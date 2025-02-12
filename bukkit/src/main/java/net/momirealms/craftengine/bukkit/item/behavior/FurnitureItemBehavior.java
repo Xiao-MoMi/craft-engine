@@ -1,6 +1,6 @@
 package net.momirealms.craftengine.bukkit.item.behavior;
 
-import net.momirealms.craftengine.bukkit.api.event.FurniturePlaceEndEvent;
+import net.momirealms.craftengine.bukkit.api.event.FurnitureAttemptPlaceEvent;
 import net.momirealms.craftengine.bukkit.api.event.FurniturePlaceEvent;
 import net.momirealms.craftengine.bukkit.entity.furniture.BukkitFurnitureManager;
 import net.momirealms.craftengine.bukkit.entity.furniture.LoadedFurniture;
@@ -88,13 +88,15 @@ public class FurnitureItemBehavior extends ItemBehavior {
         if (!player.updateLastSuccessfulInteractionTick(gameTicks)) {
             return InteractionResult.FAIL;
         }
-        FurniturePlaceEvent furniturePlaceEvent = new FurniturePlaceEvent(
-                null,
-                (org.bukkit.entity.Player) player.platformPlayer()
-        );
-        if (EventUtils.fireAndCheckCancel(furniturePlaceEvent)) {
+
+        Vec3d clickedPosition = context.getClickLocation();
+        // trigger event
+        org.bukkit.entity.Player bukkitPlayer = (org.bukkit.entity.Player) player.platformPlayer();
+        FurnitureAttemptPlaceEvent attemptPlaceEvent = new FurnitureAttemptPlaceEvent(bukkitPlayer, this, anchorType, new Location(bukkitPlayer.getWorld(), clickedPosition.x(), clickedPosition.y(), clickedPosition.z()));
+        if (EventUtils.fireAndCheckCancel(attemptPlaceEvent)) {
             return InteractionResult.FAIL;
         }
+
         if (!player.isCreativeMode()) {
             Item<?> item = context.getItem();
             item.count(item.count() - 1);
@@ -102,7 +104,6 @@ public class FurnitureItemBehavior extends ItemBehavior {
         }
         player.swingHand(context.getHand());
 
-        Vec3d clickedPosition = context.getClickLocation();
         World world = (World) context.getLevel().getHandle();
 
         // get position and rotation for placement
@@ -125,7 +126,8 @@ public class FurnitureItemBehavior extends ItemBehavior {
 
         // spawn entity and load
         Quaternionf quaternion = QuaternionUtils.toQuaternionf(0, Math.toRadians(furnitureYaw), 0);
-        Entity furnitureEntity = EntityUtils.spawnEntity(world, new Location(world, finalPlacePosition.x(), finalPlacePosition.y(), finalPlacePosition.z()), EntityType.ITEM_DISPLAY, entity -> {
+        Location furnitureLocation = new Location(world, finalPlacePosition.x(), finalPlacePosition.y(), finalPlacePosition.z());
+        Entity furnitureEntity = EntityUtils.spawnEntity(world, furnitureLocation, EntityType.ITEM_DISPLAY, entity -> {
             ItemDisplay display = (ItemDisplay) entity;
             display.setTransformation(
                     new Transformation(
@@ -139,21 +141,13 @@ public class FurnitureItemBehavior extends ItemBehavior {
             display.getPersistentDataContainer().set(BukkitFurnitureManager.FURNITURE_ANCHOR_KEY, PersistentDataType.STRING, anchorType.name());
             BukkitFurnitureManager.instance().handleEntityLoadEarly(display);
         });
+
         context.getLevel().playBlockSound(clickedPosition, sounds.placeSound(), 1f, 1f);
-        FurniturePlaceEndEvent furniturePlaceEndEvent = new FurniturePlaceEndEvent(
-                new LoadedFurniture(id,
-                        furnitureEntity,
-                        this,
-                        anchorType,
-                        new Vector3d(finalPlacePosition.x(), finalPlacePosition.y(), finalPlacePosition.z()),
-                        quaternion
-                ),
-                (org.bukkit.entity.Player) player.platformPlayer()
-        );
-        if (EventUtils.fireAndCheckCancel(furniturePlaceEndEvent)) {
-            furnitureEntity.remove();
-            return InteractionResult.FAIL;
-        }
+
+        // TODO Make this event cancellable
+        FurniturePlaceEvent placeEvent = new FurniturePlaceEvent(bukkitPlayer, Objects.requireNonNull(BukkitFurnitureManager.instance().getLoadedFurnitureByBaseEntityId(furnitureEntity.getEntityId())), furnitureLocation);
+        EventUtils.fireAndForget(placeEvent);
+
         return InteractionResult.SUCCESS;
     }
 

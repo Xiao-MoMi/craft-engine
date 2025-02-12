@@ -1,6 +1,7 @@
 package net.momirealms.craftengine.bukkit.item.behavior;
 
 import net.momirealms.craftengine.bukkit.api.CraftEngineBlocks;
+import net.momirealms.craftengine.bukkit.api.event.CustomBlockAttemptPlaceEvent;
 import net.momirealms.craftengine.bukkit.api.event.CustomBlockPlaceEvent;
 import net.momirealms.craftengine.bukkit.block.BukkitBlockManager;
 import net.momirealms.craftengine.bukkit.util.EventUtils;
@@ -71,15 +72,23 @@ public class BlockItemBehavior extends ItemBehavior {
 
         BlockPos pos = placeContext.getClickedPos();
         World world = (World) placeContext.getLevel().getHandle();
-        CustomBlockPlaceEvent customBlockPlaceEvent = new CustomBlockPlaceEvent(
-                blockStateToPlace,
-                new Location(world, pos.x(), pos.y(), pos.z()),
-                (org.bukkit.entity.Player) placeContext.getPlayer().platformPlayer()
-        );
-        if (EventUtils.fireAndCheckCancel(customBlockPlaceEvent)) {
+        Location placeLocation = new Location(world, pos.x(), pos.y(), pos.z());
+
+        // trigger event
+        CustomBlockAttemptPlaceEvent attemptPlaceEvent = new CustomBlockAttemptPlaceEvent((org.bukkit.entity.Player) player.platformPlayer(), placeLocation, blockStateToPlace);
+        if (EventUtils.fireAndCheckCancel(attemptPlaceEvent)) {
             return InteractionResult.FAIL;
         }
-        CraftEngineBlocks.place(new Location(world, pos.x(), pos.y(), pos.z()), blockStateToPlace, UpdateOption.UPDATE_ALL_IMMEDIATE);
+
+        // Todo #0
+        CraftEngineBlocks.place(placeLocation, blockStateToPlace, UpdateOption.UPDATE_ALL_IMMEDIATE);
+
+        // TODO Make place event cancellable. Needs to get the previous block state from #0
+        // TODO Add Bukkit block argument
+        CustomBlockPlaceEvent placeEvent = new CustomBlockPlaceEvent((org.bukkit.entity.Player) player.platformPlayer(), placeLocation, blockStateToPlace);
+        if (EventUtils.fireAndCheckCancel(placeEvent)) {
+            return InteractionResult.FAIL;
+        }
 
         if (!player.isCreativeMode()) {
             Item<?> item = placeContext.getItem();

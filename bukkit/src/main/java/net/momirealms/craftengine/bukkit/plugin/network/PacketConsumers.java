@@ -554,16 +554,20 @@ public class PacketConsumers {
             BukkitCraftEngine.instance().scheduler().sync().run(() -> {
                 if (actionType == Reflections.instance$ServerboundInteractPacket$ActionType$ATTACK) {
                     if (furniture.isValid()) {
-                        FurnitureBreakEvent furnitureBreakEvent = new FurnitureBreakEvent(furniture, serverPlayer.platformPlayer());
-                        if (EventUtils.fireAndCheckCancel(furnitureBreakEvent)) return;
+                        FurnitureBreakEvent breakEvent = new FurnitureBreakEvent(serverPlayer.platformPlayer(), furniture);
+                        if (EventUtils.fireAndCheckCancel(breakEvent)) {
+                            return;
+                        }
                         furniture.onPlayerDestroy(serverPlayer);
                     }
                 } else if (actionType == Reflections.instance$ServerboundInteractPacket$ActionType$INTERACT_AT) {
+                    FurnitureInteractEvent interactEvent = new FurnitureInteractEvent(serverPlayer.platformPlayer(), furniture);
+                    if (EventUtils.fireAndCheckCancel(interactEvent)) {
+                        return;
+                    }
                     if (player.isSneaking()) {
                         return;
                     }
-                    FurnitureInteractEvent furnitureInteractEvent = new FurnitureInteractEvent(furniture, serverPlayer.platformPlayer());
-                    if (EventUtils.fireAndCheckCancel(furnitureInteractEvent)) return;
                     furniture.getAvailableSeat(entityId).ifPresent(seatPos -> {
                         if (furniture.occupySeat(seatPos)) {
                             furniture.mountSeat(Objects.requireNonNull(player.getPlayer()), seatPos);

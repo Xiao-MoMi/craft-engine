@@ -533,7 +533,11 @@ public class BukkitRecipeManager implements RecipeManager<ItemStack> {
                 .map(Optional::get)
                 .toList();
 
-        List<Object> ingredients = RecipeUtils.getIngredientsFromShapedRecipe(getNMSRecipe(id));
+        Object shapedRecipe = getNMSRecipe(id);
+        if (VersionHelper.isVersionNewerThan1_21_2()) {
+            Reflections.field$ShapedRecipe$placementInfo.set(shapedRecipe, null);
+        }
+        List<Object> ingredients = RecipeUtils.getIngredientsFromShapedRecipe(shapedRecipe);
         injectIngredients(ingredients, actualIngredients);
     }
 
@@ -541,6 +545,9 @@ public class BukkitRecipeManager implements RecipeManager<ItemStack> {
     private static void injectShapelessRecipe(Key id, Recipe<ItemStack> recipe) throws ReflectiveOperationException {
         List<Ingredient<ItemStack>> actualIngredients = ((CustomShapelessRecipe<ItemStack>) recipe).ingredients();
         Object shapelessRecipe = getNMSRecipe(id);
+        if (VersionHelper.isVersionNewerThan1_21_2()) {
+            Reflections.field$ShapelessRecipe$placementInfo.set(shapelessRecipe, null);
+        }
         List<Object> ingredients = (List<Object>) Reflections.field$ShapelessRecipe$ingredients.get(shapelessRecipe);
         injectIngredients(ingredients, actualIngredients);
     }

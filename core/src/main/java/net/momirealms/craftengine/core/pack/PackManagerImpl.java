@@ -11,7 +11,6 @@ import net.momirealms.craftengine.core.font.Font;
 import net.momirealms.craftengine.core.pack.generator.ModelGeneration;
 import net.momirealms.craftengine.core.pack.generator.ModelGenerator;
 import net.momirealms.craftengine.core.pack.model.ItemModel;
-import net.momirealms.craftengine.core.platform.Platform;
 import net.momirealms.craftengine.core.plugin.CraftEngine;
 import net.momirealms.craftengine.core.plugin.PluginProperties;
 import net.momirealms.craftengine.core.plugin.config.ConfigManager;
@@ -29,6 +28,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
 import java.util.*;
+import java.util.function.BiConsumer;
 
 import static net.momirealms.craftengine.core.util.MiscUtils.castToMap;
 
@@ -36,14 +36,14 @@ public class PackManagerImpl implements PackManager {
     private static final String LEGACY_TEMPLATES = PluginProperties.getValue("legacy-templates").replace(".", "_");
     private static final String LATEST_TEMPLATES = PluginProperties.getValue("latest-templates").replace(".", "_");
     private final CraftEngine plugin;
-    private final Platform platform;
+    private final BiConsumer<Path, Path> eventDispatcher;
     private final Map<String, Pack> loadedPacks = new HashMap<>();
     private final Map<String, ConfigSectionParser> sectionParsers = new HashMap<>();
     private final TreeMap<ConfigSectionParser, List<CachedConfig>> cachedConfigs = new TreeMap<>();
 
-    public PackManagerImpl(CraftEngine plugin, Platform platform) {
+    public PackManagerImpl(CraftEngine plugin, BiConsumer<Path, Path> eventDispatcher) {
         this.plugin = plugin;
-        this.platform = platform;
+        this.eventDispatcher = eventDispatcher;
     }
 
     @Override
@@ -234,17 +234,17 @@ public class PackManagerImpl implements PackManager {
 
     @Override
     public void generateResourcePack() {
-        plugin.logger().info("Generating resource pack...");
+        this.plugin.logger().info("Generating resource pack...");
         long start = System.currentTimeMillis();
         // get the target location
-        Path generatedPackPath = plugin.dataFolderPath()
+        Path generatedPackPath = this.plugin.dataFolderPath()
                 .resolve("generated")
                 .resolve("resource_pack");
 
         try {
             org.apache.commons.io.FileUtils.deleteDirectory(generatedPackPath.toFile());
         } catch (IOException e) {
-            plugin.logger().severe("Error deleting previous resource pack", e);
+            this.plugin.logger().severe("Error deleting previous resource pack", e);
         }
 
         // firstly merge existing folders
@@ -252,35 +252,35 @@ public class PackManagerImpl implements PackManager {
             List<Path> duplicated = FileUtils.mergeFolder(loadedPacks().stream().map(Pack::resourcePackFolder).toList(), generatedPackPath);
             if (!duplicated.isEmpty()) {
                 for (Path path : duplicated) {
-                    plugin.logger().warn("Duplicated files - " + path.toAbsolutePath());
+                    this.plugin.logger().warn("Duplicated files - " + path.toAbsolutePath());
                 }
             }
         } catch (IOException e) {
-            plugin.logger().severe("Error merging resource pack", e);
+            this.plugin.logger().severe("Error merging resource pack", e);
         }
 
         this.generateFonts(generatedPackPath);
         this.generateLegacyItemOverrides(generatedPackPath);
         this.generateModernItemOverrides(generatedPackPath);
         this.generateBlockOverrides(generatedPackPath);
-        this.generateItemModels(generatedPackPath, plugin.itemManager());
-        this.generateItemModels(generatedPackPath, plugin.blockManager());
+        this.generateItemModels(generatedPackPath, this.plugin.itemManager());
+        this.generateItemModels(generatedPackPath, this.plugin.blockManager());
         this.generateSounds(generatedPackPath);
 
-        Path zipFile = plugin.dataFolderPath()
+        Path zipFile = this.plugin.dataFolderPath()
                 .resolve("generated")
                 .resolve("resource_pack.zip");
 
         try {
             ZipUtils.zipDirectory(generatedPackPath, zipFile);
         } catch (IOException e) {
-            plugin.logger().severe("Error zipping resource pack", e);
+            this.plugin.logger().severe("Error zipping resource pack", e);
         }
 
         long end = System.currentTimeMillis();
-        plugin.logger().info("Finished generating resource pack in " + (end - start) + "ms");
+        this.plugin.logger().info("Finished generating resource pack in " + (end - start) + "ms");
 
-        platform.asyncGenerateResourcePackEvent(generatedPackPath, zipFile);
+        this.eventDispatcher.accept(generatedPackPath, zipFile);
     }
 
     private void generateSounds(Path generatedPackPath) {

@@ -1,6 +1,6 @@
 package net.momirealms.craftengine.bukkit.plugin;
 
-import net.momirealms.craftengine.bukkit.platform.BukkitPlatform;
+import net.momirealms.craftengine.bukkit.api.event.AsyncResourcePackGenerateEvent;
 import net.momirealms.craftengine.bukkit.block.BukkitBlockManager;
 import net.momirealms.craftengine.bukkit.block.behavior.BukkitBlockBehaviors;
 import net.momirealms.craftengine.bukkit.entity.furniture.BukkitFurnitureManager;
@@ -15,11 +15,13 @@ import net.momirealms.craftengine.bukkit.plugin.papi.ImageExpansion;
 import net.momirealms.craftengine.bukkit.plugin.papi.ShiftExpansion;
 import net.momirealms.craftengine.bukkit.plugin.scheduler.BukkitSchedulerAdapter;
 import net.momirealms.craftengine.bukkit.plugin.user.BukkitServerPlayer;
+import net.momirealms.craftengine.bukkit.util.EventUtils;
 import net.momirealms.craftengine.bukkit.util.PlaceholderAPIUtils;
 import net.momirealms.craftengine.bukkit.util.Reflections;
 import net.momirealms.craftengine.bukkit.world.BukkitWorldManager;
 import net.momirealms.craftengine.core.entity.player.Player;
 import net.momirealms.craftengine.core.item.ItemManager;
+import net.momirealms.craftengine.core.pack.PackManagerImpl;
 import net.momirealms.craftengine.core.plugin.CraftEngine;
 import net.momirealms.craftengine.core.plugin.classpath.ReflectionClassPathAppender;
 import net.momirealms.craftengine.core.plugin.command.sender.SenderFactory;
@@ -118,7 +120,10 @@ public class BukkitCraftEngine extends CraftEngine {
         }
         BukkitBlockBehaviors.init();
         BukkitItemBehaviors.init();
-        super.platform = new BukkitPlatform();
+        super.packManager = new PackManagerImpl(this, (rf, zp) -> {
+            AsyncResourcePackGenerateEvent endEvent = new AsyncResourcePackGenerateEvent(rf, zp);
+            EventUtils.fireAndForget(endEvent);
+        });
         super.senderFactory = new BukkitSenderFactory(this);
         super.itemManager = new BukkitItemManager(this);
         super.recipeManager = new BukkitRecipeManager(this);

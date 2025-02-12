@@ -6,7 +6,6 @@ import net.momirealms.craftengine.bukkit.plugin.user.BukkitServerPlayer;
 import net.momirealms.craftengine.bukkit.util.*;
 import net.momirealms.craftengine.bukkit.world.BukkitWorld;
 import net.momirealms.craftengine.bukkit.world.BukkitWorldManager;
-import net.momirealms.craftengine.core.block.BreakReason;
 import net.momirealms.craftengine.core.block.EmptyBlock;
 import net.momirealms.craftengine.core.block.ImmutableBlockState;
 import net.momirealms.craftengine.core.block.PushReaction;
@@ -15,7 +14,6 @@ import net.momirealms.craftengine.core.entity.player.InteractionHand;
 import net.momirealms.craftengine.core.item.Item;
 import net.momirealms.craftengine.core.item.ItemKeys;
 import net.momirealms.craftengine.core.loot.parameter.LootParameters;
-import net.momirealms.craftengine.core.plugin.CraftEngine;
 import net.momirealms.craftengine.core.plugin.config.ConfigManager;
 import net.momirealms.craftengine.core.util.Key;
 import net.momirealms.craftengine.core.util.context.ContextHolder;
@@ -93,7 +91,8 @@ public class BlockEventListener implements Listener {
         }
     }
 
-    @EventHandler(ignoreCancelled = true, priority = EventPriority.LOWEST)
+
+    @EventHandler(ignoreCancelled = true, priority = EventPriority.LOW)
     public void onPlayerBreak(BlockBreakEvent event) {
         org.bukkit.block.Block block = event.getBlock();
         Object blockState = BlockStateUtils.blockDataToBlockState(block.getBlockData());
@@ -102,9 +101,15 @@ public class BlockEventListener implements Listener {
             ImmutableBlockState state = manager.getImmutableBlockStateUnsafe(stateId);
             if (!state.isEmpty()) {
                 Location location = block.getLocation();
-                CustomBlockBreakEvent customBreakEvent = new CustomBlockBreakEvent(state, location, event.getPlayer());
+
+                // trigger event
+                CustomBlockBreakEvent customBreakEvent = new CustomBlockBreakEvent(event.getPlayer(), location, state);
                 boolean isCancelled = EventUtils.fireAndCheckCancel(customBreakEvent);
-                if (isCancelled) event.setCancelled(true);
+                if (isCancelled) {
+                    event.setCancelled(true);
+                    return;
+                }
+
                 net.momirealms.craftengine.core.world.World world = new BukkitWorld(location.getWorld());
                 // handle waterlogged blocks
                 @SuppressWarnings("unchecked")
@@ -132,7 +137,6 @@ public class BlockEventListener implements Listener {
                     return;
                 }
                 // drop items
-                if (isCancelled) return;
                 ContextHolder.Builder builder = ContextHolder.builder();
                 builder.withParameter(LootParameters.LOCATION, vec3d);
                 builder.withParameter(LootParameters.PLAYER, plugin.adapt(player));

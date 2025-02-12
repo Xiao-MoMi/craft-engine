@@ -1,7 +1,7 @@
 package net.momirealms.craftengine.bukkit.api.event;
 
-import net.momirealms.craftengine.core.block.CustomBlock;
-import net.momirealms.craftengine.core.block.ImmutableBlockState;
+import net.momirealms.craftengine.bukkit.item.behavior.FurnitureItemBehavior;
+import net.momirealms.craftengine.core.entity.furniture.AnchorType;
 import org.bukkit.Location;
 import org.bukkit.entity.Player;
 import org.bukkit.event.Cancellable;
@@ -9,33 +9,33 @@ import org.bukkit.event.HandlerList;
 import org.bukkit.event.player.PlayerEvent;
 import org.jetbrains.annotations.NotNull;
 
-public class CustomBlockBreakEvent extends PlayerEvent implements Cancellable {
+public class FurnitureAttemptPlaceEvent extends PlayerEvent implements Cancellable {
     private static final HandlerList HANDLER_LIST = new HandlerList();
     private boolean cancelled;
-    private final CustomBlock block;
-    private final ImmutableBlockState state;
+    private final FurnitureItemBehavior behavior;
     private final Location location;
+    private final AnchorType anchorType;
 
-    public CustomBlockBreakEvent(@NotNull Player player, @NotNull Location location, @NotNull ImmutableBlockState state) {
+    public FurnitureAttemptPlaceEvent(@NotNull Player player, @NotNull FurnitureItemBehavior behavior, @NotNull AnchorType anchorType, @NotNull Location location) {
         super(player);
-        this.block = state.owner().value();
-        this.state = state;
+        this.behavior = behavior;
         this.location = location;
+        this.anchorType = anchorType;
     }
 
     @NotNull
-    public CustomBlock block() {
-        return this.block;
+    public AnchorType anchorType() {
+        return anchorType;
     }
 
     @NotNull
     public Location location() {
-        return this.location;
+        return location;
     }
 
     @NotNull
-    public ImmutableBlockState blockState() {
-        return this.state;
+    public FurnitureItemBehavior behavior() {
+        return behavior;
     }
 
     @NotNull

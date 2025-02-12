@@ -53,6 +53,7 @@ public class LoadedFurniture {
     private final int baseEntityId;
     private final Quaternionf rotation;
     private final Vector<Entity> seats = new Vector<>();
+    private final AnchorType anchorType;
     private Object cachedSpawnPacket;
 
     public LoadedFurniture(Key id,
@@ -63,6 +64,7 @@ public class LoadedFurniture {
                            Quaternionf rotation) {
         this.id = id;
         this.baseEntityId = baseEntity.getEntityId();
+        this.anchorType = anchorType;
         this.rotation = rotation;
         this.position = position;
         this.baseEntity = baseEntity;
@@ -253,6 +255,14 @@ public class LoadedFurniture {
         return this.baseEntity;
     }
 
+    public AnchorType anchorType() {
+        return anchorType;
+    }
+
+    public Key furnitureId() {
+        return id;
+    }
+
     public void mountSeat(org.bukkit.entity.Player player, Seat seat) {
         Location location = this.getSeatLocation(seat);
         Entity seatEntity = seat.limitPlayerRotation() ?
@@ -283,9 +293,5 @@ public class LoadedFurniture {
                 });
         this.addSeatEntity(seatEntity);
         seatEntity.addPassenger(player);
-    }
-
-    public Key furnitureId() {
-        return id;
     }
 }

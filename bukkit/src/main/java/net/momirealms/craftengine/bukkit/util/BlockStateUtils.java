@@ -38,12 +38,6 @@ public class BlockStateUtils {
         return getRealBlockIdFromState(blockState);
     }
 
-    public static Key getRealBlockIdFromStateId(int stateId) {
-        Object blockState = idToBlockState(stateId);
-        Object owner = getBlockOwner(blockState);
-        return getRealBlockIdFromState(owner);
-    }
-
     public static Key getRealBlockIdFromState(Object blockState) {
         String id = blockState.toString();
         int first = id.indexOf('{');
