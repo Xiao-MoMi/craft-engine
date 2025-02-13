@@ -55,7 +55,7 @@ templates:
               parent: "minecraft:item/bow_pulling_2"
               textures:
                 "layer0": "{bow_pulling_2_texture}"
-          threshold: 0.65
+          threshold: 0.9
       fallback:
         type: minecraft:model
         path: "{bow_pulling_0_model}"
@@ -497,6 +497,11 @@ templates:
                     formula:
                       type: ore_drops
                   - type: explosion_decay
+                  - type: drop_exp
+                    count:
+                      type: uniform
+                      min: "{min_exp}"
+                      max: "{max_exp}"
   loot_table:leaves:
     pools:
       - rolls: 1

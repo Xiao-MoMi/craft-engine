@@ -30,7 +30,6 @@ public class ContextHolder {
     }
 
     @SuppressWarnings("unchecked")
-    @Nullable
     public <T> Optional<T> getOptional(ContextKey<T> parameter) {
         return Optional.ofNullable((T) this.params.get(parameter));
     }

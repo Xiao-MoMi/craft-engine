@@ -26,5 +26,7 @@ public interface World {
 
     void dropItemNaturally(Vec3d location, Item<?> item);
 
+    void dropExp(Vec3d location, int amount);
+
     void playBlockSound(Vec3d location, Key sound, float volume, float pitch);
 }

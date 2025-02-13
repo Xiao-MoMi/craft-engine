@@ -37,8 +37,9 @@ public class FallingBlockRemoveListener implements Listener {
                 double y = Reflections.field$Entity$yo.getDouble(fallingBlockEntity);
                 double z = Reflections.field$Entity$zo.getDouble(fallingBlockEntity);
                 Vec3d vec3d = new Vec3d(x, y, z);
-                builder.withParameter(LootParameters.LOCATION, vec3d);
                 net.momirealms.craftengine.core.world.World world = new BukkitWorld(fallingBlock.getWorld());
+                builder.withParameter(LootParameters.LOCATION, vec3d);
+                builder.withParameter(LootParameters.WORLD, world);
                 for (Item<Object> item : immutableBlockState.getDrops(builder, world)) {
                     world.dropItemNaturally(vec3d, item);
                 }

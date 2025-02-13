@@ -34,7 +34,7 @@ public abstract class AbstractSingleLootEntryContainer<T> extends AbstractLootEn
 
     @Override
     public boolean expand(LootContext context, Consumer<LootEntry<T>> choiceConsumer) {
-        if (this.test(context)) {
+        if (super.test(context)) {
             choiceConsumer.accept(this.entry);
             return true;
         } else {

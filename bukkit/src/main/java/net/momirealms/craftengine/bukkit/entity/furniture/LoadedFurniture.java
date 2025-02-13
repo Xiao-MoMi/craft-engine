@@ -25,6 +25,7 @@ import net.momirealms.craftengine.core.util.QuaternionUtils;
 import net.momirealms.craftengine.core.util.VersionHelper;
 import net.momirealms.craftengine.core.util.context.ContextHolder;
 import net.momirealms.craftengine.core.world.Vec3d;
+import net.momirealms.craftengine.core.world.World;
 import org.bukkit.Location;
 import org.bukkit.SoundCategory;
 import org.bukkit.attribute.Attribute;
@@ -177,9 +178,11 @@ public class LoadedFurniture {
         Vec3d vec3d = new Vec3d(position.x(), position.y(), position.z());
         if (lootTable != null && !player.isCreativeMode()) {
             ContextHolder.Builder builder = ContextHolder.builder();
+            World world = new BukkitWorld(this.baseEntity.getWorld());
             builder.withParameter(LootParameters.LOCATION, vec3d);
+            builder.withParameter(LootParameters.WORLD, world);
             builder.withParameter(LootParameters.PLAYER, player);
-            List<Item<ItemStack>> items = lootTable.getRandomItems(builder.build(), new BukkitWorld(this.baseEntity.getWorld()));
+            List<Item<ItemStack>> items = lootTable.getRandomItems(builder.build(), world);
             for (Item<ItemStack> item : items) {
                 ItemStack itemStack = item.load();
                 if (ItemUtils.isEmpty(itemStack)) continue;

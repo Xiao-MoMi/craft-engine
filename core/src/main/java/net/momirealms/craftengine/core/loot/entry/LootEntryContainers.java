@@ -14,10 +14,12 @@ import java.util.Map;
 public class LootEntryContainers {
     public static final Key ALTERNATIVES = Key.from("craftengine:alternatives");
     public static final Key ITEM = Key.from("craftengine:item");
+    public static final Key EXP = Key.from("craftengine:exp");
 
     static {
         register(ALTERNATIVES, AlternativesLootEntryContainer.FACTORY);
         register(ITEM, SingleItemLootEntryContainer.FACTORY);
+        register(EXP, ExpLootEntryContainer.FACTORY);
     }
 
     public static <T> void register(Key key, LootEntryContainerFactory<T> factory) {

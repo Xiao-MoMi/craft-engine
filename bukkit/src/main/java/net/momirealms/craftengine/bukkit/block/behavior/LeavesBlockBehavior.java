@@ -120,9 +120,10 @@ public class LeavesBlockBehavior extends BlockBehavior {
                 bukkitWorld.setBlockData(pos.x(), pos.y(), pos.z(), Material.WATER.createBlockData());
             }
             Vec3d vec3d = Vec3d.atCenterOf(pos);
-            ContextHolder.Builder builder = ContextHolder.builder()
-                    .withParameter(LootParameters.LOCATION, vec3d);
             net.momirealms.craftengine.core.world.World world = new BukkitWorld(bukkitWorld);
+            ContextHolder.Builder builder = ContextHolder.builder()
+                    .withParameter(LootParameters.LOCATION, vec3d)
+                    .withParameter(LootParameters.WORLD, world);
             for (Item<Object> item : immutableBlockState.getDrops(builder, world)) {
                 world.dropItemNaturally(vec3d, item);
             }

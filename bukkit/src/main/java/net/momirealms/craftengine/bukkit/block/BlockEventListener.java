@@ -138,6 +138,7 @@ public class BlockEventListener implements Listener {
                 }
                 // drop items
                 ContextHolder.Builder builder = ContextHolder.builder();
+                builder.withParameter(LootParameters.WORLD, world);
                 builder.withParameter(LootParameters.LOCATION, vec3d);
                 builder.withParameter(LootParameters.PLAYER, plugin.adapt(player));
                 builder.withParameter(LootParameters.TOOL, itemInHand);
@@ -209,6 +210,7 @@ public class BlockEventListener implements Listener {
                 ContextHolder.Builder builder = ContextHolder.builder();
                 Vec3d vec3d = Vec3d.atCenterOf(oldPos);
                 builder.withParameter(LootParameters.LOCATION, vec3d);
+                builder.withParameter(LootParameters.WORLD, world.world());
                 for (Item<Object> item : blockState.getDrops(builder, world.world())) {
                     world.world().dropItemNaturally(vec3d, item);
                 }
@@ -239,6 +241,7 @@ public class BlockEventListener implements Listener {
                 ContextHolder.Builder builder = ContextHolder.builder();
                 Vec3d vec3d = Vec3d.atCenterOf(blockPos);
                 builder.withParameter(LootParameters.LOCATION, vec3d);
+                builder.withParameter(LootParameters.WORLD, world);
                 if (yield < 1f) {
                     builder.withParameter(LootParameters.EXPLOSION_RADIUS, 1.0f / yield);
                 }

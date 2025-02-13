@@ -60,8 +60,9 @@ public class BushBlockBehavior extends BlockBehavior {
                 ContextHolder.Builder builder = ContextHolder.builder();
                 BlockPos pos = LocationUtils.fromBlockPos(blockPos);
                 Vec3d vec3d = Vec3d.atCenterOf(pos);
-                builder.withParameter(LootParameters.LOCATION, vec3d);
                 net.momirealms.craftengine.core.world.World world = new BukkitWorld((World) Reflections.method$Level$getCraftWorld.invoke(level));
+                builder.withParameter(LootParameters.LOCATION, vec3d);
+                builder.withParameter(LootParameters.WORLD, world);
                 for (Item<Object> item : previousState.getDrops(builder, world)) {
                     world.dropItemNaturally(vec3d, item);
                 }

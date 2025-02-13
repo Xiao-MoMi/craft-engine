@@ -2516,12 +2516,12 @@ public class Reflections {
     static {
         try {
             if (VersionHelper.isVersionNewerThan1_20_5()) {
-                Object block_break_speed = method$ResourceLocation$fromNamespaceAndPath.invoke(null, "minecraft", "block_break_speed");
+                Object block_break_speed = method$ResourceLocation$fromNamespaceAndPath.invoke(null, "minecraft", VersionHelper.isVersionNewerThan1_21_2() ? "block_break_speed" : "player.block_break_speed");
                 @SuppressWarnings("unchecked")
                 Optional<Object> breakSpeedHolder = (Optional<Object>) method$Registry$getHolder0.invoke(instance$BuiltInRegistries$ATTRIBUTE, block_break_speed);
                 instance$Holder$Attribute$block_break_speed = breakSpeedHolder.orElse(null);
 
-                Object block_interaction_range = method$ResourceLocation$fromNamespaceAndPath.invoke(null, "minecraft", "block_interaction_range");
+                Object block_interaction_range = method$ResourceLocation$fromNamespaceAndPath.invoke(null, "minecraft", VersionHelper.isVersionNewerThan1_21_2() ? "block_interaction_range" : "player.block_interaction_range");
                 @SuppressWarnings("unchecked")
                 Optional<Object> blockInteractionRangeHolder = (Optional<Object>) method$Registry$getHolder0.invoke(instance$BuiltInRegistries$ATTRIBUTE, block_interaction_range);
                 instance$Holder$Attribute$block_interaction_range = blockInteractionRangeHolder.orElse(null);

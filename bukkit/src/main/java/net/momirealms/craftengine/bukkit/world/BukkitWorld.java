@@ -1,5 +1,6 @@
 package net.momirealms.craftengine.bukkit.world;
 
+import net.momirealms.craftengine.bukkit.util.EntityUtils;
 import net.momirealms.craftengine.bukkit.util.ItemUtils;
 import net.momirealms.craftengine.core.item.Item;
 import net.momirealms.craftengine.core.util.Key;
@@ -10,6 +11,8 @@ import net.momirealms.craftengine.core.world.WorldBlock;
 import net.momirealms.craftengine.core.world.WorldHeight;
 import org.bukkit.Location;
 import org.bukkit.SoundCategory;
+import org.bukkit.entity.EntityType;
+import org.bukkit.entity.ExperienceOrb;
 import org.bukkit.inventory.ItemStack;
 
 import java.lang.ref.WeakReference;
@@ -66,6 +69,15 @@ public class BukkitWorld implements World {
         } else {
             getHandle().dropItemNaturally(new Location(null, location.x() - 0.5, location.y() - 0.5, location.z() - 0.5), (ItemStack) item.getItem());
         }
+    }
+
+    @Override
+    public void dropExp(Vec3d location, int amount) {
+        if (amount <= 0) return;
+        EntityUtils.spawnEntity(getHandle(), new Location(getHandle(), location.x(), location.y(), location.z()), EntityType.EXPERIENCE_ORB, (e) -> {
+            ExperienceOrb orb = (ExperienceOrb) e;
+            orb.setExperience(amount);
+        });
     }
 
     @Override
