@@ -140,6 +140,26 @@ blocks:
           parent: "minecraft:block/cube_all"
           textures:
             "all": "minecraft:block/custom/palm_planks"
+  default:palm_sapling:
+    settings:
+      template: block_settings:sapling
+      overrides:
+        item: default:palm_sapling
+    behavior:
+      type: bush_block
+    loot:
+      template: loot_table:normal
+      arguments:
+        item: default:palm_sapling
+    state:
+      id: 0
+      state: oak_sapling:0
+      model:
+        path: "minecraft:block/custom/palm_sapling"
+        generation:
+          parent: "minecraft:block/cross"
+          textures:
+            "cross": "minecraft:block/custom/palm_sapling"
 
 items:
   default:palm_log:
@@ -232,6 +252,9 @@ items:
       arguments:
         model_path: "minecraft:item/custom/palm_sapling"
         texture_path: "minecraft:block/custom/palm_sapling"
+    behavior:
+      type: block_item
+      block: default:palm_sapling
   default:palm_leaves:
     material: oak_leaves
     custom-model-data: 1000
