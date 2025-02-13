@@ -4088,4 +4088,40 @@ public class Reflections {
                     clazz$DedicatedPlayerList, new String[] {"reloadRecipeData", "reloadRecipes"}
             )
     );
+
+    public static final Class<?> clazz$ResultContainer = requireNonNull(
+            ReflectionUtils.getClazz(
+                    BukkitReflectionUtils.assembleMCClass("world.inventory.ResultContainer"),
+                    BukkitReflectionUtils.assembleMCClass("world.inventory.InventoryCraftResult")
+            )
+    );
+
+    public static final Class<?> clazz$Container = requireNonNull(
+            ReflectionUtils.getClazz(
+                    BukkitReflectionUtils.assembleMCClass("world.Container"),
+                    BukkitReflectionUtils.assembleMCClass("world.IInventory")
+            )
+    );
+
+    public static final Class<?> clazz$Recipe = requireNonNull(
+            ReflectionUtils.getClazz(
+                    BukkitReflectionUtils.assembleMCClass("world.item.crafting.Recipe"),
+                    BukkitReflectionUtils.assembleMCClass("world.item.crafting.IRecipe")
+            )
+    );
+
+    public static final Field field$ResultContainer$recipeUsed = Optional.ofNullable(ReflectionUtils.getDeclaredField(clazz$ResultContainer, clazz$Recipe, 0))
+            .orElse(ReflectionUtils.getDeclaredField(clazz$ResultContainer, clazz$RecipeHolder, 0));
+
+    public static final Class<?> clazz$CraftInventoryCrafting = requireNonNull(
+            ReflectionUtils.getClazz(
+                    BukkitReflectionUtils.assembleCBClass("inventory.CraftInventoryCrafting")
+            )
+    );
+
+    public static final Field field$CraftInventoryCrafting$resultInventory = requireNonNull(
+            ReflectionUtils.getDeclaredField(
+                    clazz$CraftInventoryCrafting, clazz$Container, 0
+            )
+    );
 }

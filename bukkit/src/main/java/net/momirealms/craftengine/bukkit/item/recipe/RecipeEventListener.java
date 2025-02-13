@@ -13,9 +13,12 @@ import net.momirealms.craftengine.core.item.recipe.input.CraftingInput;
 import net.momirealms.craftengine.core.registry.BuiltInRegistries;
 import net.momirealms.craftengine.core.registry.Holder;
 import net.momirealms.craftengine.core.util.Key;
+import net.momirealms.craftengine.core.util.VersionHelper;
+import org.bukkit.Material;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
+import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.event.inventory.PrepareItemCraftEvent;
 import org.bukkit.inventory.*;
 
@@ -33,6 +36,32 @@ public class RecipeEventListener implements Listener {
         this.itemManager = itemManager;
         this.recipeManager = recipeManager;
         this.plugin = plugin;
+    }
+
+    @EventHandler
+    public void onClickCartographyTable(InventoryClickEvent event) {
+        if (VersionHelper.isPaper()) return;
+        if (!(event.getClickedInventory() instanceof CartographyInventory cartographyInventory)) {
+            return;
+        }
+        plugin.scheduler().sync().runDelayed(() -> {
+            if (ItemUtils.hasCustomItem(cartographyInventory.getContents())) {
+                cartographyInventory.setResult(new ItemStack(Material.AIR));
+            }
+        });
+    }
+
+    @EventHandler
+    public void onSpecialRecipe(PrepareItemCraftEvent event) {
+        org.bukkit.inventory.Recipe recipe = event.getRecipe();
+        if (recipe == null)
+            return;
+        if (!(recipe instanceof ComplexRecipe))
+            return;
+        CraftingInventory inventory = event.getInventory();
+        if (ItemUtils.hasCustomItem(inventory.getMatrix())) {
+            inventory.setResult(null);
+        }
     }
 
     @EventHandler
@@ -56,7 +85,7 @@ public class RecipeEventListener implements Listener {
 
         // if the recipe is a vanilla one but not injected, custom items should never be ingredients
         if (this.recipeManager.isDataPackRecipe(recipeId) && !isCustom) {
-            if (hasCustomItem(ingredients)) {
+            if (ItemUtils.hasCustomItem(ingredients)) {
                 inventory.setResult(null);
             }
             return;
@@ -114,26 +143,28 @@ public class RecipeEventListener implements Listener {
         if (ceRecipe != null) {
             inventory.setResult(ceRecipe.getResult(serverPlayer));
             serverPlayer.setLastUsedRecipe(ceRecipe);
+            correctRecipeUsed(inventory, ceRecipe);
             return;
         }
         ceRecipe = this.recipeManager.getRecipe(RecipeTypes.SHAPED, input);
         if (ceRecipe != null) {
             inventory.setResult(ceRecipe.getResult(serverPlayer));
             serverPlayer.setLastUsedRecipe(ceRecipe);
+            correctRecipeUsed(inventory, ceRecipe);
             return;
         }
         // clear result if not met
         inventory.setResult(null);
     }
 
-    private boolean hasCustomItem(ItemStack[] stack) {
-        for (ItemStack itemStack : stack) {
-            if (!ItemUtils.isEmpty(itemStack)) {
-                if (this.itemManager.wrap(itemStack).customId().isPresent()) {
-                    return true;
-                }
-            }
+    private void correctRecipeUsed(CraftingInventory inventory, Recipe<ItemStack> recipe) {
+        Object holderOrRecipe = recipeManager.getRecipeHolderByRecipe(recipe);
+        if (holderOrRecipe == null) return;
+        try {
+            Object resultInventory = Reflections.field$CraftInventoryCrafting$resultInventory.get(inventory);
+            Reflections.field$ResultContainer$recipeUsed.set(resultInventory, holderOrRecipe);
+        } catch (ReflectiveOperationException e) {
+            plugin.logger().warn("Failed to correct used recipe", e);
         }
-        return false;
     }
 }

@@ -50,7 +50,7 @@ public class CrafterEventListener implements Listener {
 
         // if the recipe is a vanilla one, custom items should never be ingredients
         if (this.recipeManager.isDataPackRecipe(recipeId) && !isCustom) {
-            if (hasCustomItem(ingredients)) {
+            if (ItemUtils.hasCustomItem(ingredients)) {
                 event.setCancelled(true);
             }
             return;
@@ -99,16 +99,5 @@ public class CrafterEventListener implements Listener {
         }
         // clear result if not met
         event.setCancelled(true);
-    }
-
-    private boolean hasCustomItem(ItemStack[] stack) {
-        for (ItemStack itemStack : stack) {
-            if (!ItemUtils.isEmpty(itemStack)) {
-                if (this.itemManager.wrap(itemStack).customId().isPresent()) {
-                    return true;
-                }
-            }
-        }
-        return false;
     }
 }

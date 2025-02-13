@@ -1,5 +1,6 @@
 package net.momirealms.craftengine.bukkit.util;
 
+import net.momirealms.craftengine.bukkit.item.BukkitItemManager;
 import net.momirealms.craftengine.core.plugin.CraftEngine;
 import org.bukkit.Material;
 import org.bukkit.inventory.ItemStack;
@@ -27,5 +28,16 @@ public class ItemUtils {
         } catch (InvocationTargetException | IllegalAccessException e) {
             CraftEngine.instance().logger().warn("Failed to set item", e);
         }
+    }
+
+    public static boolean hasCustomItem(ItemStack[] stack) {
+        for (ItemStack itemStack : stack) {
+            if (!ItemUtils.isEmpty(itemStack)) {
+                if (BukkitItemManager.instance().wrap(itemStack).customId().isPresent()) {
+                    return true;
+                }
+            }
+        }
+        return false;
     }
 }

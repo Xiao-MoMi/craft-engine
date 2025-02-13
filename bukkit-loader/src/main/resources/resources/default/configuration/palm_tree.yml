@@ -23,6 +23,9 @@ blocks:
           from: 0
           to: 27
   default:palm_log:
+    behavior:
+      type: strippable_block
+      stripped: default:stripped_palm_log
     loot:
       template: loot_table:normal
       arguments:
@@ -73,6 +76,9 @@ blocks:
           from: 3
           to: 5
   default:palm_wood:
+    behavior:
+      type: strippable_block
+      stripped: default:stripped_palm_wood
     loot:
       template: loot_table:normal
       arguments:
