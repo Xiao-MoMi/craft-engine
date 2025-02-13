@@ -3,7 +3,7 @@ items:
     material: paper
     custom-model-data: 3000
     data:
-      display-name: "Fairy Flower"
+      display-name: "<!i>Fairy Flower"
     model:
       type: "minecraft:model"
       path: "minecraft:item/custom/fairy_flower"

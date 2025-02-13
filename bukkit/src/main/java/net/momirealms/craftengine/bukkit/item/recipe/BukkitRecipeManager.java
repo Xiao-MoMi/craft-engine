@@ -175,6 +175,7 @@ public class BukkitRecipeManager implements RecipeManager<ItemStack> {
         this.customRecipes.clear();
 
         try {
+            // do not unregister them
 //            for (NamespacedKey key : this.injectedDataPackRecipes) {
 //                unregisterRecipe(key);
 //            }

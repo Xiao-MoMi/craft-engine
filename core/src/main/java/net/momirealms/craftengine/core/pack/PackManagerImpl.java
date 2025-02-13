@@ -131,6 +131,12 @@ public class PackManagerImpl implements PackManager {
         // icons
         plugin.saveResource("resources/default/configuration/icons.yml");
         plugin.saveResource("resources/default/resourcepack/assets/minecraft/textures/font/image/icons.png");
+        // blocks
+        plugin.saveResource("resources/default/configuration/blocks.yml");
+        plugin.saveResource("resources/default/resourcepack/assets/minecraft/textures/block/custom/chinese_lantern.png");
+        plugin.saveResource("resources/default/resourcepack/assets/minecraft/textures/block/custom/chinese_lantern.png.mcmeta");
+        plugin.saveResource("resources/default/resourcepack/assets/minecraft/textures/block/custom/chinese_lantern_top.png");
+        plugin.saveResource("resources/default/resourcepack/assets/minecraft/textures/block/custom/chinese_lantern_top.png.mcmeta");
         // items
         plugin.saveResource("resources/default/configuration/items.yml");
         plugin.saveResource("resources/default/resourcepack/assets/minecraft/textures/item/custom/topaz_rod.png");
