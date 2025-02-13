@@ -9,10 +9,10 @@ import net.momirealms.craftengine.core.util.AdventureHelper;
 import java.util.List;
 
 public class LoreModifier<I> implements ItemModifier<I> {
-    private final List<String> parameter;
+    private final List<String> argument;
 
-    public LoreModifier(List<String> parameter) {
-        this.parameter = parameter;
+    public LoreModifier(List<String> argument) {
+        this.argument = argument;
     }
 
     @Override
@@ -22,7 +22,7 @@ public class LoreModifier<I> implements ItemModifier<I> {
 
     @Override
     public void apply(Item<I> item, Player player) {
-        item.lore(parameter.stream().map(it -> AdventureHelper.componentToJson(AdventureHelper.miniMessage().deserialize(
+        item.lore(argument.stream().map(it -> AdventureHelper.componentToJson(AdventureHelper.miniMessage().deserialize(
                 it, ImageTag.instance(), new PlaceholderTag(player)))).toList());
     }
 }

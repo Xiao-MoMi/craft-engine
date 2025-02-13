@@ -12,6 +12,7 @@ import net.momirealms.craftengine.core.block.behavior.BlockBehaviorFactory;
 import net.momirealms.craftengine.core.item.Item;
 import net.momirealms.craftengine.core.loot.parameter.LootParameters;
 import net.momirealms.craftengine.core.util.Key;
+import net.momirealms.craftengine.core.util.MiscUtils;
 import net.momirealms.craftengine.core.util.VersionHelper;
 import net.momirealms.craftengine.core.util.context.ContextHolder;
 import net.momirealms.craftengine.core.world.BlockPos;
@@ -19,14 +20,20 @@ import net.momirealms.craftengine.core.world.Vec3d;
 import net.momirealms.craftengine.shared.block.BlockBehavior;
 import org.bukkit.World;
 
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Callable;
 
 public class BushBlockBehavior extends BlockBehavior {
     public static final Factory FACTORY = new Factory();
-    public static final BushBlockBehavior INSTANCE = new BushBlockBehavior();
     private static final Object DIRT_TAG = BlockTags.getOrCreate(Key.of("minecraft", "dirt"));
     private static final Object FARMLAND = BlockTags.getOrCreate(Key.of("minecraft", "farmland"));
+    public static final BushBlockBehavior INSTANCE = new BushBlockBehavior(List.of(DIRT_TAG, FARMLAND));
+    private final List<Object> tagsCanSurviveOn;
+
+    public BushBlockBehavior(List<Object> tagsCanSurviveOn) {
+        this.tagsCanSurviveOn = tagsCanSurviveOn;
+    }
 
     @Override
     public void onPlace(Object thisBlock, Object[] args, Callable<Object> superMethod) throws Exception {
@@ -75,7 +82,11 @@ public class BushBlockBehavior extends BlockBehavior {
     public static class Factory implements BlockBehaviorFactory {
         @Override
         public BlockBehavior create(CustomBlock block, Map<String, Object> arguments) {
-            return INSTANCE;
+            if (arguments.containsKey("tags")) {
+                return new BushBlockBehavior(MiscUtils.getAsStringList(arguments.get("tags")).stream().map(it -> BlockTags.getOrCreate(Key.of(it))).toList());
+            } else {
+                return INSTANCE;
+            }
         }
     }
 
@@ -89,8 +100,11 @@ public class BushBlockBehavior extends BlockBehavior {
     }
 
     private boolean mayPlaceOn(Object belowState, Object world, Object blockPos) throws ReflectiveOperationException {
-        boolean isDirt = (boolean) Reflections.method$BlockStateBase$hasTag.invoke(belowState, DIRT_TAG);
-        if (isDirt) return true;
-        return (boolean) Reflections.method$BlockStateBase$hasTag.invoke(belowState, FARMLAND);
+        for (Object tag : this.tagsCanSurviveOn) {
+            if ((boolean) Reflections.method$BlockStateBase$hasTag.invoke(belowState, tag)) {
+                return true;
+            }
+        }
+        return false;
     }
 }

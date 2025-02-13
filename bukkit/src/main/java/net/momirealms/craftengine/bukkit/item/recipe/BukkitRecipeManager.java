@@ -173,29 +173,32 @@ public class BukkitRecipeManager implements RecipeManager<ItemStack> {
         this.recipes.clear();
         this.dataPackRecipes.clear();
         this.customRecipes.clear();
-        if (VersionHelper.isVersionNewerThan1_21_2()) {
-            try {
-                Object recipeMap = Reflections.field$RecipeManager$recipes.get(minecraftRecipeManager);
-                for (NamespacedKey key : this.injectedDataPackRecipes) {
-                    Reflections.method$RecipeMap$removeRecipe.invoke(recipeMap, Reflections.method$CraftRecipe$toMinecraft.invoke(null, key));
-                }
-                for (NamespacedKey key : this.registeredCustomRecipes) {
-                    Reflections.method$RecipeMap$removeRecipe.invoke(recipeMap, Reflections.method$CraftRecipe$toMinecraft.invoke(null, key));
-                }
-                Reflections.method$RecipeManager$finalizeRecipeLoading.invoke(minecraftRecipeManager);
-            } catch (ReflectiveOperationException e) {
-                plugin.logger().warn("Failed to unload custom recipes", e);
-            }
-        } else {
-            for (NamespacedKey key : this.injectedDataPackRecipes) {
-                Bukkit.removeRecipe(key);
-            }
+
+        try {
+//            for (NamespacedKey key : this.injectedDataPackRecipes) {
+//                unregisterRecipe(key);
+//            }
             for (NamespacedKey key : this.registeredCustomRecipes) {
-                Bukkit.removeRecipe(key);
+                unregisterRecipe(key);
             }
+            if (VersionHelper.isVersionNewerThan1_21_2()) {
+                Reflections.method$RecipeManager$finalizeRecipeLoading.invoke(minecraftRecipeManager);
+            }
+        } catch (ReflectiveOperationException e) {
+            plugin.logger().warn("Failed to unregister recipes", e);
         }
+
         this.registeredCustomRecipes.clear();
         this.injectedDataPackRecipes.clear();
+    }
+
+    private void unregisterRecipe(NamespacedKey key) throws ReflectiveOperationException {
+        if (VersionHelper.isVersionNewerThan1_21_2()) {
+            Object recipeMap = Reflections.field$RecipeManager$recipes.get(minecraftRecipeManager);
+            Reflections.method$RecipeMap$removeRecipe.invoke(recipeMap, Reflections.method$CraftRecipe$toMinecraft.invoke(null, key));
+        } else {
+            Bukkit.removeRecipe(key);
+        }
     }
 
     @Override
@@ -340,7 +343,7 @@ public class BukkitRecipeManager implements RecipeManager<ItemStack> {
     }
 
     private void handleDataPackShapelessRecipe(Key id, VanillaShapelessRecipe recipe, Consumer<Runnable> callback) {
-        NamespacedKey key = new NamespacedKey("internal", id.value());
+        NamespacedKey key = new NamespacedKey(id.namespace(), id.value());
         ItemStack result = createResultStack(recipe.result());
         ShapelessRecipe shapelessRecipe = new ShapelessRecipe(key, result);
         if (recipe.group() != null) {
@@ -383,6 +386,7 @@ public class BukkitRecipeManager implements RecipeManager<ItemStack> {
         if (hasCustomItemInTag) {
             callback.accept(() -> {
                 try {
+                    unregisterRecipe(key);
                     Reflections.method$CraftRecipe$addToCraftingManager.invoke(Reflections.method$CraftShapelessRecipe$fromBukkitRecipe.invoke(null, shapelessRecipe));
                     injectShapelessRecipe(id, ceRecipe);
                 } catch (Exception e) {
@@ -391,11 +395,11 @@ public class BukkitRecipeManager implements RecipeManager<ItemStack> {
             });
             this.injectedDataPackRecipes.add(key);
         }
-        this.addVanillaInternalRecipe(Key.of("internal", id.value()), ceRecipe);
+        this.addVanillaInternalRecipe(id, ceRecipe);
     }
 
     private void handleDataPackShapedRecipe(Key id, VanillaShapedRecipe recipe, Consumer<Runnable> callback) {
-        NamespacedKey key = new NamespacedKey("internal", id.value());
+        NamespacedKey key = new NamespacedKey(id.namespace(), id.value());
         ItemStack result = createResultStack(recipe.result());
         ShapedRecipe shapedRecipe = new ShapedRecipe(key, result);
         if (recipe.group() != null) {
@@ -439,6 +443,7 @@ public class BukkitRecipeManager implements RecipeManager<ItemStack> {
         if (hasCustomItemInTag) {
             callback.accept(() -> {
                 try {
+                    unregisterRecipe(key);
                     Reflections.method$CraftRecipe$addToCraftingManager.invoke(Reflections.method$CraftShapedRecipe$fromBukkitRecipe.invoke(null, shapedRecipe));
                     injectShapedRecipe(id, ceRecipe);
                 } catch (Exception e) {
@@ -447,7 +452,7 @@ public class BukkitRecipeManager implements RecipeManager<ItemStack> {
             });
             this.injectedDataPackRecipes.add(key);
         }
-        this.addVanillaInternalRecipe(Key.of("internal", id.value()), ceRecipe);
+        this.addVanillaInternalRecipe(id, ceRecipe);
     }
 
     private List<Material> tagToMaterials(Key tag) {

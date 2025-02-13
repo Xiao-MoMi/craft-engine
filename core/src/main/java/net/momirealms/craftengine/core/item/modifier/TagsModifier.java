@@ -9,10 +9,10 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 
 public class TagsModifier<I> implements ItemModifier<I> {
-    private final Map<String, Object> parameters;
+    private final Map<String, Object> arguments;
 
-    public TagsModifier(Map<String, Object> parameters) {
-        this.parameters = mapToMap(parameters);
+    public TagsModifier(Map<String, Object> arguments) {
+        this.arguments = mapToMap(arguments);
     }
 
     @Override
@@ -22,7 +22,7 @@ public class TagsModifier<I> implements ItemModifier<I> {
 
     @Override
     public void apply(Item<I> item, Player player) {
-        for (Map.Entry<String, Object> entry : parameters.entrySet()) {
+        for (Map.Entry<String, Object> entry : arguments.entrySet()) {
             String key = entry.getKey();
             Object value = entry.getValue();
             item.setTag(value, key);

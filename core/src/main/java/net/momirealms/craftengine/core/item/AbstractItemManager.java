@@ -62,6 +62,10 @@ public abstract class AbstractItemManager<I> extends AbstractModelGenerator impl
             Map<String, Object> data = MiscUtils.castToMap(obj, false);
             return new TagsModifier<>(data);
         }, "tags", "tag", "nbt");
+        registerDataFunction((obj) -> {
+            boolean value = TypeUtils.checkType(obj, Boolean.class);
+            return new UnbreakableModifier<>(value);
+        }, "unbreakable");
         if (VersionHelper.isVersionNewerThan1_20_5()) {
             registerDataFunction((obj) -> {
                 String name = TypeUtils.checkType(obj, String.class);

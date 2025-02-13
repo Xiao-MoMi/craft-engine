@@ -6,30 +6,16 @@ import net.momirealms.craftengine.core.registry.Holder;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
-import java.util.function.Function;
 import java.util.stream.Collectors;
 
 public class BlockStateHolder {
-    private static final Function<Map.Entry<Property<?>, Comparable<?>>, String> PROPERTY_MAP_PRINTER = entry -> {
-        if (entry == null) {
-            return "<NULL>";
-        }
-        Property<?> property = entry.getKey();
-        return property.name() + "=" + formatValue(property, entry.getValue());
-    };
-
-    @SuppressWarnings("unchecked")
-    private static <T extends Comparable<T>> String formatValue(Property<T> property, Comparable<?> value) {
-        return property.valueName((T) value);
-    }
-
     protected final Holder<CustomBlock> owner;
     private final Reference2ObjectArrayMap<Property<?>, Comparable<?>> propertyMap;
     private Map<Property<?>, ImmutableBlockState[]> withMap;
 
     public BlockStateHolder(Holder<CustomBlock> owner, Reference2ObjectArrayMap<Property<?>, Comparable<?>> propertyMap) {
         this.owner = owner;
-        this.propertyMap = propertyMap;
+        this.propertyMap = new Reference2ObjectArrayMap<>(propertyMap);
     }
 
     public Holder<CustomBlock> owner() {
@@ -37,113 +23,114 @@ public class BlockStateHolder {
     }
 
     public <T extends Comparable<T>> ImmutableBlockState cycle(Property<T> property) {
-        return this.with(property, getNextValue(property.possibleValues(), this.get(property)));
+        T currentValue = get(property);
+        List<T> values = property.possibleValues();
+        return with(property, getNextValue(values, currentValue));
     }
 
     protected static <T> T getNextValue(List<T> values, T currentValue) {
-        int nextIndex = (values.indexOf(currentValue) + 1) % values.size();
-        return values.get(nextIndex);
+        int index = values.indexOf(currentValue);
+        if (index == -1) {
+            throw new IllegalArgumentException("Current value not found in possible values");
+        }
+        return values.get((index + 1) % values.size());
     }
 
     @Override
     public String toString() {
-        StringBuilder result = new StringBuilder();
-        result.append(this.owner.value().id());
-        if (!this.getEntries().isEmpty()) {
-            result.append('[');
-            result.append(this.getEntries().entrySet().stream()
-                    .map(PROPERTY_MAP_PRINTER)
-                    .collect(Collectors.joining(",")));
-            result.append(']');
+        if (propertyMap.isEmpty()) {
+            return owner.value().id().toString();
         }
-        return result.toString();
+        return owner.value().id() + "[" + getPropertiesAsString() + "]";
     }
 
     public String getPropertiesAsString() {
-        if (!this.getEntries().isEmpty()) {
-            return this.getEntries().entrySet().stream()
-                    .map(PROPERTY_MAP_PRINTER)
-                    .collect(Collectors.joining(","));
-        }
-        return "";
+        return propertyMap.entrySet().stream()
+                .map(entry -> {
+                    Property<?> property = entry.getKey();
+                    return property.name() + "=" + formatValue(property, entry.getValue());
+                })
+                .collect(Collectors.joining(","));
+    }
+
+    @SuppressWarnings("unchecked")
+    private static <T extends Comparable<T>> String formatValue(Property<T> property, Comparable<?> value) {
+        return property.valueName((T) value);
     }
 
     public Collection<Property<?>> getProperties() {
-        return Collections.unmodifiableCollection(this.propertyMap.keySet());
+        return Collections.unmodifiableSet(propertyMap.keySet());
     }
 
     public <T extends Comparable<T>> boolean contains(Property<T> property) {
-        return this.propertyMap.containsKey(property);
+        return propertyMap.containsKey(property);
     }
 
     public <T extends Comparable<T>> T get(Property<T> property) {
-        Comparable<?> value = this.propertyMap.get(property);
+        T value = getNullable(property);
         if (value == null) {
-            throw new IllegalArgumentException("Cannot get property " + property + " as it does not exist in " + this.owner);
+            throw new IllegalArgumentException("Property " + property + " not found in " + owner.value().id());
         }
-        return property.valueClass().cast(value);
-    }
-
-    public <T extends Comparable<T>> Optional<T> getOrEmpty(Property<T> property) {
-        return Optional.ofNullable(this.getNullable(property));
+        return value;
     }
 
     public <T extends Comparable<T>> T get(Property<T> property, T fallback) {
-        return Objects.requireNonNullElse(this.getNullable(property), fallback);
+        return Objects.requireNonNullElse(getNullable(property), fallback);
     }
 
     @Nullable
     public <T extends Comparable<T>> T getNullable(Property<T> property) {
-        Comparable<?> value = this.propertyMap.get(property);
-        return value == null ? null : property.valueClass().cast(value);
+        Comparable<?> value = propertyMap.get(property);
+        return value != null ? property.valueClass().cast(value) : null;
     }
 
     public <T extends Comparable<T>, V extends T> ImmutableBlockState with(Property<T> property, V value) {
-        Comparable<?> currentValue = this.propertyMap.get(property);
-        if (currentValue == null) {
-            throw new IllegalArgumentException("Cannot set property " + property + " as it does not exist in " + this.owner);
+        if (!propertyMap.containsKey(property)) {
+            throw new IllegalArgumentException("Property " + property + " not found in " + owner.value().id());
         }
-        return this.withInternal(property, value, currentValue);
+        return withInternal(property, value);
     }
 
-    public <T extends Comparable<T>, V extends T> ImmutableBlockState withIfExists(Property<T> property, V value) {
-        Comparable<?> currentValue = this.propertyMap.get(property);
-        return currentValue == null ? ((ImmutableBlockState) this) : this.withInternal(property, value, currentValue);
-    }
-
-    private <T extends Comparable<T>, V extends T> ImmutableBlockState withInternal(Property<T> property, V newValue, Comparable<?> currentValue) {
-        if (currentValue.equals(newValue)) {
+    private <T extends Comparable<T>, V extends T> ImmutableBlockState withInternal(Property<T> property, V newValue) {
+        if (newValue.equals(propertyMap.get(property))) {
             return (ImmutableBlockState) this;
         }
-        int valueIndex = property.indexOf(newValue);
-        if (valueIndex < 0) {
-            throw new IllegalArgumentException("Cannot set property " + property + " to " + newValue + " on " + this.owner + ", it is not an allowed value");
+
+        int index = property.indexOf(newValue);
+        if (index == -1) {
+            throw new IllegalArgumentException("Invalid value " + newValue + " for property " + property);
         }
-        return (this.withMap.get(property))[valueIndex];
+
+        return withMap.get(property)[index];
     }
 
     public void createWithMap(Map<Map<Property<?>, Comparable<?>>, ImmutableBlockState> states) {
-        if (this.withMap != null) {
-            throw new IllegalStateException("withMap is already initialized.");
+        if (withMap != null) {
+            throw new IllegalStateException("WithMap already initialized");
         }
-        Map<Property<?>, ImmutableBlockState[]> map = new Reference2ObjectArrayMap<>(this.propertyMap.size());
-        for (Map.Entry<Property<?>, Comparable<?>> entry : this.propertyMap.entrySet()) {
-            Property<?> property = entry.getKey();
-            ImmutableBlockState[] possibleStates = property.possibleValues().stream()
-                    .map(value -> states.get(this.createPropertyMap(property, value)))
+
+        Reference2ObjectArrayMap<Property<?>, ImmutableBlockState[]> map = new Reference2ObjectArrayMap<>(propertyMap.size());
+
+        for (Property<?> property : propertyMap.keySet()) {
+            ImmutableBlockState[] statesArray = property.possibleValues().stream()
+                    .map(value -> {
+                        Map<Property<?>, Comparable<?>> testMap = new Reference2ObjectArrayMap<>(propertyMap);
+                        testMap.put(property, value);
+                        ImmutableBlockState state = states.get(testMap);
+                        if (state == null) {
+                            throw new IllegalStateException("Missing state for " + testMap);
+                        }
+                        return state;
+                    })
                     .toArray(ImmutableBlockState[]::new);
-            map.put(property, possibleStates);
+
+            map.put(property, statesArray);
         }
-        this.withMap = map;
+
+        this.withMap = Map.copyOf(map);
     }
 
-    private Map<Property<?>, Comparable<?>> createPropertyMap(Property<?> property, Comparable<?> value) {
-        Map<Property<?>, Comparable<?>> newMap = new Reference2ObjectArrayMap<>(this.propertyMap);
-        newMap.put(property, value);
-        return newMap;
-    }
-
-    public Map<Property<?>, Comparable<?>> getEntries() {
-        return this.propertyMap;
+    public Map<Property<?>, Comparable<?>> propertyEntries() {
+        return Collections.unmodifiableMap(propertyMap);
     }
 }

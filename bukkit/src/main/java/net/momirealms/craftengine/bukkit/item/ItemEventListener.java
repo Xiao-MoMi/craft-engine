@@ -66,7 +66,7 @@ public class ItemEventListener implements Listener {
         CustomBlockInteractEvent interactEvent = new CustomBlockInteractEvent(
                 event.getPlayer(),
                 block.getLocation(),
-                Objects.requireNonNull(event.getInteractionPoint()),
+                event.getInteractionPoint(),
                 BukkitBlockManager.instance().getImmutableBlockStateUnsafe(stateId),
                 hand,
                 action == Action.RIGHT_CLICK_BLOCK ? CustomBlockInteractEvent.Action.RIGHT_CLICK : CustomBlockInteractEvent.Action.LEFT_CLICK
@@ -117,7 +117,7 @@ public class ItemEventListener implements Listener {
             InteractionResult result = item.behavior().useOnBlock(new UseOnContext(player, hand, hitResult));
             int maxY = player.level().worldHeight().getMaxBuildHeight() - 1;
             if (direction == Direction.UP
-                    && !result.consumesAction()
+                    && result != InteractionResult.SUCCESS
                     && pos.y() >= maxY
                     && item.behavior() instanceof BlockItemBehavior
             ) {

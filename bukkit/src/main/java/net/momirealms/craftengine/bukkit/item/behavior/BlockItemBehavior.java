@@ -86,9 +86,7 @@ public class BlockItemBehavior extends ItemBehavior {
         // TODO Make place event cancellable. Needs to get the previous block state from #0
         // TODO Add Bukkit block argument
         CustomBlockPlaceEvent placeEvent = new CustomBlockPlaceEvent((org.bukkit.entity.Player) player.platformPlayer(), placeLocation, blockStateToPlace);
-        if (EventUtils.fireAndCheckCancel(placeEvent)) {
-            return InteractionResult.FAIL;
-        }
+        EventUtils.fireAndForget(placeEvent);
 
         if (!player.isCreativeMode()) {
             Item<?> item = placeContext.getItem();

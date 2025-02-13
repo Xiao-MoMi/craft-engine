@@ -9,6 +9,7 @@ import org.bukkit.event.Cancellable;
 import org.bukkit.event.HandlerList;
 import org.bukkit.event.player.PlayerEvent;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public class CustomBlockInteractEvent extends PlayerEvent implements Cancellable {
     private static final HandlerList HANDLER_LIST = new HandlerList();
@@ -22,7 +23,7 @@ public class CustomBlockInteractEvent extends PlayerEvent implements Cancellable
 
     public CustomBlockInteractEvent(@NotNull Player player,
                                     @NotNull Location location,
-                                    @NotNull Location interactionPoint,
+                                    @Nullable Location interactionPoint,
                                     @NotNull ImmutableBlockState state,
                                     @NotNull InteractionHand hand,
                                     @NotNull Action action) {
@@ -35,7 +36,7 @@ public class CustomBlockInteractEvent extends PlayerEvent implements Cancellable
         this.action = action;
     }
 
-    @NotNull
+    @Nullable
     public Location interactionPoint() {
         return interactionPoint;
     }

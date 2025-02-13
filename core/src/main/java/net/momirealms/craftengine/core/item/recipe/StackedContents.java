@@ -266,9 +266,7 @@ public class StackedContents<T> {
 
         private int getConnectionIndex(int itemIndex, int ingredientIndex) {
             assert itemIndex >= 0 && itemIndex < this.itemCount;
-
             assert ingredientIndex >= 0 && ingredientIndex < this.ingredientCount;
-
             return this.connectionOffset() + itemIndex * this.ingredientCount + ingredientIndex;
         }
 
@@ -278,25 +276,19 @@ public class StackedContents<T> {
 
         private void assign(int itemIndex, int ingredientIndex) {
             int i = this.getResidualIndex(itemIndex, ingredientIndex);
-
             assert !this.data.get(i);
-
             this.data.set(i);
         }
 
         private void unassign(int itemIndex, int ingredientIndex) {
             int i = this.getResidualIndex(itemIndex, ingredientIndex);
-
             assert this.data.get(i);
-
             this.data.clear(i);
         }
 
         private int getResidualIndex(int itemIndex, int ingredientIndex) {
             assert itemIndex >= 0 && itemIndex < this.itemCount;
-
             assert ingredientIndex >= 0 && ingredientIndex < this.ingredientCount;
-
             return this.residualOffset() + itemIndex * this.ingredientCount + ingredientIndex;
         }
 
@@ -310,7 +302,6 @@ public class StackedContents<T> {
 
         private int getVisitedIngredientIndex(int index) {
             assert index >= 0 && index < this.ingredientCount;
-
             return this.visitedIngredientOffset() + index;
         }
 

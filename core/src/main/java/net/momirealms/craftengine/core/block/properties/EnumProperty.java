@@ -83,13 +83,13 @@ public class EnumProperty<T extends Enum<T>> extends Property<T> {
     }
 
     @Override
-    public String valueName(T enum_) {
-        return enum_.name().toLowerCase(Locale.ENGLISH);
+    public String valueName(T value) {
+        return value.name().toLowerCase(Locale.ENGLISH);
     }
 
     @Override
-    public int indexOf(T enum_) {
-        return this.ordinalToIndex[enum_.ordinal()];
+    public int indexOf(T value) {
+        return this.ordinalToIndex[value.ordinal()];
     }
 
     @Override

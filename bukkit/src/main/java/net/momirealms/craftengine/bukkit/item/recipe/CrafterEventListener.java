@@ -46,8 +46,10 @@ public class CrafterEventListener implements Listener {
         ItemStack[] ingredients = inventory.getStorageContents();
 
         Key recipeId = Key.of(recipe.getKey().namespace(), recipe.getKey().value());
+        boolean isCustom = this.recipeManager.isCustomRecipe(recipeId);
+
         // if the recipe is a vanilla one, custom items should never be ingredients
-        if (this.recipeManager.isDataPackRecipe(recipeId)) {
+        if (this.recipeManager.isDataPackRecipe(recipeId) && !isCustom) {
             if (hasCustomItem(ingredients)) {
                 event.setCancelled(true);
             }
@@ -55,7 +57,7 @@ public class CrafterEventListener implements Listener {
         }
 
         // Maybe it's recipe from other plugins, then we ignore it
-        if (!this.recipeManager.isCustomRecipe(recipeId)) {
+        if (!isCustom) {
             return;
         }
 

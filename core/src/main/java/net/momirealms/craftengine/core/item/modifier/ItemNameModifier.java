@@ -7,11 +7,12 @@ import net.momirealms.craftengine.core.plugin.minimessage.PlaceholderTag;
 import net.momirealms.craftengine.core.util.AdventureHelper;
 
 public class ItemNameModifier<I> implements ItemModifier<I> {
-    private final String parameter;
+    private final String argument;
 
-    public ItemNameModifier(String parameter) {
-        this.parameter = parameter;
+    public ItemNameModifier(String argument) {
+        this.argument = argument;
     }
+
     @Override
     public String name() {
         return "item-name";
@@ -20,6 +21,6 @@ public class ItemNameModifier<I> implements ItemModifier<I> {
     @Override
     public void apply(Item<I> item, Player player) {
         item.itemName(AdventureHelper.componentToJson(AdventureHelper.miniMessage().deserialize(
-                parameter, ImageTag.instance(), new PlaceholderTag(player))));
+                argument, ImageTag.instance(), new PlaceholderTag(player))));
     }
 }

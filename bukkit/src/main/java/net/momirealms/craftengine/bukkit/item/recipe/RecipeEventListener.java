@@ -52,8 +52,10 @@ public class RecipeEventListener implements Listener {
         CraftingInventory inventory = event.getInventory();
         ItemStack[] ingredients = inventory.getMatrix();
 
-        // if the recipe is a vanilla one, custom items should never be ingredients
-        if (this.recipeManager.isDataPackRecipe(recipeId)) {
+        boolean isCustom = this.recipeManager.isCustomRecipe(recipeId);
+
+        // if the recipe is a vanilla one but not injected, custom items should never be ingredients
+        if (this.recipeManager.isDataPackRecipe(recipeId) && !isCustom) {
             if (hasCustomItem(ingredients)) {
                 inventory.setResult(null);
             }
@@ -61,7 +63,7 @@ public class RecipeEventListener implements Listener {
         }
 
         // Maybe it's recipe from other plugins, then we ignore it
-        if (!this.recipeManager.isCustomRecipe(recipeId)) {
+        if (!isCustom) {
             return;
         }
 

@@ -6,21 +6,20 @@ import net.momirealms.craftengine.core.plugin.minimessage.ImageTag;
 import net.momirealms.craftengine.core.plugin.minimessage.PlaceholderTag;
 import net.momirealms.craftengine.core.util.AdventureHelper;
 
-public class DisplayNameModifier<I> implements ItemModifier<I> {
-    private final String argument;
+public class UnbreakableModifier<I> implements ItemModifier<I> {
+    private final boolean argument;
 
-    public DisplayNameModifier(String argument) {
+    public UnbreakableModifier(boolean argument) {
         this.argument = argument;
     }
 
     @Override
     public String name() {
-        return "display-name";
+        return "unbreakable";
     }
 
     @Override
     public void apply(Item<I> item, Player player) {
-        item.displayName(AdventureHelper.componentToJson(AdventureHelper.miniMessage().deserialize(
-                argument, ImageTag.instance(), new PlaceholderTag(player))));
+        item.unbreakable(argument);
     }
 }

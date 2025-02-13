@@ -14,6 +14,7 @@ import java.util.Map;
 public class Properties {
     public static final Key BOOLEAN = Key.of("craftengine:boolean");
     public static final Key INT = Key.of("craftengine:int");
+    public static final Key STRING = Key.of("craftengine:string");
     public static final Key AXIS = Key.of("craftengine:axis");
     public static final Key HORIZONTAL_DIRECTION = Key.of("craftengine:4-direction");
     public static final Key DIRECTION = Key.of("craftengine:6-direction");
@@ -21,6 +22,7 @@ public class Properties {
     static {
         register(BOOLEAN, BooleanProperty.FACTORY);
         register(INT, IntegerProperty.FACTORY);
+        register(STRING, StringProperty.FACTORY);
         register(AXIS, new EnumProperty.Factory<>(Direction.Axis.class));
         register(DIRECTION, new EnumProperty.Factory<>(Direction.class));
         register(HORIZONTAL_DIRECTION, new EnumProperty.Factory<>(HorizontalDirection.class));

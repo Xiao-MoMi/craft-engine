@@ -4007,22 +4007,19 @@ public class Reflections {
             )
     );
 
-    public static final Class<?> clazz$PlacementInfo = requireNonNull(
+    public static final Class<?> clazz$PlacementInfo =
             ReflectionUtils.getClazz(
                     BukkitReflectionUtils.assembleMCClass("world.item.crafting.PlacementInfo")
-            )
-    );
+            );
 
     // 1.21.2+
-    public static final Field field$ShapelessRecipe$placementInfo =
-            ReflectionUtils.getDeclaredField(
-                    clazz$ShapelessRecipe, clazz$PlacementInfo, 0
-            );
+    public static final Field field$ShapelessRecipe$placementInfo = Optional.ofNullable(clazz$PlacementInfo)
+            .map(it -> ReflectionUtils.getDeclaredField(clazz$ShapelessRecipe, it, 0))
+            .orElse(null);
 
-    public static final Field field$ShapedRecipe$placementInfo =
-            ReflectionUtils.getDeclaredField(
-                    clazz$ShapedRecipe, clazz$PlacementInfo, 0
-            );
+    public static final Field field$ShapedRecipe$placementInfo = Optional.ofNullable(clazz$PlacementInfo)
+            .map(it -> ReflectionUtils.getDeclaredField(clazz$ShapedRecipe, it, 0))
+            .orElse(null);
 
     public static final Field field$ShapelessRecipe$ingredients =
             Optional.ofNullable(ReflectionUtils.getDeclaredField(clazz$ShapelessRecipe, List.class, 0))

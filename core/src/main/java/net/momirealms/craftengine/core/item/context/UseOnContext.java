@@ -65,11 +65,11 @@ public class UseOnContext {
     }
 
     public Direction getHorizontalDirection() {
-        return this.player == null ? Direction.NORTH : this.player.getDirection();
+        return this.player.getDirection();
     }
 
     public boolean isSecondaryUseActive() {
-        return this.player != null && this.player.isSecondaryUseActive();
+        return this.player.isSecondaryUseActive();
     }
 
     public float getRotation() {

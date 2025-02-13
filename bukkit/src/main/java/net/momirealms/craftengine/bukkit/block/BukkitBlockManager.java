@@ -505,10 +505,9 @@ public class BukkitBlockManager extends AbstractBlockManager {
                     throw new BlockStateArrangeException("Invalid block state: " + blockState);
                 });
                 List<Integer> arranger = this.blockAppearanceArranger.get(block);
-                PreConditions.isNull(arranger == null, () -> {
+                if (arranger == null) {
                     throw new BlockStateArrangeException("No freed block state is available for block " + block);
-                });
-                assert arranger != null;
+                }
                 if (id >= arranger.size()) {
                     throw new BlockStateArrangeException(blockState + " is not a valid block state because " + id + " is outside of the range (0~" + (arranger.size() - 1) + ")");
                 }
