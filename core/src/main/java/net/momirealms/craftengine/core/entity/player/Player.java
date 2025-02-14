@@ -5,11 +5,13 @@ import net.momirealms.craftengine.core.entity.Entity;
 import net.momirealms.craftengine.core.item.Item;
 import net.momirealms.craftengine.core.plugin.network.NetWorkUser;
 import net.momirealms.craftengine.core.world.BlockPos;
+import org.jetbrains.annotations.Nullable;
 
 public abstract class Player extends Entity implements NetWorkUser {
 
     public abstract boolean isSecondaryUseActive();
 
+    @Nullable
     public abstract Item<?> getItemInHand(InteractionHand hand);
 
     @Override

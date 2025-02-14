@@ -41,7 +41,7 @@ public class TrimMaterialSelectProperty implements SelectProperty, LegacyModelPr
         if (s.contains("helmet") || s.contains("chestplate") || s.contains("leggings") || s.contains("boots")) {
             return "trim";
         }
-        throw new IllegalArgumentException("Unsupported material " + material);
+        return null;
     }
 
     @Override

@@ -11,6 +11,7 @@ import net.momirealms.craftengine.core.item.modifier.ItemModifier;
 import net.momirealms.craftengine.core.util.Key;
 import org.bukkit.Material;
 import org.bukkit.inventory.ItemStack;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -70,7 +71,7 @@ public class BukkitCustomItem implements CustomItem<ItemStack> {
     }
 
     @Override
-    public ItemBehavior behavior() {
+    public @NotNull ItemBehavior behavior() {
         return this.behavior;
     }
 

@@ -11,4 +11,10 @@ public class ItemKeys {
     public static final Key FISHING_ROD = Key.of("minecraft:fishing_rod");
     public static final Key ELYTRA = Key.of("minecraft:elytra");
     public static final Key GOAT_HORN = Key.of("minecraft:goat_horn");
+    public static final Key WOODEN_AXE = Key.of("minecraft:wooden_axe");
+    public static final Key STONE_AXE = Key.of("minecraft:stone_axe");
+    public static final Key IRON_AXE = Key.of("minecraft:iron_axe");
+    public static final Key GOLDEN_AXE = Key.of("minecraft:golden_axe");
+    public static final Key DIAMOND_AXE = Key.of("minecraft:diamond_axe");
+    public static final Key NETHERITE_AXE = Key.of("minecraft:netherite_axe");
 }

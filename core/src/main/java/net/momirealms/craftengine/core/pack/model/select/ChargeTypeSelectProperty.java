@@ -23,7 +23,7 @@ public class ChargeTypeSelectProperty implements SelectProperty, LegacyModelPred
     @Override
     public String legacyPredicateId(Key material) {
         if (material.equals(ItemKeys.CROSSBOW)) return "firework";
-        throw new IllegalArgumentException("Unsupported material: " + material);
+        return null;
     }
 
     @Override

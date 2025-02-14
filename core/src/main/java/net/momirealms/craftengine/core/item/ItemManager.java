@@ -1,6 +1,7 @@
 package net.momirealms.craftengine.core.item;
 
 import net.momirealms.craftengine.core.entity.player.Player;
+import net.momirealms.craftengine.core.item.behavior.ItemBehavior;
 import net.momirealms.craftengine.core.pack.LegacyOverridesModel;
 import net.momirealms.craftengine.core.pack.LoadingSequence;
 import net.momirealms.craftengine.core.pack.generator.ModelGenerator;
@@ -41,6 +42,8 @@ public interface ItemManager<T> extends Reloadable, ModelGenerator, ConfigSectio
     Key customItemId(T itemStack);
 
     Optional<CustomItem<T>> getCustomItem(Key key);
+
+    Optional<List<ItemBehavior>> getItemBehavior(Key key);
 
     Optional<? extends BuildableItem<T>> getVanillaItem(Key key);
 

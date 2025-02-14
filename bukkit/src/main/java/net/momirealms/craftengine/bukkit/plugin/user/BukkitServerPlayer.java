@@ -28,6 +28,7 @@ import org.bukkit.inventory.EquipmentSlot;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.PlayerInventory;
 import org.bukkit.util.RayTraceResult;
+import org.jetbrains.annotations.Nullable;
 
 import java.lang.ref.Reference;
 import java.lang.ref.WeakReference;
@@ -360,7 +361,7 @@ public class BukkitServerPlayer extends Player {
                     if (canInstabuild() && (itemMaterial == Material.DEBUG_STICK
                             || itemMaterial == Material.TRIDENT
                             || (VersionHelper.isVersionNewerThan1_20_5() && itemMaterial == MaterialUtils.MACE)
-                            || item.is(Key.of("minecraft:swords")))) {
+                            || item.is(ItemTags.SWORDS))) {
                         return;
                     }
                 }
@@ -482,6 +483,7 @@ public class BukkitServerPlayer extends Player {
         return DirectionUtils.toDirection(platformPlayer().getFacing());
     }
 
+    @Nullable
     @Override
     public Item<ItemStack> getItemInHand(InteractionHand hand) {
         PlayerInventory inventory = platformPlayer().getInventory();

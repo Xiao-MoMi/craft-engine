@@ -4,6 +4,7 @@ import net.momirealms.craftengine.core.entity.player.Player;
 import net.momirealms.craftengine.core.item.behavior.ItemBehavior;
 import net.momirealms.craftengine.core.item.modifier.ItemModifier;
 import net.momirealms.craftengine.core.util.Key;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
@@ -23,6 +24,7 @@ public interface CustomItem<I> extends BuildableItem<I> {
 
     Item<I> buildItem(Player player);
 
+    @NotNull
     ItemBehavior behavior();
 
     interface Builder<I> {

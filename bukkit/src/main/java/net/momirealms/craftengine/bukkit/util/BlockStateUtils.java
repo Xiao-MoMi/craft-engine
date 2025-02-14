@@ -8,6 +8,7 @@ import org.bukkit.block.Block;
 import org.bukkit.block.data.BlockData;
 import org.bukkit.event.block.BlockPhysicsEvent;
 
+import java.lang.reflect.InvocationTargetException;
 import java.util.IdentityHashMap;
 
 public class BlockStateUtils {
@@ -23,6 +24,14 @@ public class BlockStateUtils {
         hasInit = true;
     }
 
+    public static BlockData createBlockData(Object blockState) {
+        try {
+            return (BlockData) Reflections.method$CraftBlockData$createData.invoke(null, blockState);
+        } catch (InvocationTargetException | IllegalAccessException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
     public static int blockDataToId(BlockData blockData) {
         try {
             Object blockState = Reflections.field$CraftBlockData$data.get(blockData);
@@ -32,13 +41,13 @@ public class BlockStateUtils {
         }
     }
 
-    public static Key getRealBlockId(Block block) {
+    public static Key getBlockOwnerId(Block block) {
         BlockData data = block.getBlockData();
         Object blockState = blockDataToBlockState(data);
-        return getRealBlockIdFromState(blockState);
+        return getBlockOwnerIdFromState(blockState);
     }
 
-    public static Key getRealBlockIdFromState(Object blockState) {
+    public static Key getBlockOwnerIdFromState(Object blockState) {
         String id = blockState.toString();
         int first = id.indexOf('{');
         int last = id.indexOf('}');

@@ -1,5 +1,6 @@
 package net.momirealms.craftengine.core.item;
 
+import net.momirealms.craftengine.core.item.behavior.ItemBehavior;
 import net.momirealms.craftengine.core.util.Key;
 
 import java.util.List;
@@ -40,6 +41,21 @@ public class AbstractItem<W extends ItemWrapper<I>, I> implements Item<I> {
     @Override
     public Optional<CustomItem<I>> getCustomItem() {
         return ((ItemManager<I>) factory.plugin.itemManager()).getCustomItem(id());
+    }
+
+    @Override
+    public Optional<List<ItemBehavior>> getItemBehavior() {
+        return factory.plugin.itemManager().getItemBehavior(id());
+    }
+
+    @Override
+    public boolean isCustomItem() {
+        return factory.plugin.itemManager().getCustomItem(id()).isPresent();
+    }
+
+    @Override
+    public boolean isBlockItem() {
+        return factory.isBlockItem(item);
     }
 
     @Override

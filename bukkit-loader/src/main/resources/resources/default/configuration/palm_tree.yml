@@ -54,7 +54,7 @@ blocks:
     loot:
       template: loot_table:normal
       arguments:
-        item: default:palm_log
+        item: default:stripped_palm_log
     settings:
       template: block_settings:log
       overrides:
@@ -107,7 +107,7 @@ blocks:
     loot:
       template: loot_table:normal
       arguments:
-        item: default:palm_wood
+        item: default:stripped_palm_wood
     settings:
       template: block_settings:log
       overrides:

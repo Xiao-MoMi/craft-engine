@@ -1,5 +1,6 @@
 package net.momirealms.craftengine.core.item;
 
+import net.momirealms.craftengine.core.item.behavior.ItemBehavior;
 import net.momirealms.craftengine.core.util.Key;
 
 import java.util.List;
@@ -15,6 +16,12 @@ import java.util.Optional;
 public interface Item<I> {
 
     Optional<CustomItem<I>> getCustomItem();
+
+    Optional<List<ItemBehavior>> getItemBehavior();
+
+    boolean isCustomItem();
+
+    boolean isBlockItem();
 
     Key id();
 

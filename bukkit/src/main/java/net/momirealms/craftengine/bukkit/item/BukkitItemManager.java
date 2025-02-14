@@ -1,15 +1,14 @@
 package net.momirealms.craftengine.bukkit.item;
 
+import net.momirealms.craftengine.bukkit.item.behavior.AxeItemBehavior;
 import net.momirealms.craftengine.bukkit.item.factory.BukkitItemFactory;
 import net.momirealms.craftengine.bukkit.plugin.BukkitCraftEngine;
 import net.momirealms.craftengine.bukkit.util.ItemUtils;
 import net.momirealms.craftengine.bukkit.util.MaterialUtils;
 import net.momirealms.craftengine.bukkit.util.Reflections;
 import net.momirealms.craftengine.core.entity.player.Player;
-import net.momirealms.craftengine.core.item.AbstractItemManager;
-import net.momirealms.craftengine.core.item.BuildableItem;
-import net.momirealms.craftengine.core.item.CustomItem;
-import net.momirealms.craftengine.core.item.Item;
+import net.momirealms.craftengine.core.item.*;
+import net.momirealms.craftengine.core.item.behavior.ItemBehavior;
 import net.momirealms.craftengine.core.item.behavior.ItemBehaviors;
 import net.momirealms.craftengine.core.item.modifier.CustomModelDataModifier;
 import net.momirealms.craftengine.core.item.modifier.IdModifier;
@@ -38,12 +37,25 @@ import java.nio.file.Path;
 import java.util.*;
 
 public class BukkitItemManager extends AbstractItemManager<ItemStack> {
+    private static final Map<Key, ItemBehavior> VANILLA_ITEM_EXTRA_BEHAVIORS = new HashMap<>();
+
+    static {
+        registerVanillaItemExtraBehavior(AxeItemBehavior.INSTANCE, ItemKeys.WOODEN_AXE, ItemKeys.STONE_AXE, ItemKeys.IRON_AXE, ItemKeys.GOLDEN_AXE, ItemKeys.DIAMOND_AXE, ItemKeys.NETHERITE_AXE);
+    }
+
+    private static void registerVanillaItemExtraBehavior(ItemBehavior behavior, Key... items) {
+        for (Key key : items) {
+            VANILLA_ITEM_EXTRA_BEHAVIORS.put(key, behavior);
+        }
+    }
+
     private static BukkitItemManager instance;
     private final BukkitItemFactory factory;
     private final Map<Key, TreeSet<LegacyOverridesModel>> legacyOverrides;
     private final Map<Key, TreeMap<Integer, ItemModel>> modernOverrides;
     private final BukkitCraftEngine plugin;
     private final ItemEventListener itemEventListener;
+    private final DebugStickListener debugStickListener;
     private final Map<Key, List<Holder<Key>>> vanillaItemTags;
     private final Map<Key, List<Holder<Key>>> customItemTags;
     private final Map<Key, Map<Integer, Key>> cmdConflictChecker;
@@ -58,6 +70,7 @@ public class BukkitItemManager extends AbstractItemManager<ItemStack> {
         this.customItemTags = new HashMap<>();
         this.cmdConflictChecker = new HashMap<>();
         this.itemEventListener = new ItemEventListener(plugin);
+        this.debugStickListener = new DebugStickListener(plugin);
         this.registerAllVanillaItems();
         instance = this;
     }
@@ -103,6 +116,7 @@ public class BukkitItemManager extends AbstractItemManager<ItemStack> {
     public void load() {
         super.load();
         Bukkit.getPluginManager().registerEvents(this.itemEventListener, plugin.bootstrap());
+        Bukkit.getPluginManager().registerEvents(this.debugStickListener, plugin.bootstrap());
     }
 
     @Override
@@ -112,6 +126,7 @@ public class BukkitItemManager extends AbstractItemManager<ItemStack> {
         this.modernOverrides.clear();
         this.customItemTags.clear();
         HandlerList.unregisterAll(this.itemEventListener);
+        HandlerList.unregisterAll(this.debugStickListener);
         this.cmdConflictChecker.clear();
     }
 
@@ -169,6 +184,28 @@ public class BukkitItemManager extends AbstractItemManager<ItemStack> {
         Item<ItemStack> wrapped = wrap(itemStack);
         if (!wrapped.hasTag("craftengine:id")) return null;
         return wrapped.id();
+    }
+
+    @Override
+    public Optional<List<ItemBehavior>> getItemBehavior(Key key) {
+        Optional<CustomItem<ItemStack>> customItemOptional = getCustomItem(key);
+        if (customItemOptional.isPresent()) {
+            CustomItem<ItemStack> customItem = customItemOptional.get();
+            Key vanillaMaterial = customItem.material();
+            ItemBehavior behavior = VANILLA_ITEM_EXTRA_BEHAVIORS.get(vanillaMaterial);
+            if (behavior != null) {
+                return Optional.of(List.of(behavior, customItem.behavior()));
+            } else {
+                return Optional.of(List.of(customItem.behavior()));
+            }
+        } else {
+            ItemBehavior behavior = VANILLA_ITEM_EXTRA_BEHAVIORS.get(key);
+            if (behavior != null) {
+                return Optional.of(List.of(behavior));
+            } else {
+                return Optional.empty();
+            }
+        }
     }
 
     @Override
@@ -359,6 +396,20 @@ public class BukkitItemManager extends AbstractItemManager<ItemStack> {
                         customModelData
                 );
             }
+            if (model.fallBack() != null) {
+                Map<String, Object> merged = mergePredicates(
+                        parentPredicates,
+                        predicateId,
+                        predicate.toLegacyValue(0f)
+                );
+                processModelRecursively(
+                        model.fallBack(),
+                        merged,
+                        resultList,
+                        materialId,
+                        customModelData
+                );
+            }
         }
     }
 
@@ -380,6 +431,14 @@ public class BukkitItemManager extends AbstractItemManager<ItemStack> {
                             predicateId,
                             predicate.toLegacyValue(caseValue)
                     );
+                    // Additional check for crossbow
+                    if (materialId.equals(ItemKeys.CROSSBOW)) {
+                        merged = mergePredicates(
+                                merged,
+                                "charged",
+                                1
+                        );
+                    }
                     processModelRecursively(
                             entry.getValue(),
                             merged,
@@ -388,6 +447,21 @@ public class BukkitItemManager extends AbstractItemManager<ItemStack> {
                             customModelData
                     );
                 }
+            }
+            // Additional check for crossbow
+            if (model.fallBack() != null && materialId.equals(ItemKeys.CROSSBOW)) {
+                Map<String, Object> merged = mergePredicates(
+                        parentPredicates,
+                        "charged",
+                        0
+                );
+                processModelRecursively(
+                        model.fallBack(),
+                        merged,
+                        resultList,
+                        materialId,
+                        customModelData
+                );
             }
         }
     }
@@ -398,6 +472,7 @@ public class BukkitItemManager extends AbstractItemManager<ItemStack> {
             Number newValue
     ) {
         Map<String, Object> merged = new LinkedHashMap<>(existing);
+        if (newKey == null) return merged;
         merged.put(newKey, newValue);
         return merged;
     }

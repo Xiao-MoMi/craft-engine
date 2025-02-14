@@ -97,7 +97,7 @@ public class ImmutableBlockState extends BlockStateHolder {
         this.vanillaBlockState = vanillaBlockState;
     }
 
-    private CompoundTag propertiesNbt() {
+    public CompoundTag propertiesNbt() {
         CompoundTag properties = new CompoundTag();
         for (Property<?> property : getProperties()) {
             Comparable<?> value = get(property);

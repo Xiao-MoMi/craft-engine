@@ -102,4 +102,6 @@ public abstract class ItemFactory<P extends Plugin, W extends ItemWrapper<I>, I>
     protected abstract void maxStackSize(ItemWrapper<I> item, Integer maxStackSize);
 
     protected abstract boolean is(ItemWrapper<I> item, Key itemTag);
+
+    protected abstract boolean isBlockItem(ItemWrapper<I> item);
 }

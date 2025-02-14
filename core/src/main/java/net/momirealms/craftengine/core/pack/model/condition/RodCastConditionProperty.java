@@ -23,7 +23,7 @@ public class RodCastConditionProperty implements ConditionProperty, LegacyModelP
     @Override
     public String legacyPredicateId(Key material) {
         if (material.equals(ItemKeys.FISHING_ROD)) return "cast";
-        throw new IllegalArgumentException("Unsupported material: " + material);
+        return null;
     }
 
     @Override

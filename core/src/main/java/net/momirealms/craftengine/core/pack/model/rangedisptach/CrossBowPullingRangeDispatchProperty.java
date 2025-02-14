@@ -23,7 +23,7 @@ public class CrossBowPullingRangeDispatchProperty implements RangeDispatchProper
     @Override
     public String legacyPredicateId(Key material) {
         if (material.equals(ItemKeys.CROSSBOW) || material.equals(ItemKeys.BOW)) return "pull";
-        throw new IllegalArgumentException("Unsupported material: " + material);
+        return null;
     }
 
     @Override

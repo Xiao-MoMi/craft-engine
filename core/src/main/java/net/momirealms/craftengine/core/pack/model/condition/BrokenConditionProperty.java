@@ -23,7 +23,7 @@ public class BrokenConditionProperty implements ConditionProperty, LegacyModelPr
     @Override
     public String legacyPredicateId(Key material) {
         if (material.equals(ItemKeys.ELYTRA)) return "broken";
-        throw new IllegalArgumentException("Unsupported material: " + material);
+        return null;
     }
 
     @Override

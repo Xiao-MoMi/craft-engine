@@ -51,6 +51,11 @@ public abstract class BukkitItemFactory extends ItemFactory<CraftEngine, RTagIte
     }
 
     @Override
+    protected boolean isBlockItem(ItemWrapper<ItemStack> item) {
+        return item.getItem().getType().isBlock();
+    }
+
+    @Override
     protected Key vanillaId(ItemWrapper<ItemStack> item) {
         return Key.of(item.getItem().getType().getKey().asString());
     }

@@ -40,6 +40,7 @@ public class RangeDispatchItemModel implements ItemModel {
         return scale;
     }
 
+    @Nullable
     public ItemModel fallBack() {
         return fallBack;
     }

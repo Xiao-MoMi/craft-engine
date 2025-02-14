@@ -26,7 +26,7 @@ public class UsingItemConditionProperty implements ConditionProperty, LegacyMode
         if (material.equals(ItemKeys.TRIDENT)) return "throwing";
         if (material.equals(ItemKeys.CROSSBOW) || material.equals(ItemKeys.BOW)) return "pulling";
         if (material.equals(ItemKeys.GOAT_HORN)) return "tooting";
-        throw new IllegalArgumentException("Unsupported material: " + material);
+        return null;
     }
 
     @Override

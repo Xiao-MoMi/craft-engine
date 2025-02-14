@@ -2689,6 +2689,42 @@ public class Reflections {
         }
     }
 
+    public static final Class<?> clazz$EquipmentSlot = requireNonNull(
+            ReflectionUtils.getClazz(
+                    BukkitReflectionUtils.assembleMCClass("world.entity.EquipmentSlot"),
+                    BukkitReflectionUtils.assembleMCClass("world.entity.EnumItemSlot")
+            )
+    );
+
+    public static final Method method$EquipmentSlot$values = requireNonNull(
+            ReflectionUtils.getStaticMethod(
+                    clazz$EquipmentSlot, clazz$EquipmentSlot.arrayType()
+            )
+    );
+
+    public static final Object instance$EquipmentSlot$MAINHAND;
+    public static final Object instance$EquipmentSlot$OFFHAND;
+    public static final Object instance$EquipmentSlot$FEET;
+    public static final Object instance$EquipmentSlot$LEGS;
+    public static final Object instance$EquipmentSlot$CHEST;
+    public static final Object instance$EquipmentSlot$HEAD;
+//    public static final Object instance$EquipmentSlot$BODY;
+
+    static {
+        try {
+            Object[] values = (Object[]) method$EquipmentSlot$values.invoke(null);
+            instance$EquipmentSlot$MAINHAND = values[0];
+            instance$EquipmentSlot$OFFHAND = values[1];
+            instance$EquipmentSlot$FEET = values[2];
+            instance$EquipmentSlot$LEGS = values[3];
+            instance$EquipmentSlot$CHEST = values[4];
+            instance$EquipmentSlot$HEAD = values[5];
+//            instance$EquipmentSlot$BODY = values[6];
+        } catch (ReflectiveOperationException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
     public static final Method method$Block$defaultBlockState = requireNonNull(
             ReflectionUtils.getMethod(
                     clazz$Block, clazz$BlockState
@@ -4124,4 +4160,17 @@ public class Reflections {
                     clazz$CraftInventoryCrafting, clazz$Container, 0
             )
     );
+
+    public static final Class<?> clazz$LivingEntity = requireNonNull(
+            ReflectionUtils.getClazz(
+                    BukkitReflectionUtils.assembleMCClass("world.entity.LivingEntity"),
+                    BukkitReflectionUtils.assembleMCClass("world.entity.EntityLiving")
+            )
+    );
+
+    // 1.20.5+
+    public static final Method method$ItemStack$hurtAndBreak =
+            ReflectionUtils.getMethod(
+                    clazz$ItemStack, void.class, int.class, clazz$LivingEntity, clazz$EquipmentSlot
+            );
 }
