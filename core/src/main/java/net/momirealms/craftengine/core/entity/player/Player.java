@@ -42,6 +42,8 @@ public abstract class Player extends Entity implements NetWorkUser {
 
     public abstract boolean isSpectatorMode();
 
+    public abstract boolean isAdventureMode();
+
     public abstract void sendActionBar(Component text);
 
     public abstract boolean updateLastSuccessfulInteractionTick(int tick);

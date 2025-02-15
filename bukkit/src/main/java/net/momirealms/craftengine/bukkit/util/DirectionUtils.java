@@ -18,4 +18,15 @@ public class DirectionUtils {
             default -> throw new IllegalStateException("Unexpected value: " + face);
         };
     }
+
+    public static BlockFace toBlockFace(Direction direction) {
+        return switch (direction) {
+            case UP -> BlockFace.UP;
+            case DOWN -> BlockFace.DOWN;
+            case NORTH -> BlockFace.NORTH;
+            case SOUTH -> BlockFace.SOUTH;
+            case WEST -> BlockFace.WEST;
+            case EAST -> BlockFace.EAST;
+        };
+    }
 }

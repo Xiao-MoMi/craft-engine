@@ -125,6 +125,11 @@ public class BukkitServerPlayer extends Player {
     }
 
     @Override
+    public boolean isAdventureMode() {
+        return platformPlayer().getGameMode() == GameMode.ADVENTURE;
+    }
+
+    @Override
     public void sendActionBar(Component text) {
         try {
             Object packet = Reflections.constructor$ClientboundSetActionBarTextPacket.newInstance(ComponentUtils.adventureToMinecraft(text));

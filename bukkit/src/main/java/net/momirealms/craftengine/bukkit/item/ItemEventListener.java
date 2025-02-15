@@ -120,8 +120,18 @@ public class ItemEventListener implements Listener {
                 return;
             }
 
+            // TODO We need to further investigate how to handle adventure mode
+            // no spectator interactions
+            if (player.isSpectatorMode() || player.isAdventureMode()) {
+                return;
+            }
+
             for (ItemBehavior itemBehavior : optionalItemBehaviors.get()) {
                 InteractionResult result = itemBehavior.useOnBlock(new UseOnContext(player, hand, hitResult));
+                if (result == InteractionResult.SUCCESS_AND_CANCEL) {
+                    event.setCancelled(true);
+                    return;
+                }
                 int maxY = player.level().worldHeight().getMaxBuildHeight() - 1;
                 if (direction == Direction.UP
                         && result != InteractionResult.SUCCESS
@@ -129,6 +139,7 @@ public class ItemEventListener implements Listener {
                         && itemBehavior instanceof BlockItemBehavior
                 ) {
                     player.sendActionBar(Component.translatable("build.tooHigh").arguments(Component.text(maxY)).color(NamedTextColor.RED));
+                    return;
                 }
                 if (result != InteractionResult.PASS) {
                     return;

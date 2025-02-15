@@ -1,9 +1,11 @@
 package net.momirealms.craftengine.bukkit.util;
 
+import net.momirealms.craftengine.core.block.ImmutableBlockState;
 import net.momirealms.craftengine.core.block.PushReaction;
 import net.momirealms.craftengine.core.util.Instrument;
 import net.momirealms.craftengine.core.util.Key;
 import net.momirealms.craftengine.core.util.MapColor;
+import net.momirealms.craftengine.core.world.BlockPos;
 import org.bukkit.block.Block;
 import org.bukkit.block.data.BlockData;
 import org.bukkit.event.block.BlockPhysicsEvent;
@@ -22,6 +24,14 @@ public class BlockStateUtils {
         }
         vanillaStateSize = size;
         hasInit = true;
+    }
+
+    public static Object createBlockUpdatePacket(BlockPos pos, ImmutableBlockState state) {
+        try {
+            return Reflections.constructor$ClientboundBlockUpdatePacket.newInstance(LocationUtils.toBlockPos(pos), state.customBlockState().handle());
+        } catch (ReflectiveOperationException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     public static BlockData createBlockData(Object blockState) {
