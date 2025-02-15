@@ -176,9 +176,13 @@ blocks:
         stage=0:
           appearance: "default"
           id: 0
+          settings:
+            is-randomly-ticking: true
         stage=1:
           appearance: "default"
           id: 1
+          settings:
+            is-randomly-ticking: true
 
 items:
   default:palm_log:
