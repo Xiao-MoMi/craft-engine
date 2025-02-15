@@ -4341,6 +4341,18 @@ public class Reflections {
             )
     );
 
+    public static final Class<?> clazz$CraftStonecuttingRecipe = requireNonNull(
+            ReflectionUtils.getClazz(
+                    BukkitReflectionUtils.assembleCBClass("inventory.CraftStonecuttingRecipe")
+            )
+    );
+
+    public static final Method method$CraftStonecuttingRecipe$fromBukkitRecipe = requireNonNull(
+            ReflectionUtils.getStaticMethod(
+                    clazz$CraftStonecuttingRecipe, clazz$CraftStonecuttingRecipe, StonecuttingRecipe.class
+            )
+    );
+
     public static final Field field$AbstractFurnaceBlockEntity$recipeType = requireNonNull(
             ReflectionUtils.getDeclaredField(
                     clazz$AbstractFurnaceBlockEntity, clazz$RecipeType, 0

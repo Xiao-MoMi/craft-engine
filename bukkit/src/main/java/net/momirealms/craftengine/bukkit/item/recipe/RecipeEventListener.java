@@ -12,7 +12,7 @@ import net.momirealms.craftengine.core.item.recipe.CustomCampfireRecipe;
 import net.momirealms.craftengine.core.item.recipe.OptimizedIDItem;
 import net.momirealms.craftengine.core.item.recipe.Recipe;
 import net.momirealms.craftengine.core.item.recipe.RecipeTypes;
-import net.momirealms.craftengine.core.item.recipe.input.CookingInput;
+import net.momirealms.craftengine.core.item.recipe.input.SingleItemInput;
 import net.momirealms.craftengine.core.item.recipe.input.CraftingInput;
 import net.momirealms.craftengine.core.registry.BuiltInRegistries;
 import net.momirealms.craftengine.core.registry.Holder;
@@ -64,7 +64,7 @@ public class RecipeEventListener implements Listener {
                     Optional<Holder.Reference<Key>> idHolder = BuiltInRegistries.OPTIMIZED_ITEM_ID.get(wrappedItem.id());
                     if (idHolder.isEmpty()) return;
 
-                    CookingInput<ItemStack> input = new CookingInput<>(new OptimizedIDItem<>(idHolder.get(), item));
+                    SingleItemInput<ItemStack> input = new SingleItemInput<>(new OptimizedIDItem<>(idHolder.get(), item));
                     Key recipeType;
                     if (furnaceInventory.getType() == InventoryType.FURNACE) {
                         recipeType = RecipeTypes.SMELTING;
@@ -344,7 +344,7 @@ public class RecipeEventListener implements Listener {
             if (idHolder.isEmpty()) {
                 return;
             }
-            CookingInput<ItemStack> input = new CookingInput<>(new OptimizedIDItem<>(idHolder.get(), itemStack));
+            SingleItemInput<ItemStack> input = new SingleItemInput<>(new OptimizedIDItem<>(idHolder.get(), itemStack));
             CustomCampfireRecipe<ItemStack> ceRecipe = (CustomCampfireRecipe<ItemStack>) this.recipeManager.getRecipe(RecipeTypes.CAMPFIRE_COOKING, input);
             if (ceRecipe == null) {
                 event.setCancelled(true);
@@ -374,7 +374,7 @@ public class RecipeEventListener implements Listener {
             return;
         }
 
-        CookingInput<ItemStack> input = new CookingInput<>(new OptimizedIDItem<>(idHolder.get(), itemStack));
+        SingleItemInput<ItemStack> input = new SingleItemInput<>(new OptimizedIDItem<>(idHolder.get(), itemStack));
         CustomCampfireRecipe<ItemStack> ceRecipe = (CustomCampfireRecipe<ItemStack>) this.recipeManager.getRecipe(RecipeTypes.CAMPFIRE_COOKING, input);
         if (ceRecipe == null) {
             event.setTotalCookTime(Integer.MAX_VALUE);
@@ -406,7 +406,7 @@ public class RecipeEventListener implements Listener {
             return;
         }
 
-        CookingInput<ItemStack> input = new CookingInput<>(new OptimizedIDItem<>(idHolder.get(), itemStack));
+        SingleItemInput<ItemStack> input = new SingleItemInput<>(new OptimizedIDItem<>(idHolder.get(), itemStack));
         CustomCampfireRecipe<ItemStack> ceRecipe = (CustomCampfireRecipe<ItemStack>) this.recipeManager.getRecipe(RecipeTypes.CAMPFIRE_COOKING, input);
         if (ceRecipe == null) {
             event.setCancelled(true);

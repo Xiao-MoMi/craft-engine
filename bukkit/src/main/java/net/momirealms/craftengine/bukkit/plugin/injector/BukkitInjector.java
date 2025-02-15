@@ -25,7 +25,7 @@ import net.momirealms.craftengine.core.block.StatePredicate;
 import net.momirealms.craftengine.core.item.Item;
 import net.momirealms.craftengine.core.item.recipe.OptimizedIDItem;
 import net.momirealms.craftengine.core.item.recipe.RecipeTypes;
-import net.momirealms.craftengine.core.item.recipe.input.CookingInput;
+import net.momirealms.craftengine.core.item.recipe.input.SingleItemInput;
 import net.momirealms.craftengine.core.plugin.CraftEngine;
 import net.momirealms.craftengine.core.plugin.config.ConfigManager;
 import net.momirealms.craftengine.core.registry.BuiltInRegistries;
@@ -351,7 +351,7 @@ public class BukkitInjector {
                     return Optional.empty();
                 }
 
-                CookingInput<ItemStack> input = new CookingInput<>(new OptimizedIDItem<>(idHolder.get(), itemStack));
+                SingleItemInput<ItemStack> input = new SingleItemInput<>(new OptimizedIDItem<>(idHolder.get(), itemStack));
                 net.momirealms.craftengine.core.item.recipe.CookingRecipe<ItemStack> ceRecipe;
                 Key lastCustomRecipe = (Key) field$InjectedCacheChecker$lastCustomRecipe.get(thisObj);
                 if (type == Reflections.instance$RecipeType$SMELTING) {
@@ -418,7 +418,7 @@ public class BukkitInjector {
                     return Optional.empty();
                 }
 
-                CookingInput<ItemStack> input = new CookingInput<>(new OptimizedIDItem<>(idHolder.get(), itemStack));
+                SingleItemInput<ItemStack> input = new SingleItemInput<>(new OptimizedIDItem<>(idHolder.get(), itemStack));
                 net.momirealms.craftengine.core.item.recipe.CookingRecipe<ItemStack> ceRecipe;
                 Key lastCustomRecipe = (Key) field$InjectedCacheChecker$lastCustomRecipe.get(thisObj);
                 if (type == Reflections.instance$RecipeType$SMELTING) {
@@ -477,7 +477,7 @@ public class BukkitInjector {
                     return Optional.empty();
                 }
 
-                CookingInput<ItemStack> input = new CookingInput<>(new OptimizedIDItem<>(idHolder.get(), itemStack));
+                SingleItemInput<ItemStack> input = new SingleItemInput<>(new OptimizedIDItem<>(idHolder.get(), itemStack));
                 net.momirealms.craftengine.core.item.recipe.CookingRecipe<ItemStack> ceRecipe;
                 Key lastCustomRecipe = (Key) field$InjectedCacheChecker$lastCustomRecipe.get(thisObj);
                 if (type == Reflections.instance$RecipeType$SMELTING) {
@@ -537,7 +537,7 @@ public class BukkitInjector {
                     return Optional.empty();
                 }
 
-                CookingInput<ItemStack> input = new CookingInput<>(new OptimizedIDItem<>(idHolder.get(), itemStack));
+                SingleItemInput<ItemStack> input = new SingleItemInput<>(new OptimizedIDItem<>(idHolder.get(), itemStack));
                 net.momirealms.craftengine.core.item.recipe.CookingRecipe<ItemStack> ceRecipe;
                 Key lastCustomRecipe = (Key) field$InjectedCacheChecker$lastCustomRecipe.get(thisObj);
                 if (type == Reflections.instance$RecipeType$SMELTING) {

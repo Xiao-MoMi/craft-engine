@@ -16,6 +16,7 @@ public class RecipeTypes {
     public static final Key BLASTING = Key.of("minecraft:blasting");
     public static final Key SMOKING = Key.of("minecraft:smoking");
     public static final Key CAMPFIRE_COOKING = Key.of("minecraft:campfire_cooking");
+    public static final Key STONE_CUTTING = Key.of("minecraft:stone_cutting");
 
     static {
         register(SHAPED, CustomShapedRecipe.FACTORY);
@@ -24,6 +25,7 @@ public class RecipeTypes {
         register(SMOKING, CustomSmokingRecipe.FACTORY);
         register(BLASTING, CustomBlastingRecipe.FACTORY);
         register(CAMPFIRE_COOKING, CustomCampfireRecipe.FACTORY);
+        register(STONE_CUTTING, CustomStoneCuttingRecipe.FACTORY);
     }
 
     public static <T> void register(Key key, RecipeFactory<T> factory) {

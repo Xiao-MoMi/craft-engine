@@ -179,6 +179,26 @@ public class BukkitRecipeManager implements RecipeManager<ItemStack> {
                 CraftEngine.instance().logger().warn("Failed to convert campfire recipe", e);
             }
         });
+        BUKKIT_RECIPE_REGISTER.put(RecipeTypes.STONE_CUTTING, (key, recipe) -> {
+            CustomStoneCuttingRecipe<ItemStack> ceRecipe = (CustomStoneCuttingRecipe<ItemStack>) recipe;
+            List<ItemStack> itemStacks = new ArrayList<>();
+            for (Holder<Key> item : ceRecipe.ingredient().items()) {
+                itemStacks.add(BukkitItemManager.instance().buildItemStack(item.value(), null));
+            }
+            StonecuttingRecipe stonecuttingRecipe = new StonecuttingRecipe(
+                    key, ceRecipe.getResult(null),
+                    new RecipeChoice.ExactChoice(itemStacks)
+            );
+            if (ceRecipe.group() != null) {
+                stonecuttingRecipe.setGroup(Objects.requireNonNull(ceRecipe.group()));
+            }
+            try {
+                Object craftRecipe = Reflections.method$CraftStonecuttingRecipe$fromBukkitRecipe.invoke(null, stonecuttingRecipe);
+                Reflections.method$CraftRecipe$addToCraftingManager.invoke(craftRecipe);
+            } catch (Exception e) {
+                CraftEngine.instance().logger().warn("Failed to convert stone cutting recipe", e);
+            }
+        });
     }
 
     private final BukkitCraftEngine plugin;

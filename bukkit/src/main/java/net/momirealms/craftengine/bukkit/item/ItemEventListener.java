@@ -102,19 +102,25 @@ public class ItemEventListener implements Listener {
 
         // has custom item behavior
         if (optionalItemBehaviors.isPresent()) {
+            BlockPos pos = LocationUtils.toBlockPos(clickedBlock.getLocation());
+            Vec3d vec3d = new Vec3d(interactionPoint.getX(), interactionPoint.getY(), interactionPoint.getZ());
+            Direction direction = DirectionUtils.toDirection(event.getBlockFace());
+            BlockHitResult hitResult = new BlockHitResult(vec3d, direction, pos, false);
+            boolean interactable = InteractUtils.isInteractable(BlockStateUtils.getBlockOwnerId(clickedBlock), bukkitPlayer, clickedBlock.getBlockData(), hitResult, itemInHand);
+
             // do not allow to place block if it's a vanilla block
             if (itemInHand.isBlockItem() && itemInHand.isCustomItem()) {
-                event.setCancelled(true);
-            }
-            for (ItemBehavior itemBehavior : optionalItemBehaviors.get()) {
-                BlockPos pos = LocationUtils.toBlockPos(clickedBlock.getLocation());
-                Vec3d vec3d = new Vec3d(interactionPoint.getX(), interactionPoint.getY(), interactionPoint.getZ());
-                Direction direction = DirectionUtils.toDirection(event.getBlockFace());
-                BlockHitResult hitResult = new BlockHitResult(vec3d, direction, pos, false);
-                if (!player.isSecondaryUseActive()) {
-                    // if it's interactable on server, cancel the behaviors
-                    if (InteractUtils.isInteractable(BlockStateUtils.getBlockOwnerId(clickedBlock), bukkitPlayer, clickedBlock.getBlockData(), hitResult, itemInHand)) return;
+                if (!interactable || player.isSecondaryUseActive()) {
+                    event.setCancelled(true);
                 }
+            }
+
+            if (!player.isSecondaryUseActive() && interactable) {
+                // if it's interactable on server, cancel the custom behaviors
+                return;
+            }
+
+            for (ItemBehavior itemBehavior : optionalItemBehaviors.get()) {
                 InteractionResult result = itemBehavior.useOnBlock(new UseOnContext(player, hand, hitResult));
                 int maxY = player.level().worldHeight().getMaxBuildHeight() - 1;
                 if (direction == Direction.UP
