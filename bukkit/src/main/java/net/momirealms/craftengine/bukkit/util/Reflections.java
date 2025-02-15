@@ -4431,4 +4431,89 @@ public class Reflections {
                     clazz$SimpleContainer, clazz$NonNullList, 0
             )
     );
+
+    public static final Method method$LevelReader$getMaxLocalRawBrightness = requireNonNull(
+            ReflectionUtils.getMethod(
+                    clazz$LevelReader, Integer.class, clazz$BlockPos
+            )
+    );
+
+    public static final Method method$BlockPos$above = requireNonNull(
+            ReflectionUtils.getMethod(
+                    clazz$BlockPos, clazz$BlockPos, new String[] {"above", "c"}
+            )
+    );
+
+    public static final Method method$RandomSource$nextFloat = requireNonNull(
+            ReflectionUtils.getMethod(
+                    clazz$RandomSource, Float.class
+            )
+    );
+
+    public static final Field field$Level$spigotConfig = requireNonNull(
+            ReflectionUtils.getDeclaredField(
+                    clazz$Level, new String[] {"spigotConfig"}
+            )
+    );
+
+    public static final Class<?> clazz$SpigotWorldConfig = requireNonNull(
+            ReflectionUtils.getClazz(
+                    "org.spigotmc.SpigotWorldConfig"
+            )
+    );
+
+    public static final Field field$SpigotWorldConfig$saplingModifier = requireNonNull(
+            ReflectionUtils.getDeclaredField(
+                    clazz$SpigotWorldConfig, new String[] {"saplingModifier"}
+            )
+    );
+
+    public static final Method method$StateHolder$cycle = requireNonNull(
+            ReflectionUtils.getMethod(
+                    clazz$StateHolder, Object.class, new String[] {"cycle", "a"}
+            )
+    );
+
+    public static final Field field$Level$captureTreeGeneration = requireNonNull(
+            ReflectionUtils.getDeclaredField(
+                    clazz$Level, new String[] {"captureTreeGeneration"}
+            )
+    );
+
+    public static final Field field$Level$capturedBlockStates = requireNonNull(
+            ReflectionUtils.getDeclaredField(
+                    clazz$Level, new String[] {"capturedBlockStates"}
+            )
+    );
+
+    public static final Class<?> clazz$TreeGrower = requireNonNull(
+            ReflectionUtils.getClazz(
+                    BukkitReflectionUtils.assembleMCClass("world.level.block.grower.TreeGrower"),
+                    BukkitReflectionUtils.assembleMCClass("world.level.block.grower.WorldGenTreeProvider")
+            )
+    );
+
+    public static final Class<?> clazz$ChunkGenerator = requireNonNull(
+            ReflectionUtils.getClazz(
+                    BukkitReflectionUtils.assembleMCClass("world.level.chunk.ChunkGenerator")
+            )
+    );
+
+    public static final Method method$TreeGrower$growTree = requireNonNull(
+            ReflectionUtils.getMethod(
+                    clazz$TreeGrower, Boolean.class, clazz$ServerLevel, clazz$ChunkGenerator, clazz$BlockPos, clazz$BlockState, clazz$RandomSource
+            )
+    );
+
+    public static final Method method$ServerLevel$getChunkSource = requireNonNull(
+            ReflectionUtils.getMethod(
+                    clazz$ServerLevel, clazz$ServerChunkCache, new String[] {"getChunkSource", "k"}
+            )
+    );
+
+    public static final Method method$ServerChunkCache$getGenerator = requireNonNull(
+            ReflectionUtils.getMethod(
+                    clazz$ServerChunkCache, clazz$ChunkGenerator, new String[] {"getGenerator", "g"}
+            )
+    );
 }

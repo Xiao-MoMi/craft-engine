@@ -157,15 +157,28 @@ blocks:
       template: loot_table:normal
       arguments:
         item: default:palm_sapling
-    state:
-      id: 0
-      state: oak_sapling:0
-      model:
-        path: "minecraft:block/custom/palm_sapling"
-        generation:
-          parent: "minecraft:block/cross"
-          textures:
-            "cross": "minecraft:block/custom/palm_sapling"
+    states:
+      properties:
+        stage:
+          type: int
+          default-value: 0
+          range: 0~1
+      appearances:
+        default:
+          state: oak_sapling:0
+          model:
+            path: "minecraft:block/custom/palm_sapling"
+            generation:
+              parent: "minecraft:block/cross"
+              textures:
+                "cross": "minecraft:block/custom/palm_sapling"
+      variants:
+        stage=0:
+          appearance: "default"
+          id: 0
+        stage=1:
+          appearance: "default"
+          id: 1
 
 items:
   default:palm_log:
