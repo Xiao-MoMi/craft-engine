@@ -9,6 +9,7 @@ import net.momirealms.craftengine.core.block.properties.Property;
 import net.momirealms.craftengine.core.util.Key;
 import net.momirealms.craftengine.core.util.MiscUtils;
 import net.momirealms.craftengine.shared.block.BlockBehavior;
+import org.bukkit.Bukkit;
 
 import java.util.List;
 import java.util.Map;
@@ -65,12 +66,21 @@ public class SaplingBlockBehavior extends BushBlockBehavior {
     public static class Factory implements BlockBehaviorFactory {
         @Override
         public BlockBehavior create(CustomBlock block, Map<String, Object> arguments) {
-            Property<Integer> stageProperty = (Property<Integer>) block.getProperty("stage");
-            if (stageProperty == null) {
-                throw new NullPointerException("stage property not set for block " + block.id());
+            if (arguments.containsKey("tags")) {
+                Property<Integer> stageProperty = (Property<Integer>) block.getProperty("stage");
+                if (stageProperty == null) {
+                    throw new NullPointerException("stage property not set for block " + block.id());
+                }
+                List<Object> tagsCanSurviveOn = MiscUtils.getAsStringList(arguments.get("tags")).stream().map(it -> BlockTags.getOrCreate(Key.of(it))).toList();
+                try {
+                    Object ACACIA = Reflections.field$TreeGrower$ACACIA.get(null);
+                    return new SaplingBlockBehavior(ACACIA, tagsCanSurviveOn, stageProperty);
+                } catch (Exception e) {
+                    throw new RuntimeException(e);
+                }
+            } else {
+                return INSTANCE;
             }
-            List<Object> tagsCanSurviveOn = MiscUtils.getAsStringList(arguments.get("tags")).stream().map(it -> BlockTags.getOrCreate(Key.of(it))).toList();
-            return new SaplingBlockBehavior(null, tagsCanSurviveOn, stageProperty);
         }
     }
 }

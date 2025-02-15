@@ -4433,8 +4433,8 @@ public class Reflections {
     );
 
     public static final Method method$LevelReader$getMaxLocalRawBrightness = requireNonNull(
-            ReflectionUtils.getMethod(
-                    clazz$LevelReader, Integer.class, clazz$BlockPos
+            ReflectionUtils.getDeclaredMethod(
+                    clazz$LevelReader, int.class, clazz$BlockPos
             )
     );
 
@@ -4446,7 +4446,7 @@ public class Reflections {
 
     public static final Method method$RandomSource$nextFloat = requireNonNull(
             ReflectionUtils.getMethod(
-                    clazz$RandomSource, Float.class
+                    clazz$RandomSource, float.class
             )
     );
 
@@ -4469,8 +4469,8 @@ public class Reflections {
     );
 
     public static final Method method$StateHolder$cycle = requireNonNull(
-            ReflectionUtils.getMethod(
-                    clazz$StateHolder, Object.class, new String[] {"cycle", "a"}
+            ReflectionUtils.getDeclaredMethod(
+                    clazz$StateHolder, Object.class, new String[] {"cycle", "a"}, clazz$Property
             )
     );
 
@@ -4501,7 +4501,7 @@ public class Reflections {
 
     public static final Method method$TreeGrower$growTree = requireNonNull(
             ReflectionUtils.getMethod(
-                    clazz$TreeGrower, Boolean.class, clazz$ServerLevel, clazz$ChunkGenerator, clazz$BlockPos, clazz$BlockState, clazz$RandomSource
+                    clazz$TreeGrower, boolean.class, clazz$ServerLevel, clazz$ChunkGenerator, clazz$BlockPos, clazz$BlockState, clazz$RandomSource
             )
     );
 
@@ -4514,6 +4514,12 @@ public class Reflections {
     public static final Method method$ServerChunkCache$getGenerator = requireNonNull(
             ReflectionUtils.getMethod(
                     clazz$ServerChunkCache, clazz$ChunkGenerator, new String[] {"getGenerator", "g"}
+            )
+    );
+
+    public static final Field field$TreeGrower$ACACIA = requireNonNull(
+            ReflectionUtils.getDeclaredField(
+                    clazz$TreeGrower, clazz$TreeGrower, 6
             )
     );
 }
