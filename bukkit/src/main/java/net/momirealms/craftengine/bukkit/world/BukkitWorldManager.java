@@ -273,7 +273,7 @@ public class BukkitWorldManager implements WorldManager, Listener {
                     @SuppressWarnings("unchecked")
                     Map<Object, Object> blockEntities = (Map<Object, Object>) Reflections.field$ChunkAccess$blockEntities.get(levelChunk);
                     for (Object blockEntity : blockEntities.values()) {
-                        BukkitInjector.injectFurnaceBlockEntity(blockEntity);
+                        BukkitInjector.injectCookingBlockEntity(blockEntity);
                     }
                 }
             } catch (ReflectiveOperationException e) {

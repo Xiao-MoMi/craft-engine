@@ -1,4 +1,4 @@
-package net.momirealms.craftengine.bukkit.legacy.listener;
+package net.momirealms.craftengine.bukkit.entity.furniture;
 
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.Player;

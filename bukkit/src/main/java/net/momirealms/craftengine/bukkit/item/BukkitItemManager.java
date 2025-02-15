@@ -113,6 +113,18 @@ public class BukkitItemManager extends AbstractItemManager<ItemStack> {
     }
 
     @Override
+    public int fuelTime(ItemStack itemStack) {
+        if (ItemUtils.isEmpty(itemStack)) return 0;
+        Optional<CustomItem<ItemStack>> customItem = wrap(itemStack).getCustomItem();
+        return customItem.map(it -> it.settings().fuelTime()).orElse(0);
+    }
+
+    @Override
+    public int fuelTime(Key id) {
+        return getCustomItem(id).map(it -> it.settings().fuelTime()).orElse(0);
+    }
+
+    @Override
     public void load() {
         super.load();
         Bukkit.getPluginManager().registerEvents(this.itemEventListener, plugin.bootstrap());
@@ -255,6 +267,12 @@ public class BukkitItemManager extends AbstractItemManager<ItemStack> {
                 }, () -> plugin.logger().warn(path, dataEntry.getKey() + " is not a valid data type"));
             }
         }
+
+        if (section.containsKey("settings")) {
+            Map<String, Object> settings = MiscUtils.castToMap(section.get("settings"), false);
+            itemBuilder.settings(ItemSettings.fromMap(settings));
+        }
+
         this.customItems.put(id, itemBuilder.build());
 
         List<String> tags = MiscUtils.getAsStringList(section.get("tags"));

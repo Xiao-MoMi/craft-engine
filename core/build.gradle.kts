@@ -1,5 +1,5 @@
 plugins {
-    id("io.github.goooler.shadow") version "8.1.8"
+    id("com.gradleup.shadow") version "9.0.0-beta6"
     id("maven-publish")
 }
 
@@ -55,6 +55,7 @@ java {
     toolchain {
         languageVersion = JavaLanguageVersion.of(21)
     }
+    withSourcesJar()
 }
 
 tasks.withType<JavaCompile> {
@@ -66,21 +67,44 @@ tasks.withType<JavaCompile> {
 tasks {
     shadowJar {
         archiveClassifier = ""
-        archiveFileName = "craft-engine-${rootProject.properties["project_version"]}.jar"
+        archiveFileName = "craft-engine-core-${rootProject.properties["project_version"]}.jar"
         relocate("net.kyori", "net.momirealms.craftengine.libraries")
         relocate("dev.dejvokep", "net.momirealms.craftengine.libraries")
         relocate("com.saicone.rtag", "net.momirealms.craftengine.libraries.rtag")
         relocate("org.yaml.snakeyaml", "net.momirealms.craftengine.libraries.snakeyaml")
+        relocate("net.kyori", "net.momirealms.craftengine.libraries")
+        relocate("net.momirealms.sparrow.nbt", "net.momirealms.craftengine.libraries.nbt")
     }
 }
 
 publishing {
+    repositories {
+        maven {
+            url = uri("https://repo.momirealms.net/releases")
+            credentials(PasswordCredentials::class) {
+                username = System.getenv("REPO_USERNAME")
+                password = System.getenv("REPO_PASSWORD")
+            }
+        }
+    }
     publications {
         create<MavenPublication>("mavenJava") {
             groupId = "net.momirealms"
-            artifactId = "craft-engine"
-            version = rootProject.version.toString()
-            artifact(tasks.shadowJar)
+            artifactId = "craft-engine-core"
+            version = rootProject.properties["project_version"].toString()
+            artifact(tasks["sourcesJar"])
+            from(components["shadow"])
+            pom {
+                name = "CraftEngine API"
+                url = "https://github.com/Xiao-MoMi/craft-engine"
+                licenses {
+                    license {
+                        name = "GNU General Public License v3.0"
+                        url = "https://www.gnu.org/licenses/gpl-3.0.html"
+                        distribution = "repo"
+                    }
+                }
+            }
         }
     }
 }

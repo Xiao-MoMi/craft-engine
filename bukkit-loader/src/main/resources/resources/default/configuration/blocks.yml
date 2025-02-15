@@ -31,6 +31,7 @@ blocks:
       instrument: HARP
       luminance: 15
       map-color: 36
+      item: default:chinese_lantern
       sounds:
         break: minecraft:block.wood.break
         step: minecraft:block.wood.step

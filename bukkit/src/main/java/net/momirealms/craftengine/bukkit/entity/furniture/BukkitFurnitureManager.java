@@ -5,7 +5,6 @@ import com.destroystokyo.paper.event.entity.EntityRemoveFromWorldEvent;
 import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
 import it.unimi.dsi.fastutil.ints.IntSet;
 import net.momirealms.craftengine.bukkit.item.behavior.FurnitureItemBehavior;
-import net.momirealms.craftengine.bukkit.legacy.listener.DismountListener1_20;
 import net.momirealms.craftengine.bukkit.plugin.BukkitCraftEngine;
 import net.momirealms.craftengine.core.entity.furniture.AnchorType;
 import net.momirealms.craftengine.core.entity.furniture.FurnitureManager;

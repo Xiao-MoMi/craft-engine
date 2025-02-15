@@ -8,6 +8,8 @@ import net.momirealms.craftengine.core.item.ItemWrapper;
 import net.momirealms.craftengine.core.plugin.CraftEngine;
 import net.momirealms.craftengine.core.util.Key;
 import net.momirealms.craftengine.core.util.SkullUtils;
+import org.bukkit.NamespacedKey;
+import org.bukkit.Registry;
 import org.bukkit.inventory.ItemFlag;
 import org.bukkit.inventory.ItemStack;
 
@@ -186,17 +188,12 @@ public class UniversalItemFactory extends BukkitItemFactory {
         }
     }
 
+    @SuppressWarnings("deprecation")
     @Override
     protected Optional<Enchantment> getEnchantment(ItemWrapper<ItemStack> item, Key key) {
-        Object enchantments = item.getExact("Enchantments");
-        if (enchantments != null) {
-            for (Object enchant : TagList.getValue(enchantments)) {
-                if (TagBase.getValue(TagCompound.get(enchant, "id")).equals(enchant.toString())) {
-                    return Optional.of(new Enchantment(key, (int) TagBase.getValue(TagCompound.get(enchant, "lvl"))));
-                }
-            }
-        }
-        return Optional.empty();
+        int level = item.getItem().getEnchantmentLevel(Objects.requireNonNull(Registry.ENCHANTMENT.get(new NamespacedKey(key.namespace(), key.value()))));
+        if (level <= 0) return Optional.empty();
+        return Optional.of(new Enchantment(key, level));
     }
 
     @Override

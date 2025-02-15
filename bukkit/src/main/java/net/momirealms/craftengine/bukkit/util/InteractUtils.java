@@ -1,8 +1,15 @@
 package net.momirealms.craftengine.bukkit.util;
 
+import net.momirealms.craftengine.bukkit.item.recipe.BukkitRecipeManager;
 import net.momirealms.craftengine.core.block.BlockKeys;
 import net.momirealms.craftengine.core.item.Item;
+import net.momirealms.craftengine.core.item.recipe.OptimizedIDItem;
+import net.momirealms.craftengine.core.item.recipe.RecipeTypes;
+import net.momirealms.craftengine.core.item.recipe.input.CookingInput;
 import net.momirealms.craftengine.core.plugin.CraftEngine;
+import net.momirealms.craftengine.core.plugin.config.ConfigManager;
+import net.momirealms.craftengine.core.registry.BuiltInRegistries;
+import net.momirealms.craftengine.core.registry.Holder;
 import net.momirealms.craftengine.core.util.Direction;
 import net.momirealms.craftengine.core.util.Key;
 import net.momirealms.craftengine.core.util.QuadFunction;
@@ -15,6 +22,7 @@ import org.bukkit.inventory.ItemStack;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Optional;
 
 public class InteractUtils {
     private static final Map<Key, QuadFunction<Player, Item<ItemStack>, BlockData, BlockHitResult, Boolean>> INTERACTIONS = new HashMap<>();
@@ -67,6 +75,20 @@ public class InteractUtils {
                 }
             }
             return false;
+        });
+        register(BlockKeys.SOUL_CAMPFIRE, (player, item, blockState, result) -> {
+            if (!ConfigManager.enableRecipeSystem()) return false;
+            Optional<Holder.Reference<Key>> optional = BuiltInRegistries.OPTIMIZED_ITEM_ID.get(item.id());
+            return optional.filter(keyReference -> BukkitRecipeManager.instance().getRecipe(RecipeTypes.CAMPFIRE_COOKING, new CookingInput<>(new OptimizedIDItem<>(
+                    keyReference, item.getItem()
+            ))) != null).isPresent();
+        });
+        register(BlockKeys.CAMPFIRE, (player, item, blockState, result) -> {
+            if (!ConfigManager.enableRecipeSystem()) return false;
+            Optional<Holder.Reference<Key>> optional = BuiltInRegistries.OPTIMIZED_ITEM_ID.get(item.id());
+            return optional.filter(keyReference -> BukkitRecipeManager.instance().getRecipe(RecipeTypes.CAMPFIRE_COOKING, new CookingInput<>(new OptimizedIDItem<>(
+                    keyReference, item.getItem()
+            ))) != null).isPresent();
         });
         register(BlockKeys.HOPPER, (player, item, blockState, result) -> true);
         register(BlockKeys.DISPENSER, (player, item, blockState, result) -> true);

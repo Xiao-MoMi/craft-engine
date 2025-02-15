@@ -61,6 +61,10 @@ public interface ItemManager<T> extends Reloadable, ModelGenerator, ConfigSectio
 
     List<Holder<Key>> tagToCustomItems(Key tag);
 
+    int fuelTime(T itemStack);
+
+    int fuelTime(Key id);
+
     default int loadingSequence() {
         return LoadingSequence.ITEM;
     }

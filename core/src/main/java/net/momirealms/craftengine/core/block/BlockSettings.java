@@ -74,6 +74,7 @@ public class BlockSettings {
         newSettings.isRedstoneConductor = settings.isRedstoneConductor;
         newSettings.isSuffocating = settings.isSuffocating;
         newSettings.isViewBlocking = settings.isViewBlocking;
+        newSettings.correctTools = settings.correctTools;
         return newSettings;
     }
 

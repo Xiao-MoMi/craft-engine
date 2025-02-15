@@ -106,7 +106,7 @@ public class PackManagerImpl implements PackManager {
                     }
                     Pack pack = new Pack(path, new PackMeta(author, description, version, namespace));
                     this.loadedPacks.put(path.getFileName().toString(), pack);
-                    this.plugin.logger().info("Loaded pack: " + pack.folder().getFileName());
+                    this.plugin.logger().info("Loaded pack: " + pack.folder().getFileName() + ". Default namespace: " + namespace);
                 }
             }
         } catch (IOException e) {
@@ -234,7 +234,7 @@ public class PackManagerImpl implements PackManager {
                 }
             }
             long t2 = System.nanoTime();
-            this.plugin.logger().info("Loaded config type: " + parser.sectionId() + ". Took " + String.format("%.2f", ((t2 - t1) / 1_000_000.0)) + " ms");
+            this.plugin.logger().info("Loaded " + parser.sectionId() + " in " + String.format("%.2f", ((t2 - t1) / 1_000_000.0)) + " ms");
         }
     }
 

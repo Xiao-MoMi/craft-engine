@@ -1,6 +1,6 @@
-package net.momirealms.craftengine.core.item.recipe;
+package net.momirealms.craftengine.core.item.recipe.input;
 
-import net.momirealms.craftengine.core.item.recipe.input.RecipeInput;
+import net.momirealms.craftengine.core.item.recipe.OptimizedIDItem;
 
 public class CookingInput<T> implements RecipeInput {
     private final OptimizedIDItem<T> input;

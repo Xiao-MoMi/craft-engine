@@ -1,9 +1,10 @@
 plugins {
-    id("io.github.goooler.shadow") version "8.1.8"
+    id("com.gradleup.shadow") version "9.0.0-beta6"
     id("net.minecrell.plugin-yml.bukkit") version "0.6.0"
 }
 
 repositories {
+    maven("https://jitpack.io/")
     maven("https://repo.papermc.io/repository/maven-public/")
     mavenCentral()
 }
@@ -14,6 +15,8 @@ dependencies {
     implementation(project(":bukkit"))
     // Platform
     compileOnly("dev.folia:folia-api:${rootProject.properties["paper_version"]}-R0.1-SNAPSHOT")
+    implementation("net.kyori:adventure-platform-bukkit:${rootProject.properties["adventure_platform_version"]}")
+    implementation("com.saicone.rtag:rtag-item:${rootProject.properties["rtag_version"]}")
 }
 
 java {

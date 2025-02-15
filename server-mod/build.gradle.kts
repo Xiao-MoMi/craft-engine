@@ -1,6 +1,6 @@
 plugins {
     id("java-library")
-    id("io.github.goooler.shadow") version "8.1.8"
+    id("com.gradleup.shadow") version "9.0.0-beta6"
     id("io.papermc.paperweight.userdev") version "2.0.0-beta.14"
 }
 

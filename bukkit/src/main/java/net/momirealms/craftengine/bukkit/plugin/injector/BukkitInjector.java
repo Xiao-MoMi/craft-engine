@@ -23,9 +23,9 @@ import net.momirealms.craftengine.core.block.EmptyBlock;
 import net.momirealms.craftengine.core.block.ImmutableBlockState;
 import net.momirealms.craftengine.core.block.StatePredicate;
 import net.momirealms.craftengine.core.item.Item;
-import net.momirealms.craftengine.core.item.recipe.CookingInput;
 import net.momirealms.craftengine.core.item.recipe.OptimizedIDItem;
 import net.momirealms.craftengine.core.item.recipe.RecipeTypes;
+import net.momirealms.craftengine.core.item.recipe.input.CookingInput;
 import net.momirealms.craftengine.core.plugin.CraftEngine;
 import net.momirealms.craftengine.core.plugin.config.ConfigManager;
 import net.momirealms.craftengine.core.registry.BuiltInRegistries;
@@ -255,14 +255,21 @@ public class BukkitInjector {
         }
     }
 
-    public static void injectFurnaceBlockEntity(Object entity) throws ReflectiveOperationException {
-        if (!Reflections.clazz$AbstractFurnaceBlockEntity.isInstance(entity)) return;
-        Object quickCheck = Reflections.field$AbstractFurnaceBlockEntity$quickCheck.get(entity);
-        if (clazz$InjectedCacheChecker.isInstance(quickCheck)) return; // already injected
-        Object recipeType = Reflections.field$AbstractFurnaceBlockEntity$recipeType.get(entity);
-        Object injectedChecker = Reflections.UNSAFE.allocateInstance(clazz$InjectedCacheChecker);
-        field$InjectedCacheChecker$recipeType.set(injectedChecker, recipeType);
-        Reflections.field$AbstractFurnaceBlockEntity$quickCheck.set(entity, injectedChecker);
+    public static void injectCookingBlockEntity(Object entity) throws ReflectiveOperationException {
+        if (Reflections.clazz$AbstractFurnaceBlockEntity.isInstance(entity)) {
+            Object quickCheck = Reflections.field$AbstractFurnaceBlockEntity$quickCheck.get(entity);
+            if (clazz$InjectedCacheChecker.isInstance(quickCheck)) return; // already injected
+            Object recipeType = Reflections.field$AbstractFurnaceBlockEntity$recipeType.get(entity);
+            Object injectedChecker = Reflections.UNSAFE.allocateInstance(clazz$InjectedCacheChecker);
+            field$InjectedCacheChecker$recipeType.set(injectedChecker, recipeType);
+            Reflections.field$AbstractFurnaceBlockEntity$quickCheck.set(entity, injectedChecker);
+        } else if (!VersionHelper.isVersionNewerThan1_21_2() && Reflections.clazz$CampfireBlockEntity.isInstance(entity)) {
+            Object quickCheck = Reflections.field$CampfireBlockEntity$quickCheck.get(entity);
+            if (clazz$InjectedCacheChecker.isInstance(quickCheck)) return; // already injected
+            Object injectedChecker = Reflections.UNSAFE.allocateInstance(clazz$InjectedCacheChecker);
+            field$InjectedCacheChecker$recipeType.set(injectedChecker, Reflections.instance$RecipeType$CAMPFIRE_COOKING);
+            Reflections.field$CampfireBlockEntity$quickCheck.set(entity, injectedChecker);
+        }
     }
 
     public static Object getOptimizedItemDisplayFactory() {
@@ -321,8 +328,15 @@ public class BukkitInjector {
                 Object resourceLocation = pair.getFirst();
                 Key recipeId = Key.of(resourceLocation.toString());
                 BukkitRecipeManager recipeManager = BukkitRecipeManager.instance();
-                List<Object> items = (List<Object>) Reflections.field$AbstractFurnaceBlockEntity$items.get(args[0]);
-                ItemStack itemStack = (ItemStack) Reflections.method$CraftItemStack$asCraftMirror.invoke(null, items.get(0));
+
+                ItemStack itemStack;
+                List<Object> items;
+                if (type == Reflections.instance$RecipeType$CAMPFIRE_COOKING) {
+                    items = (List<Object>) Reflections.field$SimpleContainer$items.get(args[0]);
+                } else {
+                    items = (List<Object>) Reflections.field$AbstractFurnaceBlockEntity$items.get(args[0]);
+                }
+                itemStack = (ItemStack) Reflections.method$CraftItemStack$asCraftMirror.invoke(null, items.get(0));
 
                 // it's a recipe from other plugins
                 boolean isCustom = recipeManager.isCustomRecipe(recipeId);
@@ -346,7 +360,9 @@ public class BukkitInjector {
                     ceRecipe = (net.momirealms.craftengine.core.item.recipe.CookingRecipe<ItemStack>) recipeManager.getRecipe(RecipeTypes.BLASTING, input, lastCustomRecipe);
                 } else if (type == Reflections.instance$RecipeType$SMOKING) {
                     ceRecipe = (net.momirealms.craftengine.core.item.recipe.CookingRecipe<ItemStack>) recipeManager.getRecipe(RecipeTypes.SMOKING, input, lastCustomRecipe);
-                } else {
+                } else if (type == Reflections.instance$RecipeType$CAMPFIRE_COOKING) {
+                    ceRecipe = (net.momirealms.craftengine.core.item.recipe.CookingRecipe<ItemStack>) recipeManager.getRecipe(RecipeTypes.CAMPFIRE_COOKING, input, lastCustomRecipe);
+                } else  {
                     return Optional.empty();
                 }
                 if (ceRecipe == null) {
@@ -379,8 +395,15 @@ public class BukkitInjector {
                 Object id = Reflections.field$RecipeHolder$id.get(holder);
                 Key recipeId = Key.of(id.toString());
                 BukkitRecipeManager recipeManager = BukkitRecipeManager.instance();
-                List<Object> items = (List<Object>) Reflections.field$AbstractFurnaceBlockEntity$items.get(args[0]);
-                ItemStack itemStack = (ItemStack) Reflections.method$CraftItemStack$asCraftMirror.invoke(null, items.get(0));
+
+                ItemStack itemStack;
+                List<Object> items;
+                if (type == Reflections.instance$RecipeType$CAMPFIRE_COOKING) {
+                    items = (List<Object>) Reflections.field$SimpleContainer$items.get(args[0]);
+                } else {
+                    items = (List<Object>) Reflections.field$AbstractFurnaceBlockEntity$items.get(args[0]);
+                }
+                itemStack = (ItemStack) Reflections.method$CraftItemStack$asCraftMirror.invoke(null, items.get(0));
 
                 // it's a recipe from other plugins
                 boolean isCustom = recipeManager.isCustomRecipe(recipeId);
@@ -404,7 +427,9 @@ public class BukkitInjector {
                     ceRecipe = (net.momirealms.craftengine.core.item.recipe.CookingRecipe<ItemStack>) recipeManager.getRecipe(RecipeTypes.BLASTING, input, lastCustomRecipe);
                 } else if (type == Reflections.instance$RecipeType$SMOKING) {
                     ceRecipe = (net.momirealms.craftengine.core.item.recipe.CookingRecipe<ItemStack>) recipeManager.getRecipe(RecipeTypes.SMOKING, input, lastCustomRecipe);
-                } else {
+                } else if (type == Reflections.instance$RecipeType$CAMPFIRE_COOKING) {
+                    ceRecipe = (net.momirealms.craftengine.core.item.recipe.CookingRecipe<ItemStack>) recipeManager.getRecipe(RecipeTypes.CAMPFIRE_COOKING, input, lastCustomRecipe);
+                } else  {
                     return Optional.empty();
                 }
                 if (ceRecipe == null) {
@@ -461,7 +486,9 @@ public class BukkitInjector {
                     ceRecipe = (net.momirealms.craftengine.core.item.recipe.CookingRecipe<ItemStack>) recipeManager.getRecipe(RecipeTypes.BLASTING, input, lastCustomRecipe);
                 } else if (type == Reflections.instance$RecipeType$SMOKING) {
                     ceRecipe = (net.momirealms.craftengine.core.item.recipe.CookingRecipe<ItemStack>) recipeManager.getRecipe(RecipeTypes.SMOKING, input, lastCustomRecipe);
-                } else {
+                } else if (type == Reflections.instance$RecipeType$CAMPFIRE_COOKING) {
+                    ceRecipe = (net.momirealms.craftengine.core.item.recipe.CookingRecipe<ItemStack>) recipeManager.getRecipe(RecipeTypes.CAMPFIRE_COOKING, input, lastCustomRecipe);
+                } else  {
                     return Optional.empty();
                 }
                 if (ceRecipe == null) {

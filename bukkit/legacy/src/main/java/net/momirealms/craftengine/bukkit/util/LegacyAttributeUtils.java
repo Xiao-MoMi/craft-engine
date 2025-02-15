@@ -1,4 +1,4 @@
-package net.momirealms.craftengine.bukkit.legacy.util;
+package net.momirealms.craftengine.bukkit.util;
 
 import org.bukkit.attribute.Attribute;
 import org.bukkit.entity.ArmorStand;

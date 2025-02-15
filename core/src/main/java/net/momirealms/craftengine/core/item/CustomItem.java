@@ -22,6 +22,8 @@ public interface CustomItem<I> extends BuildableItem<I> {
 
     I buildItemStack(Player player, int count);
 
+    ItemSettings settings();
+
     Item<I> buildItem(Player player);
 
     @NotNull
@@ -37,6 +39,8 @@ public interface CustomItem<I> extends BuildableItem<I> {
         Builder<I> modifier(ItemModifier<I> modifier);
 
         Builder<I> behavior(ItemBehavior behavior);
+
+        Builder<I> settings(ItemSettings settings);
 
         CustomItem<I> build();
     }

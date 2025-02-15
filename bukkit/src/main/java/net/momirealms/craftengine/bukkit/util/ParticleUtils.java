@@ -21,6 +21,11 @@ public class ParticleUtils {
         try {
             Object world = Reflections.field$CraftWorld$ServerLevel.get(bukkitWorld);
             Object shape = Reflections.method$BlockState$getShape.invoke(state, world, pos, Reflections.method$CollisionContext$empty.invoke(null));
+            boolean isEmpty = (boolean) Reflections.method$VoxelShape$isEmpty.invoke(shape);
+            if (isEmpty) {
+                return;
+            }
+
             Object aabb = Reflections.method$VoxelShape$bounds.invoke(shape);
             double minX = Reflections.field$AABB$minX.getDouble(aabb);
             double minY = Reflections.field$AABB$minY.getDouble(aabb);

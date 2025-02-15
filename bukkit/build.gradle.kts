@@ -1,5 +1,6 @@
 plugins {
-    id("io.github.goooler.shadow") version "8.1.8"
+    id("com.gradleup.shadow") version "9.0.0-beta6"
+    id("maven-publish")
 }
 
 repositories {
@@ -13,11 +14,11 @@ repositories {
 
 dependencies {
     // API
-    implementation(project(":shared"))
-    implementation(project(":core"))
+    compileOnly(project(":core"))
+    compileOnly(project(":shared"))
     implementation(project(":bukkit:legacy"))
     // NBT
-    implementation("com.github.Xiao-MoMi:sparrow-nbt:${rootProject.properties["sparrow_nbt_version"]}")
+    compileOnly("com.github.Xiao-MoMi:sparrow-nbt:${rootProject.properties["sparrow_nbt_version"]}")
     // Placeholder
     compileOnly("me.clip:placeholderapi:${rootProject.properties["placeholder_api_version"]}")
     // Platform
@@ -41,12 +42,11 @@ dependencies {
     // YAML
     compileOnly(files("${rootProject.rootDir}/libs/boosted-yaml-${rootProject.properties["boosted_yaml_version"]}.jar"))
     // Item Tag
-    implementation("com.saicone.rtag:rtag:${rootProject.properties["rtag_version"]}")
-    implementation("com.saicone.rtag:rtag-item:${rootProject.properties["rtag_version"]}")
-    implementation("com.saicone.rtag:rtag-entity:${rootProject.properties["rtag_version"]}")
+    compileOnly("com.saicone.rtag:rtag:${rootProject.properties["rtag_version"]}")
+    compileOnly("com.saicone.rtag:rtag-item:${rootProject.properties["rtag_version"]}")
     // Adventure
-    implementation("net.kyori:adventure-api:${rootProject.properties["adventure_bundle_version"]}")
-    implementation("net.kyori:adventure-platform-bukkit:${rootProject.properties["adventure_platform_version"]}")
+    compileOnly("net.kyori:adventure-api:${rootProject.properties["adventure_bundle_version"]}")
+    compileOnly("net.kyori:adventure-platform-bukkit:${rootProject.properties["adventure_platform_version"]}")
     compileOnly("net.kyori:adventure-text-minimessage:${rootProject.properties["adventure_bundle_version"]}")
     compileOnly("net.kyori:adventure-text-serializer-gson:${rootProject.properties["adventure_bundle_version"]}") {
         exclude("com.google.code.gson", "gson")
@@ -63,6 +63,7 @@ java {
     toolchain {
         languageVersion = JavaLanguageVersion.of(21)
     }
+    withSourcesJar()
 }
 
 tasks.withType<JavaCompile> {
@@ -77,6 +78,8 @@ artifacts {
 
 tasks {
     shadowJar {
+        archiveClassifier = ""
+        archiveFileName = "craft-engine-bukkit-${rootProject.properties["project_version"]}.jar"
         relocate("net.kyori", "net.momirealms.craftengine.libraries")
         relocate("net.momirealms.sparrow.nbt", "net.momirealms.craftengine.libraries.nbt")
         relocate("com.saicone.rtag", "net.momirealms.craftengine.libraries.tag")
@@ -88,5 +91,37 @@ tasks {
         relocate("net.objecthunter.exp4j", "net.momirealms.craftengine.libraries.exp4j")
         relocate("net.bytebuddy", "net.momirealms.craftengine.libraries.bytebuddy")
         relocate("org.yaml.snakeyaml", "net.momirealms.craftengine.libraries.snakeyaml")
+    }
+}
+
+publishing {
+    repositories {
+        maven {
+            url = uri("https://repo.momirealms.net/releases")
+            credentials(PasswordCredentials::class) {
+                username = System.getenv("REPO_USERNAME")
+                password = System.getenv("REPO_PASSWORD")
+            }
+        }
+    }
+    publications {
+        create<MavenPublication>("mavenJava") {
+            groupId = "net.momirealms"
+            artifactId = "craft-engine-bukkit"
+            version = rootProject.properties["project_version"].toString()
+            artifact(tasks["sourcesJar"])
+            from(components["shadow"])
+            pom {
+                name = "CraftEngine API"
+                url = "https://github.com/Xiao-MoMi/craft-engine"
+                licenses {
+                    license {
+                        name = "GNU General Public License v3.0"
+                        url = "https://www.gnu.org/licenses/gpl-3.0.html"
+                        distribution = "repo"
+                    }
+                }
+            }
+        }
     }
 }

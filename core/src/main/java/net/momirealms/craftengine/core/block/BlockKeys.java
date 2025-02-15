@@ -22,6 +22,8 @@ public class BlockKeys {
     public static final Key BREWING_STAND = Key.of("minecraft:brewing_stand");
     public static final Key BEACON = Key.of("minecraft:beacon");
     public static final Key CHEST = Key.of("minecraft:chest");
+    public static final Key CAMPFIRE = Key.of("minecraft:campfire");
+    public static final Key SOUL_CAMPFIRE = Key.of("minecraft:soul_campfire");
     public static final Key ENDER_CHEST = Key.of("minecraft:ender_chest");
     public static final Key TRAPPED_CHEST = Key.of("minecraft:trapped_chest");
     public static final Key DAYLIGHT_DETECTOR = Key.of("minecraft:daylight_detector");

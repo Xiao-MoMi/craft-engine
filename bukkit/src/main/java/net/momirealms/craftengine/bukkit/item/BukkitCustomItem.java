@@ -5,6 +5,7 @@ import net.momirealms.craftengine.bukkit.util.MaterialUtils;
 import net.momirealms.craftengine.core.entity.player.Player;
 import net.momirealms.craftengine.core.item.CustomItem;
 import net.momirealms.craftengine.core.item.Item;
+import net.momirealms.craftengine.core.item.ItemSettings;
 import net.momirealms.craftengine.core.item.behavior.EmptyItemBehavior;
 import net.momirealms.craftengine.core.item.behavior.ItemBehavior;
 import net.momirealms.craftengine.core.item.modifier.ItemModifier;
@@ -22,13 +23,15 @@ public class BukkitCustomItem implements CustomItem<ItemStack> {
     private final Material material;
     private final List<ItemModifier<ItemStack>> modifiers;
     private final ItemBehavior behavior;
+    private final ItemSettings settings;
 
-    public BukkitCustomItem(Key id, Key materialKey, Material material, List<ItemModifier<ItemStack>> modifiers, ItemBehavior behavior) {
+    public BukkitCustomItem(Key id, Key materialKey, Material material, List<ItemModifier<ItemStack>> modifiers, ItemBehavior behavior, ItemSettings settings) {
         this.id = id;
         this.material = material;
         this.modifiers = modifiers;
         this.behavior = behavior;
         this.materialKey = materialKey;
+        this.settings = settings;
     }
 
     @Override
@@ -61,6 +64,11 @@ public class BukkitCustomItem implements CustomItem<ItemStack> {
     }
 
     @Override
+    public ItemSettings settings() {
+        return settings;
+    }
+
+    @Override
     public Item<ItemStack> buildItem(Player player) {
         ItemStack item = new ItemStack(material);
         Item<ItemStack> wrapped = BukkitCraftEngine.instance().itemManager().wrap(item);
@@ -84,6 +92,7 @@ public class BukkitCustomItem implements CustomItem<ItemStack> {
         private Material material;
         private Key materialKey;
         private ItemBehavior behavior = EmptyItemBehavior.INSTANCE;
+        private ItemSettings settings = ItemSettings.of();
         private final List<ItemModifier<ItemStack>> modifiers = new ArrayList<>();
 
         @Override
@@ -118,8 +127,14 @@ public class BukkitCustomItem implements CustomItem<ItemStack> {
         }
 
         @Override
+        public Builder<ItemStack> settings(ItemSettings settings) {
+            this.settings = settings;
+            return this;
+        }
+
+        @Override
         public CustomItem<ItemStack> build() {
-            return new BukkitCustomItem(id, materialKey, material, modifiers, behavior);
+            return new BukkitCustomItem(id, materialKey, material, modifiers, behavior, settings);
         }
     }
 }

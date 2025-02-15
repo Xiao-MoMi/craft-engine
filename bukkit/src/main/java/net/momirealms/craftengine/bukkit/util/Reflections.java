@@ -1725,6 +1725,13 @@ public class Reflections {
             )
     );
 
+    public static final Class<?> clazz$CampfireBlockEntity = requireNonNull(
+            ReflectionUtils.getClazz(
+                    BukkitReflectionUtils.assembleMCClass("world.level.block.entity.CampfireBlockEntity"),
+                    BukkitReflectionUtils.assembleMCClass("world.level.block.entity.TileEntityCampfire")
+            )
+    );
+
     public static final Field field$ChunkAccess$blockEntities;
 
     static {
@@ -3436,6 +3443,12 @@ public class Reflections {
             )
     );
 
+    public static final Method method$VoxelShape$isEmpty = requireNonNull(
+            ReflectionUtils.getMethod(
+                    clazz$VoxelShape, boolean.class
+            )
+    );
+
     public static final Method method$VoxelShape$bounds = requireNonNull(
             ReflectionUtils.getMethod(
                     clazz$VoxelShape, clazz$AABB
@@ -4340,6 +4353,12 @@ public class Reflections {
             )
     );
 
+    // 1.20.1-1.21.1
+    public static final Field field$CampfireBlockEntity$quickCheck =
+            ReflectionUtils.getDeclaredField(
+                    clazz$CampfireBlockEntity, clazz$RecipeManager$CachedCheck, 0
+            );
+
     // 1.21+
     public static final Class<?> clazz$RecipeInput = ReflectionUtils.getClazz(
             BukkitReflectionUtils.assembleMCClass("world.item.crafting.RecipeInput")
@@ -4348,6 +4367,10 @@ public class Reflections {
     public static final Class<?> clazz$SingleRecipeInput = ReflectionUtils.getClazz(
             BukkitReflectionUtils.assembleMCClass("world.item.crafting.SingleRecipeInput")
     );
+
+    public static final Constructor<?> constructor$SingleRecipeInput = Optional.ofNullable(clazz$SingleRecipeInput)
+            .map(it -> ReflectionUtils.getConstructor(it, clazz$ItemStack))
+            .orElse(null);
 
     // 1.20.1-1.21.1
     public static final Method method$RecipeManager$getRecipeFor0 =
@@ -4381,6 +4404,19 @@ public class Reflections {
     public static final Field field$CraftBlockEntityState$tileEntity = requireNonNull(
             ReflectionUtils.getDeclaredField(
                     clazz$CraftBlockEntityState, 0
+            )
+    );
+
+    public static final Class<?> clazz$SimpleContainer = requireNonNull(
+            ReflectionUtils.getClazz(
+                    BukkitReflectionUtils.assembleMCClass("world.SimpleContainer"),
+                    BukkitReflectionUtils.assembleMCClass("world.InventorySubcontainer")
+            )
+    );
+
+    public static final Field field$SimpleContainer$items = requireNonNull(
+            ReflectionUtils.getDeclaredField(
+                    clazz$SimpleContainer, clazz$NonNullList, 0
             )
     );
 }
