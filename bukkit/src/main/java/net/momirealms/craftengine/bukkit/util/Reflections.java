@@ -4517,9 +4517,22 @@ public class Reflections {
             )
     );
 
-    public static final Field field$TreeGrower$ACACIA = requireNonNull(
+    public static final Field field$TreeGrower$OAK = requireNonNull(
             ReflectionUtils.getDeclaredField(
-                    clazz$TreeGrower, clazz$TreeGrower, 6
+                    clazz$TreeGrower, clazz$TreeGrower, 0
+            )
+    );
+
+    public static final Class<?> clazz$SaplingBlock = requireNonNull(
+            ReflectionUtils.getClazz(
+                    BukkitReflectionUtils.assembleMCClass("world.level.block.SaplingBlock"),
+                    BukkitReflectionUtils.assembleMCClass("world.level.block.BlockSapling")
+            )
+    );
+
+    public static final Field field$SaplingBlock$STAGE = requireNonNull(
+            ReflectionUtils.getDeclaredField(
+                    clazz$SaplingBlock, clazz$IntegerProperty, 0
             )
     );
 }

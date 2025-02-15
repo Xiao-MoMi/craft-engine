@@ -17,11 +17,13 @@ import java.util.concurrent.Callable;
 
 public class SaplingBlockBehavior extends BushBlockBehavior {
     public static final Factory FACTORY = new Factory();
+    private static final Object DIRT_TAG = BlockTags.getOrCreate(Key.of("minecraft", "dirt"));
+    private static final Object FARMLAND = BlockTags.getOrCreate(Key.of("minecraft", "farmland"));
     private final Property<Integer> stageProperty;
     private final Object treeGrower;
 
     public SaplingBlockBehavior(List<Object> tagsCanSurviveOn, Object treeGrower, Property<Integer> stageProperty) {
-        super(tagsCanSurviveOn);
+        super(List.of(DIRT_TAG, FARMLAND));
         this.stageProperty = stageProperty;
         this.treeGrower = treeGrower;
     }
@@ -47,21 +49,19 @@ public class SaplingBlockBehavior extends BushBlockBehavior {
     }
 
     public void advanceTree(Object level, Object pos, Object state, Object random) throws Exception {
+        Object stageProperty = Reflections.field$SaplingBlock$STAGE.get(null);
         if ((Integer) Reflections.method$StateHolder$getValue.invoke(state, stageProperty) == 0) {
             Reflections.method$Level$setBlock.invoke(level, pos, Reflections.method$StateHolder$cycle.invoke(state, stageProperty), 4);
-            CraftEngine.instance().logger().warn("树苗1");
         } else if ((boolean) Reflections.field$Level$captureTreeGeneration.get(level)) {
             Object chunkSource = Reflections.method$ServerLevel$getChunkSource.invoke(level);
             Object generator = Reflections.method$ServerChunkCache$getGenerator.invoke(chunkSource);
             Reflections.method$TreeGrower$growTree.invoke(this.treeGrower, level, generator, pos, state, random);
-            CraftEngine.instance().logger().warn("树苗2");
         } else {
             Reflections.field$Level$captureTreeGeneration.set(level, true);
             Object chunkSource = Reflections.method$ServerLevel$getChunkSource.invoke(level);
             Object generator = Reflections.method$ServerChunkCache$getGenerator.invoke(chunkSource);
             Reflections.method$TreeGrower$growTree.invoke(this.treeGrower, level, generator, pos, state, random);
             Reflections.field$Level$captureTreeGeneration.set(level, false);
-            CraftEngine.instance().logger().warn("树苗3");
         }
     }
 
@@ -75,8 +75,8 @@ public class SaplingBlockBehavior extends BushBlockBehavior {
             }
             List<Object> tagsCanSurviveOn = MiscUtils.getAsStringList(arguments.get("tags")).stream().map(it -> BlockTags.getOrCreate(Key.of(it))).toList();
             try {
-                Object ACACIA = Reflections.field$TreeGrower$ACACIA.get(null);
-                return new SaplingBlockBehavior(tagsCanSurviveOn, ACACIA, stageProperty);
+                Object OAK = Reflections.field$TreeGrower$OAK.get(null);
+                return new SaplingBlockBehavior(tagsCanSurviveOn, OAK, stageProperty);
             } catch (Exception e) {
                 throw new RuntimeException(e);
             }
