@@ -1,18 +1,27 @@
 package net.momirealms.craftengine.bukkit.block.behavior;
 
+import net.momirealms.craftengine.bukkit.api.CraftEngineBlocks;
+import net.momirealms.craftengine.bukkit.block.BukkitBlockManager;
+import net.momirealms.craftengine.bukkit.util.BlockStateUtils;
 import net.momirealms.craftengine.bukkit.util.BlockTags;
+import net.momirealms.craftengine.bukkit.util.LocationUtils;
 import net.momirealms.craftengine.bukkit.util.Reflections;
 import net.momirealms.craftengine.core.block.CustomBlock;
 import net.momirealms.craftengine.core.block.ImmutableBlockState;
+import net.momirealms.craftengine.core.block.UpdateOption;
 import net.momirealms.craftengine.core.block.behavior.BlockBehaviorFactory;
 import net.momirealms.craftengine.core.block.properties.Property;
 import net.momirealms.craftengine.core.plugin.CraftEngine;
 import net.momirealms.craftengine.core.util.Key;
 import net.momirealms.craftengine.core.util.MiscUtils;
 import net.momirealms.craftengine.shared.block.BlockBehavior;
+import org.bukkit.Bukkit;
+import org.bukkit.Location;
+import org.bukkit.World;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.concurrent.Callable;
 
 public class SaplingBlockBehavior extends BushBlockBehavior {
@@ -49,9 +58,19 @@ public class SaplingBlockBehavior extends BushBlockBehavior {
     }
 
     public void advanceTree(Object level, Object pos, Object state, Object random) throws Exception {
-        Object stageProperty = Reflections.field$SaplingBlock$STAGE.get(null);
-        if ((Integer) Reflections.method$StateHolder$getValue.invoke(state, stageProperty) == 0) {
-            Reflections.method$Level$setBlock.invoke(level, pos, Reflections.method$StateHolder$cycle.invoke(state, stageProperty), 4);
+        ImmutableBlockState immutableBlockState = Objects.requireNonNull(BukkitBlockManager.instance().getImmutableBlockState(BlockStateUtils.blockStateToId(state)));
+        World bukkitWorld = (World) Reflections.method$Level$getCraftWorld.invoke(level);
+        if (getStage(immutableBlockState) == 0) {
+            CraftEngineBlocks.place(
+                    new Location(
+                            bukkitWorld,
+                            Reflections.field$Vec3i$x.getInt(pos),
+                            Reflections.field$Vec3i$y.getInt(pos),
+                            Reflections.field$Vec3i$z.getInt(pos)
+                    ),
+                    immutableBlockState.with(stageProperty, 1),
+                    new UpdateOption.Builder().updateClients().updateKnownShape().build()
+            );
         } else if ((boolean) Reflections.field$Level$captureTreeGeneration.get(level)) {
             Object chunkSource = Reflections.method$ServerLevel$getChunkSource.invoke(level);
             Object generator = Reflections.method$ServerChunkCache$getGenerator.invoke(chunkSource);
@@ -60,6 +79,7 @@ public class SaplingBlockBehavior extends BushBlockBehavior {
             Reflections.field$Level$captureTreeGeneration.set(level, true);
             Object chunkSource = Reflections.method$ServerLevel$getChunkSource.invoke(level);
             Object generator = Reflections.method$ServerChunkCache$getGenerator.invoke(chunkSource);
+            Bukkit.getOnlinePlayers().forEach(player -> player.sendMessage("长啊"));
             Reflections.method$TreeGrower$growTree.invoke(this.treeGrower, level, generator, pos, state, random);
             Reflections.field$Level$captureTreeGeneration.set(level, false);
         }
