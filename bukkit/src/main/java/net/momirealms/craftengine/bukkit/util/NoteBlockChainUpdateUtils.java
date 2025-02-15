@@ -4,6 +4,8 @@ import net.momirealms.craftengine.core.plugin.config.ConfigManager;
 
 public class NoteBlockChainUpdateUtils {
 
+    private NoteBlockChainUpdateUtils() {}
+
     public static void noteBlockChainUpdate(Object level, Object chunkSource, Object direction, Object blockPos, int times) throws ReflectiveOperationException {
         if (times >= ConfigManager.maxChainUpdate()) return;
         Object relativePos = Reflections.method$BlockPos$relative.invoke(blockPos, direction);

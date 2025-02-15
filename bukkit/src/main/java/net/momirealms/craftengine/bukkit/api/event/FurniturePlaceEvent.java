@@ -1,11 +1,8 @@
 package net.momirealms.craftengine.bukkit.api.event;
 
 import net.momirealms.craftengine.bukkit.entity.furniture.LoadedFurniture;
-import net.momirealms.craftengine.bukkit.item.behavior.FurnitureItemBehavior;
-import net.momirealms.craftengine.core.entity.furniture.AnchorType;
 import org.bukkit.Location;
 import org.bukkit.entity.Player;
-import org.bukkit.event.Cancellable;
 import org.bukkit.event.HandlerList;
 import org.bukkit.event.player.PlayerEvent;
 import org.jetbrains.annotations.NotNull;

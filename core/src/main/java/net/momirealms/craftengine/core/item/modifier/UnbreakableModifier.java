@@ -2,9 +2,6 @@ package net.momirealms.craftengine.core.item.modifier;
 
 import net.momirealms.craftengine.core.entity.player.Player;
 import net.momirealms.craftengine.core.item.Item;
-import net.momirealms.craftengine.core.plugin.minimessage.ImageTag;
-import net.momirealms.craftengine.core.plugin.minimessage.PlaceholderTag;
-import net.momirealms.craftengine.core.util.AdventureHelper;
 
 public class UnbreakableModifier<I> implements ItemModifier<I> {
     private final boolean argument;

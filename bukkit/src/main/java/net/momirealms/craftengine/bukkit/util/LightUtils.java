@@ -9,6 +9,8 @@ import java.util.Map;
 
 public class LightUtils {
 
+    private LightUtils() {}
+
     public static void updateChunkLight(World world, Map<Long, BitSet> sectionPosSet) {
         try {
             Object serverLevel = Reflections.field$CraftWorld$ServerLevel.get(world);

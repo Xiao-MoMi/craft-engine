@@ -4,6 +4,7 @@ import net.momirealms.craftengine.bukkit.plugin.BukkitCraftEngine;
 import net.momirealms.craftengine.bukkit.plugin.injector.BukkitInjector;
 import net.momirealms.craftengine.bukkit.util.Reflections;
 import net.momirealms.craftengine.core.block.ImmutableBlockState;
+import net.momirealms.craftengine.core.plugin.config.ConfigManager;
 import net.momirealms.craftengine.core.plugin.scheduler.SchedulerTask;
 import net.momirealms.craftengine.core.world.CEWorld;
 import net.momirealms.craftengine.core.world.ChunkPos;
@@ -267,6 +268,13 @@ public class BukkitWorldManager implements WorldManager, Listener {
                         }
                     }
                     BukkitInjector.injectLevelChunkSection(section, ceSection, ceWorld, new SectionPos(pos.x, ceChunk.sectionY(i), pos.z));
+                }
+                if (ConfigManager.enableRecipeSystem()) {
+                    @SuppressWarnings("unchecked")
+                    Map<Object, Object> blockEntities = (Map<Object, Object>) Reflections.field$ChunkAccess$blockEntities.get(levelChunk);
+                    for (Object blockEntity : blockEntities.values()) {
+                        BukkitInjector.injectFurnaceBlockEntity(blockEntity);
+                    }
                 }
             } catch (ReflectiveOperationException e) {
                 this.plugin.logger().warn("Failed to restore chunk at " + chunk.getX() + " " + chunk.getZ(), e);

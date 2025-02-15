@@ -8,10 +8,11 @@ import net.momirealms.craftengine.core.loot.parameter.LootParameters;
 import net.momirealms.craftengine.core.loot.provider.NumberProvider;
 import net.momirealms.craftengine.core.loot.provider.NumberProviders;
 import net.momirealms.craftengine.core.util.Key;
-import net.momirealms.craftengine.core.util.MiscUtils;
-import net.momirealms.craftengine.core.world.Vec3d;
 
-import java.util.*;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 
 public class DropExpFunction<T> extends AbstractLootConditionalFunction<T> {
     public static final Factory<?> FACTORY = new Factory<>();

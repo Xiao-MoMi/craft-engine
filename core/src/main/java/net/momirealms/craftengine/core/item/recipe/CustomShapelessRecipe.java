@@ -18,8 +18,8 @@ public class CustomShapelessRecipe<T> extends CraftingTableRecipe<T> {
     private final PlacementInfo<T> placementInfo;
     private final CustomRecipeResult<T> result;
 
-    public CustomShapelessRecipe(RecipeCategory category, String group, List<Ingredient<T>> ingredients, CustomRecipeResult<T> result) {
-        super(category, group);
+    public CustomShapelessRecipe(Key id, CraftingRecipeCategory category, String group, List<Ingredient<T>> ingredients, CustomRecipeResult<T> result) {
+        super(id, category, group);
         this.ingredients = ingredients;
         this.result = result;
         this.placementInfo = PlacementInfo.create(ingredients);
@@ -63,12 +63,12 @@ public class CustomShapelessRecipe<T> extends CraftingTableRecipe<T> {
 
         @SuppressWarnings({"unchecked", "rawtypes", "DuplicatedCode"})
         @Override
-        public Recipe<A> create(Map<String, Object> arguments) {
+        public Recipe<A> create(Key id, Map<String, Object> arguments) {
             Map<String, Object> ingredientMap = MiscUtils.castToMap(arguments.get("ingredients"), true);
             if (ingredientMap == null) {
                 throw new IllegalArgumentException("ingredients cannot be empty");
             }
-            RecipeCategory recipeCategory = arguments.containsKey("category") ? RecipeCategory.valueOf(arguments.get("category").toString().toUpperCase(Locale.ENGLISH)) : null;
+            CraftingRecipeCategory recipeCategory = arguments.containsKey("category") ? CraftingRecipeCategory.valueOf(arguments.get("category").toString().toUpperCase(Locale.ENGLISH)) : null;
             String group = arguments.containsKey("group") ? arguments.get("group").toString() : null;
             List<Ingredient<A>> ingredients = new ArrayList<>();
             for (Map.Entry<String, Object> entry : ingredientMap.entrySet()) {
@@ -84,6 +84,7 @@ public class CustomShapelessRecipe<T> extends CraftingTableRecipe<T> {
                 ingredients.add(Ingredient.of(holders));
             }
             return new CustomShapelessRecipe(
+                    id,
                     recipeCategory,
                     group,
                     ingredients,

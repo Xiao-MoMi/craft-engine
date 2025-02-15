@@ -20,6 +20,8 @@ public class InteractUtils {
     private static final Map<Key, QuadFunction<Player, Item<ItemStack>, BlockData, BlockHitResult, Boolean>> INTERACTIONS = new HashMap<>();
     private static final Key NOTE_BLOCK_TOP_INSTRUMENTS = Key.of("minecraft:noteblock_top_instruments");
 
+    private InteractUtils() {}
+
     static {
         register(BlockKeys.NOTE_BLOCK, (player, item, blockState, result) -> result.getDirection() != Direction.UP || !item.is(NOTE_BLOCK_TOP_INSTRUMENTS));
         register(BlockKeys.CAKE, (player, item, blockState, result) -> !canEat(player, false));

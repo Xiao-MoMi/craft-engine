@@ -11,7 +11,6 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 public abstract class CEWorld {
@@ -20,7 +19,6 @@ public abstract class CEWorld {
     protected final Map<Long, CEChunk> loadedChunkMap;
     protected final WorldDataStorage worldDataStorage;
     protected final ReentrantReadWriteLock loadedChunkMapLock = new ReentrantReadWriteLock();
-    protected final WorldExecutor executor;
     protected final WorldHeight worldHeightAccessor;
     protected final Set<SectionPos> updatedSectionPositions = Collections.synchronizedSet(new HashSet<>());
 
@@ -31,7 +29,6 @@ public abstract class CEWorld {
         this.world = world;
         this.loadedChunkMap = new Long2ObjectOpenHashMap<>(1024, 0.5f);
         this.worldDataStorage = new DefaultRegionFileStorage(world.directory().resolve(REGION_DIRECTORY));
-        this.executor = new WorldExecutor(this);
         this.worldHeightAccessor = world.worldHeight();
         this.lastChunkPos = ChunkPos.INVALID_CHUNK_POS;
     }
@@ -73,9 +70,6 @@ public abstract class CEWorld {
 
     @Nullable
     public CEChunk getLoadedChunkImmediately(int x, int z) {
-        if (WorldThread.isWorldThreadFor(this)) {
-            return this.getChunkAtIfLoadedWorldThread(x, z);
-        }
         long longKey = ChunkPos.asLong(x, z);
         this.loadedChunkMapLock.readLock().lock();
         try {
@@ -86,7 +80,7 @@ public abstract class CEWorld {
     }
 
     @Nullable
-    public CEChunk getChunkAtIfLoadedWorldThread(long chunkPos) {
+    public CEChunk getChunkAtIfLoadedMainThread(long chunkPos) {
         if (chunkPos == this.lastChunkPos) {
             return this.lastChunk;
         }
@@ -99,17 +93,14 @@ public abstract class CEWorld {
     }
 
     @Nullable
-    public CEChunk getChunkAtIfLoadedWorldThread(int x, int z) {
-        return getChunkAtIfLoadedWorldThread(ChunkPos.asLong(x, z));
+    public CEChunk getChunkAtIfLoadedMainThread(int x, int z) {
+        return getChunkAtIfLoadedMainThread(ChunkPos.asLong(x, z));
     }
 
     @Nullable
     public CEChunk getChunkAtIfLoaded(int x, int z) {
-        if (!WorldThread.isWorldThreadFor(this)) {
-            return CompletableFuture.supplyAsync(() -> this.getChunkAtIfLoaded(x, z), this.executor).join();
-        }
         long chunkPos = ChunkPos.asLong(x, z);
-        return this.getChunkAtIfLoadedWorldThread(chunkPos);
+        return this.getChunkAtIfLoadedMainThread(chunkPos);
     }
 
     public WorldHeight worldHeight() {

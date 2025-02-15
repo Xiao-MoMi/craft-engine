@@ -22,6 +22,8 @@ public class MaterialUtils {
         }
     }
 
+    private MaterialUtils() {}
+
     @Nullable
     public static Material getMaterial(String name) {
         if (name == null || name.isEmpty()) return null;

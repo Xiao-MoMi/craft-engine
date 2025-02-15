@@ -5,6 +5,8 @@ import org.bukkit.inventory.PlayerInventory;
 
 public class InventoryUtils {
 
+    private InventoryUtils() {}
+
     public static int getSuitableHotbarSlot(PlayerInventory inventory) {
         int selectedSlot = inventory.getHeldItemSlot();
         int i;

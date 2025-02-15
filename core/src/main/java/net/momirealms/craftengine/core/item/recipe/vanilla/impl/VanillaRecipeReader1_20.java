@@ -3,9 +3,7 @@ package net.momirealms.craftengine.core.item.recipe.vanilla.impl;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
-import net.momirealms.craftengine.core.item.recipe.vanilla.RecipeResult;
-import net.momirealms.craftengine.core.item.recipe.vanilla.VanillaShapedRecipe;
-import net.momirealms.craftengine.core.item.recipe.vanilla.VanillaShapelessRecipe;
+import net.momirealms.craftengine.core.item.recipe.vanilla.*;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -18,26 +16,95 @@ public class VanillaRecipeReader1_20 extends AbstractRecipeReader {
     @Override
     public VanillaShapedRecipe readShaped(JsonObject json) {
         return new VanillaShapedRecipe(
-                readCategory(json),
+                readCraftingCategory(json),
                 readGroup(json),
                 readShapedIngredientMap(json.getAsJsonObject("key")),
                 readPattern(json),
-                readResult(json.getAsJsonObject("result"))
+                readCraftingResult(json.getAsJsonObject("result"))
         );
     }
 
     @Override
     public VanillaShapelessRecipe readShapeless(JsonObject json) {
         return new VanillaShapelessRecipe(
-                readCategory(json),
+                readCraftingCategory(json),
                 readGroup(json),
                 readShapelessIngredients(json.getAsJsonArray("ingredients")),
-                readResult(json.getAsJsonObject("result"))
+                readCraftingResult(json.getAsJsonObject("result"))
         );
     }
 
+    @Override
+    public VanillaBlastingRecipe readBlasting(JsonObject json) {
+        return new VanillaBlastingRecipe(
+                readCookingCategory(json),
+                readGroup(json),
+                readCookingResult(json.get("result")),
+                readCookingIngredients(json.get("ingredient")),
+                readExperience(json),
+                readCookingTime(json)
+        );
+    }
+
+    @Override
+    public VanillaSmeltingRecipe readSmelting(JsonObject json) {
+        return new VanillaSmeltingRecipe(
+                readCookingCategory(json),
+                readGroup(json),
+                readCookingResult(json.get("result")),
+                readCookingIngredients(json.get("ingredient")),
+                readExperience(json),
+                readCookingTime(json)
+        );
+    }
+
+    @Override
+    public VanillaSmokingRecipe readSmoking(JsonObject json) {
+        return new VanillaSmokingRecipe(
+                readCookingCategory(json),
+                readGroup(json),
+                readCookingResult(json.get("result")),
+                readCookingIngredients(json.get("ingredient")),
+                readExperience(json),
+                readCookingTime(json)
+        );
+    }
+
+    @Override
+    public VanillaCampfireRecipe readCampfire(JsonObject json) {
+        return new VanillaCampfireRecipe(
+                readCookingCategory(json),
+                readGroup(json),
+                readCookingResult(json.get("result")),
+                readCookingIngredients(json.get("ingredient")),
+                readExperience(json),
+                readCookingTime(json)
+        );
+    }
+
+    protected List<String> readCookingIngredients(JsonElement json) {
+        List<String> ingredients = new ArrayList<>();
+        if (json.isJsonObject()) {
+            JsonObject argument = json.getAsJsonObject();
+            if (argument.has("item")) {
+                ingredients.add(argument.get("item").getAsString());
+            } else if (argument.has("tag")) {
+                ingredients.add("#" + argument.get("tag").getAsString());
+            }
+        } else if (json.isJsonArray()) {
+            List<String> items = readIngredientList((JsonArray) json);
+            ingredients.addAll(items);
+        }
+        return ingredients;
+    }
+
     @NotNull
-    protected RecipeResult readResult(JsonObject object) {
+    protected RecipeResult readCookingResult(JsonElement object) {
+        return new RecipeResult(object.getAsString(), 1, null);
+    }
+
+    @NotNull
+    protected RecipeResult readCraftingResult(JsonObject object) {
         String item = object.get("item").getAsString();
         int count = object.has("count") ? object.get("count").getAsInt() : 1;
         return new RecipeResult(item, count, null);

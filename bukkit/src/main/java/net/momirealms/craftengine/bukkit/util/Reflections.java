@@ -20,9 +20,7 @@ import org.bukkit.entity.HumanEntity;
 import org.bukkit.event.block.BlockPhysicsEvent;
 import org.bukkit.event.block.BlockPlaceEvent;
 import org.bukkit.event.entity.CreatureSpawnEvent;
-import org.bukkit.inventory.ItemStack;
-import org.bukkit.inventory.ShapedRecipe;
-import org.bukkit.inventory.ShapelessRecipe;
+import org.bukkit.inventory.*;
 import sun.misc.Unsafe;
 
 import java.io.BufferedReader;
@@ -1713,6 +1711,41 @@ public class Reflections {
             )
     );
 
+    public static final Class<?> clazz$BlockEntity = requireNonNull(
+            ReflectionUtils.getClazz(
+                    BukkitReflectionUtils.assembleMCClass("world.level.block.entity.BlockEntity"),
+                    BukkitReflectionUtils.assembleMCClass("world.level.block.entity.TileEntity")
+            )
+    );
+
+    public static final Class<?> clazz$AbstractFurnaceBlockEntity = requireNonNull(
+            ReflectionUtils.getClazz(
+                    BukkitReflectionUtils.assembleMCClass("world.level.block.entity.AbstractFurnaceBlockEntity"),
+                    BukkitReflectionUtils.assembleMCClass("world.level.block.entity.TileEntityFurnace")
+            )
+    );
+
+    public static final Field field$ChunkAccess$blockEntities;
+
+    static {
+        Field targetField = null;
+        for (Field field : clazz$ChunkAccess.getDeclaredFields()) {
+            if (Map.class.isAssignableFrom(field.getType())) {
+                Type genericType = field.getGenericType();
+                if (genericType instanceof ParameterizedType parameterizedType) {
+                    Type[] actualTypeArguments = parameterizedType.getActualTypeArguments();
+                    if (actualTypeArguments.length == 2 &&
+                            actualTypeArguments[0].equals(clazz$BlockPos) &&
+                            actualTypeArguments[1].equals(clazz$BlockEntity)) {
+                        field.setAccessible(true);
+                        targetField = field;
+                    }
+                }
+            }
+        }
+        field$ChunkAccess$blockEntities = targetField;
+    }
+
     public static final Method method$LevelChunkSection$setBlockState = requireNonNull(
             ReflectionUtils.getMethod(
                     clazz$LevelChunkSection, clazz$BlockState, int.class, int.class, int.class, clazz$BlockState, boolean.class
@@ -1818,6 +1851,13 @@ public class Reflections {
             )
     );
 
+    public static final Class<?> clazz$RecipeType = requireNonNull(
+            ReflectionUtils.getClazz(
+                    BukkitReflectionUtils.assembleMCClass("world.item.crafting.RecipeType"),
+                    BukkitReflectionUtils.assembleMCClass("world.item.crafting.Recipes")
+            )
+    );
+
     public static final Object instance$BuiltInRegistries$BLOCK;
     public static final Object instance$BuiltInRegistries$ITEM;
     public static final Object instance$BuiltInRegistries$ATTRIBUTE;
@@ -1827,6 +1867,7 @@ public class Reflections {
     public static final Object instance$BuiltInRegistries$PARTICLE_TYPE;
     public static final Object instance$BuiltInRegistries$ENTITY_TYPE;
     public static final Object instance$BuiltInRegistries$FLUID;
+    public static final Object instance$BuiltInRegistries$RECIPE_TYPE;
     public static final Object instance$InternalRegistries$DIMENSION_TYPE;
 
     public static final Object instance$Registries$BLOCK;
@@ -1837,8 +1878,9 @@ public class Reflections {
     public static final Object instance$Registries$SOUND_EVENT;
     public static final Object instance$Registries$PARTICLE_TYPE;
     public static final Object instance$Registries$ENTITY_TYPE;
-    public static final Object instance$Registries$DIMENSION_TYPE;
     public static final Object instance$Registries$FLUID;
+    public static final Object instance$Registries$RECIPE_TYPE;
+    public static final Object instance$Registries$DIMENSION_TYPE;
 
     public static final Object instance$registryAccess;
 
@@ -1855,6 +1897,7 @@ public class Reflections {
             Object registries$EntityType  = null;
             Object registries$Item  = null;
             Object registries$Fluid  = null;
+            Object registries$RecipeType  = null;
             for (Field field : fields) {
                 Type fieldType = field.getGenericType();
                 if (fieldType instanceof ParameterizedType paramType) {
@@ -1868,6 +1911,8 @@ public class Reflections {
                                     registries$ParticleType = field.get(null);
                                 } else if (rawType == clazz$EntityType) {
                                     registries$EntityType = field.get(null);
+                                } else if (rawType == clazz$RecipeType) {
+                                    registries$RecipeType = field.get(null);
                                 }
                             } else {
                                 if (type == clazz$Block) {
@@ -1902,6 +1947,7 @@ public class Reflections {
             instance$Registries$PARTICLE_TYPE = requireNonNull(registries$ParticleType);
             instance$Registries$ENTITY_TYPE = requireNonNull(registries$EntityType);
             instance$Registries$FLUID = requireNonNull(registries$Fluid);
+            instance$Registries$RECIPE_TYPE = requireNonNull(registries$RecipeType);
             Object server = method$MinecraftServer$getServer.invoke(null);
             Object registries = field$MinecraftServer$registries.get(server);
             instance$registryAccess = field$LayeredRegistryAccess$composite.get(registries);
@@ -1915,6 +1961,7 @@ public class Reflections {
             instance$BuiltInRegistries$PARTICLE_TYPE = method$RegistryAccess$registryOrThrow.invoke(instance$registryAccess, registries$ParticleType);
             instance$BuiltInRegistries$ENTITY_TYPE = method$RegistryAccess$registryOrThrow.invoke(instance$registryAccess, registries$EntityType);
             instance$BuiltInRegistries$FLUID = method$RegistryAccess$registryOrThrow.invoke(instance$registryAccess, registries$Fluid);
+            instance$BuiltInRegistries$RECIPE_TYPE = method$RegistryAccess$registryOrThrow.invoke(instance$registryAccess, registries$RecipeType);
         } catch (ReflectiveOperationException e) {
             throw new RuntimeException(e);
         }
@@ -3361,6 +3408,28 @@ public class Reflections {
         }
     }
 
+    public static final Object instance$RecipeType$CRAFTING;
+    public static final Object instance$RecipeType$SMELTING;
+    public static final Object instance$RecipeType$BLASTING;
+    public static final Object instance$RecipeType$SMOKING;
+    public static final Object instance$RecipeType$CAMPFIRE_COOKING;
+    public static final Object instance$RecipeType$STONECUTTING;
+    public static final Object instance$RecipeType$SMITHING;
+
+    static {
+        try {
+            instance$RecipeType$CRAFTING = Reflections.method$Registry$get.invoke(Reflections.instance$BuiltInRegistries$RECIPE_TYPE, method$ResourceLocation$fromNamespaceAndPath.invoke(null, "minecraft", "crafting"));
+            instance$RecipeType$SMELTING = Reflections.method$Registry$get.invoke(Reflections.instance$BuiltInRegistries$RECIPE_TYPE, method$ResourceLocation$fromNamespaceAndPath.invoke(null, "minecraft", "smelting"));
+            instance$RecipeType$BLASTING = Reflections.method$Registry$get.invoke(Reflections.instance$BuiltInRegistries$RECIPE_TYPE, method$ResourceLocation$fromNamespaceAndPath.invoke(null, "minecraft", "blasting"));
+            instance$RecipeType$SMOKING = Reflections.method$Registry$get.invoke(Reflections.instance$BuiltInRegistries$RECIPE_TYPE, method$ResourceLocation$fromNamespaceAndPath.invoke(null, "minecraft", "smoking"));
+            instance$RecipeType$CAMPFIRE_COOKING = Reflections.method$Registry$get.invoke(Reflections.instance$BuiltInRegistries$RECIPE_TYPE, method$ResourceLocation$fromNamespaceAndPath.invoke(null, "minecraft", "campfire_cooking"));
+            instance$RecipeType$STONECUTTING = Reflections.method$Registry$get.invoke(Reflections.instance$BuiltInRegistries$RECIPE_TYPE, method$ResourceLocation$fromNamespaceAndPath.invoke(null, "minecraft", "stonecutting"));
+            instance$RecipeType$SMITHING = Reflections.method$Registry$get.invoke(Reflections.instance$BuiltInRegistries$RECIPE_TYPE, method$ResourceLocation$fromNamespaceAndPath.invoke(null, "minecraft", "smithing"));
+        } catch (ReflectiveOperationException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
     public static final Method method$BlockState$getShape = requireNonNull(
             ReflectionUtils.getMethod(
                     clazz$BlockStateBase, clazz$VoxelShape, new String[]{"getShape", "a"}, clazz$BlockGetter, clazz$BlockPos, clazz$CollisionContext
@@ -3843,6 +3912,13 @@ public class Reflections {
             )
     );
 
+    public static final Class<?> clazz$RecipeManager$CachedCheck = requireNonNull(
+            ReflectionUtils.getClazz(
+                    BukkitReflectionUtils.assembleMCClass("world.item.crafting.RecipeManager$CachedCheck"),
+                    BukkitReflectionUtils.assembleMCClass("world.item.crafting.CraftingManager$a")
+            )
+    );
+
     public static final Method method$RecipeManager$finalizeRecipeLoading =
             ReflectionUtils.getMethod(
                     clazz$RecipeManager, new String[]{"finalizeRecipeLoading"}
@@ -4036,6 +4112,10 @@ public class Reflections {
             .map(it -> ReflectionUtils.getDeclaredField(it, 1))
             .orElse(null);
 
+    public static final Field field$RecipeHolder$id = Optional.ofNullable(clazz$RecipeHolder)
+            .map(it -> ReflectionUtils.getDeclaredField(it, 0))
+            .orElse(null);
+
     public static final Class<?> clazz$ShapelessRecipe = requireNonNull(
             ReflectionUtils.getClazz(
                     BukkitReflectionUtils.assembleMCClass("world.item.crafting.ShapelessRecipe"),
@@ -4173,4 +4253,134 @@ public class Reflections {
             ReflectionUtils.getMethod(
                     clazz$ItemStack, void.class, int.class, clazz$LivingEntity, clazz$EquipmentSlot
             );
+
+    // for 1.20.1-1.21.1
+    public static final Class<?> clazz$AbstractCookingRecipe = requireNonNull(
+            ReflectionUtils.getClazz(
+                    BukkitReflectionUtils.assembleMCClass("world.item.crafting.AbstractCookingRecipe"),
+                    BukkitReflectionUtils.assembleMCClass("world.item.crafting.RecipeCooking")
+            )
+    );
+
+    // for 1.20.1-1.21.1
+    public static final Field field$AbstractCookingRecipe$input =
+            ReflectionUtils.getDeclaredField(
+                    clazz$AbstractCookingRecipe, clazz$Ingredient, 0
+            );
+
+    // for 1.21.2+
+    public static final Class<?> clazz$SingleItemRecipe =
+            ReflectionUtils.getClazz(
+                    BukkitReflectionUtils.assembleMCClass("world.item.crafting.SingleItemRecipe")
+            );
+
+    // for 1.21.2+
+    public static final Field field$SingleItemRecipe$input =
+            Optional.ofNullable(clazz$SingleItemRecipe)
+                    .map(it -> ReflectionUtils.getDeclaredField(it, clazz$Ingredient, 0))
+                    .orElse(null);
+
+    public static final Class<?> clazz$CraftFurnaceRecipe = requireNonNull(
+            ReflectionUtils.getClazz(
+                    BukkitReflectionUtils.assembleCBClass("inventory.CraftFurnaceRecipe")
+            )
+    );
+
+    public static final Method method$CraftFurnaceRecipe$fromBukkitRecipe = requireNonNull(
+            ReflectionUtils.getStaticMethod(
+                    clazz$CraftFurnaceRecipe, clazz$CraftFurnaceRecipe, FurnaceRecipe.class
+            )
+    );
+
+    public static final Class<?> clazz$CraftBlastingRecipe = requireNonNull(
+            ReflectionUtils.getClazz(
+                    BukkitReflectionUtils.assembleCBClass("inventory.CraftBlastingRecipe")
+            )
+    );
+
+    public static final Method method$CraftBlastingRecipe$fromBukkitRecipe = requireNonNull(
+            ReflectionUtils.getStaticMethod(
+                    clazz$CraftBlastingRecipe, clazz$CraftBlastingRecipe, BlastingRecipe.class
+            )
+    );
+
+    public static final Class<?> clazz$CraftSmokingRecipe = requireNonNull(
+            ReflectionUtils.getClazz(
+                    BukkitReflectionUtils.assembleCBClass("inventory.CraftSmokingRecipe")
+            )
+    );
+
+    public static final Method method$CraftSmokingRecipe$fromBukkitRecipe = requireNonNull(
+            ReflectionUtils.getStaticMethod(
+                    clazz$CraftSmokingRecipe, clazz$CraftSmokingRecipe, SmokingRecipe.class
+            )
+    );
+
+    public static final Class<?> clazz$CraftCampfireRecipe = requireNonNull(
+            ReflectionUtils.getClazz(
+                    BukkitReflectionUtils.assembleCBClass("inventory.CraftCampfireRecipe")
+            )
+    );
+
+    public static final Method method$CraftCampfireRecipe$fromBukkitRecipe = requireNonNull(
+            ReflectionUtils.getStaticMethod(
+                    clazz$CraftCampfireRecipe, clazz$CraftCampfireRecipe, CampfireRecipe.class
+            )
+    );
+
+    public static final Field field$AbstractFurnaceBlockEntity$recipeType = requireNonNull(
+            ReflectionUtils.getDeclaredField(
+                    clazz$AbstractFurnaceBlockEntity, clazz$RecipeType, 0
+            )
+    );
+
+    public static final Field field$AbstractFurnaceBlockEntity$quickCheck = requireNonNull(
+            ReflectionUtils.getDeclaredField(
+                    clazz$AbstractFurnaceBlockEntity, clazz$RecipeManager$CachedCheck, 0
+            )
+    );
+
+    // 1.21+
+    public static final Class<?> clazz$RecipeInput = ReflectionUtils.getClazz(
+            BukkitReflectionUtils.assembleMCClass("world.item.crafting.RecipeInput")
+    );
+
+    public static final Class<?> clazz$SingleRecipeInput = ReflectionUtils.getClazz(
+            BukkitReflectionUtils.assembleMCClass("world.item.crafting.SingleRecipeInput")
+    );
+
+    // 1.20.1-1.21.1
+    public static final Method method$RecipeManager$getRecipeFor0 =
+            ReflectionUtils.getMethod(
+                    clazz$RecipeManager, Optional.class, clazz$RecipeType, clazz$Container, clazz$Level, clazz$ResourceLocation
+            );
+
+    // 1.21.2+
+    public static final Method method$RecipeManager$getRecipeFor1 =
+            ReflectionUtils.getMethod(
+                    clazz$RecipeManager, Optional.class, clazz$RecipeType, clazz$RecipeInput, clazz$Level, clazz$ResourceKey
+            );
+
+    // 1.21+
+    public static final Field field$SingleRecipeInput$item = Optional.ofNullable(clazz$SingleRecipeInput)
+            .map(it -> ReflectionUtils.getDeclaredField(it, clazz$ItemStack, 0))
+            .orElse(null);
+
+    public static final Field field$AbstractFurnaceBlockEntity$items = requireNonNull(
+            ReflectionUtils.getDeclaredField(
+                    clazz$AbstractFurnaceBlockEntity, clazz$NonNullList, 0
+            )
+    );
+
+    public static final Class<?> clazz$CraftBlockEntityState = requireNonNull(
+            ReflectionUtils.getClazz(
+                    BukkitReflectionUtils.assembleCBClass("block.CraftBlockEntityState")
+            )
+    );
+
+    public static final Field field$CraftBlockEntityState$tileEntity = requireNonNull(
+            ReflectionUtils.getDeclaredField(
+                    clazz$CraftBlockEntityState, 0
+            )
+    );
 }

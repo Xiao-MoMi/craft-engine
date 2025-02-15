@@ -11,6 +11,8 @@ public class ItemTags {
     public static final Key AXES = Key.of("minecraft:axes");
     public static final Key SWORDS = Key.of("minecraft:swords");
 
+    private ItemTags() {}
+
     public static Object getOrCreate(Key key) {
         Object value = CACHE.get(key);
         if (value == null) {

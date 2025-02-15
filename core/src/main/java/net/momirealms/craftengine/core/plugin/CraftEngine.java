@@ -7,7 +7,6 @@ import net.momirealms.craftengine.core.font.FontManagerImpl;
 import net.momirealms.craftengine.core.item.ItemManager;
 import net.momirealms.craftengine.core.item.recipe.RecipeManager;
 import net.momirealms.craftengine.core.pack.PackManager;
-import net.momirealms.craftengine.core.pack.PackManagerImpl;
 import net.momirealms.craftengine.core.plugin.classpath.ClassPathAppender;
 import net.momirealms.craftengine.core.plugin.command.CraftEngineCommandManager;
 import net.momirealms.craftengine.core.plugin.command.sender.SenderFactory;

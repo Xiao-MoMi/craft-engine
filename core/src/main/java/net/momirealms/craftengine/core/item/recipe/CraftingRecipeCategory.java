@@ -1,6 +1,6 @@
 package net.momirealms.craftengine.core.item.recipe;
 
-public enum RecipeCategory {
+public enum CraftingRecipeCategory {
     BUILDING,
     REDSTONE,
     EQUIPMENT,

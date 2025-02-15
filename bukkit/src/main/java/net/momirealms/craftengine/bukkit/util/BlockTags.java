@@ -8,6 +8,8 @@ import java.util.Map;
 public class BlockTags {
     private static final Map<Key, Object> CACHE = new HashMap<>();
 
+    private BlockTags() {}
+
     public static Object getOrCreate(Key key) {
         Object value = CACHE.get(key);
         if (value == null) {

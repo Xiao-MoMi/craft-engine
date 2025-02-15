@@ -15,8 +15,7 @@ public interface Recipe<T> {
     @NotNull
     Key type();
 
-    @Nullable
-    RecipeCategory category();
+    Key id();
 
     @Nullable
     String group();

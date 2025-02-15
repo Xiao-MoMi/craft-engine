@@ -5,6 +5,8 @@ import org.bukkit.block.BlockFace;
 
 public class DirectionUtils {
 
+    private DirectionUtils() {}
+
     public static Direction toDirection(BlockFace face) {
         return switch (face) {
             case UP -> Direction.UP;

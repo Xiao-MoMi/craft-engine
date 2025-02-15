@@ -13,8 +13,7 @@ public final class BukkitReflectionUtils {
     private static final String CB_PKG_VERSION;
     public static final int MAJOR_REVISION;
 
-    private BukkitReflectionUtils() {
-    }
+    private BukkitReflectionUtils() {}
 
     static {
         final Class<?> serverClass;

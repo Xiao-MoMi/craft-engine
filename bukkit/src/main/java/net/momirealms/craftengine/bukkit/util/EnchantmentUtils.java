@@ -5,6 +5,8 @@ import java.util.Map;
 
 public class EnchantmentUtils {
 
+    private EnchantmentUtils() {}
+
     @SuppressWarnings("unchecked")
     public static Map<String, Integer> toMap(Object itemEnchantments) throws ReflectiveOperationException {
         Map<String, Integer> map = new HashMap<>();

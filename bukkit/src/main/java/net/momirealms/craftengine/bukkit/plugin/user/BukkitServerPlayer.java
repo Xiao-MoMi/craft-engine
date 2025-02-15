@@ -10,7 +10,6 @@ import net.momirealms.craftengine.bukkit.world.BukkitWorld;
 import net.momirealms.craftengine.core.entity.player.InteractionHand;
 import net.momirealms.craftengine.core.entity.player.Player;
 import net.momirealms.craftengine.core.item.Item;
-import net.momirealms.craftengine.core.item.recipe.Recipe;
 import net.momirealms.craftengine.core.plugin.CraftEngine;
 import net.momirealms.craftengine.core.plugin.network.ConnectionState;
 import net.momirealms.craftengine.core.util.Direction;
@@ -61,7 +60,7 @@ public class BukkitServerPlayer extends Player {
     private int resentSoundTick;
     private int resentSwingTick;
 
-    private Recipe<ItemStack> lastUsedRecipe = null;
+    private Key lastUsedRecipe = null;
 
     public BukkitServerPlayer(BukkitCraftEngine plugin, Channel channel) {
         this.channel = channel;
@@ -536,11 +535,11 @@ public class BukkitServerPlayer extends Player {
         return resentSwingTick == gameTicks();
     }
 
-    public Recipe<ItemStack> lastUsedRecipe() {
+    public Key lastUsedRecipe() {
         return lastUsedRecipe;
     }
 
-    public void setLastUsedRecipe(Recipe<ItemStack> lastUsedRecipe) {
+    public void setLastUsedRecipe(Key lastUsedRecipe) {
         this.lastUsedRecipe = lastUsedRecipe;
     }
 }

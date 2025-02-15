@@ -15,6 +15,8 @@ import static java.util.Objects.requireNonNull;
 
 public class PlayerUtils {
 
+    private PlayerUtils() {}
+
     public static void dropItem(@NotNull Player player, @NotNull ItemStack itemStack, boolean retainOwnership, boolean noPickUpDelay, boolean throwRandomly) {
         requireNonNull(player, "player");
         requireNonNull(itemStack, "itemStack");

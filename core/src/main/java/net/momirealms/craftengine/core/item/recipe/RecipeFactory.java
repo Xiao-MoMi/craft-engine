@@ -8,7 +8,7 @@ import java.util.Map;
 
 public interface RecipeFactory<T> {
 
-    Recipe<T> create(Map<String, Object> arguments);
+    Recipe<T> create(Key id, Map<String, Object> arguments);
 
     @SuppressWarnings({"unchecked", "rawtypes"})
     default CustomRecipeResult<T> parseResult(Map<String, Object> arguments) {

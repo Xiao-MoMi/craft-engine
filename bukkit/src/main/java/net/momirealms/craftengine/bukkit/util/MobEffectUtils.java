@@ -2,6 +2,8 @@ package net.momirealms.craftengine.bukkit.util;
 
 public class MobEffectUtils {
 
+    private MobEffectUtils() {}
+
     public static byte pack(boolean isAmbient, boolean isVisible, boolean showIcon) {
         byte b = 0;
         if (isAmbient) {

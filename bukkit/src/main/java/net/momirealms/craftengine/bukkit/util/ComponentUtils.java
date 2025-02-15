@@ -6,6 +6,8 @@ import net.momirealms.craftengine.core.util.VersionHelper;
 
 public class ComponentUtils {
 
+    private ComponentUtils() {}
+
     public static Object adventureToMinecraft(Component component) {
         String json = AdventureHelper.componentToJson(component);
         if (VersionHelper.isVersionNewerThan1_20_5()) {

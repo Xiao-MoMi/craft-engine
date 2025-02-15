@@ -6,6 +6,8 @@ import org.bukkit.event.Event;
 
 public class EventUtils {
 
+    private EventUtils() {}
+
     public static void fireAndForget(Event event) {
         Bukkit.getPluginManager().callEvent(event);
     }

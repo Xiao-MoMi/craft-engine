@@ -1,6 +1,7 @@
 package net.momirealms.craftengine.bukkit.item.recipe;
 
 import net.momirealms.craftengine.bukkit.plugin.BukkitCraftEngine;
+import net.momirealms.craftengine.bukkit.plugin.injector.BukkitInjector;
 import net.momirealms.craftengine.bukkit.plugin.user.BukkitServerPlayer;
 import net.momirealms.craftengine.bukkit.util.ItemUtils;
 import net.momirealms.craftengine.bukkit.util.Reflections;
@@ -15,10 +16,15 @@ import net.momirealms.craftengine.core.registry.Holder;
 import net.momirealms.craftengine.core.util.Key;
 import net.momirealms.craftengine.core.util.VersionHelper;
 import org.bukkit.Material;
+import org.bukkit.block.Block;
+import org.bukkit.block.Furnace;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
+import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
+import org.bukkit.event.block.BlockPlaceEvent;
 import org.bukkit.event.inventory.InventoryClickEvent;
+import org.bukkit.event.inventory.InventoryOpenEvent;
 import org.bukkit.event.inventory.PrepareItemCraftEvent;
 import org.bukkit.inventory.*;
 
@@ -38,7 +44,37 @@ public class RecipeEventListener implements Listener {
         this.plugin = plugin;
     }
 
-    @EventHandler
+    @EventHandler(ignoreCancelled = true, priority = EventPriority.MONITOR)
+    public void onFurnaceInventoryOpen(InventoryOpenEvent event) {
+        if (!(event.getInventory() instanceof FurnaceInventory furnaceInventory)) {
+            return;
+        }
+        Furnace furnace = furnaceInventory.getHolder();
+        try {
+            Object blockEntity = Reflections.field$CraftBlockEntityState$tileEntity.get(furnace);
+            BukkitInjector.injectFurnaceBlockEntity(blockEntity);
+        } catch (Exception e) {
+            plugin.logger().warn("Failed to inject cooking block entity", e);
+        }
+    }
+
+    @EventHandler(ignoreCancelled = true, priority = EventPriority.MONITOR)
+    public void onPlaceBlock(BlockPlaceEvent event) {
+        Block block = event.getBlock();
+        Material material = block.getType();
+        if (material == Material.FURNACE || material == Material.BLAST_FURNACE || material == Material.SMOKER) {
+            if (block.getState() instanceof Furnace furnace) {
+                try {
+                    Object blockEntity = Reflections.field$CraftBlockEntityState$tileEntity.get(furnace);
+                    BukkitInjector.injectFurnaceBlockEntity(blockEntity);
+                } catch (Exception e) {
+                    plugin.logger().warn("Failed to inject cooking block entity", e);
+                }
+            }
+        }
+    }
+
+    @EventHandler(ignoreCancelled = true)
     public void onClickCartographyTable(InventoryClickEvent event) {
         if (VersionHelper.isPaper()) return;
         if (!(event.getClickedInventory() instanceof CartographyInventory cartographyInventory)) {
@@ -51,7 +87,7 @@ public class RecipeEventListener implements Listener {
         });
     }
 
-    @EventHandler
+    @EventHandler(ignoreCancelled = true)
     public void onSpecialRecipe(PrepareItemCraftEvent event) {
         org.bukkit.inventory.Recipe recipe = event.getRecipe();
         if (recipe == null)
@@ -64,8 +100,8 @@ public class RecipeEventListener implements Listener {
         }
     }
 
-    @EventHandler
-    public void onCrafting(PrepareItemCraftEvent event) {
+    @EventHandler(ignoreCancelled = true)
+    public void onCraftingRecipe(PrepareItemCraftEvent event) {
         org.bukkit.inventory.Recipe recipe = event.getRecipe();
         if (recipe == null)
             return;
@@ -78,23 +114,14 @@ public class RecipeEventListener implements Listener {
         CraftingRecipe craftingRecipe = (CraftingRecipe) recipe;
         Key recipeId = Key.of(craftingRecipe.getKey().namespace(), craftingRecipe.getKey().value());
 
-        CraftingInventory inventory = event.getInventory();
-        ItemStack[] ingredients = inventory.getMatrix();
-
         boolean isCustom = this.recipeManager.isCustomRecipe(recipeId);
-
-        // if the recipe is a vanilla one but not injected, custom items should never be ingredients
-        if (this.recipeManager.isDataPackRecipe(recipeId) && !isCustom) {
-            if (ItemUtils.hasCustomItem(ingredients)) {
-                inventory.setResult(null);
-            }
-            return;
-        }
-
         // Maybe it's recipe from other plugins, then we ignore it
         if (!isCustom) {
             return;
         }
+
+        CraftingInventory inventory = event.getInventory();
+        ItemStack[] ingredients = inventory.getMatrix();
 
         List<OptimizedIDItem<ItemStack>> optimizedIDItems = new ArrayList<>();
         for (ItemStack itemStack : ingredients) {
@@ -131,35 +158,32 @@ public class RecipeEventListener implements Listener {
         }
 
         BukkitServerPlayer serverPlayer = this.plugin.adapt(player);
-        Recipe<ItemStack> lastRecipe = serverPlayer.lastUsedRecipe();
-        if (lastRecipe != null && (lastRecipe.type() == RecipeTypes.SHAPELESS || lastRecipe.type() == RecipeTypes.SHAPED )) {
-            if (lastRecipe.matches(input)) {
-                inventory.setResult(lastRecipe.getResult(serverPlayer));
-                return;
-            }
-        }
+        Key lastRecipe = serverPlayer.lastUsedRecipe();
 
-        Recipe<ItemStack> ceRecipe = this.recipeManager.getRecipe(RecipeTypes.SHAPELESS, input);
+        Recipe<ItemStack> ceRecipe = this.recipeManager.getRecipe(RecipeTypes.SHAPELESS, input, lastRecipe);
         if (ceRecipe != null) {
             inventory.setResult(ceRecipe.getResult(serverPlayer));
-            serverPlayer.setLastUsedRecipe(ceRecipe);
-            correctRecipeUsed(inventory, ceRecipe);
+            serverPlayer.setLastUsedRecipe(ceRecipe.id());
+            correctCraftingRecipeUsed(inventory, ceRecipe);
             return;
         }
-        ceRecipe = this.recipeManager.getRecipe(RecipeTypes.SHAPED, input);
+        ceRecipe = this.recipeManager.getRecipe(RecipeTypes.SHAPED, input, lastRecipe);
         if (ceRecipe != null) {
             inventory.setResult(ceRecipe.getResult(serverPlayer));
-            serverPlayer.setLastUsedRecipe(ceRecipe);
-            correctRecipeUsed(inventory, ceRecipe);
+            serverPlayer.setLastUsedRecipe(ceRecipe.id());
+            correctCraftingRecipeUsed(inventory, ceRecipe);
             return;
         }
         // clear result if not met
         inventory.setResult(null);
     }
 
-    private void correctRecipeUsed(CraftingInventory inventory, Recipe<ItemStack> recipe) {
+    private void correctCraftingRecipeUsed(CraftingInventory inventory, Recipe<ItemStack> recipe) {
         Object holderOrRecipe = recipeManager.getRecipeHolderByRecipe(recipe);
-        if (holderOrRecipe == null) return;
+        if (holderOrRecipe == null) {
+            // it's a vanilla recipe but not injected
+            return;
+        }
         try {
             Object resultInventory = Reflections.field$CraftInventoryCrafting$resultInventory.get(inventory);
             Reflections.field$ResultContainer$recipeUsed.set(resultInventory, holderOrRecipe);

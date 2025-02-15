@@ -6,8 +6,10 @@ import net.momirealms.craftengine.core.util.MiscUtils;
 import net.momirealms.sparrow.nbt.StringTag;
 import net.momirealms.sparrow.nbt.Tag;
 
-import java.lang.reflect.Array;
-import java.util.*;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+import java.util.Optional;
 
 public class StringProperty extends Property<String> {
     public static final Factory FACTORY = new Factory();

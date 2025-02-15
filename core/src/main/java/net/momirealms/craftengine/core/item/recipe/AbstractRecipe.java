@@ -1,25 +1,25 @@
 package net.momirealms.craftengine.core.item.recipe;
 
+import net.momirealms.craftengine.core.util.Key;
 import org.jetbrains.annotations.Nullable;
 
 public abstract class AbstractRecipe<T> implements Recipe<T> {
-    protected RecipeCategory category;
     protected String group;
+    protected Key id;
 
-    protected AbstractRecipe(RecipeCategory category, String group) {
-        this.category = category;
+    protected AbstractRecipe(Key id, String group) {
         this.group = group;
-    }
-
-    @Override
-    @Nullable
-    public RecipeCategory category() {
-        return category;
+        this.id = id;
     }
 
     @Override
     @Nullable
     public String group() {
         return group;
+    }
+
+    @Override
+    public Key id() {
+        return id;
     }
 }

@@ -11,6 +11,8 @@ import java.lang.reflect.InvocationTargetException;
 
 public class ItemUtils {
 
+    private ItemUtils() {}
+
     @Contract("null -> true")
     public static boolean isEmpty(final ItemStack item) {
         if (item == null) return true;
@@ -37,6 +39,13 @@ public class ItemUtils {
                     return true;
                 }
             }
+        }
+        return false;
+    }
+
+    public static boolean isCustomItem(ItemStack stack) {
+        if (!ItemUtils.isEmpty(stack)) {
+            return BukkitItemManager.instance().wrap(stack).customId().isPresent();
         }
         return false;
     }

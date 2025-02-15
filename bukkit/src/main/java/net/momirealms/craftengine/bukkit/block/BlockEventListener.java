@@ -5,8 +5,6 @@ import net.momirealms.craftengine.bukkit.plugin.BukkitCraftEngine;
 import net.momirealms.craftengine.bukkit.plugin.user.BukkitServerPlayer;
 import net.momirealms.craftengine.bukkit.util.*;
 import net.momirealms.craftengine.bukkit.world.BukkitWorld;
-import net.momirealms.craftengine.bukkit.world.BukkitWorldManager;
-import net.momirealms.craftengine.core.block.EmptyBlock;
 import net.momirealms.craftengine.core.block.ImmutableBlockState;
 import net.momirealms.craftengine.core.block.PushReaction;
 import net.momirealms.craftengine.core.block.properties.Property;
@@ -18,7 +16,6 @@ import net.momirealms.craftengine.core.plugin.config.ConfigManager;
 import net.momirealms.craftengine.core.util.Key;
 import net.momirealms.craftengine.core.util.context.ContextHolder;
 import net.momirealms.craftengine.core.world.BlockPos;
-import net.momirealms.craftengine.core.world.CEWorld;
 import net.momirealms.craftengine.core.world.Vec3d;
 import org.bukkit.*;
 import org.bukkit.block.Block;
@@ -197,27 +194,25 @@ public class BlockEventListener implements Listener {
         handlePistonEvent(event.getDirection(), event.getBlocks(), event.getBlock());
     }
 
-    // todo refactor this method
     private void handlePistonEvent(BlockFace face, List<Block> blocksList, Block piston) {
         int blocks = blocksList.size();
-        CEWorld world = BukkitWorldManager.instance().getWorld(piston.getWorld());
+        net.momirealms.craftengine.core.world.World world = new BukkitWorld(piston.getWorld());
         for (int i = blocks - 1; i >= 0; --i) {
             Location oldLocation = blocksList.get(i).getLocation();
             BlockPos oldPos = new BlockPos(oldLocation.getBlockX(), oldLocation.getBlockY(), oldLocation.getBlockZ());
-            ImmutableBlockState blockState = world.getBlockStateAtIfLoaded(oldPos);
-            if (blockState.pushReaction() == PushReaction.DESTROY) {
+            Block block = blocksList.get(i);
+            ImmutableBlockState blockState = manager.getImmutableBlockState(BlockStateUtils.blockDataToId(block.getBlockData()));
+            if (blockState != null && blockState.pushReaction() == PushReaction.DESTROY) {
                 // break actions
                 ContextHolder.Builder builder = ContextHolder.builder();
                 Vec3d vec3d = Vec3d.atCenterOf(oldPos);
                 builder.withParameter(LootParameters.LOCATION, vec3d);
-                builder.withParameter(LootParameters.WORLD, world.world());
-                for (Item<Object> item : blockState.getDrops(builder, world.world())) {
-                    world.world().dropItemNaturally(vec3d, item);
+                builder.withParameter(LootParameters.WORLD, world);
+                for (Item<Object> item : blockState.getDrops(builder, world)) {
+                    world.dropItemNaturally(vec3d, item);
                 }
-                world.world().playBlockSound(vec3d, blockState.sounds().breakSound(),1f, 1f);
+                world.playBlockSound(vec3d, blockState.sounds().breakSound(),1f, 1f);
             }
-            // to prevent duplication in other events
-            world.setBlockStateAtIfLoaded(oldPos, EmptyBlock.INSTANCE.getDefaultState());
         }
     }
 

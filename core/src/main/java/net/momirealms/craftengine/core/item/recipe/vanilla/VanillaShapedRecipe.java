@@ -1,15 +1,15 @@
 package net.momirealms.craftengine.core.item.recipe.vanilla;
 
-import net.momirealms.craftengine.core.item.recipe.RecipeCategory;
+import net.momirealms.craftengine.core.item.recipe.CraftingRecipeCategory;
 
 import java.util.List;
 import java.util.Map;
 
-public class VanillaShapedRecipe extends VanillaRecipe {
+public class VanillaShapedRecipe extends VanillaCraftingRecipe {
     private final String[] pattern;
     private final Map<Character, List<String>> key;
 
-    public VanillaShapedRecipe(RecipeCategory category,
+    public VanillaShapedRecipe(CraftingRecipeCategory category,
                                String group,
                                Map<Character, List<String>> key,
                                String[] pattern,

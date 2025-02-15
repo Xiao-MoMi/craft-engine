@@ -6,6 +6,8 @@ import org.jetbrains.annotations.NotNull;
 
 public class LocationUtils {
 
+    private LocationUtils() {}
+
     public static Object toBlockPos(BlockPos pos) {
         try {
             return Reflections.constructor$BlockPos.newInstance(pos.x(), pos.y(), pos.z());

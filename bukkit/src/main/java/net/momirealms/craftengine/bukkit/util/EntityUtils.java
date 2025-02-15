@@ -10,6 +10,8 @@ import org.bukkit.event.entity.CreatureSpawnEvent;
 
 public class EntityUtils {
 
+    private EntityUtils() {}
+
     public static BlockPos getOnPos(Player player) {
         try {
             Object serverPlayer = Reflections.method$CraftPlayer$getHandle.invoke(player);

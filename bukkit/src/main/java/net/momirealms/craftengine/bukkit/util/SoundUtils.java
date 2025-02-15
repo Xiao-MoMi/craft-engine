@@ -5,6 +5,8 @@ import net.momirealms.craftengine.core.util.Key;
 
 public class SoundUtils {
 
+    private SoundUtils() {}
+
     public static Object toSoundType(BlockSounds sounds) throws ReflectiveOperationException {
         return Reflections.constructor$SoundType.newInstance(
             1f, 1f,

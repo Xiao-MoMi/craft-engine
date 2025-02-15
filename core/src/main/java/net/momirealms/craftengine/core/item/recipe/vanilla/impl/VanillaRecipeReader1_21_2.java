@@ -12,6 +12,20 @@ import java.util.Map;
 public class VanillaRecipeReader1_21_2 extends VanillaRecipeReader1_20_5 {
 
     @Override
+    protected List<String> readCookingIngredients(JsonElement json) {
+        if (json.isJsonPrimitive()) {
+            return List.of(json.getAsString());
+        } else {
+            JsonArray array = json.getAsJsonArray();
+            List<String> ingredients = new ArrayList<>();
+            for (JsonElement element : array) {
+                ingredients.add(element.getAsString());
+            }
+            return ingredients;
+        }
+    }
+
+    @Override
     protected Map<Character, List<String>> readShapedIngredientMap(JsonObject json) {
         Map<Character, List<String>> ingredients = new HashMap<>();
         for (Map.Entry<String, JsonElement> entry : json.entrySet()) {

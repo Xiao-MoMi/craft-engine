@@ -5,6 +5,8 @@ import org.bukkit.NamespacedKey;
 
 public class KeyUtils {
 
+    private KeyUtils() {}
+
     public static Key namespacedKey2Key(NamespacedKey key) {
         return Key.of(key.namespace(), key.value());
     }
