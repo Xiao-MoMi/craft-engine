@@ -1,81 +1,177 @@
 package net.momirealms.craftengine.bukkit.entity.furniture;
 
-import com.destroystokyo.paper.event.entity.EntityAddToWorldEvent;
-import com.destroystokyo.paper.event.entity.EntityRemoveFromWorldEvent;
 import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
 import it.unimi.dsi.fastutil.ints.IntSet;
-import net.momirealms.craftengine.bukkit.item.behavior.FurnitureItemBehavior;
 import net.momirealms.craftengine.bukkit.plugin.BukkitCraftEngine;
-import net.momirealms.craftengine.core.entity.furniture.AnchorType;
-import net.momirealms.craftengine.core.entity.furniture.FurnitureManager;
-import net.momirealms.craftengine.core.item.CustomItem;
+import net.momirealms.craftengine.bukkit.util.EntityUtils;
+import net.momirealms.craftengine.core.entity.furniture.*;
+import net.momirealms.craftengine.core.loot.LootTable;
+import net.momirealms.craftengine.core.pack.Pack;
 import net.momirealms.craftengine.core.plugin.config.ConfigManager;
+import net.momirealms.craftengine.core.plugin.scheduler.SchedulerTask;
 import net.momirealms.craftengine.core.util.Key;
 import net.momirealms.craftengine.core.util.MiscUtils;
 import net.momirealms.craftengine.core.util.VersionHelper;
-import org.bukkit.Bukkit;
-import org.bukkit.Location;
-import org.bukkit.NamespacedKey;
-import org.bukkit.World;
-import org.bukkit.entity.ArmorStand;
-import org.bukkit.entity.Entity;
-import org.bukkit.entity.ItemDisplay;
-import org.bukkit.entity.Player;
-import org.bukkit.event.EventHandler;
-import org.bukkit.event.EventPriority;
+import org.bukkit.*;
+import org.bukkit.entity.*;
 import org.bukkit.event.HandlerList;
 import org.bukkit.event.Listener;
-import org.bukkit.event.entity.EntityDismountEvent;
-import org.bukkit.event.entity.PlayerDeathEvent;
-import org.bukkit.event.player.PlayerInteractAtEntityEvent;
-import org.bukkit.event.player.PlayerQuitEvent;
-import org.bukkit.event.world.ChunkUnloadEvent;
-import org.bukkit.event.world.EntitiesLoadEvent;
-import org.bukkit.event.world.WorldLoadEvent;
-import org.bukkit.event.world.WorldUnloadEvent;
-import org.bukkit.inventory.ItemStack;
 import org.bukkit.persistence.PersistentDataType;
 import org.jetbrains.annotations.NotNull;
-import org.joml.Quaternionf;
-import org.joml.Vector3d;
 import org.joml.Vector3f;
 
 import javax.annotation.Nullable;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Optional;
+import java.nio.file.Path;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
-public class BukkitFurnitureManager implements FurnitureManager, Listener {
+public class BukkitFurnitureManager implements FurnitureManager {
     public static final NamespacedKey FURNITURE_KEY = Objects.requireNonNull(NamespacedKey.fromString("craftengine:furniture_id"));
     public static final NamespacedKey FURNITURE_ANCHOR_KEY = Objects.requireNonNull(NamespacedKey.fromString("craftengine:anchor_type"));
     public static final NamespacedKey FURNITURE_SEAT_BASE_ENTITY_KEY = Objects.requireNonNull(NamespacedKey.fromString("craftengine:seat_to_base_entity"));
     public static final NamespacedKey FURNITURE_SEAT_VECTOR_3F_KEY = Objects.requireNonNull(NamespacedKey.fromString("craftengine:seat_vector"));
     private static BukkitFurnitureManager instance;
     private final BukkitCraftEngine plugin;
-    private final Listener dismountListener;
-    private final Map<Integer, LoadedFurniture> furnitureByBaseEntityId;
-    private final Map<Integer, LoadedFurniture> furnitureByInteractionEntityId;
-    private final Map<Integer, int[]> baseEntity2SubEntities;
-    private static final int DELAYED_TICK = 5;
+
+    private final Map<Key, CustomFurniture> byId = new HashMap<>();
+
+    private final Map<Integer, LoadedFurniture> furnitureByBaseEntityId  = new ConcurrentHashMap<>(256, 0.5f);
+    private final Map<Integer, LoadedFurniture> furnitureByInteractionEntityId  = new ConcurrentHashMap<>(512, 0.5f);
+    private final Map<Integer, int[]> baseEntity2SubEntities = new ConcurrentHashMap<>(256, 0.5f);
+
     // Delay furniture cache remove for about 4-5 ticks
+    private static final int DELAYED_TICK = 5;
     private final IntSet[] delayedRemove = new IntSet[DELAYED_TICK];
+    // Event listeners
+    private final Listener dismountListener;
+    private final FurnitureEventListener furnitureEventListener;
+    // tick task
+    private SchedulerTask tickTask;
+
+    public static BukkitFurnitureManager instance() {
+        return instance;
+    }
 
     public BukkitFurnitureManager(BukkitCraftEngine plugin) {
         this.plugin = plugin;
-        this.furnitureByBaseEntityId = new ConcurrentHashMap<>(256, 0.5f);
-        this.furnitureByInteractionEntityId = new ConcurrentHashMap<>(512, 0.5f);
-        this.baseEntity2SubEntities = new ConcurrentHashMap<>(256, 0.5f);
-        this.dismountListener = VersionHelper.isVersionNewerThan1_20_3() ? new DismountListener1_20_3() : new DismountListener1_20(this::handleDismount);
+        this.furnitureEventListener = new FurnitureEventListener(this);
+        this.dismountListener = VersionHelper.isVersionNewerThan1_20_3() ? new DismountListener1_20_3(this) : new DismountListener1_20(this::handleDismount);
         for (int i = 0; i < DELAYED_TICK; i++) {
             this.delayedRemove[i] = new IntOpenHashSet();
         }
         instance = this;
     }
 
+    public LoadedFurniture place(CustomFurniture furniture, Location location, AnchorType anchorType, boolean playSound) {
+        Entity furnitureEntity = EntityUtils.spawnEntity(location.getWorld(), location, EntityType.ITEM_DISPLAY, entity -> {
+            ItemDisplay display = (ItemDisplay) entity;
+            display.getPersistentDataContainer().set(BukkitFurnitureManager.FURNITURE_KEY, PersistentDataType.STRING, furniture.id().toString());
+            display.getPersistentDataContainer().set(BukkitFurnitureManager.FURNITURE_ANCHOR_KEY, PersistentDataType.STRING, anchorType.name());
+            handleEntityLoadEarly(display);
+        });
+        if (playSound) {
+            location.getWorld().playSound(location, furniture.settings().sounds().placeSound().toString(), SoundCategory.BLOCKS,1f, 1f);
+        }
+        return getLoadedFurnitureByBaseEntityId(furnitureEntity.getEntityId());
+    }
+
+    @SuppressWarnings("unchecked")
+    @Override
+    public void parseSection(Pack pack, Path path, Key id, Map<String, Object> section) {
+        Map<String, Object> lootMap = MiscUtils.castToMap(section.get("loot"), true);
+        Map<String, Object> settingsMap = MiscUtils.castToMap(section.get("settings"), true);
+        Map<String, Object> placementMap = MiscUtils.castToMap(section.get("placement"), true);
+        EnumMap<AnchorType, CustomFurniture.Placement> placements = new EnumMap<>(AnchorType.class);
+        if (placementMap == null) {
+            throw new IllegalArgumentException("Missing required parameter 'placement' for furniture_item behavior");
+        }
+        for (Map.Entry<String, Object> entry : placementMap.entrySet()) {
+            AnchorType anchorType = AnchorType.valueOf(entry.getKey().toUpperCase(Locale.ENGLISH));
+            Map<String, Object> placementArguments = MiscUtils.castToMap(entry.getValue(), true);
+
+            List<FurnitureElement> elements = new ArrayList<>();
+            List<Map<String, Object>> elementConfigs = (List<Map<String, Object>>) placementArguments.getOrDefault("elements", List.of());
+            for (Map<String, Object> element : elementConfigs) {
+                String key = (String) element.get("item");
+                if (key == null) {
+                    throw new IllegalArgumentException("Missing required parameter 'item' for furniture_item behavior");
+                }
+                ItemDisplayContext transform = ItemDisplayContext.valueOf(element.getOrDefault("transform", "NONE").toString().toUpperCase(Locale.ENGLISH));
+                Billboard billboard = Billboard.valueOf(element.getOrDefault("billboard", "FIXED").toString().toUpperCase(Locale.ENGLISH));
+                FurnitureElement furnitureElement = new FurnitureElement(Key.of(key), billboard, transform,
+                        MiscUtils.getVector3f(element.getOrDefault("scale", "1")),
+                        MiscUtils.getVector3f(element.getOrDefault("translation", "0")),
+                        MiscUtils.getVector3f(element.getOrDefault("position", "0")),
+                        MiscUtils.getQuaternionf(element.getOrDefault("rotation", "0"))
+                );
+                elements.add(furnitureElement);
+            }
+            List<Map<String, Object>> hitboxConfigs = (List<Map<String, Object>>) placementArguments.getOrDefault("hitboxes", List.of());
+            List<HitBox> hitboxes = new ArrayList<>();
+            for (Map<String, Object> config : hitboxConfigs) {
+                List<String> seats = (List<String>) config.getOrDefault("seats", List.of());
+                Seat[] seatArray = seats.stream()
+                        .map(arg -> {
+                            String[] split = arg.split(" ");
+                            if (split.length == 1) return new Seat(MiscUtils.getVector3f(split[0]), 0, false);
+                            return new Seat(MiscUtils.getVector3f(split[0]), Float.parseFloat(split[1]), true);
+                        })
+                        .toArray(Seat[]::new);
+                Vector3f position = MiscUtils.getVector3f(config.getOrDefault("position", "0"));
+                float width = MiscUtils.getAsFloat(config.getOrDefault("width", "1"));
+                float height = MiscUtils.getAsFloat(config.getOrDefault("height", "1"));
+                HitBox hitBox = new HitBox(
+                        position,
+                        new Vector3f(width, height, width),
+                        seatArray,
+                        (boolean) config.getOrDefault("interactive", true)
+                );
+                hitboxes.add(hitBox);
+            }
+            if (hitboxes.isEmpty()) {
+                hitboxes.add(new HitBox(
+                        new Vector3f(),
+                        new Vector3f(1,1,1),
+                        new Seat[0],
+                        true
+                ));
+            }
+            Map<String, Object> ruleSection = MiscUtils.castToMap(placementArguments.get("rules"), true);
+            if (ruleSection != null) {
+                RotationRule rotationRule = Optional.ofNullable((String) ruleSection.get("rotation"))
+                        .map(it -> RotationRule.valueOf(it.toUpperCase(Locale.ENGLISH)))
+                        .orElse(RotationRule.ANY);
+                AlignmentRule alignmentRule = Optional.ofNullable((String) ruleSection.get("alignment"))
+                        .map(it -> AlignmentRule.valueOf(it.toUpperCase(Locale.ENGLISH)))
+                        .orElse(AlignmentRule.CENTER);
+                placements.put(anchorType, new CustomFurniture.Placement(
+                        elements.toArray(new FurnitureElement[0]),
+                        hitboxes.toArray(new HitBox[0]),
+                        rotationRule,
+                        alignmentRule
+                ));
+            } else {
+                placements.put(anchorType, new CustomFurniture.Placement(
+                        elements.toArray(new FurnitureElement[0]),
+                        hitboxes.toArray(new HitBox[0]),
+                        RotationRule.ANY,
+                        AlignmentRule.CENTER
+                ));
+            }
+        }
+
+        CustomFurniture furniture = new CustomFurniture(
+                id,
+                FurnitureSettings.fromMap(settingsMap),
+                placements,
+                lootMap == null ? null : LootTable.fromMap(lootMap)
+        );
+
+        this.byId.put(id, furniture);
+    }
+
     public void tick() {
-        IntSet first = delayedRemove[0];
+        IntSet first = this.delayedRemove[0];
         for (int i : first) {
             // unloaded furniture might be loaded again
             LoadedFurniture furniture = getLoadedFurnitureByBaseEntityId(i);
@@ -84,11 +180,12 @@ public class BukkitFurnitureManager implements FurnitureManager, Listener {
         }
         first.clear();
         for (int i = 1; i < DELAYED_TICK; i++) {
-            delayedRemove[i - 1] = delayedRemove[i];
+            this.delayedRemove[i - 1] = this.delayedRemove[i];
         }
-        delayedRemove[DELAYED_TICK-1] = first;
+        this.delayedRemove[DELAYED_TICK-1] = first;
     }
 
+    @Override
     public void delayedLoad() {
         for (World world : Bukkit.getWorlds()) {
             List<Entity> entities = world.getEntities();
@@ -100,14 +197,19 @@ public class BukkitFurnitureManager implements FurnitureManager, Listener {
 
     @Override
     public void unload() {
-        HandlerList.unregisterAll(this);
+        this.byId.clear();
         HandlerList.unregisterAll(this.dismountListener);
+        HandlerList.unregisterAll(this.furnitureEventListener);
+        if (tickTask != null && !tickTask.cancelled()) {
+            tickTask.cancel();
+        }
     }
 
     @Override
     public void load() {
-        Bukkit.getPluginManager().registerEvents(this, plugin.bootstrap());
-        Bukkit.getPluginManager().registerEvents(this.dismountListener, plugin.bootstrap());
+        Bukkit.getPluginManager().registerEvents(this.dismountListener, this.plugin.bootstrap());
+        Bukkit.getPluginManager().registerEvents(this.furnitureEventListener, this.plugin.bootstrap());
+        this.tickTask = plugin.scheduler().sync().runRepeating(this::tick, 1, 1);
     }
 
     @Override
@@ -121,11 +223,18 @@ public class BukkitFurnitureManager implements FurnitureManager, Listener {
         }
     }
 
+    @Override
+    public Optional<CustomFurniture> getFurniture(Key id) {
+        return Optional.ofNullable(this.byId.get(id));
+    }
+
     @Nullable
+    @Override
     public int[] getSubEntityIdsByBaseEntityId(int entityId) {
         return this.baseEntity2SubEntities.get(entityId);
     }
 
+    @Override
     public boolean isFurnitureBaseEntity(int entityId) {
         return this.furnitureByBaseEntityId.containsKey(entityId);
     }
@@ -140,59 +249,7 @@ public class BukkitFurnitureManager implements FurnitureManager, Listener {
         return this.furnitureByInteractionEntityId.get(entityId);
     }
 
-    public static BukkitFurnitureManager instance() {
-        return instance;
-    }
-
-    /*
-     * Load Entities
-     */
-    @EventHandler(ignoreCancelled = true, priority = EventPriority.LOWEST)
-    public void onEntitiesLoadEarly(EntitiesLoadEvent event) {
-        List<Entity> entities = event.getEntities();
-        for (Entity entity : entities) {
-            handleEntityLoadEarly(entity);
-        }
-    }
-
-    @EventHandler(ignoreCancelled = true, priority = EventPriority.LOWEST)
-    public void onWorldLoad(WorldLoadEvent event) {
-        List<Entity> entities = event.getWorld().getEntities();
-        for (Entity entity : entities) {
-            handleEntityLoadEarly(entity);
-        }
-    }
-
-    @EventHandler(ignoreCancelled = true, priority = EventPriority.LOWEST)
-    public void onEntityLoad(EntityAddToWorldEvent event) {
-        handleEntityLoadLate(event.getEntity());
-    }
-
-    /*
-     * Unload Entities
-     */
-    @EventHandler(ignoreCancelled = true, priority = EventPriority.HIGHEST)
-    public void onChunkUnload(ChunkUnloadEvent event) {
-        Entity[] entities = event.getChunk().getEntities();
-        for (Entity entity : entities) {
-            handleEntityUnload(entity);
-        }
-    }
-
-    @EventHandler(ignoreCancelled = true, priority = EventPriority.HIGHEST)
-    public void onWorldUnload(WorldUnloadEvent event) {
-        List<Entity> entities = event.getWorld().getEntities();
-        for (Entity entity : entities) {
-            handleEntityUnload(entity);
-        }
-    }
-
-    @EventHandler(ignoreCancelled = true, priority = EventPriority.HIGHEST)
-    public void onEntityUnload(EntityRemoveFromWorldEvent event) {
-        handleEntityUnload(event.getEntity());
-    }
-
-    private void handleEntityUnload(Entity entity) {
+    protected void handleEntityUnload(Entity entity) {
         int id = entity.getEntityId();
         LoadedFurniture furniture = this.furnitureByBaseEntityId.remove(id);
         if (furniture != null) {
@@ -204,22 +261,20 @@ public class BukkitFurnitureManager implements FurnitureManager, Listener {
         }
     }
 
-    @SuppressWarnings("deprecation")
-    public void handleEntityLoadLate(Entity entity) {
+    @SuppressWarnings("deprecation") // just a misleading name `getTrackedPlayers`
+    protected void handleEntityLoadLate(Entity entity) {
         if (entity instanceof ItemDisplay display) {
             String id = entity.getPersistentDataContainer().get(FURNITURE_KEY, PersistentDataType.STRING);
             if (id == null) return;
             Key key = Key.of(id);
-            Optional<CustomItem<ItemStack>> optionalItem = plugin.itemManager().getCustomItem(key);
-            if (optionalItem.isEmpty()) return;
-            CustomItem<ItemStack> customItem = optionalItem.get();
-            if (!(customItem.behavior() instanceof FurnitureItemBehavior behavior)) return;
+            Optional<CustomFurniture> optionalFurniture = getFurniture(key);
+            if (optionalFurniture.isEmpty()) return;
+            CustomFurniture customFurniture = optionalFurniture.get();
             LoadedFurniture previous = this.furnitureByBaseEntityId.get(display.getEntityId());
             if (previous != null) return;
-            Quaternionf rotation = display.getTransformation().getRightRotation();
-            LoadedFurniture furniture = addNewFurniture(display, key, behavior, getAnchorType(entity, behavior), rotation);
+            LoadedFurniture furniture = addNewFurniture(display, customFurniture, getAnchorType(entity, customFurniture));
             for (Player player : display.getTrackedPlayers()) {
-                plugin.networkManager().sendPacket(player, furniture.spawnPacket());
+                this.plugin.networkManager().sendPacket(player, furniture.spawnPacket());
             }
         }
     }
@@ -229,16 +284,13 @@ public class BukkitFurnitureManager implements FurnitureManager, Listener {
             String id = entity.getPersistentDataContainer().get(FURNITURE_KEY, PersistentDataType.STRING);
             if (id == null) return;
             Key key = Key.of(id);
-            Optional<CustomItem<ItemStack>> optionalItem = plugin.itemManager().getCustomItem(key);
-            if (optionalItem.isPresent()) {
-                Quaternionf rotation = display.getTransformation().getRightRotation();
-                CustomItem<ItemStack> customItem = optionalItem.get();
-                if (customItem.behavior() instanceof FurnitureItemBehavior behavior) {
-                    LoadedFurniture previous = this.furnitureByBaseEntityId.get(display.getEntityId());
-                    if (previous != null) return;
-                    addNewFurniture(display, key, behavior, getAnchorType(entity, behavior), rotation);
-                    return;
-                }
+            Optional<CustomFurniture> optionalFurniture = getFurniture(key);
+            if (optionalFurniture.isPresent()) {
+                CustomFurniture customFurniture = optionalFurniture.get();
+                LoadedFurniture previous = this.furnitureByBaseEntityId.get(display.getEntityId());
+                if (previous != null) return;
+                addNewFurniture(display, customFurniture, getAnchorType(entity, customFurniture));
+                return;
             }
             // Remove the entity if it's not a valid furniture
             if (ConfigManager.removeInvalidFurniture()) {
@@ -249,79 +301,39 @@ public class BukkitFurnitureManager implements FurnitureManager, Listener {
         }
     }
 
-    private AnchorType getAnchorType(Entity entity, FurnitureItemBehavior behavior) {
-        String anchorType = entity.getPersistentDataContainer().get(FURNITURE_ANCHOR_KEY, PersistentDataType.STRING);
+    private AnchorType getAnchorType(Entity baseEntity, CustomFurniture furniture) {
+        String anchorType = baseEntity.getPersistentDataContainer().get(FURNITURE_ANCHOR_KEY, PersistentDataType.STRING);
         if (anchorType != null) {
             try {
                 AnchorType unverified = AnchorType.valueOf(anchorType);
-                if (behavior.isAllowedPlacement(unverified)) {
+                if (furniture.isAllowedPlacement(unverified)) {
                     return unverified;
                 }
             } catch (IllegalArgumentException ignored) {
             }
         }
-        AnchorType anchorTypeEnum = behavior.getAnyPlacement();
-        entity.getPersistentDataContainer().set(FURNITURE_ANCHOR_KEY, PersistentDataType.STRING, anchorTypeEnum.name());
+        AnchorType anchorTypeEnum = furniture.getAnyPlacement();
+        baseEntity.getPersistentDataContainer().set(FURNITURE_ANCHOR_KEY, PersistentDataType.STRING, anchorTypeEnum.name());
         return anchorTypeEnum;
     }
 
-    private synchronized LoadedFurniture addNewFurniture(ItemDisplay display, Key key, FurnitureItemBehavior behavior, AnchorType anchorType, Quaternionf rotation) {
-        Location location = display.getLocation();
-        LoadedFurniture furniture = new LoadedFurniture(key, display, behavior, anchorType, new Vector3d(location.getX(), location.getY(), location.getZ()), rotation);
-        this.furnitureByBaseEntityId.put(furniture.baseEntityId(), furniture);
-        this.baseEntity2SubEntities.put(furniture.baseEntityId(), furniture.subEntityIds());
-        for (int entityId : furniture.interactionEntityIds()) {
-            this.furnitureByInteractionEntityId.put(entityId, furniture);
+    private synchronized LoadedFurniture addNewFurniture(ItemDisplay display, CustomFurniture furniture, AnchorType anchorType) {
+        LoadedFurniture loadedFurniture = new LoadedFurniture(display, furniture, anchorType);
+        this.furnitureByBaseEntityId.put(loadedFurniture.baseEntityId(), loadedFurniture);
+        this.baseEntity2SubEntities.put(loadedFurniture.baseEntityId(), loadedFurniture.subEntityIds());
+        for (int entityId : loadedFurniture.interactionEntityIds()) {
+            this.furnitureByInteractionEntityId.put(entityId, loadedFurniture);
         }
-        return furniture;
+        return loadedFurniture;
     }
 
-    public class DismountListener1_20_3 implements Listener {
-        @EventHandler(ignoreCancelled = true)
-        public void onDismount(EntityDismountEvent event) {
-            if (event.getEntity() instanceof Player player) {
-                handleDismount(player, event.getDismounted());
-            }
-        }
-    }
-
-    public void handleDismount(Player player, Entity entity) {
-        if (!isSeatCarrier(entity)) return;
+    protected void handleDismount(Player player, Entity entity) {
+        if (!isSeatCarrierType(entity)) return;
         Location location = entity.getLocation();
         plugin.scheduler().sync().runDelayed(() -> tryLeavingSeat(player, entity), player.getWorld(), location.getBlockX() >> 4, location.getBlockZ() >> 4);
     }
 
-    @EventHandler(ignoreCancelled = true)
-    public void onPlayerQuit(PlayerQuitEvent event) {
-        Player player = event.getPlayer();
-        Entity entity = player.getVehicle();
-        if (entity == null) return;
-        if (isSeatCarrier(entity)) {
-            tryLeavingSeat(player, entity);
-        }
-    }
-
-    @EventHandler(ignoreCancelled = true)
-    public void onPlayerDeath(PlayerDeathEvent event) {
-        Player player = event.getPlayer();
-        Entity entity = player.getVehicle();
-        if (entity == null) return;
-        if (isSeatCarrier(entity)) {
-            tryLeavingSeat(player, entity);
-        }
-    }
-
-    @EventHandler(ignoreCancelled = true, priority = EventPriority.LOWEST)
-    public void onInteractArmorStand(PlayerInteractAtEntityEvent event) {
-        Entity clicked = event.getRightClicked();
-        if (clicked instanceof ArmorStand armorStand) {
-            Integer baseFurniture = armorStand.getPersistentDataContainer().get(FURNITURE_SEAT_BASE_ENTITY_KEY, PersistentDataType.INTEGER);
-            if (baseFurniture == null) return;
-            event.setCancelled(true);
-        }
-    }
-
-    private void tryLeavingSeat(@NotNull Player player, @NotNull Entity vehicle) {
+    protected void tryLeavingSeat(@NotNull Player player, @NotNull Entity vehicle) {
         Integer baseFurniture = vehicle.getPersistentDataContainer().get(FURNITURE_SEAT_BASE_ENTITY_KEY, PersistentDataType.INTEGER);
         if (baseFurniture == null) return;
         vehicle.remove();
@@ -340,7 +352,7 @@ public class BukkitFurnitureManager implements FurnitureManager, Listener {
         }
     }
 
-    public boolean isSeatCarrier(Entity entity) {
+    protected boolean isSeatCarrierType(Entity entity) {
         return (entity instanceof ArmorStand || entity instanceof ItemDisplay);
     }
 }

@@ -103,7 +103,7 @@ public class BlockEventListener implements Listener {
                 Location location = block.getLocation();
 
                 // trigger event
-                CustomBlockBreakEvent customBreakEvent = new CustomBlockBreakEvent(event.getPlayer(), location, state);
+                CustomBlockBreakEvent customBreakEvent = new CustomBlockBreakEvent(event.getPlayer(), location, block, state);
                 boolean isCancelled = EventUtils.fireAndCheckCancel(customBreakEvent);
                 if (isCancelled) {
                     event.setCancelled(true);
@@ -133,7 +133,7 @@ public class BlockEventListener implements Listener {
                 Item<ItemStack> itemInHand = serverPlayer.getItemInHand(InteractionHand.MAIN_HAND);
                 Key itemId = Optional.ofNullable(itemInHand).map(Item::id).orElse(ItemKeys.AIR);
                 // do not drop if it's not the correct tool
-                if (!state.settings().isCorrectTool(itemId)) {
+                if (!state.settings().isCorrectTool(itemId) || !customBreakEvent.dropItems()) {
                     return;
                 }
                 // drop items

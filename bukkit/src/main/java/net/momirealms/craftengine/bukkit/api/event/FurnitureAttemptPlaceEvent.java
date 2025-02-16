@@ -1,8 +1,11 @@
 package net.momirealms.craftengine.bukkit.api.event;
 
-import net.momirealms.craftengine.bukkit.item.behavior.FurnitureItemBehavior;
 import net.momirealms.craftengine.core.entity.furniture.AnchorType;
+import net.momirealms.craftengine.core.entity.furniture.CustomFurniture;
+import net.momirealms.craftengine.core.entity.player.InteractionHand;
 import org.bukkit.Location;
+import org.bukkit.block.Block;
+import org.bukkit.block.BlockFace;
 import org.bukkit.entity.Player;
 import org.bukkit.event.Cancellable;
 import org.bukkit.event.HandlerList;
@@ -12,15 +15,47 @@ import org.jetbrains.annotations.NotNull;
 public class FurnitureAttemptPlaceEvent extends PlayerEvent implements Cancellable {
     private static final HandlerList HANDLER_LIST = new HandlerList();
     private boolean cancelled;
-    private final FurnitureItemBehavior behavior;
+    private final CustomFurniture furniture;
     private final Location location;
     private final AnchorType anchorType;
+    private final BlockFace clickedFace;
+    private final Block clickedBlock;
+    private final InteractionHand hand;
 
-    public FurnitureAttemptPlaceEvent(@NotNull Player player, @NotNull FurnitureItemBehavior behavior, @NotNull AnchorType anchorType, @NotNull Location location) {
+    public FurnitureAttemptPlaceEvent(@NotNull Player player,
+                                      @NotNull CustomFurniture furniture,
+                                      @NotNull AnchorType anchorType,
+                                      @NotNull Location location,
+                                      @NotNull BlockFace clickedFace,
+                                      @NotNull InteractionHand hand,
+                                      @NotNull Block clickedBlock) {
         super(player);
-        this.behavior = behavior;
+        this.furniture = furniture;
         this.location = location;
         this.anchorType = anchorType;
+        this.clickedFace = clickedFace;
+        this.clickedBlock = clickedBlock;
+        this.hand = hand;
+    }
+
+    @NotNull
+    public Block clickedBlock() {
+        return clickedBlock;
+    }
+
+    @NotNull
+    public InteractionHand hand() {
+        return hand;
+    }
+
+    @NotNull
+    public BlockFace clickedFace() {
+        return clickedFace;
+    }
+
+    @NotNull
+    public Player player() {
+        return getPlayer();
     }
 
     @NotNull
@@ -34,8 +69,8 @@ public class FurnitureAttemptPlaceEvent extends PlayerEvent implements Cancellab
     }
 
     @NotNull
-    public FurnitureItemBehavior behavior() {
-        return behavior;
+    public CustomFurniture furniture() {
+        return furniture;
     }
 
     @NotNull

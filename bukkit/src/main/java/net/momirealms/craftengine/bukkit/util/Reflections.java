@@ -571,6 +571,24 @@ public class Reflections {
             )
     );
 
+    public static final Field field$Vec3$x = requireNonNull(
+            ReflectionUtils.getInstanceDeclaredField(
+                    clazz$Vec3, double.class, 0
+            )
+    );
+
+    public static final Field field$Vec3$y = requireNonNull(
+            ReflectionUtils.getInstanceDeclaredField(
+                    clazz$Vec3, double.class, 1
+            )
+    );
+
+    public static final Field field$Vec3$z = requireNonNull(
+            ReflectionUtils.getInstanceDeclaredField(
+                    clazz$Vec3, double.class, 2
+            )
+    );
+
     public static final Constructor<?> constructor$Vec3 = requireNonNull(
             ReflectionUtils.getConstructor(
                     clazz$Vec3, double.class, double.class, double.class

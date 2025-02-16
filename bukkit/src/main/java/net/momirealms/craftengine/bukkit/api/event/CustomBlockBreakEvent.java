@@ -3,6 +3,7 @@ package net.momirealms.craftengine.bukkit.api.event;
 import net.momirealms.craftengine.core.block.CustomBlock;
 import net.momirealms.craftengine.core.block.ImmutableBlockState;
 import org.bukkit.Location;
+import org.bukkit.block.Block;
 import org.bukkit.entity.Player;
 import org.bukkit.event.Cancellable;
 import org.bukkit.event.HandlerList;
@@ -12,20 +13,45 @@ import org.jetbrains.annotations.NotNull;
 public class CustomBlockBreakEvent extends PlayerEvent implements Cancellable {
     private static final HandlerList HANDLER_LIST = new HandlerList();
     private boolean cancelled;
-    private final CustomBlock block;
+    private final CustomBlock customBlock;
     private final ImmutableBlockState state;
     private final Location location;
+    private final Block bukkitBlock;
+    private boolean dropItems;
 
-    public CustomBlockBreakEvent(@NotNull Player player, @NotNull Location location, @NotNull ImmutableBlockState state) {
+    public CustomBlockBreakEvent(@NotNull Player player,
+                                 @NotNull Location location,
+                                 @NotNull Block bukkitBlock,
+                                 @NotNull ImmutableBlockState state) {
         super(player);
-        this.block = state.owner().value();
+        this.customBlock = state.owner().value();
         this.state = state;
+        this.bukkitBlock = bukkitBlock;
         this.location = location;
+        this.dropItems = true;
+    }
+
+    public boolean dropItems() {
+        return dropItems;
+    }
+
+    public void setDropItems(boolean dropItems) {
+        this.dropItems = dropItems;
     }
 
     @NotNull
-    public CustomBlock block() {
-        return this.block;
+    public Block bukkitBlock() {
+        return bukkitBlock;
+    }
+
+    @NotNull
+    public Player player() {
+        return getPlayer();
+    }
+
+    @NotNull
+    public CustomBlock customBlock() {
+        return this.customBlock;
     }
 
     @NotNull

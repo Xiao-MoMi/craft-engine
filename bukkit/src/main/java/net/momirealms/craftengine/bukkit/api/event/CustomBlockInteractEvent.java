@@ -4,6 +4,8 @@ import net.momirealms.craftengine.core.block.CustomBlock;
 import net.momirealms.craftengine.core.block.ImmutableBlockState;
 import net.momirealms.craftengine.core.entity.player.InteractionHand;
 import org.bukkit.Location;
+import org.bukkit.block.Block;
+import org.bukkit.block.BlockFace;
 import org.bukkit.entity.Player;
 import org.bukkit.event.Cancellable;
 import org.bukkit.event.HandlerList;
@@ -14,26 +16,37 @@ import org.jetbrains.annotations.Nullable;
 public class CustomBlockInteractEvent extends PlayerEvent implements Cancellable {
     private static final HandlerList HANDLER_LIST = new HandlerList();
     private boolean cancelled;
-    private final CustomBlock block;
+    private final CustomBlock customBlock;
+    private final Block bukkitBlock;
     private final ImmutableBlockState state;
     private final Location location;
     private final Location interactionPoint;
     private final InteractionHand hand;
     private final Action action;
+    private final BlockFace clickedFace;
 
     public CustomBlockInteractEvent(@NotNull Player player,
                                     @NotNull Location location,
                                     @Nullable Location interactionPoint,
                                     @NotNull ImmutableBlockState state,
+                                    @NotNull Block bukkitBlock,
+                                    @NotNull BlockFace clickedFace,
                                     @NotNull InteractionHand hand,
                                     @NotNull Action action) {
         super(player);
-        this.block = state.owner().value();
+        this.customBlock = state.owner().value();
+        this.bukkitBlock = bukkitBlock;
         this.state = state;
         this.location = location;
         this.interactionPoint = interactionPoint;
         this.hand = hand;
         this.action = action;
+        this.clickedFace = clickedFace;
+    }
+
+    @NotNull
+    public BlockFace clickedFace() {
+        return clickedFace;
     }
 
     @Nullable
@@ -52,8 +65,18 @@ public class CustomBlockInteractEvent extends PlayerEvent implements Cancellable
     }
 
     @NotNull
-    public CustomBlock block() {
-        return this.block;
+    public Block bukkitBlock() {
+        return bukkitBlock;
+    }
+
+    @NotNull
+    public CustomBlock customBlock() {
+        return this.customBlock;
+    }
+
+    @NotNull
+    public Player player() {
+        return getPlayer();
     }
 
     @NotNull

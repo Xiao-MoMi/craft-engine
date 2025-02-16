@@ -48,7 +48,7 @@ public class WaterBucketItemBehavior extends ItemBehavior {
         // actually we should broadcast this change
         context.getPlayer().sendPacket(BlockStateUtils.createBlockUpdatePacket(pos, state), true);
         BukkitCraftEngine.instance().scheduler().sync().runDelayed(() ->
-                CraftEngineBlocks.place(location, nextState, UpdateOption.UPDATE_ALL), world, location.getBlockX() >> 4, location.getBlockZ() >> 4);
+                CraftEngineBlocks.place(location, nextState, UpdateOption.UPDATE_ALL, false), world, location.getBlockX() >> 4, location.getBlockZ() >> 4);
 
         return InteractionResult.SUCCESS;
     }

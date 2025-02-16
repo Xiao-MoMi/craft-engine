@@ -4,6 +4,7 @@ import net.momirealms.craftengine.bukkit.api.CraftEngineBlocks;
 import net.momirealms.craftengine.bukkit.api.event.CustomBlockAttemptPlaceEvent;
 import net.momirealms.craftengine.bukkit.api.event.CustomBlockPlaceEvent;
 import net.momirealms.craftengine.bukkit.block.BukkitBlockManager;
+import net.momirealms.craftengine.bukkit.util.DirectionUtils;
 import net.momirealms.craftengine.bukkit.util.EventUtils;
 import net.momirealms.craftengine.bukkit.util.LocationUtils;
 import net.momirealms.craftengine.bukkit.util.Reflections;
@@ -75,17 +76,18 @@ public class BlockItemBehavior extends ItemBehavior {
         Location placeLocation = new Location(world, pos.x(), pos.y(), pos.z());
 
         // trigger event
-        CustomBlockAttemptPlaceEvent attemptPlaceEvent = new CustomBlockAttemptPlaceEvent((org.bukkit.entity.Player) player.platformPlayer(), placeLocation, blockStateToPlace);
+        CustomBlockAttemptPlaceEvent attemptPlaceEvent = new CustomBlockAttemptPlaceEvent((org.bukkit.entity.Player) player.platformPlayer(), placeLocation.clone(), blockStateToPlace,
+                DirectionUtils.toBlockFace(context.getClickedFace()), world.getBlockAt(context.getClickedPos().x(), context.getClickedPos().y(), context.getClickedPos().z()), context.getHand());
         if (EventUtils.fireAndCheckCancel(attemptPlaceEvent)) {
             return InteractionResult.FAIL;
         }
 
         // Todo #0
-        CraftEngineBlocks.place(placeLocation, blockStateToPlace, UpdateOption.UPDATE_ALL_IMMEDIATE);
+        CraftEngineBlocks.place(placeLocation, blockStateToPlace, UpdateOption.UPDATE_ALL_IMMEDIATE, false);
 
         // TODO Make place event cancellable. Needs to get the previous block state from #0
         // TODO Add Bukkit block argument
-        CustomBlockPlaceEvent placeEvent = new CustomBlockPlaceEvent((org.bukkit.entity.Player) player.platformPlayer(), placeLocation, blockStateToPlace);
+        CustomBlockPlaceEvent placeEvent = new CustomBlockPlaceEvent((org.bukkit.entity.Player) player.platformPlayer(), placeLocation.clone(), blockStateToPlace, world.getBlockAt(placeLocation), context.getHand());
         EventUtils.fireAndForget(placeEvent);
 
         if (!player.isCreativeMode()) {

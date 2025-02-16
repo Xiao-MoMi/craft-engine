@@ -3,13 +3,9 @@ package net.momirealms.craftengine.bukkit.entity.furniture;
 import net.momirealms.craftengine.bukkit.entity.DisplayEntityData;
 import net.momirealms.craftengine.bukkit.entity.InteractionEntityData;
 import net.momirealms.craftengine.bukkit.item.BukkitItemManager;
-import net.momirealms.craftengine.bukkit.item.behavior.FurnitureItemBehavior;
 import net.momirealms.craftengine.bukkit.util.*;
 import net.momirealms.craftengine.bukkit.world.BukkitWorld;
-import net.momirealms.craftengine.core.entity.furniture.AnchorType;
-import net.momirealms.craftengine.core.entity.furniture.FurnitureElement;
-import net.momirealms.craftengine.core.entity.furniture.HitBox;
-import net.momirealms.craftengine.core.entity.furniture.Seat;
+import net.momirealms.craftengine.core.entity.furniture.*;
 import net.momirealms.craftengine.core.entity.player.Player;
 import net.momirealms.craftengine.core.item.Item;
 import net.momirealms.craftengine.core.loot.LootTable;
@@ -31,46 +27,47 @@ import org.bukkit.entity.EntityType;
 import org.bukkit.entity.ItemDisplay;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.persistence.PersistentDataType;
-import org.joml.Quaternionf;
-import org.joml.Vector3d;
+import org.jetbrains.annotations.NotNull;
 import org.joml.Vector3f;
 
+import java.lang.ref.WeakReference;
 import java.util.*;
 
 public class LoadedFurniture {
     private final Key id;
-    private final Entity baseEntity;
-    private final FurnitureItemBehavior behavior;
-    private final Map<Integer, FurnitureElement> elements;
-    private final Map<Integer, HitBox> hitboxes;
-    private final int[] subEntityIds;
-    private final int[] interactionEntityIds;
-    private final Vector3d position;
-    private final Set<Vector3f> occupiedSeats = Collections.synchronizedSet(new HashSet<>());
-    private final int baseEntityId;
-    private final Quaternionf rotation;
-    private final Vector<Entity> seats = new Vector<>();
+    private final CustomFurniture furniture;
     private final AnchorType anchorType;
+    private final Map<Integer, FurnitureElement> elements;
+    private final Map<Integer, HitBox> hitBoxes;
+    // location
+    private Location location;
+    // cached spawn packet
     private Object cachedSpawnPacket;
+    // base entity
+    private final WeakReference<Entity> baseEntity;
+    private final int baseEntityId;
+    // includes elements + interactions
+    private final int[] subEntityIds;
+    // interactions
+    private final int[] interactionEntityIds;
+    // seats
+    private final Set<Vector3f> occupiedSeats = Collections.synchronizedSet(new HashSet<>());
+    private final Vector<Entity> seats = new Vector<>();
 
-    public LoadedFurniture(Key id,
-                           Entity baseEntity,
-                           FurnitureItemBehavior behavior,
-                           AnchorType anchorType,
-                           Vector3d position,
-                           Quaternionf rotation) {
-        this.id = id;
+    public LoadedFurniture(Entity baseEntity,
+                           CustomFurniture furniture,
+                           AnchorType anchorType) {
+        this.id = furniture.id();
         this.baseEntityId = baseEntity.getEntityId();
         this.anchorType = anchorType;
-        this.rotation = rotation;
-        this.position = position;
-        this.baseEntity = baseEntity;
-        this.behavior = behavior;
-        this.hitboxes = new HashMap<>();
+        this.location = baseEntity.getLocation();
+        this.baseEntity = new WeakReference<>(baseEntity);
+        this.furniture = furniture;
+        this.hitBoxes = new HashMap<>();
         this.elements = new HashMap<>();
         List<Integer> entityIds = new ArrayList<>();
         List<Integer> interactionEntityIds = new ArrayList<>();
-        FurnitureItemBehavior.FurniturePlacement placement = behavior.getPlacement(anchorType);
+        CustomFurniture.Placement placement = furniture.getPlacement(anchorType);
         for (FurnitureElement element : placement.elements()) {
             int entityId = Reflections.instance$Entity$ENTITY_COUNTER.incrementAndGet();
             entityIds.add(entityId);
@@ -80,7 +77,7 @@ public class LoadedFurniture {
             int entityId = Reflections.instance$Entity$ENTITY_COUNTER.incrementAndGet();
             entityIds.add(entityId);
             interactionEntityIds.add(entityId);
-            this.hitboxes.put(entityId, hitBox);
+            this.hitBoxes.put(entityId, hitBox);
         }
         this.subEntityIds = new int[entityIds.size()];
         for (int i = 0; i < entityIds.size(); ++i) {
@@ -105,16 +102,15 @@ public class LoadedFurniture {
                 }
                 item.load();
 
-                Vector3f offset = new Quaternionf(this.rotation.x, this.rotation.y, this.rotation.z, this.rotation.w).conjugate().transform(new Vector3f(element.offset()));
+                Vector3f offset = QuaternionUtils.toQuaternionf(0, Math.toRadians(180 - this.location.getYaw()), 0).conjugate().transform(new Vector3f(element.offset()));
                 Object addEntityPacket = Reflections.constructor$ClientboundAddEntityPacket.newInstance(
-                        entityId, UUID.randomUUID(), position.x() + offset.x, position.y() + offset.y, position.z() - offset.z, 0, 0,
+                        entityId, UUID.randomUUID(), this.location.getX() + offset.x, this.location.getY() + offset.y, this.location.getZ() - offset.z, 0, this.location.getYaw(),
                         Reflections.instance$EntityType$ITEM_DISPLAY, 0, Reflections.instance$Vec3$Zero, 0
                 );
 
                 ArrayList<Object> values = new ArrayList<>();
                 DisplayEntityData.DisplayedItem.addEntityDataIfNotDefaultValue(item.getLiteralObject(), values);
                 DisplayEntityData.Scale.addEntityDataIfNotDefaultValue(element.scale(), values);
-                DisplayEntityData.RotationRight.addEntityDataIfNotDefaultValue(this.rotation, values);
                 DisplayEntityData.RotationLeft.addEntityDataIfNotDefaultValue(element.rotation(), values);
                 DisplayEntityData.BillboardConstraints.addEntityDataIfNotDefaultValue(element.billboard().id(), values);
                 DisplayEntityData.Translation.addEntityDataIfNotDefaultValue(element.translation(), values);
@@ -124,12 +120,12 @@ public class LoadedFurniture {
                 packets.add(addEntityPacket);
                 packets.add(setDataPacket);
             }
-            for (Map.Entry<Integer, HitBox> entry : hitboxes.entrySet()) {
+            for (Map.Entry<Integer, HitBox> entry : hitBoxes.entrySet()) {
                 int entityId = entry.getKey();
                 HitBox hitBox = entry.getValue();
-                Vector3f offset = new Quaternionf(this.rotation.x, this.rotation.y, this.rotation.z, this.rotation.w).conjugate().transform(new Vector3f(hitBox.offset()));
+                Vector3f offset = QuaternionUtils.toQuaternionf(0, Math.toRadians(180 - this.location.getYaw()), 0).conjugate().transform(new Vector3f(hitBox.offset()));
                 Object addEntityPacket = Reflections.constructor$ClientboundAddEntityPacket.newInstance(
-                        entityId, UUID.randomUUID(), position.x() + offset.x, position.y() + offset.y, position.z() - offset.z, 0, 0,
+                        entityId, UUID.randomUUID(), this.location.getX() + offset.x, this.location.getY() + offset.y, this.location.getZ() - offset.z, 0, this.location.getYaw(),
                         Reflections.instance$EntityType$INTERACTION, 0, Reflections.instance$Vec3$Zero, 0
                 );
 
@@ -148,6 +144,16 @@ public class LoadedFurniture {
         }
     }
 
+    @NotNull
+    public Location location() {
+        return this.location;
+    }
+
+    public void teleport(@NotNull Location location) {
+        if (location.equals(this.location)) return;
+        this.location = location;
+    }
+
     public Object spawnPacket() {
         if (this.cachedSpawnPacket == null) {
             this.resetSpawnPackets();
@@ -155,14 +161,24 @@ public class LoadedFurniture {
         return this.cachedSpawnPacket;
     }
 
-    public boolean isValid() {
-        return this.baseEntity.isValid();
+    @NotNull
+    public Entity baseEntity() {
+        Entity entity = baseEntity.get();
+        if (entity == null) {
+            throw new RuntimeException("Base entity not found");
+        }
+        return entity;
     }
 
-    public void onPlayerDestroy(Player player) {
-        if (!isValid()) return;
-        Location location = baseEntity.getLocation();
-        this.baseEntity.remove();
+    public boolean isValid() {
+        return baseEntity().isValid();
+    }
+
+    public void destroy() {
+        if (!isValid()) {
+            return;
+        }
+        this.baseEntity().remove();
         for (Entity entity : this.seats) {
             for (Entity passenger : entity.getPassengers()) {
                 entity.removePassenger(passenger);
@@ -170,22 +186,6 @@ public class LoadedFurniture {
             entity.remove();
         }
         this.seats.clear();
-        LootTable<ItemStack> lootTable = behavior.lootTable();
-        Vec3d vec3d = new Vec3d(position.x(), position.y(), position.z());
-        if (lootTable != null && !player.isCreativeMode()) {
-            ContextHolder.Builder builder = ContextHolder.builder();
-            World world = new BukkitWorld(this.baseEntity.getWorld());
-            builder.withParameter(LootParameters.LOCATION, vec3d);
-            builder.withParameter(LootParameters.WORLD, world);
-            builder.withParameter(LootParameters.PLAYER, player);
-            List<Item<ItemStack>> items = lootTable.getRandomItems(builder.build(), world);
-            for (Item<ItemStack> item : items) {
-                ItemStack itemStack = item.load();
-                if (ItemUtils.isEmpty(itemStack)) continue;
-                location.getWorld().dropItemNaturally(LocationUtils.toBlockCenterLocation(location), itemStack);
-            }
-        }
-        location.getWorld().playSound(location, behavior.sounds().breakSound().toString(), SoundCategory.BLOCKS,1f, 1f);
     }
 
     public void destroySeats() {
@@ -200,7 +200,7 @@ public class LoadedFurniture {
     }
 
     public Optional<Seat> getAvailableSeat(int clickedEntityId) {
-        HitBox hitbox = this.hitboxes.get(clickedEntityId);
+        HitBox hitbox = this.hitBoxes.get(clickedEntityId);
         if (hitbox == null)
             return Optional.empty();
         Seat[] seats = hitbox.seats();
@@ -216,10 +216,13 @@ public class LoadedFurniture {
     }
 
     public Location getSeatLocation(Seat seat) {
-        Vector3f offset = new Quaternionf(this.rotation.x, this.rotation.y, this.rotation.z, this.rotation.w).conjugate().transform(new Vector3f(seat.offset()));
-        double yaw = -Math.toDegrees(QuaternionUtils.quaternionToPitch(this.rotation)) + seat.yaw();
+        Vector3f offset = QuaternionUtils.toQuaternionf(0, Math.toRadians(180 - this.location.getYaw()), 0).conjugate().transform(new Vector3f(seat.offset()));
+        double yaw = seat.yaw() + this.location.getYaw();
         if (yaw < -180) yaw += 360;
-        return new Location(null, position.x() + offset.x, position.y() + offset.y + 0.6, position.z() - offset.z, (float) yaw, 0f);
+        Location newLocation = this.location.clone();
+        newLocation.setYaw((float) yaw);
+        newLocation.add(offset.x, offset.y + 0.6, -offset.z);
+        return newLocation;
     }
 
     public boolean releaseSeat(Vector3f seat) {
@@ -246,20 +249,16 @@ public class LoadedFurniture {
         return this.subEntityIds;
     }
 
-    public FurnitureItemBehavior behavior() {
-        return behavior;
-    }
-
-    public Entity baseEntity() {
-        return this.baseEntity;
-    }
-
     public AnchorType anchorType() {
         return anchorType;
     }
 
     public Key furnitureId() {
         return id;
+    }
+
+    public CustomFurniture furniture() {
+        return furniture;
     }
 
     public void mountSeat(org.bukkit.entity.Player player, Seat seat) {

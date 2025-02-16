@@ -10,7 +10,10 @@ import net.momirealms.craftengine.core.util.Key;
 import net.momirealms.craftengine.core.util.MiscUtils;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.*;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 public class CustomStoneCuttingRecipe<T> extends AbstractRecipe<T> {
     public static final Factory<?> FACTORY = new Factory<>();

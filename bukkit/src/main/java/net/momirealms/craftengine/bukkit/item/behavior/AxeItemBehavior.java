@@ -78,7 +78,7 @@ public class AxeItemBehavior extends ItemBehavior {
 
         BlockPos pos = context.getClickedPos();
         context.getLevel().playBlockSound(Vec3d.atCenterOf(pos), AXE_STRIP_SOUND, 1, 1);
-        CraftEngineBlocks.place(block.getLocation(), newState, UpdateOption.UPDATE_ALL_IMMEDIATE);
+        CraftEngineBlocks.place(block.getLocation(), newState, UpdateOption.UPDATE_ALL_IMMEDIATE, false);
         block.getWorld().sendGameEvent(bukkitPlayer, GameEvent.BLOCK_CHANGE, new Vector(pos.x(), pos.y(), pos.z()));
         Item<?> item = context.getItem();
         Material material = MaterialUtils.getMaterial(item.vanillaId());

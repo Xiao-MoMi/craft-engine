@@ -22,6 +22,14 @@ public interface CustomItem<I> extends BuildableItem<I> {
 
     I buildItemStack(Player player, int count);
 
+    default I buildItemStack() {
+        return buildItemStack(null);
+    }
+
+    default I buildItemStack(int count) {
+        return buildItemStack(null, count);
+    }
+
     ItemSettings settings();
 
     Item<I> buildItem(Player player);

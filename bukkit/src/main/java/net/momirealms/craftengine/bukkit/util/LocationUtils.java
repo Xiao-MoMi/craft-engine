@@ -1,12 +1,17 @@
 package net.momirealms.craftengine.bukkit.util;
 
 import net.momirealms.craftengine.core.world.BlockPos;
+import net.momirealms.craftengine.core.world.Vec3d;
 import org.bukkit.Location;
 import org.jetbrains.annotations.NotNull;
 
 public class LocationUtils {
 
     private LocationUtils() {}
+
+    public static Vec3d toVec3d(Location loc) {
+        return new Vec3d(loc.getX(), loc.getY(), loc.getZ());
+    }
 
     public static Object toBlockPos(BlockPos pos) {
         try {

@@ -13,12 +13,18 @@ public class FurnitureBreakEvent extends PlayerEvent implements Cancellable {
     private boolean cancelled;
     private final LoadedFurniture furniture;
 
-    public FurnitureBreakEvent(@NotNull Player player, @Nullable LoadedFurniture furniture) {
+    public FurnitureBreakEvent(@NotNull Player player,
+                               @NotNull LoadedFurniture furniture) {
         super(player);
         this.furniture = furniture;
     }
 
-    @Nullable
+    @NotNull
+    public Player player() {
+        return getPlayer();
+    }
+
+    @NotNull
     public LoadedFurniture furniture() {
         return this.furniture;
     }

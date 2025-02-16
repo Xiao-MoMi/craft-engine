@@ -11,7 +11,8 @@ public class AsyncResourcePackGenerateEvent extends Event {
     private final Path generatedPackPath;
     private final Path zipFilePath;
 
-    public AsyncResourcePackGenerateEvent(@NotNull Path generatedPackPath, @NotNull Path zipFilePath) {
+    public AsyncResourcePackGenerateEvent(@NotNull Path generatedPackPath,
+                                          @NotNull Path zipFilePath) {
         super(true);
         this.generatedPackPath = generatedPackPath;
         this.zipFilePath = zipFilePath;

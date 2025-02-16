@@ -47,7 +47,7 @@ public class BucketItemBehavior extends ItemBehavior {
         Location location = new Location(world, pos.x(), pos.y(), pos.z());
         EquipmentSlot slot = context.getHand() == InteractionHand.MAIN_HAND ? EquipmentSlot.HAND : EquipmentSlot.OFF_HAND;
 
-        CraftEngineBlocks.place(location, state.with(waterlogged, false), UpdateOption.UPDATE_ALL);
+        CraftEngineBlocks.place(location, state.with(waterlogged, false), UpdateOption.UPDATE_ALL, false);
         if (player.getGameMode() == GameMode.SURVIVAL) {
             // to prevent dupe in moment
             player.getInventory().setItem(slot, new ItemStack(Material.AIR));

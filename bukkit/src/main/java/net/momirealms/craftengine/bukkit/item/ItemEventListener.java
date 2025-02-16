@@ -67,6 +67,8 @@ public class ItemEventListener implements Listener {
                 block.getLocation(),
                 event.getInteractionPoint(),
                 BukkitBlockManager.instance().getImmutableBlockStateUnsafe(stateId),
+                block,
+                event.getBlockFace(),
                 event.getHand() == EquipmentSlot.HAND ? InteractionHand.MAIN_HAND : InteractionHand.OFF_HAND,
                 action == Action.RIGHT_CLICK_BLOCK ? CustomBlockInteractEvent.Action.RIGHT_CLICK : CustomBlockInteractEvent.Action.LEFT_CLICK
         );

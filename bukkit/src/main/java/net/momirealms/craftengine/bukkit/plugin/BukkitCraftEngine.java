@@ -1,6 +1,7 @@
 package net.momirealms.craftengine.bukkit.plugin;
 
 import net.momirealms.craftengine.bukkit.api.event.AsyncResourcePackGenerateEvent;
+import net.momirealms.craftengine.bukkit.api.event.CraftEngineReloadEvent;
 import net.momirealms.craftengine.bukkit.block.BukkitBlockManager;
 import net.momirealms.craftengine.bukkit.block.behavior.BukkitBlockBehaviors;
 import net.momirealms.craftengine.bukkit.entity.furniture.BukkitFurnitureManager;
@@ -133,7 +134,6 @@ public class BukkitCraftEngine extends CraftEngine {
         // tick task
         if (VersionHelper.isFolia()) {
             this.tickTask = this.scheduler().sync().runRepeating(() -> {
-                furnitureManager().tick();
                 for (BukkitServerPlayer serverPlayer : networkManager().onlineUsers()) {
                     org.bukkit.entity.Player player = serverPlayer.platformPlayer();
                     Location location = player.getLocation();
@@ -142,7 +142,6 @@ public class BukkitCraftEngine extends CraftEngine {
             }, 1, 1);
         } else {
             this.tickTask = this.scheduler().sync().runRepeating(() -> {
-                furnitureManager().tick();
                 for (BukkitServerPlayer serverPlayer : networkManager().onlineUsers()) {
                     serverPlayer.tick();
                 }
@@ -169,6 +168,13 @@ public class BukkitCraftEngine extends CraftEngine {
     }
 
     @Override
+    public void reload() {
+        super.reload();
+        CraftEngineReloadEvent event = new CraftEngineReloadEvent(this);
+        EventUtils.fireAndForget(event);
+    }
+
+    @Override
     protected void registerParsers() {
         // register template parser
         this.packManager.registerConfigSectionParser(this.templateManager);
@@ -176,6 +182,8 @@ public class BukkitCraftEngine extends CraftEngine {
         this.packManager.registerConfigSectionParser(this.fontManager);
         // register item parser
         this.packManager.registerConfigSectionParser(this.itemManager);
+        // register furniture parser
+        this.packManager.registerConfigSectionParser(this.furnitureManager);
         // register block parser
         this.packManager.registerConfigSectionParser(this.blockManager);
         // register recipe parser

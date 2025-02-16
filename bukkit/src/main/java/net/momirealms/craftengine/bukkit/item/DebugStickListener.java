@@ -84,7 +84,7 @@ public class DebugStickListener implements Listener {
                         }
                         if (update) {
                             ImmutableBlockState nextState = cycleState(clickedCustomBlock, currentProperty, player.isSecondaryUseActive());
-                            CraftEngineBlocks.place(clickedBlock.getLocation(), nextState, new UpdateOption.Builder().updateClients().updateKnownShape().build());
+                            CraftEngineBlocks.place(clickedBlock.getLocation(), nextState, new UpdateOption.Builder().updateClients().updateKnownShape().build(), false);
                             Object systemChatPacket = Reflections.constructor$ClientboundSystemChatPacket.newInstance(
                                     ComponentUtils.adventureToMinecraft(Component.translatable("item.minecraft.debug_stick.update")
                                             .arguments(

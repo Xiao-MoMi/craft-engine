@@ -43,7 +43,7 @@ public class SetBlockCommand extends BukkitCommandFeature<CommandSender> {
                     ImmutableBlockState state = BlockStateParser.deserialize(data);
                     if (state == null) return;
                     Location location = context.get("location");
-                    CraftEngineBlocks.place(location, state, UpdateOption.UPDATE_ALL);
+                    CraftEngineBlocks.place(location, state, UpdateOption.UPDATE_ALL, true);
                 });
     }
 
