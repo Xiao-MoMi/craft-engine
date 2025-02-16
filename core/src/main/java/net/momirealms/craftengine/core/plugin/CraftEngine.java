@@ -87,7 +87,9 @@ public abstract class CraftEngine implements Plugin {
         } finally {
             this.recipeManager.delayedLoad().thenRunAsync(() -> {
                 try {
+                    // TODO: 混淆资源包
                     this.packManager.generateResourcePack();
+                    // TODO: 破坏压缩包
                 } finally {
                     this.isReloading = false;
                 }
