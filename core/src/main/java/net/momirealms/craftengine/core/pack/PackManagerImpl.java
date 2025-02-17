@@ -284,7 +284,6 @@ public class PackManagerImpl implements PackManager {
 
         try {
             ZipUtils.zipDirectory(generatedPackPath, zipFile);
-            // TODO: 破坏压缩包
             ZipUtils.protect(zipFile);
         } catch (IOException e) {
             this.plugin.logger().severe("Error zipping resource pack", e);
