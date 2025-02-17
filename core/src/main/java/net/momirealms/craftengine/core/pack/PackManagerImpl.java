@@ -283,8 +283,10 @@ public class PackManagerImpl implements PackManager {
                 .resolve("resource_pack.zip");
 
         try {
-            ZipUtils.zipDirectory(generatedPackPath, zipFile);
-            ZipUtils.protect(zipFile);
+            ZipUtils.zipDirectory(generatedPackPath, zipFile, plugin);
+            if (plugin.configManager().settings().getSection("resource-pack").getSection("protection").getBoolean("break-zip-format")) {
+                ZipUtils.protect(zipFile);
+            }
         } catch (IOException e) {
             this.plugin.logger().severe("Error zipping resource pack", e);
         }
@@ -614,8 +616,8 @@ public class PackManagerImpl implements PackManager {
     }
 
     private void obfuscate(Path folderPath) {
-        Gson gson = GsonHelper.get();
         try (Stream<Path> paths = Files.walk(folderPath)) {
+            Gson gson = GsonHelper.get();
             for (Path path : (Iterable<Path>) paths::iterator) {
                 if (Files.isDirectory(path)) {
                     continue;
