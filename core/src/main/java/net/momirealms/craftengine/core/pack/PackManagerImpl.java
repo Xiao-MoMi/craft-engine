@@ -277,6 +277,7 @@ public class PackManagerImpl implements PackManager {
         this.generateItemModels(generatedPackPath, this.plugin.itemManager());
         this.generateItemModels(generatedPackPath, this.plugin.blockManager());
         this.generateSounds(generatedPackPath);
+        // TODO: 混淆资源包
 
         Path zipFile = this.plugin.dataFolderPath()
                 .resolve("generated")
@@ -284,6 +285,7 @@ public class PackManagerImpl implements PackManager {
 
         try {
             ZipUtils.zipDirectory(generatedPackPath, zipFile);
+            // TODO: 破坏压缩包
         } catch (IOException e) {
             this.plugin.logger().severe("Error zipping resource pack", e);
         }
