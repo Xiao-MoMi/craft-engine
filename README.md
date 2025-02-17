@@ -1,3 +1,12 @@
+<h1 align="center">
+  CraftEngine
+</h1>
+
+<p align="center">
+    <a target="_blank" href="/README.md">English</a>
+    <a target="_blank" href="/README_zh-CN.md">中文</a>
+</p>
+
 ## 📌 About CraftEngine
 CraftEngine redefines Minecraft plugin architecture as a next-generation solution for custom content implementation. Its JVM-level injection delivers unprecedented performance, stability, and extensibility. The framework provides a code-first API for registering natively integrated block behaviors and item interaction logic.
 
