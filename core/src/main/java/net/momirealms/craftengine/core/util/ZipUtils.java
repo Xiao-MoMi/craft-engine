@@ -96,42 +96,27 @@ public class ZipUtils {
 
     public static void protect(Path path) {
         try (RandomAccessFile raf = new RandomAccessFile(path.toFile(), "rw")) {
-            long eocdOffset = findEndOfCentralDirectory(raf);
-            if (eocdOffset == -1) {
-                throw new IllegalArgumentException("Central Directory End Record not found!");
-            }
+            breakHeader(raf);
         } catch (IOException e) {
             throw new RuntimeException("Error modify the zip file", e);
         }
     }
 
-    private static long findEndOfCentralDirectory(RandomAccessFile raf) throws IOException {
-        long fileLength = raf.length();
-        for (long i = fileLength - 22; i >= 0; i--) {
-            raf.seek(i);
-            if (raf.readInt() == EOCD_SIGNATURE) {
-                return i;
-            }
+    public static void breakHeader(RandomAccessFile randomAccessFile) throws IOException {
+        long position = findZipEntryHeader(randomAccessFile);
+        if (position == -1) {
+            throw new RuntimeException("ZIP header signature not found.");
         }
-        return -1;
+        insertData(randomAccessFile, position, EOCD);
+        randomAccessFile.seek(position + 4 + 6);
+        randomAccessFile.write(new byte[] { (byte) 0x01 });
     }
 
-    public static void breakHeader(Path file) {
-        try (RandomAccessFile randomAccessFile = new RandomAccessFile(file.toFile(), "rw")) {
-            long position = findZipEntryHeader(randomAccessFile);
-            if (position == -1) {
-                throw new RuntimeException("ZIP header signature not found.");
-            }
-            randomAccessFile.seek(position);
-            randomAccessFile.write(new byte[] { (byte) 0x99, (byte) 0x99, (byte) 0x99, (byte) 0x99 });
-            randomAccessFile.seek(position + 4);
-            randomAccessFile.write(new byte[] { (byte) 0xFF, (byte) 0xFF });
-        } catch (IOException e) {
-            throw new RuntimeException("Error break file header", e);
+    public static void modifyEOCD(RandomAccessFile raf) throws IOException {
+        long location = findEndOfCentralDirectory(raf);
+        if (location == -1) {
+            throw new IllegalArgumentException("Central Directory End Record not found!");
         }
-    }
-
-    public static void modifyEOCD(RandomAccessFile raf, long location) throws IOException {
         raf.seek(location);
         byte[] eocdRecord = new byte[]{
                 (byte) 0x50, (byte) 0x4B, (byte) 0x05, (byte) 0x06, // EOCD Signature (0x06054b50)
@@ -158,6 +143,18 @@ public class ZipUtils {
         return -1;
     }
 
+    private static long findEndOfCentralDirectory(RandomAccessFile raf) throws IOException {
+        long fileLength = raf.length();
+        for (long i = fileLength - 22; i >= 0; i--) {
+            raf.seek(i);
+            if (raf.readInt() == EOCD_SIGNATURE) {
+                return i;
+            }
+        }
+        return -1;
+    }
+
+
     private static boolean compareArrays(byte[] array1, byte[] array2) {
         if (array1.length != array2.length) {
             return false;
@@ -178,5 +175,36 @@ public class ZipUtils {
             zos.write(buffer, 0, bytesRead);
         }
         zos.closeEntry();
+    }
+
+    public static void insertData(RandomAccessFile randomAccessFile, long pos, byte[] data) throws IOException {
+        long originalLength = randomAccessFile.length();
+        int insertLength = data.length;
+        long newLength = originalLength + insertLength;
+
+        randomAccessFile.setLength(newLength);
+
+        long bytesToMove = originalLength - pos;
+        int bufferSize = 1024;
+        long readEnd = originalLength - 1;
+
+        while (bytesToMove > 0) {
+            long chunkStart = Math.max(pos, readEnd - bufferSize + 1);
+            int chunkSize = (int) (readEnd - chunkStart + 1);
+
+            byte[] buffer = new byte[chunkSize];
+            randomAccessFile.seek(chunkStart);
+            randomAccessFile.readFully(buffer);
+
+            long writePos = chunkStart + insertLength;
+            randomAccessFile.seek(writePos);
+            randomAccessFile.write(buffer);
+
+            bytesToMove -= chunkSize;
+            readEnd = chunkStart - 1;
+        }
+
+        randomAccessFile.seek(pos);
+        randomAccessFile.write(data);
     }
 }

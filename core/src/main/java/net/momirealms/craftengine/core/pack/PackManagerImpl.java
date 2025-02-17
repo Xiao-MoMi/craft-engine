@@ -1,9 +1,6 @@
 package net.momirealms.craftengine.core.pack;
 
-import com.google.gson.JsonArray;
-import com.google.gson.JsonElement;
-import com.google.gson.JsonObject;
-import com.google.gson.JsonParser;
+import com.google.gson.*;
 import dev.dejvokep.boostedyaml.YamlDocument;
 import dev.dejvokep.boostedyaml.block.implementation.Section;
 import net.momirealms.craftengine.core.font.BitmapImage;
@@ -29,6 +26,7 @@ import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
 import java.util.*;
 import java.util.function.BiConsumer;
+import java.util.stream.Stream;
 
 import static net.momirealms.craftengine.core.util.MiscUtils.castToMap;
 
@@ -278,6 +276,7 @@ public class PackManagerImpl implements PackManager {
         this.generateItemModels(generatedPackPath, this.plugin.blockManager());
         this.generateSounds(generatedPackPath);
         // TODO: 混淆资源包
+        this.obfuscate(generatedPackPath);
 
         Path zipFile = this.plugin.dataFolderPath()
                 .resolve("generated")
@@ -286,6 +285,7 @@ public class PackManagerImpl implements PackManager {
         try {
             ZipUtils.zipDirectory(generatedPackPath, zipFile);
             // TODO: 破坏压缩包
+            ZipUtils.protect(zipFile);
         } catch (IOException e) {
             this.plugin.logger().severe("Error zipping resource pack", e);
         }
@@ -611,6 +611,24 @@ public class PackManagerImpl implements PackManager {
                     throw new RuntimeException(e);
                 }
             }
+        }
+    }
+
+    private void obfuscate(Path folderPath) {
+        Gson gson = GsonHelper.get();
+        try (Stream<Path> paths = Files.walk(folderPath)) {
+            for (Path path : (Iterable<Path>) paths::iterator) {
+                if (Files.isDirectory(path)) {
+                    continue;
+                }
+                String fileName = path.toString().toLowerCase();
+                if (fileName.endsWith(".json") || fileName.endsWith(".mcmeta")) {
+                    JsonElement jsonElement = gson.fromJson(Files.readString(path), JsonElement.class);
+                    Files.writeString(path, gson.toJson(jsonElement), StandardCharsets.UTF_8);
+                }
+            }
+        } catch (IOException e) {
+            plugin.logger().warn("Failed to obfuscate resource pack", e);
         }
     }
 }
