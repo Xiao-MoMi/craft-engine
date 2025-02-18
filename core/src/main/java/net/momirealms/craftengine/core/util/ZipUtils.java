@@ -106,8 +106,8 @@ public class ZipUtils {
         writeShort(out, 0);                    // 文件最后修改时间      00 00           00 00
         writeShort(out, 0);                    // 文件最后修改日期      21 00           21 00
         writeInt(out, 0);                      // 未压缩数据的 CRC-32  89 0c f1 6a     00 00 00 00
-        writeInt(out, compressedSize + 7);     // 压缩数据的大小        6c 00 00 00     6d 00 00 00
-        writeInt(out, uncompressedSize + 7);   // 未压缩数据的大小      9b 00 00 00     9a 00 00 00
+        writeInt(out, compressedSize + 1);     // 压缩数据的大小        6c 00 00 00     6d 00 00 00
+        writeInt(out, uncompressedSize + 1);   // 未压缩数据的大小      9b 00 00 00     9a 00 00 00
         writeShort(out, fileNameLength);             // 文件名长度           24 00           24 00
         writeShort(out, 0);                    // 额外字段长度         00 00            00 00
     }
@@ -121,8 +121,8 @@ public class ZipUtils {
         writeShort(out, 0);                                                    // 文件最后修改时间     00 00         00 00           00 00
         writeShort(out, 0);                                                    // 文件最后修改日期     21 00         00 00           21 00
         writeInt(out, 0);                                                      // 未压缩数据的 CRC-32  89 0c f1 6a   00 00 00 00    f9 fe 34 f4
-        writeInt(out, entry.compressedSize + 7);                               // 压缩数据的大小       6a 00 00 00   6d 00 00 00     75 01 00 00
-        writeInt(out, entry.uncompressedSize + 7);                             // 未压缩数据的大小     6a 10 00 00   9a 00 00 00     75 11 00 00
+        writeInt(out, entry.compressedSize + 1);                               // 压缩数据的大小       6a 00 00 00   6d 00 00 00     75 01 00 00
+        writeInt(out, entry.uncompressedSize + 1);                             // 未压缩数据的大小     6a 10 00 00   9a 00 00 00     75 11 00 00
         writeShort(out, entry.fileName.getBytes(StandardCharsets.UTF_8).length);     // 文件名长度          24 00         24 00           2d 00
         writeShort(out, 0);                                                    // 额外字段长度         00 00         00 00          00 00
         writeShort(out, 0);                                                    // 注释长度            00 00         00 00           00 00
@@ -136,7 +136,7 @@ public class ZipUtils {
     private static void writeEndOfCentralDirectoryRecord(OutputStream out, int numEntries,
                                                          long centralDirOffset, long centralDirSize) throws IOException {
         writeInt(out, 0x06054B50);       // 结束记录签名     50 4b 05 06    50 4b 05 06
-        writeShort(out, 0xFFFF);         // 磁盘编号        ff ff          ff ff
+        writeShort(out, 1);              // 磁盘编号        ff ff          ff ff
         writeShort(out, 0);              // 中央目录起始磁盘  00 00          00 00
         writeShort(out, numEntries);           // 当前磁盘条目数    6f 01         68 01
         writeShort(out, numEntries);           // 总条目数         6f 01         68 01
