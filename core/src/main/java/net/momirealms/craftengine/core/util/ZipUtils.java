@@ -86,7 +86,6 @@ public class ZipUtils {
         entry.uncompressedSize = uncompressedSize;
         entry.fileName = relativePath;
         entry.compressionMethod = compressionMethod;
-        entry.externalAttr = 0x20;
         entries.add(entry);
     }
 
@@ -106,7 +105,6 @@ public class ZipUtils {
         entry.uncompressedSize = 0;
         entry.fileName = relativePath;
         entry.compressionMethod = 0;
-        entry.externalAttr = 0x10;
         entries.add(entry);
     }
 
@@ -128,50 +126,50 @@ public class ZipUtils {
     private static void writeLocalFileHeader(OutputStream out,
                                              long compressedSize, long uncompressedSize,
                                              int fileNameLength, int compressionMethod) throws IOException {
-        writeInt(out, 0x04034B50);  // 文件头签名
-        writeShort(out, 0);        // 最低版本
-        writeShort(out, 0x0800);    // UTF-8标志
+        writeInt(out, 0x04034B50);    // 文件头签名
+        writeShort(out, 0);           // 最低版本
+        writeShort(out, 0x0800);      // UTF-8标志
         writeShort(out, compressionMethod); // 压缩方法
-        writeShort(out, 0);
-        writeShort(out, 0);
-        writeInt(out, 0);
-        writeInt(out, compressedSize);
-        writeInt(out, uncompressedSize);
-        writeShort(out, fileNameLength);
-        writeShort(out, 0);         // 额外字段长度
+        writeShort(out, 0);           // 文件最后修改时间
+        writeShort(out, 0);           // 文件最后修改日期
+        writeInt(out, 0);             // 未压缩数据的 CRC-32
+        writeInt(out, compressedSize);      // 压缩数据的大小
+        writeInt(out, uncompressedSize);    // 未压缩数据的大小
+        writeShort(out, fileNameLength);    // 文件名长度
+        writeShort(out, 0);           // 额外字段长度
     }
 
     private static void writeCentralDirectoryEntry(OutputStream out, CentralDirectoryEntry entry) throws IOException {
-        writeInt(out, 0x02014B50);  // 中央目录头签名
-        writeShort(out, 0x14);      // 创建版本（MS-DOS）
-        writeShort(out, 0);         // 需要版本
-        writeShort(out, 0x0800);     // UTF-8标志
-        writeShort(out, entry.compressionMethod); // 压缩方法
-        writeShort(out, 0);
-        writeShort(out, 0);
-        writeInt(out, 0);
-        writeInt(out, entry.compressedSize);
-        writeInt(out, entry.uncompressedSize);
-        writeShort(out, entry.fileName.getBytes(StandardCharsets.UTF_8).length);
-        writeShort(out, 0);         // 额外字段长度
-        writeShort(out, 0);         // 注释长度
-        writeShort(out, 0);         // 磁盘编号
-        writeShort(out, 0);         // 内部属性
-        writeInt(out, entry.externalAttr); // 外部属性
-        writeInt(out, (int) entry.localHeaderOffset);
-        out.write(entry.fileName.getBytes(StandardCharsets.UTF_8));
+        writeInt(out, 0x02014B50);                                             // 中央目录头签名
+        writeShort(out, 0x14);                                                 // 创建版本（MS-DOS）
+        writeShort(out, 0);                                                    // 需要版本
+        writeShort(out, 0x0800);                                               // UTF-8标志
+        writeShort(out, entry.compressionMethod);                                    // 压缩方法
+        writeShort(out, 0);                                                    // 文件最后修改时间
+        writeShort(out, 0);                                                    // 文件最后修改日期
+        writeInt(out, 0);                                                      // 未压缩数据的 CRC-32
+        writeInt(out, entry.compressedSize);                                         // 压缩数据的大小
+        writeInt(out, entry.uncompressedSize);                                       // 未压缩数据的大小
+        writeShort(out, entry.fileName.getBytes(StandardCharsets.UTF_8).length);     // 文件名长度
+        writeShort(out, 0);                                                    // 额外字段长度
+        writeShort(out, 0);                                                    // 注释长度
+        writeShort(out, 0);                                                    // 磁盘编号
+        writeShort(out, 0);                                                    // 内部属性
+        writeInt(out, 0);                                                      // 外部属性
+        writeInt(out, (int) entry.localHeaderOffset);                                // 本地文件头的相对偏移量
+        out.write(entry.fileName.getBytes(StandardCharsets.UTF_8));                  // 文件名
     }
 
     private static void writeEndOfCentralDirectoryRecord(OutputStream out, int numEntries,
                                                          long centralDirOffset, long centralDirSize) throws IOException {
-        writeInt(out, 0x06054B50); // 结束记录签名
-        writeShort(out, 0);        // 磁盘编号
-        writeShort(out, 0);        // 中央目录起始磁盘
-        writeShort(out, numEntries); // 当前磁盘条目数
-        writeShort(out, numEntries); // 总条目数
-        writeInt(out, centralDirSize); // 中央目录大小
+        writeInt(out, 0x06054B50);       // 结束记录签名
+        writeShort(out, 0);              // 磁盘编号
+        writeShort(out, 0);              // 中央目录起始磁盘
+        writeShort(out, numEntries);           // 当前磁盘条目数
+        writeShort(out, numEntries);           // 总条目数
+        writeInt(out, centralDirSize);         // 中央目录大小
         writeInt(out, (int) centralDirOffset); // 中央目录偏移
-        writeShort(out, 0);        // 注释长度
+        writeShort(out, 0);              // 注释长度
     }
 
     private static void writeShort(OutputStream out, int value) throws IOException {
@@ -192,7 +190,6 @@ public class ZipUtils {
         long uncompressedSize;
         String fileName;
         int compressionMethod;
-        int externalAttr;
     }
 
     private static class CountingOutputStream extends OutputStream {
