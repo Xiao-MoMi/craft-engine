@@ -141,7 +141,7 @@ public class ZipUtils {
         writeInt(out, 0x02014B50);                                             // 中央目录头签名
         writeShort(out, 0x14);                                                 // 创建版本（MS-DOS）
         writeShort(out, 0);                                                    // 最低版本
-        writeShort(out, 0x0801);                                               // UTF-8 标志和伪加密
+        writeShort(out, 0x0800);                                               // UTF-8 标志
         writeShort(out, entry.compressionMethod);                                    // 压缩方法
         writeShort(out, 0);                                                    // 文件最后修改时间
         writeShort(out, 0);                                                    // 文件最后修改日期
