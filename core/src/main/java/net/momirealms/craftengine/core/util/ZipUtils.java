@@ -6,6 +6,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
 import java.io.OutputStream;
+import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.FileVisitResult;
 import java.nio.file.Files;
@@ -25,6 +26,16 @@ public class ZipUtils {
         try (OutputStream os = Files.newOutputStream(zipFilePath);
              CountingOutputStream cos = new CountingOutputStream(os)) {
             writeInt(cos, 0x06054B50);
+            cos.write(new byte[] {
+                    (byte) 0x50, (byte) 0x4b, (byte) 0x03, (byte) 0x04,
+                    (byte) 0x14, (byte) 0x00, (byte) 0x01, (byte) 0x00,
+                    (byte) 0x08, (byte) 0x00, (byte) 0x00, (byte) 0x00,
+                    (byte) 0x00, (byte) 0x00, (byte) 0x00, (byte) 0x00,
+                    (byte) 0x00, (byte) 0x00, (byte) 0x6e, (byte) 0x00,
+                    (byte) 0x00, (byte) 0x00, (byte) 0x9b, (byte) 0x00,
+                    (byte) 0x00, (byte) 0x00, (byte) 0x01, (byte) 0x00,
+                    (byte) 0x00, (byte) 0x00, (byte) 0x00
+            });
 
             List<CentralDirectoryEntry> centralDirEntries = new ArrayList<>();
             Path rootPath = folderPath.toAbsolutePath();
