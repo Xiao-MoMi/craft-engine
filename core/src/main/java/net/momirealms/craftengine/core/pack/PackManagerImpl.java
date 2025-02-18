@@ -291,10 +291,10 @@ public class PackManagerImpl implements PackManager {
                 .resolve("resource_pack.zip");
 
         try {
-            ZipUtils.zipDirectory(generatedPackPath, zipFile, plugin);
-            if (plugin.configManager().settings().getSection("resource-pack").getSection("protection").getBoolean("break-zip-format")) {
-                ZipUtils.protect(zipFile);
-            }
+            ZipUtils.zipDirectory(generatedPackPath, zipFile/*, plugin*/);
+            // if (plugin.configManager().settings().getSection("resource-pack").getSection("protection").getBoolean("break-zip-format")) {
+            //     ZipUtils.protect(zipFile);
+            // }
         } catch (IOException e) {
             this.plugin.logger().severe("Error zipping resource pack", e);
         }
