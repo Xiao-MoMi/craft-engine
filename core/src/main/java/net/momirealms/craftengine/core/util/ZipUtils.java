@@ -18,7 +18,7 @@ import java.util.zip.Deflater;
 
 public class ZipUtils {
 
-    private static final int BUFFER_SIZE = 1024 * 8;
+    private static final byte[] BUFFER = new byte[1024 * 8];
 
     public static void zipDirectory(Path folderPath, Path zipFilePath) throws IOException {
         try (OutputStream os = Files.newOutputStream(zipFilePath);
@@ -116,7 +116,7 @@ public class ZipUtils {
         deflater.finish();
 
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
-        byte[] buffer = new byte[BUFFER_SIZE];
+        byte[] buffer = BUFFER;
         while (!deflater.finished()) {
             int count = deflater.deflate(buffer);
             baos.write(buffer, 0, count);
