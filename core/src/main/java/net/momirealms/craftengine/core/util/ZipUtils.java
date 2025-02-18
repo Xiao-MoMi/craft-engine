@@ -63,14 +63,12 @@ public class ZipUtils {
         String relativePath = rootPath.relativize(file).toString().replace(File.separatorChar, '/');
         byte[] originalData = Files.readAllBytes(file);
 
-        // 压缩数据
         byte[] compressedData = compressData(originalData);
         boolean useCompression = compressedData.length < originalData.length;
 
         byte[] fileNameBytes = relativePath.getBytes(StandardCharsets.UTF_8);
         long headerOffset = cos.getCount();
 
-        // 根据是否使用压缩设置方法标记
         int compressionMethod = useCompression ? 8 : 0;
         long compressedSize = useCompression ? compressedData.length : originalData.length;
         long uncompressedSize = originalData.length;
