@@ -83,7 +83,7 @@ public class BukkitFurnitureManager implements FurnitureManager {
         Map<String, Object> placementMap = MiscUtils.castToMap(section.get("placement"), true);
         EnumMap<AnchorType, CustomFurniture.Placement> placements = new EnumMap<>(AnchorType.class);
         if (placementMap == null) {
-            throw new IllegalArgumentException("Missing required parameter 'placement' for furniture_item behavior");
+            throw new IllegalArgumentException("Missing required parameter 'placement' for furniture " + id);
         }
         for (Map.Entry<String, Object> entry : placementMap.entrySet()) {
             AnchorType anchorType = AnchorType.valueOf(entry.getKey().toUpperCase(Locale.ENGLISH));
@@ -94,7 +94,7 @@ public class BukkitFurnitureManager implements FurnitureManager {
             for (Map<String, Object> element : elementConfigs) {
                 String key = (String) element.get("item");
                 if (key == null) {
-                    throw new IllegalArgumentException("Missing required parameter 'item' for furniture_item behavior");
+                    throw new IllegalArgumentException("Missing required parameter 'item' for furniture " + id);
                 }
                 ItemDisplayContext transform = ItemDisplayContext.valueOf(element.getOrDefault("transform", "NONE").toString().toUpperCase(Locale.ENGLISH));
                 Billboard billboard = Billboard.valueOf(element.getOrDefault("billboard", "FIXED").toString().toUpperCase(Locale.ENGLISH));

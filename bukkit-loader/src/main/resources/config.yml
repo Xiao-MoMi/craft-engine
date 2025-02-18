@@ -18,6 +18,8 @@ resource-pack:
   supported-version:
     min: 1.20
     max: LATEST
+  merge-external-folders:
+    - ModelEngine/resource pack
 
 block:
   sound-system:

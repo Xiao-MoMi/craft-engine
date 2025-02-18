@@ -24,6 +24,7 @@ import java.lang.reflect.Method;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 public class ConfigManager implements Reloadable {
@@ -58,6 +59,7 @@ public class ConfigManager implements Reloadable {
     protected float packMaxVersion;
     protected boolean enableSoundSystem;
     protected boolean enableRecipeSystem;
+    protected List<String> foldersToMerge;
 
     public ConfigManager(CraftEngine plugin) {
         this.plugin = plugin;
@@ -111,6 +113,7 @@ public class ConfigManager implements Reloadable {
         resourcePack$overrideUniform = config.getBoolean("resource-pack.override-uniform-font", false);
         packMinVersion = getVersion(config.get("resource-pack.supported-version.min", "1.20").toString());
         packMaxVersion = getVersion(config.get("resource-pack.supported-version.max", "LATEST").toString());
+        foldersToMerge = config.getStringList("resource-pack.merge-external-folders");
         // performance
         maxChainUpdate = config.getInt("performance.max-block-chain-update-limit", 64);
         forceUpdateLight = config.getBoolean("performance.light-system.force-update-light", false);
@@ -210,6 +213,10 @@ public class ConfigManager implements Reloadable {
 
     public static boolean enableRecipeSystem() {
         return instance.enableRecipeSystem;
+    }
+
+    public static List<String> foldersToMerge() {
+        return instance.foldersToMerge;
     }
 
     public YamlDocument loadOrCreateYamlData(String fileName) {

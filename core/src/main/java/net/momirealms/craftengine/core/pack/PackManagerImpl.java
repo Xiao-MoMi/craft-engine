@@ -181,7 +181,7 @@ public class PackManagerImpl implements PackManager {
         plugin.saveResource("resources/default/resourcepack/assets/minecraft/textures/item/custom/fairy_flower.png");
         plugin.saveResource("resources/default/resourcepack/assets/minecraft/models/block/custom/fairy_flower_1.json");
         // furniture
-        plugin.saveResource("resources/default/configuration/furnitures.yml");
+        plugin.saveResource("resources/default/configuration/furniture.yml");
         plugin.saveResource("resources/default/resourcepack/assets/minecraft/models/item/custom/table_lamp.json");
         plugin.saveResource("resources/default/resourcepack/assets/minecraft/models/item/custom/wooden_chair.json");
         plugin.saveResource("resources/default/resourcepack/assets/minecraft/models/item/custom/bench.json");
@@ -258,15 +258,23 @@ public class PackManagerImpl implements PackManager {
 
         // firstly merge existing folders
         try {
-            List<Path> duplicated = FileUtils.mergeFolder(loadedPacks().stream().map(Pack::resourcePackFolder).toList(), generatedPackPath);
+            List<Path> folders = new ArrayList<>();
+            folders.addAll(loadedPacks().stream().map(Pack::resourcePackFolder).toList());
+            folders.addAll(ConfigManager.foldersToMerge().stream().map(it -> plugin.dataFolderPath().getParent().resolve(it)).filter(Files::exists).toList());
+
+            List<List<Path>> duplicated = FileUtils.mergeFolder(folders, generatedPackPath);
             if (!duplicated.isEmpty()) {
-                for (Path path : duplicated) {
-                    this.plugin.logger().warn("Duplicated files - " + path.toAbsolutePath());
+                for (List<Path> path : duplicated) {
+                    this.plugin.logger().warn("Duplicated files:");
+                    for (Path path0 : path) {
+                        this.plugin.logger().warn(" - " + path0.toAbsolutePath());
+                    }
                 }
             }
         } catch (IOException e) {
             this.plugin.logger().severe("Error merging resource pack", e);
         }
+
 
         this.generateFonts(generatedPackPath);
         this.generateLegacyItemOverrides(generatedPackPath);

@@ -88,6 +88,8 @@ public abstract class CraftEngine implements Plugin {
             this.recipeManager.delayedLoad().thenRunAsync(() -> {
                 try {
                     this.packManager.generateResourcePack();
+                } catch (Exception e) {
+                    this.logger.warn("Failed to generate resource pack", e);
                 } finally {
                     this.isReloading = false;
                 }

@@ -35,17 +35,17 @@ public class FileUtils {
         return validConfigs;
     }
 
-    public static List<Path> mergeFolder(Collection<Path> sourceFolders, Path targetFolder) throws IOException {
-        List<Path> duplicatedFile = new ArrayList<>();
+    public static List<List<Path>> mergeFolder(Collection<Path> sourceFolders, Path targetFolder) throws IOException {
+        Map<Path, List<Path>> conflictChecker = new HashMap<>();
         for (Path sourceFolder : sourceFolders) {
             if (Files.exists(sourceFolder)) {
                 Files.walkFileTree(sourceFolder, new SimpleFileVisitor<>() {
                     @Override
                     public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
                         Path targetPath = targetFolder.resolve(sourceFolder.relativize(file));
-                        if (Files.exists(targetPath)) {
-                            duplicatedFile.add(targetPath);
-                        } else {
+                        List<Path> conflicts = conflictChecker.computeIfAbsent(targetPath.toAbsolutePath(), k -> new ArrayList<>());
+                        conflicts.add(file);
+                        if (conflicts.size() == 1) {
                             Files.createDirectories(targetPath.getParent());
                             Files.copy(file, targetPath, StandardCopyOption.REPLACE_EXISTING);
                         }
@@ -54,6 +54,12 @@ public class FileUtils {
                 });
             }
         }
-        return duplicatedFile;
+        List<List<Path>> conflicts = new ArrayList<>();
+        for (Map.Entry<Path, List<Path>> entry : conflictChecker.entrySet()) {
+            if (entry.getValue().size() > 1) {
+                conflicts.add(entry.getValue());
+            }
+        }
+        return conflicts;
     }
 }

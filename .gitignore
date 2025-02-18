@@ -28,3 +28,4 @@ build/
 .idea/
 
 !/libs/*.jar
+!/gradle/wrapper/*.jar
