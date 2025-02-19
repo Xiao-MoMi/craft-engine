@@ -21,9 +21,10 @@ public class ZipUtils {
     private static final Random RANDOM = new Random();
     private static final byte[] BUFFER = new byte[1024 * 8];
     private static final String FILE_NAME = "C/E/".repeat(16383) + "C";
-    private static final byte[] FILE_NAME_BYTES = ("C/E/".repeat(4096) + "C/E").getBytes();
+    private static final byte[] FILE_NAME_BYTES = ("C/E/".repeat(16383) + "C/E").getBytes();
 
-    public static void zipDirectory(Path folderPath, Path zipFilePath, boolean isProtectZip, boolean isObfuscate) throws IOException {
+    public static void zipDirectory(Path folderPath, Path zipFilePath,
+                                    boolean isProtectZip, boolean isObfuscate) throws IOException {
         if (!isProtectZip) {
             try (ZipOutputStream zos = new ZipOutputStream(new FileOutputStream(zipFilePath.toFile()))) {
                 try (Stream<Path> paths = Files.walk(folderPath)) {
