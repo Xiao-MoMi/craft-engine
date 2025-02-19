@@ -6,7 +6,6 @@ import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
 import java.io.OutputStream;
-import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.FileVisitResult;
 import java.nio.file.Files;
@@ -15,30 +14,21 @@ import java.nio.file.SimpleFileVisitor;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.zip.Deflater;
 import java.util.Random;
+import java.util.zip.Deflater;
 
 public class ZipUtils {
     private static final Random RANDOM = new Random();
     private static final byte[] BUFFER = new byte[1024 * 8];
+    private static final String FILE_NAME = "C/E/".repeat(16383) + "C";
+    private static final byte[] FILE_NAME_BYTES = ("C/E/".repeat(4096) + "C/E").getBytes();
 
     public static void zipDirectory(Path folderPath, Path zipFilePath) throws IOException {
         try (OutputStream os = Files.newOutputStream(zipFilePath);
              CountingOutputStream cos = new CountingOutputStream(os)) {
-            writeInt(cos, 0x06054B50);
-            cos.write(new byte[] {
-                    (byte) 0x50, (byte) 0x4b, (byte) 0x03, (byte) 0x04,
-                    (byte) 0x14, (byte) 0x00, (byte) 0x01, (byte) 0x00,
-                    (byte) 0x08, (byte) 0x00, (byte) 0x00, (byte) 0x00,
-                    (byte) 0x00, (byte) 0x00, (byte) 0x00, (byte) 0x00,
-                    (byte) 0x00, (byte) 0x00, (byte) 0x6e, (byte) 0x00,
-                    (byte) 0x00, (byte) 0x00, (byte) 0x9b, (byte) 0x00,
-                    (byte) 0x00, (byte) 0x00, (byte) 0x01, (byte) 0x00,
-                    (byte) 0x00, (byte) 0x00, (byte) 0x00
-            });
-
             List<CentralDirectoryEntry> centralDirEntries = new ArrayList<>();
             Path rootPath = folderPath.toAbsolutePath();
+            createZipHeader(cos);
 
             Files.walkFileTree(rootPath, new SimpleFileVisitor<>() {
                 @Override
@@ -47,6 +37,10 @@ public class ZipUtils {
                     return FileVisitResult.CONTINUE;
                 }
             });
+
+            for (int i = 0; i < 10; i++) {
+                processFakeFile(i, "/" + FILE_NAME, cos, centralDirEntries);
+            }
 
             long centralDirStartOffset = cos.getCount();
 
@@ -63,6 +57,22 @@ public class ZipUtils {
         }
     }
 
+    private static void processFakeFile(int index, String fileName, CountingOutputStream cos,
+                                        List<CentralDirectoryEntry> entries) throws IOException {
+        long headerOffset = cos.getCount();
+
+        writeLocalFileHeader(cos);
+        cos.write(new byte[] {});
+
+        CentralDirectoryEntry entry = new CentralDirectoryEntry();
+        entry.localHeaderOffset = headerOffset;
+        entry.compressedSize = 0xFFFFFFFFL;
+        entry.uncompressedSize = 0xFFFFFFFFL;
+        entry.fileName = (index + fileName).replace(File.separatorChar, '/');
+        entry.compressionMethod = 0;
+        entries.add(entry);
+    }
+
     private static void processFile(Path file, CountingOutputStream cos,
                                     List<CentralDirectoryEntry> entries, Path rootPath) throws IOException {
         String relativePath = rootPath.relativize(file).toString().replace(File.separatorChar, '/');
@@ -71,16 +81,13 @@ public class ZipUtils {
         byte[] compressedData = compressData(originalData);
         boolean useCompression = compressedData.length < originalData.length;
 
-        byte[] fileNameBytes = relativePath.toUpperCase().getBytes(StandardCharsets.UTF_8);
         long headerOffset = cos.getCount();
 
         int compressionMethod = useCompression ? 8 : 0;
         long compressedSize = useCompression ? compressedData.length : originalData.length;
         long uncompressedSize = originalData.length;
 
-        writeLocalFileHeader(cos, compressedSize, uncompressedSize,
-                fileNameBytes.length, compressionMethod);
-        cos.write(fileNameBytes);
+        writeLocalFileHeader(cos);
         cos.write(useCompression ? compressedData : originalData);
 
         CentralDirectoryEntry entry = new CentralDirectoryEntry();
@@ -107,53 +114,68 @@ public class ZipUtils {
         return baos.toByteArray();
     }
 
-    private static void writeLocalFileHeader(OutputStream out,
-                                             long compressedSize, long uncompressedSize,
-                                             int fileNameLength, int compressionMethod) throws IOException {
-        writeInt(out, 0x04034B50);             // 文件头签名          50 4b 03 04     50 4b 03 04
-        writeShort(out, 0x0014);               // 最低版本            14 00           14 00
-        writeShort(out, 0x0001);               // UTF-8 标志和伪加密   00 00           01 00
-        writeShort(out, compressionMethod);          // 压缩方法            08 00           08 00
-        writeShort(out, 0);                    // 文件最后修改时间      00 00           00 00
-        writeShort(out, 0);                    // 文件最后修改日期      21 00           21 00
-        writeInt(out, 0);                      // 未压缩数据的 CRC-32  89 0c f1 6a     00 00 00 00
-        writeInt(out, compressedSize + 1);     // 压缩数据的大小        6c 00 00 00     6d 00 00 00
-        writeInt(out, uncompressedSize + 1);   // 未压缩数据的大小      9b 00 00 00     9a 00 00 00
-        writeShort(out, fileNameLength);             // 文件名长度           24 00           24 00
-        writeShort(out, 0);                    // 额外字段长度         00 00            00 00
+    private static void createZipHeader(OutputStream out) throws IOException {
+        writeInt(out, 0x06054B50);
+        writeInt(out, 0x06054B50);
+        writeInt(out, 0x04034B50);
+        writeShort(out, 0);
+        writeShort(out, 1);
+        writeShort(out, 8);
+        writeShort(out, 0xFFFF);
+        writeShort(out, 0xFFFF);
+        writeInt(out, 0xFFFFFFFFL);
+        writeInt(out, 0xFFFFFFFFL);
+        writeInt(out, 0xFFFFFFFFL);
+        writeShort(out, FILE_NAME_BYTES.length);
+        writeShort(out, 0);
+        out.write(FILE_NAME_BYTES);
+    }
+
+    private static void writeLocalFileHeader(OutputStream out) throws IOException {
+        writeInt(out, 0x04034B50);
+        writeShort(out, 0);
+        writeShort(out, 1);
+        writeShort(out, 0);
+        writeShort(out, 0);
+        writeShort(out, 0);
+        writeInt(out, 0);
+        writeInt(out, 0);
+        writeInt(out, 0);
+        writeShort(out, 0);
+        writeShort(out, 0);
     }
 
     private static void writeCentralDirectoryEntry(OutputStream out, CentralDirectoryEntry entry) throws IOException {
-        writeInt(out, 0x02014B50);                                             // 中央目录头签名      50 4b 01 02    50 4b 01 02    50 4b 01 02
-        writeShort(out, 0x031E);                                               // 创建版本(MS-DOS)   1e 03          1e 03          1e 03
-        writeShort(out, 0x0014);                                               // 最低版本           14 00          14 00          14 00
-        writeShort(out, 0);                                                    // UTF-8 标志         00 00         00 00          00 00
-        writeShort(out, entry.compressionMethod);                                    // 压缩方法           08 00          08 00          08 00
-        writeShort(out, 0);                                                    // 文件最后修改时间     00 00         00 00           00 00
-        writeShort(out, 0);                                                    // 文件最后修改日期     21 00         00 00           21 00
-        writeInt(out, 0);                                                      // 未压缩数据的 CRC-32  89 0c f1 6a   00 00 00 00    f9 fe 34 f4
-        writeInt(out, entry.compressedSize + 1);                               // 压缩数据的大小       6a 00 00 00   6d 00 00 00     75 01 00 00
-        writeInt(out, entry.uncompressedSize + 1);                             // 未压缩数据的大小     6a 10 00 00   9a 00 00 00     75 11 00 00
-        writeShort(out, entry.fileName.getBytes(StandardCharsets.UTF_8).length);     // 文件名长度          24 00         24 00           2d 00
-        writeShort(out, 0);                                                    // 额外字段长度         00 00         00 00          00 00
-        writeShort(out, 0);                                                    // 注释长度            00 00         00 00           00 00
-        writeShort(out, RANDOM.nextInt(65536));                               // 磁盘编号            44 bc         c2 45           9e d6
-        writeShort(out, 0);                                                    // 内部属性            00 00         00 00           00 00
-        writeInt(out, 1);                                                      // 外部属性            01 00 00 00   01 00 00 00     01 00 00 00
-        writeInt(out, (int) entry.localHeaderOffset);                                // 本地文件头的相对偏移量 00 00 00 00   00 00 00 00     8d 40 01 00
-        out.write(entry.fileName.getBytes(StandardCharsets.UTF_8));                  // 文件名
+        writeInt(out, 0x02014B50);
+        writeShort(out, 0);
+        writeShort(out, 0);
+        writeShort(out, 0);
+        writeShort(out, entry.compressionMethod);
+        writeShort(out, 0);
+        writeShort(out, 0);
+        writeInt(out, 0);
+        writeInt(out, entry.compressedSize + 1);
+        writeInt(out, 0xFFFFFFFFL);
+        writeShort(out, entry.fileName.getBytes(StandardCharsets.UTF_8).length);
+        writeShort(out, 0);
+        writeShort(out, 0);
+        writeShort(out, RANDOM.nextInt(65536));
+        writeShort(out, 0);
+        writeInt(out, 1);
+        writeInt(out, (int) entry.localHeaderOffset);
+        out.write(entry.fileName.getBytes(StandardCharsets.UTF_8));
     }
 
     private static void writeEndOfCentralDirectoryRecord(OutputStream out, int numEntries,
                                                          long centralDirOffset, long centralDirSize) throws IOException {
-        writeInt(out, 0x06054B50);       // 结束记录签名     50 4b 05 06    50 4b 05 06
-        writeShort(out, 1);              // 磁盘编号        ff ff          ff ff
-        writeShort(out, 0);              // 中央目录起始磁盘  00 00          00 00
-        writeShort(out, numEntries);           // 当前磁盘条目数    6f 01         68 01
-        writeShort(out, numEntries);           // 总条目数         6f 01         68 01
-        writeInt(out, centralDirSize);         // 中央目录大小     ad 84 00 00    ad 84 00 00
-        writeInt(out, (int) centralDirOffset); // 中央目录偏移     95 bb 02 00    1a 21 04 00
-        writeShort(out, 0);              // 注释长度         00 00         00 00
+        writeInt(out, 0x06054B50);
+        writeShort(out, 0xFF);
+        writeShort(out, 0);
+        writeShort(out, 0);
+        writeShort(out, 0);
+        writeInt(out, centralDirSize);
+        writeInt(out, (int) centralDirOffset);
+        writeShort(out, 0);
     }
 
     private static void writeShort(OutputStream out, int value) throws IOException {
