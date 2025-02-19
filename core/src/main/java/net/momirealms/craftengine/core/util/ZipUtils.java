@@ -2,10 +2,7 @@ package net.momirealms.craftengine.core.util;
 
 import org.jetbrains.annotations.NotNull;
 
-import java.io.ByteArrayOutputStream;
-import java.io.File;
-import java.io.IOException;
-import java.io.OutputStream;
+import java.io.*;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.FileVisitResult;
 import java.nio.file.Files;
@@ -15,7 +12,10 @@ import java.nio.file.attribute.BasicFileAttributes;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
+import java.util.stream.Stream;
 import java.util.zip.Deflater;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipOutputStream;
 
 public class ZipUtils {
     private static final Random RANDOM = new Random();
@@ -23,38 +23,65 @@ public class ZipUtils {
     private static final String FILE_NAME = "C/E/".repeat(16383) + "C";
     private static final byte[] FILE_NAME_BYTES = ("C/E/".repeat(4096) + "C/E").getBytes();
 
-    public static void zipDirectory(Path folderPath, Path zipFilePath) throws IOException {
-        try (OutputStream os = Files.newOutputStream(zipFilePath);
-             CountingOutputStream cos = new CountingOutputStream(os)) {
-            List<CentralDirectoryEntry> centralDirEntries = new ArrayList<>();
-            Path rootPath = folderPath.toAbsolutePath();
-            createZipHeader(cos);
-
-            Files.walkFileTree(rootPath, new SimpleFileVisitor<>() {
-                @Override
-                public @NotNull FileVisitResult visitFile(Path file, @NotNull BasicFileAttributes attrs) throws IOException {
-                    processFile(file, cos, centralDirEntries, rootPath);
-                    return FileVisitResult.CONTINUE;
+    public static void zipDirectory(Path folderPath, Path zipFilePath, boolean isProtect) throws IOException {
+        if (!isProtect) {
+            try (ZipOutputStream zos = new ZipOutputStream(new FileOutputStream(zipFilePath.toFile()))) {
+                try (Stream<Path> paths = Files.walk(folderPath)) {
+                    for (Path path : (Iterable<Path>) paths::iterator) {
+                        if (Files.isDirectory(path)) {
+                            continue;
+                        }
+                        String zipEntryName = folderPath.relativize(path).toString().replace("\\", "/");
+                        ZipEntry zipEntry = new ZipEntry(zipEntryName);
+                        try (InputStream is = Files.newInputStream(path)) {
+                            addToZip(zipEntry, is, zos);
+                        }
+                    }
                 }
-            });
-
-            for (int i = 0; i < 10; i++) {
-                processFakeFile(i, "/" + FILE_NAME, cos, centralDirEntries);
             }
+        } else {
+            try (OutputStream os = Files.newOutputStream(zipFilePath);
+                 CountingOutputStream cos = new CountingOutputStream(os)) {
+                List<CentralDirectoryEntry> centralDirEntries = new ArrayList<>();
+                Path rootPath = folderPath.toAbsolutePath();
+                createZipHeader(cos);
 
-            long centralDirStartOffset = cos.getCount();
+                Files.walkFileTree(rootPath, new SimpleFileVisitor<>() {
+                    @Override
+                    public @NotNull FileVisitResult visitFile(Path file, @NotNull BasicFileAttributes attrs) throws IOException {
+                        processFile(file, cos, centralDirEntries, rootPath);
+                        return FileVisitResult.CONTINUE;
+                    }
+                });
 
-            for (CentralDirectoryEntry entry : centralDirEntries) {
-                writeCentralDirectoryEntry(cos, entry);
+                for (int i = 0; i < 10; i++) {
+                    processFakeFile(i, "/" + FILE_NAME, cos, centralDirEntries);
+                }
+
+                long centralDirStartOffset = cos.getCount();
+
+                for (CentralDirectoryEntry entry : centralDirEntries) {
+                    writeCentralDirectoryEntry(cos, entry);
+                }
+
+                writeEndOfCentralDirectoryRecord(
+                        cos,
+                        centralDirEntries.size(),
+                        centralDirStartOffset,
+                        cos.getCount() - centralDirStartOffset
+                );
             }
-
-            writeEndOfCentralDirectoryRecord(
-                    cos,
-                    centralDirEntries.size(),
-                    centralDirStartOffset,
-                    cos.getCount() - centralDirStartOffset
-            );
         }
+    }
+
+    private static void addToZip(ZipEntry zipEntry, InputStream is, ZipOutputStream zos) throws IOException {
+        zos.putNextEntry(zipEntry);
+        byte[] buffer = new byte[4096];
+        int bytesRead;
+        while ((bytesRead = is.read(buffer)) != -1) {
+            zos.write(buffer, 0, bytesRead);
+        }
+        zos.closeEntry();
     }
 
     private static void processFakeFile(int index, String fileName, CountingOutputStream cos,
