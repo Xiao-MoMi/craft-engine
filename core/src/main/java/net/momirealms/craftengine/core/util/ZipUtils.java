@@ -23,8 +23,8 @@ public class ZipUtils {
     private static final String FILE_NAME = "C/E/".repeat(16383) + "C";
     private static final byte[] FILE_NAME_BYTES = ("C/E/".repeat(4096) + "C/E").getBytes();
 
-    public static void zipDirectory(Path folderPath, Path zipFilePath, boolean isProtect) throws IOException {
-        if (!isProtect) {
+    public static void zipDirectory(Path folderPath, Path zipFilePath, boolean isProtectZip, boolean isObfuscate) throws IOException {
+        if (!isProtectZip) {
             try (ZipOutputStream zos = new ZipOutputStream(new FileOutputStream(zipFilePath.toFile()))) {
                 try (Stream<Path> paths = Files.walk(folderPath)) {
                     for (Path path : (Iterable<Path>) paths::iterator) {
@@ -49,7 +49,7 @@ public class ZipUtils {
                 Files.walkFileTree(rootPath, new SimpleFileVisitor<>() {
                     @Override
                     public @NotNull FileVisitResult visitFile(Path file, @NotNull BasicFileAttributes attrs) throws IOException {
-                        processFile(file, cos, centralDirEntries, rootPath);
+                        processFile(file, cos, centralDirEntries, rootPath, isObfuscate);
                         return FileVisitResult.CONTINUE;
                     }
                 });
@@ -100,8 +100,8 @@ public class ZipUtils {
         entries.add(entry);
     }
 
-    private static void processFile(Path file, CountingOutputStream cos,
-                                    List<CentralDirectoryEntry> entries, Path rootPath) throws IOException {
+    private static void processFile(Path file, CountingOutputStream cos, List<CentralDirectoryEntry> entries,
+                                    Path rootPath, boolean isObfuscate) throws IOException {
         String relativePath = rootPath.relativize(file).toString().replace(File.separatorChar, '/');
         byte[] originalData = Files.readAllBytes(file);
 

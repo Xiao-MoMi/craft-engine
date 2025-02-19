@@ -285,20 +285,21 @@ public class PackManagerImpl implements PackManager {
         this.generateItemModels(generatedPackPath, this.plugin.blockManager());
         this.generateSounds(generatedPackPath);
         // TODO: 混淆资源包
-        this.obfuscate(generatedPackPath);
+        Section protectionSettings = plugin.configManager().settings()
+                .getSection("resource-pack")
+                .getSection("protection");
+        boolean obfuscate = protectionSettings.getBoolean("obfuscation");
+        boolean protectZip = protectionSettings.getBoolean("break-zip-format");
+        if (obfuscate) {
+            this.obfuscate(generatedPackPath, protectZip);
+        }
 
         Path zipFile = this.plugin.dataFolderPath()
                 .resolve("generated")
                 .resolve("resource_pack.zip");
 
         try {
-            ZipUtils.zipDirectory(
-                    generatedPackPath, zipFile,
-                    plugin.configManager().settings()
-                            .getSection("resource-pack")
-                            .getSection("protection")
-                            .getBoolean("break-zip-format")
-            );
+            ZipUtils.zipDirectory(generatedPackPath, zipFile, protectZip, obfuscate);
         } catch (IOException e) {
             this.plugin.logger().severe("Error zipping resource pack", e);
         }
@@ -627,21 +628,24 @@ public class PackManagerImpl implements PackManager {
         }
     }
 
-    private void obfuscate(Path folderPath) {
-        try (Stream<Path> paths = Files.walk(folderPath)) {
-            Gson gson = GsonHelper.get();
-            for (Path path : (Iterable<Path>) paths::iterator) {
-                if (Files.isDirectory(path)) {
-                    continue;
+    private void obfuscate(Path folderPath, boolean isProtectZip) {
+        if (!isProtectZip) {
+            try (Stream<Path> paths = Files.walk(folderPath)) {
+                Gson gson = GsonHelper.get();
+                for (Path path : (Iterable<Path>) paths::iterator) {
+                    if (Files.isDirectory(path)) {
+                        continue;
+                    }
+                    String fileName = path.toString().toLowerCase();
+                    if (fileName.endsWith(".json") || fileName.endsWith(".mcmeta")) {
+                        JsonElement jsonElement = gson.fromJson(Files.readString(path), JsonElement.class);
+                        Files.writeString(path, gson.toJson(jsonElement), StandardCharsets.UTF_8);
+                    }
                 }
-                String fileName = path.toString().toLowerCase();
-                if (fileName.endsWith(".json") || fileName.endsWith(".mcmeta")) {
-                    JsonElement jsonElement = gson.fromJson(Files.readString(path), JsonElement.class);
-                    Files.writeString(path, gson.toJson(jsonElement), StandardCharsets.UTF_8);
-                }
+            } catch (IOException e) {
+                plugin.logger().warn("Failed to obfuscate resource pack", e);
             }
-        } catch (IOException e) {
-            plugin.logger().warn("Failed to obfuscate resource pack", e);
+        } else {
         }
     }
 }
