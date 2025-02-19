@@ -46,16 +46,11 @@ public abstract class AbstractItemManager<I> extends AbstractModelGenerator impl
 
     private void registerFunctions() {
         registerDataFunction((obj) -> {
-            String name = TypeUtils.checkType(obj, String.class);
+            String name = obj.toString();
             return new DisplayNameModifier<>(name);
         }, "name", "display-name", "custom-name");
         registerDataFunction((obj) -> {
-            String name = TypeUtils.checkType(obj, String.class);
-            return new ItemNameModifier<>(name);
-        }, "item-name");
-        registerDataFunction((obj) -> {
-            @SuppressWarnings("unchecked")
-            List<String> name = (List<String>) TypeUtils.checkType(obj, List.class);
+            List<String> name = MiscUtils.getAsStringList(obj);
             return new LoreModifier<>(name);
         }, "lore", "display-lore", "description");
         registerDataFunction((obj) -> {
@@ -68,7 +63,7 @@ public abstract class AbstractItemManager<I> extends AbstractModelGenerator impl
         }, "unbreakable");
         if (VersionHelper.isVersionNewerThan1_20_5()) {
             registerDataFunction((obj) -> {
-                String name = TypeUtils.checkType(obj, String.class);
+                String name = obj.toString();
                 return new ItemNameModifier<>(name);
             }, "item-name");
             registerDataFunction((obj) -> {

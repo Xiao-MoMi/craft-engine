@@ -43,7 +43,7 @@ public class FileUtils {
                     @Override
                     public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
                         Path targetPath = targetFolder.resolve(sourceFolder.relativize(file));
-                        List<Path> conflicts = conflictChecker.computeIfAbsent(targetPath.toAbsolutePath(), k -> new ArrayList<>());
+                        List<Path> conflicts = conflictChecker.computeIfAbsent(targetPath, k -> new ArrayList<>());
                         conflicts.add(file);
                         if (conflicts.size() == 1) {
                             Files.createDirectories(targetPath.getParent());

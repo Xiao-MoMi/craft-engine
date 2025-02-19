@@ -27,6 +27,10 @@ public class ParticleUtils {
             }
 
             Object aabb = Reflections.method$VoxelShape$bounds.invoke(shape);
+            // TODO Really?
+            if (aabb == null) {
+                return;
+            }
             double minX = Reflections.field$AABB$minX.getDouble(aabb);
             double minY = Reflections.field$AABB$minY.getDouble(aabb);
             double minZ = Reflections.field$AABB$minZ.getDouble(aabb);

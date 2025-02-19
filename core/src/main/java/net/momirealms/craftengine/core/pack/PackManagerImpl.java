@@ -13,6 +13,7 @@ import net.momirealms.craftengine.core.plugin.PluginProperties;
 import net.momirealms.craftengine.core.plugin.config.ConfigManager;
 import net.momirealms.craftengine.core.plugin.config.ConfigSectionParser;
 import net.momirealms.craftengine.core.plugin.config.StringKeyConstructor;
+import net.momirealms.craftengine.core.plugin.config.template.TemplateManager;
 import net.momirealms.craftengine.core.util.*;
 import org.jetbrains.annotations.NotNull;
 import org.yaml.snakeyaml.LoaderOptions;
@@ -217,6 +218,7 @@ public class PackManagerImpl implements PackManager {
         this.plugin.logger().info("Loaded packs. Took " + String.format("%.2f", ((o2 - o1) / 1_000_000.0)) + " ms");
         for (Map.Entry<ConfigSectionParser, List<CachedConfig>> entry : this.cachedConfigs.entrySet()) {
             ConfigSectionParser parser = entry.getKey();
+            boolean isTemplate = parser.sectionId().equals(TemplateManager.CONFIG_SECTION_NAME);
             long t1 = System.nanoTime();
             for (CachedConfig cached : entry.getValue()) {
                 for (Map.Entry<String, Object> configEntry : cached.config().entrySet()) {
@@ -226,7 +228,7 @@ public class PackManagerImpl implements PackManager {
                         if (configEntry.getValue() instanceof Map<?, ?> configSection0) {
                             Map<String, Object> configSection1 = castToMap(configSection0, false);
                             if ((boolean) configSection1.getOrDefault("enable", true)) {
-                                parser.parseSection(cached.pack(), cached.filePath(), id, plugin.templateManager().applyTemplates(configSection1));
+                                parser.parseSection(cached.pack(), cached.filePath(), id, isTemplate ? configSection1 : plugin.templateManager().applyTemplates(configSection1));
                             }
                         } else {
                             this.plugin.logger().warn(cached.filePath(), "Configuration section is required for " + parser.sectionId() + "." + configEntry.getKey() + " - ");
@@ -274,7 +276,6 @@ public class PackManagerImpl implements PackManager {
         } catch (IOException e) {
             this.plugin.logger().severe("Error merging resource pack", e);
         }
-
 
         this.generateFonts(generatedPackPath);
         this.generateLegacyItemOverrides(generatedPackPath);

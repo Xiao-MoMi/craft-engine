@@ -117,7 +117,11 @@ public class TemplateManagerImpl implements TemplateManager {
         while (matcher.find()) {
             String placeholder = matcher.group();
             Supplier<String> replacer = arguments.get(placeholder);
-            matcher.appendReplacement(result, replacer != null ? replacer.get() : placeholder);
+            if (replacer != null) {
+                matcher.appendReplacement(result, replacer.get());
+            } else {
+                throw new IllegalArgumentException("Missing template argument: " + placeholder);
+            }
         }
         matcher.appendTail(result);
         return result.toString();

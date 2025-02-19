@@ -12,6 +12,7 @@ import net.minecraft.world.level.LevelReader;
 import net.minecraft.world.level.ScheduledTickAccess;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.BonemealableBlock;
 import net.minecraft.world.level.block.Fallable;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.material.FluidState;
@@ -21,7 +22,7 @@ import net.momirealms.craftengine.shared.ObjectHolder;
 import net.momirealms.craftengine.shared.block.*;
 import org.jetbrains.annotations.NotNull;
 
-public class CraftEngineBlock extends Block implements BehaviorHolder, ShapeHolder, NoteBlockIndicator, Fallable {
+public class CraftEngineBlock extends Block implements BehaviorHolder, ShapeHolder, NoteBlockIndicator, Fallable, BonemealableBlock {
     private static final MixinStoneBlockShape STONE = new MixinStoneBlockShape(Blocks.STONE.defaultBlockState());
     private boolean isNoteBlock;
     public ObjectHolder<BlockBehavior> behaviorHolder;
@@ -176,6 +177,35 @@ public class CraftEngineBlock extends Block implements BehaviorHolder, ShapeHold
         } catch (Exception e) {
             e.printStackTrace();
             return super.getFluidState(state);
+        }
+    }
+
+    @Override
+    public boolean isValidBonemealTarget(@NotNull LevelReader levelReader, @NotNull BlockPos blockPos, @NotNull BlockState blockState) {
+        try {
+            return behaviorHolder.value().isValidBoneMealTarget(this, new Object[]{levelReader, blockPos, blockState});
+        } catch (Exception e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
+
+    @Override
+    public boolean isBonemealSuccess(@NotNull Level level, @NotNull RandomSource randomSource, @NotNull BlockPos blockPos, @NotNull BlockState blockState) {
+        try {
+            return behaviorHolder.value().isBoneMealSuccess(this, new Object[]{level, randomSource, blockPos, blockState});
+        } catch (Exception e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
+
+    @Override
+    public void performBonemeal(@NotNull ServerLevel serverLevel, @NotNull RandomSource randomSource, @NotNull BlockPos blockPos, @NotNull BlockState blockState) {
+        try {
+            behaviorHolder.value().performBoneMeal(this, new Object[]{serverLevel, randomSource, blockPos, blockState});
+        } catch (Exception e) {
+            e.printStackTrace();
         }
     }
 }

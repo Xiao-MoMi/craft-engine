@@ -36,7 +36,7 @@ public class LootTable<T> {
     @Nullable
     @SuppressWarnings("unchecked")
     public static <T> LootTable<T> fromMap(Map<String, Object> map) {
-        if (map == null) return null;
+        if (map == null || map.isEmpty()) return null;
         List<Map<String, Object>> poolList = (List<Map<String, Object>>) map.get("pools");
         List<LootPool<T>> lootPools = new ArrayList<>();
         for (Map<String, Object> pool : poolList) {

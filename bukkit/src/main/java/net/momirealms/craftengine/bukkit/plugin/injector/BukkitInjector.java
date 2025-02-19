@@ -173,7 +173,8 @@ public class BukkitInjector {
                     .defineField("isClientSideNoteBlock", boolean.class, Visibility.PUBLIC)
                     // should always implement this interface
                     .implement(Reflections.clazz$Fallable)
-                    // duck
+                    .implement(Reflections.clazz$BonemealableBlock)
+                    // internal interfaces
                     .implement(BehaviorHolder.class)
                     .implement(ShapeHolder.class)
                     .implement(NoteBlockIndicator.class)
@@ -184,27 +185,22 @@ public class BukkitInjector {
                     .method(ElementMatchers.named("isNoteBlock"))
                     .intercept(FieldAccessor.ofField("isClientSideNoteBlock"))
                     // getShape
-                    .method(ElementMatchers.returns(Reflections.clazz$VoxelShape)
-                            .and(ElementMatchers.takesArguments(4))
-                            .and(ElementMatchers.named("getShape").or(ElementMatchers.named("a"))))
+                    .method(ElementMatchers.is(Reflections.method$BlockBehaviour$getShape))
                     .intercept(MethodDelegation.to(GetShapeInterceptor.INSTANCE))
                     // tick
-                    .method(ElementMatchers.takesArguments(4)
-                            .and(ElementMatchers.takesArgument(0, Reflections.clazz$BlockState))
-                            .and(ElementMatchers.takesArgument(1, Reflections.clazz$ServerLevel))
-                            .and(ElementMatchers.takesArgument(2, Reflections.clazz$BlockPos))
-                            .and(ElementMatchers.takesArgument(3, Reflections.clazz$RandomSource))
-                            .and(ElementMatchers.named("tick").or(ElementMatchers.named("a")))
-                    )
+                    .method(ElementMatchers.is(Reflections.method$BlockBehaviour$tick))
                     .intercept(MethodDelegation.to(TickInterceptor.INSTANCE))
+                    // isValidBoneMealTarget
+                    .method(ElementMatchers.is(Reflections.method$BonemealableBlock$isValidBonemealTarget))
+                    .intercept(MethodDelegation.to(IsValidBoneMealTargetInterceptor.INSTANCE))
+                    // isBoneMealSuccess
+                    .method(ElementMatchers.is(Reflections.method$BonemealableBlock$isBonemealSuccess))
+                    .intercept(MethodDelegation.to(IsBoneMealSuccessInterceptor.INSTANCE))
+                    // performBoneMeal
+                    .method(ElementMatchers.is(Reflections.method$BonemealableBlock$performBonemeal))
+                    .intercept(MethodDelegation.to(PerformBoneMealInterceptor.INSTANCE))
                     // random tick
-                    .method(ElementMatchers.takesArguments(4)
-                            .and(ElementMatchers.takesArgument(0, Reflections.clazz$BlockState))
-                            .and(ElementMatchers.takesArgument(1, Reflections.clazz$ServerLevel))
-                            .and(ElementMatchers.takesArgument(2, Reflections.clazz$BlockPos))
-                            .and(ElementMatchers.takesArgument(3, Reflections.clazz$RandomSource))
-                            .and(ElementMatchers.named("randomTick").or(ElementMatchers.named("b")))
-                    )
+                    .method(ElementMatchers.is(Reflections.method$BlockBehaviour$randomTick))
                     .intercept(MethodDelegation.to(RandomTickInterceptor.INSTANCE))
                     // onPlace
                     .method(ElementMatchers.takesArguments(5)
@@ -773,6 +769,50 @@ public class BukkitInjector {
             } catch (Exception e) {
                 CraftEngine.instance().logger().severe("Failed to run canSurvive", e);
                 return true;
+            }
+        }
+    }
+
+    public static class IsBoneMealSuccessInterceptor {
+        public static final IsBoneMealSuccessInterceptor INSTANCE = new IsBoneMealSuccessInterceptor();
+
+        @RuntimeType
+        public boolean intercept(@This Object thisObj, @AllArguments Object[] args) {
+            ObjectHolder<BlockBehavior> holder = ((BehaviorHolder) thisObj).getBehaviorHolder();
+            try {
+                return holder.value().isBoneMealSuccess(thisObj, args);
+            } catch (Exception e) {
+                CraftEngine.instance().logger().severe("Failed to run isBoneMealSuccess", e);
+                return true;
+            }
+        }
+    }
+
+    public static class IsValidBoneMealTargetInterceptor {
+        public static final IsValidBoneMealTargetInterceptor INSTANCE = new IsValidBoneMealTargetInterceptor();
+
+        @RuntimeType
+        public boolean intercept(@This Object thisObj, @AllArguments Object[] args) {
+            ObjectHolder<BlockBehavior> holder = ((BehaviorHolder) thisObj).getBehaviorHolder();
+            try {
+                return holder.value().isValidBoneMealTarget(thisObj, args);
+            } catch (Exception e) {
+                CraftEngine.instance().logger().severe("Failed to run isValidBoneMealTarget", e);
+                return true;
+            }
+        }
+    }
+
+    public static class PerformBoneMealInterceptor {
+        public static final PerformBoneMealInterceptor INSTANCE = new PerformBoneMealInterceptor();
+
+        @RuntimeType
+        public void intercept(@This Object thisObj, @AllArguments Object[] args) {
+            ObjectHolder<BlockBehavior> holder = ((BehaviorHolder) thisObj).getBehaviorHolder();
+            try {
+                holder.value().performBoneMeal(thisObj, args);
+            } catch (Exception e) {
+                CraftEngine.instance().logger().severe("Failed to run performBoneMeal", e);
             }
         }
     }

@@ -264,13 +264,13 @@ public class BukkitItemManager extends AbstractItemManager<ItemStack> {
         Map<String, Object> dataSection = MiscUtils.castToMap(section.get("data"), true);
         if (dataSection != null) {
             for (Map.Entry<String, Object> dataEntry : dataSection.entrySet()) {
-                Optional.ofNullable(dataFunctions.get(dataEntry.getKey())).ifPresentOrElse(function -> {
+                Optional.ofNullable(dataFunctions.get(dataEntry.getKey())).ifPresent(function -> {
                     try {
                         itemBuilder.modifier(function.apply(dataEntry.getValue()));
                     } catch (IllegalArgumentException e) {
                         plugin.logger().warn("Invalid data format", e);
                     }
-                }, () -> plugin.logger().warn(path, dataEntry.getKey() + " is not a valid data type"));
+                });
             }
         }
 
@@ -279,12 +279,12 @@ public class BukkitItemManager extends AbstractItemManager<ItemStack> {
             itemBuilder.settings(ItemSettings.fromMap(settings));
         }
 
-        this.customItems.put(id, itemBuilder.build());
+        CustomItem<ItemStack> customItem = itemBuilder.build();
+        this.customItems.put(id, customItem);
 
-        List<String> tags = MiscUtils.getAsStringList(section.get("tags"));
-        for (String tag : tags) {
-            Key key = Key.of(tag);
-            this.customItemTags.computeIfAbsent(key, k -> new ArrayList<>()).add(holder);
+        Set<Key> tags = customItem.settings().tags();
+        for (Key tag : tags) {
+            this.customItemTags.computeIfAbsent(tag, k -> new ArrayList<>()).add(holder);
         }
 
         // model part, can be null

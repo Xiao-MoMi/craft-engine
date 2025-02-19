@@ -1,4 +1,7 @@
 <h1 align="center">
+  <div style="text-align:center">
+    <img src="https://github.com/user-attachments/assets/4e679094-303b-481d-859d-073efc61037c" alt="logo" style="width:100px; height:auto;">
+  </div>
   CraftEngine
 </h1>
 

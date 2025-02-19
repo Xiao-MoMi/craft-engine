@@ -26,10 +26,10 @@ import java.util.concurrent.Callable;
 
 public class BushBlockBehavior extends BlockBehavior {
     public static final Factory FACTORY = new Factory();
-    private static final Object DIRT_TAG = BlockTags.getOrCreate(Key.of("minecraft", "dirt"));
-    private static final Object FARMLAND = BlockTags.getOrCreate(Key.of("minecraft", "farmland"));
+    protected static final Object DIRT_TAG = BlockTags.getOrCreate(Key.of("minecraft", "dirt"));
+    protected static final Object FARMLAND = BlockTags.getOrCreate(Key.of("minecraft", "farmland"));
     public static final BushBlockBehavior INSTANCE = new BushBlockBehavior(List.of(DIRT_TAG, FARMLAND));
-    private final List<Object> tagsCanSurviveOn;
+    protected final List<Object> tagsCanSurviveOn;
 
     public BushBlockBehavior(List<Object> tagsCanSurviveOn) {
         this.tagsCanSurviveOn = tagsCanSurviveOn;

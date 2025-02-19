@@ -16,3 +16,11 @@
 
 # By default, the plugin only registers an additional 112 oak leaf block states (for the default configuration needs [>=28 states]).
 minecraft:oak_leaves: 112
+
+minecraft:oak_sapling: 1
+minecraft:birch_sapling: 1
+minecraft:spruce_sapling: 1
+minecraft:jungle_sapling: 1
+minecraft:dark_oak_sapling: 1
+minecraft:acacia_sapling: 1
+minecraft:cherry_sapling: 1

@@ -125,6 +125,21 @@ templates:
   block_settings:surface_decoration:
     hardness: 0
     resistance: 0
+  block_settings:sapling:
+    template: block_settings:surface_decoration
+    overrides:
+      push-reaction: DESTROY
+      map-color: 7
+      sounds:
+        break: minecraft:block.grass.break
+        step: minecraft:block.grass.step
+        place: minecraft:block.grass.place
+        hit: minecraft:block.grass.hit
+        fall: minecraft:block.grass.fall
+      tags:
+        - minecraft:mineable/axe
+        - minecraft:saplings
+        - minecraft:sword_efficient
   block_settings:leaves:
     hardness: 0.2
     resistance: 0.2
@@ -156,6 +171,7 @@ templates:
       - minecraft:golden_pickaxe
       - minecraft:diamond_pickaxe
       - minecraft:netherite_pickaxe
+      - default:topaz_pickaxe
   block_settings:pickaxe_level_2:
     correct-tools:
       - minecraft:stone_pickaxe
@@ -163,12 +179,14 @@ templates:
       - minecraft:golden_pickaxe
       - minecraft:diamond_pickaxe
       - minecraft:netherite_pickaxe
+      - default:topaz_pickaxe
   block_settings:pickaxe_level_3:
     correct-tools:
       - minecraft:iron_pickaxe
       - minecraft:golden_pickaxe
       - minecraft:diamond_pickaxe
       - minecraft:netherite_pickaxe
+      - default:topaz_pickaxe
   block_settings:pickaxe_level_4:
     correct-tools:
       - minecraft:diamond_pickaxe

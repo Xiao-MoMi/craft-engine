@@ -1,4 +1,13 @@
 ########################################################################################################################################################################################################################
+# Sapling Block
+minecraft:oak_sapling[stage=1]: minecraft:oak_sapling[stage=0]
+minecraft:birch_sapling[stage=1]: minecraft:birch_sapling[stage=0]
+minecraft:spruce_sapling[stage=1]: minecraft:spruce_sapling[stage=0]
+minecraft:jungle_sapling[stage=1]: minecraft:jungle_sapling[stage=0]
+minecraft:dark_oak_sapling[stage=1]: minecraft:dark_oak_sapling[stage=0]
+minecraft:acacia_sapling[stage=1]: minecraft:acacia_sapling[stage=0]
+minecraft:cherry_sapling[stage=1]: minecraft:cherry_sapling[stage=0]
+########################################################################################################################################################################################################################
 # Mushroom Block
 #minecraft:mushroom_stem[down=true,east=true,north=true,south=true,up=true,west=true]: minecraft:mushroom_stem[down=true,east=true,north=true,south=true,up=true,west=true]#
 minecraft:mushroom_stem[down=false,east=false,north=false,south=false,up=false,west=false]: minecraft:mushroom_stem[down=true,east=true,north=true,south=true,up=true,west=true]

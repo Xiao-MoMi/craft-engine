@@ -1,12 +1,17 @@
 package net.momirealms.craftengine.core.item;
 
+import net.momirealms.craftengine.core.util.Key;
 import net.momirealms.craftengine.core.util.MiscUtils;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 public class ItemSettings {
     int fuelTime;
+    Set<Key> tags = Set.of();
 
     private ItemSettings() {}
 
@@ -21,6 +26,7 @@ public class ItemSettings {
     public static ItemSettings ofFullCopy(ItemSettings settings) {
         ItemSettings newSettings = of();
         newSettings.fuelTime = settings.fuelTime;
+        newSettings.tags = settings.tags;
         return newSettings;
     }
 
@@ -40,8 +46,17 @@ public class ItemSettings {
         return fuelTime;
     }
 
+    public Set<Key> tags() {
+        return tags;
+    }
+
     public ItemSettings fuelTime(int fuelTime) {
         this.fuelTime = fuelTime;
+        return this;
+    }
+
+    public ItemSettings tags(Set<Key> tags) {
+        this.tags = tags;
         return this;
     }
 
@@ -62,6 +77,10 @@ public class ItemSettings {
             registerFactory("fuel-time", (value -> {
                 int intValue = MiscUtils.getAsInt(value);
                 return settings -> settings.fuelTime(intValue);
+            }));
+            registerFactory("tags", (value -> {
+                List<String> tags = MiscUtils.getAsStringList(value);
+                return settings -> settings.tags(tags.stream().map(Key::of).collect(Collectors.toSet()));
             }));
         }
 

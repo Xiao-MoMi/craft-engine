@@ -71,6 +71,13 @@ public class Reflections {
             )
     );
 
+    public static final Class<?> clazz$RandomSource = requireNonNull(
+            ReflectionUtils.getClazz(
+                    BukkitReflectionUtils.assembleMCClass("util.RandomSource")
+            )
+    );
+
+
     public static final Class<?> clazz$ClientboundSetActionBarTextPacket = requireNonNull(
             ReflectionUtils.getClazz(
                     BukkitReflectionUtils.assembleMCClass("network.protocol.game.ClientboundSetActionBarTextPacket")
@@ -1883,6 +1890,33 @@ public class Reflections {
             )
     );
 
+    public static final Class<?> clazz$WorldGenLevel = requireNonNull(
+            ReflectionUtils.getClazz(
+                    BukkitReflectionUtils.assembleMCClass("world.level.WorldGenLevel"),
+                    BukkitReflectionUtils.assembleMCClass("world.level.GeneratorAccessSeed")
+            )
+    );
+
+    public static final Class<?> clazz$ChunkGenerator = requireNonNull(
+            ReflectionUtils.getClazz(
+                    BukkitReflectionUtils.assembleMCClass("world.level.chunk.ChunkGenerator")
+            )
+    );
+
+    // 1.20.1-1.20.2
+    public static final Class<?> clazz$AbstractTreeGrower =
+            ReflectionUtils.getClazz(
+                    BukkitReflectionUtils.assembleMCClass("world.level.block.grower.AbstractTreeGrower"),
+                    BukkitReflectionUtils.assembleMCClass("world.level.block.grower.WorldGenTreeProvider")
+            );
+
+    public static final Class<?> clazz$ConfiguredFeature = requireNonNull(
+            ReflectionUtils.getClazz(
+                    BukkitReflectionUtils.assembleMCClass("world.level.levelgen.feature.ConfiguredFeature"),
+                    BukkitReflectionUtils.assembleMCClass("world.level.levelgen.feature.WorldGenFeatureConfigured")
+            )
+    );
+
     public static final Object instance$BuiltInRegistries$BLOCK;
     public static final Object instance$BuiltInRegistries$ITEM;
     public static final Object instance$BuiltInRegistries$ATTRIBUTE;
@@ -1906,6 +1940,7 @@ public class Reflections {
     public static final Object instance$Registries$FLUID;
     public static final Object instance$Registries$RECIPE_TYPE;
     public static final Object instance$Registries$DIMENSION_TYPE;
+    public static final Object instance$Registries$CONFIGURED_FEATURE;
 
     public static final Object instance$registryAccess;
 
@@ -1923,6 +1958,7 @@ public class Reflections {
             Object registries$Item  = null;
             Object registries$Fluid  = null;
             Object registries$RecipeType  = null;
+            Object registries$ConfiguredFeature  = null;
             for (Field field : fields) {
                 Type fieldType = field.getGenericType();
                 if (fieldType instanceof ParameterizedType paramType) {
@@ -1938,6 +1974,8 @@ public class Reflections {
                                     registries$EntityType = field.get(null);
                                 } else if (rawType == clazz$RecipeType) {
                                     registries$RecipeType = field.get(null);
+                                } else if (rawType == clazz$ConfiguredFeature) {
+                                    registries$ConfiguredFeature = field.get(null);
                                 }
                             } else {
                                 if (type == clazz$Block) {
@@ -1973,6 +2011,7 @@ public class Reflections {
             instance$Registries$ENTITY_TYPE = requireNonNull(registries$EntityType);
             instance$Registries$FLUID = requireNonNull(registries$Fluid);
             instance$Registries$RECIPE_TYPE = requireNonNull(registries$RecipeType);
+            instance$Registries$CONFIGURED_FEATURE = requireNonNull(registries$ConfiguredFeature);
             Object server = method$MinecraftServer$getServer.invoke(null);
             Object registries = field$MinecraftServer$registries.get(server);
             instance$registryAccess = field$LayeredRegistryAccess$composite.get(registries);
@@ -2268,7 +2307,19 @@ public class Reflections {
 
     public static final Method method$BlockBehaviour$getShape = requireNonNull(
             ReflectionUtils.getDeclaredMethod(
-                    clazz$BlockBehaviour, clazz$VoxelShape, clazz$BlockState, clazz$BlockGetter, clazz$BlockPos, clazz$CollisionContext
+                    clazz$BlockBehaviour, clazz$VoxelShape, new String[]{"getShape", "a"}, clazz$BlockState, clazz$BlockGetter, clazz$BlockPos, clazz$CollisionContext
+            )
+    );
+
+    public static final Method method$BlockBehaviour$tick = requireNonNull(
+            ReflectionUtils.getDeclaredMethod(
+                    clazz$BlockBehaviour, void.class, new String[]{"tick", "a"}, clazz$BlockState, clazz$ServerLevel, clazz$BlockPos, clazz$RandomSource
+            )
+    );
+
+    public static final Method method$BlockBehaviour$randomTick = requireNonNull(
+            ReflectionUtils.getDeclaredMethod(
+                    clazz$BlockBehaviour, void.class, new String[]{"randomTick", "b"}, clazz$BlockState, clazz$ServerLevel, clazz$BlockPos, clazz$RandomSource
             )
     );
 
@@ -3131,9 +3182,9 @@ public class Reflections {
                     BukkitReflectionUtils.assembleMCClass("world.level.ScheduledTickAccess")
             );
 
-    public static final Class<?> clazz$RandomSource = requireNonNull(
-            ReflectionUtils.getClazz(
-                    BukkitReflectionUtils.assembleMCClass("util.RandomSource")
+    public static final Method method$RandomSource$nextFloat = requireNonNull(
+            ReflectionUtils.getMethod(
+                    clazz$RandomSource, float.class
             )
     );
 
@@ -3792,6 +3843,12 @@ public class Reflections {
             )
     );
 
+    public static final Method method$FluidState$createLegacyBlock = requireNonNull(
+            ReflectionUtils.getMethod(
+                    clazz$FluidState, clazz$BlockState
+            )
+    );
+
     public static final Class<?> clazz$FileToIdConverter = requireNonNull(
             ReflectionUtils.getClazz(
                     BukkitReflectionUtils.assembleMCClass("resources.FileToIdConverter")
@@ -4447,6 +4504,59 @@ public class Reflections {
     public static final Field field$SimpleContainer$items = requireNonNull(
             ReflectionUtils.getDeclaredField(
                     clazz$SimpleContainer, clazz$NonNullList, 0
+            )
+    );
+
+    public static final Method method$LevelReader$getMaxLocalRawBrightness = requireNonNull(
+            ReflectionUtils.getMethod(
+                    Reflections.clazz$LevelReader, int.class, Reflections.clazz$BlockPos
+            )
+    );
+
+    public static final Method method$ConfiguredFeature$place = requireNonNull(
+            ReflectionUtils.getMethod(
+                    clazz$ConfiguredFeature, boolean.class, clazz$WorldGenLevel, clazz$ChunkGenerator, clazz$RandomSource, clazz$BlockPos
+            )
+    );
+
+    public static final Method method$ServerChunkCache$getGenerator = requireNonNull(
+            ReflectionUtils.getMethod(
+                    clazz$ServerChunkCache, clazz$ChunkGenerator
+            )
+    );
+
+    public static final Method method$ServerLevel$sendBlockUpdated = requireNonNull(
+            ReflectionUtils.getMethod(
+                    clazz$ServerLevel, void.class, clazz$BlockPos, clazz$BlockState, clazz$BlockState, int.class
+            )
+    );
+
+    public static final Class<?> clazz$BonemealableBlock = requireNonNull(
+            ReflectionUtils.getClazz(
+                    BukkitReflectionUtils.assembleMCClass("world.level.block.BonemealableBlock"),
+                    BukkitReflectionUtils.assembleMCClass("world.level.block.IBlockFragilePlantElement")
+            )
+    );
+
+    public static final Method method$BonemealableBlock$isValidBonemealTarget = requireNonNull(
+            VersionHelper.isVersionNewerThan1_20_2() ?
+                    ReflectionUtils.getMethod(
+                            clazz$BonemealableBlock, boolean.class, clazz$LevelReader, clazz$BlockPos, clazz$BlockState
+                    ) :
+                    ReflectionUtils.getMethod(
+                            clazz$BonemealableBlock, boolean.class, clazz$LevelReader, clazz$BlockPos, clazz$BlockState, boolean.class
+                    )
+    );
+
+    public static final Method method$BonemealableBlock$isBonemealSuccess = requireNonNull(
+            ReflectionUtils.getMethod(
+                    clazz$BonemealableBlock, boolean.class, clazz$Level, clazz$RandomSource, clazz$BlockPos, clazz$BlockState
+            )
+    );
+
+    public static final Method method$BonemealableBlock$performBonemeal = requireNonNull(
+            ReflectionUtils.getMethod(
+                    clazz$BonemealableBlock, void.class, clazz$ServerLevel, clazz$RandomSource, clazz$BlockPos, clazz$BlockState
             )
     );
 }
