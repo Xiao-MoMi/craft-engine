@@ -13,6 +13,7 @@ resource-pack:
   # Should those images in minecraft:default font also work in minecraft:uniform
   override-uniform-font: true
   protection:
+    # Note that when enabled the ZIP size will increase by 0.67MiB
     break-zip-format: true
     obfuscation: true
   supported-version:
