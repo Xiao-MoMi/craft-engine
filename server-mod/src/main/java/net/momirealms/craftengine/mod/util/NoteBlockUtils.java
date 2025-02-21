@@ -1,4 +1,4 @@
-package net.momirealms.craftengine.mod;
+package net.momirealms.craftengine.mod.util;
 
 import net.minecraft.world.level.block.state.BlockState;
 

@@ -196,47 +196,62 @@ public class PacketConsumers {
         try {
             if (!user.isOnline()) return;
             BukkitServerPlayer player = (BukkitServerPlayer) user;
-            Object action = Reflections.field$ServerboundPlayerActionPacket$action.get(packet);
-            if (action == Reflections.instance$ServerboundPlayerActionPacket$Action$START_DESTROY_BLOCK) {
-                Object blockPos = Reflections.field$ServerboundPlayerActionPacket$pos.get(packet);
-                BlockPos pos = new BlockPos(
-                        (int) Reflections.field$Vec3i$x.get(blockPos),
-                        (int) Reflections.field$Vec3i$y.get(blockPos),
-                        (int) Reflections.field$Vec3i$z.get(blockPos)
-                );
-                Player platformPlayer = player.platformPlayer();
-                World world = platformPlayer.getWorld();
-                Object serverLevel = Reflections.field$CraftWorld$ServerLevel.get(world);
-                Object blockState = Reflections.method$BlockGetter$getBlockState.invoke(serverLevel, blockPos);
-                int stateId = BlockStateUtils.blockStateToId(blockState);
-                // not a custom block
-                if (BlockStateUtils.isVanillaBlock(stateId)) {
-                    if (ConfigManager.enableSoundSystem()) {
-                        Object blockOwner = Reflections.field$StateHolder$owner.get(blockState);
-                        if (BukkitBlockManager.instance().isBlockSoundRemoved(blockOwner)) {
-                            player.startMiningBlock(platformPlayer.getWorld(), pos, blockState, false, null);
-                            return;
-                        }
+            Player platformPlayer = player.platformPlayer();
+            World world = platformPlayer.getWorld();
+            Object blockPos = Reflections.field$ServerboundPlayerActionPacket$pos.get(packet);
+            BlockPos pos = new BlockPos(
+                    (int) Reflections.field$Vec3i$x.get(blockPos),
+                    (int) Reflections.field$Vec3i$y.get(blockPos),
+                    (int) Reflections.field$Vec3i$z.get(blockPos)
+            );
+            if (VersionHelper.isFolia()) {
+                BukkitCraftEngine.instance().scheduler().sync().run(() -> {
+                    try {
+                        handlePlayerActionPacketOnMainThread(player, world, pos, packet);
+                    } catch (Exception e) {
+                        CraftEngine.instance().logger().warn("Failed to handle ServerboundPlayerActionPacket", e);
                     }
-                    if (player.isMiningBlock() || player.shouldSyncAttribute()) {
-                        player.stopMiningBlock();
-                    }
-                    return;
-                }
-                player.startMiningBlock(platformPlayer.getWorld(), pos, blockState, true, BukkitBlockManager.instance().getImmutableBlockStateUnsafe(stateId));
-            } else if (action == Reflections.instance$ServerboundPlayerActionPacket$Action$ABORT_DESTROY_BLOCK) {
-                if (player.isMiningBlock()) {
-                    player.abortMiningBlock();
-                }
-            } else if (action == Reflections.instance$ServerboundPlayerActionPacket$Action$STOP_DESTROY_BLOCK) {
-                if (player.isMiningBlock()) {
-                    player.stopMiningBlock();
-                }
+                }, world, pos.x() >> 4, pos.z() >> 4);
+            } else {
+                handlePlayerActionPacketOnMainThread(player, world, pos, packet);
             }
         } catch (Exception e) {
             CraftEngine.instance().logger().warn("Failed to handle ServerboundPlayerActionPacket", e);
         }
     };
+
+    private static void handlePlayerActionPacketOnMainThread(BukkitServerPlayer player, World world, BlockPos pos, Object packet) throws Exception {
+
+        Object action = Reflections.field$ServerboundPlayerActionPacket$action.get(packet);
+        if (action == Reflections.instance$ServerboundPlayerActionPacket$Action$START_DESTROY_BLOCK) {
+            Object serverLevel = Reflections.field$CraftWorld$ServerLevel.get(world);
+            Object blockState = Reflections.method$BlockGetter$getBlockState.invoke(serverLevel, LocationUtils.toBlockPos(pos));
+            int stateId = BlockStateUtils.blockStateToId(blockState);
+            // not a custom block
+            if (BlockStateUtils.isVanillaBlock(stateId)) {
+                if (ConfigManager.enableSoundSystem()) {
+                    Object blockOwner = Reflections.field$StateHolder$owner.get(blockState);
+                    if (BukkitBlockManager.instance().isBlockSoundRemoved(blockOwner)) {
+                        player.startMiningBlock(world, pos, blockState, false, null);
+                        return;
+                    }
+                }
+                if (player.isMiningBlock() || player.shouldSyncAttribute()) {
+                    player.stopMiningBlock();
+                }
+                return;
+            }
+            player.startMiningBlock(world, pos, blockState, true, BukkitBlockManager.instance().getImmutableBlockStateUnsafe(stateId));
+        } else if (action == Reflections.instance$ServerboundPlayerActionPacket$Action$ABORT_DESTROY_BLOCK) {
+            if (player.isMiningBlock()) {
+                player.abortMiningBlock();
+            }
+        } else if (action == Reflections.instance$ServerboundPlayerActionPacket$Action$STOP_DESTROY_BLOCK) {
+            if (player.isMiningBlock()) {
+                player.stopMiningBlock();
+            }
+        }
+    }
 
     public static final TriConsumer<NetWorkUser, NMSPacketEvent, Object> SWING_HAND = (user, event, packet) -> {
         try {
@@ -319,137 +334,169 @@ public class PacketConsumers {
     public static final TriConsumer<NetWorkUser, NMSPacketEvent, Object> SET_CREATIVE_SLOT = (user, event, packet) -> {
         try {
             if (VersionHelper.isVersionNewerThan1_21_4()) return;
+            if (!user.isOnline()) return;
             BukkitServerPlayer player = (BukkitServerPlayer) user;
-            Player bukkitPlayer = (Player) user.platformPlayer();
-            if (bukkitPlayer == null) return;
-            if (bukkitPlayer.getGameMode() != GameMode.CREATIVE) return;
-            int slot = VersionHelper.isVersionNewerThan1_20_5() ? Reflections.field$ServerboundSetCreativeModeSlotPacket$slotNum.getShort(packet) : Reflections.field$ServerboundSetCreativeModeSlotPacket$slotNum.getInt(packet);
-            if (slot < 36 || slot > 44) return;
-            ItemStack item = (ItemStack) Reflections.method$CraftItemStack$asCraftMirror.invoke(null, Reflections.field$ServerboundSetCreativeModeSlotPacket$itemStack.get(packet));
-            if (ItemUtils.isEmpty(item)) return;
-            if (slot - 36 != bukkitPlayer.getInventory().getHeldItemSlot()) {
-                return;
-            }
-            double interactionRange = player.getInteractionRange();
-            // do ray trace to get current block
-            RayTraceResult result = bukkitPlayer.rayTraceBlocks(interactionRange, FluidCollisionMode.NEVER);
-            if (result == null) return;
-            org.bukkit.block.Block hitBlock = result.getHitBlock();
-            if (hitBlock == null) return;
-            ImmutableBlockState state = BukkitBlockManager.instance().getImmutableBlockState(BlockStateUtils.blockDataToId(hitBlock.getBlockData()));
-            // not a custom block
-            if (state == null || state.isEmpty()) return;
-            Key itemId = state.settings().itemId();
-            // no item available
-            if (itemId == null) return;
-            BlockData data = BlockStateUtils.createBlockData(state.vanillaBlockState().handle());
-            // compare item
-            if (data == null || !data.getMaterial().equals(item.getType())) return;
-            ItemStack itemStack = BukkitCraftEngine.instance().itemManager().buildCustomItemStack(itemId, (BukkitServerPlayer) user);
-            if (ItemUtils.isEmpty(itemStack)) {
-                CraftEngine.instance().logger().warn("Item: " + itemId + " is not a valid item");
-                return;
-            }
-            PlayerInventory inventory = bukkitPlayer.getInventory();
-            int sameItemSlot = -1;
-            int emptySlot = -1;
-            for (int i = 0; i < 9 + 27; i++) {
-                ItemStack invItem = inventory.getItem(i);
-                if (ItemUtils.isEmpty(invItem)) {
-                    if (emptySlot == -1 && i < 9) emptySlot = i;
-                    continue;
-                }
-                if (invItem.getType().equals(itemStack.getType()) && invItem.getItemMeta().equals(itemStack.getItemMeta())) {
-                    if (sameItemSlot == -1) sameItemSlot = i;
-                }
-            }
-            if (sameItemSlot != -1) {
-                if (sameItemSlot < 9) {
-                    inventory.setHeldItemSlot(sameItemSlot);
-                    ItemStack previousItem = inventory.getItem(slot - 36);
-                    BukkitCraftEngine.instance().scheduler().sync().runDelayed(() -> inventory.setItem(slot - 36, previousItem));
-                } else {
-                    ItemStack sameItem = inventory.getItem(sameItemSlot);
-                    int finalSameItemSlot = sameItemSlot;
-                    BukkitCraftEngine.instance().scheduler().sync().runDelayed(() -> {
-                        inventory.setItem(finalSameItemSlot, new ItemStack(Material.AIR));
-                        inventory.setItem(slot - 36, sameItem);
-                    });
-                }
+            if (VersionHelper.isFolia()) {
+                BukkitCraftEngine.instance().scheduler().sync().run(() -> {
+                    try {
+                        handleSetCreativeSlotPacketOnMainThread(player, packet);
+                    } catch (Exception e) {
+                        CraftEngine.instance().logger().warn("Failed to handle ServerboundSetCreativeModeSlotPacket", e);
+                    }
+                }, (World) player.level().getHandle(), (MCUtils.fastFloor(player.x())) >> 4, (MCUtils.fastFloor(player.z())) >> 4);
             } else {
-                if (item.getAmount() == 1) {
-                    if (ItemUtils.isEmpty(inventory.getItem(slot - 36))) {
-                        BukkitCraftEngine.instance().scheduler().sync().runDelayed(() -> inventory.setItem(slot - 36, itemStack));
-                        return;
-                    }
-                    if (emptySlot != -1) {
-                        inventory.setHeldItemSlot(emptySlot);
-                        inventory.setItem(emptySlot, itemStack);
-                    } else {
-                        BukkitCraftEngine.instance().scheduler().sync().runDelayed(() -> inventory.setItem(slot - 36, itemStack));
-                    }
-                }
+                handleSetCreativeSlotPacketOnMainThread(player, packet);
             }
         } catch (Exception e) {
             CraftEngine.instance().logger().warn("Failed to handle ServerboundSetCreativeModeSlotPacket", e);
         }
     };
 
+    private static void handleSetCreativeSlotPacketOnMainThread(BukkitServerPlayer player, Object packet) throws Exception {
+        Player bukkitPlayer = player.platformPlayer();
+        if (bukkitPlayer == null) return;
+        if (bukkitPlayer.getGameMode() != GameMode.CREATIVE) return;
+        int slot = VersionHelper.isVersionNewerThan1_20_5() ? Reflections.field$ServerboundSetCreativeModeSlotPacket$slotNum.getShort(packet) : Reflections.field$ServerboundSetCreativeModeSlotPacket$slotNum.getInt(packet);
+        if (slot < 36 || slot > 44) return;
+        ItemStack item = (ItemStack) Reflections.method$CraftItemStack$asCraftMirror.invoke(null, Reflections.field$ServerboundSetCreativeModeSlotPacket$itemStack.get(packet));
+        if (ItemUtils.isEmpty(item)) return;
+        if (slot - 36 != bukkitPlayer.getInventory().getHeldItemSlot()) {
+            return;
+        }
+        double interactionRange = player.getInteractionRange();
+        // do ray trace to get current block
+        RayTraceResult result = bukkitPlayer.rayTraceBlocks(interactionRange, FluidCollisionMode.NEVER);
+        if (result == null) return;
+        org.bukkit.block.Block hitBlock = result.getHitBlock();
+        if (hitBlock == null) return;
+        ImmutableBlockState state = BukkitBlockManager.instance().getImmutableBlockState(BlockStateUtils.blockDataToId(hitBlock.getBlockData()));
+        // not a custom block
+        if (state == null || state.isEmpty()) return;
+        Key itemId = state.settings().itemId();
+        // no item available
+        if (itemId == null) return;
+        BlockData data = BlockStateUtils.createBlockData(state.vanillaBlockState().handle());
+        // compare item
+        if (data == null || !data.getMaterial().equals(item.getType())) return;
+        ItemStack itemStack = BukkitCraftEngine.instance().itemManager().buildCustomItemStack(itemId, player);
+        if (ItemUtils.isEmpty(itemStack)) {
+            CraftEngine.instance().logger().warn("Item: " + itemId + " is not a valid item");
+            return;
+        }
+        PlayerInventory inventory = bukkitPlayer.getInventory();
+        int sameItemSlot = -1;
+        int emptySlot = -1;
+        for (int i = 0; i < 9 + 27; i++) {
+            ItemStack invItem = inventory.getItem(i);
+            if (ItemUtils.isEmpty(invItem)) {
+                if (emptySlot == -1 && i < 9) emptySlot = i;
+                continue;
+            }
+            if (invItem.getType().equals(itemStack.getType()) && invItem.getItemMeta().equals(itemStack.getItemMeta())) {
+                if (sameItemSlot == -1) sameItemSlot = i;
+            }
+        }
+        if (sameItemSlot != -1) {
+            if (sameItemSlot < 9) {
+                inventory.setHeldItemSlot(sameItemSlot);
+                ItemStack previousItem = inventory.getItem(slot - 36);
+                BukkitCraftEngine.instance().scheduler().sync().runDelayed(() -> inventory.setItem(slot - 36, previousItem));
+            } else {
+                ItemStack sameItem = inventory.getItem(sameItemSlot);
+                int finalSameItemSlot = sameItemSlot;
+                BukkitCraftEngine.instance().scheduler().sync().runDelayed(() -> {
+                    inventory.setItem(finalSameItemSlot, new ItemStack(Material.AIR));
+                    inventory.setItem(slot - 36, sameItem);
+                });
+            }
+        } else {
+            if (item.getAmount() == 1) {
+                if (ItemUtils.isEmpty(inventory.getItem(slot - 36))) {
+                    BukkitCraftEngine.instance().scheduler().sync().runDelayed(() -> inventory.setItem(slot - 36, itemStack));
+                    return;
+                }
+                if (emptySlot != -1) {
+                    inventory.setHeldItemSlot(emptySlot);
+                    inventory.setItem(emptySlot, itemStack);
+                } else {
+                    BukkitCraftEngine.instance().scheduler().sync().runDelayed(() -> inventory.setItem(slot - 36, itemStack));
+                }
+            }
+        }
+    }
+
     // 1.21.4+
     public static final TriConsumer<NetWorkUser, NMSPacketEvent, Object> PICK_ITEM_FROM_BLOCK = (user, event, packet) -> {
         try {
+            if (!user.isOnline()) return;
             Player player = (Player) user.platformPlayer();
             if (player == null) return;
             Object pos = Reflections.field$ServerboundPickItemFromBlockPacket$pos.get(packet);
-            Object serverLevel = Reflections.field$CraftWorld$ServerLevel.get(player.getWorld());
-            Object blockState = Reflections.method$BlockGetter$getBlockState.invoke(serverLevel, pos);
-            ImmutableBlockState state = BukkitBlockManager.instance().getImmutableBlockState(BlockStateUtils.blockStateToId(blockState));
-            if (state == null) return;
-            PlayerInventory inventory = player.getInventory();
-            Key itemId = state.settings().itemId();
-            if (itemId == null) return;
-            ItemStack itemStack = BukkitCraftEngine.instance().itemManager().buildCustomItemStack(itemId, (BukkitServerPlayer) user);
-            if (itemStack == null) {
-                CraftEngine.instance().logger().warn("Item: " + itemId + " is not a valid item");
-                return;
-            }
-            int matchingSlot = InventoryUtils.findMatchingItemSlot(inventory, itemStack);
-            int targetSlot = (matchingSlot < 9) && (matchingSlot >= 0) ? matchingSlot : InventoryUtils.getSuitableHotBarSlot(inventory);
-            if (matchingSlot != -1) {
-                if (matchingSlot < 9 && targetSlot >= 0) {
-                    inventory.setHeldItemSlot(targetSlot);
-                } else {
-                    ItemStack picked = inventory.getItem(matchingSlot);
-                    if (picked == null) return;
-                    inventory.setHeldItemSlot(targetSlot);
-                    ItemStack previous = inventory.getItem(targetSlot);
-                    ItemUtils.setItem(inventory, targetSlot, picked.clone());
-                    if (previous != null) {
-                        ItemUtils.setItem(inventory, matchingSlot, previous);
-                    } else {
-                        picked.setAmount(0);
+            if (VersionHelper.isFolia()) {
+                int x = (int) Reflections.field$Vec3i$x.get(pos);
+                int z = (int) Reflections.field$Vec3i$z.get(pos);
+                BukkitCraftEngine.instance().scheduler().sync().run(() -> {
+                    try {
+                        handlePickItemFromBlockPacketOnMainThread(player, pos);
+                    } catch (Exception e) {
+                        CraftEngine.instance().logger().warn("Failed to handle ServerboundPickItemFromBlockPacket", e);
                     }
-                }
-            } else if (player.getGameMode() == GameMode.CREATIVE) {
-                inventory.setHeldItemSlot(targetSlot);
-                ItemStack previous = inventory.getItem(targetSlot);
-                ItemUtils.setItem(inventory, targetSlot, itemStack);
-                if (previous != null) {
-                    for (int j = 1; j <= 3; j++) {
-                        for (int i = j * 9; i < j * 9 + 9; i++) {
-                            ItemStack itemInSlot = inventory.getItem(i);
-                            if (ItemUtils.isEmpty(itemInSlot)) {
-                                ItemUtils.setItem(inventory, i, previous);
-                                return;
-                            }
-                        }
-                    }
-                }
+                }, player.getWorld(), x >> 4, z >> 4);
+            } else {
+                handlePickItemFromBlockPacketOnMainThread(player, pos);
             }
         } catch (Exception e) {
             CraftEngine.instance().logger().warn("Failed to handle ServerboundPickItemFromBlockPacket", e);
         }
     };
+
+    private static void handlePickItemFromBlockPacketOnMainThread(Player player, Object pos) throws Exception {
+        Object serverLevel = Reflections.field$CraftWorld$ServerLevel.get(player.getWorld());
+        Object blockState = Reflections.method$BlockGetter$getBlockState.invoke(serverLevel, pos);
+        ImmutableBlockState state = BukkitBlockManager.instance().getImmutableBlockState(BlockStateUtils.blockStateToId(blockState));
+        if (state == null) return;
+        PlayerInventory inventory = player.getInventory();
+        Key itemId = state.settings().itemId();
+        if (itemId == null) return;
+        ItemStack itemStack = BukkitCraftEngine.instance().itemManager().buildCustomItemStack(itemId, BukkitCraftEngine.instance().adapt(player));
+        if (itemStack == null) {
+            CraftEngine.instance().logger().warn("Item: " + itemId + " is not a valid item");
+            return;
+        }
+        int matchingSlot = InventoryUtils.findMatchingItemSlot(inventory, itemStack);
+        int targetSlot = (matchingSlot < 9) && (matchingSlot >= 0) ? matchingSlot : InventoryUtils.getSuitableHotBarSlot(inventory);
+        if (matchingSlot != -1) {
+            if (matchingSlot < 9 && targetSlot >= 0) {
+                inventory.setHeldItemSlot(targetSlot);
+            } else {
+                ItemStack picked = inventory.getItem(matchingSlot);
+                if (picked == null) return;
+                inventory.setHeldItemSlot(targetSlot);
+                ItemStack previous = inventory.getItem(targetSlot);
+                ItemUtils.setItem(inventory, targetSlot, picked.clone());
+                if (previous != null) {
+                    ItemUtils.setItem(inventory, matchingSlot, previous);
+                } else {
+                    picked.setAmount(0);
+                }
+            }
+        } else if (player.getGameMode() == GameMode.CREATIVE) {
+            inventory.setHeldItemSlot(targetSlot);
+            ItemStack previous = inventory.getItem(targetSlot);
+            ItemUtils.setItem(inventory, targetSlot, itemStack);
+            if (previous != null) {
+                for (int j = 1; j <= 3; j++) {
+                    for (int i = j * 9; i < j * 9 + 9; i++) {
+                        ItemStack itemInSlot = inventory.getItem(i);
+                        if (ItemUtils.isEmpty(itemInSlot)) {
+                            ItemUtils.setItem(inventory, i, previous);
+                            return;
+                        }
+                    }
+                }
+            }
+        }
+    }
 
     // 1.21.4+
     public static final TriConsumer<NetWorkUser, NMSPacketEvent, Object> PICK_ITEM_FROM_ENTITY = (user, event, packet) -> {

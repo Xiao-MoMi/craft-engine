@@ -87,6 +87,6 @@ minecraft:acacia_sapling:
 minecraft:cherry_sapling:
   stage=0:
     model: "minecraft:block/cherry_sapling"
-#minecraft:pale_oak_sapling:
-#  stage=0:
-#    model: "minecraft:block/pale_oak_sapling"
+minecraft:pale_oak_sapling:
+  stage=0:
+    model: "minecraft:block/pale_oak_sapling"

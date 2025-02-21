@@ -55,6 +55,7 @@ public class BukkitCraftEngine extends CraftEngine {
     private boolean hasMod = false;
 
     public BukkitCraftEngine(JavaPlugin bootstrap) {
+        VersionHelper.init(serverVersion());
         instance = this;
         this.bootstrap = bootstrap;
         super.classPathAppender = new ReflectionClassPathAppender(this);
@@ -75,7 +76,6 @@ public class BukkitCraftEngine extends CraftEngine {
     @Override
     public void load() {
         super.load();
-        VersionHelper.init(serverVersion());
         Reflections.init();
         BukkitInjector.init();
         super.networkManager = new BukkitNetworkManager(this);

@@ -15,12 +15,12 @@
 </p>
 
 ## 📌 About CraftEngine
-CraftEngine redefines Minecraft plugin architecture as a next-generation solution for custom content implementation. Its JVM-level injection delivers unprecedented performance, stability, and extensibility. The framework provides a code-first API for registering natively integrated block behaviors and item interaction logic.
+CraftEngine redefines plugin architecture as a next-generation solution for custom content implementation. Its JVM-level injection delivers unprecedented performance, stability, and extensibility. The framework provides a code-first API for registering natively integrated block behaviors and item interaction logic.
 
 ## Build
+Getting the full jar is completely free, as long as you have a device with jdk21 installed. Follow the guide below to build it.
 
 ### 🐚 Command Line
-+ Install JDK 21.
 + Start terminal and change directory to the project folder.
 + Execute "./gradlew build" and get the artifact under /target folder.
 
@@ -31,7 +31,7 @@ CraftEngine redefines Minecraft plugin architecture as a next-generation solutio
 ## Installation
 
 ### 💻 Enviroment Requirements
-+ First, ensure that you are running a [Paper](https://papermc.io/) (or its fork) 1.20.1+ server. The plugin does not support Spigot and is unlikely to do so in the future. CraftEngine contains over 10,000 lines of code that are based on the Minecraft code of the Paper version server.
++ First, ensure that you are running a [Paper](https://papermc.io/)/[Folia](https://github.com/PaperMC/Folia) (or its fork) 1.20.1+ server. The plugin does not support Spigot and is unlikely to do so in the future.
 + Secondly, please use JDK 21 to run the server. I believe this is quite straightforward for you.
 
 ### 🔍 How to Install
@@ -41,6 +41,7 @@ CraftEngine offers two installation modes: Standard Installation and Mod Mode. A
 - Download the latest [ignite.jar](https://github.com/vectrix-space/ignite/releases) into your server's root directory
 - Either:
     - Rename your server JAR to `paper.jar`
+- Or:
     - Add launch arguments: `-Dignite.locator=paper -Dignite.paper.jar=./paper-xxx.jar`
 - Start the server to generate the `/mods` directory
 - Place the latest [mod.jar](https://github.com/Xiao-MoMi/craft-engine/releases) in `/mods`
@@ -56,9 +57,9 @@ The plugin employs runtime bytecode generation to register custom blocks at the 
 
 🧱 Native Block Customization
 + Dynamically register blocks with complete control over
-+ Physics: hardness, flammability, light emission, and all standard properties supported by vanilla Minecraft
++ Physics: hardness, flammability, light emission, etc.
 + Custom Behaviors: Tree saplings, crops, falling blocks, and more via API
-+ Vanilla Compatibility: Full preservation of native block mechanics (e.g., note blocks, tripwires)
++ Vanilla Compatibility: Full preservation of vanilla block mechanism (e.g., note blocks, tripwires)
 
 📦 Data Pack Integration
 + Define custom ore veins
@@ -110,7 +111,7 @@ If your PR is about a bug fix, it will most likely get merged. If you want to su
 3. Once done, submit a **pull request** for review. We appreciate your contributions!
 
 ### 💖 Support the Developer
-If you enjoy using CraftEngine, consider supporting the developer!
+If you enjoy using CraftEngine, consider supporting the developer! By supporting developers, you can get support from the development team.
 
 - **Polymart**: [None]
 - **BuiltByBit**: [None]

@@ -4097,7 +4097,7 @@ public class Reflections {
 
     public static final Method method$CraftInventoryPlayer$getInventory = requireNonNull(
             ReflectionUtils.getMethod(
-                    clazz$CraftInventoryPlayer, new String[]{ "getInventory" }
+                    clazz$CraftInventoryPlayer, clazz$Inventory, new String[]{ "getInventory" }
             )
     );
 

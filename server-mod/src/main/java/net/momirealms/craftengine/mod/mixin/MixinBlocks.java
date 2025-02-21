@@ -13,7 +13,7 @@ import net.minecraft.world.level.block.state.BlockBehaviour;
 import net.minecraft.world.level.block.state.BlockState;
 import net.momirealms.craftengine.mod.CraftEngineBlock;
 import net.momirealms.craftengine.mod.CraftEnginePlugin;
-import net.momirealms.craftengine.mod.NoteBlockUtils;
+import net.momirealms.craftengine.mod.util.NoteBlockUtils;
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;

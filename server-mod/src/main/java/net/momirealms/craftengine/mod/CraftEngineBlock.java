@@ -18,12 +18,13 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.material.FluidState;
 import net.minecraft.world.phys.shapes.CollisionContext;
 import net.minecraft.world.phys.shapes.VoxelShape;
+import net.momirealms.craftengine.mod.util.NoteBlockUtils;
 import net.momirealms.craftengine.shared.ObjectHolder;
 import net.momirealms.craftengine.shared.block.*;
 import org.jetbrains.annotations.NotNull;
 
 public class CraftEngineBlock extends Block implements BehaviorHolder, ShapeHolder, NoteBlockIndicator, Fallable, BonemealableBlock {
-    private static final MixinStoneBlockShape STONE = new MixinStoneBlockShape(Blocks.STONE.defaultBlockState());
+    private static final PaperWeightStoneBlockShape STONE = new PaperWeightStoneBlockShape(Blocks.STONE.defaultBlockState());
     private boolean isNoteBlock;
     public ObjectHolder<BlockBehavior> behaviorHolder;
     public ObjectHolder<BlockShape> shapeHolder;
