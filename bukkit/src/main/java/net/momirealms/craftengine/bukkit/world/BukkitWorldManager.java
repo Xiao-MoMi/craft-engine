@@ -205,30 +205,32 @@ public class BukkitWorldManager implements WorldManager, Listener {
                 plugin.logger().warn("Failed to write chunk tag at " + chunk.getX() + " " + chunk.getZ(), e);
                 return;
             } finally {
-                try {
-                    CESection[] ceSections = ceChunk.sections();
-                    Object worldServer = Reflections.field$CraftChunk$worldServer.get(chunk);
-                    Object chunkSource = Reflections.field$ServerLevel$chunkSource.get(worldServer);
-                    Object levelChunk = Reflections.method$ServerChunkCache$getChunkAtIfLoadedMainThread.invoke(chunkSource, chunk.getX(), chunk.getZ());
-                    Object[] sections = (Object[]) Reflections.field$ChunkAccess$sections.get(levelChunk);
-                    for (int i = 0; i < ceSections.length; i++) {
-                        CESection ceSection = ceSections[i];
-                        Object section = sections[i];
-                        BukkitInjector.uninjectLevelChunkSection(section);
-                        if (ceSection.statesContainer().isEmpty()) continue;
-                        for (int x = 0; x < 16; x++) {
-                            for (int z = 0; z < 16; z++) {
-                                for (int y = 0; y < 16; y++) {
-                                    ImmutableBlockState customState = ceSection.getBlockState(x, y, z);
-                                    if (customState != null && customState.vanillaBlockState() != null) {
-                                        Reflections.method$LevelChunkSection$setBlockState.invoke(section, x, y, z, customState.vanillaBlockState().handle(), false);
+                if (ConfigManager.restoreVanillaBlocks()) {
+                    try {
+                        CESection[] ceSections = ceChunk.sections();
+                        Object worldServer = Reflections.field$CraftChunk$worldServer.get(chunk);
+                        Object chunkSource = Reflections.field$ServerLevel$chunkSource.get(worldServer);
+                        Object levelChunk = Reflections.method$ServerChunkCache$getChunkAtIfLoadedMainThread.invoke(chunkSource, chunk.getX(), chunk.getZ());
+                        Object[] sections = (Object[]) Reflections.field$ChunkAccess$sections.get(levelChunk);
+                        for (int i = 0; i < ceSections.length; i++) {
+                            CESection ceSection = ceSections[i];
+                            Object section = sections[i];
+                            BukkitInjector.uninjectLevelChunkSection(section);
+                            if (ceSection.statesContainer().isEmpty()) continue;
+                            for (int x = 0; x < 16; x++) {
+                                for (int z = 0; z < 16; z++) {
+                                    for (int y = 0; y < 16; y++) {
+                                        ImmutableBlockState customState = ceSection.getBlockState(x, y, z);
+                                        if (customState != null && customState.vanillaBlockState() != null) {
+                                            Reflections.method$LevelChunkSection$setBlockState.invoke(section, x, y, z, customState.vanillaBlockState().handle(), false);
+                                        }
                                     }
                                 }
                             }
                         }
+                    } catch (ReflectiveOperationException e) {
+                        plugin.logger().warn("Failed to restore chunk at " + chunk.getX() + " " + chunk.getZ(), e);
                     }
-                } catch (ReflectiveOperationException e) {
-                    plugin.logger().warn("Failed to restore chunk at " + chunk.getX() + " " + chunk.getZ(), e);
                 }
             }
             ceChunk.unload();

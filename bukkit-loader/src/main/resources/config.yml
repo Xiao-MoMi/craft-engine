@@ -44,6 +44,10 @@ performance:
     enable: true
     # Turning this option on will reduce lighting system issues to some extent, but will increase server bandwidth consumption
     force-update-light: false
+  chunk-system:
+    # Disabling this option prevents the plugin from converting custom blocks to vanilla states when chunks are unloaded.
+    # While this can improve performance, custom blocks will turn into air if the plugin is uninstalled.
+    restore-vanilla-blocks-on-chunk-unload: true
 
 offset-characters:
   font: minecraft:default

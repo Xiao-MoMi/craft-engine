@@ -85,15 +85,7 @@ public abstract class CraftEngine implements Plugin {
             this.packManager.reload();
             this.blockManager.delayedLoad();
         } finally {
-            this.recipeManager.delayedLoad().thenRunAsync(() -> {
-                try {
-                    this.packManager.generateResourcePack();
-                } catch (Exception e) {
-                    this.logger.warn("Failed to generate resource pack", e);
-                } finally {
-                    this.isReloading = false;
-                }
-            }, this.scheduler.async());
+            this.recipeManager.delayedLoad().thenRun(() -> this.isReloading = false);
         }
     }
 
@@ -213,12 +205,22 @@ public abstract class CraftEngine implements Plugin {
     }
 
     @Override
+    public PackManager packManager() {
+        return packManager;
+    }
+
+    @Override
     public SenderFactory<? extends Plugin, ?> senderFactory() {
         return senderFactory;
     }
 
+    @Override
     public WorldManager worldManager() {
         return worldManager;
+    }
+
+    public boolean isReloading() {
+        return isReloading;
     }
 
     public static CraftEngine instance() {

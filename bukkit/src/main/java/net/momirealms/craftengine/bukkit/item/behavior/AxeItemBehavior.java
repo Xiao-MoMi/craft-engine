@@ -19,6 +19,7 @@ import net.momirealms.craftengine.core.item.ItemKeys;
 import net.momirealms.craftengine.core.item.behavior.ItemBehavior;
 import net.momirealms.craftengine.core.item.behavior.ItemBehaviorFactory;
 import net.momirealms.craftengine.core.item.context.UseOnContext;
+import net.momirealms.craftengine.core.pack.Pack;
 import net.momirealms.craftengine.core.plugin.CraftEngine;
 import net.momirealms.craftengine.core.util.Key;
 import net.momirealms.craftengine.core.util.VersionHelper;
@@ -33,6 +34,7 @@ import org.bukkit.event.entity.EntityChangeBlockEvent;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.util.Vector;
 
+import java.nio.file.Path;
 import java.util.Map;
 import java.util.Optional;
 
@@ -103,7 +105,7 @@ public class AxeItemBehavior extends ItemBehavior {
     public static class Factory implements ItemBehaviorFactory {
 
         @Override
-        public ItemBehavior create(Key id, Map<String, Object> arguments) {
+        public ItemBehavior create(Pack pack, Path path, Key id, Map<String, Object> arguments) {
             return INSTANCE;
         }
     }

@@ -13,9 +13,10 @@ public class FileUtils {
         Files.createDirectories(Files.exists(path) ? path.toRealPath() : path);
     }
 
-    public static List<Path> getConfigsDeeply(Path configFolder) {
-        List<Path> validConfigs = new ArrayList<>();
-        if (!Files.exists(configFolder)) return validConfigs;
+    public static Pair<List<Path>, List<Path>> getConfigsDeeply(Path configFolder) {
+        if (!Files.exists(configFolder)) return Pair.of(List.of(), List.of());
+        List<Path> validYaml = new ArrayList<>();
+        List<Path> validJson = new ArrayList<>();
         Deque<Path> pathDeque = new ArrayDeque<>();
         pathDeque.push(configFolder);
         while (!pathDeque.isEmpty()) {
@@ -24,15 +25,20 @@ public class FileUtils {
                 for (Path subPath : stream) {
                     if (Files.isDirectory(subPath)) {
                         pathDeque.push(subPath);
-                    } else if (Files.isRegularFile(subPath) && subPath.toString().endsWith(".yml")) {
-                        validConfigs.add(subPath);
+                    } else if (Files.isRegularFile(subPath)) {
+                        String pathString = subPath.toString();
+                        if (pathString.endsWith(".yml")) {
+                            validYaml.add(subPath);
+                        } else if (pathString.endsWith(".json")) {
+                            validJson.add(subPath);
+                        }
                     }
                 }
             } catch (IOException e) {
                 throw new RuntimeException(e);
             }
         }
-        return validConfigs;
+        return Pair.of(validYaml, validJson);
     }
 
     public static List<List<Path>> mergeFolder(Collection<Path> sourceFolders, Path targetFolder) throws IOException {

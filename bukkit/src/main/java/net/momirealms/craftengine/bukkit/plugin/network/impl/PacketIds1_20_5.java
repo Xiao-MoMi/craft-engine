@@ -11,12 +11,17 @@ public class PacketIds1_20_5 implements PacketIds {
 
     @Override
     public int clientboundSectionBlocksUpdatePacket() {
-        return  73;
+        return 73;
     }
 
     @Override
     public int clientboundLevelParticlesPacket() {
         return 41;
+    }
+
+    @Override
+    public int clientboundLevelEventPacket() {
+        return 40;
     }
 
     @Override

@@ -36,9 +36,17 @@ public class ArrayUtils {
         return result;
     }
 
-    public static <T> T[] appendElementToArray(T[] array, T element) {
+    public static <T> T[] appendElementToArrayTail(T[] array, T element) {
         T[] newArray = Arrays.copyOf(array, array.length + 1);
         newArray[array.length] = element;
+        return newArray;
+    }
+
+    @SuppressWarnings("unchecked")
+    public static <T> T[] appendElementToArrayHead(T[] array, T element) {
+        T[] newArray = (T[]) new Object[array.length + 1];
+        System.arraycopy(array, 0, newArray, 1, array.length);
+        newArray[0] = element;
         return newArray;
     }
 

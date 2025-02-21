@@ -180,13 +180,9 @@ blocks:
         stage=0:
           appearance: "default"
           id: 0
-          settings:
-            is-randomly-ticking: true
         stage=1:
           appearance: "default"
           id: 1
-          settings:
-            is-randomly-ticking: true
 items:
   default:palm_log:
     material: paper
@@ -302,6 +298,11 @@ items:
     custom-model-data: 1000
     data:
       display-name: "<!i>Palm Leaves"
+      components:
+        minecraft:block_state:
+          distance: "1"
+          persistent: "false"
+          waterlogged: "false"
     model:
       type: "minecraft:model"
       path: "minecraft:item/custom/palm_leaves"

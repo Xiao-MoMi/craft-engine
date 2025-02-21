@@ -129,6 +129,7 @@ templates:
     template: block_settings:surface_decoration
     overrides:
       push-reaction: DESTROY
+      is-randomly-ticking: true
       map-color: 7
       sounds:
         break: minecraft:block.grass.break

@@ -257,7 +257,7 @@ public class BukkitItemManager extends AbstractItemManager<ItemStack> {
         // Get item behavior
         Map<String, Object> behaviorSection = MiscUtils.castToMap(section.get("behavior"), true);
         if (behaviorSection != null) {
-            itemBuilder.behavior(ItemBehaviors.fromMap(id, behaviorSection));
+            itemBuilder.behavior(ItemBehaviors.fromMap(pack, path, id, behaviorSection));
         }
 
         // Get item data

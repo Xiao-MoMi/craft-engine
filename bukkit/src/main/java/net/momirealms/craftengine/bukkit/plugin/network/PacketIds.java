@@ -8,5 +8,7 @@ public interface PacketIds {
 
     int clientboundLevelParticlesPacket();
 
+    int clientboundLevelEventPacket();
+
     int clientboundAddEntityPacket();
 }

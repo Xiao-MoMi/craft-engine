@@ -30,28 +30,21 @@ import net.momirealms.craftengine.core.plugin.CraftEngine;
 import net.momirealms.craftengine.core.plugin.config.ConfigManager;
 import net.momirealms.craftengine.core.registry.BuiltInRegistries;
 import net.momirealms.craftengine.core.registry.Holder;
-import net.momirealms.craftengine.core.util.Key;
-import net.momirealms.craftengine.core.util.ReflectionUtils;
-import net.momirealms.craftengine.core.util.SectionPosUtils;
-import net.momirealms.craftengine.core.util.VersionHelper;
+import net.momirealms.craftengine.core.util.*;
 import net.momirealms.craftengine.core.world.CEWorld;
 import net.momirealms.craftengine.core.world.SectionPos;
 import net.momirealms.craftengine.core.world.chunk.CESection;
+import net.momirealms.craftengine.core.world.chunk.InjectedPalettedContainerHolder;
 import net.momirealms.craftengine.shared.ObjectHolder;
 import net.momirealms.craftengine.shared.block.*;
 import org.bukkit.inventory.ItemStack;
 import org.jetbrains.annotations.Nullable;
 
-import java.lang.invoke.MethodHandle;
-import java.lang.invoke.MethodHandles;
-import java.lang.invoke.MethodType;
+import java.lang.invoke.*;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
-import java.util.List;
-import java.util.Objects;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.Callable;
 
 public class BukkitInjector {
@@ -83,6 +76,8 @@ public class BukkitInjector {
 
     public static void init() {
         try {
+            MethodHandles.Lookup lookup = MethodHandles.lookup();
+
             clazz$InjectedCacheChecker = byteBuddy
                     .subclass(Object.class, ConstructorStrategy.Default.IMITATE_SUPER_CLASS_OPENING)
                     .implement(Reflections.clazz$RecipeManager$CachedCheck)
@@ -110,19 +105,26 @@ public class BukkitInjector {
             clazz$InjectedPalettedContainer = byteBuddy
                     .subclass(Reflections.clazz$PalettedContainer)
                     .name("net.minecraft.world.level.chunk.InjectedPalettedContainer")
+                    .implement(InjectedPalettedContainerHolder.class)
                     .defineField("target", Reflections.clazz$PalettedContainer, Visibility.PRIVATE)
                     .defineField("cesection", CESection.class, Visibility.PRIVATE)
                     .defineField("ceworld", CEWorld.class, Visibility.PRIVATE)
                     .defineField("cepos", SectionPos.class, Visibility.PRIVATE)
-                    .method(ElementMatchers.any())
-                    .intercept(MethodDelegation.to(PalettedContainerMethodInterceptor.INSTANCE))
-                    .method(ElementMatchers.takesArguments(4)
-                            .and(ElementMatchers.takesArgument(0, int.class))
-                            .and(ElementMatchers.takesArgument(1, int.class))
-                            .and(ElementMatchers.takesArgument(2, int.class))
-                            .and(ElementMatchers.named("getAndSet").or(ElementMatchers.named("a")))
+                    .method(ElementMatchers.any()
+                            .and(ElementMatchers.not(ElementMatchers.is(Reflections.method$PalettedContainer$getAndSet)))
+                            .and(ElementMatchers.not(ElementMatchers.isDeclaredBy(Object.class)))
                     )
+                    .intercept(MethodDelegation.toField("target"))
+                    .method(ElementMatchers.is(Reflections.method$PalettedContainer$getAndSet))
                     .intercept(MethodDelegation.to(GetAndSetInterceptor.INSTANCE))
+                    .method(ElementMatchers.named("target"))
+                    .intercept(FieldAccessor.ofField("target"))
+                    .method(ElementMatchers.named("ceSection"))
+                    .intercept(FieldAccessor.ofField("cesection"))
+                    .method(ElementMatchers.named("ceWorld"))
+                    .intercept(FieldAccessor.ofField("ceworld"))
+                    .method(ElementMatchers.named("cePos"))
+                    .intercept(FieldAccessor.ofField("cepos"))
                     .make()
                     .load(BukkitInjector.class.getClassLoader())
                     .getLoaded();
@@ -246,7 +248,7 @@ public class BukkitInjector {
             field$CraftEngineBlock$behavior = clazz$CraftEngineBlock.getField("behaviorHolder");
             field$CraftEngineBlock$shape = clazz$CraftEngineBlock.getField("shapeHolder");
             field$CraftEngineBlock$isNoteBlock = clazz$CraftEngineBlock.getField("isClientSideNoteBlock");
-        } catch (Exception e) {
+        } catch (Throwable e) {
             CraftEngine.instance().logger().severe("Failed to init injector", e);
         }
     }
@@ -564,9 +566,9 @@ public class BukkitInjector {
         public static final PalettedContainerMethodInterceptor INSTANCE = new PalettedContainerMethodInterceptor();
 
         @RuntimeType
-        public Object intercept(@This Object thisObj, @AllArguments Object[] args, @Origin Method method) throws Exception {
-            Object target = field$InjectedPalettedContainer$target.get(thisObj);
-            return method.invoke(target, args);
+        public Object intercept(@This Object thisObj, @AllArguments Object[] args, @Origin Method method) throws Throwable {
+            InjectedPalettedContainerHolder holder = (InjectedPalettedContainerHolder) thisObj;
+            return method.invoke(holder.target(), args);
         }
     }
 
@@ -574,26 +576,27 @@ public class BukkitInjector {
         public static final GetAndSetInterceptor INSTANCE = new GetAndSetInterceptor();
 
         @RuntimeType
-        public Object intercept(@This Object thisObj, @AllArguments Object[] args, @Origin Method method) throws Exception {
-            Object targetStates = field$InjectedPalettedContainer$target.get(thisObj);
-            Object previousState = method.invoke(targetStates, args);
+        public Object intercept(@This Object thisObj, @AllArguments Object[] args, @Origin MethodHandle method) throws Throwable {
+            InjectedPalettedContainerHolder holder = (InjectedPalettedContainerHolder) thisObj;
+            Object targetStates = holder.target();
+            int x = (int) args[0];
+            int y = (int) args[1];
+            int z = (int) args[2];
+            Object previousState = method.invoke(targetStates, x, y, z, args[3]);
             try {
-                int x = (int) args[0];
-                int y = (int) args[1];
-                int z = (int) args[2];
                 Object newState = args[3];
                 int stateId = BlockStateUtils.blockStateToId(newState);
-                CESection section = (CESection) field$InjectedPalettedContainer$section.get(thisObj);
+                CESection section = holder.ceSection();
                 if (BlockStateUtils.isVanillaBlock(stateId)) {
                     section.setBlockState(x, y, z, EmptyBlock.INSTANCE.getDefaultState());
                     if (ConfigManager.enableLightSystem() && ConfigManager.forceUpdateLight()) {
-                        updateLightIfChanged(thisObj, previousState, newState, null, y, z, x);
+                        updateLightIfChanged(holder, previousState, newState, null, y, z, x);
                     }
                 } else {
                     ImmutableBlockState immutableBlockState = BukkitBlockManager.instance().getImmutableBlockStateUnsafe(stateId);
                     section.setBlockState(x, y, z, immutableBlockState);
                     if (ConfigManager.enableLightSystem()) {
-                        updateLightIfChanged(thisObj, previousState, newState, immutableBlockState.vanillaBlockState().handle(), y, z, x);
+                        updateLightIfChanged(holder, previousState, newState, immutableBlockState.vanillaBlockState().handle(), y, z, x);
                     }
                 }
             } catch (Exception e) {
@@ -602,12 +605,12 @@ public class BukkitInjector {
             return previousState;
         }
 
-        private void updateLightIfChanged(@This Object thisObj, Object previousBlockState, Object newState, @Nullable Object clientSideNewState, int y, int z, int x) throws ReflectiveOperationException {
+        private void updateLightIfChanged(@This InjectedPalettedContainerHolder thisObj, Object previousBlockState, Object newState, @Nullable Object clientSideNewState, int y, int z, int x) throws ReflectiveOperationException {
             int previousLight = BlockStateUtils.getLightEmission(previousBlockState);
             int newLight = BlockStateUtils.getLightEmission(newState);
             if (previousLight != newLight || (clientSideNewState != null && (BlockStateUtils.isOcclude(newState) != BlockStateUtils.isOcclude(clientSideNewState)))) {
-                CEWorld world = (CEWorld) field$InjectedPalettedContainer$world.get(thisObj);
-                SectionPos sectionPos = (SectionPos) field$InjectedPalettedContainer$pos.get(thisObj);
+                CEWorld world = thisObj.ceWorld();
+                SectionPos sectionPos = thisObj.cePos();
                 Set<SectionPos> posSet = SectionPosUtils.calculateAffectedRegions((sectionPos.x() << 4) + x, (sectionPos.y() << 4) + y, (sectionPos.z() << 4) + z, Math.max(newLight, previousLight));
                 world.sectionLightUpdated(posSet);
             }

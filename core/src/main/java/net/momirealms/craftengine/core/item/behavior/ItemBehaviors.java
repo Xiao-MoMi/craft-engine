@@ -1,5 +1,6 @@
 package net.momirealms.craftengine.core.item.behavior;
 
+import net.momirealms.craftengine.core.pack.Pack;
 import net.momirealms.craftengine.core.registry.BuiltInRegistries;
 import net.momirealms.craftengine.core.registry.Holder;
 import net.momirealms.craftengine.core.registry.Registries;
@@ -7,6 +8,7 @@ import net.momirealms.craftengine.core.registry.WritableRegistry;
 import net.momirealms.craftengine.core.util.Key;
 import net.momirealms.craftengine.core.util.ResourceKey;
 
+import java.nio.file.Path;
 import java.util.Map;
 
 public class ItemBehaviors {
@@ -17,7 +19,7 @@ public class ItemBehaviors {
         holder.bindValue(factory);
     }
 
-    public static ItemBehavior fromMap(Key id, Map<String, Object> map) {
+    public static ItemBehavior fromMap(Pack pack, Path path, Key id, Map<String, Object> map) {
         String type = (String) map.getOrDefault("type", "empty");
         if (type == null) {
             throw new NullPointerException("behavior type cannot be null");
@@ -27,6 +29,6 @@ public class ItemBehaviors {
         if (factory == null) {
             throw new IllegalArgumentException("Unknown behavior type: " + type);
         }
-        return factory.create(id, map);
+        return factory.create(pack, path, id, map);
     }
 }

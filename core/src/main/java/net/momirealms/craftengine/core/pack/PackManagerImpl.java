@@ -194,20 +194,25 @@ public class PackManagerImpl implements PackManager {
     private void loadConfigs() {
         long o1 = System.nanoTime();
         for (Pack pack : loadedPacks()) {
-            List<Path> files = FileUtils.getConfigsDeeply(pack.configurationFolder());
-            for (Path path : files) {
+            Pair<List<Path>, List<Path>> files = FileUtils.getConfigsDeeply(pack.configurationFolder());
+            for (Path path : files.left()) {
                 Yaml yaml = new Yaml(new StringKeyConstructor(new LoaderOptions()));
                 try (InputStreamReader inputStream = new InputStreamReader(new FileInputStream(path.toFile()), StandardCharsets.UTF_8)) {
                     Map<String, Object> data = yaml.load(inputStream);
                     if (data == null) continue;
                     for (Map.Entry<String, Object> entry : data.entrySet()) {
-                        if (entry.getValue() instanceof Map<?, ?> typeSections0) {
-                            String configType = entry.getKey();
-                            Optional.ofNullable(this.sectionParsers.get(configType))
-                                .ifPresent(parser -> {
-                                    this.cachedConfigs.computeIfAbsent(parser, k -> new ArrayList<>()).add(new CachedConfig(castToMap(typeSections0, false), path, pack));
-                                });
-                        }
+                        processConfigEntry(entry, path, pack);
+                    }
+                } catch (IOException e) {
+                    this.plugin.logger().warn(path, "Error loading config file", e);
+                }
+            }
+            for (Path path : files.right()) {
+                try (InputStreamReader inputStream = new InputStreamReader(new FileInputStream(path.toFile()), StandardCharsets.UTF_8)) {
+                    Map<?, ?> dataRaw = GsonHelper.get().fromJson(JsonParser.parseReader(inputStream).getAsJsonObject(), Map.class);
+                    Map<String, Object> data = MiscUtils.castToMap(dataRaw, false);
+                    for (Map.Entry<String, Object> entry : data.entrySet()) {
+                        processConfigEntry(entry, path, pack);
                     }
                 } catch (IOException e) {
                     this.plugin.logger().warn(path, "Error loading config file", e);
@@ -240,6 +245,17 @@ public class PackManagerImpl implements PackManager {
             }
             long t2 = System.nanoTime();
             this.plugin.logger().info("Loaded " + parser.sectionId() + " in " + String.format("%.2f", ((t2 - t1) / 1_000_000.0)) + " ms");
+        }
+    }
+
+    private void processConfigEntry(Map.Entry<String, Object> entry, Path path, Pack pack) {
+        if (entry.getValue() instanceof Map<?,?> typeSections0) {
+            String configType = entry.getKey();
+            Optional.ofNullable(this.sectionParsers.get(configType))
+                    .ifPresent(parser -> {
+                        this.cachedConfigs.computeIfAbsent(parser, k -> new ArrayList<>())
+                                .add(new CachedConfig(castToMap(typeSections0, false), path, pack));
+                    });
         }
     }
 

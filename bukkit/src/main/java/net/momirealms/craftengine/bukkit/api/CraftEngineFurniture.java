@@ -254,7 +254,7 @@ public class CraftEngineFurniture {
             }
         }
         if (playSound) {
-            world.playBlockSound(vec3d, loadedFurniture.furniture().settings().sounds().breakSound(), 1f, 1f);
+            world.playBlockSound(vec3d, loadedFurniture.furniture().settings().sounds().breakSound(), 1f, 0.8f);
         }
     }
 }

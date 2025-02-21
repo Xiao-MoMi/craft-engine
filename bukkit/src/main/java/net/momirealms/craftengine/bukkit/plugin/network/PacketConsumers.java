@@ -29,7 +29,6 @@ import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.PlayerInventory;
 import org.bukkit.util.RayTraceResult;
-import org.jetbrains.annotations.NotNull;
 
 import java.lang.reflect.Method;
 import java.util.Arrays;
@@ -139,6 +138,30 @@ public class PacketConsumers {
         }
     };
 
+    public static final BiConsumer<NetWorkUser, ByteBufPacketEvent> LEVEL_EVENT = (user, event) -> {
+        try {
+            FriendlyByteBuf buf = event.getBuffer();
+            int eventId = buf.readInt();
+            if (eventId != 2001) return;
+            BlockPos blockPos = buf.readBlockPos(buf);
+            int state = buf.readInt();
+            boolean global = buf.readBoolean();
+            int newState = remap(state);
+            if (newState == state) {
+                return;
+            }
+            event.setChanged(true);
+            buf.clear();
+            buf.writeVarInt(event.packetID());
+            buf.writeInt(eventId);
+            buf.writeBlockPos(blockPos);
+            buf.writeInt(newState);
+            buf.writeBoolean(global);
+        } catch (Exception e) {
+            CraftEngine.instance().logger().warn("Failed to handle ClientboundLevelEventPacket", e);
+        }
+    };
+
     public static final BiConsumer<NetWorkUser, ByteBufPacketEvent> LEVEL_PARTICLE = (user, event) -> {
         try {
             FriendlyByteBuf buf = event.getBuffer();
@@ -191,7 +214,7 @@ public class PacketConsumers {
                     if (ConfigManager.enableSoundSystem()) {
                         Object blockOwner = Reflections.field$StateHolder$owner.get(blockState);
                         if (BukkitBlockManager.instance().isBlockSoundRemoved(blockOwner)) {
-                            player.startMiningBlock(platformPlayer.getWorld(), pos, blockState, false);
+                            player.startMiningBlock(platformPlayer.getWorld(), pos, blockState, false, null);
                             return;
                         }
                     }
@@ -200,7 +223,7 @@ public class PacketConsumers {
                     }
                     return;
                 }
-                player.startMiningBlock(platformPlayer.getWorld(), pos, blockState, true);
+                player.startMiningBlock(platformPlayer.getWorld(), pos, blockState, true, BukkitBlockManager.instance().getImmutableBlockStateUnsafe(stateId));
             } else if (action == Reflections.instance$ServerboundPlayerActionPacket$Action$ABORT_DESTROY_BLOCK) {
                 if (player.isMiningBlock()) {
                     player.abortMiningBlock();
@@ -391,7 +414,7 @@ public class PacketConsumers {
                 return;
             }
             int matchingSlot = InventoryUtils.findMatchingItemSlot(inventory, itemStack);
-            int targetSlot = (matchingSlot < 9) && (matchingSlot >= 0) ? matchingSlot : InventoryUtils.getSuitableHotbarSlot(inventory);
+            int targetSlot = (matchingSlot < 9) && (matchingSlot >= 0) ? matchingSlot : InventoryUtils.getSuitableHotBarSlot(inventory);
             if (matchingSlot != -1) {
                 if (matchingSlot < 9 && targetSlot >= 0) {
                     inventory.setHeldItemSlot(targetSlot);
@@ -445,7 +468,7 @@ public class PacketConsumers {
                 return;
             }
             int matchingSlot = InventoryUtils.findMatchingItemSlot(inventory, itemStack);
-            int targetSlot = (matchingSlot < 9) && (matchingSlot >= 0) ? matchingSlot : InventoryUtils.getSuitableHotbarSlot(inventory);
+            int targetSlot = (matchingSlot < 9) && (matchingSlot >= 0) ? matchingSlot : InventoryUtils.getSuitableHotBarSlot(inventory);
             if (matchingSlot != -1) {
                 if (matchingSlot < 9 && targetSlot >= 0) {
                     inventory.setHeldItemSlot(targetSlot);

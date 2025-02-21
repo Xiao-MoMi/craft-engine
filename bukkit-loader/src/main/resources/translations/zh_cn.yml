@@ -1,5 +1,5 @@
 # 别动这个
-config-version: "1"
+config-version: "2"
 
 exception.invalid_syntax: "<red>无效语法. 正确语法:<white><arg:0></white></red>"
 exception.invalid_argument: "<red>无效参数. 原因:<white><arg:0></white></red>"
@@ -38,4 +38,9 @@ argument.parse.failure.aggregate.missing: "<red>缺少组件 '<arg:0>'</red>"
 argument.parse.failure.aggregate.failure: "<red>无效的组件 '<arg:0>': <arg:1></red>"
 argument.parse.failure.either: "<red>无法从 '<arg:0>' 解析 <arg:1> 或 <arg:2></red>"
 argument.parse.failure.namedtextcolor: "<red>'<arg:0>' 不是颜色代码</red>"
-command.reload.success: "<white>重新加载完成. 耗时 <green><arg:0></green> 毫秒</white>"
+command.reload.config.success: "<white>重新加载配置完成. 耗时 <green><arg:0></green> 毫秒</white>"
+command.reload.config.failure: "<red>重新加载配置失败，请检查控制台日志。</red>"
+command.reload.pack.success: "<white>资源包重新加载完成. 耗时 <green><arg:0></green> 毫秒</white>"
+command.reload.pack.failure: "<red>重新加载资源包失败，请检查控制台日志。</red>"
+command.reload.all.success: "<white>全部重新加载完成. 耗时 <green><arg:0></green> 毫秒</white>"
+command.reload.all.failure: "<red>重新加载失败，请检查控制台日志。</red>"

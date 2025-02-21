@@ -7,6 +7,7 @@ import net.momirealms.craftengine.bukkit.item.BukkitItemManager;
 import net.momirealms.craftengine.bukkit.plugin.BukkitCraftEngine;
 import net.momirealms.craftengine.bukkit.util.*;
 import net.momirealms.craftengine.bukkit.world.BukkitWorld;
+import net.momirealms.craftengine.core.block.ImmutableBlockState;
 import net.momirealms.craftengine.core.entity.player.InteractionHand;
 import net.momirealms.craftengine.core.entity.player.Player;
 import net.momirealms.craftengine.core.item.Item;
@@ -183,7 +184,9 @@ public class BukkitServerPlayer extends Player {
 
     @Override
     public String name() {
-        return platformPlayer().getName();
+        org.bukkit.entity.Player player = platformPlayer();
+        if (player == null) return "Unknown";
+        return player.getName();
     }
 
     @Override
@@ -248,15 +251,25 @@ public class BukkitServerPlayer extends Player {
             Object blockPos = Reflections.constructor$BlockPos.newInstance(pos.x(), pos.y(), pos.z());
             return (float) Reflections.method$BlockStateBase$getDestroyProgress.invoke(blockState, serverPlayer, Reflections.method$Entity$level.invoke(serverPlayer), blockPos);
         } catch (ReflectiveOperationException e) {
-            plugin.logger().warn("Failed to get destroy progress for player " + platformPlayer().getName());
+            this.plugin.logger().warn("Failed to get destroy progress for player " + platformPlayer().getName());
             return 0f;
         }
     }
 
-    public void startMiningBlock(org.bukkit.World world, BlockPos pos, Object state, boolean custom) {
+    public void startMiningBlock(org.bukkit.World world, BlockPos pos, Object state, boolean custom, @Nullable ImmutableBlockState immutableBlockState) {
         // instant break
-        if (getDestroyProgress(state, pos) >= 1f) {
-            ParticleUtils.addBlockBreakParticles(world, LocationUtils.toBlockPos(pos), state);
+        if (custom && getDestroyProgress(state, pos) >= 1f) {
+            assert immutableBlockState != null;
+            // not an instant break on client side
+            if (getDestroyProgress(immutableBlockState.vanillaBlockState().handle(), pos) < 1f) {
+                try {
+                    Object levelEventPacket = Reflections.constructor$ClientboundLevelEventPacket.newInstance(2001, LocationUtils.toBlockPos(pos), BlockStateUtils.blockStateToId(this.destroyedState), false);
+                    sendPacket(levelEventPacket, false);
+                } catch (ReflectiveOperationException e) {
+                    this.plugin.logger().warn("Failed to send level event packet", e);
+                }
+            }
+            //ParticleUtils.addBlockBreakParticles(world, LocationUtils.toBlockPos(pos), state);
             return;
         }
         setCanBreakBlock(!custom);
@@ -376,12 +389,14 @@ public class BukkitServerPlayer extends Player {
                     broadcastDestroyProgress(player, hitPos, blockPos, packetStage);
                 }
                 if (this.miningProgress >= 1f) {
+                    //Reflections.method$ServerLevel$levelEvent.invoke(Reflections.field$CraftWorld$ServerLevel.get(player.getWorld()), null, 2001, blockPos, BlockStateUtils.blockStateToId(this.destroyedState));
                     Reflections.method$ServerPlayerGameMode$destroyBlock.invoke(gameMode, blockPos);
-                    ParticleUtils.addBlockBreakParticles(location.getWorld(), blockPos, this.destroyedState);
+                    Object levelEventPacket = Reflections.constructor$ClientboundLevelEventPacket.newInstance(2001, blockPos, BlockStateUtils.blockStateToId(this.destroyedState), false);
+                    sendPacket(levelEventPacket, false);
                     this.stopMiningBlock();
                 }
             }
-        } catch (ReflectiveOperationException e) {
+        } catch (Exception e) {
             plugin.logger().warn("Failed to tick destroy for player " + platformPlayer().getName(), e);
         }
     }
@@ -516,11 +531,13 @@ public class BukkitServerPlayer extends Player {
 
     @Override
     public Object serverPlayer() {
+        if (serverPlayerRef == null) return null;
         return serverPlayerRef.get();
     }
 
     @Override
     public org.bukkit.entity.Player platformPlayer() {
+        if (playerRef == null) return null;
         return playerRef.get();
     }
 

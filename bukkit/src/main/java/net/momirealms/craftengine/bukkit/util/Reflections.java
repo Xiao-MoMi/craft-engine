@@ -4559,4 +4559,50 @@ public class Reflections {
                     clazz$BonemealableBlock, void.class, clazz$ServerLevel, clazz$RandomSource, clazz$BlockPos, clazz$BlockState
             )
     );
+
+    public static final Class<?> clazz$ClientboundLevelEventPacket = requireNonNull(
+            ReflectionUtils.getClazz(
+                    BukkitReflectionUtils.assembleMCClass("network.protocol.game.ClientboundLevelEventPacket"),
+                    BukkitReflectionUtils.assembleMCClass("network.protocol.game.PacketPlayOutWorldEvent")
+            )
+    );
+
+    public static final Constructor<?> constructor$ClientboundLevelEventPacket = requireNonNull(
+            ReflectionUtils.getConstructor(
+                    clazz$ClientboundLevelEventPacket, int.class, clazz$BlockPos, int.class, boolean.class
+            )
+    );
+
+    public static final Field field$ClientboundLevelEventPacket$eventId = requireNonNull(
+            ReflectionUtils.getDeclaredField(
+                    clazz$ClientboundLevelEventPacket, int.class, 0
+            )
+    );
+
+    public static final Field field$ClientboundLevelEventPacket$data = requireNonNull(
+            ReflectionUtils.getDeclaredField(
+                    clazz$ClientboundLevelEventPacket, int.class, 1
+            )
+    );
+
+    public static final Field field$ClientboundLevelEventPacket$global = requireNonNull(
+            ReflectionUtils.getDeclaredField(
+                    clazz$ClientboundLevelEventPacket, boolean.class, 0
+            )
+    );
+
+    public static final Method method$ServerLevel$levelEvent = requireNonNull(
+            ReflectionUtils.getMethod(
+                    clazz$ServerLevel, void.class, clazz$Player, int.class, clazz$BlockPos, int.class
+            )
+    );
+
+    public static final Method method$PalettedContainer$getAndSet = Objects.requireNonNull(
+            ReflectionUtils.getMethod(
+                    Reflections.clazz$PalettedContainer,
+                    Object.class,
+                    new String[] {"a", "getAndSet"},
+                    int.class, int.class, int.class, Object.class
+            )
+    );
 }

@@ -20,6 +20,11 @@ public class PacketIds1_20_3 implements PacketIds {
     }
 
     @Override
+    public int clientboundLevelEventPacket() {
+        return 38;
+    }
+
+    @Override
     public int clientboundAddEntityPacket() {
         return 1;
     }

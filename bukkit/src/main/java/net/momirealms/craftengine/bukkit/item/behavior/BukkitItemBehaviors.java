@@ -13,7 +13,7 @@ public class BukkitItemBehaviors extends ItemBehaviors {
     public static final Key BUCKET_ITEM = Key.from("craftengine:bucket_item");
 
     public static void init() {
-        register(EMPTY, (args, id) -> EmptyItemBehavior.INSTANCE);
+        register(EMPTY, (pack, path, args, id) -> EmptyItemBehavior.INSTANCE);
         register(BLOCK_ITEM, BlockItemBehavior.FACTORY);
         register(FURNITURE_ITEM, FurnitureItemBehavior.FACTORY);
         register(AXE_ITEM, AxeItemBehavior.FACTORY);

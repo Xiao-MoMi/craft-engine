@@ -12,6 +12,8 @@ public interface NetWorkUser {
 
     Plugin plugin();
 
+    String name();
+
     void sendPacket(Object packet, boolean immediately);
 
     /**

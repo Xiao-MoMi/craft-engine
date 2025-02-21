@@ -49,12 +49,12 @@ public class TemplateManagerImpl implements TemplateManager {
     private void applyTemplatesRecursive(String currentPath,
                                          Map<String, Object> input,
                                          Map<String, Object> result,
-                                         Map<String, Supplier<String>> parentArguments) {
+                                         Map<String, Supplier<Object>> parentArguments) {
         if (input.containsKey("template")) {
             TemplateProcessingResult processingResult = processTemplates(input, parentArguments);
             List<Object> templates = processingResult.templates();
             Object overrides = processingResult.overrides();
-            Map<String, Supplier<String>> arguments = mergeArguments(parentArguments, processingResult.arguments());
+            Map<String, Supplier<Object>> arguments = mergeArguments(parentArguments, processingResult.arguments());
 
             for (Object template : templates) {
                 if (template instanceof Map<?, ?> mapTemplate) {
@@ -79,7 +79,7 @@ public class TemplateManagerImpl implements TemplateManager {
         }
     }
 
-    private TemplateProcessingResult processTemplates(Map<String, Object> input, Map<String, Supplier<String>> parentArguments) {
+    private TemplateProcessingResult processTemplates(Map<String, Object> input, Map<String, Supplier<Object>> parentArguments) {
         List<String> templateIds = MiscUtils.getAsStringList(input.get("template"));
         List<Object> templateList = new ArrayList<>();
         for (String templateId : templateIds) {
@@ -87,7 +87,7 @@ public class TemplateManagerImpl implements TemplateManager {
                     .orElseThrow(() -> new IllegalArgumentException("Template not found: " + templateId));
             templateList.add(template);
         }
-        Map<String, Supplier<String>> arguments = getArguments(
+        Map<String, Supplier<Object>> arguments = getArguments(
                 castToMap(input.getOrDefault("arguments", Collections.emptyMap()), false)
         );
         arguments.putAll(parentArguments);
@@ -98,12 +98,14 @@ public class TemplateManagerImpl implements TemplateManager {
         );
     }
 
-    private Map<String, Supplier<String>> getArguments(@NotNull Map<String, Object> argumentMap) {
-        Map<String, Supplier<String>> result = new HashMap<>();
+    private Map<String, Supplier<Object>> getArguments(@NotNull Map<String, Object> argumentMap) {
+        Map<String, Supplier<Object>> result = new HashMap<>();
         argumentMap.forEach((key, value) -> {
             String placeholder = "{" + key + "}";
             if (value instanceof Map<?, ?> nestedMap) {
                 result.put(placeholder, TemplateArguments.fromMap(castToMap(nestedMap, false)));
+            } else if (value instanceof List<?> nestedList) {
+                result.put(placeholder, new ListTemplateArgument(castToList(nestedList, false)));
             } else {
                 result.put(placeholder, value::toString);
             }
@@ -111,14 +113,24 @@ public class TemplateManagerImpl implements TemplateManager {
         return result;
     }
 
-    private String applyArgument(String input, Map<String, Supplier<String>> arguments) {
+    private Object applyArgument(String input, Map<String, Supplier<Object>> arguments) {
         StringBuilder result = new StringBuilder();
         Matcher matcher = PATTERN.matcher(input);
+        boolean first = true;
         while (matcher.find()) {
             String placeholder = matcher.group();
-            Supplier<String> replacer = arguments.get(placeholder);
+            Supplier<Object> replacer = arguments.get(placeholder);
             if (replacer != null) {
-                matcher.appendReplacement(result, replacer.get());
+                if (first) {
+                    first = false;
+                    if (input.length() == placeholder.length()) {
+                        return replacer.get();
+                    } else {
+                        matcher.appendReplacement(result, replacer.get().toString());
+                    }
+                } else {
+                    matcher.appendReplacement(result, replacer.get().toString());
+                }
             } else {
                 throw new IllegalArgumentException("Missing template argument: " + placeholder);
             }
@@ -129,7 +141,7 @@ public class TemplateManagerImpl implements TemplateManager {
 
     private void processValue(Object value,
                               Consumer<Object> resultConsumer,
-                              Map<String, Supplier<String>> arguments) {
+                              Map<String, Supplier<Object>> arguments) {
         if (value instanceof Map<?, ?> mapValue) {
             Map<String, Object> nestedResult = new LinkedHashMap<>();
             applyTemplatesRecursive("", castToMap(mapValue, false), nestedResult, arguments);
@@ -145,7 +157,7 @@ public class TemplateManagerImpl implements TemplateManager {
         }
     }
 
-    private void processList(List<Object> inputList, List<Object> resultList, Map<String, Supplier<String>> arguments) {
+    private void processList(List<Object> inputList, List<Object> resultList, Map<String, Supplier<Object>> arguments) {
         for (Object item : inputList) {
             processValue(item, resultList::add, arguments);
         }
@@ -153,7 +165,7 @@ public class TemplateManagerImpl implements TemplateManager {
 
     private void handleMapTemplate(String currentPath, Map<String, Object> template,
                                    Object overrides,
-                                   Map<String, Supplier<String>> arguments,
+                                   Map<String, Supplier<Object>> arguments,
                                    Map<String, Object> result) {
         Map<String, Object> merged = new LinkedHashMap<>(template);
         if (overrides != null) {
@@ -165,7 +177,7 @@ public class TemplateManagerImpl implements TemplateManager {
     private void handleListTemplate(String currentPath,
                                     List<Object> template,
                                     Object overrides,
-                                    Map<String, Supplier<String>> arguments,
+                                    Map<String, Supplier<Object>> arguments,
                                     Map<String, Object> result) {
         List<Object> merged = (overrides instanceof List<?> overrideList && !overrideList.isEmpty())
                 ? castToList(overrideList, false)
@@ -178,14 +190,14 @@ public class TemplateManagerImpl implements TemplateManager {
     private record TemplateProcessingResult(
             List<Object> templates,
             Object overrides,
-            Map<String, Supplier<String>> arguments
+            Map<String, Supplier<Object>> arguments
     ) {}
 
-    private static Map<String, Supplier<String>> mergeArguments(
-            Map<String, Supplier<String>> parent,
-            Map<String, Supplier<String>> child
+    private static Map<String, Supplier<Object>> mergeArguments(
+            Map<String, Supplier<Object>> parent,
+            Map<String, Supplier<Object>> child
     ) {
-        Map<String, Supplier<String>> merged = new HashMap<>(parent);
+        Map<String, Supplier<Object>> merged = new HashMap<>(parent);
         merged.putAll(child);
         return merged;
     }

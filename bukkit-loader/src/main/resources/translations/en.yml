@@ -1,5 +1,5 @@
 # Don't change this
-config-version: "1"
+config-version: "2"
 
 exception.invalid_syntax: "<red>Invalid syntax. Correct syntax: <white><arg:0></white></red>"
 exception.invalid_argument: "<red>Invalid argument. Reason: <white><arg:0></white></red>"
@@ -38,4 +38,9 @@ argument.parse.failure.aggregate.missing: "<red>Missing component '<arg:0>'</red
 argument.parse.failure.aggregate.failure: "<red>Invalid component '<arg:0>': <arg:1></red>"
 argument.parse.failure.either: "<red>Could not resolve <arg:1> or <arg:2> from '<arg:0>'</red>"
 argument.parse.failure.namedtextcolor: "<red>'<arg:0>' is not a named text color</red>"
-command.reload.success: "<white>Reloaded. Took <green><arg:0></green> ms.</white>"
+command.reload.config.success: "<white>Configs reloaded in <green><arg:0></green> ms.</white>"
+command.reload.config.failure: "<red>Config reload failed. Check console logs.</red>"
+command.reload.pack.success: "<white>Resource pack reloaded in <green><arg:0></green> ms.</white>"
+command.reload.pack.failure: "<red>Resource pack reload failed. Check console logs.</red>"
+command.reload.all.success: "<white>Reload completed in <green><arg:0></green> ms.</white>"
+command.reload.all.failure: "<red>Reload failed. Check console logs.</red>"

@@ -5,6 +5,7 @@ import net.momirealms.craftengine.core.entity.furniture.FurnitureManager;
 import net.momirealms.craftengine.core.entity.player.Player;
 import net.momirealms.craftengine.core.font.FontManager;
 import net.momirealms.craftengine.core.item.ItemManager;
+import net.momirealms.craftengine.core.pack.PackManager;
 import net.momirealms.craftengine.core.plugin.classpath.ClassPathAppender;
 import net.momirealms.craftengine.core.plugin.command.sender.SenderFactory;
 import net.momirealms.craftengine.core.plugin.config.ConfigManager;
@@ -14,6 +15,7 @@ import net.momirealms.craftengine.core.plugin.locale.TranslationManager;
 import net.momirealms.craftengine.core.plugin.logger.PluginLogger;
 import net.momirealms.craftengine.core.plugin.network.NetworkManager;
 import net.momirealms.craftengine.core.plugin.scheduler.SchedulerAdapter;
+import net.momirealms.craftengine.core.world.WorldManager;
 
 import java.io.File;
 import java.io.InputStream;
@@ -57,9 +59,13 @@ public interface Plugin extends Reloadable {
 
     FurnitureManager furnitureManager();
 
+    PackManager packManager();
+
     SenderFactory<? extends Plugin, ?> senderFactory();
 
     boolean isPluginEnabled(String plugin);
 
     String parse(Player player, String text);
+
+    WorldManager worldManager();
 }

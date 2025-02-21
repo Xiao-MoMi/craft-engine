@@ -7,7 +7,7 @@ public class InventoryUtils {
 
     private InventoryUtils() {}
 
-    public static int getSuitableHotbarSlot(PlayerInventory inventory) {
+    public static int getSuitableHotBarSlot(PlayerInventory inventory) {
         int selectedSlot = inventory.getHeldItemSlot();
         int i;
         int j;

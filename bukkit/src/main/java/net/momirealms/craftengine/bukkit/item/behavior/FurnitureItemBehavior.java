@@ -5,10 +5,9 @@ import net.momirealms.craftengine.bukkit.api.event.FurniturePlaceEvent;
 import net.momirealms.craftengine.bukkit.entity.furniture.BukkitFurnitureManager;
 import net.momirealms.craftengine.bukkit.entity.furniture.LoadedFurniture;
 import net.momirealms.craftengine.bukkit.util.DirectionUtils;
-import net.momirealms.craftengine.bukkit.util.EntityUtils;
 import net.momirealms.craftengine.bukkit.util.EventUtils;
-import net.momirealms.craftengine.core.block.BlockSounds;
-import net.momirealms.craftengine.core.entity.furniture.*;
+import net.momirealms.craftengine.core.entity.furniture.AnchorType;
+import net.momirealms.craftengine.core.entity.furniture.CustomFurniture;
 import net.momirealms.craftengine.core.entity.player.InteractionResult;
 import net.momirealms.craftengine.core.entity.player.Player;
 import net.momirealms.craftengine.core.item.Item;
@@ -16,23 +15,19 @@ import net.momirealms.craftengine.core.item.behavior.ItemBehavior;
 import net.momirealms.craftengine.core.item.behavior.ItemBehaviorFactory;
 import net.momirealms.craftengine.core.item.context.BlockPlaceContext;
 import net.momirealms.craftengine.core.item.context.UseOnContext;
-import net.momirealms.craftengine.core.loot.LootTable;
+import net.momirealms.craftengine.core.pack.Pack;
 import net.momirealms.craftengine.core.plugin.CraftEngine;
-import net.momirealms.craftengine.core.util.*;
+import net.momirealms.craftengine.core.util.Direction;
+import net.momirealms.craftengine.core.util.Key;
+import net.momirealms.craftengine.core.util.MiscUtils;
+import net.momirealms.craftengine.core.util.Pair;
 import net.momirealms.craftengine.core.world.Vec3d;
 import org.bukkit.Location;
 import org.bukkit.World;
-import org.bukkit.entity.Entity;
-import org.bukkit.entity.EntityType;
-import org.bukkit.entity.ItemDisplay;
-import org.bukkit.inventory.ItemStack;
-import org.bukkit.persistence.PersistentDataType;
-import org.bukkit.util.Transformation;
-import org.jetbrains.annotations.Nullable;
-import org.joml.Quaternionf;
-import org.joml.Vector3f;
 
-import java.util.*;
+import java.nio.file.Path;
+import java.util.Map;
+import java.util.Optional;
 
 public class FurnitureItemBehavior extends ItemBehavior {
     public static final Factory FACTORY = new Factory();
@@ -127,12 +122,17 @@ public class FurnitureItemBehavior extends ItemBehavior {
     public static class Factory implements ItemBehaviorFactory {
 
         @Override
-        public ItemBehavior create(Key id, Map<String, Object> arguments) {
-            if (!arguments.containsKey("furniture")) {
-                throw new IllegalArgumentException("Missing furniture argument");
+        public ItemBehavior create(Pack pack, Path path, Key key, Map<String, Object> arguments) {
+            Object id = arguments.get("furniture");
+            if (id == null) {
+                throw new IllegalArgumentException("Missing required parameter 'furniture' for furniture_item behavior");
             }
-            String furnitureId = arguments.get("furniture").toString();
-            return new FurnitureItemBehavior(Key.of(furnitureId));
+            if (id instanceof Map<?,?> map) {
+                BukkitFurnitureManager.instance().parseSection(pack, path, key, MiscUtils.castToMap(map, false));
+                return new FurnitureItemBehavior(key);
+            } else {
+                return new FurnitureItemBehavior(Key.of(id.toString()));
+            }
         }
     }
 }

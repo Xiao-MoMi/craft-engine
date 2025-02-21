@@ -22,6 +22,16 @@ public interface TintFactory {
                 intList.add(Integer.parseInt(o.toString()));
             }
             return Either.ofFallback(intList);
+        } else if (value instanceof String s) {
+            String[] split = s.split(",");
+            if (split.length != 3) {
+                throw new IllegalArgumentException("Invalid tint value list size: " + split.length + " which is expected to be 3");
+            }
+            List<Integer> intList = new ArrayList<>();
+            for (String string : split) {
+                intList.add(Integer.parseInt(string));
+            }
+            return Either.ofFallback(intList);
         }
         throw new IllegalArgumentException("Invalid tint value: " + value);
     }
