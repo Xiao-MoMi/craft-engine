@@ -304,10 +304,10 @@ public class PackManagerImpl implements PackManager {
         Section protectionSettings = plugin.configManager().settings()
                 .getSection("resource-pack")
                 .getSection("protection");
-        boolean obfuscate = protectionSettings.getBoolean("obfuscation");
-        boolean protectZip = protectionSettings.getBoolean("break-zip-format");
-        if (obfuscate) {
-            this.obfuscate(generatedPackPath, protectZip);
+        int obfuscate = protectionSettings.getInt("obfuscation");
+        int protectZip = protectionSettings.getInt("break-zip-format");
+        if (obfuscate != 0) {
+            this.obfuscate(generatedPackPath, protectZip, obfuscate);
         }
 
         Path zipFile = this.plugin.dataFolderPath()
@@ -644,8 +644,8 @@ public class PackManagerImpl implements PackManager {
         }
     }
 
-    private void obfuscate(Path folderPath, boolean isProtectZip) {
-        if (!isProtectZip) {
+    private void obfuscate(Path folderPath, int protectZipLevel, int obfuscateLevel) {
+        if (obfuscateLevel == 1) {
             try (Stream<Path> paths = Files.walk(folderPath)) {
                 Gson gson = GsonHelper.get();
                 for (Path path : (Iterable<Path>) paths::iterator) {
@@ -661,7 +661,7 @@ public class PackManagerImpl implements PackManager {
             } catch (IOException e) {
                 plugin.logger().warn("Failed to obfuscate resource pack", e);
             }
-        } else {
+        } else if (obfuscateLevel == 2) {
         }
     }
 }

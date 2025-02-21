@@ -24,8 +24,8 @@ public class ZipUtils {
     private static final byte[] FILE_NAME_BYTES = ("C/E/".repeat(16383) + "C/E").getBytes();
 
     public static void zipDirectory(Path folderPath, Path zipFilePath,
-                                    boolean isProtectZip, boolean isObfuscate) throws IOException {
-        if (!isProtectZip) {
+                                    int protectZipLevel, int obfuscateLevel) throws IOException {
+        if (protectZipLevel == 0) {
             try (ZipOutputStream zos = new ZipOutputStream(new FileOutputStream(zipFilePath.toFile()))) {
                 try (Stream<Path> paths = Files.walk(folderPath)) {
                     for (Path path : (Iterable<Path>) paths::iterator) {
@@ -45,18 +45,20 @@ public class ZipUtils {
                  CountingOutputStream cos = new CountingOutputStream(os)) {
                 List<CentralDirectoryEntry> centralDirEntries = new ArrayList<>();
                 Path rootPath = folderPath.toAbsolutePath();
-                createZipHeader(cos);
+                createZipHeader(cos, protectZipLevel);
 
                 Files.walkFileTree(rootPath, new SimpleFileVisitor<>() {
                     @Override
                     public @NotNull FileVisitResult visitFile(Path file, @NotNull BasicFileAttributes attrs) throws IOException {
-                        processFile(file, cos, centralDirEntries, rootPath, isObfuscate);
+                        processFile(file, cos, centralDirEntries, rootPath, obfuscateLevel);
                         return FileVisitResult.CONTINUE;
                     }
                 });
 
-                for (int i = 0; i < 10; i++) {
-                    processFakeFile(i, "/" + FILE_NAME, cos, centralDirEntries);
+                if (protectZipLevel == 3) {
+                    for (int i = 0; i < 10; i++) {
+                        processFakeFile(i, "/" + FILE_NAME, cos, centralDirEntries);
+                    }
                 }
 
                 long centralDirStartOffset = cos.getCount();
@@ -102,7 +104,7 @@ public class ZipUtils {
     }
 
     private static void processFile(Path file, CountingOutputStream cos, List<CentralDirectoryEntry> entries,
-                                    Path rootPath, boolean isObfuscate) throws IOException {
+                                    Path rootPath, int obfuscateLevel) throws IOException {
         String relativePath = rootPath.relativize(file).toString().replace(File.separatorChar, '/');
         byte[] originalData = Files.readAllBytes(file);
 
@@ -142,21 +144,23 @@ public class ZipUtils {
         return baos.toByteArray();
     }
 
-    private static void createZipHeader(OutputStream out) throws IOException {
+    private static void createZipHeader(OutputStream out, int protectZipLevel) throws IOException {
         writeInt(out, 0x06054B50);
-        writeInt(out, 0x06054B50);
-        writeInt(out, 0x04034B50);
-        writeShort(out, 0);
-        writeShort(out, 1);
-        writeShort(out, 8);
-        writeShort(out, 0xFFFF);
-        writeShort(out, 0xFFFF);
-        writeInt(out, 0xFFFFFFFFL);
-        writeInt(out, 0xFFFFFFFFL);
-        writeInt(out, 0xFFFFFFFFL);
-        writeShort(out, FILE_NAME_BYTES.length);
-        writeShort(out, 0);
-        out.write(FILE_NAME_BYTES);
+        if (protectZipLevel == 2 || protectZipLevel == 3) {
+            writeInt(out, 0x06054B50);
+            writeInt(out, 0x04034B50);
+            writeShort(out, 0);
+            writeShort(out, 1);
+            writeShort(out, 8);
+            writeShort(out, 0xFFFF);
+            writeShort(out, 0xFFFF);
+            writeInt(out, 0xFFFFFFFFL);
+            writeInt(out, 0xFFFFFFFFL);
+            writeInt(out, 0xFFFFFFFFL);
+            writeShort(out, FILE_NAME_BYTES.length);
+            writeShort(out, 0);
+            out.write(FILE_NAME_BYTES);
+        }
     }
 
     private static void writeLocalFileHeader(OutputStream out) throws IOException {
