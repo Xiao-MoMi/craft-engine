@@ -7,7 +7,8 @@
 
 <p align="center">
     <a target="_blank" href="/README.md">English</a>
-    <a target="_blank" href="/readme/README_zh-CN.md">中文</a>
+    <a target="_blank" href="/readme/README_zh-CN.md">简体中文</a>
+    <a target="_blank" href="/readme/README_zh-TW.md">繁體中文</a>
 </p>
 
 ## 📌 关于 CraftEngine
