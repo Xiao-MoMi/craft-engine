@@ -187,7 +187,7 @@ public class ZipUtils {
         writeShort(out, 0);
         writeInt(out, 0);
         writeInt(out, entry.compressedSize + 1);
-        writeInt(out, 0xFFFFFFFFL);
+        writeInt(out, 0);
         writeShort(out, entry.fileName.getBytes(StandardCharsets.UTF_8).length);
         writeShort(out, 0);
         writeShort(out, 0);
