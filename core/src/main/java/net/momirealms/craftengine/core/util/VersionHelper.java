@@ -75,6 +75,10 @@ public class VersionHelper {
         return version >= 21.39f;
     }
 
+    public static boolean isVersionNewerThan1_21_5() {
+        return version >= 21.49f;
+    }
+
     public static boolean isVersionNewerThan1_21_3() {
         return version >= 21.29f;
     }

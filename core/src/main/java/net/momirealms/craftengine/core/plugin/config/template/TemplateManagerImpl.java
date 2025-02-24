@@ -19,6 +19,7 @@ import static net.momirealms.craftengine.core.util.MiscUtils.castToMap;
 public class TemplateManagerImpl implements TemplateManager {
     private final CraftEngine plugin;
     private final Map<Key, Object> templates = new HashMap<>();
+    private final static Set<String> blacklistedKeys = new HashSet<>(Set.of(TEMPLATE, ARGUMENTS, OVERRIDES));
 
     public TemplateManagerImpl(CraftEngine plugin) {
         this.plugin = plugin;
@@ -58,7 +59,7 @@ public class TemplateManagerImpl implements TemplateManager {
 
             for (Object template : templates) {
                 if (template instanceof Map<?, ?> mapTemplate) {
-                    handleMapTemplate(currentPath, castToMap(mapTemplate, false), overrides, arguments, result);
+                    handleMapTemplate(currentPath, castToMap(mapTemplate, false), overrides, arguments, input, result);
                 } else if (template instanceof List<?> listTemplate) {
                     handleListTemplate(currentPath, castToList(listTemplate, false), overrides, arguments, result);
                 } else if (template instanceof String stringTemplate) {
@@ -69,7 +70,9 @@ public class TemplateManagerImpl implements TemplateManager {
             }
         } else {
             Map<String, Object> innerResult = currentPath.isEmpty() ? result : new LinkedHashMap<>();
-            if (!currentPath.isEmpty()) result.put(currentPath, innerResult);
+            if (!currentPath.isEmpty()) {
+                result.put(currentPath, innerResult);
+            }
 
             input.forEach((key, value) -> processValue(
                     value,
@@ -163,13 +166,20 @@ public class TemplateManagerImpl implements TemplateManager {
         }
     }
 
-    private void handleMapTemplate(String currentPath, Map<String, Object> template,
+    private void handleMapTemplate(String currentPath,
+                                   Map<String, Object> template,
                                    Object overrides,
                                    Map<String, Supplier<Object>> arguments,
+                                   Map<String, Object> input,
                                    Map<String, Object> result) {
         Map<String, Object> merged = new LinkedHashMap<>(template);
         if (overrides != null) {
             merged.putAll(castToMap(overrides, false));
+        }
+        for (Map.Entry<String, Object> entry : input.entrySet()) {
+            if (!blacklistedKeys.contains(entry.getKey())) {
+                merged.put(entry.getKey(), entry.getValue());
+            }
         }
         applyTemplatesRecursive(currentPath, merged, result, arguments);
     }

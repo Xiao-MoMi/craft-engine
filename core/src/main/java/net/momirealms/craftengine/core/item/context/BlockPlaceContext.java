@@ -10,7 +10,7 @@ import net.momirealms.craftengine.core.world.World;
 
 public class BlockPlaceContext extends UseOnContext {
     private final BlockPos relativePos;
-    protected boolean replaceClicked = true;
+    protected boolean replaceClicked;
 
     public BlockPlaceContext(UseOnContext context) {
         this(context.getLevel(), context.getPlayer(), context.getHand(), context.getItem(), context.getHitResult());
@@ -25,6 +25,10 @@ public class BlockPlaceContext extends UseOnContext {
     @Override
     public BlockPos getClickedPos() {
         return this.replaceClicked ? super.getClickedPos() : this.relativePos;
+    }
+
+    public BlockPos getAgainstPos() {
+        return super.getClickedPos();
     }
 
     public boolean canPlace() {

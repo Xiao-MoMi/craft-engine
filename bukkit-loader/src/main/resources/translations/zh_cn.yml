@@ -1,8 +1,8 @@
 # 别动这个
 config-version: "2"
 
-exception.invalid_syntax: "<red>无效语法. 正确语法:<white><arg:0></white></red>"
-exception.invalid_argument: "<red>无效参数. 原因:<white><arg:0></white></red>"
+exception.invalid_syntax: "<red>无效语法. 正确语法: <white><arg:0></white></red>"
+exception.invalid_argument: "<red>无效参数. 原因: <white><arg:0></white></red>"
 exception.invalid_sender: "<red><arg:0> 不允许执行该命令. 执行者必须是 <arg:1></red>"
 exception.unexpected: "<red>执行该命令时发生内部错误</red>"
 exception.no_permission: "<red>抱歉, 您没有权限执行该命令</red>"
@@ -44,3 +44,9 @@ command.reload.pack.success: "<white>资源包重新加载完成. 耗时 <green>
 command.reload.pack.failure: "<red>重新加载资源包失败，请检查控制台日志。</red>"
 command.reload.all.success: "<white>全部重新加载完成. 耗时 <green><arg:0></green> 毫秒</white>"
 command.reload.all.failure: "<red>重新加载失败，请检查控制台日志。</red>"
+# TODO Translate
+command.item.get.success: "<white>Got <arg:0> [<arg:1>]</white>"
+command.item.get.failure.not_exist: "<red>Unknown item <arg:0></red>"
+command.item.give.success.single: "<white>Gave <arg:0> [<arg:1>] to <arg:2></white>"
+command.item.give.success.multiple: "<white>Gave <arg:0> [<arg:1>] to <arg:2></white>"
+command.item.give.failure.not_exist: "<red>Unknown item <arg:0></red>"

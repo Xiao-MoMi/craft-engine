@@ -1,5 +1,6 @@
 package net.momirealms.craftengine.bukkit.plugin;
 
+import net.momirealms.antigrieflib.AntiGriefLib;
 import net.momirealms.craftengine.bukkit.api.event.AsyncResourcePackGenerateEvent;
 import net.momirealms.craftengine.bukkit.api.event.CraftEngineReloadEvent;
 import net.momirealms.craftengine.bukkit.block.BukkitBlockManager;
@@ -53,6 +54,7 @@ public class BukkitCraftEngine extends CraftEngine {
     private boolean successfullyLoaded = false;
     private boolean requiresRestart = false;
     private boolean hasMod = false;
+    private AntiGriefLib antiGrief;
 
     public BukkitCraftEngine(JavaPlugin bootstrap) {
         VersionHelper.init(serverVersion());
@@ -317,5 +319,15 @@ public class BukkitCraftEngine extends CraftEngine {
 
     public boolean requiresRestart() {
         return requiresRestart;
+    }
+
+    public AntiGriefLib antiGrief() {
+        if (this.antiGrief == null) {
+            this.antiGrief = AntiGriefLib.builder(this.bootstrap)
+                    .ignoreOP(true)
+                    .silentLogs(true)
+                    .build();
+        }
+        return this.antiGrief;
     }
 }

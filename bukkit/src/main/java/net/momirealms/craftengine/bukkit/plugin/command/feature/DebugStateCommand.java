@@ -27,8 +27,6 @@ public class DebugStateCommand extends BukkitCommandFeature<CommandSender> {
                     BlockData blockData = Bukkit.createBlockData(state);
                     int id = BlockStateUtils.blockDataToId(blockData);
                     context.sender().sendMessage(String.valueOf(id));
-                    Object o1 = BlockStateUtils.blockDataToBlockState(blockData);
-                    Object o2 = BlockStateUtils.idToBlockState(id);
                 });
     }
 

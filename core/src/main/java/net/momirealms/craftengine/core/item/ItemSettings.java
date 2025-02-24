@@ -1,19 +1,27 @@
 package net.momirealms.craftengine.core.item;
 
+import net.momirealms.craftengine.core.entity.EquipmentSlot;
+import net.momirealms.craftengine.core.item.modifier.EquippableModifier;
+import net.momirealms.craftengine.core.item.modifier.ItemModifier;
 import net.momirealms.craftengine.core.util.Key;
 import net.momirealms.craftengine.core.util.MiscUtils;
+import org.jetbrains.annotations.Nullable;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 public class ItemSettings {
     int fuelTime;
     Set<Key> tags = Set.of();
+    @Nullable
+    EquipmentData equipmentData;
 
     private ItemSettings() {}
+
+    public <I> List<ItemModifier<I>> modifiers() {
+        if (this.equipmentData == null) return Collections.emptyList();
+        return List.of(new EquippableModifier<>(this.equipmentData));
+    }
 
     public static ItemSettings of() {
         return new ItemSettings();
@@ -27,6 +35,7 @@ public class ItemSettings {
         ItemSettings newSettings = of();
         newSettings.fuelTime = settings.fuelTime;
         newSettings.tags = settings.tags;
+        newSettings.equipmentData = settings.equipmentData;
         return newSettings;
     }
 
@@ -50,6 +59,11 @@ public class ItemSettings {
         return tags;
     }
 
+    @Nullable
+    public EquipmentData equipmentData() {
+        return equipmentData;
+    }
+
     public ItemSettings fuelTime(int fuelTime) {
         this.fuelTime = fuelTime;
         return this;
@@ -60,10 +74,17 @@ public class ItemSettings {
         return this;
     }
 
+    public ItemSettings equipmentData(EquipmentData equipmentData) {
+        this.equipmentData = equipmentData;
+        return this;
+    }
+
+    @FunctionalInterface
     public interface Modifier {
 
         void apply(ItemSettings settings);
 
+        @FunctionalInterface
         interface Factory {
 
             ItemSettings.Modifier createModifier(Object value);
@@ -81,6 +102,22 @@ public class ItemSettings {
             registerFactory("tags", (value -> {
                 List<String> tags = MiscUtils.getAsStringList(value);
                 return settings -> settings.tags(tags.stream().map(Key::of).collect(Collectors.toSet()));
+            }));
+            registerFactory("equippable", (value -> {
+                Map<String, Object> data = MiscUtils.castToMap(value, false);
+                String slot = (String) data.get("slot");
+                if (slot == null) {
+                    throw new IllegalArgumentException("No slot specified");
+                }
+                EquipmentSlot slotEnum = EquipmentSlot.valueOf(slot.toUpperCase(Locale.ENGLISH));
+                EquipmentData.Builder builder = EquipmentData.builder().slot(slotEnum);
+                if (data.containsKey("asset-id")) {
+                    builder.assetId(Key.of(data.get("asset-id").toString()));
+                }
+                if (data.containsKey("camera-overlay")) {
+                    builder.cameraOverlay(Key.of(data.get("camera-overlay").toString()));
+                }
+                return settings -> settings.equipmentData(builder.build());
             }));
         }
 

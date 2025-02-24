@@ -54,6 +54,7 @@ tasks {
         destinationDirectory.set(file("$rootDir/target"))
         relocate("net.kyori", "net.momirealms.craftengine.libraries")
         relocate("net.momirealms.sparrow.nbt", "net.momirealms.craftengine.libraries.nbt")
+        relocate("net.momirealms.antigrieflib", "net.momirealms.craftengine.libraries.antigrieflib")
         relocate("com.saicone.rtag", "net.momirealms.craftengine.libraries.tag")
         relocate("org.incendo", "net.momirealms.craftengine.libraries")
         relocate("dev.dejvokep", "net.momirealms.craftengine.libraries")

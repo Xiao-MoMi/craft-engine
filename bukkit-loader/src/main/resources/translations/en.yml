@@ -44,3 +44,8 @@ command.reload.pack.success: "<white>Resource pack reloaded in <green><arg:0></g
 command.reload.pack.failure: "<red>Resource pack reload failed. Check console logs.</red>"
 command.reload.all.success: "<white>Reload completed in <green><arg:0></green> ms.</white>"
 command.reload.all.failure: "<red>Reload failed. Check console logs.</red>"
+command.item.get.success: "<white>Got <arg:0> [<arg:1>]</white>"
+command.item.get.failure.not_exist: "<red>Unknown item <arg:0></red>"
+command.item.give.success.single: "<white>Gave <arg:0> [<arg:1>] to <arg:2></white>"
+command.item.give.success.multiple: "<white>Gave <arg:0> [<arg:1>] to <arg:2></white>"
+command.item.give.failure.not_exist: "<red>Unknown item <arg:0></red>"

@@ -17,6 +17,7 @@ dependencies {
     compileOnly(project(":core"))
     compileOnly(project(":shared"))
     implementation(project(":bukkit:legacy"))
+    implementation("com.github.Xiao-MoMi:AntiGriefLib:0.13")
     // NBT
     compileOnly("com.github.Xiao-MoMi:sparrow-nbt:${rootProject.properties["sparrow_nbt_version"]}")
     // Placeholder
@@ -82,6 +83,7 @@ tasks {
         archiveFileName = "craft-engine-bukkit-${rootProject.properties["project_version"]}.jar"
         relocate("net.kyori", "net.momirealms.craftengine.libraries")
         relocate("net.momirealms.sparrow.nbt", "net.momirealms.craftengine.libraries.nbt")
+        relocate("net.momirealms.antigrieflib", "net.momirealms.craftengine.libraries.antigrieflib")
         relocate("com.saicone.rtag", "net.momirealms.craftengine.libraries.tag")
         relocate("org.incendo", "net.momirealms.craftengine.libraries")
         relocate("dev.dejvokep", "net.momirealms.craftengine.libraries")

@@ -101,6 +101,7 @@ public abstract class CraftEngine implements Plugin {
             this.reload();
             this.worldManager.delayedLoad();
             this.furnitureManager.delayedLoad();
+            this.delayedEnable();
         });
     }
 
@@ -118,6 +119,9 @@ public abstract class CraftEngine implements Plugin {
         if (this.worldManager != null) this.worldManager.disable();
         if (this.scheduler != null) this.scheduler.shutdownScheduler();
         if (this.scheduler != null) this.scheduler.shutdownExecutor();
+    }
+
+    protected void delayedEnable() {
     }
 
     protected abstract void registerParsers();

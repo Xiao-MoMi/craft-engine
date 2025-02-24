@@ -30,6 +30,7 @@ public class BukkitCommandManager extends AbstractCommandManager<CommandSender> 
         this.INDEX = Index.create(CommandFeature::getFeatureID, List.of(
                 new ReloadCommand(this, plugin),
                 new GetItemCommand(this, plugin),
+                new GiveItemCommand(this, plugin),
                 new DebugStateCommand(this, plugin),
                 new TestCommand(this, plugin),
                 new SetBlockCommand(this, plugin)

@@ -8,10 +8,7 @@ import net.momirealms.craftengine.core.util.MiscUtils;
 import net.momirealms.craftengine.core.util.TypeUtils;
 import net.momirealms.craftengine.core.util.VersionHelper;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 import java.util.function.Function;
 
 public abstract class AbstractItemManager<I> extends AbstractModelGenerator implements ItemManager<I> {
@@ -61,6 +58,16 @@ public abstract class AbstractItemManager<I> extends AbstractModelGenerator impl
             boolean value = TypeUtils.checkType(obj, Boolean.class);
             return new UnbreakableModifier<>(value);
         }, "unbreakable");
+        registerDataFunction((obj) -> {
+            Map<String, Object> data = MiscUtils.castToMap(obj, false);
+            List<Enchantment> enchantments = new ArrayList<>();
+            for (Map.Entry<String, Object> e : data.entrySet()) {
+                if (e.getValue() instanceof Number number) {
+                    enchantments.add(new Enchantment(Key.of(e.getKey()), number.intValue()));
+                }
+            }
+            return new EnchantmentModifier<>(enchantments);
+        }, "enchantment", "enchantments", "enchant");
         if (VersionHelper.isVersionNewerThan1_20_5()) {
             registerDataFunction((obj) -> {
                 String name = obj.toString();

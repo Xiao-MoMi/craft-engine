@@ -22,6 +22,6 @@ public class DisplayNameModifier<I> implements ItemModifier<I> {
     @Override
     public void apply(Item<I> item, Player player) {
         item.displayName(AdventureHelper.componentToJson(AdventureHelper.miniMessage().deserialize(
-                argument, ImageTag.INSTANCE, ShiftTag.INSTANCE, new PlaceholderTag(player))));
+                this.argument, ImageTag.INSTANCE, ShiftTag.INSTANCE, new PlaceholderTag(player))));
     }
 }

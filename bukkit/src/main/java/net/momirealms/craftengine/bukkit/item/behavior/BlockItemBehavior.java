@@ -26,9 +26,12 @@ import net.momirealms.craftengine.core.util.MiscUtils;
 import net.momirealms.craftengine.core.world.BlockPos;
 import org.bukkit.*;
 import org.bukkit.block.Block;
+import org.bukkit.block.BlockState;
 import org.bukkit.block.data.BlockData;
 import org.bukkit.event.block.BlockCanBuildEvent;
+import org.bukkit.event.block.BlockPlaceEvent;
 import org.bukkit.inventory.EquipmentSlot;
+import org.bukkit.inventory.ItemStack;
 import org.bukkit.util.Vector;
 
 import javax.annotation.Nullable;
@@ -75,23 +78,40 @@ public class BlockItemBehavior extends ItemBehavior {
         }
 
         BlockPos pos = placeContext.getClickedPos();
+        BlockPos againstPos = placeContext.getAgainstPos();
         World world = (World) placeContext.getLevel().getHandle();
         Location placeLocation = new Location(world, pos.x(), pos.y(), pos.z());
 
+        Block bukkitBlock = world.getBlockAt(placeLocation);
+        Block againstBlock = world.getBlockAt(againstPos.x(), againstPos.y(), againstPos.z());
+        org.bukkit.entity.Player bukkitPlayer = (org.bukkit.entity.Player) player.platformPlayer();
+
         // trigger event
-        CustomBlockAttemptPlaceEvent attemptPlaceEvent = new CustomBlockAttemptPlaceEvent((org.bukkit.entity.Player) player.platformPlayer(), placeLocation.clone(), blockStateToPlace,
-                DirectionUtils.toBlockFace(context.getClickedFace()), world.getBlockAt(context.getClickedPos().x(), context.getClickedPos().y(), context.getClickedPos().z()), context.getHand());
+        CustomBlockAttemptPlaceEvent attemptPlaceEvent = new CustomBlockAttemptPlaceEvent(bukkitPlayer, placeLocation.clone(), blockStateToPlace,
+                DirectionUtils.toBlockFace(context.getClickedFace()), bukkitBlock, context.getHand());
         if (EventUtils.fireAndCheckCancel(attemptPlaceEvent)) {
             return InteractionResult.FAIL;
         }
 
-        // Todo #0
+        // it's just world + pos
+        BlockState previousState = bukkitBlock.getState();
+        // place custom block
         CraftEngineBlocks.place(placeLocation, blockStateToPlace, UpdateOption.UPDATE_ALL_IMMEDIATE, false);
+        // call bukkit event
+        BlockPlaceEvent bukkitPlaceEvent = new BlockPlaceEvent(bukkitBlock, previousState, againstBlock, (ItemStack) placeContext.getItem().getItem(), bukkitPlayer, true, context.getHand() == InteractionHand.MAIN_HAND ? EquipmentSlot.HAND : EquipmentSlot.OFF_HAND);
+        if (EventUtils.fireAndCheckCancel(bukkitPlaceEvent)) {
+            // revert changes
+            previousState.update(true, false);
+            return InteractionResult.FAIL;
+        }
 
-        // TODO Make place event cancellable. Needs to get the previous block state from #0
-        // TODO Add Bukkit block argument
-        CustomBlockPlaceEvent placeEvent = new CustomBlockPlaceEvent((org.bukkit.entity.Player) player.platformPlayer(), placeLocation.clone(), blockStateToPlace, world.getBlockAt(placeLocation), context.getHand());
-        EventUtils.fireAndForget(placeEvent);
+        // call custom event
+        CustomBlockPlaceEvent customPlaceEvent = new CustomBlockPlaceEvent(bukkitPlayer, placeLocation.clone(), blockStateToPlace, world.getBlockAt(placeLocation), context.getHand());
+        if (EventUtils.fireAndCheckCancel(customPlaceEvent)) {
+            // revert changes
+            previousState.update(true, false);
+            return InteractionResult.FAIL;
+        }
 
         if (!player.isCreativeMode()) {
             Item<?> item = placeContext.getItem();
@@ -101,7 +121,7 @@ public class BlockItemBehavior extends ItemBehavior {
 
         player.swingHand(placeContext.getHand());
         world.playSound(new Location(world, pos.x(), pos.y(), pos.z()), blockStateToPlace.sounds().placeSound().toString(), SoundCategory.BLOCKS, 1f, 0.8f);
-        world.sendGameEvent((org.bukkit.entity.Player) player.platformPlayer(), GameEvent.BLOCK_PLACE, new Vector(pos.x(), pos.y(), pos.z()));
+        world.sendGameEvent(bukkitPlayer, GameEvent.BLOCK_PLACE, new Vector(pos.x(), pos.y(), pos.z()));
         return InteractionResult.SUCCESS;
     }
 

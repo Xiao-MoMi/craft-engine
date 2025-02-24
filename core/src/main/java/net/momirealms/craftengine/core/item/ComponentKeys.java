@@ -14,4 +14,6 @@ public class ComponentKeys {
     public static final String STORED_ENCHANTMENTS = Key.key("minecraft", "stored_enchantments").asString();
     public static final String UNBREAKABLE = Key.key("minecraft", "unbreakable").asString();
     public static final String MAX_STACK_SIZE = Key.key("minecraft", "max_stack_size").asString();
+    public static final String EQUIPPABLE = Key.key("minecraft", "equippable").asString();
+    public static final String ITEM_MODEL = Key.key("minecraft", "item_model").asString();
 }

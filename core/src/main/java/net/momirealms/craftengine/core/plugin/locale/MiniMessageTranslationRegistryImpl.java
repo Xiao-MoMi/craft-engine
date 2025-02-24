@@ -14,6 +14,8 @@ import net.kyori.adventure.text.minimessage.tag.resolver.TagResolver;
 import net.kyori.adventure.util.TriState;
 import net.kyori.examination.Examinable;
 import net.kyori.examination.ExaminableProperty;
+import net.momirealms.craftengine.core.plugin.minimessage.ImageTag;
+import net.momirealms.craftengine.core.plugin.minimessage.ShiftTag;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -79,9 +81,9 @@ public class MiniMessageTranslationRegistryImpl implements Examinable, MiniMessa
         }
         final Component resultingComponent;
         if (component.arguments().isEmpty()) {
-            resultingComponent = this.miniMessage.deserialize(miniMessageString);
+            resultingComponent = this.miniMessage.deserialize(miniMessageString, ShiftTag.INSTANCE, ImageTag.INSTANCE);
         } else {
-            resultingComponent = this.miniMessage.deserialize(miniMessageString, new ArgumentTag(component.arguments()));
+            resultingComponent = this.miniMessage.deserialize(miniMessageString, new ArgumentTag(component.arguments()), ShiftTag.INSTANCE, ImageTag.INSTANCE);
         }
         if (component.children().isEmpty()) {
             return resultingComponent;

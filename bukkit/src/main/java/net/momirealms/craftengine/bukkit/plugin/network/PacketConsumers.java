@@ -628,6 +628,9 @@ public class PacketConsumers {
             BukkitCraftEngine.instance().scheduler().sync().run(() -> {
                 if (actionType == Reflections.instance$ServerboundInteractPacket$ActionType$ATTACK) {
                     if (furniture.isValid()) {
+                        if (!BukkitCraftEngine.instance().antiGrief().canBreak(player, location)) {
+                            return;
+                        }
                         FurnitureBreakEvent breakEvent = new FurnitureBreakEvent(serverPlayer.platformPlayer(), furniture);
                         if (EventUtils.fireAndCheckCancel(breakEvent)) {
                             return;

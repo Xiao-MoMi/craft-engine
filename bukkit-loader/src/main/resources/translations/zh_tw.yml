@@ -1,8 +1,8 @@
 # 别动这个
 config-version: "1"
 
-exception.invalid_syntax: "<red>無效的語法.正確的語法:<white><arg:0></white></red>"
-exception.invalid_argument: "<red>無效的參數.原因：<white><arg:0></white></red>"
+exception.invalid_syntax: "<red>無效的語法.正確的語法: <white><arg:0></white></red>"
+exception.invalid_argument: "<red>無效的參數.原因： <white><arg:0></white></red>"
 exception.invalid_sender: "<red><arg:0> 不允許執行該命令.執行者必須是 <arg:1></red>"
 exception.unexpected: "<red>執行該命令時發生內部錯誤</red>"
 exception.no_permission: "<red>抱歉， 您沒有權限執行該命令</red>"
@@ -39,3 +39,9 @@ argument.parse.failure.aggregate.failure: "<red>無效的元件 '<arg:0>': <arg:
 argument.parse.failure.either: "<red>無法從 '<arg:0>' 解析 <arg:1> 或 <arg:2></red>"
 argument.parse.failure.namedtextcolor: "<red>'<arg:0>' 不是顏色代碼</red>"
 command.reload.success: "<white>重新載入完成.耗時 <green><arg:0></green> 毫秒</white>"
+# TODO Translate
+command.item.get.success: "<white>Got <arg:0> [<arg:1>]</white>"
+command.item.get.failure.not_exist: "<red>Unknown item <arg:0></red>"
+command.item.give.success.single: "<white>Gave <arg:0> [<arg:1>] to <arg:2></white>"
+command.item.give.success.multiple: "<white>Gave <arg:0> [<arg:1>] to <arg:2></white>"
+command.item.give.failure.not_exist: "<red>Unknown item <arg:0></red>"

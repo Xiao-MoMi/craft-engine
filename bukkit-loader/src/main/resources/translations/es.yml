@@ -44,3 +44,9 @@ command.reload.pack.success: "<white>Paquete de recursos recargado. Tomó <green
 command.reload.pack.failure: "<red>Error al recargar el paquete de recursos. Por favor, revisa el registro de la consola.</red>"
 command.reload.all.success: "<white>Todo recargado. Tomó <green><arg:0></green> ms.</white>"
 command.reload.all.failure: "<red>Error al recargar. Por favor, revisa el registro de la consola.</red>"
+# TODO Translate
+command.item.get.success: "<white>Got <arg:0> [<arg:1>]</white>"
+command.item.get.failure.not_exist: "<red>Unknown item <arg:0></red>"
+command.item.give.success.single: "<white>Gave <arg:0> [<arg:1>] to <arg:2></white>"
+command.item.give.success.multiple: "<white>Gave <arg:0> [<arg:1>] to <arg:2></white>"
+command.item.give.failure.not_exist: "<red>Unknown item <arg:0></red>"

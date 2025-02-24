@@ -10,6 +10,7 @@ import net.momirealms.craftengine.core.plugin.Reloadable;
 import net.momirealms.craftengine.core.plugin.config.ConfigSectionParser;
 import net.momirealms.craftengine.core.registry.Holder;
 import net.momirealms.craftengine.core.util.Key;
+import org.incendo.cloud.suggestion.Suggestion;
 
 import javax.annotation.Nullable;
 import java.util.*;
@@ -24,6 +25,10 @@ public interface ItemManager<T> extends Reloadable, ModelGenerator, ConfigSectio
     Map<Key, TreeSet<LegacyOverridesModel>> legacyItemOverrides();
 
     Map<Key, TreeMap<Integer, ItemModel>> modernItemOverrides();
+
+    Map<Key, ItemModel> modernItemModels1_21_4();
+
+    Map<Key, List<LegacyOverridesModel>> modernItemModels1_21_2();
 
     T buildCustomItemStack(Key id, @Nullable Player player);
 
@@ -68,4 +73,6 @@ public interface ItemManager<T> extends Reloadable, ModelGenerator, ConfigSectio
     default int loadingSequence() {
         return LoadingSequence.ITEM;
     }
+
+    Collection<Suggestion> cachedSuggestions();
 }

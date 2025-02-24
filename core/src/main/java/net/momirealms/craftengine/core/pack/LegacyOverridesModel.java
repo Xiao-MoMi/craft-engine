@@ -15,18 +15,24 @@ public class LegacyOverridesModel implements Comparable<LegacyOverridesModel> {
         this.predicate = predicate;
         this.model = model;
         this.customModelData = customModelData;
-        this.predicate.put("custom_model_data", customModelData);
+        if (customModelData > 0) {
+            this.predicate.put("custom_model_data", customModelData);
+        }
     }
 
     public Map<String, Object> predicate() {
         return predicate;
     }
 
+    public boolean hasPredicate() {
+        return !predicate.isEmpty();
+    }
+
     public String model() {
         return model;
     }
 
-    public JsonObject toJson() {
+    public JsonObject toLegacyPredicateElement() {
         JsonObject json = new JsonObject();
         JsonObject predicateJson = new JsonObject();
         if (predicate != null && !predicate.isEmpty()) {

@@ -296,6 +296,8 @@ public class PackManagerImpl implements PackManager {
         this.generateFonts(generatedPackPath);
         this.generateLegacyItemOverrides(generatedPackPath);
         this.generateModernItemOverrides(generatedPackPath);
+        this.generateModernItemModels1_21_2(generatedPackPath);
+        this.generateModernItemModels1_21_4(generatedPackPath);
         this.generateBlockOverrides(generatedPackPath);
         this.generateItemModels(generatedPackPath, this.plugin.itemManager());
         this.generateItemModels(generatedPackPath, this.plugin.blockManager());
@@ -453,6 +455,108 @@ public class PackManagerImpl implements PackManager {
         }
     }
 
+    private void generateModernItemModels1_21_2(Path generatedPackPath) {
+        if (ConfigManager.packMaxVersion() < 21.19f) return;
+        if (ConfigManager.packMinVersion() > 21.39f) return;
+
+        boolean has = false;
+        for (Map.Entry<Key, List<LegacyOverridesModel>> entry : plugin.itemManager().modernItemModels1_21_2().entrySet()) {
+            has = true;
+            Key key = entry.getKey();
+            List<LegacyOverridesModel> legacyOverridesModels = entry.getValue();
+            boolean first = true;
+            JsonObject jsonObject = new JsonObject();
+            JsonArray overrides = new JsonArray();
+            for (LegacyOverridesModel model : legacyOverridesModels) {
+                if (first) {
+                    jsonObject.addProperty("parent", model.model());
+                    if (model.hasPredicate()) {
+                        overrides.add(model.toLegacyPredicateElement());
+                    }
+                    first = false;
+                } else {
+                    overrides.add(model.toLegacyPredicateElement());
+                }
+            }
+            if (!overrides.isEmpty()) {
+                jsonObject.add("overrides", overrides);
+            }
+
+            Path itemPath = generatedPackPath
+                    .resolve("assets")
+                    .resolve(key.namespace())
+                    .resolve("models")
+                    .resolve("item")
+                    .resolve(key.value() + ".json");
+            if (Files.exists(itemPath)) {
+                plugin.logger().warn("Failed to generate item model for [" + key + "] because " + itemPath.toAbsolutePath() + " already exists");
+            } else {
+                try (InputStream inputStream = plugin.resourceStream("internal/templates_" + LEGACY_TEMPLATES + "/" + key.namespace() + "/items/" + key.value() + ".json")) {
+                    if (inputStream != null) {
+                        plugin.logger().warn("Failed to generate item model for [" + key + "] because it conflicts with vanilla item");
+                        continue;
+                    }
+                } catch (IOException e) {
+                    plugin.logger().warn("Failed to load item model", e);
+                    continue;
+                }
+            }
+            try {
+                Files.createDirectories(itemPath.getParent());
+            } catch (IOException e) {
+                plugin.logger().severe("Error creating " + itemPath.toAbsolutePath());
+                continue;
+            }
+            try (BufferedWriter writer = Files.newBufferedWriter(itemPath)) {
+                GsonHelper.get().toJson(jsonObject, writer);
+            } catch (IOException e) {
+                plugin.logger().warn("Failed to save item model for [" + key + "]");
+            }
+        }
+
+        if (ConfigManager.packMinVersion() < 21.19f && has) {
+            plugin.logger().warn("You are using item-model component for models which requires 1.21.2+. But the min supported version is " + "1." + ConfigManager.packMinVersion());
+        }
+    }
+
+    private void generateModernItemModels1_21_4(Path generatedPackPath) {
+        if (ConfigManager.packMaxVersion() < 21.39f) return;
+        for (Map.Entry<Key, ItemModel> entry : plugin.itemManager().modernItemModels1_21_4().entrySet()) {
+            Key key = entry.getKey();
+            Path itemPath = generatedPackPath
+                    .resolve("assets")
+                    .resolve(key.namespace())
+                    .resolve("items")
+                    .resolve(key.value() + ".json");
+            if (Files.exists(itemPath)) {
+                plugin.logger().warn("Failed to generate item model for [" + key + "] because " + itemPath.toAbsolutePath() + " already exists");
+            } else {
+                try (InputStream inputStream = plugin.resourceStream("internal/templates_" + LATEST_TEMPLATES + "/" + key.namespace() + "/items/" + key.value() + ".json")) {
+                    if (inputStream != null) {
+                        plugin.logger().warn("Failed to generate item model for [" + key + "] because it conflicts with vanilla item");
+                        continue;
+                    }
+                } catch (IOException e) {
+                    plugin.logger().warn("Failed to load item model", e);
+                    continue;
+                }
+            }
+            try {
+                Files.createDirectories(itemPath.getParent());
+            } catch (IOException e) {
+                plugin.logger().severe("Error creating " + itemPath.toAbsolutePath());
+                continue;
+            }
+            JsonObject model = new JsonObject();
+            model.add("model", entry.getValue().get());
+            try (BufferedWriter writer = Files.newBufferedWriter(itemPath)) {
+                GsonHelper.get().toJson(model, writer);
+            } catch (IOException e) {
+                plugin.logger().warn("Failed to save item model for [" + key + "]");
+            }
+        }
+    }
+
     private void generateModernItemOverrides(Path generatedPackPath) {
         if (ConfigManager.packMaxVersion() < 21.39f) return;
         for (Map.Entry<Key, TreeMap<Integer, ItemModel>> entry : plugin.itemManager().modernItemOverrides().entrySet()) {
@@ -562,7 +666,7 @@ public class PackManagerImpl implements PackManager {
             }
             Collection<LegacyOverridesModel> legacyOverridesModels = entry.getValue();
             for (LegacyOverridesModel model : legacyOverridesModels) {
-                overrides.add(model.toJson());
+                overrides.add(model.toLegacyPredicateElement());
             }
             try {
                 Files.createDirectories(overridedItemPath.getParent());
