@@ -28,7 +28,7 @@ public class UseOnContext {
         this.level = world;
     }
 
-    protected final BlockHitResult getHitResult() {
+    public BlockHitResult getHitResult() {
         return this.hitResult;
     }
 

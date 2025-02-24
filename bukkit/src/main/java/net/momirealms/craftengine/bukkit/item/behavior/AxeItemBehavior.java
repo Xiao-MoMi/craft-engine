@@ -3,10 +3,7 @@ package net.momirealms.craftengine.bukkit.item.behavior;
 import net.momirealms.craftengine.bukkit.api.CraftEngineBlocks;
 import net.momirealms.craftengine.bukkit.block.BukkitBlockManager;
 import net.momirealms.craftengine.bukkit.block.behavior.StrippableBlockBehavior;
-import net.momirealms.craftengine.bukkit.util.BlockStateUtils;
-import net.momirealms.craftengine.bukkit.util.EventUtils;
-import net.momirealms.craftengine.bukkit.util.MaterialUtils;
-import net.momirealms.craftengine.bukkit.util.Reflections;
+import net.momirealms.craftengine.bukkit.util.*;
 import net.momirealms.craftengine.bukkit.world.BukkitWorldBlock;
 import net.momirealms.craftengine.core.block.CustomBlock;
 import net.momirealms.craftengine.core.block.ImmutableBlockState;
@@ -43,6 +40,7 @@ public class AxeItemBehavior extends ItemBehavior {
     public static final AxeItemBehavior INSTANCE = new AxeItemBehavior();
     private static final Key AXE_STRIP_SOUND = Key.of("minecraft:item.axe.strip");
 
+    @SuppressWarnings("unchecked")
     @Override
     public InteractionResult useOnBlock(UseOnContext context) {
         BukkitWorldBlock clicked = (BukkitWorldBlock) context.getLevel().getBlockAt(context.getClickedPos());
@@ -55,7 +53,7 @@ public class AxeItemBehavior extends ItemBehavior {
         }
 
         Player player = context.getPlayer();
-        @SuppressWarnings("unchecked")
+
         Item<ItemStack> offHandItem = (Item<ItemStack>) player.getItemInHand(InteractionHand.OFF_HAND);
         // is using a shield
         if (context.getHand() == InteractionHand.MAIN_HAND && offHandItem != null && offHandItem.vanillaId().equals(ItemKeys.SHIELD) && !player.isSecondaryUseActive()) {
@@ -82,10 +80,18 @@ public class AxeItemBehavior extends ItemBehavior {
         context.getLevel().playBlockSound(Vec3d.atCenterOf(pos), AXE_STRIP_SOUND, 1, 1);
         CraftEngineBlocks.place(block.getLocation(), newState, UpdateOption.UPDATE_ALL_IMMEDIATE, false);
         block.getWorld().sendGameEvent(bukkitPlayer, GameEvent.BLOCK_CHANGE, new Vector(pos.x(), pos.y(), pos.z()));
-        Item<?> item = context.getItem();
+        Item<ItemStack> item = (Item<ItemStack>) context.getItem();
         Material material = MaterialUtils.getMaterial(item.vanillaId());
         bukkitPlayer.setStatistic(Statistic.USE_ITEM, material, bukkitPlayer.getStatistic(Statistic.USE_ITEM, material) + 1);
 
+        // resend swing if it's not interactable on client side
+        if (!InteractUtils.isInteractable(BlockStateUtils.getBlockOwnerIdFromState(state.vanillaBlockState().handle()),
+                bukkitPlayer, BlockStateUtils.fromBlockData(state.vanillaBlockState().handle()),
+                context.getHitResult(), item
+        )) {
+            player.swingHand(context.getHand());
+        }
+        // shrink item amount
         if (VersionHelper.isVersionNewerThan1_20_5()) {
             Object itemStack = item.getLiteralObject();
             Object serverPlayer = player.serverPlayer();
@@ -96,7 +102,7 @@ public class AxeItemBehavior extends ItemBehavior {
                 CraftEngine.instance().logger().warn("Failed to hurt itemStack", e);
             }
         } else {
-            ItemStack itemStack = (ItemStack) item.getItem();
+            ItemStack itemStack = item.getItem();
             itemStack.damage(1, bukkitPlayer);
         }
         return InteractionResult.SUCCESS;

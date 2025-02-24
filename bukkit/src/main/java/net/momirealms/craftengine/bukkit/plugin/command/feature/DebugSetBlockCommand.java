@@ -7,7 +7,6 @@ import net.momirealms.craftengine.core.block.ImmutableBlockState;
 import net.momirealms.craftengine.core.block.UpdateOption;
 import net.momirealms.craftengine.core.plugin.CraftEngine;
 import net.momirealms.craftengine.core.plugin.command.CraftEngineCommandManager;
-import net.momirealms.craftengine.core.plugin.command.FlagKeys;
 import org.bukkit.Location;
 import org.bukkit.command.CommandSender;
 import org.checkerframework.checker.nullness.qual.NonNull;
@@ -21,16 +20,15 @@ import org.incendo.cloud.suggestion.SuggestionProvider;
 
 import java.util.concurrent.CompletableFuture;
 
-public class SetBlockCommand extends BukkitCommandFeature<CommandSender> {
+public class DebugSetBlockCommand extends BukkitCommandFeature<CommandSender> {
 
-    public SetBlockCommand(CraftEngineCommandManager<CommandSender> commandManager, CraftEngine plugin) {
+    public DebugSetBlockCommand(CraftEngineCommandManager<CommandSender> commandManager, CraftEngine plugin) {
         super(commandManager, plugin);
     }
 
     @Override
     public Command.Builder<? extends CommandSender> assembleCommand(org.incendo.cloud.CommandManager<CommandSender> manager, Command.Builder<CommandSender> builder) {
         return builder
-                .flag(FlagKeys.SILENT_FLAG)
                 .required("location", LocationParser.locationParser())
                 .required("id", StringParser.stringComponent(StringParser.StringMode.GREEDY_FLAG_YIELDING).suggestionProvider(new SuggestionProvider<>() {
                     @Override
@@ -43,12 +41,12 @@ public class SetBlockCommand extends BukkitCommandFeature<CommandSender> {
                     ImmutableBlockState state = BlockStateParser.deserialize(data);
                     if (state == null) return;
                     Location location = context.get("location");
-                    CraftEngineBlocks.place(location, state, UpdateOption.UPDATE_ALL, true);
+                    CraftEngineBlocks.place(location, state, UpdateOption.UPDATE_ALL, false);
                 });
     }
 
     @Override
     public String getFeatureID() {
-        return "setblock";
+        return "debug_set_block";
     }
 }

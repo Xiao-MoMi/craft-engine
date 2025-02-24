@@ -42,6 +42,14 @@ public class BlockStateUtils {
         }
     }
 
+    public static BlockData fromBlockData(Object blockState) {
+        try {
+            return (BlockData) Reflections.method$CraftBlockData$fromData.invoke(null, blockState);
+        } catch (InvocationTargetException | IllegalAccessException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
     public static int blockDataToId(BlockData blockData) {
         try {
             Object blockState = Reflections.field$CraftBlockData$data.get(blockData);

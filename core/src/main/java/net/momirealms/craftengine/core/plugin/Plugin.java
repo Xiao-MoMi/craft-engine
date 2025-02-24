@@ -20,6 +20,7 @@ import net.momirealms.craftengine.core.world.WorldManager;
 import java.io.File;
 import java.io.InputStream;
 import java.nio.file.Path;
+import java.util.function.Supplier;
 
 public interface Plugin extends Reloadable {
 
@@ -68,4 +69,6 @@ public interface Plugin extends Reloadable {
     String parse(Player player, String text);
 
     WorldManager worldManager();
+
+    void debug(Supplier<String> message);
 }

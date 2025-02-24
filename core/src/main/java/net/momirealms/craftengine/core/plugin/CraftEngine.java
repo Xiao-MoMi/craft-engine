@@ -28,6 +28,8 @@ import org.apache.logging.log4j.LogManager;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.Consumer;
+import java.util.function.Supplier;
 
 public abstract class CraftEngine implements Plugin {
     public static final String MOD_CLASS = "net.momirealms.craftengine.mod.CraftEnginePlugin";
@@ -50,6 +52,7 @@ public abstract class CraftEngine implements Plugin {
     protected SenderFactory<? extends Plugin, ?> senderFactory;
     protected TemplateManager templateManager;
     protected PluginLogger logger;
+    protected Consumer<Supplier<String>> debugger = (s) -> {};
     private boolean isReloading;
 
     protected CraftEngine() {
@@ -84,6 +87,11 @@ public abstract class CraftEngine implements Plugin {
             this.worldManager.reload();
             this.packManager.reload();
             this.blockManager.delayedLoad();
+            if (ConfigManager.debug()) {
+                this.debugger = (s) -> logger.info("[Debug] " + s.get());
+            } else {
+                this.debugger = (s) -> {};
+            }
         } finally {
             this.recipeManager.delayedLoad().thenRun(() -> this.isReloading = false);
         }
@@ -221,6 +229,11 @@ public abstract class CraftEngine implements Plugin {
     @Override
     public WorldManager worldManager() {
         return worldManager;
+    }
+
+    @Override
+    public void debug(Supplier<String> message) {
+        debugger.accept(message);
     }
 
     public boolean isReloading() {

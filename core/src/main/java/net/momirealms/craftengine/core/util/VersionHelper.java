@@ -47,28 +47,44 @@ public class VersionHelper {
         return folia;
     }
 
+    public static boolean isPaper() {
+        return paper;
+    }
+
     public static boolean isMojmap() {
         return mojmap;
     }
 
-    public static boolean isVersionNewerThan1_20_5() {
-        return version >= 20.49f;
-    }
-
-    public static boolean isVersionNewerThan1_20_4() {
-        return version >= 20.39f;
-    }
-
-    public static boolean isVersionNewerThan1_19_4() {
-        return version >= 19.39f;
+    public static boolean isVersionNewerThan1_20() {
+        return version >= 20f;
     }
 
     public static boolean isVersionNewerThan1_20_2() {
         return version >= 20.19f;
     }
 
-    public static boolean isVersionNewerThan1_20() {
-        return version >= 20f;
+    public static boolean isVersionNewerThan1_20_3() {
+        return version >= 20.29f;
+    }
+
+    public static boolean isVersionNewerThan1_20_4() {
+        return version >= 20.39f;
+    }
+
+    public static boolean isVersionNewerThan1_20_5() {
+        return version >= 20.49f;
+    }
+
+    public static boolean isVersionNewerThan1_21() {
+        return version >= 21f;
+    }
+
+    public static boolean isVersionNewerThan1_21_2() {
+        return version >= 21.19f;
+    }
+
+    public static boolean isVersionNewerThan1_21_3() {
+        return version >= 21.29f;
     }
 
     public static boolean isVersionNewerThan1_21_4() {
@@ -77,25 +93,5 @@ public class VersionHelper {
 
     public static boolean isVersionNewerThan1_21_5() {
         return version >= 21.49f;
-    }
-
-    public static boolean isVersionNewerThan1_21_3() {
-        return version >= 21.29f;
-    }
-
-    public static boolean isVersionNewerThan1_21_2() {
-        return version >= 21.19f;
-    }
-
-    public static boolean isVersionNewerThan1_21() {
-        return version >= 21f;
-    }
-
-    public static boolean isVersionNewerThan1_20_3() {
-        return version >= 20.29f;
-    }
-
-    public static boolean isPaper() {
-        return paper;
     }
 }
