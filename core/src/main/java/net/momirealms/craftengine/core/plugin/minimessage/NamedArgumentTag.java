@@ -7,7 +7,6 @@ import net.kyori.adventure.text.minimessage.tag.resolver.ArgumentQueue;
 import net.kyori.adventure.text.minimessage.tag.resolver.TagResolver;
 import net.momirealms.craftengine.core.util.AdventureHelper;
 import net.momirealms.craftengine.core.util.Key;
-import net.momirealms.craftengine.core.util.context.ContextHolder;
 import net.momirealms.craftengine.core.util.context.ContextKey;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -18,10 +17,10 @@ public class NamedArgumentTag implements TagResolver {
     private static final String NAME_0 = "argument";
     private static final String NAME_1 = "arg";
 
-    private final ContextHolder contextHolder;
+    private final MiniMessageTextContext context;
 
-    public NamedArgumentTag(@NotNull ContextHolder contextHolder) {
-        this.contextHolder = Objects.requireNonNull(contextHolder, "context holder");
+    public NamedArgumentTag(@NotNull MiniMessageTextContext context) {
+        this.context = Objects.requireNonNull(context, "context holder");
     }
 
     @Override
@@ -32,11 +31,11 @@ public class NamedArgumentTag implements TagResolver {
 
         String argumentKey = arguments.popOr("No argument key provided").toString();
         ContextKey<String> key = ContextKey.of(Key.of(argumentKey));
-        if (!this.contextHolder.has(key)) {
+        if (!this.context.contexts().has(key)) {
             throw ctx.newException("Invalid argument key", arguments);
         }
 
-        return Tag.inserting(AdventureHelper.miniMessage().deserialize(this.contextHolder.getOrThrow(key), ShiftTag.INSTANCE, ImageTag.INSTANCE));
+        return Tag.inserting(AdventureHelper.miniMessage().deserialize(this.context.contexts().getOrThrow(key), this.context.tagResolvers()));
     }
 
     @Override

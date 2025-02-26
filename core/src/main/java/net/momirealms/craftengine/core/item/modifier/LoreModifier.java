@@ -25,6 +25,6 @@ public class LoreModifier<I> implements ItemModifier<I> {
     @Override
     public void apply(Item<I> item, ItemBuildContext context) {
         item.lore(argument.stream().map(it -> AdventureHelper.componentToJson(AdventureHelper.miniMessage().deserialize(
-                it, ImageTag.INSTANCE, ShiftTag.INSTANCE, new PlaceholderTag(context.player()), new NamedArgumentTag(context.contexts())))).toList());
+                it, context.tagResolvers()))).toList());
     }
 }
