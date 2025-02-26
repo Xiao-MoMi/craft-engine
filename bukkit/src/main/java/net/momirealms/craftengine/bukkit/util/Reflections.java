@@ -4605,4 +4605,9 @@ public class Reflections {
                     int.class, int.class, int.class, Object.class
             )
     );
+
+    public static final Method method$ServerGamePacketListenerImpl$tryPickItem =
+            ReflectionUtils.getDeclaredMethod(
+                    clazz$ServerGamePacketListenerImpl, void.class, clazz$ItemStack
+            );
 }

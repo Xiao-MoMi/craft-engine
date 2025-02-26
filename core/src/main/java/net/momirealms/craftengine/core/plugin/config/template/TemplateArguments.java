@@ -7,7 +7,6 @@ import net.momirealms.craftengine.core.registry.WritableRegistry;
 import net.momirealms.craftengine.core.util.Key;
 import net.momirealms.craftengine.core.util.ResourceKey;
 
-import java.util.List;
 import java.util.Map;
 
 public class TemplateArguments {

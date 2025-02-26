@@ -11,9 +11,9 @@ import org.bukkit.entity.Player;
 import org.incendo.cloud.Command;
 import org.incendo.cloud.parser.standard.StringParser;
 
-public class DebugStateCommand extends BukkitCommandFeature<CommandSender> {
+public class DebugGetBlockStateRegistryIdCommand extends BukkitCommandFeature<CommandSender> {
 
-    public DebugStateCommand(CraftEngineCommandManager<CommandSender> commandManager, CraftEngine plugin) {
+    public DebugGetBlockStateRegistryIdCommand(CraftEngineCommandManager<CommandSender> commandManager, CraftEngine plugin) {
         super(commandManager, plugin);
     }
 
@@ -32,6 +32,6 @@ public class DebugStateCommand extends BukkitCommandFeature<CommandSender> {
 
     @Override
     public String getFeatureID() {
-        return "debug_state";
+        return "debug_get_block_state_registry_id";
     }
 }

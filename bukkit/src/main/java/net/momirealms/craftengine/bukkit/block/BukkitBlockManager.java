@@ -68,6 +68,7 @@ public class BukkitBlockManager extends AbstractBlockManager {
     private ImmutableMap<Integer, Integer> blockAppearanceMapper;
     // Used to automatically arrange block states for strings such as minecraft:note_block:0
     private ImmutableMap<Key, List<Integer>> blockAppearanceArranger;
+    private ImmutableMap<Key, List<Integer>> realBlockArranger;
     // Record the amount of real blocks by block type
     private LinkedHashMap<Key, Integer> registeredRealBlockSlots;
     // A set of blocks that sounds have been removed
@@ -76,6 +77,8 @@ public class BukkitBlockManager extends AbstractBlockManager {
     // A list to record the order of registration
     private List<Key> blockRegisterOrder = new ArrayList<>();
 
+    // a reverted mapper
+    private final Map<Integer, List<Integer>> appearanceToRealState = new HashMap<>();
     // Cached command suggestions
     private final List<Suggestion> cachedSuggestions = new ArrayList<>();
     // Event listeners
@@ -127,6 +130,7 @@ public class BukkitBlockManager extends AbstractBlockManager {
         if (this.fallingBlockRemoveListener != null) HandlerList.unregisterAll(this.fallingBlockRemoveListener);
         super.clearModelsToGenerate();
         this.clearCache();
+        this.appearanceToRealState.clear();
         this.id2CraftEngineBlocks.clear();
         this.cachedSuggestions.clear();
         this.blockStateOverrides.clear();
@@ -156,6 +160,16 @@ public class BukkitBlockManager extends AbstractBlockManager {
         this.tempBlockAppearanceConvertor.clear();
     }
 
+    public void initFastAsyncWorldEditHook() {
+        // do nothing
+    }
+
+    public void initWorldEditHook() {
+        for (Key newBlockId : this.blockRegisterOrder) {
+            WorldEditHook.register(newBlockId);
+        }
+    }
+
     @Nullable
     public Object getMinecraftBlockHolder(int stateId) {
         return stateId2BlockHolder.get(stateId);
@@ -172,16 +186,6 @@ public class BukkitBlockManager extends AbstractBlockManager {
             return stateId2ImmutableBlockStates[stateId - BlockStateUtils.vanillaStateSize()];
         }
         return null;
-    }
-
-    public void initFastAsyncWorldEditHook() {
-        // do nothing
-    }
-
-    public void initWorldEditHook() {
-        for (Key newBlockId : this.blockRegisterOrder) {
-            WorldEditHook.register(newBlockId);
-        }
     }
 
     @Override
@@ -217,6 +221,19 @@ public class BukkitBlockManager extends AbstractBlockManager {
         for (String state : states) {
             this.cachedSuggestions.add(Suggestion.suggestion(state));
         }
+    }
+
+    public ImmutableMap<Key, List<Integer>> blockAppearanceArranger() {
+        return blockAppearanceArranger;
+    }
+
+    public ImmutableMap<Key, List<Integer>> realBlockArranger() {
+        return realBlockArranger;
+    }
+
+    @Nullable
+    public List<Integer> appearanceToRealStates(int appearanceStateId) {
+        return this.appearanceToRealState.get(appearanceStateId);
     }
 
     private void initMirrorRegistry() {
@@ -268,6 +285,7 @@ public class BukkitBlockManager extends AbstractBlockManager {
         try {
             ImmutableMap.Builder<Key, Integer> builder1 = ImmutableMap.builder();
             ImmutableMap.Builder<Integer, Object> builder2 = ImmutableMap.builder();
+            ImmutableMap.Builder<Key, List<Integer>> builder3 = ImmutableMap.builder();
             Set<Object> affectedSounds = new HashSet<>();
             Set<Object> affectedBlocks = new HashSet<>();
             List<Key> order = new ArrayList<>();
@@ -276,7 +294,7 @@ public class BukkitBlockManager extends AbstractBlockManager {
 
             int counter = 0;
             for (Map.Entry<Key, Integer> baseBlockAndItsCount : this.registeredRealBlockSlots.entrySet()) {
-                counter = registerBlockVariants(baseBlockAndItsCount, counter, builder1, builder2, affectedSounds, order);
+                counter = registerBlockVariants(baseBlockAndItsCount, counter, builder1, builder2, builder3, affectedSounds, order);
             }
 
             freezeRegistry();
@@ -284,6 +302,7 @@ public class BukkitBlockManager extends AbstractBlockManager {
             this.customBlockCount = counter;
             this.internalId2StateId = builder1.build();
             this.stateId2BlockHolder = builder2.build();
+            this.realBlockArranger = builder3.build();
             this.blockRegisterOrder = ImmutableList.copyOf(order);
 
             for (Object block : (Iterable<Object>) Reflections.instance$BuiltInRegistries$BLOCK) {
@@ -402,8 +421,14 @@ public class BukkitBlockManager extends AbstractBlockManager {
 
     private void bindAppearance(CustomBlock block) {
         for (ImmutableBlockState state : block.variantProvider().states()) {
+            ImmutableBlockState previous = this.stateId2ImmutableBlockStates[state.customBlockState().registryId() - BlockStateUtils.vanillaStateSize()];
+            if (previous != null && !previous.isEmpty()) {
+                this.plugin.logger().severe("[Fatal] Failed to bind real block state for " + state + ": the state is already occupied by " + previous);
+                continue;
+            }
             this.stateId2ImmutableBlockStates[state.customBlockState().registryId() - BlockStateUtils.vanillaStateSize()] = state;
             this.tempBlockAppearanceConvertor.put(state.customBlockState().registryId(), state.vanillaBlockState().registryId());
+            this.appearanceToRealState.computeIfAbsent(state.vanillaBlockState().registryId(), k -> new ArrayList<>()).add(state.customBlockState().registryId());
         }
     }
 
@@ -651,12 +676,15 @@ public class BukkitBlockManager extends AbstractBlockManager {
                                       int counter,
                                       ImmutableMap.Builder<Key, Integer> builder1,
                                       ImmutableMap.Builder<Integer, Object> builder2,
+                                      ImmutableMap.Builder<Key, List<Integer>> builder3,
                                       Set<Object> affectSoundTypes,
                                       List<Key> order) throws Exception {
         Key clientSideBlockType = blockWithCount.getKey();
         boolean isNoteBlock = clientSideBlockType.equals(BlockKeys.NOTE_BLOCK);
         Object clientSideBlock = getBlockFromRegistry(createResourceLocation(clientSideBlockType));
         int amount = blockWithCount.getValue();
+
+        List<Integer> stateIds = new ArrayList<>();
 
         for (int i = 0; i < amount; i++) {
             Key realBlockKey = createRealBlockKey(clientSideBlockType, i);
@@ -697,12 +725,14 @@ public class BukkitBlockManager extends AbstractBlockManager {
 
             builder1.put(realBlockKey, stateId);
             builder2.put(stateId, blockHolder);
+            stateIds.add(stateId);
 
             deceiveBukkit(newRealBlock, clientSideBlockType);
             order.add(realBlockKey);
             counter++;
         }
 
+        builder3.put(clientSideBlockType, stateIds);
         Object soundType = Reflections.field$BlockBehaviour$soundType.get(clientSideBlock);
         affectSoundTypes.add(soundType);
         return counter;

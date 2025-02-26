@@ -30,21 +30,55 @@ give_item:
     - /craftengine item give
     - /ce item give
 
-setblock:
+item_browser:
   enable: true
-  permission: ce.command.setblock
+  permission: ce.command.item_browser
   usage:
-    - /craftengine setblock
-    - /ce setblock
+    - /craftengine item browser
+    - /ce item browser
 
-# A command to test some stuffs
-# Usage: [COMMAND]
-debug_state:
+# Debug commands
+debug_set_block:
   enable: true
-  permission: ce.command.debug.state
+  permission: ce.command.debug.setblock
   usage:
-    - /craftengine debug state
-    - /ce debug state
+    - /craftengine debug setblock
+    - /ce debug setblock
+
+debug_get_block_state_registry_id:
+  enable: true
+  permission: ce.command.debug.get_block_state_registry_id
+  usage:
+    - /craftengine debug get-block-state-registry-id
+    - /ce debug get-block-state-registry-id
+
+debug_get_block_internal_id:
+  enable: true
+  permission: ce.command.debug.get_block_internal_id
+  usage:
+    - /craftengine debug get-block-internal-id
+    - /ce debug get-block-internal-id
+
+debug_appearance_state_usage:
+  enable: true
+  permission: ce.command.debug.state_usage
+  usage:
+    - /craftengine debug appearance-state-usage
+    - /ce debug appearance-state-usage
+
+debug_real_state_usage:
+  enable: true
+  permission: ce.command.debug.state_usage
+  usage:
+    - /craftengine debug real-state-usage
+    - /ce debug real-state-usage
+
+debug_item_data:
+  enable: true
+  permission: ce.command.debug.item_data
+  usage:
+    - /craftengine debug item-data
+    - /ce debug item-data
 
 debug_test:
   enable: true

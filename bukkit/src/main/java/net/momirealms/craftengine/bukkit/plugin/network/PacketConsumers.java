@@ -30,6 +30,7 @@ import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.PlayerInventory;
 import org.bukkit.util.RayTraceResult;
 
+import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.Arrays;
 import java.util.Map;
@@ -443,7 +444,13 @@ public class PacketConsumers {
                     }
                 }, player.getWorld(), x >> 4, z >> 4);
             } else {
-                handlePickItemFromBlockPacketOnMainThread(player, pos);
+                BukkitCraftEngine.instance().scheduler().sync().run(() -> {
+                    try {
+                        handlePickItemFromBlockPacketOnMainThread(player, pos);
+                    } catch (Exception e) {
+                        CraftEngine.instance().logger().warn("Failed to handle ServerboundPickItemFromBlockPacket", e);
+                    }
+                });
             }
         } catch (Exception e) {
             CraftEngine.instance().logger().warn("Failed to handle ServerboundPickItemFromBlockPacket", e);
@@ -455,47 +462,9 @@ public class PacketConsumers {
         Object blockState = Reflections.method$BlockGetter$getBlockState.invoke(serverLevel, pos);
         ImmutableBlockState state = BukkitBlockManager.instance().getImmutableBlockState(BlockStateUtils.blockStateToId(blockState));
         if (state == null) return;
-        PlayerInventory inventory = player.getInventory();
         Key itemId = state.settings().itemId();
         if (itemId == null) return;
-        ItemStack itemStack = BukkitCraftEngine.instance().itemManager().buildCustomItemStack(itemId, BukkitCraftEngine.instance().adapt(player));
-        if (itemStack == null) {
-            CraftEngine.instance().logger().warn("Item: " + itemId + " is not a valid item");
-            return;
-        }
-        int matchingSlot = InventoryUtils.findMatchingItemSlot(inventory, itemStack);
-        int targetSlot = (matchingSlot < 9) && (matchingSlot >= 0) ? matchingSlot : InventoryUtils.getSuitableHotBarSlot(inventory);
-        if (matchingSlot != -1) {
-            if (matchingSlot < 9 && targetSlot >= 0) {
-                inventory.setHeldItemSlot(targetSlot);
-            } else {
-                ItemStack picked = inventory.getItem(matchingSlot);
-                if (picked == null) return;
-                inventory.setHeldItemSlot(targetSlot);
-                ItemStack previous = inventory.getItem(targetSlot);
-                ItemUtils.setItem(inventory, targetSlot, picked.clone());
-                if (previous != null) {
-                    ItemUtils.setItem(inventory, matchingSlot, previous);
-                } else {
-                    picked.setAmount(0);
-                }
-            }
-        } else if (player.getGameMode() == GameMode.CREATIVE) {
-            inventory.setHeldItemSlot(targetSlot);
-            ItemStack previous = inventory.getItem(targetSlot);
-            ItemUtils.setItem(inventory, targetSlot, itemStack);
-            if (previous != null) {
-                for (int j = 1; j <= 3; j++) {
-                    for (int i = j * 9; i < j * 9 + 9; i++) {
-                        ItemStack itemInSlot = inventory.getItem(i);
-                        if (ItemUtils.isEmpty(itemInSlot)) {
-                            ItemUtils.setItem(inventory, i, previous);
-                            return;
-                        }
-                    }
-                }
-            }
-        }
+        pickItem(player, itemId);
     }
 
     // 1.21.4+
@@ -506,51 +475,47 @@ public class PacketConsumers {
             if (furniture == null) return;
             Player player = (Player) user.platformPlayer();
             if (player == null) return;
-            Key itemId = furniture.furniture().settings().itemId();
-            if (itemId == null) return;
-            ItemStack itemStack = BukkitCraftEngine.instance().itemManager().buildCustomItemStack(itemId, (BukkitServerPlayer) user);
-            PlayerInventory inventory = player.getInventory();
-            if (itemStack == null) {
-                CraftEngine.instance().logger().warn("Item: " + itemId + " is not a valid item");
-                return;
-            }
-            int matchingSlot = InventoryUtils.findMatchingItemSlot(inventory, itemStack);
-            int targetSlot = (matchingSlot < 9) && (matchingSlot >= 0) ? matchingSlot : InventoryUtils.getSuitableHotBarSlot(inventory);
-            if (matchingSlot != -1) {
-                if (matchingSlot < 9 && targetSlot >= 0) {
-                    inventory.setHeldItemSlot(targetSlot);
-                } else {
-                    ItemStack picked = inventory.getItem(matchingSlot);
-                    if (picked == null) return;
-                    inventory.setHeldItemSlot(targetSlot);
-                    ItemStack previous = inventory.getItem(targetSlot);
-                    ItemUtils.setItem(inventory, targetSlot, picked.clone());
-                    if (previous != null) {
-                        ItemUtils.setItem(inventory, matchingSlot, previous);
-                    } else {
-                        picked.setAmount(0);
+            if (VersionHelper.isFolia()) {
+                Location location = player.getLocation();
+                int x = location.getBlockX();
+                int z = location.getBlockZ();
+                BukkitCraftEngine.instance().scheduler().sync().run(() -> {
+                    try {
+                        handlePickItemFromEntityOnMainThread(player, furniture);
+                    } catch (Exception e) {
+                        CraftEngine.instance().logger().warn("Failed to handle ServerboundPickItemFromEntityPacket", e);
                     }
-                }
-            } else if (player.getGameMode() == GameMode.CREATIVE) {
-                inventory.setHeldItemSlot(targetSlot);
-                ItemStack previous = inventory.getItem(targetSlot);
-                ItemUtils.setItem(inventory, targetSlot, itemStack);
-                if (previous != null) {
-                    for (int j = 1; j <= 3; j++) {
-                        for (int i = j * 9; i < j * 9 + 9; i++) {
-                            ItemStack itemInSlot = inventory.getItem(i);
-                            if (ItemUtils.isEmpty(itemInSlot)) {
-                                ItemUtils.setItem(inventory, i, previous);
-                                return;
-                            }
-                        }
+                }, player.getWorld(), x >> 4, z >> 4);
+            } else {
+                BukkitCraftEngine.instance().scheduler().sync().run(() -> {
+                    try {
+                        handlePickItemFromEntityOnMainThread(player, furniture);
+                    } catch (Exception e) {
+                        CraftEngine.instance().logger().warn("Failed to handle ServerboundPickItemFromEntityPacket", e);
                     }
-                }
+                });
             }
         } catch (Exception e) {
             CraftEngine.instance().logger().warn("Failed to handle ServerboundPickItemFromEntityPacket", e);
         }
     };
+
+    private static void handlePickItemFromEntityOnMainThread(Player player, LoadedFurniture furniture) throws Exception {
+        Key itemId = furniture.furniture().settings().itemId();
+        if (itemId == null) return;
+        pickItem(player, itemId);
+    }
+
+    private static void pickItem(Player player, Key itemId) throws IllegalAccessException, InvocationTargetException {
+        ItemStack itemStack = BukkitCraftEngine.instance().itemManager().buildCustomItemStack(itemId, BukkitCraftEngine.instance().adapt(player));
+        if (itemStack == null) {
+            CraftEngine.instance().logger().warn("Item: " + itemId + " is not a valid item");
+            return;
+        }
+        assert Reflections.method$ServerGamePacketListenerImpl$tryPickItem != null;
+        Reflections.method$ServerGamePacketListenerImpl$tryPickItem.invoke(
+                Reflections.field$ServerPlayer$connection.get(Reflections.method$CraftPlayer$getHandle.invoke(player)), Reflections.method$CraftItemStack$asNMSMirror.invoke(null, itemStack));
+    }
 
     public static final TriConsumer<NetWorkUser, NMSPacketEvent, Object> ADD_ENTITY = (user, event, packet) -> {
         try {
