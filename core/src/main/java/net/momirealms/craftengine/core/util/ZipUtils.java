@@ -165,7 +165,7 @@ public class ZipUtils {
 
     private static void writeLocalFileHeader(OutputStream out) throws IOException {
         writeInt(out, 0x04034B50);
-        writeShort(out, 0);
+        writeShort(out, 0x14);
         writeShort(out, 1);
         writeShort(out, 0);
         writeShort(out, 0);
@@ -187,7 +187,7 @@ public class ZipUtils {
         writeShort(out, 0);
         writeInt(out, 0);
         writeInt(out, entry.compressedSize + 1);
-        writeInt(out, 0);
+        writeInt(out, 0xFFFFFFFEL);
         writeShort(out, entry.fileName.getBytes(StandardCharsets.UTF_8).length);
         writeShort(out, 0);
         writeShort(out, 0);
