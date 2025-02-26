@@ -3,6 +3,7 @@ package net.momirealms.craftengine.bukkit.item.recipe;
 import net.momirealms.craftengine.bukkit.plugin.BukkitCraftEngine;
 import net.momirealms.craftengine.bukkit.util.ItemUtils;
 import net.momirealms.craftengine.core.item.Item;
+import net.momirealms.craftengine.core.item.ItemBuildContext;
 import net.momirealms.craftengine.core.item.ItemManager;
 import net.momirealms.craftengine.core.item.recipe.OptimizedIDItem;
 import net.momirealms.craftengine.core.item.recipe.Recipe;
@@ -81,12 +82,12 @@ public class CrafterEventListener implements Listener {
 
         Recipe<ItemStack> ceRecipe = this.recipeManager.getRecipe(RecipeTypes.SHAPELESS, input);
         if (ceRecipe != null) {
-            event.setResult(ceRecipe.getResult(null));
+            event.setResult(ceRecipe.getResult(ItemBuildContext.EMPTY));
             return;
         }
         ceRecipe = this.recipeManager.getRecipe(RecipeTypes.SHAPED, input);
         if (ceRecipe != null) {
-            event.setResult(ceRecipe.getResult(null));
+            event.setResult(ceRecipe.getResult(ItemBuildContext.EMPTY));
             return;
         }
         // clear result if not met

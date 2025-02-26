@@ -4,6 +4,7 @@ import net.momirealms.craftengine.core.entity.player.Player;
 import net.momirealms.craftengine.core.item.behavior.ItemBehavior;
 import net.momirealms.craftengine.core.item.modifier.ItemModifier;
 import net.momirealms.craftengine.core.util.Key;
+import net.momirealms.craftengine.core.util.context.ContextHolder;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
@@ -16,23 +17,13 @@ public interface CustomItem<I> extends BuildableItem<I> {
 
     List<ItemModifier<I>> modifiers();
 
-    default I buildItemStack(Player player) {
-        return this.buildItemStack(player, 1);
-    }
-
-    I buildItemStack(Player player, int count);
-
-    default I buildItemStack() {
-        return buildItemStack(null);
-    }
-
-    default I buildItemStack(int count) {
-        return buildItemStack(null, count);
-    }
-
     ItemSettings settings();
 
-    Item<I> buildItem(Player player);
+    default Item<I> buildItem(Player player) {
+        return buildItem(new ItemBuildContext(player, ContextHolder.EMPTY));
+    }
+
+    Item<I> buildItem(ItemBuildContext context);
 
     @NotNull
     ItemBehavior behavior();

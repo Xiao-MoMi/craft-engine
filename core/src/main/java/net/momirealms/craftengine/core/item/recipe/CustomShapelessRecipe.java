@@ -1,6 +1,6 @@
 package net.momirealms.craftengine.core.item.recipe;
 
-import net.momirealms.craftengine.core.entity.player.Player;
+import net.momirealms.craftengine.core.item.ItemBuildContext;
 import net.momirealms.craftengine.core.item.recipe.input.CraftingInput;
 import net.momirealms.craftengine.core.item.recipe.input.RecipeInput;
 import net.momirealms.craftengine.core.plugin.CraftEngine;
@@ -50,8 +50,8 @@ public class CustomShapelessRecipe<T> extends CraftingTableRecipe<T> {
     }
 
     @Override
-    public T getResult(Player player) {
-        return result.buildItemStack(player);
+    public T getResult(ItemBuildContext context) {
+        return result.buildItemStack(context);
     }
 
     @Override

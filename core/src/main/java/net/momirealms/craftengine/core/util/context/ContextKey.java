@@ -12,4 +12,8 @@ public class ContextKey<T> {
     public Key id() {
         return id;
     }
+
+    public static <T> ContextKey<T> of(Key id) {
+        return new ContextKey<>(id);
+    }
 }

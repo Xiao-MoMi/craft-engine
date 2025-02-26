@@ -36,6 +36,7 @@ item_browser:
   usage:
     - /craftengine item browser
     - /ce item browser
+    - /ce
 
 # Debug commands
 debug_set_block:

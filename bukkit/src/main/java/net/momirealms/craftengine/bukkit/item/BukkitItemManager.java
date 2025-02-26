@@ -29,6 +29,7 @@ import net.momirealms.craftengine.core.util.Key;
 import net.momirealms.craftengine.core.util.MiscUtils;
 import net.momirealms.craftengine.core.util.ResourceKey;
 import net.momirealms.craftengine.core.util.VersionHelper;
+import net.momirealms.craftengine.core.util.context.ContextHolder;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.NamespacedKey;
@@ -165,7 +166,7 @@ public class BukkitItemManager extends AbstractItemManager<ItemStack> {
 
     @Override
     public ItemStack buildCustomItemStack(Key id, Player player) {
-        return Optional.ofNullable(customItems.get(id)).map(it -> it.buildItemStack(player, 1)).orElse(null);
+        return Optional.ofNullable(customItems.get(id)).map(it -> it.buildItemStack(new ItemBuildContext(player, ContextHolder.EMPTY), 1)).orElse(null);
     }
 
     @Override
@@ -215,7 +216,7 @@ public class BukkitItemManager extends AbstractItemManager<ItemStack> {
     @Override
     public Key customItemId(ItemStack itemStack) {
         Item<ItemStack> wrapped = wrap(itemStack);
-        if (!wrapped.hasTag("craftengine:id")) return null;
+        if (!wrapped.hasTag(IdModifier.CRAFT_ENGINE_ID)) return null;
         return wrapped.id();
     }
 

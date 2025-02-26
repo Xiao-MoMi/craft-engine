@@ -1,7 +1,7 @@
 package net.momirealms.craftengine.bukkit.item;
 
-import net.momirealms.craftengine.core.entity.player.Player;
 import net.momirealms.craftengine.core.item.BuildableItem;
+import net.momirealms.craftengine.core.item.ItemBuildContext;
 import org.bukkit.inventory.ItemStack;
 
 public class CloneableConstantItem implements BuildableItem<ItemStack> {
@@ -12,7 +12,7 @@ public class CloneableConstantItem implements BuildableItem<ItemStack> {
     }
 
     @Override
-    public ItemStack buildItemStack(Player player, int count) {
+    public ItemStack buildItemStack(ItemBuildContext context, int count) {
         ItemStack itemStack = this.item.clone();
         itemStack.setAmount(count);
         return itemStack;

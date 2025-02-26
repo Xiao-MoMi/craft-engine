@@ -1,0 +1,97 @@
+images:
+  internal:item_browser:
+    height: 139
+    ascent: 30
+    font: minecraft:internal
+    file: minecraft:font/gui/custom/item_browser.png
+    char: '\ub000'
+  internal:crafting_recipe:
+    height: 142
+    ascent: 30
+    font: minecraft:internal
+    file: minecraft:font/gui/custom/crafting_recipe.png
+    char: '\ub001'
+  internal:cooking_recipe:
+    height: 138
+    ascent: 30
+    font: minecraft:internal
+    file: minecraft:font/gui/custom/cooking_recipe.png
+    char: '\ub002'
+  internal:smelting:
+    height: 23
+    ascent: 22
+    font: minecraft:internal
+    file: minecraft:font/gui/custom/smelting.png
+    char: '\ub003'
+  internal:smoking:
+    height: 23
+    ascent: 22
+    font: minecraft:internal
+    file: minecraft:font/gui/custom/smoking.png
+    char: '\ub004'
+  internal:blasting:
+    height: 23
+    ascent: 22
+    font: minecraft:internal
+    file: minecraft:font/gui/custom/blasting.png
+    char: '\ub005'
+  internal:campfire:
+    height: 23
+    ascent: 22
+    font: minecraft:internal
+    file: minecraft:font/gui/custom/campfire.png
+    char: '\ub006'
+
+templates:
+  internal:2d_icon:
+    material: arrow
+    custom-model-data: "{model_data}"
+    data:
+      display-name: "{name}"
+      lore: "{lore}"
+    model:
+      template: models:generated
+      arguments:
+        model_path: "minecraft:item/custom/gui/{texture}"
+        texture_path: "minecraft:item/custom/gui/{texture}"
+
+items:
+  internal:next_page_0:
+    template: "internal:2d_icon"
+    arguments:
+      model_data: 1000
+      texture: next_page_0
+      name: "<!i><#FAFAD2>Next Page"
+      lore:
+        - "<!i><#F5F5F5><arg:current_page>/<arg:max_page>"
+  internal:next_page_1:
+    template: "internal:2d_icon"
+    arguments:
+      model_data: 1001
+      texture: next_page_1
+      name: "<!i><#808080>Next Page"
+      lore:
+        - "<!i><#696969><arg:current_page>/<arg:max_page>"
+  internal:previous_page_0:
+    template: "internal:2d_icon"
+    arguments:
+      model_data: 1002
+      texture: previous_page_0
+      name: "<!i><#FAFAD2>Previous Page"
+      lore:
+        - "<!i><#F5F5F5><arg:current_page>/<arg:max_page>"
+  internal:previous_page_1:
+    template: "internal:2d_icon"
+    arguments:
+      model_data: 1003
+      texture: previous_page_1
+      name: "<!i><#808080>Previous Page"
+      lore:
+        - "<!i><#696969><arg:current_page>/<arg:max_page>"
+  internal:return:
+    template: "internal:2d_icon"
+    arguments:
+      model_data: 1004
+      texture: return
+      name: "<!i><#DAA520>Back to Previous Page"
+      lore: null

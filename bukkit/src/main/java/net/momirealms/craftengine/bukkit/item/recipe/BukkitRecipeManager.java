@@ -11,6 +11,7 @@ import net.momirealms.craftengine.bukkit.util.MaterialUtils;
 import net.momirealms.craftengine.bukkit.util.RecipeUtils;
 import net.momirealms.craftengine.bukkit.util.Reflections;
 import net.momirealms.craftengine.core.item.CustomItem;
+import net.momirealms.craftengine.core.item.ItemBuildContext;
 import net.momirealms.craftengine.core.item.recipe.CookingRecipe;
 import net.momirealms.craftengine.core.item.recipe.Recipe;
 import net.momirealms.craftengine.core.item.recipe.*;
@@ -56,7 +57,7 @@ public class BukkitRecipeManager implements RecipeManager<ItemStack> {
     static {
         BUKKIT_RECIPE_REGISTER.put(RecipeTypes.SHAPED, (key, recipe) -> {
             CustomShapedRecipe<ItemStack> ceRecipe = (CustomShapedRecipe<ItemStack>) recipe;
-            ShapedRecipe shapedRecipe = new ShapedRecipe(key, ceRecipe.getResult(null));
+            ShapedRecipe shapedRecipe = new ShapedRecipe(key, ceRecipe.getResult(ItemBuildContext.EMPTY));
             if (ceRecipe.group() != null) {
                 shapedRecipe.setGroup(Objects.requireNonNull(ceRecipe.group()));
             }
@@ -77,7 +78,7 @@ public class BukkitRecipeManager implements RecipeManager<ItemStack> {
         });
         BUKKIT_RECIPE_REGISTER.put(RecipeTypes.SHAPELESS, (key, recipe) -> {
             CustomShapelessRecipe<ItemStack> ceRecipe = (CustomShapelessRecipe<ItemStack>) recipe;
-            ShapelessRecipe shapelessRecipe = new ShapelessRecipe(key, ceRecipe.getResult(null));
+            ShapelessRecipe shapelessRecipe = new ShapelessRecipe(key, ceRecipe.getResult(ItemBuildContext.EMPTY));
             if (ceRecipe.group() != null) {
                 shapelessRecipe.setGroup(Objects.requireNonNull(ceRecipe.group()));
             }
@@ -98,7 +99,7 @@ public class BukkitRecipeManager implements RecipeManager<ItemStack> {
         BUKKIT_RECIPE_REGISTER.put(RecipeTypes.SMELTING, (key, recipe) -> {
             CustomSmeltingRecipe<ItemStack> ceRecipe = (CustomSmeltingRecipe<ItemStack>) recipe;
             FurnaceRecipe furnaceRecipe = new FurnaceRecipe(
-                    key, ceRecipe.getResult(null),
+                    key, ceRecipe.getResult(ItemBuildContext.EMPTY),
                     new RecipeChoice.MaterialChoice(ingredientToBukkitMaterials(ceRecipe.ingredient())),
                     ceRecipe.experience(), ceRecipe.cookingTime()
             );
@@ -119,7 +120,7 @@ public class BukkitRecipeManager implements RecipeManager<ItemStack> {
         BUKKIT_RECIPE_REGISTER.put(RecipeTypes.SMOKING, (key, recipe) -> {
             CustomSmokingRecipe<ItemStack> ceRecipe = (CustomSmokingRecipe<ItemStack>) recipe;
             SmokingRecipe smokingRecipe = new SmokingRecipe(
-                    key, ceRecipe.getResult(null),
+                    key, ceRecipe.getResult(ItemBuildContext.EMPTY),
                     new RecipeChoice.MaterialChoice(ingredientToBukkitMaterials(ceRecipe.ingredient())),
                     ceRecipe.experience(), ceRecipe.cookingTime()
             );
@@ -140,7 +141,7 @@ public class BukkitRecipeManager implements RecipeManager<ItemStack> {
         BUKKIT_RECIPE_REGISTER.put(RecipeTypes.BLASTING, (key, recipe) -> {
             CustomBlastingRecipe<ItemStack> ceRecipe = (CustomBlastingRecipe<ItemStack>) recipe;
             BlastingRecipe blastingRecipe = new BlastingRecipe(
-                    key, ceRecipe.getResult(null),
+                    key, ceRecipe.getResult(ItemBuildContext.EMPTY),
                     new RecipeChoice.MaterialChoice(ingredientToBukkitMaterials(ceRecipe.ingredient())),
                     ceRecipe.experience(), ceRecipe.cookingTime()
             );
@@ -161,7 +162,7 @@ public class BukkitRecipeManager implements RecipeManager<ItemStack> {
         BUKKIT_RECIPE_REGISTER.put(RecipeTypes.CAMPFIRE_COOKING, (key, recipe) -> {
             CustomCampfireRecipe<ItemStack> ceRecipe = (CustomCampfireRecipe<ItemStack>) recipe;
             CampfireRecipe campfireRecipe = new CampfireRecipe(
-                    key, ceRecipe.getResult(null),
+                    key, ceRecipe.getResult(ItemBuildContext.EMPTY),
                     new RecipeChoice.MaterialChoice(ingredientToBukkitMaterials(ceRecipe.ingredient())),
                     ceRecipe.experience(), ceRecipe.cookingTime()
             );
@@ -186,7 +187,7 @@ public class BukkitRecipeManager implements RecipeManager<ItemStack> {
                 itemStacks.add(BukkitItemManager.instance().buildItemStack(item.value(), null));
             }
             StonecuttingRecipe stonecuttingRecipe = new StonecuttingRecipe(
-                    key, ceRecipe.getResult(null),
+                    key, ceRecipe.getResult(ItemBuildContext.EMPTY),
                     new RecipeChoice.ExactChoice(itemStacks)
             );
             if (ceRecipe.group() != null) {
@@ -740,7 +741,7 @@ public class BukkitRecipeManager implements RecipeManager<ItemStack> {
     private static List<Object> getIngredientLooks(List<Holder<Key>> holders) throws ReflectiveOperationException {
         List<Object> itemStacks = new ArrayList<>();
         for (Holder<Key> holder : holders) {
-            ItemStack itemStack = BukkitItemManager.instance().getBuildableItem(holder.value()).get().buildItemStack(null, 1);
+            ItemStack itemStack = BukkitItemManager.instance().getBuildableItem(holder.value()).get().buildItemStack(ItemBuildContext.EMPTY, 1);
             Object nmsStack = Reflections.method$CraftItemStack$asNMSMirror.invoke(null, itemStack);
             itemStacks.add(nmsStack);
         }

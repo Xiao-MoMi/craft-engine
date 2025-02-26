@@ -1,7 +1,7 @@
 package net.momirealms.craftengine.core.item.modifier;
 
-import net.momirealms.craftengine.core.entity.player.Player;
 import net.momirealms.craftengine.core.item.Item;
+import net.momirealms.craftengine.core.item.ItemBuildContext;
 
 import java.util.Map;
 
@@ -18,7 +18,7 @@ public class ComponentModifier<I> implements ItemModifier<I> {
     }
 
     @Override
-    public void apply(Item<I> item, Player player) {
+    public void apply(Item<I> item, ItemBuildContext context) {
         for (Map.Entry<String, Object> entry : arguments.entrySet()) {
             String key = entry.getKey();
             Object value = entry.getValue();

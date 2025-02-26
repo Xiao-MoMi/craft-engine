@@ -3,24 +3,18 @@ package net.momirealms.craftengine.core.plugin.locale;
 import net.kyori.adventure.internal.Internals;
 import net.kyori.adventure.key.Key;
 import net.kyori.adventure.text.Component;
-import net.kyori.adventure.text.ComponentLike;
 import net.kyori.adventure.text.TranslatableComponent;
-import net.kyori.adventure.text.minimessage.Context;
 import net.kyori.adventure.text.minimessage.MiniMessage;
-import net.kyori.adventure.text.minimessage.ParsingException;
-import net.kyori.adventure.text.minimessage.tag.Tag;
-import net.kyori.adventure.text.minimessage.tag.resolver.ArgumentQueue;
-import net.kyori.adventure.text.minimessage.tag.resolver.TagResolver;
 import net.kyori.adventure.util.TriState;
 import net.kyori.examination.Examinable;
 import net.kyori.examination.ExaminableProperty;
 import net.momirealms.craftengine.core.plugin.minimessage.ImageTag;
+import net.momirealms.craftengine.core.plugin.minimessage.IndexedArgumentTag;
 import net.momirealms.craftengine.core.plugin.minimessage.ShiftTag;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.text.MessageFormat;
-import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
@@ -83,7 +77,7 @@ public class MiniMessageTranslationRegistryImpl implements Examinable, MiniMessa
         if (component.arguments().isEmpty()) {
             resultingComponent = this.miniMessage.deserialize(miniMessageString, ShiftTag.INSTANCE, ImageTag.INSTANCE);
         } else {
-            resultingComponent = this.miniMessage.deserialize(miniMessageString, new ArgumentTag(component.arguments()), ShiftTag.INSTANCE, ImageTag.INSTANCE);
+            resultingComponent = this.miniMessage.deserialize(miniMessageString, new IndexedArgumentTag(component.arguments()), ShiftTag.INSTANCE, ImageTag.INSTANCE);
         }
         if (component.children().isEmpty()) {
             return resultingComponent;
@@ -138,36 +132,7 @@ public class MiniMessageTranslationRegistryImpl implements Examinable, MiniMessa
         return Internals.toString(this);
     }
 
-    public static class ArgumentTag implements TagResolver {
-        private static final String NAME_0 = "argument";
-        private static final String NAME_1 = "arg";
 
-        private final List<? extends ComponentLike> argumentComponents;
-
-        public ArgumentTag(final @NotNull List<? extends ComponentLike> argumentComponents) {
-            this.argumentComponents = Objects.requireNonNull(argumentComponents, "argumentComponents");
-        }
-
-        @Override
-        public @Nullable Tag resolve(final @NotNull String name, final @NotNull ArgumentQueue arguments, final @NotNull Context ctx) throws ParsingException {
-            if (!has(name)) {
-                return null;
-            }
-
-            final int index = arguments.popOr("No argument number provided").asInt().orElseThrow(() -> ctx.newException("Invalid argument number", arguments));
-
-            if (index < 0 || index >= argumentComponents.size()) {
-                throw ctx.newException("Invalid argument number", arguments);
-            }
-
-            return Tag.inserting(argumentComponents.get(index));
-        }
-
-        @Override
-        public boolean has(final @NotNull String name) {
-            return name.equals(NAME_0) || name.equals(NAME_1);
-        }
-    }
 
     final class Translation implements Examinable {
         private final String key;

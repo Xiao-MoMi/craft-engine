@@ -1,0 +1,12 @@
+categories:
+  default:palm_tree:
+    name: "<green>Palm Tree</green>"
+    icon: default:palm_log
+    list:
+      - default:palm_sapling
+      - default:palm_leaves
+      - default:palm_log
+      - default:stripped_palm_log
+      - default:palm_wood
+      - default:stripped_palm_wood
+      - default:palm_planks

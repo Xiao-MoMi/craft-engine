@@ -1,101 +1,3 @@
-furniture:
-  default:bench:
-    settings:
-      item: default:bench
-      sounds:
-        break: minecraft:block.bamboo_wood.break
-        place: minecraft:block.bamboo_wood.place
-    placement:
-      ground:
-        rules:
-          # ANY / FOUR / EIGHT / SIXTEEN / NORTH / EAST / WEST / SOUTH
-          rotation: EIGHT
-          # ANY / CENTER / HALF / QUARTER / CORNER
-          alignment: CENTER
-        elements:
-          - item: default:bench
-            display-transform: NONE
-            billboard: FIXED
-            position: 0.5,0,0
-            translation: 0,0.5,0
-        hitboxes:
-          - position: 0,0,0
-            width: 1
-            height: 1
-            interactive: true
-            seats:
-              - 0,0,-0.1 0
-          - position: 1,0,0
-            width: 1
-            height: 1
-            interactive: true
-            seats:
-              - 1,0,-0.1 0
-    loot:
-      template: loot_table:normal
-      arguments:
-        item: default:bench
-  default:table_lamp:
-    settings:
-      item: default:table_lamp
-      sounds:
-        break: minecraft:block.lantern.break
-        place: minecraft:block.lantern.place
-    placement:
-      ground:
-        rules:
-          rotation: ANY
-          alignment: QUARTER
-        elements:
-          - item: default:table_lamp
-            display-transform: NONE
-            billboard: FIXED
-            translation: 0,0.5,0
-            rotation: -90
-        hitboxes:
-          - position: 0,0,0
-            width: 0.7
-            height: 0.1
-            interactive: true
-          - position: 0,0.1,-0.1
-            width: 0.1
-            height: 0.6
-            interactive: true
-          - position: 0,0.6,0.15
-            width: 0.4
-            height: 0.4
-            interactive: true
-    loot:
-      template: loot_table:normal
-      arguments:
-        item: default:table_lamp
-  default:wooden_chair:
-    settings:
-      item: default:wooden_chair
-      sounds:
-        break: minecraft:block.bamboo_wood.break
-        place: minecraft:block.bamboo_wood.place
-    placement:
-      ground:
-        rules:
-          rotation: ANY
-          alignment: ANY
-        elements:
-          - item: default:wooden_chair
-            display-transform: NONE
-            billboard: FIXED
-            translation: 0,0.5,0
-        hitboxes:
-          - position: 0,0,0
-            width: 0.7
-            height: 1.2
-            interactive: true
-            seats:
-              - 0,0,-0.1 0
-    loot:
-      template: loot_table:normal
-      arguments:
-        item: default:wooden_chair
 items:
   default:bench:
     material: paper
@@ -107,7 +9,42 @@ items:
       path: "minecraft:item/custom/bench"
     behavior:
       type: furniture_item
-      furniture: default:bench
+      furniture:
+        settings:
+          item: default:bench
+          sounds:
+            break: minecraft:block.bamboo_wood.break
+            place: minecraft:block.bamboo_wood.place
+        placement:
+          ground:
+            rules:
+              # ANY / FOUR / EIGHT / SIXTEEN / NORTH / EAST / WEST / SOUTH
+              rotation: EIGHT
+              # ANY / CENTER / HALF / QUARTER / CORNER
+              alignment: CENTER
+            elements:
+              - item: default:bench
+                display-transform: NONE
+                billboard: FIXED
+                position: 0.5,0,0
+                translation: 0,0.5,0
+            hitboxes:
+              - position: 0,0,0
+                width: 1
+                height: 1
+                interactive: true
+                seats:
+                  - 0,0,-0.1 0
+              - position: 1,0,0
+                width: 1
+                height: 1
+                interactive: true
+                seats:
+                  - 1,0,-0.1 0
+        loot:
+          template: loot_table:normal
+          arguments:
+            item: default:bench
   default:table_lamp:
     material: paper
     custom-model-data: 2001
@@ -118,7 +55,40 @@ items:
       path: "minecraft:item/custom/table_lamp"
     behavior:
       type: furniture_item
-      furniture: default:table_lamp
+      furniture:
+        settings:
+          item: default:table_lamp
+          sounds:
+            break: minecraft:block.lantern.break
+            place: minecraft:block.lantern.place
+        placement:
+          ground:
+            rules:
+              rotation: ANY
+              alignment: QUARTER
+            elements:
+              - item: default:table_lamp
+                display-transform: NONE
+                billboard: FIXED
+                translation: 0,0.5,0
+                rotation: -90
+            hitboxes:
+              - position: 0,0,0
+                width: 0.7
+                height: 0.1
+                interactive: true
+              - position: 0,0.1,-0.1
+                width: 0.1
+                height: 0.6
+                interactive: true
+              - position: 0,0.6,0.15
+                width: 0.4
+                height: 0.4
+                interactive: true
+        loot:
+          template: loot_table:normal
+          arguments:
+            item: default:table_lamp
   default:wooden_chair:
     material: paper
     custom-model-data: 2002
@@ -129,4 +99,30 @@ items:
       path: "minecraft:item/custom/wooden_chair"
     behavior:
       type: furniture_item
-      furniture: default:wooden_chair
+      furniture:
+        settings:
+          item: default:wooden_chair
+          sounds:
+            break: minecraft:block.bamboo_wood.break
+            place: minecraft:block.bamboo_wood.place
+        placement:
+          ground:
+            rules:
+              rotation: ANY
+              alignment: ANY
+            elements:
+              - item: default:wooden_chair
+                display-transform: NONE
+                billboard: FIXED
+                translation: 0,0.5,0
+            hitboxes:
+              - position: 0,0,0
+                width: 0.7
+                height: 1.2
+                interactive: true
+                seats:
+                  - 0,0,-0.1 0
+        loot:
+          template: loot_table:normal
+          arguments:
+            item: default:wooden_chair

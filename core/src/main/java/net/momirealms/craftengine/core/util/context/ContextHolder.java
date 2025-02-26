@@ -9,6 +9,8 @@ import java.util.NoSuchElementException;
 import java.util.Optional;
 
 public class ContextHolder {
+    public static final ContextHolder EMPTY = ContextHolder.builder().build();
+
     private final Map<ContextKey<?>, Object> params;
 
     public ContextHolder(Map<ContextKey<?>, Object> params) {

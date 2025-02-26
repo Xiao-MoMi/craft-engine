@@ -7,6 +7,7 @@ import net.momirealms.craftengine.bukkit.plugin.user.BukkitServerPlayer;
 import net.momirealms.craftengine.bukkit.util.ItemUtils;
 import net.momirealms.craftengine.bukkit.util.Reflections;
 import net.momirealms.craftengine.core.item.Item;
+import net.momirealms.craftengine.core.item.ItemBuildContext;
 import net.momirealms.craftengine.core.item.ItemManager;
 import net.momirealms.craftengine.core.item.recipe.CustomCampfireRecipe;
 import net.momirealms.craftengine.core.item.recipe.OptimizedIDItem;
@@ -18,6 +19,7 @@ import net.momirealms.craftengine.core.registry.BuiltInRegistries;
 import net.momirealms.craftengine.core.registry.Holder;
 import net.momirealms.craftengine.core.util.Key;
 import net.momirealms.craftengine.core.util.VersionHelper;
+import net.momirealms.craftengine.core.util.context.ContextHolder;
 import org.bukkit.Material;
 import org.bukkit.block.Block;
 import org.bukkit.block.Campfire;
@@ -413,7 +415,7 @@ public class RecipeEventListener implements Listener {
             return;
         }
 
-        event.setResult(ceRecipe.getResult(null));
+        event.setResult(ceRecipe.getResult(ItemBuildContext.EMPTY));
     }
 
     @EventHandler(ignoreCancelled = true)
@@ -504,14 +506,14 @@ public class RecipeEventListener implements Listener {
 
         Recipe<ItemStack> ceRecipe = this.recipeManager.getRecipe(RecipeTypes.SHAPELESS, input, lastRecipe);
         if (ceRecipe != null) {
-            inventory.setResult(ceRecipe.getResult(serverPlayer));
+            inventory.setResult(ceRecipe.getResult(new ItemBuildContext(serverPlayer, ContextHolder.EMPTY)));
             serverPlayer.setLastUsedRecipe(ceRecipe.id());
             correctCraftingRecipeUsed(inventory, ceRecipe);
             return;
         }
         ceRecipe = this.recipeManager.getRecipe(RecipeTypes.SHAPED, input, lastRecipe);
         if (ceRecipe != null) {
-            inventory.setResult(ceRecipe.getResult(serverPlayer));
+            inventory.setResult(ceRecipe.getResult(new ItemBuildContext(serverPlayer, ContextHolder.EMPTY)));
             serverPlayer.setLastUsedRecipe(ceRecipe.id());
             correctCraftingRecipeUsed(inventory, ceRecipe);
             return;

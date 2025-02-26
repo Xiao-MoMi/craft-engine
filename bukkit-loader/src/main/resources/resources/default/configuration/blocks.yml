@@ -11,43 +11,42 @@ items:
         parent: "minecraft:block/custom/chinese_lantern"
     behavior:
       type: block_item
-      block: default:chinese_lantern
-blocks:
-  default:chinese_lantern:
-    loot:
-      template: loot_table:normal
-      arguments:
-        item: default:chinese_lantern
-    settings:
-      hardness: 0.5
-      resistance: 0.5
-      push-reaction: NORMAL
-      replaceable: false
-      burnable: true
-      burn-chance: 30
-      fire-spread-chance: 100
-      is-redstone-conductor: true
-      is-suffocating: false
-      instrument: HARP
-      luminance: 15
-      map-color: 36
-      item: default:chinese_lantern
-      sounds:
-        break: minecraft:block.wood.break
-        step: minecraft:block.wood.step
-        place: minecraft:block.wood.place
-        hit: minecraft:block.wood.hit
-        fall: minecraft:block.wood.fall
-    state:
-      id: 15
-      state: note_block:15
-      model:
-        path: "minecraft:block/custom/chinese_lantern"
-        generation:
-          parent: "minecraft:block/cube_column"
-          textures:
-            "end": "minecraft:block/custom/chinese_lantern_top"
-            "side": "minecraft:block/custom/chinese_lantern"
+      block:
+        loot:
+          template: loot_table:normal
+          arguments:
+            item: default:chinese_lantern
+        settings:
+          hardness: 0.5
+          resistance: 0.5
+          push-reaction: NORMAL
+          replaceable: false
+          burnable: true
+          burn-chance: 30
+          fire-spread-chance: 100
+          is-redstone-conductor: true
+          is-suffocating: false
+          instrument: HARP
+          luminance: 15
+          map-color: 36
+          item: default:chinese_lantern
+          sounds:
+            break: minecraft:block.wood.break
+            step: minecraft:block.wood.step
+            place: minecraft:block.wood.place
+            hit: minecraft:block.wood.hit
+            fall: minecraft:block.wood.fall
+        state:
+          id: 15
+          state: note_block:15
+          model:
+            path: "minecraft:block/custom/chinese_lantern"
+            generation:
+              parent: "minecraft:block/cube_column"
+              textures:
+                "end": "minecraft:block/custom/chinese_lantern_top"
+                "side": "minecraft:block/custom/chinese_lantern"
+
 recipes:
   default:chinese_lantern:
     type: shaped

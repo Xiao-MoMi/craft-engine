@@ -528,7 +528,7 @@ public class PacketConsumers {
                     Reflections.field$ClientboundAddEntityPacket$data.set(packet, remapped);
                 }
             } else if (entityType == Reflections.instance$EntityType$ITEM_DISPLAY) {
-                // Furnitures
+                // Furniture
                 int entityId = (int) Reflections.field$ClientboundAddEntityPacket$entityId.get(packet);
                 LoadedFurniture furniture = BukkitFurnitureManager.instance().getLoadedFurnitureByBaseEntityId(entityId);
                 if (furniture != null) {

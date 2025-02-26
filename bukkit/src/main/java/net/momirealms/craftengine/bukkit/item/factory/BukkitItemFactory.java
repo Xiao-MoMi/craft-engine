@@ -6,6 +6,7 @@ import net.momirealms.craftengine.bukkit.util.ItemTags;
 import net.momirealms.craftengine.bukkit.util.Reflections;
 import net.momirealms.craftengine.core.item.ItemFactory;
 import net.momirealms.craftengine.core.item.ItemWrapper;
+import net.momirealms.craftengine.core.item.modifier.IdModifier;
 import net.momirealms.craftengine.core.plugin.CraftEngine;
 import net.momirealms.craftengine.core.util.Key;
 import org.bukkit.inventory.ItemStack;
@@ -36,14 +37,14 @@ public abstract class BukkitItemFactory extends ItemFactory<CraftEngine, RTagIte
 
     @Override
     protected Key id(ItemWrapper<ItemStack> item) {
-        Object id = item.get("craftengine:id");
+        Object id = item.get(IdModifier.CRAFT_ENGINE_ID);
         if (id == null) return Key.of(item.getItem().getType().getKey().asString());
         return Key.of(id.toString());
     }
 
     @Override
     protected Optional<Key> customId(ItemWrapper<ItemStack> item) {
-        Object id = item.get("craftengine:id");
+        Object id = item.get(IdModifier.CRAFT_ENGINE_ID);
         if (id == null) return Optional.empty();
         return Optional.of(Key.of(id.toString()));
     }

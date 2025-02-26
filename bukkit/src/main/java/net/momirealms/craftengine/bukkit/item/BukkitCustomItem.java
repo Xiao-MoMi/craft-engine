@@ -5,11 +5,13 @@ import net.momirealms.craftengine.bukkit.util.MaterialUtils;
 import net.momirealms.craftengine.core.entity.player.Player;
 import net.momirealms.craftengine.core.item.CustomItem;
 import net.momirealms.craftengine.core.item.Item;
+import net.momirealms.craftengine.core.item.ItemBuildContext;
 import net.momirealms.craftengine.core.item.ItemSettings;
 import net.momirealms.craftengine.core.item.behavior.EmptyItemBehavior;
 import net.momirealms.craftengine.core.item.behavior.ItemBehavior;
 import net.momirealms.craftengine.core.item.modifier.ItemModifier;
 import net.momirealms.craftengine.core.util.Key;
+import net.momirealms.craftengine.core.util.context.ContextHolder;
 import org.bukkit.Material;
 import org.bukkit.inventory.ItemStack;
 import org.jetbrains.annotations.NotNull;
@@ -51,7 +53,7 @@ public class BukkitCustomItem implements CustomItem<ItemStack> {
     }
 
     @Override
-    public ItemStack buildItemStack(Player player, int count) {
+    public ItemStack buildItemStack(ItemBuildContext context, int count) {
         ItemStack item = new ItemStack(material);
         if (this.modifiers.isEmpty()) {
             return item;
@@ -59,7 +61,7 @@ public class BukkitCustomItem implements CustomItem<ItemStack> {
         Item<ItemStack> wrapped = BukkitCraftEngine.instance().itemManager().wrap(item);
         wrapped.count(count);
         for (ItemModifier<ItemStack> modifier : this.modifiers) {
-            modifier.apply(wrapped, player);
+            modifier.apply(wrapped, context);
         }
         return wrapped.load();
     }
@@ -70,11 +72,11 @@ public class BukkitCustomItem implements CustomItem<ItemStack> {
     }
 
     @Override
-    public Item<ItemStack> buildItem(Player player) {
+    public Item<ItemStack> buildItem(ItemBuildContext context) {
         ItemStack item = new ItemStack(material);
         Item<ItemStack> wrapped = BukkitCraftEngine.instance().itemManager().wrap(item);
         for (ItemModifier<ItemStack> modifier : modifiers()) {
-            modifier.apply(wrapped, player);
+            modifier.apply(wrapped, context);
         }
         return wrapped;
     }

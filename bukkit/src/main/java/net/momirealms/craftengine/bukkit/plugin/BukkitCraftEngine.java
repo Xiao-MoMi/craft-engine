@@ -190,6 +190,8 @@ public class BukkitCraftEngine extends CraftEngine {
         this.packManager.registerConfigSectionParser(this.blockManager);
         // register recipe parser
         this.packManager.registerConfigSectionParser(this.recipeManager);
+        // register category parser
+        this.packManager.registerConfigSectionParser(this.categoryManager);
     }
 
     @Override
