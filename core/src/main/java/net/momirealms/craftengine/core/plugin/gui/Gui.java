@@ -45,4 +45,6 @@ public interface Gui {
     Gui title(Component title);
 
     void open(Player player);
+
+    void onTimer();
 }

@@ -68,6 +68,13 @@ public abstract class AbstractGui implements Gui {
     }
 
     @Override
+    public void onTimer() {
+        for (GuiElement guiElement : this.guiElements) {
+            guiElement.onTimer();
+        }
+    }
+
+    @Override
     public int height() {
         return this.height;
     }

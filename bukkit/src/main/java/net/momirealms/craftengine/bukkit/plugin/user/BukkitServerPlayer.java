@@ -19,10 +19,7 @@ import net.momirealms.craftengine.core.util.VersionHelper;
 import net.momirealms.craftengine.core.world.BlockPos;
 import net.momirealms.craftengine.core.world.Vec3d;
 import net.momirealms.craftengine.core.world.World;
-import org.bukkit.FluidCollisionMode;
-import org.bukkit.GameMode;
-import org.bukkit.Location;
-import org.bukkit.Material;
+import org.bukkit.*;
 import org.bukkit.block.Block;
 import org.bukkit.inventory.EquipmentSlot;
 import org.bukkit.inventory.ItemStack;
@@ -187,6 +184,16 @@ public class BukkitServerPlayer extends Player {
         org.bukkit.entity.Player player = platformPlayer();
         if (player == null) return "Unknown";
         return player.getName();
+    }
+
+    @Override
+    public void playSound(Key sound, float volume, float pitch) {
+        platformPlayer().playSound(platformPlayer(), sound.toString(), SoundCategory.MASTER, volume, pitch);
+    }
+
+    @Override
+    public void giveItem(Item<?> item) {
+        PlayerUtils.giveItem(platformPlayer(), (ItemStack) item.getItem(), item.count());
     }
 
     @Override

@@ -1,6 +1,5 @@
 package net.momirealms.craftengine.core.item.recipe;
 
-import net.momirealms.craftengine.core.item.ItemBuildContext;
 import net.momirealms.craftengine.core.item.recipe.input.RecipeInput;
 import net.momirealms.craftengine.core.item.recipe.input.SingleItemInput;
 import net.momirealms.craftengine.core.util.Key;
@@ -8,7 +7,6 @@ import net.momirealms.craftengine.core.util.Key;
 public abstract class CookingRecipe<T> extends AbstractRecipe<T> {
     protected final CookingRecipeCategory category;
     protected final Ingredient<T> ingredient;
-    protected final CustomRecipeResult<T> result;
     protected final float experience;
     protected final int cookingTime;
 
@@ -19,10 +17,9 @@ public abstract class CookingRecipe<T> extends AbstractRecipe<T> {
                             int cookingTime,
                             float experience,
                             CustomRecipeResult<T> result) {
-        super(id, group);
+        super(id, group, result);
         this.category = category;
         this.ingredient = ingredient;
-        this.result = result;
         this.experience = experience;
         this.cookingTime = cookingTime;
     }
@@ -31,11 +28,6 @@ public abstract class CookingRecipe<T> extends AbstractRecipe<T> {
     @Override
     public boolean matches(RecipeInput input) {
         return this.ingredient.test(((SingleItemInput<T>) input).input());
-    }
-
-    @Override
-    public T getResult(ItemBuildContext context) {
-        return this.result.buildItemStack(context);
     }
 
     public CookingRecipeCategory category() {

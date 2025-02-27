@@ -1,17 +1,25 @@
 package net.momirealms.craftengine.core.plugin.gui;
 
 import net.momirealms.craftengine.core.item.Item;
+import net.momirealms.craftengine.core.plugin.gui.category.ItemBrowserManager;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.List;
 import java.util.function.BiConsumer;
 import java.util.function.Function;
 
 public interface GuiElement {
 
+    static GuiElement EMPTY = GuiElement.constant(null, (e, c) -> c.cancel());
+
     @Nullable
     Item<?> item();
 
     void handleClick(Click click);
+
+    default void onTimer() {
+    }
 
     static GuiElement dynamic(Function<DynamicGuiItemElement, Item<?>> itemSupplier, BiConsumer<DynamicGuiItemElement, Click> action) {
         return new DynamicGuiItemElement(itemSupplier, action);
@@ -29,6 +37,10 @@ public interface GuiElement {
         return new ConstantGuiElement(item, action);
     }
 
+    static GuiElement recipeIngredient(List<Item<?>> ingredients, BiConsumer<RecipeIngredientGuiElement, Click> action) {
+        return new RecipeIngredientGuiElement(ingredients, action);
+    }
+
     abstract class AbstractGuiElement implements GuiElement {
         protected Gui gui;
 
@@ -42,6 +54,44 @@ public interface GuiElement {
 
         public Gui gui() {
             return gui;
+        }
+    }
+
+    class RecipeIngredientGuiElement extends AbstractGuiElement {
+        private int ingredientIndex;
+        private final List<Item<?>> ingredients;
+        private final BiConsumer<RecipeIngredientGuiElement, Click> action;
+
+        public RecipeIngredientGuiElement(List<Item<?>> ingredients, BiConsumer<RecipeIngredientGuiElement, Click> action) {
+            this.ingredients = ingredients;
+            this.ingredientIndex = 0;
+            this.action = action;
+        }
+
+        @Override
+        public @NotNull Item<?> item() {
+            return this.ingredients.get(this.ingredientIndex);
+        }
+
+        @Override
+        public void handleClick(Click click) {
+            this.action.accept(this, click);
+        }
+
+        @Override
+        public void onTimer() {
+            int previous = this.ingredientIndex;
+            increaseIndex();
+            if (previous != ingredientIndex) {
+                notifyItemUpdate();
+            }
+        }
+
+        public void increaseIndex() {
+            this.ingredientIndex++;
+            if (this.ingredientIndex >= this.ingredients.size()) {
+                this.ingredientIndex = 0;
+            }
         }
     }
 
@@ -123,6 +173,7 @@ public interface GuiElement {
                 }
             }
             if (changed) {
+                click.clicker().playSound(ItemBrowserManager.PAGE_SOUND, 0.25f, 1);
                 notifyItemUpdate();
             }
         }

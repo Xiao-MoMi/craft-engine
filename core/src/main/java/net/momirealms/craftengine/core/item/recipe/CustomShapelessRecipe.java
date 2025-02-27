@@ -1,6 +1,5 @@
 package net.momirealms.craftengine.core.item.recipe;
 
-import net.momirealms.craftengine.core.item.ItemBuildContext;
 import net.momirealms.craftengine.core.item.recipe.input.CraftingInput;
 import net.momirealms.craftengine.core.item.recipe.input.RecipeInput;
 import net.momirealms.craftengine.core.plugin.CraftEngine;
@@ -16,12 +15,10 @@ public class CustomShapelessRecipe<T> extends CraftingTableRecipe<T> {
     public static final Factory<?> FACTORY = new Factory<>();
     private final List<Ingredient<T>> ingredients;
     private final PlacementInfo<T> placementInfo;
-    private final CustomRecipeResult<T> result;
 
     public CustomShapelessRecipe(Key id, CraftingRecipeCategory category, String group, List<Ingredient<T>> ingredients, CustomRecipeResult<T> result) {
-        super(id, category, group);
+        super(id, category, group, result);
         this.ingredients = ingredients;
-        this.result = result;
         this.placementInfo = PlacementInfo.create(ingredients);
     }
 
@@ -47,11 +44,6 @@ public class CustomShapelessRecipe<T> extends CraftingTableRecipe<T> {
             return this.ingredients.get(0).test(input.getItem(0));
         }
         return input.finder().canCraft(this);
-    }
-
-    @Override
-    public T getResult(ItemBuildContext context) {
-        return result.buildItemStack(context);
     }
 
     @Override

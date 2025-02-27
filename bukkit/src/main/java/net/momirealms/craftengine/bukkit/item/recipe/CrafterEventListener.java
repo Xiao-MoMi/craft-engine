@@ -82,12 +82,12 @@ public class CrafterEventListener implements Listener {
 
         Recipe<ItemStack> ceRecipe = this.recipeManager.getRecipe(RecipeTypes.SHAPELESS, input);
         if (ceRecipe != null) {
-            event.setResult(ceRecipe.getResult(ItemBuildContext.EMPTY));
+            event.setResult(ceRecipe.result(ItemBuildContext.EMPTY));
             return;
         }
         ceRecipe = this.recipeManager.getRecipe(RecipeTypes.SHAPED, input);
         if (ceRecipe != null) {
-            event.setResult(ceRecipe.getResult(ItemBuildContext.EMPTY));
+            event.setResult(ceRecipe.result(ItemBuildContext.EMPTY));
             return;
         }
         // clear result if not met

@@ -100,7 +100,7 @@ public class BukkitItemManager extends AbstractItemManager<ItemStack> {
         if (material == null) {
             return Optional.empty();
         }
-        return Optional.of(new CloneableConstantItem(new ItemStack(material)));
+        return Optional.of(new CloneableConstantItem(key, new ItemStack(material)));
     }
 
     @Override

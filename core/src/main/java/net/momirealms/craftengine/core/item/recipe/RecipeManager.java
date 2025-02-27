@@ -26,6 +26,8 @@ public interface RecipeManager<T> extends Reloadable, ConfigSectionParser {
 
     List<Recipe<T>> getRecipes(Key type);
 
+    List<Recipe<T>> getRecipeByResult(Key result);
+
     @Nullable
     Recipe<T> getRecipe(Key type, RecipeInput input);
 

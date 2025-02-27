@@ -10,7 +10,9 @@ public interface Recipe<T> {
 
     boolean matches(RecipeInput input);
 
-    T getResult(ItemBuildContext context);
+    T result(ItemBuildContext context);
+
+    CustomRecipeResult<T> result();
 
     @NotNull
     Key type();

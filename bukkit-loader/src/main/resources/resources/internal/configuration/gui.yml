@@ -1,46 +1,52 @@
 images:
   internal:item_browser:
-    height: 139
+    height: 140
     ascent: 18
     font: minecraft:internal
     file: minecraft:font/gui/custom/item_browser.png
     char: '\ub000'
+  internal:category:
+    height: 140
+    ascent: 18
+    font: minecraft:internal
+    file: minecraft:font/gui/custom/category.png
+    char: '\ub001'
   internal:crafting_recipe:
     height: 142
-    ascent: 18
+    ascent: 20
     font: minecraft:internal
     file: minecraft:font/gui/custom/crafting_recipe.png
-    char: '\ub001'
+    char: '\ub002'
   internal:cooking_recipe:
     height: 138
-    ascent: 18
+    ascent: 16
     font: minecraft:internal
     file: minecraft:font/gui/custom/cooking_recipe.png
-    char: '\ub002'
+    char: '\ub003'
   internal:smelting:
     height: 23
-    ascent: 22
+    ascent: 20
     font: minecraft:internal
     file: minecraft:font/gui/custom/smelting.png
-    char: '\ub003'
+    char: '\ub004'
   internal:smoking:
     height: 23
-    ascent: 22
+    ascent: 20
     font: minecraft:internal
     file: minecraft:font/gui/custom/smoking.png
-    char: '\ub004'
+    char: '\ub005'
   internal:blasting:
     height: 23
-    ascent: 22
+    ascent: 20
     font: minecraft:internal
     file: minecraft:font/gui/custom/blasting.png
-    char: '\ub005'
+    char: '\ub006'
   internal:campfire:
     height: 23
-    ascent: 22
+    ascent: 20
     font: minecraft:internal
     file: minecraft:font/gui/custom/campfire.png
-    char: '\ub006'
+    char: '\ub007'
 
 templates:
   internal:2d_icon:
@@ -95,3 +101,40 @@ items:
       texture: return
       name: "<!i><#DAA520>Return to Parent Page"
       lore: null
+  internal:next_recipe_0:
+    material: arrow
+    custom-model-data: 1000
+    data:
+      display-name: "<!i><#FAFAD2>Next Recipe"
+      lore:
+        - "<!i><#F5F5F5><arg:current_page>/<arg:max_page>"
+  internal:next_recipe_1:
+    material: arrow
+    custom-model-data: 1001
+    data:
+      display-name: "<!i><#808080>Next Recipe"
+      lore:
+        - "<!i><#696969><arg:current_page>/<arg:max_page>"
+  internal:previous_recipe_0:
+    material: arrow
+    custom-model-data: 1002
+    data:
+      display-name: "<!i><#FAFAD2>Previous Recipe"
+      lore:
+        - "<!i><#F5F5F5><arg:current_page>/<arg:max_page>"
+  internal:previous_recipe_1:
+    material: arrow
+    custom-model-data: 1003
+    data:
+      display-name: "<!i><#808080>Previous Recipe"
+      lore:
+        - "<!i><#696969><arg:current_page>/<arg:max_page>"
+  internal:get_item:
+    template: "internal:2d_icon"
+    arguments:
+      model_data: 1005
+      texture: get_item
+      name: "<!i><#DAA520>Get Item"
+      lore:
+        - "<!i><gray>Left Click to take one"
+        - "<!i><gray>Right Click to take a stack"

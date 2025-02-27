@@ -1,9 +1,12 @@
 package net.momirealms.craftengine.core.item;
 
 import net.momirealms.craftengine.core.entity.player.Player;
+import net.momirealms.craftengine.core.util.Key;
 import net.momirealms.craftengine.core.util.context.ContextHolder;
 
 public interface BuildableItem<I> {
+
+    Key id();
 
     I buildItemStack(ItemBuildContext context, int count);
 

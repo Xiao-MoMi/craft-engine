@@ -1,6 +1,7 @@
 categories:
   default:palm_tree:
     name: "<!i><green>Palm Tree</green>"
+    priority: 1
     icon: default:palm_log
     list:
       - default:palm_sapling
@@ -10,3 +11,34 @@ categories:
       - default:palm_wood
       - default:stripped_palm_wood
       - default:palm_planks
+  default:topaz:
+    name: "<!i><#FF8C00>Topaz</#FF8C00>"
+    priority: 2
+    icon: default:topaz
+    list:
+      - default:topaz
+      - default:topaz_ore
+      - default:deepslate_topaz_ore
+      - default:topaz_axe
+      - default:topaz_pickaxe
+      - default:topaz_hoe
+      - default:topaz_shovel
+      - default:topaz_sword
+      - default:topaz_bow
+      - default:topaz_crossbow
+      - default:topaz_rod
+  default:furniture:
+    name: "<!i><#FFD700>Furniture</#FFD700>"
+    priority: 3
+    icon: default:table_lamp
+    list:
+      - default:bench
+      - default:table_lamp
+      - default:wooden_chair
+  default:misc:
+    name: "<!i><WHITE>Misc</WHITE>"
+    priority: 4
+    icon: default:chinese_lantern
+    list:
+      - default:chinese_lantern
+      - default:fairy_flower

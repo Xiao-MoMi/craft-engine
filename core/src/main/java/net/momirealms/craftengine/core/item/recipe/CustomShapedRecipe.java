@@ -1,6 +1,5 @@
 package net.momirealms.craftengine.core.item.recipe;
 
-import net.momirealms.craftengine.core.item.ItemBuildContext;
 import net.momirealms.craftengine.core.item.recipe.input.CraftingInput;
 import net.momirealms.craftengine.core.item.recipe.input.RecipeInput;
 import net.momirealms.craftengine.core.plugin.CraftEngine;
@@ -16,13 +15,11 @@ public class CustomShapedRecipe<T> extends CraftingTableRecipe<T> {
     public static final Factory<?> FACTORY = new Factory<CustomShapedRecipe<?>>();
     private final ParsedPattern<T> parsedPattern;
     private final Pattern<T> pattern;
-    private final CustomRecipeResult<T> result;
 
     public CustomShapedRecipe(Key id, CraftingRecipeCategory category, String group, Pattern<T> pattern, CustomRecipeResult<T> result) {
-        super(id, category, group);
+        super(id, category, group, result);
         this.pattern = pattern;
         this.parsedPattern = pattern.parse();
-        this.result = result;
     }
 
     public ParsedPattern<T> parsedPattern() {
@@ -33,11 +30,6 @@ public class CustomShapedRecipe<T> extends CraftingTableRecipe<T> {
     @Override
     public boolean matches(RecipeInput input) {
         return this.parsedPattern.matches((CraftingInput<T>) input);
-    }
-
-    @Override
-    public T getResult(ItemBuildContext context) {
-        return result.buildItemStack(context);
     }
 
     @Override

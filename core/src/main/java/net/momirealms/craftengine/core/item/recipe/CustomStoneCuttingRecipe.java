@@ -1,6 +1,5 @@
 package net.momirealms.craftengine.core.item.recipe;
 
-import net.momirealms.craftengine.core.item.ItemBuildContext;
 import net.momirealms.craftengine.core.item.recipe.input.RecipeInput;
 import net.momirealms.craftengine.core.item.recipe.input.SingleItemInput;
 import net.momirealms.craftengine.core.plugin.CraftEngine;
@@ -18,12 +17,10 @@ import java.util.Set;
 public class CustomStoneCuttingRecipe<T> extends AbstractRecipe<T> {
     public static final Factory<?> FACTORY = new Factory<>();
     protected final Ingredient<T> ingredient;
-    protected final CustomRecipeResult<T> result;
 
     protected CustomStoneCuttingRecipe(Key id, String group, Ingredient<T> ingredient, CustomRecipeResult<T> result) {
-        super(id, group);
+        super(id, group, result);
         this.ingredient = ingredient;
-        this.result = result;
     }
 
     @SuppressWarnings("unchecked")
@@ -33,21 +30,12 @@ public class CustomStoneCuttingRecipe<T> extends AbstractRecipe<T> {
     }
 
     @Override
-    public T getResult(ItemBuildContext context) {
-        return result.buildItemStack(context);
-    }
-
-    @Override
     public @NotNull Key type() {
         return RecipeTypes.STONE_CUTTING;
     }
 
     public Ingredient<T> ingredient() {
         return ingredient;
-    }
-
-    public CustomRecipeResult<T> result() {
-        return result;
     }
 
     public static class Factory<A> implements RecipeFactory<A> {

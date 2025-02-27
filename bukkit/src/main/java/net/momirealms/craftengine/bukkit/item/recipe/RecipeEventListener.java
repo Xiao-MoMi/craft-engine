@@ -415,7 +415,7 @@ public class RecipeEventListener implements Listener {
             return;
         }
 
-        event.setResult(ceRecipe.getResult(ItemBuildContext.EMPTY));
+        event.setResult(ceRecipe.result(ItemBuildContext.EMPTY));
     }
 
     @EventHandler(ignoreCancelled = true)
@@ -506,14 +506,14 @@ public class RecipeEventListener implements Listener {
 
         Recipe<ItemStack> ceRecipe = this.recipeManager.getRecipe(RecipeTypes.SHAPELESS, input, lastRecipe);
         if (ceRecipe != null) {
-            inventory.setResult(ceRecipe.getResult(new ItemBuildContext(serverPlayer, ContextHolder.EMPTY)));
+            inventory.setResult(ceRecipe.result(new ItemBuildContext(serverPlayer, ContextHolder.EMPTY)));
             serverPlayer.setLastUsedRecipe(ceRecipe.id());
             correctCraftingRecipeUsed(inventory, ceRecipe);
             return;
         }
         ceRecipe = this.recipeManager.getRecipe(RecipeTypes.SHAPED, input, lastRecipe);
         if (ceRecipe != null) {
-            inventory.setResult(ceRecipe.getResult(new ItemBuildContext(serverPlayer, ContextHolder.EMPTY)));
+            inventory.setResult(ceRecipe.result(new ItemBuildContext(serverPlayer, ContextHolder.EMPTY)));
             serverPlayer.setLastUsedRecipe(ceRecipe.id());
             correctCraftingRecipeUsed(inventory, ceRecipe);
             return;

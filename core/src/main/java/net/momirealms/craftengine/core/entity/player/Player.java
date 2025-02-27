@@ -4,6 +4,7 @@ import net.kyori.adventure.text.Component;
 import net.momirealms.craftengine.core.entity.Entity;
 import net.momirealms.craftengine.core.item.Item;
 import net.momirealms.craftengine.core.plugin.network.NetWorkUser;
+import net.momirealms.craftengine.core.util.Key;
 import net.momirealms.craftengine.core.world.BlockPos;
 import org.jetbrains.annotations.Nullable;
 
@@ -57,4 +58,12 @@ public abstract class Player extends Entity implements NetWorkUser {
     public abstract boolean canInstabuild();
 
     public abstract String name();
+
+    public void playSound(Key sound) {
+        playSound(sound, 1, 1);
+    }
+
+    public abstract void playSound(Key sound, float volume, float pitch);
+
+    public abstract void giveItem(Item<?> item);
 }
