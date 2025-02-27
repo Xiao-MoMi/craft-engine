@@ -1,19 +1,19 @@
 images:
   internal:item_browser:
     height: 139
-    ascent: 30
+    ascent: 18
     font: minecraft:internal
     file: minecraft:font/gui/custom/item_browser.png
     char: '\ub000'
   internal:crafting_recipe:
     height: 142
-    ascent: 30
+    ascent: 18
     font: minecraft:internal
     file: minecraft:font/gui/custom/crafting_recipe.png
     char: '\ub001'
   internal:cooking_recipe:
     height: 138
-    ascent: 30
+    ascent: 18
     font: minecraft:internal
     file: minecraft:font/gui/custom/cooking_recipe.png
     char: '\ub002'
@@ -93,5 +93,5 @@ items:
     arguments:
       model_data: 1004
       texture: return
-      name: "<!i><#DAA520>Back to Previous Page"
+      name: "<!i><#DAA520>Return to Parent Page"
       lore: null

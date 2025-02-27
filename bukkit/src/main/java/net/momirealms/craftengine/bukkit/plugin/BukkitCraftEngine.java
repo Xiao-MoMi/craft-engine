@@ -11,6 +11,7 @@ import net.momirealms.craftengine.bukkit.item.behavior.BukkitItemBehaviors;
 import net.momirealms.craftengine.bukkit.item.recipe.BukkitRecipeManager;
 import net.momirealms.craftengine.bukkit.plugin.command.BukkitCommandManager;
 import net.momirealms.craftengine.bukkit.plugin.command.BukkitSenderFactory;
+import net.momirealms.craftengine.bukkit.plugin.gui.BukkitGuiManager;
 import net.momirealms.craftengine.bukkit.plugin.injector.BukkitInjector;
 import net.momirealms.craftengine.bukkit.plugin.network.BukkitNetworkManager;
 import net.momirealms.craftengine.bukkit.plugin.papi.ImageExpansion;
@@ -29,6 +30,7 @@ import net.momirealms.craftengine.core.plugin.classpath.ReflectionClassPathAppen
 import net.momirealms.craftengine.core.plugin.command.sender.SenderFactory;
 import net.momirealms.craftengine.core.plugin.dependency.Dependencies;
 import net.momirealms.craftengine.core.plugin.dependency.Dependency;
+import net.momirealms.craftengine.core.plugin.gui.category.ItemBrowserManagerImpl;
 import net.momirealms.craftengine.core.plugin.logger.JavaPluginLogger;
 import net.momirealms.craftengine.core.plugin.scheduler.SchedulerAdapter;
 import net.momirealms.craftengine.core.plugin.scheduler.SchedulerTask;
@@ -131,6 +133,8 @@ public class BukkitCraftEngine extends CraftEngine {
         super.itemManager = new BukkitItemManager(this);
         super.recipeManager = new BukkitRecipeManager(this);
         super.commandManager = new BukkitCommandManager(this);
+        super.itemBrowserManager = new ItemBrowserManagerImpl(this);
+        super.guiManager = new BukkitGuiManager(this);
         super.worldManager = new BukkitWorldManager(this);
         super.enable();
         // tick task
@@ -149,6 +153,7 @@ public class BukkitCraftEngine extends CraftEngine {
                 }
             }, 1, 1);
         }
+
         // compatibility
         // register expansion
         if (this.isPluginEnabled("PlaceholderAPI")) {
@@ -191,7 +196,7 @@ public class BukkitCraftEngine extends CraftEngine {
         // register recipe parser
         this.packManager.registerConfigSectionParser(this.recipeManager);
         // register category parser
-        this.packManager.registerConfigSectionParser(this.categoryManager);
+        this.packManager.registerConfigSectionParser(this.itemBrowserManager);
     }
 
     @Override

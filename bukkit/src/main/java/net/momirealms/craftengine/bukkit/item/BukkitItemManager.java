@@ -20,7 +20,6 @@ import net.momirealms.craftengine.core.pack.LegacyOverridesModel;
 import net.momirealms.craftengine.core.pack.Pack;
 import net.momirealms.craftengine.core.pack.generator.ModelGeneration;
 import net.momirealms.craftengine.core.pack.model.*;
-import net.momirealms.craftengine.core.plugin.CraftEngine;
 import net.momirealms.craftengine.core.plugin.config.ConfigManager;
 import net.momirealms.craftengine.core.registry.BuiltInRegistries;
 import net.momirealms.craftengine.core.registry.Holder;
@@ -182,12 +181,12 @@ public class BukkitItemManager extends AbstractItemManager<ItemStack> {
     private ItemStack createVanillaItemStack(Key id) {
         NamespacedKey key = NamespacedKey.fromString(id.toString());
         if (key == null) {
-            CraftEngine.instance().logger().warn(id + " is not a valid namespaced key");
+            this.plugin.logger().warn(id + " is not a valid namespaced key");
             return new ItemStack(Material.AIR);
         }
         Material material = Registry.MATERIAL.get(key);
         if (material == null) {
-            CraftEngine.instance().logger().warn(id + " is not a valid material");
+            this.plugin.logger().warn(id + " is not a valid material");
             return new ItemStack(Material.AIR);
         }
         return new ItemStack(material);

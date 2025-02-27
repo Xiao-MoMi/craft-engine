@@ -41,7 +41,7 @@ recipe:
 gui:
   browser:
     main:
-      title: "<shift:-10><image:internal:item_browser>"
+      title: "<white><shift:-11><image:internal:item_browser>"
       page-navigation:
         next:
           available: "internal:next_page_0"
@@ -49,8 +49,8 @@ gui:
         previous:
           available: "internal:previous_page_0"
           not-available: "internal:previous_page_1"
-    sub:
-      title: "<shift:-10><image:internal:item_browser>"
+    category:
+      title: "<white><shift:-11><image:internal:item_browser>"
       page-navigation:
         next:
           available: "internal:next_page_0"
@@ -58,6 +58,28 @@ gui:
         previous:
           available: "internal:previous_page_0"
           not-available: "internal:previous_page_1"
+        return: "internal:return"
+    recipe:
+      page-navigation:
+        next:
+          available: "internal:next_recipe_0"
+          not-available: "internal:next_recipe_1"
+        previous:
+          available: "internal:previous_recipe_0"
+          not-available: "internal:previous_recipe_1"
+        return: "internal:return"
+      none:
+        title: "<white><shift:-11><image:internal:none>"
+      blasting:
+        title: "<white><shift:-11><image:internal:blasting>"
+      smelting:
+        title: "<white><shift:-11><image:internal:smelting>"
+      smoking:
+        title: "<white><shift:-11><image:internal:smoking>"
+      campfire:
+        title: "<white><shift:-11><image:internal:campfire>"
+      crafting:
+        title: "<white><shift:-11><image:internal:crafting>"
 
 performance:
   # Maximum chain update depth when fixing client visuals

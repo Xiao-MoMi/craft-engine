@@ -2,7 +2,6 @@ package net.momirealms.craftengine.bukkit.item;
 
 import net.momirealms.craftengine.bukkit.plugin.BukkitCraftEngine;
 import net.momirealms.craftengine.bukkit.util.MaterialUtils;
-import net.momirealms.craftengine.core.entity.player.Player;
 import net.momirealms.craftengine.core.item.CustomItem;
 import net.momirealms.craftengine.core.item.Item;
 import net.momirealms.craftengine.core.item.ItemBuildContext;
@@ -11,7 +10,6 @@ import net.momirealms.craftengine.core.item.behavior.EmptyItemBehavior;
 import net.momirealms.craftengine.core.item.behavior.ItemBehavior;
 import net.momirealms.craftengine.core.item.modifier.ItemModifier;
 import net.momirealms.craftengine.core.util.Key;
-import net.momirealms.craftengine.core.util.context.ContextHolder;
 import org.bukkit.Material;
 import org.bukkit.inventory.ItemStack;
 import org.jetbrains.annotations.NotNull;
@@ -78,6 +76,7 @@ public class BukkitCustomItem implements CustomItem<ItemStack> {
         for (ItemModifier<ItemStack> modifier : modifiers()) {
             modifier.apply(wrapped, context);
         }
+        wrapped.load();
         return wrapped;
     }
 

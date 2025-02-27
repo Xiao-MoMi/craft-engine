@@ -1,6 +1,6 @@
 categories:
   default:palm_tree:
-    name: "<green>Palm Tree</green>"
+    name: "<!i><green>Palm Tree</green>"
     icon: default:palm_log
     list:
       - default:palm_sapling

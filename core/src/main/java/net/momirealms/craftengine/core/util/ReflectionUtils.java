@@ -109,6 +109,22 @@ public class ReflectionUtils {
     }
 
     @Nullable
+    public static Field getDeclaredFieldBackwards(final Class<?> clazz, final Class<?> type, int index) {
+        int i = 0;
+        Field[] fields = clazz.getDeclaredFields();
+        for (int j = fields.length - 1; j >= 0; j--) {
+            Field field = fields[j];
+            if (field.getType() == type) {
+                if (index == i) {
+                    return setAccessible(field);
+                }
+                i++;
+            }
+        }
+        return null;
+    }
+
+    @Nullable
     public static Field getInstanceDeclaredField(@NotNull Class<?> clazz, final Class<?> type, int index) {
         int i = 0;
         for (final Field field : clazz.getDeclaredFields()) {

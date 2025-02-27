@@ -4,7 +4,6 @@ import net.kyori.adventure.text.minimessage.tag.resolver.TagResolver;
 import net.momirealms.craftengine.core.entity.player.Player;
 import net.momirealms.craftengine.core.plugin.minimessage.*;
 import net.momirealms.craftengine.core.util.context.ContextHolder;
-import net.momirealms.craftengine.core.plugin.minimessage.MiniMessageTextContext;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 

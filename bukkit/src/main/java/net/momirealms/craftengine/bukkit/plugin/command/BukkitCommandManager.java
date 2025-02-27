@@ -31,6 +31,7 @@ public class BukkitCommandManager extends AbstractCommandManager<CommandSender> 
                 new ReloadCommand(this, plugin),
                 new GetItemCommand(this, plugin),
                 new GiveItemCommand(this, plugin),
+                new ItemBrowserCommand(this, plugin),
                 new TestCommand(this, plugin),
                 new DebugGetBlockStateRegistryIdCommand(this, plugin),
                 new DebugGetBlockInternalIdCommand(this, plugin),

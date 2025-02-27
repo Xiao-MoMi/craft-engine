@@ -2,10 +2,6 @@ package net.momirealms.craftengine.core.item.modifier;
 
 import net.momirealms.craftengine.core.item.Item;
 import net.momirealms.craftengine.core.item.ItemBuildContext;
-import net.momirealms.craftengine.core.plugin.minimessage.ImageTag;
-import net.momirealms.craftengine.core.plugin.minimessage.NamedArgumentTag;
-import net.momirealms.craftengine.core.plugin.minimessage.PlaceholderTag;
-import net.momirealms.craftengine.core.plugin.minimessage.ShiftTag;
 import net.momirealms.craftengine.core.util.AdventureHelper;
 
 import java.util.List;

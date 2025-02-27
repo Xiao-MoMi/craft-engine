@@ -4088,6 +4088,12 @@ public class Reflections {
             )
     );
 
+    public static final Class<?> clazz$CraftInventory = requireNonNull(
+            ReflectionUtils.getClazz(
+                    BukkitReflectionUtils.assembleCBClass("inventory.CraftInventory")
+            )
+    );
+
     public static final Class<?> clazz$Inventory = requireNonNull(
             ReflectionUtils.getClazz(
                     BukkitReflectionUtils.assembleMCClass("world.entity.player.Inventory"),
@@ -4610,4 +4616,97 @@ public class Reflections {
             ReflectionUtils.getDeclaredMethod(
                     clazz$ServerGamePacketListenerImpl, void.class, clazz$ItemStack
             );
+
+    public static final Class<?> clazz$ClientboundOpenScreenPacket = requireNonNull(
+            ReflectionUtils.getClazz(
+                    BukkitReflectionUtils.assembleMCClass("network.protocol.game.ClientboundOpenScreenPacket"),
+                    BukkitReflectionUtils.assembleMCClass("network.protocol.game.PacketPlayOutOpenWindow")
+            )
+    );
+
+    public static final Class<?> clazz$MenuType = requireNonNull(
+            ReflectionUtils.getClazz(
+                    BukkitReflectionUtils.assembleMCClass("world.inventory.MenuType"),
+                    BukkitReflectionUtils.assembleMCClass("world.inventory.Containers")
+            )
+    );
+
+    public static final Constructor<?> constructor$ClientboundOpenScreenPacket = requireNonNull(
+            ReflectionUtils.getConstructor(
+                    clazz$ClientboundOpenScreenPacket, int.class, clazz$MenuType, clazz$Component
+            )
+    );
+
+    public static final Class<?> clazz$AbstractContainerMenu = requireNonNull(
+            ReflectionUtils.getClazz(
+                    BukkitReflectionUtils.assembleMCClass("world.inventory.AbstractContainerMenu"),
+                    BukkitReflectionUtils.assembleMCClass("world.inventory.Container")
+            )
+    );
+
+    public static final Field field$AbstractContainerMenu$title = requireNonNull(
+            ReflectionUtils.getDeclaredField(
+                    clazz$AbstractContainerMenu, clazz$Component, 0
+            )
+    );
+
+    public static final Field field$Player$containerMenu = requireNonNull(
+            ReflectionUtils.getDeclaredField(
+                    clazz$Player, clazz$AbstractContainerMenu, 0
+            )
+    );
+
+    public static final Field field$AbstractContainerMenu$containerId = requireNonNull(
+            ReflectionUtils.getDeclaredField(
+                    clazz$AbstractContainerMenu, int.class, 1
+            )
+    );
+
+    public static final Field field$AbstractContainerMenu$menuType = requireNonNull(
+            ReflectionUtils.getDeclaredField(
+                    clazz$AbstractContainerMenu, clazz$MenuType, 0
+            )
+    );
+
+    public static final Method method$CraftInventory$getInventory = requireNonNull(
+            ReflectionUtils.getMethod(
+                    clazz$CraftInventory, clazz$Container, new String[]{ "getInventory" }
+            )
+    );
+
+    public static final Class<?> clazz$CraftContainer = requireNonNull(
+            ReflectionUtils.getClazz(
+                    BukkitReflectionUtils.assembleCBClass("inventory.CraftContainer")
+            )
+    );
+
+    public static final Constructor<?> constructor$CraftContainer = requireNonNull(
+            ReflectionUtils.getConstructor(
+                    clazz$CraftContainer, Inventory.class, clazz$Player, int.class
+            )
+    );
+
+    public static final Field field$AbstractContainerMenu$checkReachable = requireNonNull(
+            ReflectionUtils.getDeclaredFieldBackwards(
+                    clazz$AbstractContainerMenu, boolean.class, 0
+            )
+    );
+
+    public static final Method method$CraftContainer$getNotchInventoryType = requireNonNull(
+            ReflectionUtils.getStaticMethod(
+                    clazz$CraftContainer, clazz$MenuType, Inventory.class
+            )
+    );
+
+    public static final Method method$ServerPlayer$nextContainerCounter = requireNonNull(
+            ReflectionUtils.getMethod(
+                    clazz$ServerPlayer, int.class, new String[] {"nextContainerCounter"}
+            )
+    );
+
+    public static final Method method$ServerPlayer$initMenu = requireNonNull(
+            ReflectionUtils.getMethod(
+                    clazz$ServerPlayer, void.class, clazz$AbstractContainerMenu
+            )
+    );
 }

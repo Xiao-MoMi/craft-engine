@@ -24,4 +24,16 @@ public class ContextKey<T> {
     public static <T> ContextKey<T> of(@NotNull String id) {
         return new ContextKey<>(Key.of(id));
     }
+
+    @Override
+    public final boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof ContextKey<?> that)) return false;
+        return id.equals(that.id);
+    }
+
+    @Override
+    public int hashCode() {
+        return id.hashCode();
+    }
 }

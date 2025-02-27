@@ -30,6 +30,7 @@ public class NamedArgumentTag implements TagResolver {
         }
 
         String argumentKey = arguments.popOr("No argument key provided").toString();
+
         ContextKey<String> key = ContextKey.of(Key.of(argumentKey));
         if (!this.context.contexts().has(key)) {
             throw ctx.newException("Invalid argument key", arguments);
