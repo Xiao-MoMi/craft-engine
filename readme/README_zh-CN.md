@@ -29,7 +29,7 @@ CraftEngine 重新定义了 Minecraft 插件架构，作为下一代自定义内
 ## 安装
 
 ### 💻 环境要求
-1. 确保您正在运行 [Paper](https://papermc.io/)（或其分支）1.20.1+ 服务器。CraftEngine 不支持 Spigot，且未来也不太可能支持。该插件包含了超过 10,000 行基于 Paper 服务器的 Minecraft 代码。
+1. 确保您正在运行 [Paper](https://papermc.io/)（或其分支）1.20.1+ 服务器。CraftEngine 不支持 Spigot，且未来也不太可能支持。
 2. 使用 JDK 21 来运行服务器。
 
 ### 🔍 安装方式
@@ -57,7 +57,7 @@ CraftEngine 使用运行时字节码生成技术，在服务器原生级别注�
 - 动态注册方块，完全可控。
 - 物理属性：硬度、引燃几率、亮度等所有标准属性。
 - 自定义行为：通过 API 实现树苗、作物、下落的方块等。
-- 原生兼容性：完全保留原生方块机制（例如音符盒、绊线）。
+- 原版兼容性：完全保留原版方块机制（例如音符盒、绊线）。
 
 📦 数据包集成
 - 定义自定义矿脉。
@@ -101,7 +101,7 @@ CraftEngine 的实现依赖于以下基础库：
 ## 如何贡献
 
 ### 🔌 新功能与 Bug 修复
-如果您提交的 PR 是关于 Bug 修复的，它很可能会被合并。如果您想提交新功能，请提前在 [QQ](https://ti.qq.com/open_qq/index2.html?url=mqqapi%3a%2f%2fuserprofile%2ffriend_profile_card%3fsrc_type%3dweb%26version%3d1.0%26source%3d2%26uin%3d3266959688) 上联系我。
+如果您提交的 PR 是关于 Bug 修复的，它很可能会被合并。如果您想提交新功能，请提前在 [Discord](https://discord.com/invite/WVKdaUPR3S) 上联系我。
 
 ### 🌍 翻译
 1. 克隆此仓库。

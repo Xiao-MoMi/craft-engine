@@ -257,13 +257,15 @@ public class BukkitWorldManager implements WorldManager, Listener {
                 for (int i = 0; i < ceSections.length; i++) {
                     CESection ceSection = ceSections[i];
                     Object section = sections[i];
-                    if (!ceSection.statesContainer().isEmpty()) {
-                        for (int x = 0; x < 16; x++) {
-                            for (int z = 0; z < 16; z++) {
-                                for (int y = 0; y < 16; y++) {
-                                    ImmutableBlockState customState = ceSection.getBlockState(x, y, z);
-                                    if (customState != null && customState.customBlockState() != null) {
-                                        Reflections.method$LevelChunkSection$setBlockState.invoke(section, x, y, z, customState.customBlockState().handle(), false);
+                    if (ConfigManager.restoreCustomBlocks()) {
+                        if (!ceSection.statesContainer().isEmpty()) {
+                            for (int x = 0; x < 16; x++) {
+                                for (int z = 0; z < 16; z++) {
+                                    for (int y = 0; y < 16; y++) {
+                                        ImmutableBlockState customState = ceSection.getBlockState(x, y, z);
+                                        if (customState != null && customState.customBlockState() != null) {
+                                            Reflections.method$LevelChunkSection$setBlockState.invoke(section, x, y, z, customState.customBlockState().handle(), false);
+                                        }
                                     }
                                 }
                             }

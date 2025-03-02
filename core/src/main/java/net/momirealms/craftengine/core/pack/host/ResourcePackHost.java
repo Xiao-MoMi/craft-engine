@@ -15,6 +15,8 @@ import java.io.RandomAccessFile;
 import java.nio.channels.FileChannel;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.TimeUnit;
 
 public class ResourcePackHost {
     private static ResourcePackHost instance;
@@ -24,6 +26,9 @@ public class ResourcePackHost {
     private String ip = null;
     private int port = 0;
     private Path resourcePackPath = null;
+    private final ConcurrentHashMap<String, IpAccessRecord> ipAccessMap = new ConcurrentHashMap<>();
+    private int rateLimit = 1;
+    private long rateLimitInterval = 1000;
 
     public String url() {
         return ConfigManager.hostProtocol() + "://" + ip + ":" + port + "/";
@@ -95,9 +100,32 @@ public class ResourcePackHost {
         return instance;
     }
 
+    public void setRateLimit(int rateLimit, long rateLimitInterval, TimeUnit timeUnit) {
+        this.rateLimit = rateLimit;
+        this.rateLimitInterval = timeUnit.toMillis(rateLimitInterval);
+    }
+
     private class ResourcePackHandler extends SimpleChannelInboundHandler<FullHttpRequest> {
         @Override
         protected void channelRead0(ChannelHandlerContext ctx, FullHttpRequest request) throws Exception {
+            String clientIp = ctx.channel().remoteAddress().toString().split(":")[0];
+
+            IpAccessRecord record = ipAccessMap.compute(clientIp, (k, v) -> {
+                long currentTime = System.currentTimeMillis();
+                if (v == null || currentTime - v.lastAccessTime > rateLimitInterval) {
+                    return new IpAccessRecord(currentTime, 1);
+                } else {
+                    v.accessCount++;
+                    return v;
+                }
+            });
+
+            if (record.accessCount > rateLimit) {
+                CraftEngine.instance().debug(() -> "Rate limit exceeded for IP: " + clientIp);
+                sendError(ctx, HttpResponseStatus.TOO_MANY_REQUESTS);
+                return;
+            }
+
             if (!Files.exists(resourcePackPath)) {
                 CraftEngine.instance().logger().warn("ResourcePack not found: " + resourcePackPath);
                 sendError(ctx, HttpResponseStatus.NOT_FOUND);
@@ -132,6 +160,16 @@ public class ResourcePackHost {
         public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) {
             CraftEngine.instance().logger().warn("Netty server error", cause);
             ctx.close();
+        }
+    }
+
+    private static class IpAccessRecord {
+        long lastAccessTime;
+        int accessCount;
+
+        IpAccessRecord(long lastAccessTime, int accessCount) {
+            this.lastAccessTime = lastAccessTime;
+            this.accessCount = accessCount;
         }
     }
 }

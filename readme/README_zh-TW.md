@@ -29,7 +29,7 @@ CraftEngine 重新定義了 Minecraft 外掛程式架構，作為下一代自定
 ## 安装
 
 ### 💻 環境要求
-1. 確保您正在運行 [Paper](https://papermc.io/)（或其分支）1.20.1+ 伺服器。CraftEngine 不支援 Spigot，且未來也不太可能支援。該外掛程式包含了超過 10,000 行基於 Paper 伺服器的 Minecraft 代碼。
+1. 確保您正在運行 [Paper](https://papermc.io/)（或其分支）1.20.1+ 伺服器。CraftEngine 不支援 Spigot，且未來也不太可能支援。
 2. 使用 JDK 21 來運行伺服器。
 
 ### 🔍 安裝方式
@@ -101,7 +101,7 @@ CraftEngine 的實現依賴於以下基礎庫：
 ## 如何貢獻
 
 ### 🔌 新功能與 Bug 修復
-如果您提交的 PR 是關於 Bug 修復的，它很可能會被合併。如果您想提交新功能，請提前在 [QQ](https://ti.qq.com/open_qq/index2.html?url=mqqapi%3a%2f%2fuserprofile%2ffriend_profile_card%3fsrc_type%3dweb%26version%3d1.0%26source%3d2%26uin%3d3266959688) 上聯繫我。
+如果您提交的 PR 是關於 Bug 修復的，它很可能會被合併。如果您想提交新功能，請提前在 [Discord](https://discord.com/invite/WVKdaUPR3S) 上聯繫我。
 
 ### 🌍 翻譯
 1. 克隆此倉庫。

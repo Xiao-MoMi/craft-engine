@@ -34,6 +34,9 @@ resource-pack:
       ip: localhost
       port: 8163
       protocol: http
+      rate-limit:
+        max-requests: 3
+        reset-interval: 30 # seconds
     external-host:
       url: ""
       sha1: ""
@@ -117,6 +120,8 @@ performance:
     # Disabling this option prevents the plugin from converting custom blocks to vanilla states when chunks are unloaded.
     # While this can improve performance, custom blocks will turn into air if the plugin is uninstalled.
     restore-vanilla-blocks-on-chunk-unload: true
+    # If you disable this, it's a must to disable the above option.
+    restore-custom-blocks-on-chunk-load: true
 
 offset-characters:
   font: minecraft:default

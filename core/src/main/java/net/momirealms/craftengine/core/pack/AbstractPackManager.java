@@ -30,6 +30,7 @@ import java.nio.file.StandardCopyOption;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.*;
+import java.util.concurrent.TimeUnit;
 import java.util.function.BiConsumer;
 import java.util.stream.Stream;
 
@@ -65,6 +66,7 @@ public abstract class AbstractPackManager implements PackManager {
         this.loadConfigs();
         if (ConfigManager.hostMode() == HostMode.SELF_HOST) {
             ResourcePackHost.instance().enable(ConfigManager.hostIP(), ConfigManager.hostPort(), resourcePackPath());
+            ResourcePackHost.instance().setRateLimit(ConfigManager.requestRate(), ConfigManager.requestInterval(), TimeUnit.SECONDS);
         } else {
             ResourcePackHost.instance().disable();
         }
