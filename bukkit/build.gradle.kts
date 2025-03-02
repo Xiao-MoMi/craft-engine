@@ -33,7 +33,7 @@ dependencies {
     // FastUtil
     compileOnly("it.unimi.dsi:fastutil:${rootProject.properties["fastutil_version"]}")
     // Netty
-    compileOnly("io.netty:netty-all:${rootProject.properties["netty_version"]}.Final")
+    compileOnly("io.netty:netty-all:${rootProject.properties["netty_version"]}")
     // ByteBuddy
     compileOnly("net.bytebuddy:byte-buddy:${rootProject.properties["byte_buddy_version"]}")
     // Command

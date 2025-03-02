@@ -41,9 +41,10 @@ import org.jetbrains.annotations.Nullable;
 
 import java.nio.file.Path;
 import java.util.*;
+import java.util.stream.Stream;
 
 public class BukkitItemManager extends AbstractItemManager<ItemStack> {
-    private static final Map<Key, ItemBehavior> VANILLA_ITEM_EXTRA_BEHAVIORS = new HashMap<>();
+    private static final Map<Key, List<ItemBehavior>> VANILLA_ITEM_EXTRA_BEHAVIORS = new HashMap<>();
 
     static {
         registerVanillaItemExtraBehavior(AxeItemBehavior.INSTANCE, ItemKeys.AXES);
@@ -54,7 +55,7 @@ public class BukkitItemManager extends AbstractItemManager<ItemStack> {
 
     private static void registerVanillaItemExtraBehavior(ItemBehavior behavior, Key... items) {
         for (Key key : items) {
-            VANILLA_ITEM_EXTRA_BEHAVIORS.put(key, behavior);
+            VANILLA_ITEM_EXTRA_BEHAVIORS.computeIfAbsent(key, k -> new ArrayList<>()).add(behavior);
         }
     }
 
@@ -225,16 +226,16 @@ public class BukkitItemManager extends AbstractItemManager<ItemStack> {
         if (customItemOptional.isPresent()) {
             CustomItem<ItemStack> customItem = customItemOptional.get();
             Key vanillaMaterial = customItem.material();
-            ItemBehavior behavior = VANILLA_ITEM_EXTRA_BEHAVIORS.get(vanillaMaterial);
+            List<ItemBehavior> behavior = VANILLA_ITEM_EXTRA_BEHAVIORS.get(vanillaMaterial);
             if (behavior != null) {
-                return Optional.of(List.of(behavior, customItem.behavior()));
+                return Optional.of(Stream.concat(customItem.behaviors().stream(), behavior.stream()).toList());
             } else {
-                return Optional.of(List.of(customItem.behavior()));
+                return Optional.of(List.copyOf(customItem.behaviors()));
             }
         } else {
-            ItemBehavior behavior = VANILLA_ITEM_EXTRA_BEHAVIORS.get(key);
+            List<ItemBehavior> behavior = VANILLA_ITEM_EXTRA_BEHAVIORS.get(key);
             if (behavior != null) {
-                return Optional.of(List.of(behavior));
+                return Optional.of(List.copyOf(behavior));
             } else {
                 return Optional.empty();
             }
@@ -277,10 +278,21 @@ public class BukkitItemManager extends AbstractItemManager<ItemStack> {
             itemBuilder.modifier(new ItemModelModifier<>(itemModelKey));
         }
 
-        // Get item behavior
-        Map<String, Object> behaviorSection = MiscUtils.castToMap(section.get("behavior"), true);
-        if (behaviorSection != null) {
-            itemBuilder.behavior(ItemBehaviors.fromMap(pack, path, id, behaviorSection));
+        // Get item behaviors
+        Object behaviorConfig = section.get("behavior");
+        if (behaviorConfig instanceof List<?>) {
+            @SuppressWarnings("unchecked")
+            List<Map<String, Object>> behavior = (List<Map<String, Object>>) behaviorConfig;
+            List<ItemBehavior> behaviors = new ArrayList<>();
+            for (Map<String, Object> behaviorMap : behavior) {
+                behaviors.add(ItemBehaviors.fromMap(pack, path, id, behaviorMap));
+            }
+            itemBuilder.behavior(behaviors);
+        } else if (behaviorConfig instanceof Map<?, ?>) {
+            Map<String, Object> behaviorSection = MiscUtils.castToMap(section.get("behavior"), true);
+            if (behaviorSection != null) {
+                itemBuilder.behavior(ItemBehaviors.fromMap(pack, path, id, behaviorSection));
+            }
         }
 
         // Get item data

@@ -36,7 +36,7 @@ public class BukkitWorldBlock implements WorldBlock {
             Optional<CustomItem<ItemStack>> customItem = BukkitItemManager.instance().getCustomItem(item.id());
             if (customItem.isPresent()) {
                 CustomItem<ItemStack> custom = customItem.get();
-                if (custom.behavior() instanceof BlockItemBehavior blockItemBehavior) {
+                if (custom.behaviors() instanceof BlockItemBehavior blockItemBehavior) {
                     Key blockId = blockItemBehavior.blockId();
                     if (blockId.equals(clickedBlockId)) {
                         return false;

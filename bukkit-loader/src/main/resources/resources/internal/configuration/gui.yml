@@ -47,6 +47,18 @@ images:
     font: minecraft:internal
     file: minecraft:font/gui/custom/campfire.png
     char: '\ub007'
+  internal:stonecutting_recipe:
+    height: 142
+    ascent: 20
+    font: minecraft:internal
+    file: minecraft:font/gui/custom/stonecutting_recipe.png
+    char: '\ub008'
+  internal:no_recipe:
+    height: 140
+    ascent: 18
+    font: minecraft:internal
+    file: minecraft:font/gui/custom/no_recipe.png
+    char: '\ub009'
 
 templates:
   internal:2d_icon:
@@ -138,3 +150,12 @@ items:
       lore:
         - "<!i><gray>Left Click to take one"
         - "<!i><gray>Right Click to take a stack"
+  internal:cooking_info:
+    template: "internal:2d_icon"
+    arguments:
+      model_data: 1006
+      texture: cooking_info
+      name: "<!i><#FF8C00>Cooking Information"
+      lore:
+        - "<!i><gray>Time: <arg:cooking_time>ticks"
+        - "<!i><gray>Experience: <arg:cooking_experience>"

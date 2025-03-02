@@ -28,6 +28,13 @@ public class Dependencies {
             "jar-relocator",
             Collections.emptyList()
     );
+    public static final Dependency NETTY_HTTP = new Dependency(
+            "netty-codec-http",
+            "io.netty",
+            "netty-codec-http",
+            "netty-codec-http",
+            Collections.emptyList()
+    );
     public static final Dependency GEANTY_REF = new Dependency(
             "geantyref",
             "io{}leangen{}geantyref",

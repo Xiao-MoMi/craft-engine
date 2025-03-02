@@ -16,19 +16,9 @@ public interface NetWorkUser {
 
     void sendPacket(Object packet, boolean immediately);
 
-    /**
-     * This is not a stable api for developers to use
-     *
-     * @return connection state
-     */
     @ApiStatus.Internal
     ConnectionState decoderState();
 
-    /**
-     * This is not a stable api for developers to use
-     *
-     * @return connection state
-     */
     @ApiStatus.Internal
     ConnectionState encoderState();
 

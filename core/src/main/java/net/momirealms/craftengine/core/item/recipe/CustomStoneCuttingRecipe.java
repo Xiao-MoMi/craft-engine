@@ -18,7 +18,7 @@ public class CustomStoneCuttingRecipe<T> extends AbstractRecipe<T> {
     public static final Factory<?> FACTORY = new Factory<>();
     protected final Ingredient<T> ingredient;
 
-    protected CustomStoneCuttingRecipe(Key id, String group, Ingredient<T> ingredient, CustomRecipeResult<T> result) {
+    public CustomStoneCuttingRecipe(Key id, String group, Ingredient<T> ingredient, CustomRecipeResult<T> result) {
         super(id, group, result);
         this.ingredient = ingredient;
     }

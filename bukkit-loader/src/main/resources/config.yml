@@ -22,6 +22,22 @@ resource-pack:
     max: LATEST
   merge-external-folders:
     - ModelEngine/resource pack
+  send:
+    send-on-join: true
+    send-on-reload: true
+    kick-if-declined: true
+    prompt: "<yellow>To fully experience our server, please accept our custom resource pack.</yellow>"
+    # If you are hosting the resource pack by yourself, replace `localhost` with your server ip otherwise it would only work on your local pc
+    # If using BungeeCord or Velocity, consider using a proxy-side plugin to handle resource pack delivery.
+    mode: self-host # self-host/external-host/none
+    self-host:
+      ip: localhost
+      port: 8163
+      protocol: http
+    external-host:
+      url: ""
+      sha1: ""
+      uuid: ""
 
 block:
   sound-system:
@@ -40,6 +56,11 @@ recipe:
 
 gui:
   browser:
+    sounds:
+      change-page: "minecraft:ui.loom.take_result"
+      return-page: "minecraft:ui.button.click"
+      pick-item: "minecraft:entity.item.pickup"
+      click-button: "minecraft:ui.hud.bubble_pop"
     main:
       title: "<white><shift:-11><image:internal:item_browser>"
       page-navigation:
@@ -61,6 +82,7 @@ gui:
         return: "internal:return"
     recipe:
       get-item-icon: internal:get_item
+      cooking-information-icon: internal:cooking_info
       page-navigation:
         next:
           available: "internal:next_recipe_0"
@@ -70,7 +92,7 @@ gui:
           not-available: "internal:previous_recipe_1"
         return: "internal:return"
       none:
-        title: "<white><shift:-11><image:internal:none>"
+        title: "<white><shift:-11><image:internal:no_recipe>"
       blasting:
         title: "<white><shift:-11><image:internal:cooking_recipe><shift:-136><image:internal:blasting>"
       smelting:
@@ -81,6 +103,8 @@ gui:
         title: "<white><shift:-11><image:internal:cooking_recipe><shift:-136><image:internal:campfire>"
       crafting:
         title: "<white><shift:-11><image:internal:crafting_recipe>"
+      stonecutting:
+        title: "<white><shift:-11><image:internal:stonecutting_recipe>"
 
 performance:
   # Maximum chain update depth when fixing client visuals

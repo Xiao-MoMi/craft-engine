@@ -1,8 +1,6 @@
 package net.momirealms.craftengine.bukkit.plugin;
 
 import net.momirealms.antigrieflib.AntiGriefLib;
-import net.momirealms.craftengine.bukkit.api.CraftEngineBlocks;
-import net.momirealms.craftengine.bukkit.api.event.AsyncResourcePackGenerateEvent;
 import net.momirealms.craftengine.bukkit.api.event.CraftEngineReloadEvent;
 import net.momirealms.craftengine.bukkit.block.BukkitBlockManager;
 import net.momirealms.craftengine.bukkit.block.behavior.BukkitBlockBehaviors;
@@ -10,6 +8,7 @@ import net.momirealms.craftengine.bukkit.entity.furniture.BukkitFurnitureManager
 import net.momirealms.craftengine.bukkit.item.BukkitItemManager;
 import net.momirealms.craftengine.bukkit.item.behavior.BukkitItemBehaviors;
 import net.momirealms.craftengine.bukkit.item.recipe.BukkitRecipeManager;
+import net.momirealms.craftengine.bukkit.pack.BukkitPackManager;
 import net.momirealms.craftengine.bukkit.plugin.command.BukkitCommandManager;
 import net.momirealms.craftengine.bukkit.plugin.command.BukkitSenderFactory;
 import net.momirealms.craftengine.bukkit.plugin.gui.BukkitGuiManager;
@@ -19,14 +18,12 @@ import net.momirealms.craftengine.bukkit.plugin.papi.ImageExpansion;
 import net.momirealms.craftengine.bukkit.plugin.papi.ShiftExpansion;
 import net.momirealms.craftengine.bukkit.plugin.scheduler.BukkitSchedulerAdapter;
 import net.momirealms.craftengine.bukkit.plugin.user.BukkitServerPlayer;
-import net.momirealms.craftengine.bukkit.util.BlockStateUtils;
 import net.momirealms.craftengine.bukkit.util.EventUtils;
 import net.momirealms.craftengine.bukkit.util.PlaceholderAPIUtils;
 import net.momirealms.craftengine.bukkit.util.Reflections;
 import net.momirealms.craftengine.bukkit.world.BukkitWorldManager;
 import net.momirealms.craftengine.core.entity.player.Player;
 import net.momirealms.craftengine.core.item.ItemManager;
-import net.momirealms.craftengine.core.pack.PackManagerImpl;
 import net.momirealms.craftengine.core.plugin.CraftEngine;
 import net.momirealms.craftengine.core.plugin.classpath.ReflectionClassPathAppender;
 import net.momirealms.craftengine.core.plugin.command.sender.SenderFactory;
@@ -42,7 +39,6 @@ import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.World;
 import org.bukkit.command.CommandSender;
-import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.plugin.java.JavaPlugin;
 
@@ -128,10 +124,7 @@ public class BukkitCraftEngine extends CraftEngine {
         }
         BukkitBlockBehaviors.init();
         BukkitItemBehaviors.init();
-        super.packManager = new PackManagerImpl(this, (rf, zp) -> {
-            AsyncResourcePackGenerateEvent endEvent = new AsyncResourcePackGenerateEvent(rf, zp);
-            EventUtils.fireAndForget(endEvent);
-        });
+        super.packManager = new BukkitPackManager(this);
         super.senderFactory = new BukkitSenderFactory(this);
         super.itemManager = new BukkitItemManager(this);
         super.recipeManager = new BukkitRecipeManager(this);
@@ -277,6 +270,11 @@ public class BukkitCraftEngine extends CraftEngine {
     @Override
     public BukkitNetworkManager networkManager() {
         return (BukkitNetworkManager) networkManager;
+    }
+
+    @Override
+    public BukkitPackManager packManager() {
+        return (BukkitPackManager) packManager;
     }
 
     @SuppressWarnings("ResultOfMethodCallIgnored")

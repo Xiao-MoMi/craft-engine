@@ -12,7 +12,7 @@ import java.util.Map;
 public class VanillaRecipeReader1_21_2 extends VanillaRecipeReader1_20_5 {
 
     @Override
-    protected List<String> readCookingIngredients(JsonElement json) {
+    protected List<String> readSingleIngredient(JsonElement json) {
         if (json.isJsonPrimitive()) {
             return List.of(json.getAsString());
         } else {

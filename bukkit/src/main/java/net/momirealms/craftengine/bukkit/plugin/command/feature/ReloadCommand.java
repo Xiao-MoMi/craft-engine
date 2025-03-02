@@ -12,6 +12,7 @@ import org.incendo.cloud.parser.standard.EnumParser;
 import java.util.Optional;
 
 public class ReloadCommand extends BukkitCommandFeature<CommandSender> {
+    public static boolean RELOAD_PACK_FLAG = false;
 
     public ReloadCommand(CraftEngineCommandManager<CommandSender> commandManager, CraftEngine plugin) {
         super(commandManager, plugin);
@@ -34,6 +35,7 @@ public class ReloadCommand extends BukkitCommandFeature<CommandSender> {
                     }
                     if (argument == ReloadArgument.CONFIG) {
                         try {
+                            RELOAD_PACK_FLAG = true;
                             long time1 = System.currentTimeMillis();
                             plugin().reload();
                             long time2 = System.currentTimeMillis();

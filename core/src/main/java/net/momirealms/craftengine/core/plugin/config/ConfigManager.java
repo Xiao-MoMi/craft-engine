@@ -9,10 +9,13 @@ import dev.dejvokep.boostedyaml.settings.general.GeneralSettings;
 import dev.dejvokep.boostedyaml.settings.loader.LoaderSettings;
 import dev.dejvokep.boostedyaml.settings.updater.UpdaterSettings;
 import dev.dejvokep.boostedyaml.utils.format.NodeRole;
+import net.kyori.adventure.text.Component;
+import net.momirealms.craftengine.core.pack.host.HostMode;
 import net.momirealms.craftengine.core.plugin.CraftEngine;
 import net.momirealms.craftengine.core.plugin.PluginProperties;
 import net.momirealms.craftengine.core.plugin.Reloadable;
 import net.momirealms.craftengine.core.plugin.locale.TranslationManager;
+import net.momirealms.craftengine.core.util.AdventureHelper;
 import net.momirealms.craftengine.core.util.ReflectionUtils;
 
 import java.io.File;
@@ -21,11 +24,10 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 public class ConfigManager implements Reloadable {
     private static ConfigManager instance;
@@ -60,7 +62,18 @@ public class ConfigManager implements Reloadable {
     protected boolean enableSoundSystem;
     protected boolean enableRecipeSystem;
     protected List<String> foldersToMerge;
-    protected boolean restoreVanillaBlocks;
+	protected boolean restoreVanillaBlocks;
+    protected HostMode hostMode;
+    protected int hostPort;
+    protected String hostIP;
+    protected String hostProtocol;
+    protected boolean kickDeclined;
+    protected boolean sendPackOnJoin;
+    protected boolean sendPackOnReload;
+    protected Component resourcePackPrompt;
+    protected String packUrl;
+    protected String packSha1;
+    protected UUID packUUID;
 
     public ConfigManager(CraftEngine plugin) {
         this.plugin = plugin;
@@ -120,6 +133,19 @@ public class ConfigManager implements Reloadable {
         packMinVersion = getVersion(config.get("resource-pack.supported-version.min", "1.20").toString());
         packMaxVersion = getVersion(config.get("resource-pack.supported-version.max", "LATEST").toString());
         foldersToMerge = config.getStringList("resource-pack.merge-external-folders");
+        hostMode = HostMode.valueOf(config.getString("resource-pack.send.mode", "self-host").replace("-", "_").toUpperCase(Locale.ENGLISH));
+        hostPort = config.getInt("resource-pack.send.self-host.port", 8163);
+        hostIP = config.getString("resource-pack.send.self-host.ip", "localhost");
+        hostProtocol = config.getString("resource-pack.send.self-host.protocol", "http");
+        sendPackOnJoin = config.getBoolean("resource-pack.send.send-on-join", true);
+        sendPackOnReload = config.getBoolean("resource-pack.send.send-on-reload", true);
+        kickDeclined = config.getBoolean("resource-pack.send.kick-if-declined", true);
+        packUrl = config.getString("resource-pack.send.external-host.url", "");
+        packSha1 = config.getString("resource-pack.send.external-host.sha1", "");
+        String packUUIDStr = config.getString("resource-pack.send.external-host.uuid", "");
+        packUUID = packUUIDStr.isEmpty() ? UUID.nameUUIDFromBytes(packUrl.getBytes(StandardCharsets.UTF_8)) : UUID.fromString(packUUIDStr);
+        resourcePackPrompt = AdventureHelper.miniMessage(config.getString("resource-pack.send.prompt", "<yellow>To fully experience our server, please accept our custom resource pack.</yellow>"));
+
         // performance
         maxChainUpdate = config.getInt("performance.max-block-chain-update-limit", 64);
         forceUpdateLight = config.getBoolean("performance.light-system.force-update-light", false);
@@ -228,6 +254,50 @@ public class ConfigManager implements Reloadable {
 
     public static List<String> foldersToMerge() {
         return instance.foldersToMerge;
+    }
+
+    public static HostMode hostMode() {
+        return instance.hostMode;
+    }
+
+    public static String hostIP() {
+        return instance.hostIP;
+    }
+
+    public static int hostPort() {
+        return instance.hostPort;
+    }
+
+    public static boolean kickOnDeclined() {
+        return instance.kickDeclined;
+    }
+
+    public static Component resourcePackPrompt() {
+        return instance.resourcePackPrompt;
+    }
+
+    public static String hostProtocol() {
+        return instance.hostProtocol;
+    }
+
+    public static String externalPackUrl() {
+        return instance.packUrl;
+    }
+
+    public static String externalPackSha1() {
+        return instance.packSha1;
+    }
+
+    public static UUID externalPackUUID() {
+        return instance.packUUID;
+    }
+
+    public static boolean sendPackOnJoin() {
+        return instance.sendPackOnJoin;
+    }
+
+    public static boolean sendPackOnReload() {
+        return instance.sendPackOnReload;
     }
 
     public YamlDocument loadOrCreateYamlData(String fileName) {

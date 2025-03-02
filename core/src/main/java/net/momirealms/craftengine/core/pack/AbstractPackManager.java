@@ -7,6 +7,8 @@ import net.momirealms.craftengine.core.font.BitmapImage;
 import net.momirealms.craftengine.core.font.Font;
 import net.momirealms.craftengine.core.pack.generator.ModelGeneration;
 import net.momirealms.craftengine.core.pack.generator.ModelGenerator;
+import net.momirealms.craftengine.core.pack.host.HostMode;
+import net.momirealms.craftengine.core.pack.host.ResourcePackHost;
 import net.momirealms.craftengine.core.pack.model.ItemModel;
 import net.momirealms.craftengine.core.plugin.CraftEngine;
 import net.momirealms.craftengine.core.plugin.PluginProperties;
@@ -25,13 +27,15 @@ import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.util.*;
 import java.util.function.BiConsumer;
 import java.util.stream.Stream;
 
 import static net.momirealms.craftengine.core.util.MiscUtils.castToMap;
 
-public class PackManagerImpl implements PackManager {
+public abstract class AbstractPackManager implements PackManager {
     private static final String LEGACY_TEMPLATES = PluginProperties.getValue("legacy-templates").replace(".", "_");
     private static final String LATEST_TEMPLATES = PluginProperties.getValue("latest-templates").replace(".", "_");
     private final CraftEngine plugin;
@@ -39,16 +43,31 @@ public class PackManagerImpl implements PackManager {
     private final Map<String, Pack> loadedPacks = new HashMap<>();
     private final Map<String, ConfigSectionParser> sectionParsers = new HashMap<>();
     private final TreeMap<ConfigSectionParser, List<CachedConfig>> cachedConfigs = new TreeMap<>();
+    protected String packHash;
+    protected UUID packUUID;
 
-    public PackManagerImpl(CraftEngine plugin, BiConsumer<Path, Path> eventDispatcher) {
+    public AbstractPackManager(CraftEngine plugin, BiConsumer<Path, Path> eventDispatcher) {
         this.plugin = plugin;
         this.eventDispatcher = eventDispatcher;
+        this.calculateHash();
+    }
+
+    @Override
+    public Path resourcePackPath() {
+        return this.plugin.dataFolderPath()
+                .resolve("generated")
+                .resolve("resource_pack.zip");
     }
 
     @Override
     public void load() {
         this.loadPacks();
         this.loadConfigs();
+        if (ConfigManager.hostMode() == HostMode.SELF_HOST) {
+            ResourcePackHost.instance().enable(ConfigManager.hostIP(), ConfigManager.hostPort(), resourcePackPath());
+        } else {
+            ResourcePackHost.instance().disable();
+        }
     }
 
     @Override
@@ -128,14 +147,18 @@ public class PackManagerImpl implements PackManager {
         plugin.saveResource("resources/internal/resourcepack/assets/minecraft/textures/font/gui/custom/smoking.png");
         plugin.saveResource("resources/internal/resourcepack/assets/minecraft/textures/font/gui/custom/smelting.png");
         plugin.saveResource("resources/internal/resourcepack/assets/minecraft/textures/font/gui/custom/campfire.png");
+        plugin.saveResource("resources/internal/resourcepack/assets/minecraft/textures/font/gui/custom/stonecutting_recipe.png");
         plugin.saveResource("resources/internal/resourcepack/assets/minecraft/textures/font/gui/custom/cooking_recipe.png");
         plugin.saveResource("resources/internal/resourcepack/assets/minecraft/textures/font/gui/custom/crafting_recipe.png");
+        plugin.saveResource("resources/internal/resourcepack/assets/minecraft/textures/font/gui/custom/no_recipe.png");
         plugin.saveResource("resources/internal/resourcepack/assets/minecraft/textures/item/custom/gui/get_item.png");
         plugin.saveResource("resources/internal/resourcepack/assets/minecraft/textures/item/custom/gui/next_page_0.png");
         plugin.saveResource("resources/internal/resourcepack/assets/minecraft/textures/item/custom/gui/next_page_1.png");
         plugin.saveResource("resources/internal/resourcepack/assets/minecraft/textures/item/custom/gui/previous_page_0.png");
         plugin.saveResource("resources/internal/resourcepack/assets/minecraft/textures/item/custom/gui/previous_page_1.png");
         plugin.saveResource("resources/internal/resourcepack/assets/minecraft/textures/item/custom/gui/return.png");
+        plugin.saveResource("resources/internal/resourcepack/assets/minecraft/textures/item/custom/gui/cooking_info.png");
+        plugin.saveResource("resources/internal/resourcepack/assets/minecraft/textures/item/custom/gui/cooking_info.png.mcmeta");
         // default pack
         plugin.saveResource("resources/default/pack.yml");
         // pack meta
@@ -330,10 +353,7 @@ public class PackManagerImpl implements PackManager {
             this.obfuscate(generatedPackPath, protectZip, obfuscate);
         }
 
-        Path zipFile = this.plugin.dataFolderPath()
-                .resolve("generated")
-                .resolve("resource_pack.zip");
-
+        Path zipFile = resourcePackPath();
         try {
             ZipUtils.zipDirectory(generatedPackPath, zipFile, protectZip, obfuscate);
         } catch (IOException e) {
@@ -344,6 +364,22 @@ public class PackManagerImpl implements PackManager {
         this.plugin.logger().info("Finished generating resource pack in " + (end - start) + "ms");
 
         this.eventDispatcher.accept(generatedPackPath, zipFile);
+        this.calculateHash();
+    }
+
+    private void calculateHash() {
+        Path zipFile = resourcePackPath();
+        if (Files.exists(zipFile)) {
+            try {
+                this.packHash = computeSHA1(zipFile);
+                this.packUUID = UUID.nameUUIDFromBytes(this.packHash.getBytes(StandardCharsets.UTF_8));
+            } catch (IOException | NoSuchAlgorithmException e) {
+                this.plugin.logger().severe("Error calculating resource pack hash", e);
+            }
+        } else {
+            this.packHash = "";
+            this.packUUID = UUID.nameUUIDFromBytes("EMPTY".getBytes(StandardCharsets.UTF_8));
+        }
     }
 
     private void generateSounds(Path generatedPackPath) {
@@ -764,6 +800,23 @@ public class PackManagerImpl implements PackManager {
                 }
             }
         }
+    }
+
+    protected String computeSHA1(Path path) throws IOException, NoSuchAlgorithmException {
+        InputStream file = Files.newInputStream(path);
+        MessageDigest digest = MessageDigest.getInstance("SHA-1");
+        byte[] buffer = new byte[8192];
+        int bytesRead;
+        while ((bytesRead = file.read(buffer)) != -1) {
+            digest.update(buffer, 0, bytesRead);
+        }
+        file.close();
+
+        StringBuilder hexString = new StringBuilder(40);
+        for (byte b : digest.digest()) {
+            hexString.append(String.format("%02x", b));
+        }
+        return hexString.toString();
     }
 
     private void obfuscate(Path folderPath, int protectZipLevel, int obfuscateLevel) {

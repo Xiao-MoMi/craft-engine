@@ -23,6 +23,7 @@ import net.momirealms.craftengine.core.util.MiscUtils;
 import net.momirealms.craftengine.core.util.Pair;
 import net.momirealms.craftengine.core.world.Vec3d;
 import org.bukkit.Location;
+import org.bukkit.SoundCategory;
 import org.bukkit.World;
 
 import java.nio.file.Path;
@@ -111,7 +112,7 @@ public class FurnitureItemBehavior extends ItemBehavior {
             return InteractionResult.FAIL;
         }
 
-        LoadedFurniture loadedFurniture = BukkitFurnitureManager.instance().place(customFurniture, furnitureLocation.clone(), anchorType, true);
+        LoadedFurniture loadedFurniture = BukkitFurnitureManager.instance().place(customFurniture, furnitureLocation.clone(), anchorType, false);
 
         FurniturePlaceEvent placeEvent = new FurniturePlaceEvent(bukkitPlayer, loadedFurniture, furnitureLocation, context.getHand());
         if (EventUtils.fireAndCheckCancel(placeEvent)) {
@@ -124,6 +125,8 @@ public class FurnitureItemBehavior extends ItemBehavior {
             item.count(item.count() - 1);
             item.load();
         }
+
+        furnitureLocation.getWorld().playSound(furnitureLocation, customFurniture.settings().sounds().placeSound().toString(), SoundCategory.BLOCKS,1f, 1f);
         player.swingHand(context.getHand());
         return InteractionResult.SUCCESS;
     }

@@ -26,7 +26,7 @@ public interface CustomItem<I> extends BuildableItem<I> {
     Item<I> buildItem(ItemBuildContext context);
 
     @NotNull
-    ItemBehavior behavior();
+    List<ItemBehavior> behaviors();
 
     interface Builder<I> {
         Builder<I> id(Key id);
@@ -38,6 +38,8 @@ public interface CustomItem<I> extends BuildableItem<I> {
         Builder<I> modifier(ItemModifier<I> modifier);
 
         Builder<I> behavior(ItemBehavior behavior);
+
+        Builder<I> behavior(List<ItemBehavior> behaviors);
 
         Builder<I> settings(ItemSettings settings);
 

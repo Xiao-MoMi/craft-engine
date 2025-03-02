@@ -7,6 +7,7 @@ import net.momirealms.craftengine.core.font.FontManagerImpl;
 import net.momirealms.craftengine.core.item.ItemManager;
 import net.momirealms.craftengine.core.item.recipe.RecipeManager;
 import net.momirealms.craftengine.core.pack.PackManager;
+import net.momirealms.craftengine.core.pack.host.ResourcePackHost;
 import net.momirealms.craftengine.core.plugin.classpath.ClassPathAppender;
 import net.momirealms.craftengine.core.plugin.command.CraftEngineCommandManager;
 import net.momirealms.craftengine.core.plugin.command.sender.SenderFactory;
@@ -139,6 +140,7 @@ public abstract class CraftEngine implements Plugin {
         if (this.guiManager != null) this.guiManager.disable();
         if (this.scheduler != null) this.scheduler.shutdownScheduler();
         if (this.scheduler != null) this.scheduler.shutdownExecutor();
+        ResourcePackHost.instance().disable();
     }
 
     protected void delayedEnable() {
@@ -153,6 +155,7 @@ public abstract class CraftEngine implements Plugin {
                 Dependencies.BSTATS_BASE,
                 Dependencies.CAFFEINE,
                 Dependencies.GEANTY_REF,
+                Dependencies.NETTY_HTTP,
                 Dependencies.CLOUD_CORE, Dependencies.CLOUD_SERVICES,
                 Dependencies.GSON,
                 Dependencies.SLF4J_API, Dependencies.SLF4J_SIMPLE,

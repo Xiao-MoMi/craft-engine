@@ -6,7 +6,6 @@ import net.momirealms.craftengine.core.item.CustomItem;
 import net.momirealms.craftengine.core.item.Item;
 import net.momirealms.craftengine.core.item.ItemBuildContext;
 import net.momirealms.craftengine.core.item.ItemSettings;
-import net.momirealms.craftengine.core.item.behavior.EmptyItemBehavior;
 import net.momirealms.craftengine.core.item.behavior.ItemBehavior;
 import net.momirealms.craftengine.core.item.modifier.ItemModifier;
 import net.momirealms.craftengine.core.util.Key;
@@ -23,10 +22,10 @@ public class BukkitCustomItem implements CustomItem<ItemStack> {
     private final Key materialKey;
     private final Material material;
     private final List<ItemModifier<ItemStack>> modifiers;
-    private final ItemBehavior behavior;
+    private final List<ItemBehavior> behavior;
     private final ItemSettings settings;
 
-    public BukkitCustomItem(Key id, Key materialKey, Material material, List<ItemModifier<ItemStack>> modifiers, ItemBehavior behavior, ItemSettings settings) {
+    public BukkitCustomItem(Key id, Key materialKey, Material material, List<ItemModifier<ItemStack>> modifiers, List<ItemBehavior> behavior, ItemSettings settings) {
         this.id = id;
         this.material = material;
         this.modifiers = modifiers;
@@ -81,7 +80,7 @@ public class BukkitCustomItem implements CustomItem<ItemStack> {
     }
 
     @Override
-    public @NotNull ItemBehavior behavior() {
+    public @NotNull List<ItemBehavior> behaviors() {
         return this.behavior;
     }
 
@@ -93,7 +92,7 @@ public class BukkitCustomItem implements CustomItem<ItemStack> {
         private Key id;
         private Material material;
         private Key materialKey;
-        private ItemBehavior behavior = EmptyItemBehavior.INSTANCE;
+        private List<ItemBehavior> behavior = List.of();
         private ItemSettings settings = ItemSettings.of();
         private final List<ItemModifier<ItemStack>> modifiers = new ArrayList<>();
 
@@ -124,7 +123,13 @@ public class BukkitCustomItem implements CustomItem<ItemStack> {
 
         @Override
         public Builder<ItemStack> behavior(ItemBehavior behavior) {
-            this.behavior=  behavior;
+            this.behavior=  List.of(behavior);
+            return this;
+        }
+
+        @Override
+        public Builder<ItemStack> behavior(List<ItemBehavior> behaviors) {
+            this.behavior = behaviors;
             return this;
         }
 

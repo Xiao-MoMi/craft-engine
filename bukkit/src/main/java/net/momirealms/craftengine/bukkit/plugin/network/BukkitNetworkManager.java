@@ -21,6 +21,7 @@ import net.momirealms.craftengine.core.util.VersionHelper;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
+import org.bukkit.event.EventPriority;
 import org.bukkit.event.HandlerList;
 import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerJoinEvent;
@@ -99,9 +100,7 @@ public class BukkitNetworkManager implements NetworkManager, Listener {
         };
         this.immediatePacketConsumer = (serverPlayer, packet) -> {
             try {
-                Reflections.method$Connection$sendPacketImmediate.invoke(Reflections.field$ServerCommonPacketListenerImpl$connection.get(Reflections.field$ServerPlayer$connection.get(serverPlayer)),
-                        packet, null, true
-                );
+                Reflections.method$Connection$sendPacketImmediate.invoke(Reflections.field$ServerCommonPacketListenerImpl$connection.get(Reflections.field$ServerPlayer$connection.get(serverPlayer)), packet, null, true);
             } catch (ReflectiveOperationException e) {
                 plugin.logger().warn("Failed to invoke send packet", e);
             }
@@ -136,7 +135,7 @@ public class BukkitNetworkManager implements NetworkManager, Listener {
         return instance;
     }
 
-    @EventHandler
+    @EventHandler(priority = EventPriority.LOWEST)
     public void onPlayerJoin(PlayerJoinEvent event) {
         Player player = event.getPlayer();
         BukkitServerPlayer user = (BukkitServerPlayer) getUser(player);

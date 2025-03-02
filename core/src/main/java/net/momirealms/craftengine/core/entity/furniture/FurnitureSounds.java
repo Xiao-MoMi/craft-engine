@@ -22,8 +22,8 @@ public class FurnitureSounds {
         if (map == null) return EMPTY;
         return new FurnitureSounds(
                 Key.of(map.getOrDefault("break", "minecraft:intentionally_empty").toString()),
-                Key.of(map.getOrDefault("step", "minecraft:intentionally_empty").toString()),
-                Key.of(map.getOrDefault("place", "minecraft:intentionally_empty").toString())
+                Key.of(map.getOrDefault("place", "minecraft:intentionally_empty").toString()),
+                Key.of(map.getOrDefault("rotate", "minecraft:intentionally_empty").toString())
         );
     }
 

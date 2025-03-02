@@ -77,6 +77,40 @@ public class ItemEventListener implements Listener {
         }
     }
 
+    @EventHandler
+    public void onInteractAir(PlayerInteractEvent event) {
+        if (event.getAction() != Action.RIGHT_CLICK_AIR) return;
+        Player bukkitPlayer = event.getPlayer();
+        BukkitServerPlayer player = this.plugin.adapt(bukkitPlayer);
+        InteractionHand hand = event.getHand() == EquipmentSlot.HAND ? InteractionHand.MAIN_HAND : InteractionHand.OFF_HAND;
+        if (cancelEventIfHasInteraction(event, player, hand)) {
+            return;
+        }
+
+        if (player.isSpectatorMode() || player.isAdventureMode()) {
+            return;
+        }
+
+        // Gets the item in hand
+        Item<ItemStack> itemInHand = player.getItemInHand(hand);
+        // should never be null
+        if (itemInHand == null) return;
+        Optional<List<ItemBehavior>> optionalItemBehaviors = itemInHand.getItemBehavior();
+
+        if (optionalItemBehaviors.isPresent()) {
+            for (ItemBehavior itemBehavior : optionalItemBehaviors.get()) {
+                InteractionResult result = itemBehavior.use(player.level(), player, hand);
+                if (result == InteractionResult.SUCCESS_AND_CANCEL) {
+                    event.setCancelled(true);
+                    return;
+                }
+                if (result != InteractionResult.PASS) {
+                    return;
+                }
+            }
+        }
+    }
+
     @EventHandler(priority = EventPriority.HIGHEST)
     public void onInteractAtBlock(PlayerInteractEvent event) {
         if (event.getAction() != Action.RIGHT_CLICK_BLOCK) return;
@@ -87,14 +121,8 @@ public class ItemEventListener implements Listener {
         Block clickedBlock = Objects.requireNonNull(event.getClickedBlock());
         BukkitServerPlayer player = this.plugin.adapt(bukkitPlayer);
         InteractionHand hand = event.getHand() == EquipmentSlot.HAND ? InteractionHand.MAIN_HAND : InteractionHand.OFF_HAND;
-        if (hand == InteractionHand.OFF_HAND) {
-            int currentTicks = player.gameTicks();
-            // The client will send multiple packets to the server if the client thinks it should
-            // However, if the main hand item interaction is successful, the off-hand item should be blocked.
-            if (!player.updateLastSuccessfulInteractionTick(currentTicks)) {
-                event.setCancelled(true);
-                return;
-            }
+        if (cancelEventIfHasInteraction(event, player, hand)) {
+            return;
         }
 
         // Gets the item in hand
@@ -179,5 +207,18 @@ public class ItemEventListener implements Listener {
                 plugin.logger().warn("Failed to get CraftBlockData", e);
             }
         }
+    }
+
+    private boolean cancelEventIfHasInteraction(PlayerInteractEvent event, BukkitServerPlayer player, InteractionHand hand) {
+        if (hand == InteractionHand.OFF_HAND) {
+            int currentTicks = player.gameTicks();
+            // The client will send multiple packets to the server if the client thinks it should
+            // However, if the main hand item interaction is successful, the off-hand item should be blocked.
+            if (!player.updateLastSuccessfulInteractionTick(currentTicks)) {
+                event.setCancelled(true);
+                return true;
+            }
+        }
+        return false;
     }
 }

@@ -20,4 +20,10 @@ public class VanillaRecipeReader1_20_5 extends VanillaRecipeReader1_20 {
     protected RecipeResult readCookingResult(JsonElement object) {
         return readCraftingResult(object.getAsJsonObject());
     }
+
+    @NotNull
+    @Override
+    protected RecipeResult readStoneCuttingResult(JsonObject json) {
+        return readCraftingResult(json.getAsJsonObject("result"));
+    }
 }
