@@ -1,9 +1,6 @@
 package net.momirealms.craftengine.core.pack;
 
-import com.google.gson.JsonArray;
-import com.google.gson.JsonElement;
-import com.google.gson.JsonObject;
-import com.google.gson.JsonParser;
+import com.google.gson.*;
 import dev.dejvokep.boostedyaml.YamlDocument;
 import dev.dejvokep.boostedyaml.block.implementation.Section;
 import net.momirealms.craftengine.core.font.BitmapImage;
@@ -35,6 +32,7 @@ import java.security.NoSuchAlgorithmException;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.function.BiConsumer;
+import java.util.stream.Stream;
 
 import static net.momirealms.craftengine.core.util.MiscUtils.castToMap;
 
@@ -347,10 +345,19 @@ public abstract class AbstractPackManager implements PackManager {
         this.generateItemModels(generatedPackPath, this.plugin.itemManager());
         this.generateItemModels(generatedPackPath, this.plugin.blockManager());
         this.generateSounds(generatedPackPath);
+        // TODO: 混淆资源包
+        Section protectionSettings = plugin.configManager().settings()
+                .getSection("resource-pack")
+                .getSection("protection");
+        int obfuscate = protectionSettings.getInt("obfuscation");
+        int protectZip = protectionSettings.getInt("break-zip-format");
+        if (obfuscate != 0) {
+            this.obfuscate(generatedPackPath, protectZip, obfuscate);
+        }
 
         Path zipFile = resourcePackPath();
         try {
-            ZipUtils.zipDirectory(generatedPackPath, zipFile);
+            ZipUtils.zipDirectory(generatedPackPath, zipFile, protectZip, obfuscate);
         } catch (IOException e) {
             this.plugin.logger().severe("Error zipping resource pack", e);
         }
@@ -812,5 +819,26 @@ public abstract class AbstractPackManager implements PackManager {
             hexString.append(String.format("%02x", b));
         }
         return hexString.toString();
+    }
+
+    private void obfuscate(Path folderPath, int protectZipLevel, int obfuscateLevel) {
+        if (obfuscateLevel == 1) {
+            try (Stream<Path> paths = Files.walk(folderPath)) {
+                Gson gson = GsonHelper.get();
+                for (Path path : (Iterable<Path>) paths::iterator) {
+                    if (Files.isDirectory(path)) {
+                        continue;
+                    }
+                    String fileName = path.toString().toLowerCase();
+                    if (fileName.endsWith(".json") || fileName.endsWith(".mcmeta")) {
+                        JsonElement jsonElement = gson.fromJson(Files.readString(path), JsonElement.class);
+                        Files.writeString(path, gson.toJson(jsonElement), StandardCharsets.UTF_8);
+                    }
+                }
+            } catch (IOException e) {
+                plugin.logger().warn("Failed to obfuscate resource pack", e);
+            }
+        } else if (obfuscateLevel == 2) {
+        }
     }
 }
