@@ -72,6 +72,7 @@ public class ConfigManager implements Reloadable {
     protected boolean sendPackOnJoin;
     protected boolean sendPackOnReload;
     protected Component resourcePackPrompt;
+    protected Component resourcePackReject;
     protected String packUrl;
     protected String packSha1;
     protected UUID packUUID;
@@ -148,6 +149,7 @@ public class ConfigManager implements Reloadable {
         String packUUIDStr = config.getString("resource-pack.send.external-host.uuid", "");
         packUUID = packUUIDStr.isEmpty() ? UUID.nameUUIDFromBytes(packUrl.getBytes(StandardCharsets.UTF_8)) : UUID.fromString(packUUIDStr);
         resourcePackPrompt = AdventureHelper.miniMessage(config.getString("resource-pack.send.prompt", "<yellow>To fully experience our server, please accept our custom resource pack.</yellow>"));
+        resourcePackReject = AdventureHelper.miniMessage(config.getString("resource-pack.send.reject", "<red>You have declined our resource pack.<newline>You will not be able to play our server until you accept it.</red>"));
         requestInterval = config.getLong("resource-pack.send.self-host.rate-limit.reset-interval", 30L);
         requestRate = config.getInt("resource-pack.send.self-host.rate-limit.max-requests", 3);
 
@@ -284,6 +286,10 @@ public class ConfigManager implements Reloadable {
 
     public static Component resourcePackPrompt() {
         return instance.resourcePackPrompt;
+    }
+
+    public static Component resourcePackReject() {
+        return instance.resourcePackReject;
     }
 
     public static String hostProtocol() {
