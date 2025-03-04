@@ -4817,4 +4817,36 @@ public class Reflections {
     public static final Constructor<?> constructor$ClientboundResourcePackPopPacket = Optional.ofNullable(clazz$ClientboundResourcePackPopPacket)
             .map(it -> ReflectionUtils.getConstructor(it, Optional.class))
             .orElse(null);
+
+    public static final Class<?> clazz$ClientboundDisconnectPacket = requireNonNull(
+            ReflectionUtils.getClazz(
+                    BukkitReflectionUtils.assembleMCClass("network.protocol.common.ClientboundDisconnectPacket"),
+                    BukkitReflectionUtils.assembleMCClass("network.protocol.game.PacketPlayOutKickDisconnect")
+            )
+    );
+
+    public static final Constructor<?> constructor$ClientboundDisconnectPacket = requireNonNull(
+            ReflectionUtils.getConstructor(
+                    clazz$ClientboundDisconnectPacket, clazz$Component
+            )
+    );
+
+    public static final Class<?> clazz$ServerboundResourcePackPacket = requireNonNull(
+            ReflectionUtils.getClazz(
+                    BukkitReflectionUtils.assembleMCClass("network.protocol.common.ServerboundResourcePackPacket"),
+                    BukkitReflectionUtils.assembleMCClass("network.protocol.game.PacketPlayInResourcePackStatus")
+            )
+    );
+
+    public static final Class<?> clazz$ServerboundResourcePackPacket$Action = requireNonNull(
+            ReflectionUtils.getClazz(
+                    BukkitReflectionUtils.assembleMCClass("network.protocol.common.ServerboundResourcePackPacket$Action"),
+                    BukkitReflectionUtils.assembleMCClass("network.protocol.common.ServerboundResourcePackPacket$a"),
+                    BukkitReflectionUtils.assembleMCClass("network.protocol.game.PacketPlayInResourcePackStatus$EnumResourcePackStatus")
+            )
+    );
+
+    public static final Field field$ServerboundResourcePackPacket$action = requireNonNull(
+            ReflectionUtils.getDeclaredField(clazz$ServerboundResourcePackPacket, clazz$ServerboundResourcePackPacket$Action, 0)
+    );
 }

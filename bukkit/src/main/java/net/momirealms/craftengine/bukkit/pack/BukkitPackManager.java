@@ -22,7 +22,6 @@ import org.bukkit.event.EventPriority;
 import org.bukkit.event.HandlerList;
 import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerJoinEvent;
-import org.bukkit.event.player.PlayerResourcePackStatusEvent;
 import org.jetbrains.annotations.Nullable;
 
 import java.nio.file.Files;
@@ -48,16 +47,6 @@ public class BukkitPackManager extends AbstractPackManager implements Listener {
 		// for 1.20.1 servers, not recommended to use
 		if (ConfigManager.sendPackOnJoin() && !VersionHelper.isVersionNewerThan1_20_2()) {
 			this.sendResourcePack(plugin.networkManager().getUser(event.getPlayer()), null);
-		}
-	}
-
-	@EventHandler(priority = EventPriority.LOW)
-	public void onResourcePackStatus(PlayerResourcePackStatusEvent event) {
-		// for 1.20.1 servers, not recommended to use
-		if (ConfigManager.sendPackOnJoin() && ConfigManager.kickOnDeclined() && !VersionHelper.isVersionNewerThan1_20_2()) {
-			if (event.getStatus() == PlayerResourcePackStatusEvent.Status.DECLINED || event.getStatus() == PlayerResourcePackStatusEvent.Status.FAILED_DOWNLOAD) {
-				event.getPlayer().kick();
-			}
 		}
 	}
 

@@ -24,6 +24,7 @@ import net.momirealms.craftengine.core.plugin.gui.category.ItemBrowserManagerImp
 import net.momirealms.craftengine.core.plugin.locale.TranslationManager;
 import net.momirealms.craftengine.core.plugin.locale.TranslationManagerImpl;
 import net.momirealms.craftengine.core.plugin.logger.PluginLogger;
+import net.momirealms.craftengine.core.plugin.logger.filter.DisconnectLogFilter;
 import net.momirealms.craftengine.core.plugin.logger.filter.LogFilter;
 import net.momirealms.craftengine.core.plugin.network.NetworkManager;
 import net.momirealms.craftengine.core.plugin.scheduler.SchedulerAdapter;
@@ -68,6 +69,7 @@ public abstract class CraftEngine implements Plugin {
     @Override
     public void load() {
         ((org.apache.logging.log4j.core.Logger) LogManager.getRootLogger()).addFilter(new LogFilter());
+        ((org.apache.logging.log4j.core.Logger) LogManager.getRootLogger()).addFilter(new DisconnectLogFilter());
         this.dependencyManager = new DependencyManagerImpl(this);
         ArrayList<Dependency> dependenciesToLoad = new ArrayList<>();
         dependenciesToLoad.addAll(commonDependencies());

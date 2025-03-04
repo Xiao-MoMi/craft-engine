@@ -23,8 +23,10 @@ resource-pack:
   send:
     send-on-join: true
     send-on-reload: true
-    kick-if-declined: true
     prompt: "<yellow>To fully experience our server, please accept our custom resource pack.</yellow>"
+    # only works on 1.20.1+
+    kick-if-declined: true
+    reject: "<red>You have declined our resource pack.<newline>You will not be able to play our server until you accept it.</red>"
     # If you are hosting the resource pack by yourself, replace `localhost` with your server ip otherwise it would only work on your local pc
     # If using BungeeCord or Velocity, consider using a proxy-side plugin to handle resource pack delivery.
     mode: self-host # self-host/external-host/none

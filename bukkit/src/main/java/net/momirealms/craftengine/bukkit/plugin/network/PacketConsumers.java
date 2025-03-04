@@ -14,6 +14,7 @@ import net.momirealms.craftengine.bukkit.plugin.user.BukkitServerPlayer;
 import net.momirealms.craftengine.bukkit.util.*;
 import net.momirealms.craftengine.core.block.ImmutableBlockState;
 import net.momirealms.craftengine.core.entity.player.InteractionHand;
+import net.momirealms.craftengine.core.pack.host.HostMode;
 import net.momirealms.craftengine.core.plugin.CraftEngine;
 import net.momirealms.craftengine.core.plugin.config.ConfigManager;
 import net.momirealms.craftengine.core.plugin.network.ConnectionState;
@@ -58,6 +59,25 @@ public class PacketConsumers {
     public static int remap(int stateId) {
         return mappings[stateId];
     }
+
+    public static final TriConsumer<NetWorkUser, NMSPacketEvent, Object> PACK_RESPONSE = (user, event, packet) -> {
+        try {
+            if (ConfigManager.hostMode() == HostMode.NONE) return;
+
+            String action = Reflections.field$ServerboundResourcePackPacket$action.get(packet).toString();
+            BukkitServerPlayer player = (BukkitServerPlayer) user;
+            switch (action) {
+                case "DECLINED", "FAILED_RELOAD", "DISCARDED", "INVALID_URL", "FAILED_DOWNLOAD":
+                    if (Bukkit.getOnlinePlayers().contains(player.platformPlayer())) return;
+                    Object kickPacket = Reflections.constructor$ClientboundDisconnectPacket.newInstance(
+                            ComponentUtils.adventureToMinecraft(ConfigManager.resourcePackReject())
+                    );
+                    user.nettyChannel().writeAndFlush(kickPacket);
+            }
+        } catch (Exception e) {
+            CraftEngine.instance().logger().warn("Failed to handle ServerboundResourcepackPacket", e);
+        }
+    };
 
     public static final TriConsumer<NetWorkUser, NMSPacketEvent, Object> LEVEL_CHUNK_WITH_LIGHT = (user, event, packet) -> {
         try {
