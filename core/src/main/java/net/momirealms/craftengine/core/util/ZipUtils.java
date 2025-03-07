@@ -128,9 +128,7 @@ public class ZipUtils {
         } else {
             relativePath = rootPath.relativize(file).toString().replace(File.separatorChar, '/');
         }
-        if (relativePath.equals("pack.mcmeta") || relativePath.equals("pack.png")) {
-            relativePath += "/";
-        }
+        relativePath += "/";
         byte[] originalData;
         if (JsonUtils.isJsonFile(file, false) && replaceMap != null) {
             try {
