@@ -37,6 +37,7 @@ resource-pack:
       port: 8163
       protocol: http
       deny-non-minecraft-request: true
+      local-file-path: "./generated/resource_pack.zip"
       rate-limit:
         max-requests: 3
         reset-interval: 30 # seconds
@@ -44,42 +45,40 @@ resource-pack:
       url: ""
       sha1: ""
       uuid: ""
+# Unfinished
 #  duplicated-files-handler:
-#    - term:
-#        type: path_pattern
-#        pattern:
-#          - "minecraft/items/" # 1.21.4+
-#          - "minecraft/models/item/" # 1.20-1.21.3
-#      operation:
-#        type: json_object_merge
-#    - term:
-#        type: path_pattern
-#        pattern:
-#          - "minecraft/items/" # 1.21.4+
-#          - "minecraft/models/item/" # 1.20-1.21.3
-#      operation:
-#        type: json_object_merge
-#    - term:
+#    - matcher:
+#        type: any_of
+#        terms:
+#          - type: parent_path_suffix
+#            suffix: "minecraft/items/" # 1.21.4+
+#          - type: parent_path_suffix
+#            suffix: "minecraft/models/item/" # 1.20-1.21.3
+#      resolution:
+#        type: merge_json
+#        deeply: true
+#    - matcher:
 #        type: exact_match
 #        path: "pack.mcmeta"
-#      operation:
-#        type: keep_first
+#      resolution:
+#        type: retain_matching
 #        term:
 #          type: path_pattern
 #          pattern: "resources/default/resourcepack"
-#    - term:
-#        type: exact_match
-#        path: "pack.png"
-#      operation:
-#        type: keep_first
-#        term:
-#          type: path_pattern
-#          pattern: "resources/default/resourcepack"
-#    - term:
+#    - matcher:
 #        type: filename
 #        name: "sounds.json"
-#      operation:
-#        type: json_object_merge
+#      resolution:
+#        type: merge_json
+#        deeply: false
+#    - matcher:
+#        type: exact_match
+#        path: "pack.png"
+#      resolution:
+#        type: retain_matching
+#        term:
+#          type: path_pattern
+#          pattern: "resources/default/resourcepack"
 
 block:
   sound-system:

@@ -18,7 +18,7 @@ import net.momirealms.craftengine.bukkit.plugin.papi.ImageExpansion;
 import net.momirealms.craftengine.bukkit.plugin.papi.ShiftExpansion;
 import net.momirealms.craftengine.bukkit.plugin.scheduler.BukkitSchedulerAdapter;
 import net.momirealms.craftengine.bukkit.plugin.user.BukkitServerPlayer;
-import net.momirealms.craftengine.bukkit.sound.BukkitJukeboxSongManager;
+import net.momirealms.craftengine.bukkit.sound.BukkitSoundManager;
 import net.momirealms.craftengine.bukkit.util.EventUtils;
 import net.momirealms.craftengine.bukkit.util.PlaceholderAPIUtils;
 import net.momirealms.craftengine.bukkit.util.Reflections;
@@ -133,7 +133,7 @@ public class BukkitCraftEngine extends CraftEngine {
         super.itemBrowserManager = new ItemBrowserManagerImpl(this);
         super.guiManager = new BukkitGuiManager(this);
         super.worldManager = new BukkitWorldManager(this);
-        super.jukeboxSongManager = new BukkitJukeboxSongManager(this);
+        super.soundManager = new BukkitSoundManager(this);
         super.enable();
         // tick task
         if (VersionHelper.isFolia()) {
@@ -197,10 +197,10 @@ public class BukkitCraftEngine extends CraftEngine {
         this.packManager.registerConfigSectionParser(this.itemBrowserManager);
         // register translation parser
         this.packManager.registerConfigSectionParser(this.translationManager);
+        this.packManager.registerConfigSectionParser(this.translationManager.clientLangManager());
         // register sound parser
         this.packManager.registerConfigSectionParser(this.soundManager);
-        // register jukebox parser
-        this.packManager.registerConfigSectionParser(this.jukeboxSongManager);
+        this.packManager.registerConfigSectionParser(this.soundManager.jukeboxSongManager());
     }
 
     @Override

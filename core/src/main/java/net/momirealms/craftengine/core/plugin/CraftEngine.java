@@ -28,8 +28,6 @@ import net.momirealms.craftengine.core.plugin.logger.filter.LogFilter;
 import net.momirealms.craftengine.core.plugin.network.NetworkManager;
 import net.momirealms.craftengine.core.plugin.scheduler.SchedulerAdapter;
 import net.momirealms.craftengine.core.sound.SoundManager;
-import net.momirealms.craftengine.core.sound.SoundManagerImpl;
-import net.momirealms.craftengine.core.sound.song.JukeboxSongManager;
 import net.momirealms.craftengine.core.world.WorldManager;
 import org.apache.logging.log4j.LogManager;
 
@@ -61,7 +59,7 @@ public abstract class CraftEngine implements Plugin {
     protected ItemBrowserManager itemBrowserManager;
     protected GuiManager guiManager;
     protected SoundManager soundManager;
-    protected JukeboxSongManager jukeboxSongManager;
+
     protected PluginLogger logger;
     protected Consumer<Supplier<String>> debugger = (s) -> {};
     private boolean isReloading;
@@ -95,7 +93,6 @@ public abstract class CraftEngine implements Plugin {
             this.itemManager.reload();
             this.soundManager.reload();
             this.recipeManager.reload();
-            this.jukeboxSongManager.reload();
             this.itemBrowserManager.reload();
             this.blockManager.reload();
             this.worldManager.reload();
@@ -103,7 +100,7 @@ public abstract class CraftEngine implements Plugin {
             this.guiManager.reload();
             this.blockManager.delayedLoad();
             this.itemBrowserManager.delayedLoad();
-            this.jukeboxSongManager.delayedLoad();
+            this.soundManager.delayedLoad();
             if (ConfigManager.debug()) {
                 this.debugger = (s) -> logger.info("[Debug] " + s.get());
             } else {
@@ -120,7 +117,6 @@ public abstract class CraftEngine implements Plugin {
         this.fontManager = new FontManagerImpl(this);
         this.templateManager = new TemplateManagerImpl(this);
         this.itemBrowserManager = new ItemBrowserManagerImpl(this);
-        this.soundManager = new SoundManagerImpl(this);
         this.commandManager.registerDefaultFeatures();
         // delay the reload so other plugins can register some parsers
         this.scheduler.sync().runDelayed(() -> {
@@ -276,11 +272,6 @@ public abstract class CraftEngine implements Plugin {
     @Override
     public SoundManager soundManager() {
         return soundManager;
-    }
-
-    @Override
-    public JukeboxSongManager jukeboxSongManager() {
-        return jukeboxSongManager;
     }
 
     @Override

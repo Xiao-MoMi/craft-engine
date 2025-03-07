@@ -12,7 +12,7 @@ public class FallingCondition implements LootCondition {
 
     @Override
     public Key type() {
-        return LootConditions.ANY_OF;
+        return LootConditions.FALLING_BLOCK;
     }
 
     @Override

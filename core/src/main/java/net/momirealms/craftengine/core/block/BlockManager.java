@@ -2,8 +2,8 @@ package net.momirealms.craftengine.core.block;
 
 import com.google.gson.JsonElement;
 import net.momirealms.craftengine.core.pack.LoadingSequence;
-import net.momirealms.craftengine.core.pack.generator.ModelGeneration;
-import net.momirealms.craftengine.core.pack.generator.ModelGenerator;
+import net.momirealms.craftengine.core.pack.model.generator.ModelGeneration;
+import net.momirealms.craftengine.core.pack.model.generator.ModelGenerator;
 import net.momirealms.craftengine.core.plugin.Reloadable;
 import net.momirealms.craftengine.core.plugin.config.ConfigSectionParser;
 import net.momirealms.craftengine.core.util.Key;

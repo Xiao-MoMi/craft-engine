@@ -1,7 +1,7 @@
 package net.momirealms.craftengine.core.item;
 
 import net.momirealms.craftengine.core.item.modifier.*;
-import net.momirealms.craftengine.core.pack.generator.AbstractModelGenerator;
+import net.momirealms.craftengine.core.pack.model.generator.AbstractModelGenerator;
 import net.momirealms.craftengine.core.plugin.CraftEngine;
 import net.momirealms.craftengine.core.util.Key;
 import net.momirealms.craftengine.core.util.MiscUtils;
@@ -25,10 +25,6 @@ public abstract class AbstractItemManager<I> extends AbstractModelGenerator impl
     public void unload() {
         this.customItems.clear();
         super.clearModelsToGenerate();
-    }
-
-    @Override
-    public void load() {
     }
 
     @Override

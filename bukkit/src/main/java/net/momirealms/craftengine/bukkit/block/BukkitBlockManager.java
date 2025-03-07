@@ -19,7 +19,7 @@ import net.momirealms.craftengine.core.block.properties.Properties;
 import net.momirealms.craftengine.core.block.properties.Property;
 import net.momirealms.craftengine.core.loot.LootTable;
 import net.momirealms.craftengine.core.pack.Pack;
-import net.momirealms.craftengine.core.pack.generator.ModelGeneration;
+import net.momirealms.craftengine.core.pack.model.generator.ModelGeneration;
 import net.momirealms.craftengine.core.plugin.CraftEngine;
 import net.momirealms.craftengine.core.plugin.config.ConfigManager;
 import net.momirealms.craftengine.core.registry.BuiltInRegistries;

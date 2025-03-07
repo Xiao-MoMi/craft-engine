@@ -2,7 +2,7 @@ package net.momirealms.craftengine.core.pack.model;
 
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
-import net.momirealms.craftengine.core.pack.generator.ModelGeneration;
+import net.momirealms.craftengine.core.pack.model.generator.ModelGeneration;
 import net.momirealms.craftengine.core.pack.model.rangedisptach.RangeDispatchProperties;
 import net.momirealms.craftengine.core.pack.model.rangedisptach.RangeDispatchProperty;
 import net.momirealms.craftengine.core.util.Key;

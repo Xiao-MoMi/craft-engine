@@ -5,11 +5,11 @@ import dev.dejvokep.boostedyaml.YamlDocument;
 import dev.dejvokep.boostedyaml.block.implementation.Section;
 import net.momirealms.craftengine.core.font.BitmapImage;
 import net.momirealms.craftengine.core.font.Font;
-import net.momirealms.craftengine.core.pack.generator.ModelGeneration;
-import net.momirealms.craftengine.core.pack.generator.ModelGenerator;
 import net.momirealms.craftengine.core.pack.host.HostMode;
 import net.momirealms.craftengine.core.pack.host.ResourcePackHost;
 import net.momirealms.craftengine.core.pack.model.ItemModel;
+import net.momirealms.craftengine.core.pack.model.generator.ModelGeneration;
+import net.momirealms.craftengine.core.pack.model.generator.ModelGenerator;
 import net.momirealms.craftengine.core.pack.obfuscation.ProtectHelper;
 import net.momirealms.craftengine.core.plugin.CraftEngine;
 import net.momirealms.craftengine.core.plugin.PluginProperties;
@@ -17,8 +17,9 @@ import net.momirealms.craftengine.core.plugin.config.ConfigManager;
 import net.momirealms.craftengine.core.plugin.config.ConfigSectionParser;
 import net.momirealms.craftengine.core.plugin.config.StringKeyConstructor;
 import net.momirealms.craftengine.core.plugin.config.template.TemplateManager;
+import net.momirealms.craftengine.core.plugin.locale.I18NData;
+import net.momirealms.craftengine.core.sound.AbstractSoundManager;
 import net.momirealms.craftengine.core.sound.SoundEvent;
-import net.momirealms.craftengine.core.sound.SoundManagerImpl;
 import net.momirealms.craftengine.core.util.*;
 import org.jetbrains.annotations.NotNull;
 import org.yaml.snakeyaml.LoaderOptions;
@@ -53,7 +54,6 @@ public abstract class AbstractPackManager implements PackManager {
     public AbstractPackManager(CraftEngine plugin, BiConsumer<Path, Path> eventDispatcher) {
         this.plugin = plugin;
         this.eventDispatcher = eventDispatcher;
-        this.calculateHash();
     }
 
     @Override
@@ -67,8 +67,10 @@ public abstract class AbstractPackManager implements PackManager {
     public void load() {
         this.loadPacks();
         this.loadConfigs();
+        this.calculateHash();
         if (ConfigManager.hostMode() == HostMode.SELF_HOST) {
-            ResourcePackHost.instance().enable(ConfigManager.hostIP(), ConfigManager.hostPort(), resourcePackPath());
+            Path path = ConfigManager.hostResourcePackPath().startsWith(".") ? plugin.dataFolderPath().resolve(ConfigManager.hostResourcePackPath()) : Path.of(ConfigManager.hostResourcePackPath());
+            ResourcePackHost.instance().enable(ConfigManager.hostIP(), ConfigManager.hostPort(), path);
             ResourcePackHost.instance().setRateLimit(ConfigManager.requestRate(), ConfigManager.requestInterval(), TimeUnit.SECONDS);
         } else {
             ResourcePackHost.instance().disable();
@@ -99,6 +101,10 @@ public abstract class AbstractPackManager implements PackManager {
         if (!this.sectionParsers.containsKey(id)) return false;
         this.sectionParsers.remove(id);
         return true;
+    }
+
+    public Path selfHostPackPath() {
+        return ConfigManager.hostResourcePackPath().startsWith(".") ? plugin.dataFolderPath().resolve(ConfigManager.hostResourcePackPath()) : Path.of(ConfigManager.hostResourcePackPath());
     }
 
     private void loadPacks() {
@@ -358,6 +364,7 @@ public abstract class AbstractPackManager implements PackManager {
         this.generateItemModels(generatedPackPath, this.plugin.blockManager());
         this.generateOverrideSounds(generatedPackPath);
         this.generateCustomSounds(generatedPackPath);
+        this.generateClientLang(generatedPackPath);
 
         Path zipFile = resourcePackPath();
         try {
@@ -374,7 +381,7 @@ public abstract class AbstractPackManager implements PackManager {
     }
 
     private void calculateHash() {
-        Path zipFile = resourcePackPath();
+        Path zipFile = selfHostPackPath();
         if (Files.exists(zipFile)) {
             try {
                 this.packHash = computeSHA1(zipFile);
@@ -388,8 +395,33 @@ public abstract class AbstractPackManager implements PackManager {
         }
     }
 
+    private void generateClientLang(Path generatedPackPath) {
+        for (Map.Entry<String, I18NData> entry : this.plugin.translationManager().clientLangManager().langData().entrySet()) {
+            JsonObject json = new JsonObject();
+            for (Map.Entry<String, String> pair : entry.getValue().translations.entrySet()) {
+                json.addProperty(pair.getKey(), pair.getValue());
+            }
+            Path langPath = generatedPackPath
+                    .resolve("assets")
+                    .resolve("minecraft")
+                    .resolve("lang")
+                    .resolve(entry.getKey() + ".json");
+            try {
+                Files.createDirectories(langPath.getParent());
+            } catch (IOException e) {
+                plugin.logger().severe("Error creating " + langPath.toAbsolutePath());
+                return;
+            }
+            try {
+                GsonHelper.writeJsonFile(json, langPath);
+            } catch (IOException e) {
+                this.plugin.logger().severe("Error writing language file", e);
+            }
+        }
+    }
+
     private void generateCustomSounds(Path generatedPackPath) {
-        SoundManagerImpl soundManager = (SoundManagerImpl) plugin.soundManager();
+        AbstractSoundManager soundManager = (AbstractSoundManager) plugin.soundManager();
         for (Map.Entry<String, List<SoundEvent>> entry : soundManager.soundsByNamespace().entrySet()) {
             Path soundPath = generatedPackPath
                     .resolve("assets")
@@ -668,8 +700,8 @@ public abstract class AbstractPackManager implements PackManager {
 
             JsonObject originalItemModel;
             if (Files.exists(overridedItemPath)) {
-                try (BufferedReader reader = Files.newBufferedReader(overridedItemPath)) {
-                    originalItemModel = JsonParser.parseReader(reader).getAsJsonObject();
+                try {
+                    originalItemModel = GsonHelper.readJsonFile(overridedItemPath).getAsJsonObject();
                 } catch (IOException e) {
                     plugin.logger().warn("Failed to load existing item model", e);
                     continue;

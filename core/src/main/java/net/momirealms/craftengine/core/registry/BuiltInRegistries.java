@@ -10,6 +10,8 @@ import net.momirealms.craftengine.core.loot.entry.LootEntryContainerFactory;
 import net.momirealms.craftengine.core.loot.function.ApplyBonusCountFunction;
 import net.momirealms.craftengine.core.loot.function.LootFunctionFactory;
 import net.momirealms.craftengine.core.loot.number.NumberProviderFactory;
+import net.momirealms.craftengine.core.pack.conflict.matcher.PathMatcherFactory;
+import net.momirealms.craftengine.core.pack.conflict.resolution.ResolutionFactory;
 import net.momirealms.craftengine.core.pack.model.ItemModelFactory;
 import net.momirealms.craftengine.core.pack.model.condition.ConditionPropertyFactory;
 import net.momirealms.craftengine.core.pack.model.rangedisptach.RangeDispatchPropertyFactory;
@@ -39,6 +41,8 @@ public class BuiltInRegistries {
     public static final Registry<SelectPropertyFactory> SELECT_PROPERTY_FACTORY = createRegistry(Registries.SELECT_PROPERTY_FACTORY);
     public static final Registry<RecipeFactory<?>> RECIPE_FACTORY = createRegistry(Registries.RECIPE_FACTORY);
     public static final Registry<ApplyBonusCountFunction.FormulaFactory> FORMULA_FACTORY = createRegistry(Registries.FORMULA_FACTORY);
+    public static final Registry<PathMatcherFactory> PATH_MATCHER_FACTORY = createRegistry(Registries.PATH_MATCHER_FACTORY);
+    public static final Registry<ResolutionFactory> RESOLUTION_FACTORY = createRegistry(Registries.RESOLUTION_FACTORY);
 
     private static <T> Registry<T> createRegistry(ResourceKey<? extends Registry<T>> key) {
         return new MappedRegistry<>(key);

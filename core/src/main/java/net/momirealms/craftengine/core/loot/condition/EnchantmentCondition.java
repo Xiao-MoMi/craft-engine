@@ -22,7 +22,7 @@ public class EnchantmentCondition implements LootCondition {
 
     @Override
     public Key type() {
-        return LootConditions.MATCH_ITEM;
+        return LootConditions.ENCHANTMENT;
     }
 
     @Override

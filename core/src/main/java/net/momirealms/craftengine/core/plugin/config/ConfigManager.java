@@ -75,9 +75,11 @@ public class ConfigManager implements Reloadable {
     protected Component resourcePackPrompt;
     protected String packUrl;
     protected String packSha1;
+    protected String hostResourcePackPath;
     protected UUID packUUID;
     protected int requestRate;
     protected long requestInterval;
+
 
     public ConfigManager(CraftEngine plugin) {
         this.plugin = plugin;
@@ -140,6 +142,7 @@ public class ConfigManager implements Reloadable {
         hostMode = HostMode.valueOf(config.getString("resource-pack.send.mode", "self-host").replace("-", "_").toUpperCase(Locale.ENGLISH));
         hostPort = config.getInt("resource-pack.send.self-host.port", 8163);
         hostIP = config.getString("resource-pack.send.self-host.ip", "localhost");
+        hostResourcePackPath = config.getString("resource-pack.send.self-host.local-file-path", "./generated/resource_pack.zip");
         hostProtocol = config.getString("resource-pack.send.self-host.protocol", "http");
         sendPackOnJoin = config.getBoolean("resource-pack.send.send-on-join", true);
         sendPackOnReload = config.getBoolean("resource-pack.send.send-on-reload", true);
@@ -322,6 +325,10 @@ public class ConfigManager implements Reloadable {
 
     public static long requestInterval() {
         return instance.requestInterval;
+    }
+
+    public static String hostResourcePackPath() {
+        return instance.hostResourcePackPath;
     }
 
     public YamlDocument loadOrCreateYamlData(String fileName) {

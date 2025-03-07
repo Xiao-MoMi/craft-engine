@@ -35,10 +35,12 @@ public class TranslationManagerImpl implements TranslationManager {
     private MiniMessageTranslationRegistry registry;
     private final Path translationsDirectory;
     private final Map<Locale, I18NData> i18nData = new HashMap<>();
+    private final ClientLangManager clientLangManager;
 
     public TranslationManagerImpl(Plugin plugin) {
         this.plugin = plugin;
         this.translationsDirectory = this.plugin.dataFolderPath().resolve("translations");
+        this.clientLangManager = new ClientLangMangerImpl(plugin);
         instance = this;
     }
 
@@ -235,15 +237,8 @@ public class TranslationManagerImpl implements TranslationManager {
         }
     }
 
-    public static class I18NData {
-        private final Map<String, String> translations = new HashMap<>();
-
-        public void addTranslation(String key, String value) {
-            this.translations.put(key, value);
-        }
-
-        public String translate(String key) {
-            return this.translations.getOrDefault(key, key);
-        }
+    @Override
+    public ClientLangManager clientLangManager() {
+        return clientLangManager;
     }
 }

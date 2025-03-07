@@ -1,4 +1,4 @@
-package net.momirealms.craftengine.core.pack.generator;
+package net.momirealms.craftengine.core.pack.model.generator;
 
 import com.google.gson.JsonObject;
 import dev.dejvokep.boostedyaml.block.implementation.Section;

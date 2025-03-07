@@ -16,6 +16,8 @@ public interface TranslationManager extends Reloadable, ConfigSectionParser {
         return TranslationManagerImpl.instance;
     }
 
+    ClientLangManager clientLangManager();
+
     default String miniMessageTranslation(String key) {
         return miniMessageTranslation(key, null);
     }
@@ -45,4 +47,5 @@ public interface TranslationManager extends Reloadable, ConfigSectionParser {
     default String sectionId() {
         return CONFIG_SECTION_NAME;
     }
+
 }

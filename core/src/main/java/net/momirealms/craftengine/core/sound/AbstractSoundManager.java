@@ -2,27 +2,43 @@ package net.momirealms.craftengine.core.sound;
 
 import net.momirealms.craftengine.core.pack.Pack;
 import net.momirealms.craftengine.core.plugin.CraftEngine;
+import net.momirealms.craftengine.core.sound.song.JukeboxSongManager;
 import net.momirealms.craftengine.core.util.Key;
 import net.momirealms.craftengine.core.util.MiscUtils;
 
 import java.nio.file.Path;
 import java.util.*;
 
-public class SoundManagerImpl implements SoundManager {
-    private final CraftEngine plugin;
-    private final Map<Key, SoundEvent> byId;
-    private final Map<String, List<SoundEvent>> byNamespace;
+public abstract class AbstractSoundManager implements SoundManager {
+    protected final CraftEngine plugin;
+    protected final Map<Key, SoundEvent> byId;
+    protected final Map<String, List<SoundEvent>> byNamespace;
+    protected final JukeboxSongManager jukeboxSongManager;
 
-    public SoundManagerImpl(CraftEngine plugin) {
+    public AbstractSoundManager(CraftEngine plugin) {
         this.plugin = plugin;
+        this.jukeboxSongManager = createJukeboxSongManager();
         this.byId = new HashMap<>();
         this.byNamespace = new HashMap<>();
     }
+
+    protected abstract JukeboxSongManager createJukeboxSongManager();
 
     @Override
     public void unload() {
         this.byId.clear();
         this.byNamespace.clear();
+        this.jukeboxSongManager.unload();
+    }
+
+    @Override
+    public void load() {
+        this.jukeboxSongManager.load();
+    }
+
+    @Override
+    public void delayedLoad() {
+        this.jukeboxSongManager.delayedLoad();
     }
 
     @Override
@@ -54,5 +70,10 @@ public class SoundManagerImpl implements SoundManager {
 
     public Map<String, List<SoundEvent>> soundsByNamespace() {
         return Collections.unmodifiableMap(this.byNamespace);
+    }
+
+    @Override
+    public JukeboxSongManager jukeboxSongManager() {
+        return this.jukeboxSongManager;
     }
 }
