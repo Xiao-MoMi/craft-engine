@@ -13,11 +13,12 @@ resource-pack:
   # Should those images in minecraft:default font also work in minecraft:uniform
   override-uniform-font: true
   protection:
-    # 0是禁用 1是轻度 2是中度 3是重度
+    # 0 = Disabled, 1 = Mild, 2 = Moderate, 3 = Severe
     protection: 1
-    # 0是禁用 1是简单混淆 2是深度混淆会更加文件数量增加大小 3是针对Windows的混淆
+    # Requirement: Protection must not be 0
+    # 0 = Disabled, 1 = Simple obfuscation, 2 = Deep obfuscation (will increase file quantity and size), 3 = Windows-specific obfuscation
     obfuscation: 1
-    # 在obfuscation为2时始终为65528，最大为65528
+    # When obfuscation is set to 2, the value is always 65528 (maximum allowed value is 65528)
     obfuscation-path-length: 40
   supported-version:
     min: "1.20"
