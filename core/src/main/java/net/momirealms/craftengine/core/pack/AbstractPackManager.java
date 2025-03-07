@@ -16,6 +16,8 @@ import net.momirealms.craftengine.core.plugin.config.ConfigManager;
 import net.momirealms.craftengine.core.plugin.config.ConfigSectionParser;
 import net.momirealms.craftengine.core.plugin.config.StringKeyConstructor;
 import net.momirealms.craftengine.core.plugin.config.template.TemplateManager;
+import net.momirealms.craftengine.core.sound.SoundEvent;
+import net.momirealms.craftengine.core.sound.SoundManagerImpl;
 import net.momirealms.craftengine.core.util.*;
 import org.jetbrains.annotations.NotNull;
 import org.yaml.snakeyaml.LoaderOptions;
@@ -138,6 +140,8 @@ public abstract class AbstractPackManager implements PackManager {
         // internal
         plugin.saveResource("resources/internal/resourcepack/assets/minecraft/models/block/default_chorus_plant.json");
         plugin.saveResource("resources/internal/pack.yml");
+        // i18n
+        plugin.saveResource("resources/internal/configuration/i18n.yml");
         // offset
         plugin.saveResource("resources/internal/configuration/offset_chars.yml");
         plugin.saveResource("resources/internal/resourcepack/assets/minecraft/textures/font/offset/space_split.png");
@@ -168,6 +172,8 @@ public abstract class AbstractPackManager implements PackManager {
         plugin.saveResource("resources/default/resourcepack/pack.png");
         // templates
         plugin.saveResource("resources/default/configuration/templates.yml");
+        // i18n
+        plugin.saveResource("resources/default/configuration/i18n.yml");
         // categories
         plugin.saveResource("resources/default/configuration/categories.yml");
         // icons
@@ -232,6 +238,11 @@ public abstract class AbstractPackManager implements PackManager {
         plugin.saveResource("resources/default/resourcepack/assets/minecraft/textures/item/custom/table_lamp.png");
         plugin.saveResource("resources/default/resourcepack/assets/minecraft/textures/item/custom/wooden_chair.png");
         plugin.saveResource("resources/default/resourcepack/assets/minecraft/textures/item/custom/bench.png");
+        // tooltip
+        plugin.saveResource("resources/default/resourcepack/assets/minecraft/textures/gui/sprites/tooltip/topaz_background.png");
+        plugin.saveResource("resources/default/resourcepack/assets/minecraft/textures/gui/sprites/tooltip/topaz_background.png.mcmeta");
+        plugin.saveResource("resources/default/resourcepack/assets/minecraft/textures/gui/sprites/tooltip/topaz_frame.png");
+        plugin.saveResource("resources/default/resourcepack/assets/minecraft/textures/gui/sprites/tooltip/topaz_frame.png.mcmeta");
     }
 
     private void loadConfigs() {
@@ -344,7 +355,8 @@ public abstract class AbstractPackManager implements PackManager {
         this.generateBlockOverrides(generatedPackPath);
         this.generateItemModels(generatedPackPath, this.plugin.itemManager());
         this.generateItemModels(generatedPackPath, this.plugin.blockManager());
-        this.generateSounds(generatedPackPath);
+        this.generateOverrideSounds(generatedPackPath);
+        this.generateCustomSounds(generatedPackPath);
         // TODO: 混淆资源包
         Section protectionSettings = plugin.configManager().settings()
                 .getSection("resource-pack")
@@ -384,7 +396,46 @@ public abstract class AbstractPackManager implements PackManager {
         }
     }
 
-    private void generateSounds(Path generatedPackPath) {
+    private void generateCustomSounds(Path generatedPackPath) {
+        SoundManagerImpl soundManager = (SoundManagerImpl) plugin.soundManager();
+        for (Map.Entry<String, List<SoundEvent>> entry : soundManager.soundsByNamespace().entrySet()) {
+            Path soundPath = generatedPackPath
+                    .resolve("assets")
+                    .resolve(entry.getKey())
+                    .resolve("sounds.json");
+
+            JsonObject soundJson;
+            if (Files.exists(soundPath)) {
+                try (BufferedReader reader = Files.newBufferedReader(soundPath)) {
+                    soundJson = JsonParser.parseReader(reader).getAsJsonObject();
+                } catch (IOException e) {
+                    plugin.logger().warn("Failed to load existing sounds.json", e);
+                    return;
+                }
+            } else {
+                soundJson = new JsonObject();
+            }
+
+            for (SoundEvent soundEvent : entry.getValue()) {
+                soundJson.add(soundEvent.id().value(), soundEvent.get());
+            }
+
+            try {
+                Files.createDirectories(soundPath.getParent());
+            } catch (IOException e) {
+                plugin.logger().severe("Error creating " + soundPath.toAbsolutePath());
+                return;
+            }
+
+            try (BufferedWriter writer = Files.newBufferedWriter(soundPath)) {
+                GsonHelper.get().toJson(soundJson, writer);
+            } catch (IOException e) {
+                plugin.logger().warn("Failed to generate sounds.json: " + soundPath.toAbsolutePath(), e);
+            }
+        }
+    }
+
+    private void generateOverrideSounds(Path generatedPackPath) {
         if (!ConfigManager.enableSoundSystem()) return;
 
         Path soundPath = generatedPackPath

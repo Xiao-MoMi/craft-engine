@@ -73,10 +73,24 @@ public abstract class AbstractItemManager<I> extends AbstractModelGenerator impl
                 String name = obj.toString();
                 return new ItemNameModifier<>(name);
             }, "item-name");
+        }
+        if (VersionHelper.isVersionNewerThan1_20_5()) {
             registerDataFunction((obj) -> {
                 Map<String, Object> data = MiscUtils.castToMap(obj, false);
                 return new ComponentModifier<>(data);
             }, "components", "component");
+        }
+        if (VersionHelper.isVersionNewerThan1_21()) {
+            registerDataFunction((obj) -> {
+                String song = obj.toString();
+                return new JukeboxSongModifier<>(Key.of(song));
+            }, "jukebox-playable");
+        }
+        if (VersionHelper.isVersionNewerThan1_21_2()) {
+            registerDataFunction((obj) -> {
+                String id = obj.toString();
+                return new TooltipStyleModifier<>(Key.of(id));
+            }, "tooltip-style");
         }
     }
 }

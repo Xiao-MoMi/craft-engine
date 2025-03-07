@@ -9,7 +9,7 @@ import net.momirealms.craftengine.core.loot.condition.LootConditionFactory;
 import net.momirealms.craftengine.core.loot.entry.LootEntryContainerFactory;
 import net.momirealms.craftengine.core.loot.function.ApplyBonusCountFunction;
 import net.momirealms.craftengine.core.loot.function.LootFunctionFactory;
-import net.momirealms.craftengine.core.loot.provider.NumberProviderFactory;
+import net.momirealms.craftengine.core.loot.number.NumberProviderFactory;
 import net.momirealms.craftengine.core.pack.model.ItemModelFactory;
 import net.momirealms.craftengine.core.pack.model.condition.ConditionPropertyFactory;
 import net.momirealms.craftengine.core.pack.model.rangedisptach.RangeDispatchPropertyFactory;

@@ -3,7 +3,7 @@ items:
     material: paper
     custom-model-data: 1010
     data:
-      display-name: "<!i>Topaz Ore"
+      display-name: "<!i><i18n:item.topaz_ore>"
     model:
       type: "minecraft:model"
       path: "minecraft:item/custom/topaz_ore"
@@ -16,7 +16,7 @@ items:
     material: paper
     custom-model-data: 1011
     data:
-      display-name: "<!i>Deepslate Topaz Ore"
+      display-name: "<!i><i18n:item.deepslate_topaz_ore>"
     model:
       type: "minecraft:model"
       path: "minecraft:item/custom/deepslate_topaz_ore"
@@ -29,7 +29,7 @@ items:
     material: paper
     custom-model-data: 1012
     data:
-      display-name: "<!i><#FF8C00>Topaz"
+      display-name: "<!i><#FF8C00><i18n:item.topaz>"
     model:
       template: models:generated
       arguments:

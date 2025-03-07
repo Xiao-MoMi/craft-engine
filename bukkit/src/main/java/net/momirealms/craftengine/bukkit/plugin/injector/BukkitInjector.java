@@ -23,6 +23,7 @@ import net.momirealms.craftengine.core.block.EmptyBlock;
 import net.momirealms.craftengine.core.block.ImmutableBlockState;
 import net.momirealms.craftengine.core.block.StatePredicate;
 import net.momirealms.craftengine.core.item.Item;
+import net.momirealms.craftengine.core.item.recipe.CustomCookingRecipe;
 import net.momirealms.craftengine.core.item.recipe.OptimizedIDItem;
 import net.momirealms.craftengine.core.item.recipe.RecipeTypes;
 import net.momirealms.craftengine.core.item.recipe.input.SingleItemInput;
@@ -358,16 +359,16 @@ public class BukkitInjector {
                 }
 
                 SingleItemInput<ItemStack> input = new SingleItemInput<>(new OptimizedIDItem<>(idHolder.get(), itemStack));
-                net.momirealms.craftengine.core.item.recipe.CookingRecipe<ItemStack> ceRecipe;
+                CustomCookingRecipe<ItemStack> ceRecipe;
                 Key lastCustomRecipe = (Key) field$InjectedCacheChecker$lastCustomRecipe.get(thisObj);
                 if (type == Reflections.instance$RecipeType$SMELTING) {
-                    ceRecipe = (net.momirealms.craftengine.core.item.recipe.CookingRecipe<ItemStack>) recipeManager.getRecipe(RecipeTypes.SMELTING, input, lastCustomRecipe);
+                    ceRecipe = (CustomCookingRecipe<ItemStack>) recipeManager.getRecipe(RecipeTypes.SMELTING, input, lastCustomRecipe);
                 } else if (type == Reflections.instance$RecipeType$BLASTING) {
-                    ceRecipe = (net.momirealms.craftengine.core.item.recipe.CookingRecipe<ItemStack>) recipeManager.getRecipe(RecipeTypes.BLASTING, input, lastCustomRecipe);
+                    ceRecipe = (CustomCookingRecipe<ItemStack>) recipeManager.getRecipe(RecipeTypes.BLASTING, input, lastCustomRecipe);
                 } else if (type == Reflections.instance$RecipeType$SMOKING) {
-                    ceRecipe = (net.momirealms.craftengine.core.item.recipe.CookingRecipe<ItemStack>) recipeManager.getRecipe(RecipeTypes.SMOKING, input, lastCustomRecipe);
+                    ceRecipe = (CustomCookingRecipe<ItemStack>) recipeManager.getRecipe(RecipeTypes.SMOKING, input, lastCustomRecipe);
                 } else if (type == Reflections.instance$RecipeType$CAMPFIRE_COOKING) {
-                    ceRecipe = (net.momirealms.craftengine.core.item.recipe.CookingRecipe<ItemStack>) recipeManager.getRecipe(RecipeTypes.CAMPFIRE_COOKING, input, lastCustomRecipe);
+                    ceRecipe = (CustomCookingRecipe<ItemStack>) recipeManager.getRecipe(RecipeTypes.CAMPFIRE_COOKING, input, lastCustomRecipe);
                 } else  {
                     return Optional.empty();
                 }
@@ -425,16 +426,16 @@ public class BukkitInjector {
                 }
 
                 SingleItemInput<ItemStack> input = new SingleItemInput<>(new OptimizedIDItem<>(idHolder.get(), itemStack));
-                net.momirealms.craftengine.core.item.recipe.CookingRecipe<ItemStack> ceRecipe;
+                CustomCookingRecipe<ItemStack> ceRecipe;
                 Key lastCustomRecipe = (Key) field$InjectedCacheChecker$lastCustomRecipe.get(thisObj);
                 if (type == Reflections.instance$RecipeType$SMELTING) {
-                    ceRecipe = (net.momirealms.craftengine.core.item.recipe.CookingRecipe<ItemStack>) recipeManager.getRecipe(RecipeTypes.SMELTING, input, lastCustomRecipe);
+                    ceRecipe = (CustomCookingRecipe<ItemStack>) recipeManager.getRecipe(RecipeTypes.SMELTING, input, lastCustomRecipe);
                 } else if (type == Reflections.instance$RecipeType$BLASTING) {
-                    ceRecipe = (net.momirealms.craftengine.core.item.recipe.CookingRecipe<ItemStack>) recipeManager.getRecipe(RecipeTypes.BLASTING, input, lastCustomRecipe);
+                    ceRecipe = (CustomCookingRecipe<ItemStack>) recipeManager.getRecipe(RecipeTypes.BLASTING, input, lastCustomRecipe);
                 } else if (type == Reflections.instance$RecipeType$SMOKING) {
-                    ceRecipe = (net.momirealms.craftengine.core.item.recipe.CookingRecipe<ItemStack>) recipeManager.getRecipe(RecipeTypes.SMOKING, input, lastCustomRecipe);
+                    ceRecipe = (CustomCookingRecipe<ItemStack>) recipeManager.getRecipe(RecipeTypes.SMOKING, input, lastCustomRecipe);
                 } else if (type == Reflections.instance$RecipeType$CAMPFIRE_COOKING) {
-                    ceRecipe = (net.momirealms.craftengine.core.item.recipe.CookingRecipe<ItemStack>) recipeManager.getRecipe(RecipeTypes.CAMPFIRE_COOKING, input, lastCustomRecipe);
+                    ceRecipe = (CustomCookingRecipe<ItemStack>) recipeManager.getRecipe(RecipeTypes.CAMPFIRE_COOKING, input, lastCustomRecipe);
                 } else  {
                     return Optional.empty();
                 }
@@ -484,16 +485,16 @@ public class BukkitInjector {
                 }
 
                 SingleItemInput<ItemStack> input = new SingleItemInput<>(new OptimizedIDItem<>(idHolder.get(), itemStack));
-                net.momirealms.craftengine.core.item.recipe.CookingRecipe<ItemStack> ceRecipe;
+                CustomCookingRecipe<ItemStack> ceRecipe;
                 Key lastCustomRecipe = (Key) field$InjectedCacheChecker$lastCustomRecipe.get(thisObj);
                 if (type == Reflections.instance$RecipeType$SMELTING) {
-                    ceRecipe = (net.momirealms.craftengine.core.item.recipe.CookingRecipe<ItemStack>) recipeManager.getRecipe(RecipeTypes.SMELTING, input, lastCustomRecipe);
+                    ceRecipe = (CustomCookingRecipe<ItemStack>) recipeManager.getRecipe(RecipeTypes.SMELTING, input, lastCustomRecipe);
                 } else if (type == Reflections.instance$RecipeType$BLASTING) {
-                    ceRecipe = (net.momirealms.craftengine.core.item.recipe.CookingRecipe<ItemStack>) recipeManager.getRecipe(RecipeTypes.BLASTING, input, lastCustomRecipe);
+                    ceRecipe = (CustomCookingRecipe<ItemStack>) recipeManager.getRecipe(RecipeTypes.BLASTING, input, lastCustomRecipe);
                 } else if (type == Reflections.instance$RecipeType$SMOKING) {
-                    ceRecipe = (net.momirealms.craftengine.core.item.recipe.CookingRecipe<ItemStack>) recipeManager.getRecipe(RecipeTypes.SMOKING, input, lastCustomRecipe);
+                    ceRecipe = (CustomCookingRecipe<ItemStack>) recipeManager.getRecipe(RecipeTypes.SMOKING, input, lastCustomRecipe);
                 } else if (type == Reflections.instance$RecipeType$CAMPFIRE_COOKING) {
-                    ceRecipe = (net.momirealms.craftengine.core.item.recipe.CookingRecipe<ItemStack>) recipeManager.getRecipe(RecipeTypes.CAMPFIRE_COOKING, input, lastCustomRecipe);
+                    ceRecipe = (CustomCookingRecipe<ItemStack>) recipeManager.getRecipe(RecipeTypes.CAMPFIRE_COOKING, input, lastCustomRecipe);
                 } else  {
                     return Optional.empty();
                 }
@@ -544,14 +545,14 @@ public class BukkitInjector {
                 }
 
                 SingleItemInput<ItemStack> input = new SingleItemInput<>(new OptimizedIDItem<>(idHolder.get(), itemStack));
-                net.momirealms.craftengine.core.item.recipe.CookingRecipe<ItemStack> ceRecipe;
+                CustomCookingRecipe<ItemStack> ceRecipe;
                 Key lastCustomRecipe = (Key) field$InjectedCacheChecker$lastCustomRecipe.get(thisObj);
                 if (type == Reflections.instance$RecipeType$SMELTING) {
-                    ceRecipe = (net.momirealms.craftengine.core.item.recipe.CookingRecipe<ItemStack>) recipeManager.getRecipe(RecipeTypes.SMELTING, input, lastCustomRecipe);
+                    ceRecipe = (CustomCookingRecipe<ItemStack>) recipeManager.getRecipe(RecipeTypes.SMELTING, input, lastCustomRecipe);
                 } else if (type == Reflections.instance$RecipeType$BLASTING) {
-                    ceRecipe = (net.momirealms.craftengine.core.item.recipe.CookingRecipe<ItemStack>) recipeManager.getRecipe(RecipeTypes.BLASTING, input, lastCustomRecipe);
+                    ceRecipe = (CustomCookingRecipe<ItemStack>) recipeManager.getRecipe(RecipeTypes.BLASTING, input, lastCustomRecipe);
                 } else if (type == Reflections.instance$RecipeType$SMOKING) {
-                    ceRecipe = (net.momirealms.craftengine.core.item.recipe.CookingRecipe<ItemStack>) recipeManager.getRecipe(RecipeTypes.SMOKING, input, lastCustomRecipe);
+                    ceRecipe = (CustomCookingRecipe<ItemStack>) recipeManager.getRecipe(RecipeTypes.SMOKING, input, lastCustomRecipe);
                 } else {
                     return Optional.empty();
                 }

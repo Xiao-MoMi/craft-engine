@@ -21,6 +21,7 @@ import org.bukkit.event.block.BlockPhysicsEvent;
 import org.bukkit.event.block.BlockPlaceEvent;
 import org.bukkit.event.entity.CreatureSpawnEvent;
 import org.bukkit.inventory.*;
+import org.jetbrains.annotations.Nullable;
 import sun.misc.Unsafe;
 
 import java.io.BufferedReader;
@@ -1937,6 +1938,12 @@ public class Reflections {
             )
     );
 
+    // 1.21+
+    public static final Class<?> clazz$JukeboxSong =
+            ReflectionUtils.getClazz(
+                    BukkitReflectionUtils.assembleMCClass("world.item.JukeboxSong")
+            );
+
     public static final Object instance$BuiltInRegistries$BLOCK;
     public static final Object instance$BuiltInRegistries$ITEM;
     public static final Object instance$BuiltInRegistries$ATTRIBUTE;
@@ -1948,6 +1955,8 @@ public class Reflections {
     public static final Object instance$BuiltInRegistries$FLUID;
     public static final Object instance$BuiltInRegistries$RECIPE_TYPE;
     public static final Object instance$InternalRegistries$DIMENSION_TYPE;
+    @Nullable // 1.21+
+    public static final Object instance$InternalRegistries$JUKEBOX_SONG;
 
     public static final Object instance$Registries$BLOCK;
     public static final Object instance$Registries$ITEM;
@@ -1961,6 +1970,8 @@ public class Reflections {
     public static final Object instance$Registries$RECIPE_TYPE;
     public static final Object instance$Registries$DIMENSION_TYPE;
     public static final Object instance$Registries$CONFIGURED_FEATURE;
+    @Nullable // 1.21+
+    public static final Object instance$Registries$JUKEBOX_SONG;
 
     public static final Object instance$registryAccess;
 
@@ -1979,6 +1990,7 @@ public class Reflections {
             Object registries$Fluid  = null;
             Object registries$RecipeType  = null;
             Object registries$ConfiguredFeature  = null;
+            Object registries$JukeboxSong  = null;
             for (Field field : fields) {
                 Type fieldType = field.getGenericType();
                 if (fieldType instanceof ParameterizedType paramType) {
@@ -2014,6 +2026,8 @@ public class Reflections {
                                     registries$Item = field.get(null);
                                 } else if (type == clazz$Fluid) {
                                     registries$Fluid = field.get(null);
+                                } else if (VersionHelper.isVersionNewerThan1_21() && type == clazz$JukeboxSong) {
+                                    registries$JukeboxSong = field.get(null);
                                 }
                             }
                         }
@@ -2032,6 +2046,7 @@ public class Reflections {
             instance$Registries$FLUID = requireNonNull(registries$Fluid);
             instance$Registries$RECIPE_TYPE = requireNonNull(registries$RecipeType);
             instance$Registries$CONFIGURED_FEATURE = requireNonNull(registries$ConfiguredFeature);
+            instance$Registries$JUKEBOX_SONG = registries$JukeboxSong;
             Object server = method$MinecraftServer$getServer.invoke(null);
             Object registries = field$MinecraftServer$registries.get(server);
             instance$registryAccess = field$LayeredRegistryAccess$composite.get(registries);
@@ -2046,6 +2061,8 @@ public class Reflections {
             instance$BuiltInRegistries$ENTITY_TYPE = method$RegistryAccess$registryOrThrow.invoke(instance$registryAccess, registries$EntityType);
             instance$BuiltInRegistries$FLUID = method$RegistryAccess$registryOrThrow.invoke(instance$registryAccess, registries$Fluid);
             instance$BuiltInRegistries$RECIPE_TYPE = method$RegistryAccess$registryOrThrow.invoke(instance$registryAccess, registries$RecipeType);
+            if (registries$JukeboxSong == null) instance$InternalRegistries$JUKEBOX_SONG = null;
+            else instance$InternalRegistries$JUKEBOX_SONG = method$RegistryAccess$registryOrThrow.invoke(instance$registryAccess, registries$JukeboxSong);
         } catch (ReflectiveOperationException e) {
             throw new RuntimeException(e);
         }
@@ -4817,4 +4834,30 @@ public class Reflections {
     public static final Constructor<?> constructor$ClientboundResourcePackPopPacket = Optional.ofNullable(clazz$ClientboundResourcePackPopPacket)
             .map(it -> ReflectionUtils.getConstructor(it, Optional.class))
             .orElse(null);
+
+    public static final Constructor<?> constructor$JukeboxSong = Optional.ofNullable(clazz$JukeboxSong)
+            .map(it -> ReflectionUtils.getConstructor(it, clazz$Holder, clazz$Component, float.class, int.class))
+            .orElse(null);
+
+    public static final Field field$JukeboxSong$soundEvent = Optional.ofNullable(clazz$JukeboxSong)
+            .map(it -> ReflectionUtils.getDeclaredField(it, clazz$Holder, 0))
+            .orElse(null);
+
+    public static final Field field$JukeboxSong$description = Optional.ofNullable(clazz$JukeboxSong)
+            .map(it -> ReflectionUtils.getDeclaredField(it, clazz$Component, 0))
+            .orElse(null);
+
+    public static final Field field$JukeboxSong$lengthInSeconds = Optional.ofNullable(clazz$JukeboxSong)
+            .map(it -> ReflectionUtils.getDeclaredField(it, float.class, 0))
+            .orElse(null);
+
+    public static final Field field$JukeboxSong$comparatorOutput = Optional.ofNullable(clazz$JukeboxSong)
+            .map(it -> ReflectionUtils.getDeclaredField(it, int.class, 0))
+            .orElse(null);
+
+    public static final Method method$FluidState$getType = requireNonNull(
+            ReflectionUtils.getMethod(
+                    clazz$FluidState, clazz$Fluid
+            )
+    );
 }

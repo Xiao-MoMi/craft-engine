@@ -3,7 +3,7 @@ items:
     material: paper
     custom-model-data: 2000
     data:
-      display-name: "<!i>Bench"
+      display-name: "<!i><i18n:item.bench>"
     model:
       type: "minecraft:model"
       path: "minecraft:item/custom/bench"
@@ -49,7 +49,7 @@ items:
     material: paper
     custom-model-data: 2001
     data:
-      display-name: "<!i>Table Lamp"
+      display-name: "<!i><i18n:item.table_lamp>"
     model:
       type: "minecraft:model"
       path: "minecraft:item/custom/table_lamp"
@@ -93,7 +93,7 @@ items:
     material: paper
     custom-model-data: 2002
     data:
-      display-name: "<!i>Wooden Chair"
+      display-name: "<!i><i18n:item.wooden_chair>"
     model:
       type: "minecraft:model"
       path: "minecraft:item/custom/wooden_chair"

@@ -71,6 +71,7 @@ public class ConfigManager implements Reloadable {
     protected boolean kickDeclined;
     protected boolean sendPackOnJoin;
     protected boolean sendPackOnReload;
+    protected boolean denyNonMinecraftRequest;
     protected Component resourcePackPrompt;
     protected String packUrl;
     protected String packSha1;
@@ -150,6 +151,7 @@ public class ConfigManager implements Reloadable {
         resourcePackPrompt = AdventureHelper.miniMessage(config.getString("resource-pack.send.prompt", "<yellow>To fully experience our server, please accept our custom resource pack.</yellow>"));
         requestInterval = config.getLong("resource-pack.send.self-host.rate-limit.reset-interval", 30L);
         requestRate = config.getInt("resource-pack.send.self-host.rate-limit.max-requests", 3);
+        denyNonMinecraftRequest = config.getBoolean("resource-pack.send.deny-non-minecraft-request", true);
 
         // performance
         maxChainUpdate = config.getInt("performance.max-block-chain-update-limit", 64);
@@ -256,6 +258,10 @@ public class ConfigManager implements Reloadable {
 
     public static boolean restoreVanillaBlocks() {
         return instance.restoreVanillaBlocks && instance.restoreCustomBlocks;
+    }
+
+    public static boolean denyNonMinecraftRequest() {
+        return instance.denyNonMinecraftRequest;
     }
 
     public static boolean restoreCustomBlocks() {

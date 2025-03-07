@@ -79,7 +79,7 @@ items:
     arguments:
       model_data: 1000
       texture: next_page_0
-      name: "<!i><#FAFAD2>Next Page"
+      name: "<!i><#FAFAD2><i18n:internal.next_page>"
       lore:
         - "<!i><#F5F5F5><arg:current_page>/<arg:max_page>"
   internal:next_page_1:
@@ -87,7 +87,7 @@ items:
     arguments:
       model_data: 1001
       texture: next_page_1
-      name: "<!i><#808080>Next Page"
+      name: "<!i><#808080><i18n:internal.next_page>"
       lore:
         - "<!i><#696969><arg:current_page>/<arg:max_page>"
   internal:previous_page_0:
@@ -95,7 +95,7 @@ items:
     arguments:
       model_data: 1002
       texture: previous_page_0
-      name: "<!i><#FAFAD2>Previous Page"
+      name: "<!i><#FAFAD2><i18n:internal.previous_page>"
       lore:
         - "<!i><#F5F5F5><arg:current_page>/<arg:max_page>"
   internal:previous_page_1:
@@ -103,7 +103,7 @@ items:
     arguments:
       model_data: 1003
       texture: previous_page_1
-      name: "<!i><#808080>Previous Page"
+      name: "<!i><#808080><i18n:internal.previous_page>"
       lore:
         - "<!i><#696969><arg:current_page>/<arg:max_page>"
   internal:return:
@@ -111,34 +111,34 @@ items:
     arguments:
       model_data: 1004
       texture: return
-      name: "<!i><#DAA520>Return to Parent Page"
+      name: "<!i><#DAA520><i18n:internal.return>"
       lore: null
   internal:next_recipe_0:
     material: arrow
     custom-model-data: 1000
     data:
-      display-name: "<!i><#FAFAD2>Next Recipe"
+      display-name: "<!i><#FAFAD2><i18n:internal.next_recipe>"
       lore:
         - "<!i><#F5F5F5><arg:current_page>/<arg:max_page>"
   internal:next_recipe_1:
     material: arrow
     custom-model-data: 1001
     data:
-      display-name: "<!i><#808080>Next Recipe"
+      display-name: "<!i><#808080><i18n:internal.next_recipe>"
       lore:
         - "<!i><#696969><arg:current_page>/<arg:max_page>"
   internal:previous_recipe_0:
     material: arrow
     custom-model-data: 1002
     data:
-      display-name: "<!i><#FAFAD2>Previous Recipe"
+      display-name: "<!i><#FAFAD2><i18n:internal.previous_recipe>"
       lore:
         - "<!i><#F5F5F5><arg:current_page>/<arg:max_page>"
   internal:previous_recipe_1:
     material: arrow
     custom-model-data: 1003
     data:
-      display-name: "<!i><#808080>Previous Recipe"
+      display-name: "<!i><#808080><i18n:internal.previous_recipe>"
       lore:
         - "<!i><#696969><arg:current_page>/<arg:max_page>"
   internal:get_item:
@@ -146,16 +146,16 @@ items:
     arguments:
       model_data: 1005
       texture: get_item
-      name: "<!i><#DAA520>Get Item"
+      name: "<!i><#DAA520><i18n:internal.get_item>"
       lore:
-        - "<!i><gray>Left Click to take one"
-        - "<!i><gray>Right Click to take a stack"
+        - "<!i><gray><i18n:internal.get_item.0>"
+        - "<!i><gray><i18n:internal.get_item.1>"
   internal:cooking_info:
     template: "internal:2d_icon"
     arguments:
       model_data: 1006
       texture: cooking_info
-      name: "<!i><#FF8C00>Cooking Information"
+      name: "<!i><#FF8C00><i18n:internal.cooking_info>"
       lore:
-        - "<!i><gray>Time: <arg:cooking_time>ticks"
-        - "<!i><gray>Experience: <arg:cooking_experience>"
+        - "<!i><gray><i18n:internal.cooking_info.0>"
+        - "<!i><gray><i18n:internal.cooking_info.1>"

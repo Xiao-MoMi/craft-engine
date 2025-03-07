@@ -4,19 +4,19 @@ import net.momirealms.craftengine.core.item.recipe.input.RecipeInput;
 import net.momirealms.craftengine.core.item.recipe.input.SingleItemInput;
 import net.momirealms.craftengine.core.util.Key;
 
-public abstract class CookingRecipe<T> extends AbstractRecipe<T> {
+public abstract class CustomCookingRecipe<T> extends AbstractRecipe<T> {
     protected final CookingRecipeCategory category;
     protected final Ingredient<T> ingredient;
     protected final float experience;
     protected final int cookingTime;
 
-    protected CookingRecipe(Key id,
-                            CookingRecipeCategory category,
-                            String group,
-                            Ingredient<T> ingredient,
-                            int cookingTime,
-                            float experience,
-                            CustomRecipeResult<T> result) {
+    protected CustomCookingRecipe(Key id,
+                                  CookingRecipeCategory category,
+                                  String group,
+                                  Ingredient<T> ingredient,
+                                  int cookingTime,
+                                  float experience,
+                                  CustomRecipeResult<T> result) {
         super(id, group, result);
         this.category = category;
         this.ingredient = ingredient;

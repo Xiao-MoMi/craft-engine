@@ -1,4 +1,4 @@
-package net.momirealms.craftengine.core.loot.provider;
+package net.momirealms.craftengine.core.loot.number;
 
 import net.momirealms.craftengine.core.loot.LootContext;
 import net.momirealms.craftengine.core.util.Key;

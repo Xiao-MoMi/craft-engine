@@ -4,8 +4,8 @@ import net.momirealms.craftengine.core.item.Item;
 import net.momirealms.craftengine.core.loot.LootContext;
 import net.momirealms.craftengine.core.loot.condition.LootCondition;
 import net.momirealms.craftengine.core.loot.condition.LootConditions;
-import net.momirealms.craftengine.core.loot.provider.NumberProvider;
-import net.momirealms.craftengine.core.loot.provider.NumberProviders;
+import net.momirealms.craftengine.core.loot.number.NumberProvider;
+import net.momirealms.craftengine.core.loot.number.NumberProviders;
 import net.momirealms.craftengine.core.util.Key;
 
 import java.util.Collections;

@@ -64,7 +64,7 @@ public class ShiftExpansion extends PlaceholderExpansion {
             default -> {
                 if (split.length != 1) return null;
                 try {
-                    return plugin.fontManager().createRawOffsets(Integer.parseInt(split[0]));
+                    return plugin.fontManager().createMiniMessageOffsets(Integer.parseInt(split[0]));
                 } catch (NumberFormatException e) {
                     return null;
                 }

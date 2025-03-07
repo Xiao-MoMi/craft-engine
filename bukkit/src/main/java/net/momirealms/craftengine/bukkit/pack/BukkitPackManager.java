@@ -112,7 +112,7 @@ public class BukkitPackManager extends AbstractPackManager implements Listener {
 	public void unload() {
 		super.unload();
 		HandlerList.unregisterAll(this);
-		if (VersionHelper.isVersionNewerThan1_20_2()) {
+		if (VersionHelper.isVersionNewerThan1_20_2() && this.previousHostMode != HostMode.NONE) {
 			resetResourcePackSettings();
 		}
 	}
@@ -158,7 +158,7 @@ public class BukkitPackManager extends AbstractPackManager implements Listener {
             if (VersionHelper.isVersionNewerThan1_20_3()) {
                 info = Reflections.constructor$ServerResourcePackInfo.newInstance(uuid, url, sha1, required, ComponentUtils.adventureToMinecraft(prompt));
             } else {
-                info = Reflections.constructor$ServerResourcePackInfo.newInstance(url, sha1, required, ComponentUtils.adventureToMinecraft(prompt));
+                info = Reflections.constructor$ServerResourcePackInfo.newInstance(url + uuid, sha1, required, ComponentUtils.adventureToMinecraft(prompt));
             }
             Reflections.field$DedicatedServerProperties$serverResourcePackInfo.set(properties, Optional.of(info));
         } catch (Exception e) {
@@ -196,14 +196,14 @@ public class BukkitPackManager extends AbstractPackManager implements Listener {
 				);
 			} else {
 				packPacket = Reflections.constructor$ClientboundResourcePackPushPacket.newInstance(
-						url, "", ConfigManager.kickOnDeclined(), packPrompt
+						url + uuid, sha1, ConfigManager.kickOnDeclined(), packPrompt
 				);
 			}
 			if (user.decoderState() == ConnectionState.PLAY) {
 				if (previousPack != null && VersionHelper.isVersionNewerThan1_20_3()) {
 					plugin.networkManager().sendPackets(user, List.of(Reflections.constructor$ClientboundResourcePackPopPacket.newInstance(Optional.of(previousPack)), packPacket));
 				} else {
-					user.sendPacket(packPacket, true);
+					user.sendPacket(packPacket, false);
 				}
 			} else {
 				user.nettyChannel().writeAndFlush(packPacket);

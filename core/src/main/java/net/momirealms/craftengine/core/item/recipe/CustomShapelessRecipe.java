@@ -11,7 +11,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 
-public class CustomShapelessRecipe<T> extends CraftingTableRecipe<T> {
+public class CustomShapelessRecipe<T> extends CustomCraftingTableRecipe<T> {
     public static final Factory<?> FACTORY = new Factory<>();
     private final List<Ingredient<T>> ingredients;
     private final PlacementInfo<T> placementInfo;

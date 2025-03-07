@@ -9,7 +9,7 @@ items:
         - "minecraft:logs"
         - "minecraft:logs_that_burn"
     data:
-      display-name: "<!i>Palm Log"
+      display-name: "<!i><i18n:item.palm_log>"
     model:
       type: "minecraft:model"
       path: "minecraft:item/custom/palm_log"
@@ -55,7 +55,7 @@ items:
         - "minecraft:logs"
         - "minecraft:logs_that_burn"
     data:
-      display-name: "<!i>Stripped Palm Log"
+      display-name: "<!i><i18n:item.stripped_palm_log>"
     model:
       type: "minecraft:model"
       path: "minecraft:item/custom/stripped_palm_log"
@@ -98,7 +98,7 @@ items:
         - "minecraft:logs"
         - "minecraft:logs_that_burn"
     data:
-      display-name: "<!i>Palm Wood"
+      display-name: "<!i><i18n:item.palm_wood>"
     model:
       type: "minecraft:model"
       path: "minecraft:item/custom/palm_wood"
@@ -144,7 +144,7 @@ items:
         - "minecraft:logs"
         - "minecraft:logs_that_burn"
     data:
-      display-name: "<!i>Stripped Palm Wood"
+      display-name: "<!i><i18n:item.stripped_palm_wood>"
     model:
       type: "minecraft:model"
       path: "minecraft:item/custom/stripped_palm_wood"
@@ -186,7 +186,7 @@ items:
         - "minecraft:planks"
         - "minecraft:wooden_tool_materials"
     data:
-      display-name: "<!i>Palm Planks"
+      display-name: "<!i><i18n:item.palm_planks>"
     model:
       type: "minecraft:model"
       path: "minecraft:item/custom/palm_planks"
@@ -218,7 +218,7 @@ items:
     settings:
       fuel-time: 100
     data:
-      display-name: "<!i>Palm Sapling"
+      display-name: "<!i><i18n:item.palm_sapling>"
     model:
       template: models:generated
       arguments:
@@ -271,7 +271,7 @@ items:
     material: oak_leaves
     custom-model-data: 1000
     data:
-      display-name: "<!i>Palm Leaves"
+      display-name: "<!i><i18n:item.palm_leaves>"
       components:
         minecraft:block_state:
           distance: "1"

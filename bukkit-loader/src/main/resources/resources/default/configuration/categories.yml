@@ -1,7 +1,18 @@
 categories:
-  default:palm_tree:
-    name: "<!i><green>Palm Tree</green>"
+  default:default:
     priority: 1
+    name: "<!i><white><i18n:category.default.name></white>"
+    lore:
+      - "<!i><gray><i18n:category.default.lore>"
+    icon: default:topaz
+    list:
+      - "#default:palm_tree"
+      - "#default:topaz"
+      - "#default:furniture"
+      - "#default:misc"
+  default:palm_tree:
+    name: "<!i><green><i18n:category.palm_tree></green>"
+    hidden: true
     icon: default:palm_log
     list:
       - default:palm_sapling
@@ -12,8 +23,8 @@ categories:
       - default:stripped_palm_wood
       - default:palm_planks
   default:topaz:
-    name: "<!i><#FF8C00>Topaz</#FF8C00>"
-    priority: 2
+    name: "<!i><#FF8C00><i18n:category.topaz></#FF8C00>"
+    hidden: true
     icon: default:topaz
     list:
       - default:topaz
@@ -28,16 +39,16 @@ categories:
       - default:topaz_crossbow
       - default:topaz_rod
   default:furniture:
-    name: "<!i><#FFD700>Furniture</#FFD700>"
-    priority: 3
+    name: "<!i><#FFD700><i18n:category.furniture></#FFD700>"
+    hidden: true
     icon: default:table_lamp
     list:
       - default:bench
       - default:table_lamp
       - default:wooden_chair
   default:misc:
-    name: "<!i><WHITE>Misc</WHITE>"
-    priority: 4
+    name: "<!i><gray><i18n:category.misc></gray>"
+    hidden: true
     icon: default:chinese_lantern
     list:
       - default:chinese_lantern

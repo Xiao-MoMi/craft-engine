@@ -8,6 +8,7 @@ import dev.dejvokep.boostedyaml.settings.loader.LoaderSettings;
 import dev.dejvokep.boostedyaml.settings.updater.UpdaterSettings;
 import net.kyori.adventure.key.Key;
 import net.kyori.adventure.text.Component;
+import net.momirealms.craftengine.core.pack.Pack;
 import net.momirealms.craftengine.core.plugin.Plugin;
 import net.momirealms.craftengine.core.plugin.PluginProperties;
 import net.momirealms.craftengine.core.plugin.config.ConfigManager;
@@ -27,15 +28,18 @@ import java.util.stream.Stream;
 public class TranslationManagerImpl implements TranslationManager {
     private static final Locale DEFAULT_LOCALE = Locale.ENGLISH;
     private Locale forceLocale = null;
+    protected static TranslationManager instance;
 
     private final Plugin plugin;
     private final Set<Locale> installed = ConcurrentHashMap.newKeySet();
     private MiniMessageTranslationRegistry registry;
     private final Path translationsDirectory;
+    private final Map<Locale, I18NData> i18nData = new HashMap<>();
 
     public TranslationManagerImpl(Plugin plugin) {
         this.plugin = plugin;
         this.translationsDirectory = this.plugin.dataFolderPath().resolve("translations");
+        instance = this;
     }
 
     @Override
@@ -45,6 +49,9 @@ public class TranslationManagerImpl implements TranslationManager {
 
     @Override
     public void reload() {
+        // clear old data
+        this.i18nData.clear();
+
         // remove any previous registry
         if (this.registry != null) {
             MiniMessageTranslator.translator().removeSource(this.registry);
@@ -116,7 +123,7 @@ public class TranslationManagerImpl implements TranslationManager {
 
         // try registering the locale without a country code - if we don't already have a registration for that
         loaded.forEach((locale, bundle) -> {
-            Locale localeWithoutCountry = new Locale(locale.getLanguage());
+            Locale localeWithoutCountry = Locale.of(locale.getLanguage());
             if (!locale.equals(localeWithoutCountry) && !localeWithoutCountry.equals(DEFAULT_LOCALE) && this.installed.add(localeWithoutCountry)) {
                 try {
                     this.registry.registerAll(localeWithoutCountry, bundle);
@@ -127,8 +134,8 @@ public class TranslationManagerImpl implements TranslationManager {
         });
 
         Locale localLocale = Locale.getDefault();
-        if (!this.installed.contains(localLocale) && forceLocale == null) {
-            plugin.logger().warn(localLocale.toString().toLowerCase(Locale.ENGLISH) + ".yml not exists, using " + DEFAULT_LOCALE.toString().toLowerCase(Locale.ENGLISH) + ".yml as default locale.");
+        if (!this.installed.contains(localLocale) && this.forceLocale == null) {
+            this.plugin.logger().warn(localLocale.toString().toLowerCase(Locale.ENGLISH) + ".yml not exists, using " + DEFAULT_LOCALE.toString().toLowerCase(Locale.ENGLISH) + ".yml as default locale.");
         }
     }
 
@@ -163,7 +170,7 @@ public class TranslationManagerImpl implements TranslationManager {
                         .build()
         );
         try {
-            document.save(new File(plugin.dataFolderFile(), "translations" + File.separator + translationFile.getFileName()));
+            document.save(new File(this.plugin.dataFolderFile(), "translations" + File.separator + translationFile.getFileName()));
         } catch (IOException e) {
             throw new IllegalStateException("Could not update translation file: " + translationFile.getFileName(), e);
         }
@@ -186,5 +193,57 @@ public class TranslationManagerImpl implements TranslationManager {
         this.installed.add(locale);
 
         return Pair.of(locale, bundle);
+    }
+
+    @Override
+    public String translateI18NTag(String i18nId) {
+        Locale locale = forceLocale;
+        if (locale == null) {
+            locale = Locale.getDefault();
+            if (locale == null) {
+                I18NData data = i18nData.get(DEFAULT_LOCALE);
+                if (data == null) return i18nId;
+                return data.translate(i18nId);
+            }
+        }
+        I18NData data = i18nData.get(locale);
+        if (data == null) {
+            Locale lang = Locale.of(locale.getLanguage());
+            if (locale != lang) {
+                data = i18nData.get(lang);
+                if (data == null) {
+                    return i18nId;
+                }
+            } else {
+                return i18nId;
+            }
+        }
+        return data.translate(i18nId);
+    }
+
+    @Override
+    public void parseSection(Pack pack, Path path, net.momirealms.craftengine.core.util.Key id, Map<String, Object> section) {
+        Locale locale = TranslationManager.parseLocale(id.value());
+        if (locale == null) {
+            throw new IllegalStateException("Unknown locale '" + id.value() + "' - unable to register.");
+        }
+
+        I18NData data = this.i18nData.computeIfAbsent(locale, k -> new I18NData());
+        for (Map.Entry<String, Object> entry : section.entrySet()) {
+            String key = entry.getKey();
+            data.addTranslation(key, entry.getValue().toString());
+        }
+    }
+
+    public static class I18NData {
+        private final Map<String, String> translations = new HashMap<>();
+
+        public void addTranslation(String key, String value) {
+            this.translations.put(key, value);
+        }
+
+        public String translate(String key) {
+            return this.translations.getOrDefault(key, key);
+        }
     }
 }

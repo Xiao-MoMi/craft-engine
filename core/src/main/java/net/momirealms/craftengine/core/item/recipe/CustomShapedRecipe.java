@@ -11,7 +11,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 
-public class CustomShapedRecipe<T> extends CraftingTableRecipe<T> {
+public class CustomShapedRecipe<T> extends CustomCraftingTableRecipe<T> {
     public static final Factory<?> FACTORY = new Factory<CustomShapedRecipe<?>>();
     private final ParsedPattern<T> parsedPattern;
     private final Pattern<T> pattern;

@@ -260,7 +260,7 @@ public class ComponentItemFactory extends BukkitItemFactory {
     @Override
     protected int maxStackSize(ItemWrapper<ItemStack> item) {
         if (!item.hasComponent(ComponentKeys.MAX_STACK_SIZE)) return item.getItem().getType().getMaxStackSize();
-        return Optional.ofNullable((Integer) ComponentType.encodeJava(ComponentKeys.MAX_STACK_SIZE, item.getComponent(ComponentKeys.DAMAGE)).orElse(null))
+        return Optional.ofNullable((Integer) ComponentType.encodeJava(ComponentKeys.MAX_STACK_SIZE, item.getComponent(ComponentKeys.MAX_STACK_SIZE)).orElse(null))
                 .orElse(item.getItem().getType().getMaxStackSize());
     }
 

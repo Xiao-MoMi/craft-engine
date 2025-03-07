@@ -575,18 +575,20 @@ public class BukkitItemManager extends AbstractItemManager<ItemStack> {
     private void registerAllVanillaItems() {
         try {
             for (Material material : Registry.MATERIAL) {
-                if (!material.isLegacy() && material.isItem()) {
-                    Key id = Key.from(material.getKey().asString());
-                    Holder.Reference<Key> holder =  BuiltInRegistries.OPTIMIZED_ITEM_ID.get(id)
-                            .orElseGet(() -> ((WritableRegistry<Key>) BuiltInRegistries.OPTIMIZED_ITEM_ID)
-                                    .register(new ResourceKey<>(BuiltInRegistries.OPTIMIZED_ITEM_ID.key().location(), id), id));
+                if (material.getKey().namespace().equals("minecraft")) {
+                    if (!material.isLegacy() && material.isItem()) {
+                        Key id = Key.from(material.getKey().asString());
+                        Holder.Reference<Key> holder =  BuiltInRegistries.OPTIMIZED_ITEM_ID.get(id)
+                                .orElseGet(() -> ((WritableRegistry<Key>) BuiltInRegistries.OPTIMIZED_ITEM_ID)
+                                        .register(new ResourceKey<>(BuiltInRegistries.OPTIMIZED_ITEM_ID.key().location(), id), id));
 
-                    Object resourceLocation = Reflections.method$ResourceLocation$fromNamespaceAndPath.invoke(null, id.namespace(), id.value());
-                    Object mcHolder = ((Optional<Object>) Reflections.method$Registry$getHolder1.invoke(Reflections.instance$BuiltInRegistries$ITEM, Reflections.method$ResourceKey$create.invoke(null, Reflections.instance$Registries$ITEM, resourceLocation))).get();
-                    Set<Object> tags = (Set<Object>) Reflections.field$Holder$Reference$tags.get(mcHolder);
-                    for (Object tag : tags) {
-                        Key tagId = Key.of(Reflections.field$TagKey$location.get(tag).toString());
-                        this.vanillaItemTags.computeIfAbsent(tagId, (key) -> new ArrayList<>()).add(holder);
+                        Object resourceLocation = Reflections.method$ResourceLocation$fromNamespaceAndPath.invoke(null, id.namespace(), id.value());
+                        Object mcHolder = ((Optional<Object>) Reflections.method$Registry$getHolder1.invoke(Reflections.instance$BuiltInRegistries$ITEM, Reflections.method$ResourceKey$create.invoke(null, Reflections.instance$Registries$ITEM, resourceLocation))).get();
+                        Set<Object> tags = (Set<Object>) Reflections.field$Holder$Reference$tags.get(mcHolder);
+                        for (Object tag : tags) {
+                            Key tagId = Key.of(Reflections.field$TagKey$location.get(tag).toString());
+                            this.vanillaItemTags.computeIfAbsent(tagId, (key) -> new ArrayList<>()).add(holder);
+                        }
                     }
                 }
             }

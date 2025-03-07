@@ -18,6 +18,8 @@ import net.momirealms.craftengine.core.plugin.locale.TranslationManager;
 import net.momirealms.craftengine.core.plugin.logger.PluginLogger;
 import net.momirealms.craftengine.core.plugin.network.NetworkManager;
 import net.momirealms.craftengine.core.plugin.scheduler.SchedulerAdapter;
+import net.momirealms.craftengine.core.sound.SoundManager;
+import net.momirealms.craftengine.core.sound.song.JukeboxSongManager;
 import net.momirealms.craftengine.core.world.WorldManager;
 
 import java.io.File;
@@ -74,6 +76,10 @@ public interface Plugin extends Reloadable {
     ItemBrowserManager itemBrowserManager();
 
     GuiManager guiManager();
+
+    SoundManager soundManager();
+
+    JukeboxSongManager jukeboxSongManager();
 
     void debug(Supplier<String> message);
 

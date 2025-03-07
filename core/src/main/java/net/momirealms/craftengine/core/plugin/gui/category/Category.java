@@ -9,19 +9,23 @@ import java.util.List;
 public class Category implements Comparable<Category> {
     private final Key id;
     private final String displayName;
+    private final List<String> displayLore;
     private final Key icon;
-    private final List<Key> members;
+    private final List<String> members;
     private final int priority;
+    private final boolean hidden;
 
-    public Category(Key id, String displayName, Key icon, List<Key> members, int priority) {
+    public Category(Key id, String displayName, List<String> displayLore, Key icon, List<String> members, int priority, boolean hidden) {
         this.id = id;
         this.displayName = displayName;
         this.members = new ArrayList<>(members);
         this.icon = icon;
         this.priority = priority;
+        this.displayLore = new ArrayList<>(displayLore);
+        this.hidden = hidden;
     }
 
-    public void addMember(Key member) {
+    public void addMember(String member) {
         if (!this.members.contains(member)) {
             this.members.add(member);
         }
@@ -39,12 +43,20 @@ public class Category implements Comparable<Category> {
         return icon;
     }
 
-    public List<Key> members() {
+    public boolean hidden() {
+        return hidden;
+    }
+
+    public List<String> displayLore() {
+        return displayLore;
+    }
+
+    public List<String> members() {
         return members;
     }
 
     public void merge(Category other) {
-        for (Key member : other.members) {
+        for (String member : other.members) {
             addMember(member);
         }
     }

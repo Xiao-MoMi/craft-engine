@@ -38,7 +38,8 @@ public class BukkitCommandManager extends AbstractCommandManager<CommandSender> 
                 new DebugAppearanceStateUsageCommand(this, plugin),
                 new DebugRealStateUsageCommand(this, plugin),
                 new DebugItemDataCommand(this, plugin),
-                new DebugSetBlockCommand(this, plugin)
+                new DebugSetBlockCommand(this, plugin),
+                new DebugTargetBlockCommand(this, plugin)
         ));
         final LegacyPaperCommandManager<CommandSender> manager = (LegacyPaperCommandManager<CommandSender>) getCommandManager();
         manager.settings().set(ManagerSetting.ALLOW_UNSAFE_REGISTRATION, true);

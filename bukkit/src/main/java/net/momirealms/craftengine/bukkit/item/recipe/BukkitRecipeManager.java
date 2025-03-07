@@ -12,14 +12,13 @@ import net.momirealms.craftengine.bukkit.util.RecipeUtils;
 import net.momirealms.craftengine.bukkit.util.Reflections;
 import net.momirealms.craftengine.core.item.CustomItem;
 import net.momirealms.craftengine.core.item.ItemBuildContext;
-import net.momirealms.craftengine.core.item.recipe.CookingRecipe;
 import net.momirealms.craftengine.core.item.recipe.Recipe;
 import net.momirealms.craftengine.core.item.recipe.*;
 import net.momirealms.craftengine.core.item.recipe.input.RecipeInput;
 import net.momirealms.craftengine.core.item.recipe.vanilla.*;
-import net.momirealms.craftengine.core.item.recipe.vanilla.impl.VanillaRecipeReader1_20;
-import net.momirealms.craftengine.core.item.recipe.vanilla.impl.VanillaRecipeReader1_20_5;
-import net.momirealms.craftengine.core.item.recipe.vanilla.impl.VanillaRecipeReader1_21_2;
+import net.momirealms.craftengine.core.item.recipe.vanilla.reader.VanillaRecipeReader1_20;
+import net.momirealms.craftengine.core.item.recipe.vanilla.reader.VanillaRecipeReader1_20_5;
+import net.momirealms.craftengine.core.item.recipe.vanilla.reader.VanillaRecipeReader1_21_2;
 import net.momirealms.craftengine.core.pack.Pack;
 import net.momirealms.craftengine.core.plugin.CraftEngine;
 import net.momirealms.craftengine.core.plugin.config.ConfigManager;
@@ -651,7 +650,7 @@ public class BukkitRecipeManager implements RecipeManager<ItemStack> {
     private void handleDataPackCookingRecipe(Key id,
                                              VanillaCookingRecipe recipe,
                                              PentaFunction<NamespacedKey, ItemStack, RecipeChoice, Float, Integer, org.bukkit.inventory.CookingRecipe<?>> constructor1,
-                                             HeptaFunction<Key, CookingRecipeCategory, String, Ingredient<ItemStack>, Integer, Float, CustomRecipeResult<ItemStack>, CookingRecipe<ItemStack>> constructor2,
+                                             HeptaFunction<Key, CookingRecipeCategory, String, Ingredient<ItemStack>, Integer, Float, CustomRecipeResult<ItemStack>, CustomCookingRecipe<ItemStack>> constructor2,
                                              Method fromBukkitRecipeMethod,
                                              Consumer<Runnable> callback) {
         NamespacedKey key = new NamespacedKey(id.namespace(), id.value());
@@ -684,7 +683,7 @@ public class BukkitRecipeManager implements RecipeManager<ItemStack> {
             cookingRecipe.setCategory(CookingBookCategory.valueOf(recipe.category().name()));
         }
 
-        CookingRecipe<ItemStack> ceRecipe = constructor2.apply(
+        CustomCookingRecipe<ItemStack> ceRecipe = constructor2.apply(
                 id,
                 recipe.category(),
                 recipe.group(),
@@ -821,7 +820,7 @@ public class BukkitRecipeManager implements RecipeManager<ItemStack> {
         injectIngredients(ingredients, actualIngredients);
     }
 
-    private static void injectCookingRecipe(Key id, CookingRecipe<ItemStack> recipe) throws ReflectiveOperationException {
+    private static void injectCookingRecipe(Key id, CustomCookingRecipe<ItemStack> recipe) throws ReflectiveOperationException {
         Ingredient<ItemStack> actualIngredient = recipe.ingredient();
         Object smeltingRecipe = getNMSRecipe(id);
         recipeToMcRecipeHolder.put(recipe, smeltingRecipe);

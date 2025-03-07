@@ -3,7 +3,7 @@ items:
     material: paper
     custom-model-data: 3001
     data:
-      display-name: "<!i>Chinese Lantern"
+      display-name: "<!i><i18n:item.chinese_lantern>"
     model:
       type: "minecraft:model"
       path: "minecraft:item/custom/chinese_lantern"

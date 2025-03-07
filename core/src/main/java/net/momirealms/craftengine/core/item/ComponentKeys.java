@@ -16,4 +16,6 @@ public class ComponentKeys {
     public static final String MAX_STACK_SIZE = Key.key("minecraft", "max_stack_size").asString();
     public static final String EQUIPPABLE = Key.key("minecraft", "equippable").asString();
     public static final String ITEM_MODEL = Key.key("minecraft", "item_model").asString();
+    public static final String TOOLTIP_STYLE = Key.key("minecraft", "tooltip_style").asString();
+    public static final String JUKEBOX_PLAYABLE = Key.key("minecraft", "jukebox_playable").asString();
 }

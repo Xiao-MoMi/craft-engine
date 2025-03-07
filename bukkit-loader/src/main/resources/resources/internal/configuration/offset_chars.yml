@@ -2,264 +2,264 @@ images:
   internal:neg_1:
     height: -3
     ascent: -5000
-    font: minecraft:default
+    font: minecraft:offset_chars
     file: minecraft:font/offset/space_split.png
     char: '\uf800'
   internal:neg_2:
     height: -4
     ascent: -5000
-    font: minecraft:default
+    font: minecraft:offset_chars
     file: minecraft:font/offset/space_split.png
     char: '\uf801'
   internal:neg_3:
     height: -5
     ascent: -5000
-    font: minecraft:default
+    font: minecraft:offset_chars
     file: minecraft:font/offset/space_split.png
     char: '\uf802'
   internal:neg_4:
     height: -6
     ascent: -5000
-    font: minecraft:default
+    font: minecraft:offset_chars
     file: minecraft:font/offset/space_split.png
     char: '\uf803'
   internal:neg_5:
     height: -7
     ascent: -5000
-    font: minecraft:default
+    font: minecraft:offset_chars
     file: minecraft:font/offset/space_split.png
     char: '\uf804'
   internal:neg_6:
     height: -8
     ascent: -5000
-    font: minecraft:default
+    font: minecraft:offset_chars
     file: minecraft:font/offset/space_split.png
     char: '\uf805'
   internal:neg_7:
     height: -9
     ascent: -5000
-    font: minecraft:default
+    font: minecraft:offset_chars
     file: minecraft:font/offset/space_split.png
     char: '\uf806'
   internal:neg_8:
     height: -10
     ascent: -5000
-    font: minecraft:default
+    font: minecraft:offset_chars
     file: minecraft:font/offset/space_split.png
     char: '\uf807'
   internal:neg_9:
     height: -11
     ascent: -5000
-    font: minecraft:default
+    font: minecraft:offset_chars
     file: minecraft:font/offset/space_split.png
     char: '\uf808'
   internal:neg_10:
     height: -12
     ascent: -5000
-    font: minecraft:default
+    font: minecraft:offset_chars
     file: minecraft:font/offset/space_split.png
     char: '\uf809'
   internal:neg_11:
     height: -13
     ascent: -5000
-    font: minecraft:default
+    font: minecraft:offset_chars
     file: minecraft:font/offset/space_split.png
     char: '\uf80a'
   internal:neg_12:
     height: -14
     ascent: -5000
-    font: minecraft:default
+    font: minecraft:offset_chars
     file: minecraft:font/offset/space_split.png
     char: '\uf80b'
   internal:neg_13:
     height: -15
     ascent: -5000
-    font: minecraft:default
+    font: minecraft:offset_chars
     file: minecraft:font/offset/space_split.png
     char: '\uf80c'
   internal:neg_14:
     height: -16
     ascent: -5000
-    font: minecraft:default
+    font: minecraft:offset_chars
     file: minecraft:font/offset/space_split.png
     char: '\uf80d'
   internal:neg_15:
     height: -17
     ascent: -5000
-    font: minecraft:default
+    font: minecraft:offset_chars
     file: minecraft:font/offset/space_split.png
     char: '\uf80e'
   internal:neg_16:
     height: -18
     ascent: -5000
-    font: minecraft:default
+    font: minecraft:offset_chars
     file: minecraft:font/offset/space_split.png
     char: '\uf80f'
   internal:neg_24:
     height: -26
     ascent: -5000
-    font: minecraft:default
+    font: minecraft:offset_chars
     file: minecraft:font/offset/space_split.png
     char: '\uf810'
   internal:neg_32:
     height: -34
     ascent: -5000
-    font: minecraft:default
+    font: minecraft:offset_chars
     file: minecraft:font/offset/space_split.png
     char: '\uf811'
   internal:neg_48:
     height: -50
     ascent: -5000
-    font: minecraft:default
+    font: minecraft:offset_chars
     file: minecraft:font/offset/space_split.png
     char: '\uf812'
   internal:neg_64:
     height: -66
     ascent: -5000
-    font: minecraft:default
+    font: minecraft:offset_chars
     file: minecraft:font/offset/space_split.png
     char: '\uf813'
   internal:neg_128:
     height: -130
     ascent: -5000
-    font: minecraft:default
+    font: minecraft:offset_chars
     file: minecraft:font/offset/space_split.png
     char: '\uf814'
   internal:neg_256:
     height: -258
     ascent: -5000
-    font: minecraft:default
+    font: minecraft:offset_chars
     file: minecraft:font/offset/space_split.png
     char: '\uf815'
   internal:pos_1:
     height: -1
     ascent: -5000
-    font: minecraft:default
+    font: minecraft:offset_chars
     file: minecraft:font/offset/space_split.png
     char: '\uf830'
   internal:pos_2:
     height: 1
     ascent: -5000
-    font: minecraft:default
+    font: minecraft:offset_chars
     file: minecraft:font/offset/space_split.png
     char: '\uf831'
   internal:pos_3:
     height: 2
     ascent: -5000
-    font: minecraft:default
+    font: minecraft:offset_chars
     file: minecraft:font/offset/space_split.png
     char: '\uf832'
   internal:pos_4:
     height: 3
     ascent: -5000
-    font: minecraft:default
+    font: minecraft:offset_chars
     file: minecraft:font/offset/space_split.png
     char: '\uf833'
   internal:pos_5:
     height: 4
     ascent: -5000
-    font: minecraft:default
+    font: minecraft:offset_chars
     file: minecraft:font/offset/space_split.png
     char: '\uf834'
   internal:pos_6:
     height: 5
     ascent: -5000
-    font: minecraft:default
+    font: minecraft:offset_chars
     file: minecraft:font/offset/space_split.png
     char: '\uf835'
   internal:pos_7:
     height: 6
     ascent: -5000
-    font: minecraft:default
+    font: minecraft:offset_chars
     file: minecraft:font/offset/space_split.png
     char: '\uf836'
   internal:pos_8:
     height: 7
     ascent: -5000
-    font: minecraft:default
+    font: minecraft:offset_chars
     file: minecraft:font/offset/space_split.png
     char: '\uf837'
   internal:pos_9:
     height: 8
     ascent: -5000
-    font: minecraft:default
+    font: minecraft:offset_chars
     file: minecraft:font/offset/space_split.png
     char: '\uf838'
   internal:pos_10:
     height: 9
     ascent: -5000
-    font: minecraft:default
+    font: minecraft:offset_chars
     file: minecraft:font/offset/space_split.png
     char: '\uf839'
   internal:pos_11:
     height: 10
     ascent: -5000
-    font: minecraft:default
+    font: minecraft:offset_chars
     file: minecraft:font/offset/space_split.png
     char: '\uf83a'
   internal:pos_12:
     height: 11
     ascent: -5000
-    font: minecraft:default
+    font: minecraft:offset_chars
     file: minecraft:font/offset/space_split.png
     char: '\uf83b'
   internal:pos_13:
     height: 12
     ascent: -5000
-    font: minecraft:default
+    font: minecraft:offset_chars
     file: minecraft:font/offset/space_split.png
     char: '\uf83c'
   internal:pos_14:
     height: 13
     ascent: -5000
-    font: minecraft:default
+    font: minecraft:offset_chars
     file: minecraft:font/offset/space_split.png
     char: '\uf83d'
   internal:pos_15:
     height: 14
     ascent: -5000
-    font: minecraft:default
+    font: minecraft:offset_chars
     file: minecraft:font/offset/space_split.png
     char: '\uf83e'
   internal:pos_16:
     height: 15
     ascent: -5000
-    font: minecraft:default
+    font: minecraft:offset_chars
     file: minecraft:font/offset/space_split.png
     char: '\uf83f'
   internal:pos_24:
     height: 23
     ascent: -5000
-    font: minecraft:default
+    font: minecraft:offset_chars
     file: minecraft:font/offset/space_split.png
     char: '\uf840'
   internal:pos_32:
     height: 31
     ascent: -5000
-    font: minecraft:default
+    font: minecraft:offset_chars
     file: minecraft:font/offset/space_split.png
     char: '\uf841'
   internal:pos_48:
     height: 47
     ascent: -5000
-    font: minecraft:default
+    font: minecraft:offset_chars
     file: minecraft:font/offset/space_split.png
     char: '\uf842'
   internal:pos_64:
     height: 63
     ascent: -5000
-    font: minecraft:default
+    font: minecraft:offset_chars
     file: minecraft:font/offset/space_split.png
     char: '\uf843'
   internal:pos_128:
     height: 127
     ascent: -5000
-    font: minecraft:default
+    font: minecraft:offset_chars
     file: minecraft:font/offset/space_split.png
     char: '\uf844'
   internal:pos_256:
     height: 255
     ascent: -5000
-    font: minecraft:default
+    font: minecraft:offset_chars
     file: minecraft:font/offset/space_split.png
     char: '\uf845'

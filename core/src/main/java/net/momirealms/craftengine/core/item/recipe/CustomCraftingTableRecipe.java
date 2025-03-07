@@ -2,10 +2,10 @@ package net.momirealms.craftengine.core.item.recipe;
 
 import net.momirealms.craftengine.core.util.Key;
 
-public abstract class CraftingTableRecipe<T> extends AbstractRecipe<T> {
+public abstract class CustomCraftingTableRecipe<T> extends AbstractRecipe<T> {
     protected final CraftingRecipeCategory category;
 
-    protected CraftingTableRecipe(Key id, CraftingRecipeCategory category, String group, CustomRecipeResult<T> result) {
+    protected CustomCraftingTableRecipe(Key id, CraftingRecipeCategory category, String group, CustomRecipeResult<T> result) {
         super(id, group, result);
         this.category = category;
     }

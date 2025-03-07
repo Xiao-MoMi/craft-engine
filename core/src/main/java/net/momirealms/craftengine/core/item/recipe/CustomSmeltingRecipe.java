@@ -9,7 +9,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 
-public class CustomSmeltingRecipe<T> extends CookingRecipe<T> {
+public class CustomSmeltingRecipe<T> extends CustomCookingRecipe<T> {
     public static final Factory<?> FACTORY = new Factory<>();
 
     public CustomSmeltingRecipe(Key id, CookingRecipeCategory category, String group, Ingredient<T> ingredient, int cookingTime, float experience, CustomRecipeResult<T> result) {

@@ -4,8 +4,6 @@ import net.momirealms.craftengine.bukkit.block.BukkitBlockManager;
 import net.momirealms.craftengine.bukkit.plugin.BukkitCraftEngine;
 import net.momirealms.craftengine.bukkit.plugin.user.BukkitServerPlayer;
 import net.momirealms.craftengine.bukkit.util.BlockStateUtils;
-import net.momirealms.craftengine.bukkit.util.LocationUtils;
-import net.momirealms.craftengine.bukkit.util.ParticleUtils;
 import net.momirealms.craftengine.bukkit.util.Reflections;
 import net.momirealms.craftengine.bukkit.world.BukkitWorld;
 import net.momirealms.craftengine.core.block.CustomBlock;
@@ -190,7 +188,8 @@ public final class CraftEngineBlocks {
             world.playBlockSound(vec3d, state.sounds().breakSound(), 1, 0.8f);
         }
         if (sendParticles) {
-            ParticleUtils.addBlockBreakParticles(block.getWorld(), LocationUtils.toBlockPos(location), state.customBlockState().handle());
+            // TODO Particles
+            //ParticleUtils.addBlockBreakParticles(block.getWorld(), LocationUtils.toBlockPos(location), state.customBlockState().handle());
         }
         block.setType(Material.AIR, applyPhysics);
         return true;
