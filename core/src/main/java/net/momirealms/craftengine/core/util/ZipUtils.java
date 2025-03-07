@@ -1,6 +1,11 @@
 package net.momirealms.craftengine.core.util;
 
+import net.momirealms.craftengine.core.pack.obfuscation.ResourceKey;
+import com.google.gson.Gson;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonSyntaxException;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.*;
 import java.nio.charset.StandardCharsets;
@@ -9,22 +14,21 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.SimpleFileVisitor;
 import java.nio.file.attribute.BasicFileAttributes;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Random;
+import java.util.*;
 import java.util.stream.Stream;
 import java.util.zip.Deflater;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
 public class ZipUtils {
+    private static final Gson GSON = new Gson();
     private static final Random RANDOM = new Random();
-    private static final byte[] BUFFER = new byte[1024 * 8];
+    private static final byte[] BUFFER = new byte[1024 * 32];
     private static final String FILE_NAME = "C/E/".repeat(16383) + "C";
     private static final byte[] FILE_NAME_BYTES = ("C/E/".repeat(16383) + "C/E").getBytes();
 
-    public static void zipDirectory(Path folderPath, Path zipFilePath,
-                                    int protectZipLevel, int obfuscateLevel) throws IOException {
+    public static void zipDirectory(Path folderPath, Path zipFilePath, int protectZipLevel,
+                                    @Nullable Map<ResourceKey, ResourceKey> replaceMap) throws IOException {
         if (protectZipLevel == 0) {
             try (ZipOutputStream zos = new ZipOutputStream(new FileOutputStream(zipFilePath.toFile()))) {
                 try (Stream<Path> paths = Files.walk(folderPath)) {
@@ -45,12 +49,25 @@ public class ZipUtils {
                  CountingOutputStream cos = new CountingOutputStream(os)) {
                 List<CentralDirectoryEntry> centralDirEntries = new ArrayList<>();
                 Path rootPath = folderPath.toAbsolutePath();
+
                 createZipHeader(cos, protectZipLevel);
+
+                Map<Path, Path> replacePath = new HashMap<>();
+                if (replaceMap != null) {
+                    replaceMap.forEach((key, value) -> {
+                        Path keyPath = key.toPath(rootPath);
+                        Path valuePath = value.toPath(rootPath);
+                        replacePath.put(keyPath, valuePath);
+                        if (key.pngHasMcmeta()) {
+                            replacePath.put(FileUtils.getMcmetaPath(keyPath), FileUtils.getMcmetaPath(valuePath));
+                        }
+                    });
+                }
 
                 Files.walkFileTree(rootPath, new SimpleFileVisitor<>() {
                     @Override
                     public @NotNull FileVisitResult visitFile(Path file, @NotNull BasicFileAttributes attrs) throws IOException {
-                        processFile(file, cos, centralDirEntries, rootPath, obfuscateLevel);
+                        processFile(file, cos, centralDirEntries, rootPath, replaceMap, replacePath);
                         return FileVisitResult.CONTINUE;
                     }
                 });
@@ -69,7 +86,6 @@ public class ZipUtils {
 
                 writeEndOfCentralDirectoryRecord(
                         cos,
-                        centralDirEntries.size(),
                         centralDirStartOffset,
                         cos.getCount() - centralDirStartOffset
                 );
@@ -98,15 +114,40 @@ public class ZipUtils {
         entry.localHeaderOffset = headerOffset;
         entry.compressedSize = 0xFFFFFFFFL;
         entry.uncompressedSize = 0xFFFFFFFFL;
-        entry.fileName = (index + fileName).replace(File.separatorChar, '/');
+        entry.fileName = ((index + fileName).replace(File.separatorChar, '/')).getBytes(StandardCharsets.UTF_8);
         entry.compressionMethod = 0;
         entries.add(entry);
     }
 
     private static void processFile(Path file, CountingOutputStream cos, List<CentralDirectoryEntry> entries,
-                                    Path rootPath, int obfuscateLevel) throws IOException {
-        String relativePath = rootPath.relativize(file).toString().replace(File.separatorChar, '/');
-        byte[] originalData = Files.readAllBytes(file);
+                                    Path rootPath, @Nullable Map<ResourceKey, ResourceKey> replaceMap,
+                                    @Nullable Map<Path, Path> replacePath) throws IOException {
+        String relativePath;
+        if (replacePath != null && replacePath.containsKey(file)) {
+            relativePath = rootPath.relativize(replacePath.get(file)).toString().replace(File.separatorChar, '/');
+        } else {
+            relativePath = rootPath.relativize(file).toString().replace(File.separatorChar, '/');
+        }
+        if (relativePath.equals("pack.mcmeta") || relativePath.equals("pack.png") || relativePath.endsWith("/sounds.json")) {
+            relativePath += "/";
+        }
+        byte[] originalData;
+        if (JsonUtils.isJsonFile(file, false) && replaceMap != null) {
+            try {
+                JsonObject jsonData = GSON.fromJson(Files.readString(file), JsonObject.class);
+                JsonObject modifyContent;
+                if (jsonData.isJsonObject()) {
+                    modifyContent = JsonUtils.replaceResourceKey(jsonData, replaceMap);
+                } else {
+                    modifyContent = jsonData;
+                }
+                originalData = JsonUtils.jsonUnicode(modifyContent).getBytes(StandardCharsets.UTF_8);
+            } catch (JsonSyntaxException ignored) {
+                originalData = Files.readAllBytes(file);
+            }
+        } else {
+            originalData = Files.readAllBytes(file);
+        }
 
         byte[] compressedData = compressData(originalData);
         boolean useCompression = compressedData.length < originalData.length;
@@ -124,24 +165,26 @@ public class ZipUtils {
         entry.localHeaderOffset = headerOffset;
         entry.compressedSize = compressedSize;
         entry.uncompressedSize = uncompressedSize;
-        entry.fileName = relativePath;
+        entry.fileName = relativePath.getBytes(StandardCharsets.UTF_8);
         entry.compressionMethod = compressionMethod;
         entries.add(entry);
     }
 
     private static byte[] compressData(byte[] input) {
         Deflater deflater = new Deflater(Deflater.BEST_COMPRESSION, true);
-        deflater.setInput(input);
-        deflater.finish();
-
-        ByteArrayOutputStream baos = new ByteArrayOutputStream();
-        byte[] buffer = BUFFER;
-        while (!deflater.finished()) {
-            int count = deflater.deflate(buffer);
-            baos.write(buffer, 0, count);
+        try {
+            deflater.setInput(input);
+            deflater.finish();
+            int initialCapacity = Math.max(1024, input.length / 2);
+            ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream(initialCapacity);
+            while (!deflater.finished()) {
+                int count = deflater.deflate(BUFFER);
+                byteArrayOutputStream.write(BUFFER, 0, count);
+            }
+            return byteArrayOutputStream.toByteArray();
+        } finally {
+            deflater.end();
         }
-        deflater.end();
-        return baos.toByteArray();
     }
 
     private static void createZipHeader(OutputStream out, int protectZipLevel) throws IOException {
@@ -188,18 +231,18 @@ public class ZipUtils {
         writeInt(out, 0);
         writeInt(out, entry.compressedSize + 1);
         writeInt(out, 0xFFFFFFFEL);
-        writeShort(out, entry.fileName.getBytes(StandardCharsets.UTF_8).length);
+        writeShort(out, entry.fileName.length);
         writeShort(out, 0);
         writeShort(out, 0);
         writeShort(out, RANDOM.nextInt(65536));
         writeShort(out, 0);
         writeInt(out, 1);
         writeInt(out, (int) entry.localHeaderOffset);
-        out.write(entry.fileName.getBytes(StandardCharsets.UTF_8));
+        out.write(entry.fileName);
     }
 
-    private static void writeEndOfCentralDirectoryRecord(OutputStream out, int numEntries,
-                                                         long centralDirOffset, long centralDirSize) throws IOException {
+    private static void writeEndOfCentralDirectoryRecord(OutputStream out, long centralDirOffset,
+                                                         long centralDirSize) throws IOException {
         writeInt(out, 0x06054B50);
         writeShort(out, 0xFF);
         writeShort(out, 0);
@@ -226,7 +269,7 @@ public class ZipUtils {
         long localHeaderOffset;
         long compressedSize;
         long uncompressedSize;
-        String fileName;
+        byte[] fileName;
         int compressionMethod;
     }
 
@@ -261,3 +304,4 @@ public class ZipUtils {
         }
     }
 }
+
