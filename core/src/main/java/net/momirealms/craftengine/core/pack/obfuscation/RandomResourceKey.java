@@ -20,7 +20,6 @@ public class RandomResourceKey {
     private final Set<String> hasPath = new HashSet<>();
     private static final Random random = new Random();
     private static final Gson gson = new Gson();
-    private static final List<String> happyString = Arrays.asList("con", "prn", "aux", "nul");
 
     public RandomResourceKey(String atlasesEntry, String randomName) {
         if (randomName == null || !randomName.matches("^[a-z0-9_.-]+$")) {
@@ -69,9 +68,8 @@ public class RandomResourceKey {
             if (obfuscateLevel == 3 && !isAddHappyString) {
                 int remainingLoops = ((length - 6) / 2) + 1;
                 if (random.nextInt(remainingLoops) == 0) {
-                    String addHappyString = happyString.get(random.nextInt(happyString.size())) + "/";
-                    path.append(addHappyString);
-                    length -= addHappyString.length();
+                    path.append(".../");
+                    length -= 4;
                     isAddHappyString = true;
                     continue;
                 }
