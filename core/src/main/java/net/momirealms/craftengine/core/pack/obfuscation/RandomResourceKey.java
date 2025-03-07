@@ -65,7 +65,7 @@ public class RandomResourceKey {
         boolean isAddHappyString = false;
         length -= path.length();
         while (length >= 3) {
-            if (obfuscateLevel == 3 && !isAddHappyString) {
+            if (obfuscateLevel == 2 && !isAddHappyString) {
                 int remainingLoops = ((length - 6) / 2) + 1;
                 if (random.nextInt(remainingLoops) == 0) {
                     path.append(".../");

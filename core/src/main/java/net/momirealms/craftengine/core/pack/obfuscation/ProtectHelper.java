@@ -70,7 +70,7 @@ public class ProtectHelper {
         int length = protectionSettings.getInt("obfuscation-path-length");
         Map<ResourceKey, ResourceKey> allReplaceMap = null;
         if (obfuscateLevel > 0 && protectZipLevel > 0) {
-            if (obfuscateLevel == 2) length = 65528;
+            if (obfuscateLevel == 3) length = 65528;
             RandomResourceKey randomResourceKey = new RandomResourceKey();
             randomResourceKey.writeAtlasesJson(rootPath);
             Set<ResourceKey> allResourceKeys = getAllResourceKeys(rootPath);
