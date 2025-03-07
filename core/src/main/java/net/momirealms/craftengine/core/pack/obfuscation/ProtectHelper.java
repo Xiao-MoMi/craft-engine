@@ -46,7 +46,7 @@ public class ProtectHelper {
             Path rootPath, Set<ResourceKey> allResourceKeys,
             RandomResourceKey randomResourceKey, int length,
             int obfuscateLevel
-    ) throws IOException {
+    ) {
         Map<ResourceKey, ResourceKey> allReplaceMap = new HashMap<>();
         for (ResourceKey resourceKey : allResourceKeys) {
             if (!resourceKey.hasFile(rootPath)) continue;

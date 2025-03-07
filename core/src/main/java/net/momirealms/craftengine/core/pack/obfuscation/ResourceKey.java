@@ -58,7 +58,7 @@ public class ResourceKey {
         relativePath = relativePath.subpath(1, relativePath.getNameCount());
         String namespace = relativePath.getName(0).toString();
         relativePath = relativePath.subpath(1, relativePath.getNameCount());
-        ResourceType resourceType = null;
+        ResourceType resourceType;
         try {
             resourceType = ResourceType.of(relativePath.getName(0).toString());
         } catch (IllegalArgumentException e) {
