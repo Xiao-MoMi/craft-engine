@@ -44,18 +44,16 @@ resource-pack:
       sha1: ""
       uuid: ""
   duplicated-files-handler:
-    # handle item models
     - term:
         type: any_of
         terms:
           - type: parent_path_suffix
-            suffix: "minecraft/items" # 1.21.4+
+            suffix: "minecraft/items"
           - type: parent_path_suffix
-            suffix: "minecraft/models/item" # 1.20-1.21.3
+            suffix: "minecraft/models/item"
       resolution:
         type: merge_json
         deeply: true
-    # handle pack.mcmeta
     - term:
         type: exact
         path: "pack.mcmeta"
@@ -64,7 +62,6 @@ resource-pack:
         term:
           type: contains
           path: "resources/default/resourcepack/"
-    # handle pack.png
     - term:
         type: exact
         path: "pack.png"
@@ -73,7 +70,6 @@ resource-pack:
         term:
           type: contains
           path: "resources/default/resourcepack"
-    # handle sounds
     - term:
         type: filename
         name: "sounds.json"

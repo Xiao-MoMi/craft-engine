@@ -17,7 +17,7 @@ public class PathMatchers {
     public static final Key FILENAME = Key.of("craftengine:filename");
     public static final Key PARENT_PATH_SUFFIX = Key.of("craftengine:parent_path_suffix");
     public static final Key PARENT_PATH_PREFIX = Key.of("craftengine:parent_path_prefix");
-    public static final Key PATH_PATTERN = Key.of("craftengine:path_pattern");
+    public static final Key PATTERN = Key.of("craftengine:pattern");
     public static final Key ANY_OF = Key.of("craftengine:any_of");
     public static final Key ALL_OF = Key.of("craftengine:all_of");
     public static final Key INVERTED = Key.of("craftengine:inverted");
@@ -25,7 +25,7 @@ public class PathMatchers {
     static {
         register(PARENT_PATH_SUFFIX, ParentPathSuffixMatcher.FACTORY);
         register(PARENT_PATH_PREFIX, ParentPathPrefixMatcher.FACTORY);
-        register(PATH_PATTERN, PathPatternMatcher.FACTORY);
+        register(PATTERN, PathPatternMatcher.FACTORY);
         register(EXACT, ExactPathMatcher.FACTORY);
         register(FILENAME, FilenameMatcher.FACTORY);
         register(ANY_OF, AnyOfPathMatcher.FACTORY);

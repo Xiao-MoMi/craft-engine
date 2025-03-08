@@ -21,7 +21,7 @@ public class PathPatternMatcher implements PathMatcher {
 
     @Override
     public Key type() {
-        return PathMatchers.PATH_PATTERN;
+        return PathMatchers.PATTERN;
     }
 
     public static class Factory implements PathMatcherFactory {
