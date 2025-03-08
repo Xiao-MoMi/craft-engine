@@ -49,7 +49,8 @@ public class RandomResourceKey {
         this.randomName = randomName;
     }
 
-    private String getRandomNamespace() {
+    private String getRandomNamespace(int obfuscateLevel) {
+        if (obfuscateLevel == 5) return "...";
         String namespace = "";
         while (true) {
             namespace += randomName.charAt(random.nextInt(randomName.length()));
@@ -62,6 +63,16 @@ public class RandomResourceKey {
 
     private String getRandomPath(int length, int obfuscateLevel) {
         StringBuilder path = new StringBuilder(atlasesEntry + "/");
+        if (obfuscateLevel == 4 || obfuscateLevel == 5) {
+            path.append(".../");
+            while (true) {
+                path.append(randomName.charAt(random.nextInt(randomName.length())));
+                if (!hasPath.contains(path.toString())) {
+                    hasPath.add(path.toString());
+                    return path.toString();
+                }
+            }
+        }
         boolean isAddHappyString = false;
         length -= path.length();
         while (length >= 3) {
@@ -93,7 +104,7 @@ public class RandomResourceKey {
 
     public ResourceKey getRandomResourceKey(int length, ResourceType resourceType,
                                             boolean pngHasMcmeta, int obfuscateLevel) {
-        String namespace = getRandomNamespace();
+        String namespace = getRandomNamespace(obfuscateLevel);
         if (pngHasMcmeta) length -= 7;
         length -= namespace.length() + 1;
         length -= resourceType.typeName().length() + 1;
