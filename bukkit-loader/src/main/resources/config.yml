@@ -13,8 +13,13 @@ resource-pack:
   # Should those images in minecraft:default font also work in minecraft:uniform
   override-uniform-font: true
   protection:
-    break-zip-format: true
-    obfuscation: false
+    # 0 = Disabled, 1 = Mild, 2 = Moderate, 3 = Severe
+    protection: 1
+    # Requirement: Protection must not be 0
+    # 0 = Disabled, 1 = Simple obfuscation, 2 = Advanced obfuscation, 3 = Deep obfuscation (will increase file quantity and size)
+    obfuscation: 1
+    # When obfuscation is set to 3, the value is always 65528 (maximum allowed value is 65528)
+    obfuscation-path-length: 40
   supported-version:
     min: "1.20"
     max: LATEST
