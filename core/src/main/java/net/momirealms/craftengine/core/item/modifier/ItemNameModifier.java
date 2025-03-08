@@ -2,13 +2,14 @@ package net.momirealms.craftengine.core.item.modifier;
 
 import net.momirealms.craftengine.core.item.Item;
 import net.momirealms.craftengine.core.item.ItemBuildContext;
+import net.momirealms.craftengine.core.plugin.config.ConfigManager;
 import net.momirealms.craftengine.core.util.AdventureHelper;
 
 public class ItemNameModifier<I> implements ItemModifier<I> {
     private final String argument;
 
     public ItemNameModifier(String argument) {
-        this.argument = argument;
+        this.argument = ConfigManager.nonItalic() ? "<!i>" + argument : argument;
     }
 
     @Override

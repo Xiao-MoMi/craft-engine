@@ -82,6 +82,7 @@ public class ConfigManager implements Reloadable {
     protected int requestRate;
     protected long requestInterval;
     protected List<ConditionalResolution> resolutions;
+    protected boolean nonItalic;
 
     public ConfigManager(CraftEngine plugin) {
         this.plugin = plugin;
@@ -166,6 +167,9 @@ public class ConfigManager implements Reloadable {
             this.plugin.logger().warn("Failed to load resource pack duplicated files handler", e);
             resolutions = List.of();
         }
+
+        // item
+        nonItalic = config.getBoolean("item.non-italic-tag", false);
 
         // performance
         maxChainUpdate = config.getInt("performance.max-block-chain-update-limit", 64);
@@ -268,6 +272,10 @@ public class ConfigManager implements Reloadable {
 
     public static boolean enableRecipeSystem() {
         return instance.enableRecipeSystem;
+    }
+
+    public static boolean nonItalic() {
+        return instance.nonItalic;
     }
 
     public static boolean restoreVanillaBlocks() {

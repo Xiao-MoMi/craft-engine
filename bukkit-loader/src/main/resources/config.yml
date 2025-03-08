@@ -77,6 +77,10 @@ resource-pack:
         type: merge_json
         deeply: false
 
+item:
+  # Add a <!i> tag on item name and lore
+  non-italic-tag: false
+
 block:
   sound-system:
     enable: true
