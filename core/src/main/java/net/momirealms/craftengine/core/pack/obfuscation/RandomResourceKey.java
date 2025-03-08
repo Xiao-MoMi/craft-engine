@@ -102,7 +102,7 @@ public class RandomResourceKey {
         return ResourceKey.of(namespace, path, resourceType, pngHasMcmeta);
     }
 
-    public void writeAtlasesJson(Path rootPath) {
+    public void writeAtlasesJson(Path rootPath) throws IOException {
         Path path = rootPath.resolve("assets/minecraft/atlases/blocks.json");
         Dictionary<String, List<Dictionary<String, String>>> atlasesJson = new Hashtable<>();
         Dictionary<String, String> source = new Hashtable<>() {{
@@ -112,10 +112,12 @@ public class RandomResourceKey {
         }};
         atlasesJson.put("sources", List.of(source));
         if (!Files.exists(path)) {
+            Path parentDir = path.getParent();
+            if (parentDir != null) {
+                Files.createDirectories(parentDir);
+            }
             try (JsonWriter writer = new JsonWriter(new FileWriter(path.toFile()))) {
                 gson.toJson(atlasesJson, atlasesJson.getClass(), writer);
-            } catch (IOException e) {
-                e.printStackTrace();
             }
         }
         else {
@@ -131,8 +133,6 @@ public class RandomResourceKey {
             } catch (Exception e) {
                 try (JsonWriter writer = new JsonWriter(new FileWriter(path.toFile()))) {
                     gson.toJson(atlasesJson, atlasesJson.getClass(), writer);
-                } catch (IOException e1) {
-                    e.printStackTrace();
                 }
             }
         }
