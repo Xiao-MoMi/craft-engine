@@ -15,7 +15,9 @@ public class ParentPathSuffixMatcher implements PathMatcher {
 
     @Override
     public boolean test(Path path) {
-        String pathStr = path.getParent().toString();
+        Path parent = path.getParent();
+        if (parent == null) return false;
+        String pathStr = parent.toString().replace("\\", "/");
         return pathStr.endsWith(suffix);
     }
 

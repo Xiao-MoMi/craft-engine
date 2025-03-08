@@ -15,13 +15,13 @@ public class PathPatternMatcher implements PathMatcher {
 
     @Override
     public boolean test(Path path) {
-        String pathStr = path.toString();
+        String pathStr = path.toString().replace("\\", "/");
         return pathStr.matches(pattern);
     }
 
     @Override
     public Key type() {
-        return PathMatchers.PATH_PATTERN;
+        return PathMatchers.PATTERN;
     }
 
     public static class Factory implements PathMatcherFactory {

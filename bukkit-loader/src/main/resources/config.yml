@@ -38,6 +38,8 @@ resource-pack:
       port: 8163
       protocol: http
       deny-non-minecraft-request: true
+      # If the path begins with `./` or `../`, it is treated as a relative path to the plugin folder.
+      # Otherwise, it is considered an absolute path.
       local-file-path: "./generated/resource_pack.zip"
       rate-limit:
         max-requests: 3
@@ -46,40 +48,43 @@ resource-pack:
       url: ""
       sha1: ""
       uuid: ""
-# Unfinished
-#  duplicated-files-handler:
-#    - matcher:
-#        type: any_of
-#        terms:
-#          - type: parent_path_suffix
-#            suffix: "minecraft/items/" # 1.21.4+
-#          - type: parent_path_suffix
-#            suffix: "minecraft/models/item/" # 1.20-1.21.3
-#      resolution:
-#        type: merge_json
-#        deeply: true
-#    - matcher:
-#        type: exact_match
-#        path: "pack.mcmeta"
-#      resolution:
-#        type: retain_matching
-#        term:
-#          type: path_pattern
-#          pattern: "resources/default/resourcepack"
-#    - matcher:
-#        type: filename
-#        name: "sounds.json"
-#      resolution:
-#        type: merge_json
-#        deeply: false
-#    - matcher:
-#        type: exact_match
-#        path: "pack.png"
-#      resolution:
-#        type: retain_matching
-#        term:
-#          type: path_pattern
-#          pattern: "resources/default/resourcepack"
+  duplicated-files-handler:
+    - term:
+        type: any_of
+        terms:
+          - type: parent_path_suffix
+            suffix: "minecraft/items"
+          - type: parent_path_suffix
+            suffix: "minecraft/models/item"
+      resolution:
+        type: merge_json
+        deeply: true
+    - term:
+        type: exact
+        path: "pack.mcmeta"
+      resolution:
+        type: retain_matching
+        term:
+          type: contains
+          path: "resources/default/resourcepack/"
+    - term:
+        type: exact
+        path: "pack.png"
+      resolution:
+        type: retain_matching
+        term:
+          type: contains
+          path: "resources/default/resourcepack"
+    - term:
+        type: filename
+        name: "sounds.json"
+      resolution:
+        type: merge_json
+        deeply: false
+
+item:
+  # Add a <!i> tag on item name and lore
+  non-italic-tag: false
 
 block:
   sound-system:

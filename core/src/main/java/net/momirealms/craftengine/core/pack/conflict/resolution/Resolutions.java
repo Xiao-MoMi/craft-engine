@@ -12,10 +12,12 @@ import java.util.Map;
 public class Resolutions {
     public static final Key RETAIN_MATCHING = Key.of("craftengine:retain_matching");
     public static final Key MERGE_JSON = Key.of("craftengine:merge_json");
+    public static final Key CONDITIONAL = Key.of("craftengine:conditional");
 
     static {
         register(RETAIN_MATCHING, RetainMatchingResolution.FACTORY);
         register(MERGE_JSON, MergeJsonResolution.FACTORY);
+        register(CONDITIONAL, ConditionalResolution.FACTORY);
     }
 
     public static void register(Key key, ResolutionFactory factory) {

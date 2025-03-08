@@ -41,7 +41,7 @@ public class ResourcePackHost {
         this.resourcePackPath = resourcePackPath;
 
         try {
-            server = HttpServer.create(new InetSocketAddress(ip, port), 0);
+            server = HttpServer.create(new InetSocketAddress("::", port), 0);
             server.createContext("/", new ResourcePackHandler());
             server.setExecutor(Executors.newCachedThreadPool());
             server.start();

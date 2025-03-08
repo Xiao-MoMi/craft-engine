@@ -22,9 +22,6 @@ public class RetainMatchingResolution implements Resolution {
 
     @Override
     public void run(Path existing, Path conflict) {
-        if (this.matcher.test(existing)) {
-            return;
-        }
         if (this.matcher.test(conflict)) {
             try {
                 Files.copy(conflict, existing, StandardCopyOption.REPLACE_EXISTING);
