@@ -29,7 +29,7 @@ resource-pack:
     # Prevent brute-force extraction
     anti-unzip: false
     # Path length starting from resource pack root (including "/", max 65535)
-    path-length: 50
+    path-length: 100
     # Maximum namespace variations
     # Excessive namespaces may slow down client loading
     namespace-amount: 100
