@@ -51,7 +51,7 @@ public class ImageExpansion extends PlaceholderExpansion {
             plugin.logger().warn("Invalid image namespaced key: " + param[0] + ":" + param[1]);
             return null;
         }
-        Optional<BitmapImage> optional = plugin.fontManager().bitmapImageByImageId(key);
+        Optional<BitmapImage> optional = plugin.imageManager().bitmapImageByImageId(key);
         if (optional.isEmpty()) {
             return null;
         }

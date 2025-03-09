@@ -91,6 +91,12 @@ public class BukkitItemManager extends AbstractItemManager<ItemStack> {
         instance = this;
     }
 
+    @Override
+    public void delayedInit() {
+        Bukkit.getPluginManager().registerEvents(this.itemEventListener, plugin.bootstrap());
+        Bukkit.getPluginManager().registerEvents(this.debugStickListener, plugin.bootstrap());
+    }
+
     public static BukkitItemManager instance() {
         return instance;
     }
@@ -148,8 +154,6 @@ public class BukkitItemManager extends AbstractItemManager<ItemStack> {
     @Override
     public void load() {
         super.load();
-        Bukkit.getPluginManager().registerEvents(this.itemEventListener, plugin.bootstrap());
-        Bukkit.getPluginManager().registerEvents(this.debugStickListener, plugin.bootstrap());
     }
 
     @Override
@@ -159,9 +163,14 @@ public class BukkitItemManager extends AbstractItemManager<ItemStack> {
         this.legacyOverrides.clear();
         this.modernOverrides.clear();
         this.customItemTags.clear();
+        this.cmdConflictChecker.clear();
+    }
+
+    @Override
+    public void disable() {
+        unload();
         HandlerList.unregisterAll(this.itemEventListener);
         HandlerList.unregisterAll(this.debugStickListener);
-        this.cmdConflictChecker.clear();
     }
 
     @Override

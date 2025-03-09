@@ -25,7 +25,7 @@ public class ShiftTag implements TagResolver {
         String shiftAmount = arguments.popOr("No argument shift provided").toString();
         try {
             int shift = Integer.parseInt(shiftAmount);
-            return Tag.inserting(AdventureHelper.miniMessage(CraftEngine.instance().fontManager().createMiniMessageOffsets(shift)));
+            return Tag.inserting(AdventureHelper.miniMessage(CraftEngine.instance().imageManager().createMiniMessageOffsets(shift)));
         } catch (NumberFormatException e) {
             throw ctx.newException("Invalid shift value", arguments);
         }

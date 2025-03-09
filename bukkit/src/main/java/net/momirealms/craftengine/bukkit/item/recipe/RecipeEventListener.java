@@ -1,5 +1,6 @@
 package net.momirealms.craftengine.bukkit.item.recipe;
 
+import com.destroystokyo.paper.event.inventory.PrepareResultEvent;
 import net.momirealms.craftengine.bukkit.item.BukkitItemManager;
 import net.momirealms.craftengine.bukkit.plugin.BukkitCraftEngine;
 import net.momirealms.craftengine.bukkit.plugin.injector.BukkitInjector;
@@ -15,6 +16,7 @@ import net.momirealms.craftengine.core.item.recipe.Recipe;
 import net.momirealms.craftengine.core.item.recipe.RecipeTypes;
 import net.momirealms.craftengine.core.item.recipe.input.CraftingInput;
 import net.momirealms.craftengine.core.item.recipe.input.SingleItemInput;
+import net.momirealms.craftengine.core.plugin.config.ConfigManager;
 import net.momirealms.craftengine.core.registry.BuiltInRegistries;
 import net.momirealms.craftengine.core.registry.Holder;
 import net.momirealms.craftengine.core.util.Key;
@@ -253,6 +255,7 @@ public class RecipeEventListener implements Listener {
 
     @EventHandler(ignoreCancelled = true, priority = EventPriority.MONITOR)
     public void onFurnaceInventoryOpen(InventoryOpenEvent event) {
+        if (!ConfigManager.enableRecipeSystem()) return;
         if (!(event.getInventory() instanceof FurnaceInventory furnaceInventory)) {
             return;
         }
@@ -268,6 +271,7 @@ public class RecipeEventListener implements Listener {
     // for 1.20.1-1.21.1
     @EventHandler(ignoreCancelled = true)
     public void onBlockIgnite(BlockIgniteEvent event) {
+        if (!ConfigManager.enableRecipeSystem()) return;
         if (VersionHelper.isVersionNewerThan1_21_2()) return;
         Block block = event.getBlock();
         Material material = block.getType();
@@ -285,6 +289,7 @@ public class RecipeEventListener implements Listener {
 
     @EventHandler(ignoreCancelled = true, priority = EventPriority.MONITOR)
     public void onPlaceBlock(BlockPlaceEvent event) {
+        if (!ConfigManager.enableRecipeSystem()) return;
         Block block = event.getBlock();
         Material material = block.getType();
         if (material == Material.FURNACE || material == Material.BLAST_FURNACE || material == Material.SMOKER) {
@@ -311,6 +316,7 @@ public class RecipeEventListener implements Listener {
     // for 1.21.2+
     @EventHandler(ignoreCancelled = true)
     public void onPutItemOnCampfire(PlayerInteractEvent event) {
+        if (!ConfigManager.enableRecipeSystem()) return;
         if (!VersionHelper.isVersionNewerThan1_21_2()) return;
         if (event.getAction() != Action.RIGHT_CLICK_BLOCK) return;
         Block clicked = event.getClickedBlock();
@@ -360,6 +366,7 @@ public class RecipeEventListener implements Listener {
     // for 1.21.2+
     @EventHandler(ignoreCancelled = true)
     public void onCampfireCook(CampfireStartEvent event) {
+        if (!ConfigManager.enableRecipeSystem()) return;
         if (!VersionHelper.isVersionNewerThan1_21_2()) return;
         CampfireRecipe recipe = event.getRecipe();
         Key recipeId = new Key(recipe.getKey().namespace(), recipe.getKey().value());
@@ -390,6 +397,7 @@ public class RecipeEventListener implements Listener {
     // for 1.21.2+
     @EventHandler(ignoreCancelled = true)
     public void onCampfireCook(BlockCookEvent event) {
+        if (!ConfigManager.enableRecipeSystem()) return;
         if (!VersionHelper.isVersionNewerThan1_21_2()) return;
         Material type = event.getBlock().getType();
         if (type != Material.CAMPFIRE && type != Material.SOUL_CAMPFIRE) return;
@@ -419,21 +427,20 @@ public class RecipeEventListener implements Listener {
         event.setResult(ceRecipe.result(ItemBuildContext.EMPTY));
     }
 
-    @EventHandler(ignoreCancelled = true)
-    public void onClickCartographyTable(InventoryClickEvent event) {
-        if (VersionHelper.isPaper()) return;
-        if (!(event.getClickedInventory() instanceof CartographyInventory cartographyInventory)) {
-            return;
-        }
-        this.plugin.scheduler().sync().runDelayed(() -> {
-            if (ItemUtils.hasCustomItem(cartographyInventory.getContents())) {
-                cartographyInventory.setResult(new ItemStack(Material.AIR));
+    // Paper only
+    @EventHandler
+    public void onPrepareResult(PrepareResultEvent event) {
+        if (!ConfigManager.enableRecipeSystem()) return;
+        if (event.getInventory() instanceof CartographyInventory cartographyInventory) {
+            if (ItemUtils.hasCustomItem(cartographyInventory.getStorageContents())) {
+                event.setResult(new ItemStack(Material.AIR));
             }
-        });
+        }
     }
 
     @EventHandler(ignoreCancelled = true)
     public void onSpecialRecipe(PrepareItemCraftEvent event) {
+        if (!ConfigManager.enableRecipeSystem()) return;
         org.bukkit.inventory.Recipe recipe = event.getRecipe();
         if (recipe == null)
             return;
@@ -447,6 +454,7 @@ public class RecipeEventListener implements Listener {
 
     @EventHandler(ignoreCancelled = true)
     public void onCraftingRecipe(PrepareItemCraftEvent event) {
+        if (!ConfigManager.enableRecipeSystem()) return;
         org.bukkit.inventory.Recipe recipe = event.getRecipe();
         if (recipe == null)
             return;

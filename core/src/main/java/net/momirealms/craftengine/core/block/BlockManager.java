@@ -36,6 +36,8 @@ public interface BlockManager extends Reloadable, ModelGenerator, ConfigSectionP
 
     void delayedLoad();
 
+    void delayedInit();
+
     default int loadingSequence() {
         return LoadingSequence.BLOCK;
     }

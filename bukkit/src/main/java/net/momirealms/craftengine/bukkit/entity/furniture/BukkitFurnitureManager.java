@@ -186,7 +186,10 @@ public class BukkitFurnitureManager implements FurnitureManager {
     }
 
     @Override
-    public void delayedLoad() {
+    public void delayedInit() {
+        Bukkit.getPluginManager().registerEvents(this.dismountListener, this.plugin.bootstrap());
+        Bukkit.getPluginManager().registerEvents(this.furnitureEventListener, this.plugin.bootstrap());
+        this.tickTask = plugin.scheduler().sync().runRepeating(this::tick, 1, 1);
         for (World world : Bukkit.getWorlds()) {
             List<Entity> entities = world.getEntities();
             for (Entity entity : entities) {
@@ -198,22 +201,15 @@ public class BukkitFurnitureManager implements FurnitureManager {
     @Override
     public void unload() {
         this.byId.clear();
+    }
+
+    @Override
+    public void disable() {
         HandlerList.unregisterAll(this.dismountListener);
         HandlerList.unregisterAll(this.furnitureEventListener);
         if (tickTask != null && !tickTask.cancelled()) {
             tickTask.cancel();
         }
-    }
-
-    @Override
-    public void load() {
-        Bukkit.getPluginManager().registerEvents(this.dismountListener, this.plugin.bootstrap());
-        Bukkit.getPluginManager().registerEvents(this.furnitureEventListener, this.plugin.bootstrap());
-        this.tickTask = plugin.scheduler().sync().runRepeating(this::tick, 1, 1);
-    }
-
-    @Override
-    public void disable() {
         unload();
         for (Player player : Bukkit.getOnlinePlayers()) {
             Entity vehicle = player.getVehicle();

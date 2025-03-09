@@ -11,7 +11,7 @@ import java.util.Collection;
 import java.util.Optional;
 import java.util.function.BiFunction;
 
-public interface FontManager extends Reloadable, ConfigSectionParser {
+public interface ImageManager extends Reloadable, ConfigSectionParser {
     String CONFIG_SECTION_NAME = "images";
 
     default String sectionId() {

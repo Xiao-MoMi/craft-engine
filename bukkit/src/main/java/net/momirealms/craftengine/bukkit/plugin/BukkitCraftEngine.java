@@ -185,7 +185,7 @@ public class BukkitCraftEngine extends CraftEngine {
         // register template parser
         this.packManager.registerConfigSectionParser(this.templateManager);
         // register font parser
-        this.packManager.registerConfigSectionParser(this.fontManager);
+        this.packManager.registerConfigSectionParser(this.imageManager);
         // register item parser
         this.packManager.registerConfigSectionParser(this.itemManager);
         // register furniture parser

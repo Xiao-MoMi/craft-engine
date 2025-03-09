@@ -9,6 +9,7 @@ import net.momirealms.craftengine.core.item.recipe.OptimizedIDItem;
 import net.momirealms.craftengine.core.item.recipe.Recipe;
 import net.momirealms.craftengine.core.item.recipe.RecipeTypes;
 import net.momirealms.craftengine.core.item.recipe.input.CraftingInput;
+import net.momirealms.craftengine.core.plugin.config.ConfigManager;
 import net.momirealms.craftengine.core.registry.BuiltInRegistries;
 import net.momirealms.craftengine.core.registry.Holder;
 import net.momirealms.craftengine.core.util.Key;
@@ -38,6 +39,7 @@ public class CrafterEventListener implements Listener {
 
     @EventHandler
     public void onCrafting(CrafterCraftEvent event) {
+        if (!ConfigManager.enableRecipeSystem()) return;
         CraftingRecipe recipe = event.getRecipe();
         if (!(event.getBlock().getState() instanceof Crafter crafter)) {
             return;

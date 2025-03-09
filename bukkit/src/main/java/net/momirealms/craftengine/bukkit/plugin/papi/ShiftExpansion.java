@@ -40,7 +40,7 @@ public class ShiftExpansion extends PlaceholderExpansion {
             case "mini", "minimessage", "mm" -> {
                 if (split.length != 2) return null;
                 try {
-                    return plugin.fontManager().createMiniMessageOffsets(Integer.parseInt(split[1]));
+                    return plugin.imageManager().createMiniMessageOffsets(Integer.parseInt(split[1]));
                 } catch (NumberFormatException e) {
                     return null;
                 }
@@ -48,7 +48,7 @@ public class ShiftExpansion extends PlaceholderExpansion {
             case "md", "minedown" -> {
                 if (split.length != 2) return null;
                 try {
-                    return plugin.fontManager().createMineDownOffsets(Integer.parseInt(split[1]));
+                    return plugin.imageManager().createMineDownOffsets(Integer.parseInt(split[1]));
                 } catch (NumberFormatException e) {
                     return null;
                 }
@@ -56,7 +56,7 @@ public class ShiftExpansion extends PlaceholderExpansion {
             case "raw" -> {
                 if (split.length != 2) return null;
                 try {
-                    return plugin.fontManager().createRawOffsets(Integer.parseInt(split[1]));
+                    return plugin.imageManager().createRawOffsets(Integer.parseInt(split[1]));
                 } catch (NumberFormatException e) {
                     return null;
                 }
@@ -64,7 +64,7 @@ public class ShiftExpansion extends PlaceholderExpansion {
             default -> {
                 if (split.length != 1) return null;
                 try {
-                    return plugin.fontManager().createMiniMessageOffsets(Integer.parseInt(split[0]));
+                    return plugin.imageManager().createMiniMessageOffsets(Integer.parseInt(split[0]));
                 } catch (NumberFormatException e) {
                     return null;
                 }
