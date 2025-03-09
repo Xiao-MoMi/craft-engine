@@ -18,9 +18,9 @@ resource-pack:
     # 2 = Further block decompilation tools
     # 3 = Maximize protection (will increase size by 0.67MiB)
     level: 1
-  # Do not use this feature for the moment as it's unstable for the moment
-  # Do not use this feature for the moment as it's unstable for the moment
-  # Do not use this feature for the moment as it's unstable for the moment
+  # Do not use this feature as it's unstable for the moment
+  # Do not use this feature as it's unstable for the moment
+  # Do not use this feature as it's unstable for the moment
   obfuscation:
     # Requires protection.level ≠ 0
     # 0 = Disabled
