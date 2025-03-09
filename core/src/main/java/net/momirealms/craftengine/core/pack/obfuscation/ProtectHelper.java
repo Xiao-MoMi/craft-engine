@@ -52,8 +52,7 @@ public class ProtectHelper {
             if (!resourceKey.hasFile(rootPath)) continue;
             ResourceKey newResourceKey = randomResourceKey.getRandomResourceKey(
                     pathLength,
-                    resourceKey.resourceType(),
-                    resourceKey.pngHasMcmeta(),
+                    resourceKey,
                     obfuscateLevel,
                     namespaceAmount,
                     antiUnzip
@@ -61,6 +60,14 @@ public class ProtectHelper {
             allReplaceMap.put(resourceKey, newResourceKey);
         }
         return allReplaceMap;
+    }
+
+    private static void checkConfig(int protectZipLevel, int obfuscateLevel, int pathLength, int namespaceAmount) {
+        if (pathLength > 0 && pathLength <= 65535 && namespaceAmount > 0
+                && protectZipLevel >= 0 && protectZipLevel <= 3
+                && obfuscateLevel >= 0 && obfuscateLevel <= 3
+        ) return;
+        throw new IllegalArgumentException("Please check whether the resource-pack.protection or resource-pack.obfuscation configurations in config.yml are valid");
     }
 
     public static void protect(Path rootPath, Path zipPath) throws IOException {
@@ -75,6 +82,7 @@ public class ProtectHelper {
         boolean antiUnzip = obfuscationSettings.getBoolean("anti-unzip");
         int pathLength = obfuscationSettings.getInt("path-length");
         int namespaceAmount = obfuscationSettings.getInt("namespace-amount");
+        checkConfig(protectZipLevel, obfuscateLevel, pathLength, namespaceAmount);
         Map<ResourceKey, ResourceKey> allReplaceMap = null;
         if (obfuscateLevel > 0 && protectZipLevel > 0) {
             RandomResourceKey randomResourceKey = new RandomResourceKey();

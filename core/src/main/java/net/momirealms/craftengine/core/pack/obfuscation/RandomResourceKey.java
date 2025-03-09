@@ -109,12 +109,15 @@ public class RandomResourceKey {
         return path.toString();
     }
 
-    public ResourceKey getRandomResourceKey(int length, ResourceType resourceType,
-                                            boolean pngHasMcmeta, int obfuscateLevel,
-                                            int namespaceAmount, boolean antiUnzip) {
+    public ResourceKey getRandomResourceKey(int length, ResourceKey resourceKey,
+                                            int obfuscateLevel, int namespaceAmount,
+                                            boolean antiUnzip) {
+        boolean pngHasMcmeta = resourceKey.pngHasMcmeta();
+        ResourceType resourceType = resourceKey.resourceType();
         length -= 7;
         if (pngHasMcmeta) length -= 7;
-        String namespace = getRandomNamespace(obfuscateLevel, namespaceAmount);
+        String namespace = obfuscateLevel == 1 ?
+                resourceKey.namespace() : getRandomNamespace(obfuscateLevel, namespaceAmount);
         length -= namespace.length() + 1;
         length -= resourceType.typeName().length() + 1;
         length -= resourceType.suffix().length();
