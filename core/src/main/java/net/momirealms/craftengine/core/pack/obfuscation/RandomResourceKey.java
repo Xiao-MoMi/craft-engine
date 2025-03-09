@@ -122,7 +122,7 @@ public class RandomResourceKey {
             String path = getRandomPath(length, antiUnzip);
             return ResourceKey.of(namespace, path, resourceType, pngHasMcmeta);
         } catch (StackOverflowError | OutOfMemoryError e) {
-            throw new RuntimeException("Please increase the value of resource-pack.obfuscation.path-length in config.yml" + e);
+            throw new RuntimeException("Please increase the value of resource-pack.obfuscation.path-length in config.yml: " + e);
         }
     }
 
