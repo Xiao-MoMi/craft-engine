@@ -132,8 +132,6 @@ public class MiniMessageTranslationRegistryImpl implements Examinable, MiniMessa
         return Internals.toString(this);
     }
 
-
-
     final class Translation implements Examinable {
         private final String key;
         private final Map<Locale, String> formats;
@@ -152,7 +150,7 @@ public class MiniMessageTranslationRegistryImpl implements Examinable, MiniMessa
         @Nullable String translate(final @NotNull Locale locale) {
             String format = this.formats.get(requireNonNull(locale, "locale"));
             if (format == null) {
-                format = this.formats.get(new Locale(locale.getLanguage())); // try without country
+                format = this.formats.get(Locale.of(locale.getLanguage())); // try without country
                 if (format == null) {
                     format = this.formats.get(MiniMessageTranslationRegistryImpl.this.defaultLocale); // try local default locale
                 }

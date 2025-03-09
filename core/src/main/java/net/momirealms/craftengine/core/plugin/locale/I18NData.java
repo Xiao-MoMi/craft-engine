@@ -1,5 +1,7 @@
 package net.momirealms.craftengine.core.plugin.locale;
 
+import org.jetbrains.annotations.Nullable;
+
 import java.util.HashMap;
 import java.util.Map;
 
@@ -10,7 +12,8 @@ public class I18NData {
         this.translations.put(key, value);
     }
 
+    @Nullable
     public String translate(String key) {
-        return this.translations.getOrDefault(key, key);
+        return this.translations.get(key);
     }
 }

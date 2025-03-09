@@ -62,6 +62,7 @@ public class BukkitClick implements Click {
         return BukkitCraftEngine.instance().adapt((org.bukkit.entity.Player) event.getWhoClicked());
     }
 
+    @SuppressWarnings("deprecation")
     @Override
     public void setItemOnCursor(Item<?> item) {
         this.event.setCursor((ItemStack) item.getItem());

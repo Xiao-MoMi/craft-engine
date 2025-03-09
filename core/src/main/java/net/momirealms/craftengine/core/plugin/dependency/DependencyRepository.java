@@ -56,6 +56,7 @@ public enum DependencyRepository {
     }
 
     protected URLConnection openConnection(Dependency dependency) throws IOException {
+        @SuppressWarnings("deprecation") // 1.20
         URL dependencyUrl = new URL(this.url + dependency.mavenPath());
         return dependencyUrl.openConnection();
     }

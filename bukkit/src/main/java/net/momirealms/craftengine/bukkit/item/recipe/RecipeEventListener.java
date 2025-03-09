@@ -49,6 +49,7 @@ public class RecipeEventListener implements Listener {
         this.plugin = plugin;
     }
 
+    @SuppressWarnings("deprecation")
     @EventHandler(ignoreCancelled = true)
     public void onClickInventoryWithFuel(InventoryClickEvent event) {
         Inventory inventory = event.getInventory();

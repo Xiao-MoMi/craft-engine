@@ -5,7 +5,6 @@ import net.momirealms.craftengine.core.item.ItemBuildContext;
 import net.momirealms.craftengine.core.plugin.config.ConfigManager;
 import net.momirealms.craftengine.core.util.AdventureHelper;
 
-import java.util.ArrayList;
 import java.util.List;
 
 public class LoreModifier<I> implements ItemModifier<I> {
