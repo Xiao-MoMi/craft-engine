@@ -44,17 +44,19 @@ public class ProtectHelper {
 
     private static Map<ResourceKey, ResourceKey> buildReplaceMap(
             Path rootPath, Set<ResourceKey> allResourceKeys,
-            RandomResourceKey randomResourceKey, int length,
-            int obfuscateLevel
+            RandomResourceKey randomResourceKey, int pathLength,
+            int obfuscateLevel, int namespaceAmount, boolean antiUnzip
     ) {
         Map<ResourceKey, ResourceKey> allReplaceMap = new HashMap<>();
         for (ResourceKey resourceKey : allResourceKeys) {
             if (!resourceKey.hasFile(rootPath)) continue;
             ResourceKey newResourceKey = randomResourceKey.getRandomResourceKey(
-                    length,
+                    pathLength,
                     resourceKey.resourceType(),
                     resourceKey.pngHasMcmeta(),
-                    obfuscateLevel
+                    obfuscateLevel,
+                    namespaceAmount,
+                    antiUnzip
             );
             allReplaceMap.put(resourceKey, newResourceKey);
         }
@@ -65,18 +67,23 @@ public class ProtectHelper {
         Section protectionSettings = CraftEngine.instance().configManager().settings()
                 .getSection("resource-pack")
                 .getSection("protection");
-        int protectZipLevel = protectionSettings.getInt("protection");
-        int obfuscateLevel = protectionSettings.getInt("obfuscation");
-        int length = protectionSettings.getInt("obfuscation-path-length");
+        Section obfuscationSettings = CraftEngine.instance().configManager().settings()
+                .getSection("resource-pack")
+                .getSection("obfuscation");
+        int protectZipLevel = protectionSettings.getInt("level");
+        int obfuscateLevel = obfuscationSettings.getInt("level");
+        boolean antiUnzip = obfuscationSettings.getBoolean("anti-unzip");
+        int pathLength = obfuscationSettings.getInt("path-length");
+        int namespaceAmount = obfuscationSettings.getInt("namespace-amount");
         Map<ResourceKey, ResourceKey> allReplaceMap = null;
         if (obfuscateLevel > 0 && protectZipLevel > 0) {
-            if (obfuscateLevel >= 3) length = 65528;
             RandomResourceKey randomResourceKey = new RandomResourceKey();
             randomResourceKey.writeAtlasesJson(rootPath);
             Set<ResourceKey> allResourceKeys = getAllResourceKeys(rootPath);
             allReplaceMap = buildReplaceMap(
                     rootPath, allResourceKeys, randomResourceKey,
-                    length, obfuscateLevel
+                    pathLength, obfuscateLevel, namespaceAmount,
+                    antiUnzip
             );
         }
         ZipUtils.zipDirectory(rootPath, zipPath, protectZipLevel, allReplaceMap);

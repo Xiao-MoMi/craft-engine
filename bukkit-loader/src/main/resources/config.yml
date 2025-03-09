@@ -13,16 +13,26 @@ resource-pack:
   # Should those images in minecraft:default font also work in minecraft:uniform
   override-uniform-font: true
   protection:
-    # 0 = Disabled, 1 = Mild, 2 = Moderate, 3 = Severe
-    protection: 1
-    # Requirement: Protection must not be 0
-    # 0 = Disabled, 1 = Simple obfuscation, 2 = Advanced obfuscation
-    # 3 = Deep obfuscation (will increase file quantity and size)
-    # 4 = Reduce the obfuscation strength from 2
-    # 5 = Further reduce it from 4
-    obfuscation: 1
-    # Only available when obfuscation is 1~2 (maximum allowed value is 65528)
-    obfuscation-path-length: 40
+    # 0 = Disabled
+    # 1 = Block common decompression software from opening
+    # 2 = Further block decompilation tools
+    # 3 = Maximize protection (will increase size by 0.67MiB)
+    level: 1
+  obfuscation:
+    # Requires protection.level ≠ 0
+    # 0 = Disabled
+    # 1 = Obfuscate paths
+    # 2 = Obfuscate namespaces and paths
+    # 3 = Level 2 + unlimited namespace obfuscation
+    level: 1
+    # Requires obfuscation.level ≠ 0
+    # Prevent brute-force extraction
+    anti-unzip: false
+    # Path length starting from resource pack root (including "/", max 65535)
+    path-length: 50
+    # Maximum namespace variations
+    # Excessive namespaces may slow down client loading
+    namespace-amount: 100
   supported-version:
     min: "1.20"
     max: LATEST
