@@ -51,6 +51,8 @@ public class TranslationManagerImpl implements TranslationManager {
 
     @Override
     public void reload() {
+        this.clientLangManager.reload();
+
         // clear old data
         this.i18nData.clear();
 

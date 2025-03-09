@@ -18,6 +18,11 @@ public class ClientLangMangerImpl implements ClientLangManager {
     }
 
     @Override
+    public void reload() {
+        this.i18nData.clear();
+    }
+
+    @Override
     public void parseSection(Pack pack, Path path, Key id, Map<String, Object> section) {
         I18NData data = this.i18nData.computeIfAbsent(id.value(), k -> new I18NData());
         for (Map.Entry<String, Object> entry : section.entrySet()) {
