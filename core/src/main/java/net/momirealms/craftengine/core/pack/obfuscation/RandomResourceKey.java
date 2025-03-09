@@ -118,8 +118,12 @@ public class RandomResourceKey {
         length -= namespace.length() + 1;
         length -= resourceType.typeName().length() + 1;
         length -= resourceType.suffix().length();
-        String path = getRandomPath(length, antiUnzip);
-        return ResourceKey.of(namespace, path, resourceType, pngHasMcmeta);
+        try {
+            String path = getRandomPath(length, antiUnzip);
+            return ResourceKey.of(namespace, path, resourceType, pngHasMcmeta);
+        } catch (StackOverflowError | OutOfMemoryError e) {
+            throw new RuntimeException("Please increase the value of resource-pack.obfuscation.path-length in config.yml" + e);
+        }
     }
 
     public void writeAtlasesJson(Path rootPath) throws IOException {
