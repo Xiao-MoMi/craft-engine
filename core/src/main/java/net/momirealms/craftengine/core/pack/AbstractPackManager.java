@@ -1,9 +1,6 @@
 package net.momirealms.craftengine.core.pack;
 
-import com.google.gson.JsonArray;
-import com.google.gson.JsonElement;
-import com.google.gson.JsonObject;
-import com.google.gson.JsonParser;
+import com.google.gson.*;
 import dev.dejvokep.boostedyaml.YamlDocument;
 import dev.dejvokep.boostedyaml.block.implementation.Section;
 import net.momirealms.craftengine.core.font.BitmapImage;
@@ -14,6 +11,7 @@ import net.momirealms.craftengine.core.pack.host.ResourcePackHost;
 import net.momirealms.craftengine.core.pack.model.ItemModel;
 import net.momirealms.craftengine.core.pack.model.generator.ModelGeneration;
 import net.momirealms.craftengine.core.pack.model.generator.ModelGenerator;
+import net.momirealms.craftengine.core.pack.obfuscation.ProtectHelper;
 import net.momirealms.craftengine.core.plugin.CraftEngine;
 import net.momirealms.craftengine.core.plugin.PluginProperties;
 import net.momirealms.craftengine.core.plugin.config.ConfigManager;
@@ -37,6 +35,7 @@ import java.security.NoSuchAlgorithmException;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.function.BiConsumer;
+import java.util.stream.Stream;
 
 import static net.momirealms.craftengine.core.util.MiscUtils.castToMap;
 
@@ -371,7 +370,7 @@ public abstract class AbstractPackManager implements PackManager {
 
         Path zipFile = resourcePackPath();
         try {
-            ZipUtils.zipDirectory(generatedPackPath, zipFile);
+            ProtectHelper.protect(generatedPackPath, zipFile);
         } catch (IOException e) {
             this.plugin.logger().severe("Error zipping resource pack", e);
         }
