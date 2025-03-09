@@ -22,7 +22,7 @@ public interface TranslationManager extends Reloadable, ConfigSectionParser {
         return miniMessageTranslation(key, null);
     }
 
-    void forceLocale(Locale locale);
+    void forcedLocale(Locale locale);
 
     String miniMessageTranslation(String key, @Nullable Locale locale);
 

@@ -132,7 +132,7 @@ public class ConfigManager implements Reloadable {
 
     private void loadSettings() {
         YamlDocument config = settings();
-        plugin.translationManager().forceLocale(TranslationManager.parseLocale(config.getString("force-locale", "")));
+        plugin.translationManager().forcedLocale(TranslationManager.parseLocale(config.getString("forced-locale", "")));
         // Basics
         debug = config.getBoolean("debug", false);
         metrics = config.getBoolean("metrics", false);

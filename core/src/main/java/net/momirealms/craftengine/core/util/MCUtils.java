@@ -136,6 +136,7 @@ public class MCUtils {
                     (Predicate<? super T>) predicates.get(4)
             );
             default -> {
+                @SuppressWarnings("unchecked")
                 Predicate<? super T>[] predicates2 = predicates.toArray(Predicate[]::new);
                 yield allOf(predicates2);
             }

@@ -1,5 +1,5 @@
 # 别动这个
-config-version: "2"
+lang-version: "${lang_version}"
 
 exception.invalid_syntax: "<red>无效语法. 正确语法: <white><arg:0></white></red>"
 exception.invalid_argument: "<red>无效参数. 原因: <white><arg:0></white></red>"

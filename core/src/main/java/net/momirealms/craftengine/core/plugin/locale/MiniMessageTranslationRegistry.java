@@ -28,15 +28,11 @@ public interface MiniMessageTranslationRegistry extends Translator {
     void defaultLocale(@NotNull Locale defaultLocale);
 
     default void registerAll(final @NotNull Locale locale, final @NotNull Map<String, String> bundle) {
-        this.registerAll(locale, bundle.keySet(), bundle::get);
-    }
-
-    default void registerAll(final @NotNull Locale locale, final @NotNull Set<String> keys, final Function<String, String> function) {
         IllegalArgumentException firstError = null;
         int errorCount = 0;
-        for (final String key : keys) {
+        for (final Map.Entry<String, String> entry : bundle.entrySet()) {
             try {
-                this.register(key, locale, function.apply(key));
+                this.register(entry.getKey(), locale, entry.getValue());
             } catch (final IllegalArgumentException e) {
                 if (firstError == null) {
                     firstError = e;

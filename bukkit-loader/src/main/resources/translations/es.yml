@@ -1,5 +1,5 @@
 # Don't change this
-config-version: "2"
+lang-version: "${lang_version}"
 
 exception.invalid_syntax: "<red>Sintaxis inválida. Sintaxis correcta: <white><arg:0></white></red>"
 exception.invalid_argument: "<red>Argumento no válido. Razón: <white><arg:0></white></red>"

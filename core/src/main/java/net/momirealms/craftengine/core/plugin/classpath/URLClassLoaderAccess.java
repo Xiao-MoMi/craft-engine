@@ -111,6 +111,7 @@ public abstract class URLClassLoaderAccess {
 
         private static Object fetchField(final Class<?> clazz, final Object object, final String name) throws NoSuchFieldException {
             Field field = clazz.getDeclaredField(name);
+            @SuppressWarnings("deprecation") // java18
             long offset = UNSAFE.objectFieldOffset(field);
             return UNSAFE.getObject(object, offset);
         }

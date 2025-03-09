@@ -85,8 +85,8 @@ public abstract class CraftEngine implements Plugin {
         if (this.isReloading) return;
         this.isReloading = true;
         try {
-            this.translationManager.reload();
             this.configManager.reload();
+            this.translationManager.reload();
             this.templateManager.reload();
             this.furnitureManager.reload();
             this.fontManager.reload();

@@ -7,7 +7,7 @@ metrics: true
 # Enables automatic update checks
 update-checker: true
 # Forces a specific locale (e.g., zh_cn)
-force-locale: ''
+forced-locale: ''
 
 resource-pack:
   # Should those images in minecraft:default font also work in minecraft:uniform

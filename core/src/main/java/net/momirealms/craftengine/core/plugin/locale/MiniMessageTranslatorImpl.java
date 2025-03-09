@@ -46,7 +46,9 @@ public class MiniMessageTranslatorImpl implements MiniMessageTranslator {
     public @Nullable Component translate(@NotNull TranslatableComponent component, @NotNull Locale locale) {
         for (final Translator source : this.sources) {
             final Component translation = source.translate(component, locale);
-            if (translation != null) return translation;
+            if (translation != null) {
+                return translation;
+            }
         }
         return null;
     }
