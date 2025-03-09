@@ -292,13 +292,15 @@ public class BukkitCraftEngine extends CraftEngine {
             throw new IllegalArgumentException("ResourcePath cannot be null or empty");
         }
 
+        File outFile = new File(dataFolderFile(), resourcePath);
+        if (outFile.exists())
+            return;
+
         resourcePath = resourcePath.replace('\\', '/');
         InputStream in = resourceStream(resourcePath);
-        if (in == null) {
+        if (in == null)
             return;
-        }
 
-        File outFile = new File(dataFolderFile(), resourcePath);
         int lastIndex = resourcePath.lastIndexOf('/');
         File outDir = new File(dataFolderFile(), resourcePath.substring(0, Math.max(lastIndex, 0)));
 
@@ -307,16 +309,15 @@ public class BukkitCraftEngine extends CraftEngine {
         }
 
         try {
-            if (!outFile.exists()) {
-                OutputStream out = new FileOutputStream(outFile);
-                byte[] buf = new byte[1024];
-                int len;
-                while ((len = in.read(buf)) > 0) {
-                    out.write(buf, 0, len);
-                }
-                out.close();
-                in.close();
+            OutputStream out = new FileOutputStream(outFile);
+            byte[] buf = new byte[1024];
+            int len;
+            while ((len = in.read(buf)) > 0) {
+                out.write(buf, 0, len);
             }
+            out.close();
+            in.close();
+
         } catch (IOException ex) {
             throw new RuntimeException(ex);
         }
