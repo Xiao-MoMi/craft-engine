@@ -34,19 +34,9 @@ import java.util.*;
 public class ConfigManager implements Reloadable {
     private static ConfigManager instance;
     protected final CraftEngine plugin;
+    private final Path configFilePath;
+    private final String configVersion;
     private YamlDocument config;
-    protected String configVersion;
-
-    public YamlDocument settings() {
-        if (config == null) {
-            throw new IllegalStateException("Main config not loaded");
-        }
-        return config;
-    }
-
-    public static ConfigManager instance() {
-        return instance;
-    }
 
     protected boolean debug;
     protected boolean checkUpdate;
@@ -86,13 +76,27 @@ public class ConfigManager implements Reloadable {
 
     public ConfigManager(CraftEngine plugin) {
         this.plugin = plugin;
+        this.configVersion = PluginProperties.getValue("config");
+        this.configFilePath = this.plugin.dataFolderPath().resolve("config.yml");
         instance = this;
     }
 
     @Override
     public void load() {
-        configVersion = PluginProperties.getValue("config");
-        config = this.loadYamlConfig(
+        if (Files.exists(this.configFilePath)) {
+            this.config = this.loadYamlData(this.configFilePath.toFile());
+            String configVersion = config.getString("config-version");
+            if (configVersion.equals(this.configVersion)) {
+                loadSettings();
+                return;
+            }
+        }
+        this.updateConfigVersion();
+        loadSettings();
+    }
+
+    private void updateConfigVersion() {
+        this.config = this.loadYamlConfig(
                 "config.yml",
                 GeneralSettings.builder()
                         .setRouteSeparator('.')
@@ -122,7 +126,6 @@ public class ConfigManager implements Reloadable {
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
-        loadSettings();
     }
 
     @Override
@@ -402,5 +405,16 @@ public class ConfigManager implements Reloadable {
             }
         }
         return configFile;
+    }
+
+    public YamlDocument settings() {
+        if (config == null) {
+            throw new IllegalStateException("Main config not loaded");
+        }
+        return config;
+    }
+
+    public static ConfigManager instance() {
+        return instance;
     }
 }

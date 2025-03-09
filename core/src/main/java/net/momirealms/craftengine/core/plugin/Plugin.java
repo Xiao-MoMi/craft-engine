@@ -3,7 +3,7 @@ package net.momirealms.craftengine.core.plugin;
 import net.momirealms.craftengine.core.block.BlockManager;
 import net.momirealms.craftengine.core.entity.furniture.FurnitureManager;
 import net.momirealms.craftengine.core.entity.player.Player;
-import net.momirealms.craftengine.core.font.FontManager;
+import net.momirealms.craftengine.core.font.ImageManager;
 import net.momirealms.craftengine.core.item.ItemManager;
 import net.momirealms.craftengine.core.item.recipe.RecipeManager;
 import net.momirealms.craftengine.core.pack.PackManager;
@@ -54,7 +54,7 @@ public interface Plugin extends Reloadable {
 
     NetworkManager networkManager();
 
-    FontManager fontManager();
+    ImageManager imageManager();
 
     ConfigManager configManager();
 

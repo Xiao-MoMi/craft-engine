@@ -204,7 +204,6 @@ public class BukkitRecipeManager implements RecipeManager<ItemStack> {
     private final BukkitCraftEngine plugin;
     private final RecipeEventListener recipeEventListener;
     private final CrafterEventListener crafterEventListener;
-    private final PaperRecipeEventListener paperRecipeEventListener;
     private final Map<Key, List<Recipe<ItemStack>>> byType;
     private final Map<Key, Recipe<ItemStack>> byId;
     private final Map<Key, List<Recipe<ItemStack>>> byResult;
@@ -230,11 +229,6 @@ public class BukkitRecipeManager implements RecipeManager<ItemStack> {
             this.crafterEventListener = new CrafterEventListener(plugin, this, plugin.itemManager());
         } else {
             this.crafterEventListener = null;
-        }
-        if (VersionHelper.isPaper()) {
-            this.paperRecipeEventListener = new PaperRecipeEventListener();
-        } else {
-            this.paperRecipeEventListener = null;
         }
         if (VersionHelper.isVersionNewerThan1_21_2()) {
             this.recipeReader = new VanillaRecipeReader1_21_2();
@@ -266,15 +260,16 @@ public class BukkitRecipeManager implements RecipeManager<ItemStack> {
     }
 
     @Override
-    public void load() {
-        if (!ConfigManager.enableRecipeSystem()) return;
+    public void delayedInit() {
         Bukkit.getPluginManager().registerEvents(this.recipeEventListener, this.plugin.bootstrap());
         if (this.crafterEventListener != null) {
             Bukkit.getPluginManager().registerEvents(this.crafterEventListener, this.plugin.bootstrap());
         }
-        if (this.paperRecipeEventListener != null) {
-            Bukkit.getPluginManager().registerEvents(this.paperRecipeEventListener, this.plugin.bootstrap());
-        }
+    }
+
+    @Override
+    public void load() {
+        if (!ConfigManager.enableRecipeSystem()) return;
         if (VersionHelper.isVersionNewerThan1_21_2()) {
             try {
                 this.stolenFeatureFlagSet = Reflections.field$RecipeManager$featureflagset.get(minecraftRecipeManager);
@@ -287,13 +282,6 @@ public class BukkitRecipeManager implements RecipeManager<ItemStack> {
 
     @Override
     public void unload() {
-        HandlerList.unregisterAll(this.recipeEventListener);
-        if (this.crafterEventListener != null) {
-            HandlerList.unregisterAll(this.crafterEventListener);
-        }
-        if (this.paperRecipeEventListener != null) {
-            HandlerList.unregisterAll(this.paperRecipeEventListener);
-        }
         this.byType.clear();
         this.byId.clear();
         this.byResult.clear();
@@ -318,6 +306,15 @@ public class BukkitRecipeManager implements RecipeManager<ItemStack> {
         this.injectedDataPackRecipes.clear();
 
         recipeToMcRecipeHolder.clear();
+    }
+
+    @Override
+    public void disable() {
+        HandlerList.unregisterAll(this.recipeEventListener);
+        if (this.crafterEventListener != null) {
+            HandlerList.unregisterAll(this.crafterEventListener);
+        }
+        unload();
     }
 
     private void unregisterRecipe(NamespacedKey key) throws ReflectiveOperationException {

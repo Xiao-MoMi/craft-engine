@@ -20,6 +20,8 @@ public interface PackManager extends Reloadable {
         return this.unregisterConfigSectionParser(parser.sectionId());
     }
 
+    void delayedInit();
+
     void generateResourcePack();
 
     Path resourcePackPath();

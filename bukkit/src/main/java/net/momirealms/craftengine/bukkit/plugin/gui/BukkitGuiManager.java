@@ -26,17 +26,17 @@ public class BukkitGuiManager implements GuiManager, Listener {
     }
 
     @Override
-    public void unload() {
+    public void delayedInit() {
+        Bukkit.getPluginManager().registerEvents(this, plugin.bootstrap());
+        this.timerTask = plugin.scheduler().sync().runRepeating(this::timerTask, 20, 20);
+    }
+
+    @Override
+    public void disable() {
         HandlerList.unregisterAll(this);
         if (this.timerTask != null && !this.timerTask.cancelled()) {
             this.timerTask.cancel();
         }
-    }
-
-    @Override
-    public void load() {
-        Bukkit.getPluginManager().registerEvents(this, plugin.bootstrap());
-        this.timerTask = plugin.scheduler().sync().runRepeating(this::timerTask, 20, 20);
     }
 
     public void timerTask() {

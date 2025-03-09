@@ -307,6 +307,7 @@ public abstract class AbstractPackManager implements PackManager {
             long t2 = System.nanoTime();
             this.plugin.logger().info("Loaded " + parser.sectionId() + " in " + String.format("%.2f", ((t2 - t1) / 1_000_000.0)) + " ms");
         }
+        this.cachedConfigs.clear();
     }
 
     private void processConfigEntry(Map.Entry<String, Object> entry, Path path, Pack pack) {
@@ -818,7 +819,7 @@ public abstract class AbstractPackManager implements PackManager {
 
     private void generateFonts(Path generatedPackPath) {
         // generate image font json
-        for (Font font : plugin.fontManager().fontsInUse()) {
+        for (Font font : plugin.imageManager().fontsInUse()) {
             Key namespacedKey = font.key();
             Path fontPath = generatedPackPath.resolve("assets")
                     .resolve(namespacedKey.namespace())

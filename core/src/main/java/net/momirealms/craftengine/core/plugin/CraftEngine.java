@@ -2,8 +2,8 @@ package net.momirealms.craftengine.core.plugin;
 
 import net.momirealms.craftengine.core.block.BlockManager;
 import net.momirealms.craftengine.core.entity.furniture.FurnitureManager;
-import net.momirealms.craftengine.core.font.FontManager;
-import net.momirealms.craftengine.core.font.FontManagerImpl;
+import net.momirealms.craftengine.core.font.ImageManager;
+import net.momirealms.craftengine.core.font.ImageManagerImpl;
 import net.momirealms.craftengine.core.item.ItemManager;
 import net.momirealms.craftengine.core.item.recipe.RecipeManager;
 import net.momirealms.craftengine.core.pack.PackManager;
@@ -44,7 +44,7 @@ public abstract class CraftEngine implements Plugin {
     protected SchedulerAdapter<?> scheduler;
     protected NetworkManager networkManager;
     protected ClassPathAppender classPathAppender;
-    protected FontManager fontManager;
+    protected ImageManager imageManager;
     protected PackManager packManager;
     protected ConfigManager configManager;
     protected ItemManager<?> itemManager;
@@ -89,7 +89,7 @@ public abstract class CraftEngine implements Plugin {
             this.translationManager.reload();
             this.templateManager.reload();
             this.furnitureManager.reload();
-            this.fontManager.reload();
+            this.imageManager.reload();
             this.itemManager.reload();
             this.soundManager.reload();
             this.recipeManager.reload();
@@ -114,7 +114,7 @@ public abstract class CraftEngine implements Plugin {
     @Override
     public void enable() {
         this.networkManager.enable();
-        this.fontManager = new FontManagerImpl(this);
+        this.imageManager = new ImageManagerImpl(this);
         this.templateManager = new TemplateManagerImpl(this);
         this.itemBrowserManager = new ItemBrowserManagerImpl(this);
         this.commandManager.registerDefaultFeatures();
@@ -122,9 +122,13 @@ public abstract class CraftEngine implements Plugin {
         this.scheduler.sync().runDelayed(() -> {
             this.registerParsers();
             this.reload();
-            this.worldManager.delayedLoad();
-            this.furnitureManager.delayedLoad();
-            this.delayedEnable();
+            this.guiManager.delayedInit();
+            this.recipeManager.delayedInit();
+            this.blockManager.delayedInit();
+            this.itemManager.delayedInit();
+            this.worldManager.delayedInit();
+            this.packManager.delayedInit();
+            this.furnitureManager.delayedInit();
         });
     }
 
@@ -133,7 +137,7 @@ public abstract class CraftEngine implements Plugin {
         if (this.senderFactory != null) this.senderFactory.close();
         if (this.commandManager != null) this.commandManager.unregisterFeatures();
         if (this.networkManager != null) this.networkManager.shutdown();
-        if (this.fontManager != null) this.fontManager.disable();
+        if (this.imageManager != null) this.imageManager.disable();
         if (this.packManager != null) this.packManager.disable();
         if (this.itemManager != null) this.itemManager.disable();
         if (this.blockManager != null) this.blockManager.disable();
@@ -147,9 +151,6 @@ public abstract class CraftEngine implements Plugin {
         if (this.scheduler != null) this.scheduler.shutdownScheduler();
         if (this.scheduler != null) this.scheduler.shutdownExecutor();
         ResourcePackHost.instance().disable();
-    }
-
-    protected void delayedEnable() {
     }
 
     protected abstract void registerParsers();
@@ -209,8 +210,8 @@ public abstract class CraftEngine implements Plugin {
     }
 
     @Override
-    public FontManager fontManager() {
-        return fontManager;
+    public ImageManager imageManager() {
+        return imageManager;
     }
 
     @Override

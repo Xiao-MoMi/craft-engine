@@ -11,7 +11,7 @@ import java.util.Optional;
 public interface FurnitureManager extends Reloadable, ConfigSectionParser {
     String CONFIG_SECTION_NAME = "furniture";
 
-    void delayedLoad();
+    void delayedInit();
 
     @Override
     default String sectionId() {

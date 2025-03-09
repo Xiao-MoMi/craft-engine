@@ -43,6 +43,11 @@ public class BukkitPackManager extends AbstractPackManager implements Listener {
         this.plugin = plugin;
 	}
 
+	@Override
+	public void delayedInit() {
+		Bukkit.getPluginManager().registerEvents(this, plugin.bootstrap());
+	}
+
 	@EventHandler(priority = EventPriority.LOW)
 	public void onPlayerJoin(PlayerJoinEvent event) {
 		// for 1.20.1 servers, not recommended to use
@@ -64,7 +69,7 @@ public class BukkitPackManager extends AbstractPackManager implements Listener {
 	@Override
 	public void load() {
 		super.load();
-		Bukkit.getPluginManager().registerEvents(this, plugin.bootstrap());
+
 		// update server properties
 		if (VersionHelper.isVersionNewerThan1_20_2()) {
 			if (ConfigManager.hostMode() == HostMode.SELF_HOST) {
@@ -111,10 +116,15 @@ public class BukkitPackManager extends AbstractPackManager implements Listener {
 	@Override
 	public void unload() {
 		super.unload();
-		HandlerList.unregisterAll(this);
 		if (VersionHelper.isVersionNewerThan1_20_2() && this.previousHostMode != HostMode.NONE) {
 			resetResourcePackSettings();
 		}
+	}
+
+	@Override
+	public void disable() {
+		super.disable();
+		HandlerList.unregisterAll(this);
 	}
 
 	@Override

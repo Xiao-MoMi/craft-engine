@@ -29,7 +29,7 @@ public class ImageTag implements TagResolver {
         }
         String namespace = arguments.popOr("No argument namespace provided").toString();
         String id = arguments.popOr("No argument id provided").toString();
-        Optional<BitmapImage> optional = CraftEngine.instance().fontManager().bitmapImageByImageId(Key.of(namespace, id));
+        Optional<BitmapImage> optional = CraftEngine.instance().imageManager().bitmapImageByImageId(Key.of(namespace, id));
         if (optional.isPresent()) {
             if (arguments.hasNext()) {
                 int row = arguments.popOr("No argument row provided").asInt().orElseThrow(() -> ctx.newException("Invalid argument number", arguments));

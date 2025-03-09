@@ -8,5 +8,5 @@ public interface WorldManager extends Reloadable {
 
     CEWorld getWorld(UUID uuid);
 
-    void delayedLoad();
+    void delayedInit();
 }

@@ -117,7 +117,7 @@ public class BukkitBlockManager extends AbstractBlockManager {
     }
 
     @Override
-    public void load() {
+    public void delayedInit() {
         Bukkit.getPluginManager().registerEvents(this.blockEventListener, plugin.bootstrap());
         if (this.fallingBlockRemoveListener != null) {
             Bukkit.getPluginManager().registerEvents(this.fallingBlockRemoveListener, plugin.bootstrap());
@@ -126,8 +126,6 @@ public class BukkitBlockManager extends AbstractBlockManager {
 
     @Override
     public void unload() {
-        HandlerList.unregisterAll(this.blockEventListener);
-        if (this.fallingBlockRemoveListener != null) HandlerList.unregisterAll(this.fallingBlockRemoveListener);
         super.clearModelsToGenerate();
         this.clearCache();
         this.appearanceToRealState.clear();
@@ -141,6 +139,8 @@ public class BukkitBlockManager extends AbstractBlockManager {
     @Override
     public void disable() {
         this.unload();
+        HandlerList.unregisterAll(this.blockEventListener);
+        if (this.fallingBlockRemoveListener != null) HandlerList.unregisterAll(this.fallingBlockRemoveListener);
     }
 
     @Override

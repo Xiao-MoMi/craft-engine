@@ -80,7 +80,16 @@ public class BukkitWorldManager implements WorldManager, Listener {
         this.worldArray = this.worlds.values().toArray(new CEWorld[0]);
     }
 
-    public void delayedLoad() {
+    public void delayedInit() {
+        // events and tasks
+        Bukkit.getPluginManager().registerEvents(this, plugin.bootstrap());
+        this.tickTask = plugin.scheduler().sync().runRepeating(() -> {
+            for (CEWorld world : worldArray) {
+                world.tick();
+            }
+        }, 1, 1);
+
+        // load loaded chunks
         this.worldMapLock.writeLock().lock();
         try {
             for (World world : Bukkit.getWorlds()) {
@@ -97,25 +106,12 @@ public class BukkitWorldManager implements WorldManager, Listener {
     }
 
     @Override
-    public void load() {
-        Bukkit.getPluginManager().registerEvents(this, plugin.bootstrap());
-        this.tickTask = plugin.scheduler().sync().runRepeating(() -> {
-            for (CEWorld world : worldArray) {
-                world.tick();
-            }
-        }, 1, 1);
-    }
-
-    @Override
-    public void unload() {
+    public void disable() {
         HandlerList.unregisterAll(this);
         if (tickTask != null && !tickTask.cancelled()) {
             tickTask.cancel();
         }
-    }
 
-    @Override
-    public void disable() {
         for (World world : Bukkit.getWorlds()) {
             CEWorld ceWorld = getWorld(world.getUID());
             for (Chunk chunk : world.getLoadedChunks()) {
