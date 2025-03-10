@@ -9,161 +9,235 @@ import com.google.gson.stream.JsonWriter;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.lang.reflect.Type;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
 
 public class RandomResourceKey {
-    private String atlasesEntry;
-    private String randomName;
-    private final List<String> cacheNamespace = new ArrayList<>();
-    private final Set<String> hasNamespace = new HashSet<>();
-    private final Set<String> hasPath = new HashSet<>();
-    private static final Random random = new Random();
-    private static final Gson gson = new Gson();
+    private String _metaIdentifier;
+    private String _characterSet;
+    private final List<String> _segmentCache = new ArrayList<>();
+    private final Set<String> _existingSegments = new HashSet<>();
+    private final Set<String> _registeredPatterns = new HashSet<>();
+    private static final Random _randomizer = new Random();
+    private static final Gson _jsonProcessor = new Gson();
 
-    public RandomResourceKey(String atlasesEntry, String randomName) {
-        if (randomName == null || !randomName.matches("^[a-z0-9_.-]+$")) {
-            throw new IllegalArgumentException(randomName);
-        }
-        this.atlasesEntry = atlasesEntry;
-        this.randomName = randomName.toLowerCase(Locale.ROOT);
+    public RandomResourceKey(String textureCatalog, String namingScheme) {
+        validateNamingPattern(namingScheme);
+        this._metaIdentifier = textureCatalog;
+        this._characterSet = normalizeCharset(namingScheme);
     }
 
     public RandomResourceKey() {
-        this("ce", "abcdefghijklmnopqrstuvwxyz");
+        this("ce", generateDefaultCharset());
     }
 
-    public String atlasesEntry() {
-        return atlasesEntry;
+    private static void validateNamingPattern(String pattern) {
+        if (pattern == null || !pattern.matches("^[a-z0-9_.-]+$")) {
+            throw new IllegalArgumentException("Invalid naming scheme");
+        }
     }
 
-    public String randomNameList() {
-        return randomName;
+    private static String normalizeCharset(String input) {
+        return input.toLowerCase(Locale.ROOT);
     }
 
-    public void setAtlasesEntry(String atlasesEntry) {
-        this.atlasesEntry = atlasesEntry;
+    private static String generateDefaultCharset() {
+        char[] chars = new char[26];
+        for (int i = 0; i < 26; i++) {
+            chars[i] = (char) ('a' + i);
+        }
+        return new String(chars);
     }
 
-    public void setRandomName(String randomName) {
-        this.randomName = randomName;
+    public String randomName() {
+        return _metaIdentifier;
     }
 
-    public String getRandomNamespace(int obfuscateLevel, int namespaceAmount) {
-        if (obfuscateLevel == 3) {
-            return getRandomNamespace();
-        } else {
-            if (cacheNamespace.size() < namespaceAmount) {
-                for (int i = 0; i < namespaceAmount; i++) {
-                    cacheNamespace.add(getRandomNamespace());
-                }
+    public String string() {
+        return _characterSet;
+    }
+
+    public void setRandomName(String identifier) {
+        this._metaIdentifier = identifier;
+    }
+
+    public void setString(String charset) {
+        this._characterSet = charset;
+    }
+
+    public String getRandomNamespace(int securityLevel, int poolSize) {
+        return (securityLevel == 3)
+                ? generateUniqueSegment()
+                : manageSegmentPool(poolSize);
+    }
+
+    private String manageSegmentPool(int poolSize) {
+        synchronized (_segmentCache) {
+            while (_segmentCache.size() < poolSize) {
+                _segmentCache.add(generateUniqueSegment());
             }
-            return cacheNamespace.get(random.nextInt(cacheNamespace.size()));
+            return _segmentCache.get(_randomizer.nextInt(poolSize));
         }
     }
 
-    private String getRandomNamespace() {
-        String namespace = "";
-        while (true) {
-            namespace += randomName.charAt(random.nextInt(randomName.length()));
-            if (!hasNamespace.contains(namespace)) {
-                hasNamespace.add(namespace);
-                return namespace;
+    private String generateUniqueSegment() {
+        StringBuilder segment = new StringBuilder();
+        do {
+            segment.setLength(0);
+            for (int i = 0; i < 3 + _randomizer.nextInt(3); i++) {
+                segment.append(randomChar());
             }
-        }
+        } while (_existingSegments.contains(segment.toString()));
+        _existingSegments.add(segment.toString());
+        return segment.toString();
     }
 
-    private String getRandomPath(int length, boolean antiUnzip, boolean notAtlases) {
-        StringBuilder path = new StringBuilder();
-        if (!notAtlases) path.append(atlasesEntry).append("/");
-        boolean isAddHappyString = false;
-        length -= path.length();
-        while (length >= 3) {
-            if (antiUnzip && !isAddHappyString) {
-                int remainingLoops = ((length - 6) / 2) + 1;
-                if (random.nextInt(remainingLoops) == 0) {
-                    path.append(".../");
-                    length -= 4;
-                    isAddHappyString = true;
-                    continue;
-                }
+    private char randomChar() {
+        return _characterSet.charAt(_randomizer.nextInt(_characterSet.length()));
+    }
+
+    private String generateObfuscatedPath(int complexity, boolean enableTraps, boolean excludeCatalog) {
+        StringBuilder pathBuilder = new StringBuilder();
+        if (!excludeCatalog) {
+            pathBuilder.append(_metaIdentifier).append('/');
+        }
+
+        int remainingDepth = complexity - pathBuilder.length();
+        boolean trapInserted = false;
+
+        while (remainingDepth > 0) {
+            if (enableTraps && !trapInserted && shouldInsertTrap(remainingDepth)) {
+                pathBuilder.append(".../");
+                remainingDepth -= 4;
+                trapInserted = true;
+                continue;
             }
-            path.append(randomName.charAt(random.nextInt(randomName.length()))).append("/");
-            length -= 2;
+
+            int segmentLength = Math.min(2 + _randomizer.nextInt(3), remainingDepth);
+            appendRandomSegment(pathBuilder, segmentLength);
+            remainingDepth -= segmentLength + 1;
         }
-        switch (length) {
-            case 1:
-                path.append(randomName.charAt(random.nextInt(randomName.length())));
-                break;
-            case 2:
-                path.append(randomName.charAt(random.nextInt(randomName.length())))
-                        .append(randomName.charAt(random.nextInt(randomName.length())));
-                break;
-            default:
-                break;
-        }
-        if (hasPath.contains(path.toString())) {
-            return getRandomPath(length, antiUnzip, notAtlases);
-        }
-        hasPath.add(path.toString());
-        return path.toString();
+
+        validatePathUniqueness(pathBuilder.toString());
+        return pathBuilder.toString();
     }
 
-    public ResourceKey getRandomResourceKey(int length, ResourceKey resourceKey,
-                                            int obfuscateLevel, int namespaceAmount,
-                                            boolean antiUnzip) {
-        boolean pngHasMcmeta = resourceKey.pngHasMcmeta();
-        boolean notAtlases = resourceKey.notAtlases();
-        ResourceType resourceType = resourceKey.resourceType();
-        length -= 7;
-        if (pngHasMcmeta) length -= 7;
-        String namespace = obfuscateLevel == 1 ?
-                resourceKey.namespace() : getRandomNamespace(obfuscateLevel, namespaceAmount);
-        length -= namespace.length() + 1;
-        length -= resourceType.typeName().length() + 1;
-        length -= resourceType.suffix().length();
+    private boolean shouldInsertTrap(int remaining) {
+        return _randomizer.nextInt((remaining / 3) + 1) == 0;
+    }
+
+    private void appendRandomSegment(StringBuilder builder, int length) {
+        for (int i = 0; i < length; i++) {
+            builder.append(randomChar());
+        }
+        builder.append('/');
+    }
+
+    private void validatePathUniqueness(String path) {
+        if (_registeredPatterns.contains(path)) {
+            throw new IllegalStateException("Path collision detected");
+        }
+        _registeredPatterns.add(path);
+    }
+
+    public ResourceKey getRandomResourceKey(int complexity, ResourceKey template,
+                                            int securityLevel, int poolSize,
+                                            boolean enableTraps) {
+        boolean requiresMetadata = template.pngHasMcmeta();
+        boolean excludeCatalog = template.notAtlases();
+        ResourceType typeDescriptor = template.resourceType();
+
+        int adjustedComplexity = complexity
+                - (requiresMetadata ? 14 : 7)
+                - typeDescriptor.typeName().length()
+                - typeDescriptor.suffix().length();
+
+        String namespace = (securityLevel == 1)
+                ? template.namespace()
+                : getRandomNamespace(securityLevel, poolSize);
+
+        adjustedComplexity -= namespace.length() + 2;
+
         try {
-            String path = getRandomPath(length, antiUnzip, notAtlases);
-            return ResourceKey.of(namespace, path, resourceType, pngHasMcmeta);
+            return ResourceKey.create(
+                    namespace,
+                    typeDescriptor
+            );
         } catch (StackOverflowError | OutOfMemoryError e) {
             throw new RuntimeException("Please increase the value of resource-pack.obfuscation.path-length in config.yml: " + e);
         }
     }
 
-    public void writeAtlasesJson(Path rootPath) throws IOException {
-        Path path = rootPath.resolve("assets/minecraft/atlases/blocks.json");
-        Dictionary<String, List<Dictionary<String, String>>> atlasesJson = new Hashtable<>();
-        Dictionary<String, String> source = new Hashtable<>() {{
-            put("type", "directory");
-            put("source", atlasesEntry);
-            put("prefix", atlasesEntry + "/");
-        }};
-        atlasesJson.put("sources", List.of(source));
-        if (!Files.exists(path)) {
-            Path parentDir = path.getParent();
-            if (parentDir != null) {
-                Files.createDirectories(parentDir);
-            }
-            try (JsonWriter writer = new JsonWriter(new FileWriter(path.toFile()))) {
-                gson.toJson(atlasesJson, atlasesJson.getClass(), writer);
-            }
+    public void writeAtlasesJson(Path baseDir) throws IOException {
+        Path atlasConfig = baseDir.resolve("assets/minecraft/atlases/blocks.json");
+        Map<String, Object> configData = createAtlasConfiguration();
+
+        if (Files.notExists(atlasConfig)) {
+            initializeAtlasConfig(atlasConfig, configData);
+        } else {
+            updateExistingConfig(atlasConfig, configData);
         }
-        else {
-            try (JsonReader reader = new JsonReader(new FileReader(path.toFile()))) {
-                JsonObject existing = gson.fromJson(reader, JsonObject.class);
-                JsonArray sources = existing.getAsJsonArray("sources");
-                if (!sources.contains(gson.toJsonTree(source))) {
-                    sources.add(gson.toJsonTree(source));
-                }
-                try (JsonWriter writer = new JsonWriter(new FileWriter(path.toFile()))) {
-                    gson.toJson(existing, writer);
-                }
-            } catch (Exception e) {
-                try (JsonWriter writer = new JsonWriter(new FileWriter(path.toFile()))) {
-                    gson.toJson(atlasesJson, atlasesJson.getClass(), writer);
-                }
+    }
+
+    private Map<String, Object> createAtlasConfiguration() {
+        return Map.of(
+                "sources", Collections.singletonList(
+                        Map.of(
+                                "type", "directory",
+                                "source", _metaIdentifier,
+                                "prefix", _metaIdentifier + "/"
+                        )
+                )
+        );
+    }
+
+    private void initializeAtlasConfig(Path configPath, Map<String, Object> data) throws IOException {
+        Files.createDirectories(configPath.getParent());
+        try (JsonWriter writer = new JsonWriter(new FileWriter(configPath.toFile()))) {
+            _jsonProcessor.toJson(data, (Type) writer);
+        }
+    }
+
+    @SuppressWarnings("unchecked")
+    private void updateExistingConfig(Path configPath, Map<String, Object> newData) throws IOException {
+        try (JsonReader reader = new JsonReader(new FileReader(configPath.toFile()))) {
+            JsonObject existing = _jsonProcessor.fromJson(reader, JsonObject.class);
+            JsonArray sources = existing.getAsJsonArray("sources");
+
+            JsonObject newSource = _jsonProcessor.toJsonTree(newData.get("sources"))
+                    .getAsJsonArray().get(0).getAsJsonObject();
+
+            if (!containsSource(sources, newSource)) {
+                sources.add(newSource);
+                writeUpdatedConfig(configPath, existing);
             }
+        } catch (Exception e) {
+            rewriteConfigFile(configPath, newData);
+        }
+    }
+
+    private boolean containsSource(JsonArray sources, JsonObject target) {
+        return sources.asList().stream()
+                .anyMatch(element -> element.equals(target));
+    }
+
+    private void writeUpdatedConfig(Path path, JsonObject data) throws IOException {
+        try (JsonWriter writer = new JsonWriter(new FileWriter(path.toFile()))) {
+            _jsonProcessor.toJson(data, writer);
+        }
+    }
+
+    private void rewriteConfigFile(Path path, Map<String, Object> data) throws IOException {
+        try (JsonWriter writer = new JsonWriter(new FileWriter(path.toFile()))) {
+            _jsonProcessor.toJson(data, (Type) writer);
+        }
+    }
+
+    private static class ConfigurationException extends RuntimeException {
+        ConfigurationException(String message, Throwable cause) {
+            super(message, cause);
         }
     }
 }

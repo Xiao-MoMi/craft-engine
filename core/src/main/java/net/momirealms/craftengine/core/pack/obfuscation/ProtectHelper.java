@@ -2,99 +2,124 @@ package net.momirealms.craftengine.core.pack.obfuscation;
 
 import dev.dejvokep.boostedyaml.block.implementation.Section;
 import net.momirealms.craftengine.core.plugin.CraftEngine;
-import net.momirealms.craftengine.core.util.ZipUtils;
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonSyntaxException;
 import net.momirealms.craftengine.core.util.FileUtils;
 import net.momirealms.craftengine.core.util.JsonUtils;
+import net.momirealms.craftengine.core.util.ZipUtils;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
+import java.util.concurrent.ConcurrentMap;
+import java.util.stream.Collectors;
 
-public class ProtectHelper {
-    private static final Gson gson = new Gson();
+public final class ProtectHelper {
+    private static final Gson JSON_PARSER = new Gson();
+    private static final int MAX_PATH_LENGTH = 0xFFFF;
 
-    private static Set<ResourceKey> getAllResourceKeys(Path rootPath) throws IOException {
-        Set<ResourceKey> allResourceKeys = new HashSet<>();
-        for (Path path : FileUtils.getAllFiles(rootPath)) {
-            if (JsonUtils.isJsonFile(path, false)) {
-                try {
-                    JsonObject jsonData = gson.fromJson(Files.readString(path), JsonObject.class);
-                    Set<ResourceKey> resourceKeys = JsonUtils.getAllResourceKeys(jsonData);
-                    allResourceKeys.addAll(resourceKeys);
-                } catch (JsonSyntaxException ignored) {}
-            }
+    private static void validateConfiguration(int archiveProtectionLevel, int obfuscationLevel,
+                                              int pathComplexity, int namespacePoolSize) {
+        boolean validRange = pathComplexity > 0 && pathComplexity <= MAX_PATH_LENGTH
+                && namespacePoolSize > 0;
+        boolean validLevels = archiveProtectionLevel >= 0 && archiveProtectionLevel <= 3
+                && obfuscationLevel >= 0 && obfuscationLevel <= 3;
+
+        if (!validRange || !validLevels) {
+            throw new SecurityConfigurationException("Invalid protection settings");
         }
-        for (ResourceKey resourceKey : allResourceKeys) {
-            if (resourceKey.resourceType() == ResourceType.TEXTURE) {
-                Path path = resourceKey.toPath(rootPath);
-                if (path.toString().endsWith(".png")) {
-                    resourceKey.setPngHasMcmeta(Files.exists(path.resolveSibling(path.getFileName() + ".mcmeta")));
-                }
-            }
-        }
-        return allResourceKeys;
     }
 
-    private static Map<ResourceKey, ResourceKey> buildReplaceMap(
-            Path rootPath, Set<ResourceKey> allResourceKeys,
-            RandomResourceKey randomResourceKey, int pathLength,
-            int obfuscateLevel, int namespaceAmount, boolean antiUnzip
-    ) {
-        Map<ResourceKey, ResourceKey> allReplaceMap = new HashMap<>();
-        for (ResourceKey resourceKey : allResourceKeys) {
-            if (!resourceKey.hasFile(rootPath)) continue;
-            ResourceKey newResourceKey = randomResourceKey.getRandomResourceKey(
-                    pathLength,
-                    resourceKey,
-                    obfuscateLevel,
-                    namespaceAmount,
-                    antiUnzip
-            );
-            allReplaceMap.put(resourceKey, newResourceKey);
-        }
-        return allReplaceMap;
+    public static void protect(Path sourceDir, Path outputArchive) throws IOException {
+        Section protectionConfig = getSecuritySettings().getSection("protection");
+        Section obfuscationConfig = getSecuritySettings().getSection("obfuscation");
+
+        int archiveSecurityLevel = protectionConfig.getInt("level");
+        int obfuscationComplexity = obfuscationConfig.getInt("level");
+        boolean antiExtraction = obfuscationConfig.getBoolean("anti-unzip");
+        int pathLengthSetting = obfuscationConfig.getInt("path-length");
+        int namespacePool = obfuscationConfig.getInt("namespace-amount");
+
+        validateConfiguration(archiveSecurityLevel, obfuscationComplexity,
+                pathLengthSetting, namespacePool);
+
+        Map<?, ?> resourceMapping = shouldObfuscate(obfuscationComplexity, archiveSecurityLevel)
+                ? generateResourceMapping(sourceDir, pathLengthSetting, obfuscationComplexity, namespacePool, antiExtraction)
+                : Collections.emptyMap();
+
+        packageResources(sourceDir, outputArchive, archiveSecurityLevel, (Map<ResourceKey, ResourceKey>) resourceMapping);
     }
 
-    private static void checkConfig(int protectZipLevel, int obfuscateLevel, int pathLength, int namespaceAmount) {
-        if (pathLength > 0 && pathLength <= 65535 && namespaceAmount > 0
-                && protectZipLevel >= 0 && protectZipLevel <= 3
-                && obfuscateLevel >= 0 && obfuscateLevel <= 3
-        ) return;
-        throw new IllegalArgumentException("Please check whether the resource-pack.protection or resource-pack.obfuscation configurations in config.yml are valid");
+    private static @NotNull ConcurrentMap<Path, ResourceKey> generateResourceMapping(Path rootDir, int pathComplexity,
+                                                                                     int securityLevel, int namespacePoolSize,
+                                                                                     boolean antiExtractFlag) throws IOException {
+        RandomResourceKey generator = new RandomResourceKey();
+        generator.writeAtlasesJson(rootDir);
+
+        List<Path> assetIdentifiers = scanResourceIdentifiers(rootDir);
+        return createObfuscationMap(rootDir, assetIdentifiers, generator,
+                pathComplexity, securityLevel, namespacePoolSize, antiExtractFlag);
     }
 
-    public static void protect(Path rootPath, Path zipPath) throws IOException {
-        Section protectionSettings = CraftEngine.instance().configManager().settings()
-                .getSection("resource-pack")
-                .getSection("protection");
-        Section obfuscationSettings = CraftEngine.instance().configManager().settings()
-                .getSection("resource-pack")
-                .getSection("obfuscation");
-        int protectZipLevel = protectionSettings.getInt("level");
-        int obfuscateLevel = obfuscationSettings.getInt("level");
-        boolean antiUnzip = obfuscationSettings.getBoolean("anti-unzip");
-        int pathLength = obfuscationSettings.getInt("path-length");
-        int namespaceAmount = obfuscationSettings.getInt("namespace-amount");
-        checkConfig(protectZipLevel, obfuscateLevel, pathLength, namespaceAmount);
-        Map<ResourceKey, ResourceKey> allReplaceMap = null;
-        if (obfuscateLevel > 0 && protectZipLevel > 0) {
-            RandomResourceKey randomResourceKey = new RandomResourceKey();
-            randomResourceKey.writeAtlasesJson(rootPath);
-            Set<ResourceKey> allResourceKeys = getAllResourceKeys(rootPath);
-            allReplaceMap = buildReplaceMap(
-                    rootPath, allResourceKeys, randomResourceKey,
-                    pathLength, obfuscateLevel, namespaceAmount,
-                    antiUnzip
-            );
+    private static List<Path> scanResourceIdentifiers(Path baseDir) throws IOException {
+        return FileUtils.getAllFiles(baseDir);
+    }
+
+    private static Set<ResourceKey> parseJsonResources(Object jsonFile) {
+        try {
+            JsonObject data = JSON_PARSER.fromJson(Files.readString((Path) jsonFile), JsonObject.class);
+            Set<ResourceKey> identifiers = JsonUtils.getAllResourceKeys(data);
+            identifiers.forEach(key -> processTextureMetadata(key, (Path) jsonFile));
+            return identifiers;
+        } catch (JsonSyntaxException | IOException e) {
+            return Collections.emptySet();
         }
-        ZipUtils.zipDirectory(rootPath, zipPath, protectZipLevel, allReplaceMap);
+    }
+
+    private static void processTextureMetadata(ResourceKey identifier, Path contextPath) {
+        if (identifier.resourceType() == ResourceType.TEXTURE) {
+            Path texturePath = contextPath.resolveSibling(identifier.path(null));
+            boolean hasMetadata = Files.exists(texturePath.resolveSibling(
+                    texturePath.getFileName() + ".mcmeta"));
+            identifier.setPngHasMcmeta(hasMetadata);
+        }
+    }
+
+    private static @NotNull ConcurrentMap<Path, ResourceKey> createObfuscationMap(Path baseDir, List<Path> identifiers,
+                                                                                  RandomResourceKey generator, int pathComplexity,
+                                                                                  int securityLevel, int namespacePoolSize,
+                                                                                  boolean antiExtractFlag) {
+        return identifiers.parallelStream()
+                .filter(key -> key.endsWith(baseDir))
+                .collect(Collectors.toConcurrentMap(
+                        key -> key,
+                        key -> generator.getRandomResourceKey(
+                                pathComplexity, ResourceKey.parseValidResource(key), securityLevel,
+                                namespacePoolSize, antiExtractFlag
+                        )
+                ));
+    }
+
+    private static Section getSecuritySettings() {
+        return CraftEngine.instance().configManager().settings()
+                .getSection("resource-pack");
+    }
+
+    private static boolean shouldObfuscate(int obfuscationLevel, int protectionLevel) {
+        return obfuscationLevel > 0 && protectionLevel > 0;
+    }
+
+    private static void packageResources(Path source, Path dest, int compressionLevel,
+                                         Map<ResourceKey, ResourceKey> mapping) throws IOException {
+        ZipUtils.zipDirectory(source, dest, compressionLevel, mapping);
+    }
+
+    private static class SecurityConfigurationException extends RuntimeException {
+        SecurityConfigurationException(String message) {
+            super(message + " in configuration");
+        }
     }
 }
-
