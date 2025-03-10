@@ -74,8 +74,9 @@ public class RandomResourceKey {
         }
     }
 
-    private String getRandomPath(int length, boolean antiUnzip) {
-        StringBuilder path = new StringBuilder(atlasesEntry + "/");
+    private String getRandomPath(int length, boolean antiUnzip, boolean notAtlases) {
+        StringBuilder path = new StringBuilder();
+        if (!notAtlases) path.append(atlasesEntry).append("/");
         boolean isAddHappyString = false;
         length -= path.length();
         while (length >= 3) {
@@ -103,7 +104,7 @@ public class RandomResourceKey {
                 break;
         }
         if (hasPath.contains(path.toString())) {
-            return getRandomPath(length, antiUnzip);
+            return getRandomPath(length, antiUnzip, notAtlases);
         }
         hasPath.add(path.toString());
         return path.toString();
@@ -113,6 +114,7 @@ public class RandomResourceKey {
                                             int obfuscateLevel, int namespaceAmount,
                                             boolean antiUnzip) {
         boolean pngHasMcmeta = resourceKey.pngHasMcmeta();
+        boolean notAtlases = resourceKey.notAtlases();
         ResourceType resourceType = resourceKey.resourceType();
         length -= 7;
         if (pngHasMcmeta) length -= 7;
@@ -122,7 +124,7 @@ public class RandomResourceKey {
         length -= resourceType.typeName().length() + 1;
         length -= resourceType.suffix().length();
         try {
-            String path = getRandomPath(length, antiUnzip);
+            String path = getRandomPath(length, antiUnzip, notAtlases);
             return ResourceKey.of(namespace, path, resourceType, pngHasMcmeta);
         } catch (StackOverflowError | OutOfMemoryError e) {
             throw new RuntimeException("Please increase the value of resource-pack.obfuscation.path-length in config.yml: " + e);

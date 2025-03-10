@@ -211,7 +211,9 @@ public class JsonUtils {
                         String textureName = fileStr.substring(0, fileStr.length() - 4);
                         resourceKeys.add(ResourceKey.of(
                                 textureName,
-                                ResourceType.TEXTURE
+                                ResourceType.TEXTURE,
+                                false,
+                                true
                         ));
                     }
                 }

@@ -13,32 +13,42 @@ public class ResourceKey {
     private final String path;
     private final ResourceType resourceType;
     private boolean pngHasMcmeta;
+    private boolean notAtlases;
 
-    public ResourceKey(String namespace, String path, ResourceType resourceType, boolean pngHasMcmeta) {
+    public ResourceKey(String namespace, String path, ResourceType resourceType, boolean pngHasMcmeta, boolean notAtlases) {
         this.namespace = namespace;
         this.path = path;
         this.resourceType = resourceType;
         this.pngHasMcmeta = pngHasMcmeta;
+        this.notAtlases = notAtlases;
     }
 
     public ResourceKey(String namespace, String path, ResourceType resourceType) {
-        this(namespace, path, resourceType, false);
+        this(namespace, path, resourceType, false, false);
+    }
+
+    public static ResourceKey of(String namespace, String path, ResourceType resourceType, boolean pngHasMcmeta, boolean notAtlases) {
+        return new ResourceKey(namespace, path, resourceType, pngHasMcmeta, notAtlases);
     }
 
     public static ResourceKey of(String namespace, String path, ResourceType resourceType, boolean pngHasMcmeta) {
-        return new ResourceKey(namespace, path, resourceType, pngHasMcmeta);
+        return ResourceKey.of(namespace, path, resourceType, pngHasMcmeta, false);
     }
 
     public static ResourceKey of(String namespace, String path, ResourceType resourceType) {
         return ResourceKey.of(namespace, path, resourceType, false);
     }
 
-    public static ResourceKey of(String path, ResourceType resourceType, boolean pngHasMcmeta) {
+    public static ResourceKey of(String path, ResourceType resourceType, boolean pngHasMcmeta, boolean notAtlases) {
         if (path.contains(":")) {
             String[] parts = path.split(":");
-            return ResourceKey.of(parts[0], parts[1], resourceType, pngHasMcmeta);
+            return ResourceKey.of(parts[0], parts[1], resourceType, pngHasMcmeta, notAtlases);
         }
-        return ResourceKey.of("minecraft", path, resourceType, pngHasMcmeta);
+        return ResourceKey.of("minecraft", path, resourceType, pngHasMcmeta, notAtlases);
+    }
+
+    public static ResourceKey of(String path, ResourceType resourceType, boolean pngHasMcmeta) {
+        return ResourceKey.of(path, resourceType, pngHasMcmeta, false);
     }
 
     public static ResourceKey of(String path, ResourceType resourceType) {
@@ -87,6 +97,10 @@ public class ResourceKey {
 
     public boolean pngHasMcmeta() {
         return pngHasMcmeta;
+    }
+
+    public boolean notAtlases() {
+        return notAtlases;
     }
 
     public void setPngHasMcmeta(boolean pngHasMcmeta) {
