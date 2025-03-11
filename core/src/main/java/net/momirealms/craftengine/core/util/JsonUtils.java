@@ -110,10 +110,10 @@ public class JsonUtils {
             JsonArray sounds = jsonObject.get("sounds").getAsJsonArray();
             for (JsonElement sound : sounds) {
                 if (sound.isJsonPrimitive() && sound.getAsJsonPrimitive().isString()) {
-                    resourceKeys.add(ResourceKey.of(sound.getAsString(), ResourceType.SOUND));
+                    resourceKeys.add(ResourceKey.create(sound.getAsString(), ResourceType.SOUND));
                 } else if (sound.isJsonObject()) {
                     if (hasKey(sound.getAsJsonObject(), "name")) {
-                        resourceKeys.add(ResourceKey.of(sound.getAsJsonObject().get("name").getAsString(), ResourceType.SOUND));
+                        resourceKeys.add(ResourceKey.create(sound.getAsJsonObject().get("name").getAsString(), ResourceType.SOUND));
                     }
                 }
             }
@@ -133,7 +133,7 @@ public class JsonUtils {
                         JsonElement modelElement = valueObj.get("model");
                         if (modelElement.isJsonPrimitive()
                                 && modelElement.getAsJsonPrimitive().isString()) {
-                            resourceKeys.add(ResourceKey.of(
+                            resourceKeys.add(ResourceKey.create(
                                     modelElement.getAsString(),
                                     ResourceType.MODEL
                             ));
@@ -149,7 +149,7 @@ public class JsonUtils {
                                 JsonElement model = obj.get("model");
                                 if (model.isJsonPrimitive()
                                         && model.getAsJsonPrimitive().isString()) {
-                                    resourceKeys.add(ResourceKey.of(
+                                    resourceKeys.add(ResourceKey.create(
                                             model.getAsString(),
                                             ResourceType.MODEL
                                     ));
@@ -186,7 +186,7 @@ public class JsonUtils {
                     JsonElement modelElement = entry.get("model");
                     if (modelElement.isJsonPrimitive()
                             && modelElement.getAsJsonPrimitive().isString()) {
-                        resourceKeys.add(ResourceKey.of(
+                        resourceKeys.add(ResourceKey.create(
                                 modelElement.getAsString(),
                                 ResourceType.MODEL
                         ));
@@ -209,11 +209,9 @@ public class JsonUtils {
                     String fileStr = fileElement.getAsString();
                     if (fileStr.endsWith(".png")) {
                         String textureName = fileStr.substring(0, fileStr.length() - 4);
-                        resourceKeys.add(ResourceKey.of(
+                        resourceKeys.add(ResourceKey.create(
                                 textureName,
-                                ResourceType.TEXTURE,
-                                false,
-                                true
+                                ResourceType.TEXTURE
                         ));
                     }
                 }
@@ -240,7 +238,7 @@ public class JsonUtils {
                 else if (dataKey.equals("model") && value.isJsonPrimitive()) {
                     if (value.getAsJsonPrimitive().isString()) {
                         String modelName = value.getAsString();
-                        resourceKeys.add(ResourceKey.of(
+                        resourceKeys.add(ResourceKey.create(
                                 modelName,
                                 ResourceType.MODEL
                         ));
@@ -263,7 +261,7 @@ public class JsonUtils {
                 if (modelElement.isJsonPrimitive()
                         && modelElement.getAsJsonPrimitive().isString()) {
                     String modelName = modelElement.getAsString();
-                    resourceKeys.add(ResourceKey.of(
+                    resourceKeys.add(ResourceKey.create(
                             modelName,
                             ResourceType.MODEL
                     ));
@@ -277,7 +275,7 @@ public class JsonUtils {
         Set<ResourceKey> resourceKeys = new HashSet<>();
         if (data.isJsonPrimitive() && data.getAsJsonPrimitive().isString()) {
             String parentName = data.getAsString();
-            resourceKeys.add(ResourceKey.of(parentName, ResourceType.MODEL));
+            resourceKeys.add(ResourceKey.create(parentName, ResourceType.MODEL));
         }
         return resourceKeys;
     }
@@ -290,7 +288,7 @@ public class JsonUtils {
                 JsonElement value = entry.getValue();
                 if (value.isJsonPrimitive() && value.getAsJsonPrimitive().isString()) {
                     String textureName = value.getAsString();
-                    resourceKeys.add(ResourceKey.of(
+                    resourceKeys.add(ResourceKey.create(
                             textureName,
                             ResourceType.TEXTURE
                     ));
@@ -302,7 +300,7 @@ public class JsonUtils {
             for (JsonElement element : jsonArray) {
                 if (element.isJsonPrimitive() && element.getAsJsonPrimitive().isString()) {
                     String textureName = element.getAsString();
-                    resourceKeys.add(ResourceKey.of(
+                    resourceKeys.add(ResourceKey.create(
                             textureName,
                             ResourceType.TEXTURE
                     ));
@@ -346,7 +344,7 @@ public class JsonUtils {
                 JsonElement sound = sounds.get(i);
                 if (sound.isJsonPrimitive() && sound.getAsJsonPrimitive().isString()) {
                     String originalSound = sound.getAsString();
-                    ResourceKey soundKey = ResourceKey.of(originalSound, ResourceType.SOUND);
+                    ResourceKey soundKey = ResourceKey.create(originalSound, ResourceType.SOUND);
                     if (replaceMap.containsKey(soundKey)) {
                         String newSound = replaceMap.get(soundKey).toString();
                         sounds.set(i, new JsonPrimitive(newSound));
@@ -355,7 +353,7 @@ public class JsonUtils {
                     JsonObject soundObj = sound.getAsJsonObject();
                     if (hasKey(soundObj, "name")) {
                         String originalName = soundObj.getAsJsonPrimitive("name").getAsString();
-                        ResourceKey soundKey = ResourceKey.of(originalName, ResourceType.SOUND);
+                        ResourceKey soundKey = ResourceKey.create(originalName, ResourceType.SOUND);
                         if (replaceMap.containsKey(soundKey)) {
                             String newName = replaceMap.get(soundKey).toString();
                             soundObj.addProperty("name", newName);
@@ -379,7 +377,7 @@ public class JsonUtils {
                         replaceVariants(element, replaceMap);
                     }
                 } else if (value.isJsonPrimitive() && entry.getKey().equals("model")) {
-                    ResourceKey keyModel = ResourceKey.of(value.getAsString(), ResourceType.MODEL);
+                    ResourceKey keyModel = ResourceKey.create(value.getAsString(), ResourceType.MODEL);
                     if (replaceMap.containsKey(keyModel)) {
                         dataObj.addProperty("model", replaceMap.get(keyModel).toString());
                     }
@@ -393,7 +391,7 @@ public class JsonUtils {
         } else if (data.isJsonObject()) {
             JsonObject dataObj = data.getAsJsonObject();
             if (hasKey(dataObj, "model")) {
-                ResourceKey keyModel = ResourceKey.of(dataObj.get("model").getAsString(), ResourceType.MODEL);
+                ResourceKey keyModel = ResourceKey.create(dataObj.get("model").getAsString(), ResourceType.MODEL);
                 if (replaceMap.containsKey(keyModel)) {
                     dataObj.addProperty("model", replaceMap.get(keyModel).toString());
                 }
@@ -420,7 +418,7 @@ public class JsonUtils {
                 JsonObject modelObj = applyEntry.getAsJsonObject();
                 if (!hasKey(modelObj, "model")) continue;
                 String modelValue = modelObj.get("model").getAsString();
-                ResourceKey modelKey = ResourceKey.of(modelValue, ResourceType.MODEL);
+                ResourceKey modelKey = ResourceKey.create(modelValue, ResourceType.MODEL);
                 if (replaceMap.containsKey(modelKey)) {
                     modelObj.addProperty("model", replaceMap.get(modelKey).toString());
                 }
@@ -443,7 +441,7 @@ public class JsonUtils {
             String fileValue = providerObj.get("file").getAsString();
             if (fileValue.endsWith(".png")) {
                 String textureKeyStr = fileValue.substring(0, fileValue.length() - 4);
-                ResourceKey textureKey = ResourceKey.of(textureKeyStr, ResourceType.TEXTURE);
+                ResourceKey textureKey = ResourceKey.create(textureKeyStr, ResourceType.TEXTURE);
                 if (replaceMap.containsKey(textureKey)) {
                     String newFileValue = replaceMap.get(textureKey).toString() + ".png";
                     providerObj.addProperty("file", newFileValue);
@@ -468,7 +466,7 @@ public class JsonUtils {
                     }
                 } else if (value.isJsonPrimitive() && key.equals("model")) {
                     String modelValue = value.getAsString();
-                    ResourceKey modelKey = ResourceKey.of(modelValue, ResourceType.MODEL);
+                    ResourceKey modelKey = ResourceKey.create(modelValue, ResourceType.MODEL);
                     if (replaceMap.containsKey(modelKey)) {
                         dataObj.addProperty("model", replaceMap.get(modelKey).toString());
                     }
@@ -490,7 +488,7 @@ public class JsonUtils {
             JsonObject overrideObj = element.getAsJsonObject();
             if (!overrideObj.has("model")) continue;
             String modelValue = overrideObj.get("model").getAsString();
-            ResourceKey modelKey = ResourceKey.of(modelValue, ResourceType.MODEL);
+            ResourceKey modelKey = ResourceKey.create(modelValue, ResourceType.MODEL);
             if (replaceMap.containsKey(modelKey)) {
                 overrideObj.addProperty("model", replaceMap.get(modelKey).toString());
             }
@@ -499,7 +497,7 @@ public class JsonUtils {
 
     private static void replaceParent(JsonElement data, Map<ResourceKey, ResourceKey> replaceMap, JsonObject jsonData) {
         if (data.isJsonPrimitive() && data.getAsJsonPrimitive().isString()) {
-            ResourceKey parentKey = ResourceKey.of(data.getAsString(), ResourceType.MODEL);
+            ResourceKey parentKey = ResourceKey.create(data.getAsString(), ResourceType.MODEL);
             if (replaceMap.containsKey(parentKey)) {
                 jsonData.addProperty("parent", replaceMap.get(parentKey).toString());
             }
@@ -514,7 +512,7 @@ public class JsonUtils {
                 JsonElement value = entry.getValue();
                 if (value.isJsonPrimitive() && value.getAsJsonPrimitive().isString()) {
                     String textureValue = value.getAsString();
-                    ResourceKey textureKey = ResourceKey.of(textureValue, ResourceType.TEXTURE);
+                    ResourceKey textureKey = ResourceKey.create(textureValue, ResourceType.TEXTURE);
                     if (replaceMap.containsKey(textureKey)) {
                         texturesObj.addProperty(key, replaceMap.get(textureKey).toString());
                     }
@@ -526,7 +524,7 @@ public class JsonUtils {
                 JsonElement element = texturesArray.get(i);
                 if (element.isJsonPrimitive() && element.getAsJsonPrimitive().isString()) {
                     String textureValue = element.getAsString();
-                    ResourceKey textureKey = ResourceKey.of(textureValue, ResourceType.TEXTURE);
+                    ResourceKey textureKey = ResourceKey.create(textureValue, ResourceType.TEXTURE);
                     if (replaceMap.containsKey(textureKey)) {
                         texturesArray.set(i, new JsonPrimitive(replaceMap.get(textureKey).toString()));
                     }
