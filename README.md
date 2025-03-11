@@ -105,6 +105,7 @@ The implementation relies on these fundamental libraries:
 
 ### 🔌 New Features & Bug Fixes 
 If your PR is about a bug fix, it will most likely get merged. If you want to submit a new feature, please make sure to contact me in advance on [Discord](https://discord.com/invite/WVKdaUPR3S).
+The code you contribute will be open-sourced under the GPLv3 license. If you prefer a more permissive license(MIT), you can specifically indicate it at the top of the file.
 
 ### 🌍 Translations
 1. Clone this repository.
