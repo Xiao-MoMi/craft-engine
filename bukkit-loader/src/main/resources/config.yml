@@ -72,6 +72,8 @@ resource-pack:
             suffix: "minecraft/items"
           - type: parent_path_suffix
             suffix: "minecraft/models/item"
+          - type: parent_path_suffix
+            suffix: "minecraft/atlases"
       resolution:
         type: merge_json
         deeply: true

@@ -88,7 +88,6 @@ public class BlockEventListener implements Listener {
         }
     }
 
-
     @EventHandler(ignoreCancelled = true, priority = EventPriority.LOW)
     public void onPlayerBreak(BlockBreakEvent event) {
         org.bukkit.block.Block block = event.getBlock();
