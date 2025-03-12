@@ -1,12 +1,13 @@
 package net.momirealms.craftengine.core.util;
 
-import org.jetbrains.annotations.NotNull;
-
-import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.nio.file.*;
-import java.nio.file.attribute.BasicFileAttributes;
-import java.util.*;
+import java.nio.file.DirectoryStream;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.ArrayDeque;
+import java.util.ArrayList;
+import java.util.Deque;
+import java.util.List;
 
 public class FileUtils {
 
@@ -42,96 +43,5 @@ public class FileUtils {
             }
         }
         return Pair.of(validYaml, validJson);
-    }
-
-    public static List<List<Path>> mergeFolder(Collection<Path> sourceFolders, Path targetFolder) throws IOException {
-        Map<Path, List<Path>> conflictChecker = new HashMap<>();
-        for (Path sourceFolder : sourceFolders) {
-            if (Files.exists(sourceFolder)) {
-                Files.walkFileTree(sourceFolder, new SimpleFileVisitor<>() {
-                    @Override
-                    public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
-                        Path targetPath = targetFolder.resolve(sourceFolder.relativize(file));
-                        List<Path> conflicts = conflictChecker.computeIfAbsent(targetPath, k -> new ArrayList<>());
-                        conflicts.add(file);
-                        if (conflicts.size() == 1) {
-                            Files.createDirectories(targetPath.getParent());
-                            Files.copy(file, targetPath, StandardCopyOption.REPLACE_EXISTING);
-                        }
-                        return FileVisitResult.CONTINUE;
-                    }
-                });
-            }
-        }
-        List<List<Path>> conflicts = new ArrayList<>();
-        for (Map.Entry<Path, List<Path>> entry : conflictChecker.entrySet()) {
-            if (entry.getValue().size() > 1) {
-                conflicts.add(entry.getValue());
-            }
-        }
-        return conflicts;
-    }
-
-    public static List<Path> getAllFiles(Path path) throws IOException {
-        List<Path> files = new ArrayList<>();
-        Files.walkFileTree(path, new SimpleFileVisitor<>() {
-            @Override
-            public @NotNull FileVisitResult visitFile(Path file, @NotNull BasicFileAttributes attrs) {
-                if (attrs.isRegularFile()) {
-                    files.add(file);
-                }
-                return FileVisitResult.CONTINUE;
-            }
-        });
-        return files;
-    }
-
-    public static void moveFile(Path sourcePath, Path targetPath, boolean moveMcmeta) throws IOException {
-        if (!Files.exists(sourcePath)) {
-            throw new FileNotFoundException("Source file does not exist: " + sourcePath);
-        }
-        Path targetParent = targetPath.getParent();
-        if (targetParent != null) {
-            Files.createDirectories(targetParent);
-        }
-        Files.move(sourcePath, targetPath, StandardCopyOption.REPLACE_EXISTING);
-        if (moveMcmeta) {
-            Path mcmetaSource = getMcmetaPath(sourcePath);
-            Path mcmetaTarget = getMcmetaPath(targetPath);
-            Files.move(mcmetaSource, mcmetaTarget, StandardCopyOption.REPLACE_EXISTING);
-        }
-    }
-
-    public static Path getMcmetaPath(Path path) {
-        return path.resolveSibling(path.getFileName() + ".mcmeta");
-    }
-
-    public static void deleteEmptyDirectories(Path rootPath) throws IOException {
-        Files.walkFileTree(rootPath, new SimpleFileVisitor<>() {
-            @Override
-            public @NotNull FileVisitResult postVisitDirectory(Path dir, IOException exc) throws IOException {
-                if (isDirectoryEmpty(dir)) {
-                    Files.delete(dir);
-                }
-                return FileVisitResult.CONTINUE;
-            }
-            @Override
-            public @NotNull FileVisitResult visitFileFailed(Path file, @NotNull IOException exc) {
-                return FileVisitResult.CONTINUE;
-            }
-        });
-    }
-
-    private static boolean isDirectoryEmpty(Path dir) throws IOException {
-        try (DirectoryStream<Path> dirStream = Files.newDirectoryStream(dir)) {
-            return !dirStream.iterator().hasNext();
-        }
-    }
-
-    public static boolean inNamespaceFolder(Path path, Path rootPath) {
-        path = path.toAbsolutePath();
-        rootPath = rootPath.toAbsolutePath();
-        int count = rootPath.relativize(path).getNameCount();
-        return count >= 3;
     }
 }

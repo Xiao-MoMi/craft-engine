@@ -45,6 +45,7 @@ public class BukkitPackManager extends AbstractPackManager implements Listener {
 
 	@Override
 	public void delayedInit() {
+		super.delayedInit();
 		Bukkit.getPluginManager().registerEvents(this, plugin.bootstrap());
 	}
 

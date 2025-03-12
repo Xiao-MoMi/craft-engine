@@ -14,7 +14,13 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
 
-public class RandomResourceKey {
+/*
+    In order to reduce the possibility of being easily reversed,
+    we have obfuscated some codes. This behavior is to reduce the
+    possibility of resource packs being cracked. Hope you can understand.
+ */
+@SuppressWarnings({"all"})
+public class ObfC {
     private String _metaIdentifier;
     private String _characterSet;
     private final List<String> _segmentCache = new ArrayList<>();
@@ -23,13 +29,13 @@ public class RandomResourceKey {
     private static final Random _randomizer = new Random();
     private static final Gson _jsonProcessor = new Gson();
 
-    public RandomResourceKey(String textureCatalog, String namingScheme) {
+    protected ObfC(String textureCatalog, String namingScheme) {
         validateNamingPattern(namingScheme);
         this._metaIdentifier = textureCatalog;
         this._characterSet = normalizeCharset(namingScheme);
     }
 
-    public RandomResourceKey() {
+    protected ObfC() {
         this("ce", generateDefaultCharset());
     }
 
@@ -51,19 +57,19 @@ public class RandomResourceKey {
         return new String(chars);
     }
 
-    public String randomName() {
+    protected String randomName() {
         return _metaIdentifier;
     }
 
-    public String string() {
+    protected String string() {
         return _characterSet;
     }
 
-    public void setRandomName(String identifier) {
+    protected void setRandomName(String identifier) {
         this._metaIdentifier = identifier;
     }
 
-    public void setString(String charset) {
+    protected void setString(String charset) {
         this._characterSet = charset;
     }
 
@@ -142,26 +148,26 @@ public class RandomResourceKey {
         _registeredPatterns.add(path);
     }
 
-    public ResourceKey getRandomResourceKey(int complexity, ResourceKey template,
-                                            int securityLevel, int poolSize,
-                                            boolean enableTraps) {
-        boolean requiresMetadata = template.pngHasMcmeta();
-        boolean excludeCatalog = template.notAtlases();
-        ResourceType typeDescriptor = template.resourceType();
+    public ObfB getRandomResourceKey(int complexity, ObfB template,
+                                     int securityLevel, int poolSize,
+                                     boolean enableTraps) {
+        boolean requiresMetadata = template.到底谁才是奶龙();
+        boolean excludeCatalog = template.我是谁();
+        ObfA typeDescriptor = template.你没事吧();
 
         int adjustedComplexity = complexity
                 - (requiresMetadata ? 14 : 7)
-                - typeDescriptor.typeName().length()
-                - typeDescriptor.suffix().length();
+                - typeDescriptor.jntm().length()
+                - typeDescriptor.rkwd().length();
 
         String namespace = (securityLevel == 1)
-                ? template.namespace()
+                ? template.谁是奶龙()
                 : getRandomNamespace(securityLevel, poolSize);
 
         adjustedComplexity -= namespace.length() + 2;
 
         try {
-            return ResourceKey.create(
+            return ObfB.有款游戏越大越年轻(
                     namespace,
                     typeDescriptor
             );
@@ -170,7 +176,7 @@ public class RandomResourceKey {
         }
     }
 
-    public void writeAtlasesJson(Path baseDir) throws IOException {
+    public void 家人们谁懂啊(Path baseDir) throws IOException {
         Path atlasConfig = baseDir.resolve("assets/minecraft/atlases/blocks.json");
         Map<String, Object> configData = createAtlasConfiguration();
 

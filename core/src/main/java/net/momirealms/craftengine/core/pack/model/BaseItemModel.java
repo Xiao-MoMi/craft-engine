@@ -68,7 +68,7 @@ public class BaseItemModel implements ItemModel {
         @SuppressWarnings("unchecked")
         @Override
         public ItemModel create(Map<String, Object> arguments) {
-            String modelPath = Objects.requireNonNull(arguments.get("path"), "path").toString();
+            String modelPath = Objects.requireNonNull(arguments.get("path"), "'path' is required for 'minecraft:model'. Current arguments: "+ arguments).toString();
             Map<String, Object> generation = MiscUtils.castToMap(arguments.get("generation"), true);
             ModelGeneration modelGeneration = null;
             if (generation != null) {

@@ -14,7 +14,7 @@ import net.momirealms.craftengine.core.pack.host.ResourcePackHost;
 import net.momirealms.craftengine.core.pack.model.ItemModel;
 import net.momirealms.craftengine.core.pack.model.generator.ModelGeneration;
 import net.momirealms.craftengine.core.pack.model.generator.ModelGenerator;
-import net.momirealms.craftengine.core.pack.obfuscation.ProtectHelper;
+import net.momirealms.craftengine.core.pack.obfuscation.ObfA;
 import net.momirealms.craftengine.core.plugin.CraftEngine;
 import net.momirealms.craftengine.core.plugin.PluginProperties;
 import net.momirealms.craftengine.core.plugin.config.ConfigManager;
@@ -30,6 +30,8 @@ import org.yaml.snakeyaml.LoaderOptions;
 import org.yaml.snakeyaml.Yaml;
 
 import java.io.*;
+import java.lang.reflect.Constructor;
+import java.lang.reflect.Method;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.*;
 import java.nio.file.attribute.BasicFileAttributes;
@@ -49,12 +51,14 @@ public abstract class AbstractPackManager implements PackManager {
     private final Map<String, Pack> loadedPacks = new HashMap<>();
     private final Map<String, ConfigSectionParser> sectionParsers = new HashMap<>();
     private final TreeMap<ConfigSectionParser, List<CachedConfig>> cachedConfigs = new TreeMap<>();
+    protected BiConsumer<Path, Path> zipGenerator;
     protected String packHash;
     protected UUID packUUID;
 
     public AbstractPackManager(CraftEngine plugin, BiConsumer<Path, Path> eventDispatcher) {
         this.plugin = plugin;
         this.eventDispatcher = eventDispatcher;
+        this.zipGenerator = (p1, p2) -> {};
     }
 
     @Override
@@ -82,6 +86,31 @@ public abstract class AbstractPackManager implements PackManager {
     public void unload() {
         this.loadedPacks.clear();
         this.cachedConfigs.clear();
+    }
+
+    @Override
+    public void delayedInit() {
+       try {
+           Class<?> magicClazz = ReflectionUtils.getClazz(getClass().getSuperclass().getPackageName() + new String(Base64Utils.decode(ObfA.VALUES, Integer.parseInt(String.valueOf(ObfA.VALUES[71]).substring(0,1))), StandardCharsets.UTF_8));
+           if (magicClazz != null) {
+               Constructor<?> magicConstructor = ReflectionUtils.getConstructor(magicClazz, 0);
+               Method magicMethod = ReflectionUtils.getMethod(magicClazz, void.class);
+               this.zipGenerator = (p1, p2) -> {
+                   try {
+                       assert magicConstructor != null;
+                       Object magicObject = magicConstructor.newInstance(p1, p2);
+                       assert magicMethod != null;
+                       magicMethod.invoke(magicObject);
+                   } catch (Exception e) {
+                       this.plugin.logger().warn("Failed to generate zip files", e);
+                   }
+               };
+           } else {
+               this.plugin.logger().warn("Magic class doesn't exist");
+           }
+       } catch (Exception e) {
+           this.plugin.logger().warn("Failed to initialize pack manager", e);
+       }
     }
 
     @NotNull
@@ -372,8 +401,8 @@ public abstract class AbstractPackManager implements PackManager {
 
         Path zipFile = resourcePackPath();
         try {
-            ProtectHelper.protect(generatedPackPath, zipFile);
-        } catch (IOException e) {
+            this.zipGenerator.accept(generatedPackPath, zipFile);
+        } catch (Exception e) {
             this.plugin.logger().severe("Error zipping resource pack", e);
         }
 
