@@ -1,5 +1,5 @@
 lang:
   ALL:
-    pack.nameAndSource: "%s"
+    container.inventory: ""
   zh_cn:
-    pack.nameAndSource: "%s"
+    container.inventory: ""
