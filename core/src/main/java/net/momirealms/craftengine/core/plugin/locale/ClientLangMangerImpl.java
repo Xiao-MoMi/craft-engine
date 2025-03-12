@@ -44,32 +44,25 @@ public class ClientLangMangerImpl implements ClientLangManager {
     public void parseSection(Pack pack, Path path, Key id, Map<String, Object> section) {
         String langId = id.value().toLowerCase(Locale.ROOT);
 
-        Map<String, String> data = section.entrySet().stream()
+        Map<String, String> sectionData = section.entrySet().stream()
                 .collect(Collectors.toMap(
                         Map.Entry::getKey,
                         entry -> String.valueOf(entry.getValue())
                 ));
 
         if ("all".equals(langId)) {
-            processAllLanguages(data);
+            allLang.forEach(lang -> {
+                I18NData data = new I18NData();
+                data.translations.putAll(sectionData);
+                i18nData.put(lang, data);
+            });
             return;
         }
 
         if (allLang.contains(langId)) {
             i18nData.computeIfAbsent(langId, k -> new I18NData())
-                    .addTranslations(data);
+                    .addTranslations(sectionData);
         }
-    }
-
-    private void processAllLanguages(Map<String, String> section) {
-        I18NData defaultData = new I18NData();
-        defaultData.addTranslations(section);
-
-        allLang.forEach(lang -> {
-            I18NData data = new I18NData();
-            data.translations.putAll(defaultData.translations);
-            i18nData.put(lang, data);
-        });
     }
 
     @Override
