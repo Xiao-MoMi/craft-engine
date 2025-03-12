@@ -28,7 +28,7 @@ public class ClientLangMangerImpl implements ClientLangManager {
             "se_no", "sk_sk", "sl_si", "so_so", "sq_al", "sr_cs", "sr_sp", "sv_se",
             "sxu", "szl", "ta_in", "th_th", "tl_ph", "tlh_aa", "tok", "tr_tr",
             "tt_ru", "tzo_mx", "uk_ua", "val_es", "vec_it", "vi_vn", "vp_vl", "yi_de",
-            "yo_ng", "zh_cn", "zh_hk", "zh_tw", "zlm_arab"
+            "yo_ng", "zh_cn", "zh_hk", "zh_tw", "zlm_arab", "ky_kg"
     );
 
     public ClientLangMangerImpl(Plugin plugin) {
