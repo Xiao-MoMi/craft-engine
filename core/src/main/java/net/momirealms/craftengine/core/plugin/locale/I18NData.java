@@ -8,6 +8,10 @@ import java.util.Map;
 public class I18NData {
     public final Map<String, String> translations = new HashMap<>();
 
+    public void addTranslations(Map<String, Object> data) {
+        data.forEach((key, value) -> translations.put(key, value.toString()));
+    }
+
     public void addTranslation(String key, String value) {
         this.translations.put(key, value);
     }
