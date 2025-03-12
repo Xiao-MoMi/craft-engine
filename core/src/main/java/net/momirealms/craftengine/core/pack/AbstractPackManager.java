@@ -180,6 +180,8 @@ public abstract class AbstractPackManager implements PackManager {
         plugin.saveResource("resources/default/configuration/templates.yml");
         // i18n
         plugin.saveResource("resources/default/configuration/i18n.yml");
+        // lang
+        plugin.saveResource("resources/default/configuration/langs.yml");
         // categories
         plugin.saveResource("resources/default/configuration/categories.yml");
         // icons

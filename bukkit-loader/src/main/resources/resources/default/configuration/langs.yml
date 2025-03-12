@@ -1,0 +1,5 @@
+lang:
+  ALL:
+    pack.nameAndSource: "%s"
+  zh_cn:
+    pack.nameAndSource: "%s"
