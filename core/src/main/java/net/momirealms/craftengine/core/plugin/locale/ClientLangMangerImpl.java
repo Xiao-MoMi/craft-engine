@@ -30,7 +30,6 @@ public class ClientLangMangerImpl implements ClientLangManager {
             "tt_ru", "tzo_mx", "uk_ua", "val_es", "vec_it", "vi_vn", "vp_vl", "yi_de",
             "yo_ng", "zh_cn", "zh_hk", "zh_tw", "zlm_arab"
     );
-    private final I18NData defaultData = new I18NData();
 
     public ClientLangMangerImpl(Plugin plugin) {
         this.plugin = plugin;
@@ -39,7 +38,6 @@ public class ClientLangMangerImpl implements ClientLangManager {
     @Override
     public void reload() {
         this.i18nData.clear();
-        defaultData.translations.clear();
     }
 
     @Override
@@ -64,7 +62,7 @@ public class ClientLangMangerImpl implements ClientLangManager {
     }
 
     private void processAllLanguages(Map<String, String> section) {
-        defaultData.translations.clear();
+        I18NData defaultData = new I18NData();
         defaultData.addTranslations(section);
 
         allLang.forEach(lang -> {
