@@ -45,6 +45,7 @@ import java.util.stream.Stream;
 
 public class BukkitItemManager extends AbstractItemManager<ItemStack> {
     private static final Map<Key, List<ItemBehavior>> VANILLA_ITEM_EXTRA_BEHAVIORS = new HashMap<>();
+    private static final List<Key> VANILLA_ITEMS = new ArrayList<>();
 
     static {
         registerVanillaItemExtraBehavior(AxeItemBehavior.INSTANCE, ItemKeys.AXES);
@@ -407,6 +408,11 @@ public class BukkitItemManager extends AbstractItemManager<ItemStack> {
     }
 
     @Override
+    public Collection<Key> vanillaItems() {
+        return VANILLA_ITEMS;
+    }
+
+    @Override
     public Map<Key, TreeSet<LegacyOverridesModel>> legacyItemOverrides() {
         return this.legacyOverrides;
     }
@@ -587,6 +593,7 @@ public class BukkitItemManager extends AbstractItemManager<ItemStack> {
                 if (material.getKey().namespace().equals("minecraft")) {
                     if (!material.isLegacy() && material.isItem()) {
                         Key id = Key.from(material.getKey().asString());
+                        VANILLA_ITEMS.add(id);
                         Holder.Reference<Key> holder =  BuiltInRegistries.OPTIMIZED_ITEM_ID.get(id)
                                 .orElseGet(() -> ((WritableRegistry<Key>) BuiltInRegistries.OPTIMIZED_ITEM_ID)
                                         .register(new ResourceKey<>(BuiltInRegistries.OPTIMIZED_ITEM_ID.key().location(), id), id));

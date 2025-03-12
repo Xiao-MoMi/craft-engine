@@ -1,10 +1,10 @@
 package net.momirealms.craftengine.core.pack.obfuscation;
 
-import dev.dejvokep.boostedyaml.block.implementation.Section;
-import net.momirealms.craftengine.core.plugin.CraftEngine;
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonSyntaxException;
+import dev.dejvokep.boostedyaml.block.implementation.Section;
+import net.momirealms.craftengine.core.plugin.CraftEngine;
 import net.momirealms.craftengine.core.util.FileUtils;
 import net.momirealms.craftengine.core.util.JsonUtils;
 import net.momirealms.craftengine.core.util.ZipUtils;
@@ -13,7 +13,10 @@ import org.jetbrains.annotations.NotNull;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.*;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ConcurrentMap;
 import java.util.stream.Collectors;
 

@@ -41,38 +41,63 @@ public class ConfigManager implements Reloadable {
     protected boolean debug;
     protected boolean checkUpdate;
     protected boolean metrics;
-    protected boolean resourcePack$overrideUniform;
-    protected boolean resourcePack$protection$breakFormat;
-    protected boolean hasPAPI;
-    protected boolean forceUpdateLight;
-    protected boolean enableLightSystem;
-    protected int maxChainUpdate;
-    protected boolean removeInvalidFurniture;
-    protected Set<String> furnitureToRemove;
-    protected float packMinVersion;
-    protected float packMaxVersion;
-    protected boolean enableSoundSystem;
-    protected boolean enableRecipeSystem;
-    protected List<String> foldersToMerge;
-	protected boolean restoreVanillaBlocks;
-	protected boolean restoreCustomBlocks;
-    protected HostMode hostMode;
-    protected int hostPort;
-    protected String hostIP;
-    protected String hostProtocol;
-    protected boolean kickDeclined;
-    protected boolean sendPackOnJoin;
-    protected boolean sendPackOnReload;
-    protected boolean denyNonMinecraftRequest;
-    protected Component resourcePackPrompt;
-    protected String packUrl;
-    protected String packSha1;
-    protected String hostResourcePackPath;
-    protected UUID packUUID;
-    protected int requestRate;
-    protected long requestInterval;
-    protected List<ConditionalResolution> resolutions;
-    protected boolean nonItalic;
+
+    protected boolean resource_pack$override_uniform_font;
+    protected List<ConditionalResolution> resource_pack$duplicated_files_handler;
+    protected List<String> resource_pack$merge_external_folders;
+
+    protected boolean resource_pack$protection$crash_tools$method_1;
+    protected boolean resource_pack$protection$crash_tools$method_2;
+    protected boolean resource_pack$protection$crash_tools$method_3;
+    protected boolean resource_pack$protection$crash_tools$method_4;
+
+    protected boolean resource_pack$protection$obfuscation$enable;
+    protected long resource_pack$protection$obfuscation$seed;
+    protected boolean resource_pack$protection$obfuscation$fake_directory;
+    protected boolean resource_pack$protection$obfuscation$escape_unicode;
+    protected boolean resource_pack$protection$obfuscation$resource_location$enable;
+    protected int resource_pack$protection$obfuscation$resource_location$random_namespace$length;
+    protected int resource_pack$protection$obfuscation$resource_location$random_namespace$amount;
+    protected String resource_pack$protection$obfuscation$resource_location$random_path$source;
+    protected int resource_pack$protection$obfuscation$resource_location$random_path$depth;
+    protected List<String> resource_pack$protection$obfuscation$resource_location$bypass_textures;
+    protected List<String> resource_pack$protection$obfuscation$resource_location$bypass_models;
+    protected List<String> resource_pack$protection$obfuscation$resource_location$bypass_sounds;
+
+    protected float resource_pack$supported_version$min;
+    protected float resource_pack$supported_version$max;
+
+    protected HostMode resource_pack$send$mode;
+    protected boolean resource_pack$send$kick_if_declined;
+    protected boolean resource_pack$send$send_on_join;
+    protected boolean resource_pack$send$send_on_reload;
+    protected Component resource_pack$send$prompt;
+
+    protected int resource_pack$send$self_host$port;
+    protected String resource_pack$send$self_host$ip;
+    protected String resource_pack$send$self_host$protocol;
+    protected boolean resource_pack$send$self_host$deny_non_minecraft_request;
+    protected int resource_pack$send$self_host$rate_limit$max_requests;
+    protected long resource_pack$send$self_host$rate_limit$reset_interval;
+    protected String resource_pack$self_host$local_file_path;
+
+    protected String resource_pack$external_host$url;
+    protected String resource_pack$external_host$sha1;
+    protected UUID resource_pack$external_host$uuid;
+
+    protected boolean performance$light_system$force_update_light;
+    protected boolean performance$light_system$enable;
+    protected int performance$max_block_chain_update_limit;
+    protected boolean performance$chunk_system$restore_vanilla_blocks_on_chunk_unload;
+    protected boolean performance$chunk_system$restore_custom_blocks_on_chunk_load;
+
+    protected boolean furniture$remove_invalid_furniture_on_chunk_load$enable;
+    protected Set<String> furniture$remove_invalid_furniture_on_chunk_load$list;
+
+    protected boolean block$sound_system$enable;
+    protected boolean recipe$enable;
+
+    protected boolean item$non_italic_tag;
 
     public ConfigManager(CraftEngine plugin) {
         this.plugin = plugin;
@@ -136,66 +161,88 @@ public class ConfigManager implements Reloadable {
     private void loadSettings() {
         YamlDocument config = settings();
         plugin.translationManager().forcedLocale(TranslationManager.parseLocale(config.getString("forced-locale", "")));
-        // Basics
+
+        // basics
         debug = config.getBoolean("debug", false);
         metrics = config.getBoolean("metrics", false);
         checkUpdate = config.getBoolean("update-checker", false);
+
         // resource pack
-        resourcePack$overrideUniform = config.getBoolean("resource-pack.override-uniform-font", false);
-        packMinVersion = getVersion(config.get("resource-pack.supported-version.min", "1.20").toString());
-        packMaxVersion = getVersion(config.get("resource-pack.supported-version.max", "LATEST").toString());
-        foldersToMerge = config.getStringList("resource-pack.merge-external-folders");
-        hostMode = HostMode.valueOf(config.getString("resource-pack.send.mode", "self-host").replace("-", "_").toUpperCase(Locale.ENGLISH));
-        hostPort = config.getInt("resource-pack.send.self-host.port", 8163);
-        hostIP = config.getString("resource-pack.send.self-host.ip", "localhost");
-        hostResourcePackPath = config.getString("resource-pack.send.self-host.local-file-path", "./generated/resource_pack.zip");
-        hostProtocol = config.getString("resource-pack.send.self-host.protocol", "http");
-        sendPackOnJoin = config.getBoolean("resource-pack.send.send-on-join", true);
-        sendPackOnReload = config.getBoolean("resource-pack.send.send-on-reload", true);
-        kickDeclined = config.getBoolean("resource-pack.send.kick-if-declined", true);
-        packUrl = config.getString("resource-pack.send.external-host.url", "");
-        packSha1 = config.getString("resource-pack.send.external-host.sha1", "");
+        resource_pack$override_uniform_font = config.getBoolean("resource-pack.override-uniform-font", false);
+        resource_pack$supported_version$min = getVersion(config.get("resource-pack.supported-version.min", "1.20").toString());
+        resource_pack$supported_version$max = getVersion(config.get("resource-pack.supported-version.max", "LATEST").toString());
+        resource_pack$merge_external_folders = config.getStringList("resource-pack.merge-external-folders");
+        resource_pack$send$mode = HostMode.valueOf(config.getString("resource-pack.send.mode", "self-host").replace("-", "_").toUpperCase(Locale.ENGLISH));
+        resource_pack$send$self_host$port = config.getInt("resource-pack.send.self-host.port", 8163);
+        resource_pack$send$self_host$ip = config.getString("resource-pack.send.self-host.ip", "localhost");
+        resource_pack$self_host$local_file_path = config.getString("resource-pack.send.self-host.local-file-path", "./generated/resource_pack.zip");
+        resource_pack$send$self_host$protocol = config.getString("resource-pack.send.self-host.protocol", "http");
+        resource_pack$send$send_on_join = config.getBoolean("resource-pack.send.send-on-join", true);
+        resource_pack$send$send_on_reload = config.getBoolean("resource-pack.send.send-on-reload", true);
+        resource_pack$send$kick_if_declined = config.getBoolean("resource-pack.send.kick-if-declined", true);
+        resource_pack$external_host$url = config.getString("resource-pack.send.external-host.url", "");
+        resource_pack$external_host$sha1 = config.getString("resource-pack.send.external-host.sha1", "");
         String packUUIDStr = config.getString("resource-pack.send.external-host.uuid", "");
-        packUUID = packUUIDStr.isEmpty() ? UUID.nameUUIDFromBytes(packUrl.getBytes(StandardCharsets.UTF_8)) : UUID.fromString(packUUIDStr);
-        resourcePackPrompt = AdventureHelper.miniMessage(config.getString("resource-pack.send.prompt", "<yellow>To fully experience our server, please accept our custom resource pack.</yellow>"));
-        requestInterval = config.getLong("resource-pack.send.self-host.rate-limit.reset-interval", 30L);
-        requestRate = config.getInt("resource-pack.send.self-host.rate-limit.max-requests", 3);
-        denyNonMinecraftRequest = config.getBoolean("resource-pack.send.deny-non-minecraft-request", true);
+        resource_pack$external_host$uuid = packUUIDStr.isEmpty() ? UUID.nameUUIDFromBytes(resource_pack$external_host$url.getBytes(StandardCharsets.UTF_8)) : UUID.fromString(packUUIDStr);
+        resource_pack$send$prompt = AdventureHelper.miniMessage(config.getString("resource-pack.send.prompt", "<yellow>To fully experience our server, please accept our custom resource pack.</yellow>"));
+        resource_pack$send$self_host$rate_limit$reset_interval = config.getLong("resource-pack.send.self-host.rate-limit.reset-interval", 30L);
+        resource_pack$send$self_host$rate_limit$max_requests = config.getInt("resource-pack.send.self-host.rate-limit.max-requests", 3);
+        resource_pack$send$self_host$deny_non_minecraft_request = config.getBoolean("resource-pack.send.deny-non-minecraft-request", true);
+
+        resource_pack$protection$crash_tools$method_1 = config.getBoolean("resource-pack.protection.crash-tools.method-1", false);
+        resource_pack$protection$crash_tools$method_2 = config.getBoolean("resource-pack.protection.crash-tools.method-2", false);
+        resource_pack$protection$crash_tools$method_3 = config.getBoolean("resource-pack.protection.crash-tools.method-3", false);
+        resource_pack$protection$crash_tools$method_4 = config.getBoolean("resource-pack.protection.crash-tools.method-4", false);
+        resource_pack$protection$obfuscation$enable = config.getBoolean("resource-pack.protection.obfuscation.enable", false);
+        resource_pack$protection$obfuscation$seed = config.getLong("resource-pack.protection.obfuscation.seed", 0L);
+        resource_pack$protection$obfuscation$fake_directory = config.getBoolean("resource-pack.protection.obfuscation.fake-directory", false);
+        resource_pack$protection$obfuscation$escape_unicode = config.getBoolean("resource-pack.protection.obfuscation.escape-unicode", false);
+
+        resource_pack$protection$obfuscation$resource_location$enable = config.getBoolean("resource-pack.protection.obfuscation.resource-location.enable", false);
+        resource_pack$protection$obfuscation$resource_location$random_namespace$amount = config.getInt("resource-pack.protection.obfuscation.resource-location.random-namespace.amount", 32);
+        resource_pack$protection$obfuscation$resource_location$random_namespace$length = config.getInt("resource-pack.protection.obfuscation.resource-location.random-namespace.length", 8);
+        resource_pack$protection$obfuscation$resource_location$random_path$depth = config.getInt("resource-pack.protection.obfuscation.resource-location.random-path.depth", 16);
+        resource_pack$protection$obfuscation$resource_location$random_path$source = config.getString("resource-pack.protection.obfuscation.resource-location.random-path.source", "obf");
+        resource_pack$protection$obfuscation$resource_location$bypass_textures = config.getStringList("resource-pack.protection.obfuscation.resource-location.bypass-textures");
+        resource_pack$protection$obfuscation$resource_location$bypass_models = config.getStringList("resource-pack.protection.obfuscation.resource-location.bypass-models");
+        resource_pack$protection$obfuscation$resource_location$bypass_sounds = config.getStringList("resource-pack.protection.obfuscation.resource-location.bypass-sounds");
+
         try {
-            resolutions = config.getMapList("resource-pack.duplicated-files-handler").stream().map(it -> {
+            resource_pack$duplicated_files_handler = config.getMapList("resource-pack.duplicated-files-handler").stream().map(it -> {
                 Map<String, Object> args = MiscUtils.castToMap(it, false);
                 return ConditionalResolution.FACTORY.create(args);
             }).toList();
         } catch (Exception e) {
             this.plugin.logger().warn("Failed to load resource pack duplicated files handler", e);
-            resolutions = List.of();
+            resource_pack$duplicated_files_handler = List.of();
         }
 
         // item
-        nonItalic = config.getBoolean("item.non-italic-tag", false);
+        item$non_italic_tag = config.getBoolean("item.non-italic-tag", false);
 
         // performance
-        maxChainUpdate = config.getInt("performance.max-block-chain-update-limit", 64);
-        forceUpdateLight = config.getBoolean("performance.light-system.force-update-light", false);
-        enableLightSystem = config.getBoolean("performance.light-system.enable", true);
-        restoreVanillaBlocks = config.getBoolean("performance.chunk-system.restore-vanilla-blocks-on-chunk-unload", true);
-        restoreCustomBlocks = config.getBoolean("performance.chunk-system.restore-custom-blocks-on-chunk-load", true);
-        // compatibility
-        hasPAPI = plugin.isPluginEnabled("PlaceholderAPI");
+        performance$max_block_chain_update_limit = config.getInt("performance.max-block-chain-update-limit", 64);
+        performance$light_system$force_update_light = config.getBoolean("performance.light-system.force-update-light", false);
+        performance$light_system$enable = config.getBoolean("performance.light-system.enable", true);
+        performance$chunk_system$restore_vanilla_blocks_on_chunk_unload = config.getBoolean("performance.chunk-system.restore-vanilla-blocks-on-chunk-unload", true);
+        performance$chunk_system$restore_custom_blocks_on_chunk_load = config.getBoolean("performance.chunk-system.restore-custom-blocks-on-chunk-load", true);
+
         // furniture
-        removeInvalidFurniture = config.getBoolean("furniture.remove-invalid-furniture-on-chunk-load.enable", false);
-        furnitureToRemove = new HashSet<>(config.getStringList("furniture.remove-invalid-furniture-on-chunk-load.list"));
+        furniture$remove_invalid_furniture_on_chunk_load$enable = config.getBoolean("furniture.remove-invalid-furniture-on-chunk-load.enable", false);
+        furniture$remove_invalid_furniture_on_chunk_load$list = new HashSet<>(config.getStringList("furniture.remove-invalid-furniture-on-chunk-load.list"));
+
         // block
-        enableSoundSystem = config.getBoolean("block.sound-system.enable", true);
+        block$sound_system$enable = config.getBoolean("block.sound-system.enable", true);
+
         // recipe
-        enableRecipeSystem = config.getBoolean("recipe.enable", true);
+        recipe$enable = config.getBoolean("recipe.enable", true);
 
         Class<?> modClazz = ReflectionUtils.getClazz(CraftEngine.MOD_CLASS);
         if (modClazz != null) {
             Method setMaxChainMethod = ReflectionUtils.getStaticMethod(modClazz, new String[] {"setMaxChainUpdate"}, void.class, int.class);
             try {
                 assert setMaxChainMethod != null;
-                setMaxChainMethod.invoke(null, maxChainUpdate);
+                setMaxChainMethod.invoke(null, performance$max_block_chain_update_limit);
             } catch (IllegalAccessException | InvocationTargetException e) {
                 plugin.logger().warn("Failed to set max chain update", e);
             }
@@ -229,132 +276,188 @@ public class ConfigManager implements Reloadable {
         return instance.metrics;
     }
 
-    public static boolean hasPAPI() {
-        return instance.hasPAPI;
-    }
-
     public static boolean resourcePack$overrideUniform() {
-        return instance.resourcePack$overrideUniform;
-    }
-
-    public static boolean resourcePack$protection$breakFormat() {
-        return instance.resourcePack$protection$breakFormat;
+        return instance.resource_pack$override_uniform_font;
     }
 
     public static int maxChainUpdate() {
-        return instance.maxChainUpdate;
+        return instance.performance$max_block_chain_update_limit;
     }
 
     public static boolean removeInvalidFurniture() {
-        return instance.removeInvalidFurniture;
+        return instance.furniture$remove_invalid_furniture_on_chunk_load$enable;
     }
 
     public static Set<String> furnitureToRemove() {
-        return instance.furnitureToRemove;
+        return instance.furniture$remove_invalid_furniture_on_chunk_load$list;
     }
 
     public static boolean forceUpdateLight() {
-        return instance.forceUpdateLight;
+        return instance.performance$light_system$force_update_light;
     }
 
     public static boolean enableLightSystem() {
-        return instance.enableLightSystem;
+        return instance.performance$light_system$enable;
     }
 
     public static float packMinVersion() {
-        return instance.packMinVersion;
+        return instance.resource_pack$supported_version$min;
     }
 
     public static float packMaxVersion() {
-        return instance.packMaxVersion;
+        return instance.resource_pack$supported_version$max;
     }
 
     public static boolean enableSoundSystem() {
-        return instance.enableSoundSystem;
+        return instance.block$sound_system$enable;
     }
 
     public static boolean enableRecipeSystem() {
-        return instance.enableRecipeSystem;
+        return instance.recipe$enable;
     }
 
     public static boolean nonItalic() {
-        return instance.nonItalic;
+        return instance.item$non_italic_tag;
     }
 
     public static boolean restoreVanillaBlocks() {
-        return instance.restoreVanillaBlocks && instance.restoreCustomBlocks;
+        return instance.performance$chunk_system$restore_vanilla_blocks_on_chunk_unload && instance.performance$chunk_system$restore_custom_blocks_on_chunk_load;
     }
 
     public static boolean denyNonMinecraftRequest() {
-        return instance.denyNonMinecraftRequest;
+        return instance.resource_pack$send$self_host$deny_non_minecraft_request;
     }
 
     public static boolean restoreCustomBlocks() {
-        return instance.restoreCustomBlocks;
+        return instance.performance$chunk_system$restore_custom_blocks_on_chunk_load;
     }
 
     public static List<String> foldersToMerge() {
-        return instance.foldersToMerge;
+        return instance.resource_pack$merge_external_folders;
     }
 
     public static HostMode hostMode() {
-        return instance.hostMode;
+        return instance.resource_pack$send$mode;
     }
 
     public static String hostIP() {
-        return instance.hostIP;
+        return instance.resource_pack$send$self_host$ip;
     }
 
     public static int hostPort() {
-        return instance.hostPort;
+        return instance.resource_pack$send$self_host$port;
     }
 
     public static boolean kickOnDeclined() {
-        return instance.kickDeclined;
+        return instance.resource_pack$send$kick_if_declined;
     }
 
     public static Component resourcePackPrompt() {
-        return instance.resourcePackPrompt;
+        return instance.resource_pack$send$prompt;
     }
 
     public static String hostProtocol() {
-        return instance.hostProtocol;
+        return instance.resource_pack$send$self_host$protocol;
     }
 
     public static String externalPackUrl() {
-        return instance.packUrl;
+        return instance.resource_pack$external_host$url;
     }
 
     public static String externalPackSha1() {
-        return instance.packSha1;
+        return instance.resource_pack$external_host$sha1;
     }
 
     public static UUID externalPackUUID() {
-        return instance.packUUID;
+        return instance.resource_pack$external_host$uuid;
     }
 
     public static boolean sendPackOnJoin() {
-        return instance.sendPackOnJoin;
+        return instance.resource_pack$send$send_on_join;
     }
 
     public static boolean sendPackOnReload() {
-        return instance.sendPackOnReload;
+        return instance.resource_pack$send$send_on_reload;
     }
 
     public static int requestRate() {
-        return instance.requestRate;
+        return instance.resource_pack$send$self_host$rate_limit$max_requests;
     }
 
     public static long requestInterval() {
-        return instance.requestInterval;
+        return instance.resource_pack$send$self_host$rate_limit$reset_interval;
     }
 
     public static String hostResourcePackPath() {
-        return instance.hostResourcePackPath;
+        return instance.resource_pack$self_host$local_file_path;
     }
 
     public static List<ConditionalResolution> resolutions() {
-        return instance.resolutions;
+        return instance.resource_pack$duplicated_files_handler;
+    }
+
+    public static boolean crashTool1() {
+        return instance.resource_pack$protection$crash_tools$method_1;
+    }
+
+    public static boolean crashTool2() {
+        return instance.resource_pack$protection$crash_tools$method_2;
+    }
+
+    public static boolean crashTool3() {
+        return instance.resource_pack$protection$crash_tools$method_3;
+    }
+
+    public static boolean crashTool4() {
+        return instance.resource_pack$protection$crash_tools$method_4;
+    }
+
+    public static boolean enableObfuscation() {
+        return instance.resource_pack$protection$obfuscation$enable;
+    }
+
+    public static long obfuscationSeed() {
+        return instance.resource_pack$protection$obfuscation$seed;
+    }
+
+    public static boolean createFakeDirectory() {
+        return instance.resource_pack$protection$obfuscation$fake_directory;
+    }
+
+    public static boolean escapeUnicode() {
+        return instance.resource_pack$protection$obfuscation$escape_unicode;
+    }
+
+    public static boolean enableRandomResourceLocation() {
+        return instance.resource_pack$protection$obfuscation$resource_location$enable;
+    }
+
+    public static int namespaceLength() {
+        return instance.resource_pack$protection$obfuscation$resource_location$random_namespace$length;
+    }
+
+    public static int namespaceAmount() {
+        return instance.resource_pack$protection$obfuscation$resource_location$random_namespace$amount;
+    }
+
+    public static String atlasSource() {
+        return instance.resource_pack$protection$obfuscation$resource_location$random_path$source;
+    }
+
+    public static int pathDepth() {
+        return instance.resource_pack$protection$obfuscation$resource_location$random_path$depth;
+    }
+
+    public static List<String> bypassTextures() {
+        return instance.resource_pack$protection$obfuscation$resource_location$bypass_textures;
+    }
+
+    public static List<String> bypassModels() {
+        return instance.resource_pack$protection$obfuscation$resource_location$bypass_models;
+    }
+
+    public static List<String> bypassSounds() {
+        return instance.resource_pack$protection$obfuscation$resource_location$bypass_sounds;
     }
 
     public YamlDocument loadOrCreateYamlData(String fileName) {

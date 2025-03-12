@@ -1,8 +1,8 @@
 package net.momirealms.craftengine.core.util;
 
+import com.google.gson.*;
 import net.momirealms.craftengine.core.pack.obfuscation.ResourceKey;
 import net.momirealms.craftengine.core.pack.obfuscation.ResourceType;
-import com.google.gson.*;
 import org.jetbrains.annotations.NotNull;
 
 import java.nio.file.Files;

@@ -290,4 +290,6 @@ public abstract class CraftEngine implements Plugin {
         }
         return instance;
     }
+
+    public abstract boolean hasPlaceholderAPI();
 }

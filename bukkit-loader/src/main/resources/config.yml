@@ -12,30 +12,45 @@ forced-locale: ''
 resource-pack:
   # Should those images in minecraft:default font also work in minecraft:uniform
   override-uniform-font: true
+
+  # Do not use this feature for the moment as it's under development
+  # Do not use this feature for the moment as it's under development
+  # Do not use this feature for the moment as it's under development
+  # Resource pack protection
   protection:
-    # 0 = Disabled
-    # 1 = Block common decompression software from opening
-    # 2 = Further block decompilation tools
-    # 3 = Maximize protection (will increase size by 0.67MiB)
-    level: 1
-  # Do not use this feature as it's unstable for the moment
-  # Do not use this feature as it's unstable for the moment
-  # Do not use this feature as it's unstable for the moment
-  obfuscation:
-    # Requires protection.level ≠ 0
-    # 0 = Disabled
-    # 1 = Obfuscate paths
-    # 2 = Obfuscate namespaces and paths
-    # 3 = Level 2 + unlimited namespace obfuscation
-    level: 0
-    # Requires obfuscation.level ≠ 0
-    # Prevent brute-force extraction
-    anti-unzip: false
-    # Path length starting from resource pack root (including "/", max 65535)
-    path-length: 100
-    # Maximum namespace variations
-    # Excessive namespaces may slow down client loading
-    namespace-amount: 100
+    # Warning: Do not attempt to unzip the resource pack with crash tools enabled.
+    # Warning: Do not attempt to unzip the resource pack with crash tools enabled.
+    # Warning: Do not attempt to unzip the resource pack with crash tools enabled.
+    # You can enable all the methods at the same time.
+    crash-tools:
+      method-1: false
+      method-2: false
+      method-3: false # Enable this would increase the resource pack size by 0.67MB
+      method-4: false
+    # Please note that the primary purpose of obfuscation is to unidirectionally transform your resource pack into a format with significantly
+    # reduced readability, making it nearly impossible for thieves to restore the original structure of the resource pack. However, it is
+    # important to be aware that thieves may still be able to steal your models through JSON paths and texture paths, although this process
+    # will be considerably more challenging.
+    obfuscation:
+      enable: false
+      seed: 0 # 0 = random seed
+      fake-directory: true
+      escape-unicode: true
+      resource-location:
+        enable: true
+        random-namespace:
+          amount: 32 # 0 = disable
+          length: 9
+        random-path:
+          source: obf
+          depth: 16
+        # Sometimes, some vanilla files that have been overwritten might be mistakenly obfuscated.
+        # Please add the ignored textures/models/sounds here.
+        bypass-textures:
+          - minecraft:block/farmland
+        bypass-models: []
+        bypass-sounds: []
+
   supported-version:
     min: "1.20"
     max: LATEST

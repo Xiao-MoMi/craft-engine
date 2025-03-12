@@ -58,6 +58,7 @@ public class BukkitCraftEngine extends CraftEngine {
     private boolean requiresRestart = false;
     private boolean hasMod = false;
     private AntiGriefLib antiGrief;
+    private boolean hasPlaceholderAPI;
 
     public BukkitCraftEngine(JavaPlugin bootstrap) {
         VersionHelper.init(serverVersion());
@@ -158,6 +159,7 @@ public class BukkitCraftEngine extends CraftEngine {
         if (this.isPluginEnabled("PlaceholderAPI")) {
             new ShiftExpansion(this).register();
             new ImageExpansion(this).register();
+            this.hasPlaceholderAPI = true;
         }
         // WorldEdit
         if (this.isPluginEnabled("FastAsyncWorldEdit")) {
@@ -261,6 +263,11 @@ public class BukkitCraftEngine extends CraftEngine {
 
     public static BukkitCraftEngine instance() {
         return instance;
+    }
+
+    @Override
+    public boolean hasPlaceholderAPI() {
+        return this.hasPlaceholderAPI;
     }
 
     @Override

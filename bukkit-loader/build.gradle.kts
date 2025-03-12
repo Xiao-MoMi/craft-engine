@@ -6,17 +6,23 @@ plugins {
 repositories {
     maven("https://jitpack.io/")
     maven("https://repo.papermc.io/repository/maven-public/")
+    maven("https://repo.momirealms.net/releases/")
     mavenCentral()
 }
 
 dependencies {
+    // Platform
+    compileOnly("dev.folia:folia-api:${rootProject.properties["paper_version"]}-R0.1-SNAPSHOT")
+
     implementation(project(":shared"))
     implementation(project(":core"))
     implementation(project(":bukkit"))
-    // Platform
-    compileOnly("dev.folia:folia-api:${rootProject.properties["paper_version"]}-R0.1-SNAPSHOT")
+    implementation(project(":bukkit:legacy"))
+
     implementation("net.kyori:adventure-platform-bukkit:${rootProject.properties["adventure_platform_version"]}")
     implementation("com.saicone.rtag:rtag-item:${rootProject.properties["rtag_version"]}")
+    //implementation("net.momirealms:sparrow-util:${rootProject.properties["sparrow_util_version"]}")
+    implementation("com.github.Xiao-MoMi:AntiGriefLib:${rootProject.properties["anti_grief_version"]}")
 }
 
 java {
