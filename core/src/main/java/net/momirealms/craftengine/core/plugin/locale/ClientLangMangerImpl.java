@@ -6,6 +6,7 @@ import net.momirealms.craftengine.core.util.Key;
 
 import java.nio.file.Path;
 import java.util.*;
+import java.util.stream.Collectors;
 
 public class ClientLangMangerImpl implements ClientLangManager {
     private final Plugin plugin;
@@ -45,18 +46,24 @@ public class ClientLangMangerImpl implements ClientLangManager {
     public void parseSection(Pack pack, Path path, Key id, Map<String, Object> section) {
         String langId = id.value().toLowerCase(Locale.ROOT);
 
+        Map<String, String> data = section.entrySet().stream()
+                .collect(Collectors.toMap(
+                        Map.Entry::getKey,
+                        entry -> String.valueOf(entry.getValue())
+                ));
+
         if ("all".equals(langId)) {
-            processAllLanguages(section);
+            processAllLanguages(data);
             return;
         }
 
         if (allLang.contains(langId)) {
             i18nData.computeIfAbsent(langId, k -> new I18NData())
-                    .addTranslations(section);
+                    .addTranslations(data);
         }
     }
 
-    private void processAllLanguages(Map<String, Object> section) {
+    private void processAllLanguages(Map<String, String> section) {
         defaultData.translations.clear();
         defaultData.addTranslations(section);
 
