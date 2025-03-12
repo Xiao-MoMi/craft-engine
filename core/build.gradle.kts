@@ -18,7 +18,7 @@ dependencies {
     compileOnly("org.yaml:snakeyaml:${rootProject.properties["snake_yaml_version"]}")
     // NBT
     implementation("net.momirealms:sparrow-nbt:${rootProject.properties["sparrow_nbt_version"]}")
-    //compileOnly("net.momirealms:sparrow-util:${rootProject.properties["sparrow_util_version"]}")
+    compileOnly("net.momirealms:sparrow-util:${rootProject.properties["sparrow_util_version"]}")
     // Adventure
     implementation("net.kyori:adventure-api:${rootProject.properties["adventure_bundle_version"]}")
     compileOnly("net.kyori:adventure-text-minimessage:${rootProject.properties["adventure_bundle_version"]}")
