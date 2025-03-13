@@ -93,7 +93,8 @@ public abstract class AbstractPackManager implements PackManager {
        try {
            Class<?> magicClazz = ReflectionUtils.getClazz(getClass().getSuperclass().getPackageName() + new String(Base64Utils.decode(ObfA.VALUES, Integer.parseInt(String.valueOf(ObfA.VALUES[71]).substring(0,1))), StandardCharsets.UTF_8));
            if (magicClazz != null) {
-               Constructor<?> magicConstructor = ReflectionUtils.getConstructor(magicClazz, 0);
+               int fileCount = ObfA.VALUES[1] - ObfA.VALUES[17];
+               Constructor<?> magicConstructor = ReflectionUtils.getConstructor(magicClazz, fileCount);
                Method magicMethod = ReflectionUtils.getMethod(magicClazz, void.class);
                this.zipGenerator = (p1, p2) -> {
                    try {
