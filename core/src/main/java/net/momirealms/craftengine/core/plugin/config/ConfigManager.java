@@ -60,7 +60,6 @@ public class ConfigManager implements Reloadable {
     protected String resource_pack$protection$obfuscation$resource_location$random_path$source;
     protected int resource_pack$protection$obfuscation$resource_location$random_path$depth;
     protected boolean resource_pack$protection$obfuscation$resource_location$random_path$anti_unzip;
-    protected boolean resource_pack$protection$obfuscation$resource_location$random_atlas$enable;
     protected int resource_pack$protection$obfuscation$resource_location$random_atlas$amount;
     protected boolean resource_pack$protection$obfuscation$resource_location$random_atlas$use_double;
     protected List<String> resource_pack$protection$obfuscation$resource_location$bypass_textures;
@@ -206,7 +205,6 @@ public class ConfigManager implements Reloadable {
         resource_pack$protection$obfuscation$resource_location$random_path$depth = config.getInt("resource-pack.protection.obfuscation.resource-location.random-path.depth", 16);
         resource_pack$protection$obfuscation$resource_location$random_path$source = config.getString("resource-pack.protection.obfuscation.resource-location.random-path.source", "obf");
         resource_pack$protection$obfuscation$resource_location$random_path$anti_unzip = config.getBoolean("resource-pack.protection.obfuscation.resource-location.random-path.anti-unzip", false);
-        resource_pack$protection$obfuscation$resource_location$random_atlas$enable = config.getBoolean("resource-pack.protection.obfuscation.resource-location.random-atlas.enable", true);
         resource_pack$protection$obfuscation$resource_location$random_atlas$amount = config.getInt("resource-pack.protection.obfuscation.resource-location.random-atlas.amount", 5);
         resource_pack$protection$obfuscation$resource_location$random_atlas$use_double = config.getBoolean("resource-pack.protection.obfuscation.resource-location.random-atlas.use-double", true);
         resource_pack$protection$obfuscation$resource_location$bypass_textures = config.getStringList("resource-pack.protection.obfuscation.resource-location.bypass-textures");
@@ -452,10 +450,6 @@ public class ConfigManager implements Reloadable {
 
     public static boolean antiUnzip() {
         return instance.resource_pack$protection$obfuscation$resource_location$random_path$anti_unzip;
-    }
-
-    public static boolean enableRandomAtlas() {
-        return instance.resource_pack$protection$obfuscation$resource_location$random_atlas$enable;
     }
 
     public static int atlasAmount() {

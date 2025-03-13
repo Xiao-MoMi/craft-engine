@@ -46,8 +46,7 @@ resource-pack:
           depth: 16
           anti-unzip: false
         random-atlas:
-          enable: true
-          amount: 5
+          amount: 5 # 0 = disable
           use-double: true
         # Sometimes, some vanilla files that have been overwritten might be mistakenly obfuscated.
         # Please add the ignored textures/models/sounds here.
