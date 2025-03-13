@@ -49,7 +49,6 @@ public class ConfigManager implements Reloadable {
     protected boolean resource_pack$protection$crash_tools$method_1;
     protected boolean resource_pack$protection$crash_tools$method_2;
     protected boolean resource_pack$protection$crash_tools$method_3;
-    protected boolean resource_pack$protection$crash_tools$method_4;
 
     protected boolean resource_pack$protection$obfuscation$enable;
     protected long resource_pack$protection$obfuscation$seed;
@@ -60,6 +59,7 @@ public class ConfigManager implements Reloadable {
     protected int resource_pack$protection$obfuscation$resource_location$random_namespace$amount;
     protected String resource_pack$protection$obfuscation$resource_location$random_path$source;
     protected int resource_pack$protection$obfuscation$resource_location$random_path$depth;
+    protected boolean resource_pack$protection$obfuscation$resource_location$random_path$anti_unzip;
     protected List<String> resource_pack$protection$obfuscation$resource_location$bypass_textures;
     protected List<String> resource_pack$protection$obfuscation$resource_location$bypass_models;
     protected List<String> resource_pack$protection$obfuscation$resource_location$bypass_sounds;
@@ -192,7 +192,6 @@ public class ConfigManager implements Reloadable {
         resource_pack$protection$crash_tools$method_1 = config.getBoolean("resource-pack.protection.crash-tools.method-1", false);
         resource_pack$protection$crash_tools$method_2 = config.getBoolean("resource-pack.protection.crash-tools.method-2", false);
         resource_pack$protection$crash_tools$method_3 = config.getBoolean("resource-pack.protection.crash-tools.method-3", false);
-        resource_pack$protection$crash_tools$method_4 = config.getBoolean("resource-pack.protection.crash-tools.method-4", false);
         resource_pack$protection$obfuscation$enable = config.getBoolean("resource-pack.protection.obfuscation.enable", false);
         resource_pack$protection$obfuscation$seed = config.getLong("resource-pack.protection.obfuscation.seed", 0L);
         resource_pack$protection$obfuscation$fake_directory = config.getBoolean("resource-pack.protection.obfuscation.fake-directory", false);
@@ -203,6 +202,7 @@ public class ConfigManager implements Reloadable {
         resource_pack$protection$obfuscation$resource_location$random_namespace$length = config.getInt("resource-pack.protection.obfuscation.resource-location.random-namespace.length", 8);
         resource_pack$protection$obfuscation$resource_location$random_path$depth = config.getInt("resource-pack.protection.obfuscation.resource-location.random-path.depth", 16);
         resource_pack$protection$obfuscation$resource_location$random_path$source = config.getString("resource-pack.protection.obfuscation.resource-location.random-path.source", "obf");
+        resource_pack$protection$obfuscation$resource_location$random_path$anti_unzip = config.getBoolean("resource-pack.protection.obfuscation.resource-location.random-path.anti-unzip", false);
         resource_pack$protection$obfuscation$resource_location$bypass_textures = config.getStringList("resource-pack.protection.obfuscation.resource-location.bypass-textures");
         resource_pack$protection$obfuscation$resource_location$bypass_models = config.getStringList("resource-pack.protection.obfuscation.resource-location.bypass-models");
         resource_pack$protection$obfuscation$resource_location$bypass_sounds = config.getStringList("resource-pack.protection.obfuscation.resource-location.bypass-sounds");
@@ -408,10 +408,6 @@ public class ConfigManager implements Reloadable {
         return instance.resource_pack$protection$crash_tools$method_3;
     }
 
-    public static boolean crashTool4() {
-        return instance.resource_pack$protection$crash_tools$method_4;
-    }
-
     public static boolean enableObfuscation() {
         return instance.resource_pack$protection$obfuscation$enable;
     }
@@ -446,6 +442,10 @@ public class ConfigManager implements Reloadable {
 
     public static int pathDepth() {
         return instance.resource_pack$protection$obfuscation$resource_location$random_path$depth;
+    }
+
+    public static boolean antiUnzip() {
+        return instance.resource_pack$protection$obfuscation$resource_location$random_path$anti_unzip;
     }
 
     public static List<String> bypassTextures() {

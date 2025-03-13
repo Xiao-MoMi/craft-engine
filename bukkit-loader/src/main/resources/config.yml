@@ -26,7 +26,6 @@ resource-pack:
       method-1: false
       method-2: false
       method-3: false # Enable this would increase the resource pack size by 0.67MB
-      method-4: false
     # Please note that the primary purpose of obfuscation is to unidirectionally transform your resource pack into a format with significantly
     # reduced readability, making it nearly impossible for thieves to restore the original structure of the resource pack. However, it is
     # important to be aware that thieves may still be able to steal your models through JSON paths and texture paths, although this process
@@ -44,6 +43,7 @@ resource-pack:
         random-path:
           source: obf
           depth: 16
+          anti-unzip: false
         # Sometimes, some vanilla files that have been overwritten might be mistakenly obfuscated.
         # Please add the ignored textures/models/sounds here.
         bypass-textures:

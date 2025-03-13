@@ -68,9 +68,11 @@ public class ObfG {
         }
         Files.move(xswl, yyds, StandardCopyOption.REPLACE_EXISTING);
         if (nb) {
-            Path xh = 这波啊(xswl);
-            Path xdm = 这波啊(yyds);
-            Files.move(xh, xdm, StandardCopyOption.REPLACE_EXISTING);
+            for (Object xswl2 : 天雷滚滚我好怕怕.values()) {
+                Path xh = 这波啊(xswl.relativize(Path.of(xswl2.toString())));
+                Path xdm = 这波啊(yyds.relativize(Path.of(xswl2.toString())));
+                Files.move(xh, xdm, StandardCopyOption.REPLACE_EXISTING);
+            }
         }
     }
 
@@ -106,4 +108,16 @@ public class ObfG {
         int nb = yyds.relativize(xswl).getNameCount();
         return nb >= 3;
     }
+}
+
+@SuppressWarnings({"all"})
+enum 天雷滚滚我好怕怕 {
+    劈,
+    的,
+    我,
+    浑,
+    身,
+    掉,
+    渣,
+    渣_;
 }
