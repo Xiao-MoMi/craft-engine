@@ -45,6 +45,10 @@ resource-pack:
           source: obf
           depth: 16
           anti-unzip: false
+        random-atlas:
+          enable: true
+          amount: 5
+          use-double: true
         # Sometimes, some vanilla files that have been overwritten might be mistakenly obfuscated.
         # Please add the ignored textures/models/sounds here.
         bypass-textures:
