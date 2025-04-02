@@ -23,7 +23,7 @@ public class ShulkerHitBox extends AbstractHitBox {
     private final byte peek;
     private final boolean interactive;
     private final boolean interactionEntity;
-    private double[] interactionEntityWidthHeight = new double[]{0, 0};
+    private final double[] interactionEntityWidthHeight;
     // todo或许还能做个方向，但是会麻烦点，和 yaw 有关
     private final Direction direction;
     private final List<Object> cachedShulkerValues = new ArrayList<>();
@@ -51,6 +51,8 @@ public class ShulkerHitBox extends AbstractHitBox {
             InteractionEntityData.Height.addEntityDataIfNotDefaultValue((float) (this.interactionEntityWidthHeight[1] + 0.01f), cachedInteractionValues);
             InteractionEntityData.Width.addEntityDataIfNotDefaultValue((float) (this.interactionEntityWidthHeight[0] + 0.005f), cachedInteractionValues);
             InteractionEntityData.Responsive.addEntityDataIfNotDefaultValue(interactive, cachedInteractionValues);
+        } else {
+            this.interactionEntityWidthHeight = new double[]{0, 0};
         }
     }
 
@@ -167,8 +169,6 @@ public class ShulkerHitBox extends AbstractHitBox {
                 packets.accept(Reflections.constructor$ClientboundUpdateAttributesPacket0.newInstance(entityIds[1], Collections.singletonList(attributeInstance)), false);
             }
             if (this.interactionEntity) {
-                // 这种特殊旋转就没办法适配了
-                if (direction == Direction.EAST || direction == Direction.WEST || direction == Direction.NORTH || direction == Direction.SOUTH) return;
                 // make it a litter lower
                 double interactionEntityY = y + offset.y - 0.005f;
                 if (direction == Direction.DOWN) interactionEntityY -= (float) (this.interactionEntityWidthHeight[1] - 0.7f);
@@ -204,6 +204,10 @@ public class ShulkerHitBox extends AbstractHitBox {
             Direction directionEnum = Optional.ofNullable(arguments.get("direction")).map(it -> Direction.valueOf(it.toString().toUpperCase(Locale.ENGLISH))).orElse(Direction.UP);
             boolean interactive = (boolean) arguments.getOrDefault("interactive", true);
             boolean interactionEntity = (boolean) arguments.getOrDefault("interaction-entity", true);
+            // 这种特殊旋转就没办法适配了
+            if (directionEnum == Direction.EAST || directionEnum == Direction.WEST || directionEnum == Direction.NORTH || directionEnum == Direction.SOUTH) {
+                interactionEntity = false;
+            }
             return new ShulkerHitBox(
                     HitBoxFactory.getSeats(arguments),
                     position,
