@@ -167,6 +167,8 @@ public class ShulkerHitBox extends AbstractHitBox {
                 packets.accept(Reflections.constructor$ClientboundUpdateAttributesPacket0.newInstance(entityIds[1], Collections.singletonList(attributeInstance)), false);
             }
             if (this.interactionEntity) {
+                // 这种特殊旋转就没办法适配了
+                if (direction == Direction.EAST || direction == Direction.WEST || direction == Direction.NORTH || direction == Direction.SOUTH) return;
                 // make it a litter lower
                 double interactionEntityY = y + offset.y - 0.005f;
                 if (direction == Direction.DOWN) interactionEntityY -= (float) (this.interactionEntityWidthHeight[1] - 0.7f);
