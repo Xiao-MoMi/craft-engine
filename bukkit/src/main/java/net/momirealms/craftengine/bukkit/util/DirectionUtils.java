@@ -40,4 +40,15 @@ public class DirectionUtils {
             case EAST -> Reflections.instance$Direction$EAST;
         };
     }
+
+    public static Object toNMSOppositeDirection(Direction direction) {
+        return switch (direction) {
+            case UP -> Reflections.instance$Direction$DOWN;
+            case DOWN -> Reflections.instance$Direction$UP;
+            case NORTH -> Reflections.instance$Direction$SOUTH;
+            case SOUTH -> Reflections.instance$Direction$NORTH;
+            case WEST -> Reflections.instance$Direction$EAST;
+            case EAST -> Reflections.instance$Direction$WEST;
+        };
+    }
 }
