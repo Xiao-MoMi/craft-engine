@@ -193,6 +193,8 @@ blocks:
       type: crop_block
       grow-speed: 0.25
       light-requirement: 9
+      can-use-bone-meal: true
+      bone-meal-growth-stage-range: 0~1
       bottom-blocks:
         - minecraft:end_stone
     loot:

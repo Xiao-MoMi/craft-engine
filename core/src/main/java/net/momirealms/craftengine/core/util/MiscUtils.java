@@ -172,4 +172,17 @@ public class MiscUtils {
             throw new RuntimeException("Cannot convert " + o + " to Quaternionf");
         }
     }
+
+    public static Pair<Integer, Integer> getIntPair(Object o) {
+        String stringFormat = o.toString();
+        String[] split = stringFormat.split("~");
+        if (split.length == 2) {
+            int min = Integer.parseInt(split[0]);
+            int max = Integer.parseInt(split[1]);
+            if (min > max) max = min;
+            return Pair.of(min, max);
+        } else {
+            throw new RuntimeException("Cannot convert " + o + " to Pair<Integer, Integer>");
+        }
+    }
 }

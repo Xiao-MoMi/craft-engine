@@ -12,6 +12,7 @@ import net.momirealms.craftengine.core.block.behavior.BlockBehaviorFactory;
 import net.momirealms.craftengine.core.block.properties.IntegerProperty;
 import net.momirealms.craftengine.core.block.properties.Property;
 import net.momirealms.craftengine.core.util.MiscUtils;
+import net.momirealms.craftengine.core.util.Pair;
 import net.momirealms.craftengine.core.util.RandomUtils;
 import net.momirealms.craftengine.core.util.Tuple;
 import net.momirealms.craftengine.shared.block.BlockBehavior;
@@ -28,13 +29,18 @@ public class CropBlockBehavior extends BushBlockBehavior {
     private final IntegerProperty ageProperty;
     private final float growSpeed;
     private final int minGrowLight;
+    private final Pair<Integer, Integer> boneMealGrowthStageRange;
+    private final boolean canUseBoneMeal;
 
     public CropBlockBehavior(List<Object> tagsCanSurviveOn, Set<Object> blocksCansSurviveOn, Set<String> customBlocksCansSurviveOn,
-                             Property<Integer> ageProperty, float growSpeed, int minGrowLight) {
+                             Property<Integer> ageProperty, float growSpeed, int minGrowLight, Pair<Integer, Integer> boneMealGrowthStageRange,
+                             boolean canUseBoneMeal) {
         super(tagsCanSurviveOn, blocksCansSurviveOn, customBlocksCansSurviveOn);
         this.ageProperty = (IntegerProperty) ageProperty;
         this.growSpeed = growSpeed;
         this.minGrowLight = minGrowLight;
+        this.boneMealGrowthStageRange = boneMealGrowthStageRange;
+        this.canUseBoneMeal = canUseBoneMeal;
     }
 
     public final int getAge(ImmutableBlockState state) {
@@ -76,11 +82,12 @@ public class CropBlockBehavior extends BushBlockBehavior {
 
     @Override
     public boolean isBoneMealSuccess(Object thisBlock, Object[] args) {
-        return true;
+        return this.canUseBoneMeal;
     }
 
     @Override
     public boolean isValidBoneMealTarget(Object thisBlock, Object[] args) {
+        if (!this.canUseBoneMeal) return false;
         Object state = args[2];
         ImmutableBlockState immutableBlockState = BukkitBlockManager.instance().getImmutableBlockState(BlockStateUtils.blockStateToId(state));
         if (immutableBlockState != null && !immutableBlockState.isEmpty()) {
@@ -92,6 +99,7 @@ public class CropBlockBehavior extends BushBlockBehavior {
 
     @Override
     public void performBoneMeal(Object thisBlock, Object[] args) throws Exception {
+        if (!this.canUseBoneMeal) return;
         this.performBoneMeal(args[0], args[2], args[3]);
     }
 
@@ -112,7 +120,7 @@ public class CropBlockBehavior extends BushBlockBehavior {
             sendParticles = true;
         }
 
-        int i = this.getAge(immutableBlockState) + RandomUtils.generateRandomInt(2, 5);
+        int i = this.getAge(immutableBlockState) + RandomUtils.generateRandomInt(boneMealGrowthStageRange.left(), boneMealGrowthStageRange.right());
         int maxAge = this.ageProperty.max;
         if (i > maxAge) {
             i = maxAge;
@@ -140,7 +148,9 @@ public class CropBlockBehavior extends BushBlockBehavior {
             // 存活条件是最小生长亮度-1
             int minGrowLight = MiscUtils.getAsInt(arguments.getOrDefault("light-requirement", 9));
             float growSpeed = MiscUtils.getAsFloat(arguments.getOrDefault("grow-speed", 0.25f));
-            return new CropBlockBehavior(tuple.left(), tuple.mid(), tuple.right(), ageProperty, growSpeed, minGrowLight);
+            Pair<Integer, Integer> boneMealGrowthStageRange = MiscUtils.getIntPair(arguments.getOrDefault("bone-meal-growth-stage-range", "2~5"));
+            boolean canUseBoneMeal = (boolean) arguments.getOrDefault("can-use-bone-meal", true);
+            return new CropBlockBehavior(tuple.left(), tuple.mid(), tuple.right(), ageProperty, growSpeed, minGrowLight, boneMealGrowthStageRange, canUseBoneMeal);
         }
     }
 }
