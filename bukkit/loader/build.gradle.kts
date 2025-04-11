@@ -48,6 +48,7 @@ bukkit {
     name = "CraftEngine"
     apiVersion = "1.20"
     authors = listOf("XiaoMoMi")
+    contributors = listOf("jhqwqmc", "iqtesterrr")
     softDepend = listOf("PlaceholderAPI", "WorldEdit", "FastAsyncWorldEdit")
     foliaSupported = true
 }

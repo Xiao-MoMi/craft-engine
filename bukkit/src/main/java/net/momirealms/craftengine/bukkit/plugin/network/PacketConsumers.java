@@ -339,8 +339,8 @@ public class PacketConsumers {
                 return;
             }
 
+            boolean isChanged = false;
             List<Object> newEntries = new MarkedArrayList<>();
-            Reflections.field$ClientboundPlayerInfoUpdatePacket$entries.set(packet, newEntries);
             for (Object entry : entries) {
                 Object mcComponent = FastNMS.INSTANCE.field$ClientboundPlayerInfoUpdatePacket$Entry$displayName(entry);
                 if (mcComponent == null) {
@@ -359,6 +359,10 @@ public class PacketConsumers {
                 }
                 Object newEntry = FastNMS.INSTANCE.constructor$ClientboundPlayerInfoUpdatePacket$Entry(entry, ComponentUtils.adventureToMinecraft(component));
                 newEntries.add(newEntry);
+                isChanged = true;
+            }
+            if (isChanged) {
+                event.setNewPacket(FastNMS.INSTANCE.constructor$ClientboundPlayerInfoUpdatePacket(enums, newEntries));
             }
         } catch (Exception e) {
             CraftEngine.instance().logger().warn("Failed to handle ClientboundPlayerInfoUpdatePacket", e);
@@ -1769,18 +1773,12 @@ public class PacketConsumers {
             }
 
             if (changed) {
-                if (VersionHelper.isVersionNewerThan1_20_5()) {
-                    event.setCancelled(true);
-                    Object newPacket = Reflections.constructor$ServerboundEditBookPacket.newInstance(
-                            Reflections.field$ServerboundEditBookPacket$slot.get(packet),
-                            newPages,
-                            newTitle
-                    );
-                    user.receivePacket(newPacket);
-                } else {
-                    Reflections.field$ServerboundEditBookPacket$pages.set(packet, newPages);
-                    Reflections.field$ServerboundEditBookPacket$title.set(packet, newTitle);
-                }
+                Object newPacket = Reflections.constructor$ServerboundEditBookPacket.newInstance(
+                        Reflections.field$ServerboundEditBookPacket$slot.get(packet),
+                        newPages,
+                        newTitle
+                );
+                event.setNewPacket(newPacket);
             }
         } catch (Exception e) {
             CraftEngine.instance().logger().warn("Failed to handle ServerboundEditBookPacket", e);

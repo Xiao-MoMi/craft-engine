@@ -5,7 +5,7 @@ import com.google.gson.JsonObject;
 import io.papermc.paper.event.player.AsyncChatCommandDecorateEvent;
 import io.papermc.paper.event.player.AsyncChatDecorateEvent;
 import net.kyori.adventure.text.Component;
-import net.momirealms.craftengine.bukkit.nms.FastNMS;
+import net.momirealms.craftengine.bukkit.compatibility.permission.LuckPermsEventListeners;
 import net.momirealms.craftengine.bukkit.plugin.BukkitCraftEngine;
 import net.momirealms.craftengine.bukkit.util.ComponentUtils;
 import net.momirealms.craftengine.bukkit.util.LegacyInventoryUtils;
@@ -14,7 +14,6 @@ import net.momirealms.craftengine.core.font.*;
 import net.momirealms.craftengine.core.item.Item;
 import net.momirealms.craftengine.core.plugin.config.Config;
 import net.momirealms.craftengine.core.util.AdventureHelper;
-import net.momirealms.craftengine.core.util.CharacterUtils;
 import net.momirealms.craftengine.core.util.VersionHelper;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
@@ -32,10 +31,13 @@ import org.bukkit.inventory.meta.BookMeta;
 import org.bukkit.inventory.view.AnvilView;
 
 import java.lang.reflect.InvocationTargetException;
-import java.util.*;
+import java.util.List;
+import java.util.UUID;
+import java.util.stream.Collectors;
 
 public class BukkitFontManager extends AbstractFontManager implements Listener {
     private final BukkitCraftEngine plugin;
+    private LuckPermsEventListeners luckPermsEventListeners;
 
     public BukkitFontManager(BukkitCraftEngine plugin) {
         super(plugin);
@@ -44,6 +46,11 @@ public class BukkitFontManager extends AbstractFontManager implements Listener {
 
     @Override
     public void delayedInit() {
+        if (this.plugin.isPluginEnabled("LuckPerms")) {
+            luckPermsEventListeners = new LuckPermsEventListeners(
+                    plugin.bootstrap(), this::refreshEmojiSuggestions, plugin.scheduler()
+            );
+        }
         Bukkit.getPluginManager().registerEvents(this, plugin.bootstrap());
     }
 
@@ -51,6 +58,9 @@ public class BukkitFontManager extends AbstractFontManager implements Listener {
     public void disable() {
         super.disable();
         HandlerList.unregisterAll(this);
+        if (luckPermsEventListeners != null && this.plugin.isPluginEnabled("LuckPerms")) {
+            luckPermsEventListeners.unregisterListeners();
+        }
     }
 
     @Override
@@ -64,23 +74,39 @@ public class BukkitFontManager extends AbstractFontManager implements Listener {
         });
     }
 
-    @EventHandler(priority = EventPriority.LOWEST, ignoreCancelled = true)
+    @EventHandler(priority = EventPriority.LOWEST)
     public void onPlayerJoin(PlayerJoinEvent event) {
-        Player player = event.getPlayer();
-        this.addEmojiSuggestions(player);
+        plugin.scheduler().async().execute(() -> {
+            Player player = event.getPlayer();
+            this.addEmojiSuggestions(player);
+        });
+    }
+
+    public void refreshEmojiSuggestions(UUID playerUUID, boolean isAsync) {
+        if (isAsync) {
+            plugin.scheduler().async().execute(() -> {
+                Player player = Bukkit.getPlayer(playerUUID);
+                if (player == null) return;
+                player.removeCustomChatCompletions(oldCachedEmojiSuggestions);
+                this.addEmojiSuggestions(player);
+            });
+        } else {
+            Player player = Bukkit.getPlayer(playerUUID);
+            if (player == null) return;
+            player.removeCustomChatCompletions(oldCachedEmojiSuggestions);
+            this.addEmojiSuggestions(player);
+        }
     }
 
     private void addEmojiSuggestions(Player player) {
-        List<String> hasPermissions = new ArrayList<>();
-        List<String> cachedEmojiSuggestions = this.cachedEmojiSuggestions();
-        for (String keyword : cachedEmojiSuggestions) {
-            Emoji emoji = super.emojiMapper.get(keyword);
-            if (emoji == null) continue;
-            if (emoji.permission() != null && !player.hasPermission(Objects.requireNonNull(emoji.permission()))) {
-                continue;
-            }
-            hasPermissions.add(keyword);
-        }
+        List<String> hasPermissions = cachedEmojiSuggestions().stream()
+                .filter(keyword -> {
+                    Emoji emoji = super.emojiMapper.get(keyword);
+                    if (emoji == null) return false;
+                    String permission = emoji.permission();
+                    return permission == null || player.hasPermission(permission);
+                })
+                .collect(Collectors.toList());
         player.addCustomChatCompletions(hasPermissions);
     }
 

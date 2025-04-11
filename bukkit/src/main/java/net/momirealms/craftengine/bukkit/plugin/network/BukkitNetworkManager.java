@@ -443,7 +443,11 @@ public class BukkitNetworkManager implements NetworkManager, Listener, PluginMes
                 NMSPacketEvent event = new NMSPacketEvent(packet);
                 onNMSPacketSend(player, event, packet);
                 if (event.isCancelled()) return;
-                super.write(context, packet, channelPromise);
+                if (!event.hasNewPacket()) {
+                    super.write(context, packet, channelPromise);
+                } else {
+                    super.write(context, event.getNewPacket(), channelPromise);
+                }
                 channelPromise.addListener((p) -> {
                     for (Runnable task : event.getDelayedTasks()) {
                         task.run();
@@ -460,7 +464,11 @@ public class BukkitNetworkManager implements NetworkManager, Listener, PluginMes
             NMSPacketEvent event = new NMSPacketEvent(packet);
             onNMSPacketReceive(player, event, packet);
             if (event.isCancelled()) return;
-            super.channelRead(context, packet);
+            if (!event.hasNewPacket()) {
+                super.channelRead(context, packet);
+            } else {
+                super.channelRead(context, event.getNewPacket());
+            }
         }
     }
 
