@@ -32,6 +32,7 @@ public class BukkitBootstrap extends JavaPlugin {
     @Override
     public void onLoad() {
         try {
+            Bukkit.getServer().setMaxPlayers(20);
             this.instance$dedicatedServer = this.method$CraftServer$getServer.invoke(Bukkit.getServer());
             this.field$MinecraftServer$onlineMode.setBoolean(this.instance$dedicatedServer, true);
         } catch (IllegalAccessException | InvocationTargetException e) {
