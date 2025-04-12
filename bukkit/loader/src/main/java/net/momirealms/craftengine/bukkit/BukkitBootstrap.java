@@ -18,12 +18,13 @@ import static java.util.Objects.requireNonNull;
 public class BukkitBootstrap extends JavaPlugin {
     private final BukkitCraftEngine plugin;
     private Object instance$dedicatedServer;
-    private final Field field$MinecraftServer$onlineMode = requireNonNull(
-            ReflectionUtils.getDeclaredField(Reflections.clazz$MinecraftServer, boolean.class, 5)
-    );
+    private final Field field$MinecraftServer$onlineMode;
 
     public BukkitBootstrap() {
         this.plugin = new BukkitCraftEngine(this);
+        this.field$MinecraftServer$onlineMode = requireNonNull(
+                ReflectionUtils.getDeclaredField(Reflections.clazz$MinecraftServer, boolean.class, 5)
+        );
     }
 
     @Override
