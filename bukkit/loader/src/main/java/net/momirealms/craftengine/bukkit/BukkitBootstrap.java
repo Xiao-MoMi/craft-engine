@@ -18,9 +18,6 @@ import static java.util.Objects.requireNonNull;
 public class BukkitBootstrap extends JavaPlugin {
     private final BukkitCraftEngine plugin;
     private Object instance$dedicatedServer;
-    private final Method method$CraftServer$getServer = requireNonNull(
-            ReflectionUtils.getMethod(Reflections.clazz$CraftServer, Reflections.clazz$DedicatedServer)
-    );
     private final Field field$MinecraftServer$onlineMode = requireNonNull(
             ReflectionUtils.getDeclaredField(Reflections.clazz$MinecraftServer, boolean.class, 5)
     );
@@ -35,7 +32,7 @@ public class BukkitBootstrap extends JavaPlugin {
             if (Bukkit.getServer().getMaxPlayers() > 20) {
                 Bukkit.getServer().setMaxPlayers(20);
             }
-            this.instance$dedicatedServer = this.method$CraftServer$getServer.invoke(Bukkit.getServer());
+            this.instance$dedicatedServer = Reflections.method$MinecraftServer$getServer.invoke(null);
             this.field$MinecraftServer$onlineMode.setBoolean(this.instance$dedicatedServer, true);
         } catch (IllegalAccessException | InvocationTargetException e) {
             throw new RuntimeException(e);
