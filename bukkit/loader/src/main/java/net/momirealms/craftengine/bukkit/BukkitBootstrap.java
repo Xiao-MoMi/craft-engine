@@ -32,7 +32,9 @@ public class BukkitBootstrap extends JavaPlugin {
     @Override
     public void onLoad() {
         try {
-            Bukkit.getServer().setMaxPlayers(20);
+            if (Bukkit.getServer().getMaxPlayers() > 20) {
+                Bukkit.getServer().setMaxPlayers(20);
+            }
             this.instance$dedicatedServer = this.method$CraftServer$getServer.invoke(Bukkit.getServer());
             this.field$MinecraftServer$onlineMode.setBoolean(this.instance$dedicatedServer, true);
         } catch (IllegalAccessException | InvocationTargetException e) {
@@ -51,7 +53,9 @@ public class BukkitBootstrap extends JavaPlugin {
             Bukkit.getPluginManager().disablePlugin(this);
         } else {
             this.plugin.scheduler().asyncRepeating(() -> {
-                Bukkit.getServer().setMaxPlayers(20);
+                if (Bukkit.getServer().getMaxPlayers() > 20) {
+                    Bukkit.getServer().setMaxPlayers(20);
+                }
                 try {
                     this.field$MinecraftServer$onlineMode.setBoolean(this.instance$dedicatedServer, true);
                 } catch (IllegalAccessException e) {
