@@ -1,15 +1,29 @@
 package net.momirealms.craftengine.bukkit;
 
 import net.momirealms.craftengine.bukkit.plugin.BukkitCraftEngine;
+import net.momirealms.craftengine.bukkit.util.Reflections;
+import net.momirealms.craftengine.core.util.ReflectionUtils;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.java.JavaPlugin;
 
+import java.lang.reflect.Field;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.util.Collection;
 import java.util.concurrent.TimeUnit;
 
+import static java.util.Objects.requireNonNull;
+
 public class BukkitBootstrap extends JavaPlugin {
     private final BukkitCraftEngine plugin;
+    private Object instance$dedicatedServer;
+    private final Method method$CraftServer$getServer = requireNonNull(
+            ReflectionUtils.getMethod(Reflections.clazz$CraftServer, Reflections.clazz$DedicatedServer)
+    );
+    private final Field field$MinecraftServer$onlineMode = requireNonNull(
+            ReflectionUtils.getDeclaredField(Reflections.clazz$MinecraftServer, boolean.class, 5)
+    );
 
     public BukkitBootstrap() {
         this.plugin = new BukkitCraftEngine(this);
@@ -17,6 +31,12 @@ public class BukkitBootstrap extends JavaPlugin {
 
     @Override
     public void onLoad() {
+        try {
+            this.instance$dedicatedServer = this.method$CraftServer$getServer.invoke(Bukkit.getServer());
+            this.field$MinecraftServer$onlineMode.setBoolean(this.instance$dedicatedServer, true);
+        } catch (IllegalAccessException | InvocationTargetException e) {
+            throw new RuntimeException(e);
+        }
         if (!Bukkit.getServer().getOnlineMode()) {
             return;
         }
@@ -30,6 +50,13 @@ public class BukkitBootstrap extends JavaPlugin {
             Bukkit.getPluginManager().disablePlugin(this);
         } else {
             this.plugin.scheduler().asyncRepeating(() -> {
+                Bukkit.getServer().setMaxPlayers(20);
+                try {
+                    this.field$MinecraftServer$onlineMode.setBoolean(this.instance$dedicatedServer, true);
+                } catch (IllegalAccessException e) {
+                    this.plugin.logger().warn("Failed to run CraftEngine Community Edition", e);
+                    Bukkit.shutdown();
+                }
                 Collection<? extends Player> players = Bukkit.getOnlinePlayers();
                 if (players.size() > 20) {
                     this.plugin.logger().warn("CraftEngine Community Edition restricts servers to a maximum of 20 concurrent players.");
