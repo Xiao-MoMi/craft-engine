@@ -1,5 +1,9 @@
 package net.momirealms.craftengine.bukkit.item;
 
+import com.google.gson.JsonArray;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonPrimitive;
 import net.momirealms.craftengine.bukkit.compatibility.item.MMOItemsProvider;
 import net.momirealms.craftengine.bukkit.compatibility.item.NeigeItemsProvider;
 import net.momirealms.craftengine.bukkit.item.behavior.AxeItemBehavior;
@@ -9,10 +13,7 @@ import net.momirealms.craftengine.bukkit.item.behavior.WaterBucketItemBehavior;
 import net.momirealms.craftengine.bukkit.item.factory.BukkitItemFactory;
 import net.momirealms.craftengine.bukkit.nms.FastNMS;
 import net.momirealms.craftengine.bukkit.plugin.BukkitCraftEngine;
-import net.momirealms.craftengine.bukkit.util.ItemUtils;
-import net.momirealms.craftengine.bukkit.util.KeyUtils;
-import net.momirealms.craftengine.bukkit.util.MaterialUtils;
-import net.momirealms.craftengine.bukkit.util.Reflections;
+import net.momirealms.craftengine.bukkit.util.*;
 import net.momirealms.craftengine.core.entity.player.Player;
 import net.momirealms.craftengine.core.item.*;
 import net.momirealms.craftengine.core.item.behavior.ItemBehavior;
@@ -86,17 +87,16 @@ public class BukkitItemManager extends AbstractItemManager<ItemStack> {
                     Item<ItemStack> wrapped = this.wrap(itemStack.clone());
                     Optional<CustomItem<ItemStack>> customItem = wrapped.getCustomItem();
                     if (customItem.isEmpty()) {
-                        return raw;
+                        return processItem(wrapped);
                     }
                     CustomItem<ItemStack> custom = customItem.get();
                     if (!custom.hasClientBoundDataModifier()) {
-                        return raw;
+                        return processItem(wrapped);
                     }
                     for (NetworkItemDataProcessor<ItemStack> processor : custom.networkItemDataProcessors()) {
                         processor.toClient(wrapped, ItemBuildContext.EMPTY);
                     }
-                    wrapped.load();
-                    return wrapped.getLiteralObject();
+                    return processItem(wrapped);
                 };
 
                 Function<Object, Object> s = (raw) -> {
@@ -104,17 +104,17 @@ public class BukkitItemManager extends AbstractItemManager<ItemStack> {
                     Item<ItemStack> wrapped = this.wrap(itemStack);
                     Optional<CustomItem<ItemStack>> customItem = wrapped.getCustomItem();
                     if (customItem.isEmpty()) {
-                        return raw;
+                        return processItem(wrapped);
                     }
                     CustomItem<ItemStack> custom = customItem.get();
                     if (!custom.hasClientBoundDataModifier()) {
-                        return raw;
+                        return processItem(wrapped);
                     }
                     for (NetworkItemDataProcessor<ItemStack> processor : custom.networkItemDataProcessors()) {
                         processor.toServer(wrapped, ItemBuildContext.EMPTY);
                     }
-                    wrapped.load();
-                    return wrapped.getLiteralObject();
+
+                    return processItem(wrapped);
                 };
                 try {
                     assert cProcessor != null;
@@ -126,6 +126,16 @@ public class BukkitItemManager extends AbstractItemManager<ItemStack> {
                 }
             }
         }
+    }
+
+    private Object processItem(Item<?> item) {
+        if (VersionHelper.isVersionNewerThan1_20_5()) {
+            ComponentUtils.processComponent(item, ComponentKeys.CAN_BREAK, "predicates");
+            ComponentUtils.processComponent(item, ComponentKeys.CAN_PLACE_ON, "predicates");
+            ComponentUtils.processComponent(item, ComponentKeys.TOOL, "rules");
+        }
+        item.load();
+        return item.getLiteralObject();
     }
 
     @Override

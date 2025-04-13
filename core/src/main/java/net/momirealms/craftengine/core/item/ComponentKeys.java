@@ -22,4 +22,7 @@ public class ComponentKeys {
     public static final Key REPAIR_COST = Key.of("minecraft", "repair_cost");
     public static final Key CUSTOM_DATA = Key.of("minecraft", "custom_data");
     public static final Key PROFILE = Key.of("minecraft", "profile");
+    public static final Key CAN_BREAK = Key.of("minecraft", "can_break");
+    public static final Key CAN_PLACE_ON = Key.of("minecraft", "can_place_on");
+    public static final Key TOOL = Key.of("minecraft", "tool");
 }
