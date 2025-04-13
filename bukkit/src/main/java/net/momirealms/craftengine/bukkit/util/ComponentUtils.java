@@ -64,7 +64,6 @@ public class ComponentUtils {
         JsonElement elements = component.get(arrayField);
         if (!elements.isJsonArray()) return;
 
-        // 映射表初始化
         Map<String, List<String>> mappings = remap ? new HashMap<>() : null;
 
         JsonArray newElements = processJsonArray(
@@ -78,7 +77,6 @@ public class ComponentUtils {
         component.add(arrayField, newElements);
         item.setComponent(componentKey, component);
 
-        // 保存正向映射
         if (remap && !mappings.isEmpty()) {
             updateBlockMappings(item, componentKey.toString(), mappings);
         }
@@ -120,7 +118,6 @@ public class ComponentUtils {
         return blockObj;
     }
 
-    // 处理字符串类型的blocks
     private static void processPrimitiveBlock(JsonObject blockObj, JsonPrimitive primitive,
                                               boolean remap, String componentKey,
                                               Item<?> item, Map<String, List<String>> mappings) {
