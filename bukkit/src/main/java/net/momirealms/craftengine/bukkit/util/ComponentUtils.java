@@ -11,7 +11,10 @@ import net.momirealms.craftengine.core.item.Item;
 import net.momirealms.craftengine.core.util.AdventureHelper;
 import net.momirealms.craftengine.core.util.Key;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 public class ComponentUtils {
     private static final String BLOCK_MAPPINGS_KEY = "craftengine:block_mappings";
@@ -61,7 +64,7 @@ public class ComponentUtils {
         JsonElement elements = component.get(arrayField);
         if (!elements.isJsonArray()) return;
 
-        Map<String, Set<String>> mappings = new HashMap<>();
+        Map<String, List<String>> mappings = new HashMap<>();
 
         JsonArray newElements = processJsonArray(
                 elements.getAsJsonArray(),
@@ -102,7 +105,7 @@ public class ComponentUtils {
 
     private static JsonArray processJsonArray(JsonArray originalArray, boolean remap,
                                               String componentKey, Item<?> item,
-                                              Map<String, Set<String>> mappings) {
+                                              Map<String, List<String>> mappings) {
         JsonArray newArray = new JsonArray();
         for (JsonElement element : originalArray) {
             if (!element.isJsonObject()) {
@@ -123,7 +126,7 @@ public class ComponentUtils {
 
     private static JsonObject processBlock(JsonObject blockObj, boolean remap,
                                            String componentKey, Item<?> item,
-                                           Map<String, Set<String>> mappings) {
+                                           Map<String, List<String>> mappings) {
         JsonElement blocksElement = blockObj.get("blocks");
 
         if (blocksElement.isJsonPrimitive()) {
@@ -138,7 +141,7 @@ public class ComponentUtils {
 
     private static void processPrimitiveBlock(JsonObject blockObj, JsonPrimitive primitive,
                                               boolean remap, String componentKey,
-                                              Item<?> item, Map<String, Set<String>> mappings) {
+                                              Item<?> item, Map<String, List<String>> mappings) {
         if (!primitive.isString()) return;
 
         String value = primitive.getAsString();
@@ -153,7 +156,8 @@ public class ComponentUtils {
 
     private static void processArrayBlock(JsonObject blockObj, JsonArray blocksArray,
                                           boolean remap, String componentKey,
-                                          Item<?> item, Map<String, Set<String>> mappings) {
+                                          Item<?> item, Map<String, List<String>> mappings) {
+        if (!remap) blockObj.remove("blocks");
         JsonArray newBlocks = new JsonArray();
         for (JsonElement block : blocksArray) {
             if (block.isJsonPrimitive() && block.getAsJsonPrimitive().isString()) {
@@ -162,7 +166,6 @@ public class ComponentUtils {
                     String mapped = processRemap(value, mappings);
                     newBlocks.add(mapped != null ? mapped : value);
                 } else {
-                    blockObj.remove("blocks");
                     JsonArray restored = processRestore(value, componentKey, item);
                     if (restored != null) restored.forEach(newBlocks::add);
                     else newBlocks.add(value);
@@ -175,7 +178,7 @@ public class ComponentUtils {
     }
 
     private static String processRemap(String original,
-                                       Map<String, Set<String>> mappings) {
+                                       Map<String, List<String>> mappings) {
         if (!original.startsWith(CRAFTENGINE_PREFIX)) return null;
 
         int colonIndex = original.indexOf(':');
@@ -185,7 +188,7 @@ public class ComponentUtils {
 
         String mapped = MINECRAFT_PREFIX + original.substring(colonIndex+1, underscoreIndex);
 
-        mappings.computeIfAbsent(mapped, k -> new HashSet<>())
+        mappings.computeIfAbsent(mapped, k -> new ArrayList<>())
                 .add(original);
 
         return mapped;
@@ -206,7 +209,7 @@ public class ComponentUtils {
     }
 
     private static void updateBlockMappings(Item<?> item, String componentKey,
-                                            Map<String, Set<String>> newMappings) {
+                                            Map<String, List<String>> newMappings) {
         JsonObject customData = getOrCreateCustomData(item);
         JsonObject allMappings = getOrCreateMappings(customData);
 
