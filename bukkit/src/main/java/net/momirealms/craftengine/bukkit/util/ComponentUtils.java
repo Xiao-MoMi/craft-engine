@@ -6,11 +6,20 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonPrimitive;
 import net.kyori.adventure.text.Component;
 import net.momirealms.craftengine.bukkit.nms.FastNMS;
+import net.momirealms.craftengine.core.item.ComponentKeys;
 import net.momirealms.craftengine.core.item.Item;
 import net.momirealms.craftengine.core.util.AdventureHelper;
 import net.momirealms.craftengine.core.util.Key;
 
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
 public class ComponentUtils {
+    private static final String BLOCK_MAPPINGS_KEY = "craftengine:block_mappings";
+    private static final String CRAFTENGINE_PREFIX = "craftengine:";
+    private static final String MINECRAFT_PREFIX = "minecraft:";
 
     private ComponentUtils() {}
 
@@ -46,56 +55,101 @@ public class ComponentUtils {
         return Reflections.instance$GsonComponentSerializer$Gson.fromJson(json, Reflections.clazz$AdventureComponent);
     }
 
-    public static void processComponent(Item<?> item, Key componentKey, String arrayField) {
+    public static void processComponent(Item<?> item, Key componentKey, String arrayField, boolean remap) {
         if (!item.hasComponent(componentKey)) return;
+
         JsonObject component = (JsonObject) item.getJsonTypeComponent(componentKey);
         if (component == null) return;
+
         JsonElement elements = component.get(arrayField);
         if (!elements.isJsonArray()) return;
-        JsonArray newElements = processJsonArray(elements.getAsJsonArray());
+
+        // 映射表初始化
+        Map<String, List<String>> mappings = remap ? new HashMap<>() : null;
+
+        JsonArray newElements = processJsonArray(
+                elements.getAsJsonArray(),
+                remap,
+                componentKey.toString(),
+                item,
+                mappings
+        );
+
         component.add(arrayField, newElements);
         item.setComponent(componentKey, component);
+
+        // 保存正向映射
+        if (remap && !mappings.isEmpty()) {
+            updateBlockMappings(item, componentKey.toString(), mappings);
+        }
     }
 
-    private static JsonArray processJsonArray(JsonArray originalArray) {
+    private static JsonArray processJsonArray(JsonArray originalArray, boolean remap,
+                                              String componentKey, Item<?> item,
+                                              Map<String, List<String>> mappings) {
         JsonArray newArray = new JsonArray();
         for (JsonElement element : originalArray) {
             if (!element.isJsonObject()) {
                 newArray.add(element);
                 continue;
             }
-            newArray.add(processBlock(element.getAsJsonObject()));
+            JsonObject processed = processBlock(
+                    element.getAsJsonObject(),
+                    remap,
+                    componentKey,
+                    item,
+                    mappings
+            );
+            newArray.add(processed);
         }
         return newArray;
     }
 
-    private static JsonObject processBlock(JsonObject blockObj) {
+    private static JsonObject processBlock(JsonObject blockObj, boolean remap,
+                                           String componentKey, Item<?> item,
+                                           Map<String, List<String>> mappings) {
         JsonElement blocksElement = blockObj.get("blocks");
+
         if (blocksElement.isJsonPrimitive()) {
-            processBlockPrimitive(blockObj, blocksElement.getAsJsonPrimitive());
+            processPrimitiveBlock(blockObj, blocksElement.getAsJsonPrimitive(),
+                    remap, componentKey, item, mappings);
         } else if (blocksElement.isJsonArray()) {
-            processBlockArray(blockObj, blocksElement.getAsJsonArray());
+            processArrayBlock(blockObj, blocksElement.getAsJsonArray(),
+                    remap, componentKey, item, mappings);
         }
         return blockObj;
     }
 
-    private static void processBlockPrimitive(JsonObject blockObj, JsonPrimitive primitive) {
+    // 处理字符串类型的blocks
+    private static void processPrimitiveBlock(JsonObject blockObj, JsonPrimitive primitive,
+                                              boolean remap, String componentKey,
+                                              Item<?> item, Map<String, List<String>> mappings) {
         if (!primitive.isString()) return;
-        String processed = processBlockName(primitive.getAsString());
-        if (processed != null) {
-            blockObj.add("blocks", new JsonPrimitive(processed));
+
+        String value = primitive.getAsString();
+        if (remap) {
+            String mapped = processRemap(value, mappings);
+            if (mapped != null) blockObj.add("blocks", new JsonPrimitive(mapped));
+        } else {
+            JsonArray restored = processRestore(value, componentKey, item);
+            if (restored != null) blockObj.add("blocks", restored);
         }
     }
 
-    private static void processBlockArray(JsonObject blockObj, JsonArray blocksArray) {
+    private static void processArrayBlock(JsonObject blockObj, JsonArray blocksArray,
+                                          boolean remap, String componentKey,
+                                          Item<?> item, Map<String, List<String>> mappings) {
         JsonArray newBlocks = new JsonArray();
         for (JsonElement block : blocksArray) {
             if (block.isJsonPrimitive() && block.getAsJsonPrimitive().isString()) {
-                String processed = processBlockName(block.getAsString());
-                if (processed != null) {
-                    newBlocks.add(processed);
+                String value = block.getAsString();
+                if (remap) {
+                    String mapped = processRemap(value, mappings);
+                    newBlocks.add(mapped != null ? mapped : value);
                 } else {
-                    newBlocks.add(block);
+                    JsonArray restored = processRestore(value, componentKey, item);
+                    if (restored != null) restored.forEach(newBlocks::add);
+                    else newBlocks.add(value);
                 }
             } else {
                 newBlocks.add(block);
@@ -104,17 +158,91 @@ public class ComponentUtils {
         blockObj.add("blocks", newBlocks);
     }
 
-    private static String processBlockName(String originalName) {
-        if (!originalName.startsWith("craftengine:")) return null;
-        int colonIndex = originalName.indexOf(':');
-        int underscoreIndex = originalName.lastIndexOf('_');
-        if (isValidIndices(colonIndex, underscoreIndex)) {
-            return "minecraft:" + originalName.substring(colonIndex + 1, underscoreIndex);
-        }
-        return null;
+    private static String processRemap(String original,
+                                       Map<String, List<String>> mappings) {
+        if (!original.startsWith(CRAFTENGINE_PREFIX)) return null;
+
+        int colonIndex = original.indexOf(':');
+        int underscoreIndex = original.lastIndexOf('_');
+
+        if (!isValidIndices(colonIndex, underscoreIndex)) return null;
+
+        String mapped = MINECRAFT_PREFIX + original.substring(colonIndex+1, underscoreIndex);
+
+        mappings.computeIfAbsent(mapped, k -> new ArrayList<>())
+                .add(original);
+
+        return mapped;
     }
 
-    private static boolean isValidIndices(int colonIndex, int underscoreIndex) {
-        return colonIndex != -1 && underscoreIndex != -1 && underscoreIndex > colonIndex;
+    private static JsonArray processRestore(String mapped, String componentKey, Item<?> item) {
+        if (!mapped.startsWith(MINECRAFT_PREFIX)) return null;
+
+        JsonObject mappings = getBlockMappings(item, componentKey);
+        if (mappings == null) return null;
+
+        JsonArray origins = mappings.getAsJsonArray(mapped);
+        if (origins == null || origins.isEmpty()) return null;
+
+        JsonArray result = new JsonArray();
+        origins.forEach(result::add);
+        return result;
+    }
+
+    private static void updateBlockMappings(Item<?> item, String componentKey,
+                                            Map<String, List<String>> newMappings) {
+        JsonObject customData = getOrCreateCustomData(item);
+        JsonObject allMappings = getOrCreateMappings(customData);
+
+        JsonObject componentMappings = allMappings.has(componentKey)
+                ? allMappings.getAsJsonObject(componentKey)
+                : new JsonObject();
+
+        newMappings.forEach((mapped, origins) -> {
+            JsonArray existing = componentMappings.has(mapped)
+                    ? componentMappings.getAsJsonArray(mapped)
+                    : new JsonArray();
+
+            origins.stream()
+                    .filter(origin -> !contains(existing, origin))
+                    .forEach(existing::add);
+
+            componentMappings.add(mapped, existing);
+        });
+
+        allMappings.add(componentKey, componentMappings);
+        customData.add(BLOCK_MAPPINGS_KEY, allMappings);
+        item.setComponent(ComponentKeys.CUSTOM_DATA, customData);
+    }
+
+    private static JsonObject getOrCreateCustomData(Item<?> item) {
+        return item.hasComponent(ComponentKeys.CUSTOM_DATA)
+                ? (JsonObject) item.getJsonTypeComponent(ComponentKeys.CUSTOM_DATA)
+                : new JsonObject();
+    }
+
+    private static JsonObject getOrCreateMappings(JsonObject customData) {
+        return customData.has(BLOCK_MAPPINGS_KEY)
+                ? customData.getAsJsonObject(BLOCK_MAPPINGS_KEY)
+                : new JsonObject();
+    }
+
+    private static JsonObject getBlockMappings(Item<?> item, String componentKey) {
+        JsonObject customData = (JsonObject) item.getJsonTypeComponent(ComponentKeys.CUSTOM_DATA);
+        if (customData == null) return null;
+
+        JsonObject allMappings = customData.getAsJsonObject(BLOCK_MAPPINGS_KEY);
+        if (allMappings == null) return null;
+
+        return allMappings.getAsJsonObject(componentKey);
+    }
+
+    private static boolean contains(JsonArray array, String value) {
+        return array.asList().stream()
+                .anyMatch(e -> e.isJsonPrimitive() && e.getAsString().equals(value));
+    }
+
+    private static boolean isValidIndices(int colon, int underscore) {
+        return colon != -1 && underscore != -1 && underscore > colon;
     }
 }

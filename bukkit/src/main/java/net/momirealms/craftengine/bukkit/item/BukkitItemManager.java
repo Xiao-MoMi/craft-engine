@@ -83,16 +83,16 @@ public class BukkitItemManager extends AbstractItemManager<ItemStack> {
                     Item<ItemStack> wrapped = this.wrap(itemStack.clone());
                     Optional<CustomItem<ItemStack>> customItem = wrapped.getCustomItem();
                     if (customItem.isEmpty()) {
-                        return processItem(wrapped);
+                        return processItem(wrapped, true);
                     }
                     CustomItem<ItemStack> custom = customItem.get();
                     if (!custom.hasClientBoundDataModifier()) {
-                        return processItem(wrapped);
+                        return processItem(wrapped, true);
                     }
                     for (NetworkItemDataProcessor<ItemStack> processor : custom.networkItemDataProcessors()) {
                         processor.toClient(wrapped, ItemBuildContext.EMPTY);
                     }
-                    return processItem(wrapped);
+                    return processItem(wrapped, true);
                 };
 
                 Function<Object, Object> s = (raw) -> {
@@ -100,17 +100,16 @@ public class BukkitItemManager extends AbstractItemManager<ItemStack> {
                     Item<ItemStack> wrapped = this.wrap(itemStack);
                     Optional<CustomItem<ItemStack>> customItem = wrapped.getCustomItem();
                     if (customItem.isEmpty()) {
-                        return processItem(wrapped);
+                        return processItem(wrapped, false);
                     }
                     CustomItem<ItemStack> custom = customItem.get();
                     if (!custom.hasClientBoundDataModifier()) {
-                        return processItem(wrapped);
+                        return processItem(wrapped, false);
                     }
                     for (NetworkItemDataProcessor<ItemStack> processor : custom.networkItemDataProcessors()) {
                         processor.toServer(wrapped, ItemBuildContext.EMPTY);
                     }
-
-                    return processItem(wrapped);
+                    return processItem(wrapped, false);
                 };
                 try {
                     assert cProcessor != null;
@@ -124,11 +123,11 @@ public class BukkitItemManager extends AbstractItemManager<ItemStack> {
         }
     }
 
-    private Object processItem(Item<?> item) {
+    private Object processItem(Item<?> item, boolean remap) {
         if (VersionHelper.isVersionNewerThan1_20_5()) {
-            ComponentUtils.processComponent(item, ComponentKeys.CAN_BREAK, "predicates");
-            ComponentUtils.processComponent(item, ComponentKeys.CAN_PLACE_ON, "predicates");
-            ComponentUtils.processComponent(item, ComponentKeys.TOOL, "rules");
+            ComponentUtils.processComponent(item, ComponentKeys.CAN_BREAK, "predicates", remap);
+            ComponentUtils.processComponent(item, ComponentKeys.CAN_PLACE_ON, "predicates", remap);
+            ComponentUtils.processComponent(item, ComponentKeys.TOOL, "rules", remap);
         }
         item.load();
         return item.getLiteralObject();
