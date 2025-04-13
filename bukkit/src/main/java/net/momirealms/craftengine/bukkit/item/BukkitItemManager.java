@@ -1,9 +1,5 @@
 package net.momirealms.craftengine.bukkit.item;
 
-import com.google.gson.JsonArray;
-import com.google.gson.JsonElement;
-import com.google.gson.JsonObject;
-import com.google.gson.JsonPrimitive;
 import net.momirealms.craftengine.bukkit.compatibility.item.MMOItemsProvider;
 import net.momirealms.craftengine.bukkit.compatibility.item.NeigeItemsProvider;
 import net.momirealms.craftengine.bukkit.item.behavior.AxeItemBehavior;
