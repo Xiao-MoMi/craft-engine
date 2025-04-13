@@ -11,10 +11,7 @@ import net.momirealms.craftengine.core.item.Item;
 import net.momirealms.craftengine.core.util.AdventureHelper;
 import net.momirealms.craftengine.core.util.Key;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 public class ComponentUtils {
     private static final String BLOCK_MAPPINGS_KEY = "craftengine:block_mappings";
@@ -64,7 +61,7 @@ public class ComponentUtils {
         JsonElement elements = component.get(arrayField);
         if (!elements.isJsonArray()) return;
 
-        Map<String, List<String>> mappings = remap ? new HashMap<>() : null;
+        Map<String, Set<String>> mappings = new HashMap<>();
 
         JsonArray newElements = processJsonArray(
                 elements.getAsJsonArray(),
@@ -77,14 +74,35 @@ public class ComponentUtils {
         component.add(arrayField, newElements);
         item.setComponent(componentKey, component);
 
-        if (remap && !mappings.isEmpty()) {
-            updateBlockMappings(item, componentKey.toString(), mappings);
+        if (remap) {
+            if (!mappings.isEmpty()) {
+                System.out.println("Remapped " + componentKey + ": " + mappings);
+                updateBlockMappings(item, componentKey.toString(), mappings);
+            }
+        } else {
+            cleanComponentMappings(item, componentKey.toString());
+        }
+    }
+
+    private static void cleanComponentMappings(Item<?> item, String componentKey) {
+        JsonObject customData = (JsonObject) item.getJsonTypeComponent(ComponentKeys.CUSTOM_DATA);
+        if (customData == null) return;
+        JsonObject allMappings = customData.getAsJsonObject(BLOCK_MAPPINGS_KEY);
+        if (allMappings == null) return;
+        allMappings.remove(componentKey);
+        if (allMappings.isEmpty()) {
+            customData.remove(BLOCK_MAPPINGS_KEY);
+        }
+        if (customData.isEmpty()) {
+            item.removeComponent(ComponentKeys.CUSTOM_DATA);
+        } else {
+            item.setComponent(ComponentKeys.CUSTOM_DATA, customData);
         }
     }
 
     private static JsonArray processJsonArray(JsonArray originalArray, boolean remap,
                                               String componentKey, Item<?> item,
-                                              Map<String, List<String>> mappings) {
+                                              Map<String, Set<String>> mappings) {
         JsonArray newArray = new JsonArray();
         for (JsonElement element : originalArray) {
             if (!element.isJsonObject()) {
@@ -105,7 +123,7 @@ public class ComponentUtils {
 
     private static JsonObject processBlock(JsonObject blockObj, boolean remap,
                                            String componentKey, Item<?> item,
-                                           Map<String, List<String>> mappings) {
+                                           Map<String, Set<String>> mappings) {
         JsonElement blocksElement = blockObj.get("blocks");
 
         if (blocksElement.isJsonPrimitive()) {
@@ -120,7 +138,7 @@ public class ComponentUtils {
 
     private static void processPrimitiveBlock(JsonObject blockObj, JsonPrimitive primitive,
                                               boolean remap, String componentKey,
-                                              Item<?> item, Map<String, List<String>> mappings) {
+                                              Item<?> item, Map<String, Set<String>> mappings) {
         if (!primitive.isString()) return;
 
         String value = primitive.getAsString();
@@ -129,13 +147,13 @@ public class ComponentUtils {
             if (mapped != null) blockObj.add("blocks", new JsonPrimitive(mapped));
         } else {
             JsonArray restored = processRestore(value, componentKey, item);
-            if (restored != null) blockObj.add("blocks", restored);
+            if (restored != null) blockObj.addProperty("blocks", restored.get(0).getAsString());
         }
     }
 
     private static void processArrayBlock(JsonObject blockObj, JsonArray blocksArray,
                                           boolean remap, String componentKey,
-                                          Item<?> item, Map<String, List<String>> mappings) {
+                                          Item<?> item, Map<String, Set<String>> mappings) {
         JsonArray newBlocks = new JsonArray();
         for (JsonElement block : blocksArray) {
             if (block.isJsonPrimitive() && block.getAsJsonPrimitive().isString()) {
@@ -144,6 +162,7 @@ public class ComponentUtils {
                     String mapped = processRemap(value, mappings);
                     newBlocks.add(mapped != null ? mapped : value);
                 } else {
+                    blockObj.remove("blocks");
                     JsonArray restored = processRestore(value, componentKey, item);
                     if (restored != null) restored.forEach(newBlocks::add);
                     else newBlocks.add(value);
@@ -156,7 +175,7 @@ public class ComponentUtils {
     }
 
     private static String processRemap(String original,
-                                       Map<String, List<String>> mappings) {
+                                       Map<String, Set<String>> mappings) {
         if (!original.startsWith(CRAFTENGINE_PREFIX)) return null;
 
         int colonIndex = original.indexOf(':');
@@ -166,7 +185,7 @@ public class ComponentUtils {
 
         String mapped = MINECRAFT_PREFIX + original.substring(colonIndex+1, underscoreIndex);
 
-        mappings.computeIfAbsent(mapped, k -> new ArrayList<>())
+        mappings.computeIfAbsent(mapped, k -> new HashSet<>())
                 .add(original);
 
         return mapped;
@@ -187,7 +206,7 @@ public class ComponentUtils {
     }
 
     private static void updateBlockMappings(Item<?> item, String componentKey,
-                                            Map<String, List<String>> newMappings) {
+                                            Map<String, Set<String>> newMappings) {
         JsonObject customData = getOrCreateCustomData(item);
         JsonObject allMappings = getOrCreateMappings(customData);
 
