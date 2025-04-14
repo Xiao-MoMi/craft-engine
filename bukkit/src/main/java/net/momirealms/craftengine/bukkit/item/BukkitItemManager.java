@@ -125,9 +125,9 @@ public class BukkitItemManager extends AbstractItemManager<ItemStack> {
 
     private Object processItem(Item<?> item, boolean remap) {
         if (VersionHelper.isVersionNewerThan1_20_5()) {
-            ComponentUtils.processComponent(item, ComponentKeys.CAN_BREAK, "predicates", remap);
-            ComponentUtils.processComponent(item, ComponentKeys.CAN_PLACE_ON, "predicates", remap);
-            ComponentUtils.processComponent(item, ComponentKeys.TOOL, "rules", remap);
+            ComponentUtils.processComponent(item, ComponentKeys.CAN_BREAK, remap);
+            ComponentUtils.processComponent(item, ComponentKeys.CAN_PLACE_ON, remap);
+            ComponentUtils.processComponent(item, ComponentKeys.TOOL, remap);
         }
         item.load();
         return item.getLiteralObject();

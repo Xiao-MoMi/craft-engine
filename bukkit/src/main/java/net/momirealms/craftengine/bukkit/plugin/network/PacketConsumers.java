@@ -48,6 +48,8 @@ import java.util.function.BiConsumer;
 public class PacketConsumers {
     private static int[] mappings;
     private static int[] mappingsMOD;
+    private static int[] reverseMappings;
+    private static int[] reverseMappingsMOD;
     private static IntIdentityList BLOCK_LIST;
     private static IntIdentityList BIOME_LIST;
 
@@ -67,6 +69,17 @@ public class PacketConsumers {
             if (BlockStateUtils.isVanillaBlock(i)) {
                 mappingsMOD[i] = remap(i);
             }
+        } int maxMappingValue = Arrays.stream(mappings).max().orElse(0);
+        reverseMappings = new int[maxMappingValue + 1];
+        for (int original = 0; original < mappings.length; original++) {
+            int mapped = mappings[original];
+            reverseMappings[mapped] = original;
+        }
+        int maxMappingMODValue = Arrays.stream(mappingsMOD).max().orElse(0);
+        reverseMappingsMOD = new int[maxMappingMODValue + 1];
+        for (int original = 0; original < mappingsMOD.length; original++) {
+            int mapped = mappingsMOD[original];
+            reverseMappingsMOD[mapped] = original;
         }
         BLOCK_LIST = new IntIdentityList(registrySize);
         BIOME_LIST = new IntIdentityList(RegistryUtils.currentBiomeRegistrySize());
@@ -78,6 +91,14 @@ public class PacketConsumers {
 
     public static int remapMOD(int stateId) {
         return mappingsMOD[stateId];
+    }
+
+    public static int reverseRemap(int mappedId) {
+        return reverseMappings[mappedId];
+    }
+
+    public static int reverseRemapMOD(int mappedId) {
+        return reverseMappingsMOD[mappedId];
     }
 
     // TODO Use bytebuffer?

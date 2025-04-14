@@ -6,20 +6,16 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonPrimitive;
 import net.kyori.adventure.text.Component;
 import net.momirealms.craftengine.bukkit.nms.FastNMS;
-import net.momirealms.craftengine.core.item.ComponentKeys;
+import net.momirealms.craftengine.bukkit.plugin.network.PacketConsumers;
 import net.momirealms.craftengine.core.item.Item;
 import net.momirealms.craftengine.core.util.AdventureHelper;
 import net.momirealms.craftengine.core.util.Key;
+import org.bukkit.Bukkit;
+import org.bukkit.block.data.BlockData;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 public class ComponentUtils {
-    private static final String BLOCK_MAPPINGS_KEY = "craftengine:block_mappings";
-    private static final String CRAFTENGINE_PREFIX = "craftengine:";
-    private static final String MINECRAFT_PREFIX = "minecraft:";
 
     private ComponentUtils() {}
 
@@ -55,60 +51,84 @@ public class ComponentUtils {
         return Reflections.instance$GsonComponentSerializer$Gson.fromJson(json, Reflections.clazz$AdventureComponent);
     }
 
-    public static void processComponent(Item<?> item, Key componentKey, String arrayField, boolean remap) {
+    public static void processComponent(Item<?> item, Key componentKey, boolean remap) {
         if (!item.hasComponent(componentKey)) return;
+        String arrayField = switch (componentKey.toString()) {
+            case "minecraft:can_break", "minecraft:can_place_on" -> "predicates";
+            case "minecraft:tool" -> "rules";
+            default -> "";
+        };
+        if (arrayField.isEmpty()) return;
 
         JsonObject component = (JsonObject) item.getJsonTypeComponent(componentKey);
+        /*
+        predicates:
+          - blocks: craftengine:note_block_0
+          - blocks: craftengine:note_block_1
+          - blocks:
+              - craftengine:note_block_2
+              - craftengine:note_block_3
+              - craftengine:note_block_4
+        */
         if (component == null) return;
 
         JsonElement elements = component.get(arrayField);
-        if (!elements.isJsonArray()) return;
+        /*
+        - blocks: craftengine:note_block_0
+        - blocks: craftengine:note_block_1
+        - blocks:
+            - craftengine:note_block_2
+            - craftengine:note_block_3
+            - craftengine:note_block_4
 
-        Map<String, List<String>> mappings = new HashMap<>();
+        */
+        if (!elements.isJsonArray()) return;
+        if (elements.getAsJsonArray().isEmpty()) return;
 
         JsonArray newElements = processJsonArray(
                 elements.getAsJsonArray(),
                 remap,
                 componentKey.toString(),
-                item,
-                mappings
+                item
         );
 
         component.add(arrayField, newElements);
         item.setComponent(componentKey, component);
-
-        if (remap) {
-            if (!mappings.isEmpty()) {
-                System.out.println("Remapped " + componentKey + ": " + mappings);
-                updateBlockMappings(item, componentKey.toString(), mappings);
-            }
-        } else {
-            cleanComponentMappings(item, componentKey.toString());
-        }
-    }
-
-    private static void cleanComponentMappings(Item<?> item, String componentKey) {
-        JsonObject customData = (JsonObject) item.getJsonTypeComponent(ComponentKeys.CUSTOM_DATA);
-        if (customData == null) return;
-        JsonObject allMappings = customData.getAsJsonObject(BLOCK_MAPPINGS_KEY);
-        if (allMappings == null) return;
-        allMappings.remove(componentKey);
-        if (allMappings.isEmpty()) {
-            customData.remove(BLOCK_MAPPINGS_KEY);
-        }
-        if (customData.isEmpty()) {
-            item.removeComponent(ComponentKeys.CUSTOM_DATA);
-        } else {
-            item.setComponent(ComponentKeys.CUSTOM_DATA, customData);
-        }
     }
 
     private static JsonArray processJsonArray(JsonArray originalArray, boolean remap,
-                                              String componentKey, Item<?> item,
-                                              Map<String, List<String>> mappings) {
+                                              String componentKey, Item<?> item) {
         JsonArray newArray = new JsonArray();
+        /*
+        - blocks: craftengine:note_block_0
+        - blocks: craftengine:note_block_1
+        - blocks:
+            - craftengine:note_block_2
+            - craftengine:note_block_3
+            - craftengine:note_block_4
+
+        */
         for (JsonElement element : originalArray) {
-            if (!element.isJsonObject()) {
+            // blocks: craftengine:note_block_0
+            // 或者
+            // blocks:
+            //   - craftengine:note_block_2
+            //   - craftengine:note_block_3
+            //   - craftengine:note_block_4
+            // components:
+            //   ...
+            // nbt: xxx
+            // 或者
+            // nbt:
+            //   a: b
+            // predicates:
+            //   a: b
+            // state:
+            //   a: "b"
+            //   b:
+            //      min: "0"
+            //      max: "6"
+            if (!element.isJsonObject() || !element.getAsJsonObject().has("blocks")) {
                 newArray.add(element);
                 continue;
             }
@@ -117,7 +137,7 @@ public class ComponentUtils {
                     remap,
                     componentKey,
                     item,
-                    mappings
+                    newArray
             );
             newArray.add(processed);
         }
@@ -126,49 +146,76 @@ public class ComponentUtils {
 
     private static JsonObject processBlock(JsonObject blockObj, boolean remap,
                                            String componentKey, Item<?> item,
-                                           Map<String, List<String>> mappings) {
+                                           JsonArray newArray) {
         JsonElement blocksElement = blockObj.get("blocks");
+        // blocks: craftengine:note_block_0
+        // 或者
+        // blocks:
+        //   - craftengine:note_block_2
+        //   - craftengine:note_block_3
+        //   - craftengine:note_block_4
 
         if (blocksElement.isJsonPrimitive()) {
+            // craftengine:note_block_0
             processPrimitiveBlock(blockObj, blocksElement.getAsJsonPrimitive(),
-                    remap, componentKey, item, mappings);
+                    remap, componentKey, item);
         } else if (blocksElement.isJsonArray()) {
+            //  - craftengine:note_block_2
+            //  - craftengine:note_block_3
+            //  - craftengine:note_block_4
             processArrayBlock(blockObj, blocksElement.getAsJsonArray(),
-                    remap, componentKey, item, mappings);
+                    remap, componentKey, item, newArray);
         }
         return blockObj;
     }
 
     private static void processPrimitiveBlock(JsonObject blockObj, JsonPrimitive primitive,
                                               boolean remap, String componentKey,
-                                              Item<?> item, Map<String, List<String>> mappings) {
+                                              Item<?> item) {
         if (!primitive.isString()) return;
 
         String value = primitive.getAsString();
         if (remap) {
-            String mapped = processRemap(value, mappings);
-            if (mapped != null) blockObj.add("blocks", new JsonPrimitive(mapped));
+            // craftengine:note_block_0
+            JsonObject mapped = processRemap(value);
+            if (mapped != null) {
+                blockObj.remove("blocks");
+                blockObj.add("blocks", mapped.get("blocks"));
+                blockObj.add("state", mapped.get("state"));
+            }
         } else {
-            JsonArray restored = processRestore(value, componentKey, item);
-            if (restored != null) blockObj.addProperty("blocks", restored.get(0).getAsString());
+            // minecraft:note_block
+            processRestore(value, componentKey, item);
         }
     }
 
     private static void processArrayBlock(JsonObject blockObj, JsonArray blocksArray,
                                           boolean remap, String componentKey,
-                                          Item<?> item, Map<String, List<String>> mappings) {
-        if (!remap) blockObj.remove("blocks");
+                                          Item<?> item, JsonArray newArray) {
+        // if (!remap) blockObj.remove("blocks");
         JsonArray newBlocks = new JsonArray();
+        //  - craftengine:note_block_2
+        //  - craftengine:note_block_3
+        //  - craftengine:note_block_4
         for (JsonElement block : blocksArray) {
+            // craftengine:note_block_2
             if (block.isJsonPrimitive() && block.getAsJsonPrimitive().isString()) {
                 String value = block.getAsString();
                 if (remap) {
-                    String mapped = processRemap(value, mappings);
-                    newBlocks.add(mapped != null ? mapped : value);
+                    // craftengine:note_block_2
+                    // minecraft:note_block
+                    JsonObject mapped = processRemap(value);
+                    if (mapped != null) {
+                        JsonObject newBlockObj = new JsonObject();
+                        newBlockObj.add("blocks", mapped.get("blocks"));
+                        newBlockObj.add("state", mapped.get("state"));
+                        newArray.add(newBlockObj);
+                    } else {
+                        newBlocks.add(block);
+                    }
                 } else {
-                    JsonArray restored = processRestore(value, componentKey, item);
-                    if (restored != null) restored.forEach(newBlocks::add);
-                    else newBlocks.add(value);
+                    // minecraft:note_block
+                    processRestore(value, componentKey, item);
                 }
             } else {
                 newBlocks.add(block);
@@ -177,88 +224,113 @@ public class ComponentUtils {
         blockObj.add("blocks", newBlocks);
     }
 
-    private static String processRemap(String original,
-                                       Map<String, List<String>> mappings) {
-        if (!original.startsWith(CRAFTENGINE_PREFIX)) return null;
-
-        int colonIndex = original.indexOf(':');
-        int underscoreIndex = original.lastIndexOf('_');
-
-        if (!isValidIndices(colonIndex, underscoreIndex)) return null;
-
-        String mapped = MINECRAFT_PREFIX + original.substring(colonIndex+1, underscoreIndex);
-
-        mappings.computeIfAbsent(mapped, k -> new ArrayList<>())
-                .add(original);
-
-        return mapped;
+    private static JsonObject processRemap(String original) {
+        // craftengine:note_block_0
+        if (!original.startsWith("craftengine:")) return null;
+        BlockData blockData = Bukkit.createBlockData(original);
+        int id = BlockStateUtils.blockDataToId(blockData);
+        int remapId = PacketConsumers.remap(id);
+        Object remapBlockState = BlockStateUtils.idToBlockState(remapId);
+        String remapBlockStateString = remapBlockState.toString();
+        // Block{minecraft:note_block}[instrument=hat,note=1,powered=false]
+        int blockFirst = remapBlockStateString.indexOf('{');
+        int blockLast = remapBlockStateString.indexOf('}');
+        if (!isValidIndices(blockFirst, blockLast)) return null;
+        String blockName = remapBlockStateString.substring(blockFirst + 1, blockLast);
+        int stateFirst = remapBlockStateString.indexOf('[');
+        int stateLast = remapBlockStateString.lastIndexOf(']');
+        if (!isValidIndices(stateFirst, stateLast)) return null;
+        String state = remapBlockStateString.substring(stateFirst + 1, stateLast);
+        JsonObject remapState = new JsonObject();
+        int start = 0;
+        int length = state.length();
+        while (start < length) {
+            int commaPos = state.indexOf(',', start);
+            if (commaPos == -1) commaPos = length;
+            int pairEnd = commaPos;
+            String pair = state.substring(start, pairEnd);
+            int equalPos = pair.indexOf('=');
+            if (equalPos != -1) {
+                String key = pair.substring(0, equalPos).trim();
+                String value = pair.substring(equalPos + 1).trim();
+                remapState.addProperty(key, value);
+            }
+            start = pairEnd + 1;
+        }
+        JsonObject remap = new JsonObject();
+        remap.addProperty("blocks", blockName);
+        remap.add("state", remapState);
+        return remap;
     }
 
-    private static JsonArray processRestore(String mapped, String componentKey, Item<?> item) {
-        if (!mapped.startsWith(MINECRAFT_PREFIX)) return null;
-
-        JsonObject mappings = getBlockMappings(item, componentKey);
-        if (mappings == null) return null;
-
-        JsonArray origins = mappings.getAsJsonArray(mapped);
-        if (origins == null || origins.isEmpty()) return null;
-
-        JsonArray result = new JsonArray();
-        origins.forEach(result::add);
-        return result;
-    }
-
-    private static void updateBlockMappings(Item<?> item, String componentKey,
-                                            Map<String, List<String>> newMappings) {
-        JsonObject customData = getOrCreateCustomData(item);
-        JsonObject allMappings = getOrCreateMappings(customData);
-
-        JsonObject componentMappings = allMappings.has(componentKey)
-                ? allMappings.getAsJsonObject(componentKey)
-                : new JsonObject();
-
-        newMappings.forEach((mapped, origins) -> {
-            JsonArray existing = componentMappings.has(mapped)
-                    ? componentMappings.getAsJsonArray(mapped)
-                    : new JsonArray();
-
-            origins.stream()
-                    .filter(origin -> !contains(existing, origin))
-                    .forEach(existing::add);
-
-            componentMappings.add(mapped, existing);
-        });
-
-        allMappings.add(componentKey, componentMappings);
-        customData.add(BLOCK_MAPPINGS_KEY, allMappings);
-        item.setComponent(ComponentKeys.CUSTOM_DATA, customData);
-    }
-
-    private static JsonObject getOrCreateCustomData(Item<?> item) {
-        return item.hasComponent(ComponentKeys.CUSTOM_DATA)
-                ? (JsonObject) item.getJsonTypeComponent(ComponentKeys.CUSTOM_DATA)
-                : new JsonObject();
-    }
-
-    private static JsonObject getOrCreateMappings(JsonObject customData) {
-        return customData.has(BLOCK_MAPPINGS_KEY)
-                ? customData.getAsJsonObject(BLOCK_MAPPINGS_KEY)
-                : new JsonObject();
-    }
-
-    private static JsonObject getBlockMappings(Item<?> item, String componentKey) {
-        JsonObject customData = (JsonObject) item.getJsonTypeComponent(ComponentKeys.CUSTOM_DATA);
-        if (customData == null) return null;
-
-        JsonObject allMappings = customData.getAsJsonObject(BLOCK_MAPPINGS_KEY);
-        if (allMappings == null) return null;
-
-        return allMappings.getAsJsonObject(componentKey);
-    }
-
-    private static boolean contains(JsonArray array, String value) {
-        return array.asList().stream()
-                .anyMatch(e -> e.isJsonPrimitive() && e.getAsString().equals(value));
+    private static void processRestore(String mapped, String componentKey, Item<?> item) {
+        // minecraft:note_block
+        if (!mapped.startsWith("minecraft:")) return;
+        String arrayField = switch (componentKey) {
+            case "minecraft:can_break", "minecraft:can_place_on" -> "predicates";
+            case "minecraft:tool" -> "rules";
+            default -> "";
+        };
+        if (arrayField.isEmpty()) return;
+        JsonElement itemComponent = item.getJsonTypeComponent(Key.of(componentKey));
+        if (itemComponent == null) return;
+        if (!itemComponent.isJsonObject()) return;
+        JsonObject itemComponentObj = itemComponent.getAsJsonObject();
+        /*
+        predicates:
+          - blocks: minecraft:note_block
+            state:
+              instrument: "hat"
+              note: "1“
+              powered: "false"
+          - blocks: minecraft:note_block
+            state:
+              instrument: "hat"
+              note: "2“
+              powered: "false"
+        */
+        JsonElement array = itemComponentObj.get(arrayField);
+        /*
+        - blocks: minecraft:note_block
+          state:
+            instrument: "hat"
+            note: "1"
+            powered: "false"
+        - blocks: minecraft:note_block
+          state:
+            instrument: "hat"
+            note: "2"
+            powered: "false"
+        */
+        if (array == null || !array.isJsonArray()) return;
+        for (JsonElement block : array.getAsJsonArray()) {
+            if (!block.isJsonObject()) continue;
+            JsonElement blocks = block.getAsJsonObject().get("blocks");
+            if (blocks == null || !blocks.isJsonPrimitive() || !blocks.getAsJsonPrimitive().isString()) continue;
+            if (!blocks.getAsString().equals(mapped)) continue;
+            JsonElement state = block.getAsJsonObject().get("state");
+            if (state == null || !state.isJsonObject()) continue;
+            JsonObject stateObj = state.getAsJsonObject();
+            StringBuilder stateString = new StringBuilder(blocks.getAsJsonPrimitive().getAsString());
+            stateString.append("[");
+            for (Map.Entry<String, JsonElement> entry : stateObj.entrySet()) {
+                String key = entry.getKey();
+                JsonElement value = entry.getValue();
+                if (!value.isJsonPrimitive() || !value.getAsJsonPrimitive().isString()) continue;
+                String valueString = value.getAsString();
+                stateString.append(key).append("=").append(valueString).append(",");
+            }
+            stateString.append("]");
+            BlockData blockData = Bukkit.createBlockData(stateString.toString());
+            int id = BlockStateUtils.blockDataToId(blockData);
+            int remapId = PacketConsumers.reverseRemap(id);
+            Object remapBlockState = BlockStateUtils.idToBlockState(remapId);
+            Key blockOwnerId = BlockStateUtils.getBlockOwnerIdFromState(remapBlockState);
+            if (blockOwnerId.namespace().equals("craftengine")) continue;
+            block.getAsJsonObject().remove("blocks");
+            block.getAsJsonObject().remove("state");
+            block.getAsJsonObject().addProperty("blocks", blockOwnerId.toString());
+        }
     }
 
     private static boolean isValidIndices(int colon, int underscore) {
