@@ -399,5 +399,5 @@ public class BlockEventListener implements Listener {
         }
     }
 
-    // TODO 解决拉回非PushReaction.NORMAL方块的视觉问题
+    // TODO 解决音符盒被推动和拉动的视觉同步问题（特别是被类似黏液块的方块带着走）
 }
