@@ -19,18 +19,6 @@ public class DirectionUtils {
         };
     }
 
-    public static Direction toReverseDirection(BlockFace face) {
-        return switch (face) {
-            case UP -> Direction.DOWN;
-            case DOWN -> Direction.UP;
-            case NORTH -> Direction.SOUTH;
-            case SOUTH -> Direction.NORTH;
-            case WEST -> Direction.EAST;
-            case EAST -> Direction.WEST;
-            default -> throw new IllegalStateException("Unexpected value: " + face);
-        };
-    }
-
     public static BlockFace toBlockFace(Direction direction) {
         return switch (direction) {
             case UP -> BlockFace.UP;
