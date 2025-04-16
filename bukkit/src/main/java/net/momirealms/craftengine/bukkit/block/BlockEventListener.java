@@ -9,16 +9,19 @@ import net.momirealms.craftengine.bukkit.util.*;
 import net.momirealms.craftengine.bukkit.world.BukkitWorld;
 import net.momirealms.craftengine.core.block.BlockSettings;
 import net.momirealms.craftengine.core.block.ImmutableBlockState;
+import net.momirealms.craftengine.core.block.PushReaction;
 import net.momirealms.craftengine.core.block.properties.Property;
 import net.momirealms.craftengine.core.entity.player.InteractionHand;
 import net.momirealms.craftengine.core.item.Item;
 import net.momirealms.craftengine.core.loot.LootTable;
 import net.momirealms.craftengine.core.loot.parameter.LootParameters;
 import net.momirealms.craftengine.core.plugin.config.Config;
+import net.momirealms.craftengine.core.util.Direction;
 import net.momirealms.craftengine.core.util.VersionHelper;
 import net.momirealms.craftengine.core.util.context.ContextHolder;
 import net.momirealms.craftengine.core.world.BlockPos;
 import net.momirealms.craftengine.core.world.Vec3d;
+import net.momirealms.craftengine.core.world.WorldEvents;
 import org.bukkit.*;
 import org.bukkit.block.Block;
 import org.bukkit.block.BlockFace;
@@ -28,10 +31,7 @@ import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
-import org.bukkit.event.block.BlockBreakEvent;
-import org.bukkit.event.block.BlockExplodeEvent;
-import org.bukkit.event.block.BlockPhysicsEvent;
-import org.bukkit.event.block.BlockPlaceEvent;
+import org.bukkit.event.block.*;
 import org.bukkit.event.entity.EntityExplodeEvent;
 import org.bukkit.event.world.GenericGameEvent;
 import org.bukkit.inventory.ItemStack;
@@ -351,12 +351,12 @@ public class BlockEventListener implements Listener {
                 if (direction == BlockFace.UP || direction == BlockFace.DOWN) {
                     Object serverLevel = FastNMS.INSTANCE.field$CraftWorld$ServerLevel(world);
                     Object chunkSource = FastNMS.INSTANCE.method$ServerLevel$getChunkSource(serverLevel);
-                    Object blockPos = LocationUtils.toBlockPos(location.getBlockX(), location.getBlockY(), location.getBlockZ());
-                    FastNMS.INSTANCE.method$ServerChunkCache$blockChanged(chunkSource, blockPos);
+                    BlockPos blockPos = LocationUtils.toBlockPos(location);
+                    FastNMS.INSTANCE.method$ServerChunkCache$blockChanged(chunkSource, LocationUtils.toBlockPos(blockPos));
                     if (direction == BlockFace.UP) {
-                        NoteBlockChainUpdateUtils.noteBlockChainUpdate(serverLevel, chunkSource, Reflections.instance$Direction$UP, blockPos, 0);
+                        NoteBlockChainUpdateUtils.noteBlockChainUpdate(serverLevel, chunkSource, Direction.UP, blockPos, 0);
                     } else {
-                        NoteBlockChainUpdateUtils.noteBlockChainUpdate(serverLevel, chunkSource, Reflections.instance$Direction$DOWN, blockPos, 0);
+                        NoteBlockChainUpdateUtils.noteBlockChainUpdate(serverLevel, chunkSource, Direction.DOWN, blockPos, 0);
                     }
                 }
             } catch (ReflectiveOperationException e) {
@@ -364,4 +364,47 @@ public class BlockEventListener implements Listener {
             }
         }
     }
+
+    @EventHandler(ignoreCancelled = true, priority = EventPriority.MONITOR)
+    public void onPistonExtend(BlockPistonExtendEvent event) {
+        if (!this.enableNoteBlockCheck) return;
+        BlockFace direction = event.getDirection();
+        World world = event.getBlock().getWorld();
+        Object serverLevel = FastNMS.INSTANCE.field$CraftWorld$ServerLevel(world);
+        Object chunkSource = FastNMS.INSTANCE.method$ServerLevel$getChunkSource(serverLevel);
+        for (Block block : event.getBlocks()) {
+            // 各种检查是不是推动就被破坏的自定义音符盒方块
+            Object blockState = BlockStateUtils.blockDataToBlockState(block.getBlockData());
+            if (BlockStateUtils.isVanillaBlock(blockState)) continue;
+            if (!BlockStateUtils.isClientSideNoteBlock(blockState)) continue;
+            ImmutableBlockState customState = BukkitBlockManager.instance().getImmutableBlockState(BlockStateUtils.blockStateToId(blockState));
+            if (customState == null || customState.isEmpty()) continue;
+            if (customState.settings().pushReaction() != PushReaction.DESTROY) continue;
+            BlockPos blockPos = LocationUtils.toBlockPos(block.getLocation());
+            // 补个声音和粒子
+            net.momirealms.craftengine.core.world.World ceWorld = new BukkitWorld(world);
+            ceWorld.playBlockSound(Vec3d.atCenterOf(blockPos), customState.sounds().breakSound());
+            FastNMS.INSTANCE.method$Level$levelEvent(
+                    ceWorld.serverWorld(),
+                    WorldEvents.BLOCK_BREAK_EFFECT,
+                    LocationUtils.toBlockPos(blockPos),
+                    customState.customBlockState().registryId()
+            );
+            // 纠正客户端预测的方块更新
+            try {
+                NoteBlockChainUpdateUtils.noteBlockChainUpdate(blockPos, direction, world, chunkSource, serverLevel);
+            } catch (ReflectiveOperationException e) {
+                plugin.logger().warn("Failed to sync note block states", e);
+            }
+        }
+    }
+
+    // @EventHandler(ignoreCancelled = true, priority = EventPriority.MONITOR)
+    // public void onPistonRetract(BlockPistonRetractEvent event) {
+    //     handlePistonEvent(event.getDirection(), event.getBlocks(), event.getBlock());
+    // }
+    //
+    // private void handlePistonEvent(BlockFace direction, List<Block> blocks, Block block) {
+    //     plugin.logger().info("Piston event: " + block.getType() + " " + block.getLocation() + " " + direction + " " + blocks);
+    // }
 }
