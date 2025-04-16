@@ -399,12 +399,24 @@ public class BlockEventListener implements Listener {
         }
     }
 
-    // @EventHandler(ignoreCancelled = true, priority = EventPriority.MONITOR)
-    // public void onPistonRetract(BlockPistonRetractEvent event) {
-    //     handlePistonEvent(event.getDirection(), event.getBlocks(), event.getBlock());
-    // }
-    //
-    // private void handlePistonEvent(BlockFace direction, List<Block> blocks, Block block) {
-    //     plugin.logger().info("Piston event: " + block.getType() + " " + block.getLocation() + " " + direction + " " + blocks);
-    // }
+    @EventHandler(ignoreCancelled = true, priority = EventPriority.MONITOR)
+    public void onPistonRetract(BlockPistonRetractEvent event) {
+        // 虽然这个事件在没拉回方块的时候不会触发，但是还是先写着先
+        if (!this.enableNoteBlockCheck) return;
+        BlockFace direction = event.getDirection();
+        Block block = event.getBlock();
+        World world = block.getWorld();
+        BlockPos blockPos = LocationUtils.toBlockPos(block.getLocation()).relative(DirectionUtils.toReverseDirection(direction), 2);
+        BlockData blockData = world.getBlockAt(blockPos.x(), blockPos.y(), blockPos.z()).getBlockData();
+        Object blockState = BlockStateUtils.blockDataToBlockState(blockData);
+        if (BlockStateUtils.isVanillaBlock(blockState)) return;
+        if (!BlockStateUtils.isClientSideNoteBlock(blockState)) return;
+        ImmutableBlockState customState = BukkitBlockManager.instance().getImmutableBlockState(BlockStateUtils.blockStateToId(blockState));
+        if (customState == null || customState.isEmpty()) return;
+        if (customState.settings().pushReaction() == PushReaction.NORMAL) return;
+        Object serverLevel = FastNMS.INSTANCE.field$CraftWorld$ServerLevel(world);
+        Object chunkSource = FastNMS.INSTANCE.method$ServerLevel$getChunkSource(serverLevel);
+        Object nmsBlockPos = LocationUtils.toBlockPos(blockPos);
+        FastNMS.INSTANCE.method$ServerChunkCache$blockChanged(chunkSource, nmsBlockPos);
+    }
 }
