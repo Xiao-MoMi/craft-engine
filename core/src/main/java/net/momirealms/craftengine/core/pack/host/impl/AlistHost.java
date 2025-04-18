@@ -239,6 +239,32 @@ public class AlistHost implements ResourcePackHost {
                     boolean isDir = dataObj.getAsJsonPrimitive("is_dir").getAsBoolean();
                     if (!isDir) {
                         String url = dataObj.getAsJsonPrimitive("raw_url").getAsString();
+                        if ((this.cachedSha1 == null || this.cachedSha1.isEmpty()) && this.disabledUpload) {
+                            try (HttpClient client = HttpClient.newBuilder().proxy(this.proxy).build()) {
+                                HttpRequest request = HttpRequest.newBuilder()
+                                        .uri(URI.create(url))
+                                        .GET()
+                                        .build();
+                                HttpResponse<InputStream> responseHash = client.send(request, HttpResponse.BodyHandlers.ofInputStream());
+                                try (InputStream inputStream = responseHash.body()) {
+                                    MessageDigest md = MessageDigest.getInstance("SHA-1");
+                                    byte[] buffer = new byte[8192];
+                                    int len;
+                                    while ((len = inputStream.read(buffer)) != -1) {
+                                        md.update(buffer, 0, len);
+                                    }
+                                    byte[] digest = md.digest();
+                                    this.cachedSha1 = HexFormat.of().formatHex(digest);
+                                    saveCacheToDisk();
+                                } catch (NoSuchAlgorithmException e) {
+                                    future.completeExceptionally(new RuntimeException("Failed to calculate SHA-1 hash algorithm", e));
+                                    return;
+                                }
+                            } catch (IOException | InterruptedException e) {
+                                future.completeExceptionally(new RuntimeException("Failed to retrieve remote resource pack for hashing", e));
+                                return;
+                            }
+                        }
                         UUID uuid = UUID.nameUUIDFromBytes(Objects.requireNonNull(this.cachedSha1).getBytes(StandardCharsets.UTF_8));
                         future.complete(List.of(new ResourcePackDownloadData(url, uuid, this.cachedSha1)));
                         return;
