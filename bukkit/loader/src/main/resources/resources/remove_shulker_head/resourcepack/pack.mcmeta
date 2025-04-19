@@ -1,0 +1,21 @@
+{
+  "pack": {
+    "pack_format": 15,
+    "description": "CraftEngine Remove Shulker Head for Some Versions",
+    "supported_formats": {
+      "min_inclusive": 15,
+      "max_inclusive": 33
+    }
+  },
+  "overlays": {
+    "entries": [
+      {
+        "formats": {
+          "min_inclusive": 24,
+          "max_inclusive": 99
+        },
+        "directory": "1_20_5_assets"
+      }
+    ]
+  }
+}

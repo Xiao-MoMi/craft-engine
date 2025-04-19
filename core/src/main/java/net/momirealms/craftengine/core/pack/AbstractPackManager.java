@@ -261,6 +261,9 @@ public abstract class AbstractPackManager implements PackManager {
 
     private void saveDefaultConfigs() {
         // internal
+        plugin.saveResource("resources/remove_shulker_head/resourcepack/pack.mcmeta");
+        plugin.saveResource("resources/remove_shulker_head/resourcepack/assets/minecraft/shaders/core/rendertype_entity_solid.fsh");
+        plugin.saveResource("resources/remove_shulker_head/resourcepack/1_20_5_assets/minecraft/shaders/core/rendertype_entity_solid.fsh");
         plugin.saveResource("resources/remove_shulker_head/resourcepack/assets/minecraft/textures/entity/shulker/shulker_white.png");
         plugin.saveResource("resources/remove_shulker_head/pack.yml");
         // internal
