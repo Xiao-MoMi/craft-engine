@@ -3773,6 +3773,7 @@ public class Reflections {
     public static final Object instance$EntityType$FALLING_BLOCK;
     public static final Object instance$EntityType$INTERACTION;
     public static final Object instance$EntityType$SHULKER;
+    public static final Object instance$EntityType$OAK_BOAT;
 
     static {
         try {
@@ -3790,6 +3791,8 @@ public class Reflections {
             instance$EntityType$SHULKER = Reflections.method$Registry$get.invoke(Reflections.instance$BuiltInRegistries$ENTITY_TYPE, shulker);
             Object armorStand = FastNMS.INSTANCE.method$ResourceLocation$fromNamespaceAndPath("minecraft", "armor_stand");
             instance$EntityType$ARMOR_STAND = Reflections.method$Registry$get.invoke(Reflections.instance$BuiltInRegistries$ENTITY_TYPE, armorStand);
+            Object oakBoat = VersionHelper.isVersionNewerThan1_21_2() ? FastNMS.INSTANCE.method$ResourceLocation$fromNamespaceAndPath("minecraft", "oak_boat") : FastNMS.INSTANCE.method$ResourceLocation$fromNamespaceAndPath("minecraft", "boat");
+            instance$EntityType$OAK_BOAT = Reflections.method$Registry$get.invoke(Reflections.instance$BuiltInRegistries$ENTITY_TYPE, oakBoat);
         } catch (ReflectiveOperationException e) {
             throw new RuntimeException(e);
         }

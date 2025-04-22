@@ -63,7 +63,6 @@ public class PacketConsumers {
     private static int[] mappingsMOD;
     private static IntIdentityList BLOCK_LIST;
     private static IntIdentityList BIOME_LIST;
-    private static final UUID EMPTY_UUID = new UUID(0, 0);
 
     public static void init(Map<Integer, Integer> map, int registrySize) {
         mappings = new int[registrySize];
@@ -1516,7 +1515,7 @@ public class PacketConsumers {
                         event.setCancelled(true);
                     }
                 }
-            } else if (entityType == Reflections.instance$EntityType$INTERACTION) {
+            } else if (entityType == Reflections.instance$EntityType$OAK_BOAT) {
                 // Cancel collider entity packet
                 int entityId = FastNMS.INSTANCE.field$ClientboundAddEntityPacket$entityId(packet);
                 LoadedFurniture furniture = BukkitFurnitureManager.instance().loadedFurnitureByRealEntityId(entityId);

@@ -33,8 +33,8 @@ public class FurnitureEventListener implements Listener {
         for (Entity entity : entities) {
             if (entity instanceof ItemDisplay itemDisplay) {
                 this.manager.handleBaseEntityLoadEarly(itemDisplay);
-            } else if (entity instanceof Interaction interaction) {
-                this.manager.handleCollisionEntityLoadOnEntitiesLoad(interaction);
+            } else if (entity instanceof Boat boat) {
+                this.manager.handleCollisionEntityLoadOnEntitiesLoad(boat);
             }
         }
     }
@@ -45,8 +45,8 @@ public class FurnitureEventListener implements Listener {
         for (Entity entity : entities) {
             if (entity instanceof ItemDisplay itemDisplay) {
                 this.manager.handleBaseEntityLoadEarly(itemDisplay);
-            } else if (entity instanceof Interaction interaction) {
-                this.manager.handleCollisionEntityLoadOnEntitiesLoad(interaction);
+            } else if (entity instanceof Boat boat) {
+                this.manager.handleCollisionEntityLoadOnEntitiesLoad(boat);
             }
         }
     }
@@ -56,8 +56,8 @@ public class FurnitureEventListener implements Listener {
         Entity entity = event.getEntity();
         if (entity instanceof ItemDisplay itemDisplay) {
             this.manager.handleBaseEntityLoadLate(itemDisplay, 0);
-        } else if (entity instanceof Interaction interaction) {
-            this.manager.handleCollisionEntityLoadLate(interaction, 0);
+        } else if (entity instanceof Boat boat) {
+            this.manager.handleCollisionEntityLoadLate(boat, 0);
         }
     }
 
@@ -70,7 +70,7 @@ public class FurnitureEventListener implements Listener {
         for (Entity entity : entities) {
             if (entity instanceof ItemDisplay) {
                 this.manager.handleBaseEntityUnload(entity);
-            } else if (entity instanceof Interaction) {
+            } else if (entity instanceof Boat) {
                 this.manager.handleCollisionEntityUnload(entity);
             }
         }
@@ -82,7 +82,7 @@ public class FurnitureEventListener implements Listener {
         for (Entity entity : entities) {
             if (entity instanceof ItemDisplay) {
                 this.manager.handleBaseEntityUnload(entity);
-            } else if (entity instanceof Interaction) {
+            } else if (entity instanceof Boat) {
                 this.manager.handleCollisionEntityUnload(entity);
             }
         }
@@ -93,7 +93,7 @@ public class FurnitureEventListener implements Listener {
         Entity entity = event.getEntity();
         if (entity instanceof ItemDisplay) {
             this.manager.handleBaseEntityUnload(entity);
-        } else if (entity instanceof Interaction) {
+        } else if (entity instanceof Boat) {
             this.manager.handleCollisionEntityUnload(entity);
         }
     }
