@@ -1998,6 +1998,7 @@ public class PacketConsumers {
             EntityPacketHandler handler = user.entityPacketHandlers().get(id);
             if (handler != null) {
                 handler.handleSetEntityData(user, event);
+                return;
             }
             if (Config.interceptEntityName()) {
                 boolean isChanged = false;
