@@ -93,6 +93,17 @@ public class AbstractItem<W extends ItemWrapper<I>, I> implements Item<I> {
         return this.factory.maxDamage(this.item);
     }
 
+    @Override
+    public Item<I> dyedColor(Integer data) {
+        this.factory.dyedColor(this.item, data);
+        return this;
+    }
+
+    @Override
+    public Optional<Integer> dyedColor() {
+        return this.factory.dyedColor(this.item);
+    }
+
     @SuppressWarnings("unchecked")
     @Override
     public Optional<CustomItem<I>> getCustomItem() {
@@ -357,5 +368,10 @@ public class AbstractItem<W extends ItemWrapper<I>, I> implements Item<I> {
     @Override
     public void merge(Item<I> another) {
         this.factory.merge(this.item, (W) ((AbstractItem) another).item);
+    }
+
+    @Override
+    public byte[] toByteArray() {
+        return this.factory.toByteArray(this.item);
     }
 }

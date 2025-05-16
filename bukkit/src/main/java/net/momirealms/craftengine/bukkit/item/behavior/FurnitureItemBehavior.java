@@ -8,8 +8,10 @@ import net.momirealms.craftengine.bukkit.nms.FastNMS;
 import net.momirealms.craftengine.bukkit.plugin.BukkitCraftEngine;
 import net.momirealms.craftengine.bukkit.util.DirectionUtils;
 import net.momirealms.craftengine.bukkit.util.EventUtils;
+import net.momirealms.craftengine.bukkit.util.LocationUtils;
 import net.momirealms.craftengine.core.entity.furniture.AnchorType;
 import net.momirealms.craftengine.core.entity.furniture.CustomFurniture;
+import net.momirealms.craftengine.core.entity.furniture.FurnitureExtraData;
 import net.momirealms.craftengine.core.entity.furniture.HitBox;
 import net.momirealms.craftengine.core.entity.player.InteractionResult;
 import net.momirealms.craftengine.core.entity.player.Player;
@@ -19,6 +21,10 @@ import net.momirealms.craftengine.core.item.behavior.ItemBehaviorFactory;
 import net.momirealms.craftengine.core.item.context.UseOnContext;
 import net.momirealms.craftengine.core.pack.Pack;
 import net.momirealms.craftengine.core.plugin.CraftEngine;
+import net.momirealms.craftengine.core.plugin.context.ContextHolder;
+import net.momirealms.craftengine.core.plugin.context.PlayerOptionalContext;
+import net.momirealms.craftengine.core.plugin.context.parameter.DirectContextParameters;
+import net.momirealms.craftengine.core.plugin.event.EventTrigger;
 import net.momirealms.craftengine.core.plugin.locale.LocalizedResourceConfigException;
 import net.momirealms.craftengine.core.util.*;
 import net.momirealms.craftengine.core.world.Vec3d;
@@ -126,7 +132,15 @@ public class FurnitureItemBehavior extends ItemBehavior {
             return InteractionResult.FAIL;
         }
 
-        LoadedFurniture loadedFurniture = BukkitFurnitureManager.instance().place(customFurniture, furnitureLocation.clone(), anchorType, false);
+        Item<?> item = context.getItem();
+
+        LoadedFurniture loadedFurniture = BukkitFurnitureManager.instance().place(
+                furnitureLocation.clone(), customFurniture,
+                FurnitureExtraData.builder()
+                        .item(item.copyWithCount(1))
+                        .anchorType(anchorType)
+                        .dyedColor(item.dyedColor().orElse(null))
+                        .build(), false);
 
         FurniturePlaceEvent placeEvent = new FurniturePlaceEvent(bukkitPlayer, loadedFurniture, furnitureLocation, context.getHand());
         if (EventUtils.fireAndCheckCancel(placeEvent)) {
@@ -134,8 +148,20 @@ public class FurnitureItemBehavior extends ItemBehavior {
             return InteractionResult.FAIL;
         }
 
+        Cancellable dummy = Cancellable.dummy();
+        PlayerOptionalContext functionContext = PlayerOptionalContext.of(player, ContextHolder.builder()
+                .withParameter(DirectContextParameters.FURNITURE, loadedFurniture)
+                .withParameter(DirectContextParameters.POSITION, LocationUtils.toWorldPosition(furnitureLocation))
+                .withParameter(DirectContextParameters.EVENT, dummy)
+                .withParameter(DirectContextParameters.HAND, context.getHand())
+                .withParameter(DirectContextParameters.ITEM_IN_HAND, item)
+        );
+        customFurniture.execute(functionContext, EventTrigger.PLACE);
+        if (dummy.isCancelled()) {
+            return InteractionResult.SUCCESS_AND_CANCEL;
+        }
+
         if (!player.isCreativeMode()) {
-            Item<?> item = context.getItem();
             item.count(item.count() - 1);
             item.load();
         }

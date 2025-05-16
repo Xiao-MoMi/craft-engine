@@ -30,6 +30,9 @@ public class LootConditions {
         register(CommonConditions.FALLING_BLOCK, new FallingBlockCondition.FactoryImpl<>());
         register(CommonConditions.RANDOM, new RandomCondition.FactoryImpl<>());
         register(CommonConditions.DISTANCE, new DistanceCondition.FactoryImpl<>());
+        register(CommonConditions.PERMISSION, new PermissionCondition.FactoryImpl<>());
+        register(CommonConditions.EQUALS, new EqualsCondition.FactoryImpl<>());
+        register(CommonConditions.EXPRESSION, new ExpressionCondition.FactoryImpl<>());
     }
 
     public static void register(Key key, ConditionFactory<LootContext> factory) {

@@ -10,6 +10,7 @@ import net.momirealms.craftengine.core.entity.furniture.*;
 import net.momirealms.craftengine.core.util.*;
 import net.momirealms.craftengine.core.world.Vec3d;
 import net.momirealms.craftengine.core.world.World;
+import net.momirealms.craftengine.core.world.WorldPosition;
 import net.momirealms.craftengine.core.world.collision.AABB;
 import org.joml.Quaternionf;
 import org.joml.Vector3f;
@@ -196,9 +197,13 @@ public class ShulkerHitBox extends AbstractHitBox {
     }
 
     @Override
-    public void initPacketsAndColliders(int[] entityIds, World world, double x, double y, double z, float yaw, Quaternionf conjugated, BiConsumer<Object, Boolean> packets, Consumer<Collider> collider, BiConsumer<Integer, AABB> aabb) {
+    public void initPacketsAndColliders(int[] entityIds, WorldPosition position, Quaternionf conjugated, BiConsumer<Object, Boolean> packets, Consumer<Collider> collider, BiConsumer<Integer, AABB> aabb) {
         Vector3f offset = conjugated.transform(new Vector3f(position()));
         try {
+            double x = position.x();
+            double y = position.y();
+            double z = position.z();
+            float yaw = position.xRot();
             double originalY = y + offset.y;
             double integerPart = Math.floor(originalY);
             double fractionalPart = originalY - integerPart;
@@ -228,7 +233,7 @@ public class ShulkerHitBox extends AbstractHitBox {
                 Reflections.method$AttributeInstance$setBaseValue.invoke(attributeInstance, this.scale);
                 packets.accept(Reflections.constructor$ClientboundUpdateAttributesPacket0.newInstance(entityIds[1], Collections.singletonList(attributeInstance)), false);
             }
-            this.spawner.accept(entityIds, world, x, y, z, yaw, offset, packets, collider, aabb);
+            this.spawner.accept(entityIds, position.world(), x, y, z, yaw, offset, packets, collider, aabb);
         } catch (ReflectiveOperationException e) {
             throw new RuntimeException("Failed to construct shulker hitbox spawn packet", e);
         }

@@ -2,7 +2,7 @@ package net.momirealms.craftengine.core.item.recipe;
 
 import net.momirealms.craftengine.core.item.recipe.input.RecipeInput;
 import net.momirealms.craftengine.core.plugin.Manageable;
-import net.momirealms.craftengine.core.plugin.config.ConfigSectionParser;
+import net.momirealms.craftengine.core.plugin.config.ConfigParser;
 import net.momirealms.craftengine.core.util.Key;
 import org.jetbrains.annotations.Nullable;
 
@@ -11,7 +11,7 @@ import java.util.Optional;
 
 public interface RecipeManager<T> extends Manageable {
 
-    ConfigSectionParser parser();
+    ConfigParser parser();
 
     boolean isDataPackRecipe(Key key);
 

@@ -14,11 +14,12 @@ import net.momirealms.craftengine.core.block.properties.IntegerProperty;
 import net.momirealms.craftengine.core.block.properties.Property;
 import net.momirealms.craftengine.core.item.Item;
 import net.momirealms.craftengine.core.plugin.context.ContextHolder;
-import net.momirealms.craftengine.core.plugin.context.parameter.CommonParameters;
+import net.momirealms.craftengine.core.plugin.context.parameter.DirectContextParameters;
 import net.momirealms.craftengine.core.util.*;
 import net.momirealms.craftengine.core.world.BlockPos;
 import net.momirealms.craftengine.core.world.Vec3d;
 import net.momirealms.craftengine.core.world.WorldEvents;
+import net.momirealms.craftengine.core.world.WorldPosition;
 import net.momirealms.craftengine.shared.block.BlockBehavior;
 
 import java.util.List;
@@ -58,15 +59,14 @@ public class SugarCaneBlockBehavior extends BushBlockBehavior {
             if (currentState != null && !currentState.isEmpty()) {
                 // break the sugar cane
                 FastNMS.INSTANCE.method$Level$removeBlock(level, blockPos, false);
-                Vec3d vec3d = Vec3d.atCenterOf(LocationUtils.fromBlockPos(blockPos));
                 net.momirealms.craftengine.core.world.World world = new BukkitWorld(FastNMS.INSTANCE.method$Level$getCraftWorld(level));
+                WorldPosition position = new WorldPosition(world, Vec3d.atCenterOf(LocationUtils.fromBlockPos(blockPos)));
                 ContextHolder.Builder builder = ContextHolder.builder()
-                        .withParameter(CommonParameters.LOCATION, vec3d)
-                        .withParameter(CommonParameters.WORLD, world);
+                        .withParameter(DirectContextParameters.POSITION, position);
                 for (Item<Object> item : currentState.getDrops(builder, world, null)) {
-                    world.dropItemNaturally(vec3d, item);
+                    world.dropItemNaturally(position, item);
                 }
-                world.playBlockSound(vec3d, currentState.sounds().breakSound());
+                world.playBlockSound(position, currentState.sounds().breakSound());
                 FastNMS.INSTANCE.method$Level$levelEvent(level, WorldEvents.BLOCK_BREAK_EFFECT, blockPos, stateId);
             }
         }

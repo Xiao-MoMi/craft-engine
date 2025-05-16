@@ -45,7 +45,7 @@ public class ContextHolder {
     public <T> T getOrThrow(ContextKey<T> parameter) {
         Supplier<T> object = (Supplier<T>) this.params.get(parameter);
         if (object == null) {
-            throw new NoSuchElementException(parameter.id().toString());
+            throw new NoSuchElementException(parameter.node());
         } else {
             return object.get();
         }
@@ -96,7 +96,7 @@ public class ContextHolder {
         public <T> T getParameterOrThrow(ContextKey<T> parameter) {
             Supplier<T> object = (Supplier<T>) this.params.get(parameter);
             if (object == null) {
-                throw new NoSuchElementException(parameter.id());
+                throw new NoSuchElementException(parameter.node());
             } else {
                 return object.get();
             }

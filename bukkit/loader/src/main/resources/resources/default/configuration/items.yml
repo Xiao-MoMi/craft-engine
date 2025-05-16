@@ -1,4 +1,37 @@
-items:
+items#gui_head:
+  default:gui_head_size_1:
+    material: player_head
+    custom-model-data: 1000
+    model:
+      type: minecraft:special
+      path: minecraft:item/custom/gui_head_size_1
+      generation:
+        parent: minecraft:item/template_skull
+        gui-light: front
+        display:
+          gui:
+            translation: 0,8,0
+            scale: 2,2,2
+      model:
+        type: minecraft:head
+        kind: player
+  default:gui_head_size_4:
+    material: player_head
+    custom-model-data: 1001
+    model:
+      type: minecraft:special
+      path: minecraft:item/custom/gui_head_size_4
+      generation:
+        parent: minecraft:item/template_skull
+        gui-light: front
+        display:
+          gui:
+            translation: 9,7,0
+            scale: 4,4,4
+      model:
+        type: minecraft:head
+        kind: player
+items#topaz_gears:
   default:topaz_rod:
     material: fishing_rod
     custom-model-data: 1000
@@ -142,7 +175,42 @@ items:
     arguments:
       part: boots
       slot: feet
-
+  default:topaz_trident:
+    material: trident
+    custom-model-data: 1000
+    settings:
+      projectile:
+        item: default:topaz_trident
+        translation: 0,0,0
+        rotation: 1,1,1,1
+        display-transform: NONE
+        scale: 0.5
+      tags:
+        - "default:topaz_tools"
+    data:
+      item-name: "<!i><#FF8C00><i18n:item.topaz_trident>"
+      tooltip-style: minecraft:topaz
+    model:
+      type: minecraft:select
+      property: minecraft:display_context
+      cases:
+        - when: ["gui", "ground", "fixed"]
+          model:
+            type: minecraft:model
+            path: minecraft:item/custom/topaz_trident
+            generation:
+              parent: minecraft:item/generated
+              textures:
+                layer0: minecraft:item/custom/topaz_trident
+      fallback:
+        type: minecraft:condition
+        property: minecraft:using_item
+        on-true:
+          type: minecraft:model
+          path: minecraft:item/custom/topaz_trident_throwing
+        on-false:
+          type: minecraft:model
+          path: minecraft:item/custom/topaz_trident_in_hand
 templates:
   default:armor/topaz:
     material: "chainmail_{part}"
@@ -395,4 +463,12 @@ recipes#11:
     template-type: default:topaz
     result:
       id: default:topaz_rod
+      count: 1
+  default:topaz_trident:
+    type: smithing_transform
+    base: minecraft:trident
+    addition: default:topaz
+    template-type: default:topaz
+    result:
+      id: default:topaz_trident
       count: 1

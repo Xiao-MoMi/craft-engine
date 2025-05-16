@@ -5,7 +5,6 @@ import net.momirealms.craftengine.core.plugin.Plugin;
 import net.momirealms.craftengine.core.util.Key;
 import org.jetbrains.annotations.ApiStatus;
 
-import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
@@ -42,9 +41,7 @@ public interface NetWorkUser {
 
     Object platformPlayer();
 
-    Map<Integer, List<Integer>> furnitureView();
-
-    Map<Integer, Object> entityView();
+    Map<Integer, EntityPacketHandler> entityPacketHandlers();
 
     boolean clientModEnabled();
 

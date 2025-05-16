@@ -5,7 +5,7 @@ import net.momirealms.craftengine.core.item.Item;
 import net.momirealms.craftengine.core.loot.LootConditions;
 import net.momirealms.craftengine.core.loot.LootContext;
 import net.momirealms.craftengine.core.plugin.context.Condition;
-import net.momirealms.craftengine.core.plugin.context.parameter.PlayerParameters;
+import net.momirealms.craftengine.core.plugin.context.parameter.DirectContextParameters;
 import net.momirealms.craftengine.core.plugin.locale.LocalizedResourceConfigException;
 import net.momirealms.craftengine.core.registry.BuiltInRegistries;
 import net.momirealms.craftengine.core.registry.Holder;
@@ -31,7 +31,7 @@ public class ApplyBonusCountFunction<T> extends AbstractLootConditionalFunction<
 
     @Override
     protected Item<T> applyInternal(Item<T> item, LootContext context) {
-        Optional<Item<?>> itemInHand = context.getOptionalParameter(PlayerParameters.MAIN_HAND_ITEM);
+        Optional<Item<?>> itemInHand = context.getOptionalParameter(DirectContextParameters.ITEM_IN_HAND);
         int level = itemInHand.map(value -> value.getEnchantment(this.enchantment).map(Enchantment::level).orElse(0)).orElse(0);
         int newCount = this.formula.apply(item.count(), level);
         item.count(newCount);

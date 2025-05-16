@@ -1,6 +1,6 @@
 plugins {
     id("fabric-loom") version "1.10-SNAPSHOT"
-    id("com.gradleup.shadow") version "9.0.0-beta11"
+    id("com.gradleup.shadow") version "9.0.0-beta13"
 }
 
 version = property("project_version")!!

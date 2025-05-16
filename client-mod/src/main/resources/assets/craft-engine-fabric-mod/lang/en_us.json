@@ -2,6 +2,8 @@
   "title.craftengine.config": "CraftEngine Settings",
   "category.craftengine.general": "General",
   "option.craftengine.enable_network": "Enable custom blocks in server",
+  "option.craftengine.enable_cancel_block_update": "Enable cancelling block updates in the server",
   "tooltip.craftengine.enable_network": "Changes requires re-entering the server to take effect",
+  "tooltip.craftengine.enable_cancel_block_update": "Only works on servers with CraftEngine installed.",
   "disconnect.craftengine.block_registry_mismatch": "Block registry size mismatch. Current: %s. Expected: %s. \n 1. Make sure that the configs are the same as the server's. \n 2. Do not use any mod that might register new block. \n 3. Do not install ViaVersion."
 }

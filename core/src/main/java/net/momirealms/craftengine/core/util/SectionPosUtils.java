@@ -4,10 +4,7 @@ import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap;
 import net.momirealms.craftengine.core.world.ChunkPos;
 import net.momirealms.craftengine.core.world.SectionPos;
 
-import java.util.BitSet;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 public class SectionPosUtils {
 
@@ -46,8 +43,8 @@ public class SectionPosUtils {
         return nearby;
     }
 
-    public static Set<SectionPos> calculateAffectedRegions(int sx, int sy, int sz, int x) {
-        Set<SectionPos> regions = new HashSet<>();
+    public static List<SectionPos> calculateAffectedRegions(int sx, int sy, int sz, int x) {
+        List<SectionPos> regions = new ArrayList<>();
         int rxStart = (sx - x) >> 4;
         int rxEnd = (sx + x) >> 4;
         int ryStart = (sy - x) >> 4;

@@ -54,7 +54,6 @@ public class ReloadCommand extends BukkitCommandFeature<CommandSender> {
                                         Component.text(reloadResult.asyncTime()),
                                         Component.text(reloadResult.syncTime())
                                 );
-
                             });
                         } catch (Exception e) {
                             handleFeedback(context, MessageConstants.COMMAND_RELOAD_CONFIG_FAILURE);
@@ -88,6 +87,9 @@ public class ReloadCommand extends BukkitCommandFeature<CommandSender> {
                                             Component.text(reloadResult.syncTime()),
                                             Component.text(packTime)
                                     );
+                                } catch (Exception e) {
+                                    handleFeedback(context, MessageConstants.COMMAND_RELOAD_PACK_FAILURE);
+                                    plugin().logger().warn("Failed to generate resource pack", e);
                                 } finally {
                                     RELOAD_PACK_FLAG = false;
                                 }

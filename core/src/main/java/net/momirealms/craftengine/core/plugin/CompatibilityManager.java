@@ -27,5 +27,7 @@ public interface CompatibilityManager {
 
     String parse(Player player, String text);
 
+    String parse(Player player1, Player player2, String text);
+
     int getPlayerProtocolVersion(UUID uuid);
 }

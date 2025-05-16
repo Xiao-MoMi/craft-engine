@@ -1,6 +1,6 @@
 package net.momirealms.craftengine.core.entity.furniture;
 
-import net.momirealms.craftengine.core.entity.Entity;
+import net.momirealms.craftengine.core.entity.AbstractEntity;
 
 public interface ExternalModel {
 
@@ -8,5 +8,5 @@ public interface ExternalModel {
 
     String id();
 
-    void bindModel(Entity entity);
+    void bindModel(AbstractEntity entity);
 }

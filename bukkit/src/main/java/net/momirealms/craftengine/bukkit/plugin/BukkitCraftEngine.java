@@ -7,6 +7,7 @@ import net.momirealms.craftengine.bukkit.block.BukkitBlockManager;
 import net.momirealms.craftengine.bukkit.block.behavior.BukkitBlockBehaviors;
 import net.momirealms.craftengine.bukkit.entity.furniture.BukkitFurnitureManager;
 import net.momirealms.craftengine.bukkit.entity.furniture.hitbox.BukkitHitBoxTypes;
+import net.momirealms.craftengine.bukkit.entity.projectile.BukkitProjectileManager;
 import net.momirealms.craftengine.bukkit.font.BukkitFontManager;
 import net.momirealms.craftengine.bukkit.item.BukkitItemManager;
 import net.momirealms.craftengine.bukkit.item.behavior.BukkitItemBehaviors;
@@ -40,7 +41,6 @@ import net.momirealms.craftengine.core.util.ReflectionUtils;
 import net.momirealms.craftengine.core.util.VersionHelper;
 import org.bstats.bukkit.Metrics;
 import org.bukkit.Bukkit;
-import org.bukkit.Location;
 import org.bukkit.World;
 import org.bukkit.command.CommandSender;
 import org.bukkit.inventory.ItemStack;
@@ -166,6 +166,7 @@ public class BukkitCraftEngine extends CraftEngine {
         super.vanillaLootManager = new BukkitVanillaLootManager(this);
         super.fontManager = new BukkitFontManager(this);
         super.advancementManager = new BukkitAdvancementManager(this);
+        super.projectileManager = new BukkitProjectileManager(this);
         super.onPluginEnable();
         super.compatibilityManager().onEnable();
     }
@@ -192,15 +193,7 @@ public class BukkitCraftEngine extends CraftEngine {
             new Metrics(this.bootstrap(), 24333);
         }
         // tick task
-        if (VersionHelper.isFolia()) {
-            this.tickTask = this.scheduler().sync().runRepeating(() -> {
-                for (BukkitServerPlayer serverPlayer : networkManager().onlineUsers()) {
-                    org.bukkit.entity.Player player = serverPlayer.platformPlayer();
-                    Location location = player.getLocation();
-                    scheduler().sync().run(serverPlayer::tick, player.getWorld(), location.getBlockX() >> 4, location.getBlockZ() >> 4);
-                }
-            }, 1, 1);
-        } else {
+        if (!VersionHelper.isFolia()) {
             this.tickTask = this.scheduler().sync().runRepeating(() -> {
                 for (BukkitServerPlayer serverPlayer : networkManager().onlineUsers()) {
                     serverPlayer.tick();

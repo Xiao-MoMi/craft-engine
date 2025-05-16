@@ -83,6 +83,10 @@ public abstract class ItemFactory<W extends ItemWrapper<I>, I> {
 
     protected abstract void damage(W item, Integer damage);
 
+    protected abstract Optional<Integer> dyedColor(W item);
+
+    protected abstract void dyedColor(W item, Integer color);
+
     protected abstract Optional<Integer> maxDamage(W item);
 
     protected abstract void maxDamage(W item, Integer damage);
@@ -138,4 +142,7 @@ public abstract class ItemFactory<W extends ItemWrapper<I>, I> {
     protected abstract void equippable(W item, EquipmentData data);
 
     protected abstract Optional<EquipmentData> equippable(W item);
+
+    protected abstract byte[] toByteArray(W item);
+
 }

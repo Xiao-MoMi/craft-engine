@@ -1,7 +1,6 @@
 package net.momirealms.craftengine.core.plugin.context.number;
 
 import net.momirealms.craftengine.core.plugin.context.Context;
-import net.momirealms.craftengine.core.util.Factory;
 import net.momirealms.craftengine.core.util.Key;
 import net.momirealms.craftengine.core.util.RandomUtils;
 import net.momirealms.craftengine.core.util.ResourceConfigUtils;
@@ -41,7 +40,7 @@ public class UniformNumberProvider implements NumberProvider {
         return NumberProviders.UNIFORM;
     }
 
-    public static class FactoryImpl implements Factory<NumberProvider> {
+    public static class FactoryImpl implements NumberProviderFactory {
 
         @Override
         public NumberProvider create(Map<String, Object> arguments) {

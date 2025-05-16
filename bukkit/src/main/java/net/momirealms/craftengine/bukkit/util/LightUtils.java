@@ -23,16 +23,11 @@ public class LightUtils {
                 List<Object> players = FastNMS.INSTANCE.method$ChunkHolder$getPlayers(chunkHolder);
                 if (players.isEmpty()) continue;
                 Object lightEngine = Reflections.field$ChunkHolder$lightEngine.get(chunkHolder);
-                BitSet blockChangedLightSectionFilter = (BitSet) Reflections.field$ChunkHolder$blockChangedLightSectionFilter.get(chunkHolder);
-                blockChangedLightSectionFilter.or(entry.getValue());
-                BitSet skyChangedLightSectionFilter = (BitSet) Reflections.field$ChunkHolder$skyChangedLightSectionFilter.get(chunkHolder);
                 Object chunkPos = FastNMS.INSTANCE.constructor$ChunkPos((int) chunkKey, (int) (chunkKey >> 32));
-                Object lightPacket = FastNMS.INSTANCE.constructor$ClientboundLightUpdatePacket(chunkPos, lightEngine, skyChangedLightSectionFilter, blockChangedLightSectionFilter);
+                Object lightPacket = FastNMS.INSTANCE.constructor$ClientboundLightUpdatePacket(chunkPos, lightEngine, entry.getValue(), entry.getValue());
                 for (Object player : players) {
                     FastNMS.INSTANCE.sendPacket(player, lightPacket);
                 }
-                blockChangedLightSectionFilter.clear();
-                skyChangedLightSectionFilter.clear();
             }
         } catch (Exception e) {
             CraftEngine.instance().logger().warn("Could not update light for world " + world.getName());

@@ -10,9 +10,9 @@ import java.util.Map;
 
 public class ConstantTint implements Tint {
     public static final Factory FACTORY = new Factory();
-    private final Either<Integer, List<Integer>> value;
+    private final Either<Integer, List<Float>> value;
 
-    public ConstantTint(Either<Integer, List<Integer>> value) {
+    public ConstantTint(Either<Integer, List<Float>> value) {
         this.value = value;
     }
 

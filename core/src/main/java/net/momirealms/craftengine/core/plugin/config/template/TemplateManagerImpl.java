@@ -2,7 +2,7 @@ package net.momirealms.craftengine.core.plugin.config.template;
 
 import net.momirealms.craftengine.core.pack.LoadingSequence;
 import net.momirealms.craftengine.core.pack.Pack;
-import net.momirealms.craftengine.core.plugin.config.ConfigSectionParser;
+import net.momirealms.craftengine.core.plugin.config.ConfigParser;
 import net.momirealms.craftengine.core.plugin.locale.LocalizedResourceConfigException;
 import net.momirealms.craftengine.core.util.GsonHelper;
 import net.momirealms.craftengine.core.util.Key;
@@ -24,7 +24,7 @@ public class TemplateManagerImpl implements TemplateManager {
         this.templateParser = new TemplateParser();
     }
 
-    public class TemplateParser implements ConfigSectionParser {
+    public class TemplateParser implements ConfigParser {
         public static final String[] CONFIG_SECTION_NAME = new String[] {"templates", "template"};
 
         @Override
@@ -38,13 +38,16 @@ public class TemplateManagerImpl implements TemplateManager {
         }
 
         @Override
-        public boolean isTemplate() {
+        public boolean supportsParsingObject() {
             return true;
         }
 
         @Override
-        public void parseSection(Pack pack, Path path, Key id, Map<String, Object> section) {
-            addTemplate(pack, path, id, section);
+        public void parseObject(Pack pack, Path path, Key id, Object obj) {
+            if (templates.containsKey(id)) {
+                throw new LocalizedResourceConfigException("warning.config.template.duplicate", path.toString(), id.toString());
+            }
+            templates.put(id, obj);
         }
     }
 
@@ -54,16 +57,8 @@ public class TemplateManagerImpl implements TemplateManager {
     }
 
     @Override
-    public ConfigSectionParser parser() {
+    public ConfigParser parser() {
         return this.templateParser;
-    }
-
-    @Override
-    public void addTemplate(Pack pack, Path path, Key id, Object obj) {
-        if (this.templates.containsKey(id)) {
-            throw new LocalizedResourceConfigException("warning.config.template.duplicate", path.toString(), id.toString());
-        }
-        this.templates.put(id, obj);
     }
 
     @Override

@@ -77,7 +77,7 @@ public class BaseItemModel implements ItemModel {
             Map<String, Object> generation = MiscUtils.castToMap(arguments.get("generation"), true);
             ModelGeneration modelGeneration = null;
             if (generation != null) {
-                modelGeneration = new ModelGeneration(Key.of(modelPath), generation);
+                modelGeneration = ModelGeneration.of(Key.of(modelPath), generation);
             }
             if (arguments.containsKey("tints")) {
                 List<Tint> tints = new ArrayList<>();

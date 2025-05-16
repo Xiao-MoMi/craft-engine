@@ -7,7 +7,7 @@ import net.momirealms.craftengine.core.pack.model.ItemModel;
 import net.momirealms.craftengine.core.pack.model.LegacyOverridesModel;
 import net.momirealms.craftengine.core.pack.model.generation.ModelGenerator;
 import net.momirealms.craftengine.core.plugin.Manageable;
-import net.momirealms.craftengine.core.plugin.config.ConfigSectionParser;
+import net.momirealms.craftengine.core.plugin.config.ConfigParser;
 import net.momirealms.craftengine.core.registry.Holder;
 import net.momirealms.craftengine.core.util.Key;
 import org.incendo.cloud.suggestion.Suggestion;
@@ -17,7 +17,7 @@ import java.util.*;
 
 public interface ItemManager<T> extends Manageable, ModelGenerator {
 
-    ConfigSectionParser parser();
+    ConfigParser parser();
 
     Map<Key, TreeSet<LegacyOverridesModel>> legacyItemOverrides();
 
@@ -40,6 +40,8 @@ public interface ItemManager<T> extends Manageable, ModelGenerator {
     Item<T> createWrappedItem(Key id, @Nullable Player player);
 
     Item<T> wrap(T itemStack);
+
+    Item<T> fromByteArray(byte[] bytes);
 
     Collection<Key> items();
 

@@ -3,7 +3,7 @@ package net.momirealms.craftengine.core.plugin.locale;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.translation.Translator;
 import net.momirealms.craftengine.core.plugin.Manageable;
-import net.momirealms.craftengine.core.plugin.config.ConfigSectionParser;
+import net.momirealms.craftengine.core.plugin.config.ConfigParser;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
@@ -44,7 +44,7 @@ public interface TranslationManager extends Manageable {
         return TranslationManagerImpl.instance;
     }
 
-    ConfigSectionParser[] parsers();
+    ConfigParser[] parsers();
 
     default String miniMessageTranslation(String key) {
         return miniMessageTranslation(key, null);

@@ -52,7 +52,7 @@ public class GrassBlockBehavior extends BukkitBlockBehavior {
             int x = FastNMS.INSTANCE.field$Vec3i$x(blockPos);
             int y = FastNMS.INSTANCE.field$Vec3i$y(blockPos);
             int z = FastNMS.INSTANCE.field$Vec3i$z(blockPos);
-            world.spawnParticle(ParticleUtils.getParticle("HAPPY_VILLAGER"), x + 0.5, y + 1.5, z + 0.5, 20, 2, 0, 2);
+            world.spawnParticle(ParticleUtils.HAPPY_VILLAGER, x + 0.5, y + 1.5, z + 0.5, 20, 2, 0, 2);
         }
         return true;
     }

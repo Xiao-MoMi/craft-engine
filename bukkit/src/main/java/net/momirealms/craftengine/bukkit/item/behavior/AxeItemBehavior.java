@@ -89,7 +89,7 @@ public class AxeItemBehavior extends ItemBehavior {
         bukkitPlayer.setStatistic(Statistic.USE_ITEM, material, bukkitPlayer.getStatistic(Statistic.USE_ITEM, material) + 1);
 
         // resend swing if it's not interactable on client side
-        if (!InteractUtils.isInteractable(BlockStateUtils.getBlockOwnerIdFromState(state.vanillaBlockState().handle()),
+        if (!InteractUtils.isInteractable(
                 bukkitPlayer, BlockStateUtils.fromBlockData(state.vanillaBlockState().handle()),
                 context.getHitResult(), item
         ) || player.isSecondaryUseActive()) {

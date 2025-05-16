@@ -1,7 +1,9 @@
 package net.momirealms.craftengine.core.world;
 
+import net.momirealms.craftengine.core.block.CustomBlock;
+import net.momirealms.craftengine.core.block.ImmutableBlockState;
 import net.momirealms.craftengine.core.item.context.BlockPlaceContext;
-import net.momirealms.craftengine.core.util.Key;
+import org.jetbrains.annotations.Nullable;
 
 public interface BlockInWorld {
 
@@ -13,9 +15,15 @@ public interface BlockInWorld {
         return false;
     }
 
-    Key owner();
+    @Nullable
+    CustomBlock customBlock();
 
-    String getAsString();
+    @Nullable
+    ImmutableBlockState customBlockState();
+
+    default WorldPosition position() {
+        return new WorldPosition(world(), x(), y(), z());
+    }
 
     World world();
 

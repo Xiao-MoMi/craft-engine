@@ -8,7 +8,7 @@ import net.momirealms.craftengine.core.item.recipe.*;
 import net.momirealms.craftengine.core.pack.LoadingSequence;
 import net.momirealms.craftengine.core.pack.Pack;
 import net.momirealms.craftengine.core.plugin.CraftEngine;
-import net.momirealms.craftengine.core.plugin.config.ConfigSectionParser;
+import net.momirealms.craftengine.core.plugin.config.ConfigParser;
 import net.momirealms.craftengine.core.plugin.context.ContextHolder;
 import net.momirealms.craftengine.core.plugin.context.PlayerOptionalContext;
 import net.momirealms.craftengine.core.plugin.gui.*;
@@ -68,7 +68,7 @@ public class ItemBrowserManagerImpl implements ItemBrowserManager {
     }
 
     @Override
-    public ConfigSectionParser parser() {
+    public ConfigParser parser() {
         return this.categoryParser;
     }
 
@@ -93,7 +93,7 @@ public class ItemBrowserManagerImpl implements ItemBrowserManager {
         return Optional.ofNullable(this.byId.get(key));
     }
 
-    public class CategoryParser implements ConfigSectionParser {
+    public class CategoryParser implements ConfigParser {
         public static final String[] CONFIG_SECTION_NAME = new String[] {"categories", "category"};
 
         @Override

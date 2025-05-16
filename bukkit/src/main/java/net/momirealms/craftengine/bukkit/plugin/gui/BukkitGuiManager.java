@@ -1,13 +1,10 @@
 package net.momirealms.craftengine.bukkit.plugin.gui;
 
 import net.momirealms.craftengine.bukkit.plugin.BukkitCraftEngine;
-import net.momirealms.craftengine.bukkit.util.LegacyInventoryUtils;
 import net.momirealms.craftengine.core.plugin.gui.AbstractGui;
 import net.momirealms.craftengine.core.plugin.gui.Gui;
 import net.momirealms.craftengine.core.plugin.gui.GuiManager;
 import net.momirealms.craftengine.core.plugin.gui.Inventory;
-import net.momirealms.craftengine.core.plugin.scheduler.SchedulerTask;
-import net.momirealms.craftengine.core.util.VersionHelper;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
@@ -19,7 +16,6 @@ import org.bukkit.event.inventory.InventoryDragEvent;
 
 public class BukkitGuiManager implements GuiManager, Listener {
     private final BukkitCraftEngine plugin;
-    private SchedulerTask timerTask;
 
     public BukkitGuiManager(BukkitCraftEngine plugin) {
         this.plugin = plugin;
@@ -28,35 +24,11 @@ public class BukkitGuiManager implements GuiManager, Listener {
     @Override
     public void delayedInit() {
         Bukkit.getPluginManager().registerEvents(this, plugin.bootstrap());
-        this.timerTask = plugin.scheduler().sync().runRepeating(this::timerTask, 30, 30);
     }
 
     @Override
     public void disable() {
         HandlerList.unregisterAll(this);
-        if (this.timerTask != null && !this.timerTask.cancelled()) {
-            this.timerTask.cancel();
-        }
-    }
-
-    public void timerTask() {
-        if (VersionHelper.isFolia()) {
-            for (Player player : Bukkit.getOnlinePlayers()) {
-                this.plugin.scheduler().sync().run(() -> {
-                    org.bukkit.inventory.Inventory top = !VersionHelper.isOrAbove1_21() ? LegacyInventoryUtils.getTopInventory(player) : player.getOpenInventory().getTopInventory();
-                    if (top.getHolder() instanceof CraftEngineInventoryHolder holder) {
-                        holder.gui().onTimer();
-                    }
-                }, player.getWorld(), player.getLocation().getBlockX() >> 4, player.getLocation().getBlockZ() >> 4);
-            }
-        } else {
-            for (Player player : Bukkit.getOnlinePlayers()) {
-                org.bukkit.inventory.Inventory top = !VersionHelper.isOrAbove1_21() ? LegacyInventoryUtils.getTopInventory(player) : player.getOpenInventory().getTopInventory();
-                if (top.getHolder() instanceof CraftEngineInventoryHolder holder) {
-                    holder.gui().onTimer();
-                }
-            }
-        }
     }
 
     @Override

@@ -27,7 +27,9 @@ public class ChestSpecialModel implements SpecialModel {
         JsonObject json = new JsonObject();
         json.addProperty("type", type().toString());
         json.addProperty("texture", texture);
-        json.addProperty("openness", openness);
+        if (openness > 0) {
+            json.addProperty("openness", openness);
+        }
         return json;
     }
 

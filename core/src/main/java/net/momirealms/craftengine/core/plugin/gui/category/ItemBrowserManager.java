@@ -5,7 +5,7 @@ import net.momirealms.craftengine.core.entity.player.Player;
 import net.momirealms.craftengine.core.item.recipe.Recipe;
 import net.momirealms.craftengine.core.plugin.Manageable;
 import net.momirealms.craftengine.core.plugin.config.Config;
-import net.momirealms.craftengine.core.plugin.config.ConfigSectionParser;
+import net.momirealms.craftengine.core.plugin.config.ConfigParser;
 import net.momirealms.craftengine.core.plugin.gui.Gui;
 import net.momirealms.craftengine.core.util.Key;
 
@@ -19,7 +19,7 @@ public interface ItemBrowserManager extends Manageable {
     int MAX_RECIPE_DEPTH = 16;
     String GET_ITEM_PERMISSION = "craftengine.browser.get_item";
 
-    ConfigSectionParser parser();
+    ConfigParser parser();
 
     void addExternalCategoryMember(Key item, List<Key> category);
 

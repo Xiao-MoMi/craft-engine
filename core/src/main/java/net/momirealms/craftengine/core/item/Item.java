@@ -56,6 +56,10 @@ public interface Item<I> {
 
     Optional<Integer> maxDamage();
 
+    Item<I> dyedColor(Integer data);
+
+    Optional<Integer> dyedColor();
+
     Item<I> customName(String displayName);
 
     Optional<String> customName();
@@ -145,4 +149,6 @@ public interface Item<I> {
     Item<I> mergeCopy(Item<?> another);
 
     void merge(Item<I> another);
+
+    byte[] toByteArray();
 }

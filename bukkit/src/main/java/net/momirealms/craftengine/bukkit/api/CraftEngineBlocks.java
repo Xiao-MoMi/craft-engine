@@ -12,11 +12,11 @@ import net.momirealms.craftengine.core.block.ImmutableBlockState;
 import net.momirealms.craftengine.core.block.UpdateOption;
 import net.momirealms.craftengine.core.item.Item;
 import net.momirealms.craftengine.core.plugin.context.ContextHolder;
-import net.momirealms.craftengine.core.plugin.context.parameter.CommonParameters;
+import net.momirealms.craftengine.core.plugin.context.parameter.DirectContextParameters;
 import net.momirealms.craftengine.core.util.Key;
-import net.momirealms.craftengine.core.world.Vec3d;
 import net.momirealms.craftengine.core.world.World;
 import net.momirealms.craftengine.core.world.WorldEvents;
+import net.momirealms.craftengine.core.world.WorldPosition;
 import net.momirealms.sparrow.nbt.CompoundTag;
 import org.bukkit.Location;
 import org.bukkit.Material;
@@ -169,20 +169,20 @@ public final class CraftEngineBlocks {
         if (state == null || state.isEmpty()) return false;
         World world = new BukkitWorld(block.getWorld());
         Location location = block.getLocation();
-        Vec3d vec3d = new Vec3d(location.getBlockX() + 0.5, location.getBlockY() + 0.5, location.getBlockZ() + 0.5);
+        WorldPosition position = new WorldPosition(world, location.getBlockX() + 0.5, location.getBlockY() + 0.5, location.getBlockZ() + 0.5);
         if (dropLoot) {
-            ContextHolder.Builder builder = new ContextHolder.Builder().withParameter(CommonParameters.WORLD, world).withParameter(CommonParameters.LOCATION, vec3d);
+            ContextHolder.Builder builder = new ContextHolder.Builder()
+                    .withParameter(DirectContextParameters.POSITION, position);
             BukkitServerPlayer serverPlayer = BukkitCraftEngine.instance().adapt(player);
             if (player != null) {
-                builder.withParameter(CommonParameters.PLAYER, serverPlayer);
-                //mark item builder.withOptionalParameter(CommonParameters.MAIN_HAND_ITEM, serverPlayer.getItemInHand(InteractionHand.MAIN_HAND));
+                builder.withParameter(DirectContextParameters.PLAYER, serverPlayer);
             }
             for (Item<?> item : state.getDrops(builder, world, serverPlayer)) {
-                world.dropItemNaturally(vec3d, item);
+                world.dropItemNaturally(position, item);
             }
         }
         if (playSound) {
-            world.playBlockSound(vec3d, state.sounds().breakSound());
+            world.playBlockSound(position, state.sounds().breakSound());
         }
         if (sendParticles) {
             FastNMS.INSTANCE.method$Level$levelEvent(world.serverWorld(), WorldEvents.BLOCK_BREAK_EFFECT, LocationUtils.toBlockPos(location.getBlockX(), location.getBlockY(), location.getBlockZ()), state.customBlockState().registryId());

@@ -4,7 +4,7 @@ import net.kyori.adventure.text.Component;
 import net.momirealms.craftengine.core.pack.LoadingSequence;
 import net.momirealms.craftengine.core.pack.Pack;
 import net.momirealms.craftengine.core.plugin.CraftEngine;
-import net.momirealms.craftengine.core.plugin.config.ConfigSectionParser;
+import net.momirealms.craftengine.core.plugin.config.ConfigParser;
 import net.momirealms.craftengine.core.plugin.locale.LocalizedResourceConfigException;
 import net.momirealms.craftengine.core.util.*;
 
@@ -32,8 +32,8 @@ public abstract class AbstractSoundManager implements SoundManager {
     }
 
     @Override
-    public ConfigSectionParser[] parsers() {
-        return new ConfigSectionParser[] { this.soundParser, this.songParser };
+    public ConfigParser[] parsers() {
+        return new ConfigParser[] { this.soundParser, this.songParser };
     }
 
     @Override
@@ -59,7 +59,7 @@ public abstract class AbstractSoundManager implements SoundManager {
 
     protected abstract void registerSongs(Map<Key, JukeboxSong> songs);
 
-    public class SongParser implements ConfigSectionParser {
+    public class SongParser implements ConfigParser {
         public static final String[] CONFIG_SECTION_NAME = new String[] {"jukebox_songs", "song", "songs", "jukebox", "jukebox_song"};
 
         @Override
@@ -86,7 +86,7 @@ public abstract class AbstractSoundManager implements SoundManager {
         }
     }
 
-    public class SoundParser implements ConfigSectionParser {
+    public class SoundParser implements ConfigParser {
         public static final String[] CONFIG_SECTION_NAME = new String[] {"sounds", "sound"};
 
         @Override

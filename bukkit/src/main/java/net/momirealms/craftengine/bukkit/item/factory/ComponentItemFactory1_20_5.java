@@ -245,6 +245,30 @@ public class ComponentItemFactory1_20_5 extends BukkitItemFactory<ComponentItemW
     }
 
     @Override
+    protected Optional<Integer> dyedColor(ComponentItemWrapper item) {
+        if (!item.hasComponent(ComponentTypes.DYED_COLOR)) return Optional.empty();
+        Object javaObj = ComponentType.encodeJava(
+                ComponentTypes.DYED_COLOR,
+                item.getComponent(ComponentTypes.DYED_COLOR)
+        ).orElse(null);
+        if (javaObj instanceof Integer integer) {
+            return Optional.of(integer);
+        } else if (javaObj instanceof Map<?, ?> map) {
+            return Optional.of((int) map.get("rgb"));
+        }
+        return Optional.empty();
+    }
+
+    @Override
+    protected void dyedColor(ComponentItemWrapper item, Integer color) {
+        if (color == null) {
+            item.resetComponent(ComponentTypes.DYED_COLOR);
+        } else {
+            item.setJavaComponent(ComponentTypes.DYED_COLOR, color);
+        }
+    }
+
+    @Override
     protected Optional<Integer> maxDamage(ComponentItemWrapper item) {
         if (!item.hasComponent(ComponentTypes.MAX_DAMAGE)) return Optional.of((int) item.getItem().getType().getMaxDurability());
         return Optional.ofNullable(
@@ -309,7 +333,7 @@ public class ComponentItemFactory1_20_5 extends BukkitItemFactory<ComponentItemW
         Object enchant = item.getComponent(ComponentTypes.ENCHANTMENTS);
         try {
             Map<String, Integer> map = EnchantmentUtils.toMap(enchant);
-            map.put(enchantment.toString(), enchantment.level());
+            map.put(enchantment.id().toString(), enchantment.level());
             item.setJavaComponent(ComponentTypes.ENCHANTMENTS, map);
         } catch (ReflectiveOperationException e) {
             plugin.logger().warn("Failed to add enchantment", e);
@@ -321,7 +345,7 @@ public class ComponentItemFactory1_20_5 extends BukkitItemFactory<ComponentItemW
         Object enchant = item.getComponent(ComponentTypes.STORED_ENCHANTMENTS);
         try {
             Map<String, Integer> map = EnchantmentUtils.toMap(enchant);
-            map.put(enchantment.toString(), enchantment.level());
+            map.put(enchantment.id().toString(), enchantment.level());
             item.setJavaComponent(ComponentTypes.STORED_ENCHANTMENTS, map);
         } catch (ReflectiveOperationException e) {
             plugin.logger().warn("Failed to add stored enchantment", e);

@@ -4,7 +4,7 @@ import net.momirealms.craftengine.core.item.Enchantment;
 import net.momirealms.craftengine.core.item.Item;
 import net.momirealms.craftengine.core.plugin.context.Condition;
 import net.momirealms.craftengine.core.plugin.context.Context;
-import net.momirealms.craftengine.core.plugin.context.parameter.PlayerParameters;
+import net.momirealms.craftengine.core.plugin.context.parameter.DirectContextParameters;
 import net.momirealms.craftengine.core.plugin.locale.LocalizedResourceConfigException;
 import net.momirealms.craftengine.core.util.Key;
 import net.momirealms.craftengine.core.util.RandomUtils;
@@ -31,7 +31,7 @@ public class TableBonusCondition<CTX extends Context> implements Condition<CTX> 
 
     @Override
     public boolean test(CTX ctx) {
-        Optional<Item<?>> item = ctx.getOptionalParameter(PlayerParameters.MAIN_HAND_ITEM);
+        Optional<Item<?>> item = ctx.getOptionalParameter(DirectContextParameters.ITEM_IN_HAND);
         int level = item.map(value -> value.getEnchantment(this.enchantmentType).map(Enchantment::level).orElse(0)).orElse(0);
         float f = this.values.get(Math.min(level, this.values.size() - 1));
         return RandomUtils.generateRandomFloat(0, 1) < f;

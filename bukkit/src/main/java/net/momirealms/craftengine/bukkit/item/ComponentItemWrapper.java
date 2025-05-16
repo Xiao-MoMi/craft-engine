@@ -14,11 +14,11 @@ public class ComponentItemWrapper implements ItemWrapper<ItemStack> {
     private final ItemStack item;
 
     public ComponentItemWrapper(final ItemStack item) {
-        this.item = item;
+        this.item = FastNMS.INSTANCE.ensureCraftItemStack(item);
     }
 
     public ComponentItemWrapper(final ItemStack item, int count) {
-        this.item = item;
+        this.item = FastNMS.INSTANCE.ensureCraftItemStack(item);
         this.item.setAmount(count);
     }
 
@@ -71,7 +71,7 @@ public class ComponentItemWrapper implements ItemWrapper<ItemStack> {
 
     @Override
     public ItemWrapper<ItemStack> copyWithCount(int count) {
-        ItemStack copied = item.clone();
+        ItemStack copied = this.item.clone();
         copied.setAmount(count);
         return new ComponentItemWrapper(copied);
     }

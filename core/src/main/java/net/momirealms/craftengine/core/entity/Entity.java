@@ -2,34 +2,37 @@ package net.momirealms.craftengine.core.entity;
 
 import net.momirealms.craftengine.core.util.Direction;
 import net.momirealms.craftengine.core.util.Key;
-import net.momirealms.craftengine.core.world.Vec3d;
 import net.momirealms.craftengine.core.world.World;
+import net.momirealms.craftengine.core.world.WorldPosition;
 
-public abstract class Entity {
+import java.util.UUID;
 
-    public abstract Key type();
+public interface Entity {
+    Key type();
 
-    public abstract double x();
+    double x();
 
-    public abstract double y();
+    double y();
 
-    public abstract double z();
+    double z();
 
-    public Vec3d position() {
-        return new Vec3d(x(), y(), z());
-    }
+    WorldPosition position();
 
-    public abstract void tick();
+    void tick();
 
-    public abstract int entityID();
+    float getXRot();
 
-    public abstract float getXRot();
+    int entityID();
 
-    public abstract float getYRot();
+    float getYRot();
 
-    public abstract World world();
+    World world();
 
-    public abstract Direction getDirection();
+    Direction getDirection();
 
-    public abstract Object literalObject();
+    Object literalObject();
+
+    String name();
+
+    UUID uuid();
 }

@@ -9,6 +9,9 @@ import net.momirealms.craftengine.core.block.*;
 import net.momirealms.craftengine.core.block.properties.Property;
 import net.momirealms.craftengine.core.loot.LootTable;
 import net.momirealms.craftengine.core.plugin.CraftEngine;
+import net.momirealms.craftengine.core.plugin.context.PlayerOptionalContext;
+import net.momirealms.craftengine.core.plugin.context.function.Function;
+import net.momirealms.craftengine.core.plugin.event.EventTrigger;
 import net.momirealms.craftengine.core.registry.BuiltInRegistries;
 import net.momirealms.craftengine.core.registry.Holder;
 import net.momirealms.craftengine.core.registry.WritableRegistry;
@@ -19,12 +22,11 @@ import net.momirealms.craftengine.core.util.VersionHelper;
 import net.momirealms.craftengine.shared.ObjectHolder;
 import net.momirealms.craftengine.shared.block.BlockBehavior;
 import org.bukkit.inventory.ItemStack;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.lang.reflect.Field;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 public class BukkitCustomBlock extends CustomBlock {
 
@@ -35,10 +37,11 @@ public class BukkitCustomBlock extends CustomBlock {
             Map<String, Integer> appearances,
             Map<String, VariantState> variantMapper,
             BlockSettings settings,
-            Map<String, Object> behavior,
+            @NotNull EnumMap<EventTrigger, List<Function<PlayerOptionalContext>>> events,
+            @Nullable Map<String, Object> behavior,
             @Nullable LootTable<?> lootTable
     ) {
-        super(id, holder, properties, appearances, variantMapper, settings, behavior, lootTable);
+        super(id, holder, properties, appearances, variantMapper, settings, events, behavior, lootTable);
     }
 
     @SuppressWarnings("unchecked")
@@ -158,7 +161,7 @@ public class BukkitCustomBlock extends CustomBlock {
             // create or get block holder
             Holder.Reference<CustomBlock> holder = BuiltInRegistries.BLOCK.get(id).orElseGet(() ->
                     ((WritableRegistry<CustomBlock>) BuiltInRegistries.BLOCK).registerForHolder(new ResourceKey<>(BuiltInRegistries.BLOCK.key().location(), id)));
-            return new BukkitCustomBlock(id, holder, properties, appearances, variantMapper, settings, behavior, lootTable);
+            return new BukkitCustomBlock(id, holder, properties, appearances, variantMapper, settings, events, behavior, lootTable);
         }
     }
 }

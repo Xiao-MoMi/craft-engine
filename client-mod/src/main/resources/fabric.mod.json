@@ -24,6 +24,10 @@
     "modmenu": ["net.momirealms.craftengine.fabric.client.config.ModMenuIntegration"]
   },
 
+  "mixins": [
+    "craftengine.mixins.json"
+  ],
+
   "depends": {
     "fabricloader": ">=${loader_version}",
     "fabric": "*",

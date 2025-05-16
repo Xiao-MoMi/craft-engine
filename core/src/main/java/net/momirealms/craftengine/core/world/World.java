@@ -27,13 +27,15 @@ public interface World {
 
     UUID uuid();
 
-    void dropItemNaturally(Vec3d location, Item<?> item);
+    void dropItemNaturally(Position location, Item<?> item);
 
-    void dropExp(Vec3d location, int amount);
+    void dropExp(Position location, int amount);
 
-    void playBlockSound(Vec3d location, Key sound, float volume, float pitch);
+    void playBlockSound(Position location, Key sound, float volume, float pitch);
 
-    default void playBlockSound(Vec3d location, SoundData data) {
+    default void playBlockSound(Position location, SoundData data) {
         playBlockSound(location, data.id(), data.volume(), data.pitch());
     }
+
+    long time();
 }

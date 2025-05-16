@@ -1,0 +1,14 @@
+{
+  "required": true,
+  "package": "net.momirealms.craftengine.fabric.mixin",
+  "compatibilityLevel": "JAVA_21",
+  "client": [
+    "AbstractBlockStateMixin",
+    "AbstractRailBlockMixin",
+    "BlockItemMixin",
+    "FluidStateMixin"
+  ],
+  "injectors": {
+    "defaultRequire": 1
+  }
+}

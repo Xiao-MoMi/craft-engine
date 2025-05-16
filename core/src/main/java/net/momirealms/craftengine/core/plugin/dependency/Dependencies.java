@@ -280,6 +280,22 @@ public class Dependencies {
             List.of(Relocation.of("reactivestreams", "org{}reactivestreams"))
     );
 
+    public static final Dependency JIMFS = new Dependency(
+            "jimfs",
+            "com{}google{}jimfs",
+            "jimfs",
+            "jimfs",
+            List.of(Relocation.of("jimfs", "com{}google{}common{}jimfs"))
+    );
+
+    public static final Dependency COMMONS_IMAGING = new Dependency(
+            "commons-imaging",
+            "org{}apache{}commons",
+            "commons-imaging",
+            "commons-imaging",
+            List.of(Relocation.of("imaging", "org{}apache{}commons{}imaging"))
+    );
+
     public static final Dependency AMAZON_AWSSDK_S3 = new Dependency(
             "amazon-sdk-s3",
             "software{}amazon{}awssdk",

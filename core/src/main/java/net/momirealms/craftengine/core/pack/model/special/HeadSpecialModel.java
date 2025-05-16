@@ -5,6 +5,7 @@ import net.momirealms.craftengine.core.util.Key;
 import net.momirealms.craftengine.core.util.ResourceConfigUtils;
 
 import java.util.Map;
+import java.util.Optional;
 
 public class HeadSpecialModel implements SpecialModel {
     public static final Factory FACTORY = new Factory();
@@ -28,8 +29,12 @@ public class HeadSpecialModel implements SpecialModel {
         JsonObject json = new JsonObject();
         json.addProperty("type", type().toString());
         json.addProperty("kind", kind);
-        json.addProperty("texture", texture);
-        json.addProperty("animation", animation);
+        if (texture != null) {
+            json.addProperty("texture", texture);
+        }
+        if (animation != 0) {
+            json.addProperty("animation", animation);
+        }
         return json;
     }
 
@@ -38,7 +43,7 @@ public class HeadSpecialModel implements SpecialModel {
         @Override
         public SpecialModel create(Map<String, Object> arguments) {
             String kind = ResourceConfigUtils.requireNonEmptyStringOrThrow(arguments.get("kind"), "warning.config.item.model.special.head.missing_kind");
-            String texture = ResourceConfigUtils.requireNonEmptyStringOrThrow(arguments.get("texture"), "warning.config.item.model.special.head.missing_texture");
+            String texture = Optional.ofNullable(arguments.get("texture")).map(String::valueOf).orElse(null);
             int animation = ResourceConfigUtils.getAsInt(arguments.getOrDefault("animation", 0), "animation");
             return new HeadSpecialModel(kind, texture, animation);
         }

@@ -1,11 +1,8 @@
 package net.momirealms.craftengine.core.plugin.config.template;
 
-import net.momirealms.craftengine.core.pack.Pack;
 import net.momirealms.craftengine.core.plugin.Manageable;
-import net.momirealms.craftengine.core.plugin.config.ConfigSectionParser;
-import net.momirealms.craftengine.core.util.Key;
+import net.momirealms.craftengine.core.plugin.config.ConfigParser;
 
-import java.nio.file.Path;
 import java.util.Map;
 import java.util.regex.Pattern;
 
@@ -17,9 +14,7 @@ public interface TemplateManager extends Manageable {
     String OVERRIDES = "overrides";
     String ARGUMENTS = "arguments";
 
-    ConfigSectionParser parser();
-
-    void addTemplate(Pack pack, Path path, Key id, Object obj);
+    ConfigParser parser();
 
     Map<String, Object> applyTemplates(Map<String, Object> input);
 }

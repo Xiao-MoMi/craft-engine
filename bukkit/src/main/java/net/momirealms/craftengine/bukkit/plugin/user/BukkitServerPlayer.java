@@ -7,17 +7,20 @@ import net.momirealms.craftengine.bukkit.block.BukkitBlockManager;
 import net.momirealms.craftengine.bukkit.item.BukkitItemManager;
 import net.momirealms.craftengine.bukkit.nms.FastNMS;
 import net.momirealms.craftengine.bukkit.plugin.BukkitCraftEngine;
+import net.momirealms.craftengine.bukkit.plugin.gui.CraftEngineInventoryHolder;
 import net.momirealms.craftengine.bukkit.util.*;
 import net.momirealms.craftengine.bukkit.world.BukkitWorld;
 import net.momirealms.craftengine.core.block.BlockSettings;
 import net.momirealms.craftengine.core.block.ImmutableBlockState;
 import net.momirealms.craftengine.core.block.PackedBlockState;
+import net.momirealms.craftengine.core.entity.player.GameMode;
 import net.momirealms.craftengine.core.entity.player.InteractionHand;
 import net.momirealms.craftengine.core.entity.player.Player;
 import net.momirealms.craftengine.core.item.Item;
 import net.momirealms.craftengine.core.plugin.CraftEngine;
 import net.momirealms.craftengine.core.plugin.config.Config;
 import net.momirealms.craftengine.core.plugin.network.ConnectionState;
+import net.momirealms.craftengine.core.plugin.network.EntityPacketHandler;
 import net.momirealms.craftengine.core.plugin.network.ProtocolVersion;
 import net.momirealms.craftengine.core.util.Direction;
 import net.momirealms.craftengine.core.util.Key;
@@ -25,7 +28,10 @@ import net.momirealms.craftengine.core.util.VersionHelper;
 import net.momirealms.craftengine.core.world.BlockPos;
 import net.momirealms.craftengine.core.world.World;
 import net.momirealms.craftengine.core.world.WorldEvents;
-import org.bukkit.*;
+import org.bukkit.FluidCollisionMode;
+import org.bukkit.Location;
+import org.bukkit.Material;
+import org.bukkit.SoundCategory;
 import org.bukkit.attribute.Attribute;
 import org.bukkit.attribute.AttributeInstance;
 import org.bukkit.block.Block;
@@ -89,9 +95,8 @@ public class BukkitServerPlayer extends Player {
     // cache interaction range here
     private int lastUpdateInteractionRangeTick;
     private double cachedInteractionRange;
-    // for better fake furniture visual sync
-    private final Map<Integer, List<Integer>> furnitureView = new ConcurrentHashMap<>();
-    private final Map<Integer, Object> entityTypeView = new ConcurrentHashMap<>();
+
+    private final Map<Integer, EntityPacketHandler> entityTypeView = new ConcurrentHashMap<>();
 
     public BukkitServerPlayer(BukkitCraftEngine plugin, Channel channel) {
         this.channel = channel;
@@ -103,13 +108,6 @@ public class BukkitServerPlayer extends Player {
         this.serverPlayerRef = new WeakReference<>(FastNMS.INSTANCE.method$CraftPlayer$getHandle(player));
         this.uuid = player.getUniqueId();
         this.name = player.getName();
-//        if (Reflections.method$CraftPlayer$setSimplifyContainerDesyncCheck != null) {
-//            try {
-//                Reflections.method$CraftPlayer$setSimplifyContainerDesyncCheck.invoke(player, true);
-//            } catch (Exception e) {
-//                this.plugin.logger().warn("Failed to setSimplifyContainerDesyncCheck", e);
-//            }
-//        }
     }
 
     @Override
@@ -151,18 +149,18 @@ public class BukkitServerPlayer extends Player {
     }
 
     @Override
-    public boolean isCreativeMode() {
-        return platformPlayer().getGameMode() == GameMode.CREATIVE;
+    public GameMode gameMode() {
+        return switch (platformPlayer().getGameMode()) {
+            case CREATIVE -> GameMode.CREATIVE;
+            case SPECTATOR -> GameMode.SPECTATOR;
+            case ADVENTURE -> GameMode.ADVENTURE;
+            case SURVIVAL -> GameMode.SURVIVAL;
+        };
     }
 
     @Override
-    public boolean isSpectatorMode() {
-        return platformPlayer().getGameMode() == GameMode.SPECTATOR;
-    }
-
-    @Override
-    public boolean isAdventureMode() {
-        return platformPlayer().getGameMode() == GameMode.ADVENTURE;
+    public void setGameMode(GameMode gameMode) {
+        platformPlayer().setGameMode(Objects.requireNonNull(org.bukkit.GameMode.getByValue(gameMode.id())));
     }
 
     @Override
@@ -177,12 +175,22 @@ public class BukkitServerPlayer extends Player {
 
     @Override
     public void sendActionBar(Component text) {
-        try {
-            Object packet = Reflections.constructor$ClientboundSetActionBarTextPacket.newInstance(ComponentUtils.adventureToMinecraft(text));
-            sendPacket(packet, false);
-        } catch (ReflectiveOperationException e) {
-            plugin.logger().warn("Failed to send action bar", e);
-        }
+        Object packet = FastNMS.INSTANCE.constructor$ClientboundActionBarPacket(ComponentUtils.adventureToMinecraft(text));
+        sendPacket(packet, false);
+    }
+
+    @Override
+    public void sendTitle(Component title, Component subtitle, int fadeIn, int stay, int fadeOut) {
+        Object titlePacket = FastNMS.INSTANCE.constructor$ClientboundSetTitleTextPacket(ComponentUtils.adventureToMinecraft(title));
+        Object subtitlePacket = FastNMS.INSTANCE.constructor$ClientboundSetSubtitleTextPacket(ComponentUtils.adventureToMinecraft(subtitle));
+        Object timePacket = FastNMS.INSTANCE.constructor$ClientboundSetTitlesAnimationPacket(fadeIn, stay, fadeOut);
+        sendPackets(List.of(titlePacket, subtitlePacket, timePacket), false);
+    }
+
+    @Override
+    public void sendMessage(Component text, boolean overlay) {
+        Object packet = FastNMS.INSTANCE.constructor$ClientboundSystemChatPacket(ComponentUtils.adventureToMinecraft(text), overlay);
+        sendPacket(packet, false);
     }
 
     @Override
@@ -334,6 +342,9 @@ public class BukkitServerPlayer extends Player {
         } else {
             this.gameTicks = FastNMS.INSTANCE.field$MinecraftServer$currentTick();
         }
+        if (this.gameTicks % 30 == 0) {
+            this.updateGUI();
+        }
         if (this.isDestroyingBlock)  {
             this.tickBlockDestroy();
         }
@@ -347,6 +358,13 @@ public class BukkitServerPlayer extends Player {
                 this.previousEyeLocation = eyeLocation;
                 this.predictNextBlockToMine();
             }
+        }
+    }
+
+    private void updateGUI() {
+        org.bukkit.inventory.Inventory top = !VersionHelper.isOrAbove1_21() ? LegacyInventoryUtils.getTopInventory(platformPlayer()) : platformPlayer().getOpenInventory().getTopInventory();
+        if (top.getHolder() instanceof CraftEngineInventoryHolder holder) {
+            holder.gui().onTimer();
         }
     }
 
@@ -653,12 +671,12 @@ public class BukkitServerPlayer extends Player {
 
     @Override
     public float getYRot() {
-        return platformPlayer().getLocation().getPitch();
+        return platformPlayer().getPitch();
     }
 
     @Override
     public float getXRot() {
-        return platformPlayer().getLocation().getYaw();
+        return platformPlayer().getYaw();
     }
 
     @Override
@@ -685,17 +703,17 @@ public class BukkitServerPlayer extends Player {
 
     @Override
     public double x() {
-        return platformPlayer().getLocation().getX();
+        return platformPlayer().getX();
     }
 
     @Override
     public double y() {
-        return platformPlayer().getLocation().getY();
+        return platformPlayer().getY();
     }
 
     @Override
     public double z() {
-        return platformPlayer().getLocation().getZ();
+        return platformPlayer().getZ();
     }
 
     @Override
@@ -716,12 +734,7 @@ public class BukkitServerPlayer extends Player {
     }
 
     @Override
-    public Map<Integer, List<Integer>> furnitureView() {
-        return this.furnitureView;
-    }
-
-    @Override
-    public Map<Integer, Object> entityView() {
+    public Map<Integer, EntityPacketHandler> entityPacketHandlers() {
         return this.entityTypeView;
     }
 
@@ -787,7 +800,6 @@ public class BukkitServerPlayer extends Player {
     @Override
     public void clearView() {
         this.entityTypeView.clear();
-        this.furnitureView.clear();
     }
 
     @Override
@@ -815,5 +827,10 @@ public class BukkitServerPlayer extends Player {
         } else {
             return LegacyAttributeUtils.getLuck(platformPlayer());
         }
+    }
+
+    @Override
+    public boolean isFlying() {
+        return platformPlayer().isFlying();
     }
 }

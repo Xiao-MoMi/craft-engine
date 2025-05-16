@@ -12,6 +12,8 @@ public class MCUtils {
 
     private MCUtils() {}
 
+    public static final float DEG_TO_RAD = ((float)Math.PI / 180F);
+
     private static final int[] MULTIPLY_DE_BRUIJN_BIT_POSITION = new int[]{0, 1, 28, 2, 29, 14, 24, 3, 30, 22, 20, 15, 25, 17, 4, 8, 31, 27, 13, 23, 21, 19, 16, 7, 26, 12, 18, 6, 11, 5, 10, 9};
     private static final float[] SIN = make(new float[65536], (sineTable) -> {
         for(int i = 0; i < sineTable.length; ++i) {
@@ -116,7 +118,6 @@ public class MCUtils {
                     return false;
                 }
             }
-
             return true;
         };
     }
@@ -148,6 +149,70 @@ public class MCUtils {
         };
     }
 
+    public static <T> Predicate<T> anyOf() {
+        return o -> false;
+    }
+
+    @SuppressWarnings("unchecked")
+    public static <T> Predicate<T> anyOf(Predicate<? super T> a) {
+        return (Predicate<T>) a;
+    }
+
+    public static <T> Predicate<T> anyOf(Predicate<? super T> a, Predicate<? super T> b) {
+        return o -> a.test(o) || b.test(o);
+    }
+
+    public static <T> Predicate<T> anyOf(Predicate<? super T> a, Predicate<? super T> b, Predicate<? super T> c) {
+        return o -> a.test(o) || b.test(o) || c.test(o);
+    }
+
+    public static <T> Predicate<T> anyOf(Predicate<? super T> a, Predicate<? super T> b, Predicate<? super T> c, Predicate<? super T> d) {
+        return o -> a.test(o) || b.test(o) || c.test(o) || d.test(o);
+    }
+
+    public static <T> Predicate<T> anyOf(Predicate<? super T> a, Predicate<? super T> b, Predicate<? super T> c, Predicate<? super T> d, Predicate<? super T> e) {
+        return o -> a.test(o) || b.test(o) || c.test(o) || d.test(o) || e.test(o);
+    }
+
+    @SafeVarargs
+    public static <T> Predicate<T> anyOf(Predicate<? super T>... predicates) {
+        return o -> {
+            for (Predicate<? super T> predicate : predicates) {
+                if (predicate.test(o)) {
+                    return true;
+                }
+            }
+            return false;
+        };
+    }
+
+    public static <T> Predicate<T> anyOf(List<? extends Predicate<? super T>> predicates) {
+        return switch (predicates.size()) {
+            case 0 -> anyOf();
+            case 1 -> anyOf((Predicate<? super T>) predicates.get(0));
+            case 2 -> anyOf((Predicate<? super T>) predicates.get(0), (Predicate<? super T>) predicates.get(1));
+            case 3 -> anyOf((Predicate<? super T>) predicates.get(0), (Predicate<? super T>) predicates.get(1), (Predicate<? super T>) predicates.get(2));
+            case 4 -> anyOf(
+                    (Predicate<? super T>) predicates.get(0),
+                    (Predicate<? super T>) predicates.get(1),
+                    (Predicate<? super T>) predicates.get(2),
+                    (Predicate<? super T>) predicates.get(3)
+            );
+            case 5 -> anyOf(
+                    (Predicate<? super T>) predicates.get(0),
+                    (Predicate<? super T>) predicates.get(1),
+                    (Predicate<? super T>) predicates.get(2),
+                    (Predicate<? super T>) predicates.get(3),
+                    (Predicate<? super T>) predicates.get(4)
+            );
+            default -> {
+                @SuppressWarnings("unchecked")
+                Predicate<? super T>[] predicates2 = predicates.toArray(Predicate[]::new);
+                yield anyOf(predicates2);
+            }
+        };
+    }
+
     public static <T> T findPreviousInIterable(Iterable<T> iterable, @Nullable T object) {
         Iterator<T> iterator = iterable.iterator();
         T previous = null;
@@ -168,6 +233,14 @@ public class MCUtils {
         return SIN[(int) (value * 10430.378F) & '\uffff'];
     }
 
+    public static float cos(float value) {
+        return SIN[(int)(value * 10430.378F + 16384.0F) & '\uffff'];
+    }
+
+    public static float sqrt(float value) {
+        return (float)Math.sqrt(value);
+    }
+
     public static <T> T findNextInIterable(Iterable<T> iterable, @Nullable T object) {
         Iterator<T> iterator = iterable.iterator();
         T next = iterator.next();
@@ -183,5 +256,25 @@ public class MCUtils {
             }
         }
         return next;
+    }
+
+    public static byte packDegrees(float degrees) {
+        return (byte) fastFloor(degrees * 256.0F / 360.0F);
+    }
+
+    public static float unpackDegrees(byte degrees) {
+        return (float) (degrees * 360) / 256.0F;
+    }
+
+    public static int clamp(int value, int min, int max) {
+        return Math.min(Math.max(value, min), max);
+    }
+
+    public static float clamp(float value, float min, float max) {
+        return value < min ? min : Math.min(value, max);
+    }
+
+    public static double clamp(double value, double min, double max) {
+        return value < min ? min : Math.min(value, max);
     }
 }

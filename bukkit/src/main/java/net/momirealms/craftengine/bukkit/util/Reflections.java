@@ -27,6 +27,7 @@ import sun.misc.Unsafe;
 import java.io.BufferedReader;
 import java.lang.invoke.VarHandle;
 import java.lang.reflect.*;
+import java.net.URLClassLoader;
 import java.time.Instant;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
@@ -558,7 +559,6 @@ public class Reflections {
             )
     );
 
-    @Deprecated
     public static final Field field$ClientboundAddEntityPacket$type = requireNonNull(
             ReflectionUtils.getDeclaredField(
                     clazz$ClientboundAddEntityPacket, clazz$EntityType, 0
@@ -3368,11 +3368,23 @@ public class Reflections {
     );
 
     public static final Object instance$SoundEvent$EMPTY;
+    public static final Object instance$SoundEvent$TRIDENT_RIPTIDE_1;
+    public static final Object instance$SoundEvent$TRIDENT_RIPTIDE_2;
+    public static final Object instance$SoundEvent$TRIDENT_RIPTIDE_3;
+    public static final Object instance$SoundEvent$TRIDENT_THROW;
 
     static {
         try {
-            Object key = FastNMS.INSTANCE.method$ResourceLocation$fromNamespaceAndPath("minecraft", "intentionally_empty");
-            instance$SoundEvent$EMPTY = method$Registry$get.invoke(instance$BuiltInRegistries$SOUND_EVENT, key);
+            Object intentionallyEmpty = FastNMS.INSTANCE.method$ResourceLocation$fromNamespaceAndPath("minecraft", "intentionally_empty");
+            instance$SoundEvent$EMPTY = method$Registry$get.invoke(instance$BuiltInRegistries$SOUND_EVENT, intentionallyEmpty);
+            Object tridentRiptide1 = FastNMS.INSTANCE.method$ResourceLocation$fromNamespaceAndPath("minecraft", "item.trident_riptide_1");
+            instance$SoundEvent$TRIDENT_RIPTIDE_1 = method$Registry$get.invoke(instance$BuiltInRegistries$SOUND_EVENT, tridentRiptide1);
+            Object tridentRiptide2 = FastNMS.INSTANCE.method$ResourceLocation$fromNamespaceAndPath("minecraft", "item.trident_riptide_2");
+            instance$SoundEvent$TRIDENT_RIPTIDE_2 = method$Registry$get.invoke(instance$BuiltInRegistries$SOUND_EVENT, tridentRiptide2);
+            Object tridentRiptide3 = FastNMS.INSTANCE.method$ResourceLocation$fromNamespaceAndPath("minecraft", "item.trident.riptide_3");
+            instance$SoundEvent$TRIDENT_RIPTIDE_3 = method$Registry$get.invoke(instance$BuiltInRegistries$SOUND_EVENT, tridentRiptide3);
+            Object tridentThrow = FastNMS.INSTANCE.method$ResourceLocation$fromNamespaceAndPath("minecraft", "item.trident.throw");
+            instance$SoundEvent$TRIDENT_THROW = method$Registry$get.invoke(instance$BuiltInRegistries$SOUND_EVENT, tridentThrow);
         } catch (ReflectiveOperationException e) {
             throw new RuntimeException(e);
         }
@@ -3810,6 +3822,8 @@ public class Reflections {
     public static final Object instance$EntityType$INTERACTION;
     public static final Object instance$EntityType$SHULKER;
     public static final Object instance$EntityType$OAK_BOAT;
+    public static final Object instance$EntityType$TRIDENT;
+    public static final Object instance$EntityType$SNOWBALL;
 
     static {
         try {
@@ -3829,6 +3843,10 @@ public class Reflections {
             instance$EntityType$ARMOR_STAND = Reflections.method$Registry$get.invoke(Reflections.instance$BuiltInRegistries$ENTITY_TYPE, armorStand);
             Object oakBoat = VersionHelper.isOrAbove1_21_2() ? FastNMS.INSTANCE.method$ResourceLocation$fromNamespaceAndPath("minecraft", "oak_boat") : FastNMS.INSTANCE.method$ResourceLocation$fromNamespaceAndPath("minecraft", "boat");
             instance$EntityType$OAK_BOAT = Reflections.method$Registry$get.invoke(Reflections.instance$BuiltInRegistries$ENTITY_TYPE, oakBoat);
+            Object trident = FastNMS.INSTANCE.method$ResourceLocation$fromNamespaceAndPath("minecraft", "trident");
+            instance$EntityType$TRIDENT = Reflections.method$Registry$get.invoke(Reflections.instance$BuiltInRegistries$ENTITY_TYPE, trident);
+            Object snowball = FastNMS.INSTANCE.method$ResourceLocation$fromNamespaceAndPath("minecraft", "snowball");
+            instance$EntityType$SNOWBALL = Reflections.method$Registry$get.invoke(Reflections.instance$BuiltInRegistries$ENTITY_TYPE, snowball);
         } catch (ReflectiveOperationException e) {
             throw new RuntimeException(e);
         }
@@ -3979,7 +3997,7 @@ public class Reflections {
             )
     );
 
-    // 1.21.3+
+    // 1.21.2+
     public static final Class<?> clazz$ClientboundEntityPositionSyncPacket =
             ReflectionUtils.getClazz(
                     BukkitReflectionUtils.assembleMCClass("network.protocol.game.ClientboundEntityPositionSyncPacket")
@@ -5264,6 +5282,13 @@ public class Reflections {
             )
     );
 
+    public static final Class<?> clazz$ArmorDyeRecipe = requireNonNull(
+            BukkitReflectionUtils.findReobfOrMojmapClass(
+                    "world.item.crafting.RecipeArmorDye",
+                    "world.item.crafting.ArmorDyeRecipe"
+            )
+    );
+
     public static final Field field$CraftComplexRecipe$recipe = requireNonNull(
             ReflectionUtils.getDeclaredField(
                     clazz$CraftComplexRecipe, clazz$CustomRecipe, 0
@@ -6098,6 +6123,10 @@ public class Reflections {
             )
     );
 
+    public static final Constructor<?> constructor$ClientboundMoveEntityPacket$PosRot = requireNonNull(
+            ReflectionUtils.getTheOnlyConstructor(clazz$ClientboundMoveEntityPacket$PosRot)
+    );
+
     public static final Class<?> clazz$ClientboundRotateHeadPacket = requireNonNull(
             BukkitReflectionUtils.findReobfOrMojmapClass(
                     "network.protocol.game.PacketPlayOutEntityHeadRotation",
@@ -6395,14 +6424,20 @@ public class Reflections {
     );
 
     public static final int instance$EntityType$BLOCK_DISPLAY$registryId;
+    public static final int instance$EntityType$ITEM_DISPLAY$registryId;
     public static final int instance$EntityType$TEXT_DISPLAY$registryId;
     public static final int instance$EntityType$FALLING_BLOCK$registryId;
+    public static final int instance$EntityType$TRIDENT$registryId;
+    public static final int instance$EntityType$ARMOR_STAND$registryId;
 
     static {
         try {
             instance$EntityType$BLOCK_DISPLAY$registryId = (int) Reflections.method$Registry$getId.invoke(Reflections.instance$BuiltInRegistries$ENTITY_TYPE, instance$EntityType$BLOCK_DISPLAY);
+            instance$EntityType$ITEM_DISPLAY$registryId = (int) Reflections.method$Registry$getId.invoke(Reflections.instance$BuiltInRegistries$ENTITY_TYPE, instance$EntityType$ITEM_DISPLAY);
             instance$EntityType$TEXT_DISPLAY$registryId = (int) Reflections.method$Registry$getId.invoke(Reflections.instance$BuiltInRegistries$ENTITY_TYPE, instance$EntityType$TEXT_DISPLAY);
             instance$EntityType$FALLING_BLOCK$registryId = (int) Reflections.method$Registry$getId.invoke(Reflections.instance$BuiltInRegistries$ENTITY_TYPE, instance$EntityType$FALLING_BLOCK);
+            instance$EntityType$TRIDENT$registryId = (int) Reflections.method$Registry$getId.invoke(Reflections.instance$BuiltInRegistries$ENTITY_TYPE, instance$EntityType$TRIDENT);
+            instance$EntityType$ARMOR_STAND$registryId = (int) Reflections.method$Registry$getId.invoke(Reflections.instance$BuiltInRegistries$ENTITY_TYPE, instance$EntityType$ARMOR_STAND);
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
@@ -6618,4 +6653,143 @@ public class Reflections {
                     BukkitReflectionUtils.assembleCBClass("block.CraftBlockStates$BlockEntityStateFactory")
             )
     );
+
+    public static final Class<?> clazz$ServerEntity = requireNonNull(
+            BukkitReflectionUtils.findReobfOrMojmapClass(
+                    "server.level.EntityTrackerEntry",
+                    "server.level.ServerEntity")
+    );
+
+    public static final Field field$ServerEntity$updateInterval = requireNonNull(
+            ReflectionUtils.getInstanceDeclaredField(
+                    clazz$ServerEntity, int.class, 0
+            )
+    );
+
+    public static final Class<?> clazz$AbstractArrow = requireNonNull(
+            BukkitReflectionUtils.findReobfOrMojmapClass(
+                    "world.entity.projectile.EntityArrow",
+                    "world.entity.projectile.AbstractArrow"
+            )
+    );
+
+    public static final Class<?> clazz$ClientboundCustomPayloadPacket = requireNonNull(
+            BukkitReflectionUtils.findReobfOrMojmapClass(
+                    List.of("network.protocol.game.PacketPlayOutCustomPayload", "network.protocol.common.ClientboundCustomPayloadPacket"),
+                    List.of("network.protocol.game.ClientboundCustomPayloadPacket", "network.protocol.common.ClientboundCustomPayloadPacket")
+            )
+    );
+
+    public static final Constructor<?> constructor$ClientboundCustomPayloadPacket = requireNonNull(
+            ReflectionUtils.getConstructor(clazz$ClientboundCustomPayloadPacket, 0)
+    );
+
+    // 1.20.2+
+    public static final Constructor<?> constructor$DiscardedPayload = Optional.ofNullable(clazz$DiscardedPayload)
+            .map(clazz -> ReflectionUtils.getTheOnlyConstructor(clazz))
+            .orElse(null);
+
+    public static final Class<?> clazz$PaperPluginClassLoader = ReflectionUtils.getClazz(
+            "io.papermc.paper.plugin.entrypoint.classloader.PaperPluginClassLoader"
+    );
+
+    public static final Field field$PaperPluginClassLoader$libraryLoader = Optional.ofNullable(clazz$PaperPluginClassLoader)
+            .map(it -> ReflectionUtils.getDeclaredField(it, URLClassLoader.class, 0))
+            .orElse(null);
+
+    public static final Method method$SoundSource$values = requireNonNull(
+            ReflectionUtils.getStaticMethod(
+                    clazz$SoundSource, clazz$SoundSource.arrayType()
+            )
+    );
+
+    public static final Object instance$SoundSource$MASTER;
+    public static final Object instance$SoundSource$MUSIC;
+    public static final Object instance$SoundSource$RECORDS;
+    public static final Object instance$SoundSource$WEATHER;
+    public static final Object instance$SoundSource$BLOCKS;
+    public static final Object instance$SoundSource$HOSTILE;
+    public static final Object instance$SoundSource$NEUTRAL;
+    public static final Object instance$SoundSource$PLAYERS;
+    public static final Object instance$SoundSource$AMBIENT;
+    public static final Object instance$SoundSource$VOICE;
+
+    static {
+        try {
+            Object[] values = (Object[]) method$SoundSource$values.invoke(null);
+            instance$SoundSource$MASTER = values[0];
+            instance$SoundSource$MUSIC = values[1];
+            instance$SoundSource$RECORDS = values[2];
+            instance$SoundSource$WEATHER = values[3];
+            instance$SoundSource$BLOCKS = values[4];
+            instance$SoundSource$HOSTILE = values[5];
+            instance$SoundSource$NEUTRAL = values[6];
+            instance$SoundSource$PLAYERS = values[7];
+            instance$SoundSource$AMBIENT = values[8];
+            instance$SoundSource$VOICE = values[9];
+        } catch (ReflectiveOperationException e) {
+            throw new AssertionError(e);
+        }
+    }
+
+    public static final Class<?> clazz$MoverType = requireNonNull(
+            BukkitReflectionUtils.findReobfOrMojmapClass(
+                    "world.entity.EnumMoveType",
+                    "world.entity.MoverType"
+            )
+    );
+
+    public static final Method method$MoverType$values = requireNonNull(
+            ReflectionUtils.getStaticMethod(
+                    clazz$MoverType, clazz$MoverType.arrayType()
+            )
+    );
+
+    public static final Object instance$MoverType$SELF;
+    public static final Object instance$MoverType$PLAYER;
+    public static final Object instance$MoverType$PISTON;
+    public static final Object instance$MoverType$SHULKER_BOX;
+    public static final Object instance$MoverType$SHULKER;
+
+    static {
+        try {
+            Object[] values = (Object[]) method$MoverType$values.invoke(null);
+            instance$MoverType$SELF = values[0];
+            instance$MoverType$PLAYER = values[1];
+            instance$MoverType$PISTON = values[2];
+            instance$MoverType$SHULKER_BOX = values[3];
+            instance$MoverType$SHULKER = values[4];
+        } catch (ReflectiveOperationException e) {
+            throw new AssertionError(e);
+        }
+    }
+
+    public static final Class<?> clazz$AbstractArrow$Pickup = requireNonNull(
+            BukkitReflectionUtils.findReobfOrMojmapClass(
+                    "world.entity.projectile.EntityArrow$PickupStatus",
+                    "world.entity.projectile.AbstractArrow$Pickup"
+            )
+    );
+
+    public static final Method method$AbstractArrow$Pickup$values = requireNonNull(
+            ReflectionUtils.getStaticMethod(
+                    clazz$AbstractArrow$Pickup, clazz$AbstractArrow$Pickup.arrayType()
+            )
+    );
+
+    public static final Object instance$AbstractArrow$Pickup$DISALLOWED;
+    public static final Object instance$AbstractArrow$Pickup$ALLOWED;
+    public static final Object instance$AbstractArrow$Pickup$CREATIVE_ONLY;
+
+    static {
+        try {
+            Object[] values = (Object[]) method$AbstractArrow$Pickup$values.invoke(null);
+            instance$AbstractArrow$Pickup$DISALLOWED = values[0];
+            instance$AbstractArrow$Pickup$ALLOWED = values[1];
+            instance$AbstractArrow$Pickup$CREATIVE_ONLY = values[2];
+        } catch (ReflectiveOperationException e) {
+            throw new AssertionError(e);
+        }
+    }
+
 }

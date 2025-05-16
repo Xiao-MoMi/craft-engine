@@ -273,9 +273,10 @@ public class InteractUtils {
         }
     }
 
-    public static boolean isInteractable(Key block, org.bukkit.entity.Player player, BlockData state, BlockHitResult hit, Item<ItemStack> item) {
-        if (INTERACTIONS.containsKey(block)) {
-            return INTERACTIONS.get(block).apply(player, item, state, hit);
+    public static boolean isInteractable(Player player, BlockData state, BlockHitResult hit, Item<ItemStack> item) {
+        Key blockType = BlockStateUtils.getBlockOwnerId(state);
+        if (INTERACTIONS.containsKey(blockType)) {
+            return INTERACTIONS.get(blockType).apply(player, item, state, hit);
         } else {
             return false;
         }

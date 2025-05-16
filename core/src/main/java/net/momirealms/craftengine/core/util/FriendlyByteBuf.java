@@ -458,6 +458,15 @@ public class FriendlyByteBuf extends ByteBuf {
         this.writeBytes(Arrays.copyOf(byteArray, MCUtils.positiveCeilDiv(size, 8)));
     }
 
+    @SuppressWarnings("unchecked")
+    public <T extends Enum<T>> T readEnumConstant(Class<T> enumClass) {
+        return (T)((Enum<T>[])enumClass.getEnumConstants())[this.readVarInt()];
+    }
+
+    public FriendlyByteBuf writeEnumConstant(Enum<?> instance) {
+        return this.writeVarInt(instance.ordinal());
+    }
+
     @FunctionalInterface
     public interface Writer<T> extends BiConsumer<FriendlyByteBuf, T> {
 

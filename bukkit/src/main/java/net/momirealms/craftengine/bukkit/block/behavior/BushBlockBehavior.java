@@ -12,7 +12,7 @@ import net.momirealms.craftengine.core.block.ImmutableBlockState;
 import net.momirealms.craftengine.core.block.behavior.BlockBehaviorFactory;
 import net.momirealms.craftengine.core.item.Item;
 import net.momirealms.craftengine.core.plugin.context.ContextHolder;
-import net.momirealms.craftengine.core.plugin.context.parameter.CommonParameters;
+import net.momirealms.craftengine.core.plugin.context.parameter.DirectContextParameters;
 import net.momirealms.craftengine.core.util.Key;
 import net.momirealms.craftengine.core.util.MiscUtils;
 import net.momirealms.craftengine.core.util.Tuple;
@@ -20,6 +20,7 @@ import net.momirealms.craftengine.core.util.VersionHelper;
 import net.momirealms.craftengine.core.world.BlockPos;
 import net.momirealms.craftengine.core.world.Vec3d;
 import net.momirealms.craftengine.core.world.WorldEvents;
+import net.momirealms.craftengine.core.world.WorldPosition;
 import net.momirealms.craftengine.shared.block.BlockBehavior;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
@@ -67,16 +68,15 @@ public class BushBlockBehavior extends BukkitBlockBehavior {
             int stateId = BlockStateUtils.blockStateToId(state);
             ImmutableBlockState previousState = BukkitBlockManager.instance().getImmutableBlockState(stateId);
             if (previousState != null && !previousState.isEmpty()) {
-                ContextHolder.Builder builder = ContextHolder.builder();
                 BlockPos pos = LocationUtils.fromBlockPos(blockPos);
-                Vec3d vec3d = Vec3d.atCenterOf(pos);
                 net.momirealms.craftengine.core.world.World world = new BukkitWorld(FastNMS.INSTANCE.method$Level$getCraftWorld(level));
-                builder.withParameter(CommonParameters.LOCATION, vec3d);
-                builder.withParameter(CommonParameters.WORLD, world);
+                WorldPosition position = new WorldPosition(world, Vec3d.atCenterOf(pos));
+                ContextHolder.Builder builder = ContextHolder.builder()
+                        .withParameter(DirectContextParameters.POSITION, position);
                 for (Item<Object> item : previousState.getDrops(builder, world, null)) {
-                    world.dropItemNaturally(vec3d, item);
+                    world.dropItemNaturally(position, item);
                 }
-                world.playBlockSound(vec3d, previousState.sounds().breakSound());
+                world.playBlockSound(position, previousState.sounds().breakSound());
                 FastNMS.INSTANCE.method$Level$levelEvent(level, WorldEvents.BLOCK_BREAK_EFFECT, blockPos, stateId);
             }
             return Reflections.method$Block$defaultBlockState.invoke(Reflections.instance$Blocks$AIR);

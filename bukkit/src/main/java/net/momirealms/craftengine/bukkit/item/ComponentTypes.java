@@ -25,6 +25,7 @@ public class ComponentTypes {
     public static final Object REPAIR_COST = getComponentType(ComponentKeys.REPAIR_COST);
     public static final Object CUSTOM_DATA = getComponentType(ComponentKeys.CUSTOM_DATA);
     public static final Object PROFILE = getComponentType(ComponentKeys.PROFILE);
+    public static final Object DYED_COLOR = getComponentType(ComponentKeys.DYED_COLOR);
 
     private ComponentTypes() {}
 

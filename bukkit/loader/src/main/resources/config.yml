@@ -65,6 +65,8 @@ resource-pack:
     - CustomNameplates/ResourcePack
     - BetterModel/build
     - BetterHud/build
+  merge-external-zip-files:
+    - CraftEngine/external_packs/example.zip
   delivery:
     # Send the resource pack on joining the server
     send-on-join: true

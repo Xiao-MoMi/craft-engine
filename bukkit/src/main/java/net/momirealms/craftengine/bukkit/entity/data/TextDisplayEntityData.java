@@ -3,7 +3,6 @@ package net.momirealms.craftengine.bukkit.entity.data;
 import net.momirealms.craftengine.bukkit.util.Reflections;
 
 public class TextDisplayEntityData<T> extends DisplayEntityData<T> {
-    // Text display only
     public static final DisplayEntityData<Object> Text = of(23, EntityDataValue.Serializers$COMPONENT, Reflections.instance$Component$empty);
     public static final DisplayEntityData<Integer> LineWidth = of(24, EntityDataValue.Serializers$INT, 200);
     public static final DisplayEntityData<Integer> BackgroundColor = of(25, EntityDataValue.Serializers$INT, 0x40000000);

@@ -3,7 +3,6 @@ package net.momirealms.craftengine.core.plugin.context.number;
 import com.ezylang.evalex.Expression;
 import net.momirealms.craftengine.core.plugin.context.Context;
 import net.momirealms.craftengine.core.plugin.locale.LocalizedResourceConfigException;
-import net.momirealms.craftengine.core.util.Factory;
 import net.momirealms.craftengine.core.util.Key;
 import net.momirealms.craftengine.core.util.ResourceConfigUtils;
 
@@ -27,7 +26,7 @@ public class FixedNumberProvider implements NumberProvider {
         return NumberProviders.FIXED;
     }
 
-    public static class FactoryImpl implements Factory<NumberProvider> {
+    public static class FactoryImpl implements NumberProviderFactory {
 
         @Override
         public NumberProvider create(Map<String, Object> arguments) {

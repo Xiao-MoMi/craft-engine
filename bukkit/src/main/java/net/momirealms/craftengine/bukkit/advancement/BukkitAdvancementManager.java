@@ -6,7 +6,7 @@ import net.momirealms.craftengine.bukkit.plugin.BukkitCraftEngine;
 import net.momirealms.craftengine.core.advancement.AbstractAdvancementManager;
 import net.momirealms.craftengine.core.pack.LoadingSequence;
 import net.momirealms.craftengine.core.pack.Pack;
-import net.momirealms.craftengine.core.plugin.config.ConfigSectionParser;
+import net.momirealms.craftengine.core.plugin.config.ConfigParser;
 import net.momirealms.craftengine.core.plugin.locale.LocalizedResourceConfigException;
 import net.momirealms.craftengine.core.util.GsonHelper;
 import net.momirealms.craftengine.core.util.Key;
@@ -31,11 +31,11 @@ public class BukkitAdvancementManager extends AbstractAdvancementManager {
     }
 
     @Override
-    public ConfigSectionParser parser() {
+    public ConfigParser parser() {
         return this.advancementParser;
     }
 
-    public class AdvancementParser implements ConfigSectionParser {
+    public class AdvancementParser implements ConfigParser {
         public static final String[] CONFIG_SECTION_NAME = new String[] {"advancements", "advancement"};
 
         @Override

@@ -12,5 +12,7 @@ public interface Context {
 
     <T> Optional<T> getOptionalParameter(ContextKey<T> parameter);
 
-    <T> T getParameterOrThrow(ContextKey<T> parameter);
+    default <T> T getParameterOrThrow(ContextKey<T> parameter) {
+        return getOptionalParameter(parameter).orElseThrow(() -> new RuntimeException("No parameter found for " + parameter));
+    }
 }

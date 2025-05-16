@@ -25,7 +25,7 @@ public class NamedArgumentTag implements TagResolver {
         if (!has(name)) {
             return null;
         }
-        ContextKey<?> key = ContextKey.of(arguments.popOr("No argument key provided").toString());
+        ContextKey<?> key = ContextKey.chain(arguments.popOr("No argument key provided").toString());
         Optional<?> optional = this.context.getOptionalParameter(key);
         Object value = optional.orElse(null);
         if (value == null) {

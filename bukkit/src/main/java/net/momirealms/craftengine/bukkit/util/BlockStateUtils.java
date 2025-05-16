@@ -101,8 +101,11 @@ public class BlockStateUtils {
     }
 
     public static Key getBlockOwnerId(Block block) {
-        BlockData data = block.getBlockData();
-        Object blockState = blockDataToBlockState(data);
+        return getBlockOwnerId(block.getBlockData());
+    }
+
+    public static Key getBlockOwnerId(BlockData block) {
+        Object blockState = blockDataToBlockState(block);
         return getBlockOwnerIdFromState(blockState);
     }
 
@@ -188,8 +191,12 @@ public class BlockStateUtils {
         Reflections.field$BlockStateBase$replaceable.set(state, replaceable);
     }
 
-    public static boolean isReplaceable(Object state) throws ReflectiveOperationException {
-        return (boolean) Reflections.field$BlockStateBase$replaceable.get(state);
+    public static boolean isReplaceable(Object state) {
+        try {
+            return (boolean) Reflections.field$BlockStateBase$replaceable.get(state);
+        } catch (ReflectiveOperationException e) {
+            throw new RuntimeException("Failed to get replaceable property", e);
+        }
     }
 
     public static void setCanOcclude(Object state, boolean canOcclude) throws ReflectiveOperationException {

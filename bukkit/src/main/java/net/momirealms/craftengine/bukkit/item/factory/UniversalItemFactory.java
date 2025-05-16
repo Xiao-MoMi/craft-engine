@@ -153,6 +153,21 @@ public class UniversalItemFactory extends BukkitItemFactory<LegacyItemWrapper> {
     }
 
     @Override
+    protected Optional<Integer> dyedColor(LegacyItemWrapper item) {
+        if (!item.hasTag("display", "color")) return Optional.empty();
+        return Optional.of(item.get("display", "color"));
+    }
+
+    @Override
+    protected void dyedColor(LegacyItemWrapper item, Integer color) {
+        if (color == null) {
+            item.remove("display", "color");
+        } else {
+            item.set(color, "display", "color");
+        }
+    }
+
+    @Override
     protected Optional<Integer> maxDamage(LegacyItemWrapper item) {
         return Optional.of((int) item.getItem().getType().getMaxDurability());
     }
@@ -198,9 +213,9 @@ public class UniversalItemFactory extends BukkitItemFactory<LegacyItemWrapper> {
                     return;
                 }
             }
-            item.add(Map.of("id", enchantment.toString(), "lvl", (short) enchantment.level()), "Enchantments");
+            item.add(Map.of("id", enchantment.id().toString(), "lvl", (short) enchantment.level()), "Enchantments");
         } else {
-            item.set(List.of(Map.of("id", enchantment.toString(), "lvl", (short) enchantment.level())), "Enchantments");
+            item.set(List.of(Map.of("id", enchantment.id().toString(), "lvl", (short) enchantment.level())), "Enchantments");
         }
     }
 
@@ -214,9 +229,9 @@ public class UniversalItemFactory extends BukkitItemFactory<LegacyItemWrapper> {
                     return;
                 }
             }
-            item.add(Map.of("id", enchantment.toString(), "lvl", (short) enchantment.level()), "StoredEnchantments");
+            item.add(Map.of("id", enchantment.id().toString(), "lvl", (short) enchantment.level()), "StoredEnchantments");
         } else {
-            item.set(List.of(Map.of("id", enchantment.toString(), "lvl", (short) enchantment.level())), "StoredEnchantments");
+            item.set(List.of(Map.of("id", enchantment.id().toString(), "lvl", (short) enchantment.level())), "StoredEnchantments");
         }
     }
 

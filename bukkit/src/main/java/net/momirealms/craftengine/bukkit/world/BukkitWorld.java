@@ -7,7 +7,7 @@ import net.momirealms.craftengine.core.item.Item;
 import net.momirealms.craftengine.core.util.Key;
 import net.momirealms.craftengine.core.util.VersionHelper;
 import net.momirealms.craftengine.core.world.BlockInWorld;
-import net.momirealms.craftengine.core.world.Vec3d;
+import net.momirealms.craftengine.core.world.Position;
 import net.momirealms.craftengine.core.world.World;
 import net.momirealms.craftengine.core.world.WorldHeight;
 import org.bukkit.Location;
@@ -35,11 +35,7 @@ public class BukkitWorld implements World {
 
     @Override
     public Object serverWorld() {
-        try {
-            return FastNMS.INSTANCE.field$CraftWorld$ServerLevel(platformWorld());
-        } catch (Exception e) {
-            throw new RuntimeException("Failed to get server world", e);
-        }
+        return FastNMS.INSTANCE.field$CraftWorld$ServerLevel(platformWorld());
     }
 
     @Override
@@ -71,7 +67,7 @@ public class BukkitWorld implements World {
     }
 
     @Override
-    public void dropItemNaturally(Vec3d location, Item<?> item) {
+    public void dropItemNaturally(Position location, Item<?> item) {
         ItemStack itemStack = (ItemStack) item.load();
         if (ItemUtils.isEmpty(itemStack)) return;
         if (VersionHelper.isOrAbove1_21_2()) {
@@ -82,7 +78,7 @@ public class BukkitWorld implements World {
     }
 
     @Override
-    public void dropExp(Vec3d location, int amount) {
+    public void dropExp(Position location, int amount) {
         if (amount <= 0) return;
         EntityUtils.spawnEntity(platformWorld(), new Location(platformWorld(), location.x(), location.y(), location.z()), EntityType.EXPERIENCE_ORB, (e) -> {
             ExperienceOrb orb = (ExperienceOrb) e;
@@ -91,7 +87,12 @@ public class BukkitWorld implements World {
     }
 
     @Override
-    public void playBlockSound(Vec3d location, Key sound, float volume, float pitch) {
+    public void playBlockSound(Position location, Key sound, float volume, float pitch) {
         platformWorld().playSound(new Location(null, location.x(), location.y(), location.z()), sound.toString(), SoundCategory.BLOCKS, volume, pitch);
+    }
+
+    @Override
+    public long time() {
+        return platformWorld().getTime();
     }
 }

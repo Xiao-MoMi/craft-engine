@@ -6,14 +6,15 @@ import net.momirealms.craftengine.bukkit.util.MaterialUtils;
 import net.momirealms.craftengine.core.item.*;
 import net.momirealms.craftengine.core.item.behavior.ItemBehavior;
 import net.momirealms.craftengine.core.item.modifier.ItemDataModifier;
+import net.momirealms.craftengine.core.plugin.context.PlayerOptionalContext;
+import net.momirealms.craftengine.core.plugin.context.function.Function;
+import net.momirealms.craftengine.core.plugin.event.EventTrigger;
 import net.momirealms.craftengine.core.util.Key;
 import org.bukkit.Material;
 import org.bukkit.inventory.ItemStack;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 public class BukkitCustomItem implements CustomItem<ItemStack> {
     private final Key id;
@@ -26,6 +27,7 @@ public class BukkitCustomItem implements CustomItem<ItemStack> {
     private final NetworkItemDataProcessor<ItemStack>[] networkItemDataProcessors;
     private final List<ItemBehavior> behaviors;
     private final ItemSettings settings;
+    private final EnumMap<EventTrigger, List<Function<PlayerOptionalContext>>> events;
 
     @SuppressWarnings("unchecked")
     public BukkitCustomItem(Key id,
@@ -34,10 +36,12 @@ public class BukkitCustomItem implements CustomItem<ItemStack> {
                             List<ItemDataModifier<ItemStack>> modifiers,
                             List<ItemDataModifier<ItemStack>> clientBoundModifiers,
                             List<ItemBehavior> behaviors,
-                            ItemSettings settings) {
+                            ItemSettings settings,
+                            EnumMap<EventTrigger, List<Function<PlayerOptionalContext>>> events) {
         this.id = id;
         this.material = material;
         this.materialKey = materialKey;
+        this.events = events;
         // unchecked cast
         this.modifiers = modifiers.toArray(new ItemDataModifier[0]);
         // unchecked cast
@@ -63,6 +67,13 @@ public class BukkitCustomItem implements CustomItem<ItemStack> {
         this.clientBoundModifierMap = clientSideModifierMapBuilder.build();
         // unchecked cast
         this.networkItemDataProcessors = networkItemDataProcessors.toArray(new NetworkItemDataProcessor[0]);
+    }
+
+    @Override
+    public void execute(PlayerOptionalContext context, EventTrigger trigger) {
+        for (Function<PlayerOptionalContext> function : Optional.ofNullable(this.events.get(trigger)).orElse(Collections.emptyList())) {
+            function.run(context);
+        }
     }
 
     @Override
@@ -145,6 +156,7 @@ public class BukkitCustomItem implements CustomItem<ItemStack> {
         private Material material;
         private Key materialKey;
         private ItemSettings settings;
+        private EnumMap<EventTrigger, List<Function<PlayerOptionalContext>>> events = new EnumMap<>(EventTrigger.class);
         private final List<ItemBehavior> behaviors = new ArrayList<>();
         private final List<ItemDataModifier<ItemStack>> modifiers = new ArrayList<>();
         private final List<ItemDataModifier<ItemStack>> clientBoundModifiers = new ArrayList<>();
@@ -205,9 +217,15 @@ public class BukkitCustomItem implements CustomItem<ItemStack> {
         }
 
         @Override
+        public Builder<ItemStack> events(EnumMap<EventTrigger, List<Function<PlayerOptionalContext>>> events) {
+            this.events = events;
+            return this;
+        }
+
+        @Override
         public CustomItem<ItemStack> build() {
             this.modifiers.addAll(this.settings.modifiers());
-            return new BukkitCustomItem(this.id, this.materialKey, this.material, this.modifiers, this.clientBoundModifiers, this.behaviors, this.settings);
+            return new BukkitCustomItem(this.id, this.materialKey, this.material, this.modifiers, this.clientBoundModifiers, this.behaviors, this.settings, this.events);
         }
     }
 }

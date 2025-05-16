@@ -4,7 +4,7 @@ import net.momirealms.craftengine.core.item.Item;
 import net.momirealms.craftengine.core.loot.LootConditions;
 import net.momirealms.craftengine.core.loot.LootContext;
 import net.momirealms.craftengine.core.plugin.context.Condition;
-import net.momirealms.craftengine.core.plugin.context.parameter.CommonParameters;
+import net.momirealms.craftengine.core.plugin.context.parameter.DirectContextParameters;
 import net.momirealms.craftengine.core.util.Key;
 import net.momirealms.craftengine.core.util.RandomUtils;
 
@@ -22,7 +22,7 @@ public class ExplosionDecayFunction<T> extends AbstractLootConditionalFunction<T
 
     @Override
     protected Item<T> applyInternal(Item<T> item, LootContext context) {
-        Optional<Float> radius = context.getOptionalParameter(CommonParameters.EXPLOSION_RADIUS);
+        Optional<Float> radius = context.getOptionalParameter(DirectContextParameters.EXPLOSION_RADIUS);
         if (radius.isPresent()) {
             float f = 1f / radius.get();
             int amount = item.count();

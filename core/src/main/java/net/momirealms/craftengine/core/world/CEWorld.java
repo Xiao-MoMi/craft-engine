@@ -9,10 +9,10 @@ import net.momirealms.craftengine.core.world.chunk.storage.WorldDataStorage;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
-import java.util.Collections;
-import java.util.HashSet;
+import java.util.Collection;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 public abstract class CEWorld {
@@ -22,7 +22,7 @@ public abstract class CEWorld {
     protected final WorldDataStorage worldDataStorage;
     protected final ReentrantReadWriteLock loadedChunkMapLock = new ReentrantReadWriteLock();
     protected final WorldHeight worldHeightAccessor;
-    protected final Set<SectionPos> updatedSectionPositions = Collections.synchronizedSet(new HashSet<>());
+    protected final Set<SectionPos> updatedSectionSet = ConcurrentHashMap.newKeySet(128);
 
     private CEChunk lastChunk;
     private long lastChunkPos;
@@ -165,11 +165,11 @@ public abstract class CEWorld {
     }
 
     public void sectionLightUpdated(SectionPos pos) {
-        this.updatedSectionPositions.add(pos);
+        this.updatedSectionSet.add(pos);
     }
 
-    public void sectionLightUpdated(Set<SectionPos> pos) {
-        this.updatedSectionPositions.addAll(pos);
+    public void sectionLightUpdated(Collection<SectionPos> pos) {
+        this.updatedSectionSet.addAll(pos);
     }
 
     public abstract void tick();

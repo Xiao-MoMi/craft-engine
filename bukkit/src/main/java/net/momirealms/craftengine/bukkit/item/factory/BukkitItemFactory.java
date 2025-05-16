@@ -1,6 +1,7 @@
 package net.momirealms.craftengine.bukkit.item.factory;
 
 import com.google.gson.JsonElement;
+import com.saicone.rtag.item.ItemTagStream;
 import net.momirealms.craftengine.bukkit.util.ItemTags;
 import net.momirealms.craftengine.bukkit.util.Reflections;
 import net.momirealms.craftengine.core.item.EquipmentData;
@@ -39,7 +40,7 @@ public abstract class BukkitItemFactory<W extends ItemWrapper<ItemStack>> extend
             case "1.21.4" -> {
                 return new ComponentItemFactory1_21_4(plugin);
             }
-            case "1.21.5", "1.22", "1.22.1" -> {
+            case "1.21.5", "1.21.6", "1.22", "1.22.1" -> {
                 return new ComponentItemFactory1_21_5(plugin);
             }
             default -> throw new IllegalStateException("Unsupported server version: " + plugin.serverVersion());
@@ -47,7 +48,13 @@ public abstract class BukkitItemFactory<W extends ItemWrapper<ItemStack>> extend
     }
 
     @Override
+    protected byte[] toByteArray(W item) {
+        return ItemTagStream.INSTANCE.toBytes(item.getItem());
+    }
+
+    @Override
     protected boolean isBlockItem(W item) {
+        // todo 这个 isBlockItem 他考虑组件了吗???
         return item.getItem().getType().isBlock();
     }
 

@@ -14,13 +14,14 @@ import net.momirealms.craftengine.core.block.behavior.BlockBehaviorFactory;
 import net.momirealms.craftengine.core.block.properties.Property;
 import net.momirealms.craftengine.core.item.Item;
 import net.momirealms.craftengine.core.plugin.context.ContextHolder;
-import net.momirealms.craftengine.core.plugin.context.parameter.CommonParameters;
+import net.momirealms.craftengine.core.plugin.context.parameter.DirectContextParameters;
 import net.momirealms.craftengine.core.util.Direction;
 import net.momirealms.craftengine.core.util.Key;
 import net.momirealms.craftengine.core.util.ResourceConfigUtils;
 import net.momirealms.craftengine.core.util.VersionHelper;
 import net.momirealms.craftengine.core.world.BlockPos;
 import net.momirealms.craftengine.core.world.Vec3d;
+import net.momirealms.craftengine.core.world.WorldPosition;
 import net.momirealms.craftengine.shared.block.BlockBehavior;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
@@ -122,13 +123,12 @@ public class LeavesBlockBehavior extends WaterLoggedBlockBehavior {
             if (isWaterLogged(immutableBlockState)) {
                 bukkitWorld.setBlockData(pos.x(), pos.y(), pos.z(), Material.WATER.createBlockData());
             }
-            Vec3d vec3d = Vec3d.atCenterOf(pos);
             net.momirealms.craftengine.core.world.World world = new BukkitWorld(bukkitWorld);
+            WorldPosition position = new WorldPosition(world, Vec3d.atCenterOf(pos));
             ContextHolder.Builder builder = ContextHolder.builder()
-                    .withParameter(CommonParameters.LOCATION, vec3d)
-                    .withParameter(CommonParameters.WORLD, world);
+                    .withParameter(DirectContextParameters.POSITION, position);
             for (Item<Object> item : immutableBlockState.getDrops(builder, world, null)) {
-                world.dropItemNaturally(vec3d, item);
+                world.dropItemNaturally(position, item);
             }
         }
     }

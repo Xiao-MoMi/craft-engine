@@ -23,4 +23,8 @@ public class KeyUtils {
     public static Object toResourceLocation(Key key) {
         return toResourceLocation(key.namespace(), key.value());
     }
+
+    public static NamespacedKey toNamespacedKey(Key key) {
+        return new NamespacedKey(key.namespace(), key.value());
+    }
 }

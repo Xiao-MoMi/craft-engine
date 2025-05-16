@@ -4,7 +4,7 @@ import net.momirealms.craftengine.core.block.CustomBlock;
 import net.momirealms.craftengine.core.block.properties.Property;
 import net.momirealms.craftengine.core.plugin.context.Condition;
 import net.momirealms.craftengine.core.plugin.context.Context;
-import net.momirealms.craftengine.core.plugin.context.parameter.CommonParameters;
+import net.momirealms.craftengine.core.plugin.context.parameter.DirectContextParameters;
 import net.momirealms.craftengine.core.util.Key;
 import net.momirealms.craftengine.core.util.MiscUtils;
 import net.momirealms.craftengine.core.util.Pair;
@@ -29,7 +29,7 @@ public class MatchBlockPropertyCondition<CTX extends Context> implements Conditi
 
     @Override
     public boolean test(CTX ctx) {
-        return ctx.getOptionalParameter(CommonParameters.BLOCK_STATE).map(state -> {
+        return ctx.getOptionalParameter(DirectContextParameters.BLOCK_STATE).map(state -> {
             CustomBlock block = state.owner().value();
             for (Pair<String, String> property : this.properties) {
                 Property<?> propertyIns = block.getProperty(property.left());

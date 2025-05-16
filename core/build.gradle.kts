@@ -1,5 +1,5 @@
 plugins {
-    id("com.gradleup.shadow") version "9.0.0-beta11"
+    id("com.gradleup.shadow") version "9.0.0-beta13"
     id("maven-publish")
 }
 
@@ -52,12 +52,12 @@ dependencies {
     // Aho-Corasick java implementation
     compileOnly("org.ahocorasick:ahocorasick:${rootProject.properties["ahocorasick_version"]}")
     // Amazon S3
-    compileOnly("software.amazon.awssdk:s3:${rootProject.properties["amazon_awssdk_version"]}") {
-
-    }
+    compileOnly("software.amazon.awssdk:s3:${rootProject.properties["amazon_awssdk_version"]}")
     compileOnly("software.amazon.awssdk:netty-nio-client:${rootProject.properties["amazon_awssdk_version"]}")
     // EvalEx
     compileOnly("com.ezylang:EvalEx:${rootProject.properties["evalex_version"]}")
+    // Jimfs
+    compileOnly("com.google.jimfs:jimfs:${rootProject.properties["jimfs_version"]}")
 }
 
 java {
@@ -90,6 +90,8 @@ tasks {
         relocate("software.amazon.awssdk", "net.momirealms.craftengine.libraries.awssdk") // awssdk
         relocate("software.amazon.eventstream", "net.momirealms.craftengine.libraries.eventstream") // awssdk
         relocate("com.ezylang.evalex", "net.momirealms.craftengine.libraries.evalex")
+        relocate("com.google.common.jimfs", "net.momirealms.craftengine.libraries.jimfs")
+        relocate("org.apache.commons.imaging", "net.momirealms.craftengine.libraries.imaging")
     }
 }
 

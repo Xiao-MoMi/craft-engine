@@ -9,10 +9,10 @@ import java.util.Map;
 
 public class SimpleDefaultTint implements Tint {
     public static final Factory FACTORY = new Factory();
-    private final Either<Integer, List<Integer>> value;
+    private final Either<Integer, List<Float>> value;
     private final Key type;
 
-    public SimpleDefaultTint(Either<Integer, List<Integer>> value, Key type) {
+    public SimpleDefaultTint(Either<Integer, List<Float>> value, Key type) {
         this.value = value;
         this.type = type;
     }

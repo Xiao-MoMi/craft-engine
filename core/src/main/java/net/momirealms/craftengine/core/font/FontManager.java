@@ -4,7 +4,7 @@ import net.kyori.adventure.text.Component;
 import net.momirealms.craftengine.core.entity.player.Player;
 import net.momirealms.craftengine.core.plugin.Manageable;
 import net.momirealms.craftengine.core.plugin.config.Config;
-import net.momirealms.craftengine.core.plugin.config.ConfigSectionParser;
+import net.momirealms.craftengine.core.plugin.config.ConfigParser;
 import net.momirealms.craftengine.core.util.AdventureHelper;
 import net.momirealms.craftengine.core.util.CharacterUtils;
 import net.momirealms.craftengine.core.util.FormatUtils;
@@ -45,7 +45,7 @@ public interface FontManager extends Manageable {
 
     IllegalCharacterProcessResult processIllegalCharacters(String raw, char replacement);
 
-    ConfigSectionParser[] parsers();
+    ConfigParser[] parsers();
 
     default EmojiTextProcessResult replaceMiniMessageEmoji(@NotNull String miniMessage, @Nullable Player player) {
         return replaceMiniMessageEmoji(miniMessage, player, Config.maxEmojisPerParse());

@@ -167,7 +167,6 @@ warning.config.item.model.special.chest.invalid_openness: "<yellow><arg:0> dosya
 warning.config.item.model.special.shulker_box.missing_texture: "<yellow><arg:0> dosyasında sorun bulundu - '<arg:1>' eşyası, 'minecraft:shulker_box' özel modeli için gerekli 'texture' argümanı eksik.</yellow>"
 warning.config.item.model.special.shulker_box.invalid_openness: "<yellow><arg:0> dosyasında sorun bulundu - '<arg:1>' eşyası, 'minecraft:shulker_box' özel modeli için geçersiz bir 'openness' değeri '<arg:2>' kullanıyor. Geçerli aralık '0~1.'</yellow>"
 warning.config.item.model.special.head.missing_kind: "<yellow><arg:0> dosyasında sorun bulundu - '<arg:1>' eşyası, 'minecraft:head' özel modeli için gerekli 'kind' argümanı eksik.</yellow>"
-warning.config.item.model.special.head.missing_texture: "<yellow><arg:0> dosyasında sorun bulundu - '<arg:1>' eşyası, 'minecraft:head' özel modeli için gerekli 'texture' argümanı eksik.</yellow>"
 warning.config.block.duplicate: "<yellow><arg:0> dosyasında sorun bulundu - Yinelenen blok '<arg:1>'. Diğer dosyalarda aynı yapılandırmanın olup olmadığını kontrol edin.</yellow>"
 warning.config.block.missing_state: "<yellow><arg:0> dosyasında sorun bulundu - '<arg:1>' bloğu gerekli 'state' argümanı eksik.</yellow>"
 warning.config.block.state.property.missing_type: "<yellow><arg:0> dosyasında sorun bulundu - '<arg:1>' bloğu, '<arg:2>' özelliği için gerekli 'type' argümanı eksik.</yellow>"

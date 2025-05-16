@@ -9,7 +9,7 @@ import net.momirealms.craftengine.core.pack.LoadingSequence;
 import net.momirealms.craftengine.core.pack.Pack;
 import net.momirealms.craftengine.core.plugin.CraftEngine;
 import net.momirealms.craftengine.core.plugin.config.Config;
-import net.momirealms.craftengine.core.plugin.config.ConfigSectionParser;
+import net.momirealms.craftengine.core.plugin.config.ConfigParser;
 import net.momirealms.craftengine.core.plugin.locale.LocalizedResourceConfigException;
 import net.momirealms.craftengine.core.registry.Holder;
 import net.momirealms.craftengine.core.util.Key;
@@ -35,7 +35,7 @@ public abstract class AbstractRecipeManager<T> implements RecipeManager<T> {
     }
 
     @Override
-    public ConfigSectionParser parser() {
+    public ConfigParser parser() {
         return this.recipeParser;
     }
 
@@ -140,7 +140,7 @@ public abstract class AbstractRecipeManager<T> implements RecipeManager<T> {
         }
     }
 
-    public class RecipeParser implements ConfigSectionParser {
+    public class RecipeParser implements ConfigParser {
         public static final String[] CONFIG_SECTION_NAME = new String[] {"recipes", "recipe"};
 
         @Override

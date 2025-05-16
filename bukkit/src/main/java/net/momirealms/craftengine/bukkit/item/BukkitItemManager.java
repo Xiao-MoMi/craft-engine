@@ -1,10 +1,14 @@
 package net.momirealms.craftengine.bukkit.item;
 
+import com.saicone.rtag.item.ItemTagStream;
 import net.momirealms.craftengine.bukkit.item.behavior.AxeItemBehavior;
 import net.momirealms.craftengine.bukkit.item.behavior.BoneMealItemBehavior;
 import net.momirealms.craftengine.bukkit.item.behavior.BucketItemBehavior;
 import net.momirealms.craftengine.bukkit.item.behavior.WaterBucketItemBehavior;
 import net.momirealms.craftengine.bukkit.item.factory.BukkitItemFactory;
+import net.momirealms.craftengine.bukkit.item.listener.ArmorEventListener;
+import net.momirealms.craftengine.bukkit.item.listener.DebugStickListener;
+import net.momirealms.craftengine.bukkit.item.listener.ItemEventListener;
 import net.momirealms.craftengine.bukkit.nms.FastNMS;
 import net.momirealms.craftengine.bukkit.plugin.BukkitCraftEngine;
 import net.momirealms.craftengine.bukkit.util.ItemUtils;
@@ -27,8 +31,9 @@ import net.momirealms.craftengine.core.pack.model.generation.ModelGeneration;
 import net.momirealms.craftengine.core.pack.model.select.ChargeTypeSelectProperty;
 import net.momirealms.craftengine.core.pack.model.select.TrimMaterialSelectProperty;
 import net.momirealms.craftengine.core.plugin.config.Config;
-import net.momirealms.craftengine.core.plugin.config.ConfigSectionParser;
+import net.momirealms.craftengine.core.plugin.config.ConfigParser;
 import net.momirealms.craftengine.core.plugin.context.ContextHolder;
+import net.momirealms.craftengine.core.plugin.event.EventFunctions;
 import net.momirealms.craftengine.core.plugin.locale.LocalizedResourceConfigException;
 import net.momirealms.craftengine.core.registry.BuiltInRegistries;
 import net.momirealms.craftengine.core.registry.Holder;
@@ -62,6 +67,7 @@ public class BukkitItemManager extends AbstractItemManager<ItemStack> {
     private final BukkitCraftEngine plugin;
     private final ItemEventListener itemEventListener;
     private final DebugStickListener debugStickListener;
+    private final ArmorEventListener armorEventListener;
     private final ItemParser itemParser;
 
     public BukkitItemManager(BukkitCraftEngine plugin) {
@@ -71,6 +77,7 @@ public class BukkitItemManager extends AbstractItemManager<ItemStack> {
         this.factory = BukkitItemFactory.create(plugin);
         this.itemEventListener = new ItemEventListener(plugin);
         this.debugStickListener = new DebugStickListener(plugin);
+        this.armorEventListener = new ArmorEventListener();
         this.itemParser = new ItemParser();
         this.registerAllVanillaItems();
         if (plugin.hasMod()) {
@@ -129,6 +136,7 @@ public class BukkitItemManager extends AbstractItemManager<ItemStack> {
     public void delayedInit() {
         Bukkit.getPluginManager().registerEvents(this.itemEventListener, this.plugin.bootstrap());
         Bukkit.getPluginManager().registerEvents(this.debugStickListener, this.plugin.bootstrap());
+        Bukkit.getPluginManager().registerEvents(this.armorEventListener, this.plugin.bootstrap());
     }
 
     public static BukkitItemManager instance() {
@@ -161,10 +169,16 @@ public class BukkitItemManager extends AbstractItemManager<ItemStack> {
         this.unload();
         HandlerList.unregisterAll(this.itemEventListener);
         HandlerList.unregisterAll(this.debugStickListener);
+        HandlerList.unregisterAll(this.armorEventListener);
     }
 
     @Override
-    public ConfigSectionParser parser() {
+    public Item<ItemStack> fromByteArray(byte[] bytes) {
+        return this.factory.wrap(ItemTagStream.INSTANCE.fromBytes(bytes));
+    }
+
+    @Override
+    public ConfigParser parser() {
         return this.itemParser;
     }
 
@@ -224,7 +238,7 @@ public class BukkitItemManager extends AbstractItemManager<ItemStack> {
         return wrapped.id();
     }
 
-    public class ItemParser implements ConfigSectionParser {
+    public class ItemParser implements ConfigParser {
         public static final String[] CONFIG_SECTION_NAME = new String[] {"items", "item"};
 
         @Override
@@ -344,12 +358,15 @@ public class BukkitItemManager extends AbstractItemManager<ItemStack> {
                 itemSettings.canPlaceRelatedVanillaBlock(true);
             }
             itemBuilder.settings(itemSettings);
+            itemBuilder.events(EventFunctions.parseEvents(ResourceConfigUtils.get(section, "events", "event")));
 
             CustomItem<ItemStack> customItem = itemBuilder.build();
             customItems.put(id, customItem);
 
             // cache command suggestions
             cachedSuggestions.add(Suggestion.suggestion(id.toString()));
+
+            // TODO Deprecated 理论支持任意物品类型
             if (material == Material.TOTEM_OF_UNDYING)
                 cachedTotemSuggestions.add(Suggestion.suggestion(id.toString()));
 
@@ -411,6 +428,7 @@ public class BukkitItemManager extends AbstractItemManager<ItemStack> {
                 }
 
                 if (Config.packMinVersion() < 21.39f) {
+                    // TODO 手动指定旧版格式
                     List<LegacyOverridesModel> legacyOverridesModels = new ArrayList<>();
                     processModelRecursively(model, new LinkedHashMap<>(), legacyOverridesModels, materialId, customModelData);
                     TreeSet<LegacyOverridesModel> lom = legacyOverrides.computeIfAbsent(materialId, k -> new TreeSet<>());
@@ -461,6 +479,12 @@ public class BukkitItemManager extends AbstractItemManager<ItemStack> {
             resultList.add(new LegacyOverridesModel(
                     new LinkedHashMap<>(accumulatedPredicates),
                     baseModel.path(),
+                    customModelData
+            ));
+        } else if (currentModel instanceof SpecialItemModel specialModel) {
+            resultList.add(new LegacyOverridesModel(
+                    new LinkedHashMap<>(accumulatedPredicates),
+                    specialModel.base(),
                     customModelData
             ));
         }

@@ -58,6 +58,7 @@ public class Config {
     protected boolean resource_pack$override_uniform_font;
     protected List<ResolutionConditional> resource_pack$duplicated_files_handler;
     protected List<String> resource_pack$merge_external_folders;
+    protected List<String> resource_pack$merge_external_zips;
 
     protected boolean resource_pack$protection$crash_tools$method_1;
     protected boolean resource_pack$protection$crash_tools$method_2;
@@ -218,6 +219,7 @@ public class Config {
         resource_pack$supported_version$min = getVersion(config.get("resource-pack.supported-version.min", "1.20").toString());
         resource_pack$supported_version$max = getVersion(config.get("resource-pack.supported-version.max", "LATEST").toString());
         resource_pack$merge_external_folders = config.getStringList("resource-pack.merge-external-folders");
+        resource_pack$merge_external_zips = config.getStringList("resource-pack.merge-external-zip-files");
         resource_pack$delivery$send_on_join = config.getBoolean("resource-pack.delivery.send-on-join", true);
         resource_pack$delivery$resend_on_upload = config.getBoolean("resource-pack.delivery.resend-on-upload", true);
         resource_pack$delivery$kick_if_declined = config.getBoolean("resource-pack.delivery.kick-if-declined", true);

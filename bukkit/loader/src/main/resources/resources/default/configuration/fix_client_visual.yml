@@ -1,5 +1,5 @@
-# client-bound-data requires CraftEngine mod to apply
 items:
+  # client-bound-data requires CraftEngine mod to apply
   minecraft:string:
     client-bound-data:
       components:
@@ -18,3 +18,10 @@ items:
           instrument: "harp"
           powered: "false"
           note: "0"
+
+blocks:
+  minecraft:note_block:
+    settings:
+      client-bound-tags:
+        - minecraft:beacon_base_blocks
+        - minecraft:mineable/axe

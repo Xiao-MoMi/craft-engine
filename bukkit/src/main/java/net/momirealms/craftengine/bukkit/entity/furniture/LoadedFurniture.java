@@ -14,6 +14,7 @@ import net.momirealms.craftengine.core.util.QuaternionUtils;
 import net.momirealms.craftengine.core.util.VersionHelper;
 import net.momirealms.craftengine.core.world.Vec3d;
 import net.momirealms.craftengine.core.world.World;
+import net.momirealms.craftengine.core.world.WorldPosition;
 import net.momirealms.craftengine.core.world.collision.AABB;
 import org.bukkit.Location;
 import org.bukkit.attribute.Attribute;
@@ -24,6 +25,7 @@ import org.jetbrains.annotations.Nullable;
 import org.joml.Quaternionf;
 import org.joml.Vector3f;
 
+import java.io.IOException;
 import java.lang.ref.WeakReference;
 import java.util.*;
 
@@ -31,6 +33,7 @@ public class LoadedFurniture implements Furniture {
     private final Key id;
     private final CustomFurniture furniture;
     private final AnchorType anchorType;
+    private FurnitureExtraData extraData;
     // location
     private final Location location;
     // base entity
@@ -54,10 +57,11 @@ public class LoadedFurniture implements Furniture {
 
     public LoadedFurniture(Entity baseEntity,
                            CustomFurniture furniture,
-                           AnchorType anchorType) {
+                           FurnitureExtraData extraData) {
         this.id = furniture.id();
+        this.extraData = extraData;
         this.baseEntityId = baseEntity.getEntityId();
-        this.anchorType = anchorType;
+        this.anchorType = extraData.anchorType().orElse(furniture.getAnyPlacement());
         this.location = baseEntity.getLocation();
         this.baseEntity = new WeakReference<>(baseEntity);
         this.furniture = furniture;
@@ -75,9 +79,9 @@ public class LoadedFurniture implements Furniture {
             } catch (Exception e) {
                 CraftEngine.instance().logger().warn("Failed to load external model for furniture " + id, e);
             }
-            hasExternalModel = true;
+            this.hasExternalModel = true;
         } else {
-            hasExternalModel = false;
+            this.hasExternalModel = false;
         }
 
         float yaw = this.location.getYaw();
@@ -92,10 +96,12 @@ public class LoadedFurniture implements Furniture {
         List<Collider> colliders = new ArrayList<>();
 
         World world = world();
+        WorldPosition position = new WorldPosition(world, x, y, z, yaw, 0);
+        Integer dyedColor = this.extraData.dyedColor().orElse(null);
         for (FurnitureElement element : placement.elements()) {
             int entityId = Reflections.instance$Entity$ENTITY_COUNTER.incrementAndGet();
             fakeEntityIds.add(entityId);
-            element.initPackets(entityId, world, x, y, z, yaw, conjugated, packet -> {
+            element.initPackets(entityId, position, conjugated, dyedColor, packet -> {
                 packets.add(packet);
                 if (this.minimized) minimizedPackets.add(packet);
             });
@@ -107,7 +113,7 @@ public class LoadedFurniture implements Furniture {
                 mainEntityIds.add(entityId);
                 this.hitBoxes.put(entityId, hitBox);
             }
-            hitBox.initPacketsAndColliders(ids, world, x, y, z, yaw, conjugated, (packet, canBeMinimized) -> {
+            hitBox.initPacketsAndColliders(ids, position, conjugated, (packet, canBeMinimized) -> {
                 packets.add(packet);
                 if (this.minimized && !canBeMinimized) {
                     minimizedPackets.add(packet);
@@ -174,6 +180,17 @@ public class LoadedFurniture implements Furniture {
     @Override
     public boolean isValid() {
         return baseEntity().isValid();
+    }
+
+    @NotNull
+    public Location dropLocation() {
+        Optional<Vector3f> dropOffset = config().getPlacement(this.anchorType).dropOffset();
+        if (dropOffset.isEmpty()) {
+            return location();
+        }
+        Quaternionf conjugated = QuaternionUtils.toQuaternionf(0, Math.toRadians(180 - this.location.getYaw()), 0).conjugate();
+        Vector3f offset = conjugated.transform(new Vector3f(dropOffset.get()));
+        return new Location(this.location.getWorld(), this.location.getX() + offset.x, this.location.getY() + offset.y, this.location.getZ() - offset.z);
     }
 
     @Override
@@ -294,7 +311,27 @@ public class LoadedFurniture implements Furniture {
         spawnSeatEntityForPlayer((Player) player.platformPlayer(), seat);
     }
 
-    public void spawnSeatEntityForPlayer(org.bukkit.entity.Player player, Seat seat) {
+    @Override
+    public FurnitureExtraData extraData() {
+        return this.extraData;
+    }
+
+    @Override
+    public void setExtraData(FurnitureExtraData extraData) {
+        this.extraData = extraData;
+        this.save();
+    }
+
+    @Override
+    public void save() {
+        try {
+            this.baseEntity().getPersistentDataContainer().set(BukkitFurnitureManager.FURNITURE_EXTRA_DATA_KEY, PersistentDataType.BYTE_ARRAY, this.extraData.toBytes());
+        } catch (IOException e) {
+            CraftEngine.instance().logger().warn("Failed to save furniture data.", e);
+        }
+    }
+
+    private void spawnSeatEntityForPlayer(org.bukkit.entity.Player player, Seat seat) {
         Location location = this.calculateSeatLocation(seat);
         Entity seatEntity = seat.limitPlayerRotation() ?
                 EntityUtils.spawnEntity(player.getWorld(), VersionHelper.isOrAbove1_20_2() ? location.subtract(0,0.9875,0) : location.subtract(0,0.990625,0), EntityType.ARMOR_STAND, entity -> {

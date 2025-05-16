@@ -9,7 +9,7 @@ import net.momirealms.craftengine.core.util.Key;
 import net.momirealms.craftengine.core.util.MiscUtils;
 import net.momirealms.craftengine.core.util.ResourceConfigUtils;
 import net.momirealms.craftengine.core.world.Vec3d;
-import net.momirealms.craftengine.core.world.World;
+import net.momirealms.craftengine.core.world.WorldPosition;
 import net.momirealms.craftengine.core.world.collision.AABB;
 import org.joml.Quaternionf;
 import org.joml.Vector3f;
@@ -53,8 +53,12 @@ public class InteractionHitBox extends AbstractHitBox {
     }
 
     @Override
-    public void initPacketsAndColliders(int[] entityId, World world, double x, double y, double z, float yaw, Quaternionf conjugated, BiConsumer<Object, Boolean> packets, Consumer<Collider> collider, BiConsumer<Integer, AABB> aabb) {
+    public void initPacketsAndColliders(int[] entityId, WorldPosition position, Quaternionf conjugated, BiConsumer<Object, Boolean> packets, Consumer<Collider> collider, BiConsumer<Integer, AABB> aabb) {
         Vector3f offset = conjugated.transform(new Vector3f(position()));
+        double x = position.x();
+        double y = position.y();
+        double z = position.z();
+        float yaw = position.xRot();
         packets.accept(FastNMS.INSTANCE.constructor$ClientboundAddEntityPacket(
                 entityId[0], UUID.randomUUID(), x + offset.x, y + offset.y, z - offset.z, 0, yaw,
                 Reflections.instance$EntityType$INTERACTION, 0, Reflections.instance$Vec3$Zero, 0
@@ -66,7 +70,7 @@ public class InteractionHitBox extends AbstractHitBox {
         if (blocksBuilding() || this.canBeHitByProjectile()) {
             AABB ceAABB = AABB.fromInteraction(new Vec3d(x + offset.x, y + offset.y, z - offset.z), this.size.x, this.size.y);
             Object nmsAABB = FastNMS.INSTANCE.constructor$AABB(ceAABB.minX, ceAABB.minY, ceAABB.minZ, ceAABB.maxX, ceAABB.maxY, ceAABB.maxZ);
-            collider.accept(new BukkitCollider(world.serverWorld(), nmsAABB, x, y, z, this.canBeHitByProjectile(), false, this.blocksBuilding()));
+            collider.accept(new BukkitCollider(position.world().serverWorld(), nmsAABB, x, y, z, this.canBeHitByProjectile(), false, this.blocksBuilding()));
         }
     }
 

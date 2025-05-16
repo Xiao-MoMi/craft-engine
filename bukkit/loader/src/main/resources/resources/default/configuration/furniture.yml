@@ -17,6 +17,7 @@ items:
             place: minecraft:block.bamboo_wood.place
         placement:
           ground:
+            loot-spawn-offset: 0.5,0.5,0
             rules:
               # ANY / FOUR / EIGHT / SIXTEEN / NORTH / EAST / WEST / SOUTH
               rotation: FOUR
@@ -40,7 +41,7 @@ items:
                   - 0,0,-0.1 0
                   - 1,0,-0.1 0
         loot:
-          template: "default:loot_table/basic"
+          template: "default:loot_table/furniture"
           arguments:
             item: default:bench
   default:table_lamp:
@@ -61,6 +62,7 @@ items:
             place: minecraft:block.lantern.place
         placement:
           ground:
+            loot-spawn-offset: 0,0.2,0
             rules:
               rotation: ANY
               alignment: QUARTER
@@ -90,7 +92,7 @@ items:
                 height: 0.4
                 interactive: true
         loot:
-          template: "default:loot_table/basic"
+          template: "default:loot_table/furniture"
           arguments:
             item: default:table_lamp
   default:wooden_chair:
@@ -111,6 +113,7 @@ items:
             place: minecraft:block.bamboo_wood.place
         placement:
           ground:
+            loot-spawn-offset: 0,0.4,0
             rules:
               rotation: ANY
               alignment: ANY
@@ -129,6 +132,6 @@ items:
                 seats:
                   - 0,0,-0.1 0
         loot:
-          template: "default:loot_table/basic"
+          template: "default:loot_table/furniture"
           arguments:
             item: default:wooden_chair

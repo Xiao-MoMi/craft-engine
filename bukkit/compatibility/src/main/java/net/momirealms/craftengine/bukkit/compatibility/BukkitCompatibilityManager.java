@@ -193,6 +193,11 @@ public class BukkitCompatibilityManager implements CompatibilityManager {
     }
 
     @Override
+    public String parse(Player player1, Player player2, String text) {
+        return PlaceholderAPIUtils.parse((org.bukkit.entity.Player) player1.platformPlayer(), (org.bukkit.entity.Player) player2.platformPlayer(), text);
+    }
+
+    @Override
     public int getPlayerProtocolVersion(UUID uuid) {
         return ViaVersionUtils.getPlayerProtocolVersion(uuid);
     }

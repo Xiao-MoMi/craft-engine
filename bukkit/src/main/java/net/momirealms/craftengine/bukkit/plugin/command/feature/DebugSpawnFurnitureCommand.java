@@ -1,5 +1,6 @@
 package net.momirealms.craftengine.bukkit.plugin.command.feature;
 
+import net.momirealms.craftengine.bukkit.api.CraftEngineFurniture;
 import net.momirealms.craftengine.bukkit.entity.furniture.BukkitFurnitureManager;
 import net.momirealms.craftengine.bukkit.plugin.command.BukkitCommandFeature;
 import net.momirealms.craftengine.bukkit.util.KeyUtils;
@@ -55,7 +56,7 @@ public class DebugSpawnFurnitureCommand extends BukkitCommandFeature<CommandSend
                     CustomFurniture customFurniture = optionalCustomFurniture.get();
                     AnchorType anchorType = (AnchorType) context.optional("anchor-type").orElse(customFurniture.getAnyPlacement());
                     boolean playSound = context.flags().hasFlag("silent");
-                    furnitureManager.place(customFurniture, location, anchorType, !playSound);
+                    CraftEngineFurniture.place(location, customFurniture, anchorType, playSound);
                 });
     }
 

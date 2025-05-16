@@ -6,7 +6,6 @@ import com.ezylang.evalex.parser.ParseException;
 import net.kyori.adventure.text.Component;
 import net.momirealms.craftengine.core.plugin.context.Context;
 import net.momirealms.craftengine.core.util.AdventureHelper;
-import net.momirealms.craftengine.core.util.Factory;
 import net.momirealms.craftengine.core.util.Key;
 import net.momirealms.craftengine.core.util.ResourceConfigUtils;
 
@@ -41,7 +40,7 @@ public class ExpressionNumberProvider implements NumberProvider {
         return this.expr;
     }
 
-    public static class FactoryImpl implements Factory<NumberProvider> {
+    public static class FactoryImpl implements NumberProviderFactory {
 
         @Override
         public NumberProvider create(Map<String, Object> arguments) {

@@ -5,10 +5,9 @@ import net.momirealms.craftengine.core.plugin.context.Condition;
 import net.momirealms.craftengine.core.plugin.context.Context;
 import net.momirealms.craftengine.core.plugin.context.number.NumberProvider;
 import net.momirealms.craftengine.core.plugin.context.number.NumberProviders;
-import net.momirealms.craftengine.core.plugin.context.parameter.CommonParameters;
+import net.momirealms.craftengine.core.plugin.context.parameter.DirectContextParameters;
 import net.momirealms.craftengine.core.util.Key;
-import net.momirealms.craftengine.core.world.Vec3d;
-import net.momirealms.craftengine.core.world.World;
+import net.momirealms.craftengine.core.world.WorldPosition;
 
 import java.util.Map;
 import java.util.Optional;
@@ -32,14 +31,18 @@ public class DistanceCondition<CTX extends Context> implements Condition<CTX> {
     public boolean test(CTX ctx) {
         float min = this.min.getFloat(ctx);
         float max = this.max.getFloat(ctx);
-        Optional<Player> optionalPlayer = ctx.getOptionalParameter(CommonParameters.PLAYER);
-        World world = ctx.getParameterOrThrow(CommonParameters.WORLD);
-        Vec3d location = ctx.getParameterOrThrow(CommonParameters.LOCATION);
+        Optional<Player> optionalPlayer = ctx.getOptionalParameter(DirectContextParameters.PLAYER);
         if (optionalPlayer.isEmpty()) {
             return false;
         }
+        Optional<WorldPosition> optionalPosition = ctx.getOptionalParameter(DirectContextParameters.POSITION);
+        if (optionalPosition.isEmpty()) {
+            return false;
+        }
+
+        WorldPosition location = optionalPosition.get();
         Player player = optionalPlayer.get();
-        if (!player.world().uuid().equals(world.uuid())) {
+        if (!player.world().uuid().equals(location.world().uuid())) {
             return false;
         }
 

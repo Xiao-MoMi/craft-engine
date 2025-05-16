@@ -10,10 +10,10 @@ import java.util.Map;
 
 public class CustomModelDataTint implements Tint {
     public static final Factory FACTORY = new Factory();
-    private final Either<Integer, List<Integer>> value;
+    private final Either<Integer, List<Float>> value;
     private final int index;
 
-    public CustomModelDataTint(Either<Integer, List<Integer>> value, int index) {
+    public CustomModelDataTint(Either<Integer, List<Float>> value, int index) {
         this.index = index;
         this.value = value;
     }

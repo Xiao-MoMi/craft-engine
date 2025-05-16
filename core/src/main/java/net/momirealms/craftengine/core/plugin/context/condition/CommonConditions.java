@@ -17,4 +17,7 @@ public final class CommonConditions {
     public static final Key ENCHANTMENT = Key.from("craftengine:enchantment");
     public static final Key FALLING_BLOCK = Key.from("craftengine:falling_block");
     public static final Key DISTANCE = Key.from("craftengine:distance");
+    public static final Key PERMISSION = Key.from("craftengine:permission");
+    public static final Key EQUALS = Key.from("craftengine:equals");
+    public static final Key EXPRESSION = Key.from("craftengine:expression");
 }

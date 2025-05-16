@@ -120,7 +120,7 @@ public class SaplingBlockBehavior extends BushBlockBehavior {
             int x = FastNMS.INSTANCE.field$Vec3i$x(blockPos);
             int y = FastNMS.INSTANCE.field$Vec3i$y(blockPos);
             int z = FastNMS.INSTANCE.field$Vec3i$z(blockPos);
-            world.spawnParticle(ParticleUtils.getParticle("HAPPY_VILLAGER"), x + 0.5, y + 0.5, z + 0.5, 15, 0.25, 0.25, 0.25);
+            world.spawnParticle(ParticleUtils.HAPPY_VILLAGER, x + 0.5, y + 0.5, z + 0.5, 15, 0.25, 0.25, 0.25);
         }
         return success;
     }

@@ -28,7 +28,7 @@ public class ItemBehaviors {
         Key key = Key.withDefaultNamespace(type, Key.DEFAULT_NAMESPACE);
         ItemBehaviorFactory factory = BuiltInRegistries.ITEM_BEHAVIOR_FACTORY.getValue(key);
         if (factory == null) {
-            throw new LocalizedResourceConfigException("warning.config.item.behavior.invalid_type", type.toString());
+            throw new LocalizedResourceConfigException("warning.config.item.behavior.invalid_type", type);
         }
         return factory.create(pack, path, id, map);
     }

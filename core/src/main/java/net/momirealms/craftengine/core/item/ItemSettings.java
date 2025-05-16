@@ -1,5 +1,7 @@
 package net.momirealms.craftengine.core.item;
 
+import net.momirealms.craftengine.core.entity.ItemDisplayContext;
+import net.momirealms.craftengine.core.entity.projectile.ProjectileMeta;
 import net.momirealms.craftengine.core.item.modifier.EquippableModifier;
 import net.momirealms.craftengine.core.item.modifier.ItemDataModifier;
 import net.momirealms.craftengine.core.pack.misc.EquipmentGeneration;
@@ -9,6 +11,8 @@ import net.momirealms.craftengine.core.util.MiscUtils;
 import net.momirealms.craftengine.core.util.ResourceConfigUtils;
 import net.momirealms.craftengine.core.util.VersionHelper;
 import org.jetbrains.annotations.Nullable;
+import org.joml.Quaternionf;
+import org.joml.Vector3f;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -22,6 +26,8 @@ public class ItemSettings {
     List<AnvilRepairItem> anvilRepairItems = List.of();
     boolean renameable = true;
     boolean canPlaceRelatedVanillaBlock = false;
+    ProjectileMeta projectileMeta;
+    boolean dyeable = true;
 
     private ItemSettings() {}
 
@@ -50,6 +56,8 @@ public class ItemSettings {
         newSettings.anvilRepairItems = settings.anvilRepairItems;
         newSettings.renameable = settings.renameable;
         newSettings.canPlaceRelatedVanillaBlock = settings.canPlaceRelatedVanillaBlock;
+        newSettings.projectileMeta = settings.projectileMeta;
+        newSettings.dyeable = settings.dyeable;
         return newSettings;
     }
 
@@ -63,6 +71,10 @@ public class ItemSettings {
             }
         }
         return settings;
+    }
+
+    public ProjectileMeta projectileMeta() {
+        return projectileMeta;
     }
 
     public boolean canPlaceRelatedVanillaBlock() {
@@ -83,6 +95,10 @@ public class ItemSettings {
 
     public Set<Key> tags() {
         return tags;
+    }
+
+    public boolean dyeable() {
+        return dyeable;
     }
 
     public List<AnvilRepairItem> repairItems() {
@@ -109,6 +125,11 @@ public class ItemSettings {
         return this;
     }
 
+    public ItemSettings projectileMeta(ProjectileMeta projectileMeta) {
+        this.projectileMeta = projectileMeta;
+        return this;
+    }
+
     public ItemSettings canPlaceRelatedVanillaBlock(boolean canPlaceRelatedVanillaBlock) {
         this.canPlaceRelatedVanillaBlock = canPlaceRelatedVanillaBlock;
         return this;
@@ -126,6 +147,11 @@ public class ItemSettings {
 
     public ItemSettings equipment(EquipmentGeneration equipment) {
         this.equipment = equipment;
+        return this;
+    }
+
+    public ItemSettings dyeable(boolean bool) {
+        this.dyeable = bool;
         return this;
     }
 
@@ -192,6 +218,20 @@ public class ItemSettings {
             registerFactory("can-place", (value -> {
                 boolean bool = (boolean) value;
                 return settings -> settings.canPlaceRelatedVanillaBlock(bool);
+            }));
+            registerFactory("projectile", (value -> {
+                Map<String, Object> args = MiscUtils.castToMap(value, false);
+                Key customTridentItemId = Key.of(Objects.requireNonNull(args.get("item"), "'item should not be null'").toString());
+                ItemDisplayContext displayType = ItemDisplayContext.valueOf(args.getOrDefault("display-transform", "NONE").toString().toUpperCase(Locale.ENGLISH));
+                Vector3f translation = MiscUtils.getAsVector3f(args.getOrDefault("translation", "0"), "translation");
+                Vector3f scale = MiscUtils.getAsVector3f(args.getOrDefault("scale", "1"), "scale");
+                Quaternionf rotation = MiscUtils.getAsQuaternionf(ResourceConfigUtils.get(args, "rotation-left", "rotation"), "rotation-left");
+                String type = args.getOrDefault("type", "none").toString();
+                return settings -> settings.projectileMeta(new ProjectileMeta(customTridentItemId, displayType, scale, translation, rotation, type));
+            }));
+            registerFactory("dyeable", (value -> {
+                boolean bool = (boolean) value;
+                return settings -> settings.dyeable(bool);
             }));
         }
 

@@ -6,7 +6,7 @@ import net.momirealms.craftengine.core.pack.LoadingSequence;
 import net.momirealms.craftengine.core.pack.Pack;
 import net.momirealms.craftengine.core.pack.ResourceLocation;
 import net.momirealms.craftengine.core.plugin.CraftEngine;
-import net.momirealms.craftengine.core.plugin.config.ConfigSectionParser;
+import net.momirealms.craftengine.core.plugin.config.ConfigParser;
 import net.momirealms.craftengine.core.plugin.context.ContextHolder;
 import net.momirealms.craftengine.core.plugin.context.PlayerOptionalContext;
 import net.momirealms.craftengine.core.plugin.locale.LocalizedResourceConfigException;
@@ -75,8 +75,8 @@ public abstract class AbstractFontManager implements FontManager {
     }
 
     @Override
-    public ConfigSectionParser[] parsers() {
-        return new ConfigSectionParser[] {this.imageParser, this.emojiParser};
+    public ConfigParser[] parsers() {
+        return new ConfigParser[] {this.imageParser, this.emojiParser};
     }
 
     @Override
@@ -339,7 +339,7 @@ public abstract class AbstractFontManager implements FontManager {
         return this.fonts.computeIfAbsent(key, Font::new);
     }
 
-    public class EmojiParser implements ConfigSectionParser {
+    public class EmojiParser implements ConfigParser {
         public static final String[] CONFIG_SECTION_NAME = new String[] {"emoji", "emojis"};
 
         @Override
@@ -400,7 +400,7 @@ public abstract class AbstractFontManager implements FontManager {
         }
     }
 
-    public class ImageParser implements ConfigSectionParser {
+    public class ImageParser implements ConfigParser {
         public static final String[] CONFIG_SECTION_NAME = new String[] {"images", "image"};
 
         @Override

@@ -7,7 +7,7 @@ import net.momirealms.craftengine.core.loot.function.LootFunction;
 import net.momirealms.craftengine.core.loot.function.LootFunctions;
 import net.momirealms.craftengine.core.plugin.CraftEngine;
 import net.momirealms.craftengine.core.plugin.context.Condition;
-import net.momirealms.craftengine.core.plugin.context.parameter.CommonParameters;
+import net.momirealms.craftengine.core.plugin.context.parameter.DirectContextParameters;
 import net.momirealms.craftengine.core.util.Key;
 import net.momirealms.craftengine.core.util.ResourceConfigUtils;
 
@@ -31,7 +31,7 @@ public class SingleItemLootEntryContainer<T> extends AbstractSingleLootEntryCont
     @SuppressWarnings("unchecked")
     @Override
     protected void createItem(Consumer<Item<T>> lootConsumer, LootContext context) {
-        Item<T> tItem = (Item<T>) CraftEngine.instance().itemManager().createWrappedItem(this.item, context.getOptionalParameter(CommonParameters.PLAYER).orElse(null));
+        Item<T> tItem = (Item<T>) CraftEngine.instance().itemManager().createWrappedItem(this.item, context.getOptionalParameter(DirectContextParameters.PLAYER).orElse(null));
         if (tItem != null) {
             lootConsumer.accept(tItem);
         } else {

@@ -32,6 +32,7 @@ import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 public class BukkitWorldManager implements WorldManager, Listener {
@@ -45,6 +46,7 @@ public class BukkitWorldManager implements WorldManager, Listener {
     private UUID lastVisitedUUID;
     private CEWorld lastVisitedWorld;
     private StorageAdaptor storageAdaptor;
+    private boolean isTicking = false;
 
     public BukkitWorldManager(BukkitCraftEngine plugin) {
         instance = this;
@@ -90,12 +92,20 @@ public class BukkitWorldManager implements WorldManager, Listener {
 
     public void delayedInit() {
         // events and tasks
-        Bukkit.getPluginManager().registerEvents(this, plugin.bootstrap());
-        this.tickTask = plugin.scheduler().sync().runRepeating(() -> {
-            for (CEWorld world : worldArray) {
-                world.tick();
+        Bukkit.getPluginManager().registerEvents(this, this.plugin.bootstrap());
+        this.tickTask = this.plugin.scheduler().asyncRepeating(() -> {
+            try {
+                if (this.isTicking) {
+                    return;
+                }
+                this.isTicking = true;
+                for (CEWorld world : this.worldArray) {
+                    world.tick();
+                }
+            } finally {
+                this.isTicking = false;
             }
-        }, 1, 1);
+        }, 50, 50, TimeUnit.MILLISECONDS);
         // load loaded chunks
         this.worldMapLock.writeLock().lock();
         try {
@@ -125,7 +135,6 @@ public class BukkitWorldManager implements WorldManager, Listener {
         if (this.tickTask != null && !this.tickTask.cancelled()) {
             this.tickTask.cancel();
         }
-
         for (World world : Bukkit.getWorlds()) {
             CEWorld ceWorld = getWorld(world.getUID());
             for (Chunk chunk : world.getLoadedChunks()) {
@@ -299,7 +308,7 @@ public class BukkitWorldManager implements WorldManager, Listener {
                     }
                 }
             }
-            if (unsaved && !FastNMS.INSTANCE.method$LevelChunk$isUnsaved(levelChunk)) {
+            if (unsaved /*&& !FastNMS.INSTANCE.method$LevelChunk$isUnsaved(levelChunk)*/) {
                 FastNMS.INSTANCE.method$LevelChunk$markUnsaved(levelChunk);
             }
             ceChunk.unload();

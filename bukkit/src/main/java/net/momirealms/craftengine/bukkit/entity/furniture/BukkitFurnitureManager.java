@@ -4,20 +4,29 @@ import net.momirealms.craftengine.bukkit.entity.furniture.hitbox.InteractionHitB
 import net.momirealms.craftengine.bukkit.nms.CollisionEntity;
 import net.momirealms.craftengine.bukkit.nms.FastNMS;
 import net.momirealms.craftengine.bukkit.plugin.BukkitCraftEngine;
+import net.momirealms.craftengine.bukkit.plugin.network.handler.FurniturePacketHandler;
 import net.momirealms.craftengine.bukkit.util.EntityUtils;
+import net.momirealms.craftengine.bukkit.util.LocationUtils;
 import net.momirealms.craftengine.bukkit.util.Reflections;
+import net.momirealms.craftengine.core.entity.Billboard;
+import net.momirealms.craftengine.core.entity.ItemDisplayContext;
 import net.momirealms.craftengine.core.entity.furniture.*;
 import net.momirealms.craftengine.core.loot.LootTable;
 import net.momirealms.craftengine.core.pack.LoadingSequence;
 import net.momirealms.craftengine.core.pack.Pack;
 import net.momirealms.craftengine.core.plugin.config.Config;
-import net.momirealms.craftengine.core.plugin.config.ConfigSectionParser;
+import net.momirealms.craftengine.core.plugin.config.ConfigParser;
+import net.momirealms.craftengine.core.plugin.context.PlayerOptionalContext;
+import net.momirealms.craftengine.core.plugin.context.function.Function;
+import net.momirealms.craftengine.core.plugin.event.EventFunctions;
+import net.momirealms.craftengine.core.plugin.event.EventTrigger;
 import net.momirealms.craftengine.core.plugin.locale.LocalizedResourceConfigException;
 import net.momirealms.craftengine.core.sound.SoundData;
 import net.momirealms.craftengine.core.util.Key;
 import net.momirealms.craftengine.core.util.MiscUtils;
+import net.momirealms.craftengine.core.util.ResourceConfigUtils;
 import net.momirealms.craftengine.core.util.VersionHelper;
-import net.momirealms.craftengine.core.world.Vec3d;
+import net.momirealms.craftengine.core.world.WorldPosition;
 import org.bukkit.*;
 import org.bukkit.entity.*;
 import org.bukkit.event.HandlerList;
@@ -28,13 +37,16 @@ import org.jetbrains.annotations.NotNull;
 import org.joml.Vector3f;
 
 import javax.annotation.Nullable;
+import java.io.IOException;
 import java.nio.file.Path;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
 public class BukkitFurnitureManager extends AbstractFurnitureManager {
     public static final NamespacedKey FURNITURE_KEY = Objects.requireNonNull(NamespacedKey.fromString("craftengine:furniture_id"));
-    public static final NamespacedKey FURNITURE_ANCHOR_KEY = Objects.requireNonNull(NamespacedKey.fromString("craftengine:anchor_type"));
+    // DEPRECATED
+    // public static final NamespacedKey FURNITURE_ANCHOR_KEY = Objects.requireNonNull(NamespacedKey.fromString("craftengine:anchor_type"));
+    public static final NamespacedKey FURNITURE_EXTRA_DATA_KEY = Objects.requireNonNull(NamespacedKey.fromString("craftengine:furniture_extra_data"));
     public static final NamespacedKey FURNITURE_SEAT_BASE_ENTITY_KEY = Objects.requireNonNull(NamespacedKey.fromString("craftengine:seat_to_base_entity"));
     public static final NamespacedKey FURNITURE_SEAT_VECTOR_3F_KEY = Objects.requireNonNull(NamespacedKey.fromString("craftengine:seat_vector"));
     public static final NamespacedKey FURNITURE_COLLISION = Objects.requireNonNull(NamespacedKey.fromString("craftengine:collision"));
@@ -63,19 +75,23 @@ public class BukkitFurnitureManager extends AbstractFurnitureManager {
     }
 
     @Override
-    public Furniture place(CustomFurniture furniture, Vec3d vec3d, net.momirealms.craftengine.core.world.World world, AnchorType anchorType, boolean playSound) {
-        return this.place(furniture, new Location((World) world.platformWorld(), vec3d.x(), vec3d.y(), vec3d.z()), anchorType, playSound);
+    public Furniture place(WorldPosition position, CustomFurniture furniture, FurnitureExtraData extraData, boolean playSound) {
+        return this.place(LocationUtils.toLocation(position), furniture, extraData, playSound);
     }
 
-    public LoadedFurniture place(CustomFurniture furniture, Location location, AnchorType anchorType, boolean playSound) {
-        if (furniture.isAllowedPlacement(anchorType)) {
-            anchorType = furniture.getAnyPlacement();
+    public LoadedFurniture place(Location location, CustomFurniture furniture, FurnitureExtraData extraData, boolean playSound) {
+        Optional<AnchorType> optionalAnchorType = extraData.anchorType();
+        if (optionalAnchorType.isEmpty() || !furniture.isAllowedPlacement(optionalAnchorType.get())) {
+            extraData.anchorType(furniture.getAnyPlacement());
         }
-        AnchorType finalAnchorType = anchorType;
         Entity furnitureEntity = EntityUtils.spawnEntity(location.getWorld(), location, EntityType.ITEM_DISPLAY, entity -> {
             ItemDisplay display = (ItemDisplay) entity;
             display.getPersistentDataContainer().set(BukkitFurnitureManager.FURNITURE_KEY, PersistentDataType.STRING, furniture.id().toString());
-            display.getPersistentDataContainer().set(BukkitFurnitureManager.FURNITURE_ANCHOR_KEY, PersistentDataType.STRING, finalAnchorType.name());
+            try {
+                display.getPersistentDataContainer().set(BukkitFurnitureManager.FURNITURE_EXTRA_DATA_KEY, PersistentDataType.BYTE_ARRAY, extraData.toBytes());
+            } catch (IOException e) {
+                this.plugin.logger().warn("Failed to set furniture PDC for " + furniture.id().toString(), e);
+            }
             handleBaseEntityLoadEarly(display);
         });
         if (playSound) {
@@ -86,11 +102,11 @@ public class BukkitFurnitureManager extends AbstractFurnitureManager {
     }
 
     @Override
-    public ConfigSectionParser parser() {
+    public ConfigParser parser() {
         return this.furnitureParser;
     }
 
-    public class FurnitureParser implements ConfigSectionParser {
+    public class FurnitureParser implements ConfigParser {
         public static final String[] CONFIG_SECTION_NAME = new String[] { "furniture" };
 
         @Override
@@ -124,6 +140,8 @@ public class BukkitFurnitureManager extends AbstractFurnitureManager {
                 AnchorType anchorType = AnchorType.valueOf(entry.getKey().toUpperCase(Locale.ENGLISH));
                 Map<String, Object> placementArguments = MiscUtils.castToMap(entry.getValue(), true);
 
+                Optional<Vector3f> optionalLootSpawnOffset = Optional.ofNullable(placementArguments.get("loot-spawn-offset")).map(it -> MiscUtils.getAsVector3f(it, "loot-spawn-offset"));
+
                 // furniture display elements
                 List<FurnitureElement> elements = new ArrayList<>();
                 List<Map<String, Object>> elementConfigs = (List<Map<String, Object>>) placementArguments.getOrDefault("elements", List.of());
@@ -138,7 +156,8 @@ public class BukkitFurnitureManager extends AbstractFurnitureManager {
                             MiscUtils.getAsVector3f(element.getOrDefault("scale", "1"), "scale"),
                             MiscUtils.getAsVector3f(element.getOrDefault("translation", "0"), "translation"),
                             MiscUtils.getAsVector3f(element.getOrDefault("position", "0"), "position"),
-                            MiscUtils.getAsQuaternionf(element.getOrDefault("rotation", "0"), "rotation")
+                            MiscUtils.getAsQuaternionf(element.getOrDefault("rotation", "0"), "rotation"),
+                            (boolean) element.getOrDefault("apply-dyed-color", true)
                     );
                     elements.add(furnitureElement);
                 }
@@ -178,7 +197,8 @@ public class BukkitFurnitureManager extends AbstractFurnitureManager {
                             hitboxes.toArray(new HitBox[0]),
                             rotationRule,
                             alignmentRule,
-                            externalModel
+                            externalModel,
+                            optionalLootSpawnOffset
                     ));
                 } else {
                     placements.put(anchorType, new CustomFurniture.Placement(
@@ -186,7 +206,8 @@ public class BukkitFurnitureManager extends AbstractFurnitureManager {
                             hitboxes.toArray(new HitBox[0]),
                             RotationRule.ANY,
                             AlignmentRule.CENTER,
-                            externalModel
+                            externalModel,
+                            optionalLootSpawnOffset
                     ));
                 }
             }
@@ -196,7 +217,8 @@ public class BukkitFurnitureManager extends AbstractFurnitureManager {
 
             // get loot table
             LootTable<ItemStack> lootTable = lootMap == null ? null : LootTable.fromMap(lootMap);
-            CustomFurniture furniture = new CustomFurniture(id, settings, placements, lootTable);
+            EnumMap<EventTrigger, List<Function<PlayerOptionalContext>>> events = EventFunctions.parseEvents(ResourceConfigUtils.get(section, "events", "event"));
+            CustomFurniture furniture = new CustomFurniture(id, settings, placements, events, lootTable);
             byId.put(id, furniture);
         }
     }
@@ -217,9 +239,6 @@ public class BukkitFurnitureManager extends AbstractFurnitureManager {
                     handleCollisionEntityLoadOnEntitiesLoad(interaction);
                 } else if (entity instanceof Boat boat) {
                     handleCollisionEntityLoadOnEntitiesLoad(boat);
-                } else if (entity instanceof Shulker shulker) {
-                    // TODO 移除这一行，预计过一个月
-                    handleCollisionEntityLoadOnEntitiesLoad(shulker);
                 }
             }
         }
@@ -294,17 +313,17 @@ public class BukkitFurnitureManager extends AbstractFurnitureManager {
         boolean preventChange = FastNMS.INSTANCE.isPreventingStatusUpdates(location.getWorld(), location.getBlockX() >> 4, location.getBlockZ() >> 4);
         if (above1_20_1) {
             if (!preventChange) {
-                LoadedFurniture furniture = addNewFurniture(display, customFurniture, getAnchorType(display, customFurniture));
+                LoadedFurniture furniture = addNewFurniture(display, customFurniture);
                 furniture.initializeColliders();
                 for (Player player : display.getTrackedPlayers()) {
-                    this.plugin.adapt(player).furnitureView().computeIfAbsent(furniture.baseEntityId(), k -> new ArrayList<>()).addAll(furniture.fakeEntityIds());
+                    this.plugin.adapt(player).entityPacketHandlers().computeIfAbsent(furniture.baseEntityId(), k -> new FurniturePacketHandler(furniture.fakeEntityIds()));
                     this.plugin.networkManager().sendPacket(player, furniture.spawnPacket(player));
                 }
             }
         } else {
-            LoadedFurniture furniture = addNewFurniture(display, customFurniture, getAnchorType(display, customFurniture));
+            LoadedFurniture furniture = addNewFurniture(display, customFurniture);
             for (Player player : display.getTrackedPlayers()) {
-                this.plugin.adapt(player).furnitureView().computeIfAbsent(furniture.baseEntityId(), k -> new ArrayList<>()).addAll(furniture.fakeEntityIds());
+                this.plugin.adapt(player).entityPacketHandlers().computeIfAbsent(furniture.baseEntityId(), k -> new FurniturePacketHandler(furniture.fakeEntityIds()));
                 this.plugin.networkManager().sendPacket(player, furniture.spawnPacket(player));
             }
             if (preventChange) {
@@ -366,7 +385,7 @@ public class BukkitFurnitureManager extends AbstractFurnitureManager {
             CustomFurniture customFurniture = optionalFurniture.get();
             LoadedFurniture previous = this.furnitureByRealEntityId.get(display.getEntityId());
             if (previous != null) return;
-            LoadedFurniture furniture = addNewFurniture(display, customFurniture, getAnchorType(display, customFurniture));
+            LoadedFurniture furniture = addNewFurniture(display, customFurniture);
             furniture.initializeColliders(); // safely do it here
         }
     }
@@ -387,24 +406,37 @@ public class BukkitFurnitureManager extends AbstractFurnitureManager {
         collisionEntity.remove();
     }
 
-    private AnchorType getAnchorType(Entity baseEntity, CustomFurniture furniture) {
-        String anchorType = baseEntity.getPersistentDataContainer().get(FURNITURE_ANCHOR_KEY, PersistentDataType.STRING);
-        if (anchorType != null) {
-            try {
-                AnchorType unverified = AnchorType.valueOf(anchorType);
-                if (furniture.isAllowedPlacement(unverified)) {
-                    return unverified;
-                }
-            } catch (IllegalArgumentException ignored) {
-            }
-        }
-        AnchorType anchorTypeEnum = furniture.getAnyPlacement();
-        baseEntity.getPersistentDataContainer().set(FURNITURE_ANCHOR_KEY, PersistentDataType.STRING, anchorTypeEnum.name());
-        return anchorTypeEnum;
+    private FurnitureExtraData getFurnitureExtraData(Entity baseEntity) throws IOException {
+        byte[] extraData = baseEntity.getPersistentDataContainer().get(FURNITURE_EXTRA_DATA_KEY, PersistentDataType.BYTE_ARRAY);
+        if (extraData == null) return FurnitureExtraData.builder().build();
+        return FurnitureExtraData.fromBytes(extraData);
     }
 
-    private synchronized LoadedFurniture addNewFurniture(ItemDisplay display, CustomFurniture furniture, AnchorType anchorType) {
-        LoadedFurniture loadedFurniture = new LoadedFurniture(display, furniture, anchorType);
+//    private AnchorType getAnchorType(Entity baseEntity, CustomFurniture furniture) {
+//        String anchorType = baseEntity.getPersistentDataContainer().get(FURNITURE_ANCHOR_KEY, PersistentDataType.STRING);
+//        if (anchorType != null) {
+//            try {
+//                AnchorType unverified = AnchorType.valueOf(anchorType);
+//                if (furniture.isAllowedPlacement(unverified)) {
+//                    return unverified;
+//                }
+//            } catch (IllegalArgumentException ignored) {
+//            }
+//        }
+//        AnchorType anchorTypeEnum = furniture.getAnyPlacement();
+//        baseEntity.getPersistentDataContainer().set(FURNITURE_ANCHOR_KEY, PersistentDataType.STRING, anchorTypeEnum.name());
+//        return anchorTypeEnum;
+//    }
+
+    private synchronized LoadedFurniture addNewFurniture(ItemDisplay display, CustomFurniture furniture) {
+        FurnitureExtraData extraData;
+        try {
+            extraData = getFurnitureExtraData(display);
+        } catch (IOException e) {
+            extraData = FurnitureExtraData.builder().build();
+            plugin.logger().warn("Furniture extra data could not be loaded", e);
+        }
+        LoadedFurniture loadedFurniture = new LoadedFurniture(display, furniture, extraData);
         this.furnitureByRealEntityId.put(loadedFurniture.baseEntityId(), loadedFurniture);
         for (int entityId : loadedFurniture.entityIds()) {
             this.furnitureByEntityId.put(entityId, loadedFurniture);

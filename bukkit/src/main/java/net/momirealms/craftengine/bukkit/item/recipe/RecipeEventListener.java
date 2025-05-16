@@ -330,14 +330,12 @@ public class RecipeEventListener implements Listener {
         if (clicked == null) return;
         Material type = clicked.getType();
         if (type != Material.CAMPFIRE && type != Material.SOUL_CAMPFIRE) return;
-        if (!VersionHelper.isOrAbove1_21_2()) {
-            if (clicked.getState() instanceof Campfire campfire) {
-                try {
-                    Object blockEntity = Reflections.field$CraftBlockEntityState$tileEntity.get(campfire);
-                    BukkitInjector.injectCookingBlockEntity(blockEntity);
-                } catch (Exception e) {
-                    this.plugin.logger().warn("Failed to inject cooking block entity", e);
-                }
+        if (clicked.getState() instanceof Campfire campfire) {
+            try {
+                Object blockEntity = Reflections.field$CraftBlockEntityState$tileEntity.get(campfire);
+                BukkitInjector.injectCookingBlockEntity(blockEntity);
+            } catch (Exception e) {
+                this.plugin.logger().warn("Failed to inject cooking block entity", e);
             }
         }
 
@@ -704,59 +702,72 @@ public class RecipeEventListener implements Listener {
 
         try {
             Object mcRecipe = Reflections.field$CraftComplexRecipe$recipe.get(complexRecipe);
-            if (!Reflections.clazz$RepairItemRecipe.isInstance(mcRecipe)) {
+
+            // Repair recipe
+            if (Reflections.clazz$RepairItemRecipe.isInstance(mcRecipe)) {
+                // repair item
+                ItemStack[] itemStacks = inventory.getMatrix();
+                Pair<ItemStack, ItemStack> onlyTwoItems = getTheOnlyTwoItem(itemStacks);
+                if (onlyTwoItems.left() == null || onlyTwoItems.right() == null) {
+                    inventory.setResult(null);
+                    return;
+                }
+
+                Item<ItemStack> left = plugin.itemManager().wrap(onlyTwoItems.left());
+                Item<ItemStack> right = plugin.itemManager().wrap(onlyTwoItems.right());
+                if (!left.id().equals(right.id())) {
+                    inventory.setResult(null);
+                    return;
+                }
+
+                int totalDamage = right.damage().orElse(0) + left.damage().orElse(0);
+                int totalMaxDamage = left.maxDamage().get() + right.maxDamage().get();
+                // should be impossible, but take care
+                if (totalDamage >= totalMaxDamage) {
+                    inventory.setResult(null);
+                    return;
+                }
+
+                Player player;
+                try {
+                    player = (Player) Reflections.method$InventoryView$getPlayer.invoke(event.getView());
+                } catch (ReflectiveOperationException e) {
+                    plugin.logger().warn("Failed to get inventory viewer", e);
+                    return;
+                }
+
+                Optional<CustomItem<ItemStack>> customItemOptional = plugin.itemManager().getCustomItem(left.id());
+                if (customItemOptional.isEmpty()) {
+                    inventory.setResult(null);
+                    return;
+                }
+
+                CustomItem<ItemStack> customItem = customItemOptional.get();
+                if (!customItem.settings().canRepair()) {
+                    inventory.setResult(null);
+                    return;
+                }
+
+                Item<ItemStack> newItem = customItem.buildItem(ItemBuildContext.of(plugin.adapt(player)));
+                int remainingDurability = totalMaxDamage - totalDamage;
+                int newItemDamage = Math.max(0, newItem.maxDamage().get() - remainingDurability);
+                newItem.damage(newItemDamage);
+                inventory.setResult(newItem.load());
+            } else if (Reflections.clazz$ArmorDyeRecipe.isInstance(mcRecipe)) {
+                ItemStack[] itemStacks = inventory.getMatrix();
+                for (ItemStack itemStack : itemStacks) {
+                    if (itemStack == null) continue;
+                    Item<ItemStack> item = plugin.itemManager().wrap(itemStack);
+                    Optional<CustomItem<ItemStack>> optionalCustomItem = item.getCustomItem();
+                    if (optionalCustomItem.isPresent() && !optionalCustomItem.get().settings().dyeable()) {
+                        inventory.setResult(null);
+                        return;
+                    }
+                }
+            } else {
                 inventory.setResult(null);
                 return;
             }
-
-            // repair item
-            ItemStack[] itemStacks = inventory.getMatrix();
-            Pair<ItemStack, ItemStack> onlyTwoItems = getTheOnlyTwoItem(itemStacks);
-            if (onlyTwoItems.left() == null || onlyTwoItems.right() == null) {
-                inventory.setResult(null);
-                return;
-            }
-
-            Item<ItemStack> left = plugin.itemManager().wrap(onlyTwoItems.left());
-            Item<ItemStack> right = plugin.itemManager().wrap(onlyTwoItems.right());
-            if (!left.id().equals(right.id())) {
-                inventory.setResult(null);
-                return;
-            }
-
-            int totalDamage = right.damage().orElse(0) + left.damage().orElse(0);
-            int totalMaxDamage = left.maxDamage().get() + right.maxDamage().get();
-            // should be impossible, but take care
-            if (totalDamage >= totalMaxDamage) {
-                inventory.setResult(null);
-                return;
-            }
-
-            Player player;
-            try {
-                player = (Player) Reflections.method$InventoryView$getPlayer.invoke(event.getView());
-            } catch (ReflectiveOperationException e) {
-                plugin.logger().warn("Failed to get inventory viewer", e);
-                return;
-            }
-
-            Optional<CustomItem<ItemStack>> customItemOptional = plugin.itemManager().getCustomItem(left.id());
-            if (customItemOptional.isEmpty()) {
-                inventory.setResult(null);
-                return;
-            }
-
-            CustomItem<ItemStack> customItem = customItemOptional.get();
-            if (!customItem.settings().canRepair()) {
-                inventory.setResult(null);
-                return;
-            }
-
-            Item<ItemStack> newItem = customItem.buildItem(ItemBuildContext.of(plugin.adapt(player)));
-            int remainingDurability = totalMaxDamage - totalDamage;
-            int newItemDamage = Math.max(0, newItem.maxDamage().get() - remainingDurability);
-            newItem.damage(newItemDamage);
-            inventory.setResult(newItem.load());
         } catch (Exception e) {
             this.plugin.logger().warn("Failed to handle minecraft custom recipe", e);
         }

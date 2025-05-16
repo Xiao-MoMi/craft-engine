@@ -12,12 +12,12 @@ import net.momirealms.craftengine.core.loot.LootTable;
 import net.momirealms.craftengine.core.loot.VanillaLoot;
 import net.momirealms.craftengine.core.pack.LoadingSequence;
 import net.momirealms.craftengine.core.pack.Pack;
-import net.momirealms.craftengine.core.plugin.config.ConfigSectionParser;
+import net.momirealms.craftengine.core.plugin.config.ConfigParser;
 import net.momirealms.craftengine.core.plugin.context.ContextHolder;
-import net.momirealms.craftengine.core.plugin.context.parameter.CommonParameters;
+import net.momirealms.craftengine.core.plugin.context.parameter.DirectContextParameters;
 import net.momirealms.craftengine.core.plugin.locale.LocalizedResourceConfigException;
 import net.momirealms.craftengine.core.util.*;
-import net.momirealms.craftengine.core.world.Vec3d;
+import net.momirealms.craftengine.core.world.WorldPosition;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.entity.Entity;
@@ -65,33 +65,31 @@ public class BukkitVanillaLootManager extends AbstractVanillaLootManager impleme
             }
             Location location = entity.getLocation();
             net.momirealms.craftengine.core.world.World world = new BukkitWorld(entity.getWorld());
-            Vec3d vec3d = new Vec3d(location.getBlockX() + 0.5, location.getBlockY() + 0.5, location.getBlockZ() + 0.5);
-            ContextHolder.Builder builder = ContextHolder.builder();
-            builder.withParameter(CommonParameters.WORLD, world);
-            builder.withParameter(CommonParameters.LOCATION, vec3d);
+            WorldPosition position = new WorldPosition(world, location.getX(), location.getY(), location.getZ());
+            ContextHolder.Builder builder = ContextHolder.builder()
+                    .withParameter(DirectContextParameters.POSITION, position);
             BukkitServerPlayer optionalPlayer = null;
             if (VersionHelper.isOrAbove1_20_5()) {
                 if (event.getDamageSource().getCausingEntity() instanceof Player player) {
                     optionalPlayer = this.plugin.adapt(player);
-                    builder.withParameter(CommonParameters.PLAYER, optionalPlayer);
-                    //mark item builder.withOptionalParameter(CommonParameters.MAIN_HAND_ITEM, serverPlayer.getItemInHand(InteractionHand.MAIN_HAND));
+                    builder.withParameter(DirectContextParameters.PLAYER, optionalPlayer);
                 }
             }
             ContextHolder contextHolder = builder.build();
             for (LootTable<?> lootTable : loot.lootTables()) {
                 for (Item<?> item : lootTable.getRandomItems(contextHolder, world, optionalPlayer)) {
-                    world.dropItemNaturally(vec3d, item);
+                    world.dropItemNaturally(position, item);
                 }
             }
         });
     }
 
     @Override
-    public ConfigSectionParser parser() {
+    public ConfigParser parser() {
         return this.vanillaLootParser;
     }
 
-    public class VanillaLootParser implements ConfigSectionParser {
+    public class VanillaLootParser implements ConfigParser {
         public static final String[] CONFIG_SECTION_NAME = new String[] {"vanilla-loots", "vanilla-loot", "loots", "loot"};
 
         @Override

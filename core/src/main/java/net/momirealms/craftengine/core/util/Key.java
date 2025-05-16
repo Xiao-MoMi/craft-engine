@@ -57,6 +57,10 @@ public record Key(String namespace, String value) {
         return namespace + ":" + value;
     }
 
+    public String asString() {
+        return namespace + ":" + value;
+    }
+
     private static String[] decompose(String id, String namespace) {
         String[] strings = new String[]{namespace, id};
         int i = id.indexOf(':');

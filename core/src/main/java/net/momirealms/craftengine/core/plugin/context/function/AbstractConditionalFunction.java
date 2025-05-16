@@ -2,7 +2,6 @@ package net.momirealms.craftengine.core.plugin.context.function;
 
 import net.momirealms.craftengine.core.plugin.context.Condition;
 import net.momirealms.craftengine.core.plugin.context.Context;
-import net.momirealms.craftengine.core.util.Factory;
 import net.momirealms.craftengine.core.util.MCUtils;
 import net.momirealms.craftengine.core.util.MiscUtils;
 
@@ -11,7 +10,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.function.Predicate;
 
-// TODO 将loot functions迁移过来
 public abstract class AbstractConditionalFunction<CTX extends Context> implements Function<CTX> {
     protected final List<Condition<CTX>> predicates;
     private final Predicate<CTX> compositePredicates;
@@ -30,11 +28,15 @@ public abstract class AbstractConditionalFunction<CTX extends Context> implement
 
     protected abstract void runInternal(CTX ctx);
 
-    public static abstract class AbstractFactory<CTX extends Context> implements Factory<Function<CTX>> {
+    public static abstract class AbstractFactory<CTX extends Context> implements FunctionFactory<CTX> {
         private final java.util.function.Function<Map<String, Object>, Condition<CTX>> factory;
 
         public AbstractFactory(java.util.function.Function<Map<String, Object>, Condition<CTX>> factory) {
             this.factory = factory;
+        }
+
+        public java.util.function.Function<Map<String, Object>, Condition<CTX>> conditionFactory() {
+            return factory;
         }
 
         protected List<Condition<CTX>> getPredicates(Map<String, Object> arguments) {

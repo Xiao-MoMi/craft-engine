@@ -38,6 +38,7 @@ categories:
       - default:topaz_bow
       - default:topaz_crossbow
       - default:topaz_rod
+      - default:topaz_trident
       - default:topaz_helmet
       - default:topaz_chestplate
       - default:topaz_leggings
@@ -63,3 +64,5 @@ categories:
       - default:gunpowder_block
       - default:solid_gunpowder_block
       - default:ender_pearl_flower_seeds
+      - default:gui_head_size_1
+      - default:gui_head_size_4

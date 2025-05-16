@@ -18,14 +18,14 @@ import net.momirealms.craftengine.mod.CraftEnginePlugin;
 import net.momirealms.craftengine.mod.util.NoteBlockUtils;
 import net.momirealms.craftengine.shared.ObjectHolder;
 import net.momirealms.craftengine.shared.block.*;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.jetbrains.annotations.NotNull;
 
-public class CraftEngineBlock
-        extends Block
-        implements BehaviorHolder, ShapeHolder, NoteBlockIndicator, Fallable, BonemealableBlock
-        //TODO , SimpleWaterloggedBlock
-{
+public class CraftEngineBlock extends Block
+        implements BehaviorHolder, ShapeHolder, NoteBlockIndicator, Fallable, BonemealableBlock {
     private static final StoneBlockShape STONE = new StoneBlockShape(Blocks.STONE.defaultBlockState());
+    private static final Logger LOGGER = LogManager.getLogger(CraftEngineBlock.class);
     private boolean isNoteBlock;
     public ObjectHolder<BlockBehavior> behaviorHolder;
     public ObjectHolder<BlockShape> shapeHolder;
@@ -38,30 +38,30 @@ public class CraftEngineBlock
     }
 
     public void setNoteBlock(boolean noteBlock) {
-        isNoteBlock = noteBlock;
+        this.isNoteBlock = noteBlock;
     }
 
     @Override
     public ObjectHolder<BlockBehavior> getBehaviorHolder() {
-        return behaviorHolder;
+        return this.behaviorHolder;
     }
 
     @Override
     public ObjectHolder<BlockShape> getShapeHolder() {
-        return shapeHolder;
+        return this.shapeHolder;
     }
 
     @Override
     public boolean isNoteBlock() {
-        return isClientSideNoteBlock;
+        return this.isClientSideNoteBlock;
     }
 
     @Override
     protected @NotNull VoxelShape getShape(@NotNull BlockState state, @NotNull BlockGetter level, @NotNull BlockPos pos, @NotNull CollisionContext context) {
         try {
-            return (VoxelShape) shapeHolder.value().getShape(this, new Object[]{state, level, pos, context});
+            return (VoxelShape) this.shapeHolder.value().getShape(this, new Object[]{state, level, pos, context});
         } catch (Exception e) {
-            e.printStackTrace();
+            LOGGER.error(e);
             return super.getShape(state, level, pos, context);
         }
     }
@@ -71,7 +71,7 @@ public class CraftEngineBlock
         try {
             return (BlockState) this.behaviorHolder.value().rotate(this, new Object[]{state, rotation}, () -> super.rotate(state, rotation));
         } catch (Exception e) {
-            e.printStackTrace();
+            LOGGER.error(e);
             return super.rotate(state, rotation);
         }
     }
@@ -81,7 +81,7 @@ public class CraftEngineBlock
         try {
             return (BlockState) this.behaviorHolder.value().mirror(this, new Object[]{state, mirror}, () -> super.mirror(state, mirror));
         } catch (Exception e) {
-            e.printStackTrace();
+            LOGGER.error(e);
             return super.mirror(state, mirror);
         }
     }
@@ -94,7 +94,7 @@ public class CraftEngineBlock
                  return null;
             });
         } catch (Exception e) {
-            e.printStackTrace();
+            LOGGER.error(e);
             super.tick(state, level, pos, random);
         }
     }
@@ -107,7 +107,7 @@ public class CraftEngineBlock
                 return null;
             });
         } catch (Exception e) {
-            e.printStackTrace();
+            LOGGER.error(e);
             super.randomTick(state, level, pos, random);
         }
     }
@@ -120,7 +120,7 @@ public class CraftEngineBlock
                 return null;
             });
         } catch (Exception e) {
-            e.printStackTrace();
+            LOGGER.error(e);
             super.onPlace(state, level, pos, oldState, movedByPiston);
         }
     }
@@ -128,9 +128,9 @@ public class CraftEngineBlock
     @Override
     public void onBrokenAfterFall(@NotNull Level level, @NotNull BlockPos pos, @NotNull FallingBlockEntity fallingBlock) {
         try {
-            behaviorHolder.value().onBrokenAfterFall(this, new Object[]{level, pos, fallingBlock});
+            this.behaviorHolder.value().onBrokenAfterFall(this, new Object[]{level, pos, fallingBlock});
         } catch (Exception e) {
-            e.printStackTrace();
+            LOGGER.error(e);
             Fallable.super.onBrokenAfterFall(level, pos, fallingBlock);
         }
     }
@@ -138,29 +138,29 @@ public class CraftEngineBlock
     @Override
     protected boolean canSurvive(@NotNull BlockState state, @NotNull LevelReader level, @NotNull BlockPos pos) {
         try {
-            return behaviorHolder.value().canSurvive(this, new Object[]{state, level, pos}, () -> super.canSurvive(state, level, pos));
+            return this.behaviorHolder.value().canSurvive(this, new Object[]{state, level, pos}, () -> super.canSurvive(state, level, pos));
         } catch (Exception e) {
-            e.printStackTrace();
+            LOGGER.error(e);
             return super.canSurvive(state, level, pos);
         }
     }
 
     @Override
-    protected BlockState updateShape(@NotNull BlockState state,
-                                     @NotNull LevelReader level,
-                                     @NotNull ScheduledTickAccess scheduledTickAccess,
-                                     @NotNull BlockPos pos,
-                                     @NotNull Direction direction,
-                                     @NotNull BlockPos neighborPos,
-                                     @NotNull BlockState neighborState,
-                                     @NotNull RandomSource random) {
+    protected @NotNull BlockState updateShape(@NotNull BlockState state,
+                                              @NotNull LevelReader level,
+                                              @NotNull ScheduledTickAccess scheduledTickAccess,
+                                              @NotNull BlockPos pos,
+                                              @NotNull Direction direction,
+                                              @NotNull BlockPos neighborPos,
+                                              @NotNull BlockState neighborState,
+                                              @NotNull RandomSource random) {
         try {
-            if (isNoteBlock && level instanceof ServerLevel serverLevel) {
+            if (this.isNoteBlock && level instanceof ServerLevel serverLevel) {
                 startNoteBlockChain(direction, serverLevel, pos);
             }
-            return (BlockState) behaviorHolder.value().updateShape(this, new Object[]{state, level, scheduledTickAccess, pos, direction, neighborPos, neighborState, random}, () -> super.updateShape(state, level, scheduledTickAccess, pos, direction, neighborPos, neighborState, random));
+            return (BlockState) this.behaviorHolder.value().updateShape(this, new Object[]{state, level, scheduledTickAccess, pos, direction, neighborPos, neighborState, random}, () -> super.updateShape(state, level, scheduledTickAccess, pos, direction, neighborPos, neighborState, random));
         } catch (Exception e) {
-            e.printStackTrace();
+            LOGGER.error(e);
             return super.updateShape(state, level, scheduledTickAccess, pos, direction, neighborPos, neighborState, random);
         }
     }
@@ -189,22 +189,12 @@ public class CraftEngineBlock
         }
     }
 
-//    @Override
-//    protected @NotNull FluidState getFluidState(@NotNull BlockState state) {
-//        try {
-//            return (FluidState) behaviorHolder.value().getFluidState(this, new Object[]{state}, () -> super.getFluidState(state));
-//        } catch (Exception e) {
-//            e.printStackTrace();
-//            return super.getFluidState(state);
-//        }
-//    }
-
     @Override
     public boolean isValidBonemealTarget(@NotNull LevelReader levelReader, @NotNull BlockPos blockPos, @NotNull BlockState blockState) {
         try {
-            return behaviorHolder.value().isValidBoneMealTarget(this, new Object[]{levelReader, blockPos, blockState});
+            return this.behaviorHolder.value().isValidBoneMealTarget(this, new Object[]{levelReader, blockPos, blockState});
         } catch (Exception e) {
-            e.printStackTrace();
+            LOGGER.error(e);
             return false;
         }
     }
@@ -212,9 +202,9 @@ public class CraftEngineBlock
     @Override
     public boolean isBonemealSuccess(@NotNull Level level, @NotNull RandomSource randomSource, @NotNull BlockPos blockPos, @NotNull BlockState blockState) {
         try {
-            return behaviorHolder.value().isBoneMealSuccess(this, new Object[]{level, randomSource, blockPos, blockState});
+            return this.behaviorHolder.value().isBoneMealSuccess(this, new Object[]{level, randomSource, blockPos, blockState});
         } catch (Exception e) {
-            e.printStackTrace();
+            LOGGER.error(e);
             return false;
         }
     }
@@ -222,49 +212,18 @@ public class CraftEngineBlock
     @Override
     public void performBonemeal(@NotNull ServerLevel serverLevel, @NotNull RandomSource randomSource, @NotNull BlockPos blockPos, @NotNull BlockState blockState) {
         try {
-            behaviorHolder.value().performBoneMeal(this, new Object[]{serverLevel, randomSource, blockPos, blockState});
+            this.behaviorHolder.value().performBoneMeal(this, new Object[]{serverLevel, randomSource, blockPos, blockState});
         } catch (Exception e) {
-            e.printStackTrace();
+            LOGGER.error(e);
         }
     }
 
     @Override
     public void onLand(@NotNull Level level, @NotNull BlockPos pos, @NotNull BlockState state, @NotNull BlockState replaceableState, @NotNull FallingBlockEntity fallingBlock) {
         try {
-            behaviorHolder.value().onLand(this, new Object[]{level, pos, state, replaceableState, fallingBlock});
+            this.behaviorHolder.value().onLand(this, new Object[]{level, pos, state, replaceableState, fallingBlock});
         } catch (Exception e) {
-            e.printStackTrace();
+            LOGGER.error(e);
         }
     }
-
-//    @Override
-//    public boolean canPlaceLiquid(@Nullable Player player, @NotNull BlockGetter level, @NotNull BlockPos pos, @NotNull BlockState state, @NotNull Fluid fluid) {
-//        try {
-//            return behaviorHolder.value().canPlaceLiquid(this, new Object[]{player, level, pos, state, fluid}, () -> SimpleWaterloggedBlock.super.canPlaceLiquid(player, level, pos, state, fluid));
-//        } catch (Exception e) {
-//            e.printStackTrace();
-//            return SimpleWaterloggedBlock.super.canPlaceLiquid(player, level, pos, state, fluid);
-//        }
-//    }
-//
-//    @Override
-//    public boolean placeLiquid(@NotNull LevelAccessor level, @NotNull BlockPos pos, @NotNull BlockState state, @NotNull FluidState fluidState) {
-//        try {
-//            return behaviorHolder.value().placeLiquid(this, new Object[]{level, pos, state, fluidState}, () -> SimpleWaterloggedBlock.super.placeLiquid(level, pos, state, fluidState));
-//        } catch (Exception e) {
-//            e.printStackTrace();
-//            return SimpleWaterloggedBlock.super.placeLiquid(level, pos, state, fluidState);
-//        }
-//    }
-//
-//    @NotNull
-//    @Override
-//    public ItemStack pickupBlock(@Nullable Player player, @NotNull LevelAccessor level, @NotNull BlockPos pos, @NotNull BlockState state) {
-//        try {
-//            return (ItemStack) behaviorHolder.value().pickupBlock(this, new Object[]{player, level, pos, state}, () -> SimpleWaterloggedBlock.super.pickupBlock(player, level, pos, state));
-//        } catch (Exception e) {
-//            e.printStackTrace();
-//            return SimpleWaterloggedBlock.super.pickupBlock(player, level, pos, state);
-//        }
-//    }
 }

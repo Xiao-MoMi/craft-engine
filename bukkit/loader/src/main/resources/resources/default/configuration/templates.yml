@@ -968,6 +968,18 @@ templates#loot_tables:
           - type: item
             item: "{item}"
 
+  # drop the original furniture item or a fallback item
+
+  # template: default:loot_table/furniture
+  # arguments:
+  #   item: the fallback item
+  default:loot_table/furniture:
+    pools:
+      - rolls: 1
+        entries:
+          - type: furniture_item
+            item: "{item}"
+
   # drop with silk touch
 
   # template: default:loot_table/silk_touch

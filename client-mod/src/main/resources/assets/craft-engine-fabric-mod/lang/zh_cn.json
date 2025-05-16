@@ -2,6 +2,8 @@
   "title.craftengine.config": "CraftEngine设置",
   "category.craftengine.general": "通用",
   "option.craftengine.enable_network": "启用服务器内自定义方块",
+  "option.craftengine.enable_cancel_block_update": "启用服务器内取消方块更新",
   "tooltip.craftengine.enable_network": "需要重新进入服务器以应用更改",
+  "tooltip.craftengine.enable_cancel_block_update": "仅在安装了CraftEngine的服务器内生效",
   "disconnect.craftengine.block_registry_mismatch": "方块注册表大小不匹配. 当前: %s. 预期: %s \n 1. 确保客户端mod配置与服务端配置一致. \n 2. 不要安装任何会注册新方块的mod. \n 3. 不要使用ViaVersion."
 }

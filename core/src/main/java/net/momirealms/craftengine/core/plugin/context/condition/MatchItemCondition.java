@@ -3,7 +3,7 @@ package net.momirealms.craftengine.core.plugin.context.condition;
 import net.momirealms.craftengine.core.item.Item;
 import net.momirealms.craftengine.core.plugin.context.Condition;
 import net.momirealms.craftengine.core.plugin.context.Context;
-import net.momirealms.craftengine.core.plugin.context.parameter.PlayerParameters;
+import net.momirealms.craftengine.core.plugin.context.parameter.DirectContextParameters;
 import net.momirealms.craftengine.core.plugin.locale.LocalizedResourceConfigException;
 import net.momirealms.craftengine.core.util.Key;
 import net.momirealms.craftengine.core.util.MiscUtils;
@@ -26,7 +26,7 @@ public class MatchItemCondition<CTX extends Context> implements Condition<CTX> {
 
     @Override
     public boolean test(CTX ctx) {
-        Optional<Item<?>> item = ctx.getOptionalParameter(PlayerParameters.MAIN_HAND_ITEM);
+        Optional<Item<?>> item = ctx.getOptionalParameter(DirectContextParameters.ITEM_IN_HAND);
         if (item.isEmpty()) return false;
         Key key = item.get().id();
         String itemId = key.toString();

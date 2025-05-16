@@ -6,7 +6,7 @@ import net.momirealms.craftengine.core.entity.player.Player;
 import net.momirealms.craftengine.core.item.Item;
 import net.momirealms.craftengine.core.loot.LootTable;
 import net.momirealms.craftengine.core.plugin.context.ContextHolder;
-import net.momirealms.craftengine.core.plugin.context.parameter.CommonParameters;
+import net.momirealms.craftengine.core.plugin.context.parameter.DirectContextParameters;
 import net.momirealms.craftengine.core.registry.Holder;
 import net.momirealms.craftengine.core.world.World;
 import net.momirealms.craftengine.shared.block.BlockBehavior;
@@ -20,9 +20,7 @@ import java.util.List;
 
 public class ImmutableBlockState extends BlockStateHolder {
     private CompoundTag tag;
-    @Nullable
     private PackedBlockState customBlockState;
-    @Nullable
     private PackedBlockState vanillaBlockState;
 
     private BlockBehavior behavior;
@@ -84,18 +82,18 @@ public class ImmutableBlockState extends BlockStateHolder {
     }
 
     public PackedBlockState customBlockState() {
-        return customBlockState;
+        return this.customBlockState;
     }
 
     public PackedBlockState vanillaBlockState() {
-        return vanillaBlockState;
+        return this.vanillaBlockState;
     }
 
-    public void setCustomBlockState(@Nullable PackedBlockState customBlockState) {
+    public void setCustomBlockState(@NotNull PackedBlockState customBlockState) {
         this.customBlockState = customBlockState;
     }
 
-    public void setVanillaBlockState(@Nullable PackedBlockState vanillaBlockState) {
+    public void setVanillaBlockState(@NotNull PackedBlockState vanillaBlockState) {
         this.vanillaBlockState = vanillaBlockState;
     }
 
@@ -140,16 +138,12 @@ public class ImmutableBlockState extends BlockStateHolder {
         return state.with(property, (T) value);
     }
 
-    public List<Item<Object>> getDrops(@NotNull ContextHolder.Builder builder, @NotNull World world) {
-        return this.getDrops(builder, world, null);
-    }
-
     @SuppressWarnings("unchecked")
     public List<Item<Object>> getDrops(@NotNull ContextHolder.Builder builder, @NotNull World world, @Nullable Player player) {
         CustomBlock block = owner.value();
         if (block == null) return List.of();
         LootTable<Object> lootTable = (LootTable<Object>) block.lootTable();
         if (lootTable == null) return List.of();
-        return lootTable.getRandomItems(builder.withParameter(CommonParameters.BLOCK_STATE, this).build(), world, player);
+        return lootTable.getRandomItems(builder.withParameter(DirectContextParameters.BLOCK_STATE, this).build(), world, player);
     }
 }
