@@ -102,7 +102,6 @@ CraftEngine 從以下開源專案中汲取了靈感：
 - [LuckPerms](https://github.com/LuckPerms/LuckPerms)
 - [Fabric](https://github.com/FabricMC/fabric)
 - [packetevents](https://github.com/retrooper/packetevents)
-- [NBT](https://github.com/Querz/NBT)
 - [DataFixerUpper](https://github.com/Mojang/DataFixerUpper)
 - [ViaVersion](https://github.com/ViaVersion/ViaVersion)
 
