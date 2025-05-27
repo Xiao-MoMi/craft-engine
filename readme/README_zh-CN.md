@@ -125,9 +125,9 @@ CraftEngine 的实现依赖于以下基础库：
 ## 版本之间的差异
 | 版本           | 官方支持 | 最大玩家数 | 在线模式需求 | 商用 |
 |-------------------|------------------|-------------|----------------------|----------------|
-| Community Edition | ❌ 不支持             | 20          | ✔️ 需要               | ✔️ Allowed(社区版)     |
-| GitHub Edition    | ❌ 不支持             | 无限   | ❌ 无需                 | ✔️ Allowed(GitHub版)     |
-| Premium Edition   | ✔️ 支持           | 无限   | ❌ 无需                 | ✔️ Allowed(高级版)     |
+| Community Edition(社区版) | ❌ 不支持             | 20          | ✔️ 需要               | ✔️ 允许     |
+| GitHub Edition(GitHub版)    | ❌ 不支持             | 无限   | ❌ 无需                 | ✔️ 允许     |
+| Premium Edition(高级版)   | ✔️ 支持           | 无限   | ❌ 无需                 | ✔️ 允许     |
 
 ### 💖 支持开发者
 如果您喜欢使用 CraftEngine，请考虑支持开发者！
