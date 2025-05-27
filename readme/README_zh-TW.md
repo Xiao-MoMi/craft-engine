@@ -89,6 +89,13 @@ CraftEngine 通過底層注入實現完全可定製的合成系統。與傳統�
 ### 🛠️ 模型
 該外掛程式通過配置實現模型繼承和紋理覆蓋，同時支援從 1.21.4 版本開始的[所有物品模型](https://misode.github.io/assets/item/)。它包含一個版本遷移系統，可以自動將 1.21.4+ 的物品模型降級為舊格式，以實現最大向後相容性。
 
+### ❗️ 您必須了解和部分插件的不相容性
+- CraftEngine 會注入到 PalettedContainer 中，以確保插件的區塊資料會被高效的儲存與同步。這有可能會導致與一些修改palette的其他插件發生衝突。當您使用 Spark 來分析伺服器效能時，palette的操作所導致的效能開銷，將會在Spark的分析結果中歸因於 CraftEngine 外掛程式。
+- CraftEngine 會注入到 FurnaceBlockEntity 中，來修改它的配方獲取邏輯.
+- CraftEngine 會使用真實的server-side blocks, 任何依賴Bukkit的Material類別的插件，都會無法正確識別自訂方塊類型。 正確的方法是使用像 BlockState#getBlock(mojmap) 這樣的替代方式，而不是使用 Material 類別。
+- CraftEngine 透過擴展某些 Minecraft 實體來實現 0-tick 碰撞實體, 確保碰撞在伺服器端可以正常工作（例如，讓豬站在椅子上）. 然而，一些反作弊插件在檢測玩家移動時沒有正確檢查實體 AABB（Axis-Aligned Bounding Box），這可能會導致誤報。
+- CraftEngine 的自訂配方處理可能會與其他配方插件 不完全相容。
+
 ## 靈感來源
 CraftEngine 從以下開源專案中汲取了靈感：
 - [Paper](https://github.com/PaperMC/Paper)
