@@ -12,7 +12,6 @@ import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.ByteToMessageDecoder;
 import io.netty.handler.codec.MessageToByteEncoder;
 import io.papermc.paper.event.player.AsyncChatDecorateEvent;
-import net.kyori.adventure.text.Component;
 import net.momirealms.craftengine.bukkit.nms.FastNMS;
 import net.momirealms.craftengine.core.util.ReflectionUtils;
 import net.momirealms.craftengine.core.util.VersionHelper;
@@ -194,9 +193,15 @@ public class Reflections {
                     clazz$ClientboundSystemChatPacket, clazz$Component, 0
             );
 
+    public static final Class<?> clazz$AdventureComponent = requireNonNull(
+            ReflectionUtils.getClazz(
+                    "net{}kyori{}adventure{}text{}Component".replace("{}", ".")
+            )
+    );
+
     public static final Field field$ClientboundSystemChatPacket$adventure$content =
             ReflectionUtils.getDeclaredField(
-                    clazz$ClientboundSystemChatPacket, Component.class, 0
+                    clazz$ClientboundSystemChatPacket, clazz$AdventureComponent, 0
             );
 
     public static final Field field$ClientboundSystemChatPacket$text =
@@ -5612,12 +5617,6 @@ public class Reflections {
     public static final Field field$ServerboundSignUpdatePacket$lines = requireNonNull(
             ReflectionUtils.getDeclaredField(
                     clazz$ServerboundSignUpdatePacket, String[].class, 0
-            )
-    );
-
-    public static final Class<?> clazz$AdventureComponent = requireNonNull(
-            ReflectionUtils.getClazz(
-                    "net{}kyori{}adventure{}text{}Component".replace("{}", ".")
             )
     );
 

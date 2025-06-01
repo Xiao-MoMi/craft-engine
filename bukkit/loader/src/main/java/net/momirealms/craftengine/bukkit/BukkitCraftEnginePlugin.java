@@ -8,6 +8,7 @@ public class BukkitCraftEnginePlugin extends JavaPlugin {
 
     public BukkitCraftEnginePlugin() {
         this.plugin = new BukkitCraftEngine(this);
+        this.plugin.setJavaPlugin(this);
     }
 
     @Override
