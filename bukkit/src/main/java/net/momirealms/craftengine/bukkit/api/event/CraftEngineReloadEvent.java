@@ -7,14 +7,22 @@ import org.jetbrains.annotations.NotNull;
 
 public class CraftEngineReloadEvent extends Event {
     private static final HandlerList HANDLER_LIST = new HandlerList();
+    private static boolean hasBeenTriggeredBefore = false;
     private final BukkitCraftEngine plugin;
+    private final boolean isFirstLoad;
 
     public CraftEngineReloadEvent(BukkitCraftEngine plugin) {
         this.plugin = plugin;
+        this.isFirstLoad = !hasBeenTriggeredBefore;
+        if (!hasBeenTriggeredBefore) hasBeenTriggeredBefore = true;
     }
 
     public BukkitCraftEngine plugin() {
         return plugin;
+    }
+
+    public boolean isFirstLoad() {
+        return isFirstLoad;
     }
 
     @NotNull
