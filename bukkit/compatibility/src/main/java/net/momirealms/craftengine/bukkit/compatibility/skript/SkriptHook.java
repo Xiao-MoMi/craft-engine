@@ -7,6 +7,7 @@ import net.momirealms.craftengine.bukkit.compatibility.skript.condition.CondIsFu
 import net.momirealms.craftengine.bukkit.compatibility.skript.effect.EffPlaceCustomBlock;
 import net.momirealms.craftengine.bukkit.compatibility.skript.effect.EffPlaceFurniture;
 import net.momirealms.craftengine.bukkit.compatibility.skript.effect.EffRemoveFurniture;
+import net.momirealms.craftengine.bukkit.compatibility.skript.event.EvtCraftEngineLoaded;
 import net.momirealms.craftengine.bukkit.compatibility.skript.event.EvtCustomBlock;
 import net.momirealms.craftengine.bukkit.compatibility.skript.event.EvtCustomClick;
 import net.momirealms.craftengine.bukkit.compatibility.skript.event.EvtCustomFurniture;
@@ -16,6 +17,7 @@ public class SkriptHook {
 
     public static void register() {
         CraftEngineClasses.register();
+        EvtCraftEngineLoaded.register();
         EvtCustomBlock.register();
         EvtCustomFurniture.register();
         EvtCustomClick.register();
