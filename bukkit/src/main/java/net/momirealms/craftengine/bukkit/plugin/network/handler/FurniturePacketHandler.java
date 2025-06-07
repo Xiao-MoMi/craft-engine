@@ -15,7 +15,7 @@ public class FurniturePacketHandler implements EntityPacketHandler {
     }
 
     @Override
-    public boolean handleEntitiesRemove(IntList entityIds) {
+    public boolean handleEntitiesRemove(NetWorkUser user, IntList entityIds) {
         entityIds.addAll(this.fakeEntities);
         return true;
     }

@@ -149,6 +149,7 @@ warning.config.furniture.element.missing_item: "<yellow>Issue found in file <arg
 warning.config.furniture.settings.unknown: "<yellow>Issue found in file <arg:0> - The furniture '<arg:1>' is using an unknown setting type '<arg:2>'.</yellow>"
 warning.config.furniture.hitbox.invalid_type: "<yellow>Issue found in file <arg:0> - The furniture '<arg:1>' is using an invalid hitbox type '<arg:2>'.</yellow>"
 warning.config.furniture.hitbox.custom.invalid_entity: "<yellow>Issue found in file <arg:0> - The furniture '<arg:1>' is using a custom hitbox with invalid entity type '<arg:2>'.</yellow>"
+warning.config.furniture.seat.invalid_type: "<yellow>Issue found in file <arg:0> - The furniture '<arg:1>' is using an invalid seat type '<arg:2>'.</yellow>"
 warning.config.item.duplicate: "<yellow>Issue found in file <arg:0> - Duplicated item '<arg:1>'. Please check if there is the same configuration in other files.</yellow>"
 warning.config.item.settings.unknown: "<yellow>Issue found in file <arg:0> - The item '<arg:1>' is using an unknown setting type '<arg:2>'.</yellow>"
 warning.config.item.missing_material: "<yellow>Issue found in file <arg:0> - The item '<arg:1>' is missing the required 'material' argument.</yellow>"

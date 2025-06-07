@@ -7,6 +7,8 @@ import org.jetbrains.annotations.Contract;
 
 public class ItemUtils {
 
+    public static final ItemStack AIR = new ItemStack(Material.AIR);
+
     private ItemUtils() {}
 
     @Contract("null -> true")

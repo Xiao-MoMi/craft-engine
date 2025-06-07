@@ -1,6 +1,8 @@
 package net.momirealms.craftengine.bukkit.entity.furniture;
 
+import net.momirealms.craftengine.bukkit.api.BukkitAdaptors;
 import net.momirealms.craftengine.bukkit.entity.furniture.hitbox.InteractionHitBox;
+import net.momirealms.craftengine.bukkit.entity.furniture.seat.BukkitSeatEntity;
 import net.momirealms.craftengine.bukkit.nms.CollisionEntity;
 import net.momirealms.craftengine.bukkit.nms.FastNMS;
 import net.momirealms.craftengine.bukkit.plugin.BukkitCraftEngine;
@@ -14,7 +16,6 @@ import net.momirealms.craftengine.core.entity.furniture.*;
 import net.momirealms.craftengine.core.plugin.config.Config;
 import net.momirealms.craftengine.core.sound.SoundData;
 import net.momirealms.craftengine.core.util.Key;
-import net.momirealms.craftengine.core.util.MiscUtils;
 import net.momirealms.craftengine.core.util.VersionHelper;
 import net.momirealms.craftengine.core.world.WorldPosition;
 import org.bukkit.*;
@@ -24,7 +25,6 @@ import org.bukkit.event.Listener;
 import org.bukkit.persistence.PersistentDataType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.joml.Vector3f;
 
 import java.io.IOException;
 import java.util.Collection;
@@ -37,7 +37,6 @@ public class BukkitFurnitureManager extends AbstractFurnitureManager {
     public static final NamespacedKey FURNITURE_KEY = KeyUtils.toNamespacedKey(FurnitureManager.FURNITURE_KEY);
     public static final NamespacedKey FURNITURE_EXTRA_DATA_KEY = KeyUtils.toNamespacedKey(FurnitureManager.FURNITURE_EXTRA_DATA_KEY);
     public static final NamespacedKey FURNITURE_SEAT_BASE_ENTITY_KEY = KeyUtils.toNamespacedKey(FurnitureManager.FURNITURE_SEAT_BASE_ENTITY_KEY);
-    public static final NamespacedKey FURNITURE_SEAT_VECTOR_3F_KEY = KeyUtils.toNamespacedKey(FurnitureManager.FURNITURE_SEAT_VECTOR_3F_KEY);
     public static final NamespacedKey FURNITURE_COLLISION = KeyUtils.toNamespacedKey(FurnitureManager.FURNITURE_COLLISION);
     public static Class<?> COLLISION_ENTITY_CLASS = Interaction.class;
     public static Object NMS_COLLISION_ENTITY_TYPE = MEntityTypes.instance$EntityType$INTERACTION;
@@ -320,20 +319,17 @@ public class BukkitFurnitureManager extends AbstractFurnitureManager {
     }
 
     protected void tryLeavingSeat(@NotNull Player player, @NotNull Entity vehicle) {
-        Integer baseFurniture = vehicle.getPersistentDataContainer().get(FURNITURE_SEAT_BASE_ENTITY_KEY, PersistentDataType.INTEGER);
-        if (baseFurniture == null) return;
-        vehicle.remove();
-        BukkitFurniture furniture = loadedFurnitureByRealEntityId(baseFurniture);
+        net.momirealms.craftengine.core.entity.player.Player serverPlayer = BukkitAdaptors.adapt(player);
+        BukkitSeatEntity seatEntity = (BukkitSeatEntity) serverPlayer.seat();
+        if (seatEntity == null || seatEntity.literalObject() != vehicle) return;
+
+        BukkitFurniture furniture = seatEntity.furniture();
         if (furniture == null) {
+            seatEntity.destroy();
             return;
         }
-        String vector3f = vehicle.getPersistentDataContainer().get(BukkitFurnitureManager.FURNITURE_SEAT_VECTOR_3F_KEY, PersistentDataType.STRING);
-        if (vector3f == null) {
-            plugin.logger().warn("Failed to get vector3f for player " + player.getName() + "'s seat");
-            return;
-        }
-        Vector3f seatPos = MiscUtils.getAsVector3f(vector3f, "seat");
-        furniture.removeOccupiedSeat(seatPos);
+
+        seatEntity.dismount(serverPlayer);
 
         if (player.getVehicle() != null) return;
         Location vehicleLocation = vehicle.getLocation();

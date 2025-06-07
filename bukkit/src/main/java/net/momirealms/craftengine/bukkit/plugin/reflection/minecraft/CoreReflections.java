@@ -1,5 +1,6 @@
 package net.momirealms.craftengine.bukkit.plugin.reflection.minecraft;
 
+import com.google.common.collect.ForwardingMultimap;
 import com.google.common.collect.ImmutableList;
 import com.google.gson.JsonElement;
 import com.mojang.serialization.DynamicOps;
@@ -3264,5 +3265,152 @@ public final class CoreReflections {
     // 1.21.1-
     public static final Method method$Registry$asLookup = ReflectionUtils.getMethod(
             clazz$Registry, clazz$HolderLookup$RegistryLookup, new String[]{"asLookup", "p"}
+    );
+
+    public static final Method method$Entity$setInvisible = requireNonNull(
+            ReflectionUtils.getMethod(
+                    clazz$Entity, new String[]{"j", "setInvisible"}, boolean.class
+            )
+    );
+
+    public static final Class<?> clazz$GameProfile = requireNonNull(
+            ReflectionUtils.getClazz("com.mojang.authlib.GameProfile")
+    );
+
+    public static final Constructor<?> constructor$GameProfile = requireNonNull(
+            ReflectionUtils.getConstructor(
+                    clazz$GameProfile, 0
+            )
+    );
+
+    public static final Method method$GameProfile$getProperties = requireNonNull(
+            ReflectionUtils.getMethod(
+                    clazz$GameProfile, ForwardingMultimap.class
+            )
+    );
+
+    public static final Constructor<?> constructor$ServerPlayer = requireNonNull(
+            ReflectionUtils.getConstructor(
+                    clazz$ServerPlayer, 0
+            )
+    );
+
+    public static final Method method$ServerPlayer$getGameProfile = requireNonNull(
+            ReflectionUtils.getMethod(
+                    clazz$ServerPlayer, clazz$GameProfile, 0
+            )
+    );
+
+    // 1.20.2 +
+    public static final Method method$ServerPlayer$clientInformation = VersionHelper.isOrAbove1_20_2() ? requireNonNull(ReflectionUtils.getMethod(
+            clazz$ServerPlayer, clazz$ClientInformation, 0
+    )) : null;
+
+    public static final Class<?> clazz$CompoundTag = requireNonNull(
+            BukkitReflectionUtils.findReobfOrMojmapClass(
+                    "nbt.NBTTagCompound",
+                    "nbt.CompoundTag"
+            )
+    );
+
+    public static final Object instance$CompoundTag$Empty;
+
+    static {
+        try {
+            instance$CompoundTag$Empty = CoreReflections.clazz$CompoundTag.getConstructor().newInstance();
+        } catch (ReflectiveOperationException e) {
+            throw new RuntimeException("Failed to instantiate empty CompoundTag", e);
+        }
+    }
+
+    public static final Method method$Entity$getEntityData = requireNonNull(
+            ReflectionUtils.getMethod(
+                    clazz$Entity, clazz$SynchedEntityData, 0
+            )
+    );
+
+    public static final Method method$SynchedEntityData$set = requireNonNull(
+            ReflectionUtils.getMethod(
+                    clazz$SynchedEntityData, void.class, clazz$EntityDataAccessor, Object.class
+            )
+    );
+
+    public static final Method method$SynchedEntityData$isDirty = requireNonNull(
+            ReflectionUtils.getMethod(
+                    clazz$SynchedEntityData, boolean.class
+            )
+    );
+
+    public static final Method method$SynchedEntityData$packDirty = requireNonNull(
+            ReflectionUtils.getMethod(
+                    clazz$SynchedEntityData, List.class, new String[]{"b", "packDirty"}
+            )
+    );
+
+    public static final Class<?> clazz$SynchedEntityData$DataItem = requireNonNull(
+            BukkitReflectionUtils.findReobfOrMojmapClass(
+                    "network.syncher.DataWatcher$Item",
+                    "network.syncher.SynchedEntityData$DataItem"
+            )
+    );
+
+    public static final Method method$SynchedEntityData$getItem = requireNonNull(
+            ReflectionUtils.getDeclaredMethod(
+                    clazz$SynchedEntityData, clazz$SynchedEntityData$DataItem, clazz$EntityDataAccessor)
+    );
+
+    public static final Method method$SynchedEntityData$DataItem$value = requireNonNull(
+            ReflectionUtils.getMethod(
+                    clazz$SynchedEntityData$DataItem, clazz$SynchedEntityData$DataValue, 0
+            )
+    );
+
+    public static final Class<?> clazz$RemoteChatSession$Data = requireNonNull(
+            BukkitReflectionUtils.findReobfOrMojmapClass(
+                    "network.chat.RemoteChatSession$a",
+                    "network.chat.RemoteChatSession$Data"
+            )
+    );
+
+    public static final Method method$GameType$values = requireNonNull(
+            ReflectionUtils.getStaticMethod(
+                    clazz$GameType, clazz$GameType.arrayType()
+            )
+    );
+
+    public static final Object instance$GameType$SURVIVAL;
+    public static final Object instance$GameType$CREATIVE;
+    public static final Object instance$GameType$ADVENTURE;
+    public static final Object instance$GameType$SPECTATOR;
+
+    static {
+        try {
+            Object[] values = (Object[]) method$GameType$values.invoke(null);
+            instance$GameType$SURVIVAL = values[0];
+            instance$GameType$CREATIVE = values[1];
+            instance$GameType$ADVENTURE = values[2];
+            instance$GameType$SPECTATOR = values[3];
+        } catch (ReflectiveOperationException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    // 1.21.3 +
+    public static final Class<?> clazz$PositionMoveRotation = VersionHelper.isOrAbove1_21_3() ? ReflectionUtils.getClazz(
+            requireNonNull(BukkitReflectionUtils.assembleMCClass("world.entity.PositionMoveRotation"))) : null;
+
+    public static final Method method$PositionMoveRotation$of = VersionHelper.isOrAbove1_21_3() ? requireNonNull(
+            ReflectionUtils.getStaticMethod(clazz$PositionMoveRotation, clazz$PositionMoveRotation, clazz$Entity)) : null;
+
+    public static final Method method$Entity$absSnapTo = requireNonNull(
+            ReflectionUtils.getMethod(
+                    clazz$Entity, void.class, double.class, double.class, double.class, float.class, float.class
+            )
+    );
+
+    public static final Method method$Entity$setSharedFlag = requireNonNull(
+            ReflectionUtils.getDeclaredMethod(
+                    clazz$Entity, void.class, int.class, boolean.class
+            )
     );
 }

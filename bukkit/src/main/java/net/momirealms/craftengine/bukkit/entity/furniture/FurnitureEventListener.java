@@ -2,6 +2,8 @@ package net.momirealms.craftengine.bukkit.entity.furniture;
 
 import com.destroystokyo.paper.event.entity.EntityAddToWorldEvent;
 import com.destroystokyo.paper.event.entity.EntityRemoveFromWorldEvent;
+import net.momirealms.craftengine.bukkit.api.BukkitAdaptors;
+import net.momirealms.craftengine.bukkit.plugin.user.BukkitServerPlayer;
 import org.bukkit.entity.ArmorStand;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.ItemDisplay;
@@ -10,7 +12,9 @@ import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.entity.PlayerDeathEvent;
-import org.bukkit.event.player.PlayerInteractAtEntityEvent;
+import org.bukkit.event.player.PlayerAnimationEvent;
+import org.bukkit.event.player.PlayerArmorStandManipulateEvent;
+import org.bukkit.event.player.PlayerItemHeldEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.event.world.ChunkUnloadEvent;
 import org.bukkit.event.world.EntitiesLoadEvent;
@@ -123,12 +127,30 @@ public class FurnitureEventListener implements Listener {
 
     // do not allow players to put item on seats
     @EventHandler(ignoreCancelled = true, priority = EventPriority.LOWEST)
-    public void onInteractArmorStand(PlayerInteractAtEntityEvent event) {
-        Entity clicked = event.getRightClicked();
-        if (clicked instanceof ArmorStand armorStand) {
-            Integer baseFurniture = armorStand.getPersistentDataContainer().get(BukkitFurnitureManager.FURNITURE_SEAT_BASE_ENTITY_KEY, PersistentDataType.INTEGER);
-            if (baseFurniture == null) return;
-            event.setCancelled(true);
-        }
+    public void onInteractArmorStand(PlayerArmorStandManipulateEvent event) {
+        ArmorStand clicked = event.getRightClicked();
+        Integer baseFurniture = clicked.getPersistentDataContainer().get(BukkitFurnitureManager.FURNITURE_SEAT_BASE_ENTITY_KEY, PersistentDataType.INTEGER);
+        if (baseFurniture == null) return;
+        event.setCancelled(true);
+    }
+
+    @EventHandler(ignoreCancelled = true, priority = EventPriority.MONITOR)
+    public void onMainHandChange(PlayerItemHeldEvent event) {
+        Player player = event.getPlayer();
+        if (player.getVehicle() == null) return;
+        BukkitServerPlayer serverPlayer = BukkitAdaptors.adapt(player);
+        if (serverPlayer.seat() == null) return;
+
+        serverPlayer.seat().event(serverPlayer, event);
+    }
+
+    @EventHandler(priority = EventPriority.MONITOR)
+    public void onPlayerAnimation(PlayerAnimationEvent event) {
+        Player player = event.getPlayer();
+        if (player.getVehicle() == null) return;
+        BukkitServerPlayer serverPlayer = BukkitAdaptors.adapt(player);
+        if (serverPlayer.seat() == null) return;
+
+        serverPlayer.seat().event(serverPlayer, event);
     }
 }

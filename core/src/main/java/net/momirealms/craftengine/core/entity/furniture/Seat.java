@@ -1,23 +1,14 @@
 package net.momirealms.craftengine.core.entity.furniture;
 
+import net.momirealms.craftengine.core.entity.player.Player;
+import net.momirealms.craftengine.core.entity.seat.SeatEntity;
 import org.joml.Vector3f;
 
-import java.util.Objects;
+public interface Seat {
 
-public record Seat(Vector3f offset, float yaw, boolean limitPlayerRotation) {
+    SeatEntity spawn(Player player, Furniture furniture);
 
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (!(o instanceof Seat seat)) return false;
-        return Float.compare(yaw, seat.yaw) == 0 && Objects.equals(offset, seat.offset) && limitPlayerRotation == seat.limitPlayerRotation;
-    }
+    Vector3f offset();
 
-    @Override
-    public int hashCode() {
-        int result = Objects.hashCode(offset);
-        result = 31 * result + Float.hashCode(yaw);
-        result = 31 * result + Boolean.hashCode(limitPlayerRotation);
-        return result;
-    }
+    float yaw();
 }

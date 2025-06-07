@@ -51,6 +51,8 @@ public final class MEntityTypes {
     public static final int instance$EntityType$EXPERIENCE_BOTTLE$registryId;
     public static final Object instance$EntityType$POTION;
     public static final int instance$EntityType$POTION$registryId;
+    public static final Object instance$EntityType$PLAYER;
+    public static final int instance$EntityType$PLAYER$registryId;
 
     private static Object getById(String id) throws ReflectiveOperationException {
         Object rl = FastNMS.INSTANCE.method$ResourceLocation$fromNamespaceAndPath("minecraft", id);
@@ -108,6 +110,8 @@ public final class MEntityTypes {
             instance$EntityType$POTION$registryId = getRegistryId(instance$EntityType$POTION);
             instance$EntityType$OMINOUS_ITEM_SPAWNER = VersionHelper.isOrAbove1_20_5() ? getById("ominous_item_spawner") : null;
             instance$EntityType$OMINOUS_ITEM_SPAWNER$registryId = getRegistryId(instance$EntityType$OMINOUS_ITEM_SPAWNER);
+            instance$EntityType$PLAYER = getById("player");
+            instance$EntityType$PLAYER$registryId = getRegistryId(instance$EntityType$PLAYER);
         } catch (ReflectiveOperationException e) {
             throw new ReflectionInitException("Failed to init EntityTypes", e);
         }

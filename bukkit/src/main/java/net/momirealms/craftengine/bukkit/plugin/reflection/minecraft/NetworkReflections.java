@@ -379,12 +379,30 @@ public final class NetworkReflections {
             ReflectionUtils.getStaticMethod(clazz$ClientboundPlayerInfoUpdatePacket$Action, clazz$ClientboundPlayerInfoUpdatePacket$Action.arrayType())
     );
 
+
+    public static final Object instance$ClientboundPlayerInfoUpdatePacket$Action$ADD_PLAYER;
+    public static final Object instance$ClientboundPlayerInfoUpdatePacket$Action$INITIALIZE_CHAT;
+    public static final Object instance$ClientboundPlayerInfoUpdatePacket$Action$UPDATE_GAME_MODE;
+    public static final Object instance$ClientboundPlayerInfoUpdatePacket$Action$UPDATE_LISTED;
+    public static final Object instance$ClientboundPlayerInfoUpdatePacket$Action$UPDATE_LATENCY;
     public static final Object instance$ClientboundPlayerInfoUpdatePacket$Action$UPDATE_DISPLAY_NAME;
+    //public static final Object instance$ClientboundPlayerInfoUpdatePacket$Action$UPDATE_LIST_ORDER;
+    //public static final Object instance$ClientboundPlayerInfoUpdatePacket$Action$UPDATE_HAT;
+
 
     static {
         try {
             Object[] values = (Object[]) method$ClientboundPlayerInfoUpdatePacket$Action$values.invoke(null);
+            instance$ClientboundPlayerInfoUpdatePacket$Action$ADD_PLAYER = values[0];
+            instance$ClientboundPlayerInfoUpdatePacket$Action$INITIALIZE_CHAT = values[1];
+            instance$ClientboundPlayerInfoUpdatePacket$Action$UPDATE_GAME_MODE = values[2];
+            instance$ClientboundPlayerInfoUpdatePacket$Action$UPDATE_LISTED = values[3];
+            instance$ClientboundPlayerInfoUpdatePacket$Action$UPDATE_LATENCY = values[4];
             instance$ClientboundPlayerInfoUpdatePacket$Action$UPDATE_DISPLAY_NAME = values[5];
+            //1.21.3
+            //instance$ClientboundPlayerInfoUpdatePacket$Action$UPDATE_LIST_ORDER = values[6];
+            //1.21.4
+            //instance$ClientboundPlayerInfoUpdatePacket$Action$UPDATE_HAT = values[7];
         } catch (ReflectiveOperationException e) {
             throw new RuntimeException(e);
         }
@@ -1293,4 +1311,78 @@ public final class NetworkReflections {
     public static final Constructor<?> constructor$ClientboundTickingStatePacket = Optional.ofNullable(clazz$ClientboundTickingStatePacket)
             .map(it -> ReflectionUtils.getConstructor(it, float.class, boolean.class))
             .orElse(null);
+
+    public static final Class<?> clazz$ClientBoundPlayerInfoUpdatePacket$Entry = requireNonNull(
+            BukkitReflectionUtils.findReobfOrMojmapClass(
+                    "network.protocol.game.ClientboundPlayerInfoUpdatePacket$b",
+                    "network.protocol.game.ClientboundPlayerInfoUpdatePacket$Entry"
+            )
+    );
+
+    public static final Constructor<?> constructor$ClientBoundPlayerInfoUpdatePacket$Entry = requireNonNull(
+            VersionHelper.isOrAbove1_21_3()
+                    ? VersionHelper.isOrAbove1_21_4()
+                    ? ReflectionUtils.getConstructor(clazz$ClientBoundPlayerInfoUpdatePacket$Entry, UUID.class, CoreReflections.clazz$GameProfile, boolean.class, int.class, CoreReflections.clazz$GameType, CoreReflections.clazz$Component, boolean.class, int.class, CoreReflections.clazz$RemoteChatSession$Data)
+                    : ReflectionUtils.getConstructor(clazz$ClientBoundPlayerInfoUpdatePacket$Entry, UUID.class, CoreReflections.clazz$GameProfile, boolean.class, int.class, CoreReflections.clazz$GameType, CoreReflections.clazz$Component, int.class, CoreReflections.clazz$RemoteChatSession$Data)
+                    : ReflectionUtils.getConstructor(clazz$ClientBoundPlayerInfoUpdatePacket$Entry, UUID.class, CoreReflections.clazz$GameProfile, boolean.class, int.class, CoreReflections.clazz$GameType, CoreReflections.clazz$Component, CoreReflections.clazz$RemoteChatSession$Data)
+    );
+
+    public static final Class<?> clazz$ClientboundTeleportEntityPacket = requireNonNull(
+            BukkitReflectionUtils.findReobfOrMojmapClass(
+                    "network.protocol.game.PacketPlayOutEntityTeleport",
+                    "network.protocol.game.ClientboundTeleportEntityPacket"
+            )
+    );
+
+    public static final Constructor<?> constructor$ClientboundTeleportEntityPacket = requireNonNull(
+            VersionHelper.isOrAbove1_21_3()
+                    ? ReflectionUtils.getConstructor(clazz$ClientboundTeleportEntityPacket, int.class, CoreReflections.clazz$PositionMoveRotation, Set.class, boolean.class)
+                    : ReflectionUtils.getConstructor(clazz$ClientboundTeleportEntityPacket, CoreReflections.clazz$Entity)
+    );
+
+    public static final Method method$ClientboundSetEquipmentPacket$getEntity = requireNonNull(
+            ReflectionUtils.getMethod(
+                    NetworkReflections.clazz$ClientboundSetEquipmentPacket, int.class
+            )
+    );
+
+    public static final Method method$ClientboundSetEquipmentPacket$getSlots = requireNonNull(
+            ReflectionUtils.getMethod(
+                    NetworkReflections.clazz$ClientboundSetEquipmentPacket, List.class
+            )
+    );
+
+    public static final Method method$ClientboundContainerSetSlotPacket$getContainerId = requireNonNull(
+            ReflectionUtils.getMethod(
+                    clazz$ClientboundContainerSetSlotPacket, int.class, new String[]{"a", "getContainerId"}
+            )
+    );
+
+    public static final Method method$ClientboundContainerSetSlotPacket$getSlot = requireNonNull(
+            ReflectionUtils.getMethod(
+                    clazz$ClientboundContainerSetSlotPacket, int.class, new String[]{"c", "d", "getSlot"}
+            )
+    );
+
+    public static final Method method$ClientboundContainerSetSlotPacket$getStateId = requireNonNull(
+            ReflectionUtils.getMethod(
+                    clazz$ClientboundContainerSetSlotPacket, int.class, new String[]{"e", "f", "getStateId"}
+            )
+    );
+
+    public static final Class<?> clazz$ClientboundAnimatePacket = requireNonNull(
+            BukkitReflectionUtils.findReobfOrMojmapClass(
+                    "network.protocol.game.PacketPlayOutAnimation",
+                    "network.protocol.game.ClientboundAnimatePacket")
+    );
+
+    public static final Constructor<?> constructor$ClientboundAnimatePacket = requireNonNull(
+            ReflectionUtils.getConstructor(clazz$ClientboundAnimatePacket, CoreReflections.clazz$Entity, int.class)
+    );
+
+    public static final Constructor<?> constructor$ClientboundRotateHeadPacket = requireNonNull(
+            ReflectionUtils.getDeclaredConstructor(
+                    clazz$ClientboundRotateHeadPacket, CoreReflections.clazz$Entity, byte.class
+            )
+    );
 }

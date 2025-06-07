@@ -3,22 +3,23 @@ package net.momirealms.craftengine.bukkit.entity.furniture;
 import it.unimi.dsi.fastutil.ints.Int2ObjectArrayMap;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
 import net.momirealms.craftengine.bukkit.entity.BukkitEntity;
+import net.momirealms.craftengine.bukkit.entity.furniture.seat.BukkitSeatEntity;
 import net.momirealms.craftengine.bukkit.nms.FastNMS;
+import net.momirealms.craftengine.bukkit.plugin.network.BukkitNetworkManager;
 import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.CoreReflections;
-import net.momirealms.craftengine.bukkit.util.EntityUtils;
-import net.momirealms.craftengine.bukkit.util.LegacyAttributeUtils;
+import net.momirealms.craftengine.bukkit.plugin.user.BukkitServerPlayer;
 import net.momirealms.craftengine.bukkit.util.LocationUtils;
+import net.momirealms.craftengine.bukkit.util.PlayerUtils;
 import net.momirealms.craftengine.core.entity.furniture.*;
 import net.momirealms.craftengine.core.plugin.CraftEngine;
 import net.momirealms.craftengine.core.util.ArrayUtils;
 import net.momirealms.craftengine.core.util.Key;
 import net.momirealms.craftengine.core.util.QuaternionUtils;
-import net.momirealms.craftengine.core.util.VersionHelper;
 import net.momirealms.craftengine.core.world.WorldPosition;
 import net.momirealms.craftengine.core.world.collision.AABB;
 import org.bukkit.Location;
-import org.bukkit.attribute.Attribute;
-import org.bukkit.entity.*;
+import org.bukkit.entity.Entity;
+import org.bukkit.entity.Player;
 import org.bukkit.persistence.PersistentDataType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -50,7 +51,7 @@ public class BukkitFurniture implements Furniture {
     private final boolean hasExternalModel;
     // seats
     private final Set<Vector3f> occupiedSeats = Collections.synchronizedSet(new HashSet<>());
-    private final Vector<WeakReference<Entity>> seats = new Vector<>();
+    private final Map<Integer, BukkitSeatEntity> seats = Collections.synchronizedMap(new HashMap<>());
     // cached spawn packet
     private Object cachedSpawnPacket;
     private Object cachedMinimizedSpawnPacket;
@@ -190,24 +191,13 @@ public class BukkitFurniture implements Furniture {
             if (entity != null)
                 entity.destroy();
         }
-        for (WeakReference<Entity> r : this.seats) {
-            Entity entity = r.get();
-            if (entity == null) continue;
-            for (Entity passenger : entity.getPassengers()) {
-                entity.removePassenger(passenger);
-            }
-            entity.remove();
-        }
-        this.seats.clear();
+        destroySeats();
     }
 
     @Override
     public void destroySeats() {
-        for (WeakReference<Entity> entity : this.seats) {
-            Entity e = entity.get();
-            if (e != null) {
-                e.remove();
-            }
+        for (BukkitSeatEntity seat : this.seats.values()) {
+            seat.destroy();
         }
         this.seats.clear();
     }
@@ -295,7 +285,13 @@ public class BukkitFurniture implements Furniture {
 
     @Override
     public void spawnSeatEntityForPlayer(net.momirealms.craftengine.core.entity.player.Player player, Seat seat) {
-        spawnSeatEntityForPlayer((Player) player.platformPlayer(), seat);
+        BukkitSeatEntity seatEntity = (BukkitSeatEntity) seat.spawn(player, this);
+        this.seats.put(seatEntity.playerID(), seatEntity);
+        player.setSeat(seatEntity);
+        BukkitServerPlayer serverPlayer = (BukkitServerPlayer) player;
+        for (Player p : PlayerUtils.getTrackedBy(serverPlayer.platformPlayer())) {
+            BukkitNetworkManager.instance().getOnlineUser(p).entityPacketHandlers().put(seatEntity.playerID(), seatEntity);
+        }
     }
 
     @Override
@@ -318,39 +314,7 @@ public class BukkitFurniture implements Furniture {
         }
     }
 
-    private void spawnSeatEntityForPlayer(org.bukkit.entity.Player player, Seat seat) {
-        Location location = this.calculateSeatLocation(seat);
-        Entity seatEntity = seat.limitPlayerRotation() ?
-                EntityUtils.spawnEntity(player.getWorld(), VersionHelper.isOrAbove1_20_2() ? location.subtract(0,0.9875,0) : location.subtract(0,0.990625,0), EntityType.ARMOR_STAND, entity -> {
-                    ArmorStand armorStand = (ArmorStand) entity;
-                    if (VersionHelper.isOrAbove1_21_3()) {
-                        Objects.requireNonNull(armorStand.getAttribute(Attribute.MAX_HEALTH)).setBaseValue(0.01);
-                    } else {
-                        LegacyAttributeUtils.setMaxHealth(armorStand);
-                    }
-                    armorStand.setSmall(true);
-                    armorStand.setInvisible(true);
-                    armorStand.setSilent(true);
-                    armorStand.setInvulnerable(true);
-                    armorStand.setArms(false);
-                    armorStand.setCanTick(false);
-                    armorStand.setAI(false);
-                    armorStand.setGravity(false);
-                    armorStand.setPersistent(false);
-                    armorStand.getPersistentDataContainer().set(BukkitFurnitureManager.FURNITURE_SEAT_BASE_ENTITY_KEY, PersistentDataType.INTEGER, this.baseEntityId());
-                    armorStand.getPersistentDataContainer().set(BukkitFurnitureManager.FURNITURE_SEAT_VECTOR_3F_KEY, PersistentDataType.STRING, seat.offset().x + ", " + seat.offset().y + ", " + seat.offset().z);
-                }) :
-                EntityUtils.spawnEntity(player.getWorld(), VersionHelper.isOrAbove1_20_2() ? location : location.subtract(0,0.25,0), EntityType.ITEM_DISPLAY, entity -> {
-                    ItemDisplay itemDisplay = (ItemDisplay) entity;
-                    itemDisplay.setPersistent(false);
-                    itemDisplay.getPersistentDataContainer().set(BukkitFurnitureManager.FURNITURE_SEAT_BASE_ENTITY_KEY, PersistentDataType.INTEGER, this.baseEntityId());
-                    itemDisplay.getPersistentDataContainer().set(BukkitFurnitureManager.FURNITURE_SEAT_VECTOR_3F_KEY, PersistentDataType.STRING, seat.offset().x + ", " + seat.offset().y + ", " + seat.offset().z);
-                });
-        this.seats.add(new WeakReference<>(seatEntity));
-        seatEntity.addPassenger(player);
-    }
-
-    private Location calculateSeatLocation(Seat seat) {
+    public Location calculateSeatLocation(Seat seat) {
         Vector3f offset = QuaternionUtils.toQuaternionf(0, Math.toRadians(180 - this.location.getYaw()), 0).conjugate().transform(new Vector3f(seat.offset()));
         double yaw = seat.yaw() + this.location.getYaw();
         if (yaw < -180) yaw += 360;
@@ -358,5 +322,13 @@ public class BukkitFurniture implements Furniture {
         newLocation.setYaw((float) yaw);
         newLocation.add(offset.x, offset.y + 0.6, -offset.z);
         return newLocation;
+    }
+
+    public BukkitSeatEntity seatByEntityId(int id) {
+        return this.seats.get(id);
+    }
+
+    public void removeSeatEntity(int id) {
+        this.seats.remove(id);
     }
 }
