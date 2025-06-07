@@ -156,6 +156,7 @@ warning.config.item.invalid_material: "<yellow>在文件 <arg:0> 发现问题 - 
 warning.config.item.invalid_custom_model_data: "<yellow>在文件 <arg:0> 发现问题 - 物品 '<arg:1>' 使用了无效的负数模型值 '<arg:2>'.</yellow>"
 warning.config.item.bad_custom_model_data: "<yellow>在文件 <arg:0> 发现问题 - 物品 '<arg:1>' 使用的自定义模型数据 '<arg:2>' 数值过大 建议使用小于 16,777,216 的值</yellow>"
 warning.config.item.custom_model_data_conflict: "<yellow>在文件 <arg:0> 发现问题 - 物品 '<arg:1>' 使用的自定义模型数据 '<arg:2>' 已被物品 '<arg:3>' 占用</yellow>"
+warning.config.item.component_notfound: "<yellow>发现问题 - 有物品使用了未知的组件 '<arg:0>'</yellow>"
 warning.config.item.missing_model_id: "<yellow>在文件 <arg:0> 发现问题 - 物品 '<arg:1>' 缺少必需的 'custom-model-data' 或 'item-model' 参数</yellow>"
 warning.config.item.missing_model: "<yellow>在文件 <arg:0> 中发现问题 - 物品 '<arg:1>' 缺少支持 1.21.4+ 资源包必需的 'model' 配置项</yellow>"
 warning.config.item.behavior.missing_type: "<yellow>在文件 <arg:0> 发现问题 - 物品 '<arg:1>' 的行为配置缺少必需的 'type' 参数</yellow>"

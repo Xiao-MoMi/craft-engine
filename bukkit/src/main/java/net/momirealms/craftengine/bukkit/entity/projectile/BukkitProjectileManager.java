@@ -161,7 +161,10 @@ public class BukkitProjectileManager implements Listener, ProjectileManager {
     public class ProjectileInjectTask implements Runnable {
         private final Projectile projectile;
         private final SchedulerTask task;
+        private Object cachedServerEntity;
         private boolean injected;
+        private int lastInjectedInterval = -1;
+        private boolean wasInGround;
 
         public ProjectileInjectTask(Projectile projectile) {
             this.projectile = projectile;
@@ -180,30 +183,49 @@ public class BukkitProjectileManager implements Listener, ProjectileManager {
             }
             Object nmsEntity = FastNMS.INSTANCE.method$CraftEntity$getHandle(this.projectile);
             if (!this.injected) {
-                Object trackedEntity = FastNMS.INSTANCE.field$Entity$trackedEntity(nmsEntity);
-                if (trackedEntity == null) {
-                    return;
-                }
-                Object serverEntity = FastNMS.INSTANCE.filed$ChunkMap$TrackedEntity$serverEntity(trackedEntity);
-                if (serverEntity == null) {
-                    return;
-                }
-                try {
-                    CoreReflections.field$ServerEntity$updateInterval.set(serverEntity, 1);
-                    this.injected = true;
-                } catch (ReflectiveOperationException e) {
-                    plugin.logger().warn("Failed to update server entity tracking interval", e);
-                }
+                injectProjectile(nmsEntity, 1);
+                this.injected = true;
+                this.lastInjectedInterval = 1;
             }
-            if (canSpawnParticle(nmsEntity)) {
+            boolean inGround = FastNMS.INSTANCE.method$AbstractArrow$isInGround(nmsEntity);
+            if (canSpawnParticle(nmsEntity, inGround)) {
                 this.projectile.getWorld().spawnParticle(ParticleUtils.BUBBLE, this.projectile.getLocation(), 3, 0.1, 0.1, 0.1, 0);
+            }
+            projectileByEntityId(this.projectile.getEntityId()).ifPresent(customProjectile -> {
+                customProjectile.setInGroundTime(inGround ? customProjectile.inGroundTime() + 1 : 0);
+                if (customProjectile.inGroundTime() > 5) {
+                    if (lastInjectedInterval != Integer.MAX_VALUE) {
+                        injectProjectile(nmsEntity, Integer.MAX_VALUE);
+                    }
+                } else if (!inGround && wasInGround) {
+                    if (lastInjectedInterval != 1) {
+                        injectProjectile(nmsEntity, 1);
+                    }
+                }
+                this.wasInGround = inGround;
+            });
+        }
+
+        private void injectProjectile(Object entity, int updateInterval) {
+            if (this.cachedServerEntity == null) {
+                Object trackedEntity = FastNMS.INSTANCE.field$Entity$trackedEntity(entity);
+                if (trackedEntity == null) return;
+                Object serverEntity = FastNMS.INSTANCE.filed$ChunkMap$TrackedEntity$serverEntity(trackedEntity);
+                if (serverEntity == null) return;
+                this.cachedServerEntity = serverEntity;
+            }
+            try {
+                CoreReflections.handle$ServerEntity$updateIntervalSetter.invokeExact(this.cachedServerEntity, updateInterval);
+                this.lastInjectedInterval = updateInterval;
+            } catch (Throwable e) {
+                plugin.logger().warn("Failed to update server entity tracking interval", e);
             }
         }
 
-        private static boolean canSpawnParticle(Object nmsEntity) {
+        private static boolean canSpawnParticle(Object nmsEntity, boolean inGround) {
             if (!FastNMS.INSTANCE.field$Entity$wasTouchingWater(nmsEntity)) return false;
             if (CoreReflections.clazz$AbstractArrow.isInstance(nmsEntity)) {
-                return !FastNMS.INSTANCE.method$AbstractArrow$isInGround(nmsEntity);
+                return !inGround;
             }
             return true;
         }

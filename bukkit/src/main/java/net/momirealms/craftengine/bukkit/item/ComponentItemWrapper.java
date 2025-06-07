@@ -8,6 +8,7 @@ import net.momirealms.craftengine.bukkit.nms.FastNMS;
 import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.CoreReflections;
 import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.MRegistryOps;
 import net.momirealms.craftengine.core.item.ItemWrapper;
+import net.momirealms.craftengine.core.plugin.locale.TranslationManager;
 import net.momirealms.craftengine.core.util.Key;
 import net.momirealms.sparrow.nbt.Tag;
 import org.bukkit.inventory.ItemStack;
@@ -111,6 +112,10 @@ public class ComponentItemWrapper implements ItemWrapper<ItemStack> {
     private void setComponentInternal(Object type, DynamicOps ops, Object value) {
         if (value == null) return;
         Object componentType = ensureDataComponentType(type);
+        if (componentType == null) {
+            TranslationManager.instance().log("warning.config.item.component_notfound", type.toString());
+            return;
+        }
         Codec codec = FastNMS.INSTANCE.method$DataComponentType$codec(componentType);
         try {
             DataResult<Object> result = codec.parse(ops, value);

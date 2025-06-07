@@ -6,6 +6,7 @@ public abstract class AbstractCustomProjectile implements CustomProjectile {
     protected final ProjectileMeta meta;
     protected final Projectile projectile;
     protected final Item<?> item;
+    private int inGroundTime;
 
     protected AbstractCustomProjectile(ProjectileMeta meta, Projectile projectile, Item<?> item) {
         this.meta = meta;
@@ -26,5 +27,15 @@ public abstract class AbstractCustomProjectile implements CustomProjectile {
     @Override
     public Item<?> item() {
         return item;
+    }
+
+    @Override
+    public int inGroundTime() {
+        return inGroundTime;
+    }
+
+    @Override
+    public void setInGroundTime(int inGroundTime) {
+        this.inGroundTime = inGroundTime;
     }
 }

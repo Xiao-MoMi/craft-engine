@@ -86,6 +86,7 @@ public class BukkitFurnitureManager extends AbstractFurnitureManager {
             SoundData data = furniture.settings().sounds().placeSound();
             location.getWorld().playSound(location, data.id().toString(), SoundCategory.BLOCKS, data.volume(), data.pitch());
         }
+        BukkitFurniture.injectFurnitureEntity(FastNMS.INSTANCE.method$CraftEntity$getHandle(furnitureEntity));
         return loadedFurnitureByRealEntityId(furnitureEntity.getEntityId());
     }
 
@@ -101,6 +102,7 @@ public class BukkitFurnitureManager extends AbstractFurnitureManager {
             for (Entity entity : entities) {
                 if (entity instanceof ItemDisplay display) {
                     handleBaseEntityLoadEarly(display);
+                    BukkitFurniture.injectFurnitureEntity(FastNMS.INSTANCE.method$CraftEntity$getHandle(display));
                 } else if (entity instanceof Interaction interaction) {
                     handleCollisionEntityLoadOnEntitiesLoad(interaction);
                 } else if (entity instanceof Boat boat) {
@@ -208,6 +210,7 @@ public class BukkitFurnitureManager extends AbstractFurnitureManager {
                 furniture.initializeColliders();
             }
         }
+        BukkitFurniture.injectFurnitureEntity(FastNMS.INSTANCE.method$CraftEntity$getHandle(display));
         if (depth > 2) return;
         this.plugin.scheduler().sync().runLater(() -> handleBaseEntityLoadLate(display, depth + 1), 1, location.getWorld(), location.getBlockX() >> 4, location.getBlockZ() >> 4);
     }

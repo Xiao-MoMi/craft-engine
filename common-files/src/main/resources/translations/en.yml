@@ -156,6 +156,7 @@ warning.config.item.invalid_material: "<yellow>Issue found in file <arg:0> - The
 warning.config.item.invalid_custom_model_data: "<yellow>Issue found in file <arg:0> - The item '<arg:1>' is using a negative custom model data '<arg:2>' which is invalid.</yellow>"
 warning.config.item.bad_custom_model_data: "<yellow>Issue found in file <arg:0> - The item '<arg:1>' is using a custom model data '<arg:2>' that is too large. It's recommended to use a value lower than 16,777,216.</yellow>"
 warning.config.item.custom_model_data_conflict: "<yellow>Issue found in file <arg:0> - The item '<arg:1>' is using a custom model data '<arg:2>' that has been occupied by item '<arg:3>'.</yellow>"
+warning.config.item.component_notfound: "<yellow>Issue found - Have item using a component '<arg:0>' that does not exist.</yellow>"
 warning.config.item.missing_model_id: "<yellow>Issue found in file <arg:0> - The item '<arg:1>' is missing the required 'custom-model-data' or 'item-model' argument.</yellow>"
 warning.config.item.missing_model: "<yellow>Issue found in file <arg:0> - The item '<arg:1>' is missing the required 'model' section for 1.21.4+ resource pack support.</yellow>"
 warning.config.item.behavior.missing_type: "<yellow>Issue found in file <arg:0> - The item '<arg:1>' is missing the required 'type' argument for its item behavior.</yellow>"

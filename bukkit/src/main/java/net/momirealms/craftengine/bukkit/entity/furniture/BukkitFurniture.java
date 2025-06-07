@@ -28,6 +28,7 @@ import org.joml.Vector3f;
 import java.io.IOException;
 import java.lang.ref.WeakReference;
 import java.util.*;
+import java.util.function.Consumer;
 
 public class BukkitFurniture implements Furniture {
     private final Key id;
@@ -130,6 +131,7 @@ public class BukkitFurniture implements Furniture {
         Object world = FastNMS.INSTANCE.field$CraftWorld$ServerLevel(this.location.getWorld());
         for (Collider entity : this.colliderEntities) {
             FastNMS.INSTANCE.method$LevelWriter$addFreshEntity(world, entity.handle());
+            injectFurnitureEntity(entity.handle());
             Entity bukkitEntity = FastNMS.INSTANCE.method$Entity$getBukkitEntity(entity.handle());
             bukkitEntity.getPersistentDataContainer().set(BukkitFurnitureManager.FURNITURE_COLLISION, PersistentDataType.BYTE, (byte) 1);
         }
@@ -358,5 +360,25 @@ public class BukkitFurniture implements Furniture {
         newLocation.setYaw((float) yaw);
         newLocation.add(offset.x, offset.y + 0.6, -offset.z);
         return newLocation;
+    }
+
+    public static void injectFurnitureEntity(Object nmsEntity) {
+        try {
+            Object trackedEntity = FastNMS.INSTANCE.field$Entity$trackedEntity(nmsEntity);
+            Object serverEntity = FastNMS.INSTANCE.filed$ChunkMap$TrackedEntity$serverEntity(trackedEntity);
+            CoreReflections.handle$ServerEntity$broadcastSetter.invokeExact(serverEntity, Handlers.DO_NOTHING);
+            CoreReflections.handle$ServerEntity$updateIntervalSetter.invokeExact(serverEntity, Integer.MAX_VALUE);
+        } catch (Throwable e) {
+            CraftEngine.instance().logger().warn("Failed to inject collider", e);
+        }
+    }
+
+    @FunctionalInterface
+    public interface Handlers extends Consumer<Object> {
+        Consumer<Object> DO_NOTHING = doNothing();
+
+        static Handlers doNothing() {
+            return (packet) -> {};
+        }
     }
 }

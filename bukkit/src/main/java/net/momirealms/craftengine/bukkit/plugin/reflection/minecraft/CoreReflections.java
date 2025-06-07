@@ -11,6 +11,8 @@ import net.momirealms.craftengine.core.util.ReflectionUtils;
 import net.momirealms.craftengine.core.util.VersionHelper;
 
 import java.io.BufferedReader;
+import java.lang.invoke.MethodHandle;
+import java.lang.invoke.MethodType;
 import java.lang.invoke.VarHandle;
 import java.lang.reflect.*;
 import java.util.*;
@@ -3265,4 +3267,33 @@ public final class CoreReflections {
     public static final Method method$Registry$asLookup = ReflectionUtils.getMethod(
             clazz$Registry, clazz$HolderLookup$RegistryLookup, new String[]{"asLookup", "p"}
     );
+
+    public static final Field field$ServerEntity$broadcast = requireNonNull(
+            ReflectionUtils.getDeclaredField(
+                    clazz$ServerEntity, Consumer.class, 0
+            )
+    );
+
+    public static final MethodHandle handle$ServerEntity$broadcastSetter;
+    public static final MethodHandle handle$ServerEntity$updateIntervalSetter;
+    public static final MethodHandle handle$ServerPlayer$connectionGetter;
+
+    static {
+        try {
+            handle$ServerEntity$broadcastSetter = requireNonNull(
+                    ReflectionUtils.unreflectSetter(field$ServerEntity$broadcast)
+                            .asType(MethodType.methodType(void.class, Object.class, Consumer.class))
+            );
+            handle$ServerEntity$updateIntervalSetter = requireNonNull(
+                    ReflectionUtils.unreflectSetter(field$ServerEntity$updateInterval)
+                            .asType(MethodType.methodType(void.class, Object.class, int.class))
+            );
+            handle$ServerPlayer$connectionGetter = requireNonNull(
+                    ReflectionUtils.unreflectGetter(field$ServerPlayer$connection)
+                            .asType(MethodType.methodType(Object.class, Object.class))
+            );
+        } catch (IllegalAccessException e) {
+            throw new ReflectionInitException("Failed to initialize reflection", e);
+        }
+    }
 }

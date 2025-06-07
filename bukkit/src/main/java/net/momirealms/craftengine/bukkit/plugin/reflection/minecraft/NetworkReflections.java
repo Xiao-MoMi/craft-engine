@@ -1,10 +1,13 @@
 package net.momirealms.craftengine.bukkit.plugin.reflection.minecraft;
 
 import io.netty.buffer.ByteBuf;
+import net.momirealms.craftengine.bukkit.plugin.reflection.ReflectionInitException;
 import net.momirealms.craftengine.bukkit.util.BukkitReflectionUtils;
 import net.momirealms.craftengine.core.util.ReflectionUtils;
 import net.momirealms.craftengine.core.util.VersionHelper;
 
+import java.lang.invoke.MethodHandle;
+import java.lang.invoke.MethodType;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
@@ -968,7 +971,7 @@ public final class NetworkReflections {
     );
 
     public static final Field field$ServerboundEditBookPacket$slot = requireNonNull(
-            ReflectionUtils.getDeclaredField(clazz$ServerboundEditBookPacket, int.class, 0)
+            ReflectionUtils.getDeclaredField(clazz$ServerboundEditBookPacket, int.class, VersionHelper.isOrAbove1_20_5() ? 0 : 4)
     );
 
     public static final Field field$ServerboundEditBookPacket$pages = requireNonNull(
@@ -1293,4 +1296,170 @@ public final class NetworkReflections {
     public static final Constructor<?> constructor$ClientboundTickingStatePacket = Optional.ofNullable(clazz$ClientboundTickingStatePacket)
             .map(it -> ReflectionUtils.getConstructor(it, float.class, boolean.class))
             .orElse(null);
+
+    public static final MethodHandle handle$ServerboundRenameItemPacket$nameGetter;
+    public static final MethodHandle handle$ServerboundRenameItemPacket$nameSetter;
+    public static final MethodHandle handle$ServerboundHelloPacket$nameGetter;
+    public static final MethodHandle handle$ServerboundHelloPacket$uuidGetter;
+    public static final MethodHandle handle$ServerboundSetCreativeModeSlotPacket$itemStackGetter;
+    public static final MethodHandle handle$ServerboundSetCreativeModeSlotPacket$slotNumGetter;
+    public static final MethodHandle handle$ServerboundInteractPacket$actionGetter;
+    public static final MethodHandle handle$ServerboundInteractPacket$InteractionAtLocationAction$handGetter;
+    public static final MethodHandle handle$ServerboundInteractPacket$InteractionAtLocationAction$locationGetter;
+    public static final MethodHandle handle$ServerboundSignUpdatePacket$linesGetter;
+    public static final MethodHandle handleServerboundEditBookPacket$pagesGetter;
+    public static final MethodHandle handle$ServerboundEditBookPacket$titleGetter;
+    public static final MethodHandle handle$ServerboundEditBookPacket$slotGetter;
+    public static final MethodHandle handle$ServerboundResourcePackPacket$actionGetter;
+    public static final MethodHandle handle$ClientboundEntityEventPacket$entityIdGetter;
+    public static final MethodHandle handle$ClientboundEntityEventPacket$eventIdGetter;
+    public static final MethodHandle handle$ClientIntentionPacket$protocolVersionGetter;
+    public static final MethodHandle handle$ClientboundRespawnPacket$dimensionGetter;
+    public static final MethodHandle handle$ClientboundRespawnPacket$commonPlayerSpawnInfoGetter;
+    public static final MethodHandle handle$CommonPlayerSpawnInfo$dimensionGetter;
+    public static final MethodHandle handle$ClientboundLoginPacket$dimensionGetter;
+    public static final MethodHandle handle$ClientboundLoginPacket$commonPlayerSpawnInfoGetter;
+    public static final MethodHandle handle$ServerboundPickItemFromBlockPacket$posGetter;
+    public static final MethodHandle handle$ServerboundPickItemFromEntityPacket$idGetter;
+    public static final MethodHandle handle$ServerboundCustomPayloadPacket$payloadGetter;
+
+    static {
+        try {
+            handle$ServerboundRenameItemPacket$nameGetter = requireNonNull(
+                    ReflectionUtils.unreflectGetter(field$ServerboundRenameItemPacket$name)
+                            .asType(MethodType.methodType(String.class, Object.class))
+            );
+            handle$ServerboundRenameItemPacket$nameSetter = requireNonNull(
+                    ReflectionUtils.unreflectSetter(field$ServerboundRenameItemPacket$name)
+                            .asType(MethodType.methodType(void.class, Object.class, String.class))
+            );
+            handle$ServerboundHelloPacket$nameGetter = requireNonNull(
+                    ReflectionUtils.unreflectGetter(field$ServerboundHelloPacket$name)
+                            .asType(MethodType.methodType(String.class, Object.class))
+            );
+            handle$ServerboundHelloPacket$uuidGetter = requireNonNull(
+                    ReflectionUtils.unreflectGetter(field$ServerboundHelloPacket$uuid)
+                            .asType(MethodType.methodType(VersionHelper.isOrAbove1_20_2() ? UUID.class : Optional.class, Object.class))
+            );
+            handle$ServerboundSetCreativeModeSlotPacket$itemStackGetter = requireNonNull(
+                    ReflectionUtils.unreflectGetter(field$ServerboundSetCreativeModeSlotPacket$itemStack)
+                            .asType(MethodType.methodType(Object.class, Object.class))
+            );
+            handle$ServerboundSetCreativeModeSlotPacket$slotNumGetter = requireNonNull(
+                    ReflectionUtils.unreflectGetter(field$ServerboundSetCreativeModeSlotPacket$slotNum)
+                            .asType(MethodType.methodType(VersionHelper.isOrAbove1_20_5() ? short.class : int.class, Object.class))
+            );
+            handle$ServerboundInteractPacket$actionGetter = requireNonNull(
+                    ReflectionUtils.unreflectGetter(field$ServerboundInteractPacket$action)
+                            .asType(MethodType.methodType(Object.class, Object.class))
+            );
+            handle$ServerboundInteractPacket$InteractionAtLocationAction$handGetter = requireNonNull(
+                    ReflectionUtils.unreflectGetter(field$ServerboundInteractPacket$InteractionAtLocationAction$hand)
+                            .asType(MethodType.methodType(Object.class, Object.class))
+            );
+            handle$ServerboundInteractPacket$InteractionAtLocationAction$locationGetter = requireNonNull(
+                    ReflectionUtils.unreflectGetter(field$ServerboundInteractPacket$InteractionAtLocationAction$location)
+                            .asType(MethodType.methodType(Object.class, Object.class))
+            );
+            handle$ServerboundSignUpdatePacket$linesGetter = requireNonNull(
+                    ReflectionUtils.unreflectGetter(field$ServerboundSignUpdatePacket$lines)
+                            .asType(MethodType.methodType(String[].class, Object.class))
+            );
+            handleServerboundEditBookPacket$pagesGetter = requireNonNull(
+                    ReflectionUtils.unreflectGetter(field$ServerboundEditBookPacket$pages)
+                            .asType(MethodType.methodType(List.class, Object.class))
+            );
+            handle$ServerboundEditBookPacket$titleGetter = requireNonNull(
+                    ReflectionUtils.unreflectGetter(field$ServerboundEditBookPacket$title)
+                            .asType(MethodType.methodType(Optional.class, Object.class))
+            );
+            handle$ServerboundEditBookPacket$slotGetter = requireNonNull(
+                    ReflectionUtils.unreflectGetter(field$ServerboundEditBookPacket$slot)
+                            .asType(MethodType.methodType(int.class, Object.class))
+            );
+            handle$ServerboundResourcePackPacket$actionGetter = requireNonNull(
+                    ReflectionUtils.unreflectGetter(field$ServerboundResourcePackPacket$action)
+                            .asType(MethodType.methodType(Object.class, Object.class))
+            );
+            handle$ClientboundEntityEventPacket$entityIdGetter = requireNonNull(
+                    ReflectionUtils.unreflectGetter(field$ClientboundEntityEventPacket$entityId)
+                            .asType(MethodType.methodType(int.class, Object.class))
+            );
+            handle$ClientboundEntityEventPacket$eventIdGetter = requireNonNull(
+                    ReflectionUtils.unreflectGetter(field$ClientboundEntityEventPacket$eventId)
+                            .asType(MethodType.methodType(byte.class, Object.class))
+            );
+            handle$ClientIntentionPacket$protocolVersionGetter = requireNonNull(
+                    ReflectionUtils.unreflectGetter(field$ClientIntentionPacket$protocolVersion)
+                            .asType(MethodType.methodType(int.class, Object.class))
+            );
+            if (field$ServerboundCustomPayloadPacket$payload != null) {
+                handle$ServerboundCustomPayloadPacket$payloadGetter = requireNonNull(
+                        ReflectionUtils.unreflectGetter(field$ServerboundCustomPayloadPacket$payload)
+                                .asType(MethodType.methodType(Object.class, Object.class))
+                );
+            } else {
+                handle$ServerboundCustomPayloadPacket$payloadGetter = null;
+            }
+            if (field$ServerboundPickItemFromEntityPacket$id != null) {
+                handle$ServerboundPickItemFromEntityPacket$idGetter = requireNonNull(
+                        ReflectionUtils.unreflectGetter(field$ServerboundPickItemFromEntityPacket$id)
+                                .asType(MethodType.methodType(int.class, Object.class))
+                );
+            } else {
+                handle$ServerboundPickItemFromEntityPacket$idGetter = null;
+            }
+            if (field$ServerboundPickItemFromBlockPacket$pos != null) {
+                handle$ServerboundPickItemFromBlockPacket$posGetter = requireNonNull(
+                        ReflectionUtils.unreflectGetter(field$ServerboundPickItemFromBlockPacket$pos)
+                                .asType(MethodType.methodType(Object.class, Object.class))
+                );
+            } else {
+                handle$ServerboundPickItemFromBlockPacket$posGetter = null;
+            }
+            if (field$ClientboundLoginPacket$commonPlayerSpawnInfo != null) {
+                handle$ClientboundLoginPacket$commonPlayerSpawnInfoGetter = requireNonNull(
+                        ReflectionUtils.unreflectGetter(field$ClientboundLoginPacket$commonPlayerSpawnInfo)
+                                .asType(MethodType.methodType(Object.class, Object.class))
+                );
+            } else {
+                handle$ClientboundLoginPacket$commonPlayerSpawnInfoGetter = null;
+            }
+            if (field$ClientboundLoginPacket$dimension != null) {
+                handle$ClientboundLoginPacket$dimensionGetter = requireNonNull(
+                        ReflectionUtils.unreflectGetter(field$ClientboundLoginPacket$dimension)
+                                .asType(MethodType.methodType(Object.class, Object.class))
+                );
+            } else {
+                handle$ClientboundLoginPacket$dimensionGetter = null;
+            }
+            if (field$CommonPlayerSpawnInfo$dimension != null) {
+                handle$CommonPlayerSpawnInfo$dimensionGetter = requireNonNull(
+                        ReflectionUtils.unreflectGetter(field$CommonPlayerSpawnInfo$dimension)
+                                .asType(MethodType.methodType(Object.class, Object.class))
+                );
+            } else {
+                handle$CommonPlayerSpawnInfo$dimensionGetter = null;
+            }
+            if (field$ClientboundRespawnPacket$commonPlayerSpawnInfo != null) {
+                handle$ClientboundRespawnPacket$commonPlayerSpawnInfoGetter = requireNonNull(
+                        ReflectionUtils.unreflectGetter(field$ClientboundRespawnPacket$commonPlayerSpawnInfo)
+                                .asType(MethodType.methodType(Object.class, Object.class))
+                );
+            } else {
+                handle$ClientboundRespawnPacket$commonPlayerSpawnInfoGetter = null;
+            }
+            if (field$ClientboundRespawnPacket$dimension != null) {
+                handle$ClientboundRespawnPacket$dimensionGetter = requireNonNull(
+                        ReflectionUtils.unreflectGetter(field$ClientboundRespawnPacket$dimension)
+                                .asType(MethodType.methodType(Object.class, Object.class))
+                );
+            } else {
+                handle$ClientboundRespawnPacket$dimensionGetter = null;
+            }
+        } catch (Throwable e) {
+            throw new ReflectionInitException("Failed to initialize reflection", e);
+        }
+    }
+
 }
