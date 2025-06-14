@@ -11,6 +11,9 @@ repositories {
     maven("https://nexus.phoenixdevt.fr/repository/maven-public/") // mmoitems
     maven("https://repo.viaversion.com") // via
     maven("https://repo.skriptlang.org/releases/") // skript
+    maven("https://nexus.neetgames.com/repository/maven-releases/") // mcmmo
+    maven("https://repo.dmulloy2.net/repository/public/") // mcmmo required
+    maven("https://repo.auxilor.io/repository/maven-public/") // eco
 }
 
 dependencies {
@@ -49,6 +52,21 @@ dependencies {
     compileOnly("com.fastasyncworldedit:FastAsyncWorldEdit-Bukkit") { isTransitive = false }
     // MythicMobs
     compileOnly("io.lumine:Mythic-Dist:5.9.0")
+    // McMMO
+    compileOnly("com.gmail.nossr50.mcMMO:mcMMO:2.2.038")
+    // MMOCore
+    compileOnly("net.Indyuce:MMOCore-API:1.12.1-SNAPSHOT")
+    // JobsReborn
+    compileOnly("com.github.Zrips:Jobs:v5.2.2.3")
+    // CustomFishing
+    compileOnly("net.momirealms:custom-fishing:2.3.3")
+    // eco
+    compileOnly("com.willfp:eco:6.70.1")
+    compileOnly("com.willfp:EcoJobs:3.56.1")
+    compileOnly("com.willfp:EcoSkills:3.46.1")
+    compileOnly("com.willfp:libreforge:4.58.1")
+    // AureliumSkills
+    compileOnly("com.github.Archy-X:AureliumSkills:Beta1.3.21")
 }
 
 java {

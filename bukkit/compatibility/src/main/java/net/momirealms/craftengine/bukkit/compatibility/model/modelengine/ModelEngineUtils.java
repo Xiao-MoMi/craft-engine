@@ -1,4 +1,4 @@
-package net.momirealms.craftengine.bukkit.compatibility.modelengine;
+package net.momirealms.craftengine.bukkit.compatibility.model.modelengine;
 
 import com.ticxo.modelengine.api.ModelEngineAPI;
 import com.ticxo.modelengine.api.model.ActiveModel;

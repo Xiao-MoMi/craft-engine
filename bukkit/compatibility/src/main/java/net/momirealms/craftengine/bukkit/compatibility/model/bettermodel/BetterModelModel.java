@@ -1,22 +1,22 @@
-package net.momirealms.craftengine.bukkit.compatibility.modelengine;
+package net.momirealms.craftengine.bukkit.compatibility.model.bettermodel;
 
 import net.momirealms.craftengine.core.entity.AbstractEntity;
 import net.momirealms.craftengine.core.entity.furniture.AbstractExternalModel;
 
-public class ModelEngineModel extends AbstractExternalModel {
+public class BetterModelModel extends AbstractExternalModel {
 
-    public ModelEngineModel(String id) {
+    public BetterModelModel(String id) {
         super(id);
     }
 
     @Override
     public String plugin() {
-        return "ModelEngine";
+        return "BetterModel";
     }
 
     @Override
     public void bindModel(AbstractEntity entity) {
         org.bukkit.entity.Entity bukkitEntity = (org.bukkit.entity.Entity) entity.literalObject();
-        ModelEngineUtils.bindModel(bukkitEntity, id());
+        BetterModelUtils.bindModel(bukkitEntity, id());
     }
 }
