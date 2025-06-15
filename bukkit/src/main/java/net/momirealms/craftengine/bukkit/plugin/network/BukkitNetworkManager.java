@@ -485,6 +485,7 @@ public class BukkitNetworkManager implements NetworkManager, Listener, PluginMes
 
         @Override
         public void write(ChannelHandlerContext context, Object packet, ChannelPromise channelPromise) throws Exception {
+            boolean isWrote = false;
             try {
                 NMSPacketEvent event = new NMSPacketEvent(packet);
                 onNMSPacketSend(player, event, packet);
@@ -494,6 +495,8 @@ public class BukkitNetworkManager implements NetworkManager, Listener, PluginMes
                 } else {
                     super.write(context, packet, channelPromise);
                 }
+                isWrote = true;
+                if (VersionHelper.isOrAbove1_21_6()) return; // TODO: 需排查为什么从 1.21.6 开始执行 addListener 后会报错
                 channelPromise.addListener((p) -> {
                     for (Runnable task : event.getDelayedTasks()) {
                         task.run();
@@ -501,7 +504,9 @@ public class BukkitNetworkManager implements NetworkManager, Listener, PluginMes
                 });
             } catch (Throwable e) {
                 plugin.logger().severe("An error occurred when reading packets. Packet class: " + packet.getClass(), e);
-                super.write(context, packet, channelPromise);
+                if (!isWrote) {
+                    super.write(context, packet, channelPromise);
+                }
             }
         }
 

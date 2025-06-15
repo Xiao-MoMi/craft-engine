@@ -200,12 +200,12 @@ public final class CoreReflections {
             )
     );
 
-    public static final Class<?> clazz$Component$Serializer = requireNonNull(
+    // 1.20~1.21.5
+    public static final Class<?> clazz$Component$Serializer =
             BukkitReflectionUtils.findReobfOrMojmapClass(
                     "network.chat.IChatBaseComponent$ChatSerializer",
                     "network.chat.Component$Serializer"
-            )
-    );
+            );
 
     public static final Class<?> clazz$ComponentContents = requireNonNull(
             ReflectionUtils.getClazz(
@@ -2531,30 +2531,6 @@ public final class CoreReflections {
 
     public static final Method method$AttributeInstance$setBaseValue = requireNonNull(
             ReflectionUtils.getMethod(clazz$AttributeInstance, void.class, double.class)
-    );
-
-    public static final Method method$Entity$canBeCollidedWith = requireNonNull(
-            VersionHelper.isOrAbove1_20_5()
-                    ? ReflectionUtils.getMethod(clazz$Entity, boolean.class, new String[]{"canBeCollidedWith"})
-                    : VersionHelper.isOrAbove1_20_3()
-                    ? ReflectionUtils.getMethod(clazz$Entity, boolean.class, new String[]{"bz"})
-                    : VersionHelper.isOrAbove1_20_2()
-                    ? ReflectionUtils.getMethod(clazz$Entity, boolean.class, new String[]{"bx"})
-                    : VersionHelper.isOrAbove1_20()
-                    ? ReflectionUtils.getMethod(clazz$Entity, boolean.class, new String[]{"bu"})
-                    : ReflectionUtils.getMethod(clazz$Entity, boolean.class, new String[]{"canBeCollidedWith", "bu", "bx", "bz"})
-    );
-
-    public static final Method method$Entity$getId = requireNonNull(
-            VersionHelper.isOrAbove1_20_5()
-                    ? ReflectionUtils.getMethod(clazz$Entity, int.class, new String[]{"getId"})
-                    : VersionHelper.isOrAbove1_20_3()
-                    ? ReflectionUtils.getMethod(clazz$Entity, int.class, new String[]{"aj"})
-                    : VersionHelper.isOrAbove1_20_2()
-                    ? ReflectionUtils.getMethod(clazz$Entity, int.class, new String[]{"ah"})
-                    : VersionHelper.isOrAbove1_20()
-                    ? ReflectionUtils.getMethod(clazz$Entity, int.class, new String[]{"af"})
-                    : ReflectionUtils.getMethod(clazz$Entity, int.class, new String[]{"getId", "aj", "ah", "af"})
     );
 
     public static final Class<?> clazz$Rotation = requireNonNull(

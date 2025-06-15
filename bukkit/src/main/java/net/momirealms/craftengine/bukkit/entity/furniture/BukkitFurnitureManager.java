@@ -396,7 +396,7 @@ public class BukkitFurnitureManager extends AbstractFurnitureManager {
             for (Entity bukkitEntity : nearbyEntities) {
                 if (bukkitEntity instanceof Player) continue;
                 Object nmsEntity = FastNMS.INSTANCE.method$CraftEntity$getHandle(bukkitEntity);
-                return (boolean) CoreReflections.method$Entity$canBeCollidedWith.invoke(nmsEntity);
+                return FastNMS.INSTANCE.method$Entity$canBeCollidedWith(nmsEntity);
             }
         } catch (Exception ignored) {}
         return false;
