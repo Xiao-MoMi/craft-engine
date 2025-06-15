@@ -77,14 +77,22 @@ paper {
         // external models
         register("ModelEngine") { required = false }
         register("BetterModel") { required = false }
+        register("FreeMinecraftModels") { required = false }
 
         // external items
         register("NeigeItems") { required = false }
         register("MMOItems") { required = false }
         register("MythicMobs") { required = false }
+        register("CustomFishing") { required = false }
 
         // leveler
         register("AuraSkills") { required = false }
+        register("AureliumSkills") { required = false }
+        register("McMMO") { required = false }
+        register("MMOCore") { required = false }
+        register("Jobs") { required = false }
+        register("EcoSkills") { required = false }
+        register("EcoJobs") { required = false }
 
         // anti grief lib
         register("Dominion") { required = false }

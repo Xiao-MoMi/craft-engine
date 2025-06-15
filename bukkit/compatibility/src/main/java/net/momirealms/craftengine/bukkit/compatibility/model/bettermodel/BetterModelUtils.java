@@ -1,4 +1,4 @@
-package net.momirealms.craftengine.bukkit.compatibility.bettermodel;
+package net.momirealms.craftengine.bukkit.compatibility.model.bettermodel;
 
 import kr.toxicity.model.api.BetterModel;
 import kr.toxicity.model.api.data.renderer.BlueprintRenderer;
