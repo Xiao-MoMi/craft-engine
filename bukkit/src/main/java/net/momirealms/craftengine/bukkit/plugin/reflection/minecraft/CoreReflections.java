@@ -3503,4 +3503,10 @@ public final class CoreReflections {
             throw new RuntimeException(e);
         }
     }
+
+    public static final Method method$Level$destroyBlock = requireNonNull(
+            ReflectionUtils.getDeclaredMethod(
+                    clazz$Level, boolean.class, clazz$BlockPos, boolean.class, clazz$Entity, int.class
+            )
+    );
 }
