@@ -201,32 +201,50 @@ public abstract class CraftEngine implements Plugin {
         this.commandManager.registerDefaultFeatures();
         // delay the reload so other plugins can register some custom parsers
         this.scheduler.sync().runDelayed(() -> {
-            this.registerDefaultParsers();
-            // hook external item plugins
-            this.itemManager.delayedInit();
-            // hook worldedit
-            this.blockManager.delayedInit();
-            // register listeners and tasks
-            this.guiManager.delayedInit();
-            this.recipeManager.delayedInit();
-            this.packManager.delayedInit();
-            this.fontManager.delayedInit();
-            this.vanillaLootManager.delayedInit();
-            this.advancementManager.delayedInit();
-            // reload the plugin
+            boolean delayLoadFailed = false;
             try {
-                this.reloadPlugin(Runnable::run, Runnable::run, true);
-            } catch (Exception e) {
-                this.logger.warn("Failed to reload plugin on enable stage", e);
+                this.registerDefaultParsers();
+                // hook external item plugins
+                this.itemManager.delayedInit();
+                // hook worldedit
+                this.blockManager.delayedInit();
+                // register listeners and tasks
+                this.guiManager.delayedInit();
+                this.recipeManager.delayedInit();
+                this.packManager.delayedInit();
+                this.fontManager.delayedInit();
+                this.vanillaLootManager.delayedInit();
+                this.advancementManager.delayedInit();
+                // reload the plugin
+                try {
+                    this.reloadPlugin(Runnable::run, Runnable::run, true);
+                } catch (Exception e) {
+                    this.logger.warn("Failed to reload plugin on enable stage", e);
+                    delayLoadFailed = true;
+                }
+                // must be after reloading because this process loads furniture
+                this.projectileManager.delayedInit();
+                this.worldManager.delayedInit();
+                this.furnitureManager.delayedInit();
+                // set up some platform extra tasks
+                this.platformDelayedEnable();
+                this.isInitializing = false;
+                this.scheduler.executeAsync(() -> this.packManager.initCachedAssets());
+            } catch (Throwable e) {
+                this.logger.warn("Failed to complete delay tasks", e);
+                delayLoadFailed = true;
             }
-            // must be after reloading because this process loads furniture
-            this.projectileManager.delayedInit();
-            this.worldManager.delayedInit();
-            this.furnitureManager.delayedInit();
-            // set up some platform extra tasks
-            this.platformDelayedEnable();
-            this.isInitializing = false;
-            this.scheduler.executeAsync(() -> this.packManager.initCachedAssets());
+            if (delayLoadFailed) {
+                logger().severe(" ");
+                logger().severe(" ");
+                logger().severe(" ");
+                logger().severe("Failed to complete delay tasks.");
+                logger().severe("To reduce the loss caused, now shutting down the server");
+                logger().severe(" ");
+                logger().severe(" ");
+                logger().severe(" ");
+                this.platform.stop();
+            }
         });
     }
 

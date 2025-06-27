@@ -14,4 +14,6 @@ public interface Platform {
     Tag snbtToSparrowNBT(String nbt);
 
     Tag javaToSparrowNBT(Object object);
+
+    void stop();
 }

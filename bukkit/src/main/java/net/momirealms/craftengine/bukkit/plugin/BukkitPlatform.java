@@ -54,4 +54,9 @@ public class BukkitPlatform implements Platform {
     public Tag javaToSparrowNBT(Object object) {
         return MRegistryOps.JAVA.convertTo(MRegistryOps.SPARROW_NBT, object);
     }
+
+    @Override
+    public void stop() {
+        Bukkit.getServer().shutdown();
+    }
 }
