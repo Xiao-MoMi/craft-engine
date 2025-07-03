@@ -162,21 +162,20 @@ public class BlockStateHitBox extends AbstractHitBox {
                 
                 // Register this block position with the FurnitureManager for tracking
                 if (parentFurniture != null) {
-                    // Register with both the new furniture entity storage and the deprecated manager maps
-                    parentFurniture.addBlockStateHitBoxPosition(this.placedPosition);
+                    // Register with the furniture entity's PersistentDataContainer with complete data
+                    // This ensures persistence across server restarts and proper cleanup
+                    parentFurniture.addBlockStateHitBoxData(
+                        this.placedPosition, 
+                        this.originalBlockState, 
+                        this.dropContainer, 
+                        this.actuallyPlacedBlock
+                    );
                     
-                    // Use BukkitFurnitureManager's extended registration method for backward compatibility
-                    if (CraftEngine.instance().furnitureManager() instanceof net.momirealms.craftengine.bukkit.entity.furniture.BukkitFurnitureManager bukkitManager) {
-                        @SuppressWarnings("deprecation")
-                        Runnable legacyRegistration = () -> bukkitManager.registerBlockStateHitBox(this.placedPosition, parentFurniture, 
-                            this.originalBlockState, this.dropContainer, this.actuallyPlacedBlock);
-                        legacyRegistration.run();
-                    } else {
-                        // Fallback to basic registration
-                        CraftEngine.instance().furnitureManager().registerBlockStateHitBox(this.placedPosition, parentFurniture);
-                    }
+                    // Register with the manager using the simplified method
+                    CraftEngine.instance().furnitureManager().registerBlockStateHitBox(this.placedPosition, parentFurniture);
+                    
                     CraftEngine.instance().logger().info("Registered BlockStateHitBox at position: " + this.placedPosition + 
-                        " for furniture: " + parentFurniture.id());
+                        " for furniture: " + parentFurniture.id() + " (stored with complete data in PersistentDataContainer)");
                 }
             }
         } else {
@@ -187,21 +186,20 @@ public class BlockStateHitBox extends AbstractHitBox {
             applyRotationToBlock(world, blockX, blockY, blockZ, conjugated);
             
             if (parentFurniture != null) {
-                // Register with both the new furniture entity storage and the deprecated manager maps
-                parentFurniture.addBlockStateHitBoxPosition(this.placedPosition);
+                // Register with the furniture entity's PersistentDataContainer with complete data
+                // Even for reused blocks, we need to track them for proper cleanup
+                parentFurniture.addBlockStateHitBoxData(
+                    this.placedPosition, 
+                    this.originalBlockState, // This will be null for reused blocks
+                    this.dropContainer, 
+                    this.actuallyPlacedBlock // false for reused blocks
+                );
                 
-                // Use BukkitFurnitureManager's extended registration method for backward compatibility
-                if (CraftEngine.instance().furnitureManager() instanceof net.momirealms.craftengine.bukkit.entity.furniture.BukkitFurnitureManager bukkitManager) {
-                    @SuppressWarnings("deprecation")
-                    Runnable legacyRegistration = () -> bukkitManager.registerBlockStateHitBox(this.placedPosition, parentFurniture, 
-                        null, this.dropContainer, this.actuallyPlacedBlock); // null for originalBlockState since we didn't place it
-                    legacyRegistration.run();
-                } else {
-                    // Fallback to basic registration
-                    CraftEngine.instance().furnitureManager().registerBlockStateHitBox(this.placedPosition, parentFurniture);
-                }
+                // Register with the manager using the simplified method
+                CraftEngine.instance().furnitureManager().registerBlockStateHitBox(this.placedPosition, parentFurniture);
+                
                 CraftEngine.instance().logger().info("Registered reused BlockStateHitBox at position: " + this.placedPosition + 
-                    " for furniture: " + parentFurniture.id());
+                    " for furniture: " + parentFurniture.id() + " (stored in PersistentDataContainer)");
             }
         }
 
@@ -232,33 +230,6 @@ public class BlockStateHitBox extends AbstractHitBox {
     @Override
     public int[] acquireEntityIds(Supplier<Integer> entityIdSupplier) {
         return new int[] {entityIdSupplier.get()};
-    }
-
-    /**
-     * Removes the placed block and handles container drops if needed
-     */
-    public void removePlacedBlock() {
-        if (placedPosition == null) return;
-        
-        // Verify that this block position is actually registered to our parent furniture
-        Furniture registeredFurniture = CraftEngine.instance().furnitureManager().getFurnitureByBlockPosition(placedPosition);
-        if (registeredFurniture != null && parentFurniture != null && !registeredFurniture.equals(parentFurniture)) {
-            CraftEngine.instance().logger().warn("Attempted to remove block at " + placedPosition + 
-                " but it belongs to a different furniture. Skipping removal.");
-            return;
-        }
-        
-        // Remove from furniture entity's own storage
-        if (parentFurniture != null) {
-            parentFurniture.removeBlockStateHitBoxPosition(placedPosition);
-        }
-        
-        // Unregister from tracking (both new and deprecated systems)
-        CraftEngine.instance().furnitureManager().unregisterBlockStateHitBox(placedPosition);
-        CraftEngine.instance().logger().info("Unregistered BlockStateHitBox at position: " + placedPosition);
-        
-        // Use the utility method to handle block removal
-        BlockStateUtils.removeBlockStateHitBoxBlock(placedPosition, originalBlockState, dropContainer, actuallyPlacedBlock);
     }
 
     /**

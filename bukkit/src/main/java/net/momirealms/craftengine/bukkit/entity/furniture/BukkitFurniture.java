@@ -5,6 +5,7 @@ import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -32,6 +33,7 @@ import it.unimi.dsi.fastutil.ints.IntArrayList;
 import net.momirealms.craftengine.bukkit.entity.BukkitEntity;
 import net.momirealms.craftengine.bukkit.nms.FastNMS;
 import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.CoreReflections;
+import net.momirealms.craftengine.bukkit.util.BlockStateUtils;
 import net.momirealms.craftengine.bukkit.util.EntityUtils;
 import net.momirealms.craftengine.bukkit.util.LegacyAttributeUtils;
 import net.momirealms.craftengine.bukkit.util.LocationUtils;
@@ -53,6 +55,95 @@ import net.momirealms.craftengine.core.util.VersionHelper;
 import net.momirealms.craftengine.core.world.BlockPosition;
 import net.momirealms.craftengine.core.world.WorldPosition;
 import net.momirealms.craftengine.core.world.collision.AABB;
+
+/**
+ * Data class to store complete BlockStateHitBox information for proper cleanup
+ */
+class BlockStateHitBoxData {
+    private final WorldPosition position;
+    private final net.momirealms.craftengine.core.block.BlockStateWrapper originalBlockState;
+    private final boolean dropContainer;
+    private final boolean actuallyPlaced;
+    
+    public BlockStateHitBoxData(WorldPosition position, 
+                               net.momirealms.craftengine.core.block.BlockStateWrapper originalBlockState,
+                               boolean dropContainer, 
+                               boolean actuallyPlaced) {
+        this.position = position;
+        this.originalBlockState = originalBlockState;
+        this.dropContainer = dropContainer;
+        this.actuallyPlaced = actuallyPlaced;
+    }
+    
+    public WorldPosition getPosition() {
+        return position;
+    }
+    
+    public net.momirealms.craftengine.core.block.BlockStateWrapper getOriginalBlockState() {
+        return originalBlockState;
+    }
+    
+    public boolean isDropContainer() {
+        return dropContainer;
+    }
+    
+    public boolean isActuallyPlaced() {
+        return actuallyPlaced;
+    }
+    
+    /**
+     * Converts this data to a string format for storage in PDC.
+     * Format: "worldName,x,y,z,dropContainer,actuallyPlaced,originalBlockStateRegistryId"
+     */
+    public String toStorageString() {
+        return position.world().name() + "," + 
+               (int)position.x() + "," + 
+               (int)position.y() + "," + 
+               (int)position.z() + "," + 
+               dropContainer + "," + 
+               actuallyPlaced + "," + 
+               (originalBlockState != null ? originalBlockState.registryId() : -1);
+    }
+    
+    /**
+     * Creates BlockStateHitBoxData from a storage string.
+     * Returns null if the string is invalid or the world doesn't match.
+     */
+    public static BlockStateHitBoxData fromStorageString(String str, net.momirealms.craftengine.core.world.World currentWorld) {
+        try {
+            String[] parts = str.split(",", 7);
+            if (parts.length != 7) return null;
+            
+            String worldName = parts[0];
+            int x = Integer.parseInt(parts[1]);
+            int y = Integer.parseInt(parts[2]);
+            int z = Integer.parseInt(parts[3]);
+            boolean dropContainer = Boolean.parseBoolean(parts[4]);
+            boolean actuallyPlaced = Boolean.parseBoolean(parts[5]);
+            int originalStateId = Integer.parseInt(parts[6]);
+            
+            // Check if world matches
+            if (!currentWorld.name().equals(worldName)) {
+                return null; // Skip data from different worlds
+            }
+            
+            WorldPosition position = new WorldPosition(currentWorld, x, y, z);
+            net.momirealms.craftengine.core.block.BlockStateWrapper originalBlockState = null;
+            
+            if (originalStateId >= 0) {
+                // Reconstruct the original block state from registry ID
+                originalBlockState = BlockStateUtils.toPackedBlockState(
+                    BlockStateUtils.fromBlockData(BlockStateUtils.idToBlockState(originalStateId))
+                );
+            }
+            
+            return new BlockStateHitBoxData(position, originalBlockState, dropContainer, actuallyPlaced);
+        } catch (Exception e) {
+            CraftEngine.instance().logger().warn("Failed to parse BlockStateHitBoxData from string: " + str, e);
+            return null;
+        }
+    }
+}
 
 public class BukkitFurniture implements Furniture {
     private final Key id;
@@ -78,6 +169,8 @@ public class BukkitFurniture implements Furniture {
     private final Vector<WeakReference<Entity>> seats = new Vector<>();
     // BlockStateHitBox positions storage - persistent across server restarts
     private final Set<BlockPosition> blockStateHitBoxPositions = Collections.synchronizedSet(new HashSet<>());
+    // BlockStateHitBox complete data for proper cleanup
+    private final Map<BlockPosition, BlockStateHitBoxData> blockStateHitBoxDataMap = Collections.synchronizedMap(new HashMap<>());
     // cached spawn packet
     private Object cachedSpawnPacket;
     private Object cachedMinimizedSpawnPacket;
@@ -155,6 +248,9 @@ public class BukkitFurniture implements Furniture {
         this.entityIds = mainEntityIds;
         this.colliderEntities = colliders.toArray(new Collider[0]);
         
+        // Load BlockStateHitBox data from PersistentDataContainer
+        this.loadBlockStateHitBoxDataFromPDC();
+        
         // Initialize BlockStateHitBox positions after all hitboxes are set up
         this.initializeBlockStateHitBoxPositions();
     }
@@ -187,13 +283,13 @@ public class BukkitFurniture implements Furniture {
     @Override
     @NotNull
     public float yaw() {
-        return this.baseEntity().getYaw();
+        return this.baseEntity().getLocation().getYaw();
     }
     @Override
     @NotNull
     public float pitch() {
     
-        return this.baseEntity().getPitch();
+        return this.baseEntity().getLocation().getPitch();
     }
 
     @NotNull
@@ -231,18 +327,76 @@ public class BukkitFurniture implements Furniture {
         if (!isValid()) {
             return;
         }
-        // Clean up BlockStateHitBoxes using both the furniture's own storage and the manager's registry
-        // First try the furniture's own storage (persistent)
-        for (BlockPosition blockPosition : this.blockStateHitBoxPositions) {
-            CraftEngine.instance().furnitureManager().unregisterBlockStateHitBox(blockPosition.toExactWorldPosition());
+        
+        
+        // Load blocks from PDC before clearing them for proper cleanup
+        List<BlockStateHitBoxData> blocksToRemove = new ArrayList<>();
+        try {
+            // Read blocks from PDC for later removal
+            Entity baseEntity = this.baseEntity();
+            String dataString = baseEntity.getPersistentDataContainer().get(
+                BukkitFurnitureManager.FURNITURE_BLOCKSTATE_HITBOX_DATA, 
+                PersistentDataType.STRING
+            );
+            
+            if (dataString != null && !dataString.isEmpty()) {
+                String[] dataStrings = dataString.split(";");
+                
+                for (String dataStr : dataStrings) {
+                    if (dataStr.trim().isEmpty()) continue;
+                    
+                    BlockStateHitBoxData data = BlockStateHitBoxData.fromStorageString(
+                        dataStr, 
+                        LocationUtils.toWorldPosition(this.location).world()
+                    );
+                    
+                    if (data != null) {
+                        blocksToRemove.add(data);
+                    }
+                }
+                
+                CraftEngine.instance().logger().info("Loaded " + blocksToRemove.size() + 
+                    " BlockStateHitBox data entries from PDC for removal during furniture destroy: " + this.id());
+            }
+        } catch (Exception e) {
+            CraftEngine.instance().logger().warn("Failed to load BlockStateHitBox data from PDC during destroy for furniture: " + this.id(), e);
         }
-        // Also clean up using the manager's registry (for backward compatibility)
-        java.util.Collection<BlockPosition> registeredPositions = CraftEngine.instance().furnitureManager().getBlockStateHitBoxPositions(this);
-        for (BlockPosition blockPosition : registeredPositions) {
-            CraftEngine.instance().furnitureManager().unregisterBlockStateHitBox(blockPosition.toExactWorldPosition());
+        
+        // Process the loaded blocks for cleanup using the correct parameters
+        for (BlockStateHitBoxData data : blocksToRemove) {
+            try {
+                WorldPosition worldPos = data.getPosition();
+                
+                // Unregister from furniture manager
+                CraftEngine.instance().furnitureManager().unregisterBlockStateHitBox(worldPos);
+                
+                // Use BlockStateUtils.removeBlockStateHitBoxBlock with correct parameters
+                BlockStateUtils.removeBlockStateHitBoxBlock(
+                    worldPos, 
+                    data.getOriginalBlockState(), 
+                    data.isDropContainer(), 
+                    data.isActuallyPlaced()
+                );
+                
+                CraftEngine.instance().logger().info("Processed BlockStateHitBox cleanup for position: " + worldPos + 
+                    " (original state: " + (data.getOriginalBlockState() != null ? "preserved" : "air") + 
+                    ", actually placed: " + data.isActuallyPlaced() + ")");
+                    
+            } catch (Exception e) {
+                CraftEngine.instance().logger().warn("Failed to process block cleanup for data: " + data.toStorageString(), e);
+            }
         }
-        // Clear our own storage
+        
+        // Clear our own storage and remove from PDC
         this.blockStateHitBoxPositions.clear();
+        this.blockStateHitBoxDataMap.clear();
+        try {
+            this.baseEntity().getPersistentDataContainer().remove(BukkitFurnitureManager.FURNITURE_BLOCKSTATE_HITBOX_POSITIONS);
+            this.baseEntity().getPersistentDataContainer().remove(BukkitFurnitureManager.FURNITURE_BLOCKSTATE_HITBOX_DATA);
+            CraftEngine.instance().logger().info("Removed BlockStateHitBox data from PDC for furniture: " + this.id());
+        } catch (Exception e) {
+            CraftEngine.instance().logger().warn("Failed to remove BlockStateHitBox data from PDC during destroy", e);
+        }
         
         this.baseEntity().remove();
         for (Collider entity : this.colliderEntities) {
@@ -427,16 +581,37 @@ public class BukkitFurniture implements Furniture {
     public void addBlockStateHitBoxPosition(WorldPosition position) {
         BlockPosition blockPos = BlockPosition.fromWorldPosition(position);
         this.blockStateHitBoxPositions.add(blockPos);
-        // Note: We don't save to persistent data immediately for performance reasons
-        // save() will be called when appropriate
+        // Save to PersistentDataContainer immediately
+        this.saveBlockStateHitBoxPositionsToPDC();
+    }
+    
+    /**
+     * Adds complete BlockStateHitBox data for proper cleanup.
+     * This method should be called by BlockStateHitBox during initialization.
+     */
+    public void addBlockStateHitBoxData(WorldPosition position, 
+                                       net.momirealms.craftengine.core.block.BlockStateWrapper originalBlockState,
+                                       boolean dropContainer, 
+                                       boolean actuallyPlaced) {
+        BlockPosition blockPos = BlockPosition.fromWorldPosition(position);
+        BlockStateHitBoxData data = new BlockStateHitBoxData(position, originalBlockState, dropContainer, actuallyPlaced);
+        
+        this.blockStateHitBoxPositions.add(blockPos);
+        this.blockStateHitBoxDataMap.put(blockPos, data);
+        
+        // Save to PersistentDataContainer immediately
+        this.saveBlockStateHitBoxDataToPDC();
     }
 
     @Override
     public boolean removeBlockStateHitBoxPosition(WorldPosition position) {
         BlockPosition blockPos = BlockPosition.fromWorldPosition(position);
         boolean removed = this.blockStateHitBoxPositions.remove(blockPos);
-        // Note: We don't save to persistent data immediately for performance reasons
-        // save() will be called when appropriate
+        if (removed) {
+            this.blockStateHitBoxDataMap.remove(blockPos);
+            // Save to PersistentDataContainer immediately
+            this.saveBlockStateHitBoxDataToPDC();
+        }
         return removed;
     }
 
@@ -448,7 +623,176 @@ public class BukkitFurniture implements Furniture {
     @Override
     public boolean hasBlockStateHitBoxAt(WorldPosition position) {
         BlockPosition blockPos = BlockPosition.fromWorldPosition(position);
-        return this.blockStateHitBoxPositions.contains(blockPos);
+        // Check if the position is in our stored positions
+        for (BlockPosition storedPos : this.blockStateHitBoxPositions) {
+            if (storedPos.x() == blockPos.x() && 
+                storedPos.y() == blockPos.y() && 
+                storedPos.z() == blockPos.z() &&
+                storedPos.world().name().equals(blockPos.world().name())) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
+     * Loads BlockStateHitBox data from the PersistentDataContainer
+     */
+    private void loadBlockStateHitBoxDataFromPDC() {
+        try {
+            Entity baseEntity = this.baseEntity();
+            String dataString = baseEntity.getPersistentDataContainer().get(
+                BukkitFurnitureManager.FURNITURE_BLOCKSTATE_HITBOX_DATA, 
+                PersistentDataType.STRING
+            );
+            
+            this.blockStateHitBoxPositions.clear();
+            this.blockStateHitBoxDataMap.clear();
+            
+            if (dataString != null && !dataString.isEmpty()) {
+                String[] dataStrings = dataString.split(";");
+                int loadedCount = 0;
+                int skippedCount = 0;
+                
+                for (String dataStr : dataStrings) {
+                    if (dataStr.trim().isEmpty()) continue;
+                    
+                    BlockStateHitBoxData data = BlockStateHitBoxData.fromStorageString(
+                        dataStr, 
+                        LocationUtils.toWorldPosition(this.location).world()
+                    );
+                    
+                    if (data != null) {
+                        BlockPosition blockPos = BlockPosition.fromWorldPosition(data.getPosition());
+                        this.blockStateHitBoxPositions.add(blockPos);
+                        this.blockStateHitBoxDataMap.put(blockPos, data);
+                        loadedCount++;
+                    } else {
+                        // Skip invalid or different-world data
+                        skippedCount++;
+                        CraftEngine.instance().logger().warn("Skipped invalid BlockStateHitBox data: " + dataStr + " for furniture: " + this.id());
+                    }
+                }
+                
+                if (loadedCount > 0) {
+                    CraftEngine.instance().logger().info("Loaded " + loadedCount + 
+                        " BlockStateHitBox data entries from PDC for furniture: " + this.id() +
+                        (skippedCount > 0 ? " (skipped " + skippedCount + " invalid/different-world entries)" : ""));
+                }
+                
+                // If we skipped any data, update the PDC to remove them
+                if (skippedCount > 0) {
+                    this.saveBlockStateHitBoxDataToPDC();
+                }
+            }
+            
+            // Legacy support: try to load from old format if new format is empty
+            if (this.blockStateHitBoxDataMap.isEmpty()) {
+                this.loadLegacyBlockStateHitBoxPositionsFromPDC();
+            }
+        } catch (Exception e) {
+            CraftEngine.instance().logger().warn("Failed to load BlockStateHitBox data from PDC for furniture: " + this.id(), e);
+        }
+    }
+    
+    /**
+     * Legacy method to load old format positions (for backwards compatibility)
+     */
+    private void loadLegacyBlockStateHitBoxPositionsFromPDC() {
+        try {
+            Entity baseEntity = this.baseEntity();
+            String positionsData = baseEntity.getPersistentDataContainer().get(
+                BukkitFurnitureManager.FURNITURE_BLOCKSTATE_HITBOX_POSITIONS, 
+                PersistentDataType.STRING
+            );
+            
+            if (positionsData != null && !positionsData.isEmpty()) {
+                String[] positionStrings = positionsData.split(";");
+                int loadedCount = 0;
+                
+                for (String posStr : positionStrings) {
+                    if (posStr.trim().isEmpty()) continue;
+                    try {
+                        String[] parts = posStr.split(",", 4);
+                        if (parts.length == 4) {
+                            String worldName = parts[0];
+                            int x = Integer.parseInt(parts[1]);
+                            int y = Integer.parseInt(parts[2]);
+                            int z = Integer.parseInt(parts[3]);
+                            
+                            // Check if the world name matches our current world
+                            if (this.location.getWorld().getName().equals(worldName)) {
+                                net.momirealms.craftengine.core.world.World world = LocationUtils.toWorldPosition(this.location).world();
+                                WorldPosition worldPos = new WorldPosition(world, x, y, z);
+                                BlockPosition blockPos = new BlockPosition(world, x, y, z);
+                                
+                                // Create default data for legacy format (assume air original state)
+                                BlockStateHitBoxData data = new BlockStateHitBoxData(
+                                    worldPos, 
+                                    null, // No original state preserved in legacy format
+                                    true, // Default to dropping containers
+                                    true  // Assume it was actually placed
+                                );
+                                
+                                this.blockStateHitBoxPositions.add(blockPos);
+                                this.blockStateHitBoxDataMap.put(blockPos, data);
+                                loadedCount++;
+                            }
+                        }
+                    } catch (NumberFormatException e) {
+                        CraftEngine.instance().logger().warn("Invalid legacy BlockPosition string in PDC: " + posStr, e);
+                    }
+                }
+                
+                if (loadedCount > 0) {
+                    CraftEngine.instance().logger().info("Loaded " + loadedCount + 
+                        " legacy BlockStateHitBox positions, converting to new format for furniture: " + this.id());
+                    
+                    // Convert legacy data to new format and save
+                    this.saveBlockStateHitBoxDataToPDC();
+                    
+                    // Remove legacy data
+                    baseEntity.getPersistentDataContainer().remove(BukkitFurnitureManager.FURNITURE_BLOCKSTATE_HITBOX_POSITIONS);
+                }
+            }
+        } catch (Exception e) {
+            CraftEngine.instance().logger().warn("Failed to load legacy BlockStateHitBox positions from PDC for furniture: " + this.id(), e);
+        }
+    }
+
+    /**
+     * Saves BlockStateHitBox data to the PersistentDataContainer
+     */
+    private void saveBlockStateHitBoxDataToPDC() {
+        try {
+            Entity baseEntity = this.baseEntity();
+            
+            if (this.blockStateHitBoxDataMap.isEmpty()) {
+                // Remove the key if no data
+                baseEntity.getPersistentDataContainer().remove(BukkitFurnitureManager.FURNITURE_BLOCKSTATE_HITBOX_DATA);
+            } else {
+                // Convert data to string format: "dataString1;dataString2;..."
+                String dataString = this.blockStateHitBoxDataMap.values().stream()
+                    .map(BlockStateHitBoxData::toStorageString)
+                    .reduce((a, b) -> a + ";" + b)
+                    .orElse("");
+                
+                baseEntity.getPersistentDataContainer().set(
+                    BukkitFurnitureManager.FURNITURE_BLOCKSTATE_HITBOX_DATA,
+                    PersistentDataType.STRING,
+                    dataString
+                );
+            }
+        } catch (Exception e) {
+            CraftEngine.instance().logger().warn("Failed to save BlockStateHitBox data to PDC for furniture: " + this.id(), e);
+        }
+    }
+
+    /**
+     * Legacy method for backwards compatibility - now delegates to the new data method
+     */
+    private void saveBlockStateHitBoxPositionsToPDC() {
+        this.saveBlockStateHitBoxDataToPDC();
     }
 
     /**
@@ -462,6 +806,53 @@ public class BukkitFurniture implements Furniture {
                 // We just need to ensure it has the parent reference
                 blockStateHitBox.setParentFurniture(this);
             }
+        }
+    }
+
+    /**
+     * Clean up orphaned BlockStateHitBox data that no longer correspond to actual blocks
+     * This method can be called periodically or when issues are detected
+     */
+    @Override
+    public void cleanupOrphanedBlockStateHitBoxPositions() {
+        if (this.blockStateHitBoxDataMap.isEmpty()) return;
+        
+        int initialSize = this.blockStateHitBoxDataMap.size();
+        this.blockStateHitBoxDataMap.entrySet().removeIf(entry -> {
+            BlockPosition blockPos = entry.getKey();
+            BlockStateHitBoxData data = entry.getValue();
+            
+            try {
+                // Check if the block at this position still exists and belongs to this furniture
+                WorldPosition worldPos = data.getPosition();
+                Furniture furnitureAtPos = CraftEngine.instance().furnitureManager().getFurnitureByBlockPosition(worldPos);
+                
+                // Remove if no furniture is found at this position, or if it's a different furniture
+                boolean shouldRemove = furnitureAtPos == null || !furnitureAtPos.uuid().equals(this.uuid());
+                
+                if (shouldRemove) {
+                    CraftEngine.instance().logger().info("Removed orphaned BlockStateHitBox data: " + data.toStorageString() + 
+                        " for furniture: " + this.id());
+                    // Also remove from the positions set
+                    this.blockStateHitBoxPositions.remove(blockPos);
+                }
+                
+                return shouldRemove;
+            } catch (Exception e) {
+                // If there's an error checking the position, remove it to be safe
+                CraftEngine.instance().logger().warn("Error checking BlockStateHitBox data " + data.toStorageString() + 
+                    ", removing for safety", e);
+                this.blockStateHitBoxPositions.remove(blockPos);
+                return true;
+            }
+        });
+        
+        int removedCount = initialSize - this.blockStateHitBoxDataMap.size();
+        if (removedCount > 0) {
+            CraftEngine.instance().logger().info("Cleaned up " + removedCount + 
+                " orphaned BlockStateHitBox data entries for furniture: " + this.id());
+            // Save the cleaned up data to PDC
+            this.saveBlockStateHitBoxDataToPDC();
         }
     }
 }

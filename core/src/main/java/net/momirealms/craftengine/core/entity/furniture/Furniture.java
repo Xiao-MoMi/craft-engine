@@ -87,4 +87,12 @@ public interface Furniture {
      * @return true if this furniture has a BlockStateHitBox at that position
      */
     boolean hasBlockStateHitBoxAt(WorldPosition position);
+
+    /**
+     * Clean up orphaned BlockStateHitBox positions that no longer correspond to actual blocks
+     * This method can be called periodically or when issues are detected
+     */
+    default void cleanupOrphanedBlockStateHitBoxPositions() {
+        // Default implementation does nothing, can be overridden by implementations
+    }
 }

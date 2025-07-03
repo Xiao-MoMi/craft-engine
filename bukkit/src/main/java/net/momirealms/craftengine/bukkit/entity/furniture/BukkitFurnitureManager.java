@@ -33,7 +33,6 @@ import net.momirealms.craftengine.bukkit.nms.FastNMS;
 import net.momirealms.craftengine.bukkit.plugin.BukkitCraftEngine;
 import net.momirealms.craftengine.bukkit.plugin.network.handler.FurniturePacketHandler;
 import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.MEntityTypes;
-import net.momirealms.craftengine.bukkit.util.BlockStateUtils;
 import net.momirealms.craftengine.bukkit.util.EntityUtils;
 import net.momirealms.craftengine.bukkit.util.KeyUtils;
 import net.momirealms.craftengine.bukkit.util.LocationUtils;
@@ -61,6 +60,8 @@ public class BukkitFurnitureManager extends AbstractFurnitureManager {
     public static final NamespacedKey FURNITURE_SEAT_BASE_ENTITY_KEY = KeyUtils.toNamespacedKey(FurnitureManager.FURNITURE_SEAT_BASE_ENTITY_KEY);
     public static final NamespacedKey FURNITURE_SEAT_VECTOR_3F_KEY = KeyUtils.toNamespacedKey(FurnitureManager.FURNITURE_SEAT_VECTOR_3F_KEY);
     public static final NamespacedKey FURNITURE_COLLISION = KeyUtils.toNamespacedKey(FurnitureManager.FURNITURE_COLLISION);
+    public static final NamespacedKey FURNITURE_BLOCKSTATE_HITBOX_POSITIONS = KeyUtils.toNamespacedKey(Key.of("craftengine", "blockstate_hitbox_positions"));
+    public static final NamespacedKey FURNITURE_BLOCKSTATE_HITBOX_DATA = KeyUtils.toNamespacedKey(Key.of("craftengine", "blockstate_hitbox_data"));
     public static Class<?> COLLISION_ENTITY_CLASS = Interaction.class;
     public static Object NMS_COLLISION_ENTITY_TYPE = MEntityTypes.INTERACTION;
     public static ColliderType COLLISION_ENTITY_TYPE = ColliderType.INTERACTION;
@@ -354,7 +355,7 @@ public class BukkitFurnitureManager extends AbstractFurnitureManager {
     @Override
     protected Furniture findFurnitureByBlockPosition(WorldPosition position) {
         // Search through all loaded furniture to find one that has a BlockStateHitBox at this position
-        // This is more expensive than the deprecated map lookup, but works across server restarts
+        // This method works across server restarts since it queries the PersistentDataContainer
         for (BukkitFurniture furniture : furnitureByRealEntityId.values()) {
             if (furniture.hasBlockStateHitBoxAt(position)) {
                 return furniture;
@@ -369,24 +370,22 @@ public class BukkitFurnitureManager extends AbstractFurnitureManager {
         return furniture.getBlockStateHitBoxPositions();
     }
 
-    @Override
-    @SuppressWarnings("deprecation")
-    public void unregisterBlockStateHitBox(WorldPosition position) {
-        BlockPosition blockPos = BlockPosition.fromWorldPosition(position);
-        
-        // Get cleanup information if available
-        BlockStateHitBoxInfo info = blockStateHitBoxInfos.remove(blockPos);
-        if (info != null) {
-            // Use BlockStateUtils to clean up the block
-            BlockStateUtils.removeBlockStateHitBoxBlock(
-                info.placedPosition,
-                info.originalBlockState,
-                info.dropContainer,
-                info.actuallyPlaced
-            );
+    /**
+     * Cleans up orphaned BlockStateHitBox positions for all loaded furniture
+     * This can be called periodically or via command for maintenance
+     */
+    public void cleanupAllOrphanedBlockStateHitBoxPositions() {
+        int furnitureCount = 0;
+        for (BukkitFurniture furniture : furnitureByRealEntityId.values()) {
+            furniture.cleanupOrphanedBlockStateHitBoxPositions();
+            furnitureCount++;
         }
-        
-        blockStateHitBoxPositions.remove(blockPos);
+        this.plugin.logger().info("Cleaned up orphaned BlockStateHitBox positions for " + 
+            furnitureCount + " loaded furniture entities");
+    }
+
+    @Override
+    public void unregisterBlockStateHitBox(WorldPosition position) {
     }
 
     protected void handleDismount(Player player, Entity entity) {
