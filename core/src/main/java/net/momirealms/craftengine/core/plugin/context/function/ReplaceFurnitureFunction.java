@@ -95,11 +95,11 @@ public class ReplaceFurnitureFunction<CTX extends Context> extends AbstractCondi
         public Function<CTX> create(Map<String, Object> arguments) {
             String furnitureIdStr = ResourceConfigUtils.requireNonEmptyStringOrThrow(arguments.get("furniture-id"), "warning.config.function.replace_furniture.missing_furniture_id");
             Key furnitureId = Key.of(furnitureIdStr);
-            NumberProvider x = NumberProviders.fromObject(arguments.getOrDefault("x", "<arg:position.x>"));
-            NumberProvider y = NumberProviders.fromObject(arguments.getOrDefault("y", "<arg:position.y>"));
-            NumberProvider z = NumberProviders.fromObject(arguments.getOrDefault("z", "<arg:position.z>"));
-            NumberProvider pitch = NumberProviders.fromObject(arguments.getOrDefault("pitch", "<arg:pitch>"));
-            NumberProvider yaw = NumberProviders.fromObject(arguments.getOrDefault("yaw", "<arg:yaw>"));
+            NumberProvider x = NumberProviders.fromObject(arguments.getOrDefault("x", "<arg:furniture.x>"));
+            NumberProvider y = NumberProviders.fromObject(arguments.getOrDefault("y", "<arg:furniture.y>"));
+            NumberProvider z = NumberProviders.fromObject(arguments.getOrDefault("z", "<arg:furniture.z>"));
+            NumberProvider pitch = NumberProviders.fromObject(arguments.getOrDefault("pitch", "<arg:furniture.pitch>"));
+            NumberProvider yaw = NumberProviders.fromObject(arguments.getOrDefault("yaw", "<arg:furniture.yaw>"));
             AnchorType anchorType = Optional.ofNullable(arguments.get("anchor-type")).map(o -> AnchorType.valueOf(o.toString().toUpperCase())).orElse(null);
             boolean dropLoot = ResourceConfigUtils.getAsBoolean(arguments.getOrDefault("drop-loot", true), "drop-loot");
             boolean playSound = ResourceConfigUtils.getAsBoolean(arguments.getOrDefault("play-sound", true), "play-sound");

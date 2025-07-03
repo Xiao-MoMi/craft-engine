@@ -18,8 +18,8 @@ public class FurnitureParameterProvider implements ChainParameterProvider<Furnit
         CONTEXT_FUNCTIONS.put(DirectContextParameters.X, furniture -> furniture.position().x());
         CONTEXT_FUNCTIONS.put(DirectContextParameters.Y, furniture -> furniture.position().y());
         CONTEXT_FUNCTIONS.put(DirectContextParameters.Z, furniture -> furniture.position().z());
-        CONTEXT_FUNCTIONS.put(DirectContextParameters.PITCH, furniture -> furniture.position().yRot());
-        CONTEXT_FUNCTIONS.put(DirectContextParameters.YAW, furniture -> furniture.position().xRot());
+        CONTEXT_FUNCTIONS.put(DirectContextParameters.PITCH, furniture -> furniture.pitch());
+        CONTEXT_FUNCTIONS.put(DirectContextParameters.YAW, furniture -> furniture.yaw());
     }
 
     @SuppressWarnings("unchecked")
