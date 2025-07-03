@@ -1,5 +1,20 @@
 package net.momirealms.craftengine.core.entity.furniture;
 
+import java.nio.file.Path;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.EnumMap;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+import java.util.Optional;
+import java.util.concurrent.ConcurrentHashMap;
+
+import org.incendo.cloud.suggestion.Suggestion;
+import org.joml.Vector3f;
+
 import net.momirealms.craftengine.core.entity.Billboard;
 import net.momirealms.craftengine.core.entity.ItemDisplayContext;
 import net.momirealms.craftengine.core.loot.LootTable;
@@ -12,18 +27,41 @@ import net.momirealms.craftengine.core.plugin.locale.LocalizedResourceConfigExce
 import net.momirealms.craftengine.core.util.Key;
 import net.momirealms.craftengine.core.util.MiscUtils;
 import net.momirealms.craftengine.core.util.ResourceConfigUtils;
-import org.incendo.cloud.suggestion.Suggestion;
-import org.joml.Vector3f;
-
-import java.nio.file.Path;
-import java.util.*;
+import net.momirealms.craftengine.core.world.BlockPosition;
+import net.momirealms.craftengine.core.world.WorldPosition;
 
 public abstract class AbstractFurnitureManager implements FurnitureManager {
     protected final Map<Key, CustomFurniture> byId = new HashMap<>();
+    // Deprecated maps for backward compatibility - these should no longer be used
+    // as they are not persistent across server restarts
+    @Deprecated
+    protected final Map<BlockPosition, Furniture> blockStateHitBoxPositions = new ConcurrentHashMap<>();
+    @Deprecated
+    protected final Map<BlockPosition, BlockStateHitBoxInfo> blockStateHitBoxInfos = new ConcurrentHashMap<>();
     private final CraftEngine plugin;
     private final FurnitureParser furnitureParser;
     // Cached command suggestions
     private final List<Suggestion> cachedSuggestions = new ArrayList<>();
+
+    /**
+     * Information stored about a BlockStateHitBox for cleanup purposes
+     */
+    public static class BlockStateHitBoxInfo {
+        public final net.momirealms.craftengine.core.world.WorldPosition placedPosition;
+        public final net.momirealms.craftengine.core.block.BlockStateWrapper originalBlockState;
+        public final boolean dropContainer;
+        public final boolean actuallyPlaced;
+
+        public BlockStateHitBoxInfo(net.momirealms.craftengine.core.world.WorldPosition placedPosition,
+                                   net.momirealms.craftengine.core.block.BlockStateWrapper originalBlockState,
+                                   boolean dropContainer,
+                                   boolean actuallyPlaced) {
+            this.placedPosition = placedPosition;
+            this.originalBlockState = originalBlockState;
+            this.dropContainer = dropContainer;
+            this.actuallyPlaced = actuallyPlaced;
+        }
+    }
 
     public AbstractFurnitureManager(CraftEngine plugin) {
         this.plugin = plugin;
@@ -61,6 +99,9 @@ public abstract class AbstractFurnitureManager implements FurnitureManager {
     @Override
     public void unload() {
         this.byId.clear();
+        // Clear deprecated maps for backward compatibility
+        this.blockStateHitBoxPositions.clear();
+        this.blockStateHitBoxInfos.clear();
     }
 
     protected abstract HitBox defaultHitBox();
@@ -167,4 +208,85 @@ public abstract class AbstractFurnitureManager implements FurnitureManager {
             AbstractFurnitureManager.this.byId.put(id, furniture);
         }
     }
+
+    // Implementation of BlockStateHitBox tracking methods
+    @Override
+    public void registerBlockStateHitBox(WorldPosition position, Furniture furniture) {
+        // For backward compatibility, still update the deprecated maps
+        BlockPosition blockPos = BlockPosition.fromWorldPosition(position);
+        blockStateHitBoxPositions.put(blockPos, furniture);
+        
+        // The primary storage is now in the furniture entity itself
+        // This is handled in the specific platform implementations
+    }
+
+    /**
+     * Register BlockStateHitBox with cleanup information
+     * @deprecated Use furniture entity's own storage instead
+     */
+    @Deprecated
+    public void registerBlockStateHitBox(WorldPosition position, Furniture furniture,
+                                       net.momirealms.craftengine.core.block.BlockStateWrapper originalBlockState,
+                                       boolean dropContainer, boolean actuallyPlaced) {
+        BlockPosition blockPos = BlockPosition.fromWorldPosition(position);
+        // For backward compatibility
+        blockStateHitBoxPositions.put(blockPos, furniture);
+        blockStateHitBoxInfos.put(blockPos, new BlockStateHitBoxInfo(position, originalBlockState, dropContainer, actuallyPlaced));
+        
+        // The primary storage is now in the furniture entity itself
+        // This is handled in the specific platform implementations
+    }
+
+    @Override
+    public void unregisterBlockStateHitBox(WorldPosition position) {
+        BlockPosition blockPos = BlockPosition.fromWorldPosition(position);
+        
+        // Clean up deprecated maps for backward compatibility
+        blockStateHitBoxInfos.remove(blockPos);
+        blockStateHitBoxPositions.remove(blockPos);
+        
+        // The primary storage is now in the furniture entity itself
+        // Cleanup is handled in the specific platform implementations
+    }
+
+    @Override
+    public Furniture getFurnitureByBlockPosition(WorldPosition position) {
+        // First check deprecated maps for backward compatibility
+        BlockPosition blockPos = BlockPosition.fromWorldPosition(position);
+        Furniture result = blockStateHitBoxPositions.get(blockPos);
+        if (result != null) {
+            return result;
+        }
+        
+        // If not found in deprecated maps, search nearby furniture entities
+        return findFurnitureByBlockPosition(position);
+    }
+
+    /**
+     * Find furniture by searching nearby loaded furniture entities
+     * This method is persistent across server restarts since it queries actual entities
+     */
+    protected abstract Furniture findFurnitureByBlockPosition(WorldPosition position);
+
+    @Override
+    public Collection<BlockPosition> getBlockStateHitBoxPositions(Furniture furniture) {
+        // First try deprecated map for backward compatibility
+        List<BlockPosition> positions = blockStateHitBoxPositions.entrySet().stream()
+            .filter(entry -> entry.getValue().uuid().equals(furniture.uuid()))
+            .map(Map.Entry::getKey)
+            .toList();
+        
+        if (!positions.isEmpty()) {
+            return positions;
+        }
+        
+        // If not found in deprecated maps, query the furniture entity itself
+        return getBlockStateHitBoxPositionsFromEntity(furniture);
+    }
+
+    /**
+     * Get BlockStateHitBox positions from the furniture entity itself
+     * This method should be implemented by platform-specific managers
+     */
+    protected abstract Collection<BlockPosition> getBlockStateHitBoxPositionsFromEntity(Furniture furniture);
 }

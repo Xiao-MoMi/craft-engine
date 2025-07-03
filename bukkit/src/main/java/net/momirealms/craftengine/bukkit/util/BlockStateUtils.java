@@ -1,5 +1,15 @@
 package net.momirealms.craftengine.bukkit.util;
 
+import java.util.IdentityHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+
+import org.bukkit.block.data.BlockData;
+import org.bukkit.inventory.ItemStack;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
 import net.momirealms.craftengine.bukkit.nms.FastNMS;
 import net.momirealms.craftengine.bukkit.plugin.reflection.ReflectionInitException;
 import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.CoreReflections;
@@ -11,15 +21,6 @@ import net.momirealms.craftengine.core.block.DelegatingBlockState;
 import net.momirealms.craftengine.core.block.ImmutableBlockState;
 import net.momirealms.craftengine.core.item.Item;
 import net.momirealms.craftengine.core.util.Key;
-import org.bukkit.block.data.BlockData;
-import org.bukkit.inventory.ItemStack;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-
-import java.util.IdentityHashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
 
 public class BlockStateUtils {
     public static final IdentityHashMap<Object, Object> CLIENT_SIDE_NOTE_BLOCKS = new IdentityHashMap<>();
@@ -143,5 +144,85 @@ public class BlockStateUtils {
     public static boolean isBurnable(Object state) {
         Object blockOwner = getBlockOwner(state);
         return IGNITE_ODDS.getOrDefault(blockOwner, 0) > 0;
+    }
+
+    /**
+     * Utility method to remove a BlockStateHitBox placed block and handle container drops
+     * 
+     * @param placedPosition The position where the block was placed
+     * @param originalBlockState The original block state to restore (can be null for air)
+     * @param dropContainer Whether to drop container contents before removal
+     * @param actuallyPlaced Whether we actually placed the block (vs reused existing)
+     */
+    public static void removeBlockStateHitBoxBlock(
+            net.momirealms.craftengine.core.world.WorldPosition placedPosition,
+            net.momirealms.craftengine.core.block.BlockStateWrapper originalBlockState,
+            boolean dropContainer,
+            boolean actuallyPlaced) {
+        
+        if (placedPosition == null) return;
+        
+        // Only restore the block if we actually placed it
+        if (!actuallyPlaced) {
+            net.momirealms.craftengine.core.plugin.CraftEngine.instance().logger()
+                .info("Skipping block removal for reused BlockStateHitBox at position: " + placedPosition);
+            return;
+        }
+        
+        net.momirealms.craftengine.core.world.World world = placedPosition.world();
+        int x = (int) placedPosition.x();
+        int y = (int) placedPosition.y();
+        int z = (int) placedPosition.z();
+        
+        // Drop container contents if the flag is enabled
+        if (dropContainer) {
+            dropContainerContents(world, x, y, z);
+        }
+        
+        // Restore the original block state with minimal server impact
+        if (originalBlockState != null) {
+            int flags = net.momirealms.craftengine.core.block.UpdateOption.Flags.UPDATE_CLIENTS | 
+                       net.momirealms.craftengine.core.block.UpdateOption.Flags.UPDATE_SUPPRESS_DROPS;
+            world.setBlockAt(x, y, z, originalBlockState, flags);
+        } else {
+            // Fallback to air if no original state was stored
+            net.momirealms.craftengine.core.block.BlockStateWrapper airState = 
+                net.momirealms.craftengine.core.plugin.CraftEngine.instance().blockManager().createPackedBlockState("minecraft:air");
+            if (airState != null) {
+                int flags = net.momirealms.craftengine.core.block.UpdateOption.Flags.UPDATE_CLIENTS | 
+                           net.momirealms.craftengine.core.block.UpdateOption.Flags.UPDATE_SUPPRESS_DROPS;
+                world.setBlockAt(x, y, z, airState, flags);
+            }
+        }
+    }
+
+    /**
+     * Drops the contents of a container block
+     */
+    private static void dropContainerContents(net.momirealms.craftengine.core.world.World world, int x, int y, int z) {
+        try {
+            // Get the bukkit world and block
+            org.bukkit.World bukkitWorld = (org.bukkit.World) world.platformWorld();
+            if (bukkitWorld == null) return;
+            
+            org.bukkit.block.Block block = bukkitWorld.getBlockAt(x, y, z);
+            if (block.getState() instanceof org.bukkit.inventory.InventoryHolder inventoryHolder) {
+                org.bukkit.inventory.Inventory inventory = inventoryHolder.getInventory();
+                org.bukkit.Location dropLocation = block.getLocation().add(0.5, 0.5, 0.5);
+                
+                // Drop all items in the inventory
+                for (org.bukkit.inventory.ItemStack itemStack : inventory.getContents()) {
+                    if (itemStack != null && itemStack.getType() != org.bukkit.Material.AIR) {
+                        bukkitWorld.dropItemNaturally(dropLocation, itemStack);
+                    }
+                }
+                
+                // Clear the inventory
+                inventory.clear();
+            }
+        } catch (Exception e) {
+            net.momirealms.craftengine.core.plugin.CraftEngine.instance().logger()
+                .warn("Failed to drop container contents for BlockStateHitBox", e);
+        }
     }
 }

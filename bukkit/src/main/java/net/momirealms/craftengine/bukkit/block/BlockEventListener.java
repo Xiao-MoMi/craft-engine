@@ -1,5 +1,29 @@
 package net.momirealms.craftengine.bukkit.block;
 
+import java.util.Optional;
+
+import org.bukkit.GameEvent;
+import org.bukkit.GameMode;
+import org.bukkit.Location;
+import org.bukkit.Material;
+import org.bukkit.SoundCategory;
+import org.bukkit.World;
+import org.bukkit.block.Block;
+import org.bukkit.entity.Entity;
+import org.bukkit.entity.Player;
+import org.bukkit.event.EventHandler;
+import org.bukkit.event.EventPriority;
+import org.bukkit.event.Listener;
+import org.bukkit.event.block.BlockBreakEvent;
+import org.bukkit.event.block.BlockPhysicsEvent;
+import org.bukkit.event.block.BlockPistonExtendEvent;
+import org.bukkit.event.block.BlockPistonRetractEvent;
+import org.bukkit.event.block.BlockPlaceEvent;
+import org.bukkit.event.entity.EntityDamageByEntityEvent;
+import org.bukkit.event.player.PlayerJoinEvent;
+import org.bukkit.event.world.GenericGameEvent;
+import org.bukkit.inventory.ItemStack;
+
 import io.papermc.paper.event.block.BlockBreakBlockEvent;
 import net.momirealms.craftengine.bukkit.api.event.CustomBlockBreakEvent;
 import net.momirealms.craftengine.bukkit.nms.FastNMS;
@@ -7,7 +31,11 @@ import net.momirealms.craftengine.bukkit.plugin.BukkitCraftEngine;
 import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.CoreReflections;
 import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.MBlocks;
 import net.momirealms.craftengine.bukkit.plugin.user.BukkitServerPlayer;
-import net.momirealms.craftengine.bukkit.util.*;
+import net.momirealms.craftengine.bukkit.util.BlockStateUtils;
+import net.momirealms.craftengine.bukkit.util.EntityUtils;
+import net.momirealms.craftengine.bukkit.util.EventUtils;
+import net.momirealms.craftengine.bukkit.util.LocationUtils;
+import net.momirealms.craftengine.bukkit.util.NoteBlockChainUpdateUtils;
 import net.momirealms.craftengine.bukkit.world.BukkitBlockInWorld;
 import net.momirealms.craftengine.bukkit.world.BukkitWorld;
 import net.momirealms.craftengine.core.block.ImmutableBlockState;
@@ -23,23 +51,8 @@ import net.momirealms.craftengine.core.plugin.context.parameter.DirectContextPar
 import net.momirealms.craftengine.core.util.Cancellable;
 import net.momirealms.craftengine.core.util.VersionHelper;
 import net.momirealms.craftengine.core.world.BlockPos;
+import net.momirealms.craftengine.core.world.BlockPosition;
 import net.momirealms.craftengine.core.world.WorldPosition;
-import org.bukkit.*;
-import org.bukkit.block.Block;
-import org.bukkit.entity.Entity;
-import org.bukkit.entity.Player;
-import org.bukkit.event.EventHandler;
-import org.bukkit.event.EventPriority;
-import org.bukkit.event.Listener;
-import org.bukkit.event.block.BlockBreakEvent;
-import org.bukkit.event.block.BlockPhysicsEvent;
-import org.bukkit.event.block.BlockPlaceEvent;
-import org.bukkit.event.entity.EntityDamageByEntityEvent;
-import org.bukkit.event.player.PlayerJoinEvent;
-import org.bukkit.event.world.GenericGameEvent;
-import org.bukkit.inventory.ItemStack;
-
-import java.util.Optional;
 
 public final class BlockEventListener implements Listener {
     private final BukkitCraftEngine plugin;
@@ -113,7 +126,7 @@ public final class BlockEventListener implements Listener {
         }
     }
 
-    @EventHandler(ignoreCancelled = true, priority = EventPriority.MONITOR)
+    @EventHandler(ignoreCancelled = true, priority = EventPriority.HIGHEST)
     public void onPlayerBreak(BlockBreakEvent event) {
         org.bukkit.block.Block block = event.getBlock();
         Object blockState = BlockStateUtils.blockDataToBlockState(block.getBlockData());
@@ -124,6 +137,13 @@ public final class BlockEventListener implements Listener {
         net.momirealms.craftengine.core.world.World world = new BukkitWorld(player.getWorld());
         WorldPosition position = new WorldPosition(world, location.getBlockX() + 0.5, location.getBlockY() + 0.5, location.getBlockZ() + 0.5);
         Item<ItemStack> itemInHand = serverPlayer.getItemInHand(InteractionHand.MAIN_HAND);
+
+        // Check if the broken block is part of a BlockStateHitBox FIRST, before any other processing
+        if (isBlockStateHitBoxBlock(block, player)) {
+            this.plugin.logger().info("Block break cancelled - block is part of a BlockStateHitBox furniture");
+            event.setCancelled(true);
+            return;
+        }
 
         if (itemInHand != null) {
             Optional<CustomItem<ItemStack>> optionalCustomItem = itemInHand.getCustomItem();
@@ -177,7 +197,9 @@ public final class BlockEventListener implements Listener {
                 // play sound
                 world.playBlockSound(position, state.settings().sounds().breakSound());
             }
-        } else {
+        }
+        
+        if (BlockStateUtils.isVanillaBlock(stateId)) {
             // override vanilla block loots
             if (player.getGameMode() != GameMode.CREATIVE) {
                 this.plugin.vanillaLootManager().getBlockLoot(stateId).ifPresent(it -> {
@@ -299,5 +321,56 @@ public final class BlockEventListener implements Listener {
                 }
             }
         }
+    }
+
+    @EventHandler(ignoreCancelled = true, priority = EventPriority.HIGHEST)
+    public void onPistonExtend(BlockPistonExtendEvent event) {
+        // Check if any of the blocks being pushed are BlockStateHitBox blocks
+        for (Block block : event.getBlocks()) {
+            if (isBlockStateHitBoxBlock(block)) {
+                event.setCancelled(true);
+                return;
+            }
+        }
+    }
+
+    @EventHandler(ignoreCancelled = true, priority = EventPriority.HIGHEST)
+    public void onPistonRetract(BlockPistonRetractEvent event) {
+        // Check if any of the blocks being pulled are BlockStateHitBox blocks
+        for (Block block : event.getBlocks()) {
+            if (isBlockStateHitBoxBlock(block)) {
+                event.setCancelled(true);
+                return;
+            }
+        }
+    }
+
+    private boolean isBlockStateHitBoxBlock(Block block) {
+        return isBlockStateHitBoxBlock(block, null);
+    }
+
+    private boolean isBlockStateHitBoxBlock(Block block, Player player) {
+        net.momirealms.craftengine.core.world.World world = new BukkitWorld(block.getWorld());
+        BlockPosition blockPosition = new BlockPosition(world, block.getX(), block.getY(), block.getZ());
+        WorldPosition worldPosition = blockPosition.toExactWorldPosition();
+        net.momirealms.craftengine.core.entity.furniture.Furniture furniture = this.plugin.furnitureManager().getFurnitureByBlockPosition(worldPosition);
+        
+        if (furniture != null) {
+            if (player != null) {
+                if (furniture instanceof net.momirealms.craftengine.bukkit.entity.furniture.BukkitFurniture bukkitFurniture) {
+                    net.momirealms.craftengine.bukkit.api.event.FurnitureAttemptBreakEvent attemptBreakEvent = 
+                        new net.momirealms.craftengine.bukkit.api.event.FurnitureAttemptBreakEvent(player, bukkitFurniture);
+                    if (!EventUtils.fireAndCheckCancel(attemptBreakEvent)) {
+                        net.momirealms.craftengine.bukkit.api.event.FurnitureBreakEvent breakEvent = 
+                            new net.momirealms.craftengine.bukkit.api.event.FurnitureBreakEvent(player, bukkitFurniture);
+                        if (!EventUtils.fireAndCheckCancel(breakEvent)) {
+                            bukkitFurniture.destroy();
+                        } 
+                    } 
+                }
+            }
+            return true;
+        }
+        return false;
     }
 }

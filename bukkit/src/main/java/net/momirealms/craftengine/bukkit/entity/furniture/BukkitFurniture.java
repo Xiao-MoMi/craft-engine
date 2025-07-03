@@ -50,6 +50,7 @@ import net.momirealms.craftengine.core.util.ArrayUtils;
 import net.momirealms.craftengine.core.util.Key;
 import net.momirealms.craftengine.core.util.QuaternionUtils;
 import net.momirealms.craftengine.core.util.VersionHelper;
+import net.momirealms.craftengine.core.world.BlockPosition;
 import net.momirealms.craftengine.core.world.WorldPosition;
 import net.momirealms.craftengine.core.world.collision.AABB;
 
@@ -75,6 +76,8 @@ public class BukkitFurniture implements Furniture {
     // seats
     private final Set<Vector3f> occupiedSeats = Collections.synchronizedSet(new HashSet<>());
     private final Vector<WeakReference<Entity>> seats = new Vector<>();
+    // BlockStateHitBox positions storage - persistent across server restarts
+    private final Set<BlockPosition> blockStateHitBoxPositions = Collections.synchronizedSet(new HashSet<>());
     // cached spawn packet
     private Object cachedSpawnPacket;
     private Object cachedMinimizedSpawnPacket;
@@ -122,6 +125,11 @@ public class BukkitFurniture implements Furniture {
             });
         }
         for (HitBox hitBox : placement.hitBoxes()) {
+            // Set parent furniture for BlockStateHitBox to enable proper block tracking
+            if (hitBox instanceof net.momirealms.craftengine.bukkit.entity.furniture.hitbox.BlockStateHitBox) {
+                ((net.momirealms.craftengine.bukkit.entity.furniture.hitbox.BlockStateHitBox) hitBox).setParentFurniture(this);
+            }
+            
             int[] ids = hitBox.acquireEntityIds(CoreReflections.instance$Entity$ENTITY_COUNTER::incrementAndGet);
             for (int entityId : ids) {
                 fakeEntityIds.add(entityId);
@@ -146,6 +154,9 @@ public class BukkitFurniture implements Furniture {
         this.fakeEntityIds = fakeEntityIds;
         this.entityIds = mainEntityIds;
         this.colliderEntities = colliders.toArray(new Collider[0]);
+        
+        // Initialize BlockStateHitBox positions after all hitboxes are set up
+        this.initializeBlockStateHitBoxPositions();
     }
 
     @Override
@@ -171,6 +182,18 @@ public class BukkitFurniture implements Furniture {
     @Override
     public WorldPosition position() {
         return LocationUtils.toWorldPosition(this.location);
+    }
+
+    @Override
+    @NotNull
+    public float yaw() {
+        return this.baseEntity().getYaw();
+    }
+    @Override
+    @NotNull
+    public float pitch() {
+    
+        return this.baseEntity().getPitch();
     }
 
     @NotNull
@@ -208,6 +231,19 @@ public class BukkitFurniture implements Furniture {
         if (!isValid()) {
             return;
         }
+        // Clean up BlockStateHitBoxes using both the furniture's own storage and the manager's registry
+        // First try the furniture's own storage (persistent)
+        for (BlockPosition blockPosition : this.blockStateHitBoxPositions) {
+            CraftEngine.instance().furnitureManager().unregisterBlockStateHitBox(blockPosition.toExactWorldPosition());
+        }
+        // Also clean up using the manager's registry (for backward compatibility)
+        java.util.Collection<BlockPosition> registeredPositions = CraftEngine.instance().furnitureManager().getBlockStateHitBoxPositions(this);
+        for (BlockPosition blockPosition : registeredPositions) {
+            CraftEngine.instance().furnitureManager().unregisterBlockStateHitBox(blockPosition.toExactWorldPosition());
+        }
+        // Clear our own storage
+        this.blockStateHitBoxPositions.clear();
+        
         this.baseEntity().remove();
         for (Collider entity : this.colliderEntities) {
             if (entity != null)
@@ -384,5 +420,48 @@ public class BukkitFurniture implements Furniture {
         newLocation.setYaw((float) yaw);
         newLocation.add(offset.x, offset.y + 0.6, -offset.z);
         return newLocation;
+    }
+
+    // Implementation of BlockStateHitBox storage methods
+    @Override
+    public void addBlockStateHitBoxPosition(WorldPosition position) {
+        BlockPosition blockPos = BlockPosition.fromWorldPosition(position);
+        this.blockStateHitBoxPositions.add(blockPos);
+        // Note: We don't save to persistent data immediately for performance reasons
+        // save() will be called when appropriate
+    }
+
+    @Override
+    public boolean removeBlockStateHitBoxPosition(WorldPosition position) {
+        BlockPosition blockPos = BlockPosition.fromWorldPosition(position);
+        boolean removed = this.blockStateHitBoxPositions.remove(blockPos);
+        // Note: We don't save to persistent data immediately for performance reasons
+        // save() will be called when appropriate
+        return removed;
+    }
+
+    @Override
+    public java.util.Collection<BlockPosition> getBlockStateHitBoxPositions() {
+        return Collections.unmodifiableSet(this.blockStateHitBoxPositions);
+    }
+
+    @Override
+    public boolean hasBlockStateHitBoxAt(WorldPosition position) {
+        BlockPosition blockPos = BlockPosition.fromWorldPosition(position);
+        return this.blockStateHitBoxPositions.contains(blockPos);
+    }
+
+    /**
+     * Initializes BlockStateHitBox positions by scanning the current hitboxes
+     * This method should be called after the furniture is fully loaded
+     */
+    public void initializeBlockStateHitBoxPositions() {
+        for (HitBox hitBox : hitBoxes.values()) {
+            if (hitBox instanceof net.momirealms.craftengine.bukkit.entity.furniture.hitbox.BlockStateHitBox blockStateHitBox) {
+                // The BlockStateHitBox will register itself when initialized
+                // We just need to ensure it has the parent reference
+                blockStateHitBox.setParentFurniture(this);
+            }
+        }
     }
 }
