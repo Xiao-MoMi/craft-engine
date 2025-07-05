@@ -1,16 +1,17 @@
 package net.momirealms.craftengine.core.entity.furniture;
 
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+
+import org.jetbrains.annotations.Nullable;
+import org.joml.Vector3f;
+
 import net.momirealms.craftengine.core.loot.LootTable;
 import net.momirealms.craftengine.core.plugin.context.PlayerOptionalContext;
 import net.momirealms.craftengine.core.plugin.context.event.EventTrigger;
 import net.momirealms.craftengine.core.plugin.context.function.Function;
 import net.momirealms.craftengine.core.util.Key;
-import org.jetbrains.annotations.Nullable;
-import org.joml.Vector3f;
-
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
 
 // TODO 家具的设计存在问题。家具也应该存在不同的状态，而不是根据放置规则直接决定状态类型
 public interface CustomFurniture {
@@ -52,6 +53,7 @@ public interface CustomFurniture {
     record Placement(AnchorType anchorType,
                      FurnitureElement[] elements,
                      HitBox[] hitBoxes,
+                     FurnitureEmitter[] emitters,
                      RotationRule rotationRule,
                      AlignmentRule alignmentRule,
                      Optional<ExternalModel> externalModel,

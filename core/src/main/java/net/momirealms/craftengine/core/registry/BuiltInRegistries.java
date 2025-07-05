@@ -3,6 +3,7 @@ package net.momirealms.craftengine.core.registry;
 import net.momirealms.craftengine.core.block.CustomBlock;
 import net.momirealms.craftengine.core.block.behavior.BlockBehaviorFactory;
 import net.momirealms.craftengine.core.block.properties.PropertyFactory;
+import net.momirealms.craftengine.core.entity.furniture.FurnitureEmitterFactory;
 import net.momirealms.craftengine.core.entity.furniture.HitBoxFactory;
 import net.momirealms.craftengine.core.item.behavior.ItemBehaviorFactory;
 import net.momirealms.craftengine.core.item.equipment.EquipmentFactory;
@@ -65,6 +66,7 @@ public class BuiltInRegistries {
     public static final Registry<ResolutionFactory> RESOLUTION_FACTORY = createRegistry(Registries.RESOLUTION_FACTORY);
     public static final Registry<CustomSmithingTransformRecipe.ItemDataProcessor.ProcessorFactory> SMITHING_RESULT_PROCESSOR_FACTORY = createRegistry(Registries.SMITHING_RESULT_PROCESSOR_FACTORY);
     public static final Registry<HitBoxFactory> HITBOX_FACTORY = createRegistry(Registries.HITBOX_FACTORY);
+    public static final Registry<FurnitureEmitterFactory> EMITTER_FACTORY = createRegistry(Registries.EMITTER_FACTORY);
     public static final Registry<ResourcePackHostFactory> RESOURCE_PACK_HOST_FACTORY = createRegistry(Registries.RESOURCE_PACK_HOST_FACTORY);
     public static final Registry<FunctionFactory<PlayerOptionalContext>> EVENT_FUNCTION_FACTORY = createRegistry(Registries.EVENT_FUNCTION_FACTORY);
     public static final Registry<ConditionFactory<PlayerOptionalContext>> EVENT_CONDITION_FACTORY = createRegistry(Registries.EVENT_CONDITION_FACTORY);
