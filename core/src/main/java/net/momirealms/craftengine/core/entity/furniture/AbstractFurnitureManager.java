@@ -1,5 +1,19 @@
 package net.momirealms.craftengine.core.entity.furniture;
 
+import java.nio.file.Path;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.EnumMap;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+import java.util.Optional;
+
+import org.incendo.cloud.suggestion.Suggestion;
+import org.joml.Vector3f;
+
 import net.momirealms.craftengine.core.entity.Billboard;
 import net.momirealms.craftengine.core.entity.ItemDisplayContext;
 import net.momirealms.craftengine.core.loot.LootTable;
@@ -12,11 +26,6 @@ import net.momirealms.craftengine.core.plugin.locale.LocalizedResourceConfigExce
 import net.momirealms.craftengine.core.util.Key;
 import net.momirealms.craftengine.core.util.MiscUtils;
 import net.momirealms.craftengine.core.util.ResourceConfigUtils;
-import org.incendo.cloud.suggestion.Suggestion;
-import org.joml.Vector3f;
-
-import java.nio.file.Path;
-import java.util.*;
 
 public abstract class AbstractFurnitureManager implements FurnitureManager {
     protected final Map<Key, CustomFurniture> byId = new HashMap<>();
@@ -131,6 +140,9 @@ public abstract class AbstractFurnitureManager implements FurnitureManager {
                 if (hitboxes.isEmpty() && externalModel.isEmpty()) {
                     hitboxes = List.of(defaultHitBox());
                 }
+                
+                // add emitters  
+                List<FurnitureEmitter> emitters = ResourceConfigUtils.parseConfigAsList(placementArguments.get("emitters"), FurnitureEmitterTypes::fromMap);
 
                 // rules
                 Map<String, Object> ruleSection = MiscUtils.castToMap(placementArguments.get("rules"), true);
@@ -139,6 +151,7 @@ public abstract class AbstractFurnitureManager implements FurnitureManager {
                             anchorType,
                             elements.toArray(new FurnitureElement[0]),
                             hitboxes.toArray(new HitBox[0]),
+                            emitters.toArray(new FurnitureEmitter[0]),
                             ResourceConfigUtils.getOrDefault(ruleSection.get("rotation"), o -> RotationRule.valueOf(o.toString().toUpperCase(Locale.ENGLISH)), RotationRule.ANY),
                             ResourceConfigUtils.getOrDefault(ruleSection.get("alignment"), o -> AlignmentRule.valueOf(o.toString().toUpperCase(Locale.ENGLISH)), AlignmentRule.CENTER),
                             externalModel,
@@ -149,6 +162,7 @@ public abstract class AbstractFurnitureManager implements FurnitureManager {
                             anchorType,
                             elements.toArray(new FurnitureElement[0]),
                             hitboxes.toArray(new HitBox[0]),
+                            emitters.toArray(new FurnitureEmitter[0]),
                             RotationRule.ANY,
                             AlignmentRule.CENTER,
                             externalModel,
