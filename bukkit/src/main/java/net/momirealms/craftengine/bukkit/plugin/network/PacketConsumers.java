@@ -2311,8 +2311,8 @@ public class PacketConsumers {
                     return;
                 }
             }
-            // 绕过1.21.7新增的校验
-            if (VersionHelper.isOrAbove1_21_7()) {
+            // 绕过paper1.21.7新增的校验
+            if (VersionHelper.isOrAbove1_21_7() && VersionHelper.isPaper()) {
                 event.setCancelled(true);
                 Object packetListener = FastNMS.INSTANCE.method$Connection$getPacketListener(user.connection());
                 if (!CoreReflections.clazz$ServerConfigurationPacketListenerImpl.isInstance(packetListener)) return;
