@@ -10,7 +10,9 @@ import net.momirealms.craftengine.core.item.context.BlockPlaceContext;
 import net.momirealms.craftengine.core.world.BlockInWorld;
 import net.momirealms.craftengine.core.world.World;
 import org.bukkit.Location;
+import org.bukkit.Material;
 import org.bukkit.block.Block;
+import org.bukkit.block.data.type.Snow;
 
 public class BukkitBlockInWorld implements BlockInWorld {
     private final Block block;
@@ -24,6 +26,10 @@ public class BukkitBlockInWorld implements BlockInWorld {
         ImmutableBlockState customState = CraftEngineBlocks.getCustomBlockState(this.block);
         if (customState != null && !customState.isEmpty()) {
             return customState.behavior().canBeReplaced(context, customState);
+        }
+        if (this.block.getType() == Material.SNOW) {
+            Snow snow = (Snow) block.getBlockData();
+            return snow.getLayers() == 1;
         }
         return this.block.isReplaceable();
     }
