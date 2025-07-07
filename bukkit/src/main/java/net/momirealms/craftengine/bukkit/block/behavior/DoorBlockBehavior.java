@@ -192,7 +192,7 @@ public class DoorBlockBehavior extends AbstractCanSurviveBlockBehavior {
     @Override
     public void setPlacedBy(BlockPlaceContext context, ImmutableBlockState state) {
         BlockPos pos = context.getClickedPos();
-        context.getLevel().setBlockAt(pos.x(), pos.y() + 1, pos.z(), state.with(this.halfProperty, DoubleBlockHalf.UPPER).customBlockState(), UpdateOption.Flags.UPDATE_CLIENTS);
+        context.getLevel().setBlockAt(pos.x(), pos.y() + 1, pos.z(), state.with(this.halfProperty, DoubleBlockHalf.UPPER).customBlockState(), UpdateOption.UPDATE_ALL.flags());
     }
 
     @Override
