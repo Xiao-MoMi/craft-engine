@@ -260,17 +260,40 @@ public class DoorBlockBehavior extends AbstractCanSurviveBlockBehavior {
     }
 
     public void setOpen(@Nullable Player player, Object serverLevel, ImmutableBlockState state, BlockPos pos, boolean isOpen) {
-        if (isOpen(state) != isOpen) {
-            org.bukkit.World world = FastNMS.INSTANCE.method$Level$getCraftWorld(serverLevel);
-            FastNMS.INSTANCE.method$LevelWriter$setBlock(serverLevel, LocationUtils.toBlockPos(pos), state.with(this.openProperty, isOpen).customBlockState().handle(), UpdateOption.builder().updateImmediate().updateClients().build().flags());
-            world.sendGameEvent(player == null ? null : (org.bukkit.entity.Player) player.platformPlayer(), isOpen ? GameEvent.BLOCK_OPEN : GameEvent.BLOCK_CLOSE, new Vector(pos.x(), pos.y(), pos.z()));
-            SoundData soundData = isOpen ? this.openSound : this.closeSound;
-            if (soundData != null) {
-                new BukkitWorld(world).playBlockSound(
-                        new Vec3d(pos.x() + 0.5, pos.y() + 0.5, pos.z() + 0.5),
-                        soundData
-                );
-            }
+        ImmutableBlockState newState = state.with(this.openProperty, isOpen);
+        FastNMS.INSTANCE.method$LevelWriter$setBlock(
+                serverLevel,
+                LocationUtils.toBlockPos(pos),
+                newState.customBlockState().handle(),
+                UpdateOption.builder().updateImmediate().updateClients().build().flags()
+        );
+
+        BlockPos otherPos = (state.get(this.halfProperty) == DoubleBlockHalf.LOWER) ? pos.above() : pos.offset(0, -1, 0);
+        ImmutableBlockState otherState = BukkitBlockManager.instance().getImmutableBlockState(
+                BlockStateUtils.blockStateToId(
+                        FastNMS.INSTANCE.method$BlockGetter$getBlockState(
+                                serverLevel,
+                                LocationUtils.toBlockPos(otherPos)
+                        )
+                )
+        );
+        if (otherState != null && otherState.owner().value() == this.customBlock) {
+            FastNMS.INSTANCE.method$LevelWriter$setBlock(
+                    serverLevel,
+                    LocationUtils.toBlockPos(otherPos),
+                    otherState.with(this.openProperty, isOpen).customBlockState().handle(),
+                    UpdateOption.builder().updateImmediate().updateClients().build().flags()
+            );
+        }
+
+        org.bukkit.World world = FastNMS.INSTANCE.method$Level$getCraftWorld(serverLevel);
+        world.sendGameEvent(player == null ? null : (org.bukkit.entity.Player) player.platformPlayer(), isOpen ? GameEvent.BLOCK_OPEN : GameEvent.BLOCK_CLOSE, new Vector(pos.x(), pos.y(), pos.z()));
+        SoundData soundData = isOpen ? this.openSound : this.closeSound;
+        if (soundData != null) {
+            new BukkitWorld(world).playBlockSound(
+                    new Vec3d(pos.x() + 0.5, pos.y() + 0.5, pos.z() + 0.5),
+                    soundData
+            );
         }
     }
 
