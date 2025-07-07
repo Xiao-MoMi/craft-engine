@@ -9,6 +9,7 @@ import net.momirealms.craftengine.bukkit.plugin.user.BukkitServerPlayer;
 import net.momirealms.craftengine.bukkit.util.BlockStateUtils;
 import net.momirealms.craftengine.bukkit.util.DirectionUtils;
 import net.momirealms.craftengine.bukkit.util.LocationUtils;
+import net.momirealms.craftengine.bukkit.world.BukkitBlockInWorld;
 import net.momirealms.craftengine.bukkit.world.BukkitWorld;
 import net.momirealms.craftengine.core.block.BlockBehavior;
 import net.momirealms.craftengine.core.block.CustomBlock;
@@ -96,9 +97,14 @@ public class DoorBlockBehavior extends AbstractCanSurviveBlockBehavior {
         ImmutableBlockState customState = optionalCustomState.get();
         DoubleBlockHalf half = customState.get(this.halfProperty);
         Object direction = VersionHelper.isOrAbove1_21_2() ? args[4] : args[1];
-        if (DirectionUtils.isYAxis(direction) && half == DoubleBlockHalf.LOWER == (direction == CoreReflections.instance$Direction$UP)) {
+
+        if (DirectionUtils.isYAxis(direction) && half == DoubleBlockHalf.LOWER && direction == CoreReflections.instance$Direction$UP) {
             Optional<ImmutableBlockState> optionalNeighborState = BlockStateUtils.getOptionalCustomBlockState(args[updateShape$neighborState]);
             if (optionalNeighborState.isEmpty()) {
+                Object neighborBlockState = args[updateShape$neighborState];
+                if (BlockStateUtils.isReplaceable(neighborBlockState)) {
+                    return blockState;
+                }
                 return MBlocks.AIR$defaultState;
             }
             ImmutableBlockState neighborState = optionalNeighborState.get();
@@ -110,18 +116,25 @@ public class DoorBlockBehavior extends AbstractCanSurviveBlockBehavior {
                 return neighborState.with(anotherDoorBehavior.get().halfProperty, half).customBlockState().handle();
             }
             return MBlocks.AIR$defaultState;
-        } else {
-            if (half == DoubleBlockHalf.LOWER && direction == CoreReflections.instance$Direction$DOWN
-                    && !canSurvive(thisBlock, blockState, level, blockPos)) {
-                BlockPos pos = LocationUtils.fromBlockPos(blockPos);
-                net.momirealms.craftengine.core.world.World world = new BukkitWorld(FastNMS.INSTANCE.method$Level$getCraftWorld(level));
-                WorldPosition position = new WorldPosition(world, Vec3d.atCenterOf(pos));
-                world.playBlockSound(position, customState.settings().sounds().breakSound());
-                FastNMS.INSTANCE.method$LevelAccessor$levelEvent(level, WorldEvents.BLOCK_BREAK_EFFECT, blockPos, customState.customBlockState().registryId());
+        }
+
+        if (half == DoubleBlockHalf.UPPER && direction == CoreReflections.instance$Direction$DOWN) {
+            Optional<ImmutableBlockState> optionalNeighborState = BlockStateUtils.getOptionalCustomBlockState(args[updateShape$neighborState]);
+            if (optionalNeighborState.isEmpty() || optionalNeighborState.get().owner().value() != this.customBlock) {
                 return MBlocks.AIR$defaultState;
             }
-            return blockState;
         }
+
+        if (half == DoubleBlockHalf.LOWER && direction == CoreReflections.instance$Direction$DOWN
+                && !canSurvive(thisBlock, blockState, level, blockPos)) {
+            BlockPos pos = LocationUtils.fromBlockPos(blockPos);
+            net.momirealms.craftengine.core.world.World world = new BukkitWorld(FastNMS.INSTANCE.method$Level$getCraftWorld(level));
+            WorldPosition position = new WorldPosition(world, Vec3d.atCenterOf(pos));
+            world.playBlockSound(position, customState.settings().sounds().breakSound());
+            FastNMS.INSTANCE.method$LevelAccessor$levelEvent(level, WorldEvents.BLOCK_BREAK_EFFECT, blockPos, customState.customBlockState().registryId());
+            return MBlocks.AIR$defaultState;
+        }
+        return blockState;
     }
 
     @Override
@@ -171,7 +184,7 @@ public class DoorBlockBehavior extends AbstractCanSurviveBlockBehavior {
     @Override
     public void setPlacedBy(BlockPlaceContext context, ImmutableBlockState state) {
         BlockPos pos = context.getClickedPos();
-        context.getLevel().setBlockAt(pos.x(), pos.y() + 1, pos.z(), state.with(this.halfProperty, DoubleBlockHalf.UPPER).customBlockState(), UpdateOption.UPDATE_ALL.flags());
+        context.getLevel().setBlockAt(pos.x(), pos.y() + 1, pos.z(), state.with(this.halfProperty, DoubleBlockHalf.UPPER).customBlockState(), UpdateOption.Flags.UPDATE_CLIENTS);
     }
 
     @Override
@@ -180,6 +193,10 @@ public class DoorBlockBehavior extends AbstractCanSurviveBlockBehavior {
         Object level = world.serverWorld();
         BlockPos pos = context.getClickedPos();
         if (pos.y() < context.getLevel().worldHeight().getMaxBuildHeight() && world.getBlockAt(pos.above()).canBeReplaced(context)) {
+            // Not supposed to replace top of tall grass
+            if (((BukkitBlockInWorld) world.getBlockAt(pos)).block().getBlockData() instanceof Bisected bisected)
+                if (bisected.getHalf() == Bisected.Half.TOP) return null;
+
             boolean hasSignal = FastNMS.INSTANCE.method$SignalGetter$hasNeighborSignal(level, LocationUtils.toBlockPos(pos)) || FastNMS.INSTANCE.method$SignalGetter$hasNeighborSignal(level, LocationUtils.toBlockPos(pos.above()));
             return state.with(this.poweredProperty, hasSignal)
                     .with(this.facingProperty, context.getHorizontalDirection().toHorizontalDirection())
