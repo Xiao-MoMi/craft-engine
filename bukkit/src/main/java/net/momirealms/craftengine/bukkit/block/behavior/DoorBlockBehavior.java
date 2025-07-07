@@ -9,11 +9,9 @@ import net.momirealms.craftengine.bukkit.plugin.user.BukkitServerPlayer;
 import net.momirealms.craftengine.bukkit.util.BlockStateUtils;
 import net.momirealms.craftengine.bukkit.util.DirectionUtils;
 import net.momirealms.craftengine.bukkit.util.LocationUtils;
+import net.momirealms.craftengine.bukkit.world.BukkitBlockInWorld;
 import net.momirealms.craftengine.bukkit.world.BukkitWorld;
-import net.momirealms.craftengine.core.block.BlockBehavior;
-import net.momirealms.craftengine.core.block.CustomBlock;
-import net.momirealms.craftengine.core.block.ImmutableBlockState;
-import net.momirealms.craftengine.core.block.UpdateOption;
+import net.momirealms.craftengine.core.block.*;
 import net.momirealms.craftengine.core.block.behavior.BlockBehaviorFactory;
 import net.momirealms.craftengine.core.block.properties.Property;
 import net.momirealms.craftengine.core.block.state.properties.DoorHinge;
@@ -180,6 +178,15 @@ public class DoorBlockBehavior extends AbstractCanSurviveBlockBehavior {
         Object level = world.serverWorld();
         BlockPos pos = context.getClickedPos();
         if (pos.y() < context.getLevel().worldHeight().getMaxBuildHeight() && world.getBlockAt(pos.above()).canBeReplaced(context)) {
+            if (((BukkitBlockInWorld) world.getBlockAt(pos)).block().getBlockData() instanceof Bisected bisected) {
+                if (bisected.getHalf() == Bisected.Half.TOP) {
+                    return null;
+                }
+                context.getLevel().setBlockAt(pos.x(), pos.y(), pos.z(), BlockStateWrapper.vanilla(MBlocks.AIR$defaultState, BlockStateUtils.blockStateToId(MBlocks.AIR$defaultState)),
+                        UpdateOption.UPDATE_NONE.flags());
+                context.getLevel().setBlockAt(pos.x(), pos.y() + 1, pos.z(), BlockStateWrapper.vanilla(MBlocks.AIR$defaultState, BlockStateUtils.blockStateToId(MBlocks.AIR$defaultState)),
+                        UpdateOption.UPDATE_NONE.flags());
+            }
             boolean hasSignal = FastNMS.INSTANCE.method$SignalGetter$hasNeighborSignal(level, LocationUtils.toBlockPos(pos)) || FastNMS.INSTANCE.method$SignalGetter$hasNeighborSignal(level, LocationUtils.toBlockPos(pos.above()));
             return state.with(this.poweredProperty, hasSignal)
                     .with(this.facingProperty, context.getHorizontalDirection().toHorizontalDirection())
