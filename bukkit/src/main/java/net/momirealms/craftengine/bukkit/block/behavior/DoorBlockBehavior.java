@@ -145,11 +145,19 @@ public class DoorBlockBehavior extends AbstractCanSurviveBlockBehavior {
         Object player = args[3];
         ImmutableBlockState blockState = BukkitBlockManager.instance().getImmutableBlockState(BlockStateUtils.blockStateToId(state));
         if (blockState == null || blockState.isEmpty()) return superMethod.call();
+
         org.bukkit.entity.Player bukkitPlayer = FastNMS.INSTANCE.method$ServerPlayer$getBukkitEntity(player);
         BukkitServerPlayer cePlayer = BukkitCraftEngine.instance().adapt(bukkitPlayer);
         Item<ItemStack> item = cePlayer.getItemInHand(InteractionHand.MAIN_HAND);
         if (cePlayer.canInstabuild() || !BlockStateUtils.isCorrectTool(blockState, item)) {
             preventDropFromBottomPart(level, pos, blockState, player);
+        } else if (blockState.get(this.halfProperty) == DoubleBlockHalf.UPPER) {
+            Object belowPos = FastNMS.INSTANCE.method$BlockPos$relative(pos, CoreReflections.instance$Direction$DOWN);
+            Object belowState = FastNMS.INSTANCE.method$BlockGetter$getBlockState(level, belowPos);
+            ImmutableBlockState belowCustomState = BukkitBlockManager.instance().getImmutableBlockState(BlockStateUtils.blockStateToId(belowState));
+            if (belowCustomState != null && belowCustomState.owner().value() == this.customBlock) {
+                FastNMS.INSTANCE.method$Level$destroyBlock(level, belowPos, true);
+            }
         }
         return superMethod.call();
     }
