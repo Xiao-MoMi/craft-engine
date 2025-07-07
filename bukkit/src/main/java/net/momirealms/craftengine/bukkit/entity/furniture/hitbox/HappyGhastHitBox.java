@@ -7,6 +7,7 @@ import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.CoreReflect
 import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.MAttributeHolders;
 import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.MEntityTypes;
 import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.NetworkReflections;
+import net.momirealms.craftengine.bukkit.util.EntityUtils;
 import net.momirealms.craftengine.core.entity.furniture.*;
 import net.momirealms.craftengine.core.util.Key;
 import net.momirealms.craftengine.core.util.MiscUtils;
@@ -60,15 +61,16 @@ public class HappyGhastHitBox extends AbstractHitBox {
             double z = position.z();
             float yaw = position.xRot();
             packets.accept(FastNMS.INSTANCE.constructor$ClientboundAddEntityPacket(
-                    entityIds[0], UUID.randomUUID(), x + offset.x, y + offset.y, z - offset.z, 0, yaw,
+                    entityIds[0], UUID.randomUUID(), x + offset.x, y + 50, z - offset.z, 0, yaw,
                     MEntityTypes.HAPPY_GHAST, 0, CoreReflections.instance$Vec3$Zero, 0
-            ), true);
-            packets.accept(FastNMS.INSTANCE.constructor$ClientboundSetEntityDataPacket(entityIds[0], List.copyOf(this.cachedValues)), true);
+            ), false);
+            packets.accept(FastNMS.INSTANCE.constructor$ClientboundSetEntityDataPacket(entityIds[0], List.copyOf(this.cachedValues)), false);
             if (VersionHelper.isOrAbove1_20_5() && this.scale != 1) {
                 Object attributeInstance = CoreReflections.constructor$AttributeInstance.newInstance(MAttributeHolders.SCALE, (Consumer<?>) (o) -> {});
                 CoreReflections.method$AttributeInstance$setBaseValue.invoke(attributeInstance, this.scale);
                 packets.accept(NetworkReflections.constructor$ClientboundUpdateAttributesPacket0.newInstance(entityIds[0], Collections.singletonList(attributeInstance)), false);
             }
+            packets.accept(EntityUtils.buildTeleportPacket(entityIds[0], false, x + offset.x, y + offset.y, z - offset.z, 0, yaw), false);
             if (this.hardCollision) {
                 collider.accept(this.createCollider(position.world(), offset, x, y, z, entityIds[0], aabb));
             }

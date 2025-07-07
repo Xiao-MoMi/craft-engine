@@ -6,6 +6,7 @@ import net.momirealms.craftengine.bukkit.plugin.command.BukkitCommandFeature;
 import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.CoreReflections;
 import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.MEntityTypes;
 import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.NetworkReflections;
+import net.momirealms.craftengine.bukkit.util.EntityUtils;
 import net.momirealms.craftengine.core.plugin.CraftEngine;
 import net.momirealms.craftengine.core.plugin.command.CraftEngineCommandManager;
 import org.bukkit.Location;
@@ -52,10 +53,11 @@ public class TestCommand extends BukkitCommandFeature<CommandSender> {
                     // HappyGhastData.SharedFlags.addEntityDataIfNotDefaultValue((byte) 0x20, cachedShulkerValues); // Invisible
                     HappyGhastData.StaysStill.addEntityDataIfNotDefaultValue(true, cachedShulkerValues);
                     packets.add(FastNMS.INSTANCE.constructor$ClientboundAddEntityPacket(
-                            entityId, UUID.randomUUID(), location.x(), location.y(), location.z(), 0, location.getYaw(),
+                            entityId, UUID.randomUUID(), location.x(), Integer.MAX_VALUE, location.z(), 0, location.getYaw(),
                             MEntityTypes.HAPPY_GHAST, 0, CoreReflections.instance$Vec3$Zero, 0
                     ));
                     packets.add(FastNMS.INSTANCE.constructor$ClientboundSetEntityDataPacket(entityId, List.copyOf(cachedShulkerValues)));
+                    packets.add(EntityUtils.buildTeleportPacket(entityId, false, location.x(), location.y(), location.z(), 0, 0));
                     plugin().adapt(player).sendPackets(packets, true);
                     player.sendMessage("发送成功 id: " + entityId);
                 });

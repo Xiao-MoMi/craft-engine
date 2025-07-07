@@ -1554,4 +1554,22 @@ public final class NetworkReflections {
             throw new ReflectionInitException("Failed to initialize ServerCommonPacketListener$handleResourcePackResponse", e);
         }
     }
+
+    public static final Class<?> clazz$ClientboundTeleportEntityPacket = requireNonNull(
+            BukkitReflectionUtils.findReobfOrMojmapClass(
+                    "network.protocol.game.PacketPlayOutEntityTeleport",
+                    "network.protocol.game.ClientboundTeleportEntityPacket"
+            )
+    );
+
+    // 1.20~1.21.1 FriendlyByteBuf buf
+    public static final Constructor<?> constructor$ClientboundTeleportEntityPacket = MiscUtils.requireNonNullIf(
+            ReflectionUtils.getConstructor(clazz$ClientboundTeleportEntityPacket, CoreReflections.clazz$FriendlyByteBuf),
+            !VersionHelper.isOrAbove1_21_2()
+    );
+
+    // 1.21.2+ int id, PositionMoveRotation values, boolean onGround
+    public static final Constructor<?> constructor$ClientboundEntityPositionSyncPacket = Optional.ofNullable(clazz$ClientboundEntityPositionSyncPacket)
+            .map(ReflectionUtils::getTheOnlyConstructor)
+            .orElse(null);
 }
