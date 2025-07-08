@@ -61,7 +61,7 @@ public class HappyGhastHitBox extends AbstractHitBox {
             double z = position.z();
             float yaw = position.xRot();
             packets.accept(FastNMS.INSTANCE.constructor$ClientboundAddEntityPacket(
-                    entityIds[0], UUID.randomUUID(), x + offset.x, y + 50, z - offset.z, 0, yaw,
+                    entityIds[0], UUID.randomUUID(), x + offset.x, y + offset.y, z - offset.z, 0, yaw,
                     MEntityTypes.HAPPY_GHAST, 0, CoreReflections.instance$Vec3$Zero, 0
             ), false);
             packets.accept(FastNMS.INSTANCE.constructor$ClientboundSetEntityDataPacket(entityIds[0], List.copyOf(this.cachedValues)), false);
@@ -70,7 +70,6 @@ public class HappyGhastHitBox extends AbstractHitBox {
                 CoreReflections.method$AttributeInstance$setBaseValue.invoke(attributeInstance, this.scale);
                 packets.accept(NetworkReflections.constructor$ClientboundUpdateAttributesPacket0.newInstance(entityIds[0], Collections.singletonList(attributeInstance)), false);
             }
-            packets.accept(EntityUtils.buildTeleportPacket(entityIds[0], false, x + offset.x, y + offset.y, z - offset.z, 0, yaw), false);
             if (this.hardCollision) {
                 collider.accept(this.createCollider(position.world(), offset, x, y, z, entityIds[0], aabb));
             }
