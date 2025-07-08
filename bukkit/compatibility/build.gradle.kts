@@ -65,6 +65,7 @@ dependencies {
     compileOnly("com.willfp:EcoJobs:3.56.1")
     compileOnly("com.willfp:EcoSkills:3.46.1")
     compileOnly("com.willfp:libreforge:4.58.1")
+    compileOnly("com.willfp:EcoItems:5.61.0")
     // AureliumSkills
     compileOnly("com.github.Archy-X:AureliumSkills:Beta1.3.21")
 }
