@@ -118,14 +118,6 @@ public class BukkitCompatibilityManager implements CompatibilityManager {
             registerLevelerProvider("Jobs", new JobsRebornLevelerProvider());
             logHook("Jobs");
         }
-        if (this.isPluginEnabled("EcoSkills")) {
-            registerLevelerProvider("EcoSkills", new EcoSkillsLevelerProvider());
-            logHook("EcoSkills");
-        }
-        if (this.isPluginEnabled("EcoJobs")) {
-            registerLevelerProvider("EcoJobs", new EcoJobsLevelerProvider());
-            logHook("EcoJobs");
-        }
         if (this.isPluginEnabled("MythicMobs")) {
             BukkitItemManager.instance().registerExternalItemProvider(new MythicMobsProvider());
             new MythicMobsListener(this.plugin);
@@ -254,10 +246,6 @@ public class BukkitCompatibilityManager implements CompatibilityManager {
         if (this.isPluginEnabled("CustomFishing")) {
             itemManager.registerExternalItemProvider(new CustomFishingProvider());
             logHook("CustomFishing");
-        }
-        if (this.isPluginEnabled("EcoItems")) {
-            itemManager.registerExternalItemProvider(new EcoItemsProvider());
-            logHook("EcoItems");
         }
     }
 
