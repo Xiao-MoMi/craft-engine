@@ -24,4 +24,12 @@ public enum Tristate {
     public boolean asBoolean() {
         return this.booleanValue;
     }
+
+    public boolean asBoolean(boolean defaultValue) {
+        if (this == UNDEFINED) {
+            return defaultValue;
+        } else {
+            return this.booleanValue;
+        }
+    }
 }

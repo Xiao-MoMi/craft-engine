@@ -1,22 +1,5 @@
 # This file contains some useful template data. If you have good ideas, you are welcome to contribute your template!
 
-# These templates let you ditch the real custom_model_data on the server side.
-# Instead, we use client side components sent via packets to control how items look.
-default:item/client_bound_custom_model_data:
-  custom-model-data: ${custom_model_data}
-  data:
-    remove-components:
-      - minecraft:custom_model_data
-  client-bound-data:
-    custom-model-data: ${custom_model_data}
-default:item/client_bound_item_model:
-  item-model: ${item_model}
-  data:
-    remove-components:
-      - minecraft:item_model
-  client-bound-data:
-    item-model: ${item_model}
-
 # blocks
 templates#models#block:
   # template: default:model/cube_all
@@ -162,6 +145,120 @@ templates#models#2d:
       texture: ${path}
       broken_model: ${broken_path}
       broken_texture: ${broken_path}
+  # template: default:model/armor_trim
+  # arguments:
+  #   material: armor material type
+  #   part: slot type
+  default:model/armor_trim:
+    type: minecraft:select
+    property: minecraft:trim_material
+    fallback:
+      type: minecraft:model
+      path: minecraft:item/custom/${material}_${part}
+      generation:
+        parent: minecraft:item/generated
+        textures:
+          layer0: minecraft:item/custom/${material}_${part}
+    cases:
+      - when: minecraft:quartz
+        model:
+          type: minecraft:model
+          path: minecraft:item/custom/${material}_${part}_quartz_trim
+          generation:
+            parent: minecraft:item/generated
+            textures:
+              layer0: minecraft:item/custom/${material}_${part}
+              layer1: minecraft:trims/items/${part}_trim_quartz
+      - when: minecraft:iron
+        model:
+          type: minecraft:model
+          path: minecraft:item/custom/${material}_${part}_iron_trim
+          generation:
+            parent: minecraft:item/generated
+            textures:
+              layer0: minecraft:item/custom/${material}_${part}
+              layer1: minecraft:trims/items/${part}_trim_iron
+      - when: minecraft:netherite
+        model:
+          type: minecraft:model
+          path: minecraft:item/custom/${material}_${part}_netherite_trim
+          generation:
+            parent: minecraft:item/generated
+            textures:
+              layer0: minecraft:item/custom/${material}_${part}
+              layer1: minecraft:trims/items/${part}_trim_netherite
+      - when: minecraft:redstone
+        model:
+          type: minecraft:model
+          path: minecraft:item/custom/${material}_${part}_redstone_trim
+          generation:
+            parent: minecraft:item/generated
+            textures:
+              layer0: minecraft:item/custom/${material}_${part}
+              layer1: minecraft:trims/items/${part}_trim_redstone
+      - when: minecraft:copper
+        model:
+          type: minecraft:model
+          path: minecraft:item/custom/${material}_${part}_copper_trim
+          generation:
+            parent: minecraft:item/generated
+            textures:
+              layer0: minecraft:item/custom/${material}_${part}
+              layer1: minecraft:trims/items/${part}_trim_copper
+      - when: minecraft:gold
+        model:
+          type: minecraft:model
+          path: minecraft:item/custom/${material}_${part}_gold_trim
+          generation:
+            parent: minecraft:item/generated
+            textures:
+              layer0: minecraft:item/custom/${material}_${part}
+              layer1: minecraft:trims/items/${part}_trim_gold
+      - when: minecraft:emerald
+        model:
+          type: minecraft:model
+          path: minecraft:item/custom/${material}_${part}_emerald_trim
+          generation:
+            parent: minecraft:item/generated
+            textures:
+              layer0: minecraft:item/custom/${material}_${part}
+              layer1: minecraft:trims/items/${part}_trim_emerald
+      - when: minecraft:diamond
+        model:
+          type: minecraft:model
+          path: minecraft:item/custom/${material}_${part}_diamond_trim
+          generation:
+            parent: minecraft:item/generated
+            textures:
+              layer0: minecraft:item/custom/${material}_${part}
+              layer1: minecraft:trims/items/${part}_trim_diamond
+      - when: minecraft:lapis
+        model:
+          type: minecraft:model
+          path: minecraft:item/custom/${material}_${part}_lapis_trim
+          generation:
+            parent: minecraft:item/generated
+            textures:
+              layer0: minecraft:item/custom/${material}_${part}
+              layer1: minecraft:trims/items/${part}_trim_lapis
+      - when: minecraft:amethyst
+        model:
+          type: minecraft:model
+          path: minecraft:item/custom/${material}_${part}_amethyst_trim
+          generation:
+            parent: minecraft:item/generated
+            textures:
+              layer0: minecraft:item/custom/${material}_${part}
+              layer1: minecraft:trims/items/${part}_trim_amethyst
+      - when: minecraft:resin
+        model:
+          type: minecraft:model
+          path: minecraft:item/custom/${material}_${part}_resin_trim
+          generation:
+            parent: minecraft:item/generated
+            textures:
+              layer0: minecraft:item/custom/${material}_${part}
+              layer1: minecraft:trims/items/${part}_trim_resin
 
 # shield
 templates#models#shield:
@@ -2053,17 +2150,17 @@ templates#block_states:
         state: ${base_block}[type=top,waterlogged=false]
         model:
           path: ${model_top_path}
-          generation: ${model_top_generation}
+          generation: ${model_top_generation:-null}
       type=bottom,waterlogged=false:
         state: ${base_block}[type=bottom,waterlogged=false]
         model:
           path: ${model_bottom_path}
-          generation: ${model_bottom_generation}
+          generation: ${model_bottom_generation:-null}
       type=double,waterlogged=false:
         state: ${base_block}[type=double,waterlogged=false]
         model:
           path: ${model_double_path}
-          generation: ${model_double_generation}
+          generation: ${model_double_generation:-null}
       type=top,waterlogged=true:
         state: ${base_block}[type=top,waterlogged=true]
         model:
@@ -3122,6 +3219,20 @@ templates#loot_tables:
         entries:
           - type: furniture_item
             item: ${item}
+
+  # drop the door
+
+  # template: default:loot_table/door
+  default:loot_table/door:
+    pools:
+      - rolls: 1
+        entries:
+          - type: item
+            item: ${__NAMESPACE__}:${__ID__}
+            conditions:
+              - type: match_block_property
+                properties:
+                  half: lower
 
   # drop with silk touch
 

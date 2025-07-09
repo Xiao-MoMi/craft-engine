@@ -29,7 +29,7 @@ public class UnbreakableModifier<I> implements ItemDataModifier<I> {
     @Override
     public Item<I> prepareNetworkItem(Item<I> item, ItemBuildContext context, CompoundTag networkData) {
         if (VersionHelper.isOrAbove1_20_5()) {
-            Tag previous = item.getNBTComponent(ComponentKeys.UNBREAKABLE);
+            Tag previous = item.getSparrowNBTComponent(ComponentKeys.UNBREAKABLE);
             if (previous != null) {
                 networkData.put(ComponentKeys.UNBREAKABLE.asString(), NetworkItemHandler.pack(NetworkItemHandler.Operation.ADD, previous));
             } else {

@@ -27,7 +27,7 @@ import java.util.Optional;
 import java.util.function.BiConsumer;
 
 @SuppressWarnings("DuplicatedCode")
-public class LegacyNetworkItemHandler implements NetworkItemHandler<ItemStack> {
+public final class LegacyNetworkItemHandler implements NetworkItemHandler<ItemStack> {
 
     @Override
     public Optional<Item<ItemStack>> c2s(Item<ItemStack> wrapped) {
@@ -87,6 +87,8 @@ public class LegacyNetworkItemHandler implements NetworkItemHandler<ItemStack> {
                 }
                 for (ItemDataModifier<ItemStack> modifier : customItem.clientBoundDataModifiers()) {
                     modifier.prepareNetworkItem(wrapped, context, tag);
+                }
+                for (ItemDataModifier<ItemStack> modifier : customItem.clientBoundDataModifiers()) {
                     modifier.apply(wrapped, context);
                 }
                 if (Config.interceptItem()) {

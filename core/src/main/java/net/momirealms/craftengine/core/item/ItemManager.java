@@ -2,8 +2,8 @@ package net.momirealms.craftengine.core.item;
 
 import net.momirealms.craftengine.core.entity.player.Player;
 import net.momirealms.craftengine.core.item.behavior.ItemBehavior;
+import net.momirealms.craftengine.core.item.equipment.Equipment;
 import net.momirealms.craftengine.core.item.modifier.ItemDataModifier;
-import net.momirealms.craftengine.core.pack.misc.EquipmentGeneration;
 import net.momirealms.craftengine.core.pack.model.LegacyOverridesModel;
 import net.momirealms.craftengine.core.pack.model.ModernItemModel;
 import net.momirealms.craftengine.core.pack.model.generation.ModelGenerator;
@@ -21,13 +21,13 @@ public interface ItemManager<T> extends Manageable, ModelGenerator {
 
     void registerDataType(Function<Object, ItemDataModifier<T>> factory, String... alias);
 
-    ConfigParser parser();
+    Map<Key, Equipment> equipments();
+
+    ConfigParser[] parsers();
 
     Map<Key, TreeSet<LegacyOverridesModel>> legacyItemOverrides();
 
     Map<Key, TreeMap<Integer, ModernItemModel>> modernItemOverrides();
-
-    Collection<EquipmentGeneration> equipmentsToGenerate();
 
     Map<Key, ModernItemModel> modernItemModels1_21_4();
 
@@ -56,6 +56,8 @@ public interface ItemManager<T> extends Manageable, ModelGenerator {
     ExternalItemProvider<T> getExternalItemProvider(String name);
 
     boolean registerExternalItemProvider(ExternalItemProvider<T> externalItemProvider);
+
+    Optional<Equipment> getEquipment(Key key);
 
     Optional<CustomItem<T>> getCustomItem(Key key);
 

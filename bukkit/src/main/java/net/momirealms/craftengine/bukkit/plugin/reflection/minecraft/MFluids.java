@@ -15,7 +15,7 @@ public final class MFluids {
 
     private static Object getById(String id) throws ReflectiveOperationException {
         Object rl = FastNMS.INSTANCE.method$ResourceLocation$fromNamespaceAndPath("minecraft", id);
-        return CoreReflections.method$Registry$get.invoke(MBuiltInRegistries.FLUID, rl);
+        return FastNMS.INSTANCE.method$Registry$getValue(MBuiltInRegistries.FLUID, rl);
     }
 
     static {

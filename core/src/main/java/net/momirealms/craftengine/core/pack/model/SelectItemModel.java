@@ -167,11 +167,11 @@ public class SelectItemModel implements ItemModel {
                     if (whenObj instanceof JsonArray array) {
                         List<String> whens = new ArrayList<>(array.size());
                         for (JsonElement o : array) {
-                            whens.add(o.toString());
+                            whens.add(o.getAsString());
                         }
                         either = Either.ofFallback(whens);
                     } else if (whenObj instanceof JsonPrimitive primitive) {
-                        either = Either.ofPrimary(primitive.toString());
+                        either = Either.ofPrimary(primitive.getAsString());
                     } else {
                         throw new IllegalArgumentException("when is expected to be either JsonPrimitive or JsonArray");
                     }

@@ -4,9 +4,12 @@ import net.momirealms.craftengine.bukkit.nms.FastNMS;
 import net.momirealms.craftengine.core.util.Key;
 import org.bukkit.NamespacedKey;
 
-public class KeyUtils {
-
+public final class KeyUtils {
     private KeyUtils() {}
+
+    public static Key resourceLocationToKey(Object resourceLocation) {
+        return Key.of(FastNMS.INSTANCE.method$ResourceLocation$namespace(resourceLocation), FastNMS.INSTANCE.method$ResourceLocation$path(resourceLocation));
+    }
 
     public static Key namespacedKey2Key(NamespacedKey key) {
         return Key.of(key.getNamespace(), key.getKey());

@@ -147,15 +147,4 @@ public class ProjectilePacketHandler implements EntityPacketHandler {
                 onGround
         );
     }
-
-    private Object convertCustomProjectileTeleportPacket(Object packet, int entityId) {
-        float xRot = MCUtils.unpackDegrees(FastNMS.INSTANCE.field$ClientboundMoveEntityPacket$xRot(packet));
-        float yRot = MCUtils.unpackDegrees(FastNMS.INSTANCE.field$ClientboundMoveEntityPacket$yRot(packet));
-        boolean onGround = FastNMS.INSTANCE.field$ClientboundMoveEntityPacket$onGround(packet);
-        return FastNMS.INSTANCE.constructor$ClientboundTeleportEntityPacket(
-                entityId, this.projectile.projectile().x(), this.projectile.projectile().y(), this.projectile.projectile().z(),
-                MCUtils.packDegrees(-yRot), MCUtils.packDegrees(MCUtils.clamp(-xRot, -90.0F, 90.0F)),
-                onGround
-        );
-    }
 }

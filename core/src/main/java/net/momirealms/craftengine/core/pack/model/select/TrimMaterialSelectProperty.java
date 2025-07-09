@@ -39,10 +39,7 @@ public class TrimMaterialSelectProperty implements SelectProperty, LegacyModelPr
 
     @Override
     public String legacyPredicateId(Key material) {
-        if (isArmor(material)) {
-            return "trim_type";
-        }
-        return null;
+        return "trim_type";
     }
 
     @Override
@@ -52,11 +49,6 @@ public class TrimMaterialSelectProperty implements SelectProperty, LegacyModelPr
             throw new IllegalArgumentException("Invalid trim material '" + value + "'");
         }
         return f;
-    }
-
-    public boolean isArmor(Key material) {
-        String s = material.toString();
-        return s.contains("helmet") || s.contains("chestplate") || s.contains("leggings") || s.contains("boots");
     }
 
     public static class Factory implements SelectPropertyFactory {

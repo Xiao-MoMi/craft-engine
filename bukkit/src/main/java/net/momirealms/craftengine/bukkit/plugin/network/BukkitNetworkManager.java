@@ -1,6 +1,5 @@
 package net.momirealms.craftengine.bukkit.plugin.network;
 
-import com.google.gson.JsonObject;
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.*;
 import io.netty.handler.codec.MessageToMessageDecoder;
@@ -19,6 +18,7 @@ import net.momirealms.craftengine.bukkit.plugin.user.BukkitServerPlayer;
 import net.momirealms.craftengine.bukkit.util.KeyUtils;
 import net.momirealms.craftengine.core.plugin.CraftEngine;
 import net.momirealms.craftengine.core.plugin.context.CooldownData;
+import net.momirealms.craftengine.core.plugin.logger.Debugger;
 import net.momirealms.craftengine.core.plugin.network.*;
 import net.momirealms.craftengine.core.util.*;
 import org.bukkit.Bukkit;
@@ -104,7 +104,7 @@ public class BukkitNetworkManager implements NetworkManager, Listener, PluginMes
         // register packet handlers
         this.registerPacketHandlers();
         // set up packet senders
-        this.packetConsumer = FastNMS.INSTANCE::sendPacket;
+        this.packetConsumer = FastNMS.INSTANCE::method$Connection$send;
         this.packetsConsumer = ((connection, packets) -> {
             Object bundle = FastNMS.INSTANCE.constructor$ClientboundBundlePacket(packets);
             this.packetConsumer.accept(connection, bundle);
@@ -114,12 +114,9 @@ public class BukkitNetworkManager implements NetworkManager, Listener, PluginMes
             Object bundle = FastNMS.INSTANCE.constructor$ClientboundBundlePacket(packets);
             this.immediatePacketConsumer.accept(channel, bundle);
         };
-        // todo 可以删除吗
         // set up mod channel
         this.plugin.javaPlugin().getServer().getMessenger().registerIncomingPluginChannel(this.plugin.javaPlugin(), MOD_CHANNEL, this);
         this.plugin.javaPlugin().getServer().getMessenger().registerOutgoingPluginChannel(this.plugin.javaPlugin(), MOD_CHANNEL);
-        // 配置via频道
-        this.plugin.javaPlugin().getServer().getMessenger().registerIncomingPluginChannel(this.plugin.javaPlugin(), VIA_CHANNEL, this);
         // Inject server channel
         try {
             Object server = CoreReflections.method$MinecraftServer$getServer.invoke(null);
@@ -153,15 +150,14 @@ public class BukkitNetworkManager implements NetworkManager, Listener, PluginMes
         registerNMSPacketConsumer(PacketConsumers.SIGN_UPDATE, NetworkReflections.clazz$ServerboundSignUpdatePacket);
         registerNMSPacketConsumer(PacketConsumers.EDIT_BOOK, NetworkReflections.clazz$ServerboundEditBookPacket);
         registerNMSPacketConsumer(PacketConsumers.CUSTOM_PAYLOAD, NetworkReflections.clazz$ServerboundCustomPayloadPacket);
-        registerNMSPacketConsumer(PacketConsumers.RESOURCE_PACK_PUSH, NetworkReflections.clazz$ClientboundResourcePackPushPacket);
-        registerNMSPacketConsumer(PacketConsumers.HANDSHAKE_C2S, NetworkReflections.clazz$ClientIntentionPacket);
-        registerNMSPacketConsumer(PacketConsumers.LOGIN_ACKNOWLEDGED, NetworkReflections.clazz$ServerboundLoginAcknowledgedPacket);
         registerNMSPacketConsumer(PacketConsumers.RESOURCE_PACK_RESPONSE, NetworkReflections.clazz$ServerboundResourcePackPacket);
         registerNMSPacketConsumer(PacketConsumers.ENTITY_EVENT, NetworkReflections.clazz$ClientboundEntityEventPacket);
         registerNMSPacketConsumer(PacketConsumers.MOVE_POS_AND_ROTATE_ENTITY, NetworkReflections.clazz$ClientboundMoveEntityPacket$PosRot);
         registerNMSPacketConsumer(PacketConsumers.MOVE_POS_ENTITY, NetworkReflections.clazz$ClientboundMoveEntityPacket$Pos);
         registerNMSPacketConsumer(PacketConsumers.ROTATE_HEAD, NetworkReflections.clazz$ClientboundRotateHeadPacket);
         registerNMSPacketConsumer(PacketConsumers.SET_ENTITY_MOTION, NetworkReflections.clazz$ClientboundSetEntityMotionPacket);
+        registerNMSPacketConsumer(PacketConsumers.FINISH_CONFIGURATION, NetworkReflections.clazz$ClientboundFinishConfigurationPacket);
+        registerNMSPacketConsumer(PacketConsumers.LOGIN_FINISHED, NetworkReflections.clazz$ClientboundLoginFinishedPacket);
         registerS2CByteBufPacketConsumer(PacketConsumers.LEVEL_CHUNK_WITH_LIGHT, this.packetIds.clientboundLevelChunkWithLightPacket());
         registerS2CByteBufPacketConsumer(PacketConsumers.SECTION_BLOCK_UPDATE, this.packetIds.clientboundSectionBlocksUpdatePacket());
         registerS2CByteBufPacketConsumer(PacketConsumers.BLOCK_UPDATE, this.packetIds.clientboundBlockUpdatePacket());
@@ -205,7 +201,7 @@ public class BukkitNetworkManager implements NetworkManager, Listener, PluginMes
             this.resetUserArray();
             if (VersionHelper.isFolia()) {
                 player.getScheduler().runAtFixedRate(plugin.javaPlugin(), (t) -> user.tick(),
-                        () -> plugin.debug(() -> "Player " + player.getName() + "'s entity scheduler is retired"), 1, 1);
+                        () -> {}, 1, 1);
             }
         }
     }
@@ -243,14 +239,6 @@ public class BukkitNetworkManager implements NetworkManager, Listener, PluginMes
 
     @Override
     public void onPluginMessageReceived(@NotNull String channel, @NotNull Player player, byte @NotNull [] message) {
-        if (channel.equals(VIA_CHANNEL)) {
-            BukkitServerPlayer user = this.plugin.adapt(player);
-            if (user != null) {
-                JsonObject payload = GsonHelper.get().fromJson(new String(message), JsonObject.class);
-                int version = payload.get("version").getAsInt();
-                user.setProtocolVersion(version);
-            }
-        }
     }
 
     @Override
@@ -302,7 +290,13 @@ public class BukkitNetworkManager implements NetworkManager, Listener, PluginMes
     }
 
     public Channel getChannel(Player player) {
-        return (Channel) FastNMS.INSTANCE.field$Player$connection$connection$channel(FastNMS.INSTANCE.method$CraftPlayer$getHandle(player));
+        return FastNMS.INSTANCE.field$Connection$channel(
+                FastNMS.INSTANCE.field$ServerGamePacketListenerImpl$connection(
+                        FastNMS.INSTANCE.field$Player$connection(
+                                FastNMS.INSTANCE.method$CraftPlayer$getHandle(player)
+                        )
+                )
+        );
     }
 
     @Override
@@ -648,6 +642,7 @@ public class BukkitNetworkManager implements NetworkManager, Listener, PluginMes
     }
 
     private void onNMSPacketReceive(NetWorkUser user, NMSPacketEvent event, Object packet) {
+        Debugger.PACKET.debug(() -> "[C->S]" + packet.getClass());
         handleNMSPacket(user, event, packet);
     }
 
@@ -658,6 +653,7 @@ public class BukkitNetworkManager implements NetworkManager, Listener, PluginMes
                 onNMSPacketSend(player, event, p);
             }
         } else {
+            Debugger.PACKET.debug(() -> "[S->C]" + packet.getClass());
             handleNMSPacket(player, event, packet);
         }
     }

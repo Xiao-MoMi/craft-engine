@@ -108,6 +108,7 @@ public class BukkitCraftEngine extends CraftEngine {
         if (super.blockManager != null) return;
         try {
             BlockGenerator.init();
+            BlockStateGenerator.init();
             super.blockManager = new BukkitBlockManager(this);
         } catch (Exception e) {
             throw new InjectionException("Error injecting blocks", e);
@@ -137,6 +138,7 @@ public class BukkitCraftEngine extends CraftEngine {
         super.onPluginLoad();
         super.blockManager.init();
         super.networkManager = new BukkitNetworkManager(this);
+        super.itemManager = new BukkitItemManager(this);
         this.successfullyLoaded = true;
         super.compatibilityManager().onLoad();
     }
@@ -181,7 +183,6 @@ public class BukkitCraftEngine extends CraftEngine {
         PacketConsumers.initEntities(RegistryUtils.currentEntityTypeRegistrySize());
         super.packManager = new BukkitPackManager(this);
         super.senderFactory = new BukkitSenderFactory(this);
-        super.itemManager = new BukkitItemManager(this);
         super.recipeManager = new BukkitRecipeManager(this);
         super.commandManager = new BukkitCommandManager(this);
         super.itemBrowserManager = new ItemBrowserManagerImpl(this);
@@ -269,7 +270,7 @@ public class BukkitCraftEngine extends CraftEngine {
 
     @Override
     public String serverVersion() {
-        return Bukkit.getServer().getBukkitVersion().split("-")[0];
+        return VersionHelper.MINECRAFT_VERSION.version();
     }
 
     @Override
@@ -365,7 +366,7 @@ public class BukkitCraftEngine extends CraftEngine {
         );
     }
 
-    public AntiGriefLib antiGrief() {
+    public AntiGriefLib antiGriefProvider() {
         if (this.antiGrief == null) {
             this.antiGrief = AntiGriefLib.builder(this.javaPlugin)
                     .ignoreOP(true)

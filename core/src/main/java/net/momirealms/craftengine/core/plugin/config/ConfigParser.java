@@ -29,4 +29,10 @@ public interface ConfigParser extends Comparable<ConfigParser> {
     default int compareTo(@NotNull ConfigParser another) {
         return Integer.compare(loadingSequence(), another.loadingSequence());
     }
+
+    default void postProcess() {
+    }
+
+    default void preProcess() {
+    }
 }

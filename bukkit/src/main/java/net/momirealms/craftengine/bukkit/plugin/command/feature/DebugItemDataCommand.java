@@ -1,11 +1,8 @@
 package net.momirealms.craftengine.bukkit.plugin.command.feature;
 
-import com.saicone.rtag.RtagMirror;
-import com.saicone.rtag.tag.TagCompound;
-import net.kyori.adventure.text.Component;
-import net.kyori.adventure.text.format.NamedTextColor;
 import net.momirealms.craftengine.bukkit.nms.FastNMS;
 import net.momirealms.craftengine.bukkit.plugin.command.BukkitCommandFeature;
+import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.MRegistryOps;
 import net.momirealms.craftengine.bukkit.util.ItemUtils;
 import net.momirealms.craftengine.core.plugin.CraftEngine;
 import net.momirealms.craftengine.core.plugin.command.CraftEngineCommandManager;
@@ -30,11 +27,9 @@ public class DebugItemDataCommand extends BukkitCommandFeature<CommandSender> {
                 .handler(context -> {
                     ItemStack itemInHand = context.sender().getInventory().getItemInMainHand();
                     if (ItemUtils.isEmpty(itemInHand)) {
-                        plugin().senderFactory().wrap(context.sender()).sendMessage(Component.text("Please hold an item").color(NamedTextColor.RED));
                         return;
                     }
-                    Map<String, Object> readableMap = toReadableMap(itemInHand);
-                    readableMap.remove("rtagDataVersion");
+                    Map<String, Object> readableMap = toMap(itemInHand);
                     List<String> readableList = mapToList(readableMap);
                     StringJoiner joiner = new StringJoiner("<newline><reset>");
                     for (String text : readableList) {
@@ -49,13 +44,10 @@ public class DebugItemDataCommand extends BukkitCommandFeature<CommandSender> {
         return "debug_item_data";
     }
 
-
-    public static Map<String, Object> toReadableMap(ItemStack item) {
-        return toMap(item);
-    }
-
+    @SuppressWarnings("unchecked")
     private static Map<String, Object> toMap(ItemStack object) {
-        return TagCompound.getValue(RtagMirror.INSTANCE, FastNMS.INSTANCE.itemStackToCompoundTag(object));
+        Object tag = FastNMS.INSTANCE.method$itemStack$save(FastNMS.INSTANCE.field$CraftItemStack$handle(object), FastNMS.INSTANCE.constructor$CompoundTag());
+        return (Map<String, Object>) MRegistryOps.NBT.convertTo(MRegistryOps.JAVA, tag);
     }
 
     private List<String> mapToList(Map<String, Object> readableDataMap) {

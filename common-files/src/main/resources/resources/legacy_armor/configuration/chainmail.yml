@@ -1,0 +1,30 @@
+# Since we removed the chainmail armor textures, we need to add a client-side trim type for the vanilla chainmail armor to make it display properly.
+items:
+  minecraft:chainmail_helmet:
+    client-bound-data:
+      trim:
+        pattern: chainmail
+        material: custom
+      hide-tooltip:
+        - trim
+  minecraft:chainmail_chestplate:
+    client-bound-data:
+      trim:
+        pattern: chainmail
+        material: custom
+      hide-tooltip:
+        - trim
+  minecraft:chainmail_leggings:
+    client-bound-data:
+      trim:
+        pattern: chainmail
+        material: custom
+      hide-tooltip:
+        - trim
+  minecraft:chainmail_boots:
+    client-bound-data:
+      trim:
+        pattern: chainmail
+        material: custom
+      hide-tooltip:
+        - trim

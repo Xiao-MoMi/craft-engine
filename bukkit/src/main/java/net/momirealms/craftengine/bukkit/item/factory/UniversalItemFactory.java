@@ -1,16 +1,13 @@
 package net.momirealms.craftengine.bukkit.item.factory;
 
-import com.saicone.rtag.RtagItem;
-import com.saicone.rtag.item.ItemObject;
-import com.saicone.rtag.tag.TagBase;
-import com.saicone.rtag.tag.TagCompound;
-import com.saicone.rtag.tag.TagList;
+import it.unimi.dsi.fastutil.ints.IntArrayList;
 import net.momirealms.craftengine.bukkit.item.LegacyItemWrapper;
 import net.momirealms.craftengine.bukkit.nms.FastNMS;
 import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.MBuiltInRegistries;
 import net.momirealms.craftengine.bukkit.util.KeyUtils;
-import net.momirealms.craftengine.core.item.Enchantment;
-import net.momirealms.craftengine.core.item.Trim;
+import net.momirealms.craftengine.core.item.data.Enchantment;
+import net.momirealms.craftengine.core.item.data.FireworkExplosion;
+import net.momirealms.craftengine.core.item.data.Trim;
 import net.momirealms.craftengine.core.item.modifier.IdModifier;
 import net.momirealms.craftengine.core.plugin.CraftEngine;
 import net.momirealms.craftengine.core.util.Key;
@@ -32,7 +29,7 @@ public class UniversalItemFactory extends BukkitItemFactory<LegacyItemWrapper> {
 
     @Override
     protected LegacyItemWrapper wrapInternal(ItemStack item) {
-        return new LegacyItemWrapper(new RtagItem(item));
+        return new LegacyItemWrapper(item);
     }
 
     @Override
@@ -212,38 +209,6 @@ public class UniversalItemFactory extends BukkitItemFactory<LegacyItemWrapper> {
         item.setTag(tags, "StoredEnchantments");
     }
 
-    @Override
-    protected void addEnchantment(LegacyItemWrapper item, Enchantment enchantment) {
-        Object enchantments = item.getExactTag("Enchantments");
-        if (enchantments != null) {
-            for (Object enchant : TagList.getValue(enchantments)) {
-                if (TagBase.getValue(TagCompound.get(enchant, "id")).equals(enchant.toString())) {
-                    TagCompound.set(enchant, "lvl", TagBase.newTag(enchantment.level()));
-                    return;
-                }
-            }
-            item.add(Map.of("id", enchantment.id().toString(), "lvl", (short) enchantment.level()), "Enchantments");
-        } else {
-            item.setTag(List.of(Map.of("id", enchantment.id().toString(), "lvl", (short) enchantment.level())), "Enchantments");
-        }
-    }
-
-    @Override
-    protected void addStoredEnchantment(LegacyItemWrapper item, Enchantment enchantment) {
-        Object enchantments = item.getExactTag("StoredEnchantments");
-        if (enchantments != null) {
-            for (Object enchant : TagList.getValue(enchantments)) {
-                if (TagBase.getValue(TagCompound.get(enchant, "id")).equals(enchant.toString())) {
-                    TagCompound.set(enchant, "lvl", TagBase.newTag(enchantment.level()));
-                    return;
-                }
-            }
-            item.add(Map.of("id", enchantment.id().toString(), "lvl", (short) enchantment.level()), "StoredEnchantments");
-        } else {
-            item.setTag(List.of(Map.of("id", enchantment.id().toString(), "lvl", (short) enchantment.level())), "StoredEnchantments");
-        }
-    }
-
     @SuppressWarnings("deprecation")
     @Override
     protected Optional<Enchantment> getEnchantment(LegacyItemWrapper item, Key key) {
@@ -298,6 +263,38 @@ public class UniversalItemFactory extends BukkitItemFactory<LegacyItemWrapper> {
     }
 
     @Override
+    protected Optional<FireworkExplosion> fireworkExplosion(LegacyItemWrapper item) {
+        Map<String, Object> explosionObj = item.getJavaTag("Explosion");
+        if (explosionObj == null) return Optional.empty();
+        IntArrayList colors = (IntArrayList) explosionObj.get("Colors");
+        IntArrayList fadeColors = (IntArrayList) explosionObj.get("FadeColors");
+        return Optional.of(
+                new FireworkExplosion(
+                    FireworkExplosion.Shape.byId((Integer) explosionObj.getOrDefault("Type", 0)),
+                        colors == null ? new IntArrayList() : new IntArrayList(colors),
+                        fadeColors == null ? new IntArrayList() : new IntArrayList(fadeColors),
+                        (boolean) explosionObj.getOrDefault("Trail", false),
+                        (boolean) explosionObj.getOrDefault("Flicker", false)
+                )
+        );
+    }
+
+    @Override
+    protected void fireworkExplosion(LegacyItemWrapper item, FireworkExplosion explosion) {
+        if (explosion == null) {
+            item.remove("Explosion");
+        } else {
+            item.setTag(Map.of(
+                    "Type", explosion.shape().id(),
+                    "Colors", explosion.colors(),
+                    "FadeColors", explosion.fadeColors(),
+                    "Trail", explosion.hasTrail(),
+                    "Flicker", explosion.hasTwinkle()
+            ), "Explosion");
+        }
+    }
+
+    @Override
     protected Optional<Trim> trim(LegacyItemWrapper item) {
         String material = item.getJavaTag("Trim", "material");
         String pattern = item.getJavaTag("Trim", "pattern");
@@ -307,33 +304,33 @@ public class UniversalItemFactory extends BukkitItemFactory<LegacyItemWrapper> {
 
     @Override
     protected LegacyItemWrapper mergeCopy(LegacyItemWrapper item1, LegacyItemWrapper item2) {
-        Object itemStack = ItemObject.copy(item2.getLiteralObject());
-        FastNMS.INSTANCE.method$ItemStack$setTag(itemStack, TagCompound.clone(FastNMS.INSTANCE.field$ItemStack$getOrCreateTag(item1.getLiteralObject())));
-        // one more step than vanilla
-        TagCompound.merge(FastNMS.INSTANCE.field$ItemStack$getOrCreateTag(itemStack), FastNMS.INSTANCE.field$ItemStack$getOrCreateTag(item2.getLiteralObject()), true, true);
-        return new LegacyItemWrapper(new RtagItem(FastNMS.INSTANCE.method$CraftItemStack$asCraftMirror(itemStack)));
+        Object copied = FastNMS.INSTANCE.constructor$ItemStack(FastNMS.INSTANCE.method$ItemStack$getItem(item2.getLiteralObject()), item2.count());
+        Object copiedTag = FastNMS.INSTANCE.field$ItemStack$getOrCreateTag(copied);
+        FastNMS.INSTANCE.method$CompoundTag$merge(copiedTag, FastNMS.INSTANCE.field$ItemStack$getOrCreateTag(item1.getLiteralObject()));
+        FastNMS.INSTANCE.method$CompoundTag$merge(copiedTag, FastNMS.INSTANCE.field$ItemStack$getOrCreateTag(item2.getLiteralObject()));
+        return new LegacyItemWrapper(FastNMS.INSTANCE.method$CraftItemStack$asCraftMirror(copied));
     }
 
     @Override
     protected void merge(LegacyItemWrapper item1, LegacyItemWrapper item2) {
-        // load previous changes on nms items
-        item1.load();
-        TagCompound.merge(FastNMS.INSTANCE.field$ItemStack$getOrCreateTag(item1.getLiteralObject()), FastNMS.INSTANCE.field$ItemStack$getOrCreateTag(item2.getLiteralObject()), true, true);
-        // update wrapped item
-        item1.update();
+        Object item1Tag = FastNMS.INSTANCE.field$ItemStack$getOrCreateTag(item1.getLiteralObject());
+        Object item2Tag = FastNMS.INSTANCE.field$ItemStack$getOrCreateTag(item2.getLiteralObject());
+        FastNMS.INSTANCE.method$CompoundTag$merge(item1Tag, item2Tag);
     }
 
     @Override
     protected LegacyItemWrapper transmuteCopy(LegacyItemWrapper item, Key newItem, int amount) {
-        Object newItemStack = FastNMS.INSTANCE.constructor$ItemStack(FastNMS.INSTANCE.method$Registry$getValue(MBuiltInRegistries.ITEM, KeyUtils.toResourceLocation(newItem)), amount);
-        FastNMS.INSTANCE.method$ItemStack$setTag(newItemStack, TagCompound.clone(FastNMS.INSTANCE.field$ItemStack$getOrCreateTag(item.getLiteralObject())));
-        return new LegacyItemWrapper(new RtagItem(ItemObject.asCraftMirror(newItemStack)));
+        Object copied = FastNMS.INSTANCE.constructor$ItemStack(FastNMS.INSTANCE.method$Registry$getValue(MBuiltInRegistries.ITEM, KeyUtils.toResourceLocation(newItem)), amount);
+        Object copiedTag = FastNMS.INSTANCE.field$ItemStack$getOrCreateTag(copied);
+        Object thisTag = FastNMS.INSTANCE.field$ItemStack$getOrCreateTag(item.getLiteralObject());
+        FastNMS.INSTANCE.method$CompoundTag$merge(copiedTag, thisTag);
+        return new LegacyItemWrapper(FastNMS.INSTANCE.method$CraftItemStack$asCraftMirror(copied));
     }
 
     @Override
     protected LegacyItemWrapper unsafeTransmuteCopy(LegacyItemWrapper item, Object newItem, int amount) {
         Object newItemStack = FastNMS.INSTANCE.constructor$ItemStack(newItem, amount);
-        FastNMS.INSTANCE.method$ItemStack$setTag(newItemStack, TagCompound.clone(FastNMS.INSTANCE.field$ItemStack$getOrCreateTag(item.getLiteralObject())));
-        return new LegacyItemWrapper(new RtagItem(ItemObject.asCraftMirror(newItemStack)));
+        FastNMS.INSTANCE.method$ItemStack$setTag(newItemStack, FastNMS.INSTANCE.method$CompoundTag$copy(FastNMS.INSTANCE.field$ItemStack$getOrCreateTag(item.getLiteralObject())));
+        return new LegacyItemWrapper(FastNMS.INSTANCE.method$CraftItemStack$asCraftMirror(newItemStack));
     }
 }

@@ -46,9 +46,6 @@ dependencies {
     compileOnly("org.incendo:cloud-paper:${rootProject.properties["cloud_paper_version"]}")
     // YAML
     compileOnly(files("${rootProject.rootDir}/libs/boosted-yaml-${rootProject.properties["boosted_yaml_version"]}.jar"))
-    // Item Tag
-    compileOnly("com.saicone.rtag:rtag:${rootProject.properties["rtag_version"]}")
-    compileOnly("com.saicone.rtag:rtag-item:${rootProject.properties["rtag_version"]}")
     // Adventure
     compileOnly("net.kyori:adventure-api:${rootProject.properties["adventure_bundle_version"]}")
     compileOnly("net.kyori:adventure-text-minimessage:${rootProject.properties["adventure_bundle_version"]}")
@@ -61,6 +58,8 @@ dependencies {
     compileOnly("org.bstats:bstats-bukkit:${rootProject.properties["bstats_version"]}")
     // Aho-Corasick java implementation
     compileOnly("org.ahocorasick:ahocorasick:${rootProject.properties["ahocorasick_version"]}")
+    // authlib
+    compileOnly("com.mojang:authlib:${rootProject.properties["authlib_version"]}")
 }
 
 java {
@@ -89,7 +88,6 @@ tasks {
         relocate("net.kyori", "net.momirealms.craftengine.libraries")
         relocate("net.momirealms.sparrow.nbt", "net.momirealms.craftengine.libraries.nbt")
         relocate("net.momirealms.antigrieflib", "net.momirealms.craftengine.libraries.antigrieflib")
-        relocate("com.saicone.rtag", "net.momirealms.craftengine.libraries.tag")
         relocate("org.incendo", "net.momirealms.craftengine.libraries")
         relocate("dev.dejvokep", "net.momirealms.craftengine.libraries")
         relocate("org.bstats", "net.momirealms.craftengine.libraries.bstats")

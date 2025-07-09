@@ -1,7 +1,8 @@
 package net.momirealms.craftengine.core.block;
 
 import com.google.common.collect.ImmutableMap;
-import net.momirealms.craftengine.core.block.behavior.AbstractBlockBehavior;
+import net.momirealms.craftengine.core.block.behavior.EmptyBlockBehavior;
+import net.momirealms.craftengine.core.block.parser.BlockNbtParser;
 import net.momirealms.craftengine.core.block.properties.Property;
 import net.momirealms.craftengine.core.item.context.BlockPlaceContext;
 import net.momirealms.craftengine.core.loot.LootTable;
@@ -37,10 +38,10 @@ public abstract class AbstractCustomBlock implements CustomBlock {
             @NotNull Holder.Reference<CustomBlock> holder,
             @NotNull Map<String, Property<?>> properties,
             @NotNull Map<String, Integer> appearances,
-            @NotNull Map<String, VariantState> variantMapper,
+            @NotNull Map<String, BlockStateVariant> variantMapper,
             @NotNull BlockSettings settings,
             @NotNull Map<EventTrigger, List<Function<PlayerOptionalContext>>> events,
-            @NotNull List<Map<String, Object>> behaviorConfig,
+            @Nullable List<Map<String, Object>> behaviorConfig,
             @Nullable LootTable<?> lootTable
     ) {
         holder.bindValue(this);
@@ -57,14 +58,14 @@ public abstract class AbstractCustomBlock implements CustomBlock {
             placements.add(Property.createStateForPlacement(propertyEntry.getKey(), propertyEntry.getValue()));
         }
         this.placementFunction = composite(placements);
-        for (Map.Entry<String, VariantState> entry : variantMapper.entrySet()) {
+        for (Map.Entry<String, BlockStateVariant> entry : variantMapper.entrySet()) {
             String nbtString = entry.getKey();
             CompoundTag tag = BlockNbtParser.deserialize(this, nbtString);
             if (tag == null) {
                 throw new LocalizedResourceConfigException("warning.config.block.state.property.invalid_format", nbtString);
             }
-            VariantState variantState = entry.getValue();
-            int vanillaStateRegistryId = appearances.getOrDefault(variantState.appearance(), -1);
+            BlockStateVariant blockStateVariant = entry.getValue();
+            int vanillaStateRegistryId = appearances.getOrDefault(blockStateVariant.appearance(), -1);
             // This should never happen
             if (vanillaStateRegistryId == -1) {
                 vanillaStateRegistryId = appearances.values().iterator().next();
@@ -72,9 +73,9 @@ public abstract class AbstractCustomBlock implements CustomBlock {
             // Late init states
             for (ImmutableBlockState state : this.getPossibleStates(tag)) {
                 state.setBehavior(this.behavior);
-                state.setSettings(variantState.settings());
-                state.setVanillaBlockState(BlockRegistryMirror.stateByRegistryId(vanillaStateRegistryId));
-                state.setCustomBlockState(BlockRegistryMirror.stateByRegistryId(variantState.internalRegistryId()));
+                state.setSettings(blockStateVariant.settings());
+                state.setVanillaBlockState((BlockStateWrapper.VanillaBlockState) BlockRegistryMirror.stateByRegistryId(vanillaStateRegistryId));
+                state.setCustomBlockState((BlockStateWrapper.CustomBlockState) BlockRegistryMirror.stateByRegistryId(blockStateVariant.internalRegistryId()));
             }
         }
         // double check if there's any invalid state
@@ -189,10 +190,7 @@ public abstract class AbstractCustomBlock implements CustomBlock {
     @Override
     public ImmutableBlockState getStateForPlacement(BlockPlaceContext context) {
         ImmutableBlockState state = this.placementFunction.apply(context, defaultState());
-        if (this.behavior instanceof AbstractBlockBehavior blockBehavior) {
-            state = blockBehavior.updateStateForPlacement(context, state);
-        }
-        return state;
+        return this.behavior.updateStateForPlacement(context, state);
     }
 
     @Override

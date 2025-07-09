@@ -1,7 +1,7 @@
 package net.momirealms.craftengine.core.loot.function;
 
-import net.momirealms.craftengine.core.item.Enchantment;
 import net.momirealms.craftengine.core.item.Item;
+import net.momirealms.craftengine.core.item.data.Enchantment;
 import net.momirealms.craftengine.core.loot.LootConditions;
 import net.momirealms.craftengine.core.loot.LootContext;
 import net.momirealms.craftengine.core.plugin.context.Condition;

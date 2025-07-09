@@ -1,6 +1,5 @@
 package net.momirealms.craftengine.bukkit.block.behavior;
 
-import net.momirealms.craftengine.bukkit.block.BukkitBlockManager;
 import net.momirealms.craftengine.bukkit.nms.FastNMS;
 import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.MBlocks;
 import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.MFluids;
@@ -16,6 +15,7 @@ import net.momirealms.craftengine.core.world.BlockPos;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 public class NearLiquidBlockBehavior extends AbstractCanSurviveBlockBehavior {
     private static final List<Object> WATER = List.of(MFluids.WATER, MFluids.FLOWING_WATER);
@@ -70,12 +70,9 @@ public class NearLiquidBlockBehavior extends AbstractCanSurviveBlockBehavior {
         if (this.stackable) {
             Object belowPos = FastNMS.INSTANCE.constructor$BlockPos(x, y - 1, z);
             Object belowState = FastNMS.INSTANCE.method$BlockGetter$getBlockState(world, belowPos);
-            int id = BlockStateUtils.blockStateToId(belowState);
-            if (!BlockStateUtils.isVanillaBlock(id)) {
-                ImmutableBlockState immutableBlockState = BukkitBlockManager.instance().getImmutableBlockStateUnsafe(id);
-                if (immutableBlockState.owner().value() == super.customBlock) {
-                    return true;
-                }
+            Optional<ImmutableBlockState> optionalBelowCustomState = BlockStateUtils.getOptionalCustomBlockState(belowState);
+            if (optionalBelowCustomState.isPresent() && optionalBelowCustomState.get().owner().value() == super.customBlock) {
+                return true;
             }
         }
         for (BlockPos pos : positions) {

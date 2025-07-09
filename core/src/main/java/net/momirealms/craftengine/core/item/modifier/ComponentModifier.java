@@ -75,7 +75,7 @@ public class ComponentModifier<I> implements ItemDataModifier<I> {
     @Override
     public Item<I> prepareNetworkItem(Item<I> item, ItemBuildContext context, CompoundTag networkData) {
         for (Pair<Key, Tag> entry : this.arguments) {
-            Tag previous = item.getNBTComponent(entry.left());
+            Tag previous = item.getSparrowNBTComponent(entry.left());
             if (previous != null) {
                 networkData.put(entry.left().asString(), NetworkItemHandler.pack(NetworkItemHandler.Operation.ADD, previous));
             } else {

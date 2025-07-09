@@ -35,7 +35,7 @@ public class SimpleSelectProperty implements SelectProperty {
     public static class Reader implements SelectPropertyReader {
         @Override
         public SelectProperty read(JsonObject json) {
-            Key type = Key.of(json.get("property").toString());
+            Key type = Key.of(json.get("property").getAsString());
             return new SimpleSelectProperty(type);
         }
     }

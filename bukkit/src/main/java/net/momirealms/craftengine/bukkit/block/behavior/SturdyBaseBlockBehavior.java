@@ -1,6 +1,5 @@
 package net.momirealms.craftengine.bukkit.block.behavior;
 
-import net.momirealms.craftengine.bukkit.block.BukkitBlockManager;
 import net.momirealms.craftengine.bukkit.nms.FastNMS;
 import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.CoreReflections;
 import net.momirealms.craftengine.bukkit.util.BlockStateUtils;
@@ -16,6 +15,7 @@ import net.momirealms.craftengine.core.util.ResourceConfigUtils;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Optional;
 
 public class SturdyBaseBlockBehavior extends AbstractCanSurviveBlockBehavior {
     public static final Factory FACTORY = new Factory();
@@ -56,9 +56,8 @@ public class SturdyBaseBlockBehavior extends AbstractCanSurviveBlockBehavior {
         if (!this.stackable) {
             return false;
         }
-        ImmutableBlockState targetCustomState = BukkitBlockManager.instance().getImmutableBlockState(BlockStateUtils.blockStateToId(blockState));
-        if (targetCustomState == null || targetCustomState.isEmpty()) return false;
-        return targetCustomState.owner().value() == super.customBlock;
+        Optional<ImmutableBlockState> optionalCustomState = BlockStateUtils.getOptionalCustomBlockState(blockState);
+        return optionalCustomState.filter(immutableBlockState -> immutableBlockState.owner().value() == super.customBlock).isPresent();
     }
 
     public static class Factory implements BlockBehaviorFactory {

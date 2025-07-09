@@ -92,8 +92,8 @@ public class HappyGhastHitBox extends AbstractHitBox {
         double maxX = x + halfSize + offset.x();
         double minY = y + offset.y();
         double maxY = y + baseSize + offset.y();
-        double minZ = z - halfSize + offset.z();
-        double maxZ = z + halfSize + offset.z();
+        double minZ = z - halfSize - offset.z();
+        double maxZ = z + halfSize - offset.z();
         return new AABB(minX, minY, minZ, maxX, maxY, maxZ);
     }
 

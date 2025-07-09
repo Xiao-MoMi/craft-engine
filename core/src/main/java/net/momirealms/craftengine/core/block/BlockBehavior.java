@@ -94,7 +94,7 @@ public abstract class BlockBehavior {
     }
 
     // 1.21+ BlockState state, ServerLevel level, BlockPos pos, Explosion explosion, BiConsumer<ItemStack, BlockPos> dropConsumer
-    public void onExplosionHit(Object thisBlock, Object[] args, Callable<Object> superMethod) {
+    public void onExplosionHit(Object thisBlock, Object[] args, Callable<Object> superMethod) throws Exception {
     }
 
     // LevelAccessor level, BlockPos pos, BlockState state, FluidState fluidState
@@ -136,6 +136,11 @@ public abstract class BlockBehavior {
     // BlockState blockState
     public boolean isSignalSource(Object thisBlock, Object[] args, Callable<Object> superMethod) {
         return false;
+    }
+
+    // Level level, BlockPos pos, BlockState state, Player player
+    public Object playerWillDestroy(Object thisBlock, Object[] args, Callable<Object> superMethod) throws Exception {
+        return superMethod.call();
     }
 
     public ImmutableBlockState updateStateForPlacement(BlockPlaceContext context, ImmutableBlockState state) {

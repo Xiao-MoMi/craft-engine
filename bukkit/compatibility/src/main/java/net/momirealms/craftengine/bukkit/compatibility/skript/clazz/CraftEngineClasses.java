@@ -6,9 +6,9 @@ import ch.njol.skript.classes.Serializer;
 import ch.njol.skript.lang.ParseContext;
 import ch.njol.skript.registrations.Classes;
 import ch.njol.yggdrasil.Fields;
-import net.momirealms.craftengine.core.block.BlockStateParser;
 import net.momirealms.craftengine.core.block.ImmutableBlockState;
 import net.momirealms.craftengine.core.block.UnsafeBlockStateMatcher;
+import net.momirealms.craftengine.core.block.parser.BlockStateParser;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.StreamCorruptedException;

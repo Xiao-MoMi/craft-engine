@@ -39,7 +39,6 @@ This project draws inspiration and refers to some implementations from the follo
 ### Core Dependencies
 The implementation relies on these fundamental libraries:
 + [cloud-minecraft](https://github.com/Incendo/cloud-minecraft)
-+ [rtag](https://github.com/saicone/rtag)
 + [adventure](https://github.com/KyoriPowered/adventure)
 + [byte-buddy](https://github.com/raphw/byte-buddy)
 
@@ -63,7 +62,7 @@ The code you contribute will be open-sourced under the GPLv3 license. If you pre
 ### 💖 Support the Developer
 Help sustain CraftEngine's development by going Premium!
 
-- **Polymart**: [None]
+- **Polymart**: [Support via Polymart](https://polymart.org/product/7624/craftengine)
 - **BuiltByBit**: [None]
 - **Afdian**: [Support via Afdian](https://afdian.com/@xiaomomi/)
 
@@ -76,7 +75,7 @@ repositories {
 ```
 ```kotlin
 dependencies {
-    compileOnly("net.momirealms:craft-engine-core:0.0.57")
-    compileOnly("net.momirealms:craft-engine-bukkit:0.0.57")
+    compileOnly("net.momirealms:craft-engine-core:0.0.59")
+    compileOnly("net.momirealms:craft-engine-bukkit:0.0.59")
 }
 ```

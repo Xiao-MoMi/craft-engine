@@ -1,3 +1,0 @@
-minecraft:chorus_plant:
-  down=true,east=true,north=true,south=true,up=true,west=true:
-    model: "minecraft:block/default_chorus_plant"

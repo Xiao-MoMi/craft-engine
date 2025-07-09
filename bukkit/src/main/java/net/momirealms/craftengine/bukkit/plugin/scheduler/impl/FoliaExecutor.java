@@ -43,9 +43,9 @@ public class FoliaExecutor implements RegionExecutor<World> {
     public SchedulerTask runLater(Runnable runnable, long delay, World world, int x, int z) {
         if (world == null) {
             if (delay <= 0) {
-                return new FoliaTask(Bukkit.getGlobalRegionScheduler().runDelayed(plugin.javaPlugin(), scheduledTask -> runnable.run(), delay));
-            } else {
                 return new FoliaTask(Bukkit.getGlobalRegionScheduler().run(plugin.javaPlugin(), scheduledTask -> runnable.run()));
+            } else {
+                return new FoliaTask(Bukkit.getGlobalRegionScheduler().runDelayed(plugin.javaPlugin(), scheduledTask -> runnable.run(), delay));
             }
         } else {
             if (delay <= 0) {

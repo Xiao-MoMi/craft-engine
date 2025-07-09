@@ -5,7 +5,7 @@ import io.netty.buffer.Unpooled;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelHandler;
 import net.kyori.adventure.text.Component;
-import net.momirealms.craftengine.bukkit.block.BukkitBlockManager;
+import net.momirealms.craftengine.bukkit.api.CraftEngineBlocks;
 import net.momirealms.craftengine.bukkit.item.BukkitItemManager;
 import net.momirealms.craftengine.bukkit.nms.FastNMS;
 import net.momirealms.craftengine.bukkit.plugin.BukkitCraftEngine;
@@ -29,7 +29,6 @@ import net.momirealms.craftengine.core.plugin.config.Config;
 import net.momirealms.craftengine.core.plugin.context.CooldownData;
 import net.momirealms.craftengine.core.plugin.network.ConnectionState;
 import net.momirealms.craftengine.core.plugin.network.EntityPacketHandler;
-import net.momirealms.craftengine.core.plugin.network.ProtocolVersion;
 import net.momirealms.craftengine.core.sound.SoundSource;
 import net.momirealms.craftengine.core.util.Direction;
 import net.momirealms.craftengine.core.util.Key;
@@ -58,8 +57,7 @@ import java.util.concurrent.ConcurrentHashMap;
 
 public class BukkitServerPlayer extends Player {
     private final BukkitCraftEngine plugin;
-    // handshake
-    private ProtocolVersion protocolVersion = ProtocolVersion.UNKNOWN;
+
     // connection state
     private final Channel channel;
     private ChannelHandler connection;
@@ -67,8 +65,8 @@ public class BukkitServerPlayer extends Player {
     private UUID uuid;
     private ConnectionState decoderState;
     private ConnectionState encoderState;
+    private boolean shouldProcessFinishConfiguration = true;
     private final Set<UUID> resourcePackUUID = Collections.synchronizedSet(new HashSet<>());
-    private boolean sentResourcePack = !Config.sendPackOnJoin();
     // some references
     private Reference<org.bukkit.entity.Player> playerRef;
     private Reference<Object> serverPlayerRef;
@@ -252,13 +250,8 @@ public class BukkitServerPlayer extends Player {
 
     @Override
     public boolean canInstabuild() {
-        try {
-            Object abilities = CoreReflections.field$Player$abilities.get(serverPlayer());
-            return (boolean) CoreReflections.field$Abilities$instabuild.get(abilities);
-        } catch (ReflectiveOperationException e) {
-            CraftEngine.instance().logger().warn("Failed to get canInstabuild for " + name(), e);
-            return false;
-        }
+        Object abilities = FastNMS.INSTANCE.field$Player$abilities(serverPlayer());
+        return FastNMS.INSTANCE.field$Abilities$instabuild(abilities);
     }
 
     @Override
@@ -450,15 +443,15 @@ public class BukkitServerPlayer extends Player {
             }
             return;
         }
-        int stateId = BlockStateUtils.blockDataToId(hitBlock.getBlockData());
-        if (BlockStateUtils.isVanillaBlock(stateId)) {
+        ImmutableBlockState nextBlock = CraftEngineBlocks.getCustomBlockState(hitBlock);
+        if (nextBlock == null) {
             if (!this.clientSideCanBreak) {
                 setClientSideCanBreakBlock(true);
             }
-            return;
-        }
-        if (this.clientSideCanBreak) {
-            setClientSideCanBreakBlock(false);
+        } else {
+            if (this.clientSideCanBreak) {
+                setClientSideCanBreakBlock(false);
+            }
         }
     }
 
@@ -612,10 +605,10 @@ public class BukkitServerPlayer extends Player {
                 }
 
                 float progressToAdd = getDestroyProgress(destroyedState, hitPos);
-                int id = BlockStateUtils.blockStateToId(destroyedState);
-                ImmutableBlockState customState = BukkitBlockManager.instance().getImmutableBlockState(id);
+                Optional<ImmutableBlockState> optionalCustomState = BlockStateUtils.getOptionalCustomBlockState(destroyedState);
                 // double check custom block
-                if (customState != null && !customState.isEmpty()) {
+                if (optionalCustomState.isPresent()) {
+                    ImmutableBlockState customState = optionalCustomState.get();
                     BlockSettings blockSettings = customState.settings();
                     if (blockSettings.requireCorrectTool()) {
                         if (item != null) {
@@ -655,10 +648,10 @@ public class BukkitServerPlayer extends Player {
                             if (canBreak(hitPos, customState.vanillaBlockState().handle())) {
                                 // Error might occur so we use try here
                                 try {
-                                    FastNMS.INSTANCE.setMayBuild(serverPlayer, true);
+                                    FastNMS.INSTANCE.field$Player$mayBuild(serverPlayer, true);
                                     CoreReflections.method$ServerPlayerGameMode$destroyBlock.invoke(gameMode, blockPos);
                                 } finally {
-                                    FastNMS.INSTANCE.setMayBuild(serverPlayer, false);
+                                    FastNMS.INSTANCE.field$Player$mayBuild(serverPlayer, false);
                                 }
                             }
                         } else {
@@ -666,7 +659,7 @@ public class BukkitServerPlayer extends Player {
                             CoreReflections.method$ServerPlayerGameMode$destroyBlock.invoke(gameMode, blockPos);
                         }
                         // send break particle + (removed sounds)
-                        sendPacket(FastNMS.INSTANCE.constructor$ClientboundLevelEventPacket(WorldEvents.BLOCK_BREAK_EFFECT, blockPos, id, false), false);
+                        sendPacket(FastNMS.INSTANCE.constructor$ClientboundLevelEventPacket(WorldEvents.BLOCK_BREAK_EFFECT, blockPos, customState.customBlockState().registryId(), false), false);
                         this.lastSuccessfulBreak = currentTick;
                         this.destroyPos = null;
                         this.setIsDestroyingBlock(false, false);
@@ -691,7 +684,14 @@ public class BukkitServerPlayer extends Player {
             double d1 = (double) hitPos.y() - otherLocation.getY();
             double d2 = (double) hitPos.z() - otherLocation.getZ();
             if (d0 * d0 + d1 * d1 + d2 * d2 < 1024.0D) {
-                FastNMS.INSTANCE.sendPacket(FastNMS.INSTANCE.field$Player$connection$connection(FastNMS.INSTANCE.method$CraftPlayer$getHandle(other)), packet);
+                FastNMS.INSTANCE.method$Connection$send(
+                        FastNMS.INSTANCE.field$ServerGamePacketListenerImpl$connection(
+                                FastNMS.INSTANCE.field$Player$connection(
+                                        FastNMS.INSTANCE.method$CraftPlayer$getHandle(player)
+                                )
+                        ),
+                        packet
+                );
             }
         }
     }
@@ -701,7 +701,7 @@ public class BukkitServerPlayer extends Player {
         if (this.lastUpdateInteractionRangeTick + 20 > gameTicks()) {
             return this.cachedInteractionRange;
         }
-        this.cachedInteractionRange = FastNMS.INSTANCE.getInteractionRange(serverPlayer());
+        this.cachedInteractionRange = FastNMS.INSTANCE.method$Player$getInteractionRange(serverPlayer());
         this.lastUpdateInteractionRangeTick = gameTicks();
         return this.cachedInteractionRange;
     }
@@ -807,7 +807,9 @@ public class BukkitServerPlayer extends Player {
         if (this.connection == null) {
             Object serverPlayer = serverPlayer();
             if (serverPlayer != null) {
-                this.connection = (ChannelHandler) FastNMS.INSTANCE.field$Player$connection$connection(serverPlayer);
+                this.connection = (ChannelHandler) FastNMS.INSTANCE.field$ServerGamePacketListenerImpl$connection(
+                        FastNMS.INSTANCE.field$Player$connection(serverPlayer)
+                );
             } else {
                 throw new IllegalStateException("Cannot init or find connection instance for player " + name());
             }
@@ -865,23 +867,18 @@ public class BukkitServerPlayer extends Player {
     }
 
     @Override
-    public ProtocolVersion protocolVersion() {
-        return this.protocolVersion;
+    public boolean isResourcePackLoading(UUID uuid) {
+        return this.resourcePackUUID.contains(uuid);
     }
 
     @Override
-    public void setProtocolVersion(int protocolVersion) {
-        this.protocolVersion = ProtocolVersion.getById(protocolVersion);
+    public void setShouldProcessFinishConfiguration(boolean shouldProcess) {
+        this.shouldProcessFinishConfiguration = shouldProcess;
     }
 
     @Override
-    public boolean sentResourcePack() {
-        return this.sentResourcePack;
-    }
-
-    @Override
-    public void setSentResourcePack(boolean sentResourcePack) {
-        this.sentResourcePack = sentResourcePack;
+    public boolean shouldProcessFinishConfiguration() {
+        return this.shouldProcessFinishConfiguration;
     }
 
     @Override

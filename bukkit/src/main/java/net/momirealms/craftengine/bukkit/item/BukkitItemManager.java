@@ -1,5 +1,9 @@
 package net.momirealms.craftengine.bukkit.item;
 
+import com.google.gson.JsonArray;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonPrimitive;
 import net.momirealms.craftengine.bukkit.item.behavior.AxeItemBehavior;
 import net.momirealms.craftengine.bukkit.item.behavior.FlintAndSteelItemBehavior;
 import net.momirealms.craftengine.bukkit.item.factory.BukkitItemFactory;
@@ -16,12 +20,15 @@ import net.momirealms.craftengine.bukkit.util.KeyUtils;
 import net.momirealms.craftengine.core.entity.player.Player;
 import net.momirealms.craftengine.core.item.*;
 import net.momirealms.craftengine.core.item.modifier.IdModifier;
+import net.momirealms.craftengine.core.pack.AbstractPackManager;
 import net.momirealms.craftengine.core.plugin.config.Config;
 import net.momirealms.craftengine.core.plugin.context.ContextHolder;
 import net.momirealms.craftengine.core.plugin.locale.LocalizedResourceConfigException;
+import net.momirealms.craftengine.core.plugin.logger.Debugger;
 import net.momirealms.craftengine.core.registry.BuiltInRegistries;
 import net.momirealms.craftengine.core.registry.Holder;
 import net.momirealms.craftengine.core.registry.WritableRegistry;
+import net.momirealms.craftengine.core.util.GsonHelper;
 import net.momirealms.craftengine.core.util.Key;
 import net.momirealms.craftengine.core.util.ResourceKey;
 import net.momirealms.craftengine.core.util.VersionHelper;
@@ -33,9 +40,10 @@ import org.bukkit.event.HandlerList;
 import org.bukkit.inventory.ItemStack;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.Optional;
-import java.util.Set;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.*;
 
 public class BukkitItemManager extends AbstractItemManager<ItemStack> {
     static {
@@ -50,6 +58,8 @@ public class BukkitItemManager extends AbstractItemManager<ItemStack> {
     private final DebugStickListener debugStickListener;
     private final ArmorEventListener armorEventListener;
     private final NetworkItemHandler<ItemStack> networkItemHandler;
+    private final Object bedrockItemHolder;
+    private Set<Key> lastRegisteredPatterns = Set.of();
 
     public BukkitItemManager(BukkitCraftEngine plugin) {
         super(plugin);
@@ -61,6 +71,9 @@ public class BukkitItemManager extends AbstractItemManager<ItemStack> {
         this.armorEventListener = new ArmorEventListener();
         this.networkItemHandler = VersionHelper.isOrAbove1_20_5() ? new ModernNetworkItemHandler() : new LegacyNetworkItemHandler();
         this.registerAllVanillaItems();
+        this.bedrockItemHolder = FastNMS.INSTANCE.method$Registry$getHolderByResourceKey(MBuiltInRegistries.ITEM, FastNMS.INSTANCE.method$ResourceKey$create(MRegistries.ITEM, KeyUtils.toResourceLocation(Key.of("minecraft:bedrock")))).get();;
+        this.registerCustomTrimMaterial();
+        this.loadLastRegisteredPatterns();
     }
 
     @Override
@@ -83,11 +96,9 @@ public class BukkitItemManager extends AbstractItemManager<ItemStack> {
         try {
             Item<ItemStack> wrapped = wrap(itemStack);
             if (wrapped == null) return Optional.empty();
-            return this.networkItemHandler.s2c(wrapped, player).map(Item::load);
+            return this.networkItemHandler.s2c(wrapped, player).map(Item::getItem);
         } catch (Throwable e) {
-            if (Config.debug()) {
-                this.plugin.logger().warn("Failed to handle s2c items.", e);
-            }
+            Debugger.ITEM.warn(() -> "Failed to handle s2c items.", e);
             return Optional.empty();
         }
     }
@@ -96,11 +107,9 @@ public class BukkitItemManager extends AbstractItemManager<ItemStack> {
         try {
             Item<ItemStack> wrapped = wrap(itemStack);
             if (wrapped == null) return Optional.empty();
-            return this.networkItemHandler.c2s(wrapped).map(Item::load);
+            return this.networkItemHandler.c2s(wrapped).map(Item::getItem);
         } catch (Throwable e) {
-            if (Config.debug()) {
-                this.plugin.logger().warn("Failed to handle c2s items.", e);
-            }
+            Debugger.COMMON.warn(() -> "Failed to handle c2s items.", e);
             return Optional.empty();
         }
     }
@@ -132,6 +141,127 @@ public class BukkitItemManager extends AbstractItemManager<ItemStack> {
         HandlerList.unregisterAll(this.itemEventListener);
         HandlerList.unregisterAll(this.debugStickListener);
         HandlerList.unregisterAll(this.armorEventListener);
+        this.persistLastRegisteredPatterns();
+    }
+
+    @Override
+    protected void registerArmorTrimPattern(Collection<Key> equipments) {
+        if (equipments.isEmpty()) return;
+        this.lastRegisteredPatterns = new HashSet<>(equipments);
+        // 可能还没加载
+        if (Config.sacrificedAssetId() != null)
+            this.lastRegisteredPatterns.add(Config.sacrificedAssetId());
+        Object registry = FastNMS.INSTANCE.method$RegistryAccess$lookupOrThrow(FastNMS.INSTANCE.registryAccess(), MRegistries.TRIM_PATTERN);
+        try {
+            CoreReflections.field$MappedRegistry$frozen.set(registry, false);
+            for (Key assetId : this.lastRegisteredPatterns) {
+                Object resourceLocation = KeyUtils.toResourceLocation(assetId);
+                Object previous = FastNMS.INSTANCE.method$Registry$getValue(registry, resourceLocation);
+                if (previous == null) {
+                    Object trimPattern = createTrimPattern(assetId);
+                    Object holder = CoreReflections.method$Registry$registerForHolder.invoke(null, registry, resourceLocation, trimPattern);
+                    CoreReflections.method$Holder$Reference$bindValue.invoke(holder, trimPattern);
+                    CoreReflections.field$Holder$Reference$tags.set(holder, Set.of());
+                }
+            }
+        } catch (Exception e) {
+            this.plugin.logger().warn("Failed to register armor trim pattern.", e);
+        } finally {
+            try {
+                CoreReflections.field$MappedRegistry$frozen.set(registry, true);
+            } catch (ReflectiveOperationException ignored) {
+            }
+        }
+    }
+
+    private void persistLastRegisteredPatterns() {
+        Path persistTrimPatternPath = this.plugin.dataFolderPath()
+                .resolve("cache")
+                .resolve("trim_patterns.json");
+        try {
+            Files.createDirectories(persistTrimPatternPath.getParent());
+            JsonObject json = new JsonObject();
+            JsonArray jsonElements = new JsonArray();
+            for (Key key : this.lastRegisteredPatterns) {
+                jsonElements.add(new JsonPrimitive(key.toString()));
+            }
+            json.add("patterns", jsonElements);
+            if (jsonElements.isEmpty()) {
+                if (Files.exists(persistTrimPatternPath)) {
+                    Files.delete(persistTrimPatternPath);
+                }
+            } else {
+                GsonHelper.writeJsonFile(json, persistTrimPatternPath);
+            }
+        } catch (IOException e) {
+            this.plugin.logger().warn("Failed to persist registered trim patterns.", e);
+        }
+    }
+
+    // 需要持久化存储上一次注册的新trim类型，如果注册晚了，加载世界可能导致一些物品损坏
+    private void loadLastRegisteredPatterns() {
+        Path persistTrimPatternPath = this.plugin.dataFolderPath()
+                .resolve("cache")
+                .resolve("trim_patterns.json");
+        if (Files.exists(persistTrimPatternPath) && Files.isRegularFile(persistTrimPatternPath)) {
+            try {
+                JsonObject cache = GsonHelper.readJsonFile(persistTrimPatternPath).getAsJsonObject();
+                JsonArray patterns = cache.getAsJsonArray("patterns");
+                Set<Key> trims = new HashSet<>();
+                for (JsonElement element : patterns) {
+                    if (element instanceof JsonPrimitive primitive) {
+                        trims.add(Key.of(primitive.getAsString()));
+                    }
+                }
+                this.registerArmorTrimPattern(trims);
+                this.lastRegisteredPatterns = trims;
+            } catch (IOException e) {
+                this.plugin.logger().warn("Failed to load registered trim patterns.", e);
+            }
+        }
+    }
+
+    private void registerCustomTrimMaterial() {
+        Object registry = FastNMS.INSTANCE.method$RegistryAccess$lookupOrThrow(FastNMS.INSTANCE.registryAccess(), MRegistries.TRIM_MATERIAL);
+        Object resourceLocation = KeyUtils.toResourceLocation(Key.of("minecraft", AbstractPackManager.NEW_TRIM_MATERIAL));
+        Object previous = FastNMS.INSTANCE.method$Registry$getValue(registry, resourceLocation);
+        if (previous == null) {
+            try {
+                CoreReflections.field$MappedRegistry$frozen.set(registry, false);
+                Object trimMaterial = createTrimMaterial();
+                Object holder = CoreReflections.method$Registry$registerForHolder.invoke(null, registry, resourceLocation, trimMaterial);
+                CoreReflections.method$Holder$Reference$bindValue.invoke(holder, trimMaterial);
+                CoreReflections.field$Holder$Reference$tags.set(holder, Set.of());
+            } catch (Exception e) {
+                this.plugin.logger().warn("Failed to register trim material.", e);
+            } finally {
+                try {
+                    CoreReflections.field$MappedRegistry$frozen.set(registry, true);
+                } catch (ReflectiveOperationException ignored) {
+                }
+            }
+        }
+    }
+
+    private Object createTrimPattern(Key key) throws ReflectiveOperationException {
+        if (VersionHelper.isOrAbove1_21_5()) {
+            return CoreReflections.constructor$TrimPattern.newInstance(KeyUtils.toResourceLocation(key), CoreReflections.instance$Component$empty, false);
+        } else if (VersionHelper.isOrAbove1_20_2()) {
+            return CoreReflections.constructor$TrimPattern.newInstance(KeyUtils.toResourceLocation(key), this.bedrockItemHolder, CoreReflections.instance$Component$empty, false);
+        } else {
+            return CoreReflections.constructor$TrimPattern.newInstance(KeyUtils.toResourceLocation(key), this.bedrockItemHolder, CoreReflections.instance$Component$empty);
+        }
+    }
+
+    private Object createTrimMaterial() throws ReflectiveOperationException {
+        if (VersionHelper.isOrAbove1_21_5()) {
+            Object assetGroup = CoreReflections.method$MaterialAssetGroup$create.invoke(null, "custom");
+            return CoreReflections.constructor$TrimMaterial.newInstance(assetGroup, CoreReflections.instance$Component$empty);
+        } else if (VersionHelper.isOrAbove1_21_4()) {
+            return CoreReflections.constructor$TrimMaterial.newInstance("custom", this.bedrockItemHolder, Map.of(), CoreReflections.instance$Component$empty);
+        } else {
+            return CoreReflections.constructor$TrimMaterial.newInstance("custom", this.bedrockItemHolder, 0f, Map.of(), CoreReflections.instance$Component$empty);
+        }
     }
 
     @SuppressWarnings("deprecation")
@@ -215,15 +345,15 @@ public class BukkitItemManager extends AbstractItemManager<ItemStack> {
     @SuppressWarnings("unchecked")
     private void registerAllVanillaItems() {
         try {
-            for (NamespacedKey item : FastNMS.INSTANCE.getAllVanillaItems()) {
-                if (item.getNamespace().equals("minecraft")) {
-                    Key id = KeyUtils.namespacedKey2Key(item);
-                    VANILLA_ITEMS.add(id);
-                    Holder.Reference<Key> holder =  BuiltInRegistries.OPTIMIZED_ITEM_ID.get(id)
+            for (Object item : (Iterable<?>) MBuiltInRegistries.ITEM) {
+                Object resourceLocation = FastNMS.INSTANCE.method$Registry$getKey(MBuiltInRegistries.ITEM, item);
+                Key itemKey = KeyUtils.resourceLocationToKey(resourceLocation);
+                if (itemKey.namespace().equals("minecraft")) {
+                    VANILLA_ITEMS.add(itemKey);
+                    Holder.Reference<Key> holder =  BuiltInRegistries.OPTIMIZED_ITEM_ID.get(itemKey)
                             .orElseGet(() -> ((WritableRegistry<Key>) BuiltInRegistries.OPTIMIZED_ITEM_ID)
-                                    .register(new ResourceKey<>(BuiltInRegistries.OPTIMIZED_ITEM_ID.key().location(), id), id));
-                    Object resourceLocation = KeyUtils.toResourceLocation(id.namespace(), id.value());
-                    Object mcHolder = ((Optional<Object>) CoreReflections.method$Registry$getHolder1.invoke(MBuiltInRegistries.ITEM, CoreReflections.method$ResourceKey$create.invoke(null, MRegistries.ITEM, resourceLocation))).get();
+                                    .register(new ResourceKey<>(BuiltInRegistries.OPTIMIZED_ITEM_ID.key().location(), itemKey), itemKey));
+                    Object mcHolder = FastNMS.INSTANCE.method$Registry$getHolderByResourceKey(MBuiltInRegistries.ITEM, FastNMS.INSTANCE.method$ResourceKey$create(MRegistries.ITEM, resourceLocation)).get();
                     Set<Object> tags = (Set<Object>) CoreReflections.field$Holder$Reference$tags.get(mcHolder);
                     for (Object tag : tags) {
                         Key tagId = Key.of(CoreReflections.field$TagKey$location.get(tag).toString());

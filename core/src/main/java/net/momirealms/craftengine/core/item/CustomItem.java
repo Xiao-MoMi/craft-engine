@@ -25,13 +25,9 @@ public interface CustomItem<I> extends BuildableItem<I> {
 
     ItemDataModifier<I>[] dataModifiers();
 
-    Map<String, ItemDataModifier<I>> dataModifierMap();
-
     boolean hasClientBoundDataModifier();
 
     ItemDataModifier<I>[] clientBoundDataModifiers();
-
-    Map<String, ItemDataModifier<I>> clientBoundDataModifierMap();
 
     ItemSettings settings();
 

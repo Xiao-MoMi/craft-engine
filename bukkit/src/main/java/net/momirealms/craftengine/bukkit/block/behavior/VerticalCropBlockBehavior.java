@@ -1,6 +1,5 @@
 package net.momirealms.craftengine.bukkit.block.behavior;
 
-import net.momirealms.craftengine.bukkit.block.BukkitBlockManager;
 import net.momirealms.craftengine.bukkit.nms.FastNMS;
 import net.momirealms.craftengine.bukkit.plugin.reflection.bukkit.CraftBukkitReflections;
 import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.MBlocks;
@@ -19,6 +18,7 @@ import net.momirealms.craftengine.core.util.VersionHelper;
 import net.momirealms.craftengine.core.world.BlockPos;
 
 import java.util.Map;
+import java.util.Optional;
 import java.util.concurrent.Callable;
 
 public class VerticalCropBlockBehavior extends BukkitBlockBehavior {
@@ -42,26 +42,25 @@ public class VerticalCropBlockBehavior extends BukkitBlockBehavior {
         Object blockState = args[0];
         Object level = args[1];
         Object blockPos = args[2];
+        Optional<ImmutableBlockState> optionalCurrentState = BlockStateUtils.getOptionalCustomBlockState(blockState);
+        if (optionalCurrentState.isEmpty()) {
+            return;
+        }
+        ImmutableBlockState currentState = optionalCurrentState.get();
         // above block is empty
         if (FastNMS.INSTANCE.method$BlockGetter$getBlockState(level, (this.direction ? LocationUtils.above(blockPos) : LocationUtils.below(blockPos))) == MBlocks.AIR$defaultState) {
             int currentHeight = 1;
             BlockPos currentPos = LocationUtils.fromBlockPos(blockPos);
-            ImmutableBlockState currentState = BukkitBlockManager.instance().getImmutableBlockState(BlockStateUtils.blockStateToId(blockState));
-            if (currentState != null && !currentState.isEmpty()) {
-                while (true) {
-                    Object nextPos = LocationUtils.toBlockPos(currentPos.x(), this.direction ? currentPos.y() - currentHeight : currentPos.y() + currentHeight, currentPos.z());
-                    Object nextState = FastNMS.INSTANCE.method$BlockGetter$getBlockState(level, nextPos);
-                    ImmutableBlockState belowImmutableState = BukkitBlockManager.instance().getImmutableBlockState(BlockStateUtils.blockStateToId(nextState));
-                    if (belowImmutableState != null && !belowImmutableState.isEmpty() && belowImmutableState.owner() == currentState.owner()) {
-                        currentHeight++;
-                    } else {
-                        break;
-                    }
+            while (true) {
+                Object nextPos = LocationUtils.toBlockPos(currentPos.x(), this.direction ? currentPos.y() - currentHeight : currentPos.y() + currentHeight, currentPos.z());
+                Object nextState = FastNMS.INSTANCE.method$BlockGetter$getBlockState(level, nextPos);
+                Optional<ImmutableBlockState> optionalBelowCustomState = BlockStateUtils.getOptionalCustomBlockState(nextState);
+                if (optionalBelowCustomState.isPresent() && optionalBelowCustomState.get().owner().value() == super.customBlock) {
+                    currentHeight++;
+                } else {
+                    break;
                 }
-            } else {
-                return;
             }
-
             if (currentHeight < this.maxHeight) {
                 int age = currentState.get(ageProperty);
                 if (age >= this.ageProperty.max || RandomUtils.generateRandomFloat(0, 1) < this.growSpeed) {

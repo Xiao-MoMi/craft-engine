@@ -85,9 +85,10 @@ public class LocalizedException extends RuntimeException {
             return cleanMessage;
         } catch (Exception e) {
             return String.format(
-                    "Failed to translate. Node: %s, Arguments: %s",
+                    "Failed to translate. Node: %s, Arguments: %s. Cause: %s",
                     node,
-                    Arrays.toString(arguments)
+                    Arrays.toString(arguments),
+                    e.getMessage()
             );
         }
     }

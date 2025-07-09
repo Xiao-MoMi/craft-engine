@@ -35,7 +35,7 @@ public class SimpleRangeDispatchProperty implements RangeDispatchProperty {
     public static class Reader implements RangeDispatchPropertyReader {
         @Override
         public RangeDispatchProperty read(JsonObject json) {
-            Key type = Key.of(json.get("property").toString());
+            Key type = Key.of(json.get("property").getAsString());
             return new SimpleRangeDispatchProperty(type);
         }
     }

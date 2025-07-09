@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Function;
 
 public final class SNBTReader extends DefaultStringReader {
     private static final char COMPOUND_START = '{';
@@ -16,12 +17,10 @@ public final class SNBTReader extends DefaultStringReader {
     private static final char KEY_VALUE_SEPARATOR = ':';
     private static final char ELEMENT_SEPARATOR = ',';
 
-    // 数字类型后缀
-    private static final char BYTE_SUFFIX = 'b';
-    private static final char SHORT_SUFFIX = 's';
-    private static final char LONG_SUFFIX = 'l';
-    private static final char FLOAT_SUFFIX = 'f';
-    private static final char DOUBLE_SUFFIX = 'd';
+    private static final char ARRAY_DELIMITER = ';';
+    private static final char BYTE_ARRAY = 'b';
+    private static final char INT_ARRAY = 'i';
+    private static final char LONG_ARRAY = 'l';
 
     public SNBTReader(String content) {
         super(content);
@@ -81,9 +80,53 @@ public final class SNBTReader extends DefaultStringReader {
     }
 
     // 解析列表值 [1, 2, 3]
-    private List<Object> parseList() {
+    private Object parseList() {
         skip(); // 跳过 '['
         skipWhitespace();
+
+        // 检查接下来的2个非空格字符, 确认是否要走数组解析.
+        if (canRead()) {
+            setMarker(cursor); // 记录指针, 尝试解析数组.
+            char typeChar = Character.toLowerCase(peek());
+            if (typeChar == BYTE_ARRAY || typeChar == INT_ARRAY || typeChar == LONG_ARRAY) {
+                skip();
+                skipWhitespace();
+                if (canRead() && peek() == ARRAY_DELIMITER) {  // 下一个必须是 ';'
+                    skip();
+                    switch (typeChar) { // 解析并返回数组喵
+                        case BYTE_ARRAY -> {
+                            return parseArray(list -> {
+                                byte[] bytes = new byte[list.size()];
+                                for (int i = 0; i < bytes.length; i++) {
+                                    bytes[i] = list.get(i).byteValue();
+                                }
+                                return bytes;
+                            });
+                        }
+                        case INT_ARRAY -> {
+                            return parseArray(list -> {
+                                int[] ints = new int[list.size()];
+                                for (int i = 0; i < ints.length; i++) {
+                                    ints[i] = list.get(i).intValue();
+                                }
+                                return ints;
+                            });
+                        }
+                        case LONG_ARRAY -> {
+                            return parseArray(list -> {
+                                long[] longs = new long[list.size()];
+                                for (int i = 0; i < longs.length; i++) {
+                                    longs[i] = list.get(i).longValue();
+                                }
+                                return longs;
+                            });
+                        }
+                    }
+                }
+            }
+            restore(); // 复原指针.
+        }
+
         List<Object> elementList = new ArrayList<>();
 
         if (canRead() && peek() != LIST_END) {
@@ -98,6 +141,34 @@ public final class SNBTReader extends DefaultStringReader {
         }
         skip(); // 跳过 ']'
         return elementList;
+    }
+
+    // 解析数组 [I; 11, 41, 54]
+    // ArrayType -> B, I, L.
+    private Object parseArray(Function<List<Number>, Object> convertor) {
+        skipWhitespace();
+        // 用来暂存解析出的数字
+        List<Number> elements = new ArrayList<>();
+        if (canRead() && peek() != LIST_END) {
+            do {
+                Object element = parseValue();
+
+                // 1.21.6的SNBT原版是支持 {key:[B;1,2b,0xFF]} 这种奇葩写法的, 越界部分会被自动舍弃, 如0xff的byte值为-1.
+                // 如果需要和原版对齐, 那么只需要判断是否是数字就行了.
+                // if (!(element instanceof Number number))
+                //    throw new IllegalArgumentException("Error element type at pos " + getCursor());
+                if (!(element instanceof Number number))
+                    throw new IllegalArgumentException("Error parsing number at pos " + getCursor());
+
+                elements.add(number); // 校验通过后加入
+                skipWhitespace();
+            } while (canRead() && peek() == ELEMENT_SEPARATOR && ++cursor > 0 /* 跳过 ',' */);
+        }
+
+        if (!canRead() || peek() != LIST_END)
+            throw new IllegalArgumentException("Expected ']' at position " + getCursor());
+        skip(); // 跳过 ']'
+        return convertor.apply(elements);
     }
 
     // 解析Key值
@@ -149,12 +220,13 @@ public final class SNBTReader extends DefaultStringReader {
             }
         }
         int tokenLength = getCursor() - tokenStart - lastWhitespace; // 计算值长度需要再减去尾部空格.
-        if (tokenLength == 0) throw new IllegalArgumentException("Empty value at position " + tokenStart);
+        if (tokenLength == 0) return null; // 如果值长度为0则返回null.
         if (contentHasWhitespace) return substring(tokenStart, tokenStart + tokenLength); // 如果值的中间有空格, 一定是字符串, 可直接返回.
 
         // 布尔值检查
         if (tokenLength == 4) {
             if (matchesAt(tokenStart, "true")) return Boolean.TRUE;
+            if (matchesAt(tokenStart, "null")) return null; // 支持 {key:null}.
         } else if (tokenLength == 5) {
             if (matchesAt(tokenStart, "false")) return Boolean.FALSE;
         }
@@ -163,19 +235,19 @@ public final class SNBTReader extends DefaultStringReader {
             char lastChar = charAt(tokenStart + tokenLength - 1);
             try {
                 switch (lastChar) {
-                    case BYTE_SUFFIX -> {
+                    case 'b', 'B' -> {
                         return Byte.parseByte(substring(tokenStart, tokenStart + tokenLength - 1));
                     }
-                    case SHORT_SUFFIX -> {
+                    case 's', 'S' -> {
                         return Short.parseShort(substring(tokenStart, tokenStart + tokenLength - 1));
                     }
-                    case LONG_SUFFIX -> {
+                    case 'l', 'L' -> {
                         return Long.parseLong(substring(tokenStart, tokenStart + tokenLength - 1));
                     }
-                    case FLOAT_SUFFIX -> {
+                    case 'f', 'F' -> {
                         return Float.parseFloat(substring(tokenStart, tokenStart + tokenLength));
                     }
-                    case DOUBLE_SUFFIX -> {
+                    case 'd', 'D' -> {
                         return Double.parseDouble(substring(tokenStart, tokenStart + tokenLength));
                     }
                     default -> {

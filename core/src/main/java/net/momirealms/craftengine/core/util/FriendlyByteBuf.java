@@ -10,6 +10,7 @@ import io.netty.handler.codec.EncoderException;
 import io.netty.util.ByteProcessor;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
 import it.unimi.dsi.fastutil.ints.IntList;
+import net.momirealms.craftengine.core.registry.Registry;
 import net.momirealms.craftengine.core.world.BlockPos;
 import net.momirealms.sparrow.nbt.NBT;
 import net.momirealms.sparrow.nbt.Tag;
@@ -58,14 +59,26 @@ public class FriendlyByteBuf extends ByteBuf {
     public <T> void writeCollection(Collection<T> collection, Writer<T> writer) {
         this.writeVarInt(collection.size());
 
-        for(T t0 : collection) {
+        for (T t0 : collection) {
             writer.accept(this, t0);
         }
-
     }
 
     public BlockPos readBlockPos() {
         return BlockPos.of(this.readLong());
+    }
+
+    public OptionalInt readOptionalVarInt() {
+        int i = this.readVarInt();
+        return i == 0 ? OptionalInt.empty() : OptionalInt.of(i - 1);
+    }
+
+    public void writeOptionalVarInt(OptionalInt optionalInt) {
+        if (optionalInt.isPresent()) {
+            this.writeVarInt(optionalInt.getAsInt() + 1);
+        } else {
+            this.writeVarInt(0);
+        }
     }
 
     public int readContainerId() {
@@ -329,6 +342,11 @@ public class FriendlyByteBuf extends ByteBuf {
         byte[] byteArray = new byte[size];
         this.getBytes(0, byteArray);
         return byteArray;
+    }
+
+    public <T> T readById(Registry<T> registry) {
+        int id = this.readVarInt();
+        return registry.getValue(id);
     }
 
     public int readVarInt() {

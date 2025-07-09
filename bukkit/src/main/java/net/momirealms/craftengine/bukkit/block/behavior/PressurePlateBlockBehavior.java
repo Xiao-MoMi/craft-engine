@@ -1,7 +1,6 @@
 package net.momirealms.craftengine.bukkit.block.behavior;
 
 import io.papermc.paper.event.entity.EntityInsideBlockEvent;
-import net.momirealms.craftengine.bukkit.block.BukkitBlockManager;
 import net.momirealms.craftengine.bukkit.nms.FastNMS;
 import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.CoreReflections;
 import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.MBlocks;
@@ -16,9 +15,6 @@ import net.momirealms.craftengine.core.block.CustomBlock;
 import net.momirealms.craftengine.core.block.ImmutableBlockState;
 import net.momirealms.craftengine.core.block.behavior.BlockBehaviorFactory;
 import net.momirealms.craftengine.core.block.properties.Property;
-import net.momirealms.craftengine.core.item.Item;
-import net.momirealms.craftengine.core.plugin.context.ContextHolder;
-import net.momirealms.craftengine.core.plugin.context.parameter.DirectContextParameters;
 import net.momirealms.craftengine.core.sound.SoundData;
 import net.momirealms.craftengine.core.util.Direction;
 import net.momirealms.craftengine.core.util.PressurePlateSensitivity;
@@ -57,33 +53,24 @@ public class PressurePlateBlockBehavior extends BukkitBlockBehavior {
         this.pressedTime = pressedTime;
     }
 
+    @SuppressWarnings("DuplicatedCode")
     @Override
     public Object updateShape(Object thisBlock, Object[] args, Callable<Object> superMethod) throws Exception {
         Object state = args[0];
-        Object level;
-        Object blockPos;
-        if (VersionHelper.isOrAbove1_21_2()) {
-            level = args[1];
-            blockPos = args[3];
-        } else {
-            level = args[3];
-            blockPos = args[4];
-        }
+        Object level = args[updateShape$level];
+        Object blockPos = args[updateShape$blockPos];
         Direction direction = DirectionUtils.fromNMSDirection(VersionHelper.isOrAbove1_21_2() ? args[4] : args[1]);
         if (direction == Direction.DOWN && !FastNMS.INSTANCE.method$BlockStateBase$canSurvive(state, level, blockPos)) {
+            Optional<ImmutableBlockState> optionalCustomState = BlockStateUtils.getOptionalCustomBlockState(state);
+            if (optionalCustomState.isEmpty()) {
+                return MBlocks.AIR$defaultState;
+            }
+            ImmutableBlockState customState = optionalCustomState.get();
             BlockPos pos = LocationUtils.fromBlockPos(blockPos);
             net.momirealms.craftengine.core.world.World world = new BukkitWorld(FastNMS.INSTANCE.method$Level$getCraftWorld(level));
             WorldPosition position = new WorldPosition(world, Vec3d.atCenterOf(pos));
-            ContextHolder.Builder builder = ContextHolder.builder()
-                    .withParameter(DirectContextParameters.POSITION, position);
-            int stateId = BlockStateUtils.blockStateToId(state);
-            ImmutableBlockState immutableBlockState = BukkitBlockManager.instance().getImmutableBlockState(stateId);
-            if (immutableBlockState == null || immutableBlockState.isEmpty()) return MBlocks.AIR$defaultState;
-            for (Item<Object> item : immutableBlockState.getDrops(builder, world, null)) {
-                world.dropItemNaturally(position, item);
-            }
-            world.playBlockSound(position, immutableBlockState.sounds().breakSound());
-            FastNMS.INSTANCE.method$Level$levelEvent(level, WorldEvents.BLOCK_BREAK_EFFECT, blockPos, stateId);
+            world.playBlockSound(position, customState.settings().sounds().breakSound());
+            FastNMS.INSTANCE.method$LevelAccessor$levelEvent(level, WorldEvents.BLOCK_BREAK_EFFECT, blockPos, customState.customBlockState().registryId());
             return MBlocks.AIR$defaultState;
         }
         return state;
@@ -118,6 +105,7 @@ public class PressurePlateBlockBehavior extends BukkitBlockBehavior {
         if (signalForState == 0) {
             this.checkPressed(args[3], args[1], args[2], state, signalForState, thisBlock);
         } else {
+            // todo 为什么
             FastNMS.INSTANCE.method$LevelAccessor$scheduleBlockTick(args[1], args[2], thisBlock, this.pressedTime);
         }
     }
@@ -128,13 +116,13 @@ public class PressurePlateBlockBehavior extends BukkitBlockBehavior {
             case MOBS -> CoreReflections.clazz$LivingEntity;
         };
         Object box = FastNMS.INSTANCE.method$AABB$move(CoreReflections.instance$BasePressurePlateBlock$TOUCH_AABB, pos);
-        return FastNMS.INSTANCE.method$BasePressurePlateBlock$getEntityCount(level, box, clazz) > 0 ? 15 : 0;
+        return FastNMS.INSTANCE.method$EntityGetter$getEntitiesOfClass(level, box, clazz) > 0 ? 15 : 0;
     }
 
     private Object setSignalForState(Object state, int strength) {
-        ImmutableBlockState blockState = BukkitBlockManager.instance().getImmutableBlockState(BlockStateUtils.blockStateToId(state));
-        if (blockState == null || blockState.isEmpty()) return state;
-        return blockState.with(this.poweredProperty, strength > 0).customBlockState().handle();
+        Optional<ImmutableBlockState> optionalCustomState = BlockStateUtils.getOptionalCustomBlockState(state);
+        if (optionalCustomState.isEmpty()) return state;
+        return optionalCustomState.get().with(this.poweredProperty, strength > 0).customBlockState().handle();
     }
 
     private void checkPressed(@Nullable Object entity, Object level, Object pos, Object state, int currentSignal, Object thisBlock) {
@@ -205,9 +193,8 @@ public class PressurePlateBlockBehavior extends BukkitBlockBehavior {
     }
 
     private int getSignalForState(Object state) {
-        ImmutableBlockState blockState = BukkitBlockManager.instance().getImmutableBlockState(BlockStateUtils.blockStateToId(state));
-        if (blockState == null || blockState.isEmpty()) return 0;
-        return blockState.get(this.poweredProperty) ? 15 : 0;
+        Optional<ImmutableBlockState> optionalCustomState = BlockStateUtils.getOptionalCustomBlockState(state);
+        return optionalCustomState.filter(immutableBlockState -> immutableBlockState.get(this.poweredProperty)).map(immutableBlockState -> 15).orElse(0);
     }
 
     @Override

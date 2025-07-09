@@ -36,7 +36,7 @@ public class RemoveComponentModifier<I> implements ItemDataModifier<I> {
     @Override
     public Item<I> prepareNetworkItem(Item<I> item, ItemBuildContext context, CompoundTag networkData) {
         for (String component : this.arguments) {
-            Tag previous = item.getNBTComponent(component);
+            Tag previous = item.getSparrowNBTComponent(component);
             if (previous != null) {
                 networkData.put(component, NetworkItemHandler.pack(NetworkItemHandler.Operation.ADD, previous));
             }

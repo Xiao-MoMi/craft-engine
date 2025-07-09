@@ -50,4 +50,8 @@ public class BlockPos extends Vec3i {
     public static long asLong(int x, int y, int z) {
         return (((long) x & (long) 67108863) << 38) | (((long) y & (long) 4095)) | (((long) z & (long) 67108863) << 12);
     }
+
+    public BlockPos offset(int x, int y, int z) {
+        return x == 0 && y == 0 && z == 0 ? this : new BlockPos(this.x() + x, this.y() + y, this.z() + z);
+    }
 }

@@ -7,6 +7,7 @@ import org.joml.Vector3f;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 public class MiscUtils {
 
@@ -92,8 +93,10 @@ public class MiscUtils {
             String[] split = stringFormat.split(",");
             if (split.length == 4) {
                 return new Quaternionf(Float.parseFloat(split[0]), Float.parseFloat(split[1]), Float.parseFloat(split[2]), Float.parseFloat(split[3]));
+            } else if (split.length == 3) {
+                return QuaternionUtils.toQuaternionf((float) Math.toRadians(Float.parseFloat(split[2])), (float) Math.toRadians(Float.parseFloat(split[1])), (float) Math.toRadians(Float.parseFloat(split[0])));
             } else if (split.length == 1) {
-                return QuaternionUtils.toQuaternionf(0, Math.toRadians(Float.parseFloat(split[0])), 0);
+                return QuaternionUtils.toQuaternionf(0, (float) -Math.toRadians(Float.parseFloat(split[0])), 0);
             } else {
                 throw new LocalizedResourceConfigException("warning.config.type.quaternionf", stringFormat, option);
             }
@@ -126,6 +129,14 @@ public class MiscUtils {
                     baseMap.put(key, value);
                 }
             }
+        }
+    }
+
+    public static <T> T requireNonNullIf(T o, boolean condition) {
+        if (condition) {
+            return Objects.requireNonNull(o);
+        } else {
+            return o;
         }
     }
 }

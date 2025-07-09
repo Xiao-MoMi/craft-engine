@@ -355,10 +355,12 @@ public class BlockSettings {
         return this;
     }
 
+    @FunctionalInterface
     public interface Modifier {
 
         void apply(BlockSettings settings);
 
+        @FunctionalInterface
         interface Factory {
 
             Modifier createModifier(Object value);

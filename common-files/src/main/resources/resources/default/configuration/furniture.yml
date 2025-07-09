@@ -69,7 +69,7 @@ items:
                 display-transform: NONE
                 billboard: FIXED
                 translation: 0,0.5,0
-                rotation: -90
+                rotation: 90
             hitboxes:
               - position: 0,0,0
                 type: interaction

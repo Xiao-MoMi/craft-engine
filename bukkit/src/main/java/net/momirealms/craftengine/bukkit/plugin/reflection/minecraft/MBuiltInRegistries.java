@@ -1,5 +1,7 @@
 package net.momirealms.craftengine.bukkit.plugin.reflection.minecraft;
 
+import net.momirealms.craftengine.bukkit.plugin.reflection.ReflectionInitException;
+
 import java.lang.reflect.Field;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
@@ -18,6 +20,7 @@ public final class MBuiltInRegistries {
     public static final Object FLUID;
     public static final Object RECIPE_TYPE;
     public static final Object PARTICLE_TYPE;
+    public static final Object DATA_COMPONENT_TYPE;
 
     static {
         Field[] fields = CoreReflections.clazz$BuiltInRegistries.getDeclaredFields();
@@ -31,6 +34,7 @@ public final class MBuiltInRegistries {
             Object registries$Item  = null;
             Object registries$Fluid  = null;
             Object registries$RecipeType  = null;
+            Object registries$DataComponentType  = null;
             for (Field field : fields) {
                 Type fieldType = field.getGenericType();
                 if (fieldType instanceof ParameterizedType paramType) {
@@ -43,6 +47,8 @@ public final class MBuiltInRegistries {
                             registries$EntityType = field.get(null);
                         } else if (rawType == CoreReflections.clazz$RecipeType) {
                             registries$RecipeType = field.get(null);
+                        } else if (rawType == CoreReflections.clazz$DataComponentType && registries$DataComponentType == null) {
+                            registries$DataComponentType = field.get(null);
                         }
                     } else {
                         if (type == CoreReflections.clazz$Block) {
@@ -70,8 +76,9 @@ public final class MBuiltInRegistries {
             ENTITY_TYPE = requireNonNull(registries$EntityType);
             FLUID = requireNonNull(registries$Fluid);
             RECIPE_TYPE = requireNonNull(registries$RecipeType);
+            DATA_COMPONENT_TYPE = registries$DataComponentType;
         } catch (ReflectiveOperationException e) {
-            throw new RuntimeException(e);
+            throw new ReflectionInitException("Failed to init BuiltInRegistries", e);
         }
     }
 }

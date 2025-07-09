@@ -19,6 +19,7 @@ import net.momirealms.craftengine.core.world.Vec3d;
 import net.momirealms.craftengine.core.world.WorldPosition;
 
 import java.util.Map;
+import java.util.Optional;
 import java.util.concurrent.Callable;
 
 public class FallingBlockBehavior extends BukkitBlockBehavior {
@@ -41,15 +42,8 @@ public class FallingBlockBehavior extends BukkitBlockBehavior {
 
     @Override
     public Object updateShape(Object thisBlock, Object[] args, Callable<Object> superMethod) {
-        Object world;
-        Object blockPos;
-        if (VersionHelper.isOrAbove1_21_2()) {
-            world = args[1];
-            blockPos = args[3];
-        } else {
-            world = args[3];
-            blockPos = args[4];
-        }
+        Object world = args[updateShape$level];
+        Object blockPos = args[updateShape$blockPos];
         FastNMS.INSTANCE.method$LevelAccessor$scheduleBlockTick(world, blockPos, thisBlock, 2);
         return args[0];
     }
@@ -79,6 +73,7 @@ public class FallingBlockBehavior extends BukkitBlockBehavior {
         }
     }
 
+    @SuppressWarnings("DuplicatedCode")
     @Override
     public void onBrokenAfterFall(Object thisBlock, Object[] args) throws Exception {
         // Use EntityRemoveEvent for 1.20.3+
@@ -88,21 +83,21 @@ public class FallingBlockBehavior extends BukkitBlockBehavior {
         boolean cancelDrop = (boolean) CoreReflections.field$FallingBlockEntity$cancelDrop.get(fallingBlockEntity);
         if (cancelDrop) return;
         Object blockState = CoreReflections.field$FallingBlockEntity$blockState.get(fallingBlockEntity);
-        int stateId = BlockStateUtils.blockStateToId(blockState);
-        ImmutableBlockState immutableBlockState = BukkitBlockManager.instance().getImmutableBlockState(stateId);
-        if (immutableBlockState == null || immutableBlockState.isEmpty()) return;
+        Optional<ImmutableBlockState> optionalCustomState = BlockStateUtils.getOptionalCustomBlockState(blockState);
+        if (optionalCustomState.isEmpty()) return;
+        ImmutableBlockState customState = optionalCustomState.get();
         net.momirealms.craftengine.core.world.World world = new BukkitWorld(FastNMS.INSTANCE.method$Level$getCraftWorld(level));
         WorldPosition position = new WorldPosition(world, CoreReflections.field$Entity$xo.getDouble(fallingBlockEntity), CoreReflections.field$Entity$yo.getDouble(fallingBlockEntity), CoreReflections.field$Entity$zo.getDouble(fallingBlockEntity));
         ContextHolder.Builder builder = ContextHolder.builder()
                 .withParameter(DirectContextParameters.FALLING_BLOCK, true)
                 .withParameter(DirectContextParameters.POSITION, position);
-        for (Item<Object> item : immutableBlockState.getDrops(builder, world, null)) {
+        for (Item<Object> item : customState.getDrops(builder, world, null)) {
             world.dropItemNaturally(position, item);
         }
         Object entityData = CoreReflections.field$Entity$entityData.get(fallingBlockEntity);
         boolean isSilent = (boolean) CoreReflections.method$SynchedEntityData$get.invoke(entityData, CoreReflections.instance$Entity$DATA_SILENT);
         if (!isSilent) {
-            world.playBlockSound(position, immutableBlockState.sounds().destroySound());
+            world.playBlockSound(position, customState.settings().sounds().destroySound());
         }
     }
 
@@ -119,7 +114,7 @@ public class FallingBlockBehavior extends BukkitBlockBehavior {
         if (immutableBlockState == null || immutableBlockState.isEmpty()) return;
         if (!isSilent) {
             net.momirealms.craftengine.core.world.World world = new BukkitWorld(FastNMS.INSTANCE.method$Level$getCraftWorld(level));
-            world.playBlockSound(Vec3d.atCenterOf(LocationUtils.fromBlockPos(pos)), immutableBlockState.sounds().landSound());
+            world.playBlockSound(Vec3d.atCenterOf(LocationUtils.fromBlockPos(pos)), immutableBlockState.settings().sounds().landSound());
         }
     }
 

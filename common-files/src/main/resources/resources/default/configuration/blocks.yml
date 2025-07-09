@@ -67,6 +67,9 @@ items#misc:
           template:
             - default:pickaxe_power/level_4
           overrides:
+            tags:
+              - minecraft:mineable/pickaxe
+              - minecraft:anvil
             sounds:
               break: minecraft:block.anvil.break
               step: minecraft:block.anvil.step

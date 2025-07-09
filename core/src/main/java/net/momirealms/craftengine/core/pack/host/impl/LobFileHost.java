@@ -56,23 +56,19 @@ public class LobFileHost implements ResourcePackHost {
     }
 
     public void readCacheFromDisk() {
-        Path cachePath = CraftEngine.instance().dataFolderPath().resolve("lobfile.cache");
-        if (!Files.exists(cachePath)) return;
-
+        Path cachePath = CraftEngine.instance().dataFolderPath().resolve("cache").resolve("lobfile.json");
+        if (!Files.exists(cachePath) || !Files.isRegularFile(cachePath)) return;
         try (InputStream is = Files.newInputStream(cachePath)) {
             Map<String, String> cache = GsonHelper.get().fromJson(
                     new InputStreamReader(is),
                     new TypeToken<Map<String, String>>(){}.getType()
             );
-
             this.url = cache.get("url");
             this.sha1 = cache.get("sha1");
-
             String uuidString = cache.get("uuid");
             if (uuidString != null && !uuidString.isEmpty()) {
                 this.uuid = UUID.fromString(uuidString);
             }
-
             CraftEngine.instance().logger().info("[LobFile] Loaded cached resource pack info");
         } catch (Exception e) {
             CraftEngine.instance().logger().warn(
@@ -85,9 +81,9 @@ public class LobFileHost implements ResourcePackHost {
         cache.put("url", this.url);
         cache.put("sha1", this.sha1);
         cache.put("uuid", this.uuid != null ? this.uuid.toString() : "");
-
-        Path cachePath = CraftEngine.instance().dataFolderPath().resolve("lobfile.cache");
+        Path cachePath = CraftEngine.instance().dataFolderPath().resolve("cache").resolve("lobfile.json");
         try {
+            Files.createDirectories(cachePath.getParent());
             Files.writeString(
                     cachePath,
                     GsonHelper.get().toJson(cache),

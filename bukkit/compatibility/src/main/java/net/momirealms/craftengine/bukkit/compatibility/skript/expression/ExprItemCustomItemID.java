@@ -55,10 +55,9 @@ public class ExprItemCustomItemID extends SimplePropertyExpression<Object, Strin
                 Item<ItemStack> item1 = BukkitItemManager.instance().wrap(itemStack);
                 Item<ItemStack> item2 = BukkitItemManager.instance().createWrappedItem(id, null);
                 item1.merge(item2);
-                item1.load();
             } else if (item instanceof ItemType itemType) {
                 Item<ItemStack> item2 = BukkitItemManager.instance().createWrappedItem(id, null);
-                itemType.setItemMeta(item2.load().getItemMeta());
+                itemType.setItemMeta(item2.getItem().getItemMeta());
             }
         }
     }

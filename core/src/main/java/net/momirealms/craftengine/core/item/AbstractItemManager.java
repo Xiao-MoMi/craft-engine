@@ -1,13 +1,17 @@
 package net.momirealms.craftengine.core.item;
 
+import net.momirealms.craftengine.core.attribute.AttributeModifier;
 import net.momirealms.craftengine.core.item.behavior.ItemBehavior;
 import net.momirealms.craftengine.core.item.behavior.ItemBehaviors;
+import net.momirealms.craftengine.core.item.data.Enchantment;
+import net.momirealms.craftengine.core.item.data.JukeboxPlayable;
+import net.momirealms.craftengine.core.item.equipment.*;
 import net.momirealms.craftengine.core.item.modifier.*;
 import net.momirealms.craftengine.core.item.setting.EquipmentData;
+import net.momirealms.craftengine.core.pack.AbstractPackManager;
 import net.momirealms.craftengine.core.pack.LoadingSequence;
 import net.momirealms.craftengine.core.pack.Pack;
 import net.momirealms.craftengine.core.pack.ResourceLocation;
-import net.momirealms.craftengine.core.pack.misc.EquipmentGeneration;
 import net.momirealms.craftengine.core.pack.model.*;
 import net.momirealms.craftengine.core.pack.model.generation.AbstractModelGenerator;
 import net.momirealms.craftengine.core.pack.model.generation.ModelGeneration;
@@ -41,16 +45,17 @@ public abstract class AbstractItemManager<I> extends AbstractModelGenerator impl
     protected static final Map<Key, List<Holder<Key>>> VANILLA_ITEM_TAGS = new HashMap<>();
 
     private final ItemParser itemParser;
+    private final EquipmentParser equipmentParser;
     protected final Map<String, ExternalItemProvider<I>> externalItemProviders = new HashMap<>();
     protected final Map<String, Function<Object, ItemDataModifier<I>>> dataFunctions = new HashMap<>();
     protected final Map<Key, CustomItem<I>> customItems = new HashMap<>();
-    protected final Map<Key, List<Holder<Key>>> customItemTags;
-    protected final Map<Key, Map<Integer, Key>> cmdConflictChecker;
-    protected final Map<Key, ModernItemModel> modernItemModels1_21_4;
-    protected final Map<Key, TreeSet<LegacyOverridesModel>> modernItemModels1_21_2;
-    protected final Map<Key, TreeSet<LegacyOverridesModel>> legacyOverrides;
-    protected final Map<Key, TreeMap<Integer, ModernItemModel>> modernOverrides;
-    protected final Set<EquipmentGeneration> equipmentsToGenerate;
+    protected final Map<Key, List<Holder<Key>>> customItemTags = new HashMap<>();
+    protected final Map<Key, Map<Integer, Key>> cmdConflictChecker = new HashMap<>();
+    protected final Map<Key, ModernItemModel> modernItemModels1_21_4 = new HashMap<>();
+    protected final Map<Key, TreeSet<LegacyOverridesModel>> modernItemModels1_21_2 = new HashMap<>();
+    protected final Map<Key, TreeSet<LegacyOverridesModel>> legacyOverrides = new HashMap<>();
+    protected final Map<Key, TreeMap<Integer, ModernItemModel>> modernOverrides = new HashMap<>();
+    protected final Map<Key, Equipment> equipments = new HashMap<>();
     // Cached command suggestions
     protected final List<Suggestion> cachedSuggestions = new ArrayList<>();
     protected final List<Suggestion> cachedTotemSuggestions = new ArrayList<>();
@@ -58,20 +63,14 @@ public abstract class AbstractItemManager<I> extends AbstractModelGenerator impl
     protected AbstractItemManager(CraftEngine plugin) {
         super(plugin);
         this.itemParser = new ItemParser();
+        this.equipmentParser = new EquipmentParser();
         this.registerFunctions();
-        this.legacyOverrides = new HashMap<>();
-        this.modernOverrides = new HashMap<>();
-        this.customItemTags = new HashMap<>();
-        this.cmdConflictChecker = new HashMap<>();
-        this.modernItemModels1_21_4 = new HashMap<>();
-        this.modernItemModels1_21_2 = new HashMap<>();
-        this.equipmentsToGenerate = new HashSet<>();
     }
 
     @Override
     public void registerDataType(Function<Object, ItemDataModifier<I>> factory, String... alias) {
         for (String a : alias) {
-            dataFunctions.put(a, factory);
+            this.dataFunctions.put(a, factory);
         }
     }
 
@@ -84,11 +83,11 @@ public abstract class AbstractItemManager<I> extends AbstractModelGenerator impl
     protected void applyDataFunctions(Map<String, Object> dataSection, Consumer<ItemDataModifier<I>> consumer) {
         if (dataSection != null) {
             for (Map.Entry<String, Object> dataEntry : dataSection.entrySet()) {
-                Optional.ofNullable(dataFunctions.get(dataEntry.getKey())).ifPresent(function -> {
+                Optional.ofNullable(this.dataFunctions.get(dataEntry.getKey())).ifPresent(function -> {
                     try {
                         consumer.accept(function.apply(dataEntry.getValue()));
                     } catch (IllegalArgumentException e) {
-                        plugin.logger().warn("Invalid data format", e);
+                        this.plugin.logger().warn("Invalid data format", e);
                     }
                 });
             }
@@ -96,8 +95,8 @@ public abstract class AbstractItemManager<I> extends AbstractModelGenerator impl
     }
 
     @Override
-    public ConfigParser parser() {
-        return this.itemParser;
+    public ConfigParser[] parsers() {
+        return new ConfigParser[]{this.itemParser, this.equipmentParser};
     }
 
     @Override
@@ -121,10 +120,20 @@ public abstract class AbstractItemManager<I> extends AbstractModelGenerator impl
         this.legacyOverrides.clear();
         this.modernOverrides.clear();
         this.customItemTags.clear();
-        this.equipmentsToGenerate.clear();
+        this.equipments.clear();
         this.cmdConflictChecker.clear();
         this.modernItemModels1_21_4.clear();
         this.modernItemModels1_21_2.clear();
+    }
+
+    @Override
+    public Map<Key, Equipment> equipments() {
+        return Collections.unmodifiableMap(this.equipments);
+    }
+
+    @Override
+    public Optional<Equipment> getEquipment(Key key) {
+        return Optional.ofNullable(this.equipments.get(key));
     }
 
     @Override
@@ -149,16 +158,6 @@ public abstract class AbstractItemManager<I> extends AbstractModelGenerator impl
         Set<Key> tags = customItem.settings().tags();
         for (Key tag : tags) {
             this.customItemTags.computeIfAbsent(tag, k -> new ArrayList<>()).add(customItem.idHolder());
-        }
-        // equipment generation
-        EquipmentGeneration equipment = customItem.settings().equipment();
-        if (equipment != null) {
-            EquipmentData modern = equipment.modernData();
-            // 1.21.2+
-            if (modern != null) {
-                this.equipmentsToGenerate.add(equipment);
-            }
-            // TODO 1.20
         }
         return true;
     }
@@ -250,16 +249,56 @@ public abstract class AbstractItemManager<I> extends AbstractModelGenerator impl
     }
 
     @Override
-    public Collection<EquipmentGeneration> equipmentsToGenerate() {
-        return Collections.unmodifiableCollection(this.equipmentsToGenerate);
-    }
-
-    @Override
     public boolean isVanillaItem(Key item) {
         return VANILLA_ITEMS.contains(item);
     }
 
     protected abstract CustomItem.Builder<I> createPlatformItemBuilder(Holder<Key> id, Key material, Key clientBoundMaterial);
+
+    protected abstract void registerArmorTrimPattern(Collection<Key> equipments);
+
+    public class EquipmentParser implements ConfigParser {
+        public static final String[] CONFIG_SECTION_NAME = new String[] {"equipments", "equipment"};
+
+        @Override
+        public String[] sectionId() {
+            return CONFIG_SECTION_NAME;
+        }
+
+        @Override
+        public int loadingSequence() {
+            return LoadingSequence.EQUIPMENT;
+        }
+
+        @Override
+        public void parseSection(Pack pack, Path path, Key id, Map<String, Object> section) {
+            if (AbstractItemManager.this.equipments.containsKey(id)) {
+                throw new LocalizedResourceConfigException("warning.config.equipment.duplicate");
+            }
+            Equipment equipment = Equipments.fromMap(id, section);
+            AbstractItemManager.this.equipments.put(id, equipment);
+        }
+
+        @Override
+        public void postProcess() {
+            List<Key> trims = AbstractItemManager.this.equipments.values().stream()
+                    .filter(TrimBasedEquipment.class::isInstance)
+                    .map(Equipment::assetId)
+                    .toList();
+            registerArmorTrimPattern(trims);
+        }
+    }
+
+    public void addOrMergeEquipment(ComponentBasedEquipment equipment) {
+        Equipment previous = this.equipments.get(equipment.assetId());
+        if (previous instanceof ComponentBasedEquipment another) {
+            for (Map.Entry<EquipmentLayerType, List<ComponentBasedEquipment.Layer>> entry : equipment.layers().entrySet()) {
+                another.addLayer(entry.getKey(), entry.getValue());
+            }
+        } else {
+            this.equipments.put(equipment.assetId(), equipment);
+        }
+    }
 
     public class ItemParser implements ConfigParser {
         public static final String[] CONFIG_SECTION_NAME = new String[] {"items", "item"};
@@ -297,6 +336,7 @@ public abstract class AbstractItemManager<I> extends AbstractModelGenerator impl
             Key material = Key.from(isVanillaItem ? id.value() : ResourceConfigUtils.requireNonEmptyStringOrThrow(section.get("material"), "warning.config.item.missing_material").toLowerCase(Locale.ENGLISH));
             Key clientBoundMaterial = section.containsKey("client-bound-material") ? Key.from(section.get("client-bound-material").toString().toLowerCase(Locale.ENGLISH)) : material;
             int customModelData = ResourceConfigUtils.getAsInt(section.getOrDefault("custom-model-data", 0), "custom-model-data");
+            boolean clientBoundModel = section.containsKey("client-bound-model") ? ResourceConfigUtils.getAsBoolean(section.get("client-bound-data"), "client-bound-data") : Config.globalClientboundModel();
             if (customModelData < 0) {
                 throw new LocalizedResourceConfigException("warning.config.item.invalid_custom_model_data", String.valueOf(customModelData));
             }
@@ -312,7 +352,11 @@ public abstract class AbstractItemManager<I> extends AbstractModelGenerator impl
             // To get at least one model provider
             // Sets some basic model info
             if (customModelData > 0) {
-                itemBuilder.dataModifier(new CustomModelDataModifier<>(customModelData));
+                if (clientBoundModel) {
+                    itemBuilder.clientBoundDataModifier(new CustomModelDataModifier<>(customModelData));
+                } else {
+                    itemBuilder.dataModifier(new CustomModelDataModifier<>(customModelData));
+                }
             }
             // Requires the item to have model before apply item-model
             else if (!hasItemModelSection && section.containsKey("model") && VersionHelper.isOrAbove1_21_2()) {
@@ -320,7 +364,11 @@ public abstract class AbstractItemManager<I> extends AbstractModelGenerator impl
                 // customize or use the id
                 itemModelKey = Key.from(section.getOrDefault("item-model", id.toString()).toString());
                 if (ResourceLocation.isValid(itemModelKey.toString())) {
-                    itemBuilder.dataModifier(new ItemModelModifier<>(itemModelKey));
+                    if (clientBoundModel) {
+                        itemBuilder.clientBoundDataModifier(new ItemModelModifier<>(itemModelKey));
+                    } else {
+                        itemBuilder.dataModifier(new ItemModelModifier<>(itemModelKey));
+                    }
                 } else {
                     itemModelKey = null;
                 }
@@ -328,7 +376,11 @@ public abstract class AbstractItemManager<I> extends AbstractModelGenerator impl
 
             if (hasItemModelSection && VersionHelper.isOrAbove1_21_2()) {
                 itemModelKey = Key.from(section.get("item-model").toString());
-                itemBuilder.dataModifier(new ItemModelModifier<>(itemModelKey));
+                if (clientBoundModel) {
+                    itemBuilder.clientBoundDataModifier(new ItemModelModifier<>(itemModelKey));
+                } else {
+                    itemBuilder.dataModifier(new ItemModelModifier<>(itemModelKey));
+                }
             }
 
             // Get item data
@@ -353,6 +405,11 @@ public abstract class AbstractItemManager<I> extends AbstractModelGenerator impl
             // add it to category
             if (section.containsKey("category")) {
                 AbstractItemManager.this.plugin.itemBrowserManager().addExternalCategoryMember(id, MiscUtils.getAsStringList(section.get("category")).stream().map(Key::of).toList());
+            }
+
+            // 不处理原版物品的模型
+            if (isVanillaItem) {
+                return;
             }
 
             // model part, can be null
@@ -398,18 +455,21 @@ public abstract class AbstractItemManager<I> extends AbstractModelGenerator impl
                 }
             }
 
+            boolean isVanillaItemModel = itemModelKey != null && AbstractPackManager.PRESET_ITEMS.containsKey(itemModelKey);
+
             // use custom model data
             if (customModelData != 0) {
                 // use custom model data
-                // check conflict
-                Map<Integer, Key> conflict = AbstractItemManager.this.cmdConflictChecker.computeIfAbsent(clientBoundMaterial, k -> new HashMap<>());
+                // 其实这很奇怪，因为1.21.2以下并不支持item model，但是如果强行配置，那么不阻拦
+                Key finalBaseModel = isVanillaItemModel ? itemModelKey : clientBoundMaterial;
+                Map<Integer, Key> conflict = AbstractItemManager.this.cmdConflictChecker.computeIfAbsent(finalBaseModel, k -> new HashMap<>());
                 if (conflict.containsKey(customModelData)) {
                     throw new LocalizedResourceConfigException("warning.config.item.custom_model_data_conflict", String.valueOf(customModelData), conflict.get(customModelData).toString());
                 }
                 conflict.put(customModelData, id);
                 // Parse models
                 if (isModernFormatRequired() && modernModel != null) {
-                    TreeMap<Integer, ModernItemModel> map = AbstractItemManager.this.modernOverrides.computeIfAbsent(clientBoundMaterial, k -> new TreeMap<>());
+                    TreeMap<Integer, ModernItemModel> map = AbstractItemManager.this.modernOverrides.computeIfAbsent(finalBaseModel, k -> new TreeMap<>());
                     map.put(customModelData, new ModernItemModel(
                             modernModel,
                             ResourceConfigUtils.getAsBoolean(section.getOrDefault("oversized-in-gui", true), "oversized-in-gui"),
@@ -417,13 +477,15 @@ public abstract class AbstractItemManager<I> extends AbstractModelGenerator impl
                     ));
                 }
                 if (needsLegacyCompatibility() && legacyOverridesModels != null && !legacyOverridesModels.isEmpty()) {
-                    TreeSet<LegacyOverridesModel> lom = AbstractItemManager.this.legacyOverrides.computeIfAbsent(clientBoundMaterial, k -> new TreeSet<>());
+                    TreeSet<LegacyOverridesModel> lom = AbstractItemManager.this.legacyOverrides.computeIfAbsent(finalBaseModel, k -> new TreeSet<>());
                     lom.addAll(legacyOverridesModels);
                 }
+            } else if (isVanillaItemModel) {
+                throw new IllegalArgumentException("You are not allowed to use vanilla 'item-model' without specifying a 'custom-model-data'.");
             }
 
-            // use item model
-            if (itemModelKey != null) {
+            // use item model, but not a vanilla model
+            if (itemModelKey != null && !isVanillaItemModel) {
                 if (isModernFormatRequired() && modernModel != null) {
                     AbstractItemManager.this.modernItemModels1_21_4.put(itemModelKey, new ModernItemModel(
                             modernModel,
@@ -447,16 +509,23 @@ public abstract class AbstractItemManager<I> extends AbstractModelGenerator impl
             ExternalItemProvider<I> provider = AbstractItemManager.this.getExternalItemProvider(plugin);
             return new ExternalModifier<>(id, Objects.requireNonNull(provider, "Item provider " + plugin + " not found"));
         }, "external");
+        if (VersionHelper.isOrAbove1_20_5()) {
+            registerDataType((obj) -> {
+                String name = obj.toString();
+                return new CustomNameModifier<>(name);
+            }, "custom-name");
+            registerDataType((obj) -> {
+                String name = obj.toString();
+                return new ItemNameModifier<>(name);
+            }, "item-name", "display-name");
+        } else {
+            registerDataType((obj) -> {
+                String name = obj.toString();
+                return new CustomNameModifier<>(name);
+            }, "custom-name", "item-name", "display-name");
+        }
         registerDataType((obj) -> {
-            String name = obj.toString();
-            return new CustomNameModifier<>(Config.nonItalic() ? "<!i>" + name : name);
-        }, "custom-name");
-        registerDataType((obj) -> {
-            String name = obj.toString();
-            return new ItemNameModifier<>(Config.nonItalic() ? "<!i>" + name : name);
-        }, "item-name", "display-name");
-        registerDataType((obj) -> {
-            List<String> lore = MiscUtils.getAsStringList(obj).stream().map(it -> "<!i>" + it).toList();
+            List<String> lore = MiscUtils.getAsStringList(obj);
             return new LoreModifier<>(lore);
         }, "lore", "display-lore", "description");
         registerDataType((obj) -> {
@@ -482,6 +551,38 @@ public abstract class AbstractItemManager<I> extends AbstractModelGenerator impl
                 return new TagsModifier<>(data);
             }, "tags", "tag", "nbt");
         }
+        registerDataType((object -> {
+            MutableInt mutableInt = new MutableInt(0);
+            List<AttributeModifier> attributeModifiers = ResourceConfigUtils.parseConfigAsList(object, (map) -> {
+                String type = ResourceConfigUtils.requireNonEmptyStringOrThrow(map.get("type"), "warning.config.item.data.attribute_modifiers.missing_type");
+                Key nativeType = AttributeModifiersModifier.getNativeAttributeName(Key.of(type));
+                AttributeModifier.Slot slot = AttributeModifier.Slot.valueOf(map.getOrDefault("slot", "any").toString().toUpperCase(Locale.ENGLISH));
+                Key id = Optional.ofNullable(map.get("id")).map(String::valueOf).map(Key::of).orElseGet(() -> {
+                    mutableInt.add(1);
+                    return Key.of("craftengine", "modifier_" + mutableInt.intValue());
+                });
+                double amount = ResourceConfigUtils.getAsDouble(
+                        ResourceConfigUtils.requireNonNullOrThrow(map.get("amount"), "warning.config.item.data.attribute_modifiers.missing_amount"), "amount"
+                );
+                AttributeModifier.Operation operation = AttributeModifier.Operation.valueOf(
+                        ResourceConfigUtils.requireNonEmptyStringOrThrow(map.get("operation"), "warning.config.item.data.attribute_modifiers.missing_operation").toUpperCase(Locale.ENGLISH)
+                );
+                AttributeModifier.Display display = null;
+                if (VersionHelper.isOrAbove1_21_6() && map.containsKey("display")) {
+                    Map<String, Object> displayMap = MiscUtils.castToMap(map.get("display"), false);
+                    AttributeModifier.Display.Type displayType = AttributeModifier.Display.Type.valueOf(ResourceConfigUtils.requireNonEmptyStringOrThrow(displayMap.get("type"), "warning.config.item.data.attribute_modifiers.display.missing_type").toUpperCase(Locale.ENGLISH));
+                    if (displayType == AttributeModifier.Display.Type.OVERRIDE) {
+                        String miniMessageValue = ResourceConfigUtils.requireNonEmptyStringOrThrow(displayMap.get("value"), "warning.config.item.data.attribute_modifiers.display.missing_value");
+                        display = new AttributeModifier.Display(displayType, miniMessageValue);
+                    } else {
+                        display = new AttributeModifier.Display(displayType, null);
+                    }
+                }
+                return new AttributeModifier(nativeType.value(), slot, id,
+                        amount, operation, display);
+            });
+            return new AttributeModifiersModifier<>(attributeModifiers);
+        }), "attributes", "attribute-modifiers", "attribute-modifier");
         registerDataType((obj) -> {
             boolean value = TypeUtils.checkType(obj, Boolean.class);
             return new UnbreakableModifier<>(value);
@@ -506,6 +607,10 @@ public abstract class AbstractItemManager<I> extends AbstractModelGenerator impl
             String pattern = data.get("pattern").toString().toLowerCase(Locale.ENGLISH);
             return new TrimModifier<>(material, pattern);
         }, "trim");
+        registerDataType((obj) -> {
+            List<Key> components = MiscUtils.getAsStringList(obj).stream().map(Key::of).toList();
+            return new HideTooltipModifier<>(components);
+        }, "hide-tooltip", "hide-flags");
         registerDataType((obj) -> {
             Map<String, Object> data = MiscUtils.castToMap(obj, false);
             Map<String, TextProvider> arguments = new HashMap<>();
@@ -672,7 +777,7 @@ public abstract class AbstractItemManager<I> extends AbstractModelGenerator impl
                 List<String> cases = entry.getKey().fallbackOrMapPrimary(List::of);
                 for (String caseValue : cases) {
                     Number legacyValue = predicate.toLegacyValue(caseValue);
-                    if (predicate instanceof TrimMaterialSelectProperty property && property.isArmor(materialId)) {
+                    if (predicate instanceof TrimMaterialSelectProperty) {
                         if (legacyValue.floatValue() > 1f) {
                             continue;
                         }
@@ -713,7 +818,7 @@ public abstract class AbstractItemManager<I> extends AbstractModelGenerator impl
                             materialId,
                             customModelData
                     );
-                } else if (predicate instanceof TrimMaterialSelectProperty property && property.isArmor(materialId)) {
+                } else if (predicate instanceof TrimMaterialSelectProperty) {
                     processModelRecursively(
                             model.fallBack(),
                             mergePredicates(

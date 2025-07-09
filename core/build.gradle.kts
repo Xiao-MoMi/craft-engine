@@ -21,11 +21,10 @@ dependencies {
     implementation("net.momirealms:sparrow-nbt-codec:${rootProject.properties["sparrow_nbt_version"]}")
     implementation("net.momirealms:sparrow-nbt-legacy-codec:${rootProject.properties["sparrow_nbt_version"]}")
     // S3
-    implementation("net.momirealms:craft-engine-s3:0.2")
+    implementation("net.momirealms:craft-engine-s3:0.3")
     // Util
     compileOnly("net.momirealms:sparrow-util:${rootProject.properties["sparrow_util_version"]}")
     // Adventure
-    // TODO Create an API module
     compileOnly("net.kyori:adventure-api:${rootProject.properties["adventure_bundle_version"]}")
     compileOnly("net.kyori:adventure-text-minimessage:${rootProject.properties["adventure_bundle_version"]}")
     compileOnly("net.kyori:adventure-text-serializer-gson:${rootProject.properties["adventure_bundle_version"]}") {
@@ -64,6 +63,8 @@ dependencies {
     compileOnly("com.google.jimfs:jimfs:${rootProject.properties["jimfs_version"]}")
     // Brigadier
     compileOnly("com.mojang:brigadier:${rootProject.properties["mojang_brigadier_version"]}")
+    // authlib
+    compileOnly("com.mojang:authlib:${rootProject.properties["authlib_version"]}")
 }
 
 java {
@@ -87,7 +88,6 @@ tasks {
         archiveFileName = "craft-engine-core-${rootProject.properties["project_version"]}.jar"
         relocate("net.kyori", "net.momirealms.craftengine.libraries")
         relocate("dev.dejvokep", "net.momirealms.craftengine.libraries")
-        relocate("com.saicone.rtag", "net.momirealms.craftengine.libraries.rtag")
         relocate("org.yaml.snakeyaml", "net.momirealms.craftengine.libraries.snakeyaml")
         relocate("net.kyori", "net.momirealms.craftengine.libraries")
         relocate("org.ahocorasick", "net.momirealms.craftengine.libraries.ahocorasick")

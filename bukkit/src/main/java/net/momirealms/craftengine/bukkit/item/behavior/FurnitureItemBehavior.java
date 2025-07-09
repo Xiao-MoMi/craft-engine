@@ -117,7 +117,7 @@ public class FurnitureItemBehavior extends ItemBehavior {
             }
         }
 
-        if (!BukkitCraftEngine.instance().antiGrief().canPlace(bukkitPlayer, furnitureLocation)) {
+        if (!BukkitCraftEngine.instance().antiGriefProvider().canPlace(bukkitPlayer, furnitureLocation)) {
             return InteractionResult.FAIL;
         }
 
@@ -135,6 +135,7 @@ public class FurnitureItemBehavior extends ItemBehavior {
                         .item(item.copyWithCount(1))
                         .anchorType(anchorType)
                         .dyedColor(item.dyedColor().orElse(null))
+                        .fireworkExplosionColors(item.fireworkExplosion().map(explosion -> explosion.colors().toIntArray()).orElse(null))
                         .build(), false);
 
         FurniturePlaceEvent placeEvent = new FurniturePlaceEvent(bukkitPlayer, bukkitFurniture, furnitureLocation, context.getHand());
@@ -158,7 +159,6 @@ public class FurnitureItemBehavior extends ItemBehavior {
 
         if (!player.isCreativeMode()) {
             item.count(item.count() - 1);
-            item.load();
         }
 
         context.getLevel().playBlockSound(finalPlacePosition, customFurniture.settings().sounds().placeSound());

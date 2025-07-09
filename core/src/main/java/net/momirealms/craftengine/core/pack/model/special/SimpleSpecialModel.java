@@ -45,7 +45,7 @@ public class SimpleSpecialModel implements SpecialModel {
     public static class Reader implements SpecialModelReader {
         @Override
         public SpecialModel read(JsonObject json) {
-            Key type = Key.of(json.get("type").toString());
+            Key type = Key.of(json.get("type").getAsString());
             return new SimpleSpecialModel(type);
         }
     }

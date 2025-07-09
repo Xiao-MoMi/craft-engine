@@ -1,6 +1,5 @@
 package net.momirealms.craftengine.core.item;
 
-import com.google.common.collect.ImmutableMap;
 import net.momirealms.craftengine.core.item.behavior.ItemBehavior;
 import net.momirealms.craftengine.core.item.modifier.ItemDataModifier;
 import net.momirealms.craftengine.core.plugin.context.PlayerOptionalContext;
@@ -20,9 +19,7 @@ public abstract class AbstractCustomItem<I> implements CustomItem<I> {
     protected final Key material;
     protected final Key clientBoundMaterial;
     protected final ItemDataModifier<I>[] modifiers;
-    protected final Map<String, ItemDataModifier<I>> modifierMap;
     protected final ItemDataModifier<I>[] clientBoundModifiers;
-    protected final Map<String, ItemDataModifier<I>> clientBoundModifierMap;
     protected final List<ItemBehavior> behaviors;
     protected final ItemSettings settings;
     protected final Map<EventTrigger, List<Function<PlayerOptionalContext>>> events;
@@ -44,14 +41,6 @@ public abstract class AbstractCustomItem<I> implements CustomItem<I> {
         this.clientBoundModifiers = clientBoundModifiers.toArray(new ItemDataModifier[0]);
         this.behaviors = List.copyOf(behaviors);
         this.settings = settings;
-        ImmutableMap.Builder<String, ItemDataModifier<I>> modifierMapBuilder = ImmutableMap.builder();
-        for (ItemDataModifier<I> modifier : modifiers) {
-            modifierMapBuilder.put(modifier.name(), modifier);
-        }
-        this.modifierMap = modifierMapBuilder.build();
-        ImmutableMap.Builder<String, ItemDataModifier<I>> clientSideModifierMapBuilder = ImmutableMap.builder();
-        this.clientBoundModifierMap = clientSideModifierMapBuilder.build();
-
     }
 
     @Override
@@ -87,11 +76,6 @@ public abstract class AbstractCustomItem<I> implements CustomItem<I> {
     }
 
     @Override
-    public Map<String, ItemDataModifier<I>> dataModifierMap() {
-        return this.modifierMap;
-    }
-
-    @Override
     public boolean hasClientBoundDataModifier() {
         return this.clientBoundModifiers.length != 0;
     }
@@ -99,11 +83,6 @@ public abstract class AbstractCustomItem<I> implements CustomItem<I> {
     @Override
     public ItemDataModifier<I>[] clientBoundDataModifiers() {
         return this.clientBoundModifiers;
-    }
-
-    @Override
-    public Map<String, ItemDataModifier<I>> clientBoundDataModifierMap() {
-        return this.clientBoundModifierMap;
     }
 
     @Override

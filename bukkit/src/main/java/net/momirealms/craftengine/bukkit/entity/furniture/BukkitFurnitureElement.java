@@ -1,5 +1,6 @@
 package net.momirealms.craftengine.bukkit.entity.furniture;
 
+import it.unimi.dsi.fastutil.ints.IntArrayList;
 import net.momirealms.craftengine.bukkit.entity.data.ItemDisplayEntityData;
 import net.momirealms.craftengine.bukkit.item.BukkitItemManager;
 import net.momirealms.craftengine.bukkit.nms.FastNMS;
@@ -8,14 +9,16 @@ import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.MEntityType
 import net.momirealms.craftengine.core.entity.Billboard;
 import net.momirealms.craftengine.core.entity.ItemDisplayContext;
 import net.momirealms.craftengine.core.entity.furniture.AbstractFurnitureElement;
+import net.momirealms.craftengine.core.entity.furniture.Furniture;
 import net.momirealms.craftengine.core.entity.furniture.FurnitureElement;
 import net.momirealms.craftengine.core.item.Item;
-import net.momirealms.craftengine.core.plugin.CraftEngine;
+import net.momirealms.craftengine.core.item.data.FireworkExplosion;
 import net.momirealms.craftengine.core.util.Key;
 import net.momirealms.craftengine.core.world.WorldPosition;
 import org.bukkit.Material;
 import org.bukkit.inventory.ItemStack;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.joml.Quaternionf;
 import org.joml.Vector3f;
 
@@ -45,25 +48,40 @@ public class BukkitFurnitureElement extends AbstractFurnitureElement {
     }
 
     @Override
-    public void initPackets(int entityId, @NotNull WorldPosition position, @NotNull Quaternionf conjugated, Integer dyedColor, Consumer<Object> packets) {
+    public void initPackets(Furniture furniture, int entityId, @NotNull Quaternionf conjugated, Consumer<Object> packets) {
+        WorldPosition position = furniture.position();
         Vector3f offset = conjugated.transform(new Vector3f(position()));
         packets.accept(FastNMS.INSTANCE.constructor$ClientboundAddEntityPacket(
                 entityId, UUID.randomUUID(), position.x() + offset.x, position.y() + offset.y, position.z() - offset.z, 0, position.xRot(),
                 MEntityTypes.ITEM_DISPLAY, 0, CoreReflections.instance$Vec3$Zero, 0
         ));
-        packets.accept(FastNMS.INSTANCE.constructor$ClientboundSetEntityDataPacket(entityId, getCachedValues(dyedColor)));
+        if (applyDyedColor()) {
+            packets.accept(FastNMS.INSTANCE.constructor$ClientboundSetEntityDataPacket(entityId, getCachedValues(
+                    furniture.extraData().dyedColor().orElse(null),
+                    furniture.extraData().fireworkExplosionColors().orElse(null)
+            )));
+        } else {
+            packets.accept(FastNMS.INSTANCE.constructor$ClientboundSetEntityDataPacket(entityId, getCachedValues(null, null)));
+        }
     }
 
-    private synchronized List<Object> getCachedValues(Integer color) {
+    private synchronized List<Object> getCachedValues(@Nullable Integer color, int @Nullable [] colors) {
         List<Object> cachedValues = new ArrayList<>(this.commonValues);
         Item<ItemStack> item = BukkitItemManager.instance().createWrappedItem(item(), null);
         if (item == null) {
-            CraftEngine.instance().debug(() -> "Failed to create furniture element because item " + item() + " not found");
             item = BukkitItemManager.instance().wrap(new ItemStack(Material.BARRIER));
         } else {
             if (color != null) {
                 item.dyedColor(color);
-                item.load();
+            }
+            if (colors != null) {
+                item.fireworkExplosion(new FireworkExplosion(
+                    FireworkExplosion.Shape.SMALL_BALL,
+                        new IntArrayList(colors),
+                        new IntArrayList(),
+                        false,
+                        false
+                ));
             }
         }
         ItemDisplayEntityData.DisplayedItem.addEntityDataIfNotDefaultValue(item.getLiteralObject(), cachedValues);

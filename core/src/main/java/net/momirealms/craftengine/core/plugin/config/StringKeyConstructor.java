@@ -49,83 +49,139 @@ public class StringKeyConstructor extends SafeConstructor {
      */
     @Override
     public Object constructObject(Node node) {
-        if (node instanceof MappingNode mappingNode) {
-            if (isValueSelectorNode(mappingNode)) {
-                // 场景B: 这是一个值选择器，解析它以获得单个值
-                return constructVersionedValue(mappingNode);
-            }
+        if (node instanceof MappingNode mappingNode && isValueSelectorNode(mappingNode)) {
+            return constructVersionedValue(mappingNode);
         }
         // 对于所有其他情况 (包括需要合并的Map)，使用默认的构造逻辑
         // super.constructObject 会最终调用我们重写的 constructMapping
         return super.constructObject(node);
     }
 
+
     /**
      * 场景A (块合并与路径展开): 构造一个Map，同时处理其中的版本化块合并和 `::` 分隔的深层键。
      */
-    @SuppressWarnings("unchecked")
     @Override
     protected Map<Object, Object> constructMapping(MappingNode node) {
         Map<Object, Object> map = new LinkedHashMap<>();
+
         for (NodeTuple tuple : node.getValue()) {
             Node keyNode = tuple.getKeyNode();
             if (!(keyNode instanceof ScalarNode)) continue;
-
-            String key = constructScalar((ScalarNode) keyNode);
             Node valueNode = tuple.getValueNode();
 
-            if (key.startsWith(VERSION_PREFIX)) {
-                // 处理版本化块合并
-                String versionSpec = key.substring(VERSION_PREFIX.length());
-                if (isVersionMatch(versionSpec)) {
-                    if (valueNode instanceof MappingNode) {
-                        // 将版本匹配的map内容合并到当前map
-                        map.putAll(constructMapping((MappingNode) valueNode));
-                    } else {
-                        logWarning("versioned_key_not_a_map", key, valueNode);
-                    }
-                }
-            } else if (key.contains(DEEP_KEY_SEPARATOR)) {
-                // 处理 '::' 分隔的深层键
-                String[] parts = key.split(DEEP_KEY_SEPARATOR);
-                Object value = constructObject(valueNode);
-                Map<Object, Object> currentMap = map;
+            String key = constructScalar((ScalarNode) keyNode);
 
-                // 遍历除最后一个部分外的所有路径，创建嵌套的map
-                for (int i = 0; i < parts.length - 1; i++) {
-                    String part = parts[i];
-                    Object nextObject = currentMap.get(part);
-                    if (nextObject instanceof Map) {
-                        currentMap = (Map<Object, Object>) nextObject;
-                    } else {
-                        // 如果路径中存在一个非map的值，发出警告并覆盖它
-                        if (nextObject != null) {
-                            logWarning("key_path_conflict", part, keyNode);
-                        }
-                        Map<Object, Object> newMap = new LinkedHashMap<>();
-                        currentMap.put(part, newMap);
-                        currentMap = newMap;
-                    }
-                }
-
-                // 在最深层的map中设置最终的键值对
-                String finalKey = parts[parts.length - 1];
-                Object previous = currentMap.put(finalKey, value);
-                if (previous != null) {
-                    // 使用完整的原始键来报告重复键，更清晰
-                    logWarning("duplicated_key", key, keyNode);
-                }
-            } else {
-                // 原始逻辑：处理普通键
-                Object value = constructObject(valueNode);
-                Object previous = map.put(key, value);
-                if (previous != null) {
-                    logWarning("duplicated_key", key, keyNode);
-                }
-            }
+            // 处理 版本化块.
+            if (key.startsWith(VERSION_PREFIX)) processVersionedBlock(map, key, valueNode);
+            // 处理 深层键 -> {a::b::c: value} 和 {a::b: {c: value}}.
+            else if (key.contains(DEEP_KEY_SEPARATOR)) processDeepKey(map, key, valueNode, keyNode);
+            // 处理 正常键.
+            else processRegularKey(map, key, valueNode, keyNode);
         }
+
         return map;
     }
+
+
+    // 处理版本化块合并
+    private void processVersionedBlock(Map<Object, Object> targetMap, String key, Node valueNode) {
+        String versionSpec = key.substring(VERSION_PREFIX.length());
+
+        if (isVersionMatch(versionSpec)) {
+            if (valueNode instanceof MappingNode mappingNode) {
+                Map<Object, Object> versionedMap = constructMapping(mappingNode);
+                mergeMap(targetMap, versionedMap, "", valueNode);
+            } else {
+                logWarning("versioned_key_not_a_map", key, valueNode);
+            }
+        }
+    }
+
+    // 处理深层键
+    @SuppressWarnings("unchecked")
+    private void processDeepKey(Map<Object, Object> rootMap, String fullKey, Node valueNode, Node keyNode) {
+        // 分割出不同的层级
+        String[] keyParts = fullKey.split(DEEP_KEY_SEPARATOR);
+        Map<Object, Object> currentMap = rootMap;
+
+        // 创建必要的的中间层级(最后一个key不应遍历, 如aa::bb::cc, 只应创建aa和bb.)
+        for (int i = 0; i < keyParts.length - 1; i++) {
+            String keyPart = keyParts[i];
+            Object existingValue = currentMap.get(keyPart);
+
+            // 路径中的值
+            if (existingValue instanceof Map) {
+                currentMap = (Map<Object, Object>) existingValue;
+                continue;
+            }
+
+            // 如果路径中存在一个非map的值, 这意味着
+            // 当存在了 {aa: bb}, 又想要写入 {aa::bb::c: value} 时, 会触发这个警告, 然后会覆盖之前的.
+            if (existingValue != null) logWarning("inconsistent_value_type", keyPart, keyNode);
+
+            // 创建层级
+            Map<Object, Object> newMap = new LinkedHashMap<>();
+            currentMap.put(keyPart, newMap);
+            currentMap = newMap;
+        }
+
+        // 这里再处理最后的 cc key.
+        String finalKey = keyParts[keyParts.length - 1];
+        Object newValue = constructObject(valueNode);
+        String keyPath = String.join(DEEP_KEY_SEPARATOR, keyParts); // 构建完整的键路径字符串
+
+        setValueWithDuplicationCheck(currentMap, finalKey, newValue, keyPath, keyNode);
+    }
+
+    // 处理普通键
+    private void processRegularKey(Map<Object, Object> targetMap, String key, Node valueNode, Node keyNode) {
+        Object newValue = constructObject(valueNode);
+        setValueWithDuplicationCheck(targetMap, key, newValue, key, keyNode);
+    }
+
+
+    // 设置值并检查重复键
+    @SuppressWarnings("unchecked")
+    private void setValueWithDuplicationCheck(Map<Object, Object> targetMap, String key, Object newValue, String fullKeyPath, Node keyNode) {
+        Object existingValue = targetMap.get(key);
+
+        if (existingValue == null) {
+            // 键不存在，直接设置.
+            targetMap.put(key, newValue);
+        } else if (existingValue instanceof Map && newValue instanceof Map) {
+            // 两个都是Map，直接合并.
+            mergeMap((Map<Object, Object>) existingValue, (Map<Object, Object>) newValue, fullKeyPath, keyNode);
+        } else {
+            // 存在重复键（至少一个不是Map）
+            logWarning("duplicated_key", fullKeyPath, keyNode);
+            targetMap.put(key, newValue);
+        }
+    }
+
+
+    // 合并两个Map并检查重复键
+    @SuppressWarnings("unchecked")
+    private void mergeMap(Map<Object, Object> target, Map<Object, Object> source, String parentPath, Node sourceNode) {
+        for (Map.Entry<Object, Object> entry : source.entrySet()) {
+            String key = entry.getKey().toString();
+            Object sourceValue = entry.getValue();
+            Object targetValue = target.get(key);
+            String currentPath = parentPath.isEmpty() ? key : parentPath + DEEP_KEY_SEPARATOR + key;
+
+            // Map不存在该键，直接添加喵.
+            if (targetValue == null) target.put(key, sourceValue);
+            // 两个值都是Map，还需继续合并.
+            else if (targetValue instanceof Map && sourceValue instanceof Map)
+                mergeMap((Map<Object, Object>) targetValue, (Map<Object, Object>) sourceValue, currentPath, sourceNode);
+            // 发现重复的键, 爆炸了喵.
+            else {
+                logWarning("duplicated_key", currentPath, sourceNode);
+                target.put(key, sourceValue);
+            }
+        }
+    }
+
 
     /**
      * 检查一个MappingNode是否是“值选择器”（即所有键都以 '$$' 开头）。

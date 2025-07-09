@@ -1,8 +1,6 @@
 package net.momirealms.craftengine.bukkit.block.behavior;
 
-import net.momirealms.craftengine.bukkit.block.BukkitBlockManager;
 import net.momirealms.craftengine.bukkit.nms.FastNMS;
-import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.CoreReflections;
 import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.MFluids;
 import net.momirealms.craftengine.bukkit.util.BlockStateUtils;
 import net.momirealms.craftengine.bukkit.util.DirectionUtils;
@@ -25,6 +23,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.Callable;
 
+@SuppressWarnings("DuplicatedCode")
 public class StairsBlockBehavior extends BukkitBlockBehavior {
     public static final Factory FACTORY = new Factory();
     private final Property<HorizontalDirection> facingProperty;
@@ -54,127 +53,76 @@ public class StairsBlockBehavior extends BukkitBlockBehavior {
 
     @Override
     public Object updateShape(Object thisBlock, Object[] args, Callable<Object> superMethod) throws Exception {
-        Object level;
-        Object blockPos;
+        Object level = args[updateShape$level];
+        Object blockPos = args[updateShape$blockPos];
         Object blockState = args[0];
-        if (VersionHelper.isOrAbove1_21_2()) {
-            level = args[1];
-            blockPos = args[3];
-        } else {
-            level = args[3];
-            blockPos = args[4];
-        }
-        int stateId = BlockStateUtils.blockStateToId(blockState);
-        ImmutableBlockState immutableBlockState = BukkitBlockManager.instance().getImmutableBlockState(stateId);
-        if (immutableBlockState == null || immutableBlockState.isEmpty()) return blockState;
-        if (super.waterloggedProperty != null && immutableBlockState.get(this.waterloggedProperty)) {
-            FastNMS.INSTANCE.method$LevelAccessor$scheduleFluidTick(VersionHelper.isOrAbove1_21_2() ? args[2] : args[3], VersionHelper.isOrAbove1_21_2() ? args[3] : args[4], MFluids.WATER, 5);
+        Optional<ImmutableBlockState> optionalCustomState = BlockStateUtils.getOptionalCustomBlockState(blockState);
+        if (optionalCustomState.isEmpty()) return blockState;
+        ImmutableBlockState customState = optionalCustomState.get();
+        if (super.waterloggedProperty != null && customState.get(this.waterloggedProperty)) {
+            FastNMS.INSTANCE.method$LevelAccessor$scheduleFluidTick(args[updateShape$level], args[updateShape$blockPos], MFluids.WATER, 5);
         }
         Direction direction = DirectionUtils.fromNMSDirection(VersionHelper.isOrAbove1_21_2() ? args[4] : args[1]);
-        StairsShape stairsShape = getStairsShape(immutableBlockState, level, LocationUtils.fromBlockPos(blockPos));
+        StairsShape stairsShape = getStairsShape(customState, level, LocationUtils.fromBlockPos(blockPos));
         return direction.axis().isHorizontal()
-                ? immutableBlockState.with(this.shapeProperty, stairsShape).customBlockState().handle()
+                ? customState.with(this.shapeProperty, stairsShape).customBlockState().handle()
                 : superMethod.call();
     }
 
     private StairsShape getStairsShape(ImmutableBlockState state, Object level, BlockPos pos) {
         Direction direction = state.get(this.facingProperty).toDirection();
-        Object blockState = FastNMS.INSTANCE.method$BlockGetter$getBlockState(level, LocationUtils.toBlockPos(pos.relative(direction)));
-        int stateId = BlockStateUtils.blockStateToId(blockState);
-        ImmutableBlockState immutableBlockState = BukkitBlockManager.instance().getImmutableBlockState(stateId);
-        if (immutableBlockState != null && !immutableBlockState.isEmpty()) {
-            if (isStairs(blockState) && state.get(this.halfProperty) == immutableBlockState.get(this.halfProperty)) {
-                Direction direction1 = immutableBlockState.get(this.facingProperty).toDirection();
-                if (direction1.axis() != state.get(this.facingProperty).toDirection().axis() && canTakeShape(state, level, pos, direction1.opposite())) {
-                    if (direction1 == direction.counterClockWise()) {
-                        return StairsShape.OUTER_LEFT;
+        Object relativeBlockState1 = FastNMS.INSTANCE.method$BlockGetter$getBlockState(level, LocationUtils.toBlockPos(pos.relative(direction)));
+        Optional<ImmutableBlockState> optionalCustomState1 = BlockStateUtils.getOptionalCustomBlockState(relativeBlockState1);
+        if (optionalCustomState1.isPresent()) {
+            ImmutableBlockState customState1 = optionalCustomState1.get();
+            Optional<StairsBlockBehavior> optionalStairsBlockBehavior = customState1.behavior().getAs(StairsBlockBehavior.class);
+            if (optionalStairsBlockBehavior.isPresent()) {
+                StairsBlockBehavior stairsBlockBehavior = optionalStairsBlockBehavior.get();
+                if (state.get(this.halfProperty) == customState1.get(stairsBlockBehavior.halfProperty)) {
+                    Direction direction1 = customState1.get(stairsBlockBehavior.facingProperty).toDirection();
+                    if (direction1.axis() != state.get(this.facingProperty).toDirection().axis() && canTakeShape(state, level, pos, direction1.opposite())) {
+                        if (direction1 == direction.counterClockWise()) {
+                            return StairsShape.OUTER_LEFT;
+                        }
+                        return StairsShape.OUTER_RIGHT;
                     }
-                    return StairsShape.OUTER_RIGHT;
                 }
             }
-        } else if (isStairs(blockState)) {
-            // 处理可能是原版楼梯
-            // try {
-            //     Object nmsHalf = CoreReflections.method$StateHolder$getValue.invoke(blockState, CoreReflections.instance$StairBlock$HALF);
-            //     SingleBlockHalf half = SingleBlockHalf.valueOf(nmsHalf.toString().toUpperCase(Locale.ROOT));
-            //     if (state.get(this.halfProperty).equals(half)) {
-            //         Object nmsFacing = CoreReflections.method$StateHolder$getValue.invoke(blockState, CoreReflections.instance$StairBlock$FACING);
-            //         Direction direction1 = DirectionUtils.fromNMSDirection(nmsFacing);
-            //         if (direction1.axis() != state.get(this.facingProperty).toDirection().axis() && canTakeShape(state, level, pos, direction1.opposite())) {
-            //             if (direction1 == direction.counterClockWise()) {
-            //                 return StairsShape.OUTER_LEFT;
-            //             }
-            //             return StairsShape.OUTER_RIGHT;
-            //         }
-            //     }
-            // } catch (Exception e) {
-            //     CraftEngine.instance().logger().warn("Failed to get facing from blockState", e);
-            // }
         }
-
-        Object blockState1 = FastNMS.INSTANCE.method$BlockGetter$getBlockState(level, LocationUtils.toBlockPos(pos.relative(direction.opposite())));
-        int stateId1 = BlockStateUtils.blockStateToId(blockState1);
-        ImmutableBlockState immutableBlockState1 = BukkitBlockManager.instance().getImmutableBlockState(stateId1);
-        if (immutableBlockState1 != null && !immutableBlockState1.isEmpty()) {
-            if (isStairs(blockState1) && state.get(this.halfProperty) == immutableBlockState1.get(this.halfProperty)) {
-                Direction direction2 = immutableBlockState1.get(this.facingProperty).toDirection();
-                if (direction2.axis() != state.get(this.facingProperty).toDirection().axis() && canTakeShape(state, level, pos, direction2)) {
-                    if (direction2 == direction.counterClockWise()) {
-                        return StairsShape.INNER_LEFT;
+        Object relativeBlockState2 = FastNMS.INSTANCE.method$BlockGetter$getBlockState(level, LocationUtils.toBlockPos(pos.relative(direction.opposite())));
+        Optional<ImmutableBlockState> optionalCustomState2 = BlockStateUtils.getOptionalCustomBlockState(relativeBlockState2);
+        if (optionalCustomState2.isPresent()) {
+            ImmutableBlockState customState2 = optionalCustomState2.get();
+            Optional<StairsBlockBehavior> optionalStairsBlockBehavior = customState2.behavior().getAs(StairsBlockBehavior.class);
+            if (optionalStairsBlockBehavior.isPresent()) {
+                StairsBlockBehavior stairsBlockBehavior = optionalStairsBlockBehavior.get();
+                if (state.get(this.halfProperty) == customState2.get(stairsBlockBehavior.halfProperty)) {
+                    Direction direction2 = customState2.get(stairsBlockBehavior.facingProperty).toDirection();
+                    if (direction2.axis() != state.get(this.facingProperty).toDirection().axis() && canTakeShape(state, level, pos, direction2)) {
+                        if (direction2 == direction.counterClockWise()) {
+                            return StairsShape.INNER_LEFT;
+                        }
+                        return StairsShape.INNER_RIGHT;
                     }
-                    return StairsShape.INNER_RIGHT;
                 }
             }
-        } else if (isStairs(blockState1)) {
-            // 处理可能是原版楼梯
-            // try {
-            //     Object nmsHalf = CoreReflections.method$StateHolder$getValue.invoke(blockState1, CoreReflections.instance$StairBlock$HALF);
-            //     SingleBlockHalf half = SingleBlockHalf.valueOf(nmsHalf.toString().toUpperCase(Locale.ROOT));
-            //     if (state.get(this.halfProperty).equals(half)) {
-            //         Object nmsFacing = CoreReflections.method$StateHolder$getValue.invoke(blockState1, CoreReflections.instance$StairBlock$FACING);
-            //         Direction direction1 = DirectionUtils.fromNMSDirection(nmsFacing);
-            //         if (direction1.axis() != state.get(this.facingProperty).toDirection().axis() && canTakeShape(state, level, pos, direction1)) {
-            //             if (direction1 == direction.counterClockWise()) {
-            //                 return StairsShape.INNER_LEFT;
-            //             }
-            //             return StairsShape.INNER_RIGHT;
-            //         }
-            //     }
-            // } catch (Exception e) {
-            //     CraftEngine.instance().logger().warn("Failed to get facing from blockState", e);
-            // }
         }
-
         return StairsShape.STRAIGHT;
-    }
-
-    private boolean isStairs(Object state) {
-        ImmutableBlockState immutableBlockState = BukkitBlockManager.instance().getImmutableBlockState(BlockStateUtils.blockStateToId(state));
-        if (immutableBlockState == null || immutableBlockState.isEmpty()) {
-            return FastNMS.INSTANCE.method$BlockState$getBlock(state).equals(CoreReflections.clazz$StairBlock);
-        }
-        Optional<StairsBlockBehavior> optionalBehavior = immutableBlockState.behavior().getAs(StairsBlockBehavior.class);
-        return optionalBehavior.isPresent();
     }
 
     private boolean canTakeShape(ImmutableBlockState state, Object level, BlockPos pos, Direction face) {
         Object blockState = FastNMS.INSTANCE.method$BlockGetter$getBlockState(level, LocationUtils.toBlockPos(pos.relative(face)));
-        ImmutableBlockState immutableBlockState = BukkitBlockManager.instance().getImmutableBlockState(BlockStateUtils.blockStateToId(blockState));
-        if (immutableBlockState == null || immutableBlockState.isEmpty()) {
-            // 处理可能是原版楼梯
-            // try {
-            //     Object nmsFacing = CoreReflections.method$StateHolder$getValue.invoke(blockState, CoreReflections.instance$StairBlock$FACING);
-            //     Direction direction = DirectionUtils.fromNMSDirection(nmsFacing);
-            //     if (direction != state.get(this.facingProperty).toDirection()) return true;
-            //     Object nmsHalf = CoreReflections.method$StateHolder$getValue.invoke(blockState, CoreReflections.instance$StairBlock$HALF);
-            //     SingleBlockHalf half = SingleBlockHalf.valueOf(nmsHalf.toString().toUpperCase(Locale.ROOT));
-            //     if (half != state.get(this.halfProperty)) return true;
-            // } catch (Exception e) {
-            //     CraftEngine.instance().logger().warn("Failed to handle canTakeShape", e);
-            // }
-            return !isStairs(blockState);
+        Optional<ImmutableBlockState> optionalAnotherState = BlockStateUtils.getOptionalCustomBlockState(blockState);
+        if (optionalAnotherState.isEmpty()) {
+            return true;
         }
-        return !isStairs(blockState) || immutableBlockState.get(this.facingProperty) != state.get(this.facingProperty) || immutableBlockState.get(this.halfProperty) != state.get(this.halfProperty);
+        ImmutableBlockState anotherState = optionalAnotherState.get();
+        Optional<StairsBlockBehavior> optionalBehavior = anotherState.behavior().getAs(StairsBlockBehavior.class);
+        if (optionalBehavior.isEmpty()) {
+            return true;
+        }
+        StairsBlockBehavior anotherBehavior = optionalBehavior.get();
+        return anotherState.get(anotherBehavior.facingProperty) != state.get(this.facingProperty) || anotherState.get(anotherBehavior.halfProperty) != state.get(this.halfProperty);
     }
 
     public static class Factory implements BlockBehaviorFactory {

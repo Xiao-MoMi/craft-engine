@@ -102,7 +102,7 @@ public class CustomSmithingTransformRecipe<T> implements Recipe<T> {
         for (ItemDataProcessor processor : this.processors) {
             processor.accept(base, wrappedResult, finalResult);
         }
-        return finalResult.load();
+        return finalResult.getItem();
     }
 
     @Override

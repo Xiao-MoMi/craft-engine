@@ -15,12 +15,14 @@ import net.momirealms.craftengine.bukkit.util.ComponentUtils;
 import net.momirealms.craftengine.bukkit.util.ItemUtils;
 import net.momirealms.craftengine.bukkit.util.LegacyInventoryUtils;
 import net.momirealms.craftengine.core.item.*;
+import net.momirealms.craftengine.core.item.equipment.TrimBasedEquipment;
 import net.momirealms.craftengine.core.item.recipe.*;
 import net.momirealms.craftengine.core.item.recipe.Recipe;
 import net.momirealms.craftengine.core.item.recipe.input.CraftingInput;
 import net.momirealms.craftengine.core.item.recipe.input.SingleItemInput;
 import net.momirealms.craftengine.core.item.recipe.input.SmithingInput;
 import net.momirealms.craftengine.core.item.setting.AnvilRepairItem;
+import net.momirealms.craftengine.core.item.setting.ItemEquipment;
 import net.momirealms.craftengine.core.plugin.config.Config;
 import net.momirealms.craftengine.core.plugin.context.ContextHolder;
 import net.momirealms.craftengine.core.registry.BuiltInRegistries;
@@ -451,80 +453,102 @@ public class RecipeEventListener implements Listener {
     }
 
     @EventHandler(ignoreCancelled = true, priority = EventPriority.LOWEST)
-    public void onAnvilCombineItems(PrepareAnvilEvent event) {
+    public void onAnvilEvent(PrepareAnvilEvent event) {
+        preProcess(event);
+        processRepairable(event);
+        processRename(event);
+    }
+
+    /*
+    预处理会阻止一些不合理的原版材质造成的合并问题
+     */
+    private void preProcess(PrepareAnvilEvent event) {
         AnvilInventory inventory = event.getInventory();
         ItemStack first = inventory.getFirstItem();
         ItemStack second = inventory.getSecondItem();
         if (first == null || second == null) return;
         Item<ItemStack> wrappedFirst = BukkitItemManager.instance().wrap(first);
-        boolean firstCustom = wrappedFirst.isCustomItem();
+        Optional<CustomItem<ItemStack>> firstCustom = wrappedFirst.getCustomItem();
         Item<ItemStack> wrappedSecond = BukkitItemManager.instance().wrap(second);
-        boolean secondCustom = wrappedSecond.isCustomItem();
-        // both are vanilla items
-        if (!firstCustom && !secondCustom) {
+        Optional<CustomItem<ItemStack>> secondCustom = wrappedFirst.getCustomItem();
+        // 两个都是原版物品
+        if (firstCustom.isEmpty() && secondCustom.isEmpty()) {
             return;
         }
-
-        // both of them are custom items
-        // if the second is an enchanted book, then apply it
+        // 如果第二个物品是附魔书，那么忽略
         if (wrappedSecond.vanillaId().equals(ItemKeys.ENCHANTED_BOOK)) {
             return;
         }
 
-        // one of them is vanilla item
-        if (!firstCustom || !secondCustom) {
-            if (second.canRepair(first)) return; // 这里需要考虑原版逻辑
-            // block "vanilla + custom" recipes
-            event.setResult(null);
-            return;
+        // 被修的是自定义，材料不是自定义
+        if (firstCustom.isPresent() && secondCustom.isEmpty()) {
+            if (firstCustom.get().settings().respectRepairableComponent()) {
+                if (second.canRepair(first)) return; // 尊重原版的repairable
+            } else {
+                event.setResult(null);
+                return;
+            }
         }
 
-        // not the same item
+        // 被修的是原版，材料是自定义
+        if (firstCustom.isEmpty() && secondCustom.isPresent()) {
+            if (secondCustom.get().settings().respectRepairableComponent()) {
+                if (second.canRepair(first)) return;
+            } else {
+                event.setResult(null);
+                return;
+            }
+        }
+
+        // 如果两个物品id不同，不能合并
         if (!wrappedFirst.customId().equals(wrappedSecond.customId())) {
             event.setResult(null);
             return;
         }
 
-        // can not repair
-        wrappedFirst.getCustomItem().ifPresent(it -> {
+        // 如果禁止在铁砧使用两个相同物品修复
+        firstCustom.ifPresent(it -> {
             if (!it.settings().canRepair()) {
                 event.setResult(null);
             }
         });
     }
 
+    /*
+    处理item settings中repair item属性。如果修补材料不是自定义物品，则不会参与后续逻辑。
+    这会忽略preprocess里event.setResult(null);
+     */
     @SuppressWarnings("UnstableApiUsage")
-    @EventHandler(ignoreCancelled = true, priority = EventPriority.LOW)
-    public void onAnvilRepairItems(PrepareAnvilEvent event) {
+    private void processRepairable(PrepareAnvilEvent event) {
         AnvilInventory inventory = event.getInventory();
         ItemStack first = inventory.getFirstItem();
         ItemStack second = inventory.getSecondItem();
         if (first == null || second == null) return;
 
         Item<ItemStack> wrappedSecond = BukkitItemManager.instance().wrap(second);
-        // if the second slot is not a custom item, ignore it
-        Optional<CustomItem<ItemStack>> customItemOptional = plugin.itemManager().getCustomItem(wrappedSecond.id());
+        // 如果材料不是自定义的，那么忽略
+        Optional<CustomItem<ItemStack>> customItemOptional = this.plugin.itemManager().getCustomItem(wrappedSecond.id());
         if (customItemOptional.isEmpty()) {
             return;
         }
 
         CustomItem<ItemStack> customItem = customItemOptional.get();
         List<AnvilRepairItem> repairItems = customItem.settings().repairItems();
-        // if the second slot is not a repair item, ignore it
+        // 如果材料不支持修复物品，则忽略
         if (repairItems.isEmpty()) {
             return;
         }
 
+        // 后续均为修复逻辑
         Item<ItemStack> wrappedFirst = BukkitItemManager.instance().wrap(first.clone());
-
         int maxDamage = wrappedFirst.maxDamage();
         int damage = wrappedFirst.damage().orElse(0);
-        // not a repairable item
+        // 物品无damage属性
         if (damage == 0 || maxDamage == 0) return;
 
         Key firstId = wrappedFirst.id();
         Optional<CustomItem<ItemStack>> optionalCustomTool = wrappedFirst.getCustomItem();
-        // can not repair
+        // 物品无法被修复
         if (optionalCustomTool.isPresent() && !optionalCustomTool.get().settings().canRepair()) {
             return;
         }
@@ -549,7 +573,7 @@ public class RecipeEventListener implements Listener {
             }
         }
 
-        // no repair item matching
+        // 找不到匹配的修复
         if (repairItem == null) {
             return;
         }
@@ -566,7 +590,7 @@ public class RecipeEventListener implements Listener {
         String renameText;
         int maxRepairCost;
         //int previousCost;
-        if (VersionHelper.isOrAbove1_21_2()) {
+        if (VersionHelper.isOrAbove1_21()) {
             AnvilView anvilView = event.getView();
             renameText = anvilView.getRenameText();
             maxRepairCost = anvilView.getMaximumRepairCost();
@@ -643,13 +667,15 @@ public class RecipeEventListener implements Listener {
             }
             afterPenalty = calculateIncreasedRepairCost(afterPenalty);
             wrappedFirst.repairCost(afterPenalty);
-            event.setResult(wrappedFirst.load());
+            event.setResult(wrappedFirst.getItem());
         }
     }
 
+    /*
+    如果物品不可被重命名，则在最后处理。
+     */
     @SuppressWarnings("UnstableApiUsage")
-    @EventHandler(ignoreCancelled = true, priority = EventPriority.NORMAL)
-    public void onAnvilRenameItem(PrepareAnvilEvent event) {
+    private void processRename(PrepareAnvilEvent event) {
         AnvilInventory inventory = event.getInventory();
         ItemStack first = inventory.getFirstItem();
         if (ItemUtils.isEmpty(first)) {
@@ -662,7 +688,7 @@ public class RecipeEventListener implements Listener {
         wrappedFirst.getCustomItem().ifPresent(item -> {
             if (!item.settings().renameable()) {
                 String renameText;
-                if (VersionHelper.isOrAbove1_21_2()) {
+                if (VersionHelper.isOrAbove1_21()) {
                     AnvilView anvilView = event.getView();
                     renameText = anvilView.getRenameText();
                 } else {
@@ -757,8 +783,8 @@ public class RecipeEventListener implements Listener {
                 int remainingDurability = totalMaxDamage - totalDamage;
                 int newItemDamage = Math.max(0, newItem.maxDamage() - remainingDurability);
                 newItem.damage(newItemDamage);
-                inventory.setResult(newItem.load());
-            } else if (CoreReflections.clazz$ArmorDyeRecipe.isInstance(mcRecipe)) {
+                inventory.setResult(newItem.getItem());
+            } else if (CoreReflections.clazz$ArmorDyeRecipe.isInstance(mcRecipe) || CoreReflections.clazz$FireworkStarFadeRecipe.isInstance(mcRecipe)) {
                 ItemStack[] itemStacks = inventory.getMatrix();
                 for (ItemStack itemStack : itemStacks) {
                     if (itemStack == null) continue;
@@ -930,6 +956,24 @@ public class RecipeEventListener implements Listener {
             CoreReflections.field$ResultContainer$recipeUsed.set(resultInventory, holderOrRecipe);
         } catch (ReflectiveOperationException e) {
             plugin.logger().warn("Failed to correct used recipe", e);
+        }
+    }
+
+    @EventHandler(ignoreCancelled = true)
+    public void onSmithingTrim(PrepareSmithingEvent event) {
+        SmithingInventory inventory = event.getInventory();
+        if (!(inventory.getRecipe() instanceof SmithingTrimRecipe)) return;
+        ItemStack equipment = inventory.getInputEquipment();
+        if (equipment == null) return;
+        Item<ItemStack> wrappedEquipment = this.itemManager.wrap(equipment);
+        Optional<CustomItem<ItemStack>> optionalCustomItem = wrappedEquipment.getCustomItem();
+        if (optionalCustomItem.isEmpty()) return;
+        CustomItem<ItemStack> customItem = optionalCustomItem.get();
+        ItemEquipment itemEquipmentSettings = customItem.settings().equipment();
+        if (itemEquipmentSettings == null) return;
+        // 不允许trim类型的盔甲再次被使用trim
+        if (itemEquipmentSettings.equipment() instanceof TrimBasedEquipment) {
+            event.setResult(null);
         }
     }
 

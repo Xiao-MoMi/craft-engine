@@ -130,6 +130,10 @@ public class InteractUtils {
         registerInteraction(BlockKeys.PALE_OAK_BUTTON, (player, item, blockState, result) -> true);
         registerInteraction(BlockKeys.MANGROVE_BUTTON, (player, item, blockState, result) -> true);
         registerInteraction(BlockKeys.BAMBOO_BUTTON, (player, item, blockState, result) -> true);
+        registerInteraction(BlockKeys.STONE_BUTTON, (player, item, blockState, result) -> true);
+        registerInteraction(BlockKeys.POLISHED_BLACKSTONE_BUTTON, (player, item, blockState, result) -> true);
+        registerInteraction(BlockKeys.CRIMSON_BUTTON, (player, item, blockState, result) -> true);
+        registerInteraction(BlockKeys.WARPED_BUTTON, (player, item, blockState, result) -> true);
         registerInteraction(BlockKeys.OAK_TRAPDOOR, (player, item, blockState, result) -> true);
         registerInteraction(BlockKeys.SPRUCE_TRAPDOOR, (player, item, blockState, result) -> true);
         registerInteraction(BlockKeys.BIRCH_TRAPDOOR, (player, item, blockState, result) -> true);

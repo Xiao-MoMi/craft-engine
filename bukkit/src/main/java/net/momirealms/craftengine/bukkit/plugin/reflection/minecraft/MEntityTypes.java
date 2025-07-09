@@ -1,7 +1,6 @@
 package net.momirealms.craftengine.bukkit.plugin.reflection.minecraft;
 
 import net.momirealms.craftengine.bukkit.nms.FastNMS;
-import net.momirealms.craftengine.bukkit.plugin.reflection.ReflectionInitException;
 import net.momirealms.craftengine.core.util.VersionHelper;
 
 public final class MEntityTypes {
@@ -60,72 +59,68 @@ public final class MEntityTypes {
     public static final Object PLAYER;
     public static final int PLAYER$registryId;
 
-    private static Object getById(String id) throws ReflectiveOperationException {
+    private static Object getById(String id) {
         Object rl = FastNMS.INSTANCE.method$ResourceLocation$fromNamespaceAndPath("minecraft", id);
-        return CoreReflections.method$Registry$get.invoke(MBuiltInRegistries.ENTITY_TYPE, rl);
+        return FastNMS.INSTANCE.method$Registry$getValue(MBuiltInRegistries.ENTITY_TYPE, rl);
     }
 
-    private static int getRegistryId(Object type) throws ReflectiveOperationException {
+    private static int getRegistryId(Object type) {
         if (type == null) return -1;
-        return (int) CoreReflections.method$Registry$getId.invoke(MBuiltInRegistries.ENTITY_TYPE, type);
+        return FastNMS.INSTANCE.method$Registry$getId(MBuiltInRegistries.ENTITY_TYPE, type);
     }
 
     static {
-        try {
-            TEXT_DISPLAY = getById("text_display");
-            TEXT_DISPLAY$registryId = getRegistryId(TEXT_DISPLAY);
-            ITEM_DISPLAY = getById("item_display");
-            ITEM_DISPLAY$registryId = getRegistryId(ITEM_DISPLAY);
-            BLOCK_DISPLAY = getById("block_display");
-            BLOCK_DISPLAY$registryId = getRegistryId(BLOCK_DISPLAY);
-            FALLING_BLOCK = getById("falling_block");
-            FALLING_BLOCK$registryId = getRegistryId(FALLING_BLOCK);
-            INTERACTION = getById("interaction");
-            INTERACTION$registryId = getRegistryId(INTERACTION);
-            SHULKER = getById("shulker");
-            SHULKER$registryId = getRegistryId(SHULKER);
-            ARMOR_STAND = getById("armor_stand");
-            ARMOR_STAND$registryId = getRegistryId(ARMOR_STAND);
-            OAK_BOAT = getById(VersionHelper.isOrAbove1_21_2() ? "oak_boat" : "boat");
-            OAK_BOAT$registryId = getRegistryId(OAK_BOAT);
-            TRIDENT = getById("trident");
-            TRIDENT$registryId = getRegistryId(TRIDENT);
-            SNOWBALL = getById("snowball");
-            SNOWBALL$registryId = getRegistryId(SNOWBALL);
-            FIREBALL = getById("fireball");
-            FIREBALL$registryId = getRegistryId(FIREBALL);
-            EYE_OF_ENDER = getById("eye_of_ender");
-            EYE_OF_ENDER$registryId = getRegistryId(EYE_OF_ENDER);
-            FIREWORK_ROCKET = getById("firework_rocket");
-            FIREWORK_ROCKET$registryId = getRegistryId(FIREWORK_ROCKET);
-            ITEM = getById("item");
-            ITEM$registryId = getRegistryId(ITEM);
-            ITEM_FRAME = getById("item_frame");
-            ITEM_FRAME$registryId = getRegistryId(ITEM_FRAME);
-            GLOW_ITEM_FRAME = getById("glow_item_frame");
-            GLOW_ITEM_FRAME$registryId = getRegistryId(GLOW_ITEM_FRAME);
-            SMALL_FIREBALL = getById("small_fireball");
-            SMALL_FIREBALL$registryId = getRegistryId(SMALL_FIREBALL);
-            EGG = getById("egg");
-            EGG$registryId = getRegistryId(EGG);
-            ENDER_PEARL = getById("ender_pearl");
-            ENDER_PEARL$registryId = getRegistryId(ENDER_PEARL);
-            EXPERIENCE_BOTTLE = getById("experience_bottle");
-            EXPERIENCE_BOTTLE$registryId = getRegistryId(EXPERIENCE_BOTTLE);
-            POTION = getById("potion");
-            POTION$registryId = getRegistryId(POTION);
-            OMINOUS_ITEM_SPAWNER = VersionHelper.isOrAbove1_20_5() ? getById("ominous_item_spawner") : null;
-            OMINOUS_ITEM_SPAWNER$registryId = getRegistryId(OMINOUS_ITEM_SPAWNER);
-            HAPPY_GHAST = VersionHelper.isOrAbove1_21_6() ? getById("happy_ghast") : null;
-            HAPPY_GHAST$registryId = getRegistryId(HAPPY_GHAST);
-            PLAYER = getById("player");
-            PLAYER$registryId = getRegistryId(PLAYER);
-            ARROW = getById("arrow");
-            ARROW$registryId = getRegistryId(ARROW);
-            SPECTRAL_ARROW = getById("spectral_arrow");
-            SPECTRAL_ARROW$registryId = getRegistryId(SPECTRAL_ARROW);
-        } catch (ReflectiveOperationException e) {
-            throw new ReflectionInitException("Failed to init EntityTypes", e);
-        }
+        TEXT_DISPLAY = getById("text_display");
+        TEXT_DISPLAY$registryId = getRegistryId(TEXT_DISPLAY);
+        ITEM_DISPLAY = getById("item_display");
+        ITEM_DISPLAY$registryId = getRegistryId(ITEM_DISPLAY);
+        BLOCK_DISPLAY = getById("block_display");
+        BLOCK_DISPLAY$registryId = getRegistryId(BLOCK_DISPLAY);
+        FALLING_BLOCK = getById("falling_block");
+        FALLING_BLOCK$registryId = getRegistryId(FALLING_BLOCK);
+        INTERACTION = getById("interaction");
+        INTERACTION$registryId = getRegistryId(INTERACTION);
+        SHULKER = getById("shulker");
+        SHULKER$registryId = getRegistryId(SHULKER);
+        ARMOR_STAND = getById("armor_stand");
+        ARMOR_STAND$registryId = getRegistryId(ARMOR_STAND);
+        OAK_BOAT = getById(VersionHelper.isOrAbove1_21_2() ? "oak_boat" : "boat");
+        OAK_BOAT$registryId = getRegistryId(OAK_BOAT);
+        TRIDENT = getById("trident");
+        TRIDENT$registryId = getRegistryId(TRIDENT);
+        SNOWBALL = getById("snowball");
+        SNOWBALL$registryId = getRegistryId(SNOWBALL);
+        FIREBALL = getById("fireball");
+        FIREBALL$registryId = getRegistryId(FIREBALL);
+        EYE_OF_ENDER = getById("eye_of_ender");
+        EYE_OF_ENDER$registryId = getRegistryId(EYE_OF_ENDER);
+        FIREWORK_ROCKET = getById("firework_rocket");
+        FIREWORK_ROCKET$registryId = getRegistryId(FIREWORK_ROCKET);
+        ITEM = getById("item");
+        ITEM$registryId = getRegistryId(ITEM);
+        ITEM_FRAME = getById("item_frame");
+        ITEM_FRAME$registryId = getRegistryId(ITEM_FRAME);
+        GLOW_ITEM_FRAME = getById("glow_item_frame");
+        GLOW_ITEM_FRAME$registryId = getRegistryId(GLOW_ITEM_FRAME);
+        SMALL_FIREBALL = getById("small_fireball");
+        SMALL_FIREBALL$registryId = getRegistryId(SMALL_FIREBALL);
+        EGG = getById("egg");
+        EGG$registryId = getRegistryId(EGG);
+        ENDER_PEARL = getById("ender_pearl");
+        ENDER_PEARL$registryId = getRegistryId(ENDER_PEARL);
+        EXPERIENCE_BOTTLE = getById("experience_bottle");
+        EXPERIENCE_BOTTLE$registryId = getRegistryId(EXPERIENCE_BOTTLE);
+        POTION = getById("potion");
+        POTION$registryId = getRegistryId(POTION);
+        OMINOUS_ITEM_SPAWNER = VersionHelper.isOrAbove1_20_5() ? getById("ominous_item_spawner") : null;
+        OMINOUS_ITEM_SPAWNER$registryId = getRegistryId(OMINOUS_ITEM_SPAWNER);
+        HAPPY_GHAST = VersionHelper.isOrAbove1_21_6() ? getById("happy_ghast") : null;
+        HAPPY_GHAST$registryId = getRegistryId(HAPPY_GHAST);
+        PLAYER = getById("player");
+        PLAYER$registryId = getRegistryId(PLAYER);
+        ARROW = getById("arrow");
+        ARROW$registryId = getRegistryId(ARROW);
+        SPECTRAL_ARROW = getById("spectral_arrow");
+        SPECTRAL_ARROW$registryId = getRegistryId(SPECTRAL_ARROW);
     }
 }

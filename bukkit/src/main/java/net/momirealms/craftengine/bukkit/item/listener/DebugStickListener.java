@@ -2,13 +2,14 @@ package net.momirealms.craftengine.bukkit.item.listener;
 
 import net.kyori.adventure.text.Component;
 import net.momirealms.craftengine.bukkit.api.CraftEngineBlocks;
-import net.momirealms.craftengine.bukkit.block.BukkitBlockManager;
 import net.momirealms.craftengine.bukkit.item.BukkitItemManager;
+import net.momirealms.craftengine.bukkit.nms.FastNMS;
 import net.momirealms.craftengine.bukkit.plugin.BukkitCraftEngine;
 import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.NetworkReflections;
 import net.momirealms.craftengine.bukkit.plugin.user.BukkitServerPlayer;
 import net.momirealms.craftengine.bukkit.util.BlockStateUtils;
 import net.momirealms.craftengine.bukkit.util.ComponentUtils;
+import net.momirealms.craftengine.bukkit.util.LocationUtils;
 import net.momirealms.craftengine.core.block.CustomBlock;
 import net.momirealms.craftengine.core.block.ImmutableBlockState;
 import net.momirealms.craftengine.core.block.UpdateOption;
@@ -58,13 +59,11 @@ public class DebugStickListener implements Listener {
                 return;
             }
         }
-        Object blockState = BlockStateUtils.blockDataToBlockState(clickedBlock.getBlockData());
-        int stateId = BlockStateUtils.blockStateToId(blockState);
-        if (!BlockStateUtils.isVanillaBlock(stateId)) {
+        Object blockState = FastNMS.INSTANCE.method$BlockGetter$getBlockState(FastNMS.INSTANCE.field$CraftWorld$ServerLevel(clickedBlock.getWorld()), LocationUtils.toBlockPos(clickedBlock.getX(), clickedBlock.getY(), clickedBlock.getZ()));
+        BlockStateUtils.getOptionalCustomBlockState(blockState).ifPresent(customState -> {
             event.setCancelled(true);
             boolean update = event.getAction() == Action.RIGHT_CLICK_BLOCK;
-            ImmutableBlockState clickedCustomBlock = BukkitBlockManager.instance().getImmutableBlockStateUnsafe(stateId);
-            CustomBlock block = clickedCustomBlock.owner().value();
+            CustomBlock block = customState.owner().value();
             Collection<Property<?>> properties = block.properties();
             String blockId = block.id().toString();
             try {
@@ -84,7 +83,7 @@ public class DebugStickListener implements Listener {
                             currentProperty = properties.iterator().next();
                         }
                         if (update) {
-                            ImmutableBlockState nextState = cycleState(clickedCustomBlock, currentProperty, player.isSecondaryUseActive());
+                            ImmutableBlockState nextState = cycleState(customState, currentProperty, player.isSecondaryUseActive());
                             CraftEngineBlocks.place(clickedBlock.getLocation(), nextState, new UpdateOption.Builder().updateClients().updateKnownShape().build(), false);
                             Object systemChatPacket = NetworkReflections.constructor$ClientboundSystemChatPacket.newInstance(
                                     ComponentUtils.adventureToMinecraft(Component.translatable("item.minecraft.debug_stick.update")
@@ -97,21 +96,20 @@ public class DebugStickListener implements Listener {
                             currentProperty = getRelative(properties, currentProperty, player.isSecondaryUseActive());
                             data.put(blockId, currentProperty.name());
                             wrapped.setTag(data, "craftengine:debug_stick_state");
-                            wrapped.load();
                             Object systemChatPacket = NetworkReflections.constructor$ClientboundSystemChatPacket.newInstance(
                                     ComponentUtils.adventureToMinecraft(Component.translatable("item.minecraft.debug_stick.select")
                                             .arguments(
                                                     Component.text(currentProperty.name()),
-                                                    Component.text(getNameHelper(clickedCustomBlock, currentProperty))
+                                                    Component.text(getNameHelper(customState, currentProperty))
                                             )), true);
                             player.sendPacket(systemChatPacket, false);
                         }
                     }
                 }
             } catch (ReflectiveOperationException e) {
-                plugin.logger().warn("Failed to send system chat packet", e);
+                this.plugin.logger().warn("Failed to send system chat packet", e);
             }
-        }
+        });
     }
 
     private static <T extends Comparable<T>> ImmutableBlockState cycleState(ImmutableBlockState state, Property<T> property, boolean inverse) {

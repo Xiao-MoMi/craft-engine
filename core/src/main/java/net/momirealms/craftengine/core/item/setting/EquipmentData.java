@@ -1,14 +1,13 @@
 package net.momirealms.craftengine.core.item.setting;
 
 import net.momirealms.craftengine.core.entity.EquipmentSlot;
-import net.momirealms.craftengine.core.plugin.locale.LocalizedResourceConfigException;
 import net.momirealms.craftengine.core.util.Key;
 import net.momirealms.craftengine.core.util.ResourceConfigUtils;
 import net.momirealms.craftengine.core.util.VersionHelper;
+import net.momirealms.sparrow.nbt.CompoundTag;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.HashMap;
 import java.util.Locale;
 import java.util.Map;
 
@@ -44,8 +43,9 @@ public class EquipmentData {
     public static EquipmentData fromMap(@NotNull final Map<String, Object> data) {
         String slot = (String) data.get("slot");
         if (slot == null) {
-            throw new LocalizedResourceConfigException("warning.config.item.settings.equippable.missing_slot");
+            throw new IllegalArgumentException("slot cannot be null");
         }
+        // todo 重新写判断，不应该支持手部
         EquipmentSlot slotEnum = EquipmentSlot.valueOf(slot.toUpperCase(Locale.ENGLISH));
         EquipmentData.Builder builder = EquipmentData.builder().slot(slotEnum);
         if (data.containsKey("asset-id")) {
@@ -97,22 +97,26 @@ public class EquipmentData {
         return cameraOverlay;
     }
 
-    public Map<String, Object> toMap() {
-        Map<String, Object> map = new HashMap<>();
-        map.put("slot", this.slot.toString().toLowerCase(Locale.ENGLISH));
+    public CompoundTag toNBT() {
+        CompoundTag tag = new CompoundTag();
+        tag.putString("slot", this.slot.toString().toLowerCase(Locale.ENGLISH));
         if (this.assetId != null) {
-            map.put("asset_id", this.assetId.toString());
+            if (VersionHelper.isOrAbove1_21_4()) {
+                tag.putString("asset_id", this.assetId.toString());
+            } else {
+                tag.putString("model", this.assetId.toString());
+            }
         }
-        map.put("dispensable", this.dispensable);
-        map.put("swappable", this.swappable);
-        map.put("damage_on_hurt", this.damageOnHurt);
+        tag.putBoolean("dispensable", this.dispensable);
+        tag.putBoolean("swappable", this.swappable);
+        tag.putBoolean("damage_on_hurt", this.damageOnHurt);
         if (VersionHelper.isOrAbove1_21_5()) {
-            map.put("equip_on_interact", this.equipOnInteract);
+            tag.putBoolean("equip_on_interact", this.equipOnInteract);
         }
         if (this.cameraOverlay != null) {
-            map.put("camera_overlay", this.cameraOverlay.toString());
+            tag.putString("camera_overlay", this.cameraOverlay.toString());
         }
-        return map;
+        return tag;
     }
 
     public static Builder builder() {
@@ -126,7 +130,7 @@ public class EquipmentData {
         private boolean swappable = true;
         private boolean damageOnHurt = true;
         // 1.21.5+
-        private boolean equipOnInteract = true;
+        private boolean equipOnInteract = false;
         private Key cameraOverlay;
 
         public Builder() {}

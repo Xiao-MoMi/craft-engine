@@ -1,6 +1,5 @@
 package net.momirealms.craftengine.bukkit.block.behavior;
 
-import net.momirealms.craftengine.bukkit.block.BukkitBlockManager;
 import net.momirealms.craftengine.bukkit.nms.FastNMS;
 import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.CoreReflections;
 import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.MFluids;
@@ -81,26 +80,24 @@ public class SlabBlockBehavior extends BukkitBlockBehavior {
     @Override
     public boolean placeLiquid(Object thisBlock, Object[] args, Callable<Object> superMethod) {
         Object blockState = args[2];
-        ImmutableBlockState immutableBlockState = BukkitBlockManager.instance().getImmutableBlockState(BlockStateUtils.blockStateToId(blockState));
-        if (immutableBlockState == null || immutableBlockState.isEmpty()) return false;
-        return immutableBlockState.get(this.typeProperty) != SlabType.DOUBLE && super.placeLiquid(thisBlock, args, superMethod);
+        Optional<ImmutableBlockState> optionalCustomState = BlockStateUtils.getOptionalCustomBlockState(blockState);
+        return optionalCustomState.filter(state -> state.get(this.typeProperty) != SlabType.DOUBLE && super.placeLiquid(thisBlock, args, superMethod)).isPresent();
     }
 
     @Override
     public boolean canPlaceLiquid(Object thisBlock, Object[] args, Callable<Object> superMethod) {
         Object blockState = VersionHelper.isOrAbove1_20_2() ? args[3] : args[2];
-        ImmutableBlockState immutableBlockState = BukkitBlockManager.instance().getImmutableBlockState(BlockStateUtils.blockStateToId(blockState));
-        if (immutableBlockState == null || immutableBlockState.isEmpty()) return false;
-        return immutableBlockState.get(this.typeProperty) != SlabType.DOUBLE && super.canPlaceLiquid(thisBlock, args, superMethod);
+        Optional<ImmutableBlockState> optionalCustomState = BlockStateUtils.getOptionalCustomBlockState(blockState);
+        return optionalCustomState.filter(state -> state.get(this.typeProperty) != SlabType.DOUBLE && super.canPlaceLiquid(thisBlock, args, superMethod)).isPresent();
     }
 
     @Override
     public Object updateShape(Object thisBlock, Object[] args, Callable<Object> superMethod) throws Exception {
         Object blockState = args[0];
         if (super.waterloggedProperty == null) return blockState;
-        ImmutableBlockState immutableBlockState = BukkitBlockManager.instance().getImmutableBlockState(BlockStateUtils.blockStateToId(blockState));
-        if (immutableBlockState == null || immutableBlockState.isEmpty()) return blockState;
-        if (immutableBlockState.get(super.waterloggedProperty)) {
+        Optional<ImmutableBlockState> optionalCustomState = BlockStateUtils.getOptionalCustomBlockState(blockState);
+        if (optionalCustomState.isEmpty()) return blockState;
+        if (optionalCustomState.get().get(super.waterloggedProperty)) {
             FastNMS.INSTANCE.method$LevelAccessor$scheduleFluidTick(VersionHelper.isOrAbove1_21_2() ? args[2] : args[3], VersionHelper.isOrAbove1_21_2() ? args[3] : args[4], MFluids.WATER, 5);
         }
         return blockState;
@@ -110,10 +107,10 @@ public class SlabBlockBehavior extends BukkitBlockBehavior {
     public boolean isPathFindable(Object thisBlock, Object[] args, Callable<Object> superMethod) {
         Object type = VersionHelper.isOrAbove1_20_5() ? args[1] : args[3];
         Object blockState = args[0];
-        ImmutableBlockState state = BukkitBlockManager.instance().getImmutableBlockState(BlockStateUtils.blockStateToId(blockState));
-        if (state == null || state.isEmpty()) return false;
+        Optional<ImmutableBlockState> optionalCustomState = BlockStateUtils.getOptionalCustomBlockState(blockState);
+        if (optionalCustomState.isEmpty()) return false;
         if (type == CoreReflections.instance$PathComputationType$WATER) {
-            return super.waterloggedProperty != null && state.get(this.typeProperty) != SlabType.DOUBLE && state.get(super.waterloggedProperty);
+            return super.waterloggedProperty != null && optionalCustomState.get().get(this.typeProperty) != SlabType.DOUBLE && optionalCustomState.get().get(super.waterloggedProperty);
         }
         return false;
     }

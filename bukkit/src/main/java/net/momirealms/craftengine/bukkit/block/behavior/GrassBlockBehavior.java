@@ -1,9 +1,11 @@
 package net.momirealms.craftengine.bukkit.block.behavior;
 
-import net.momirealms.craftengine.bukkit.block.BukkitBlockManager;
 import net.momirealms.craftengine.bukkit.nms.FastNMS;
 import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.CoreReflections;
+import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.MBlocks;
+import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.MRegistries;
 import net.momirealms.craftengine.bukkit.util.BlockStateUtils;
+import net.momirealms.craftengine.bukkit.util.FeatureUtils;
 import net.momirealms.craftengine.bukkit.util.LocationUtils;
 import net.momirealms.craftengine.bukkit.util.ParticleUtils;
 import net.momirealms.craftengine.bukkit.world.BukkitBlockInWorld;
@@ -16,38 +18,49 @@ import net.momirealms.craftengine.core.item.Item;
 import net.momirealms.craftengine.core.item.ItemKeys;
 import net.momirealms.craftengine.core.item.context.UseOnContext;
 import net.momirealms.craftengine.core.plugin.CraftEngine;
-import net.momirealms.craftengine.core.util.VersionHelper;
+import net.momirealms.craftengine.core.util.*;
 import net.momirealms.craftengine.core.world.BlockPos;
 import org.bukkit.World;
 import org.bukkit.block.Block;
 
 import java.util.Map;
+import java.util.Optional;
 
+@SuppressWarnings("DuplicatedCode")
 public class GrassBlockBehavior extends BukkitBlockBehavior {
     public static final Factory FACTORY = new Factory();
+    private final Key feature;
 
-    public GrassBlockBehavior(CustomBlock block) {
+    public GrassBlockBehavior(CustomBlock block, Key feature) {
         super(block);
+        this.feature = feature;
+    }
+
+    public Key boneMealFeature() {
+        return feature;
     }
 
     @Override
     public boolean isValidBoneMealTarget(Object thisBlock, Object[] args) {
-        return FastNMS.INSTANCE.method$GrassBlock$isValidBonemealTarget(args[0], args[1], args[2]);
+        Object above = LocationUtils.above(args[1]);
+        Object aboveState = FastNMS.INSTANCE.method$BlockGetter$getBlockState(args[0], above);
+        return FastNMS.INSTANCE.method$BlockStateBase$isAir(aboveState);
     }
 
     @Override
-    public boolean isBoneMealSuccess(Object thisBlock, Object[] args) throws Exception {
+    public boolean isBoneMealSuccess(Object thisBlock, Object[] args) {
         if (!VersionHelper.isOrAbove1_20_2()) return true;
         Object level = args[0];
         Object blockPos = args[2];
         Object blockState = args[3];
-        ImmutableBlockState immutableBlockState = BukkitBlockManager.instance().getImmutableBlockState(BlockStateUtils.blockStateToId(blockState));
-        if (immutableBlockState == null || immutableBlockState.isEmpty()) {
+        Optional<ImmutableBlockState> optionalCustomState = BlockStateUtils.getOptionalCustomBlockState(blockState);
+        if (optionalCustomState.isEmpty()) {
             return false;
         }
         boolean sendParticles = false;
-        Object visualState = immutableBlockState.vanillaBlockState().handle();
-        Object visualStateBlock = CoreReflections.method$BlockStateBase$getBlock.invoke(visualState);
+        ImmutableBlockState customState = optionalCustomState.get();
+        Object visualState = customState.vanillaBlockState().handle();
+        Object visualStateBlock = BlockStateUtils.getBlockOwner(visualState);
         if (CoreReflections.clazz$BonemealableBlock.isInstance(visualStateBlock)) {
             boolean is = FastNMS.INSTANCE.method$BonemealableBlock$isValidBonemealTarget(visualStateBlock, level, blockPos, visualState);
             if (!is) {
@@ -78,20 +91,15 @@ public class GrassBlockBehavior extends BukkitBlockBehavior {
         if (!block.isEmpty())
             return InteractionResult.PASS;
         boolean sendSwing = false;
-        try {
-            Object visualState = state.vanillaBlockState().handle();
-            Object visualStateBlock = CoreReflections.method$BlockStateBase$getBlock.invoke(visualState);
-            if (CoreReflections.clazz$BonemealableBlock.isInstance(visualStateBlock)) {
-                boolean is = FastNMS.INSTANCE.method$BonemealableBlock$isValidBonemealTarget(visualStateBlock, context.getLevel().serverWorld(), LocationUtils.toBlockPos(context.getClickedPos()), visualState);
-                if (!is) {
-                    sendSwing = true;
-                }
-            } else {
+        Object visualState = state.vanillaBlockState().handle();
+        Object visualStateBlock = BlockStateUtils.getBlockOwner(visualState);
+        if (CoreReflections.clazz$BonemealableBlock.isInstance(visualStateBlock)) {
+            boolean is = FastNMS.INSTANCE.method$BonemealableBlock$isValidBonemealTarget(visualStateBlock, context.getLevel().serverWorld(), LocationUtils.toBlockPos(context.getClickedPos()), visualState);
+            if (!is) {
                 sendSwing = true;
             }
-        } catch (Exception e) {
-            CraftEngine.instance().logger().warn("Failed to check visual state bone meal state", e);
-            return InteractionResult.FAIL;
+        } else {
+            sendSwing = true;
         }
         if (sendSwing) {
             context.getPlayer().swingHand(context.getHand());
@@ -100,14 +108,56 @@ public class GrassBlockBehavior extends BukkitBlockBehavior {
     }
 
     @Override
-    public void performBoneMeal(Object thisBlock, Object[] args) {
-        FastNMS.INSTANCE.method$GrassBlock$performBoneMeal(args[0], args[1], args[2], args[3], thisBlock);
+    public void performBoneMeal(Object thisBlock, Object[] args) throws Exception {
+        Object registry = FastNMS.INSTANCE.method$RegistryAccess$lookupOrThrow(FastNMS.INSTANCE.registryAccess(), MRegistries.PLACED_FEATURE);
+        if (registry == null) return;
+        Optional<Object> holder = FastNMS.INSTANCE.method$Registry$getHolderByResourceKey(registry, FeatureUtils.createPlacedFeatureKey(boneMealFeature()));
+        if (holder.isEmpty()) {
+            CraftEngine.instance().logger().warn("Placed feature not found: " + boneMealFeature());
+            return;
+        }
+        BlockPos grassPos = LocationUtils.fromBlockPos(args[2]);
+        Object world = args[0];
+        Object random = args[1];
+        BlockPos topPos = grassPos.above();
+        out:
+        for (int i = 0; i < 128; i++) {
+            BlockPos currentPos = topPos;
+            for (int j = 0; j < i / 16; ++j) {
+                currentPos = currentPos.offset(
+                        RandomUtils.generateRandomInt(-1, 2), RandomUtils.generateRandomInt(-1, 2) * RandomUtils.generateRandomInt(0, 3) / 2, RandomUtils.generateRandomInt(-1, 2)
+                );
+                BlockPos belowPos = currentPos.relative(Direction.DOWN);
+                Object belowState = FastNMS.INSTANCE.method$BlockGetter$getBlockState(world, LocationUtils.toBlockPos(belowPos));
+                Optional<ImmutableBlockState> optionalCustomState = BlockStateUtils.getOptionalCustomBlockState(belowState);
+                if (optionalCustomState.isEmpty()) {
+                    continue out;
+                }
+                if (optionalCustomState.get().owner().value() != super.customBlock) {
+                    continue out;
+                }
+                Object nmsCurrentPos = LocationUtils.toBlockPos(currentPos);
+                Object currentState = FastNMS.INSTANCE.method$BlockGetter$getBlockState(world, nmsCurrentPos);
+                if (FastNMS.INSTANCE.method$BlockStateBase$isCollisionShapeFullBlock(currentState, world, nmsCurrentPos)) {
+                    continue out;
+                }
+                if (BlockStateUtils.getBlockOwner(currentState) == MBlocks.SHORT_GRASS && RandomUtils.generateRandomInt(0, 10) == 0) {
+                    CoreReflections.method$BonemealableBlock$performBonemeal.invoke(MBlocks.SHORT_GRASS, world, random, nmsCurrentPos, currentState);
+                }
+                if (FastNMS.INSTANCE.method$BlockStateBase$isAir(currentState)) {
+                    Object chunkGenerator = CoreReflections.method$ServerChunkCache$getGenerator.invoke(FastNMS.INSTANCE.method$ServerLevel$getChunkSource(world));
+                    Object placedFeature = CoreReflections.method$Holder$value.invoke(holder.get());
+                    CoreReflections.method$PlacedFeature$place.invoke(placedFeature, world, chunkGenerator, random, nmsCurrentPos);
+                }
+            }
+        }
     }
 
     public static class Factory implements BlockBehaviorFactory {
         @Override
         public BlockBehavior create(CustomBlock block, Map<String, Object> arguments) {
-            return new GrassBlockBehavior(block);
+            String feature = ResourceConfigUtils.requireNonEmptyStringOrThrow(ResourceConfigUtils.get(arguments, "feature", "placed-feature"), "warning.config.block.behavior.grass.missing_feature");
+            return new GrassBlockBehavior(block, Key.of(feature));
         }
     }
 }

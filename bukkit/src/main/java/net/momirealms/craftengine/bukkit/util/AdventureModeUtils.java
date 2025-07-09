@@ -29,7 +29,7 @@ public class AdventureModeUtils {
                 return false;
             }
         }
-        return FastNMS.INSTANCE.canBreakInAdventureMode(FastNMS.INSTANCE.field$CraftItemStack$handle(itemStack), blockInWorld);
+        return FastNMS.INSTANCE.method$ItemStack$canBreakInAdventureMode(FastNMS.INSTANCE.field$CraftItemStack$handle(itemStack), blockInWorld);
     }
 
     public static boolean canPlace(Item<?> itemStack, World world, BlockPos pos, Object state) {
@@ -44,7 +44,7 @@ public class AdventureModeUtils {
                 return false;
             }
         }
-        return FastNMS.INSTANCE.canPlaceInAdventureMode(item, blockInWorld);
+        return FastNMS.INSTANCE.method$ItemStack$canPlaceInAdventureMode(item, blockInWorld);
     }
 
     public static boolean canPlace(ItemStack itemStack, Location pos, Object state) {
@@ -58,6 +58,6 @@ public class AdventureModeUtils {
                 return false;
             }
         }
-        return FastNMS.INSTANCE.canPlaceInAdventureMode(FastNMS.INSTANCE.field$CraftItemStack$handle(itemStack), blockInWorld);
+        return FastNMS.INSTANCE.method$ItemStack$canPlaceInAdventureMode(FastNMS.INSTANCE.field$CraftItemStack$handle(itemStack), blockInWorld);
     }
 }

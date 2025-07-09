@@ -14,7 +14,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
-public class UnsafeBlockStateMatcher {
+public final class UnsafeBlockStateMatcher {
     private final List<Pair<String, String>> matchers;
     private final Key id;
 

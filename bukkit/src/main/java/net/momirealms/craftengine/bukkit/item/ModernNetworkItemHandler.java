@@ -29,7 +29,7 @@ public final class ModernNetworkItemHandler implements NetworkItemHandler<ItemSt
 
     @Override
     public Optional<Item<ItemStack>> c2s(Item<ItemStack> wrapped) {
-        Tag customData = wrapped.getNBTComponent(ComponentTypes.CUSTOM_DATA);
+        Tag customData = wrapped.getSparrowNBTComponent(ComponentTypes.CUSTOM_DATA);
         if (!(customData instanceof CompoundTag compoundTag)) return Optional.empty();
         Optional<CustomItem<ItemStack>> optionalCustomItem = wrapped.getCustomItem();
         boolean hasDifferentMaterial = false;
@@ -75,7 +75,7 @@ public final class ModernNetworkItemHandler implements NetworkItemHandler<ItemSt
                 if (!Config.interceptItem() && !hasDifferentMaterial) return Optional.empty();
                 return new OtherItem(wrapped, hasDifferentMaterial).process();
             } else {
-                CompoundTag customData = Optional.ofNullable(wrapped.getNBTComponent(ComponentTypes.CUSTOM_DATA)).map(CompoundTag.class::cast).orElse(new CompoundTag());
+                CompoundTag customData = Optional.ofNullable(wrapped.getSparrowNBTComponent(ComponentTypes.CUSTOM_DATA)).map(CompoundTag.class::cast).orElse(new CompoundTag());
                 CompoundTag arguments = customData.getCompound(ArgumentModifier.ARGUMENTS_TAG);
                 ItemBuildContext context;
                 if (arguments == null) {
@@ -90,6 +90,8 @@ public final class ModernNetworkItemHandler implements NetworkItemHandler<ItemSt
                 CompoundTag tag = new CompoundTag();
                 for (ItemDataModifier<ItemStack> modifier : customItem.clientBoundDataModifiers()) {
                     modifier.prepareNetworkItem(wrapped, context, tag);
+                }
+                for (ItemDataModifier<ItemStack> modifier : customItem.clientBoundDataModifiers()) {
                     modifier.apply(wrapped, context);
                 }
                 if (Config.interceptItem()) {
@@ -174,7 +176,7 @@ public final class ModernNetworkItemHandler implements NetworkItemHandler<ItemSt
     }
 
     public static boolean processModernItemName(Item<ItemStack> item, Supplier<CompoundTag> tag) {
-        Tag nameTag = item.getNBTComponent(ComponentTypes.ITEM_NAME);
+        Tag nameTag = item.getSparrowNBTComponent(ComponentTypes.ITEM_NAME);
         if (nameTag == null) return false;
         String tagStr = nameTag.getAsString();
         Map<String, Component> tokens = CraftEngine.instance().fontManager().matchTags(tagStr);
@@ -187,7 +189,7 @@ public final class ModernNetworkItemHandler implements NetworkItemHandler<ItemSt
     }
 
     public static boolean processModernCustomName(Item<ItemStack> item, Supplier<CompoundTag> tag) {
-        Tag nameTag = item.getNBTComponent(ComponentTypes.CUSTOM_NAME);
+        Tag nameTag = item.getSparrowNBTComponent(ComponentTypes.CUSTOM_NAME);
         if (nameTag == null) return false;
         String tagStr = nameTag.getAsString();
         Map<String, Component> tokens = CraftEngine.instance().fontManager().matchTags(tagStr);
@@ -200,7 +202,7 @@ public final class ModernNetworkItemHandler implements NetworkItemHandler<ItemSt
     }
 
     public static boolean processModernLore(Item<ItemStack> item, Supplier<CompoundTag> tagSupplier) {
-        Tag loreTag = item.getNBTComponent(ComponentTypes.LORE);
+        Tag loreTag = item.getSparrowNBTComponent(ComponentTypes.LORE);
         boolean changed = false;
         if (!(loreTag instanceof ListTag listTag)) {
             return false;
@@ -252,7 +254,7 @@ public final class ModernNetworkItemHandler implements NetworkItemHandler<ItemSt
                     this.globalChanged = true;
             }
             if (this.globalChanged) {
-                CompoundTag customData = Optional.ofNullable(this.item.getNBTComponent(ComponentTypes.CUSTOM_DATA)).map(CompoundTag.class::cast).orElse(new CompoundTag());
+                CompoundTag customData = Optional.ofNullable(this.item.getSparrowNBTComponent(ComponentTypes.CUSTOM_DATA)).map(CompoundTag.class::cast).orElse(new CompoundTag());
                 customData.put(NETWORK_ITEM_TAG, getOrCreateTag());
                 this.item.setNBTComponent(ComponentKeys.CUSTOM_DATA, customData);
                 return Optional.of(this.item);

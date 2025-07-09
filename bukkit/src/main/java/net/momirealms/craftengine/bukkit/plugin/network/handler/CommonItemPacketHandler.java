@@ -17,6 +17,7 @@ import java.util.Optional;
 
 public class CommonItemPacketHandler implements EntityPacketHandler {
     public static final CommonItemPacketHandler INSTANCE = new CommonItemPacketHandler();
+    private static long lastWarningTime = 0;
 
     @Override
     public void handleSetEntityData(NetWorkUser user, ByteBufPacketEvent event) {
@@ -29,9 +30,14 @@ public class CommonItemPacketHandler implements EntityPacketHandler {
             int entityDataId = FastNMS.INSTANCE.field$SynchedEntityData$DataValue$id(packedItem);
             if (entityDataId == EntityDataUtils.ITEM_DATA_ID) {
                 Object nmsItemStack = FastNMS.INSTANCE.field$SynchedEntityData$DataValue$value(packedItem);
-                // TODO 检查为什么会导致问题，难道是其他插件乱发entity id？
                 if (!CoreReflections.clazz$ItemStack.isInstance(nmsItemStack)) {
-                    CraftEngine.instance().logger().warn("Invalid item data for entity " + id);
+                    long time = System.currentTimeMillis();
+                    if (time - lastWarningTime > 5000) {
+                        BukkitServerPlayer serverPlayer = (BukkitServerPlayer) user;
+                        CraftEngine.instance().logger().severe("An issue was detected while applying item-related entity data for '" + serverPlayer.name() +
+                                "'. Please execute the command '/ce debug entity-id " + serverPlayer.world().name() + " " + id + "' and provide a screenshot for further investigation.");
+                        lastWarningTime = time;
+                    }
                     continue;
                 }
                 ItemStack itemStack = FastNMS.INSTANCE.method$CraftItemStack$asCraftMirror(nmsItemStack);

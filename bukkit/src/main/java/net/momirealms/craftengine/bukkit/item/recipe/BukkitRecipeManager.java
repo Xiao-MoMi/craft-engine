@@ -130,7 +130,8 @@ public class BukkitRecipeManager extends AbstractRecipeManager<ItemStack> {
                 } else if (VersionHelper.isOrAbove1_20_2()) {
                     nmsRecipe = CoreReflections.constructor$RecipeHolder.newInstance(KeyUtils.toResourceLocation(id), nmsRecipe);
                 } else {
-                    return () -> {};
+                    Object finalNmsRecipe0 = nmsRecipe;
+                    return () -> registerNMSSmithingRecipe(finalNmsRecipe0);
                 }
                 Object finalNmsRecipe = nmsRecipe;
                 return () -> registerNMSSmithingRecipe(finalNmsRecipe);
@@ -304,13 +305,21 @@ public class BukkitRecipeManager extends AbstractRecipeManager<ItemStack> {
         if (!Config.enableRecipeSystem()) return;
         super.unload();
         if (VersionHelper.isOrAbove1_21_2()) {
-            this.plugin.scheduler().executeSync(() -> {
+            if (Bukkit.getServer().isStopping()) {
                 try {
                     CoreReflections.method$RecipeManager$finalizeRecipeLoading.invoke(nmsRecipeManager);
                 } catch (ReflectiveOperationException e) {
                     this.plugin.logger().warn("Failed to unregister recipes", e);
                 }
-            });
+            } else {
+                this.plugin.scheduler().executeSync(() -> {
+                    try {
+                        CoreReflections.method$RecipeManager$finalizeRecipeLoading.invoke(nmsRecipeManager);
+                    } catch (ReflectiveOperationException e) {
+                        this.plugin.logger().warn("Failed to unregister recipes", e);
+                    }
+                });
+            }
         }
     }
 

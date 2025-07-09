@@ -1,6 +1,7 @@
 package net.momirealms.craftengine.bukkit.plugin.network;
 
 import com.google.common.collect.Lists;
+import com.mojang.authlib.GameProfile;
 import com.mojang.datafixers.util.Either;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
@@ -9,6 +10,7 @@ import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.ints.IntList;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.TranslationArgument;
+import net.momirealms.craftengine.bukkit.api.CraftEngineBlocks;
 import net.momirealms.craftengine.bukkit.api.CraftEngineFurniture;
 import net.momirealms.craftengine.bukkit.api.event.FurnitureAttemptBreakEvent;
 import net.momirealms.craftengine.bukkit.api.event.FurnitureBreakEvent;
@@ -20,7 +22,6 @@ import net.momirealms.craftengine.bukkit.entity.projectile.BukkitProjectileManag
 import net.momirealms.craftengine.bukkit.item.BukkitItemManager;
 import net.momirealms.craftengine.bukkit.item.behavior.FurnitureItemBehavior;
 import net.momirealms.craftengine.bukkit.nms.FastNMS;
-import net.momirealms.craftengine.bukkit.pack.BukkitPackManager;
 import net.momirealms.craftengine.bukkit.plugin.BukkitCraftEngine;
 import net.momirealms.craftengine.bukkit.plugin.injector.ProtectedFieldVisitor;
 import net.momirealms.craftengine.bukkit.plugin.network.handler.*;
@@ -49,6 +50,7 @@ import net.momirealms.craftengine.core.plugin.context.ContextHolder;
 import net.momirealms.craftengine.core.plugin.context.PlayerOptionalContext;
 import net.momirealms.craftengine.core.plugin.context.event.EventTrigger;
 import net.momirealms.craftengine.core.plugin.context.parameter.DirectContextParameters;
+import net.momirealms.craftengine.core.plugin.logger.Debugger;
 import net.momirealms.craftengine.core.plugin.network.*;
 import net.momirealms.craftengine.core.util.*;
 import net.momirealms.craftengine.core.world.BlockHitResult;
@@ -63,7 +65,6 @@ import net.momirealms.craftengine.core.world.collision.AABB;
 import net.momirealms.sparrow.nbt.Tag;
 import org.bukkit.*;
 import org.bukkit.block.Block;
-import org.bukkit.block.data.BlockData;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.PlayerInventory;
@@ -994,7 +995,7 @@ public class PacketConsumers {
             float zDist = buf.readFloat();
             float maxSpeed = buf.readFloat();
             int count = buf.readInt();
-            Object option = FastNMS.INSTANCE.method$ParticleTypes$STREAM_CODEC$decode(buf);
+            Object option = FastNMS.INSTANCE.method$StreamCodec$decode(NetworkReflections.instance$ParticleTypes$STREAM_CODEC, buf);
             if (option == null) return;
             if (!CoreReflections.clazz$BlockParticleOption.isInstance(option)) return;
             Object blockState = FastNMS.INSTANCE.field$BlockParticleOption$blockState(option);
@@ -1016,7 +1017,7 @@ public class PacketConsumers {
             buf.writeFloat(zDist);
             buf.writeFloat(maxSpeed);
             buf.writeInt(count);
-            FastNMS.INSTANCE.method$ParticleTypes$STREAM_CODEC$encode(buf, remappedOption);
+            FastNMS.INSTANCE.method$StreamCodec$encode(NetworkReflections.instance$ParticleTypes$STREAM_CODEC, buf, remappedOption);
         } catch (Exception e) {
             CraftEngine.instance().logger().warn("Failed to handle ClientboundLevelParticlesPacket", e);
         }
@@ -1034,7 +1035,7 @@ public class PacketConsumers {
             float zDist = buf.readFloat();
             float maxSpeed = buf.readFloat();
             int count = buf.readInt();
-            Object option = FastNMS.INSTANCE.method$ParticleTypes$STREAM_CODEC$decode(buf);
+            Object option = FastNMS.INSTANCE.method$StreamCodec$decode(NetworkReflections.instance$ParticleTypes$STREAM_CODEC, buf);
             if (option == null) return;
             if (!CoreReflections.clazz$BlockParticleOption.isInstance(option)) return;
             Object blockState = FastNMS.INSTANCE.field$BlockParticleOption$blockState(option);
@@ -1055,7 +1056,7 @@ public class PacketConsumers {
             buf.writeFloat(zDist);
             buf.writeFloat(maxSpeed);
             buf.writeInt(count);
-            FastNMS.INSTANCE.method$ParticleTypes$STREAM_CODEC$encode(buf, remappedOption);
+            FastNMS.INSTANCE.method$StreamCodec$encode(NetworkReflections.instance$ParticleTypes$STREAM_CODEC, buf, remappedOption);
         } catch (Exception e) {
             CraftEngine.instance().logger().warn("Failed to handle ClientboundLevelParticlesPacket", e);
         }
@@ -1253,9 +1254,6 @@ public class PacketConsumers {
             player.setConnectionState(ConnectionState.PLAY);
             Object dimensionKey;
             if (!VersionHelper.isOrAbove1_20_2()) {
-                if (BukkitNetworkManager.hasViaVersion()) {
-                    user.setProtocolVersion(CraftEngine.instance().compatibilityManager().getPlayerProtocolVersion(player.uuid()));
-                }
                 dimensionKey = NetworkReflections.methodHandle$ClientboundLoginPacket$dimensionGetter.invokeExact(packet);
             } else {
                 Object commonInfo = NetworkReflections.methodHandle$ClientboundLoginPacket$commonPlayerSpawnInfoGetter.invokeExact(packet);
@@ -1280,7 +1278,7 @@ public class PacketConsumers {
     // When the hotbar is full, the latest creative mode inventory can only be accessed when the player opens the inventory screen. Currently, it is not worth further handling this issue.
     public static final TriConsumer<NetWorkUser, NMSPacketEvent, Object> SET_CREATIVE_SLOT = (user, event, packet) -> {
         try {
-            if (user.protocolVersion().isVersionNewerThan(ProtocolVersion.V1_21_4)) return;
+            if (VersionHelper.isOrAbove1_21_4()) return;
             if (!user.isOnline()) return;
             BukkitServerPlayer player = (BukkitServerPlayer) user;
             if (VersionHelper.isFolia()) {
@@ -1316,15 +1314,18 @@ public class PacketConsumers {
         if (result == null) return;
         Block hitBlock = result.getHitBlock();
         if (hitBlock == null) return;
-        ImmutableBlockState state = BukkitBlockManager.instance().getImmutableBlockState(BlockStateUtils.blockDataToId(hitBlock.getBlockData()));
+        ImmutableBlockState state = CraftEngineBlocks.getCustomBlockState(hitBlock);
         // not a custom block
         if (state == null || state.isEmpty()) return;
         Key itemId = state.settings().itemId();
         // no item available
         if (itemId == null) return;
-        BlockData data = BlockStateUtils.fromBlockData(state.vanillaBlockState().handle());
-        // compare item
-        if (data == null || !data.getMaterial().equals(item.getType())) return;
+        Object vanillaBlock = FastNMS.INSTANCE.method$BlockState$getBlock(state.vanillaBlockState().handle());
+        Object vanillaBlockItem = FastNMS.INSTANCE.method$Block$asItem(vanillaBlock);
+        if (vanillaBlockItem == null) return;
+        Key addItemId = KeyUtils.namespacedKey2Key(item.getType().getKey());
+        Key blockItemId = KeyUtils.resourceLocationToKey(FastNMS.INSTANCE.method$Registry$getKey(MBuiltInRegistries.ITEM, vanillaBlockItem));
+        if (!addItemId.equals(blockItemId)) return;
         ItemStack itemStack = BukkitCraftEngine.instance().itemManager().buildCustomItemStack(itemId, player);
         if (ItemUtils.isEmpty(itemStack)) {
             CraftEngine.instance().logger().warn("Item: " + itemId + " is not a valid item");
@@ -1550,7 +1551,7 @@ public class PacketConsumers {
                     if (EventUtils.fireAndCheckCancel(preBreakEvent))
                         return;
 
-                    if (!BukkitCraftEngine.instance().antiGrief().canBreak(platformPlayer, location))
+                    if (!BukkitCraftEngine.instance().antiGriefProvider().canBreak(platformPlayer, location))
                         return;
 
                     FurnitureBreakEvent breakEvent = new FurnitureBreakEvent(serverPlayer.platformPlayer(), furniture);
@@ -1724,7 +1725,7 @@ public class PacketConsumers {
                 Optional<Object> optionalSound = FastNMS.INSTANCE.method$IdMap$byId(MBuiltInRegistries.SOUND_EVENT, id - 1);
                 if (optionalSound.isEmpty()) return;
                 Object soundEvent = optionalSound.get();
-                Key soundId = Key.of(FastNMS.INSTANCE.method$SoundEvent$location(soundEvent));
+                Key soundId = KeyUtils.resourceLocationToKey(FastNMS.INSTANCE.method$SoundEvent$location(soundEvent));
                 int source = buf.readVarInt();
                 int x = buf.readInt();
                 int y = buf.readInt();
@@ -2092,7 +2093,13 @@ public class PacketConsumers {
             int stateId = buf.readVarInt();
             int slot = buf.readShort();
             Object friendlyBuf = FastNMS.INSTANCE.constructor$FriendlyByteBuf(buf);
-            ItemStack itemStack = FastNMS.INSTANCE.method$FriendlyByteBuf$readItem(friendlyBuf);
+            ItemStack itemStack;
+            try {
+                itemStack = FastNMS.INSTANCE.method$FriendlyByteBuf$readItem(friendlyBuf);
+            } catch (Exception e) {
+                // 其他插件干的，比如某ty*****er，不要赖到ce头上
+                return;
+            }
             BukkitItemManager.instance().s2c(itemStack, serverPlayer).ifPresent((newItemStack) -> {
                 event.setChanged(true);
                 buf.clear();
@@ -2279,73 +2286,52 @@ public class PacketConsumers {
         }
     };
 
-    public static final TriConsumer<NetWorkUser, NMSPacketEvent, Object> RESOURCE_PACK_PUSH = (user, event, packet) -> {
-        try {
-            if (!VersionHelper.isOrAbove1_20_2()) return;
-            // we should only handle fake urls
-            String url = FastNMS.INSTANCE.field$ClientboundResourcePackPushPacket$url(packet);
-            if (!url.equals(BukkitPackManager.FAKE_URL)) {
-                return;
-            }
-
-            event.setCancelled(true);
-            UUID packUUID = FastNMS.INSTANCE.field$ClientboundResourcePackPushPacket$uuid(packet);
-            ResourcePackHost host = CraftEngine.instance().packManager().resourcePackHost();
-            host.requestResourcePackDownloadLink(user.uuid()).thenAccept(dataList -> {
-                if (dataList.isEmpty()) {
-                    user.simulatePacket(FastNMS.INSTANCE.constructor$ServerboundResourcePackPacket$SUCCESSFULLY_LOADED(packUUID));
-                    return;
-                }
-                for (ResourcePackDownloadData data : dataList) {
-                    Object newPacket = ResourcePackUtils.createPacket(data.uuid(), data.url(), data.sha1());
-                    user.sendPacket(newPacket, true);
-                    user.addResourcePackUUID(data.uuid());
-                }
-            }).exceptionally(throwable -> {
-                CraftEngine.instance().logger().warn("Failed to handle ClientboundResourcePackPushPacket", throwable);
-                user.simulatePacket(FastNMS.INSTANCE.constructor$ServerboundResourcePackPacket$SUCCESSFULLY_LOADED(packUUID));
-                return null;
-            });
-        } catch (Exception e) {
-            CraftEngine.instance().logger().warn("Failed to handle ClientboundResourcePackPushPacket", e);
-        }
-    };
-
-    public static final TriConsumer<NetWorkUser, NMSPacketEvent, Object> HANDSHAKE_C2S = (user, event, packet) -> {
-        try {
-            if (BukkitNetworkManager.hasViaVersion()) return;
-            int protocolVersion = (int) NetworkReflections.methodHandle$ClientIntentionPacket$protocolVersionGetter.invokeExact(packet);
-            user.setProtocolVersion(protocolVersion);
-        } catch (Throwable e) {
-            CraftEngine.instance().logger().warn("Failed to handle ClientIntentionPacket", e);
-        }
-    };
-
-    public static final TriConsumer<NetWorkUser, NMSPacketEvent, Object> LOGIN_ACKNOWLEDGED = (user, event, packet) -> {
-        try {
-            if (BukkitNetworkManager.hasViaVersion()) {
-                user.setProtocolVersion(CraftEngine.instance().compatibilityManager().getPlayerProtocolVersion(user.uuid()));
-            }
-        } catch (Exception e) {
-            CraftEngine.instance().logger().warn("Failed to handle ServerboundLoginAcknowledgedPacket", e);
-        }
-    };
-
     public static final TriConsumer<NetWorkUser, NMSPacketEvent, Object> RESOURCE_PACK_RESPONSE = (user, event, packet) -> {
         try {
-            if (user.sentResourcePack() || !Config.sendPackOnJoin() || !Config.kickOnDeclined()) return;
-            Object action = NetworkReflections.methodHandle$ServerboundResourcePackPacket$actionGetter.invokeExact(packet);
+            Object action = FastNMS.INSTANCE.field$ServerboundResourcePackPacket$action(packet);
             if (action == null) return;
-            if (action == NetworkReflections.instance$ServerboundResourcePackPacket$Action$DECLINED
-                    || action == NetworkReflections.instance$ServerboundResourcePackPacket$Action$FAILED_DOWNLOAD) {
-                Object kickPacket = NetworkReflections.constructor$ClientboundDisconnectPacket.newInstance(
-                        ComponentUtils.adventureToMinecraft(Component.translatable("multiplayer.requiredTexturePrompt.disconnect")));
-                user.sendPacket(kickPacket, true);
-                user.nettyChannel().disconnect();
-                return;
+            if (VersionHelper.isOrAbove1_20_3()) {
+                UUID uuid = FastNMS.INSTANCE.field$ServerboundResourcePackPacket$id(packet);
+                if (!user.isResourcePackLoading(uuid)) {
+                    // 不是CraftEngine发送的资源包,不管
+                    return;
+                }
             }
-            if (action == NetworkReflections.instance$ServerboundResourcePackPacket$Action$SUCCESSFULLY_LOADED) {
-                user.setSentResourcePack(true);
+            // 检查是否是拒绝
+            if (Config.kickOnDeclined()) {
+                if (action == NetworkReflections.instance$ServerboundResourcePackPacket$Action$DECLINED) {
+                    user.kick(Component.translatable("multiplayer.requiredTexturePrompt.disconnect"));
+                    return;
+                }
+            }
+
+            // 检查是否失败
+            if (Config.kickOnFailedApply()) {
+                if (action == NetworkReflections.instance$ServerboundResourcePackPacket$Action$FAILED_DOWNLOAD
+                        || (VersionHelper.isOrAbove1_20_3() && action == NetworkReflections.instance$ServerboundResourcePackPacket$Action$INVALID_URL)) {
+                    user.kick(Component.translatable("multiplayer.requiredTexturePrompt.disconnect"));
+                    return;
+                }
+            }
+
+            boolean isTerminal = action == NetworkReflections.instance$ServerboundResourcePackPacket$Action$SUCCESSFULLY_LOADED || action == NetworkReflections.instance$ServerboundResourcePackPacket$Action$DOWNLOADED;
+            if (isTerminal) {
+                event.setCancelled(true);
+                Object packetListener = FastNMS.INSTANCE.method$Connection$getPacketListener(user.connection());
+                if (!CoreReflections.clazz$ServerConfigurationPacketListenerImpl.isInstance(packetListener)) return;
+                // 主线程上处理这个包
+                CraftEngine.instance().scheduler().executeSync(() -> {
+                    try {
+                        // 当客户端发出多次成功包的时候，finish会报错，我们忽略他
+                        NetworkReflections.methodHandle$ServerCommonPacketListener$handleResourcePackResponse.invokeExact(packetListener, packet);
+                        if (action != NetworkReflections.instance$ServerboundResourcePackPacket$Action$ACCEPTED
+                                && action != NetworkReflections.instance$ServerboundResourcePackPacket$Action$DOWNLOADED) {
+                            CoreReflections.methodHandle$ServerConfigurationPacketListenerImpl$finishCurrentTask.invokeExact(packetListener, CoreReflections.instance$ServerResourcePackConfigurationTask$TYPE);
+                        }
+                    } catch (Throwable e) {
+                        Debugger.RESOURCE_PACK.warn(() -> "Cannot finish current task", e);
+                    }
+                });
             }
         } catch (Throwable e) {
             CraftEngine.instance().logger().warn("Failed to handle ServerboundResourcePackPacket", e);
@@ -2414,6 +2400,81 @@ public class PacketConsumers {
             }
         } catch (Throwable e) {
             CraftEngine.instance().logger().warn("Failed to handle ClientboundSetEntityMotionPacket", e);
+        }
+    };
+
+    // 这个包是由 JoinWorldTask 发出的，客户端收到后会返回 ServerboundFinishConfigurationPacket
+    @SuppressWarnings("unchecked")
+    public static final TriConsumer<NetWorkUser, NMSPacketEvent, Object> FINISH_CONFIGURATION = (user, event, packet) -> {
+        try {
+            if (!VersionHelper.isOrAbove1_20_2() || !Config.sendPackOnJoin()) {
+                // 防止后期调试进配置阶段造成问题
+                user.setShouldProcessFinishConfiguration(false);
+                return;
+            }
+
+            if (!user.shouldProcessFinishConfiguration()) return;
+            Object packetListener = FastNMS.INSTANCE.method$Connection$getPacketListener(user.connection());
+            if (!CoreReflections.clazz$ServerConfigurationPacketListenerImpl.isInstance(packetListener)) {
+                return;
+            }
+
+            // 防止后续加入的JoinWorldTask再次处理
+            user.setShouldProcessFinishConfiguration(false);
+
+            // 取消 ClientboundFinishConfigurationPacket，让客户端发呆，并结束掉当前的进入世界任务
+            event.setCancelled(true);
+            try {
+                CoreReflections.methodHandle$ServerConfigurationPacketListenerImpl$finishCurrentTask.invokeExact(packetListener, CoreReflections.instance$JoinWorldTask$TYPE);
+            } catch (Throwable e) {
+                CraftEngine.instance().logger().warn("Failed to finish current task for " + user.name(), e);
+            }
+
+            if (VersionHelper.isOrAbove1_20_5()) {
+                // 1.20.5+开始会检查是否结束需要重新设置回去，不然不会发keepAlive包
+                CoreReflections.methodHandle$ServerCommonPacketListenerImpl$closedSetter.invokeExact(packetListener, false);
+            }
+
+            // 请求资源包
+            ResourcePackHost host = CraftEngine.instance().packManager().resourcePackHost();
+            host.requestResourcePackDownloadLink(user.uuid()).whenComplete((dataList, t) -> {
+                if (t != null) {
+                    CraftEngine.instance().logger().warn("Failed to get pack data for player " + user.name(), t);
+                    FastNMS.INSTANCE.method$ServerConfigurationPacketListenerImpl$returnToWorld(packetListener);
+                    return;
+                }
+                if (dataList.isEmpty()) {
+                    FastNMS.INSTANCE.method$ServerConfigurationPacketListenerImpl$returnToWorld(packetListener);
+                    return;
+                }
+                Queue<Object> configurationTasks;
+                try {
+                    configurationTasks = (Queue<Object>) CoreReflections.methodHandle$ServerConfigurationPacketListenerImpl$configurationTasksGetter.invokeExact(packetListener);
+                } catch (Throwable e) {
+                    CraftEngine.instance().logger().warn("Failed to get configuration tasks for player " + user.name(), e);
+                    FastNMS.INSTANCE.method$ServerConfigurationPacketListenerImpl$returnToWorld(packetListener);
+                    return;
+                }
+                // 向配置阶段连接的任务重加入资源包的任务
+                for (ResourcePackDownloadData data : dataList) {
+                    configurationTasks.add(FastNMS.INSTANCE.constructor$ServerResourcePackConfigurationTask(ResourcePackUtils.createServerResourcePackInfo(data.uuid(), data.url(), data.sha1())));
+                    user.addResourcePackUUID(data.uuid());
+                }
+                // 最后再加入一个 JoinWorldTask 并开始资源包任务
+                FastNMS.INSTANCE.method$ServerConfigurationPacketListenerImpl$returnToWorld(packetListener);
+            });
+        } catch (Throwable e) {
+            CraftEngine.instance().logger().warn("Failed to handle ClientboundFinishConfigurationPacket", e);
+        }
+    };
+
+    public static final TriConsumer<NetWorkUser, NMSPacketEvent, Object> LOGIN_FINISHED = (user, event, packet) -> {
+        try {
+            GameProfile gameProfile = FastNMS.INSTANCE.field$ClientboundLoginFinishedPacket$gameProfile(packet);
+            user.setName(gameProfile.getName());
+            user.setUUID(gameProfile.getId());
+        } catch (Exception e) {
+            CraftEngine.instance().logger().warn("Failed to handle ClientboundLoginFinishedPacket", e);
         }
     };
 }

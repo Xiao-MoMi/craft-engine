@@ -1,6 +1,5 @@
 package net.momirealms.craftengine.bukkit.block.behavior;
 
-import net.momirealms.craftengine.bukkit.block.BukkitBlockManager;
 import net.momirealms.craftengine.bukkit.nms.FastNMS;
 import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.MBlocks;
 import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.MFluids;
@@ -15,6 +14,7 @@ import net.momirealms.craftengine.core.util.ResourceConfigUtils;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 public class OnLiquidBlockBehavior extends AbstractCanSurviveBlockBehavior {
     public static final Factory FACTORY = new Factory();
@@ -47,6 +47,7 @@ public class OnLiquidBlockBehavior extends AbstractCanSurviveBlockBehavior {
         }
     }
 
+    @SuppressWarnings("DuplicatedCode")
     @Override
     protected boolean canSurvive(Object thisBlock, Object state, Object world, Object blockPos) {
         int y = FastNMS.INSTANCE.field$Vec3i$y(blockPos);
@@ -59,12 +60,9 @@ public class OnLiquidBlockBehavior extends AbstractCanSurviveBlockBehavior {
 
     protected boolean mayPlaceOn(Object belowState, Object world, Object belowPos) {
         if (this.stackable) {
-            int id = BlockStateUtils.blockStateToId(belowState);
-            if (!BlockStateUtils.isVanillaBlock(id)) {
-                ImmutableBlockState immutableBlockState = BukkitBlockManager.instance().getImmutableBlockStateUnsafe(id);
-                if (immutableBlockState.owner().value() == super.customBlock) {
-                    return true;
-                }
+            Optional<ImmutableBlockState> optionalCustomState = BlockStateUtils.getOptionalCustomBlockState(belowState);
+            if (optionalCustomState.isPresent() && optionalCustomState.get().owner().value() == super.customBlock) {
+                return true;
             }
         }
         Object fluidState = FastNMS.INSTANCE.method$Level$getFluidState(world, belowPos);

@@ -40,6 +40,7 @@ public abstract class AbstractSoundManager implements SoundManager {
     public void unload() {
         this.byId.clear();
         this.byNamespace.clear();
+        this.songs.clear();
     }
 
     @Override
@@ -60,7 +61,7 @@ public abstract class AbstractSoundManager implements SoundManager {
     protected abstract void registerSongs(Map<Key, JukeboxSong> songs);
 
     public class SongParser implements ConfigParser {
-        public static final String[] CONFIG_SECTION_NAME = new String[] {"jukebox_songs", "song", "songs", "jukebox", "jukebox_song"};
+        public static final String[] CONFIG_SECTION_NAME = new String[] {"jukebox_songs", "jukebox_song", "jukebox-songs", "jukebox-song"};
 
         @Override
         public int loadingSequence() {

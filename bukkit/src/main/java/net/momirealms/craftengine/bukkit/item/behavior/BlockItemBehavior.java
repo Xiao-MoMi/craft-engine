@@ -99,13 +99,13 @@ public class BlockItemBehavior extends BlockBoundItemBehavior {
 
         if (player.isAdventureMode()) {
             Object againstBlockState = BlockStateUtils.blockDataToBlockState(againstBlock.getBlockData());
-            int stateId = BlockStateUtils.blockStateToId(againstBlockState);
-            if (BlockStateUtils.isVanillaBlock(stateId)) {
+            Optional<ImmutableBlockState> optionalCustomState = BlockStateUtils.getOptionalCustomBlockState(againstBlockState);
+            if (optionalCustomState.isEmpty()) {
                 if (!AdventureModeUtils.canPlace(context.getItem(), context.getLevel(), againstPos, againstBlockState)) {
                     return InteractionResult.FAIL;
                 }
             } else {
-                ImmutableBlockState customState = BukkitBlockManager.instance().getImmutableBlockStateUnsafe(stateId);
+                ImmutableBlockState customState = optionalCustomState.get();
                 // custom block
                 if (!AdventureModeUtils.canPlace(context.getItem(), context.getLevel(), againstPos, Config.simplifyAdventurePlaceCheck() ? customState.vanillaBlockState().handle() : againstBlockState)) {
                     return InteractionResult.FAIL;
@@ -157,13 +157,12 @@ public class BlockItemBehavior extends BlockBoundItemBehavior {
         if (!player.isCreativeMode()) {
             Item<?> item = context.getItem();
             item.count(item.count() - 1);
-            item.load();
         }
 
         block.setPlacedBy(context, blockStateToPlace);
 
         player.swingHand(context.getHand());
-        context.getLevel().playBlockSound(position, blockStateToPlace.sounds().placeSound());
+        context.getLevel().playBlockSound(position, blockStateToPlace.settings().sounds().placeSound());
         world.sendGameEvent(bukkitPlayer, GameEvent.BLOCK_PLACE, new Vector(pos.x(), pos.y(), pos.z()));
         return InteractionResult.SUCCESS;
     }

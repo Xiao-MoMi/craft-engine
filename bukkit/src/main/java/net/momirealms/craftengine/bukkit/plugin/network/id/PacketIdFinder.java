@@ -30,9 +30,9 @@ public class PacketIdFinder {
                     }
                 }
             } else if (VersionHelper.isOrAbove1_20_5()) {
-                gamePacketIdsByName.putAll(FastNMS.INSTANCE.method$getGamePacketIdsByName());
+                gamePacketIdsByName.putAll(FastNMS.INSTANCE.gamePacketIdsByName());
             } else {
-                gamePacketIdsByClazz.putAll(FastNMS.INSTANCE.method$getGamePacketIdsByClazz());
+                gamePacketIdsByClazz.putAll(FastNMS.INSTANCE.gamePacketIdsByClazz());
             }
         } catch (Exception e) {
             CraftEngine.instance().logger().warn("Failed to get packets", e);

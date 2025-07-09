@@ -79,7 +79,7 @@ public class TotemAnimationCommand extends BukkitCommandFeature<CommandSender> {
                             item.setComponent(ComponentTypes.DEATH_PROTECTION, Map.of());
                         }
                     }
-                    ItemStack totemItem = item.load();
+                    ItemStack totemItem = item.getItem();
                     MultiplePlayerSelector selector = context.get("players");
                     for (Player player : selector.values()) {
                         PlayerUtils.sendTotemAnimation(player, totemItem);

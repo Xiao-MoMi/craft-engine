@@ -28,7 +28,7 @@ public class TooltipStyleModifier<I> implements ItemDataModifier<I> {
 
     @Override
     public Item<I> prepareNetworkItem(Item<I> item, ItemBuildContext context, CompoundTag networkData) {
-        Tag previous = item.getNBTComponent(ComponentKeys.TOOLTIP_STYLE);
+        Tag previous = item.getSparrowNBTComponent(ComponentKeys.TOOLTIP_STYLE);
         if (previous != null) {
             networkData.put(ComponentKeys.TOOLTIP_STYLE.asString(), NetworkItemHandler.pack(NetworkItemHandler.Operation.ADD, previous));
         } else {

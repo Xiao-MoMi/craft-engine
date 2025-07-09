@@ -1,6 +1,7 @@
 package net.momirealms.craftengine.core.item.modifier;
 
 import net.momirealms.craftengine.core.item.*;
+import net.momirealms.craftengine.core.item.data.Enchantment;
 import net.momirealms.craftengine.core.util.VersionHelper;
 import net.momirealms.sparrow.nbt.CompoundTag;
 import net.momirealms.sparrow.nbt.Tag;
@@ -33,7 +34,7 @@ public class EnchantmentModifier<I> implements ItemDataModifier<I> {
     public Item<I> prepareNetworkItem(Item<I> item, ItemBuildContext context, CompoundTag networkData) {
         if (item.vanillaId().equals(ItemKeys.ENCHANTED_BOOK)) {
             if (VersionHelper.isOrAbove1_20_5()) {
-                Tag previous = item.getNBTComponent(ComponentKeys.STORED_ENCHANTMENTS);
+                Tag previous = item.getSparrowNBTComponent(ComponentKeys.STORED_ENCHANTMENTS);
                 if (previous != null) {
                     networkData.put(ComponentKeys.STORED_ENCHANTMENTS.asString(), NetworkItemHandler.pack(NetworkItemHandler.Operation.ADD, previous));
                 } else {
@@ -49,7 +50,7 @@ public class EnchantmentModifier<I> implements ItemDataModifier<I> {
             }
         } else {
             if (VersionHelper.isOrAbove1_20_5()) {
-                Tag previous = item.getNBTComponent(ComponentKeys.ENCHANTMENTS);
+                Tag previous = item.getSparrowNBTComponent(ComponentKeys.ENCHANTMENTS);
                 if (previous != null) {
                     networkData.put(ComponentKeys.ENCHANTMENTS.asString(), NetworkItemHandler.pack(NetworkItemHandler.Operation.ADD, previous));
                 } else {

@@ -12,7 +12,6 @@ import net.bytebuddy.implementation.bind.annotation.SuperCall;
 import net.bytebuddy.implementation.bind.annotation.This;
 import net.bytebuddy.implementation.bytecode.assign.Assigner;
 import net.bytebuddy.matcher.ElementMatchers;
-import net.momirealms.craftengine.bukkit.block.BukkitBlockManager;
 import net.momirealms.craftengine.bukkit.nms.FastNMS;
 import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.CoreReflections;
 import net.momirealms.craftengine.bukkit.util.BlockStateUtils;
@@ -34,6 +33,7 @@ import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodType;
 import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.Callable;
 import java.util.function.Consumer;
 
@@ -217,10 +217,10 @@ public class WorldStorageInjector {
 
     protected static void compareAndUpdateBlockState(int x, int y, int z, Object newState, Object previousState, InjectedHolder holder) {
         try {
-            int stateId = BlockStateUtils.blockStateToId(newState);
+            Optional<ImmutableBlockState> optionalCustomState = BlockStateUtils.getOptionalCustomBlockState(newState);
             CESection section = holder.ceSection();
             // 如果是原版方块
-            if (BlockStateUtils.isVanillaBlock(stateId)) {
+            if (optionalCustomState.isEmpty()) {
                 // 那么应该清空自定义块
                 ImmutableBlockState previous = section.setBlockState(x, y, z, EmptyBlock.STATE);
                 // 处理  自定义块 -> 原版块
@@ -235,7 +235,7 @@ public class WorldStorageInjector {
                     }
                 }
             } else {
-                ImmutableBlockState immutableBlockState = BukkitBlockManager.instance().getImmutableBlockStateUnsafe(stateId);
+                ImmutableBlockState immutableBlockState = optionalCustomState.get();
                 ImmutableBlockState previousImmutableBlockState = section.setBlockState(x, y, z, immutableBlockState);
                 if (previousImmutableBlockState == immutableBlockState) return;
                 // 处理  自定义块到自定义块或原版块到自定义块

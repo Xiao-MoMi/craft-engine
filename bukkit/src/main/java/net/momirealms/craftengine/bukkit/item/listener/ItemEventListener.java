@@ -2,7 +2,6 @@ package net.momirealms.craftengine.bukkit.item.listener;
 
 import io.papermc.paper.event.block.CompostItemEvent;
 import net.momirealms.craftengine.bukkit.api.event.CustomBlockInteractEvent;
-import net.momirealms.craftengine.bukkit.block.BukkitBlockManager;
 import net.momirealms.craftengine.bukkit.item.BukkitCustomItem;
 import net.momirealms.craftengine.bukkit.nms.FastNMS;
 import net.momirealms.craftengine.bukkit.plugin.BukkitCraftEngine;
@@ -112,8 +111,7 @@ public class ItemEventListener implements Listener {
         Block block = Objects.requireNonNull(event.getClickedBlock());
         BlockData blockData = block.getBlockData();
         Object blockState = BlockStateUtils.blockDataToBlockState(blockData);
-        ImmutableBlockState immutableBlockState = null;
-        int stateId = BlockStateUtils.blockStateToId(blockState);
+        ImmutableBlockState immutableBlockState = BlockStateUtils.getOptionalCustomBlockState(blockState).orElse(null);
         Item<ItemStack> itemInHand = serverPlayer.getItemInHand(hand);
         Location interactionPoint = event.getInteractionPoint();
 
@@ -126,8 +124,7 @@ public class ItemEventListener implements Listener {
         }
 
         // 处理自定义方块
-        if (!BlockStateUtils.isVanillaBlock(stateId)) {
-            immutableBlockState = BukkitBlockManager.instance().getImmutableBlockStateUnsafe(stateId);
+        if (immutableBlockState != null) {
             // call the event if it's custom
             CustomBlockInteractEvent interactEvent = new CustomBlockInteractEvent(
                     player,

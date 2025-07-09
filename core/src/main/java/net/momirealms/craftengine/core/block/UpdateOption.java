@@ -1,6 +1,6 @@
 package net.momirealms.craftengine.core.block;
 
-public class UpdateOption {
+public final class UpdateOption {
     public static final UpdateOption UPDATE_ALL = new UpdateOption(3);
     public static final UpdateOption UPDATE_NONE = new UpdateOption(4);
     public static final UpdateOption UPDATE_ALL_IMMEDIATE = new UpdateOption(11);

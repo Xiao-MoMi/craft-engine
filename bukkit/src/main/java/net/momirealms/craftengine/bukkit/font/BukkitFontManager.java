@@ -153,7 +153,7 @@ public class BukkitFontManager extends AbstractFontManager implements Listener {
         if (replaceProcessResult.changed()) {
             Item<ItemStack> wrapped = this.plugin.itemManager().wrap(result);
             wrapped.customNameJson(AdventureHelper.componentToJson(replaceProcessResult.newText()));
-            event.setResult(wrapped.load());
+            event.setResult(wrapped.getItem());
         }
     }
 

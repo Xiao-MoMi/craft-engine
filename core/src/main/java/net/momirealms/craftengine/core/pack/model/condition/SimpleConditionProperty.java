@@ -35,7 +35,7 @@ public class SimpleConditionProperty implements ConditionProperty {
     public static class Reader implements ConditionPropertyReader {
         @Override
         public ConditionProperty read(JsonObject json) {
-            return new SimpleConditionProperty(Key.of(json.get("property").toString()));
+            return new SimpleConditionProperty(Key.of(json.get("property").getAsString()));
         }
     }
 }

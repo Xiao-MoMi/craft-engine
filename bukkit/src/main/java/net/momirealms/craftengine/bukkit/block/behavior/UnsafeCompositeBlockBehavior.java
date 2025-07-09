@@ -188,7 +188,7 @@ public class UnsafeCompositeBlockBehavior extends BukkitBlockBehavior {
     }
 
     @Override
-    public void onExplosionHit(Object thisBlock, Object[] args, Callable<Object> superMethod) {
+    public void onExplosionHit(Object thisBlock, Object[] args, Callable<Object> superMethod) throws Exception {
         for (AbstractBlockBehavior behavior : this.behaviors) {
             behavior.onExplosionHit(thisBlock, args, superMethod);
         }
@@ -255,5 +255,17 @@ public class UnsafeCompositeBlockBehavior extends BukkitBlockBehavior {
             }
         }
         return false;
+    }
+
+    @Override
+    public Object playerWillDestroy(Object thisBlock, Object[] args, Callable<Object> superMethod) throws Exception {
+        Object previous = args[0];
+        for (AbstractBlockBehavior behavior : this.behaviors) {
+            Object processed = behavior.playerWillDestroy(thisBlock, args, superMethod);
+            if (processed != previous) {
+                return processed;
+            }
+        }
+        return previous;
     }
 }

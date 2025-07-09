@@ -6,7 +6,7 @@ import net.momirealms.craftengine.core.util.Key;
 import java.util.List;
 import java.util.Map;
 
-public class EmptyBlock extends AbstractCustomBlock {
+public final class EmptyBlock extends AbstractCustomBlock {
     public static EmptyBlock INSTANCE;
     public static ImmutableBlockState STATE;
 

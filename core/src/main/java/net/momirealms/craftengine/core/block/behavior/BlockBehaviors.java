@@ -2,7 +2,6 @@ package net.momirealms.craftengine.core.block.behavior;
 
 import net.momirealms.craftengine.core.block.BlockBehavior;
 import net.momirealms.craftengine.core.block.CustomBlock;
-import net.momirealms.craftengine.core.block.EmptyBlockBehavior;
 import net.momirealms.craftengine.core.plugin.locale.LocalizedResourceConfigException;
 import net.momirealms.craftengine.core.registry.BuiltInRegistries;
 import net.momirealms.craftengine.core.registry.Holder;
@@ -17,7 +16,6 @@ import java.util.Map;
 
 public class BlockBehaviors {
     public static final Key EMPTY = Key.from("craftengine:empty");
-    public static final Key UNSAFE_COMBINED = Key.from("craftengine:unsafe_combined");
 
     public static void register(Key key, BlockBehaviorFactory factory) {
         Holder.Reference<BlockBehaviorFactory> holder = ((WritableRegistry<BlockBehaviorFactory>) BuiltInRegistries.BLOCK_BEHAVIOR_FACTORY)

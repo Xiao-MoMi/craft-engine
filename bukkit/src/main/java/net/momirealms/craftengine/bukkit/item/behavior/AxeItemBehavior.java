@@ -27,7 +27,6 @@ import net.momirealms.sparrow.nbt.CompoundTag;
 import org.bukkit.GameEvent;
 import org.bukkit.Material;
 import org.bukkit.Statistic;
-import org.bukkit.block.data.BlockData;
 import org.bukkit.event.entity.EntityChangeBlockEvent;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.util.Vector;
@@ -58,15 +57,12 @@ public class AxeItemBehavior extends ItemBehavior {
             return InteractionResult.PASS;
         }
 
-        BukkitBlockInWorld block = (BukkitBlockInWorld) context.getLevel().getBlockAt(context.getClickedPos());
-        BlockData blockData = block.block().getBlockData();
-        int stateId = BlockStateUtils.blockDataToId(blockData);
-        if (BlockStateUtils.isVanillaBlock(stateId)) return InteractionResult.PASS;
+        Object blockState = FastNMS.INSTANCE.method$BlockGetter$getBlockState(context.getLevel().serverWorld(), LocationUtils.toBlockPos(context.getClickedPos()));
+        Optional<ImmutableBlockState> optionalCustomState = BlockStateUtils.getOptionalCustomBlockState(blockState);
+        if (optionalCustomState.isEmpty()) return InteractionResult.PASS;
 
-        ImmutableBlockState customBlockState = BukkitBlockManager.instance().getImmutableBlockState(stateId);
-        if (customBlockState == null || customBlockState.isEmpty()) return InteractionResult.PASS;
-
-        Optional<StrippableBlockBehavior> behaviorOptional = customBlockState.behavior().getAs(StrippableBlockBehavior.class);
+        ImmutableBlockState customState = optionalCustomState.get();
+        Optional<StrippableBlockBehavior> behaviorOptional = customState.behavior().getAs(StrippableBlockBehavior.class);
         if (behaviorOptional.isEmpty()) return InteractionResult.PASS;
         Key stripped = behaviorOptional.get().stripped();
         Item<ItemStack> offHandItem = (Item<ItemStack>) player.getItemInHand(InteractionHand.OFF_HAND);
@@ -81,7 +77,7 @@ public class AxeItemBehavior extends ItemBehavior {
             return InteractionResult.FAIL;
         }
         CustomBlock newCustomBlock = optionalNewCustomBlock.get();
-        CompoundTag compoundTag = customBlockState.propertiesNbt();
+        CompoundTag compoundTag = customState.propertiesNbt();
         ImmutableBlockState newState = newCustomBlock.getBlockState(compoundTag);
 
         org.bukkit.entity.Player bukkitPlayer = ((org.bukkit.entity.Player) player.platformPlayer());
@@ -103,7 +99,7 @@ public class AxeItemBehavior extends ItemBehavior {
 
         // resend swing if it's not interactable on client side
         if (!InteractUtils.isInteractable(
-                bukkitPlayer, BlockStateUtils.fromBlockData(customBlockState.vanillaBlockState().handle()),
+                bukkitPlayer, BlockStateUtils.fromBlockData(customState.vanillaBlockState().handle()),
                 context.getHitResult(), item
         ) || player.isSecondaryUseActive()) {
             player.swingHand(context.getHand());

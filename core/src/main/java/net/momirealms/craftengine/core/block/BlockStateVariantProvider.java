@@ -18,7 +18,7 @@ import java.util.Map;
 import java.util.function.Function;
 import java.util.stream.Stream;
 
-public class BlockStateVariantProvider {
+public final class BlockStateVariantProvider {
     private final ImmutableSortedMap<String, Property<?>> properties;
     private final ImmutableList<ImmutableBlockState> states;
     private final Holder<CustomBlock> owner;
@@ -65,7 +65,7 @@ public class BlockStateVariantProvider {
 
     @NotNull
     public ImmutableBlockState getDefaultState() {
-        ImmutableBlockState first = this.states.get(0);
+        ImmutableBlockState first = this.states.getFirst();
         for (Property<?> property : this.properties.values()) {
             first = ImmutableBlockState.with(first, property, property.defaultValue());
         }
@@ -73,11 +73,11 @@ public class BlockStateVariantProvider {
     }
 
     public ImmutableList<ImmutableBlockState> states() {
-        return states;
+        return this.states;
     }
 
     public Holder<CustomBlock> owner() {
-        return owner;
+        return this.owner;
     }
 
     @Nullable
