@@ -34,7 +34,7 @@ public class DisableResourceCommand extends BukkitCommandFeature<CommandSender> 
                 .required("pack", StringParser.stringComponent(StringParser.StringMode.GREEDY).suggestionProvider(new SuggestionProvider<>() {
                     @Override
                     public @NonNull CompletableFuture<? extends @NonNull Iterable<? extends @NonNull Suggestion>> suggestionsFuture(@NonNull CommandContext<Object> context, @NonNull CommandInput input) {
-                        return CompletableFuture.completedFuture(plugin().packManager().loadedPacks().stream().filter(Pack::enabled).map(pack -> Suggestion.suggestion(pack.name())).toList());
+                        return CompletableFuture.completedFuture(plugin().packManager().loadedPacks().stream().filter(Pack::enabled).map(pack -> Suggestion.suggestion(pack.folder().toString().replace("plugins/CraftEngine/resources/", ""))).toList());
                     }
                 }))
                 .handler(context -> {
