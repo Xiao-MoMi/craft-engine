@@ -4,8 +4,12 @@
 name: Maven Package
 
 on:
-  release:
-    types: [created]
+  workflow_dispatch:
+    inputs:
+      branch:
+        description: 'Branch zum Ausführen des Workflows'
+        required: true
+        default: 'dev'
 
 jobs:
   build:
