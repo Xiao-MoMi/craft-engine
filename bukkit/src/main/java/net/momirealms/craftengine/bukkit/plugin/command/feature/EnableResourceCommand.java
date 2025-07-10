@@ -3,6 +3,7 @@ package net.momirealms.craftengine.bukkit.plugin.command.feature;
 import dev.dejvokep.boostedyaml.YamlDocument;
 import net.kyori.adventure.text.Component;
 import net.momirealms.craftengine.bukkit.plugin.command.BukkitCommandFeature;
+import net.momirealms.craftengine.core.pack.Pack;
 import net.momirealms.craftengine.core.plugin.CraftEngine;
 import net.momirealms.craftengine.core.plugin.command.CraftEngineCommandManager;
 import net.momirealms.craftengine.core.plugin.locale.MessageConstants;
@@ -18,6 +19,7 @@ import org.incendo.cloud.suggestion.SuggestionProvider;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Collection;
 import java.util.concurrent.CompletableFuture;
 
 public class EnableResourceCommand extends BukkitCommandFeature<CommandSender> {
@@ -33,16 +35,24 @@ public class EnableResourceCommand extends BukkitCommandFeature<CommandSender> {
                 .required("pack", StringParser.stringComponent(StringParser.StringMode.GREEDY).suggestionProvider(new SuggestionProvider<>() {
                     @Override
                     public @NonNull CompletableFuture<? extends @NonNull Iterable<? extends @NonNull Suggestion>> suggestionsFuture(@NonNull CommandContext<Object> context, @NonNull CommandInput input) {
-                        return CompletableFuture.completedFuture(plugin().packManager().loadedPacks().stream().filter(pack -> !pack.enabled()).map(pack -> Suggestion.suggestion(pack.folder().toString().replace("plugins/CraftEngine/resources/", ""))).toList());
+                        return CompletableFuture.completedFuture(plugin().packManager().loadedPacks().stream().filter(pack -> !pack.enabled()).map(pack ->  Suggestion.suggestion(pack.name())).toList());
                     }
                 }))
                 .handler(context -> {
-                    String packFolder = context.get("pack");
-                    Path path = plugin().dataFolderPath().resolve("resources").resolve(packFolder);
+                    String packName = context.get("pack");
+                    Collection<Pack> packs = plugin().packManager().loadedPacks();
+                    Path path = null;
+                    for (Pack pack : packs) {
+                        if (pack.name().equals(packName)) {
+                            path = pack.folder();
+                        }
+                    }
+
                     if (!Files.exists(path)) {
-                        handleFeedback(context, MessageConstants.COMMAND_RESOURCE_ENABLE_FAILURE, Component.text(packFolder));
+                        handleFeedback(context, MessageConstants.COMMAND_RESOURCE_ENABLE_FAILURE, Component.text(path.toString()));
                         return;
                     }
+
                     Path packMetaPath = path.resolve("pack.yml");
                     if (!Files.exists(packMetaPath)) {
                         try {
@@ -60,7 +70,7 @@ public class EnableResourceCommand extends BukkitCommandFeature<CommandSender> {
                         plugin().logger().warn("Could not save pack.yml file: " + packMetaPath);
                         return;
                     }
-                    handleFeedback(context, MessageConstants.COMMAND_RESOURCE_ENABLE_SUCCESS, Component.text(packFolder));
+                    handleFeedback(context, MessageConstants.COMMAND_RESOURCE_ENABLE_SUCCESS, Component.text(packName));
                 });
     }
 

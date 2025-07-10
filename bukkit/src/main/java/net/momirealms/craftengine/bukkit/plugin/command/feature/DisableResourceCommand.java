@@ -10,6 +10,7 @@ import net.momirealms.craftengine.core.plugin.locale.MessageConstants;
 import org.bukkit.command.CommandSender;
 import org.checkerframework.checker.nullness.qual.NonNull;
 import org.incendo.cloud.Command;
+import org.incendo.cloud.CommandManager;
 import org.incendo.cloud.context.CommandContext;
 import org.incendo.cloud.context.CommandInput;
 import org.incendo.cloud.parser.standard.StringParser;
@@ -19,6 +20,7 @@ import org.incendo.cloud.suggestion.SuggestionProvider;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Collection;
 import java.util.concurrent.CompletableFuture;
 
 public class DisableResourceCommand extends BukkitCommandFeature<CommandSender> {
@@ -28,20 +30,27 @@ public class DisableResourceCommand extends BukkitCommandFeature<CommandSender> 
     }
 
     @Override
-    public Command.Builder<? extends CommandSender> assembleCommand(org.incendo.cloud.CommandManager<CommandSender> manager, Command.Builder<CommandSender> builder) {
+    public Command.Builder<? extends CommandSender> assembleCommand(CommandManager<CommandSender> manager, Command.Builder<CommandSender> builder) {
         return builder
                 .flag(manager.flagBuilder("silent").withAliases("s"))
                 .required("pack", StringParser.stringComponent(StringParser.StringMode.GREEDY).suggestionProvider(new SuggestionProvider<>() {
                     @Override
                     public @NonNull CompletableFuture<? extends @NonNull Iterable<? extends @NonNull Suggestion>> suggestionsFuture(@NonNull CommandContext<Object> context, @NonNull CommandInput input) {
-                        return CompletableFuture.completedFuture(plugin().packManager().loadedPacks().stream().filter(Pack::enabled).map(pack -> Suggestion.suggestion(pack.folder().toString().replace("plugins/CraftEngine/resources/", ""))).toList());
+                        return CompletableFuture.completedFuture(plugin().packManager().loadedPacks().stream().filter(Pack::enabled).map(pack -> Suggestion.suggestion(pack.name())).toList());
                     }
                 }))
                 .handler(context -> {
-                    String packFolder = context.get("pack");
-                    Path path = plugin().dataFolderPath().resolve("resources").resolve(packFolder);
+                    String packName = context.get("pack");
+                    Collection<Pack> packs = plugin().packManager().loadedPacks();
+                    Path path = null;
+                    for (Pack pack : packs) {
+                        if (pack.name().equals(packName)) {
+                            path = pack.folder();
+                        }
+                    }
+
                     if (!Files.exists(path)) {
-                        handleFeedback(context, MessageConstants.COMMAND_RESOURCE_DISABLE_FAILURE, Component.text(packFolder));
+                        handleFeedback(context, MessageConstants.COMMAND_RESOURCE_DISABLE_FAILURE, Component.text(path.toString()));
                         return;
                     }
                     Path packMetaPath = path.resolve("pack.yml");
@@ -61,7 +70,7 @@ public class DisableResourceCommand extends BukkitCommandFeature<CommandSender> 
                         plugin().logger().warn("Could not save pack.yml file: " + packMetaPath);
                         return;
                     }
-                    handleFeedback(context, MessageConstants.COMMAND_RESOURCE_DISABLE_SUCCESS, Component.text(packFolder));
+                    handleFeedback(context, MessageConstants.COMMAND_RESOURCE_DISABLE_SUCCESS, Component.text(packName));
                 });
     }
 
