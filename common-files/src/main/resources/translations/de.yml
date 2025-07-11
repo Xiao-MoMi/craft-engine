@@ -63,6 +63,8 @@ command.upload.failure.not_supported: "<red>Die aktuelle Hosting-Methode '<arg:0
 command.upload.on_progress: "<white>Upload-Vorgang gestartet. Überprüfen Sie die Konsole für weitere Informationen.</white>"
 command.send_resource_pack.success.single: "<white>Ressourcenpaket an <arg:0> gesendet.</white>"
 command.send_resource_pack.success.multiple: "<white>Ressourcenpakete an <arg:0> Spieler gesendet.</white>"
+command.debug.export_pack_tree.success: "<white>Paketbaum für '<arg:0>' erfolgreich nach '<arg:1>' exportiert.</white>"
+command.debug.export_pack_tree.failure: "<red>Fehler beim Exportieren des Paketbaums für '<arg:0>'. Überprüfe die Konsole für Details.</red>"
 warning.config.pack.duplicated_files: "</red>Duplizierte Dateien gefunden. Bitte beheben Sie diese im Abschnitt 'resource-pack.duplicated-files-handler' in config.yml.</red>"
 warning.config.yaml.duplicated_key: "<red>Problem in Datei <arg:0> gefunden - Duplizierter Schlüssel '<arg:1>' in Zeile <arg:2> gefunden, dies kann zu unerwarteten Ergebnissen führen.</red>"
 warning.config.type.int: "<yellow>Problem in Datei <arg:0> gefunden - Laden von '<arg:1>' fehlgeschlagen: Kann '<arg:2>' nicht in den Integer-Typ für Option '<arg:3>' umwandeln.</yellow>"
