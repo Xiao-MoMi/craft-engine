@@ -11,6 +11,7 @@ import net.momirealms.craftengine.core.entity.projectile.ProjectileManager;
 import net.momirealms.craftengine.core.entity.projectile.ProjectileMeta;
 import net.momirealms.craftengine.core.item.Item;
 import net.momirealms.craftengine.core.plugin.scheduler.SchedulerTask;
+import net.momirealms.craftengine.core.util.ItemUtils;
 import net.momirealms.craftengine.core.util.VersionHelper;
 import org.bukkit.Bukkit;
 import org.bukkit.World;
@@ -119,7 +120,7 @@ public class BukkitProjectileManager implements Listener, ProjectileManager {
             return;
         }
         Item<ItemStack> wrapped = this.plugin.itemManager().wrap(projectileItem);
-        if (wrapped == null) return;
+        if (ItemUtils.isEmpty(wrapped)) return;
         wrapped.getCustomItem().ifPresent(it -> {
             ProjectileMeta meta = it.settings().projectileMeta();
             if (meta != null) {

@@ -128,6 +128,8 @@ public class FurnitureItemBehavior extends ItemBehavior {
         }
 
         Item<?> item = context.getItem();
+        // 不可能
+        if (ItemUtils.isEmpty(item)) return InteractionResult.FAIL;
 
         BukkitFurniture bukkitFurniture = BukkitFurnitureManager.instance().place(
                 furnitureLocation.clone(), customFurniture,

@@ -3,7 +3,7 @@ package net.momirealms.craftengine.bukkit.item;
 import net.momirealms.craftengine.bukkit.nms.FastNMS;
 import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.CoreReflections;
 import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.MRegistryOps;
-import net.momirealms.craftengine.bukkit.util.ItemUtils;
+import net.momirealms.craftengine.bukkit.util.ItemStackUtils;
 import net.momirealms.craftengine.core.item.ItemWrapper;
 import net.momirealms.sparrow.nbt.Tag;
 import org.bukkit.inventory.ItemStack;
@@ -13,7 +13,7 @@ public class LegacyItemWrapper implements ItemWrapper<ItemStack> {
     private final ItemStack itemStack;
 
     public LegacyItemWrapper(ItemStack item) {
-        this.itemStack = ItemUtils.ensureCraftItemStack(item);
+        this.itemStack = ItemStackUtils.ensureCraftItemStack(item);
         this.nmsStack = FastNMS.INSTANCE.field$CraftItemStack$handle(this.itemStack);
     }
 

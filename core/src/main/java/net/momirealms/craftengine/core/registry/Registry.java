@@ -21,6 +21,10 @@ public interface Registry<T> extends Holder.Owner<T> {
     @Nullable
     T getValue(int id);
 
+    int getId(T value);
+
+    Key getKey(T value);
+
     Set<Key> keySet();
 
     Set<Map.Entry<ResourceKey<T>, T>> entrySet();

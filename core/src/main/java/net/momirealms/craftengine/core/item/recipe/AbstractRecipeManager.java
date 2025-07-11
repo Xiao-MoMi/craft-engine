@@ -11,8 +11,8 @@ import net.momirealms.craftengine.core.plugin.CraftEngine;
 import net.momirealms.craftengine.core.plugin.config.Config;
 import net.momirealms.craftengine.core.plugin.config.ConfigParser;
 import net.momirealms.craftengine.core.plugin.locale.LocalizedResourceConfigException;
-import net.momirealms.craftengine.core.registry.Holder;
 import net.momirealms.craftengine.core.util.Key;
+import net.momirealms.craftengine.core.util.UniqueKey;
 import net.momirealms.craftengine.core.util.VersionHelper;
 import org.jetbrains.annotations.Nullable;
 
@@ -140,8 +140,8 @@ public abstract class AbstractRecipeManager<T> implements RecipeManager<T> {
         this.byResult.computeIfAbsent(recipe.result().item().id(), k -> new ArrayList<>()).add(recipe);
         HashSet<Key> usedKeys = new HashSet<>();
         for (Ingredient<T> ingredient : recipe.ingredientsInUse()) {
-            for (Holder<Key> holder : ingredient.items()) {
-                Key key = holder.value();
+            for (UniqueKey holder : ingredient.items()) {
+                Key key = holder.key();
                 if (usedKeys.add(key)) {
                     this.byIngredient.computeIfAbsent(key, k -> new ArrayList<>()).add(recipe);
                 }
@@ -173,6 +173,8 @@ public abstract class AbstractRecipeManager<T> implements RecipeManager<T> {
                 markAsCustomRecipe(id);
                 registerInternalRecipe(id, recipe);
                 registerPlatformRecipe(id, recipe);
+            } catch (LocalizedResourceConfigException e) {
+                throw e;
             } catch (Exception e) {
                 CraftEngine.instance().logger().warn("Failed to register custom recipe " + id, e);
             }

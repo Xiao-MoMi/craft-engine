@@ -25,9 +25,6 @@ import net.momirealms.craftengine.core.plugin.context.text.TextProvider;
 import net.momirealms.craftengine.core.plugin.context.text.TextProviders;
 import net.momirealms.craftengine.core.plugin.locale.LocalizedResourceConfigException;
 import net.momirealms.craftengine.core.plugin.locale.TranslationManager;
-import net.momirealms.craftengine.core.registry.BuiltInRegistries;
-import net.momirealms.craftengine.core.registry.Holder;
-import net.momirealms.craftengine.core.registry.WritableRegistry;
 import net.momirealms.craftengine.core.util.*;
 import org.incendo.cloud.suggestion.Suggestion;
 import org.incendo.cloud.type.Either;
@@ -42,14 +39,14 @@ import java.util.stream.Stream;
 public abstract class AbstractItemManager<I> extends AbstractModelGenerator implements ItemManager<I> {
     protected static final Map<Key, List<ItemBehavior>> VANILLA_ITEM_EXTRA_BEHAVIORS = new HashMap<>();
     protected static final Set<Key> VANILLA_ITEMS = new HashSet<>(1024);
-    protected static final Map<Key, List<Holder<Key>>> VANILLA_ITEM_TAGS = new HashMap<>();
+    protected static final Map<Key, List<UniqueKey>> VANILLA_ITEM_TAGS = new HashMap<>();
 
     private final ItemParser itemParser;
     private final EquipmentParser equipmentParser;
     protected final Map<String, ExternalItemProvider<I>> externalItemProviders = new HashMap<>();
     protected final Map<String, Function<Object, ItemDataModifier<I>>> dataFunctions = new HashMap<>();
     protected final Map<Key, CustomItem<I>> customItems = new HashMap<>();
-    protected final Map<Key, List<Holder<Key>>> customItemTags = new HashMap<>();
+    protected final Map<Key, List<UniqueKey>> customItemTags = new HashMap<>();
     protected final Map<Key, Map<Integer, Key>> cmdConflictChecker = new HashMap<>();
     protected final Map<Key, ModernItemModel> modernItemModels1_21_4 = new HashMap<>();
     protected final Map<Key, TreeSet<LegacyOverridesModel>> modernItemModels1_21_2 = new HashMap<>();
@@ -157,19 +154,19 @@ public abstract class AbstractItemManager<I> extends AbstractModelGenerator impl
         // tags
         Set<Key> tags = customItem.settings().tags();
         for (Key tag : tags) {
-            this.customItemTags.computeIfAbsent(tag, k -> new ArrayList<>()).add(customItem.idHolder());
+            this.customItemTags.computeIfAbsent(tag, k -> new ArrayList<>()).add(customItem.uniqueId());
         }
         return true;
     }
 
     @Override
-    public List<Holder<Key>> tagToItems(Key tag) {
-        List<Holder<Key>> items = new ArrayList<>();
-        List<Holder<Key>> holders = VANILLA_ITEM_TAGS.get(tag);
+    public List<UniqueKey> tagToItems(Key tag) {
+        List<UniqueKey> items = new ArrayList<>();
+        List<UniqueKey> holders = VANILLA_ITEM_TAGS.get(tag);
         if (holders != null) {
             items.addAll(holders);
         }
-        List<Holder<Key>> customItems = this.customItemTags.get(tag);
+        List<UniqueKey> customItems = this.customItemTags.get(tag);
         if (customItems != null) {
             items.addAll(customItems);
         }
@@ -177,12 +174,12 @@ public abstract class AbstractItemManager<I> extends AbstractModelGenerator impl
     }
 
     @Override
-    public List<Holder<Key>> tagToVanillaItems(Key tag) {
+    public List<UniqueKey> tagToVanillaItems(Key tag) {
         return Collections.unmodifiableList(VANILLA_ITEM_TAGS.getOrDefault(tag, List.of()));
     }
 
     @Override
-    public List<Holder<Key>> tagToCustomItems(Key tag) {
+    public List<UniqueKey> tagToCustomItems(Key tag) {
         return Collections.unmodifiableList(this.customItemTags.getOrDefault(tag, List.of()));
     }
 
@@ -253,7 +250,7 @@ public abstract class AbstractItemManager<I> extends AbstractModelGenerator impl
         return VANILLA_ITEMS.contains(item);
     }
 
-    protected abstract CustomItem.Builder<I> createPlatformItemBuilder(Holder<Key> id, Key material, Key clientBoundMaterial);
+    protected abstract CustomItem.Builder<I> createPlatformItemBuilder(UniqueKey id, Key material, Key clientBoundMaterial);
 
     protected abstract void registerArmorTrimPattern(Collection<Key> equipments);
 
@@ -327,11 +324,9 @@ public abstract class AbstractItemManager<I> extends AbstractModelGenerator impl
                 throw new LocalizedResourceConfigException("warning.config.item.duplicate");
             }
 
-            // register for recipes
-            Holder.Reference<Key> holder = BuiltInRegistries.OPTIMIZED_ITEM_ID.get(id)
-                    .orElseGet(() -> ((WritableRegistry<Key>) BuiltInRegistries.OPTIMIZED_ITEM_ID)
-                            .register(new ResourceKey<>(BuiltInRegistries.OPTIMIZED_ITEM_ID.key().location(), id), id));
+            UniqueKey uniqueId = UniqueKey.create(id);
 
+            // register for recipes
             boolean isVanillaItem = isVanillaItem(id);
             Key material = Key.from(isVanillaItem ? id.value() : ResourceConfigUtils.requireNonEmptyStringOrThrow(section.get("material"), "warning.config.item.missing_material").toLowerCase(Locale.ENGLISH));
             Key clientBoundMaterial = section.containsKey("client-bound-material") ? Key.from(section.get("client-bound-material").toString().toLowerCase(Locale.ENGLISH)) : material;
@@ -346,7 +341,7 @@ public abstract class AbstractItemManager<I> extends AbstractModelGenerator impl
 
             Key itemModelKey = null;
 
-            CustomItem.Builder<I> itemBuilder = createPlatformItemBuilder(holder, material, clientBoundMaterial);
+            CustomItem.Builder<I> itemBuilder = createPlatformItemBuilder(uniqueId, material, clientBoundMaterial);
             boolean hasItemModelSection = section.containsKey("item-model");
 
             // To get at least one model provider

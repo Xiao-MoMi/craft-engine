@@ -4,5 +4,11 @@ public enum CraftingRecipeCategory {
     BUILDING,
     REDSTONE,
     EQUIPMENT,
-    MISC
+    MISC;
+
+    public static final CraftingRecipeCategory[] VALUES = CraftingRecipeCategory.values();
+
+    public static CraftingRecipeCategory byId(final int id) {
+        return VALUES[id];
+    }
 }

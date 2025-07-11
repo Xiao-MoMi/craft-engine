@@ -9,6 +9,7 @@ import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.NetworkRefl
 import net.momirealms.craftengine.bukkit.plugin.user.BukkitServerPlayer;
 import net.momirealms.craftengine.bukkit.util.BlockStateUtils;
 import net.momirealms.craftengine.bukkit.util.ComponentUtils;
+import net.momirealms.craftengine.bukkit.util.ItemStackUtils;
 import net.momirealms.craftengine.bukkit.util.LocationUtils;
 import net.momirealms.craftengine.core.block.CustomBlock;
 import net.momirealms.craftengine.core.block.ImmutableBlockState;
@@ -44,7 +45,7 @@ public class DebugStickListener implements Listener {
         Block clickedBlock = event.getClickedBlock();
         if (clickedBlock == null) return;
         ItemStack itemInHand = event.getItem();
-        if (itemInHand == null) return;
+        if (ItemStackUtils.isEmpty(itemInHand)) return;
         Material material = itemInHand.getType();
         if (material != Material.DEBUG_STICK) return;
         Player bukkitPlayer = event.getPlayer();

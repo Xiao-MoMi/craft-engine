@@ -8,7 +8,7 @@ import net.momirealms.craftengine.bukkit.nms.FastNMS;
 import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.CoreReflections;
 import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.MBuiltInRegistries;
 import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.MRegistryOps;
-import net.momirealms.craftengine.bukkit.util.ItemUtils;
+import net.momirealms.craftengine.bukkit.util.ItemStackUtils;
 import net.momirealms.craftengine.bukkit.util.KeyUtils;
 import net.momirealms.craftengine.core.item.ItemWrapper;
 import net.momirealms.craftengine.core.util.Key;
@@ -22,12 +22,12 @@ public class ComponentItemWrapper implements ItemWrapper<ItemStack> {
     private final Object handle;
 
     public ComponentItemWrapper(final ItemStack item) {
-        this.item = ItemUtils.ensureCraftItemStack(item);
+        this.item = ItemStackUtils.ensureCraftItemStack(item);
         this.handle = FastNMS.INSTANCE.field$CraftItemStack$handle(this.item);
     }
 
     public ComponentItemWrapper(final ItemStack item, int count) {
-        this.item = ItemUtils.ensureCraftItemStack(item);
+        this.item = ItemStackUtils.ensureCraftItemStack(item);
         this.item.setAmount(count);
         this.handle = FastNMS.INSTANCE.field$CraftItemStack$handle(this.item);
     }

@@ -1,14 +1,19 @@
 package net.momirealms.craftengine.bukkit.item.factory;
 
 import com.google.gson.JsonElement;
+import net.momirealms.craftengine.bukkit.nms.FastNMS;
 import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.CoreReflections;
+import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.MBuiltInRegistries;
 import net.momirealms.craftengine.bukkit.util.ItemTags;
+import net.momirealms.craftengine.bukkit.util.KeyUtils;
 import net.momirealms.craftengine.core.item.ItemFactory;
+import net.momirealms.craftengine.core.item.ItemKeys;
 import net.momirealms.craftengine.core.item.ItemWrapper;
 import net.momirealms.craftengine.core.item.data.JukeboxPlayable;
 import net.momirealms.craftengine.core.item.setting.EquipmentData;
 import net.momirealms.craftengine.core.plugin.CraftEngine;
 import net.momirealms.craftengine.core.util.Key;
+import net.momirealms.craftengine.core.util.UniqueKey;
 import net.momirealms.sparrow.nbt.Tag;
 import org.bukkit.Bukkit;
 import org.bukkit.inventory.ItemStack;
@@ -55,13 +60,14 @@ public abstract class BukkitItemFactory<W extends ItemWrapper<ItemStack>> extend
 
     @Override
     protected boolean isBlockItem(W item) {
-        // todo 这个 isBlockItem 他考虑组件了吗???
-        return item.getItem().getType().isBlock();
+        return CoreReflections.clazz$BlockItem.isInstance(FastNMS.INSTANCE.method$ItemStack$getItem(item.getLiteralObject()));
     }
 
     @Override
     protected Key vanillaId(W item) {
-        return Key.of(item.getItem().getType().getKey().asString());
+        Object i = FastNMS.INSTANCE.method$ItemStack$getItem(item.getLiteralObject());
+        if (i == null) return ItemKeys.AIR;
+        return KeyUtils.resourceLocationToKey(FastNMS.INSTANCE.method$Registry$getKey(MBuiltInRegistries.ITEM, i));
     }
 
     @Override
@@ -72,6 +78,11 @@ public abstract class BukkitItemFactory<W extends ItemWrapper<ItemStack>> extend
     @Override
     protected ItemStack getItem(W item) {
         return item.getItem();
+    }
+
+    @Override
+    protected UniqueKey recipeIngredientID(W item) {
+        return UniqueKey.create(id(item));
     }
 
     @Override

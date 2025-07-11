@@ -118,6 +118,10 @@ public interface Holder<T> {
             return new Reference<>(owner, registryKey, null);
         }
 
+        public static <T> Reference<T> createConstant(Owner<T> owner, ResourceKey<T> registryKey, T value) {
+            return new Constant<>(owner, registryKey, value);
+        }
+
         public ResourceKey<T> key() {
             if (this.key == null) {
                 throw new IllegalStateException("Trying to access unbound value '" + this.value + "' from registry " + this.owner);
@@ -203,6 +207,18 @@ public interface Holder<T> {
         @Override
         public String toString() {
             return "Reference{" + this.key + "=" + this.value + "}";
+        }
+
+        static class Constant<A> extends Reference<A> {
+
+            public Constant(Owner<A> owner, @Nullable ResourceKey<A> key, @Nullable A value) {
+                super(owner, key, value);
+            }
+
+            @Override
+            public void bindValue(A value) {
+                throw new UnsupportedOperationException();
+            }
         }
     }
 

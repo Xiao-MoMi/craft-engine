@@ -3,7 +3,6 @@ package net.momirealms.craftengine.core.pack.model;
 import com.google.gson.JsonObject;
 import net.momirealms.craftengine.core.plugin.locale.LocalizedResourceConfigException;
 import net.momirealms.craftengine.core.registry.BuiltInRegistries;
-import net.momirealms.craftengine.core.registry.Holder;
 import net.momirealms.craftengine.core.registry.Registries;
 import net.momirealms.craftengine.core.registry.WritableRegistry;
 import net.momirealms.craftengine.core.util.Key;
@@ -41,15 +40,13 @@ public class ItemModels {
     }
 
     public static void registerFactory(Key key, ItemModelFactory factory) {
-        Holder.Reference<ItemModelFactory> holder = ((WritableRegistry<ItemModelFactory>) BuiltInRegistries.ITEM_MODEL_FACTORY)
-                .registerForHolder(new ResourceKey<>(Registries.ITEM_MODEL_FACTORY.location(), key));
-        holder.bindValue(factory);
+        ((WritableRegistry<ItemModelFactory>) BuiltInRegistries.ITEM_MODEL_FACTORY)
+                .register(ResourceKey.create(Registries.ITEM_MODEL_FACTORY.location(), key), factory);
     }
 
     public static void registerReader(Key key, ItemModelReader reader) {
-        Holder.Reference<ItemModelReader> holder = ((WritableRegistry<ItemModelReader>) BuiltInRegistries.ITEM_MODEL_READER)
-                .registerForHolder(new ResourceKey<>(Registries.ITEM_MODEL_READER.location(), key));
-        holder.bindValue(reader);
+        ((WritableRegistry<ItemModelReader>) BuiltInRegistries.ITEM_MODEL_READER)
+                .register(ResourceKey.create(Registries.ITEM_MODEL_READER.location(), key), reader);
     }
 
     public static ItemModel fromMap(Map<String, Object> map) {

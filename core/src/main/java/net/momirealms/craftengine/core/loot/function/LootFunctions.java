@@ -4,7 +4,6 @@ import net.momirealms.craftengine.core.item.Item;
 import net.momirealms.craftengine.core.loot.LootContext;
 import net.momirealms.craftengine.core.plugin.locale.LocalizedResourceConfigException;
 import net.momirealms.craftengine.core.registry.BuiltInRegistries;
-import net.momirealms.craftengine.core.registry.Holder;
 import net.momirealms.craftengine.core.registry.Registries;
 import net.momirealms.craftengine.core.registry.WritableRegistry;
 import net.momirealms.craftengine.core.util.Key;
@@ -30,9 +29,8 @@ public class LootFunctions {
     }
 
     public static <T> void register(Key key, LootFunctionFactory<T> factory) {
-        Holder.Reference<LootFunctionFactory<?>> holder = ((WritableRegistry<LootFunctionFactory<?>>) BuiltInRegistries.LOOT_FUNCTION_FACTORY)
-                .registerForHolder(new ResourceKey<>(Registries.LOOT_FUNCTION_FACTORY.location(), key));
-        holder.bindValue(factory);
+        ((WritableRegistry<LootFunctionFactory<?>>) BuiltInRegistries.LOOT_FUNCTION_FACTORY)
+                .register(ResourceKey.create(Registries.LOOT_FUNCTION_FACTORY.location(), key), factory);
     }
 
     public static <T> BiFunction<Item<T>, LootContext, Item<T>> identity() {

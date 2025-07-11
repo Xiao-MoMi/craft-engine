@@ -22,6 +22,7 @@ import net.momirealms.craftengine.core.plugin.context.SimpleContext;
 import net.momirealms.craftengine.core.plugin.context.number.NumberProvider;
 import net.momirealms.craftengine.core.plugin.context.number.NumberProviders;
 import net.momirealms.craftengine.core.plugin.context.parameter.DirectContextParameters;
+import net.momirealms.craftengine.core.util.ItemUtils;
 import net.momirealms.craftengine.core.util.RandomUtils;
 import net.momirealms.craftengine.core.util.ResourceConfigUtils;
 import net.momirealms.craftengine.core.world.Vec3d;
@@ -127,7 +128,7 @@ public class CropBlockBehavior extends BukkitBlockBehavior {
     @Override
     public InteractionResult useOnBlock(UseOnContext context, ImmutableBlockState state) {
         Item<?> item = context.getItem();
-        if (item == null || !item.vanillaId().equals(ItemKeys.BONE_MEAL) || context.getPlayer().isAdventureMode())
+        if (ItemUtils.isEmpty(item) || !item.vanillaId().equals(ItemKeys.BONE_MEAL) || context.getPlayer().isAdventureMode())
             return InteractionResult.PASS;
         if (isMaxAge(state))
             return InteractionResult.PASS;

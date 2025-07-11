@@ -22,7 +22,7 @@ public interface RecipeFactory<T> {
         int count = ResourceConfigUtils.getAsInt(resultMap.getOrDefault("count", 1), "count");
         return new CustomRecipeResult(
                 CraftEngine.instance().itemManager().getBuildableItem(Key.of(id)).orElseThrow(
-                        () -> new LocalizedResourceConfigException("warning.config.recipe.invalid_item", id)),
+                        () -> new LocalizedResourceConfigException("warning.config.recipe.invalid_result", id)),
                 count
         );
     }

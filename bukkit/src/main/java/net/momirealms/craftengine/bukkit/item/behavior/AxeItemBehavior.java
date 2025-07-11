@@ -19,6 +19,7 @@ import net.momirealms.craftengine.core.item.behavior.ItemBehaviorFactory;
 import net.momirealms.craftengine.core.item.context.UseOnContext;
 import net.momirealms.craftengine.core.pack.Pack;
 import net.momirealms.craftengine.core.plugin.CraftEngine;
+import net.momirealms.craftengine.core.util.ItemUtils;
 import net.momirealms.craftengine.core.util.Key;
 import net.momirealms.craftengine.core.util.VersionHelper;
 import net.momirealms.craftengine.core.world.BlockPos;
@@ -67,7 +68,7 @@ public class AxeItemBehavior extends ItemBehavior {
         Key stripped = behaviorOptional.get().stripped();
         Item<ItemStack> offHandItem = (Item<ItemStack>) player.getItemInHand(InteractionHand.OFF_HAND);
         // is using a shield
-        if (context.getHand() == InteractionHand.MAIN_HAND && offHandItem != null && canBlockAttack(offHandItem) && !player.isSecondaryUseActive()) {
+        if (context.getHand() == InteractionHand.MAIN_HAND && !ItemUtils.isEmpty(offHandItem) && canBlockAttack(offHandItem) && !player.isSecondaryUseActive()) {
             return InteractionResult.PASS;
         }
 
@@ -90,6 +91,8 @@ public class AxeItemBehavior extends ItemBehavior {
         }
 
         Item<ItemStack> item = (Item<ItemStack>) context.getItem();
+        // 理论不可能出现
+        if (ItemUtils.isEmpty(item)) return InteractionResult.FAIL;
         BlockPos pos = context.getClickedPos();
         context.getLevel().playBlockSound(Vec3d.atCenterOf(pos), AXE_STRIP_SOUND, 1, 1);
         FastNMS.INSTANCE.method$LevelWriter$setBlock(context.getLevel().serverWorld(), LocationUtils.toBlockPos(pos), newState.customBlockState().handle(), UpdateOption.UPDATE_ALL_IMMEDIATE.flags());

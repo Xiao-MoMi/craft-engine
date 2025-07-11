@@ -47,6 +47,7 @@ import org.bukkit.persistence.PersistentDataType;
 import org.bukkit.potion.PotionEffect;
 import org.bukkit.potion.PotionEffectType;
 import org.bukkit.util.RayTraceResult;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
@@ -593,7 +594,7 @@ public class BukkitServerPlayer extends Player {
                 CoreReflections.field$ServerPlayerGameMode$isDestroyingBlock.set(gameMode, false);
                 // check item in hand
                 Item<ItemStack> item = this.getItemInHand(InteractionHand.MAIN_HAND);
-                if (item != null) {
+                if (!item.isEmpty()) {
                     Material itemMaterial = item.getItem().getType();
                     // creative mode + invalid item in hand
                     if (canInstabuild() && (itemMaterial == Material.DEBUG_STICK
@@ -611,7 +612,7 @@ public class BukkitServerPlayer extends Player {
                     ImmutableBlockState customState = optionalCustomState.get();
                     BlockSettings blockSettings = customState.settings();
                     if (blockSettings.requireCorrectTool()) {
-                        if (item != null) {
+                        if (!item.isEmpty()) {
                             // it's correct on plugin side
                             if (blockSettings.isCorrectTool(item.id())) {
                                 // but not on serverside
@@ -763,7 +764,7 @@ public class BukkitServerPlayer extends Player {
         return DirectionUtils.toDirection(platformPlayer().getFacing());
     }
 
-    @Nullable
+    @NotNull
     @Override
     public Item<ItemStack> getItemInHand(InteractionHand hand) {
         PlayerInventory inventory = platformPlayer().getInventory();

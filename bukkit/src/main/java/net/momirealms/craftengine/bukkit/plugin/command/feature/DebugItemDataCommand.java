@@ -3,7 +3,7 @@ package net.momirealms.craftengine.bukkit.plugin.command.feature;
 import net.momirealms.craftengine.bukkit.nms.FastNMS;
 import net.momirealms.craftengine.bukkit.plugin.command.BukkitCommandFeature;
 import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.MRegistryOps;
-import net.momirealms.craftengine.bukkit.util.ItemUtils;
+import net.momirealms.craftengine.bukkit.util.ItemStackUtils;
 import net.momirealms.craftengine.core.plugin.CraftEngine;
 import net.momirealms.craftengine.core.plugin.command.CraftEngineCommandManager;
 import net.momirealms.craftengine.core.util.AdventureHelper;
@@ -26,7 +26,7 @@ public class DebugItemDataCommand extends BukkitCommandFeature<CommandSender> {
                 .senderType(Player.class)
                 .handler(context -> {
                     ItemStack itemInHand = context.sender().getInventory().getItemInMainHand();
-                    if (ItemUtils.isEmpty(itemInHand)) {
+                    if (ItemStackUtils.isEmpty(itemInHand)) {
                         return;
                     }
                     Map<String, Object> readableMap = toMap(itemInHand);

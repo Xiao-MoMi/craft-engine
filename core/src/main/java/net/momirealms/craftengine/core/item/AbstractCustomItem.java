@@ -5,8 +5,8 @@ import net.momirealms.craftengine.core.item.modifier.ItemDataModifier;
 import net.momirealms.craftengine.core.plugin.context.PlayerOptionalContext;
 import net.momirealms.craftengine.core.plugin.context.event.EventTrigger;
 import net.momirealms.craftengine.core.plugin.context.function.Function;
-import net.momirealms.craftengine.core.registry.Holder;
 import net.momirealms.craftengine.core.util.Key;
+import net.momirealms.craftengine.core.util.UniqueKey;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collections;
@@ -15,7 +15,7 @@ import java.util.Map;
 import java.util.Optional;
 
 public abstract class AbstractCustomItem<I> implements CustomItem<I> {
-    protected final Holder<Key> id;
+    protected final UniqueKey id;
     protected final Key material;
     protected final Key clientBoundMaterial;
     protected final ItemDataModifier<I>[] modifiers;
@@ -25,7 +25,7 @@ public abstract class AbstractCustomItem<I> implements CustomItem<I> {
     protected final Map<EventTrigger, List<Function<PlayerOptionalContext>>> events;
 
     @SuppressWarnings("unchecked")
-    public AbstractCustomItem(Holder<Key> id, Key material, Key clientBoundMaterial,
+    public AbstractCustomItem(UniqueKey id, Key material, Key clientBoundMaterial,
                               List<ItemBehavior> behaviors,
                               List<ItemDataModifier<I>> modifiers,
                               List<ItemDataModifier<I>> clientBoundModifiers,
@@ -52,11 +52,11 @@ public abstract class AbstractCustomItem<I> implements CustomItem<I> {
 
     @Override
     public Key id() {
-        return this.id.value();
+        return this.id.key();
     }
 
     @Override
-    public Holder<Key> idHolder() {
+    public UniqueKey uniqueId() {
         return this.id;
     }
 

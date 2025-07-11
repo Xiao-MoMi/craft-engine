@@ -21,7 +21,7 @@ dependencies {
     implementation("net.momirealms:sparrow-nbt-codec:${rootProject.properties["sparrow_nbt_version"]}")
     implementation("net.momirealms:sparrow-nbt-legacy-codec:${rootProject.properties["sparrow_nbt_version"]}")
     // S3
-    implementation("net.momirealms:craft-engine-s3:0.3")
+    implementation("net.momirealms:craft-engine-s3:0.4")
     // Util
     compileOnly("net.momirealms:sparrow-util:${rootProject.properties["sparrow_util_version"]}")
     // Adventure
@@ -98,6 +98,7 @@ tasks {
         relocate("com.ezylang.evalex", "net.momirealms.craftengine.libraries.evalex")
         relocate("com.google.common.jimfs", "net.momirealms.craftengine.libraries.jimfs")
         relocate("org.apache.commons", "net.momirealms.craftengine.libraries.commons")
+        relocate("io.leangen.geantyref", "net.momirealms.craftengine.libraries.geantyref")
     }
 }
 

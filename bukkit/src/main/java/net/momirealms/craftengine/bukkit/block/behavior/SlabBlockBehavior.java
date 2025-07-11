@@ -16,10 +16,7 @@ import net.momirealms.craftengine.core.item.Item;
 import net.momirealms.craftengine.core.item.behavior.BlockBoundItemBehavior;
 import net.momirealms.craftengine.core.item.behavior.ItemBehavior;
 import net.momirealms.craftengine.core.item.context.BlockPlaceContext;
-import net.momirealms.craftengine.core.util.Direction;
-import net.momirealms.craftengine.core.util.Key;
-import net.momirealms.craftengine.core.util.ResourceConfigUtils;
-import net.momirealms.craftengine.core.util.VersionHelper;
+import net.momirealms.craftengine.core.util.*;
 import net.momirealms.craftengine.core.world.BlockPos;
 import org.bukkit.inventory.ItemStack;
 
@@ -41,7 +38,7 @@ public class SlabBlockBehavior extends BukkitBlockBehavior {
     public boolean canBeReplaced(BlockPlaceContext context, ImmutableBlockState state) {
         SlabType type = state.get(this.typeProperty);
         Item<ItemStack> item = (Item<ItemStack>) context.getItem();
-        if (type == SlabType.DOUBLE || item == null) return false;
+        if (type == SlabType.DOUBLE || ItemUtils.isEmpty(item)) return false;
         Optional<CustomItem<ItemStack>> itemInHand = item.getCustomItem();
         if (itemInHand.isEmpty()) return false;
         CustomItem<ItemStack> customItem = itemInHand.get();

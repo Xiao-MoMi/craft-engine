@@ -19,4 +19,9 @@ public class NeigeItemsProvider implements ExternalItemProvider<ItemStack> {
     public ItemStack build(String id, ItemBuildContext context) {
         return ItemManager.INSTANCE.getItemStack(id, Optional.ofNullable(context.player()).map(it -> (Player) it.platformPlayer()).orElse(null));
     }
+
+    @Override
+    public String id(ItemStack item) {
+        return ItemManager.INSTANCE.getItemId(item);
+    }
 }

@@ -50,11 +50,9 @@ public class BlockStateUtils {
     public static boolean isCorrectTool(@NotNull ImmutableBlockState state, @Nullable Item<ItemStack> itemInHand) {
         BlockSettings settings = state.settings();
         if (settings.requireCorrectTool()) {
-            if (itemInHand == null) return false;
-            if (!settings.isCorrectTool(itemInHand.id()) &&
-                    (!settings.respectToolComponent() || !FastNMS.INSTANCE.method$ItemStack$isCorrectToolForDrops(itemInHand.getLiteralObject(), state.customBlockState().handle()))) {
-                return false;
-            }
+            if (itemInHand == null || itemInHand.isEmpty()) return false;
+            return settings.isCorrectTool(itemInHand.id()) ||
+                    (settings.respectToolComponent() && FastNMS.INSTANCE.method$ItemStack$isCorrectToolForDrops(itemInHand.getLiteralObject(), state.customBlockState().handle()));
         }
         return true;
     }

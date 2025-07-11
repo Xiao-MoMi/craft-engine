@@ -10,6 +10,7 @@ import net.momirealms.craftengine.core.entity.furniture.AnchorType;
 import net.momirealms.craftengine.core.entity.furniture.CustomFurniture;
 import net.momirealms.craftengine.core.entity.furniture.Furniture;
 import net.momirealms.craftengine.core.entity.furniture.FurnitureExtraData;
+import net.momirealms.craftengine.core.entity.player.InteractionHand;
 import net.momirealms.craftengine.core.item.Item;
 import net.momirealms.craftengine.core.loot.LootTable;
 import net.momirealms.craftengine.core.plugin.context.ContextHolder;
@@ -276,7 +277,9 @@ public final class CraftEngineFurniture {
                     .withParameter(DirectContextParameters.FURNITURE, furniture)
                     .withOptionalParameter(DirectContextParameters.FURNITURE_ITEM, furniture.extraData().item().orElse(null));
             if (player != null) {
-                builder.withParameter(DirectContextParameters.PLAYER, player);
+                Item<?> itemInHand = player.getItemInHand(InteractionHand.MAIN_HAND);
+                builder.withParameter(DirectContextParameters.PLAYER, player)
+                        .withOptionalParameter(DirectContextParameters.ITEM_IN_HAND, itemInHand.isEmpty() ? null : itemInHand);
             }
             List<Item<ItemStack>> items = lootTable.getRandomItems(builder.build(), world, player);
             for (Item<ItemStack> item : items) {

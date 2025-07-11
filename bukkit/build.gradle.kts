@@ -98,6 +98,7 @@ tasks {
         relocate("com.ezylang.evalex", "net.momirealms.craftengine.libraries.evalex")
         relocate("com.google.common.jimfs", "net.momirealms.craftengine.libraries.jimfs")
         relocate("org.apache.commons", "net.momirealms.craftengine.libraries.commons")
+        relocate("io.leangen.geantyref", "net.momirealms.craftengine.libraries.geantyref")
     }
 }
 

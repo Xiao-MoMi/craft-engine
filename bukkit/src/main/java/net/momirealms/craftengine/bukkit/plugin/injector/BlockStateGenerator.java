@@ -118,7 +118,7 @@ public final class BlockStateGenerator {
             World world = new BukkitWorld(FastNMS.INSTANCE.method$Level$getCraftWorld(serverLevel));
             ContextHolder.Builder lootBuilder = new ContextHolder.Builder()
                     .withParameter(DirectContextParameters.POSITION, new WorldPosition(world, FastNMS.INSTANCE.field$Vec3$x(vec3), FastNMS.INSTANCE.field$Vec3$y(vec3), FastNMS.INSTANCE.field$Vec3$z(vec3)));
-            if (item != null) {
+            if (!item.isEmpty()) {
                 lootBuilder.withParameter(DirectContextParameters.ITEM_IN_HAND, item);
             }
 

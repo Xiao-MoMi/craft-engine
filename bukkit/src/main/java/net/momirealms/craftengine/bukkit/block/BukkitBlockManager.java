@@ -276,7 +276,7 @@ public final class BukkitBlockManager extends AbstractBlockManager {
     }
 
     private void registerEmptyBlock() {
-        Holder.Reference<CustomBlock> holder = ((WritableRegistry<CustomBlock>) BuiltInRegistries.BLOCK).registerForHolder(new ResourceKey<>(BuiltInRegistries.BLOCK.key().location(), Key.withDefaultNamespace("empty")));
+        Holder.Reference<CustomBlock> holder = ((WritableRegistry<CustomBlock>) BuiltInRegistries.BLOCK).registerForHolder(ResourceKey.create(BuiltInRegistries.BLOCK.key().location(), Key.withDefaultNamespace("empty")));
         EmptyBlock emptyBlock = new EmptyBlock(Key.withDefaultNamespace("empty"), holder);
         holder.bindValue(emptyBlock);
     }

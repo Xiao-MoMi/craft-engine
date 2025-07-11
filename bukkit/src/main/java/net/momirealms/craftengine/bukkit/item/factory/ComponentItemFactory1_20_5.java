@@ -32,6 +32,11 @@ public class ComponentItemFactory1_20_5 extends BukkitItemFactory<ComponentItemW
     }
 
     @Override
+    protected boolean isEmpty(ComponentItemWrapper item) {
+        return item.getItem().isEmpty();
+    }
+
+    @Override
     protected void customId(ComponentItemWrapper item, Key id) {
         FastNMS.INSTANCE.setCustomItemId(item.getLiteralObject(), id.toString());
     }

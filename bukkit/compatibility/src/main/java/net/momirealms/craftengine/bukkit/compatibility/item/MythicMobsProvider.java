@@ -22,4 +22,12 @@ public class MythicMobsProvider implements ExternalItemProvider<ItemStack> {
         }
         return mythicBukkit.getItemManager().getItemStack(id);
     }
+
+    @Override
+    public String id(ItemStack item) {
+        if (mythicBukkit == null || mythicBukkit.isClosed()) {
+            this.mythicBukkit = MythicBukkit.inst();
+        }
+        return mythicBukkit.getItemManager().getMythicTypeFromItem(item);
+    }
 }

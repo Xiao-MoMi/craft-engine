@@ -3764,4 +3764,11 @@ public final class CoreReflections {
                     clazz$Level, clazz$BlockPos, clazz$BlockState, clazz$Player
             )
     );
+
+    public static final Class<?> clazz$BlockItem = requireNonNull(
+            BukkitReflectionUtils.findReobfOrMojmapClass(
+                    "world.item.ItemBlock",
+                    "world.item.BlockItem"
+            )
+    );
 }

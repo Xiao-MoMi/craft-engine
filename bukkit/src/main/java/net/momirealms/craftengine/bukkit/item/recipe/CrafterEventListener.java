@@ -1,7 +1,7 @@
 package net.momirealms.craftengine.bukkit.item.recipe;
 
 import net.momirealms.craftengine.bukkit.plugin.BukkitCraftEngine;
-import net.momirealms.craftengine.bukkit.util.ItemUtils;
+import net.momirealms.craftengine.bukkit.util.ItemStackUtils;
 import net.momirealms.craftengine.core.item.Item;
 import net.momirealms.craftengine.core.item.ItemBuildContext;
 import net.momirealms.craftengine.core.item.ItemManager;
@@ -10,8 +10,6 @@ import net.momirealms.craftengine.core.item.recipe.Recipe;
 import net.momirealms.craftengine.core.item.recipe.RecipeTypes;
 import net.momirealms.craftengine.core.item.recipe.input.CraftingInput;
 import net.momirealms.craftengine.core.plugin.config.Config;
-import net.momirealms.craftengine.core.registry.BuiltInRegistries;
-import net.momirealms.craftengine.core.registry.Holder;
 import net.momirealms.craftengine.core.util.Key;
 import org.bukkit.block.Crafter;
 import org.bukkit.event.EventHandler;
@@ -23,10 +21,8 @@ import org.bukkit.inventory.ItemStack;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
 
 public class CrafterEventListener implements Listener {
-    private static final OptimizedIDItem<ItemStack> EMPTY = new OptimizedIDItem<>(null, null);
     private final ItemManager<ItemStack> itemManager;
     private final BukkitRecipeManager recipeManager;
     private final BukkitCraftEngine plugin;
@@ -58,18 +54,11 @@ public class CrafterEventListener implements Listener {
 
         List<OptimizedIDItem<ItemStack>> optimizedIDItems = new ArrayList<>();
         for (ItemStack itemStack : ingredients) {
-            if (ItemUtils.isEmpty(itemStack)) {
-                optimizedIDItems.add(EMPTY);
+            if (ItemStackUtils.isEmpty(itemStack)) {
+                optimizedIDItems.add(RecipeEventListener.EMPTY);
             } else {
                 Item<ItemStack> wrappedItem = this.itemManager.wrap(itemStack);
-                Optional<Holder.Reference<Key>> idHolder = BuiltInRegistries.OPTIMIZED_ITEM_ID.get(wrappedItem.id());
-                if (idHolder.isEmpty()) {
-                    // an invalid item is used in recipe, we disallow it
-                    event.setCancelled(true);
-                    return;
-                } else {
-                    optimizedIDItems.add(new OptimizedIDItem<>(idHolder.get(), itemStack));
-                }
+                optimizedIDItems.add(new OptimizedIDItem<>(wrappedItem.recipeIngredientId(), itemStack));
             }
         }
 

@@ -3,7 +3,6 @@ package net.momirealms.craftengine.core.pack.model.special;
 import com.google.gson.JsonObject;
 import net.momirealms.craftengine.core.plugin.locale.LocalizedResourceConfigException;
 import net.momirealms.craftengine.core.registry.BuiltInRegistries;
-import net.momirealms.craftengine.core.registry.Holder;
 import net.momirealms.craftengine.core.registry.Registries;
 import net.momirealms.craftengine.core.registry.WritableRegistry;
 import net.momirealms.craftengine.core.util.Key;
@@ -54,15 +53,13 @@ public class SpecialModels {
     }
 
     public static void registerFactory(Key key, SpecialModelFactory factory) {
-        Holder.Reference<SpecialModelFactory> holder = ((WritableRegistry<SpecialModelFactory>) BuiltInRegistries.SPECIAL_MODEL_FACTORY)
-                .registerForHolder(new ResourceKey<>(Registries.SPECIAL_MODEL_FACTORY.location(), key));
-        holder.bindValue(factory);
+        ((WritableRegistry<SpecialModelFactory>) BuiltInRegistries.SPECIAL_MODEL_FACTORY)
+                .register(ResourceKey.create(Registries.SPECIAL_MODEL_FACTORY.location(), key), factory);
     }
 
-    public static void registerReader(Key key, SpecialModelReader factory) {
-        Holder.Reference<SpecialModelReader> holder = ((WritableRegistry<SpecialModelReader>) BuiltInRegistries.SPECIAL_MODEL_READER)
-                .registerForHolder(new ResourceKey<>(Registries.SPECIAL_MODEL_READER.location(), key));
-        holder.bindValue(factory);
+    public static void registerReader(Key key, SpecialModelReader reader) {
+        ((WritableRegistry<SpecialModelReader>) BuiltInRegistries.SPECIAL_MODEL_READER)
+                .register(ResourceKey.create(Registries.SPECIAL_MODEL_READER.location(), key), reader);
     }
 
     public static SpecialModel fromMap(Map<String, Object> map) {

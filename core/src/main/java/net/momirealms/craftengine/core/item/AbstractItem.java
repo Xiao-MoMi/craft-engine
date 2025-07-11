@@ -9,6 +9,7 @@ import net.momirealms.craftengine.core.item.data.JukeboxPlayable;
 import net.momirealms.craftengine.core.item.data.Trim;
 import net.momirealms.craftengine.core.item.setting.EquipmentData;
 import net.momirealms.craftengine.core.util.Key;
+import net.momirealms.craftengine.core.util.UniqueKey;
 import net.momirealms.sparrow.nbt.Tag;
 
 import java.util.List;
@@ -21,6 +22,11 @@ public class AbstractItem<W extends ItemWrapper<I>, I> implements Item<I> {
     AbstractItem(ItemFactory<W, I> factory, W item) {
         this.factory = factory;
         this.item = item;
+    }
+
+    @Override
+    public boolean isEmpty() {
+        return this.factory.isEmpty(this.item);
     }
 
     @Override
@@ -151,6 +157,11 @@ public class AbstractItem<W extends ItemWrapper<I>, I> implements Item<I> {
     @Override
     public Key vanillaId() {
         return this.factory.vanillaId(this.item);
+    }
+
+    @Override
+    public UniqueKey recipeIngredientId() {
+        return this.factory.recipeIngredientID(this.item);
     }
 
     @Override

@@ -3,7 +3,6 @@ package net.momirealms.craftengine.core.pack.model.rangedisptach;
 import com.google.gson.JsonObject;
 import net.momirealms.craftengine.core.plugin.locale.LocalizedResourceConfigException;
 import net.momirealms.craftengine.core.registry.BuiltInRegistries;
-import net.momirealms.craftengine.core.registry.Holder;
 import net.momirealms.craftengine.core.registry.Registries;
 import net.momirealms.craftengine.core.registry.WritableRegistry;
 import net.momirealms.craftengine.core.util.Key;
@@ -48,15 +47,13 @@ public class RangeDispatchProperties {
     }
 
     public static void registerFactory(Key key, RangeDispatchPropertyFactory factory) {
-        Holder.Reference<RangeDispatchPropertyFactory> holder = ((WritableRegistry<RangeDispatchPropertyFactory>) BuiltInRegistries.RANGE_DISPATCH_PROPERTY_FACTORY)
-                .registerForHolder(new ResourceKey<>(Registries.RANGE_DISPATCH_PROPERTY_FACTORY.location(), key));
-        holder.bindValue(factory);
+        ((WritableRegistry<RangeDispatchPropertyFactory>) BuiltInRegistries.RANGE_DISPATCH_PROPERTY_FACTORY)
+                .register(ResourceKey.create(Registries.RANGE_DISPATCH_PROPERTY_FACTORY.location(), key), factory);
     }
 
     public static void registerReader(Key key, RangeDispatchPropertyReader reader) {
-        Holder.Reference<RangeDispatchPropertyReader> holder = ((WritableRegistry<RangeDispatchPropertyReader>) BuiltInRegistries.RANGE_DISPATCH_PROPERTY_READER)
-                .registerForHolder(new ResourceKey<>(Registries.RANGE_DISPATCH_PROPERTY_READER.location(), key));
-        holder.bindValue(reader);
+        ((WritableRegistry<RangeDispatchPropertyReader>) BuiltInRegistries.RANGE_DISPATCH_PROPERTY_READER)
+                .register(ResourceKey.create(Registries.RANGE_DISPATCH_PROPERTY_READER.location(), key), reader);
     }
 
     public static RangeDispatchProperty fromMap(Map<String, Object> map) {

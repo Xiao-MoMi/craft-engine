@@ -1561,4 +1561,30 @@ public final class NetworkReflections {
                     List.of("network.protocol.login.ClientboundLoginFinishedPacket", "network.protocol.login.ClientboundGameProfilePacket")
             )
     );
+
+    public static final Class<?> clazz$ClientboundRecipeBookAddPacket = MiscUtils.requireNonNullIf(BukkitReflectionUtils.findReobfOrMojmapClass(
+            "network.protocol.game.ClientboundRecipeBookAddPacket",
+            "network.protocol.game.ClientboundRecipeBookAddPacket"
+    ), VersionHelper.isOrAbove1_21_2());
+
+    public static final Class<?> clazz$ClientboundPlaceGhostRecipePacket = requireNonNull(
+            BukkitReflectionUtils.findReobfOrMojmapClass(
+                    "network.protocol.game.PacketPlayOutAutoRecipe",
+                    "network.protocol.game.ClientboundPlaceGhostRecipePacket"
+            )
+    );
+
+    public static final Class<?> clazz$ClientboundUpdateRecipesPacket = requireNonNull(
+            BukkitReflectionUtils.findReobfOrMojmapClass(
+                    "network.protocol.game.PacketPlayOutRecipeUpdate",
+                    "network.protocol.game.ClientboundUpdateRecipesPacket"
+            )
+    );
+
+    public static final Class<?> clazz$ClientboundUpdateAdvancementsPacket = requireNonNull(
+            BukkitReflectionUtils.findReobfOrMojmapClass(
+                    "network.protocol.game.PacketPlayOutAdvancements",
+                    "network.protocol.game.ClientboundUpdateAdvancementsPacket"
+            )
+    );
 }

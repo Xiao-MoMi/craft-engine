@@ -1,37 +1,36 @@
 package net.momirealms.craftengine.core.item.recipe;
 
-import net.momirealms.craftengine.core.registry.Holder;
-import net.momirealms.craftengine.core.util.Key;
+import net.momirealms.craftengine.core.util.UniqueKey;
 
 public class OptimizedIDItem<T> {
     private final T rawItem;
-    private final Holder<Key> idHolder;
+    private final UniqueKey uniqueId;
 
-    public OptimizedIDItem(Holder<Key> idHolder, T rawItem) {
-        this.idHolder = idHolder;
+    public OptimizedIDItem(UniqueKey uniqueId, T rawItem) {
+        this.uniqueId = uniqueId;
         this.rawItem = rawItem;
     }
 
-    public Holder<Key> id() {
-        return idHolder;
+    public UniqueKey id() {
+        return uniqueId;
     }
 
     public T rawItem() {
         return rawItem;
     }
 
-    public boolean is(Holder<Key> id) {
-        return idHolder == id;
+    public boolean is(UniqueKey id) {
+        return uniqueId == id;
     }
 
     public boolean isEmpty() {
-        return idHolder == null;
+        return uniqueId == null;
     }
 
     @Override
     public String toString() {
         return "OptimizedIDItem{" +
-                "idHolder=" + idHolder +
+                "uniqueId=" + uniqueId +
                 '}';
     }
 }

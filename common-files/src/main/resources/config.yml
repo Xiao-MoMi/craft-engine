@@ -221,7 +221,7 @@ image:
   intercept-packets:
     system-chat: true
     tab-list: true     # Tab list header and footer
-    player-info: true  # User list in tab
+    player-info: true  # Player list in tab
     set-score: true
     actionbar: true
     title: true
@@ -233,6 +233,7 @@ image:
     armor-stand: true   # Legacy Holograms
     text-display: true  # Modern Holograms
     item: true
+    advancement: true
   # Defines Unicode characters used for <shift:xxx> positioning
   # - Must match the font defined in resource packs
   # - Do NOT modify unless you understand text rendering mechanics

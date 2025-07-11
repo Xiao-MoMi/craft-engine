@@ -10,6 +10,7 @@ import net.momirealms.craftengine.core.item.data.Trim;
 import net.momirealms.craftengine.core.item.modifier.ItemDataModifier;
 import net.momirealms.craftengine.core.item.setting.EquipmentData;
 import net.momirealms.craftengine.core.util.Key;
+import net.momirealms.craftengine.core.util.UniqueKey;
 import net.momirealms.sparrow.nbt.Tag;
 
 import java.util.List;
@@ -24,6 +25,8 @@ import java.util.Optional;
  */
 public interface Item<I> {
 
+    boolean isEmpty();
+
     Optional<CustomItem<I>> getCustomItem();
 
     Optional<List<ItemBehavior>> getItemBehavior();
@@ -35,6 +38,8 @@ public interface Item<I> {
     Key id();
 
     Key vanillaId();
+
+    UniqueKey recipeIngredientId();
 
     Optional<Key> customId();
 

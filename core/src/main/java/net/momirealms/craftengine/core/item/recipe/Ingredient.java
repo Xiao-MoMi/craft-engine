@@ -1,15 +1,14 @@
 package net.momirealms.craftengine.core.item.recipe;
 
-import net.momirealms.craftengine.core.registry.Holder;
-import net.momirealms.craftengine.core.util.Key;
+import net.momirealms.craftengine.core.util.UniqueKey;
 
 import java.util.*;
 import java.util.function.Predicate;
 
-public class Ingredient<T> implements Predicate<OptimizedIDItem<T>>, StackedContents.IngredientInfo<Holder<Key>> {
-    private final List<Holder<Key>> items;
+public class Ingredient<T> implements Predicate<OptimizedIDItem<T>>, StackedContents.IngredientInfo<UniqueKey> {
+    private final List<UniqueKey> items;
 
-    public Ingredient(List<Holder<Key>> items) {
+    public Ingredient(List<UniqueKey> items) {
         this.items = items;
     }
 
@@ -18,17 +17,17 @@ public class Ingredient<T> implements Predicate<OptimizedIDItem<T>>, StackedCont
                 .orElseGet(stack::isEmpty);
     }
 
-    public static <T> Ingredient<T> of(List<Holder<Key>> items) {
+    public static <T> Ingredient<T> of(List<UniqueKey> items) {
         return new Ingredient<>(items);
     }
 
-    public static <T> Ingredient<T> of(Set<Holder<Key>> items) {
+    public static <T> Ingredient<T> of(Set<UniqueKey> items) {
         return new Ingredient<>(new ArrayList<>(items));
     }
 
     @Override
     public boolean test(OptimizedIDItem<T> optimizedIDItem) {
-        for (Holder<Key> item : this.items()) {
+        for (UniqueKey item : this.items()) {
             if (optimizedIDItem.is(item)) {
                 return true;
             }
@@ -36,14 +35,14 @@ public class Ingredient<T> implements Predicate<OptimizedIDItem<T>>, StackedCont
         return false;
     }
 
-    public List<Holder<Key>> items() {
+    public List<UniqueKey> items() {
         return this.items;
     }
 
     @Override
     public String toString() {
         StringJoiner joiner = new StringJoiner(", ");
-        for (Holder<Key> item : this.items()) {
+        for (UniqueKey item : this.items()) {
             joiner.add(item.toString());
         }
         return "Ingredient: [" + joiner + "]";
@@ -54,7 +53,7 @@ public class Ingredient<T> implements Predicate<OptimizedIDItem<T>>, StackedCont
     }
 
     @Override
-    public boolean acceptsItem(Holder<Key> entry) {
+    public boolean acceptsItem(UniqueKey entry) {
         return this.items.contains(entry);
     }
 }

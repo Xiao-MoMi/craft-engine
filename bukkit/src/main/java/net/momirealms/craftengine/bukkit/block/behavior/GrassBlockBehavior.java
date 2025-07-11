@@ -83,7 +83,7 @@ public class GrassBlockBehavior extends BukkitBlockBehavior {
     @Override
     public InteractionResult useOnBlock(UseOnContext context, ImmutableBlockState state) {
         Item<?> item = context.getItem();
-        if (item == null || !item.vanillaId().equals(ItemKeys.BONE_MEAL) || context.getPlayer().isAdventureMode())
+        if (ItemUtils.isEmpty(item) || !item.vanillaId().equals(ItemKeys.BONE_MEAL) || context.getPlayer().isAdventureMode())
             return InteractionResult.PASS;
         BlockPos pos = context.getClickedPos();
         BukkitBlockInWorld upper = (BukkitBlockInWorld) context.getLevel().getBlockAt(pos.x(), pos.y() + 1, pos.z());

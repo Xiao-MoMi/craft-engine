@@ -7,43 +7,19 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
-public class MappedRegistry<T> implements WritableRegistry<T> {
-    private final ResourceKey<? extends Registry<T>> key;
-    private final Map<Key, Holder.Reference<T>> byResourceLocation = new HashMap<>(512);
-    private final Map<ResourceKey<T>, Holder.Reference<T>> byResourceKey = new HashMap<>(512);
-    private final List<Holder.Reference<T>> byId = new ArrayList<>(512);
+public abstract class AbstractMappedRegistry<T> implements WritableRegistry<T> {
+    protected final ResourceKey<? extends Registry<T>> key;
+    protected final Map<Key, Holder.Reference<T>> byResourceLocation = new HashMap<>(512);
+    protected final Map<ResourceKey<T>, Holder.Reference<T>> byResourceKey = new HashMap<>(512);
+    protected final List<Holder.Reference<T>> byId = new ArrayList<>(512);
 
-    public MappedRegistry(ResourceKey<? extends Registry<T>> key) {
+    protected AbstractMappedRegistry(ResourceKey<? extends Registry<T>> key) {
         this.key = key;
     }
 
     @Override
     public ResourceKey<? extends Registry<T>> key() {
         return this.key;
-    }
-
-    @Override
-    public Holder.Reference<T> registerForHolder(ResourceKey<T> key) {
-        Objects.requireNonNull(key);
-        if (!key.registry().equals(this.key.location())) {
-            throw new IllegalStateException(key + " is not allowed to be registered in " + this.key);
-        }
-        if (this.byResourceLocation.containsKey(key.location())) {
-            throw new IllegalStateException("Adding duplicate key '" + key + "' to registry");
-        } else {
-            Holder.Reference<T> reference = this.byResourceKey.computeIfAbsent(key, k -> Holder.Reference.create(this, k));
-            this.byResourceKey.put(key, reference);
-            this.byResourceLocation.put(key.location(), reference);
-            this.byId.add(reference);
-            return reference;
-        }
-    }
-
-    @Override
-    public Holder.Reference<T> register(ResourceKey<T> key, T value) {
-        Holder.Reference<T> holder = registerForHolder(key);
-        holder.bindValue(value);
-        return holder;
     }
 
     @Nullable

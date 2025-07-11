@@ -21,6 +21,7 @@ import net.momirealms.craftengine.core.plugin.context.PlayerOptionalContext;
 import net.momirealms.craftengine.core.plugin.context.event.EventTrigger;
 import net.momirealms.craftengine.core.plugin.context.parameter.DirectContextParameters;
 import net.momirealms.craftengine.core.util.Cancellable;
+import net.momirealms.craftengine.core.util.ItemUtils;
 import net.momirealms.craftengine.core.util.VersionHelper;
 import net.momirealms.craftengine.core.world.BlockPos;
 import net.momirealms.craftengine.core.world.WorldPosition;
@@ -125,7 +126,7 @@ public final class BlockEventListener implements Listener {
         WorldPosition position = new WorldPosition(world, location.getBlockX() + 0.5, location.getBlockY() + 0.5, location.getBlockZ() + 0.5);
         Item<ItemStack> itemInHand = serverPlayer.getItemInHand(InteractionHand.MAIN_HAND);
 
-        if (itemInHand != null) {
+        if (!ItemUtils.isEmpty(itemInHand)) {
             Optional<CustomItem<ItemStack>> optionalCustomItem = itemInHand.getCustomItem();
             if (optionalCustomItem.isPresent()) {
                 Cancellable cancellable = Cancellable.of(event::isCancelled, event::setCancelled);
@@ -167,7 +168,7 @@ public final class BlockEventListener implements Listener {
                         .withParameter(DirectContextParameters.CUSTOM_BLOCK_STATE, state)
                         .withParameter(DirectContextParameters.EVENT, cancellable)
                         .withParameter(DirectContextParameters.POSITION, position)
-                        .withOptionalParameter(DirectContextParameters.ITEM_IN_HAND, itemInHand)
+                        .withOptionalParameter(DirectContextParameters.ITEM_IN_HAND, ItemUtils.isEmpty(itemInHand) ? null : itemInHand)
                 );
                 state.owner().value().execute(context, EventTrigger.BREAK);
                 if (cancellable.isCancelled()) {
@@ -189,7 +190,7 @@ public final class BlockEventListener implements Listener {
                             .withParameter(DirectContextParameters.BLOCK, new BukkitBlockInWorld(block))
                             .withParameter(DirectContextParameters.POSITION, position)
                             .withParameter(DirectContextParameters.PLAYER, serverPlayer)
-                            .withOptionalParameter(DirectContextParameters.ITEM_IN_HAND, itemInHand).build();
+                            .withOptionalParameter(DirectContextParameters.ITEM_IN_HAND, ItemUtils.isEmpty(itemInHand) ? null : itemInHand).build();
                     for (LootTable<?> lootTable : it.lootTables()) {
                         for (Item<?> item : lootTable.getRandomItems(lootContext, world, serverPlayer)) {
                             world.dropItemNaturally(position, item);

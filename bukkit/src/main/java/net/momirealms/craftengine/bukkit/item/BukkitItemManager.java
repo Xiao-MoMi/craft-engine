@@ -14,8 +14,9 @@ import net.momirealms.craftengine.bukkit.nms.FastNMS;
 import net.momirealms.craftengine.bukkit.plugin.BukkitCraftEngine;
 import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.CoreReflections;
 import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.MBuiltInRegistries;
+import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.MItems;
 import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.MRegistries;
-import net.momirealms.craftengine.bukkit.util.ItemUtils;
+import net.momirealms.craftengine.bukkit.util.ItemStackUtils;
 import net.momirealms.craftengine.bukkit.util.KeyUtils;
 import net.momirealms.craftengine.core.entity.player.Player;
 import net.momirealms.craftengine.core.item.*;
@@ -25,19 +26,13 @@ import net.momirealms.craftengine.core.plugin.config.Config;
 import net.momirealms.craftengine.core.plugin.context.ContextHolder;
 import net.momirealms.craftengine.core.plugin.locale.LocalizedResourceConfigException;
 import net.momirealms.craftengine.core.plugin.logger.Debugger;
-import net.momirealms.craftengine.core.registry.BuiltInRegistries;
-import net.momirealms.craftengine.core.registry.Holder;
-import net.momirealms.craftengine.core.registry.WritableRegistry;
-import net.momirealms.craftengine.core.util.GsonHelper;
-import net.momirealms.craftengine.core.util.Key;
-import net.momirealms.craftengine.core.util.ResourceKey;
-import net.momirealms.craftengine.core.util.VersionHelper;
+import net.momirealms.craftengine.core.util.*;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
-import org.bukkit.NamespacedKey;
 import org.bukkit.Registry;
 import org.bukkit.event.HandlerList;
 import org.bukkit.inventory.ItemStack;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
@@ -59,6 +54,8 @@ public class BukkitItemManager extends AbstractItemManager<ItemStack> {
     private final ArmorEventListener armorEventListener;
     private final NetworkItemHandler<ItemStack> networkItemHandler;
     private final Object bedrockItemHolder;
+    private final Item<ItemStack> empty;
+    private final ItemStack emptyStack;
     private Set<Key> lastRegisteredPatterns = Set.of();
 
     public BukkitItemManager(BukkitCraftEngine plugin) {
@@ -74,6 +71,8 @@ public class BukkitItemManager extends AbstractItemManager<ItemStack> {
         this.bedrockItemHolder = FastNMS.INSTANCE.method$Registry$getHolderByResourceKey(MBuiltInRegistries.ITEM, FastNMS.INSTANCE.method$ResourceKey$create(MRegistries.ITEM, KeyUtils.toResourceLocation(Key.of("minecraft:bedrock")))).get();;
         this.registerCustomTrimMaterial();
         this.loadLastRegisteredPatterns();
+        this.empty = this.wrap(FastNMS.INSTANCE.method$CraftItemStack$asCraftMirror(CoreReflections.instance$ItemStack$EMPTY));
+        this.emptyStack = FastNMS.INSTANCE.method$CraftItemStack$asCraftMirror(FastNMS.INSTANCE.constructor$ItemStack(MItems.AIR, 1));
     }
 
     @Override
@@ -84,12 +83,33 @@ public class BukkitItemManager extends AbstractItemManager<ItemStack> {
     }
 
     @Override
+    public Item<ItemStack> decode(FriendlyByteBuf byteBuf) {
+        Object friendlyBuf = FastNMS.INSTANCE.constructor$FriendlyByteBuf(byteBuf);
+        return this.wrap(FastNMS.INSTANCE.method$FriendlyByteBuf$readItem(friendlyBuf));
+    }
+
+    @Override
+    public void encode(FriendlyByteBuf byteBuf, Item<ItemStack> item) {
+        FastNMS.INSTANCE.method$FriendlyByteBuf$writeItem(FastNMS.INSTANCE.constructor$FriendlyByteBuf(byteBuf), item.getItem());
+    }
+
+    @Override
     public NetworkItemHandler<ItemStack> networkItemHandler() {
         return this.networkItemHandler;
     }
 
     public static BukkitItemManager instance() {
         return instance;
+    }
+
+    @Override
+    public Item<ItemStack> s2c(Item<ItemStack> item, Player player) {
+        return this.networkItemHandler.s2c(item, player).orElse(item);
+    }
+
+    @Override
+    public Item<ItemStack> c2s(Item<ItemStack> item) {
+        return this.networkItemHandler.c2s(item).orElse(item);
     }
 
     public Optional<ItemStack> s2c(ItemStack itemStack, Player player) {
@@ -125,7 +145,7 @@ public class BukkitItemManager extends AbstractItemManager<ItemStack> {
 
     @Override
     public int fuelTime(ItemStack itemStack) {
-        if (ItemUtils.isEmpty(itemStack)) return 0;
+        if (ItemStackUtils.isEmpty(itemStack)) return 0;
         Optional<CustomItem<ItemStack>> customItem = wrap(itemStack).getCustomItem();
         return customItem.map(it -> it.settings().fuelTime()).orElse(0);
     }
@@ -272,12 +292,16 @@ public class BukkitItemManager extends AbstractItemManager<ItemStack> {
 
     @Override
     public ItemStack buildCustomItemStack(Key id, Player player) {
-        return Optional.ofNullable(customItems.get(id)).map(it -> it.buildItemStack(new ItemBuildContext(player, ContextHolder.EMPTY), 1)).orElse(null);
+        return Optional.ofNullable(this.customItems.get(id)).map(it -> it.buildItemStack(new ItemBuildContext(player, ContextHolder.EMPTY), 1)).orElse(null);
     }
 
     @Override
     public ItemStack buildItemStack(Key id, @Nullable Player player) {
-        return Optional.ofNullable(buildCustomItemStack(id, player)).orElseGet(() -> createVanillaItemStack(id));
+        ItemStack customItem = buildCustomItemStack(id, player);
+        if (customItem != null) {
+            return customItem;
+        }
+        return createVanillaItemStack(id);
     }
 
     @Override
@@ -285,31 +309,30 @@ public class BukkitItemManager extends AbstractItemManager<ItemStack> {
         return Optional.ofNullable(customItems.get(id)).map(it -> it.buildItem(player)).orElse(null);
     }
 
-    private ItemStack createVanillaItemStack(Key id) {
-        NamespacedKey key = NamespacedKey.fromString(id.toString());
-        if (key == null) {
-            this.plugin.logger().warn(id + " is not a valid namespaced key");
-            return new ItemStack(Material.AIR);
+    @Override
+    public Item<ItemStack> createWrappedItem(Key id, @Nullable Player player) {
+        CustomItem<ItemStack> customItem = this.customItems.get(id);
+        if (customItem != null) {
+            return customItem.buildItem(player);
         }
+        ItemStack itemStack = this.createVanillaItemStack(id);
+        if (itemStack != null) {
+            return wrap(itemStack);
+        }
+        return null;
+    }
+
+    private ItemStack createVanillaItemStack(Key id) {
         Object item = FastNMS.INSTANCE.method$Registry$getValue(MBuiltInRegistries.ITEM, KeyUtils.toResourceLocation(id));
         if (item == null) {
-            this.plugin.logger().warn(id + " is not a valid material");
-            return new ItemStack(Material.AIR);
+            return null;
         }
         return FastNMS.INSTANCE.method$CraftItemStack$asCraftMirror(FastNMS.INSTANCE.constructor$ItemStack(item, 1));
     }
 
     @Override
-    public Item<ItemStack> createWrappedItem(Key id, @Nullable Player player) {
-        return Optional.ofNullable(this.customItems.get(id)).map(it -> it.buildItem(player)).orElseGet(() -> {
-            ItemStack itemStack = createVanillaItemStack(id);
-            return wrap(itemStack);
-        });
-    }
-
-    @Override
-    public Item<ItemStack> wrap(ItemStack itemStack) {
-        if (ItemUtils.isEmpty(itemStack)) return null;
+    public @NotNull Item<ItemStack> wrap(ItemStack itemStack) {
+        if (itemStack == null) return this.empty;
         return this.factory.wrap(itemStack);
     }
 
@@ -327,7 +350,7 @@ public class BukkitItemManager extends AbstractItemManager<ItemStack> {
     }
 
     @Override
-    protected CustomItem.Builder<ItemStack> createPlatformItemBuilder(Holder<Key> id, Key materialId, Key clientBoundMaterialId) {
+    protected CustomItem.Builder<ItemStack> createPlatformItemBuilder(UniqueKey id, Key materialId, Key clientBoundMaterialId) {
         Object item = FastNMS.INSTANCE.method$Registry$getValue(MBuiltInRegistries.ITEM, KeyUtils.toResourceLocation(materialId));
         Object clientBoundItem = materialId == clientBoundMaterialId ? item : FastNMS.INSTANCE.method$Registry$getValue(MBuiltInRegistries.ITEM, KeyUtils.toResourceLocation(clientBoundMaterialId));
         if (item == null) {
@@ -350,14 +373,12 @@ public class BukkitItemManager extends AbstractItemManager<ItemStack> {
                 Key itemKey = KeyUtils.resourceLocationToKey(resourceLocation);
                 if (itemKey.namespace().equals("minecraft")) {
                     VANILLA_ITEMS.add(itemKey);
-                    Holder.Reference<Key> holder =  BuiltInRegistries.OPTIMIZED_ITEM_ID.get(itemKey)
-                            .orElseGet(() -> ((WritableRegistry<Key>) BuiltInRegistries.OPTIMIZED_ITEM_ID)
-                                    .register(new ResourceKey<>(BuiltInRegistries.OPTIMIZED_ITEM_ID.key().location(), itemKey), itemKey));
+                    UniqueKey uniqueKey = UniqueKey.create(itemKey);
                     Object mcHolder = FastNMS.INSTANCE.method$Registry$getHolderByResourceKey(MBuiltInRegistries.ITEM, FastNMS.INSTANCE.method$ResourceKey$create(MRegistries.ITEM, resourceLocation)).get();
                     Set<Object> tags = (Set<Object>) CoreReflections.field$Holder$Reference$tags.get(mcHolder);
                     for (Object tag : tags) {
                         Key tagId = Key.of(CoreReflections.field$TagKey$location.get(tag).toString());
-                        VANILLA_ITEM_TAGS.computeIfAbsent(tagId, (key) -> new ArrayList<>()).add(holder);
+                        VANILLA_ITEM_TAGS.computeIfAbsent(tagId, (key) -> new ArrayList<>()).add(uniqueKey);
                     }
                 }
             }

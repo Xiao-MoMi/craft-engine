@@ -4,7 +4,6 @@ import net.momirealms.craftengine.core.plugin.context.Condition;
 import net.momirealms.craftengine.core.plugin.context.Context;
 import net.momirealms.craftengine.core.plugin.locale.LocalizedResourceConfigException;
 import net.momirealms.craftengine.core.registry.BuiltInRegistries;
-import net.momirealms.craftengine.core.registry.Holder;
 import net.momirealms.craftengine.core.registry.Registries;
 import net.momirealms.craftengine.core.registry.WritableRegistry;
 import net.momirealms.craftengine.core.util.Key;
@@ -26,9 +25,8 @@ public class PlayerSelectors {
     }
 
     public static void register(Key key, PlayerSelectorFactory<?> factory) {
-        Holder.Reference<PlayerSelectorFactory<?>> holder = ((WritableRegistry<PlayerSelectorFactory<?>>) BuiltInRegistries.PLAYER_SELECTOR_FACTORY)
-                .registerForHolder(new ResourceKey<>(Registries.PLAYER_SELECTOR_FACTORY.location(), key));
-        holder.bindValue(factory);
+        ((WritableRegistry<PlayerSelectorFactory<?>>) BuiltInRegistries.PLAYER_SELECTOR_FACTORY)
+                .register(ResourceKey.create(Registries.PLAYER_SELECTOR_FACTORY.location(), key), factory);
     }
 
     @Nullable

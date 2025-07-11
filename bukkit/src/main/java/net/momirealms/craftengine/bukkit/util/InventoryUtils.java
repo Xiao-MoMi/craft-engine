@@ -13,14 +13,14 @@ public class InventoryUtils {
         int j;
         for (j = 0; j < 9; ++j) {
             i = (selectedSlot + j) % 9;
-            if (ItemUtils.isEmpty(inventory.getItem(i))) {
+            if (ItemStackUtils.isEmpty(inventory.getItem(i))) {
                 return i;
             }
         }
         for (j = 0; j < 9; ++j) {
             i = (selectedSlot + j) % 9;
             ItemStack item = inventory.getItem(i);
-            if (ItemUtils.isEmpty(item) || item.getEnchantments().isEmpty()) {
+            if (ItemStackUtils.isEmpty(item) || item.getEnchantments().isEmpty()) {
                 return i;
             }
         }
@@ -31,7 +31,7 @@ public class InventoryUtils {
         ItemStack[] items = inventory.getStorageContents();
         for (int i = 0; i < items.length; ++i) {
             ItemStack stack = items[i];
-            if (ItemUtils.isEmpty(stack)) continue;
+            if (ItemStackUtils.isEmpty(stack)) continue;
             if (stack.isSimilar(itemStack)) {
                 return i;
             }

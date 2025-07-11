@@ -6,8 +6,8 @@ import net.momirealms.craftengine.core.item.modifier.ItemDataModifier;
 import net.momirealms.craftengine.core.plugin.context.PlayerOptionalContext;
 import net.momirealms.craftengine.core.plugin.context.event.EventTrigger;
 import net.momirealms.craftengine.core.plugin.context.function.Function;
-import net.momirealms.craftengine.core.registry.Holder;
 import net.momirealms.craftengine.core.util.Key;
+import net.momirealms.craftengine.core.util.UniqueKey;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
@@ -17,7 +17,7 @@ public interface CustomItem<I> extends BuildableItem<I> {
 
     Key id();
 
-    Holder<Key> idHolder();
+    UniqueKey uniqueId();
 
     Key material();
 
@@ -47,7 +47,7 @@ public interface CustomItem<I> extends BuildableItem<I> {
     List<ItemBehavior> behaviors();
 
     interface Builder<I> {
-        Builder<I> id(Holder<Key> id);
+        Builder<I> id(UniqueKey id);
 
         Builder<I> clientBoundMaterial(Key clientBoundMaterialKey);
 

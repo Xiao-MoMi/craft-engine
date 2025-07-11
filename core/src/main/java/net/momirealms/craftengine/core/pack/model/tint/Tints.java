@@ -3,7 +3,6 @@ package net.momirealms.craftengine.core.pack.model.tint;
 import com.google.gson.JsonObject;
 import net.momirealms.craftengine.core.plugin.locale.LocalizedResourceConfigException;
 import net.momirealms.craftengine.core.registry.BuiltInRegistries;
-import net.momirealms.craftengine.core.registry.Holder;
 import net.momirealms.craftengine.core.registry.Registries;
 import net.momirealms.craftengine.core.registry.WritableRegistry;
 import net.momirealms.craftengine.core.util.Key;
@@ -42,15 +41,13 @@ public class Tints {
     }
 
     public static void registerFactory(Key key, TintFactory factory) {
-        Holder.Reference<TintFactory> holder = ((WritableRegistry<TintFactory>) BuiltInRegistries.TINT_FACTORY)
-                .registerForHolder(new ResourceKey<>(Registries.TINT_FACTORY.location(), key));
-        holder.bindValue(factory);
+        ((WritableRegistry<TintFactory>) BuiltInRegistries.TINT_FACTORY)
+                .register(ResourceKey.create(Registries.TINT_FACTORY.location(), key), factory);
     }
 
     public static void registerReader(Key key, TintReader reader) {
-        Holder.Reference<TintReader> holder = ((WritableRegistry<TintReader>) BuiltInRegistries.TINT_READER)
-                .registerForHolder(new ResourceKey<>(Registries.TINT_READER.location(), key));
-        holder.bindValue(reader);
+        ((WritableRegistry<TintReader>) BuiltInRegistries.TINT_READER)
+                .register(ResourceKey.create(Registries.TINT_READER.location(), key), reader);
     }
 
     public static Tint fromMap(Map<String, Object> map) {

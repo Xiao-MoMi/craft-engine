@@ -28,4 +28,9 @@ public class CustomFishingProvider implements ExternalItemProvider<ItemStack> {
         );
         return BukkitCustomFishingPlugin.getInstance().getItemManager().buildInternal(ctx.arg(ContextKeys.ID, id), id);
     }
+
+    @Override
+    public String id(ItemStack item) {
+        return BukkitCustomFishingPlugin.getInstance().getItemManager().getCustomFishingItemID(item);
+    }
 }

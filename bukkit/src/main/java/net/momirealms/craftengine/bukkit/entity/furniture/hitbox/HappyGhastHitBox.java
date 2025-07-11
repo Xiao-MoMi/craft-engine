@@ -119,9 +119,9 @@ public class HappyGhastHitBox extends AbstractHitBox {
             }
             double scale = ResourceConfigUtils.getAsDouble(arguments.getOrDefault("scale", 1), "scale");
             boolean hardCollision = ResourceConfigUtils.getAsBoolean(arguments.getOrDefault("hard-collision", true), "hard-collision");
-            boolean canUseOn = ResourceConfigUtils.getAsBoolean(arguments.getOrDefault("can-use-item-on", false), "can-use-item-on");
-            boolean canBeHitByProjectile = ResourceConfigUtils.getAsBoolean(arguments.getOrDefault("can-be-hit-by-projectile", false), "can-be-hit-by-projectile");
-            boolean blocksBuilding = ResourceConfigUtils.getAsBoolean(arguments.getOrDefault("blocks-building", false), "blocks-building");
+            boolean canUseOn = ResourceConfigUtils.getAsBoolean(arguments.getOrDefault("can-use-item-on", true), "can-use-item-on");
+            boolean canBeHitByProjectile = ResourceConfigUtils.getAsBoolean(arguments.getOrDefault("can-be-hit-by-projectile", true), "can-be-hit-by-projectile");
+            boolean blocksBuilding = ResourceConfigUtils.getAsBoolean(arguments.getOrDefault("blocks-building", true), "blocks-building");
             return new HappyGhastHitBox(
                     HitBoxFactory.getSeats(arguments),
                     MiscUtils.getAsVector3f(arguments.getOrDefault("position", "0"), "position"),

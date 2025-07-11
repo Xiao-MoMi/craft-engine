@@ -129,6 +129,7 @@ public class Config {
     protected boolean recipe$enable;
     protected boolean recipe$disable_vanilla_recipes$all;
     protected Set<Key> recipe$disable_vanilla_recipes$list;
+    protected List<String> recipe$ingredient_sources;
 
     protected boolean image$illegal_characters_filter$command;
     protected boolean image$illegal_characters_filter$chat;
@@ -149,6 +150,7 @@ public class Config {
     protected boolean image$intercept_packets$player_info;
     protected boolean image$intercept_packets$set_score;
     protected boolean image$intercept_packets$item;
+    protected boolean image$intercept_packets$advancement;
 
     protected boolean item$client_bound_model;
     protected boolean item$non_italic_tag;
@@ -370,6 +372,7 @@ public class Config {
         recipe$enable = config.getBoolean("recipe.enable", true);
         recipe$disable_vanilla_recipes$all = config.getBoolean("recipe.disable-vanilla-recipes.all", false);
         recipe$disable_vanilla_recipes$list = config.getStringList("recipe.disable-vanilla-recipes.list").stream().map(Key::of).collect(Collectors.toSet());
+        recipe$ingredient_sources = config.getStringList("recipe.ingredient-sources");
 
         // image
         image$illegal_characters_filter$anvil = config.getBoolean("image.illegal-characters-filter.anvil", true);
@@ -391,6 +394,7 @@ public class Config {
         image$intercept_packets$player_info = config.getBoolean("image.intercept-packets.player-info", true);
         image$intercept_packets$set_score = config.getBoolean("image.intercept-packets.set-score", true);
         image$intercept_packets$item = config.getBoolean("image.intercept-packets.item", true);
+        image$intercept_packets$advancement = config.getBoolean("image.intercept-packets.advancement", true);
 
         // emoji
         emoji$chat = config.getBoolean("emoji.chat", true);
@@ -740,6 +744,10 @@ public class Config {
         return instance.image$intercept_packets$item;
     }
 
+    public static boolean interceptAdvancement() {
+        return instance.image$intercept_packets$advancement;
+    }
+
     public static boolean predictBreaking() {
         return instance.block$predict_breaking;
     }
@@ -818,6 +826,10 @@ public class Config {
 
     public static boolean globalClientboundModel() {
         return instance.item$client_bound_model;
+    }
+
+    public static List<String> recipeIngredientSources() {
+        return instance.recipe$ingredient_sources;
     }
 
     public YamlDocument loadOrCreateYamlData(String fileName) {
