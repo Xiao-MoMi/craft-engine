@@ -5,6 +5,7 @@ import net.momirealms.craftengine.core.pack.conflict.PathContext;
 import net.momirealms.craftengine.core.plugin.CraftEngine;
 import net.momirealms.craftengine.core.util.GsonHelper;
 import net.momirealms.craftengine.core.util.Key;
+import net.momirealms.craftengine.core.util.ResourceConfigUtils;
 
 import java.io.IOException;
 import java.util.Map;
@@ -43,7 +44,7 @@ public class ResolutionMergeJson implements Resolution {
 
         @Override
         public Resolution create(Map<String, Object> arguments) {
-            boolean deeply = (boolean) arguments.getOrDefault("deeply", false);
+            boolean deeply = ResourceConfigUtils.getAsBoolean(arguments.getOrDefault("deeply", false), "deeply");
             return new ResolutionMergeJson(deeply);
         }
     }

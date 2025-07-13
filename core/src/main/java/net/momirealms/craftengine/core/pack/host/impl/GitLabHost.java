@@ -7,10 +7,7 @@ import net.momirealms.craftengine.core.pack.host.ResourcePackHostFactory;
 import net.momirealms.craftengine.core.pack.host.ResourcePackHosts;
 import net.momirealms.craftengine.core.plugin.CraftEngine;
 import net.momirealms.craftengine.core.plugin.locale.LocalizedException;
-import net.momirealms.craftengine.core.util.GsonHelper;
-import net.momirealms.craftengine.core.util.HashUtils;
-import net.momirealms.craftengine.core.util.Key;
-import net.momirealms.craftengine.core.util.MiscUtils;
+import net.momirealms.craftengine.core.util.*;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -48,27 +45,23 @@ public class GitLabHost implements ResourcePackHost {
     }
 
     public void readCacheFromDisk() {
-        Path cachePath = CraftEngine.instance().dataFolderPath().resolve("gitlab.cache");
-        if (!Files.exists(cachePath)) return;
-
+        Path cachePath = CraftEngine.instance().dataFolderPath().resolve("cache").resolve("gitlab.json");
+        if (!Files.exists(cachePath) || !Files.isRegularFile(cachePath)) return;
         try (InputStream is = Files.newInputStream(cachePath)) {
             Map<String, String> cache = GsonHelper.get().fromJson(
                     new InputStreamReader(is),
                     new TypeToken<Map<String, String>>(){}.getType()
             );
-
             this.url = cache.get("url");
             this.sha1 = cache.get("sha1");
-
             String uuidString = cache.get("uuid");
             if (uuidString != null && !uuidString.isEmpty()) {
                 this.uuid = UUID.fromString(uuidString);
             }
-
             CraftEngine.instance().logger().info("[GitLab] Loaded cached resource pack info");
         } catch (Exception e) {
             CraftEngine.instance().logger().warn(
-                    "[GitLab] Failed to read cache file: " + e.getMessage());
+                    "[GitLab] Failed to read cache file: " + cachePath, e);
         }
     }
 
@@ -77,9 +70,9 @@ public class GitLabHost implements ResourcePackHost {
         cache.put("url", this.url);
         cache.put("sha1", this.sha1);
         cache.put("uuid", this.uuid != null ? this.uuid.toString() : "");
-
-        Path cachePath = CraftEngine.instance().dataFolderPath().resolve("gitlab.cache");
+        Path cachePath = CraftEngine.instance().dataFolderPath().resolve("cache").resolve("gitlab.json");
         try {
+            Files.createDirectories(cachePath.getParent());
             Files.writeString(
                     cachePath,
                     GsonHelper.get().toJson(cache),
@@ -176,7 +169,7 @@ public class GitLabHost implements ResourcePackHost {
 
         @Override
         public ResourcePackHost create(Map<String, Object> arguments) {
-            boolean useEnv = (boolean) arguments.getOrDefault("use-environment-variables", false);
+            boolean useEnv = ResourceConfigUtils.getAsBoolean(arguments.getOrDefault("use-environment-variables", false), "use-environment-variables");
             String gitlabUrl = Optional.ofNullable(arguments.get("gitlab-url")).map(String::valueOf).orElse(null);
             if (gitlabUrl == null || gitlabUrl.isEmpty()) {
                 throw new LocalizedException("warning.config.host.gitlab.missing_url");

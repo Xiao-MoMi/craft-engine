@@ -53,7 +53,7 @@ public class SetFoodFunction<CTX extends Context> extends AbstractConditionalFun
         @Override
         public Function<CTX> create(Map<String, Object> arguments) {
             Object value = ResourceConfigUtils.requireNonNullOrThrow(arguments.get("food"), "warning.config.function.set_food.missing_food");
-            boolean add = (boolean) arguments.getOrDefault("add", false);
+            boolean add = ResourceConfigUtils.getAsBoolean(arguments.getOrDefault("add", false), "add");
             return new SetFoodFunction<>(NumberProviders.fromObject(value), add, PlayerSelectors.fromObject(arguments.get("target"), conditionFactory()), getPredicates(arguments));
         }
     }

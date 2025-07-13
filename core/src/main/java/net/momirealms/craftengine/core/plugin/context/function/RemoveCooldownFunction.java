@@ -57,7 +57,7 @@ public class RemoveCooldownFunction<CTX extends Context> extends AbstractConditi
 
         @Override
         public Function<CTX> create(Map<String, Object> arguments) {
-            boolean all = (boolean) arguments.getOrDefault("all", false);
+            boolean all = ResourceConfigUtils.getAsBoolean(arguments.getOrDefault("all", false), "all");
             if (all) {
                 return new RemoveCooldownFunction<>(null, true, PlayerSelectors.fromObject(arguments.get("target"), conditionFactory()), getPredicates(arguments));
             } else {

@@ -4,10 +4,9 @@ import net.momirealms.craftengine.core.item.recipe.input.CraftingInput;
 import net.momirealms.craftengine.core.item.recipe.input.RecipeInput;
 import net.momirealms.craftengine.core.plugin.CraftEngine;
 import net.momirealms.craftengine.core.plugin.locale.LocalizedResourceConfigException;
-import net.momirealms.craftengine.core.registry.BuiltInRegistries;
-import net.momirealms.craftengine.core.registry.Holder;
 import net.momirealms.craftengine.core.util.Key;
 import net.momirealms.craftengine.core.util.MiscUtils;
+import net.momirealms.craftengine.core.util.UniqueKey;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
@@ -107,7 +106,7 @@ public class CustomShapedRecipe<T> extends CustomCraftingTableRecipe<T> {
                     } else {
                         optional = this.ingredients.get(j + i * this.width);
                     }
-                    OptimizedIDItem<T> itemStack = input.getItem(j, i);
+                    UniqueIdItem<T> itemStack = input.getItem(j, i);
                     if (!Ingredient.isInstance(optional, itemStack)) {
                         return false;
                     }
@@ -156,13 +155,12 @@ public class CustomShapedRecipe<T> extends CustomCraftingTableRecipe<T> {
                 }
                 char ch = key.charAt(0);
                 List<String> items = MiscUtils.getAsStringList(entry.getValue());
-                Set<Holder<Key>> holders = new HashSet<>();
+                Set<UniqueKey> holders = new HashSet<>();
                 for (String item : items) {
                     if (item.charAt(0) == '#') {
                         holders.addAll(CraftEngine.instance().itemManager().tagToItems(Key.of(item.substring(1))));
                     } else {
-                        holders.add(BuiltInRegistries.OPTIMIZED_ITEM_ID.get(Key.of(item)).orElseThrow(
-                                () -> new LocalizedResourceConfigException("warning.config.recipe.invalid_item", item)));
+                        holders.add(UniqueKey.create(Key.of(item)));
                     }
                 }
                 ingredients.put(ch, Ingredient.of(holders));

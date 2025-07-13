@@ -1,6 +1,7 @@
 package net.momirealms.craftengine.bukkit.util;
 
 import org.bukkit.entity.Player;
+import org.bukkit.event.inventory.InventoryEvent;
 import org.bukkit.event.inventory.PrepareAnvilEvent;
 import org.bukkit.inventory.AnvilInventory;
 import org.bukkit.inventory.Inventory;
@@ -64,5 +65,9 @@ public class LegacyInventoryUtils {
 
     public static void openWorkbench(Player player) {
         player.openWorkbench(null, true);
+    }
+
+    public static Player getPlayerFromInventoryEvent(InventoryEvent event) {
+        return (Player) event.getView().getPlayer();
     }
 }

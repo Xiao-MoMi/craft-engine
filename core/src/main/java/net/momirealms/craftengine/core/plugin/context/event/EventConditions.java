@@ -5,7 +5,6 @@ import net.momirealms.craftengine.core.plugin.context.PlayerOptionalContext;
 import net.momirealms.craftengine.core.plugin.context.condition.*;
 import net.momirealms.craftengine.core.plugin.locale.LocalizedResourceConfigException;
 import net.momirealms.craftengine.core.registry.BuiltInRegistries;
-import net.momirealms.craftengine.core.registry.Holder;
 import net.momirealms.craftengine.core.registry.Registries;
 import net.momirealms.craftengine.core.registry.WritableRegistry;
 import net.momirealms.craftengine.core.util.Key;
@@ -40,9 +39,8 @@ public class EventConditions {
     }
 
     public static void register(Key key, ConditionFactory<PlayerOptionalContext> factory) {
-        Holder.Reference<ConditionFactory<PlayerOptionalContext>> holder = ((WritableRegistry<ConditionFactory<PlayerOptionalContext>>) BuiltInRegistries.EVENT_CONDITION_FACTORY)
-                .registerForHolder(new ResourceKey<>(Registries.EVENT_CONDITION_FACTORY.location(), key));
-        holder.bindValue(factory);
+        ((WritableRegistry<ConditionFactory<PlayerOptionalContext>>) BuiltInRegistries.EVENT_CONDITION_FACTORY)
+                .register(ResourceKey.create(Registries.EVENT_CONDITION_FACTORY.location(), key), factory);
     }
 
     public static Condition<PlayerOptionalContext> fromMap(Map<String, Object> map) {

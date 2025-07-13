@@ -9,6 +9,8 @@ import java.util.Map;
 
 public class ChargeTypeSelectProperty implements SelectProperty, LegacyModelPredicate<String> {
     public static final Factory FACTORY = new Factory();
+    public static final Reader READER = new Reader();
+    public static final ChargeTypeSelectProperty INSTANCE = new ChargeTypeSelectProperty();
 
     @Override
     public Key type() {
@@ -33,10 +35,16 @@ public class ChargeTypeSelectProperty implements SelectProperty, LegacyModelPred
     }
 
     public static class Factory implements SelectPropertyFactory {
-
         @Override
         public SelectProperty create(Map<String, Object> arguments) {
-            return new ChargeTypeSelectProperty();
+            return INSTANCE;
+        }
+    }
+
+    public static class Reader implements SelectPropertyReader {
+        @Override
+        public SelectProperty read(JsonObject json) {
+            return INSTANCE;
         }
     }
 }

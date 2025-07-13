@@ -172,4 +172,28 @@ public final class ResourceConfigUtils {
             }
         }
     }
+
+    public static boolean getAsBoolean(Object o, String option) {
+        switch (o) {
+            case null -> {
+                return false;
+            }
+            case Boolean b -> {
+                return b;
+            }
+            case Number n -> {
+                if (n.byteValue() == 0) return false;
+                if (n.byteValue() == 1) return true;
+                throw new LocalizedResourceConfigException("warning.config.type.boolean", String.valueOf(n), option);
+            }
+            case String s -> {
+                if (s.equalsIgnoreCase("true")) return true;
+                if (s.equalsIgnoreCase("false")) return false;
+                throw new LocalizedResourceConfigException("warning.config.type.boolean", s, option);
+            }
+            default -> {
+                throw new LocalizedResourceConfigException("warning.config.type.boolean", o.toString(), option);
+            }
+        }
+    }
 }

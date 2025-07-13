@@ -32,6 +32,7 @@ import org.jetbrains.annotations.NotNull;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
@@ -276,7 +277,6 @@ public class BukkitWorldManager implements WorldManager, Listener {
         if (ceChunk != null) {
             if (ceChunk.dirty()) {
                 try {
-                    this.plugin.debug(() -> "[Dirty Chunk]" + pos + " unloaded");
                     world.worldDataStorage().writeChunkAt(pos, ceChunk);
                     ceChunk.setDirty(false);
                 } catch (IOException e) {
@@ -338,14 +338,14 @@ public class BukkitWorldManager implements WorldManager, Listener {
                         boolean requiresSync = false;
                         if (CoreReflections.clazz$SingleValuePalette.isInstance(palette)) {
                             Object onlyBlockState = CoreReflections.field$SingleValuePalette$value.get(palette);
-                            if (!BlockStateUtils.isVanillaBlock(BlockStateUtils.blockStateToId(onlyBlockState))) {
+                            if (BlockStateUtils.isCustomBlock(onlyBlockState)) {
                                 requiresSync = true;
                             }
                         } else if (CoreReflections.clazz$LinearPalette.isInstance(palette)) {
                             Object[] blockStates = (Object[]) CoreReflections.field$LinearPalette$values.get(palette);
                             for (Object blockState : blockStates) {
                                 if (blockState != null) {
-                                    if (!BlockStateUtils.isVanillaBlock(BlockStateUtils.blockStateToId(blockState))) {
+                                    if (BlockStateUtils.isCustomBlock(blockState)) {
                                         requiresSync = true;
                                         break;
                                     }
@@ -356,7 +356,7 @@ public class BukkitWorldManager implements WorldManager, Listener {
                             Object[] blockStates = (Object[]) CoreReflections.field$CrudeIncrementalIntIdentityHashBiMap$keys.get(biMap);
                             for (Object blockState : blockStates) {
                                 if (blockState != null) {
-                                    if (!BlockStateUtils.isVanillaBlock(BlockStateUtils.blockStateToId(blockState))) {
+                                    if (BlockStateUtils.isCustomBlock(blockState)) {
                                         requiresSync = true;
                                         break;
                                     }
@@ -370,10 +370,9 @@ public class BukkitWorldManager implements WorldManager, Listener {
                                 for (int z = 0; z < 16; z++) {
                                     for (int y = 0; y < 16; y++) {
                                         Object mcState = FastNMS.INSTANCE.method$LevelChunkSection$getBlockState(section, x, y, z);
-                                        int stateId = BlockStateUtils.blockStateToId(mcState);
-                                        ImmutableBlockState customState = this.plugin.blockManager().getImmutableBlockState(stateId);
-                                        if (customState != null) {
-                                            ceSection.setBlockState(x, y, z, customState);
+                                        Optional<ImmutableBlockState> optionalCustomState = BlockStateUtils.getOptionalCustomBlockState(mcState);
+                                        if (optionalCustomState.isPresent()) {
+                                            ceSection.setBlockState(x, y, z, optionalCustomState.get());
                                         }
                                     }
                                 }

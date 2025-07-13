@@ -2,9 +2,14 @@ package net.momirealms.craftengine.bukkit.item.factory;
 
 import net.momirealms.craftengine.bukkit.item.ComponentItemWrapper;
 import net.momirealms.craftengine.bukkit.item.ComponentTypes;
+import net.momirealms.craftengine.core.entity.EquipmentSlot;
 import net.momirealms.craftengine.core.item.setting.EquipmentData;
 import net.momirealms.craftengine.core.plugin.CraftEngine;
+import net.momirealms.craftengine.core.util.Key;
+import net.momirealms.craftengine.core.util.MiscUtils;
 
+import java.util.Locale;
+import java.util.Map;
 import java.util.Optional;
 
 public class ComponentItemFactory1_21_2 extends ComponentItemFactory1_21 {
@@ -46,12 +51,24 @@ public class ComponentItemFactory1_21_2 extends ComponentItemFactory1_21 {
         if (data == null) {
             item.resetComponent(ComponentTypes.EQUIPPABLE);
         } else {
-            item.setJavaComponent(ComponentTypes.EQUIPPABLE, data.toMap());
+            item.setSparrowNBTComponent(ComponentTypes.EQUIPPABLE, data.toNBT());
         }
     }
 
     @Override
     protected Optional<EquipmentData> equippable(ComponentItemWrapper item) {
-        throw new UnsupportedOperationException("Not implemented yet.");
+        Optional<Object> optionalData = item.getJavaComponent(ComponentTypes.EQUIPPABLE);
+        if (optionalData.isEmpty()) return Optional.empty();
+        Map<String, Object> data = MiscUtils.castToMap(optionalData.get(), false);
+        String slot = data.get("slot").toString();
+        return Optional.of(new EquipmentData(
+                EquipmentSlot.valueOf(slot.toUpperCase(Locale.ENGLISH)),
+                data.containsKey("asset_id") ? Key.of((String) data.get("asset_id")) : null,
+                (boolean) data.getOrDefault("dispensable", true),
+                (boolean) data.getOrDefault("swappable", true),
+                (boolean) data.getOrDefault("damage_on_hurt", true),
+                (boolean) data.getOrDefault("equip_on_interact", false),
+                data.containsKey("camera_overlay") ? Key.of((String) data.get("camera_overlay")) : null
+        ));
     }
 }

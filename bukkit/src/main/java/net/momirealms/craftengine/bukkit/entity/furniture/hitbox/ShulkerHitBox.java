@@ -284,11 +284,11 @@ public class ShulkerHitBox extends AbstractHitBox {
             float scale = ResourceConfigUtils.getAsFloat(arguments.getOrDefault("scale", "1"), "scale");
             byte peek = (byte) ResourceConfigUtils.getAsInt(arguments.getOrDefault("peek", 0), "peek");
             Direction directionEnum = Optional.ofNullable(arguments.get("direction")).map(it -> Direction.valueOf(it.toString().toUpperCase(Locale.ENGLISH))).orElse(Direction.UP);
-            boolean interactive = (boolean) arguments.getOrDefault("interactive", true);
-            boolean interactionEntity = (boolean) arguments.getOrDefault("interaction-entity", true);
-            boolean canUseItemOn = (boolean) arguments.getOrDefault("can-use-item-on", true);
-            boolean canBeHitByProjectile = (boolean) arguments.getOrDefault("can-be-hit-by-projectile", true);
-            boolean blocksBuilding = (boolean) arguments.getOrDefault("blocks-building", true);
+            boolean interactive = ResourceConfigUtils.getAsBoolean(arguments.getOrDefault("interactive", true), "interactive");
+            boolean interactionEntity = ResourceConfigUtils.getAsBoolean(arguments.getOrDefault("interaction-entity", true), "interaction-entity");
+            boolean canUseItemOn = ResourceConfigUtils.getAsBoolean(arguments.getOrDefault("can-use-item-on", true), "can-use-item-on");
+            boolean canBeHitByProjectile = ResourceConfigUtils.getAsBoolean(arguments.getOrDefault("can-be-hit-by-projectile", true), "can-be-hit-by-projectile");
+            boolean blocksBuilding = ResourceConfigUtils.getAsBoolean(arguments.getOrDefault("blocks-building", true), "blocks-building");
             return new ShulkerHitBox(
                     HitBoxFactory.getSeats(arguments),
                     position, directionEnum,

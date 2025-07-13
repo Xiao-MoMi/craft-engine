@@ -8,6 +8,7 @@ import java.util.Map;
 
 public class KeyBindDownConditionProperty implements ConditionProperty {
     public static final Factory FACTORY = new Factory();
+    public static final Reader READER = new Reader();
     private final String keybind;
 
     public KeyBindDownConditionProperty(String keybind) {
@@ -26,11 +27,18 @@ public class KeyBindDownConditionProperty implements ConditionProperty {
     }
 
     public static class Factory implements ConditionPropertyFactory {
-
         @Override
         public ConditionProperty create(Map<String, Object> arguments) {
-            String keybindObj = ResourceConfigUtils.requireNonEmptyStringOrThrow(arguments.get("keybind"), "warning.config.item.model.condition.keybind.missing");
+            String keybindObj = ResourceConfigUtils.requireNonEmptyStringOrThrow(arguments.get("keybind"), "warning.config.item.model.condition.keybind.missing_keybind");
             return new KeyBindDownConditionProperty(keybindObj);
+        }
+    }
+
+    public static class Reader implements ConditionPropertyReader {
+        @Override
+        public ConditionProperty read(JsonObject json) {
+            String keybind = json.get("keybind").getAsString();
+            return new KeyBindDownConditionProperty(keybind);
         }
     }
 }

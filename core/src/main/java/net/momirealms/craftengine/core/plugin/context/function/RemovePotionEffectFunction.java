@@ -52,7 +52,7 @@ public class RemovePotionEffectFunction<CTX extends Context> extends AbstractCon
 
         @Override
         public Function<CTX> create(Map<String, Object> arguments) {
-            boolean all = (boolean) arguments.getOrDefault("all", false);
+            boolean all = ResourceConfigUtils.getAsBoolean(arguments.getOrDefault("all", false), "all");
             if (all) {
                 return new RemovePotionEffectFunction<>(null, true, PlayerSelectors.fromObject(arguments.get("target"), conditionFactory()), getPredicates(arguments));
             } else {

@@ -1,6 +1,5 @@
 package net.momirealms.craftengine.bukkit.block.behavior;
 
-import net.momirealms.craftengine.bukkit.block.BukkitBlockManager;
 import net.momirealms.craftengine.bukkit.item.BukkitItemManager;
 import net.momirealms.craftengine.bukkit.nms.FastNMS;
 import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.CoreReflections;
@@ -43,6 +42,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.Callable;
 
+@SuppressWarnings("DuplicatedCode")
 public class FenceGateBlockBehavior extends BukkitBlockBehavior {
     public static final Factory FACTORY = new Factory();
     private final Property<HorizontalDirection> facingProperty;
@@ -83,7 +83,7 @@ public class FenceGateBlockBehavior extends BukkitBlockBehavior {
 
     public boolean isWall(Object state) {
         if (state == null) return false;
-        return FastNMS.INSTANCE.method$BlockStateBase$isTagKeyBlock(state, MTagKeys.Block$WALLS);
+        return FastNMS.INSTANCE.method$BlockStateBase$is(state, MTagKeys.Block$WALLS);
     }
 
     private Object getBlockState(Object level, BlockPos blockPos) {
@@ -93,14 +93,15 @@ public class FenceGateBlockBehavior extends BukkitBlockBehavior {
     @Override
     public Object updateShape(Object thisBlock, Object[] args, Callable<Object> superMethod) throws Exception {
         Object blockState = args[0];
-        Direction direction = DirectionUtils.fromNMSDirection(VersionHelper.isOrAbove1_21_2() ? args[4] : args[1]);
-        ImmutableBlockState state = BukkitBlockManager.instance().getImmutableBlockState(BlockStateUtils.blockStateToId(blockState));
-        if (state == null || state.isEmpty()) return blockState;
-        if (state.get(this.facingProperty).toDirection().clockWise().axis() != direction.axis()) {
+        Direction direction = DirectionUtils.fromNMSDirection(args[updateShape$direction]);
+        Optional<ImmutableBlockState> optionalCustomState = BlockStateUtils.getOptionalCustomBlockState(blockState);
+        if (optionalCustomState.isEmpty()) return blockState;
+        ImmutableBlockState customState = optionalCustomState.get();
+        if (customState.get(this.facingProperty).toDirection().clockWise().axis() != direction.axis()) {
             return superMethod.call();
         }
-        Object neighborState = VersionHelper.isOrAbove1_21_2() ? args[6] : args[2];
-        Object level = VersionHelper.isOrAbove1_21_2() ? args[1] : args[3];
+        Object neighborState = args[updateShape$neighborState];
+        Object level = args[updateShape$level];
         BlockPos blockPos = LocationUtils.fromBlockPos(VersionHelper.isOrAbove1_21_2() ? args[3] : args[4]);
         Object relativeState = getBlockState(level, blockPos.relative(direction.opposite()));
         boolean neighborStateIsWall = this.isWall(neighborState);
@@ -112,7 +113,7 @@ public class FenceGateBlockBehavior extends BukkitBlockBehavior {
         if (relativeStateIsWall) {
             // TODO: 连接原版方块
         }
-        return state.with(this.inWallProperty, flag).customBlockState().handle();
+        return customState.with(this.inWallProperty, flag).customBlockState().handle();
     }
 
     @Override
@@ -135,19 +136,12 @@ public class FenceGateBlockBehavior extends BukkitBlockBehavior {
     }
 
     @Override
-    public InteractionResult useOnBlock(UseOnContext context, ImmutableBlockState state) {
+    public InteractionResult useWithoutItem(UseOnContext context, ImmutableBlockState state) {
         if (!this.canOpenWithHand) {
             return InteractionResult.PASS;
         }
-        if (context.getItem() == null) {
-            playerToggle(context, state);
-            return InteractionResult.SUCCESS;
-        } else if (!context.getPlayer().isSecondaryUseActive()) {
-            playerToggle(context, state);
-            return InteractionResult.SUCCESS_AND_CANCEL;
-        } else {
-            return InteractionResult.PASS;
-        }
+        playerToggle(context, state);
+        return InteractionResult.SUCCESS_AND_CANCEL;
     }
 
     @SuppressWarnings("unchecked")
@@ -163,10 +157,10 @@ public class FenceGateBlockBehavior extends BukkitBlockBehavior {
     public boolean isPathFindable(Object thisBlock, Object[] args, Callable<Object> superMethod) {
         Object type = VersionHelper.isOrAbove1_20_5() ? args[1] : args[3];
         Object blockState = args[0];
-        ImmutableBlockState state = BukkitBlockManager.instance().getImmutableBlockState(BlockStateUtils.blockStateToId(blockState));
-        if (state == null || state.isEmpty()) return false;
+        Optional<ImmutableBlockState> optionalCustomState = BlockStateUtils.getOptionalCustomBlockState(blockState);
+        if (optionalCustomState.isEmpty()) return false;
         if (type == CoreReflections.instance$PathComputationType$LAND || type == CoreReflections.instance$PathComputationType$AIR) {
-            return isOpen(state);
+            return isOpen(optionalCustomState.get());
         }
         return false;
     }
@@ -174,9 +168,9 @@ public class FenceGateBlockBehavior extends BukkitBlockBehavior {
     @Override
     public void onExplosionHit(Object thisBlock, Object[] args, Callable<Object> superMethod) {
         if (this.canOpenByWindCharge && FastNMS.INSTANCE.method$Explosion$canTriggerBlocks(args[3])) {
-            ImmutableBlockState state = BukkitBlockManager.instance().getImmutableBlockState(BlockStateUtils.blockStateToId(args[0]));
-            if (state == null || state.isEmpty()) return;
-            this.toggle(state, new BukkitWorld(FastNMS.INSTANCE.method$Level$getCraftWorld(args[1])), LocationUtils.fromBlockPos(args[2]), null);
+            Optional<ImmutableBlockState> optionalCustomState = BlockStateUtils.getOptionalCustomBlockState(args[0]);
+            if (optionalCustomState.isEmpty()) return;
+            this.toggle(optionalCustomState.get(), new BukkitWorld(FastNMS.INSTANCE.method$Level$getCraftWorld(args[1])), LocationUtils.fromBlockPos(args[2]), null);
         }
     }
 
@@ -184,16 +178,17 @@ public class FenceGateBlockBehavior extends BukkitBlockBehavior {
     @Override
     public void neighborChanged(Object thisBlock, Object[] args, Callable<Object> superMethod) {
         Object blockState = args[0];
-        ImmutableBlockState immutableBlockState = BukkitBlockManager.instance().getImmutableBlockState(BlockStateUtils.blockStateToId(blockState));
-        if (immutableBlockState == null || immutableBlockState.isEmpty()) return;
+        Optional<ImmutableBlockState> optionalCustomState = BlockStateUtils.getOptionalCustomBlockState(blockState);
+        if (optionalCustomState.isEmpty()) return;
         Object level = args[1];
         Object blockPos = args[2];
         boolean hasSignal = FastNMS.INSTANCE.method$SignalGetter$hasNeighborSignal(level, blockPos);
-        if (hasSignal == immutableBlockState.get(this.poweredProperty)) return;
+        ImmutableBlockState customState = optionalCustomState.get();
+        if (hasSignal == customState.get(this.poweredProperty)) return;
 
         Block bblock = FastNMS.INSTANCE.method$CraftBlock$at(level, blockPos);
         int power = bblock.getBlockPower();
-        int oldPower = isOpen(immutableBlockState) ? 15 : 0;
+        int oldPower = isOpen(customState) ? 15 : 0;
         Object neighborBlock = args[3];
 
         if (oldPower == 0 ^ power == 0 || FastNMS.INSTANCE.method$BlockStateBase$isSignalSource(FastNMS.INSTANCE.method$Block$defaultState(neighborBlock))) {
@@ -203,7 +198,7 @@ public class FenceGateBlockBehavior extends BukkitBlockBehavior {
         }
 
         World world = new BukkitWorld(FastNMS.INSTANCE.method$Level$getCraftWorld(level));
-        boolean changed = isOpen(immutableBlockState) != hasSignal;
+        boolean changed = isOpen(customState) != hasSignal;
         if (hasSignal && changed) {
             Object abovePos = LocationUtils.above(blockPos);
             Object aboveBlockState = FastNMS.INSTANCE.method$BlockGetter$getBlockState(level, abovePos);
@@ -220,7 +215,7 @@ public class FenceGateBlockBehavior extends BukkitBlockBehavior {
         }
 
         if (changed) {
-            immutableBlockState = immutableBlockState.with(this.openProperty, hasSignal);
+            customState = customState.with(this.openProperty, hasSignal);
             FastNMS.INSTANCE.method$Level$getCraftWorld(level).sendGameEvent(null,
                     hasSignal ? GameEvent.BLOCK_OPEN : GameEvent.BLOCK_CLOSE,
                     new Vector(FastNMS.INSTANCE.field$Vec3i$x(blockPos), FastNMS.INSTANCE.field$Vec3i$y(blockPos), FastNMS.INSTANCE.field$Vec3i$z(blockPos))
@@ -228,8 +223,9 @@ public class FenceGateBlockBehavior extends BukkitBlockBehavior {
             this.playSound(LocationUtils.fromBlockPos(blockPos), world, hasSignal);
         }
 
-        FastNMS.INSTANCE.method$LevelWriter$setBlock(level, blockPos, immutableBlockState.with(this.poweredProperty, hasSignal).customBlockState().handle(), UpdateOption.Flags.UPDATE_CLIENTS);
+        FastNMS.INSTANCE.method$LevelWriter$setBlock(level, blockPos, customState.with(this.poweredProperty, hasSignal).customBlockState().handle(), UpdateOption.Flags.UPDATE_CLIENTS);
     }
+
     private void toggle(ImmutableBlockState state, World world, BlockPos pos, @Nullable Player player) {
         ImmutableBlockState newState;
         if (state.get(this.openProperty)) {
@@ -275,8 +271,8 @@ public class FenceGateBlockBehavior extends BukkitBlockBehavior {
             Property<Boolean> inWall = (Property<Boolean>) ResourceConfigUtils.requireNonNullOrThrow(block.getProperty("in_wall"), "warning.config.block.behavior.fence_gate.missing_in_wall");
             Property<Boolean> open = (Property<Boolean>) ResourceConfigUtils.requireNonNullOrThrow(block.getProperty("open"), "warning.config.block.behavior.fence_gate.missing_open");
             Property<Boolean> powered = (Property<Boolean>) ResourceConfigUtils.requireNonNullOrThrow(block.getProperty("powered"), "warning.config.block.behavior.fence_gate.missing_powered");
-            boolean canOpenWithHand = (boolean) arguments.getOrDefault("can-open-with-hand", true);
-            boolean canOpenByWindCharge = (boolean) arguments.getOrDefault("can-open-by-wind-charge", true);
+            boolean canOpenWithHand = ResourceConfigUtils.getAsBoolean(arguments.getOrDefault("can-open-with-hand", true), "can-open-with-hand");
+            boolean canOpenByWindCharge = ResourceConfigUtils.getAsBoolean(arguments.getOrDefault("can-open-by-wind-charge", true), "can-open-by-wind-charge");
             Map<String, Object> sounds = (Map<String, Object>) arguments.get("sounds");
             SoundData openSound = null;
             SoundData closeSound = null;

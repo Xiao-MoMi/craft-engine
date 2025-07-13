@@ -2,11 +2,10 @@ package net.momirealms.craftengine.bukkit.item.factory;
 
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
-import com.saicone.rtag.data.ComponentType;
 import net.kyori.adventure.text.Component;
 import net.momirealms.craftengine.bukkit.item.ComponentItemWrapper;
 import net.momirealms.craftengine.bukkit.item.ComponentTypes;
-import net.momirealms.craftengine.core.item.JukeboxPlayable;
+import net.momirealms.craftengine.core.item.data.JukeboxPlayable;
 import net.momirealms.craftengine.core.plugin.CraftEngine;
 import net.momirealms.craftengine.core.util.AdventureHelper;
 import net.momirealms.craftengine.core.util.GsonHelper;
@@ -17,7 +16,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
-@SuppressWarnings("UnstableApiUsage")
 public class ComponentItemFactory1_21_5 extends ComponentItemFactory1_21_4 {
 
     public ComponentItemFactory1_21_5(CraftEngine plugin) {
@@ -116,9 +114,7 @@ public class ComponentItemFactory1_21_5 extends ComponentItemFactory1_21_4 {
     @Override
     protected Optional<JukeboxPlayable> jukeboxSong(ComponentItemWrapper item) {
         if (!item.hasComponent(ComponentTypes.JUKEBOX_PLAYABLE)) return Optional.empty();
-        String song = (String) ComponentType.encodeJava(
-                ComponentTypes.JUKEBOX_PLAYABLE,
-                item.getComponentExact(ComponentTypes.JUKEBOX_PLAYABLE)).orElse(null);
+        String song = (String) item.getJavaComponent(ComponentTypes.JUKEBOX_PLAYABLE).orElse(null);
         if (song == null) return Optional.empty();
         return Optional.of(new JukeboxPlayable(song, true));
     }

@@ -7,6 +7,7 @@ import java.util.Map;
 
 public class SimpleSelectProperty implements SelectProperty {
     public static final Factory FACTORY = new Factory();
+    public static final Reader READER = new Reader();
     private final Key type;
 
     public SimpleSelectProperty(Key type) {
@@ -24,10 +25,17 @@ public class SimpleSelectProperty implements SelectProperty {
     }
 
     public static class Factory implements SelectPropertyFactory {
-
         @Override
         public SelectProperty create(Map<String, Object> arguments) {
             Key type = Key.of(arguments.get("property").toString());
+            return new SimpleSelectProperty(type);
+        }
+    }
+
+    public static class Reader implements SelectPropertyReader {
+        @Override
+        public SelectProperty read(JsonObject json) {
+            Key type = Key.of(json.get("property").getAsString());
             return new SimpleSelectProperty(type);
         }
     }

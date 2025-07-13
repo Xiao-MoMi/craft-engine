@@ -1,17 +1,15 @@
 package net.momirealms.craftengine.bukkit.item.recipe;
 
 import net.momirealms.craftengine.bukkit.plugin.BukkitCraftEngine;
-import net.momirealms.craftengine.bukkit.util.ItemUtils;
+import net.momirealms.craftengine.bukkit.util.ItemStackUtils;
 import net.momirealms.craftengine.core.item.Item;
 import net.momirealms.craftengine.core.item.ItemBuildContext;
 import net.momirealms.craftengine.core.item.ItemManager;
-import net.momirealms.craftengine.core.item.recipe.OptimizedIDItem;
 import net.momirealms.craftengine.core.item.recipe.Recipe;
 import net.momirealms.craftengine.core.item.recipe.RecipeTypes;
+import net.momirealms.craftengine.core.item.recipe.UniqueIdItem;
 import net.momirealms.craftengine.core.item.recipe.input.CraftingInput;
 import net.momirealms.craftengine.core.plugin.config.Config;
-import net.momirealms.craftengine.core.registry.BuiltInRegistries;
-import net.momirealms.craftengine.core.registry.Holder;
 import net.momirealms.craftengine.core.util.Key;
 import org.bukkit.block.Crafter;
 import org.bukkit.event.EventHandler;
@@ -23,10 +21,8 @@ import org.bukkit.inventory.ItemStack;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
 
 public class CrafterEventListener implements Listener {
-    private static final OptimizedIDItem<ItemStack> EMPTY = new OptimizedIDItem<>(null, null);
     private final ItemManager<ItemStack> itemManager;
     private final BukkitRecipeManager recipeManager;
     private final BukkitCraftEngine plugin;
@@ -56,40 +52,33 @@ public class CrafterEventListener implements Listener {
         Inventory inventory = crafter.getInventory();
         ItemStack[] ingredients = inventory.getStorageContents();
 
-        List<OptimizedIDItem<ItemStack>> optimizedIDItems = new ArrayList<>();
+        List<UniqueIdItem<ItemStack>> uniqueIdItems = new ArrayList<>();
         for (ItemStack itemStack : ingredients) {
-            if (ItemUtils.isEmpty(itemStack)) {
-                optimizedIDItems.add(EMPTY);
+            if (ItemStackUtils.isEmpty(itemStack)) {
+                uniqueIdItems.add(this.itemManager.uniqueEmptyItem());
             } else {
                 Item<ItemStack> wrappedItem = this.itemManager.wrap(itemStack);
-                Optional<Holder.Reference<Key>> idHolder = BuiltInRegistries.OPTIMIZED_ITEM_ID.get(wrappedItem.id());
-                if (idHolder.isEmpty()) {
-                    // an invalid item is used in recipe, we disallow it
-                    event.setCancelled(true);
-                    return;
-                } else {
-                    optimizedIDItems.add(new OptimizedIDItem<>(idHolder.get(), itemStack));
-                }
+                uniqueIdItems.add(new UniqueIdItem<>(wrappedItem.recipeIngredientId(), wrappedItem));
             }
         }
 
         CraftingInput<ItemStack> input;
         if (ingredients.length == 9) {
-            input = CraftingInput.of(3, 3, optimizedIDItems);
+            input = CraftingInput.of(3, 3, uniqueIdItems);
         } else if (ingredients.length == 4) {
-            input = CraftingInput.of(2, 2, optimizedIDItems);
+            input = CraftingInput.of(2, 2, uniqueIdItems);
         } else {
             return;
         }
 
         Recipe<ItemStack> ceRecipe = this.recipeManager.recipeByInput(RecipeTypes.SHAPELESS, input);
         if (ceRecipe != null) {
-            event.setResult(ceRecipe.result(ItemBuildContext.EMPTY));
+            event.setResult(ceRecipe.assemble(input, ItemBuildContext.EMPTY));
             return;
         }
         ceRecipe = this.recipeManager.recipeByInput(RecipeTypes.SHAPED, input);
         if (ceRecipe != null) {
-            event.setResult(ceRecipe.result(ItemBuildContext.EMPTY));
+            event.setResult(ceRecipe.assemble(input, ItemBuildContext.EMPTY));
             return;
         }
         // clear result if not met

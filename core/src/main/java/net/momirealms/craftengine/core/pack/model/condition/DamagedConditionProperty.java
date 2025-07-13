@@ -8,6 +8,8 @@ import java.util.Map;
 
 public class DamagedConditionProperty implements ConditionProperty, LegacyModelPredicate<Boolean> {
     public static final Factory FACTORY = new Factory();
+    public static final Reader READER = new Reader();
+    public static final DamagedConditionProperty INSTANCE = new DamagedConditionProperty();
 
     @Override
     public Key type() {
@@ -32,7 +34,14 @@ public class DamagedConditionProperty implements ConditionProperty, LegacyModelP
     public static class Factory implements ConditionPropertyFactory {
         @Override
         public ConditionProperty create(Map<String, Object> arguments) {
-            return new DamagedConditionProperty();
+            return INSTANCE;
+        }
+    }
+
+    public static class Reader implements ConditionPropertyReader {
+        @Override
+        public ConditionProperty read(JsonObject json) {
+            return INSTANCE;
         }
     }
 }

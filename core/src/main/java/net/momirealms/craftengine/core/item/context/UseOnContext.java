@@ -8,6 +8,7 @@ import net.momirealms.craftengine.core.world.BlockHitResult;
 import net.momirealms.craftengine.core.world.BlockPos;
 import net.momirealms.craftengine.core.world.Vec3d;
 import net.momirealms.craftengine.core.world.World;
+import org.jetbrains.annotations.NotNull;
 
 public class UseOnContext {
     private final Player player;
@@ -24,7 +25,7 @@ public class UseOnContext {
         this(player.world(), player, hand, stack, hit);
     }
 
-    public UseOnContext(World world, Player player, InteractionHand hand, Item<?> stack, BlockHitResult hit) {
+    public UseOnContext(@NotNull World world, Player player, InteractionHand hand, @NotNull Item<?> stack, BlockHitResult hit) {
         this.player = player;
         this.hand = hand;
         this.hitResult = hit;
@@ -52,6 +53,7 @@ public class UseOnContext {
         return this.hitResult.isInside();
     }
 
+    @NotNull
     public Item<?> getItem() {
         return this.itemStack;
     }

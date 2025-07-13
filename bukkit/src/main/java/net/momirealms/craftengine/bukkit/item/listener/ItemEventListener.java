@@ -2,7 +2,6 @@ package net.momirealms.craftengine.bukkit.item.listener;
 
 import io.papermc.paper.event.block.CompostItemEvent;
 import net.momirealms.craftengine.bukkit.api.event.CustomBlockInteractEvent;
-import net.momirealms.craftengine.bukkit.block.BukkitBlockManager;
 import net.momirealms.craftengine.bukkit.item.BukkitCustomItem;
 import net.momirealms.craftengine.bukkit.nms.FastNMS;
 import net.momirealms.craftengine.bukkit.plugin.BukkitCraftEngine;
@@ -72,7 +71,7 @@ public class ItemEventListener implements Listener {
         InteractionHand hand = event.getHand() == EquipmentSlot.HAND ? InteractionHand.MAIN_HAND : InteractionHand.OFF_HAND;
         Item<ItemStack> itemInHand = serverPlayer.getItemInHand(hand);
 
-        if (itemInHand == null) return;
+        if (ItemUtils.isEmpty(itemInHand)) return;
         Optional<CustomItem<ItemStack>> optionalCustomItem = itemInHand.getCustomItem();
         if (optionalCustomItem.isEmpty()) return;
 
@@ -112,8 +111,7 @@ public class ItemEventListener implements Listener {
         Block block = Objects.requireNonNull(event.getClickedBlock());
         BlockData blockData = block.getBlockData();
         Object blockState = BlockStateUtils.blockDataToBlockState(blockData);
-        ImmutableBlockState immutableBlockState = null;
-        int stateId = BlockStateUtils.blockStateToId(blockState);
+        ImmutableBlockState immutableBlockState = BlockStateUtils.getOptionalCustomBlockState(blockState).orElse(null);
         Item<ItemStack> itemInHand = serverPlayer.getItemInHand(hand);
         Location interactionPoint = event.getInteractionPoint();
 
@@ -126,8 +124,7 @@ public class ItemEventListener implements Listener {
         }
 
         // 处理自定义方块
-        if (!BlockStateUtils.isVanillaBlock(stateId)) {
-            immutableBlockState = BukkitBlockManager.instance().getImmutableBlockStateUnsafe(stateId);
+        if (immutableBlockState != null) {
             // call the event if it's custom
             CustomBlockInteractEvent interactEvent = new CustomBlockInteractEvent(
                     player,
@@ -161,7 +158,7 @@ public class ItemEventListener implements Listener {
                     .withParameter(DirectContextParameters.HAND, hand)
                     .withParameter(DirectContextParameters.EVENT, dummy)
                     .withParameter(DirectContextParameters.POSITION, LocationUtils.toWorldPosition(block.getLocation()))
-                    .withOptionalParameter(DirectContextParameters.ITEM_IN_HAND, itemInHand)
+                    .withOptionalParameter(DirectContextParameters.ITEM_IN_HAND, ItemUtils.isEmpty(itemInHand) ? null : itemInHand)
             );
             if (action.isRightClick()) customBlock.execute(context, EventTrigger.RIGHT_CLICK);
             else customBlock.execute(context, EventTrigger.LEFT_CLICK);
@@ -216,8 +213,8 @@ public class ItemEventListener implements Listener {
             }
         }
 
-        Optional<CustomItem<ItemStack>> optionalCustomItem = itemInHand == null ? Optional.empty() : itemInHand.getCustomItem();
-        boolean hasItem = itemInHand != null;
+        boolean hasItem = !itemInHand.isEmpty();
+        Optional<CustomItem<ItemStack>> optionalCustomItem = hasItem ? itemInHand.getCustomItem() : Optional.empty();
         boolean hasCustomItem = optionalCustomItem.isPresent();
 
         // interact block with items
@@ -345,7 +342,7 @@ public class ItemEventListener implements Listener {
         InteractionHand hand = event.getHand() == EquipmentSlot.HAND ? InteractionHand.MAIN_HAND : InteractionHand.OFF_HAND;
         Item<ItemStack> itemInHand = serverPlayer.getItemInHand(hand);
         // should never be null
-        if (itemInHand == null) return;
+        if (ItemUtils.isEmpty(itemInHand)) return;
 
         // todo 真的需要这个吗
         if (cancelEventIfHasInteraction(event, serverPlayer, hand)) {
@@ -387,7 +384,7 @@ public class ItemEventListener implements Listener {
     @EventHandler(ignoreCancelled = true, priority = EventPriority.LOW)
     public void onConsumeItem(PlayerItemConsumeEvent event) {
         ItemStack consumedItem = event.getItem();
-        if (ItemUtils.isEmpty(consumedItem)) return;
+        if (ItemStackUtils.isEmpty(consumedItem)) return;
         Item<ItemStack> wrapped = this.plugin.itemManager().wrap(consumedItem);
         Optional<CustomItem<ItemStack>> optionalCustomItem = wrapped.getCustomItem();
         if (optionalCustomItem.isEmpty()) {
@@ -420,7 +417,7 @@ public class ItemEventListener implements Listener {
         if (VersionHelper.isOrAbove1_20_5()) return;
         if (!(event.getEntity() instanceof Player player)) return;
         ItemStack consumedItem = event.getItem();
-        if (ItemUtils.isEmpty(consumedItem)) return;
+        if (ItemStackUtils.isEmpty(consumedItem)) return;
         Item<ItemStack> wrapped = this.plugin.itemManager().wrap(consumedItem);
         Optional<CustomItem<ItemStack>> optionalCustomItem = wrapped.getCustomItem();
         if (optionalCustomItem.isEmpty()) {
@@ -490,9 +487,9 @@ public class ItemEventListener implements Listener {
         ItemStack lazuli = inventory.getSecondary();
         if (lazuli != null) return;
         ItemStack item = inventory.getItem();
-        if (item == null) return;
+        if (ItemStackUtils.isEmpty(item)) return;
         Item<ItemStack> wrapped = this.plugin.itemManager().wrap(item);
-        if (wrapped == null) return;
+        if (ItemUtils.isEmpty(wrapped)) return;
         Optional<CustomItem<ItemStack>> optionalCustomItem = wrapped.getCustomItem();
         if (optionalCustomItem.isEmpty()) return;
         BukkitCustomItem customItem = (BukkitCustomItem) optionalCustomItem.get();

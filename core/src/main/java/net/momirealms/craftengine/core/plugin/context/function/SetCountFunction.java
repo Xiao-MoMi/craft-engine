@@ -50,7 +50,7 @@ public class SetCountFunction<CTX extends Context> extends AbstractConditionalFu
         @Override
         public Function<CTX> create(Map<String, Object> arguments) {
             Object value = ResourceConfigUtils.requireNonNullOrThrow(arguments.get("count"), "warning.config.function.set_count.missing_count");
-            boolean add = (boolean) arguments.getOrDefault("add", false);
+            boolean add = ResourceConfigUtils.getAsBoolean(arguments.getOrDefault("add", false), "add");
             return new SetCountFunction<>(NumberProviders.fromObject(value), add, getPredicates(arguments));
         }
     }

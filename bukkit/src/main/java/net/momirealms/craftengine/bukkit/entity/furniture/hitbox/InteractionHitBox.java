@@ -104,10 +104,10 @@ public class InteractionHitBox extends AbstractHitBox {
                 width = ResourceConfigUtils.getAsFloat(arguments.getOrDefault("width", "1"), "width");
                 height = ResourceConfigUtils.getAsFloat(arguments.getOrDefault("height", "1"), "height");
             }
-            boolean canUseOn = (boolean) arguments.getOrDefault("can-use-item-on", false);
-            boolean interactive = (boolean) arguments.getOrDefault("interactive", true);
-            boolean canBeHitByProjectile = (boolean) arguments.getOrDefault("can-be-hit-by-projectile", false);
-            boolean blocksBuilding = (boolean) arguments.getOrDefault("blocks-building", true);
+            boolean canUseOn = ResourceConfigUtils.getAsBoolean(arguments.getOrDefault("can-use-item-on", false), "can-use-item-on");
+            boolean interactive = ResourceConfigUtils.getAsBoolean(arguments.getOrDefault("interactive", true), "interactive");
+            boolean canBeHitByProjectile = ResourceConfigUtils.getAsBoolean(arguments.getOrDefault("can-be-hit-by-projectile", false), "can-be-hit-by-projectile");
+            boolean blocksBuilding = ResourceConfigUtils.getAsBoolean(arguments.getOrDefault("blocks-building", true), "blocks-building");
             return new InteractionHitBox(
                     HitBoxFactory.getSeats(arguments),
                     position,

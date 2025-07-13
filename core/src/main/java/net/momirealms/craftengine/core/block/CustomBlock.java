@@ -53,7 +53,7 @@ public interface CustomBlock {
 
         Builder settings(BlockSettings settings);
 
-        Builder variantMapper(Map<String, VariantState> variantMapper);
+        Builder variantMapper(Map<String, BlockStateVariant> variantMapper);
 
         @NotNull CustomBlock build();
     }

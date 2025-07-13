@@ -9,6 +9,8 @@ import java.util.Map;
 
 public class RodCastConditionProperty implements ConditionProperty, LegacyModelPredicate<Boolean> {
     public static final Factory FACTORY = new Factory();
+    public static final Reader READER = new Reader();
+    public static final RodCastConditionProperty INSTANCE = new RodCastConditionProperty();
 
     @Override
     public Key type() {
@@ -34,7 +36,14 @@ public class RodCastConditionProperty implements ConditionProperty, LegacyModelP
     public static class Factory implements ConditionPropertyFactory {
         @Override
         public ConditionProperty create(Map<String, Object> arguments) {
-            return new RodCastConditionProperty();
+            return INSTANCE;
+        }
+    }
+
+    public static class Reader implements ConditionPropertyReader {
+        @Override
+        public ConditionProperty read(JsonObject json) {
+            return INSTANCE;
         }
     }
 }

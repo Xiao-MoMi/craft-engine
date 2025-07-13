@@ -9,6 +9,8 @@ import java.util.Map;
 
 public class TrimMaterialSelectProperty implements SelectProperty, LegacyModelPredicate<String> {
     public static final Factory FACTORY = new Factory();
+    public static final Reader READER = new Reader();
+    public static final TrimMaterialSelectProperty INSTANCE = new TrimMaterialSelectProperty();
     private static final Map<String, Float> LEGACY_TRIM_DATA = new HashMap<>();
     static {
         LEGACY_TRIM_DATA.put("minecraft:quartz", 0.1f);
@@ -37,10 +39,7 @@ public class TrimMaterialSelectProperty implements SelectProperty, LegacyModelPr
 
     @Override
     public String legacyPredicateId(Key material) {
-        if (isArmor(material)) {
-            return "trim_type";
-        }
-        return null;
+        return "trim_type";
     }
 
     @Override
@@ -52,16 +51,17 @@ public class TrimMaterialSelectProperty implements SelectProperty, LegacyModelPr
         return f;
     }
 
-    public boolean isArmor(Key material) {
-        String s = material.toString();
-        return s.contains("helmet") || s.contains("chestplate") || s.contains("leggings") || s.contains("boots");
-    }
-
     public static class Factory implements SelectPropertyFactory {
-
         @Override
         public SelectProperty create(Map<String, Object> arguments) {
-            return new TrimMaterialSelectProperty();
+            return INSTANCE;
+        }
+    }
+
+    public static class Reader implements SelectPropertyReader {
+        @Override
+        public SelectProperty read(JsonObject json) {
+            return INSTANCE;
         }
     }
 }

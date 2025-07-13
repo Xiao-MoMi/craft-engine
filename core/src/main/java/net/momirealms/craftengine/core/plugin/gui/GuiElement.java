@@ -129,7 +129,9 @@ public interface GuiElement {
 
         @Override
         public Item<?> item() {
-            return gui().itemAt(this.index).item();
+            ItemWithAction item = gui().itemAt(this.index);
+            if (item == null) return null;
+            return item.item();
         }
 
         @Override

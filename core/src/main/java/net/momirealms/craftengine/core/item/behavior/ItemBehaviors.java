@@ -3,7 +3,6 @@ package net.momirealms.craftengine.core.item.behavior;
 import net.momirealms.craftengine.core.pack.Pack;
 import net.momirealms.craftengine.core.plugin.locale.LocalizedResourceConfigException;
 import net.momirealms.craftengine.core.registry.BuiltInRegistries;
-import net.momirealms.craftengine.core.registry.Holder;
 import net.momirealms.craftengine.core.registry.Registries;
 import net.momirealms.craftengine.core.registry.WritableRegistry;
 import net.momirealms.craftengine.core.util.Key;
@@ -20,9 +19,8 @@ public class ItemBehaviors {
     public static final Key EMPTY = Key.withDefaultNamespace("empty", Key.DEFAULT_NAMESPACE);
 
     public static void register(Key key, ItemBehaviorFactory factory) {
-        Holder.Reference<ItemBehaviorFactory> holder = ((WritableRegistry<ItemBehaviorFactory>) BuiltInRegistries.ITEM_BEHAVIOR_FACTORY)
-                .registerForHolder(new ResourceKey<>(Registries.ITEM_BEHAVIOR_FACTORY.location(), key));
-        holder.bindValue(factory);
+        ((WritableRegistry<ItemBehaviorFactory>) BuiltInRegistries.ITEM_BEHAVIOR_FACTORY)
+                .register(ResourceKey.create(Registries.ITEM_BEHAVIOR_FACTORY.location(), key), factory);
     }
 
     public static ItemBehavior fromMap(Pack pack, Path path, Key id, Map<String, Object> map) {

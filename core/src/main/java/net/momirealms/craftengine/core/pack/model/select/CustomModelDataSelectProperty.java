@@ -8,6 +8,7 @@ import java.util.Map;
 
 public class CustomModelDataSelectProperty implements SelectProperty {
     public static final Factory FACTORY = new Factory();
+    public static final Reader READER = new Reader();
     private final int index;
 
     public CustomModelDataSelectProperty(int index) {
@@ -26,10 +27,17 @@ public class CustomModelDataSelectProperty implements SelectProperty {
     }
 
     public static class Factory implements SelectPropertyFactory {
-
         @Override
         public SelectProperty create(Map<String, Object> arguments) {
             int index = ResourceConfigUtils.getAsInt(arguments.getOrDefault("index", 0), "index");
+            return new CustomModelDataSelectProperty(index);
+        }
+    }
+
+    public static class Reader implements SelectPropertyReader {
+        @Override
+        public SelectProperty read(JsonObject json) {
+            int index = json.has("index") ? json.get("index").getAsInt() : 0;
             return new CustomModelDataSelectProperty(index);
         }
     }

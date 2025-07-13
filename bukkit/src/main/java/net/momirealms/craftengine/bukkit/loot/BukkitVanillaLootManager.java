@@ -54,6 +54,7 @@ public class BukkitVanillaLootManager extends AbstractVanillaLootManager impleme
         HandlerList.unregisterAll(this);
     }
 
+    @SuppressWarnings("UnstableApiUsage")
     @EventHandler(ignoreCancelled = true, priority = EventPriority.MONITOR)
     public void onEntityDeath(EntityDeathEvent event) {
         Entity entity = event.getEntity();
@@ -90,7 +91,7 @@ public class BukkitVanillaLootManager extends AbstractVanillaLootManager impleme
     }
 
     public class VanillaLootParser implements ConfigParser {
-        public static final String[] CONFIG_SECTION_NAME = new String[] {"vanilla-loots", "vanilla-loot", "loots", "loot"};
+        public static final String[] CONFIG_SECTION_NAME = new String[] {"vanilla-loots", "vanilla-loot", "vanilla_loots", "vanilla_loot"};
 
         @Override
         public int loadingSequence() {
@@ -111,7 +112,7 @@ public class BukkitVanillaLootManager extends AbstractVanillaLootManager impleme
             } catch (IllegalArgumentException e) {
                 throw new LocalizedResourceConfigException("warning.config.vanilla_loot.invalid_type", type, EnumUtils.toString(VanillaLoot.Type.values()));
             }
-            boolean override = (boolean) section.getOrDefault("override", false);
+            boolean override = ResourceConfigUtils.getAsBoolean(section.getOrDefault("override", false), "override");
             List<String> targets = MiscUtils.getAsStringList(section.getOrDefault("target", List.of()));
             LootTable<?> lootTable = LootTable.fromMap(MiscUtils.castToMap(section.get("loot"), false));
             switch (typeEnum) {

@@ -49,21 +49,18 @@ public class DropboxHost implements ResourcePackHost {
     }
 
     public void readCacheFromDisk() {
-        Path cachePath = CraftEngine.instance().dataFolderPath().resolve("dropbox.cache");
+        Path cachePath = CraftEngine.instance().dataFolderPath().resolve("cache").resolve("dropbox.json");
         if (!Files.exists(cachePath)) return;
-
         try (InputStream is = Files.newInputStream(cachePath)) {
             JsonObject cache = GsonHelper.parseJsonToJsonObject(new String(is.readAllBytes(), StandardCharsets.UTF_8));
-
             this.url = getString(cache, "url");
             this.sha1 = getString(cache, "sha1");
             this.refreshToken = getString(cache, "refresh_token");
             this.accessToken = getString(cache, "access_token");
             this.expiresAt = getLong(cache, "expires_at");
-
             CraftEngine.instance().logger().info("[Dropbox] Loaded cached resource pack info");
         } catch (Exception e) {
-            CraftEngine.instance().logger().warn("[Dropbox] Failed to load cache", e);
+            CraftEngine.instance().logger().warn("[Dropbox] Failed to load cache " + cachePath, e);
         }
     }
 
@@ -74,9 +71,9 @@ public class DropboxHost implements ResourcePackHost {
         cache.addProperty("refresh_token", this.refreshToken);
         cache.addProperty("access_token", this.accessToken);
         cache.addProperty("expires_at", this.expiresAt);
-
-        Path cachePath = CraftEngine.instance().dataFolderPath().resolve("dropbox.cache");
+        Path cachePath = CraftEngine.instance().dataFolderPath().resolve("cache").resolve("dropbox.json");
         try {
+            Files.createDirectories(cachePath);
             Files.writeString(
                     cachePath,
                     GsonHelper.get().toJson(cache),
@@ -263,7 +260,7 @@ public class DropboxHost implements ResourcePackHost {
 
         @Override
         public ResourcePackHost create(Map<String, Object> arguments) {
-            boolean useEnv = (boolean) arguments.getOrDefault("use-environment-variables", false);
+            boolean useEnv = ResourceConfigUtils.getAsBoolean(arguments.getOrDefault("use-environment-variables", false), "use-environment-variables");
             String appKey = useEnv ? System.getenv("CE_DROPBOX_APP_KEY") : Optional.ofNullable(arguments.get("app-key")).map(String::valueOf).orElse(null);
             if (appKey == null || appKey.isEmpty()) {
                 throw new LocalizedException("warning.config.host.dropbox.missing_app_key");

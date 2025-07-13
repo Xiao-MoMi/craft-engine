@@ -5,6 +5,7 @@ import net.momirealms.craftengine.bukkit.plugin.command.BukkitCommandFeature;
 import net.momirealms.craftengine.core.plugin.CraftEngine;
 import net.momirealms.craftengine.core.plugin.command.CraftEngineCommandManager;
 import net.momirealms.craftengine.core.plugin.locale.MessageConstants;
+import net.momirealms.craftengine.core.util.VersionHelper;
 import org.bukkit.command.CommandSender;
 import org.incendo.cloud.Command;
 import org.incendo.cloud.parser.standard.EnumParser;
@@ -75,7 +76,7 @@ public class ReloadCommand extends BukkitCommandFeature<CommandSender> {
                     } else if (argument == ReloadArgument.ALL) {
                         RELOAD_PACK_FLAG = true;
                         try {
-                            plugin().reloadPlugin(plugin().scheduler().async(), r -> plugin().scheduler().sync().run(r), true).thenAcceptAsync(reloadResult -> {
+                            plugin().reloadPlugin(plugin().scheduler().async(), r -> plugin().scheduler().sync().run(r), !VersionHelper.isFolia()).thenAcceptAsync(reloadResult -> {
                                 try {
                                     long time1 = System.currentTimeMillis();
                                     plugin().packManager().generateResourcePack();

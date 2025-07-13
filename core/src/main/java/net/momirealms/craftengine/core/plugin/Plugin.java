@@ -28,7 +28,6 @@ import net.momirealms.craftengine.core.world.WorldManager;
 import java.io.File;
 import java.io.InputStream;
 import java.nio.file.Path;
-import java.util.function.Supplier;
 
 public interface Plugin {
 
@@ -89,8 +88,6 @@ public interface Plugin {
     SoundManager soundManager();
 
     VanillaLootManager vanillaLootManager();
-
-    void debug(Supplier<String> message);
 
     CompatibilityManager compatibilityManager();
 

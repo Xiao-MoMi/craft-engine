@@ -5,8 +5,10 @@ import net.momirealms.craftengine.core.pack.ResourceLocation;
 import net.momirealms.craftengine.core.pack.model.generation.ModelGeneration;
 import net.momirealms.craftengine.core.pack.model.special.SpecialModel;
 import net.momirealms.craftengine.core.pack.model.special.SpecialModels;
+import net.momirealms.craftengine.core.pack.revision.Revision;
 import net.momirealms.craftengine.core.plugin.locale.LocalizedResourceConfigException;
 import net.momirealms.craftengine.core.util.Key;
+import net.momirealms.craftengine.core.util.MinecraftVersion;
 import net.momirealms.craftengine.core.util.MiscUtils;
 import net.momirealms.craftengine.core.util.ResourceConfigUtils;
 import org.jetbrains.annotations.Nullable;
@@ -16,6 +18,7 @@ import java.util.Map;
 
 public class SpecialItemModel implements ItemModel {
     public static final Factory FACTORY = new Factory();
+    public static final Reader READER = new Reader();
     private final SpecialModel specialModel;
     private final String base;
     private final ModelGeneration modelGeneration;
@@ -27,19 +30,19 @@ public class SpecialItemModel implements ItemModel {
     }
 
     public SpecialModel specialModel() {
-        return specialModel;
+        return this.specialModel;
     }
 
     public String base() {
-        return base;
+        return this.base;
     }
 
     @Override
-    public JsonObject get() {
+    public JsonObject apply(MinecraftVersion version) {
         JsonObject json = new JsonObject();
         json.addProperty("type", type().toString());
-        json.add("model", specialModel.get());
-        json.addProperty("base", base);
+        json.add("model", this.specialModel.apply(version));
+        json.addProperty("base", this.base);
         return json;
     }
 
@@ -57,6 +60,11 @@ public class SpecialItemModel implements ItemModel {
         }
     }
 
+    @Override
+    public List<Revision> revisions() {
+        return this.specialModel.revisions();
+    }
+
     public static class Factory implements ItemModelFactory {
 
         @Override
@@ -72,6 +80,16 @@ public class SpecialItemModel implements ItemModel {
             }
             Map<String, Object> model = MiscUtils.castToMap(arguments.get("model"), false);
             return new SpecialItemModel(SpecialModels.fromMap(model), base, modelGeneration);
+        }
+    }
+
+    public static class Reader implements ItemModelReader {
+
+        @Override
+        public ItemModel read(JsonObject json) {
+            String base = json.get("base").getAsString();
+            SpecialModel sm = SpecialModels.fromJson(json.getAsJsonObject("model"));
+            return new SpecialItemModel(sm, base, null);
         }
     }
 }

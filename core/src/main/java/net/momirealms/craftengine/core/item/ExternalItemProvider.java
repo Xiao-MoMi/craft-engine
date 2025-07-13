@@ -8,4 +8,6 @@ public interface ExternalItemProvider<I> {
 
     @Nullable
     I build(String id, ItemBuildContext context);
+
+    String id(I item);
 }

@@ -13,6 +13,7 @@ public interface Tint extends Supplier<JsonObject> {
     Key type();
 
     default void applyAnyTint(JsonObject json, Either<Integer, List<Float>> value, String key) {
+        if (value == null) return;
         if (value.primary().isPresent()) {
             json.addProperty(key, value.primary().get());
         } else {

@@ -23,7 +23,6 @@ dependencies {
     implementation(project(":bukkit:compatibility:legacy"))
     implementation(project(":common-files"))
 
-    implementation("com.saicone.rtag:rtag-item:${rootProject.properties["rtag_version"]}")
     implementation("net.momirealms:sparrow-util:${rootProject.properties["sparrow_util_version"]}")
     implementation("net.momirealms:antigrieflib:${rootProject.properties["anti_grief_version"]}")
     implementation("net.momirealms:craft-engine-nms-helper-mojmap:${rootProject.properties["nms_helper_version"]}")
@@ -51,7 +50,7 @@ paper {
     name = "CraftEngine"
     apiVersion = "1.20"
     authors = listOf("XiaoMoMi")
-    contributors = listOf("jhqwqmc", "iqtesterrr")
+    contributors = listOf("jhqwqmc", "iqtesterrr", "WhiteProject1", "Catnies", "xiaozhangup", "TamashiiMon")
     foliaSupported = true
     serverDependencies {
         register("PlaceholderAPI") {
@@ -77,7 +76,6 @@ paper {
         // external models
         register("ModelEngine") { required = false }
         register("BetterModel") { required = false }
-        register("FreeMinecraftModels") { required = false }
 
         // external items
         register("NeigeItems") { required = false }
@@ -137,7 +135,6 @@ tasks {
         relocate("net.kyori", "net.momirealms.craftengine.libraries")
         relocate("net.momirealms.sparrow.nbt", "net.momirealms.craftengine.libraries.nbt")
         relocate("net.momirealms.antigrieflib", "net.momirealms.craftengine.libraries.antigrieflib")
-        relocate("com.saicone.rtag", "net.momirealms.craftengine.libraries.tag")
         relocate("org.incendo", "net.momirealms.craftengine.libraries")
         relocate("dev.dejvokep", "net.momirealms.craftengine.libraries")
         relocate("org.bstats", "net.momirealms.craftengine.libraries.bstats")
@@ -151,5 +148,6 @@ tasks {
         relocate("software.amazon.eventstream", "net.momirealms.craftengine.libraries.eventstream")
         relocate("com.google.common.jimfs", "net.momirealms.craftengine.libraries.jimfs")
         relocate("org.apache.commons", "net.momirealms.craftengine.libraries.commons")
+        relocate("io.leangen.geantyref", "net.momirealms.craftengine.libraries.geantyref")
     }
 }

@@ -19,7 +19,7 @@ public class RegistryUtils {
 
     public static int currentBiomeRegistrySize() {
         try {
-            Object idMap = CoreReflections.method$Registry$asHolderIdMap.invoke(CoreReflections.method$RegistryAccess$registryOrThrow.invoke(FastNMS.INSTANCE.registryAccess(), MRegistries.BIOME));
+            Object idMap = CoreReflections.method$Registry$asHolderIdMap.invoke(FastNMS.INSTANCE.method$RegistryAccess$lookupOrThrow(FastNMS.INSTANCE.registryAccess(), MRegistries.BIOME));
             return (int) CoreReflections.method$IdMap$size.invoke(idMap);
         } catch (ReflectiveOperationException e) {
             throw new RuntimeException(e);

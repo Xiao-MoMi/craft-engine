@@ -42,7 +42,7 @@ public final class MRegistryOps {
                 // 1.20.1-1.20.4
                 JAVA = (DynamicOps<Object>) CoreReflections.method$RegistryOps$create.invoke(null, LegacyJavaOps.INSTANCE, FastNMS.INSTANCE.registryAccess());
             } else {
-                JAVA = null;
+                throw new ReflectionInitException("Could not find JavaOps");
             }
             NBT = (DynamicOps<Object>) CoreReflections.method$RegistryOps$create.invoke(null, ReflectionUtils.getDeclaredField(clazz$NbtOps, clazz$NbtOps, 0).get(null), FastNMS.INSTANCE.registryAccess());
             JSON = (DynamicOps<JsonElement>) CoreReflections.method$RegistryOps$create.invoke(null, JsonOps.INSTANCE, FastNMS.INSTANCE.registryAccess());

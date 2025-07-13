@@ -12,6 +12,6 @@ public class BlockEntityState {
     }
 
     public CompoundTag nbt() {
-        return nbt;
+        return this.nbt;
     }
 }

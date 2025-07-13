@@ -7,6 +7,7 @@ import java.util.Map;
 
 public class SimpleRangeDispatchProperty implements RangeDispatchProperty {
     public static final Factory FACTORY = new Factory();
+    public static final Reader READER = new Reader();
     private final Key type;
 
     public SimpleRangeDispatchProperty(Key type) {
@@ -24,10 +25,17 @@ public class SimpleRangeDispatchProperty implements RangeDispatchProperty {
     }
 
     public static class Factory implements RangeDispatchPropertyFactory {
-
         @Override
         public RangeDispatchProperty create(Map<String, Object> arguments) {
             Key type = Key.of(arguments.get("property").toString());
+            return new SimpleRangeDispatchProperty(type);
+        }
+    }
+
+    public static class Reader implements RangeDispatchPropertyReader {
+        @Override
+        public RangeDispatchProperty read(JsonObject json) {
+            Key type = Key.of(json.get("property").getAsString());
             return new SimpleRangeDispatchProperty(type);
         }
     }

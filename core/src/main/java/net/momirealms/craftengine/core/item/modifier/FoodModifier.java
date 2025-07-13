@@ -37,7 +37,7 @@ public class FoodModifier<I> implements ItemDataModifier<I> {
 
     @Override
     public Item<I> prepareNetworkItem(Item<I> item, ItemBuildContext context, CompoundTag networkData) {
-        Tag previous = item.getNBTComponent(ComponentKeys.FOOD);
+        Tag previous = item.getSparrowNBTComponent(ComponentKeys.FOOD);
         if (previous != null) {
             networkData.put(ComponentKeys.FOOD.asString(), NetworkItemHandler.pack(NetworkItemHandler.Operation.ADD, previous));
         } else {

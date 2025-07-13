@@ -1,10 +1,10 @@
 package net.momirealms.craftengine.core.plugin.config.template;
 
-import net.momirealms.craftengine.core.plugin.CraftEngine;
 import net.momirealms.craftengine.core.plugin.Manageable;
 import net.momirealms.craftengine.core.plugin.config.ConfigParser;
 import net.momirealms.craftengine.core.plugin.locale.LocalizedResourceConfigException;
 import net.momirealms.craftengine.core.util.Key;
+import net.momirealms.craftengine.core.util.SNBTReader;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -65,6 +65,7 @@ public interface TemplateManager extends Manageable {
         private final String placeholder;
         private final String rawText;
         private final Object defaultValue;
+        private final boolean hasDefaultValue;
 
         public Placeholder(String placeholderContent) {
             this.rawText = "${" + placeholderContent + "}";
@@ -72,15 +73,17 @@ public interface TemplateManager extends Manageable {
             if (separatorIndex == -1) {
                 this.placeholder = placeholderContent;
                 this.defaultValue = null;
+                this.hasDefaultValue = false;
             } else {
                 this.placeholder = placeholderContent.substring(0, separatorIndex);
                 String defaultValueString = placeholderContent.substring(separatorIndex + 2);
                 try {
-                    this.defaultValue = CraftEngine.instance().platform().nbt2Java(defaultValueString);
+                    this.defaultValue = new SNBTReader(defaultValueString).deserializeAsJava();
                 } catch (LocalizedResourceConfigException e) {
                     e.appendTailArgument(this.placeholder);
                     throw e;
                 }
+                this.hasDefaultValue = true;
             }
         }
 
@@ -94,7 +97,10 @@ public interface TemplateManager extends Manageable {
             if (replacement != null) {
                 return replacement.get(arguments);
             }
-            return this.defaultValue;
+            if (this.hasDefaultValue) {
+                return this.defaultValue;
+            }
+            throw new LocalizedResourceConfigException("warning.config.template.argument.missing_value", this.rawText);
         }
 
         @Override

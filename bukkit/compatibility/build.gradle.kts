@@ -34,7 +34,7 @@ dependencies {
     // ModelEngine
     compileOnly("com.ticxo.modelengine:ModelEngine:R4.0.8")
     // BetterModels
-    compileOnly("io.github.toxicity188:BetterModel:1.4.2")
+    compileOnly("io.github.toxicity188:BetterModel:1.7.0")
     // MMOItems
     compileOnly("net.Indyuce:MMOItems-API:6.10-SNAPSHOT")
     compileOnly("io.lumine:MythicLib-dist:1.6.2-SNAPSHOT")

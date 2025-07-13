@@ -211,7 +211,6 @@ public class FastAsyncWorldEditDelegate extends AbstractDelegateExtent {
         int newStateId = ordinalToIbdID[newBlock.getOrdinal()];
         int oldStateId = ordinalToIbdID[oldBlock.getOrdinal()];
         this.brokenChunks.add(ChunkPos.of(chunkX, chunkZ));
-        //CraftEngine.instance().debug(() -> "Processing block at " + blockX + ", " + blockY + ", " + blockZ + ": " + oldStateId + " -> " + newStateId);
         if (BlockStateUtils.isVanillaBlock(newStateId) && BlockStateUtils.isVanillaBlock(oldStateId)) return;
         try {
             CEChunk ceChunk = Optional.ofNullable(this.ceWorld.getChunkAtIfLoaded(chunkX, chunkZ))
@@ -231,7 +230,6 @@ public class FastAsyncWorldEditDelegate extends AbstractDelegateExtent {
     private void saveAllChunks() {
         try {
             for (CEChunk ceChunk : this.chunksToSave) {
-                CraftEngine.instance().debug(() -> "Saving chunk " + ceChunk.chunkPos());
                 this.ceWorld.worldDataStorage().writeChunkAt(ceChunk.chunkPos(), ceChunk);
             }
             this.chunksToSave.clear();

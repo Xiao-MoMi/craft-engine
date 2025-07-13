@@ -58,7 +58,7 @@ public class CustomHitBox extends AbstractHitBox {
         try {
             packets.accept(FastNMS.INSTANCE.constructor$ClientboundAddEntityPacket(
                     entityId[0], UUID.randomUUID(), position.x() + offset.x, position.y() + offset.y, position.z() - offset.z, 0, position.xRot(),
-                    FastNMS.INSTANCE.toNMSEntityType(this.entityType), 0, CoreReflections.instance$Vec3$Zero, 0
+                    FastNMS.INSTANCE.method$CraftEntityType$toNMSEntityType(this.entityType), 0, CoreReflections.instance$Vec3$Zero, 0
             ), true);
             packets.accept(FastNMS.INSTANCE.constructor$ClientboundSetEntityDataPacket(entityId[0], List.copyOf(this.cachedValues)), true);
             if (VersionHelper.isOrAbove1_20_5() && this.scale != 1) {
@@ -91,8 +91,8 @@ public class CustomHitBox extends AbstractHitBox {
             if (entityType == null) {
                 throw new LocalizedResourceConfigException("warning.config.furniture.hitbox.custom.invalid_entity", new IllegalArgumentException("EntityType not found: " + type), type);
             }
-            boolean canBeHitByProjectile = (boolean) arguments.getOrDefault("can-be-hit-by-projectile", false);
-            boolean blocksBuilding = (boolean) arguments.getOrDefault("blocks-building", true);
+            boolean canBeHitByProjectile = ResourceConfigUtils.getAsBoolean(arguments.getOrDefault("can-be-hit-by-projectile", false), "can-be-hit-by-projectile");
+            boolean blocksBuilding = ResourceConfigUtils.getAsBoolean(arguments.getOrDefault("blocks-building", true), "blocks-building");
             return new CustomHitBox(HitBoxFactory.getSeats(arguments), position, entityType, scale, blocksBuilding, canBeHitByProjectile);
         }
     }

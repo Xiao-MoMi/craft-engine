@@ -2,7 +2,7 @@ package net.momirealms.craftengine.core.util;
 
 import java.util.Base64;
 
-public class SkullUtils {
+public final class SkullUtils {
 
     private SkullUtils() {}
 

@@ -53,7 +53,7 @@ public class SetSaturationFunction<CTX extends Context> extends AbstractConditio
         @Override
         public Function<CTX> create(Map<String, Object> arguments) {
             Object value = ResourceConfigUtils.requireNonNullOrThrow(arguments.get("saturation"), "warning.config.function.set_saturation.missing_saturation");
-            boolean add = (boolean) arguments.getOrDefault("add", false);
+            boolean add = ResourceConfigUtils.getAsBoolean(arguments.getOrDefault("add", false), "add");
             return new SetSaturationFunction<>(NumberProviders.fromObject(value), add, PlayerSelectors.fromObject(arguments.get("target"), conditionFactory()), getPredicates(arguments));
         }
     }

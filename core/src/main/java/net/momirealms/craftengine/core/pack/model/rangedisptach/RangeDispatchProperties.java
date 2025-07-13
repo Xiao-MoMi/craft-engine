@@ -1,8 +1,8 @@
 package net.momirealms.craftengine.core.pack.model.rangedisptach;
 
+import com.google.gson.JsonObject;
 import net.momirealms.craftengine.core.plugin.locale.LocalizedResourceConfigException;
 import net.momirealms.craftengine.core.registry.BuiltInRegistries;
-import net.momirealms.craftengine.core.registry.Holder;
 import net.momirealms.craftengine.core.registry.Registries;
 import net.momirealms.craftengine.core.registry.WritableRegistry;
 import net.momirealms.craftengine.core.util.Key;
@@ -24,22 +24,36 @@ public class RangeDispatchProperties {
     public static final Key USE_DURATION = Key.of("minecraft:use_duration");
 
     static {
-        register(BUNDLE_FULLNESS, SimpleRangeDispatchProperty.FACTORY);
-        register(COOLDOWN, SimpleRangeDispatchProperty.FACTORY);
-        register(CROSSBOW_PULL, CrossBowPullingRangeDispatchProperty.FACTORY);
-        register(COMPASS, CompassRangeDispatchProperty.FACTORY);
-        register(COUNT, NormalizeRangeDispatchProperty.FACTORY);
-        register(DAMAGE, DamageRangeDispatchProperty.FACTORY);
-        register(CUSTOM_MODEL_DATA, CustomModelDataRangeDispatchProperty.FACTORY);
-        register(TIME, TimeRangeDispatchProperty.FACTORY);
-        register(USE_CYCLE, UseCycleRangeDispatchProperty.FACTORY);
-        register(USE_DURATION, UseDurationRangeDispatchProperty.FACTORY);
+        registerFactory(BUNDLE_FULLNESS, SimpleRangeDispatchProperty.FACTORY);
+        registerReader(BUNDLE_FULLNESS, SimpleRangeDispatchProperty.READER);
+        registerFactory(COOLDOWN, SimpleRangeDispatchProperty.FACTORY);
+        registerReader(COOLDOWN, SimpleRangeDispatchProperty.READER);
+        registerFactory(CROSSBOW_PULL, CrossBowPullingRangeDispatchProperty.FACTORY);
+        registerReader(CROSSBOW_PULL, CrossBowPullingRangeDispatchProperty.READER);
+        registerFactory(COMPASS, CompassRangeDispatchProperty.FACTORY);
+        registerReader(COMPASS, CompassRangeDispatchProperty.READER);
+        registerFactory(COUNT, NormalizeRangeDispatchProperty.FACTORY);
+        registerReader(COUNT, NormalizeRangeDispatchProperty.READER);
+        registerFactory(DAMAGE, DamageRangeDispatchProperty.FACTORY);
+        registerReader(DAMAGE, DamageRangeDispatchProperty.READER);
+        registerFactory(CUSTOM_MODEL_DATA, CustomModelDataRangeDispatchProperty.FACTORY);
+        registerReader(CUSTOM_MODEL_DATA, CustomModelDataRangeDispatchProperty.READER);
+        registerFactory(TIME, TimeRangeDispatchProperty.FACTORY);
+        registerReader(TIME, TimeRangeDispatchProperty.READER);
+        registerFactory(USE_CYCLE, UseCycleRangeDispatchProperty.FACTORY);
+        registerReader(USE_CYCLE, UseCycleRangeDispatchProperty.READER);
+        registerFactory(USE_DURATION, UseDurationRangeDispatchProperty.FACTORY);
+        registerReader(USE_DURATION, UseDurationRangeDispatchProperty.READER);
     }
 
-    public static void register(Key key, RangeDispatchPropertyFactory factory) {
-        Holder.Reference<RangeDispatchPropertyFactory> holder = ((WritableRegistry<RangeDispatchPropertyFactory>) BuiltInRegistries.RANGE_DISPATCH_PROPERTY_FACTORY)
-                .registerForHolder(new ResourceKey<>(Registries.RANGE_DISPATCH_PROPERTY_FACTORY.location(), key));
-        holder.bindValue(factory);
+    public static void registerFactory(Key key, RangeDispatchPropertyFactory factory) {
+        ((WritableRegistry<RangeDispatchPropertyFactory>) BuiltInRegistries.RANGE_DISPATCH_PROPERTY_FACTORY)
+                .register(ResourceKey.create(Registries.RANGE_DISPATCH_PROPERTY_FACTORY.location(), key), factory);
+    }
+
+    public static void registerReader(Key key, RangeDispatchPropertyReader reader) {
+        ((WritableRegistry<RangeDispatchPropertyReader>) BuiltInRegistries.RANGE_DISPATCH_PROPERTY_READER)
+                .register(ResourceKey.create(Registries.RANGE_DISPATCH_PROPERTY_READER.location(), key), reader);
     }
 
     public static RangeDispatchProperty fromMap(Map<String, Object> map) {
@@ -50,5 +64,15 @@ public class RangeDispatchProperties {
             throw new LocalizedResourceConfigException("warning.config.item.model.range_dispatch.invalid_property", type);
         }
         return factory.create(map);
+    }
+
+    public static RangeDispatchProperty fromJson(JsonObject json) {
+        String type = json.get("property").getAsString();
+        Key key = Key.withDefaultNamespace(type, "minecraft");
+        RangeDispatchPropertyReader reader = BuiltInRegistries.RANGE_DISPATCH_PROPERTY_READER.getValue(key);
+        if (reader == null) {
+            throw new IllegalArgumentException("Invalid range dispatch property type: " + key);
+        }
+        return reader.read(json);
     }
 }

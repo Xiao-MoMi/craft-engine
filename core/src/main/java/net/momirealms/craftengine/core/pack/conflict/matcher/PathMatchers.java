@@ -5,7 +5,6 @@ import net.momirealms.craftengine.core.plugin.context.Condition;
 import net.momirealms.craftengine.core.plugin.context.condition.*;
 import net.momirealms.craftengine.core.plugin.locale.LocalizedException;
 import net.momirealms.craftengine.core.registry.BuiltInRegistries;
-import net.momirealms.craftengine.core.registry.Holder;
 import net.momirealms.craftengine.core.registry.Registries;
 import net.momirealms.craftengine.core.registry.WritableRegistry;
 import net.momirealms.craftengine.core.util.Key;
@@ -37,9 +36,8 @@ public class PathMatchers {
     }
 
     public static void register(Key key, ConditionFactory<PathContext> factory) {
-        Holder.Reference<ConditionFactory<PathContext>> holder = ((WritableRegistry<ConditionFactory<PathContext>>) BuiltInRegistries.PATH_MATCHER_FACTORY)
-                .registerForHolder(new ResourceKey<>(Registries.PATH_MATCHER_FACTORY.location(), key));
-        holder.bindValue(factory);
+        ((WritableRegistry<ConditionFactory<PathContext>>) BuiltInRegistries.PATH_MATCHER_FACTORY)
+                .register(ResourceKey.create(Registries.PATH_MATCHER_FACTORY.location(), key), factory);
     }
 
     public static List<Condition<PathContext>> fromMapList(List<Map<String, Object>> arguments) {

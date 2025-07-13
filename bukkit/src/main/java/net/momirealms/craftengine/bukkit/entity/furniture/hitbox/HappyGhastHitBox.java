@@ -92,8 +92,8 @@ public class HappyGhastHitBox extends AbstractHitBox {
         double maxX = x + halfSize + offset.x();
         double minY = y + offset.y();
         double maxY = y + baseSize + offset.y();
-        double minZ = z - halfSize + offset.z();
-        double maxZ = z + halfSize + offset.z();
+        double minZ = z - halfSize - offset.z();
+        double maxZ = z + halfSize - offset.z();
         return new AABB(minX, minY, minZ, maxX, maxY, maxZ);
     }
 
@@ -118,10 +118,10 @@ public class HappyGhastHitBox extends AbstractHitBox {
                 throw new UnsupportedOperationException("HappyGhastHitBox is only supported on 1.21.6+");
             }
             double scale = ResourceConfigUtils.getAsDouble(arguments.getOrDefault("scale", 1), "scale");
-            boolean hardCollision = (boolean) arguments.getOrDefault("hard-collision", true);
-            boolean canUseOn = (boolean) arguments.getOrDefault("can-use-item-on", false);
-            boolean canBeHitByProjectile = (boolean) arguments.getOrDefault("can-be-hit-by-projectile", false);
-            boolean blocksBuilding = (boolean) arguments.getOrDefault("blocks-building", false);
+            boolean hardCollision = ResourceConfigUtils.getAsBoolean(arguments.getOrDefault("hard-collision", true), "hard-collision");
+            boolean canUseOn = ResourceConfigUtils.getAsBoolean(arguments.getOrDefault("can-use-item-on", true), "can-use-item-on");
+            boolean canBeHitByProjectile = ResourceConfigUtils.getAsBoolean(arguments.getOrDefault("can-be-hit-by-projectile", true), "can-be-hit-by-projectile");
+            boolean blocksBuilding = ResourceConfigUtils.getAsBoolean(arguments.getOrDefault("blocks-building", true), "blocks-building");
             return new HappyGhastHitBox(
                     HitBoxFactory.getSeats(arguments),
                     MiscUtils.getAsVector3f(arguments.getOrDefault("position", "0"), "position"),

@@ -2,7 +2,6 @@ package net.momirealms.craftengine.core.item.recipe;
 
 import net.momirealms.craftengine.core.plugin.locale.LocalizedResourceConfigException;
 import net.momirealms.craftengine.core.registry.BuiltInRegistries;
-import net.momirealms.craftengine.core.registry.Holder;
 import net.momirealms.craftengine.core.registry.Registries;
 import net.momirealms.craftengine.core.registry.WritableRegistry;
 import net.momirealms.craftengine.core.util.Key;
@@ -21,6 +20,7 @@ public class RecipeTypes {
     public static final Key STONECUTTING = Key.of("minecraft:stonecutting");
     public static final Key SMITHING_TRANSFORM = Key.of("minecraft:smithing_transform");
     public static final Key SMITHING_TRIM = Key.of("minecraft:smithing_trim");
+    public static final Key BREWING = Key.of("minecraft:brewing");
 
     static {
         register(SHAPED, CustomShapedRecipe.FACTORY);
@@ -31,12 +31,13 @@ public class RecipeTypes {
         register(CAMPFIRE_COOKING, CustomCampfireRecipe.FACTORY);
         register(STONECUTTING, CustomStoneCuttingRecipe.FACTORY);
         register(SMITHING_TRANSFORM, CustomSmithingTransformRecipe.FACTORY);
+        register(SMITHING_TRIM, CustomSmithingTrimRecipe.FACTORY);
+        register(BREWING, CustomBrewingRecipe.FACTORY);
     }
 
     public static <T> void register(Key key, RecipeFactory<T> factory) {
-        Holder.Reference<RecipeFactory<?>> holder = ((WritableRegistry<RecipeFactory<?>>) BuiltInRegistries.RECIPE_FACTORY)
-                .registerForHolder(new ResourceKey<>(Registries.RECIPE_FACTORY.location(), key));
-        holder.bindValue(factory);
+        ((WritableRegistry<RecipeFactory<?>>) BuiltInRegistries.RECIPE_FACTORY)
+                .register(ResourceKey.create(Registries.RECIPE_FACTORY.location(), key), factory);
     }
 
     @SuppressWarnings("unchecked")

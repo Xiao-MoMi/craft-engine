@@ -2,7 +2,7 @@ package net.momirealms.craftengine.core.entity.furniture;
 
 import net.momirealms.craftengine.core.item.Item;
 import net.momirealms.craftengine.core.plugin.CraftEngine;
-import net.momirealms.craftengine.core.plugin.config.Config;
+import net.momirealms.craftengine.core.plugin.logger.Debugger;
 import net.momirealms.sparrow.nbt.CompoundTag;
 import net.momirealms.sparrow.nbt.NBT;
 
@@ -12,6 +12,7 @@ import java.util.Optional;
 public class FurnitureExtraData {
     public static final String ITEM = "item";
     public static final String DYED_COLOR = "dyed_color";
+    public static final String FIREWORK_EXPLOSION_COLORS = "firework_explosion_colors";
     public static final String ANCHOR_TYPE = "anchor_type";
 
     private final CompoundTag data;
@@ -38,11 +39,14 @@ public class FurnitureExtraData {
         try {
             return Optional.of(CraftEngine.instance().itemManager().fromByteArray(data));
         } catch (Exception e) {
-            if (Config.debug()) {
-                CraftEngine.instance().logger().warn("Failed to read item data", e);
-            }
+            Debugger.FURNITURE.warn(() -> "Failed to read furniture item data", e);
             return Optional.empty();
         }
+    }
+
+    public Optional<int[]> fireworkExplosionColors() {
+        if (this.data.containsKey(FIREWORK_EXPLOSION_COLORS)) return Optional.of(this.data.getIntArray(FIREWORK_EXPLOSION_COLORS));
+        return Optional.empty();
     }
 
     public Optional<Integer> dyedColor() {
@@ -91,6 +95,12 @@ public class FurnitureExtraData {
         public Builder dyedColor(Integer color) {
             if (color == null) return this;
             this.data.putInt(DYED_COLOR, color);
+            return this;
+        }
+
+        public Builder fireworkExplosionColors(int[] colors) {
+            if (colors == null) return this;
+            this.data.putIntArray(FIREWORK_EXPLOSION_COLORS, colors);
             return this;
         }
 

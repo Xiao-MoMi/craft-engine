@@ -1,11 +1,11 @@
 package net.momirealms.craftengine.core.item.modifier;
 
 import com.google.gson.JsonElement;
-import com.google.gson.JsonObject;
 import net.momirealms.craftengine.core.item.ComponentKeys;
 import net.momirealms.craftengine.core.item.Item;
 import net.momirealms.craftengine.core.item.ItemBuildContext;
 import net.momirealms.craftengine.core.item.NetworkItemHandler;
+import net.momirealms.craftengine.core.plugin.CraftEngine;
 import net.momirealms.craftengine.core.util.GsonHelper;
 import net.momirealms.craftengine.core.util.Key;
 import net.momirealms.craftengine.core.util.Pair;
@@ -17,15 +17,15 @@ import java.util.List;
 import java.util.Map;
 
 public class ComponentModifier<I> implements ItemDataModifier<I> {
-    private final List<Pair<Key, Object>> arguments;
-    private JsonObject customData = null;
+    private final List<Pair<Key, Tag>> arguments;
+    private CompoundTag customData = null;
 
     public ComponentModifier(Map<String, Object> arguments) {
-        List<Pair<Key, Object>> pairs = new ArrayList<>(arguments.size());
+        List<Pair<Key, Tag>> pairs = new ArrayList<>(arguments.size());
         for (Map.Entry<String, Object> entry : arguments.entrySet()) {
             Key key = Key.of(entry.getKey());
             if (key.equals(ComponentKeys.CUSTOM_DATA)) {
-                this.customData = parseJsonObjectValue(entry.getValue());
+                this.customData = (CompoundTag) parseValue(entry.getValue());
             } else {
                 pairs.add(new Pair<>(key, parseValue(entry.getValue())));
             }
@@ -33,28 +33,19 @@ public class ComponentModifier<I> implements ItemDataModifier<I> {
         this.arguments = pairs;
     }
 
-    public List<Pair<Key, Object>> arguments() {
+    public List<Pair<Key, Tag>> arguments() {
         return arguments;
     }
 
-    private Object parseValue(Object value) {
+    private Tag parseValue(Object value) {
         if (value instanceof String string) {
             if (string.startsWith("(json) ")) {
-                return GsonHelper.get().fromJson(string.substring("(json) ".length()), JsonElement.class);
+                return CraftEngine.instance().platform().jsonToSparrowNBT(GsonHelper.get().fromJson(string.substring("(json) ".length()), JsonElement.class));
+            } else if (string.startsWith("(snbt) ")) {
+                return CraftEngine.instance().platform().snbtToSparrowNBT(string.substring("(snbt) ".length()));
             }
         }
-        return value;
-    }
-
-    private JsonObject parseJsonObjectValue(Object value) {
-        if (value instanceof String string) {
-            if (string.startsWith("(json) ")) {
-                return GsonHelper.get().fromJson(string.substring("(json) ".length()), JsonObject.class);
-            }
-        } else if (value instanceof Map<?,?> map) {
-            return (JsonObject) GsonHelper.get().toJsonTree(map, Map.class);
-        }
-        throw new UnsupportedOperationException("Invalid minecraft:custom_data value: " + value.toString());
+        return CraftEngine.instance().platform().javaToSparrowNBT(value);
     }
 
     @Override
@@ -64,13 +55,16 @@ public class ComponentModifier<I> implements ItemDataModifier<I> {
 
     @Override
     public Item<I> apply(Item<I> item, ItemBuildContext context) {
-        for (Pair<Key, Object> entry : this.arguments) {
-            item.setComponent(entry.left(), entry.right());
+        for (Pair<Key, Tag> entry : this.arguments) {
+            item.setNBTComponent(entry.left(), entry.right());
         }
         if (this.customData != null) {
-            JsonObject tag = (JsonObject) item.getJsonComponent(ComponentKeys.CUSTOM_DATA);
+            CompoundTag tag = (CompoundTag) item.getTag(ComponentKeys.CUSTOM_DATA);
             if (tag != null) {
-                item.setComponent(ComponentKeys.CUSTOM_DATA, GsonHelper.shallowMerge(this.customData, tag));
+                for (Map.Entry<String, Tag> entry : this.customData.entrySet()) {
+                    tag.put(entry.getKey(), entry.getValue());
+                }
+                item.setComponent(ComponentKeys.CUSTOM_DATA, tag);
             } else {
                 item.setComponent(ComponentKeys.CUSTOM_DATA, this.customData);
             }
@@ -80,8 +74,8 @@ public class ComponentModifier<I> implements ItemDataModifier<I> {
 
     @Override
     public Item<I> prepareNetworkItem(Item<I> item, ItemBuildContext context, CompoundTag networkData) {
-        for (Pair<Key, Object> entry : this.arguments) {
-            Tag previous = item.getNBTComponent(entry.left());
+        for (Pair<Key, Tag> entry : this.arguments) {
+            Tag previous = item.getSparrowNBTComponent(entry.left());
             if (previous != null) {
                 networkData.put(entry.left().asString(), NetworkItemHandler.pack(NetworkItemHandler.Operation.ADD, previous));
             } else {

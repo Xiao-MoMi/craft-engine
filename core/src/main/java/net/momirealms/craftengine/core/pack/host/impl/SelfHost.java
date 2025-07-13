@@ -73,9 +73,9 @@ public class SelfHost implements ResourcePackHost {
                 }
                 if (!url.endsWith("/")) url  += "/";
             }
-            boolean oneTimeToken = (boolean) arguments.getOrDefault("one-time-token", true);
+            boolean oneTimeToken = ResourceConfigUtils.getAsBoolean(arguments.getOrDefault("one-time-token", true), "one-time-token");
             String protocol = arguments.getOrDefault("protocol", "http").toString();
-            boolean denyNonMinecraftRequest = (boolean) arguments.getOrDefault("deny-non-minecraft-request", true);
+            boolean denyNonMinecraftRequest = ResourceConfigUtils.getAsBoolean(arguments.getOrDefault("deny-non-minecraft-request", true), "deny-non-minecraft-request");
             Map<String, Object> rateMap = MiscUtils.castToMap(arguments.get("rate-map"), true);
             int maxRequests = 5;
             int resetInterval = 20_000;

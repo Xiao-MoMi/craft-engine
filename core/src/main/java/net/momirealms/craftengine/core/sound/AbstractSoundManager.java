@@ -40,6 +40,7 @@ public abstract class AbstractSoundManager implements SoundManager {
     public void unload() {
         this.byId.clear();
         this.byNamespace.clear();
+        this.songs.clear();
     }
 
     @Override
@@ -60,7 +61,7 @@ public abstract class AbstractSoundManager implements SoundManager {
     protected abstract void registerSongs(Map<Key, JukeboxSong> songs);
 
     public class SongParser implements ConfigParser {
-        public static final String[] CONFIG_SECTION_NAME = new String[] {"jukebox_songs", "song", "songs", "jukebox", "jukebox_song"};
+        public static final String[] CONFIG_SECTION_NAME = new String[] {"jukebox_songs", "jukebox_song", "jukebox-songs", "jukebox-song"};
 
         @Override
         public int loadingSequence() {
@@ -104,7 +105,7 @@ public abstract class AbstractSoundManager implements SoundManager {
             if (AbstractSoundManager.this.byId.containsKey(id)) {
                 throw new LocalizedResourceConfigException("warning.config.sound.duplicate");
             }
-            boolean replace = (boolean) section.getOrDefault("replace", false);
+            boolean replace = ResourceConfigUtils.getAsBoolean(section.getOrDefault("replace", false), "replace");
             String subtitle = (String) section.get("subtitle");
             List<?> soundList = (List<?>) ResourceConfigUtils.requireNonNullOrThrow(section.get("sounds"), "warning.config.sound.missing_sounds");
             List<Sound> sounds = new ArrayList<>();

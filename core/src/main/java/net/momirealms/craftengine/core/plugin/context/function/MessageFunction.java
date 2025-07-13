@@ -61,7 +61,7 @@ public class MessageFunction<CTX extends Context> extends AbstractConditionalFun
         public Function<CTX> create(Map<String, Object> arguments) {
             Object message = ResourceConfigUtils.requireNonNullOrThrow(ResourceConfigUtils.get(arguments, "messages", "message"), "warning.config.function.command.missing_message");
             List<TextProvider> messages = MiscUtils.getAsStringList(message).stream().map(TextProviders::fromString).toList();
-            boolean overlay = (boolean) arguments.getOrDefault("overlay", false);
+            boolean overlay = ResourceConfigUtils.getAsBoolean(arguments.getOrDefault("overlay", false), "overlay");
             return new MessageFunction<>(getPredicates(arguments), PlayerSelectors.fromObject(arguments.get("target"), conditionFactory()), messages, overlay);
         }
     }

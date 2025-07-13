@@ -1,7 +1,6 @@
 package net.momirealms.craftengine.bukkit.block.behavior;
 
 import net.momirealms.craftengine.bukkit.api.CraftEngineBlocks;
-import net.momirealms.craftengine.bukkit.block.BukkitBlockManager;
 import net.momirealms.craftengine.bukkit.nms.FastNMS;
 import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.CoreReflections;
 import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.MRegistries;
@@ -14,12 +13,14 @@ import net.momirealms.craftengine.core.block.CustomBlock;
 import net.momirealms.craftengine.core.block.ImmutableBlockState;
 import net.momirealms.craftengine.core.block.UpdateOption;
 import net.momirealms.craftengine.core.block.behavior.BlockBehaviorFactory;
+import net.momirealms.craftengine.core.block.properties.IntegerProperty;
 import net.momirealms.craftengine.core.block.properties.Property;
 import net.momirealms.craftengine.core.entity.player.InteractionResult;
 import net.momirealms.craftengine.core.item.Item;
 import net.momirealms.craftengine.core.item.ItemKeys;
 import net.momirealms.craftengine.core.item.context.UseOnContext;
 import net.momirealms.craftengine.core.plugin.CraftEngine;
+import net.momirealms.craftengine.core.util.ItemUtils;
 import net.momirealms.craftengine.core.util.Key;
 import net.momirealms.craftengine.core.util.RandomUtils;
 import net.momirealms.craftengine.core.util.ResourceConfigUtils;
@@ -30,14 +31,15 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.Callable;
 
+@SuppressWarnings("DuplicatedCode")
 public class SaplingBlockBehavior extends BukkitBlockBehavior {
     public static final Factory FACTORY = new Factory();
     private final Key feature;
-    private final Property<Integer> stageProperty;
+    private final IntegerProperty stageProperty;
     private final double boneMealSuccessChance;
     private final float growSpeed;
 
-    public SaplingBlockBehavior(CustomBlock block, Key feature, Property<Integer> stageProperty, double boneMealSuccessChance, float growSpeed) {
+    public SaplingBlockBehavior(CustomBlock block, Key feature, IntegerProperty stageProperty, double boneMealSuccessChance, float growSpeed) {
         super(block);
         this.feature = feature;
         this.stageProperty = stageProperty;
@@ -55,17 +57,18 @@ public class SaplingBlockBehavior extends BukkitBlockBehavior {
         Object blockPos = args[2];
         Object blockState = args[0];
         Object aboveBlockPos = LocationUtils.above(blockPos);
-        if ((int) CoreReflections.method$LevelReader$getMaxLocalRawBrightness.invoke(world, aboveBlockPos) >= 9 && RandomUtils.generateRandomFloat(0, 1) < growSpeed) {
+        if ((int) CoreReflections.method$LevelReader$getMaxLocalRawBrightness.invoke(world, aboveBlockPos) >= 9 && RandomUtils.generateRandomFloat(0, 1) < this.growSpeed) {
             increaseStage(world, blockPos, blockState, args[3]);
         }
     }
 
     private void increaseStage(Object world, Object blockPos, Object blockState, Object randomSource) throws Exception {
-        ImmutableBlockState immutableBlockState = BukkitBlockManager.instance().getImmutableBlockState(BlockStateUtils.blockStateToId(blockState));
-        if (immutableBlockState == null || immutableBlockState.isEmpty()) return;
-        int currentStage = immutableBlockState.get(this.stageProperty);
-        if (currentStage != this.stageProperty.possibleValues().get(this.stageProperty.possibleValues().size() - 1)) {
-            ImmutableBlockState nextStage = immutableBlockState.cycle(this.stageProperty);
+        Optional<ImmutableBlockState> optionalCustomState = BlockStateUtils.getOptionalCustomBlockState(blockState);
+        if (optionalCustomState.isEmpty()) return;
+        ImmutableBlockState customState = optionalCustomState.get();
+        int currentStage = customState.get(this.stageProperty);
+        if (currentStage != this.stageProperty.max) {
+            ImmutableBlockState nextStage = customState.cycle(this.stageProperty);
             World bukkitWorld = FastNMS.INSTANCE.method$Level$getCraftWorld(world);
             int x = FastNMS.INSTANCE.field$Vec3i$x(blockPos);
             int y = FastNMS.INSTANCE.field$Vec3i$y(blockPos);
@@ -77,17 +80,16 @@ public class SaplingBlockBehavior extends BukkitBlockBehavior {
     }
 
     private void generateTree(Object world, Object blockPos, Object blockState, Object randomSource) throws Exception {
-        Object registry = CoreReflections.method$RegistryAccess$registryOrThrow.invoke(FastNMS.INSTANCE.registryAccess(), MRegistries.CONFIGURED_FEATURE);
+        Object registry = FastNMS.INSTANCE.method$RegistryAccess$lookupOrThrow(FastNMS.INSTANCE.registryAccess(), MRegistries.CONFIGURED_FEATURE);
         if (registry == null) return;
-        @SuppressWarnings("unchecked")
-        Optional<Object> holder = (Optional<Object>) CoreReflections.method$Registry$getHolder1.invoke(registry, FeatureUtils.createFeatureKey(treeFeature()));
+        Optional<Object> holder = FastNMS.INSTANCE.method$Registry$getHolderByResourceKey(registry, FeatureUtils.createConfiguredFeatureKey(treeFeature()));
         if (holder.isEmpty()) {
             CraftEngine.instance().logger().warn("Configured feature not found: " + treeFeature());
             return;
         }
         Object chunkGenerator = CoreReflections.method$ServerChunkCache$getGenerator.invoke(FastNMS.INSTANCE.method$ServerLevel$getChunkSource(world));
         Object configuredFeature = CoreReflections.method$Holder$value.invoke(holder.get());
-        Object fluidState = FastNMS.INSTANCE.method$Level$getFluidState(world, blockPos);
+        Object fluidState = FastNMS.INSTANCE.method$BlockGetter$getFluidState(world, blockPos);
         Object legacyState = CoreReflections.method$FluidState$createLegacyBlock.invoke(fluidState);
         FastNMS.INSTANCE.method$LevelWriter$setBlock(world, blockPos, legacyState, UpdateOption.UPDATE_NONE.flags());
         if ((boolean) CoreReflections.method$ConfiguredFeature$place.invoke(configuredFeature, world, chunkGenerator, randomSource, blockPos)) {
@@ -101,18 +103,19 @@ public class SaplingBlockBehavior extends BukkitBlockBehavior {
     }
 
     @Override
-    public boolean isBoneMealSuccess(Object thisBlock, Object[] args) throws Exception {
+    public boolean isBoneMealSuccess(Object thisBlock, Object[] args) {
         boolean success = RandomUtils.generateRandomDouble(0d, 1d) < this.boneMealSuccessChance;
         Object level = args[0];
         Object blockPos = args[2];
         Object blockState = args[3];
-        ImmutableBlockState immutableBlockState = BukkitBlockManager.instance().getImmutableBlockState(BlockStateUtils.blockStateToId(blockState));
-        if (immutableBlockState == null || immutableBlockState.isEmpty()) {
+        Optional<ImmutableBlockState> optionalCustomState = BlockStateUtils.getOptionalCustomBlockState(blockState);
+        if (optionalCustomState.isEmpty()) {
             return false;
         }
+        ImmutableBlockState customState = optionalCustomState.get();
         boolean sendParticles = false;
-        Object visualState = immutableBlockState.vanillaBlockState().handle();
-        Object visualStateBlock = CoreReflections.method$BlockStateBase$getBlock.invoke(visualState);
+        Object visualState = customState.vanillaBlockState().handle();
+        Object visualStateBlock = BlockStateUtils.getBlockOwner(visualState);
         if (CoreReflections.clazz$BonemealableBlock.isInstance(visualStateBlock)) {
             boolean is = FastNMS.INSTANCE.method$BonemealableBlock$isValidBonemealTarget(visualStateBlock, level, blockPos, visualState);
             if (!is) {
@@ -145,23 +148,18 @@ public class SaplingBlockBehavior extends BukkitBlockBehavior {
     @Override
     public InteractionResult useOnBlock(UseOnContext context, ImmutableBlockState state) {
         Item<?> item = context.getItem();
-        if (item == null || !item.vanillaId().equals(ItemKeys.BONE_MEAL) || context.getPlayer().isAdventureMode())
+        if (ItemUtils.isEmpty(item) || !item.vanillaId().equals(ItemKeys.BONE_MEAL) || context.getPlayer().isAdventureMode())
             return InteractionResult.PASS;
         boolean sendSwing = false;
-        try {
-            Object visualState = state.vanillaBlockState().handle();
-            Object visualStateBlock = CoreReflections.method$BlockStateBase$getBlock.invoke(visualState);
-            if (CoreReflections.clazz$BonemealableBlock.isInstance(visualStateBlock)) {
-                boolean is = FastNMS.INSTANCE.method$BonemealableBlock$isValidBonemealTarget(visualStateBlock, context.getLevel().serverWorld(), LocationUtils.toBlockPos(context.getClickedPos()), visualState);
-                if (!is) {
-                    sendSwing = true;
-                }
-            } else {
+        Object visualState = state.vanillaBlockState().handle();
+        Object visualStateBlock = BlockStateUtils.getBlockOwner(visualState);
+        if (CoreReflections.clazz$BonemealableBlock.isInstance(visualStateBlock)) {
+            boolean is = FastNMS.INSTANCE.method$BonemealableBlock$isValidBonemealTarget(visualStateBlock, context.getLevel().serverWorld(), LocationUtils.toBlockPos(context.getClickedPos()), visualState);
+            if (!is) {
                 sendSwing = true;
             }
-        } catch (Exception e) {
-            CraftEngine.instance().logger().warn("Failed to check visual state bone meal state", e);
-            return InteractionResult.FAIL;
+        } else {
+            sendSwing = true;
         }
         if (sendSwing) {
             context.getPlayer().swingHand(context.getHand());
@@ -174,10 +172,10 @@ public class SaplingBlockBehavior extends BukkitBlockBehavior {
         @SuppressWarnings("unchecked")
         @Override
         public BlockBehavior create(CustomBlock block, Map<String, Object> arguments) {
-            String feature = ResourceConfigUtils.requireNonEmptyStringOrThrow(arguments.get("feature"), "warning.config.block.behavior.sapling.missing_feature");
+            String feature = ResourceConfigUtils.requireNonEmptyStringOrThrow(ResourceConfigUtils.get(arguments, "feature", "configured-feature"), "warning.config.block.behavior.sapling.missing_feature");
             Property<Integer> stageProperty = (Property<Integer>) ResourceConfigUtils.requireNonNullOrThrow(block.getProperty("stage"), "warning.config.block.behavior.sapling.missing_stage");
             double boneMealSuccessChance = ResourceConfigUtils.getAsDouble(arguments.getOrDefault("bone-meal-success-chance", 0.45), "bone-meal-success-chance");
-            return new SaplingBlockBehavior(block, Key.of(feature), stageProperty, boneMealSuccessChance,
+            return new SaplingBlockBehavior(block, Key.of(feature), (IntegerProperty) stageProperty, boneMealSuccessChance,
                     ResourceConfigUtils.getAsFloat(arguments.getOrDefault("grow-speed", 1.0 / 7.0), "grow-speed"));
         }
     }

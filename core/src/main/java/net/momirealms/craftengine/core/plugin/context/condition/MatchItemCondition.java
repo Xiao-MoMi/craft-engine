@@ -7,6 +7,7 @@ import net.momirealms.craftengine.core.plugin.context.parameter.DirectContextPar
 import net.momirealms.craftengine.core.plugin.locale.LocalizedResourceConfigException;
 import net.momirealms.craftengine.core.util.Key;
 import net.momirealms.craftengine.core.util.MiscUtils;
+import net.momirealms.craftengine.core.util.ResourceConfigUtils;
 
 import java.util.*;
 
@@ -50,7 +51,7 @@ public class MatchItemCondition<CTX extends Context> implements Condition<CTX> {
             if (ids.isEmpty()) {
                 throw new LocalizedResourceConfigException("warning.config.condition.match_item.missing_id");
             }
-            boolean regex = (boolean) arguments.getOrDefault("regex", false);
+            boolean regex = ResourceConfigUtils.getAsBoolean(arguments.getOrDefault("regex", false), "regex");
             return new MatchItemCondition<>(ids, regex);
         }
     }

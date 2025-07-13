@@ -14,7 +14,10 @@ import org.bukkit.entity.FallingBlock;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 
-public class FallingBlockRemoveListener implements Listener {
+import java.util.Optional;
+
+@SuppressWarnings("DuplicatedCode")
+public final class FallingBlockRemoveListener implements Listener {
 
     @EventHandler
     public void onFallingBlockBreak(org.bukkit.event.entity.EntityRemoveEvent event) {
@@ -24,21 +27,21 @@ public class FallingBlockRemoveListener implements Listener {
                 boolean cancelDrop = (boolean) CoreReflections.field$FallingBlockEntity$cancelDrop.get(fallingBlockEntity);
                 if (cancelDrop) return;
                 Object blockState = CoreReflections.field$FallingBlockEntity$blockState.get(fallingBlockEntity);
-                int stateId = BlockStateUtils.blockStateToId(blockState);
-                ImmutableBlockState immutableBlockState = BukkitBlockManager.instance().getImmutableBlockState(stateId);
-                if (immutableBlockState == null || immutableBlockState.isEmpty()) return;
+                Optional<ImmutableBlockState> optionalCustomState = BlockStateUtils.getOptionalCustomBlockState(blockState);
+                if (optionalCustomState.isEmpty()) return;
+                ImmutableBlockState customState = optionalCustomState.get();
                 net.momirealms.craftengine.core.world.World world = new BukkitWorld(fallingBlock.getWorld());
                 WorldPosition position = new WorldPosition(world, CoreReflections.field$Entity$xo.getDouble(fallingBlockEntity), CoreReflections.field$Entity$yo.getDouble(fallingBlockEntity), CoreReflections.field$Entity$zo.getDouble(fallingBlockEntity));
                 ContextHolder.Builder builder = ContextHolder.builder()
                         .withParameter(DirectContextParameters.FALLING_BLOCK, true)
                         .withParameter(DirectContextParameters.POSITION, position);
-                for (Item<Object> item : immutableBlockState.getDrops(builder, world, null)) {
+                for (Item<Object> item : customState.getDrops(builder, world, null)) {
                     world.dropItemNaturally(position, item);
                 }
                 Object entityData = CoreReflections.field$Entity$entityData.get(fallingBlockEntity);
                 boolean isSilent = (boolean) CoreReflections.method$SynchedEntityData$get.invoke(entityData, CoreReflections.instance$Entity$DATA_SILENT);
                 if (!isSilent) {
-                    world.playBlockSound(position, immutableBlockState.sounds().destroySound());
+                    world.playBlockSound(position, customState.settings().sounds().destroySound());
                 }
             } catch (ReflectiveOperationException e) {
                 CraftEngine.instance().logger().warn("Failed to handle EntityRemoveEvent", e);

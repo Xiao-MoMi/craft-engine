@@ -9,6 +9,7 @@ import java.util.Map;
 
 public class GrassTint implements Tint {
     public static final Factory FACTORY = new Factory();
+    public static final Reader READER = new Reader();
     private final float temperature;
     private final float downfall;
 
@@ -32,7 +33,6 @@ public class GrassTint implements Tint {
     }
 
     public static class Factory implements TintFactory {
-
         @Override
         public Tint create(Map<String, Object> arguments) {
             float temperature = ResourceConfigUtils.getAsFloat(arguments.getOrDefault("temperature", 0), "temperature");
@@ -43,6 +43,15 @@ public class GrassTint implements Tint {
             if (downfall > 1 || downfall < 0) {
                 throw new LocalizedResourceConfigException("warning.config.item.model.tint.grass.invalid_downfall", String.valueOf(downfall));
             }
+            return new GrassTint(temperature, downfall);
+        }
+    }
+
+    public static class Reader implements TintReader {
+        @Override
+        public Tint read(JsonObject json) {
+            float temperature = json.has("temperature") ? json.get("temperature").getAsFloat() : 0;
+            float downfall = json.has("downfall") ? json.get("downfall").getAsFloat() : 0;
             return new GrassTint(temperature, downfall);
         }
     }

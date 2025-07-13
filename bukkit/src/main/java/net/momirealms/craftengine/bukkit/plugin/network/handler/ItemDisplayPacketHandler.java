@@ -25,20 +25,18 @@ public class ItemDisplayPacketHandler implements EntityPacketHandler {
         for (int i = 0; i < packedItems.size(); i++) {
             Object packedItem = packedItems.get(i);
             int entityDataId = FastNMS.INSTANCE.field$SynchedEntityData$DataValue$id(packedItem);
-            if (entityDataId == EntityDataUtils.DISPLAYED_ITEM_DATA_ID) {
-                Object nmsItemStack = FastNMS.INSTANCE.field$SynchedEntityData$DataValue$value(packedItem);
-                ItemStack itemStack = FastNMS.INSTANCE.method$CraftItemStack$asCraftMirror(nmsItemStack);
-                Optional<ItemStack> optional = BukkitItemManager.instance().s2c(itemStack, (BukkitServerPlayer) user);
-                if (optional.isPresent()) {
-                    isChanged = true;
-                    itemStack = optional.get();
-                    Object serializer = FastNMS.INSTANCE.field$SynchedEntityData$DataValue$serializer(packedItem);
-                    packedItems.set(i, FastNMS.INSTANCE.constructor$SynchedEntityData$DataValue(
-                            entityDataId, serializer, FastNMS.INSTANCE.method$CraftItemStack$asNMSCopy(itemStack)
-                    ));
-                    break;
-                }
-            }
+            if (entityDataId != EntityDataUtils.DISPLAYED_ITEM_DATA_ID) continue;
+            Object nmsItemStack = FastNMS.INSTANCE.field$SynchedEntityData$DataValue$value(packedItem);
+            ItemStack itemStack = FastNMS.INSTANCE.method$CraftItemStack$asCraftMirror(nmsItemStack);
+            Optional<ItemStack> optional = BukkitItemManager.instance().s2c(itemStack, (BukkitServerPlayer) user);
+            if (optional.isEmpty()) continue;
+            isChanged = true;
+            itemStack = optional.get();
+            Object serializer = FastNMS.INSTANCE.field$SynchedEntityData$DataValue$serializer(packedItem);
+            packedItems.set(i, FastNMS.INSTANCE.constructor$SynchedEntityData$DataValue(
+                    entityDataId, serializer, FastNMS.INSTANCE.method$CraftItemStack$asNMSCopy(itemStack)
+            ));
+            break;
         }
         if (isChanged) {
             event.setChanged(true);

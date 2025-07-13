@@ -1,7 +1,6 @@
 package net.momirealms.craftengine.bukkit.plugin.reflection.minecraft;
 
 import net.momirealms.craftengine.bukkit.nms.FastNMS;
-import net.momirealms.craftengine.bukkit.plugin.reflection.ReflectionInitException;
 import net.momirealms.craftengine.core.util.VersionHelper;
 
 public final class MBlocks {
@@ -19,26 +18,22 @@ public final class MBlocks {
     public static final Object SHULKER_BOX;
     public static final Object COMPOSTER;
 
-    private static Object getById(String id) throws ReflectiveOperationException {
+    private static Object getById(String id) {
         Object rl = FastNMS.INSTANCE.method$ResourceLocation$fromNamespaceAndPath("minecraft", id);
-        return CoreReflections.method$Registry$get.invoke(MBuiltInRegistries.BLOCK, rl);
+        return FastNMS.INSTANCE.method$Registry$getValue(MBuiltInRegistries.BLOCK, rl);
     }
 
     static {
-        try {
-            AIR = getById("air");
-            AIR$defaultState = CoreReflections.method$Block$defaultBlockState.invoke(AIR);
-            FIRE = getById("fire");
-            SOUL_FIRE = getById("soul_fire");
-            STONE = getById("stone");
-            STONE$defaultState = CoreReflections.method$Block$defaultBlockState.invoke(STONE);
-            ICE = getById("ice");
-            SHORT_GRASS = getById(VersionHelper.isOrAbove1_20_3() ? "short_grass" : "grass");
-            SHORT_GRASS$defaultState = CoreReflections.method$Block$defaultBlockState.invoke(SHORT_GRASS);
-            SHULKER_BOX = getById("shulker_box");
-            COMPOSTER = getById("composter");
-        } catch (ReflectiveOperationException e) {
-            throw new ReflectionInitException("Failed to init Blocks", e);
-        }
+        AIR = getById("air");
+        AIR$defaultState = FastNMS.INSTANCE.method$Block$defaultState(AIR);
+        FIRE = getById("fire");
+        SOUL_FIRE = getById("soul_fire");
+        STONE = getById("stone");
+        STONE$defaultState = FastNMS.INSTANCE.method$Block$defaultState(STONE);
+        ICE = getById("ice");
+        SHORT_GRASS = getById(VersionHelper.isOrAbove1_20_3() ? "short_grass" : "grass");
+        SHORT_GRASS$defaultState = FastNMS.INSTANCE.method$Block$defaultState(SHORT_GRASS);
+        SHULKER_BOX = getById("shulker_box");
+        COMPOSTER = getById("composter");
     }
 }

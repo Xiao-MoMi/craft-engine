@@ -3,8 +3,13 @@ package net.momirealms.craftengine.core.item;
 import com.google.gson.JsonElement;
 import net.kyori.adventure.text.Component;
 import net.momirealms.craftengine.core.item.behavior.ItemBehavior;
+import net.momirealms.craftengine.core.item.data.Enchantment;
+import net.momirealms.craftengine.core.item.data.FireworkExplosion;
+import net.momirealms.craftengine.core.item.data.JukeboxPlayable;
+import net.momirealms.craftengine.core.item.data.Trim;
 import net.momirealms.craftengine.core.item.setting.EquipmentData;
 import net.momirealms.craftengine.core.util.Key;
+import net.momirealms.craftengine.core.util.UniqueKey;
 import net.momirealms.sparrow.nbt.Tag;
 
 import java.util.List;
@@ -17,6 +22,11 @@ public class AbstractItem<W extends ItemWrapper<I>, I> implements Item<I> {
     AbstractItem(ItemFactory<W, I> factory, W item) {
         this.factory = factory;
         this.item = item;
+    }
+
+    @Override
+    public boolean isEmpty() {
+        return this.factory.isEmpty(this.item);
     }
 
     @Override
@@ -107,6 +117,17 @@ public class AbstractItem<W extends ItemWrapper<I>, I> implements Item<I> {
         return this.factory.dyedColor(this.item);
     }
 
+    @Override
+    public Item<I> fireworkExplosion(FireworkExplosion explosion) {
+        this.factory.fireworkExplosion(this.item, explosion);
+        return this;
+    }
+
+    @Override
+    public Optional<FireworkExplosion> fireworkExplosion() {
+        return this.factory.fireworkExplosion(this.item);
+    }
+
     @SuppressWarnings("unchecked")
     @Override
     public Optional<CustomItem<I>> getCustomItem() {
@@ -136,6 +157,11 @@ public class AbstractItem<W extends ItemWrapper<I>, I> implements Item<I> {
     @Override
     public Key vanillaId() {
         return this.factory.vanillaId(this.item);
+    }
+
+    @Override
+    public UniqueKey recipeIngredientId() {
+        return this.factory.recipeIngredientID(this.item);
     }
 
     @Override
@@ -277,20 +303,8 @@ public class AbstractItem<W extends ItemWrapper<I>, I> implements Item<I> {
     }
 
     @Override
-    public Item<I> addEnchantment(Enchantment enchantment) {
-        this.factory.addEnchantment(this.item, enchantment);
-        return this;
-    }
-
-    @Override
     public Item<I> setStoredEnchantments(List<Enchantment> enchantments) {
         this.factory.storedEnchantments(this.item, enchantments);
-        return this;
-    }
-
-    @Override
-    public Item<I> addStoredEnchantment(Enchantment enchantment) {
-        this.factory.addStoredEnchantment(this.item, enchantment);
         return this;
     }
 
@@ -317,8 +331,13 @@ public class AbstractItem<W extends ItemWrapper<I>, I> implements Item<I> {
     }
 
     @Override
-    public Tag getNBTTag(Object... path) {
-        return this.factory.getNBTTag(this.item, path);
+    public Tag getTag(Object... path) {
+        return this.factory.getTag(this.item, path);
+    }
+
+    @Override
+    public Object getExactTag(Object... path) {
+        return this.factory.getExactTag(this.item, path);
     }
 
     @Override
@@ -353,6 +372,11 @@ public class AbstractItem<W extends ItemWrapper<I>, I> implements Item<I> {
     }
 
     @Override
+    public void setExactComponent(Object type, Object value) {
+        this.factory.setExactComponent(this.item, type, value);
+    }
+
+    @Override
     public Object getJavaComponent(Object type) {
         return this.factory.getJavaComponent(this.item, type);
     }
@@ -363,7 +387,12 @@ public class AbstractItem<W extends ItemWrapper<I>, I> implements Item<I> {
     }
 
     @Override
-    public Tag getNBTComponent(Object type) {
+    public Tag getSparrowNBTComponent(Object type) {
+        return this.factory.getSparrowNBTComponent(this.item, type);
+    }
+
+    @Override
+    public Object getNBTComponent(Object type) {
         return this.factory.getNBTComponent(this.item, type);
     }
 
@@ -395,11 +424,6 @@ public class AbstractItem<W extends ItemWrapper<I>, I> implements Item<I> {
     @Override
     public I getItem() {
         return this.factory.getItem(this.item);
-    }
-
-    @Override
-    public I load() {
-        return this.factory.load(this.item);
     }
 
     @SuppressWarnings({"unchecked"})

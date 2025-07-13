@@ -2,7 +2,6 @@ package net.momirealms.craftengine.core.pack.conflict.resolution;
 
 import net.momirealms.craftengine.core.plugin.locale.LocalizedException;
 import net.momirealms.craftengine.core.registry.BuiltInRegistries;
-import net.momirealms.craftengine.core.registry.Holder;
 import net.momirealms.craftengine.core.registry.Registries;
 import net.momirealms.craftengine.core.registry.WritableRegistry;
 import net.momirealms.craftengine.core.util.Key;
@@ -27,8 +26,7 @@ public class Resolutions {
     }
 
     public static void register(Key key, ResolutionFactory factory) {
-        Holder.Reference<ResolutionFactory> holder = ((WritableRegistry<ResolutionFactory>) BuiltInRegistries.RESOLUTION_FACTORY).registerForHolder(new ResourceKey<>(Registries.RESOLUTION_FACTORY.location(), key));
-        holder.bindValue(factory);
+        ((WritableRegistry<ResolutionFactory>) BuiltInRegistries.RESOLUTION_FACTORY).register(ResourceKey.create(Registries.RESOLUTION_FACTORY.location(), key), factory);
     }
 
     public static Resolution fromMap(Map<String, Object> map) {

@@ -57,11 +57,9 @@ public interface NetWorkUser {
 
     void addResourcePackUUID(UUID uuid);
 
-    ProtocolVersion protocolVersion();
+    boolean isResourcePackLoading(UUID uuid);
 
-    void setProtocolVersion(int protocolVersion);
+    void setShouldProcessFinishConfiguration(boolean shouldProcess);
 
-    boolean sentResourcePack();
-
-    void setSentResourcePack(boolean sentResourcePack);
+    boolean shouldProcessFinishConfiguration();
 }

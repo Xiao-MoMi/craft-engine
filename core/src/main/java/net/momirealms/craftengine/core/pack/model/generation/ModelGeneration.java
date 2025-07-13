@@ -8,6 +8,7 @@ import net.momirealms.craftengine.core.plugin.locale.LocalizedResourceConfigExce
 import net.momirealms.craftengine.core.util.EnumUtils;
 import net.momirealms.craftengine.core.util.Key;
 import net.momirealms.craftengine.core.util.MiscUtils;
+import net.momirealms.craftengine.core.util.ResourceConfigUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.joml.Vector3f;
@@ -54,7 +55,7 @@ public class ModelGeneration implements Supplier<JsonObject> {
             }
         });
         BUILDER_FUNCTIONS.put("ambient-occlusion", (b, data) -> {
-           b.ambientOcclusion((boolean) data);
+           b.ambientOcclusion(ResourceConfigUtils.getAsBoolean(data, "ambient-occlusion"));
         });
         BUILDER_FUNCTIONS.put("parent", (b, data) -> {
             String parentModelPath = data.toString();

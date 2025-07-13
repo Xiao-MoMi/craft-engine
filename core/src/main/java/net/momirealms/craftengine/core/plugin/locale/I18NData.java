@@ -1,8 +1,8 @@
 package net.momirealms.craftengine.core.plugin.locale;
 
-import net.momirealms.craftengine.core.block.BlockStateParser;
 import net.momirealms.craftengine.core.block.CustomBlock;
 import net.momirealms.craftengine.core.block.ImmutableBlockState;
+import net.momirealms.craftengine.core.block.parser.BlockStateParser;
 import net.momirealms.craftengine.core.plugin.CraftEngine;
 import net.momirealms.craftengine.core.util.Key;
 import org.jetbrains.annotations.Nullable;

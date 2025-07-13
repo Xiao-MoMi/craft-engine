@@ -9,7 +9,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-public class InactiveCustomBlock extends AbstractCustomBlock {
+public final class InactiveCustomBlock extends AbstractCustomBlock {
     private final Map<CompoundTag, ImmutableBlockState> cachedData = new HashMap<>();
 
     public InactiveCustomBlock(Key id, Holder.Reference<CustomBlock> holder) {
@@ -23,7 +23,7 @@ public class InactiveCustomBlock extends AbstractCustomBlock {
     @Override
     public ImmutableBlockState getBlockState(CompoundTag nbt) {
         return this.cachedData.computeIfAbsent(nbt, k -> {
-            ImmutableBlockState state = new ImmutableBlockState(holder, new Reference2ObjectArrayMap<>());
+            ImmutableBlockState state = new ImmutableBlockState(super.holder, new Reference2ObjectArrayMap<>());
             state.setNbtToSave(state.toNbtToSave(nbt));
             return state;
         });

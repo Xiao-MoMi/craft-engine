@@ -4,7 +4,7 @@
     "description":"CraftEngine",
     "supported_formats": {
       "min_inclusive": 15,
-      "max_inclusive": 71
+      "max_inclusive": 1000
     }
   }
 }

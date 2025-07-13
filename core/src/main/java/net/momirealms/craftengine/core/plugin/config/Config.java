@@ -13,6 +13,7 @@ import dev.dejvokep.boostedyaml.settings.updater.UpdaterSettings;
 import dev.dejvokep.boostedyaml.utils.format.NodeRole;
 import net.kyori.adventure.text.Component;
 import net.momirealms.craftengine.core.entity.furniture.ColliderType;
+import net.momirealms.craftengine.core.pack.AbstractPackManager;
 import net.momirealms.craftengine.core.pack.conflict.resolution.ResolutionConditional;
 import net.momirealms.craftengine.core.plugin.CraftEngine;
 import net.momirealms.craftengine.core.plugin.PluginProperties;
@@ -21,6 +22,7 @@ import net.momirealms.craftengine.core.plugin.locale.TranslationManager;
 import net.momirealms.craftengine.core.plugin.logger.filter.DisconnectLogFilter;
 import net.momirealms.craftengine.core.util.AdventureHelper;
 import net.momirealms.craftengine.core.util.Key;
+import net.momirealms.craftengine.core.util.MinecraftVersion;
 import net.momirealms.craftengine.core.util.MiscUtils;
 import net.momirealms.craftengine.core.world.InjectionTarget;
 import net.momirealms.craftengine.core.world.chunk.storage.CompressionMethod;
@@ -42,10 +44,15 @@ public class Config {
     private long size;
 
     protected boolean firstTime = true;
-    protected boolean debug;
     protected boolean checkUpdate;
     protected boolean metrics;
     protected boolean filterConfigurationPhaseDisconnect;
+
+    protected boolean debug$common;
+    protected boolean debug$packet;
+    protected boolean debug$item;
+    protected boolean debug$furniture;
+    protected boolean debug$resource_pack;
 
     protected boolean resource_pack$remove_tinted_leaves_particle;
     protected boolean resource_pack$generate_mod_assets;
@@ -73,17 +80,19 @@ public class Config {
     protected String resource_pack$protection$obfuscation$resource_location$random_path$source;
     protected int resource_pack$protection$obfuscation$resource_location$random_path$depth;
     protected boolean resource_pack$protection$obfuscation$resource_location$random_path$anti_unzip;
-    protected int resource_pack$protection$obfuscation$resource_location$random_atlas$amount;
+    protected int resource_pack$protection$obfuscation$resource_location$random_atlas$images_per_canvas;
     protected boolean resource_pack$protection$obfuscation$resource_location$random_atlas$use_double;
     protected List<String> resource_pack$protection$obfuscation$resource_location$bypass_textures;
     protected List<String> resource_pack$protection$obfuscation$resource_location$bypass_models;
     protected List<String> resource_pack$protection$obfuscation$resource_location$bypass_sounds;
     protected List<String> resource_pack$protection$obfuscation$resource_location$bypass_equipments;
 
-    protected float resource_pack$supported_version$min;
-    protected float resource_pack$supported_version$max;
+    protected MinecraftVersion resource_pack$supported_version$min;
+    protected MinecraftVersion resource_pack$supported_version$max;
+    protected String resource_pack$overlay_format;
 
     protected boolean resource_pack$delivery$kick_if_declined;
+    protected boolean resource_pack$delivery$kick_if_failed_to_apply;
     protected boolean resource_pack$delivery$send_on_join;
     protected boolean resource_pack$delivery$resend_on_upload;
     protected boolean resource_pack$delivery$auto_upload;
@@ -120,8 +129,7 @@ public class Config {
     protected boolean recipe$enable;
     protected boolean recipe$disable_vanilla_recipes$all;
     protected Set<Key> recipe$disable_vanilla_recipes$list;
-
-    protected boolean item$non_italic_tag;
+    protected List<String> recipe$ingredient_sources;
 
     protected boolean image$illegal_characters_filter$command;
     protected boolean image$illegal_characters_filter$chat;
@@ -142,6 +150,15 @@ public class Config {
     protected boolean image$intercept_packets$player_info;
     protected boolean image$intercept_packets$set_score;
     protected boolean image$intercept_packets$item;
+    protected boolean image$intercept_packets$advancement;
+
+    protected boolean item$client_bound_model;
+    protected boolean item$non_italic_tag;
+
+    protected String equipment$sacrificed_vanilla_armor$type;
+    protected Key equipment$sacrificed_vanilla_armor$asset_id;
+    protected Key equipment$sacrificed_vanilla_armor$humanoid;
+    protected Key equipment$sacrificed_vanilla_armor$humanoid_leggings;
 
     protected boolean emoji$chat;
     protected boolean emoji$book;
@@ -221,11 +238,17 @@ public class Config {
         plugin.translationManager().forcedLocale(TranslationManager.parseLocale(config.getString("forced-locale", "")));
 
         // basics
-        debug = config.getBoolean("debug", false);
         metrics = config.getBoolean("metrics", false);
         checkUpdate = config.getBoolean("update-checker", false);
         filterConfigurationPhaseDisconnect = config.getBoolean("filter-configuration-phase-disconnect", false);
         DisconnectLogFilter.instance().setEnable(filterConfigurationPhaseDisconnect);
+
+        // debug
+        debug$common = config.getBoolean("debug.common", false);
+        debug$packet = config.getBoolean("debug.packet", false);
+        debug$item = config.getBoolean("debug.item", false);
+        debug$furniture = config.getBoolean("debug.furniture", false);
+        debug$resource_pack = config.getBoolean("debug.resource-pack", false);
 
         // resource pack
         resource_pack$override_uniform_font = config.getBoolean("resource-pack.override-uniform-font", false);
@@ -239,6 +262,7 @@ public class Config {
         resource_pack$delivery$send_on_join = config.getBoolean("resource-pack.delivery.send-on-join", true);
         resource_pack$delivery$resend_on_upload = config.getBoolean("resource-pack.delivery.resend-on-upload", true);
         resource_pack$delivery$kick_if_declined = config.getBoolean("resource-pack.delivery.kick-if-declined", true);
+        resource_pack$delivery$kick_if_failed_to_apply = config.getBoolean("resource-pack.delivery.kick-if-failed-to-apply", true);
         resource_pack$delivery$auto_upload = config.getBoolean("resource-pack.delivery.auto-upload", true);
         resource_pack$delivery$file_to_upload = resolvePath(config.getString("resource-pack.delivery.file-to-upload", "./generated/resource_pack.zip"));
         resource_pack$send$prompt = AdventureHelper.miniMessage().deserialize(config.getString("resource-pack.delivery.prompt", "<yellow>To fully experience our server, please accept our custom resource pack.</yellow>"));
@@ -256,7 +280,7 @@ public class Config {
         resource_pack$protection$obfuscation$resource_location$random_path$depth = config.getInt("resource-pack.protection.obfuscation.resource-location.random-path.depth", 16);
         resource_pack$protection$obfuscation$resource_location$random_path$source = config.getString("resource-pack.protection.obfuscation.resource-location.random-path.source", "obf");
         resource_pack$protection$obfuscation$resource_location$random_path$anti_unzip = config.getBoolean("resource-pack.protection.obfuscation.resource-location.random-path.anti-unzip", false);
-        resource_pack$protection$obfuscation$resource_location$random_atlas$amount = config.getInt("resource-pack.protection.obfuscation.resource-location.random-atlas.amount", 5);
+        resource_pack$protection$obfuscation$resource_location$random_atlas$images_per_canvas = config.getInt("resource-pack.protection.obfuscation.resource-location.random-atlas.images-per-canvas", 16);
         resource_pack$protection$obfuscation$resource_location$random_atlas$use_double = config.getBoolean("resource-pack.protection.obfuscation.resource-location.random-atlas.use-double", true);
         resource_pack$protection$obfuscation$resource_location$bypass_textures = config.getStringList("resource-pack.protection.obfuscation.resource-location.bypass-textures");
         resource_pack$protection$obfuscation$resource_location$bypass_models = config.getStringList("resource-pack.protection.obfuscation.resource-location.bypass-models");
@@ -264,6 +288,10 @@ public class Config {
         resource_pack$protection$obfuscation$resource_location$bypass_equipments = config.getStringList("resource-pack.protection.obfuscation.resource-location.bypass-equipments");
         resource_pack$validate$enable = config.getBoolean("resource-pack.validate.enable", true);
         resource_pack$exclude_core_shaders = config.getBoolean("resource-pack.exclude-core-shaders", false);
+        resource_pack$overlay_format = config.getString("resource-pack.overlay-format", "overlay_{version}");
+        if (!resource_pack$overlay_format.contains("{version}")) {
+            TranslationManager.instance().log("warning.config.resource_pack.invalid_overlay_format", resource_pack$overlay_format);
+        }
 
         try {
             resource_pack$duplicated_files_handler = config.getMapList("resource-pack.duplicated-files-handler").stream().map(it -> {
@@ -277,9 +305,6 @@ public class Config {
             this.plugin.logger().warn("Failed to load resource-pack.duplicated-files-handler", e);
             resource_pack$duplicated_files_handler = List.of();
         }
-
-        // item
-        item$non_italic_tag = config.getBoolean("item.non-italic-tag", false);
 
         // performance
         performance$max_note_block_chain_update_limit = config.getInt("performance.max-note-block-chain-update-limit", 64);
@@ -320,6 +345,21 @@ public class Config {
         furniture$hide_base_entity = config.getBoolean("furniture.hide-base-entity", true);
         furniture$collision_entity_type = ColliderType.valueOf(config.getString("furniture.collision-entity-type", "interaction").toUpperCase(Locale.ENGLISH));
 
+        // equipment
+        equipment$sacrificed_vanilla_armor$type = config.getString("equipment.sacrificed-vanilla-armor.type", "chainmail").toLowerCase(Locale.ENGLISH);
+        if (!AbstractPackManager.ALLOWED_VANILLA_EQUIPMENT.contains(equipment$sacrificed_vanilla_armor$type)) {
+            TranslationManager.instance().log("warning.config.equipment.invalid_sacrificed_armor", equipment$sacrificed_vanilla_armor$type);
+            equipment$sacrificed_vanilla_armor$type = "chainmail";
+        }
+
+        equipment$sacrificed_vanilla_armor$asset_id = Key.of(config.getString("equipment.sacrificed-vanilla-armor.asset-id", "minecraft:chainmail"));
+        equipment$sacrificed_vanilla_armor$humanoid = Key.of(config.getString("equipment.sacrificed-vanilla-armor.humanoid", "minecraft:trims/entity/humanoid/chainmail"));
+        equipment$sacrificed_vanilla_armor$humanoid_leggings = Key.of(config.getString("equipment.sacrificed-vanilla-armor.humanoid-leggings", "minecraft:trims/entity/humanoid_leggings/chainmail"));
+
+        // item
+        item$client_bound_model = config.getBoolean("item.client-bound-model", false);
+        item$non_italic_tag = config.getBoolean("item.non-italic-tag", false);
+
         // block
         block$sound_system$enable = config.getBoolean("block.sound-system.enable", true);
         block$simplify_adventure_break_check = config.getBoolean("block.simplify-adventure-break-check", false);
@@ -332,6 +372,7 @@ public class Config {
         recipe$enable = config.getBoolean("recipe.enable", true);
         recipe$disable_vanilla_recipes$all = config.getBoolean("recipe.disable-vanilla-recipes.all", false);
         recipe$disable_vanilla_recipes$list = config.getStringList("recipe.disable-vanilla-recipes.list").stream().map(Key::of).collect(Collectors.toSet());
+        recipe$ingredient_sources = config.getStringList("recipe.ingredient-sources");
 
         // image
         image$illegal_characters_filter$anvil = config.getBoolean("image.illegal-characters-filter.anvil", true);
@@ -353,6 +394,7 @@ public class Config {
         image$intercept_packets$player_info = config.getBoolean("image.intercept-packets.player-info", true);
         image$intercept_packets$set_score = config.getBoolean("image.intercept-packets.set-score", true);
         image$intercept_packets$item = config.getBoolean("image.intercept-packets.item", true);
+        image$intercept_packets$advancement = config.getBoolean("image.intercept-packets.advancement", true);
 
         // emoji
         emoji$chat = config.getBoolean("emoji.chat", true);
@@ -363,23 +405,35 @@ public class Config {
         firstTime = false;
     }
 
-    private static float getVersion(String version) {
+    private static MinecraftVersion getVersion(String version) {
         if (version.equalsIgnoreCase("LATEST")) {
-            version = PluginProperties.getValue("latest-version");
+            return new MinecraftVersion(PluginProperties.getValue("latest-version"));
         }
-        String[] split = version.split("\\.", 2);
-        if (split.length != 2) {
-            throw new IllegalArgumentException("Invalid version: " + version);
-        }
-        return Float.parseFloat(split[1]);
+        return MinecraftVersion.parse(version);
     }
 
     public static String configVersion() {
         return instance.configVersion;
     }
 
-    public static boolean debug() {
-        return instance.debug;
+    public static boolean debugCommon() {
+        return instance.debug$common;
+    }
+
+    public static boolean debugPacket() {
+        return instance.debug$packet;
+    }
+
+    public static boolean debugItem() {
+        return instance.debug$item;
+    }
+
+    public static boolean debugFurniture() {
+        return instance.debug$furniture;
+    }
+
+    public static boolean debugResourcePack() {
+        return instance.debug$resource_pack;
     }
 
     public static boolean checkUpdate() {
@@ -422,11 +476,11 @@ public class Config {
         return instance.light_system$enable;
     }
 
-    public static float packMinVersion() {
+    public static MinecraftVersion packMinVersion() {
         return instance.resource_pack$supported_version$min;
     }
 
-    public static float packMaxVersion() {
+    public static MinecraftVersion packMaxVersion() {
         return instance.resource_pack$supported_version$max;
     }
 
@@ -452,10 +506,6 @@ public class Config {
 
     public static Set<Key> disabledVanillaRecipes() {
         return instance.recipe$disable_vanilla_recipes$list;
-    }
-
-    public static boolean nonItalic() {
-        return instance.item$non_italic_tag;
     }
 
     public static boolean restoreVanillaBlocks() {
@@ -484,6 +534,10 @@ public class Config {
 
     public static boolean kickOnDeclined() {
         return instance.resource_pack$delivery$kick_if_declined;
+    }
+
+    public static boolean kickOnFailedApply() {
+        return instance.resource_pack$delivery$kick_if_failed_to_apply;
     }
 
     public static Component resourcePackPrompt() {
@@ -570,8 +624,8 @@ public class Config {
         return instance.resource_pack$protection$obfuscation$resource_location$random_path$anti_unzip;
     }
 
-    public static int atlasAmount() {
-        return instance.resource_pack$protection$obfuscation$resource_location$random_atlas$amount;
+    public static int imagesPerCanvas() {
+        return instance.resource_pack$protection$obfuscation$resource_location$random_atlas$images_per_canvas;
     }
 
     public static boolean useDouble() {
@@ -690,6 +744,10 @@ public class Config {
         return instance.image$intercept_packets$item;
     }
 
+    public static boolean interceptAdvancement() {
+        return instance.image$intercept_packets$advancement;
+    }
+
     public static boolean predictBreaking() {
         return instance.block$predict_breaking;
     }
@@ -726,6 +784,10 @@ public class Config {
         return instance.chunk_system$cache_system;
     }
 
+    public static boolean addNonItalicTag() {
+        return instance.item$non_italic_tag;
+    }
+
     public static boolean fastInjection() {
         return instance.chunk_system$injection$use_fast_method;
     }
@@ -740,6 +802,34 @@ public class Config {
 
     public static boolean excludeShaders() {
         return instance.resource_pack$exclude_core_shaders;
+    }
+
+    public static String createOverlayFolderName(String version) {
+        return instance.resource_pack$overlay_format.replace("{version}", version);
+    }
+
+    public static Key sacrificedAssetId() {
+        return instance.equipment$sacrificed_vanilla_armor$asset_id;
+    }
+
+    public static Key sacrificedHumanoid() {
+        return instance.equipment$sacrificed_vanilla_armor$humanoid;
+    }
+
+    public static Key sacrificedHumanoidLeggings() {
+        return instance.equipment$sacrificed_vanilla_armor$humanoid_leggings;
+    }
+
+    public static String sacrificedVanillaArmorType() {
+        return instance.equipment$sacrificed_vanilla_armor$type;
+    }
+
+    public static boolean globalClientboundModel() {
+        return instance.item$client_bound_model;
+    }
+
+    public static List<String> recipeIngredientSources() {
+        return instance.recipe$ingredient_sources;
     }
 
     public YamlDocument loadOrCreateYamlData(String fileName) {

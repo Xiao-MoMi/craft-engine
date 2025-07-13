@@ -61,9 +61,8 @@ public class OneDriveHost implements ResourcePackHost {
     }
 
     public void readCacheFromDisk() {
-        Path cachePath = CraftEngine.instance().dataFolderPath().resolve("onedrive.cache");
-        if (!Files.exists(cachePath)) return;
-
+        Path cachePath = CraftEngine.instance().dataFolderPath().resolve("cache").resolve("onedrive.json");
+        if (!Files.exists(cachePath) || !Files.isRegularFile(cachePath)) return;
         try (InputStream is = Files.newInputStream(cachePath)) {
             Map<String, String> cache = GsonHelper.get().fromJson(
                     new InputStreamReader(is),
@@ -80,7 +79,7 @@ public class OneDriveHost implements ResourcePackHost {
             CraftEngine.instance().logger().info("[OneDrive] Loaded cached resource pack info");
         } catch (Exception e) {
             CraftEngine.instance().logger().warn(
-                    "[OneDrive] Failed to load cache from disk: " + e.getMessage());
+                    "[OneDrive] Failed to load cache" + cachePath, e);
         }
     }
 
@@ -91,9 +90,9 @@ public class OneDriveHost implements ResourcePackHost {
         cache.put("refresh-token-expires-in", String.valueOf(this.refreshToken.right().getTime()));
         cache.put("sha1", this.sha1);
         cache.put("file-id", this.fileId);
-
-        Path cachePath = CraftEngine.instance().dataFolderPath().resolve("onedrive.cache");
+        Path cachePath = CraftEngine.instance().dataFolderPath().resolve("cache").resolve("onedrive.json");
         try {
+            Files.createDirectories(cachePath.getParent());
             Files.writeString(
                     cachePath,
                     GsonHelper.get().toJson(cache),
@@ -102,7 +101,7 @@ public class OneDriveHost implements ResourcePackHost {
             );
         } catch (IOException e) {
             CraftEngine.instance().logger().warn(
-                    "[OneDrive] Failed to persist cache to disk: " + e.getMessage());
+                    "[OneDrive] Failed to persist cache", e);
         }
     }
 
@@ -230,7 +229,7 @@ public class OneDriveHost implements ResourcePackHost {
 
         @Override
         public ResourcePackHost create(Map<String, Object> arguments) {
-            boolean useEnv = (boolean) arguments.getOrDefault("use-environment-variables", false);
+            boolean useEnv = ResourceConfigUtils.getAsBoolean(arguments.getOrDefault("use-environment-variables", false), "use-environment-variables");
             String clientId = useEnv ? System.getenv("CE_ONEDRIVE_CLIENT_ID") : Optional.ofNullable(arguments.get("client-id")).map(String::valueOf).orElse(null);
             if (clientId == null || clientId.isEmpty()) {
                 throw new LocalizedException("warning.config.host.onedrive.missing_client_id");

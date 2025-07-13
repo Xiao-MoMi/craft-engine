@@ -1,7 +1,6 @@
 package net.momirealms.craftengine.core.util;
 
 import org.joml.Quaternionf;
-import org.joml.Vector3f;
 
 public class QuaternionUtils {
 
@@ -21,23 +20,17 @@ public class QuaternionUtils {
         return new Quaternionf(x, y, z, w);
     }
 
-    public static Vector3f toEulerAngle(Quaternionf quaternionf) {
-        float x = quaternionf.x;
-        float y = quaternionf.y;
-        float z = quaternionf.z;
-        float w = quaternionf.w;
-        float siny_cosp = 2 * (w * z + x * y);
-        float cosy_cosp = 1 - 2 * (y * y + z * z);
-        float yaw = (float) Math.atan2(siny_cosp, cosy_cosp);
-        float sinp = 2 * (w * y - z * x);
-        float pitch = (float) Math.asin(sinp);
-        float sinr_cosp = 2 * (w * x + y * z);
-        float cosr_cosp = 1 - 2 * (x * x + y * y);
-        float roll = (float) Math.atan2(sinr_cosp, cosr_cosp);
-        return new Vector3f(yaw, pitch, roll);
-    }
-
-    public static double quaternionToPitch(Quaternionf quaternionf) {
-        return 2 * Math.atan2(quaternionf.y, quaternionf.w);
+    public static Quaternionf toQuaternionf(float yaw, float pitch, float roll) {
+        float cy = MCUtils.cos(yaw * 0.5f);
+        float sy = MCUtils.sin(yaw * 0.5f);
+        float cp = MCUtils.cos(pitch * 0.5f);
+        float sp = MCUtils.sin(pitch * 0.5f);
+        float cr = MCUtils.cos(roll * 0.5f);
+        float sr = MCUtils.sin(roll * 0.5f);
+        float w = cr * cp * cy + sr * sp * sy;
+        float x = sr * cp * cy - cr * sp * sy;
+        float y = cr * sp * cy + sr * cp * sy;
+        float z = cr * cp * sy - sr * sp * cy;
+        return new Quaternionf(x, y, z, w);
     }
 }

@@ -4,7 +4,6 @@ import net.momirealms.craftengine.core.plugin.context.Condition;
 import net.momirealms.craftengine.core.plugin.context.condition.*;
 import net.momirealms.craftengine.core.plugin.locale.LocalizedResourceConfigException;
 import net.momirealms.craftengine.core.registry.BuiltInRegistries;
-import net.momirealms.craftengine.core.registry.Holder;
 import net.momirealms.craftengine.core.registry.Registries;
 import net.momirealms.craftengine.core.registry.WritableRegistry;
 import net.momirealms.craftengine.core.util.Key;
@@ -41,9 +40,8 @@ public class LootConditions {
     }
 
     public static void register(Key key, ConditionFactory<LootContext> factory) {
-        Holder.Reference<ConditionFactory<LootContext>> holder = ((WritableRegistry<ConditionFactory<LootContext>>) BuiltInRegistries.LOOT_CONDITION_FACTORY)
-                .registerForHolder(new ResourceKey<>(Registries.LOOT_CONDITION_FACTORY.location(), key));
-        holder.bindValue(factory);
+        ((WritableRegistry<ConditionFactory<LootContext>>) BuiltInRegistries.LOOT_CONDITION_FACTORY)
+                .register(ResourceKey.create(Registries.LOOT_CONDITION_FACTORY.location(), key), factory);
     }
 
     public static <T> Predicate<T> andConditions(List<? extends Predicate<T>> predicates) {

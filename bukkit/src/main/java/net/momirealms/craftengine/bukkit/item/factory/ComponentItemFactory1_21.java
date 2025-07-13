@@ -2,7 +2,7 @@ package net.momirealms.craftengine.bukkit.item.factory;
 
 import net.momirealms.craftengine.bukkit.item.ComponentItemWrapper;
 import net.momirealms.craftengine.bukkit.item.ComponentTypes;
-import net.momirealms.craftengine.core.item.JukeboxPlayable;
+import net.momirealms.craftengine.core.item.data.JukeboxPlayable;
 import net.momirealms.craftengine.core.plugin.CraftEngine;
 
 import java.util.Map;

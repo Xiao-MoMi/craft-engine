@@ -5,13 +5,15 @@ import net.momirealms.craftengine.core.util.Key;
 
 import java.util.Map;
 
-public class BlockSounds {
+public final class BlockSounds {
     /*
     Fall 0.5 0.75
-    Place 1, 0.8
-    Step 0.15, 1
+    Place 1 0.8
+    Step 0.15 1
     Hit 0.5 0.5
     Break 1 0.8
+    Land 0.3 1
+    Destroy 1 1
      */
     public static final SoundData EMPTY_SOUND = new SoundData(Key.of("minecraft:intentionally_empty"), SoundData.SoundValue.FIXED_1, SoundData.SoundValue.FIXED_1);
     public static final BlockSounds EMPTY = new BlockSounds(EMPTY_SOUND, EMPTY_SOUND, EMPTY_SOUND, EMPTY_SOUND, EMPTY_SOUND, EMPTY_SOUND, EMPTY_SOUND);

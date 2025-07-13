@@ -69,7 +69,7 @@ public class CommandFunction<CTX extends Context> extends AbstractConditionalFun
         public Function<CTX> create(Map<String, Object> arguments) {
             Object command = ResourceConfigUtils.requireNonNullOrThrow(ResourceConfigUtils.get(arguments, "command", "commands"), "warning.config.function.command.missing_command");
             List<TextProvider> commands = MiscUtils.getAsStringList(command).stream().map(TextProviders::fromString).toList();
-            boolean asPlayer = (boolean) arguments.getOrDefault("as-player", false);
+            boolean asPlayer = ResourceConfigUtils.getAsBoolean(arguments.getOrDefault("as-player", false), "as-player");
             return new CommandFunction<>(getPredicates(arguments), PlayerSelectors.fromObject(arguments.get("target"), conditionFactory()), commands, asPlayer);
         }
     }

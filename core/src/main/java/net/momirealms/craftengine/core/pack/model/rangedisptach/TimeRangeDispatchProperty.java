@@ -8,6 +8,7 @@ import java.util.Map;
 
 public class TimeRangeDispatchProperty implements RangeDispatchProperty {
     public static final Factory FACTORY = new Factory();
+    public static final Reader READER = new Reader();
     private final String source;
     private final boolean wobble;
 
@@ -31,12 +32,20 @@ public class TimeRangeDispatchProperty implements RangeDispatchProperty {
     }
 
     public static class Factory implements RangeDispatchPropertyFactory {
-
         @Override
         public RangeDispatchProperty create(Map<String, Object> arguments) {
             String sourceObj = ResourceConfigUtils.requireNonEmptyStringOrThrow(arguments.get("source"), "warning.config.item.model.range_dispatch.time.missing_source");
-            boolean wobble = (boolean) arguments.getOrDefault("wobble", true);
+            boolean wobble = ResourceConfigUtils.getAsBoolean(arguments.getOrDefault("wobble", true), "wobble");
             return new TimeRangeDispatchProperty(sourceObj, wobble);
+        }
+    }
+
+    public static class Reader implements RangeDispatchPropertyReader {
+        @Override
+        public RangeDispatchProperty read(JsonObject json) {
+            String source = json.get("source").getAsString();
+            boolean wobble = !json.has("wobble") || json.get("wobble").getAsBoolean();
+            return new TimeRangeDispatchProperty(source, wobble);
         }
     }
 }

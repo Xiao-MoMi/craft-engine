@@ -8,9 +8,10 @@ import java.util.Map;
 
 public class UseCycleRangeDispatchProperty implements RangeDispatchProperty {
     public static final Factory FACTORY = new Factory();
-    private final int period;
+    public static final Reader READER = new Reader();
+    private final float period;
 
-    public UseCycleRangeDispatchProperty(int period) {
+    public UseCycleRangeDispatchProperty(float period) {
         this.period = period;
     }
 
@@ -26,10 +27,17 @@ public class UseCycleRangeDispatchProperty implements RangeDispatchProperty {
     }
 
     public static class Factory implements RangeDispatchPropertyFactory {
-
         @Override
         public RangeDispatchProperty create(Map<String, Object> arguments) {
-            int period = ResourceConfigUtils.getAsInt(arguments.getOrDefault("period", 0), "period");
+            float period = ResourceConfigUtils.getAsFloat(arguments.getOrDefault("period", 0), "period");
+            return new UseCycleRangeDispatchProperty(period);
+        }
+    }
+
+    public static class Reader implements RangeDispatchPropertyReader {
+        @Override
+        public RangeDispatchProperty read(JsonObject json) {
+            float period = json.has("period") ? json.get("period").getAsFloat() : 1.0f;
             return new UseCycleRangeDispatchProperty(period);
         }
     }

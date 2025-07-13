@@ -3,9 +3,14 @@ package net.momirealms.craftengine.core.item;
 import com.google.gson.JsonElement;
 import net.kyori.adventure.text.Component;
 import net.momirealms.craftengine.core.item.behavior.ItemBehavior;
+import net.momirealms.craftengine.core.item.data.Enchantment;
+import net.momirealms.craftengine.core.item.data.FireworkExplosion;
+import net.momirealms.craftengine.core.item.data.JukeboxPlayable;
+import net.momirealms.craftengine.core.item.data.Trim;
 import net.momirealms.craftengine.core.item.modifier.ItemDataModifier;
 import net.momirealms.craftengine.core.item.setting.EquipmentData;
 import net.momirealms.craftengine.core.util.Key;
+import net.momirealms.craftengine.core.util.UniqueKey;
 import net.momirealms.sparrow.nbt.Tag;
 
 import java.util.List;
@@ -20,6 +25,8 @@ import java.util.Optional;
  */
 public interface Item<I> {
 
+    boolean isEmpty();
+
     Optional<CustomItem<I>> getCustomItem();
 
     Optional<List<ItemBehavior>> getItemBehavior();
@@ -31,6 +38,8 @@ public interface Item<I> {
     Key id();
 
     Key vanillaId();
+
+    UniqueKey recipeIngredientId();
 
     Optional<Key> customId();
 
@@ -63,6 +72,10 @@ public interface Item<I> {
     Item<I> dyedColor(Integer data);
 
     Optional<Integer> dyedColor();
+
+    Item<I> fireworkExplosion(FireworkExplosion explosion);
+
+    Optional<FireworkExplosion> fireworkExplosion();
 
     Item<I> customNameJson(String displayName);
 
@@ -112,7 +125,6 @@ public interface Item<I> {
 
     Item<I> equippable(EquipmentData equipmentData);
 
-
     Item<I> unbreakable(boolean unbreakable);
 
     boolean unbreakable();
@@ -123,17 +135,15 @@ public interface Item<I> {
 
     Item<I> setEnchantments(List<Enchantment> enchantments);
 
-    Item<I> addEnchantment(Enchantment enchantment);
-
     Item<I> setStoredEnchantments(List<Enchantment> enchantments);
-
-    Item<I> addStoredEnchantment(Enchantment enchantment);
 
     Item<I> itemFlags(List<String> flags);
 
     Object getJavaTag(Object... path);
 
-    Tag getNBTTag(Object... path);
+    Tag getTag(Object... path);
+
+    Object getExactTag(Object... path);
 
     Item<I> setTag(Object value, Object... path);
 
@@ -145,13 +155,17 @@ public interface Item<I> {
 
     void removeComponent(Object type);
 
+    void setExactComponent(Object type, Object value);
+
     Object getExactComponent(Object type);
 
     Object getJavaComponent(Object type);
 
     JsonElement getJsonComponent(Object type);
 
-    Tag getNBTComponent(Object type);
+    Tag getSparrowNBTComponent(Object type);
+
+    Object getNBTComponent(Object type);
 
     void setComponent(Object type, Object value);
 
@@ -164,8 +178,6 @@ public interface Item<I> {
     void resetComponent(Object type);
 
     I getItem();
-
-    I load();
 
     int maxStackSize();
 

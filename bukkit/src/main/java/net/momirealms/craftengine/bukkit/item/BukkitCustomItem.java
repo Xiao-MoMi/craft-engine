@@ -8,8 +8,8 @@ import net.momirealms.craftengine.core.item.modifier.ItemDataModifier;
 import net.momirealms.craftengine.core.plugin.context.PlayerOptionalContext;
 import net.momirealms.craftengine.core.plugin.context.event.EventTrigger;
 import net.momirealms.craftengine.core.plugin.context.function.Function;
-import net.momirealms.craftengine.core.registry.Holder;
 import net.momirealms.craftengine.core.util.Key;
+import net.momirealms.craftengine.core.util.UniqueKey;
 import org.bukkit.inventory.ItemStack;
 
 import java.util.ArrayList;
@@ -21,7 +21,7 @@ public class BukkitCustomItem extends AbstractCustomItem<ItemStack> {
     private final Object item;
     private final Object clientItem;
 
-    public BukkitCustomItem(Holder<Key> id, Object item, Object clientItem, Key materialKey, Key clientBoundMaterialKey,
+    public BukkitCustomItem(UniqueKey id, Object item, Object clientItem, Key materialKey, Key clientBoundMaterialKey,
                             List<ItemBehavior> behaviors,
                             List<ItemDataModifier<ItemStack>> modifiers, List<ItemDataModifier<ItemStack>> clientBoundModifiers,
                             ItemSettings settings,
@@ -38,7 +38,7 @@ public class BukkitCustomItem extends AbstractCustomItem<ItemStack> {
         for (ItemDataModifier<ItemStack> modifier : this.modifiers) {
             modifier.apply(wrapped, context);
         }
-        return wrapped.load();
+        return wrapped.getItem();
     }
 
     @Override
@@ -48,7 +48,7 @@ public class BukkitCustomItem extends AbstractCustomItem<ItemStack> {
         for (ItemDataModifier<ItemStack> modifier : dataModifiers()) {
             modifier.apply(wrapped, context);
         }
-        return BukkitCraftEngine.instance().itemManager().wrap(wrapped.load());
+        return BukkitCraftEngine.instance().itemManager().wrap(wrapped.getItem());
     }
 
     public Object clientItem() {
@@ -64,7 +64,7 @@ public class BukkitCustomItem extends AbstractCustomItem<ItemStack> {
     }
 
     public static class BuilderImpl implements Builder<ItemStack> {
-        private Holder<Key> id;
+        private UniqueKey id;
         private Key itemKey;
         private final Object item;
         private Key clientBoundItemKey;
@@ -81,7 +81,7 @@ public class BukkitCustomItem extends AbstractCustomItem<ItemStack> {
         }
 
         @Override
-        public Builder<ItemStack> id(Holder<Key> id) {
+        public Builder<ItemStack> id(UniqueKey id) {
             this.id = id;
             return this;
         }
@@ -149,6 +149,7 @@ public class BukkitCustomItem extends AbstractCustomItem<ItemStack> {
         @Override
         public CustomItem<ItemStack> build() {
             this.modifiers.addAll(this.settings.modifiers());
+            this.clientBoundModifiers.addAll(this.settings.clientBoundModifiers());
             return new BukkitCustomItem(this.id, this.item, this.clientBoundItem, this.itemKey, this.clientBoundItemKey, List.copyOf(this.behaviors),
                     List.copyOf(this.modifiers), List.copyOf(this.clientBoundModifiers), this.settings, this.events);
         }

@@ -60,6 +60,11 @@ public interface BlockStateWrapper {
         }
 
         @Override
+        public DelegatingBlockState handle() {
+            return (DelegatingBlockState) super.handle();
+        }
+
+        @Override
         public boolean isVanillaBlock() {
             return false;
         }

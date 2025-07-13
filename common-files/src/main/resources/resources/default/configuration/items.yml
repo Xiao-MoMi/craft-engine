@@ -13,8 +13,7 @@ items#gui_head:
             translation: 0,8,0
             scale: 2,2,2
       model:
-        type: minecraft:head
-        kind: player
+        type: minecraft:player_head
   default:gui_head_size_4:
     material: player_head
     custom-model-data: 1001
@@ -29,8 +28,7 @@ items#gui_head:
             translation: 9,7,0
             scale: 4,4,4
       model:
-        type: minecraft:head
-        kind: player
+        type: minecraft:player_head
 items#topaz_gears:
   default:topaz_rod:
     material: fishing_rod
@@ -155,27 +153,6 @@ items#topaz_gears:
       template: default:model/simplified_handheld
       arguments:
         path: minecraft:item/custom/topaz_sword
-  $$>=1.21.2#armor:
-    default:topaz_helmet:
-      template: default:armor/topaz
-      arguments:
-        part: helmet
-        slot: head
-    default:topaz_chestplate:
-      template: default:armor/topaz
-      arguments:
-        part: chestplate
-        slot: chest
-    default:topaz_leggings:
-      template: default:armor/topaz
-      arguments:
-        part: leggings
-        slot: legs
-    default:topaz_boots:
-      template: default:armor/topaz
-      arguments:
-        part: boots
-        slot: feet
   $$>=1.21.4#topaz_trident:
     default:topaz_trident:
       material: trident
@@ -290,6 +267,34 @@ items#topaz_gears:
       tints:
         - type: minecraft:dye
           default: -6265536
+  default:topaz_helmet:
+    template:
+      - default:armor/topaz
+    arguments:
+      part: helmet
+      slot: head
+      material: topaz
+  default:topaz_chestplate:
+    template:
+      - default:armor/topaz
+    arguments:
+      part: chestplate
+      slot: chest
+      material: topaz
+  default:topaz_leggings:
+    template:
+      - default:armor/topaz
+    arguments:
+      part: leggings
+      slot: legs
+      material: topaz
+  default:topaz_boots:
+    template:
+      - default:armor/topaz
+    arguments:
+      part: boots
+      slot: feet
+      material: topaz
 templates:
   default:armor/topaz:
     material: chainmail_${part}
@@ -300,122 +305,25 @@ templates:
     settings:
       tags:
         - default:topaz_tools
-      equippable:
-        slot: ${slot}
-        asset-id: topaz
-        humanoid: minecraft:topaz
-        humanoid-leggings: minecraft:topaz
+        - minecraft:trimmable_armor
+      equipment:
+        asset-id: default:topaz
+        $$>=1.21.2:
+          slot: ${slot}
     model:
-      type: minecraft:select
-      property: minecraft:trim_material
-      fallback:
-        type: minecraft:model
-        path: minecraft:item/custom/topaz_${part}
-        generation:
-          parent: minecraft:item/generated
-          textures:
-            layer0: minecraft:item/custom/topaz_${part}
-      cases:
-        - when: minecraft:quartz
-          model:
-            type: minecraft:model
-            path: minecraft:item/custom/topaz_${part}_quartz_trim
-            generation:
-              parent: minecraft:item/generated
-              textures:
-                layer0: minecraft:item/custom/topaz_${part}
-                layer1: minecraft:trims/items/${part}_trim_quartz
-        - when: minecraft:iron
-          model:
-            type: minecraft:model
-            path: minecraft:item/custom/topaz_${part}_iron_trim
-            generation:
-              parent: minecraft:item/generated
-              textures:
-                layer0: minecraft:item/custom/topaz_${part}
-                layer1: minecraft:trims/items/${part}_trim_iron
-        - when: minecraft:netherite
-          model:
-            type: minecraft:model
-            path: minecraft:item/custom/topaz_${part}_netherite_trim
-            generation:
-              parent: minecraft:item/generated
-              textures:
-                layer0: minecraft:item/custom/topaz_${part}
-                layer1: minecraft:trims/items/${part}_trim_netherite
-        - when: minecraft:redstone
-          model:
-            type: minecraft:model
-            path: minecraft:item/custom/topaz_${part}_redstone_trim
-            generation:
-              parent: minecraft:item/generated
-              textures:
-                layer0: minecraft:item/custom/topaz_${part}
-                layer1: minecraft:trims/items/${part}_trim_redstone
-        - when: minecraft:copper
-          model:
-            type: minecraft:model
-            path: minecraft:item/custom/topaz_${part}_copper_trim
-            generation:
-              parent: minecraft:item/generated
-              textures:
-                layer0: minecraft:item/custom/topaz_${part}
-                layer1: minecraft:trims/items/${part}_trim_copper
-        - when: minecraft:gold
-          model:
-            type: minecraft:model
-            path: minecraft:item/custom/topaz_${part}_gold_trim
-            generation:
-              parent: minecraft:item/generated
-              textures:
-                layer0: minecraft:item/custom/topaz_${part}
-                layer1: minecraft:trims/items/${part}_trim_gold
-        - when: minecraft:emerald
-          model:
-            type: minecraft:model
-            path: minecraft:item/custom/topaz_${part}_emerald_trim
-            generation:
-              parent: minecraft:item/generated
-              textures:
-                layer0: minecraft:item/custom/topaz_${part}
-                layer1: minecraft:trims/items/${part}_trim_emerald
-        - when: minecraft:diamond
-          model:
-            type: minecraft:model
-            path: minecraft:item/custom/topaz_${part}_diamond_trim
-            generation:
-              parent: minecraft:item/generated
-              textures:
-                layer0: minecraft:item/custom/topaz_${part}
-                layer1: minecraft:trims/items/${part}_trim_diamond
-        - when: minecraft:lapis
-          model:
-            type: minecraft:model
-            path: minecraft:item/custom/topaz_${part}_lapis_trim
-            generation:
-              parent: minecraft:item/generated
-              textures:
-                layer0: minecraft:item/custom/topaz_${part}
-                layer1: minecraft:trims/items/${part}_trim_lapis
-        - when: minecraft:amethyst
-          model:
-            type: minecraft:model
-            path: minecraft:item/custom/topaz_${part}_amethyst_trim
-            generation:
-              parent: minecraft:item/generated
-              textures:
-                layer0: minecraft:item/custom/topaz_${part}
-                layer1: minecraft:trims/items/${part}_trim_amethyst
-        - when: minecraft:resin
-          model:
-            type: minecraft:model
-            path: minecraft:item/custom/topaz_${part}_resin_trim
-            generation:
-              parent: minecraft:item/generated
-              textures:
-                layer0: minecraft:item/custom/topaz_${part}
-                layer1: minecraft:trims/items/${part}_trim_resin
-recipes#topaz_gears:
+      template: default:model/armor_trim
+equipments#topaz:
+  $$>=1.21.2:
+    default:topaz:
+      type: component
+      humanoid: minecraft:topaz
+      humanoid-leggings: minecraft:topaz
+  $$<1.21.2:
+    default:topaz:
+      type: trim
+      humanoid: minecraft:entity/equipment/humanoid/topaz
+      humanoid-leggings: minecraft:entity/equipment/humanoid_leggings/topaz
+recipes#topaz:
   default:topaz_shovel:
     type: shaped
     pattern:
@@ -476,49 +384,48 @@ recipes#topaz_gears:
     result:
       id: default:topaz_pickaxe
       count: 1
-  $$>=1.21.2#armor:
-    default:topaz_helmet:
-      type: shaped
-      pattern:
-        - AAA
-        - A A
-      ingredients:
-        A: default:topaz
-      result:
-        id: default:topaz_helmet
-        count: 1
-    default:topaz_chestplate:
-      type: shaped
-      pattern:
-        - A A
-        - AAA
-        - AAA
-      ingredients:
-        A: default:topaz
-      result:
-        id: default:topaz_chestplate
-        count: 1
-    default:topaz_leggings:
-      type: shaped
-      pattern:
-        - AAA
-        - A A
-        - A A
-      ingredients:
-        A: default:topaz
-      result:
-        id: default:topaz_leggings
-        count: 1
-    default:topaz_boots:
-      type: shaped
-      pattern:
-        - A A
-        - A A
-      ingredients:
-        A: default:topaz
-      result:
-        id: default:topaz_boots
-        count: 1
+  default:topaz_helmet:
+    type: shaped
+    pattern:
+      - AAA
+      - A A
+    ingredients:
+      A: default:topaz
+    result:
+      id: default:topaz_helmet
+      count: 1
+  default:topaz_chestplate:
+    type: shaped
+    pattern:
+      - A A
+      - AAA
+      - AAA
+    ingredients:
+      A: default:topaz
+    result:
+      id: default:topaz_chestplate
+      count: 1
+  default:topaz_leggings:
+    type: shaped
+    pattern:
+      - AAA
+      - A A
+      - A A
+    ingredients:
+      A: default:topaz
+    result:
+      id: default:topaz_leggings
+      count: 1
+  default:topaz_boots:
+    type: shaped
+    pattern:
+      - A A
+      - A A
+    ingredients:
+      A: default:topaz
+    result:
+      id: default:topaz_boots
+      count: 1
   default:topaz_bow:
     type: smithing_transform
     base: minecraft:bow

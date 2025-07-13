@@ -7,6 +7,7 @@ import java.util.Map;
 
 public class SimpleConditionProperty implements ConditionProperty {
     public static final Factory FACTORY = new Factory();
+    public static final Reader READER = new Reader();
     private final Key type;
 
     public SimpleConditionProperty(Key type) {
@@ -28,6 +29,13 @@ public class SimpleConditionProperty implements ConditionProperty {
         public ConditionProperty create(Map<String, Object> arguments) {
             Key type = Key.of(arguments.get("property").toString());
             return new SimpleConditionProperty(type);
+        }
+    }
+
+    public static class Reader implements ConditionPropertyReader {
+        @Override
+        public ConditionProperty read(JsonObject json) {
+            return new SimpleConditionProperty(Key.of(json.get("property").getAsString()));
         }
     }
 }

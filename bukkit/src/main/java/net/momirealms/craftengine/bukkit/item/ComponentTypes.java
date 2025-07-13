@@ -1,6 +1,8 @@
 package net.momirealms.craftengine.bukkit.item;
 
 import net.momirealms.craftengine.bukkit.nms.FastNMS;
+import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.MBuiltInRegistries;
+import net.momirealms.craftengine.bukkit.util.KeyUtils;
 import net.momirealms.craftengine.core.item.ComponentKeys;
 import net.momirealms.craftengine.core.util.Key;
 import net.momirealms.craftengine.core.util.VersionHelper;
@@ -27,11 +29,12 @@ public class ComponentTypes {
     public static final Object PROFILE = getComponentType(ComponentKeys.PROFILE);
     public static final Object DYED_COLOR = getComponentType(ComponentKeys.DYED_COLOR);
     public static final Object DEATH_PROTECTION = getComponentType(ComponentKeys.DEATH_PROTECTION);
+    public static final Object FIREWORK_EXPLOSION = getComponentType(ComponentKeys.FIREWORK_EXPLOSION);
 
     private ComponentTypes() {}
 
     private static Object getComponentType(Key key) {
         if (!VersionHelper.isOrAbove1_20_5()) return null;
-        return FastNMS.INSTANCE.getComponentType(key.namespace(), key.value());
+        return FastNMS.INSTANCE.method$Registry$getValue(MBuiltInRegistries.DATA_COMPONENT_TYPE, KeyUtils.toResourceLocation(key));
     }
 }

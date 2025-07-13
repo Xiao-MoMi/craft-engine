@@ -8,6 +8,7 @@ import java.util.Map;
 
 public class BlockStateSelectProperty implements SelectProperty {
     public static final Factory FACTORY = new Factory();
+    public static final Reader READER = new Reader();
     private final String blockStateProperty;
 
     public BlockStateSelectProperty(String blockStateProperty) {
@@ -26,10 +27,17 @@ public class BlockStateSelectProperty implements SelectProperty {
     }
 
     public static class Factory implements SelectPropertyFactory {
-
         @Override
         public SelectProperty create(Map<String, Object> arguments) {
             String property = ResourceConfigUtils.requireNonEmptyStringOrThrow(arguments.get("block-state-property"), "warning.config.item.model.select.block_state.missing_property");
+            return new BlockStateSelectProperty(property);
+        }
+    }
+
+    public static class Reader implements SelectPropertyReader {
+        @Override
+        public SelectProperty read(JsonObject json) {
+            String property = json.get("block_state_property").getAsString();
             return new BlockStateSelectProperty(property);
         }
     }

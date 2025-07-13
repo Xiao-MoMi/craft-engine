@@ -3,9 +3,7 @@ package net.momirealms.craftengine.core.entity.furniture;
 import net.momirealms.craftengine.core.entity.Billboard;
 import net.momirealms.craftengine.core.entity.ItemDisplayContext;
 import net.momirealms.craftengine.core.util.Key;
-import net.momirealms.craftengine.core.world.WorldPosition;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 import org.joml.Quaternionf;
 import org.joml.Vector3f;
 
@@ -28,7 +26,7 @@ public interface FurnitureElement {
 
     Vector3f position();
 
-    void initPackets(int entityId, @NotNull WorldPosition position, @NotNull Quaternionf conjugated, @Nullable Integer dyedColor, Consumer<Object> packets);
+    void initPackets(Furniture furniture, int entityId, @NotNull Quaternionf conjugated, Consumer<Object> packets);
 
     interface Builder {
 

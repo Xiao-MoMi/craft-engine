@@ -355,10 +355,12 @@ public class BlockSettings {
         return this;
     }
 
+    @FunctionalInterface
     public interface Modifier {
 
         void apply(BlockSettings settings);
 
+        @FunctionalInterface
         interface Factory {
 
             Modifier createModifier(Object value);
@@ -386,11 +388,11 @@ public class BlockSettings {
                 return settings -> settings.resistance(floatValue);
             }));
             registerFactory("is-randomly-ticking", (value -> {
-                boolean booleanValue = (boolean) value;
+                boolean booleanValue = ResourceConfigUtils.getAsBoolean(value, "is-randomly-ticking");
                 return settings -> settings.isRandomlyTicking(booleanValue);
             }));
             registerFactory("propagate-skylight", (value -> {
-                boolean booleanValue = (boolean) value;
+                boolean booleanValue = ResourceConfigUtils.getAsBoolean(value, "propagate-skylight");
                 return settings -> settings.propagatesSkylightDown(booleanValue ? Tristate.TRUE : Tristate.FALSE);
             }));
             registerFactory("push-reaction", (value -> {
@@ -402,7 +404,7 @@ public class BlockSettings {
                 return settings -> settings.mapColor(MapColor.get(intValue));
             }));
             registerFactory("burnable", (value -> {
-                boolean booleanValue = (boolean) value;
+                boolean booleanValue = ResourceConfigUtils.getAsBoolean(value, "burnable");
                 return settings -> settings.burnable(booleanValue);
             }));
             registerFactory("instrument", (value -> {
@@ -426,19 +428,19 @@ public class BlockSettings {
                 return settings -> settings.fireSpreadChance(intValue);
             }));
             registerFactory("replaceable", (value -> {
-                boolean booleanValue = (boolean) value;
+                boolean booleanValue = ResourceConfigUtils.getAsBoolean(value, "replaceable");
                 return settings -> settings.replaceable(booleanValue);
             }));
             registerFactory("is-redstone-conductor", (value -> {
-                boolean booleanValue = (boolean) value;
+                boolean booleanValue = ResourceConfigUtils.getAsBoolean(value, "is-redstone-conductor");
                 return settings -> settings.isRedstoneConductor(booleanValue);
             }));
             registerFactory("is-suffocating", (value -> {
-                boolean booleanValue = (boolean) value;
+                boolean booleanValue = ResourceConfigUtils.getAsBoolean(value, "is-suffocating");
                 return settings -> settings.isSuffocating(booleanValue);
             }));
             registerFactory("is-view-blocking", (value -> {
-                boolean booleanValue = (boolean) value;
+                boolean booleanValue = ResourceConfigUtils.getAsBoolean(value, "is-view-blocking");
                 return settings -> settings.isViewBlocking(booleanValue);
             }));
             registerFactory("sounds", (value -> {
@@ -446,11 +448,11 @@ public class BlockSettings {
                 return settings -> settings.sounds(BlockSounds.fromMap(soundMap));
             }));
             registerFactory("fluid-state", (value -> {
-                String state = (String) value;
+                String state = value.toString();
                 return settings -> settings.fluidState(state.equals("water"));
             }));
             registerFactory("can-occlude", (value -> {
-                boolean booleanValue = (boolean) value;
+                boolean booleanValue = ResourceConfigUtils.getAsBoolean(value, "can-occlude");
                 return settings -> settings.canOcclude(booleanValue ? Tristate.TRUE : Tristate.FALSE);
             }));
             registerFactory("correct-tools", (value -> {
@@ -458,15 +460,15 @@ public class BlockSettings {
                 return settings -> settings.correctTools(tools.stream().map(Key::of).collect(Collectors.toSet()));
             }));
             registerFactory("require-correct-tools", (value -> {
-                boolean booleanValue = (boolean) value;
+                boolean booleanValue = ResourceConfigUtils.getAsBoolean(value, "require-correct-tools");
                 return settings -> settings.requireCorrectTool(booleanValue);
             }));
             registerFactory("respect-tool-component", (value -> {
-                boolean booleanValue = (boolean) value;
+                boolean booleanValue = ResourceConfigUtils.getAsBoolean(value, "respect-tool-component");
                 return settings -> settings.respectToolComponent(booleanValue);
             }));
             registerFactory("use-shape-for-light-occlusion", (value -> {
-                boolean booleanValue = (boolean) value;
+                boolean booleanValue = ResourceConfigUtils.getAsBoolean(value, "use-shape-for-light-occlusion");
                 return settings -> settings.useShapeForLightOcclusion(booleanValue ? Tristate.TRUE : Tristate.FALSE);
             }));
             registerFactory("incorrect-tool-dig-speed", (value -> {

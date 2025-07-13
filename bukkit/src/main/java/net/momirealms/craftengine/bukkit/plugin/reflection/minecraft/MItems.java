@@ -1,25 +1,22 @@
 package net.momirealms.craftengine.bukkit.plugin.reflection.minecraft;
 
 import net.momirealms.craftengine.bukkit.nms.FastNMS;
-import net.momirealms.craftengine.bukkit.plugin.reflection.ReflectionInitException;
 
 public final class MItems {
     private MItems() {}
 
     public static final Object AIR;
     public static final Object WATER_BUCKET;
+    public static final Object BARRIER;
 
-    private static Object getById(String id) throws ReflectiveOperationException {
+    private static Object getById(String id) {
         Object rl = FastNMS.INSTANCE.method$ResourceLocation$fromNamespaceAndPath("minecraft", id);
-        return CoreReflections.method$Registry$get.invoke(MBuiltInRegistries.ITEM, rl);
+        return FastNMS.INSTANCE.method$Registry$getValue(MBuiltInRegistries.ITEM, rl);
     }
 
     static {
-        try {
-            AIR = getById("air");
-            WATER_BUCKET = getById("water_bucket");
-        } catch (ReflectiveOperationException e) {
-            throw new ReflectionInitException("Failed to init Items", e);
-        }
+        AIR = getById("air");
+        WATER_BUCKET = getById("water_bucket");
+        BARRIER = getById("barrier");
     }
 }

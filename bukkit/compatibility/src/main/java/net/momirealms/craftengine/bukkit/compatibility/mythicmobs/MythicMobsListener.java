@@ -20,7 +20,6 @@ public class MythicMobsListener implements Listener {
     public void onMythicDropLoad(MythicDropLoadEvent event)	{
         if (!event.getDropName().equalsIgnoreCase("craftengine")) return;
         String argument = event.getArgument();
-        plugin.debug(() -> "[MM调试] " + argument);
         Key itemId = Key.of(argument);
         this.plugin.itemManager().getCustomItem(itemId).ifPresent(customItem -> {
             String line = event.getContainer().getConfigLine();

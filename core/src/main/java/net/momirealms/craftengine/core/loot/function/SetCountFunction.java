@@ -43,7 +43,7 @@ public class SetCountFunction<T> extends AbstractLootConditionalFunction<T> {
         @Override
         public LootFunction<A> create(Map<String, Object> arguments) {
             Object value = ResourceConfigUtils.requireNonNullOrThrow(arguments.get("count"), "warning.config.loot_table.function.set_count.missing_count");
-            boolean add = (boolean) arguments.getOrDefault("add", false);
+            boolean add = ResourceConfigUtils.getAsBoolean(arguments.getOrDefault("add", false), "add");
             List<Condition<LootContext>> conditions = Optional.ofNullable(arguments.get("conditions"))
                     .map(it -> LootConditions.fromMapList((List<Map<String, Object>>) it))
                     .orElse(Collections.emptyList());

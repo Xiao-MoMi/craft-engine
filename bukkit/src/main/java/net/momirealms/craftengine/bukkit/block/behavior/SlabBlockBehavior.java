@@ -1,6 +1,5 @@
 package net.momirealms.craftengine.bukkit.block.behavior;
 
-import net.momirealms.craftengine.bukkit.block.BukkitBlockManager;
 import net.momirealms.craftengine.bukkit.nms.FastNMS;
 import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.CoreReflections;
 import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.MFluids;
@@ -17,10 +16,7 @@ import net.momirealms.craftengine.core.item.Item;
 import net.momirealms.craftengine.core.item.behavior.BlockBoundItemBehavior;
 import net.momirealms.craftengine.core.item.behavior.ItemBehavior;
 import net.momirealms.craftengine.core.item.context.BlockPlaceContext;
-import net.momirealms.craftengine.core.util.Direction;
-import net.momirealms.craftengine.core.util.Key;
-import net.momirealms.craftengine.core.util.ResourceConfigUtils;
-import net.momirealms.craftengine.core.util.VersionHelper;
+import net.momirealms.craftengine.core.util.*;
 import net.momirealms.craftengine.core.world.BlockPos;
 import org.bukkit.inventory.ItemStack;
 
@@ -42,7 +38,7 @@ public class SlabBlockBehavior extends BukkitBlockBehavior {
     public boolean canBeReplaced(BlockPlaceContext context, ImmutableBlockState state) {
         SlabType type = state.get(this.typeProperty);
         Item<ItemStack> item = (Item<ItemStack>) context.getItem();
-        if (type == SlabType.DOUBLE || item == null) return false;
+        if (type == SlabType.DOUBLE || ItemUtils.isEmpty(item)) return false;
         Optional<CustomItem<ItemStack>> itemInHand = item.getCustomItem();
         if (itemInHand.isEmpty()) return false;
         CustomItem<ItemStack> customItem = itemInHand.get();
@@ -70,7 +66,7 @@ public class SlabBlockBehavior extends BukkitBlockBehavior {
                 blockState = blockState.with(super.waterloggedProperty, false);
             return blockState.with(this.typeProperty, SlabType.DOUBLE);
         } else {
-            Object fluidState = FastNMS.INSTANCE.method$Level$getFluidState(context.getLevel().serverWorld(), LocationUtils.toBlockPos(clickedPos));
+            Object fluidState = FastNMS.INSTANCE.method$BlockGetter$getFluidState(context.getLevel().serverWorld(), LocationUtils.toBlockPos(clickedPos));
             if (super.waterloggedProperty != null)
                 state = state.with(super.waterloggedProperty, FastNMS.INSTANCE.method$FluidState$getType(fluidState) == MFluids.WATER);
             Direction clickedFace = context.getClickedFace();
@@ -81,27 +77,25 @@ public class SlabBlockBehavior extends BukkitBlockBehavior {
     @Override
     public boolean placeLiquid(Object thisBlock, Object[] args, Callable<Object> superMethod) {
         Object blockState = args[2];
-        ImmutableBlockState immutableBlockState = BukkitBlockManager.instance().getImmutableBlockState(BlockStateUtils.blockStateToId(blockState));
-        if (immutableBlockState == null || immutableBlockState.isEmpty()) return false;
-        return immutableBlockState.get(this.typeProperty) != SlabType.DOUBLE && super.placeLiquid(thisBlock, args, superMethod);
+        Optional<ImmutableBlockState> optionalCustomState = BlockStateUtils.getOptionalCustomBlockState(blockState);
+        return optionalCustomState.filter(state -> state.get(this.typeProperty) != SlabType.DOUBLE && super.placeLiquid(thisBlock, args, superMethod)).isPresent();
     }
 
     @Override
     public boolean canPlaceLiquid(Object thisBlock, Object[] args, Callable<Object> superMethod) {
         Object blockState = VersionHelper.isOrAbove1_20_2() ? args[3] : args[2];
-        ImmutableBlockState immutableBlockState = BukkitBlockManager.instance().getImmutableBlockState(BlockStateUtils.blockStateToId(blockState));
-        if (immutableBlockState == null || immutableBlockState.isEmpty()) return false;
-        return immutableBlockState.get(this.typeProperty) != SlabType.DOUBLE && super.canPlaceLiquid(thisBlock, args, superMethod);
+        Optional<ImmutableBlockState> optionalCustomState = BlockStateUtils.getOptionalCustomBlockState(blockState);
+        return optionalCustomState.filter(state -> state.get(this.typeProperty) != SlabType.DOUBLE && super.canPlaceLiquid(thisBlock, args, superMethod)).isPresent();
     }
 
     @Override
     public Object updateShape(Object thisBlock, Object[] args, Callable<Object> superMethod) throws Exception {
         Object blockState = args[0];
         if (super.waterloggedProperty == null) return blockState;
-        ImmutableBlockState immutableBlockState = BukkitBlockManager.instance().getImmutableBlockState(BlockStateUtils.blockStateToId(blockState));
-        if (immutableBlockState == null || immutableBlockState.isEmpty()) return blockState;
-        if (immutableBlockState.get(super.waterloggedProperty)) {
-            FastNMS.INSTANCE.method$LevelAccessor$scheduleFluidTick(VersionHelper.isOrAbove1_21_2() ? args[2] : args[3], VersionHelper.isOrAbove1_21_2() ? args[3] : args[4], MFluids.WATER, 5);
+        Optional<ImmutableBlockState> optionalCustomState = BlockStateUtils.getOptionalCustomBlockState(blockState);
+        if (optionalCustomState.isEmpty()) return blockState;
+        if (optionalCustomState.get().get(super.waterloggedProperty)) {
+            FastNMS.INSTANCE.method$ScheduledTickAccess$scheduleFluidTick(VersionHelper.isOrAbove1_21_2() ? args[2] : args[3], VersionHelper.isOrAbove1_21_2() ? args[3] : args[4], MFluids.WATER, 5);
         }
         return blockState;
     }
@@ -110,10 +104,10 @@ public class SlabBlockBehavior extends BukkitBlockBehavior {
     public boolean isPathFindable(Object thisBlock, Object[] args, Callable<Object> superMethod) {
         Object type = VersionHelper.isOrAbove1_20_5() ? args[1] : args[3];
         Object blockState = args[0];
-        ImmutableBlockState state = BukkitBlockManager.instance().getImmutableBlockState(BlockStateUtils.blockStateToId(blockState));
-        if (state == null || state.isEmpty()) return false;
+        Optional<ImmutableBlockState> optionalCustomState = BlockStateUtils.getOptionalCustomBlockState(blockState);
+        if (optionalCustomState.isEmpty()) return false;
         if (type == CoreReflections.instance$PathComputationType$WATER) {
-            return super.waterloggedProperty != null && state.get(this.typeProperty) != SlabType.DOUBLE && state.get(super.waterloggedProperty);
+            return super.waterloggedProperty != null && optionalCustomState.get().get(this.typeProperty) != SlabType.DOUBLE && optionalCustomState.get().get(super.waterloggedProperty);
         }
         return false;
     }

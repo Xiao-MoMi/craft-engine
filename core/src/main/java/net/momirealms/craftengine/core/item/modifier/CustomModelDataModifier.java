@@ -29,14 +29,14 @@ public class CustomModelDataModifier<I> implements ItemDataModifier<I> {
     @Override
     public Item<I> prepareNetworkItem(Item<I> item, ItemBuildContext context, CompoundTag networkData) {
         if (VersionHelper.isOrAbove1_20_5()) {
-            Tag previous = item.getNBTComponent(ComponentKeys.CUSTOM_MODEL_DATA);
+            Tag previous = item.getSparrowNBTComponent(ComponentKeys.CUSTOM_MODEL_DATA);
             if (previous != null) {
                 networkData.put(ComponentKeys.CUSTOM_MODEL_DATA.asString(), NetworkItemHandler.pack(NetworkItemHandler.Operation.ADD, previous));
             } else {
                 networkData.put(ComponentKeys.CUSTOM_MODEL_DATA.asString(), NetworkItemHandler.pack(NetworkItemHandler.Operation.REMOVE));
             }
         } else {
-            Tag previous = item.getNBTTag("CustomModelData");
+            Tag previous = item.getTag("CustomModelData");
             if (previous != null) {
                 networkData.put("CustomModelData", NetworkItemHandler.pack(NetworkItemHandler.Operation.ADD, previous));
             } else {

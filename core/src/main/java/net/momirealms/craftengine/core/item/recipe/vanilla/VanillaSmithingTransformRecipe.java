@@ -23,7 +23,6 @@ public class VanillaSmithingTransformRecipe implements VanillaRecipe {
         return RecipeTypes.SMITHING_TRANSFORM;
     }
 
-    @Override
     public RecipeResult result() {
         return result;
     }

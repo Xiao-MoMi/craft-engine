@@ -4,13 +4,11 @@ import net.momirealms.craftengine.bukkit.item.recipe.BukkitRecipeManager;
 import net.momirealms.craftengine.core.block.BlockKeys;
 import net.momirealms.craftengine.core.item.Item;
 import net.momirealms.craftengine.core.item.ItemKeys;
-import net.momirealms.craftengine.core.item.recipe.OptimizedIDItem;
 import net.momirealms.craftengine.core.item.recipe.RecipeTypes;
+import net.momirealms.craftengine.core.item.recipe.UniqueIdItem;
 import net.momirealms.craftengine.core.item.recipe.input.SingleItemInput;
 import net.momirealms.craftengine.core.plugin.CraftEngine;
 import net.momirealms.craftengine.core.plugin.config.Config;
-import net.momirealms.craftengine.core.registry.BuiltInRegistries;
-import net.momirealms.craftengine.core.registry.Holder;
 import net.momirealms.craftengine.core.util.Direction;
 import net.momirealms.craftengine.core.util.Key;
 import net.momirealms.craftengine.core.util.QuadFunction;
@@ -20,10 +18,10 @@ import org.bukkit.block.data.BlockData;
 import org.bukkit.block.data.type.Bell;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Optional;
 
 public class InteractUtils {
     private static final Map<Key, QuadFunction<Player, Item<ItemStack>, BlockData, BlockHitResult, Boolean>> INTERACTIONS = new HashMap<>();
@@ -80,17 +78,15 @@ public class InteractUtils {
         });
         registerInteraction(BlockKeys.SOUL_CAMPFIRE, (player, item, blockState, result) -> {
             if (!Config.enableRecipeSystem()) return false;
-            Optional<Holder.Reference<Key>> optional = BuiltInRegistries.OPTIMIZED_ITEM_ID.get(item.id());
-            return optional.filter(keyReference -> BukkitRecipeManager.instance().recipeByInput(RecipeTypes.CAMPFIRE_COOKING, new SingleItemInput<>(new OptimizedIDItem<>(
-                    keyReference, item.getItem()
-            ))) != null).isPresent();
+            return BukkitRecipeManager.instance().recipeByInput(RecipeTypes.CAMPFIRE_COOKING, new SingleItemInput<>(new UniqueIdItem<>(
+                    item.recipeIngredientId(), item
+            ))) != null;
         });
         registerInteraction(BlockKeys.CAMPFIRE, (player, item, blockState, result) -> {
             if (!Config.enableRecipeSystem()) return false;
-            Optional<Holder.Reference<Key>> optional = BuiltInRegistries.OPTIMIZED_ITEM_ID.get(item.id());
-            return optional.filter(keyReference -> BukkitRecipeManager.instance().recipeByInput(RecipeTypes.CAMPFIRE_COOKING, new SingleItemInput<>(new OptimizedIDItem<>(
-                    keyReference, item.getItem()
-            ))) != null).isPresent();
+            return BukkitRecipeManager.instance().recipeByInput(RecipeTypes.CAMPFIRE_COOKING, new SingleItemInput<>(new UniqueIdItem<>(
+                    item.recipeIngredientId(), item
+            ))) != null;
         });
         registerInteraction(BlockKeys.DECORATED_POT, (player, item, blockState, result) -> true);
         registerInteraction(BlockKeys.HOPPER, (player, item, blockState, result) -> true);
@@ -130,6 +126,10 @@ public class InteractUtils {
         registerInteraction(BlockKeys.PALE_OAK_BUTTON, (player, item, blockState, result) -> true);
         registerInteraction(BlockKeys.MANGROVE_BUTTON, (player, item, blockState, result) -> true);
         registerInteraction(BlockKeys.BAMBOO_BUTTON, (player, item, blockState, result) -> true);
+        registerInteraction(BlockKeys.STONE_BUTTON, (player, item, blockState, result) -> true);
+        registerInteraction(BlockKeys.POLISHED_BLACKSTONE_BUTTON, (player, item, blockState, result) -> true);
+        registerInteraction(BlockKeys.CRIMSON_BUTTON, (player, item, blockState, result) -> true);
+        registerInteraction(BlockKeys.WARPED_BUTTON, (player, item, blockState, result) -> true);
         registerInteraction(BlockKeys.OAK_TRAPDOOR, (player, item, blockState, result) -> true);
         registerInteraction(BlockKeys.SPRUCE_TRAPDOOR, (player, item, blockState, result) -> true);
         registerInteraction(BlockKeys.BIRCH_TRAPDOOR, (player, item, blockState, result) -> true);
@@ -288,7 +288,7 @@ public class InteractUtils {
         }
     }
 
-    public static boolean isInteractable(Player player, BlockData state, BlockHitResult hit, Item<ItemStack> item) {
+    public static boolean isInteractable(Player player, BlockData state, BlockHitResult hit, @Nullable Item<ItemStack> item) {
         Key blockType = BlockStateUtils.getBlockOwnerIdFromData(state);
         if (INTERACTIONS.containsKey(blockType)) {
             return INTERACTIONS.get(blockType).apply(player, item, state, hit);
@@ -297,7 +297,7 @@ public class InteractUtils {
         }
     }
 
-    public static boolean willConsume(Player player, BlockData state, BlockHitResult hit, Item<ItemStack> item) {
+    public static boolean willConsume(Player player, BlockData state, BlockHitResult hit, @Nullable Item<ItemStack> item) {
         if (item == null) return false;
         Key blockType = BlockStateUtils.getBlockOwnerIdFromData(state);
         if (WILL_CONSUME.containsKey(blockType)) {

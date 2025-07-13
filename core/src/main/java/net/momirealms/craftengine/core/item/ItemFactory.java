@@ -2,10 +2,15 @@ package net.momirealms.craftengine.core.item;
 
 import com.google.gson.JsonElement;
 import net.kyori.adventure.text.Component;
+import net.momirealms.craftengine.core.item.data.Enchantment;
+import net.momirealms.craftengine.core.item.data.FireworkExplosion;
+import net.momirealms.craftengine.core.item.data.JukeboxPlayable;
+import net.momirealms.craftengine.core.item.data.Trim;
 import net.momirealms.craftengine.core.item.setting.EquipmentData;
 import net.momirealms.craftengine.core.plugin.CraftEngine;
 import net.momirealms.craftengine.core.util.AdventureHelper;
 import net.momirealms.craftengine.core.util.Key;
+import net.momirealms.craftengine.core.util.UniqueKey;
 import net.momirealms.sparrow.nbt.Tag;
 
 import java.util.List;
@@ -33,7 +38,7 @@ public abstract class ItemFactory<W extends ItemWrapper<I>, I> {
 
     protected abstract Object getJavaTag(W item, Object... path);
 
-    protected abstract Tag getNBTTag(W item, Object... path);
+    protected abstract Tag getTag(W item, Object... path);
 
     protected abstract void setTag(W item, Object value, Object... path);
 
@@ -45,19 +50,23 @@ public abstract class ItemFactory<W extends ItemWrapper<I>, I> {
 
     protected abstract Object getExactComponent(W item, Object type);
 
+    protected abstract Object getExactTag(W item, Object... path);
+
+    protected abstract void setExactComponent(W item, Object type, Object value);
+
     protected abstract Object getJavaComponent(W item, Object type);
 
     protected abstract JsonElement getJsonComponent(W item, Object type);
 
-    protected abstract Tag getNBTComponent(W item, Object type);
+    protected abstract Tag getSparrowNBTComponent(W item, Object type);
+
+    protected abstract Object getNBTComponent(W item, Object type);
 
     protected abstract boolean hasComponent(W item, Object type);
 
     protected abstract void removeComponent(W item, Object type);
 
     protected abstract void resetComponent(W item, Object type);
-
-    protected abstract I load(W item);
 
     protected abstract I getItem(W item);
 
@@ -139,10 +148,6 @@ public abstract class ItemFactory<W extends ItemWrapper<I>, I> {
 
     protected abstract void storedEnchantments(W item, List<Enchantment> enchantments);
 
-    protected abstract void addEnchantment(W item, Enchantment enchantment);
-
-    protected abstract void addStoredEnchantment(W item, Enchantment enchantment);
-
     protected abstract Optional<Enchantment> getEnchantment(W item, Key key);
 
     protected abstract void itemFlags(W item, List<String> flags);
@@ -187,6 +192,10 @@ public abstract class ItemFactory<W extends ItemWrapper<I>, I> {
 
     protected abstract Optional<EquipmentData> equippable(W item);
 
+    protected abstract void fireworkExplosion(W item, FireworkExplosion explosion);
+
+    protected abstract Optional<FireworkExplosion> fireworkExplosion(W item);
+
     protected abstract byte[] toByteArray(W item);
 
     protected abstract void setJavaComponent(W item, Object type, Object value);
@@ -198,4 +207,8 @@ public abstract class ItemFactory<W extends ItemWrapper<I>, I> {
     protected abstract W transmuteCopy(W item, Key newItem, int amount);
 
     protected abstract W unsafeTransmuteCopy(W item, Object newItem, int count);
+
+    protected abstract boolean isEmpty(W item);
+
+    protected abstract UniqueKey recipeIngredientID(W item);
 }

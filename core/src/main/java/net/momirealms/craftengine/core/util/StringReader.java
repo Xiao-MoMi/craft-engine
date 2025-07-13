@@ -40,6 +40,10 @@ public interface StringReader {
 
     void skip(int count);
 
+    char charAt(int index);
+
+    String substring(int start, int end);
+
     void skipWhitespace();
 
     void skipWhitespaceAndComment();

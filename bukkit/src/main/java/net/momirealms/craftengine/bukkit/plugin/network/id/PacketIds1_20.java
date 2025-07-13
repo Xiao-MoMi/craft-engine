@@ -149,4 +149,24 @@ public class PacketIds1_20 implements PacketIds {
     public int serverboundInteractPacket() {
         return PacketIdFinder.serverboundByClazz(NetworkReflections.clazz$ServerboundInteractPacket);
     }
+
+    @Override
+    public int clientboundRecipeBookAddPacket() {
+        return PacketIdFinder.clientboundByClazz(NetworkReflections.clazz$ClientboundRecipeBookAddPacket);
+    }
+
+    @Override
+    public int clientboundPlaceGhostRecipePacket() {
+        return PacketIdFinder.clientboundByClazz(NetworkReflections.clazz$ClientboundPlaceGhostRecipePacket);
+    }
+
+    @Override
+    public int clientboundUpdateRecipesPacket() {
+        return PacketIdFinder.clientboundByClazz(NetworkReflections.clazz$ClientboundUpdateRecipesPacket);
+    }
+
+    @Override
+    public int clientboundUpdateAdvancementsPacket() {
+        return PacketIdFinder.clientboundByClazz(NetworkReflections.clazz$ClientboundUpdateAdvancementsPacket);
+    }
 }

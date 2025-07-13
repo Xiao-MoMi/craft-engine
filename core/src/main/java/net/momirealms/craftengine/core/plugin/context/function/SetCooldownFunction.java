@@ -65,7 +65,7 @@ public class SetCooldownFunction<CTX extends Context> extends AbstractConditiona
         public Function<CTX> create(Map<String, Object> arguments) {
             String id = ResourceConfigUtils.requireNonEmptyStringOrThrow(arguments.get("id"), "warning.config.function.set_cooldown.missing_id");
             String time = ResourceConfigUtils.requireNonEmptyStringOrThrow(arguments.get("time"), "warning.config.function.set_cooldown.missing_time");
-            boolean add = (boolean) arguments.getOrDefault("add", false);
+            boolean add = ResourceConfigUtils.getAsBoolean(arguments.getOrDefault("add", false), "add");
             return new SetCooldownFunction<>(TextProviders.fromString(time), id, add, PlayerSelectors.fromObject(arguments.get("target"), conditionFactory()), getPredicates(arguments));
         }
     }

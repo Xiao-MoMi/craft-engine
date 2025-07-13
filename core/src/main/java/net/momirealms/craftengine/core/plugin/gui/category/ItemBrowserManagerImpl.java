@@ -16,11 +16,7 @@ import net.momirealms.craftengine.core.plugin.context.ContextHolder;
 import net.momirealms.craftengine.core.plugin.context.PlayerOptionalContext;
 import net.momirealms.craftengine.core.plugin.gui.*;
 import net.momirealms.craftengine.core.plugin.gui.Ingredient;
-import net.momirealms.craftengine.core.registry.Holder;
-import net.momirealms.craftengine.core.util.AdventureHelper;
-import net.momirealms.craftengine.core.util.Key;
-import net.momirealms.craftengine.core.util.MiscUtils;
-import net.momirealms.craftengine.core.util.ResourceConfigUtils;
+import net.momirealms.craftengine.core.util.*;
 
 import java.nio.file.Path;
 import java.util.*;
@@ -52,6 +48,7 @@ public class ItemBrowserManagerImpl implements ItemBrowserManager {
     public void unload() {
         this.byId.clear();
         this.categoryOnMainPage.clear();
+        this.externalMembers.clear();
     }
 
     @Override
@@ -117,7 +114,8 @@ public class ItemBrowserManagerImpl implements ItemBrowserManager {
             List<String> members = MiscUtils.getAsStringList(section.getOrDefault("list", List.of()));
             Key icon = Key.of(section.getOrDefault("icon", ItemKeys.STONE).toString());
             int priority = ResourceConfigUtils.getAsInt(section.getOrDefault("priority", 0), "priority");
-            Category category = new Category(id, name, MiscUtils.getAsStringList(section.getOrDefault("lore", List.of())), icon, members.stream().distinct().toList(), priority, (boolean) section.getOrDefault("hidden", false));
+            Category category = new Category(id, name, MiscUtils.getAsStringList(section.getOrDefault("lore", List.of())), icon, members.stream().distinct().toList(), priority,
+                    ResourceConfigUtils.getAsBoolean(section.getOrDefault("hidden", false), "hidden"));
             if (ItemBrowserManagerImpl.this.byId.containsKey(id)) {
                 ItemBrowserManagerImpl.this.byId.get(id).merge(category);
             } else {
@@ -159,13 +157,12 @@ public class ItemBrowserManagerImpl implements ItemBrowserManager {
 
         List<ItemWithAction> iconList = this.categoryOnMainPage.stream().map(it -> {
             Item<?> item = this.plugin.itemManager().createWrappedItem(it.icon(), player);
-            if (item == null) {
+            if (ItemUtils.isEmpty(item)) {
                 this.plugin.logger().warn("Can't not find item " + it.icon() + " for category icon");
                 return null;
             }
             item.customNameJson(AdventureHelper.componentToJson(AdventureHelper.miniMessage().deserialize(it.displayName(), ItemBuildContext.EMPTY.tagResolvers())));
             item.loreJson(it.displayLore().stream().map(lore -> AdventureHelper.componentToJson(AdventureHelper.miniMessage().deserialize(lore, ItemBuildContext.EMPTY.tagResolvers()))).toList());
-            item.load();
             return new ItemWithAction(item, (element, click) -> {
                 click.cancel();
                 player.playSound(Constants.SOUND_CLICK_BUTTON);
@@ -245,17 +242,15 @@ public class ItemBrowserManagerImpl implements ItemBrowserManager {
                 Category subCategory = this.byId.get(Key.of(subCategoryId));
                 if (subCategory == null) return null;
                 Item<?> item = this.plugin.itemManager().createWrappedItem(subCategory.icon(), player);
-                if (item == null) {
+                if (ItemUtils.isEmpty(item)) {
                     if (!subCategory.icon().equals(ItemKeys.AIR)) {
                         item = this.plugin.itemManager().createWrappedItem(ItemKeys.BARRIER, player);
                         item.customNameJson(AdventureHelper.componentToJson(AdventureHelper.miniMessage().deserialize(subCategory.displayName(), ItemBuildContext.EMPTY.tagResolvers())));
                         item.loreJson(subCategory.displayLore().stream().map(lore -> AdventureHelper.componentToJson(AdventureHelper.miniMessage().deserialize(lore, ItemBuildContext.EMPTY.tagResolvers()))).toList());
-                        item.load();
                     }
                 } else {
                     item.customNameJson(AdventureHelper.componentToJson(AdventureHelper.miniMessage().deserialize(subCategory.displayName(), ItemBuildContext.EMPTY.tagResolvers())));
                     item.loreJson(subCategory.displayLore().stream().map(lore -> AdventureHelper.componentToJson(AdventureHelper.miniMessage().deserialize(lore, ItemBuildContext.EMPTY.tagResolvers()))).toList());
-                    item.load();
                 }
                 return new ItemWithAction(item, (element, click) -> {
                     click.cancel();
@@ -266,11 +261,10 @@ public class ItemBrowserManagerImpl implements ItemBrowserManager {
                 Key itemId = Key.of(it);
                 Item<?> item = this.plugin.itemManager().createWrappedItem(itemId, player);
                 boolean canGoFurther;
-                if (item == null) {
+                if (ItemUtils.isEmpty(item)) {
                     if (!itemId.equals(ItemKeys.AIR)) {
                         item = this.plugin.itemManager().createWrappedItem(ItemKeys.BARRIER, player);
                         item.customNameJson(AdventureHelper.componentToJson(Component.text(it).decoration(TextDecoration.ITALIC, TextDecoration.State.FALSE).color(NamedTextColor.RED)));
-                        item.load();
                     }
                     canGoFurther = false;
                 } else {
@@ -505,11 +499,10 @@ public class ItemBrowserManagerImpl implements ItemBrowserManager {
             }
         }));
 
-
         List<Item<?>> templates = new ArrayList<>();
         Optional.ofNullable(recipe.template()).ifPresent(it -> {
-            for (Holder<Key> in : it.items()) {
-                templates.add(this.plugin.itemManager().createWrappedItem(in.value(), player));
+            for (UniqueKey in : it.items()) {
+                templates.add(this.plugin.itemManager().createWrappedItem(in.key(), player));
             }
         });
         layout.addIngredient('A', templates.isEmpty() ? GuiElement.EMPTY : GuiElement.recipeIngredient(templates, (e, c) -> {
@@ -541,8 +534,8 @@ public class ItemBrowserManagerImpl implements ItemBrowserManager {
 
         List<Item<?>> bases = new ArrayList<>();
         Optional.ofNullable(recipe.base()).ifPresent(it -> {
-            for (Holder<Key> in : it.items()) {
-                bases.add(this.plugin.itemManager().createWrappedItem(in.value(), player));
+            for (UniqueKey in : it.items()) {
+                bases.add(this.plugin.itemManager().createWrappedItem(in.key(), player));
             }
         });
         layout.addIngredient('B', bases.isEmpty() ? GuiElement.EMPTY : GuiElement.recipeIngredient(bases, (e, c) -> {
@@ -574,8 +567,8 @@ public class ItemBrowserManagerImpl implements ItemBrowserManager {
 
         List<Item<?>> additions = new ArrayList<>();
         Optional.ofNullable(recipe.addition()).ifPresent(it -> {
-            for (Holder<Key> in : it.items()) {
-                additions.add(this.plugin.itemManager().createWrappedItem(in.value(), player));
+            for (UniqueKey in : it.items()) {
+                additions.add(this.plugin.itemManager().createWrappedItem(in.key(), player));
             }
         });
         layout.addIngredient('C', additions.isEmpty() ? GuiElement.EMPTY : GuiElement.recipeIngredient(additions, (e, c) -> {
@@ -625,8 +618,8 @@ public class ItemBrowserManagerImpl implements ItemBrowserManager {
 
         List<Item<?>> ingredients = new ArrayList<>();
         net.momirealms.craftengine.core.item.recipe.Ingredient<Object> ingredient = recipe.ingredient();
-        for (Holder<Key> in : ingredient.items()) {
-            ingredients.add(this.plugin.itemManager().createWrappedItem(in.value(), player));
+        for (UniqueKey in : ingredient.items()) {
+            ingredients.add(this.plugin.itemManager().createWrappedItem(in.key(), player));
         }
         GuiLayout layout = new GuiLayout(
                 "         ",
@@ -758,8 +751,8 @@ public class ItemBrowserManagerImpl implements ItemBrowserManager {
 
         List<Item<?>> ingredients = new ArrayList<>();
         net.momirealms.craftengine.core.item.recipe.Ingredient<Object> ingredient = recipe.ingredient();
-        for (Holder<Key> in : ingredient.items()) {
-            ingredients.add(this.plugin.itemManager().createWrappedItem(in.value(), player));
+        for (UniqueKey in : ingredient.items()) {
+            ingredients.add(this.plugin.itemManager().createWrappedItem(in.key(), player));
         }
         GuiLayout layout = new GuiLayout(
                 "         ",
@@ -1003,8 +996,8 @@ public class ItemBrowserManagerImpl implements ItemBrowserManager {
                             layout.addIngredient(currentChar, Ingredient.EMPTY);
                         } else {
                             List<Item<?>> ingredients = new ArrayList<>();
-                            for (Holder<Key> in : ingredient.items()) {
-                                ingredients.add(this.plugin.itemManager().createWrappedItem(in.value(), player));
+                            for (UniqueKey in : ingredient.items()) {
+                                ingredients.add(this.plugin.itemManager().createWrappedItem(in.key(), player));
                             }
                             layout.addIngredient(currentChar, GuiElement.recipeIngredient(ingredients, (e, c) -> {
                                 c.cancel();
@@ -1046,8 +1039,8 @@ public class ItemBrowserManagerImpl implements ItemBrowserManager {
                     char currentChar = (char) (start + x + y * 3);
                     if (i < ingredients.size()) {
                         List<Item<?>> ingredientItems = new ArrayList<>();
-                        for (Holder<Key> in : ingredients.get(i).items()) {
-                            ingredientItems.add(this.plugin.itemManager().createWrappedItem(in.value(), player));
+                        for (UniqueKey in : ingredients.get(i).items()) {
+                            ingredientItems.add(this.plugin.itemManager().createWrappedItem(in.key(), player));
                         }
                         layout.addIngredient(currentChar, GuiElement.recipeIngredient(ingredientItems, (e, c) -> {
                             c.cancel();

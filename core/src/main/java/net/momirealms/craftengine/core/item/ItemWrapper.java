@@ -4,8 +4,6 @@ public interface ItemWrapper<I> {
 
     I getItem();
 
-    I load();
-
     Object getLiteralObject();
 
     int count();

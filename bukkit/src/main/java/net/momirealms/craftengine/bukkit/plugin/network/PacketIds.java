@@ -54,9 +54,17 @@ public interface PacketIds {
 
     int clientboundBlockEventPacket();
 
+    int clientboundRecipeBookAddPacket();
+
+    int clientboundPlaceGhostRecipePacket();
+
+    int clientboundUpdateAdvancementsPacket();
+
     int serverboundContainerClickPacket();
 
     int serverboundSetCreativeModeSlotPacket();
 
     int serverboundInteractPacket();
+
+    int clientboundUpdateRecipesPacket();
 }
