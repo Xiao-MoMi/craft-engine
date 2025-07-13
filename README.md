@@ -79,3 +79,5 @@ dependencies {
     compileOnly("net.momirealms:craft-engine-bukkit:0.0.59")
 }
 ```
+
+[![bStats Graph Data](https://bstats.org/signatures/bukkit/CraftEngine.svg)](https://bstats.org/plugin/bukkit/CraftEngine)
