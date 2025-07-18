@@ -10,6 +10,7 @@ import net.momirealms.craftengine.core.item.setting.EquipmentData;
 import net.momirealms.craftengine.core.plugin.CraftEngine;
 import net.momirealms.craftengine.core.util.AdventureHelper;
 import net.momirealms.craftengine.core.util.Key;
+import net.momirealms.craftengine.core.util.UniqueKey;
 import net.momirealms.sparrow.nbt.Tag;
 
 import java.util.List;
@@ -37,7 +38,7 @@ public abstract class ItemFactory<W extends ItemWrapper<I>, I> {
 
     protected abstract Object getJavaTag(W item, Object... path);
 
-    protected abstract Tag getNBTTag(W item, Object... path);
+    protected abstract Tag getTag(W item, Object... path);
 
     protected abstract void setTag(W item, Object value, Object... path);
 
@@ -49,11 +50,17 @@ public abstract class ItemFactory<W extends ItemWrapper<I>, I> {
 
     protected abstract Object getExactComponent(W item, Object type);
 
+    protected abstract Object getExactTag(W item, Object... path);
+
+    protected abstract void setExactComponent(W item, Object type, Object value);
+
     protected abstract Object getJavaComponent(W item, Object type);
 
     protected abstract JsonElement getJsonComponent(W item, Object type);
 
-    protected abstract Tag getNBTComponent(W item, Object type);
+    protected abstract Tag getSparrowNBTComponent(W item, Object type);
+
+    protected abstract Object getNBTComponent(W item, Object type);
 
     protected abstract boolean hasComponent(W item, Object type);
 
@@ -200,4 +207,8 @@ public abstract class ItemFactory<W extends ItemWrapper<I>, I> {
     protected abstract W transmuteCopy(W item, Key newItem, int amount);
 
     protected abstract W unsafeTransmuteCopy(W item, Object newItem, int count);
+
+    protected abstract boolean isEmpty(W item);
+
+    protected abstract UniqueKey recipeIngredientID(W item);
 }

@@ -8,7 +8,6 @@ import net.momirealms.craftengine.core.plugin.context.Condition;
 import net.momirealms.craftengine.core.plugin.context.parameter.DirectContextParameters;
 import net.momirealms.craftengine.core.plugin.locale.LocalizedResourceConfigException;
 import net.momirealms.craftengine.core.registry.BuiltInRegistries;
-import net.momirealms.craftengine.core.registry.Holder;
 import net.momirealms.craftengine.core.registry.Registries;
 import net.momirealms.craftengine.core.registry.WritableRegistry;
 import net.momirealms.craftengine.core.util.*;
@@ -81,9 +80,8 @@ public class ApplyBonusCountFunction<T> extends AbstractLootConditionalFunction<
         }
 
         public static void register(Key key, FormulaFactory factory) {
-            Holder.Reference<FormulaFactory> holder = ((WritableRegistry<FormulaFactory>) BuiltInRegistries.FORMULA_FACTORY)
-                    .registerForHolder(new ResourceKey<>(Registries.FORMULA_FACTORY.location(), key));
-            holder.bindValue(factory);
+            ((WritableRegistry<FormulaFactory>) BuiltInRegistries.FORMULA_FACTORY)
+                    .register(ResourceKey.create(Registries.FORMULA_FACTORY.location(), key), factory);
         }
 
         public static Formula fromMap(Map<String, Object> map) {

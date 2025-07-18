@@ -4,7 +4,6 @@ import net.momirealms.craftengine.core.block.BlockBehavior;
 import net.momirealms.craftengine.core.block.CustomBlock;
 import net.momirealms.craftengine.core.plugin.locale.LocalizedResourceConfigException;
 import net.momirealms.craftengine.core.registry.BuiltInRegistries;
-import net.momirealms.craftengine.core.registry.Holder;
 import net.momirealms.craftengine.core.registry.Registries;
 import net.momirealms.craftengine.core.registry.WritableRegistry;
 import net.momirealms.craftengine.core.util.Key;
@@ -18,9 +17,8 @@ public class BlockBehaviors {
     public static final Key EMPTY = Key.from("craftengine:empty");
 
     public static void register(Key key, BlockBehaviorFactory factory) {
-        Holder.Reference<BlockBehaviorFactory> holder = ((WritableRegistry<BlockBehaviorFactory>) BuiltInRegistries.BLOCK_BEHAVIOR_FACTORY)
-                .registerForHolder(new ResourceKey<>(Registries.BLOCK_BEHAVIOR_FACTORY.location(), key));
-        holder.bindValue(factory);
+        ((WritableRegistry<BlockBehaviorFactory>) BuiltInRegistries.BLOCK_BEHAVIOR_FACTORY)
+                .register(ResourceKey.create(Registries.BLOCK_BEHAVIOR_FACTORY.location(), key), factory);
     }
 
     public static BlockBehavior fromMap(CustomBlock block, @Nullable Map<String, Object> map) {

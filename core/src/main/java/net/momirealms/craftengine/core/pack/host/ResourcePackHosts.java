@@ -3,7 +3,6 @@ package net.momirealms.craftengine.core.pack.host;
 import net.momirealms.craftengine.core.pack.host.impl.*;
 import net.momirealms.craftengine.core.plugin.locale.LocalizedException;
 import net.momirealms.craftengine.core.registry.BuiltInRegistries;
-import net.momirealms.craftengine.core.registry.Holder;
 import net.momirealms.craftengine.core.registry.Registries;
 import net.momirealms.craftengine.core.registry.WritableRegistry;
 import net.momirealms.craftengine.core.util.Key;
@@ -35,9 +34,8 @@ public class ResourcePackHosts {
     }
 
     public static void register(Key key, ResourcePackHostFactory factory) {
-        Holder.Reference<ResourcePackHostFactory> holder = ((WritableRegistry<ResourcePackHostFactory>) BuiltInRegistries.RESOURCE_PACK_HOST_FACTORY)
-                .registerForHolder(new ResourceKey<>(Registries.RESOURCE_PACK_HOST_FACTORY.location(), key));
-        holder.bindValue(factory);
+        ((WritableRegistry<ResourcePackHostFactory>) BuiltInRegistries.RESOURCE_PACK_HOST_FACTORY)
+                .register(ResourceKey.create(Registries.RESOURCE_PACK_HOST_FACTORY.location(), key), factory);
     }
 
     public static ResourcePackHost fromMap(Map<String, Object> map) {

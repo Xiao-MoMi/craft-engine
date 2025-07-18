@@ -11,7 +11,10 @@ import net.momirealms.craftengine.core.util.VersionHelper;
 import net.momirealms.sparrow.nbt.CompoundTag;
 import net.momirealms.sparrow.nbt.Tag;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -75,7 +78,7 @@ public class HideTooltipModifier<I> implements ItemDataModifier<I> {
     @Override
     public Item<I> prepareNetworkItem(Item<I> item, ItemBuildContext context, CompoundTag networkData) {
         if (VersionHelper.isOrAbove1_21_5()) {
-            Tag previous = item.getNBTComponent(ComponentKeys.TOOLTIP_DISPLAY);
+            Tag previous = item.getSparrowNBTComponent(ComponentKeys.TOOLTIP_DISPLAY);
             if (previous != null) {
                 networkData.put(ComponentKeys.TOOLTIP_DISPLAY.asString(), NetworkItemHandler.pack(NetworkItemHandler.Operation.ADD, previous));
             } else {
@@ -83,7 +86,7 @@ public class HideTooltipModifier<I> implements ItemDataModifier<I> {
             }
         } else if (VersionHelper.isOrAbove1_20_5()) {
             for (Key component : this.components) {
-                Tag previous = item.getNBTComponent(component);
+                Tag previous = item.getSparrowNBTComponent(component);
                 if (previous != null) {
                     networkData.put(component.asString(), NetworkItemHandler.pack(NetworkItemHandler.Operation.ADD, previous));
                 } else {
@@ -91,7 +94,7 @@ public class HideTooltipModifier<I> implements ItemDataModifier<I> {
                 }
             }
         } else {
-            Tag previous = item.getNBTTag("HideFlags");
+            Tag previous = item.getTag("HideFlags");
             if (previous != null) {
                 networkData.put("HideFlags", NetworkItemHandler.pack(NetworkItemHandler.Operation.ADD, previous));
             } else {
@@ -127,7 +130,7 @@ public class HideTooltipModifier<I> implements ItemDataModifier<I> {
 
         @Override
         public void apply(Item<I> item) {
-            Tag previous = item.getNBTComponent(this.component);
+            Tag previous = item.getSparrowNBTComponent(this.component);
             if (previous instanceof CompoundTag compoundTag) {
                 compoundTag.putBoolean("show_in_tooltip", false);
                 item.setNBTComponent(this.component, compoundTag);

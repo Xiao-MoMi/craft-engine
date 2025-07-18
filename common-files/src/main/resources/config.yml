@@ -1,7 +1,5 @@
 # Do not modify this value
 config-version: '${config_version}'
-# Enables or disables debug mode
-debug: false
 # Enables or disables metrics collection via BStats
 metrics: true
 # Enables automatic update checks
@@ -76,9 +74,8 @@ resource-pack:
     # Send the resource pack on joining the server
     send-on-join: true
     kick-if-declined: true
-    prompt: |
-      <yellow>To fully experience our server,
-      please accept our custom resource pack.</yellow>
+    kick-if-failed-to-apply: true
+    prompt: "<yellow>To fully experience our server,<newline>please accept our custom resource pack.</yellow>"
     # If you are hosting the resource pack by yourself, replace `localhost` with your server ip otherwise it would only work on your local pc
     # If using BungeeCord or Velocity, consider using a proxy-side plugin to handle resource pack delivery.
     # Read this page for more host types: https://mo-mi.gitbook.io/xiaomomi-plugins/craftengine/plugin-wiki/craftengine/resource-pack/host
@@ -141,6 +138,8 @@ resource-pack:
 item:
   # Make custom-model-data and item-model clientside by default
   client-bound-model: false
+  # Add a <!i> tag on custom name and lore
+  non-italic-tag: false
 
 equipment:
   # The sacrificed-vanilla-armor argument determines which vanilla armor gets completely removed (loses all its trims)
@@ -222,7 +221,7 @@ image:
   intercept-packets:
     system-chat: true
     tab-list: true     # Tab list header and footer
-    player-info: true  # User list in tab
+    player-info: true  # Player list in tab
     set-score: true
     actionbar: true
     title: true
@@ -234,6 +233,7 @@ image:
     armor-stand: true   # Legacy Holograms
     text-display: true  # Modern Holograms
     item: true
+    advancement: true
   # Defines Unicode characters used for <shift:xxx> positioning
   # - Must match the font defined in resource packs
   # - Do NOT modify unless you understand text rendering mechanics
@@ -296,6 +296,8 @@ recipe:
     # Selective recipe disabling (safer alternative to 'all: true')
     # Example: ["minecraft:wooden_sword", "minecraft:stone_hoe"]
     list: []
+  # You can use items from other plugins by adding the supported plugin names here
+  ingredient-sources: []
 
 gui:
   browser:
@@ -352,6 +354,8 @@ gui:
         title: "<white><shift:-11><image:internal:stonecutting_recipe>"
       smithing-transform:
         title: "<white><shift:-11><image:internal:smithing_transform_recipe>"
+      brewing:
+        title: "<white><shift:-11><image:internal:brewing_recipe>"
 
 performance:
   # Maximum chain update depth when fixing client visuals
@@ -407,3 +411,11 @@ chunk-system:
   # server's CraftEngine internal data. Enabling this option will synchronize the data when the chunk is loaded.
   # (This option only slightly impacts performance, which has been fully optimized, so you don't need to worry too much.)
   sync-custom-blocks-on-chunk-load: false
+
+# Enables or disables debug mode
+debug:
+  common: false
+  packet: false
+  furniture: false
+  item: false
+  resource-pack: false

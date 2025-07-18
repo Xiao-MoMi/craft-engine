@@ -305,17 +305,24 @@ templates:
     settings:
       tags:
         - default:topaz_tools
+        - minecraft:trimmable_armor
       equipment:
         asset-id: default:topaz
+        $$>=1.21.2:
+          slot: ${slot}
     model:
       template: default:model/armor_trim
 equipments#topaz:
-  default:topaz:
-    type:
-      $$>=1.21.2: component
-      $$<1.21.2: trim
-    humanoid: minecraft:entity/equipment/humanoid/topaz
-    humanoid-leggings: minecraft:entity/equipment/humanoid_leggings/topaz
+  $$>=1.21.2:
+    default:topaz:
+      type: component
+      humanoid: minecraft:topaz
+      humanoid-leggings: minecraft:topaz
+  $$<1.21.2:
+    default:topaz:
+      type: trim
+      humanoid: minecraft:entity/equipment/humanoid/topaz
+      humanoid-leggings: minecraft:entity/equipment/humanoid_leggings/topaz
 recipes#topaz:
   default:topaz_shovel:
     type: shaped
@@ -377,49 +384,48 @@ recipes#topaz:
     result:
       id: default:topaz_pickaxe
       count: 1
-  $$>=1.21.2#armor:
-    default:topaz_helmet:
-      type: shaped
-      pattern:
-        - AAA
-        - A A
-      ingredients:
-        A: default:topaz
-      result:
-        id: default:topaz_helmet
-        count: 1
-    default:topaz_chestplate:
-      type: shaped
-      pattern:
-        - A A
-        - AAA
-        - AAA
-      ingredients:
-        A: default:topaz
-      result:
-        id: default:topaz_chestplate
-        count: 1
-    default:topaz_leggings:
-      type: shaped
-      pattern:
-        - AAA
-        - A A
-        - A A
-      ingredients:
-        A: default:topaz
-      result:
-        id: default:topaz_leggings
-        count: 1
-    default:topaz_boots:
-      type: shaped
-      pattern:
-        - A A
-        - A A
-      ingredients:
-        A: default:topaz
-      result:
-        id: default:topaz_boots
-        count: 1
+  default:topaz_helmet:
+    type: shaped
+    pattern:
+      - AAA
+      - A A
+    ingredients:
+      A: default:topaz
+    result:
+      id: default:topaz_helmet
+      count: 1
+  default:topaz_chestplate:
+    type: shaped
+    pattern:
+      - A A
+      - AAA
+      - AAA
+    ingredients:
+      A: default:topaz
+    result:
+      id: default:topaz_chestplate
+      count: 1
+  default:topaz_leggings:
+    type: shaped
+    pattern:
+      - AAA
+      - A A
+      - A A
+    ingredients:
+      A: default:topaz
+    result:
+      id: default:topaz_leggings
+      count: 1
+  default:topaz_boots:
+    type: shaped
+    pattern:
+      - A A
+      - A A
+    ingredients:
+      A: default:topaz
+    result:
+      id: default:topaz_boots
+      count: 1
   default:topaz_bow:
     type: smithing_transform
     base: minecraft:bow

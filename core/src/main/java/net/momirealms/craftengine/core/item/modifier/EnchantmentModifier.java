@@ -34,14 +34,14 @@ public class EnchantmentModifier<I> implements ItemDataModifier<I> {
     public Item<I> prepareNetworkItem(Item<I> item, ItemBuildContext context, CompoundTag networkData) {
         if (item.vanillaId().equals(ItemKeys.ENCHANTED_BOOK)) {
             if (VersionHelper.isOrAbove1_20_5()) {
-                Tag previous = item.getNBTComponent(ComponentKeys.STORED_ENCHANTMENTS);
+                Tag previous = item.getSparrowNBTComponent(ComponentKeys.STORED_ENCHANTMENTS);
                 if (previous != null) {
                     networkData.put(ComponentKeys.STORED_ENCHANTMENTS.asString(), NetworkItemHandler.pack(NetworkItemHandler.Operation.ADD, previous));
                 } else {
                     networkData.put(ComponentKeys.STORED_ENCHANTMENTS.asString(), NetworkItemHandler.pack(NetworkItemHandler.Operation.REMOVE));
                 }
             } else {
-                Tag previous = item.getNBTTag("StoredEnchantments");
+                Tag previous = item.getTag("StoredEnchantments");
                 if (previous != null) {
                     networkData.put("StoredEnchantments", NetworkItemHandler.pack(NetworkItemHandler.Operation.ADD, previous));
                 } else {
@@ -50,14 +50,14 @@ public class EnchantmentModifier<I> implements ItemDataModifier<I> {
             }
         } else {
             if (VersionHelper.isOrAbove1_20_5()) {
-                Tag previous = item.getNBTComponent(ComponentKeys.ENCHANTMENTS);
+                Tag previous = item.getSparrowNBTComponent(ComponentKeys.ENCHANTMENTS);
                 if (previous != null) {
                     networkData.put(ComponentKeys.ENCHANTMENTS.asString(), NetworkItemHandler.pack(NetworkItemHandler.Operation.ADD, previous));
                 } else {
                     networkData.put(ComponentKeys.ENCHANTMENTS.asString(), NetworkItemHandler.pack(NetworkItemHandler.Operation.REMOVE));
                 }
             } else {
-                Tag previous = item.getNBTTag("Enchantments");
+                Tag previous = item.getTag("Enchantments");
                 if (previous != null) {
                     networkData.put("Enchantments", NetworkItemHandler.pack(NetworkItemHandler.Operation.ADD, previous));
                 } else {

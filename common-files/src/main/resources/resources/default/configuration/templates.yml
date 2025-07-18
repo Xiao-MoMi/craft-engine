@@ -2150,17 +2150,17 @@ templates#block_states:
         state: ${base_block}[type=top,waterlogged=false]
         model:
           path: ${model_top_path}
-          generation: ${model_top_generation}
+          generation: ${model_top_generation:-null}
       type=bottom,waterlogged=false:
         state: ${base_block}[type=bottom,waterlogged=false]
         model:
           path: ${model_bottom_path}
-          generation: ${model_bottom_generation}
+          generation: ${model_bottom_generation:-null}
       type=double,waterlogged=false:
         state: ${base_block}[type=double,waterlogged=false]
         model:
           path: ${model_double_path}
-          generation: ${model_double_generation}
+          generation: ${model_double_generation:-null}
       type=top,waterlogged=true:
         state: ${base_block}[type=top,waterlogged=true]
         model:

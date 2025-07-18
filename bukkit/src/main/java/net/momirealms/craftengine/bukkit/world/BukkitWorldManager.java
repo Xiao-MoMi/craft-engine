@@ -277,7 +277,6 @@ public class BukkitWorldManager implements WorldManager, Listener {
         if (ceChunk != null) {
             if (ceChunk.dirty()) {
                 try {
-                    this.plugin.debug(() -> "[Dirty Chunk]" + pos + " unloaded");
                     world.worldDataStorage().writeChunkAt(pos, ceChunk);
                     ceChunk.setDirty(false);
                 } catch (IOException e) {

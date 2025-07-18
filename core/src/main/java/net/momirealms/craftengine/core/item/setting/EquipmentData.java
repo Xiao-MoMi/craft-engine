@@ -130,7 +130,7 @@ public class EquipmentData {
         private boolean swappable = true;
         private boolean damageOnHurt = true;
         // 1.21.5+
-        private boolean equipOnInteract = true;
+        private boolean equipOnInteract = false;
         private Key cameraOverlay;
 
         public Builder() {}

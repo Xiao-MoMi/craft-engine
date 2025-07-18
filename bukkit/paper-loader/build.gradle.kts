@@ -76,7 +76,6 @@ paper {
         // external models
         register("ModelEngine") { required = false }
         register("BetterModel") { required = false }
-        register("FreeMinecraftModels") { required = false }
 
         // external items
         register("NeigeItems") { required = false }
@@ -149,5 +148,6 @@ tasks {
         relocate("software.amazon.eventstream", "net.momirealms.craftengine.libraries.eventstream")
         relocate("com.google.common.jimfs", "net.momirealms.craftengine.libraries.jimfs")
         relocate("org.apache.commons", "net.momirealms.craftengine.libraries.commons")
+        relocate("io.leangen.geantyref", "net.momirealms.craftengine.libraries.geantyref")
     }
 }

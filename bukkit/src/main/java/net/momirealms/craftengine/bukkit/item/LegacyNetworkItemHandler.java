@@ -27,7 +27,7 @@ import java.util.Optional;
 import java.util.function.BiConsumer;
 
 @SuppressWarnings("DuplicatedCode")
-public class LegacyNetworkItemHandler implements NetworkItemHandler<ItemStack> {
+public final class LegacyNetworkItemHandler implements NetworkItemHandler<ItemStack> {
 
     @Override
     public Optional<Item<ItemStack>> c2s(Item<ItemStack> wrapped) {
@@ -45,7 +45,7 @@ public class LegacyNetworkItemHandler implements NetworkItemHandler<ItemStack> {
                 return Optional.of(wrapped);
             }
         }
-        CompoundTag networkData = (CompoundTag) wrapped.getNBTTag(NETWORK_ITEM_TAG);
+        CompoundTag networkData = (CompoundTag) wrapped.getTag(NETWORK_ITEM_TAG);
         if (networkData == null) return Optional.empty();
         wrapped.removeTag(NETWORK_ITEM_TAG);
         for (Map.Entry<String, Tag> entry : networkData.entrySet()) {
@@ -74,7 +74,7 @@ public class LegacyNetworkItemHandler implements NetworkItemHandler<ItemStack> {
                 return new OtherItem(wrapped, hasDifferentMaterial).process();
             } else {
                 CompoundTag tag = new CompoundTag();
-                Tag argumentTag = wrapped.getNBTTag(ArgumentModifier.ARGUMENTS_TAG);
+                Tag argumentTag = wrapped.getTag(ArgumentModifier.ARGUMENTS_TAG);
                 ItemBuildContext context;
                 if (argumentTag instanceof CompoundTag arguments) {
                     ContextHolder.Builder builder = ContextHolder.builder();
@@ -87,6 +87,8 @@ public class LegacyNetworkItemHandler implements NetworkItemHandler<ItemStack> {
                 }
                 for (ItemDataModifier<ItemStack> modifier : customItem.clientBoundDataModifiers()) {
                     modifier.prepareNetworkItem(wrapped, context, tag);
+                }
+                for (ItemDataModifier<ItemStack> modifier : customItem.clientBoundDataModifiers()) {
                     modifier.apply(wrapped, context);
                 }
                 if (Config.interceptItem()) {

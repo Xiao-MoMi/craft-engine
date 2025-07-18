@@ -61,9 +61,8 @@ public class OneDriveHost implements ResourcePackHost {
     }
 
     public void readCacheFromDisk() {
-        Path cachePath = CraftEngine.instance().dataFolderPath().resolve("onedrive.cache");
-        if (!Files.exists(cachePath)) return;
-
+        Path cachePath = CraftEngine.instance().dataFolderPath().resolve("cache").resolve("onedrive.json");
+        if (!Files.exists(cachePath) || !Files.isRegularFile(cachePath)) return;
         try (InputStream is = Files.newInputStream(cachePath)) {
             Map<String, String> cache = GsonHelper.get().fromJson(
                     new InputStreamReader(is),
@@ -91,9 +90,9 @@ public class OneDriveHost implements ResourcePackHost {
         cache.put("refresh-token-expires-in", String.valueOf(this.refreshToken.right().getTime()));
         cache.put("sha1", this.sha1);
         cache.put("file-id", this.fileId);
-
-        Path cachePath = CraftEngine.instance().dataFolderPath().resolve("onedrive.cache");
+        Path cachePath = CraftEngine.instance().dataFolderPath().resolve("cache").resolve("onedrive.json");
         try {
+            Files.createDirectories(cachePath.getParent());
             Files.writeString(
                     cachePath,
                     GsonHelper.get().toJson(cache),

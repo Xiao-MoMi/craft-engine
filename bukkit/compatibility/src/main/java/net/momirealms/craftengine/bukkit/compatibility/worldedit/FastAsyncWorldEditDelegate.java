@@ -46,14 +46,12 @@ import static java.util.Objects.requireNonNull;
 
 public class FastAsyncWorldEditDelegate extends AbstractDelegateExtent {
     private static int[] ordinalToIbdID;
-    private final Extent extent;
     private final Set<CEChunk> chunksToSave;
     private final CEWorld ceWorld;
     private final Set<ChunkPos> brokenChunks = Collections.synchronizedSet(new HashSet<>());
 
     protected FastAsyncWorldEditDelegate(EditSessionEvent event, Extent extent) {
         super(extent);
-        this.extent = extent;
         this.chunksToSave = new HashSet<>();
         World weWorld = event.getWorld();
         org.bukkit.World world = Bukkit.getWorld(requireNonNull(weWorld).getName());
@@ -77,8 +75,9 @@ public class FastAsyncWorldEditDelegate extends AbstractDelegateExtent {
             public void onEditSessionEvent(EditSessionEvent event) {
                 World weWorld = event.getWorld();
                 if (weWorld == null) return;
+                Extent currentExtent = event.getExtent();
                 if (event.getStage() == EditSession.Stage.BEFORE_CHANGE) {
-                    event.setExtent(new FastAsyncWorldEditDelegate(event, event.getExtent()));
+                    event.setExtent(new FastAsyncWorldEditDelegate(event, currentExtent));
                 }
             }
         });
@@ -138,7 +137,7 @@ public class FastAsyncWorldEditDelegate extends AbstractDelegateExtent {
 
     @Override
     public <T extends BlockStateHolder<T>> boolean setBlock(int x, int y, int z, T block) {
-        boolean result = extent.setBlock(x, y, z, block);
+        boolean result = super.setBlock(x, y, z, block);
         if (result) {
             Mask mask = getMask();
             if (mask != null && !mask.test(BlockVector3.at(x, y, z))) return true;
@@ -211,7 +210,6 @@ public class FastAsyncWorldEditDelegate extends AbstractDelegateExtent {
         int newStateId = ordinalToIbdID[newBlock.getOrdinal()];
         int oldStateId = ordinalToIbdID[oldBlock.getOrdinal()];
         this.brokenChunks.add(ChunkPos.of(chunkX, chunkZ));
-        //CraftEngine.instance().debug(() -> "Processing block at " + blockX + ", " + blockY + ", " + blockZ + ": " + oldStateId + " -> " + newStateId);
         if (BlockStateUtils.isVanillaBlock(newStateId) && BlockStateUtils.isVanillaBlock(oldStateId)) return;
         try {
             CEChunk ceChunk = Optional.ofNullable(this.ceWorld.getChunkAtIfLoaded(chunkX, chunkZ))
@@ -231,7 +229,6 @@ public class FastAsyncWorldEditDelegate extends AbstractDelegateExtent {
     private void saveAllChunks() {
         try {
             for (CEChunk ceChunk : this.chunksToSave) {
-                CraftEngine.instance().debug(() -> "Saving chunk " + ceChunk.chunkPos());
                 this.ceWorld.worldDataStorage().writeChunkAt(ceChunk.chunkPos(), ceChunk);
             }
             this.chunksToSave.clear();

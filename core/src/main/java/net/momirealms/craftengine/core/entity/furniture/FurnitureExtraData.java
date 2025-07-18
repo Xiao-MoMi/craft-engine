@@ -2,7 +2,7 @@ package net.momirealms.craftengine.core.entity.furniture;
 
 import net.momirealms.craftengine.core.item.Item;
 import net.momirealms.craftengine.core.plugin.CraftEngine;
-import net.momirealms.craftengine.core.plugin.config.Config;
+import net.momirealms.craftengine.core.plugin.logger.Debugger;
 import net.momirealms.sparrow.nbt.CompoundTag;
 import net.momirealms.sparrow.nbt.NBT;
 
@@ -39,9 +39,7 @@ public class FurnitureExtraData {
         try {
             return Optional.of(CraftEngine.instance().itemManager().fromByteArray(data));
         } catch (Exception e) {
-            if (Config.debug()) {
-                CraftEngine.instance().logger().warn("Failed to read item data", e);
-            }
+            Debugger.FURNITURE.warn(() -> "Failed to read furniture item data", e);
             return Optional.empty();
         }
     }

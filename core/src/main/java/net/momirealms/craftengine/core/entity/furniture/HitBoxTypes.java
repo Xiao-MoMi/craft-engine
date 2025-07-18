@@ -2,7 +2,6 @@ package net.momirealms.craftengine.core.entity.furniture;
 
 import net.momirealms.craftengine.core.plugin.locale.LocalizedResourceConfigException;
 import net.momirealms.craftengine.core.registry.BuiltInRegistries;
-import net.momirealms.craftengine.core.registry.Holder;
 import net.momirealms.craftengine.core.registry.Registries;
 import net.momirealms.craftengine.core.registry.WritableRegistry;
 import net.momirealms.craftengine.core.util.Key;
@@ -18,9 +17,8 @@ public class HitBoxTypes {
     public static final Key CUSTOM = Key.of("minecraft:custom");
 
     public static void register(Key key, HitBoxFactory factory) {
-        Holder.Reference<HitBoxFactory> holder = ((WritableRegistry<HitBoxFactory>) BuiltInRegistries.HITBOX_FACTORY)
-                .registerForHolder(new ResourceKey<>(Registries.HITBOX_FACTORY.location(), key));
-        holder.bindValue(factory);
+        ((WritableRegistry<HitBoxFactory>) BuiltInRegistries.HITBOX_FACTORY)
+                .register(ResourceKey.create(Registries.HITBOX_FACTORY.location(), key), factory);
     }
 
     public static HitBox fromMap(Map<String, Object> arguments) {

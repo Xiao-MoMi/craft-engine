@@ -56,6 +56,7 @@ public interface ItemBrowserManager extends Manageable {
         public static String RECIPE_CRAFTING_TITLE;
         public static String RECIPE_STONECUTTING_TITLE;
         public static String RECIPE_SMITHING_TRANSFORM_TITLE;
+        public static String RECIPE_BREWING_TITLE;
         public static Key RECIPE_BACK;
         public static Key RECIPE_EXIT;
         public static Key RECIPE_NEXT_PAGE_AVAILABLE;
@@ -95,6 +96,7 @@ public interface ItemBrowserManager extends Manageable {
             RECIPE_CRAFTING_TITLE = getOrThrow(section, "recipe.crafting.title");
             RECIPE_STONECUTTING_TITLE = getOrThrow(section, "recipe.stonecutting.title");
             RECIPE_SMITHING_TRANSFORM_TITLE = getOrThrow(section, "recipe.smithing-transform.title");
+            RECIPE_BREWING_TITLE = getOrThrow(section, "recipe.brewing.title");
             RECIPE_BACK = Key.of(getOrThrow(section, "recipe.page-navigation.return"));
             RECIPE_EXIT = Key.of(getOrThrow(section, "recipe.page-navigation.exit"));
             RECIPE_NEXT_PAGE_AVAILABLE = Key.of(getOrThrow(section, "recipe.page-navigation.next.available"));

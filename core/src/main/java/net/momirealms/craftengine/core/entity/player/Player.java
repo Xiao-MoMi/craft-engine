@@ -8,7 +8,7 @@ import net.momirealms.craftengine.core.plugin.network.NetWorkUser;
 import net.momirealms.craftengine.core.sound.SoundSource;
 import net.momirealms.craftengine.core.util.Key;
 import net.momirealms.craftengine.core.world.BlockPos;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
@@ -17,7 +17,7 @@ public abstract class Player extends AbstractEntity implements NetWorkUser {
 
     public abstract boolean isSecondaryUseActive();
 
-    @Nullable
+    @NotNull
     public abstract Item<?> getItemInHand(InteractionHand hand);
 
     @Override

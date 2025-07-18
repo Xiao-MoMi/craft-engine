@@ -41,6 +41,7 @@ public class BukkitCommandManager extends AbstractCommandManager<CommandSender> 
                 new DebugGetBlockInternalIdCommand(this, plugin),
                 new DebugAppearanceStateUsageCommand(this, plugin),
                 new DebugClearCooldownCommand(this, plugin),
+                new DebugEntityIdCommand(this, plugin),
                 new DebugRealStateUsageCommand(this, plugin),
                 new DebugItemDataCommand(this, plugin),
                 new DebugSetBlockCommand(this, plugin),

@@ -30,14 +30,14 @@ public class ItemNameModifier<I> implements ItemDataModifier<I> {
     @Override
     public Item<I> prepareNetworkItem(Item<I> item, ItemBuildContext context, CompoundTag networkData) {
         if (VersionHelper.isOrAbove1_20_5()) {
-            Tag previous = item.getNBTComponent(ComponentKeys.ITEM_NAME);
+            Tag previous = item.getSparrowNBTComponent(ComponentKeys.ITEM_NAME);
             if (previous != null) {
                 networkData.put(ComponentKeys.ITEM_NAME.asString(), NetworkItemHandler.pack(NetworkItemHandler.Operation.ADD, previous));
             } else {
                 networkData.put(ComponentKeys.ITEM_NAME.asString(), NetworkItemHandler.pack(NetworkItemHandler.Operation.REMOVE));
             }
         } else {
-            Tag previous = item.getNBTTag("display", "Name");
+            Tag previous = item.getTag("display", "Name");
             if (previous != null) {
                 networkData.put("display.Name", NetworkItemHandler.pack(NetworkItemHandler.Operation.ADD, previous));
             } else {

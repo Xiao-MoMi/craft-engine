@@ -1,10 +1,13 @@
 package net.momirealms.craftengine.core.plugin.context.function;
 
+import net.momirealms.craftengine.core.entity.player.Player;
 import net.momirealms.craftengine.core.plugin.context.Condition;
 import net.momirealms.craftengine.core.plugin.context.Context;
 import net.momirealms.craftengine.core.plugin.context.number.NumberProvider;
 import net.momirealms.craftengine.core.plugin.context.number.NumberProviders;
 import net.momirealms.craftengine.core.plugin.context.parameter.DirectContextParameters;
+import net.momirealms.craftengine.core.plugin.context.selector.PlayerSelector;
+import net.momirealms.craftengine.core.plugin.context.selector.PlayerSelectors;
 import net.momirealms.craftengine.core.sound.SoundSource;
 import net.momirealms.craftengine.core.util.Key;
 import net.momirealms.craftengine.core.util.ResourceConfigUtils;
@@ -25,8 +28,19 @@ public class PlaySoundFunction<CTX extends Context> extends AbstractConditionalF
     private final NumberProvider volume;
     private final NumberProvider pitch;
     private final SoundSource source;
+    private final PlayerSelector<CTX> selector;
 
-    public PlaySoundFunction(Key soundEvent, NumberProvider x, NumberProvider y, NumberProvider z, NumberProvider volume, NumberProvider pitch, SoundSource source, List<Condition<CTX>> predicates) {
+    public PlaySoundFunction(
+            Key soundEvent,
+            NumberProvider x,
+            NumberProvider y,
+            NumberProvider z,
+            NumberProvider volume,
+            NumberProvider pitch,
+            SoundSource source,
+            PlayerSelector<CTX> selector,
+            List<Condition<CTX>> predicates
+    ) {
         super(predicates);
         this.soundEvent = soundEvent;
         this.x = x;
@@ -35,15 +49,22 @@ public class PlaySoundFunction<CTX extends Context> extends AbstractConditionalF
         this.volume = volume;
         this.pitch = pitch;
         this.source = source;
+        this.selector = selector;
     }
 
     @Override
     public void runInternal(CTX ctx) {
-        Optional<WorldPosition> optionalWorldPosition = ctx.getOptionalParameter(DirectContextParameters.POSITION);
-        if (optionalWorldPosition.isPresent()) {
-            World world = optionalWorldPosition.get().world();
-            world.playSound(new Vec3d(this.x.getDouble(ctx), this.y.getDouble(ctx), this.z.getDouble(ctx)),
-                    this.soundEvent, this.volume.getFloat(ctx), this.pitch.getFloat(ctx), this.source);
+        if (this.selector == null) {
+            Optional<WorldPosition> optionalWorldPosition = ctx.getOptionalParameter(DirectContextParameters.POSITION);
+            if (optionalWorldPosition.isPresent()) {
+                World world = optionalWorldPosition.get().world();
+                world.playSound(new Vec3d(this.x.getDouble(ctx), this.y.getDouble(ctx), this.z.getDouble(ctx)),
+                        this.soundEvent, this.volume.getFloat(ctx), this.pitch.getFloat(ctx), this.source);
+            }
+        } else {
+            for (Player player : selector.get(ctx)) {
+                player.playSound(this.soundEvent, this.source, this.volume.getFloat(ctx), this.pitch.getFloat(ctx));
+            }
         }
     }
 
@@ -67,7 +88,8 @@ public class PlaySoundFunction<CTX extends Context> extends AbstractConditionalF
             NumberProvider volume = NumberProviders.fromObject(arguments.getOrDefault("volume", 1));
             NumberProvider pitch = NumberProviders.fromObject(arguments.getOrDefault("pitch", 1));
             SoundSource source = Optional.ofNullable(arguments.get("source")).map(String::valueOf).map(it -> SoundSource.valueOf(it.toUpperCase(Locale.ENGLISH))).orElse(SoundSource.MASTER);
-            return new PlaySoundFunction<>(soundEvent, x, y, z, volume, pitch, source, getPredicates(arguments));
+            PlayerSelector<CTX> selector = PlayerSelectors.fromObject(arguments.get("target"), conditionFactory());
+            return new PlaySoundFunction<>(soundEvent, x, y, z, volume, pitch, source, selector, getPredicates(arguments));
         }
     }
 }

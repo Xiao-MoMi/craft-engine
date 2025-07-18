@@ -2,7 +2,6 @@ package net.momirealms.craftengine.core.item.equipment;
 
 import net.momirealms.craftengine.core.plugin.locale.LocalizedResourceConfigException;
 import net.momirealms.craftengine.core.registry.BuiltInRegistries;
-import net.momirealms.craftengine.core.registry.Holder;
 import net.momirealms.craftengine.core.registry.Registries;
 import net.momirealms.craftengine.core.registry.WritableRegistry;
 import net.momirealms.craftengine.core.util.Key;
@@ -21,9 +20,8 @@ public final class Equipments {
     }
 
     public static void register(Key key, EquipmentFactory factory) {
-        Holder.Reference<EquipmentFactory> holder = ((WritableRegistry<EquipmentFactory>) BuiltInRegistries.EQUIPMENT_FACTORY)
-                .registerForHolder(new ResourceKey<>(Registries.EQUIPMENT_FACTORY.location(), key));
-        holder.bindValue(factory);
+        ((WritableRegistry<EquipmentFactory>) BuiltInRegistries.EQUIPMENT_FACTORY)
+                .register(ResourceKey.create(Registries.EQUIPMENT_FACTORY.location(), key), factory);
     }
 
     public static Equipment fromMap(Key id, Map<String, Object> map) {

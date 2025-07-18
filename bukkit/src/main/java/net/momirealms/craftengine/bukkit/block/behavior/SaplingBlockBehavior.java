@@ -20,6 +20,7 @@ import net.momirealms.craftengine.core.item.Item;
 import net.momirealms.craftengine.core.item.ItemKeys;
 import net.momirealms.craftengine.core.item.context.UseOnContext;
 import net.momirealms.craftengine.core.plugin.CraftEngine;
+import net.momirealms.craftengine.core.util.ItemUtils;
 import net.momirealms.craftengine.core.util.Key;
 import net.momirealms.craftengine.core.util.RandomUtils;
 import net.momirealms.craftengine.core.util.ResourceConfigUtils;
@@ -88,7 +89,7 @@ public class SaplingBlockBehavior extends BukkitBlockBehavior {
         }
         Object chunkGenerator = CoreReflections.method$ServerChunkCache$getGenerator.invoke(FastNMS.INSTANCE.method$ServerLevel$getChunkSource(world));
         Object configuredFeature = CoreReflections.method$Holder$value.invoke(holder.get());
-        Object fluidState = FastNMS.INSTANCE.method$Level$getFluidState(world, blockPos);
+        Object fluidState = FastNMS.INSTANCE.method$BlockGetter$getFluidState(world, blockPos);
         Object legacyState = CoreReflections.method$FluidState$createLegacyBlock.invoke(fluidState);
         FastNMS.INSTANCE.method$LevelWriter$setBlock(world, blockPos, legacyState, UpdateOption.UPDATE_NONE.flags());
         if ((boolean) CoreReflections.method$ConfiguredFeature$place.invoke(configuredFeature, world, chunkGenerator, randomSource, blockPos)) {
@@ -147,7 +148,7 @@ public class SaplingBlockBehavior extends BukkitBlockBehavior {
     @Override
     public InteractionResult useOnBlock(UseOnContext context, ImmutableBlockState state) {
         Item<?> item = context.getItem();
-        if (item == null || !item.vanillaId().equals(ItemKeys.BONE_MEAL) || context.getPlayer().isAdventureMode())
+        if (ItemUtils.isEmpty(item) || !item.vanillaId().equals(ItemKeys.BONE_MEAL) || context.getPlayer().isAdventureMode())
             return InteractionResult.PASS;
         boolean sendSwing = false;
         Object visualState = state.vanillaBlockState().handle();

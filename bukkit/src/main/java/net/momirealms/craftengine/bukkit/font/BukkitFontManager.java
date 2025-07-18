@@ -6,9 +6,10 @@ import io.papermc.paper.event.player.AsyncChatCommandDecorateEvent;
 import io.papermc.paper.event.player.AsyncChatDecorateEvent;
 import net.kyori.adventure.text.Component;
 import net.momirealms.craftengine.bukkit.plugin.BukkitCraftEngine;
-import net.momirealms.craftengine.bukkit.plugin.reflection.bukkit.CraftBukkitReflections;
 import net.momirealms.craftengine.bukkit.plugin.reflection.paper.PaperReflections;
 import net.momirealms.craftengine.bukkit.util.ComponentUtils;
+import net.momirealms.craftengine.bukkit.util.InventoryUtils;
+import net.momirealms.craftengine.bukkit.util.ItemStackUtils;
 import net.momirealms.craftengine.bukkit.util.LegacyInventoryUtils;
 import net.momirealms.craftengine.core.font.*;
 import net.momirealms.craftengine.core.item.Item;
@@ -130,15 +131,8 @@ public class BukkitFontManager extends AbstractFontManager implements Listener {
             return;
         }
         ItemStack result = event.getResult();
-        if (result == null) return;
-        Player player;
-        try {
-            player = (Player) CraftBukkitReflections.method$InventoryView$getPlayer.invoke(VersionHelper.isOrAbove1_21() ? event.getView() : LegacyInventoryUtils.getView(event));
-        } catch (ReflectiveOperationException e) {
-            this.plugin.logger().warn("Failed to get inventory viewer", e);
-            return;
-        }
-
+        if (ItemStackUtils.isEmpty(result)) return;
+        Player player = InventoryUtils.getPlayerFromInventoryEvent(event);
         String renameText;
         if (VersionHelper.isOrAbove1_21_2()) {
             AnvilView anvilView = event.getView();
@@ -149,7 +143,7 @@ public class BukkitFontManager extends AbstractFontManager implements Listener {
 
         if (renameText == null || renameText.isEmpty()) return;
         Component itemName = Component.text(renameText);
-        EmojiComponentProcessResult replaceProcessResult = replaceComponentEmoji(itemName, plugin.adapt(player), renameText);
+        EmojiComponentProcessResult replaceProcessResult = replaceComponentEmoji(itemName, this.plugin.adapt(player), renameText);
         if (replaceProcessResult.changed()) {
             Item<ItemStack> wrapped = this.plugin.itemManager().wrap(result);
             wrapped.customNameJson(AdventureHelper.componentToJson(replaceProcessResult.newText()));

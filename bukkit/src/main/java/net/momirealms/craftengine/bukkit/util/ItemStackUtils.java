@@ -7,9 +7,9 @@ import org.bukkit.Material;
 import org.bukkit.inventory.ItemStack;
 import org.jetbrains.annotations.Contract;
 
-public class ItemUtils {
+public class ItemStackUtils {
 
-    private ItemUtils() {}
+    private ItemStackUtils() {}
 
     @Contract("null -> true")
     public static boolean isEmpty(final ItemStack item) {
@@ -20,7 +20,7 @@ public class ItemUtils {
 
     public static boolean hasCustomItem(ItemStack[] stack) {
         for (ItemStack itemStack : stack) {
-            if (!ItemUtils.isEmpty(itemStack)) {
+            if (!ItemStackUtils.isEmpty(itemStack)) {
                 if (BukkitItemManager.instance().wrap(itemStack).customId().isPresent()) {
                     return true;
                 }
@@ -30,7 +30,7 @@ public class ItemUtils {
     }
 
     public static boolean isCustomItem(ItemStack stack) {
-        if (!ItemUtils.isEmpty(stack)) {
+        if (!ItemStackUtils.isEmpty(stack)) {
             return BukkitItemManager.instance().wrap(stack).customId().isPresent();
         }
         return false;

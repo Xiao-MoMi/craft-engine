@@ -254,9 +254,8 @@ public final class BukkitCustomBlock extends AbstractCustomBlock {
         @Override
         public @NotNull CustomBlock build() {
             // create or get block holder
-            Holder.Reference<CustomBlock> holder = BuiltInRegistries.BLOCK.get(id).orElseGet(() ->
-                    ((WritableRegistry<CustomBlock>) BuiltInRegistries.BLOCK).registerForHolder(new ResourceKey<>(BuiltInRegistries.BLOCK.key().location(), id)));
-            return new BukkitCustomBlock(id, holder, properties, appearances, variantMapper, settings, events, behavior, lootTable);
+            Holder.Reference<CustomBlock> holder = ((WritableRegistry<CustomBlock>) BuiltInRegistries.BLOCK).getOrRegisterForHolder(ResourceKey.create(BuiltInRegistries.BLOCK.key().location(), this.id));
+            return new BukkitCustomBlock(this.id, holder, this.properties, this.appearances, this.variantMapper, this.settings, this.events, this.behavior, this.lootTable);
         }
     }
 }

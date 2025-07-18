@@ -29,7 +29,6 @@ import net.momirealms.craftengine.core.plugin.config.Config;
 import net.momirealms.craftengine.core.plugin.context.CooldownData;
 import net.momirealms.craftengine.core.plugin.network.ConnectionState;
 import net.momirealms.craftengine.core.plugin.network.EntityPacketHandler;
-import net.momirealms.craftengine.core.plugin.network.ProtocolVersion;
 import net.momirealms.craftengine.core.sound.SoundSource;
 import net.momirealms.craftengine.core.util.Direction;
 import net.momirealms.craftengine.core.util.Key;
@@ -48,6 +47,7 @@ import org.bukkit.persistence.PersistentDataType;
 import org.bukkit.potion.PotionEffect;
 import org.bukkit.potion.PotionEffectType;
 import org.bukkit.util.RayTraceResult;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
@@ -55,12 +55,10 @@ import java.lang.ref.Reference;
 import java.lang.ref.WeakReference;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.atomic.AtomicInteger;
 
 public class BukkitServerPlayer extends Player {
     private final BukkitCraftEngine plugin;
-    // handshake
-    private ProtocolVersion protocolVersion = ProtocolVersion.UNKNOWN;
+
     // connection state
     private final Channel channel;
     private ChannelHandler connection;
@@ -68,8 +66,8 @@ public class BukkitServerPlayer extends Player {
     private UUID uuid;
     private ConnectionState decoderState;
     private ConnectionState encoderState;
+    private boolean shouldProcessFinishConfiguration = true;
     private final Set<UUID> resourcePackUUID = Collections.synchronizedSet(new HashSet<>());
-    private final AtomicInteger remainingConfigurationStagePacks = new AtomicInteger(0);
     // some references
     private Reference<org.bukkit.entity.Player> playerRef;
     private Reference<Object> serverPlayerRef;
@@ -109,7 +107,6 @@ public class BukkitServerPlayer extends Player {
     private double cachedInteractionRange;
     // cooldown data
     private CooldownData cooldownData;
-    private UUID serverSideRealPackUUID;
 
     private final Map<Integer, EntityPacketHandler> entityTypeView = new ConcurrentHashMap<>();
 
@@ -254,13 +251,8 @@ public class BukkitServerPlayer extends Player {
 
     @Override
     public boolean canInstabuild() {
-        try {
-            Object abilities = CoreReflections.field$Player$abilities.get(serverPlayer());
-            return (boolean) CoreReflections.field$Abilities$instabuild.get(abilities);
-        } catch (ReflectiveOperationException e) {
-            CraftEngine.instance().logger().warn("Failed to get canInstabuild for " + name(), e);
-            return false;
-        }
+        Object abilities = FastNMS.INSTANCE.field$Player$abilities(serverPlayer());
+        return FastNMS.INSTANCE.field$Abilities$instabuild(abilities);
     }
 
     @Override
@@ -602,7 +594,7 @@ public class BukkitServerPlayer extends Player {
                 CoreReflections.field$ServerPlayerGameMode$isDestroyingBlock.set(gameMode, false);
                 // check item in hand
                 Item<ItemStack> item = this.getItemInHand(InteractionHand.MAIN_HAND);
-                if (item != null) {
+                if (!item.isEmpty()) {
                     Material itemMaterial = item.getItem().getType();
                     // creative mode + invalid item in hand
                     if (canInstabuild() && (itemMaterial == Material.DEBUG_STICK
@@ -620,7 +612,7 @@ public class BukkitServerPlayer extends Player {
                     ImmutableBlockState customState = optionalCustomState.get();
                     BlockSettings blockSettings = customState.settings();
                     if (blockSettings.requireCorrectTool()) {
-                        if (item != null) {
+                        if (!item.isEmpty()) {
                             // it's correct on plugin side
                             if (blockSettings.isCorrectTool(item.id())) {
                                 // but not on serverside
@@ -754,12 +746,12 @@ public class BukkitServerPlayer extends Player {
 
     @Override
     public float yRot() {
-        return platformPlayer().getPitch();
+        return platformPlayer().getYaw();
     }
 
     @Override
     public float xRot() {
-        return platformPlayer().getYaw();
+        return platformPlayer().getPitch();
     }
 
     @Override
@@ -772,7 +764,7 @@ public class BukkitServerPlayer extends Player {
         return DirectionUtils.toDirection(platformPlayer().getFacing());
     }
 
-    @Nullable
+    @NotNull
     @Override
     public Item<ItemStack> getItemInHand(InteractionHand hand) {
         PlayerInventory inventory = platformPlayer().getInventory();
@@ -881,28 +873,13 @@ public class BukkitServerPlayer extends Player {
     }
 
     @Override
-    public ProtocolVersion protocolVersion() {
-        return this.protocolVersion;
+    public void setShouldProcessFinishConfiguration(boolean shouldProcess) {
+        this.shouldProcessFinishConfiguration = shouldProcess;
     }
 
     @Override
-    public void setProtocolVersion(int protocolVersion) {
-        this.protocolVersion = ProtocolVersion.getById(protocolVersion);
-    }
-
-    @Override
-    public AtomicInteger remainingConfigurationStagePacks() {
-        return this.remainingConfigurationStagePacks;
-    }
-
-    @Override
-    public void setServerSideRealPackUUID(UUID uuid) {
-        this.serverSideRealPackUUID = uuid;
-    }
-
-    @Override
-    public UUID getServerSideRealPackUUID() {
-        return this.serverSideRealPackUUID;
+    public boolean shouldProcessFinishConfiguration() {
+        return this.shouldProcessFinishConfiguration;
     }
 
     @Override

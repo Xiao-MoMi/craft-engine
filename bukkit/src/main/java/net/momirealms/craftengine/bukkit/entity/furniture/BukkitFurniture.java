@@ -167,6 +167,7 @@ public class BukkitFurniture implements Furniture {
     @NotNull
     public Object spawnPacket(Player player) {
         // TODO hasPermission might be slow, can we use a faster way in the future?
+        // TODO Make it based on conditions. So we can dynamically control which furniture should be sent to the player
         if (!this.minimized || player.hasPermission(FurnitureManager.FURNITURE_ADMIN_NODE)) {
             return this.cachedSpawnPacket;
         } else {

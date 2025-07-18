@@ -1,8 +1,11 @@
 package net.momirealms.craftengine.bukkit.block.behavior;
 
+import net.momirealms.craftengine.bukkit.block.BukkitBlockManager;
 import net.momirealms.craftengine.bukkit.nms.FastNMS;
+import net.momirealms.craftengine.bukkit.plugin.BukkitCraftEngine;
 import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.CoreReflections;
 import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.MBlocks;
+import net.momirealms.craftengine.bukkit.plugin.user.BukkitServerPlayer;
 import net.momirealms.craftengine.bukkit.util.BlockStateUtils;
 import net.momirealms.craftengine.bukkit.util.DirectionUtils;
 import net.momirealms.craftengine.bukkit.util.LocationUtils;
@@ -15,8 +18,10 @@ import net.momirealms.craftengine.core.block.behavior.BlockBehaviorFactory;
 import net.momirealms.craftengine.core.block.properties.Property;
 import net.momirealms.craftengine.core.block.state.properties.DoorHinge;
 import net.momirealms.craftengine.core.block.state.properties.DoubleBlockHalf;
+import net.momirealms.craftengine.core.entity.player.InteractionHand;
 import net.momirealms.craftengine.core.entity.player.InteractionResult;
 import net.momirealms.craftengine.core.entity.player.Player;
+import net.momirealms.craftengine.core.item.Item;
 import net.momirealms.craftengine.core.item.context.BlockPlaceContext;
 import net.momirealms.craftengine.core.item.context.UseOnContext;
 import net.momirealms.craftengine.core.sound.SoundData;
@@ -32,6 +37,7 @@ import org.bukkit.block.data.Bisected;
 import org.bukkit.block.data.BlockData;
 import org.bukkit.block.data.type.Door;
 import org.bukkit.event.block.BlockRedstoneEvent;
+import org.bukkit.inventory.ItemStack;
 import org.bukkit.util.Vector;
 
 import javax.annotation.Nullable;
@@ -111,10 +117,41 @@ public class DoorBlockBehavior extends AbstractCanSurviveBlockBehavior {
                 net.momirealms.craftengine.core.world.World world = new BukkitWorld(FastNMS.INSTANCE.method$Level$getCraftWorld(level));
                 WorldPosition position = new WorldPosition(world, Vec3d.atCenterOf(pos));
                 world.playBlockSound(position, customState.settings().sounds().breakSound());
-                FastNMS.INSTANCE.method$Level$levelEvent(level, WorldEvents.BLOCK_BREAK_EFFECT, blockPos, customState.customBlockState().registryId());
+                FastNMS.INSTANCE.method$LevelAccessor$levelEvent(level, WorldEvents.BLOCK_BREAK_EFFECT, blockPos, customState.customBlockState().registryId());
                 return MBlocks.AIR$defaultState;
             }
             return blockState;
+        }
+    }
+
+    @Override
+    public Object playerWillDestroy(Object thisBlock, Object[] args, Callable<Object> superMethod) throws Exception {
+        Object level = args[0];
+        Object pos = args[1];
+        Object state = args[2];
+        Object player = args[3];
+        ImmutableBlockState blockState = BukkitBlockManager.instance().getImmutableBlockState(BlockStateUtils.blockStateToId(state));
+        if (blockState == null || blockState.isEmpty()) return superMethod.call();
+        org.bukkit.entity.Player bukkitPlayer = FastNMS.INSTANCE.method$ServerPlayer$getBukkitEntity(player);
+        BukkitServerPlayer cePlayer = BukkitCraftEngine.instance().adapt(bukkitPlayer);
+        Item<ItemStack> item = cePlayer.getItemInHand(InteractionHand.MAIN_HAND);
+        if (cePlayer.canInstabuild() || !BlockStateUtils.isCorrectTool(blockState, item)) {
+            preventDropFromBottomPart(level, pos, blockState, player);
+        }
+        return superMethod.call();
+    }
+
+    private void preventDropFromBottomPart(Object level, Object pos, ImmutableBlockState state, Object player) {
+        DoubleBlockHalf half = state.get(this.halfProperty);
+        if (half == DoubleBlockHalf.UPPER) {
+            Object blockPos = FastNMS.INSTANCE.method$BlockPos$relative(pos, CoreReflections.instance$Direction$DOWN);
+            Object blockState = FastNMS.INSTANCE.method$BlockGetter$getBlockState(level, blockPos);
+            ImmutableBlockState belowState = BukkitBlockManager.instance().getImmutableBlockState(BlockStateUtils.blockStateToId(blockState));
+            if (belowState == null || belowState.isEmpty()) return;
+            Optional<DoorBlockBehavior> belowDoorBehavior = belowState.behavior().getAs(DoorBlockBehavior.class);
+            if (belowDoorBehavior.isEmpty() || belowState.get(this.halfProperty) != DoubleBlockHalf.LOWER) return;
+            FastNMS.INSTANCE.method$LevelWriter$setBlock(level, blockPos, MBlocks.AIR$defaultState, UpdateOption.builder().updateSuppressDrops().updateClients().updateNeighbors().build().flags());
+            FastNMS.INSTANCE.method$LevelAccessor$levelEvent(level, player, WorldEvents.BLOCK_BREAK_EFFECT, blockPos, belowState.customBlockState().registryId());
         }
     }
 

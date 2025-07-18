@@ -7,12 +7,16 @@ import net.momirealms.craftengine.core.entity.projectile.ProjectileManager;
 import net.momirealms.craftengine.core.font.FontManager;
 import net.momirealms.craftengine.core.item.ItemManager;
 import net.momirealms.craftengine.core.item.recipe.RecipeManager;
+import net.momirealms.craftengine.core.item.recipe.network.legacy.LegacyRecipeTypes;
+import net.momirealms.craftengine.core.item.recipe.network.modern.display.RecipeDisplayTypes;
+import net.momirealms.craftengine.core.item.recipe.network.modern.display.slot.SlotDisplayTypes;
 import net.momirealms.craftengine.core.loot.VanillaLootManager;
 import net.momirealms.craftengine.core.pack.PackManager;
 import net.momirealms.craftengine.core.plugin.classpath.ClassPathAppender;
 import net.momirealms.craftengine.core.plugin.command.CraftEngineCommandManager;
 import net.momirealms.craftengine.core.plugin.command.sender.SenderFactory;
 import net.momirealms.craftengine.core.plugin.compatibility.CompatibilityManager;
+import net.momirealms.craftengine.core.plugin.compatibility.PluginTaskRegistry;
 import net.momirealms.craftengine.core.plugin.config.Config;
 import net.momirealms.craftengine.core.plugin.config.template.TemplateManager;
 import net.momirealms.craftengine.core.plugin.config.template.TemplateManagerImpl;
@@ -34,18 +38,17 @@ import net.momirealms.craftengine.core.sound.SoundManager;
 import net.momirealms.craftengine.core.world.WorldManager;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.core.Logger;
+import org.jetbrains.annotations.ApiStatus;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
 import java.util.function.Consumer;
-import java.util.function.Supplier;
 
 public abstract class CraftEngine implements Plugin {
     private static CraftEngine instance;
     protected PluginLogger logger;
-    protected Consumer<Supplier<String>> debugger = (s) -> {};
     protected Config config;
     protected Platform platform;
     protected ClassPathAppender classPathAppender;
@@ -72,6 +75,9 @@ public abstract class CraftEngine implements Plugin {
     protected GlobalVariableManager globalVariableManager;
     protected ProjectileManager projectileManager;
 
+    private final PluginTaskRegistry preLoadTaskRegistry = new PluginTaskRegistry();
+    private final PluginTaskRegistry postLoadTaskRegistry = new PluginTaskRegistry();
+
     private final Consumer<CraftEngine> reloadEventDispatcher;
     private boolean isReloading;
     private boolean isInitializing;
@@ -95,6 +101,9 @@ public abstract class CraftEngine implements Plugin {
     }
 
     protected void onPluginLoad() {
+        RecipeDisplayTypes.register();
+        SlotDisplayTypes.register();
+        LegacyRecipeTypes.register();
         ((Logger) LogManager.getRootLogger()).addFilter(new LogFilter());
         ((Logger) LogManager.getRootLogger()).addFilter(new DisconnectLogFilter());
     }
@@ -123,8 +132,6 @@ public abstract class CraftEngine implements Plugin {
                 long time1 = System.currentTimeMillis();
                 // firstly reload main config
                 this.config.load();
-                // reset debugger
-                this.debugger = Config.debug() ? (s) -> logger.info("[Debug] " + s.get()) : (s) -> {};
                 // now we reload the translations
                 this.translationManager.reload();
                 // clear the outdated cache by reloading the managers
@@ -203,6 +210,7 @@ public abstract class CraftEngine implements Plugin {
         this.commandManager.registerDefaultFeatures();
         // delay the reload so other plugins can register some custom parsers
         this.scheduler.sync().runDelayed(() -> {
+            this.preLoadTaskRegistry.executeTasks();
             this.registerDefaultParsers();
             // hook external item plugins
             this.itemManager.delayedInit();
@@ -215,6 +223,7 @@ public abstract class CraftEngine implements Plugin {
             this.fontManager.delayedInit();
             this.vanillaLootManager.delayedInit();
             this.advancementManager.delayedInit();
+            this.compatibilityManager.onDelayedEnable();
             // reload the plugin
             try {
                 this.reloadPlugin(Runnable::run, Runnable::run, true);
@@ -228,6 +237,7 @@ public abstract class CraftEngine implements Plugin {
             // set up some platform extra tasks
             this.platformDelayedEnable();
             this.isInitializing = false;
+            this.postLoadTaskRegistry.executeTasks();
             this.scheduler.executeAsync(() -> this.packManager.initCachedAssets());
         });
     }
@@ -340,11 +350,6 @@ public abstract class CraftEngine implements Plugin {
     @Override
     public PluginLogger logger() {
         return logger;
-    }
-
-    @Override
-    public void debug(Supplier<String> message) {
-        debugger.accept(message);
     }
 
     @Override
@@ -463,5 +468,15 @@ public abstract class CraftEngine implements Plugin {
     @Override
     public Platform platform() {
         return platform;
+    }
+
+    @ApiStatus.Experimental
+    public PluginTaskRegistry preLoadTaskRegistry() {
+        return preLoadTaskRegistry;
+    }
+
+    @ApiStatus.Experimental
+    public PluginTaskRegistry postLoadTaskRegistry() {
+        return postLoadTaskRegistry;
     }
 }

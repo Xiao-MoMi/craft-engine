@@ -77,7 +77,7 @@ public class TrapDoorBlockBehavior extends BukkitBlockBehavior {
         if (super.waterloggedProperty != null) {
             BlockStateUtils.getOptionalCustomBlockState(blockState).ifPresent(customState -> {
                 if (customState.get(super.waterloggedProperty)) {
-                    FastNMS.INSTANCE.method$LevelAccessor$scheduleFluidTick(args[updateShape$level], args[updateShape$blockPos], MFluids.WATER, 5);
+                    FastNMS.INSTANCE.method$ScheduledTickAccess$scheduleFluidTick(args[updateShape$level], args[updateShape$blockPos], MFluids.WATER, 5);
                 }
             });
         }
@@ -99,7 +99,7 @@ public class TrapDoorBlockBehavior extends BukkitBlockBehavior {
         if (FastNMS.INSTANCE.method$SignalGetter$hasNeighborSignal(level, clickedPos)) {
             state = state.with(this.poweredProperty, true).with(this.openProperty, true);
         }
-        if (this.waterloggedProperty != null && FastNMS.INSTANCE.method$FluidState$getType(FastNMS.INSTANCE.method$Level$getFluidState(level, clickedPos)) == MFluids.WATER) {
+        if (this.waterloggedProperty != null && FastNMS.INSTANCE.method$FluidState$getType(FastNMS.INSTANCE.method$BlockGetter$getFluidState(level, clickedPos)) == MFluids.WATER) {
             state = state.with(this.waterloggedProperty, true);
         }
         return state;
@@ -197,7 +197,7 @@ public class TrapDoorBlockBehavior extends BukkitBlockBehavior {
 
         FastNMS.INSTANCE.method$LevelWriter$setBlock(level, blockPos, customState.with(this.poweredProperty, hasSignal).customBlockState().handle(), UpdateOption.Flags.UPDATE_CLIENTS);
         if (this.waterloggedProperty != null && customState.get(this.waterloggedProperty)) {
-            FastNMS.INSTANCE.method$LevelAccessor$scheduleFluidTick(level, blockPos, MFluids.WATER, 5);
+            FastNMS.INSTANCE.method$ScheduledTickAccess$scheduleFluidTick(level, blockPos, MFluids.WATER, 5);
         }
     }
 

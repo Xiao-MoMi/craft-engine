@@ -9,6 +9,7 @@ import io.netty.channel.ChannelFuture;
 import it.unimi.dsi.fastutil.objects.Object2IntMap;
 import net.momirealms.craftengine.bukkit.plugin.reflection.ReflectionInitException;
 import net.momirealms.craftengine.bukkit.util.BukkitReflectionUtils;
+import net.momirealms.craftengine.core.util.MiscUtils;
 import net.momirealms.craftengine.core.util.ReflectionUtils;
 import net.momirealms.craftengine.core.util.VersionHelper;
 
@@ -1823,16 +1824,8 @@ public final class CoreReflections {
             ReflectionUtils.getInstanceDeclaredField(clazz$Abilities, boolean.class, 2)
     );
 
-    public static final Field field$Abilities$instabuild = requireNonNull(
-            ReflectionUtils.getInstanceDeclaredField(clazz$Abilities, boolean.class, 3)
-    );
-
     public static final Field field$Abilities$mayBuild = requireNonNull(
             ReflectionUtils.getInstanceDeclaredField(clazz$Abilities, boolean.class, 4)
-    );
-
-    public static final Field field$Player$abilities = requireNonNull(
-            ReflectionUtils.getInstanceDeclaredField(clazz$Player, clazz$Abilities, 0)
     );
 
     public static final Class<?> clazz$FlowingFluid = requireNonNull(
@@ -2297,12 +2290,26 @@ public final class CoreReflections {
 
     public static final Constructor<?> constructor$SmithingTransformRecipe = requireNonNull(
             VersionHelper.isOrAbove1_21_5()
-                    ? ReflectionUtils.getConstructor(clazz$SmithingTransformRecipe, Optional.class, clazz$Ingredient, Optional.class, clazz$TransmuteResult)
-                    : VersionHelper.isOrAbove1_21_2()
-                    ? ReflectionUtils.getConstructor(clazz$SmithingTransformRecipe, Optional.class, Optional.class, Optional.class, clazz$ItemStack)
-                    : VersionHelper.isOrAbove1_20_2()
-                    ? ReflectionUtils.getConstructor(clazz$SmithingTransformRecipe, clazz$Ingredient, clazz$Ingredient, clazz$Ingredient, clazz$ItemStack)
-                    : ReflectionUtils.getConstructor(clazz$SmithingTransformRecipe, clazz$ResourceLocation, clazz$Ingredient, clazz$Ingredient, clazz$Ingredient, clazz$ItemStack)
+            ? ReflectionUtils.getConstructor(clazz$SmithingTransformRecipe, Optional.class, clazz$Ingredient, Optional.class, clazz$TransmuteResult)
+            : VersionHelper.isOrAbove1_21_2()
+            ? ReflectionUtils.getConstructor(clazz$SmithingTransformRecipe, Optional.class, Optional.class, Optional.class, clazz$ItemStack)
+            : VersionHelper.isOrAbove1_20_2()
+            ? ReflectionUtils.getConstructor(clazz$SmithingTransformRecipe, clazz$Ingredient, clazz$Ingredient, clazz$Ingredient, clazz$ItemStack)
+            : ReflectionUtils.getConstructor(clazz$SmithingTransformRecipe, clazz$ResourceLocation, clazz$Ingredient, clazz$Ingredient, clazz$Ingredient, clazz$ItemStack)
+    );
+
+    public static final Class<?> clazz$SmithingTrimRecipe = requireNonNull(
+            ReflectionUtils.getClazz(BukkitReflectionUtils.assembleMCClass("world.item.crafting.SmithingTrimRecipe"))
+    );
+
+    public static final Constructor<?> constructor$SmithingTrimRecipe = requireNonNull(
+            VersionHelper.isOrAbove1_21_5() ?
+            ReflectionUtils.getConstructor(clazz$SmithingTrimRecipe, clazz$Ingredient, clazz$Ingredient, clazz$Ingredient, clazz$Holder) :
+            VersionHelper.isOrAbove1_21_2() ?
+            ReflectionUtils.getConstructor(clazz$SmithingTrimRecipe, Optional.class, Optional.class, Optional.class) :
+            VersionHelper.isOrAbove1_20_2() ?
+            ReflectionUtils.getConstructor(clazz$SmithingTrimRecipe, clazz$Ingredient, clazz$Ingredient, clazz$Ingredient) :
+            ReflectionUtils.getConstructor(clazz$SmithingTrimRecipe, clazz$ResourceLocation, clazz$Ingredient, clazz$Ingredient, clazz$Ingredient)
     );
 
     public static final Method method$RecipeManager$addRecipe = requireNonNull(
@@ -3634,4 +3641,259 @@ public final class CoreReflections {
             ReflectionUtils.getConstructor(clazz$TrimMaterial, String.class, clazz$Holder, Map.class, clazz$Component) :
             ReflectionUtils.getConstructor(clazz$TrimMaterial, String.class, clazz$Holder, float.class, Map.class, clazz$Component)
     );
+
+    public static final Class<?> clazz$ServerConfigurationPacketListenerImpl = MiscUtils.requireNonNullIf(
+            ReflectionUtils.getClazz(
+                    BukkitReflectionUtils.assembleMCClass("server.network.ServerConfigurationPacketListenerImpl")
+            ),
+            VersionHelper.isOrAbove1_20_2()
+    );
+
+    // 1.20.2+
+    public static final Field field$ServerConfigurationPacketListenerImpl$configurationTasks = Optional.ofNullable(clazz$ServerConfigurationPacketListenerImpl)
+            .map(it -> ReflectionUtils.getDeclaredField(it, Queue.class, 0))
+            .orElse(null);
+
+    public static final MethodHandle methodHandle$ServerConfigurationPacketListenerImpl$configurationTasksGetter;
+
+    static {
+        try {
+            if (VersionHelper.isOrAbove1_20_2()) {
+                methodHandle$ServerConfigurationPacketListenerImpl$configurationTasksGetter =
+                        ReflectionUtils.unreflectGetter(field$ServerConfigurationPacketListenerImpl$configurationTasks)
+                                .asType(MethodType.methodType(Queue.class, Object.class));
+            } else {
+                methodHandle$ServerConfigurationPacketListenerImpl$configurationTasksGetter = null;
+            }
+        } catch (IllegalAccessException e) {
+            throw new ReflectionInitException("Failed to initialize reflection", e);
+        }
+    }
+
+    public static final Class<?> clazz$JoinWorldTask = MiscUtils.requireNonNullIf(
+            ReflectionUtils.getClazz(
+                    BukkitReflectionUtils.assembleMCClass("server.network.config.JoinWorldTask")
+            ),
+            VersionHelper.isOrAbove1_20_2()
+    );
+
+    // 1.20.2+
+    public static final Constructor<?> constructor$JoinWorldTask = Optional.ofNullable(clazz$JoinWorldTask)
+            .map(ReflectionUtils::getTheOnlyConstructor)
+            .orElse(null);
+
+    public static final Class<?> clazz$ConfigurationTask$Type = MiscUtils.requireNonNullIf(
+            BukkitReflectionUtils.findReobfOrMojmapClass(
+                    "server.network.ConfigurationTask$a",
+                    "server.network.ConfigurationTask$Type"
+            ),
+            VersionHelper.isOrAbove1_20_2()
+    );
+
+    // 1.20.2+
+    public static final Field field$JoinWorldTask$TYPE = Optional.ofNullable(clazz$JoinWorldTask)
+            .map(it -> ReflectionUtils.getDeclaredField(it, clazz$ConfigurationTask$Type, 0))
+            .orElse(null);
+
+    public static final Class<?> clazz$ServerResourcePackConfigurationTask = MiscUtils.requireNonNullIf(
+            ReflectionUtils.getClazz(
+                    BukkitReflectionUtils.assembleMCClass("server.network.config.ServerResourcePackConfigurationTask")
+            ),
+            VersionHelper.isOrAbove1_20_2()
+    );
+
+    // 1.20.2+
+    public static final Field field$ServerResourcePackConfigurationTask$TYPE = Optional.ofNullable(clazz$ServerResourcePackConfigurationTask)
+            .map(it -> ReflectionUtils.getDeclaredField(it, clazz$ConfigurationTask$Type, 0))
+            .orElse(null);
+
+    public static final Object instance$JoinWorldTask;
+    public static final Object instance$JoinWorldTask$TYPE;
+    public static final Object instance$ServerResourcePackConfigurationTask$TYPE;
+
+    static {
+        try {
+            if (VersionHelper.isOrAbove1_20_2()) {
+                instance$JoinWorldTask = constructor$JoinWorldTask.newInstance();
+                instance$JoinWorldTask$TYPE = field$JoinWorldTask$TYPE.get(null);
+                instance$ServerResourcePackConfigurationTask$TYPE = field$ServerResourcePackConfigurationTask$TYPE.get(null);
+            } else {
+                instance$JoinWorldTask = null;
+                instance$JoinWorldTask$TYPE = null;
+                instance$ServerResourcePackConfigurationTask$TYPE = null;
+            }
+        } catch (ReflectiveOperationException e) {
+            throw new ReflectionInitException("Failed to initialize reflection", e);
+        }
+    }
+
+    // 注释的这些说不定以后调试有用
+    // public static final Class<?> clazz$ConfigurationTask = MiscUtils.requireNonNullIf(
+    //         ReflectionUtils.getClazz(
+    //                 BukkitReflectionUtils.assembleMCClass("server.network.ConfigurationTask")
+    //         ),
+    //         VersionHelper.isOrAbove1_20_2()
+    // );
+    //
+    // public static final Field field$ServerConfigurationPacketListenerImpl$currentTask = MiscUtils.requireNonNullIf(
+    //         ReflectionUtils.getDeclaredField(clazz$ServerConfigurationPacketListenerImpl, clazz$ConfigurationTask, 0),
+    //         VersionHelper.isOrAbove1_20_2()
+    // );
+
+    // 1.20.2+
+    public static final Method method$ServerConfigurationPacketListenerImpl$finishCurrentTask = Optional.ofNullable(clazz$ServerConfigurationPacketListenerImpl)
+            .map(it -> ReflectionUtils.getDeclaredMethod(it, void.class, clazz$ConfigurationTask$Type))
+            .orElse( null);
+
+    public static final Field field$ServerCommonPacketListenerImpl$closed = MiscUtils.requireNonNullIf(
+            ReflectionUtils.getDeclaredField(clazz$ServerCommonPacketListenerImpl, boolean.class, VersionHelper.isOrAbove1_21_6() ? 1 : 2),
+            VersionHelper.isOrAbove1_20_5()
+    );
+
+    public static final MethodHandle methodHandle$ServerConfigurationPacketListenerImpl$finishCurrentTask;
+    public static final MethodHandle methodHandle$ServerCommonPacketListenerImpl$closedSetter;
+
+    static {
+        try {
+            if (VersionHelper.isOrAbove1_20_2()) {
+                methodHandle$ServerConfigurationPacketListenerImpl$finishCurrentTask =
+                        ReflectionUtils.unreflectMethod(method$ServerConfigurationPacketListenerImpl$finishCurrentTask)
+                                .asType(MethodType.methodType(void.class, Object.class, Object.class));
+                methodHandle$ServerCommonPacketListenerImpl$closedSetter =
+                        ReflectionUtils.unreflectSetter(field$ServerCommonPacketListenerImpl$closed)
+                                .asType(MethodType.methodType(void.class, Object.class, boolean.class));
+            } else {
+                methodHandle$ServerConfigurationPacketListenerImpl$finishCurrentTask = null;
+                methodHandle$ServerCommonPacketListenerImpl$closedSetter = null;
+            }
+        } catch (ReflectiveOperationException e) {
+            throw new ReflectionInitException("Failed to initialize reflection", e);
+        }
+    }
+
+    public static final Method method$Block$playerWillDestroy = requireNonNull(
+            ReflectionUtils.getDeclaredMethod(
+                    clazz$Block,
+                    VersionHelper.isOrAbove1_20_3() ? clazz$BlockState : void.class,
+                    clazz$Level, clazz$BlockPos, clazz$BlockState, clazz$Player
+            )
+    );
+
+    public static final Class<?> clazz$BlockItem = requireNonNull(
+            BukkitReflectionUtils.findReobfOrMojmapClass(
+                    "world.item.ItemBlock",
+                    "world.item.BlockItem"
+            )
+    );
+
+    public static final Class<?> clazz$ArmorTrim = requireNonNull(
+            ReflectionUtils.getClazz(
+                    VersionHelper.isOrAbove1_21_2() ?
+                    BukkitReflectionUtils.assembleMCClass("world.item.equipment.trim.ArmorTrim") :
+                    BukkitReflectionUtils.assembleMCClass("world.item.armortrim.ArmorTrim")
+            )
+    );
+
+    public static final Field field$ArmorTrim$CODEC = requireNonNull(
+            ReflectionUtils.getDeclaredField(clazz$ArmorTrim, Codec.class, 0)
+    );
+
+    public static final Codec<?> instance$ArmorTrim$CODEC;
+
+    static {
+        try {
+            instance$ArmorTrim$CODEC = (Codec<?>) field$ArmorTrim$CODEC.get(null);
+        } catch (ReflectiveOperationException e) {
+            throw new ReflectionInitException("Failed to initialize ArmorTrim CODEC", e);
+        }
+    }
+
+    public static final Method method$ArmorTrim$setTrim = ReflectionUtils.getStaticMethod(
+            clazz$ArmorTrim, boolean.class, clazz$RegistryAccess, clazz$ItemStack, clazz$ArmorTrim
+    );
+
+    public static final Method method$ArmorTrim$getTrim =
+            VersionHelper.isOrAbove1_20_2() ?
+            ReflectionUtils.getStaticMethod(clazz$ArmorTrim, Optional.class, clazz$RegistryAccess, clazz$ItemStack, boolean.class) :
+            ReflectionUtils.getStaticMethod(clazz$ArmorTrim, Optional.class, clazz$RegistryAccess, clazz$ItemStack);
+
+    public static final Method method$BlockBehaviour$spawnAfterBreak = requireNonNull(
+            ReflectionUtils.getDeclaredMethod(
+                    clazz$BlockBehaviour, void.class, clazz$BlockState, clazz$ServerLevel, clazz$BlockPos, clazz$ItemStack, boolean.class
+            )
+    );
+
+    // 1.20~1.21.4
+    public static final Method method$BlockBehaviour$onRemove = MiscUtils.requireNonNullIf(
+            ReflectionUtils.getDeclaredMethod(
+                    clazz$BlockBehaviour, void.class, clazz$BlockState, clazz$Level, clazz$BlockPos, clazz$BlockState, boolean.class
+            ),
+            !VersionHelper.isOrAbove1_21_5()
+    );
+    public static final Object instance$CollisionContext$empty;
+
+    static {
+        try {
+            instance$CollisionContext$empty = requireNonNull(method$CollisionContext$empty.invoke(null));
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    // 1.21.6+
+    public static final Method method$CollisionContext$placementContext = MiscUtils.requireNonNullIf(ReflectionUtils.getStaticMethod(
+            clazz$CollisionContext, clazz$CollisionContext, clazz$Player
+    ), VersionHelper.isOrAbove1_21_6());
+
+    public static final Constructor<?> constructor$BlockHitResult = requireNonNull(
+            ReflectionUtils.getConstructor(
+                    CoreReflections.clazz$BlockHitResult, CoreReflections.clazz$Vec3, CoreReflections.clazz$Direction, CoreReflections.clazz$BlockPos, boolean.class
+            )
+    );
+
+    public static final Class<?> clazz$HashOps = MiscUtils.requireNonNullIf(
+            ReflectionUtils.getClazz(BukkitReflectionUtils.assembleMCClass("util.HashOps")),
+            VersionHelper.isOrAbove1_21_5()
+    );
+
+    public static final Field field$HashOps$CRC32C_INSTANCE = Optional.ofNullable(clazz$HashOps)
+            .map(it -> ReflectionUtils.getDeclaredField(it, it, 0))
+            .orElse(null);
+
+    public static final Object instance$HashOps$CRC32C_INSTANCE;
+
+    static {
+        try {
+            if (VersionHelper.isOrAbove1_21_5()) {
+                instance$HashOps$CRC32C_INSTANCE = field$HashOps$CRC32C_INSTANCE.get(null);
+            } else {
+                instance$HashOps$CRC32C_INSTANCE = null;
+            }
+        } catch (ReflectiveOperationException e) {
+            throw new ReflectionInitException("Failed to initialize HashOps", e);
+        }
+    }
+
+    public static final Class<?> clazz$SnowLayerBlock = requireNonNull(
+            BukkitReflectionUtils.findReobfOrMojmapClass(
+                    "world.level.block.BlockSnow",
+                    "world.level.block.SnowLayerBlock"
+            )
+    );
+
+    public static final Field field$SnowLayerBlock$LAYERS = requireNonNull(
+            ReflectionUtils.getDeclaredField(
+                    clazz$SnowLayerBlock, clazz$IntegerProperty, 0
+            )
+    );
+
+    public static final Object instance$SnowLayerBlock$LAYERS;
+
+    static {
+        try {
+            instance$SnowLayerBlock$LAYERS = field$SnowLayerBlock$LAYERS.get(null);
+        } catch (IllegalAccessException e) {
+            throw new ReflectionInitException("Failed to initialize SnowLayerBlock$LAYERS", e);
+        }
+    }
 }

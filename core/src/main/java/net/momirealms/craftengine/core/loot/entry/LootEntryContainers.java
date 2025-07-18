@@ -2,7 +2,6 @@ package net.momirealms.craftengine.core.loot.entry;
 
 import net.momirealms.craftengine.core.plugin.locale.LocalizedResourceConfigException;
 import net.momirealms.craftengine.core.registry.BuiltInRegistries;
-import net.momirealms.craftengine.core.registry.Holder;
 import net.momirealms.craftengine.core.registry.Registries;
 import net.momirealms.craftengine.core.registry.WritableRegistry;
 import net.momirealms.craftengine.core.util.Key;
@@ -27,9 +26,8 @@ public class LootEntryContainers {
     }
 
     public static <T> void register(Key key, LootEntryContainerFactory<T> factory) {
-        Holder.Reference<LootEntryContainerFactory<?>> holder = ((WritableRegistry<LootEntryContainerFactory<?>>) BuiltInRegistries.LOOT_ENTRY_CONTAINER_FACTORY)
-                .registerForHolder(new ResourceKey<>(Registries.LOOT_ENTRY_CONTAINER_FACTORY.location(), key));
-        holder.bindValue(factory);
+        ((WritableRegistry<LootEntryContainerFactory<?>>) BuiltInRegistries.LOOT_ENTRY_CONTAINER_FACTORY)
+                .register(ResourceKey.create(Registries.LOOT_ENTRY_CONTAINER_FACTORY.location(), key), factory);
     }
 
     public static <T> List<LootEntryContainer<T>> fromMapList(List<Map<String, Object>> mapList) {

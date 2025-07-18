@@ -44,10 +44,15 @@ public class Config {
     private long size;
 
     protected boolean firstTime = true;
-    protected boolean debug;
     protected boolean checkUpdate;
     protected boolean metrics;
     protected boolean filterConfigurationPhaseDisconnect;
+
+    protected boolean debug$common;
+    protected boolean debug$packet;
+    protected boolean debug$item;
+    protected boolean debug$furniture;
+    protected boolean debug$resource_pack;
 
     protected boolean resource_pack$remove_tinted_leaves_particle;
     protected boolean resource_pack$generate_mod_assets;
@@ -87,6 +92,7 @@ public class Config {
     protected String resource_pack$overlay_format;
 
     protected boolean resource_pack$delivery$kick_if_declined;
+    protected boolean resource_pack$delivery$kick_if_failed_to_apply;
     protected boolean resource_pack$delivery$send_on_join;
     protected boolean resource_pack$delivery$resend_on_upload;
     protected boolean resource_pack$delivery$auto_upload;
@@ -123,6 +129,7 @@ public class Config {
     protected boolean recipe$enable;
     protected boolean recipe$disable_vanilla_recipes$all;
     protected Set<Key> recipe$disable_vanilla_recipes$list;
+    protected List<String> recipe$ingredient_sources;
 
     protected boolean image$illegal_characters_filter$command;
     protected boolean image$illegal_characters_filter$chat;
@@ -143,8 +150,10 @@ public class Config {
     protected boolean image$intercept_packets$player_info;
     protected boolean image$intercept_packets$set_score;
     protected boolean image$intercept_packets$item;
+    protected boolean image$intercept_packets$advancement;
 
     protected boolean item$client_bound_model;
+    protected boolean item$non_italic_tag;
 
     protected String equipment$sacrificed_vanilla_armor$type;
     protected Key equipment$sacrificed_vanilla_armor$asset_id;
@@ -229,11 +238,17 @@ public class Config {
         plugin.translationManager().forcedLocale(TranslationManager.parseLocale(config.getString("forced-locale", "")));
 
         // basics
-        debug = config.getBoolean("debug", false);
         metrics = config.getBoolean("metrics", false);
         checkUpdate = config.getBoolean("update-checker", false);
         filterConfigurationPhaseDisconnect = config.getBoolean("filter-configuration-phase-disconnect", false);
         DisconnectLogFilter.instance().setEnable(filterConfigurationPhaseDisconnect);
+
+        // debug
+        debug$common = config.getBoolean("debug.common", false);
+        debug$packet = config.getBoolean("debug.packet", false);
+        debug$item = config.getBoolean("debug.item", false);
+        debug$furniture = config.getBoolean("debug.furniture", false);
+        debug$resource_pack = config.getBoolean("debug.resource-pack", false);
 
         // resource pack
         resource_pack$override_uniform_font = config.getBoolean("resource-pack.override-uniform-font", false);
@@ -247,6 +262,7 @@ public class Config {
         resource_pack$delivery$send_on_join = config.getBoolean("resource-pack.delivery.send-on-join", true);
         resource_pack$delivery$resend_on_upload = config.getBoolean("resource-pack.delivery.resend-on-upload", true);
         resource_pack$delivery$kick_if_declined = config.getBoolean("resource-pack.delivery.kick-if-declined", true);
+        resource_pack$delivery$kick_if_failed_to_apply = config.getBoolean("resource-pack.delivery.kick-if-failed-to-apply", true);
         resource_pack$delivery$auto_upload = config.getBoolean("resource-pack.delivery.auto-upload", true);
         resource_pack$delivery$file_to_upload = resolvePath(config.getString("resource-pack.delivery.file-to-upload", "./generated/resource_pack.zip"));
         resource_pack$send$prompt = AdventureHelper.miniMessage().deserialize(config.getString("resource-pack.delivery.prompt", "<yellow>To fully experience our server, please accept our custom resource pack.</yellow>"));
@@ -342,6 +358,7 @@ public class Config {
 
         // item
         item$client_bound_model = config.getBoolean("item.client-bound-model", false);
+        item$non_italic_tag = config.getBoolean("item.non-italic-tag", false);
 
         // block
         block$sound_system$enable = config.getBoolean("block.sound-system.enable", true);
@@ -355,6 +372,7 @@ public class Config {
         recipe$enable = config.getBoolean("recipe.enable", true);
         recipe$disable_vanilla_recipes$all = config.getBoolean("recipe.disable-vanilla-recipes.all", false);
         recipe$disable_vanilla_recipes$list = config.getStringList("recipe.disable-vanilla-recipes.list").stream().map(Key::of).collect(Collectors.toSet());
+        recipe$ingredient_sources = config.getStringList("recipe.ingredient-sources");
 
         // image
         image$illegal_characters_filter$anvil = config.getBoolean("image.illegal-characters-filter.anvil", true);
@@ -376,6 +394,7 @@ public class Config {
         image$intercept_packets$player_info = config.getBoolean("image.intercept-packets.player-info", true);
         image$intercept_packets$set_score = config.getBoolean("image.intercept-packets.set-score", true);
         image$intercept_packets$item = config.getBoolean("image.intercept-packets.item", true);
+        image$intercept_packets$advancement = config.getBoolean("image.intercept-packets.advancement", true);
 
         // emoji
         emoji$chat = config.getBoolean("emoji.chat", true);
@@ -397,8 +416,24 @@ public class Config {
         return instance.configVersion;
     }
 
-    public static boolean debug() {
-        return instance.debug;
+    public static boolean debugCommon() {
+        return instance.debug$common;
+    }
+
+    public static boolean debugPacket() {
+        return instance.debug$packet;
+    }
+
+    public static boolean debugItem() {
+        return instance.debug$item;
+    }
+
+    public static boolean debugFurniture() {
+        return instance.debug$furniture;
+    }
+
+    public static boolean debugResourcePack() {
+        return instance.debug$resource_pack;
     }
 
     public static boolean checkUpdate() {
@@ -499,6 +534,10 @@ public class Config {
 
     public static boolean kickOnDeclined() {
         return instance.resource_pack$delivery$kick_if_declined;
+    }
+
+    public static boolean kickOnFailedApply() {
+        return instance.resource_pack$delivery$kick_if_failed_to_apply;
     }
 
     public static Component resourcePackPrompt() {
@@ -705,6 +744,10 @@ public class Config {
         return instance.image$intercept_packets$item;
     }
 
+    public static boolean interceptAdvancement() {
+        return instance.image$intercept_packets$advancement;
+    }
+
     public static boolean predictBreaking() {
         return instance.block$predict_breaking;
     }
@@ -739,6 +782,10 @@ public class Config {
 
     public static boolean enableChunkCache() {
         return instance.chunk_system$cache_system;
+    }
+
+    public static boolean addNonItalicTag() {
+        return instance.item$non_italic_tag;
     }
 
     public static boolean fastInjection() {
@@ -779,6 +826,10 @@ public class Config {
 
     public static boolean globalClientboundModel() {
         return instance.item$client_bound_model;
+    }
+
+    public static List<String> recipeIngredientSources() {
+        return instance.recipe$ingredient_sources;
     }
 
     public YamlDocument loadOrCreateYamlData(String fileName) {

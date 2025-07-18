@@ -7,6 +7,7 @@ import org.joml.Vector3f;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 public class MiscUtils {
 
@@ -128,6 +129,14 @@ public class MiscUtils {
                     baseMap.put(key, value);
                 }
             }
+        }
+    }
+
+    public static <T> T requireNonNullIf(T o, boolean condition) {
+        if (condition) {
+            return Objects.requireNonNull(o);
+        } else {
+            return o;
         }
     }
 }

@@ -1,7 +1,6 @@
 package net.momirealms.craftengine.core.plugin.config.template;
 
 import net.momirealms.craftengine.core.registry.BuiltInRegistries;
-import net.momirealms.craftengine.core.registry.Holder;
 import net.momirealms.craftengine.core.registry.Registries;
 import net.momirealms.craftengine.core.registry.WritableRegistry;
 import net.momirealms.craftengine.core.util.Key;
@@ -19,9 +18,8 @@ public class TemplateArguments {
     public static final Key OBJECT = Key.of("craftengine:object"); // No Factory, internal use
 
     public static void register(Key key, TemplateArgumentFactory factory) {
-        Holder.Reference<TemplateArgumentFactory> holder = ((WritableRegistry<TemplateArgumentFactory>) BuiltInRegistries.TEMPLATE_ARGUMENT_FACTORY)
-                .registerForHolder(new ResourceKey<>(Registries.TEMPLATE_ARGUMENT_FACTORY.location(), key));
-        holder.bindValue(factory);
+        ((WritableRegistry<TemplateArgumentFactory>) BuiltInRegistries.TEMPLATE_ARGUMENT_FACTORY)
+                .register(ResourceKey.create(Registries.TEMPLATE_ARGUMENT_FACTORY.location(), key), factory);
     }
 
     static {

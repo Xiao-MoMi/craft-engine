@@ -16,10 +16,7 @@ import net.momirealms.craftengine.core.item.Item;
 import net.momirealms.craftengine.core.item.behavior.BlockBoundItemBehavior;
 import net.momirealms.craftengine.core.item.behavior.ItemBehavior;
 import net.momirealms.craftengine.core.item.context.BlockPlaceContext;
-import net.momirealms.craftengine.core.util.Direction;
-import net.momirealms.craftengine.core.util.Key;
-import net.momirealms.craftengine.core.util.ResourceConfigUtils;
-import net.momirealms.craftengine.core.util.VersionHelper;
+import net.momirealms.craftengine.core.util.*;
 import net.momirealms.craftengine.core.world.BlockPos;
 import org.bukkit.inventory.ItemStack;
 
@@ -41,7 +38,7 @@ public class SlabBlockBehavior extends BukkitBlockBehavior {
     public boolean canBeReplaced(BlockPlaceContext context, ImmutableBlockState state) {
         SlabType type = state.get(this.typeProperty);
         Item<ItemStack> item = (Item<ItemStack>) context.getItem();
-        if (type == SlabType.DOUBLE || item == null) return false;
+        if (type == SlabType.DOUBLE || ItemUtils.isEmpty(item)) return false;
         Optional<CustomItem<ItemStack>> itemInHand = item.getCustomItem();
         if (itemInHand.isEmpty()) return false;
         CustomItem<ItemStack> customItem = itemInHand.get();
@@ -69,7 +66,7 @@ public class SlabBlockBehavior extends BukkitBlockBehavior {
                 blockState = blockState.with(super.waterloggedProperty, false);
             return blockState.with(this.typeProperty, SlabType.DOUBLE);
         } else {
-            Object fluidState = FastNMS.INSTANCE.method$Level$getFluidState(context.getLevel().serverWorld(), LocationUtils.toBlockPos(clickedPos));
+            Object fluidState = FastNMS.INSTANCE.method$BlockGetter$getFluidState(context.getLevel().serverWorld(), LocationUtils.toBlockPos(clickedPos));
             if (super.waterloggedProperty != null)
                 state = state.with(super.waterloggedProperty, FastNMS.INSTANCE.method$FluidState$getType(fluidState) == MFluids.WATER);
             Direction clickedFace = context.getClickedFace();
@@ -98,7 +95,7 @@ public class SlabBlockBehavior extends BukkitBlockBehavior {
         Optional<ImmutableBlockState> optionalCustomState = BlockStateUtils.getOptionalCustomBlockState(blockState);
         if (optionalCustomState.isEmpty()) return blockState;
         if (optionalCustomState.get().get(super.waterloggedProperty)) {
-            FastNMS.INSTANCE.method$LevelAccessor$scheduleFluidTick(VersionHelper.isOrAbove1_21_2() ? args[2] : args[3], VersionHelper.isOrAbove1_21_2() ? args[3] : args[4], MFluids.WATER, 5);
+            FastNMS.INSTANCE.method$ScheduledTickAccess$scheduleFluidTick(VersionHelper.isOrAbove1_21_2() ? args[2] : args[3], VersionHelper.isOrAbove1_21_2() ? args[3] : args[4], MFluids.WATER, 5);
         }
         return blockState;
     }

@@ -196,6 +196,13 @@ debug_is_chunk_persistent_loaded:
     - /craftengine debug is-chunk-persistent-loaded
     - /ce debug is-chunk-persistent-loaded
 
+debug_entity_id:
+  enable: true
+  permission: ce.command.debug.debug_entity_id
+  usage:
+    - /craftengine debug entity-id
+    - /ce debug entity-id
+
 debug_test:
   enable: true
   permission: ce.command.debug.test

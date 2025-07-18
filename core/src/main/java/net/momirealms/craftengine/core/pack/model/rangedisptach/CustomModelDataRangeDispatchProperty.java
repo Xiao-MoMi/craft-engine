@@ -7,7 +7,7 @@ import net.momirealms.craftengine.core.util.ResourceConfigUtils;
 
 import java.util.Map;
 
-public class CustomModelDataRangeDispatchProperty implements RangeDispatchProperty, LegacyModelPredicate<Float> {
+public class CustomModelDataRangeDispatchProperty implements RangeDispatchProperty, LegacyModelPredicate<Number> {
     public static final Factory FACTORY = new Factory();
     public static final Reader READER = new Reader();
     private final int index;
@@ -33,7 +33,7 @@ public class CustomModelDataRangeDispatchProperty implements RangeDispatchProper
     }
 
     @Override
-    public Number toLegacyValue(Float value) {
+    public Number toLegacyValue(Number value) {
         return value.intValue();
     }
 

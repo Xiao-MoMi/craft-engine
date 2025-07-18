@@ -18,8 +18,8 @@ public class PlayerParameterProvider implements ChainParameterProvider<Player> {
         CONTEXT_FUNCTIONS.put(DirectContextParameters.X, Entity::x);
         CONTEXT_FUNCTIONS.put(DirectContextParameters.Y, Entity::y);
         CONTEXT_FUNCTIONS.put(DirectContextParameters.Z, Entity::z);
-        CONTEXT_FUNCTIONS.put(DirectContextParameters.YAW, Entity::xRot);
-        CONTEXT_FUNCTIONS.put(DirectContextParameters.PITCH, Entity::yRot);
+        CONTEXT_FUNCTIONS.put(DirectContextParameters.PITCH, Entity::xRot);
+        CONTEXT_FUNCTIONS.put(DirectContextParameters.YAW, Entity::yRot);
         CONTEXT_FUNCTIONS.put(DirectContextParameters.POSITION, Entity::position);
         CONTEXT_FUNCTIONS.put(DirectContextParameters.BLOCK_X, p -> MCUtils.fastFloor(p.x()));
         CONTEXT_FUNCTIONS.put(DirectContextParameters.BLOCK_Y, p -> MCUtils.fastFloor(p.y()));

@@ -13,7 +13,6 @@ import net.momirealms.craftengine.core.entity.furniture.Furniture;
 import net.momirealms.craftengine.core.entity.furniture.FurnitureElement;
 import net.momirealms.craftengine.core.item.Item;
 import net.momirealms.craftengine.core.item.data.FireworkExplosion;
-import net.momirealms.craftengine.core.plugin.CraftEngine;
 import net.momirealms.craftengine.core.util.Key;
 import net.momirealms.craftengine.core.world.WorldPosition;
 import org.bukkit.Material;
@@ -70,7 +69,6 @@ public class BukkitFurnitureElement extends AbstractFurnitureElement {
         List<Object> cachedValues = new ArrayList<>(this.commonValues);
         Item<ItemStack> item = BukkitItemManager.instance().createWrappedItem(item(), null);
         if (item == null) {
-            CraftEngine.instance().debug(() -> "Failed to create furniture element because item " + item() + " not found");
             item = BukkitItemManager.instance().wrap(new ItemStack(Material.BARRIER));
         } else {
             if (color != null) {

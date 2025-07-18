@@ -262,7 +262,7 @@ public final class CraftBukkitReflections {
     );
 
     public static final Field field$CraftBlockEntityState$tileEntity = requireNonNull(
-            ReflectionUtils.getDeclaredField(clazz$CraftBlockEntityState, 0)
+            ReflectionUtils.getInstanceDeclaredField(clazz$CraftBlockEntityState, 0)
     );
 
     public static final Method method$CraftInventory$getInventory = requireNonNull(

@@ -1,10 +1,10 @@
 package net.momirealms.craftengine.bukkit.compatibility;
 
 import net.momirealms.craftengine.bukkit.block.BukkitBlockManager;
-import net.momirealms.craftengine.bukkit.compatibility.item.CustomFishingProvider;
-import net.momirealms.craftengine.bukkit.compatibility.item.MMOItemsProvider;
-import net.momirealms.craftengine.bukkit.compatibility.item.MythicMobsProvider;
-import net.momirealms.craftengine.bukkit.compatibility.item.NeigeItemsProvider;
+import net.momirealms.craftengine.bukkit.compatibility.item.CustomFishingSource;
+import net.momirealms.craftengine.bukkit.compatibility.item.MMOItemsSource;
+import net.momirealms.craftengine.bukkit.compatibility.item.MythicMobsSource;
+import net.momirealms.craftengine.bukkit.compatibility.item.NeigeItemsSource;
 import net.momirealms.craftengine.bukkit.compatibility.legacy.slimeworld.LegacySlimeFormatStorageAdaptor;
 import net.momirealms.craftengine.bukkit.compatibility.leveler.*;
 import net.momirealms.craftengine.bukkit.compatibility.model.bettermodel.BetterModelModel;
@@ -130,7 +130,7 @@ public class BukkitCompatibilityManager implements CompatibilityManager {
             logHook("EcoJobs");
         }
         if (this.isPluginEnabled("MythicMobs")) {
-            BukkitItemManager.instance().registerExternalItemProvider(new MythicMobsProvider());
+            BukkitItemManager.instance().registerExternalItemSource(new MythicMobsSource());
             new MythicMobsListener(this.plugin);
             logHook("MythicMobs");
         }
@@ -247,15 +247,15 @@ public class BukkitCompatibilityManager implements CompatibilityManager {
     private void initItemHooks() {
         BukkitItemManager itemManager = BukkitItemManager.instance();
         if (this.isPluginEnabled("NeigeItems")) {
-            itemManager.registerExternalItemProvider(new NeigeItemsProvider());
+            itemManager.registerExternalItemSource(new NeigeItemsSource());
             logHook("NeigeItems");
         }
         if (this.isPluginEnabled("MMOItems")) {
-            itemManager.registerExternalItemProvider(new MMOItemsProvider());
+            itemManager.registerExternalItemSource(new MMOItemsSource());
             logHook("MMOItems");
         }
         if (this.isPluginEnabled("CustomFishing")) {
-            itemManager.registerExternalItemProvider(new CustomFishingProvider());
+            itemManager.registerExternalItemSource(new CustomFishingSource());
             logHook("CustomFishing");
         }
     }

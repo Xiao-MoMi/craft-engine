@@ -49,18 +49,15 @@ public class DropboxHost implements ResourcePackHost {
     }
 
     public void readCacheFromDisk() {
-        Path cachePath = CraftEngine.instance().dataFolderPath().resolve("dropbox.cache");
+        Path cachePath = CraftEngine.instance().dataFolderPath().resolve("cache").resolve("dropbox.json");
         if (!Files.exists(cachePath)) return;
-
         try (InputStream is = Files.newInputStream(cachePath)) {
             JsonObject cache = GsonHelper.parseJsonToJsonObject(new String(is.readAllBytes(), StandardCharsets.UTF_8));
-
             this.url = getString(cache, "url");
             this.sha1 = getString(cache, "sha1");
             this.refreshToken = getString(cache, "refresh_token");
             this.accessToken = getString(cache, "access_token");
             this.expiresAt = getLong(cache, "expires_at");
-
             CraftEngine.instance().logger().info("[Dropbox] Loaded cached resource pack info");
         } catch (Exception e) {
             CraftEngine.instance().logger().warn("[Dropbox] Failed to load cache " + cachePath, e);
@@ -74,9 +71,9 @@ public class DropboxHost implements ResourcePackHost {
         cache.addProperty("refresh_token", this.refreshToken);
         cache.addProperty("access_token", this.accessToken);
         cache.addProperty("expires_at", this.expiresAt);
-
-        Path cachePath = CraftEngine.instance().dataFolderPath().resolve("dropbox.cache");
+        Path cachePath = CraftEngine.instance().dataFolderPath().resolve("cache").resolve("dropbox.json");
         try {
+            Files.createDirectories(cachePath);
             Files.writeString(
                     cachePath,
                     GsonHelper.get().toJson(cache),

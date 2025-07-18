@@ -1,14 +1,13 @@
 package net.momirealms.craftengine.core.item.recipe;
 
-import net.momirealms.craftengine.core.registry.Holder;
-import net.momirealms.craftengine.core.util.Key;
+import net.momirealms.craftengine.core.util.UniqueKey;
 
 import java.util.List;
 
 public class RecipeFinder {
-    private final StackedContents<Holder<Key>> stackedContents = new StackedContents<>();
+    private final StackedContents<UniqueKey> stackedContents = new StackedContents<>();
 
-    public <T> void addInput(OptimizedIDItem<T> item) {
+    public <T> void addInput(UniqueIdItem<T> item) {
         if (!item.isEmpty()) {
             this.stackedContents.add(item.id(), 1);
         }
@@ -19,7 +18,7 @@ public class RecipeFinder {
         return !placementInfo.isImpossibleToPlace() && canCraft(placementInfo.ingredients());
     }
 
-    private boolean canCraft(List<? extends StackedContents.IngredientInfo<Holder<Key>>> rawIngredients) {
+    private boolean canCraft(List<? extends StackedContents.IngredientInfo<UniqueKey>> rawIngredients) {
         return this.stackedContents.tryPick(rawIngredients);
     }
 }

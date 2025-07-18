@@ -1,14 +1,21 @@
 package net.momirealms.craftengine.bukkit.item.factory;
 
 import com.google.gson.JsonElement;
+import net.momirealms.craftengine.bukkit.nms.FastNMS;
 import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.CoreReflections;
+import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.MBuiltInRegistries;
 import net.momirealms.craftengine.bukkit.util.ItemTags;
+import net.momirealms.craftengine.bukkit.util.KeyUtils;
+import net.momirealms.craftengine.core.item.ExternalItemSource;
 import net.momirealms.craftengine.core.item.ItemFactory;
+import net.momirealms.craftengine.core.item.ItemKeys;
 import net.momirealms.craftengine.core.item.ItemWrapper;
 import net.momirealms.craftengine.core.item.data.JukeboxPlayable;
 import net.momirealms.craftengine.core.item.setting.EquipmentData;
 import net.momirealms.craftengine.core.plugin.CraftEngine;
 import net.momirealms.craftengine.core.util.Key;
+import net.momirealms.craftengine.core.util.StringUtils;
+import net.momirealms.craftengine.core.util.UniqueKey;
 import net.momirealms.sparrow.nbt.Tag;
 import org.bukkit.Bukkit;
 import org.bukkit.inventory.ItemStack;
@@ -17,6 +24,8 @@ import java.util.Objects;
 import java.util.Optional;
 
 public abstract class BukkitItemFactory<W extends ItemWrapper<ItemStack>> extends ItemFactory<W, ItemStack> {
+    private boolean hasExternalRecipeSource = false;
+    private ExternalItemSource<ItemStack>[] recipeIngredientSources = null;
 
     protected BukkitItemFactory(CraftEngine plugin) {
         super(plugin);
@@ -40,10 +49,20 @@ public abstract class BukkitItemFactory<W extends ItemWrapper<ItemStack>> extend
             case "1.21.4" -> {
                 return new ComponentItemFactory1_21_4(plugin);
             }
-            case "1.21.5", "1.21.6", "1.21.7", "1.22", "1.22.1" -> {
+            case "1.21.5", "1.21.6", "1.21.7", "1.21.8" -> {
                 return new ComponentItemFactory1_21_5(plugin);
             }
             default -> throw new IllegalStateException("Unsupported server version: " + plugin.serverVersion());
+        }
+    }
+
+    public void resetRecipeIngredientSources(ExternalItemSource<ItemStack>[] recipeIngredientSources) {
+        if (recipeIngredientSources == null || recipeIngredientSources.length == 0) {
+            this.recipeIngredientSources = null;
+            this.hasExternalRecipeSource = false;
+        } else {
+            this.recipeIngredientSources = recipeIngredientSources;
+            this.hasExternalRecipeSource = true;
         }
     }
 
@@ -55,13 +74,14 @@ public abstract class BukkitItemFactory<W extends ItemWrapper<ItemStack>> extend
 
     @Override
     protected boolean isBlockItem(W item) {
-        // todo 这个 isBlockItem 他考虑组件了吗???
-        return item.getItem().getType().isBlock();
+        return CoreReflections.clazz$BlockItem.isInstance(FastNMS.INSTANCE.method$ItemStack$getItem(item.getLiteralObject()));
     }
 
     @Override
     protected Key vanillaId(W item) {
-        return Key.of(item.getItem().getType().getKey().asString());
+        Object i = FastNMS.INSTANCE.method$ItemStack$getItem(item.getLiteralObject());
+        if (i == null) return ItemKeys.AIR;
+        return KeyUtils.resourceLocationToKey(FastNMS.INSTANCE.method$Registry$getKey(MBuiltInRegistries.ITEM, i));
     }
 
     @Override
@@ -72,6 +92,19 @@ public abstract class BukkitItemFactory<W extends ItemWrapper<ItemStack>> extend
     @Override
     protected ItemStack getItem(W item) {
         return item.getItem();
+    }
+
+    @Override
+    protected UniqueKey recipeIngredientID(W item) {
+        if (this.hasExternalRecipeSource) {
+           for (ExternalItemSource<ItemStack> source : this.recipeIngredientSources) {
+               String id = source.id(item.getItem());
+               if (id != null) {
+                   return UniqueKey.create(Key.of(source.plugin(), StringUtils.toLowerCase(id)));
+               }
+           }
+        }
+        return UniqueKey.create(id(item));
     }
 
     @Override
@@ -111,7 +144,12 @@ public abstract class BukkitItemFactory<W extends ItemWrapper<ItemStack>> extend
     }
 
     @Override
-    protected Tag getNBTComponent(W item, Object type) {
+    public Object getNBTComponent(W item, Object type) {
+        throw new UnsupportedOperationException("This feature is only available on 1.20.5+");
+    }
+
+    @Override
+    protected Tag getSparrowNBTComponent(W item, Object type) {
         throw new UnsupportedOperationException("This feature is only available on 1.20.5+");
     }
 
@@ -127,6 +165,11 @@ public abstract class BukkitItemFactory<W extends ItemWrapper<ItemStack>> extend
 
     @Override
     protected Object getExactComponent(W item, Object type) {
+        throw new UnsupportedOperationException("This feature is only available on 1.20.5+");
+    }
+
+    @Override
+    protected void setExactComponent(W item, Object type, Object value) {
         throw new UnsupportedOperationException("This feature is only available on 1.20.5+");
     }
 

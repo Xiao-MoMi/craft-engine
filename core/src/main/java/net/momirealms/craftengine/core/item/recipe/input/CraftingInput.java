@@ -1,25 +1,25 @@
 package net.momirealms.craftengine.core.item.recipe.input;
 
-import net.momirealms.craftengine.core.item.recipe.OptimizedIDItem;
 import net.momirealms.craftengine.core.item.recipe.RecipeFinder;
+import net.momirealms.craftengine.core.item.recipe.UniqueIdItem;
 
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-public class CraftingInput<T> implements RecipeInput {
+public final class CraftingInput<T> implements RecipeInput {
     private final int width;
     private final int height;
-    private final List<OptimizedIDItem<T>> items;
+    private final List<UniqueIdItem<T>> items;
     private final int ingredientCount;
     private final RecipeFinder finder = new RecipeFinder();
 
-    private CraftingInput(int width, int height, List<OptimizedIDItem<T>> items) {
+    private CraftingInput(int width, int height, List<UniqueIdItem<T>> items) {
         this.height = height;
         this.width = width;
         this.items = items;
         int i = 0;
-        for (OptimizedIDItem<T> item : items) {
+        for (UniqueIdItem<T> item : items) {
             if (!item.isEmpty()) {
                 i++;
                 this.finder.addInput(item);
@@ -32,7 +32,7 @@ public class CraftingInput<T> implements RecipeInput {
         return finder;
     }
 
-    public static <T> CraftingInput<T> of(int width, int height, List<OptimizedIDItem<T>> stacks) {
+    public static <T> CraftingInput<T> of(int width, int height, List<UniqueIdItem<T>> stacks) {
         if (width <= 0 || height <= 0) {
             return new CraftingInput<>(0, 0, Collections.emptyList());
         }
@@ -43,7 +43,7 @@ public class CraftingInput<T> implements RecipeInput {
         int maxRow = -1;
 
         for (int index = 0; index < width * height; index++) {
-            OptimizedIDItem<T> item = stacks.get(index);
+            UniqueIdItem<T> item = stacks.get(index);
             if (!item.isEmpty()) {
                 int row = index / width;
                 int col = index % width;
@@ -65,7 +65,7 @@ public class CraftingInput<T> implements RecipeInput {
             return new CraftingInput<>(width, height, stacks);
         }
 
-        List<OptimizedIDItem<T>> trimmed = new ArrayList<>(newWidth * newHeight);
+        List<UniqueIdItem<T>> trimmed = new ArrayList<>(newWidth * newHeight);
         for (int row = minRow; row <= maxRow; row++) {
             for (int col = minCol; col <= maxCol; col++) {
                 int originalIndex = col + row * width;
@@ -92,11 +92,11 @@ public class CraftingInput<T> implements RecipeInput {
         return items.size();
     }
 
-    public OptimizedIDItem<T> getItem(int x, int y) {
+    public UniqueIdItem<T> getItem(int x, int y) {
         return this.items.get(x + y * width);
     }
 
-    public OptimizedIDItem<T> getItem(int index) {
+    public UniqueIdItem<T> getItem(int index) {
         return this.items.get(index);
     }
 }

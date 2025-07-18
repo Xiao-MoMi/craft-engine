@@ -8,7 +8,7 @@ import net.momirealms.craftengine.bukkit.nms.FastNMS;
 import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.CoreReflections;
 import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.MBuiltInRegistries;
 import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.MRegistryOps;
-import net.momirealms.craftengine.bukkit.util.ItemUtils;
+import net.momirealms.craftengine.bukkit.util.ItemStackUtils;
 import net.momirealms.craftengine.bukkit.util.KeyUtils;
 import net.momirealms.craftengine.core.item.ItemWrapper;
 import net.momirealms.craftengine.core.util.Key;
@@ -22,12 +22,12 @@ public class ComponentItemWrapper implements ItemWrapper<ItemStack> {
     private final Object handle;
 
     public ComponentItemWrapper(final ItemStack item) {
-        this.item = ItemUtils.ensureCraftItemStack(item);
+        this.item = ItemStackUtils.ensureCraftItemStack(item);
         this.handle = FastNMS.INSTANCE.field$CraftItemStack$handle(this.item);
     }
 
     public ComponentItemWrapper(final ItemStack item, int count) {
-        this.item = ItemUtils.ensureCraftItemStack(item);
+        this.item = ItemStackUtils.ensureCraftItemStack(item);
         this.item.setAmount(count);
         this.handle = FastNMS.INSTANCE.field$CraftItemStack$handle(this.item);
     }
@@ -72,8 +72,18 @@ public class ComponentItemWrapper implements ItemWrapper<ItemStack> {
         return getComponentInternal(type, MRegistryOps.NBT);
     }
 
+    @SuppressWarnings({"rawtypes", "unchecked"})
     public Optional<Tag> getSparrowNBTComponent(Object type) {
-        return getComponentInternal(type, MRegistryOps.SPARROW_NBT);
+        Object componentType = ensureDataComponentType(type);
+        Codec codec = FastNMS.INSTANCE.method$DataComponentType$codec(componentType);
+        try {
+            Object componentData = FastNMS.INSTANCE.method$ItemStack$getComponent(getLiteralObject(), componentType);
+            if (componentData == null) return Optional.empty();
+            DataResult<Tag> result = codec.encodeStart(MRegistryOps.SPARROW_NBT, componentData);
+            return result.result().map(Tag::copy);
+        } catch (Throwable t) {
+            throw new RuntimeException("Cannot read component " + type.toString(), t);
+        }
     }
 
     @SuppressWarnings({"rawtypes", "unchecked"})

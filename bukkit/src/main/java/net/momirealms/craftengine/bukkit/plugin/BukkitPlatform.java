@@ -4,7 +4,6 @@ import com.google.gson.JsonElement;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import net.momirealms.craftengine.bukkit.nms.FastNMS;
 import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.MRegistryOps;
-import net.momirealms.craftengine.core.plugin.CraftEngine;
 import net.momirealms.craftengine.core.plugin.Platform;
 import net.momirealms.craftengine.core.plugin.locale.LocalizedResourceConfigException;
 import net.momirealms.sparrow.nbt.CompoundTag;
@@ -28,7 +27,6 @@ public class BukkitPlatform implements Platform {
             Map<String, Object> map = (Map<String, Object>) MRegistryOps.NBT.convertTo(MRegistryOps.JAVA, tag);
             return map.get("root");
         } catch (CommandSyntaxException e) {
-            CraftEngine.instance().debug(e::getMessage);
             throw new LocalizedResourceConfigException("warning.config.type.snbt.invalid_syntax", e, nbt);
         }
     }
@@ -45,7 +43,6 @@ public class BukkitPlatform implements Platform {
             CompoundTag map = (CompoundTag) MRegistryOps.NBT.convertTo(MRegistryOps.SPARROW_NBT, tag);
             return map.get("root");
         } catch (CommandSyntaxException e) {
-            CraftEngine.instance().debug(e::getMessage);
             throw new LocalizedResourceConfigException("warning.config.type.snbt.invalid_syntax", e, nbt);
         }
     }

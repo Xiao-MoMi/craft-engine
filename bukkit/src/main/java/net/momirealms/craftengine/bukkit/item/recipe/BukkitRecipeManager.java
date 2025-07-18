@@ -2,6 +2,9 @@ package net.momirealms.craftengine.bukkit.item.recipe;
 
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
+import io.papermc.paper.potion.PotionMix;
+import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.format.NamedTextColor;
 import net.momirealms.craftengine.bukkit.item.BukkitItemManager;
 import net.momirealms.craftengine.bukkit.item.CloneableConstantItem;
 import net.momirealms.craftengine.bukkit.nms.FastNMS;
@@ -13,18 +16,14 @@ import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.MRegistryOp
 import net.momirealms.craftengine.bukkit.util.KeyUtils;
 import net.momirealms.craftengine.bukkit.util.MaterialUtils;
 import net.momirealms.craftengine.bukkit.util.RecipeUtils;
-import net.momirealms.craftengine.core.item.CustomItem;
-import net.momirealms.craftengine.core.item.ItemBuildContext;
+import net.momirealms.craftengine.core.item.*;
 import net.momirealms.craftengine.core.item.recipe.*;
 import net.momirealms.craftengine.core.item.recipe.Recipe;
 import net.momirealms.craftengine.core.item.recipe.vanilla.*;
 import net.momirealms.craftengine.core.plugin.CraftEngine;
 import net.momirealms.craftengine.core.plugin.config.Config;
-import net.momirealms.craftengine.core.registry.BuiltInRegistries;
-import net.momirealms.craftengine.core.registry.Holder;
-import net.momirealms.craftengine.core.util.HeptaFunction;
-import net.momirealms.craftengine.core.util.Key;
-import net.momirealms.craftengine.core.util.VersionHelper;
+import net.momirealms.craftengine.core.plugin.locale.LocalizedResourceConfigException;
+import net.momirealms.craftengine.core.util.*;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.NamespacedKey;
@@ -135,8 +134,31 @@ public class BukkitRecipeManager extends AbstractRecipeManager<ItemStack> {
                 }
                 Object finalNmsRecipe = nmsRecipe;
                 return () -> registerNMSSmithingRecipe(finalNmsRecipe);
+            } catch (InvalidRecipeIngredientException e) {
+                throw e;
             } catch (Exception e) {
                 CraftEngine.instance().logger().warn("Failed to convert smithing transform recipe", e);
+                return null;
+            }
+        });
+        MIXED_RECIPE_CONVERTORS.put(RecipeTypes.SMITHING_TRIM, (BukkitRecipeConvertor<CustomSmithingTrimRecipe<ItemStack>>) (id, recipe) -> {
+            try {
+                Object nmsRecipe = createMinecraftSmithingTrimRecipe(recipe);
+                if (VersionHelper.isOrAbove1_21_2()) {
+                    nmsRecipe = CoreReflections.constructor$RecipeHolder.newInstance(
+                            CraftBukkitReflections.method$CraftRecipe$toMinecraft.invoke(null, new NamespacedKey(id.namespace(), id.value())), nmsRecipe);
+                } else if (VersionHelper.isOrAbove1_20_2()) {
+                    nmsRecipe = CoreReflections.constructor$RecipeHolder.newInstance(KeyUtils.toResourceLocation(id), nmsRecipe);
+                } else {
+                    Object finalNmsRecipe0 = nmsRecipe;
+                    return () -> registerNMSSmithingRecipe(finalNmsRecipe0);
+                }
+                Object finalNmsRecipe = nmsRecipe;
+                return () -> registerNMSSmithingRecipe(finalNmsRecipe);
+            } catch (InvalidRecipeIngredientException e) {
+                throw e;
+            } catch (Exception e) {
+                CraftEngine.instance().logger().warn("Failed to convert smithing trim recipe", e);
                 return null;
             }
         });
@@ -220,8 +242,8 @@ public class BukkitRecipeManager extends AbstractRecipeManager<ItemStack> {
         });
         MIXED_RECIPE_CONVERTORS.put(RecipeTypes.STONECUTTING, (BukkitRecipeConvertor<CustomStoneCuttingRecipe<ItemStack>>) (id, recipe) -> {
             List<ItemStack> itemStacks = new ArrayList<>();
-            for (Holder<Key> item : recipe.ingredient().items()) {
-                itemStacks.add(BukkitItemManager.instance().buildItemStack(item.value(), null));
+            for (UniqueKey item : recipe.ingredient().items()) {
+                itemStacks.add(BukkitItemManager.instance().buildItemStack(item.key(), null));
             }
             StonecuttingRecipe stonecuttingRecipe = new StonecuttingRecipe(
                     new NamespacedKey(id.namespace(), id.value()), recipe.result(ItemBuildContext.EMPTY),
@@ -303,24 +325,16 @@ public class BukkitRecipeManager extends AbstractRecipeManager<ItemStack> {
     @Override
     public void unload() {
         if (!Config.enableRecipeSystem()) return;
-        super.unload();
-        if (VersionHelper.isOrAbove1_21_2()) {
-            if (Bukkit.getServer().isStopping()) {
-                try {
-                    CoreReflections.method$RecipeManager$finalizeRecipeLoading.invoke(nmsRecipeManager);
-                } catch (ReflectiveOperationException e) {
-                    this.plugin.logger().warn("Failed to unregister recipes", e);
-                }
-            } else {
-                this.plugin.scheduler().executeSync(() -> {
-                    try {
-                        CoreReflections.method$RecipeManager$finalizeRecipeLoading.invoke(nmsRecipeManager);
-                    } catch (ReflectiveOperationException e) {
-                        this.plugin.logger().warn("Failed to unregister recipes", e);
-                    }
-                });
+        // 安排卸载任务，这些任务会在load后执行。如果没有load说明服务器已经关闭了，那就不需要管卸载了。
+        if (!Bukkit.isStopping()) {
+            for (Map.Entry<Key, Recipe<ItemStack>> entry : this.byId.entrySet()) {
+                Key id = entry.getKey();
+                if (isDataPackRecipe(id)) continue;
+                boolean isBrewingRecipe = entry.getValue() instanceof CustomBrewingRecipe<ItemStack>;
+                this.delayedTasksOnMainThread.add(() -> this.unregisterPlatformRecipe(id, isBrewingRecipe));
             }
         }
+        super.unload();
     }
 
     @Override
@@ -333,6 +347,12 @@ public class BukkitRecipeManager extends AbstractRecipeManager<ItemStack> {
     public void disable() {
         unload();
         CE_RECIPE_2_NMS_HOLDER.clear();
+        // 不是服务器关闭造成disable，那么需要把配方卸载干净
+        if (!Bukkit.isStopping()) {
+            for (Runnable task : this.delayedTasksOnMainThread) {
+                task.run();
+            }
+        }
         HandlerList.unregisterAll(this.recipeEventListener);
         if (this.crafterEventListener != null) {
             HandlerList.unregisterAll(this.crafterEventListener);
@@ -340,19 +360,43 @@ public class BukkitRecipeManager extends AbstractRecipeManager<ItemStack> {
     }
 
     @Override
-    protected void unregisterPlatformRecipe(Key key) {
-        unregisterNMSRecipe(new NamespacedKey(key.namespace(), key.value()));
+    protected void unregisterPlatformRecipe(Key key, boolean isBrewingRecipe) {
+        if (isBrewingRecipe) {
+            Bukkit.getPotionBrewer().removePotionMix(new NamespacedKey(key.namespace(), key.value()));
+        } else {
+            unregisterNMSRecipe(new NamespacedKey(key.namespace(), key.value()));
+        }
     }
 
     @Override
     protected void registerPlatformRecipe(Key id, Recipe<ItemStack> recipe) {
-        try {
-            Runnable converted = findNMSRecipeConvertor(recipe).convert(id, recipe);
-            if (converted != null) {
-                this.delayedTasksOnMainThread.add(converted);
+        if (recipe instanceof CustomBrewingRecipe<ItemStack> brewingRecipe) {
+            if (!VersionHelper.isOrAbove1_20_2()) return;
+            PotionMix potionMix = new PotionMix(new NamespacedKey(id.namespace(), id.value()),
+                    brewingRecipe.result(ItemBuildContext.EMPTY),
+                    PotionMix.createPredicateChoice(container -> {
+                        Item<ItemStack> wrapped = this.plugin.itemManager().wrap(container);
+                        return brewingRecipe.container().test(new UniqueIdItem<>(wrapped.recipeIngredientId(), wrapped));
+                    }),
+                    PotionMix.createPredicateChoice(ingredient -> {
+                        Item<ItemStack> wrapped = this.plugin.itemManager().wrap(ingredient);
+                        return brewingRecipe.ingredient().test(new UniqueIdItem<>(wrapped.recipeIngredientId(), wrapped));
+                    })
+            );
+            this.delayedTasksOnMainThread.add(() -> {
+                Bukkit.getPotionBrewer().addPotionMix(potionMix);
+            });
+        } else {
+            try {
+                Runnable converted = findNMSRecipeConvertor(recipe).convert(id, recipe);
+                if (converted != null) {
+                    this.delayedTasksOnMainThread.add(converted);
+                }
+            } catch (InvalidRecipeIngredientException e) {
+                throw new LocalizedResourceConfigException("warning.config.recipe.invalid_ingredient", e.ingredient());
+            } catch (Exception e) {
+                this.plugin.logger().warn("Failed to convert recipe " + id, e);
             }
-        } catch (Exception e) {
-            this.plugin.logger().warn("Failed to convert recipe " + id, e);
         }
     }
 
@@ -397,11 +441,11 @@ public class BukkitRecipeManager extends AbstractRecipeManager<ItemStack> {
 //                        continue;
 //                    }
                     if (Config.disableAllVanillaRecipes()) {
-                        this.delayedTasksOnMainThread.add(() -> unregisterPlatformRecipe(id));
+                        this.delayedTasksOnMainThread.add(() -> unregisterPlatformRecipe(id, false));
                         continue;
                     }
                     if (hasDisabledAny && Config.disabledVanillaRecipes().contains(id)) {
-                        this.delayedTasksOnMainThread.add(() -> unregisterPlatformRecipe(id));
+                        this.delayedTasksOnMainThread.add(() -> unregisterPlatformRecipe(id, false));
                         continue;
                     }
                     markAsDataPackRecipe(id);
@@ -436,6 +480,10 @@ public class BukkitRecipeManager extends AbstractRecipeManager<ItemStack> {
                         case "minecraft:smithing_transform" -> {
                             VanillaSmithingTransformRecipe recipe = this.recipeReader.readSmithingTransform(jsonObject);
                             handleDataPackSmithingTransform(id, recipe, (this.delayedTasksOnMainThread::add));
+                        }
+                        case "minecraft:smithing_trim" -> {
+                            VanillaSmithingTrimRecipe recipe = this.recipeReader.readSmithingTrim(jsonObject);
+                            handleDataPackSmithingTrim(id, recipe, (this.delayedTasksOnMainThread::add));
                         }
                         case "minecraft:stonecutting" -> {
                             VanillaStoneCuttingRecipe recipe = this.recipeReader.readStoneCutting(jsonObject);
@@ -502,18 +550,18 @@ public class BukkitRecipeManager extends AbstractRecipeManager<ItemStack> {
 
     private void handleDataPackStoneCuttingRecipe(Key id, VanillaStoneCuttingRecipe recipe) {
         ItemStack result = createDataPackResultStack(recipe.result());
-        Set<Holder<Key>> holders = new HashSet<>();
+        Set<UniqueKey> holders = new HashSet<>();
         for (String item : recipe.ingredient()) {
             if (item.charAt(0) == '#') {
                 Key tag = Key.from(item.substring(1));
                 holders.addAll(this.plugin.itemManager().tagToItems(tag));
             } else {
-                holders.add(BuiltInRegistries.OPTIMIZED_ITEM_ID.get(Key.from(item)).orElseThrow());
+                holders.add(UniqueKey.create(Key.from(item)));
             }
         }
         CustomStoneCuttingRecipe<ItemStack> ceRecipe = new CustomStoneCuttingRecipe<>(
                 id, recipe.group(), Ingredient.of(holders),
-                new CustomRecipeResult<>(new CloneableConstantItem(recipe.result().isCustom() ? Key.of("!internal:custom") : Key.of(recipe.result().id()), result), recipe.result().count())
+                new CustomRecipeResult<>(new CloneableConstantItem(recipe.result().isCustom() ? Key.of("!internal:custom") : Key.of(recipe.result().id()), BukkitItemManager.instance().wrap(result)), recipe.result().count(), null)
         );
         this.registerInternalRecipe(id, ceRecipe);
     }
@@ -524,7 +572,7 @@ public class BukkitRecipeManager extends AbstractRecipeManager<ItemStack> {
         boolean hasCustomItemInTag = false;
         List<Ingredient<ItemStack>> ingredientList = new ArrayList<>();
         for (List<String> list : recipe.ingredients()) {
-            Set<Holder<Key>> holders = new HashSet<>();
+            Set<UniqueKey> holders = new HashSet<>();
             for (String item : list) {
                 if (item.charAt(0) == '#') {
                     Key tag = Key.of(item.substring(1));
@@ -535,14 +583,14 @@ public class BukkitRecipeManager extends AbstractRecipeManager<ItemStack> {
                     }
                     holders.addAll(plugin.itemManager().tagToItems(tag));
                 } else {
-                    holders.add(BuiltInRegistries.OPTIMIZED_ITEM_ID.get(Key.from(item)).orElseThrow());
+                    holders.add(UniqueKey.create(Key.from(item)));
                 }
             }
             ingredientList.add(Ingredient.of(holders));
         }
         CustomShapelessRecipe<ItemStack> ceRecipe = new CustomShapelessRecipe<>(
                 id, recipe.category(), recipe.group(), ingredientList,
-                new CustomRecipeResult<>(new CloneableConstantItem(recipe.result().isCustom() ? Key.of("!internal:custom") : Key.of(recipe.result().id()), result), recipe.result().count())
+                new CustomRecipeResult<>(new CloneableConstantItem(recipe.result().isCustom() ? Key.of("!internal:custom") : Key.of(recipe.result().id()), BukkitItemManager.instance().wrap(result)), recipe.result().count(), null)
         );
         if (hasCustomItemInTag) {
             Runnable converted = findNMSRecipeConvertor(ceRecipe).convert(id, ceRecipe);
@@ -560,7 +608,7 @@ public class BukkitRecipeManager extends AbstractRecipeManager<ItemStack> {
         boolean hasCustomItemInTag = false;
         Map<Character, Ingredient<ItemStack>> ingredients = new HashMap<>();
         for (Map.Entry<Character, List<String>> entry : recipe.ingredients().entrySet()) {
-            Set<Holder<Key>> holders = new HashSet<>();
+            Set<UniqueKey> holders = new HashSet<>();
             for (String item : entry.getValue()) {
                 if (item.charAt(0) == '#') {
                     Key tag = Key.from(item.substring(1));
@@ -571,7 +619,7 @@ public class BukkitRecipeManager extends AbstractRecipeManager<ItemStack> {
                     }
                     holders.addAll(plugin.itemManager().tagToItems(tag));
                 } else {
-                    holders.add(BuiltInRegistries.OPTIMIZED_ITEM_ID.get(Key.from(item)).orElseThrow());
+                    holders.add(UniqueKey.create(Key.from(item)));
                 }
             }
             ingredients.put(entry.getKey(), Ingredient.of(holders));
@@ -579,7 +627,7 @@ public class BukkitRecipeManager extends AbstractRecipeManager<ItemStack> {
         CustomShapedRecipe<ItemStack> ceRecipe = new CustomShapedRecipe<>(
                 id, recipe.category(), recipe.group(),
                 new CustomShapedRecipe.Pattern<>(recipe.pattern(), ingredients),
-                new CustomRecipeResult<>(new CloneableConstantItem(recipe.result().isCustom() ? Key.of("!internal:custom") : Key.of(recipe.result().id()), result), recipe.result().count())
+                new CustomRecipeResult<>(new CloneableConstantItem(recipe.result().isCustom() ? Key.of("!internal:custom") : Key.of(recipe.result().id()), BukkitItemManager.instance().wrap(result)), recipe.result().count(), null)
         );
         if (hasCustomItemInTag) {
             Runnable converted = findNMSRecipeConvertor(ceRecipe).convert(id, ceRecipe);
@@ -597,13 +645,13 @@ public class BukkitRecipeManager extends AbstractRecipeManager<ItemStack> {
                                              Consumer<Runnable> callback) {
         NamespacedKey key = new NamespacedKey(id.namespace(), id.value());
         ItemStack result = createDataPackResultStack(recipe.result());
-        Set<Holder<Key>> holders = new HashSet<>();
+        Set<UniqueKey> holders = new HashSet<>();
         boolean hasCustomItemInTag = readVanillaIngredients(false, recipe.ingredient(), holders::add);
         CustomCookingRecipe<ItemStack> ceRecipe = constructor2.apply(
                 id, recipe.category(), recipe.group(),
                 Ingredient.of(holders),
                 recipe.cookingTime(), recipe.experience(),
-                new CustomRecipeResult<>(new CloneableConstantItem(recipe.result().isCustom() ? Key.of("!internal:custom") : Key.of(recipe.result().id()), result), recipe.result().count())
+                new CustomRecipeResult<>(new CloneableConstantItem(recipe.result().isCustom() ? Key.of("!internal:custom") : Key.of(recipe.result().id()), BukkitItemManager.instance().wrap(result)), recipe.result().count(), null)
         );
         if (hasCustomItemInTag) {
             Runnable converted = findNMSRecipeConvertor(ceRecipe).convert(id, ceRecipe);
@@ -620,11 +668,11 @@ public class BukkitRecipeManager extends AbstractRecipeManager<ItemStack> {
         ItemStack result = createDataPackResultStack(recipe.result());
         boolean hasCustomItemInTag;
 
-        Set<Holder<Key>> additionHolders = new HashSet<>();
+        Set<UniqueKey> additionHolders = new HashSet<>();
         hasCustomItemInTag = readVanillaIngredients(false, recipe.addition(), additionHolders::add);
-        Set<Holder<Key>> templateHolders = new HashSet<>();
+        Set<UniqueKey> templateHolders = new HashSet<>();
         hasCustomItemInTag = readVanillaIngredients(hasCustomItemInTag, recipe.template(), templateHolders::add);
-        Set<Holder<Key>> baseHolders = new HashSet<>();
+        Set<UniqueKey> baseHolders = new HashSet<>();
         hasCustomItemInTag = readVanillaIngredients(hasCustomItemInTag, recipe.base(), baseHolders::add);
 
         CustomSmithingTransformRecipe<ItemStack> ceRecipe = new CustomSmithingTransformRecipe<>(
@@ -632,7 +680,7 @@ public class BukkitRecipeManager extends AbstractRecipeManager<ItemStack> {
                 baseHolders.isEmpty() ? null : Ingredient.of(baseHolders),
                 templateHolders.isEmpty() ? null : Ingredient.of(templateHolders),
                 additionHolders.isEmpty() ? null : Ingredient.of(additionHolders),
-                new CustomRecipeResult<>(new CloneableConstantItem(recipe.result().isCustom() ? Key.of("!internal:custom") : Key.of(recipe.result().id()), result), recipe.result().count()),
+                new CustomRecipeResult<>(new CloneableConstantItem(recipe.result().isCustom() ? Key.of("!internal:custom") : Key.of(recipe.result().id()), BukkitItemManager.instance().wrap(result)), recipe.result().count(), null),
                 true,
                 List.of()
         );
@@ -647,7 +695,36 @@ public class BukkitRecipeManager extends AbstractRecipeManager<ItemStack> {
         this.registerInternalRecipe(id, ceRecipe);
     }
 
-    private boolean readVanillaIngredients(boolean hasCustomItemInTag, List<String> ingredients, Consumer<Holder<Key>> holderConsumer) {
+    private void handleDataPackSmithingTrim(Key id, VanillaSmithingTrimRecipe recipe, Consumer<Runnable> callback) {
+        NamespacedKey key = new NamespacedKey(id.namespace(), id.value());
+
+        boolean hasCustomItemInTag;
+        Set<UniqueKey> additionHolders = new HashSet<>();
+        hasCustomItemInTag = readVanillaIngredients(false, recipe.addition(), additionHolders::add);
+        Set<UniqueKey> templateHolders = new HashSet<>();
+        hasCustomItemInTag = readVanillaIngredients(hasCustomItemInTag, recipe.template(), templateHolders::add);
+        Set<UniqueKey> baseHolders = new HashSet<>();
+        hasCustomItemInTag = readVanillaIngredients(hasCustomItemInTag, recipe.base(), baseHolders::add);
+
+        CustomSmithingTrimRecipe<ItemStack> ceRecipe = new CustomSmithingTrimRecipe<>(
+                id,
+                Ingredient.of(baseHolders),
+                Ingredient.of(templateHolders),
+                Ingredient.of(additionHolders),
+                Optional.ofNullable(recipe.pattern()).map(Key::of).orElse(null)
+        );
+
+        if (hasCustomItemInTag) {
+            Runnable converted = findNMSRecipeConvertor(ceRecipe).convert(id, ceRecipe);
+            callback.accept(() -> {
+                unregisterNMSRecipe(key);
+                converted.run();
+            });
+        }
+        this.registerInternalRecipe(id, ceRecipe);
+    }
+
+    private boolean readVanillaIngredients(boolean hasCustomItemInTag, List<String> ingredients, Consumer<UniqueKey> holderConsumer) {
         for (String item : ingredients) {
             if (item.charAt(0) == '#') {
                 Key tag = Key.from(item.substring(1));
@@ -656,11 +733,11 @@ public class BukkitRecipeManager extends AbstractRecipeManager<ItemStack> {
                         hasCustomItemInTag = true;
                     }
                 }
-                for (Holder<Key> holder : this.plugin.itemManager().tagToItems(tag)) {
+                for (UniqueKey holder : this.plugin.itemManager().tagToItems(tag)) {
                     holderConsumer.accept(holder);
                 }
             } else {
-                holderConsumer.accept(BuiltInRegistries.OPTIMIZED_ITEM_ID.get(Key.from(item)).orElseThrow());
+                holderConsumer.accept(UniqueKey.create(Key.from(item)));
             }
         }
         return hasCustomItemInTag;
@@ -703,8 +780,8 @@ public class BukkitRecipeManager extends AbstractRecipeManager<ItemStack> {
 
     private static RecipeChoice ingredientToBukkitRecipeChoice(Ingredient<ItemStack> ingredient) {
         Set<Material> materials = new HashSet<>();
-        for (Holder<Key> holder : ingredient.items()) {
-            materials.add(getMaterialById(holder.value()));
+        for (UniqueKey holder : ingredient.items()) {
+            materials.add(getMaterialById(holder.key()));
         }
         return new RecipeChoice.MaterialChoice(new ArrayList<>(materials));
     }
@@ -715,15 +792,21 @@ public class BukkitRecipeManager extends AbstractRecipeManager<ItemStack> {
             return material;
         }
         Optional<CustomItem<ItemStack>> optionalItem = BukkitItemManager.instance().getCustomItem(key);
-        return optionalItem.map(itemStackCustomItem -> MaterialUtils.getMaterial(itemStackCustomItem.material())).orElse(null);
+        return optionalItem.map(itemStackCustomItem -> MaterialUtils.getMaterial(itemStackCustomItem.material())).orElseThrow(() -> new InvalidRecipeIngredientException(key.asString()));
     }
 
-    private static List<Object> getIngredientLooks(List<Holder<Key>> holders) {
+    private static List<Object> getIngredientLooks(List<UniqueKey> holders) {
         List<Object> itemStacks = new ArrayList<>();
-        for (Holder<Key> holder : holders) {
-            ItemStack itemStack = BukkitItemManager.instance().getBuildableItem(holder.value()).get().buildItemStack(ItemBuildContext.EMPTY, 1);
-            Object nmsStack = FastNMS.INSTANCE.method$CraftItemStack$asNMSCopy(itemStack);
-            itemStacks.add(nmsStack);
+        for (UniqueKey holder : holders) {
+            Optional<? extends BuildableItem<ItemStack>> buildableItem = BukkitItemManager.instance().getBuildableItem(holder.key());
+            if (buildableItem.isPresent()) {
+                ItemStack itemStack = buildableItem.get().buildItemStack(ItemBuildContext.EMPTY, 1);
+                Object nmsStack = FastNMS.INSTANCE.method$CraftItemStack$asNMSCopy(itemStack);
+                itemStacks.add(nmsStack);
+            } else {
+                Item<ItemStack> barrier = BukkitItemManager.instance().createWrappedItem(ItemKeys.BARRIER, null);
+                barrier.customNameJson(AdventureHelper.componentToJson(Component.text(holder.key().asString()).color(NamedTextColor.RED)));
+            }
         }
         return itemStacks;
     }
@@ -892,6 +975,37 @@ public class BukkitRecipeManager extends AbstractRecipeManager<ItemStack> {
                     toMinecraftIngredient(recipe.base()),
                     toMinecraftIngredient(recipe.addition()),
                     FastNMS.INSTANCE.method$CraftItemStack$asNMSCopy(recipe.result(ItemBuildContext.EMPTY))
+            );
+        }
+    }
+
+    private static Object createMinecraftSmithingTrimRecipe(CustomSmithingTrimRecipe<ItemStack> recipe) throws ReflectiveOperationException {
+        if (VersionHelper.isOrAbove1_21_5()) {
+            Object registry = FastNMS.INSTANCE.method$RegistryAccess$lookupOrThrow(FastNMS.INSTANCE.registryAccess(), MRegistries.TRIM_PATTERN);
+            return CoreReflections.constructor$SmithingTrimRecipe.newInstance(
+                    toMinecraftIngredient(recipe.template()),
+                    toMinecraftIngredient(recipe.base()),
+                    toMinecraftIngredient(recipe.addition()),
+                    FastNMS.INSTANCE.method$Registry$getHolderByResourceLocation(registry, KeyUtils.toResourceLocation(recipe.pattern())).orElseThrow(() -> new RuntimeException("Pattern " + recipe.pattern() + " doesn't exist."))
+            );
+        } else if (VersionHelper.isOrAbove1_21_2()) {
+            return CoreReflections.constructor$SmithingTrimRecipe.newInstance(
+                    toOptionalMinecraftIngredient(recipe.template()),
+                    toOptionalMinecraftIngredient(recipe.base()),
+                    toOptionalMinecraftIngredient(recipe.addition())
+            );
+        } else if (VersionHelper.isOrAbove1_20_2()) {
+            return CoreReflections.constructor$SmithingTrimRecipe.newInstance(
+                    toMinecraftIngredient(recipe.template()),
+                    toMinecraftIngredient(recipe.base()),
+                    toMinecraftIngredient(recipe.addition())
+            );
+        } else {
+            return CoreReflections.constructor$SmithingTrimRecipe.newInstance(
+                    KeyUtils.toResourceLocation(recipe.id()),
+                    toMinecraftIngredient(recipe.template()),
+                    toMinecraftIngredient(recipe.base()),
+                    toMinecraftIngredient(recipe.addition())
             );
         }
     }

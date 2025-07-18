@@ -31,22 +31,20 @@ public class TextDisplayPacketHandler implements EntityPacketHandler {
         for (int i = 0; i < packedItems.size(); i++) {
             Object packedItem = packedItems.get(i);
             int entityDataId = FastNMS.INSTANCE.field$SynchedEntityData$DataValue$id(packedItem);
-            if (entityDataId == EntityDataUtils.TEXT_DATA_ID) {
-                Object textComponent = FastNMS.INSTANCE.field$SynchedEntityData$DataValue$value(packedItem);
-                if (textComponent == CoreReflections.instance$Component$empty) break;
-                String json = ComponentUtils.minecraftToJson(textComponent);
-                Map<String, Component> tokens = CraftEngine.instance().fontManager().matchTags(json);
-                if (!tokens.isEmpty()) {
-                    Component component = AdventureHelper.jsonToComponent(json);
-                    for (Map.Entry<String, Component> token : tokens.entrySet()) {
-                        component = component.replaceText(b -> b.matchLiteral(token.getKey()).replacement(token.getValue()));
-                    }
-                    Object serializer = FastNMS.INSTANCE.field$SynchedEntityData$DataValue$serializer(packedItem);
-                    packedItems.set(i, FastNMS.INSTANCE.constructor$SynchedEntityData$DataValue(entityDataId, serializer, ComponentUtils.adventureToMinecraft(component)));
-                    isChanged = true;
-                    break;
-                }
+            if (entityDataId != EntityDataUtils.TEXT_DATA_ID) continue;
+            Object textComponent = FastNMS.INSTANCE.field$SynchedEntityData$DataValue$value(packedItem);
+            if (textComponent == CoreReflections.instance$Component$empty) break;
+            String json = ComponentUtils.minecraftToJson(textComponent);
+            Map<String, Component> tokens = CraftEngine.instance().fontManager().matchTags(json);
+            if (tokens.isEmpty()) continue;
+            Component component = AdventureHelper.jsonToComponent(json);
+            for (Map.Entry<String, Component> token : tokens.entrySet()) {
+                component = component.replaceText(b -> b.matchLiteral(token.getKey()).replacement(token.getValue()));
             }
+            Object serializer = FastNMS.INSTANCE.field$SynchedEntityData$DataValue$serializer(packedItem);
+            packedItems.set(i, FastNMS.INSTANCE.constructor$SynchedEntityData$DataValue(entityDataId, serializer, ComponentUtils.adventureToMinecraft(component)));
+            isChanged = true;
+            break;
         }
         if (isChanged) {
             event.setChanged(true);

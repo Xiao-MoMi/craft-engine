@@ -2,7 +2,6 @@ package net.momirealms.craftengine.core.plugin.context.number;
 
 import net.momirealms.craftengine.core.plugin.locale.LocalizedResourceConfigException;
 import net.momirealms.craftengine.core.registry.BuiltInRegistries;
-import net.momirealms.craftengine.core.registry.Holder;
 import net.momirealms.craftengine.core.registry.Registries;
 import net.momirealms.craftengine.core.registry.WritableRegistry;
 import net.momirealms.craftengine.core.util.Key;
@@ -27,9 +26,8 @@ public class NumberProviders {
     }
 
     public static void register(Key key, NumberProviderFactory factory) {
-        Holder.Reference<NumberProviderFactory> holder = ((WritableRegistry<NumberProviderFactory>) BuiltInRegistries.NUMBER_PROVIDER_FACTORY)
-                .registerForHolder(new ResourceKey<>(Registries.NUMBER_PROVIDER_FACTORY.location(), key));
-        holder.bindValue(factory);
+        ((WritableRegistry<NumberProviderFactory>) BuiltInRegistries.NUMBER_PROVIDER_FACTORY)
+                .register(ResourceKey.create(Registries.NUMBER_PROVIDER_FACTORY.location(), key), factory);
     }
 
     public static List<NumberProvider> fromMapList(List<Map<String, Object>> mapList) {

@@ -29,14 +29,14 @@ public class DyedColorModifier<I> implements ItemDataModifier<I> {
     @Override
     public Item<I> prepareNetworkItem(Item<I> item, ItemBuildContext context, CompoundTag networkData) {
         if (VersionHelper.isOrAbove1_20_5()) {
-            Tag previous = item.getNBTComponent(ComponentKeys.DYED_COLOR);
+            Tag previous = item.getSparrowNBTComponent(ComponentKeys.DYED_COLOR);
             if (previous != null) {
                 networkData.put(ComponentKeys.DYED_COLOR.asString(), NetworkItemHandler.pack(NetworkItemHandler.Operation.ADD, previous));
             } else {
                 networkData.put(ComponentKeys.DYED_COLOR.asString(), NetworkItemHandler.pack(NetworkItemHandler.Operation.REMOVE));
             }
         } else {
-            Tag previous = item.getNBTTag("display", "color");
+            Tag previous = item.getTag("display", "color");
             if (previous != null) {
                 networkData.put("display.color", NetworkItemHandler.pack(NetworkItemHandler.Operation.ADD, previous));
             } else {

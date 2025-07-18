@@ -3,7 +3,6 @@ package net.momirealms.craftengine.core.block.properties;
 import net.momirealms.craftengine.core.block.state.properties.*;
 import net.momirealms.craftengine.core.plugin.locale.LocalizedResourceConfigException;
 import net.momirealms.craftengine.core.registry.BuiltInRegistries;
-import net.momirealms.craftengine.core.registry.Holder;
 import net.momirealms.craftengine.core.registry.Registries;
 import net.momirealms.craftengine.core.registry.WritableRegistry;
 import net.momirealms.craftengine.core.util.*;
@@ -40,8 +39,7 @@ public class Properties {
     }
 
     public static void register(Key key, PropertyFactory factory) {
-        Holder.Reference<PropertyFactory> holder = ((WritableRegistry<PropertyFactory>) BuiltInRegistries.PROPERTY_FACTORY).registerForHolder(new ResourceKey<>(Registries.PROPERTY_FACTORY.location(), key));
-        holder.bindValue(factory);
+        ((WritableRegistry<PropertyFactory>) BuiltInRegistries.PROPERTY_FACTORY).register(ResourceKey.create(Registries.PROPERTY_FACTORY.location(), key), factory);
     }
 
     public static Property<?> fromMap(String name, Map<String, Object> map) {

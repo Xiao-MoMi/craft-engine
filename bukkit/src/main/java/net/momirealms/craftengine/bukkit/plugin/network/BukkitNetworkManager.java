@@ -1,6 +1,5 @@
 package net.momirealms.craftengine.bukkit.plugin.network;
 
-import com.google.gson.JsonObject;
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.*;
 import io.netty.handler.codec.MessageToMessageDecoder;
@@ -19,6 +18,7 @@ import net.momirealms.craftengine.bukkit.plugin.user.BukkitServerPlayer;
 import net.momirealms.craftengine.bukkit.util.KeyUtils;
 import net.momirealms.craftengine.core.plugin.CraftEngine;
 import net.momirealms.craftengine.core.plugin.context.CooldownData;
+import net.momirealms.craftengine.core.plugin.logger.Debugger;
 import net.momirealms.craftengine.core.plugin.network.*;
 import net.momirealms.craftengine.core.util.*;
 import org.bukkit.Bukkit;
@@ -43,8 +43,8 @@ public class BukkitNetworkManager implements NetworkManager, Listener, PluginMes
     private static BukkitNetworkManager instance;
     private static final Map<Class<?>, TriConsumer<NetWorkUser, NMSPacketEvent, Object>> NMS_PACKET_HANDLERS = new HashMap<>();
     // only for game stage for the moment
-    private static BiConsumer<NetWorkUser, ByteBufPacketEvent>[] S2C_BYTE_BUFFER_PACKET_HANDLERS;
-    private static BiConsumer<NetWorkUser, ByteBufPacketEvent>[] C2S_BYTE_BUFFER_PACKET_HANDLERS;
+    private static BiConsumer<NetWorkUser, ByteBufPacketEvent>[] S2C_GAME_BYTE_BUFFER_PACKET_HANDLERS;
+    private static BiConsumer<NetWorkUser, ByteBufPacketEvent>[] C2S_GAME_BYTE_BUFFER_PACKET_HANDLERS;
 
     private static void registerNMSPacketConsumer(final TriConsumer<NetWorkUser, NMSPacketEvent, Object> function, @Nullable Class<?> packet) {
         if (packet == null) return;
@@ -53,18 +53,18 @@ public class BukkitNetworkManager implements NetworkManager, Listener, PluginMes
 
     private static void registerS2CByteBufPacketConsumer(final BiConsumer<NetWorkUser, ByteBufPacketEvent> function, int id) {
         if (id == -1) return;
-        if (id < 0 || id >= S2C_BYTE_BUFFER_PACKET_HANDLERS.length) {
+        if (id < 0 || id >= S2C_GAME_BYTE_BUFFER_PACKET_HANDLERS.length) {
             throw new IllegalArgumentException("Invalid packet id: " + id);
         }
-        S2C_BYTE_BUFFER_PACKET_HANDLERS[id] = function;
+        S2C_GAME_BYTE_BUFFER_PACKET_HANDLERS[id] = function;
     }
 
     private static void registerC2SByteBufPacketConsumer(final BiConsumer<NetWorkUser, ByteBufPacketEvent> function, int id) {
         if (id == -1) return;
-        if (id < 0 || id >= C2S_BYTE_BUFFER_PACKET_HANDLERS.length) {
+        if (id < 0 || id >= C2S_GAME_BYTE_BUFFER_PACKET_HANDLERS.length) {
             throw new IllegalArgumentException("Invalid packet id: " + id);
         }
-        C2S_BYTE_BUFFER_PACKET_HANDLERS[id] = function;
+        C2S_GAME_BYTE_BUFFER_PACKET_HANDLERS[id] = function;
     }
 
     private final BiConsumer<ChannelHandler, Object> packetConsumer;
@@ -92,10 +92,10 @@ public class BukkitNetworkManager implements NetworkManager, Listener, PluginMes
     @SuppressWarnings("unchecked")
     public BukkitNetworkManager(BukkitCraftEngine plugin) {
         instance = this;
-        S2C_BYTE_BUFFER_PACKET_HANDLERS = new BiConsumer[PacketIdFinder.maxS2CPacketId()];
-        C2S_BYTE_BUFFER_PACKET_HANDLERS = new BiConsumer[PacketIdFinder.maxC2SPacketId()];
-        Arrays.fill(S2C_BYTE_BUFFER_PACKET_HANDLERS, Handlers.DO_NOTHING);
-        Arrays.fill(C2S_BYTE_BUFFER_PACKET_HANDLERS, Handlers.DO_NOTHING);
+        S2C_GAME_BYTE_BUFFER_PACKET_HANDLERS = new BiConsumer[PacketIdFinder.s2cGamePackets()];
+        C2S_GAME_BYTE_BUFFER_PACKET_HANDLERS = new BiConsumer[PacketIdFinder.c2sGamePackets()];
+        Arrays.fill(S2C_GAME_BYTE_BUFFER_PACKET_HANDLERS, Handlers.DO_NOTHING);
+        Arrays.fill(C2S_GAME_BYTE_BUFFER_PACKET_HANDLERS, Handlers.DO_NOTHING);
         hasModelEngine = Bukkit.getPluginManager().getPlugin("ModelEngine") != null;
         hasViaVersion = Bukkit.getPluginManager().getPlugin("ViaVersion") != null;
         this.plugin = plugin;
@@ -117,8 +117,6 @@ public class BukkitNetworkManager implements NetworkManager, Listener, PluginMes
         // set up mod channel
         this.plugin.javaPlugin().getServer().getMessenger().registerIncomingPluginChannel(this.plugin.javaPlugin(), MOD_CHANNEL, this);
         this.plugin.javaPlugin().getServer().getMessenger().registerOutgoingPluginChannel(this.plugin.javaPlugin(), MOD_CHANNEL);
-        // 配置via频道
-        this.plugin.javaPlugin().getServer().getMessenger().registerIncomingPluginChannel(this.plugin.javaPlugin(), VIA_CHANNEL, this);
         // Inject server channel
         try {
             Object server = CoreReflections.method$MinecraftServer$getServer.invoke(null);
@@ -152,15 +150,15 @@ public class BukkitNetworkManager implements NetworkManager, Listener, PluginMes
         registerNMSPacketConsumer(PacketConsumers.SIGN_UPDATE, NetworkReflections.clazz$ServerboundSignUpdatePacket);
         registerNMSPacketConsumer(PacketConsumers.EDIT_BOOK, NetworkReflections.clazz$ServerboundEditBookPacket);
         registerNMSPacketConsumer(PacketConsumers.CUSTOM_PAYLOAD, NetworkReflections.clazz$ServerboundCustomPayloadPacket);
-        registerNMSPacketConsumer(PacketConsumers.RESOURCE_PACK_PUSH, NetworkReflections.clazz$ClientboundResourcePackPushPacket);
-        registerNMSPacketConsumer(PacketConsumers.HANDSHAKE_C2S, NetworkReflections.clazz$ClientIntentionPacket);
-        registerNMSPacketConsumer(PacketConsumers.LOGIN_ACKNOWLEDGED, NetworkReflections.clazz$ServerboundLoginAcknowledgedPacket);
         registerNMSPacketConsumer(PacketConsumers.RESOURCE_PACK_RESPONSE, NetworkReflections.clazz$ServerboundResourcePackPacket);
         registerNMSPacketConsumer(PacketConsumers.ENTITY_EVENT, NetworkReflections.clazz$ClientboundEntityEventPacket);
         registerNMSPacketConsumer(PacketConsumers.MOVE_POS_AND_ROTATE_ENTITY, NetworkReflections.clazz$ClientboundMoveEntityPacket$PosRot);
         registerNMSPacketConsumer(PacketConsumers.MOVE_POS_ENTITY, NetworkReflections.clazz$ClientboundMoveEntityPacket$Pos);
         registerNMSPacketConsumer(PacketConsumers.ROTATE_HEAD, NetworkReflections.clazz$ClientboundRotateHeadPacket);
         registerNMSPacketConsumer(PacketConsumers.SET_ENTITY_MOTION, NetworkReflections.clazz$ClientboundSetEntityMotionPacket);
+        registerNMSPacketConsumer(PacketConsumers.FINISH_CONFIGURATION, NetworkReflections.clazz$ClientboundFinishConfigurationPacket);
+        registerNMSPacketConsumer(PacketConsumers.LOGIN_FINISHED, NetworkReflections.clazz$ClientboundLoginFinishedPacket);
+        registerNMSPacketConsumer(PacketConsumers.UPDATE_TAGS, NetworkReflections.clazz$ClientboundUpdateTagsPacket);
         registerS2CByteBufPacketConsumer(PacketConsumers.LEVEL_CHUNK_WITH_LIGHT, this.packetIds.clientboundLevelChunkWithLightPacket());
         registerS2CByteBufPacketConsumer(PacketConsumers.SECTION_BLOCK_UPDATE, this.packetIds.clientboundSectionBlocksUpdatePacket());
         registerS2CByteBufPacketConsumer(PacketConsumers.BLOCK_UPDATE, this.packetIds.clientboundBlockUpdatePacket());
@@ -176,6 +174,10 @@ public class BukkitNetworkManager implements NetworkManager, Listener, PluginMes
         registerS2CByteBufPacketConsumer(VersionHelper.isOrAbove1_20_3() ? PacketConsumers.TEAM_1_20_3 : PacketConsumers.TEAM_1_20, this.packetIds.clientboundSetPlayerTeamPacket());
         registerS2CByteBufPacketConsumer(VersionHelper.isOrAbove1_20_3() ? PacketConsumers.SET_OBJECTIVE_1_20_3 : PacketConsumers.SET_OBJECTIVE_1_20, this.packetIds.clientboundSetObjectivePacket());
         registerS2CByteBufPacketConsumer(PacketConsumers.SET_SCORE_1_20_3, VersionHelper.isOrAbove1_20_3() ? this.packetIds.clientboundSetScorePacket() : -1);
+        registerS2CByteBufPacketConsumer(PacketConsumers.ADD_RECIPE_BOOK, this.packetIds.clientboundRecipeBookAddPacket());
+        registerS2CByteBufPacketConsumer(PacketConsumers.PLACE_GHOST_RECIPE, this.packetIds.clientboundPlaceGhostRecipePacket());
+        registerS2CByteBufPacketConsumer(PacketConsumers.UPDATE_RECIPES, this.packetIds.clientboundUpdateRecipesPacket());
+        registerS2CByteBufPacketConsumer(PacketConsumers.UPDATE_ADVANCEMENTS, this.packetIds.clientboundUpdateAdvancementsPacket());
         registerS2CByteBufPacketConsumer(PacketConsumers.REMOVE_ENTITY, this.packetIds.clientboundRemoveEntitiesPacket());
         registerS2CByteBufPacketConsumer(PacketConsumers.ADD_ENTITY, this.packetIds.clientboundAddEntityPacket());
         registerS2CByteBufPacketConsumer(PacketConsumers.SOUND, this.packetIds.clientboundSoundPacket());
@@ -186,7 +188,7 @@ public class BukkitNetworkManager implements NetworkManager, Listener, PluginMes
         registerS2CByteBufPacketConsumer(PacketConsumers.SET_EQUIPMENT, this.packetIds.clientboundSetEquipmentPacket());
         registerS2CByteBufPacketConsumer(PacketConsumers.SET_PLAYER_INVENTORY_1_21_2, this.packetIds.clientboundSetPlayerInventoryPacket());
         registerC2SByteBufPacketConsumer(PacketConsumers.SET_CREATIVE_MODE_SLOT, this.packetIds.serverboundSetCreativeModeSlotPacket());
-        registerC2SByteBufPacketConsumer(PacketConsumers.CONTAINER_CLICK_1_20, this.packetIds.serverboundContainerClickPacket());
+        registerC2SByteBufPacketConsumer(VersionHelper.isOrAbove1_21_5() ? PacketConsumers.CONTAINER_CLICK_1_21_5 : PacketConsumers.CONTAINER_CLICK_1_20, this.packetIds.serverboundContainerClickPacket());
         registerC2SByteBufPacketConsumer(PacketConsumers.INTERACT_ENTITY, this.packetIds.serverboundInteractPacket());
     }
 
@@ -204,7 +206,7 @@ public class BukkitNetworkManager implements NetworkManager, Listener, PluginMes
             this.resetUserArray();
             if (VersionHelper.isFolia()) {
                 player.getScheduler().runAtFixedRate(plugin.javaPlugin(), (t) -> user.tick(),
-                        () -> plugin.debug(() -> "Player " + player.getName() + "'s entity scheduler is retired"), 1, 1);
+                        () -> {}, 1, 1);
             }
         }
     }
@@ -242,14 +244,6 @@ public class BukkitNetworkManager implements NetworkManager, Listener, PluginMes
 
     @Override
     public void onPluginMessageReceived(@NotNull String channel, @NotNull Player player, byte @NotNull [] message) {
-        if (channel.equals(VIA_CHANNEL)) {
-            BukkitServerPlayer user = this.plugin.adapt(player);
-            if (user != null) {
-                JsonObject payload = GsonHelper.get().fromJson(new String(message), JsonObject.class);
-                int version = payload.get("version").getAsInt();
-                user.setProtocolVersion(version);
-            }
-        }
     }
 
     @Override
@@ -653,6 +647,7 @@ public class BukkitNetworkManager implements NetworkManager, Listener, PluginMes
     }
 
     private void onNMSPacketReceive(NetWorkUser user, NMSPacketEvent event, Object packet) {
+        Debugger.PACKET.debug(() -> "[C->S]" + packet.getClass());
         handleNMSPacket(user, event, packet);
     }
 
@@ -663,6 +658,7 @@ public class BukkitNetworkManager implements NetworkManager, Listener, PluginMes
                 onNMSPacketSend(player, event, p);
             }
         } else {
+            Debugger.PACKET.debug(() -> "[S->C]" + packet.getClass());
             handleNMSPacket(player, event, packet);
         }
     }
@@ -674,13 +670,13 @@ public class BukkitNetworkManager implements NetworkManager, Listener, PluginMes
 
     protected void handleS2CByteBufPacket(NetWorkUser user, ByteBufPacketEvent event) {
         int packetID = event.packetID();
-        Optional.ofNullable(S2C_BYTE_BUFFER_PACKET_HANDLERS[packetID])
+        Optional.ofNullable(S2C_GAME_BYTE_BUFFER_PACKET_HANDLERS[packetID])
                 .ifPresent(function -> function.accept(user, event));
     }
 
     protected void handleC2SByteBufPacket(NetWorkUser user, ByteBufPacketEvent event) {
         int packetID = event.packetID();
-        Optional.ofNullable(C2S_BYTE_BUFFER_PACKET_HANDLERS[packetID])
+        Optional.ofNullable(C2S_GAME_BYTE_BUFFER_PACKET_HANDLERS[packetID])
                 .ifPresent(function -> function.accept(user, event));
     }
 
