@@ -1,6 +1,6 @@
 author: XiaoMoMi
 version: 0.0.1
-description:
+description: Fix broken vanilla armor
 namespace: minecraft
 enable:
   $$>=1.21.2: false

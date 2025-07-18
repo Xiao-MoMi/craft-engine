@@ -77,17 +77,14 @@ public class AlistHost implements ResourcePackHost {
     }
 
     private void readCacheFromDisk() {
-        Path cachePath = CraftEngine.instance().dataFolderPath().resolve("alist.cache");
-        if (!Files.exists(cachePath)) return;
-
+        Path cachePath = CraftEngine.instance().dataFolderPath().resolve("cache").resolve("alist.json");
+        if (!Files.exists(cachePath) || !Files.isRegularFile(cachePath)) return;
         try (InputStream is = Files.newInputStream(cachePath)) {
             Map<String, String> cache = GsonHelper.get().fromJson(
                     new InputStreamReader(is),
                     new TypeToken<Map<String, String>>(){}.getType()
             );
-
             this.cachedSha1 = cache.get("sha1");
-
             CraftEngine.instance().logger().info("[Alist] Loaded cached resource pack metadata");
         } catch (Exception e) {
             CraftEngine.instance().logger().warn("[Alist] Failed to load cache " + cachePath, e);
@@ -97,9 +94,9 @@ public class AlistHost implements ResourcePackHost {
     private void saveCacheToDisk() {
         Map<String, String> cache = new HashMap<>();
         cache.put("sha1", this.cachedSha1 != null ? this.cachedSha1 : "");
-
-        Path cachePath = CraftEngine.instance().dataFolderPath().resolve("alist.cache");
+        Path cachePath = CraftEngine.instance().dataFolderPath().resolve("cache").resolve("alist.json");
         try {
+            Files.createDirectories(cachePath.getParent());
             Files.writeString(
                     cachePath,
                     GsonHelper.get().toJson(cache),

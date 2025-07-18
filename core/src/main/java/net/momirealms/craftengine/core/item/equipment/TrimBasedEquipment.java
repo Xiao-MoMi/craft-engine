@@ -41,7 +41,7 @@ public class TrimBasedEquipment extends AbstractEquipment {
     @Override
     public <I> List<ItemDataModifier<I>> modifiers() {
         return List.of(
-                new TrimModifier<>(AbstractPackManager.NEW_TRIM_MATERIAL, this.assetId.toString()),
+                new TrimModifier<>(Key.of(AbstractPackManager.NEW_TRIM_MATERIAL), this.assetId),
                 new HideTooltipModifier<>(List.of(ComponentKeys.TRIM))
         );
     }

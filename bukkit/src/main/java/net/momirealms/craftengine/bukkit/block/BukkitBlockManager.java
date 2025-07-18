@@ -94,7 +94,7 @@ public final class BukkitBlockManager extends AbstractBlockManager {
     private BlockEventListener blockEventListener;
     private FallingBlockRemoveListener fallingBlockRemoveListener;
     // cached tag packet
-    Object cachedUpdateTagsPacket;
+    private Object cachedUpdateTagsPacket;
 
     private final List<Tuple<Object, Key, Boolean>> blocksToDeceive = new ArrayList<>();
 
@@ -276,7 +276,7 @@ public final class BukkitBlockManager extends AbstractBlockManager {
     }
 
     private void registerEmptyBlock() {
-        Holder.Reference<CustomBlock> holder = ((WritableRegistry<CustomBlock>) BuiltInRegistries.BLOCK).registerForHolder(new ResourceKey<>(BuiltInRegistries.BLOCK.key().location(), Key.withDefaultNamespace("empty")));
+        Holder.Reference<CustomBlock> holder = ((WritableRegistry<CustomBlock>) BuiltInRegistries.BLOCK).registerForHolder(ResourceKey.create(BuiltInRegistries.BLOCK.key().location(), Key.withDefaultNamespace("empty")));
         EmptyBlock emptyBlock = new EmptyBlock(Key.withDefaultNamespace("empty"), holder);
         holder.bindValue(emptyBlock);
     }
@@ -395,6 +395,10 @@ public final class BukkitBlockManager extends AbstractBlockManager {
                 break;
             }
         }
+    }
+
+    public Object cachedUpdateTagsPacket() {
+        return cachedUpdateTagsPacket;
     }
 
     public class BlockParser implements ConfigParser {

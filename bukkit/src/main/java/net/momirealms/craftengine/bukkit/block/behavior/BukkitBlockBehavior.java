@@ -7,6 +7,7 @@ import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.MItems;
 import net.momirealms.craftengine.bukkit.util.BlockStateUtils;
 import net.momirealms.craftengine.bukkit.util.MirrorUtils;
 import net.momirealms.craftengine.bukkit.util.RotationUtils;
+import net.momirealms.craftengine.core.block.BlockStateWrapper;
 import net.momirealms.craftengine.core.block.CustomBlock;
 import net.momirealms.craftengine.core.block.ImmutableBlockState;
 import net.momirealms.craftengine.core.block.behavior.AbstractBlockBehavior;
@@ -154,7 +155,7 @@ public class BukkitBlockBehavior extends AbstractBlockBehavior {
         Object fluidType = FastNMS.INSTANCE.method$FluidState$getType(args[3]);
         if (!immutableBlockState.get(this.waterloggedProperty) && fluidType == MFluids.WATER) {
             FastNMS.INSTANCE.method$LevelWriter$setBlock(args[0], args[1], immutableBlockState.with(this.waterloggedProperty, true).customBlockState().handle(), 3);
-            FastNMS.INSTANCE.method$LevelAccessor$scheduleFluidTick(args[0], args[1], fluidType, 5);
+            FastNMS.INSTANCE.method$ScheduledTickAccess$scheduleFluidTick(args[0], args[1], fluidType, 5);
             return true;
         }
         return false;
@@ -172,4 +173,15 @@ public class BukkitBlockBehavior extends AbstractBlockBehavior {
     protected static final int updateShape$blockPos = VersionHelper.isOrAbove1_21_2() ? 3 : 4;
     protected static final int updateShape$neighborState = VersionHelper.isOrAbove1_21_2() ? 6 : 2;
     protected static final int updateShape$direction = VersionHelper.isOrAbove1_21_2() ? 4 : 1;
+
+    protected static final int isPathFindable$type = VersionHelper.isOrAbove1_20_5() ? 1 : 3;
+
+    @Override
+    public boolean isPathFindable(Object thisBlock, Object[] args, Callable<Object> superMethod) throws Exception {
+        Optional<ImmutableBlockState> optionalCustomState = BlockStateUtils.getOptionalCustomBlockState(args[0]);
+        if (optionalCustomState.isEmpty()) return false;
+        BlockStateWrapper vanillaState = optionalCustomState.get().vanillaBlockState();
+        if (vanillaState == null) return false;
+        return FastNMS.INSTANCE.method$BlockStateBase$isPathFindable(vanillaState.handle(), VersionHelper.isOrAbove1_20_5() ? null : args[1], VersionHelper.isOrAbove1_20_5() ? null : args[2], args[isPathFindable$type]);
+    }
 }

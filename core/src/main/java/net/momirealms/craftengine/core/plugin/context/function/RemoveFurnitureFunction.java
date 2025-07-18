@@ -26,14 +26,14 @@ public class RemoveFurnitureFunction<CTX extends Context> extends AbstractCondit
     public void runInternal(CTX ctx) {
         Optional<WorldPosition> optionalWorldPosition = ctx.getOptionalParameter(DirectContextParameters.POSITION);
         if (optionalWorldPosition.isPresent()) {
-            // Buscar muebles en el contexto
+            // Search for furniture in the context
             Optional<Furniture> optionalFurniture = ctx.getOptionalParameter(DirectContextParameters.FURNITURE);
             if (optionalFurniture.isPresent()) {
                 Furniture furniture = optionalFurniture.get();
                 if (furniture.isValid()) {
                     furniture.destroy();
-                    // TODO: Implementar lógica para dropear loot y reproducir sonidos
-                    // usando this.dropLoot y this.playSound cuando sea necesario
+                    // TODO: Implement logic to drop loot and play sounds
+                    // using this.dropLoot and this.playSound when necessary
                 }
             }
         }

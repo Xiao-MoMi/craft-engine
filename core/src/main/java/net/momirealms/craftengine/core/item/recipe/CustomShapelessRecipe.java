@@ -3,11 +3,9 @@ package net.momirealms.craftengine.core.item.recipe;
 import net.momirealms.craftengine.core.item.recipe.input.CraftingInput;
 import net.momirealms.craftengine.core.item.recipe.input.RecipeInput;
 import net.momirealms.craftengine.core.plugin.CraftEngine;
-import net.momirealms.craftengine.core.plugin.locale.LocalizedResourceConfigException;
-import net.momirealms.craftengine.core.registry.BuiltInRegistries;
-import net.momirealms.craftengine.core.registry.Holder;
 import net.momirealms.craftengine.core.util.Key;
 import net.momirealms.craftengine.core.util.MiscUtils;
+import net.momirealms.craftengine.core.util.UniqueKey;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
@@ -64,13 +62,12 @@ public class CustomShapelessRecipe<T> extends CustomCraftingTableRecipe<T> {
             if (ingredientsObject instanceof Map<?,?> map) {
                 for (Map.Entry<String, Object> entry : (MiscUtils.castToMap(map, false)).entrySet()) {
                     List<String> items = MiscUtils.getAsStringList(entry.getValue());
-                    Set<Holder<Key>> holders = new HashSet<>();
+                    Set<UniqueKey> holders = new HashSet<>();
                     for (String item : items) {
                         if (item.charAt(0) == '#') {
                             holders.addAll(CraftEngine.instance().itemManager().tagToItems(Key.of(item.substring(1))));
                         } else {
-                            holders.add(BuiltInRegistries.OPTIMIZED_ITEM_ID.get(Key.of(item)).orElseThrow(
-                                    () -> new LocalizedResourceConfigException("warning.config.recipe.invalid_item", item)));
+                            holders.add(UniqueKey.create(Key.of(item)));
                         }
                     }
                     ingredients.add(Ingredient.of(holders));
@@ -78,36 +75,33 @@ public class CustomShapelessRecipe<T> extends CustomCraftingTableRecipe<T> {
             } else if (ingredientsObject instanceof List<?> list) {
                 for (Object obj : list) {
                     if (obj instanceof List<?> inner) {
-                        Set<Holder<Key>> holders = new HashSet<>();
+                        Set<UniqueKey> holders = new HashSet<>();
                         for (String item : MiscUtils.getAsStringList(inner)) {
                             if (item.charAt(0) == '#') {
                                 holders.addAll(CraftEngine.instance().itemManager().tagToItems(Key.of(item.substring(1))));
                             } else {
-                                holders.add(BuiltInRegistries.OPTIMIZED_ITEM_ID.get(Key.of(item)).orElseThrow(
-                                        () -> new LocalizedResourceConfigException("warning.config.recipe.invalid_item", item)));
+                                holders.add(UniqueKey.create(Key.of(item)));
                             }
                         }
                         ingredients.add(Ingredient.of(holders));
                     } else {
                         String item = obj.toString();
-                        Set<Holder<Key>> holders = new HashSet<>();
+                        Set<UniqueKey> holders = new HashSet<>();
                         if (item.charAt(0) == '#') {
                             holders.addAll(CraftEngine.instance().itemManager().tagToItems(Key.of(item.substring(1))));
                         } else {
-                            holders.add(BuiltInRegistries.OPTIMIZED_ITEM_ID.get(Key.of(item)).orElseThrow(
-                                    () -> new LocalizedResourceConfigException("warning.config.recipe.invalid_item", item)));
+                            holders.add(UniqueKey.create(Key.of(item)));
                         }
                         ingredients.add(Ingredient.of(holders));
                     }
                 }
             } else {
                 String item = ingredientsObject.toString();
-                Set<Holder<Key>> holders = new HashSet<>();
+                Set<UniqueKey> holders = new HashSet<>();
                 if (item.charAt(0) == '#') {
                     holders.addAll(CraftEngine.instance().itemManager().tagToItems(Key.of(item.substring(1))));
                 } else {
-                    holders.add(BuiltInRegistries.OPTIMIZED_ITEM_ID.get(Key.of(item)).orElseThrow(
-                            () -> new LocalizedResourceConfigException("warning.config.recipe.invalid_item", item)));
+                    holders.add(UniqueKey.create(Key.of(item)));
                 }
                 ingredients.add(Ingredient.of(holders));
             }

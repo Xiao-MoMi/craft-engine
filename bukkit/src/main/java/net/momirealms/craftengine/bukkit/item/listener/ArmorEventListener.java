@@ -1,7 +1,7 @@
 package net.momirealms.craftengine.bukkit.item.listener;
 
 import net.momirealms.craftengine.bukkit.api.CraftEngineItems;
-import net.momirealms.craftengine.bukkit.util.ItemUtils;
+import net.momirealms.craftengine.bukkit.util.ItemStackUtils;
 import net.momirealms.craftengine.core.util.VersionHelper;
 import org.bukkit.Material;
 import org.bukkit.entity.Horse;
@@ -60,7 +60,7 @@ public class ArmorEventListener implements Listener {
         } else if (event.getClickedInventory() == horseInventory) {
             ItemStack itemInCursor = event.getCursor();
             if (event.getAction() == InventoryAction.SWAP_WITH_CURSOR || event.getAction() == InventoryAction.PLACE_ALL || event.getAction() == InventoryAction.PLACE_ONE) {
-                if (!ItemUtils.isEmpty(itemInCursor) && CraftEngineItems.isCustomItem(itemInCursor)) {
+                if (!ItemStackUtils.isEmpty(itemInCursor) && CraftEngineItems.isCustomItem(itemInCursor)) {
                     event.setCancelled(true);
                     return;
                 }
@@ -69,13 +69,13 @@ public class ArmorEventListener implements Listener {
                 int slot = event.getHotbarButton();
                 if (slot != -1) {
                     ItemStack itemInHotBar = event.getWhoClicked().getInventory().getItem(slot);
-                    if (!ItemUtils.isEmpty(itemInHotBar) && CraftEngineItems.isCustomItem(itemInHotBar)) {
+                    if (!ItemStackUtils.isEmpty(itemInHotBar) && CraftEngineItems.isCustomItem(itemInHotBar)) {
                         event.setCancelled(true);
                         return;
                     }
                 } else {
                     ItemStack offHand = event.getWhoClicked().getInventory().getItemInOffHand();
-                    if (!ItemUtils.isEmpty(offHand) && CraftEngineItems.isCustomItem(offHand)) {
+                    if (!ItemStackUtils.isEmpty(offHand) && CraftEngineItems.isCustomItem(offHand)) {
                         event.setCancelled(true);
                         return;
                     }
@@ -92,7 +92,7 @@ public class ArmorEventListener implements Listener {
         }
         for (Map.Entry<Integer, ItemStack> item : event.getNewItems().entrySet()) {
             if (item.getKey() == 0 || item.getKey() == 1) {
-                if (!ItemUtils.isEmpty(item.getValue()) && CraftEngineItems.isCustomItem(item.getValue())) {
+                if (!ItemStackUtils.isEmpty(item.getValue()) && CraftEngineItems.isCustomItem(item.getValue())) {
                     event.setCancelled(true);
                     return;
                 }

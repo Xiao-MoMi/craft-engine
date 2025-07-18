@@ -77,14 +77,14 @@ public class FurnitureItemBehavior extends ItemBehavior {
 
         Player player = context.getPlayer();
         // todo adventure check
-        if (player.isAdventureMode()) {
+        if (player != null && player.isAdventureMode()) {
             return InteractionResult.FAIL;
         }
 
         Vec3d clickedPosition = context.getClickLocation();
 
         // trigger event
-        org.bukkit.entity.Player bukkitPlayer = (org.bukkit.entity.Player) player.platformPlayer();
+        org.bukkit.entity.Player bukkitPlayer = player != null ? (org.bukkit.entity.Player) player.platformPlayer() : null;
         World world = (World) context.getLevel().platformWorld();
 
         // get position and rotation for placement
@@ -100,7 +100,7 @@ public class FurnitureItemBehavior extends ItemBehavior {
                 finalPlacePosition = new Vec3d(xz.left(), xz.right(), clickedPosition.z());
             }
         } else {
-            furnitureYaw = placement.rotationRule().apply(180 + player.xRot());
+            furnitureYaw = placement.rotationRule().apply(180 + (player != null ? player.yRot() : 0));
             Pair<Double, Double> xz = placement.alignmentRule().apply(Pair.of(clickedPosition.x(), clickedPosition.z()));
             finalPlacePosition = new Vec3d(xz.left(), clickedPosition.y(), xz.right());
         }
@@ -121,13 +121,17 @@ public class FurnitureItemBehavior extends ItemBehavior {
             return InteractionResult.FAIL;
         }
 
-        FurnitureAttemptPlaceEvent attemptPlaceEvent = new FurnitureAttemptPlaceEvent(bukkitPlayer, customFurniture, anchorType, furnitureLocation.clone(),
-                DirectionUtils.toBlockFace(clickedFace), context.getHand(), world.getBlockAt(context.getClickedPos().x(), context.getClickedPos().y(), context.getClickedPos().z()));
-        if (EventUtils.fireAndCheckCancel(attemptPlaceEvent)) {
-            return InteractionResult.FAIL;
+        if (player != null) {
+            FurnitureAttemptPlaceEvent attemptPlaceEvent = new FurnitureAttemptPlaceEvent(bukkitPlayer, customFurniture, anchorType, furnitureLocation.clone(),
+                    DirectionUtils.toBlockFace(clickedFace), context.getHand(), world.getBlockAt(context.getClickedPos().x(), context.getClickedPos().y(), context.getClickedPos().z()));
+            if (EventUtils.fireAndCheckCancel(attemptPlaceEvent)) {
+                return InteractionResult.FAIL;
+            }
         }
 
         Item<?> item = context.getItem();
+        // 不可能
+        if (ItemUtils.isEmpty(item)) return InteractionResult.FAIL;
 
         BukkitFurniture bukkitFurniture = BukkitFurnitureManager.instance().place(
                 furnitureLocation.clone(), customFurniture,
@@ -138,10 +142,12 @@ public class FurnitureItemBehavior extends ItemBehavior {
                         .fireworkExplosionColors(item.fireworkExplosion().map(explosion -> explosion.colors().toIntArray()).orElse(null))
                         .build(), false);
 
-        FurniturePlaceEvent placeEvent = new FurniturePlaceEvent(bukkitPlayer, bukkitFurniture, furnitureLocation, context.getHand());
-        if (EventUtils.fireAndCheckCancel(placeEvent)) {
-            bukkitFurniture.destroy();
-            return InteractionResult.FAIL;
+        if (player != null) {
+            FurniturePlaceEvent placeEvent = new FurniturePlaceEvent(bukkitPlayer, bukkitFurniture, furnitureLocation, context.getHand());
+            if (EventUtils.fireAndCheckCancel(placeEvent)) {
+                bukkitFurniture.destroy();
+                return InteractionResult.FAIL;
+            }
         }
 
         Cancellable dummy = Cancellable.dummy();
@@ -157,12 +163,14 @@ public class FurnitureItemBehavior extends ItemBehavior {
             return InteractionResult.SUCCESS_AND_CANCEL;
         }
 
-        if (!player.isCreativeMode()) {
-            item.count(item.count() - 1);
+        if (player != null) {
+            if (!player.canInstabuild()) {
+                item.count(item.count() - 1);
+            }
+            player.swingHand(context.getHand());
         }
 
         context.getLevel().playBlockSound(finalPlacePosition, customFurniture.settings().sounds().placeSound());
-        player.swingHand(context.getHand());
         return InteractionResult.SUCCESS;
     }
 

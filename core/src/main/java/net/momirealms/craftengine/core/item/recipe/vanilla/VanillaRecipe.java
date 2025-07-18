@@ -5,6 +5,4 @@ import net.momirealms.craftengine.core.util.Key;
 public interface VanillaRecipe {
 
     Key type();
-
-    RecipeResult result();
 }

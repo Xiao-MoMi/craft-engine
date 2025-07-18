@@ -40,7 +40,7 @@ public class EquippableAssetIdModifier<I> implements ItemDataModifier<I> {
 
     @Override
     public Item<I> prepareNetworkItem(Item<I> item, ItemBuildContext context, CompoundTag networkData) {
-        Tag previous = item.getNBTComponent(ComponentKeys.EQUIPPABLE);
+        Tag previous = item.getSparrowNBTComponent(ComponentKeys.EQUIPPABLE);
         if (previous != null) {
             networkData.put(ComponentKeys.EQUIPPABLE.asString(), NetworkItemHandler.pack(NetworkItemHandler.Operation.ADD, previous));
         } else {

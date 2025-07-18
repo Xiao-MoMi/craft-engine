@@ -43,8 +43,13 @@ public class UniversalItemFactory extends BukkitItemFactory<LegacyItemWrapper> {
     }
 
     @Override
-    protected Tag getNBTTag(LegacyItemWrapper item, Object... path) {
+    protected Tag getTag(LegacyItemWrapper item, Object... path) {
         return item.getNBTTag(path);
+    }
+
+    @Override
+    protected Object getExactTag(LegacyItemWrapper item, Object... path) {
+        return item.getExactTag(path);
     }
 
     @Override
@@ -55,6 +60,11 @@ public class UniversalItemFactory extends BukkitItemFactory<LegacyItemWrapper> {
     @Override
     protected boolean removeTag(LegacyItemWrapper item, Object... path) {
         return item.remove(path);
+    }
+
+    @Override
+    protected boolean isEmpty(LegacyItemWrapper item) {
+        return item.getItem().isEmpty();
     }
 
     @Override
@@ -258,8 +268,8 @@ public class UniversalItemFactory extends BukkitItemFactory<LegacyItemWrapper> {
             item.remove("Trim");
             return;
         }
-        item.setTag(trim.material(), "Trim", "material");
-        item.setTag(trim.pattern(), "Trim", "pattern");
+        item.setTag(trim.material().asString(), "Trim", "material");
+        item.setTag(trim.pattern().asString(), "Trim", "pattern");
     }
 
     @Override
@@ -299,7 +309,7 @@ public class UniversalItemFactory extends BukkitItemFactory<LegacyItemWrapper> {
         String material = item.getJavaTag("Trim", "material");
         String pattern = item.getJavaTag("Trim", "pattern");
         if (material == null || pattern == null) return Optional.empty();
-        return Optional.of(new Trim(material, pattern));
+        return Optional.of(new Trim(Key.of(material), Key.of(pattern)));
     }
 
     @Override

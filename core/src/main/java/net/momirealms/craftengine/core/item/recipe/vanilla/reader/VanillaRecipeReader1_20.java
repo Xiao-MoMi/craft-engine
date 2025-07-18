@@ -101,6 +101,16 @@ public class VanillaRecipeReader1_20 extends AbstractRecipeReader {
         );
     }
 
+    @Override
+    public VanillaSmithingTrimRecipe readSmithingTrim(JsonObject json) {
+        return new VanillaSmithingTrimRecipe(
+                readSingleIngredient(json.get("base")),
+                readSingleIngredient(json.get("template")),
+                readSingleIngredient(json.get("addition")),
+                null
+        );
+    }
+
     protected List<String> readSingleIngredient(JsonElement json) {
         List<String> ingredients = new ArrayList<>();
         if (json.isJsonObject()) {

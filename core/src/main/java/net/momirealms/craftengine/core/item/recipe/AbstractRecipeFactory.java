@@ -2,12 +2,7 @@ package net.momirealms.craftengine.core.item.recipe;
 
 import net.momirealms.craftengine.core.plugin.CraftEngine;
 import net.momirealms.craftengine.core.plugin.locale.LocalizedResourceConfigException;
-import net.momirealms.craftengine.core.registry.BuiltInRegistries;
-import net.momirealms.craftengine.core.registry.Holder;
-import net.momirealms.craftengine.core.util.EnumUtils;
-import net.momirealms.craftengine.core.util.Key;
-import net.momirealms.craftengine.core.util.MiscUtils;
-import net.momirealms.craftengine.core.util.ResourceConfigUtils;
+import net.momirealms.craftengine.core.util.*;
 
 import java.util.*;
 
@@ -21,14 +16,13 @@ public abstract class AbstractRecipeFactory<T> implements RecipeFactory<T> {
         return MiscUtils.castToMap(getIngredientOrThrow(arguments), true);
     }
 
-    protected Set<Holder<Key>> ingredientHolders(Map<String, Object> arguments) {
-        Set<Holder<Key>> holders = new HashSet<>();
+    protected Set<UniqueKey> ingredientHolders(Map<String, Object> arguments) {
+        Set<UniqueKey> holders = new HashSet<>();
         for (String item : ingredients(arguments)) {
             if (item.charAt(0) == '#') {
                 holders.addAll(CraftEngine.instance().itemManager().tagToItems(Key.of(item.substring(1))));
             } else {
-                holders.add(BuiltInRegistries.OPTIMIZED_ITEM_ID.get(Key.of(item)).orElseThrow(
-                        () -> new LocalizedResourceConfigException("warning.config.recipe.invalid_item", item)));
+                holders.add(UniqueKey.create(Key.of(item)));
             }
         }
         return holders;

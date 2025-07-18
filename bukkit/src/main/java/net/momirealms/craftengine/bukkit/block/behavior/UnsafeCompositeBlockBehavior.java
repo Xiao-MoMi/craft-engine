@@ -188,7 +188,7 @@ public class UnsafeCompositeBlockBehavior extends BukkitBlockBehavior {
     }
 
     @Override
-    public void onExplosionHit(Object thisBlock, Object[] args, Callable<Object> superMethod) {
+    public void onExplosionHit(Object thisBlock, Object[] args, Callable<Object> superMethod) throws Exception {
         for (AbstractBlockBehavior behavior : this.behaviors) {
             behavior.onExplosionHit(thisBlock, args, superMethod);
         }
@@ -226,6 +226,13 @@ public class UnsafeCompositeBlockBehavior extends BukkitBlockBehavior {
     }
 
     @Override
+    public void onRemove(Object thisBlock, Object[] args, Callable<Object> superMethod) throws Exception {
+        for (AbstractBlockBehavior behavior : this.behaviors) {
+            behavior.onRemove(thisBlock, args, superMethod);
+        }
+    }
+
+    @Override
     public int getSignal(Object thisBlock, Object[] args, Callable<Object> superMethod) {
         for (AbstractBlockBehavior behavior : this.behaviors) {
             int signal = behavior.getSignal(thisBlock, args, superMethod);
@@ -255,5 +262,24 @@ public class UnsafeCompositeBlockBehavior extends BukkitBlockBehavior {
             }
         }
         return false;
+    }
+
+    @Override
+    public Object playerWillDestroy(Object thisBlock, Object[] args, Callable<Object> superMethod) throws Exception {
+        Object previous = args[0];
+        for (AbstractBlockBehavior behavior : this.behaviors) {
+            Object processed = behavior.playerWillDestroy(thisBlock, args, superMethod);
+            if (processed != previous) {
+                return processed;
+            }
+        }
+        return previous;
+    }
+
+    @Override
+    public void spawnAfterBreak(Object thisBlock, Object[] args, Callable<Object> superMethod) throws Exception {
+        for (AbstractBlockBehavior behavior : this.behaviors) {
+            behavior.spawnAfterBreak(thisBlock, args, superMethod);
+        }
     }
 }

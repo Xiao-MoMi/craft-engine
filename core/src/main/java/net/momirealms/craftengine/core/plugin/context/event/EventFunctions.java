@@ -37,7 +37,6 @@ import net.momirealms.craftengine.core.plugin.context.function.TitleFunction;
 import net.momirealms.craftengine.core.plugin.context.function.UpdateInteractionFunction;
 import net.momirealms.craftengine.core.plugin.locale.LocalizedResourceConfigException;
 import net.momirealms.craftengine.core.registry.BuiltInRegistries;
-import net.momirealms.craftengine.core.registry.Holder;
 import net.momirealms.craftengine.core.registry.Registries;
 import net.momirealms.craftengine.core.registry.WritableRegistry;
 import net.momirealms.craftengine.core.util.Key;
@@ -76,9 +75,8 @@ public class EventFunctions {
     }
 
     public static void register(Key key, FunctionFactory<PlayerOptionalContext> factory) {
-        Holder.Reference<FunctionFactory<PlayerOptionalContext>> holder = ((WritableRegistry<FunctionFactory<PlayerOptionalContext>>) BuiltInRegistries.EVENT_FUNCTION_FACTORY)
-                .registerForHolder(new ResourceKey<>(Registries.EVENT_FUNCTION_FACTORY.location(), key));
-        holder.bindValue(factory);
+        ((WritableRegistry<FunctionFactory<PlayerOptionalContext>>) BuiltInRegistries.EVENT_FUNCTION_FACTORY)
+                .register(ResourceKey.create(Registries.EVENT_FUNCTION_FACTORY.location(), key), factory);
     }
 
     public static Function<PlayerOptionalContext> fromMap(Map<String, Object> map) {

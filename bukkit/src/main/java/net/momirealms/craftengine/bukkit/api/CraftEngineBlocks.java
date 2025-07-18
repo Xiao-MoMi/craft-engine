@@ -184,7 +184,7 @@ public final class CraftEngineBlocks {
             world.playBlockSound(position, state.settings().sounds().breakSound());
         }
         if (sendParticles) {
-            FastNMS.INSTANCE.method$Level$levelEvent(world.serverWorld(), WorldEvents.BLOCK_BREAK_EFFECT, LocationUtils.toBlockPos(location.getBlockX(), location.getBlockY(), location.getBlockZ()), state.customBlockState().registryId());
+            FastNMS.INSTANCE.method$LevelAccessor$levelEvent(world.serverWorld(), WorldEvents.BLOCK_BREAK_EFFECT, LocationUtils.toBlockPos(location.getBlockX(), location.getBlockY(), location.getBlockZ()), state.customBlockState().registryId());
         }
         FastNMS.INSTANCE.method$Level$removeBlock(world.serverWorld(), LocationUtils.toBlockPos(location.getBlockX(), location.getBlockY(), location.getBlockZ()), isMoving);
         return true;

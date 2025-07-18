@@ -70,7 +70,7 @@ public class PressurePlateBlockBehavior extends BukkitBlockBehavior {
             net.momirealms.craftengine.core.world.World world = new BukkitWorld(FastNMS.INSTANCE.method$Level$getCraftWorld(level));
             WorldPosition position = new WorldPosition(world, Vec3d.atCenterOf(pos));
             world.playBlockSound(position, customState.settings().sounds().breakSound());
-            FastNMS.INSTANCE.method$Level$levelEvent(level, WorldEvents.BLOCK_BREAK_EFFECT, blockPos, customState.customBlockState().registryId());
+            FastNMS.INSTANCE.method$LevelAccessor$levelEvent(level, WorldEvents.BLOCK_BREAK_EFFECT, blockPos, customState.customBlockState().registryId());
             return MBlocks.AIR$defaultState;
         }
         return state;
@@ -106,7 +106,7 @@ public class PressurePlateBlockBehavior extends BukkitBlockBehavior {
             this.checkPressed(args[3], args[1], args[2], state, signalForState, thisBlock);
         } else {
             // todo 为什么
-            FastNMS.INSTANCE.method$LevelAccessor$scheduleBlockTick(args[1], args[2], thisBlock, this.pressedTime);
+            FastNMS.INSTANCE.method$ScheduledTickAccess$scheduleBlockTick(args[1], args[2], thisBlock, this.pressedTime);
         }
     }
 
@@ -150,7 +150,7 @@ public class PressurePlateBlockBehavior extends BukkitBlockBehavior {
         }
 
         if (isActive) {
-            FastNMS.INSTANCE.method$LevelAccessor$scheduleBlockTick(level, pos, thisBlock, this.pressedTime);
+            FastNMS.INSTANCE.method$ScheduledTickAccess$scheduleBlockTick(level, pos, thisBlock, this.pressedTime);
         }
     }
 
@@ -179,6 +179,21 @@ public class PressurePlateBlockBehavior extends BukkitBlockBehavior {
         boolean movedByPiston = (boolean) args[3];
         if (!movedByPiston && this.getSignalForState(args[0]) > 0) {
             this.updateNeighbours(args[1], args[2], thisBlock);
+        }
+    }
+
+    @Override
+    public void onRemove(Object thisBlock, Object[] args, Callable<Object> superMethod) throws Exception {
+        Object state = args[0];
+        Object level = args[1];
+        Object pos = args[2];
+        Object newState = args[3];
+        boolean movedByPiston = (boolean) args[4];
+        if (!movedByPiston && !FastNMS.INSTANCE.method$BlockStateBase$is(state, FastNMS.INSTANCE.method$BlockState$getBlock(newState))) {
+            if (this.getSignalForState(state) > 0) {
+                this.updateNeighbours(level, pos, thisBlock);
+            }
+            superMethod.call();
         }
     }
 

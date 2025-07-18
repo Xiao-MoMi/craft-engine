@@ -1,7 +1,7 @@
 package net.momirealms.craftengine.bukkit.api;
 
 import net.momirealms.craftengine.bukkit.item.BukkitItemManager;
-import net.momirealms.craftengine.bukkit.util.ItemUtils;
+import net.momirealms.craftengine.bukkit.util.ItemStackUtils;
 import net.momirealms.craftengine.core.item.CustomItem;
 import net.momirealms.craftengine.core.util.Key;
 import org.bukkit.inventory.ItemStack;
@@ -31,7 +31,7 @@ public final class CraftEngineItems {
      */
     @Nullable
     public static CustomItem<ItemStack> byItemStack(@NotNull ItemStack itemStack) {
-        if (ItemUtils.isEmpty(itemStack)) return null;
+        if (ItemStackUtils.isEmpty(itemStack)) return null;
         return BukkitItemManager.instance().wrap(itemStack).getCustomItem().orElse(null);
     }
 
@@ -42,7 +42,7 @@ public final class CraftEngineItems {
      * @return true if it's a custom item
      */
     public static boolean isCustomItem(@NotNull ItemStack itemStack) {
-        if (ItemUtils.isEmpty(itemStack)) return false;
+        if (ItemStackUtils.isEmpty(itemStack)) return false;
         return BukkitItemManager.instance().wrap(itemStack).isCustomItem();
     }
 
@@ -54,7 +54,7 @@ public final class CraftEngineItems {
      */
     @Nullable
     public static Key getCustomItemId(@NotNull ItemStack itemStack) {
-        if (ItemUtils.isEmpty(itemStack)) return null;
+        if (ItemStackUtils.isEmpty(itemStack)) return null;
         return BukkitItemManager.instance().wrap(itemStack).customId().orElse(null);
     }
 }

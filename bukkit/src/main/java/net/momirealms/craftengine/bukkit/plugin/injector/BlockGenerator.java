@@ -148,7 +148,7 @@ public final class BlockGenerator {
                 // onExplosionHit 1.21+
                 .method(ElementMatchers.returns(void.class)
                         .and(ElementMatchers.takesArgument(0, CoreReflections.clazz$BlockState))
-                        .and(ElementMatchers.takesArgument(1, CoreReflections.clazz$ServerLevel))
+                        .and(ElementMatchers.takesArgument(1, VersionHelper.isOrAbove1_21_2() ? CoreReflections.clazz$ServerLevel : CoreReflections.clazz$Level))
                         .and(ElementMatchers.takesArgument(2, CoreReflections.clazz$BlockPos))
                         .and(ElementMatchers.takesArgument(3, CoreReflections.clazz$Explosion))
                         .and(ElementMatchers.takesArgument(4, BiConsumer.class))
@@ -177,10 +177,20 @@ public final class BlockGenerator {
                 .intercept(MethodDelegation.to(GetDirectSignalInterceptor.INSTANCE))
                 // isSignalSource
                 .method(ElementMatchers.is(CoreReflections.method$BlockBehaviour$isSignalSource))
-                .intercept(MethodDelegation.to(IsSignalSourceInterceptor.INSTANCE));
+                .intercept(MethodDelegation.to(IsSignalSourceInterceptor.INSTANCE))
+                // playerWillDestroy
+                .method(ElementMatchers.is(CoreReflections.method$Block$playerWillDestroy))
+                .intercept(MethodDelegation.to(PlayerWillDestroyInterceptor.INSTANCE))
+                // spawnAfterBreak
+                .method(ElementMatchers.is(CoreReflections.method$BlockBehaviour$spawnAfterBreak))
+                .intercept(MethodDelegation.to(SpawnAfterBreakInterceptor.INSTANCE));
         if (CoreReflections.method$BlockBehaviour$affectNeighborsAfterRemoval != null) {
             builder.method(ElementMatchers.is(CoreReflections.method$BlockBehaviour$affectNeighborsAfterRemoval))
                     .intercept(MethodDelegation.to(AffectNeighborsAfterRemovalInterceptor.INSTANCE));
+        }
+        if (CoreReflections.method$BlockBehaviour$onRemove != null) {
+            builder.method(ElementMatchers.is(CoreReflections.method$BlockBehaviour$onRemove))
+                    .intercept(MethodDelegation.to(OnRemoveInterceptor.INSTANCE));
         }
 
         Class<?> clazz$CraftEngineBlock = builder.make().load(BlockGenerator.class.getClassLoader()).getLoaded();
@@ -225,15 +235,9 @@ public final class BlockGenerator {
         public Object intercept(@This Object thisObj, @AllArguments Object[] args, @SuperCall Callable<Object> superMethod) {
             ObjectHolder<BlockBehavior> holder = ((DelegatingBlock) thisObj).behaviorDelegate();
             DelegatingBlock indicator = (DelegatingBlock) thisObj;
-            // todo chain updater
-            if (indicator.isNoteBlock()) {
-                if (CoreReflections.clazz$ServerLevel.isInstance(args[levelIndex])) {
-                    startNoteBlockChain(args);
-                }
-            } else if (indicator.isTripwire()) {
-                if (CoreReflections.clazz$ServerLevel.isInstance(args[posIndex])) {
-
-                }
+            // todo better chain updater
+            if (indicator.isNoteBlock() && CoreReflections.clazz$ServerLevel.isInstance(args[levelIndex])) {
+                startNoteBlockChain(args);
             }
             try {
                 return holder.value().updateShape(thisObj, args, superMethod);
@@ -501,6 +505,7 @@ public final class BlockGenerator {
             ObjectHolder<BlockBehavior> holder = ((DelegatingBlock) thisObj).behaviorDelegate();
             try {
                 holder.value().onExplosionHit(thisObj, args, superMethod);
+                superMethod.call();
             } catch (Exception e) {
                 CraftEngine.instance().logger().severe("Failed to run onExplosionHit", e);
             }
@@ -611,6 +616,20 @@ public final class BlockGenerator {
         }
     }
 
+    public static class OnRemoveInterceptor {
+        public static final OnRemoveInterceptor INSTANCE = new OnRemoveInterceptor();
+
+        @RuntimeType
+        public void intercept(@This Object thisObj, @AllArguments Object[] args, @SuperCall Callable<Object> superMethod) {
+            ObjectHolder<BlockBehavior> holder = ((DelegatingBlock) thisObj).behaviorDelegate();
+            try {
+                holder.value().onRemove(thisObj, args, superMethod);
+            } catch (Exception e) {
+                CraftEngine.instance().logger().severe("Failed to run onRemove", e);
+            }
+        }
+    }
+
     public static class EntityInsideInterceptor {
         public static final EntityInsideInterceptor INSTANCE = new EntityInsideInterceptor();
 
@@ -621,6 +640,35 @@ public final class BlockGenerator {
                 holder.value().entityInside(thisObj, args, superMethod);
             } catch (Exception e) {
                 CraftEngine.instance().logger().severe("Failed to run entityInside", e);
+            }
+        }
+    }
+
+    public static class PlayerWillDestroyInterceptor {
+        public static final PlayerWillDestroyInterceptor INSTANCE = new PlayerWillDestroyInterceptor();
+
+        @RuntimeType
+        public Object intercept(@This Object thisObj, @AllArguments Object[] args, @SuperCall Callable<Object> superMethod) throws Exception {
+            ObjectHolder<BlockBehavior> holder = ((DelegatingBlock) thisObj).behaviorDelegate();
+            try {
+                return holder.value().playerWillDestroy(thisObj, args, superMethod);
+            } catch (Exception e) {
+                CraftEngine.instance().logger().severe("Failed to run playerWillDestroy", e);
+                return superMethod.call();
+            }
+        }
+    }
+
+    public static class SpawnAfterBreakInterceptor {
+        public static final SpawnAfterBreakInterceptor INSTANCE = new SpawnAfterBreakInterceptor();
+
+        @RuntimeType
+        public void intercept(@This Object thisObj, @AllArguments Object[] args, @SuperCall Callable<Object> superMethod) {
+            ObjectHolder<BlockBehavior> holder = ((DelegatingBlock) thisObj).behaviorDelegate();
+            try {
+                holder.value().spawnAfterBreak(thisObj, args, superMethod);
+            } catch (Exception e) {
+                CraftEngine.instance().logger().severe("Failed to run spawnAfterBreak", e);
             }
         }
     }

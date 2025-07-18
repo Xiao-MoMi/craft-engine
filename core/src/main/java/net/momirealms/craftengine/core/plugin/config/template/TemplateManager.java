@@ -65,6 +65,7 @@ public interface TemplateManager extends Manageable {
         private final String placeholder;
         private final String rawText;
         private final Object defaultValue;
+        private final boolean hasDefaultValue;
 
         public Placeholder(String placeholderContent) {
             this.rawText = "${" + placeholderContent + "}";
@@ -72,16 +73,17 @@ public interface TemplateManager extends Manageable {
             if (separatorIndex == -1) {
                 this.placeholder = placeholderContent;
                 this.defaultValue = null;
+                this.hasDefaultValue = false;
             } else {
                 this.placeholder = placeholderContent.substring(0, separatorIndex);
                 String defaultValueString = placeholderContent.substring(separatorIndex + 2);
                 try {
-                    // TODO 改进报错检测
                     this.defaultValue = new SNBTReader(defaultValueString).deserializeAsJava();
                 } catch (LocalizedResourceConfigException e) {
                     e.appendTailArgument(this.placeholder);
                     throw e;
                 }
+                this.hasDefaultValue = true;
             }
         }
 
@@ -95,7 +97,10 @@ public interface TemplateManager extends Manageable {
             if (replacement != null) {
                 return replacement.get(arguments);
             }
-            return this.defaultValue;
+            if (this.hasDefaultValue) {
+                return this.defaultValue;
+            }
+            throw new LocalizedResourceConfigException("warning.config.template.argument.missing_value", this.rawText);
         }
 
         @Override

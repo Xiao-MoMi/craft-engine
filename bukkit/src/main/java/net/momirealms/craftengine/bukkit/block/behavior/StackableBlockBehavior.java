@@ -15,6 +15,7 @@ import net.momirealms.craftengine.core.item.Item;
 import net.momirealms.craftengine.core.item.context.UseOnContext;
 import net.momirealms.craftengine.core.plugin.locale.LocalizedResourceConfigException;
 import net.momirealms.craftengine.core.sound.SoundData;
+import net.momirealms.craftengine.core.util.ItemUtils;
 import net.momirealms.craftengine.core.util.Key;
 import net.momirealms.craftengine.core.util.MiscUtils;
 import net.momirealms.craftengine.core.util.ResourceConfigUtils;
@@ -49,7 +50,7 @@ public class StackableBlockBehavior extends BukkitBlockBehavior {
             return InteractionResult.PASS;
         }
         Item<ItemStack> item = (Item<ItemStack>) context.getItem();
-        if (item == null) {
+        if (ItemUtils.isEmpty(item)) {
             return InteractionResult.PASS;
         }
         if (!this.items.contains(item.id())) {

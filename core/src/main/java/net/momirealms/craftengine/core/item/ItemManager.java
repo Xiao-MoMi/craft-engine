@@ -4,14 +4,17 @@ import net.momirealms.craftengine.core.entity.player.Player;
 import net.momirealms.craftengine.core.item.behavior.ItemBehavior;
 import net.momirealms.craftengine.core.item.equipment.Equipment;
 import net.momirealms.craftengine.core.item.modifier.ItemDataModifier;
+import net.momirealms.craftengine.core.item.recipe.UniqueIdItem;
 import net.momirealms.craftengine.core.pack.model.LegacyOverridesModel;
 import net.momirealms.craftengine.core.pack.model.ModernItemModel;
 import net.momirealms.craftengine.core.pack.model.generation.ModelGenerator;
 import net.momirealms.craftengine.core.plugin.Manageable;
 import net.momirealms.craftengine.core.plugin.config.ConfigParser;
-import net.momirealms.craftengine.core.registry.Holder;
+import net.momirealms.craftengine.core.util.FriendlyByteBuf;
 import net.momirealms.craftengine.core.util.Key;
+import net.momirealms.craftengine.core.util.UniqueKey;
 import org.incendo.cloud.suggestion.Suggestion;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
@@ -20,6 +23,8 @@ import java.util.function.Function;
 public interface ItemManager<T> extends Manageable, ModelGenerator {
 
     void registerDataType(Function<Object, ItemDataModifier<T>> factory, String... alias);
+
+    Function<Object, ItemDataModifier<T>> getDataType(String key);
 
     Map<Key, Equipment> equipments();
 
@@ -35,14 +40,19 @@ public interface ItemManager<T> extends Manageable, ModelGenerator {
 
     Collection<Key> vanillaItems();
 
+    @Nullable
     T buildCustomItemStack(Key id, @Nullable Player player);
 
+    @Nullable
     T buildItemStack(Key id, @Nullable Player player);
 
+    @Nullable
     Item<T> createCustomWrappedItem(Key id, @Nullable Player player);
 
+    @Nullable
     Item<T> createWrappedItem(Key id, @Nullable Player player);
 
+    @NotNull
     Item<T> wrap(T itemStack);
 
     Item<T> fromByteArray(byte[] bytes);
@@ -53,9 +63,9 @@ public interface ItemManager<T> extends Manageable, ModelGenerator {
 
     Key customItemId(T itemStack);
 
-    ExternalItemProvider<T> getExternalItemProvider(String name);
+    ExternalItemSource<T> getExternalItemSource(String name);
 
-    boolean registerExternalItemProvider(ExternalItemProvider<T> externalItemProvider);
+    boolean registerExternalItemSource(ExternalItemSource<T> externalItemSource);
 
     Optional<Equipment> getEquipment(Key key);
 
@@ -77,11 +87,11 @@ public interface ItemManager<T> extends Manageable, ModelGenerator {
 
     boolean addCustomItem(CustomItem<T> customItem);
 
-    List<Holder<Key>> tagToItems(Key tag);
+    List<UniqueKey> tagToItems(Key tag);
 
-    List<Holder<Key>> tagToVanillaItems(Key tag);
+    List<UniqueKey> tagToVanillaItems(Key tag);
 
-    List<Holder<Key>> tagToCustomItems(Key tag);
+    List<UniqueKey> tagToCustomItems(Key tag);
 
     int fuelTime(T itemStack);
 
@@ -92,4 +102,16 @@ public interface ItemManager<T> extends Manageable, ModelGenerator {
     Collection<Suggestion> cachedTotemSuggestions();
 
     boolean isVanillaItem(Key item);
+
+    Item<T> decode(FriendlyByteBuf byteBuf);
+
+    void encode(FriendlyByteBuf byteBuf, Item<T> item);
+
+    Item<T> s2c(Item<T> item, Player player);
+
+    Item<T> c2s(Item<T> item);
+
+    UniqueIdItem<T> uniqueEmptyItem();
+
+    Item<T> applyTrim(Item<T> base, Item<T> addition, Item<T> template, Key pattern);
 }

@@ -2,8 +2,8 @@ package net.momirealms.craftengine.core.item.recipe;
 
 import net.momirealms.craftengine.core.item.recipe.input.RecipeInput;
 import net.momirealms.craftengine.core.item.recipe.input.SingleItemInput;
-import net.momirealms.craftengine.core.registry.Holder;
 import net.momirealms.craftengine.core.util.Key;
+import net.momirealms.craftengine.core.util.UniqueKey;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
@@ -45,7 +45,7 @@ public class CustomStoneCuttingRecipe<T> extends AbstractGroupedRecipe<T> {
         @Override
         public Recipe<A> create(Key id, Map<String, Object> arguments) {
             String group = arguments.containsKey("group") ? arguments.get("group").toString() : null;
-            Set<Holder<Key>> holders = ingredientHolders(arguments);
+            Set<UniqueKey> holders = ingredientHolders(arguments);
             return new CustomStoneCuttingRecipe<>(id, group, Ingredient.of(holders), parseResult(arguments));
         }
     }

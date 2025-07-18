@@ -211,6 +211,9 @@ public abstract class AbstractPackManager implements PackManager {
             }
             TranslationManager.instance().log(e.node(), e.arguments());
             this.resourcePackHost = NoneHost.INSTANCE;
+        } catch (Exception e) {
+            this.plugin.logger().warn("Failed to load resource pack host", e);
+            this.resourcePackHost = NoneHost.INSTANCE;
         }
     }
 
@@ -366,6 +369,7 @@ public abstract class AbstractPackManager implements PackManager {
         plugin.saveResource("resources/internal/resourcepack/assets/minecraft/textures/font/gui/custom/smithing_transform_recipe.png");
         plugin.saveResource("resources/internal/resourcepack/assets/minecraft/textures/font/gui/custom/cooking_recipe.png");
         plugin.saveResource("resources/internal/resourcepack/assets/minecraft/textures/font/gui/custom/crafting_recipe.png");
+        plugin.saveResource("resources/internal/resourcepack/assets/minecraft/textures/font/gui/custom/brewing_recipe.png");
         plugin.saveResource("resources/internal/resourcepack/assets/minecraft/textures/font/gui/custom/no_recipe.png");
         plugin.saveResource("resources/internal/resourcepack/assets/minecraft/textures/item/custom/gui/get_item.png");
         plugin.saveResource("resources/internal/resourcepack/assets/minecraft/textures/item/custom/gui/next_page_0.png");
@@ -587,7 +591,6 @@ public abstract class AbstractPackManager implements PackManager {
                             exception.setId(cached.prefix() + "." + key);
                         }
                         TranslationManager.instance().log(e.node(), e.arguments());
-                        this.plugin.debug(e::node);
                     } catch (Exception e) {
                         this.plugin.logger().warn("Unexpected error loading file " + cached.filePath() + " - '" + parser.sectionId()[0] + "." + key + "'. Please find the cause according to the stacktrace or seek developer help. Additional info: " + GsonHelper.get().toJson(configEntry.getValue()), e);
                     }
@@ -641,10 +644,11 @@ public abstract class AbstractPackManager implements PackManager {
             this.generateItemModels(generatedPackPath, this.plugin.itemManager());
             this.generateItemModels(generatedPackPath, this.plugin.blockManager());
             this.generateBlockOverrides(generatedPackPath);
-            this.generateLegacyItemOverrides(generatedPackPath);
-            this.generateModernItemOverrides(generatedPackPath, revisions::add);
+            // 一定要先生成item-model再生成overrides
             this.generateModernItemModels1_21_2(generatedPackPath);
             this.generateModernItemModels1_21_4(generatedPackPath, revisions::add);
+            this.generateLegacyItemOverrides(generatedPackPath);
+            this.generateModernItemOverrides(generatedPackPath, revisions::add);
             this.generateOverrideSounds(generatedPackPath);
             this.generateCustomSounds(generatedPackPath);
             this.generateClientLang(generatedPackPath);
@@ -800,7 +804,6 @@ public abstract class AbstractPackManager implements PackManager {
 
     @SuppressWarnings("DuplicatedCode")
     private void validateResourcePack(Path path) {
-        long time1 = System.currentTimeMillis();
         Path[] rootPaths;
         try {
             rootPaths = FileUtils.collectOverlays(path).toArray(new Path[0]);
@@ -931,9 +934,6 @@ public abstract class AbstractPackManager implements PackManager {
             }
         }
 
-        long time2 = System.currentTimeMillis();
-        this.plugin.debug(() -> "Took " + (time2 - time1) + "ms collecting assets");
-
         // 验证font的贴图是否存在
         label: for (Map.Entry<Key, Collection<Key>> entry : imageToFonts.asMap().entrySet()) {
             Key key = entry.getKey();
@@ -946,9 +946,6 @@ public abstract class AbstractPackManager implements PackManager {
             }
             TranslationManager.instance().log("warning.config.resource_pack.generation.missing_font_texture", entry.getValue().stream().distinct().toList().toString(), imagePath);
         }
-
-        long time3 = System.currentTimeMillis();
-        this.plugin.debug(() -> "Took " + (time3 - time2) + "ms verifying font textures");
 
         // 验证物品模型是否存在，验证的同时去收集贴图
         label: for (Map.Entry<Key, Collection<Key>> entry : modelToItems.asMap().entrySet()) {
@@ -996,9 +993,6 @@ public abstract class AbstractPackManager implements PackManager {
             TranslationManager.instance().log("warning.config.resource_pack.generation.missing_block_model", entry.getValue().stream().distinct().toList().toString(), modelPath);
         }
 
-        long time4 = System.currentTimeMillis();
-        this.plugin.debug(() -> "Took " + (time4 - time3) + "ms verifying models and their parents");
-
         // 验证贴图是否存在
         boolean enableObf = Config.enableObfuscation() && Config.enableRandomResourceLocation();
         label: for (Map.Entry<Key, Collection<Key>> entry : imageToModels.asMap().entrySet()) {
@@ -1031,9 +1025,6 @@ public abstract class AbstractPackManager implements PackManager {
                 TranslationManager.instance().log("warning.config.resource_pack.generation.texture_not_in_atlas", key.toString());
             }
         }
-
-        long time5 = System.currentTimeMillis();
-        this.plugin.debug(() -> "Took " + (time5 - time4) + "ms verifying model textures");
     }
 
     private void verifyParentModelAndCollectTextures(Key sourceModelLocation, JsonObject sourceModelJson, Path[] rootPaths, Multimap<Key, Key> imageToModels, Set<Key> collected) {
@@ -1188,74 +1179,7 @@ public abstract class AbstractPackManager implements PackManager {
         for (Equipment equipment : this.plugin.itemManager().equipments().values()) {
             if (equipment instanceof ComponentBasedEquipment componentBasedEquipment) {
                 // 现代的盔甲生成
-                Key assetId = componentBasedEquipment.assetId();
-                if (Config.packMaxVersion().isAtOrAbove(MinecraftVersions.V1_21_4)) {
-                    Path equipmentPath = generatedPackPath
-                            .resolve("assets")
-                            .resolve(assetId.namespace())
-                            .resolve("equipment")
-                            .resolve(assetId.value() + ".json");
-
-                    JsonObject equipmentJson = null;
-                    if (Files.exists(equipmentPath)) {
-                        try (BufferedReader reader = Files.newBufferedReader(equipmentPath)) {
-                            equipmentJson = JsonParser.parseReader(reader).getAsJsonObject();
-                        } catch (IOException e) {
-                            plugin.logger().warn("Failed to load existing sounds.json", e);
-                            return;
-                        }
-                    }
-                    if (equipmentJson != null) {
-                        equipmentJson = GsonHelper.deepMerge(equipmentJson, componentBasedEquipment.get());
-                    } else {
-                        equipmentJson = componentBasedEquipment.get();
-                    }
-                    try {
-                        Files.createDirectories(equipmentPath.getParent());
-                    } catch (IOException e) {
-                        plugin.logger().severe("Error creating " + equipmentPath.toAbsolutePath());
-                        return;
-                    }
-                    try {
-                        GsonHelper.writeJsonFile(equipmentJson, equipmentPath);
-                    } catch (IOException e) {
-                        this.plugin.logger().severe("Error writing equipment file", e);
-                    }
-                }
-                if (Config.packMaxVersion().isAtOrAbove(MinecraftVersions.V1_21_2) && Config.packMinVersion().isBelow(MinecraftVersions.V1_21_4)) {
-                    Path equipmentPath = generatedPackPath
-                            .resolve("assets")
-                            .resolve(assetId.namespace())
-                            .resolve("models")
-                            .resolve("equipment")
-                            .resolve(assetId.value() + ".json");
-
-                    JsonObject equipmentJson = null;
-                    if (Files.exists(equipmentPath)) {
-                        try (BufferedReader reader = Files.newBufferedReader(equipmentPath)) {
-                            equipmentJson = JsonParser.parseReader(reader).getAsJsonObject();
-                        } catch (IOException e) {
-                            plugin.logger().warn("Failed to load existing sounds.json", e);
-                            return;
-                        }
-                    }
-                    if (equipmentJson != null) {
-                        equipmentJson = GsonHelper.deepMerge(equipmentJson, componentBasedEquipment.get());
-                    } else {
-                        equipmentJson = componentBasedEquipment.get();
-                    }
-                    try {
-                        Files.createDirectories(equipmentPath.getParent());
-                    } catch (IOException e) {
-                        plugin.logger().severe("Error creating " + equipmentPath.toAbsolutePath());
-                        return;
-                    }
-                    try {
-                        GsonHelper.writeJsonFile(equipmentJson, equipmentPath);
-                    } catch (IOException e) {
-                        this.plugin.logger().severe("Error writing equipment file", e);
-                    }
-                }
+                processComponentBasedEquipment(componentBasedEquipment, generatedPackPath);
             } else if (equipment instanceof TrimBasedEquipment trimBasedEquipment) {
                 Key assetId = trimBasedEquipment.assetId();
                 Pair<Boolean, Boolean> result = processTrimBasedEquipment(trimBasedEquipment, generatedPackPath);
@@ -1423,6 +1347,77 @@ public abstract class AbstractPackManager implements PackManager {
         }
     }
 
+    private void processComponentBasedEquipment(ComponentBasedEquipment componentBasedEquipment, Path generatedPackPath) {
+        Key assetId = componentBasedEquipment.assetId();
+        if (Config.packMaxVersion().isAtOrAbove(MinecraftVersions.V1_21_4)) {
+            Path equipmentPath = generatedPackPath
+                    .resolve("assets")
+                    .resolve(assetId.namespace())
+                    .resolve("equipment")
+                    .resolve(assetId.value() + ".json");
+
+            JsonObject equipmentJson = null;
+            if (Files.exists(equipmentPath)) {
+                try (BufferedReader reader = Files.newBufferedReader(equipmentPath)) {
+                    equipmentJson = JsonParser.parseReader(reader).getAsJsonObject();
+                } catch (IOException e) {
+                    plugin.logger().warn("Failed to load existing sounds.json", e);
+                    return;
+                }
+            }
+            if (equipmentJson != null) {
+                equipmentJson = GsonHelper.deepMerge(equipmentJson, componentBasedEquipment.get());
+            } else {
+                equipmentJson = componentBasedEquipment.get();
+            }
+            try {
+                Files.createDirectories(equipmentPath.getParent());
+            } catch (IOException e) {
+                plugin.logger().severe("Error creating " + equipmentPath.toAbsolutePath());
+                return;
+            }
+            try {
+                GsonHelper.writeJsonFile(equipmentJson, equipmentPath);
+            } catch (IOException e) {
+                this.plugin.logger().severe("Error writing equipment file", e);
+            }
+        }
+        if (Config.packMaxVersion().isAtOrAbove(MinecraftVersions.V1_21_2) && Config.packMinVersion().isBelow(MinecraftVersions.V1_21_4)) {
+            Path equipmentPath = generatedPackPath
+                    .resolve("assets")
+                    .resolve(assetId.namespace())
+                    .resolve("models")
+                    .resolve("equipment")
+                    .resolve(assetId.value() + ".json");
+
+            JsonObject equipmentJson = null;
+            if (Files.exists(equipmentPath)) {
+                try (BufferedReader reader = Files.newBufferedReader(equipmentPath)) {
+                    equipmentJson = JsonParser.parseReader(reader).getAsJsonObject();
+                } catch (IOException e) {
+                    plugin.logger().warn("Failed to load existing sounds.json", e);
+                    return;
+                }
+            }
+            if (equipmentJson != null) {
+                equipmentJson = GsonHelper.deepMerge(equipmentJson, componentBasedEquipment.get());
+            } else {
+                equipmentJson = componentBasedEquipment.get();
+            }
+            try {
+                Files.createDirectories(equipmentPath.getParent());
+            } catch (IOException e) {
+                plugin.logger().severe("Error creating " + equipmentPath.toAbsolutePath());
+                return;
+            }
+            try {
+                GsonHelper.writeJsonFile(equipmentJson, equipmentPath);
+            } catch (IOException e) {
+                this.plugin.logger().severe("Error writing equipment file", e);
+            }
+        }
+    }
+
     @Nullable
     private Pair<Boolean, Boolean> processTrimBasedEquipment(TrimBasedEquipment trimBasedEquipment, Path generatedPackPath) {
         Key assetId = trimBasedEquipment.assetId();
@@ -1439,7 +1434,7 @@ public abstract class AbstractPackManager implements PackManager {
                     .resolve("textures")
                     .resolve(humanoidResourceLocation.value() + ".png");
             if (!Files.exists(texture) || !Files.isRegularFile(texture)) {
-                // todo 说话
+                TranslationManager.instance().log("warning.config.resource_pack.generation.missing_equipment_texture", assetId.asString(), texture.toString());
                 return null;
             }
             boolean shouldPreserve = false;
@@ -1498,7 +1493,7 @@ public abstract class AbstractPackManager implements PackManager {
                     .resolve("textures")
                     .resolve(humanoidLeggingsResourceLocation.value() + ".png");
             if (!Files.exists(texture) && !Files.isRegularFile(texture)) {
-                // todo 说话
+                TranslationManager.instance().log("warning.config.resource_pack.generation.missing_equipment_texture", assetId.asString(), texture.toString());
                 return null;
             }
             boolean shouldPreserve = false;
@@ -1776,12 +1771,6 @@ public abstract class AbstractPackManager implements PackManager {
             Key itemModelPath = entry.getKey();
             TreeSet<LegacyOverridesModel> legacyOverridesModels = entry.getValue();
 
-            // 检测item model合法性
-            if (PRESET_MODERN_MODELS_ITEM.containsKey(itemModelPath) || PRESET_LEGACY_MODELS_ITEM.containsKey(itemModelPath)) {
-                TranslationManager.instance().log("warning.config.resource_pack.item_model.conflict.vanilla", itemModelPath.asString());
-                continue;
-            }
-
             // 要检查目标生成路径是否已经存在模型，如果存在模型，应该只为其生成overrides
             Path itemPath = generatedPackPath
                     .resolve("assets")
@@ -1843,11 +1832,6 @@ public abstract class AbstractPackManager implements PackManager {
                     .resolve(key.namespace())
                     .resolve("items")
                     .resolve(key.value() + ".json");
-
-            if (PRESET_ITEMS.containsKey(key)) {
-                TranslationManager.instance().log("warning.config.resource_pack.item_model.conflict.vanilla", key.asString());
-                continue;
-            }
             if (Files.exists(itemPath)) {
                 TranslationManager.instance().log("warning.config.resource_pack.item_model.already_exist", key.asString(), itemPath.toAbsolutePath().toString());
                 continue;

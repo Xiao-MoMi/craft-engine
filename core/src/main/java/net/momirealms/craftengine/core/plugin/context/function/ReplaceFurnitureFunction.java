@@ -52,7 +52,7 @@ public class ReplaceFurnitureFunction<CTX extends Context> extends AbstractCondi
         if (optionalWorldPosition.isPresent() && optionalOldFurniture.isPresent()) {
             Furniture oldFurniture = optionalOldFurniture.get();
             
-            // Obtener la nueva posición o usar la actual del mueble
+            // Get the new position or use the current furniture position
             double xPos = this.x.getDouble(ctx);
             double yPos = this.y.getDouble(ctx);
             double zPos = this.z.getDouble(ctx);
@@ -61,19 +61,18 @@ public class ReplaceFurnitureFunction<CTX extends Context> extends AbstractCondi
             
             WorldPosition newPosition = new WorldPosition(optionalWorldPosition.get().world(), xPos, yPos, zPos, pitchValue, yawValue);
             
-            // Obtener el nuevo mueble
+            // Get the new furniture
             Optional<CustomFurniture> optionalNewFurniture = CraftEngine.instance().furnitureManager().furnitureById(this.newFurnitureId);
             if (optionalNewFurniture.isPresent()) {
                 CustomFurniture newFurniture = optionalNewFurniture.get();
                 AnchorType anchor = this.anchorType != null ? this.anchorType : newFurniture.getAnyAnchorType();
                 
-                // Remover el mueble antiguo
+                // Remove the old furniture
                 if (oldFurniture.isValid()) {
                     oldFurniture.destroy();
-                    // TODO: Implementar lógica para dropear loot usando this.dropLoot
                 }
                 
-                // Colocar el nuevo mueble
+                // Place the new furniture
                 FurnitureExtraData extraData = FurnitureExtraData.builder().anchorType(anchor).build();
                 CraftEngine.instance().furnitureManager().place(newPosition, newFurniture, extraData, this.playSound);
             }

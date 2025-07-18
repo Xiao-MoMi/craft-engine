@@ -58,6 +58,8 @@ dependencies {
     compileOnly("org.bstats:bstats-bukkit:${rootProject.properties["bstats_version"]}")
     // Aho-Corasick java implementation
     compileOnly("org.ahocorasick:ahocorasick:${rootProject.properties["ahocorasick_version"]}")
+    // authlib
+    compileOnly("com.mojang:authlib:${rootProject.properties["authlib_version"]}")
 }
 
 java {
@@ -96,6 +98,7 @@ tasks {
         relocate("com.ezylang.evalex", "net.momirealms.craftengine.libraries.evalex")
         relocate("com.google.common.jimfs", "net.momirealms.craftengine.libraries.jimfs")
         relocate("org.apache.commons", "net.momirealms.craftengine.libraries.commons")
+        relocate("io.leangen.geantyref", "net.momirealms.craftengine.libraries.geantyref")
     }
 }
 

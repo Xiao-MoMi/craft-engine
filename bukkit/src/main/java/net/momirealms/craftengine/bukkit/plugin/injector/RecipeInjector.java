@@ -20,11 +20,9 @@ import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.MRegistries
 import net.momirealms.craftengine.bukkit.util.KeyUtils;
 import net.momirealms.craftengine.core.item.Item;
 import net.momirealms.craftengine.core.item.recipe.CustomCookingRecipe;
-import net.momirealms.craftengine.core.item.recipe.OptimizedIDItem;
 import net.momirealms.craftengine.core.item.recipe.RecipeTypes;
+import net.momirealms.craftengine.core.item.recipe.UniqueIdItem;
 import net.momirealms.craftengine.core.item.recipe.input.SingleItemInput;
-import net.momirealms.craftengine.core.registry.BuiltInRegistries;
-import net.momirealms.craftengine.core.registry.Holder;
 import net.momirealms.craftengine.core.util.Key;
 import net.momirealms.craftengine.core.util.ReflectionUtils;
 import net.momirealms.craftengine.core.util.VersionHelper;
@@ -135,12 +133,7 @@ public class RecipeInjector {
             );
 
             Item<ItemStack> wrappedItem = BukkitItemManager.instance().wrap(itemStack);
-            Optional<Holder.Reference<Key>> idHolder = BuiltInRegistries.OPTIMIZED_ITEM_ID.get(wrappedItem.id());
-            if (idHolder.isEmpty()) {
-                return Optional.empty();
-            }
-
-            SingleItemInput<ItemStack> input = new SingleItemInput<>(new OptimizedIDItem<>(idHolder.get(), itemStack));
+            SingleItemInput<ItemStack> input = new SingleItemInput<>(new UniqueIdItem<>(wrappedItem.recipeIngredientId(), wrappedItem));
             CustomCookingRecipe<ItemStack> ceRecipe = (CustomCookingRecipe<ItemStack>) recipeManager.recipeByInput(injectedCacheCheck.customRecipeType(), input, injectedCacheCheck.lastCustomRecipe());
             if (ceRecipe == null) {
                 return Optional.empty();
@@ -186,12 +179,7 @@ public class RecipeInjector {
             }
 
             Item<ItemStack> wrappedItem = BukkitItemManager.instance().wrap(itemStack);
-            Optional<Holder.Reference<Key>> idHolder = BuiltInRegistries.OPTIMIZED_ITEM_ID.get(wrappedItem.id());
-            if (idHolder.isEmpty()) {
-                return Optional.empty();
-            }
-
-            SingleItemInput<ItemStack> input = new SingleItemInput<>(new OptimizedIDItem<>(idHolder.get(), itemStack));
+            SingleItemInput<ItemStack> input = new SingleItemInput<>(new UniqueIdItem<>(wrappedItem.recipeIngredientId(), wrappedItem));
             CustomCookingRecipe<ItemStack> ceRecipe = (CustomCookingRecipe<ItemStack>) recipeManager.recipeByInput(injectedCacheCheck.customRecipeType(), input, injectedCacheCheck.lastCustomRecipe());
             if (ceRecipe == null) {
                 return Optional.empty();
@@ -232,12 +220,7 @@ public class RecipeInjector {
 
             ItemStack itemStack = FastNMS.INSTANCE.method$CraftItemStack$asCraftMirror(FastNMS.INSTANCE.field$SingleRecipeInput$item(args[0]));
             Item<ItemStack> wrappedItem = BukkitItemManager.instance().wrap(itemStack);
-            Optional<Holder.Reference<Key>> idHolder = BuiltInRegistries.OPTIMIZED_ITEM_ID.get(wrappedItem.id());
-            if (idHolder.isEmpty()) {
-                return Optional.empty();
-            }
-
-            SingleItemInput<ItemStack> input = new SingleItemInput<>(new OptimizedIDItem<>(idHolder.get(), itemStack));
+            SingleItemInput<ItemStack> input = new SingleItemInput<>(new UniqueIdItem<>(wrappedItem.recipeIngredientId(), wrappedItem));
             CustomCookingRecipe<ItemStack> ceRecipe = (CustomCookingRecipe<ItemStack>) recipeManager.recipeByInput(injectedCacheCheck.customRecipeType(), input, injectedCacheCheck.lastCustomRecipe());
             if (ceRecipe == null) {
                 return Optional.empty();
@@ -282,12 +265,7 @@ public class RecipeInjector {
             // 获取唯一内存地址id
             ItemStack itemStack = FastNMS.INSTANCE.method$CraftItemStack$asCraftMirror(FastNMS.INSTANCE.field$SingleRecipeInput$item(args[0]));
             Item<ItemStack> wrappedItem = BukkitItemManager.instance().wrap(itemStack);
-            Optional<Holder.Reference<Key>> idHolder = BuiltInRegistries.OPTIMIZED_ITEM_ID.get(wrappedItem.id());
-            if (idHolder.isEmpty()) {
-                return Optional.empty();
-            }
-
-            SingleItemInput<ItemStack> input = new SingleItemInput<>(new OptimizedIDItem<>(idHolder.get(), itemStack));
+            SingleItemInput<ItemStack> input = new SingleItemInput<>(new UniqueIdItem<>(wrappedItem.recipeIngredientId(), wrappedItem));
             CustomCookingRecipe<ItemStack> ceRecipe = (CustomCookingRecipe<ItemStack>) recipeManager.recipeByInput(injectedCacheCheck.customRecipeType(), input, injectedCacheCheck.lastCustomRecipe());
             // 这个ce配方并不存在，那么应该返回空
             if (ceRecipe == null) {

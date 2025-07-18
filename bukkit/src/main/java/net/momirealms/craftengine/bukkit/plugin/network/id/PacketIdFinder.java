@@ -21,8 +21,8 @@ public class PacketIdFinder {
             if (VersionHelper.isOrAbove1_21()) {
                 Object packetReport = CoreReflections.constructor$PacketReport.newInstance((Object) null);
                 JsonElement jsonElement = (JsonElement) CoreReflections.method$PacketReport$serializePackets.invoke(packetReport);
-                var play = jsonElement.getAsJsonObject().get("play");
-                for (var entry : play.getAsJsonObject().entrySet()) {
+                JsonElement play = jsonElement.getAsJsonObject().get("play");
+                for (Map.Entry<String, JsonElement> entry : play.getAsJsonObject().entrySet()) {
                     Map<String, Integer> ids = new HashMap<>();
                     gamePacketIdsByName.put(entry.getKey(), ids);
                     for (var entry2 : entry.getValue().getAsJsonObject().entrySet()) {
@@ -40,6 +40,7 @@ public class PacketIdFinder {
         maxS2CPacketId = calculateMaxId("clientbound");
         maxC2SPacketId = calculateMaxId("serverbound");
     }
+
     private static int calculateMaxId(String direction) {
         if (VersionHelper.isOrAbove1_20_5()) {
             return gamePacketIdsByName.getOrDefault(direction, Collections.emptyMap()).size();
@@ -48,11 +49,11 @@ public class PacketIdFinder {
         }
     }
 
-    public static int maxC2SPacketId() {
+    public static int c2sGamePackets() {
         return maxC2SPacketId;
     }
 
-    public static int maxS2CPacketId() {
+    public static int s2cGamePackets() {
         return maxS2CPacketId;
     }
 

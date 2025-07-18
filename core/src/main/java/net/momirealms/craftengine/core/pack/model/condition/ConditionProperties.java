@@ -3,7 +3,6 @@ package net.momirealms.craftengine.core.pack.model.condition;
 import com.google.gson.JsonObject;
 import net.momirealms.craftengine.core.plugin.locale.LocalizedResourceConfigException;
 import net.momirealms.craftengine.core.registry.BuiltInRegistries;
-import net.momirealms.craftengine.core.registry.Holder;
 import net.momirealms.craftengine.core.registry.Registries;
 import net.momirealms.craftengine.core.registry.WritableRegistry;
 import net.momirealms.craftengine.core.util.Key;
@@ -57,15 +56,13 @@ public class ConditionProperties {
     }
 
     public static void registerFactory(Key key, ConditionPropertyFactory factory) {
-        Holder.Reference<ConditionPropertyFactory> holder = ((WritableRegistry<ConditionPropertyFactory>) BuiltInRegistries.CONDITION_PROPERTY_FACTORY)
-                .registerForHolder(new ResourceKey<>(Registries.CONDITION_PROPERTY_FACTORY.location(), key));
-        holder.bindValue(factory);
+        ((WritableRegistry<ConditionPropertyFactory>) BuiltInRegistries.CONDITION_PROPERTY_FACTORY)
+                .register(ResourceKey.create(Registries.CONDITION_PROPERTY_FACTORY.location(), key), factory);
     }
 
     public static void registerReader(Key key, ConditionPropertyReader reader) {
-        Holder.Reference<ConditionPropertyReader> holder = ((WritableRegistry<ConditionPropertyReader>) BuiltInRegistries.CONDITION_PROPERTY_READER)
-                .registerForHolder(new ResourceKey<>(Registries.CONDITION_PROPERTY_READER.location(), key));
-        holder.bindValue(reader);
+        ((WritableRegistry<ConditionPropertyReader>) BuiltInRegistries.CONDITION_PROPERTY_READER)
+                .register(ResourceKey.create(Registries.CONDITION_PROPERTY_READER.location(), key), reader);
     }
 
     public static ConditionProperty fromMap(Map<String, Object> map) {

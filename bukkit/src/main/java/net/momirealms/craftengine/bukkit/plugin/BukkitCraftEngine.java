@@ -138,6 +138,7 @@ public class BukkitCraftEngine extends CraftEngine {
         super.onPluginLoad();
         super.blockManager.init();
         super.networkManager = new BukkitNetworkManager(this);
+        super.itemManager = new BukkitItemManager(this);
         this.successfullyLoaded = true;
         super.compatibilityManager().onLoad();
     }
@@ -182,7 +183,6 @@ public class BukkitCraftEngine extends CraftEngine {
         PacketConsumers.initEntities(RegistryUtils.currentEntityTypeRegistrySize());
         super.packManager = new BukkitPackManager(this);
         super.senderFactory = new BukkitSenderFactory(this);
-        super.itemManager = new BukkitItemManager(this);
         super.recipeManager = new BukkitRecipeManager(this);
         super.commandManager = new BukkitCommandManager(this);
         super.itemBrowserManager = new ItemBrowserManagerImpl(this);
@@ -227,7 +227,6 @@ public class BukkitCraftEngine extends CraftEngine {
                 }
             }, 1, 1);
         }
-        super.compatibilityManager().onDelayedEnable();
     }
 
     @Override

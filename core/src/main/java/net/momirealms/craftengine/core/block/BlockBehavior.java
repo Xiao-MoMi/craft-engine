@@ -9,6 +9,7 @@ import net.momirealms.craftengine.core.item.context.BlockPlaceContext;
 import net.momirealms.craftengine.core.item.context.UseOnContext;
 import net.momirealms.craftengine.core.plugin.CraftEngine;
 import net.momirealms.craftengine.core.util.Key;
+import org.jetbrains.annotations.ApiStatus;
 
 import java.util.Optional;
 import java.util.concurrent.Callable;
@@ -33,8 +34,8 @@ public abstract class BlockBehavior {
         return superMethod.call();
     }
 
-    // 1.20.1-1.21.1 Direction direction, BlockState neighborState, LevelAccessor world, BlockPos pos, BlockPos neighborPos
-    // 1.21.2+ LevelReader level, ScheduledTickAccess scheduledTickAccess, BlockPos pos, Direction direction, BlockPos neighborPos, BlockState neighborState, RandomSource random
+    // 1.20.1-1.21.1 BlockState state, Direction direction, BlockState neighborState, LevelAccessor world, BlockPos pos, BlockPos neighborPos
+    // 1.21.2+ BlockState state, LevelReader level, ScheduledTickAccess scheduledTickAccess, BlockPos pos, Direction direction, BlockPos neighborPos, BlockState neighborState, RandomSource random
     public Object updateShape(Object thisBlock, Object[] args, Callable<Object> superMethod) throws Exception {
         return args[0];
     }
@@ -94,7 +95,7 @@ public abstract class BlockBehavior {
     }
 
     // 1.21+ BlockState state, ServerLevel level, BlockPos pos, Explosion explosion, BiConsumer<ItemStack, BlockPos> dropConsumer
-    public void onExplosionHit(Object thisBlock, Object[] args, Callable<Object> superMethod) {
+    public void onExplosionHit(Object thisBlock, Object[] args, Callable<Object> superMethod) throws Exception {
     }
 
     // LevelAccessor level, BlockPos pos, BlockState state, FluidState fluidState
@@ -123,6 +124,11 @@ public abstract class BlockBehavior {
     public void affectNeighborsAfterRemoval(Object thisBlock, Object[] args, Callable<Object> superMethod) throws Exception {
     }
 
+    // 1.20~1.21.4 BlockState state, Level level, BlockPos pos, BlockState newState, boolean movedByPiston
+    @ApiStatus.Obsolete
+    public void onRemove(Object thisBlock, Object[] args, Callable<Object> superMethod) throws Exception {
+    }
+
     // BlockState blockState, BlockGetter blockAccess, BlockPos pos, Direction side
     public int getSignal(Object thisBlock, Object[] args, Callable<Object> superMethod) {
         return 0;
@@ -136,6 +142,15 @@ public abstract class BlockBehavior {
     // BlockState blockState
     public boolean isSignalSource(Object thisBlock, Object[] args, Callable<Object> superMethod) {
         return false;
+    }
+
+    // Level level, BlockPos pos, BlockState state, Player player
+    public Object playerWillDestroy(Object thisBlock, Object[] args, Callable<Object> superMethod) throws Exception {
+        return superMethod.call();
+    }
+
+    // BlockState state, ServerLevel level, BlockPos pos, ItemStack stack, boolean dropExperience
+    public void spawnAfterBreak(Object thisBlock, Object[] args, Callable<Object> superMethod) throws Exception {
     }
 
     public ImmutableBlockState updateStateForPlacement(BlockPlaceContext context, ImmutableBlockState state) {

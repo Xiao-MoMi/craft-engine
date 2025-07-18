@@ -5,8 +5,12 @@ import net.momirealms.craftengine.core.plugin.locale.LocalizedResourceConfigExce
 import net.momirealms.craftengine.core.util.Key;
 import net.momirealms.craftengine.core.util.MiscUtils;
 import net.momirealms.craftengine.core.util.ResourceConfigUtils;
+import net.momirealms.craftengine.core.util.UniqueKey;
 
+import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 public interface RecipeFactory<T> {
 
@@ -22,8 +26,21 @@ public interface RecipeFactory<T> {
         int count = ResourceConfigUtils.getAsInt(resultMap.getOrDefault("count", 1), "count");
         return new CustomRecipeResult(
                 CraftEngine.instance().itemManager().getBuildableItem(Key.of(id)).orElseThrow(
-                        () -> new LocalizedResourceConfigException("warning.config.recipe.invalid_item", id)),
-                count
+                        () -> new LocalizedResourceConfigException("warning.config.recipe.invalid_result", id)),
+                count,
+                null
         );
+    }
+
+    default Ingredient<T> toIngredient(List<String> items) {
+        Set<UniqueKey> holders = new HashSet<>();
+        for (String item : items) {
+            if (item.charAt(0) == '#') {
+                holders.addAll(CraftEngine.instance().itemManager().tagToItems(Key.of(item.substring(1))));
+            } else {
+                holders.add(UniqueKey.create(Key.of(item)));
+            }
+        }
+        return holders.isEmpty() ? null : Ingredient.of(holders);
     }
 }

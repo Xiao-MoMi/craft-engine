@@ -7,41 +7,19 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
-public class MappedRegistry<T> implements WritableRegistry<T> {
-    private final ResourceKey<? extends Registry<T>> key;
-    private final Map<Key, Holder.Reference<T>> byId = new HashMap<>(2048);
-    private final Map<ResourceKey<T>, Holder.Reference<T>> byResourceKey = new HashMap<>(2048);
+public abstract class AbstractMappedRegistry<T> implements WritableRegistry<T> {
+    protected final ResourceKey<? extends Registry<T>> key;
+    protected final Map<Key, Holder.Reference<T>> byResourceLocation = new HashMap<>(512);
+    protected final Map<ResourceKey<T>, Holder.Reference<T>> byResourceKey = new HashMap<>(512);
+    protected final List<Holder.Reference<T>> byId = new ArrayList<>(512);
 
-    public MappedRegistry(ResourceKey<? extends Registry<T>> key) {
+    protected AbstractMappedRegistry(ResourceKey<? extends Registry<T>> key) {
         this.key = key;
     }
 
     @Override
     public ResourceKey<? extends Registry<T>> key() {
         return this.key;
-    }
-
-    @Override
-    public Holder.Reference<T> registerForHolder(ResourceKey<T> key) {
-        Objects.requireNonNull(key);
-        if (!key.registry().equals(this.key.location())) {
-            throw new IllegalStateException(key + " is not allowed to be registered in " + this.key);
-        }
-        if (this.byId.containsKey(key.location())) {
-            throw new IllegalStateException("Adding duplicate key '" + key + "' to registry");
-        } else {
-            Holder.Reference<T> reference = this.byResourceKey.computeIfAbsent(key, k -> Holder.Reference.create(this, k));
-            this.byResourceKey.put(key, reference);
-            this.byId.put(key.location(), reference);
-            return reference;
-        }
-    }
-
-    @Override
-    public Holder.Reference<T> register(ResourceKey<T> key, T value) {
-        Holder.Reference<T> holder = registerForHolder(key);
-        holder.bindValue(value);
-        return holder;
     }
 
     @Nullable
@@ -52,7 +30,7 @@ public class MappedRegistry<T> implements WritableRegistry<T> {
 
     @Override
     public Optional<Holder.Reference<T>> get(Key id) {
-        return Optional.ofNullable(this.byId.get(id));
+        return Optional.ofNullable(this.byResourceLocation.get(id));
     }
 
     @Override
@@ -63,8 +41,14 @@ public class MappedRegistry<T> implements WritableRegistry<T> {
     @Nullable
     @Override
     public T getValue(@Nullable Key id) {
-        Holder.Reference<T> reference = this.byId.get(id);
+        Holder.Reference<T> reference = this.byResourceLocation.get(id);
         return getValueFromNullable(reference);
+    }
+
+    @Override
+    public @Nullable T getValue(int id) {
+        if (id < 0 || id >= this.byId.size()) return null;
+        return getValueFromNullable(this.byId.get(id));
     }
 
     @Nullable
@@ -74,7 +58,7 @@ public class MappedRegistry<T> implements WritableRegistry<T> {
 
     @Override
     public Set<Key> keySet() {
-        return Collections.unmodifiableSet(this.byId.keySet());
+        return Collections.unmodifiableSet(this.byResourceLocation.keySet());
     }
 
     @Override
@@ -84,7 +68,7 @@ public class MappedRegistry<T> implements WritableRegistry<T> {
 
     @Override
     public boolean containsKey(Key id) {
-        return this.byId.containsKey(id);
+        return this.byResourceLocation.containsKey(id);
     }
 
     @Override

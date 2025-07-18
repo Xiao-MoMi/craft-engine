@@ -38,6 +38,7 @@ public class ItemSettings {
     List<DamageSource> invulnerable = List.of();
     boolean canEnchant = true;
     float compostProbability= 0.5f;
+    boolean respectRepairableComponent = false;
     @Nullable
     ItemEquipment equipment;
 
@@ -97,6 +98,7 @@ public class ItemSettings {
         newSettings.invulnerable = settings.invulnerable;
         newSettings.canEnchant = settings.canEnchant;
         newSettings.compostProbability = settings.compostProbability;
+        newSettings.respectRepairableComponent = settings.respectRepairableComponent;
         return newSettings;
     }
 
@@ -146,6 +148,10 @@ public class ItemSettings {
 
     public List<AnvilRepairItem> repairItems() {
         return anvilRepairItems;
+    }
+
+    public boolean respectRepairableComponent() {
+        return respectRepairableComponent;
     }
 
     @Nullable
@@ -256,6 +262,11 @@ public class ItemSettings {
         return this;
     }
 
+    public ItemSettings respectRepairableComponent(boolean respectRepairableComponent) {
+        this.respectRepairableComponent = respectRepairableComponent;
+        return this;
+    }
+
     public ItemSettings invulnerable(List<DamageSource> invulnerable) {
         this.invulnerable = invulnerable;
         return this;
@@ -320,6 +331,7 @@ public class ItemSettings {
                 Map<String, Object> args = MiscUtils.castToMap(value, false);
                 EquipmentData data = EquipmentData.fromMap(args);
                 ComponentBasedEquipment componentBasedEquipment = ComponentBasedEquipment.FACTORY.create(data.assetId(), args);
+                ((AbstractItemManager<?>) CraftEngine.instance().itemManager()).addOrMergeEquipment(componentBasedEquipment);
                 ItemEquipment itemEquipment = new ItemEquipment(Tristate.FALSE, data, componentBasedEquipment);
                 return settings -> settings.equipment(itemEquipment);
             }));
@@ -332,8 +344,16 @@ public class ItemSettings {
                     throw new LocalizedResourceConfigException("warning.config.item.settings.equipment.invalid_asset_id");
                 }
                 if (VersionHelper.isOrAbove1_21_2() && args.containsKey("slot")) {
-                    EquipmentData data = EquipmentData.fromMap(args);
-                    return settings -> settings.equipment(new ItemEquipment(clientBoundModel, data, optionalEquipment.get()));
+                    if (optionalEquipment.get() instanceof ComponentBasedEquipment) {
+                        EquipmentData data = EquipmentData.fromMap(args);
+                        return settings -> settings.equipment(new ItemEquipment(clientBoundModel, data, optionalEquipment.get()));
+                    } else {
+                        // trim based
+                        Map<String, Object> copiedArgs = new HashMap<>(args);
+                        copiedArgs.put("asset-id", Config.sacrificedVanillaArmorType());
+                        EquipmentData data = EquipmentData.fromMap(copiedArgs);
+                        return settings -> settings.equipment(new ItemEquipment(clientBoundModel, data, optionalEquipment.get()));
+                    }
                 } else {
                     return settings -> settings.equipment(new ItemEquipment(clientBoundModel, null, optionalEquipment.get()));
                 }
@@ -365,6 +385,10 @@ public class ItemSettings {
             registerFactory("dyeable", (value -> {
                 boolean bool = ResourceConfigUtils.getAsBoolean(value, "dyeable");
                 return settings -> settings.dyeable(bool);
+            }));
+            registerFactory("respect-repairable-component", (value -> {
+                boolean bool = ResourceConfigUtils.getAsBoolean(value, "respect-repairable-component");
+                return settings -> settings.respectRepairableComponent(bool);
             }));
             registerFactory("food", (value -> {
                 Map<String, Object> args = MiscUtils.castToMap(value, false);

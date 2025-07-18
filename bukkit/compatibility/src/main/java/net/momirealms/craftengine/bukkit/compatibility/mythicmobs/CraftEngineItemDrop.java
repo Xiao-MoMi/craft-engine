@@ -29,12 +29,10 @@ public class CraftEngineItemDrop extends ItemDrop implements IItemDrop {
     public CraftEngineItemDrop(String line, MythicLineConfig config, CustomItem<ItemStack> customItem) {
         super(line, config);
         this.customItem = customItem;
-        CraftEngine.instance().debug(() -> "[MM调试] " + customItem.id() + " 注册成功");
     }
 
     @Override
     public AbstractItemStack getDrop(DropMetadata dropMetadata, double amount) {
-        CraftEngine.instance().debug(() -> "[MM调试] getDrop() dropMetadata={" + dropMetadata + "}, amount={" + amount + "}");
         ItemBuildContext context = ItemBuildContext.EMPTY;
         SkillCaster caster = dropMetadata.getCaster();
         if (caster != null && caster.getEntity() instanceof AbstractPlayer abstractPlayer) {

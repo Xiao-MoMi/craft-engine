@@ -7,6 +7,7 @@ public final class MItems {
 
     public static final Object AIR;
     public static final Object WATER_BUCKET;
+    public static final Object BARRIER;
 
     private static Object getById(String id) {
         Object rl = FastNMS.INSTANCE.method$ResourceLocation$fromNamespaceAndPath("minecraft", id);
@@ -16,5 +17,6 @@ public final class MItems {
     static {
         AIR = getById("air");
         WATER_BUCKET = getById("water_bucket");
+        BARRIER = getById("barrier");
     }
 }

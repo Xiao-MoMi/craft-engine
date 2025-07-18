@@ -59,7 +59,7 @@ public class LampBlockBehavior extends BukkitBlockBehavior {
         boolean lit = customState.get(this.litProperty);
         if (lit != FastNMS.INSTANCE.method$SignalGetter$hasNeighborSignal(world, blockPos)) {
             if (lit) {
-                FastNMS.INSTANCE.method$LevelAccessor$scheduleBlockTick(world, blockPos, thisBlock, 4);
+                FastNMS.INSTANCE.method$ScheduledTickAccess$scheduleBlockTick(world, blockPos, thisBlock, 4);
             } else {
                 if (FastNMS.INSTANCE.method$CraftEventFactory$callRedstoneChange(world, blockPos, 0, 15).getNewCurrent() != 15) {
                     return;

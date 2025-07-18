@@ -28,7 +28,7 @@ public class ArgumentModifier<I> implements ItemDataModifier<I> {
     @Override
     public Item<I> apply(Item<I> item, ItemBuildContext context) {
         if (VersionHelper.isOrAbove1_20_5()) {
-            CompoundTag customData = (CompoundTag) Optional.ofNullable(item.getNBTComponent(ComponentKeys.CUSTOM_DATA)).orElse(new CompoundTag());
+            CompoundTag customData = (CompoundTag) Optional.ofNullable(item.getSparrowNBTComponent(ComponentKeys.CUSTOM_DATA)).orElse(new CompoundTag());
             CompoundTag argumentTag = new CompoundTag();
             for (Map.Entry<String, TextProvider> entry : this.arguments.entrySet()) {
                 argumentTag.put(entry.getKey(), new StringTag(entry.getValue().get(context)));

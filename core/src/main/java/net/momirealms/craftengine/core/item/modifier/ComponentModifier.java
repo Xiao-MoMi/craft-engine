@@ -59,7 +59,7 @@ public class ComponentModifier<I> implements ItemDataModifier<I> {
             item.setNBTComponent(entry.left(), entry.right());
         }
         if (this.customData != null) {
-            CompoundTag tag = (CompoundTag) item.getNBTTag(ComponentKeys.CUSTOM_DATA);
+            CompoundTag tag = (CompoundTag) item.getTag(ComponentKeys.CUSTOM_DATA);
             if (tag != null) {
                 for (Map.Entry<String, Tag> entry : this.customData.entrySet()) {
                     tag.put(entry.getKey(), entry.getValue());
@@ -75,7 +75,7 @@ public class ComponentModifier<I> implements ItemDataModifier<I> {
     @Override
     public Item<I> prepareNetworkItem(Item<I> item, ItemBuildContext context, CompoundTag networkData) {
         for (Pair<Key, Tag> entry : this.arguments) {
-            Tag previous = item.getNBTComponent(entry.left());
+            Tag previous = item.getSparrowNBTComponent(entry.left());
             if (previous != null) {
                 networkData.put(entry.left().asString(), NetworkItemHandler.pack(NetworkItemHandler.Operation.ADD, previous));
             } else {

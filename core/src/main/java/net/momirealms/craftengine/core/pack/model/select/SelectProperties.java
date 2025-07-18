@@ -3,7 +3,6 @@ package net.momirealms.craftengine.core.pack.model.select;
 import com.google.gson.JsonObject;
 import net.momirealms.craftengine.core.plugin.locale.LocalizedResourceConfigException;
 import net.momirealms.craftengine.core.registry.BuiltInRegistries;
-import net.momirealms.craftengine.core.registry.Holder;
 import net.momirealms.craftengine.core.registry.Registries;
 import net.momirealms.craftengine.core.registry.WritableRegistry;
 import net.momirealms.craftengine.core.util.Key;
@@ -48,15 +47,13 @@ public class SelectProperties {
     }
 
     public static void registerFactory(Key key, SelectPropertyFactory factory) {
-        Holder.Reference<SelectPropertyFactory> holder = ((WritableRegistry<SelectPropertyFactory>) BuiltInRegistries.SELECT_PROPERTY_FACTORY)
-                .registerForHolder(new ResourceKey<>(Registries.SELECT_PROPERTY_FACTORY.location(), key));
-        holder.bindValue(factory);
+        ((WritableRegistry<SelectPropertyFactory>) BuiltInRegistries.SELECT_PROPERTY_FACTORY)
+                .register(ResourceKey.create(Registries.SELECT_PROPERTY_FACTORY.location(), key), factory);
     }
 
     public static void registerReader(Key key, SelectPropertyReader reader) {
-        Holder.Reference<SelectPropertyReader> holder = ((WritableRegistry<SelectPropertyReader>) BuiltInRegistries.SELECT_PROPERTY_READER)
-                .registerForHolder(new ResourceKey<>(Registries.SELECT_PROPERTY_READER.location(), key));
-        holder.bindValue(reader);
+        ((WritableRegistry<SelectPropertyReader>) BuiltInRegistries.SELECT_PROPERTY_READER)
+                .register(ResourceKey.create(Registries.SELECT_PROPERTY_READER.location(), key), reader);
     }
 
     public static SelectProperty fromMap(Map<String, Object> map) {

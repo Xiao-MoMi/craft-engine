@@ -100,6 +100,9 @@ public final class BlockStateGenerator {
             Object tool = FastNMS.INSTANCE.method$LootParams$Builder$getOptionalParameter(builder, MLootContextParams.TOOL);
             Item<ItemStack> item = BukkitItemManager.instance().wrap(tool == null || FastNMS.INSTANCE.method$ItemStack$isEmpty(tool) ? null : FastNMS.INSTANCE.method$CraftItemStack$asCraftMirror(tool));
             Object optionalPlayer = FastNMS.INSTANCE.method$LootParams$Builder$getOptionalParameter(builder, MLootContextParams.THIS_ENTITY);
+            if (!CoreReflections.clazz$Player.isInstance(optionalPlayer)) {
+                optionalPlayer = null;
+            }
 
             // do not drop if it's not the correct tool
             BlockSettings settings = state.settings();
@@ -115,7 +118,7 @@ public final class BlockStateGenerator {
             World world = new BukkitWorld(FastNMS.INSTANCE.method$Level$getCraftWorld(serverLevel));
             ContextHolder.Builder lootBuilder = new ContextHolder.Builder()
                     .withParameter(DirectContextParameters.POSITION, new WorldPosition(world, FastNMS.INSTANCE.field$Vec3$x(vec3), FastNMS.INSTANCE.field$Vec3$y(vec3), FastNMS.INSTANCE.field$Vec3$z(vec3)));
-            if (item != null) {
+            if (!item.isEmpty()) {
                 lootBuilder.withParameter(DirectContextParameters.ITEM_IN_HAND, item);
             }
 

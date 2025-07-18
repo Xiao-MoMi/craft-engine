@@ -72,7 +72,7 @@ public class BukkitWorld implements World {
     @Override
     public void dropItemNaturally(Position location, Item<?> item) {
         ItemStack itemStack = (ItemStack) item.getItem();
-        if (ItemUtils.isEmpty(itemStack)) return;
+        if (ItemStackUtils.isEmpty(itemStack)) return;
         if (VersionHelper.isOrAbove1_21_2()) {
             platformWorld().dropItemNaturally(new Location(null, location.x(), location.y(), location.z()), (ItemStack) item.getItem());
         } else {
@@ -121,6 +121,6 @@ public class BukkitWorld implements World {
 
     @Override
     public void levelEvent(int id, BlockPos pos, int data) {
-        FastNMS.INSTANCE.method$Level$levelEvent(serverWorld(), id, LocationUtils.toBlockPos(pos), data);
+        FastNMS.INSTANCE.method$LevelAccessor$levelEvent(serverWorld(), id, LocationUtils.toBlockPos(pos), data);
     }
 }
