@@ -393,6 +393,7 @@ warning.config.function.potion_effect.missing_potion_effect: "<yellow>Issue foun
 warning.config.function.set_cooldown.missing_time: "<yellow>Issue found in file <arg:0> - The config '<arg:1>' is missing the required 'time' argument for 'set_cooldown' function.</yellow>"
 warning.config.function.set_cooldown.missing_id: "<yellow>Issue found in file <arg:0> - The config '<arg:1>' is missing the required 'id' argument for 'set_cooldown' function.</yellow>"
 warning.config.function.remove_cooldown.missing_id: "<yellow>Issue found in file <arg:0> - The config '<arg:1>' is missing the required 'id' argument for 'remove_cooldown' function.</yellow>"
+warning.config.function.mythic_mobs_skill.missing_skill: "<yellow>Issue found in file <arg:0> - The config '<arg:1>' is missing the required 'skill' argument for 'mythic_mobs_skill' function.</yellow>"
 warning.config.selector.missing_type: "<yellow>Issue found in file <arg:0> - The config '<arg:1>' is missing the required 'type' argument for selector.</yellow>"
 warning.config.selector.invalid_type: "<yellow>Issue found in file <arg:0> - The config '<arg:1>' is using an invalid selector type '<arg:2>'.</yellow>"
 warning.config.selector.invalid_target: "<yellow>Issue found in file <arg:0> - The config '<arg:1>' is using an invalid selector target '<arg:2>'.</yellow>"

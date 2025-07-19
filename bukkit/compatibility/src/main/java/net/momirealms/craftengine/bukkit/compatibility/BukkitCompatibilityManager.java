@@ -11,6 +11,7 @@ import net.momirealms.craftengine.bukkit.compatibility.model.bettermodel.BetterM
 import net.momirealms.craftengine.bukkit.compatibility.model.modelengine.ModelEngineModel;
 import net.momirealms.craftengine.bukkit.compatibility.model.modelengine.ModelEngineUtils;
 import net.momirealms.craftengine.bukkit.compatibility.mythicmobs.MythicMobsListener;
+import net.momirealms.craftengine.bukkit.compatibility.mythicmobs.SkillHelper;
 import net.momirealms.craftengine.bukkit.compatibility.papi.PlaceholderAPIUtils;
 import net.momirealms.craftengine.bukkit.compatibility.permission.LuckPermsEventListeners;
 import net.momirealms.craftengine.bukkit.compatibility.skript.SkriptHook;
@@ -39,6 +40,7 @@ public class BukkitCompatibilityManager implements CompatibilityManager {
     private final Map<String, LevelerProvider> levelerProviders;
     private boolean hasPlaceholderAPI;
     private boolean hasViaVersion;
+    private SkillHelper skillExecute;
 
     public BukkitCompatibilityManager(BukkitCraftEngine plugin) {
         this.plugin = plugin;
@@ -134,6 +136,11 @@ public class BukkitCompatibilityManager implements CompatibilityManager {
             new MythicMobsListener(this.plugin);
             logHook("MythicMobs");
         }
+    }
+
+    @Override
+    public void skillExecute(String skill, float power, Player player) {
+        SkillHelper.execute(skill, power, player);
     }
 
     @Override

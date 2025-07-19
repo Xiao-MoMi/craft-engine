@@ -38,6 +38,7 @@ public class EventFunctions {
         register(CommonFunctions.LEVELER_EXP, new LevelerExpFunction.FactoryImpl<>(EventConditions::fromMap));
         register(CommonFunctions.SET_COOLDOWN, new SetCooldownFunction.FactoryImpl<>(EventConditions::fromMap));
         register(CommonFunctions.REMOVE_COOLDOWN, new RemoveCooldownFunction.FactoryImpl<>(EventConditions::fromMap));
+        register(CommonFunctions.MYTHIC_MOBS_SKILL, new MythicMobsSkillFunction.FactoryImpl<>(EventConditions::fromMap));
     }
 
     public static void register(Key key, FunctionFactory<PlayerOptionalContext> factory) {

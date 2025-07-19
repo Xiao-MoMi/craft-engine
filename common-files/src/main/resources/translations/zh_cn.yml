@@ -391,6 +391,7 @@ warning.config.function.potion_effect.missing_potion_effect: "<yellow>在文件 
 warning.config.function.set_cooldown.missing_time: "<yellow>在文件 <arg:0> 中发现问题 - 配置项 '<arg:1>' 缺少 'set_cooldown' 函数必需的 'time' 参数</yellow>"
 warning.config.function.set_cooldown.missing_id: "<yellow>在文件 <arg:0> 中发现问题 - 配置项 '<arg:1>' 缺少 'set_cooldown' 函数必需的 'id' 参数</yellow>"
 warning.config.function.remove_cooldown.missing_id: "<yellow>在文件 <arg:0> 中发现问题 - 配置项 '<arg:1>' 缺少 'remove_cooldown' 函数必需的 'id' 参数</yellow>"
+warning.config.function.mythic_mobs_skill.missing_skill: "<yellow>在文件 <arg:0> 中发现问题 - 配置项 '<arg:1>' 缺少 'mythic_mobs_skill' 函数必需的 'skill' 参数</yellow>"
 warning.config.selector.missing_type: "<yellow>在文件 <arg:0> 中发现问题 - 配置项 '<arg:1>' 缺少选择器必需的 'type' 参数</yellow>"
 warning.config.selector.invalid_type: "<yellow>在文件 <arg:0> 中发现问题 - 配置项 '<arg:1>' 使用了无效的选择器类型 '<arg:2>'</yellow>"
 warning.config.selector.invalid_target: "<yellow>在文件 <arg:0> 中发现问题 - 配置项 '<arg:1>' 使用了无效的选择器目标 '<arg:2>'</yellow>"

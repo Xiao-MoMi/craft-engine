@@ -34,4 +34,6 @@ public interface CompatibilityManager {
     String parse(Player player1, Player player2, String text);
 
     int getPlayerProtocolVersion(UUID uuid);
+
+    void skillExecute(String skill, float power, Player player);
 }
