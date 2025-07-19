@@ -42,6 +42,9 @@ public final class BlockKeys {
     public static final Key CHAIN_COMMAND_BLOCK = Key.of("minecraft:chain_command_block");
     public static final Key REPEATING_COMMAND_BLOCK = Key.of("minecraft:repeating_command_block");
     public static final Key DECORATED_POT = Key.of("minecraft:decorated_pot");
+    public static final Key CHISELED_BOOKSHELF = Key.of("minecraft:chiseled_bookshelf");
+    public static final Key REDSTONE_ORE = Key.of("minecraft:redstone_ore");
+    public static final Key DEEPSLATE_REDSTONE_ORE = Key.of("minecraft:deepslate_redstone_ore");
 
     public static final Key CAKE = Key.of("minecraft:cake");
     public static final Key CANDLE_CAKE = Key.of("minecraft:candle_cake");

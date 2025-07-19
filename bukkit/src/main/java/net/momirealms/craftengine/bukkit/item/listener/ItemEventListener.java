@@ -36,6 +36,7 @@ import org.bukkit.Material;
 import org.bukkit.block.Block;
 import org.bukkit.block.data.BlockData;
 import org.bukkit.block.data.Openable;
+import org.bukkit.entity.Entity;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
@@ -66,7 +67,9 @@ public class ItemEventListener implements Listener {
 
     @EventHandler(ignoreCancelled = true, priority = EventPriority.HIGHEST)
     public void onInteractEntity(PlayerInteractEntityEvent event) {
-        BukkitServerPlayer serverPlayer = this.plugin.adapt(event.getPlayer());
+        Player player = event.getPlayer();
+        Entity entity = event.getRightClicked();
+        BukkitServerPlayer serverPlayer = this.plugin.adapt(player);
         if (serverPlayer == null) return;
         InteractionHand hand = event.getHand() == EquipmentSlot.HAND ? InteractionHand.MAIN_HAND : InteractionHand.OFF_HAND;
         Item<ItemStack> itemInHand = serverPlayer.getItemInHand(hand);
@@ -74,6 +77,7 @@ public class ItemEventListener implements Listener {
         if (ItemUtils.isEmpty(itemInHand)) return;
         Optional<CustomItem<ItemStack>> optionalCustomItem = itemInHand.getCustomItem();
         if (optionalCustomItem.isEmpty()) return;
+        if (InteractUtils.isEntityInteractable(player, entity, itemInHand)) return;
 
         Cancellable cancellable = Cancellable.of(event::isCancelled, event::setCancelled);
         PlayerOptionalContext context = PlayerOptionalContext.of(serverPlayer, ContextHolder.builder()
@@ -275,7 +279,9 @@ public class ItemEventListener implements Listener {
                         .withParameter(DirectContextParameters.EVENT, dummy)
                 );
                 CustomItem<ItemStack> customItem = optionalCustomItem.get();
-                customItem.execute(context, EventTrigger.RIGHT_CLICK);
+                if (!(InteractUtils.isInteractable(player, blockData, hitResult, itemInHand) && !player.isSneaking())) {
+                    customItem.execute(context, EventTrigger.RIGHT_CLICK);
+                }
                 if (dummy.isCancelled()) {
                     event.setCancelled(true);
                     return;
