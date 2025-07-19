@@ -5,14 +5,14 @@ import net.momirealms.craftengine.core.util.UniqueKey;
 import java.util.*;
 import java.util.function.Predicate;
 
-public class Ingredient<T> implements Predicate<OptimizedIDItem<T>>, StackedContents.IngredientInfo<UniqueKey> {
+public class Ingredient<T> implements Predicate<UniqueIdItem<T>>, StackedContents.IngredientInfo<UniqueKey> {
     private final List<UniqueKey> items;
 
     public Ingredient(List<UniqueKey> items) {
         this.items = items;
     }
 
-    public static <T> boolean isInstance(Optional<Ingredient<T>> optionalIngredient, OptimizedIDItem<T> stack) {
+    public static <T> boolean isInstance(Optional<Ingredient<T>> optionalIngredient, UniqueIdItem<T> stack) {
         return optionalIngredient.map((ingredient) -> ingredient.test(stack))
                 .orElseGet(stack::isEmpty);
     }
@@ -26,9 +26,9 @@ public class Ingredient<T> implements Predicate<OptimizedIDItem<T>>, StackedCont
     }
 
     @Override
-    public boolean test(OptimizedIDItem<T> optimizedIDItem) {
+    public boolean test(UniqueIdItem<T> uniqueIdItem) {
         for (UniqueKey item : this.items()) {
-            if (optimizedIDItem.is(item)) {
+            if (uniqueIdItem.is(item)) {
                 return true;
             }
         }

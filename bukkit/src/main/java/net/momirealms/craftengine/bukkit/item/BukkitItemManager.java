@@ -14,13 +14,14 @@ import net.momirealms.craftengine.bukkit.nms.FastNMS;
 import net.momirealms.craftengine.bukkit.plugin.BukkitCraftEngine;
 import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.CoreReflections;
 import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.MBuiltInRegistries;
-import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.MItems;
 import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.MRegistries;
+import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.MRegistryOps;
 import net.momirealms.craftengine.bukkit.util.ItemStackUtils;
 import net.momirealms.craftengine.bukkit.util.KeyUtils;
 import net.momirealms.craftengine.core.entity.player.Player;
 import net.momirealms.craftengine.core.item.*;
 import net.momirealms.craftengine.core.item.modifier.IdModifier;
+import net.momirealms.craftengine.core.item.recipe.UniqueIdItem;
 import net.momirealms.craftengine.core.pack.AbstractPackManager;
 import net.momirealms.craftengine.core.plugin.config.Config;
 import net.momirealms.craftengine.core.plugin.context.ContextHolder;
@@ -28,8 +29,6 @@ import net.momirealms.craftengine.core.plugin.locale.LocalizedResourceConfigExce
 import net.momirealms.craftengine.core.plugin.logger.Debugger;
 import net.momirealms.craftengine.core.util.*;
 import org.bukkit.Bukkit;
-import org.bukkit.Material;
-import org.bukkit.Registry;
 import org.bukkit.event.HandlerList;
 import org.bukkit.inventory.ItemStack;
 import org.jetbrains.annotations.NotNull;
@@ -39,6 +38,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
+import java.util.function.Function;
 
 public class BukkitItemManager extends AbstractItemManager<ItemStack> {
     static {
@@ -54,10 +54,12 @@ public class BukkitItemManager extends AbstractItemManager<ItemStack> {
     private final ArmorEventListener armorEventListener;
     private final NetworkItemHandler<ItemStack> networkItemHandler;
     private final Object bedrockItemHolder;
-    private final Item<ItemStack> empty;
-    private final ItemStack emptyStack;
+    private final Item<ItemStack> emptyItem;
+    private final UniqueIdItem<ItemStack> emptyUniqueItem;
+    private final Function<Object, Integer> decoratedHashOpsGenerator;
     private Set<Key> lastRegisteredPatterns = Set.of();
 
+    @SuppressWarnings("unchecked")
     public BukkitItemManager(BukkitCraftEngine plugin) {
         super(plugin);
         instance = this;
@@ -68,11 +70,34 @@ public class BukkitItemManager extends AbstractItemManager<ItemStack> {
         this.armorEventListener = new ArmorEventListener();
         this.networkItemHandler = VersionHelper.isOrAbove1_20_5() ? new ModernNetworkItemHandler() : new LegacyNetworkItemHandler();
         this.registerAllVanillaItems();
-        this.bedrockItemHolder = FastNMS.INSTANCE.method$Registry$getHolderByResourceKey(MBuiltInRegistries.ITEM, FastNMS.INSTANCE.method$ResourceKey$create(MRegistries.ITEM, KeyUtils.toResourceLocation(Key.of("minecraft:bedrock")))).get();;
+        this.bedrockItemHolder = FastNMS.INSTANCE.method$Registry$getHolderByResourceKey(MBuiltInRegistries.ITEM, FastNMS.INSTANCE.method$ResourceKey$create(MRegistries.ITEM, KeyUtils.toResourceLocation(Key.of("minecraft:bedrock")))).get();
         this.registerCustomTrimMaterial();
         this.loadLastRegisteredPatterns();
-        this.empty = this.wrap(FastNMS.INSTANCE.method$CraftItemStack$asCraftMirror(CoreReflections.instance$ItemStack$EMPTY));
-        this.emptyStack = FastNMS.INSTANCE.method$CraftItemStack$asCraftMirror(FastNMS.INSTANCE.constructor$ItemStack(MItems.AIR, 1));
+
+        ItemStack emptyStack = FastNMS.INSTANCE.method$CraftItemStack$asCraftMirror(CoreReflections.instance$ItemStack$EMPTY);
+        this.emptyItem = this.wrap(emptyStack);
+        this.emptyUniqueItem = new UniqueIdItem<>(UniqueKey.AIR, this.emptyItem);
+        this.decoratedHashOpsGenerator = VersionHelper.isOrAbove1_21_5() ? (Function<Object, Integer>) FastNMS.INSTANCE.createDecoratedHashOpsGenerator(MRegistryOps.HASHCODE) : null;
+    }
+
+    @SuppressWarnings("unchecked")
+    @Override
+    public void delayedLoad() {
+        super.delayedLoad();
+        List<ExternalItemSource<ItemStack>> sources = new ArrayList<>();
+        for (String externalSource : Config.recipeIngredientSources()) {
+            String sourceId = externalSource.toLowerCase(Locale.ENGLISH);
+            ExternalItemSource<ItemStack> provider = getExternalItemSource(sourceId);
+            if (provider != null) {
+                sources.add(provider);
+            }
+        }
+        this.factory.resetRecipeIngredientSources(sources.isEmpty() ? null : sources.toArray(new ExternalItemSource[0]));
+    }
+
+    @Override
+    public UniqueIdItem<ItemStack> uniqueEmptyItem() {
+        return this.emptyUniqueItem;
     }
 
     @Override
@@ -104,18 +129,20 @@ public class BukkitItemManager extends AbstractItemManager<ItemStack> {
 
     @Override
     public Item<ItemStack> s2c(Item<ItemStack> item, Player player) {
+        if (item.isEmpty()) return item;
         return this.networkItemHandler.s2c(item, player).orElse(item);
     }
 
     @Override
     public Item<ItemStack> c2s(Item<ItemStack> item) {
+        if (item.isEmpty()) return item;
         return this.networkItemHandler.c2s(item).orElse(item);
     }
 
     public Optional<ItemStack> s2c(ItemStack itemStack, Player player) {
         try {
             Item<ItemStack> wrapped = wrap(itemStack);
-            if (wrapped == null) return Optional.empty();
+            if (wrapped.isEmpty()) return Optional.empty();
             return this.networkItemHandler.s2c(wrapped, player).map(Item::getItem);
         } catch (Throwable e) {
             Debugger.ITEM.warn(() -> "Failed to handle s2c items.", e);
@@ -126,7 +153,7 @@ public class BukkitItemManager extends AbstractItemManager<ItemStack> {
     public Optional<ItemStack> c2s(ItemStack itemStack) {
         try {
             Item<ItemStack> wrapped = wrap(itemStack);
-            if (wrapped == null) return Optional.empty();
+            if (wrapped.isEmpty()) return Optional.empty();
             return this.networkItemHandler.c2s(wrapped).map(Item::getItem);
         } catch (Throwable e) {
             Debugger.COMMON.warn(() -> "Failed to handle c2s items.", e);
@@ -136,11 +163,11 @@ public class BukkitItemManager extends AbstractItemManager<ItemStack> {
 
     @Override
     public Optional<BuildableItem<ItemStack>> getVanillaItem(Key key) {
-        Material material = Registry.MATERIAL.get(KeyUtils.toNamespacedKey(key));
-        if (material == null) {
+        ItemStack vanilla = createVanillaItemStack(key);
+        if (vanilla == null) {
             return Optional.empty();
         }
-        return Optional.of(new CloneableConstantItem(key, new ItemStack(material)));
+        return Optional.of(new CloneableConstantItem(key, this.wrap(vanilla)));
     }
 
     @Override
@@ -332,7 +359,7 @@ public class BukkitItemManager extends AbstractItemManager<ItemStack> {
 
     @Override
     public @NotNull Item<ItemStack> wrap(ItemStack itemStack) {
-        if (itemStack == null) return this.empty;
+        if (itemStack == null) return this.emptyItem;
         return this.factory.wrap(itemStack);
     }
 
@@ -385,5 +412,52 @@ public class BukkitItemManager extends AbstractItemManager<ItemStack> {
         } catch (ReflectiveOperationException e) {
             plugin.logger().warn("Failed to init vanilla items", e);
         }
+    }
+
+    // 1.20-1.21.4 template 不为空
+    // 1.21.5+ pattern 不为空
+    @Override
+    public Item<ItemStack> applyTrim(Item<ItemStack> base, Item<ItemStack> addition, Item<ItemStack> template, Key pattern) {
+        Optional<?> optionalMaterial = FastNMS.INSTANCE.method$TrimMaterials$getFromIngredient(addition.getLiteralObject());
+        Optional<?> optionalPattern = VersionHelper.isOrAbove1_21_5() ?
+                FastNMS.INSTANCE.method$Registry$getHolderByResourceLocation(FastNMS.INSTANCE.method$RegistryAccess$lookupOrThrow(FastNMS.INSTANCE.registryAccess(), MRegistries.TRIM_PATTERN), KeyUtils.toResourceLocation(pattern)) :
+                FastNMS.INSTANCE.method$TrimPatterns$getFromTemplate(template.getLiteralObject());
+        if (optionalMaterial.isPresent() && optionalPattern.isPresent()) {
+            Object armorTrim = FastNMS.INSTANCE.constructor$ArmorTrim(optionalMaterial.get(), optionalPattern.get());
+            Object previousTrim;
+            if (VersionHelper.isOrAbove1_20_5()) {
+                previousTrim = base.getExactComponent(ComponentKeys.TRIM);
+            } else {
+                try {
+                    previousTrim = VersionHelper.isOrAbove1_20_2() ?
+                    ((Optional<?>) CoreReflections.method$ArmorTrim$getTrim.invoke(null, FastNMS.INSTANCE.registryAccess(), base.getLiteralObject(), true)).orElse(null) :
+                    ((Optional<?>) CoreReflections.method$ArmorTrim$getTrim.invoke(null, FastNMS.INSTANCE.registryAccess(), base.getLiteralObject())).orElse(null);
+                } catch (ReflectiveOperationException e) {
+                    this.plugin.logger().warn("Failed to get armor trim", e);
+                    return this.emptyItem;
+                }
+            }
+            if (armorTrim.equals(previousTrim)) {
+                return this.emptyItem;
+            }
+            Item<ItemStack> newItem = base.copyWithCount(1);
+            if (VersionHelper.isOrAbove1_20_5()) {
+                newItem.setExactComponent(ComponentKeys.TRIM, armorTrim);
+            } else {
+                try {
+                    CoreReflections.method$ArmorTrim$setTrim.invoke(null, FastNMS.INSTANCE.registryAccess(), newItem.getLiteralObject(), armorTrim);
+                } catch (ReflectiveOperationException e) {
+                    this.plugin.logger().warn("Failed to set armor trim", e);
+                    return this.emptyItem;
+                }
+            }
+            return newItem;
+        }
+        return this.emptyItem;
+    }
+
+    @Nullable // 1.21.5+
+    public Function<Object, Integer> decoratedHashOpsGenerator() {
+        return decoratedHashOpsGenerator;
     }
 }

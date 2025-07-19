@@ -72,8 +72,29 @@ public class ComponentItemFactory1_20_5 extends BukkitItemFactory<ComponentItemW
         return currentObj;
     }
 
+    @SuppressWarnings("DuplicatedCode")
     @Override
-    protected Tag getNBTTag(ComponentItemWrapper item, Object... path) {
+    protected Object getExactTag(ComponentItemWrapper item, Object... path) {
+        Object customData = getExactComponent(item, ComponentTypes.CUSTOM_DATA);
+        if (customData == null) return null;
+        Object currentTag = FastNMS.INSTANCE.method$CustomData$getUnsafe(customData);
+        for (int i = 0; i < path.length; i++) {
+            Object pathSegment = path[i];
+            if (pathSegment == null) return null;
+            currentTag = FastNMS.INSTANCE.method$CompoundTag$get(currentTag, path[i].toString());
+            if (currentTag == null) return null;
+            if (i == path.length - 1) {
+                return currentTag;
+            }
+            if (!CoreReflections.clazz$CompoundTag.isInstance(currentTag)) {
+                return null;
+            }
+        }
+        return null;
+    }
+
+    @Override
+    protected Tag getTag(ComponentItemWrapper item, Object... path) {
         CompoundTag rootTag = (CompoundTag) item.getSparrowNBTComponent(ComponentTypes.CUSTOM_DATA).orElse(null);
         if (rootTag == null) return null;
         Tag currentTag = rootTag;
@@ -140,7 +161,7 @@ public class ComponentItemFactory1_20_5 extends BukkitItemFactory<ComponentItemW
 
     @Override
     protected boolean hasTag(ComponentItemWrapper item, Object... path) {
-        return getNBTTag(item, path) != null;
+        return getTag(item, path) != null;
     }
 
     @Override
@@ -219,6 +240,11 @@ public class ComponentItemFactory1_20_5 extends BukkitItemFactory<ComponentItemW
     @Override
     protected Object getExactComponent(ComponentItemWrapper item, Object type) {
         return item.getComponentExact(type);
+    }
+
+    @Override
+    protected void setExactComponent(ComponentItemWrapper item, Object type, Object value) {
+        item.setComponentExact(type, value);
     }
 
     @Override
@@ -475,8 +501,8 @@ public class ComponentItemFactory1_20_5 extends BukkitItemFactory<ComponentItemW
             item.resetComponent(ComponentTypes.TRIM);
         } else {
             item.setJavaComponent(ComponentTypes.TRIM, Map.of(
-                    "pattern", trim.pattern(),
-                    "material", trim.material()
+                    "pattern", trim.pattern().asString(),
+                    "material", trim.material().asString()
             ));
         }
     }
@@ -489,7 +515,7 @@ public class ComponentItemFactory1_20_5 extends BukkitItemFactory<ComponentItemW
         }
         @SuppressWarnings("unchecked")
         Map<String, String> trimMap = (Map<String, String>) trim.get();
-        return Optional.of(new Trim(trimMap.get("pattern"), trimMap.get("material")));
+        return Optional.of(new Trim(Key.of(trimMap.get("pattern")), Key.of(trimMap.get("material"))));
     }
 
     @SuppressWarnings("unchecked")

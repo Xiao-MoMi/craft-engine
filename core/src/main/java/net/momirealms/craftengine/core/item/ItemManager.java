@@ -4,6 +4,7 @@ import net.momirealms.craftengine.core.entity.player.Player;
 import net.momirealms.craftengine.core.item.behavior.ItemBehavior;
 import net.momirealms.craftengine.core.item.equipment.Equipment;
 import net.momirealms.craftengine.core.item.modifier.ItemDataModifier;
+import net.momirealms.craftengine.core.item.recipe.UniqueIdItem;
 import net.momirealms.craftengine.core.pack.model.LegacyOverridesModel;
 import net.momirealms.craftengine.core.pack.model.ModernItemModel;
 import net.momirealms.craftengine.core.pack.model.generation.ModelGenerator;
@@ -22,6 +23,8 @@ import java.util.function.Function;
 public interface ItemManager<T> extends Manageable, ModelGenerator {
 
     void registerDataType(Function<Object, ItemDataModifier<T>> factory, String... alias);
+
+    Function<Object, ItemDataModifier<T>> getDataType(String key);
 
     Map<Key, Equipment> equipments();
 
@@ -60,9 +63,9 @@ public interface ItemManager<T> extends Manageable, ModelGenerator {
 
     Key customItemId(T itemStack);
 
-    ExternalItemProvider<T> getExternalItemProvider(String name);
+    ExternalItemSource<T> getExternalItemSource(String name);
 
-    boolean registerExternalItemProvider(ExternalItemProvider<T> externalItemProvider);
+    boolean registerExternalItemSource(ExternalItemSource<T> externalItemSource);
 
     Optional<Equipment> getEquipment(Key key);
 
@@ -107,4 +110,8 @@ public interface ItemManager<T> extends Manageable, ModelGenerator {
     Item<T> s2c(Item<T> item, Player player);
 
     Item<T> c2s(Item<T> item);
+
+    UniqueIdItem<T> uniqueEmptyItem();
+
+    Item<T> applyTrim(Item<T> base, Item<T> addition, Item<T> template, Key pattern);
 }

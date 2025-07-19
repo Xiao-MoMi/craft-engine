@@ -8,7 +8,7 @@ import net.momirealms.craftengine.core.util.ResourceConfigUtils;
 
 import java.util.Map;
 
-public class UseDurationRangeDispatchProperty implements RangeDispatchProperty, LegacyModelPredicate<Float> {
+public class UseDurationRangeDispatchProperty implements RangeDispatchProperty, LegacyModelPredicate<Number> {
     public static final Factory FACTORY = new Factory();
     public static final Reader READER = new Reader();
     private final boolean remaining;
@@ -37,7 +37,7 @@ public class UseDurationRangeDispatchProperty implements RangeDispatchProperty, 
     }
 
     @Override
-    public Number toLegacyValue(Float value) {
+    public Number toLegacyValue(Number value) {
         return value;
     }
 

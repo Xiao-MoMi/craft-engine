@@ -5,9 +5,9 @@ import net.momirealms.craftengine.bukkit.util.ItemStackUtils;
 import net.momirealms.craftengine.core.item.Item;
 import net.momirealms.craftengine.core.item.ItemBuildContext;
 import net.momirealms.craftengine.core.item.ItemManager;
-import net.momirealms.craftengine.core.item.recipe.OptimizedIDItem;
 import net.momirealms.craftengine.core.item.recipe.Recipe;
 import net.momirealms.craftengine.core.item.recipe.RecipeTypes;
+import net.momirealms.craftengine.core.item.recipe.UniqueIdItem;
 import net.momirealms.craftengine.core.item.recipe.input.CraftingInput;
 import net.momirealms.craftengine.core.plugin.config.Config;
 import net.momirealms.craftengine.core.util.Key;
@@ -52,33 +52,33 @@ public class CrafterEventListener implements Listener {
         Inventory inventory = crafter.getInventory();
         ItemStack[] ingredients = inventory.getStorageContents();
 
-        List<OptimizedIDItem<ItemStack>> optimizedIDItems = new ArrayList<>();
+        List<UniqueIdItem<ItemStack>> uniqueIdItems = new ArrayList<>();
         for (ItemStack itemStack : ingredients) {
             if (ItemStackUtils.isEmpty(itemStack)) {
-                optimizedIDItems.add(RecipeEventListener.EMPTY);
+                uniqueIdItems.add(this.itemManager.uniqueEmptyItem());
             } else {
                 Item<ItemStack> wrappedItem = this.itemManager.wrap(itemStack);
-                optimizedIDItems.add(new OptimizedIDItem<>(wrappedItem.recipeIngredientId(), itemStack));
+                uniqueIdItems.add(new UniqueIdItem<>(wrappedItem.recipeIngredientId(), wrappedItem));
             }
         }
 
         CraftingInput<ItemStack> input;
         if (ingredients.length == 9) {
-            input = CraftingInput.of(3, 3, optimizedIDItems);
+            input = CraftingInput.of(3, 3, uniqueIdItems);
         } else if (ingredients.length == 4) {
-            input = CraftingInput.of(2, 2, optimizedIDItems);
+            input = CraftingInput.of(2, 2, uniqueIdItems);
         } else {
             return;
         }
 
         Recipe<ItemStack> ceRecipe = this.recipeManager.recipeByInput(RecipeTypes.SHAPELESS, input);
         if (ceRecipe != null) {
-            event.setResult(ceRecipe.result(ItemBuildContext.EMPTY));
+            event.setResult(ceRecipe.assemble(input, ItemBuildContext.EMPTY));
             return;
         }
         ceRecipe = this.recipeManager.recipeByInput(RecipeTypes.SHAPED, input);
         if (ceRecipe != null) {
-            event.setResult(ceRecipe.result(ItemBuildContext.EMPTY));
+            event.setResult(ceRecipe.assemble(input, ItemBuildContext.EMPTY));
             return;
         }
         // clear result if not met

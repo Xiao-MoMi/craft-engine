@@ -106,7 +106,7 @@ public class CustomShapedRecipe<T> extends CustomCraftingTableRecipe<T> {
                     } else {
                         optional = this.ingredients.get(j + i * this.width);
                     }
-                    OptimizedIDItem<T> itemStack = input.getItem(j, i);
+                    UniqueIdItem<T> itemStack = input.getItem(j, i);
                     if (!Ingredient.isInstance(optional, itemStack)) {
                         return false;
                     }

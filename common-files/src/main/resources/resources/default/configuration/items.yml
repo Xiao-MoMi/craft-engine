@@ -305,6 +305,7 @@ templates:
     settings:
       tags:
         - default:topaz_tools
+        - minecraft:trimmable_armor
       equipment:
         asset-id: default:topaz
         $$>=1.21.2:

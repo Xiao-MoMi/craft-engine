@@ -7,7 +7,7 @@ import java.util.List;
 public class RecipeFinder {
     private final StackedContents<UniqueKey> stackedContents = new StackedContents<>();
 
-    public <T> void addInput(OptimizedIDItem<T> item) {
+    public <T> void addInput(UniqueIdItem<T> item) {
         if (!item.isEmpty()) {
             this.stackedContents.add(item.id(), 1);
         }

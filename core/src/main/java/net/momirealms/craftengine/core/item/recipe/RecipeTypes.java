@@ -20,6 +20,7 @@ public class RecipeTypes {
     public static final Key STONECUTTING = Key.of("minecraft:stonecutting");
     public static final Key SMITHING_TRANSFORM = Key.of("minecraft:smithing_transform");
     public static final Key SMITHING_TRIM = Key.of("minecraft:smithing_trim");
+    public static final Key BREWING = Key.of("minecraft:brewing");
 
     static {
         register(SHAPED, CustomShapedRecipe.FACTORY);
@@ -30,6 +31,8 @@ public class RecipeTypes {
         register(CAMPFIRE_COOKING, CustomCampfireRecipe.FACTORY);
         register(STONECUTTING, CustomStoneCuttingRecipe.FACTORY);
         register(SMITHING_TRANSFORM, CustomSmithingTransformRecipe.FACTORY);
+        register(SMITHING_TRIM, CustomSmithingTrimRecipe.FACTORY);
+        register(BREWING, CustomBrewingRecipe.FACTORY);
     }
 
     public static <T> void register(Key key, RecipeFactory<T> factory) {

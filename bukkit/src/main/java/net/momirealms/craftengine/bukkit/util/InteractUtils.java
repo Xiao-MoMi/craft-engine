@@ -4,8 +4,8 @@ import net.momirealms.craftengine.bukkit.item.recipe.BukkitRecipeManager;
 import net.momirealms.craftengine.core.block.BlockKeys;
 import net.momirealms.craftengine.core.item.Item;
 import net.momirealms.craftengine.core.item.ItemKeys;
-import net.momirealms.craftengine.core.item.recipe.OptimizedIDItem;
 import net.momirealms.craftengine.core.item.recipe.RecipeTypes;
+import net.momirealms.craftengine.core.item.recipe.UniqueIdItem;
 import net.momirealms.craftengine.core.item.recipe.input.SingleItemInput;
 import net.momirealms.craftengine.core.plugin.CraftEngine;
 import net.momirealms.craftengine.core.plugin.config.Config;
@@ -78,14 +78,14 @@ public class InteractUtils {
         });
         registerInteraction(BlockKeys.SOUL_CAMPFIRE, (player, item, blockState, result) -> {
             if (!Config.enableRecipeSystem()) return false;
-            return BukkitRecipeManager.instance().recipeByInput(RecipeTypes.CAMPFIRE_COOKING, new SingleItemInput<>(new OptimizedIDItem<>(
-                    item.recipeIngredientId(), item.getItem()
+            return BukkitRecipeManager.instance().recipeByInput(RecipeTypes.CAMPFIRE_COOKING, new SingleItemInput<>(new UniqueIdItem<>(
+                    item.recipeIngredientId(), item
             ))) != null;
         });
         registerInteraction(BlockKeys.CAMPFIRE, (player, item, blockState, result) -> {
             if (!Config.enableRecipeSystem()) return false;
-            return BukkitRecipeManager.instance().recipeByInput(RecipeTypes.CAMPFIRE_COOKING, new SingleItemInput<>(new OptimizedIDItem<>(
-                    item.recipeIngredientId(), item.getItem()
+            return BukkitRecipeManager.instance().recipeByInput(RecipeTypes.CAMPFIRE_COOKING, new SingleItemInput<>(new UniqueIdItem<>(
+                    item.recipeIngredientId(), item
             ))) != null;
         });
         registerInteraction(BlockKeys.DECORATED_POT, (player, item, blockState, result) -> true);

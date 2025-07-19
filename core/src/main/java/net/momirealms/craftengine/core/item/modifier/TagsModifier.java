@@ -41,7 +41,7 @@ public class TagsModifier<I> implements ItemDataModifier<I> {
     @Override
     public Item<I> prepareNetworkItem(Item<I> item, ItemBuildContext context, CompoundTag networkData) {
         for (Map.Entry<String, Object> entry : this.arguments.entrySet()) {
-            Tag previous = item.getNBTTag(entry.getKey());
+            Tag previous = item.getTag(entry.getKey());
             if (previous != null) {
                 networkData.put(entry.getKey(), NetworkItemHandler.pack(NetworkItemHandler.Operation.ADD, previous));
             } else {

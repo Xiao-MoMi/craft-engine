@@ -1,33 +1,34 @@
 package net.momirealms.craftengine.core.item.recipe.input;
 
-import net.momirealms.craftengine.core.item.recipe.OptimizedIDItem;
+import net.momirealms.craftengine.core.item.recipe.UniqueIdItem;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class SmithingInput<T> implements RecipeInput {
-    private final OptimizedIDItem<T> base;
-    private final OptimizedIDItem<T> template;
-    private final OptimizedIDItem<T> addition;
+public final class SmithingInput<T> implements RecipeInput {
+    private final UniqueIdItem<T> base;
+    private final UniqueIdItem<T> template;
+    private final UniqueIdItem<T> addition;
 
-    public SmithingInput(@Nullable OptimizedIDItem<T> base,
-                         @Nullable OptimizedIDItem<T> template,
-                         @Nullable OptimizedIDItem<T> addition) {
+    public SmithingInput(@NotNull UniqueIdItem<T> base,
+                         @Nullable UniqueIdItem<T> template,
+                         @Nullable UniqueIdItem<T> addition) {
         this.base = base;
         this.template = template;
         this.addition = addition;
     }
 
-    @Nullable
-    public OptimizedIDItem<T> base() {
+    @NotNull
+    public UniqueIdItem<T> base() {
         return base;
     }
 
     @Nullable
-    public OptimizedIDItem<T> template() {
+    public UniqueIdItem<T> template() {
         return template;
     }
 
     @Nullable
-    public OptimizedIDItem<T> addition() {
+    public UniqueIdItem<T> addition() {
         return addition;
     }
 }

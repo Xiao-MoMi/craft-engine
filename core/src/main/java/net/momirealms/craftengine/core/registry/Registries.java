@@ -6,6 +6,7 @@ import net.momirealms.craftengine.core.block.properties.PropertyFactory;
 import net.momirealms.craftengine.core.entity.furniture.HitBoxFactory;
 import net.momirealms.craftengine.core.item.behavior.ItemBehaviorFactory;
 import net.momirealms.craftengine.core.item.equipment.EquipmentFactory;
+import net.momirealms.craftengine.core.item.recipe.CustomRecipeResult;
 import net.momirealms.craftengine.core.item.recipe.CustomSmithingTransformRecipe;
 import net.momirealms.craftengine.core.item.recipe.RecipeFactory;
 import net.momirealms.craftengine.core.item.recipe.network.legacy.LegacyRecipe;
@@ -42,7 +43,6 @@ import net.momirealms.craftengine.core.util.ResourceKey;
 public class Registries {
     public static final Key ROOT_REGISTRY = Key.withDefaultNamespace("root");
     public static final ResourceKey<Registry<CustomBlock>> BLOCK = ResourceKey.create(ROOT_REGISTRY, Key.withDefaultNamespace("block"));
-    public static final ResourceKey<Registry<Key>> OPTIMIZED_ITEM_ID = ResourceKey.create(ROOT_REGISTRY, Key.withDefaultNamespace("optimized_item_id"));
     public static final ResourceKey<Registry<PropertyFactory>> PROPERTY_FACTORY = ResourceKey.create(ROOT_REGISTRY, Key.withDefaultNamespace("property_factory"));
     public static final ResourceKey<Registry<BlockBehaviorFactory>> BLOCK_BEHAVIOR_FACTORY = ResourceKey.create(ROOT_REGISTRY, Key.withDefaultNamespace("block_behavior_factory"));
     public static final ResourceKey<Registry<ItemBehaviorFactory>> ITEM_BEHAVIOR_FACTORY = ResourceKey.create(ROOT_REGISTRY, Key.withDefaultNamespace("item_behavior_factory"));
@@ -77,4 +77,5 @@ public class Registries {
     public static final ResourceKey<Registry<SlotDisplay.Type>> SLOT_DISPLAY_TYPE = ResourceKey.create(ROOT_REGISTRY, Key.withDefaultNamespace("slot_display_type"));
     public static final ResourceKey<Registry<RecipeDisplay.Type>> RECIPE_DISPLAY_TYPE = ResourceKey.create(ROOT_REGISTRY, Key.withDefaultNamespace("recipe_display_type"));
     public static final ResourceKey<Registry<LegacyRecipe.Type>> LEGACY_RECIPE_TYPE = ResourceKey.create(ROOT_REGISTRY, Key.withDefaultNamespace("legacy_recipe_type"));
+    public static final ResourceKey<Registry<CustomRecipeResult.ApplyItemDataProcessor.Type<?>>> RECIPE_POST_PROCESSOR_TYPE = ResourceKey.create(ROOT_REGISTRY, Key.withDefaultNamespace("recipe_post_processor_type"));
 }

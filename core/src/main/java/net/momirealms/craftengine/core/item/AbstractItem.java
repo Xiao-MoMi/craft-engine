@@ -331,8 +331,13 @@ public class AbstractItem<W extends ItemWrapper<I>, I> implements Item<I> {
     }
 
     @Override
-    public Tag getNBTTag(Object... path) {
-        return this.factory.getNBTTag(this.item, path);
+    public Tag getTag(Object... path) {
+        return this.factory.getTag(this.item, path);
+    }
+
+    @Override
+    public Object getExactTag(Object... path) {
+        return this.factory.getExactTag(this.item, path);
     }
 
     @Override
@@ -364,6 +369,11 @@ public class AbstractItem<W extends ItemWrapper<I>, I> implements Item<I> {
     @Override
     public Object getExactComponent(Object type) {
         return this.factory.getExactComponent(this.item, type);
+    }
+
+    @Override
+    public void setExactComponent(Object type, Object value) {
+        this.factory.setExactComponent(this.item, type, value);
     }
 
     @Override

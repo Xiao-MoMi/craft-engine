@@ -36,7 +36,7 @@ public class UnbreakableModifier<I> implements ItemDataModifier<I> {
                 networkData.put(ComponentKeys.UNBREAKABLE.asString(), NetworkItemHandler.pack(NetworkItemHandler.Operation.REMOVE));
             }
         } else {
-            Tag previous = item.getNBTTag("Unbreakable");
+            Tag previous = item.getTag("Unbreakable");
             if (previous != null) {
                 networkData.put("Unbreakable", NetworkItemHandler.pack(NetworkItemHandler.Operation.ADD, previous));
             } else {

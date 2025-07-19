@@ -1,15 +1,15 @@
 package net.momirealms.craftengine.core.item.modifier;
 
-import net.momirealms.craftengine.core.item.ExternalItemProvider;
+import net.momirealms.craftengine.core.item.ExternalItemSource;
 import net.momirealms.craftengine.core.item.Item;
 import net.momirealms.craftengine.core.item.ItemBuildContext;
 import net.momirealms.craftengine.core.plugin.CraftEngine;
 
 public class ExternalModifier<I> implements ItemDataModifier<I> {
     private final String id;
-    private final ExternalItemProvider<I> provider;
+    private final ExternalItemSource<I> provider;
 
-    public ExternalModifier(String id, ExternalItemProvider<I> provider) {
+    public ExternalModifier(String id, ExternalItemSource<I> provider) {
         this.id = id;
         this.provider = provider;
     }

@@ -2,7 +2,10 @@ package net.momirealms.craftengine.bukkit.world;
 
 import net.momirealms.craftengine.bukkit.api.CraftEngineBlocks;
 import net.momirealms.craftengine.bukkit.nms.FastNMS;
+import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.CoreReflections;
+import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.MBlocks;
 import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.MFluids;
+import net.momirealms.craftengine.bukkit.util.BlockStateUtils;
 import net.momirealms.craftengine.bukkit.util.LocationUtils;
 import net.momirealms.craftengine.core.block.CustomBlock;
 import net.momirealms.craftengine.core.block.ImmutableBlockState;
@@ -21,18 +24,22 @@ public class BukkitBlockInWorld implements BlockInWorld {
 
     @Override
     public boolean canBeReplaced(BlockPlaceContext context) {
-        ImmutableBlockState customState = CraftEngineBlocks.getCustomBlockState(this.block);
+        Object state = BlockStateUtils.getBlockState(this.block);
+        ImmutableBlockState customState = BlockStateUtils.getOptionalCustomBlockState(state).orElse(null);
         if (customState != null && !customState.isEmpty()) {
             return customState.behavior().canBeReplaced(context, customState);
         }
-        return this.block.isReplaceable();
+        if (BlockStateUtils.getBlockOwner(state) == MBlocks.SNOW) {
+            return (int) FastNMS.INSTANCE.method$StateHolder$getValue(state, CoreReflections.instance$SnowLayerBlock$LAYERS) == 1;
+        }
+        return BlockStateUtils.isReplaceable(state);
     }
 
     @Override
     public boolean isWaterSource(BlockPlaceContext blockPlaceContext) {
         Location location = this.block.getLocation();
         Object serverLevel = FastNMS.INSTANCE.field$CraftWorld$ServerLevel(this.block.getWorld());
-        Object fluidData = FastNMS.INSTANCE.method$Level$getFluidState(serverLevel, LocationUtils.toBlockPos(location.getBlockX(), location.getBlockY(), location.getBlockZ()));
+        Object fluidData = FastNMS.INSTANCE.method$BlockGetter$getFluidState(serverLevel, LocationUtils.toBlockPos(location.getBlockX(), location.getBlockY(), location.getBlockZ()));
         if (fluidData == null) return false;
         return FastNMS.INSTANCE.method$FluidState$getType(fluidData) == MFluids.WATER;
     }

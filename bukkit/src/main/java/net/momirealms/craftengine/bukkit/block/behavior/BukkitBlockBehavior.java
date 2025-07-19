@@ -155,7 +155,7 @@ public class BukkitBlockBehavior extends AbstractBlockBehavior {
         Object fluidType = FastNMS.INSTANCE.method$FluidState$getType(args[3]);
         if (!immutableBlockState.get(this.waterloggedProperty) && fluidType == MFluids.WATER) {
             FastNMS.INSTANCE.method$LevelWriter$setBlock(args[0], args[1], immutableBlockState.with(this.waterloggedProperty, true).customBlockState().handle(), 3);
-            FastNMS.INSTANCE.method$LevelAccessor$scheduleFluidTick(args[0], args[1], fluidType, 5);
+            FastNMS.INSTANCE.method$ScheduledTickAccess$scheduleFluidTick(args[0], args[1], fluidType, 5);
             return true;
         }
         return false;

@@ -66,7 +66,7 @@ public class LeavesBlockBehavior extends BukkitBlockBehavior {
                 LeavesBlockBehavior behavior = optionalBehavior.get();
                 int distance = behavior.getDistanceAt(neighborState) + 1;
                 if (distance != 1 || behavior.getDistance(optionalCustomState.get()) != distance) {
-                    FastNMS.INSTANCE.method$LevelAccessor$scheduleBlockTick(world, blockPos, thisBlock, 1);
+                    FastNMS.INSTANCE.method$ScheduledTickAccess$scheduleBlockTick(world, blockPos, thisBlock, 1);
                 }
             }
         }

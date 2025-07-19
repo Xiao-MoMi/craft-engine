@@ -141,7 +141,9 @@ public interface Item<I> {
 
     Object getJavaTag(Object... path);
 
-    Tag getNBTTag(Object... path);
+    Tag getTag(Object... path);
+
+    Object getExactTag(Object... path);
 
     Item<I> setTag(Object value, Object... path);
 
@@ -152,6 +154,8 @@ public interface Item<I> {
     boolean hasComponent(Object type);
 
     void removeComponent(Object type);
+
+    void setExactComponent(Object type, Object value);
 
     Object getExactComponent(Object type);
 

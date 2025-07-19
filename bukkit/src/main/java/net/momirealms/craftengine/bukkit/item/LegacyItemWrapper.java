@@ -72,6 +72,7 @@ public class LegacyItemWrapper implements ItemWrapper<ItemStack> {
         getItem().setAmount(amount);
     }
 
+    @SuppressWarnings("DuplicatedCode")
     public Object getExactTag(Object... path) {
         Object compoundTag = FastNMS.INSTANCE.method$ItemStack$getTag(this.nmsStack);
         if (compoundTag == null) return null;

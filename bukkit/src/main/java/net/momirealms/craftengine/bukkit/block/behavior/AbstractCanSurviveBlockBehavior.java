@@ -53,7 +53,7 @@ public abstract class AbstractCanSurviveBlockBehavior extends BukkitBlockBehavio
     public void onPlace(Object thisBlock, Object[] args, Callable<Object> superMethod) {
         Object world = args[1];
         Object blockPos = args[2];
-        FastNMS.INSTANCE.method$LevelAccessor$scheduleBlockTick(world, blockPos, thisBlock, 2);
+        FastNMS.INSTANCE.method$ScheduledTickAccess$scheduleBlockTick(world, blockPos, thisBlock, 2);
     }
 
     @Override
@@ -66,7 +66,7 @@ public abstract class AbstractCanSurviveBlockBehavior extends BukkitBlockBehavio
             return state;
         }
         if (this.delay != 0) {
-            FastNMS.INSTANCE.method$LevelAccessor$scheduleBlockTick(level, blockPos, thisBlock, this.delay);
+            FastNMS.INSTANCE.method$ScheduledTickAccess$scheduleBlockTick(level, blockPos, thisBlock, this.delay);
             return state;
         }
         if (!canSurvive(thisBlock, new Object[] {state, level, blockPos}, () -> true)) {

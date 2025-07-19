@@ -1,6 +1,6 @@
 package net.momirealms.craftengine.bukkit.compatibility.item;
 
-import net.momirealms.craftengine.core.item.ExternalItemProvider;
+import net.momirealms.craftengine.core.item.ExternalItemSource;
 import net.momirealms.craftengine.core.item.ItemBuildContext;
 import net.momirealms.customfishing.api.BukkitCustomFishingPlugin;
 import net.momirealms.customfishing.api.mechanic.context.Context;
@@ -11,10 +11,10 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Optional;
 
-public class CustomFishingProvider implements ExternalItemProvider<ItemStack> {
+public class CustomFishingSource implements ExternalItemSource<ItemStack> {
     @Override
     public String plugin() {
-        return "CustomFishing";
+        return "customfishing";
     }
 
     @SuppressWarnings("UnstableApiUsage")

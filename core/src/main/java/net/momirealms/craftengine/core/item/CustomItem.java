@@ -1,6 +1,5 @@
 package net.momirealms.craftengine.core.item;
 
-import net.momirealms.craftengine.core.entity.player.Player;
 import net.momirealms.craftengine.core.item.behavior.ItemBehavior;
 import net.momirealms.craftengine.core.item.modifier.ItemDataModifier;
 import net.momirealms.craftengine.core.plugin.context.PlayerOptionalContext;
@@ -34,12 +33,6 @@ public interface CustomItem<I> extends BuildableItem<I> {
     default boolean is(Key tag) {
         return settings().tags().contains(tag);
     }
-
-    default Item<I> buildItem(Player player) {
-        return buildItem(ItemBuildContext.of(player));
-    }
-
-    Item<I> buildItem(ItemBuildContext context);
 
     void execute(PlayerOptionalContext context, EventTrigger trigger);
 

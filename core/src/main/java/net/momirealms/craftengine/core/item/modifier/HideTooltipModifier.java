@@ -94,7 +94,7 @@ public class HideTooltipModifier<I> implements ItemDataModifier<I> {
                 }
             }
         } else {
-            Tag previous = item.getNBTTag("HideFlags");
+            Tag previous = item.getTag("HideFlags");
             if (previous != null) {
                 networkData.put("HideFlags", NetworkItemHandler.pack(NetworkItemHandler.Operation.ADD, previous));
             } else {

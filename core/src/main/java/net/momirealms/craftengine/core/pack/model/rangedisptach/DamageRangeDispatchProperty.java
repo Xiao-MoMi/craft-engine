@@ -7,7 +7,7 @@ import net.momirealms.craftengine.core.util.ResourceConfigUtils;
 
 import java.util.Map;
 
-public class DamageRangeDispatchProperty implements RangeDispatchProperty, LegacyModelPredicate<Float> {
+public class DamageRangeDispatchProperty implements RangeDispatchProperty, LegacyModelPredicate<Number> {
     public static final Factory FACTORY = new Factory();
     public static final Reader READER = new Reader();
     private final boolean normalize;
@@ -36,7 +36,7 @@ public class DamageRangeDispatchProperty implements RangeDispatchProperty, Legac
     }
 
     @Override
-    public Number toLegacyValue(Float value) {
+    public Number toLegacyValue(Number value) {
         if (this.normalize) return value;
         throw new RuntimeException("Enable 'normalize' option if you want to use 'damage' on 1.21.3 and below");
     }

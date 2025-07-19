@@ -7,7 +7,7 @@ import net.momirealms.craftengine.core.util.Key;
 
 import java.util.Map;
 
-public class CrossBowPullingRangeDispatchProperty implements RangeDispatchProperty, LegacyModelPredicate<Float> {
+public class CrossBowPullingRangeDispatchProperty implements RangeDispatchProperty, LegacyModelPredicate<Number> {
     public static final Factory FACTORY = new Factory();
     public static final Reader READER = new Reader();
     public static final CrossBowPullingRangeDispatchProperty INSTANCE = new CrossBowPullingRangeDispatchProperty();
@@ -29,7 +29,7 @@ public class CrossBowPullingRangeDispatchProperty implements RangeDispatchProper
     }
 
     @Override
-    public Number toLegacyValue(Float value) {
+    public Number toLegacyValue(Number value) {
         return value;
     }
 

@@ -66,7 +66,7 @@ public class SlabBlockBehavior extends BukkitBlockBehavior {
                 blockState = blockState.with(super.waterloggedProperty, false);
             return blockState.with(this.typeProperty, SlabType.DOUBLE);
         } else {
-            Object fluidState = FastNMS.INSTANCE.method$Level$getFluidState(context.getLevel().serverWorld(), LocationUtils.toBlockPos(clickedPos));
+            Object fluidState = FastNMS.INSTANCE.method$BlockGetter$getFluidState(context.getLevel().serverWorld(), LocationUtils.toBlockPos(clickedPos));
             if (super.waterloggedProperty != null)
                 state = state.with(super.waterloggedProperty, FastNMS.INSTANCE.method$FluidState$getType(fluidState) == MFluids.WATER);
             Direction clickedFace = context.getClickedFace();
@@ -95,7 +95,7 @@ public class SlabBlockBehavior extends BukkitBlockBehavior {
         Optional<ImmutableBlockState> optionalCustomState = BlockStateUtils.getOptionalCustomBlockState(blockState);
         if (optionalCustomState.isEmpty()) return blockState;
         if (optionalCustomState.get().get(super.waterloggedProperty)) {
-            FastNMS.INSTANCE.method$LevelAccessor$scheduleFluidTick(VersionHelper.isOrAbove1_21_2() ? args[2] : args[3], VersionHelper.isOrAbove1_21_2() ? args[3] : args[4], MFluids.WATER, 5);
+            FastNMS.INSTANCE.method$ScheduledTickAccess$scheduleFluidTick(VersionHelper.isOrAbove1_21_2() ? args[2] : args[3], VersionHelper.isOrAbove1_21_2() ? args[3] : args[4], MFluids.WATER, 5);
         }
         return blockState;
     }

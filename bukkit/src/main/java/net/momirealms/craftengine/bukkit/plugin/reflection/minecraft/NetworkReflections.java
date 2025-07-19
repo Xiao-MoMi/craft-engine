@@ -1587,4 +1587,38 @@ public final class NetworkReflections {
                     "network.protocol.game.ClientboundUpdateAdvancementsPacket"
             )
     );
+
+    public static final Class<?> clazz$ClientboundUpdateTagsPacket = requireNonNull(
+            BukkitReflectionUtils.findReobfOrMojmapClass(
+                    List.of("network.protocol.common.ClientboundUpdateTagsPacket", "network.protocol.game.PacketPlayOutTags"),
+                    List.of("network.protocol.common.ClientboundUpdateTagsPacket", "network.protocol.game.ClientboundUpdateTagsPacket")
+            )
+    );
+
+    // 1.21.5+
+    public static final Class<?> clazz$HashedStack = MiscUtils.requireNonNullIf(
+            ReflectionUtils.getClazz(
+                    BukkitReflectionUtils.assembleMCClass("network.HashedStack")
+            ),
+            VersionHelper.isOrAbove1_21_5()
+    );
+
+    // 1.21.5+
+    public static final Field field$HashedStack$STREAM_CODEC = Optional.ofNullable(clazz$HashedStack)
+            .map(it -> ReflectionUtils.getDeclaredField(it, clazz$StreamCodec, 0))
+            .orElse(null);
+
+    public static final Object instance$HashedStack$STREAM_CODEC;
+
+    static {
+        try {
+            if (VersionHelper.isOrAbove1_21_5()) {
+                instance$HashedStack$STREAM_CODEC = field$HashedStack$STREAM_CODEC.get(null);
+            } else {
+                instance$HashedStack$STREAM_CODEC = null;
+            }
+        } catch (ReflectiveOperationException e) {
+            throw new ReflectionInitException("Failed to initialize HashedStack$STREAM_CODEC", e);
+        }
+    }
 }

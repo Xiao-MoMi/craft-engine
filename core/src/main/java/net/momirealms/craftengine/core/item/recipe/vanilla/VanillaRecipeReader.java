@@ -19,4 +19,6 @@ public interface VanillaRecipeReader {
     VanillaStoneCuttingRecipe readStoneCutting(JsonObject json);
 
     VanillaSmithingTransformRecipe readSmithingTransform(JsonObject json);
+
+    VanillaSmithingTrimRecipe readSmithingTrim(JsonObject json);
 }

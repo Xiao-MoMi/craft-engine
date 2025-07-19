@@ -42,13 +42,13 @@ public class BukkitCustomItem extends AbstractCustomItem<ItemStack> {
     }
 
     @Override
-    public Item<ItemStack> buildItem(ItemBuildContext context) {
-        ItemStack item = FastNMS.INSTANCE.method$CraftItemStack$asCraftMirror(FastNMS.INSTANCE.constructor$ItemStack(this.item, 1));
+    public Item<ItemStack> buildItem(ItemBuildContext context, int count) {
+        ItemStack item = FastNMS.INSTANCE.method$CraftItemStack$asCraftMirror(FastNMS.INSTANCE.constructor$ItemStack(this.item, count));
         Item<ItemStack> wrapped = BukkitCraftEngine.instance().itemManager().wrap(item);
         for (ItemDataModifier<ItemStack> modifier : dataModifiers()) {
             modifier.apply(wrapped, context);
         }
-        return BukkitCraftEngine.instance().itemManager().wrap(wrapped.getItem());
+        return wrapped;
     }
 
     public Object clientItem() {

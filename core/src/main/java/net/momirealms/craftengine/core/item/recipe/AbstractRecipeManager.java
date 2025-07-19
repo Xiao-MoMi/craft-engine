@@ -5,6 +5,7 @@ import net.momirealms.craftengine.core.item.recipe.vanilla.VanillaRecipeReader;
 import net.momirealms.craftengine.core.item.recipe.vanilla.reader.VanillaRecipeReader1_20;
 import net.momirealms.craftengine.core.item.recipe.vanilla.reader.VanillaRecipeReader1_20_5;
 import net.momirealms.craftengine.core.item.recipe.vanilla.reader.VanillaRecipeReader1_21_2;
+import net.momirealms.craftengine.core.item.recipe.vanilla.reader.VanillaRecipeReader1_21_5;
 import net.momirealms.craftengine.core.pack.LoadingSequence;
 import net.momirealms.craftengine.core.pack.Pack;
 import net.momirealms.craftengine.core.plugin.CraftEngine;
@@ -26,7 +27,6 @@ public abstract class AbstractRecipeManager<T> implements RecipeManager<T> {
     protected final Map<Key, List<Recipe<T>>> byResult = new HashMap<>();
     protected final Map<Key, List<Recipe<T>>> byIngredient = new HashMap<>();
     protected final Set<Key> dataPackRecipes = new HashSet<>();
-    protected final Set<Key> customRecipes = new HashSet<>();
     protected final RecipeParser recipeParser;
     protected boolean isReloading;
 
@@ -41,7 +41,9 @@ public abstract class AbstractRecipeManager<T> implements RecipeManager<T> {
     }
 
     private VanillaRecipeReader initVanillaRecipeReader() {
-        if (VersionHelper.isOrAbove1_21_2()) {
+        if (VersionHelper.isOrAbove1_21_5()) {
+            return new VanillaRecipeReader1_21_5();
+        } else if (VersionHelper.isOrAbove1_21_2()) {
             return new VanillaRecipeReader1_21_2();
         } else if (VersionHelper.isOrAbove1_20_5()) {
             return new VanillaRecipeReader1_20_5();
@@ -57,18 +59,10 @@ public abstract class AbstractRecipeManager<T> implements RecipeManager<T> {
         this.byId.clear();
         this.byResult.clear();
         this.byIngredient.clear();
-        for (Key key : this.customRecipes) {
-            unregisterPlatformRecipe(key);
-        }
-        this.customRecipes.clear();
     }
 
     protected void markAsDataPackRecipe(Key key) {
         this.dataPackRecipes.add(key);
-    }
-
-    protected void markAsCustomRecipe(Key key) {
-        this.customRecipes.add(key);
     }
 
     @Override
@@ -137,7 +131,9 @@ public abstract class AbstractRecipeManager<T> implements RecipeManager<T> {
     protected void registerInternalRecipe(Key id, Recipe<T> recipe) {
         this.byType.computeIfAbsent(recipe.type(), k -> new ArrayList<>()).add(recipe);
         this.byId.put(id, recipe);
-        this.byResult.computeIfAbsent(recipe.result().item().id(), k -> new ArrayList<>()).add(recipe);
+        if (recipe instanceof FixedResultRecipe<?> fixedResult) {
+            this.byResult.computeIfAbsent(fixedResult.result().item().id(), k -> new ArrayList<>()).add(recipe);
+        }
         HashSet<Key> usedKeys = new HashSet<>();
         for (Ingredient<T> ingredient : recipe.ingredientsInUse()) {
             for (UniqueKey holder : ingredient.items()) {
@@ -170,7 +166,6 @@ public abstract class AbstractRecipeManager<T> implements RecipeManager<T> {
             }
             Recipe<T> recipe = RecipeTypes.fromMap(id, section);
             try {
-                markAsCustomRecipe(id);
                 registerInternalRecipe(id, recipe);
                 registerPlatformRecipe(id, recipe);
             } catch (LocalizedResourceConfigException e) {
@@ -181,7 +176,7 @@ public abstract class AbstractRecipeManager<T> implements RecipeManager<T> {
         }
     }
 
-    protected abstract void unregisterPlatformRecipe(Key key);
+    protected abstract void unregisterPlatformRecipe(Key key, boolean isBrewingRecipe);
 
     protected abstract void registerPlatformRecipe(Key key, Recipe<T> recipe);
 }

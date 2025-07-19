@@ -13,7 +13,6 @@ public abstract class VanillaGroupedRecipe implements VanillaRecipe {
         return group;
     }
 
-    @Override
     public RecipeResult result() {
         return result;
     }

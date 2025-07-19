@@ -86,8 +86,8 @@ public class NearLiquidBlockBehavior extends AbstractCanSurviveBlockBehavior {
     }
 
     protected boolean mayPlaceOn(Object belowState, Object world, Object belowPos) {
-        Object fluidState = FastNMS.INSTANCE.method$Level$getFluidState(world, belowPos);
-        Object fluidStateAbove = FastNMS.INSTANCE.method$Level$getFluidState(world, LocationUtils.above(belowPos));
+        Object fluidState = FastNMS.INSTANCE.method$BlockGetter$getFluidState(world, belowPos);
+        Object fluidStateAbove = FastNMS.INSTANCE.method$BlockGetter$getFluidState(world, LocationUtils.above(belowPos));
         if (FastNMS.INSTANCE.method$FluidState$getType(fluidStateAbove) != MFluids.EMPTY) {
             return false;
         }

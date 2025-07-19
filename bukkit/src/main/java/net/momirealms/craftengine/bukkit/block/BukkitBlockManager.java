@@ -94,7 +94,7 @@ public final class BukkitBlockManager extends AbstractBlockManager {
     private BlockEventListener blockEventListener;
     private FallingBlockRemoveListener fallingBlockRemoveListener;
     // cached tag packet
-    Object cachedUpdateTagsPacket;
+    private Object cachedUpdateTagsPacket;
 
     private final List<Tuple<Object, Key, Boolean>> blocksToDeceive = new ArrayList<>();
 
@@ -395,6 +395,10 @@ public final class BukkitBlockManager extends AbstractBlockManager {
                 break;
             }
         }
+    }
+
+    public Object cachedUpdateTagsPacket() {
+        return cachedUpdateTagsPacket;
     }
 
     public class BlockParser implements ConfigParser {

@@ -41,7 +41,7 @@ public class EnchantmentModifier<I> implements ItemDataModifier<I> {
                     networkData.put(ComponentKeys.STORED_ENCHANTMENTS.asString(), NetworkItemHandler.pack(NetworkItemHandler.Operation.REMOVE));
                 }
             } else {
-                Tag previous = item.getNBTTag("StoredEnchantments");
+                Tag previous = item.getTag("StoredEnchantments");
                 if (previous != null) {
                     networkData.put("StoredEnchantments", NetworkItemHandler.pack(NetworkItemHandler.Operation.ADD, previous));
                 } else {
@@ -57,7 +57,7 @@ public class EnchantmentModifier<I> implements ItemDataModifier<I> {
                     networkData.put(ComponentKeys.ENCHANTMENTS.asString(), NetworkItemHandler.pack(NetworkItemHandler.Operation.REMOVE));
                 }
             } else {
-                Tag previous = item.getNBTTag("Enchantments");
+                Tag previous = item.getTag("Enchantments");
                 if (previous != null) {
                     networkData.put("Enchantments", NetworkItemHandler.pack(NetworkItemHandler.Operation.ADD, previous));
                 } else {

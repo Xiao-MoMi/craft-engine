@@ -746,12 +746,12 @@ public class BukkitServerPlayer extends Player {
 
     @Override
     public float yRot() {
-        return platformPlayer().getPitch();
+        return platformPlayer().getYaw();
     }
 
     @Override
     public float xRot() {
-        return platformPlayer().getYaw();
+        return platformPlayer().getPitch();
     }
 
     @Override

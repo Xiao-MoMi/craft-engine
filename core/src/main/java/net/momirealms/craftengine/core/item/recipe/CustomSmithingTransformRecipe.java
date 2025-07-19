@@ -13,9 +13,11 @@ import net.momirealms.craftengine.core.util.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
 
-public class CustomSmithingTransformRecipe<T> implements Recipe<T> {
+public class CustomSmithingTransformRecipe<T> implements FixedResultRecipe<T> {
     public static final Factory<?> FACTORY = new Factory<>();
     private final Key id;
     private final CustomRecipeResult<T> result;
@@ -51,7 +53,7 @@ public class CustomSmithingTransformRecipe<T> implements Recipe<T> {
                 && checkIngredient(this.addition, smithingInput.addition());
     }
 
-    private boolean checkIngredient(Ingredient<T> ingredient, OptimizedIDItem<T> item) {
+    private boolean checkIngredient(Ingredient<T> ingredient, UniqueIdItem<T> item) {
         if (ingredient != null) {
             if (item == null || item.isEmpty()) {
                 return false;
@@ -85,13 +87,16 @@ public class CustomSmithingTransformRecipe<T> implements Recipe<T> {
         return this.id;
     }
 
-    @Override
+    @Nullable
     public T result(ItemBuildContext context) {
         return this.result.buildItemStack(context);
     }
 
     @SuppressWarnings("unchecked")
-    public T assemble(ItemBuildContext context, Item<T> base) {
+    @Override
+    public T assemble(RecipeInput input, ItemBuildContext context) {
+        SmithingInput<T> smithingInput = ((SmithingInput<T>) input);
+        Item<T> base = smithingInput.base().item();
         T result = this.result(context);
         Item<T> wrappedResult = (Item<T>) CraftEngine.instance().itemManager().wrap(result);
         Item<T> finalResult = wrappedResult;
@@ -104,7 +109,6 @@ public class CustomSmithingTransformRecipe<T> implements Recipe<T> {
         return finalResult.getItem();
     }
 
-    @Override
     public CustomRecipeResult<T> result() {
         return this.result;
     }
@@ -130,6 +134,9 @@ public class CustomSmithingTransformRecipe<T> implements Recipe<T> {
         @Override
         public Recipe<A> create(Key id, Map<String, Object> arguments) {
             List<String> base = MiscUtils.getAsStringList(arguments.get("base"));
+            if (base.isEmpty()) {
+                throw new LocalizedResourceConfigException("warning.config.recipe.smithing_transform.missing_base");
+            }
             List<String> addition = MiscUtils.getAsStringList(arguments.get("addition"));
             List<String> template = MiscUtils.getAsStringList(arguments.get("template-type"));
             boolean mergeComponents = ResourceConfigUtils.getAsBoolean(arguments.getOrDefault("merge-components", true), "merge-components");
@@ -142,23 +149,12 @@ public class CustomSmithingTransformRecipe<T> implements Recipe<T> {
                     ItemDataProcessors.fromMapList(processors)
             );
         }
-
-        private Ingredient<A> toIngredient(List<String> items) {
-            Set<UniqueKey> holders = new HashSet<>();
-            for (String item : items) {
-                if (item.charAt(0) == '#') {
-                    holders.addAll(CraftEngine.instance().itemManager().tagToItems(Key.of(item.substring(1))));
-                } else {
-                    holders.add(UniqueKey.create(Key.of(item)));
-                }
-            }
-            return holders.isEmpty() ? null : Ingredient.of(holders);
-        }
     }
 
     public static class ItemDataProcessors {
         public static final Key KEEP_COMPONENTS = Key.of("craftengine:keep_components");
         public static final Key KEEP_TAGS = Key.of("craftengine:keep_tags");
+        public static final Key APPLY_DATA = Key.of("craftengine:apply_data");
 
         static {
             if (VersionHelper.isOrAbove1_20_5()) {

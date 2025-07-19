@@ -211,6 +211,9 @@ public abstract class AbstractPackManager implements PackManager {
             }
             TranslationManager.instance().log(e.node(), e.arguments());
             this.resourcePackHost = NoneHost.INSTANCE;
+        } catch (Exception e) {
+            this.plugin.logger().warn("Failed to load resource pack host", e);
+            this.resourcePackHost = NoneHost.INSTANCE;
         }
     }
 
@@ -380,6 +383,7 @@ public abstract class AbstractPackManager implements PackManager {
         plugin.saveResource("resources/internal/resourcepack/assets/minecraft/textures/font/gui/custom/smithing_transform_recipe.png");
         plugin.saveResource("resources/internal/resourcepack/assets/minecraft/textures/font/gui/custom/cooking_recipe.png");
         plugin.saveResource("resources/internal/resourcepack/assets/minecraft/textures/font/gui/custom/crafting_recipe.png");
+        plugin.saveResource("resources/internal/resourcepack/assets/minecraft/textures/font/gui/custom/brewing_recipe.png");
         plugin.saveResource("resources/internal/resourcepack/assets/minecraft/textures/font/gui/custom/no_recipe.png");
         plugin.saveResource("resources/internal/resourcepack/assets/minecraft/textures/item/custom/gui/get_item.png");
         plugin.saveResource("resources/internal/resourcepack/assets/minecraft/textures/item/custom/gui/next_page_0.png");
@@ -654,10 +658,11 @@ public abstract class AbstractPackManager implements PackManager {
             this.generateItemModels(generatedPackPath, this.plugin.itemManager());
             this.generateItemModels(generatedPackPath, this.plugin.blockManager());
             this.generateBlockOverrides(generatedPackPath);
-            this.generateLegacyItemOverrides(generatedPackPath);
-            this.generateModernItemOverrides(generatedPackPath, revisions::add);
+            // 一定要先生成item-model再生成overrides
             this.generateModernItemModels1_21_2(generatedPackPath);
             this.generateModernItemModels1_21_4(generatedPackPath, revisions::add);
+            this.generateLegacyItemOverrides(generatedPackPath);
+            this.generateModernItemOverrides(generatedPackPath, revisions::add);
             this.generateOverrideSounds(generatedPackPath);
             this.generateCustomSounds(generatedPackPath);
             this.generateClientLang(generatedPackPath);
@@ -1780,12 +1785,6 @@ public abstract class AbstractPackManager implements PackManager {
             Key itemModelPath = entry.getKey();
             TreeSet<LegacyOverridesModel> legacyOverridesModels = entry.getValue();
 
-            // 检测item model合法性
-            if (PRESET_MODERN_MODELS_ITEM.containsKey(itemModelPath) || PRESET_LEGACY_MODELS_ITEM.containsKey(itemModelPath)) {
-                TranslationManager.instance().log("warning.config.resource_pack.item_model.conflict.vanilla", itemModelPath.asString());
-                continue;
-            }
-
             // 要检查目标生成路径是否已经存在模型，如果存在模型，应该只为其生成overrides
             Path itemPath = generatedPackPath
                     .resolve("assets")
@@ -1847,11 +1846,6 @@ public abstract class AbstractPackManager implements PackManager {
                     .resolve(key.namespace())
                     .resolve("items")
                     .resolve(key.value() + ".json");
-
-            if (PRESET_ITEMS.containsKey(key)) {
-                TranslationManager.instance().log("warning.config.resource_pack.item_model.conflict.vanilla", key.asString());
-                continue;
-            }
             if (Files.exists(itemPath)) {
                 TranslationManager.instance().log("warning.config.resource_pack.item_model.already_exist", key.asString(), itemPath.toAbsolutePath().toString());
                 continue;

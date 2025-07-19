@@ -1,5 +1,6 @@
 package net.momirealms.craftengine.core.block;
 
+import net.momirealms.craftengine.core.plugin.CraftEngine;
 import net.momirealms.craftengine.core.plugin.locale.LocalizedResourceConfigException;
 import net.momirealms.craftengine.core.util.*;
 import org.jetbrains.annotations.Nullable;
@@ -34,7 +35,7 @@ public class BlockSettings {
     Key itemId;
     Set<Key> tags = Set.of();
     float incorrectToolSpeed = 0.3f;
-    Set<Key> correctTools = Set.of();
+    LazyReference<Set<Key>> correctTools = LazyReference.lazyReference(Set::of);
     String name;
     String supportShapeBlockState;
 
@@ -148,7 +149,7 @@ public class BlockSettings {
     }
 
     public boolean requireCorrectTool() {
-        return requireCorrectTools || !correctTools.isEmpty();
+        return requireCorrectTools || !correctTools.get().isEmpty();
     }
 
     public String name() {
@@ -196,7 +197,7 @@ public class BlockSettings {
     }
 
     public boolean isCorrectTool(Key key) {
-        return this.correctTools.contains(key);
+        return this.correctTools.get().contains(key);
     }
 
     public boolean respectToolComponent() {
@@ -215,7 +216,7 @@ public class BlockSettings {
         return useShapeForLightOcclusion;
     }
 
-    public BlockSettings correctTools(Set<Key> correctTools) {
+    public BlockSettings correctTools(LazyReference<Set<Key>> correctTools) {
         this.correctTools = correctTools;
         return this;
     }
@@ -417,7 +418,10 @@ public class BlockSettings {
             }));
             registerFactory("tags", (value -> {
                 List<String> tags = MiscUtils.getAsStringList(value);
-                return settings -> settings.tags(tags.stream().map(Key::of).collect(Collectors.toSet()));
+                return settings -> settings.tags(tags.stream().map(it -> {
+                    if (it.charAt(0) == '#') return Key.of(it.substring(1));
+                    else return Key.of(it);
+                }).collect(Collectors.toSet()));
             }));
             registerFactory("burn-chance", (value -> {
                 int intValue = ResourceConfigUtils.getAsInt(value, "burn-chance");
@@ -457,7 +461,15 @@ public class BlockSettings {
             }));
             registerFactory("correct-tools", (value -> {
                 List<String> tools = MiscUtils.getAsStringList(value);
-                return settings -> settings.correctTools(tools.stream().map(Key::of).collect(Collectors.toSet()));
+                LazyReference<Set<Key>> correctTools = LazyReference.lazyReference(() -> {
+                    Set<Key> ids = new HashSet<>();
+                    for (String tool : tools) {
+                        if (tool.charAt(0) == '#') ids.addAll(CraftEngine.instance().itemManager().tagToItems(Key.of(tool.substring(1))).stream().map(UniqueKey::key).toList());
+                        else ids.add(Key.of(tool));
+                    }
+                    return ids;
+                });
+                return settings -> settings.correctTools(correctTools);
             }));
             registerFactory("require-correct-tools", (value -> {
                 boolean booleanValue = ResourceConfigUtils.getAsBoolean(value, "require-correct-tools");

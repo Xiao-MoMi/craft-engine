@@ -3,12 +3,12 @@ package net.momirealms.craftengine.core.pack.model;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
-import com.google.gson.JsonPrimitive;
 import net.momirealms.craftengine.core.pack.model.generation.ModelGeneration;
 import net.momirealms.craftengine.core.pack.model.select.SelectProperties;
 import net.momirealms.craftengine.core.pack.model.select.SelectProperty;
 import net.momirealms.craftengine.core.pack.revision.Revision;
 import net.momirealms.craftengine.core.plugin.locale.LocalizedResourceConfigException;
+import net.momirealms.craftengine.core.util.GsonHelper;
 import net.momirealms.craftengine.core.util.Key;
 import net.momirealms.craftengine.core.util.MinecraftVersion;
 import net.momirealms.craftengine.core.util.MiscUtils;
@@ -25,11 +25,11 @@ public class SelectItemModel implements ItemModel {
     public static final Factory FACTORY = new Factory();
     public static final Reader READER = new Reader();
     private final SelectProperty property;
-    private final Map<Either<String, List<String>>, ItemModel> whenMap;
+    private final Map<Either<JsonElement, List<JsonElement>>, ItemModel> whenMap;
     private final ItemModel fallBack;
 
     public SelectItemModel(@NotNull SelectProperty property,
-                           @NotNull Map<Either<String, List<String>>, ItemModel> whenMap,
+                           @NotNull Map<Either<JsonElement, List<JsonElement>>, ItemModel> whenMap,
                            @Nullable ItemModel fallBack) {
         this.property = property;
         this.whenMap = whenMap;
@@ -40,7 +40,7 @@ public class SelectItemModel implements ItemModel {
         return this.property;
     }
 
-    public Map<Either<String, List<String>>, ItemModel> whenMap() {
+    public Map<Either<JsonElement, List<JsonElement>>, ItemModel> whenMap() {
         return this.whenMap;
     }
 
@@ -55,17 +55,17 @@ public class SelectItemModel implements ItemModel {
         this.property.accept(json);
         JsonArray array = new JsonArray();
         json.add("cases", array);
-        for (Map.Entry<Either<String, List<String>>, ItemModel> entry : this.whenMap.entrySet()) {
+        for (Map.Entry<Either<JsonElement, List<JsonElement>>, ItemModel> entry : this.whenMap.entrySet()) {
             JsonObject item = new JsonObject();
             ItemModel itemModel = entry.getValue();
             item.add("model", itemModel.apply(version));
-            Either<String, List<String>> either = entry.getKey();
+            Either<JsonElement, List<JsonElement>> either = entry.getKey();
             if (either.primary().isPresent()) {
-                item.addProperty("when", either.primary().get());
+                item.add("when", either.primary().get());
             } else {
-                List<String> list = either.fallback().get();
+                List<JsonElement> list = either.fallback().get();
                 JsonArray whens = new JsonArray();
-                for (String e : list) {
+                for (JsonElement e : list) {
                     whens.add(e);
                 }
                 item.add("when", whens);
@@ -118,21 +118,21 @@ public class SelectItemModel implements ItemModel {
             if (casesObj instanceof List<?> list) {
                 List<Map<String, Object>> cases = (List<Map<String, Object>>) list;
                 if (!cases.isEmpty()) {
-                    Map<Either<String, List<String>>, ItemModel> whenMap = new HashMap<>();
+                    Map<Either<JsonElement, List<JsonElement>>, ItemModel> whenMap = new HashMap<>();
                     for (Map<String, Object> c : cases) {
                         Object when = c.get("when");
                         if (when == null) {
                             throw new LocalizedResourceConfigException("warning.config.item.model.select.case.missing_when");
                         }
-                        Either<String, List<String>> either;
+                        Either<JsonElement, List<JsonElement>> either;
                         if (when instanceof List<?> whenList) {
-                            List<String> whens = new ArrayList<>(whenList.size());
+                            List<JsonElement> whens = new ArrayList<>(whenList.size());
                             for (Object o : whenList) {
-                                whens.add(o.toString());
+                                whens.add(GsonHelper.get().toJsonTree(o));
                             }
                             either = Either.ofFallback(whens);
                         } else {
-                            either = Either.ofPrimary(when.toString());
+                            either = Either.ofPrimary(GsonHelper.get().toJsonTree(when));
                         }
                         Object model = c.get("model");
                         if (model == null) {
@@ -158,22 +158,22 @@ public class SelectItemModel implements ItemModel {
             if (cases == null) {
                 throw new IllegalArgumentException("cases is expected to be a JsonArray");
             }
-            Map<Either<String, List<String>>, ItemModel> whenMap = new HashMap<>(cases.size());
+            Map<Either<JsonElement, List<JsonElement>>, ItemModel> whenMap = new HashMap<>(cases.size());
             for (JsonElement e : cases) {
                 if (e instanceof JsonObject caseObj) {
                     ItemModel model = ItemModels.fromJson(caseObj.getAsJsonObject("model"));
                     JsonElement whenObj = caseObj.get("when");
-                    Either<String, List<String>> either;
+                    Either<JsonElement, List<JsonElement>> either;
                     if (whenObj instanceof JsonArray array) {
-                        List<String> whens = new ArrayList<>(array.size());
+                        List<JsonElement> whens = new ArrayList<>(array.size());
                         for (JsonElement o : array) {
-                            whens.add(o.getAsString());
+                            whens.add(o);
                         }
                         either = Either.ofFallback(whens);
-                    } else if (whenObj instanceof JsonPrimitive primitive) {
-                        either = Either.ofPrimary(primitive.getAsString());
+                    } else if (whenObj != null) {
+                        either = Either.ofPrimary(whenObj);
                     } else {
-                        throw new IllegalArgumentException("when is expected to be either JsonPrimitive or JsonArray");
+                        throw new IllegalArgumentException("'when' should not be null");
                     }
                     whenMap.put(either, model);
                 } else {

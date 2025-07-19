@@ -1,11 +1,22 @@
 package net.momirealms.craftengine.bukkit.util;
 
+import net.momirealms.craftengine.core.util.VersionHelper;
+import org.bukkit.entity.Player;
+import org.bukkit.event.inventory.InventoryEvent;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.PlayerInventory;
 
 public class InventoryUtils {
 
     private InventoryUtils() {}
+
+    public static Player getPlayerFromInventoryEvent(InventoryEvent event) {
+        if (VersionHelper.isOrAbove1_21()) {
+            return (Player) event.getView().getPlayer();
+        } else {
+            return LegacyInventoryUtils.getPlayerFromInventoryEvent(event);
+        }
+    }
 
     public static int getSuitableHotBarSlot(PlayerInventory inventory) {
         int selectedSlot = inventory.getHeldItemSlot();

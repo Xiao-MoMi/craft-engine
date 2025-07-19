@@ -59,7 +59,7 @@ public class ComponentModifier<I> implements ItemDataModifier<I> {
             item.setNBTComponent(entry.left(), entry.right());
         }
         if (this.customData != null) {
-            CompoundTag tag = (CompoundTag) item.getNBTTag(ComponentKeys.CUSTOM_DATA);
+            CompoundTag tag = (CompoundTag) item.getTag(ComponentKeys.CUSTOM_DATA);
             if (tag != null) {
                 for (Map.Entry<String, Tag> entry : this.customData.entrySet()) {
                     tag.put(entry.getKey(), entry.getValue());

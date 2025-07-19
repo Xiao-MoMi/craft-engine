@@ -4,7 +4,7 @@ import net.momirealms.craftengine.core.item.ItemBuildContext;
 import net.momirealms.craftengine.core.util.Key;
 import org.jetbrains.annotations.Nullable;
 
-public abstract class AbstractGroupedRecipe<T> implements Recipe<T> {
+public abstract class AbstractGroupedRecipe<T> implements FixedResultRecipe<T> {
     protected final String group;
     protected final Key id;
     protected final CustomRecipeResult<T> result;

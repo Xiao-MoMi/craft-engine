@@ -54,7 +54,7 @@ public class DynamicLoreModifier<I> implements ItemDataModifier<I> {
                 networkData.put(ComponentKeys.LORE.asString(), NetworkItemHandler.pack(NetworkItemHandler.Operation.REMOVE));
             }
         } else {
-            Tag previous = item.getNBTTag("display", "Lore");
+            Tag previous = item.getTag("display", "Lore");
             if (previous != null) {
                 networkData.put("display.Lore", NetworkItemHandler.pack(NetworkItemHandler.Operation.ADD, previous));
             } else {

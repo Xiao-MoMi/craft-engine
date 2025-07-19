@@ -2,7 +2,7 @@ package net.momirealms.craftengine.core.item;
 
 import org.jetbrains.annotations.Nullable;
 
-public interface ExternalItemProvider<I> {
+public interface ExternalItemSource<I> {
 
     String plugin();
 

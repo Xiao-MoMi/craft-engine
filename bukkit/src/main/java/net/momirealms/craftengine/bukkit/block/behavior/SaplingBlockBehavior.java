@@ -89,7 +89,7 @@ public class SaplingBlockBehavior extends BukkitBlockBehavior {
         }
         Object chunkGenerator = CoreReflections.method$ServerChunkCache$getGenerator.invoke(FastNMS.INSTANCE.method$ServerLevel$getChunkSource(world));
         Object configuredFeature = CoreReflections.method$Holder$value.invoke(holder.get());
-        Object fluidState = FastNMS.INSTANCE.method$Level$getFluidState(world, blockPos);
+        Object fluidState = FastNMS.INSTANCE.method$BlockGetter$getFluidState(world, blockPos);
         Object legacyState = CoreReflections.method$FluidState$createLegacyBlock.invoke(fluidState);
         FastNMS.INSTANCE.method$LevelWriter$setBlock(world, blockPos, legacyState, UpdateOption.UPDATE_NONE.flags());
         if ((boolean) CoreReflections.method$ConfiguredFeature$place.invoke(configuredFeature, world, chunkGenerator, randomSource, blockPos)) {

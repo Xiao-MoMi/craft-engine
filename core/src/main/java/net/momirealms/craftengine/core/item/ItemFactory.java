@@ -38,7 +38,7 @@ public abstract class ItemFactory<W extends ItemWrapper<I>, I> {
 
     protected abstract Object getJavaTag(W item, Object... path);
 
-    protected abstract Tag getNBTTag(W item, Object... path);
+    protected abstract Tag getTag(W item, Object... path);
 
     protected abstract void setTag(W item, Object value, Object... path);
 
@@ -49,6 +49,10 @@ public abstract class ItemFactory<W extends ItemWrapper<I>, I> {
     protected abstract void setComponent(W item, Object type, Object value);
 
     protected abstract Object getExactComponent(W item, Object type);
+
+    protected abstract Object getExactTag(W item, Object... path);
+
+    protected abstract void setExactComponent(W item, Object type, Object value);
 
     protected abstract Object getJavaComponent(W item, Object type);
 

@@ -21,6 +21,7 @@ import net.momirealms.craftengine.core.world.BlockHitResult;
 import net.momirealms.craftengine.core.world.BlockPos;
 import net.momirealms.craftengine.core.world.Vec3d;
 import net.momirealms.craftengine.core.world.World;
+import org.jetbrains.annotations.Nullable;
 
 import java.nio.file.Path;
 import java.util.Map;
@@ -40,8 +41,9 @@ public class LiquidCollisionBlockItemBehavior extends BlockItemBehavior {
     }
 
     @Override
-    public InteractionResult use(World world, Player player, InteractionHand hand) {
+    public InteractionResult use(World world, @Nullable Player player, InteractionHand hand) {
         try {
+            if (player == null) return InteractionResult.FAIL;
             Object blockHitResult = CoreReflections.method$Item$getPlayerPOVHitResult.invoke(null, world.serverWorld(), player.serverPlayer(), CoreReflections.instance$ClipContext$Fluid$SOURCE_ONLY);
             Object blockPos = CoreReflections.field$BlockHitResul$blockPos.get(blockHitResult);
             BlockPos above = new BlockPos(FastNMS.INSTANCE.field$Vec3i$x(blockPos), FastNMS.INSTANCE.field$Vec3i$y(blockPos) + offsetY, FastNMS.INSTANCE.field$Vec3i$z(blockPos));

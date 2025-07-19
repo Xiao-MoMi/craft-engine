@@ -45,7 +45,7 @@ public final class LegacyNetworkItemHandler implements NetworkItemHandler<ItemSt
                 return Optional.of(wrapped);
             }
         }
-        CompoundTag networkData = (CompoundTag) wrapped.getNBTTag(NETWORK_ITEM_TAG);
+        CompoundTag networkData = (CompoundTag) wrapped.getTag(NETWORK_ITEM_TAG);
         if (networkData == null) return Optional.empty();
         wrapped.removeTag(NETWORK_ITEM_TAG);
         for (Map.Entry<String, Tag> entry : networkData.entrySet()) {
@@ -74,7 +74,7 @@ public final class LegacyNetworkItemHandler implements NetworkItemHandler<ItemSt
                 return new OtherItem(wrapped, hasDifferentMaterial).process();
             } else {
                 CompoundTag tag = new CompoundTag();
-                Tag argumentTag = wrapped.getNBTTag(ArgumentModifier.ARGUMENTS_TAG);
+                Tag argumentTag = wrapped.getTag(ArgumentModifier.ARGUMENTS_TAG);
                 ItemBuildContext context;
                 if (argumentTag instanceof CompoundTag arguments) {
                     ContextHolder.Builder builder = ContextHolder.builder();

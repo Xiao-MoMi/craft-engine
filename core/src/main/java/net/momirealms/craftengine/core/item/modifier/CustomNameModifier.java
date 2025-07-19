@@ -46,7 +46,7 @@ public class CustomNameModifier<I> implements ItemDataModifier<I> {
                 networkData.put(ComponentKeys.CUSTOM_NAME.asString(), NetworkItemHandler.pack(NetworkItemHandler.Operation.REMOVE));
             }
         } else {
-            Tag previous = item.getNBTTag("display", "Name");
+            Tag previous = item.getTag("display", "Name");
             if (previous != null) {
                 networkData.put("display.Name", NetworkItemHandler.pack(NetworkItemHandler.Operation.ADD, previous));
             } else {

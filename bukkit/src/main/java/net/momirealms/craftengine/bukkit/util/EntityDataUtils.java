@@ -16,6 +16,7 @@ public class EntityDataUtils {
     public static final int DISPLAYED_ITEM_DATA_ID = VersionHelper.isOrAbove1_20_2() ? 23 : 22;
     public static final int CUSTOM_NAME_DATA_ID = 2;
     public static final int ITEM_DATA_ID = 8;
+    public static final int ITEM_FRAME_DATA_ID = VersionHelper.isOrAbove1_21_6() ? 9 : 8;
 
     public static byte encodeTextDisplayMask(boolean hasShadow, boolean isSeeThrough, boolean useDefaultBackground, int alignment) {
         int bitMask = 0;

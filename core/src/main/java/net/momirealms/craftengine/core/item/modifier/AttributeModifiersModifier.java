@@ -178,7 +178,7 @@ public class AttributeModifiersModifier<I> implements ItemDataModifier<I> {
                 networkData.put(ComponentKeys.ATTRIBUTE_MODIFIERS.asString(), NetworkItemHandler.pack(NetworkItemHandler.Operation.REMOVE));
             }
         } else {
-            Tag previous = item.getNBTTag("AttributeModifiers");
+            Tag previous = item.getTag("AttributeModifiers");
             if (previous != null) {
                 networkData.put("AttributeModifiers", NetworkItemHandler.pack(NetworkItemHandler.Operation.ADD, previous));
             } else {

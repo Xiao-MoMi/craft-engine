@@ -296,6 +296,8 @@ recipe:
     # Selective recipe disabling (safer alternative to 'all: true')
     # Example: ["minecraft:wooden_sword", "minecraft:stone_hoe"]
     list: []
+  # You can use items from other plugins by adding the supported plugin names here
+  ingredient-sources: []
 
 gui:
   browser:
@@ -352,6 +354,8 @@ gui:
         title: "<white><shift:-11><image:internal:stonecutting_recipe>"
       smithing-transform:
         title: "<white><shift:-11><image:internal:smithing_transform_recipe>"
+      brewing:
+        title: "<white><shift:-11><image:internal:brewing_recipe>"
 
 performance:
   # Maximum chain update depth when fixing client visuals

@@ -36,7 +36,6 @@ import org.bukkit.event.block.BlockBreakEvent;
 import org.bukkit.event.block.BlockPhysicsEvent;
 import org.bukkit.event.block.BlockPlaceEvent;
 import org.bukkit.event.entity.EntityDamageByEntityEvent;
-import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.world.GenericGameEvent;
 import org.bukkit.inventory.ItemStack;
 
@@ -51,14 +50,6 @@ public final class BlockEventListener implements Listener {
         this.plugin = plugin;
         this.manager = manager;
         this.enableNoteBlockCheck = enableNoteBlockCheck;
-    }
-
-    @EventHandler
-    public void onPlayerJoin(PlayerJoinEvent event) {
-        Object packet = this.manager.cachedUpdateTagsPacket;
-        if (packet != null) {
-            this.plugin.adapt(event.getPlayer()).sendPacket(packet, false);
-        }
     }
 
     @EventHandler(ignoreCancelled = true)
