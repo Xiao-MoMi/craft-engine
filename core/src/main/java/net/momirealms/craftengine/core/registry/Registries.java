@@ -3,6 +3,7 @@ package net.momirealms.craftengine.core.registry;
 import net.momirealms.craftengine.core.block.CustomBlock;
 import net.momirealms.craftengine.core.block.behavior.BlockBehaviorFactory;
 import net.momirealms.craftengine.core.block.properties.PropertyFactory;
+import net.momirealms.craftengine.core.entity.furniture.FurnitureEmitterFactory;
 import net.momirealms.craftengine.core.entity.furniture.HitBoxFactory;
 import net.momirealms.craftengine.core.item.behavior.ItemBehaviorFactory;
 import net.momirealms.craftengine.core.item.equipment.EquipmentFactory;
@@ -42,6 +43,7 @@ import net.momirealms.craftengine.core.util.ResourceKey;
 
 public class Registries {
     public static final Key ROOT_REGISTRY = Key.withDefaultNamespace("root");
+    public static final ResourceKey<Registry<FurnitureEmitterFactory>> EMITTER_FACTORY = ResourceKey.create(ROOT_REGISTRY, Key.withDefaultNamespace("emitter_factory"));
     public static final ResourceKey<Registry<CustomBlock>> BLOCK = ResourceKey.create(ROOT_REGISTRY, Key.withDefaultNamespace("block"));
     public static final ResourceKey<Registry<PropertyFactory>> PROPERTY_FACTORY = ResourceKey.create(ROOT_REGISTRY, Key.withDefaultNamespace("property_factory"));
     public static final ResourceKey<Registry<BlockBehaviorFactory>> BLOCK_BEHAVIOR_FACTORY = ResourceKey.create(ROOT_REGISTRY, Key.withDefaultNamespace("block_behavior_factory"));
