@@ -23,6 +23,7 @@ minecraft:cherry_sapling[stage=1]: minecraft:cherry_sapling[stage=0]
 $$>=1.21.4#sapling:
   minecraft:pale_oak_sapling[stage=1]: minecraft:pale_oak_sapling[stage=0]
 
+
 #### Sculk Sensor ####
 # The Sculk Sensor's hitbox is exactly half a block. Plus, its appearance only changes based on the sculk_sensor_phase,
 # not the power level. That means we can repurpose the extra states to make bottom-half slabs

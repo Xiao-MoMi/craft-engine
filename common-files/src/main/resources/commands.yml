@@ -30,6 +30,13 @@ send_resource_pack:
     - /craftengine feature send-pack
     - /ce feature send-pack
 
+export_pack_tree:
+  enable: true
+  permission: ce.command.admin.send_resource_pack
+  usage:
+    - /craftengine debug expot-pack-tree
+    - /ce debug export-pack-tree
+
 get_item:
   enable: true
   permission: ce.command.admin.get_item
