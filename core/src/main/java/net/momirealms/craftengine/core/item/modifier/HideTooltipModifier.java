@@ -11,7 +11,6 @@ import net.momirealms.craftengine.core.util.VersionHelper;
 import net.momirealms.sparrow.nbt.CompoundTag;
 import net.momirealms.sparrow.nbt.Tag;
 
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -46,20 +45,8 @@ public class HideTooltipModifier<I> implements ItemDataModifier<I> {
 
     public HideTooltipModifier(List<Key> components) {
         this.components = components;
-        if (VersionHelper.isOrAbove1_21_5()) {
+        if (VersionHelper.isOrAbove1_20_5()) {
             this.applier = new ModernApplier<>(components);
-        } else if (VersionHelper.isOrAbove1_20_5()) {
-            if (components.isEmpty()) {
-                this.applier = new DummyApplier<>();
-            } else if (components.size() == 1) {
-                this.applier = new SemiModernApplier<>(components.getFirst());
-            } else {
-                List<Applier<I>> appliers = new ArrayList<>();
-                for (Key key : components) {
-                    appliers.add(new SemiModernApplier<>(key));
-                }
-                this.applier = new CompoundApplier<>(appliers);
-            }
         } else {
             this.applier = new LegacyApplier<>(components);
         }
@@ -77,21 +64,12 @@ public class HideTooltipModifier<I> implements ItemDataModifier<I> {
 
     @Override
     public Item<I> prepareNetworkItem(Item<I> item, ItemBuildContext context, CompoundTag networkData) {
-        if (VersionHelper.isOrAbove1_21_5()) {
+        if (VersionHelper.isOrAbove1_20_5()) {
             Tag previous = item.getSparrowNBTComponent(ComponentKeys.TOOLTIP_DISPLAY);
             if (previous != null) {
                 networkData.put(ComponentKeys.TOOLTIP_DISPLAY.asString(), NetworkItemHandler.pack(NetworkItemHandler.Operation.ADD, previous));
             } else {
                 networkData.put(ComponentKeys.TOOLTIP_DISPLAY.asString(), NetworkItemHandler.pack(NetworkItemHandler.Operation.REMOVE));
-            }
-        } else if (VersionHelper.isOrAbove1_20_5()) {
-            for (Key component : this.components) {
-                Tag previous = item.getSparrowNBTComponent(component);
-                if (previous != null) {
-                    networkData.put(component.asString(), NetworkItemHandler.pack(NetworkItemHandler.Operation.ADD, previous));
-                } else {
-                    networkData.put(component.asString(), NetworkItemHandler.pack(NetworkItemHandler.Operation.REMOVE));
-                }
             }
         } else {
             Tag previous = item.getTag("HideFlags");
@@ -112,44 +90,6 @@ public class HideTooltipModifier<I> implements ItemDataModifier<I> {
     public interface Applier<I> {
 
         void apply(Item<I> item);
-    }
-
-    public static class DummyApplier<T> implements Applier<T> {
-
-        @Override
-        public void apply(Item<T> item) {
-        }
-    }
-
-    public static class SemiModernApplier<I> implements Applier<I> {
-        private final Key component;
-
-        public SemiModernApplier(Key component) {
-            this.component = component;
-        }
-
-        @Override
-        public void apply(Item<I> item) {
-            Tag previous = item.getSparrowNBTComponent(this.component);
-            if (previous instanceof CompoundTag compoundTag) {
-                compoundTag.putBoolean("show_in_tooltip", false);
-                item.setNBTComponent(this.component, compoundTag);
-            } else {
-                CompoundTag compoundTag = new CompoundTag();
-                compoundTag.putBoolean("show_in_tooltip", false);
-                item.setNBTComponent(this.component, compoundTag);
-            }
-        }
-    }
-
-    public record CompoundApplier<I>(List<Applier<I>> appliers) implements Applier<I> {
-
-        @Override
-        public void apply(Item<I> item) {
-            for (Applier<I> applier : appliers) {
-                applier.apply(item);
-            }
-        }
     }
 
     public static class LegacyApplier<W> implements Applier<W> {

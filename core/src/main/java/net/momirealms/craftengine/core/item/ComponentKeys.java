@@ -1,6 +1,7 @@
 package net.momirealms.craftengine.core.item;
 
 import net.momirealms.craftengine.core.util.Key;
+import net.momirealms.craftengine.core.util.VersionHelper;
 
 public final class ComponentKeys {
     private ComponentKeys() {}
@@ -66,7 +67,7 @@ public final class ComponentKeys {
     public static final Key STORED_ENCHANTMENTS = Key.of("minecraft", "stored_enchantments");
     public static final Key SUSPICIOUS_STEW_EFFECTS = Key.of("minecraft", "suspicious_stew_effects");
     public static final Key TOOL = Key.of("minecraft", "tool");
-    public static final Key TOOLTIP_DISPLAY = Key.of("minecraft", "tooltip_display");
+    public static final Key TOOLTIP_DISPLAY = VersionHelper.isOrAbove1_21_5() ? Key.of("minecraft", "tooltip_display") : Key.of("minecraft", "hide_additional_tooltip");
     public static final Key TOOLTIP_STYLE = Key.of("minecraft", "tooltip_style");
     public static final Key TRIM = Key.of("minecraft", "trim");
     public static final Key UNBREAKABLE = Key.of("minecraft", "unbreakable");
