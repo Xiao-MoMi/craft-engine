@@ -21,7 +21,7 @@ public class ExpressionNumberProvider implements NumberProvider {
 
     @Override
     public float getFloat(Context context) {
-        Component resultComponent = AdventureHelper.customMiniMessage().deserialize(this.expr, context.tagResolvers());
+        Component resultComponent = AdventureHelper.customMiniMessage().deserialize(this.expr, context.combinedTagResolver());
         String resultString = AdventureHelper.plainTextContent(resultComponent);
         Expression expression = new Expression(resultString);
         try {
@@ -33,7 +33,7 @@ public class ExpressionNumberProvider implements NumberProvider {
 
     @Override
     public double getDouble(Context context) {
-        Component resultComponent = AdventureHelper.customMiniMessage().deserialize(this.expr, context.tagResolvers());
+        Component resultComponent = AdventureHelper.customMiniMessage().deserialize(this.expr, context.combinedTagResolver());
         String resultString = AdventureHelper.plainTextContent(resultComponent);
         Expression expression = new Expression(resultString);
         try {

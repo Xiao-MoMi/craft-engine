@@ -1,5 +1,7 @@
 package net.momirealms.craftengine.core.plugin.context;
 
+import java.util.ArrayList;
+import java.util.List;
 import net.kyori.adventure.text.minimessage.tag.resolver.TagResolver;
 import net.momirealms.craftengine.core.plugin.text.minimessage.*;
 
@@ -8,11 +10,23 @@ import java.util.Optional;
 public class ViewerContext implements RelationalContext {
     private final Context owner;
     private final PlayerOptionalContext viewer;
-    private TagResolver[] tagResolvers;
+    private final List<TagResolver> tagResolvers = new ArrayList<>();
 
     public ViewerContext(Context owner, PlayerOptionalContext viewer) {
         this.owner = owner;
         this.viewer = viewer;
+            if (this.owner instanceof PlayerOptionalContext context && context.player != null && this.viewer.player != null) {
+                this.tagResolvers.addAll(List.of(new RelationalPlaceholderTag(context.player, this.viewer.player, this),
+                        ShiftTag.INSTANCE, ImageTag.INSTANCE,
+                        new PlaceholderTag(this.owner), new ViewerPlaceholderTag(this.viewer),
+                        new NamedArgumentTag(this.owner), new ViewerNamedArgumentTag(this.viewer),
+                        new I18NTag(this), new ExpressionTag(this), new GlobalVariableTag(this)));
+            } else {
+                this.tagResolvers.addAll(List.of(ShiftTag.INSTANCE, ImageTag.INSTANCE,
+                        new PlaceholderTag(this.owner), new ViewerPlaceholderTag(this.viewer),
+                        new NamedArgumentTag(this.owner), new ViewerNamedArgumentTag(this.viewer),
+                        new I18NTag(this), new ExpressionTag(this), new GlobalVariableTag(this)));
+            }
     }
 
     public static ViewerContext of(Context owner, PlayerOptionalContext viewer) {
@@ -50,21 +64,7 @@ public class ViewerContext implements RelationalContext {
     }
 
     @Override
-    public TagResolver[] tagResolvers() {
-        if (this.tagResolvers == null) {
-            if (this.owner instanceof PlayerOptionalContext context && context.player != null && this.viewer.player != null) {
-                this.tagResolvers = new TagResolver[]{new RelationalPlaceholderTag(context.player, this.viewer.player, this),
-                        ShiftTag.INSTANCE, ImageTag.INSTANCE,
-                        new PlaceholderTag(this.owner), new ViewerPlaceholderTag(this.viewer),
-                        new NamedArgumentTag(this.owner), new ViewerNamedArgumentTag(this.viewer),
-                        new I18NTag(this), new ExpressionTag(this), new GlobalVariableTag(this)};
-            } else {
-                this.tagResolvers = new TagResolver[]{ShiftTag.INSTANCE, ImageTag.INSTANCE,
-                        new PlaceholderTag(this.owner), new ViewerPlaceholderTag(this.viewer),
-                        new NamedArgumentTag(this.owner), new ViewerNamedArgumentTag(this.viewer),
-                        new I18NTag(this), new ExpressionTag(this), new GlobalVariableTag(this)};
-            }
-        }
+    public List<TagResolver> tagResolvers() {
         return this.tagResolvers;
     }
 }

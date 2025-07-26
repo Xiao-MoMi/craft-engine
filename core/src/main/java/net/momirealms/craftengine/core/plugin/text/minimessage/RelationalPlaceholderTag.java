@@ -29,7 +29,7 @@ public class RelationalPlaceholderTag implements TagResolver {
             return null;
         }
         String rawArgument = arguments.popOr("No argument placeholder provided").toString();
-        if (rawArgument.contains("<")) rawArgument = AdventureHelper.resolvePlainStringTags(rawArgument, this.context.tagResolvers());
+        if (rawArgument.contains("<")) rawArgument = AdventureHelper.resolvePlainStringTags(rawArgument, this.context.combinedTagResolver());
         String placeholder = "%" + rawArgument + "%";
         String parsed = CraftEngine.instance().compatibilityManager().parse(this.player1, this.player2, placeholder);
         if (parsed.equals(placeholder)) {

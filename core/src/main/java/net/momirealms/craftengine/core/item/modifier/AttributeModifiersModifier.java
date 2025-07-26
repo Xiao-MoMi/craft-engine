@@ -125,7 +125,7 @@ public class AttributeModifiersModifier<I> implements ItemDataModifier<I> {
                     AttributeModifier.Display.Type displayType = display.type();
                     displayTag.putString("type", displayType.name().toLowerCase(Locale.ENGLISH));
                     if (displayType == AttributeModifier.Display.Type.OVERRIDE) {
-                        displayTag.put("value", AdventureHelper.componentToTag(AdventureHelper.miniMessage().deserialize(display.value(), context.tagResolvers())));
+                        displayTag.put("value", AdventureHelper.componentToTag(AdventureHelper.miniMessage().deserialize(display.value(), context.combinedTagResolver())));
                     }
                     modifierTag.put("display", displayTag);
                 }

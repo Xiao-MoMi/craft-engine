@@ -161,8 +161,8 @@ public class ItemBrowserManagerImpl implements ItemBrowserManager {
                 this.plugin.logger().warn("Can't not find item " + it.icon() + " for category icon");
                 return null;
             }
-            item.customNameJson(AdventureHelper.componentToJson(AdventureHelper.miniMessage().deserialize(it.displayName(), ItemBuildContext.EMPTY.tagResolvers())));
-            item.loreJson(it.displayLore().stream().map(lore -> AdventureHelper.componentToJson(AdventureHelper.miniMessage().deserialize(lore, ItemBuildContext.EMPTY.tagResolvers()))).toList());
+            item.customNameJson(AdventureHelper.componentToJson(AdventureHelper.miniMessage().deserialize(it.displayName(), ItemBuildContext.EMPTY.combinedTagResolver())));
+            item.loreJson(it.displayLore().stream().map(lore -> AdventureHelper.componentToJson(AdventureHelper.miniMessage().deserialize(lore, ItemBuildContext.EMPTY.combinedTagResolver()))).toList());
             return new ItemWithAction(item, (element, click) -> {
                 click.cancel();
                 player.playSound(Constants.SOUND_CLICK_BUTTON);
@@ -179,7 +179,7 @@ public class ItemBrowserManagerImpl implements ItemBrowserManager {
                     }
                 })
                 .build()
-                .title(AdventureHelper.miniMessage().deserialize(Constants.BROWSER_TITLE, PlayerOptionalContext.of(player).tagResolvers()))
+                .title(AdventureHelper.miniMessage().deserialize(Constants.BROWSER_TITLE, PlayerOptionalContext.of(player).combinedTagResolver()))
                 .refresh()
                 .open(player);
     }
@@ -245,12 +245,12 @@ public class ItemBrowserManagerImpl implements ItemBrowserManager {
                 if (ItemUtils.isEmpty(item)) {
                     if (!subCategory.icon().equals(ItemKeys.AIR)) {
                         item = this.plugin.itemManager().createWrappedItem(ItemKeys.BARRIER, player);
-                        item.customNameJson(AdventureHelper.componentToJson(AdventureHelper.miniMessage().deserialize(subCategory.displayName(), ItemBuildContext.EMPTY.tagResolvers())));
-                        item.loreJson(subCategory.displayLore().stream().map(lore -> AdventureHelper.componentToJson(AdventureHelper.miniMessage().deserialize(lore, ItemBuildContext.EMPTY.tagResolvers()))).toList());
+                        item.customNameJson(AdventureHelper.componentToJson(AdventureHelper.miniMessage().deserialize(subCategory.displayName(), ItemBuildContext.EMPTY.combinedTagResolver())));
+                        item.loreJson(subCategory.displayLore().stream().map(lore -> AdventureHelper.componentToJson(AdventureHelper.miniMessage().deserialize(lore, ItemBuildContext.EMPTY.combinedTagResolver()))).toList());
                     }
                 } else {
-                    item.customNameJson(AdventureHelper.componentToJson(AdventureHelper.miniMessage().deserialize(subCategory.displayName(), ItemBuildContext.EMPTY.tagResolvers())));
-                    item.loreJson(subCategory.displayLore().stream().map(lore -> AdventureHelper.componentToJson(AdventureHelper.miniMessage().deserialize(lore, ItemBuildContext.EMPTY.tagResolvers()))).toList());
+                    item.customNameJson(AdventureHelper.componentToJson(AdventureHelper.miniMessage().deserialize(subCategory.displayName(), ItemBuildContext.EMPTY.combinedTagResolver())));
+                    item.loreJson(subCategory.displayLore().stream().map(lore -> AdventureHelper.componentToJson(AdventureHelper.miniMessage().deserialize(lore, ItemBuildContext.EMPTY.combinedTagResolver()))).toList());
                 }
                 return new ItemWithAction(item, (element, click) -> {
                     click.cancel();
@@ -321,7 +321,7 @@ public class ItemBrowserManagerImpl implements ItemBrowserManager {
                     }
                 })
                 .build()
-                .title(AdventureHelper.miniMessage().deserialize(Constants.CATEGORY_TITLE, PlayerOptionalContext.of(player).tagResolvers()))
+                .title(AdventureHelper.miniMessage().deserialize(Constants.CATEGORY_TITLE, PlayerOptionalContext.of(player).combinedTagResolver()))
                 .refresh()
                 .open(player);
     }
@@ -382,7 +382,7 @@ public class ItemBrowserManagerImpl implements ItemBrowserManager {
                     }
                 })
                 .build()
-                .title(AdventureHelper.miniMessage().deserialize(Constants.RECIPE_NONE_TITLE, PlayerOptionalContext.of(player).tagResolvers()))
+                .title(AdventureHelper.miniMessage().deserialize(Constants.RECIPE_NONE_TITLE, PlayerOptionalContext.of(player).combinedTagResolver()))
                 .refresh()
                 .open(player);
     }
@@ -576,7 +576,7 @@ public class ItemBrowserManagerImpl implements ItemBrowserManager {
                     }
                 })
                 .build()
-                .title(AdventureHelper.miniMessage().deserialize(Constants.RECIPE_BREWING_TITLE, PlayerOptionalContext.of(player).tagResolvers()))
+                .title(AdventureHelper.miniMessage().deserialize(Constants.RECIPE_BREWING_TITLE, PlayerOptionalContext.of(player).combinedTagResolver()))
                 .refresh()
                 .open(player);
     }
@@ -776,7 +776,7 @@ public class ItemBrowserManagerImpl implements ItemBrowserManager {
                     }
                 })
                 .build()
-                .title(AdventureHelper.miniMessage().deserialize(Constants.RECIPE_SMITHING_TRANSFORM_TITLE, PlayerOptionalContext.of(player).tagResolvers()))
+                .title(AdventureHelper.miniMessage().deserialize(Constants.RECIPE_SMITHING_TRANSFORM_TITLE, PlayerOptionalContext.of(player).combinedTagResolver()))
                 .refresh()
                 .open(player);
     }
@@ -909,7 +909,7 @@ public class ItemBrowserManagerImpl implements ItemBrowserManager {
                     }
                 })
                 .build()
-                .title(AdventureHelper.miniMessage().deserialize(Constants.RECIPE_STONECUTTING_TITLE, PlayerOptionalContext.of(player).tagResolvers()))
+                .title(AdventureHelper.miniMessage().deserialize(Constants.RECIPE_STONECUTTING_TITLE, PlayerOptionalContext.of(player).combinedTagResolver()))
                 .refresh()
                 .open(player);
     }
@@ -1059,7 +1059,7 @@ public class ItemBrowserManagerImpl implements ItemBrowserManager {
                     }
                 })
                 .build()
-                .title(AdventureHelper.miniMessage().deserialize(title, PlayerOptionalContext.of(player).tagResolvers()))
+                .title(AdventureHelper.miniMessage().deserialize(title, PlayerOptionalContext.of(player).combinedTagResolver()))
                 .refresh()
                 .open(player);
     }
@@ -1254,7 +1254,7 @@ public class ItemBrowserManagerImpl implements ItemBrowserManager {
                     }
                 })
                 .build()
-                .title(AdventureHelper.miniMessage().deserialize(Constants.RECIPE_CRAFTING_TITLE, PlayerOptionalContext.of(player).tagResolvers()))
+                .title(AdventureHelper.miniMessage().deserialize(Constants.RECIPE_CRAFTING_TITLE, PlayerOptionalContext.of(player).combinedTagResolver()))
                 .refresh()
                 .open(player);
     }

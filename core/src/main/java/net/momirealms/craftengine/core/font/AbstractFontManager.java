@@ -122,7 +122,7 @@ public abstract class AbstractFontManager implements FontManager {
                     PlayerOptionalContext.of(player, ContextHolder.builder()
                             .withOptionalParameter(EmojiParameters.EMOJI, emoji.emojiImage())
                             .withParameter(EmojiParameters.KEYWORD, emoji.keywords().get(0))
-                    ).tagResolvers()
+                    ).combinedTagResolver()
             );
             replacements.put(fragment, AdventureHelper.componentToMiniMessage(content));
         }
@@ -168,7 +168,7 @@ public abstract class AbstractFontManager implements FontManager {
                     PlayerOptionalContext.of(player, ContextHolder.builder()
                             .withOptionalParameter(EmojiParameters.EMOJI, emoji.emojiImage())
                             .withParameter(EmojiParameters.KEYWORD, emoji.keywords().get(0))
-                    ).tagResolvers())
+                    ).combinedTagResolver())
             );
             if (emojis.size() >= maxTimes) break;
         }
@@ -200,7 +200,7 @@ public abstract class AbstractFontManager implements FontManager {
                     PlayerOptionalContext.of(player, ContextHolder.builder()
                             .withOptionalParameter(EmojiParameters.EMOJI, emoji.emojiImage())
                             .withParameter(EmojiParameters.KEYWORD, emoji.keywords().get(0))
-                    ).tagResolvers()
+                    ).combinedTagResolver()
             ));
             if (emojis.size() >= maxTimes) break;
         }

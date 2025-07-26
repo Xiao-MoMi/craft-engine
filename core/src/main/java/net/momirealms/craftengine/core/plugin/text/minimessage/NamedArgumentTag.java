@@ -31,7 +31,7 @@ public class NamedArgumentTag implements TagResolver {
         if (value == null) {
             value = arguments.popOr("No default value provided").toString();
         }
-        return Tag.selfClosingInserting(AdventureHelper.miniMessage().deserialize(String.valueOf(value), this.context.tagResolvers()));
+        return Tag.selfClosingInserting(AdventureHelper.miniMessage().deserialize(String.valueOf(value), this.context.combinedTagResolver()));
     }
 
     @Override

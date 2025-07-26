@@ -29,12 +29,12 @@ public class ActionBarFunction<CTX extends Context> extends AbstractConditionalF
     public void runInternal(CTX ctx) {
         if (this.selector == null) {
             ctx.getOptionalParameter(DirectContextParameters.PLAYER).ifPresent(it -> {
-                it.sendActionBar(AdventureHelper.miniMessage().deserialize(this.message.get(ctx), ctx.tagResolvers()));
+                it.sendActionBar(AdventureHelper.miniMessage().deserialize(this.message.get(ctx), ctx.combinedTagResolver()));
             });
         } else {
             for (Player viewer : this.selector.get(ctx)) {
                 RelationalContext relationalContext = ViewerContext.of(ctx, PlayerOptionalContext.of(viewer, ContextHolder.EMPTY));
-                viewer.sendActionBar(AdventureHelper.miniMessage().deserialize(this.message.get(relationalContext), relationalContext.tagResolvers()));
+                viewer.sendActionBar(AdventureHelper.miniMessage().deserialize(this.message.get(relationalContext), relationalContext.combinedTagResolver()));
             }
         }
     }

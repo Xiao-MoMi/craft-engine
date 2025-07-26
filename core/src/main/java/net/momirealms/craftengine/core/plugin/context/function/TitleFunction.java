@@ -39,16 +39,16 @@ public class TitleFunction<CTX extends Context> extends AbstractConditionalFunct
     public void runInternal(CTX ctx) {
         if (this.selector == null) {
             ctx.getOptionalParameter(DirectContextParameters.PLAYER).ifPresent(it -> it.sendTitle(
-                    AdventureHelper.miniMessage().deserialize(this.main.get(ctx), ctx.tagResolvers()),
-                    AdventureHelper.miniMessage().deserialize(this.sub.get(ctx), ctx.tagResolvers()),
+                    AdventureHelper.miniMessage().deserialize(this.main.get(ctx), ctx.combinedTagResolver()),
+                    AdventureHelper.miniMessage().deserialize(this.sub.get(ctx), ctx.combinedTagResolver()),
                     this.fadeIn.getInt(ctx), this.stay.getInt(ctx), this.fadeOut.getInt(ctx)
             ));
         } else {
             for (Player viewer : this.selector.get(ctx)) {
                 RelationalContext relationalContext = ViewerContext.of(ctx, PlayerOptionalContext.of(viewer, ContextHolder.EMPTY));
                 viewer.sendTitle(
-                        AdventureHelper.miniMessage().deserialize(this.main.get(relationalContext), relationalContext.tagResolvers()),
-                        AdventureHelper.miniMessage().deserialize(this.sub.get(relationalContext), relationalContext.tagResolvers()),
+                        AdventureHelper.miniMessage().deserialize(this.main.get(relationalContext), relationalContext.combinedTagResolver()),
+                        AdventureHelper.miniMessage().deserialize(this.sub.get(relationalContext), relationalContext.combinedTagResolver()),
                         this.fadeIn.getInt(relationalContext), this.stay.getInt(relationalContext), this.fadeOut.getInt(relationalContext)
                 );
             }

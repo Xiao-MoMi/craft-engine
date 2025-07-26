@@ -32,7 +32,7 @@ public class CustomNameModifier<I> implements ItemDataModifier<I> {
 
     @Override
     public Item<I> apply(Item<I> item, ItemBuildContext context) {
-        item.customNameComponent(AdventureHelper.miniMessage().deserialize(this.argument, context.tagResolvers()));
+        item.customNameComponent(AdventureHelper.miniMessage().deserialize(this.argument, context.combinedTagResolver()));
         return item;
     }
 

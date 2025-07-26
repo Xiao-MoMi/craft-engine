@@ -39,7 +39,7 @@ public class OpenWindowFunction<CTX extends Context> extends AbstractConditional
             ctx.getOptionalParameter(DirectContextParameters.PLAYER).ifPresent(it -> {
                 CraftEngine.instance().guiManager().openInventory(it, this.guiType);
                 if (this.optionalTitle != null) {
-                    CraftEngine.instance().guiManager().updateInventoryTitle(it, AdventureHelper.miniMessage().deserialize(this.optionalTitle.get(ctx), ctx.tagResolvers()));
+                    CraftEngine.instance().guiManager().updateInventoryTitle(it, AdventureHelper.miniMessage().deserialize(this.optionalTitle.get(ctx), ctx.combinedTagResolver()));
                 }
             });
         } else {
@@ -47,7 +47,7 @@ public class OpenWindowFunction<CTX extends Context> extends AbstractConditional
                 CraftEngine.instance().guiManager().openInventory(viewer, this.guiType);
                 if (this.optionalTitle != null) {
                     RelationalContext relationalContext = ViewerContext.of(ctx, PlayerOptionalContext.of(viewer, ContextHolder.EMPTY));
-                    CraftEngine.instance().guiManager().updateInventoryTitle(viewer, AdventureHelper.miniMessage().deserialize(this.optionalTitle.get(relationalContext), relationalContext.tagResolvers()));
+                    CraftEngine.instance().guiManager().updateInventoryTitle(viewer, AdventureHelper.miniMessage().deserialize(this.optionalTitle.get(relationalContext), relationalContext.combinedTagResolver()));
                 }
             }
         }

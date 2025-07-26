@@ -18,7 +18,7 @@ public record LoreModification(Operation operation, boolean split, String[] cont
     }
 
     public Stream<Component> parseAsStream(ItemBuildContext context) {
-        Stream<Component> parsed = Arrays.stream(this.content).map(string -> AdventureHelper.miniMessage().deserialize(string, context.tagResolvers()));
+        Stream<Component> parsed = Arrays.stream(this.content).map(string -> AdventureHelper.miniMessage().deserialize(string, context.combinedTagResolver()));
         return this.split ? parsed.map(AdventureHelper::splitLines).flatMap(List::stream) : parsed;
     }
 

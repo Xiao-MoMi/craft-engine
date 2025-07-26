@@ -34,7 +34,7 @@ public class ExpressionTag implements TagResolver {
         String format = arguments.popOr("No format provided").toString();
         String expr = arguments.popOr("No expression provided").toString();
 
-        Component resultComponent = AdventureHelper.customMiniMessage().deserialize(expr, context.tagResolvers());
+        Component resultComponent = AdventureHelper.customMiniMessage().deserialize(expr, context.combinedTagResolver());
         String resultString = AdventureHelper.plainTextContent(resultComponent);
         Expression expression = new Expression(resultString);
 

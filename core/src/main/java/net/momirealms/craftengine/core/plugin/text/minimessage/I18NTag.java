@@ -24,7 +24,7 @@ public class I18NTag implements TagResolver {
         }
         String i18nKey = arguments.popOr("No argument i18n key provided").toString();
         String translation = TranslationManager.instance().miniMessageTranslation(i18nKey);
-        return Tag.selfClosingInserting(AdventureHelper.miniMessage().deserialize(translation, this.context.tagResolvers()));
+        return Tag.selfClosingInserting(AdventureHelper.miniMessage().deserialize(translation, this.context.combinedTagResolver()));
     }
 
     @Override

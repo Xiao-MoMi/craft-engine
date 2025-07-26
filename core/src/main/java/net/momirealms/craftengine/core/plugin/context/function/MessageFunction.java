@@ -33,14 +33,14 @@ public class MessageFunction<CTX extends Context> extends AbstractConditionalFun
         if (this.selector == null) {
             ctx.getOptionalParameter(DirectContextParameters.PLAYER).ifPresent(it -> {
                 for (TextProvider c : this.messages) {
-                    it.sendMessage(AdventureHelper.miniMessage().deserialize(c.get(ctx), ctx.tagResolvers()), this.overlay);
+                    it.sendMessage(AdventureHelper.miniMessage().deserialize(c.get(ctx), ctx.combinedTagResolver()), this.overlay);
                 }
             });
         } else {
             for (Player viewer : this.selector.get(ctx)) {
                 RelationalContext relationalContext = ViewerContext.of(ctx, PlayerOptionalContext.of(viewer, ContextHolder.EMPTY));
                 for (TextProvider c : this.messages) {
-                    viewer.sendMessage(AdventureHelper.miniMessage().deserialize(c.get(relationalContext), relationalContext.tagResolvers()), this.overlay);
+                    viewer.sendMessage(AdventureHelper.miniMessage().deserialize(c.get(relationalContext), relationalContext.combinedTagResolver()), this.overlay);
                 }
             }
         }

@@ -18,7 +18,7 @@ public class TagTextProvider implements TextProvider {
 
     @Override
     public String get(Context context) {
-        Component resultComponent = AdventureHelper.customMiniMessage().deserialize(this.text, context.tagResolvers());
+        Component resultComponent = AdventureHelper.customMiniMessage().deserialize(this.text, context.combinedTagResolver());
         return AdventureHelper.plainTextContent(resultComponent);
     }
 

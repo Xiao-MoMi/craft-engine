@@ -23,7 +23,7 @@ public class ItemNameModifier<I> implements ItemDataModifier<I> {
 
     @Override
     public Item<I> apply(Item<I> item, ItemBuildContext context) {
-        item.itemNameComponent(AdventureHelper.miniMessage().deserialize(this.argument, context.tagResolvers()));
+        item.itemNameComponent(AdventureHelper.miniMessage().deserialize(this.argument, context.combinedTagResolver()));
         return item;
     }
 

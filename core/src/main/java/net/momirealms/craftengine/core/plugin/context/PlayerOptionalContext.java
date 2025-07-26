@@ -1,9 +1,7 @@
 package net.momirealms.craftengine.core.plugin.context;
 
-import net.kyori.adventure.text.minimessage.tag.resolver.TagResolver;
 import net.momirealms.craftengine.core.entity.player.Player;
 import net.momirealms.craftengine.core.plugin.context.parameter.DirectContextParameters;
-import net.momirealms.craftengine.core.plugin.text.minimessage.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -51,15 +49,5 @@ public class PlayerOptionalContext extends AbstractChainParameterContext impleme
 
     public boolean isPlayerPresent() {
         return this.player != null;
-    }
-
-    @Override
-    @NotNull
-    public TagResolver[] tagResolvers() {
-        if (this.tagResolvers == null) {
-            this.tagResolvers = new TagResolver[]{ShiftTag.INSTANCE, ImageTag.INSTANCE, new PlaceholderTag(this), new I18NTag(this),
-                    new NamedArgumentTag(this), new ExpressionTag(this), new GlobalVariableTag(this)};
-        }
-        return this.tagResolvers;
     }
 }
