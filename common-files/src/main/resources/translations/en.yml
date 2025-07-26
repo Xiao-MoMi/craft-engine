@@ -63,6 +63,8 @@ command.upload.failure.not_supported: "<red>Current hosting method '<arg:0>' doe
 command.upload.on_progress: "<white>Started uploading progress. Check the console for more information.</white>"
 command.send_resource_pack.success.single: "<white>Sent resource pack to <arg:0>.</white>"
 command.send_resource_pack.success.multiple: "<white>Send resource packs to <arg:0> players.</white>"
+command.debug.export_pack_tree.success: "<white>Successfully exported pack tree for '<arg:0>' to <arg:1></white>"
+command.debug.export_pack_tree.failure: "<red>Failed to export pack tree for '<arg:0>'. Check console for details.</red>"
 warning.config.pack.duplicated_files: "</red>Duplicated files Found. Please resolve them through config.yml 'resource-pack.duplicated-files-handler' section.</red>"
 warning.config.yaml.duplicated_key: "<red>Issue found in file <arg:0> - Found duplicated key '<arg:1>' at line <arg:2>, this might cause unexpected results.</red>"
 warning.config.yaml.inconsistent_value_type: "<red>Issue found in file <arg:0> - Found duplicated key '<arg:1>' at line <arg:2> with different value types, this might cause unexpected results.</red>"

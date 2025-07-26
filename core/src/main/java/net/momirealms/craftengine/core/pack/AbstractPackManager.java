@@ -302,41 +302,55 @@ public abstract class AbstractPackManager implements PackManager {
                 Files.createDirectories(resourcesFolder);
                 this.saveDefaultConfigs();
             }
-            try (DirectoryStream<Path> paths = Files.newDirectoryStream(resourcesFolder)) {
-                for (Path path : paths) {
-                    if (!Files.isDirectory(path)) {
-                        this.plugin.logger().warn(path.toAbsolutePath() + " is not a directory");
-                        continue;
-                    }
+            loadPacksRecursive(resourcesFolder, true);
+        } catch (IOException e) {
+            this.plugin.logger().severe("Error loading packs", e);
+        }
+    }
+
+    private void loadPacksRecursive(Path folder, boolean isInitialCall) {
+        try (DirectoryStream<Path> paths = Files.newDirectoryStream(folder)) {
+            for (Path path : paths) {
+                if (!Files.isDirectory(path) || path.getFileName().toString().charAt(0) == '.') {
+                    continue;
+                }
+
+                Path metaFile = path.resolve("pack.yml");
+                boolean isPack = Files.exists(metaFile) && Files.isRegularFile(metaFile);
+
+                if (isPack) {
                     String namespace = path.getFileName().toString();
-                    if (namespace.charAt(0) == '.') {
-                        continue;
-                    }
-                    Path metaFile = path.resolve("pack.yml");
                     String description = null;
                     String version = null;
                     String author = null;
                     boolean enable = true;
-                    if (Files.exists(metaFile) && Files.isRegularFile(metaFile)) {
-                        Yaml yaml = new Yaml(new StringKeyConstructor(path, new LoaderOptions()));
-                        try (InputStream is = Files.newInputStream(metaFile)) {
-                            Map<String, Object> data = yaml.load(is);
-                            enable = ResourceConfigUtils.getAsBoolean(data.getOrDefault("enable", true), "enable");
-                            namespace = data.getOrDefault("namespace", namespace).toString();
-                            description = Optional.ofNullable(data.get("description")).map(String::valueOf).orElse(null);
-                            version = Optional.ofNullable(data.get("version")).map(String::valueOf).orElse(null);
-                            author = Optional.ofNullable(data.get("author")).map(String::valueOf).orElse(null);
-                        } catch (IOException e) {
-                            this.plugin.logger().warn("Failed to load " + metaFile, e);
-                        }
+
+                    Yaml yaml = new Yaml(new StringKeyConstructor(path, new LoaderOptions())); // Assuming StringKeyConstructor is available
+                    try (InputStream is = Files.newInputStream(metaFile)) {
+                        Map<String, Object> data = yaml.load(is);
+                        enable = ResourceConfigUtils.getAsBoolean(data.getOrDefault("enable", true), "enable");
+                        namespace = data.getOrDefault("namespace", namespace).toString();
+                        description = Optional.ofNullable(data.get("description")).map(String::valueOf).orElse(null);
+                        version = Optional.ofNullable(data.get("version")).map(String::valueOf).orElse(null);
+                        author = Optional.ofNullable(data.get("author")).map(String::valueOf).orElse(null);
+                    } catch (IOException | ClassCastException e) {
+                        this.plugin.logger().warn("Failed to load pack.yml for " + metaFile.toAbsolutePath() + ". Skipping this pack.", e);
+                        continue;
                     }
+
                     Pack pack = new Pack(path, new PackMeta(author, description, version, namespace), enable);
-                    this.loadedPacks.put(path.getFileName().toString(), pack);
-                    this.plugin.logger().info("Loaded pack: " + pack.folder().getFileName() + ". Default namespace: " + namespace);
+                    this.loadedPacks.put(pack.name(), pack);
+                    this.plugin.logger().info("Loaded pack: " + pack.name() + " from folder " + pack.folder().getFileName() + ". Namespace: " + namespace);
+
+                } else if (isInitialCall) {
+                    this.plugin.logger().info("Folder '" + path.getFileName().toString() + "' is not a direct pack. Checking its subfolders for packs.");
+                    loadPacksRecursive(path, false);
+                } else {
+                    this.plugin.logger().info("Folder '" + path.getFileName().toString() + "' is not a pack. Its subfolders will not be checked (depth limit reached).");
                 }
             }
         } catch (IOException e) {
-            this.plugin.logger().severe("Error loading packs", e);
+            this.plugin.logger().severe("Error accessing directory " + folder.toAbsolutePath(), e);
         }
     }
 
