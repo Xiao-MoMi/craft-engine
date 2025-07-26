@@ -44,7 +44,7 @@ public class BukkitSenderFactory extends SenderFactory<BukkitCraftEngine, Comman
         if (sender instanceof Player player) {
             FastNMS.INSTANCE.method$Connection$send(
                     FastNMS.INSTANCE.field$ServerGamePacketListenerImpl$connection(FastNMS.INSTANCE.field$Player$connection(FastNMS.INSTANCE.method$CraftPlayer$getHandle(player))),
-                    FastNMS.INSTANCE.constructor$ClientboundSystemChatPacket(ComponentUtils.adventureToMinecraft(message), false));
+                    FastNMS.INSTANCE.constructor$ClientboundSystemChatPacket(ComponentUtils.adventureToMinecraft(message), false), null);
         } else if (sender instanceof ConsoleCommandSender commandSender) {
             commandSender.sendMessage(LegacyComponentSerializer.legacySection().serialize(message));
         } else if (sender instanceof RemoteConsoleCommandSender commandSender) {

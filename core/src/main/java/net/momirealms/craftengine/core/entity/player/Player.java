@@ -28,6 +28,8 @@ public abstract class Player extends AbstractEntity implements NetWorkUser {
 
     public abstract void sendPackets(List<Object> packet, boolean immediately);
 
+    public abstract void sendPackets(List<Object> packet, boolean immediately, Runnable sendListener);
+
     public abstract float getDestroyProgress(Object blockState, BlockPos pos);
 
     public abstract void setClientSideCanBreakBlock(boolean canBreak);

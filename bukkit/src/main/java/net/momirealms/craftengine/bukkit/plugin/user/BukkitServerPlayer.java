@@ -324,6 +324,11 @@ public class BukkitServerPlayer extends Player {
     }
 
     @Override
+    public void sendPacket(Object packet, boolean immediately, Runnable sendListener) {
+        this.plugin.networkManager().sendPacket(this, packet, immediately, sendListener);
+    }
+
+    @Override
     public void sendCustomPayload(Key channel, byte[] data) {
         try {
             Object channelKey = KeyUtils.toResourceLocation(channel);
@@ -352,8 +357,10 @@ public class BukkitServerPlayer extends Player {
         try {
             Object reason = ComponentUtils.adventureToMinecraft(message);
             Object kickPacket = NetworkReflections.constructor$ClientboundDisconnectPacket.newInstance(reason);
-            this.sendPacket(kickPacket, true);
-            this.nettyChannel().disconnect();
+            this.sendPacket(kickPacket, false, () -> FastNMS.INSTANCE.method$Connection$disconnect(this.connection(), reason));
+            this.nettyChannel().config().setAutoRead(false);
+            Runnable handleDisconnection = () -> FastNMS.INSTANCE.method$Connection$handleDisconnection(this.connection());
+            FastNMS.INSTANCE.method$BlockableEventLoop$scheduleOnMain(handleDisconnection);
         } catch (Exception e) {
             CraftEngine.instance().logger().warn("Failed to kick " + name(), e);
         }
@@ -362,6 +369,11 @@ public class BukkitServerPlayer extends Player {
     @Override
     public void sendPackets(List<Object> packet, boolean immediately) {
         this.plugin.networkManager().sendPackets(this, packet, immediately);
+    }
+
+    @Override
+    public void sendPackets(List<Object> packet, boolean immediately, Runnable sendListener) {
+        this.plugin.networkManager().sendPackets(this, packet, immediately, sendListener);
     }
 
     @Override
@@ -719,7 +731,8 @@ public class BukkitServerPlayer extends Player {
                                         FastNMS.INSTANCE.method$CraftPlayer$getHandle(player)
                                 )
                         ),
-                        packet
+                        packet,
+                        null
                 );
             }
         }
