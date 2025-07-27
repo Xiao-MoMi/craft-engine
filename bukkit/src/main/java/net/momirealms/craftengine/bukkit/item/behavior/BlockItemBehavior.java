@@ -47,6 +47,8 @@ import org.bukkit.inventory.ItemStack;
 import org.bukkit.util.Vector;
 
 import java.nio.file.Path;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
@@ -125,15 +127,19 @@ public class BlockItemBehavior extends BlockBoundItemBehavior {
 
         // it's just world + pos
         BlockState previousState = bukkitBlock.getState();
+        List<BlockState> revertStates = new ArrayList<>(2);
+        revertStates.add(previousState);
         // place custom block
-        placeBlock(placeLocation, blockStateToPlace);
+        placeBlock(placeLocation, blockStateToPlace, revertStates);
 
         if (player != null) {
             // call bukkit event
             BlockPlaceEvent bukkitPlaceEvent = new BlockPlaceEvent(bukkitBlock, previousState, againstBlock, (ItemStack) context.getItem().getItem(), bukkitPlayer, true, context.getHand() == InteractionHand.MAIN_HAND ? EquipmentSlot.HAND : EquipmentSlot.OFF_HAND);
             if (EventUtils.fireAndCheckCancel(bukkitPlaceEvent)) {
                 // revert changes
-                previousState.update(true, false);
+                for (BlockState state : revertStates) {
+                    state.update(true, false);
+                }
                 return InteractionResult.FAIL;
             }
 
@@ -141,7 +147,9 @@ public class BlockItemBehavior extends BlockBoundItemBehavior {
             CustomBlockPlaceEvent customPlaceEvent = new CustomBlockPlaceEvent(bukkitPlayer, placeLocation.clone(), blockStateToPlace, world.getBlockAt(placeLocation), context.getHand());
             if (EventUtils.fireAndCheckCancel(customPlaceEvent)) {
                 // revert changes
-                previousState.update(true, false);
+                for (BlockState state : revertStates) {
+                    state.update(true, false);
+                }
                 return InteractionResult.FAIL;
             }
         }
@@ -215,7 +223,7 @@ public class BlockItemBehavior extends BlockBoundItemBehavior {
         }
     }
 
-    protected boolean placeBlock(Location location, ImmutableBlockState blockState) {
+    protected boolean placeBlock(Location location, ImmutableBlockState blockState, List<BlockState> revertStates) {
         return CraftEngineBlocks.place(location, blockState, UpdateOption.UPDATE_ALL_IMMEDIATE, false);
     }
 
