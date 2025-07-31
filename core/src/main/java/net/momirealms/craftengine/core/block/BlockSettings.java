@@ -18,7 +18,7 @@ public class BlockSettings {
     float hardness = 2f;
     float resistance = 2f;
     Tristate canOcclude = Tristate.UNDEFINED;
-    boolean fluidState;
+    FluidState fluidState;
     boolean requireCorrectTools;
     boolean respectToolComponent;
     Tristate isRedstoneConductor = Tristate.UNDEFINED;
@@ -120,7 +120,7 @@ public class BlockSettings {
         return resistance;
     }
 
-    public boolean fluidState() {
+    public FluidState fluidState() {
         return fluidState;
     }
 
@@ -341,7 +341,7 @@ public class BlockSettings {
         return this;
     }
 
-    public BlockSettings fluidState(boolean state) {
+    public BlockSettings fluidState(FluidState state) {
         this.fluidState = state;
         return this;
     }
@@ -453,7 +453,7 @@ public class BlockSettings {
             }));
             registerFactory("fluid-state", (value -> {
                 String state = value.toString();
-                return settings -> settings.fluidState(state.equals("water"));
+                return settings -> settings.fluidState(FluidState.byName(state));
             }));
             registerFactory("can-occlude", (value -> {
                 boolean booleanValue = ResourceConfigUtils.getAsBoolean(value, "can-occlude");

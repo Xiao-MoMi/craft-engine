@@ -166,10 +166,13 @@ public final class BukkitCustomBlock extends AbstractCustomBlock {
                     }
                 }
                 // set fluid later
-                if (settings.fluidState()) {
-                    CoreReflections.field$BlockStateBase$fluidState.set(nmsState, CoreReflections.method$FlowingFluid$getSource.invoke(MFluids.WATER, false));
-                } else {
-                    CoreReflections.field$BlockStateBase$fluidState.set(nmsState, MFluids.EMPTY$defaultState);
+                switch (settings.fluidState()) {
+                    case null -> CoreReflections.field$BlockStateBase$fluidState.set(nmsState, MFluids.EMPTY$defaultState);
+                    case EMPTY -> CoreReflections.field$BlockStateBase$fluidState.set(nmsState, MFluids.EMPTY$defaultState);
+                    case WATER -> CoreReflections.field$BlockStateBase$fluidState.set(nmsState, CoreReflections.method$FlowingFluid$getSource.invoke(MFluids.WATER, false));
+                    case FLOWING_WATER -> CoreReflections.field$BlockStateBase$fluidState.set(nmsState, CoreReflections.method$FlowingFluid$getSource.invoke(MFluids.FLOWING_WATER, false));
+                    case LAVA -> CoreReflections.field$BlockStateBase$fluidState.set(nmsState, CoreReflections.method$FlowingFluid$getSource.invoke(MFluids.LAVA, false));
+                    case FLOWING_LAVA -> CoreReflections.field$BlockStateBase$fluidState.set(nmsState, CoreReflections.method$FlowingFluid$getSource.invoke(MFluids.FLOWING_LAVA, false));
                 }
                 // set random tick later
                 CoreReflections.field$BlockStateBase$isRandomlyTicking.set(nmsState, settings.isRandomlyTicking());
