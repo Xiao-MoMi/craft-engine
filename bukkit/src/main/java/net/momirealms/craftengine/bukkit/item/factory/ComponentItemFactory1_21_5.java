@@ -5,15 +5,20 @@ import com.google.gson.JsonElement;
 import net.kyori.adventure.text.Component;
 import net.momirealms.craftengine.bukkit.item.ComponentItemWrapper;
 import net.momirealms.craftengine.bukkit.item.ComponentTypes;
+import net.momirealms.craftengine.core.attribute.AttributeModifier;
+import net.momirealms.craftengine.core.item.ComponentKeys;
 import net.momirealms.craftengine.core.item.data.JukeboxPlayable;
 import net.momirealms.craftengine.core.plugin.CraftEngine;
 import net.momirealms.craftengine.core.util.AdventureHelper;
 import net.momirealms.craftengine.core.util.GsonHelper;
+import net.momirealms.craftengine.core.util.VersionHelper;
+import net.momirealms.sparrow.nbt.CompoundTag;
 import net.momirealms.sparrow.nbt.ListTag;
 import net.momirealms.sparrow.nbt.Tag;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 import java.util.Optional;
 
 public class ComponentItemFactory1_21_5 extends ComponentItemFactory1_21_4 {
@@ -122,5 +127,30 @@ public class ComponentItemFactory1_21_5 extends ComponentItemFactory1_21_4 {
     @Override
     protected void jukeboxSong(ComponentItemWrapper item, JukeboxPlayable data) {
         item.setJavaComponent(ComponentTypes.JUKEBOX_PLAYABLE, data.song());
+    }
+
+    @Override
+    protected void attributeModifiers(ComponentItemWrapper item, List<AttributeModifier> modifierList) {
+        ListTag modifiers = new ListTag();
+        for (AttributeModifier modifier : modifierList) {
+            CompoundTag modifierTag = new CompoundTag();
+            modifierTag.putString("type", modifier.type());
+            modifierTag.putString("slot", modifier.slot().name().toLowerCase(Locale.ENGLISH));
+            modifierTag.putString("id", modifier.id().toString());
+            modifierTag.putDouble("amount", modifier.amount());
+            modifierTag.putString("operation", modifier.operation().id());
+            AttributeModifier.Display display = modifier.display();
+            if (VersionHelper.isOrAbove1_21_6() && display != null) {
+                CompoundTag displayTag = new CompoundTag();
+                AttributeModifier.Display.Type displayType = display.type();
+                displayTag.putString("type", displayType.name().toLowerCase(Locale.ENGLISH));
+                if (displayType == AttributeModifier.Display.Type.OVERRIDE) {
+                    displayTag.put("value", AdventureHelper.componentToTag(display.value()));
+                }
+                modifierTag.put("display", displayTag);
+            }
+            modifiers.add(modifierTag);
+        }
+        item.setSparrowNBTComponent(ComponentKeys.ATTRIBUTE_MODIFIERS, modifiers);
     }
 }

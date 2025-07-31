@@ -348,7 +348,7 @@ items:
       arguments:
         path: minecraft:item/custom/palm_door
     behavior:
-      type: block_item
+      type: double_high_block_item
       block:
         behavior:
           type: door_block

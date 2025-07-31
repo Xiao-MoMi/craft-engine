@@ -1,5 +1,5 @@
 plugins {
-    id("com.gradleup.shadow") version "9.0.0-beta13"
+    id("com.gradleup.shadow") version "9.0.0-rc2"
     id("de.eldoria.plugin-yml.bukkit") version "0.7.1"
 }
 

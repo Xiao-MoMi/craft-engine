@@ -5,10 +5,7 @@ import net.momirealms.craftengine.core.plugin.locale.LocalizedException;
 import net.momirealms.craftengine.core.plugin.locale.LocalizedResourceConfigException;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
@@ -18,6 +15,17 @@ public final class ResourceConfigUtils {
 
     public static <T, O> T getOrDefault(@Nullable O raw, Function<O, T> function, T defaultValue) {
         return raw != null ? function.apply(raw) : defaultValue;
+    }
+
+    public static <E extends Enum<E>> E getAsEnum(Object o, Class<E> clazz, E defaultValue) {
+        if (o == null) {
+            return defaultValue;
+        }
+        try {
+            return Enum.valueOf(clazz, o.toString().toUpperCase(Locale.ENGLISH));
+        } catch (IllegalArgumentException e) {
+            return defaultValue;
+        }
     }
 
     public static <T> T requireNonNullOrThrow(T obj, String node) {
@@ -195,5 +203,13 @@ public final class ResourceConfigUtils {
                 throw new LocalizedResourceConfigException("warning.config.type.boolean", o.toString(), option);
             }
         }
+    }
+
+    @SuppressWarnings("unchecked")
+    public static Map<String, Object> getAsMap(Object obj, String option) {
+        if (obj instanceof Map<?, ?> map) {
+            return (Map<String, Object>) map;
+        }
+        throw new LocalizedResourceConfigException("warning.config.type.map", String.valueOf(obj), option);
     }
 }

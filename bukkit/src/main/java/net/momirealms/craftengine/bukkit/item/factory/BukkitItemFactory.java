@@ -13,6 +13,7 @@ import net.momirealms.craftengine.core.item.ItemWrapper;
 import net.momirealms.craftengine.core.item.data.JukeboxPlayable;
 import net.momirealms.craftengine.core.item.setting.EquipmentData;
 import net.momirealms.craftengine.core.plugin.CraftEngine;
+import net.momirealms.craftengine.core.util.Color;
 import net.momirealms.craftengine.core.util.Key;
 import net.momirealms.craftengine.core.util.StringUtils;
 import net.momirealms.craftengine.core.util.UniqueKey;
@@ -111,11 +112,20 @@ public abstract class BukkitItemFactory<W extends ItemWrapper<ItemStack>> extend
     protected boolean is(W item, Key itemTag) {
         Object literalObject = item.getLiteralObject();
         Object tag = ItemTags.getOrCreate(itemTag);
-        try {
-            return (boolean) CoreReflections.method$ItemStack$isTag.invoke(literalObject, tag);
-        } catch (ReflectiveOperationException e) {
-            return false;
-        }
+        return FastNMS.INSTANCE.method$ItemStack$is(literalObject, tag);
+    }
+
+    @Override
+    protected boolean isDyeItem(W item) {
+        return CoreReflections.clazz$DyeItem.isInstance(FastNMS.INSTANCE.method$ItemStack$getItem(item.getLiteralObject()));
+    }
+
+    @Override
+    protected Optional<Color> dyeColor(W item) {
+        Object itemStack = item.getLiteralObject();
+        Object dyeItem = FastNMS.INSTANCE.method$ItemStack$getItem(itemStack);
+        if (!CoreReflections.clazz$DyeItem.isInstance(dyeItem)) return Optional.empty();
+        return Optional.of(Color.fromDecimal(FastNMS.INSTANCE.method$DyeColor$getTextureDiffuseColor(FastNMS.INSTANCE.method$DyeItem$getDyeColor(dyeItem))));
     }
 
     @Override

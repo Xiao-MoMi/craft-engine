@@ -21,6 +21,7 @@ public class RecipeTypes {
     public static final Key SMITHING_TRANSFORM = Key.of("minecraft:smithing_transform");
     public static final Key SMITHING_TRIM = Key.of("minecraft:smithing_trim");
     public static final Key BREWING = Key.of("minecraft:brewing");
+    public static final Key SPECIAL = Key.of("minecraft:special");
 
     static {
         register(SHAPED, CustomShapedRecipe.FACTORY);

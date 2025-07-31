@@ -5,7 +5,9 @@ import net.kyori.adventure.audience.Audience;
 import net.kyori.adventure.key.Key;
 import net.kyori.adventure.sound.Sound;
 import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.ComponentIteratorType;
 import net.kyori.adventure.text.TextComponent;
+import net.kyori.adventure.text.TextReplacementConfig;
 import net.kyori.adventure.text.minimessage.MiniMessage;
 import net.kyori.adventure.text.minimessage.tag.resolver.TagResolver;
 import net.kyori.adventure.text.serializer.gson.GsonComponentSerializer;
@@ -15,7 +17,7 @@ import net.momirealms.sparrow.nbt.Tag;
 import net.momirealms.sparrow.nbt.adventure.NBTComponentSerializer;
 import net.momirealms.sparrow.nbt.adventure.NBTSerializerOptions;
 
-import java.util.Map;
+import java.util.*;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
@@ -29,6 +31,21 @@ public class AdventureHelper {
     private final MiniMessage miniMessageCustom;
     private final GsonComponentSerializer gsonComponentSerializer;
     private final NBTComponentSerializer nbtComponentSerializer;
+    private static final TextReplacementConfig REPLACE_LF = TextReplacementConfig.builder().matchLiteral("\n").replacement(Component.newline()).build();
+    /**
+     * This iterator slices a component into individual parts that
+     * <ul>
+     *     <li>Can be used individually without style loss</li>
+     *     <li>Can be concatenated to form the original component, given that children are dropped</li>
+     * </ul>
+     * Any {@link net.kyori.adventure.text.ComponentIteratorFlag}s are ignored.
+     */
+    private static final ComponentIteratorType SLICER = (component, deque, flags) -> {
+        final List<Component> children = component.children();
+        for (int i = children.size() - 1; i >= 0; i--) {
+            deque.addFirst(children.get(i).applyFallbackStyle(component.style()));
+        }
+    };
 
     private AdventureHelper() {
         this.miniMessage = MiniMessage.builder().build();
@@ -207,6 +224,24 @@ public class AdventureHelper {
 
     public static Component tagToComponent(Tag tag) {
         return getNBT().deserialize(tag);
+    }
+
+    public static List<Component> splitLines(Component component) {
+        List<Component> result = new ArrayList<>(1);
+        Component line = Component.empty();
+        for (Iterator<Component> it = component.replaceText(REPLACE_LF).iterator(SLICER); it.hasNext(); ) {
+            Component child = it.next().children(Collections.emptyList());
+            if (child instanceof TextComponent text && text.content().equals(Component.newline().content())) {
+                result.add(line.compact());
+                line = Component.empty();
+            } else {
+                line = line.append(child);
+            }
+        }
+        if (Component.IS_NOT_EMPTY.test(line)) {
+            result.add(line.compact());
+        }
+        return result;
     }
 
     /**

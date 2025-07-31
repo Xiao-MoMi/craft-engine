@@ -3746,7 +3746,7 @@ public final class CoreReflections {
             .orElse( null);
 
     public static final Field field$ServerCommonPacketListenerImpl$closed = MiscUtils.requireNonNullIf(
-            ReflectionUtils.getDeclaredField(clazz$ServerCommonPacketListenerImpl, boolean.class, VersionHelper.isOrAbove1_21_6() ? 1 : 2),
+            ReflectionUtils.getDeclaredField(clazz$ServerCommonPacketListenerImpl, "closed", "n"),
             VersionHelper.isOrAbove1_20_5()
     );
 
@@ -3896,4 +3896,11 @@ public final class CoreReflections {
             throw new ReflectionInitException("Failed to initialize SnowLayerBlock$LAYERS", e);
         }
     }
+
+    public static final Class<?> clazz$DyeItem = requireNonNull(
+            BukkitReflectionUtils.findReobfOrMojmapClass(
+                    "world.item.ItemDye",
+                    "world.item.DyeItem"
+            )
+    );
 }

@@ -1248,7 +1248,9 @@ public final class NetworkReflections {
     );
 
     public static final Constructor<?> constructor$ClientboundCustomPayloadPacket = requireNonNull(
-            ReflectionUtils.getConstructor(clazz$ClientboundCustomPayloadPacket, 0)
+            VersionHelper.isOrAbove1_20_2()
+                    ? ReflectionUtils.getConstructor(clazz$ClientboundCustomPayloadPacket, clazz$CustomPacketPayload)
+                    : ReflectionUtils.getConstructor(clazz$ClientboundCustomPayloadPacket, CoreReflections.clazz$ResourceLocation, CoreReflections.clazz$FriendlyByteBuf)
     );
 
     // 1.20.2+
@@ -1621,4 +1623,27 @@ public final class NetworkReflections {
             throw new ReflectionInitException("Failed to initialize HashedStack$STREAM_CODEC", e);
         }
     }
+
+    // 1.20.2~1.20.4
+    public static final Class<?> clazz$UnknownPayload = MiscUtils.requireNonNullIf(
+            ReflectionUtils.getClazz(
+                    BukkitReflectionUtils.assembleMCClass("network.protocol.common.ServerboundCustomPayloadPacket$UnknownPayload")
+            ),
+            VersionHelper.isOrAbove1_20_2() && !VersionHelper.isOrAbove1_20_5()
+    );
+
+    // 1.20.2~1.20.4
+    public static final Field field$UnknownPayload$id = Optional.ofNullable(clazz$UnknownPayload)
+            .map(it -> ReflectionUtils.getDeclaredField(it, CoreReflections.clazz$ResourceLocation, 0))
+            .orElse(null);
+
+    // 1.20.2~1.20.4
+    public static final Field field$UnknownPayload$data = Optional.ofNullable(clazz$UnknownPayload)
+            .map(it -> ReflectionUtils.getDeclaredField(it, ByteBuf.class, 0))
+            .orElse(null);
+
+    // 1.20.2~1.20.4
+    public static final Constructor<?> constructor$UnknownPayload = Optional.ofNullable(clazz$UnknownPayload)
+            .map(ReflectionUtils::getTheOnlyConstructor)
+            .orElse(null);
 }

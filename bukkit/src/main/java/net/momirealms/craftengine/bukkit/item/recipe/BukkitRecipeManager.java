@@ -46,6 +46,7 @@ public class BukkitRecipeManager extends AbstractRecipeManager<ItemStack> {
     private static final Map<Key, BukkitRecipeConvertor<? extends Recipe<ItemStack>>> MIXED_RECIPE_CONVERTORS = new HashMap<>();
     private static final List<Object> injectedIngredients = new ArrayList<>();
     private static final IdentityHashMap<Recipe<ItemStack>, Object> CE_RECIPE_2_NMS_HOLDER = new IdentityHashMap<>();
+    public static final CustomDyeRecipe<ItemStack> DYE_RECIPE = new CustomDyeRecipe<>();
     private static Object nmsRecipeManager;
 
     private static void registerNMSSmithingRecipe(Object recipe) {
@@ -541,7 +542,7 @@ public class BukkitRecipeManager extends AbstractRecipeManager<ItemStack> {
                 Optional<Object> nmsRecipe = getOptionalNMSRecipe(entry.getKey());
                 nmsRecipe.ifPresent(o -> CE_RECIPE_2_NMS_HOLDER.put(entry.getValue(), o));
             }
-
+            CE_RECIPE_2_NMS_HOLDER.put(DYE_RECIPE, getOptionalNMSRecipe(CustomDyeRecipe.ID).orElseThrow(() -> new IllegalStateException("DyeRecipe not found")));
             super.isReloading = false;
         } catch (Exception e) {
             this.plugin.logger().warn("Failed to run delayed recipe tasks", e);

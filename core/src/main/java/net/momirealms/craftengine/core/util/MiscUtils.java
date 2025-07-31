@@ -51,6 +51,20 @@ public class MiscUtils {
         return list;
     }
 
+    public static String[] getAsStringArray(Object o) {
+        if (o instanceof List<?> list) {
+            String[] array = new String[list.size()];
+            for (int i = 0; i < array.length; i++) {
+                array[i] = list.get(i).toString();
+            }
+            return array;
+        } else if (o != null) {
+            return new String[]{o.toString()};
+        } else {
+            return new String[0];
+        }
+    }
+
     @SuppressWarnings("unchecked")
     public static <T> List<T> getAsList(Object o, Class<T> clazz) {
         if (o instanceof List<?> list) {

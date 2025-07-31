@@ -3,7 +3,6 @@ package net.momirealms.craftengine.core.item;
 import net.momirealms.craftengine.core.entity.player.Player;
 import net.momirealms.craftengine.core.item.behavior.ItemBehavior;
 import net.momirealms.craftengine.core.item.equipment.Equipment;
-import net.momirealms.craftengine.core.item.modifier.ItemDataModifier;
 import net.momirealms.craftengine.core.item.recipe.UniqueIdItem;
 import net.momirealms.craftengine.core.pack.model.LegacyOverridesModel;
 import net.momirealms.craftengine.core.pack.model.ModernItemModel;
@@ -18,13 +17,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
-import java.util.function.Function;
 
 public interface ItemManager<T> extends Manageable, ModelGenerator {
-
-    void registerDataType(Function<Object, ItemDataModifier<T>> factory, String... alias);
-
-    Function<Object, ItemDataModifier<T>> getDataType(String key);
 
     Map<Key, Equipment> equipments();
 

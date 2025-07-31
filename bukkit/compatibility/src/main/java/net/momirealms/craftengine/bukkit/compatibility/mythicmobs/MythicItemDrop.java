@@ -21,12 +21,12 @@ import org.bukkit.inventory.ItemStack;
 
 import java.lang.reflect.Constructor;
 
-public class CraftEngineItemDrop extends ItemDrop implements IItemDrop {
+public class MythicItemDrop extends ItemDrop implements IItemDrop {
     private final CustomItem<ItemStack> customItem;
     private static final Constructor<?> constructor$BukkitItemStack = ReflectionUtils.getConstructor(BukkitItemStack.class, ItemStack.class);
     private static final boolean useReflection = constructor$BukkitItemStack != null;
 
-    public CraftEngineItemDrop(String line, MythicLineConfig config, CustomItem<ItemStack> customItem) {
+    public MythicItemDrop(String line, MythicLineConfig config, CustomItem<ItemStack> customItem) {
         super(line, config);
         this.customItem = customItem;
     }

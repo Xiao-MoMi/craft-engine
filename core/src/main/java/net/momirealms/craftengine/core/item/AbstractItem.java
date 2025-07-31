@@ -2,12 +2,14 @@ package net.momirealms.craftengine.core.item;
 
 import com.google.gson.JsonElement;
 import net.kyori.adventure.text.Component;
+import net.momirealms.craftengine.core.attribute.AttributeModifier;
 import net.momirealms.craftengine.core.item.behavior.ItemBehavior;
 import net.momirealms.craftengine.core.item.data.Enchantment;
 import net.momirealms.craftengine.core.item.data.FireworkExplosion;
 import net.momirealms.craftengine.core.item.data.JukeboxPlayable;
 import net.momirealms.craftengine.core.item.data.Trim;
 import net.momirealms.craftengine.core.item.setting.EquipmentData;
+import net.momirealms.craftengine.core.util.Color;
 import net.momirealms.craftengine.core.util.Key;
 import net.momirealms.craftengine.core.util.UniqueKey;
 import net.momirealms.sparrow.nbt.Tag;
@@ -107,13 +109,13 @@ public class AbstractItem<W extends ItemWrapper<I>, I> implements Item<I> {
     }
 
     @Override
-    public Item<I> dyedColor(Integer data) {
+    public Item<I> dyedColor(Color data) {
         this.factory.dyedColor(this.item, data);
         return this;
     }
 
     @Override
-    public Optional<Integer> dyedColor() {
+    public Optional<Color> dyedColor() {
         return this.factory.dyedColor(this.item);
     }
 
@@ -250,6 +252,12 @@ public class AbstractItem<W extends ItemWrapper<I>, I> implements Item<I> {
     @Override
     public Optional<List<Component>> loreComponent() {
         return this.factory.loreComponent(this.item);
+    }
+
+    @Override
+    public Item<I> attributeModifiers(List<AttributeModifier> modifiers) {
+        this.factory.attributeModifiers(this.item, modifiers);
+        return this;
     }
 
     @Override
@@ -472,5 +480,15 @@ public class AbstractItem<W extends ItemWrapper<I>, I> implements Item<I> {
     @Override
     public void shrink(int amount) {
         this.item.shrink(amount);
+    }
+
+    @Override
+    public boolean isDyeItem() {
+        return this.factory.isDyeItem(this.item);
+    }
+
+    @Override
+    public Optional<Color> dyeColor() {
+        return this.factory.dyeColor(this.item);
     }
 }

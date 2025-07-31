@@ -28,6 +28,8 @@ public abstract class Player extends AbstractEntity implements NetWorkUser {
 
     public abstract void sendPackets(List<Object> packet, boolean immediately);
 
+    public abstract void sendPackets(List<Object> packet, boolean immediately, Runnable sendListener);
+
     public abstract float getDestroyProgress(Object blockState, BlockPos pos);
 
     public abstract void setClientSideCanBreakBlock(boolean canBreak);
@@ -67,6 +69,10 @@ public abstract class Player extends AbstractEntity implements NetWorkUser {
     public abstract boolean updateLastSuccessfulInteractionTick(int tick);
 
     public abstract int lastSuccessfulInteractionTick();
+
+    public abstract void updateLastInteractEntityTick(@NotNull InteractionHand hand);
+
+    public abstract boolean lastInteractEntityCheck(@NotNull InteractionHand hand);
 
     public abstract int gameTicks();
 

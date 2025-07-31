@@ -25,14 +25,22 @@ public interface NetworkManager extends Manageable {
     Player[] onlineUsers();
 
     default void sendPacket(@NotNull NetWorkUser player, Object packet) {
-        sendPacket(player, packet, false);
+        sendPacket(player, packet, false, null);
     }
 
-    void sendPacket(@NotNull NetWorkUser player, Object packet, boolean immediately);
+    default void sendPacket(@NotNull NetWorkUser player, Object packet, boolean immediately) {
+        sendPacket(player, packet, immediately, null);
+    }
+
+    void sendPacket(@NotNull NetWorkUser player, Object packet, boolean immediately, Runnable sendListener);
 
     default void sendPackets(@NotNull NetWorkUser player, List<Object> packet) {
-        sendPackets(player, packet, false);
+        sendPackets(player, packet, false, null);
     }
 
-    void sendPackets(@NotNull NetWorkUser player, List<Object> packet, boolean immediately);
+    default void sendPackets(@NotNull NetWorkUser player, List<Object> packet, boolean immediately) {
+        sendPackets(player, packet, immediately, null);
+    }
+
+    void sendPackets(@NotNull NetWorkUser player, List<Object> packet, boolean immediately, Runnable sendListener);
 }

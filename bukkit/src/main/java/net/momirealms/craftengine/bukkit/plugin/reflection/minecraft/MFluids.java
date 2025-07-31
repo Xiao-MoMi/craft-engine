@@ -7,6 +7,7 @@ public final class MFluids {
     private MFluids() {}
 
     public static final Object WATER;
+    public static final Object WATER$defaultState;
     public static final Object FLOWING_WATER;
     public static final Object LAVA;
     public static final Object FLOWING_LAVA;
@@ -21,6 +22,7 @@ public final class MFluids {
     static {
         try {
             WATER = getById("water");
+            WATER$defaultState = CoreReflections.method$Fluid$defaultFluidState.invoke(WATER);
             FLOWING_WATER = getById("flowing_water");
             LAVA = getById("lava");
             FLOWING_LAVA = getById("flowing_lava");

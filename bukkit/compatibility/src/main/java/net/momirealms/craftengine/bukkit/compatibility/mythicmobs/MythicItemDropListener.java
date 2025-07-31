@@ -8,10 +8,10 @@ import org.bukkit.Bukkit;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 
-public class MythicMobsListener implements Listener {
+public class MythicItemDropListener implements Listener {
     private final BukkitCraftEngine plugin;
 
-    public MythicMobsListener(BukkitCraftEngine plugin) {
+    public MythicItemDropListener(BukkitCraftEngine plugin) {
         this.plugin = plugin;
         Bukkit.getPluginManager().registerEvents(this, plugin.javaPlugin());
     }
@@ -24,7 +24,7 @@ public class MythicMobsListener implements Listener {
         this.plugin.itemManager().getCustomItem(itemId).ifPresent(customItem -> {
             String line = event.getContainer().getConfigLine();
             MythicLineConfig config = event.getConfig();
-            event.register(new CraftEngineItemDrop(line, config, customItem));
+            event.register(new MythicItemDrop(line, config, customItem));
         });
     }
 }

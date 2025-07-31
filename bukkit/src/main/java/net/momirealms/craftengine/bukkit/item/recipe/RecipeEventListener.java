@@ -745,13 +745,15 @@ public class RecipeEventListener implements Listener {
                 int newItemDamage = Math.max(0, newItem.maxDamage() - remainingDurability);
                 newItem.damage(newItemDamage);
                 inventory.setResult(newItem.getItem());
-            } else if (CoreReflections.clazz$ArmorDyeRecipe.isInstance(mcRecipe) || CoreReflections.clazz$FireworkStarFadeRecipe.isInstance(mcRecipe)) {
+            } else if (CoreReflections.clazz$ArmorDyeRecipe.isInstance(mcRecipe)) {
+                handlePossibleDyeRecipe(event, false);
+            } else if (CoreReflections.clazz$FireworkStarFadeRecipe.isInstance(mcRecipe)) {
                 ItemStack[] itemStacks = inventory.getMatrix();
                 for (ItemStack itemStack : itemStacks) {
                     if (itemStack == null) continue;
                     Item<ItemStack> item = plugin.itemManager().wrap(itemStack);
                     Optional<CustomItem<ItemStack>> optionalCustomItem = item.getCustomItem();
-                    if (optionalCustomItem.isPresent() && !optionalCustomItem.get().settings().dyeable()) {
+                    if (optionalCustomItem.isPresent() && optionalCustomItem.get().settings().dyeable() == Tristate.FALSE) {
                         inventory.setResult(null);
                         return;
                     }
@@ -825,15 +827,36 @@ public class RecipeEventListener implements Listener {
     }
 
     @EventHandler(ignoreCancelled = true)
+    public void onDyeRecipe(PrepareItemCraftEvent event) {
+        org.bukkit.inventory.Recipe recipe = event.getRecipe();
+        if (recipe != null) {
+            return;
+        }
+        handlePossibleDyeRecipe(event, true);
+    }
+
+    private void handlePossibleDyeRecipe(PrepareItemCraftEvent event, boolean correct) {
+        // dye recipe
+        CraftingInventory inventory = event.getInventory();
+        CraftingInput<ItemStack> input = getCraftingInput(inventory);
+        if (input == null) return;
+        if (BukkitRecipeManager.DYE_RECIPE.matches(input)) {
+            Player player = InventoryUtils.getPlayerFromInventoryEvent(event);
+            event.getInventory().setResult(BukkitRecipeManager.DYE_RECIPE.assemble(input, ItemBuildContext.of(this.plugin.adapt(player))));
+            if (correct) {
+                correctCraftingRecipeUsed(inventory, BukkitRecipeManager.DYE_RECIPE);
+            }
+        }
+    }
+
+    @EventHandler(ignoreCancelled = true)
     public void onCraftingRecipe(PrepareItemCraftEvent event) {
         if (!Config.enableRecipeSystem()) return;
         org.bukkit.inventory.Recipe recipe = event.getRecipe();
-        if (recipe == null)
-            return;
 
         // we only handle shaped and shapeless recipes
-        boolean shapeless = event.getRecipe() instanceof ShapelessRecipe;
-        boolean shaped = event.getRecipe() instanceof ShapedRecipe;
+        boolean shapeless = recipe instanceof ShapelessRecipe;
+        boolean shaped = recipe instanceof ShapedRecipe;
         if (!shaped && !shapeless) return;
 
         CraftingRecipe craftingRecipe = (CraftingRecipe) recipe;
@@ -846,24 +869,10 @@ public class RecipeEventListener implements Listener {
         }
 
         CraftingInventory inventory = event.getInventory();
-        ItemStack[] ingredients = inventory.getMatrix();
-
-        List<UniqueIdItem<ItemStack>> uniqueIdItems = new ArrayList<>();
-        for (ItemStack itemStack : ingredients) {
-            uniqueIdItems.add(getUniqueIdItem(itemStack));
-        }
-
-        CraftingInput<ItemStack> input;
-        if (ingredients.length == 9) {
-            input = CraftingInput.of(3, 3, uniqueIdItems);
-        } else if (ingredients.length == 4) {
-            input = CraftingInput.of(2, 2, uniqueIdItems);
-        } else {
-            return;
-        }
+        CraftingInput<ItemStack> input = getCraftingInput(inventory);
+        if (input == null) return;
 
         Player player = InventoryUtils.getPlayerFromInventoryEvent(event);
-
         BukkitServerPlayer serverPlayer = this.plugin.adapt(player);
         Key lastRecipe = serverPlayer.lastUsedRecipe();
 
@@ -889,17 +898,34 @@ public class RecipeEventListener implements Listener {
         inventory.setResult(null);
     }
 
+    private CraftingInput<ItemStack> getCraftingInput(CraftingInventory inventory) {
+        ItemStack[] ingredients = inventory.getMatrix();
+
+        List<UniqueIdItem<ItemStack>> uniqueIdItems = new ArrayList<>();
+        for (ItemStack itemStack : ingredients) {
+            uniqueIdItems.add(getUniqueIdItem(itemStack));
+        }
+
+        CraftingInput<ItemStack> input;
+        if (ingredients.length == 9) {
+            input = CraftingInput.of(3, 3, uniqueIdItems);
+        } else if (ingredients.length == 4) {
+            input = CraftingInput.of(2, 2, uniqueIdItems);
+        } else {
+            return null;
+        }
+        return input;
+    }
+
     private void correctCraftingRecipeUsed(CraftingInventory inventory, Recipe<ItemStack> recipe) {
         Object holderOrRecipe = this.recipeManager.nmsRecipeHolderByRecipe(recipe);
         if (holderOrRecipe == null) {
             return;
         }
-        try {
-            Object resultInventory = CraftBukkitReflections.field$CraftInventoryCrafting$resultInventory.get(inventory);
-            CoreReflections.field$ResultContainer$recipeUsed.set(resultInventory, holderOrRecipe);
-        } catch (ReflectiveOperationException e) {
-            plugin.logger().warn("Failed to correct used recipe", e);
-        }
+        Object resultInventory = FastNMS.INSTANCE.method$CraftInventoryCrafting$getResultInventory(inventory);
+        FastNMS.INSTANCE.method$ResultContainer$setRecipeUsed(resultInventory, holderOrRecipe);
+        Object matrixInventory = FastNMS.INSTANCE.method$CraftInventoryCrafting$getMatrixInventory(inventory);
+        FastNMS.INSTANCE.method$CraftingContainer$setCurrentRecipe(matrixInventory, holderOrRecipe);
     }
 
     @EventHandler(ignoreCancelled = true)

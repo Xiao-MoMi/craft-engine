@@ -4,7 +4,6 @@ import net.momirealms.craftengine.core.item.BuildableItem;
 import net.momirealms.craftengine.core.item.Item;
 import net.momirealms.craftengine.core.item.ItemBuildContext;
 import net.momirealms.craftengine.core.item.modifier.ItemDataModifier;
-import net.momirealms.craftengine.core.plugin.CraftEngine;
 import net.momirealms.craftengine.core.registry.BuiltInRegistries;
 import net.momirealms.craftengine.core.registry.Registries;
 import net.momirealms.craftengine.core.registry.WritableRegistry;
@@ -33,9 +32,8 @@ public record CustomRecipeResult<T>(BuildableItem<T> item, int count, PostProces
         registerPostProcessorType(Key.of("apply_data"), args -> {
             List<ItemDataModifier<?>> modifiers = new ArrayList<>();
             for (Map.Entry<String, Object> entry : args.entrySet()) {
-                Optional.ofNullable(CraftEngine.instance().itemManager().getDataType(entry.getKey())).ifPresent(it -> {
-                    modifiers.add(it.apply(entry.getValue()));
-                });
+                Optional.ofNullable(BuiltInRegistries.ITEM_DATA_MODIFIER_FACTORY.getValue(Key.withDefaultNamespace(entry.getKey(), "craftengine")))
+                        .ifPresent(factory -> modifiers.add(factory.create(entry.getValue())));
             }
             return new ApplyItemDataProcessor<>(modifiers.toArray(new ItemDataModifier[0]));
         });

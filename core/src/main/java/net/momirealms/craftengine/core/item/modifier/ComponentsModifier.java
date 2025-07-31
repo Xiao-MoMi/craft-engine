@@ -1,14 +1,12 @@
 package net.momirealms.craftengine.core.item.modifier;
 
 import com.google.gson.JsonElement;
-import net.momirealms.craftengine.core.item.ComponentKeys;
-import net.momirealms.craftengine.core.item.Item;
-import net.momirealms.craftengine.core.item.ItemBuildContext;
-import net.momirealms.craftengine.core.item.NetworkItemHandler;
+import net.momirealms.craftengine.core.item.*;
 import net.momirealms.craftengine.core.plugin.CraftEngine;
 import net.momirealms.craftengine.core.util.GsonHelper;
 import net.momirealms.craftengine.core.util.Key;
 import net.momirealms.craftengine.core.util.Pair;
+import net.momirealms.craftengine.core.util.ResourceConfigUtils;
 import net.momirealms.sparrow.nbt.CompoundTag;
 import net.momirealms.sparrow.nbt.Tag;
 
@@ -16,11 +14,12 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-public class ComponentModifier<I> implements ItemDataModifier<I> {
+public class ComponentsModifier<I> implements ItemDataModifier<I> {
+    public static final Factory<?> FACTORY = new Factory<>();
     private final List<Pair<Key, Tag>> arguments;
     private CompoundTag customData = null;
 
-    public ComponentModifier(Map<String, Object> arguments) {
+    public ComponentsModifier(Map<String, Object> arguments) {
         List<Pair<Key, Tag>> pairs = new ArrayList<>(arguments.size());
         for (Map.Entry<String, Object> entry : arguments.entrySet()) {
             Key key = Key.of(entry.getKey());
@@ -33,7 +32,7 @@ public class ComponentModifier<I> implements ItemDataModifier<I> {
         this.arguments = pairs;
     }
 
-    public List<Pair<Key, Tag>> arguments() {
+    public List<Pair<Key, Tag>> components() {
         return arguments;
     }
 
@@ -49,8 +48,8 @@ public class ComponentModifier<I> implements ItemDataModifier<I> {
     }
 
     @Override
-    public String name() {
-        return "components";
+    public Key type() {
+        return ItemDataModifiers.COMPONENTS;
     }
 
     @Override
@@ -83,5 +82,14 @@ public class ComponentModifier<I> implements ItemDataModifier<I> {
             }
         }
         return item;
+    }
+
+    public static class Factory<I> implements ItemDataModifierFactory<I> {
+
+        @Override
+        public ItemDataModifier<I> create(Object arg) {
+            Map<String, Object> data = ResourceConfigUtils.getAsMap(arg, "components");
+            return new ComponentsModifier<>(data);
+        }
     }
 }

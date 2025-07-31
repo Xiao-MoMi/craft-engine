@@ -4,6 +4,7 @@ import net.momirealms.craftengine.core.block.CustomBlock;
 import net.momirealms.craftengine.core.block.behavior.BlockBehaviorFactory;
 import net.momirealms.craftengine.core.block.properties.PropertyFactory;
 import net.momirealms.craftengine.core.entity.furniture.HitBoxFactory;
+import net.momirealms.craftengine.core.item.ItemDataModifierFactory;
 import net.momirealms.craftengine.core.item.behavior.ItemBehaviorFactory;
 import net.momirealms.craftengine.core.item.equipment.EquipmentFactory;
 import net.momirealms.craftengine.core.item.recipe.CustomRecipeResult;
@@ -43,6 +44,7 @@ import net.momirealms.craftengine.core.util.ResourceKey;
 public class Registries {
     public static final Key ROOT_REGISTRY = Key.withDefaultNamespace("root");
     public static final ResourceKey<Registry<CustomBlock>> BLOCK = ResourceKey.create(ROOT_REGISTRY, Key.withDefaultNamespace("block"));
+    public static final ResourceKey<Registry<ItemDataModifierFactory<?>>> ITEM_DATA_MODIFIER_FACTORY = ResourceKey.create(ROOT_REGISTRY, Key.withDefaultNamespace("item_data_modifier_factory"));
     public static final ResourceKey<Registry<PropertyFactory>> PROPERTY_FACTORY = ResourceKey.create(ROOT_REGISTRY, Key.withDefaultNamespace("property_factory"));
     public static final ResourceKey<Registry<BlockBehaviorFactory>> BLOCK_BEHAVIOR_FACTORY = ResourceKey.create(ROOT_REGISTRY, Key.withDefaultNamespace("block_behavior_factory"));
     public static final ResourceKey<Registry<ItemBehaviorFactory>> ITEM_BEHAVIOR_FACTORY = ResourceKey.create(ROOT_REGISTRY, Key.withDefaultNamespace("item_behavior_factory"));
