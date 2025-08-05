@@ -8,6 +8,12 @@ import java.util.Map;
 
 public record FireworkExplosion(Shape shape, IntList colors, IntList fadeColors, boolean hasTrail, boolean hasTwinkle) {
 
+    public static final FireworkExplosion DEFAULT = new FireworkExplosion(Shape.SMALL_BALL, IntList.of(), IntList.of(), false, false);
+
+    public FireworkExplosion withFadeColors(@NotNull final IntList fadeColors) {
+        return new FireworkExplosion(this.shape, this.colors, fadeColors, this.hasTrail, this.hasTwinkle);
+    }
+
     public enum Shape {
         SMALL_BALL(0, "small_ball"),
         LARGE_BALL(1, "large_ball"),

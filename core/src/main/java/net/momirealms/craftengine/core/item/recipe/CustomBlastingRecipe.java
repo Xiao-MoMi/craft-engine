@@ -1,35 +1,55 @@
 package net.momirealms.craftengine.core.item.recipe;
 
+import com.google.gson.JsonObject;
+import net.momirealms.craftengine.core.item.recipe.result.CustomRecipeResult;
 import net.momirealms.craftengine.core.util.Key;
 import net.momirealms.craftengine.core.util.ResourceConfigUtils;
-import net.momirealms.craftengine.core.util.UniqueKey;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Map;
-import java.util.Set;
 
 public class CustomBlastingRecipe<T> extends CustomCookingRecipe<T> {
-    public static final Factory<?> FACTORY = new Factory<>();
+    public static final Serializer<?> SERIALIZER = new Serializer<>();
 
     public CustomBlastingRecipe(Key id, CookingRecipeCategory category, String group, Ingredient<T> ingredient, int cookingTime, float experience, CustomRecipeResult<T> result) {
         super(id, category, group, ingredient, cookingTime, experience, result);
     }
 
     @Override
-    public @NotNull Key type() {
-        return RecipeTypes.BLASTING;
+    public @NotNull Key serializerType() {
+        return RecipeSerializers.BLASTING;
     }
 
-    public static class Factory<A> extends AbstractRecipeFactory<A> {
+    @Override
+    public RecipeType type() {
+        return RecipeType.BLASTING;
+    }
+
+    public static class Serializer<A> extends AbstractRecipeSerializer<A, CustomBlastingRecipe<A>> {
 
         @SuppressWarnings({"unchecked", "rawtypes", "DuplicatedCode"})
         @Override
-        public Recipe<A> create(Key id, Map<String, Object> arguments) {
-            String group = arguments.containsKey("group") ? arguments.get("group").toString() : null;
-            int cookingTime = ResourceConfigUtils.getAsInt(arguments.getOrDefault("time", 80), "time");
-            float experience = ResourceConfigUtils.getAsFloat(arguments.getOrDefault("experience", 0.0f), "experience");
-            Set<UniqueKey> holders = ingredientHolders(arguments);
-            return new CustomBlastingRecipe(id, cookingRecipeCategory(arguments), group, Ingredient.of(holders), cookingTime, experience, parseResult(arguments));
+        public CustomBlastingRecipe<A> readMap(Key id, Map<String, Object> arguments) {
+            return new CustomBlastingRecipe(id,
+                    cookingRecipeCategory(arguments),
+                    arguments.containsKey("group") ? arguments.get("group").toString() : null,
+                    singleInputIngredient(arguments),
+                    ResourceConfigUtils.getAsInt(arguments.getOrDefault("time", 80), "time"),
+                    ResourceConfigUtils.getAsFloat(arguments.getOrDefault("experience", 0.0f), "experience"),
+                    parseResult(arguments)
+            );
+        }
+
+        @Override
+        public CustomBlastingRecipe<A> readJson(Key id, JsonObject json) {
+            return new CustomBlastingRecipe<>(id,
+                    VANILLA_RECIPE_HELPER.cookingCategory(json),
+                    VANILLA_RECIPE_HELPER.readGroup(json),
+                    toIngredient(VANILLA_RECIPE_HELPER.singleIngredient(json.get("ingredient"))),
+                    VANILLA_RECIPE_HELPER.cookingTime(json),
+                    VANILLA_RECIPE_HELPER.cookingExperience(json),
+                    parseResult(VANILLA_RECIPE_HELPER.cookingResult(json.get("result")))
+            );
         }
     }
 }

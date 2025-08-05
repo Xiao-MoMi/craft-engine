@@ -16,6 +16,7 @@ import net.momirealms.craftengine.core.plugin.classpath.ClassPathAppender;
 import net.momirealms.craftengine.core.plugin.command.CraftEngineCommandManager;
 import net.momirealms.craftengine.core.plugin.command.sender.SenderFactory;
 import net.momirealms.craftengine.core.plugin.compatibility.CompatibilityManager;
+import net.momirealms.craftengine.core.plugin.compatibility.PluginTaskRegistry;
 import net.momirealms.craftengine.core.plugin.config.Config;
 import net.momirealms.craftengine.core.plugin.config.template.TemplateManager;
 import net.momirealms.craftengine.core.plugin.config.template.TemplateManagerImpl;
@@ -37,6 +38,7 @@ import net.momirealms.craftengine.core.sound.SoundManager;
 import net.momirealms.craftengine.core.world.WorldManager;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.core.Logger;
+import org.jetbrains.annotations.ApiStatus;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -72,6 +74,9 @@ public abstract class CraftEngine implements Plugin {
     protected CompatibilityManager compatibilityManager;
     protected GlobalVariableManager globalVariableManager;
     protected ProjectileManager projectileManager;
+
+    private final PluginTaskRegistry preLoadTaskRegistry = new PluginTaskRegistry();
+    private final PluginTaskRegistry postLoadTaskRegistry = new PluginTaskRegistry();
 
     private final Consumer<CraftEngine> reloadEventDispatcher;
     private boolean isReloading;
@@ -205,6 +210,7 @@ public abstract class CraftEngine implements Plugin {
         this.commandManager.registerDefaultFeatures();
         // delay the reload so other plugins can register some custom parsers
         this.scheduler.sync().runDelayed(() -> {
+            this.preLoadTaskRegistry.executeTasks();
             this.registerDefaultParsers();
             // hook external item plugins
             this.itemManager.delayedInit();
@@ -217,6 +223,7 @@ public abstract class CraftEngine implements Plugin {
             this.fontManager.delayedInit();
             this.vanillaLootManager.delayedInit();
             this.advancementManager.delayedInit();
+            this.compatibilityManager.onDelayedEnable();
             // reload the plugin
             try {
                 this.reloadPlugin(Runnable::run, Runnable::run, true);
@@ -230,6 +237,7 @@ public abstract class CraftEngine implements Plugin {
             // set up some platform extra tasks
             this.platformDelayedEnable();
             this.isInitializing = false;
+            this.postLoadTaskRegistry.executeTasks();
             this.scheduler.executeAsync(() -> this.packManager.initCachedAssets());
         });
     }
@@ -460,5 +468,15 @@ public abstract class CraftEngine implements Plugin {
     @Override
     public Platform platform() {
         return platform;
+    }
+
+    @ApiStatus.Experimental
+    public PluginTaskRegistry preLoadTaskRegistry() {
+        return preLoadTaskRegistry;
+    }
+
+    @ApiStatus.Experimental
+    public PluginTaskRegistry postLoadTaskRegistry() {
+        return postLoadTaskRegistry;
     }
 }

@@ -7,6 +7,7 @@ import net.momirealms.craftengine.bukkit.util.EventUtils;
 import net.momirealms.craftengine.bukkit.util.LocationUtils;
 import net.momirealms.craftengine.bukkit.world.BukkitBlockInWorld;
 import net.momirealms.craftengine.core.entity.player.InteractionResult;
+import net.momirealms.craftengine.core.entity.player.Player;
 import net.momirealms.craftengine.core.item.behavior.ItemBehavior;
 import net.momirealms.craftengine.core.item.behavior.ItemBehaviorFactory;
 import net.momirealms.craftengine.core.item.context.UseOnContext;
@@ -44,29 +45,35 @@ public class CompostableItemBehavior extends ItemBehavior {
         if (!(blockData instanceof Levelled levelled)) {
             return InteractionResult.PASS;
         }
+
         int maxLevel = levelled.getMaximumLevel();
         int currentLevel = levelled.getLevel();
         if (currentLevel >= maxLevel) return InteractionResult.PASS;
         boolean willRaise = (currentLevel == 0) && (this.chance > 0) || (RandomUtils.generateRandomDouble(0, 1) < this.chance);
 
+        Player player = context.getPlayer();
         if (willRaise) {
             levelled.setLevel(currentLevel + 1);
-            EntityChangeBlockEvent event = new EntityChangeBlockEvent((Entity) context.getPlayer().platformPlayer(), block.block(), levelled);
-            if (EventUtils.fireAndCheckCancel(event)) {
-                return InteractionResult.FAIL;
+            if (player != null) {
+                EntityChangeBlockEvent event = new EntityChangeBlockEvent((Entity) player.platformPlayer(), block.block(), levelled);
+                if (EventUtils.fireAndCheckCancel(event)) {
+                    return InteractionResult.FAIL;
+                }
             }
             block.block().setBlockData(levelled);
         }
 
         context.getLevel().levelEvent(WorldEvents.COMPOSTER_COMPOSTS, context.getClickedPos(), willRaise ? 1 : 0);
-        ((World) context.getLevel().platformWorld()).sendGameEvent((Entity) context.getPlayer().platformPlayer(), GameEvent.BLOCK_CHANGE, new Vector(block.x() + 0.5, block.y() + 0.5, block.z() + 0.5));
+        ((World) context.getLevel().platformWorld()).sendGameEvent(player != null ? (Entity) player.platformPlayer() : null, GameEvent.BLOCK_CHANGE, new Vector(block.x() + 0.5, block.y() + 0.5, block.z() + 0.5));
         if (currentLevel + 1 == 7) {
             FastNMS.INSTANCE.method$ScheduledTickAccess$scheduleBlockTick(context.getLevel().serverWorld(), LocationUtils.toBlockPos(context.getClickedPos()), blockOwner, 20);
         }
-        if (!context.getPlayer().canInstabuild()) {
-            context.getItem().shrink(1);
+        if (player != null) {
+            if (!player.canInstabuild()) {
+                context.getItem().shrink(1);
+            }
+            player.swingHand(context.getHand());
         }
-        context.getPlayer().swingHand(context.getHand());
         return InteractionResult.SUCCESS;
     }
 

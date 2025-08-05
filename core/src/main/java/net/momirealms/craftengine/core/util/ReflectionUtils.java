@@ -74,7 +74,7 @@ public class ReflectionUtils {
         }
     }
 
-    @NotNull
+    @Nullable
     public static Field getDeclaredField(@NotNull Class<?> clazz, @NotNull String... possibleNames) {
         List<String> possibleNameList = Arrays.asList(possibleNames);
         for (Field field : clazz.getDeclaredFields()) {
@@ -82,7 +82,7 @@ public class ReflectionUtils {
                 return field;
             }
         }
-        throw new RuntimeException("Class " + clazz.getName() + " does not contain a field with possible names " + Arrays.toString(possibleNames));
+        return null;
     }
 
     @Nullable

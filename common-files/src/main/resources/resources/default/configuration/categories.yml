@@ -57,6 +57,7 @@ categories:
       - default:bench
       - default:table_lamp
       - default:wooden_chair
+      - default:flower_basket
   default:misc:
     name: <!i><gray><i18n:category.misc></gray>
     hidden: true

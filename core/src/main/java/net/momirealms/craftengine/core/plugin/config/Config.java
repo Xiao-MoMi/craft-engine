@@ -20,10 +20,7 @@ import net.momirealms.craftengine.core.plugin.PluginProperties;
 import net.momirealms.craftengine.core.plugin.locale.LocalizedResourceConfigException;
 import net.momirealms.craftengine.core.plugin.locale.TranslationManager;
 import net.momirealms.craftengine.core.plugin.logger.filter.DisconnectLogFilter;
-import net.momirealms.craftengine.core.util.AdventureHelper;
-import net.momirealms.craftengine.core.util.Key;
-import net.momirealms.craftengine.core.util.MinecraftVersion;
-import net.momirealms.craftengine.core.util.MiscUtils;
+import net.momirealms.craftengine.core.util.*;
 import net.momirealms.craftengine.core.world.InjectionTarget;
 import net.momirealms.craftengine.core.world.chunk.storage.CompressionMethod;
 
@@ -254,8 +251,11 @@ public class Config {
         resource_pack$override_uniform_font = config.getBoolean("resource-pack.override-uniform-font", false);
         resource_pack$generate_mod_assets = config.getBoolean("resource-pack.generate-mod-assets", false);
         resource_pack$remove_tinted_leaves_particle = config.getBoolean("resource-pack.remove-tinted-leaves-particle", true);
-        resource_pack$supported_version$min = getVersion(config.get("resource-pack.supported-version.min", "1.20").toString());
+        resource_pack$supported_version$min = getVersion(config.get("resource-pack.supported-version.min", "SERVER").toString());
         resource_pack$supported_version$max = getVersion(config.get("resource-pack.supported-version.max", "LATEST").toString());
+        if (resource_pack$supported_version$min.isAbove(resource_pack$supported_version$max)) {
+            resource_pack$supported_version$min = resource_pack$supported_version$max;
+        }
         resource_pack$merge_external_folders = config.getStringList("resource-pack.merge-external-folders");
         resource_pack$merge_external_zips = config.getStringList("resource-pack.merge-external-zip-files");
         resource_pack$exclude_file_extensions = new HashSet<>(config.getStringList("resource-pack.exclude-file-extensions"));
@@ -408,6 +408,9 @@ public class Config {
     private static MinecraftVersion getVersion(String version) {
         if (version.equalsIgnoreCase("LATEST")) {
             return new MinecraftVersion(PluginProperties.getValue("latest-version"));
+        }
+        if (version.equalsIgnoreCase("SERVER")) {
+            return VersionHelper.MINECRAFT_VERSION;
         }
         return MinecraftVersion.parse(version);
     }
@@ -830,6 +833,10 @@ public class Config {
 
     public static List<String> recipeIngredientSources() {
         return instance.recipe$ingredient_sources;
+    }
+
+    public void setObf(boolean enable) {
+        this.resource_pack$protection$obfuscation$enable = enable;
     }
 
     public YamlDocument loadOrCreateYamlData(String fileName) {

@@ -129,13 +129,12 @@ public final class BukkitCustomBlock extends AbstractCustomBlock {
                 // set block side properties
                 CoreReflections.field$BlockBehaviour$explosionResistance.set(nmsBlock, settings.resistance());
                 CoreReflections.field$BlockBehaviour$soundType.set(nmsBlock, SoundUtils.toSoundType(settings.sounds()));
-                // 1.21.2以前要在init cache之前设定 isConditionallyFullOpaque
+                // init cache
+                CoreReflections.method$BlockStateBase$initCache.invoke(nmsState);
                 boolean isConditionallyFullOpaque = canOcclude & useShapeForLightOcclusion;
                 if (!VersionHelper.isOrAbove1_21_2()) {
                     CoreReflections.field$BlockStateBase$isConditionallyFullOpaque.set(nmsState, isConditionallyFullOpaque);
                 }
-                // init cache
-                CoreReflections.method$BlockStateBase$initCache.invoke(nmsState);
                 // modify cache
                 if (VersionHelper.isOrAbove1_21_2()) {
                     int blockLight = settings.blockLight() != -1 ? settings.blockLight() : CoreReflections.field$BlockStateBase$lightBlock.getInt(immutableBlockState.vanillaBlockState().handle());

@@ -1,5 +1,6 @@
 package net.momirealms.craftengine.bukkit.plugin.injector;
 
+import net.momirealms.craftengine.core.item.recipe.RecipeType;
 import net.momirealms.craftengine.core.util.Key;
 
 public interface InjectedCacheCheck {
@@ -8,9 +9,9 @@ public interface InjectedCacheCheck {
 
     void recipeType(Object recipeType);
 
-    Key customRecipeType();
+    RecipeType customRecipeType();
 
-    void customRecipeType(Key customRecipeType);
+    void customRecipeType(RecipeType customRecipeType);
 
     Object lastRecipe();
 

@@ -1,7 +1,7 @@
 package net.momirealms.craftengine.core.item.recipe;
 
 import net.momirealms.craftengine.core.item.ItemBuildContext;
-import net.momirealms.craftengine.core.item.recipe.input.RecipeInput;
+import net.momirealms.craftengine.core.item.recipe.result.CustomRecipeResult;
 import net.momirealms.craftengine.core.util.Key;
 import org.jetbrains.annotations.Nullable;
 
@@ -11,14 +11,9 @@ public abstract class AbstractGroupedRecipe<T> implements FixedResultRecipe<T> {
     protected final CustomRecipeResult<T> result;
 
     protected AbstractGroupedRecipe(Key id, String group, CustomRecipeResult<T> result) {
-        this.group = group;
+        this.group = group == null ? "" : group;
         this.id = id;
         this.result = result;
-    }
-
-    @Override
-    public T assemble(RecipeInput input, ItemBuildContext context) {
-        return this.result(context);
     }
 
     @Nullable

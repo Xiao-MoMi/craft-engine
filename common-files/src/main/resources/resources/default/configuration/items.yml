@@ -326,6 +326,7 @@ equipments#topaz:
 recipes#topaz:
   default:topaz_shovel:
     type: shaped
+    category: equipment
     pattern:
       - A
       - B
@@ -338,6 +339,7 @@ recipes#topaz:
       count: 1
   default:topaz_axe:
     type: shaped
+    category: equipment
     pattern:
       - 'AA'
       - 'AB'
@@ -350,6 +352,7 @@ recipes#topaz:
       count: 1
   default:topaz_sword:
     type: shaped
+    category: equipment
     pattern:
       - A
       - A
@@ -362,6 +365,7 @@ recipes#topaz:
       count: 1
   default:topaz_hoe:
     type: shaped
+    category: equipment
     pattern:
       - 'AA'
       - ' B'
@@ -374,6 +378,7 @@ recipes#topaz:
       count: 1
   default:topaz_pickaxe:
     type: shaped
+    category: equipment
     pattern:
       - 'AAA'
       - ' B '
@@ -386,6 +391,7 @@ recipes#topaz:
       count: 1
   default:topaz_helmet:
     type: shaped
+    category: equipment
     pattern:
       - AAA
       - A A
@@ -396,6 +402,7 @@ recipes#topaz:
       count: 1
   default:topaz_chestplate:
     type: shaped
+    category: equipment
     pattern:
       - A A
       - AAA
@@ -407,6 +414,7 @@ recipes#topaz:
       count: 1
   default:topaz_leggings:
     type: shaped
+    category: equipment
     pattern:
       - AAA
       - A A
@@ -418,6 +426,7 @@ recipes#topaz:
       count: 1
   default:topaz_boots:
     type: shaped
+    category: equipment
     pattern:
       - A A
       - A A

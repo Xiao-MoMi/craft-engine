@@ -9,7 +9,7 @@ import net.momirealms.craftengine.core.util.*;
 
 import java.util.Map;
 
-public class Properties {
+public final class Properties {
     public static final Key BOOLEAN = Key.of("craftengine:boolean");
     public static final Key INT = Key.of("craftengine:int");
     public static final Key STRING = Key.of("craftengine:string");

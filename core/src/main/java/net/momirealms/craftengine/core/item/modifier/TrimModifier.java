@@ -3,14 +3,17 @@ package net.momirealms.craftengine.core.item.modifier;
 import net.momirealms.craftengine.core.item.ComponentKeys;
 import net.momirealms.craftengine.core.item.Item;
 import net.momirealms.craftengine.core.item.ItemBuildContext;
-import net.momirealms.craftengine.core.item.NetworkItemHandler;
+import net.momirealms.craftengine.core.item.ItemDataModifierFactory;
 import net.momirealms.craftengine.core.item.data.Trim;
 import net.momirealms.craftengine.core.util.Key;
-import net.momirealms.craftengine.core.util.VersionHelper;
-import net.momirealms.sparrow.nbt.CompoundTag;
-import net.momirealms.sparrow.nbt.Tag;
+import net.momirealms.craftengine.core.util.ResourceConfigUtils;
+import org.jetbrains.annotations.Nullable;
 
-public class TrimModifier<I> implements ItemDataModifier<I> {
+import java.util.Locale;
+import java.util.Map;
+
+public class TrimModifier<I> implements SimpleNetworkItemDataModifier<I> {
+    public static final Factory<?> FACTORY = new Factory<>();
     private final Key material;
     private final Key pattern;
 
@@ -19,34 +22,47 @@ public class TrimModifier<I> implements ItemDataModifier<I> {
         this.pattern = pattern;
     }
 
+    public Key material() {
+        return material;
+    }
+
+    public Key pattern() {
+        return pattern;
+    }
+
     @Override
-    public String name() {
-        return "trim";
+    public Key type() {
+        return ItemDataModifiers.TRIM;
     }
 
     @Override
     public Item<I> apply(Item<I> item, ItemBuildContext context) {
-        item.trim(new Trim(this.pattern, this.material));
-        return item;
+        return item.trim(new Trim(this.pattern, this.material));
     }
 
     @Override
-    public Item<I> prepareNetworkItem(Item<I> item, ItemBuildContext context, CompoundTag networkData) {
-        if (VersionHelper.isOrAbove1_20_5()) {
-            Tag previous = item.getSparrowNBTComponent(ComponentKeys.TRIM);
-            if (previous != null) {
-                networkData.put(ComponentKeys.TRIM.asString(), NetworkItemHandler.pack(NetworkItemHandler.Operation.ADD, previous));
-            } else {
-                networkData.put(ComponentKeys.TRIM.asString(), NetworkItemHandler.pack(NetworkItemHandler.Operation.REMOVE));
-            }
-        } else {
-            Tag previous = item.getTag("Trim");
-            if (previous != null) {
-                networkData.put("Trim", NetworkItemHandler.pack(NetworkItemHandler.Operation.ADD, previous));
-            } else {
-                networkData.put("Trim", NetworkItemHandler.pack(NetworkItemHandler.Operation.REMOVE));
-            }
+    public @Nullable Key componentType(Item<I> item, ItemBuildContext context) {
+        return ComponentKeys.TRIM;
+    }
+
+    @Override
+    public @Nullable Object[] nbtPath(Item<I> item, ItemBuildContext context) {
+        return new Object[]{"Trim"};
+    }
+
+    @Override
+    public String nbtPathString(Item<I> item, ItemBuildContext context) {
+        return "Trim";
+    }
+
+    public static class Factory<I> implements ItemDataModifierFactory<I> {
+
+        @Override
+        public ItemDataModifier<I> create(Object arg) {
+            Map<String, Object> data = ResourceConfigUtils.getAsMap(arg, "trim");
+            String material = data.get("material").toString().toLowerCase(Locale.ENGLISH);
+            String pattern = data.get("pattern").toString().toLowerCase(Locale.ENGLISH);
+            return new TrimModifier<>(Key.of(material), Key.of(pattern));
         }
-        return item;
     }
 }

@@ -12,6 +12,7 @@ import net.momirealms.craftengine.core.sound.JukeboxSong;
 import net.momirealms.craftengine.core.util.Key;
 import net.momirealms.craftengine.core.util.VersionHelper;
 
+import java.util.Collection;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
@@ -23,6 +24,37 @@ public class BukkitSoundManager extends AbstractSoundManager {
         for (Object soundEvent : (Iterable<?>) MBuiltInRegistries.SOUND_EVENT) {
             Object resourceLocation = FastNMS.INSTANCE.field$SoundEvent$location(soundEvent);
             VANILLA_SOUND_EVENTS.add(KeyUtils.resourceLocationToKey(resourceLocation));
+        }
+    }
+
+    @Override
+    protected void registerSounds(Collection<Key> sounds) {
+        if (sounds.isEmpty()) return;
+        Object registry = MBuiltInRegistries.SOUND_EVENT;
+        try {
+            CoreReflections.field$MappedRegistry$frozen.set(registry, false);
+            for (Key soundEventId : sounds) {
+                Object resourceLocation = KeyUtils.toResourceLocation(soundEventId);
+                // 检查之前有没有注册过了
+                Object soundEvent = FastNMS.INSTANCE.method$Registry$getValue(registry, resourceLocation);
+                // 只有没注册才注册，否则会报错
+                if (soundEvent == null) {
+                    soundEvent = VersionHelper.isOrAbove1_21_2() ?
+                            CoreReflections.constructor$SoundEvent.newInstance(resourceLocation, Optional.of(0)) :
+                            CoreReflections.constructor$SoundEvent.newInstance(resourceLocation, 0, false);
+                    Object holder = CoreReflections.method$Registry$registerForHolder.invoke(null, registry, resourceLocation, soundEvent);
+                    CoreReflections.method$Holder$Reference$bindValue.invoke(holder, soundEvent);
+                    CoreReflections.field$Holder$Reference$tags.set(holder, Set.of());
+                    int id = FastNMS.INSTANCE.method$Registry$getId(registry, soundEvent);
+                    super.customSoundsInRegistry.put(id, soundEventId);
+                }
+            }
+        } catch (Exception e) {
+            this.plugin.logger().warn("Failed to register jukebox songs.", e);
+        } finally {
+            try {
+                CoreReflections.field$MappedRegistry$frozen.set(registry, true);
+            } catch (ReflectiveOperationException ignored) {}
         }
     }
 
@@ -40,13 +72,12 @@ public class BukkitSoundManager extends AbstractSoundManager {
                 Object soundId = KeyUtils.toResourceLocation(jukeboxSong.sound());
                 // 检查之前有没有注册过了
                 Object song = FastNMS.INSTANCE.method$Registry$getValue(registry, resourceLocation);
-
-                Object soundEvent = VersionHelper.isOrAbove1_21_2() ?
-                        CoreReflections.constructor$SoundEvent.newInstance(soundId, Optional.of(jukeboxSong.range())) :
-                        CoreReflections.constructor$SoundEvent.newInstance(soundId, jukeboxSong.range(), false);
-                Object soundHolder = CoreReflections.method$Holder$direct.invoke(null, soundEvent);
                 // 只有没注册才注册，否则会报错
                 if (song == null) {
+                    Object soundEvent = VersionHelper.isOrAbove1_21_2() ?
+                            CoreReflections.constructor$SoundEvent.newInstance(soundId, Optional.of(jukeboxSong.range())) :
+                            CoreReflections.constructor$SoundEvent.newInstance(soundId, jukeboxSong.range(), false);
+                    Object soundHolder = CoreReflections.method$Holder$direct.invoke(null, soundEvent);
                     song = CoreReflections.constructor$JukeboxSong.newInstance(soundHolder, ComponentUtils.adventureToMinecraft(jukeboxSong.description()), jukeboxSong.lengthInSeconds(), jukeboxSong.comparatorOutput());
                     Object holder = CoreReflections.method$Registry$registerForHolder.invoke(null, registry, resourceLocation, song);
                     CoreReflections.method$Holder$Reference$bindValue.invoke(holder, song);

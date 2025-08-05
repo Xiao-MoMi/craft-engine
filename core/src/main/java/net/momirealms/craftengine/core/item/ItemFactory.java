@@ -2,6 +2,7 @@ package net.momirealms.craftengine.core.item;
 
 import com.google.gson.JsonElement;
 import net.kyori.adventure.text.Component;
+import net.momirealms.craftengine.core.attribute.AttributeModifier;
 import net.momirealms.craftengine.core.item.data.Enchantment;
 import net.momirealms.craftengine.core.item.data.FireworkExplosion;
 import net.momirealms.craftengine.core.item.data.JukeboxPlayable;
@@ -9,6 +10,7 @@ import net.momirealms.craftengine.core.item.data.Trim;
 import net.momirealms.craftengine.core.item.setting.EquipmentData;
 import net.momirealms.craftengine.core.plugin.CraftEngine;
 import net.momirealms.craftengine.core.util.AdventureHelper;
+import net.momirealms.craftengine.core.util.Color;
 import net.momirealms.craftengine.core.util.Key;
 import net.momirealms.craftengine.core.util.UniqueKey;
 import net.momirealms.sparrow.nbt.Tag;
@@ -16,7 +18,6 @@ import net.momirealms.sparrow.nbt.Tag;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.stream.Collectors;
 
 public abstract class ItemFactory<W extends ItemWrapper<I>, I> {
     protected final CraftEngine plugin;
@@ -112,7 +113,7 @@ public abstract class ItemFactory<W extends ItemWrapper<I>, I> {
 
     protected void loreComponent(W item, List<Component> component) {
         if (component != null && !component.isEmpty()) {
-            loreJson(item, component.stream().map(AdventureHelper::componentToJson).collect(Collectors.toList()));
+            loreJson(item, component.stream().map(AdventureHelper::componentToJson).toList());
         } else {
             loreJson(item, null);
         }
@@ -136,9 +137,9 @@ public abstract class ItemFactory<W extends ItemWrapper<I>, I> {
 
     protected abstract void damage(W item, Integer damage);
 
-    protected abstract Optional<Integer> dyedColor(W item);
+    protected abstract Optional<Color> dyedColor(W item);
 
-    protected abstract void dyedColor(W item, Integer color);
+    protected abstract void dyedColor(W item, Color color);
 
     protected abstract int maxDamage(W item);
 
@@ -164,7 +165,7 @@ public abstract class ItemFactory<W extends ItemWrapper<I>, I> {
 
     protected abstract void maxStackSize(W item, Integer maxStackSize);
 
-    protected abstract boolean is(W item, Key itemTag);
+    protected abstract boolean hasItemTag(W item, Key itemTag);
 
     protected abstract boolean isBlockItem(W item);
 
@@ -211,4 +212,6 @@ public abstract class ItemFactory<W extends ItemWrapper<I>, I> {
     protected abstract boolean isEmpty(W item);
 
     protected abstract UniqueKey recipeIngredientID(W item);
+
+    protected abstract void attributeModifiers(W item, List<AttributeModifier> modifiers);
 }

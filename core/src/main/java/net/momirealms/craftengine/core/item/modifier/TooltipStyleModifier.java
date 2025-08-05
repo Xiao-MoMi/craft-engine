@@ -3,21 +3,25 @@ package net.momirealms.craftengine.core.item.modifier;
 import net.momirealms.craftengine.core.item.ComponentKeys;
 import net.momirealms.craftengine.core.item.Item;
 import net.momirealms.craftengine.core.item.ItemBuildContext;
-import net.momirealms.craftengine.core.item.NetworkItemHandler;
+import net.momirealms.craftengine.core.item.ItemDataModifierFactory;
 import net.momirealms.craftengine.core.util.Key;
-import net.momirealms.sparrow.nbt.CompoundTag;
-import net.momirealms.sparrow.nbt.Tag;
+import org.jetbrains.annotations.Nullable;
 
-public class TooltipStyleModifier<I> implements ItemDataModifier<I> {
+public class TooltipStyleModifier<I> implements SimpleNetworkItemDataModifier<I> {
+    public static final Factory<?> FACTORY = new Factory<>();
     private final Key argument;
 
     public TooltipStyleModifier(Key argument) {
         this.argument = argument;
     }
 
+    public Key tooltipStyle() {
+        return this.argument;
+    }
+
     @Override
-    public String name() {
-        return "tooltip-style";
+    public Key type() {
+        return ItemDataModifiers.TOOLTIP_STYLE;
     }
 
     @Override
@@ -27,13 +31,16 @@ public class TooltipStyleModifier<I> implements ItemDataModifier<I> {
     }
 
     @Override
-    public Item<I> prepareNetworkItem(Item<I> item, ItemBuildContext context, CompoundTag networkData) {
-        Tag previous = item.getSparrowNBTComponent(ComponentKeys.TOOLTIP_STYLE);
-        if (previous != null) {
-            networkData.put(ComponentKeys.TOOLTIP_STYLE.asString(), NetworkItemHandler.pack(NetworkItemHandler.Operation.ADD, previous));
-        } else {
-            networkData.put(ComponentKeys.TOOLTIP_STYLE.asString(), NetworkItemHandler.pack(NetworkItemHandler.Operation.REMOVE));
+    public @Nullable Key componentType(Item<I> item, ItemBuildContext context) {
+        return ComponentKeys.TOOLTIP_STYLE;
+    }
+
+    public static class Factory<I> implements ItemDataModifierFactory<I> {
+
+        @Override
+        public ItemDataModifier<I> create(Object arg) {
+            String id = arg.toString();
+            return new TooltipStyleModifier<>(Key.of(id));
         }
-        return item;
     }
 }

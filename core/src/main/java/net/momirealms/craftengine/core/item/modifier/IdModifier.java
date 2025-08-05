@@ -12,9 +12,13 @@ public class IdModifier<I> implements ItemDataModifier<I> {
         this.argument = argument;
     }
 
+    public Key identifier() {
+        return argument;
+    }
+
     @Override
-    public String name() {
-        return "id";
+    public Key type() {
+        return ItemDataModifiers.ID;
     }
 
     @Override
