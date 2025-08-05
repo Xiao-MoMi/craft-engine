@@ -33,19 +33,19 @@ public class TearingBlockSpawn extends BukkitBlockBehavior {
     private static final List<Object> WATER = List.of(MFluids.WATER, MFluids.FLOWING_WATER);
     private static final List<Object> LAVA = List.of(MFluids.LAVA, MFluids.FLOWING_LAVA);
 
-    private boolean water; // true == water , false == lava
-    private Key toPlace;
-    private float chance;
+    private final boolean water; // true == water , false == lava
+    private final Key toPlace;
+    private final float chance;
+    private final int heightLimit;
     private Object defaultBlockState;
     private ImmutableBlockState defaultImmutableBlockState;
 
-    public int heightLimit = 256;
-
-    public TearingBlockSpawn(CustomBlock customBlock, Key toPlace, Boolean water, float chance) {
+    public TearingBlockSpawn(CustomBlock customBlock, Key toPlace, Boolean water, float chance, int heightLimit) {
         super(customBlock);
         this.water = water;
         this.toPlace = toPlace;
         this.chance = chance;
+        this.heightLimit = heightLimit;
     }
 
     public Object getDefaultBlockState() {
@@ -156,7 +156,8 @@ public class TearingBlockSpawn extends BukkitBlockBehavior {
             Boolean water = arguments.getOrDefault("liquid", "water").toString().equalsIgnoreCase("water");
             Key toPlace = Key.from((String) arguments.getOrDefault("toPlace", "dripstone"));
             float chance = Float.parseFloat(arguments.getOrDefault("chance", 0.011377778F).toString());
-            return new TearingBlockSpawn(block, toPlace, water, chance);
+            int heightLimit = Integer.parseInt(arguments.getOrDefault("heightLimit", 12).toString());
+            return new TearingBlockSpawn(block, toPlace, water, chance, heightLimit);
         }
     }
 }
