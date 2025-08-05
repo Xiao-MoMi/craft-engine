@@ -91,21 +91,12 @@ public class TearingBlockSpawn extends BukkitBlockBehavior {
     public boolean canTear(World level, BlockPos pos) {
         Object relativeBlockState1 = FastNMS.INSTANCE.method$BlockGetter$getBlockState(level, pos);
         BlockData blockData1 = BlockStateUtils.fromBlockData(relativeBlockState1);
-        if (blockData1 instanceof PointedDripstone pDripstone) {
-            if (pDripstone.getVerticalDirection() == BlockFace.DOWN) {
-                BlockPos highest = findHighestConnectedDripstone(pos, level);
-                if (highest != null) {
-                    BlockPos fluidPos = highest.above().above();
-                    if (water && WATER.contains(FastNMS.INSTANCE.method$BlockGetter$getFluidState(level, fluidPos))) {
-                        return true;
-                    } else if (!water
-                            && LAVA.contains(FastNMS.INSTANCE.method$BlockGetter$getFluidState(level, fluidPos))) {
-                        return true;
-                    }
-                }
-            }
-        }
-        return false;
+        if (!(blockData1 instanceof PointedDripstone pDripstone)) return false;
+        if (pDripstone.getVerticalDirection() != BlockFace.DOWN) return false;
+        BlockPos highest = findHighestConnectedDripstone(pos, level);
+        if (highest == null) return false;
+        BlockPos fluidPos = highest.above().above();
+        return (water && WATER.contains(FastNMS.INSTANCE.method$BlockGetter$getFluidState(level, fluidPos)) || !water && LAVA.contains(FastNMS.INSTANCE.method$BlockGetter$getFluidState(level, fluidPos)));
     }
 
     public BlockPos findHighestConnectedDripstone(BlockPos start, World world) {
