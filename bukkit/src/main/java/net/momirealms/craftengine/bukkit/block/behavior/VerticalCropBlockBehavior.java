@@ -44,7 +44,7 @@ public class VerticalCropBlockBehavior extends BukkitBlockBehavior {
     private final boolean direction;
     private final float growSpeed;
 
-    public VerticalCropBlockBehavior(CustomBlock customBlock,Property<Integer> ageProperty,int maxHeight,float growSpeed,boolean direction,BlockPos[] liquidPositions,boolean requireWater,boolean requireLava,boolean stopOverwaterGrowing,boolean allowAirGrow,boolean allowWaterGrow) {
+    public VerticalCropBlockBehavior(CustomBlock customBlock, Property<Integer> ageProperty, int maxHeight, float growSpeed, boolean direction, BlockPos[] liquidPositions, boolean requireWater, boolean requireLava, boolean stopOverwaterGrowing, boolean allowAirGrow, boolean allowWaterGrow) {
         super(customBlock);
         this.maxHeight = maxHeight;
         this.ageProperty = (IntegerProperty) ageProperty;
