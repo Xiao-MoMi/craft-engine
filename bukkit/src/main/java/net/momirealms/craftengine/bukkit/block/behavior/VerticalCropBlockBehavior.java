@@ -62,10 +62,7 @@ public class VerticalCropBlockBehavior extends BukkitBlockBehavior {
     if (this.liquidPositions.length == 0)
       return true;
     for (BlockPos offset : this.liquidPositions) {
-      Object checkPos = LocationUtils.toBlockPos(
-          currentPos.x() + offset.x(),
-          currentPos.y() + offset.y(),
-          currentPos.z() + offset.z());
+      Object checkPos = LocationUtils.toBlockPos(currentPos.x() + offset.x(), currentPos.y() + offset.y(), currentPos.z() + offset.z());
       Object fs = FastNMS.INSTANCE.method$BlockGetter$getFluidState(level, checkPos);
       Object ft = FastNMS.INSTANCE.method$FluidState$getType(fs);
       if ((this.requireWater && WATER.contains(ft)) || (this.requireLava && LAVA.contains(ft))) {
@@ -81,61 +78,38 @@ public class VerticalCropBlockBehavior extends BukkitBlockBehavior {
     Object level = args[1];
     Object blockPos = args[2];
     Optional<ImmutableBlockState> optionalState = BlockStateUtils.getOptionalCustomBlockState(blockState);
-    if (optionalState.isEmpty()) {
-      return;
-    }
+    if (optionalState.isEmpty()) return;
     ImmutableBlockState currentState = optionalState.get();
     BlockPos currentPos = LocationUtils.fromBlockPos(blockPos);
-    if (!canGrow(level, currentPos)) {
-      return;
-    }
+    if (!canGrow(level, currentPos))  return;
     Object targetPos = direction ? LocationUtils.above(blockPos) : LocationUtils.below(blockPos);
     Object directionFluid = FastNMS.INSTANCE.method$BlockGetter$getFluidState(level, targetPos);
-    boolean canGrowAir = allowAirGrow
-        && FastNMS.INSTANCE.method$FluidState$getType(directionFluid) == MFluids.EMPTY
-        && FastNMS.INSTANCE.method$BlockGetter$getBlockState(level, targetPos) == MBlocks.AIR$defaultState;
-    boolean canGrowWater = allowWaterGrow
-        && WATER.contains(FastNMS.INSTANCE.method$FluidState$getType(directionFluid))
-        && !stopOverwaterGrowing;
-    if (!canGrowAir && !canGrowWater) {
-      return;
-    }
+    boolean canGrowAir = allowAirGrow && FastNMS.INSTANCE.method$FluidState$getType(directionFluid) == MFluids.EMPTY && FastNMS.INSTANCE.method$BlockGetter$getBlockState(level, targetPos) == MBlocks.AIR$defaultState;
+    boolean canGrowWater = allowWaterGrow && WATER.contains(FastNMS.INSTANCE.method$FluidState$getType(directionFluid)) && !stopOverwaterGrowing;
+    if (!canGrowAir && !canGrowWater) return;
     int height = 1;
     while (true) {
-      Object pos = LocationUtils.toBlockPos(
-          currentPos.x(), direction ? currentPos.y() - height : currentPos.y() + height, currentPos.z());
-      Optional<ImmutableBlockState> nextOpt = BlockStateUtils
-          .getOptionalCustomBlockState(FastNMS.INSTANCE.method$BlockGetter$getBlockState(level, pos));
+      Object pos = LocationUtils.toBlockPos(currentPos.x(), direction ? currentPos.y() - height : currentPos.y() + height, currentPos.z());
+      Optional<ImmutableBlockState> nextOpt = BlockStateUtils.getOptionalCustomBlockState(FastNMS.INSTANCE.method$BlockGetter$getBlockState(level, pos));
       if (nextOpt.isPresent() && nextOpt.get().owner().value() == customBlock) {
         height++;
         continue;
       }
       break;
     }
-    if (height >= maxHeight) {
-      return;
-    }
+    if (height >= maxHeight) return;
     int age = currentState.get(ageProperty);
     if (age >= ageProperty.max || RandomUtils.generateRandomFloat(0, 1) < growSpeed) {
       if (VersionHelper.isOrAbove1_21_5()) {
-        CraftBukkitReflections.method$CraftEventFactory$handleBlockGrowEvent
-            .invoke(null, level, targetPos, customBlock.defaultState().customBlockState().handle(),
-                UpdateOption.UPDATE_ALL.flags());
+        CraftBukkitReflections.method$CraftEventFactory$handleBlockGrowEvent.invoke(null, level, targetPos, customBlock.defaultState().customBlockState().handle(),UpdateOption.UPDATE_ALL.flags());
       } else {
-        CraftBukkitReflections.method$CraftEventFactory$handleBlockGrowEvent
-            .invoke(null, level, targetPos, customBlock.defaultState().customBlockState().handle());
+        CraftBukkitReflections.method$CraftEventFactory$handleBlockGrowEvent.invoke(null, level, targetPos, customBlock.defaultState().customBlockState().handle());
       }
-      FastNMS.INSTANCE.method$LevelWriter$setBlock(
-          level, blockPos,
-          currentState.with(ageProperty, ageProperty.min).customBlockState().handle(),
-          UpdateOption.UPDATE_NONE.flags());
+      FastNMS.INSTANCE.method$LevelWriter$setBlock(level, blockPos,currentState.with(ageProperty, ageProperty.min).customBlockState().handle(),UpdateOption.UPDATE_NONE.flags());
       return;
     }
     if (RandomUtils.generateRandomFloat(0, 1) < growSpeed) {
-      FastNMS.INSTANCE.method$LevelWriter$setBlock(
-          level, blockPos,
-          currentState.with(ageProperty, age + 1).customBlockState().handle(),
-          UpdateOption.UPDATE_NONE.flags());
+      FastNMS.INSTANCE.method$LevelWriter$setBlock(level, blockPos,currentState.with(ageProperty, age + 1).customBlockState().handle(),UpdateOption.UPDATE_NONE.flags());
     }
   }
 
