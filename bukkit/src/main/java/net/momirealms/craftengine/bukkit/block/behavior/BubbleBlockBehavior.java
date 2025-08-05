@@ -104,7 +104,7 @@ public class BubbleBlockBehavior extends BukkitBlockBehavior{
         public BlockBehavior create(CustomBlock block, Map<String, Object> arguments) {
             boolean direction = arguments.getOrDefault("direction", "down").toString().equalsIgnoreCase("down");
             boolean drag = arguments.getOrDefault("drag", "up").toString().equalsIgnoreCase("up");
-            int limit = (int) arguments.getOrDefault("limit", 100);
+            int limit = (int) Integer.valueOf(arguments.getOrDefault("limit", 100).toString());
             return new BubbleBlockBehavior(block, drag, direction, limit);
         }
     }
