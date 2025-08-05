@@ -76,14 +76,13 @@ public class TearingBlockSpawn extends BukkitBlockBehavior {
         for (int y = pos.y(); y < heightLimit; y++) {
             BlockPos currentPos = new BlockPos(pos.x(), y, pos.z());
             Object blockState = FastNMS.INSTANCE.method$BlockGetter$getBlockState(level, currentPos);
-            if (blockState != MBlocks.AIR$defaultState) {
-                BlockData blockData = BlockStateUtils.fromBlockData(blockState);
-                if (blockData instanceof PointedDripstone pDripstone) {
-                    if (pDripstone.getVerticalDirection() == BlockFace.UP) {
-                        return currentPos;
-                    }
-                }
-            }
+            if (blockState == MBlocks.AIR$defaultState) continue;
+            
+            BlockData blockData = BlockStateUtils.fromBlockData(blockState);
+            if (!(blockData instanceof PointedDripstone pDripstone)) continue;
+            if (pDripstone.getVerticalDirection() != BlockFace.UP) continue;
+            
+            return currentPos;
         }
         return null;
     }
@@ -91,11 +90,16 @@ public class TearingBlockSpawn extends BukkitBlockBehavior {
     public boolean canTear(World level, BlockPos pos) {
         Object relativeBlockState1 = FastNMS.INSTANCE.method$BlockGetter$getBlockState(level, pos);
         BlockData blockData1 = BlockStateUtils.fromBlockData(relativeBlockState1);
+
         if (!(blockData1 instanceof PointedDripstone pDripstone)) return false;
         if (pDripstone.getVerticalDirection() != BlockFace.DOWN) return false;
+
         BlockPos highest = findHighestConnectedDripstone(pos, level);
+        
         if (highest == null) return false;
+
         BlockPos fluidPos = highest.above().above();
+        
         return (water && WATER.contains(FastNMS.INSTANCE.method$BlockGetter$getFluidState(level, fluidPos)) || !water && LAVA.contains(FastNMS.INSTANCE.method$BlockGetter$getFluidState(level, fluidPos)));
     }
 
@@ -104,11 +108,8 @@ public class TearingBlockSpawn extends BukkitBlockBehavior {
         while (true) {
             BlockPos above = pos.above();
             BlockData blockData = BlockStateUtils.fromBlockData(FastNMS.INSTANCE.method$BlockGetter$getBlockState(world, above));
-            if (blockData instanceof PointedDripstone pDripstone && pDripstone.getVerticalDirection() == BlockFace.DOWN) {
-                pos = above;
-            } else {
-                break;
-            }
+            if (!(blockData instanceof PointedDripstone pDripstone) || pDripstone.getVerticalDirection() != BlockFace.DOWN) break;
+            pos = above;
         }
         return pos;
     }
