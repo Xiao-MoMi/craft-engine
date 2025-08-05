@@ -5,6 +5,7 @@ import net.momirealms.craftengine.core.block.behavior.EmptyBlockBehavior;
 import net.momirealms.craftengine.core.util.Key;
 
 public class BukkitBlockBehaviors extends BlockBehaviors {
+    public static final Key BUBBLE_BLOCK = Key.from("craftengine:bubble_block");
     public static final Key BUSH_BLOCK = Key.from("craftengine:bush_block");
     public static final Key HANGING_BLOCK = Key.from("craftengine:hanging_block");
     public static final Key FALLING_BLOCK = Key.from("craftengine:falling_block");
@@ -30,6 +31,7 @@ public class BukkitBlockBehaviors extends BlockBehaviors {
 
     public static void init() {
         register(EMPTY, (block, args) -> EmptyBlockBehavior.INSTANCE);
+        register(BUBBLE_BLOCK, BubbleBlockBehavior.FACTORY);
         register(FALLING_BLOCK, FallingBlockBehavior.FACTORY);
         register(BUSH_BLOCK, BushBlockBehavior.FACTORY);
         register(HANGING_BLOCK, HangingBlockBehavior.FACTORY);
