@@ -23,13 +23,18 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.Callable;
+import java.util.Locale;
+import java.util.StringTokenizer;
+
+import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 
 public class VerticalCropBlockBehavior extends BukkitBlockBehavior {
     public static final Factory FACTORY = new Factory();
+    private static final ObjectArrayList<Object> WATER = ObjectArrayList.of(MFluids.WATER, MFluids.FLOWING_WATER);
+    private static final ObjectArrayList<Object> LAVA = ObjectArrayList.of(MFluids.LAVA, MFluids.FLOWING_LAVA);
+
     private final int maxHeight;
     private final IntegerProperty ageProperty;
-    private static final List<Object> WATER = List.of(MFluids.WATER, MFluids.FLOWING_WATER);
-    private static final List<Object> LAVA = List.of(MFluids.LAVA, MFluids.FLOWING_LAVA);
     private final BlockPos[] liquidPositions;
     private final boolean requireWater;
     private final boolean requireLava;
@@ -40,16 +45,16 @@ public class VerticalCropBlockBehavior extends BukkitBlockBehavior {
     private final float growSpeed;
 
     public VerticalCropBlockBehavior(CustomBlock customBlock,
-                                     Property<Integer> ageProperty,
-                                     int maxHeight,
-                                     float growSpeed,
-                                     boolean direction,
-                                     BlockPos[] liquidPositions,
-                                     boolean requireWater,
-                                     boolean requireLava,
-                                     boolean stopOverwaterGrowing,
-                                     boolean allowAirGrow,
-                                     boolean allowWaterGrow) {
+            Property<Integer> ageProperty,
+            int maxHeight,
+            float growSpeed,
+            boolean direction,
+            BlockPos[] liquidPositions,
+            boolean requireWater,
+            boolean requireLava,
+            boolean stopOverwaterGrowing,
+            boolean allowAirGrow,
+            boolean allowWaterGrow) {
         super(customBlock);
         this.maxHeight = maxHeight;
         this.ageProperty = (IntegerProperty) ageProperty;
@@ -63,15 +68,14 @@ public class VerticalCropBlockBehavior extends BukkitBlockBehavior {
         this.allowWaterGrow = allowWaterGrow;
     }
 
-    // método helper para verificar si cumple los requisitos de líquidos cercanos
     private boolean canGrow(Object level, BlockPos currentPos) {
-        if (this.liquidPositions.length == 0) return true;
+        if (this.liquidPositions.length == 0)
+            return true;
         for (BlockPos offset : this.liquidPositions) {
             Object checkPos = LocationUtils.toBlockPos(
-                currentPos.x() + offset.x(),
-                currentPos.y() + offset.y(),
-                currentPos.z() + offset.z()
-            );
+                    currentPos.x() + offset.x(),
+                    currentPos.y() + offset.y(),
+                    currentPos.z() + offset.z());
             Object fs = FastNMS.INSTANCE.method$BlockGetter$getFluidState(level, checkPos);
             Object ft = FastNMS.INSTANCE.method$FluidState$getType(fs);
             if ((this.requireWater && WATER.contains(ft)) || (this.requireLava && LAVA.contains(ft))) {
@@ -86,69 +90,62 @@ public class VerticalCropBlockBehavior extends BukkitBlockBehavior {
         Object blockState = args[0];
         Object level = args[1];
         Object blockPos = args[2];
-        Optional<ImmutableBlockState> optionalCurrentState = BlockStateUtils.getOptionalCustomBlockState(blockState);
-        if (optionalCurrentState.isEmpty()) {
+        Optional<ImmutableBlockState> optionalState = BlockStateUtils.getOptionalCustomBlockState(blockState);
+        if (optionalState.isEmpty()) {
             return;
         }
-        ImmutableBlockState currentState = optionalCurrentState.get();
+        ImmutableBlockState currentState = optionalState.get();
         BlockPos currentPos = LocationUtils.fromBlockPos(blockPos);
         if (!canGrow(level, currentPos)) {
             return;
         }
-        Object targetPos = this.direction ? LocationUtils.above(blockPos) : LocationUtils.below(blockPos);
-        Object directionBlock = FastNMS.INSTANCE.method$BlockGetter$getBlockState(level, targetPos);
+        Object targetPos = direction ? LocationUtils.above(blockPos) : LocationUtils.below(blockPos);
         Object directionFluid = FastNMS.INSTANCE.method$BlockGetter$getFluidState(level, targetPos);
-        boolean canGrowAir = this.allowAirGrow
-            && directionBlock == MBlocks.AIR$defaultState
-            && FastNMS.INSTANCE.method$FluidState$getType(directionFluid) == MFluids.EMPTY;
-        boolean canGrowWater = this.allowWaterGrow
-            && WATER.contains(FastNMS.INSTANCE.method$FluidState$getType(directionFluid))
-            && !this.stopOverwaterGrowing;
-        if (canGrowAir || canGrowWater) {
-            int currentHeight = 1;
-            while (true) {
-                Object nextPos = LocationUtils.toBlockPos(
-                    currentPos.x(),
-                    this.direction ? currentPos.y() - currentHeight : currentPos.y() + currentHeight,
-                    currentPos.z()
-                );
-                Object nextState = FastNMS.INSTANCE.method$BlockGetter$getBlockState(level, nextPos);
-                Optional<ImmutableBlockState> opt = BlockStateUtils.getOptionalCustomBlockState(nextState);
-                if (opt.isPresent() && opt.get().owner().value() == super.customBlock) {
-                    currentHeight++;
-                } else {
-                    break;
-                }
+        boolean canGrowAir = allowAirGrow
+                && FastNMS.INSTANCE.method$FluidState$getType(directionFluid) == MFluids.EMPTY
+                && FastNMS.INSTANCE.method$BlockGetter$getBlockState(level, targetPos) == MBlocks.AIR$defaultState;
+        boolean canGrowWater = allowWaterGrow
+                && WATER.contains(FastNMS.INSTANCE.method$FluidState$getType(directionFluid))
+                && !stopOverwaterGrowing;
+        if (!canGrowAir && !canGrowWater) {
+            return;
+        }
+        int height = 1;
+        while (true) {
+            Object pos = LocationUtils.toBlockPos(
+                    currentPos.x(), direction ? currentPos.y() - height : currentPos.y() + height, currentPos.z());
+            Optional<ImmutableBlockState> nextOpt = BlockStateUtils
+                    .getOptionalCustomBlockState(FastNMS.INSTANCE.method$BlockGetter$getBlockState(level, pos));
+            if (nextOpt.isPresent() && nextOpt.get().owner().value() == customBlock) {
+                height++;
+                continue;
             }
-            if (currentHeight < this.maxHeight) {
-                int age = currentState.get(ageProperty);
-                Object newPos = targetPos;
-                if (age >= this.ageProperty.max || RandomUtils.generateRandomFloat(0, 1) < this.growSpeed) {
-                    if (VersionHelper.isOrAbove1_21_5()) {
-                        CraftBukkitReflections.method$CraftEventFactory$handleBlockGrowEvent
-                            .invoke(null, level, newPos,
-                                    super.customBlock.defaultState().customBlockState().handle(),
-                                    UpdateOption.UPDATE_ALL.flags());
-                    } else {
-                        CraftBukkitReflections.method$CraftEventFactory$handleBlockGrowEvent
-                            .invoke(null, level, newPos,
-                                    super.customBlock.defaultState().customBlockState().handle());
-                    }
-                    FastNMS.INSTANCE.method$LevelWriter$setBlock(
-                        level, blockPos,
-                        currentState.with(this.ageProperty, this.ageProperty.min)
-                                     .customBlockState().handle(),
-                        UpdateOption.UPDATE_NONE.flags()
-                    );
-                } else if (RandomUtils.generateRandomFloat(0, 1) < this.growSpeed) {
-                    FastNMS.INSTANCE.method$LevelWriter$setBlock(
-                        level, blockPos,
-                        currentState.with(this.ageProperty, age + 1)
-                                     .customBlockState().handle(),
-                        UpdateOption.UPDATE_NONE.flags()
-                    );
-                }
+            break;
+        }
+        if (height >= maxHeight) {
+            return;
+        }
+        int age = currentState.get(ageProperty);
+        if (age >= ageProperty.max || RandomUtils.generateRandomFloat(0, 1) < growSpeed) {
+            if (VersionHelper.isOrAbove1_21_5()) {
+                CraftBukkitReflections.method$CraftEventFactory$handleBlockGrowEvent
+                        .invoke(null, level, targetPos, customBlock.defaultState().customBlockState().handle(),
+                                UpdateOption.UPDATE_ALL.flags());
+            } else {
+                CraftBukkitReflections.method$CraftEventFactory$handleBlockGrowEvent
+                        .invoke(null, level, targetPos, customBlock.defaultState().customBlockState().handle());
             }
+            FastNMS.INSTANCE.method$LevelWriter$setBlock(
+                    level, blockPos,
+                    currentState.with(ageProperty, ageProperty.min).customBlockState().handle(),
+                    UpdateOption.UPDATE_NONE.flags());
+            return;
+        }
+        if (RandomUtils.generateRandomFloat(0, 1) < growSpeed) {
+            FastNMS.INSTANCE.method$LevelWriter$setBlock(
+                    level, blockPos,
+                    currentState.with(ageProperty, age + 1).customBlockState().handle(),
+                    UpdateOption.UPDATE_NONE.flags());
         }
     }
 
@@ -157,57 +154,45 @@ public class VerticalCropBlockBehavior extends BukkitBlockBehavior {
         @Override
         public BlockBehavior create(CustomBlock block, Map<String, Object> arguments) {
             Property<Integer> ageProperty = (Property<Integer>) ResourceConfigUtils.requireNonNullOrThrow(
-                block.getProperty("age"),
-                "warning.config.block.behavior.vertical_crop.missing_age"
-            );
-            int maxHeight = ResourceConfigUtils.getAsInt(
-                arguments.getOrDefault("max-height", 3),
-                "max-height"
-            );
-            boolean direction = arguments.getOrDefault("direction", "up")
-                .toString().equalsIgnoreCase("up");
+                    block.getProperty("age"), "warning.config.block.behavior.vertical_crop.missing_age");
+            int maxHeight = ResourceConfigUtils.getAsInt(arguments.getOrDefault("max-height", 3), "max-height");
+            boolean direction = "up".equals(arguments.getOrDefault("direction", "up")
+                    .toString().toLowerCase(Locale.ROOT));
             List<String> requiredLiquids = MiscUtils.getAsStringList(
-                arguments.getOrDefault("required-liquids", List.of())
-            );
+                    arguments.getOrDefault("required-liquids", ObjectArrayList.of()));
             boolean reqWater = requiredLiquids.contains("water");
             boolean reqLava = requiredLiquids.contains("lava");
             List<String> posStrings = MiscUtils.getAsStringList(
-                arguments.getOrDefault("liquids-pos", List.of())
-            );
+                    arguments.getOrDefault("liquids-pos", ObjectArrayList.of()));
             BlockPos[] liquidPositions = new BlockPos[posStrings.size()];
             for (int i = 0; i < posStrings.size(); i++) {
-                String[] split = posStrings.get(i).split(",");
-                liquidPositions[i] = new BlockPos(
-                    Integer.parseInt(split[0]),
-                    Integer.parseInt(split[1]),
-                    Integer.parseInt(split[2])
-                );
+                StringTokenizer tokenizer = new StringTokenizer(posStrings.get(i), ",");
+                int x = Integer.parseInt(tokenizer.nextToken());
+                int y = Integer.parseInt(tokenizer.nextToken());
+                int z = Integer.parseInt(tokenizer.nextToken());
+                liquidPositions[i] = new BlockPos(x, y, z);
             }
             boolean stopOver = ResourceConfigUtils.getAsBoolean(
-                arguments.getOrDefault("stop-overwater-growing", false),
-                "stop-overwater-growing"
-            );
+                    arguments.getOrDefault("stop-overwater-growing", false),
+                    "stop-overwater-growing");
             List<String> growTypes = MiscUtils.getAsStringList(
-                arguments.getOrDefault("grow-types", List.of("air"))
-            );
+                    arguments.getOrDefault("grow-types", ObjectArrayList.of("air")));
             boolean allowAir = growTypes.contains("air");
             boolean allowWater = growTypes.contains("water");
             return new VerticalCropBlockBehavior(
-                block,
-                ageProperty,
-                maxHeight,
-                ResourceConfigUtils.getAsFloat(
-                    arguments.getOrDefault("grow-speed", 1),
-                    "grow-speed"
-                ),
-                direction,
-                liquidPositions,
-                reqWater,
-                reqLava,
-                stopOver,
-                allowAir,
-                allowWater
-            );
+                    block,
+                    ageProperty,
+                    maxHeight,
+                    ResourceConfigUtils.getAsFloat(
+                            arguments.getOrDefault("grow-speed", 1),
+                            "grow-speed"),
+                    direction,
+                    liquidPositions,
+                    reqWater,
+                    reqLava,
+                    stopOver,
+                    allowAir,
+                    allowWater);
         }
     }
 }
