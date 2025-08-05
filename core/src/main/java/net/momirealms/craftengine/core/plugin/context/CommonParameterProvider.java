@@ -8,6 +8,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.function.Function;
 
+//TODO 需要为random指定id
 public class CommonParameterProvider implements AdditionalParameterProvider {
     private double lastRandom = -1;
 

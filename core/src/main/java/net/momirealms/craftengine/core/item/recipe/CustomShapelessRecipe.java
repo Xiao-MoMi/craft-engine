@@ -1,17 +1,19 @@
 package net.momirealms.craftengine.core.item.recipe;
 
+import com.google.gson.JsonObject;
 import net.momirealms.craftengine.core.item.recipe.input.CraftingInput;
 import net.momirealms.craftengine.core.item.recipe.input.RecipeInput;
-import net.momirealms.craftengine.core.plugin.CraftEngine;
+import net.momirealms.craftengine.core.item.recipe.result.CustomRecipeResult;
 import net.momirealms.craftengine.core.util.Key;
 import net.momirealms.craftengine.core.util.MiscUtils;
-import net.momirealms.craftengine.core.util.UniqueKey;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
 
 public class CustomShapelessRecipe<T> extends CustomCraftingTableRecipe<T> {
-    public static final Factory<?> FACTORY = new Factory<>();
+    public static final Serializer<?> SERIALIZER = new Serializer<>();
     private final List<Ingredient<T>> ingredients;
     private final PlacementInfo<T> placementInfo;
 
@@ -47,65 +49,49 @@ public class CustomShapelessRecipe<T> extends CustomCraftingTableRecipe<T> {
     }
 
     @Override
-    public @NotNull Key type() {
-        return RecipeTypes.SHAPELESS;
+    public @NotNull Key serializerType() {
+        return RecipeSerializers.SHAPELESS;
     }
 
-    public static class Factory<A> extends AbstractRecipeFactory<A> {
+    public static class Serializer<A> extends AbstractRecipeSerializer<A, CustomShapelessRecipe<A>> {
 
         @SuppressWarnings({"unchecked", "rawtypes", "DuplicatedCode"})
         @Override
-        public Recipe<A> create(Key id, Map<String, Object> arguments) {
-            String group = arguments.containsKey("group") ? arguments.get("group").toString() : null;
+        public CustomShapelessRecipe<A> readMap(Key id, Map<String, Object> arguments) {
             List<Ingredient<A>> ingredients = new ArrayList<>();
             Object ingredientsObject = getIngredientOrThrow(arguments);
             if (ingredientsObject instanceof Map<?,?> map) {
                 for (Map.Entry<String, Object> entry : (MiscUtils.castToMap(map, false)).entrySet()) {
-                    List<String> items = MiscUtils.getAsStringList(entry.getValue());
-                    Set<UniqueKey> holders = new HashSet<>();
-                    for (String item : items) {
-                        if (item.charAt(0) == '#') {
-                            holders.addAll(CraftEngine.instance().itemManager().tagToItems(Key.of(item.substring(1))));
-                        } else {
-                            holders.add(UniqueKey.create(Key.of(item)));
-                        }
-                    }
-                    ingredients.add(Ingredient.of(holders));
+                    if (entry.getValue() == null) continue;
+                    ingredients.add(toIngredient(MiscUtils.getAsStringList(entry.getValue())));
                 }
             } else if (ingredientsObject instanceof List<?> list) {
                 for (Object obj : list) {
                     if (obj instanceof List<?> inner) {
-                        Set<UniqueKey> holders = new HashSet<>();
-                        for (String item : MiscUtils.getAsStringList(inner)) {
-                            if (item.charAt(0) == '#') {
-                                holders.addAll(CraftEngine.instance().itemManager().tagToItems(Key.of(item.substring(1))));
-                            } else {
-                                holders.add(UniqueKey.create(Key.of(item)));
-                            }
-                        }
-                        ingredients.add(Ingredient.of(holders));
+                        ingredients.add(toIngredient(MiscUtils.getAsStringList(inner)));
                     } else {
                         String item = obj.toString();
-                        Set<UniqueKey> holders = new HashSet<>();
-                        if (item.charAt(0) == '#') {
-                            holders.addAll(CraftEngine.instance().itemManager().tagToItems(Key.of(item.substring(1))));
-                        } else {
-                            holders.add(UniqueKey.create(Key.of(item)));
-                        }
-                        ingredients.add(Ingredient.of(holders));
+                        ingredients.add(toIngredient(item));
                     }
                 }
             } else {
-                String item = ingredientsObject.toString();
-                Set<UniqueKey> holders = new HashSet<>();
-                if (item.charAt(0) == '#') {
-                    holders.addAll(CraftEngine.instance().itemManager().tagToItems(Key.of(item.substring(1))));
-                } else {
-                    holders.add(UniqueKey.create(Key.of(item)));
-                }
-                ingredients.add(Ingredient.of(holders));
+                ingredients.add(toIngredient(ingredientsObject.toString()));
             }
-            return new CustomShapelessRecipe(id, craftingRecipeCategory(arguments), group, ingredients, parseResult(arguments));
+            return new CustomShapelessRecipe(id,
+                    craftingRecipeCategory(arguments),
+                    arguments.containsKey("group") ? arguments.get("group").toString() : null,
+                    ingredients,
+                    parseResult(arguments));
+        }
+
+        @Override
+        public CustomShapelessRecipe<A> readJson(Key id, JsonObject json) {
+            return new CustomShapelessRecipe<>(id,
+                    VANILLA_RECIPE_HELPER.craftingCategory(json),
+                    VANILLA_RECIPE_HELPER.readGroup(json),
+                    VANILLA_RECIPE_HELPER.shapelessIngredients(json.getAsJsonArray("ingredients")).stream().map(this::toIngredient).toList(),
+                    parseResult(VANILLA_RECIPE_HELPER.craftingResult(json.getAsJsonObject("result")))
+            );
         }
     }
 }

@@ -3,11 +3,14 @@ package net.momirealms.craftengine.bukkit.util;
 import net.momirealms.craftengine.bukkit.item.BukkitItemManager;
 import net.momirealms.craftengine.bukkit.nms.FastNMS;
 import net.momirealms.craftengine.bukkit.plugin.reflection.bukkit.CraftBukkitReflections;
+import net.momirealms.craftengine.core.item.Item;
+import net.momirealms.craftengine.core.item.recipe.UniqueIdItem;
 import org.bukkit.Material;
 import org.bukkit.inventory.ItemStack;
 import org.jetbrains.annotations.Contract;
+import org.jetbrains.annotations.Nullable;
 
-public class ItemStackUtils {
+public final class ItemStackUtils {
 
     private ItemStackUtils() {}
 
@@ -42,5 +45,10 @@ public class ItemStackUtils {
         } else {
             return FastNMS.INSTANCE.method$CraftItemStack$asCraftCopy(itemStack);
         }
+    }
+
+    public static UniqueIdItem<ItemStack> getUniqueIdItem(@Nullable ItemStack itemStack) {
+        Item<ItemStack> wrappedItem = BukkitItemManager.instance().wrap(itemStack);
+        return UniqueIdItem.of(wrappedItem);
     }
 }

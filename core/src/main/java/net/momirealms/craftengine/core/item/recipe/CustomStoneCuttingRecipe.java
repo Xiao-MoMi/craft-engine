@@ -1,17 +1,17 @@
 package net.momirealms.craftengine.core.item.recipe;
 
+import com.google.gson.JsonObject;
 import net.momirealms.craftengine.core.item.recipe.input.RecipeInput;
 import net.momirealms.craftengine.core.item.recipe.input.SingleItemInput;
+import net.momirealms.craftengine.core.item.recipe.result.CustomRecipeResult;
 import net.momirealms.craftengine.core.util.Key;
-import net.momirealms.craftengine.core.util.UniqueKey;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 public class CustomStoneCuttingRecipe<T> extends AbstractGroupedRecipe<T> {
-    public static final Factory<?> FACTORY = new Factory<>();
+    public static final Serializer<?> SERIALIZER = new Serializer<>();
     protected final Ingredient<T> ingredient;
 
     public CustomStoneCuttingRecipe(Key id, String group, Ingredient<T> ingredient, CustomRecipeResult<T> result) {
@@ -27,26 +27,36 @@ public class CustomStoneCuttingRecipe<T> extends AbstractGroupedRecipe<T> {
 
     @Override
     public List<Ingredient<T>> ingredientsInUse() {
-        return List.of(ingredient);
+        return List.of(this.ingredient);
     }
 
     @Override
-    public @NotNull Key type() {
-        return RecipeTypes.STONECUTTING;
+    public @NotNull Key serializerType() {
+        return RecipeSerializers.STONECUTTING;
+    }
+
+    @Override
+    public RecipeType type() {
+        return RecipeType.STONECUTTING;
     }
 
     public Ingredient<T> ingredient() {
-        return ingredient;
+        return this.ingredient;
     }
 
-    public static class Factory<A> extends AbstractRecipeFactory<A> {
+    public static class Serializer<A> extends AbstractRecipeSerializer<A, CustomStoneCuttingRecipe<A>> {
 
         @SuppressWarnings({"DuplicatedCode"})
         @Override
-        public Recipe<A> create(Key id, Map<String, Object> arguments) {
+        public CustomStoneCuttingRecipe<A> readMap(Key id, Map<String, Object> arguments) {
             String group = arguments.containsKey("group") ? arguments.get("group").toString() : null;
-            Set<UniqueKey> holders = ingredientHolders(arguments);
-            return new CustomStoneCuttingRecipe<>(id, group, Ingredient.of(holders), parseResult(arguments));
+            return new CustomStoneCuttingRecipe<>(id, group, singleInputIngredient(arguments), parseResult(arguments));
+        }
+
+        @Override
+        public CustomStoneCuttingRecipe<A> readJson(Key id, JsonObject json) {
+            String group = VANILLA_RECIPE_HELPER.readGroup(json);
+            return new CustomStoneCuttingRecipe<>(id, group, toIngredient(VANILLA_RECIPE_HELPER.singleIngredient(json.get("ingredient"))), parseResult(VANILLA_RECIPE_HELPER.stoneCuttingResult(json)));
         }
     }
 }

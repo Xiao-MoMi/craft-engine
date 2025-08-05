@@ -10,6 +10,7 @@ import net.momirealms.craftengine.core.plugin.command.CraftEngineCommandManager;
 import net.momirealms.craftengine.core.plugin.command.FlagKeys;
 import net.momirealms.craftengine.core.plugin.locale.MessageConstants;
 import net.momirealms.craftengine.core.util.Key;
+import net.momirealms.craftengine.core.util.VersionHelper;
 import org.bukkit.NamespacedKey;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
@@ -74,9 +75,17 @@ public class GiveItemCommand extends BukkitCommandFeature<CommandSender> {
                             ItemStack more = builtItem.clone();
                             more.setAmount(perStackSize);
                             if (toInv) {
-                                PlayerUtils.putItemsToInventory(player.getInventory(), more, more.getAmount());
+                                if (VersionHelper.isFolia()) {
+                                    player.getScheduler().run(plugin().javaPlugin(), (t) -> PlayerUtils.putItemsToInventory(player.getInventory(), more, more.getAmount()), () -> {});
+                                } else {
+                                    PlayerUtils.putItemsToInventory(player.getInventory(), more, more.getAmount());
+                                }
                             } else {
-                                PlayerUtils.dropItem(player, more, false, true, false);
+                                if (VersionHelper.isFolia()) {
+                                    player.getScheduler().run(plugin().javaPlugin(), (t) -> PlayerUtils.dropItem(player, more, false, true, false), () -> {});
+                                } else {
+                                    PlayerUtils.dropItem(player, more, false, true, false);
+                                }
                             }
                         }
                     }

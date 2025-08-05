@@ -1,11 +1,11 @@
 package net.momirealms.craftengine.core.item.recipe;
 
+import com.google.gson.JsonObject;
 import net.momirealms.craftengine.core.item.Item;
 import net.momirealms.craftengine.core.item.ItemBuildContext;
 import net.momirealms.craftengine.core.item.recipe.input.RecipeInput;
 import net.momirealms.craftengine.core.item.recipe.input.SmithingInput;
 import net.momirealms.craftengine.core.plugin.CraftEngine;
-import net.momirealms.craftengine.core.plugin.locale.LocalizedResourceConfigException;
 import net.momirealms.craftengine.core.util.Key;
 import net.momirealms.craftengine.core.util.MiscUtils;
 import net.momirealms.craftengine.core.util.ResourceConfigUtils;
@@ -16,9 +16,10 @@ import org.jetbrains.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 public class CustomSmithingTrimRecipe<T> implements Recipe<T> {
-    public static final Factory<?> FACTORY = new Factory<>();
+    public static final Serializer<?> SERIALIZER = new Serializer<>();
     private final Key id;
     private final Ingredient<T> base;
     private final Ingredient<T> template;
@@ -60,14 +61,7 @@ public class CustomSmithingTrimRecipe<T> implements Recipe<T> {
     }
 
     private boolean checkIngredient(Ingredient<T> ingredient, UniqueIdItem<T> item) {
-        if (ingredient != null) {
-            if (item == null || item.isEmpty()) {
-                return false;
-            }
-            return ingredient.test(item);
-        } else {
-            return item == null || item.isEmpty();
-        }
+        return ingredient.test(item);
     }
 
     @Override
@@ -80,8 +74,13 @@ public class CustomSmithingTrimRecipe<T> implements Recipe<T> {
     }
 
     @Override
-    public @NotNull Key type() {
-        return RecipeTypes.SMITHING_TRIM;
+    public @NotNull Key serializerType() {
+        return RecipeSerializers.SMITHING_TRIM;
+    }
+
+    @Override
+    public RecipeType type() {
+        return RecipeType.SMITHING;
     }
 
     @Override
@@ -89,17 +88,17 @@ public class CustomSmithingTrimRecipe<T> implements Recipe<T> {
         return this.id;
     }
 
-    @Nullable
+    @NotNull
     public Ingredient<T> base() {
         return this.base;
     }
 
-    @Nullable
+    @NotNull
     public Ingredient<T> template() {
         return template;
     }
 
-    @Nullable
+    @NotNull
     public Ingredient<T> addition() {
         return addition;
     }
@@ -110,28 +109,29 @@ public class CustomSmithingTrimRecipe<T> implements Recipe<T> {
     }
 
     @SuppressWarnings({"DuplicatedCode"})
-    public static class Factory<A> implements RecipeFactory<A> {
+    public static class Serializer<A> extends AbstractRecipeSerializer<A, CustomSmithingTrimRecipe<A>> {
 
         @Override
-        public Recipe<A> create(Key id, Map<String, Object> arguments) {
+        public CustomSmithingTrimRecipe<A> readMap(Key id, Map<String, Object> arguments) {
             List<String> base = MiscUtils.getAsStringList(arguments.get("base"));
-            if (base.isEmpty()) {
-                throw new LocalizedResourceConfigException("warning.config.recipe.smithing_trim.missing_base");
-            }
-            List<String> addition = MiscUtils.getAsStringList(arguments.get("addition"));
-            if (addition.isEmpty()) {
-                throw new LocalizedResourceConfigException("warning.config.recipe.smithing_trim.missing_addition");
-            }
             List<String> template = MiscUtils.getAsStringList(arguments.get("template-type"));
-            if (template.isEmpty()) {
-                throw new LocalizedResourceConfigException("warning.config.recipe.smithing_trim.missing_template_type");
-            }
+            List<String> addition = MiscUtils.getAsStringList(arguments.get("addition"));
             Key pattern = VersionHelper.isOrAbove1_21_5() ? Key.of(ResourceConfigUtils.requireNonEmptyStringOrThrow(arguments.get("pattern"), "warning.config.recipe.smithing_trim.missing_pattern")) : null;
             return new CustomSmithingTrimRecipe<>(id,
                     ResourceConfigUtils.requireNonNullOrThrow(toIngredient(base), "warning.config.recipe.smithing_trim.missing_base"),
                     ResourceConfigUtils.requireNonNullOrThrow(toIngredient(template), "warning.config.recipe.smithing_trim.missing_template_type"),
                     ResourceConfigUtils.requireNonNullOrThrow(toIngredient(addition), "warning.config.recipe.smithing_trim.missing_addition"),
                     pattern);
+        }
+
+        @Override
+        public CustomSmithingTrimRecipe<A> readJson(Key id, JsonObject json) {
+            return new CustomSmithingTrimRecipe<>(id,
+                    Objects.requireNonNull(toIngredient(VANILLA_RECIPE_HELPER.singleIngredient(json.get("base")))),
+                    Objects.requireNonNull(toIngredient(VANILLA_RECIPE_HELPER.singleIngredient(json.get("template")))),
+                    Objects.requireNonNull(toIngredient(VANILLA_RECIPE_HELPER.singleIngredient(json.get("addition")))),
+                    VersionHelper.isOrAbove1_21_5() ? Key.of(json.get("pattern").getAsString()) : null
+            );
         }
     }
 }

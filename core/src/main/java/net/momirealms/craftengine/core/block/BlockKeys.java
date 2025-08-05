@@ -41,7 +41,25 @@ public final class BlockKeys {
     public static final Key COMMAND_BLOCK = Key.of("minecraft:command_block");
     public static final Key CHAIN_COMMAND_BLOCK = Key.of("minecraft:chain_command_block");
     public static final Key REPEATING_COMMAND_BLOCK = Key.of("minecraft:repeating_command_block");
+    public static final Key JIGSAW = Key.of("minecraft:jigsaw");
+    public static final Key STRUCTURE_BLOCK = Key.of("minecraft:structure_block");
+    public static final Key TEST_INSTANCE_BLOCK = Key.of("minecraft:test_instance_block");
+    public static final Key TEST_BLOCK = Key.of("minecraft:test_block");
+    public static final Key LIGHT = Key.of("minecraft:light");
     public static final Key DECORATED_POT = Key.of("minecraft:decorated_pot");
+    public static final Key FLOWER_POT = Key.of("minecraft:flower_pot");
+    public static final Key CHISELED_BOOKSHELF = Key.of("minecraft:chiseled_bookshelf");
+    public static final Key REDSTONE_ORE = Key.of("minecraft:redstone_ore");
+    public static final Key DEEPSLATE_REDSTONE_ORE = Key.of("minecraft:deepslate_redstone_ore");
+    public static final Key BEE_NEST = Key.of("minecraft:bee_nest");
+    public static final Key BEEHIVE = Key.of("minecraft:beehive");
+    public static final Key POWDER_SNOW = Key.of("minecraft:powder_snow");
+    public static final Key COMPOSTER = Key.of("minecraft:composter");
+    public static final Key CAULDRON = Key.of("minecraft:cauldron");
+    public static final Key WATER_CAULDRON = Key.of("minecraft:water_cauldron");
+    public static final Key LAVA_CAULDRON = Key.of("minecraft:lava_cauldron");
+    public static final Key RESPAWN_ANCHOR = Key.of("minecraft:respawn_anchor");
+    public static final Key LODESTONE = Key.of("minecraft:lodestone");
 
     public static final Key CAKE = Key.of("minecraft:cake");
     public static final Key CANDLE_CAKE = Key.of("minecraft:candle_cake");
@@ -157,6 +175,8 @@ public final class BlockKeys {
     public static final Key WAXED_EXPOSED_COPPER_TRAPDOOR = Key.of("minecraft:waxed_exposed_copper_trapdoor");
     public static final Key WAXED_OXIDIZED_COPPER_TRAPDOOR = Key.of("minecraft:waxed_oxidized_copper_trapdoor");
     public static final Key WAXED_WEATHERED_COPPER_TRAPDOOR = Key.of("minecraft:waxed_weathered_copper_trapdoor");
+
+
 
     public static final Key OAK_FENCE_GATE = Key.of("minecraft:oak_fence_gate");
     public static final Key SPRUCE_FENCE_GATE = Key.of("minecraft:spruce_fence_gate");

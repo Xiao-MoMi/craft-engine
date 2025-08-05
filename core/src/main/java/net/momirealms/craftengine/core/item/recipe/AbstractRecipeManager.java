@@ -1,11 +1,6 @@
 package net.momirealms.craftengine.core.item.recipe;
 
 import net.momirealms.craftengine.core.item.recipe.input.RecipeInput;
-import net.momirealms.craftengine.core.item.recipe.vanilla.VanillaRecipeReader;
-import net.momirealms.craftengine.core.item.recipe.vanilla.reader.VanillaRecipeReader1_20;
-import net.momirealms.craftengine.core.item.recipe.vanilla.reader.VanillaRecipeReader1_20_5;
-import net.momirealms.craftengine.core.item.recipe.vanilla.reader.VanillaRecipeReader1_21_2;
-import net.momirealms.craftengine.core.item.recipe.vanilla.reader.VanillaRecipeReader1_21_5;
 import net.momirealms.craftengine.core.pack.LoadingSequence;
 import net.momirealms.craftengine.core.pack.Pack;
 import net.momirealms.craftengine.core.plugin.CraftEngine;
@@ -14,42 +9,26 @@ import net.momirealms.craftengine.core.plugin.config.ConfigParser;
 import net.momirealms.craftengine.core.plugin.locale.LocalizedResourceConfigException;
 import net.momirealms.craftengine.core.util.Key;
 import net.momirealms.craftengine.core.util.UniqueKey;
-import net.momirealms.craftengine.core.util.VersionHelper;
 import org.jetbrains.annotations.Nullable;
 
 import java.nio.file.Path;
 import java.util.*;
 
 public abstract class AbstractRecipeManager<T> implements RecipeManager<T> {
-    protected final VanillaRecipeReader recipeReader;
-    protected final Map<Key, List<Recipe<T>>> byType = new HashMap<>();
+    protected final Map<RecipeType, List<Recipe<T>>> byType = new HashMap<>();
     protected final Map<Key, Recipe<T>> byId = new HashMap<>();
     protected final Map<Key, List<Recipe<T>>> byResult = new HashMap<>();
     protected final Map<Key, List<Recipe<T>>> byIngredient = new HashMap<>();
     protected final Set<Key> dataPackRecipes = new HashSet<>();
     protected final RecipeParser recipeParser;
-    protected boolean isReloading;
 
     public AbstractRecipeManager() {
-        this.recipeReader = initVanillaRecipeReader();
         this.recipeParser = new RecipeParser();
     }
 
     @Override
     public ConfigParser parser() {
         return this.recipeParser;
-    }
-
-    private VanillaRecipeReader initVanillaRecipeReader() {
-        if (VersionHelper.isOrAbove1_21_5()) {
-            return new VanillaRecipeReader1_21_5();
-        } else if (VersionHelper.isOrAbove1_21_2()) {
-            return new VanillaRecipeReader1_21_2();
-        } else if (VersionHelper.isOrAbove1_20_5()) {
-            return new VanillaRecipeReader1_20_5();
-        } else {
-            return new VanillaRecipeReader1_20();
-        }
     }
 
     @Override
@@ -67,44 +46,37 @@ public abstract class AbstractRecipeManager<T> implements RecipeManager<T> {
 
     @Override
     public boolean isDataPackRecipe(Key key) {
-        if (this.isReloading) return false;
         return this.dataPackRecipes.contains(key);
     }
 
     @Override
     public boolean isCustomRecipe(Key key) {
-        if (this.isReloading) return false;
         return this.byId.containsKey(key);
     }
 
     @Override
     public Optional<Recipe<T>> recipeById(Key key) {
-        if (this.isReloading) return Optional.empty();
         return Optional.ofNullable(this.byId.get(key));
     }
 
     @Override
-    public List<Recipe<T>> recipesByType(Key type) {
-        if (this.isReloading) return List.of();
+    public List<Recipe<T>> recipesByType(RecipeType type) {
         return this.byType.getOrDefault(type, List.of());
     }
 
     @Override
     public List<Recipe<T>> recipeByResult(Key result) {
-        if (this.isReloading) return List.of();
         return this.byResult.getOrDefault(result, List.of());
     }
 
     @Override
     public List<Recipe<T>> recipeByIngredient(Key ingredient) {
-        if (this.isReloading) return List.of();
         return this.byIngredient.getOrDefault(ingredient, List.of());
     }
 
     @Nullable
     @Override
-    public Recipe<T> recipeByInput(Key type, RecipeInput input) {
-        if (this.isReloading) return null;
+    public Recipe<T> recipeByInput(RecipeType type, RecipeInput input) {
         List<Recipe<T>> recipes = this.byType.get(type);
         if (recipes == null) return null;
         for (Recipe<T> recipe : recipes) {
@@ -117,8 +89,7 @@ public abstract class AbstractRecipeManager<T> implements RecipeManager<T> {
 
     @Nullable
     @Override
-    public Recipe<T> recipeByInput(Key type, RecipeInput input, Key lastRecipe) {
-        if (this.isReloading) return null;
+    public Recipe<T> recipeByInput(RecipeType type, RecipeInput input, Key lastRecipe) {
         if (lastRecipe != null) {
             Recipe<T> last = this.byId.get(lastRecipe);
             if (last != null && last.matches(input)) {
@@ -128,7 +99,8 @@ public abstract class AbstractRecipeManager<T> implements RecipeManager<T> {
         return recipeByInput(type, input);
     }
 
-    protected void registerInternalRecipe(Key id, Recipe<T> recipe) {
+    protected boolean registerInternalRecipe(Key id, Recipe<T> recipe) {
+        if (this.byId.containsKey(id)) return false;
         this.byType.computeIfAbsent(recipe.type(), k -> new ArrayList<>()).add(recipe);
         this.byId.put(id, recipe);
         if (recipe instanceof FixedResultRecipe<?> fixedResult) {
@@ -143,6 +115,7 @@ public abstract class AbstractRecipeManager<T> implements RecipeManager<T> {
                 }
             }
         }
+        return true;
     }
 
     public class RecipeParser implements ConfigParser {
@@ -164,10 +137,9 @@ public abstract class AbstractRecipeManager<T> implements RecipeManager<T> {
             if (AbstractRecipeManager.this.byId.containsKey(id)) {
                 throw new LocalizedResourceConfigException("warning.config.recipe.duplicate", path, id);
             }
-            Recipe<T> recipe = RecipeTypes.fromMap(id, section);
+            Recipe<T> recipe = RecipeSerializers.fromMap(id, section);
             try {
                 registerInternalRecipe(id, recipe);
-                registerPlatformRecipe(id, recipe);
             } catch (LocalizedResourceConfigException e) {
                 throw e;
             } catch (Exception e) {
@@ -176,7 +148,7 @@ public abstract class AbstractRecipeManager<T> implements RecipeManager<T> {
         }
     }
 
-    protected abstract void unregisterPlatformRecipe(Key key, boolean isBrewingRecipe);
+    protected abstract void unregisterPlatformRecipeMainThread(Key key, boolean isBrewingRecipe);
 
-    protected abstract void registerPlatformRecipe(Key key, Recipe<T> recipe);
+    protected abstract void registerPlatformRecipeMainThread(Recipe<T> recipe);
 }

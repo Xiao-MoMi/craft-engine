@@ -1,18 +1,20 @@
 package net.momirealms.craftengine.core.item.recipe;
 
+import com.google.common.collect.Maps;
+import com.google.gson.JsonObject;
 import net.momirealms.craftengine.core.item.recipe.input.CraftingInput;
 import net.momirealms.craftengine.core.item.recipe.input.RecipeInput;
-import net.momirealms.craftengine.core.plugin.CraftEngine;
+import net.momirealms.craftengine.core.item.recipe.result.CustomRecipeResult;
 import net.momirealms.craftengine.core.plugin.locale.LocalizedResourceConfigException;
 import net.momirealms.craftengine.core.util.Key;
 import net.momirealms.craftengine.core.util.MiscUtils;
-import net.momirealms.craftengine.core.util.UniqueKey;
+import net.momirealms.craftengine.core.util.ResourceConfigUtils;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 
 public class CustomShapedRecipe<T> extends CustomCraftingTableRecipe<T> {
-    public static final Factory<?> FACTORY = new Factory<CustomShapedRecipe<?>>();
+    public static final Serializer<?> SERIALIZER = new Serializer<CustomShapedRecipe<?>>();
     private final ParsedPattern<T> parsedPattern;
     private final Pattern<T> pattern;
 
@@ -38,8 +40,8 @@ public class CustomShapedRecipe<T> extends CustomCraftingTableRecipe<T> {
     }
 
     @Override
-    public @NotNull Key type() {
-        return RecipeTypes.SHAPED;
+    public @NotNull Key serializerType() {
+        return RecipeSerializers.SHAPED;
     }
 
     public Pattern<T> pattern() {
@@ -133,11 +135,11 @@ public class CustomShapedRecipe<T> extends CustomCraftingTableRecipe<T> {
         }
     }
 
-    public static class Factory<A> extends AbstractRecipeFactory<A> {
+    public static class Serializer<A> extends AbstractRecipeSerializer<A, CustomShapedRecipe<A>> {
 
         @SuppressWarnings({"unchecked", "rawtypes", "DuplicatedCode"})
         @Override
-        public Recipe<A> create(Key id, Map<String, Object> arguments) {
+        public CustomShapedRecipe<A> readMap(Key id, Map<String, Object> arguments) {
             List<String> pattern = MiscUtils.getAsStringList(arguments.get("pattern"));
             if (pattern.isEmpty()) {
                 throw new LocalizedResourceConfigException("warning.config.recipe.shaped.missing_pattern");
@@ -146,30 +148,37 @@ public class CustomShapedRecipe<T> extends CustomCraftingTableRecipe<T> {
                 throw new LocalizedResourceConfigException("warning.config.recipe.shaped.invalid_pattern", pattern.toString());
             }
             Object ingredientObj = getIngredientOrThrow(arguments);
-            String group = arguments.containsKey("group") ? arguments.get("group").toString() : null;
             Map<Character, Ingredient<A>> ingredients = new HashMap<>();
-            for (Map.Entry<String, Object> entry : MiscUtils.castToMap(ingredientObj, false).entrySet()) {
+            for (Map.Entry<String, Object> entry : ResourceConfigUtils.getAsMap(ingredientObj, "ingredient").entrySet()) {
                 String key = entry.getKey();
                 if (key.length() != 1) {
                     throw new LocalizedResourceConfigException("warning.config.recipe.shaped.invalid_symbol", key);
                 }
                 char ch = key.charAt(0);
                 List<String> items = MiscUtils.getAsStringList(entry.getValue());
-                Set<UniqueKey> holders = new HashSet<>();
-                for (String item : items) {
-                    if (item.charAt(0) == '#') {
-                        holders.addAll(CraftEngine.instance().itemManager().tagToItems(Key.of(item.substring(1))));
-                    } else {
-                        holders.add(UniqueKey.create(Key.of(item)));
-                    }
-                }
-                ingredients.put(ch, Ingredient.of(holders));
+                ingredients.put(ch, toIngredient(items));
             }
-            return new CustomShapedRecipe(id, craftingRecipeCategory(arguments), group, new Pattern<>(pattern.toArray(new String[0]), ingredients), parseResult(arguments));
+            return new CustomShapedRecipe(id,
+                    craftingRecipeCategory(arguments),
+                    arguments.containsKey("group") ? arguments.get("group").toString() : null,
+                    new Pattern<>(pattern.toArray(new String[0]), ingredients),
+                    parseResult(arguments)
+            );
+        }
+
+        @Override
+        public CustomShapedRecipe<A> readJson(Key id, JsonObject json) {
+            Map<Character, Ingredient<A>> ingredients = Maps.transformValues(VANILLA_RECIPE_HELPER.shapedIngredientMap(json.getAsJsonObject("key")), this::toIngredient);
+            return new CustomShapedRecipe<>(id,
+                    VANILLA_RECIPE_HELPER.craftingCategory(json),
+                    VANILLA_RECIPE_HELPER.readGroup(json),
+                    new Pattern<>(VANILLA_RECIPE_HELPER.craftingShapedPattern(json), ingredients),
+                    parseResult(VANILLA_RECIPE_HELPER.craftingResult(json.getAsJsonObject("result")))
+            );
         }
 
         private boolean validatePattern(List<String> pattern) {
-            String first = pattern.get(0);
+            String first = pattern.getFirst();
             int length = first.length();
             for (String s : pattern) {
                 if (s.length() != length) {

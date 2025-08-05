@@ -19,5 +19,10 @@ public class ExceptionCollector<T extends Throwable> {
             throw this.result;
         }
     }
+
+    public void addAndThrow(T throwable) throws T {
+        this.add(throwable);
+        this.throwIfPresent();
+    }
 }
 

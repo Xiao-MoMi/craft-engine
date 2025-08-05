@@ -2,7 +2,6 @@ package net.momirealms.craftengine.core.item.recipe.input;
 
 import net.momirealms.craftengine.core.item.recipe.UniqueIdItem;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 public final class SmithingInput<T> implements RecipeInput {
     private final UniqueIdItem<T> base;
@@ -10,8 +9,8 @@ public final class SmithingInput<T> implements RecipeInput {
     private final UniqueIdItem<T> addition;
 
     public SmithingInput(@NotNull UniqueIdItem<T> base,
-                         @Nullable UniqueIdItem<T> template,
-                         @Nullable UniqueIdItem<T> addition) {
+                         @NotNull UniqueIdItem<T> template,
+                         @NotNull UniqueIdItem<T> addition) {
         this.base = base;
         this.template = template;
         this.addition = addition;
@@ -22,12 +21,12 @@ public final class SmithingInput<T> implements RecipeInput {
         return base;
     }
 
-    @Nullable
+    @NotNull
     public UniqueIdItem<T> template() {
         return template;
     }
 
-    @Nullable
+    @NotNull
     public UniqueIdItem<T> addition() {
         return addition;
     }

@@ -227,7 +227,6 @@ public class BukkitCraftEngine extends CraftEngine {
                 }
             }, 1, 1);
         }
-        super.compatibilityManager().onDelayedEnable();
     }
 
     @Override

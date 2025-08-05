@@ -19,15 +19,15 @@ public interface RecipeManager<T> extends Manageable {
 
     Optional<Recipe<T>> recipeById(Key id);
 
-    List<Recipe<T>> recipesByType(Key type);
+    List<Recipe<T>> recipesByType(RecipeType type);
 
     List<Recipe<T>> recipeByResult(Key result);
 
     List<Recipe<T>> recipeByIngredient(Key ingredient);
 
     @Nullable
-    Recipe<T> recipeByInput(Key type, RecipeInput input);
+    Recipe<T> recipeByInput(RecipeType type, RecipeInput input);
 
     @Nullable
-    Recipe<T> recipeByInput(Key type, RecipeInput input, @Nullable Key lastRecipe);
+    Recipe<T> recipeByInput(RecipeType type, RecipeInput input, @Nullable Key lastRecipe);
 }
