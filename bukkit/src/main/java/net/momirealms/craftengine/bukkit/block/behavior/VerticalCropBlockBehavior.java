@@ -43,8 +43,9 @@ public class VerticalCropBlockBehavior extends BukkitBlockBehavior {
     private final boolean allowWaterGrow;
     private final boolean direction;
     private final float growSpeed;
+    private final boolean invertGrowth;
 
-    public VerticalCropBlockBehavior(CustomBlock customBlock, Property<Integer> ageProperty, int maxHeight, float growSpeed, boolean direction, BlockPos[] liquidPositions, boolean requireWater, boolean requireLava, boolean stopOverwaterGrowing, boolean allowAirGrow, boolean allowWaterGrow) {
+    public VerticalCropBlockBehavior(CustomBlock customBlock, Property<Integer> ageProperty, int maxHeight, float growSpeed, boolean direction, BlockPos[] liquidPositions, boolean requireWater, boolean requireLava, boolean stopOverwaterGrowing, boolean allowAirGrow, boolean allowWaterGrow, boolean invertGrowth) {
         super(customBlock);
         this.maxHeight = maxHeight;
         this.ageProperty = (IntegerProperty) ageProperty;
@@ -56,6 +57,7 @@ public class VerticalCropBlockBehavior extends BukkitBlockBehavior {
         this.stopOverwaterGrowing = stopOverwaterGrowing;
         this.allowAirGrow = allowAirGrow;
         this.allowWaterGrow = allowWaterGrow;
+        this.invertGrowth = invertGrowth;
     }
 
     private boolean canGrow(Object level, BlockPos currentPos) {
@@ -101,15 +103,43 @@ public class VerticalCropBlockBehavior extends BukkitBlockBehavior {
         int age = currentState.get(ageProperty);
         if (age >= ageProperty.max || RandomUtils.generateRandomFloat(0, 1) < growSpeed) {
             if (VersionHelper.isOrAbove1_21_5()) {
-                CraftBukkitReflections.method$CraftEventFactory$handleBlockGrowEvent.invoke(null, level, targetPos, customBlock.defaultState().customBlockState().handle(),UpdateOption.UPDATE_ALL.flags());
+                CraftBukkitReflections.method$CraftEventFactory$handleBlockGrowEvent.invoke(null, level, targetPos, customBlock.defaultState().customBlockState().handle(), UpdateOption.UPDATE_ALL.flags());
             } else {
                 CraftBukkitReflections.method$CraftEventFactory$handleBlockGrowEvent.invoke(null, level, targetPos, customBlock.defaultState().customBlockState().handle());
             }
-            FastNMS.INSTANCE.method$LevelWriter$setBlock(level, blockPos,currentState.with(ageProperty, ageProperty.min).customBlockState().handle(),UpdateOption.UPDATE_NONE.flags());
+            if (invertGrowth) {
+                // New tip block gets age 0
+                ImmutableBlockState tipState = customBlock.defaultState().with(ageProperty, ageProperty.min);
+                FastNMS.INSTANCE.method$LevelWriter$setBlock(level, targetPos, tipState.customBlockState().handle(), UpdateOption.UPDATE_NONE.flags());
+                // Update existing blocks: closer to root gets higher age
+                for (int i = 0; i < height; i++) {
+                    int ageValue = i + 1;
+                    // NMS position for existing block at offset
+                    Object posObj = LocationUtils.toBlockPos(
+                        currentPos.x(),
+                        direction ? currentPos.y() - i : currentPos.y() + i,
+                        currentPos.z()
+                    );
+                    ImmutableBlockState state = customBlock.defaultState().with(ageProperty, ageValue);
+                    FastNMS.INSTANCE.method$LevelWriter$setBlock(level, posObj, state.customBlockState().handle(), UpdateOption.UPDATE_NONE.flags());
+                }
+            } else {
+                // Default growth: assign ages from base (0) up to new tip (height)
+                int stackSize = height + 1;
+                // Compute base Y-coordinate based on growth direction
+                int baseY = direction ? currentPos.y() - (height - 1) : currentPos.y() + (height - 1);
+                for (int j = 0; j < stackSize; j++) {
+                    int ageValue = j;
+                    int y = direction ? baseY + j : baseY - j;
+                    Object posObj = LocationUtils.toBlockPos(currentPos.x(), y, currentPos.z());
+                    ImmutableBlockState state = customBlock.defaultState().with(ageProperty, ageValue);
+                    FastNMS.INSTANCE.method$LevelWriter$setBlock(level, posObj, state.customBlockState().handle(), UpdateOption.UPDATE_NONE.flags());
+                }
+            }
             return;
         }
         if (RandomUtils.generateRandomFloat(0, 1) < growSpeed) {
-            FastNMS.INSTANCE.method$LevelWriter$setBlock(level, blockPos,currentState.with(ageProperty, age + 1).customBlockState().handle(),UpdateOption.UPDATE_NONE.flags());
+            FastNMS.INSTANCE.method$LevelWriter$setBlock(level, blockPos, currentState.with(ageProperty, age + 1).customBlockState().handle(), UpdateOption.UPDATE_NONE.flags());
         }
     }
 
@@ -137,7 +167,8 @@ public class VerticalCropBlockBehavior extends BukkitBlockBehavior {
             boolean allowAir = growTypes.contains("air");
             boolean allowWater = growTypes.contains("water");
             float growSpeed = ResourceConfigUtils.getAsFloat(arguments.getOrDefault("grow-speed", 1),"grow-speed");
-            return new VerticalCropBlockBehavior(block,ageProperty,maxHeight,growSpeed,direction,liquidPositions,reqWater,reqLava,stopOver,allowAir,allowWater);
+            boolean invertGrowth = ResourceConfigUtils.getAsBoolean(arguments.getOrDefault("invert-growth", false), "invert-growth");
+            return new VerticalCropBlockBehavior(block,ageProperty,maxHeight,growSpeed,direction,liquidPositions,reqWater,reqLava,stopOver,allowAir,allowWater,invertGrowth);
         }
     }
 }
