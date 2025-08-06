@@ -7,7 +7,7 @@ import net.momirealms.craftengine.core.item.CustomItem;
 import net.momirealms.craftengine.core.item.Item;
 import net.momirealms.craftengine.core.item.ItemBuildContext;
 import net.momirealms.craftengine.core.item.NetworkItemHandler;
-import net.momirealms.craftengine.core.item.modifier.ArgumentModifier;
+import net.momirealms.craftengine.core.item.modifier.ArgumentsModifier;
 import net.momirealms.craftengine.core.item.modifier.ItemDataModifier;
 import net.momirealms.craftengine.core.plugin.CraftEngine;
 import net.momirealms.craftengine.core.plugin.config.Config;
@@ -74,7 +74,7 @@ public final class LegacyNetworkItemHandler implements NetworkItemHandler<ItemSt
                 return new OtherItem(wrapped, hasDifferentMaterial).process();
             } else {
                 CompoundTag tag = new CompoundTag();
-                Tag argumentTag = wrapped.getTag(ArgumentModifier.ARGUMENTS_TAG);
+                Tag argumentTag = wrapped.getTag(ArgumentsModifier.ARGUMENTS_TAG);
                 ItemBuildContext context;
                 if (argumentTag instanceof CompoundTag arguments) {
                     ContextHolder.Builder builder = ContextHolder.builder();

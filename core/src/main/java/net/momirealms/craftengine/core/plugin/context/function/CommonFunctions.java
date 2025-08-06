@@ -30,4 +30,5 @@ public final class CommonFunctions {
     public static final Key SPAWN_FURNITURE = Key.of("craftengine:spawn_furniture");
     public static final Key REMOVE_FURNITURE = Key.of("craftengine:remove_furniture");
     public static final Key REPLACE_FURNITURE = Key.of("craftengine:replace_furniture");
+    public static final Key MYTHIC_MOBS_SKILL = Key.of("craftengine:mythic_mobs_skill");
 }

@@ -1,13 +1,13 @@
 package net.momirealms.craftengine.core.plugin.context.parameter;
 
+import net.momirealms.craftengine.core.entity.furniture.Furniture;
+import net.momirealms.craftengine.core.plugin.context.ChainParameterProvider;
+import net.momirealms.craftengine.core.plugin.context.ContextKey;
+
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 import java.util.function.Function;
-
-import net.momirealms.craftengine.core.entity.furniture.Furniture;
-import net.momirealms.craftengine.core.plugin.context.ChainParameterProvider;
-import net.momirealms.craftengine.core.plugin.context.ContextKey;
 
 public class FurnitureParameterProvider implements ChainParameterProvider<Furniture> {
     private static final Map<ContextKey<?>, Function<Furniture, Object>> CONTEXT_FUNCTIONS = new HashMap<>();
@@ -20,6 +20,7 @@ public class FurnitureParameterProvider implements ChainParameterProvider<Furnit
         CONTEXT_FUNCTIONS.put(DirectContextParameters.Z, furniture -> furniture.position().z());
         CONTEXT_FUNCTIONS.put(DirectContextParameters.PITCH, furniture -> furniture.position().xRot());
         CONTEXT_FUNCTIONS.put(DirectContextParameters.YAW, furniture -> furniture.position().yRot());
+        CONTEXT_FUNCTIONS.put(DirectContextParameters.POSITION, Furniture::position);
     }
 
     @SuppressWarnings("unchecked")

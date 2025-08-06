@@ -12,15 +12,12 @@ import net.momirealms.craftengine.bukkit.item.listener.DebugStickListener;
 import net.momirealms.craftengine.bukkit.item.listener.ItemEventListener;
 import net.momirealms.craftengine.bukkit.nms.FastNMS;
 import net.momirealms.craftengine.bukkit.plugin.BukkitCraftEngine;
-import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.CoreReflections;
-import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.MBuiltInRegistries;
-import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.MRegistries;
-import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.MRegistryOps;
+import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.*;
 import net.momirealms.craftengine.bukkit.util.ItemStackUtils;
 import net.momirealms.craftengine.bukkit.util.KeyUtils;
 import net.momirealms.craftengine.core.entity.player.Player;
 import net.momirealms.craftengine.core.item.*;
-import net.momirealms.craftengine.core.item.modifier.IdModifier;
+import net.momirealms.craftengine.core.item.recipe.DatapackRecipeResult;
 import net.momirealms.craftengine.core.item.recipe.UniqueIdItem;
 import net.momirealms.craftengine.core.pack.AbstractPackManager;
 import net.momirealms.craftengine.core.plugin.config.Config;
@@ -73,10 +70,9 @@ public class BukkitItemManager extends AbstractItemManager<ItemStack> {
         this.bedrockItemHolder = FastNMS.INSTANCE.method$Registry$getHolderByResourceKey(MBuiltInRegistries.ITEM, FastNMS.INSTANCE.method$ResourceKey$create(MRegistries.ITEM, KeyUtils.toResourceLocation(Key.of("minecraft:bedrock")))).get();
         this.registerCustomTrimMaterial();
         this.loadLastRegisteredPatterns();
-
         ItemStack emptyStack = FastNMS.INSTANCE.method$CraftItemStack$asCraftMirror(CoreReflections.instance$ItemStack$EMPTY);
-        this.emptyItem = this.wrap(emptyStack);
-        this.emptyUniqueItem = new UniqueIdItem<>(UniqueKey.AIR, this.emptyItem);
+        this.emptyItem = this.factory.wrap(emptyStack);
+        this.emptyUniqueItem = UniqueIdItem.of(this.emptyItem);
         this.decoratedHashOpsGenerator = VersionHelper.isOrAbove1_21_5() ? (Function<Object, Integer>) FastNMS.INSTANCE.createDecoratedHashOpsGenerator(MRegistryOps.HASHCODE) : null;
     }
 
@@ -162,12 +158,32 @@ public class BukkitItemManager extends AbstractItemManager<ItemStack> {
     }
 
     @Override
+    public Item<ItemStack> build(DatapackRecipeResult result) {
+        if (result.components() == null) {
+            ItemStack itemStack = createVanillaItemStack(Key.of(result.id()));
+            return wrap(itemStack).count(result.count());
+        } else {
+            // 低版本无法应用nbt或组件,所以这里是1.20.5+
+            JsonObject jsonObject = new JsonObject();
+            jsonObject.addProperty("id", result.id());
+            jsonObject.addProperty("count", result.count());
+            jsonObject.add("components", result.components());
+            Object nmsStack = CoreReflections.instance$ItemStack$CODEC.parse(MRegistryOps.JSON, jsonObject)
+                    .resultOrPartial((itemId) -> plugin.logger().severe("Tried to load invalid item: '" + itemId + "'")).orElse(null);
+            if (nmsStack == null) {
+                return this.emptyItem;
+            }
+            return wrap(FastNMS.INSTANCE.method$CraftItemStack$asCraftMirror(nmsStack));
+        }
+    }
+
+    @Override
     public Optional<BuildableItem<ItemStack>> getVanillaItem(Key key) {
         ItemStack vanilla = createVanillaItemStack(key);
         if (vanilla == null) {
             return Optional.empty();
         }
-        return Optional.of(new CloneableConstantItem(key, this.wrap(vanilla)));
+        return Optional.of(CloneableConstantItem.of(this.wrap(vanilla)));
     }
 
     @Override
@@ -359,31 +375,18 @@ public class BukkitItemManager extends AbstractItemManager<ItemStack> {
 
     @Override
     public @NotNull Item<ItemStack> wrap(ItemStack itemStack) {
-        if (itemStack == null) return this.emptyItem;
+        if (itemStack == null || itemStack.isEmpty()) return this.emptyItem;
         return this.factory.wrap(itemStack);
-    }
-
-    @Override
-    public Key itemId(ItemStack itemStack) {
-        Item<ItemStack> wrapped = wrap(itemStack);
-        return wrapped.id();
-    }
-
-    @Override
-    public Key customItemId(ItemStack itemStack) {
-        Item<ItemStack> wrapped = wrap(itemStack);
-        if (!wrapped.hasTag(IdModifier.CRAFT_ENGINE_ID)) return null;
-        return wrapped.id();
     }
 
     @Override
     protected CustomItem.Builder<ItemStack> createPlatformItemBuilder(UniqueKey id, Key materialId, Key clientBoundMaterialId) {
         Object item = FastNMS.INSTANCE.method$Registry$getValue(MBuiltInRegistries.ITEM, KeyUtils.toResourceLocation(materialId));
         Object clientBoundItem = materialId == clientBoundMaterialId ? item : FastNMS.INSTANCE.method$Registry$getValue(MBuiltInRegistries.ITEM, KeyUtils.toResourceLocation(clientBoundMaterialId));
-        if (item == null) {
+        if (item == MItems.AIR) {
             throw new LocalizedResourceConfigException("warning.config.item.invalid_material", materialId.toString());
         }
-        if (clientBoundItem == null) {
+        if (clientBoundItem == MItems.AIR) {
             throw new LocalizedResourceConfigException("warning.config.item.invalid_material", clientBoundMaterialId.toString());
         }
         return BukkitCustomItem.builder(item, clientBoundItem)
@@ -398,15 +401,13 @@ public class BukkitItemManager extends AbstractItemManager<ItemStack> {
             for (Object item : (Iterable<?>) MBuiltInRegistries.ITEM) {
                 Object resourceLocation = FastNMS.INSTANCE.method$Registry$getKey(MBuiltInRegistries.ITEM, item);
                 Key itemKey = KeyUtils.resourceLocationToKey(resourceLocation);
-                if (itemKey.namespace().equals("minecraft")) {
-                    VANILLA_ITEMS.add(itemKey);
-                    UniqueKey uniqueKey = UniqueKey.create(itemKey);
-                    Object mcHolder = FastNMS.INSTANCE.method$Registry$getHolderByResourceKey(MBuiltInRegistries.ITEM, FastNMS.INSTANCE.method$ResourceKey$create(MRegistries.ITEM, resourceLocation)).get();
-                    Set<Object> tags = (Set<Object>) CoreReflections.field$Holder$Reference$tags.get(mcHolder);
-                    for (Object tag : tags) {
-                        Key tagId = Key.of(CoreReflections.field$TagKey$location.get(tag).toString());
-                        VANILLA_ITEM_TAGS.computeIfAbsent(tagId, (key) -> new ArrayList<>()).add(uniqueKey);
-                    }
+                VANILLA_ITEMS.add(itemKey);
+                UniqueKey uniqueKey = UniqueKey.create(itemKey);
+                Object mcHolder = FastNMS.INSTANCE.method$Registry$getHolderByResourceKey(MBuiltInRegistries.ITEM, FastNMS.INSTANCE.method$ResourceKey$create(MRegistries.ITEM, resourceLocation)).get();
+                Set<Object> tags = (Set<Object>) CoreReflections.field$Holder$Reference$tags.get(mcHolder);
+                for (Object tag : tags) {
+                    Key tagId = Key.of(CoreReflections.field$TagKey$location.get(tag).toString());
+                    VANILLA_ITEM_TAGS.computeIfAbsent(tagId, (key) -> new ArrayList<>()).add(uniqueKey);
                 }
             }
         } catch (ReflectiveOperationException e) {

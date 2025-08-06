@@ -2,6 +2,7 @@ package net.momirealms.craftengine.core.item;
 
 import com.google.gson.JsonElement;
 import net.kyori.adventure.text.Component;
+import net.momirealms.craftengine.core.attribute.AttributeModifier;
 import net.momirealms.craftengine.core.item.behavior.ItemBehavior;
 import net.momirealms.craftengine.core.item.data.Enchantment;
 import net.momirealms.craftengine.core.item.data.FireworkExplosion;
@@ -9,9 +10,12 @@ import net.momirealms.craftengine.core.item.data.JukeboxPlayable;
 import net.momirealms.craftengine.core.item.data.Trim;
 import net.momirealms.craftengine.core.item.modifier.ItemDataModifier;
 import net.momirealms.craftengine.core.item.setting.EquipmentData;
+import net.momirealms.craftengine.core.util.Color;
 import net.momirealms.craftengine.core.util.Key;
 import net.momirealms.craftengine.core.util.UniqueKey;
 import net.momirealms.sparrow.nbt.Tag;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 import java.util.Optional;
@@ -35,10 +39,13 @@ public interface Item<I> {
 
     boolean isBlockItem();
 
+    @NotNull
     Key id();
 
+    @NotNull
     Key vanillaId();
 
+    @Nullable
     UniqueKey recipeIngredientId();
 
     Optional<Key> customId();
@@ -69,9 +76,10 @@ public interface Item<I> {
 
     int maxDamage();
 
-    Item<I> dyedColor(Integer data);
+    // todo 考虑部分版本的show in tooltip保留
+    Item<I> dyedColor(Color data);
 
-    Optional<Integer> dyedColor();
+    Optional<Color> dyedColor();
 
     Item<I> fireworkExplosion(FireworkExplosion explosion);
 
@@ -116,6 +124,8 @@ public interface Item<I> {
     Optional<List<String>> loreJson();
 
     Optional<List<Component>> loreComponent();
+
+    Item<I> attributeModifiers(List<AttributeModifier> modifiers);
 
     Optional<JukeboxPlayable> jukeboxSong();
 
@@ -185,7 +195,7 @@ public interface Item<I> {
 
     Item<I> copyWithCount(int count);
 
-    boolean is(Key itemTag);
+    boolean hasItemTag(Key itemTag);
 
     Object getLiteralObject();
 
@@ -208,4 +218,34 @@ public interface Item<I> {
     }
 
     byte[] toByteArray();
+
+    default Item<I> applyDyedColors(List<Color> colors) {
+        int totalRed = 0;
+        int totalGreen = 0;
+        int totalBlue = 0;
+        int totalMaxComponent = 0;
+        int colorCount = 0;
+        Optional<Color> existingColor = dyedColor();
+        existingColor.ifPresent(colors::add);
+        for (Color color : colors) {
+            int dyeRed = color.r();
+            int dyeGreen = color.g();
+            int dyeBlue = color.b();
+            totalMaxComponent += Math.max(dyeRed, Math.max(dyeGreen, dyeBlue));
+            totalRed += dyeRed;
+            totalGreen += dyeGreen;
+            totalBlue += dyeBlue;
+            ++colorCount;
+        }
+        int avgRed = totalRed / colorCount;
+        int avgGreen = totalGreen / colorCount;
+        int avgBlue = totalBlue / colorCount;
+        float avgMaxComponent = (float) totalMaxComponent / (float)colorCount;
+        float currentMaxComponent = (float) Math.max(avgRed, Math.max(avgGreen, avgBlue));
+        avgRed = (int) ((float) avgRed * avgMaxComponent / currentMaxComponent);
+        avgGreen = (int) ((float) avgGreen * avgMaxComponent / currentMaxComponent);
+        avgBlue = (int) ((float) avgBlue * avgMaxComponent / currentMaxComponent);
+        Color finalColor = new Color(0, avgRed, avgGreen, avgBlue);
+        return dyedColor(finalColor);
+    }
 }

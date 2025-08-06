@@ -4,14 +4,16 @@ import net.momirealms.craftengine.core.block.CustomBlock;
 import net.momirealms.craftengine.core.block.behavior.BlockBehaviorFactory;
 import net.momirealms.craftengine.core.block.properties.PropertyFactory;
 import net.momirealms.craftengine.core.entity.furniture.HitBoxFactory;
+import net.momirealms.craftengine.core.item.ItemDataModifierFactory;
 import net.momirealms.craftengine.core.item.behavior.ItemBehaviorFactory;
 import net.momirealms.craftengine.core.item.equipment.EquipmentFactory;
-import net.momirealms.craftengine.core.item.recipe.CustomRecipeResult;
 import net.momirealms.craftengine.core.item.recipe.CustomSmithingTransformRecipe;
-import net.momirealms.craftengine.core.item.recipe.RecipeFactory;
+import net.momirealms.craftengine.core.item.recipe.Recipe;
+import net.momirealms.craftengine.core.item.recipe.RecipeSerializer;
 import net.momirealms.craftengine.core.item.recipe.network.legacy.LegacyRecipe;
 import net.momirealms.craftengine.core.item.recipe.network.modern.display.RecipeDisplay;
 import net.momirealms.craftengine.core.item.recipe.network.modern.display.slot.SlotDisplay;
+import net.momirealms.craftengine.core.item.recipe.result.PostProcessor;
 import net.momirealms.craftengine.core.loot.LootContext;
 import net.momirealms.craftengine.core.loot.entry.LootEntryContainerFactory;
 import net.momirealms.craftengine.core.loot.function.ApplyBonusCountFunction;
@@ -42,6 +44,7 @@ import net.momirealms.craftengine.core.util.ResourceKey;
 public class BuiltInRegistries {
     public static final Registry<CustomBlock> BLOCK = createDynamicBoundRegistry(Registries.BLOCK);
     public static final Registry<BlockBehaviorFactory> BLOCK_BEHAVIOR_FACTORY = createConstantBoundRegistry(Registries.BLOCK_BEHAVIOR_FACTORY);
+    public static final Registry<ItemDataModifierFactory<?>> ITEM_DATA_MODIFIER_FACTORY = createConstantBoundRegistry(Registries.ITEM_DATA_MODIFIER_FACTORY);
     public static final Registry<ItemBehaviorFactory> ITEM_BEHAVIOR_FACTORY = createConstantBoundRegistry(Registries.ITEM_BEHAVIOR_FACTORY);
     public static final Registry<PropertyFactory> PROPERTY_FACTORY = createConstantBoundRegistry(Registries.PROPERTY_FACTORY);
     public static final Registry<LootFunctionFactory<?>> LOOT_FUNCTION_FACTORY = createConstantBoundRegistry(Registries.LOOT_FUNCTION_FACTORY);
@@ -61,7 +64,7 @@ public class BuiltInRegistries {
     public static final Registry<ConditionPropertyReader> CONDITION_PROPERTY_READER = createConstantBoundRegistry(Registries.CONDITION_PROPERTY_READER);
     public static final Registry<SelectPropertyFactory> SELECT_PROPERTY_FACTORY = createConstantBoundRegistry(Registries.SELECT_PROPERTY_FACTORY);
     public static final Registry<SelectPropertyReader> SELECT_PROPERTY_READER = createConstantBoundRegistry(Registries.SELECT_PROPERTY_READER);
-    public static final Registry<RecipeFactory<?>> RECIPE_FACTORY = createConstantBoundRegistry(Registries.RECIPE_FACTORY);
+    public static final Registry<RecipeSerializer<?, ? extends Recipe<?>>> RECIPE_SERIALIZER = createConstantBoundRegistry(Registries.RECIPE_FACTORY);
     public static final Registry<ApplyBonusCountFunction.FormulaFactory> FORMULA_FACTORY = createConstantBoundRegistry(Registries.FORMULA_FACTORY);
     public static final Registry<ConditionFactory<PathContext>> PATH_MATCHER_FACTORY = createConstantBoundRegistry(Registries.PATH_MATCHER_FACTORY);
     public static final Registry<ResolutionFactory> RESOLUTION_FACTORY = createConstantBoundRegistry(Registries.RESOLUTION_FACTORY);
@@ -75,7 +78,7 @@ public class BuiltInRegistries {
     public static final Registry<SlotDisplay.Type> SLOT_DISPLAY_TYPE = createConstantBoundRegistry(Registries.SLOT_DISPLAY_TYPE);
     public static final Registry<RecipeDisplay.Type> RECIPE_DISPLAY_TYPE = createConstantBoundRegistry(Registries.RECIPE_DISPLAY_TYPE);
     public static final Registry<LegacyRecipe.Type> LEGACY_RECIPE_TYPE = createConstantBoundRegistry(Registries.LEGACY_RECIPE_TYPE);
-    public static final Registry<CustomRecipeResult.ApplyItemDataProcessor.Type<?>> RECIPE_POST_PROCESSOR_TYPE = createConstantBoundRegistry(Registries.RECIPE_POST_PROCESSOR_TYPE);
+    public static final Registry<PostProcessor.Type<?>> RECIPE_POST_PROCESSOR_TYPE = createConstantBoundRegistry(Registries.RECIPE_POST_PROCESSOR_TYPE);
 
     private static <T> Registry<T> createConstantBoundRegistry(ResourceKey<? extends Registry<T>> key) {
         return new ConstantBoundRegistry<>(key);

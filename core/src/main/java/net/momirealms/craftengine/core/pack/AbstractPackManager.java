@@ -497,6 +497,11 @@ public abstract class AbstractPackManager implements PackManager {
         plugin.saveResource("resources/default/resourcepack/assets/minecraft/textures/item/custom/table_lamp.png");
         plugin.saveResource("resources/default/resourcepack/assets/minecraft/textures/item/custom/wooden_chair.png");
         plugin.saveResource("resources/default/resourcepack/assets/minecraft/textures/item/custom/bench.png");
+        plugin.saveResource("resources/default/resourcepack/assets/minecraft/models/item/custom/flower_basket_ceiling.json");
+        plugin.saveResource("resources/default/resourcepack/assets/minecraft/models/item/custom/flower_basket_ground.json");
+        plugin.saveResource("resources/default/resourcepack/assets/minecraft/models/item/custom/flower_basket_wall.json");
+        plugin.saveResource("resources/default/resourcepack/assets/minecraft/textures/item/custom/flower_basket.png");
+        plugin.saveResource("resources/default/resourcepack/assets/minecraft/textures/item/custom/flower_basket_2d.png");
         // tooltip
         plugin.saveResource("resources/default/resourcepack/assets/minecraft/textures/gui/sprites/tooltip/topaz_background.png");
         plugin.saveResource("resources/default/resourcepack/assets/minecraft/textures/gui/sprites/tooltip/topaz_background.png.mcmeta");
@@ -586,11 +591,7 @@ public abstract class AbstractPackManager implements PackManager {
                             }
                         }
                     } catch (LocalizedException e) {
-                        if (e instanceof LocalizedResourceConfigException exception) {
-                            exception.setPath(cached.filePath());
-                            exception.setId(cached.prefix() + "." + key);
-                        }
-                        TranslationManager.instance().log(e.node(), e.arguments());
+                        printWarningRecursively(e, cached.filePath(), cached.prefix() + "." + key);
                     } catch (Exception e) {
                         this.plugin.logger().warn("Unexpected error loading file " + cached.filePath() + " - '" + parser.sectionId()[0] + "." + key + "'. Please find the cause according to the stacktrace or seek developer help. Additional info: " + GsonHelper.get().toJson(configEntry.getValue()), e);
                     }
@@ -600,6 +601,19 @@ public abstract class AbstractPackManager implements PackManager {
             long t2 = System.nanoTime();
             this.plugin.logger().info("Loaded " + parser.sectionId()[0] + " in " + String.format("%.2f", ((t2 - t1) / 1_000_000.0)) + " ms");
         }
+    }
+
+    private void printWarningRecursively(LocalizedException e, Path path, String prefix) {
+        for (Throwable t : e.getSuppressed()) {
+            if (t instanceof LocalizedException suppressed) {
+                printWarningRecursively(suppressed, path, prefix);
+            }
+        }
+        if (e instanceof LocalizedResourceConfigException exception) {
+            exception.setPath(path);
+            exception.setId(prefix);
+        }
+        TranslationManager.instance().log(e.node(), e.arguments());
     }
 
     private void processConfigEntry(Map.Entry<String, Object> entry, Path path, Pack pack, BiConsumer<ConfigParser, CachedConfigSection> callback) {
@@ -667,6 +681,10 @@ public abstract class AbstractPackManager implements PackManager {
             this.plugin.logger().info("Validated resource pack in " + (time3 - time2) + "ms");
             Path finalPath = resourcePackPath();
             Files.createDirectories(finalPath.getParent());
+            if (!VersionHelper.PREMIUM) {
+                Config.instance().setObf(false);
+                this.plugin.logger().warn("Resource pack obfuscation requires Premium Edition.");
+            }
             try {
                 this.zipGenerator.accept(generatedPackPath, finalPath);
             } catch (Exception e) {
@@ -1551,15 +1569,24 @@ public abstract class AbstractPackManager implements PackManager {
 
     private void generateClientLang(Path generatedPackPath) {
         for (Map.Entry<String, I18NData> entry : this.plugin.translationManager().clientLangData().entrySet()) {
-            JsonObject json = new JsonObject();
-            for (Map.Entry<String, String> pair : entry.getValue().translations.entrySet()) {
-                json.addProperty(pair.getKey(), pair.getValue());
-            }
             Path langPath = generatedPackPath
                     .resolve("assets")
                     .resolve("minecraft")
                     .resolve("lang")
                     .resolve(entry.getKey() + ".json");
+            JsonObject json;
+            if (Files.exists(langPath)) {
+                try {
+                    json = GsonHelper.readJsonFile(langPath).getAsJsonObject();
+                } catch (Exception e) {
+                    json = new JsonObject();
+                }
+            } else {
+                json = new JsonObject();
+            }
+            for (Map.Entry<String, String> pair : entry.getValue().translations.entrySet()) {
+                json.addProperty(pair.getKey(), pair.getValue());
+            }
             try {
                 Files.createDirectories(langPath.getParent());
             } catch (IOException e) {

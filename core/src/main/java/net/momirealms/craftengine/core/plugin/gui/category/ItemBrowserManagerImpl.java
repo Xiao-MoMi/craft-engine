@@ -392,24 +392,24 @@ public class ItemBrowserManagerImpl implements ItemBrowserManager {
         if (index >= recipes.size()) return;
         if (depth > MAX_RECIPE_DEPTH) return;
         Recipe<Object> recipe = recipes.get(index);
-        Key recipeType = recipe.type();
-        if (recipeType == RecipeTypes.SHAPELESS || recipeType == RecipeTypes.SHAPED) {
+        Key recipeType = recipe.serializerType();
+        if (recipeType == RecipeSerializers.SHAPELESS || recipeType == RecipeSerializers.SHAPED) {
             openCraftingRecipePage(player, (CustomCraftingTableRecipe<Object>) recipe, parentGui, recipes, index, depth, canOpenNoRecipePage);
             return;
         }
-        if (recipeType == RecipeTypes.BLASTING || recipeType == RecipeTypes.CAMPFIRE_COOKING || recipeType == RecipeTypes.SMOKING || recipeType == RecipeTypes.SMELTING) {
+        if (recipeType == RecipeSerializers.BLASTING || recipeType == RecipeSerializers.CAMPFIRE_COOKING || recipeType == RecipeSerializers.SMOKING || recipeType == RecipeSerializers.SMELTING) {
             openCookingRecipePage(player, (CustomCookingRecipe<Object>) recipe, parentGui, recipes, index, depth, canOpenNoRecipePage);
             return;
         }
-        if (recipeType == RecipeTypes.STONECUTTING) {
+        if (recipeType == RecipeSerializers.STONECUTTING) {
             openStoneCuttingRecipePage(player, (CustomStoneCuttingRecipe<Object>) recipe, parentGui, recipes, index, depth, canOpenNoRecipePage);
             return;
         }
-        if (recipeType == RecipeTypes.SMITHING_TRANSFORM) {
+        if (recipeType == RecipeSerializers.SMITHING_TRANSFORM) {
             openSmithingTransformRecipePage(player, (CustomSmithingTransformRecipe<Object>) recipe, parentGui, recipes, index, depth, canOpenNoRecipePage);
             return;
         }
-        if (recipeType == RecipeTypes.BREWING) {
+        if (recipeType == RecipeSerializers.BREWING) {
             openBrewingRecipePage(player, (CustomBrewingRecipe<Object>) recipe, parentGui, recipes, index, depth, canOpenNoRecipePage);
             return;
         }
@@ -1041,11 +1041,11 @@ public class ItemBrowserManagerImpl implements ItemBrowserManager {
         }));
 
         String title;
-        if (recipe.type() == RecipeTypes.SMELTING) {
+        if (recipe.serializerType() == RecipeSerializers.SMELTING) {
             title = Constants.RECIPE_SMELTING_TITLE;
-        } else if (recipe.type() == RecipeTypes.BLASTING) {
+        } else if (recipe.serializerType() == RecipeSerializers.BLASTING) {
             title = Constants.RECIPE_BLASTING_TITLE;
-        } else if (recipe.type() == RecipeTypes.CAMPFIRE_COOKING) {
+        } else if (recipe.serializerType() == RecipeSerializers.CAMPFIRE_COOKING) {
             title = Constants.RECIPE_CAMPFIRE_TITLE;
         } else {
             title = Constants.RECIPE_SMOKING_TITLE;
@@ -1154,7 +1154,7 @@ public class ItemBrowserManagerImpl implements ItemBrowserManager {
         }));
 
         char start = 'A';
-        if (recipe.type() == RecipeTypes.SHAPED) {
+        if (recipe.serializerType() == RecipeSerializers.SHAPED) {
             String[] pattern = ((CustomShapedRecipe<Object>) recipe).pattern().pattern();
             for (int x = 0; x < 3; x++) {
                 for (int y = 0; y < 3; y++) {

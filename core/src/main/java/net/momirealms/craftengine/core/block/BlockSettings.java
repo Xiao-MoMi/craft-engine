@@ -464,7 +464,7 @@ public class BlockSettings {
                 LazyReference<Set<Key>> correctTools = LazyReference.lazyReference(() -> {
                     Set<Key> ids = new HashSet<>();
                     for (String tool : tools) {
-                        if (tool.charAt(0) == '#') ids.addAll(CraftEngine.instance().itemManager().tagToItems(Key.of(tool.substring(1))).stream().map(UniqueKey::key).toList());
+                        if (tool.charAt(0) == '#') ids.addAll(CraftEngine.instance().itemManager().itemIdsByTag(Key.of(tool.substring(1))).stream().map(UniqueKey::key).toList());
                         else ids.add(Key.of(tool));
                     }
                     return ids;

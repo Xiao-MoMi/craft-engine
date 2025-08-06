@@ -10,7 +10,8 @@ import net.momirealms.craftengine.bukkit.compatibility.leveler.*;
 import net.momirealms.craftengine.bukkit.compatibility.model.bettermodel.BetterModelModel;
 import net.momirealms.craftengine.bukkit.compatibility.model.modelengine.ModelEngineModel;
 import net.momirealms.craftengine.bukkit.compatibility.model.modelengine.ModelEngineUtils;
-import net.momirealms.craftengine.bukkit.compatibility.mythicmobs.MythicMobsListener;
+import net.momirealms.craftengine.bukkit.compatibility.mythicmobs.MythicItemDropListener;
+import net.momirealms.craftengine.bukkit.compatibility.mythicmobs.MythicSkillHelper;
 import net.momirealms.craftengine.bukkit.compatibility.papi.PlaceholderAPIUtils;
 import net.momirealms.craftengine.bukkit.compatibility.permission.LuckPermsEventListeners;
 import net.momirealms.craftengine.bukkit.compatibility.skript.SkriptHook;
@@ -39,6 +40,7 @@ public class BukkitCompatibilityManager implements CompatibilityManager {
     private final Map<String, LevelerProvider> levelerProviders;
     private boolean hasPlaceholderAPI;
     private boolean hasViaVersion;
+    private MythicSkillHelper skillExecute;
 
     public BukkitCompatibilityManager(BukkitCraftEngine plugin) {
         this.plugin = plugin;
@@ -131,9 +133,14 @@ public class BukkitCompatibilityManager implements CompatibilityManager {
         }
         if (this.isPluginEnabled("MythicMobs")) {
             BukkitItemManager.instance().registerExternalItemSource(new MythicMobsSource());
-            new MythicMobsListener(this.plugin);
+            new MythicItemDropListener(this.plugin);
             logHook("MythicMobs");
         }
+    }
+
+    @Override
+    public void executeMMSkill(String skill, float power, Player player) {
+        MythicSkillHelper.execute(skill, power, player);
     }
 
     @Override

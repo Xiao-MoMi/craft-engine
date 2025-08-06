@@ -66,6 +66,11 @@ public abstract class BukkitItemFactory<W extends ItemWrapper<ItemStack>> extend
         }
     }
 
+    @Override
+    protected boolean isEmpty(W item) {
+        return FastNMS.INSTANCE.method$ItemStack$isEmpty(item.getLiteralObject());
+    }
+
     @SuppressWarnings("deprecation")
     @Override
     protected byte[] toByteArray(W item) {
@@ -86,6 +91,9 @@ public abstract class BukkitItemFactory<W extends ItemWrapper<ItemStack>> extend
 
     @Override
     protected Key id(W item) {
+        if (FastNMS.INSTANCE.method$ItemStack$isEmpty(item.getLiteralObject())) {
+            return ItemKeys.AIR;
+        }
         return customId(item).orElse(vanillaId(item));
     }
 
@@ -96,6 +104,9 @@ public abstract class BukkitItemFactory<W extends ItemWrapper<ItemStack>> extend
 
     @Override
     protected UniqueKey recipeIngredientID(W item) {
+        if (FastNMS.INSTANCE.method$ItemStack$isEmpty(item.getLiteralObject())) {
+            return null;
+        }
         if (this.hasExternalRecipeSource) {
            for (ExternalItemSource<ItemStack> source : this.recipeIngredientSources) {
                String id = source.id(item.getItem());
@@ -108,14 +119,10 @@ public abstract class BukkitItemFactory<W extends ItemWrapper<ItemStack>> extend
     }
 
     @Override
-    protected boolean is(W item, Key itemTag) {
+    protected boolean hasItemTag(W item, Key itemTag) {
         Object literalObject = item.getLiteralObject();
         Object tag = ItemTags.getOrCreate(itemTag);
-        try {
-            return (boolean) CoreReflections.method$ItemStack$isTag.invoke(literalObject, tag);
-        } catch (ReflectiveOperationException e) {
-            return false;
-        }
+        return FastNMS.INSTANCE.method$ItemStack$is(literalObject, tag);
     }
 
     @Override

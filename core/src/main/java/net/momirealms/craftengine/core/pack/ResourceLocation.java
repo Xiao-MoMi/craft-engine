@@ -20,7 +20,7 @@ public final class ResourceLocation {
     }
 
     public static boolean isValidNamespace(String namespace) {
-        for(int i = 0; i < namespace.length(); ++i) {
+        for (int i = 0; i < namespace.length(); ++i) {
             if (!validNamespaceChar(namespace.charAt(i))) {
                 return false;
             }

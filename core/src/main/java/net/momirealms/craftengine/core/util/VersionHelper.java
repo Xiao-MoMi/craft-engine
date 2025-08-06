@@ -7,7 +7,9 @@ import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 
 public class VersionHelper {
+    public static final boolean PREMIUM = true;
     public static final MinecraftVersion MINECRAFT_VERSION;
+    public static final boolean COMPONENT_RELEASE;
     private static final int version;
     private static final int majorVersion;
     private static final int minorVersion;
@@ -69,6 +71,8 @@ public class VersionHelper {
 
             majorVersion = major;
             minorVersion = minor;
+
+            COMPONENT_RELEASE = v1_20_5;
 
             mojmap = checkMojMap();
             folia = checkFolia();

@@ -4,7 +4,7 @@ import net.kyori.adventure.text.Component;
 import net.momirealms.craftengine.bukkit.nms.FastNMS;
 import net.momirealms.craftengine.core.entity.player.Player;
 import net.momirealms.craftengine.core.item.*;
-import net.momirealms.craftengine.core.item.modifier.ArgumentModifier;
+import net.momirealms.craftengine.core.item.modifier.ArgumentsModifier;
 import net.momirealms.craftengine.core.item.modifier.ItemDataModifier;
 import net.momirealms.craftengine.core.plugin.CraftEngine;
 import net.momirealms.craftengine.core.plugin.config.Config;
@@ -60,6 +60,7 @@ public final class ModernNetworkItemHandler implements NetworkItemHandler<ItemSt
 
     @Override
     public Optional<Item<ItemStack>> s2c(Item<ItemStack> wrapped, Player player) {
+        Item<ItemStack> original = wrapped;
         Optional<CustomItem<ItemStack>> optionalCustomItem = wrapped.getCustomItem();
         if (optionalCustomItem.isEmpty()) {
             if (!Config.interceptItem()) return Optional.empty();
@@ -76,7 +77,7 @@ public final class ModernNetworkItemHandler implements NetworkItemHandler<ItemSt
                 return new OtherItem(wrapped, hasDifferentMaterial).process();
             } else {
                 CompoundTag customData = Optional.ofNullable(wrapped.getSparrowNBTComponent(ComponentTypes.CUSTOM_DATA)).map(CompoundTag.class::cast).orElse(new CompoundTag());
-                CompoundTag arguments = customData.getCompound(ArgumentModifier.ARGUMENTS_TAG);
+                CompoundTag arguments = customData.getCompound(ArgumentsModifier.ARGUMENTS_TAG);
                 ItemBuildContext context;
                 if (arguments == null) {
                     context = ItemBuildContext.of(player);
@@ -89,7 +90,7 @@ public final class ModernNetworkItemHandler implements NetworkItemHandler<ItemSt
                 }
                 CompoundTag tag = new CompoundTag();
                 for (ItemDataModifier<ItemStack> modifier : customItem.clientBoundDataModifiers()) {
-                    modifier.prepareNetworkItem(wrapped, context, tag);
+                    modifier.prepareNetworkItem(original, context, tag);
                 }
                 for (ItemDataModifier<ItemStack> modifier : customItem.clientBoundDataModifiers()) {
                     modifier.apply(wrapped, context);

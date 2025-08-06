@@ -1,9 +1,5 @@
 package net.momirealms.craftengine.core.plugin.context.function;
 
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-
 import net.momirealms.craftengine.core.entity.furniture.AnchorType;
 import net.momirealms.craftengine.core.entity.furniture.CustomFurniture;
 import net.momirealms.craftengine.core.entity.furniture.Furniture;
@@ -17,6 +13,10 @@ import net.momirealms.craftengine.core.plugin.context.parameter.DirectContextPar
 import net.momirealms.craftengine.core.util.Key;
 import net.momirealms.craftengine.core.util.ResourceConfigUtils;
 import net.momirealms.craftengine.core.world.WorldPosition;
+
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 
 public class ReplaceFurnitureFunction<CTX extends Context> extends AbstractConditionalFunction<CTX> {
     private final Key newFurnitureId;

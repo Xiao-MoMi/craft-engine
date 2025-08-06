@@ -2849,10 +2849,6 @@ public final class CoreReflections {
             ReflectionUtils.getClazz(BukkitReflectionUtils.assembleMCClass("server.MinecraftServer"))
     );
 
-    public static final Method method$MinecraftServer$getServer = requireNonNull(
-            ReflectionUtils.getMethod(clazz$MinecraftServer, new String[] { "getServer" })
-    );
-
     public static final Field field$MinecraftServer$registries = requireNonNull(
             ReflectionUtils.getDeclaredField(clazz$MinecraftServer, clazz$LayeredRegistryAccess, 0)
     );
@@ -3746,7 +3742,7 @@ public final class CoreReflections {
             .orElse( null);
 
     public static final Field field$ServerCommonPacketListenerImpl$closed = MiscUtils.requireNonNullIf(
-            ReflectionUtils.getDeclaredField(clazz$ServerCommonPacketListenerImpl, boolean.class, VersionHelper.isOrAbove1_21_6() ? 1 : 2),
+            ReflectionUtils.getDeclaredField(clazz$ServerCommonPacketListenerImpl, "closed", "n"),
             VersionHelper.isOrAbove1_20_5()
     );
 
@@ -3759,11 +3755,14 @@ public final class CoreReflections {
                 methodHandle$ServerConfigurationPacketListenerImpl$finishCurrentTask =
                         ReflectionUtils.unreflectMethod(method$ServerConfigurationPacketListenerImpl$finishCurrentTask)
                                 .asType(MethodType.methodType(void.class, Object.class, Object.class));
+            } else {
+                methodHandle$ServerConfigurationPacketListenerImpl$finishCurrentTask = null;
+            }
+            if (VersionHelper.isOrAbove1_20_5()) {
                 methodHandle$ServerCommonPacketListenerImpl$closedSetter =
                         ReflectionUtils.unreflectSetter(field$ServerCommonPacketListenerImpl$closed)
                                 .asType(MethodType.methodType(void.class, Object.class, boolean.class));
             } else {
-                methodHandle$ServerConfigurationPacketListenerImpl$finishCurrentTask = null;
                 methodHandle$ServerCommonPacketListenerImpl$closedSetter = null;
             }
         } catch (ReflectiveOperationException e) {
@@ -3896,4 +3895,81 @@ public final class CoreReflections {
             throw new ReflectionInitException("Failed to initialize SnowLayerBlock$LAYERS", e);
         }
     }
+
+    public static final Class<?> clazz$DyeItem = requireNonNull(
+            BukkitReflectionUtils.findReobfOrMojmapClass(
+                    "world.item.ItemDye",
+                    "world.item.DyeItem"
+            )
+    );
+
+    public static final Method method$Recipe$matches = requireNonNull(
+            VersionHelper.isOrAbove1_21() ?
+            ReflectionUtils.getMethod(clazz$Recipe, boolean.class, clazz$RecipeInput, clazz$Level) :
+            ReflectionUtils.getMethod(clazz$Recipe, boolean.class, clazz$Container, clazz$Level)
+    );
+
+    public static final Method method$Recipe$assemble = requireNonNull(
+            VersionHelper.isOrAbove1_21() ?
+            ReflectionUtils.getMethod(clazz$Recipe, clazz$ItemStack, clazz$RecipeInput, clazz$HolderLookup$Provider) :
+            VersionHelper.isOrAbove1_20_5() ?
+            ReflectionUtils.getMethod(clazz$Recipe, clazz$ItemStack, clazz$Container, clazz$HolderLookup$Provider) :
+            ReflectionUtils.getMethod(clazz$Recipe, clazz$ItemStack, clazz$Container, clazz$RegistryAccess)
+    );
+
+    public static final Class<?> clazz$CraftingBookCategory = requireNonNull(
+            BukkitReflectionUtils.findReobfOrMojmapClass(
+                    "world.item.crafting.CraftingBookCategory",
+                    "world.item.crafting.CraftingBookCategory"
+            )
+    );
+
+    public static final Method method$CraftingBookCategory$values = requireNonNull(
+            ReflectionUtils.getStaticMethod(clazz$CraftingBookCategory, clazz$CraftingBookCategory.arrayType())
+    );
+
+    public static final Object instance$CraftingBookCategory$BUILDING;
+    public static final Object instance$CraftingBookCategory$REDSTONE;
+    public static final Object instance$CraftingBookCategory$EQUIPMENT;
+    public static final Object instance$CraftingBookCategory$MISC;
+
+    static {
+        try {
+            Object[] values = (Object[]) method$CraftingBookCategory$values.invoke(null);
+            instance$CraftingBookCategory$BUILDING = values[0];
+            instance$CraftingBookCategory$REDSTONE = values[1];
+            instance$CraftingBookCategory$EQUIPMENT = values[2];
+            instance$CraftingBookCategory$MISC = values[3];
+        } catch (ReflectiveOperationException e) {
+            throw new ReflectionInitException("Failed to initialize CraftingBookCategory", e);
+        }
+    }
+
+    public static final Class<?> clazz$CraftingInput = MiscUtils.requireNonNullIf(
+            BukkitReflectionUtils.findReobfOrMojmapClass(
+                    "world.item.crafting.CraftingInput",
+                    "world.item.crafting.CraftingInput"
+            ), VersionHelper.isOrAbove1_21()
+    );
+
+    public static final Class<?> clazz$CraftingContainer = requireNonNull(
+            BukkitReflectionUtils.findReobfOrMojmapClass(
+                    "world.inventory.InventoryCrafting",
+                    "world.inventory.CraftingContainer"
+            )
+    );
+
+    public static final Class<?> clazz$DyeableLeatherItem = MiscUtils.requireNonNullIf(
+            BukkitReflectionUtils.findReobfOrMojmapClass(
+                    "world.item.IDyeable",
+                    "world.item.DyeableLeatherItem"
+            ), !VersionHelper.isOrAbove1_20_5()
+    );
+
+    public static final Class<?> clazz$LootPoolEntryType = requireNonNull(
+            BukkitReflectionUtils.findReobfOrMojmapClass(
+                    "world.level.storage.loot.entries.LootEntryType",
+                    "world.level.storage.loot.entries.LootPoolEntryType"
+            )
+    );
 }

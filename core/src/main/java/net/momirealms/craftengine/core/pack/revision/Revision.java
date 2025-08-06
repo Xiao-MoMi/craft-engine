@@ -55,7 +55,7 @@ public interface Revision {
 
         @Override
         public boolean matches(MinecraftVersion min, MinecraftVersion max) {
-            return this.minVersion.isAtOrBelow(max);
+            return this.minVersion.isAtOrBelow(max) && min.isBelow(this.minVersion);
         }
 
         @Override

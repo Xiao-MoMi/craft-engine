@@ -1,9 +1,5 @@
 package net.momirealms.craftengine.core.plugin.context.function;
 
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-
 import net.momirealms.craftengine.core.entity.furniture.Furniture;
 import net.momirealms.craftengine.core.plugin.context.Condition;
 import net.momirealms.craftengine.core.plugin.context.Context;
@@ -11,6 +7,10 @@ import net.momirealms.craftengine.core.plugin.context.parameter.DirectContextPar
 import net.momirealms.craftengine.core.util.Key;
 import net.momirealms.craftengine.core.util.ResourceConfigUtils;
 import net.momirealms.craftengine.core.world.WorldPosition;
+
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 
 public class RemoveFurnitureFunction<CTX extends Context> extends AbstractConditionalFunction<CTX> {
     private final boolean dropLoot;

@@ -2,14 +2,10 @@ package net.momirealms.craftengine.core.item;
 
 import com.google.gson.JsonElement;
 import com.google.gson.JsonPrimitive;
-import net.momirealms.craftengine.core.attribute.AttributeModifier;
 import net.momirealms.craftengine.core.item.behavior.ItemBehavior;
 import net.momirealms.craftengine.core.item.behavior.ItemBehaviors;
-import net.momirealms.craftengine.core.item.data.Enchantment;
-import net.momirealms.craftengine.core.item.data.JukeboxPlayable;
 import net.momirealms.craftengine.core.item.equipment.*;
 import net.momirealms.craftengine.core.item.modifier.*;
-import net.momirealms.craftengine.core.item.setting.EquipmentData;
 import net.momirealms.craftengine.core.pack.AbstractPackManager;
 import net.momirealms.craftengine.core.pack.LoadingSequence;
 import net.momirealms.craftengine.core.pack.Pack;
@@ -22,20 +18,18 @@ import net.momirealms.craftengine.core.pack.model.select.TrimMaterialSelectPrope
 import net.momirealms.craftengine.core.plugin.CraftEngine;
 import net.momirealms.craftengine.core.plugin.config.Config;
 import net.momirealms.craftengine.core.plugin.config.ConfigParser;
+import net.momirealms.craftengine.core.plugin.context.PlayerOptionalContext;
 import net.momirealms.craftengine.core.plugin.context.event.EventFunctions;
-import net.momirealms.craftengine.core.plugin.context.text.TextProvider;
-import net.momirealms.craftengine.core.plugin.context.text.TextProviders;
+import net.momirealms.craftengine.core.plugin.context.event.EventTrigger;
 import net.momirealms.craftengine.core.plugin.locale.LocalizedResourceConfigException;
-import net.momirealms.craftengine.core.plugin.locale.TranslationManager;
+import net.momirealms.craftengine.core.registry.BuiltInRegistries;
 import net.momirealms.craftengine.core.util.*;
 import org.incendo.cloud.suggestion.Suggestion;
 import org.incendo.cloud.type.Either;
-import org.joml.Vector3f;
 
 import java.nio.file.Path;
 import java.util.*;
 import java.util.function.Consumer;
-import java.util.function.Function;
 import java.util.stream.Stream;
 
 public abstract class AbstractItemManager<I> extends AbstractModelGenerator implements ItemManager<I> {
@@ -46,7 +40,6 @@ public abstract class AbstractItemManager<I> extends AbstractModelGenerator impl
     private final ItemParser itemParser;
     private final EquipmentParser equipmentParser;
     protected final Map<String, ExternalItemSource<I>> externalItemSources = new HashMap<>();
-    protected final Map<String, Function<Object, ItemDataModifier<I>>> dataFunctions = new HashMap<>();
     protected final Map<Key, CustomItem<I>> customItems = new HashMap<>();
     protected final Map<Key, List<UniqueKey>> customItemTags = new HashMap<>();
     protected final Map<Key, Map<Integer, Key>> cmdConflictChecker = new HashMap<>();
@@ -63,14 +56,7 @@ public abstract class AbstractItemManager<I> extends AbstractModelGenerator impl
         super(plugin);
         this.itemParser = new ItemParser();
         this.equipmentParser = new EquipmentParser();
-        this.registerFunctions();
-    }
-
-    @Override
-    public void registerDataType(Function<Object, ItemDataModifier<I>> factory, String... alias) {
-        for (String a : alias) {
-            this.dataFunctions.put(a, factory);
-        }
+        ItemDataModifiers.init();
     }
 
     protected static void registerVanillaItemExtraBehavior(ItemBehavior behavior, Key... items) {
@@ -79,23 +65,23 @@ public abstract class AbstractItemManager<I> extends AbstractModelGenerator impl
         }
     }
 
-    protected void applyDataFunctions(Map<String, Object> dataSection, Consumer<ItemDataModifier<I>> consumer) {
+    @SuppressWarnings("unchecked")
+    protected void applyDataModifiers(Map<String, Object> dataSection, Consumer<ItemDataModifier<I>> callback) {
+        ExceptionCollector<LocalizedResourceConfigException> errorCollector = new ExceptionCollector<>();
         if (dataSection != null) {
             for (Map.Entry<String, Object> dataEntry : dataSection.entrySet()) {
-                Optional.ofNullable(this.dataFunctions.get(dataEntry.getKey())).ifPresent(function -> {
+                Object value = dataEntry.getValue();
+                if (value == null) continue;
+                Optional.ofNullable(BuiltInRegistries.ITEM_DATA_MODIFIER_FACTORY.getValue(Key.withDefaultNamespace(dataEntry.getKey(), Key.DEFAULT_NAMESPACE))).ifPresent(factory -> {
                     try {
-                        consumer.accept(function.apply(dataEntry.getValue()));
-                    } catch (IllegalArgumentException e) {
-                        this.plugin.logger().warn("Invalid data format", e);
+                        callback.accept((ItemDataModifier<I>) factory.create(value));
+                    } catch (LocalizedResourceConfigException e) {
+                        errorCollector.add(e);
                     }
                 });
             }
         }
-    }
-
-    @Override
-    public Function<Object, ItemDataModifier<I>> getDataType(String key) {
-        return this.dataFunctions.get(key);
+        errorCollector.throwIfPresent();
     }
 
     @Override
@@ -151,43 +137,31 @@ public abstract class AbstractItemManager<I> extends AbstractModelGenerator impl
         Key id = customItem.id();
         if (this.customItems.containsKey(id)) return false;
         this.customItems.put(id, customItem);
-        // cache command suggestions
-        this.cachedSuggestions.add(Suggestion.suggestion(id.toString()));
-        // totem animations
-        if (VersionHelper.isOrAbove1_21_2()) {
-            this.cachedTotemSuggestions.add(Suggestion.suggestion(id.toString()));
-        } else if (customItem.material().equals(ItemKeys.TOTEM_OF_UNDYING)) {
-            this.cachedTotemSuggestions.add(Suggestion.suggestion(id.toString()));
-        }
-        // tags
-        Set<Key> tags = customItem.settings().tags();
-        for (Key tag : tags) {
-            this.customItemTags.computeIfAbsent(tag, k -> new ArrayList<>()).add(customItem.uniqueId());
+        if (!customItem.isVanillaItem()) {
+            // cache command suggestions
+            this.cachedSuggestions.add(Suggestion.suggestion(id.toString()));
+            // totem animations
+            if (VersionHelper.isOrAbove1_21_2()) {
+                this.cachedTotemSuggestions.add(Suggestion.suggestion(id.toString()));
+            } else if (customItem.material().equals(ItemKeys.TOTEM_OF_UNDYING)) {
+                this.cachedTotemSuggestions.add(Suggestion.suggestion(id.toString()));
+            }
+            // tags
+            Set<Key> tags = customItem.settings().tags();
+            for (Key tag : tags) {
+                this.customItemTags.computeIfAbsent(tag, k -> new ArrayList<>()).add(customItem.uniqueId());
+            }
         }
         return true;
     }
 
     @Override
-    public List<UniqueKey> tagToItems(Key tag) {
-        List<UniqueKey> items = new ArrayList<>();
-        List<UniqueKey> holders = VANILLA_ITEM_TAGS.get(tag);
-        if (holders != null) {
-            items.addAll(holders);
-        }
-        List<UniqueKey> customItems = this.customItemTags.get(tag);
-        if (customItems != null) {
-            items.addAll(customItems);
-        }
-        return items;
-    }
-
-    @Override
-    public List<UniqueKey> tagToVanillaItems(Key tag) {
+    public List<UniqueKey> vanillaItemIdsByTag(Key tag) {
         return Collections.unmodifiableList(VANILLA_ITEM_TAGS.getOrDefault(tag, List.of()));
     }
 
     @Override
-    public List<UniqueKey> tagToCustomItems(Key tag) {
+    public List<UniqueKey> customItemIdsByTag(Key tag) {
         return Collections.unmodifiableList(this.customItemTags.getOrDefault(tag, List.of()));
     }
 
@@ -378,23 +352,63 @@ public abstract class AbstractItemManager<I> extends AbstractModelGenerator impl
                 else itemBuilder.dataModifier(new ItemModelModifier<>(itemModelKey));
             }
 
+            // 对于不重要的配置，可以仅警告，不返回
+            ExceptionCollector<LocalizedResourceConfigException> collector = new ExceptionCollector<>();
+
             // 应用物品数据
-            applyDataFunctions(MiscUtils.castToMap(section.get("data"), true), itemBuilder::dataModifier);
-            applyDataFunctions(MiscUtils.castToMap(section.get("client-bound-data"), true), itemBuilder::clientBoundDataModifier);
+            try {
+                applyDataModifiers(MiscUtils.castToMap(section.get("data"), true), itemBuilder::dataModifier);
+            } catch (LocalizedResourceConfigException e) {
+                collector.add(e);
+            }
+            try {
+                applyDataModifiers(MiscUtils.castToMap(section.get("client-bound-data"), true), itemBuilder::clientBoundDataModifier);
+            } catch (LocalizedResourceConfigException e) {
+                collector.add(e);
+            }
 
             // 如果不是原版物品，那么加入ce的标识符
             if (!isVanillaItem)
                 itemBuilder.dataModifier(new IdModifier<>(id));
 
+            // 事件
+            Map<EventTrigger, List<net.momirealms.craftengine.core.plugin.context.function.Function<PlayerOptionalContext>>> eventTriggerListMap;
+            try {
+                eventTriggerListMap = EventFunctions.parseEvents(ResourceConfigUtils.get(section, "events", "event"));
+            } catch (LocalizedResourceConfigException e) {
+                collector.add(e);
+                eventTriggerListMap = Map.of();
+            }
+
+            // 设置
+            ItemSettings settings;
+            try {
+                settings = Optional.ofNullable(ResourceConfigUtils.get(section, "settings"))
+                        .map(map -> ItemSettings.fromMap(MiscUtils.castToMap(map, true)))
+                        .map(it -> isVanillaItem ? it.canPlaceRelatedVanillaBlock(true) : it)
+                        .orElse(ItemSettings.of().canPlaceRelatedVanillaBlock(isVanillaItem));
+            } catch (LocalizedResourceConfigException e) {
+                collector.add(e);
+                settings = ItemSettings.of().canPlaceRelatedVanillaBlock(isVanillaItem);
+            }
+
+            // 行为
+            List<ItemBehavior> behaviors;
+            try {
+                behaviors = ItemBehaviors.fromObj(pack, path, id, ResourceConfigUtils.get(section, "behavior", "behaviors"));
+            } catch (LocalizedResourceConfigException e) {
+                collector.add(e);
+                behaviors = Collections.emptyList();
+            }
+
             // 构建自定义物品
             CustomItem<I> customItem = itemBuilder
-                    .behaviors(ItemBehaviors.fromObj(pack, path, id, ResourceConfigUtils.get(section, "behavior", "behaviors")))
-                    .settings(Optional.ofNullable(ResourceConfigUtils.get(section, "settings"))
-                            .map(map -> ItemSettings.fromMap(MiscUtils.castToMap(map, true)))
-                            .map(it -> isVanillaItem ? it.canPlaceRelatedVanillaBlock(true) : it)
-                            .orElse(ItemSettings.of().canPlaceRelatedVanillaBlock(isVanillaItem)))
-                    .events(EventFunctions.parseEvents(ResourceConfigUtils.get(section, "events", "event")))
+                    .isVanillaItem(isVanillaItem)
+                    .behaviors(behaviors)
+                    .settings(settings)
+                    .events(eventTriggerListMap)
                     .build();
+
             // 添加到缓存
             addCustomItem(customItem);
 
@@ -407,6 +421,7 @@ public abstract class AbstractItemManager<I> extends AbstractModelGenerator impl
             Map<String, Object> modelSection = MiscUtils.castToMap(section.get("model"), true);
             Map<String, Object> legacyModelSection = MiscUtils.castToMap(section.get("legacy-model"), true);
             if (modelSection == null && legacyModelSection == null) {
+                collector.throwIfPresent();
                 return;
             }
 
@@ -415,13 +430,8 @@ public abstract class AbstractItemManager<I> extends AbstractModelGenerator impl
             if (!isVanillaItem) {
                 // 既没有模型值也没有item-model
                 if (customModelData == 0 && itemModelKey == null) {
-                    throw new LocalizedResourceConfigException("warning.config.item.missing_model_id");
+                    collector.addAndThrow(new LocalizedResourceConfigException("warning.config.item.missing_model_id"));
                 }
-            }
-
-            // 1.21.4+必须要配置model区域，如果不需要高版本兼容，则可以只写legacy-model
-            if (needsModelSection && modelSection == null) {
-                throw new LocalizedResourceConfigException("warning.config.item.missing_model");
             }
 
             // 新版格式
@@ -430,24 +440,37 @@ public abstract class AbstractItemManager<I> extends AbstractModelGenerator impl
             TreeSet<LegacyOverridesModel> legacyOverridesModels = null;
             // 如果需要支持新版item model 或者用户需要旧版本兼容，但是没配置legacy-model
             if (needsModelSection) {
-                modernModel = ItemModels.fromMap(modelSection);
-                for (ModelGeneration generation : modernModel.modelsToGenerate()) {
-                    prepareModelGeneration(generation);
+                // 1.21.4+必须要配置model区域，如果不需要高版本兼容，则可以只写legacy-model
+                if (modelSection == null) {
+                    collector.addAndThrow(new LocalizedResourceConfigException("warning.config.item.missing_model"));
+                    return;
+                }
+                try {
+                    modernModel = ItemModels.fromMap(modelSection);
+                    for (ModelGeneration generation : modernModel.modelsToGenerate()) {
+                        prepareModelGeneration(generation);
+                    }
+                } catch (LocalizedResourceConfigException e) {
+                    collector.addAndThrow(e);
                 }
             }
             // 如果需要旧版本兼容
             if (needsLegacyCompatibility()) {
                 if (legacyModelSection != null) {
-                    LegacyItemModel legacyItemModel = LegacyItemModel.fromMap(legacyModelSection, customModelData);
-                    for (ModelGeneration generation : legacyItemModel.modelsToGenerate()) {
-                        prepareModelGeneration(generation);
+                    try {
+                        LegacyItemModel legacyItemModel = LegacyItemModel.fromMap(legacyModelSection, customModelData);
+                        for (ModelGeneration generation : legacyItemModel.modelsToGenerate()) {
+                            prepareModelGeneration(generation);
+                        }
+                        legacyOverridesModels = new TreeSet<>(legacyItemModel.overrides());
+                    } catch (LocalizedResourceConfigException e) {
+                        collector.addAndThrow(e);
                     }
-                    legacyOverridesModels = new TreeSet<>(legacyItemModel.overrides());
                 } else {
                     legacyOverridesModels = new TreeSet<>();
                     processModelRecursively(modernModel, new LinkedHashMap<>(), legacyOverridesModels, clientBoundMaterial, customModelData);
                     if (legacyOverridesModels.isEmpty()) {
-                        TranslationManager.instance().log("warning.config.item.legacy_model.cannot_convert", path.toString(), id.asString());
+                        collector.add(new LocalizedResourceConfigException("warning.config.item.legacy_model.cannot_convert", path.toString(), id.asString()));
                     }
                 }
             }
@@ -463,7 +486,7 @@ public abstract class AbstractItemManager<I> extends AbstractModelGenerator impl
                     // 检查cmd冲突
                     Map<Integer, Key> conflict = AbstractItemManager.this.cmdConflictChecker.computeIfAbsent(finalBaseModel, k -> new HashMap<>());
                     if (conflict.containsKey(customModelData)) {
-                        throw new LocalizedResourceConfigException("warning.config.item.custom_model_data_conflict", String.valueOf(customModelData), conflict.get(customModelData).toString());
+                        collector.addAndThrow(new LocalizedResourceConfigException("warning.config.item.custom_model_data_conflict", String.valueOf(customModelData), conflict.get(customModelData).toString()));
                     }
                     conflict.put(customModelData, id);
                     // 添加新版item model
@@ -481,7 +504,7 @@ public abstract class AbstractItemManager<I> extends AbstractModelGenerator impl
                         lom.addAll(legacyOverridesModels);
                     }
                 } else if (isVanillaItemModel) {
-                    throw new LocalizedResourceConfigException("warning.config.item.item_model.conflict", itemModelKey.asString());
+                    collector.addAndThrow(new LocalizedResourceConfigException("warning.config.item.item_model.conflict", itemModelKey.asString()));
                 }
 
                 // 使用了item-model组件，且不是原版物品的
@@ -508,162 +531,9 @@ public abstract class AbstractItemManager<I> extends AbstractModelGenerator impl
                     ));
                 }
             }
-        }
-    }
 
-    private void registerFunctions() {
-        registerDataType((obj) -> {
-            Map<String, Object> data = MiscUtils.castToMap(obj, false);
-            String plugin = data.get("plugin").toString();
-            String id = data.get("id").toString();
-            ExternalItemSource<I> provider = AbstractItemManager.this.getExternalItemSource(plugin.toLowerCase(Locale.ENGLISH));
-            return new ExternalModifier<>(id, Objects.requireNonNull(provider, "Item provider " + plugin + " not found"));
-        }, "external");
-        if (VersionHelper.isOrAbove1_20_5()) {
-            registerDataType((obj) -> {
-                String name = obj.toString();
-                return new CustomNameModifier<>(name);
-            }, "custom-name");
-            registerDataType((obj) -> {
-                String name = obj.toString();
-                return new ItemNameModifier<>(name);
-            }, "item-name", "display-name");
-        } else {
-            registerDataType((obj) -> {
-                String name = obj.toString();
-                return new CustomNameModifier<>(name);
-            }, "custom-name", "item-name", "display-name");
-        }
-        registerDataType((obj) -> {
-            List<String> lore = MiscUtils.getAsStringList(obj);
-            return new LoreModifier<>(lore);
-        }, "lore", "display-lore", "description");
-        registerDataType((obj) -> {
-            Map<String, List<String>> dynamicLore = new LinkedHashMap<>();
-            if (obj instanceof Map<?, ?> map) {
-                for (Map.Entry<?, ?> entry : map.entrySet()) {
-                    dynamicLore.put(entry.getKey().toString(), MiscUtils.getAsStringList(entry.getValue()));
-                }
-            }
-            return new DynamicLoreModifier<>(dynamicLore);
-        }, "dynamic-lore");
-        registerDataType((obj) -> {
-            if (obj instanceof Integer integer) {
-                return new DyedColorModifier<>(integer);
-            } else {
-                Vector3f vector3f = MiscUtils.getAsVector3f(obj, "dyed-color");
-                return new DyedColorModifier<>(0 << 24 /*不可省略*/ | MCUtils.fastFloor(vector3f.x) << 16 | MCUtils.fastFloor(vector3f.y) << 8 | MCUtils.fastFloor(vector3f.z));
-            }
-        }, "dyed-color");
-        if (!VersionHelper.isOrAbove1_21_5()) {
-            registerDataType((obj) -> {
-                Map<String, Object> data = MiscUtils.castToMap(obj, false);
-                return new TagsModifier<>(data);
-            }, "tags", "tag", "nbt");
-        }
-        registerDataType((object -> {
-            MutableInt mutableInt = new MutableInt(0);
-            List<AttributeModifier> attributeModifiers = ResourceConfigUtils.parseConfigAsList(object, (map) -> {
-                String type = ResourceConfigUtils.requireNonEmptyStringOrThrow(map.get("type"), "warning.config.item.data.attribute_modifiers.missing_type");
-                Key nativeType = AttributeModifiersModifier.getNativeAttributeName(Key.of(type));
-                AttributeModifier.Slot slot = AttributeModifier.Slot.valueOf(map.getOrDefault("slot", "any").toString().toUpperCase(Locale.ENGLISH));
-                Key id = Optional.ofNullable(map.get("id")).map(String::valueOf).map(Key::of).orElseGet(() -> {
-                    mutableInt.add(1);
-                    return Key.of("craftengine", "modifier_" + mutableInt.intValue());
-                });
-                double amount = ResourceConfigUtils.getAsDouble(
-                        ResourceConfigUtils.requireNonNullOrThrow(map.get("amount"), "warning.config.item.data.attribute_modifiers.missing_amount"), "amount"
-                );
-                AttributeModifier.Operation operation = AttributeModifier.Operation.valueOf(
-                        ResourceConfigUtils.requireNonEmptyStringOrThrow(map.get("operation"), "warning.config.item.data.attribute_modifiers.missing_operation").toUpperCase(Locale.ENGLISH)
-                );
-                AttributeModifier.Display display = null;
-                if (VersionHelper.isOrAbove1_21_6() && map.containsKey("display")) {
-                    Map<String, Object> displayMap = MiscUtils.castToMap(map.get("display"), false);
-                    AttributeModifier.Display.Type displayType = AttributeModifier.Display.Type.valueOf(ResourceConfigUtils.requireNonEmptyStringOrThrow(displayMap.get("type"), "warning.config.item.data.attribute_modifiers.display.missing_type").toUpperCase(Locale.ENGLISH));
-                    if (displayType == AttributeModifier.Display.Type.OVERRIDE) {
-                        String miniMessageValue = ResourceConfigUtils.requireNonEmptyStringOrThrow(displayMap.get("value"), "warning.config.item.data.attribute_modifiers.display.missing_value");
-                        display = new AttributeModifier.Display(displayType, miniMessageValue);
-                    } else {
-                        display = new AttributeModifier.Display(displayType, null);
-                    }
-                }
-                return new AttributeModifier(nativeType.value(), slot, id,
-                        amount, operation, display);
-            });
-            return new AttributeModifiersModifier<>(attributeModifiers);
-        }), "attributes", "attribute-modifiers", "attribute-modifier");
-        registerDataType((obj) -> {
-            boolean value = TypeUtils.checkType(obj, Boolean.class);
-            return new UnbreakableModifier<>(value);
-        }, "unbreakable");
-        registerDataType((obj) -> {
-            int customModelData = ResourceConfigUtils.getAsInt(obj, "custom-model-data");
-            return new CustomModelDataModifier<>(customModelData);
-        }, "custom-model-data");
-        registerDataType((obj) -> {
-            Map<String, Object> data = MiscUtils.castToMap(obj, false);
-            List<Enchantment> enchantments = new ArrayList<>();
-            for (Map.Entry<String, Object> e : data.entrySet()) {
-                if (e.getValue() instanceof Number number) {
-                    enchantments.add(new Enchantment(Key.of(e.getKey()), number.intValue()));
-                }
-            }
-            return new EnchantmentModifier<>(enchantments);
-        }, "enchantment", "enchantments", "enchant");
-        registerDataType((obj) -> {
-            Map<String, Object> data = MiscUtils.castToMap(obj, false);
-            String material = data.get("material").toString().toLowerCase(Locale.ENGLISH);
-            String pattern = data.get("pattern").toString().toLowerCase(Locale.ENGLISH);
-            return new TrimModifier<>(Key.of(material), Key.of(pattern));
-        }, "trim");
-        registerDataType((obj) -> {
-            List<Key> components = MiscUtils.getAsStringList(obj).stream().map(Key::of).toList();
-            return new HideTooltipModifier<>(components);
-        }, "hide-tooltip", "hide-flags");
-        registerDataType((obj) -> {
-            Map<String, Object> data = MiscUtils.castToMap(obj, false);
-            Map<String, TextProvider> arguments = new HashMap<>();
-            for (Map.Entry<String, Object> entry : data.entrySet()) {
-                arguments.put(entry.getKey(), TextProviders.fromString(entry.getValue().toString()));
-            }
-            return new ArgumentModifier<>(arguments);
-        }, "args", "argument", "arguments");
-        if (VersionHelper.isOrAbove1_20_5()) {
-            registerDataType((obj) -> {
-                Map<String, Object> data = MiscUtils.castToMap(obj, false);
-                return new ComponentModifier<>(data);
-            }, "components", "component");
-            registerDataType((obj) -> {
-                List<String> data = MiscUtils.getAsStringList(obj);
-                return new RemoveComponentModifier<>(data);
-            }, "remove-components", "remove-component");
-            registerDataType((obj) -> {
-               Map<String, Object> data = MiscUtils.castToMap(obj, false);
-                int nutrition = ResourceConfigUtils.getAsInt(data.get("nutrition"), "nutrition");
-                float saturation = ResourceConfigUtils.getAsFloat(data.get("saturation"), "saturation");
-                return new FoodModifier<>(nutrition, saturation, ResourceConfigUtils.getAsBoolean(data.getOrDefault("can-always-eat", false), "can-always-eat"));
-            }, "food");
-        }
-        if (VersionHelper.isOrAbove1_21()) {
-            registerDataType((obj) -> {
-                String song = obj.toString();
-                return new JukeboxSongModifier<>(new JukeboxPlayable(song, true));
-            }, "jukebox-playable");
-        }
-        if (VersionHelper.isOrAbove1_21_2()) {
-            registerDataType((obj) -> {
-                String id = obj.toString();
-                return new TooltipStyleModifier<>(Key.of(id));
-            }, "tooltip-style");
-            registerDataType((obj) -> {
-                Map<String, Object> data = MiscUtils.castToMap(obj, false);
-                return new EquippableModifier<>(EquipmentData.fromMap(data));
-            }, "equippable");
-            registerDataType((obj) -> {
-                String id = obj.toString();
-                return new ItemModelModifier<>(Key.of(id));
-            }, "item-model");
+            // 抛出异常
+            collector.throwIfPresent();
         }
     }
 

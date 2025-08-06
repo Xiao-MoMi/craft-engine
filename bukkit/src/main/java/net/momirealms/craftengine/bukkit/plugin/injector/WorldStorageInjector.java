@@ -37,7 +37,7 @@ import java.util.Optional;
 import java.util.concurrent.Callable;
 import java.util.function.Consumer;
 
-public class WorldStorageInjector {
+public final class WorldStorageInjector {
     private static Class<?> clazz$InjectedPalettedContainer;
     private static MethodHandle constructor$InjectedLevelChunkSection;
 

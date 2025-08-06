@@ -1,40 +1,7 @@
 package net.momirealms.craftengine.core.plugin.context.event;
 
-import java.util.ArrayList;
-import java.util.EnumMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-
 import net.momirealms.craftengine.core.plugin.context.PlayerOptionalContext;
-import net.momirealms.craftengine.core.plugin.context.function.ActionBarFunction;
-import net.momirealms.craftengine.core.plugin.context.function.BreakBlockFunction;
-import net.momirealms.craftengine.core.plugin.context.function.CancelEventFunction;
-import net.momirealms.craftengine.core.plugin.context.function.CommandFunction;
-import net.momirealms.craftengine.core.plugin.context.function.CommonFunctions;
-import net.momirealms.craftengine.core.plugin.context.function.DropLootFunction;
-import net.momirealms.craftengine.core.plugin.context.function.Function;
-import net.momirealms.craftengine.core.plugin.context.function.FunctionFactory;
-import net.momirealms.craftengine.core.plugin.context.function.LevelerExpFunction;
-import net.momirealms.craftengine.core.plugin.context.function.MessageFunction;
-import net.momirealms.craftengine.core.plugin.context.function.OpenWindowFunction;
-import net.momirealms.craftengine.core.plugin.context.function.ParticleFunction;
-import net.momirealms.craftengine.core.plugin.context.function.PlaceBlockFunction;
-import net.momirealms.craftengine.core.plugin.context.function.PlaySoundFunction;
-import net.momirealms.craftengine.core.plugin.context.function.PotionEffectFunction;
-import net.momirealms.craftengine.core.plugin.context.function.RemoveCooldownFunction;
-import net.momirealms.craftengine.core.plugin.context.function.RemoveFurnitureFunction;
-import net.momirealms.craftengine.core.plugin.context.function.RemovePotionEffectFunction;
-import net.momirealms.craftengine.core.plugin.context.function.ReplaceFurnitureFunction;
-import net.momirealms.craftengine.core.plugin.context.function.RunFunction;
-import net.momirealms.craftengine.core.plugin.context.function.SetCooldownFunction;
-import net.momirealms.craftengine.core.plugin.context.function.SetCountFunction;
-import net.momirealms.craftengine.core.plugin.context.function.SetFoodFunction;
-import net.momirealms.craftengine.core.plugin.context.function.SetSaturationFunction;
-import net.momirealms.craftengine.core.plugin.context.function.SpawnFurnitureFunction;
-import net.momirealms.craftengine.core.plugin.context.function.SwingHandFunction;
-import net.momirealms.craftengine.core.plugin.context.function.TitleFunction;
-import net.momirealms.craftengine.core.plugin.context.function.UpdateInteractionFunction;
+import net.momirealms.craftengine.core.plugin.context.function.*;
 import net.momirealms.craftengine.core.plugin.locale.LocalizedResourceConfigException;
 import net.momirealms.craftengine.core.registry.BuiltInRegistries;
 import net.momirealms.craftengine.core.registry.Registries;
@@ -43,6 +10,8 @@ import net.momirealms.craftengine.core.util.Key;
 import net.momirealms.craftengine.core.util.MiscUtils;
 import net.momirealms.craftengine.core.util.ResourceConfigUtils;
 import net.momirealms.craftengine.core.util.ResourceKey;
+
+import java.util.*;
 
 public class EventFunctions {
 
@@ -72,6 +41,7 @@ public class EventFunctions {
         register(CommonFunctions.SPAWN_FURNITURE, new SpawnFurnitureFunction.FactoryImpl<>(EventConditions::fromMap));
         register(CommonFunctions.REMOVE_FURNITURE, new RemoveFurnitureFunction.FactoryImpl<>(EventConditions::fromMap));
         register(CommonFunctions.REPLACE_FURNITURE, new ReplaceFurnitureFunction.FactoryImpl<>(EventConditions::fromMap));
+        register(CommonFunctions.MYTHIC_MOBS_SKILL, new MythicMobsSkillFunction.FactoryImpl<>(EventConditions::fromMap));
     }
 
     public static void register(Key key, FunctionFactory<PlayerOptionalContext> factory) {

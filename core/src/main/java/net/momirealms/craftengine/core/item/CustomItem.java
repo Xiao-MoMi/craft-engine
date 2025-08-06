@@ -14,6 +14,8 @@ import java.util.Map;
 
 public interface CustomItem<I> extends BuildableItem<I> {
 
+    boolean isVanillaItem();
+
     Key id();
 
     UniqueKey uniqueId();
@@ -40,6 +42,8 @@ public interface CustomItem<I> extends BuildableItem<I> {
     List<ItemBehavior> behaviors();
 
     interface Builder<I> {
+        Builder<I> isVanillaItem(boolean isVanillaItem);
+
         Builder<I> id(UniqueKey id);
 
         Builder<I> clientBoundMaterial(Key clientBoundMaterialKey);
