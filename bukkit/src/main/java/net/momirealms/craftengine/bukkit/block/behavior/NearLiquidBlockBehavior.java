@@ -25,13 +25,15 @@ public class NearLiquidBlockBehavior extends AbstractCanSurviveBlockBehavior {
     private final boolean onLava;
     private final boolean stackable;
     private final BlockPos[] positions;
+    private final boolean verticalDirection;
 
-    public NearLiquidBlockBehavior(CustomBlock block, int delay, BlockPos[] positions, boolean stackable, boolean onWater, boolean onLava) {
+    public NearLiquidBlockBehavior(CustomBlock block, int delay, BlockPos[] positions, boolean stackable, boolean onWater, boolean onLava, boolean verticalDirection) {
         super(block, delay);
         this.onWater = onWater;
         this.onLava = onLava;
         this.stackable = stackable;
         this.positions = positions;
+        this.verticalDirection = verticalDirection;
     }
 
     public boolean onWater() {
@@ -45,19 +47,20 @@ public class NearLiquidBlockBehavior extends AbstractCanSurviveBlockBehavior {
     public static class Factory implements BlockBehaviorFactory {
         @Override
         public BlockBehavior create(CustomBlock block, Map<String, Object> arguments) {
+            boolean verticalDirection = "up".equalsIgnoreCase(ResourceConfigUtils.requireNonEmptyStringOrThrow(arguments.getOrDefault("direction", "up"), "direction"));
             List<String> liquidTypes = MiscUtils.getAsStringList(arguments.getOrDefault("liquid-type", List.of("water")));
             boolean stackable = ResourceConfigUtils.getAsBoolean(arguments.getOrDefault("stackable", false), "stackable");
             int delay = ResourceConfigUtils.getAsInt(arguments.getOrDefault("delay", 0), "delay");
             List<String> positionsToCheck = MiscUtils.getAsStringList(arguments.getOrDefault("positions", List.of()));
             if (positionsToCheck.isEmpty()) {
-                return new NearLiquidBlockBehavior(block, delay, new BlockPos[]{new BlockPos(0,-1,0)}, stackable, liquidTypes.contains("water"), liquidTypes.contains("lava"));
+                return new NearLiquidBlockBehavior(block, delay, new BlockPos[]{new BlockPos(0,-1,0)}, stackable, liquidTypes.contains("water"), liquidTypes.contains("lava"), verticalDirection);
             } else {
                 BlockPos[] pos = new BlockPos[positionsToCheck.size()];
                 for (int i = 0; i < pos.length; i++) {
                     String[] split = positionsToCheck.get(i).split(",");
                     pos[i] = new BlockPos(Integer.parseInt(split[0]), Integer.parseInt(split[1]), Integer.parseInt(split[2]));
                 }
-                return new NearLiquidBlockBehavior(block, delay, pos, stackable, liquidTypes.contains("water"), liquidTypes.contains("lava"));
+                return new NearLiquidBlockBehavior(block, delay, pos, stackable, liquidTypes.contains("water"), liquidTypes.contains("lava"), verticalDirection);
             }
         }
     }
@@ -68,7 +71,7 @@ public class NearLiquidBlockBehavior extends AbstractCanSurviveBlockBehavior {
         int x = FastNMS.INSTANCE.field$Vec3i$x(blockPos);
         int z = FastNMS.INSTANCE.field$Vec3i$z(blockPos);
         if (this.stackable) {
-            Object belowPos = FastNMS.INSTANCE.constructor$BlockPos(x, y - 1, z);
+            Object belowPos = FastNMS.INSTANCE.constructor$BlockPos(x, this.verticalDirection ? y - 1 : y + 1, z);
             Object belowState = FastNMS.INSTANCE.method$BlockGetter$getBlockState(world, belowPos);
             Optional<ImmutableBlockState> optionalBelowCustomState = BlockStateUtils.getOptionalCustomBlockState(belowState);
             if (optionalBelowCustomState.isPresent() && optionalBelowCustomState.get().owner().value() == super.customBlock) {
