@@ -2,6 +2,7 @@ package net.momirealms.craftengine.bukkit.plugin.network;
 
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.*;
+import io.netty.channel.embedded.EmbeddedChannel;
 import io.netty.handler.codec.MessageToMessageDecoder;
 import io.netty.handler.codec.MessageToMessageEncoder;
 import io.netty.util.internal.logging.InternalLogger;
@@ -270,7 +271,7 @@ public class BukkitNetworkManager implements NetworkManager, Listener, PluginMes
             uninjectServerChannel(channel);
         }
         for (Player player : Bukkit.getOnlinePlayers()) {
-            Optional.ofNullable(getChannel(player)).ifPresent(this::handleDisconnection);
+            handleDisconnection(getChannel(player));
         }
         this.injectedChannels.clear();
     }
@@ -282,6 +283,7 @@ public class BukkitNetworkManager implements NetworkManager, Listener, PluginMes
     }
 
     @Override
+    @Nullable
     public NetWorkUser getUser(Channel channel) {
         ChannelPipeline pipeline = channel.pipeline();
         return this.users.get(pipeline);
@@ -294,30 +296,28 @@ public class BukkitNetworkManager implements NetworkManager, Listener, PluginMes
     }
 
     @Override
-    @Nullable
+    @NotNull
     public Channel getChannel(net.momirealms.craftengine.core.entity.player.Player player) {
         return getChannel((Player) player.platformPlayer());
     }
 
     @Nullable
     public NetWorkUser getUser(@Nullable Player player) {
-        return Optional.ofNullable(getChannel(player))
-                .map(this::getUser)
-                .orElse(null);
+        return getUser(getChannel(player));
     }
 
     public NetWorkUser getOnlineUser(Player player) {
         return this.onlineUsers.get(player.getUniqueId());
     }
 
-    @Nullable
+    @NotNull
     public Channel getChannel(@Nullable Player player) {
         return Optional.ofNullable(player)
                 .map(FastNMS.INSTANCE::method$CraftPlayer$getHandle)
                 .map(FastNMS.INSTANCE::field$Player$connection)
                 .map(FastNMS.INSTANCE::field$ServerGamePacketListenerImpl$connection)
                 .map(FastNMS.INSTANCE::field$Connection$channel)
-                .orElse(null);
+                .orElse(new EmbeddedChannel());
     }
 
     @Override
@@ -387,7 +387,7 @@ public class BukkitNetworkManager implements NetworkManager, Listener, PluginMes
         for (Player player : Bukkit.getOnlinePlayers()) {
             Channel channel = getChannel(player);
             NetWorkUser user = getUser(player);
-            if (user == null && channel != null) {
+            if (user == null) {
                 user = new BukkitServerPlayer(plugin, channel);
                 ((BukkitServerPlayer) user).setPlayer(player);
                 injectChannel(channel, ConnectionState.PLAY);

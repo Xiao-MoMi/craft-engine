@@ -363,6 +363,7 @@ public class BukkitCraftEngine extends CraftEngine {
         }
     }
 
+    @Nullable
     public BukkitServerPlayer adapt(org.bukkit.entity.Player player) {
         if (player == null) return null;
         return Optional.ofNullable((BukkitServerPlayer) networkManager().getOnlineUser(player)).orElseGet(
