@@ -264,7 +264,6 @@ warning.config.block.behavior.invalid_type: "<yellow>Issue found in file <arg:0>
 warning.config.block.behavior.concrete.missing_solid: "<yellow>Issue found in file <arg:0> - The block '<arg:1>' is missing the required 'solid-block' option for 'concrete_block' behavior.</yellow>"
 warning.config.block.behavior.crop.missing_age: "<yellow>Issue found in file <arg:0> - The block '<arg:1>' is missing the required 'age' property for 'crop_block' behavior.</yellow>"
 warning.config.block.behavior.vertical_crop.missing_age: "<yellow>Issue found in file <arg:0> - The block '<arg:1>' is missing the required 'age' property for 'vertical_crop' behavior.</yellow>"
-warning.config.block.behavior.vertical_crop.missing_waterlogged: "<yellow>Issue found in file <arg:0> - The block '<arg:1>' is missing the required 'waterlogged' property for 'vertical_crop' behavior.</yellow>"
 warning.config.block.behavior.leaves.missing_persistent: "<yellow>Issue found in file <arg:0> - The block '<arg:1>' is missing the required 'persistent' property for 'leaves_block' behavior.</yellow>"
 warning.config.block.behavior.leaves.missing_distance: "<yellow>Issue found in file <arg:0> - The block '<arg:1>' is missing the required 'distance' property for 'leaves_block' behavior.</yellow>"
 warning.config.block.behavior.lamp.missing_lit: "<yellow>Issue found in file <arg:0> - The block '<arg:1>' is missing the required 'lit' property for 'lamp_block' behavior.</yellow>"

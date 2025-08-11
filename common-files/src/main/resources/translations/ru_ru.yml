@@ -247,7 +247,6 @@ warning.config.block.behavior.invalid_type: "<yellow>Проблема найде
 warning.config.block.behavior.concrete.missing_solid: "<yellow>Проблема найдена в файле <arg:0> - В блоке '<arg:1>' отсутствует необходимый 'solid-block' вариант для 'concrete_block' behavior.</yellow>"
 warning.config.block.behavior.crop.missing_age: "<yellow>Проблема найдена в файле <arg:0> - В блоке '<arg:1>' отсутствует необходимый 'age' свойство для 'crop_block' behavior.</yellow>"
 warning.config.block.behavior.vertical_crop.missing_age: "<yellow>Проблема найдена в файле <arg:0> - В блоке '<arg:1>' отсутствует необходимый 'age' свойство для 'vertical_crop' behavior.</yellow>"
-warning.config.block.behavior.vertical_crop.missing_waterlogged: "<yellow>Проблема найдена в файле <arg:0> - В блоке '<arg:1>' отсутствует необходимый 'waterlogged' свойство для 'vertical_crop' behavior.</yellow>"
 warning.config.block.behavior.leaves.missing_persistent: "<yellow>Проблема найдена в файле <arg:0> - В блоке '<arg:1>' отсутствует необходимый 'persistent' свойство для 'leaves_block' behavior.</yellow>"
 warning.config.block.behavior.leaves.missing_distance: "<yellow>Проблема найдена в файле <arg:0> - В блоке '<arg:1>' отсутствует необходимый 'distance' свойство для 'leaves_block' behavior.</yellow>"
 warning.config.block.behavior.lamp.missing_lit: "<yellow>Проблема найдена в файле <arg:0> - В блоке '<arg:1>' отсутствует необходимый 'lit' свойство для 'lamp_block' behavior.</yellow>"
