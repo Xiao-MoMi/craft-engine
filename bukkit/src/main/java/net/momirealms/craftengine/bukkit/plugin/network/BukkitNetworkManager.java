@@ -270,7 +270,7 @@ public class BukkitNetworkManager implements NetworkManager, Listener, PluginMes
             uninjectServerChannel(channel);
         }
         for (Player player : Bukkit.getOnlinePlayers()) {
-            handleDisconnection(getChannel(player));
+            Optional.ofNullable(getChannel(player)).ifPresent(this::handleDisconnection);
         }
         this.injectedChannels.clear();
     }
@@ -294,26 +294,30 @@ public class BukkitNetworkManager implements NetworkManager, Listener, PluginMes
     }
 
     @Override
+    @Nullable
     public Channel getChannel(net.momirealms.craftengine.core.entity.player.Player player) {
         return getChannel((Player) player.platformPlayer());
     }
 
-    public NetWorkUser getUser(Player player) {
-        return getUser(getChannel(player));
+    @Nullable
+    public NetWorkUser getUser(@Nullable Player player) {
+        return Optional.ofNullable(getChannel(player))
+                .map(this::getUser)
+                .orElse(null);
     }
 
     public NetWorkUser getOnlineUser(Player player) {
         return this.onlineUsers.get(player.getUniqueId());
     }
 
-    public Channel getChannel(Player player) {
-        return FastNMS.INSTANCE.field$Connection$channel(
-                FastNMS.INSTANCE.field$ServerGamePacketListenerImpl$connection(
-                        FastNMS.INSTANCE.field$Player$connection(
-                                FastNMS.INSTANCE.method$CraftPlayer$getHandle(player)
-                        )
-                )
-        );
+    @Nullable
+    public Channel getChannel(@Nullable Player player) {
+        return Optional.ofNullable(player)
+                .map(FastNMS.INSTANCE::method$CraftPlayer$getHandle)
+                .map(FastNMS.INSTANCE::field$Player$connection)
+                .map(FastNMS.INSTANCE::field$ServerGamePacketListenerImpl$connection)
+                .map(FastNMS.INSTANCE::field$Connection$channel)
+                .orElse(null);
     }
 
     @Override
@@ -383,7 +387,7 @@ public class BukkitNetworkManager implements NetworkManager, Listener, PluginMes
         for (Player player : Bukkit.getOnlinePlayers()) {
             Channel channel = getChannel(player);
             NetWorkUser user = getUser(player);
-            if (user == null) {
+            if (user == null && channel != null) {
                 user = new BukkitServerPlayer(plugin, channel);
                 ((BukkitServerPlayer) user).setPlayer(player);
                 injectChannel(channel, ConnectionState.PLAY);
@@ -397,7 +401,7 @@ public class BukkitNetworkManager implements NetworkManager, Listener, PluginMes
         }
     }
 
-    public void handleDisconnection(Channel channel) {
+    public void handleDisconnection(@NotNull Channel channel) {
         NetWorkUser user = removeUser(channel);
         if (user == null) return;
         if (channel.pipeline().get(PLAYER_CHANNEL_HANDLER_NAME) != null) {
