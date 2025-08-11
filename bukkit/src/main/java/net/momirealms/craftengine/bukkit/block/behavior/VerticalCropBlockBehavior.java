@@ -144,6 +144,7 @@ public class VerticalCropBlockBehavior extends BukkitBlockBehavior {
     }
 
     public static class Factory implements BlockBehaviorFactory {
+
         @SuppressWarnings("unchecked")
         @Override
         public BlockBehavior create(CustomBlock block, Map<String, Object> arguments) {
