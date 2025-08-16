@@ -2241,7 +2241,7 @@ public class PacketConsumers {
     // 因为不能走编码器只能替换对象
     public static final TriConsumer<NetWorkUser, NMSPacketEvent, Object> CONTAINER_CLICK_1_21_5 = (user, event, packet) -> {
         try {
-            var player = (net.momirealms.craftengine.core.entity.player.Player) user;
+            BukkitServerPlayer player = (BukkitServerPlayer) user;
             int containerId = FastNMS.INSTANCE.field$ServerboundContainerClickPacket$containerId(packet);
             int stateId = FastNMS.INSTANCE.field$ServerboundContainerClickPacket$stateId(packet);
             short slotNum = FastNMS.INSTANCE.field$ServerboundContainerClickPacket$slotNum(packet);
