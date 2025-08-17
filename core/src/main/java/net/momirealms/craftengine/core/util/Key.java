@@ -49,6 +49,9 @@ public record Key(String namespace, String value) {
         if (obj == null) {
             return false;
         }
+        if (obj == this) {
+            return true;
+        }
         if (!(obj instanceof Key key)) return false;
         // 先比value命中率高
         return this.value.equals(key.value()) && this.namespace.equals(key.namespace());
@@ -56,7 +59,7 @@ public record Key(String namespace, String value) {
 
     @Override
     public @NotNull String toString() {
-        return this.namespace + ":" + this.value;
+        return asString();
     }
 
     public String asString() {
