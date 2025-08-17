@@ -142,6 +142,14 @@ item:
   client-bound-model: false
   # Add a <!i> tag on custom name and lore
   non-italic-tag: false
+  # Determines when to trigger the item updater
+  # This feature may incur some performance overhead. Please do not enable it unless necessary.
+  # Correct use case: When you designed incorrect weapon attributes and need to update the values for items already held by players.
+  # Wrong use case: When you want to update an item's name and lore to a newer version (In this case you should use client-bound-data instead of the item updater)
+  update-triggers:
+    click-in-inventory: false # this option won't work for players in creative mode
+    drop: false
+    pick-up: false
 
 equipment:
   # The sacrificed-vanilla-armor argument determines which vanilla armor gets completely removed (loses all its trims)
@@ -170,7 +178,7 @@ block:
   #   - Server MUST list ACTUAL CUSTOM BLOCK IDs in item's `can_break` component.
   #   - Sending custom IDs (e.g., craftengine:note_block_0) to vanilla clients WILL CRASH THEM!
   #   ✅ Solution:
-  #   - Use `client-bound-item-data` to safely sync custom block data to clients.
+  #   - Use `client-bound-data` to safely sync custom block data to clients.
   simplify-adventure-break-check: false
   # Similar to the option above, but designed for block placement
   simplify-adventure-place-check: false

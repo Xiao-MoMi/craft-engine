@@ -5,6 +5,7 @@ import net.momirealms.craftengine.bukkit.api.BukkitAdaptors;
 import net.momirealms.craftengine.bukkit.api.event.CustomBlockInteractEvent;
 import net.momirealms.craftengine.bukkit.entity.BukkitEntity;
 import net.momirealms.craftengine.bukkit.item.BukkitCustomItem;
+import net.momirealms.craftengine.bukkit.item.BukkitItemManager;
 import net.momirealms.craftengine.bukkit.nms.FastNMS;
 import net.momirealms.craftengine.bukkit.plugin.BukkitCraftEngine;
 import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.CoreReflections;
@@ -18,9 +19,11 @@ import net.momirealms.craftengine.core.entity.player.InteractionHand;
 import net.momirealms.craftengine.core.entity.player.InteractionResult;
 import net.momirealms.craftengine.core.item.CustomItem;
 import net.momirealms.craftengine.core.item.Item;
+import net.momirealms.craftengine.core.item.ItemBuildContext;
 import net.momirealms.craftengine.core.item.behavior.ItemBehavior;
 import net.momirealms.craftengine.core.item.context.UseOnContext;
 import net.momirealms.craftengine.core.item.setting.FoodData;
+import net.momirealms.craftengine.core.item.updater.ItemUpdateResult;
 import net.momirealms.craftengine.core.plugin.config.Config;
 import net.momirealms.craftengine.core.plugin.context.ContextHolder;
 import net.momirealms.craftengine.core.plugin.context.PlayerOptionalContext;
@@ -46,13 +49,16 @@ import org.bukkit.event.Listener;
 import org.bukkit.event.block.Action;
 import org.bukkit.event.enchantment.PrepareItemEnchantEvent;
 import org.bukkit.event.entity.EntityDamageEvent;
+import org.bukkit.event.entity.EntityPickupItemEvent;
 import org.bukkit.event.entity.FoodLevelChangeEvent;
 import org.bukkit.event.inventory.InventoryClickEvent;
+import org.bukkit.event.player.PlayerDropItemEvent;
 import org.bukkit.event.player.PlayerInteractEntityEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.event.player.PlayerItemConsumeEvent;
 import org.bukkit.inventory.EnchantingInventory;
 import org.bukkit.inventory.EquipmentSlot;
+import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
 
 import java.util.ArrayList;
@@ -62,9 +68,11 @@ import java.util.Optional;
 
 public class ItemEventListener implements Listener {
     private final BukkitCraftEngine plugin;
+    private final BukkitItemManager itemManager;
 
-    public ItemEventListener(BukkitCraftEngine plugin) {
+    public ItemEventListener(BukkitCraftEngine plugin, BukkitItemManager itemManager) {
         this.plugin = plugin;
+        this.itemManager = itemManager;
     }
 
     @EventHandler(ignoreCancelled = true, priority = EventPriority.HIGHEST)
@@ -535,5 +543,51 @@ public class ItemEventListener implements Listener {
             }
             serverPlayer.sendPackets(packets, false);
         });
+    }
+
+    /*
+
+    关于物品更新器
+
+     */
+    @EventHandler(ignoreCancelled = true, priority = EventPriority.HIGH)
+    public void onDropItem(PlayerDropItemEvent event) {
+        if (!Config.triggerUpdateDrop()) return;
+        org.bukkit.entity.Item itemDrop = event.getItemDrop();
+        ItemStack itemStack = itemDrop.getItemStack();
+        Item<ItemStack> wrapped = this.itemManager.wrap(itemStack);
+        ItemUpdateResult result = this.itemManager.updateItem(wrapped, () -> ItemBuildContext.of(BukkitAdaptors.adapt(event.getPlayer())));
+        if (result.updated()) {
+            itemDrop.setItemStack((ItemStack) result.finalItem().getItem());
+        }
+    }
+
+    @EventHandler(ignoreCancelled = true, priority = EventPriority.HIGH)
+    public void onPickUpItem(EntityPickupItemEvent event) {
+        if (!Config.triggerUpdatePickUp()) return;
+        if (!(event.getEntity() instanceof Player player)) return;
+        org.bukkit.entity.Item itemDrop = event.getItem();
+        ItemStack itemStack = itemDrop.getItemStack();
+        Item<ItemStack> wrapped = this.itemManager.wrap(itemStack);
+        ItemUpdateResult result = this.itemManager.updateItem(wrapped, () -> ItemBuildContext.of(BukkitAdaptors.adapt(player)));
+        if (result.updated()) {
+            itemDrop.setItemStack((ItemStack) result.finalItem().getItem());
+        }
+    }
+
+    @EventHandler(ignoreCancelled = true, priority = EventPriority.LOW)
+    public void onInventoryClickItem(InventoryClickEvent event) {
+        if (!Config.triggerUpdateClick()) return;
+        if (!(event.getWhoClicked() instanceof Player player)) return;
+        Inventory clickedInventory = event.getClickedInventory();
+        // 点击自己物品栏里的物品
+        if (clickedInventory == null || clickedInventory != player.getInventory()) return;
+        ItemStack currentItem = event.getCurrentItem();
+        Item<ItemStack> wrapped = this.itemManager.wrap(currentItem);
+        ItemUpdateResult result = this.itemManager.updateItem(wrapped, () -> ItemBuildContext.of(BukkitAdaptors.adapt(player)));
+        if (!result.updated() || !result.replaced()) {
+           return;
+        }
+        event.setCurrentItem((ItemStack) result.finalItem().getItem());
     }
 }

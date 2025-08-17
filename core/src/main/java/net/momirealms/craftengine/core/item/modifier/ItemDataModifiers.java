@@ -31,6 +31,7 @@ public final class ItemDataModifiers {
     public static final Key ATTRIBUTE_MODIFIERS = Key.of("craftengine:attribute-modifiers");
     public static final Key ATTRIBUTES = Key.of("craftengine:attributes");
     public static final Key ARGUMENTS = Key.of("craftengine:arguments");
+    public static final Key VERSION = Key.of("craftengine:version");
     public static final Key ITEM_NAME = Key.of("craftengine:item-name");
     public static final Key OVERWRITABLE_ITEM_NAME = Key.of("craftengine:overwritable-item-name");
     public static final Key JUKEBOX_PLAYABLE = Key.of("craftengine:jukebox-playable");
