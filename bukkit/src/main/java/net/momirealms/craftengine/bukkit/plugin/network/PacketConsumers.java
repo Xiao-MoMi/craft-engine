@@ -87,8 +87,8 @@ import java.util.function.BiConsumer;
 
 public class PacketConsumers {
     private static BukkitNetworkManager.Handlers[] ADD_ENTITY_HANDLERS;
-    private static int[] mappings;
-    private static int[] mappingsMOD;
+    private static int[] BLOCK_STATE_MAPPINGS;
+    private static int[] MOD_BLOCK_STATE_MAPPINGS;
     private static IntIdentityList BLOCK_LIST;
     private static IntIdentityList BIOME_LIST;
 
@@ -227,34 +227,34 @@ public class PacketConsumers {
     }
 
     public static void initBlocks(Map<Integer, Integer> map, int registrySize) {
-        mappings = new int[registrySize];
+        int[] newMappings = new int[registrySize];
         for (int i = 0; i < registrySize; i++) {
-            mappings[i] = i;
+            newMappings[i] = i;
         }
-        mappingsMOD = Arrays.copyOf(mappings, registrySize);
+        int[] newMappingsMOD = Arrays.copyOf(newMappings, registrySize);
         for (Map.Entry<Integer, Integer> entry : map.entrySet()) {
-            mappings[entry.getKey()] = entry.getValue();
+            newMappings[entry.getKey()] = entry.getValue();
             if (BlockStateUtils.isVanillaBlock(entry.getKey())) {
-                mappingsMOD[entry.getKey()] = entry.getValue();
+                newMappingsMOD[entry.getKey()] = entry.getValue();
             }
         }
-        for (int i = 0; i < mappingsMOD.length; i++) {
+        for (int i = 0; i < newMappingsMOD.length; i++) {
             if (BlockStateUtils.isVanillaBlock(i)) {
-                mappingsMOD[i] = remap(i);
+                newMappingsMOD[i] = newMappings[i];
             }
         }
+        BLOCK_STATE_MAPPINGS = newMappings;
+        MOD_BLOCK_STATE_MAPPINGS = newMappingsMOD;
         BLOCK_LIST = new IntIdentityList(registrySize);
         BIOME_LIST = new IntIdentityList(RegistryUtils.currentBiomeRegistrySize());
     }
 
     public static int remap(int stateId) {
-        // if (true) return 0;
-        return mappings[stateId];
+        return BLOCK_STATE_MAPPINGS[stateId];
     }
 
     public static int remapMOD(int stateId) {
-        // if (true) return 0;
-        return mappingsMOD[stateId];
+        return MOD_BLOCK_STATE_MAPPINGS[stateId];
     }
 
     public static final BiConsumer<NetWorkUser, ByteBufPacketEvent> LEVEL_CHUNK_WITH_LIGHT = (user, event) -> {
