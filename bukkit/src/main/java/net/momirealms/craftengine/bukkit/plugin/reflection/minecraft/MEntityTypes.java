@@ -58,6 +58,8 @@ public final class MEntityTypes {
     public static final int HAPPY_GHAST$registryId;
     public static final Object PLAYER;
     public static final int PLAYER$registryId;
+    public static final Object ENDERMAN;
+    public static final int ENDERMAN$registryId;
 
     private static Object getById(String id) {
         Object rl = FastNMS.INSTANCE.method$ResourceLocation$fromNamespaceAndPath("minecraft", id);
@@ -122,5 +124,7 @@ public final class MEntityTypes {
         ARROW$registryId = getRegistryId(ARROW);
         SPECTRAL_ARROW = getById("spectral_arrow");
         SPECTRAL_ARROW$registryId = getRegistryId(SPECTRAL_ARROW);
+        ENDERMAN = getById("enderman");
+        ENDERMAN$registryId = getRegistryId(ENDERMAN);
     }
 }

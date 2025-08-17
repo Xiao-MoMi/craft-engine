@@ -17,6 +17,7 @@ public final class EntityDataUtils {
     public static final int CUSTOM_NAME_DATA_ID = 2;
     public static final int ITEM_DATA_ID = 8;
     public static final int ITEM_FRAME_DATA_ID = VersionHelper.isOrAbove1_21_6() ? 9 : 8;
+    public static final int ENDERMAN_OPTIONAL_BLOCK_STATE = 16;
 
     public static byte encodeTextDisplayMask(boolean hasShadow, boolean isSeeThrough, boolean useDefaultBackground, int alignment) {
         int bitMask = 0;
