@@ -380,10 +380,10 @@ chunk-system:
   compression-method: 4
   # Settings for injection
   injection:
-    # Requires a restart to apply
+    # Requires a restart to apply.
     # SECTION: Inject the LevelChunkSection
     # PALETTE: Inject the PalettedContainer
-    target: SECTION
+    target: PALETTE
     # Enables faster injection method
     # Note: May not work with certain server forks that alter chunk class structure (In most cases it won't conflict)
     use-fast-method: true

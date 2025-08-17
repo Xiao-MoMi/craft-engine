@@ -188,6 +188,7 @@ public class BukkitServerPlayer extends Player {
         };
     }
 
+    @SuppressWarnings("UnstableApiUsage")
     @Override
     public void setGameMode(GameMode gameMode) {
         platformPlayer().setGameMode(Objects.requireNonNull(org.bukkit.GameMode.getByValue(gameMode.id())));

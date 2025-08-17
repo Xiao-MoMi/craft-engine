@@ -5,6 +5,7 @@ import net.momirealms.craftengine.core.item.Item;
 import net.momirealms.craftengine.core.item.ItemBuildContext;
 import net.momirealms.craftengine.core.item.ItemDataModifierFactory;
 import net.momirealms.craftengine.core.plugin.config.Config;
+import net.momirealms.craftengine.core.plugin.text.minimessage.FormattedLine;
 import net.momirealms.craftengine.core.util.AdventureHelper;
 import net.momirealms.craftengine.core.util.Key;
 import org.jetbrains.annotations.Nullable;
@@ -12,6 +13,7 @@ import org.jetbrains.annotations.Nullable;
 public class CustomNameModifier<I> implements SimpleNetworkItemDataModifier<I> {
     public static final Factory<?> FACTORY = new Factory<>();
     private final String argument;
+    private final FormattedLine line;
 
     public CustomNameModifier(String argument) {
         if (Config.addNonItalicTag()) {
@@ -23,6 +25,7 @@ public class CustomNameModifier<I> implements SimpleNetworkItemDataModifier<I> {
         } else {
             this.argument = argument;
         }
+        this.line = FormattedLine.create(this.argument);
     }
 
     public String customName() {
@@ -36,7 +39,7 @@ public class CustomNameModifier<I> implements SimpleNetworkItemDataModifier<I> {
 
     @Override
     public Item<I> apply(Item<I> item, ItemBuildContext context) {
-        item.customNameComponent(AdventureHelper.miniMessage().deserialize(this.argument, context.tagResolvers()));
+        item.customNameComponent(this.line.parse(context));
         return item;
     }
 

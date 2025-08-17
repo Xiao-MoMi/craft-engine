@@ -1,9 +1,9 @@
 package net.momirealms.craftengine.core.item.modifier;
 
 import net.momirealms.craftengine.core.item.ItemDataModifierFactory;
-import net.momirealms.craftengine.core.item.modifier.lore.OverwritableLoreModifier;
 import net.momirealms.craftengine.core.item.modifier.lore.DynamicLoreModifier;
 import net.momirealms.craftengine.core.item.modifier.lore.LoreModifier;
+import net.momirealms.craftengine.core.item.modifier.lore.OverwritableLoreModifier;
 import net.momirealms.craftengine.core.registry.BuiltInRegistries;
 import net.momirealms.craftengine.core.registry.Registries;
 import net.momirealms.craftengine.core.registry.WritableRegistry;

@@ -265,7 +265,6 @@ warning.config.block.state.unavailable_vanilla: "<yellow>Issue found in file <ar
 warning.config.block.state.invalid_vanilla_id: "<yellow>Issue found in file <arg:0> - The block '<arg:1>' is using a vanilla block state '<arg:2>' that exceeds the available slot range '0~<arg:3>'.</yellow>"
 warning.config.block.state.conflict: "<yellow>Issue found in file <arg:0> - The block '<arg:1>' is using a vanilla block state '<arg:2>' that has been occupied by '<arg:3>'.</yellow>"
 warning.config.block.state.bind_failed: "<yellow>Issue found in file <arg:0> - The block '<arg:1>' failed to bind real block state for '<arg:2>' as the state has been occupied by '<arg:3>'.</yellow>"
-warning.config.block.state.missing_model: "<yellow>Issue found in file <arg:0> - The block '<arg:1>' is missing the required 'model' or 'models' argument.</yellow>"
 warning.config.block.state.invalid_real_id: "<yellow>Issue found in file <arg:0> - The block '<arg:1>' is using a real block state '<arg:2>' that exceeds the available slot range '0~<arg:3>'. Consider adding more real states in 'additional-real-blocks.yml' if the slots are used up.</yellow>"
 warning.config.block.state.model.missing_path: "<yellow>Issue found in file <arg:0> - The block '<arg:1>' is missing the required 'path' option for 'model'.</yellow>"
 warning.config.block.state.model.invalid_path: "<yellow>Issue found in file <arg:0> - The block '<arg:1>' has a 'path' argument '<arg:2>' that contains illegal characters. Please read https://minecraft.wiki/w/Resource_location#Legal_characters.</yellow>"

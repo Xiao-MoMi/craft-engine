@@ -8,6 +8,8 @@ import net.momirealms.craftengine.core.item.ItemDataModifierFactory;
 import net.momirealms.craftengine.core.item.modifier.ItemDataModifier;
 import net.momirealms.craftengine.core.item.modifier.ItemDataModifiers;
 import net.momirealms.craftengine.core.item.modifier.SimpleNetworkItemDataModifier;
+import net.momirealms.craftengine.core.plugin.config.Config;
+import net.momirealms.craftengine.core.plugin.text.minimessage.FormattedLine;
 import net.momirealms.craftengine.core.util.Key;
 import net.momirealms.craftengine.core.util.MiscUtils;
 import net.momirealms.craftengine.core.util.ResourceConfigUtils;
@@ -63,7 +65,9 @@ public sealed interface LoreModifier<I> extends SimpleNetworkItemDataModifier<I>
                     rawLore[i] = o.toString();
                 }
             }
-            return new SingleLoreModifier<>(new LoreModification(LoreModification.Operation.APPEND, false, rawLore));
+            return new SingleLoreModifier<>(new LoreModification(LoreModification.Operation.APPEND, false,
+                    Arrays.stream(rawLore).map(line -> Config.addNonItalicTag() ? FormattedLine.create("<!i>" + line) : FormattedLine.create(line))
+                            .toArray(FormattedLine[]::new)));
         }
 
         List<LoreModificationHolder> modifications = new ArrayList<>(rawLoreData.size() + 1);
@@ -74,7 +78,9 @@ public sealed interface LoreModifier<I> extends SimpleNetworkItemDataModifier<I>
                 LoreModification.Operation operation = ResourceConfigUtils.getAsEnum(Optional.ofNullable(complexLore.get("operation")).map(String::valueOf).orElse(null), LoreModification.Operation.class, LoreModification.Operation.APPEND);
                 lastPriority = Optional.ofNullable(complexLore.get("priority")).map(it -> ResourceConfigUtils.getAsInt(it, "priority")).orElse(lastPriority);
                 boolean split = ResourceConfigUtils.getAsBoolean(complexLore.get("split-lines"), "split-lines");
-                modifications.add(new LoreModificationHolder(new LoreModification(operation, split, content), lastPriority));
+                modifications.add(new LoreModificationHolder(new LoreModification(operation, split,
+                        Arrays.stream(content).map(line -> Config.addNonItalicTag() ? FormattedLine.create("<!i>" + line) : FormattedLine.create(line))
+                        .toArray(FormattedLine[]::new)), lastPriority));
             }
         }
         modifications.sort(LoreModificationHolder::compareTo);

@@ -2,28 +2,28 @@ package net.momirealms.craftengine.core.item.modifier.lore;
 
 import net.kyori.adventure.text.Component;
 import net.momirealms.craftengine.core.item.ItemBuildContext;
+import net.momirealms.craftengine.core.plugin.text.minimessage.FormattedLine;
 import net.momirealms.craftengine.core.util.AdventureHelper;
 import net.momirealms.craftengine.core.util.TriFunction;
 
 import java.util.Arrays;
 import java.util.List;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 // todo 可以考虑未来添加条件系统
-public record LoreModification(Operation operation, boolean split, String[] content) {
+public record LoreModification(Operation operation, boolean split, FormattedLine[] content) {
 
     public Stream<Component> apply(Stream<Component> lore, ItemBuildContext context) {
         return this.operation.function.apply(lore, context, this);
     }
 
     public Stream<Component> parseAsStream(ItemBuildContext context) {
-        Stream<Component> parsed = Arrays.stream(this.content).map(string -> AdventureHelper.miniMessage().deserialize(string, context.tagResolvers()));
+        Stream<Component> parsed = Arrays.stream(this.content).map(line -> line.parse(context));
         return this.split ? parsed.map(AdventureHelper::splitLines).flatMap(List::stream) : parsed;
     }
 
     public List<Component> parseAsList(ItemBuildContext context) {
-        return this.parseAsStream(context).collect(Collectors.toList());
+        return this.parseAsStream(context).toList();
     }
 
     public enum Operation {

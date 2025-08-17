@@ -1,18 +1,24 @@
 package net.momirealms.craftengine.core.block;
 
 import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
 import it.unimi.dsi.fastutil.ints.Int2IntOpenHashMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
+import net.momirealms.craftengine.core.block.properties.Properties;
+import net.momirealms.craftengine.core.block.properties.Property;
 import net.momirealms.craftengine.core.pack.LoadingSequence;
 import net.momirealms.craftengine.core.pack.Pack;
 import net.momirealms.craftengine.core.pack.ResourceLocation;
 import net.momirealms.craftengine.core.pack.model.generation.AbstractModelGenerator;
+import net.momirealms.craftengine.core.pack.model.generation.ModelGeneration;
 import net.momirealms.craftengine.core.plugin.CraftEngine;
 import net.momirealms.craftengine.core.plugin.config.Config;
 import net.momirealms.craftengine.core.plugin.config.ConfigParser;
 import net.momirealms.craftengine.core.plugin.locale.LocalizedResourceConfigException;
+import net.momirealms.craftengine.core.util.GsonHelper;
 import net.momirealms.craftengine.core.util.Key;
 import net.momirealms.craftengine.core.util.MiscUtils;
+import net.momirealms.craftengine.core.util.ResourceConfigUtils;
 import org.incendo.cloud.suggestion.Suggestion;
 import org.jetbrains.annotations.NotNull;
 
@@ -41,6 +47,9 @@ public abstract class AbstractBlockManager extends AbstractModelGenerator implem
     // client side block tags
     protected Map<Integer, List<String>> clientBoundTags = Map.of();
     protected Map<Integer, List<String>> previousClientBoundTags = Map.of();
+    // Used to automatically arrange block states for strings such as minecraft:note_block:0
+    protected Map<Key, List<Integer>> blockAppearanceArranger;
+    protected Map<Key, List<Integer>> realBlockArranger;
 
     protected AbstractBlockManager(CraftEngine plugin) {
         super(plugin);
@@ -139,6 +148,8 @@ public abstract class AbstractBlockManager extends AbstractModelGenerator implem
 
     protected abstract int getBlockRegistryId(Key id);
 
+    public abstract String stateRegistryIdToStateSNBT(int id);
+
     public class BlockParser implements ConfigParser {
         public static final String[] CONFIG_SECTION_NAME = new String[]{"blocks", "block"};
 
@@ -179,7 +190,161 @@ public abstract class AbstractBlockManager extends AbstractModelGenerator implem
         private void parseCustomBlock(Pack pack, Path path, Key id, Map<String, Object> section) {
             // 获取方块设置
             BlockSettings settings = BlockSettings.fromMap(id, MiscUtils.castToMap(section.get("settings"), true));
-            //
+            // 读取基础外观配置
+            Map<String, Property<?>> properties;
+            Map<String, Integer> appearances;
+            Map<String, BlockStateVariant> variants;
+            // 读取states区域
+            Map<String, Object> stateSection = MiscUtils.castToMap(ResourceConfigUtils.requireNonNullOrThrow(
+                    ResourceConfigUtils.get(section, "state", "states"), "warning.config.block.missing_state"), true);
+            boolean singleState = !stateSection.containsKey("properties");
+            // 单方块状态
+            if (singleState) {
+                int internalId = ResourceConfigUtils.getAsInt(ResourceConfigUtils.requireNonNullOrThrow(
+                        stateSection.get("id"), "warning.config.block.state.missing_real_id"), "id");
+                // 获取原版外观的注册表id
+                int appearanceId = pluginFormattedBlockStateToRegistryId(ResourceConfigUtils.requireNonEmptyStringOrThrow(
+                        stateSection.get("state"), "warning.config.block.state.missing_state"));
+                // 为原版外观赋予外观模型并检查模型冲突
+                this.arrangeModelForStateAndVerify(appearanceId, ResourceConfigUtils.get(stateSection, "model", "models"));
+                // 设置参数
+                properties = Map.of();
+                appearances = Map.of("", appearanceId);
+                variants = Map.of("", new BlockStateVariant("", settings, internalId));
+            }
+            // 多方块状态
+            else {
+                properties = parseBlockProperties(ResourceConfigUtils.getAsMap(ResourceConfigUtils.requireNonNullOrThrow(stateSection.get("properties"), "warning.config.block.state.missing_properties"), "properties"));
+                appearances = parseBlockAppearances(ResourceConfigUtils.getAsMap(ResourceConfigUtils.requireNonNullOrThrow(stateSection.get("appearances"), "warning.config.block.state.missing_appearances"), "appearances"));
+
+            }
+        }
+
+        private Map<String, Integer> parseBlockAppearances(Map<String, Object> appearancesSection) {
+            Map<String, Integer> appearances = new HashMap<>();
+            for (Map.Entry<String, Object> entry : appearancesSection.entrySet()) {
+                Map<String, Object> appearanceSection = ResourceConfigUtils.getAsMap(entry.getValue(), entry.getKey());
+                int appearanceId = pluginFormattedBlockStateToRegistryId(ResourceConfigUtils.requireNonEmptyStringOrThrow(
+                        appearanceSection.get("state"), "warning.config.block.state.missing_state"));
+                this.arrangeModelForStateAndVerify(appearanceId, ResourceConfigUtils.get(appearanceSection, "model", "models"));
+                appearances.put(entry.getKey(), appearanceId);
+            }
+            return appearances;
+        }
+
+        @NotNull
+        private Map<String, Property<?>> parseBlockProperties(Map<String, Object> propertiesSection) {
+            Map<String, Property<?>> properties = new HashMap<>();
+            for (Map.Entry<String, Object> entry : propertiesSection.entrySet()) {
+                Property<?> property = Properties.fromMap(entry.getKey(), ResourceConfigUtils.getAsMap(entry.getValue(), entry.getKey()));
+                properties.put(entry.getKey(), property);
+            }
+            return properties;
+        }
+
+        private void arrangeModelForStateAndVerify(int registryId, Object modelOrModels) {
+            // 如果没有配置models
+            if (modelOrModels == null) {
+                return;
+            }
+            // 获取variants
+            List<JsonObject> variants;
+            if (modelOrModels instanceof String model) {
+                JsonObject json = new JsonObject();
+                json.addProperty("model", model);
+                variants = Collections.singletonList(json);
+            } else {
+                variants = ResourceConfigUtils.parseConfigAsList(modelOrModels, this::parseAppearanceModelSectionAsJson);
+                if (variants.isEmpty()) {
+                    return;
+                }
+            }
+            // 拆分方块id与属性
+            String blockState = stateRegistryIdToStateSNBT(registryId);
+            Key blockId = Key.of(blockState.substring(blockState.indexOf('{') + 1, blockState.lastIndexOf('}')));
+            String propertyNBT = blockState.substring(blockState.indexOf('[') + 1, blockState.lastIndexOf(']'));
+            // 结合variants
+            JsonElement combinedVariant = GsonHelper.combine(variants);
+            JsonElement previous = AbstractBlockManager.this.blockStateOverrides.computeIfAbsent(blockId, k -> new HashMap<>()).put(propertyNBT, combinedVariant);
+            if (previous != null && !previous.equals(combinedVariant)) {
+                // todo 播报可能的冲突
+                plugin.logger().warn("warning 1");
+            }
+        }
+
+        private JsonObject parseAppearanceModelSectionAsJson(Map<String, Object> section) {
+            JsonObject json = new JsonObject();
+            String modelPath = ResourceConfigUtils.requireNonEmptyStringOrThrow(section.get("path"), "warning.config.block.state.model.missing_path");
+            if (!ResourceLocation.isValid(modelPath)) {
+                throw new LocalizedResourceConfigException("warning.config.block.state.model.invalid_path", modelPath);
+            }
+            json.addProperty("model", modelPath);
+            if (section.containsKey("x"))
+                json.addProperty("x", ResourceConfigUtils.getAsInt(section.get("x"), "x"));
+            if (section.containsKey("y"))
+                json.addProperty("y", ResourceConfigUtils.getAsInt(section.get("y"), "y"));
+            if (section.containsKey("uvlock")) json.addProperty("uvlock", ResourceConfigUtils.getAsBoolean(section.get("uvlock"), "uvlock"));
+            if (section.containsKey("weight"))
+                json.addProperty("weight", ResourceConfigUtils.getAsInt(section.get("weight"), "weight"));
+            Map<String, Object> generationMap = MiscUtils.castToMap(section.get("generation"), true);
+            if (generationMap != null) {
+                prepareModelGeneration(ModelGeneration.of(Key.of(modelPath), generationMap));
+            }
+            return json;
+        }
+
+        // 从方块外观的state里获取其原版方块的state id
+        private int pluginFormattedBlockStateToRegistryId(String blockState) {
+            // 五种合理情况
+            // minecraft:note_block:10
+            // note_block:10
+            // minecraft:note_block[xxx=xxx]
+            // note_block[xxx=xxx]
+            // minecraft:barrier
+            String[] split = blockState.split(":", 3);
+            if (split.length >= 4) {
+                throw new LocalizedResourceConfigException("warning.config.block.state.invalid_vanilla", blockState);
+            }
+            int registryId;
+            String stateOrId = split[split.length - 1];
+            boolean isId = false;
+            int arrangerIndex = 0;
+            try {
+                arrangerIndex = Integer.parseInt(stateOrId);
+                if (arrangerIndex < 0) {
+                    throw new LocalizedResourceConfigException("warning.config.block.state.invalid_vanilla", blockState);
+                }
+                isId = true;
+            } catch (NumberFormatException ignored) {
+            }
+            // 如果末尾是id，则至少长度为2
+            if (isId) {
+                if (split.length == 1) {
+                    throw new LocalizedResourceConfigException("warning.config.block.state.invalid_vanilla", blockState);
+                }
+                // 获取原版方块的id
+                Key block = split.length == 2 ? Key.of(split[0]) : Key.of(split[0], split[1]);
+                try {
+                    List<Integer> arranger = blockAppearanceArranger.get(block);
+                    if (arranger == null) {
+                        throw new LocalizedResourceConfigException("warning.config.block.state.unavailable_vanilla", blockState);
+                    }
+                    if (arrangerIndex >= arranger.size()) {
+                        throw new LocalizedResourceConfigException("warning.config.block.state.invalid_vanilla_id", blockState, String.valueOf(arranger.size() - 1));
+                    }
+                    registryId = arranger.get(arrangerIndex);
+                } catch (NumberFormatException e) {
+                    throw new LocalizedResourceConfigException("warning.config.block.state.invalid_vanilla", e, blockState);
+                }
+            } else {
+                // 其他情况则是完整的方块
+                BlockStateWrapper packedBlockState = createPackedBlockState(blockState);
+                if (packedBlockState == null || !packedBlockState.isVanillaBlock()) {
+                    throw new LocalizedResourceConfigException("warning.config.block.state.invalid_vanilla", blockState);
+                }
+                registryId = packedBlockState.registryId();
+            }
+            return registryId;
         }
     }
 }

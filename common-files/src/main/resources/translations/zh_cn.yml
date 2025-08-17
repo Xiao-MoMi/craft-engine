@@ -263,7 +263,6 @@ warning.config.block.state.unavailable_vanilla: "<yellow>在文件 <arg:0> 发�
 warning.config.block.state.invalid_vanilla_id: "<yellow>在文件 <arg:0> 发现问题 - 方块 '<arg:1>' 使用的原版方块状态 '<arg:2>' 超出可用槽位范围 '0~<arg:3>'</yellow>"
 warning.config.block.state.conflict: "<yellow>在文件 <arg:0> 发现问题 - 方块 '<arg:1>' 使用的原版方块状态 '<arg:2>' 已被 '<arg:3>' 占用</yellow>"
 warning.config.block.state.bind_failed: "<yellow>在文件 <arg:0> 发现问题 - 方块 '<arg:1>' 无法为 '<arg:2>' 绑定真实方块状态 因该状态已被 '<arg:3>' 占用</yellow>"
-warning.config.block.state.missing_model: "<yellow>在文件 <arg:0> 发现问题 - 方块 '<arg:1>' 缺少必需的 'model' 或 'models' 参数</yellow>"
 warning.config.block.state.invalid_real_id: "<yellow>在文件 <arg:0> 发现问题 - 方块 '<arg:1>' 使用的真实方块状态 '<arg:2>' 超出可用槽位范围 '0~<arg:3>' 如果槽位已用尽 请在 additional-real-blocks.yml 中添加更多真实状态</yellow>"
 warning.config.block.state.model.missing_path: "<yellow>在文件 <arg:0> 发现问题 - 方块 '<arg:1>' 的 'model' 缺少必需的 'path' 选项</yellow>"
 warning.config.block.state.model.invalid_path: "<yellow>在文件 <arg:0> 发现问题 - 方块 '<arg:1>' 的 'path' 参数 '<arg:2>' 包含非法字符 请参考 https://zh.minecraft.wiki/w/%E5%91%BD%E5%90%8D%E7%A9%BA%E9%97%B4ID#%E5%90%88%E6%B3%95%E5%AD%97%E7%AC%A6</yellow>"

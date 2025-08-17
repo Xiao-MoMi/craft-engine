@@ -47,7 +47,6 @@ import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.NamespacedKey;
 import org.bukkit.Registry;
-import org.bukkit.block.BlockType;
 import org.bukkit.block.data.BlockData;
 import org.bukkit.event.HandlerList;
 import org.jetbrains.annotations.NotNull;
@@ -80,9 +79,6 @@ public final class BukkitBlockManager extends AbstractBlockManager {
     private Map<Integer, Object> stateId2BlockHolder;
     // This map is used to change the block states that are not necessarily needed into a certain block state
     private Map<Integer, Integer> blockAppearanceMapper;
-    // Used to automatically arrange block states for strings such as minecraft:note_block:0
-    private Map<Key, List<Integer>> blockAppearanceArranger;
-    private Map<Key, List<Integer>> realBlockArranger;
     // Record the amount of real blocks by block type
     private Map<Key, Integer> registeredRealBlockSlots;
     // A set of blocks that sounds have been removed
@@ -123,6 +119,11 @@ public final class BukkitBlockManager extends AbstractBlockManager {
         this.stateId2ImmutableBlockStates = new ImmutableBlockState[this.customBlockCount];
         Arrays.fill(this.stateId2ImmutableBlockStates, EmptyBlock.INSTANCE.defaultState());
         this.resetPacketConsumers();
+    }
+
+    @Override
+    public String stateRegistryIdToStateSNBT(int id) {
+        return BlockStateUtils.idToBlockState(id).toString();
     }
 
     public static BukkitBlockManager instance() {
