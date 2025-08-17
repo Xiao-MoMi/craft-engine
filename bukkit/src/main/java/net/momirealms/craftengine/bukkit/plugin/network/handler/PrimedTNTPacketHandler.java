@@ -2,7 +2,8 @@ package net.momirealms.craftengine.bukkit.plugin.network.handler;
 
 import net.kyori.adventure.text.Component;
 import net.momirealms.craftengine.bukkit.entity.data.BaseEntityData;
-import net.momirealms.craftengine.bukkit.entity.data.EnderManData;
+import net.momirealms.craftengine.bukkit.entity.data.BlockDisplayEntityData;
+import net.momirealms.craftengine.bukkit.entity.data.PrimedTntData;
 import net.momirealms.craftengine.bukkit.nms.FastNMS;
 import net.momirealms.craftengine.bukkit.plugin.network.PacketConsumers;
 import net.momirealms.craftengine.bukkit.util.BlockStateUtils;
@@ -19,8 +20,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
-public class EndermanPacketHandler implements EntityPacketHandler {
-    public static final EndermanPacketHandler INSTANCE = new EndermanPacketHandler();
+public class PrimedTNTPacketHandler implements EntityPacketHandler {
+    public static final PrimedTNTPacketHandler INSTANCE = new PrimedTNTPacketHandler();
 
     @Override
     public void handleSetEntityData(NetWorkUser user, ByteBufPacketEvent event) {
@@ -31,11 +32,9 @@ public class EndermanPacketHandler implements EntityPacketHandler {
         for (int i = 0; i < packedItems.size(); i++) {
             Object packedItem = packedItems.get(i);
             int entityDataId = FastNMS.INSTANCE.field$SynchedEntityData$DataValue$id(packedItem);
-            if (entityDataId == EnderManData.CarryState.id()) {
-                @SuppressWarnings("unchecked")
-                Optional<Object> blockState = (Optional<Object>) FastNMS.INSTANCE.field$SynchedEntityData$DataValue$value(packedItem);
-                if (blockState.isEmpty()) continue;
-                int stateId = BlockStateUtils.blockStateToId(blockState.get());
+            if (entityDataId == PrimedTntData.BlockState.id()) {
+                Object blockState = FastNMS.INSTANCE.field$SynchedEntityData$DataValue$value(packedItem);
+                int stateId = BlockStateUtils.blockStateToId(blockState);
                 int newStateId;
                 if (!user.clientModEnabled()) {
                     newStateId = PacketConsumers.remap(stateId);
@@ -45,7 +44,7 @@ public class EndermanPacketHandler implements EntityPacketHandler {
                 if (newStateId == stateId) continue;
                 Object serializer = FastNMS.INSTANCE.field$SynchedEntityData$DataValue$serializer(packedItem);
                 packedItems.set(i, FastNMS.INSTANCE.constructor$SynchedEntityData$DataValue(
-                        entityDataId, serializer, Optional.of(BlockStateUtils.idToBlockState(newStateId))
+                        entityDataId, serializer, BlockStateUtils.idToBlockState(newStateId)
                 ));
                 isChanged = true;
             } else if (Config.interceptEntityName() && entityDataId == BaseEntityData.CustomName.id()) {
@@ -75,5 +74,4 @@ public class EndermanPacketHandler implements EntityPacketHandler {
             FastNMS.INSTANCE.method$ClientboundSetEntityDataPacket$pack(packedItems, buf);
         }
     }
-
 }

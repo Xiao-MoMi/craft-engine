@@ -18,6 +18,7 @@ import net.momirealms.craftengine.bukkit.api.event.FurnitureAttemptBreakEvent;
 import net.momirealms.craftengine.bukkit.api.event.FurnitureBreakEvent;
 import net.momirealms.craftengine.bukkit.api.event.FurnitureInteractEvent;
 import net.momirealms.craftengine.bukkit.block.BukkitBlockManager;
+import net.momirealms.craftengine.bukkit.entity.data.BaseEntityData;
 import net.momirealms.craftengine.bukkit.entity.furniture.BukkitFurniture;
 import net.momirealms.craftengine.bukkit.entity.furniture.BukkitFurnitureManager;
 import net.momirealms.craftengine.bukkit.entity.projectile.BukkitProjectileManager;
@@ -138,6 +139,13 @@ public class PacketConsumers {
         ADD_ENTITY_HANDLERS[MEntityTypes.ITEM_FRAME$registryId] = simpleAddEntityHandler(ItemFramePacketHandler.INSTANCE);
         ADD_ENTITY_HANDLERS[MEntityTypes.GLOW_ITEM_FRAME$registryId] = simpleAddEntityHandler(ItemFramePacketHandler.INSTANCE);
         ADD_ENTITY_HANDLERS[MEntityTypes.ENDERMAN$registryId] = simpleAddEntityHandler(EndermanPacketHandler.INSTANCE);
+        ADD_ENTITY_HANDLERS[MEntityTypes.CHEST_MINECART$registryId] = simpleAddEntityHandler(AbstractMinecartPacketHandler.INSTANCE);
+        ADD_ENTITY_HANDLERS[MEntityTypes.COMMAND_BLOCK_MINECART$registryId] = simpleAddEntityHandler(AbstractMinecartPacketHandler.INSTANCE);
+        ADD_ENTITY_HANDLERS[MEntityTypes.FURNACE_MINECART$registryId] = simpleAddEntityHandler(AbstractMinecartPacketHandler.INSTANCE);
+        ADD_ENTITY_HANDLERS[MEntityTypes.HOPPER_MINECART$registryId] = simpleAddEntityHandler(AbstractMinecartPacketHandler.INSTANCE);
+        ADD_ENTITY_HANDLERS[MEntityTypes.MINECART$registryId] = simpleAddEntityHandler(AbstractMinecartPacketHandler.INSTANCE);
+        ADD_ENTITY_HANDLERS[MEntityTypes.SPAWNER_MINECART$registryId] = simpleAddEntityHandler(AbstractMinecartPacketHandler.INSTANCE);
+        ADD_ENTITY_HANDLERS[MEntityTypes.TNT_MINECART$registryId] = simpleAddEntityHandler(AbstractMinecartPacketHandler.INSTANCE);
         ADD_ENTITY_HANDLERS[MEntityTypes.FIREBALL$registryId] = createOptionalCustomProjectileEntityHandler(true);
         ADD_ENTITY_HANDLERS[MEntityTypes.EYE_OF_ENDER$registryId] = createOptionalCustomProjectileEntityHandler(true);
         ADD_ENTITY_HANDLERS[MEntityTypes.FIREWORK_ROCKET$registryId] = createOptionalCustomProjectileEntityHandler(true);
@@ -150,6 +158,9 @@ public class PacketConsumers {
         ADD_ENTITY_HANDLERS[MEntityTypes.TRIDENT$registryId] = createOptionalCustomProjectileEntityHandler(false);
         ADD_ENTITY_HANDLERS[MEntityTypes.ARROW$registryId] = createOptionalCustomProjectileEntityHandler(false);
         ADD_ENTITY_HANDLERS[MEntityTypes.SPECTRAL_ARROW$registryId] = createOptionalCustomProjectileEntityHandler(false);
+        if (VersionHelper.isOrAbove1_20_3()) {
+            ADD_ENTITY_HANDLERS[MEntityTypes.TNT$registryId] = simpleAddEntityHandler(PrimedTNTPacketHandler.INSTANCE);
+        }
         if (VersionHelper.isOrAbove1_20_5()) {
             ADD_ENTITY_HANDLERS[MEntityTypes.OMINOUS_ITEM_SPAWNER$registryId] = simpleAddEntityHandler(CommonItemPacketHandler.INSTANCE);
         }
@@ -237,10 +248,12 @@ public class PacketConsumers {
     }
 
     public static int remap(int stateId) {
+        // if (true) return 0;
         return mappings[stateId];
     }
 
     public static int remapMOD(int stateId) {
+        // if (true) return 0;
         return mappingsMOD[stateId];
     }
 
@@ -1946,7 +1959,7 @@ public class PacketConsumers {
                 for (int i = 0; i < packedItems.size(); i++) {
                     Object packedItem = packedItems.get(i);
                     int entityDataId = FastNMS.INSTANCE.field$SynchedEntityData$DataValue$id(packedItem);
-                    if (entityDataId != EntityDataUtils.CUSTOM_NAME_DATA_ID) continue;
+                    if (entityDataId != BaseEntityData.CustomName.id()) continue;
                     Optional<Object> optionalTextComponent = (Optional<Object>) FastNMS.INSTANCE.field$SynchedEntityData$DataValue$value(packedItem);
                     if (optionalTextComponent.isEmpty()) continue;
                     Object textComponent = optionalTextComponent.get();

@@ -28,7 +28,7 @@ public class CommonItemPacketHandler implements EntityPacketHandler {
         for (int i = 0; i < packedItems.size(); i++) {
             Object packedItem = packedItems.get(i);
             int entityDataId = FastNMS.INSTANCE.field$SynchedEntityData$DataValue$id(packedItem);
-            if (entityDataId != EntityDataUtils.ITEM_DATA_ID) continue;
+            if (entityDataId != EntityDataUtils.UNSAFE_ITEM_DATA_ID) continue;
             Object nmsItemStack = FastNMS.INSTANCE.field$SynchedEntityData$DataValue$value(packedItem);
             if (!CoreReflections.clazz$ItemStack.isInstance(nmsItemStack)) {
                 long time = System.currentTimeMillis();
