@@ -4,6 +4,7 @@ import io.netty.channel.Channel;
 import io.netty.channel.ChannelHandler;
 import net.kyori.adventure.text.Component;
 import net.momirealms.craftengine.core.plugin.Plugin;
+import net.momirealms.craftengine.core.util.IntIdentityList;
 import net.momirealms.craftengine.core.util.Key;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nullable;
@@ -71,4 +72,8 @@ public interface NetWorkUser {
     void setShouldProcessFinishConfiguration(boolean shouldProcess);
 
     boolean shouldProcessFinishConfiguration();
+
+    IntIdentityList clientBlockStateSize();
+
+    void setClientBlockStateSize(int size);
 }

@@ -4,7 +4,8 @@ import io.netty.buffer.ByteBuf;
 
 public enum NetWorkDataTypes {
     CLIENT_CUSTOM_BLOCK(NetWorkCodecs.INTEGER),
-    CANCEL_BLOCK_UPDATE(NetWorkCodecs.BOOLEAN);
+    CANCEL_BLOCK_UPDATE(NetWorkCodecs.BOOLEAN),
+    CLIENT_BLOCK_STATE_SIZE(NetWorkCodecs.INTEGER);
 
     private final NetWorkCodec<?> codec;
 

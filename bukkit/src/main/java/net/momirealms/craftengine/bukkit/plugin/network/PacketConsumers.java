@@ -90,7 +90,6 @@ public class PacketConsumers {
     private static int[] BLOCK_STATE_MAPPINGS;
     private static int[] MOD_BLOCK_STATE_MAPPINGS;
     private static IntIdentityList SERVER_BLOCK_LIST;
-    private static IntIdentityList CLIENT_BLOCK_LIST;
     private static IntIdentityList BIOME_LIST;
 
     public static void initEntities(int registrySize) {
@@ -247,7 +246,6 @@ public class PacketConsumers {
         BLOCK_STATE_MAPPINGS = newMappings;
         MOD_BLOCK_STATE_MAPPINGS = newMappingsMOD;
         SERVER_BLOCK_LIST = new IntIdentityList(registrySize);
-        CLIENT_BLOCK_LIST = new IntIdentityList(BlockStateUtils.vanillaStateSize());
         BIOME_LIST = new IntIdentityList(RegistryUtils.currentBiomeRegistrySize());
     }
 
@@ -308,7 +306,7 @@ public class PacketConsumers {
                 FriendlyByteBuf friendlyByteBuf = new FriendlyByteBuf(byteBuf);
                 FriendlyByteBuf newBuf = new FriendlyByteBuf(Unpooled.buffer());
                 for (int i = 0, count = player.clientSideSectionCount(); i < count; i++) {
-                    MCSection mcSection = new MCSection(SERVER_BLOCK_LIST, SERVER_BLOCK_LIST, BIOME_LIST);
+                    MCSection mcSection = new MCSection(user.clientBlockStateSize(), SERVER_BLOCK_LIST, BIOME_LIST);
                     mcSection.readPacket(friendlyByteBuf);
                     PalettedContainer<Integer> container = mcSection.blockStateContainer();
                     Palette<Integer> palette = container.data().palette();
@@ -331,7 +329,7 @@ public class PacketConsumers {
                 FriendlyByteBuf friendlyByteBuf = new FriendlyByteBuf(byteBuf);
                 FriendlyByteBuf newBuf = new FriendlyByteBuf(Unpooled.buffer());
                 for (int i = 0, count = player.clientSideSectionCount(); i < count; i++) {
-                    MCSection mcSection = new MCSection(CLIENT_BLOCK_LIST, SERVER_BLOCK_LIST, BIOME_LIST);
+                    MCSection mcSection = new MCSection(user.clientBlockStateSize(), SERVER_BLOCK_LIST, BIOME_LIST);
                     mcSection.readPacket(friendlyByteBuf);
                     PalettedContainer<Integer> container = mcSection.blockStateContainer();
                     Palette<Integer> palette = container.data().palette();
@@ -1914,6 +1912,7 @@ public class PacketConsumers {
             NetWorkDataTypes dataType = buf.readEnumConstant(NetWorkDataTypes.class);
             if (dataType == NetWorkDataTypes.CLIENT_CUSTOM_BLOCK) {
                 int clientBlockRegistrySize = dataType.decode(buf);
+                user.setClientBlockStateSize(clientBlockRegistrySize);
                 int serverBlockRegistrySize = RegistryUtils.currentBlockRegistrySize();
                 if (clientBlockRegistrySize != serverBlockRegistrySize) {
                     user.kick(Component.translatable(
@@ -1931,6 +1930,9 @@ public class PacketConsumers {
                     dataType.encode(bufPayload, true);
                     user.sendCustomPayload(NetworkManager.MOD_CHANNEL_KEY, bufPayload.array());
                 }
+            } else if (dataType == NetWorkDataTypes.CLIENT_BLOCK_STATE_SIZE) {
+                int clientBlockStateSize = dataType.decode(buf);
+                user.setClientBlockStateSize(clientBlockStateSize);
             }
         } catch (Throwable e) {
             CraftEngine.instance().logger().warn("Failed to handle ServerboundCustomPayloadPacket", e);

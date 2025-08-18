@@ -32,6 +32,7 @@ import net.momirealms.craftengine.core.plugin.network.ConnectionState;
 import net.momirealms.craftengine.core.plugin.network.EntityPacketHandler;
 import net.momirealms.craftengine.core.sound.SoundSource;
 import net.momirealms.craftengine.core.util.Direction;
+import net.momirealms.craftengine.core.util.IntIdentityList;
 import net.momirealms.craftengine.core.util.Key;
 import net.momirealms.craftengine.core.util.VersionHelper;
 import net.momirealms.craftengine.core.world.BlockPos;
@@ -75,6 +76,7 @@ public class BukkitServerPlayer extends Player {
     // client side dimension info
     private int sectionCount;
     private Key clientSideDimension;
+    private IntIdentityList clientBlockStateSize = new IntIdentityList(BlockStateUtils.vanillaStateSize());
     // check main hand/offhand interaction
     private int lastSuccessfulInteraction;
     // to prevent duplicated events
@@ -923,6 +925,16 @@ public class BukkitServerPlayer extends Player {
     @Override
     public boolean shouldProcessFinishConfiguration() {
         return this.shouldProcessFinishConfiguration;
+    }
+
+    @Override
+    public IntIdentityList clientBlockStateSize() {
+        return this.clientBlockStateSize;
+    }
+
+    @Override
+    public void setClientBlockStateSize(int size) {
+        this.clientBlockStateSize = new IntIdentityList(size);
     }
 
     @Override
