@@ -89,7 +89,8 @@ public class PacketConsumers {
     private static BukkitNetworkManager.Handlers[] ADD_ENTITY_HANDLERS;
     private static int[] BLOCK_STATE_MAPPINGS;
     private static int[] MOD_BLOCK_STATE_MAPPINGS;
-    private static IntIdentityList BLOCK_LIST;
+    private static IntIdentityList SERVER_BLOCK_LIST;
+    private static IntIdentityList CLIENT_BLOCK_LIST;
     private static IntIdentityList BIOME_LIST;
 
     public static void initEntities(int registrySize) {
@@ -245,7 +246,8 @@ public class PacketConsumers {
         }
         BLOCK_STATE_MAPPINGS = newMappings;
         MOD_BLOCK_STATE_MAPPINGS = newMappingsMOD;
-        BLOCK_LIST = new IntIdentityList(registrySize);
+        SERVER_BLOCK_LIST = new IntIdentityList(registrySize);
+        CLIENT_BLOCK_LIST = new IntIdentityList(BlockStateUtils.vanillaStateSize());
         BIOME_LIST = new IntIdentityList(RegistryUtils.currentBiomeRegistrySize());
     }
 
@@ -306,26 +308,22 @@ public class PacketConsumers {
                 FriendlyByteBuf friendlyByteBuf = new FriendlyByteBuf(byteBuf);
                 FriendlyByteBuf newBuf = new FriendlyByteBuf(Unpooled.buffer());
                 for (int i = 0, count = player.clientSideSectionCount(); i < count; i++) {
-                    try {
-                        MCSection mcSection = new MCSection(BLOCK_LIST, BIOME_LIST);
-                        mcSection.readPacket(friendlyByteBuf);
-                        PalettedContainer<Integer> container = mcSection.blockStateContainer();
-                        Palette<Integer> palette = container.data().palette();
-                        if (palette.canRemap()) {
-                            palette.remap(PacketConsumers::remapMOD);
-                        } else {
-                            for (int j = 0; j < 4096; j++) {
-                                int state = container.get(j);
-                                int newState = remapMOD(state);
-                                if (newState != state) {
-                                    container.set(j, newState);
-                                }
+                    MCSection mcSection = new MCSection(SERVER_BLOCK_LIST, SERVER_BLOCK_LIST, BIOME_LIST);
+                    mcSection.readPacket(friendlyByteBuf);
+                    PalettedContainer<Integer> container = mcSection.blockStateContainer();
+                    Palette<Integer> palette = container.data().palette();
+                    if (palette.canRemap()) {
+                        palette.remap(PacketConsumers::remapMOD);
+                    } else {
+                        for (int j = 0; j < 4096; j++) {
+                            int state = container.get(j);
+                            int newState = remapMOD(state);
+                            if (newState != state) {
+                                container.set(j, newState);
                             }
                         }
-                        mcSection.writePacket(newBuf);
-                    } catch (Exception e) {
-                        break;
                     }
+                    mcSection.writePacket(newBuf);
                 }
                 buffer = newBuf.array();
             } else {
@@ -333,26 +331,22 @@ public class PacketConsumers {
                 FriendlyByteBuf friendlyByteBuf = new FriendlyByteBuf(byteBuf);
                 FriendlyByteBuf newBuf = new FriendlyByteBuf(Unpooled.buffer());
                 for (int i = 0, count = player.clientSideSectionCount(); i < count; i++) {
-                    try {
-                        MCSection mcSection = new MCSection(BLOCK_LIST, BIOME_LIST);
-                        mcSection.readPacket(friendlyByteBuf);
-                        PalettedContainer<Integer> container = mcSection.blockStateContainer();
-                        Palette<Integer> palette = container.data().palette();
-                        if (palette.canRemap()) {
-                            palette.remap(PacketConsumers::remap);
-                        } else {
-                            for (int j = 0; j < 4096; j++) {
-                                int state = container.get(j);
-                                int newState = remap(state);
-                                if (newState != state) {
-                                    container.set(j, newState);
-                                }
+                    MCSection mcSection = new MCSection(CLIENT_BLOCK_LIST, SERVER_BLOCK_LIST, BIOME_LIST);
+                    mcSection.readPacket(friendlyByteBuf);
+                    PalettedContainer<Integer> container = mcSection.blockStateContainer();
+                    Palette<Integer> palette = container.data().palette();
+                    if (palette.canRemap()) {
+                        palette.remap(PacketConsumers::remap);
+                    } else {
+                        for (int j = 0; j < 4096; j++) {
+                            int state = container.get(j);
+                            int newState = remap(state);
+                            if (newState != state) {
+                                container.set(j, newState);
                             }
                         }
-                        mcSection.writePacket(newBuf);
-                    } catch (Exception e) {
-                        break;
                     }
+                    mcSection.writePacket(newBuf);
                 }
                 buffer = newBuf.array();
             }

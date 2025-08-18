@@ -43,6 +43,7 @@ import net.momirealms.craftengine.core.registry.WritableRegistry;
 import net.momirealms.craftengine.core.sound.SoundData;
 import net.momirealms.craftengine.core.sound.Sounds;
 import net.momirealms.craftengine.core.util.*;
+import net.momirealms.craftengine.core.world.chunk.PalettedContainer;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.NamespacedKey;
@@ -327,7 +328,9 @@ public final class BukkitBlockManager extends AbstractBlockManager {
             this.realBlockArranger = builder3.build();
             this.registeredBlocks = builder4.build();
             this.blockRegisterOrder = ImmutableList.copyOf(order);
-
+            if (MCUtils.ceilLog2(BlockStateUtils.vanillaStateSize() + counter) == MCUtils.ceilLog2(BlockStateUtils.vanillaStateSize())) {
+                PalettedContainer.NEED_DOWNGRADE = false;
+            }
             for (Object block : (Iterable<Object>) MBuiltInRegistries.BLOCK) {
                 Object soundType = CoreReflections.field$BlockBehaviour$soundType.get(block);
                 if (affectedBlockSounds.contains(soundType)) {

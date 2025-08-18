@@ -16,13 +16,11 @@ import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
-import java.util.function.BiConsumer;
-import java.util.function.Consumer;
-import java.util.function.IntUnaryOperator;
-import java.util.function.Predicate;
+import java.util.function.*;
 import java.util.stream.LongStream;
 
 public class PalettedContainer<T> implements PaletteResizeListener<T>, ReadableContainer<T> {
+    public static boolean NEED_DOWNGRADE = true;
     private static final BiConsumer<FriendlyByteBuf, long[]> RAW_DATA_WRITER = VersionHelper.isOrAbove1_21_5() ?
             (FriendlyByteBuf::writeFixedSizeLongArray) : (FriendlyByteBuf::writeLongArray);
     private static final BiConsumer<FriendlyByteBuf, long[]> RAW_DATA_READER = VersionHelper.isOrAbove1_21_5() ?
@@ -74,35 +72,43 @@ public class PalettedContainer<T> implements PaletteResizeListener<T>, ReadableC
         return false;
     }
 
+    public PalettedContainer<T> downgradeTo(IndexedIterable<T> idList) {
+        if (!NEED_DOWNGRADE) {
+            return this;
+        }
+        Palette<T> palette = this.data.palette;
+        if (!(palette instanceof IdListPalette<T> idListPalette)) {
+            return this;
+        }
+        Data<T> newData = getCompatibleData(this.data, idList, 128);
+        newData.importFrom(idListPalette, this.data.storage);
+        return new PalettedContainer<>(idList, PaletteProvider.BLOCK_STATE, newData);
+    }
+
     public Data<T> data() {
         return data;
     }
 
     public void readPacket(FriendlyByteBuf buf) {
-        this.lock();
-        try {
-            int i = buf.readByte();
-            Data<T> data = this.getCompatibleData(this.data, i);
-            data.palette.readPacket(buf);
-            RAW_DATA_READER.accept(buf, data.storage.getData());
-            this.data = data;
-        } finally {
-            this.unlock();
-        }
+        int i = buf.readByte();
+        Data<T> data = this.getCompatibleData(this.data, i);
+        data.palette.readPacket(buf);
+        RAW_DATA_READER.accept(buf, data.storage.getData());
+        this.data = data;
     }
 
     @Override
     public void writePacket(FriendlyByteBuf buf) {
-        this.lock();
-        try {
-            this.data.writePacket(buf);
-        } finally {
-            this.unlock();
-        }
+        this.data.writePacket(buf);
     }
 
     private Data<T> getCompatibleData(@Nullable Data<T> previousData, int bits) {
         DataProvider<T> dataProvider = this.paletteProvider.createDataProvider(this.idList, bits);
+        return previousData != null && dataProvider.equals(previousData.configuration()) ? previousData : dataProvider.createData(this.idList, this, this.paletteProvider.getContainerSize());
+    }
+
+    private Data<T> getCompatibleData(@Nullable Data<T> previousData, IndexedIterable<T> idList, int bits) {
+        DataProvider<T> dataProvider = this.paletteProvider.createDataProvider(idList, bits);
         return previousData != null && dataProvider.equals(previousData.configuration()) ? previousData : dataProvider.createData(this.idList, this, this.paletteProvider.getContainerSize());
     }
 
