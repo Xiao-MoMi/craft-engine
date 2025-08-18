@@ -32,6 +32,7 @@ public final class ItemDataModifiers {
     public static final Key ATTRIBUTES = Key.of("craftengine:attributes");
     public static final Key ARGUMENTS = Key.of("craftengine:arguments");
     public static final Key VERSION = Key.of("craftengine:version");
+    public static final Key PDC = Key.of("craftengine:pdc");
     public static final Key ITEM_NAME = Key.of("craftengine:item-name");
     public static final Key OVERWRITABLE_ITEM_NAME = Key.of("craftengine:overwritable-item-name");
     public static final Key JUKEBOX_PLAYABLE = Key.of("craftengine:jukebox-playable");
@@ -74,6 +75,7 @@ public final class ItemDataModifiers {
         register(HIDE_TOOLTIP, HideTooltipModifier.FACTORY);
         register(ARGUMENTS, ArgumentsModifier.FACTORY);
         register(OVERWRITABLE_ITEM_NAME, OverwritableItemNameModifier.FACTORY);
+        register(PDC, PDCModifier.FACTORY);
         if (VersionHelper.isOrAbove1_20_5()) {
             register(CUSTOM_NAME, CustomNameModifier.FACTORY);
             register(ITEM_NAME, ItemNameModifier.FACTORY);
