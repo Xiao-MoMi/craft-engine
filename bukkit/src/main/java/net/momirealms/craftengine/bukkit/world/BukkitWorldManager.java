@@ -54,6 +54,9 @@ public class BukkitWorldManager implements WorldManager, Listener {
         this.plugin = plugin;
         this.worlds = new HashMap<>();
         this.storageAdaptor = new DefaultStorageAdaptor();
+        for (World world : Bukkit.getWorlds()) {
+            this.worlds.put(world.getUID(), new BukkitCEWorld(new BukkitWorld(world), this.storageAdaptor));
+        }
     }
 
     @Override
@@ -98,7 +101,6 @@ public class BukkitWorldManager implements WorldManager, Listener {
 
     public void delayedInit() {
         // events and tasks
-        Bukkit.getPluginManager().registerEvents(this, this.plugin.javaPlugin());
         this.tickTask = this.plugin.scheduler().asyncRepeating(() -> {
             try {
                 if (this.isTicking) {
@@ -117,9 +119,7 @@ public class BukkitWorldManager implements WorldManager, Listener {
         try {
             for (World world : Bukkit.getWorlds()) {
                 try {
-                    CEWorld ceWorld = new BukkitCEWorld(new BukkitWorld(world), this.storageAdaptor);
-                    this.worlds.put(world.getUID(), ceWorld);
-                    this.resetWorldArray();
+                    CEWorld ceWorld = this.worlds.computeIfAbsent(world.getUID(), k -> new BukkitCEWorld(new BukkitWorld(world), this.storageAdaptor));
                     for (Chunk chunk : world.getLoadedChunks()) {
                         handleChunkLoad(ceWorld, chunk);
                     }
@@ -127,9 +127,11 @@ public class BukkitWorldManager implements WorldManager, Listener {
                     CraftEngine.instance().logger().warn("Error loading world: " + world.getName(), e);
                 }
             }
+            this.resetWorldArray();
         } finally {
             this.worldMapLock.writeLock().unlock();
         }
+        Bukkit.getPluginManager().registerEvents(this, this.plugin.javaPlugin());
     }
 
     @Override
@@ -246,6 +248,7 @@ public class BukkitWorldManager implements WorldManager, Listener {
 
     @EventHandler(ignoreCancelled = true, priority = EventPriority.LOWEST)
     public void onChunkLoad(ChunkLoadEvent event) {
+        if (!this.fullyLoaded) return;
         this.worldMapLock.readLock().lock();
         CEWorld world;
         try {
@@ -261,6 +264,7 @@ public class BukkitWorldManager implements WorldManager, Listener {
 
     @EventHandler(ignoreCancelled = true, priority = EventPriority.HIGHEST)
     public void onChunkUnload(ChunkUnloadEvent event) {
+        if (!this.fullyLoaded) return;
         CEWorld world;
         this.worldMapLock.readLock().lock();
         try {
