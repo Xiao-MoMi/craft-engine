@@ -16,7 +16,10 @@ import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
-import java.util.function.*;
+import java.util.function.BiConsumer;
+import java.util.function.Consumer;
+import java.util.function.IntUnaryOperator;
+import java.util.function.Predicate;
 import java.util.stream.LongStream;
 
 public class PalettedContainer<T> implements PaletteResizeListener<T>, ReadableContainer<T> {

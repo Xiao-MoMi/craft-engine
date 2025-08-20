@@ -6,13 +6,10 @@ import net.momirealms.craftengine.core.item.ItemBuildContext;
 import net.momirealms.craftengine.core.item.ItemDataModifierFactory;
 import net.momirealms.craftengine.core.plugin.CraftEngine;
 import net.momirealms.craftengine.core.util.Key;
-import net.momirealms.craftengine.core.util.MiscUtils;
 import net.momirealms.craftengine.core.util.ResourceConfigUtils;
 import net.momirealms.craftengine.core.util.VersionHelper;
 import net.momirealms.sparrow.nbt.CompoundTag;
-import net.momirealms.sparrow.nbt.Tag;
 
-import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 

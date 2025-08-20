@@ -3,8 +3,6 @@ package net.momirealms.craftengine.bukkit.block;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
-import com.google.gson.JsonElement;
-import com.google.gson.JsonObject;
 import it.unimi.dsi.fastutil.ints.Int2IntOpenHashMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
@@ -26,16 +24,7 @@ import net.momirealms.craftengine.bukkit.util.TagUtils;
 import net.momirealms.craftengine.core.block.*;
 import net.momirealms.craftengine.core.block.behavior.EmptyBlockBehavior;
 import net.momirealms.craftengine.core.block.parser.BlockStateParser;
-import net.momirealms.craftengine.core.block.properties.Properties;
-import net.momirealms.craftengine.core.block.properties.Property;
-import net.momirealms.craftengine.core.loot.LootTable;
-import net.momirealms.craftengine.core.pack.LoadingSequence;
-import net.momirealms.craftengine.core.pack.Pack;
-import net.momirealms.craftengine.core.pack.ResourceLocation;
-import net.momirealms.craftengine.core.pack.model.generation.ModelGeneration;
-import net.momirealms.craftengine.core.plugin.config.ConfigParser;
 import net.momirealms.craftengine.core.plugin.config.StringKeyConstructor;
-import net.momirealms.craftengine.core.plugin.context.event.EventFunctions;
 import net.momirealms.craftengine.core.plugin.locale.LocalizedResourceConfigException;
 import net.momirealms.craftengine.core.registry.BuiltInRegistries;
 import net.momirealms.craftengine.core.registry.Holder;
@@ -47,7 +36,6 @@ import net.momirealms.craftengine.core.world.chunk.PalettedContainer;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.NamespacedKey;
-import org.bukkit.Registry;
 import org.bukkit.block.data.BlockData;
 import org.bukkit.event.HandlerList;
 import org.jetbrains.annotations.NotNull;
@@ -69,14 +57,12 @@ import java.util.function.Predicate;
 public final class BukkitBlockManager extends AbstractBlockManager {
     private static BukkitBlockManager instance;
     private final BukkitCraftEngine plugin;
-    private final BlockParser blockParser;
+
     // The total amount of blocks registered
     private int customBlockCount;
     private ImmutableBlockState[] stateId2ImmutableBlockStates;
     // Minecraft objects
     // Cached new blocks $ holders
-    private Map<Key, Integer> internalId2StateId;
-    private Map<Key, DelegatingBlock> registeredBlocks;
     private Map<Integer, Object> stateId2BlockHolder;
     // This map is used to change the block states that are not necessarily needed into a certain block state
     private Map<Integer, Integer> blockAppearanceMapper;
@@ -100,7 +86,6 @@ public final class BukkitBlockManager extends AbstractBlockManager {
         super(plugin);
         instance = this;
         this.plugin = plugin;
-        this.blockParser = new BlockParser();
         this.initVanillaRegistry();
         this.loadMappingsAndAdditionalBlocks();
         this.registerBlocks();
@@ -230,12 +215,7 @@ public final class BukkitBlockManager extends AbstractBlockManager {
     }
 
     @Override
-    public ConfigParser parser() {
-        return this.blockParser;
-    }
-
-    @Override
-    public void addBlock(Key id, CustomBlock customBlock) {
+    public void addBlockInternal(Key id, CustomBlock customBlock) {
         // bind appearance and real state
         for (ImmutableBlockState state : customBlock.variantProvider().states()) {
             ImmutableBlockState previous = this.stateId2ImmutableBlockStates[state.customBlockState().registryId() - BlockStateUtils.vanillaStateSize()];
@@ -246,12 +226,17 @@ public final class BukkitBlockManager extends AbstractBlockManager {
             this.tempBlockAppearanceConvertor.put(state.customBlockState().registryId(), state.vanillaBlockState().registryId());
             this.appearanceToRealState.computeIfAbsent(state.vanillaBlockState().registryId(), k -> new IntArrayList()).add(state.customBlockState().registryId());
         }
-        super.addBlock(id, customBlock);
+        super.addBlockInternal(id, customBlock);
     }
 
     @Override
     public Key getBlockOwnerId(BlockStateWrapper state) {
         return BlockStateUtils.getBlockOwnerIdFromState(state.handle());
+    }
+
+    @Override
+    protected Key getBlockOwnerId(int id) {
+        return BlockStateUtils.getBlockOwnerIdFromState(BlockStateUtils.idToBlockState(id));
     }
 
     @Override
@@ -298,6 +283,11 @@ public final class BukkitBlockManager extends AbstractBlockManager {
         int vanillaStateCount = RegistryUtils.currentBlockRegistrySize();
         this.plugin.logger().info("Vanilla block count: " + vanillaStateCount);
         BlockStateUtils.init(vanillaStateCount);
+    }
+
+    @Override
+    protected CustomBlock.Builder platformBuilder(Key id) {
+        return BukkitCustomBlock.builder(id);
     }
 
     @SuppressWarnings("unchecked")
@@ -404,225 +394,6 @@ public final class BukkitBlockManager extends AbstractBlockManager {
 
     public Object cachedUpdateTagsPacket() {
         return cachedUpdateTagsPacket;
-    }
-
-    public class BlockParser implements ConfigParser {
-        public static final String[] CONFIG_SECTION_NAME = new String[]{"blocks", "block"};
-
-        @Override
-        public String[] sectionId() {
-            return CONFIG_SECTION_NAME;
-        }
-
-        @Override
-        public int loadingSequence() {
-            return LoadingSequence.BLOCK;
-        }
-
-        @Override
-        public void parseSection(Pack pack, Path path, Key id, Map<String, Object> section) {
-            if (id.namespace().equals("minecraft") && Registry.MATERIAL.get(KeyUtils.toNamespacedKey(id)) != null) {
-                parseVanillaBlock(pack, path, id, section);
-            } else {
-                // check duplicated config
-                if (BukkitBlockManager.this.byId.containsKey(id)) {
-                    throw new LocalizedResourceConfigException("warning.config.block.duplicate");
-                }
-                parseCustomBlock(pack, path, id, section);
-            }
-        }
-
-        private void parseCustomBlock(Pack pack, Path path, Key id, Map<String, Object> section) {
-            // read block settings
-            BlockSettings settings = BlockSettings.fromMap(id, MiscUtils.castToMap(section.get("settings"), true));
-            // read states
-            Map<String, Property<?>> properties;
-            Map<String, Integer> appearances;
-            Map<String, BlockStateVariant> variants;
-
-            Map<String, Object> stateSection = MiscUtils.castToMap(ResourceConfigUtils.requireNonNullOrThrow(ResourceConfigUtils.get(section, "state", "states"), "warning.config.block.missing_state"), true);
-            boolean singleState = !stateSection.containsKey("properties");
-            // single state
-            if (singleState) {
-                properties = Map.of();
-                int internalId = ResourceConfigUtils.getAsInt(ResourceConfigUtils.requireNonNullOrThrow(stateSection.get("id"), "warning.config.block.state.missing_real_id"), "id");
-                VanillaBlockState vanillaBlock = getVanillaBlock(id, stateSection);
-                appearances = Map.of("", vanillaBlock.registryId());
-                Key internalBlockId = Key.of(Key.DEFAULT_NAMESPACE, vanillaBlock.type().value() + "_" + internalId);
-                int internalBlockRegistryId = Optional.ofNullable(internalId2StateId.get(internalBlockId)).orElse(-1);
-                if (internalBlockRegistryId == -1) {
-                    throw new LocalizedResourceConfigException("warning.config.block.state.invalid_real_id", internalBlockId.toString(), String.valueOf(availableAppearances(vanillaBlock.type()) - 1));
-                }
-                variants = Map.of("", new BlockStateVariant("", settings, internalBlockRegistryId));
-            } else {
-                // properties
-                properties = getProperties(MiscUtils.castToMap(ResourceConfigUtils.requireNonNullOrThrow(stateSection.get("properties"), "warning.config.block.state.missing_properties"), true));
-                // appearance
-                appearances = new HashMap<>();
-                Map<String, Key> appearance2BlockType = new HashMap<>();
-                for (Map.Entry<String, Object> appearanceEntry : MiscUtils.castToMap(ResourceConfigUtils.requireNonNullOrThrow(stateSection.get("appearances"), "warning.config.block.state.missing_appearances"), false).entrySet()) {
-                    if (appearanceEntry.getValue() instanceof Map<?, ?>) {
-                        VanillaBlockState vanillaBlock = getVanillaBlock(id, MiscUtils.castToMap(appearanceEntry.getValue(), false));
-                        appearances.put(appearanceEntry.getKey(), vanillaBlock.registryId());
-                        appearance2BlockType.put(appearanceEntry.getKey(), vanillaBlock.type());
-                    }
-                }
-                // variants
-                variants = new HashMap<>();
-                for (Map.Entry<String, Object> variantEntry : MiscUtils.castToMap(ResourceConfigUtils.requireNonNullOrThrow(stateSection.get("variants"), "warning.config.block.state.missing_variants"), false).entrySet()) {
-                    if (variantEntry.getValue() instanceof Map<?, ?>) {
-                        Map<String, Object> variantSection = MiscUtils.castToMap(variantEntry.getValue(), false);
-                        String variantNBT = variantEntry.getKey();
-                        String appearance = ResourceConfigUtils.requireNonEmptyStringOrThrow(variantSection.get("appearance"), "warning.config.block.state.variant.missing_appearance");
-                        if (!appearances.containsKey(appearance)) {
-                            throw new LocalizedResourceConfigException("warning.config.block.state.variant.invalid_appearance", variantNBT, appearance);
-                        }
-                        int internalId = ResourceConfigUtils.getAsInt(ResourceConfigUtils.requireNonNullOrThrow(variantSection.get("id"), "warning.config.block.state.missing_real_id"), "id");
-                        Key baseBlock = appearance2BlockType.get(appearance);
-                        Key internalBlockId = Key.of(Key.DEFAULT_NAMESPACE, baseBlock.value() + "_" + internalId);
-                        int internalBlockRegistryId = Optional.ofNullable(internalId2StateId.get(internalBlockId)).orElse(-1);
-                        if (internalBlockRegistryId == -1) {
-                            throw new LocalizedResourceConfigException("warning.config.block.state.invalid_real_id", internalBlockId.toString(), String.valueOf(availableAppearances(baseBlock) - 1));
-                        }
-                        Map<String, Object> anotherSetting = MiscUtils.castToMap(variantSection.get("settings"), true);
-                        variants.put(variantNBT, new BlockStateVariant(appearance, anotherSetting == null ? settings : BlockSettings.ofFullCopy(settings, anotherSetting), internalBlockRegistryId));
-                    }
-                }
-            }
-
-            CustomBlock block = BukkitCustomBlock.builder(id)
-                    .appearances(appearances)
-                    .variantMapper(variants)
-                    .properties(properties)
-                    .settings(settings)
-                    .lootTable(LootTable.fromMap(MiscUtils.castToMap(section.get("loot"), true)))
-                    .behavior(MiscUtils.getAsMapList(ResourceConfigUtils.get(section, "behavior", "behaviors")))
-                    .events(EventFunctions.parseEvents(ResourceConfigUtils.get(section, "events", "event")))
-                    .build();
-
-            addBlock(id, block);
-        }
-
-        private void parseVanillaBlock(Pack pack, Path path, Key id, Map<String, Object> section) {
-            Map<String, Object> settings = MiscUtils.castToMap(section.get("settings"), true);
-            if (settings != null) {
-                Object clientBoundTags = settings.get("client-bound-tags");
-                if (clientBoundTags instanceof List<?> list) {
-                    List<String> clientSideTags = MiscUtils.getAsStringList(list).stream().filter(ResourceLocation::isValid).toList();
-                    Object nmsBlock = FastNMS.INSTANCE.method$Registry$getValue(MBuiltInRegistries.BLOCK, KeyUtils.toResourceLocation(id));
-                    FastNMS.INSTANCE.method$IdMap$getId(MBuiltInRegistries.BLOCK, nmsBlock).ifPresent(i ->
-                            BukkitBlockManager.this.clientBoundTags.put(i, clientSideTags));
-                }
-            }
-        }
-    }
-
-    @NotNull
-    private Map<String, Property<?>> getProperties(Map<String, Object> propertiesSection) {
-        Map<String, Property<?>> properties = new HashMap<>();
-        for (Map.Entry<String, Object> entry : propertiesSection.entrySet()) {
-            Property<?> property = Properties.fromMap(entry.getKey(), MiscUtils.castToMap(entry.getValue(), false));
-            properties.put(entry.getKey(), property);
-        }
-        return properties;
-    }
-
-    @NotNull
-    private VanillaBlockState getVanillaBlock(Key id, Map<String, Object> section) {
-        // require state non null
-        String vanillaBlockStateTag = ResourceConfigUtils.requireNonEmptyStringOrThrow(section.get("state"), "warning.config.block.state.missing_state");
-        // get its registry id
-        int vanillaBlockStateRegistryId = getVanillaBlockStateRegistryId(vanillaBlockStateTag);
-        // check if another block has occupied the appearance
-        // TODO blocks share the same look
-        Key ifAny = this.tempRegistryIdConflictMap.get(vanillaBlockStateRegistryId);
-        if (ifAny != null && !ifAny.equals(id)) {
-            throw new LocalizedResourceConfigException("warning.config.block.state.conflict", BlockStateUtils.fromBlockData(BlockStateUtils.idToBlockState(vanillaBlockStateRegistryId)).getAsString(), ifAny.toString());
-        }
-        // require models not to be null
-        Object models = ResourceConfigUtils.requireNonNullOrThrow(ResourceConfigUtils.get(section, "models", "model"), "warning.config.block.state.missing_model");
-        List<JsonObject> variants = ResourceConfigUtils.parseConfigAsList(models, this::getVariantModel);
-        if (variants.isEmpty()) {
-            throw new LocalizedResourceConfigException("warning.config.block.state.missing_model");
-        }
-        // TODO blocks share the same look
-        this.tempRegistryIdConflictMap.put(vanillaBlockStateRegistryId, id);
-        // gets the full block state
-        String blockState = BlockStateUtils.idToBlockState(vanillaBlockStateRegistryId).toString();
-        Key blockId = Key.of(blockState.substring(blockState.indexOf('{') + 1, blockState.lastIndexOf('}')));
-        String propertyNBT = blockState.substring(blockState.indexOf('[') + 1, blockState.lastIndexOf(']'));
-        // for generating assets
-        JsonElement combinedVariant = GsonHelper.combine(variants);
-        this.blockStateOverrides.computeIfAbsent(blockId, k -> new HashMap<>()).put(propertyNBT, combinedVariant);
-        this.tempVanillaBlockStateModels.put(vanillaBlockStateRegistryId, combinedVariant);
-        return new VanillaBlockState(blockId, propertyNBT, vanillaBlockStateRegistryId);
-    }
-
-    public record VanillaBlockState(Key type, String properties, int registryId) {
-    }
-
-    private JsonObject getVariantModel(Map<String, Object> singleModelMap) {
-        JsonObject json = new JsonObject();
-        String modelPath = ResourceConfigUtils.requireNonEmptyStringOrThrow(singleModelMap.get("path"), "warning.config.block.state.model.missing_path");
-        if (!ResourceLocation.isValid(modelPath)) {
-            throw new LocalizedResourceConfigException("warning.config.block.state.model.invalid_path", modelPath);
-        }
-        json.addProperty("model", modelPath);
-        if (singleModelMap.containsKey("x"))
-            json.addProperty("x", ResourceConfigUtils.getAsInt(singleModelMap.get("x"), "x"));
-        if (singleModelMap.containsKey("y"))
-            json.addProperty("y", ResourceConfigUtils.getAsInt(singleModelMap.get("y"), "y"));
-        if (singleModelMap.containsKey("uvlock")) json.addProperty("uvlock", ResourceConfigUtils.getAsBoolean(singleModelMap.get("uvlock"), "uvlock"));
-        if (singleModelMap.containsKey("weight"))
-            json.addProperty("weight", ResourceConfigUtils.getAsInt(singleModelMap.get("weight"), "weight"));
-        Map<String, Object> generationMap = MiscUtils.castToMap(singleModelMap.get("generation"), true);
-        if (generationMap != null) {
-            prepareModelGeneration(ModelGeneration.of(Key.of(modelPath), generationMap));
-        }
-        return json;
-    }
-
-    private int getVanillaBlockStateRegistryId(String blockState) {
-        String[] split = blockState.split(":", 3);
-        if (split.length >= 4) {
-            throw new LocalizedResourceConfigException("warning.config.block.state.invalid_vanilla", blockState);
-        }
-        int registryId;
-        String stateOrId = split[split.length - 1];
-        boolean isId = !stateOrId.contains("[") && !stateOrId.contains("]");
-        if (isId) {
-            if (split.length == 1) {
-                throw new LocalizedResourceConfigException("warning.config.block.state.invalid_vanilla", blockState);
-            }
-            Key block = split.length == 2 ? Key.of(split[0]) : Key.of(split[0], split[1]);
-            try {
-                int id = split.length == 2 ? Integer.parseInt(split[1]) : Integer.parseInt(split[2]);
-                if (id < 0) {
-                    throw new LocalizedResourceConfigException("warning.config.block.state.invalid_vanilla", blockState);
-                }
-                List<Integer> arranger = this.blockAppearanceArranger.get(block);
-                if (arranger == null) {
-                    throw new LocalizedResourceConfigException("warning.config.block.state.unavailable_vanilla", blockState);
-                }
-                if (id >= arranger.size()) {
-                    throw new LocalizedResourceConfigException("warning.config.block.state.invalid_vanilla_id", blockState, String.valueOf(arranger.size() - 1));
-                }
-                registryId = arranger.get(id);
-            } catch (NumberFormatException e) {
-                throw new LocalizedResourceConfigException("warning.config.block.state.invalid_vanilla", e, blockState);
-            }
-        } else {
-            try {
-                BlockData blockData = Bukkit.createBlockData(blockState);
-                registryId = BlockStateUtils.blockDataToId(blockData);
-                if (!this.blockAppearanceMapper.containsKey(registryId)) {
-                    throw new LocalizedResourceConfigException("warning.config.block.state.unavailable_vanilla", blockState);
-                }
-            } catch (IllegalArgumentException e) {
-                throw new LocalizedResourceConfigException("warning.config.block.state.invalid_vanilla", e, blockState);
-            }
-        }
-        return registryId;
     }
 
     private void loadMappingsAndAdditionalBlocks() {
@@ -762,13 +533,19 @@ public final class BukkitBlockManager extends AbstractBlockManager {
     }
 
     private LinkedHashMap<Key, Integer> buildRegisteredRealBlockSlots(Map<Key, Integer> counter, Map<String, Object> additionalYaml) {
-        LinkedHashMap<Key, Integer> map = new LinkedHashMap<>();
-        for (Map.Entry<Key, Integer> entry : counter.entrySet()) {
-            String id = entry.getKey().toString();
-            int additionalStates = (int) additionalYaml.getOrDefault(id, 0);
-            int internalIds = entry.getValue() + additionalStates;
-            plugin.logger().info("Loaded " + id + " with " + entry.getValue() + " appearances and " + internalIds + " real block states");
-            map.put(entry.getKey(), internalIds);
+        LinkedHashMap<Key, Integer> map = new LinkedHashMap<>(counter);
+        for (Map.Entry<String, Object> entry : additionalYaml.entrySet()) {
+            Key blockType = Key.of(entry.getKey());
+            if (entry.getValue() instanceof Integer i) {
+                int previous = map.getOrDefault(blockType, 0);
+                if (previous == 0) {
+                    map.put(blockType, i);
+                    this.plugin.logger().info("Loaded " + blockType + " with " + i + " real block states");
+                } else {
+                    map.put(blockType, i + previous);
+                    this.plugin.logger().info("Loaded " + blockType + " with " + previous + " appearances and " + (i + previous) + " real block states");
+                }
+            }
         }
         return map;
     }

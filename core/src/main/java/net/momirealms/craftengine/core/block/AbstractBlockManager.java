@@ -6,6 +6,7 @@ import it.unimi.dsi.fastutil.ints.Int2IntOpenHashMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import net.momirealms.craftengine.core.block.properties.Properties;
 import net.momirealms.craftengine.core.block.properties.Property;
+import net.momirealms.craftengine.core.loot.LootTable;
 import net.momirealms.craftengine.core.pack.LoadingSequence;
 import net.momirealms.craftengine.core.pack.Pack;
 import net.momirealms.craftengine.core.pack.ResourceLocation;
@@ -14,6 +15,7 @@ import net.momirealms.craftengine.core.pack.model.generation.ModelGeneration;
 import net.momirealms.craftengine.core.plugin.CraftEngine;
 import net.momirealms.craftengine.core.plugin.config.Config;
 import net.momirealms.craftengine.core.plugin.config.ConfigParser;
+import net.momirealms.craftengine.core.plugin.context.event.EventFunctions;
 import net.momirealms.craftengine.core.plugin.locale.LocalizedResourceConfigException;
 import net.momirealms.craftengine.core.util.GsonHelper;
 import net.momirealms.craftengine.core.util.Key;
@@ -24,8 +26,10 @@ import org.jetbrains.annotations.NotNull;
 
 import java.nio.file.Path;
 import java.util.*;
+import java.util.function.Function;
 
 public abstract class AbstractBlockManager extends AbstractModelGenerator implements BlockManager {
+    protected final BlockParser blockParser;
     // CraftEngine objects
     protected final Map<Key, CustomBlock> byId = new HashMap<>();
     // Cached command suggestions
@@ -44,15 +48,19 @@ public abstract class AbstractBlockManager extends AbstractModelGenerator implem
     protected final Map<Key, Map<String, JsonElement>> blockStateOverrides = new HashMap<>();
     // a reverted mapper
     protected final Map<Integer, List<Integer>> appearanceToRealState = new Int2ObjectOpenHashMap<>();
+
     // client side block tags
     protected Map<Integer, List<String>> clientBoundTags = Map.of();
     protected Map<Integer, List<String>> previousClientBoundTags = Map.of();
     // Used to automatically arrange block states for strings such as minecraft:note_block:0
     protected Map<Key, List<Integer>> blockAppearanceArranger;
     protected Map<Key, List<Integer>> realBlockArranger;
+    protected Map<Key, Integer> internalId2StateId;
+    protected Map<Key, DelegatingBlock> registeredBlocks;
 
     protected AbstractBlockManager(CraftEngine plugin) {
         super(plugin);
+        this.blockParser = new BlockParser();
     }
 
     @Override
@@ -85,8 +93,7 @@ public abstract class AbstractBlockManager extends AbstractModelGenerator implem
         return Optional.ofNullable(this.byId.get(id));
     }
 
-    @Override
-    public void addBlock(Key id, CustomBlock customBlock) {
+    protected void addBlockInternal(Key id, CustomBlock customBlock) {
         this.byId.put(id, customBlock);
         // generate mod assets
         if (Config.generateModAssets()) {
@@ -94,6 +101,11 @@ public abstract class AbstractBlockManager extends AbstractModelGenerator implem
                 this.modBlockStates.put(getBlockOwnerId(state.customBlockState()), this.tempVanillaBlockStateModels.get(state.vanillaBlockState().registryId()));
             }
         }
+    }
+
+    @Override
+    public ConfigParser parser() {
+        return this.blockParser;
     }
 
     @Override
@@ -148,7 +160,11 @@ public abstract class AbstractBlockManager extends AbstractModelGenerator implem
 
     protected abstract int getBlockRegistryId(Key id);
 
-    public abstract String stateRegistryIdToStateSNBT(int id);
+    protected abstract String stateRegistryIdToStateSNBT(int id);
+
+    protected abstract Key getBlockOwnerId(int id);
+
+    protected abstract CustomBlock.Builder platformBuilder(Key id);
 
     public class BlockParser implements ConfigParser {
         public static final String[] CONFIG_SECTION_NAME = new String[]{"blocks", "block"};
@@ -210,14 +226,56 @@ public abstract class AbstractBlockManager extends AbstractModelGenerator implem
                 // 设置参数
                 properties = Map.of();
                 appearances = Map.of("", appearanceId);
-                variants = Map.of("", new BlockStateVariant("", settings, internalId));
+                variants = Map.of("", new BlockStateVariant("", settings, getInternalBlockId(internalId, appearanceId)));
             }
             // 多方块状态
             else {
                 properties = parseBlockProperties(ResourceConfigUtils.getAsMap(ResourceConfigUtils.requireNonNullOrThrow(stateSection.get("properties"), "warning.config.block.state.missing_properties"), "properties"));
                 appearances = parseBlockAppearances(ResourceConfigUtils.getAsMap(ResourceConfigUtils.requireNonNullOrThrow(stateSection.get("appearances"), "warning.config.block.state.missing_appearances"), "appearances"));
-
+                variants = parseBlockVariants(
+                        ResourceConfigUtils.getAsMap(ResourceConfigUtils.requireNonNullOrThrow(stateSection.get("variants"), "warning.config.block.state.missing_variants"), "variants"),
+                        it -> appearances.getOrDefault(it, -1), settings
+                );
             }
+
+            addBlockInternal(id, platformBuilder(id)
+                    .appearances(appearances)
+                    .variantMapper(variants)
+                    .properties(properties)
+                    .settings(settings)
+                    .lootTable(LootTable.fromMap(ResourceConfigUtils.getAsMapOrNull(section.get("loot"), "loot")))
+                    .behavior(MiscUtils.getAsMapList(ResourceConfigUtils.get(section, "behavior", "behaviors")))
+                    .events(EventFunctions.parseEvents(ResourceConfigUtils.get(section, "events", "event")))
+                    .build());
+        }
+
+        private Map<String, BlockStateVariant> parseBlockVariants(Map<String, Object> variantsSection,
+                                                                  Function<String, Integer> appearanceValidator,
+                                                                  BlockSettings parentSettings) {
+            Map<String, BlockStateVariant> variants = new HashMap<>();
+            for (Map.Entry<String, Object> entry : variantsSection.entrySet()) {
+                Map<String, Object> variantSection = ResourceConfigUtils.getAsMap(entry.getValue(), entry.getKey());
+                String variantNBT = entry.getKey();
+                String appearance = ResourceConfigUtils.requireNonEmptyStringOrThrow(variantSection.get("appearance"), "warning.config.block.state.variant.missing_appearance");
+                int appearanceId = appearanceValidator.apply(appearance);
+                if (appearanceId == -1) {
+                    throw new LocalizedResourceConfigException("warning.config.block.state.variant.invalid_appearance", variantNBT, appearance);
+                }
+                int internalId = getInternalBlockId(ResourceConfigUtils.getAsInt(ResourceConfigUtils.requireNonNullOrThrow(variantSection.get("id"), "warning.config.block.state.missing_real_id"), "id"), appearanceId);
+                Map<String, Object> anotherSetting = ResourceConfigUtils.getAsMapOrNull(variantSection.get("settings"), "settings");
+                variants.put(variantNBT, new BlockStateVariant(appearance, anotherSetting == null ? parentSettings : BlockSettings.ofFullCopy(parentSettings, anotherSetting), internalId));
+            }
+            return variants;
+        }
+
+        private int getInternalBlockId(int internalId, int appearanceId) {
+            Key baseBlock = getBlockOwnerId(appearanceId);
+            Key internalBlockId = Key.of(Key.DEFAULT_NAMESPACE, baseBlock.value() + "_" + internalId);
+            int internalBlockRegistryId = Optional.ofNullable(AbstractBlockManager.this.internalId2StateId.get(internalBlockId)).orElse(-1);
+            if (internalBlockRegistryId == -1) {
+                throw new LocalizedResourceConfigException("warning.config.block.state.invalid_real_id", internalBlockId.toString(), String.valueOf(availableAppearances(baseBlock) - 1));
+            }
+            return internalBlockRegistryId;
         }
 
         private Map<String, Integer> parseBlockAppearances(Map<String, Object> appearancesSection) {
@@ -265,11 +323,12 @@ public abstract class AbstractBlockManager extends AbstractModelGenerator implem
             String propertyNBT = blockState.substring(blockState.indexOf('[') + 1, blockState.lastIndexOf(']'));
             // 结合variants
             JsonElement combinedVariant = GsonHelper.combine(variants);
-            JsonElement previous = AbstractBlockManager.this.blockStateOverrides.computeIfAbsent(blockId, k -> new HashMap<>()).put(propertyNBT, combinedVariant);
+            Map<String, JsonElement> overrideMap = AbstractBlockManager.this.blockStateOverrides.computeIfAbsent(blockId, k -> new HashMap<>());
+            JsonElement previous = overrideMap.get(propertyNBT);
             if (previous != null && !previous.equals(combinedVariant)) {
-                // todo 播报可能的冲突
-                plugin.logger().warn("warning 1");
+                throw new LocalizedResourceConfigException("warning.config.block.state.model.conflict", GsonHelper.get().toJson(combinedVariant), blockState, GsonHelper.get().toJson(previous));
             }
+            overrideMap.put(propertyNBT, combinedVariant);
         }
 
         private JsonObject parseAppearanceModelSectionAsJson(Map<String, Object> section) {

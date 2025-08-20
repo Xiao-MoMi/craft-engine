@@ -269,6 +269,7 @@ warning.config.block.state.bind_failed: "<yellow>在文件 <arg:0> 发现问题 
 warning.config.block.state.invalid_real_id: "<yellow>在文件 <arg:0> 发现问题 - 方块 '<arg:1>' 使用的真实方块状态 '<arg:2>' 超出可用槽位范围 '0~<arg:3>' 如果槽位已用尽 请在 additional-real-blocks.yml 中添加更多真实状态</yellow>"
 warning.config.block.state.model.missing_path: "<yellow>在文件 <arg:0> 发现问题 - 方块 '<arg:1>' 的 'model' 缺少必需的 'path' 选项</yellow>"
 warning.config.block.state.model.invalid_path: "<yellow>在文件 <arg:0> 发现问题 - 方块 '<arg:1>' 的 'path' 参数 '<arg:2>' 包含非法字符 请参考 https://zh.minecraft.wiki/w/%E5%91%BD%E5%90%8D%E7%A9%BA%E9%97%B4ID#%E5%90%88%E6%B3%95%E5%AD%97%E7%AC%A6</yellow>"
+warning.config.block.state.model.conflict: "<yellow>在文件 <arg:0> 发现问题 - 方块 '<arg:1>' 正尝试将模型 '<arg:2>' 绑定到方块状态 '<arg:3>' 上, 但是此状态已绑定了另一个模型 '<arg:4>'</yellow>"
 warning.config.block.settings.unknown: "<yellow>在文件 <arg:0> 发现问题 - 方块 '<arg:1>' 使用了未知的设置类型 '<arg:2>'</yellow>"
 warning.config.block.behavior.missing_type: "<yellow>在文件 <arg:0> 发现问题 - 方块 '<arg:1>' 的行为配置缺少必需的 'type' 参数</yellow>"
 warning.config.block.behavior.invalid_type: "<yellow>在文件 <arg:0> 发现问题 - 方块 '<arg:1>' 使用了无效的行为类型 '<arg:2>'</yellow>"

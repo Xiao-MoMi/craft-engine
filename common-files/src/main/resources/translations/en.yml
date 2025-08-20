@@ -271,6 +271,7 @@ warning.config.block.state.bind_failed: "<yellow>Issue found in file <arg:0> - T
 warning.config.block.state.invalid_real_id: "<yellow>Issue found in file <arg:0> - The block '<arg:1>' is using a real block state '<arg:2>' that exceeds the available slot range '0~<arg:3>'. Consider adding more real states in 'additional-real-blocks.yml' if the slots are used up.</yellow>"
 warning.config.block.state.model.missing_path: "<yellow>Issue found in file <arg:0> - The block '<arg:1>' is missing the required 'path' option for 'model'.</yellow>"
 warning.config.block.state.model.invalid_path: "<yellow>Issue found in file <arg:0> - The block '<arg:1>' has a 'path' argument '<arg:2>' that contains illegal characters. Please read https://minecraft.wiki/w/Resource_location#Legal_characters.</yellow>"
+warning.config.block.state.model.conflict: "<yellow>Issue found in file <arg:0> - The block '<arg:1>' is trying to bind model '<arg:2>' to block state '<arg:3>' which has already been bound to model '<arg:4>'</yellow>"
 warning.config.block.settings.unknown: "<yellow>Issue found in file <arg:0> - The block '<arg:1>' is using an unknown setting type '<arg:2>'.</yellow>"
 warning.config.block.behavior.missing_type: "<yellow>Issue found in file <arg:0> - The block '<arg:1>' is missing the required 'type' argument for its block behavior.</yellow>"
 warning.config.block.behavior.invalid_type: "<yellow>Issue found in file <arg:0> - The block '<arg:1>' is using an invalid block behavior type '<arg:2>'.</yellow>"
