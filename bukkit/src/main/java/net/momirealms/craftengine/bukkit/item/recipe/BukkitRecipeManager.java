@@ -403,7 +403,18 @@ public class BukkitRecipeManager extends AbstractRecipeManager<ItemStack> {
                 this.plugin.logger().warn("Failed to load datapack recipes", e);
             }
         }
+
+        if (Config.disableAllVanillaRecipes()) {
+            this.recipesToUnregister.addAll(this.lastDatapackRecipes.keySet().stream().map(it -> Pair.of(it, false)).toList());
+            return;
+        }
+
+        boolean hasDisabledAny = !Config.disabledVanillaRecipes().isEmpty();
         for (Map.Entry<Key, Recipe<ItemStack>> entry : this.lastDatapackRecipes.entrySet()) {
+            if (hasDisabledAny && Config.disabledVanillaRecipes().contains(entry.getKey())) {
+                this.recipesToUnregister.add(Pair.of(entry.getKey(), false));
+                continue;
+            }
             markAsDataPackRecipe(entry.getKey());
             registerInternalRecipe(entry.getKey(), entry.getValue());
         }
@@ -420,19 +431,11 @@ public class BukkitRecipeManager extends AbstractRecipeManager<ItemStack> {
             packResources.add(CoreReflections.methodHandle$Pack$open.invokeExact(pack));
         }
         Map<Key, Recipe<ItemStack>> recipes = new HashMap<>();
-        boolean hasDisabledAny = !Config.disabledVanillaRecipes().isEmpty();
+
         try (AutoCloseable resourceManager = (AutoCloseable) CoreReflections.methodHandle$MultiPackResourceManagerConstructor.invokeExact(CoreReflections.instance$PackType$SERVER_DATA, packResources)) {
             Map<Object, Object> scannedResources = (Map<Object, Object>) CoreReflections.methodHandle$FileToIdConverter$listMatchingResources.invokeExact(fileToIdConverter, resourceManager);
             for (Map.Entry<Object, Object> entry : scannedResources.entrySet()) {
                 Key id = extractKeyFromResourceLocation(entry.getKey().toString());
-                if (Config.disableAllVanillaRecipes()) {
-                    this.recipesToUnregister.add(new Pair<>(id, false));
-                    continue;
-                }
-                if (hasDisabledAny && Config.disabledVanillaRecipes().contains(id)) {
-                    this.recipesToUnregister.add(new Pair<>(id, false));
-                    continue;
-                }
                 Reader reader = (Reader) CoreReflections.methodHandle$Resource$openAsReader.invokeExact(entry.getValue());
                 JsonObject jsonObject = JsonParser.parseReader(reader).getAsJsonObject();
                 Key serializerType = Key.of(jsonObject.get("type").getAsString());
@@ -470,6 +473,9 @@ public class BukkitRecipeManager extends AbstractRecipeManager<ItemStack> {
         for (Pair<Key, Boolean> pair : this.recipesToUnregister) {
             unregisterPlatformRecipeMainThread(pair.left(), pair.right());
         }
+
+        this.recipesToUnregister.clear();
+
         // 注册新的配方
         for (Recipe<ItemStack> recipe : this.byId.values()) {
             try {
