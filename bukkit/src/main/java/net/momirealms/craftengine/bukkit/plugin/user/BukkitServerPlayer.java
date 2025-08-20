@@ -470,7 +470,21 @@ public class BukkitServerPlayer extends Player {
 
     @Override
     public float getDestroyProgress(Object blockState, BlockPos pos) {
-        return FastNMS.INSTANCE.method$BlockStateBase$getDestroyProgress(blockState, serverPlayer(), FastNMS.INSTANCE.field$CraftWorld$ServerLevel(platformPlayer().getWorld()), LocationUtils.toBlockPos(pos));
+        Optional<ImmutableBlockState> optionalCustomState = BlockStateUtils.getOptionalCustomBlockState(blockState);
+        float progress = FastNMS.INSTANCE.method$BlockStateBase$getDestroyProgress(blockState, serverPlayer(), FastNMS.INSTANCE.field$CraftWorld$ServerLevel(platformPlayer().getWorld()), LocationUtils.toBlockPos(pos));
+        if (optionalCustomState.isPresent()) {
+            ImmutableBlockState customState = optionalCustomState.get();
+            Item<ItemStack> tool = getItemInHand(InteractionHand.MAIN_HAND);
+            boolean isCorrectTool = FastNMS.INSTANCE.method$ItemStack$isCorrectToolForDrops(tool.getLiteralObject(), blockState);
+            // 如果自定义方块在服务端侧未使用正确地工具，那么需要还原挖掘速度
+            if (!isCorrectTool) {
+                progress *= (10f / 3f);
+            }
+            if (!BlockStateUtils.isCorrectTool(customState, tool)) {
+                progress *= customState.settings().incorrectToolSpeed();
+            }
+        }
+        return progress;
     }
 
     private void predictNextBlockToMine() {
@@ -655,28 +669,6 @@ public class BukkitServerPlayer extends Player {
                 // double check custom block
                 if (optionalCustomState.isPresent()) {
                     ImmutableBlockState customState = optionalCustomState.get();
-                    BlockSettings blockSettings = customState.settings();
-                    if (blockSettings.requireCorrectTool()) {
-                        if (!item.isEmpty()) {
-                            // it's correct on plugin side
-                            if (blockSettings.isCorrectTool(item.id())) {
-                                // but not on serverside
-                                if (!FastNMS.INSTANCE.method$ItemStack$isCorrectToolForDrops(item.getLiteralObject(), destroyedState)) {
-                                    // we fix the speed
-                                    progressToAdd = progressToAdd * (10f / 3f);
-                                }
-                            } else {
-                                // not a correct tool on plugin side and not a correct tool on serverside
-                                if (!blockSettings.respectToolComponent() || !FastNMS.INSTANCE.method$ItemStack$isCorrectToolForDrops(item.getLiteralObject(), destroyedState)) {
-                                    progressToAdd = progressToAdd * (10f / 3f) * blockSettings.incorrectToolSpeed();
-                                }
-                            }
-                        } else {
-                            // item is null, but it requires correct tool, then we reset the speed
-                            progressToAdd = progressToAdd * (10f / 3f) * blockSettings.incorrectToolSpeed();
-                        }
-                    }
-
                     // accumulate progress
                     this.miningProgress = progressToAdd + miningProgress;
                     int packetStage = (int) (this.miningProgress * 10.0F);
