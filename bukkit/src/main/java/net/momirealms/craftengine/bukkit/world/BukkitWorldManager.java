@@ -248,7 +248,6 @@ public class BukkitWorldManager implements WorldManager, Listener {
 
     @EventHandler(ignoreCancelled = true, priority = EventPriority.LOWEST)
     public void onChunkLoad(ChunkLoadEvent event) {
-        if (!this.fullyLoaded) return;
         this.worldMapLock.readLock().lock();
         CEWorld world;
         try {
@@ -264,7 +263,6 @@ public class BukkitWorldManager implements WorldManager, Listener {
 
     @EventHandler(ignoreCancelled = true, priority = EventPriority.HIGHEST)
     public void onChunkUnload(ChunkUnloadEvent event) {
-        if (!this.fullyLoaded) return;
         CEWorld world;
         this.worldMapLock.readLock().lock();
         try {
