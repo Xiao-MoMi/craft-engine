@@ -71,14 +71,14 @@ public class ChunkPos {
 
     @Override
     public final boolean equals(Object o) {
+        if (o == null) return false;
+        if (o == this) return true;
         if (!(o instanceof ChunkPos chunkPos)) return false;
-        return x == chunkPos.x && z == chunkPos.z;
+        return this.longKey == chunkPos.longKey;
     }
 
     @Override
     public int hashCode() {
-        int result = x;
-        result = 31 * result + z;
-        return result;
+        return Long.hashCode(this.longKey);
     }
 }

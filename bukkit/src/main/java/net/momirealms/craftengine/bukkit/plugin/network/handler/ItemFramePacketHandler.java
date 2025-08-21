@@ -1,10 +1,10 @@
 package net.momirealms.craftengine.bukkit.plugin.network.handler;
 
+import net.momirealms.craftengine.bukkit.entity.data.ItemFrameData;
 import net.momirealms.craftengine.bukkit.item.BukkitItemManager;
 import net.momirealms.craftengine.bukkit.nms.FastNMS;
 import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.CoreReflections;
 import net.momirealms.craftengine.bukkit.plugin.user.BukkitServerPlayer;
-import net.momirealms.craftengine.bukkit.util.EntityDataUtils;
 import net.momirealms.craftengine.core.plugin.CraftEngine;
 import net.momirealms.craftengine.core.plugin.network.ByteBufPacketEvent;
 import net.momirealms.craftengine.core.plugin.network.EntityPacketHandler;
@@ -28,7 +28,7 @@ public class ItemFramePacketHandler implements EntityPacketHandler {
         for (int i = 0; i < packedItems.size(); i++) {
             Object packedItem = packedItems.get(i);
             int entityDataId = FastNMS.INSTANCE.field$SynchedEntityData$DataValue$id(packedItem);
-            if (entityDataId != EntityDataUtils.ITEM_FRAME_DATA_ID) continue;
+            if (entityDataId != ItemFrameData.Item.id()) continue;
             Object nmsItemStack = FastNMS.INSTANCE.field$SynchedEntityData$DataValue$value(packedItem);
             if (!CoreReflections.clazz$ItemStack.isInstance(nmsItemStack)) {
                 long time = System.currentTimeMillis();

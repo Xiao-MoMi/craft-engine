@@ -2,6 +2,7 @@ package net.momirealms.craftengine.core.item;
 
 import net.momirealms.craftengine.core.item.behavior.ItemBehavior;
 import net.momirealms.craftengine.core.item.modifier.ItemDataModifier;
+import net.momirealms.craftengine.core.item.updater.ItemUpdateConfig;
 import net.momirealms.craftengine.core.plugin.context.PlayerOptionalContext;
 import net.momirealms.craftengine.core.plugin.context.event.EventTrigger;
 import net.momirealms.craftengine.core.plugin.context.function.Function;
@@ -11,6 +12,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 public interface CustomItem<I> extends BuildableItem<I> {
 
@@ -31,6 +33,8 @@ public interface CustomItem<I> extends BuildableItem<I> {
     ItemDataModifier<I>[] clientBoundDataModifiers();
 
     ItemSettings settings();
+
+    Optional<ItemUpdateConfig> updater();
 
     default boolean is(Key tag) {
         return settings().tags().contains(tag);
@@ -63,6 +67,8 @@ public interface CustomItem<I> extends BuildableItem<I> {
         Builder<I> behaviors(List<ItemBehavior> behaviors);
 
         Builder<I> settings(ItemSettings settings);
+
+        Builder<I> updater(ItemUpdateConfig updater);
 
         Builder<I> events(Map<EventTrigger, List<Function<PlayerOptionalContext>>> events);
 

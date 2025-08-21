@@ -6,6 +6,7 @@ import net.momirealms.craftengine.bukkit.plugin.BukkitCraftEngine;
 import net.momirealms.craftengine.core.util.Key;
 import org.bukkit.Bukkit;
 import org.bukkit.event.EventHandler;
+import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 
 public class MythicItemDropListener implements Listener {
@@ -16,7 +17,7 @@ public class MythicItemDropListener implements Listener {
         Bukkit.getPluginManager().registerEvents(this, plugin.javaPlugin());
     }
 
-    @EventHandler
+    @EventHandler(ignoreCancelled = true, priority = EventPriority.HIGH)
     public void onMythicDropLoad(MythicDropLoadEvent event)	{
         if (!event.getDropName().equalsIgnoreCase("craftengine")) return;
         String argument = event.getArgument();

@@ -151,6 +151,10 @@ public class Config {
 
     protected boolean item$client_bound_model;
     protected boolean item$non_italic_tag;
+    protected boolean item$update_triggers$attack;
+    protected boolean item$update_triggers$click_in_inventory;
+    protected boolean item$update_triggers$drop;
+    protected boolean item$update_triggers$pick_up;
 
     protected String equipment$sacrificed_vanilla_armor$type;
     protected Key equipment$sacrificed_vanilla_armor$asset_id;
@@ -359,6 +363,10 @@ public class Config {
         // item
         item$client_bound_model = config.getBoolean("item.client-bound-model", false);
         item$non_italic_tag = config.getBoolean("item.non-italic-tag", false);
+        item$update_triggers$attack = config.getBoolean("item.update-triggers.attack", false);
+        item$update_triggers$click_in_inventory = config.getBoolean("item.update-triggers.click-in-inventory", false);
+        item$update_triggers$drop = config.getBoolean("item.update-triggers.drop", false);
+        item$update_triggers$pick_up = config.getBoolean("item.update-triggers.pick-up", false);
 
         // block
         block$sound_system$enable = config.getBoolean("block.sound-system.enable", true);
@@ -833,6 +841,22 @@ public class Config {
 
     public static List<String> recipeIngredientSources() {
         return instance.recipe$ingredient_sources;
+    }
+
+    public static boolean triggerUpdateAttack() {
+        return instance.item$update_triggers$attack;
+    }
+
+    public static boolean triggerUpdateClick() {
+        return instance.item$update_triggers$click_in_inventory;
+    }
+
+    public static boolean triggerUpdatePickUp() {
+        return instance.item$update_triggers$pick_up;
+    }
+
+    public static boolean triggerUpdateDrop() {
+        return instance.item$update_triggers$drop;
     }
 
     public void setObf(boolean enable) {

@@ -5,6 +5,7 @@ import net.momirealms.craftengine.core.item.behavior.ItemBehavior;
 import net.momirealms.craftengine.core.item.equipment.Equipment;
 import net.momirealms.craftengine.core.item.recipe.DatapackRecipeResult;
 import net.momirealms.craftengine.core.item.recipe.UniqueIdItem;
+import net.momirealms.craftengine.core.item.updater.ItemUpdateResult;
 import net.momirealms.craftengine.core.pack.model.LegacyOverridesModel;
 import net.momirealms.craftengine.core.pack.model.ModernItemModel;
 import net.momirealms.craftengine.core.pack.model.generation.ModelGenerator;
@@ -18,6 +19,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
+import java.util.function.Supplier;
 
 public interface ItemManager<T> extends Manageable, ModelGenerator {
 
@@ -114,4 +116,6 @@ public interface ItemManager<T> extends Manageable, ModelGenerator {
     Item<T> applyTrim(Item<T> base, Item<T> addition, Item<T> template, Key pattern);
 
     Item<T> build(DatapackRecipeResult result);
+
+    ItemUpdateResult updateItem(Item<T> item, Supplier<ItemBuildContext> contextSupplier);
 }

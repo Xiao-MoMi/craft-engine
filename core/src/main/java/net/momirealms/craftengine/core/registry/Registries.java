@@ -14,6 +14,7 @@ import net.momirealms.craftengine.core.item.recipe.network.legacy.LegacyRecipe;
 import net.momirealms.craftengine.core.item.recipe.network.modern.display.RecipeDisplay;
 import net.momirealms.craftengine.core.item.recipe.network.modern.display.slot.SlotDisplay;
 import net.momirealms.craftengine.core.item.recipe.result.PostProcessor;
+import net.momirealms.craftengine.core.item.updater.ItemUpdaterType;
 import net.momirealms.craftengine.core.loot.LootContext;
 import net.momirealms.craftengine.core.loot.entry.LootEntryContainerFactory;
 import net.momirealms.craftengine.core.loot.function.ApplyBonusCountFunction;
@@ -81,4 +82,5 @@ public class Registries {
     public static final ResourceKey<Registry<RecipeDisplay.Type>> RECIPE_DISPLAY_TYPE = ResourceKey.create(ROOT_REGISTRY, Key.withDefaultNamespace("recipe_display_type"));
     public static final ResourceKey<Registry<LegacyRecipe.Type>> LEGACY_RECIPE_TYPE = ResourceKey.create(ROOT_REGISTRY, Key.withDefaultNamespace("legacy_recipe_type"));
     public static final ResourceKey<Registry<PostProcessor.Type<?>>> RECIPE_POST_PROCESSOR_TYPE = ResourceKey.create(ROOT_REGISTRY, Key.withDefaultNamespace("recipe_post_processor_type"));
+    public static final ResourceKey<Registry<ItemUpdaterType<?>>> ITEM_UPDATER_TYPE = ResourceKey.create(ROOT_REGISTRY, Key.withDefaultNamespace("item_updater_type"));
 }

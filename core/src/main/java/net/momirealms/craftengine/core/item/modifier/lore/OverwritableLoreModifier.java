@@ -8,6 +8,7 @@ import net.momirealms.craftengine.core.item.modifier.ItemDataModifier;
 import net.momirealms.craftengine.core.item.modifier.ItemDataModifiers;
 import net.momirealms.craftengine.core.item.modifier.SimpleNetworkItemDataModifier;
 import net.momirealms.craftengine.core.util.Key;
+import net.momirealms.craftengine.core.util.VersionHelper;
 import net.momirealms.sparrow.nbt.CompoundTag;
 
 public final class OverwritableLoreModifier<I> implements SimpleNetworkItemDataModifier<I> {
@@ -25,8 +26,14 @@ public final class OverwritableLoreModifier<I> implements SimpleNetworkItemDataM
 
     @Override
     public Item<I> apply(Item<I> item, ItemBuildContext context) {
-        if (item.hasNonDefaultComponent(ComponentKeys.LORE)) {
-            return item;
+        if (VersionHelper.COMPONENT_RELEASE) {
+            if (item.hasNonDefaultComponent(ComponentKeys.LORE)) {
+                return item;
+            }
+        } else {
+            if (item.hasTag("display", "Lore")) {
+                return item;
+            }
         }
         return this.loreModifier.apply(item, context);
     }
@@ -56,8 +63,14 @@ public final class OverwritableLoreModifier<I> implements SimpleNetworkItemDataM
 
     @Override
     public Item<I> prepareNetworkItem(Item<I> item, ItemBuildContext context, CompoundTag networkData) {
-        if (item.hasNonDefaultComponent(ComponentKeys.LORE)) {
-            return item;
+        if (VersionHelper.COMPONENT_RELEASE) {
+            if (item.hasNonDefaultComponent(ComponentKeys.LORE)) {
+                return item;
+            }
+        } else {
+            if (item.hasTag("display", "Lore")) {
+                return item;
+            }
         }
         return SimpleNetworkItemDataModifier.super.prepareNetworkItem(item, context, networkData);
     }

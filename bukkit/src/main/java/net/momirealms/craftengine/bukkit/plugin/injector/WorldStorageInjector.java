@@ -177,7 +177,6 @@ public final class WorldStorageInjector {
         return section;
     }
 
-
     public static class SetBlockStateInterceptor {
         public static final SetBlockStateInterceptor INSTANCE = new SetBlockStateInterceptor();
 
@@ -215,7 +214,7 @@ public final class WorldStorageInjector {
         }
     }
 
-    protected static void compareAndUpdateBlockState(int x, int y, int z, Object newState, Object previousState, InjectedHolder holder) {
+    private static void compareAndUpdateBlockState(int x, int y, int z, Object newState, Object previousState, InjectedHolder holder) {
         try {
             Optional<ImmutableBlockState> optionalCustomState = BlockStateUtils.getOptionalCustomBlockState(newState);
             CESection section = holder.ceSection();
