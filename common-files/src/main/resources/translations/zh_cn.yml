@@ -106,6 +106,8 @@ warning.config.condition.expression.missing_expression: "<yellow>在文件 <arg:
 warning.config.condition.is_null.missing_argument: "<yellow>在文件 <arg:0> 发现问题 - 配置项 '<arg:1>' 缺少 'is_null' 条件的必需的 'argument' 参数</yellow>"
 warning.config.condition.hand.missing_hand: "<yellow>在文件 <arg:0> 发现问题 - 配置项 '<arg:1>' 缺少 'hand' 条件必需的 'hand' 参数</yellow>"
 warning.config.condition.hand.invalid_hand: "<yellow>在文件 <arg:0> 发现问题 - 配置项 '<arg:1>' 使用了无效的 'hand' 参数 '<arg:2>'（'hand' 条件）。允许的手部类型: [<arg:3>]</yellow>"
+warning.config.condition.gamemode.missing_gamemode: "<yellow>在文件 <arg:0> 发现问题 - 配置项 '<arg:1>' 缺少 'gamemode' 条件必需的 'gamemode' 参数</yellow>"
+warning.config.condition.gamemode.invalid_gamemode: "<yellow>在文件 <arg:0> 发现问题 - 配置项 '<arg:1>' 使用了无效的 'gamemode' 参数 '<arg:2>'（'gamemode' 条件）。允许的游戏模式类型: [<arg:3>]</yellow>"
 warning.config.condition.on_cooldown.missing_id: "<yellow>在文件 <arg:0> 发现问题 - 配置项 '<arg:1>' 缺少 'on_cooldown' 条件必需的 'id' 参数</yellow>"
 warning.config.structure.not_section: "<yellow>在文件 <arg:0> 发现问题 - 配置项 '<arg:1>' 应为配置段落 但实际类型为 '<arg:2>'</yellow>"
 warning.config.image.duplicate: "<yellow>在文件 <arg:0> 发现问题 - 重复的图片配置 '<arg:1>' 请检查其他文件中是否存在相同配置</yellow>"
