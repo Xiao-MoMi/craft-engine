@@ -99,8 +99,10 @@ public class CustomSmithingTransformRecipe<T> extends AbstractedFixedResultRecip
         if (this.mergeComponents) {
             finalResult = base.mergeCopy(wrappedResult);
         }
-        for (ItemDataProcessor processor : this.processors) {
-            processor.accept(base, wrappedResult, finalResult);
+        if (this.processors != null) {
+            for (ItemDataProcessor processor : this.processors) {
+                processor.accept(base, wrappedResult, finalResult);
+            }
         }
         return finalResult.getItem();
     }

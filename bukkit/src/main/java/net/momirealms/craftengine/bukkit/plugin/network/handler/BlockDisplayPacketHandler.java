@@ -1,11 +1,12 @@
 package net.momirealms.craftengine.bukkit.plugin.network.handler;
 
 import net.kyori.adventure.text.Component;
+import net.momirealms.craftengine.bukkit.entity.data.BaseEntityData;
+import net.momirealms.craftengine.bukkit.entity.data.BlockDisplayEntityData;
 import net.momirealms.craftengine.bukkit.nms.FastNMS;
 import net.momirealms.craftengine.bukkit.plugin.network.PacketConsumers;
 import net.momirealms.craftengine.bukkit.util.BlockStateUtils;
 import net.momirealms.craftengine.bukkit.util.ComponentUtils;
-import net.momirealms.craftengine.bukkit.util.EntityDataUtils;
 import net.momirealms.craftengine.core.plugin.CraftEngine;
 import net.momirealms.craftengine.core.plugin.config.Config;
 import net.momirealms.craftengine.core.plugin.network.ByteBufPacketEvent;
@@ -30,7 +31,7 @@ public class BlockDisplayPacketHandler implements EntityPacketHandler {
         for (int i = 0; i < packedItems.size(); i++) {
             Object packedItem = packedItems.get(i);
             int entityDataId = FastNMS.INSTANCE.field$SynchedEntityData$DataValue$id(packedItem);
-            if (entityDataId == EntityDataUtils.BLOCK_STATE_DATA_ID) {
+            if (entityDataId == BlockDisplayEntityData.DisplayedBlock.id()) {
                 Object blockState = FastNMS.INSTANCE.field$SynchedEntityData$DataValue$value(packedItem);
                 int stateId = BlockStateUtils.blockStateToId(blockState);
                 int newStateId;
@@ -39,12 +40,13 @@ public class BlockDisplayPacketHandler implements EntityPacketHandler {
                 } else {
                     newStateId = PacketConsumers.remapMOD(stateId);
                 }
+                if (newStateId == stateId) continue;
                 Object serializer = FastNMS.INSTANCE.field$SynchedEntityData$DataValue$serializer(packedItem);
                 packedItems.set(i, FastNMS.INSTANCE.constructor$SynchedEntityData$DataValue(
                         entityDataId, serializer, BlockStateUtils.idToBlockState(newStateId)
                 ));
                 isChanged = true;
-            } else if (Config.interceptEntityName() && entityDataId == EntityDataUtils.CUSTOM_NAME_DATA_ID) {
+            } else if (Config.interceptEntityName() && entityDataId == BaseEntityData.CustomName.id()) {
                 @SuppressWarnings("unchecked")
                 Optional<Object> optionalTextComponent = (Optional<Object>) FastNMS.INSTANCE.field$SynchedEntityData$DataValue$value(packedItem);
                 if (optionalTextComponent.isEmpty()) continue;

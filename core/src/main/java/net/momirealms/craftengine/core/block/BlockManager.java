@@ -28,8 +28,6 @@ public interface BlockManager extends Manageable, ModelGenerator {
 
     Optional<CustomBlock> blockById(Key key);
 
-    void addBlock(Key id, CustomBlock customBlock);
-
     Collection<Suggestion> cachedSuggestions();
 
     Map<Key, Key> soundMapper();

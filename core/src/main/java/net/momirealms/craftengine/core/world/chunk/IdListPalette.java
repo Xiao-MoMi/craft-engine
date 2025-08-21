@@ -39,6 +39,10 @@ public class IdListPalette<T> implements Palette<T> {
         }
     }
 
+    public IndexedIterable<T> idList() {
+        return idList;
+    }
+
     @Override
     public int getSize() {
         return this.idList.size();

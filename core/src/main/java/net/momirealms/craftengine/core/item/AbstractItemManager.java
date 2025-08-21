@@ -6,6 +6,10 @@ import net.momirealms.craftengine.core.item.behavior.ItemBehavior;
 import net.momirealms.craftengine.core.item.behavior.ItemBehaviors;
 import net.momirealms.craftengine.core.item.equipment.*;
 import net.momirealms.craftengine.core.item.modifier.*;
+import net.momirealms.craftengine.core.item.updater.ItemUpdateConfig;
+import net.momirealms.craftengine.core.item.updater.ItemUpdateResult;
+import net.momirealms.craftengine.core.item.updater.ItemUpdater;
+import net.momirealms.craftengine.core.item.updater.ItemUpdaters;
 import net.momirealms.craftengine.core.pack.AbstractPackManager;
 import net.momirealms.craftengine.core.pack.LoadingSequence;
 import net.momirealms.craftengine.core.pack.Pack;
@@ -30,6 +34,7 @@ import org.incendo.cloud.type.Either;
 import java.nio.file.Path;
 import java.util.*;
 import java.util.function.Consumer;
+import java.util.function.Supplier;
 import java.util.stream.Stream;
 
 public abstract class AbstractItemManager<I> extends AbstractModelGenerator implements ItemManager<I> {
@@ -142,6 +147,19 @@ public abstract class AbstractItemManager<I> extends AbstractModelGenerator impl
     @Override
     public Optional<CustomItem<I>> getCustomItemByPathOnly(String path) {
         return Optional.ofNullable(this.customItemsByPath.get(path));
+    }
+
+    @Override
+    public ItemUpdateResult updateItem(Item<I> item, Supplier<ItemBuildContext> contextSupplier) {
+        Optional<CustomItem<I>> optionalCustomItem = item.getCustomItem();
+        if (optionalCustomItem.isPresent()) {
+            CustomItem<I> customItem = optionalCustomItem.get();
+            Optional<ItemUpdateConfig> updater = customItem.updater();
+            if (updater.isPresent()) {
+                return updater.get().update(item, contextSupplier);
+            }
+        }
+        return new ItemUpdateResult(item, false, false);
     }
 
     @Override
@@ -415,6 +433,25 @@ public abstract class AbstractItemManager<I> extends AbstractModelGenerator impl
             } catch (LocalizedResourceConfigException e) {
                 collector.add(e);
                 behaviors = Collections.emptyList();
+            }
+
+            // 如果有物品更新器
+            if (section.containsKey("updater")) {
+                Map<String, Object> updater = ResourceConfigUtils.getAsMap(section.get("updater"), "updater");
+                List<ItemUpdateConfig.Version> versions = new ArrayList<>(2);
+                for (Map.Entry<String, Object> entry : updater.entrySet()) {
+                    try {
+                        int version = Integer.parseInt(entry.getKey());
+                        versions.add(new ItemUpdateConfig.Version(
+                                version,
+                                ResourceConfigUtils.parseConfigAsList(entry.getValue(), map -> ItemUpdaters.fromMap(id, map)).toArray(new ItemUpdater[0])
+                        ));
+                    } catch (NumberFormatException ignored) {
+                    }
+                }
+                ItemUpdateConfig config = new ItemUpdateConfig(versions);
+                itemBuilder.updater(config);
+                itemBuilder.dataModifier(new ItemVersionModifier<>(config.maxVersion()));
             }
 
             // 构建自定义物品
