@@ -52,8 +52,6 @@ public abstract class Player extends AbstractEntity implements NetWorkUser {
 
     public abstract boolean isSneaking();
 
-    public abstract boolean isJumping();
-
     public abstract boolean isSwimming();
 
     public abstract boolean isClimbing();

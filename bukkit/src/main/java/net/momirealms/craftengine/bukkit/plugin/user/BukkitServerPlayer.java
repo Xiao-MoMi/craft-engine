@@ -179,23 +179,18 @@ public class BukkitServerPlayer extends Player {
     }
 
     @Override
-    public boolean isJumping() {
-        return platformPlayer().isJumping();
-    }
-
-    @Override
     public boolean isSwimming() {
         return platformPlayer().isSwimming();
     }
 
     @Override
     public boolean isClimbing() {
-        return platformPlayer().isSwimming();
+        return platformPlayer().isClimbing();
     }
 
     @Override
     public boolean isGliding() {
-        return platformPlayer().isSwimming();
+        return platformPlayer().isGliding();
     }
 
     @Override

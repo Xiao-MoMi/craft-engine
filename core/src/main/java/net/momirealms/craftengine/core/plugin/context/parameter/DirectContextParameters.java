@@ -57,8 +57,11 @@ public final class DirectContextParameters {
     public static final ContextKey<AnchorType> ANCHOR_TYPE = ContextKey.direct("anchor_type");
     public static final ContextKey<InteractionHand> HAND = ContextKey.direct("hand");
     public static final ContextKey<Cancellable> EVENT = ContextKey.direct("event");
-    public static final ContextKey<Boolean> IS_FLYING = ContextKey.direct("is_flying");
     public static final ContextKey<Boolean> IS_SNEAKING = ContextKey.direct("is_sneaking");
+    public static final ContextKey<Boolean> IS_SWIMMING = ContextKey.direct("is_swimming");
+    public static final ContextKey<Boolean> IS_CLIMBING = ContextKey.direct("is_climbing");
+    public static final ContextKey<Boolean> IS_GLIDING = ContextKey.direct("is_gliding");
+    public static final ContextKey<Boolean> IS_FLYING = ContextKey.direct("is_flying");
     public static final ContextKey<Boolean> IS_CUSTOM = ContextKey.direct("is_custom");
     public static final ContextKey<Boolean> IS_BLOCK_ITEM = ContextKey.direct("is_block_item");
     public static final ContextKey<GameMode> GAMEMODE = ContextKey.direct("gamemode");
