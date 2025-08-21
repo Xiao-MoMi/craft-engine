@@ -17,6 +17,8 @@ public class EventConditions {
 
     static {
         register(CommonConditions.MATCH_ITEM, new MatchItemCondition.FactoryImpl<>());
+        register(CommonConditions.MATCH_ENTITY_TYPE, new MatchEntityTypeCondition.FactoryImpl<>());
+        register(CommonConditions.MATCH_BLOCK_TYPE, new MatchBlockTypeCondition.FactoryImpl<>());
         register(CommonConditions.MATCH_BLOCK_PROPERTY, new MatchBlockPropertyCondition.FactoryImpl<>());
         register(CommonConditions.TABLE_BONUS, new TableBonusCondition.FactoryImpl<>());
         register(CommonConditions.SURVIVES_EXPLOSION, new SurvivesExplosionCondition.FactoryImpl<>());
@@ -25,6 +27,7 @@ public class EventConditions {
         register(CommonConditions.ENCHANTMENT, new EnchantmentCondition.FactoryImpl<>());
         register(CommonConditions.INVERTED, new InvertedCondition.FactoryImpl<>(EventConditions::fromMap));
         register(CommonConditions.FALLING_BLOCK, new FallingBlockCondition.FactoryImpl<>());
+        register(CommonConditions.GAMEMODE, new GameModeCondition.FactoryImpl<>());
         register(CommonConditions.RANDOM, new RandomCondition.FactoryImpl<>());
         register(CommonConditions.DISTANCE, new DistanceCondition.FactoryImpl<>());
         register(CommonConditions.PERMISSION, new PermissionCondition.FactoryImpl<>());
@@ -33,6 +36,8 @@ public class EventConditions {
         register(CommonConditions.STRING_EQUALS, new StringEqualsCondition.FactoryImpl<>());
         register(CommonConditions.STRING_CONTAINS, new StringContainsCondition.FactoryImpl<>());
         register(CommonConditions.EXPRESSION, new ExpressionCondition.FactoryImpl<>());
+        register(CommonConditions.IS_SNEAKING, new IsSneakingCondition.FactoryImpl<>());
+        register(CommonConditions.IS_FLYING, new IsFlyingCondition.FactoryImpl<>());
         register(CommonConditions.IS_NULL, new IsNullCondition.FactoryImpl<>());
         register(CommonConditions.HAND, new HandCondition.FactoryImpl<>());
         register(CommonConditions.ON_COOLDOWN, new OnCooldownCondition.FactoryImpl<>());
