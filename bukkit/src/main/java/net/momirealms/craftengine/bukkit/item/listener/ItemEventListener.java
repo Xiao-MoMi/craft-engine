@@ -3,6 +3,7 @@ package net.momirealms.craftengine.bukkit.item.listener;
 import io.papermc.paper.event.block.CompostItemEvent;
 import net.momirealms.craftengine.bukkit.api.BukkitAdaptors;
 import net.momirealms.craftengine.bukkit.api.event.CustomBlockInteractEvent;
+import net.momirealms.craftengine.bukkit.entity.BukkitEntity;
 import net.momirealms.craftengine.bukkit.item.BukkitCustomItem;
 import net.momirealms.craftengine.bukkit.nms.FastNMS;
 import net.momirealms.craftengine.bukkit.plugin.BukkitCraftEngine;
@@ -88,9 +89,10 @@ public class ItemEventListener implements Listener {
         Cancellable cancellable = Cancellable.of(event::isCancelled, event::setCancelled);
         PlayerOptionalContext context = PlayerOptionalContext.of(serverPlayer, ContextHolder.builder()
                 .withOptionalParameter(DirectContextParameters.ITEM_IN_HAND, itemInHand)
-                .withParameter(DirectContextParameters.EVENT, cancellable)
-                .withParameter(DirectContextParameters.POSITION, LocationUtils.toWorldPosition(event.getRightClicked().getLocation()))
                 .withParameter(DirectContextParameters.HAND, hand)
+                .withParameter(DirectContextParameters.EVENT, cancellable)
+                .withParameter(DirectContextParameters.ENTITY, new BukkitEntity(entity))
+                .withParameter(DirectContextParameters.POSITION, LocationUtils.toWorldPosition(event.getRightClicked().getLocation()))
         );
         CustomItem<ItemStack> customItem = optionalCustomItem.get();
         customItem.execute(context, EventTrigger.RIGHT_CLICK);
