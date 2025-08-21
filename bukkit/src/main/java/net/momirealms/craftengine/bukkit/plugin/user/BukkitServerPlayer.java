@@ -179,6 +179,31 @@ public class BukkitServerPlayer extends Player {
     }
 
     @Override
+    public boolean isJumping() {
+        return platformPlayer().isJumping();
+    }
+
+    @Override
+    public boolean isSwimming() {
+        return platformPlayer().isSwimming();
+    }
+
+    @Override
+    public boolean isClimbing() {
+        return platformPlayer().isSwimming();
+    }
+
+    @Override
+    public boolean isGliding() {
+        return platformPlayer().isSwimming();
+    }
+
+    @Override
+    public boolean isFlying() {
+        return platformPlayer().isFlying();
+    }
+
+    @Override
     public GameMode gameMode() {
         return switch (platformPlayer().getGameMode()) {
             case CREATIVE -> GameMode.CREATIVE;
@@ -947,11 +972,6 @@ public class BukkitServerPlayer extends Player {
         } else {
             return LegacyAttributeUtils.getLuck(platformPlayer());
         }
-    }
-
-    @Override
-    public boolean isFlying() {
-        return platformPlayer().isFlying();
     }
 
     @Override

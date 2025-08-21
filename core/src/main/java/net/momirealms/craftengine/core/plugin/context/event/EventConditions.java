@@ -37,6 +37,10 @@ public class EventConditions {
         register(CommonConditions.STRING_CONTAINS, new StringContainsCondition.FactoryImpl<>());
         register(CommonConditions.EXPRESSION, new ExpressionCondition.FactoryImpl<>());
         register(CommonConditions.IS_SNEAKING, new IsSneakingCondition.FactoryImpl<>());
+        register(CommonConditions.IS_JUMPING, new IsJumpingCondition.FactoryImpl<>());
+        register(CommonConditions.IS_SWIMMING, new IsSwimmingCondition.FactoryImpl<>());
+        register(CommonConditions.IS_CLIMBING, new IsClimbingCondition.FactoryImpl<>());
+        register(CommonConditions.IS_GLIDING, new IsGlidingCondition.FactoryImpl<>());
         register(CommonConditions.IS_FLYING, new IsFlyingCondition.FactoryImpl<>());
         register(CommonConditions.IS_NULL, new IsNullCondition.FactoryImpl<>());
         register(CommonConditions.HAND, new HandCondition.FactoryImpl<>());
