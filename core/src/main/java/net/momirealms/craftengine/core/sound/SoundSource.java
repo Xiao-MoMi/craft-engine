@@ -12,7 +12,8 @@ public enum SoundSource {
     NEUTRAL("neutral"),
     PLAYER("player"),
     AMBIENT("ambient"),
-    VOICE("voice");
+    VOICE("voice"),
+    UI("ui");
 
     private final String id;
 

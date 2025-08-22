@@ -37,6 +37,7 @@ public final class SoundUtils {
             case HOSTILE -> SoundCategory.HOSTILE;
             case NEUTRAL -> SoundCategory.NEUTRAL;
             case WEATHER -> SoundCategory.WEATHER;
+            case UI -> SoundCategory.UI;
         };
     }
 }
