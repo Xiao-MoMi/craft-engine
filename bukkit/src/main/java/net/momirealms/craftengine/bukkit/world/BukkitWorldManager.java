@@ -48,6 +48,7 @@ public class BukkitWorldManager implements WorldManager, Listener {
     private CEWorld lastVisitedWorld;
     private StorageAdaptor storageAdaptor;
     private boolean isTicking = false;
+    private boolean initialized = false;
 
     public BukkitWorldManager(BukkitCraftEngine plugin) {
         instance = this;
@@ -132,6 +133,7 @@ public class BukkitWorldManager implements WorldManager, Listener {
             this.worldMapLock.writeLock().unlock();
         }
         Bukkit.getPluginManager().registerEvents(this, this.plugin.javaPlugin());
+        this.initialized = true;
     }
 
     @Override
@@ -235,6 +237,10 @@ public class BukkitWorldManager implements WorldManager, Listener {
         } catch (IOException e) {
             CraftEngine.instance().logger().warn("Failed to close world storage", e);
         }
+    }
+
+    public boolean initialized() {
+        return initialized;
     }
 
     @Override

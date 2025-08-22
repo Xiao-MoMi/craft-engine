@@ -128,6 +128,9 @@ public final class BukkitCustomBlock extends AbstractCustomBlock {
                 behaviorHolder.bindValue(super.behavior);
                 // set block side properties
                 CoreReflections.field$BlockBehaviour$explosionResistance.set(nmsBlock, settings.resistance());
+                CoreReflections.field$BlockBehaviour$friction.set(nmsBlock, settings.friction());
+                CoreReflections.field$BlockBehaviour$speedFactor.set(nmsBlock, settings.speedFactor());
+                CoreReflections.field$BlockBehaviour$jumpFactor.set(nmsBlock, settings.jumpFactor());
                 CoreReflections.field$BlockBehaviour$soundType.set(nmsBlock, SoundUtils.toSoundType(settings.sounds()));
                 // init cache
                 CoreReflections.method$BlockStateBase$initCache.invoke(nmsState);

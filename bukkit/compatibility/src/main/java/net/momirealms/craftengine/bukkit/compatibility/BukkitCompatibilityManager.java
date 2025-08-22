@@ -66,8 +66,14 @@ public class BukkitCompatibilityManager implements CompatibilityManager {
             logHook("Skript");
         }
         // WorldEdit
+        // FastAsyncWorldEdit
         if (this.isPluginEnabled("FastAsyncWorldEdit")) {
-            // do nothing
+            try {
+                this.initFastAsyncWorldEditHook();
+                logHook("FastAsyncWorldEdit");
+            } catch (Exception e) {
+                this.plugin.logger().warn("[Compatibility] Failed to initialize FastAsyncWorldEdit hook", e);
+            }
         } else if (this.isPluginEnabled("WorldEdit")) {
             this.initWorldEditHook();
             logHook("WorldEdit");
@@ -113,15 +119,6 @@ public class BukkitCompatibilityManager implements CompatibilityManager {
             BukkitItemManager.instance().registerExternalItemSource(new MythicMobsSource());
             new MythicItemDropListener(this.plugin);
             logHook("MythicMobs");
-        }
-        // FastAsyncWorldEdit
-        if (this.isPluginEnabled("FastAsyncWorldEdit")) {
-            try {
-                this.initFastAsyncWorldEditHook();
-                logHook("FastAsyncWorldEdit");
-            } catch (Exception e) {
-                this.plugin.logger().warn("[Compatibility] Failed to initialize FastAsyncWorldEdit hook", e);
-            }
         }
     }
 

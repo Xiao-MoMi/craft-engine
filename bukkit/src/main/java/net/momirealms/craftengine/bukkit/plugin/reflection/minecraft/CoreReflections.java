@@ -1451,6 +1451,18 @@ public final class CoreReflections {
             ReflectionUtils.getInstanceDeclaredField(clazz$BlockBehaviour, float.class, 0)
     );
 
+    public static final Field field$BlockBehaviour$friction = requireNonNull(
+            ReflectionUtils.getInstanceDeclaredField(clazz$BlockBehaviour, float.class, 1)
+    );
+
+    public static final Field field$BlockBehaviour$speedFactor = requireNonNull(
+            ReflectionUtils.getInstanceDeclaredField(clazz$BlockBehaviour, float.class, 2)
+    );
+
+    public static final Field field$BlockBehaviour$jumpFactor = requireNonNull(
+            ReflectionUtils.getInstanceDeclaredField(clazz$BlockBehaviour, float.class, 3)
+    );
+
     public static final Field field$BlockBehaviour$soundType = requireNonNull(
             ReflectionUtils.getInstanceDeclaredField(clazz$BlockBehaviour, clazz$SoundType, 0)
     );

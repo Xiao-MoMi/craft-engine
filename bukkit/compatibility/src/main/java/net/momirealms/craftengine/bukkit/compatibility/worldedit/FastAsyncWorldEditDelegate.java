@@ -85,6 +85,7 @@ public class FastAsyncWorldEditDelegate extends AbstractDelegateExtent {
             @SuppressWarnings("unused")
             public void onEditSessionEvent(EditSessionEvent event) {
                 if (event.getWorld() == null || event.getStage() != EditSession.Stage.BEFORE_CHANGE) return;
+                if (!BukkitWorldManager.instance().initialized()) return;
                 event.setExtent(new FastAsyncWorldEditDelegate(event, event.getExtent()));
             }
         });

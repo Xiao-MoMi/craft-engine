@@ -38,6 +38,9 @@ public class BlockSettings {
     LazyReference<Set<Key>> correctTools = LazyReference.lazyReference(Set::of);
     String name;
     String supportShapeBlockState;
+    float friction = 0.6f;
+    float speedFactor = 1f;
+    float jumpFactor = 1f;
 
     private BlockSettings() {}
 
@@ -101,6 +104,9 @@ public class BlockSettings {
         newSettings.supportShapeBlockState = settings.supportShapeBlockState;
         newSettings.propagatesSkylightDown = settings.propagatesSkylightDown;
         newSettings.useShapeForLightOcclusion = settings.useShapeForLightOcclusion;
+        newSettings.speedFactor = settings.speedFactor;
+        newSettings.jumpFactor = settings.jumpFactor;
+        newSettings.friction = settings.friction;
         return newSettings;
     }
 
@@ -138,6 +144,18 @@ public class BlockSettings {
 
     public float hardness() {
         return hardness;
+    }
+
+    public float friction() {
+        return friction;
+    }
+
+    public float jumpFactor() {
+        return jumpFactor;
+    }
+
+    public float speedFactor() {
+        return speedFactor;
     }
 
     public Tristate canOcclude() {
@@ -233,6 +251,21 @@ public class BlockSettings {
 
     public BlockSettings fireSpreadChance(int fireSpreadChance) {
         this.fireSpreadChance = fireSpreadChance;
+        return this;
+    }
+
+    public BlockSettings friction(float friction) {
+        this.friction = friction;
+        return this;
+    }
+
+    public BlockSettings speedFactor(float speedFactor) {
+        this.speedFactor = speedFactor;
+        return this;
+    }
+
+    public BlockSettings jumpFactor(float jumpFactor) {
+        this.jumpFactor = jumpFactor;
         return this;
     }
 
@@ -383,6 +416,18 @@ public class BlockSettings {
             registerFactory("hardness", (value -> {
                 float floatValue = ResourceConfigUtils.getAsFloat(value, "hardness");
                 return settings -> settings.hardness(floatValue);
+            }));
+            registerFactory("friction", (value -> {
+                float floatValue = ResourceConfigUtils.getAsFloat(value, "friction");
+                return settings -> settings.friction(floatValue);
+            }));
+            registerFactory("speed-factor", (value -> {
+                float floatValue = ResourceConfigUtils.getAsFloat(value, "speed-factor");
+                return settings -> settings.speedFactor(floatValue);
+            }));
+            registerFactory("jump-factor", (value -> {
+                float floatValue = ResourceConfigUtils.getAsFloat(value, "jump-factor");
+                return settings -> settings.jumpFactor(floatValue);
             }));
             registerFactory("resistance", (value -> {
                 float floatValue = ResourceConfigUtils.getAsFloat(value, "resistance");
