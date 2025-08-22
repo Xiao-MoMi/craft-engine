@@ -114,6 +114,8 @@ public abstract class Player extends AbstractEntity implements NetWorkUser {
 
     public abstract void performCommand(String command);
 
+    public abstract void performCommandAsEvent(String command);
+
     public abstract double luck();
 
     @Override

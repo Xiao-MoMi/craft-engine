@@ -18,7 +18,6 @@ import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.MMobEffects
 import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.NetworkReflections;
 import net.momirealms.craftengine.bukkit.util.*;
 import net.momirealms.craftengine.bukkit.world.BukkitWorld;
-import net.momirealms.craftengine.core.block.BlockSettings;
 import net.momirealms.craftengine.core.block.BlockStateWrapper;
 import net.momirealms.craftengine.core.block.ImmutableBlockState;
 import net.momirealms.craftengine.core.entity.player.GameMode;
@@ -41,6 +40,7 @@ import org.bukkit.*;
 import org.bukkit.attribute.Attribute;
 import org.bukkit.attribute.AttributeInstance;
 import org.bukkit.block.Block;
+import org.bukkit.event.player.PlayerCommandPreprocessEvent;
 import org.bukkit.inventory.EquipmentSlot;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.PlayerInventory;
@@ -958,6 +958,14 @@ public class BukkitServerPlayer extends Player {
     @Override
     public void performCommand(String command) {
         platformPlayer().performCommand(command);
+    }
+
+    @Override
+    @SuppressWarnings("UnstableApiUsage")
+    public void performCommandAsEvent(String command) {
+        String formattedCommand = command.startsWith("/") ? command : "/" + command;
+        PlayerCommandPreprocessEvent event = new PlayerCommandPreprocessEvent(platformPlayer(), formattedCommand);
+        Bukkit.getPluginManager().callEvent(event);
     }
 
     @Override
