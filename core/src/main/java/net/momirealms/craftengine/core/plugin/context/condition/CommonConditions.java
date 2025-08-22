@@ -30,7 +30,6 @@ public final class CommonConditions {
     public static final Key STRING_REGEX = Key.from("craftengine:regex");
     public static final Key EXPRESSION = Key.from("craftengine:expression");
     public static final Key IS_SNEAKING = Key.from("craftengine:is_sneaking");
-    public static final Key IS_JUMPING = Key.from("craftengine:is_jumping");
     public static final Key IS_SWIMMING = Key.from("craftengine:is_swimming");
     public static final Key IS_CLIMBING = Key.from("craftengine:is_climbing");
     public static final Key IS_GLIDING = Key.from("craftengine:is_gliding");
