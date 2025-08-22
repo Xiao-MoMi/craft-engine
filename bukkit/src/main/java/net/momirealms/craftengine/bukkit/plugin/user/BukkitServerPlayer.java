@@ -496,7 +496,7 @@ public class BukkitServerPlayer extends Player {
             ImmutableBlockState customState = optionalCustomState.get();
             Item<ItemStack> tool = getItemInHand(InteractionHand.MAIN_HAND);
             boolean isCorrectTool = FastNMS.INSTANCE.method$ItemStack$isCorrectToolForDrops(tool.getLiteralObject(), blockState);
-            // 如果自定义方块在服务端侧未使用正确地工具，那么需要还原挖掘速度
+            // 如果自定义方块在服务端侧未使用正确的工具，那么需要还原挖掘速度
             if (!isCorrectTool) {
                 progress *= (10f / 3f);
             }
