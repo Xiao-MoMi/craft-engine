@@ -96,10 +96,6 @@ public class Config {
     protected Path resource_pack$delivery$file_to_upload;
     protected Component resource_pack$send$prompt;
 
-    protected int performance$max_note_block_chain_update_limit;
-    protected int performance$max_tripwire_chain_update_limit;
-    protected int performance$max_emojis_per_parse;
-
     protected boolean light_system$force_update_light;
     protected boolean light_system$enable;
 
@@ -110,9 +106,11 @@ public class Config {
     protected boolean chunk_system$cache_system;
     protected boolean chunk_system$injection$use_fast_method;
     protected boolean chunk_system$injection$target;
+    protected boolean chunk_system$process_invalid_furniture$enable;
+    protected Map<String, String> chunk_system$process_invalid_furniture$mapping;
+    protected boolean chunk_system$process_invalid_blocks$enable;
+    protected Map<String, String> chunk_system$process_invalid_blocks$mapping;
 
-    protected boolean furniture$handle_invalid_furniture_on_chunk_load$enable;
-    protected Map<String, String> furniture$handle_invalid_furniture_on_chunk_load$mapping;
     protected boolean furniture$hide_base_entity;
     protected ColliderType furniture$collision_entity_type;
 
@@ -161,10 +159,11 @@ public class Config {
     protected Key equipment$sacrificed_vanilla_armor$humanoid;
     protected Key equipment$sacrificed_vanilla_armor$humanoid_leggings;
 
-    protected boolean emoji$chat;
-    protected boolean emoji$book;
-    protected boolean emoji$anvil;
-    protected boolean emoji$sign;
+    protected boolean emoji$contexts$chat;
+    protected boolean emoji$contexts$book;
+    protected boolean emoji$contexts$anvil;
+    protected boolean emoji$contexts$sign;
+    protected int emoji$max_emojis_per_parse;
 
     public Config(CraftEngine plugin) {
         this.plugin = plugin;
@@ -310,11 +309,6 @@ public class Config {
             resource_pack$duplicated_files_handler = List.of();
         }
 
-        // performance
-        performance$max_note_block_chain_update_limit = config.getInt("performance.max-note-block-chain-update-limit", 64);
-        performance$max_tripwire_chain_update_limit = config.getInt("performance.max-tripwire-chain-update-limit", 128);
-        performance$max_emojis_per_parse = config.getInt("performance.max-emojis-per-parse", 32);
-
         // light
         light_system$force_update_light = config.getBoolean("light-system.force-update-light", false);
         light_system$enable = config.getBoolean("light-system.enable", true);
@@ -330,22 +324,37 @@ public class Config {
             chunk_system$injection$target = config.getEnum("chunk-system.injection.target", InjectionTarget.class, InjectionTarget.PALETTE) == InjectionTarget.PALETTE;
         }
 
-        // furniture
-        furniture$handle_invalid_furniture_on_chunk_load$enable = config.getBoolean("furniture.handle-invalid-furniture-on-chunk-load.enable", false);
-        ImmutableMap.Builder<String, String> builder = ImmutableMap.builder();
-        for (String furniture : config.getStringList("furniture.handle-invalid-furniture-on-chunk-load.remove")) {
-            builder.put(furniture, "");
+        chunk_system$process_invalid_furniture$enable = config.getBoolean("chunk-system.process-invalid-furniture.enable", false);
+        ImmutableMap.Builder<String, String> furnitureBuilder = ImmutableMap.builder();
+        for (String furniture : config.getStringList("chunk-system.process-invalid-furniture.remove")) {
+            furnitureBuilder.put(furniture, "");
         }
-        if (config.contains("furniture.handle-invalid-furniture-on-chunk-load.convert")) {
-            Section section = config.getSection("furniture.handle-invalid-furniture-on-chunk-load.convert");
+        if (config.contains("chunk-system.process-invalid-furniture.convert")) {
+            Section section = config.getSection("chunk-system.process-invalid-furniture.convert");
             if (section != null) {
                 for (Map.Entry<String, Object> entry : section.getStringRouteMappedValues(false).entrySet()) {
-                    builder.put(entry.getKey(), entry.getValue().toString());
+                    furnitureBuilder.put(entry.getKey(), entry.getValue().toString());
                 }
             }
         }
+        chunk_system$process_invalid_furniture$mapping = furnitureBuilder.build();
 
-        furniture$handle_invalid_furniture_on_chunk_load$mapping = builder.build();
+        chunk_system$process_invalid_blocks$enable = config.getBoolean("chunk-system.process-invalid-blocks.enable", false);
+        ImmutableMap.Builder<String, String> blockBuilder = ImmutableMap.builder();
+        for (String furniture : config.getStringList("chunk-system.process-invalid-blocks.remove")) {
+            blockBuilder.put(furniture, "");
+        }
+        if (config.contains("chunk-system.process-invalid-blocks.convert")) {
+            Section section = config.getSection("chunk-system.process-invalid-blocks.convert");
+            if (section != null) {
+                for (Map.Entry<String, Object> entry : section.getStringRouteMappedValues(false).entrySet()) {
+                    blockBuilder.put(entry.getKey(), entry.getValue().toString());
+                }
+            }
+        }
+        chunk_system$process_invalid_blocks$mapping = blockBuilder.build();
+
+        // furniture
         furniture$hide_base_entity = config.getBoolean("furniture.hide-base-entity", true);
         furniture$collision_entity_type = ColliderType.valueOf(config.getString("furniture.collision-entity-type", "interaction").toUpperCase(Locale.ENGLISH));
 
@@ -405,10 +414,12 @@ public class Config {
         image$intercept_packets$advancement = config.getBoolean("image.intercept-packets.advancement", true);
 
         // emoji
-        emoji$chat = config.getBoolean("emoji.chat", true);
-        emoji$anvil = config.getBoolean("emoji.anvil", true);
-        emoji$book = config.getBoolean("emoji.book", true);
-        emoji$sign = config.getBoolean("emoji.sign", true);
+        emoji$contexts$chat = config.getBoolean("emoji.contexts.chat", true);
+        emoji$contexts$anvil = config.getBoolean("emoji.contexts.anvil", true);
+        emoji$contexts$book = config.getBoolean("emoji.contexts.book", true);
+        emoji$contexts$sign = config.getBoolean("emoji.contexts.sign", true);
+        emoji$max_emojis_per_parse = config.getInt("emoji.max-emojis-per-parse", 32);
+
 
         firstTime = false;
     }
@@ -464,24 +475,28 @@ public class Config {
     }
 
     public static int maxNoteBlockChainUpdate() {
-        return instance.performance$max_note_block_chain_update_limit;
+        return 64;
     }
 
     public static int maxEmojisPerParse() {
-        return instance.performance$max_emojis_per_parse;
+        return instance.emoji$max_emojis_per_parse;
     }
 
     public static boolean handleInvalidFurniture() {
-        return instance.furniture$handle_invalid_furniture_on_chunk_load$enable;
+        return instance.chunk_system$process_invalid_furniture$enable;
+    }
+
+    public static boolean handleInvalidBlock() {
+        return instance.chunk_system$process_invalid_blocks$enable;
     }
 
     public static Map<String, String> furnitureMappings() {
-        return instance.furniture$handle_invalid_furniture_on_chunk_load$mapping;
+        return instance.chunk_system$process_invalid_furniture$mapping;
     }
 
-//    public static boolean forceUpdateLight() {
-//        return instance.light_system$force_update_light;
-//    }
+    public static Map<String, String> blockMappings() {
+        return instance.chunk_system$process_invalid_blocks$mapping;
+    }
 
     public static boolean enableLightSystem() {
         return instance.light_system$enable;
@@ -772,19 +787,19 @@ public class Config {
     }
 
     public static boolean allowEmojiSign() {
-        return instance.emoji$sign;
+        return instance.emoji$contexts$sign;
     }
 
     public static boolean allowEmojiChat() {
-        return instance.emoji$chat;
+        return instance.emoji$contexts$chat;
     }
 
     public static boolean allowEmojiAnvil() {
-        return instance.emoji$anvil;
+        return instance.emoji$contexts$anvil;
     }
 
     public static boolean allowEmojiBook() {
-        return instance.emoji$book;
+        return instance.emoji$contexts$book;
     }
 
     public static ColliderType colliderType() {

@@ -9,7 +9,6 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.HashSet;
 
 public class CustomIngredientList extends ArrayList<Object> {
     private final Ingredient<ItemStack> ingredient;

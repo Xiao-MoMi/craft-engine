@@ -214,7 +214,7 @@ public class CustomSmithingTransformRecipe<T> extends AbstractedFixedResultRecip
             for (Key component : this.components) {
                 Object componentObj = item1.getExactComponent(component);
                 if (componentObj != null) {
-                    item3.setComponent(component, componentObj);
+                    item3.setExactComponent(component, componentObj);
                 }
             }
         }
