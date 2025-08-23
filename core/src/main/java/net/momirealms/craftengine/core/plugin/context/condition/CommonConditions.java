@@ -20,7 +20,6 @@ public final class CommonConditions {
     public static final Key RANDOM = Key.from("craftengine:random");
     public static final Key ENCHANTMENT = Key.from("craftengine:enchantment");
     public static final Key FALLING_BLOCK = Key.from("craftengine:falling_block");
-    public static final Key GAMEMODE = Key.from("craftengine:gamemode");
     public static final Key DISTANCE = Key.from("craftengine:distance");
     public static final Key PERMISSION = Key.from("craftengine:permission");
     public static final Key ON_COOLDOWN = Key.from("craftengine:on_cooldown");
@@ -29,11 +28,6 @@ public final class CommonConditions {
     public static final Key STRING_CONTAINS = Key.from("craftengine:string_contains");
     public static final Key STRING_REGEX = Key.from("craftengine:regex");
     public static final Key EXPRESSION = Key.from("craftengine:expression");
-    public static final Key IS_SNEAKING = Key.from("craftengine:is_sneaking");
-    public static final Key IS_SWIMMING = Key.from("craftengine:is_swimming");
-    public static final Key IS_CLIMBING = Key.from("craftengine:is_climbing");
-    public static final Key IS_GLIDING = Key.from("craftengine:is_gliding");
-    public static final Key IS_FLYING = Key.from("craftengine:is_flying");
     public static final Key IS_NULL = Key.from("craftengine:is_null");
     public static final Key HAND = Key.from("craftengine:hand");
 
