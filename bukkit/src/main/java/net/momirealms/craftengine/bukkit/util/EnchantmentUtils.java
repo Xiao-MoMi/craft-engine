@@ -5,7 +5,7 @@ import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.CoreReflect
 import java.util.HashMap;
 import java.util.Map;
 
-public class EnchantmentUtils {
+public final class EnchantmentUtils {
 
     private EnchantmentUtils() {}
 

@@ -1,7 +1,7 @@
 import net.minecrell.pluginyml.paper.PaperPluginDescription
 
 plugins {
-    id("com.gradleup.shadow") version "9.0.0-beta13"
+    id("com.gradleup.shadow") version "9.0.0-rc2"
     id("de.eldoria.plugin-yml.paper") version "0.7.1"
 }
 
@@ -50,7 +50,7 @@ paper {
     name = "CraftEngine"
     apiVersion = "1.20"
     authors = listOf("XiaoMoMi")
-    contributors = listOf("jhqwqmc", "iqtesterrr", "WhiteProject1", "Catnies", "xiaozhangup", "TamashiiMon")
+    contributors = listOf("jhqwqmc", "iqtesterrr", "WhiteProject1", "Catnies", "xiaozhangup", "TamashiiMon", "Halogly", "ArubikU", "Maxsh001", "Sasha2294", "MrPanda8")
     foliaSupported = true
     serverDependencies {
         register("PlaceholderAPI") {

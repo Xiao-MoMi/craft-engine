@@ -4,10 +4,7 @@ import net.momirealms.craftengine.core.plugin.locale.LocalizedResourceConfigExce
 import org.joml.Quaternionf;
 import org.joml.Vector3f;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
+import java.util.*;
 
 public class MiscUtils {
 
@@ -49,6 +46,20 @@ public class MiscUtils {
             }
         }
         return list;
+    }
+
+    public static String[] getAsStringArray(Object o) {
+        if (o instanceof List<?> list) {
+            String[] array = new String[list.size()];
+            for (int i = 0; i < array.length; i++) {
+                array[i] = list.get(i).toString();
+            }
+            return array;
+        } else if (o != null) {
+            return new String[]{o.toString()};
+        } else {
+            return new String[0];
+        }
     }
 
     @SuppressWarnings("unchecked")
@@ -138,5 +149,18 @@ public class MiscUtils {
         } else {
             return o;
         }
+    }
+
+    public static boolean matchRegex(String id, Set<String> ids, boolean regexMatch) {
+        if (regexMatch) {
+            for (String regex : ids) {
+                if (id.matches(regex)) {
+                    return true;
+                }
+            }
+        } else {
+            return ids.contains(id);
+        }
+        return false;
     }
 }

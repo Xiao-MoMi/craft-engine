@@ -1,11 +1,13 @@
 package net.momirealms.craftengine.bukkit.entity.furniture;
 
+import net.momirealms.craftengine.bukkit.api.BukkitAdaptors;
 import net.momirealms.craftengine.bukkit.entity.furniture.hitbox.InteractionHitBox;
 import net.momirealms.craftengine.bukkit.nms.CollisionEntity;
 import net.momirealms.craftengine.bukkit.nms.FastNMS;
 import net.momirealms.craftengine.bukkit.plugin.BukkitCraftEngine;
 import net.momirealms.craftengine.bukkit.plugin.network.handler.FurniturePacketHandler;
 import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.MEntityTypes;
+import net.momirealms.craftengine.bukkit.plugin.user.BukkitServerPlayer;
 import net.momirealms.craftengine.bukkit.util.EntityUtils;
 import net.momirealms.craftengine.bukkit.util.KeyUtils;
 import net.momirealms.craftengine.bukkit.util.LocationUtils;
@@ -207,15 +209,16 @@ public class BukkitFurnitureManager extends AbstractFurnitureManager {
                 BukkitFurniture furniture = addNewFurniture(display, customFurniture);
                 furniture.initializeColliders();
                 for (Player player : display.getTrackedPlayers()) {
-                    this.plugin.adapt(player).entityPacketHandlers().computeIfAbsent(furniture.baseEntityId(), k -> new FurniturePacketHandler(furniture.fakeEntityIds()));
-                    this.plugin.networkManager().sendPacket(this.plugin.adapt(player), furniture.spawnPacket(player));
+                    BukkitAdaptors.adapt(player).entityPacketHandlers().computeIfAbsent(furniture.baseEntityId(), k -> new FurniturePacketHandler(furniture.fakeEntityIds()));
+                    this.plugin.networkManager().sendPacket(BukkitAdaptors.adapt(player), furniture.spawnPacket(player));
                 }
             }
         } else {
             BukkitFurniture furniture = addNewFurniture(display, customFurniture);
             for (Player player : display.getTrackedPlayers()) {
-                this.plugin.adapt(player).entityPacketHandlers().computeIfAbsent(furniture.baseEntityId(), k -> new FurniturePacketHandler(furniture.fakeEntityIds()));
-                this.plugin.networkManager().sendPacket(this.plugin.adapt(player), furniture.spawnPacket(player));
+                BukkitServerPlayer serverPlayer = BukkitAdaptors.adapt(player);
+                serverPlayer.entityPacketHandlers().computeIfAbsent(furniture.baseEntityId(), k -> new FurniturePacketHandler(furniture.fakeEntityIds()));
+                this.plugin.networkManager().sendPacket(serverPlayer, furniture.spawnPacket(player));
             }
             if (preventChange) {
                 this.plugin.scheduler().sync().runLater(furniture::initializeColliders, 1, location.getWorld(), location.getBlockX() >> 4, location.getBlockZ() >> 4);

@@ -14,7 +14,7 @@ import org.jetbrains.annotations.Nullable;
 public class EffRemoveFurniture extends Effect {
 
     public static void register() {
-        Skript.registerEffect(EffRemoveFurniture.class, "remove furniture %entities%");
+        Skript.registerEffect(EffRemoveFurniture.class, "remove [(custom|ce|craft-engine)] furniture %entities%");
     }
 
     private Expression<Entity> entities;
@@ -22,11 +22,9 @@ public class EffRemoveFurniture extends Effect {
     @Override
     protected void execute(Event e) {
         for (Entity entity : entities.getArray(e)) {
-            if (CraftEngineFurniture.isFurniture(entity)) {
-                Furniture bukkitFurniture = CraftEngineFurniture.getLoadedFurnitureByBaseEntity(entity);
-                if (bukkitFurniture != null) {
-                    bukkitFurniture.destroy();
-                }
+            Furniture bukkitFurniture = CraftEngineFurniture.getLoadedFurnitureByBaseEntity(entity);
+            if (bukkitFurniture != null) {
+                bukkitFurniture.destroy();
             }
         }
     }

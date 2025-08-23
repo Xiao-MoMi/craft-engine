@@ -15,8 +15,8 @@ public class CondIsCustomBlock extends Condition {
 
     public static void register() {
         Skript.registerCondition(CondIsCustomBlock.class,
-                "%blocks% (is|are) custom block(s)",
-                "%blocks% (is|are)(n't| not) custom block(s)");
+                "%blocks% (is|are) [a[n]] (custom|ce|craft-engine) block[s]",
+                "%blocks% (is|are) (n't| not) [a[n]] (custom|ce|craft-engine) block[s]");
     }
 
     private Expression<Block> blocks;

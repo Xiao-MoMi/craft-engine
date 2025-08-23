@@ -113,7 +113,7 @@ public class CEChunk {
         return this.sections[index];
     }
 
-    @Nullable
+    @NotNull
     public CESection sectionById(int sectionId) {
         return this.sections[sectionIndex(sectionId)];
     }

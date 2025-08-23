@@ -2,7 +2,6 @@ package net.momirealms.craftengine.bukkit.world;
 
 import net.momirealms.craftengine.bukkit.nms.FastNMS;
 import net.momirealms.craftengine.bukkit.plugin.BukkitCraftEngine;
-import net.momirealms.craftengine.bukkit.plugin.injector.RecipeInjector;
 import net.momirealms.craftengine.bukkit.plugin.injector.WorldStorageInjector;
 import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.CoreReflections;
 import net.momirealms.craftengine.bukkit.util.BlockStateUtils;
@@ -49,12 +48,16 @@ public class BukkitWorldManager implements WorldManager, Listener {
     private CEWorld lastVisitedWorld;
     private StorageAdaptor storageAdaptor;
     private boolean isTicking = false;
+    private boolean initialized = false;
 
     public BukkitWorldManager(BukkitCraftEngine plugin) {
         instance = this;
         this.plugin = plugin;
         this.worlds = new HashMap<>();
         this.storageAdaptor = new DefaultStorageAdaptor();
+        for (World world : Bukkit.getWorlds()) {
+            this.worlds.put(world.getUID(), new BukkitCEWorld(new BukkitWorld(world), this.storageAdaptor));
+        }
     }
 
     @Override
@@ -88,13 +91,17 @@ public class BukkitWorldManager implements WorldManager, Listener {
         }
     }
 
+    @Override
+    public CEWorld[] getWorlds() {
+        return this.worldArray;
+    }
+
     private void resetWorldArray() {
         this.worldArray = this.worlds.values().toArray(new CEWorld[0]);
     }
 
     public void delayedInit() {
         // events and tasks
-        Bukkit.getPluginManager().registerEvents(this, this.plugin.javaPlugin());
         this.tickTask = this.plugin.scheduler().asyncRepeating(() -> {
             try {
                 if (this.isTicking) {
@@ -113,9 +120,7 @@ public class BukkitWorldManager implements WorldManager, Listener {
         try {
             for (World world : Bukkit.getWorlds()) {
                 try {
-                    CEWorld ceWorld = new BukkitCEWorld(new BukkitWorld(world), this.storageAdaptor);
-                    this.worlds.put(world.getUID(), ceWorld);
-                    this.resetWorldArray();
+                    CEWorld ceWorld = this.worlds.computeIfAbsent(world.getUID(), k -> new BukkitCEWorld(new BukkitWorld(world), this.storageAdaptor));
                     for (Chunk chunk : world.getLoadedChunks()) {
                         handleChunkLoad(ceWorld, chunk);
                     }
@@ -123,9 +128,12 @@ public class BukkitWorldManager implements WorldManager, Listener {
                     CraftEngine.instance().logger().warn("Error loading world: " + world.getName(), e);
                 }
             }
+            this.resetWorldArray();
         } finally {
             this.worldMapLock.writeLock().unlock();
         }
+        Bukkit.getPluginManager().registerEvents(this, this.plugin.javaPlugin());
+        this.initialized = true;
     }
 
     @Override
@@ -218,7 +226,6 @@ public class BukkitWorldManager implements WorldManager, Listener {
                 this.lastVisitedUUID = null;
             }
             this.resetWorldArray();
-
         } finally {
             this.worldMapLock.writeLock().unlock();
         }
@@ -230,6 +237,10 @@ public class BukkitWorldManager implements WorldManager, Listener {
         } catch (IOException e) {
             CraftEngine.instance().logger().warn("Failed to close world storage", e);
         }
+    }
+
+    public boolean initialized() {
+        return initialized;
     }
 
     @Override
@@ -328,80 +339,75 @@ public class BukkitWorldManager implements WorldManager, Listener {
                 Object chunkSource = FastNMS.INSTANCE.method$ServerLevel$getChunkSource(worldServer);
                 Object levelChunk = FastNMS.INSTANCE.method$ServerChunkCache$getChunkAtIfLoadedMainThread(chunkSource, chunk.getX(), chunk.getZ());
                 Object[] sections = FastNMS.INSTANCE.method$ChunkAccess$getSections(levelChunk);
-                for (int i = 0; i < ceSections.length; i++) {
-                    CESection ceSection = ceSections[i];
-                    Object section = sections[i];
-                    if (Config.syncCustomBlocks()) {
-                        Object statesContainer = FastNMS.INSTANCE.field$LevelChunkSection$states(section);
-                        Object data = CoreReflections.varHandle$PalettedContainer$data.get(statesContainer);
-                        Object palette = CoreReflections.field$PalettedContainer$Data$palette.get(data);
-                        boolean requiresSync = false;
-                        if (CoreReflections.clazz$SingleValuePalette.isInstance(palette)) {
-                            Object onlyBlockState = CoreReflections.field$SingleValuePalette$value.get(palette);
-                            if (BlockStateUtils.isCustomBlock(onlyBlockState)) {
+                synchronized (sections) {
+                    for (int i = 0; i < ceSections.length; i++) {
+                        CESection ceSection = ceSections[i];
+                        Object section = sections[i];
+                        if (Config.syncCustomBlocks()) {
+                            Object statesContainer = FastNMS.INSTANCE.field$LevelChunkSection$states(section);
+                            Object data = CoreReflections.varHandle$PalettedContainer$data.get(statesContainer);
+                            Object palette = CoreReflections.field$PalettedContainer$Data$palette.get(data);
+                            boolean requiresSync = false;
+                            if (CoreReflections.clazz$SingleValuePalette.isInstance(palette)) {
+                                Object onlyBlockState = CoreReflections.field$SingleValuePalette$value.get(palette);
+                                if (BlockStateUtils.isCustomBlock(onlyBlockState)) {
+                                    requiresSync = true;
+                                }
+                            } else if (CoreReflections.clazz$LinearPalette.isInstance(palette)) {
+                                Object[] blockStates = (Object[]) CoreReflections.field$LinearPalette$values.get(palette);
+                                for (Object blockState : blockStates) {
+                                    if (blockState != null) {
+                                        if (BlockStateUtils.isCustomBlock(blockState)) {
+                                            requiresSync = true;
+                                            break;
+                                        }
+                                    }
+                                }
+                            } else if (CoreReflections.clazz$HashMapPalette.isInstance(palette)) {
+                                Object biMap = CoreReflections.field$HashMapPalette$values.get(palette);
+                                Object[] blockStates = (Object[]) CoreReflections.field$CrudeIncrementalIntIdentityHashBiMap$keys.get(biMap);
+                                for (Object blockState : blockStates) {
+                                    if (blockState != null) {
+                                        if (BlockStateUtils.isCustomBlock(blockState)) {
+                                            requiresSync = true;
+                                            break;
+                                        }
+                                    }
+                                }
+                            } else {
                                 requiresSync = true;
                             }
-                        } else if (CoreReflections.clazz$LinearPalette.isInstance(palette)) {
-                            Object[] blockStates = (Object[]) CoreReflections.field$LinearPalette$values.get(palette);
-                            for (Object blockState : blockStates) {
-                                if (blockState != null) {
-                                    if (BlockStateUtils.isCustomBlock(blockState)) {
-                                        requiresSync = true;
-                                        break;
-                                    }
-                                }
-                            }
-                        } else if (CoreReflections.clazz$HashMapPalette.isInstance(palette)) {
-                            Object biMap = CoreReflections.field$HashMapPalette$values.get(palette);
-                            Object[] blockStates = (Object[]) CoreReflections.field$CrudeIncrementalIntIdentityHashBiMap$keys.get(biMap);
-                            for (Object blockState : blockStates) {
-                                if (blockState != null) {
-                                    if (BlockStateUtils.isCustomBlock(blockState)) {
-                                        requiresSync = true;
-                                        break;
-                                    }
-                                }
-                            }
-                        } else {
-                            requiresSync = true;
-                        }
-                        if (requiresSync) {
-                            for (int x = 0; x < 16; x++) {
-                                for (int z = 0; z < 16; z++) {
-                                    for (int y = 0; y < 16; y++) {
-                                        Object mcState = FastNMS.INSTANCE.method$LevelChunkSection$getBlockState(section, x, y, z);
-                                        Optional<ImmutableBlockState> optionalCustomState = BlockStateUtils.getOptionalCustomBlockState(mcState);
-                                        if (optionalCustomState.isPresent()) {
-                                            ceSection.setBlockState(x, y, z, optionalCustomState.get());
+                            if (requiresSync) {
+                                for (int x = 0; x < 16; x++) {
+                                    for (int z = 0; z < 16; z++) {
+                                        for (int y = 0; y < 16; y++) {
+                                            Object mcState = FastNMS.INSTANCE.method$LevelChunkSection$getBlockState(section, x, y, z);
+                                            Optional<ImmutableBlockState> optionalCustomState = BlockStateUtils.getOptionalCustomBlockState(mcState);
+                                            if (optionalCustomState.isPresent()) {
+                                                ceSection.setBlockState(x, y, z, optionalCustomState.get());
+                                            }
                                         }
                                     }
                                 }
                             }
                         }
-                    }
-                    if (Config.restoreCustomBlocks()) {
-                        if (!ceSection.statesContainer().isEmpty()) {
-                            for (int x = 0; x < 16; x++) {
-                                for (int z = 0; z < 16; z++) {
-                                    for (int y = 0; y < 16; y++) {
-                                        ImmutableBlockState customState = ceSection.getBlockState(x, y, z);
-                                        if (!customState.isEmpty() && customState.customBlockState() != null) {
-                                            FastNMS.INSTANCE.method$LevelChunkSection$setBlockState(section, x, y, z, customState.customBlockState().handle(), false);
+                        if (Config.restoreCustomBlocks()) {
+                            if (!ceSection.statesContainer().isEmpty()) {
+                                for (int x = 0; x < 16; x++) {
+                                    for (int z = 0; z < 16; z++) {
+                                        for (int y = 0; y < 16; y++) {
+                                            ImmutableBlockState customState = ceSection.getBlockState(x, y, z);
+                                            if (!customState.isEmpty() && customState.customBlockState() != null) {
+                                                FastNMS.INSTANCE.method$LevelChunkSection$setBlockState(section, x, y, z, customState.customBlockState().handle(), false);
+                                            }
                                         }
                                     }
                                 }
                             }
                         }
-                    }
-                    int finalI = i;
-                    WorldStorageInjector.injectLevelChunkSection(section, ceSection, ceChunk, new SectionPos(pos.x, ceChunk.sectionY(i), pos.z),
-                            (injected) -> sections[finalI] = injected);
-                }
-                if (Config.enableRecipeSystem()) {
-                    @SuppressWarnings("unchecked")
-                    Map<Object, Object> blockEntities = (Map<Object, Object>) FastNMS.INSTANCE.field$ChunkAccess$blockEntities(levelChunk);
-                    for (Object blockEntity : blockEntities.values()) {
-                        RecipeInjector.injectCookingBlockEntity(blockEntity);
+                        int finalI = i;
+                        WorldStorageInjector.injectLevelChunkSection(section, ceSection, ceChunk, new SectionPos(pos.x, ceChunk.sectionY(i), pos.z),
+                                (injected) -> sections[finalI] = injected);
                     }
                 }
             } catch (ReflectiveOperationException e) {

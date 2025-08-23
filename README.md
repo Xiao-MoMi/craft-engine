@@ -9,8 +9,8 @@
   <a href="https://deepwiki.com/Xiao-MoMi/craft-engine">
     <img src="https://deepwiki.com/badge.svg" alt="Ask DeepWiki">
   </a>
-  <a href="https://mo-mi.gitbook.io/xiaomomi-plugins/craftengine" alt="GitBook">
-    <img src="https://img.shields.io/badge/📙-User Manual-D2691E" alt="Gitbook"/>
+  <a href="https://xiao-momi.github.io/craft-engine-wiki/" alt="doc">
+    <img src="https://img.shields.io/badge/📙-User Manual-D2691E" alt="doc"/>
   </a>
 </p>
 
@@ -56,7 +56,7 @@ The code you contribute will be open-sourced under the GPLv3 license. If you pre
 ## Differences Between Versions
 | Version           | Official Support | Max Players | Dev Builds |
 |-------------------|------------------|-------------|------------|
-| Community Edition | ❌ No             | 20          | ❌ No       |
+| Community Edition | ❌ No             | 30          | ❌ No       |
 | Premium Edition   | ✔️ Yes           | Unlimited   | ✔️ Yes     |
 
 ### 💖 Support the Developer
@@ -75,7 +75,7 @@ repositories {
 ```
 ```kotlin
 dependencies {
-    compileOnly("net.momirealms:craft-engine-core:0.0.59")
-    compileOnly("net.momirealms:craft-engine-bukkit:0.0.59")
+    compileOnly("net.momirealms:craft-engine-core:0.0.61")
+    compileOnly("net.momirealms:craft-engine-bukkit:0.0.61")
 }
 ```

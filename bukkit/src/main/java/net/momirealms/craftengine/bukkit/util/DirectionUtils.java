@@ -4,7 +4,7 @@ import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.CoreReflect
 import net.momirealms.craftengine.core.util.Direction;
 import org.bukkit.block.BlockFace;
 
-public class DirectionUtils {
+public final class DirectionUtils {
 
     private DirectionUtils() {}
 

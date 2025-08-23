@@ -15,7 +15,7 @@ import org.jetbrains.annotations.Nullable;
 public class EffPlaceFurniture extends Effect {
 
     public static void register() {
-        Skript.registerEffect(EffPlaceFurniture.class, "place furniture %strings% [%directions% %locations%]");
+        Skript.registerEffect(EffPlaceFurniture.class, "place [(custom|ce|craft-engine)] furniture[s] %strings% [at] [%directions% %locations%]");
     }
 
     private Expression<String> furniture;

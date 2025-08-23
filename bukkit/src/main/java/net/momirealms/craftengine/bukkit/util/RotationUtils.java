@@ -3,7 +3,7 @@ package net.momirealms.craftengine.bukkit.util;
 import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.CoreReflections;
 import net.momirealms.craftengine.core.util.Rotation;
 
-public class RotationUtils {
+public final class RotationUtils {
 
     private RotationUtils() {}
 

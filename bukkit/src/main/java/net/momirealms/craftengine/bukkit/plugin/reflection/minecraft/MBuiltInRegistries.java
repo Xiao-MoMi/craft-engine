@@ -21,6 +21,7 @@ public final class MBuiltInRegistries {
     public static final Object RECIPE_TYPE;
     public static final Object PARTICLE_TYPE;
     public static final Object DATA_COMPONENT_TYPE;
+    public static final Object LOOT_POOL_ENTRY_TYPE;
 
     static {
         Field[] fields = CoreReflections.clazz$BuiltInRegistries.getDeclaredFields();
@@ -35,6 +36,7 @@ public final class MBuiltInRegistries {
             Object registries$Fluid  = null;
             Object registries$RecipeType  = null;
             Object registries$DataComponentType  = null;
+            Object registries$LootPoolEntryType  = null;
             for (Field field : fields) {
                 Type fieldType = field.getGenericType();
                 if (fieldType instanceof ParameterizedType paramType) {
@@ -63,6 +65,8 @@ public final class MBuiltInRegistries {
                             registries$Item = field.get(null);
                         } else if (type == CoreReflections.clazz$Fluid) {
                             registries$Fluid = field.get(null);
+                        } else if (type == CoreReflections.clazz$LootPoolEntryType) {
+                            registries$LootPoolEntryType = field.get(null);
                         }
                     }
                 }
@@ -76,6 +80,7 @@ public final class MBuiltInRegistries {
             ENTITY_TYPE = requireNonNull(registries$EntityType);
             FLUID = requireNonNull(registries$Fluid);
             RECIPE_TYPE = requireNonNull(registries$RecipeType);
+            LOOT_POOL_ENTRY_TYPE = requireNonNull(registries$LootPoolEntryType);
             DATA_COMPONENT_TYPE = registries$DataComponentType;
         } catch (ReflectiveOperationException e) {
             throw new ReflectionInitException("Failed to init BuiltInRegistries", e);

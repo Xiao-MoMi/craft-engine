@@ -9,7 +9,7 @@ import java.util.BitSet;
 import java.util.List;
 import java.util.Map;
 
-public class LightUtils {
+public final class LightUtils {
 
     private LightUtils() {}
 

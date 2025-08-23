@@ -28,6 +28,8 @@ public abstract class Player extends AbstractEntity implements NetWorkUser {
 
     public abstract void sendPackets(List<Object> packet, boolean immediately);
 
+    public abstract void sendPackets(List<Object> packet, boolean immediately, Runnable sendListener);
+
     public abstract float getDestroyProgress(Object blockState, BlockPos pos);
 
     public abstract void setClientSideCanBreakBlock(boolean canBreak);
@@ -50,6 +52,14 @@ public abstract class Player extends AbstractEntity implements NetWorkUser {
 
     public abstract boolean isSneaking();
 
+    public abstract boolean isSwimming();
+
+    public abstract boolean isClimbing();
+
+    public abstract boolean isGliding();
+
+    public abstract boolean isFlying();
+
     public abstract GameMode gameMode();
 
     public abstract void setGameMode(GameMode gameMode);
@@ -67,6 +77,10 @@ public abstract class Player extends AbstractEntity implements NetWorkUser {
     public abstract boolean updateLastSuccessfulInteractionTick(int tick);
 
     public abstract int lastSuccessfulInteractionTick();
+
+    public abstract void updateLastInteractEntityTick(@NotNull InteractionHand hand);
+
+    public abstract boolean lastInteractEntityCheck(@NotNull InteractionHand hand);
 
     public abstract int gameTicks();
 
@@ -100,9 +114,9 @@ public abstract class Player extends AbstractEntity implements NetWorkUser {
 
     public abstract void performCommand(String command);
 
-    public abstract double luck();
+    public abstract void performCommandAsEvent(String command);
 
-    public abstract boolean isFlying();
+    public abstract double luck();
 
     @Override
     public Key type() {

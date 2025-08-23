@@ -17,6 +17,8 @@ public class EventConditions {
 
     static {
         register(CommonConditions.MATCH_ITEM, new MatchItemCondition.FactoryImpl<>());
+        register(CommonConditions.MATCH_ENTITY_TYPE, new MatchEntityTypeCondition.FactoryImpl<>());
+        register(CommonConditions.MATCH_BLOCK_TYPE, new MatchBlockTypeCondition.FactoryImpl<>());
         register(CommonConditions.MATCH_BLOCK_PROPERTY, new MatchBlockPropertyCondition.FactoryImpl<>());
         register(CommonConditions.TABLE_BONUS, new TableBonusCondition.FactoryImpl<>());
         register(CommonConditions.SURVIVES_EXPLOSION, new SurvivesExplosionCondition.FactoryImpl<>());

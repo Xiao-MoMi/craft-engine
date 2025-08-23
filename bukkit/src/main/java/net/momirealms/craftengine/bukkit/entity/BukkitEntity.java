@@ -1,6 +1,6 @@
 package net.momirealms.craftengine.bukkit.entity;
 
-import net.momirealms.craftengine.bukkit.util.KeyUtils;
+import net.momirealms.craftengine.bukkit.util.EntityUtils;
 import net.momirealms.craftengine.bukkit.world.BukkitWorld;
 import net.momirealms.craftengine.core.entity.AbstractEntity;
 import net.momirealms.craftengine.core.util.Direction;
@@ -68,7 +68,7 @@ public class BukkitEntity extends AbstractEntity {
 
     @Override
     public Key type() {
-        return KeyUtils.namespacedKey2Key(literalObject().getType().getKey());
+        return EntityUtils.getEntityType(literalObject());
     }
 
     @Override

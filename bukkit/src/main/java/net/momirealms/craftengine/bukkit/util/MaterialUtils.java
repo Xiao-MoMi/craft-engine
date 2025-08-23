@@ -10,7 +10,7 @@ import java.util.Locale;
 import java.util.Objects;
 import java.util.Optional;
 
-public class MaterialUtils {
+public final class MaterialUtils {
 
     public static Material MACE;
 

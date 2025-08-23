@@ -58,6 +58,24 @@ public final class MEntityTypes {
     public static final int HAPPY_GHAST$registryId;
     public static final Object PLAYER;
     public static final int PLAYER$registryId;
+    public static final Object ENDERMAN;
+    public static final int ENDERMAN$registryId;
+    public static final Object TNT;
+    public static final int TNT$registryId;
+    public static final Object CHEST_MINECART;
+    public static final int CHEST_MINECART$registryId;
+    public static final Object COMMAND_BLOCK_MINECART;
+    public static final int COMMAND_BLOCK_MINECART$registryId;
+    public static final Object FURNACE_MINECART;
+    public static final int FURNACE_MINECART$registryId;
+    public static final Object HOPPER_MINECART;
+    public static final int HOPPER_MINECART$registryId;
+    public static final Object MINECART;
+    public static final int MINECART$registryId;
+    public static final Object SPAWNER_MINECART;
+    public static final int SPAWNER_MINECART$registryId;
+    public static final Object TNT_MINECART;
+    public static final int TNT_MINECART$registryId;
 
     private static Object getById(String id) {
         Object rl = FastNMS.INSTANCE.method$ResourceLocation$fromNamespaceAndPath("minecraft", id);
@@ -122,5 +140,23 @@ public final class MEntityTypes {
         ARROW$registryId = getRegistryId(ARROW);
         SPECTRAL_ARROW = getById("spectral_arrow");
         SPECTRAL_ARROW$registryId = getRegistryId(SPECTRAL_ARROW);
+        ENDERMAN = getById("enderman");
+        ENDERMAN$registryId = getRegistryId(ENDERMAN);
+        TNT = getById("tnt");
+        TNT$registryId = getRegistryId(TNT);
+        CHEST_MINECART = getById("chest_minecart");
+        CHEST_MINECART$registryId = getRegistryId(CHEST_MINECART);
+        COMMAND_BLOCK_MINECART = getById("command_block_minecart");
+        COMMAND_BLOCK_MINECART$registryId = getRegistryId(COMMAND_BLOCK_MINECART);
+        FURNACE_MINECART = getById("furnace_minecart");
+        FURNACE_MINECART$registryId = getRegistryId(FURNACE_MINECART);
+        HOPPER_MINECART = getById("hopper_minecart");
+        HOPPER_MINECART$registryId = getRegistryId(HOPPER_MINECART);
+        MINECART = getById("minecart");
+        MINECART$registryId = getRegistryId(MINECART);
+        SPAWNER_MINECART = getById("spawner_minecart");
+        SPAWNER_MINECART$registryId = getRegistryId(SPAWNER_MINECART);
+        TNT_MINECART = getById("tnt_minecart");
+        TNT_MINECART$registryId = getRegistryId(TNT_MINECART);
     }
 }

@@ -19,6 +19,7 @@ public abstract class AbstractSoundManager implements SoundManager {
     protected final Map<Key, JukeboxSong> songs = new HashMap<>();
     protected final SoundParser soundParser;
     protected final SongParser songParser;
+    protected final Map<Integer, Key> customSoundsInRegistry = new HashMap<>();
 
     public AbstractSoundManager(CraftEngine plugin) {
         this.plugin = plugin;
@@ -46,6 +47,8 @@ public abstract class AbstractSoundManager implements SoundManager {
     @Override
     public void runDelayedSyncTasks() {
         if (!VersionHelper.isOrAbove1_21()) return;
+        // 问题是会踢客户端
+        // this.registerSounds(this.byId.keySet());
         this.registerSongs(this.songs);
     }
 
@@ -59,6 +62,8 @@ public abstract class AbstractSoundManager implements SoundManager {
     }
 
     protected abstract void registerSongs(Map<Key, JukeboxSong> songs);
+
+    protected abstract void registerSounds(Collection<Key> sounds);
 
     public class SongParser implements ConfigParser {
         public static final String[] CONFIG_SECTION_NAME = new String[] {"jukebox_songs", "jukebox_song", "jukebox-songs", "jukebox-song"};

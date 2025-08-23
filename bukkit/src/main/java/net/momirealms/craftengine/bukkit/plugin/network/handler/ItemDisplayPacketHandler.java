@@ -1,9 +1,9 @@
 package net.momirealms.craftengine.bukkit.plugin.network.handler;
 
+import net.momirealms.craftengine.bukkit.entity.data.ItemDisplayEntityData;
 import net.momirealms.craftengine.bukkit.item.BukkitItemManager;
 import net.momirealms.craftengine.bukkit.nms.FastNMS;
 import net.momirealms.craftengine.bukkit.plugin.user.BukkitServerPlayer;
-import net.momirealms.craftengine.bukkit.util.EntityDataUtils;
 import net.momirealms.craftengine.core.plugin.network.ByteBufPacketEvent;
 import net.momirealms.craftengine.core.plugin.network.EntityPacketHandler;
 import net.momirealms.craftengine.core.plugin.network.NetWorkUser;
@@ -25,7 +25,7 @@ public class ItemDisplayPacketHandler implements EntityPacketHandler {
         for (int i = 0; i < packedItems.size(); i++) {
             Object packedItem = packedItems.get(i);
             int entityDataId = FastNMS.INSTANCE.field$SynchedEntityData$DataValue$id(packedItem);
-            if (entityDataId != EntityDataUtils.DISPLAYED_ITEM_DATA_ID) continue;
+            if (entityDataId != ItemDisplayEntityData.DisplayedItem.id()) continue;
             Object nmsItemStack = FastNMS.INSTANCE.field$SynchedEntityData$DataValue$value(packedItem);
             ItemStack itemStack = FastNMS.INSTANCE.method$CraftItemStack$asCraftMirror(nmsItemStack);
             Optional<ItemStack> optional = BukkitItemManager.instance().s2c(itemStack, (BukkitServerPlayer) user);

@@ -1,8 +1,8 @@
 package net.momirealms.craftengine.core.item;
 
-import net.momirealms.craftengine.core.entity.player.Player;
 import net.momirealms.craftengine.core.item.behavior.ItemBehavior;
 import net.momirealms.craftengine.core.item.modifier.ItemDataModifier;
+import net.momirealms.craftengine.core.item.updater.ItemUpdateConfig;
 import net.momirealms.craftengine.core.plugin.context.PlayerOptionalContext;
 import net.momirealms.craftengine.core.plugin.context.event.EventTrigger;
 import net.momirealms.craftengine.core.plugin.context.function.Function;
@@ -12,8 +12,11 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 public interface CustomItem<I> extends BuildableItem<I> {
+
+    boolean isVanillaItem();
 
     Key id();
 
@@ -31,15 +34,11 @@ public interface CustomItem<I> extends BuildableItem<I> {
 
     ItemSettings settings();
 
+    Optional<ItemUpdateConfig> updater();
+
     default boolean is(Key tag) {
         return settings().tags().contains(tag);
     }
-
-    default Item<I> buildItem(Player player) {
-        return buildItem(ItemBuildContext.of(player));
-    }
-
-    Item<I> buildItem(ItemBuildContext context);
 
     void execute(PlayerOptionalContext context, EventTrigger trigger);
 
@@ -47,6 +46,8 @@ public interface CustomItem<I> extends BuildableItem<I> {
     List<ItemBehavior> behaviors();
 
     interface Builder<I> {
+        Builder<I> isVanillaItem(boolean isVanillaItem);
+
         Builder<I> id(UniqueKey id);
 
         Builder<I> clientBoundMaterial(Key clientBoundMaterialKey);
@@ -66,6 +67,8 @@ public interface CustomItem<I> extends BuildableItem<I> {
         Builder<I> behaviors(List<ItemBehavior> behaviors);
 
         Builder<I> settings(ItemSettings settings);
+
+        Builder<I> updater(ItemUpdateConfig updater);
 
         Builder<I> events(Map<EventTrigger, List<Function<PlayerOptionalContext>>> events);
 

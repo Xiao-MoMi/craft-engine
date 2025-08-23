@@ -3,7 +3,7 @@ package net.momirealms.craftengine.bukkit.util;
 import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.CoreReflections;
 import net.momirealms.craftengine.core.block.state.properties.StairsShape;
 
-public class StairsShapeUtils {
+public final class StairsShapeUtils {
     private StairsShapeUtils() {}
 
     public static StairsShape fromNMSStairsShape(Object shape) {

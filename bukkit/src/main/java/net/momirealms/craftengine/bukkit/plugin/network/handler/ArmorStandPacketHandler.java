@@ -1,9 +1,9 @@
 package net.momirealms.craftengine.bukkit.plugin.network.handler;
 
 import net.kyori.adventure.text.Component;
+import net.momirealms.craftengine.bukkit.entity.data.BaseEntityData;
 import net.momirealms.craftengine.bukkit.nms.FastNMS;
 import net.momirealms.craftengine.bukkit.util.ComponentUtils;
-import net.momirealms.craftengine.bukkit.util.EntityDataUtils;
 import net.momirealms.craftengine.core.plugin.CraftEngine;
 import net.momirealms.craftengine.core.plugin.config.Config;
 import net.momirealms.craftengine.core.plugin.network.ByteBufPacketEvent;
@@ -32,7 +32,7 @@ public class ArmorStandPacketHandler implements EntityPacketHandler {
         for (int i = 0; i < packedItems.size(); i++) {
             Object packedItem = packedItems.get(i);
             int entityDataId = FastNMS.INSTANCE.field$SynchedEntityData$DataValue$id(packedItem);
-            if (entityDataId != EntityDataUtils.CUSTOM_NAME_DATA_ID) continue;
+            if (entityDataId != BaseEntityData.CustomName.id()) continue;
             @SuppressWarnings("unchecked")
             Optional<Object> optionalTextComponent = (Optional<Object>) FastNMS.INSTANCE.field$SynchedEntityData$DataValue$value(packedItem);
             if (optionalTextComponent.isEmpty()) continue;

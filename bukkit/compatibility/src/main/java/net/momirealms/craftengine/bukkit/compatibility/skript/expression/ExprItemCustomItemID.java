@@ -1,12 +1,18 @@
 package net.momirealms.craftengine.bukkit.compatibility.skript.expression;
 
+import ch.njol.skript.Skript;
 import ch.njol.skript.aliases.ItemType;
 import ch.njol.skript.classes.Changer;
-import ch.njol.skript.expressions.base.SimplePropertyExpression;
-import ch.njol.util.coll.CollectionUtils;
+import ch.njol.skript.doc.Description;
+import ch.njol.skript.doc.Name;
+import ch.njol.skript.doc.Since;
+import ch.njol.skript.lang.Expression;
+import ch.njol.skript.lang.ExpressionType;
+import ch.njol.skript.lang.SkriptParser;
+import ch.njol.skript.lang.util.SimpleExpression;
+import ch.njol.skript.util.slot.Slot;
+import ch.njol.util.Kleenean;
 import net.momirealms.craftengine.bukkit.api.CraftEngineItems;
-import net.momirealms.craftengine.bukkit.item.BukkitItemManager;
-import net.momirealms.craftengine.core.item.Item;
 import net.momirealms.craftengine.core.util.Key;
 import org.bukkit.event.Event;
 import org.bukkit.inventory.ItemStack;
@@ -14,27 +20,52 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Optional;
 
-public class ExprItemCustomItemID extends SimplePropertyExpression<Object, String> {
+@Name("CraftEngine Item ID")
+@Description({"Get CraftEngine item id."})
+@Since("1.0")
+public class ExprItemCustomItemID extends SimpleExpression<String> {
 
     public static void register() {
-        register(ExprItemCustomItemID.class, String.class, "custom item id", "itemstacks/itemtypes");
+        Skript.registerExpression(ExprItemCustomItemID.class, String.class, ExpressionType.PROPERTY,
+                "(custom|ce|craft-engine) item [namespace] id of %itemstack/itemtype/slot%",
+                "%itemstack/itemtype/slot%'[s] (custom|ce|craft-engine) item [namespace] id"
+        );
+    }
+
+    private Expression<?> itemStackExpr;
+
+    @Override
+    public boolean init(Expression<?>[] exprs, int matchedPattern, Kleenean isDelayed, SkriptParser.ParseResult parseResult) {
+        itemStackExpr = exprs[0];
+        return true;
     }
 
     @Override
-    public @Nullable String convert(Object object) {
-        if (object instanceof ItemStack itemStack)
-            return Optional.ofNullable(CraftEngineItems.byItemStack(itemStack)).map(it -> it.id().toString()).orElse(null);
-        if (object instanceof ItemType itemType) {
-            ItemStack itemStack = new ItemStack(itemType.getMaterial());
-            itemStack.setItemMeta(itemType.getItemMeta());
-            return Optional.ofNullable(CraftEngineItems.byItemStack(itemStack)).map(it -> it.id().toString()).orElse(null);
+    protected String[] get(Event event) {
+        Object single = itemStackExpr.getSingle(event);
+
+        String result = null;
+        if (single instanceof ItemStack itemStack) {
+            result =  Optional.of(itemStack).map(this::getCraftEngineItemId).orElse(null);
+        } else if (single instanceof ItemType itemType) {
+            result = Optional.ofNullable(itemType.getTypes().getFirst().getStack()).map(this::getCraftEngineItemId).orElse(null);
+        } else if (single instanceof Slot slot) {
+            result = Optional.ofNullable(slot.getItem()).map(this::getCraftEngineItemId).orElse(null);
         }
-        return null;
+
+        return new String[] {result};
+    }
+
+
+    private String getCraftEngineItemId(ItemStack itemStack) {
+        return Optional.ofNullable(CraftEngineItems.getCustomItemId(itemStack))
+                .map(Key::asString)
+                .orElse(null);
     }
 
     @Override
-    protected String getPropertyName() {
-        return "custom item id";
+    public boolean isSingle() {
+        return itemStackExpr.isSingle();
     }
 
     @Override
@@ -42,23 +73,14 @@ public class ExprItemCustomItemID extends SimplePropertyExpression<Object, Strin
         return String.class;
     }
 
+    // 不需要处理 add, delete 等修改操作
     @Override
     public Class<?>[] acceptChange(Changer.ChangeMode mode) {
-        return CollectionUtils.array(String.class);
+        return null;
     }
 
     @Override
-    public void change(Event e, @Nullable Object[] delta, Changer.ChangeMode mode) {
-        Key id = Key.of((String) delta[0]);
-        for (Object item : getExpr().getArray(e)) {
-            if (item instanceof ItemStack itemStack) {
-                Item<ItemStack> item1 = BukkitItemManager.instance().wrap(itemStack);
-                Item<ItemStack> item2 = BukkitItemManager.instance().createWrappedItem(id, null);
-                item1.merge(item2);
-            } else if (item instanceof ItemType itemType) {
-                Item<ItemStack> item2 = BukkitItemManager.instance().createWrappedItem(id, null);
-                itemType.setItemMeta(item2.getItem().getItemMeta());
-            }
-        }
+    public String toString(@Nullable Event event, boolean debug) {
+        return "craft-engine item ID of " + itemStackExpr.toString(event, debug);
     }
 }

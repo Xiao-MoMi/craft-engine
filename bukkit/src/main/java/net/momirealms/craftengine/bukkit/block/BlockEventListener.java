@@ -1,6 +1,7 @@
 package net.momirealms.craftengine.bukkit.block;
 
 import io.papermc.paper.event.block.BlockBreakBlockEvent;
+import net.momirealms.craftengine.bukkit.api.BukkitAdaptors;
 import net.momirealms.craftengine.bukkit.api.event.CustomBlockBreakEvent;
 import net.momirealms.craftengine.bukkit.nms.FastNMS;
 import net.momirealms.craftengine.bukkit.plugin.BukkitCraftEngine;
@@ -56,7 +57,7 @@ public final class BlockEventListener implements Listener {
     public void onPlayerAttack(EntityDamageByEntityEvent event) {
         if (!VersionHelper.isOrAbove1_20_5()) {
             if (event.getDamager() instanceof Player player) {
-                BukkitServerPlayer serverPlayer = plugin.adapt(player);
+                BukkitServerPlayer serverPlayer = BukkitAdaptors.adapt(player);
                 serverPlayer.setClientSideCanBreakBlock(true);
             }
         }
@@ -65,7 +66,7 @@ public final class BlockEventListener implements Listener {
     @EventHandler(ignoreCancelled = true)
     public void onPlaceBlock(BlockPlaceEvent event) {
         Player player = event.getPlayer();
-        BukkitServerPlayer serverPlayer = plugin.adapt(player);
+        BukkitServerPlayer serverPlayer = BukkitAdaptors.adapt(player);
         // send swing if player is clicking a replaceable block
         if (serverPlayer.shouldResendSwing()) {
             player.swingHand(event.getHand());
@@ -112,7 +113,7 @@ public final class BlockEventListener implements Listener {
         int stateId = BlockStateUtils.blockStateToId(blockState);
         Player player = event.getPlayer();
         Location location = block.getLocation();
-        BukkitServerPlayer serverPlayer = this.plugin.adapt(player);
+        BukkitServerPlayer serverPlayer = BukkitAdaptors.adapt(player);
         net.momirealms.craftengine.core.world.World world = new BukkitWorld(player.getWorld());
         WorldPosition position = new WorldPosition(world, location.getBlockX() + 0.5, location.getBlockY() + 0.5, location.getBlockZ() + 0.5);
         Item<ItemStack> itemInHand = serverPlayer.getItemInHand(InteractionHand.MAIN_HAND);
@@ -246,7 +247,7 @@ public final class BlockEventListener implements Listener {
             Location location = player.getLocation();
             ImmutableBlockState state = optionalCustomState.get();
             Cancellable cancellable = Cancellable.of(event::isCancelled, event::setCancelled);
-            state.owner().value().execute(PlayerOptionalContext.of(this.plugin.adapt(player), ContextHolder.builder()
+            state.owner().value().execute(PlayerOptionalContext.of(BukkitAdaptors.adapt(player), ContextHolder.builder()
                     .withParameter(DirectContextParameters.EVENT, cancellable)
                     .withParameter(DirectContextParameters.POSITION, new WorldPosition(new BukkitWorld(event.getWorld()), LocationUtils.toVec3d(location)))
                     .withParameter(DirectContextParameters.BLOCK, new BukkitBlockInWorld(block))

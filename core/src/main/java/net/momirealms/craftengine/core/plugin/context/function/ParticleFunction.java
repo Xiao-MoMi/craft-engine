@@ -38,7 +38,7 @@ public class ParticleFunction<CTX extends Context> extends AbstractConditionalFu
                         })),
                 ParticleTypes.BLOCK, ParticleTypes.FALLING_DUST, ParticleTypes.DUST_PILLAR, ParticleTypes.BLOCK_CRUMBLE, ParticleTypes.BLOCK_MARKER);
         registerParticleData(map -> new ColorData(
-                        Color.fromString(ResourceConfigUtils.requireNonEmptyStringOrThrow(map.get("color"), "warning.config.function.particle.missing_color").split(","))),
+                        Color.fromStrings(ResourceConfigUtils.requireNonEmptyStringOrThrow(map.get("color"), "warning.config.function.particle.missing_color").split(","))),
                 ParticleTypes.ENTITY_EFFECT, ParticleTypes.TINTED_LEAVES);
         registerParticleData(map -> new JavaTypeData(
                         ResourceConfigUtils.getAsFloat(map.get("charge"), "charge")),
@@ -47,12 +47,12 @@ public class ParticleFunction<CTX extends Context> extends AbstractConditionalFu
                         ResourceConfigUtils.getAsInt(map.get("shriek"), "shriek")),
                 ParticleTypes.SHRIEK);
         registerParticleData(map -> new DustData(
-                        Color.fromString(ResourceConfigUtils.requireNonEmptyStringOrThrow(map.get("color"), "warning.config.function.particle.missing_color").split(",")),
+                        Color.fromStrings(ResourceConfigUtils.requireNonEmptyStringOrThrow(map.get("color"), "warning.config.function.particle.missing_color").split(",")),
                         ResourceConfigUtils.getAsFloat(map.getOrDefault("scale", 1), "scale")),
                 ParticleTypes.DUST);
         registerParticleData(map -> new DustTransitionData(
-                        Color.fromString(ResourceConfigUtils.requireNonEmptyStringOrThrow(map.get("from"), "warning.config.function.particle.missing_from").split(",")),
-                        Color.fromString(ResourceConfigUtils.requireNonEmptyStringOrThrow(map.get("to"), "warning.config.function.particle.missing_to").split(",")),
+                        Color.fromStrings(ResourceConfigUtils.requireNonEmptyStringOrThrow(map.get("from"), "warning.config.function.particle.missing_from").split(",")),
+                        Color.fromStrings(ResourceConfigUtils.requireNonEmptyStringOrThrow(map.get("to"), "warning.config.function.particle.missing_to").split(",")),
                         ResourceConfigUtils.getAsFloat(map.getOrDefault("scale", 1), "scale")),
                 ParticleTypes.DUST_COLOR_TRANSITION);
         registerParticleData(map -> new ItemStackData(
@@ -75,7 +75,7 @@ public class ParticleFunction<CTX extends Context> extends AbstractConditionalFu
                         NumberProviders.fromObject(map.getOrDefault("target-x", 0)),
                         NumberProviders.fromObject(map.getOrDefault("target-y", 0)),
                         NumberProviders.fromObject(map.getOrDefault("target-z", 0)),
-                        Color.fromString(ResourceConfigUtils.requireNonEmptyStringOrThrow(map.get("color"), "warning.config.function.particle.missing_color").split(",")),
+                        Color.fromStrings(ResourceConfigUtils.requireNonEmptyStringOrThrow(map.get("color"), "warning.config.function.particle.missing_color").split(",")),
                         NumberProviders.fromObject(map.getOrDefault("duration", 10))),
                 ParticleTypes.TRAIL);
     }

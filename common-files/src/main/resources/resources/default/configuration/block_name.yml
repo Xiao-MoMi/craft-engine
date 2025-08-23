@@ -26,6 +26,7 @@ lang:
     block_name:default:gunpowder_block: GunPowder Block
     block_name:default:solid_gunpowder_block: Solid GunPowder Block
     block_name:default:copper_coil: Copper Coil
+    block_name:default:chessboard: Chessboard
   zh_cn:
     block_name:default:chinese_lantern: 灯笼
     block_name:default:netherite_anvil: 下界合金砧
@@ -50,3 +51,4 @@ lang:
     block_name:default:gunpowder_block: 火药粉末
     block_name:default:solid_gunpowder_block: 凝固火药块
     block_name:default:copper_coil: 铜线圈
+    block_name:default:chessboard: 棋盘

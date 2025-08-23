@@ -7,14 +7,16 @@ import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 
 public class VersionHelper {
+    public static final boolean PREMIUM = true;
     public static final MinecraftVersion MINECRAFT_VERSION;
+    public static final boolean COMPONENT_RELEASE;
     private static final int version;
     private static final int majorVersion;
     private static final int minorVersion;
     private static final boolean mojmap;
     private static final boolean folia;
     private static final boolean paper;
-
+    private static final boolean leaves;
     private static final boolean v1_20;
     private static final boolean v1_20_1;
     private static final boolean v1_20_2;
@@ -30,6 +32,7 @@ public class VersionHelper {
     private static final boolean v1_21_5;
     private static final boolean v1_21_6;
     private static final boolean v1_21_7;
+    private static final boolean v1_21_8;
 
     static {
         try (InputStream inputStream = Class.forName("net.minecraft.obfuscate.DontObfuscate").getResourceAsStream("/version.json")) {
@@ -64,13 +67,17 @@ public class VersionHelper {
             v1_21_5 = version >= 12105;
             v1_21_6 = version >= 12106;
             v1_21_7 = version >= 12107;
+            v1_21_8 = version >= 12108;
 
             majorVersion = major;
             minorVersion = minor;
 
+            COMPONENT_RELEASE = v1_20_5;
+
             mojmap = checkMojMap();
             folia = checkFolia();
             paper = checkPaper();
+            leaves = checkLeaves();
         } catch (Exception e) {
             throw new RuntimeException("Failed to init VersionHelper", e);
         }
@@ -144,12 +151,25 @@ public class VersionHelper {
         return false;
     }
 
+    private static boolean checkLeaves() {
+        try {
+            Class.forName("org.leavesmc.leaves.bot.ServerBot");
+            return true;
+        } catch (ClassNotFoundException ignored) {
+        }
+        return false;
+    }
+
     public static boolean isFolia() {
         return folia;
     }
 
     public static boolean isPaper() {
         return paper;
+    }
+
+    public static boolean isLeaves() {
+        return leaves;
     }
 
     public static boolean isMojmap() {
@@ -214,5 +234,9 @@ public class VersionHelper {
 
     public static boolean isOrAbove1_21_7() {
         return v1_21_7;
+    }
+
+    public static boolean isOrAbove1_21_8() {
+        return v1_21_8;
     }
 }

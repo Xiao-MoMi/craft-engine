@@ -1,10 +1,10 @@
 package net.momirealms.craftengine.bukkit.plugin.network.handler;
 
 import net.kyori.adventure.text.Component;
+import net.momirealms.craftengine.bukkit.entity.data.TextDisplayEntityData;
 import net.momirealms.craftengine.bukkit.nms.FastNMS;
 import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.CoreReflections;
 import net.momirealms.craftengine.bukkit.util.ComponentUtils;
-import net.momirealms.craftengine.bukkit.util.EntityDataUtils;
 import net.momirealms.craftengine.core.plugin.CraftEngine;
 import net.momirealms.craftengine.core.plugin.config.Config;
 import net.momirealms.craftengine.core.plugin.network.ByteBufPacketEvent;
@@ -31,7 +31,7 @@ public class TextDisplayPacketHandler implements EntityPacketHandler {
         for (int i = 0; i < packedItems.size(); i++) {
             Object packedItem = packedItems.get(i);
             int entityDataId = FastNMS.INSTANCE.field$SynchedEntityData$DataValue$id(packedItem);
-            if (entityDataId != EntityDataUtils.TEXT_DATA_ID) continue;
+            if (entityDataId != TextDisplayEntityData.Text.id()) continue;
             Object textComponent = FastNMS.INSTANCE.field$SynchedEntityData$DataValue$value(packedItem);
             if (textComponent == CoreReflections.instance$Component$empty) break;
             String json = ComponentUtils.minecraftToJson(textComponent);

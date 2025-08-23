@@ -11,13 +11,13 @@ import net.momirealms.craftengine.bukkit.nms.FastNMS;
 import net.momirealms.craftengine.bukkit.plugin.BukkitCraftEngine;
 import net.momirealms.craftengine.bukkit.plugin.gui.CraftEngineInventoryHolder;
 import net.momirealms.craftengine.bukkit.plugin.network.payload.DiscardedPayload;
+import net.momirealms.craftengine.bukkit.plugin.reflection.bukkit.CraftBukkitReflections;
 import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.CoreReflections;
 import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.MAttributeHolders;
 import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.MMobEffects;
 import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.NetworkReflections;
 import net.momirealms.craftengine.bukkit.util.*;
 import net.momirealms.craftengine.bukkit.world.BukkitWorld;
-import net.momirealms.craftengine.core.block.BlockSettings;
 import net.momirealms.craftengine.core.block.BlockStateWrapper;
 import net.momirealms.craftengine.core.block.ImmutableBlockState;
 import net.momirealms.craftengine.core.entity.player.GameMode;
@@ -40,6 +40,7 @@ import org.bukkit.*;
 import org.bukkit.attribute.Attribute;
 import org.bukkit.attribute.AttributeInstance;
 import org.bukkit.block.Block;
+import org.bukkit.event.player.PlayerCommandPreprocessEvent;
 import org.bukkit.inventory.EquipmentSlot;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.PlayerInventory;
@@ -76,6 +77,9 @@ public class BukkitServerPlayer extends Player {
     private Key clientSideDimension;
     // check main hand/offhand interaction
     private int lastSuccessfulInteraction;
+    // to prevent duplicated events
+    private int lastInteractEntityWithMainHand;
+    private int lastInteractEntityWithOffHand;
     // re-sync attribute timely to prevent some bugs
     private long lastAttributeSyncTime;
     // for breaking blocks
@@ -90,8 +94,6 @@ public class BukkitServerPlayer extends Player {
     // for client visual sync
     private int resentSoundTick;
     private int resentSwingTick;
-    // cache used recipe
-    private Key lastUsedRecipe = null;
     // has fabric client mod or not
     private boolean hasClientMod = false;
     // cache if player can break blocks
@@ -110,14 +112,16 @@ public class BukkitServerPlayer extends Player {
 
     private final Map<Integer, EntityPacketHandler> entityTypeView = new ConcurrentHashMap<>();
 
-    public BukkitServerPlayer(BukkitCraftEngine plugin, Channel channel) {
+    public BukkitServerPlayer(BukkitCraftEngine plugin, @Nullable Channel channel) {
         this.channel = channel;
         this.plugin = plugin;
-        for (String name : channel.pipeline().names()) {
-            ChannelHandler handler = channel.pipeline().get(name);
-            if (NetworkReflections.clazz$Connection.isInstance(handler)) {
-                this.connection = handler;
-                break;
+        if (channel != null) {
+            for (String name : channel.pipeline().names()) {
+                ChannelHandler handler = channel.pipeline().get(name);
+                if (NetworkReflections.clazz$Connection.isInstance(handler)) {
+                    this.connection = handler;
+                    break;
+                }
             }
         }
     }
@@ -175,6 +179,26 @@ public class BukkitServerPlayer extends Player {
     }
 
     @Override
+    public boolean isSwimming() {
+        return platformPlayer().isSwimming();
+    }
+
+    @Override
+    public boolean isClimbing() {
+        return platformPlayer().isClimbing();
+    }
+
+    @Override
+    public boolean isGliding() {
+        return platformPlayer().isGliding();
+    }
+
+    @Override
+    public boolean isFlying() {
+        return platformPlayer().isFlying();
+    }
+
+    @Override
     public GameMode gameMode() {
         return switch (platformPlayer().getGameMode()) {
             case CREATIVE -> GameMode.CREATIVE;
@@ -184,6 +208,7 @@ public class BukkitServerPlayer extends Player {
         };
     }
 
+    @SuppressWarnings("UnstableApiUsage")
     @Override
     public void setGameMode(GameMode gameMode) {
         platformPlayer().setGameMode(Objects.requireNonNull(org.bukkit.GameMode.getByValue(gameMode.id())));
@@ -232,6 +257,24 @@ public class BukkitServerPlayer extends Player {
     @Override
     public int lastSuccessfulInteractionTick() {
         return this.lastSuccessfulInteraction;
+    }
+
+    @Override
+    public void updateLastInteractEntityTick(@NotNull InteractionHand hand) {
+        if (hand == InteractionHand.MAIN_HAND) {
+            this.lastInteractEntityWithMainHand = gameTicks();
+        } else {
+            this.lastInteractEntityWithOffHand = gameTicks();
+        }
+    }
+
+    @Override
+    public boolean lastInteractEntityCheck(@NotNull InteractionHand hand) {
+        if (hand == InteractionHand.MAIN_HAND) {
+            return gameTicks() == this.lastInteractEntityWithMainHand;
+        } else {
+            return gameTicks() == this.lastInteractEntityWithOffHand;
+        }
     }
 
     @Override
@@ -303,16 +346,43 @@ public class BukkitServerPlayer extends Player {
     }
 
     @Override
-    public void sendCustomPayload(Key channel, byte[] data) {
+    public void sendPacket(Object packet, boolean immediately, Runnable sendListener) {
+        this.plugin.networkManager().sendPacket(this, packet, immediately, sendListener);
+    }
+
+    @Override
+    public void sendPackets(List<Object> packet, boolean immediately) {
+        this.plugin.networkManager().sendPackets(this, packet, immediately);
+    }
+
+    @Override
+    public void sendPackets(List<Object> packet, boolean immediately, Runnable sendListener) {
+        this.plugin.networkManager().sendPackets(this, packet, immediately, sendListener);
+    }
+
+    @Override
+    public void simulatePacket(Object packet) {
+        this.plugin.networkManager().simulatePacket(this, packet);
+    }
+
+    @Override
+    public void sendCustomPayload(Key channelId, byte[] data) {
         try {
-            Object channelKey = KeyUtils.toResourceLocation(channel);
-            Object dataPayload;
-            if (DiscardedPayload.useNewMethod) {
-                dataPayload = NetworkReflections.constructor$DiscardedPayload.newInstance(channelKey, data);
+            Object channelResourceLocation = KeyUtils.toResourceLocation(channelId);
+            Object responsePacket;
+            if (VersionHelper.isOrAbove1_20_2()) {
+                Object dataPayload;
+                if (NetworkReflections.clazz$UnknownPayload != null) {
+                    dataPayload = NetworkReflections.constructor$UnknownPayload.newInstance(channelResourceLocation, Unpooled.wrappedBuffer(data));
+                } else if (DiscardedPayload.useNewMethod) {
+                    dataPayload = NetworkReflections.constructor$DiscardedPayload.newInstance(channelResourceLocation, data);
+                } else {
+                    dataPayload = NetworkReflections.constructor$DiscardedPayload.newInstance(channelResourceLocation, Unpooled.wrappedBuffer(data));
+                }
+                responsePacket = NetworkReflections.constructor$ClientboundCustomPayloadPacket.newInstance(dataPayload);
             } else {
-                dataPayload = NetworkReflections.constructor$DiscardedPayload.newInstance(channelKey, Unpooled.wrappedBuffer(data));
+                responsePacket = NetworkReflections.constructor$ClientboundCustomPayloadPacket.newInstance(channelResourceLocation, FastNMS.INSTANCE.constructor$FriendlyByteBuf(Unpooled.wrappedBuffer(data)));
             }
-            Object responsePacket = NetworkReflections.constructor$ClientboundCustomPayloadPacket.newInstance(dataPayload);
             this.sendPacket(responsePacket, true);
         } catch (Exception e) {
             CraftEngine.instance().logger().warn("Failed to send custom payload to " + name(), e);
@@ -324,21 +394,13 @@ public class BukkitServerPlayer extends Player {
         try {
             Object reason = ComponentUtils.adventureToMinecraft(message);
             Object kickPacket = NetworkReflections.constructor$ClientboundDisconnectPacket.newInstance(reason);
-            this.sendPacket(kickPacket, true);
-            this.nettyChannel().disconnect();
+            this.sendPacket(kickPacket, false, () -> FastNMS.INSTANCE.method$Connection$disconnect(this.connection(), reason));
+            this.nettyChannel().config().setAutoRead(false);
+            Runnable handleDisconnection = () -> FastNMS.INSTANCE.method$Connection$handleDisconnection(this.connection());
+            FastNMS.INSTANCE.method$BlockableEventLoop$scheduleOnMain(handleDisconnection);
         } catch (Exception e) {
             CraftEngine.instance().logger().warn("Failed to kick " + name(), e);
         }
-    }
-
-    @Override
-    public void sendPackets(List<Object> packet, boolean immediately) {
-        this.plugin.networkManager().sendPackets(this, packet, immediately);
-    }
-
-    @Override
-    public void simulatePacket(Object packet) {
-        this.plugin.networkManager().simulatePacket(this, packet);
     }
 
     @Override
@@ -418,6 +480,9 @@ public class BukkitServerPlayer extends Player {
 
     private void updateGUI() {
         org.bukkit.inventory.Inventory top = !VersionHelper.isOrAbove1_21() ? LegacyInventoryUtils.getTopInventory(platformPlayer()) : platformPlayer().getOpenInventory().getTopInventory();
+        if (!CraftBukkitReflections.clazz$MinecraftInventory.isInstance(FastNMS.INSTANCE.method$CraftInventory$getInventory(top))) {
+            return;
+        }
         if (top.getHolder() instanceof CraftEngineInventoryHolder holder) {
             holder.gui().onTimer();
         }
@@ -425,7 +490,21 @@ public class BukkitServerPlayer extends Player {
 
     @Override
     public float getDestroyProgress(Object blockState, BlockPos pos) {
-        return FastNMS.INSTANCE.method$BlockStateBase$getDestroyProgress(blockState, serverPlayer(), FastNMS.INSTANCE.field$CraftWorld$ServerLevel(platformPlayer().getWorld()), LocationUtils.toBlockPos(pos));
+        Optional<ImmutableBlockState> optionalCustomState = BlockStateUtils.getOptionalCustomBlockState(blockState);
+        float progress = FastNMS.INSTANCE.method$BlockStateBase$getDestroyProgress(blockState, serverPlayer(), FastNMS.INSTANCE.field$CraftWorld$ServerLevel(platformPlayer().getWorld()), LocationUtils.toBlockPos(pos));
+        if (optionalCustomState.isPresent()) {
+            ImmutableBlockState customState = optionalCustomState.get();
+            Item<ItemStack> tool = getItemInHand(InteractionHand.MAIN_HAND);
+            boolean isCorrectTool = FastNMS.INSTANCE.method$ItemStack$isCorrectToolForDrops(tool.getLiteralObject(), blockState);
+            // 如果自定义方块在服务端侧未使用正确的工具，那么需要还原挖掘速度
+            if (!isCorrectTool) {
+                progress *= (10f / 3f);
+            }
+            if (!BlockStateUtils.isCorrectTool(customState, tool)) {
+                progress *= customState.settings().incorrectToolSpeed();
+            }
+        }
+        return progress;
     }
 
     private void predictNextBlockToMine() {
@@ -600,7 +679,7 @@ public class BukkitServerPlayer extends Player {
                     if (canInstabuild() && (itemMaterial == Material.DEBUG_STICK
                             || itemMaterial == Material.TRIDENT
                             || (VersionHelper.isOrAbove1_20_5() && itemMaterial == MaterialUtils.MACE)
-                            || item.is(ItemTags.SWORDS))) {
+                            || item.hasItemTag(ItemTags.SWORDS))) {
                         return;
                     }
                 }
@@ -610,28 +689,6 @@ public class BukkitServerPlayer extends Player {
                 // double check custom block
                 if (optionalCustomState.isPresent()) {
                     ImmutableBlockState customState = optionalCustomState.get();
-                    BlockSettings blockSettings = customState.settings();
-                    if (blockSettings.requireCorrectTool()) {
-                        if (!item.isEmpty()) {
-                            // it's correct on plugin side
-                            if (blockSettings.isCorrectTool(item.id())) {
-                                // but not on serverside
-                                if (!FastNMS.INSTANCE.method$ItemStack$isCorrectToolForDrops(item.getLiteralObject(), destroyedState)) {
-                                    // we fix the speed
-                                    progressToAdd = progressToAdd * (10f / 3f);
-                                }
-                            } else {
-                                // not a correct tool on plugin side and not a correct tool on serverside
-                                if (!blockSettings.respectToolComponent() || !FastNMS.INSTANCE.method$ItemStack$isCorrectToolForDrops(item.getLiteralObject(), destroyedState)) {
-                                    progressToAdd = progressToAdd * (10f / 3f) * blockSettings.incorrectToolSpeed();
-                                }
-                            }
-                        } else {
-                            // item is null, but it requires correct tool, then we reset the speed
-                            progressToAdd = progressToAdd * (10f / 3f) * blockSettings.incorrectToolSpeed();
-                        }
-                    }
-
                     // accumulate progress
                     this.miningProgress = progressToAdd + miningProgress;
                     int packetStage = (int) (this.miningProgress * 10.0F);
@@ -691,7 +748,8 @@ public class BukkitServerPlayer extends Player {
                                         FastNMS.INSTANCE.method$CraftPlayer$getHandle(player)
                                 )
                         ),
-                        packet
+                        packet,
+                        null
                 );
             }
         }
@@ -746,12 +804,12 @@ public class BukkitServerPlayer extends Player {
 
     @Override
     public float yRot() {
-        return platformPlayer().getPitch();
+        return platformPlayer().getYaw();
     }
 
     @Override
     public float xRot() {
-        return platformPlayer().getYaw();
+        return platformPlayer().getPitch();
     }
 
     @Override
@@ -819,6 +877,11 @@ public class BukkitServerPlayer extends Player {
     }
 
     @Override
+    public boolean isFakePlayer() {
+        return false;
+    }
+
+    @Override
     public org.bukkit.entity.Player literalObject() {
         return platformPlayer();
     }
@@ -842,14 +905,6 @@ public class BukkitServerPlayer extends Player {
 
     public boolean shouldResendSwing() {
         return resentSwingTick == gameTicks();
-    }
-
-    public Key lastUsedRecipe() {
-        return lastUsedRecipe;
-    }
-
-    public void setLastUsedRecipe(Key lastUsedRecipe) {
-        this.lastUsedRecipe = lastUsedRecipe;
     }
 
     public boolean clientModEnabled() {
@@ -906,17 +961,20 @@ public class BukkitServerPlayer extends Player {
     }
 
     @Override
+    @SuppressWarnings("UnstableApiUsage")
+    public void performCommandAsEvent(String command) {
+        String formattedCommand = command.startsWith("/") ? command : "/" + command;
+        PlayerCommandPreprocessEvent event = new PlayerCommandPreprocessEvent(platformPlayer(), formattedCommand);
+        Bukkit.getPluginManager().callEvent(event);
+    }
+
+    @Override
     public double luck() {
         if (VersionHelper.isOrAbove1_21_3()) {
             return Optional.ofNullable(platformPlayer().getAttribute(Attribute.LUCK)).map(AttributeInstance::getValue).orElse(1d);
         } else {
             return LegacyAttributeUtils.getLuck(platformPlayer());
         }
-    }
-
-    @Override
-    public boolean isFlying() {
-        return platformPlayer().isFlying();
     }
 
     @Override

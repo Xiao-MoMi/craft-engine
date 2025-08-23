@@ -1,10 +1,7 @@
 package net.momirealms.craftengine.core.item.modifier;
 
-import net.momirealms.craftengine.core.item.Item;
-import net.momirealms.craftengine.core.item.ItemBuildContext;
-import net.momirealms.craftengine.core.item.NetworkItemHandler;
-import net.momirealms.craftengine.core.util.MiscUtils;
-import net.momirealms.craftengine.core.util.TypeUtils;
+import net.momirealms.craftengine.core.item.*;
+import net.momirealms.craftengine.core.util.*;
 import net.momirealms.sparrow.nbt.CompoundTag;
 import net.momirealms.sparrow.nbt.Tag;
 
@@ -12,19 +9,20 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 
 public class TagsModifier<I> implements ItemDataModifier<I> {
+    public static final Factory<?> FACTORY = new Factory<>();
     private final Map<String, Object> arguments;
 
     public TagsModifier(Map<String, Object> arguments) {
         this.arguments = mapToMap(arguments);
     }
 
-    public Map<String, Object> arguments() {
+    public Map<String, Object> tags() {
         return arguments;
     }
 
     @Override
-    public String name() {
-        return "tags";
+    public Key type() {
+        return ItemDataModifiers.TAGS;
     }
 
     @Override
@@ -40,12 +38,21 @@ public class TagsModifier<I> implements ItemDataModifier<I> {
     // TODO NOT PERFECT
     @Override
     public Item<I> prepareNetworkItem(Item<I> item, ItemBuildContext context, CompoundTag networkData) {
-        for (Map.Entry<String, Object> entry : this.arguments.entrySet()) {
-            Tag previous = item.getTag(entry.getKey());
+        if (VersionHelper.isOrAbove1_20_5()) {
+            Tag previous = item.getSparrowNBTComponent(ComponentKeys.CUSTOM_DATA);
             if (previous != null) {
-                networkData.put(entry.getKey(), NetworkItemHandler.pack(NetworkItemHandler.Operation.ADD, previous));
+                networkData.put(ComponentKeys.CUSTOM_DATA.asString(), NetworkItemHandler.pack(NetworkItemHandler.Operation.ADD, previous));
             } else {
-                networkData.put(entry.getKey(), NetworkItemHandler.pack(NetworkItemHandler.Operation.REMOVE));
+                networkData.put(ComponentKeys.CUSTOM_DATA.asString(), NetworkItemHandler.pack(NetworkItemHandler.Operation.REMOVE));
+            }
+        } else {
+            for (Map.Entry<String, Object> entry : this.arguments.entrySet()) {
+                Tag previous = item.getTag(entry.getKey());
+                if (previous != null) {
+                    networkData.put(entry.getKey(), NetworkItemHandler.pack(NetworkItemHandler.Operation.ADD, previous));
+                } else {
+                    networkData.put(entry.getKey(), NetworkItemHandler.pack(NetworkItemHandler.Operation.REMOVE));
+                }
             }
         }
         return item;
@@ -123,5 +130,13 @@ public class TagsModifier<I> implements ItemDataModifier<I> {
 
     private record ParsedValue(boolean success, Object result) {
             static final ParsedValue FAILURE = new ParsedValue(false, null);
+    }
+
+    public static class Factory<I> implements ItemDataModifierFactory<I> {
+        @Override
+        public ItemDataModifier<I> create(Object arg) {
+            Map<String, Object> data = ResourceConfigUtils.getAsMap(arg, "nbt");
+            return new TagsModifier<>(data);
+        }
     }
 }

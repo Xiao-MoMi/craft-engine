@@ -25,4 +25,18 @@ public final class StringUtils {
         result[index] = s.substring(start);
         return result;
     }
+
+    public static String toLowerCase(String str) {
+        if (str == null) {
+            return null;
+        }
+        char[] chars = str.toCharArray();
+        for (int i = 0; i < chars.length; i++) {
+            char c = chars[i];
+            if (c >= 'A' && c <= 'Z') {
+                chars[i] = (char) (c + 32);
+            }
+        }
+        return new String(chars);
+    }
 }

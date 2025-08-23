@@ -185,11 +185,11 @@ public final class BlockGenerator {
                 .method(ElementMatchers.is(CoreReflections.method$BlockBehaviour$spawnAfterBreak))
                 .intercept(MethodDelegation.to(SpawnAfterBreakInterceptor.INSTANCE));
         if (CoreReflections.method$BlockBehaviour$affectNeighborsAfterRemoval != null) {
-            builder.method(ElementMatchers.is(CoreReflections.method$BlockBehaviour$affectNeighborsAfterRemoval))
+            builder = builder.method(ElementMatchers.is(CoreReflections.method$BlockBehaviour$affectNeighborsAfterRemoval))
                     .intercept(MethodDelegation.to(AffectNeighborsAfterRemovalInterceptor.INSTANCE));
         }
         if (CoreReflections.method$BlockBehaviour$onRemove != null) {
-            builder.method(ElementMatchers.is(CoreReflections.method$BlockBehaviour$onRemove))
+            builder = builder.method(ElementMatchers.is(CoreReflections.method$BlockBehaviour$onRemove))
                     .intercept(MethodDelegation.to(OnRemoveInterceptor.INSTANCE));
         }
 

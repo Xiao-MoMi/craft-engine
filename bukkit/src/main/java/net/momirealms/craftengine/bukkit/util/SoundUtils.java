@@ -6,7 +6,7 @@ import net.momirealms.craftengine.core.sound.SoundSource;
 import net.momirealms.craftengine.core.util.Key;
 import org.bukkit.SoundCategory;
 
-public class SoundUtils {
+public final class SoundUtils {
 
     private SoundUtils() {}
 
@@ -37,6 +37,7 @@ public class SoundUtils {
             case HOSTILE -> SoundCategory.HOSTILE;
             case NEUTRAL -> SoundCategory.NEUTRAL;
             case WEATHER -> SoundCategory.WEATHER;
+            case UI -> SoundCategory.UI;
         };
     }
 }

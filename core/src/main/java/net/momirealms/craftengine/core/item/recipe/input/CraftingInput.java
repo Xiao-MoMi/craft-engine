@@ -2,12 +2,14 @@ package net.momirealms.craftengine.core.item.recipe.input;
 
 import net.momirealms.craftengine.core.item.recipe.RecipeFinder;
 import net.momirealms.craftengine.core.item.recipe.UniqueIdItem;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Iterator;
 import java.util.List;
 
-public final class CraftingInput<T> implements RecipeInput {
+public final class CraftingInput<T> implements RecipeInput, Iterable<UniqueIdItem<T>> {
     private final int width;
     private final int height;
     private final List<UniqueIdItem<T>> items;
@@ -98,5 +100,10 @@ public final class CraftingInput<T> implements RecipeInput {
 
     public UniqueIdItem<T> getItem(int index) {
         return this.items.get(index);
+    }
+
+    @Override
+    public @NotNull Iterator<UniqueIdItem<T>> iterator() {
+        return this.items.iterator();
     }
 }

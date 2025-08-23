@@ -68,7 +68,7 @@ public class StackableBlockBehavior extends BukkitBlockBehavior {
     private void updateStackableBlock(ImmutableBlockState state, BlockPos pos, World world, Item<ItemStack> item, Player player, InteractionHand hand) {
         ImmutableBlockState nextStage = state.cycle(this.amountProperty);
         Location location = new Location((org.bukkit.World) world.platformWorld(), pos.x(), pos.y(), pos.z());
-        FastNMS.INSTANCE.method$LevelWriter$setBlock(world.serverWorld(), LocationUtils.toBlockPos(pos), nextStage.customBlockState().handle(), UpdateOption.UPDATE_NONE.flags());
+        FastNMS.INSTANCE.method$LevelWriter$setBlock(world.serverWorld(), LocationUtils.toBlockPos(pos), nextStage.customBlockState().handle(), UpdateOption.UPDATE_ALL.flags());
         if (this.stackSound != null) {
             world.playBlockSound(new Vec3d(location.getX(), location.getY(), location.getZ()), this.stackSound);
         }

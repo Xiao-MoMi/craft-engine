@@ -3,7 +3,7 @@ package net.momirealms.craftengine.bukkit.util;
 import net.momirealms.craftengine.core.world.FluidCollisionRule;
 import org.bukkit.FluidCollisionMode;
 
-public class FluidUtils {
+public final class FluidUtils {
 
     private FluidUtils() {}
 

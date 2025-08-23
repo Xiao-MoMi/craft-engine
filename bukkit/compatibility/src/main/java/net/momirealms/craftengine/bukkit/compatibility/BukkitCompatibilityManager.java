@@ -1,16 +1,17 @@
 package net.momirealms.craftengine.bukkit.compatibility;
 
 import net.momirealms.craftengine.bukkit.block.BukkitBlockManager;
-import net.momirealms.craftengine.bukkit.compatibility.item.CustomFishingProvider;
-import net.momirealms.craftengine.bukkit.compatibility.item.MMOItemsProvider;
-import net.momirealms.craftengine.bukkit.compatibility.item.MythicMobsProvider;
-import net.momirealms.craftengine.bukkit.compatibility.item.NeigeItemsProvider;
+import net.momirealms.craftengine.bukkit.compatibility.item.CustomFishingSource;
+import net.momirealms.craftengine.bukkit.compatibility.item.MMOItemsSource;
+import net.momirealms.craftengine.bukkit.compatibility.item.MythicMobsSource;
+import net.momirealms.craftengine.bukkit.compatibility.item.NeigeItemsSource;
 import net.momirealms.craftengine.bukkit.compatibility.legacy.slimeworld.LegacySlimeFormatStorageAdaptor;
 import net.momirealms.craftengine.bukkit.compatibility.leveler.*;
 import net.momirealms.craftengine.bukkit.compatibility.model.bettermodel.BetterModelModel;
 import net.momirealms.craftengine.bukkit.compatibility.model.modelengine.ModelEngineModel;
 import net.momirealms.craftengine.bukkit.compatibility.model.modelengine.ModelEngineUtils;
-import net.momirealms.craftengine.bukkit.compatibility.mythicmobs.MythicMobsListener;
+import net.momirealms.craftengine.bukkit.compatibility.mythicmobs.MythicItemDropListener;
+import net.momirealms.craftengine.bukkit.compatibility.mythicmobs.MythicSkillHelper;
 import net.momirealms.craftengine.bukkit.compatibility.papi.PlaceholderAPIUtils;
 import net.momirealms.craftengine.bukkit.compatibility.permission.LuckPermsEventListeners;
 import net.momirealms.craftengine.bukkit.compatibility.skript.SkriptHook;
@@ -38,7 +39,6 @@ public class BukkitCompatibilityManager implements CompatibilityManager {
     private final Map<String, ModelProvider> modelProviders;
     private final Map<String, LevelerProvider> levelerProviders;
     private boolean hasPlaceholderAPI;
-    private boolean hasViaVersion;
 
     public BukkitCompatibilityManager(BukkitCraftEngine plugin) {
         this.plugin = plugin;
@@ -61,26 +61,12 @@ public class BukkitCompatibilityManager implements CompatibilityManager {
             this.hasPlaceholderAPI = true;
             logHook("PlaceholderAPI");
         }
-        // skript
         if (this.isPluginEnabled("Skript")) {
             SkriptHook.register();
             logHook("Skript");
-            Plugin skriptPlugin = getPlugin("Skript");
-            // This can cause bugs, needs to find a better way
-//            for (BukkitTask task : Bukkit.getScheduler().getPendingTasks()) {
-//                if (task.getOwner() == skriptPlugin) {
-//                    task.cancel();
-//                    if (VersionHelper.isFolia()) {
-//                        Bukkit.getGlobalRegionScheduler().run(skriptPlugin, (t) -> {
-//                            FastNMS.INSTANCE.getBukkitTaskRunnable(task).run();
-//                        });
-//                    } else {
-//                        Bukkit.getScheduler().runTask(skriptPlugin, FastNMS.INSTANCE.getBukkitTaskRunnable(task));
-//                    }
-//                }
-//            }
         }
         // WorldEdit
+        // FastAsyncWorldEdit
         if (this.isPluginEnabled("FastAsyncWorldEdit")) {
             try {
                 this.initFastAsyncWorldEditHook();
@@ -130,10 +116,15 @@ public class BukkitCompatibilityManager implements CompatibilityManager {
             logHook("EcoJobs");
         }
         if (this.isPluginEnabled("MythicMobs")) {
-            BukkitItemManager.instance().registerExternalItemProvider(new MythicMobsProvider());
-            new MythicMobsListener(this.plugin);
+            BukkitItemManager.instance().registerExternalItemSource(new MythicMobsSource());
+            new MythicItemDropListener(this.plugin);
             logHook("MythicMobs");
         }
+    }
+
+    @Override
+    public void executeMMSkill(String skill, float power, Player player) {
+        MythicSkillHelper.execute(skill, power, player);
     }
 
     @Override
@@ -247,15 +238,15 @@ public class BukkitCompatibilityManager implements CompatibilityManager {
     private void initItemHooks() {
         BukkitItemManager itemManager = BukkitItemManager.instance();
         if (this.isPluginEnabled("NeigeItems")) {
-            itemManager.registerExternalItemProvider(new NeigeItemsProvider());
+            itemManager.registerExternalItemSource(new NeigeItemsSource());
             logHook("NeigeItems");
         }
         if (this.isPluginEnabled("MMOItems")) {
-            itemManager.registerExternalItemProvider(new MMOItemsProvider());
+            itemManager.registerExternalItemSource(new MMOItemsSource());
             logHook("MMOItems");
         }
         if (this.isPluginEnabled("CustomFishing")) {
-            itemManager.registerExternalItemProvider(new CustomFishingProvider());
+            itemManager.registerExternalItemSource(new CustomFishingSource());
             logHook("CustomFishing");
         }
     }

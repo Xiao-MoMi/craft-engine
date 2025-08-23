@@ -5,6 +5,7 @@ import net.momirealms.craftengine.core.entity.player.InteractionResult;
 import net.momirealms.craftengine.core.entity.player.Player;
 import net.momirealms.craftengine.core.item.context.UseOnContext;
 import net.momirealms.craftengine.core.world.World;
+import org.jetbrains.annotations.Nullable;
 
 public abstract class ItemBehavior {
 
@@ -12,7 +13,7 @@ public abstract class ItemBehavior {
         return InteractionResult.PASS;
     }
 
-    public InteractionResult use(World world, Player player, InteractionHand hand) {
+    public InteractionResult use(World world, @Nullable Player player, InteractionHand hand) {
         return InteractionResult.PASS;
     }
 }

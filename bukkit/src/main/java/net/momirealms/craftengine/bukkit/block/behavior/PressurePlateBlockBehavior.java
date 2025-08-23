@@ -189,7 +189,7 @@ public class PressurePlateBlockBehavior extends BukkitBlockBehavior {
         Object pos = args[2];
         Object newState = args[3];
         boolean movedByPiston = (boolean) args[4];
-        if (!movedByPiston && !FastNMS.INSTANCE.method$BlockStateBase$is(state, FastNMS.INSTANCE.method$BlockState$getBlock(newState))) {
+        if (!movedByPiston && !FastNMS.INSTANCE.method$BlockStateBase$isBlock(state, FastNMS.INSTANCE.method$BlockState$getBlock(newState))) {
             if (this.getSignalForState(state) > 0) {
                 this.updateNeighbours(level, pos, thisBlock);
             }

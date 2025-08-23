@@ -64,6 +64,10 @@ public abstract class AbstractCustomBlock implements CustomBlock {
             if (tag == null) {
                 throw new LocalizedResourceConfigException("warning.config.block.state.property.invalid_format", nbtString);
             }
+            List<ImmutableBlockState> possibleStates = this.getPossibleStates(tag);
+            if (possibleStates.size() != 1) {
+                throw new LocalizedResourceConfigException("warning.config.block.state.property.invalid_format", nbtString);
+            }
             BlockStateVariant blockStateVariant = entry.getValue();
             int vanillaStateRegistryId = appearances.getOrDefault(blockStateVariant.appearance(), -1);
             // This should never happen
@@ -71,15 +75,14 @@ public abstract class AbstractCustomBlock implements CustomBlock {
                 vanillaStateRegistryId = appearances.values().iterator().next();
             }
             // Late init states
-            for (ImmutableBlockState state : this.getPossibleStates(tag)) {
-                state.setBehavior(this.behavior);
-                state.setSettings(blockStateVariant.settings());
-                state.setVanillaBlockState((BlockStateWrapper.VanillaBlockState) BlockRegistryMirror.stateByRegistryId(vanillaStateRegistryId));
-                state.setCustomBlockState((BlockStateWrapper.CustomBlockState) BlockRegistryMirror.stateByRegistryId(blockStateVariant.internalRegistryId()));
-            }
+            ImmutableBlockState state = possibleStates.getFirst();
+            state.setSettings(blockStateVariant.settings());
+            state.setVanillaBlockState((BlockStateWrapper.VanillaBlockState) BlockRegistryMirror.stateByRegistryId(vanillaStateRegistryId));
+            state.setCustomBlockState((BlockStateWrapper.CustomBlockState) BlockRegistryMirror.stateByRegistryId(blockStateVariant.internalRegistryId()));
         }
         // double check if there's any invalid state
         for (ImmutableBlockState state : this.variantProvider().states()) {
+            state.setBehavior(this.behavior);
             if (state.settings() == null) {
                 state.setSettings(settings);
             }

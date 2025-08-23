@@ -8,6 +8,18 @@ public interface BuildableItem<I> {
 
     Key id();
 
+    Item<I> buildItem(ItemBuildContext context, int count);
+
+    boolean isEmpty();
+
+    default Item<I> buildItem(Player player) {
+        return buildItem(ItemBuildContext.of(player));
+    }
+
+    default Item<I> buildItem(ItemBuildContext context) {
+        return buildItem(context, 1);
+    }
+
     I buildItemStack(ItemBuildContext context, int count);
 
     default I buildItemStack(ItemBuildContext context) {

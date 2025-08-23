@@ -3,7 +3,7 @@ package net.momirealms.craftengine.bukkit.util;
 import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.CoreReflections;
 import net.momirealms.craftengine.core.util.Mirror;
 
-public class MirrorUtils {
+public final class MirrorUtils {
 
     private MirrorUtils() {}
 
