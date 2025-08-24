@@ -34,7 +34,6 @@ import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodType;
 import java.lang.reflect.Field;
 import java.util.concurrent.Callable;
-import java.util.function.BiConsumer;
 import java.util.function.Function;
 
 public final class BlockGenerator {
@@ -63,6 +62,7 @@ public final class BlockGenerator {
                 .implement(CoreReflections.clazz$Fallable)
                 .implement(CoreReflections.clazz$BonemealableBlock)
                 .implement(CoreReflections.clazz$SimpleWaterloggedBlock)
+                .implement(CoreReflections.clazz$WorldlyContainerHolder)
                 // internal interfaces
                 .method(ElementMatchers.named("behaviorDelegate"))
                 .intercept(FieldAccessor.ofField("behaviorHolder"))
@@ -96,6 +96,9 @@ public final class BlockGenerator {
                 // isValidBoneMealTarget
                 .method(ElementMatchers.is(CoreReflections.method$BonemealableBlock$isValidBonemealTarget))
                 .intercept(MethodDelegation.to(IsValidBoneMealTargetInterceptor.INSTANCE))
+                // getContainer
+                .method(ElementMatchers.is(CoreReflections.method$WorldlyContainerHolder$getContainer))
+                .intercept(MethodDelegation.to(GetContainerInterceptor.INSTANCE))
                 // isBoneMealSuccess
                 .method(ElementMatchers.is(CoreReflections.method$BonemealableBlock$isBonemealSuccess))
                 .intercept(MethodDelegation.to(IsBoneMealSuccessInterceptor.INSTANCE))
@@ -438,6 +441,21 @@ public final class BlockGenerator {
             } catch (Exception e) {
                 CraftEngine.instance().logger().severe("Failed to run isValidBoneMealTarget", e);
                 return true;
+            }
+        }
+    }
+
+    public static class GetContainerInterceptor {
+        public static final GetContainerInterceptor INSTANCE = new GetContainerInterceptor();
+
+        @RuntimeType
+        public Object intercept(@This Object thisObj, @AllArguments Object[] args) {
+            ObjectHolder<BlockBehavior> holder = ((DelegatingBlock) thisObj).behaviorDelegate();
+            try {
+                return holder.value().getContainer(thisObj, args);
+            } catch (Exception e) {
+                CraftEngine.instance().logger().severe("Failed to run getContainer", e);
+                return null;
             }
         }
     }
