@@ -4013,7 +4013,7 @@ public final class CoreReflections {
     // 1.20~1.21.4
     public static final Method method$BlockBehaviour$onRemove = VersionHelper.isOrAbove1_21_5() ? null :
             ReflectionUtils.getDeclaredMethod(
-                    clazz$BlockBehaviour, void.class, clazz$BlockState, clazz$Level, clazz$BlockPos, clazz$BlockState, boolean.class
+                    clazz$BlockBehaviour, void.class, new String[]{"onRemove", "a"}, clazz$BlockState, clazz$Level, clazz$BlockPos, clazz$BlockState, boolean.class
     );
 
     public static final Object instance$CollisionContext$empty;

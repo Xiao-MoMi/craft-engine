@@ -112,7 +112,7 @@ public final class BlockGenerator {
                         .and(ElementMatchers.takesArgument(2, CoreReflections.clazz$BlockPos))
                         .and(ElementMatchers.takesArgument(3, CoreReflections.clazz$BlockState))
                         .and(ElementMatchers.takesArgument(4, boolean.class))
-                        .and(ElementMatchers.named("onPlace").or(ElementMatchers.named("a")))
+                        .and(ElementMatchers.named("onPlace").or(ElementMatchers.named("b")))
                 )
                 .intercept(MethodDelegation.to(OnPlaceInterceptor.INSTANCE))
                 // onBrokenAfterFall
