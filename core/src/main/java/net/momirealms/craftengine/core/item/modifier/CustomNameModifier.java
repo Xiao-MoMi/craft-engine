@@ -3,14 +3,14 @@ package net.momirealms.craftengine.core.item.modifier;
 import net.momirealms.craftengine.core.item.ComponentKeys;
 import net.momirealms.craftengine.core.item.Item;
 import net.momirealms.craftengine.core.item.ItemBuildContext;
-import net.momirealms.craftengine.core.item.NetworkItemHandler;
+import net.momirealms.craftengine.core.item.ItemDataModifierFactory;
 import net.momirealms.craftengine.core.plugin.config.Config;
 import net.momirealms.craftengine.core.util.AdventureHelper;
-import net.momirealms.craftengine.core.util.VersionHelper;
-import net.momirealms.sparrow.nbt.CompoundTag;
-import net.momirealms.sparrow.nbt.Tag;
+import net.momirealms.craftengine.core.util.Key;
+import org.jetbrains.annotations.Nullable;
 
-public class CustomNameModifier<I> implements ItemDataModifier<I> {
+public class CustomNameModifier<I> implements SimpleNetworkItemDataModifier<I> {
+    public static final Factory<?> FACTORY = new Factory<>();
     private final String argument;
 
     public CustomNameModifier(String argument) {
@@ -25,9 +25,13 @@ public class CustomNameModifier<I> implements ItemDataModifier<I> {
         }
     }
 
+    public String customName() {
+        return argument;
+    }
+
     @Override
-    public String name() {
-        return "custom-name";
+    public Key type() {
+        return ItemDataModifiers.CUSTOM_NAME;
     }
 
     @Override
@@ -37,22 +41,26 @@ public class CustomNameModifier<I> implements ItemDataModifier<I> {
     }
 
     @Override
-    public Item<I> prepareNetworkItem(Item<I> item, ItemBuildContext context, CompoundTag networkData) {
-        if (VersionHelper.isOrAbove1_20_5()) {
-            Tag previous = item.getSparrowNBTComponent(ComponentKeys.CUSTOM_NAME);
-            if (previous != null) {
-                networkData.put(ComponentKeys.CUSTOM_NAME.asString(), NetworkItemHandler.pack(NetworkItemHandler.Operation.ADD, previous));
-            } else {
-                networkData.put(ComponentKeys.CUSTOM_NAME.asString(), NetworkItemHandler.pack(NetworkItemHandler.Operation.REMOVE));
-            }
-        } else {
-            Tag previous = item.getTag("display", "Name");
-            if (previous != null) {
-                networkData.put("display.Name", NetworkItemHandler.pack(NetworkItemHandler.Operation.ADD, previous));
-            } else {
-                networkData.put("display.Name", NetworkItemHandler.pack(NetworkItemHandler.Operation.REMOVE));
-            }
+    public @Nullable Key componentType(Item<I> item, ItemBuildContext context) {
+        return ComponentKeys.CUSTOM_NAME;
+    }
+
+    @Override
+    public @Nullable Object[] nbtPath(Item<I> item, ItemBuildContext context) {
+        return new Object[]{"display", "Name"};
+    }
+
+    @Override
+    public String nbtPathString(Item<I> item, ItemBuildContext context) {
+        return "display.Name";
+    }
+
+    public static class Factory<I> implements ItemDataModifierFactory<I> {
+
+        @Override
+        public ItemDataModifier<I> create(Object arg) {
+            String name = arg.toString();
+            return new CustomNameModifier<>(name);
         }
-        return item;
     }
 }

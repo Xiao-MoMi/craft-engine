@@ -3,24 +3,26 @@ package net.momirealms.craftengine.core.item.modifier;
 import net.momirealms.craftengine.core.item.ComponentKeys;
 import net.momirealms.craftengine.core.item.Item;
 import net.momirealms.craftengine.core.item.ItemBuildContext;
-import net.momirealms.craftengine.core.item.NetworkItemHandler;
 import net.momirealms.craftengine.core.item.setting.EquipmentData;
 import net.momirealms.craftengine.core.util.Key;
-import net.momirealms.sparrow.nbt.CompoundTag;
-import net.momirealms.sparrow.nbt.Tag;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Optional;
 
-public class EquippableAssetIdModifier<I> implements ItemDataModifier<I> {
+public class EquippableAssetIdModifier<I> implements SimpleNetworkItemDataModifier<I> {
     private final Key assetId;
 
     public EquippableAssetIdModifier(Key assetsId) {
         this.assetId = assetsId;
     }
 
+    public Key assetId() {
+        return assetId;
+    }
+
     @Override
-    public String name() {
-        return "equippable-asset-id";
+    public Key type() {
+        return ItemDataModifiers.EQUIPPABLE_ASSET_ID;
     }
 
     @Override
@@ -39,13 +41,7 @@ public class EquippableAssetIdModifier<I> implements ItemDataModifier<I> {
     }
 
     @Override
-    public Item<I> prepareNetworkItem(Item<I> item, ItemBuildContext context, CompoundTag networkData) {
-        Tag previous = item.getSparrowNBTComponent(ComponentKeys.EQUIPPABLE);
-        if (previous != null) {
-            networkData.put(ComponentKeys.EQUIPPABLE.asString(), NetworkItemHandler.pack(NetworkItemHandler.Operation.ADD, previous));
-        } else {
-            networkData.put(ComponentKeys.EQUIPPABLE.asString(), NetworkItemHandler.pack(NetworkItemHandler.Operation.REMOVE));
-        }
-        return item;
+    public @Nullable Key componentType(Item<I> item, ItemBuildContext context) {
+        return ComponentKeys.EQUIPPABLE;
     }
 }

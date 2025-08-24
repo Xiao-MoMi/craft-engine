@@ -113,6 +113,11 @@ public class BukkitCraftEngine extends CraftEngine {
         } catch (Exception e) {
             throw new InjectionException("Error injecting blocks", e);
         }
+        try {
+            LootEntryInjector.init();
+        } catch (Exception e) {
+            throw new InjectionException("Error injecting loot entries", e);
+        }
     }
 
     @Override
@@ -227,7 +232,6 @@ public class BukkitCraftEngine extends CraftEngine {
                 }
             }, 1, 1);
         }
-        super.compatibilityManager().onDelayedEnable();
     }
 
     @Override

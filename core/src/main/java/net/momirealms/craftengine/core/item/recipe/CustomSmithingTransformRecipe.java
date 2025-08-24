@@ -1,9 +1,11 @@
 package net.momirealms.craftengine.core.item.recipe;
 
+import com.google.gson.JsonObject;
 import net.momirealms.craftengine.core.item.Item;
 import net.momirealms.craftengine.core.item.ItemBuildContext;
 import net.momirealms.craftengine.core.item.recipe.input.RecipeInput;
 import net.momirealms.craftengine.core.item.recipe.input.SmithingInput;
+import net.momirealms.craftengine.core.item.recipe.result.CustomRecipeResult;
 import net.momirealms.craftengine.core.plugin.CraftEngine;
 import net.momirealms.craftengine.core.plugin.locale.LocalizedResourceConfigException;
 import net.momirealms.craftengine.core.registry.BuiltInRegistries;
@@ -16,11 +18,10 @@ import org.jetbrains.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
-public class CustomSmithingTransformRecipe<T> implements FixedResultRecipe<T> {
-    public static final Factory<?> FACTORY = new Factory<>();
-    private final Key id;
-    private final CustomRecipeResult<T> result;
+public class CustomSmithingTransformRecipe<T> extends AbstractedFixedResultRecipe<T> {
+    public static final Serializer<?> SERIALIZER = new Serializer<>();
     private final Ingredient<T> base;
     private final Ingredient<T> template;
     private final Ingredient<T> addition;
@@ -28,15 +29,15 @@ public class CustomSmithingTransformRecipe<T> implements FixedResultRecipe<T> {
     private final List<ItemDataProcessor> processors;
 
     public CustomSmithingTransformRecipe(Key id,
-                                         @Nullable Ingredient<T> base,
+                                         boolean showNotification,
                                          @Nullable Ingredient<T> template,
+                                         @NotNull Ingredient<T> base,
                                          @Nullable Ingredient<T> addition,
                                          CustomRecipeResult<T> result,
-                                         boolean mergeComponents,
-                                         List<ItemDataProcessor> processors
+                                         List<ItemDataProcessor> processors,
+                                         boolean mergeComponents
     ) {
-        this.id = id;
-        this.result = result;
+        super(id, showNotification, result);
         this.base = base;
         this.template = template;
         this.addition = addition;
@@ -78,18 +79,13 @@ public class CustomSmithingTransformRecipe<T> implements FixedResultRecipe<T> {
     }
 
     @Override
-    public @NotNull Key type() {
-        return RecipeTypes.SMITHING_TRANSFORM;
+    public @NotNull Key serializerType() {
+        return RecipeSerializers.SMITHING_TRANSFORM;
     }
 
     @Override
-    public Key id() {
-        return this.id;
-    }
-
-    @Nullable
-    public T result(ItemBuildContext context) {
-        return this.result.buildItemStack(context);
+    public RecipeType type() {
+        return RecipeType.SMITHING;
     }
 
     @SuppressWarnings("unchecked")
@@ -109,11 +105,7 @@ public class CustomSmithingTransformRecipe<T> implements FixedResultRecipe<T> {
         return finalResult.getItem();
     }
 
-    public CustomRecipeResult<T> result() {
-        return this.result;
-    }
-
-    @Nullable
+    @NotNull
     public Ingredient<T> base() {
         return this.base;
     }
@@ -129,24 +121,31 @@ public class CustomSmithingTransformRecipe<T> implements FixedResultRecipe<T> {
     }
 
     @SuppressWarnings({"DuplicatedCode"})
-    public static class Factory<A> implements RecipeFactory<A> {
+    public static class Serializer<A> extends AbstractRecipeSerializer<A, CustomSmithingTransformRecipe<A>> {
 
         @Override
-        public Recipe<A> create(Key id, Map<String, Object> arguments) {
+        public CustomSmithingTransformRecipe<A> readMap(Key id, Map<String, Object> arguments) {
             List<String> base = MiscUtils.getAsStringList(arguments.get("base"));
-            if (base.isEmpty()) {
-                throw new LocalizedResourceConfigException("warning.config.recipe.smithing_transform.missing_base");
-            }
-            List<String> addition = MiscUtils.getAsStringList(arguments.get("addition"));
             List<String> template = MiscUtils.getAsStringList(arguments.get("template-type"));
+            List<String> addition = MiscUtils.getAsStringList(arguments.get("addition"));
             boolean mergeComponents = ResourceConfigUtils.getAsBoolean(arguments.getOrDefault("merge-components", true), "merge-components");
             @SuppressWarnings("unchecked")
             List<Map<String, Object>> processors = (List<Map<String, Object>>) arguments.getOrDefault("post-processors", List.of());
-            return new CustomSmithingTransformRecipe<>(
-                    id,
-                    toIngredient(base), toIngredient(template),toIngredient(addition), parseResult(arguments),
-                    mergeComponents,
-                    ItemDataProcessors.fromMapList(processors)
+            return new CustomSmithingTransformRecipe<>(id,
+                    showNotification(arguments),
+                    toIngredient(template),
+                    ResourceConfigUtils.requireNonNullOrThrow(toIngredient(base), "warning.config.recipe.smithing_transform.missing_base"),
+                    toIngredient(addition),
+                    parseResult(arguments),
+                    ItemDataProcessors.fromMapList(processors),
+                    mergeComponents
+            );
+        }
+
+        @Override
+        public CustomSmithingTransformRecipe<A> readJson(Key id, JsonObject json) {
+            return new CustomSmithingTransformRecipe<>(id,
+                    true, toIngredient(VANILLA_RECIPE_HELPER.singleIngredient(json.get("template"))), Objects.requireNonNull(toIngredient(VANILLA_RECIPE_HELPER.singleIngredient(json.get("base")))), toIngredient(VANILLA_RECIPE_HELPER.singleIngredient(json.get("addition"))), parseResult(VANILLA_RECIPE_HELPER.smithingResult(json.getAsJsonObject("result"))), null, true
             );
         }
     }

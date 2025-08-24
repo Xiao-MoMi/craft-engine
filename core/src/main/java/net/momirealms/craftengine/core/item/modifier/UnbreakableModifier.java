@@ -3,21 +3,26 @@ package net.momirealms.craftengine.core.item.modifier;
 import net.momirealms.craftengine.core.item.ComponentKeys;
 import net.momirealms.craftengine.core.item.Item;
 import net.momirealms.craftengine.core.item.ItemBuildContext;
-import net.momirealms.craftengine.core.item.NetworkItemHandler;
-import net.momirealms.craftengine.core.util.VersionHelper;
-import net.momirealms.sparrow.nbt.CompoundTag;
-import net.momirealms.sparrow.nbt.Tag;
+import net.momirealms.craftengine.core.item.ItemDataModifierFactory;
+import net.momirealms.craftengine.core.util.Key;
+import net.momirealms.craftengine.core.util.ResourceConfigUtils;
+import org.jetbrains.annotations.Nullable;
 
-public class UnbreakableModifier<I> implements ItemDataModifier<I> {
+public class UnbreakableModifier<I> implements SimpleNetworkItemDataModifier<I> {
+    public static final Factory<?> FACTORY = new Factory<>();
     private final boolean argument;
 
     public UnbreakableModifier(boolean argument) {
         this.argument = argument;
     }
 
+    public boolean unbreakable() {
+        return argument;
+    }
+
     @Override
-    public String name() {
-        return "unbreakable";
+    public Key type() {
+        return ItemDataModifiers.UNBREAKABLE;
     }
 
     @Override
@@ -27,22 +32,26 @@ public class UnbreakableModifier<I> implements ItemDataModifier<I> {
     }
 
     @Override
-    public Item<I> prepareNetworkItem(Item<I> item, ItemBuildContext context, CompoundTag networkData) {
-        if (VersionHelper.isOrAbove1_20_5()) {
-            Tag previous = item.getSparrowNBTComponent(ComponentKeys.UNBREAKABLE);
-            if (previous != null) {
-                networkData.put(ComponentKeys.UNBREAKABLE.asString(), NetworkItemHandler.pack(NetworkItemHandler.Operation.ADD, previous));
-            } else {
-                networkData.put(ComponentKeys.UNBREAKABLE.asString(), NetworkItemHandler.pack(NetworkItemHandler.Operation.REMOVE));
-            }
-        } else {
-            Tag previous = item.getTag("Unbreakable");
-            if (previous != null) {
-                networkData.put("Unbreakable", NetworkItemHandler.pack(NetworkItemHandler.Operation.ADD, previous));
-            } else {
-                networkData.put("Unbreakable", NetworkItemHandler.pack(NetworkItemHandler.Operation.REMOVE));
-            }
+    public @Nullable Key componentType(Item<I> item, ItemBuildContext context) {
+        return ComponentKeys.UNBREAKABLE;
+    }
+
+    @Override
+    public @Nullable Object[] nbtPath(Item<I> item, ItemBuildContext context) {
+        return new Object[]{"Unbreakable"};
+    }
+
+    @Override
+    public String nbtPathString(Item<I> item, ItemBuildContext context) {
+        return "Unbreakable";
+    }
+
+    public static class Factory<I> implements ItemDataModifierFactory<I> {
+
+        @Override
+        public ItemDataModifier<I> create(Object arg) {
+            boolean value = ResourceConfigUtils.getAsBoolean(arg, "unbreakable");
+            return new UnbreakableModifier<>(value);
         }
-        return item;
     }
 }

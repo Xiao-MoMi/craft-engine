@@ -13,6 +13,7 @@ import net.momirealms.craftengine.core.entity.furniture.Furniture;
 import net.momirealms.craftengine.core.entity.furniture.FurnitureElement;
 import net.momirealms.craftengine.core.item.Item;
 import net.momirealms.craftengine.core.item.data.FireworkExplosion;
+import net.momirealms.craftengine.core.util.Color;
 import net.momirealms.craftengine.core.util.Key;
 import net.momirealms.craftengine.core.world.WorldPosition;
 import org.bukkit.Material;
@@ -65,7 +66,7 @@ public class BukkitFurnitureElement extends AbstractFurnitureElement {
         }
     }
 
-    private synchronized List<Object> getCachedValues(@Nullable Integer color, int @Nullable [] colors) {
+    private synchronized List<Object> getCachedValues(@Nullable Color color, int @Nullable [] colors) {
         List<Object> cachedValues = new ArrayList<>(this.commonValues);
         Item<ItemStack> item = BukkitItemManager.instance().createWrappedItem(item(), null);
         if (item == null) {

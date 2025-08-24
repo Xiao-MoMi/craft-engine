@@ -93,38 +93,69 @@ public enum Direction {
         };
     }
 
+//    public static Direction[] orderedByNearest(AbstractEntity entity) {
+//        float xRotation = entity.xRot() * (float) (Math.PI / 180.0);
+//        float yRotation = -entity.yRot() * (float) (Math.PI / 180.0);
+//        float sinX = (float) Math.sin(xRotation);
+//        float cosX = (float) Math.cos(xRotation);
+//        float sinY = (float) Math.sin(yRotation);
+//        float cosY = (float) Math.cos(yRotation);
+//        boolean isFacingPositiveY = sinY > 0.0F;
+//        boolean isFacingNegativeX = sinX < 0.0F;
+//        boolean isFacingPositiveX = cosY > 0.0F;
+//        float adjustedSinY = isFacingPositiveY ? sinY : -sinY;
+//        float adjustedSinX = isFacingNegativeX ? -sinX : sinX;
+//        float adjustedCosY = isFacingPositiveX ? cosY : -cosY;
+//        float horizontalProjection = adjustedSinY * cosX;
+//        float verticalProjection = adjustedCosY * cosX;
+//        Direction horizontalDirection = isFacingPositiveY ? EAST : WEST;
+//        Direction verticalDirection = isFacingNegativeX ? UP : DOWN;
+//        Direction depthDirection = isFacingPositiveX ? SOUTH : NORTH;
+//        if (adjustedSinY > adjustedCosY) {
+//            if (adjustedSinX > horizontalProjection) {
+//                return createDirectionArray(verticalDirection, horizontalDirection, depthDirection);
+//            } else {
+//                return verticalProjection > adjustedSinX
+//                        ? createDirectionArray(horizontalDirection, depthDirection, verticalDirection)
+//                        : createDirectionArray(horizontalDirection, verticalDirection, depthDirection);
+//            }
+//        } else if (adjustedSinX > verticalProjection) {
+//            return createDirectionArray(verticalDirection, depthDirection, horizontalDirection);
+//        } else {
+//            return horizontalProjection > adjustedSinX
+//                    ? createDirectionArray(depthDirection, horizontalDirection, verticalDirection)
+//                    : createDirectionArray(depthDirection, verticalDirection, horizontalDirection);
+//        }
+//    }
+
     public static Direction[] orderedByNearest(AbstractEntity entity) {
-        float xRotation = entity.xRot() * (float) (Math.PI / 180.0);
-        float yRotation = -entity.yRot() * (float) (Math.PI / 180.0);
-        float sinX = (float) Math.sin(xRotation);
-        float cosX = (float) Math.cos(xRotation);
-        float sinY = (float) Math.sin(yRotation);
-        float cosY = (float) Math.cos(yRotation);
-        boolean isFacingPositiveY = sinY > 0.0F;
-        boolean isFacingNegativeX = sinX < 0.0F;
-        boolean isFacingPositiveX = cosY > 0.0F;
-        float adjustedSinY = isFacingPositiveY ? sinY : -sinY;
-        float adjustedSinX = isFacingNegativeX ? -sinX : sinX;
-        float adjustedCosY = isFacingPositiveX ? cosY : -cosY;
-        float horizontalProjection = adjustedSinY * cosX;
-        float verticalProjection = adjustedCosY * cosX;
-        Direction horizontalDirection = isFacingPositiveY ? EAST : WEST;
-        Direction verticalDirection = isFacingNegativeX ? UP : DOWN;
-        Direction depthDirection = isFacingPositiveX ? SOUTH : NORTH;
-        if (adjustedSinY > adjustedCosY) {
-            if (adjustedSinX > horizontalProjection) {
-                return createDirectionArray(verticalDirection, horizontalDirection, depthDirection);
+        float f = entity.xRot() * ((float)Math.PI / 180F);
+        float f1 = -entity.yRot() * ((float)Math.PI / 180F);
+        float sin = MCUtils.sin(f);
+        float cos = MCUtils.cos(f);
+        float sin1 = MCUtils.sin(f1);
+        float cos1 = MCUtils.cos(f1);
+        boolean flag = sin1 > 0.0F;
+        boolean flag1 = sin < 0.0F;
+        boolean flag2 = cos1 > 0.0F;
+        float f2 = flag ? sin1 : -sin1;
+        float f3 = flag1 ? -sin : sin;
+        float f4 = flag2 ? cos1 : -cos1;
+        float f5 = f2 * cos;
+        float f6 = f4 * cos;
+        Direction direction = flag ? EAST : WEST;
+        Direction direction1 = flag1 ? UP : DOWN;
+        Direction direction2 = flag2 ? SOUTH : NORTH;
+        if (f2 > f4) {
+            if (f3 > f5) {
+                return createDirectionArray(direction1, direction, direction2);
             } else {
-                return verticalProjection > adjustedSinX
-                        ? createDirectionArray(horizontalDirection, depthDirection, verticalDirection)
-                        : createDirectionArray(horizontalDirection, verticalDirection, depthDirection);
+                return f6 > f3 ? createDirectionArray(direction, direction2, direction1) : createDirectionArray(direction, direction1, direction2);
             }
-        } else if (adjustedSinX > verticalProjection) {
-            return createDirectionArray(verticalDirection, depthDirection, horizontalDirection);
+        } else if (f3 > f6) {
+            return createDirectionArray(direction1, direction2, direction);
         } else {
-            return horizontalProjection > adjustedSinX
-                    ? createDirectionArray(depthDirection, horizontalDirection, verticalDirection)
-                    : createDirectionArray(depthDirection, verticalDirection, horizontalDirection);
+            return f5 > f3 ? createDirectionArray(direction2, direction, direction1) : createDirectionArray(direction2, direction1, direction);
         }
     }
 

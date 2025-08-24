@@ -15,6 +15,7 @@ import java.util.Map;
 import java.util.Optional;
 
 public abstract class AbstractCustomItem<I> implements CustomItem<I> {
+    protected final boolean isVanillaItem;
     protected final UniqueKey id;
     protected final Key material;
     protected final Key clientBoundMaterial;
@@ -25,12 +26,13 @@ public abstract class AbstractCustomItem<I> implements CustomItem<I> {
     protected final Map<EventTrigger, List<Function<PlayerOptionalContext>>> events;
 
     @SuppressWarnings("unchecked")
-    public AbstractCustomItem(UniqueKey id, Key material, Key clientBoundMaterial,
+    public AbstractCustomItem(boolean isVanillaItem, UniqueKey id, Key material, Key clientBoundMaterial,
                               List<ItemBehavior> behaviors,
                               List<ItemDataModifier<I>> modifiers,
                               List<ItemDataModifier<I>> clientBoundModifiers,
                               ItemSettings settings,
                               Map<EventTrigger, List<Function<PlayerOptionalContext>>> events) {
+        this.isVanillaItem = isVanillaItem;
         this.id = id;
         this.material = material;
         this.clientBoundMaterial = clientBoundMaterial;
@@ -73,6 +75,11 @@ public abstract class AbstractCustomItem<I> implements CustomItem<I> {
     @Override
     public ItemDataModifier<I>[] dataModifiers() {
         return this.modifiers;
+    }
+
+    @Override
+    public boolean isVanillaItem() {
+        return isVanillaItem;
     }
 
     @Override

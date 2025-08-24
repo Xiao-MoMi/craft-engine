@@ -8,9 +8,13 @@ public class UniqueIdItem<T> {
     private final Item<T> rawItem;
     private final UniqueKey uniqueId;
 
-    public UniqueIdItem(@NotNull UniqueKey uniqueId, @NotNull Item<T> rawItem) {
-        this.uniqueId = uniqueId;
+    private UniqueIdItem(@NotNull Item<T> rawItem) {
         this.rawItem = rawItem;
+        this.uniqueId = rawItem.recipeIngredientId();
+    }
+
+    public static <T> UniqueIdItem<T> of(Item<T> rawItem) {
+        return new UniqueIdItem<>(rawItem);
     }
 
     @NotNull
@@ -28,7 +32,7 @@ public class UniqueIdItem<T> {
     }
 
     public boolean isEmpty() {
-        return this.uniqueId == UniqueKey.AIR;
+        return this.uniqueId == null;
     }
 
     @Override

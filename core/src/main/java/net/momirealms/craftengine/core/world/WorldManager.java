@@ -13,6 +13,8 @@ public interface WorldManager extends Manageable {
 
     CEWorld getWorld(UUID uuid);
 
+    CEWorld[] getWorlds();
+
     void loadWorld(World world);
 
     void loadWorld(CEWorld world);

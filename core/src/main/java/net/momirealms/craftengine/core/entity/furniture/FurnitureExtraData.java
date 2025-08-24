@@ -1,13 +1,14 @@
 package net.momirealms.craftengine.core.entity.furniture;
 
+import java.io.IOException;
+import java.util.Optional;
+
 import net.momirealms.craftengine.core.item.Item;
 import net.momirealms.craftengine.core.plugin.CraftEngine;
 import net.momirealms.craftengine.core.plugin.logger.Debugger;
+import net.momirealms.craftengine.core.util.Color;
 import net.momirealms.sparrow.nbt.CompoundTag;
 import net.momirealms.sparrow.nbt.NBT;
-
-import java.io.IOException;
-import java.util.Optional;
 
 public class FurnitureExtraData {
     public static final String ITEM = "item";
@@ -49,8 +50,8 @@ public class FurnitureExtraData {
         return Optional.empty();
     }
 
-    public Optional<Integer> dyedColor() {
-        if (this.data.containsKey(DYED_COLOR)) return Optional.of(this.data.getInt(DYED_COLOR));
+    public Optional<Color> dyedColor() {
+        if (this.data.containsKey(DYED_COLOR)) return Optional.of(Color.fromDecimal(this.data.getInt(DYED_COLOR)));
         return Optional.empty();
     }
 
@@ -92,9 +93,9 @@ public class FurnitureExtraData {
             return this;
         }
 
-        public Builder dyedColor(Integer color) {
+        public Builder dyedColor(Color color) {
             if (color == null) return this;
-            this.data.putInt(DYED_COLOR, color);
+            this.data.putInt(DYED_COLOR, color.color());
             return this;
         }
 

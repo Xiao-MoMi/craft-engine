@@ -70,4 +70,30 @@ public class WorldPosition implements Position {
     public float yRot() {
         return yRot;
     }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj) return true;
+        if (!(obj instanceof WorldPosition other)) return false;
+        return Double.compare(other.x, x) == 0 &&
+               Double.compare(other.y, y) == 0 &&
+               Double.compare(other.z, z) == 0 &&
+               Float.compare(other.xRot, xRot) == 0 &&
+               Float.compare(other.yRot, yRot) == 0 &&
+               world.equals(other.world);
+    }
+
+    @Override
+    public int hashCode() {
+        int result = world.hashCode();
+        long temp = Double.doubleToLongBits(x);
+        result = 31 * result + (int) (temp ^ (temp >>> 32));
+        temp = Double.doubleToLongBits(y);
+        result = 31 * result + (int) (temp ^ (temp >>> 32));
+        temp = Double.doubleToLongBits(z);
+        result = 31 * result + (int) (temp ^ (temp >>> 32));
+        result = 31 * result + Float.floatToIntBits(xRot);
+        result = 31 * result + Float.floatToIntBits(yRot);
+        return result;
+    }
 }

@@ -4,13 +4,16 @@ import net.momirealms.craftengine.core.block.CustomBlock;
 import net.momirealms.craftengine.core.block.behavior.BlockBehaviorFactory;
 import net.momirealms.craftengine.core.block.properties.PropertyFactory;
 import net.momirealms.craftengine.core.entity.furniture.HitBoxFactory;
+import net.momirealms.craftengine.core.item.ItemDataModifierFactory;
 import net.momirealms.craftengine.core.item.behavior.ItemBehaviorFactory;
 import net.momirealms.craftengine.core.item.equipment.EquipmentFactory;
 import net.momirealms.craftengine.core.item.recipe.CustomSmithingTransformRecipe;
-import net.momirealms.craftengine.core.item.recipe.RecipeFactory;
+import net.momirealms.craftengine.core.item.recipe.Recipe;
+import net.momirealms.craftengine.core.item.recipe.RecipeSerializer;
 import net.momirealms.craftengine.core.item.recipe.network.legacy.LegacyRecipe;
 import net.momirealms.craftengine.core.item.recipe.network.modern.display.RecipeDisplay;
 import net.momirealms.craftengine.core.item.recipe.network.modern.display.slot.SlotDisplay;
+import net.momirealms.craftengine.core.item.recipe.result.PostProcessor;
 import net.momirealms.craftengine.core.loot.LootContext;
 import net.momirealms.craftengine.core.loot.entry.LootEntryContainerFactory;
 import net.momirealms.craftengine.core.loot.function.ApplyBonusCountFunction;
@@ -42,7 +45,7 @@ import net.momirealms.craftengine.core.util.ResourceKey;
 public class Registries {
     public static final Key ROOT_REGISTRY = Key.withDefaultNamespace("root");
     public static final ResourceKey<Registry<CustomBlock>> BLOCK = ResourceKey.create(ROOT_REGISTRY, Key.withDefaultNamespace("block"));
-    public static final ResourceKey<Registry<Key>> OPTIMIZED_ITEM_ID = ResourceKey.create(ROOT_REGISTRY, Key.withDefaultNamespace("optimized_item_id"));
+    public static final ResourceKey<Registry<ItemDataModifierFactory<?>>> ITEM_DATA_MODIFIER_FACTORY = ResourceKey.create(ROOT_REGISTRY, Key.withDefaultNamespace("item_data_modifier_factory"));
     public static final ResourceKey<Registry<PropertyFactory>> PROPERTY_FACTORY = ResourceKey.create(ROOT_REGISTRY, Key.withDefaultNamespace("property_factory"));
     public static final ResourceKey<Registry<BlockBehaviorFactory>> BLOCK_BEHAVIOR_FACTORY = ResourceKey.create(ROOT_REGISTRY, Key.withDefaultNamespace("block_behavior_factory"));
     public static final ResourceKey<Registry<ItemBehaviorFactory>> ITEM_BEHAVIOR_FACTORY = ResourceKey.create(ROOT_REGISTRY, Key.withDefaultNamespace("item_behavior_factory"));
@@ -63,7 +66,7 @@ public class Registries {
     public static final ResourceKey<Registry<ConditionPropertyReader>> CONDITION_PROPERTY_READER = ResourceKey.create(ROOT_REGISTRY, Key.withDefaultNamespace("condition_property_reader"));
     public static final ResourceKey<Registry<SelectPropertyFactory>> SELECT_PROPERTY_FACTORY = ResourceKey.create(ROOT_REGISTRY, Key.withDefaultNamespace("select_property_factory"));
     public static final ResourceKey<Registry<SelectPropertyReader>> SELECT_PROPERTY_READER = ResourceKey.create(ROOT_REGISTRY, Key.withDefaultNamespace("select_property_reader"));
-    public static final ResourceKey<Registry<RecipeFactory<?>>> RECIPE_FACTORY = ResourceKey.create(ROOT_REGISTRY, Key.withDefaultNamespace("recipe_factory"));
+    public static final ResourceKey<Registry<RecipeSerializer<?, ? extends Recipe<?>>>> RECIPE_FACTORY = ResourceKey.create(ROOT_REGISTRY, Key.withDefaultNamespace("recipe_factory"));
     public static final ResourceKey<Registry<ApplyBonusCountFunction.FormulaFactory>> FORMULA_FACTORY = ResourceKey.create(ROOT_REGISTRY, Key.withDefaultNamespace("formula_factory"));
     public static final ResourceKey<Registry<ConditionFactory<PathContext>>> PATH_MATCHER_FACTORY = ResourceKey.create(ROOT_REGISTRY, Key.withDefaultNamespace("path_matcher_factory"));
     public static final ResourceKey<Registry<ResolutionFactory>> RESOLUTION_FACTORY = ResourceKey.create(ROOT_REGISTRY, Key.withDefaultNamespace("resolution_factory"));
@@ -77,4 +80,5 @@ public class Registries {
     public static final ResourceKey<Registry<SlotDisplay.Type>> SLOT_DISPLAY_TYPE = ResourceKey.create(ROOT_REGISTRY, Key.withDefaultNamespace("slot_display_type"));
     public static final ResourceKey<Registry<RecipeDisplay.Type>> RECIPE_DISPLAY_TYPE = ResourceKey.create(ROOT_REGISTRY, Key.withDefaultNamespace("recipe_display_type"));
     public static final ResourceKey<Registry<LegacyRecipe.Type>> LEGACY_RECIPE_TYPE = ResourceKey.create(ROOT_REGISTRY, Key.withDefaultNamespace("legacy_recipe_type"));
+    public static final ResourceKey<Registry<PostProcessor.Type<?>>> RECIPE_POST_PROCESSOR_TYPE = ResourceKey.create(ROOT_REGISTRY, Key.withDefaultNamespace("recipe_post_processor_type"));
 }

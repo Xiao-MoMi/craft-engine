@@ -59,12 +59,18 @@ images:
     font: minecraft:gui
     file: minecraft:font/gui/custom/smithing_transform_recipe.png
     char: \ub009
+  internal:brewing_recipe:
+    height: 142
+    ascent: 20
+    font: minecraft:gui
+    file: minecraft:font/gui/custom/brewing_recipe.png
+    char: \ub00a
   internal:no_recipe:
     height: 140
     ascent: 18
     font: minecraft:gui
     file: minecraft:font/gui/custom/no_recipe.png
-    char: \ub00a
+    char: \ub00b
 templates:
   internal:icon/2d:
     material: arrow

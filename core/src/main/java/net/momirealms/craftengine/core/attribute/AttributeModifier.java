@@ -1,5 +1,6 @@
 package net.momirealms.craftengine.core.attribute;
 
+import net.kyori.adventure.text.Component;
 import net.momirealms.craftengine.core.util.Key;
 import org.jetbrains.annotations.Nullable;
 
@@ -72,7 +73,7 @@ public class AttributeModifier {
         }
     }
 
-    public record Display(AttributeModifier.Display.Type type, String value) {
+    public record Display(AttributeModifier.Display.Type type, Component value) {
 
         public enum Type {
                 DEFAULT, HIDDEN, OVERRIDE

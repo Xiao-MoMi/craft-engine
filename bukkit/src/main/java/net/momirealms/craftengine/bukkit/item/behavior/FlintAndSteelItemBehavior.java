@@ -36,6 +36,9 @@ public class FlintAndSteelItemBehavior extends ItemBehavior {
     @SuppressWarnings("unchecked")
     @Override
     public InteractionResult useOnBlock(UseOnContext context) {
+        net.momirealms.craftengine.core.entity.player.Player player = context.getPlayer();
+        if (player == null) return InteractionResult.PASS;
+
         BlockPos clickedPos = context.getClickedPos();
         BukkitBlockInWorld clicked = (BukkitBlockInWorld) context.getLevel().getBlockAt(clickedPos);
         Block block = clicked.block();
@@ -65,7 +68,6 @@ public class FlintAndSteelItemBehavior extends ItemBehavior {
             return InteractionResult.PASS;
         }
 
-        net.momirealms.craftengine.core.entity.player.Player player = context.getPlayer();
         // 点击对象直接可燃，则忽略
         if (isClickedBlockBurnable) {
             int stateId = BlockStateUtils.blockStateToId(clickedBlockState);

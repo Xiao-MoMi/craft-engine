@@ -25,12 +25,12 @@ import java.util.stream.Collectors;
 public class ItemSettings {
     int fuelTime;
     Set<Key> tags = Set.of();
-    boolean canRepair = true;
+    Tristate canRepair = Tristate.UNDEFINED;
     List<AnvilRepairItem> anvilRepairItems = List.of();
     boolean renameable = true;
     boolean canPlaceRelatedVanillaBlock = false;
     ProjectileMeta projectileMeta;
-    boolean dyeable = true;
+    Tristate dyeable = Tristate.UNDEFINED;
     Helmet helmet = null;
     FoodData foodData = null;
     Key consumeReplacement = null;
@@ -41,6 +41,10 @@ public class ItemSettings {
     boolean respectRepairableComponent = false;
     @Nullable
     ItemEquipment equipment;
+    @Nullable
+    Color dyeColor;
+    @Nullable
+    Color fireworkColor;
 
     private ItemSettings() {}
 
@@ -99,6 +103,8 @@ public class ItemSettings {
         newSettings.canEnchant = settings.canEnchant;
         newSettings.compostProbability = settings.compostProbability;
         newSettings.respectRepairableComponent = settings.respectRepairableComponent;
+        newSettings.dyeColor = settings.dyeColor;
+        newSettings.fireworkColor = settings.fireworkColor;
         return newSettings;
     }
 
@@ -122,7 +128,7 @@ public class ItemSettings {
         return canPlaceRelatedVanillaBlock;
     }
 
-    public boolean canRepair() {
+    public Tristate canRepair() {
         return canRepair;
     }
 
@@ -138,7 +144,7 @@ public class ItemSettings {
         return tags;
     }
 
-    public boolean dyeable() {
+    public Tristate dyeable() {
         return dyeable;
     }
 
@@ -179,12 +185,32 @@ public class ItemSettings {
         return equipment;
     }
 
+    @Nullable
+    public Color dyeColor() {
+        return this.dyeColor;
+    }
+
+    @Nullable
+    public Color fireworkColor() {
+        return this.fireworkColor;
+    }
+
     public List<DamageSource> invulnerable() {
         return invulnerable;
     }
 
     public float compostProbability() {
         return compostProbability;
+    }
+
+    public ItemSettings fireworkColor(Color color) {
+        this.fireworkColor = color;
+        return this;
+    }
+
+    public ItemSettings dyeColor(Color color) {
+        this.dyeColor = color;
+        return this;
     }
 
     public ItemSettings repairItems(List<AnvilRepairItem> items) {
@@ -207,7 +233,7 @@ public class ItemSettings {
         return this;
     }
 
-    public ItemSettings canRepair(boolean canRepair) {
+    public ItemSettings canRepair(Tristate canRepair) {
         this.canRepair = canRepair;
         return this;
     }
@@ -252,7 +278,7 @@ public class ItemSettings {
         return this;
     }
 
-    public ItemSettings dyeable(boolean bool) {
+    public ItemSettings dyeable(Tristate bool) {
         this.dyeable = bool;
         return this;
     }
@@ -290,7 +316,7 @@ public class ItemSettings {
         static {
             registerFactory("repairable", (value -> {
                 boolean bool = ResourceConfigUtils.getAsBoolean(value, "repairable");
-                return settings -> settings.canRepair(bool);
+                return settings -> settings.canRepair(bool ? Tristate.TRUE : Tristate.FALSE);
             }));
             registerFactory("enchantable", (value -> {
                 boolean bool = ResourceConfigUtils.getAsBoolean(value, "enchantable");
@@ -325,7 +351,13 @@ public class ItemSettings {
             }));
             registerFactory("tags", (value -> {
                 List<String> tags = MiscUtils.getAsStringList(value);
-                return settings -> settings.tags(tags.stream().map(Key::of).collect(Collectors.toSet()));
+                return settings -> settings.tags(tags.stream().map(it -> {
+                    if (it.charAt(0) == '#') {
+                        return Key.of(it.substring(1));
+                    } else {
+                        return Key.of(it);
+                    }
+                }).collect(Collectors.toSet()));
             }));
             registerFactory("equippable", (value -> {
                 Map<String, Object> args = MiscUtils.castToMap(value, false);
@@ -384,11 +416,25 @@ public class ItemSettings {
             }));
             registerFactory("dyeable", (value -> {
                 boolean bool = ResourceConfigUtils.getAsBoolean(value, "dyeable");
-                return settings -> settings.dyeable(bool);
+                return settings -> settings.dyeable(bool ? Tristate.TRUE : Tristate.FALSE);
             }));
             registerFactory("respect-repairable-component", (value -> {
                 boolean bool = ResourceConfigUtils.getAsBoolean(value, "respect-repairable-component");
                 return settings -> settings.respectRepairableComponent(bool);
+            }));
+            registerFactory("dye-color", (value -> {
+                if (value instanceof Integer i) {
+                    return settings -> settings.dyeColor(Color.fromDecimal(i));
+                } else {
+                    return settings -> settings.dyeColor(Color.fromVector3f(MiscUtils.getAsVector3f(value, "dye-color")));
+                }
+            }));
+            registerFactory("firework-color", (value -> {
+                if (value instanceof Integer i) {
+                    return settings -> settings.fireworkColor(Color.fromDecimal(i));
+                } else {
+                    return settings -> settings.fireworkColor(Color.fromVector3f(MiscUtils.getAsVector3f(value, "firework-color")));
+                }
             }));
             registerFactory("food", (value -> {
                 Map<String, Object> args = MiscUtils.castToMap(value, false);

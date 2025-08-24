@@ -3,13 +3,15 @@ package net.momirealms.craftengine.core.item.modifier;
 import net.momirealms.craftengine.core.item.ComponentKeys;
 import net.momirealms.craftengine.core.item.Item;
 import net.momirealms.craftengine.core.item.ItemBuildContext;
-import net.momirealms.craftengine.core.item.NetworkItemHandler;
-import net.momirealms.sparrow.nbt.CompoundTag;
-import net.momirealms.sparrow.nbt.Tag;
+import net.momirealms.craftengine.core.item.ItemDataModifierFactory;
+import net.momirealms.craftengine.core.util.Key;
+import net.momirealms.craftengine.core.util.ResourceConfigUtils;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Map;
 
-public class FoodModifier<I> implements ItemDataModifier<I> {
+public class FoodModifier<I> implements SimpleNetworkItemDataModifier<I> {
+    public static final Factory<?> FACTORY = new Factory<>();
     private final int nutrition;
     private final float saturation;
     private final boolean canAlwaysEat;
@@ -20,9 +22,21 @@ public class FoodModifier<I> implements ItemDataModifier<I> {
         this.saturation = saturation;
     }
 
+    public boolean canAlwaysEat() {
+        return canAlwaysEat;
+    }
+
+    public int nutrition() {
+        return nutrition;
+    }
+
+    public float saturation() {
+        return saturation;
+    }
+
     @Override
-    public String name() {
-        return "food";
+    public Key type() {
+        return ItemDataModifiers.FOOD;
     }
 
     @Override
@@ -36,13 +50,18 @@ public class FoodModifier<I> implements ItemDataModifier<I> {
     }
 
     @Override
-    public Item<I> prepareNetworkItem(Item<I> item, ItemBuildContext context, CompoundTag networkData) {
-        Tag previous = item.getSparrowNBTComponent(ComponentKeys.FOOD);
-        if (previous != null) {
-            networkData.put(ComponentKeys.FOOD.asString(), NetworkItemHandler.pack(NetworkItemHandler.Operation.ADD, previous));
-        } else {
-            networkData.put(ComponentKeys.FOOD.asString(), NetworkItemHandler.pack(NetworkItemHandler.Operation.REMOVE));
+    public @Nullable Key componentType(Item<I> item, ItemBuildContext context) {
+        return ComponentKeys.FOOD;
+    }
+
+    public static class Factory<I> implements ItemDataModifierFactory<I> {
+
+        @Override
+        public ItemDataModifier<I> create(Object arg) {
+            Map<String, Object> data = ResourceConfigUtils.getAsMap(arg, "food");
+            int nutrition = ResourceConfigUtils.getAsInt(data.get("nutrition"), "nutrition");
+            float saturation = ResourceConfigUtils.getAsFloat(data.get("saturation"), "saturation");
+            return new FoodModifier<>(nutrition, saturation, ResourceConfigUtils.getAsBoolean(data.getOrDefault("can-always-eat", false), "can-always-eat"));
         }
-        return item;
     }
 }

@@ -31,6 +31,10 @@ public class FixedNumberProvider implements NumberProvider {
         return NumberProviders.FIXED;
     }
 
+    public static FixedNumberProvider of(final double value) {
+        return new FixedNumberProvider(value);
+    }
+
     public static class FactoryImpl implements NumberProviderFactory {
 
         @Override

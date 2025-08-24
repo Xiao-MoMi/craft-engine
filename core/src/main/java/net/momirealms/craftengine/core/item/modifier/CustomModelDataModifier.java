@@ -3,21 +3,26 @@ package net.momirealms.craftengine.core.item.modifier;
 import net.momirealms.craftengine.core.item.ComponentKeys;
 import net.momirealms.craftengine.core.item.Item;
 import net.momirealms.craftengine.core.item.ItemBuildContext;
-import net.momirealms.craftengine.core.item.NetworkItemHandler;
-import net.momirealms.craftengine.core.util.VersionHelper;
-import net.momirealms.sparrow.nbt.CompoundTag;
-import net.momirealms.sparrow.nbt.Tag;
+import net.momirealms.craftengine.core.item.ItemDataModifierFactory;
+import net.momirealms.craftengine.core.util.Key;
+import net.momirealms.craftengine.core.util.ResourceConfigUtils;
+import org.jetbrains.annotations.Nullable;
 
-public class CustomModelDataModifier<I> implements ItemDataModifier<I> {
+public class CustomModelDataModifier<I> implements SimpleNetworkItemDataModifier<I> {
+    public static final Factory<?> FACTORY = new Factory<>();
     private final int argument;
 
     public CustomModelDataModifier(int argument) {
         this.argument = argument;
     }
 
+    public int customModelData() {
+        return this.argument;
+    }
+
     @Override
-    public String name() {
-        return "custom-model-data";
+    public Key type() {
+        return ItemDataModifiers.CUSTOM_MODEL_DATA;
     }
 
     @Override
@@ -27,22 +32,26 @@ public class CustomModelDataModifier<I> implements ItemDataModifier<I> {
     }
 
     @Override
-    public Item<I> prepareNetworkItem(Item<I> item, ItemBuildContext context, CompoundTag networkData) {
-        if (VersionHelper.isOrAbove1_20_5()) {
-            Tag previous = item.getSparrowNBTComponent(ComponentKeys.CUSTOM_MODEL_DATA);
-            if (previous != null) {
-                networkData.put(ComponentKeys.CUSTOM_MODEL_DATA.asString(), NetworkItemHandler.pack(NetworkItemHandler.Operation.ADD, previous));
-            } else {
-                networkData.put(ComponentKeys.CUSTOM_MODEL_DATA.asString(), NetworkItemHandler.pack(NetworkItemHandler.Operation.REMOVE));
-            }
-        } else {
-            Tag previous = item.getTag("CustomModelData");
-            if (previous != null) {
-                networkData.put("CustomModelData", NetworkItemHandler.pack(NetworkItemHandler.Operation.ADD, previous));
-            } else {
-                networkData.put("CustomModelData", NetworkItemHandler.pack(NetworkItemHandler.Operation.REMOVE));
-            }
+    public @Nullable Key componentType(Item<I> item, ItemBuildContext context) {
+        return ComponentKeys.CUSTOM_MODEL_DATA;
+    }
+
+    @Override
+    public @Nullable Object[] nbtPath(Item<I> item, ItemBuildContext context) {
+        return new Object[]{"CustomModelData"};
+    }
+
+    @Override
+    public String nbtPathString(Item<I> item, ItemBuildContext context) {
+        return "CustomModelData";
+    }
+
+    public static class Factory<I> implements ItemDataModifierFactory<I> {
+
+        @Override
+        public ItemDataModifier<I> create(Object arg) {
+            int customModelData = ResourceConfigUtils.getAsInt(arg, "custom-model-data");
+            return new CustomModelDataModifier<>(customModelData);
         }
-        return item;
     }
 }

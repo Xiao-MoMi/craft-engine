@@ -2,7 +2,10 @@ package net.momirealms.craftengine.core.item.modifier;
 
 import net.momirealms.craftengine.core.item.Item;
 import net.momirealms.craftengine.core.item.ItemBuildContext;
+import net.momirealms.craftengine.core.item.ItemDataModifierFactory;
 import net.momirealms.craftengine.core.item.NetworkItemHandler;
+import net.momirealms.craftengine.core.util.Key;
+import net.momirealms.craftengine.core.util.MiscUtils;
 import net.momirealms.sparrow.nbt.CompoundTag;
 import net.momirealms.sparrow.nbt.Tag;
 
@@ -10,19 +13,20 @@ import java.util.Collections;
 import java.util.List;
 
 public class RemoveComponentModifier<I> implements ItemDataModifier<I> {
+    public static final Factory<?> FACTORY = new Factory<>();
     private final List<String> arguments;
 
     public RemoveComponentModifier(List<String> arguments) {
         this.arguments = arguments;
     }
 
-    public List<String> arguments() {
+    public List<String> components() {
         return Collections.unmodifiableList(this.arguments);
     }
 
     @Override
-    public String name() {
-        return "remove-components";
+    public Key type() {
+        return ItemDataModifiers.REMOVE_COMPONENTS;
     }
 
     @Override
@@ -42,5 +46,14 @@ public class RemoveComponentModifier<I> implements ItemDataModifier<I> {
             }
         }
         return item;
+    }
+
+    public static class Factory<I> implements ItemDataModifierFactory<I> {
+
+        @Override
+        public ItemDataModifier<I> create(Object arg) {
+            List<String> data = MiscUtils.getAsStringList(arg);
+            return new RemoveComponentModifier<>(data);
+        }
     }
 }

@@ -7,6 +7,7 @@ import com.mojang.datafixers.util.Either;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
+import it.unimi.dsi.fastutil.ints.Int2ObjectMaps;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.ints.IntList;
 import net.kyori.adventure.text.Component;
@@ -29,6 +30,7 @@ import net.momirealms.craftengine.bukkit.plugin.network.handler.*;
 import net.momirealms.craftengine.bukkit.plugin.network.payload.DiscardedPayload;
 import net.momirealms.craftengine.bukkit.plugin.network.payload.NetWorkDataTypes;
 import net.momirealms.craftengine.bukkit.plugin.network.payload.Payload;
+import net.momirealms.craftengine.bukkit.plugin.network.payload.UnknownPayload;
 import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.CoreReflections;
 import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.MBuiltInRegistries;
 import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.MEntityTypes;
@@ -105,7 +107,7 @@ public class PacketConsumers {
             byte yHeadRot = buf.readByte();
             int data = buf.readVarInt();
             // Falling blocks
-            int remapped = remap(data);
+            int remapped = user.clientModEnabled() ? remapMOD(data) : remap(data);
             if (remapped != data) {
                 int xa = buf.readShort();
                 int ya = buf.readShort();
@@ -428,7 +430,7 @@ public class PacketConsumers {
             if (user.clientModEnabled() && !BlockStateUtils.isVanillaBlock(before)) {
                 return;
             }
-            int state = remap(before);
+            int state = user.clientModEnabled() ? remapMOD(before) : remap(before);
             if (state == before) {
                 return;
             }
@@ -450,7 +452,7 @@ public class PacketConsumers {
             BlockPos blockPos = buf.readBlockPos();
             int state = buf.readInt();
             boolean global = buf.readBoolean();
-            int newState = remap(state);
+            int newState = user.clientModEnabled() ? remapMOD(state) : remap(state);
             if (newState == state) {
                 return;
             }
@@ -1006,7 +1008,7 @@ public class PacketConsumers {
             if (!CoreReflections.clazz$BlockParticleOption.isInstance(option)) return;
             Object blockState = FastNMS.INSTANCE.field$BlockParticleOption$blockState(option);
             int id = BlockStateUtils.blockStateToId(blockState);
-            int remapped = remap(id);
+            int remapped = user.clientModEnabled() ? remapMOD(id) : remap(id);
             if (remapped == id) return;
             Object type = FastNMS.INSTANCE.method$BlockParticleOption$getType(option);
             Object remappedOption = FastNMS.INSTANCE.constructor$BlockParticleOption(type, BlockStateUtils.idToBlockState(remapped));
@@ -1046,7 +1048,7 @@ public class PacketConsumers {
             if (!CoreReflections.clazz$BlockParticleOption.isInstance(option)) return;
             Object blockState = FastNMS.INSTANCE.field$BlockParticleOption$blockState(option);
             int id = BlockStateUtils.blockStateToId(blockState);
-            int remapped = remap(id);
+            int remapped = user.clientModEnabled() ? remapMOD(id) : remap(id);
             if (remapped == id) return;
             Object type = FastNMS.INSTANCE.method$BlockParticleOption$getType(option);
             Object remappedOption = FastNMS.INSTANCE.constructor$BlockParticleOption(type, BlockStateUtils.idToBlockState(remapped));
@@ -1086,7 +1088,7 @@ public class PacketConsumers {
             if (!CoreReflections.clazz$BlockParticleOption.isInstance(option)) return;
             Object blockState = FastNMS.INSTANCE.field$BlockParticleOption$blockState(option);
             int id = BlockStateUtils.blockStateToId(blockState);
-            int remapped = remap(id);
+            int remapped = user.clientModEnabled() ? remapMOD(id) : remap(id);
             if (remapped == id) return;
             Object type = FastNMS.INSTANCE.method$BlockParticleOption$getType(option);
             Object remappedOption = FastNMS.INSTANCE.constructor$BlockParticleOption(type, BlockStateUtils.idToBlockState(remapped));
@@ -1601,6 +1603,10 @@ public class PacketConsumers {
                 }
 
                 mainThreadTask = () -> {
+                    if (!furniture.isValid()) {
+                        return;
+                    }
+
                     FurnitureInteractEvent interactEvent = new FurnitureInteractEvent(serverPlayer.platformPlayer(), furniture, hand, interactionPoint);
                     if (EventUtils.fireAndCheckCancel(interactEvent)) {
                         return;
@@ -1622,7 +1628,7 @@ public class PacketConsumers {
                     }
 
                     // 必须从网络包层面处理，否则无法获取交互的具体实体
-                    if (serverPlayer.isSecondaryUseActive() && itemInHand != null) {
+                    if (serverPlayer.isSecondaryUseActive() && !itemInHand.isEmpty()) {
                         // try placing another furniture above it
                         AABB hitBox = furniture.aabbByEntityId(entityId);
                         if (hitBox == null) return;
@@ -1884,34 +1890,38 @@ public class PacketConsumers {
 
     public static final TriConsumer<NetWorkUser, NMSPacketEvent, Object> CUSTOM_PAYLOAD = (user, event, packet) -> {
         try {
-            if (!VersionHelper.isOrAbove1_20_5()) return;
+            if (!VersionHelper.isOrAbove1_20_2()) return;
             Object payload = NetworkReflections.methodHandle$ServerboundCustomPayloadPacket$payloadGetter.invokeExact(packet);
+            Payload clientPayload;
             if (NetworkReflections.clazz$DiscardedPayload.isInstance(payload)) {
-                Payload discardedPayload = DiscardedPayload.from(payload);
-                if (discardedPayload == null || !discardedPayload.channel().equals(NetworkManager.MOD_CHANNEL_KEY))
+                clientPayload = DiscardedPayload.from(payload);
+            } else if (!VersionHelper.isOrAbove1_20_5() && NetworkReflections.clazz$UnknownPayload.isInstance(payload)) {
+                clientPayload = UnknownPayload.from(payload);
+            } else {
+                return;
+            }
+            if (clientPayload == null || !clientPayload.channel().equals(NetworkManager.MOD_CHANNEL_KEY))
+                return;
+            FriendlyByteBuf buf = clientPayload.toBuffer();
+            NetWorkDataTypes dataType = buf.readEnumConstant(NetWorkDataTypes.class);
+            if (dataType == NetWorkDataTypes.CLIENT_CUSTOM_BLOCK) {
+                int clientBlockRegistrySize = dataType.decode(buf);
+                int serverBlockRegistrySize = RegistryUtils.currentBlockRegistrySize();
+                if (clientBlockRegistrySize != serverBlockRegistrySize) {
+                    user.kick(Component.translatable(
+                            "disconnect.craftengine.block_registry_mismatch",
+                            TranslationArgument.numeric(clientBlockRegistrySize),
+                            TranslationArgument.numeric(serverBlockRegistrySize)
+                    ));
                     return;
-                FriendlyByteBuf buf = discardedPayload.toBuffer();
-                NetWorkDataTypes<?> dataType = NetWorkDataTypes.readType(buf);
-                if (dataType == NetWorkDataTypes.CLIENT_CUSTOM_BLOCK) {
-                    int clientBlockRegistrySize = dataType.as(Integer.class).decode(buf);
-                    int serverBlockRegistrySize = RegistryUtils.currentBlockRegistrySize();
-                    if (clientBlockRegistrySize != serverBlockRegistrySize) {
-                        user.kick(Component.translatable(
-                                "disconnect.craftengine.block_registry_mismatch",
-                                TranslationArgument.numeric(clientBlockRegistrySize),
-                                TranslationArgument.numeric(serverBlockRegistrySize)
-                        ));
-                        return;
-                    }
-                    user.setClientModState(true);
-                } else if (dataType == NetWorkDataTypes.CANCEL_BLOCK_UPDATE) {
-                    if (!VersionHelper.isOrAbove1_20_2()) return;
-                    if (dataType.as(Boolean.class).decode(buf)) {
-                        FriendlyByteBuf bufPayload = new FriendlyByteBuf(Unpooled.buffer());
-                        dataType.writeType(bufPayload);
-                        dataType.as(Boolean.class).encode(bufPayload, true);
-                        user.sendCustomPayload(NetworkManager.MOD_CHANNEL_KEY, bufPayload.array());
-                    }
+                }
+                user.setClientModState(true);
+            } else if (dataType == NetWorkDataTypes.CANCEL_BLOCK_UPDATE) {
+                if (dataType.decode(buf)) {
+                    FriendlyByteBuf bufPayload = new FriendlyByteBuf(Unpooled.buffer());
+                    bufPayload.writeEnumConstant(dataType);
+                    dataType.encode(bufPayload, true);
+                    user.sendCustomPayload(NetworkManager.MOD_CHANNEL_KEY, bufPayload.array());
                 }
             }
         } catch (Throwable e) {
@@ -2124,23 +2134,6 @@ public class PacketConsumers {
             FriendlyByteBuf buf = event.getBuffer();
             Object friendlyBuf = FastNMS.INSTANCE.constructor$FriendlyByteBuf(buf);
             ItemStack itemStack = FastNMS.INSTANCE.method$FriendlyByteBuf$readItem(friendlyBuf);
-            if (VersionHelper.isOrAbove1_21_5()) {
-                Item<ItemStack> wrapped = BukkitItemManager.instance().wrap(itemStack);
-                if (!wrapped.isEmpty() && wrapped.isCustomItem()) {
-                    Object containerMenu = FastNMS.INSTANCE.field$Player$containerMenu(serverPlayer.serverPlayer());
-                    if (containerMenu != null) {
-                        ItemStack carried = FastNMS.INSTANCE.method$CraftItemStack$asCraftMirror(FastNMS.INSTANCE.method$AbstractContainerMenu$getCarried(containerMenu));
-                        if (ItemStackUtils.isEmpty(carried)) {
-                            event.setChanged(true);
-                            buf.clear();
-                            buf.writeVarInt(event.packetID());
-                            Object newFriendlyBuf = FastNMS.INSTANCE.constructor$FriendlyByteBuf(buf);
-                            FastNMS.INSTANCE.method$FriendlyByteBuf$writeItem(newFriendlyBuf, carried);
-                            return;
-                        }
-                    }
-                }
-            }
             BukkitItemManager.instance().s2c(itemStack, serverPlayer).ifPresent((newItemStack) -> {
                 event.setChanged(true);
                 buf.clear();
@@ -2216,11 +2209,18 @@ public class PacketConsumers {
 
     public static final BiConsumer<NetWorkUser, ByteBufPacketEvent> SET_CREATIVE_MODE_SLOT = (user, event) -> {
         try {
+            if (!(user instanceof BukkitServerPlayer serverPlayer)) return;
+            if (!serverPlayer.isCreativeMode()) return;
             FriendlyByteBuf buf = event.getBuffer();
             Object friendlyBuf = FastNMS.INSTANCE.constructor$FriendlyByteBuf(buf);
             short slotNum = buf.readShort();
-            ItemStack itemStack = VersionHelper.isOrAbove1_20_5() ?
-                    FastNMS.INSTANCE.method$FriendlyByteBuf$readUntrustedItem(friendlyBuf) : FastNMS.INSTANCE.method$FriendlyByteBuf$readItem(friendlyBuf);
+            ItemStack itemStack;
+            try {
+                itemStack = VersionHelper.isOrAbove1_20_5() ?
+                        FastNMS.INSTANCE.method$FriendlyByteBuf$readUntrustedItem(friendlyBuf) : FastNMS.INSTANCE.method$FriendlyByteBuf$readItem(friendlyBuf);
+            } catch (Exception e) {
+                return;
+            }
             BukkitItemManager.instance().c2s(itemStack).ifPresent((newItemStack) -> {
                 event.setChanged(true);
                 buf.clear();
@@ -2238,9 +2238,30 @@ public class PacketConsumers {
         }
     };
 
+    // 因为不能走编码器只能替换对象
+    public static final TriConsumer<NetWorkUser, NMSPacketEvent, Object> CONTAINER_CLICK_1_21_5 = (user, event, packet) -> {
+        try {
+            var player = (net.momirealms.craftengine.core.entity.player.Player) user;
+            int containerId = FastNMS.INSTANCE.field$ServerboundContainerClickPacket$containerId(packet);
+            int stateId = FastNMS.INSTANCE.field$ServerboundContainerClickPacket$stateId(packet);
+            short slotNum = FastNMS.INSTANCE.field$ServerboundContainerClickPacket$slotNum(packet);
+            byte buttonNum = FastNMS.INSTANCE.field$ServerboundContainerClickPacket$buttonNum(packet);
+            Object clickType = FastNMS.INSTANCE.field$ServerboundContainerClickPacket$clickType(packet);
+            @SuppressWarnings("unchecked")
+            Int2ObjectMap<Object> changedSlots = FastNMS.INSTANCE.field$ServerboundContainerClickPacket$changedSlots(packet);
+            Int2ObjectMap<Object> newChangedSlots = new Int2ObjectOpenHashMap<>(changedSlots.size());
+            for (Int2ObjectMap.Entry<Object> entry : changedSlots.int2ObjectEntrySet()) {
+                newChangedSlots.put(entry.getIntKey(), FastNMS.INSTANCE.constructor$InjectedHashedStack(entry.getValue(), player));
+            }
+            Object carriedItem = FastNMS.INSTANCE.constructor$InjectedHashedStack(FastNMS.INSTANCE.field$ServerboundContainerClickPacket$carriedItem(packet), player);
+            event.replacePacket(FastNMS.INSTANCE.constructor$ServerboundContainerClickPacket(containerId, stateId, slotNum, buttonNum, clickType, Int2ObjectMaps.unmodifiable(newChangedSlots), carriedItem));
+        } catch (Exception e) {
+            CraftEngine.instance().logger().warn("Failed to handle ServerboundContainerClickPacket", e);
+        }
+    };
+
     public static final BiConsumer<NetWorkUser, ByteBufPacketEvent> CONTAINER_CLICK_1_20 = (user, event) -> {
         try {
-            if (VersionHelper.isOrAbove1_21_5()) return; // 1.21.5+需要其他办法解决同步问题
             FriendlyByteBuf buf = event.getBuffer();
             boolean changed = false;
             Object friendlyBuf = FastNMS.INSTANCE.constructor$FriendlyByteBuf(buf);

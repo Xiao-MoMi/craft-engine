@@ -7,7 +7,9 @@ import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 
 public class VersionHelper {
+    public static final boolean PREMIUM = true;
     public static final MinecraftVersion MINECRAFT_VERSION;
+    public static final boolean COMPONENT_RELEASE;
     private static final int version;
     private static final int majorVersion;
     private static final int minorVersion;
@@ -30,6 +32,7 @@ public class VersionHelper {
     private static final boolean v1_21_5;
     private static final boolean v1_21_6;
     private static final boolean v1_21_7;
+    private static final boolean v1_21_8;
 
     static {
         try (InputStream inputStream = Class.forName("net.minecraft.obfuscate.DontObfuscate").getResourceAsStream("/version.json")) {
@@ -64,9 +67,12 @@ public class VersionHelper {
             v1_21_5 = version >= 12105;
             v1_21_6 = version >= 12106;
             v1_21_7 = version >= 12107;
+            v1_21_8 = version >= 12108;
 
             majorVersion = major;
             minorVersion = minor;
+
+            COMPONENT_RELEASE = v1_20_5;
 
             mojmap = checkMojMap();
             folia = checkFolia();
@@ -214,5 +220,9 @@ public class VersionHelper {
 
     public static boolean isOrAbove1_21_7() {
         return v1_21_7;
+    }
+
+    public static boolean isOrAbove1_21_8() {
+        return v1_21_8;
     }
 }

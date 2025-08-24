@@ -6,19 +6,16 @@ import net.momirealms.craftengine.core.attribute.Attributes1_21;
 import net.momirealms.craftengine.core.item.ComponentKeys;
 import net.momirealms.craftengine.core.item.Item;
 import net.momirealms.craftengine.core.item.ItemBuildContext;
-import net.momirealms.craftengine.core.item.NetworkItemHandler;
-import net.momirealms.craftengine.core.util.AdventureHelper;
-import net.momirealms.craftengine.core.util.Key;
-import net.momirealms.craftengine.core.util.UUIDUtils;
-import net.momirealms.craftengine.core.util.VersionHelper;
-import net.momirealms.sparrow.nbt.CompoundTag;
-import net.momirealms.sparrow.nbt.ListTag;
-import net.momirealms.sparrow.nbt.Tag;
+import net.momirealms.craftengine.core.item.ItemDataModifierFactory;
+import net.momirealms.craftengine.core.plugin.context.number.NumberProvider;
+import net.momirealms.craftengine.core.plugin.context.number.NumberProviders;
+import net.momirealms.craftengine.core.util.*;
+import org.jetbrains.annotations.Nullable;
 
-import java.nio.charset.StandardCharsets;
 import java.util.*;
 
-public class AttributeModifiersModifier<I> implements ItemDataModifier<I> {
+public class AttributeModifiersModifier<I> implements SimpleNetworkItemDataModifier<I> {
+    public static final Factory<?> FACTORY = new Factory<>();
     public static final Map<Key, Key> CONVERTOR = new HashMap<>();
 
     static {
@@ -91,100 +88,101 @@ public class AttributeModifiersModifier<I> implements ItemDataModifier<I> {
         return CONVERTOR.getOrDefault(attributeName, attributeName);
     }
 
-    private final List<AttributeModifier> modifiers;
+    private final List<PreModifier> modifiers;
 
-    public AttributeModifiersModifier(List<AttributeModifier> modifiers) {
+    public AttributeModifiersModifier(List<PreModifier> modifiers) {
         this.modifiers = modifiers;
     }
 
-    public List<AttributeModifier> modifiers() {
+    public List<PreModifier> modifiers() {
         return this.modifiers;
     }
 
     @Override
-    public String name() {
-        return "attribute-modifiers";
+    public Key type() {
+        return ItemDataModifiers.ATTRIBUTE_MODIFIERS;
     }
-
-    private static Object previous;
 
     @Override
     public Item<I> apply(Item<I> item, ItemBuildContext context) {
-        if (VersionHelper.isOrAbove1_21_5()) {
-            ListTag modifiers = new ListTag();
-            for (AttributeModifier modifier : this.modifiers) {
-                CompoundTag modifierTag = new CompoundTag();
-                modifierTag.putString("type", modifier.type());
-                modifierTag.putString("slot", modifier.slot().name().toLowerCase(Locale.ENGLISH));
-                modifierTag.putString("id", modifier.id().toString());
-                modifierTag.putDouble("amount", modifier.amount());
-                modifierTag.putString("operation", modifier.operation().id());
-                AttributeModifier.Display display = modifier.display();
-                if (VersionHelper.isOrAbove1_21_6() && display != null) {
-                    CompoundTag displayTag = new CompoundTag();
-                    AttributeModifier.Display.Type displayType = display.type();
-                    displayTag.putString("type", displayType.name().toLowerCase(Locale.ENGLISH));
-                    if (displayType == AttributeModifier.Display.Type.OVERRIDE) {
-                        displayTag.put("value", AdventureHelper.componentToTag(AdventureHelper.miniMessage().deserialize(display.value(), context.tagResolvers())));
-                    }
-                    modifierTag.put("display", displayTag);
-                }
-                modifiers.add(modifierTag);
-            }
-            item.setNBTComponent(ComponentKeys.ATTRIBUTE_MODIFIERS, modifiers);
-        } else if (VersionHelper.isOrAbove1_20_5()) {
-            CompoundTag compoundTag = (CompoundTag) Optional.ofNullable(item.getSparrowNBTComponent(ComponentKeys.ATTRIBUTE_MODIFIERS)).orElseGet(CompoundTag::new);
-            ListTag modifiers = new ListTag();
-            compoundTag.put("modifiers", modifiers);
-            for (AttributeModifier modifier : this.modifiers) {
-                CompoundTag modifierTag = new CompoundTag();
-                modifierTag.putString("type", modifier.type());
-                modifierTag.putString("slot", modifier.slot().name().toLowerCase(Locale.ENGLISH));
-                if (VersionHelper.isOrAbove1_21()) {
-                    modifierTag.putString("id", modifier.id().toString());
-                } else {
-                    modifierTag.putIntArray("uuid", UUIDUtils.uuidToIntArray(UUID.nameUUIDFromBytes(modifier.id().toString().getBytes(StandardCharsets.UTF_8))));
-                    modifierTag.putString("name", modifier.id().toString());
-                }
-                modifierTag.putDouble("amount", modifier.amount());
-                modifierTag.putString("operation", modifier.operation().id());
-                modifiers.add(modifierTag);
-            }
-            item.setNBTComponent(ComponentKeys.ATTRIBUTE_MODIFIERS, compoundTag);
-        } else {
-            ListTag listTag = new ListTag();
-            for (AttributeModifier modifier : this.modifiers) {
-                CompoundTag modifierTag = new CompoundTag();
-                modifierTag.putString("AttributeName", modifier.type());
-                modifierTag.putString("Name", modifier.id().toString());
-                modifierTag.putString("Slot", modifier.slot().name().toLowerCase(Locale.ENGLISH));
-                modifierTag.putInt("Operation", modifier.operation().ordinal());
-                modifierTag.putDouble("Amount", modifier.amount());
-                modifierTag.putIntArray("UUID", UUIDUtils.uuidToIntArray(UUID.nameUUIDFromBytes(modifier.id().toString().getBytes(StandardCharsets.UTF_8))));
-                listTag.add(modifierTag);
-            }
-            item.setTag(listTag, "AttributeModifiers");
-        }
-        return item;
+        return item.attributeModifiers(this.modifiers.stream().map(it -> it.toAttributeModifier(context)).toList());
     }
 
     @Override
-    public Item<I> prepareNetworkItem(Item<I> item, ItemBuildContext context, CompoundTag networkData) {
-        if (VersionHelper.isOrAbove1_20_5()) {
-            Tag previous = item.getSparrowNBTComponent(ComponentKeys.ATTRIBUTE_MODIFIERS);
-            if (previous != null) {
-                networkData.put(ComponentKeys.ATTRIBUTE_MODIFIERS.asString(), NetworkItemHandler.pack(NetworkItemHandler.Operation.ADD, previous));
-            } else {
-                networkData.put(ComponentKeys.ATTRIBUTE_MODIFIERS.asString(), NetworkItemHandler.pack(NetworkItemHandler.Operation.REMOVE));
-            }
-        } else {
-            Tag previous = item.getTag("AttributeModifiers");
-            if (previous != null) {
-                networkData.put("AttributeModifiers", NetworkItemHandler.pack(NetworkItemHandler.Operation.ADD, previous));
-            } else {
-                networkData.put("AttributeModifiers", NetworkItemHandler.pack(NetworkItemHandler.Operation.REMOVE));
+    public @Nullable Key componentType(Item<I> item, ItemBuildContext context) {
+        return ComponentKeys.ATTRIBUTE_MODIFIERS;
+    }
+
+    @Override
+    public @Nullable Object[] nbtPath(Item<I> item, ItemBuildContext context) {
+        return new Object[]{"AttributeModifiers"};
+    }
+
+    @Override
+    public String nbtPathString(Item<I> item, ItemBuildContext context) {
+        return "AttributeModifiers";
+    }
+
+    public record PreModifier(String type,
+                              AttributeModifier.Slot slot,
+                              Key id,
+                              NumberProvider amount,
+                              AttributeModifier.Operation operation,
+                              AttributeModifiersModifier.PreModifier.@Nullable PreDisplay display) {
+
+        public PreModifier(String type, AttributeModifier.Slot slot, Key id, NumberProvider amount, AttributeModifier.Operation operation, @Nullable PreDisplay display) {
+            this.amount = amount;
+            this.type = type;
+            this.slot = slot;
+            this.id = id;
+            this.operation = operation;
+            this.display = display;
+        }
+
+        public AttributeModifier toAttributeModifier(ItemBuildContext context) {
+            return new AttributeModifier(type, slot, id, amount.getDouble(context), operation, display == null ? null : display.toDisplay(context));
+        }
+
+        public record PreDisplay(AttributeModifier.Display.Type type, String value) {
+
+            public AttributeModifier.Display toDisplay(ItemBuildContext context) {
+                return new AttributeModifier.Display(type, AdventureHelper.miniMessage().deserialize(value, context.tagResolvers()));
             }
         }
-        return item;
+    }
+
+    public static class Factory<I> implements ItemDataModifierFactory<I> {
+
+        @Override
+        public ItemDataModifier<I> create(Object arg) {
+            MutableInt mutableInt = new MutableInt(0);
+            List<PreModifier> attributeModifiers = ResourceConfigUtils.parseConfigAsList(arg, (map) -> {
+                String type = ResourceConfigUtils.requireNonEmptyStringOrThrow(map.get("type"), "warning.config.item.data.attribute_modifiers.missing_type");
+                Key nativeType = AttributeModifiersModifier.getNativeAttributeName(Key.of(type));
+                AttributeModifier.Slot slot = AttributeModifier.Slot.valueOf(map.getOrDefault("slot", "any").toString().toUpperCase(Locale.ENGLISH));
+                Key id = Optional.ofNullable(map.get("id")).map(String::valueOf).map(Key::of).orElseGet(() -> {
+                    mutableInt.add(1);
+                    return Key.of("craftengine", "modifier_" + mutableInt.intValue());
+                });
+                NumberProvider amount = NumberProviders.fromObject(ResourceConfigUtils.requireNonNullOrThrow(map.get("amount"), "warning.config.item.data.attribute_modifiers.missing_amount"));
+                AttributeModifier.Operation operation = AttributeModifier.Operation.valueOf(
+                        ResourceConfigUtils.requireNonEmptyStringOrThrow(map.get("operation"), "warning.config.item.data.attribute_modifiers.missing_operation").toUpperCase(Locale.ENGLISH)
+                );
+                PreModifier.PreDisplay display = null;
+                if (VersionHelper.isOrAbove1_21_6() && map.containsKey("display")) {
+                    Map<String, Object> displayMap = MiscUtils.castToMap(map.get("display"), false);
+                    AttributeModifier.Display.Type displayType = AttributeModifier.Display.Type.valueOf(ResourceConfigUtils.requireNonEmptyStringOrThrow(displayMap.get("type"), "warning.config.item.data.attribute_modifiers.display.missing_type").toUpperCase(Locale.ENGLISH));
+                    if (displayType == AttributeModifier.Display.Type.OVERRIDE) {
+                        String miniMessageValue = ResourceConfigUtils.requireNonEmptyStringOrThrow(displayMap.get("value"), "warning.config.item.data.attribute_modifiers.display.missing_value");
+                        display = new PreModifier.PreDisplay(displayType, miniMessageValue);
+                    } else {
+                        display = new PreModifier.PreDisplay(displayType, null);
+                    }
+                }
+                return new PreModifier(nativeType.value(), slot, id,
+                        amount, operation, display);
+            });
+            return new AttributeModifiersModifier<>(attributeModifiers);
+        }
     }
 }

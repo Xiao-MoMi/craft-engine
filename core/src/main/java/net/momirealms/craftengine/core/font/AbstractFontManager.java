@@ -368,7 +368,13 @@ public abstract class AbstractFontManager implements FontManager {
             if (keywords.isEmpty()) {
                 throw new LocalizedResourceConfigException("warning.config.emoji.missing_keywords", path, id);
             }
-            String content = section.getOrDefault("content", "<arg:emoji>").toString();
+            Object rawContent = section.getOrDefault("content", "<white><arg:emoji></white>");
+            String content;
+            if (rawContent instanceof List<?> list) {
+                content = list.stream().map(Object::toString).collect(Collectors.joining());
+            } else {
+                content = rawContent.toString();
+            }
             String image = null;
             if (section.containsKey("image")) {
                 String rawImage = section.get("image").toString();

@@ -98,7 +98,7 @@ public final class BlockStateGenerator {
             if (vec3 == null) return List.of();
 
             Object tool = FastNMS.INSTANCE.method$LootParams$Builder$getOptionalParameter(builder, MLootContextParams.TOOL);
-            Item<ItemStack> item = BukkitItemManager.instance().wrap(tool == null || FastNMS.INSTANCE.method$ItemStack$isEmpty(tool) ? null : FastNMS.INSTANCE.method$CraftItemStack$asCraftMirror(tool));
+            Item<ItemStack> item = BukkitItemManager.instance().wrap(tool == null ? null : FastNMS.INSTANCE.method$CraftItemStack$asCraftMirror(tool));
             Object optionalPlayer = FastNMS.INSTANCE.method$LootParams$Builder$getOptionalParameter(builder, MLootContextParams.THIS_ENTITY);
             if (!CoreReflections.clazz$Player.isInstance(optionalPlayer)) {
                 optionalPlayer = null;
@@ -107,7 +107,7 @@ public final class BlockStateGenerator {
             // do not drop if it's not the correct tool
             BlockSettings settings = state.settings();
             if (optionalPlayer != null && settings.requireCorrectTool()) {
-                if (item == null) return List.of();
+                if (item.isEmpty()) return List.of();
                 if (!settings.isCorrectTool(item.id()) &&
                         (!settings.respectToolComponent() || !FastNMS.INSTANCE.method$ItemStack$isCorrectToolForDrops(tool, state.customBlockState().handle()))) {
                     return List.of();

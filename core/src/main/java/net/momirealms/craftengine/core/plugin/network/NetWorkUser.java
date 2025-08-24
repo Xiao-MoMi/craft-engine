@@ -27,6 +27,8 @@ public interface NetWorkUser {
 
     void sendPacket(Object packet, boolean immediately);
 
+    void sendPacket(Object packet, boolean immediately, Runnable sendListener);
+
     void sendCustomPayload(Key channel, byte[] data);
 
     void kick(Component message);

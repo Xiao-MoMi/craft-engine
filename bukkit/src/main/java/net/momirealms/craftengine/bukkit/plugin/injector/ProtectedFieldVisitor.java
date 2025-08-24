@@ -15,7 +15,7 @@ import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.NetworkRefl
 
 import java.lang.reflect.Modifier;
 
-public class ProtectedFieldVisitor {
+public final class ProtectedFieldVisitor {
     private static FieldAccessor internalFieldAccessor;
 
     public static void init() throws ReflectiveOperationException {
