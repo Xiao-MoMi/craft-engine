@@ -29,8 +29,11 @@ public class PlayerParameterProvider implements ChainParameterProvider<Player> {
         CONTEXT_FUNCTIONS.put(DirectContextParameters.NAME, Player::name);
         CONTEXT_FUNCTIONS.put(DirectContextParameters.UUID, Player::uuid);
         CONTEXT_FUNCTIONS.put(DirectContextParameters.WORLD, Entity::world);
-        CONTEXT_FUNCTIONS.put(DirectContextParameters.IS_FLYING, Player::isFlying);
         CONTEXT_FUNCTIONS.put(DirectContextParameters.IS_SNEAKING, Player::isSneaking);
+        CONTEXT_FUNCTIONS.put(DirectContextParameters.IS_SWIMMING, Player::isSwimming);
+        CONTEXT_FUNCTIONS.put(DirectContextParameters.IS_CLIMBING, Player::isClimbing);
+        CONTEXT_FUNCTIONS.put(DirectContextParameters.IS_GLIDING, Player::isGliding);
+        CONTEXT_FUNCTIONS.put(DirectContextParameters.IS_FLYING, Player::isFlying);
         CONTEXT_FUNCTIONS.put(DirectContextParameters.GAMEMODE, Player::gameMode);
         CONTEXT_FUNCTIONS.put(DirectContextParameters.MAIN_HAND_ITEM, p -> p.getItemInHand(InteractionHand.MAIN_HAND));
         CONTEXT_FUNCTIONS.put(DirectContextParameters.OFF_HAND_ITEM, p -> p.getItemInHand(InteractionHand.OFF_HAND));

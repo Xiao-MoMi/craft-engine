@@ -10,7 +10,7 @@ import org.bukkit.Location;
 import org.bukkit.inventory.ItemStack;
 
 @SuppressWarnings("DuplicatedCode")
-public class AdventureModeUtils {
+public final class AdventureModeUtils {
 
     private AdventureModeUtils() {}
 

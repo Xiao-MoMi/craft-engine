@@ -1,12 +1,15 @@
 package net.momirealms.craftengine.bukkit.plugin.command.feature;
 
 import net.momirealms.craftengine.bukkit.plugin.command.BukkitCommandFeature;
-import net.momirealms.craftengine.bukkit.plugin.network.BukkitNetworkManager;
+import net.momirealms.craftengine.bukkit.util.BlockStateUtils;
 import net.momirealms.craftengine.core.plugin.CraftEngine;
 import net.momirealms.craftengine.core.plugin.command.CraftEngineCommandManager;
+import org.bukkit.Location;
+import org.bukkit.block.data.BlockData;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 import org.incendo.cloud.Command;
+import org.incendo.cloud.parser.standard.IntegerParser;
 
 public class TestCommand extends BukkitCommandFeature<CommandSender> {
 
@@ -17,10 +20,22 @@ public class TestCommand extends BukkitCommandFeature<CommandSender> {
     @Override
     public Command.Builder<? extends CommandSender> assembleCommand(org.incendo.cloud.CommandManager<CommandSender> manager, Command.Builder<CommandSender> builder) {
         return builder
+                .required("start", IntegerParser.integerParser(0))
                 .senderType(Player.class)
                 .handler(context -> {
-                    Player player = context.sender();
-                    player.sendMessage("客户端模组状态: " + BukkitNetworkManager.instance().getUser(player).clientModEnabled());
+                    Player sender = context.sender();
+                    int start = context.get("start");
+                    int x = sender.getChunk().getX() * 16;
+                    int z = sender.getChunk().getZ() * 16;
+                    int y = (sender.getLocation().getBlockY() / 16) * 16;
+                    for (int a = 0; a < 16; a++) {
+                        for (int b = 0; b < 16; b++) {
+                            for (int c = 0; c < 16; c++) {
+                                BlockData blockData = BlockStateUtils.fromBlockData(BlockStateUtils.idToBlockState(start + a + b * 16 + c * 256));
+                                sender.getWorld().setBlockData(new Location(sender.getWorld(), x + a, y + b, z + c), blockData);
+                            }
+                        }
+                    }
                 });
     }
 

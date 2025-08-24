@@ -364,6 +364,77 @@ items#misc:
               pebble=3:
                 appearance: 'three'
                 id: 4
+  default:chessboard_block:
+    material: nether_brick
+    custom-model-data: 3006
+    data:
+      item-name: <!i><i18n:item.chessboard_block>
+    model:
+      type: minecraft:model
+      path: minecraft:item/custom/chessboard_block
+      generation:
+        parent: minecraft:block/custom/chessboard_block
+    behavior:
+      type: block_item
+      block:
+        loot:
+          template: default:loot_table/self
+        settings:
+          hardness: 1.4
+          resistance: 1.4
+          is-suffocating: true
+          is-redstone-conductor: true
+          push-reaction: PUSH_ONLY
+          instrument: BASEDRUM
+          map-color: 36
+          sounds:
+            break: minecraft:block.stone.break
+            fall: minecraft:block.stone.fall
+            hit: minecraft:block.stone.hit
+            place: minecraft:block.stone.place
+            step: minecraft:block.stone.step
+        states:
+          properties:
+            facing:
+              type: 4-direction
+              default: north
+          appearances:
+            east:
+              state: note_block:18
+              model:
+                path: minecraft:block/custom/chessboard_block
+                y: 270
+                generation:
+                  parent: minecraft:block/template_glazed_terracotta
+                  textures:
+                    pattern: minecraft:block/custom/chessboard_block
+            north:
+              state: note_block:19
+              model:
+                path: minecraft:block/custom/chessboard_block
+                y: 180
+            south:
+              state: note_block:20
+              model:
+                path: minecraft:block/custom/chessboard_block
+            west:
+              state: note_block:21
+              model:
+                path: minecraft:block/custom/chessboard_block
+                y: 90
+          variants:
+            facing=east:
+              appearance: east
+              id: 18
+            facing=north:
+              appearance: north
+              id: 19
+            facing=south:
+              appearance: south
+              id: 20
+            facing=west:
+              appearance: west
+              id: 21
 recipes#misc:
   default:chinese_lantern:
     type: shaped
@@ -436,3 +507,14 @@ recipes#misc:
     result:
       id: minecraft:cobblestone
       count: 1
+  default:chessboard_block:
+    type: shaped
+    pattern:
+      - AB
+      - BA
+    ingredients:
+      A: minecraft:white_terracotta
+      B: minecraft:black_terracotta
+    result:
+      id: default:chessboard_block
+      count: 4

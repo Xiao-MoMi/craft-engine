@@ -4,7 +4,7 @@ import net.momirealms.craftengine.bukkit.nms.FastNMS;
 import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.MRegistries;
 import net.momirealms.craftengine.core.util.Key;
 
-public class FeatureUtils {
+public final class FeatureUtils {
 
     private FeatureUtils() {}
 

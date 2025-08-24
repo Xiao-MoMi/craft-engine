@@ -1,6 +1,7 @@
 package net.momirealms.craftengine.bukkit.item.listener;
 
 import net.kyori.adventure.text.Component;
+import net.momirealms.craftengine.bukkit.api.BukkitAdaptors;
 import net.momirealms.craftengine.bukkit.api.CraftEngineBlocks;
 import net.momirealms.craftengine.bukkit.item.BukkitItemManager;
 import net.momirealms.craftengine.bukkit.nms.FastNMS;
@@ -49,7 +50,7 @@ public class DebugStickListener implements Listener {
         Material material = itemInHand.getType();
         if (material != Material.DEBUG_STICK) return;
         Player bukkitPlayer = event.getPlayer();
-        BukkitServerPlayer player = this.plugin.adapt(bukkitPlayer);
+        BukkitServerPlayer player = BukkitAdaptors.adapt(bukkitPlayer);
         if (!(player.canInstabuild() && player.hasPermission("minecraft.debugstick")) && !player.hasPermission("minecraft.debugstick.always")) {
             return;
         }

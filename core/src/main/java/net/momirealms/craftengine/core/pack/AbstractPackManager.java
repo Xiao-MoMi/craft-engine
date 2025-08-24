@@ -125,6 +125,7 @@ public abstract class AbstractPackManager implements PackManager {
 
         loadInternalList("textures", "", VANILLA_TEXTURES::add);
         VANILLA_MODELS.add(Key.of("minecraft", "builtin/entity"));
+        VANILLA_MODELS.add(Key.of("minecraft", "item/player_head"));
         for (int i = 0; i < 256; i++) {
             VANILLA_TEXTURES.add(Key.of("minecraft", "font/unicode_page_" + String.format("%02x", i)));
         }
@@ -321,11 +322,15 @@ public abstract class AbstractPackManager implements PackManager {
                         Yaml yaml = new Yaml(new StringKeyConstructor(path, new LoaderOptions()));
                         try (InputStream is = Files.newInputStream(metaFile)) {
                             Map<String, Object> data = yaml.load(is);
-                            enable = ResourceConfigUtils.getAsBoolean(data.getOrDefault("enable", true), "enable");
-                            namespace = data.getOrDefault("namespace", namespace).toString();
-                            description = Optional.ofNullable(data.get("description")).map(String::valueOf).orElse(null);
-                            version = Optional.ofNullable(data.get("version")).map(String::valueOf).orElse(null);
-                            author = Optional.ofNullable(data.get("author")).map(String::valueOf).orElse(null);
+                            if (data != null) {
+                                enable = ResourceConfigUtils.getAsBoolean(data.getOrDefault("enable", true), "enable");
+                                namespace = data.getOrDefault("namespace", namespace).toString();
+                                description = Optional.ofNullable(data.get("description")).map(String::valueOf).orElse(null);
+                                version = Optional.ofNullable(data.get("version")).map(String::valueOf).orElse(null);
+                                author = Optional.ofNullable(data.get("author")).map(String::valueOf).orElse(null);
+                            } else {
+                                this.plugin.logger().warn("Failed to load resource meta file: " + metaFile);
+                            }
                         } catch (IOException e) {
                             this.plugin.logger().warn("Failed to load " + metaFile, e);
                         }
@@ -415,6 +420,7 @@ public abstract class AbstractPackManager implements PackManager {
         plugin.saveResource("resources/default/resourcepack/assets/minecraft/textures/block/custom/copper_coil_side.png");
         plugin.saveResource("resources/default/resourcepack/assets/minecraft/textures/block/custom/copper_coil_on.png");
         plugin.saveResource("resources/default/resourcepack/assets/minecraft/textures/block/custom/copper_coil_on_side.png");
+        plugin.saveResource("resources/default/resourcepack/assets/minecraft/textures/block/custom/chessboard_block.png");
         // items
         plugin.saveResource("resources/default/configuration/items.yml");
         plugin.saveResource("resources/default/resourcepack/assets/minecraft/textures/item/custom/topaz_rod.png");

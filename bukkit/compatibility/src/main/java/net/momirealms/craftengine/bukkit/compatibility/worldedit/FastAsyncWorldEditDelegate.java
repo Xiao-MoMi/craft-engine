@@ -26,10 +26,11 @@ import net.momirealms.craftengine.bukkit.block.BukkitBlockManager;
 import net.momirealms.craftengine.bukkit.nms.FastNMS;
 import net.momirealms.craftengine.bukkit.plugin.injector.WorldStorageInjector;
 import net.momirealms.craftengine.bukkit.util.BlockStateUtils;
+import net.momirealms.craftengine.bukkit.world.BukkitWorldManager;
 import net.momirealms.craftengine.core.block.EmptyBlock;
 import net.momirealms.craftengine.core.block.ImmutableBlockState;
 import net.momirealms.craftengine.core.plugin.CraftEngine;
-import net.momirealms.craftengine.core.util.ReflectionUtils;
+import net.momirealms.craftengine.core.util.LazyReference;
 import net.momirealms.craftengine.core.world.CEWorld;
 import net.momirealms.craftengine.core.world.ChunkPos;
 import net.momirealms.craftengine.core.world.SectionPos;
@@ -47,38 +48,45 @@ import static java.util.Objects.requireNonNull;
 public class FastAsyncWorldEditDelegate extends AbstractDelegateExtent {
     private static int[] ordinalToIbdID;
     private final Set<CEChunk> chunksToSave;
-    private final CEWorld ceWorld;
+    private final LazyReference<CEWorld> ceWorld;
     private final Set<ChunkPos> brokenChunks = Collections.synchronizedSet(new HashSet<>());
 
     protected FastAsyncWorldEditDelegate(EditSessionEvent event, Extent extent) {
         super(extent);
         this.chunksToSave = new HashSet<>();
-        World weWorld = event.getWorld();
-        org.bukkit.World world = Bukkit.getWorld(requireNonNull(weWorld).getName());
-        CEWorld ceWorld = CraftEngine.instance().worldManager().getWorld(requireNonNull(world).getUID());
-        this.ceWorld = requireNonNull(ceWorld);
+        this.ceWorld = LazyReference.lazyReference(() -> {
+            World weWorld = event.getWorld();
+            requireNonNull(weWorld, "WorldEdit world is null");
+            org.bukkit.World world = Bukkit.getWorld(weWorld.getName());
+            requireNonNull(world, () -> "WorldEdit world " + weWorld.getName() + " is not a Bukkit world");
+            CEWorld ceWorld = BukkitWorldManager.instance().getWorld(world);
+            requireNonNull(ceWorld, () -> "WorldEdit world " + world.getName() + " is not a CraftEngine world");
+            return ceWorld;
+        });
     }
 
     public static void init() {
         Settings.settings().EXTENT.ALLOWED_PLUGINS.add(FastAsyncWorldEditDelegate.class.getCanonicalName());
-        FaweAdapter<?, ?> adapter = (FaweAdapter<?, ?>) WorldEditPlugin.getInstance().getBukkitImplAdapter();
-        Method ordinalToIbdIDMethod = ReflectionUtils.getDeclaredMethod(CachedBukkitAdapter.class, int.class.arrayType(), new String[]{"getOrdinalToIbdID"});
         try {
-            assert ordinalToIbdIDMethod != null;
-            ordinalToIbdID = (int[]) ordinalToIbdIDMethod.invoke(adapter);
+            Method ordinalToIbdIDMethod = CachedBukkitAdapter.class.getDeclaredMethod("getOrdinalToIbdID"); // 这样获取有代码提示
+            ordinalToIbdIDMethod.setAccessible(true);
+            if (WorldEditPlugin.getInstance().getBukkitImplAdapter() instanceof FaweAdapter<?, ?> faweAdapter) { // 确保是 paper 服务器的才调用这个
+                ordinalToIbdID = (int[]) ordinalToIbdIDMethod.invoke(faweAdapter);
+            } else { // 应该在 spigot 的服务器上用不了这个
+                CraftEngine.instance().logger().warn("Failed to init FastAsyncWorldEdit compatibility, Please use the server of paper or its fork.");
+                return;
+            }
         } catch (ReflectiveOperationException e) {
-            throw new RuntimeException("Failed to init FastAsyncWorldEdit compatibility", e);
+            CraftEngine.instance().logger().warn("Failed to init FastAsyncWorldEdit compatibility", e);
+            return;
         }
         WorldEdit.getInstance().getEventBus().register(new Object() {
             @Subscribe
             @SuppressWarnings("unused")
             public void onEditSessionEvent(EditSessionEvent event) {
-                World weWorld = event.getWorld();
-                if (weWorld == null) return;
-                Extent currentExtent = event.getExtent();
-                if (event.getStage() == EditSession.Stage.BEFORE_CHANGE) {
-                    event.setExtent(new FastAsyncWorldEditDelegate(event, currentExtent));
-                }
+                if (event.getWorld() == null || event.getStage() != EditSession.Stage.BEFORE_CHANGE) return;
+                if (!BukkitWorldManager.instance().initialized()) return;
+                event.setExtent(new FastAsyncWorldEditDelegate(event, event.getExtent()));
             }
         });
     }
@@ -99,6 +107,10 @@ public class FastAsyncWorldEditDelegate extends AbstractDelegateExtent {
                 }
             }
         }
+    }
+
+    private CEWorld ceWorld() {
+        return this.ceWorld.get();
     }
 
     @Override
@@ -180,10 +192,10 @@ public class FastAsyncWorldEditDelegate extends AbstractDelegateExtent {
         Operation operation = super.commit();
         List<ChunkPos> chunks = new ArrayList<>(this.brokenChunks);
         this.brokenChunks.clear();
-            Object worldServer = this.ceWorld.world().serverWorld();
+            Object worldServer = this.ceWorld().world().serverWorld();
             Object chunkSource = FastNMS.INSTANCE.method$ServerLevel$getChunkSource(worldServer);
             for (ChunkPos chunk : chunks) {
-                CEChunk loaded = this.ceWorld.getChunkAtIfLoaded(chunk.longKey());
+                CEChunk loaded = this.ceWorld().getChunkAtIfLoaded(chunk.longKey());
                 // only inject loaded chunks
                 if (loaded == null) continue;
                 injectLevelChunk(chunkSource, loaded);
@@ -214,8 +226,8 @@ public class FastAsyncWorldEditDelegate extends AbstractDelegateExtent {
         this.brokenChunks.add(ChunkPos.of(chunkX, chunkZ));
         if (BlockStateUtils.isVanillaBlock(newStateId) && BlockStateUtils.isVanillaBlock(oldStateId)) return;
         try {
-            CEChunk ceChunk = Optional.ofNullable(this.ceWorld.getChunkAtIfLoaded(chunkX, chunkZ))
-                    .orElse(this.ceWorld.worldDataStorage().readChunkAt(this.ceWorld, new ChunkPos(chunkX, chunkZ)));
+            CEChunk ceChunk = Optional.ofNullable(this.ceWorld().getChunkAtIfLoaded(chunkX, chunkZ))
+                    .orElse(this.ceWorld().worldDataStorage().readChunkAt(this.ceWorld(), new ChunkPos(chunkX, chunkZ)));
             CESection ceSection = ceChunk.sectionById(SectionPos.blockToSectionCoord(blockY));
             ImmutableBlockState immutableBlockState = BukkitBlockManager.instance().getImmutableBlockState(newStateId);
             if (immutableBlockState == null) {
@@ -232,7 +244,7 @@ public class FastAsyncWorldEditDelegate extends AbstractDelegateExtent {
     private void saveAllChunks() {
         try {
             for (CEChunk ceChunk : this.chunksToSave) {
-                this.ceWorld.worldDataStorage().writeChunkAt(ceChunk.chunkPos(), ceChunk);
+                this.ceWorld().worldDataStorage().writeChunkAt(ceChunk.chunkPos(), ceChunk);
             }
             this.chunksToSave.clear();
         } catch (IOException e) {

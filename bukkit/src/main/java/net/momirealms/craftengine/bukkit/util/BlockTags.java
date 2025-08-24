@@ -7,7 +7,7 @@ import net.momirealms.craftengine.core.util.Key;
 import java.util.HashMap;
 import java.util.Map;
 
-public class BlockTags {
+public final class BlockTags {
     private static final Map<Key, Object> CACHE = new HashMap<>();
 
     private BlockTags() {}

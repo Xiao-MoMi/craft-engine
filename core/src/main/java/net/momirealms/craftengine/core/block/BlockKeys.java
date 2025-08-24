@@ -8,6 +8,7 @@ public final class BlockKeys {
     public static final Key NOTE_BLOCK = Key.of("minecraft:note_block");
     public static final Key TRIPWIRE = Key.of("minecraft:tripwire");
     public static final Key CRAFTING_TABLE = Key.of("minecraft:crafting_table");
+    public static final Key CARTOGRAPHY_TABLE = Key.of("minecraft:cartography_table");
     public static final Key STONECUTTER = Key.of("minecraft:stonecutter");
     public static final Key BELL = Key.of("minecraft:bell");
     public static final Key SMITHING_TABLE = Key.of("minecraft:smithing_table");
@@ -175,8 +176,6 @@ public final class BlockKeys {
     public static final Key WAXED_EXPOSED_COPPER_TRAPDOOR = Key.of("minecraft:waxed_exposed_copper_trapdoor");
     public static final Key WAXED_OXIDIZED_COPPER_TRAPDOOR = Key.of("minecraft:waxed_oxidized_copper_trapdoor");
     public static final Key WAXED_WEATHERED_COPPER_TRAPDOOR = Key.of("minecraft:waxed_weathered_copper_trapdoor");
-
-
 
     public static final Key OAK_FENCE_GATE = Key.of("minecraft:oak_fence_gate");
     public static final Key SPRUCE_FENCE_GATE = Key.of("minecraft:spruce_fence_gate");

@@ -56,7 +56,7 @@ The code you contribute will be open-sourced under the GPLv3 license. If you pre
 ## Differences Between Versions
 | Version           | Official Support | Max Players | Dev Builds |
 |-------------------|------------------|-------------|------------|
-| Community Edition | ❌ No             | 20          | ❌ No       |
+| Community Edition | ❌ No             | 30          | ❌ No       |
 | Premium Edition   | ✔️ Yes           | Unlimited   | ✔️ Yes     |
 
 ### 💖 Support the Developer

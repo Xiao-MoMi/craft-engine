@@ -212,4 +212,15 @@ public final class ResourceConfigUtils {
         }
         throw new LocalizedResourceConfigException("warning.config.type.map", String.valueOf(obj), option);
     }
+
+    @SuppressWarnings("unchecked")
+    public static Map<String, Object> getAsMapOrNull(Object obj, String option) {
+        if (obj == null) {
+            return null;
+        }
+        if (obj instanceof Map<?, ?> map) {
+            return (Map<String, Object>) map;
+        }
+        throw new LocalizedResourceConfigException("warning.config.type.map", String.valueOf(obj), option);
+    }
 }

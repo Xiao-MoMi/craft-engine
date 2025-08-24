@@ -6,7 +6,7 @@ import org.bukkit.event.inventory.InventoryEvent;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.PlayerInventory;
 
-public class InventoryUtils {
+public final class InventoryUtils {
 
     private InventoryUtils() {}
 

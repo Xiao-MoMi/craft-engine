@@ -27,4 +27,9 @@ public class CloneableConstantItem<I> implements BuildableItem<I> {
     public I buildItemStack(ItemBuildContext context, int count) {
         return this.item.copyWithCount(count).getItem();
     }
+
+    @Override
+    public boolean isEmpty() {
+        return this.item.isEmpty();
+    }
 }

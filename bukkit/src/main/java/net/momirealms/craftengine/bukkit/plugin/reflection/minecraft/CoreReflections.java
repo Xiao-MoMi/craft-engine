@@ -14,6 +14,7 @@ import net.momirealms.craftengine.core.util.ReflectionUtils;
 import net.momirealms.craftengine.core.util.VersionHelper;
 
 import java.io.BufferedReader;
+import java.io.Reader;
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodType;
 import java.lang.invoke.VarHandle;
@@ -97,6 +98,17 @@ public final class CoreReflections {
     public static final Method method$FileToIdConverter$json = requireNonNull(
             ReflectionUtils.getStaticMethod(clazz$FileToIdConverter, clazz$FileToIdConverter, String.class)
     );
+
+    public static final MethodHandle methodHandle$FileToIdConverter$json;
+
+    static {
+        try {
+            methodHandle$FileToIdConverter$json = ReflectionUtils.unreflectMethod(method$FileToIdConverter$json)
+                    .asType(MethodType.methodType(Object.class, String.class));
+        } catch (Throwable t) {
+            throw new ReflectionInitException("Failed to initialize methodHandle$FileToIdConverter$json", t);
+        }
+    }
     
     public static final Class<?> clazz$RegistryOps = requireNonNull(
             BukkitReflectionUtils.findReobfOrMojmapClass(
@@ -1169,6 +1181,17 @@ public final class CoreReflections {
             )
     );
 
+    public static final Class<?> clazz$ServerLevel = requireNonNull(
+            BukkitReflectionUtils.findReobfOrMojmapClass(
+                    "server.level.WorldServer",
+                    "server.level.ServerLevel"
+            )
+    );
+
+    public static final Class<?> clazz$Explosion = requireNonNull(
+            ReflectionUtils.getClazz(BukkitReflectionUtils.assembleMCClass("world.level.Explosion"))
+    );
+
     public static final Constructor<?> constructor$StateDefinition$Builder = requireNonNull(
             ReflectionUtils.getTheOnlyConstructor(clazz$StateDefinition$Builder)
     );
@@ -1439,6 +1462,18 @@ public final class CoreReflections {
             ReflectionUtils.getInstanceDeclaredField(clazz$BlockBehaviour, float.class, 0)
     );
 
+    public static final Field field$BlockBehaviour$friction = requireNonNull(
+            ReflectionUtils.getInstanceDeclaredField(clazz$BlockBehaviour, float.class, 1)
+    );
+
+    public static final Field field$BlockBehaviour$speedFactor = requireNonNull(
+            ReflectionUtils.getInstanceDeclaredField(clazz$BlockBehaviour, float.class, 2)
+    );
+
+    public static final Field field$BlockBehaviour$jumpFactor = requireNonNull(
+            ReflectionUtils.getInstanceDeclaredField(clazz$BlockBehaviour, float.class, 3)
+    );
+
     public static final Field field$BlockBehaviour$soundType = requireNonNull(
             ReflectionUtils.getInstanceDeclaredField(clazz$BlockBehaviour, clazz$SoundType, 0)
     );
@@ -1639,6 +1674,15 @@ public final class CoreReflections {
                     ReflectionUtils.getDeclaredMethod(clazz$BlockBehaviour, clazz$BlockState, clazz$BlockState, clazz$Direction, clazz$BlockState, clazz$LevelAccessor, clazz$BlockPos, clazz$BlockPos)
     );
 
+    public static final Method method$BlockBehaviour$canSurvive = requireNonNull(
+            ReflectionUtils.getDeclaredMethod(clazz$BlockBehaviour, boolean.class, clazz$BlockState, clazz$LevelReader, clazz$BlockPos)
+    );
+
+    public static final Method method$BlockBehaviour$onExplosionHit = MiscUtils.requireNonNullIf(
+            ReflectionUtils.getDeclaredMethod(clazz$BlockBehaviour, void.class, clazz$BlockState, VersionHelper.isOrAbove1_21_2() ? clazz$ServerLevel : clazz$Level, clazz$BlockPos, clazz$Explosion, BiConsumer.class),
+            VersionHelper.isOrAbove1_21()
+    );
+
     public static final Class<?> clazz$Fallable = requireNonNull(
             ReflectionUtils.getClazz(BukkitReflectionUtils.assembleMCClass("world.level.block.Fallable"))
     );
@@ -1659,6 +1703,14 @@ public final class CoreReflections {
                     "world.entity.item.EntityFallingBlock",
                     "world.entity.item.FallingBlockEntity"
             )
+    );
+
+    public static final Method method$Fallable$onLand = requireNonNull(
+            ReflectionUtils.getMethod(clazz$Fallable, void.class, clazz$Level, clazz$BlockPos, clazz$BlockState, clazz$BlockState, clazz$FallingBlockEntity)
+    );
+
+    public static final Method method$Fallable$onBrokenAfterFall = requireNonNull(
+            ReflectionUtils.getMethod(clazz$Fallable, void.class, clazz$Level, clazz$BlockPos, clazz$FallingBlockEntity)
     );
 
     public static final Method method$FallingBlockEntity$fall = requireNonNull(
@@ -1900,17 +1952,42 @@ public final class CoreReflections {
             )
     );
 
-    // 1.20.1-1.21.1
-    public static final Field field$Ingredient$itemStacks1_20_1 =
-            ReflectionUtils.getDeclaredField(clazz$Ingredient, clazz$ItemStack.arrayType(), 0);
+    public static final Field field$Ingredient$itemStacks = requireNonNull(
+            ReflectionUtils.getDeclaredField(
+                    clazz$Ingredient,
+                    VersionHelper.isOrAbove1_21_4() ? Set.class : VersionHelper.isOrAbove1_21_2() ? List.class : clazz$ItemStack.arrayType(),
+                    VersionHelper.isOrAbove1_21_4() ? 0 : VersionHelper.isOrAbove1_21_2() ? 1 : 0
+            )
+    );
 
-    // 1.21.2-1.21.3
-    public static final Field field$Ingredient$itemStacks1_21_2 =
-            ReflectionUtils.getDeclaredField(clazz$Ingredient, List.class, 1);
+    public static final MethodHandle methodHandle$RecipeManager$finalizeRecipeLoading;
+    public static final MethodHandle methodHandle$RecipeManager$featureflagsetGetter;
+    public static final MethodHandle methodHandle$RecipeManager$featureflagsetSetter;
+    public static final MethodHandle methodHandle$Ingredient$itemStacksSetter;
 
-    // 1.21.4 paper
-    public static final Field field$Ingredient$itemStacks1_21_4 =
-            ReflectionUtils.getDeclaredField(clazz$Ingredient, Set.class, 0);
+    static {
+        try {
+            if (method$RecipeManager$finalizeRecipeLoading != null) {
+                methodHandle$RecipeManager$finalizeRecipeLoading = ReflectionUtils.unreflectMethod(method$RecipeManager$finalizeRecipeLoading)
+                        .asType(MethodType.methodType(void.class, Object.class));
+            } else {
+                methodHandle$RecipeManager$finalizeRecipeLoading = null;
+            }
+            if (field$RecipeManager$featureflagset != null) {
+                methodHandle$RecipeManager$featureflagsetGetter = ReflectionUtils.unreflectGetter(field$RecipeManager$featureflagset)
+                        .asType(MethodType.methodType(Object.class, Object.class));
+                methodHandle$RecipeManager$featureflagsetSetter = ReflectionUtils.unreflectSetter(field$RecipeManager$featureflagset)
+                        .asType(MethodType.methodType(void.class, Object.class, Object.class));
+            } else {
+                methodHandle$RecipeManager$featureflagsetGetter = null;
+                methodHandle$RecipeManager$featureflagsetSetter = null;
+            }
+            methodHandle$Ingredient$itemStacksSetter = ReflectionUtils.unreflectSetter(field$Ingredient$itemStacks)
+                    .asType(MethodType.methodType(void.class, Object.class, VersionHelper.isOrAbove1_21_4() ? Set.class : VersionHelper.isOrAbove1_21_2() ? List.class : Object.class));
+        } catch (Exception e) {
+            throw new ReflectionInitException("Failed to initialize CoreReflections", e);
+        }
+    }
 
     // Since 1.21.2, exact has been removed
     public static final Field field$Ingredient$exact =
@@ -1928,7 +2005,7 @@ public final class CoreReflections {
             ReflectionUtils.getClazz(BukkitReflectionUtils.assembleMCClass("world.item.crafting.ShapedRecipePattern"));
 
     // 1.20.1-1.20.2
-    public static final Field field$1_20_1$ShapedRecipe$recipeItems=
+    public static final Field field$1_20_1$ShapedRecipe$recipeItems =
             ReflectionUtils.getDeclaredField(clazz$ShapedRecipe, clazz$NonNullList, 0);
 
     // 1.20.3+
@@ -1991,6 +2068,70 @@ public final class CoreReflections {
     public static final Field field$ShapelessRecipe$ingredients =
             Optional.ofNullable(ReflectionUtils.getDeclaredField(clazz$ShapelessRecipe, List.class, 0))
                     .orElse(ReflectionUtils.getDeclaredField(clazz$ShapelessRecipe, clazz$NonNullList, 0));
+
+    public static final MethodHandle methodHandle$1_20_1$ShapedRecipe$recipeItemsGetter;
+    public static final MethodHandle methodHandle$1_20_3$ShapedRecipe$patternGetter;
+    public static final MethodHandle methodHandle$ShapedRecipePattern$ingredients1_20_3Getter;
+    public static final MethodHandle methodHandle$ShapedRecipePattern$ingredients1_21_2Getter;
+    public static final MethodHandle methodHandle$Ingredient$valuesGetter;
+    public static final MethodHandle methodHandle$ShapelessRecipe$placementInfoSetter;
+    public static final MethodHandle methodHandle$ShapedRecipe$placementInfoSetter;
+    public static final MethodHandle methodHandle$ShapelessRecipe$ingredientsGetter;
+
+    static {
+        try {
+            if (field$1_20_1$ShapedRecipe$recipeItems != null) {
+                methodHandle$1_20_1$ShapedRecipe$recipeItemsGetter = ReflectionUtils.unreflectGetter(field$1_20_1$ShapedRecipe$recipeItems)
+                        .asType(MethodType.methodType(List.class, Object.class));
+            } else {
+                methodHandle$1_20_1$ShapedRecipe$recipeItemsGetter = null;
+            }
+            if (field$1_20_3$ShapedRecipe$pattern != null) {
+                methodHandle$1_20_3$ShapedRecipe$patternGetter = ReflectionUtils.unreflectGetter(field$1_20_3$ShapedRecipe$pattern)
+                        .asType(MethodType.methodType(Object.class, Object.class));
+            } else {
+                methodHandle$1_20_3$ShapedRecipe$patternGetter = null;
+            }
+            if (field$ShapedRecipePattern$ingredients1_20_3 != null) {
+                methodHandle$ShapedRecipePattern$ingredients1_20_3Getter = ReflectionUtils.unreflectGetter(field$ShapedRecipePattern$ingredients1_20_3)
+                        .asType(MethodType.methodType(List.class, Object.class));
+            } else {
+                methodHandle$ShapedRecipePattern$ingredients1_20_3Getter = null;
+            }
+            if (field$ShapedRecipePattern$ingredients1_21_2 != null) {
+                methodHandle$ShapedRecipePattern$ingredients1_21_2Getter = ReflectionUtils.unreflectGetter(field$ShapedRecipePattern$ingredients1_21_2)
+                        .asType(MethodType.methodType(List.class, Object.class));
+            } else {
+                methodHandle$ShapedRecipePattern$ingredients1_21_2Getter = null;
+            }
+            if (field$Ingredient$values != null) {
+                methodHandle$Ingredient$valuesGetter = ReflectionUtils.unreflectGetter(field$Ingredient$values)
+                        .asType(MethodType.methodType(Object[].class, Object.class));
+            } else {
+                methodHandle$Ingredient$valuesGetter = null;
+            }
+            if (field$ShapelessRecipe$placementInfo != null) {
+                methodHandle$ShapelessRecipe$placementInfoSetter = ReflectionUtils.unreflectSetter(field$ShapelessRecipe$placementInfo)
+                        .asType(MethodType.methodType(void.class, Object.class, Object.class));
+            } else {
+                methodHandle$ShapelessRecipe$placementInfoSetter = null;
+            }
+            if (field$ShapedRecipe$placementInfo != null) {
+                methodHandle$ShapedRecipe$placementInfoSetter = ReflectionUtils.unreflectSetter(field$ShapedRecipe$placementInfo)
+                        .asType(MethodType.methodType(void.class, Object.class, Object.class));
+            } else {
+                methodHandle$ShapedRecipe$placementInfoSetter = null;
+            }
+            if (field$ShapelessRecipe$ingredients != null) {
+                methodHandle$ShapelessRecipe$ingredientsGetter = ReflectionUtils.unreflectGetter(field$ShapelessRecipe$ingredients)
+                        .asType(MethodType.methodType(List.class, Object.class));
+            } else {
+                methodHandle$ShapelessRecipe$ingredientsGetter = null;
+            }
+        } catch (Exception e) {
+            throw new ReflectionInitException("Failed to initialize CoreReflections", e);
+        }
+    }
 
     // require ResourceLocation for 1.20.1-1.21.1
     // require ResourceKey for 1.21.2+
@@ -2093,6 +2234,28 @@ public final class CoreReflections {
                     .map(it -> ReflectionUtils.getDeclaredField(it, clazz$Ingredient, 0))
                     .orElse(null);
 
+    public static final MethodHandle methodHandle$AbstractCookingRecipe$inputGetter;
+    public static final MethodHandle methodHandle$SingleItemRecipe$inputGetter;
+
+    static {
+        try {
+            if (field$AbstractCookingRecipe$input != null) {
+                methodHandle$AbstractCookingRecipe$inputGetter = ReflectionUtils.unreflectGetter(field$AbstractCookingRecipe$input)
+                        .asType(MethodType.methodType(Object.class, Object.class));
+            } else {
+                methodHandle$AbstractCookingRecipe$inputGetter = null;
+            }
+            if (field$SingleItemRecipe$input != null) {
+                methodHandle$SingleItemRecipe$inputGetter = ReflectionUtils.unreflectGetter(field$SingleItemRecipe$input)
+                        .asType(MethodType.methodType(Object.class, Object.class));
+            } else {
+                methodHandle$SingleItemRecipe$inputGetter = null;
+            }
+        } catch (Exception e) {
+            throw new ReflectionInitException("Failed to initialize methodHandle$SingleItemRecipe$inputGetter", e);
+        }
+    }
+
     public static final Field field$AbstractFurnaceBlockEntity$quickCheck = requireNonNull(
             ReflectionUtils.getDeclaredField(clazz$AbstractFurnaceBlockEntity, clazz$RecipeManager$CachedCheck, 0)
     );
@@ -2151,12 +2314,30 @@ public final class CoreReflections {
             )
     );
 
+    public static final Class<?> clazz$WorldlyContainerHolder = requireNonNull(
+            BukkitReflectionUtils.findReobfOrMojmapClass(
+                    "world.IInventoryHolder",
+                    "world.WorldlyContainerHolder"
+            )
+    );
+
     public static final Method method$BonemealableBlock$isValidBonemealTarget = requireNonNull(
             VersionHelper.isOrAbove1_20_2() ?
                     ReflectionUtils.getInstanceMethod(clazz$BonemealableBlock, boolean.class, clazz$LevelReader, clazz$BlockPos, clazz$BlockState) :
                     ReflectionUtils.getInstanceMethod(clazz$BonemealableBlock, boolean.class, clazz$LevelReader, clazz$BlockPos, clazz$BlockState, boolean.class)
     );
 
+    public static final Class<?> clazz$WorldlyContainer = requireNonNull(
+            BukkitReflectionUtils.findReobfOrMojmapClass(
+                    "world.IWorldInventory",
+                    "world.WorldlyContainer"
+            )
+    );
+
+
+    public static final Method method$WorldlyContainerHolder$getContainer = requireNonNull(
+            ReflectionUtils.getMethod(clazz$WorldlyContainerHolder, clazz$WorldlyContainer, clazz$BlockState, clazz$LevelAccessor, clazz$BlockPos)
+    );
     public static final Method method$BonemealableBlock$isBonemealSuccess = requireNonNull(
             ReflectionUtils.getMethod(clazz$BonemealableBlock, boolean.class, clazz$Level, clazz$RandomSource, clazz$BlockPos, clazz$BlockState)
     );
@@ -2834,13 +3015,6 @@ public final class CoreReflections {
             ReflectionUtils.getInstanceDeclaredField(clazz$ServerPlayer, clazz$ServerGamePacketListenerImpl, 0)
     );
 
-    public static final Class<?> clazz$ServerLevel = requireNonNull(
-            BukkitReflectionUtils.findReobfOrMojmapClass(
-                    "server.level.WorldServer",
-                    "server.level.ServerLevel"
-            )
-    );
-
     public static final Method method$ServerLevel$getNoiseBiome = requireNonNull(
             ReflectionUtils.getMethod(clazz$ServerLevel, clazz$Holder, int.class, int.class, int.class)
     );
@@ -3019,6 +3193,17 @@ public final class CoreReflections {
             ReflectionUtils.getMethod(clazz$Resource, BufferedReader.class)
     );
 
+    public static final MethodHandle methodHandle$Resource$openAsReader;
+
+    static {
+        try {
+            methodHandle$Resource$openAsReader = ReflectionUtils.unreflectMethod(method$Resource$openAsReader)
+                    .asType(MethodType.methodType(Reader.class, Object.class));
+        } catch (Exception e) {
+            throw new ReflectionInitException("Failed to init methodHandle$Resource$openAsReader", e);
+        }
+    }
+
     public static final Class<?> clazz$MultiPackResourceManager = requireNonNull(
             BukkitReflectionUtils.findReobfOrMojmapClass(
                     "server.packs.resources.ResourceManager",
@@ -3062,6 +3247,20 @@ public final class CoreReflections {
     public static final Field field$PackRepository$selected = requireNonNull(
             ReflectionUtils.getInstanceDeclaredField(clazz$PackRepository, List.class, 0)
     );
+
+    public static final MethodHandle methodHandle$MinecraftServer$getPackRepository;
+    public static final MethodHandle methodHandle$PackRepository$selectedGetter;
+
+    static {
+        try {
+            methodHandle$MinecraftServer$getPackRepository = ReflectionUtils.unreflectMethod(method$MinecraftServer$getPackRepository)
+                    .asType(MethodType.methodType(Object.class, Object.class));
+            methodHandle$PackRepository$selectedGetter = ReflectionUtils.unreflectGetter(field$PackRepository$selected)
+                    .asType(MethodType.methodType(List.class, Object.class));
+        } catch (Exception e) {
+            throw new ReflectionInitException("Failed to initialize reflection for methodHandle$MinecraftServer$getPackRepository", e);
+        }
+    }
 
     public static final Class<?> clazz$Pack = requireNonNull(
             BukkitReflectionUtils.findReobfOrMojmapClass(
@@ -3108,6 +3307,23 @@ public final class CoreReflections {
     public static final Method method$DedicatedPlayerList$reloadRecipes = requireNonNull(
             ReflectionUtils.getMethod(clazz$DedicatedPlayerList, new String[] {"reloadRecipeData", "reloadRecipes"})
     );
+
+    public static final MethodHandle methodHandle$DedicatedPlayerList$reloadRecipes;
+    public static final MethodHandle methodHandle$Pack$open;
+    public static final MethodHandle methodHandle$MultiPackResourceManagerConstructor;
+
+    static {
+        try {
+            methodHandle$DedicatedPlayerList$reloadRecipes = ReflectionUtils.unreflectMethod(method$DedicatedPlayerList$reloadRecipes)
+                    .asType(MethodType.methodType(void.class, Object.class));
+            methodHandle$Pack$open = ReflectionUtils.unreflectMethod(method$Pack$open)
+                    .asType(MethodType.methodType(Object.class, Object.class));
+            methodHandle$MultiPackResourceManagerConstructor = ReflectionUtils.unreflectConstructor(constructor$MultiPackResourceManager)
+                    .asType(MethodType.methodType(AutoCloseable.class, Object.class, List.class));
+        } catch (Exception e) {
+            throw new ReflectionInitException("Failed to init methodHandle$DedicatedPlayerList$reloadRecipes", e);
+        }
+    }
 
     public static final Method method$ServerChunkCache$getGenerator = requireNonNull(
             ReflectionUtils.getMethod(clazz$ServerChunkCache, clazz$ChunkGenerator)
@@ -3281,6 +3497,11 @@ public final class CoreReflections {
             ReflectionUtils.getDeclaredMethod(clazz$BlockBehaviour, void.class, new String[]{"randomTick", "b"}, clazz$BlockState, clazz$ServerLevel, clazz$BlockPos, clazz$RandomSource)
     );
 
+    public static final Method method$BlockBehaviour$onPlace = requireNonNull(
+            ReflectionUtils.getDeclaredMethod(clazz$BlockBehaviour, void.class, new String[]{"onPlace", VersionHelper.isOrAbove1_21_5() ? "a" : "b"},
+                    clazz$BlockState, clazz$Level, clazz$BlockPos, clazz$BlockState, boolean.class)
+    );
+
     public static final Class<?> clazz$InsideBlockEffectApplier = BukkitReflectionUtils.findReobfOrMojmapClass(
             "world.entity.InsideBlockEffectApplier",
             "world.entity.InsideBlockEffectApplier"
@@ -3314,6 +3535,17 @@ public final class CoreReflections {
     public static final Method method$FileToIdConverter$listMatchingResources = requireNonNull(
             ReflectionUtils.getMethod(clazz$FileToIdConverter, Map.class, new String[]{"listMatchingResources", "a"}, clazz$ResourceManager)
     );
+
+    public static final MethodHandle methodHandle$FileToIdConverter$listMatchingResources;
+
+    static {
+        try {
+            methodHandle$FileToIdConverter$listMatchingResources = ReflectionUtils.unreflectMethod(method$FileToIdConverter$listMatchingResources)
+                    .asType(MethodType.methodType(Map.class, Object.class, AutoCloseable.class));
+        } catch (Exception e) {
+            throw new ReflectionInitException("Failed to initialize methodHandle$FileToIdConverter$listMatchingResources", e);
+        }
+    }
 
     public static final Method method$RegistryOps$create = requireNonNull(
             ReflectionUtils.getStaticMethod(clazz$RegistryOps, clazz$RegistryOps, DynamicOps.class, clazz$HolderLookup$Provider)
@@ -3424,12 +3656,6 @@ public final class CoreReflections {
             BukkitReflectionUtils.findReobfOrMojmapClass(
                     "world.level.block.BlockRedstoneWire",
                     "world.level.block.RedStoneWireBlock"
-            )
-    );
-
-    public static final Class<?> clazz$Explosion = requireNonNull(
-            ReflectionUtils.getClazz(
-                    BukkitReflectionUtils.assembleMCClass("world.level.Explosion")
             )
     );
 
@@ -3817,18 +4043,15 @@ public final class CoreReflections {
             ReflectionUtils.getStaticMethod(clazz$ArmorTrim, Optional.class, clazz$RegistryAccess, clazz$ItemStack);
 
     public static final Method method$BlockBehaviour$spawnAfterBreak = requireNonNull(
-            ReflectionUtils.getDeclaredMethod(
-                    clazz$BlockBehaviour, void.class, clazz$BlockState, clazz$ServerLevel, clazz$BlockPos, clazz$ItemStack, boolean.class
-            )
+            ReflectionUtils.getDeclaredMethod(clazz$BlockBehaviour, void.class, clazz$BlockState, clazz$ServerLevel, clazz$BlockPos, clazz$ItemStack, boolean.class)
     );
 
     // 1.20~1.21.4
     public static final Method method$BlockBehaviour$onRemove = MiscUtils.requireNonNullIf(
-            ReflectionUtils.getDeclaredMethod(
-                    clazz$BlockBehaviour, void.class, clazz$BlockState, clazz$Level, clazz$BlockPos, clazz$BlockState, boolean.class
-            ),
+            ReflectionUtils.getDeclaredMethod(clazz$BlockBehaviour, void.class, new String[]{"a", "onRemove"}, clazz$BlockState, clazz$Level, clazz$BlockPos, clazz$BlockState, boolean.class),
             !VersionHelper.isOrAbove1_21_5()
     );
+
     public static final Object instance$CollisionContext$empty;
 
     static {

@@ -166,6 +166,11 @@ public abstract class BukkitItemFactory<W extends ItemWrapper<ItemStack>> extend
     }
 
     @Override
+    protected boolean hasNonDefaultComponent(W item, Object type) {
+        throw new UnsupportedOperationException("This feature is only available on 1.20.5+");
+    }
+
+    @Override
     protected void setComponent(W item, Object type, Object value) {
         throw new UnsupportedOperationException("This feature is only available on 1.20.5+");
     }

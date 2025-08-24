@@ -10,6 +10,8 @@ public interface BuildableItem<I> {
 
     Item<I> buildItem(ItemBuildContext context, int count);
 
+    boolean isEmpty();
+
     default Item<I> buildItem(Player player) {
         return buildItem(ItemBuildContext.of(player));
     }

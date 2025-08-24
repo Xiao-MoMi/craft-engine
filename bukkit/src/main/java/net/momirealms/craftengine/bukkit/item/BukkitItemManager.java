@@ -62,7 +62,7 @@ public class BukkitItemManager extends AbstractItemManager<ItemStack> {
         instance = this;
         this.plugin = plugin;
         this.factory = BukkitItemFactory.create(plugin);
-        this.itemEventListener = new ItemEventListener(plugin);
+        this.itemEventListener = new ItemEventListener(plugin, this);
         this.debugStickListener = new DebugStickListener(plugin);
         this.armorEventListener = new ArmorEventListener();
         this.networkItemHandler = VersionHelper.isOrAbove1_20_5() ? new ModernNetworkItemHandler() : new LegacyNetworkItemHandler();
@@ -335,7 +335,7 @@ public class BukkitItemManager extends AbstractItemManager<ItemStack> {
 
     @Override
     public ItemStack buildCustomItemStack(Key id, Player player) {
-        return Optional.ofNullable(this.customItems.get(id)).map(it -> it.buildItemStack(new ItemBuildContext(player, ContextHolder.EMPTY), 1)).orElse(null);
+        return Optional.ofNullable(this.customItemsById.get(id)).map(it -> it.buildItemStack(new ItemBuildContext(player, ContextHolder.EMPTY), 1)).orElse(null);
     }
 
     @Override
@@ -349,12 +349,12 @@ public class BukkitItemManager extends AbstractItemManager<ItemStack> {
 
     @Override
     public Item<ItemStack> createCustomWrappedItem(Key id, Player player) {
-        return Optional.ofNullable(customItems.get(id)).map(it -> it.buildItem(player)).orElse(null);
+        return Optional.ofNullable(customItemsById.get(id)).map(it -> it.buildItem(player)).orElse(null);
     }
 
     @Override
     public Item<ItemStack> createWrappedItem(Key id, @Nullable Player player) {
-        CustomItem<ItemStack> customItem = this.customItems.get(id);
+        CustomItem<ItemStack> customItem = this.customItemsById.get(id);
         if (customItem != null) {
             return customItem.buildItem(player);
         }
@@ -365,9 +365,10 @@ public class BukkitItemManager extends AbstractItemManager<ItemStack> {
         return null;
     }
 
+    @Nullable
     private ItemStack createVanillaItemStack(Key id) {
         Object item = FastNMS.INSTANCE.method$Registry$getValue(MBuiltInRegistries.ITEM, KeyUtils.toResourceLocation(id));
-        if (item == null) {
+        if (item == MItems.AIR && !id.equals(ItemKeys.AIR)) {
             return null;
         }
         return FastNMS.INSTANCE.method$CraftItemStack$asCraftMirror(FastNMS.INSTANCE.constructor$ItemStack(item, 1));

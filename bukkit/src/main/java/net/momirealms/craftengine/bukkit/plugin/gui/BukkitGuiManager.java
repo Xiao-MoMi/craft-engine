@@ -3,6 +3,7 @@ package net.momirealms.craftengine.bukkit.plugin.gui;
 import net.kyori.adventure.text.Component;
 import net.momirealms.craftengine.bukkit.nms.FastNMS;
 import net.momirealms.craftengine.bukkit.plugin.BukkitCraftEngine;
+import net.momirealms.craftengine.bukkit.plugin.reflection.bukkit.CraftBukkitReflections;
 import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.CoreReflections;
 import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.NetworkReflections;
 import net.momirealms.craftengine.bukkit.util.ComponentUtils;
@@ -91,6 +92,9 @@ public class BukkitGuiManager implements GuiManager, Listener {
     @EventHandler(ignoreCancelled = true)
     public void onInventoryClick(InventoryClickEvent event) {
         org.bukkit.inventory.Inventory inventory = event.getInventory();
+        if (!CraftBukkitReflections.clazz$MinecraftInventory.isInstance(FastNMS.INSTANCE.method$CraftInventory$getInventory(inventory))) {
+            return;
+        }
         if (!(inventory.getHolder() instanceof CraftEngineInventoryHolder craftEngineInventoryHolder)) {
             return;
         }
@@ -106,6 +110,9 @@ public class BukkitGuiManager implements GuiManager, Listener {
     @EventHandler(ignoreCancelled = true, priority = EventPriority.LOW)
     public void onInventoryDrag(InventoryDragEvent event) {
         org.bukkit.inventory.Inventory inventory = event.getInventory();
+        if (!CraftBukkitReflections.clazz$MinecraftInventory.isInstance(FastNMS.INSTANCE.method$CraftInventory$getInventory(inventory))) {
+            return;
+        }
         if (!(inventory.getHolder() instanceof CraftEngineInventoryHolder)) {
             return;
         }

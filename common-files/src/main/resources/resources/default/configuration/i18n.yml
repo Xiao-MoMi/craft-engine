@@ -45,6 +45,7 @@ i18n:
     item.pebble: Pebble
     item.cap: Cap
     item.flower_basket: Flower Basket
+    item.chessboard_block: Chessboard Block
     category.default.name: Default Assets
     category.default.lore: Contains the default configuration of CraftEngine
     category.palm_tree: Palm Tree
@@ -100,6 +101,7 @@ i18n:
     item.pebble: 石子
     item.cap: 鸭舌帽
     item.flower_basket: 花篮
+    item.chessboard_block: 棋盘方块
     category.default.name: 默认资产
     category.default.lore: 包含了CraftEngine的默认配置
     category.palm_tree: 棕榈树

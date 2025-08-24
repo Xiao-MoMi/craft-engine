@@ -12,9 +12,11 @@ import net.momirealms.craftengine.bukkit.util.ItemStackUtils;
 import net.momirealms.craftengine.bukkit.util.KeyUtils;
 import net.momirealms.craftengine.core.item.ItemWrapper;
 import net.momirealms.craftengine.core.util.Key;
+import net.momirealms.craftengine.core.util.VersionHelper;
 import net.momirealms.sparrow.nbt.Tag;
 import org.bukkit.inventory.ItemStack;
 
+import java.util.Objects;
 import java.util.Optional;
 
 public class ComponentItemWrapper implements ItemWrapper<ItemStack> {
@@ -102,6 +104,18 @@ public class ComponentItemWrapper implements ItemWrapper<ItemStack> {
 
     public boolean hasComponent(Object type) {
         return FastNMS.INSTANCE.method$ItemStack$hasComponent(getLiteralObject(), ensureDataComponentType(type));
+    }
+
+    public boolean hasNonDefaultComponent(Object type) {
+        if (VersionHelper.isOrAbove1_21_4()) {
+            return FastNMS.INSTANCE.method$ItemStack$hasNonDefaultComponent(getLiteralObject(), ensureDataComponentType(type));
+        } else {
+            Object item = FastNMS.INSTANCE.method$ItemStack$getItem(this.getLiteralObject());
+            Object componentMap = FastNMS.INSTANCE.method$Item$components(item);
+            Object componentType = ensureDataComponentType(type);
+            Object defaultComponent = FastNMS.INSTANCE.method$DataComponentMap$get(componentMap, componentType);
+            return !Objects.equals(defaultComponent, getComponentExact(componentType));
+        }
     }
 
     public void setComponentExact(Object type, final Object value) {

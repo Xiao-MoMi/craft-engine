@@ -163,6 +163,8 @@ public interface Item<I> {
 
     boolean hasComponent(Object type);
 
+    boolean hasNonDefaultComponent(Object type);
+
     void removeComponent(Object type);
 
     void setExactComponent(Object type, Object value);

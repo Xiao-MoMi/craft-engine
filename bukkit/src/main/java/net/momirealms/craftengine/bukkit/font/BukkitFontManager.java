@@ -5,6 +5,7 @@ import com.google.gson.JsonObject;
 import io.papermc.paper.event.player.AsyncChatCommandDecorateEvent;
 import io.papermc.paper.event.player.AsyncChatDecorateEvent;
 import net.kyori.adventure.text.Component;
+import net.momirealms.craftengine.bukkit.api.BukkitAdaptors;
 import net.momirealms.craftengine.bukkit.plugin.BukkitCraftEngine;
 import net.momirealms.craftengine.bukkit.plugin.reflection.paper.PaperReflections;
 import net.momirealms.craftengine.bukkit.util.ComponentUtils;
@@ -143,7 +144,7 @@ public class BukkitFontManager extends AbstractFontManager implements Listener {
 
         if (renameText == null || renameText.isEmpty()) return;
         Component itemName = Component.text(renameText);
-        EmojiComponentProcessResult replaceProcessResult = replaceComponentEmoji(itemName, this.plugin.adapt(player), renameText);
+        EmojiComponentProcessResult replaceProcessResult = replaceComponentEmoji(itemName, BukkitAdaptors.adapt(player), renameText);
         if (replaceProcessResult.changed()) {
             Item<ItemStack> wrapped = this.plugin.itemManager().wrap(result);
             wrapped.customNameJson(AdventureHelper.componentToJson(replaceProcessResult.newText()));
@@ -160,7 +161,7 @@ public class BukkitFontManager extends AbstractFontManager implements Listener {
             JsonElement json = ComponentUtils.paperAdventureToJsonElement(lines.get(i));
             if (json == null) continue;
             Component line = AdventureHelper.jsonElementToComponent(json);
-            EmojiComponentProcessResult result = replaceComponentEmoji(line, plugin.adapt(player));
+            EmojiComponentProcessResult result = replaceComponentEmoji(line, BukkitAdaptors.adapt(player));
             if (result.changed()) {
                 try {
                     PaperReflections.method$SignChangeEvent$line.invoke(event, i, ComponentUtils.jsonElementToPaperAdventure(AdventureHelper.componentToJsonElement(result.newText())));
@@ -191,7 +192,7 @@ public class BukkitFontManager extends AbstractFontManager implements Listener {
         for (int i = 0; i < pages.size(); i++) {
             JsonElement json = ComponentUtils.paperAdventureToJsonElement(pages.get(i));
             Component page = AdventureHelper.jsonElementToComponent(json);
-            EmojiComponentProcessResult result = replaceComponentEmoji(page, plugin.adapt(player));
+            EmojiComponentProcessResult result = replaceComponentEmoji(page, BukkitAdaptors.adapt(player));
             if (result.changed()) {
                 changed = true;
                 try {
@@ -214,7 +215,7 @@ public class BukkitFontManager extends AbstractFontManager implements Listener {
             Object originalMessage = PaperReflections.field$AsyncChatDecorateEvent$originalMessage.get(event);
             String rawJsonMessage = ComponentUtils.paperAdventureToJson(originalMessage);
             if (Config.allowEmojiChat()) {
-                EmojiTextProcessResult processResult = replaceJsonEmoji(rawJsonMessage, this.plugin.adapt(player));
+                EmojiTextProcessResult processResult = replaceJsonEmoji(rawJsonMessage, BukkitAdaptors.adapt(player));
                 boolean hasChanged = processResult.replaced();
                 if (!player.hasPermission(FontManager.BYPASS_CHAT))  {
                     IllegalCharacterProcessResult result = processIllegalCharacters(processResult.text());

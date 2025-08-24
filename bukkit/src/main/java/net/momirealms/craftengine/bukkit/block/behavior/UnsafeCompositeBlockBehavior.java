@@ -74,6 +74,18 @@ public class UnsafeCompositeBlockBehavior extends BukkitBlockBehavior {
         return previous;
     }
 
+
+    @Override
+    public Object getContainer(Object thisBlock, Object[] args) throws Exception {
+        for (AbstractBlockBehavior behavior : this.behaviors) {
+            Object container = behavior.getContainer(thisBlock, args);
+            if (container != null) {
+                return container;
+            }
+        }
+        return null;
+    }
+
     @Override
     public void tick(Object thisBlock, Object[] args, Callable<Object> superMethod) throws Exception {
         for (AbstractBlockBehavior behavior : this.behaviors) {

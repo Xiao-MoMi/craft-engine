@@ -3,7 +3,7 @@ package net.momirealms.craftengine.bukkit.util;
 import net.momirealms.craftengine.core.util.DamageSource;
 import org.bukkit.event.entity.EntityDamageEvent;
 
-public class DamageCauseUtils {
+public final class DamageCauseUtils {
     
     private DamageCauseUtils() {}
 

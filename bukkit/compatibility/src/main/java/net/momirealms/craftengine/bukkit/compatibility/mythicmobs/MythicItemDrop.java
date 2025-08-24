@@ -9,7 +9,7 @@ import io.lumine.mythic.api.skills.SkillCaster;
 import io.lumine.mythic.bukkit.BukkitAdapter;
 import io.lumine.mythic.bukkit.adapters.BukkitItemStack;
 import io.lumine.mythic.core.drops.droppables.ItemDrop;
-import net.momirealms.craftengine.bukkit.plugin.BukkitCraftEngine;
+import net.momirealms.craftengine.bukkit.api.BukkitAdaptors;
 import net.momirealms.craftengine.core.item.CustomItem;
 import net.momirealms.craftengine.core.item.ItemBuildContext;
 import net.momirealms.craftengine.core.plugin.CraftEngine;
@@ -38,7 +38,7 @@ public class MythicItemDrop extends ItemDrop implements IItemDrop {
         if (caster != null && caster.getEntity() instanceof AbstractPlayer abstractPlayer) {
             Entity bukkitEntity = abstractPlayer.getBukkitEntity();
             if (bukkitEntity instanceof Player bukkitPlayer) {
-                var player = BukkitCraftEngine.instance().adapt(bukkitPlayer);
+                var player = BukkitAdaptors.adapt(bukkitPlayer);
                 context = ItemBuildContext.of(player);
             }
         }

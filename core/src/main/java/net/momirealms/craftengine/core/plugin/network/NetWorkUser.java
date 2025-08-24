@@ -6,6 +6,7 @@ import net.kyori.adventure.text.Component;
 import net.momirealms.craftengine.core.plugin.Plugin;
 import net.momirealms.craftengine.core.util.Key;
 import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Map;
 import java.util.UUID;
@@ -13,7 +14,15 @@ import java.util.UUID;
 public interface NetWorkUser {
     boolean isOnline();
 
+    // 对假人来说会null
+    @Nullable
     Channel nettyChannel();
+
+    // 对假人来说会null
+    @Nullable
+    ChannelHandler connection();
+
+    boolean isFakePlayer();
 
     Plugin plugin();
 
@@ -48,8 +57,6 @@ public interface NetWorkUser {
     Object serverPlayer();
 
     Object platformPlayer();
-
-    ChannelHandler connection();
 
     Map<Integer, EntityPacketHandler> entityPacketHandlers();
 

@@ -36,7 +36,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
-public class InteractUtils {
+public final class InteractUtils {
     private static final Map<Key, QuadFunction<Player, Item<ItemStack>, BlockData, BlockHitResult, Boolean>> INTERACTIONS = new HashMap<>();
     private static final Map<Key, QuadFunction<Player, Item<ItemStack>, BlockData, BlockHitResult, Boolean>> WILL_CONSUME = new HashMap<>();
     private static final Map<Key, TriFunction<Player, Entity, @Nullable Item<ItemStack>, Boolean>> ENTITY_INTERACTIONS = new HashMap<>();
@@ -169,6 +169,7 @@ public class InteractUtils {
         registerInteraction(BlockKeys.DAMAGED_ANVIL, (player, item, blockState, result) -> true);
         registerInteraction(BlockKeys.FURNACE, (player, item, blockState, result) -> true);
         registerInteraction(BlockKeys.CRAFTING_TABLE, (player, item, blockState, result) -> true);
+        registerInteraction(BlockKeys.CARTOGRAPHY_TABLE, (player, item, blockState, result) -> true);
         registerInteraction(BlockKeys.STONECUTTER, (player, item, blockState, result) -> true);
         registerInteraction(BlockKeys.SMITHING_TABLE, (player, item, blockState, result) -> true);
         registerInteraction(BlockKeys.LOOM, (player, item, blockState, result) -> true);

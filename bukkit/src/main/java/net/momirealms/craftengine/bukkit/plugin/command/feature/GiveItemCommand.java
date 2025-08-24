@@ -1,6 +1,7 @@
 package net.momirealms.craftengine.bukkit.plugin.command.feature;
 
 import net.kyori.adventure.text.Component;
+import net.momirealms.craftengine.bukkit.api.CraftEngineItems;
 import net.momirealms.craftengine.bukkit.item.BukkitItemManager;
 import net.momirealms.craftengine.bukkit.plugin.command.BukkitCommandFeature;
 import net.momirealms.craftengine.bukkit.util.PlayerUtils;
@@ -27,7 +28,6 @@ import org.incendo.cloud.suggestion.Suggestion;
 import org.incendo.cloud.suggestion.SuggestionProvider;
 
 import java.util.Collection;
-import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 
 public class GiveItemCommand extends BukkitCommandFeature<CommandSender> {
@@ -54,16 +54,20 @@ public class GiveItemCommand extends BukkitCommandFeature<CommandSender> {
                     int amount = context.getOrDefault("amount", 1);
                     boolean toInv = context.flags().hasFlag(FlagKeys.TO_INVENTORY);
                     NamespacedKey namespacedKey = context.get("id");
-                    Key key = Key.of(namespacedKey.namespace(), namespacedKey.value());
-                    Optional<CustomItem<ItemStack>> optionalItem = BukkitItemManager.instance().getCustomItem(key);
-                    if (optionalItem.isEmpty()) {
-                        handleFeedback(context, MessageConstants.COMMAND_ITEM_GIVE_FAILURE_NOT_EXIST, Component.text(key.toString()));
-                        return;
+                    Key itemId = Key.of(namespacedKey.namespace(), namespacedKey.value());
+                    CustomItem<ItemStack> customItem = CraftEngineItems.byId(itemId);
+                    if (customItem == null) {
+                        customItem = BukkitItemManager.instance().getCustomItemByPathOnly(itemId.value()).orElse(null);
+                        if (customItem == null) {
+                            handleFeedback(context, MessageConstants.COMMAND_ITEM_GIVE_FAILURE_NOT_EXIST, Component.text(itemId.toString()));
+                            return;
+                        } else {
+                            itemId = customItem.id();
+                        }
                     }
-
                     Collection<Player> players = selector.values();
                     for (Player player : players) {
-                        ItemStack builtItem = optionalItem.get().buildItemStack(plugin().adapt(player));
+                        ItemStack builtItem = customItem.buildItemStack(plugin().adapt(player));
                         if (builtItem == null) {
                             return;
                         }
@@ -90,9 +94,9 @@ public class GiveItemCommand extends BukkitCommandFeature<CommandSender> {
                         }
                     }
                     if (players.size() == 1) {
-                        handleFeedback(context, MessageConstants.COMMAND_ITEM_GIVE_SUCCESS_SINGLE, Component.text(amount), Component.text(key.toString()), Component.text(players.iterator().next().getName()));
+                        handleFeedback(context, MessageConstants.COMMAND_ITEM_GIVE_SUCCESS_SINGLE, Component.text(amount), Component.text(itemId.toString()), Component.text(players.iterator().next().getName()));
                     } else if (players.size() > 1) {
-                        handleFeedback(context, MessageConstants.COMMAND_ITEM_GIVE_SUCCESS_MULTIPLE, Component.text(amount), Component.text(key.toString()), Component.text(players.size()));
+                        handleFeedback(context, MessageConstants.COMMAND_ITEM_GIVE_SUCCESS_MULTIPLE, Component.text(amount), Component.text(itemId.toString()), Component.text(players.size()));
                     }
                 });
     }

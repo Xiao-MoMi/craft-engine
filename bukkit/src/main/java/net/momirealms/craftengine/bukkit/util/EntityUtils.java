@@ -15,7 +15,7 @@ import org.bukkit.event.entity.CreatureSpawnEvent;
 
 import java.util.function.Consumer;
 
-public class EntityUtils {
+public final class EntityUtils {
 
     private EntityUtils() {
     }

@@ -6,6 +6,10 @@ import net.momirealms.craftengine.core.item.behavior.ItemBehavior;
 import net.momirealms.craftengine.core.item.behavior.ItemBehaviors;
 import net.momirealms.craftengine.core.item.equipment.*;
 import net.momirealms.craftengine.core.item.modifier.*;
+import net.momirealms.craftengine.core.item.updater.ItemUpdateConfig;
+import net.momirealms.craftengine.core.item.updater.ItemUpdateResult;
+import net.momirealms.craftengine.core.item.updater.ItemUpdater;
+import net.momirealms.craftengine.core.item.updater.ItemUpdaters;
 import net.momirealms.craftengine.core.pack.AbstractPackManager;
 import net.momirealms.craftengine.core.pack.LoadingSequence;
 import net.momirealms.craftengine.core.pack.Pack;
@@ -30,6 +34,7 @@ import org.incendo.cloud.type.Either;
 import java.nio.file.Path;
 import java.util.*;
 import java.util.function.Consumer;
+import java.util.function.Supplier;
 import java.util.stream.Stream;
 
 public abstract class AbstractItemManager<I> extends AbstractModelGenerator implements ItemManager<I> {
@@ -40,7 +45,8 @@ public abstract class AbstractItemManager<I> extends AbstractModelGenerator impl
     private final ItemParser itemParser;
     private final EquipmentParser equipmentParser;
     protected final Map<String, ExternalItemSource<I>> externalItemSources = new HashMap<>();
-    protected final Map<Key, CustomItem<I>> customItems = new HashMap<>();
+    protected final Map<Key, CustomItem<I>> customItemsById = new HashMap<>();
+    protected final Map<String, CustomItem<I>> customItemsByPath = new HashMap<>();
     protected final Map<Key, List<UniqueKey>> customItemTags = new HashMap<>();
     protected final Map<Key, Map<Integer, Key>> cmdConflictChecker = new HashMap<>();
     protected final Map<Key, ModernItemModel> modernItemModels1_21_4 = new HashMap<>();
@@ -72,7 +78,12 @@ public abstract class AbstractItemManager<I> extends AbstractModelGenerator impl
             for (Map.Entry<String, Object> dataEntry : dataSection.entrySet()) {
                 Object value = dataEntry.getValue();
                 if (value == null) continue;
-                Optional.ofNullable(BuiltInRegistries.ITEM_DATA_MODIFIER_FACTORY.getValue(Key.withDefaultNamespace(dataEntry.getKey(), Key.DEFAULT_NAMESPACE))).ifPresent(factory -> {
+                String key = dataEntry.getKey();
+                int idIndex = key.indexOf('#');
+                if (idIndex != -1) {
+                    key = key.substring(0, idIndex);
+                }
+                Optional.ofNullable(BuiltInRegistries.ITEM_DATA_MODIFIER_FACTORY.getValue(Key.withDefaultNamespace(key, Key.DEFAULT_NAMESPACE))).ifPresent(factory -> {
                     try {
                         callback.accept((ItemDataModifier<I>) factory.create(value));
                     } catch (LocalizedResourceConfigException e) {
@@ -105,7 +116,8 @@ public abstract class AbstractItemManager<I> extends AbstractModelGenerator impl
     @Override
     public void unload() {
         super.clearModelsToGenerate();
-        this.customItems.clear();
+        this.customItemsById.clear();
+        this.customItemsByPath.clear();
         this.cachedSuggestions.clear();
         this.cachedTotemSuggestions.clear();
         this.legacyOverrides.clear();
@@ -129,14 +141,33 @@ public abstract class AbstractItemManager<I> extends AbstractModelGenerator impl
 
     @Override
     public Optional<CustomItem<I>> getCustomItem(Key key) {
-        return Optional.ofNullable(this.customItems.get(key));
+        return Optional.ofNullable(this.customItemsById.get(key));
+    }
+
+    @Override
+    public Optional<CustomItem<I>> getCustomItemByPathOnly(String path) {
+        return Optional.ofNullable(this.customItemsByPath.get(path));
+    }
+
+    @Override
+    public ItemUpdateResult updateItem(Item<I> item, Supplier<ItemBuildContext> contextSupplier) {
+        Optional<CustomItem<I>> optionalCustomItem = item.getCustomItem();
+        if (optionalCustomItem.isPresent()) {
+            CustomItem<I> customItem = optionalCustomItem.get();
+            Optional<ItemUpdateConfig> updater = customItem.updater();
+            if (updater.isPresent()) {
+                return updater.get().update(item, contextSupplier);
+            }
+        }
+        return new ItemUpdateResult(item, false, false);
     }
 
     @Override
     public boolean addCustomItem(CustomItem<I> customItem) {
         Key id = customItem.id();
-        if (this.customItems.containsKey(id)) return false;
-        this.customItems.put(id, customItem);
+        if (this.customItemsById.containsKey(id)) return false;
+        this.customItemsById.put(id, customItem);
+        this.customItemsByPath.put(id.value(), customItem);
         if (!customItem.isVanillaItem()) {
             // cache command suggestions
             this.cachedSuggestions.add(Suggestion.suggestion(id.toString()));
@@ -199,7 +230,7 @@ public abstract class AbstractItemManager<I> extends AbstractModelGenerator impl
 
     @Override
     public Collection<Key> items() {
-        return Collections.unmodifiableCollection(this.customItems.keySet());
+        return Collections.unmodifiableCollection(this.customItemsById.keySet());
     }
 
     @Override
@@ -302,7 +333,7 @@ public abstract class AbstractItemManager<I> extends AbstractModelGenerator impl
 
         @Override
         public void parseSection(Pack pack, Path path, Key id, Map<String, Object> section) {
-            if (AbstractItemManager.this.customItems.containsKey(id)) {
+            if (AbstractItemManager.this.customItemsById.containsKey(id)) {
                 throw new LocalizedResourceConfigException("warning.config.item.duplicate");
             }
 
@@ -313,7 +344,7 @@ public abstract class AbstractItemManager<I> extends AbstractModelGenerator impl
             Key clientBoundMaterial = section.containsKey("client-bound-material") ? Key.from(section.get("client-bound-material").toString().toLowerCase(Locale.ENGLISH)) : material;
             // 如果是原版物品，那么custom-model-data只能是0，即使用户设置了其他值
             int customModelData = isVanillaItem ? 0 : ResourceConfigUtils.getAsInt(section.getOrDefault("custom-model-data", 0), "custom-model-data");
-            boolean clientBoundModel = section.containsKey("client-bound-model") ? ResourceConfigUtils.getAsBoolean(section.get("client-bound-data"), "client-bound-data") : Config.globalClientboundModel();
+            boolean clientBoundModel = section.containsKey("client-bound-model") ? ResourceConfigUtils.getAsBoolean(section.get("client-bound-model"), "client-bound-model") : Config.globalClientboundModel();
             if (customModelData < 0) {
                 throw new LocalizedResourceConfigException("warning.config.item.invalid_custom_model_data", String.valueOf(customModelData));
             }
@@ -361,8 +392,11 @@ public abstract class AbstractItemManager<I> extends AbstractModelGenerator impl
             } catch (LocalizedResourceConfigException e) {
                 collector.add(e);
             }
+            // 应用客户端侧数据
             try {
-                applyDataModifiers(MiscUtils.castToMap(section.get("client-bound-data"), true), itemBuilder::clientBoundDataModifier);
+                if (VersionHelper.PREMIUM) {
+                    applyDataModifiers(MiscUtils.castToMap(section.get("client-bound-data"), true), itemBuilder::clientBoundDataModifier);
+                }
             } catch (LocalizedResourceConfigException e) {
                 collector.add(e);
             }
@@ -399,6 +433,25 @@ public abstract class AbstractItemManager<I> extends AbstractModelGenerator impl
             } catch (LocalizedResourceConfigException e) {
                 collector.add(e);
                 behaviors = Collections.emptyList();
+            }
+
+            // 如果有物品更新器
+            if (section.containsKey("updater")) {
+                Map<String, Object> updater = ResourceConfigUtils.getAsMap(section.get("updater"), "updater");
+                List<ItemUpdateConfig.Version> versions = new ArrayList<>(2);
+                for (Map.Entry<String, Object> entry : updater.entrySet()) {
+                    try {
+                        int version = Integer.parseInt(entry.getKey());
+                        versions.add(new ItemUpdateConfig.Version(
+                                version,
+                                ResourceConfigUtils.parseConfigAsList(entry.getValue(), map -> ItemUpdaters.fromMap(id, map)).toArray(new ItemUpdater[0])
+                        ));
+                    } catch (NumberFormatException ignored) {
+                    }
+                }
+                ItemUpdateConfig config = new ItemUpdateConfig(versions);
+                itemBuilder.updater(config);
+                itemBuilder.dataModifier(new ItemVersionModifier<>(config.maxVersion()));
             }
 
             // 构建自定义物品

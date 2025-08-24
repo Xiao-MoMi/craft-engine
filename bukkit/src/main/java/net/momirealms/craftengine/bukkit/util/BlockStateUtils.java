@@ -23,7 +23,7 @@ import net.momirealms.craftengine.core.block.ImmutableBlockState;
 import net.momirealms.craftengine.core.item.Item;
 import net.momirealms.craftengine.core.util.Key;
 
-public class BlockStateUtils {
+public final class BlockStateUtils {
     public static final IdentityHashMap<Object, Object> CLIENT_SIDE_NOTE_BLOCKS = new IdentityHashMap<>();
     private static int vanillaStateSize;
     private static boolean hasInit;

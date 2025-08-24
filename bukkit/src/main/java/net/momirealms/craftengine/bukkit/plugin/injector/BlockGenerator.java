@@ -34,7 +34,6 @@ import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodType;
 import java.lang.reflect.Field;
 import java.util.concurrent.Callable;
-import java.util.function.BiConsumer;
 import java.util.function.Function;
 
 public final class BlockGenerator {
@@ -63,6 +62,7 @@ public final class BlockGenerator {
                 .implement(CoreReflections.clazz$Fallable)
                 .implement(CoreReflections.clazz$BonemealableBlock)
                 .implement(CoreReflections.clazz$SimpleWaterloggedBlock)
+                .implement(CoreReflections.clazz$WorldlyContainerHolder)
                 // internal interfaces
                 .method(ElementMatchers.named("behaviorDelegate"))
                 .intercept(FieldAccessor.ofField("behaviorHolder"))
@@ -96,6 +96,9 @@ public final class BlockGenerator {
                 // isValidBoneMealTarget
                 .method(ElementMatchers.is(CoreReflections.method$BonemealableBlock$isValidBonemealTarget))
                 .intercept(MethodDelegation.to(IsValidBoneMealTargetInterceptor.INSTANCE))
+                // getContainer
+                .method(ElementMatchers.is(CoreReflections.method$WorldlyContainerHolder$getContainer))
+                .intercept(MethodDelegation.to(GetContainerInterceptor.INSTANCE))
                 // isBoneMealSuccess
                 .method(ElementMatchers.is(CoreReflections.method$BonemealableBlock$isBonemealSuccess))
                 .intercept(MethodDelegation.to(IsBoneMealSuccessInterceptor.INSTANCE))
@@ -106,54 +109,21 @@ public final class BlockGenerator {
                 .method(ElementMatchers.is(CoreReflections.method$BlockBehaviour$randomTick))
                 .intercept(MethodDelegation.to(RandomTickInterceptor.INSTANCE))
                 // onPlace
-                .method(ElementMatchers.takesArguments(5)
-                        .and(ElementMatchers.takesArgument(0, CoreReflections.clazz$BlockState))
-                        .and(ElementMatchers.takesArgument(1, CoreReflections.clazz$Level))
-                        .and(ElementMatchers.takesArgument(2, CoreReflections.clazz$BlockPos))
-                        .and(ElementMatchers.takesArgument(3, CoreReflections.clazz$BlockState))
-                        .and(ElementMatchers.takesArgument(4, boolean.class))
-                        .and(ElementMatchers.named("onPlace").or(ElementMatchers.named("a")))
-                )
+                .method(ElementMatchers.is(CoreReflections.method$BlockBehaviour$onPlace))
                 .intercept(MethodDelegation.to(OnPlaceInterceptor.INSTANCE))
                 // onBrokenAfterFall
-                .method(ElementMatchers.takesArguments(3)
-                        .and(ElementMatchers.takesArgument(0, CoreReflections.clazz$Level))
-                        .and(ElementMatchers.takesArgument(1, CoreReflections.clazz$BlockPos))
-                        .and(ElementMatchers.takesArgument(2, CoreReflections.clazz$FallingBlockEntity))
-                )
+                .method(ElementMatchers.is(CoreReflections.method$Fallable$onBrokenAfterFall))
                 .intercept(MethodDelegation.to(OnBrokenAfterFallInterceptor.INSTANCE))
                 // onLand
-                .method(ElementMatchers.takesArguments(5)
-                        .and(ElementMatchers.takesArgument(0, CoreReflections.clazz$Level))
-                        .and(ElementMatchers.takesArgument(1, CoreReflections.clazz$BlockPos))
-                        .and(ElementMatchers.takesArgument(2, CoreReflections.clazz$BlockState))
-                        .and(ElementMatchers.takesArgument(3, CoreReflections.clazz$BlockState))
-                        .and(ElementMatchers.takesArgument(4, CoreReflections.clazz$FallingBlockEntity))
-                )
+                .method(ElementMatchers.is(CoreReflections.method$Fallable$onLand))
                 .intercept(MethodDelegation.to(OnLandInterceptor.INSTANCE))
                 // canSurvive
-                .method(ElementMatchers.takesArguments(3)
-                        .and(ElementMatchers.takesArgument(0, CoreReflections.clazz$BlockState))
-                        .and(ElementMatchers.takesArgument(1, CoreReflections.clazz$LevelReader))
-                        .and(ElementMatchers.takesArgument(2, CoreReflections.clazz$BlockPos))
+                .method(ElementMatchers.is(CoreReflections.method$BlockBehaviour$canSurvive)
                 )
                 .intercept(MethodDelegation.to(CanSurviveInterceptor.INSTANCE))
                 // updateShape
-                .method(ElementMatchers.returns(CoreReflections.clazz$BlockState)
-                        .and(ElementMatchers.takesArgument(0, CoreReflections.clazz$BlockState))
-                        // LevelReader 1.21.3+                                                     // 1.20-1.12.2
-                        .and(ElementMatchers.takesArgument(1, CoreReflections.clazz$LevelReader).or(ElementMatchers.takesArgument(1, CoreReflections.clazz$Direction)))
-                        .and(ElementMatchers.named("updateShape").or(ElementMatchers.named("a"))))
+                .method(ElementMatchers.is(CoreReflections.method$BlockBehaviour$updateShape))
                 .intercept(MethodDelegation.to(UpdateShapeInterceptor.INSTANCE))
-                // onExplosionHit 1.21+
-                .method(ElementMatchers.returns(void.class)
-                        .and(ElementMatchers.takesArgument(0, CoreReflections.clazz$BlockState))
-                        .and(ElementMatchers.takesArgument(1, VersionHelper.isOrAbove1_21_2() ? CoreReflections.clazz$ServerLevel : CoreReflections.clazz$Level))
-                        .and(ElementMatchers.takesArgument(2, CoreReflections.clazz$BlockPos))
-                        .and(ElementMatchers.takesArgument(3, CoreReflections.clazz$Explosion))
-                        .and(ElementMatchers.takesArgument(4, BiConsumer.class))
-                )
-                .intercept(MethodDelegation.to(OnExplosionHitInterceptor.INSTANCE))
                 // neighborChanged
                 .method(ElementMatchers.is(CoreReflections.method$BlockBehaviour$neighborChanged))
                 .intercept(MethodDelegation.to(NeighborChangedInterceptor.INSTANCE))
@@ -184,15 +154,21 @@ public final class BlockGenerator {
                 // spawnAfterBreak
                 .method(ElementMatchers.is(CoreReflections.method$BlockBehaviour$spawnAfterBreak))
                 .intercept(MethodDelegation.to(SpawnAfterBreakInterceptor.INSTANCE));
+        // 1.21.5+
         if (CoreReflections.method$BlockBehaviour$affectNeighborsAfterRemoval != null) {
-            builder.method(ElementMatchers.is(CoreReflections.method$BlockBehaviour$affectNeighborsAfterRemoval))
+            builder = builder.method(ElementMatchers.is(CoreReflections.method$BlockBehaviour$affectNeighborsAfterRemoval))
                     .intercept(MethodDelegation.to(AffectNeighborsAfterRemovalInterceptor.INSTANCE));
         }
+        // 1.20-1.21.4
         if (CoreReflections.method$BlockBehaviour$onRemove != null) {
-            builder.method(ElementMatchers.is(CoreReflections.method$BlockBehaviour$onRemove))
+            builder = builder.method(ElementMatchers.is(CoreReflections.method$BlockBehaviour$onRemove))
                     .intercept(MethodDelegation.to(OnRemoveInterceptor.INSTANCE));
         }
-
+        // 1.21+
+        if (CoreReflections.method$BlockBehaviour$onExplosionHit != null) {
+            builder = builder.method(ElementMatchers.is(CoreReflections.method$BlockBehaviour$onExplosionHit))
+                    .intercept(MethodDelegation.to(OnExplosionHitInterceptor.INSTANCE));
+        }
         Class<?> clazz$CraftEngineBlock = builder.make().load(BlockGenerator.class.getClassLoader()).getLoaded();
         constructor$CraftEngineBlock = MethodHandles.publicLookup().in(clazz$CraftEngineBlock)
                 .findConstructor(clazz$CraftEngineBlock, MethodType.methodType(void.class, CoreReflections.clazz$BlockBehaviour$Properties))
@@ -465,6 +441,21 @@ public final class BlockGenerator {
             } catch (Exception e) {
                 CraftEngine.instance().logger().severe("Failed to run isValidBoneMealTarget", e);
                 return true;
+            }
+        }
+    }
+
+    public static class GetContainerInterceptor {
+        public static final GetContainerInterceptor INSTANCE = new GetContainerInterceptor();
+
+        @RuntimeType
+        public Object intercept(@This Object thisObj, @AllArguments Object[] args) {
+            ObjectHolder<BlockBehavior> holder = ((DelegatingBlock) thisObj).behaviorDelegate();
+            try {
+                return holder.value().getContainer(thisObj, args);
+            } catch (Exception e) {
+                CraftEngine.instance().logger().severe("Failed to run getContainer", e);
+                return null;
             }
         }
     }

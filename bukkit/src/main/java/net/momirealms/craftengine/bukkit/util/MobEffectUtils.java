@@ -2,7 +2,7 @@ package net.momirealms.craftengine.bukkit.util;
 
 import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.NetworkReflections;
 
-public class MobEffectUtils {
+public final class MobEffectUtils {
 
     private MobEffectUtils() {}
 

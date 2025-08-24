@@ -18,6 +18,7 @@ import net.momirealms.craftengine.bukkit.api.event.FurnitureAttemptBreakEvent;
 import net.momirealms.craftengine.bukkit.api.event.FurnitureBreakEvent;
 import net.momirealms.craftengine.bukkit.api.event.FurnitureInteractEvent;
 import net.momirealms.craftengine.bukkit.block.BukkitBlockManager;
+import net.momirealms.craftengine.bukkit.entity.data.BaseEntityData;
 import net.momirealms.craftengine.bukkit.entity.furniture.BukkitFurniture;
 import net.momirealms.craftengine.bukkit.entity.furniture.BukkitFurnitureManager;
 import net.momirealms.craftengine.bukkit.entity.projectile.BukkitProjectileManager;
@@ -86,9 +87,10 @@ import java.util.function.BiConsumer;
 
 public class PacketConsumers {
     private static BukkitNetworkManager.Handlers[] ADD_ENTITY_HANDLERS;
-    private static int[] mappings;
-    private static int[] mappingsMOD;
-    private static IntIdentityList BLOCK_LIST;
+    private static int[] BLOCK_STATE_MAPPINGS;
+    private static int[] MOD_BLOCK_STATE_MAPPINGS;
+    private static IntIdentityList SERVER_BLOCK_LIST;
+    private static IntIdentityList CLIENT_BLOCK_LIST;
     private static IntIdentityList BIOME_LIST;
 
     public static void initEntities(int registrySize) {
@@ -137,6 +139,14 @@ public class PacketConsumers {
         ADD_ENTITY_HANDLERS[MEntityTypes.ITEM$registryId] = simpleAddEntityHandler(CommonItemPacketHandler.INSTANCE);
         ADD_ENTITY_HANDLERS[MEntityTypes.ITEM_FRAME$registryId] = simpleAddEntityHandler(ItemFramePacketHandler.INSTANCE);
         ADD_ENTITY_HANDLERS[MEntityTypes.GLOW_ITEM_FRAME$registryId] = simpleAddEntityHandler(ItemFramePacketHandler.INSTANCE);
+        ADD_ENTITY_HANDLERS[MEntityTypes.ENDERMAN$registryId] = simpleAddEntityHandler(EndermanPacketHandler.INSTANCE);
+        ADD_ENTITY_HANDLERS[MEntityTypes.CHEST_MINECART$registryId] = simpleAddEntityHandler(AbstractMinecartPacketHandler.INSTANCE);
+        ADD_ENTITY_HANDLERS[MEntityTypes.COMMAND_BLOCK_MINECART$registryId] = simpleAddEntityHandler(AbstractMinecartPacketHandler.INSTANCE);
+        ADD_ENTITY_HANDLERS[MEntityTypes.FURNACE_MINECART$registryId] = simpleAddEntityHandler(AbstractMinecartPacketHandler.INSTANCE);
+        ADD_ENTITY_HANDLERS[MEntityTypes.HOPPER_MINECART$registryId] = simpleAddEntityHandler(AbstractMinecartPacketHandler.INSTANCE);
+        ADD_ENTITY_HANDLERS[MEntityTypes.MINECART$registryId] = simpleAddEntityHandler(AbstractMinecartPacketHandler.INSTANCE);
+        ADD_ENTITY_HANDLERS[MEntityTypes.SPAWNER_MINECART$registryId] = simpleAddEntityHandler(AbstractMinecartPacketHandler.INSTANCE);
+        ADD_ENTITY_HANDLERS[MEntityTypes.TNT_MINECART$registryId] = simpleAddEntityHandler(AbstractMinecartPacketHandler.INSTANCE);
         ADD_ENTITY_HANDLERS[MEntityTypes.FIREBALL$registryId] = createOptionalCustomProjectileEntityHandler(true);
         ADD_ENTITY_HANDLERS[MEntityTypes.EYE_OF_ENDER$registryId] = createOptionalCustomProjectileEntityHandler(true);
         ADD_ENTITY_HANDLERS[MEntityTypes.FIREWORK_ROCKET$registryId] = createOptionalCustomProjectileEntityHandler(true);
@@ -149,6 +159,9 @@ public class PacketConsumers {
         ADD_ENTITY_HANDLERS[MEntityTypes.TRIDENT$registryId] = createOptionalCustomProjectileEntityHandler(false);
         ADD_ENTITY_HANDLERS[MEntityTypes.ARROW$registryId] = createOptionalCustomProjectileEntityHandler(false);
         ADD_ENTITY_HANDLERS[MEntityTypes.SPECTRAL_ARROW$registryId] = createOptionalCustomProjectileEntityHandler(false);
+        if (VersionHelper.isOrAbove1_20_3()) {
+            ADD_ENTITY_HANDLERS[MEntityTypes.TNT$registryId] = simpleAddEntityHandler(PrimedTNTPacketHandler.INSTANCE);
+        }
         if (VersionHelper.isOrAbove1_20_5()) {
             ADD_ENTITY_HANDLERS[MEntityTypes.OMINOUS_ITEM_SPAWNER$registryId] = simpleAddEntityHandler(CommonItemPacketHandler.INSTANCE);
         }
@@ -215,32 +228,35 @@ public class PacketConsumers {
     }
 
     public static void initBlocks(Map<Integer, Integer> map, int registrySize) {
-        mappings = new int[registrySize];
+        int[] newMappings = new int[registrySize];
         for (int i = 0; i < registrySize; i++) {
-            mappings[i] = i;
+            newMappings[i] = i;
         }
-        mappingsMOD = Arrays.copyOf(mappings, registrySize);
+        int[] newMappingsMOD = Arrays.copyOf(newMappings, registrySize);
         for (Map.Entry<Integer, Integer> entry : map.entrySet()) {
-            mappings[entry.getKey()] = entry.getValue();
+            newMappings[entry.getKey()] = entry.getValue();
             if (BlockStateUtils.isVanillaBlock(entry.getKey())) {
-                mappingsMOD[entry.getKey()] = entry.getValue();
+                newMappingsMOD[entry.getKey()] = entry.getValue();
             }
         }
-        for (int i = 0; i < mappingsMOD.length; i++) {
+        for (int i = 0; i < newMappingsMOD.length; i++) {
             if (BlockStateUtils.isVanillaBlock(i)) {
-                mappingsMOD[i] = remap(i);
+                newMappingsMOD[i] = newMappings[i];
             }
         }
-        BLOCK_LIST = new IntIdentityList(registrySize);
+        BLOCK_STATE_MAPPINGS = newMappings;
+        MOD_BLOCK_STATE_MAPPINGS = newMappingsMOD;
+        SERVER_BLOCK_LIST = new IntIdentityList(registrySize);
+        CLIENT_BLOCK_LIST = new IntIdentityList(BlockStateUtils.vanillaStateSize());
         BIOME_LIST = new IntIdentityList(RegistryUtils.currentBiomeRegistrySize());
     }
 
     public static int remap(int stateId) {
-        return mappings[stateId];
+        return BLOCK_STATE_MAPPINGS[stateId];
     }
 
     public static int remapMOD(int stateId) {
-        return mappingsMOD[stateId];
+        return MOD_BLOCK_STATE_MAPPINGS[stateId];
     }
 
     public static final BiConsumer<NetWorkUser, ByteBufPacketEvent> LEVEL_CHUNK_WITH_LIGHT = (user, event) -> {
@@ -292,26 +308,22 @@ public class PacketConsumers {
                 FriendlyByteBuf friendlyByteBuf = new FriendlyByteBuf(byteBuf);
                 FriendlyByteBuf newBuf = new FriendlyByteBuf(Unpooled.buffer());
                 for (int i = 0, count = player.clientSideSectionCount(); i < count; i++) {
-                    try {
-                        MCSection mcSection = new MCSection(BLOCK_LIST, BIOME_LIST);
-                        mcSection.readPacket(friendlyByteBuf);
-                        PalettedContainer<Integer> container = mcSection.blockStateContainer();
-                        Palette<Integer> palette = container.data().palette();
-                        if (palette.canRemap()) {
-                            palette.remap(PacketConsumers::remapMOD);
-                        } else {
-                            for (int j = 0; j < 4096; j++) {
-                                int state = container.get(j);
-                                int newState = remapMOD(state);
-                                if (newState != state) {
-                                    container.set(j, newState);
-                                }
+                    MCSection mcSection = new MCSection(SERVER_BLOCK_LIST, SERVER_BLOCK_LIST, BIOME_LIST);
+                    mcSection.readPacket(friendlyByteBuf);
+                    PalettedContainer<Integer> container = mcSection.blockStateContainer();
+                    Palette<Integer> palette = container.data().palette();
+                    if (palette.canRemap()) {
+                        palette.remap(PacketConsumers::remapMOD);
+                    } else {
+                        for (int j = 0; j < 4096; j++) {
+                            int state = container.get(j);
+                            int newState = remapMOD(state);
+                            if (newState != state) {
+                                container.set(j, newState);
                             }
                         }
-                        mcSection.writePacket(newBuf);
-                    } catch (Exception e) {
-                        break;
                     }
+                    mcSection.writePacket(newBuf);
                 }
                 buffer = newBuf.array();
             } else {
@@ -319,26 +331,22 @@ public class PacketConsumers {
                 FriendlyByteBuf friendlyByteBuf = new FriendlyByteBuf(byteBuf);
                 FriendlyByteBuf newBuf = new FriendlyByteBuf(Unpooled.buffer());
                 for (int i = 0, count = player.clientSideSectionCount(); i < count; i++) {
-                    try {
-                        MCSection mcSection = new MCSection(BLOCK_LIST, BIOME_LIST);
-                        mcSection.readPacket(friendlyByteBuf);
-                        PalettedContainer<Integer> container = mcSection.blockStateContainer();
-                        Palette<Integer> palette = container.data().palette();
-                        if (palette.canRemap()) {
-                            palette.remap(PacketConsumers::remap);
-                        } else {
-                            for (int j = 0; j < 4096; j++) {
-                                int state = container.get(j);
-                                int newState = remap(state);
-                                if (newState != state) {
-                                    container.set(j, newState);
-                                }
+                    MCSection mcSection = new MCSection(CLIENT_BLOCK_LIST, SERVER_BLOCK_LIST, BIOME_LIST);
+                    mcSection.readPacket(friendlyByteBuf);
+                    PalettedContainer<Integer> container = mcSection.blockStateContainer();
+                    Palette<Integer> palette = container.data().palette();
+                    if (palette.canRemap()) {
+                        palette.remap(PacketConsumers::remap);
+                    } else {
+                        for (int j = 0; j < 4096; j++) {
+                            int state = container.get(j);
+                            int newState = remap(state);
+                            if (newState != state) {
+                                container.set(j, newState);
                             }
                         }
-                        mcSection.writePacket(newBuf);
-                    } catch (Exception e) {
-                        break;
                     }
+                    mcSection.writePacket(newBuf);
                 }
                 buffer = newBuf.array();
             }
@@ -1945,7 +1953,7 @@ public class PacketConsumers {
                 for (int i = 0; i < packedItems.size(); i++) {
                     Object packedItem = packedItems.get(i);
                     int entityDataId = FastNMS.INSTANCE.field$SynchedEntityData$DataValue$id(packedItem);
-                    if (entityDataId != EntityDataUtils.CUSTOM_NAME_DATA_ID) continue;
+                    if (entityDataId != BaseEntityData.CustomName.id()) continue;
                     Optional<Object> optionalTextComponent = (Optional<Object>) FastNMS.INSTANCE.field$SynchedEntityData$DataValue$value(packedItem);
                     if (optionalTextComponent.isEmpty()) continue;
                     Object textComponent = optionalTextComponent.get();
@@ -2241,7 +2249,7 @@ public class PacketConsumers {
     // 因为不能走编码器只能替换对象
     public static final TriConsumer<NetWorkUser, NMSPacketEvent, Object> CONTAINER_CLICK_1_21_5 = (user, event, packet) -> {
         try {
-            var player = (net.momirealms.craftengine.core.entity.player.Player) user;
+            BukkitServerPlayer player = (BukkitServerPlayer) user;
             int containerId = FastNMS.INSTANCE.field$ServerboundContainerClickPacket$containerId(packet);
             int stateId = FastNMS.INSTANCE.field$ServerboundContainerClickPacket$stateId(packet);
             short slotNum = FastNMS.INSTANCE.field$ServerboundContainerClickPacket$slotNum(packet);

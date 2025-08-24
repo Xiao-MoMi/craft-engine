@@ -1,9 +1,6 @@
 package net.momirealms.craftengine.core.item.recipe;
 
-import net.momirealms.craftengine.core.item.CloneableConstantItem;
-import net.momirealms.craftengine.core.item.CustomItem;
-import net.momirealms.craftengine.core.item.Item;
-import net.momirealms.craftengine.core.item.ItemManager;
+import net.momirealms.craftengine.core.item.*;
 import net.momirealms.craftengine.core.item.recipe.reader.VanillaRecipeReader;
 import net.momirealms.craftengine.core.item.recipe.reader.VanillaRecipeReader1_20;
 import net.momirealms.craftengine.core.item.recipe.reader.VanillaRecipeReader1_20_5;
@@ -72,9 +69,13 @@ public abstract class AbstractRecipeSerializer<T, R extends Recipe<T>> implement
         }
         String id = ResourceConfigUtils.requireNonEmptyStringOrThrow(resultMap.get("id"), "warning.config.recipe.result.missing_id");
         int count = ResourceConfigUtils.getAsInt(resultMap.getOrDefault("count", 1), "count");
+        BuildableItem<T> resultItem = (BuildableItem<T>) CraftEngine.instance().itemManager().getBuildableItem(Key.of(id)).orElseThrow(() -> new LocalizedResourceConfigException("warning.config.recipe.invalid_result", id));
+        if (resultItem.isEmpty()) {
+            throw new LocalizedResourceConfigException("warning.config.recipe.invalid_result", id);
+        }
         List<PostProcessor<T>> processors = ResourceConfigUtils.parseConfigAsList(resultMap.get("post-processors"), PostProcessors::fromMap);
-        return (CustomRecipeResult<T>) new CustomRecipeResult<>(
-                CraftEngine.instance().itemManager().getBuildableItem(Key.of(id)).orElseThrow(() -> new LocalizedResourceConfigException("warning.config.recipe.invalid_result", id)),
+        return new CustomRecipeResult<>(
+                resultItem,
                 count,
                 processors.isEmpty() ? null : processors.toArray(new PostProcessor[0])
         );

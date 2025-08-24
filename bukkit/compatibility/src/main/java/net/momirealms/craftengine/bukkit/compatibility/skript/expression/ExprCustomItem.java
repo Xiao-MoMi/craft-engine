@@ -1,6 +1,10 @@
 package net.momirealms.craftengine.bukkit.compatibility.skript.expression;
 
 import ch.njol.skript.Skript;
+import ch.njol.skript.aliases.ItemType;
+import ch.njol.skript.doc.Description;
+import ch.njol.skript.doc.Name;
+import ch.njol.skript.doc.Since;
 import ch.njol.skript.lang.Expression;
 import ch.njol.skript.lang.ExpressionType;
 import ch.njol.skript.lang.SkriptParser;
@@ -14,29 +18,44 @@ import org.bukkit.event.Event;
 import org.bukkit.inventory.ItemStack;
 import org.jetbrains.annotations.Nullable;
 
-public class ExprCustomItem extends SimpleExpression<ItemStack> {
+import java.util.ArrayList;
+import java.util.List;
+
+@Name("CraftEngine Item")
+@Description({"Get CraftEngine items."})
+@Since("1.0")
+public class ExprCustomItem extends SimpleExpression<ItemType> {
 
     public static void register() {
-        Skript.registerExpression(ExprCustomItem.class, ItemStack.class, ExpressionType.SIMPLE, "[(the|a)] custom item [with id] %string%");
+        Skript.registerExpression(ExprCustomItem.class, ItemType.class, ExpressionType.SIMPLE, "[(the|a)] (custom|ce|craft-engine) item [with [namespace] id] %strings%");
     }
 
-    private Expression<String> itemId;
+    private Expression<?> itemIds;
 
     @Override
     @SuppressWarnings("unchecked")
     public boolean init(Expression<?>[] exprs, int matchedPattern, Kleenean isDelayed, SkriptParser.ParseResult parseResult) {
-        itemId = (Expression<String>) exprs[0];
+        itemIds = exprs[0];
         return true;
     }
 
     @Override
     @Nullable
-    protected ItemStack[] get(Event e) {
-        String itemId = this.itemId.getSingle(e);
-        if (itemId == null)
-            return null;
-        CustomItem<ItemStack> customItem = CraftEngineItems.byId(Key.of(itemId));
-        return customItem == null ? null : new ItemStack[] {customItem.buildItemStack(ItemBuildContext.EMPTY)};
+    protected ItemType[] get(Event event) {
+        Object[] objects = itemIds.getArray(event);
+        List<ItemType> items = new ArrayList<>();
+
+        for (Object object : objects) {
+            if (object instanceof String string) {
+                CustomItem<ItemStack> customItem = CraftEngineItems.byId(Key.of(string));
+                if (customItem != null) {
+                    ItemType itemType = new ItemType(customItem.buildItemStack(ItemBuildContext.EMPTY));
+                    items.add(itemType);
+                }
+            }
+        }
+
+        return items.toArray(new ItemType[0]);
     }
 
     @Override
@@ -45,12 +64,12 @@ public class ExprCustomItem extends SimpleExpression<ItemStack> {
     }
 
     @Override
-    public Class<ItemStack> getReturnType() {
-        return ItemStack.class;
+    public Class<ItemType> getReturnType() {
+        return ItemType.class;
     }
 
     @Override
     public String toString(@Nullable Event e, boolean debug) {
-        return "the custom item with id " + itemId.toString(e, debug);
+        return "craft-engine item with id " + itemIds.toString(e, debug);
     }
 }

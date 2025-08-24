@@ -1,5 +1,6 @@
 package net.momirealms.craftengine.bukkit.pack;
 
+import net.momirealms.craftengine.bukkit.api.BukkitAdaptors;
 import net.momirealms.craftengine.bukkit.api.event.AsyncResourcePackGenerateEvent;
 import net.momirealms.craftengine.bukkit.plugin.BukkitCraftEngine;
 import net.momirealms.craftengine.bukkit.plugin.command.feature.ReloadCommand;
@@ -43,7 +44,7 @@ public class BukkitPackManager extends AbstractPackManager implements Listener {
     @EventHandler(priority = EventPriority.LOW)
     public void onPlayerJoin(PlayerJoinEvent event) {
         if (Config.sendPackOnJoin() && !VersionHelper.isOrAbove1_20_2()) {
-            Player player = plugin.adapt(event.getPlayer());
+            Player player = BukkitAdaptors.adapt(event.getPlayer());
             this.sendResourcePack(player);
         }
     }

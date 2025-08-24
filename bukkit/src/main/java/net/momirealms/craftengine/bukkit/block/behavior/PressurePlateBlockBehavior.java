@@ -105,7 +105,6 @@ public class PressurePlateBlockBehavior extends BukkitBlockBehavior {
         if (signalForState == 0) {
             this.checkPressed(args[3], args[1], args[2], state, signalForState, thisBlock);
         } else {
-            // todo 为什么
             FastNMS.INSTANCE.method$ScheduledTickAccess$scheduleBlockTick(args[1], args[2], thisBlock, this.pressedTime);
         }
     }
@@ -189,7 +188,7 @@ public class PressurePlateBlockBehavior extends BukkitBlockBehavior {
         Object pos = args[2];
         Object newState = args[3];
         boolean movedByPiston = (boolean) args[4];
-        if (!movedByPiston && !FastNMS.INSTANCE.method$BlockStateBase$is(state, FastNMS.INSTANCE.method$BlockState$getBlock(newState))) {
+        if (!movedByPiston && !FastNMS.INSTANCE.method$BlockStateBase$isBlock(state, FastNMS.INSTANCE.method$BlockState$getBlock(newState))) {
             if (this.getSignalForState(state) > 0) {
                 this.updateNeighbours(level, pos, thisBlock);
             }

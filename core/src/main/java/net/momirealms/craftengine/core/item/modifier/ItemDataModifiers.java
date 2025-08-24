@@ -3,6 +3,7 @@ package net.momirealms.craftengine.core.item.modifier;
 import net.momirealms.craftengine.core.item.ItemDataModifierFactory;
 import net.momirealms.craftengine.core.item.modifier.lore.DynamicLoreModifier;
 import net.momirealms.craftengine.core.item.modifier.lore.LoreModifier;
+import net.momirealms.craftengine.core.item.modifier.lore.OverwritableLoreModifier;
 import net.momirealms.craftengine.core.registry.BuiltInRegistries;
 import net.momirealms.craftengine.core.registry.Registries;
 import net.momirealms.craftengine.core.registry.WritableRegistry;
@@ -30,7 +31,10 @@ public final class ItemDataModifiers {
     public static final Key ATTRIBUTE_MODIFIERS = Key.of("craftengine:attribute-modifiers");
     public static final Key ATTRIBUTES = Key.of("craftengine:attributes");
     public static final Key ARGUMENTS = Key.of("craftengine:arguments");
+    public static final Key VERSION = Key.of("craftengine:version");
+    public static final Key PDC = Key.of("craftengine:pdc");
     public static final Key ITEM_NAME = Key.of("craftengine:item-name");
+    public static final Key OVERWRITABLE_ITEM_NAME = Key.of("craftengine:overwritable-item-name");
     public static final Key JUKEBOX_PLAYABLE = Key.of("craftengine:jukebox-playable");
     public static final Key REMOVE_COMPONENTS = Key.of("craftengine:remove-components");
     public static final Key TAGS = Key.of("craftengine:tags");
@@ -40,10 +44,15 @@ public final class ItemDataModifiers {
     public static final Key LORE = Key.of("craftengine:lore");
     public static final Key UNBREAKABLE = Key.of("craftengine:unbreakable");
     public static final Key DYNAMIC_LORE = Key.of("craftengine:dynamic-lore");
+    public static final Key OVERWRITABLE_LORE = Key.of("craftengine:overwritable-lore");
 
     public static <T> void register(Key key, ItemDataModifierFactory<T> factory) {
         ((WritableRegistry<ItemDataModifierFactory<?>>) BuiltInRegistries.ITEM_DATA_MODIFIER_FACTORY)
                 .register(ResourceKey.create(Registries.ITEM_DATA_MODIFIER_FACTORY.location(), key), factory);
+        if (key.value().contains("-")) {
+            ((WritableRegistry<ItemDataModifierFactory<?>>) BuiltInRegistries.ITEM_DATA_MODIFIER_FACTORY)
+                    .register(ResourceKey.create(Registries.ITEM_DATA_MODIFIER_FACTORY.location(), new Key(key.namespace(), key.value().replace("-", "_"))), factory);
+        }
     }
 
     public static void init() {}
@@ -52,6 +61,7 @@ public final class ItemDataModifiers {
         register(EXTERNAL, ExternalModifier.FACTORY);
         register(LORE, LoreModifier.FACTORY);
         register(DYNAMIC_LORE, DynamicLoreModifier.FACTORY);
+        register(OVERWRITABLE_LORE, OverwritableLoreModifier.FACTORY);
         register(DYED_COLOR, DyedColorModifier.FACTORY);
         register(TAGS, TagsModifier.FACTORY);
         register(NBT, TagsModifier.FACTORY);
@@ -64,6 +74,8 @@ public final class ItemDataModifiers {
         register(TRIM, TrimModifier.FACTORY);
         register(HIDE_TOOLTIP, HideTooltipModifier.FACTORY);
         register(ARGUMENTS, ArgumentsModifier.FACTORY);
+        register(OVERWRITABLE_ITEM_NAME, OverwritableItemNameModifier.FACTORY);
+        register(PDC, PDCModifier.FACTORY);
         if (VersionHelper.isOrAbove1_20_5()) {
             register(CUSTOM_NAME, CustomNameModifier.FACTORY);
             register(ITEM_NAME, ItemNameModifier.FACTORY);

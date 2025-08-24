@@ -68,58 +68,35 @@ public class BukkitRecipeManager extends AbstractRecipeManager<ItemStack> {
                 return recipe;
             };
 
-    static {
-        try {
-            Key dyeRecipeId = Key.from("armor_dye");
-            MINECRAFT_RECIPE_REMOVER.accept(dyeRecipeId);
-            MINECRAFT_RECIPE_ADDER.apply(dyeRecipeId, RecipeInjector.createCustomDyeRecipe(dyeRecipeId));
-            Key repairRecipeId = Key.from("repair_item");
-            MINECRAFT_RECIPE_REMOVER.accept(repairRecipeId);
-            MINECRAFT_RECIPE_ADDER.apply(repairRecipeId, RecipeInjector.createRepairItemRecipe(repairRecipeId));
-            Key fireworkStarFadeRecipeId = Key.from("firework_star_fade");
-            MINECRAFT_RECIPE_REMOVER.accept(fireworkStarFadeRecipeId);
-            MINECRAFT_RECIPE_ADDER.apply(fireworkStarFadeRecipeId, RecipeInjector.createFireworkStarFadeRecipe(fireworkStarFadeRecipeId));
-        } catch (ReflectiveOperationException e) {
-            throw new ReflectionInitException("Failed to inject special recipes", e);
-        }
-    }
-
-    private static final List<Object> MODIFIED_INGREDIENTS = new ArrayList<>();
     private static final Map<Key, Function<Recipe<ItemStack>, Object>> ADD_RECIPE_FOR_MINECRAFT_RECIPE_HOLDER = Map.of(
             RecipeSerializers.SHAPED, recipe -> {
                 CustomShapedRecipe<ItemStack> shapedRecipe = (CustomShapedRecipe<ItemStack>) recipe;
                 Object mcRecipe = FastNMS.INSTANCE.createShapedRecipe(shapedRecipe);
-                modifyShapedRecipeIngredients(shapedRecipe, mcRecipe);
                 return MINECRAFT_RECIPE_ADDER.apply(recipe.id(), mcRecipe);
             },
             RecipeSerializers.SHAPELESS, recipe -> {
                 CustomShapelessRecipe<ItemStack> shapelessRecipe = (CustomShapelessRecipe<ItemStack>) recipe;
                 Object mcRecipe = FastNMS.INSTANCE.createShapelessRecipe(shapelessRecipe);
-                modifyShapelessRecipeIngredients(shapelessRecipe, mcRecipe);
                 return MINECRAFT_RECIPE_ADDER.apply(recipe.id(), mcRecipe);
             },
             RecipeSerializers.SMELTING, recipe -> {
                 CustomSmeltingRecipe<ItemStack> smeltingRecipe = (CustomSmeltingRecipe<ItemStack>) recipe;
                 Object mcRecipe = FastNMS.INSTANCE.createSmeltingRecipe(smeltingRecipe);
-                modifyCookingRecipeIngredient(smeltingRecipe, mcRecipe);
                 return MINECRAFT_RECIPE_ADDER.apply(recipe.id(), mcRecipe);
             },
             RecipeSerializers.BLASTING, recipe -> {
                 CustomBlastingRecipe<ItemStack> blastingRecipe = (CustomBlastingRecipe<ItemStack>) recipe;
                 Object mcRecipe = FastNMS.INSTANCE.createBlastingRecipe(blastingRecipe);
-                modifyCookingRecipeIngredient(blastingRecipe, mcRecipe);
                 return MINECRAFT_RECIPE_ADDER.apply(recipe.id(), mcRecipe);
             },
             RecipeSerializers.SMOKING, recipe -> {
                 CustomSmokingRecipe<ItemStack> smokingRecipe = (CustomSmokingRecipe<ItemStack>) recipe;
                 Object mcRecipe = FastNMS.INSTANCE.createSmokingRecipe(smokingRecipe);
-                modifyCookingRecipeIngredient(smokingRecipe, mcRecipe);
                 return MINECRAFT_RECIPE_ADDER.apply(recipe.id(), mcRecipe);
             },
             RecipeSerializers.CAMPFIRE_COOKING, recipe -> {
                 CustomCampfireRecipe<ItemStack> campfireRecipe = (CustomCampfireRecipe<ItemStack>) recipe;
                 Object mcRecipe = FastNMS.INSTANCE.createCampfireRecipe(campfireRecipe);
-                modifyCookingRecipeIngredient(campfireRecipe, mcRecipe);
                 return MINECRAFT_RECIPE_ADDER.apply(recipe.id(), mcRecipe);
             },
             RecipeSerializers.STONECUTTING, recipe -> {
@@ -144,11 +121,11 @@ public class BukkitRecipeManager extends AbstractRecipeManager<ItemStack> {
                     .map(Optional::get)
                     .toList();
             if (VersionHelper.isOrAbove1_21_2()) {
-                CoreReflections.field$ShapedRecipe$placementInfo.set(shapedRecipe, null);
+                CoreReflections.methodHandle$ShapedRecipe$placementInfoSetter.invokeExact(shapedRecipe, (Object) null);
             }
             List<Object> ingredients = getIngredientsFromShapedRecipe(shapedRecipe);
             modifyIngredients(ingredients, actualIngredients);
-        } catch (ReflectiveOperationException e) {
+        } catch (Throwable e) {
             CraftEngine.instance().logger().warn("Failed to inject shaped recipe", e);
         }
     }
@@ -158,16 +135,16 @@ public class BukkitRecipeManager extends AbstractRecipeManager<ItemStack> {
         List<Object> ingredients = new ArrayList<>();
         try {
             if (VersionHelper.isOrAbove1_20_3()) {
-                Object pattern = CoreReflections.field$1_20_3$ShapedRecipe$pattern.get(recipe);
+                Object pattern = CoreReflections.methodHandle$1_20_3$ShapedRecipe$patternGetter.invokeExact(recipe);
                 if (VersionHelper.isOrAbove1_21_2()) {
-                    List<Optional<Object>> optionals = (List<Optional<Object>>) CoreReflections.field$ShapedRecipePattern$ingredients1_21_2.get(pattern);
+                    List<Optional<Object>> optionals = (List<Optional<Object>>) CoreReflections.methodHandle$ShapedRecipePattern$ingredients1_21_2Getter.invokeExact(pattern);
                     for (Optional<Object> optional : optionals) {
                         optional.ifPresent(ingredients::add);
                     }
                 } else {
-                    List<Object> objectList = (List<Object>) CoreReflections.field$ShapedRecipePattern$ingredients1_20_3.get(pattern);
+                    List<Object> objectList = (List<Object>) CoreReflections.methodHandle$ShapedRecipePattern$ingredients1_20_3Getter.invokeExact(pattern);
                     for (Object object : objectList) {
-                        Object[] values = (Object[]) CoreReflections.field$Ingredient$values.get(object);
+                        Object[] values = (Object[]) CoreReflections.methodHandle$Ingredient$valuesGetter.invokeExact(object);
                         // is empty or not
                         if (values.length != 0) {
                             ingredients.add(object);
@@ -175,15 +152,15 @@ public class BukkitRecipeManager extends AbstractRecipeManager<ItemStack> {
                     }
                 }
             } else {
-                List<Object> objectList = (List<Object>) CoreReflections.field$1_20_1$ShapedRecipe$recipeItems.get(recipe);
+                List<Object> objectList = (List<Object>) CoreReflections.methodHandle$1_20_1$ShapedRecipe$recipeItemsGetter.invokeExact(recipe);
                 for (Object object : objectList) {
-                    Object[] values = (Object[]) CoreReflections.field$Ingredient$values.get(object);
+                    Object[] values = (Object[]) CoreReflections.methodHandle$Ingredient$valuesGetter.invokeExact(object);
                     if (values.length != 0) {
                         ingredients.add(object);
                     }
                 }
             }
-        } catch (ReflectiveOperationException e) {
+        } catch (Throwable e) {
             CraftEngine.instance().logger().warn("Failed to get ingredients from shaped recipe", e);
         }
         return ingredients;
@@ -193,12 +170,12 @@ public class BukkitRecipeManager extends AbstractRecipeManager<ItemStack> {
         try {
             List<Ingredient<ItemStack>> actualIngredients = recipe.ingredientsInUse();
             if (VersionHelper.isOrAbove1_21_2()) {
-                CoreReflections.field$ShapelessRecipe$placementInfo.set(shapelessRecipe, null);
+                CoreReflections.methodHandle$ShapelessRecipe$placementInfoSetter.invokeExact(shapelessRecipe, (Object) null);
             }
             @SuppressWarnings("unchecked")
-            List<Object> ingredients = (List<Object>) CoreReflections.field$ShapelessRecipe$ingredients.get(shapelessRecipe);
+            List<Object> ingredients = (List<Object>) CoreReflections.methodHandle$ShapelessRecipe$ingredientsGetter.invokeExact(shapelessRecipe);
             modifyIngredients(ingredients, actualIngredients);
-        } catch (ReflectiveOperationException e) {
+        } catch (Throwable e) {
             CraftEngine.instance().logger().warn("Failed to inject shapeless recipe", e);
         }
     }
@@ -208,17 +185,17 @@ public class BukkitRecipeManager extends AbstractRecipeManager<ItemStack> {
             Ingredient<ItemStack> actualIngredient = recipe.ingredient();
             Object ingredient;
             if (VersionHelper.isOrAbove1_21_2()) {
-                ingredient = CoreReflections.field$SingleItemRecipe$input.get(cookingRecipe);
+                ingredient = CoreReflections.methodHandle$SingleItemRecipe$inputGetter.invokeExact(cookingRecipe);
             } else {
-                ingredient = CoreReflections.field$AbstractCookingRecipe$input.get(cookingRecipe);
+                ingredient = CoreReflections.methodHandle$AbstractCookingRecipe$inputGetter.invokeExact(cookingRecipe);
             }
             modifyIngredients(List.of(ingredient), List.of(actualIngredient));
-        } catch (ReflectiveOperationException e) {
+        } catch (Throwable e) {
             CraftEngine.instance().logger().warn("Failed to inject cooking recipe", e);
         }
     }
 
-    private static List<Object> getIngredientLooks(List<UniqueKey> holders) {
+    public static List<Object> getIngredientLooks(List<UniqueKey> holders) {
         List<Object> itemStacks = new ArrayList<>();
         for (UniqueKey holder : holders) {
             Optional<? extends BuildableItem<ItemStack>> buildableItem = BukkitItemManager.instance().getBuildableItem(holder.key());
@@ -230,12 +207,13 @@ public class BukkitRecipeManager extends AbstractRecipeManager<ItemStack> {
                 Item<ItemStack> barrier = BukkitItemManager.instance().createWrappedItem(ItemKeys.BARRIER, null);
                 assert barrier != null;
                 barrier.customNameJson(AdventureHelper.componentToJson(Component.text(holder.key().asString()).color(NamedTextColor.RED)));
+                itemStacks.add(barrier.getLiteralObject());
             }
         }
         return itemStacks;
     }
 
-    private static void modifyIngredients(List<Object> fakeIngredients, List<Ingredient<ItemStack>> actualIngredients) throws ReflectiveOperationException {
+    private static void modifyIngredients(List<Object> fakeIngredients, List<Ingredient<ItemStack>> actualIngredients) throws Throwable {
         if (fakeIngredients.size() != actualIngredients.size()) {
             throw new IllegalArgumentException("Ingredient count mismatch");
         }
@@ -244,17 +222,16 @@ public class BukkitRecipeManager extends AbstractRecipeManager<ItemStack> {
             Ingredient<ItemStack> actualIngredient = actualIngredients.get(i);
             List<Object> items = getIngredientLooks(actualIngredient.items());
             if (VersionHelper.isOrAbove1_21_4()) {
-                CoreReflections.field$Ingredient$itemStacks1_21_4.set(ingredient, new HashSet<>(items));
+                CoreReflections.methodHandle$Ingredient$itemStacksSetter.invokeExact(ingredient, (Set<Object>) new CustomIngredientSet(items, actualIngredient));
             } else if (VersionHelper.isOrAbove1_21_2()) {
-                CoreReflections.field$Ingredient$itemStacks1_21_2.set(ingredient, items);
+                CoreReflections.methodHandle$Ingredient$itemStacksSetter.invokeExact(ingredient, (List<Object>) new CustomIngredientList(items, actualIngredient));
             } else {
                 Object itemStackArray = Array.newInstance(CoreReflections.clazz$ItemStack, items.size());
                 for (int j = 0; j < items.size(); j++) {
                     Array.set(itemStackArray, j, items.get(j));
                 }
-                CoreReflections.field$Ingredient$itemStacks1_20_1.set(ingredient, itemStackArray);
+                CoreReflections.methodHandle$Ingredient$itemStacksSetter.invokeExact(ingredient, (Object) itemStackArray);
             }
-            MODIFIED_INGREDIENTS.add(ingredient);
         }
     }
 
@@ -308,9 +285,9 @@ public class BukkitRecipeManager extends AbstractRecipeManager<ItemStack> {
         if (!Config.enableRecipeSystem()) return;
         if (VersionHelper.isOrAbove1_21_2()) {
             try {
-                this.stolenFeatureFlagSet = CoreReflections.field$RecipeManager$featureflagset.get(minecraftRecipeManager());
-                CoreReflections.field$RecipeManager$featureflagset.set(minecraftRecipeManager(), null);
-            } catch (ReflectiveOperationException e) {
+                this.stolenFeatureFlagSet = CoreReflections.methodHandle$RecipeManager$featureflagsetGetter.invokeExact(minecraftRecipeManager());
+                CoreReflections.methodHandle$RecipeManager$featureflagsetSetter.invokeExact(minecraftRecipeManager(), (Object) null);
+            } catch (Throwable e) {
                 this.plugin.logger().warn("Failed to steal feature flag set", e);
             }
         }
@@ -398,41 +375,44 @@ public class BukkitRecipeManager extends AbstractRecipeManager<ItemStack> {
             this.replacedDatapackRecipes.clear();
             try {
                 this.lastDatapackRecipes = scanResources();
-            } catch (ReflectiveOperationException e) {
+            } catch (Throwable e) {
                 this.plugin.logger().warn("Failed to load datapack recipes", e);
             }
         }
+
+        if (Config.disableAllVanillaRecipes()) {
+            this.recipesToUnregister.addAll(this.lastDatapackRecipes.keySet().stream().map(it -> Pair.of(it, false)).toList());
+            return;
+        }
+
+        boolean hasDisabledAny = !Config.disabledVanillaRecipes().isEmpty();
         for (Map.Entry<Key, Recipe<ItemStack>> entry : this.lastDatapackRecipes.entrySet()) {
+            if (hasDisabledAny && Config.disabledVanillaRecipes().contains(entry.getKey())) {
+                this.recipesToUnregister.add(Pair.of(entry.getKey(), false));
+                continue;
+            }
             markAsDataPackRecipe(entry.getKey());
             registerInternalRecipe(entry.getKey(), entry.getValue());
         }
     }
 
     @SuppressWarnings("unchecked")
-    private Map<Key, Recipe<ItemStack>> scanResources() throws ReflectiveOperationException {
-        Object fileToIdConverter = CoreReflections.method$FileToIdConverter$json.invoke(null, VersionHelper.isOrAbove1_21() ? "recipe" : "recipes");
+    private Map<Key, Recipe<ItemStack>> scanResources() throws Throwable {
+        Object fileToIdConverter = CoreReflections.methodHandle$FileToIdConverter$json.invokeExact((String) (VersionHelper.isOrAbove1_21() ? "recipe" : "recipes"));
         Object minecraftServer = FastNMS.INSTANCE.method$MinecraftServer$getServer();
-        Object packRepository = CoreReflections.method$MinecraftServer$getPackRepository.invoke(minecraftServer);
-        List<Object> selected = (List<Object>) CoreReflections.field$PackRepository$selected.get(packRepository);
+        Object packRepository = CoreReflections.methodHandle$MinecraftServer$getPackRepository.invokeExact(minecraftServer);
+        List<Object> selected = (List<Object>) CoreReflections.methodHandle$PackRepository$selectedGetter.invokeExact(packRepository);
         List<Object> packResources = new ArrayList<>();
         for (Object pack : selected) {
-            packResources.add(CoreReflections.method$Pack$open.invoke(pack));
+            packResources.add(CoreReflections.methodHandle$Pack$open.invokeExact(pack));
         }
         Map<Key, Recipe<ItemStack>> recipes = new HashMap<>();
-        boolean hasDisabledAny = !Config.disabledVanillaRecipes().isEmpty();
-        try (AutoCloseable resourceManager = (AutoCloseable) CoreReflections.constructor$MultiPackResourceManager.newInstance(CoreReflections.instance$PackType$SERVER_DATA, packResources)) {
-            Map<Object, Object> scannedResources = (Map<Object, Object>) CoreReflections.method$FileToIdConverter$listMatchingResources.invoke(fileToIdConverter, resourceManager);
+
+        try (AutoCloseable resourceManager = (AutoCloseable) CoreReflections.methodHandle$MultiPackResourceManagerConstructor.invokeExact(CoreReflections.instance$PackType$SERVER_DATA, packResources)) {
+            Map<Object, Object> scannedResources = (Map<Object, Object>) CoreReflections.methodHandle$FileToIdConverter$listMatchingResources.invokeExact(fileToIdConverter, resourceManager);
             for (Map.Entry<Object, Object> entry : scannedResources.entrySet()) {
                 Key id = extractKeyFromResourceLocation(entry.getKey().toString());
-                if (Config.disableAllVanillaRecipes()) {
-                    this.recipesToUnregister.add(new Pair<>(id, false));
-                    continue;
-                }
-                if (hasDisabledAny && Config.disabledVanillaRecipes().contains(id)) {
-                    this.recipesToUnregister.add(new Pair<>(id, false));
-                    continue;
-                }
-                Reader reader = (Reader) CoreReflections.method$Resource$openAsReader.invoke(entry.getValue());
+                Reader reader = (Reader) CoreReflections.methodHandle$Resource$openAsReader.invokeExact(entry.getValue());
                 JsonObject jsonObject = JsonParser.parseReader(reader).getAsJsonObject();
                 Key serializerType = Key.of(jsonObject.get("type").getAsString());
                 RecipeSerializer<ItemStack, ? extends Recipe<ItemStack>> serializer = (RecipeSerializer<ItemStack, ? extends Recipe<ItemStack>>) BuiltInRegistries.RECIPE_SERIALIZER.getValue(serializerType);
@@ -446,7 +426,7 @@ public class BukkitRecipeManager extends AbstractRecipeManager<ItemStack> {
                     this.plugin.logger().warn("Failed to load data pack recipe " + id + ". Json: " + jsonObject, e);
                 }
             }
-        } catch (Exception e) {
+        } catch (Throwable e) {
             this.plugin.logger().warn("Unknown error occurred when loading data pack recipes", e);
         }
         return recipes;
@@ -469,6 +449,9 @@ public class BukkitRecipeManager extends AbstractRecipeManager<ItemStack> {
         for (Pair<Key, Boolean> pair : this.recipesToUnregister) {
             unregisterPlatformRecipeMainThread(pair.left(), pair.right());
         }
+
+        this.recipesToUnregister.clear();
+
         // 注册新的配方
         for (Recipe<ItemStack> recipe : this.byId.values()) {
             try {
@@ -477,35 +460,37 @@ public class BukkitRecipeManager extends AbstractRecipeManager<ItemStack> {
                 this.plugin.logger().warn("Failed to register recipe " + recipe.id().toString(), e);
             }
         }
+
+        // 重新注入特殊配方
+        try {
+            Key dyeRecipeId = Key.from("armor_dye");
+            MINECRAFT_RECIPE_REMOVER.accept(dyeRecipeId);
+            MINECRAFT_RECIPE_ADDER.apply(dyeRecipeId, RecipeInjector.createCustomDyeRecipe(dyeRecipeId));
+            Key repairRecipeId = Key.from("repair_item");
+            MINECRAFT_RECIPE_REMOVER.accept(repairRecipeId);
+            MINECRAFT_RECIPE_ADDER.apply(repairRecipeId, RecipeInjector.createRepairItemRecipe(repairRecipeId));
+            Key fireworkStarFadeRecipeId = Key.from("firework_star_fade");
+            MINECRAFT_RECIPE_REMOVER.accept(fireworkStarFadeRecipeId);
+            MINECRAFT_RECIPE_ADDER.apply(fireworkStarFadeRecipeId, RecipeInjector.createFireworkStarFadeRecipe(fireworkStarFadeRecipeId));
+        } catch (ReflectiveOperationException e) {
+            throw new ReflectionInitException("Failed to inject special recipes", e);
+        }
+
         try {
             // give flags back on 1.21.2+
             if (VersionHelper.isOrAbove1_21_2() && this.stolenFeatureFlagSet != null) {
-                CoreReflections.field$RecipeManager$featureflagset.set(minecraftRecipeManager(), this.stolenFeatureFlagSet);
+                CoreReflections.methodHandle$RecipeManager$featureflagsetSetter.invokeExact(minecraftRecipeManager(), (Object) this.stolenFeatureFlagSet);
                 this.stolenFeatureFlagSet = null;
             }
 
             // refresh recipes
             if (VersionHelper.isOrAbove1_21_2()) {
-                CoreReflections.method$RecipeManager$finalizeRecipeLoading.invoke(minecraftRecipeManager());
+                CoreReflections.methodHandle$RecipeManager$finalizeRecipeLoading.invokeExact(minecraftRecipeManager());
             }
 
             // send to players
-            CoreReflections.method$DedicatedPlayerList$reloadRecipes.invoke(CraftBukkitReflections.field$CraftServer$playerList.get(Bukkit.getServer()));
-
-            // now we need to remove the fake `exact` choices
-            if (VersionHelper.isOrAbove1_21_4()) {
-                for (Object ingredient : MODIFIED_INGREDIENTS) {
-                    CoreReflections.field$Ingredient$itemStacks1_21_4.set(ingredient, null);
-                }
-            } else if (VersionHelper.isOrAbove1_21_2()) {
-                for (Object ingredient : MODIFIED_INGREDIENTS) {
-                    CoreReflections.field$Ingredient$itemStacks1_21_2.set(ingredient, null);
-                }
-            }
-
-            // clear cache
-            MODIFIED_INGREDIENTS.clear();
-        } catch (Exception e) {
+            CoreReflections.methodHandle$DedicatedPlayerList$reloadRecipes.invokeExact(CraftBukkitReflections.methodHandle$CraftServer$playerListGetter.invokeExact(Bukkit.getServer()));
+        } catch (Throwable e) {
             this.plugin.logger().warn("Failed to run delayed recipe tasks", e);
         }
     }

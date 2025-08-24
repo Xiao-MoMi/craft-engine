@@ -9,7 +9,7 @@ import org.bukkit.Location;
 import org.bukkit.World;
 import org.jetbrains.annotations.NotNull;
 
-public class LocationUtils {
+public final class LocationUtils {
 
     private LocationUtils() {}
 

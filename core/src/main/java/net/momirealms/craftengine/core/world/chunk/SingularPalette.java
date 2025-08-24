@@ -18,7 +18,7 @@ public class SingularPalette<T> implements Palette<T> {
         this.idList = idList;
         this.listener = listener;
         if (!entries.isEmpty()) {
-            this.entry = entries.get(0);
+            this.entry = entries.getFirst();
         }
     }
 

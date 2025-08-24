@@ -57,6 +57,22 @@ public final class CraftEngineBlocks {
     }
 
     /**
+     * Place a custom block
+     *
+     * @param location location
+     * @param blockId block owner id
+     * @param playSound whether to play place sounds
+     * @return success or not
+     */
+    public static boolean place(@NotNull Location location,
+                                @NotNull Key blockId,
+                                boolean playSound) {
+        CustomBlock block = byId(blockId);
+        if (block == null) return false;
+        return place(location, block.defaultState(), UpdateOption.UPDATE_ALL, playSound);
+    }
+
+    /**
      * Place a custom block with given properties
      *
      * @param location location

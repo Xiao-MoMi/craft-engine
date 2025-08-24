@@ -5,7 +5,7 @@ import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.CoreReflect
 import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.MBuiltInRegistries;
 import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.MRegistries;
 
-public class RegistryUtils {
+public final class RegistryUtils {
 
     private RegistryUtils() {}
 

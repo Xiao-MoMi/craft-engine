@@ -372,6 +372,11 @@ public class AbstractItem<W extends ItemWrapper<I>, I> implements Item<I> {
     }
 
     @Override
+    public boolean hasNonDefaultComponent(Object type) {
+        return this.factory.hasNonDefaultComponent(this.item, type);
+    }
+
+    @Override
     public void removeComponent(Object type) {
         this.factory.removeComponent(this.item, type);
     }

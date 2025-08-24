@@ -69,6 +69,8 @@ public abstract class ItemFactory<W extends ItemWrapper<I>, I> {
 
     protected abstract void resetComponent(W item, Object type);
 
+    protected abstract boolean hasNonDefaultComponent(W item, Object type);
+
     protected abstract I getItem(W item);
 
     protected abstract void customModelData(W item, Integer data);

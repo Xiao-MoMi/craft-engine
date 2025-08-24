@@ -10,6 +10,8 @@ public final class CommonConditions {
     public static final Key ANY_OF = Key.of("craftengine:any_of");
     public static final Key INVERTED = Key.of("craftengine:inverted");
     public static final Key MATCH_ITEM = Key.of("craftengine:match_item");
+    public static final Key MATCH_ENTITY_TYPE = Key.of("craftengine:match_entity_type");
+    public static final Key MATCH_BLOCK_TYPE = Key.of("craftengine:match_block_type");
     public static final Key MATCH_BLOCK_PROPERTY = Key.from("craftengine:match_block_property");
     public static final Key TABLE_BONUS = Key.from("craftengine:table_bonus");
     public static final Key SURVIVES_EXPLOSION = Key.from("craftengine:survives_explosion");

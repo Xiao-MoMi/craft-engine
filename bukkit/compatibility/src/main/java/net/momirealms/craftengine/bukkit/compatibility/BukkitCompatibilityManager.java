@@ -39,8 +39,6 @@ public class BukkitCompatibilityManager implements CompatibilityManager {
     private final Map<String, ModelProvider> modelProviders;
     private final Map<String, LevelerProvider> levelerProviders;
     private boolean hasPlaceholderAPI;
-    private boolean hasViaVersion;
-    private MythicSkillHelper skillExecute;
 
     public BukkitCompatibilityManager(BukkitCraftEngine plugin) {
         this.plugin = plugin;
@@ -63,26 +61,12 @@ public class BukkitCompatibilityManager implements CompatibilityManager {
             this.hasPlaceholderAPI = true;
             logHook("PlaceholderAPI");
         }
-        // skript
         if (this.isPluginEnabled("Skript")) {
             SkriptHook.register();
             logHook("Skript");
-            Plugin skriptPlugin = getPlugin("Skript");
-            // This can cause bugs, needs to find a better way
-//            for (BukkitTask task : Bukkit.getScheduler().getPendingTasks()) {
-//                if (task.getOwner() == skriptPlugin) {
-//                    task.cancel();
-//                    if (VersionHelper.isFolia()) {
-//                        Bukkit.getGlobalRegionScheduler().run(skriptPlugin, (t) -> {
-//                            FastNMS.INSTANCE.getBukkitTaskRunnable(task).run();
-//                        });
-//                    } else {
-//                        Bukkit.getScheduler().runTask(skriptPlugin, FastNMS.INSTANCE.getBukkitTaskRunnable(task));
-//                    }
-//                }
-//            }
         }
         // WorldEdit
+        // FastAsyncWorldEdit
         if (this.isPluginEnabled("FastAsyncWorldEdit")) {
             try {
                 this.initFastAsyncWorldEditHook();

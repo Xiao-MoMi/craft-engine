@@ -10,12 +10,12 @@ import java.util.Optional;
 public class ExprEntityFurnitureID extends SimplePropertyExpression<Object, String> {
 
     public static void register() {
-        register(ExprEntityFurnitureID.class, String.class, "furniture id", "entities");
+        register(ExprEntityFurnitureID.class, String.class, "[(custom|ce|craft-engine)] furniture [namespace] id", "entities");
     }
 
     @Override
     public @Nullable String convert(Object object) {
-        if (object instanceof Entity entity && CraftEngineFurniture.isFurniture(entity)) {
+        if (object instanceof Entity entity) {
             return Optional.ofNullable(CraftEngineFurniture.getLoadedFurnitureByBaseEntity(entity))
                     .map(it -> it.id().toString())
                     .orElse(null);

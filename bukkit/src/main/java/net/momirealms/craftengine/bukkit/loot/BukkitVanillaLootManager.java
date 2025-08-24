@@ -1,5 +1,6 @@
 package net.momirealms.craftengine.bukkit.loot;
 
+import net.momirealms.craftengine.bukkit.api.BukkitAdaptors;
 import net.momirealms.craftengine.bukkit.plugin.BukkitCraftEngine;
 import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.MBlocks;
 import net.momirealms.craftengine.bukkit.plugin.user.BukkitServerPlayer;
@@ -72,7 +73,7 @@ public class BukkitVanillaLootManager extends AbstractVanillaLootManager impleme
             BukkitServerPlayer optionalPlayer = null;
             if (VersionHelper.isOrAbove1_20_5()) {
                 if (event.getDamageSource().getCausingEntity() instanceof Player player) {
-                    optionalPlayer = this.plugin.adapt(player);
+                    optionalPlayer = BukkitAdaptors.adapt(player);
                     builder.withParameter(DirectContextParameters.PLAYER, optionalPlayer);
                 }
             }

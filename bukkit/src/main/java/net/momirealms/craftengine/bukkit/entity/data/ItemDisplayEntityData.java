@@ -4,7 +4,7 @@ import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.CoreReflect
 
 public class ItemDisplayEntityData<T> extends DisplayEntityData<T> {
     // Item display only
-    public static final DisplayEntityData<Object> DisplayedItem = new ItemDisplayEntityData<>(ItemDisplayEntityData.class, EntityDataValue.Serializers$ITEM_STACK, CoreReflections.instance$ItemStack$EMPTY);
+    public static final ItemDisplayEntityData<Object> DisplayedItem = new ItemDisplayEntityData<>(ItemDisplayEntityData.class, EntityDataValue.Serializers$ITEM_STACK, CoreReflections.instance$ItemStack$EMPTY);
     /**
      * Display type:
      * 0 = NONE
@@ -17,7 +17,7 @@ public class ItemDisplayEntityData<T> extends DisplayEntityData<T> {
      * 7 = GROUND
      * 8 = FIXED
      */
-    public static final DisplayEntityData<Byte> DisplayType = new ItemDisplayEntityData<>(ItemDisplayEntityData.class, EntityDataValue.Serializers$BYTE, (byte) 0);
+    public static final ItemDisplayEntityData<Byte> DisplayType = new ItemDisplayEntityData<>(ItemDisplayEntityData.class, EntityDataValue.Serializers$BYTE, (byte) 0);
 
     public ItemDisplayEntityData(Class<?> clazz, Object serializer, T defaultValue) {
         super(clazz, serializer, defaultValue);

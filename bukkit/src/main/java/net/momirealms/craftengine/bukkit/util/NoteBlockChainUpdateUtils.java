@@ -2,7 +2,7 @@ package net.momirealms.craftengine.bukkit.util;
 
 import net.momirealms.craftengine.bukkit.nms.FastNMS;
 
-public class NoteBlockChainUpdateUtils {
+public final class NoteBlockChainUpdateUtils {
 
     private NoteBlockChainUpdateUtils() {}
 

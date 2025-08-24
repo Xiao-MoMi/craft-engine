@@ -10,6 +10,7 @@ import net.momirealms.craftengine.bukkit.util.LocationUtils;
 import net.momirealms.craftengine.core.block.CustomBlock;
 import net.momirealms.craftengine.core.block.ImmutableBlockState;
 import net.momirealms.craftengine.core.item.context.BlockPlaceContext;
+import net.momirealms.craftengine.core.util.Key;
 import net.momirealms.craftengine.core.world.BlockInWorld;
 import net.momirealms.craftengine.core.world.World;
 
@@ -61,6 +62,15 @@ public class BukkitBlockInWorld implements BlockInWorld {
     @Override
     public int z() {
         return this.block.getZ();
+    }
+
+    @Override
+    public Key type() {
+        CustomBlock customBlock = customBlock();
+        if (customBlock == null) {
+            return BlockStateUtils.getBlockOwnerIdFromData(this.block.getBlockData());
+        }
+        return customBlock.id();
     }
 
     @Override

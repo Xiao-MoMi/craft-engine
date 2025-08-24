@@ -1,10 +1,12 @@
 package net.momirealms.craftengine.bukkit.plugin.reflection.bukkit;
 
+import net.momirealms.craftengine.bukkit.plugin.reflection.ReflectionInitException;
 import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.CoreReflections;
 import net.momirealms.craftengine.bukkit.util.BukkitReflectionUtils;
 import net.momirealms.craftengine.core.util.ReflectionUtils;
 import net.momirealms.craftengine.core.util.VersionHelper;
 import org.bukkit.NamespacedKey;
+import org.bukkit.Server;
 import org.bukkit.block.BlockState;
 import org.bukkit.block.data.BlockData;
 import org.bukkit.entity.HumanEntity;
@@ -12,6 +14,8 @@ import org.bukkit.event.block.BlockPhysicsEvent;
 import org.bukkit.event.block.BlockPlaceEvent;
 import org.bukkit.inventory.*;
 
+import java.lang.invoke.MethodHandle;
+import java.lang.invoke.MethodType;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
@@ -201,6 +205,17 @@ public final class CraftBukkitReflections {
             ReflectionUtils.getDeclaredField(clazz$CraftServer, CoreReflections.clazz$DedicatedPlayerList, 0)
     );
 
+    public static final MethodHandle methodHandle$CraftServer$playerListGetter;
+
+    static {
+        try {
+            methodHandle$CraftServer$playerListGetter = ReflectionUtils.unreflectGetter(field$CraftServer$playerList)
+                    .asType(MethodType.methodType(Object.class, Server.class));
+        } catch (Exception e) {
+            throw new ReflectionInitException("Failed to initialize methodHandle$CraftServer$playerList", e);
+        }
+    }
+
     public static final Class<?> clazz$CraftInventoryCrafting = requireNonNull(
             ReflectionUtils.getClazz(BukkitReflectionUtils.assembleCBClass("inventory.CraftInventoryCrafting"))
     );
@@ -352,5 +367,9 @@ public final class CraftBukkitReflections {
 
     public static final Method method$Level$getCraftWorld = requireNonNull(
             ReflectionUtils.getMethod(CoreReflections.clazz$Level, clazz$CraftWorld)
+    );
+
+    public static final Class<?> clazz$MinecraftInventory = requireNonNull(
+            ReflectionUtils.getClazz(BukkitReflectionUtils.assembleCBClass("inventory.CraftInventoryCustom$MinecraftInventory"))
     );
 }

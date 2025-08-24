@@ -12,9 +12,11 @@ import net.momirealms.craftengine.bukkit.plugin.network.id.PacketIdFinder;
 import net.momirealms.craftengine.bukkit.plugin.network.id.PacketIds1_20;
 import net.momirealms.craftengine.bukkit.plugin.network.id.PacketIds1_20_5;
 import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.CoreReflections;
+import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.LeavesReflections;
 import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.LibraryReflections;
 import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.NetworkReflections;
 import net.momirealms.craftengine.bukkit.plugin.user.BukkitServerPlayer;
+import net.momirealms.craftengine.bukkit.plugin.user.FakeBukkitServerPlayer;
 import net.momirealms.craftengine.bukkit.util.KeyUtils;
 import net.momirealms.craftengine.core.plugin.CraftEngine;
 import net.momirealms.craftengine.core.plugin.context.CooldownData;
@@ -142,6 +144,47 @@ public class BukkitNetworkManager implements NetworkManager, Listener, PluginMes
         } catch (ReflectiveOperationException e) {
             throw new RuntimeException("Failed to init server connection", e);
         }
+        // Inject Leaves bot list
+        if (VersionHelper.isLeaves()) {
+            this.injectLeavesBotList();
+        }
+    }
+
+    public static BukkitNetworkManager instance() {
+        return instance;
+    }
+
+    public void addFakePlayer(Player player) {
+        FakeBukkitServerPlayer fakePlayer = new FakeBukkitServerPlayer(this.plugin);
+        fakePlayer.setPlayer(player);
+        this.onlineUsers.put(player.getUniqueId(), fakePlayer);
+        this.resetUserArray();
+    }
+
+    public boolean removeFakePlayer(Player player) {
+        BukkitServerPlayer fakePlayer = this.onlineUsers.get(player.getUniqueId());
+        if (!(fakePlayer instanceof FakeBukkitServerPlayer)) {
+            return false;
+        }
+        this.onlineUsers.remove(player.getUniqueId());
+        this.resetUserArray();
+        this.saveCooldown(player, fakePlayer.cooldown());
+        return true;
+    }
+
+    @SuppressWarnings("unchecked")
+    private void injectLeavesBotList() {
+        try {
+            Object botList = LeavesReflections.field$BotList$INSTANCE.get(null);
+            List<Object> bots = (List<Object>) LeavesReflections.field$BotList$bots.get(botList);
+            ListMonitor<Object> monitor = new ListMonitor<>(bots,
+                    (bot) -> addFakePlayer(FastNMS.INSTANCE.method$ServerPlayer$getBukkitEntity(bot)),
+                    (bot) -> removeFakePlayer(FastNMS.INSTANCE.method$ServerPlayer$getBukkitEntity(bot))
+            );
+            LeavesReflections.field$BotList$bots.set(botList, monitor);
+        } catch (ReflectiveOperationException e) {
+            this.plugin.logger().severe("Failed to inject leaves bot list");
+        }
     }
 
     private void registerPacketHandlers() {
@@ -203,10 +246,6 @@ public class BukkitNetworkManager implements NetworkManager, Listener, PluginMes
         registerC2SByteBufPacketConsumer(PacketConsumers.INTERACT_ENTITY, this.packetIds.serverboundInteractPacket());
     }
 
-    public static BukkitNetworkManager instance() {
-        return instance;
-    }
-
     @EventHandler(priority = EventPriority.LOWEST)
     public void onPlayerJoin(PlayerJoinEvent event) {
         Player player = event.getPlayer();
@@ -215,10 +254,10 @@ public class BukkitNetworkManager implements NetworkManager, Listener, PluginMes
             user.setPlayer(player);
             this.onlineUsers.put(player.getUniqueId(), user);
             this.resetUserArray();
+            // folia在此tick每个玩家
             if (VersionHelper.isFolia()) {
                 player.getScheduler().runAtFixedRate(plugin.javaPlugin(), (t) -> user.tick(),
-                        () -> {
-                        }, 1, 1);
+                        () -> {}, 1, 1);
             }
         }
     }
@@ -282,7 +321,7 @@ public class BukkitNetworkManager implements NetworkManager, Listener, PluginMes
     }
 
     @Override
-    public NetWorkUser getUser(Channel channel) {
+    public NetWorkUser getUser(@NotNull Channel channel) {
         ChannelPipeline pipeline = channel.pipeline();
         return this.users.get(pipeline);
     }
@@ -298,14 +337,18 @@ public class BukkitNetworkManager implements NetworkManager, Listener, PluginMes
         return getChannel((Player) player.platformPlayer());
     }
 
+    @Nullable
     public NetWorkUser getUser(Player player) {
         return getUser(getChannel(player));
     }
 
+    @Nullable
     public NetWorkUser getOnlineUser(Player player) {
         return this.onlineUsers.get(player.getUniqueId());
     }
 
+    // 当假人的时候channel为null
+    @NotNull
     public Channel getChannel(Player player) {
         return FastNMS.INSTANCE.field$Connection$channel(
                 FastNMS.INSTANCE.field$ServerGamePacketListenerImpl$connection(
@@ -318,6 +361,7 @@ public class BukkitNetworkManager implements NetworkManager, Listener, PluginMes
 
     @Override
     public void sendPacket(@NotNull NetWorkUser player, Object packet, boolean immediately, Runnable sendListener) {
+        if (player.isFakePlayer()) return;
         if (immediately) {
             this.immediatePacketConsumer.accept(player.nettyChannel(), packet, sendListener);
         } else {
@@ -327,6 +371,7 @@ public class BukkitNetworkManager implements NetworkManager, Listener, PluginMes
 
     @Override
     public void sendPackets(@NotNull NetWorkUser player, List<Object> packet, boolean immediately, Runnable sendListener) {
+        if (player.isFakePlayer()) return;
         if (immediately) {
             this.immediatePacketsConsumer.accept(player.nettyChannel(), packet, sendListener);
         } else {

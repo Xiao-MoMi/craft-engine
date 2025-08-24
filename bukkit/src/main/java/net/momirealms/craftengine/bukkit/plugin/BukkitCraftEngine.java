@@ -50,6 +50,7 @@ import org.bukkit.World;
 import org.bukkit.command.CommandSender;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.plugin.java.JavaPlugin;
+import org.jetbrains.annotations.NotNull;
 import org.jspecify.annotations.Nullable;
 
 import java.io.*;
@@ -58,7 +59,6 @@ import java.net.URLConnection;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Objects;
-import java.util.Optional;
 
 @SuppressWarnings("unchecked")
 public class BukkitCraftEngine extends CraftEngine {
@@ -123,7 +123,7 @@ public class BukkitCraftEngine extends CraftEngine {
     @Override
     public void onPluginLoad() {
         if (super.blockManager == null) {
-            injectRegistries();
+            this.injectRegistries();
         }
         try {
             WorldStorageInjector.init();
@@ -363,11 +363,9 @@ public class BukkitCraftEngine extends CraftEngine {
         }
     }
 
-    public BukkitServerPlayer adapt(org.bukkit.entity.Player player) {
-        if (player == null) return null;
-        return Optional.ofNullable((BukkitServerPlayer) networkManager().getOnlineUser(player)).orElseGet(
-                () -> (BukkitServerPlayer) networkManager().getUser(player)
-        );
+    public BukkitServerPlayer adapt(@NotNull org.bukkit.entity.Player player) {
+        Objects.requireNonNull(player, "player cannot be null");
+        return (BukkitServerPlayer) networkManager().getOnlineUser(player);
     }
 
     public AntiGriefLib antiGriefProvider() {

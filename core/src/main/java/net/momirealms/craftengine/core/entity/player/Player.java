@@ -52,6 +52,14 @@ public abstract class Player extends AbstractEntity implements NetWorkUser {
 
     public abstract boolean isSneaking();
 
+    public abstract boolean isSwimming();
+
+    public abstract boolean isClimbing();
+
+    public abstract boolean isGliding();
+
+    public abstract boolean isFlying();
+
     public abstract GameMode gameMode();
 
     public abstract void setGameMode(GameMode gameMode);
@@ -106,9 +114,9 @@ public abstract class Player extends AbstractEntity implements NetWorkUser {
 
     public abstract void performCommand(String command);
 
-    public abstract double luck();
+    public abstract void performCommandAsEvent(String command);
 
-    public abstract boolean isFlying();
+    public abstract double luck();
 
     @Override
     public Key type() {

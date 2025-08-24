@@ -6,7 +6,7 @@ import net.momirealms.craftengine.bukkit.nms.FastNMS;
 import net.momirealms.craftengine.bukkit.plugin.reflection.paper.PaperReflections;
 import net.momirealms.craftengine.core.util.AdventureHelper;
 
-public class ComponentUtils {
+public final class ComponentUtils {
 
     private ComponentUtils() {}
 

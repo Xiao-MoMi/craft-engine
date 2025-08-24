@@ -99,8 +99,10 @@ public class CustomSmithingTransformRecipe<T> extends AbstractedFixedResultRecip
         if (this.mergeComponents) {
             finalResult = base.mergeCopy(wrappedResult);
         }
-        for (ItemDataProcessor processor : this.processors) {
-            processor.accept(base, wrappedResult, finalResult);
+        if (this.processors != null) {
+            for (ItemDataProcessor processor : this.processors) {
+                processor.accept(base, wrappedResult, finalResult);
+            }
         }
         return finalResult.getItem();
     }
@@ -212,7 +214,7 @@ public class CustomSmithingTransformRecipe<T> extends AbstractedFixedResultRecip
             for (Key component : this.components) {
                 Object componentObj = item1.getExactComponent(component);
                 if (componentObj != null) {
-                    item3.setComponent(component, componentObj);
+                    item3.setExactComponent(component, componentObj);
                 }
             }
         }

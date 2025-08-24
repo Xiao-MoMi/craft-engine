@@ -1,8 +1,11 @@
 package net.momirealms.craftengine.bukkit.plugin.command.feature;
 
 import net.kyori.adventure.text.Component;
+import net.momirealms.craftengine.bukkit.api.CraftEngineItems;
+import net.momirealms.craftengine.bukkit.item.BukkitItemManager;
 import net.momirealms.craftengine.bukkit.plugin.command.BukkitCommandFeature;
 import net.momirealms.craftengine.bukkit.util.PlayerUtils;
+import net.momirealms.craftengine.core.item.CustomItem;
 import net.momirealms.craftengine.core.plugin.CraftEngine;
 import net.momirealms.craftengine.core.plugin.command.CraftEngineCommandManager;
 import net.momirealms.craftengine.core.plugin.command.FlagKeys;
@@ -47,12 +50,18 @@ public class GetItemCommand extends BukkitCommandFeature<CommandSender> {
                     int amount = context.getOrDefault("amount", 1);
                     boolean toInv = context.flags().hasFlag(FlagKeys.TO_INVENTORY);
                     NamespacedKey namespacedKey = context.get("id");
-                    Key key = Key.of(namespacedKey.namespace(), namespacedKey.value());
-                    ItemStack builtItem = plugin().itemManager().buildCustomItemStack(key, plugin().adapt(context.sender()));
-                    if (builtItem == null) {
-                        handleFeedback(context, MessageConstants.COMMAND_ITEM_GET_FAILURE_NOT_EXIST, Component.text(key.toString()));
-                        return;
+                    Key itemId = Key.of(namespacedKey.namespace(), namespacedKey.value());
+                    CustomItem<ItemStack> customItem = CraftEngineItems.byId(itemId);
+                    if (customItem == null) {
+                        customItem = BukkitItemManager.instance().getCustomItemByPathOnly(itemId.value()).orElse(null);
+                        if (customItem == null) {
+                            handleFeedback(context, MessageConstants.COMMAND_ITEM_GET_FAILURE_NOT_EXIST, Component.text(itemId.toString()));
+                            return;
+                        } else {
+                            itemId = customItem.id();
+                        }
                     }
+                    ItemStack builtItem = customItem.buildItemStack(plugin().adapt(context.sender()));
                     int amountToGive = amount;
                     int maxStack = builtItem.getMaxStackSize();
                     while (amountToGive > 0) {
@@ -66,7 +75,7 @@ public class GetItemCommand extends BukkitCommandFeature<CommandSender> {
                             PlayerUtils.dropItem(player, more, false, true, false);
                         }
                     }
-                    handleFeedback(context, MessageConstants.COMMAND_ITEM_GET_SUCCESS, Component.text(amount), Component.text(key.toString()));
+                    handleFeedback(context, MessageConstants.COMMAND_ITEM_GET_SUCCESS, Component.text(amount), Component.text(itemId.toString()));
                 });
     }
 

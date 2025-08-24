@@ -82,7 +82,7 @@ resource-pack:
     prompt: "<yellow>To fully experience our server,<newline>please accept our custom resource pack.</yellow>"
     # If you are hosting the resource pack by yourself, replace `localhost` with your server ip otherwise it would only work on your local pc
     # If using BungeeCord or Velocity, consider using a proxy-side plugin to handle resource pack delivery.
-    # Read this page for more host types: https://mo-mi.gitbook.io/xiaomomi-plugins/craftengine/plugin-wiki/craftengine/resource-pack/host
+    # Read this page for more host types: https://xiao-momi.github.io/craft-engine-wiki/getting_start/set_up_host
     hosting:
       - type: "self"
         ip: "localhost"
@@ -142,6 +142,14 @@ item:
   client-bound-model: false
   # Add a <!i> tag on custom name and lore
   non-italic-tag: false
+  # Determines when to trigger the item updater
+  # This feature may incur some performance overhead. Please do not enable it unless necessary.
+  # Correct use case: When you designed incorrect weapon attributes and need to update the values for items already held by players.
+  # Wrong use case: When you want to update an item's name and lore to a newer version (In this case you should use client-bound-data instead of the item updater)
+  update-triggers:
+    click-in-inventory: false # this option won't work for players in creative mode
+    drop: false
+    pick-up: false
 
 equipment:
   # The sacrificed-vanilla-armor argument determines which vanilla armor gets completely removed (loses all its trims)
@@ -170,8 +178,7 @@ block:
   #   - Server MUST list ACTUAL CUSTOM BLOCK IDs in item's `can_break` component.
   #   - Sending custom IDs (e.g., craftengine:note_block_0) to vanilla clients WILL CRASH THEM!
   #   ✅ Solution:
-  #   - Use `client-bound-item-data` to safely sync custom block data to clients.
-  #   Documentation: https://mo-mi.gitbook.io/xiaomomi-plugins/craftengine/plugin-wiki/craftengine/add-new-contents/items/item-data/client-bound-item-data
+  #   - Use `client-bound-data` to safely sync custom block data to clients.
   simplify-adventure-break-check: false
   # Similar to the option above, but designed for block placement
   simplify-adventure-place-check: false
@@ -183,16 +190,6 @@ block:
     extended-interaction-range: 0.5
 
 furniture:
-  # Automatically remove outdated furniture entities when a chunk is loaded.
-  handle-invalid-furniture-on-chunk-load:
-    # Enable/disable the cleanup system
-    enable: false
-    # Removes the specified invalid furniture
-    remove:
-      - "xxx:invalid_furniture"
-    # Converts the invalid furniture to a valid one
-    convert:
-      "namespace:furniture_a": "namespace:furniture_b"
   # Hide technical entities used for storing furniture metadata.
   # NOTE:
   # - These are INVISIBLE entities used internally for tracking furniture states
@@ -204,10 +201,14 @@ furniture:
   collision-entity-type: interaction
 
 emoji:
-  chat: true
-  book: true
-  anvil: true
-  sign: true
+  # Contexts where emoji parsing is enabled
+  contexts:
+    chat: true
+    book: true
+    anvil: true
+    sign: true
+  # Prevent lag or oversized packet when processing emoji-heavy content
+  max-emojis-per-parse: 16
 
 image:
   # Block image tags using minecraft:default font in these interfaces
@@ -359,12 +360,6 @@ gui:
       brewing:
         title: "<white><shift:-11><image:internal:brewing_recipe>"
 
-performance:
-  # Maximum chain update depth when fixing client visuals
-  max-note-block-chain-update-limit: 48
-  # Prevent lag or oversized packet when processing emoji-heavy content
-  max-emojis-per-parse: 16
-
 light-system:
   # Required for custom light-emitting blocks
   enable: true
@@ -381,10 +376,10 @@ chunk-system:
   compression-method: 4
   # Settings for injection
   injection:
-    # Requires a restart to apply
-    # SECTION: Inject the LevelChunkSection
+    # Requires a restart to apply.
+    # SECTION: Inject the LevelChunkSection (Use this if you have installed both FastAsyncWorldEdit and Axiom)
     # PALETTE: Inject the PalettedContainer
-    target: SECTION
+    target: PALETTE
     # Enables faster injection method
     # Note: May not work with certain server forks that alter chunk class structure (In most cases it won't conflict)
     use-fast-method: true
@@ -413,6 +408,16 @@ chunk-system:
   # server's CraftEngine internal data. Enabling this option will synchronize the data when the chunk is loaded.
   # (This option only slightly impacts performance, which has been fully optimized, so you don't need to worry too much.)
   sync-custom-blocks-on-chunk-load: false
+  # This system processes any invalid block when a chunk is loaded.
+  process-invalid-blocks:
+    enable: false
+    remove: []
+    convert: {}
+  # This system processes any invalid furniture when a chunk is loaded.
+  process-invalid-furniture:
+    enable: false
+    remove: []
+    convert: {}
 
 # Enables or disables debug mode
 debug:

@@ -16,7 +16,7 @@ public class VersionHelper {
     private static final boolean mojmap;
     private static final boolean folia;
     private static final boolean paper;
-
+    private static final boolean leaves;
     private static final boolean v1_20;
     private static final boolean v1_20_1;
     private static final boolean v1_20_2;
@@ -77,6 +77,7 @@ public class VersionHelper {
             mojmap = checkMojMap();
             folia = checkFolia();
             paper = checkPaper();
+            leaves = checkLeaves();
         } catch (Exception e) {
             throw new RuntimeException("Failed to init VersionHelper", e);
         }
@@ -150,12 +151,25 @@ public class VersionHelper {
         return false;
     }
 
+    private static boolean checkLeaves() {
+        try {
+            Class.forName("org.leavesmc.leaves.bot.ServerBot");
+            return true;
+        } catch (ClassNotFoundException ignored) {
+        }
+        return false;
+    }
+
     public static boolean isFolia() {
         return folia;
     }
 
     public static boolean isPaper() {
         return paper;
+    }
+
+    public static boolean isLeaves() {
+        return leaves;
     }
 
     public static boolean isMojmap() {

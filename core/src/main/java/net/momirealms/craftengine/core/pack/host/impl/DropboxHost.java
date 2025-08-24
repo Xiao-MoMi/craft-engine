@@ -73,7 +73,7 @@ public class DropboxHost implements ResourcePackHost {
         cache.addProperty("expires_at", this.expiresAt);
         Path cachePath = CraftEngine.instance().dataFolderPath().resolve("cache").resolve("dropbox.json");
         try {
-            Files.createDirectories(cachePath);
+            Files.createDirectories(cachePath.getParent());
             Files.writeString(
                     cachePath,
                     GsonHelper.get().toJson(cache),
