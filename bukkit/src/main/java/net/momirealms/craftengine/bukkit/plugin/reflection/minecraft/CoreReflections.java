@@ -2314,12 +2314,30 @@ public final class CoreReflections {
             )
     );
 
+    public static final Class<?> clazz$WorldlyContainerHolder = requireNonNull(
+            BukkitReflectionUtils.findReobfOrMojmapClass(
+                    "world.IInventoryHolder",
+                    "world.WorldlyContainerHolder"
+            )
+    );
+
     public static final Method method$BonemealableBlock$isValidBonemealTarget = requireNonNull(
             VersionHelper.isOrAbove1_20_2() ?
                     ReflectionUtils.getInstanceMethod(clazz$BonemealableBlock, boolean.class, clazz$LevelReader, clazz$BlockPos, clazz$BlockState) :
                     ReflectionUtils.getInstanceMethod(clazz$BonemealableBlock, boolean.class, clazz$LevelReader, clazz$BlockPos, clazz$BlockState, boolean.class)
     );
 
+    public static final Class<?> clazz$WorldlyContainer = requireNonNull(
+            BukkitReflectionUtils.findReobfOrMojmapClass(
+                    "world.IWorldInventory",
+                    "world.WorldlyContainer"
+            )
+    );
+
+
+    public static final Method method$WorldlyContainerHolder$getContainer = requireNonNull(
+            ReflectionUtils.getMethod(clazz$WorldlyContainerHolder, clazz$WorldlyContainer, clazz$BlockState, clazz$LevelAccessor, clazz$BlockPos)
+    );
     public static final Method method$BonemealableBlock$isBonemealSuccess = requireNonNull(
             ReflectionUtils.getMethod(clazz$BonemealableBlock, boolean.class, clazz$Level, clazz$RandomSource, clazz$BlockPos, clazz$BlockState)
     );
