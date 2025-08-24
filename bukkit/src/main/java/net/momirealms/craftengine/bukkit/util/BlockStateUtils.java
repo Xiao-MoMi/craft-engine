@@ -5,6 +5,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
+import org.bukkit.block.Block;
 import org.bukkit.block.data.BlockData;
 import org.bukkit.inventory.ItemStack;
 import org.jetbrains.annotations.NotNull;
@@ -150,6 +151,11 @@ public class BlockStateUtils {
         return IGNITE_ODDS.getOrDefault(blockOwner, 0) > 0;
     }
 
+    public static Object getBlockState(Block block) {
+        Object worldServer = FastNMS.INSTANCE.field$CraftWorld$ServerLevel(block.getWorld());
+        Object blockPos = LocationUtils.toBlockPos(block.getX(), block.getY(), block.getZ());
+        return FastNMS.INSTANCE.method$BlockGetter$getBlockState(worldServer, blockPos);
+    }
     /**
      * Utility method to remove a BlockStateHitBox placed block and handle container
      * drops

@@ -173,9 +173,6 @@ public class BlockStateHitBox extends AbstractHitBox {
                     
                     // Register with the manager using the simplified method
                     CraftEngine.instance().furnitureManager().registerBlockStateHitBox(this.placedPosition, parentFurniture);
-                    
-                    CraftEngine.instance().logger().info("Registered BlockStateHitBox at position: " + this.placedPosition + 
-                        " for furniture: " + parentFurniture.id() + " (stored with complete data in PersistentDataContainer)");
                 }
             }
         } else {
@@ -198,8 +195,6 @@ public class BlockStateHitBox extends AbstractHitBox {
                 // Register with the manager using the simplified method
                 CraftEngine.instance().furnitureManager().registerBlockStateHitBox(this.placedPosition, parentFurniture);
                 
-                CraftEngine.instance().logger().info("Registered reused BlockStateHitBox at position: " + this.placedPosition + 
-                    " for furniture: " + parentFurniture.id() + " (stored in PersistentDataContainer)");
             }
         }
 

@@ -365,34 +365,23 @@ public class BukkitFurniture implements Furniture {
                         blocksToRemove.add(data);
                     }
                 }
-
-                CraftEngine.instance().logger().info("Loaded " + blocksToRemove.size() +
-                        " BlockStateHitBox data entries from PDC for removal during furniture destroy: " + this.id());
             }
         } catch (Exception e) {
             CraftEngine.instance().logger().warn(
                     "Failed to load BlockStateHitBox data from PDC during destroy for furniture: " + this.id(), e);
         }
 
-        // Process the loaded blocks for cleanup using the correct parameters
         for (BlockStateHitBoxData data : blocksToRemove) {
             try {
                 WorldPosition worldPos = data.getPosition();
 
-                // Unregister from furniture manager
                 CraftEngine.instance().furnitureManager().unregisterBlockStateHitBox(worldPos);
 
-                // Use BlockStateUtils.removeBlockStateHitBoxBlock with correct parameters
                 BlockStateUtils.removeBlockStateHitBoxBlock(
                         worldPos,
                         data.getOriginalBlockState(),
                         data.isDropContainer(),
                         data.isActuallyPlaced());
-
-                CraftEngine.instance().logger().info("Processed BlockStateHitBox cleanup for position: " + worldPos +
-                        " (original state: " + (data.getOriginalBlockState() != null ? "preserved" : "air") +
-                        ", actually placed: " + data.isActuallyPlaced() + ")");
-
             } catch (Exception e) {
                 CraftEngine.instance().logger()
                         .warn("Failed to process block cleanup for data: " + data.toStorageString(), e);
@@ -704,14 +693,6 @@ public class BukkitFurniture implements Furniture {
                                 "Skipped invalid BlockStateHitBox data: " + dataStr + " for furniture: " + this.id());
                     }
                 }
-
-                if (loadedCount > 0) {
-                    CraftEngine.instance().logger().info("Loaded " + loadedCount +
-                            " BlockStateHitBox data entries from PDC for furniture: " + this.id() +
-                            (skippedCount > 0 ? " (skipped " + skippedCount + " invalid/different-world entries)"
-                                    : ""));
-                }
-
                 // If we skipped any data, update the PDC to remove them
                 if (skippedCount > 0) {
                     this.saveBlockStateHitBoxDataToPDC();
