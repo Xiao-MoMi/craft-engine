@@ -13,6 +13,9 @@ import net.momirealms.craftengine.core.item.context.BlockPlaceContext;
 import net.momirealms.craftengine.core.util.Key;
 import net.momirealms.craftengine.core.world.BlockInWorld;
 import net.momirealms.craftengine.core.world.World;
+
+import java.util.Optional;
+
 import org.bukkit.Location;
 import org.bukkit.block.Block;
 
@@ -35,6 +38,7 @@ public class BukkitBlockInWorld implements BlockInWorld {
         }
         return BlockStateUtils.isReplaceable(state);
     }
+
 
     @Override
     public boolean isWaterSource(BlockPlaceContext blockPlaceContext) {

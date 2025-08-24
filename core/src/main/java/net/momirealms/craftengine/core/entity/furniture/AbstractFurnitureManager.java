@@ -1,5 +1,19 @@
 package net.momirealms.craftengine.core.entity.furniture;
 
+import java.nio.file.Path;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.EnumMap;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+import java.util.Optional;
+
+import org.incendo.cloud.suggestion.Suggestion;
+import org.joml.Vector3f;
+
 import net.momirealms.craftengine.core.entity.Billboard;
 import net.momirealms.craftengine.core.entity.ItemDisplayContext;
 import net.momirealms.craftengine.core.loot.LootTable;
@@ -12,11 +26,8 @@ import net.momirealms.craftengine.core.plugin.locale.LocalizedResourceConfigExce
 import net.momirealms.craftengine.core.util.Key;
 import net.momirealms.craftengine.core.util.MiscUtils;
 import net.momirealms.craftengine.core.util.ResourceConfigUtils;
-import org.incendo.cloud.suggestion.Suggestion;
-import org.joml.Vector3f;
-
-import java.nio.file.Path;
-import java.util.*;
+import net.momirealms.craftengine.core.world.BlockPosition;
+import net.momirealms.craftengine.core.world.WorldPosition;
 
 public abstract class AbstractFurnitureManager implements FurnitureManager {
     protected final Map<Key, CustomFurniture> byId = new HashMap<>();
@@ -24,6 +35,28 @@ public abstract class AbstractFurnitureManager implements FurnitureManager {
     private final FurnitureParser furnitureParser;
     // Cached command suggestions
     private final List<Suggestion> cachedSuggestions = new ArrayList<>();
+
+    /**
+     * Information stored about a BlockStateHitBox for cleanup purposes
+     * @deprecated This class is no longer used as data is stored in PersistentDataContainer
+     */
+    @Deprecated
+    public static class BlockStateHitBoxInfo {
+        public final net.momirealms.craftengine.core.world.WorldPosition placedPosition;
+        public final net.momirealms.craftengine.core.block.BlockStateWrapper originalBlockState;
+        public final boolean dropContainer;
+        public final boolean actuallyPlaced;
+
+        public BlockStateHitBoxInfo(net.momirealms.craftengine.core.world.WorldPosition placedPosition,
+                                   net.momirealms.craftengine.core.block.BlockStateWrapper originalBlockState,
+                                   boolean dropContainer,
+                                   boolean actuallyPlaced) {
+            this.placedPosition = placedPosition;
+            this.originalBlockState = originalBlockState;
+            this.dropContainer = dropContainer;
+            this.actuallyPlaced = actuallyPlaced;
+        }
+    }
 
     public AbstractFurnitureManager(CraftEngine plugin) {
         this.plugin = plugin;
@@ -167,4 +200,41 @@ public abstract class AbstractFurnitureManager implements FurnitureManager {
             AbstractFurnitureManager.this.byId.put(id, furniture);
         }
     }
+
+    // Implementation of BlockStateHitBox tracking methods
+    @Override
+    public void registerBlockStateHitBox(WorldPosition position, Furniture furniture) {
+        // All storage is now handled in the furniture entity's PersistentDataContainer
+        // This method is kept for interface compatibility but does nothing
+    }
+
+    @Override
+    public void unregisterBlockStateHitBox(WorldPosition position) {
+        // All storage is now handled in the furniture entity's PersistentDataContainer
+        // This method is kept for interface compatibility but does nothing
+    }
+
+    @Override
+    public Furniture getFurnitureByBlockPosition(WorldPosition position) {
+        // Search nearby furniture entities using their PersistentDataContainer data
+        return findFurnitureByBlockPosition(position);
+    }
+
+    /**
+     * Find furniture by searching nearby loaded furniture entities
+     * This method is persistent across server restarts since it queries actual entities
+     */
+    protected abstract Furniture findFurnitureByBlockPosition(WorldPosition position);
+
+    @Override
+    public Collection<BlockPosition> getBlockStateHitBoxPositions(Furniture furniture) {
+        // Query the furniture entity's own storage
+        return getBlockStateHitBoxPositionsFromEntity(furniture);
+    }
+
+    /**
+     * Get BlockStateHitBox positions from the furniture entity itself
+     * This method should be implemented by platform-specific managers
+     */
+    protected abstract Collection<BlockPosition> getBlockStateHitBoxPositionsFromEntity(Furniture furniture);
 }

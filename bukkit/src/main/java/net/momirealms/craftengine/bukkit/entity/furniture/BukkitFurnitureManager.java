@@ -1,6 +1,33 @@
 package net.momirealms.craftengine.bukkit.entity.furniture;
 
 import net.momirealms.craftengine.bukkit.api.BukkitAdaptors;
+import java.io.IOException;
+import java.util.Collection;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.BiConsumer;
+
+import org.bukkit.Bukkit;
+import org.bukkit.Location;
+import org.bukkit.NamespacedKey;
+import org.bukkit.SoundCategory;
+import org.bukkit.World;
+import org.bukkit.entity.ArmorStand;
+import org.bukkit.entity.Boat;
+import org.bukkit.entity.Entity;
+import org.bukkit.entity.EntityType;
+import org.bukkit.entity.Interaction;
+import org.bukkit.entity.ItemDisplay;
+import org.bukkit.entity.Player;
+import org.bukkit.event.HandlerList;
+import org.bukkit.event.Listener;
+import org.bukkit.persistence.PersistentDataType;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.joml.Vector3f;
+
 import net.momirealms.craftengine.bukkit.entity.furniture.hitbox.InteractionHitBox;
 import net.momirealms.craftengine.bukkit.nms.CollisionEntity;
 import net.momirealms.craftengine.bukkit.nms.FastNMS;
@@ -11,28 +38,23 @@ import net.momirealms.craftengine.bukkit.plugin.user.BukkitServerPlayer;
 import net.momirealms.craftengine.bukkit.util.EntityUtils;
 import net.momirealms.craftengine.bukkit.util.KeyUtils;
 import net.momirealms.craftengine.bukkit.util.LocationUtils;
-import net.momirealms.craftengine.core.entity.furniture.*;
+import net.momirealms.craftengine.core.entity.furniture.AbstractFurnitureManager;
+import net.momirealms.craftengine.core.entity.furniture.AnchorType;
+import net.momirealms.craftengine.core.entity.furniture.Collider;
+import net.momirealms.craftengine.core.entity.furniture.ColliderType;
+import net.momirealms.craftengine.core.entity.furniture.CustomFurniture;
+import net.momirealms.craftengine.core.entity.furniture.Furniture;
+import net.momirealms.craftengine.core.entity.furniture.FurnitureElement;
+import net.momirealms.craftengine.core.entity.furniture.FurnitureExtraData;
+import net.momirealms.craftengine.core.entity.furniture.FurnitureManager;
+import net.momirealms.craftengine.core.entity.furniture.HitBox;
 import net.momirealms.craftengine.core.plugin.config.Config;
 import net.momirealms.craftengine.core.sound.SoundData;
 import net.momirealms.craftengine.core.util.Key;
 import net.momirealms.craftengine.core.util.MiscUtils;
 import net.momirealms.craftengine.core.util.VersionHelper;
+import net.momirealms.craftengine.core.world.BlockPosition;
 import net.momirealms.craftengine.core.world.WorldPosition;
-import org.bukkit.*;
-import org.bukkit.entity.*;
-import org.bukkit.event.HandlerList;
-import org.bukkit.event.Listener;
-import org.bukkit.persistence.PersistentDataType;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.joml.Vector3f;
-
-import java.io.IOException;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.function.BiConsumer;
 
 public class BukkitFurnitureManager extends AbstractFurnitureManager {
     public static final NamespacedKey FURNITURE_KEY = KeyUtils.toNamespacedKey(FurnitureManager.FURNITURE_KEY);
@@ -40,6 +62,8 @@ public class BukkitFurnitureManager extends AbstractFurnitureManager {
     public static final NamespacedKey FURNITURE_SEAT_BASE_ENTITY_KEY = KeyUtils.toNamespacedKey(FurnitureManager.FURNITURE_SEAT_BASE_ENTITY_KEY);
     public static final NamespacedKey FURNITURE_SEAT_VECTOR_3F_KEY = KeyUtils.toNamespacedKey(FurnitureManager.FURNITURE_SEAT_VECTOR_3F_KEY);
     public static final NamespacedKey FURNITURE_COLLISION = KeyUtils.toNamespacedKey(FurnitureManager.FURNITURE_COLLISION);
+    public static final NamespacedKey FURNITURE_BLOCKSTATE_HITBOX_POSITIONS = KeyUtils.toNamespacedKey(Key.of("craftengine", "blockstate_hitbox_positions"));
+    public static final NamespacedKey FURNITURE_BLOCKSTATE_HITBOX_DATA = KeyUtils.toNamespacedKey(Key.of("craftengine", "blockstate_hitbox_data"));
     public static Class<?> COLLISION_ENTITY_CLASS = Interaction.class;
     public static Object NMS_COLLISION_ENTITY_TYPE = MEntityTypes.INTERACTION;
     public static ColliderType COLLISION_ENTITY_TYPE = ColliderType.INTERACTION;
@@ -329,6 +353,42 @@ public class BukkitFurnitureManager extends AbstractFurnitureManager {
     @Override
     protected HitBox defaultHitBox() {
         return InteractionHitBox.DEFAULT;
+    }
+
+    @Override
+    protected Furniture findFurnitureByBlockPosition(WorldPosition position) {
+        // Search through all loaded furniture to find one that has a BlockStateHitBox at this position
+        // This method works across server restarts since it queries the PersistentDataContainer
+        for (BukkitFurniture furniture : furnitureByRealEntityId.values()) {
+            if (furniture.hasBlockStateHitBoxAt(position)) {
+                return furniture;
+            }
+        }
+        return null;
+    }
+
+    @Override
+    protected Collection<BlockPosition> getBlockStateHitBoxPositionsFromEntity(Furniture furniture) {
+        // Delegate to the furniture entity's own storage
+        return furniture.getBlockStateHitBoxPositions();
+    }
+
+    /**
+     * Cleans up orphaned BlockStateHitBox positions for all loaded furniture
+     * This can be called periodically or via command for maintenance
+     */
+    public void cleanupAllOrphanedBlockStateHitBoxPositions() {
+        int furnitureCount = 0;
+        for (BukkitFurniture furniture : furnitureByRealEntityId.values()) {
+            furniture.cleanupOrphanedBlockStateHitBoxPositions();
+            furnitureCount++;
+        }
+        this.plugin.logger().info("Cleaned up orphaned BlockStateHitBox positions for " + 
+            furnitureCount + " loaded furniture entities");
+    }
+
+    @Override
+    public void unregisterBlockStateHitBox(WorldPosition position) {
     }
 
     protected void handleDismount(Player player, Entity entity) {

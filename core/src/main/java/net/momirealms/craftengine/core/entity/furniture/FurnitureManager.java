@@ -1,15 +1,17 @@
 package net.momirealms.craftengine.core.entity.furniture;
 
+import java.util.Collection;
+import java.util.Optional;
+
+import org.incendo.cloud.suggestion.Suggestion;
+import org.jetbrains.annotations.Nullable;
+
 import net.momirealms.craftengine.core.entity.AbstractEntity;
 import net.momirealms.craftengine.core.plugin.Manageable;
 import net.momirealms.craftengine.core.plugin.config.ConfigParser;
 import net.momirealms.craftengine.core.util.Key;
+import net.momirealms.craftengine.core.world.BlockPosition;
 import net.momirealms.craftengine.core.world.WorldPosition;
-import org.incendo.cloud.suggestion.Suggestion;
-import org.jetbrains.annotations.Nullable;
-
-import java.util.Collection;
-import java.util.Optional;
 
 public interface FurnitureManager extends Manageable {
     Key FURNITURE_KEY = Key.of("craftengine:furniture_id");
@@ -42,4 +44,14 @@ public interface FurnitureManager extends Manageable {
 
     @Nullable
     Furniture loadedFurnitureByEntityId(int entityId);
+
+    // Methods for BlockStateHitBox tracking
+    void registerBlockStateHitBox(WorldPosition position, Furniture furniture);
+    
+    void unregisterBlockStateHitBox(WorldPosition position);
+    
+    @Nullable
+    Furniture getFurnitureByBlockPosition(WorldPosition position);
+    
+    Collection<BlockPosition> getBlockStateHitBoxPositions(Furniture furniture);
 }
