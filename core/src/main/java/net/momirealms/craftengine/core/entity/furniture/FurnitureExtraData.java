@@ -1,14 +1,14 @@
 package net.momirealms.craftengine.core.entity.furniture;
 
+import java.io.IOException;
+import java.util.Optional;
+
 import net.momirealms.craftengine.core.item.Item;
 import net.momirealms.craftengine.core.plugin.CraftEngine;
 import net.momirealms.craftengine.core.plugin.logger.Debugger;
 import net.momirealms.craftengine.core.util.Color;
 import net.momirealms.sparrow.nbt.CompoundTag;
 import net.momirealms.sparrow.nbt.NBT;
-
-import java.io.IOException;
-import java.util.Optional;
 
 public class FurnitureExtraData {
     public static final String ITEM = "item";
