@@ -15,6 +15,20 @@ import net.bytebuddy.implementation.bind.annotation.This;
 import net.bytebuddy.matcher.ElementMatchers;
 import net.momirealms.craftengine.bukkit.block.BukkitBlockShape;
 import net.momirealms.craftengine.bukkit.nms.FastNMS;
+import net.momirealms.craftengine.bukkit.plugin.injector.BlockGenerator.AffectNeighborsAfterRemovalInterceptor;
+import net.momirealms.craftengine.bukkit.plugin.injector.BlockGenerator.CanPlaceLiquidInterceptor;
+import net.momirealms.craftengine.bukkit.plugin.injector.BlockGenerator.EntityInsideInterceptor;
+import net.momirealms.craftengine.bukkit.plugin.injector.BlockGenerator.GetDirectSignalInterceptor;
+import net.momirealms.craftengine.bukkit.plugin.injector.BlockGenerator.GetSignalInterceptor;
+import net.momirealms.craftengine.bukkit.plugin.injector.BlockGenerator.IsSignalSourceInterceptor;
+import net.momirealms.craftengine.bukkit.plugin.injector.BlockGenerator.NeighborChangedInterceptor;
+import net.momirealms.craftengine.bukkit.plugin.injector.BlockGenerator.OnExplosionHitInterceptor;
+import net.momirealms.craftengine.bukkit.plugin.injector.BlockGenerator.OnRemoveInterceptor;
+import net.momirealms.craftengine.bukkit.plugin.injector.BlockGenerator.PerformBoneMealInterceptor;
+import net.momirealms.craftengine.bukkit.plugin.injector.BlockGenerator.PickUpBlockInterceptor;
+import net.momirealms.craftengine.bukkit.plugin.injector.BlockGenerator.PlaceLiquidInterceptor;
+import net.momirealms.craftengine.bukkit.plugin.injector.BlockGenerator.PlayerWillDestroyInterceptor;
+import net.momirealms.craftengine.bukkit.plugin.injector.BlockGenerator.SpawnAfterBreakInterceptor;
 import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.CoreReflections;
 import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.MBlocks;
 import net.momirealms.craftengine.bukkit.util.NoteBlockChainUpdateUtils;
@@ -90,6 +104,12 @@ public final class BlockGenerator {
                 // rotate
                 .method(ElementMatchers.is(CoreReflections.method$BlockBehaviour$rotate))
                 .intercept(MethodDelegation.to(RotateInterceptor.INSTANCE))
+                // hasAnalogOutputSignal
+                .method(ElementMatchers.is(CoreReflections.method$BlockBehaviour$hasAnalogOutputSignal))
+                .intercept(MethodDelegation.to(HasAnalogOutputSignalInterceptor.INSTANCE))
+                // getAnalogOutputSignal
+                .method(ElementMatchers.is(CoreReflections.method$BlockBehaviour$getAnalogOutputSignal))
+                .intercept(MethodDelegation.to(GetAnalogOutputSignalInterceptor.INSTANCE))
                 // tick
                 .method(ElementMatchers.is(CoreReflections.method$BlockBehaviour$tick))
                 .intercept(MethodDelegation.to(TickInterceptor.INSTANCE))
@@ -456,6 +476,36 @@ public final class BlockGenerator {
             } catch (Exception e) {
                 CraftEngine.instance().logger().severe("Failed to run getContainer", e);
                 return null;
+            }
+        }
+    }
+
+    public static class HasAnalogOutputSignalInterceptor {
+        public static final HasAnalogOutputSignalInterceptor INSTANCE = new HasAnalogOutputSignalInterceptor();
+
+        @RuntimeType
+        public boolean intercept(@This Object thisObj, @AllArguments Object[] args) {
+            ObjectHolder<BlockBehavior> holder = ((DelegatingBlock) thisObj).behaviorDelegate();
+            try {
+                return holder.value().hasAnalogOutputSignal(thisObj, args);
+            } catch (Exception e) {
+                CraftEngine.instance().logger().severe("Failed to run hasAnalogOutputSignal", e);
+                return false;
+            }
+        }
+    }
+
+    public static class GetAnalogOutputSignalInterceptor {
+        public static final GetAnalogOutputSignalInterceptor INSTANCE = new GetAnalogOutputSignalInterceptor();
+
+        @RuntimeType
+        public int intercept(@This Object thisObj, @AllArguments Object[] args) {
+            ObjectHolder<BlockBehavior> holder = ((DelegatingBlock) thisObj).behaviorDelegate();
+            try {
+                return holder.value().getAnalogOutputSignal(thisObj, args);
+            } catch (Exception e) {
+                CraftEngine.instance().logger().severe("Failed to run getAnalogOutputSignal", e);
+                return 0;
             }
         }
     }

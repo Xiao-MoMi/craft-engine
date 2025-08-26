@@ -277,6 +277,30 @@ public class UnsafeCompositeBlockBehavior extends BukkitBlockBehavior {
     }
 
     @Override
+    public boolean hasAnalogOutputSignal(Object thisBlock, Object[] args) throws Exception {
+        for (AbstractBlockBehavior behavior : this.behaviors) {
+            if (behavior.hasAnalogOutputSignal(thisBlock, args)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    @Override
+    public int getAnalogOutputSignal(Object thisBlock, Object[] args) throws Exception {
+        int signal = 0;
+        int count = 0;
+        for (AbstractBlockBehavior behavior : this.behaviors) {
+            int s = behavior.getAnalogOutputSignal(thisBlock, args);
+            if (s != 0) {
+                signal += s;
+                count++;
+            }
+        }
+        return count == 0 ? 0 : signal / count;
+    }
+
+    @Override
     public Object playerWillDestroy(Object thisBlock, Object[] args, Callable<Object> superMethod) throws Exception {
         Object previous = args[0];
         for (AbstractBlockBehavior behavior : this.behaviors) {
