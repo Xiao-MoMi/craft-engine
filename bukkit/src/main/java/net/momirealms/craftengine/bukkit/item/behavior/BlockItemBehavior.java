@@ -13,6 +13,8 @@ import net.momirealms.craftengine.bukkit.world.BukkitExistingBlock;
 import net.momirealms.craftengine.core.block.CustomBlock;
 import net.momirealms.craftengine.core.block.ImmutableBlockState;
 import net.momirealms.craftengine.core.block.UpdateOption;
+import net.momirealms.craftengine.core.block.entity.BlockEntity;
+import net.momirealms.craftengine.core.block.entity.ItemStorageCapable;
 import net.momirealms.craftengine.core.entity.player.InteractionHand;
 import net.momirealms.craftengine.core.entity.player.InteractionResult;
 import net.momirealms.craftengine.core.entity.player.Player;
@@ -133,6 +135,12 @@ public class BlockItemBehavior extends BlockBoundItemBehavior {
         placeBlock(placeLocation, blockStateToPlace, revertStates);
 
         if (player != null) {
+            // loading storage data from the item
+            BlockEntity blockEntity = context.getLevel().storageWorld().getBlockEntityAtIfLoaded(pos);
+            if (blockEntity instanceof ItemStorageCapable itemStorageCapable && itemStorageCapable.hasPermission(player)) {
+                itemStorageCapable.loadCustomDataFromItem(context.getItem());
+            }
+
             // call bukkit event
             BlockPlaceEvent bukkitPlaceEvent = new BlockPlaceEvent(bukkitBlock, previousState, againstBlock, (ItemStack) context.getItem().getItem(), bukkitPlayer, true, context.getHand() == InteractionHand.MAIN_HAND ? EquipmentSlot.HAND : EquipmentSlot.OFF_HAND);
             if (EventUtils.fireAndCheckCancel(bukkitPlaceEvent)) {

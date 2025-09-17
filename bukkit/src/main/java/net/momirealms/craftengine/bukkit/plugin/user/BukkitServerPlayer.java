@@ -214,6 +214,11 @@ public class BukkitServerPlayer extends Player {
     }
 
     @Override
+    public boolean isOp() {
+        return platformPlayer().isOp();
+    }
+
+    @Override
     public GameMode gameMode() {
         return switch (platformPlayer().getGameMode()) {
             case CREATIVE -> GameMode.CREATIVE;

@@ -4389,4 +4389,31 @@ public final class CoreReflections {
     public static final Constructor<?> constructor$AdvancementHolder = Optional.ofNullable(clazz$AdvancementHolder)
             .map(it -> ReflectionUtils.getConstructor(it, clazz$ResourceLocation, clazz$Advancement))
             .orElse(null);
+
+    // 1.21.5+
+    public static final Class<?> clazz$ItemContainerContents = ReflectionUtils.getClazz(
+            BukkitReflectionUtils.assembleMCClass("world.item.component.ItemContainerContents")
+    );
+
+    // 1.21.5+
+    public static final Method method$ItemContainerContents$fromItems = Optional.ofNullable(clazz$ItemContainerContents)
+            .map(it -> ReflectionUtils.getStaticMethod(it, it, new String[]{"fromItems", "a"}, List.class))
+            .orElse(null);
+
+    // 1.21.5+
+    public static final Field field$ItemContainerContents$CODEC = Optional.ofNullable(clazz$ItemContainerContents)
+            .map(it -> ReflectionUtils.getDeclaredField(it, Codec.class, 0))
+            .orElse(null);
+
+    // 1.21.5+
+    public static final Codec<Object> instance$ItemContainerContents$CODEC = getItemContainerContents$CODEC();
+
+    @SuppressWarnings("unchecked")
+    private static Codec<Object> getItemContainerContents$CODEC() {
+        try {
+            return VersionHelper.isOrAbove1_21_5() ? (Codec<Object>) field$ItemContainerContents$CODEC.get(null) : null;
+        } catch (ReflectiveOperationException e) {
+            throw new ReflectionInitException("Failed to init ItemContainerContents$CODEC", e);
+        }
+    }
 }

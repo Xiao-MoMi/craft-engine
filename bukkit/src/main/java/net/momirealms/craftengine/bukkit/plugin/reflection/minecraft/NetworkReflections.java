@@ -678,6 +678,10 @@ public final class NetworkReflections {
             .map(it -> ReflectionUtils.getDeclaredField(it, CoreReflections.clazz$BlockPos, 0))
             .orElse(null);
 
+    public static final Field field$ServerboundPickItemFromBlockPacket$includeData = Optional.ofNullable(clazz$ServerboundPickItemFromBlockPacket)
+            .map(it -> ReflectionUtils.getDeclaredField(it, boolean.class, 0))
+            .orElse(null);
+
     public static final Class<?> clazz$ServerboundSetCreativeModeSlotPacket = requireNonNull(
             BukkitReflectionUtils.findReobfOrMojmapClass(
                     "network.protocol.game.PacketPlayInSetCreativeSlot",
@@ -801,6 +805,10 @@ public final class NetworkReflections {
 
     public static final Field field$ServerboundPickItemFromEntityPacket$id = Optional.ofNullable(clazz$ServerboundPickItemFromEntityPacket)
             .map(it -> ReflectionUtils.getInstanceDeclaredField(it, int.class, 0))
+            .orElse(null);
+
+    public static final Field field$ServerboundPickItemFromEntityPacket$includeData = Optional.ofNullable(clazz$ServerboundPickItemFromEntityPacket)
+            .map(it -> ReflectionUtils.getInstanceDeclaredField(it, boolean.class, 0))
             .orElse(null);
 
     public static final Class<?> clazz$ClientboundSoundPacket = requireNonNull(
@@ -1336,7 +1344,9 @@ public final class NetworkReflections {
     public static final MethodHandle methodHandle$ClientboundLoginPacket$dimensionGetter;
     public static final MethodHandle methodHandle$ClientboundLoginPacket$commonPlayerSpawnInfoGetter;
     public static final MethodHandle methodHandle$ServerboundPickItemFromBlockPacket$posGetter;
+    public static final MethodHandle methodHandle$ServerboundPickItemFromBlockPacket$includeDataGetter;
     public static final MethodHandle methodHandle$ServerboundPickItemFromEntityPacket$idGetter;
+    public static final MethodHandle methodHandle$ServerboundPickItemFromEntityPacket$includeDataGetter;
     public static final MethodHandle methodHandle$ServerboundCustomPayloadPacket$payloadGetter;
     public static final MethodHandle methodHandle$ClientboundRotateHeadPacket$entityIdGetter;
     public static final MethodHandle methodHandle$ClientboundSetEntityMotionPacket$idGetter;
@@ -1436,6 +1446,14 @@ public final class NetworkReflections {
             } else {
                 methodHandle$ServerboundPickItemFromEntityPacket$idGetter = null;
             }
+            if (field$ServerboundPickItemFromEntityPacket$includeData != null) {
+                methodHandle$ServerboundPickItemFromEntityPacket$includeDataGetter = requireNonNull(
+                        ReflectionUtils.unreflectGetter(field$ServerboundPickItemFromEntityPacket$includeData)
+                                .asType(MethodType.methodType(boolean.class, Object.class))
+                );
+            } else {
+                methodHandle$ServerboundPickItemFromEntityPacket$includeDataGetter = null;
+            }
             if (field$ServerboundPickItemFromBlockPacket$pos != null) {
                 methodHandle$ServerboundPickItemFromBlockPacket$posGetter = requireNonNull(
                         ReflectionUtils.unreflectGetter(field$ServerboundPickItemFromBlockPacket$pos)
@@ -1443,6 +1461,14 @@ public final class NetworkReflections {
                 );
             } else {
                 methodHandle$ServerboundPickItemFromBlockPacket$posGetter = null;
+            }
+            if (field$ServerboundPickItemFromBlockPacket$includeData != null) {
+                methodHandle$ServerboundPickItemFromBlockPacket$includeDataGetter = requireNonNull(
+                        ReflectionUtils.unreflectGetter(field$ServerboundPickItemFromBlockPacket$includeData)
+                                .asType(MethodType.methodType(boolean.class, Object.class))
+                );
+            } else {
+                methodHandle$ServerboundPickItemFromBlockPacket$includeDataGetter = null;
             }
             if (field$ClientboundLoginPacket$commonPlayerSpawnInfo != null) {
                 methodHandle$ClientboundLoginPacket$commonPlayerSpawnInfoGetter = requireNonNull(

@@ -11,17 +11,21 @@ import it.unimi.dsi.fastutil.ints.Int2ObjectMaps;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.ints.IntList;
 import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.format.NamedTextColor;
+import net.kyori.adventure.text.format.TextDecoration;
 import net.momirealms.craftengine.bukkit.api.CraftEngineBlocks;
 import net.momirealms.craftengine.bukkit.api.CraftEngineFurniture;
 import net.momirealms.craftengine.bukkit.api.event.FurnitureAttemptBreakEvent;
 import net.momirealms.craftengine.bukkit.api.event.FurnitureBreakEvent;
 import net.momirealms.craftengine.bukkit.api.event.FurnitureInteractEvent;
 import net.momirealms.craftengine.bukkit.block.BukkitBlockManager;
+import net.momirealms.craftengine.bukkit.block.entity.SimpleStorageBlockEntity;
 import net.momirealms.craftengine.bukkit.entity.data.BaseEntityData;
 import net.momirealms.craftengine.bukkit.entity.furniture.BukkitFurniture;
 import net.momirealms.craftengine.bukkit.entity.furniture.BukkitFurnitureManager;
 import net.momirealms.craftengine.bukkit.entity.projectile.BukkitProjectileManager;
 import net.momirealms.craftengine.bukkit.item.BukkitItemManager;
+import net.momirealms.craftengine.bukkit.item.ComponentTypes;
 import net.momirealms.craftengine.bukkit.item.behavior.FurnitureItemBehavior;
 import net.momirealms.craftengine.bukkit.nms.FastNMS;
 import net.momirealms.craftengine.bukkit.plugin.BukkitCraftEngine;
@@ -41,6 +45,8 @@ import net.momirealms.craftengine.bukkit.world.BukkitWorldManager;
 import net.momirealms.craftengine.core.advancement.network.AdvancementHolder;
 import net.momirealms.craftengine.core.advancement.network.AdvancementProgress;
 import net.momirealms.craftengine.core.block.ImmutableBlockState;
+import net.momirealms.craftengine.core.block.entity.BlockEntity;
+import net.momirealms.craftengine.core.block.entity.ItemStorageCapable;
 import net.momirealms.craftengine.core.entity.player.InteractionHand;
 import net.momirealms.craftengine.core.font.FontManager;
 import net.momirealms.craftengine.core.font.IllegalCharacterProcessResult;
@@ -73,6 +79,8 @@ import net.momirealms.craftengine.core.world.chunk.PalettedContainer;
 import net.momirealms.craftengine.core.world.chunk.packet.BlockEntityData;
 import net.momirealms.craftengine.core.world.chunk.packet.MCSection;
 import net.momirealms.craftengine.core.world.collision.AABB;
+import net.momirealms.sparrow.nbt.CompoundTag;
+import net.momirealms.sparrow.nbt.ListTag;
 import net.momirealms.sparrow.nbt.Tag;
 import org.bukkit.*;
 import org.bukkit.World;
@@ -1477,12 +1485,13 @@ public class PacketConsumers {
             Player player = (Player) user.platformPlayer();
             if (player == null) return;
             Object pos = NetworkReflections.methodHandle$ServerboundPickItemFromBlockPacket$posGetter.invokeExact(packet);
+            boolean includeData = (boolean) NetworkReflections.methodHandle$ServerboundPickItemFromBlockPacket$includeDataGetter.invokeExact(packet);
             if (VersionHelper.isFolia()) {
                 int x = FastNMS.INSTANCE.field$Vec3i$x(pos);
                 int z = FastNMS.INSTANCE.field$Vec3i$z(pos);
                 BukkitCraftEngine.instance().scheduler().sync().run(() -> {
                     try {
-                        handlePickItemFromBlockPacketOnMainThread(player, pos);
+                        handlePickItemFromBlockPacketOnMainThread(player, pos, includeData);
                     } catch (Throwable e) {
                         CraftEngine.instance().logger().warn("Failed to handle ServerboundPickItemFromBlockPacket", e);
                     }
@@ -1490,7 +1499,7 @@ public class PacketConsumers {
             } else {
                 BukkitCraftEngine.instance().scheduler().sync().run(() -> {
                     try {
-                        handlePickItemFromBlockPacketOnMainThread(player, pos);
+                        handlePickItemFromBlockPacketOnMainThread(player, pos, includeData);
                     } catch (Throwable e) {
                         CraftEngine.instance().logger().warn("Failed to handle ServerboundPickItemFromBlockPacket", e);
                     }
@@ -1501,14 +1510,14 @@ public class PacketConsumers {
         }
     };
 
-    private static void handlePickItemFromBlockPacketOnMainThread(Player player, Object pos) throws Throwable {
+    private static void handlePickItemFromBlockPacketOnMainThread(Player player, Object pos, boolean includeData) throws Throwable {
         Object serverLevel = FastNMS.INSTANCE.field$CraftWorld$ServerLevel(player.getWorld());
         Object blockState = FastNMS.INSTANCE.method$BlockGetter$getBlockState(serverLevel, pos);
         ImmutableBlockState state = BukkitBlockManager.instance().getImmutableBlockState(BlockStateUtils.blockStateToId(blockState));
         if (state == null) return;
         Key itemId = state.settings().itemId();
         if (itemId == null) return;
-        pickItem(player, itemId, pos, null);
+        pickItem(player, itemId, pos, null, includeData);
     }
 
     // 1.21.4+
@@ -1519,18 +1528,20 @@ public class PacketConsumers {
             if (furniture == null) return;
             Player player = (Player) user.platformPlayer();
             if (player == null) return;
+            boolean includeData = (boolean) NetworkReflections.methodHandle$ServerboundPickItemFromEntityPacket$includeDataGetter.invokeExact(packet);
             if (VersionHelper.isFolia()) {
                 player.getScheduler().run(BukkitCraftEngine.instance().javaPlugin(), (t) -> {
                     try {
-                        handlePickItemFromEntityOnMainThread(player, furniture);
+                        handlePickItemFromEntityOnMainThread(player, furniture, includeData);
                     } catch (Throwable e) {
                         CraftEngine.instance().logger().warn("Failed to handle ServerboundPickItemFromEntityPacket", e);
                     }
-                }, () -> {});
+                }, () -> {
+                });
             } else {
                 BukkitCraftEngine.instance().scheduler().sync().run(() -> {
                     try {
-                        handlePickItemFromEntityOnMainThread(player, furniture);
+                        handlePickItemFromEntityOnMainThread(player, furniture, includeData);
                     } catch (Throwable e) {
                         CraftEngine.instance().logger().warn("Failed to handle ServerboundPickItemFromEntityPacket", e);
                     }
@@ -1541,26 +1552,32 @@ public class PacketConsumers {
         }
     };
 
-    private static void handlePickItemFromEntityOnMainThread(Player player, BukkitFurniture furniture) throws Throwable {
+    private static void handlePickItemFromEntityOnMainThread(Player player, BukkitFurniture furniture, boolean includeData) throws Throwable {
         Key itemId = furniture.config().settings().itemId();
         if (itemId == null) return;
-        pickItem(player, itemId, null, FastNMS.INSTANCE.method$CraftEntity$getHandle(furniture.baseEntity()));
+        pickItem(player, itemId, null, FastNMS.INSTANCE.method$CraftEntity$getHandle(furniture.baseEntity()), includeData);
     }
 
-    private static void pickItem(Player player, Key itemId, @Nullable Object blockPos, @Nullable Object entity) throws Throwable {
-        ItemStack itemStack = BukkitCraftEngine.instance().itemManager().buildCustomItemStack(itemId, BukkitCraftEngine.instance().adapt(player));
-        if (itemStack == null) {
+    private static void pickItem(Player player, Key itemId, @Nullable Object blockPos, @Nullable Object entity, boolean includeData) throws Throwable {
+        BukkitServerPlayer serverPlayer = BukkitCraftEngine.instance().adapt(player);
+        Item<ItemStack> customItem = BukkitCraftEngine.instance().itemManager().createCustomWrappedItem(itemId, serverPlayer);
+        if (customItem == null) {
             CraftEngine.instance().logger().warn("Item: " + itemId + " is not a valid item");
             return;
         }
+        if (blockPos != null && includeData) {
+            BlockPos pos = LocationUtils.fromBlockPos(blockPos);
+            BlockEntity blockEntity = serverPlayer.world().storageWorld().getBlockEntityAtIfLoaded(pos);
+            if (blockEntity instanceof ItemStorageCapable itemStorageCapable && itemStorageCapable.hasPermission(serverPlayer)) {
+                itemStorageCapable.saveCustomDataToItem(customItem);
+            }
+        }
         assert CoreReflections.method$ServerGamePacketListenerImpl$tryPickItem != null;
+        Object packetListener = FastNMS.INSTANCE.method$Connection$getPacketListener(serverPlayer.connection());
         if (VersionHelper.isOrAbove1_21_5()) {
-            CoreReflections.method$ServerGamePacketListenerImpl$tryPickItem.invoke(
-                    CoreReflections.methodHandle$ServerPlayer$connectionGetter.invokeExact(FastNMS.INSTANCE.method$CraftPlayer$getHandle(player)),
-                    FastNMS.INSTANCE.method$CraftItemStack$asNMSCopy(itemStack), blockPos, entity, true);
+            CoreReflections.method$ServerGamePacketListenerImpl$tryPickItem.invoke(packetListener, FastNMS.INSTANCE.method$CraftItemStack$asNMSCopy(customItem.getItem()), blockPos, entity, true);
         } else {
-            CoreReflections.method$ServerGamePacketListenerImpl$tryPickItem.invoke(
-                    CoreReflections.methodHandle$ServerPlayer$connectionGetter.invokeExact(FastNMS.INSTANCE.method$CraftPlayer$getHandle(player)), FastNMS.INSTANCE.method$CraftItemStack$asNMSCopy(itemStack));
+            CoreReflections.method$ServerGamePacketListenerImpl$tryPickItem.invoke(packetListener, FastNMS.INSTANCE.method$CraftItemStack$asNMSCopy(customItem.getItem()));
         }
     }
 

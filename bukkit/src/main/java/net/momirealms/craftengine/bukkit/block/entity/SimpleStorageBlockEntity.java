@@ -1,5 +1,7 @@
 package net.momirealms.craftengine.bukkit.block.entity;
 
+import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+import net.kyori.adventure.text.Component;
 import net.momirealms.craftengine.bukkit.api.BukkitAdaptors;
 import net.momirealms.craftengine.bukkit.block.behavior.SimpleStorageBlockBehavior;
 import net.momirealms.craftengine.bukkit.item.BukkitItemManager;
@@ -11,10 +13,15 @@ import net.momirealms.craftengine.bukkit.util.LocationUtils;
 import net.momirealms.craftengine.core.block.ImmutableBlockState;
 import net.momirealms.craftengine.core.block.UpdateOption;
 import net.momirealms.craftengine.core.block.entity.BlockEntity;
+import net.momirealms.craftengine.core.block.entity.BlockEntityTypeKeys;
+import net.momirealms.craftengine.core.block.entity.ItemStorageCapable;
 import net.momirealms.craftengine.core.block.properties.Property;
 import net.momirealms.craftengine.core.entity.player.Player;
+import net.momirealms.craftengine.core.item.ComponentKeys;
+import net.momirealms.craftengine.core.item.Item;
 import net.momirealms.craftengine.core.plugin.CraftEngine;
 import net.momirealms.craftengine.core.sound.SoundData;
+import net.momirealms.craftengine.core.util.Key;
 import net.momirealms.craftengine.core.util.VersionHelper;
 import net.momirealms.craftengine.core.world.BlockPos;
 import net.momirealms.craftengine.core.world.Vec3d;
@@ -31,7 +38,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.List;
 import java.util.Optional;
 
-public class SimpleStorageBlockEntity extends BlockEntity {
+public class SimpleStorageBlockEntity extends BlockEntity implements ItemStorageCapable {
     private final SimpleStorageBlockBehavior behavior;
     private final Inventory inventory;
     private double maxInteractionDistance;
@@ -43,6 +50,38 @@ public class SimpleStorageBlockEntity extends BlockEntity {
         BlockEntityHolder holder = new BlockEntityHolder(this);
         this.inventory = FastNMS.INSTANCE.createSimpleStorageContainer(holder, this.behavior.rows() * 9, this.behavior.canPlaceItem(), this.behavior.canTakeItem());
         holder.setInventory(this.inventory);
+    }
+
+    @Override
+    public Key storageKey() {
+        return BlockEntityTypeKeys.SIMPLE_STORAGE;
+    }
+
+    @Override
+    public void saveCustomDataToItem(Item<?> item) {
+        if (inventory().isEmpty()) return;
+        ItemStorageCapable.super.saveCustomDataToItem(item);
+        if (VersionHelper.isOrAbove1_21_5()) {
+            // 1.20.5~1.21.4 不显示所以说不添加
+            try {
+                List<Object> items = new ObjectArrayList<>();
+                for (ItemStack itemStack : inventory().getStorageContents()) {
+                    if (itemStack == null) continue;
+                    items.add(FastNMS.INSTANCE.field$CraftItemStack$handle(itemStack));
+                }
+                Object itemContainerContents = CoreReflections.method$ItemContainerContents$fromItems.invoke(null, items);
+                CoreReflections.instance$ItemContainerContents$CODEC.encodeStart(MRegistryOps.SPARROW_NBT, itemContainerContents)
+                        .ifSuccess(success -> item.setNBTComponent(ComponentKeys.CONTAINER, success))
+                        .ifError(error -> CraftEngine.instance().logger().warn("Error when converting to ItemContainerContents: " + error));
+            } catch (ReflectiveOperationException e) {
+                CraftEngine.instance().logger().warn("An error occurred while retrieving ItemContainerContents.", e);
+            }
+        } else if (!VersionHelper.isOrAbove1_20_5()) {
+            // 1.20~1.20.4添加一个 (+NBT) 的lore
+            List<Component> lore = item.loreComponent().map(ObjectArrayList::new).orElseGet(ObjectArrayList::new);
+            lore.addLast(Component.text("(+NBT)"));
+            item.loreComponent(lore);
+        }
     }
 
     @Override

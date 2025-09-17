@@ -56,6 +56,8 @@ public abstract class Player extends AbstractEntity implements NetWorkUser {
 
     public abstract boolean isFlying();
 
+    public abstract boolean isOp();
+
     public abstract GameMode gameMode();
 
     public abstract void setGameMode(GameMode gameMode);
