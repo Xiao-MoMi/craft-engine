@@ -17,6 +17,7 @@ public final class MBlocks {
     public static final Object SHORT_GRASS$defaultState;
     public static final Object SHULKER_BOX;
     public static final Object COMPOSTER;
+    public static final Object BUBBLE_COLUMN;
     public static final Object SNOW;
     public static final Object WATER;
     public static final Object WATER$defaultState;
@@ -45,6 +46,7 @@ public final class MBlocks {
         SHORT_GRASS$defaultState = FastNMS.INSTANCE.method$Block$defaultState(SHORT_GRASS);
         SHULKER_BOX = getById("shulker_box");
         COMPOSTER = getById("composter");
+        BUBBLE_COLUMN = getById("bubble_column");
         SNOW = getById("snow");
         WATER = getById("water");
         WATER$defaultState = FastNMS.INSTANCE.method$Block$defaultState(WATER);
