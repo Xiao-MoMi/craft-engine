@@ -61,7 +61,7 @@ public class InteractionHitBox extends AbstractHitBox {
         float yaw = position.xRot();
         packets.accept(FastNMS.INSTANCE.constructor$ClientboundAddEntityPacket(
                 entityId[0], UUID.randomUUID(), x + offset.x, y + offset.y, z - offset.z, 0, yaw,
-                MEntityTypes.INTERACTION, 0, CoreReflections.instance$Vec3$Zero, 0
+                MEntityTypes.INTERACTION, 0, CoreReflections.Instance.vec3$Zero, 0
         ), true);
         packets.accept(FastNMS.INSTANCE.constructor$ClientboundSetEntityDataPacket(entityId[0], List.copyOf(this.cachedValues)), true);
         if (canUseItemOn()) {

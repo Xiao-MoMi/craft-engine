@@ -96,7 +96,7 @@ public class DoorBlockBehavior extends AbstractCanSurviveBlockBehavior {
         ImmutableBlockState customState = optionalCustomState.get();
         DoubleBlockHalf half = customState.get(this.halfProperty);
         Object direction = VersionHelper.isOrAbove1_21_2() ? args[4] : args[1];
-        if (DirectionUtils.isYAxis(direction) && half == DoubleBlockHalf.LOWER == (direction == CoreReflections.instance$Direction$UP)) {
+        if (DirectionUtils.isYAxis(direction) && half == DoubleBlockHalf.LOWER == (direction == CoreReflections.Instance.direction$UP)) {
             Optional<ImmutableBlockState> optionalNeighborState = BlockStateUtils.getOptionalCustomBlockState(args[updateShape$neighborState]);
             if (optionalNeighborState.isEmpty()) {
                 return MBlocks.AIR$defaultState;
@@ -111,7 +111,7 @@ public class DoorBlockBehavior extends AbstractCanSurviveBlockBehavior {
             }
             return MBlocks.AIR$defaultState;
         } else {
-            if (half == DoubleBlockHalf.LOWER && direction == CoreReflections.instance$Direction$DOWN
+            if (half == DoubleBlockHalf.LOWER && direction == CoreReflections.Instance.direction$DOWN
                     && !canSurvive(thisBlock, blockState, level, blockPos)) {
                 BlockPos pos = LocationUtils.fromBlockPos(blockPos);
                 net.momirealms.craftengine.core.world.World world = new BukkitWorld(FastNMS.INSTANCE.method$Level$getCraftWorld(level));
@@ -144,7 +144,7 @@ public class DoorBlockBehavior extends AbstractCanSurviveBlockBehavior {
     private void preventDropFromBottomPart(Object level, Object pos, ImmutableBlockState state, Object player) {
         DoubleBlockHalf half = state.get(this.halfProperty);
         if (half == DoubleBlockHalf.UPPER) {
-            Object blockPos = FastNMS.INSTANCE.method$BlockPos$relative(pos, CoreReflections.instance$Direction$DOWN);
+            Object blockPos = FastNMS.INSTANCE.method$BlockPos$relative(pos, CoreReflections.Instance.direction$DOWN);
             Object blockState = FastNMS.INSTANCE.method$BlockGetter$getBlockState(level, blockPos);
             ImmutableBlockState belowState = BukkitBlockManager.instance().getImmutableBlockState(BlockStateUtils.blockStateToId(blockState));
             if (belowState == null || belowState.isEmpty()) return;
@@ -272,7 +272,7 @@ public class DoorBlockBehavior extends AbstractCanSurviveBlockBehavior {
         Object blockState = args[0];
         Optional<ImmutableBlockState> optionalCustomState = BlockStateUtils.getOptionalCustomBlockState(blockState);
         if (optionalCustomState.isEmpty()) return false;
-        if (type == CoreReflections.instance$PathComputationType$LAND || type == CoreReflections.instance$PathComputationType$AIR) {
+        if (type == CoreReflections.Instance.pathComputationType$LAND || type == CoreReflections.Instance.pathComputationType$AIR) {
             return optionalCustomState.get().get(this.openProperty);
         }
         return false;
@@ -325,8 +325,8 @@ public class DoorBlockBehavior extends AbstractCanSurviveBlockBehavior {
             return belowCustomState.filter(immutableBlockState -> immutableBlockState.owner().value() == super.customBlock).isPresent();
         } else {
             return FastNMS.INSTANCE.method$BlockStateBase$isFaceSturdy(
-                    belowState, world, belowPos, CoreReflections.instance$Direction$UP,
-                    CoreReflections.instance$SupportType$FULL
+                    belowState, world, belowPos, CoreReflections.Instance.direction$UP,
+                    CoreReflections.Instance.supportType$FULL
             );
         }
     }

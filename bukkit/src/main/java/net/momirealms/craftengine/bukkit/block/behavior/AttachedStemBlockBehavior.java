@@ -38,7 +38,7 @@ public class AttachedStemBlockBehavior extends BukkitBlockBehavior {
 
     @Override
     public boolean isPathFindable(Object thisBlock, Object[] args, Callable<Object> superMethod) throws Exception {
-        return (VersionHelper.isOrAbove1_20_5() ? args[1] : args[3]).equals(CoreReflections.instance$PathComputationType$AIR)
+        return (VersionHelper.isOrAbove1_20_5() ? args[1] : args[3]).equals(CoreReflections.Instance.pathComputationType$AIR)
                 && !FastNMS.INSTANCE.field$BlockBehavior$hasCollision(thisBlock) || (boolean) superMethod.call();
     }
 

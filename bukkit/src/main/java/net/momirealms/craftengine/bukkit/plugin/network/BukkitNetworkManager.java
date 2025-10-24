@@ -1052,7 +1052,7 @@ public class BukkitNetworkManager implements NetworkManager, Listener, PluginMes
 
         private static void handlePlayerActionPacketOnMainThread(BukkitServerPlayer player, World world, BlockPos pos, Object packet) {
             Object action = FastNMS.INSTANCE.field$ServerboundPlayerActionPacket$action(packet);
-            if (action == NetworkReflections.instance$ServerboundPlayerActionPacket$Action$START_DESTROY_BLOCK) {
+            if (action == NetworkReflections.Instance.serverboundPlayerActionPacket$Action$START_DESTROY_BLOCK) {
                 Object serverLevel = FastNMS.INSTANCE.field$CraftWorld$ServerLevel(world);
                 Object blockState = FastNMS.INSTANCE.method$BlockGetter$getBlockState(serverLevel, LocationUtils.toBlockPos(pos));
                 int stateId = BlockStateUtils.blockStateToId(blockState);
@@ -1089,11 +1089,11 @@ public class BukkitNetworkManager implements NetworkManager, Listener, PluginMes
                     }
                 }
                 player.startMiningBlock(pos, blockState, BukkitBlockManager.instance().getImmutableBlockStateUnsafe(stateId));
-            } else if (action == NetworkReflections.instance$ServerboundPlayerActionPacket$Action$ABORT_DESTROY_BLOCK) {
+            } else if (action == NetworkReflections.Instance.serverboundPlayerActionPacket$Action$ABORT_DESTROY_BLOCK) {
                 if (player.isMiningBlock()) {
                     player.abortMiningBlock();
                 }
-            } else if (action == NetworkReflections.instance$ServerboundPlayerActionPacket$Action$STOP_DESTROY_BLOCK) {
+            } else if (action == NetworkReflections.Instance.serverboundPlayerActionPacket$Action$STOP_DESTROY_BLOCK) {
                 if (player.isMiningBlock()) {
                     player.stopMiningBlock();
                 }
@@ -1108,7 +1108,7 @@ public class BukkitNetworkManager implements NetworkManager, Listener, PluginMes
             BukkitServerPlayer player = (BukkitServerPlayer) user;
             if (!player.isMiningBlock()) return;
             Object hand = FastNMS.INSTANCE.field$ServerboundSwingPacket$hand(packet);
-            if (hand == CoreReflections.instance$InteractionHand$MAIN_HAND) {
+            if (hand == CoreReflections.Instance.interactionHand$MAIN_HAND) {
                 player.onSwingHand();
             }
         }
@@ -1137,7 +1137,7 @@ public class BukkitNetworkManager implements NetworkManager, Listener, PluginMes
             EnumSet<? extends Enum<?>> enums = FastNMS.INSTANCE.field$ClientboundPlayerInfoUpdatePacket$actions(packet);
             outer: {
                 for (Object entry : enums) {
-                    if (entry == NetworkReflections.instance$ClientboundPlayerInfoUpdatePacket$Action$UPDATE_DISPLAY_NAME) {
+                    if (entry == NetworkReflections.Instance.clientboundPlayerInfoUpdatePacket$Action$UPDATE_DISPLAY_NAME) {
                         break outer;
                     }
                 }
@@ -1638,7 +1638,7 @@ public class BukkitNetworkManager implements NetworkManager, Listener, PluginMes
 
             // 检查是否是拒绝
             if (Config.kickOnDeclined()) {
-                if (action == NetworkReflections.instance$ServerboundResourcePackPacket$Action$DECLINED || action == NetworkReflections.instance$ServerboundResourcePackPacket$Action$DISCARDED) {
+                if (action == NetworkReflections.Instance.serverboundResourcePackPacket$Action$DECLINED || action == NetworkReflections.Instance.serverboundResourcePackPacket$Action$DISCARDED) {
                     user.kick(Component.translatable("multiplayer.requiredTexturePrompt.disconnect"));
                     return;
                 }
@@ -1646,14 +1646,14 @@ public class BukkitNetworkManager implements NetworkManager, Listener, PluginMes
 
             // 检查是否失败
             if (Config.kickOnFailedApply()) {
-                if (action == NetworkReflections.instance$ServerboundResourcePackPacket$Action$FAILED_DOWNLOAD
-                        || (VersionHelper.isOrAbove1_20_3() && action == NetworkReflections.instance$ServerboundResourcePackPacket$Action$INVALID_URL)) {
+                if (action == NetworkReflections.Instance.serverboundResourcePackPacket$Action$FAILED_DOWNLOAD
+                        || (VersionHelper.isOrAbove1_20_3() && action == NetworkReflections.Instance.serverboundResourcePackPacket$Action$INVALID_URL)) {
                     user.kick(Component.translatable("multiplayer.requiredTexturePrompt.disconnect"));
                     return;
                 }
             }
 
-            boolean isTerminal = action != NetworkReflections.instance$ServerboundResourcePackPacket$Action$ACCEPTED && action != NetworkReflections.instance$ServerboundResourcePackPacket$Action$DOWNLOADED;
+            boolean isTerminal = action != NetworkReflections.Instance.serverboundResourcePackPacket$Action$ACCEPTED && action != NetworkReflections.Instance.serverboundResourcePackPacket$Action$DOWNLOADED;
             if (isTerminal && VersionHelper.isOrAbove1_20_2()) {
                 event.setCancelled(true);
                 Object packetListener = FastNMS.INSTANCE.method$Connection$getPacketListener(user.connection());
@@ -1663,7 +1663,7 @@ public class BukkitNetworkManager implements NetworkManager, Listener, PluginMes
                     try {
                         // 当客户端发出多次成功包的时候，finish会报错，我们忽略他
                         NetworkReflections.methodHandle$ServerCommonPacketListener$handleResourcePackResponse.invokeExact(packetListener, packet);
-                        CoreReflections.methodHandle$ServerConfigurationPacketListenerImpl$finishCurrentTask.invokeExact(packetListener, CoreReflections.instance$ServerResourcePackConfigurationTask$TYPE);
+                        CoreReflections.methodHandle$ServerConfigurationPacketListenerImpl$finishCurrentTask.invokeExact(packetListener, CoreReflections.Instance.serverResourcePackConfigurationTask$TYPE);
                     } catch (Throwable e) {
                         Debugger.RESOURCE_PACK.warn(() -> "Cannot finish current task", e);
                     }
@@ -1796,7 +1796,7 @@ public class BukkitNetworkManager implements NetworkManager, Listener, PluginMes
             // 取消 ClientboundFinishConfigurationPacket，让客户端发呆，并结束掉当前的进入世界任务
             event.setCancelled(true);
             try {
-                CoreReflections.methodHandle$ServerConfigurationPacketListenerImpl$finishCurrentTask.invokeExact(packetListener, CoreReflections.instance$JoinWorldTask$TYPE);
+                CoreReflections.methodHandle$ServerConfigurationPacketListenerImpl$finishCurrentTask.invokeExact(packetListener, CoreReflections.Instance.joinWorldTask$TYPE);
             } catch (Throwable e) {
                 CraftEngine.instance().logger().warn("Failed to finish current task for " + user.name(), e);
             }
@@ -2182,7 +2182,7 @@ public class BukkitNetworkManager implements NetworkManager, Listener, PluginMes
             float zDist = buf.readFloat();
             float maxSpeed = buf.readFloat();
             int count = buf.readInt();
-            Object option = FastNMS.INSTANCE.method$StreamDecoder$decode(NetworkReflections.instance$ParticleTypes$STREAM_CODEC, FastNMS.INSTANCE.constructor$FriendlyByteBuf(buf.source()));
+            Object option = FastNMS.INSTANCE.method$StreamDecoder$decode(NetworkReflections.Instance.particleTypes$STREAM_CODEC, FastNMS.INSTANCE.constructor$FriendlyByteBuf(buf.source()));
             if (option == null) return;
             if (!CoreReflections.clazz$BlockParticleOption.isInstance(option)) return;
             Object blockState = FastNMS.INSTANCE.field$BlockParticleOption$blockState(option);
@@ -2204,7 +2204,7 @@ public class BukkitNetworkManager implements NetworkManager, Listener, PluginMes
             buf.writeFloat(zDist);
             buf.writeFloat(maxSpeed);
             buf.writeInt(count);
-            FastNMS.INSTANCE.method$StreamEncoder$encode(NetworkReflections.instance$ParticleTypes$STREAM_CODEC, FastNMS.INSTANCE.constructor$FriendlyByteBuf(buf.source()), remappedOption);
+            FastNMS.INSTANCE.method$StreamEncoder$encode(NetworkReflections.Instance.particleTypes$STREAM_CODEC, FastNMS.INSTANCE.constructor$FriendlyByteBuf(buf.source()), remappedOption);
         }
     }
 
@@ -2229,7 +2229,7 @@ public class BukkitNetworkManager implements NetworkManager, Listener, PluginMes
             float zDist = buf.readFloat();
             float maxSpeed = buf.readFloat();
             int count = buf.readInt();
-            Object option = FastNMS.INSTANCE.method$StreamDecoder$decode(NetworkReflections.instance$ParticleTypes$STREAM_CODEC, FastNMS.INSTANCE.constructor$FriendlyByteBuf(buf.source()));
+            Object option = FastNMS.INSTANCE.method$StreamDecoder$decode(NetworkReflections.Instance.particleTypes$STREAM_CODEC, FastNMS.INSTANCE.constructor$FriendlyByteBuf(buf.source()));
             if (option == null) return;
             if (!CoreReflections.clazz$BlockParticleOption.isInstance(option)) return;
             Object blockState = FastNMS.INSTANCE.field$BlockParticleOption$blockState(option);
@@ -2250,7 +2250,7 @@ public class BukkitNetworkManager implements NetworkManager, Listener, PluginMes
             buf.writeFloat(zDist);
             buf.writeFloat(maxSpeed);
             buf.writeInt(count);
-            FastNMS.INSTANCE.method$StreamEncoder$encode(NetworkReflections.instance$ParticleTypes$STREAM_CODEC, FastNMS.INSTANCE.constructor$FriendlyByteBuf(buf.source()), remappedOption);
+            FastNMS.INSTANCE.method$StreamEncoder$encode(NetworkReflections.Instance.particleTypes$STREAM_CODEC, FastNMS.INSTANCE.constructor$FriendlyByteBuf(buf.source()), remappedOption);
         }
     }
 
@@ -2330,7 +2330,7 @@ public class BukkitNetworkManager implements NetworkManager, Listener, PluginMes
                     if (mappedSoundId != null) {
                         Object packet = FastNMS.INSTANCE.constructor$ClientboundSoundPacket(
                                 FastNMS.INSTANCE.method$Holder$direct(FastNMS.INSTANCE.constructor$SoundEvent(KeyUtils.toResourceLocation(mappedSoundId), Optional.empty())),
-                                CoreReflections.instance$SoundSource$BLOCKS,
+                                CoreReflections.Instance.soundSource$BLOCKS,
                                 blockPos.x() + 0.5, blockPos.y() + 0.5, blockPos.z() + 0.5, 1f, 0.8F,
                                 RandomUtils.generateRandomLong()
                         );
@@ -2343,7 +2343,7 @@ public class BukkitNetworkManager implements NetworkManager, Listener, PluginMes
                 Object finalSoundId = KeyUtils.toResourceLocation(mappedSoundId == null ? soundId : mappedSoundId);
                 Object packet = FastNMS.INSTANCE.constructor$ClientboundSoundPacket(
                         FastNMS.INSTANCE.method$Holder$direct(FastNMS.INSTANCE.constructor$SoundEvent(finalSoundId, Optional.empty())),
-                        CoreReflections.instance$SoundSource$BLOCKS,
+                        CoreReflections.Instance.soundSource$BLOCKS,
                         blockPos.x() + 0.5, blockPos.y() + 0.5, blockPos.z() + 0.5, 1f, 0.8F,
                         RandomUtils.generateRandomLong()
                 );
@@ -2418,7 +2418,7 @@ public class BukkitNetworkManager implements NetworkManager, Listener, PluginMes
                 }
                 itemTag.put("components", componentsTag);
             }
-            DataResult<Object> nmsItemStackResult = CoreReflections.instance$ItemStack$CODEC.parse(MRegistryOps.SPARROW_NBT, itemTag);
+            DataResult<Object> nmsItemStackResult = CoreReflections.Instance.itemStack$CODEC.parse(MRegistryOps.SPARROW_NBT, itemTag);
             Optional<Object> result = nmsItemStackResult.result();
             if (result.isEmpty()) {
                 return showItem;
@@ -2450,7 +2450,7 @@ public class BukkitNetworkManager implements NetworkManager, Listener, PluginMes
         net.kyori.adventure.key.Key id = KeyUtils.toAdventureKey(clientBoundItem.vanillaId());
         int count = clientBoundItem.count();
         if (VersionHelper.COMPONENT_RELEASE) {
-            DataResult<Tag> tagDataResult = CoreReflections.instance$ItemStack$CODEC.encodeStart(MRegistryOps.SPARROW_NBT, clientBoundItem.getLiteralObject());
+            DataResult<Tag> tagDataResult = CoreReflections.Instance.itemStack$CODEC.encodeStart(MRegistryOps.SPARROW_NBT, clientBoundItem.getLiteralObject());
             Optional<Tag> result = tagDataResult.result();
             if (result.isEmpty()) {
                 return showItem;
@@ -3435,7 +3435,7 @@ public class BukkitNetworkManager implements NetworkManager, Listener, PluginMes
             int slotMask;
             do {
                 slotMask = buf.readByte();
-                Object equipmentSlot = CoreReflections.instance$EquipmentSlot$values[slotMask & 127];
+                Object equipmentSlot = CoreReflections.Instance.equipmentSlot$values[slotMask & 127];
                 ItemStack itemStack = FastNMS.INSTANCE.method$FriendlyByteBuf$readItem(friendlyBuf);
                 Optional<ItemStack> optional = BukkitItemManager.instance().s2c(itemStack, serverPlayer);
                 if (optional.isPresent()) {
@@ -4040,9 +4040,9 @@ public class BukkitNetworkManager implements NetworkManager, Listener, PluginMes
             BukkitItemManager manager = BukkitItemManager.instance();
             Object friendlyBuf = FastNMS.INSTANCE.constructor$FriendlyByteBuf(buf.source());
             List<MerchantOffer<ItemStack>> merchantOffers = buf.readCollection(ArrayList::new, byteBuf -> {
-                ItemStack cost1 = FastNMS.INSTANCE.method$CraftItemStack$asCraftMirror(FastNMS.INSTANCE.field$ItemCost$itemStack(FastNMS.INSTANCE.method$StreamDecoder$decode(NetworkReflections.instance$ItemCost$STREAM_CODEC, friendlyBuf)));
+                ItemStack cost1 = FastNMS.INSTANCE.method$CraftItemStack$asCraftMirror(FastNMS.INSTANCE.field$ItemCost$itemStack(FastNMS.INSTANCE.method$StreamDecoder$decode(NetworkReflections.Instance.itemCost$STREAM_CODEC, friendlyBuf)));
                 ItemStack result = FastNMS.INSTANCE.method$FriendlyByteBuf$readItem(friendlyBuf);
-                Optional<ItemStack> cost2 = ((Optional<Object>) FastNMS.INSTANCE.method$StreamDecoder$decode(NetworkReflections.instance$ItemCost$OPTIONAL_STREAM_CODEC, friendlyBuf))
+                Optional<ItemStack> cost2 = ((Optional<Object>) FastNMS.INSTANCE.method$StreamDecoder$decode(NetworkReflections.Instance.itemCost$OPTIONAL_STREAM_CODEC, friendlyBuf))
                         .map(cost -> FastNMS.INSTANCE.method$CraftItemStack$asCraftMirror(FastNMS.INSTANCE.field$ItemCost$itemStack(cost)));
                 boolean outOfStock = byteBuf.readBoolean();
                 int uses = byteBuf.readInt();
@@ -4077,9 +4077,9 @@ public class BukkitNetworkManager implements NetworkManager, Listener, PluginMes
                 buf.writeVarInt(event.packetID());
                 buf.writeContainerId(containerId);
                 buf.writeCollection(merchantOffers, (byteBuf, offer) -> {
-                    FastNMS.INSTANCE.method$StreamEncoder$encode(NetworkReflections.instance$ItemCost$STREAM_CODEC, friendlyBuf, itemStackToItemCost(offer.cost1().getLiteralObject(), offer.cost1().count()));
+                    FastNMS.INSTANCE.method$StreamEncoder$encode(NetworkReflections.Instance.itemCost$STREAM_CODEC, friendlyBuf, itemStackToItemCost(offer.cost1().getLiteralObject(), offer.cost1().count()));
                     FastNMS.INSTANCE.method$FriendlyByteBuf$writeItem(friendlyBuf, offer.result().getItem());
-                    FastNMS.INSTANCE.method$StreamEncoder$encode(NetworkReflections.instance$ItemCost$OPTIONAL_STREAM_CODEC, friendlyBuf, offer.cost2().map(it -> itemStackToItemCost(it.getLiteralObject(), it.count())));
+                    FastNMS.INSTANCE.method$StreamEncoder$encode(NetworkReflections.Instance.itemCost$OPTIONAL_STREAM_CODEC, friendlyBuf, offer.cost2().map(it -> itemStackToItemCost(it.getLiteralObject(), it.count())));
                     byteBuf.writeBoolean(offer.outOfStock());
                     byteBuf.writeInt(offer.uses());
                     byteBuf.writeInt(offer.maxUses());
@@ -4126,7 +4126,7 @@ public class BukkitNetworkManager implements NetworkManager, Listener, PluginMes
                 for (Tag itemTag : itemsTag) {
                     if (itemTag instanceof CompoundTag itemCompoundTag) {
                         byte slot = itemCompoundTag.getByte("Slot");
-                        Object nmsStack = CoreReflections.instance$ItemStack$CODEC.parse(MRegistryOps.SPARROW_NBT, itemCompoundTag)
+                        Object nmsStack = CoreReflections.Instance.itemStack$CODEC.parse(MRegistryOps.SPARROW_NBT, itemCompoundTag)
                                 .resultOrPartial((error) -> CraftEngine.instance().logger().severe("Tried to parse invalid item: '" + error + "'")).orElse(null);
                         ItemStack bukkitStack = FastNMS.INSTANCE.method$CraftItemStack$asCraftMirror(nmsStack);
                         Optional<ItemStack> optional = itemManager.s2c(bukkitStack, (BukkitServerPlayer) user);
@@ -4141,7 +4141,7 @@ public class BukkitNetworkManager implements NetworkManager, Listener, PluginMes
                 if (changed) {
                     ListTag newItemsTag = new ListTag();
                     for (Pair<Byte, ItemStack> pair : items) {
-                        CompoundTag newItemCompoundTag = (CompoundTag) CoreReflections.instance$ItemStack$CODEC.encodeStart(MRegistryOps.SPARROW_NBT, FastNMS.INSTANCE.field$CraftItemStack$handle(pair.right()))
+                        CompoundTag newItemCompoundTag = (CompoundTag) CoreReflections.Instance.itemStack$CODEC.encodeStart(MRegistryOps.SPARROW_NBT, FastNMS.INSTANCE.field$CraftItemStack$handle(pair.right()))
                                 .resultOrPartial((error) -> CraftEngine.instance().logger().severe("Tried to encode invalid item: '" + error + "'")).orElse(null);
                         if (newItemCompoundTag != null) {
                             newItemCompoundTag.putByte("Slot", pair.left());

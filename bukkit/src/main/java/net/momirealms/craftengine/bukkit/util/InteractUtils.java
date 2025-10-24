@@ -1071,7 +1071,7 @@ public final class InteractUtils {
         return FastNMS.INSTANCE.constructor$BlockPlaceContext(
                 context.getLevel().serverWorld(),
                 Optional.ofNullable(context.getPlayer()).map(net.momirealms.craftengine.core.entity.player.Player::serverPlayer).orElse(null),
-                context.getHand() == InteractionHand.MAIN_HAND ? CoreReflections.instance$InteractionHand$MAIN_HAND : CoreReflections.instance$InteractionHand$OFF_HAND,
+                context.getHand() == InteractionHand.MAIN_HAND ? CoreReflections.Instance.interactionHand$MAIN_HAND : CoreReflections.Instance.interactionHand$OFF_HAND,
                 context.getItem().getLiteralObject(),
                 toNMSHitResult(context.getHitResult())
         );

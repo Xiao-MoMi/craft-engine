@@ -131,18 +131,18 @@ public class BukkitBlockBehavior extends AbstractBlockBehavior {
 
     @Override
     public Object pickupBlock(Object thisBlock, Object[] args, Callable<Object> superMethod) {
-        if (this.waterloggedProperty == null) return CoreReflections.instance$ItemStack$EMPTY;
+        if (this.waterloggedProperty == null) return CoreReflections.Instance.itemStack$EMPTY;
         Object blockState = args[pickupBlock$blockState];
         Object world = args[pickupBlock$world];
         Object pos = args[pickupBlock$pos];
         Optional<ImmutableBlockState> optionalCustomState = BlockStateUtils.getOptionalCustomBlockState(blockState);
-        if (optionalCustomState.isEmpty()) return CoreReflections.instance$ItemStack$EMPTY;
+        if (optionalCustomState.isEmpty()) return CoreReflections.Instance.itemStack$EMPTY;
         ImmutableBlockState immutableBlockState = optionalCustomState.get();
         if (immutableBlockState.get(this.waterloggedProperty)) {
             FastNMS.INSTANCE.method$LevelWriter$setBlock(world, pos, immutableBlockState.with(this.waterloggedProperty, false).customBlockState().literalObject(), 3);
             return FastNMS.INSTANCE.constructor$ItemStack(MItems.WATER_BUCKET, 1);
         }
-        return CoreReflections.instance$ItemStack$EMPTY;
+        return CoreReflections.Instance.itemStack$EMPTY;
     }
 
     @Override

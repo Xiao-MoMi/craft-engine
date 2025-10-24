@@ -62,7 +62,7 @@ public class FlintAndSteelItemBehavior extends ItemBehavior {
         try {
             isClickedBlockBurnable = BlockStateUtils.isBurnable(clickedBlockState) ||
                     (context.getClickedFace() == Direction.UP && (boolean) CoreReflections.method$BlockStateBase$isFaceSturdy.invoke(
-                            clickedBlockState, context.getLevel().serverWorld(), LocationUtils.toBlockPos(clickedPos), CoreReflections.instance$Direction$UP, CoreReflections.instance$SupportType$FULL));
+                            clickedBlockState, context.getLevel().serverWorld(), LocationUtils.toBlockPos(clickedPos), CoreReflections.Instance.direction$UP, CoreReflections.Instance.supportType$FULL));
         } catch (ReflectiveOperationException e) {
             CraftEngine.instance().logger().warn("Failed to call method$BlockStateBase$isFaceSturdy", e);
             return InteractionResult.PASS;
@@ -101,7 +101,7 @@ public class FlintAndSteelItemBehavior extends ItemBehavior {
                         Block belowBlock = belowFireBlock.block();
                         belowCanBurn = BlockStateUtils.isBurnable(BlockStateUtils.blockDataToBlockState(belowBlock.getBlockData())) ||
                                 (boolean) CoreReflections.method$BlockStateBase$isFaceSturdy.invoke(
-                                        BlockStateUtils.blockDataToBlockState(belowFireBlock.block().getBlockData()), context.getLevel().serverWorld(), LocationUtils.toBlockPos(belowFirePos), CoreReflections.instance$Direction$UP, CoreReflections.instance$SupportType$FULL);
+                                        BlockStateUtils.blockDataToBlockState(belowFireBlock.block().getBlockData()), context.getLevel().serverWorld(), LocationUtils.toBlockPos(belowFirePos), CoreReflections.Instance.direction$UP, CoreReflections.Instance.supportType$FULL);
                     } catch (ReflectiveOperationException e) {
                         CraftEngine.instance().logger().warn("Failed to call method$BlockStateBase$isFaceSturdy", e);
                         return InteractionResult.PASS;
@@ -144,7 +144,7 @@ public class FlintAndSteelItemBehavior extends ItemBehavior {
                     }
                     try {
                         if (dir == Direction.DOWN && (boolean) CoreReflections.method$BlockStateBase$isFaceSturdy.invoke(
-                                nearbyBlockState, context.getLevel().serverWorld(), LocationUtils.toBlockPos(relPos), CoreReflections.instance$Direction$UP, CoreReflections.instance$SupportType$FULL)) {
+                                nearbyBlockState, context.getLevel().serverWorld(), LocationUtils.toBlockPos(relPos), CoreReflections.Instance.direction$UP, CoreReflections.Instance.supportType$FULL)) {
                             return InteractionResult.PASS;
                         }
                     } catch (ReflectiveOperationException e) {

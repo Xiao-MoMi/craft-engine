@@ -137,7 +137,7 @@ public class ButtonBlockBehavior extends BukkitBlockBehavior {
         Object arrow = this.canButtonBeActivatedByArrows ? FastNMS.INSTANCE.method$EntityGetter$getEntitiesOfClass(
                 level, CoreReflections.clazz$AbstractArrow, FastNMS.INSTANCE.method$AABB$move(
                         FastNMS.INSTANCE.method$VoxelShape$bounds(FastNMS.INSTANCE.method$BlockState$getShape(
-                                state, level, pos, CoreReflections.instance$CollisionContext$empty
+                                state, level, pos, CoreReflections.Instance.collisionContext$empty
                         )), pos), MEntitySelectors.NO_SPECTATORS).stream().findFirst().orElse(null) : null;
         boolean on = arrow != null;
         ImmutableBlockState blockState = BlockStateUtils.getOptionalCustomBlockState(state).orElse(null);
@@ -169,7 +169,7 @@ public class ButtonBlockBehavior extends BukkitBlockBehavior {
             Property<HorizontalDirection> facing = (Property<HorizontalDirection>) state.owner().value().getProperty("facing");
             if (facing != null) {
                 orientation = FastNMS.INSTANCE.method$ExperimentalRedstoneUtils$initialOrientation(
-                        level, nmsDirection, opposite.axis().isHorizontal() ? CoreReflections.instance$Direction$UP : DirectionUtils.toNMSDirection(state.get(facing).toDirection())
+                        level, nmsDirection, opposite.axis().isHorizontal() ? CoreReflections.Instance.direction$UP : DirectionUtils.toNMSDirection(state.get(facing).toDirection())
                 );
             }
         }
@@ -181,7 +181,7 @@ public class ButtonBlockBehavior extends BukkitBlockBehavior {
         SoundData soundData = getSound(on);
         if (soundData == null) return;
         Object sound = FastNMS.INSTANCE.constructor$SoundEvent(KeyUtils.toResourceLocation(soundData.id()), Optional.empty());
-        FastNMS.INSTANCE.method$LevelAccessor$playSound(level, null, pos, sound, CoreReflections.instance$SoundSource$BLOCKS, soundData.volume().get(), soundData.pitch().get());
+        FastNMS.INSTANCE.method$LevelAccessor$playSound(level, null, pos, sound, CoreReflections.Instance.soundSource$BLOCKS, soundData.volume().get(), soundData.pitch().get());
     }
 
     private SoundData getSound(boolean on) {

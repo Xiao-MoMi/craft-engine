@@ -274,14 +274,14 @@ public final class BlockGenerator {
             Object serverLevel = args[levelIndex];
             Object blockPos = args[posIndex];
             // Y axis
-            if (direction == CoreReflections.instance$Direction$DOWN) {
+            if (direction == CoreReflections.Instance.direction$DOWN) {
                 Object chunkSource = FastNMS.INSTANCE.method$ServerLevel$getChunkSource(serverLevel);
                 FastNMS.INSTANCE.method$ServerChunkCache$blockChanged(chunkSource, blockPos);
-                NoteBlockChainUpdateUtils.noteBlockChainUpdate(serverLevel, chunkSource, CoreReflections.instance$Direction$UP, blockPos, Config.maxNoteBlockChainUpdate());
-            } else if (direction == CoreReflections.instance$Direction$UP) {
+                NoteBlockChainUpdateUtils.noteBlockChainUpdate(serverLevel, chunkSource, CoreReflections.Instance.direction$UP, blockPos, Config.maxNoteBlockChainUpdate());
+            } else if (direction == CoreReflections.Instance.direction$UP) {
                 Object chunkSource = FastNMS.INSTANCE.method$ServerLevel$getChunkSource(serverLevel);
                 FastNMS.INSTANCE.method$ServerChunkCache$blockChanged(chunkSource, blockPos);
-                NoteBlockChainUpdateUtils.noteBlockChainUpdate(serverLevel, chunkSource, CoreReflections.instance$Direction$DOWN, blockPos, Config.maxNoteBlockChainUpdate());
+                NoteBlockChainUpdateUtils.noteBlockChainUpdate(serverLevel, chunkSource, CoreReflections.Instance.direction$DOWN, blockPos, Config.maxNoteBlockChainUpdate());
             }
         }
     }
@@ -586,10 +586,10 @@ public final class BlockGenerator {
         public Object intercept(@This Object thisObj, @AllArguments Object[] args, @SuperCall Callable<Object> superMethod) {
             ObjectHolder<BlockBehavior> holder = ((DelegatingBlock) thisObj).behaviorDelegate();
             try {
-                return holder.value().pickupBlock(thisObj, args, () -> CoreReflections.instance$ItemStack$EMPTY);
+                return holder.value().pickupBlock(thisObj, args, () -> CoreReflections.Instance.itemStack$EMPTY);
             } catch (Exception e) {
                 CraftEngine.instance().logger().severe("Failed to run pickupBlock", e);
-                return CoreReflections.instance$ItemStack$EMPTY;
+                return CoreReflections.Instance.itemStack$EMPTY;
             }
         }
     }

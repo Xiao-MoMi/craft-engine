@@ -44,7 +44,7 @@ public class LiquidCollisionBlockItemBehavior extends BlockItemBehavior {
     public InteractionResult use(World world, @Nullable Player player, InteractionHand hand) {
         try {
             if (player == null) return InteractionResult.FAIL;
-            Object blockHitResult = CoreReflections.method$Item$getPlayerPOVHitResult.invoke(null, world.serverWorld(), player.serverPlayer(), CoreReflections.instance$ClipContext$Fluid$SOURCE_ONLY);
+            Object blockHitResult = CoreReflections.method$Item$getPlayerPOVHitResult.invoke(null, world.serverWorld(), player.serverPlayer(), CoreReflections.Instance.clipContext$Fluid$SOURCE_ONLY);
             Object blockPos = FastNMS.INSTANCE.field$BlockHitResult$blockPos(blockHitResult);
             BlockPos above = new BlockPos(FastNMS.INSTANCE.field$Vec3i$x(blockPos), FastNMS.INSTANCE.field$Vec3i$y(blockPos) + offsetY, FastNMS.INSTANCE.field$Vec3i$z(blockPos));
             Direction direction = DirectionUtils.fromNMSDirection(FastNMS.INSTANCE.field$BlockHitResul$direction(blockHitResult));

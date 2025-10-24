@@ -4,7 +4,7 @@ import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.CoreReflect
 
 public class ItemDisplayEntityData<T> extends DisplayEntityData<T> {
     // Item display only
-    public static final ItemDisplayEntityData<Object> DisplayedItem = new ItemDisplayEntityData<>(ItemDisplayEntityData.class, EntityDataValue.Serializers$ITEM_STACK, CoreReflections.instance$ItemStack$EMPTY);
+    public static final ItemDisplayEntityData<Object> DisplayedItem = new ItemDisplayEntityData<>(ItemDisplayEntityData.class, EntityDataValue.Serializers$ITEM_STACK, CoreReflections.Instance.itemStack$EMPTY);
     /**
      * Display type:
      * 0 = NONE

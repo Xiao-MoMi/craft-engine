@@ -19,11 +19,11 @@ public class TextDisplayBlockEntityElement implements BlockEntityElement {
     private final int entityId;
 
     public TextDisplayBlockEntityElement(TextDisplayBlockEntityElementConfig config, BlockPos pos) {
-        int entityId = CoreReflections.instance$Entity$ENTITY_COUNTER.incrementAndGet();
+        int entityId = CoreReflections.Instance.entity$ENTITY_COUNTER.incrementAndGet();
         Vector3f position = config.position();
         this.cachedSpawnPacket = FastNMS.INSTANCE.constructor$ClientboundAddEntityPacket(
                 entityId, UUID.randomUUID(), pos.x() + position.x, pos.y() + position.y, pos.z() + position.z,
-                config.xRot(), config.yRot(), MEntityTypes.TEXT_DISPLAY, 0, CoreReflections.instance$Vec3$Zero, 0
+                config.xRot(), config.yRot(), MEntityTypes.TEXT_DISPLAY, 0, CoreReflections.Instance.vec3$Zero, 0
         );
         this.config = config;
         this.cachedDespawnPacket = FastNMS.INSTANCE.constructor$ClientboundRemoveEntitiesPacket(IntList.of(entityId));

@@ -55,7 +55,7 @@ public class SimpleStorageBlockEntity extends BlockEntity {
             if (storageContents[i] != null) {
                 if (VersionHelper.isOrAbove1_20_5()) {
                     int slot = i;
-                    CoreReflections.instance$ItemStack$CODEC.encodeStart(MRegistryOps.SPARROW_NBT, FastNMS.INSTANCE.field$CraftItemStack$handle(storageContents[i]))
+                    CoreReflections.Instance.itemStack$CODEC.encodeStart(MRegistryOps.SPARROW_NBT, FastNMS.INSTANCE.field$CraftItemStack$handle(storageContents[i]))
                             .ifSuccess(success -> {
                                 CompoundTag itemTag = (CompoundTag) success;
                                 itemTag.putInt("slot", slot);
@@ -84,7 +84,7 @@ public class SimpleStorageBlockEntity extends BlockEntity {
                 continue;
             }
             if (VersionHelper.isOrAbove1_20_5()) {
-                CoreReflections.instance$ItemStack$CODEC.parse(MRegistryOps.SPARROW_NBT, itemTag)
+                CoreReflections.Instance.itemStack$CODEC.parse(MRegistryOps.SPARROW_NBT, itemTag)
                         .resultOrPartial((error) -> CraftEngine.instance().logger().severe("Tried to load invalid item: '" + itemTag + "'. " + error))
                         .ifPresent(nmsStack -> storageContents[slot] = FastNMS.INSTANCE.method$CraftItemStack$asCraftMirror(nmsStack));
             } else {

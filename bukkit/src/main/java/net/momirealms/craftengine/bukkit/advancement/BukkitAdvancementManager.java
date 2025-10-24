@@ -48,9 +48,9 @@ public final class BukkitAdvancementManager extends AbstractAdvancementManager {
             Object displayInfo = CoreReflections.constructor$DisplayInfo.newInstance(
                     icon.getLiteralObject(),
                     ComponentUtils.adventureToMinecraft(message),  // title
-                    CoreReflections.instance$Component$empty, // description
+                    CoreReflections.Instance.component$empty, // description
                     VersionHelper.isOrAbove1_20_3() ? Optional.empty() : null, // background
-                    CoreReflections.instance$AdvancementType$values[type.ordinal()],
+                    CoreReflections.Instance.advancementType$values[type.ordinal()],
                     true, // show toast
                     false, // announce to chat
                     true // hidden
@@ -72,7 +72,7 @@ public final class BukkitAdvancementManager extends AbstractAdvancementManager {
                 advancement = CoreReflections.constructor$Advancement.newInstance(
                         Optional.empty(),
                         displayInfo,
-                        CoreReflections.instance$AdvancementRewards$EMPTY,
+                        CoreReflections.Instance.advancementRewards$EMPTY,
                         criteria,
                         advancementRequirements,
                         false
@@ -84,7 +84,7 @@ public final class BukkitAdvancementManager extends AbstractAdvancementManager {
                         resourceLocation,
                         null, // parent
                         displayInfo,
-                        CoreReflections.instance$AdvancementRewards$EMPTY,
+                        CoreReflections.Instance.advancementRewards$EMPTY,
                         criteria,
                         new String[][] {{"impossible"}},
                         false

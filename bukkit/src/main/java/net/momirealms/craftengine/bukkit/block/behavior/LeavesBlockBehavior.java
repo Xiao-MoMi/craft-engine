@@ -132,7 +132,7 @@ public class LeavesBlockBehavior extends BukkitBlockBehavior {
         Object mutablePos = CoreReflections.constructor$MutableBlockPos.newInstance();
         int j = Direction.values().length;
         for (int k = 0; k < j; ++k) {
-            Object direction = CoreReflections.instance$Direction$values[k];
+            Object direction = CoreReflections.Instance.direction$values[k];
             CoreReflections.method$MutableBlockPos$setWithOffset.invoke(mutablePos, blockPos, direction);
             Object blockState = FastNMS.INSTANCE.method$BlockGetter$getBlockState(world, mutablePos);
             i = Math.min(i, getDistanceAt(blockState) + 1);

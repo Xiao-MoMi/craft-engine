@@ -48,7 +48,7 @@ public class StemBlockBehavior extends BukkitBlockBehavior {
 
     @Override
     public boolean isPathFindable(Object thisBlock, Object[] args, Callable<Object> superMethod) throws Exception {
-        return (VersionHelper.isOrAbove1_20_5() ? args[1] : args[3]).equals(CoreReflections.instance$PathComputationType$AIR)
+        return (VersionHelper.isOrAbove1_20_5() ? args[1] : args[3]).equals(CoreReflections.Instance.pathComputationType$AIR)
                 && !FastNMS.INSTANCE.field$BlockBehavior$hasCollision(thisBlock) || (boolean) superMethod.call();
     }
 
@@ -65,11 +65,11 @@ public class StemBlockBehavior extends BukkitBlockBehavior {
             FastNMS.INSTANCE.method$LevelWriter$setBlock(level, pos, customState.with(ageProperty, age + 1).customBlockState().literalObject(), 2);
             return;
         }
-        Object randomDirection = CoreReflections.instance$Direction$values[RandomUtils.generateRandomInt(2, 6)];
+        Object randomDirection = CoreReflections.Instance.direction$values[RandomUtils.generateRandomInt(2, 6)];
         Object blockPos = FastNMS.INSTANCE.method$BlockPos$relative(pos, randomDirection);
         if (!FastNMS.INSTANCE.method$BlockStateBase$isAir(FastNMS.INSTANCE.method$BlockGetter$getBlockState(level, blockPos)))
             return;
-        Object blockState = FastNMS.INSTANCE.method$BlockGetter$getBlockState(level, FastNMS.INSTANCE.method$BlockPos$relative(blockPos, CoreReflections.instance$Direction$DOWN));
+        Object blockState = FastNMS.INSTANCE.method$BlockGetter$getBlockState(level, FastNMS.INSTANCE.method$BlockPos$relative(blockPos, CoreReflections.Instance.direction$DOWN));
         if (mayPlaceFruit(blockState)) {
             Optional<CustomBlock> optionalFruit = BukkitBlockManager.instance().blockById(this.fruit);
             Object fruitState = null;

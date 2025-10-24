@@ -41,7 +41,7 @@ public class ReflectionUtils {
 
     public static Class<?> getClazz(String clazz) {
         try {
-            return Class.forName(clazz);
+            return Class.forName(clazz, false, ReflectionUtils.class.getClassLoader());
         } catch (Throwable e) {
             return null;
         }
@@ -49,7 +49,7 @@ public class ReflectionUtils {
 
     public static boolean classExists(@NotNull final String clazz) {
         try {
-            Class.forName(clazz);
+            Class.forName(clazz, false, ReflectionUtils.class.getClassLoader());
             return true;
         } catch (Throwable e) {
             return false;

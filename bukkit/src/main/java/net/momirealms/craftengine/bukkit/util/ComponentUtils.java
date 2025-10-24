@@ -31,18 +31,18 @@ public final class ComponentUtils {
     }
 
     public static String paperAdventureToJson(Object component) {
-        return PaperReflections.instance$GsonComponentSerializer$Gson.toJson(component);
+        return PaperReflections.Instance.instance$GsonComponentSerializer$Gson.toJson(component);
     }
 
     public static Object jsonToPaperAdventure(String json) {
-        return PaperReflections.instance$GsonComponentSerializer$Gson.fromJson(json, PaperReflections.clazz$AdventureComponent);
+        return PaperReflections.Instance.instance$GsonComponentSerializer$Gson.fromJson(json, PaperReflections.clazz$AdventureComponent);
     }
 
     public static JsonElement paperAdventureToJsonElement(Object component) {
-        return PaperReflections.instance$GsonComponentSerializer$Gson.toJsonTree(component);
+        return PaperReflections.Instance.instance$GsonComponentSerializer$Gson.toJsonTree(component);
     }
 
     public static Object jsonElementToPaperAdventure(JsonElement json) {
-        return PaperReflections.instance$GsonComponentSerializer$Gson.fromJson(json, PaperReflections.clazz$AdventureComponent);
+        return PaperReflections.Instance.instance$GsonComponentSerializer$Gson.fromJson(json, PaperReflections.clazz$AdventureComponent);
     }
 }

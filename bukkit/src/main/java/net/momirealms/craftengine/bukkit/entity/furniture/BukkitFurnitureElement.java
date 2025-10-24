@@ -58,7 +58,7 @@ public class BukkitFurnitureElement extends AbstractFurnitureElement {
         Vector3f offset = conjugated.transform(new Vector3f(position()));
         packets.accept(FastNMS.INSTANCE.constructor$ClientboundAddEntityPacket(
                 entityId, UUID.randomUUID(), position.x() + offset.x, position.y() + offset.y, position.z() - offset.z, 0, position.xRot(),
-                MEntityTypes.ITEM_DISPLAY, 0, CoreReflections.instance$Vec3$Zero, 0
+                MEntityTypes.ITEM_DISPLAY, 0, CoreReflections.Instance.vec3$Zero, 0
         ));
         if (applyDyedColor()) {
             packets.accept(FastNMS.INSTANCE.constructor$ClientboundSetEntityDataPacket(entityId, getCachedValues(

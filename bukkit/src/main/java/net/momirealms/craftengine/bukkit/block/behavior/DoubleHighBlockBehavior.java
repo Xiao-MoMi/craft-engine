@@ -43,8 +43,8 @@ public class DoubleHighBlockBehavior extends BukkitBlockBehavior {
         // 获取另一半
         Object anotherHalfPos = FastNMS.INSTANCE.method$BlockPos$relative(blockPos,
                 half == DoubleBlockHalf.UPPER
-                        ? CoreReflections.instance$Direction$DOWN
-                        : CoreReflections.instance$Direction$UP
+                        ? CoreReflections.Instance.direction$DOWN
+                        : CoreReflections.Instance.direction$UP
         );
         Object anotherHalfState = FastNMS.INSTANCE.method$BlockGetter$getBlockState(level, anotherHalfPos);
         ImmutableBlockState anotherHalfCustomState = BukkitBlockManager.instance().getImmutableBlockState(BlockStateUtils.blockStateToId(anotherHalfState));

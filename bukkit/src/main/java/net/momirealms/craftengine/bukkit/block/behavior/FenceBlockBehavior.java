@@ -1,10 +1,7 @@
 package net.momirealms.craftengine.bukkit.block.behavior;
 
 import net.momirealms.craftengine.bukkit.nms.FastNMS;
-import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.CoreReflections;
-import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.MFluids;
-import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.MRegistries;
-import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.MTagKeys;
+import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.*;
 import net.momirealms.craftengine.bukkit.util.*;
 import net.momirealms.craftengine.core.block.BlockBehavior;
 import net.momirealms.craftengine.core.block.BlockStateWrapper;
@@ -105,10 +102,10 @@ public class FenceBlockBehavior extends BukkitBlockBehavior {
             state = state.with(waterlogged, FastNMS.INSTANCE.method$FluidState$getType(fluidState) == MFluids.WATER);
         }
         return state
-                .with(this.northProperty, this.connectsTo(blockState, FastNMS.INSTANCE.method$BlockStateBase$isFaceSturdy(blockState.literalObject(), level.serverWorld(), LocationUtils.toBlockPos(blockPos), CoreReflections.instance$Direction$SOUTH, CoreReflections.instance$SupportType$FULL), HorizontalDirection.SOUTH))
-                .with(this.eastProperty, this.connectsTo(blockState1, FastNMS.INSTANCE.method$BlockStateBase$isFaceSturdy(blockState1.literalObject(), level.serverWorld(), LocationUtils.toBlockPos(blockPos1), CoreReflections.instance$Direction$WEST, CoreReflections.instance$SupportType$FULL), HorizontalDirection.WEST))
-                .with(this.southProperty, this.connectsTo(blockState2, FastNMS.INSTANCE.method$BlockStateBase$isFaceSturdy(blockState2.literalObject(), level.serverWorld(), LocationUtils.toBlockPos(blockPos2), CoreReflections.instance$Direction$NORTH, CoreReflections.instance$SupportType$FULL), HorizontalDirection.NORTH))
-                .with(this.westProperty, this.connectsTo(blockState3, FastNMS.INSTANCE.method$BlockStateBase$isFaceSturdy(blockState3.literalObject(), level.serverWorld(), LocationUtils.toBlockPos(blockPos3), CoreReflections.instance$Direction$EAST, CoreReflections.instance$SupportType$FULL), HorizontalDirection.EAST));
+                .with(this.northProperty, this.connectsTo(blockState, FastNMS.INSTANCE.method$BlockStateBase$isFaceSturdy(blockState.literalObject(), level.serverWorld(), LocationUtils.toBlockPos(blockPos), CoreReflections.Instance.direction$SOUTH, CoreReflections.Instance.supportType$FULL), HorizontalDirection.SOUTH))
+                .with(this.eastProperty, this.connectsTo(blockState1, FastNMS.INSTANCE.method$BlockStateBase$isFaceSturdy(blockState1.literalObject(), level.serverWorld(), LocationUtils.toBlockPos(blockPos1), CoreReflections.Instance.direction$WEST, CoreReflections.Instance.supportType$FULL), HorizontalDirection.WEST))
+                .with(this.southProperty, this.connectsTo(blockState2, FastNMS.INSTANCE.method$BlockStateBase$isFaceSturdy(blockState2.literalObject(), level.serverWorld(), LocationUtils.toBlockPos(blockPos2), CoreReflections.Instance.direction$NORTH, CoreReflections.Instance.supportType$FULL), HorizontalDirection.NORTH))
+                .with(this.westProperty, this.connectsTo(blockState3, FastNMS.INSTANCE.method$BlockStateBase$isFaceSturdy(blockState3.literalObject(), level.serverWorld(), LocationUtils.toBlockPos(blockPos3), CoreReflections.Instance.direction$EAST, CoreReflections.Instance.supportType$FULL), HorizontalDirection.EAST));
     }
 
     @Override
@@ -129,7 +126,7 @@ public class FenceBlockBehavior extends BukkitBlockBehavior {
                 BooleanProperty booleanProperty = (BooleanProperty) state.owner().value().getProperty(direction.name().toLowerCase(Locale.ROOT));
                 if (booleanProperty != null) {
                     BlockStateWrapper wrapper = BlockStateUtils.toBlockStateWrapper(args[updateShape$neighborState]);
-                    return state.with(booleanProperty, this.connectsTo(wrapper, FastNMS.INSTANCE.method$BlockStateBase$isFaceSturdy(wrapper.literalObject(), args[updateShape$level], args[5], DirectionUtils.toNMSDirection(direction.opposite()), CoreReflections.instance$SupportType$FULL), direction.opposite().toHorizontalDirection())).customBlockState().literalObject();
+                    return state.with(booleanProperty, this.connectsTo(wrapper, FastNMS.INSTANCE.method$BlockStateBase$isFaceSturdy(wrapper.literalObject(), args[updateShape$level], args[5], DirectionUtils.toNMSDirection(direction.opposite()), CoreReflections.Instance.supportType$FULL), direction.opposite().toHorizontalDirection())).customBlockState().literalObject();
                 }
             }
         }

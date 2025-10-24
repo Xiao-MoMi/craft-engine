@@ -33,12 +33,12 @@ public final class DirectionUtils {
 
     public static Object toNMSDirection(Direction direction) {
         return switch (direction) {
-            case UP -> CoreReflections.instance$Direction$UP;
-            case DOWN -> CoreReflections.instance$Direction$DOWN;
-            case NORTH -> CoreReflections.instance$Direction$NORTH;
-            case SOUTH -> CoreReflections.instance$Direction$SOUTH;
-            case WEST -> CoreReflections.instance$Direction$WEST;
-            case EAST -> CoreReflections.instance$Direction$EAST;
+            case UP -> CoreReflections.Instance.direction$UP;
+            case DOWN -> CoreReflections.Instance.direction$DOWN;
+            case NORTH -> CoreReflections.Instance.direction$NORTH;
+            case SOUTH -> CoreReflections.Instance.direction$SOUTH;
+            case WEST -> CoreReflections.Instance.direction$WEST;
+            case EAST -> CoreReflections.Instance.direction$EAST;
         };
     }
 
@@ -49,6 +49,6 @@ public final class DirectionUtils {
     }
 
     public static boolean isYAxis(Object nmsDirection) {
-        return nmsDirection == CoreReflections.instance$Direction$UP || nmsDirection == CoreReflections.instance$Direction$DOWN;
+        return nmsDirection == CoreReflections.Instance.direction$UP || nmsDirection == CoreReflections.Instance.direction$DOWN;
     }
 }

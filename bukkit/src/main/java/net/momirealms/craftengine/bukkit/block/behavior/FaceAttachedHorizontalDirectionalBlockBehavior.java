@@ -119,7 +119,7 @@ public class FaceAttachedHorizontalDirectionalBlockBehavior extends BukkitBlockB
         return FastNMS.INSTANCE.method$BlockStateBase$isFaceSturdy(
                 targetState, level, targetPos,
                 FastNMS.INSTANCE.method$Direction$getOpposite(direction),
-                CoreReflections.instance$SupportType$FULL
+                CoreReflections.Instance.supportType$FULL
         );
     }
 

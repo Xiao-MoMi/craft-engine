@@ -11,7 +11,7 @@ public class BaseEntityData<T> extends BukkitEntityData<T> {
     public static final BaseEntityData<Boolean> CustomNameVisible = new BaseEntityData<>(BaseEntityData.class, EntityDataValue.Serializers$BOOLEAN, false);
     public static final BaseEntityData<Boolean> Silent = new BaseEntityData<>(BaseEntityData.class, EntityDataValue.Serializers$BOOLEAN, false);
     public static final BaseEntityData<Boolean> NoGravity = new BaseEntityData<>(BaseEntityData.class, EntityDataValue.Serializers$BOOLEAN, false);
-    public static final BaseEntityData<Object> Pose = new BaseEntityData<>(BaseEntityData.class, EntityDataValue.Serializers$POSE, CoreReflections.instance$Pose$STANDING);
+    public static final BaseEntityData<Object> Pose = new BaseEntityData<>(BaseEntityData.class, EntityDataValue.Serializers$POSE, CoreReflections.Instance.pose$STANDING);
     public static final BaseEntityData<Integer> TicksFrozen = new BaseEntityData<>(BaseEntityData.class, EntityDataValue.Serializers$INT, 0);
 
     public BaseEntityData(Class<?> clazz, Object serializer, T defaultValue) {

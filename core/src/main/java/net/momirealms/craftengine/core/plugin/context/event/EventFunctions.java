@@ -53,6 +53,7 @@ public class EventFunctions {
         register(CommonFunctions.IF_ELSE, new IfElseFunction.FactoryImpl<>(EventConditions::fromMap, EventFunctions::fromMap));
         register(CommonFunctions.ALTERNATIVES, new IfElseFunction.FactoryImpl<>(EventConditions::fromMap, EventFunctions::fromMap));
         register(CommonFunctions.WHEN, new WhenFunction.FactoryImpl<>(EventConditions::fromMap, EventFunctions::fromMap));
+        register(CommonFunctions.DAMAGE_ITEM, new DamageItemFunction.FactoryImpl<>(EventConditions::fromMap));
     }
 
     public static void register(Key key, FunctionFactory<PlayerOptionalContext> factory) {

@@ -19,13 +19,13 @@ public final class MirrorUtils {
     public static Object toNMSMirror(Mirror mirror) {
         switch (mirror) {
             case FRONT_BACK -> {
-                return CoreReflections.instance$Mirror$FRONT_BACK;
+                return CoreReflections.Instance.mirror$FRONT_BACK;
             }
             case LEFT_RIGHT -> {
-                return CoreReflections.instance$Mirror$LEFT_RIGHT;
+                return CoreReflections.Instance.mirror$LEFT_RIGHT;
             }
             default -> {
-                return CoreReflections.instance$Mirror$NONE;
+                return CoreReflections.Instance.mirror$NONE;
             }
         }
     }

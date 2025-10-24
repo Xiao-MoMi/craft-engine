@@ -72,7 +72,7 @@ public class BukkitItemManager extends AbstractItemManager<ItemStack> {
         this.bedrockItemHolder = FastNMS.INSTANCE.method$Registry$getHolderByResourceKey(MBuiltInRegistries.ITEM, FastNMS.INSTANCE.method$ResourceKey$create(MRegistries.ITEM, KeyUtils.toResourceLocation(Key.of("minecraft:bedrock")))).get();
         this.registerCustomTrimMaterial();
         this.loadLastRegisteredPatterns();
-        ItemStack emptyStack = FastNMS.INSTANCE.method$CraftItemStack$asCraftMirror(CoreReflections.instance$ItemStack$EMPTY);
+        ItemStack emptyStack = FastNMS.INSTANCE.method$CraftItemStack$asCraftMirror(CoreReflections.Instance.itemStack$EMPTY);
         this.emptyItem = this.factory.wrap(emptyStack);
         this.emptyUniqueItem = UniqueIdItem.of(this.emptyItem);
         this.decoratedHashOpsGenerator = VersionHelper.isOrAbove1_21_5() ? (Function<Object, Integer>) FastNMS.INSTANCE.createDecoratedHashOpsGenerator(MRegistryOps.HASHCODE) : null;
@@ -147,7 +147,7 @@ public class BukkitItemManager extends AbstractItemManager<ItemStack> {
             jsonObject.addProperty("id", result.id());
             jsonObject.addProperty("count", result.count());
             jsonObject.add("components", result.components());
-            Object nmsStack = CoreReflections.instance$ItemStack$CODEC.parse(MRegistryOps.JSON, jsonObject)
+            Object nmsStack = CoreReflections.Instance.itemStack$CODEC.parse(MRegistryOps.JSON, jsonObject)
                     .resultOrPartial((error) -> plugin.logger().severe("Tried to load invalid item: '" + error + "'")).orElse(null);
             if (nmsStack == null) {
                 return this.emptyItem;
@@ -287,22 +287,22 @@ public class BukkitItemManager extends AbstractItemManager<ItemStack> {
 
     private Object createTrimPattern(Key key) throws ReflectiveOperationException {
         if (VersionHelper.isOrAbove1_21_5()) {
-            return CoreReflections.constructor$TrimPattern.newInstance(KeyUtils.toResourceLocation(key), CoreReflections.instance$Component$empty, false);
+            return CoreReflections.constructor$TrimPattern.newInstance(KeyUtils.toResourceLocation(key), CoreReflections.Instance.component$empty, false);
         } else if (VersionHelper.isOrAbove1_20_2()) {
-            return CoreReflections.constructor$TrimPattern.newInstance(KeyUtils.toResourceLocation(key), this.bedrockItemHolder, CoreReflections.instance$Component$empty, false);
+            return CoreReflections.constructor$TrimPattern.newInstance(KeyUtils.toResourceLocation(key), this.bedrockItemHolder, CoreReflections.Instance.component$empty, false);
         } else {
-            return CoreReflections.constructor$TrimPattern.newInstance(KeyUtils.toResourceLocation(key), this.bedrockItemHolder, CoreReflections.instance$Component$empty);
+            return CoreReflections.constructor$TrimPattern.newInstance(KeyUtils.toResourceLocation(key), this.bedrockItemHolder, CoreReflections.Instance.component$empty);
         }
     }
 
     private Object createTrimMaterial() throws ReflectiveOperationException {
         if (VersionHelper.isOrAbove1_21_5()) {
             Object assetGroup = CoreReflections.method$MaterialAssetGroup$create.invoke(null, "custom");
-            return CoreReflections.constructor$TrimMaterial.newInstance(assetGroup, CoreReflections.instance$Component$empty);
+            return CoreReflections.constructor$TrimMaterial.newInstance(assetGroup, CoreReflections.Instance.component$empty);
         } else if (VersionHelper.isOrAbove1_21_4()) {
-            return CoreReflections.constructor$TrimMaterial.newInstance("custom", this.bedrockItemHolder, Map.of(), CoreReflections.instance$Component$empty);
+            return CoreReflections.constructor$TrimMaterial.newInstance("custom", this.bedrockItemHolder, Map.of(), CoreReflections.Instance.component$empty);
         } else {
-            return CoreReflections.constructor$TrimMaterial.newInstance("custom", this.bedrockItemHolder, 0f, Map.of(), CoreReflections.instance$Component$empty);
+            return CoreReflections.constructor$TrimMaterial.newInstance("custom", this.bedrockItemHolder, 0f, Map.of(), CoreReflections.Instance.component$empty);
         }
     }
 

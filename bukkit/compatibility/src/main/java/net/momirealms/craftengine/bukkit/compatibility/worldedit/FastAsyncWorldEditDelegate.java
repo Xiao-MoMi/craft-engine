@@ -76,7 +76,7 @@ public class FastAsyncWorldEditDelegate extends AbstractDelegateExtent {
                 CraftEngine.instance().logger().warn("Failed to init FastAsyncWorldEdit compatibility, Please use the server of paper or its fork.");
                 return;
             }
-        } catch (ReflectiveOperationException e) {
+        } catch (Throwable e) {
             CraftEngine.instance().logger().warn("Failed to init FastAsyncWorldEdit compatibility", e);
             return;
         }

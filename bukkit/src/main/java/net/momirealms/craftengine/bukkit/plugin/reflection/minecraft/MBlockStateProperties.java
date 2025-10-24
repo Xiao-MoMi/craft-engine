@@ -24,7 +24,7 @@ public final class MBlockStateProperties {
                     } else if (CoreReflections.clazz$EnumProperty.isInstance(instance) && CoreReflections.field$Property$name.get(instance).equals("facing")) {
                         @SuppressWarnings("unchecked")
                         Collection<Object> values = (Collection<Object>) CoreReflections.field$EnumProperty$values.get(instance);
-                        if (values.size() == CoreReflections.instance$Direction$values.length) {
+                        if (values.size() == CoreReflections.Instance.direction$values.length) {
                             facing = instance;
                         }
                     }

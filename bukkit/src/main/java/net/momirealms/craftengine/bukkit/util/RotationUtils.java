@@ -19,16 +19,16 @@ public final class RotationUtils {
     public static Object toNMSRotation(Rotation rotation) {
         switch (rotation) {
             case CLOCKWISE_90 -> {
-                return CoreReflections.instance$Rotation$CLOCKWISE_90;
+                return CoreReflections.Instance.rotation$CLOCKWISE_90;
             }
             case CLOCKWISE_180 -> {
-                return CoreReflections.instance$Rotation$CLOCKWISE_180;
+                return CoreReflections.Instance.rotation$CLOCKWISE_180;
             }
             case COUNTERCLOCKWISE_90 -> {
-                return CoreReflections.instance$Rotation$COUNTERCLOCKWISE_90;
+                return CoreReflections.Instance.rotation$COUNTERCLOCKWISE_90;
             }
             default -> {
-                return CoreReflections.instance$Rotation$NONE;
+                return CoreReflections.Instance.rotation$NONE;
             }
         }
     }

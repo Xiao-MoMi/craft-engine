@@ -35,7 +35,7 @@ public class TextDisplayPacketHandler implements EntityPacketHandler {
             int entityDataId = FastNMS.INSTANCE.field$SynchedEntityData$DataValue$id(packedItem);
             if (entityDataId != TextDisplayEntityData.Text.id()) continue;
             Object textComponent = FastNMS.INSTANCE.field$SynchedEntityData$DataValue$value(packedItem);
-            if (textComponent == CoreReflections.instance$Component$empty) break;
+            if (textComponent == CoreReflections.Instance.component$empty) break;
             String json = ComponentUtils.minecraftToJson(textComponent);
             Map<String, ComponentProvider> tokens = CraftEngine.instance().fontManager().matchTags(json);
             if (tokens.isEmpty()) continue;

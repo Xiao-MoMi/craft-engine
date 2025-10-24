@@ -78,7 +78,7 @@ public class PressurePlateBlockBehavior extends BukkitBlockBehavior {
         Object blockPos = LocationUtils.below(args[2]);
         Object level = args[1];
         return FastNMS.INSTANCE.method$Block$canSupportRigidBlock(level, blockPos)
-                || FastNMS.INSTANCE.method$Block$canSupportCenter(level, blockPos, CoreReflections.instance$Direction$UP);
+                || FastNMS.INSTANCE.method$Block$canSupportCenter(level, blockPos, CoreReflections.Instance.direction$UP);
     }
 
     @Override
@@ -109,7 +109,7 @@ public class PressurePlateBlockBehavior extends BukkitBlockBehavior {
             case EVERYTHING -> CoreReflections.clazz$Entity;
             case MOBS -> CoreReflections.clazz$LivingEntity;
         };
-        Object box = FastNMS.INSTANCE.method$AABB$move(CoreReflections.instance$BasePressurePlateBlock$TOUCH_AABB, pos);
+        Object box = FastNMS.INSTANCE.method$AABB$move(CoreReflections.Instance.basePressurePlateBlock$TOUCH_AABB, pos);
         return !FastNMS.INSTANCE.method$EntityGetter$getEntitiesOfClass(
                 level, clazz, box,
                 MEntitySelectors.NO_SPECTATORS.and(entity -> !FastNMS.INSTANCE.method$Entity$isIgnoringBlockTriggers(entity))

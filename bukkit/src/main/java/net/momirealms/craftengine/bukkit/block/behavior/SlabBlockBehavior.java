@@ -106,7 +106,7 @@ public class SlabBlockBehavior extends BukkitBlockBehavior {
         Object blockState = args[0];
         Optional<ImmutableBlockState> optionalCustomState = BlockStateUtils.getOptionalCustomBlockState(blockState);
         if (optionalCustomState.isEmpty()) return false;
-        if (type == CoreReflections.instance$PathComputationType$WATER) {
+        if (type == CoreReflections.Instance.pathComputationType$WATER) {
             return super.waterloggedProperty != null && optionalCustomState.get().get(this.typeProperty) != SlabType.DOUBLE && optionalCustomState.get().get(super.waterloggedProperty);
         }
         return false;

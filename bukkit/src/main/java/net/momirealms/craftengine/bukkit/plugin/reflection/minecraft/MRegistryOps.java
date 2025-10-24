@@ -50,7 +50,7 @@ public final class MRegistryOps {
             NBT = (DynamicOps<Object>) CoreReflections.method$RegistryOps$create.invoke(null, ReflectionUtils.getDeclaredField(clazz$NbtOps, clazz$NbtOps, 0).get(null), FastNMS.INSTANCE.registryAccess());
             JSON = (DynamicOps<JsonElement>) CoreReflections.method$RegistryOps$create.invoke(null, JsonOps.INSTANCE, FastNMS.INSTANCE.registryAccess());
             SPARROW_NBT = (DynamicOps<Tag>) CoreReflections.method$RegistryOps$create.invoke(null, VersionHelper.isOrAbove1_20_5() ? NBTOps.INSTANCE : LegacyNBTOps.INSTANCE, FastNMS.INSTANCE.registryAccess());
-            HASHCODE = VersionHelper.isOrAbove1_21_5() ? (DynamicOps<HashCode>) CoreReflections.method$RegistryOps$create.invoke(null, CoreReflections.instance$HashOps$CRC32C_INSTANCE, FastNMS.INSTANCE.registryAccess()) : null;
+            HASHCODE = VersionHelper.isOrAbove1_21_5() ? (DynamicOps<HashCode>) CoreReflections.method$RegistryOps$create.invoke(null, CoreReflections.Instance.hashOps$CRC32C_INSTANCE, FastNMS.INSTANCE.registryAccess()) : null;
         } catch (ReflectiveOperationException e) {
             throw new ReflectionInitException("Failed to init DynamicOps", e);
         }

@@ -3,10 +3,7 @@ package net.momirealms.craftengine.bukkit.entity.furniture.hitbox;
 import net.momirealms.craftengine.bukkit.entity.data.HappyGhastData;
 import net.momirealms.craftengine.bukkit.entity.furniture.BukkitCollider;
 import net.momirealms.craftengine.bukkit.nms.FastNMS;
-import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.CoreReflections;
-import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.MAttributeHolders;
-import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.MEntityTypes;
-import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.NetworkReflections;
+import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.*;
 import net.momirealms.craftengine.core.entity.furniture.*;
 import net.momirealms.craftengine.core.util.Key;
 import net.momirealms.craftengine.core.util.ResourceConfigUtils;
@@ -60,7 +57,7 @@ public class HappyGhastHitBox extends AbstractHitBox {
             float yaw = position.xRot();
             packets.accept(FastNMS.INSTANCE.constructor$ClientboundAddEntityPacket(
                     entityIds[0], UUID.randomUUID(), x + offset.x, y + offset.y, z - offset.z, 0, yaw,
-                    MEntityTypes.HAPPY_GHAST, 0, CoreReflections.instance$Vec3$Zero, 0
+                    MEntityTypes.HAPPY_GHAST, 0, CoreReflections.Instance.vec3$Zero, 0
             ), true);
             packets.accept(FastNMS.INSTANCE.constructor$ClientboundSetEntityDataPacket(entityIds[0], List.copyOf(this.cachedValues)), true);
             if (VersionHelper.isOrAbove1_20_5() && this.scale != 1) {

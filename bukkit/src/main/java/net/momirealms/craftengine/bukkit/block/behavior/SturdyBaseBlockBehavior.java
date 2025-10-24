@@ -43,7 +43,7 @@ public class SturdyBaseBlockBehavior extends AbstractCanSurviveBlockBehavior {
         Object blockState = FastNMS.INSTANCE.method$BlockGetter$getBlockState(world, targetPos);
         if (this.checkFull && (boolean) CoreReflections.method$BlockStateBase$isFaceSturdy.invoke(
                 blockState, world, targetPos, DirectionUtils.toNMSDirection(this.direction.opposite()),
-                CoreReflections.instance$SupportType$FULL
+                CoreReflections.Instance.supportType$FULL
         )) {
             return true;
         }

@@ -11,7 +11,7 @@ public final class RegistryUtils {
 
     public static int currentBlockRegistrySize() {
         try {
-            return (int) CoreReflections.method$IdMapper$size.invoke(CoreReflections.instance$Block$BLOCK_STATE_REGISTRY);
+            return (int) CoreReflections.method$IdMapper$size.invoke(CoreReflections.Instance.block$BLOCK_STATE_REGISTRY);
         } catch (ReflectiveOperationException e) {
             throw new RuntimeException(e);
         }

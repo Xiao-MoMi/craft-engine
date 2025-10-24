@@ -104,10 +104,10 @@ public final class RecipeInjector {
     private static Object createSpecialRecipe(Key id, Class<?> clazz$InjectedRepairItemRecipe) throws InstantiationException, IllegalAccessException, java.lang.reflect.InvocationTargetException {
         if (VersionHelper.isOrAbove1_20_2()) {
             Constructor<?> constructor = ReflectionUtils.getConstructor(clazz$InjectedRepairItemRecipe, CoreReflections.clazz$CraftingBookCategory);
-            return constructor.newInstance(CoreReflections.instance$CraftingBookCategory$MISC);
+            return constructor.newInstance(CoreReflections.Instance.craftingBookCategory$MISC);
         } else {
             Constructor<?> constructor = ReflectionUtils.getConstructor(clazz$InjectedRepairItemRecipe, CoreReflections.clazz$ResourceLocation, CoreReflections.clazz$CraftingBookCategory);
-            return constructor.newInstance(KeyUtils.toResourceLocation(id), CoreReflections.instance$CraftingBookCategory$MISC);
+            return constructor.newInstance(KeyUtils.toResourceLocation(id), CoreReflections.Instance.craftingBookCategory$MISC);
         }
     }
 
@@ -177,7 +177,7 @@ public final class RecipeInjector {
                 if (isFireworkDye(wrapped)) {
                     Color color = getFireworkColor(wrapped);
                     if (color == null) {
-                        return CoreReflections.instance$ItemStack$EMPTY;
+                        return CoreReflections.Instance.itemStack$EMPTY;
                     }
                     colors.add(color.color());
                 } else if (wrapped.id().equals(ItemKeys.FIREWORK_STAR)) {
@@ -185,7 +185,7 @@ public final class RecipeInjector {
                 }
             }
             if (starItem == null || colors.isEmpty()) {
-                return CoreReflections.instance$ItemStack$EMPTY;
+                return CoreReflections.Instance.itemStack$EMPTY;
             }
             FireworkExplosion explosion = starItem.fireworkExplosion().orElse(FireworkExplosion.DEFAULT);
             starItem.fireworkExplosion(explosion.withFadeColors(colors));
@@ -312,12 +312,12 @@ public final class RecipeInjector {
                     if (dyeColor != null) {
                         colors.add(dyeColor);
                     } else {
-                        return CoreReflections.instance$ItemStack$EMPTY;
+                        return CoreReflections.Instance.itemStack$EMPTY;
                     }
                 }
             }
             if (itemToDye == null || itemToDye.isEmpty() || colors.isEmpty()) {
-                return CoreReflections.instance$ItemStack$EMPTY;
+                return CoreReflections.Instance.itemStack$EMPTY;
             }
             return itemToDye.applyDyedColors(colors).getLiteralObject();
         }

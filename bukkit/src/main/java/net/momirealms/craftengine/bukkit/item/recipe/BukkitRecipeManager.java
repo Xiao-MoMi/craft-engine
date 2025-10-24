@@ -323,7 +323,7 @@ public class BukkitRecipeManager extends AbstractRecipeManager<ItemStack> {
         }
         Map<Key, JsonObject> recipes = new HashMap<>();
 
-        try (AutoCloseable resourceManager = (AutoCloseable) CoreReflections.methodHandle$MultiPackResourceManagerConstructor.invokeExact(CoreReflections.instance$PackType$SERVER_DATA, packResources)) {
+        try (AutoCloseable resourceManager = (AutoCloseable) CoreReflections.methodHandle$MultiPackResourceManagerConstructor.invokeExact(CoreReflections.Instance.packType$SERVER_DATA, packResources)) {
             Map<Object, Object> scannedResources = (Map<Object, Object>) CoreReflections.methodHandle$FileToIdConverter$listMatchingResources.invokeExact(fileToIdConverter, resourceManager);
             for (Map.Entry<Object, Object> entry : scannedResources.entrySet()) {
                 Key id = extractKeyFromResourceLocation(entry.getKey().toString());

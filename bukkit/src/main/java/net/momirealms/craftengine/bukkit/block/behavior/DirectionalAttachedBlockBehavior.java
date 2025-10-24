@@ -82,7 +82,7 @@ public class DirectionalAttachedBlockBehavior extends BukkitBlockBehavior {
         BlockPos blockPos = LocationUtils.fromBlockPos(args[2]).relative(direction);
         Object nmsPos = LocationUtils.toBlockPos(blockPos);
         Object nmsState = FastNMS.INSTANCE.method$BlockGetter$getBlockState(args[1], nmsPos);
-        return FastNMS.INSTANCE.method$BlockStateBase$isFaceSturdy(nmsState, args[1], nmsPos, DirectionUtils.toNMSDirection(direction), CoreReflections.instance$SupportType$FULL)
+        return FastNMS.INSTANCE.method$BlockStateBase$isFaceSturdy(nmsState, args[1], nmsPos, DirectionUtils.toNMSDirection(direction), CoreReflections.Instance.supportType$FULL)
                 && mayPlaceOn(nmsState);
     }
 

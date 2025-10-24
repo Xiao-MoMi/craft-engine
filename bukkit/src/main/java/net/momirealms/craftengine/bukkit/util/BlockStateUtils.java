@@ -81,11 +81,11 @@ public final class BlockStateUtils {
     }
 
     public static Object idToBlockState(int id) {
-        return FastNMS.INSTANCE.method$IdMapper$byId(CoreReflections.instance$Block$BLOCK_STATE_REGISTRY, id);
+        return FastNMS.INSTANCE.method$IdMapper$byId(CoreReflections.Instance.block$BLOCK_STATE_REGISTRY, id);
     }
 
     public static int blockStateToId(Object blockState) {
-        return FastNMS.INSTANCE.method$IdMapper$getId(CoreReflections.instance$Block$BLOCK_STATE_REGISTRY, blockState);
+        return FastNMS.INSTANCE.method$IdMapper$getId(CoreReflections.Instance.block$BLOCK_STATE_REGISTRY, blockState);
     }
 
     public static Object getBlockOwner(Object blockState) {

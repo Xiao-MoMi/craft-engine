@@ -19,7 +19,8 @@ import static java.util.Objects.requireNonNull;
 
 public final class NetworkReflections {
 
-    private NetworkReflections() {}
+    private NetworkReflections() {
+    }
 
     public static final Class<?> clazz$Connection = requireNonNull(
             BukkitReflectionUtils.findReobfOrMojmapClass(
@@ -214,7 +215,7 @@ public final class NetworkReflections {
                     "network.protocol.game.ClientboundSetEntityDataPacket"
             )
     );
-    
+
     public static final Class<?> clazz$ClientboundUpdateAttributesPacket = requireNonNull(
             BukkitReflectionUtils.findReobfOrMojmapClass(
                     "network.protocol.game.PacketPlayOutUpdateAttributes",
@@ -286,7 +287,7 @@ public final class NetworkReflections {
     public static final Field field$ClientboundGameEventPacket$Type$id = requireNonNull(
             ReflectionUtils.getDeclaredField(clazz$ClientboundGameEventPacket$Type, int.class, 0)
     );
-    
+
     public static final Class<?> clazz$ClientboundSetPlayerTeamPacket = requireNonNull(
             BukkitReflectionUtils.findReobfOrMojmapClass(
                     "network.protocol.game.PacketPlayOutScoreboardTeam",
@@ -382,17 +383,6 @@ public final class NetworkReflections {
             ReflectionUtils.getStaticMethod(clazz$ClientboundPlayerInfoUpdatePacket$Action, clazz$ClientboundPlayerInfoUpdatePacket$Action.arrayType())
     );
 
-    public static final Object instance$ClientboundPlayerInfoUpdatePacket$Action$UPDATE_DISPLAY_NAME;
-
-    static {
-        try {
-            Object[] values = (Object[]) method$ClientboundPlayerInfoUpdatePacket$Action$values.invoke(null);
-            instance$ClientboundPlayerInfoUpdatePacket$Action$UPDATE_DISPLAY_NAME = values[5];
-        } catch (ReflectiveOperationException e) {
-            throw new RuntimeException(e);
-        }
-    }
-
     public static final Field field$ClientboundLevelChunkWithLightPacket$chunkData = requireNonNull(
             ReflectionUtils.getDeclaredField(clazz$ClientboundLevelChunkWithLightPacket, clazz$ClientboundLevelChunkPacketData, 0)
     );
@@ -462,21 +452,6 @@ public final class NetworkReflections {
     public static final Method method$ServerboundPlayerActionPacket$Action$values = requireNonNull(
             ReflectionUtils.getStaticMethod(clazz$ServerboundPlayerActionPacket$Action, clazz$ServerboundPlayerActionPacket$Action.arrayType())
     );
-
-    public static final Object instance$ServerboundPlayerActionPacket$Action$START_DESTROY_BLOCK;
-    public static final Object instance$ServerboundPlayerActionPacket$Action$ABORT_DESTROY_BLOCK;
-    public static final Object instance$ServerboundPlayerActionPacket$Action$STOP_DESTROY_BLOCK;
-
-    static {
-        try {
-            Object[] values = (Object[]) method$ServerboundPlayerActionPacket$Action$values.invoke(null);
-            instance$ServerboundPlayerActionPacket$Action$START_DESTROY_BLOCK = values[0];
-            instance$ServerboundPlayerActionPacket$Action$ABORT_DESTROY_BLOCK = values[1];
-            instance$ServerboundPlayerActionPacket$Action$STOP_DESTROY_BLOCK = values[2];
-        } catch (ReflectiveOperationException e) {
-            throw new RuntimeException(e);
-        }
-    }
 
     public static final Class<?> clazz$ClientboundBlockDestructionPacket = requireNonNull(
             BukkitReflectionUtils.findReobfOrMojmapClass(
@@ -578,21 +553,6 @@ public final class NetworkReflections {
                     clazz$ServerboundInteractPacket$ActionType, clazz$ServerboundInteractPacket$ActionType.arrayType()
             )
     );
-
-    public static final Object instance$ServerboundInteractPacket$ActionType$INTERACT;
-    public static final Object instance$ServerboundInteractPacket$ActionType$ATTACK;
-    public static final Object instance$ServerboundInteractPacket$ActionType$INTERACT_AT;
-
-    static {
-        try {
-            Object[] values = (Object[]) method$ServerboundInteractPacket$ActionType$values.invoke(null);
-            instance$ServerboundInteractPacket$ActionType$INTERACT = values[0];
-            instance$ServerboundInteractPacket$ActionType$ATTACK = values[1];
-            instance$ServerboundInteractPacket$ActionType$INTERACT_AT = values[2];
-        } catch (ReflectiveOperationException e) {
-            throw new RuntimeException(e);
-        }
-    }
 
     public static final Field field$ServerboundInteractPacket$usingSecondaryAction = requireNonNull(
             ReflectionUtils.getInstanceDeclaredField(
@@ -1182,38 +1142,6 @@ public final class NetworkReflections {
             )
     );
 
-    public static final Object instance$ServerboundResourcePackPacket$Action$SUCCESSFULLY_LOADED;
-    public static final Object instance$ServerboundResourcePackPacket$Action$DECLINED;
-    public static final Object instance$ServerboundResourcePackPacket$Action$FAILED_DOWNLOAD;
-    public static final Object instance$ServerboundResourcePackPacket$Action$ACCEPTED;
-    public static final Object instance$ServerboundResourcePackPacket$Action$DOWNLOADED;
-    public static final Object instance$ServerboundResourcePackPacket$Action$INVALID_URL;
-    public static final Object instance$ServerboundResourcePackPacket$Action$FAILED_RELOAD;
-    public static final Object instance$ServerboundResourcePackPacket$Action$DISCARDED;
-
-    static {
-        try {
-            Object[] values = (Object[]) method$ServerboundResourcePackPacket$Action$values.invoke(null);
-            instance$ServerboundResourcePackPacket$Action$SUCCESSFULLY_LOADED = values[0];
-            instance$ServerboundResourcePackPacket$Action$DECLINED = values[1];
-            instance$ServerboundResourcePackPacket$Action$FAILED_DOWNLOAD = values[2];
-            instance$ServerboundResourcePackPacket$Action$ACCEPTED = values[3];
-            if (VersionHelper.isOrAbove1_20_3()) {
-                instance$ServerboundResourcePackPacket$Action$DOWNLOADED = values[4];
-                instance$ServerboundResourcePackPacket$Action$INVALID_URL = values[5];
-                instance$ServerboundResourcePackPacket$Action$FAILED_RELOAD = values[6];
-                instance$ServerboundResourcePackPacket$Action$DISCARDED = values[7];
-            } else {
-                instance$ServerboundResourcePackPacket$Action$DOWNLOADED = null;
-                instance$ServerboundResourcePackPacket$Action$INVALID_URL = null;
-                instance$ServerboundResourcePackPacket$Action$FAILED_RELOAD = null;
-                instance$ServerboundResourcePackPacket$Action$DISCARDED = null;
-            }
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        }
-    }
-
     public static final Constructor<?> constructor$ServerboundResourcePackPacket = requireNonNull(
             field$ClientboundResourcePackPushPacket$id != null
                     ? ReflectionUtils.getConstructor(clazz$ServerboundResourcePackPacket, UUID.class, clazz$ServerboundResourcePackPacket$Action)
@@ -1494,17 +1422,6 @@ public final class NetworkReflections {
             "network.codec.StreamCodec"
     );
 
-    public static final Object instance$ParticleTypes$STREAM_CODEC;
-
-    static {
-        try {
-            instance$ParticleTypes$STREAM_CODEC = !VersionHelper.isOrAbove1_20_5() ? null :
-                    ReflectionUtils.getDeclaredField(CoreReflections.clazz$ParticleTypes, clazz$StreamCodec, 0).get(null);
-        } catch (ReflectiveOperationException e) {
-            throw new ReflectionInitException("Failed to initialize ParticleTypes$STREAM_CODEC", e);
-        }
-    }
-
     public static final Class<?> clazz$ClientboundFinishConfigurationPacket = MiscUtils.requireNonNullIf(
             ReflectionUtils.getClazz(
                     BukkitReflectionUtils.assembleMCClass("network.protocol.configuration.ClientboundFinishConfigurationPacket")
@@ -1521,22 +1438,6 @@ public final class NetworkReflections {
     public static final Field field$ClientboundFinishConfigurationPacket$INSTANCE = Optional.ofNullable(clazz$ClientboundFinishConfigurationPacket)
             .map(it -> ReflectionUtils.getDeclaredField(it, it, 0))
             .orElse(null);
-
-    public static final Object instance$ClientboundFinishConfigurationPacket$INSTANCE;
-
-    static {
-        try {
-            if (VersionHelper.isOrAbove1_20_2()) {
-                instance$ClientboundFinishConfigurationPacket$INSTANCE = VersionHelper.isOrAbove1_20_5()
-                        ? field$ClientboundFinishConfigurationPacket$INSTANCE.get(null)
-                        : constructor$ClientboundFinishConfigurationPacket.newInstance();
-            } else {
-                instance$ClientboundFinishConfigurationPacket$INSTANCE = null;
-            }
-        } catch (ReflectiveOperationException e) {
-            throw new ReflectionInitException("Failed to initialize ClientboundFinishConfigurationPacket$INSTANCE", e);
-        }
-    }
 
     public static final Class<?> clazz$ServerCommonPacketListener = MiscUtils.requireNonNullIf(
             ReflectionUtils.getClazz(
@@ -1619,20 +1520,6 @@ public final class NetworkReflections {
             .map(it -> ReflectionUtils.getDeclaredField(it, clazz$StreamCodec, 0))
             .orElse(null);
 
-    public static final Object instance$HashedStack$STREAM_CODEC;
-
-    static {
-        try {
-            if (VersionHelper.isOrAbove1_21_5()) {
-                instance$HashedStack$STREAM_CODEC = field$HashedStack$STREAM_CODEC.get(null);
-            } else {
-                instance$HashedStack$STREAM_CODEC = null;
-            }
-        } catch (ReflectiveOperationException e) {
-            throw new ReflectionInitException("Failed to initialize HashedStack$STREAM_CODEC", e);
-        }
-    }
-
     // 1.20.2~1.20.4
     public static final Class<?> clazz$ServerboundCustomPayloadPacket$UnknownPayload = MiscUtils.requireNonNullIf(
             ReflectionUtils.getClazz(
@@ -1674,8 +1561,8 @@ public final class NetworkReflections {
 
     public static final Constructor<?> constructor$ClientboundUpdateAdvancementsPacket = requireNonNull(
             VersionHelper.isOrAbove1_21_5() ?
-            ReflectionUtils.getConstructor(clazz$ClientboundUpdateAdvancementsPacket, boolean.class, Collection.class, Set.class, Map.class, boolean.class) :
-            ReflectionUtils.getConstructor(clazz$ClientboundUpdateAdvancementsPacket, boolean.class, Collection.class, Set.class, Map.class)
+                    ReflectionUtils.getConstructor(clazz$ClientboundUpdateAdvancementsPacket, boolean.class, Collection.class, Set.class, Map.class, boolean.class) :
+                    ReflectionUtils.getConstructor(clazz$ClientboundUpdateAdvancementsPacket, boolean.class, Collection.class, Set.class, Map.class)
     );
 
     public static final Class<?> clazz$ClientboundStopSoundPacket = requireNonNull(
@@ -1700,24 +1587,143 @@ public final class NetworkReflections {
             )
     );
 
-    public static final Object instance$ItemCost$STREAM_CODEC;
-    public static final Object instance$ItemCost$OPTIONAL_STREAM_CODEC;
-
-    static {
-        try {
-            instance$ItemCost$STREAM_CODEC = !VersionHelper.isOrAbove1_20_5() ? null :
-                    ReflectionUtils.getDeclaredField(CoreReflections.clazz$ItemCost, clazz$StreamCodec, 0).get(null);
-            instance$ItemCost$OPTIONAL_STREAM_CODEC = !VersionHelper.isOrAbove1_20_5() ? null :
-                    ReflectionUtils.getDeclaredField(CoreReflections.clazz$ItemCost, clazz$StreamCodec, 1).get(null);
-        } catch (ReflectiveOperationException e) {
-            throw new ReflectionInitException("Failed to initialize ItemCost$STREAM_CODEC", e);
-        }
-    }
-
     public static final Class<?> clazz$ClientboundBlockEntityDataPacket = requireNonNull(
             BukkitReflectionUtils.findReobfOrMojmapClass(
-                "network.protocol.game.PacketPlayOutTileEntityData",
-                "network.protocol.game.ClientboundBlockEntityDataPacket"
+                    "network.protocol.game.PacketPlayOutTileEntityData",
+                    "network.protocol.game.ClientboundBlockEntityDataPacket"
             )
     );
+
+    public static final class Instance {
+        private Instance() {}
+
+        public static final Object clientboundPlayerInfoUpdatePacket$Action$UPDATE_DISPLAY_NAME;
+
+        static {
+            try {
+                Object[] values = (Object[]) method$ClientboundPlayerInfoUpdatePacket$Action$values.invoke(null);
+                clientboundPlayerInfoUpdatePacket$Action$UPDATE_DISPLAY_NAME = values[5];
+            } catch (ReflectiveOperationException e) {
+                throw new RuntimeException(e);
+            }
+        }
+
+        public static final Object serverboundPlayerActionPacket$Action$START_DESTROY_BLOCK;
+        public static final Object serverboundPlayerActionPacket$Action$ABORT_DESTROY_BLOCK;
+        public static final Object serverboundPlayerActionPacket$Action$STOP_DESTROY_BLOCK;
+
+        static {
+            try {
+                Object[] values = (Object[]) method$ServerboundPlayerActionPacket$Action$values.invoke(null);
+                serverboundPlayerActionPacket$Action$START_DESTROY_BLOCK = values[0];
+                serverboundPlayerActionPacket$Action$ABORT_DESTROY_BLOCK = values[1];
+                serverboundPlayerActionPacket$Action$STOP_DESTROY_BLOCK = values[2];
+            } catch (ReflectiveOperationException e) {
+                throw new RuntimeException(e);
+            }
+        }
+
+        public static final Object serverboundInteractPacket$ActionType$INTERACT;
+        public static final Object serverboundInteractPacket$ActionType$ATTACK;
+        public static final Object serverboundInteractPacket$ActionType$INTERACT_AT;
+
+        static {
+            try {
+                Object[] values = (Object[]) method$ServerboundInteractPacket$ActionType$values.invoke(null);
+                serverboundInteractPacket$ActionType$INTERACT = values[0];
+                serverboundInteractPacket$ActionType$ATTACK = values[1];
+                serverboundInteractPacket$ActionType$INTERACT_AT = values[2];
+            } catch (ReflectiveOperationException e) {
+                throw new RuntimeException(e);
+            }
+        }
+
+        public static final Object serverboundResourcePackPacket$Action$SUCCESSFULLY_LOADED;
+        public static final Object serverboundResourcePackPacket$Action$DECLINED;
+        public static final Object serverboundResourcePackPacket$Action$FAILED_DOWNLOAD;
+        public static final Object serverboundResourcePackPacket$Action$ACCEPTED;
+        public static final Object serverboundResourcePackPacket$Action$DOWNLOADED;
+        public static final Object serverboundResourcePackPacket$Action$INVALID_URL;
+        public static final Object serverboundResourcePackPacket$Action$FAILED_RELOAD;
+        public static final Object serverboundResourcePackPacket$Action$DISCARDED;
+
+        static {
+            try {
+                Object[] values = (Object[]) method$ServerboundResourcePackPacket$Action$values.invoke(null);
+                serverboundResourcePackPacket$Action$SUCCESSFULLY_LOADED = values[0];
+                serverboundResourcePackPacket$Action$DECLINED = values[1];
+                serverboundResourcePackPacket$Action$FAILED_DOWNLOAD = values[2];
+                serverboundResourcePackPacket$Action$ACCEPTED = values[3];
+                if (VersionHelper.isOrAbove1_20_3()) {
+                    serverboundResourcePackPacket$Action$DOWNLOADED = values[4];
+                    serverboundResourcePackPacket$Action$INVALID_URL = values[5];
+                    serverboundResourcePackPacket$Action$FAILED_RELOAD = values[6];
+                    serverboundResourcePackPacket$Action$DISCARDED = values[7];
+                } else {
+                    serverboundResourcePackPacket$Action$DOWNLOADED = null;
+                    serverboundResourcePackPacket$Action$INVALID_URL = null;
+                    serverboundResourcePackPacket$Action$FAILED_RELOAD = null;
+                    serverboundResourcePackPacket$Action$DISCARDED = null;
+                }
+            } catch (Exception e) {
+                throw new RuntimeException(e);
+            }
+        }
+
+        public static final Object particleTypes$STREAM_CODEC;
+
+        static {
+            try {
+                particleTypes$STREAM_CODEC = !VersionHelper.isOrAbove1_20_5() ? null :
+                        ReflectionUtils.getDeclaredField(CoreReflections.clazz$ParticleTypes, clazz$StreamCodec, 0).get(null);
+            } catch (ReflectiveOperationException e) {
+                throw new ReflectionInitException("Failed to initialize ParticleTypes$STREAM_CODEC", e);
+            }
+        }
+
+        public static final Object clientboundFinishConfigurationPacket$INSTANCE;
+
+        static {
+            try {
+                if (VersionHelper.isOrAbove1_20_2()) {
+                    clientboundFinishConfigurationPacket$INSTANCE = VersionHelper.isOrAbove1_20_5()
+                            ? field$ClientboundFinishConfigurationPacket$INSTANCE.get(null)
+                            : constructor$ClientboundFinishConfigurationPacket.newInstance();
+                } else {
+                    clientboundFinishConfigurationPacket$INSTANCE = null;
+                }
+            } catch (ReflectiveOperationException e) {
+                throw new ReflectionInitException("Failed to initialize ClientboundFinishConfigurationPacket$INSTANCE", e);
+            }
+        }
+
+        public static final Object hashedStack$STREAM_CODEC;
+
+        static {
+            try {
+                if (VersionHelper.isOrAbove1_21_5()) {
+                    hashedStack$STREAM_CODEC = field$HashedStack$STREAM_CODEC.get(null);
+                } else {
+                    hashedStack$STREAM_CODEC = null;
+                }
+            } catch (ReflectiveOperationException e) {
+                throw new ReflectionInitException("Failed to initialize HashedStack$STREAM_CODEC", e);
+            }
+        }
+
+        public static final Object itemCost$STREAM_CODEC;
+        public static final Object itemCost$OPTIONAL_STREAM_CODEC;
+
+        static {
+            try {
+                itemCost$STREAM_CODEC = !VersionHelper.isOrAbove1_20_5() ? null :
+                        ReflectionUtils.getDeclaredField(CoreReflections.clazz$ItemCost, clazz$StreamCodec, 0).get(null);
+                itemCost$OPTIONAL_STREAM_CODEC = !VersionHelper.isOrAbove1_20_5() ? null :
+                        ReflectionUtils.getDeclaredField(CoreReflections.clazz$ItemCost, clazz$StreamCodec, 1).get(null);
+            } catch (ReflectiveOperationException e) {
+                throw new ReflectionInitException("Failed to initialize ItemCost$STREAM_CODEC", e);
+            }
+        }
+
+    }
 }

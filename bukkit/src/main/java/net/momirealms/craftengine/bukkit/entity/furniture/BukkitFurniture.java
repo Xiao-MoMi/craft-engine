@@ -90,7 +90,7 @@ public class BukkitFurniture implements Furniture {
         List<Collider> colliders = new ArrayList<>();
         WorldPosition position = position();
         for (FurnitureElement element : placement.elements()) {
-            int entityId = CoreReflections.instance$Entity$ENTITY_COUNTER.incrementAndGet();
+            int entityId = CoreReflections.Instance.entity$ENTITY_COUNTER.incrementAndGet();
             fakeEntityIds.add(entityId);
             element.initPackets(this, entityId, conjugated, packet -> {
                 packets.add(packet);
@@ -98,7 +98,7 @@ public class BukkitFurniture implements Furniture {
             });
         }
         for (HitBox hitBox : placement.hitBoxes()) {
-            int[] ids = hitBox.acquireEntityIds(CoreReflections.instance$Entity$ENTITY_COUNTER::incrementAndGet);
+            int[] ids = hitBox.acquireEntityIds(CoreReflections.Instance.entity$ENTITY_COUNTER::incrementAndGet);
             for (int entityId : ids) {
                 fakeEntityIds.add(entityId);
                 mainEntityIds.add(entityId);

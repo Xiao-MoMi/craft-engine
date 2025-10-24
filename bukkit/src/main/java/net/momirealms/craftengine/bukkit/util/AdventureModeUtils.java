@@ -34,7 +34,7 @@ public final class AdventureModeUtils {
 
     public static boolean canPlace(Item<?> itemStack, World world, BlockPos pos, Object state) {
         Object blockPos = LocationUtils.toBlockPos(pos);
-        Object item = itemStack == null ? CoreReflections.instance$ItemStack$EMPTY : itemStack.getLiteralObject();
+        Object item = itemStack == null ? CoreReflections.Instance.itemStack$EMPTY : itemStack.getLiteralObject();
         Object blockInWorld = FastNMS.INSTANCE.constructor$BlockInWorld(FastNMS.INSTANCE.field$CraftWorld$ServerLevel((org.bukkit.World) world.platformWorld()), blockPos, false);
         if (state != null) {
             try {

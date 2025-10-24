@@ -33,7 +33,7 @@ public class BukkitExistingBlock implements ExistingBlock {
             return customState.behavior().canBeReplaced(context, customState);
         }
         if (BlockStateUtils.getBlockOwner(state) == MBlocks.SNOW) {
-            return (int) FastNMS.INSTANCE.method$StateHolder$getValue(state, CoreReflections.instance$SnowLayerBlock$LAYERS) == 1;
+            return (int) FastNMS.INSTANCE.method$StateHolder$getValue(state, CoreReflections.Instance.snowLayerBlock$LAYERS) == 1;
         }
         return BlockStateUtils.isReplaceable(state);
     }

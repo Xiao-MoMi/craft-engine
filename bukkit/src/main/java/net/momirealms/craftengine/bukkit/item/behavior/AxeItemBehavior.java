@@ -110,7 +110,7 @@ public class AxeItemBehavior extends ItemBehavior {
             if (VersionHelper.isOrAbove1_20_5()) {
                 Object itemStack = item.getLiteralObject();
                 Object serverPlayer = player.serverPlayer();
-                Object equipmentSlot = context.getHand() == InteractionHand.MAIN_HAND ? CoreReflections.instance$EquipmentSlot$MAINHAND : CoreReflections.instance$EquipmentSlot$OFFHAND;
+                Object equipmentSlot = context.getHand() == InteractionHand.MAIN_HAND ? CoreReflections.Instance.equipmentSlot$MAINHAND : CoreReflections.Instance.equipmentSlot$OFFHAND;
                 try {
                     CoreReflections.method$ItemStack$hurtAndBreak.invoke(itemStack, 1, serverPlayer, equipmentSlot);
                 } catch (ReflectiveOperationException e) {

@@ -156,7 +156,7 @@ public class FenceGateBlockBehavior extends BukkitBlockBehavior {
         Object blockState = args[0];
         Optional<ImmutableBlockState> optionalCustomState = BlockStateUtils.getOptionalCustomBlockState(blockState);
         if (optionalCustomState.isEmpty()) return false;
-        if (type == CoreReflections.instance$PathComputationType$LAND || type == CoreReflections.instance$PathComputationType$AIR) {
+        if (type == CoreReflections.Instance.pathComputationType$LAND || type == CoreReflections.Instance.pathComputationType$AIR) {
             return isOpen(optionalCustomState.get());
         }
         return false;

@@ -17,11 +17,11 @@ public final class StairsShapeUtils {
 
     public static Object toNMSStairsShape(StairsShape shape) {
         return switch (shape) {
-            case STRAIGHT -> CoreReflections.instance$StairsShape$STRAIGHT;
-            case INNER_LEFT -> CoreReflections.instance$StairsShape$INNER_LEFT;
-            case INNER_RIGHT -> CoreReflections.instance$StairsShape$INNER_RIGHT;
-            case OUTER_LEFT -> CoreReflections.instance$StairsShape$OUTER_LEFT;
-            case OUTER_RIGHT -> CoreReflections.instance$StairsShape$OUTER_RIGHT;
+            case STRAIGHT -> CoreReflections.Instance.stairsShape$STRAIGHT;
+            case INNER_LEFT -> CoreReflections.Instance.stairsShape$INNER_LEFT;
+            case INNER_RIGHT -> CoreReflections.Instance.stairsShape$INNER_RIGHT;
+            case OUTER_LEFT -> CoreReflections.Instance.stairsShape$OUTER_LEFT;
+            case OUTER_RIGHT -> CoreReflections.Instance.stairsShape$OUTER_RIGHT;
         };
     }
 }

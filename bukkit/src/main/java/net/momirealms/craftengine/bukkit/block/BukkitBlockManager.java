@@ -31,7 +31,6 @@ import net.momirealms.craftengine.core.util.Tristate;
 import net.momirealms.craftengine.core.util.VersionHelper;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
-import org.bukkit.Registry;
 import org.bukkit.event.HandlerList;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -233,8 +232,8 @@ public final class BukkitBlockManager extends AbstractBlockManager {
             CoreReflections.field$BlockStateBase$replaceable.set(nmsState, settings.replaceable());
             Object mcMapColor = CoreReflections.method$MapColor$byId.invoke(null, settings.mapColor().id);
             CoreReflections.field$BlockStateBase$mapColor.set(nmsState, mcMapColor);
-            CoreReflections.field$BlockStateBase$instrument.set(nmsState, CoreReflections.instance$NoteBlockInstrument$values[settings.instrument().ordinal()]);
-            CoreReflections.field$BlockStateBase$pushReaction.set(nmsState, CoreReflections.instance$PushReaction$values[settings.pushReaction().ordinal()]);
+            CoreReflections.field$BlockStateBase$instrument.set(nmsState, CoreReflections.Instance.noteBlockInstrument$values[settings.instrument().ordinal()]);
+            CoreReflections.field$BlockStateBase$pushReaction.set(nmsState, CoreReflections.Instance.pushReaction$values[settings.pushReaction().ordinal()]);
             boolean canOcclude = settings.canOcclude() == Tristate.UNDEFINED ? BlockStateUtils.isOcclude(nmsVisualState) : settings.canOcclude().asBoolean();
             CoreReflections.field$BlockStateBase$canOcclude.set(nmsState, canOcclude);
             boolean useShapeForLightOcclusion = settings.useShapeForLightOcclusion() == Tristate.UNDEFINED ? CoreReflections.field$BlockStateBase$useShapeForLightOcclusion.getBoolean(nmsVisualState) : settings.useShapeForLightOcclusion().asBoolean();
@@ -345,7 +344,7 @@ public final class BukkitBlockManager extends AbstractBlockManager {
                     CoreReflections.field$Holder$Reference$tags.set(blockHolder, Set.of());
                     DelegatingBlockState newBlockState = (DelegatingBlockState) FastNMS.INSTANCE.method$Block$defaultState(customBlock);
                     this.customBlockStates[i] = newBlockState;
-                    CoreReflections.method$IdMapper$add.invoke(CoreReflections.instance$Block$BLOCK_STATE_REGISTRY, newBlockState);
+                    CoreReflections.method$IdMapper$add.invoke(CoreReflections.Instance.block$BLOCK_STATE_REGISTRY, newBlockState);
                 } catch (ReflectiveOperationException e) {
                     CraftEngine.instance().logger().warn("Failed to register custom block " + customBlockId, e);
                 }

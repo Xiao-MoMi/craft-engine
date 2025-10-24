@@ -43,7 +43,7 @@ import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 
 public class TotemAnimationCommand extends BukkitCommandFeature<CommandSender> {
-    public static final Object FIX_TOTEM_SOUND_PACKET = FastNMS.INSTANCE.constructor$ClientboundSoundPacket(FastNMS.INSTANCE.method$Holder$direct(MSoundEvents.TOTEM_USE), CoreReflections.instance$SoundSource$MUSIC, 0, Integer.MIN_VALUE, 0, 0, 0, 0);
+    public static final Object FIX_TOTEM_SOUND_PACKET = FastNMS.INSTANCE.constructor$ClientboundSoundPacket(FastNMS.INSTANCE.method$Holder$direct(MSoundEvents.TOTEM_USE), CoreReflections.Instance.soundSource$MUSIC, 0, Integer.MIN_VALUE, 0, 0, 0, 0);
 
     public TotemAnimationCommand(CraftEngineCommandManager<CommandSender> commandManager, CraftEngine plugin) {
         super(commandManager, plugin);

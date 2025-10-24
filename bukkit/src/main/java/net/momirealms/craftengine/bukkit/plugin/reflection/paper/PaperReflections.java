@@ -15,7 +15,8 @@ import static java.util.Objects.requireNonNull;
 
 @SuppressWarnings("UnstableApiUsage")
 public final class PaperReflections {
-    private PaperReflections() {}
+    private PaperReflections() {
+    }
 
     public static final Class<?> clazz$AdventureComponent = requireNonNull(
             ReflectionUtils.getClazz("net{}kyori{}adventure{}text{}Component".replace("{}", "."))
@@ -46,11 +47,11 @@ public final class PaperReflections {
     );
 
     public static final Method method$ComponentSerializer$serialize = requireNonNull(
-            ReflectionUtils.getMethod(clazz$ComponentSerializer, Object.class, new String[] {"serialize"}, clazz$AdventureComponent)
+            ReflectionUtils.getMethod(clazz$ComponentSerializer, Object.class, new String[]{"serialize"}, clazz$AdventureComponent)
     );
 
     public static final Method method$ComponentSerializer$deserialize = requireNonNull(
-            ReflectionUtils.getMethod(clazz$ComponentSerializer, Object.class, new String[] {"deserialize"}, Object.class)
+            ReflectionUtils.getMethod(clazz$ComponentSerializer, Object.class, new String[]{"deserialize"}, Object.class)
     );
 
     public static final Method method$AsyncChatDecorateEvent$result = requireNonNull(
@@ -78,19 +79,6 @@ public final class PaperReflections {
             ReflectionUtils.getMethod(clazz$GsonComponentSerializer, Gson.class)
     );
 
-    public static final Object instance$GsonComponentSerializer;
-    public static final Gson instance$GsonComponentSerializer$Gson;
-
-    static {
-        try {
-            Object builder = method$GsonComponentSerializer$builder.invoke(null);
-            instance$GsonComponentSerializer = method$GsonComponentSerializer$Builder$build.invoke(builder);
-            instance$GsonComponentSerializer$Gson = (Gson) method$GsonComponentSerializer$serializer.invoke(instance$GsonComponentSerializer);
-        } catch (ReflectiveOperationException e) {
-            throw new RuntimeException(e);
-        }
-    }
-
     public static final Method method$SignChangeEvent$line = requireNonNull(
             ReflectionUtils.getMethod(CraftBukkitReflections.clazz$SignChangeEvent, void.class, int.class, clazz$AdventureComponent)
     );
@@ -117,4 +105,22 @@ public final class PaperReflections {
                     clazz$RegionizedPlayerChunkLoader$PlayerChunkLoaderData, LongOpenHashSet.class, 0
             )
     );
+
+    public static final class Instance {
+        private Instance() {}
+
+        public static final Object instance$GsonComponentSerializer;
+        public static final Gson instance$GsonComponentSerializer$Gson;
+
+        static {
+            try {
+                Object builder = method$GsonComponentSerializer$builder.invoke(null);
+                instance$GsonComponentSerializer = method$GsonComponentSerializer$Builder$build.invoke(builder);
+                instance$GsonComponentSerializer$Gson = (Gson) method$GsonComponentSerializer$serializer.invoke(instance$GsonComponentSerializer);
+            } catch (ReflectiveOperationException e) {
+                throw new RuntimeException(e);
+            }
+        }
+
+    }
 }

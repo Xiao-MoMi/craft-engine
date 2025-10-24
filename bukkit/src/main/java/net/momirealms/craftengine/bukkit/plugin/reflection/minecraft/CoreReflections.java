@@ -166,35 +166,6 @@ public final class CoreReflections {
             ReflectionUtils.getStaticMethod(clazz$SoundSource, clazz$SoundSource.arrayType())
     );
 
-    public static final Object instance$SoundSource$MASTER;
-    public static final Object instance$SoundSource$MUSIC;
-    public static final Object instance$SoundSource$RECORDS;
-    public static final Object instance$SoundSource$WEATHER;
-    public static final Object instance$SoundSource$BLOCKS;
-    public static final Object instance$SoundSource$HOSTILE;
-    public static final Object instance$SoundSource$NEUTRAL;
-    public static final Object instance$SoundSource$PLAYERS;
-    public static final Object instance$SoundSource$AMBIENT;
-    public static final Object instance$SoundSource$VOICE;
-
-    static {
-        try {
-            Object[] values = (Object[]) method$SoundSource$values.invoke(null);
-            instance$SoundSource$MASTER = values[0];
-            instance$SoundSource$MUSIC = values[1];
-            instance$SoundSource$RECORDS = values[2];
-            instance$SoundSource$WEATHER = values[3];
-            instance$SoundSource$BLOCKS = values[4];
-            instance$SoundSource$HOSTILE = values[5];
-            instance$SoundSource$NEUTRAL = values[6];
-            instance$SoundSource$PLAYERS = values[7];
-            instance$SoundSource$AMBIENT = values[8];
-            instance$SoundSource$VOICE = values[9];
-        } catch (ReflectiveOperationException e) {
-            throw new ReflectionInitException("Failed to init SoundSource", e);
-        }
-    }
-
     // 1.21+
     public static final Class<?> clazz$PacketReport =
             ReflectionUtils.getClazz(BukkitReflectionUtils.assembleMCClass("data.info.PacketReport"));
@@ -232,16 +203,6 @@ public final class CoreReflections {
     public static final Method method$Component$empty = requireNonNull(
             ReflectionUtils.getStaticMethod(clazz$Component, clazz$Component)
     );
-
-    public static final Object instance$Component$empty;
-
-    static {
-        try {
-            instance$Component$empty = method$Component$empty.invoke(null);
-        } catch (ReflectiveOperationException e) {
-            throw new ReflectionInitException("Failed to get empty component", e);
-        }
-    }
 
     public static final Method method$Component$getString = requireNonNull(
             ReflectionUtils.getMethod(clazz$Component, String.class, new String[]{"getString", "a"})
@@ -463,28 +424,6 @@ public final class CoreReflections {
                     clazz$Direction, clazz$Direction.arrayType()
             )
     );
-
-    public static final Object instance$Direction$DOWN;
-    public static final Object instance$Direction$UP;
-    public static final Object instance$Direction$NORTH;
-    public static final Object instance$Direction$SOUTH;
-    public static final Object instance$Direction$WEST;
-    public static final Object instance$Direction$EAST;
-    public static final Object[] instance$Direction$values;
-
-    static {
-        try {
-            instance$Direction$values = (Object[]) method$Direction$values.invoke(null);
-            instance$Direction$DOWN = instance$Direction$values[0];
-            instance$Direction$UP = instance$Direction$values[1];
-            instance$Direction$NORTH = instance$Direction$values[2];
-            instance$Direction$SOUTH = instance$Direction$values[3];
-            instance$Direction$WEST = instance$Direction$values[4];
-            instance$Direction$EAST = instance$Direction$values[5];
-        } catch (ReflectiveOperationException e) {
-            throw new ReflectionInitException("Failed to init Direction", e);
-        }
-    }
 
     public static final Method method$Vec3i$relative = requireNonNull(
             ReflectionUtils.getMethod(clazz$Vec3i, clazz$Vec3i, clazz$Direction)
@@ -820,16 +759,6 @@ public final class CoreReflections {
             ReflectionUtils.getDeclaredField(clazz$Vec3, clazz$Vec3, 0)
     );
 
-    public static final Object instance$Vec3$Zero;
-
-    static {
-        try {
-            instance$Vec3$Zero = field$Vec3$Zero.get(null);
-        } catch (ReflectiveOperationException e) {
-            throw new RuntimeException("Failed to get instance$Vec3$Zero", e);
-        }
-    }
-
     public static final Class<?> clazz$AttributeInstance = requireNonNull(
             BukkitReflectionUtils.findReobfOrMojmapClass(
                     "world.entity.ai.attributes.AttributeModifiable",
@@ -855,17 +784,6 @@ public final class CoreReflections {
     public static final Method method$AttributeModifier$Operation$values = requireNonNull(
             ReflectionUtils.getStaticMethod(clazz$AttributeModifier$Operation, clazz$AttributeModifier$Operation.arrayType())
     );
-
-    public static final Object instance$AttributeModifier$Operation$ADD_VALUE;
-
-    static {
-        try {
-            Object[] values = (Object[]) method$AttributeModifier$Operation$values.invoke(null);
-            instance$AttributeModifier$Operation$ADD_VALUE = values[0];
-        } catch (ReflectiveOperationException e) {
-            throw new AssertionError(e);
-        }
-    }
 
     public static final Constructor<?> constructor$AttributeModifier = requireNonNull(
             !VersionHelper.isOrAbove1_20_5() ? ReflectionUtils.getConstructor(clazz$AttributeModifier, String.class, double.class, clazz$AttributeModifier$Operation) :
@@ -931,16 +849,6 @@ public final class CoreReflections {
     public static final Method method$IdMapper$add = requireNonNull(
             ReflectionUtils.getMethod(clazz$IdMapper, void.class, new String[] {"add", "b"}, Object.class)
     );
-
-    public static final Object instance$Block$BLOCK_STATE_REGISTRY;
-
-    static {
-        try {
-            instance$Block$BLOCK_STATE_REGISTRY = field$BLOCK_STATE_REGISTRY.get(null);
-        } catch (ReflectiveOperationException e) {
-            throw new RuntimeException(e);
-        }
-    }
 
     public static final Class<?> clazz$LevelAccessor = requireNonNull(
             BukkitReflectionUtils.findReobfOrMojmapClass(
@@ -1246,16 +1154,6 @@ public final class CoreReflections {
             ReflectionUtils.getMethod(clazz$PushReaction, new String[] { "values" })
     );
 
-    public static final Object[] instance$PushReaction$values;
-
-    static {
-        try {
-            instance$PushReaction$values = (Object[]) method$PushReaction$values.invoke(null);
-        } catch (ReflectiveOperationException e) {
-            throw new ReflectionInitException("Failed to init PushReaction", e);
-        }
-    }
-
     public static final Class<?> clazz$NoteBlockInstrument = requireNonNull(
             BukkitReflectionUtils.findReobfOrMojmapClass(
                     "world.level.block.state.properties.BlockPropertyInstrument",
@@ -1266,16 +1164,6 @@ public final class CoreReflections {
     public static final Method method$NoteBlockInstrument$values = requireNonNull(
             ReflectionUtils.getMethod(clazz$NoteBlockInstrument, new String[] { "values" })
     );
-
-    public static final Object[] instance$NoteBlockInstrument$values;
-
-    static {
-        try {
-            instance$NoteBlockInstrument$values = (Object[]) method$NoteBlockInstrument$values.invoke(null);
-        } catch (ReflectiveOperationException e) {
-            throw new ReflectionInitException("Failed to init NoteBlockInstrument", e);
-        }
-    }
 
     public static final Class<?> clazz$BlockStateBase = requireNonNull(
             BukkitReflectionUtils.findReobfOrMojmapClass(
@@ -1456,21 +1344,6 @@ public final class CoreReflections {
             ReflectionUtils.getStaticMethod(clazz$PathComputationType, clazz$PathComputationType.arrayType())
     );
 
-    public static final Object instance$PathComputationType$LAND;
-    public static final Object instance$PathComputationType$WATER;
-    public static final Object instance$PathComputationType$AIR;
-
-    static {
-        try {
-            Object[] objs = (Object[]) method$PathComputationType$values.invoke(null);
-            instance$PathComputationType$LAND = objs[0];
-            instance$PathComputationType$WATER = objs[1];
-            instance$PathComputationType$AIR = objs[2];
-        } catch (ReflectiveOperationException e) {
-            throw new ReflectionInitException("Failed to initialize PathComputationType", e);
-        }
-    }
-
     public static final Method method$BlockBehaviour$isPathFindable = requireNonNull(
             VersionHelper.isOrAbove1_20_5() ?
             ReflectionUtils.getDeclaredMethod(clazz$BlockBehaviour, boolean.class, clazz$BlockState, clazz$PathComputationType) :
@@ -1563,16 +1436,6 @@ public final class CoreReflections {
             ReflectionUtils.getStaticMethod(clazz$LightLayer, clazz$LightLayer.arrayType())
     );
 
-    public static final Object instance$LightLayer$BLOCK;
-
-    static {
-        try {
-            instance$LightLayer$BLOCK = ((Object[]) method$LightLayer$values.invoke(null))[1];
-        } catch (ReflectiveOperationException e) {
-            throw new RuntimeException(e);
-        }
-    }
-
     public static final Class<?> clazz$Player = requireNonNull(
             BukkitReflectionUtils.findReobfOrMojmapClass(
                     "world.entity.player.EntityHuman",
@@ -1587,16 +1450,6 @@ public final class CoreReflections {
     public static final Field field$Entity$ENTITY_COUNTER = requireNonNull(
             ReflectionUtils.getDeclaredField(clazz$Entity, AtomicInteger.class, 0)
     );
-
-    public static final AtomicInteger instance$Entity$ENTITY_COUNTER;
-
-    static {
-        try {
-            instance$Entity$ENTITY_COUNTER = (AtomicInteger) requireNonNull(field$Entity$ENTITY_COUNTER.get(null));
-        } catch (IllegalAccessException e) {
-            throw new RuntimeException(e);
-        }
-    }
 
     public static final Class<?> clazz$Level = requireNonNull(
             BukkitReflectionUtils.findReobfOrMojmapClass(
@@ -1631,19 +1484,6 @@ public final class CoreReflections {
             ReflectionUtils.getStaticMethod(clazz$InteractionHand, clazz$InteractionHand.arrayType())
     );
 
-    public static final Object instance$InteractionHand$MAIN_HAND;
-    public static final Object instance$InteractionHand$OFF_HAND;
-
-    static {
-        try {
-            Object[] values = (Object[]) method$InteractionHand$values.invoke(null);
-            instance$InteractionHand$MAIN_HAND = values[0];
-            instance$InteractionHand$OFF_HAND = values[1];
-        } catch (ReflectiveOperationException e) {
-            throw new RuntimeException(e);
-        }
-    }
-
     public static final Class<?> clazz$EquipmentSlot = requireNonNull(
             BukkitReflectionUtils.findReobfOrMojmapClass(
                     "world.entity.EnumItemSlot",
@@ -1657,30 +1497,6 @@ public final class CoreReflections {
             )
     );
 
-    public static final Object[] instance$EquipmentSlot$values;
-    public static final Object instance$EquipmentSlot$MAINHAND;
-    public static final Object instance$EquipmentSlot$OFFHAND;
-    public static final Object instance$EquipmentSlot$FEET;
-    public static final Object instance$EquipmentSlot$LEGS;
-    public static final Object instance$EquipmentSlot$CHEST;
-    public static final Object instance$EquipmentSlot$HEAD;
-//    public static final Object instance$EquipmentSlot$BODY;
-
-    static {
-        try {
-            instance$EquipmentSlot$values = (Object[]) method$EquipmentSlot$values.invoke(null);
-            instance$EquipmentSlot$MAINHAND = instance$EquipmentSlot$values[0];
-            instance$EquipmentSlot$OFFHAND = instance$EquipmentSlot$values[1];
-            instance$EquipmentSlot$FEET = instance$EquipmentSlot$values[2];
-            instance$EquipmentSlot$LEGS = instance$EquipmentSlot$values[3];
-            instance$EquipmentSlot$CHEST = instance$EquipmentSlot$values[4];
-            instance$EquipmentSlot$HEAD = instance$EquipmentSlot$values[5];
-//            instance$EquipmentSlot$BODY = instance$EquipmentSlot$values[6];
-        } catch (ReflectiveOperationException e) {
-            throw new ReflectionInitException("Failed to init EquipmentSlot", e);
-        }
-    }
-
     public static final Field field$Block$defaultBlockState = requireNonNull(
             ReflectionUtils.getDeclaredField(clazz$Block, clazz$BlockState, 0)
     );
@@ -1692,16 +1508,6 @@ public final class CoreReflections {
     public static final Class<?> clazz$ItemStack = requireNonNull(
             ReflectionUtils.getClazz(BukkitReflectionUtils.assembleMCClass("world.item.ItemStack"))
     );
-
-    public static final Object instance$ItemStack$EMPTY;
-
-    static {
-        try {
-            instance$ItemStack$EMPTY = requireNonNull(ReflectionUtils.getDeclaredField(clazz$ItemStack, clazz$ItemStack, 0)).get(null);
-        } catch (ReflectiveOperationException e) {
-            throw new RuntimeException(e);
-        }
-    }
 
     public static final Class<?> clazz$ItemEnchantments =
             ReflectionUtils.getClazz(BukkitReflectionUtils.assembleMCClass( "world.item.enchantment.ItemEnchantments"));
@@ -2571,21 +2377,6 @@ public final class CoreReflections {
             ReflectionUtils.getStaticMethod(clazz$ClipContext$Fluid, clazz$ClipContext$Fluid.arrayType())
     );
 
-    public static final Object instance$ClipContext$Fluid$NONE;
-    public static final Object instance$ClipContext$Fluid$SOURCE_ONLY;
-    public static final Object instance$ClipContext$Fluid$ANY;
-
-    static {
-        try {
-            Object[] values = (Object[]) method$ClipContext$Fluid$values.invoke(null);
-            instance$ClipContext$Fluid$NONE = values[0];
-            instance$ClipContext$Fluid$SOURCE_ONLY = values[1];
-            instance$ClipContext$Fluid$ANY = values[2];
-        } catch (ReflectiveOperationException e) {
-            throw new RuntimeException(e);
-        }
-    }
-
     public static final Method method$Item$getPlayerPOVHitResult = requireNonNull(
             ReflectionUtils.getDeclaredMethod(clazz$Item, clazz$BlockHitResult, clazz$Level, clazz$Player, clazz$ClipContext$Fluid)
     );
@@ -2686,30 +2477,6 @@ public final class CoreReflections {
             ReflectionUtils.getDeclaredField(clazz$LinearPalette, Object.class.arrayType(), 0)
     );
 
-    public static final Object instance$Entity$DATA_SILENT;
-
-    static {
-        int i = 0;
-        Field targetField = null;
-        for (Field field : clazz$Entity.getDeclaredFields()) {
-            Type fieldType = field.getGenericType();
-            if (field.getType() == clazz$EntityDataAccessor && fieldType instanceof ParameterizedType paramType) {
-                if (paramType.getActualTypeArguments()[0] == Boolean.class) {
-                    i++;
-                    if (i == 2) {
-                        targetField = field;
-                        break;
-                    }
-                }
-            }
-        }
-        try {
-            instance$Entity$DATA_SILENT = ReflectionUtils.setAccessible(requireNonNull(targetField)).get(null);
-        } catch (ReflectiveOperationException e) {
-            throw new RuntimeException(e);
-        }
-    }
-
     public static final Field field$Entity$entityData = requireNonNull(
             ReflectionUtils.getDeclaredField(clazz$Entity, clazz$SynchedEntityData, 0)
     );
@@ -2724,21 +2491,6 @@ public final class CoreReflections {
     public static final Method method$SupportType$values = requireNonNull(
             ReflectionUtils.getStaticMethod(clazz$SupportType, clazz$SupportType.arrayType())
     );
-
-    public static final Object instance$SupportType$FULL;
-    public static final Object instance$SupportType$CENTER;
-    public static final Object instance$SupportType$RIGID;
-
-    static {
-        try {
-            Object[] values = (Object[]) method$SupportType$values.invoke(null);
-            instance$SupportType$FULL = values[0];
-            instance$SupportType$CENTER = values[1];
-            instance$SupportType$RIGID = values[2];
-        } catch (ReflectiveOperationException e) {
-            throw new RuntimeException(e);
-        }
-    }
 
     public static final Method method$BlockStateBase$isFaceSturdy = requireNonNull(
             ReflectionUtils.getMethod(clazz$BlockStateBase, boolean.class, clazz$BlockGetter, clazz$BlockPos, clazz$Direction, clazz$SupportType)
@@ -2794,58 +2546,6 @@ public final class CoreReflections {
             ReflectionUtils.getStaticMethod(clazz$Pose, clazz$Pose.arrayType())
     );
 
-    public static final Object instance$Pose$STANDING;
-    public static final Object instance$Pose$FALL_FLYING;
-    public static final Object instance$Pose$SLEEPING;
-    public static final Object instance$Pose$SWIMMING;
-    public static final Object instance$Pose$SPIN_ATTACK;
-    public static final Object instance$Pose$CROUCHING;
-    public static final Object instance$Pose$LONG_JUMPING;
-    public static final Object instance$Pose$DYING;
-    public static final Object instance$Pose$CROAKING;
-    public static final Object instance$Pose$USING_TONGUE;
-    public static final Object instance$Pose$SITTING;
-    public static final Object instance$Pose$ROARING;
-    public static final Object instance$Pose$SNIFFING;
-    public static final Object instance$Pose$EMERGING;
-    public static final Object instance$Pose$DIGGING;
-    public static final Object instance$Pose$SLIDING;
-    public static final Object instance$Pose$SHOOTING;
-    public static final Object instance$Pose$INHALING;
-    public static final Object[] instance$Poses;
-
-    static {
-        try {
-            instance$Poses = (Object[]) method$Pose$values.invoke(null);
-            instance$Pose$STANDING = instance$Poses[0];
-            instance$Pose$FALL_FLYING = instance$Poses[1];
-            instance$Pose$SLEEPING = instance$Poses[2];
-            instance$Pose$SWIMMING = instance$Poses[3];
-            instance$Pose$SPIN_ATTACK = instance$Poses[4];
-            instance$Pose$CROUCHING = instance$Poses[5];
-            instance$Pose$LONG_JUMPING = instance$Poses[6];
-            instance$Pose$DYING = instance$Poses[7];
-            instance$Pose$CROAKING = instance$Poses[8];
-            instance$Pose$USING_TONGUE = instance$Poses[9];
-            instance$Pose$SITTING = instance$Poses[10];
-            instance$Pose$ROARING = instance$Poses[11];
-            instance$Pose$SNIFFING = instance$Poses[12];
-            instance$Pose$EMERGING = instance$Poses[13];
-            instance$Pose$DIGGING = instance$Poses[14];
-            if (VersionHelper.isOrAbove1_20_3()) {
-                instance$Pose$SLIDING = instance$Poses[15];
-                instance$Pose$SHOOTING = instance$Poses[16];
-                instance$Pose$INHALING = instance$Poses[17];
-            } else {
-                instance$Pose$SLIDING = null;
-                instance$Pose$SHOOTING = null;
-                instance$Pose$INHALING = null;
-            }
-        } catch (ReflectiveOperationException e) {
-            throw new RuntimeException(e);
-        }
-    }
-
     public static final Class<?> clazz$Attributes = requireNonNull(
             BukkitReflectionUtils.findReobfOrMojmapClass(
                     "world.entity.ai.attributes.GenericAttributes",
@@ -2872,23 +2572,6 @@ public final class CoreReflections {
             ReflectionUtils.getStaticMethod(clazz$Rotation, clazz$Rotation.arrayType())
     );
 
-    public static final Object instance$Rotation$NONE;
-    public static final Object instance$Rotation$CLOCKWISE_90;
-    public static final Object instance$Rotation$CLOCKWISE_180;
-    public static final Object instance$Rotation$COUNTERCLOCKWISE_90;
-
-    static {
-        try {
-            Object[] values = (Object[]) method$Rotation$values.invoke(null);
-            instance$Rotation$NONE = values[0];
-            instance$Rotation$CLOCKWISE_90 = values[1];
-            instance$Rotation$CLOCKWISE_180 = values[2];
-            instance$Rotation$COUNTERCLOCKWISE_90 = values[3];
-        } catch (ReflectiveOperationException e) {
-            throw new RuntimeException(e);
-        }
-    }
-
     public static final Method method$Rotation$ordinal = requireNonNull(
             ReflectionUtils.getMethod(clazz$Rotation, int.class, new String[]{"ordinal"})
     );
@@ -2906,21 +2589,6 @@ public final class CoreReflections {
                     clazz$Mirror, clazz$Mirror.arrayType()
             )
     );
-
-    public static final Object instance$Mirror$NONE;
-    public static final Object instance$Mirror$LEFT_RIGHT;
-    public static final Object instance$Mirror$FRONT_BACK;
-
-    static {
-        try {
-            Object[] values = (Object[]) method$Mirror$values.invoke(null);
-            instance$Mirror$NONE = values[0];
-            instance$Mirror$LEFT_RIGHT = values[1];
-            instance$Mirror$FRONT_BACK = values[2];
-        } catch (ReflectiveOperationException e) {
-            throw new RuntimeException(e);
-        }
-    }
 
     public static final Method method$Mirror$ordinal = requireNonNull(
             ReflectionUtils.getMethod(clazz$Mirror, int.class, new String[]{"ordinal"})
@@ -2966,25 +2634,6 @@ public final class CoreReflections {
             )
     );
 
-    public static final Object instance$MoverType$SELF;
-    public static final Object instance$MoverType$PLAYER;
-    public static final Object instance$MoverType$PISTON;
-    public static final Object instance$MoverType$SHULKER_BOX;
-    public static final Object instance$MoverType$SHULKER;
-
-    static {
-        try {
-            Object[] values = (Object[]) method$MoverType$values.invoke(null);
-            instance$MoverType$SELF = values[0];
-            instance$MoverType$PLAYER = values[1];
-            instance$MoverType$PISTON = values[2];
-            instance$MoverType$SHULKER_BOX = values[3];
-            instance$MoverType$SHULKER = values[4];
-        } catch (ReflectiveOperationException e) {
-            throw new AssertionError(e);
-        }
-    }
-
     public static final Class<?> clazz$AbstractArrow$Pickup = requireNonNull(
             BukkitReflectionUtils.findReobfOrMojmapClass(
                     "world.entity.projectile.EntityArrow$PickupStatus",
@@ -2995,21 +2644,6 @@ public final class CoreReflections {
     public static final Method method$AbstractArrow$Pickup$values = requireNonNull(
             ReflectionUtils.getStaticMethod(clazz$AbstractArrow$Pickup, clazz$AbstractArrow$Pickup.arrayType())
     );
-
-    public static final Object instance$AbstractArrow$Pickup$DISALLOWED;
-    public static final Object instance$AbstractArrow$Pickup$ALLOWED;
-    public static final Object instance$AbstractArrow$Pickup$CREATIVE_ONLY;
-
-    static {
-        try {
-            Object[] values = (Object[]) method$AbstractArrow$Pickup$values.invoke(null);
-            instance$AbstractArrow$Pickup$DISALLOWED = values[0];
-            instance$AbstractArrow$Pickup$ALLOWED = values[1];
-            instance$AbstractArrow$Pickup$CREATIVE_ONLY = values[2];
-        } catch (ReflectiveOperationException e) {
-            throw new AssertionError(e);
-        }
-    }
 
     public static final Class<?> clazz$Orientation =
             BukkitReflectionUtils.findReobfOrMojmapClass(
@@ -3272,17 +2906,6 @@ public final class CoreReflections {
             ReflectionUtils.getStaticMethod(clazz$PackType, clazz$PackType.arrayType())
     );
 
-    public static final Object instance$PackType$SERVER_DATA;
-
-    static {
-        try {
-            Object[] values = (Object[]) method$PackType$values.invoke(null);
-            instance$PackType$SERVER_DATA = values[1];
-        } catch (ReflectiveOperationException e) {
-            throw new RuntimeException(e);
-        }
-    }
-
     public static final Class<?> clazz$PackRepository = requireNonNull(
             BukkitReflectionUtils.findReobfOrMojmapClass(
                     "server.packs.repository.ResourcePackRepository",
@@ -3495,29 +3118,6 @@ public final class CoreReflections {
             .map(it -> ReflectionUtils.getStaticMethod(it, it.arrayType()))
             .orElse(null);
 
-    // 1.21.2+
-    public static final Object instance$ParticleStatus$ALL;
-    public static final Object instance$ParticleStatus$DECREASED;
-    public static final Object instance$ParticleStatus$MINIMAL;
-
-    // 1.21.2+
-    static {
-        try {
-            if (VersionHelper.isOrAbove1_21_2()) {
-                Object[] values = (Object[]) method$ParticleStatus$values.invoke(null);
-                instance$ParticleStatus$ALL = values[0];
-                instance$ParticleStatus$DECREASED = values[1];
-                instance$ParticleStatus$MINIMAL = values[2];
-            } else {
-                instance$ParticleStatus$ALL = null;
-                instance$ParticleStatus$DECREASED = null;
-                instance$ParticleStatus$MINIMAL = null;
-            }
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        }
-    }
-
     // 1.21.2+ ParticleStatus
     public static final Field field$ClientInformation$particleStatus = Optional.ofNullable(clazz$ClientInformation)
             .map(it -> ReflectionUtils.getDeclaredField(it, 8))
@@ -3718,17 +3318,6 @@ public final class CoreReflections {
     // 1.20.5+
     public static final Field field$ItemStack$CODEC = ReflectionUtils.getDeclaredField(clazz$ItemStack, "CODEC", "b");
 
-    public static final Codec<Object> instance$ItemStack$CODEC = getItemStack$CODEC();
-
-    @SuppressWarnings("unchecked")
-    private static Codec<Object> getItemStack$CODEC() {
-        try {
-            return VersionHelper.isOrAbove1_20_5() ? (Codec<Object>) field$ItemStack$CODEC.get(null) : null;
-        } catch (ReflectiveOperationException e) {
-            throw new ReflectionInitException("Failed to init ItemStack$CODEC", e);
-        }
-    }
-
     public static final Class<?> clazz$StairBlock = requireNonNull(
             BukkitReflectionUtils.findReobfOrMojmapClass(
                     "world.level.block.BlockStairs",
@@ -3752,25 +3341,6 @@ public final class CoreReflections {
                     clazz$StairsShape, new String[]{"ordinal"}
             )
     );
-
-    public static final Object instance$StairsShape$STRAIGHT;
-    public static final Object instance$StairsShape$INNER_LEFT;
-    public static final Object instance$StairsShape$INNER_RIGHT;
-    public static final Object instance$StairsShape$OUTER_LEFT;
-    public static final Object instance$StairsShape$OUTER_RIGHT;
-
-    static {
-        try {
-            Object[] values = (Object[]) method$StairsShape$values.invoke(null);
-            instance$StairsShape$STRAIGHT = values[0];
-            instance$StairsShape$INNER_LEFT = values[1];
-            instance$StairsShape$INNER_RIGHT = values[2];
-            instance$StairsShape$OUTER_LEFT = values[3];
-            instance$StairsShape$OUTER_RIGHT = values[4];
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        }
-    }
 
     public static final Class<?> clazz$EnumProperty = requireNonNull(
             BukkitReflectionUtils.findReobfOrMojmapClass(
@@ -3804,20 +3374,6 @@ public final class CoreReflections {
             )
     );
 
-    public static final Object instance$StairBlock$FACING;
-    public static final Object instance$StairBlock$HALF;
-    public static final Object instance$StairBlock$SHAPE;
-
-    static {
-        try {
-            instance$StairBlock$FACING = requireNonNull(field$StairBlock$FACING.get(null));
-            instance$StairBlock$HALF = requireNonNull(field$StairBlock$HALF.get(null));
-            instance$StairBlock$SHAPE = requireNonNull(field$StairBlock$SHAPE.get(null));
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        }
-    }
-
     public static final Class<?> clazz$BasePressurePlateBlock = requireNonNull(
             BukkitReflectionUtils.findReobfOrMojmapClass(
                     "world.level.block.BlockPressurePlateAbstract",
@@ -3830,16 +3386,6 @@ public final class CoreReflections {
                     clazz$BasePressurePlateBlock, clazz$AABB, 0
             )
     );
-
-    public static final Object instance$BasePressurePlateBlock$TOUCH_AABB;
-
-    static {
-        try {
-            instance$BasePressurePlateBlock$TOUCH_AABB = requireNonNull(field$BasePressurePlateBlock$TOUCH_AABB.get(null));
-        } catch (IllegalAccessException e) {
-            throw new RuntimeException(e);
-        }
-    }
 
     public static final Class<?> clazz$LootParams$Builder = requireNonNull(
             BukkitReflectionUtils.findReobfOrMojmapClass(
@@ -3986,26 +3532,6 @@ public final class CoreReflections {
             .map(it -> ReflectionUtils.getDeclaredField(it, clazz$ConfigurationTask$Type, 0))
             .orElse(null);
 
-    public static final Object instance$JoinWorldTask;
-    public static final Object instance$JoinWorldTask$TYPE;
-    public static final Object instance$ServerResourcePackConfigurationTask$TYPE;
-
-    static {
-        try {
-            if (VersionHelper.isOrAbove1_20_2()) {
-                instance$JoinWorldTask = constructor$JoinWorldTask.newInstance();
-                instance$JoinWorldTask$TYPE = field$JoinWorldTask$TYPE.get(null);
-                instance$ServerResourcePackConfigurationTask$TYPE = field$ServerResourcePackConfigurationTask$TYPE.get(null);
-            } else {
-                instance$JoinWorldTask = null;
-                instance$JoinWorldTask$TYPE = null;
-                instance$ServerResourcePackConfigurationTask$TYPE = null;
-            }
-        } catch (ReflectiveOperationException e) {
-            throw new ReflectionInitException("Failed to initialize reflection", e);
-        }
-    }
-
     // 注释的这些说不定以后调试有用
     // public static final Class<?> clazz$ConfigurationTask = MiscUtils.requireNonNullIf(
     //         ReflectionUtils.getClazz(
@@ -4080,16 +3606,6 @@ public final class CoreReflections {
             ReflectionUtils.getDeclaredField(clazz$ArmorTrim, Codec.class, 0)
     );
 
-    public static final Codec<?> instance$ArmorTrim$CODEC;
-
-    static {
-        try {
-            instance$ArmorTrim$CODEC = (Codec<?>) field$ArmorTrim$CODEC.get(null);
-        } catch (ReflectiveOperationException e) {
-            throw new ReflectionInitException("Failed to initialize ArmorTrim CODEC", e);
-        }
-    }
-
     public static final Method method$ArmorTrim$setTrim = ReflectionUtils.getStaticMethod(
             clazz$ArmorTrim, boolean.class, clazz$RegistryAccess, clazz$ItemStack, clazz$ArmorTrim
     );
@@ -4109,16 +3625,6 @@ public final class CoreReflections {
             !VersionHelper.isOrAbove1_21_5()
     );
 
-    public static final Object instance$CollisionContext$empty;
-
-    static {
-        try {
-            instance$CollisionContext$empty = requireNonNull(method$CollisionContext$empty.invoke(null));
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        }
-    }
-
     // 1.21.6+
     public static final Method method$CollisionContext$placementContext = MiscUtils.requireNonNullIf(ReflectionUtils.getStaticMethod(
             clazz$CollisionContext, clazz$CollisionContext, clazz$Player
@@ -4126,7 +3632,7 @@ public final class CoreReflections {
 
     public static final Constructor<?> constructor$BlockHitResult = requireNonNull(
             ReflectionUtils.getConstructor(
-                    CoreReflections.clazz$BlockHitResult, CoreReflections.clazz$Vec3, CoreReflections.clazz$Direction, CoreReflections.clazz$BlockPos, boolean.class
+                    clazz$BlockHitResult, clazz$Vec3, clazz$Direction, clazz$BlockPos, boolean.class
             )
     );
 
@@ -4138,20 +3644,6 @@ public final class CoreReflections {
     public static final Field field$HashOps$CRC32C_INSTANCE = Optional.ofNullable(clazz$HashOps)
             .map(it -> ReflectionUtils.getDeclaredField(it, it, 0))
             .orElse(null);
-
-    public static final Object instance$HashOps$CRC32C_INSTANCE;
-
-    static {
-        try {
-            if (VersionHelper.isOrAbove1_21_5()) {
-                instance$HashOps$CRC32C_INSTANCE = field$HashOps$CRC32C_INSTANCE.get(null);
-            } else {
-                instance$HashOps$CRC32C_INSTANCE = null;
-            }
-        } catch (ReflectiveOperationException e) {
-            throw new ReflectionInitException("Failed to initialize HashOps", e);
-        }
-    }
 
     public static final Class<?> clazz$SnowLayerBlock = requireNonNull(
             BukkitReflectionUtils.findReobfOrMojmapClass(
@@ -4165,16 +3657,6 @@ public final class CoreReflections {
                     clazz$SnowLayerBlock, clazz$IntegerProperty, 0
             )
     );
-
-    public static final Object instance$SnowLayerBlock$LAYERS;
-
-    static {
-        try {
-            instance$SnowLayerBlock$LAYERS = field$SnowLayerBlock$LAYERS.get(null);
-        } catch (IllegalAccessException e) {
-            throw new ReflectionInitException("Failed to initialize SnowLayerBlock$LAYERS", e);
-        }
-    }
 
     public static final Class<?> clazz$DyeItem = requireNonNull(
             BukkitReflectionUtils.findReobfOrMojmapClass(
@@ -4207,23 +3689,6 @@ public final class CoreReflections {
     public static final Method method$CraftingBookCategory$values = requireNonNull(
             ReflectionUtils.getStaticMethod(clazz$CraftingBookCategory, clazz$CraftingBookCategory.arrayType())
     );
-
-    public static final Object instance$CraftingBookCategory$BUILDING;
-    public static final Object instance$CraftingBookCategory$REDSTONE;
-    public static final Object instance$CraftingBookCategory$EQUIPMENT;
-    public static final Object instance$CraftingBookCategory$MISC;
-
-    static {
-        try {
-            Object[] values = (Object[]) method$CraftingBookCategory$values.invoke(null);
-            instance$CraftingBookCategory$BUILDING = values[0];
-            instance$CraftingBookCategory$REDSTONE = values[1];
-            instance$CraftingBookCategory$EQUIPMENT = values[2];
-            instance$CraftingBookCategory$MISC = values[3];
-        } catch (ReflectiveOperationException e) {
-            throw new ReflectionInitException("Failed to initialize CraftingBookCategory", e);
-        }
-    }
 
     public static final Class<?> clazz$CraftingInput = MiscUtils.requireNonNullIf(
             BukkitReflectionUtils.findReobfOrMojmapClass(
@@ -4276,16 +3741,6 @@ public final class CoreReflections {
             ReflectionUtils.getStaticDeclaredField(clazz$AdvancementRewards, clazz$AdvancementRewards, 0)
     );
 
-    public static final Object instance$AdvancementRewards$EMPTY;
-
-    static {
-        try {
-            instance$AdvancementRewards$EMPTY = field$AdvancementRewards$EMPTY.get(null);
-        } catch (ReflectiveOperationException e) {
-            throw new ReflectionInitException("Failed to initialize AdvancementRewards$EMPTY", e);
-        }
-    }
-
     public static final Class<?> clazz$AdvancementRequirements = MiscUtils.requireNonNullIf(
             BukkitReflectionUtils.findReobfOrMojmapClass(
                     "advancements.AdvancementRequirements",
@@ -4329,16 +3784,6 @@ public final class CoreReflections {
     public static final Method method$AdvancementType$values = requireNonNull(
             ReflectionUtils.getStaticMethod(clazz$AdvancementType, clazz$AdvancementType.arrayType())
     );
-
-    public static final Object[] instance$AdvancementType$values;
-
-    static {
-        try {
-            instance$AdvancementType$values = (Object[]) method$AdvancementType$values.invoke(null);
-        } catch (ReflectiveOperationException e) {
-            throw new ReflectionInitException("Failed to initialize AdvancementTypes", e);
-        }
-    }
 
     public static final Class<?> clazz$DisplayInfo = requireNonNull(
             BukkitReflectionUtils.findReobfOrMojmapClass(
@@ -4496,4 +3941,512 @@ public final class CoreReflections {
             "world.level.block.entity.TileEntityTypes",
             "world.level.block.entity.BlockEntityType"
     ));
+
+    public static final class Instance {
+        private Instance() {}
+
+        public static final Object[] advancementType$values;
+
+        static {
+            try {
+                advancementType$values = (Object[]) method$AdvancementType$values.invoke(null);
+            } catch (ReflectiveOperationException e) {
+                throw new ReflectionInitException("Failed to initialize AdvancementTypes", e);
+            }
+        }
+
+        public static final Object craftingBookCategory$BUILDING;
+        public static final Object craftingBookCategory$REDSTONE;
+        public static final Object craftingBookCategory$EQUIPMENT;
+        public static final Object craftingBookCategory$MISC;
+
+        static {
+            try {
+                Object[] values = (Object[]) method$CraftingBookCategory$values.invoke(null);
+                craftingBookCategory$BUILDING = values[0];
+                craftingBookCategory$REDSTONE = values[1];
+                craftingBookCategory$EQUIPMENT = values[2];
+                craftingBookCategory$MISC = values[3];
+            } catch (ReflectiveOperationException e) {
+                throw new ReflectionInitException("Failed to initialize CraftingBookCategory", e);
+            }
+        }
+
+        public static final Object collisionContext$empty;
+
+        static {
+            try {
+                collisionContext$empty = requireNonNull(method$CollisionContext$empty.invoke(null));
+            } catch (Exception e) {
+                throw new RuntimeException(e);
+            }
+        }
+
+        public static final Object stairsShape$STRAIGHT;
+        public static final Object stairsShape$INNER_LEFT;
+        public static final Object stairsShape$INNER_RIGHT;
+        public static final Object stairsShape$OUTER_LEFT;
+        public static final Object stairsShape$OUTER_RIGHT;
+
+        static {
+            try {
+                Object[] values = (Object[]) method$StairsShape$values.invoke(null);
+                stairsShape$STRAIGHT = values[0];
+                stairsShape$INNER_LEFT = values[1];
+                stairsShape$INNER_RIGHT = values[2];
+                stairsShape$OUTER_LEFT = values[3];
+                stairsShape$OUTER_RIGHT = values[4];
+            } catch (Exception e) {
+                throw new RuntimeException(e);
+            }
+        }
+
+        // 1.21.2+
+        public static final Object particleStatus$ALL;
+        public static final Object particleStatus$DECREASED;
+        public static final Object particleStatus$MINIMAL;
+
+        // 1.21.2+
+        static {
+            try {
+                if (VersionHelper.isOrAbove1_21_2()) {
+                    Object[] values = (Object[]) method$ParticleStatus$values.invoke(null);
+                    particleStatus$ALL = values[0];
+                    particleStatus$DECREASED = values[1];
+                    particleStatus$MINIMAL = values[2];
+                } else {
+                    particleStatus$ALL = null;
+                    particleStatus$DECREASED = null;
+                    particleStatus$MINIMAL = null;
+                }
+            } catch (Exception e) {
+                throw new RuntimeException(e);
+            }
+        }
+
+        public static final Object packType$SERVER_DATA;
+
+        static {
+            try {
+                Object[] values = (Object[]) method$PackType$values.invoke(null);
+                packType$SERVER_DATA = values[1];
+            } catch (ReflectiveOperationException e) {
+                throw new RuntimeException(e);
+            }
+        }
+
+        public static final Object abstractArrow$Pickup$DISALLOWED;
+        public static final Object abstractArrow$Pickup$ALLOWED;
+        public static final Object abstractArrow$Pickup$CREATIVE_ONLY;
+
+        static {
+            try {
+                Object[] values = (Object[]) method$AbstractArrow$Pickup$values.invoke(null);
+                abstractArrow$Pickup$DISALLOWED = values[0];
+                abstractArrow$Pickup$ALLOWED = values[1];
+                abstractArrow$Pickup$CREATIVE_ONLY = values[2];
+            } catch (ReflectiveOperationException e) {
+                throw new AssertionError(e);
+            }
+        }
+
+        public static final Object moverType$SELF;
+        public static final Object moverType$PLAYER;
+        public static final Object moverType$PISTON;
+        public static final Object moverType$SHULKER_BOX;
+        public static final Object moverType$SHULKER;
+
+        static {
+            try {
+                Object[] values = (Object[]) method$MoverType$values.invoke(null);
+                moverType$SELF = values[0];
+                moverType$PLAYER = values[1];
+                moverType$PISTON = values[2];
+                moverType$SHULKER_BOX = values[3];
+                moverType$SHULKER = values[4];
+            } catch (ReflectiveOperationException e) {
+                throw new AssertionError(e);
+            }
+        }
+
+        public static final Object mirror$NONE;
+        public static final Object mirror$LEFT_RIGHT;
+        public static final Object mirror$FRONT_BACK;
+
+        static {
+            try {
+                Object[] values = (Object[]) method$Mirror$values.invoke(null);
+                mirror$NONE = values[0];
+                mirror$LEFT_RIGHT = values[1];
+                mirror$FRONT_BACK = values[2];
+            } catch (ReflectiveOperationException e) {
+                throw new RuntimeException(e);
+            }
+        }
+
+        public static final Object rotation$NONE;
+        public static final Object rotation$CLOCKWISE_90;
+        public static final Object rotation$CLOCKWISE_180;
+        public static final Object rotation$COUNTERCLOCKWISE_90;
+
+        static {
+            try {
+                Object[] values = (Object[]) method$Rotation$values.invoke(null);
+                rotation$NONE = values[0];
+                rotation$CLOCKWISE_90 = values[1];
+                rotation$CLOCKWISE_180 = values[2];
+                rotation$COUNTERCLOCKWISE_90 = values[3];
+            } catch (ReflectiveOperationException e) {
+                throw new RuntimeException(e);
+            }
+        }
+
+        public static final Object pose$STANDING;
+        public static final Object pose$FALL_FLYING;
+        public static final Object pose$SLEEPING;
+        public static final Object pose$SWIMMING;
+        public static final Object pose$SPIN_ATTACK;
+        public static final Object pose$CROUCHING;
+        public static final Object pose$LONG_JUMPING;
+        public static final Object pose$DYING;
+        public static final Object pose$CROAKING;
+        public static final Object pose$USING_TONGUE;
+        public static final Object pose$SITTING;
+        public static final Object pose$ROARING;
+        public static final Object pose$SNIFFING;
+        public static final Object pose$EMERGING;
+        public static final Object pose$DIGGING;
+        public static final Object pose$SLIDING;
+        public static final Object pose$SHOOTING;
+        public static final Object pose$INHALING;
+        public static final Object[] pose$values;
+
+        static {
+            try {
+                pose$values = (Object[]) method$Pose$values.invoke(null);
+                pose$STANDING = pose$values[0];
+                pose$FALL_FLYING = pose$values[1];
+                pose$SLEEPING = pose$values[2];
+                pose$SWIMMING = pose$values[3];
+                pose$SPIN_ATTACK = pose$values[4];
+                pose$CROUCHING = pose$values[5];
+                pose$LONG_JUMPING = pose$values[6];
+                pose$DYING = pose$values[7];
+                pose$CROAKING = pose$values[8];
+                pose$USING_TONGUE = pose$values[9];
+                pose$SITTING = pose$values[10];
+                pose$ROARING = pose$values[11];
+                pose$SNIFFING = pose$values[12];
+                pose$EMERGING = pose$values[13];
+                pose$DIGGING = pose$values[14];
+                if (VersionHelper.isOrAbove1_20_3()) {
+                    pose$SLIDING = pose$values[15];
+                    pose$SHOOTING = pose$values[16];
+                    pose$INHALING = pose$values[17];
+                } else {
+                    pose$SLIDING = null;
+                    pose$SHOOTING = null;
+                    pose$INHALING = null;
+                }
+            } catch (ReflectiveOperationException e) {
+                throw new RuntimeException(e);
+            }
+        }
+
+        public static final Object supportType$FULL;
+        public static final Object supportType$CENTER;
+        public static final Object supportType$RIGID;
+
+        static {
+            try {
+                Object[] values = (Object[]) method$SupportType$values.invoke(null);
+                supportType$FULL = values[0];
+                supportType$CENTER = values[1];
+                supportType$RIGID = values[2];
+            } catch (ReflectiveOperationException e) {
+                throw new RuntimeException(e);
+            }
+        }
+
+        public static final Object clipContext$Fluid$NONE;
+        public static final Object clipContext$Fluid$SOURCE_ONLY;
+        public static final Object clipContext$Fluid$ANY;
+
+        static {
+            try {
+                Object[] values = (Object[]) method$ClipContext$Fluid$values.invoke(null);
+                clipContext$Fluid$NONE = values[0];
+                clipContext$Fluid$SOURCE_ONLY = values[1];
+                clipContext$Fluid$ANY = values[2];
+            } catch (ReflectiveOperationException e) {
+                throw new RuntimeException(e);
+            }
+        }
+
+        public static final Object component$empty;
+
+        static {
+            try {
+                component$empty = method$Component$empty.invoke(null);
+            } catch (ReflectiveOperationException e) {
+                throw new ReflectionInitException("Failed to get empty component", e);
+            }
+        }
+
+        public static final Object direction$DOWN;
+        public static final Object direction$UP;
+        public static final Object direction$NORTH;
+        public static final Object direction$SOUTH;
+        public static final Object direction$WEST;
+        public static final Object direction$EAST;
+        public static final Object[] direction$values;
+
+        static {
+            try {
+                direction$values = (Object[]) method$Direction$values.invoke(null);
+                direction$DOWN = direction$values[0];
+                direction$UP = direction$values[1];
+                direction$NORTH = direction$values[2];
+                direction$SOUTH = direction$values[3];
+                direction$WEST = direction$values[4];
+                direction$EAST = direction$values[5];
+            } catch (ReflectiveOperationException e) {
+                throw new ReflectionInitException("Failed to init Direction", e);
+            }
+        }
+
+        public static final Object attributeModifier$Operation$ADD_VALUE;
+
+        static {
+            try {
+                Object[] values = (Object[]) method$AttributeModifier$Operation$values.invoke(null);
+                attributeModifier$Operation$ADD_VALUE = values[0];
+            } catch (ReflectiveOperationException e) {
+                throw new AssertionError(e);
+            }
+        }
+
+        public static final Object[] pushReaction$values;
+
+        static {
+            try {
+                pushReaction$values = (Object[]) method$PushReaction$values.invoke(null);
+            } catch (ReflectiveOperationException e) {
+                throw new ReflectionInitException("Failed to init PushReaction", e);
+            }
+        }
+
+        public static final Object[] noteBlockInstrument$values;
+
+        static {
+            try {
+                noteBlockInstrument$values = (Object[]) method$NoteBlockInstrument$values.invoke(null);
+            } catch (ReflectiveOperationException e) {
+                throw new ReflectionInitException("Failed to init NoteBlockInstrument", e);
+            }
+        }
+
+        public static final Object pathComputationType$LAND;
+        public static final Object pathComputationType$WATER;
+        public static final Object pathComputationType$AIR;
+
+        static {
+            try {
+                Object[] objs = (Object[]) method$PathComputationType$values.invoke(null);
+                pathComputationType$LAND = objs[0];
+                pathComputationType$WATER = objs[1];
+                pathComputationType$AIR = objs[2];
+            } catch (ReflectiveOperationException e) {
+                throw new ReflectionInitException("Failed to initialize PathComputationType", e);
+            }
+        }
+
+        public static final Object lightLayer$BLOCK;
+
+        static {
+            try {
+                lightLayer$BLOCK = ((Object[]) method$LightLayer$values.invoke(null))[1];
+            } catch (ReflectiveOperationException e) {
+                throw new RuntimeException(e);
+            }
+        }
+
+        public static final Object interactionHand$MAIN_HAND;
+        public static final Object interactionHand$OFF_HAND;
+
+        static {
+            try {
+                Object[] values = (Object[]) method$InteractionHand$values.invoke(null);
+                interactionHand$MAIN_HAND = values[0];
+                interactionHand$OFF_HAND = values[1];
+            } catch (ReflectiveOperationException e) {
+                throw new RuntimeException(e);
+            }
+        }
+
+        public static final Object[] equipmentSlot$values;
+        public static final Object equipmentSlot$MAINHAND;
+        public static final Object equipmentSlot$OFFHAND;
+        public static final Object equipmentSlot$FEET;
+        public static final Object equipmentSlot$LEGS;
+        public static final Object equipmentSlot$CHEST;
+        public static final Object equipmentSlot$HEAD;
+        // public static final Object equipmentSlot$BODY;
+
+        static {
+            try {
+                equipmentSlot$values = (Object[]) method$EquipmentSlot$values.invoke(null);
+                equipmentSlot$MAINHAND = equipmentSlot$values[0];
+                equipmentSlot$OFFHAND = equipmentSlot$values[1];
+                equipmentSlot$FEET = equipmentSlot$values[2];
+                equipmentSlot$LEGS = equipmentSlot$values[3];
+                equipmentSlot$CHEST = equipmentSlot$values[4];
+                equipmentSlot$HEAD = equipmentSlot$values[5];
+                // instance$EquipmentSlot$BODY = equipmentSlot$values[6];
+            } catch (ReflectiveOperationException e) {
+                throw new ReflectionInitException("Failed to init EquipmentSlot", e);
+            }
+        }
+
+        public static final Object vec3$Zero;
+
+        static {
+            try {
+                vec3$Zero = field$Vec3$Zero.get(null);
+            } catch (ReflectiveOperationException e) {
+                throw new RuntimeException("Failed to get instance$Vec3$Zero", e);
+            }
+        }
+
+        public static final Object block$BLOCK_STATE_REGISTRY;
+
+        static {
+            try {
+                block$BLOCK_STATE_REGISTRY = field$BLOCK_STATE_REGISTRY.get(null);
+            } catch (ReflectiveOperationException e) {
+                throw new RuntimeException(e);
+            }
+        }
+
+        public static final AtomicInteger entity$ENTITY_COUNTER;
+
+        static {
+            try {
+                entity$ENTITY_COUNTER = (AtomicInteger) requireNonNull(field$Entity$ENTITY_COUNTER.get(null));
+            } catch (IllegalAccessException e) {
+                throw new RuntimeException(e);
+            }
+        }
+
+        public static final Object itemStack$EMPTY;
+
+        static {
+            try {
+                itemStack$EMPTY = requireNonNull(ReflectionUtils.getDeclaredField(clazz$ItemStack, clazz$ItemStack, 0)).get(null);
+            } catch (ReflectiveOperationException e) {
+                throw new RuntimeException(e);
+            }
+        }
+
+        public static final Codec<Object> itemStack$CODEC = getItemStack$CODEC();
+
+        @SuppressWarnings("unchecked")
+        private static Codec<Object> getItemStack$CODEC() {
+            try {
+                return VersionHelper.isOrAbove1_20_5() ? (Codec<Object>) field$ItemStack$CODEC.get(null) : null;
+            } catch (ReflectiveOperationException e) {
+                throw new ReflectionInitException("Failed to init ItemStack$CODEC", e);
+            }
+        }
+
+        public static final Object basePressurePlateBlock$TOUCH_AABB;
+
+        static {
+            try {
+                basePressurePlateBlock$TOUCH_AABB = requireNonNull(field$BasePressurePlateBlock$TOUCH_AABB.get(null));
+            } catch (IllegalAccessException e) {
+                throw new RuntimeException(e);
+            }
+        }
+
+        public static final Object joinWorldTask$TYPE;
+        public static final Object serverResourcePackConfigurationTask$TYPE;
+
+        static {
+            try {
+                if (VersionHelper.isOrAbove1_20_2()) {
+                    joinWorldTask$TYPE = field$JoinWorldTask$TYPE.get(null);
+                    serverResourcePackConfigurationTask$TYPE = field$ServerResourcePackConfigurationTask$TYPE.get(null);
+                } else {
+                    joinWorldTask$TYPE = null;
+                    serverResourcePackConfigurationTask$TYPE = null;
+                }
+            } catch (ReflectiveOperationException e) {
+                throw new ReflectionInitException("Failed to initialize reflection", e);
+            }
+        }
+
+        public static final Object hashOps$CRC32C_INSTANCE;
+
+        static {
+            try {
+                if (VersionHelper.isOrAbove1_21_5()) {
+                    hashOps$CRC32C_INSTANCE = field$HashOps$CRC32C_INSTANCE.get(null);
+                } else {
+                    hashOps$CRC32C_INSTANCE = null;
+                }
+            } catch (ReflectiveOperationException e) {
+                throw new ReflectionInitException("Failed to initialize HashOps", e);
+            }
+        }
+
+        public static final Object snowLayerBlock$LAYERS;
+
+        static {
+            try {
+                snowLayerBlock$LAYERS = field$SnowLayerBlock$LAYERS.get(null);
+            } catch (IllegalAccessException e) {
+                throw new ReflectionInitException("Failed to initialize SnowLayerBlock$LAYERS", e);
+            }
+        }
+
+        public static final Object advancementRewards$EMPTY;
+
+        static {
+            try {
+                advancementRewards$EMPTY = field$AdvancementRewards$EMPTY.get(null);
+            } catch (ReflectiveOperationException e) {
+                throw new ReflectionInitException("Failed to initialize AdvancementRewards$EMPTY", e);
+            }
+        }
+
+        public static final Object soundSource$MASTER;
+        public static final Object soundSource$MUSIC;
+        public static final Object soundSource$RECORDS;
+        public static final Object soundSource$WEATHER;
+        public static final Object soundSource$BLOCKS;
+        public static final Object soundSource$HOSTILE;
+        public static final Object soundSource$NEUTRAL;
+        public static final Object soundSource$PLAYERS;
+        public static final Object soundSource$AMBIENT;
+        public static final Object soundSource$VOICE;
+
+        static {
+            try {
+                Object[] values = (Object[]) method$SoundSource$values.invoke(null);
+                soundSource$MASTER = values[0];
+                soundSource$MUSIC = values[1];
+                soundSource$RECORDS = values[2];
+                soundSource$WEATHER = values[3];
+                soundSource$BLOCKS = values[4];
+                soundSource$HOSTILE = values[5];
+                soundSource$NEUTRAL = values[6];
+                soundSource$PLAYERS = values[7];
+                soundSource$AMBIENT = values[8];
+                soundSource$VOICE = values[9];
+            } catch (ReflectiveOperationException e) {
+                throw new ReflectionInitException("Failed to init SoundSource", e);
+            }
+        }
+    }
 }

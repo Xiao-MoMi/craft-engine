@@ -71,31 +71,31 @@ public final class PlayerUtils {
             Object previousOffHandItem = player.getItemInHand(InteractionHand.OFF_HAND).getLiteralObject();
             if (isMainHandTotem) {
                 packets.add(NetworkReflections.constructor$ClientboundSetEquipmentPacket.newInstance(
-                        player.entityID(), List.of(Pair.of(CoreReflections.instance$EquipmentSlot$MAINHAND, BukkitItemManager.instance().uniqueEmptyItem().item().getLiteralObject()))
+                        player.entityID(), List.of(Pair.of(CoreReflections.Instance.equipmentSlot$MAINHAND, BukkitItemManager.instance().uniqueEmptyItem().item().getLiteralObject()))
                 ));
             }
             packets.add(NetworkReflections.constructor$ClientboundSetEquipmentPacket.newInstance(
-                    player.entityID(), List.of(Pair.of(CoreReflections.instance$EquipmentSlot$OFFHAND, totemItem))
+                    player.entityID(), List.of(Pair.of(CoreReflections.Instance.equipmentSlot$OFFHAND, totemItem))
             ));
             packets.add(NetworkReflections.constructor$ClientboundEntityEventPacket.newInstance(player.serverPlayer(), (byte) 35));
             if (isMainHandTotem) {
                 packets.add(NetworkReflections.constructor$ClientboundSetEquipmentPacket.newInstance(
-                        player.entityID(), List.of(Pair.of(CoreReflections.instance$EquipmentSlot$MAINHAND, previousMainHandItem.getLiteralObject()))
+                        player.entityID(), List.of(Pair.of(CoreReflections.Instance.equipmentSlot$MAINHAND, previousMainHandItem.getLiteralObject()))
                 ));
             }
             packets.add(NetworkReflections.constructor$ClientboundSetEquipmentPacket.newInstance(
-                    player.entityID(), List.of(Pair.of(CoreReflections.instance$EquipmentSlot$OFFHAND, previousOffHandItem))
+                    player.entityID(), List.of(Pair.of(CoreReflections.Instance.equipmentSlot$OFFHAND, previousOffHandItem))
             ));
             if (sound != null || removeSound) {
                 packets.add(NetworkReflections.constructor$ClientboundStopSoundPacket.newInstance(
                         FastNMS.INSTANCE.method$ResourceLocation$fromNamespaceAndPath("minecraft", "item.totem.use"),
-                        CoreReflections.instance$SoundSource$PLAYERS
+                        CoreReflections.Instance.soundSource$PLAYERS
                 ));
             }
             if (sound != null) {
                 packets.add(FastNMS.INSTANCE.constructor$ClientboundSoundPacket(
                         FastNMS.INSTANCE.method$Holder$direct(FastNMS.INSTANCE.constructor$SoundEvent(KeyUtils.toResourceLocation(sound.id()), Optional.empty())),
-                        CoreReflections.instance$SoundSource$PLAYERS,
+                        CoreReflections.Instance.soundSource$PLAYERS,
                         player.x(), player.y(), player.z(), sound.volume().get(), sound.pitch().get(),
                         RandomUtils.generateRandomLong()
                 ));

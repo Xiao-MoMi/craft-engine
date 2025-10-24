@@ -205,7 +205,7 @@ public class BlockItemBehavior extends BlockBoundItemBehavior {
             } else if (player != null) {
                 voxelShape = CoreReflections.method$CollisionContext$of.invoke(null, player);
             } else {
-                voxelShape = CoreReflections.instance$CollisionContext$empty;
+                voxelShape = CoreReflections.Instance.collisionContext$empty;
             }
             Object world = FastNMS.INSTANCE.field$CraftWorld$ServerLevel((World) context.getLevel().platformWorld());
             boolean defaultReturn = ((!this.checkStatePlacement() || FastNMS.INSTANCE.method$BlockStateBase$canSurvive(blockState, world, blockPos))

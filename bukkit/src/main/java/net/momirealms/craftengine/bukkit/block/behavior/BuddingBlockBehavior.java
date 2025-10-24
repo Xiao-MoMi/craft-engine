@@ -32,7 +32,7 @@ public class BuddingBlockBehavior extends BukkitBlockBehavior {
     @Override
     public void randomTick(Object thisBlock, Object[] args, Callable<Object> superMethod) throws Exception {
         if (RandomUtils.generateRandomFloat(0, 1) >= growthChance) return;
-        Object nmsDirection = CoreReflections.instance$Direction$values[RandomUtils.generateRandomInt(0, 6)];
+        Object nmsDirection = CoreReflections.Instance.direction$values[RandomUtils.generateRandomInt(0, 6)];
         Direction direction = DirectionUtils.fromNMSDirection(nmsDirection);
         Object blockPos = FastNMS.INSTANCE.method$BlockPos$relative(args[2], nmsDirection);
         Object blockState = FastNMS.INSTANCE.method$BlockGetter$getBlockState(args[1], blockPos);

@@ -26,7 +26,7 @@ public class ChimeBlockBehavior extends BukkitBlockBehavior {
     public void onProjectileHit(Object thisBlock, Object[] args, Callable<Object> superMethod) {
         Object blockPos = FastNMS.INSTANCE.field$BlockHitResult$blockPos(args[2]);
         Object sound = FastNMS.INSTANCE.constructor$SoundEvent(KeyUtils.toResourceLocation(hitSound.id()), Optional.empty());
-        FastNMS.INSTANCE.method$LevelAccessor$playSound(args[0], null, blockPos, sound, CoreReflections.instance$SoundSource$BLOCKS, hitSound.volume().get(), hitSound.pitch().get());
+        FastNMS.INSTANCE.method$LevelAccessor$playSound(args[0], null, blockPos, sound, CoreReflections.Instance.soundSource$BLOCKS, hitSound.volume().get(), hitSound.pitch().get());
     }
 
     public static class Factory implements BlockBehaviorFactory {
