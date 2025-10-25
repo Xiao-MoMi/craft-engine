@@ -22,6 +22,7 @@
  */
 package net.momirealms.craftengine.core.util;
 
+import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
 import org.apache.commons.imaging.common.Allocator;
 import org.apache.commons.imaging.formats.png.ChunkType;
 import org.apache.commons.imaging.formats.png.InterlaceMethod;
@@ -35,30 +36,14 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
+import java.util.Set;
 import java.util.zip.Deflater;
 import java.util.zip.DeflaterOutputStream;
 
 public class PngWriter {
 
-    private static final class ImageHeader {
-        public final int width;
-        public final int height;
-        public final byte bitDepth;
-        public final PngColorType pngColorType;
-        public final byte compressionMethod;
-        public final byte filterMethod;
-        public final InterlaceMethod interlaceMethod;
-
-        ImageHeader(final int width, final int height, final byte bitDepth, final PngColorType pngColorType, final byte compressionMethod,
-                    final byte filterMethod, final InterlaceMethod interlaceMethod) {
-            this.width = width;
-            this.height = height;
-            this.bitDepth = bitDepth;
-            this.pngColorType = pngColorType;
-            this.compressionMethod = compressionMethod;
-            this.filterMethod = filterMethod;
-            this.interlaceMethod = interlaceMethod;
-        }
+    private record ImageHeader(int width, int height, byte bitDepth, PngColorType pngColorType, byte compressionMethod,
+                               byte filterMethod, InterlaceMethod interlaceMethod) {
     }
 
     public void write(BufferedImage src, OutputStream os, PaletteFactory paletteFactory) throws IOException {
@@ -87,17 +72,37 @@ public class PngWriter {
     }
 
     private Pair<PngColorType, byte[]> findBestCompressMethod(BufferedImage src, PaletteFactory paletteFactory,  boolean hasAlpha, boolean isGrayscale) throws IOException {
-        byte[] paletteSize = tryPalette(src, paletteFactory, hasAlpha);
-        byte[] normalSize = tryNormal(src, hasAlpha, isGrayscale);
-        if (normalSize.length > paletteSize.length) {
-            return Pair.of(PngColorType.INDEXED_COLOR, paletteSize);
+        byte[] paletteData = null;
+        if (countUniqueColors(src, 257) <= 256) {
+            paletteData = tryPalette(src, paletteFactory, hasAlpha);
+        }
+        byte[] normalData = tryNormal(src, hasAlpha, isGrayscale);
+        if (paletteData != null && paletteData.length < normalData.length) {
+            return Pair.of(PngColorType.INDEXED_COLOR, paletteData);
         } else {
             if (isGrayscale) {
-                return Pair.of(hasAlpha ? PngColorType.GREYSCALE_WITH_ALPHA : PngColorType.GREYSCALE, normalSize);
+                return Pair.of(hasAlpha ? PngColorType.GREYSCALE_WITH_ALPHA : PngColorType.GREYSCALE, normalData);
             } else {
-                return Pair.of(hasAlpha ? PngColorType.TRUE_COLOR_WITH_ALPHA : PngColorType.TRUE_COLOR, normalSize);
+                return Pair.of(hasAlpha ? PngColorType.TRUE_COLOR_WITH_ALPHA : PngColorType.TRUE_COLOR, normalData);
             }
         }
+    }
+
+    private int countUniqueColors(BufferedImage src, int maxCount) {
+        int width = src.getWidth();
+        int height = src.getHeight();
+        Set<Integer> colors = new IntOpenHashSet();
+        int[] row = Allocator.intArray(width);
+        for (int y = 0; y < height; y++) {
+            src.getRGB(0, y, width, 1, row, 0, width);
+            for (int x = 0; x < width; x++) {
+                colors.add(row[x]);
+                if (colors.size() >= maxCount) {
+                    return colors.size();
+                }
+            }
+        }
+        return colors.size();
     }
 
     private byte[] tryNormal(BufferedImage src, boolean hasAlpha, boolean isGrayscale) throws IOException {

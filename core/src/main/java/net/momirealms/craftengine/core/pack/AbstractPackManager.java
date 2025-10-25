@@ -5,7 +5,6 @@ import com.google.common.collect.Multimap;
 import com.google.common.jimfs.Configuration;
 import com.google.common.jimfs.Jimfs;
 import com.google.gson.*;
-import net.kyori.adventure.text.Component;
 import net.momirealms.craftengine.core.font.BitmapImage;
 import net.momirealms.craftengine.core.font.Font;
 import net.momirealms.craftengine.core.item.equipment.ComponentBasedEquipment;
@@ -60,7 +59,6 @@ import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
-import java.util.stream.Collectors;
 
 import static net.momirealms.craftengine.core.util.MiscUtils.castToMap;
 
