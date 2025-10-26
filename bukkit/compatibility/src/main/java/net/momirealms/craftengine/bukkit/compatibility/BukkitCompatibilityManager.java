@@ -258,13 +258,14 @@ public class BukkitCompatibilityManager implements CompatibilityManager {
         if (BlockType.REGISTRY.get("craftengine:custom_0") == null) {
             this.plugin.logger().severe("");
             if (Locale.getDefault() == Locale.SIMPLIFIED_CHINESE) {
-                this.plugin.logger().severe("[Compatibility] 插件需要更新 FastAsyncWorldEdit 到 2.13.0 或更高版本，以获得更好的兼容性。(当前版本: " + version + ")");
+                this.plugin.logger().severe("[Compatibility] 无法兼容 FastAsyncWorldEdit，请更新到 2.13.0 或更高版本（当前版本: " + version + "）");
                 this.plugin.logger().severe("[Compatibility] 请前往 https://ci.athion.net/job/FastAsyncWorldEdit/ 下载最新版本");
             } else {
-                this.plugin.logger().severe("[Compatibility] Update FastAsyncWorldEdit to v2.13.0+ for better compatibility (Current: " + version + ")");
+                this.plugin.logger().severe("[Compatibility] Unable to hook FastAsyncWorldEdit. Please update to v2.13.0+ (Current: " + version + ")");
                 this.plugin.logger().severe("[Compatibility] Download latest version: https://ci.athion.net/job/FastAsyncWorldEdit/");
             }
             this.plugin.logger().severe("");
+            return;
         }
         new WorldEditBlockRegister(BukkitBlockManager.instance(), true);
         logHook("FastAsyncWorldEdit");
