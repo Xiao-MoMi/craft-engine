@@ -245,17 +245,17 @@ public class BukkitCompatibilityManager implements CompatibilityManager {
 
     @SuppressWarnings({"deprecation", "all"})
     private void initFastAsyncWorldEditHook() {
-        if (!VersionHelper.isOrAbove1_20_2()) { // 最低要求的 #1039 构建版本不支持1.20(.1)
-            if (Locale.getDefault() == Locale.SIMPLIFIED_CHINESE) {
-                this.plugin.logger().warn("[Compatibility] 无法兼容 FastAsyncWorldEdit，请更新到 1.20.2 或更高版本的服务端");
-            } else {
-                this.plugin.logger().warn("[Compatibility] Unable to hook FastAsyncWorldEdit. Please update your server to 1.20.2+");
-            }
-            return;
-        }
         Plugin fastAsyncWorldEdit = Bukkit.getPluginManager().getPlugin("FastAsyncWorldEdit");
         String version = VersionHelper.isPaper() ? fastAsyncWorldEdit.getPluginMeta().getVersion() : fastAsyncWorldEdit.getDescription().getVersion();
-        if (BlockType.REGISTRY.get("craftengine:custom_0") == null) {
+        if (BlockType.REGISTRY.get("craftengine:custom_0") == null) { // 确保没有任何外部强行兼容的情况下
+            if (!VersionHelper.isOrAbove1_20_2()) { // 最低要求的 #1039 构建版本不支持1.20(.1)
+                if (Locale.getDefault() == Locale.SIMPLIFIED_CHINESE) {
+                    this.plugin.logger().warn("[Compatibility] 无法兼容 FastAsyncWorldEdit，请更新到 1.20.2 或更高版本的服务端");
+                } else {
+                    this.plugin.logger().warn("[Compatibility] Unable to hook FastAsyncWorldEdit. Please update your server to 1.20.2+");
+                }
+                return;
+            }
             this.plugin.logger().severe("");
             if (Locale.getDefault() == Locale.SIMPLIFIED_CHINESE) {
                 this.plugin.logger().severe("[Compatibility] 无法兼容 FastAsyncWorldEdit，请更新到 2.13.0 或更高版本（当前版本: " + version + "）");
