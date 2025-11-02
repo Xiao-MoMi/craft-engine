@@ -5,10 +5,12 @@ import net.momirealms.craftengine.core.util.Key;
 import java.util.List;
 
 public final class BlockKeys {
-    private BlockKeys() {}
+    private BlockKeys() {
+    }
+
     // 特殊
     public static final Key AIR = Key.of("minecraft:air");
-  
+
     public static final Key SUGAR_CANE = Key.of("minecraft:sugar_cane");
     public static final Key NOTE_BLOCK = Key.of("minecraft:note_block");
     public static final Key TRIPWIRE = Key.of("minecraft:tripwire");
@@ -46,11 +48,6 @@ public final class BlockKeys {
     public static final Key LECTERN = Key.of("minecraft:lectern");
     public static final Key FARMLAND = Key.of("minecraft:farmland");
 
-    public static final Key CHEST = Key.of("minecraft:chest");
-    public static final Key BARREL = Key.of("minecraft:barrel");
-    public static final Key ENDER_CHEST = Key.of("minecraft:ender_chest");
-    public static final Key TRAPPED_CHEST = Key.of("minecraft:trapped_chest");
-
     public static final Key RESPAWN_ANCHOR = Key.of("minecraft:respawn_anchor");
     public static final Key DRAGON_EGG = Key.of("minecraft:dragon_egg");
     public static final Key END_PORTAL_FRAME = Key.of("minecraft:end_portal_frame");
@@ -58,6 +55,20 @@ public final class BlockKeys {
 
     public static final Key SPAWNER = Key.of("minecraft:spawner");
     public static final Key TRIAL_SPAWNER = Key.of("minecraft:trial_spawner");
+    // 箱子容器
+    public static final Key CHEST = Key.of("minecraft:chest");
+    public static final Key BARREL = Key.of("minecraft:barrel");
+    public static final Key ENDER_CHEST = Key.of("minecraft:ender_chest");
+    public static final Key TRAPPED_CHEST = Key.of("minecraft:trapped_chest");
+
+    public static final Key COPPER_CHEST = Key.of("minecraft:copper_chest");
+    public static final Key EXPOSED_COPPER_CHEST = Key.of("minecraft:exposed_copper_chest");
+    public static final Key WEATHERED_COPPER_CHEST = Key.of("minecraft:weathered_copper_chest");
+    public static final Key OXIDIZED_COPPER_CHEST = Key.of("minecraft:oxidized_copper_chest");
+    public static final Key WAXED_COPPER_CHEST = Key.of("minecraft:waxed_copper_chest");
+    public static final Key WAXED_EXPOSED_COPPER_CHEST = Key.of("minecraft:waxed_exposed_copper_chest");
+    public static final Key WAXED_WEATHERED_COPPER_CHEST = Key.of("minecraft:waxed_weathered_copper_chest");
+    public static final Key WAXED_OXIDIZED_COPPER_CHEST = Key.of("minecraft:waxed_oxidized_copper_chest");
     // 红石方块
     public static final Key REDSTONE_WIRE = Key.of("minecraft:redstone_wire");
     public static final Key REDSTONE_TORCH = Key.of("minecraft:redstone_torch");
@@ -304,6 +315,28 @@ public final class BlockKeys {
     public static final Key BAMBOO_WALL_HANGING_SIGN = Key.of("minecraft:bamboo_wall_hanging_sign");
     public static final Key CRIMSON_WALL_HANGING_SIGN = Key.of("minecraft:crimson_wall_hanging_sign");
     public static final Key WARPED_WALL_HANGING_SIGN = Key.of("minecraft:warped_wall_hanging_sign");
+    // 展示架
+    public static final Key OAK_SHELF = Key.of("minecraft:oak_shelf");
+    public static final Key SPRUCE_SHELF = Key.of("minecraft:spruce_shelf");
+    public static final Key BIRCH_SHELF = Key.of("minecraft:birch_shelf");
+    public static final Key JUNGLE_SHELF = Key.of("minecraft:jungle_shelf");
+    public static final Key ACACIA_SHELF = Key.of("minecraft:acacia_shelf");
+    public static final Key DARK_OAK_SHELF = Key.of("minecraft:dark_oak_shelf");
+    public static final Key MANGROVE_SHELF = Key.of("minecraft:mangrove_shelf");
+    public static final Key CHERRY_SHELF = Key.of("minecraft:cherry_shelf");
+    public static final Key PALE_OAK_SHELF = Key.of("minecraft:pale_oak_shelf");
+    public static final Key BAMBOO_SHELF = Key.of("minecraft:bamboo_shelf");
+    public static final Key CRIMSON_SHELF = Key.of("minecraft:crimson_shelf");
+    public static final Key WARPED_SHELF = Key.of("minecraft:warped_shelf");
+    // 铜傀儡像
+    public static final Key COPPER_GOLEM_STATUE = Key.of("minecraft:copper_golem_statue");
+    public static final Key EXPOSED_COPPER_GOLEM_STATUE = Key.of("minecraft:exposed_copper_golem_statue");
+    public static final Key WEATHERED_COPPER_GOLEM_STATUE = Key.of("minecraft:weathered_copper_golem_statue");
+    public static final Key OXIDIZED_COPPER_GOLEM_STATUE = Key.of("minecraft:oxidized_copper_golem_statue");
+    public static final Key WAXED_COPPER_GOLEM_STATUE = Key.of("minecraft:waxed_copper_golem_statue");
+    public static final Key WAXED_EXPOSED_COPPER_GOLEM_STATUE = Key.of("minecraft:waxed_exposed_copper_golem_statue");
+    public static final Key WAXED_WEATHERED_COPPER_GOLEM_STATUE = Key.of("minecraft:waxed_weathered_copper_golem_statue");
+    public static final Key WAXED_OXIDIZED_COPPER_GOLEM_STATUE = Key.of("minecraft:waxed_oxidized_copper_golem_statue");
 
     public static final Key BROWN_MUSHROOM_BLOCK = Key.of("minecraft:brown_mushroom_block");
     public static final Key RED_MUSHROOM_BLOCK = Key.of("minecraft:red_mushroom_block");
@@ -342,11 +375,11 @@ public final class BlockKeys {
             LIGHT_WEIGHTED_PRESSURE_PLATE, HEAVY_WEIGHTED_PRESSURE_PLATE
     };
 
-    public static final Key[] REDSTONE_CONNECTION = new Key[] {
+    public static final Key[] REDSTONE_CONNECTION = new Key[]{
             REDSTONE_WIRE, REDSTONE_TORCH, REDSTONE_BLOCK, REPEATER, COMPARATOR, TARGET, LEVER, SCULK_SENSOR, CALIBRATED_SCULK_SENSOR,
             TRIPWIRE_HOOK, LECTERN, DAYLIGHT_DETECTOR, LIGHTNING_ROD, TRAPPED_CHEST, JUKEBOX, OBSERVER, DETECTOR_RAIL
     };
-  
+
     public static final List<Key> WOODEN_TRAPDOORS = List.of(OAK_TRAPDOOR, SPRUCE_TRAPDOOR, BIRCH_TRAPDOOR,
             ACACIA_TRAPDOOR, PALE_OAK_TRAPDOOR, DARK_OAK_TRAPDOOR, MANGROVE_TRAPDOOR, JUNGLE_TRAPDOOR);
     public static final List<Key> CHERRY_TRAPDOORS = List.of(CHERRY_TRAPDOOR);

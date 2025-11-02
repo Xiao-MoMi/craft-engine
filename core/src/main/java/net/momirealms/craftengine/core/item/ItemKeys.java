@@ -73,12 +73,11 @@ public final class ItemKeys {
     public static final Key SWEET_BERRIES = Key.of("minecraft:sweet_berries");
     public static final Key GLOW_BERRIES = Key.of("minecraft:glow_berries");
 
-    public static final Key[] AXES = new Key[] {WOODEN_AXE, STONE_AXE, IRON_AXE, GOLDEN_AXE, DIAMOND_AXE, NETHERITE_AXE};
+    public static final Key[] AXES = new Key[]{WOODEN_AXE, STONE_AXE, IRON_AXE, GOLDEN_AXE, DIAMOND_AXE, NETHERITE_AXE};
 
-    public static final Key[] WATER_BUCKETS = new Key[] {WATER_BUCKET, COD_BUCKET, SALMON_BUCKET, TROPICAL_FISH_BUCKET, TADPOLE_BUCKET, PUFFERFISH_BUCKET, AXOLOTL_BUCKET};
+    public static final Key[] WATER_BUCKETS = new Key[]{WATER_BUCKET, COD_BUCKET, SALMON_BUCKET,
+            TROPICAL_FISH_BUCKET, TADPOLE_BUCKET, PUFFERFISH_BUCKET, AXOLOTL_BUCKET};
 
-    public static final Key[] DYES = new Key[] {
-            WHITE_DYE, LIGHT_GRAY_DYE, GRAY_DYE, BLACK_DYE, BROWN_DYE, RED_DYE, ORANGE_DYE, YELLOW_DYE, LIME_DYE,
-            GREEN_DYE, CYAN_DYE, LIGHT_BLUE_DYE, BLUE_DYE, PURPLE_DYE, MAGENTA_DYE, PINK_DYE
-    };
+    public static final Key[] DYES = new Key[]{WHITE_DYE, LIGHT_GRAY_DYE, GRAY_DYE, BLACK_DYE, BROWN_DYE, RED_DYE, ORANGE_DYE,
+            YELLOW_DYE, LIME_DYE, GREEN_DYE, CYAN_DYE, LIGHT_BLUE_DYE, BLUE_DYE, PURPLE_DYE, MAGENTA_DYE, PINK_DYE};
 }

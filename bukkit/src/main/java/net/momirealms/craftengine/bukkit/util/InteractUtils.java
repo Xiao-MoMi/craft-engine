@@ -77,27 +77,20 @@ public final class InteractUtils {
         registerInteraction(BlockKeys.FURNACE, (player, item, blockState, result) -> true);
         registerInteraction(BlockKeys.SMOKER, (player, item, blockState, result) -> true);
         registerInteraction(BlockKeys.BLAST_FURNACE, (player, item, blockState, result) -> true);
-        registerInteraction(BlockKeys.CAMPFIRE, (player, item, blockState, result) -> {
-            if (!Config.enableRecipeSystem()) return false;
-            return BukkitRecipeManager.instance().recipeByInput(RecipeType.CAMPFIRE_COOKING, new SingleItemInput<>(UniqueIdItem.of(item))) != null;
-        });
-        registerInteraction(BlockKeys.SOUL_CAMPFIRE, (player, item, blockState, result) -> {
-            if (!Config.enableRecipeSystem()) return false;
-            return BukkitRecipeManager.instance().recipeByInput(RecipeType.CAMPFIRE_COOKING, new SingleItemInput<>(UniqueIdItem.of(item))) != null;
-        });
         registerInteraction(BlockKeys.ANVIL, (player, item, blockState, result) -> true);
         registerInteraction(BlockKeys.CHIPPED_ANVIL, (player, item, blockState, result) -> true);
         registerInteraction(BlockKeys.DAMAGED_ANVIL, (player, item, blockState, result) -> true);
-        registerInteraction(BlockKeys.COMPOSTER, (player, item, blockState, result) -> {
-            if (item.getItem().getType().isCompostable()) return true;
-            return blockState instanceof Levelled levelled && levelled.getLevel() == levelled.getMaximumLevel();
-        });
+        registerInteraction(BlockKeys.ENCHANTING_TABLE, (player, item, blockState, result) -> true);
+        registerInteraction(BlockKeys.BREWING_STAND, (player, item, blockState, result) -> true);
+        registerInteraction(BlockKeys.BEACON, (player, item, blockState, result) -> true);
+        registerInteraction(BlockKeys.FLOWER_POT, (player, item, blockState, result) -> true);
+        registerInteraction(BlockKeys.DECORATED_POT, (player, item, blockState, result) -> true);
+        registerInteraction(BlockKeys.LECTERN, (player, item, blockState, result) -> true);
+        registerInteraction(BlockKeys.DRAGON_EGG, (player, item, blockState, result) -> true);
         registerInteraction(BlockKeys.JUKEBOX, (player, item, blockState, result) -> {
             if (blockState instanceof Jukebox jukebox && jukebox.hasRecord()) return true;
             return item.getItem().getType().isRecord();
         });
-        registerInteraction(BlockKeys.ENCHANTING_TABLE, (player, item, blockState, result) -> true);
-        registerInteraction(BlockKeys.BREWING_STAND, (player, item, blockState, result) -> true);
         registerInteraction(BlockKeys.CAULDRON, (player, item, blockState, result) -> {
             Key id = item.vanillaId();
             return ItemKeys.WATER_BUCKET.equals(id) || ItemKeys.LAVA_BUCKET.equals(id);
@@ -138,7 +131,10 @@ public final class InteractUtils {
             }
             return false;
         });
-        registerInteraction(BlockKeys.BEACON, (player, item, blockState, result) -> true);
+        registerInteraction(BlockKeys.COMPOSTER, (player, item, blockState, result) -> {
+            if (item.getItem().getType().isCompostable()) return true;
+            return blockState instanceof Levelled levelled && levelled.getLevel() == levelled.getMaximumLevel();
+        });
         registerInteraction(BlockKeys.BEE_NEST, (player, item, blockState, result) -> {
             if (blockState instanceof Beehive beehive && beehive.getHoneyLevel() == beehive.getMaximumHoneyLevel()) {
                 Key id = item.vanillaId();
@@ -153,28 +149,23 @@ public final class InteractUtils {
             }
             return false;
         });
-        registerInteraction(BlockKeys.FLOWER_POT, (player, item, blockState, result) -> true);
-        registerInteraction(BlockKeys.DECORATED_POT, (player, item, blockState, result) -> true);
-        registerInteraction(BlockKeys.CHISELED_BOOKSHELF, (player, item, blockState, result) -> {
-            if (!(blockState instanceof ChiseledBookshelf chiseledBookshelf)) return false;
-            return DirectionUtils.toDirection(chiseledBookshelf.getFacing()) == result.getDirection();
+        registerInteraction(BlockKeys.CAMPFIRE, (player, item, blockState, result) -> {
+            if (!Config.enableRecipeSystem()) return false;
+            return BukkitRecipeManager.instance().recipeByInput(RecipeType.CAMPFIRE_COOKING, new SingleItemInput<>(UniqueIdItem.of(item))) != null;
         });
-        registerInteraction(BlockKeys.LECTERN, (player, item, blockState, result) -> true);
-        registerInteraction(BlockKeys.CHEST, (player, item, blockState, result) -> true);
-        registerInteraction(BlockKeys.BARREL, (player, item, blockState, result) -> true);
-        registerInteraction(BlockKeys.ENDER_CHEST, (player, item, blockState, result) -> true);
-        registerInteraction(BlockKeys.TRAPPED_CHEST, (player, item, blockState, result) -> true);
+        registerInteraction(BlockKeys.SOUL_CAMPFIRE, (player, item, blockState, result) -> {
+            if (!Config.enableRecipeSystem()) return false;
+            return BukkitRecipeManager.instance().recipeByInput(RecipeType.CAMPFIRE_COOKING, new SingleItemInput<>(UniqueIdItem.of(item))) != null;
+        });
         registerInteraction(BlockKeys.RESPAWN_ANCHOR, (player, item, blockState, result) -> {
             Key id = item.vanillaId();
             if (ItemKeys.GLOWSTONE.equals(id)) return true;
             return blockState instanceof RespawnAnchor respawnAnchor && respawnAnchor.getCharges() != 0;
         });
-        registerInteraction(BlockKeys.DRAGON_EGG, (player, item, blockState, result) -> true);
         registerInteraction(BlockKeys.END_PORTAL_FRAME, (player, item, blockState, result) -> {
             Key id = item.vanillaId();
             return ItemKeys.ENDER_EYE.equals(id);
         });
-        registerInteraction(BlockKeys.VAULT, (player, item, blockState, result) -> blockState instanceof Vault vault && vault.getVaultState() == Vault.State.ACTIVE);
         registerInteraction(BlockKeys.SPAWNER, (player, item, blockState, result) -> {
             Key id = item.vanillaId();
             return id.asString().endsWith("_spawn_egg");
@@ -183,7 +174,37 @@ public final class InteractUtils {
             Key id = item.vanillaId();
             return id.asString().endsWith("_spawn_egg");
         });
+        registerInteraction(BlockKeys.CHISELED_BOOKSHELF, (player, item, blockState, result) -> {
+            if (!(blockState instanceof ChiseledBookshelf chiseledBookshelf)) return false;
+            return DirectionUtils.toDirection(chiseledBookshelf.getFacing()) == result.getDirection();
+        });
+        registerInteraction(BlockKeys.VAULT, (player, item, blockState, result) -> {
+            if (!(blockState instanceof Vault vault)) return false;
+            return vault.getVaultState() == Vault.State.ACTIVE;
+        });
+        // 箱子容器
+        registerInteraction(BlockKeys.CHEST, (player, item, blockState, result) -> true);
+        registerInteraction(BlockKeys.BARREL, (player, item, blockState, result) -> true);
+        registerInteraction(BlockKeys.ENDER_CHEST, (player, item, blockState, result) -> true);
+        registerInteraction(BlockKeys.TRAPPED_CHEST, (player, item, blockState, result) -> true);
+
+        registerInteraction(BlockKeys.COPPER_CHEST, (player, item, blockState, result) -> true);
+        registerInteraction(BlockKeys.EXPOSED_COPPER_CHEST, (player, item, blockState, result) -> true);
+        registerInteraction(BlockKeys.WEATHERED_COPPER_CHEST, (player, item, blockState, result) -> true);
+        registerInteraction(BlockKeys.OXIDIZED_COPPER_CHEST, (player, item, blockState, result) -> true);
+        registerInteraction(BlockKeys.WAXED_COPPER_CHEST, (player, item, blockState, result) -> true);
+        registerInteraction(BlockKeys.WAXED_EXPOSED_COPPER_CHEST, (player, item, blockState, result) -> true);
+        registerInteraction(BlockKeys.WAXED_WEATHERED_COPPER_CHEST, (player, item, blockState, result) -> true);
+        registerInteraction(BlockKeys.WAXED_OXIDIZED_COPPER_CHEST, (player, item, blockState, result) -> true);
         // 红石方块
+        registerInteraction(BlockKeys.REPEATER, (player, item, blockState, result) -> true);
+        registerInteraction(BlockKeys.COMPARATOR, (player, item, blockState, result) -> true);
+        registerInteraction(BlockKeys.LEVER, (player, item, blockState, result) -> true);
+        registerInteraction(BlockKeys.DAYLIGHT_DETECTOR, (player, item, blockState, result) -> true);
+        registerInteraction(BlockKeys.DISPENSER, (player, item, blockState, result) -> true);
+        registerInteraction(BlockKeys.DROPPER, (player, item, blockState, result) -> true);
+        registerInteraction(BlockKeys.CRAFTER, (player, item, blockState, result) -> true);
+        registerInteraction(BlockKeys.HOPPER, (player, item, blockState, result) -> true);
         registerInteraction(BlockKeys.REDSTONE_WIRE, (player, item, blockState, result) -> {
             if (blockState instanceof RedstoneWire redstoneWire) {
                 boolean isCross = redstoneWire.getFace(BlockFace.EAST).equals(RedstoneWire.Connection.SIDE)
@@ -227,14 +248,6 @@ public final class InteractUtils {
             }
             return false;
         });
-        registerInteraction(BlockKeys.REPEATER, (player, item, blockState, result) -> true);
-        registerInteraction(BlockKeys.COMPARATOR, (player, item, blockState, result) -> true);
-        registerInteraction(BlockKeys.LEVER, (player, item, blockState, result) -> true);
-        registerInteraction(BlockKeys.DAYLIGHT_DETECTOR, (player, item, blockState, result) -> true);
-        registerInteraction(BlockKeys.DISPENSER, (player, item, blockState, result) -> true);
-        registerInteraction(BlockKeys.DROPPER, (player, item, blockState, result) -> true);
-        registerInteraction(BlockKeys.CRAFTER, (player, item, blockState, result) -> true);
-        registerInteraction(BlockKeys.HOPPER, (player, item, blockState, result) -> true);
         registerInteraction(BlockKeys.TNT, (player, item, blockState, result) -> {
             Optional<List<ItemBehavior>> behaviors = item.getItemBehavior();
             if (behaviors.isPresent()) {
@@ -714,6 +727,64 @@ public final class InteractUtils {
         registerInteraction(BlockKeys.BAMBOO_WALL_HANGING_SIGN, (player, item, blockState, result) -> true);
         registerInteraction(BlockKeys.CRIMSON_WALL_HANGING_SIGN, (player, item, blockState, result) -> true);
         registerInteraction(BlockKeys.WARPED_WALL_HANGING_SIGN, (player, item, blockState, result) -> true);
+        // 展示架
+        registerInteraction(BlockKeys.OAK_SHELF, (player, item, blockState, result) -> {
+            if (!(blockState instanceof Shelf shelf)) return false;
+            return DirectionUtils.toDirection(shelf.getFacing()) == result.getDirection();
+        });
+        registerInteraction(BlockKeys.SPRUCE_SHELF, (player, item, blockState, result) -> {
+            if (!(blockState instanceof Shelf shelf)) return false;
+            return DirectionUtils.toDirection(shelf.getFacing()) == result.getDirection();
+        });
+        registerInteraction(BlockKeys.BIRCH_SHELF, (player, item, blockState, result) -> {
+            if (!(blockState instanceof Shelf shelf)) return false;
+            return DirectionUtils.toDirection(shelf.getFacing()) == result.getDirection();
+        });
+        registerInteraction(BlockKeys.JUNGLE_SHELF, (player, item, blockState, result) -> {
+            if (!(blockState instanceof Shelf shelf)) return false;
+            return DirectionUtils.toDirection(shelf.getFacing()) == result.getDirection();
+        });
+        registerInteraction(BlockKeys.ACACIA_SHELF, (player, item, blockState, result) -> {
+            if (!(blockState instanceof Shelf shelf)) return false;
+            return DirectionUtils.toDirection(shelf.getFacing()) == result.getDirection();
+        });
+        registerInteraction(BlockKeys.DARK_OAK_SHELF, (player, item, blockState, result) -> {
+            if (!(blockState instanceof Shelf shelf)) return false;
+            return DirectionUtils.toDirection(shelf.getFacing()) == result.getDirection();
+        });
+        registerInteraction(BlockKeys.MANGROVE_SHELF, (player, item, blockState, result) -> {
+            if (!(blockState instanceof Shelf shelf)) return false;
+            return DirectionUtils.toDirection(shelf.getFacing()) == result.getDirection();
+        });
+        registerInteraction(BlockKeys.CHERRY_SHELF, (player, item, blockState, result) -> {
+            if (!(blockState instanceof Shelf shelf)) return false;
+            return DirectionUtils.toDirection(shelf.getFacing()) == result.getDirection();
+        });
+        registerInteraction(BlockKeys.PALE_OAK_SHELF, (player, item, blockState, result) -> {
+            if (!(blockState instanceof Shelf shelf)) return false;
+            return DirectionUtils.toDirection(shelf.getFacing()) == result.getDirection();
+        });
+        registerInteraction(BlockKeys.BAMBOO_SHELF, (player, item, blockState, result) -> {
+            if (!(blockState instanceof Shelf shelf)) return false;
+            return DirectionUtils.toDirection(shelf.getFacing()) == result.getDirection();
+        });
+        registerInteraction(BlockKeys.CRIMSON_SHELF, (player, item, blockState, result) -> {
+            if (!(blockState instanceof Shelf shelf)) return false;
+            return DirectionUtils.toDirection(shelf.getFacing()) == result.getDirection();
+        });
+        registerInteraction(BlockKeys.WARPED_SHELF, (player, item, blockState, result) -> {
+            if (!(blockState instanceof Shelf shelf)) return false;
+            return DirectionUtils.toDirection(shelf.getFacing()) == result.getDirection();
+        });
+        // 铜傀儡像
+        registerInteraction(BlockKeys.COPPER_GOLEM_STATUE, (player, item, blockState, result) -> true);
+        registerInteraction(BlockKeys.EXPOSED_COPPER_GOLEM_STATUE, (player, item, blockState, result) -> true);
+        registerInteraction(BlockKeys.WEATHERED_COPPER_GOLEM_STATUE, (player, item, blockState, result) -> true);
+        registerInteraction(BlockKeys.OXIDIZED_COPPER_GOLEM_STATUE, (player, item, blockState, result) -> true);
+        registerInteraction(BlockKeys.WAXED_COPPER_GOLEM_STATUE, (player, item, blockState, result) -> true);
+        registerInteraction(BlockKeys.WAXED_EXPOSED_COPPER_GOLEM_STATUE, (player, item, blockState, result) -> true);
+        registerInteraction(BlockKeys.WAXED_WEATHERED_COPPER_GOLEM_STATUE, (player, item, blockState, result) -> true);
+        registerInteraction(BlockKeys.WAXED_OXIDIZED_COPPER_GOLEM_STATUE, (player, item, blockState, result) -> true);
     }
 
     static {
