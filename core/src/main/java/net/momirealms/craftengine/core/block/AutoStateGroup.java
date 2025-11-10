@@ -19,12 +19,12 @@ public enum AutoStateGroup {
             (w) -> w.getProperty("waterlogged")
     ),
     TINTABLE_LEAVES("tintable_leaves",
-            Set.of(BlockKeys.OAK_LEAVES, BlockKeys.BIRCH_LEAVES, BlockKeys.JUNGLE_LEAVES, BlockKeys.ACACIA_LEAVES, BlockKeys.DARK_OAK_LEAVES, BlockKeys.MANGROVE_LEAVES, BlockKeys.SPRUCE_LEAVES),
+            Set.of(BlockKeys.OAK_LEAVES, BlockKeys.JUNGLE_LEAVES, BlockKeys.ACACIA_LEAVES, BlockKeys.DARK_OAK_LEAVES, BlockKeys.MANGROVE_LEAVES),
             (w) -> !(boolean) w.getProperty("waterlogged")
     ),
     WATERLOGGED_TINTABLE_LEAVES(
             "waterlogged_tintable_leaves",
-            Set.of(BlockKeys.OAK_LEAVES, BlockKeys.BIRCH_LEAVES, BlockKeys.JUNGLE_LEAVES, BlockKeys.ACACIA_LEAVES, BlockKeys.DARK_OAK_LEAVES, BlockKeys.MANGROVE_LEAVES, BlockKeys.SPRUCE_LEAVES),
+            Set.of(BlockKeys.OAK_LEAVES, BlockKeys.JUNGLE_LEAVES, BlockKeys.ACACIA_LEAVES, BlockKeys.DARK_OAK_LEAVES, BlockKeys.MANGROVE_LEAVES),
             (w) -> w.getProperty("waterlogged")
     ),
     LEAVES("leaves",
