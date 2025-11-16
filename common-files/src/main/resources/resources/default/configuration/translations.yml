@@ -55,7 +55,7 @@ translations:
     item.hami_melon: Hami Melon
     item.hami_melon_seeds: Hami Melon Seeds
     item.magma_fruit: Magma Fruit
-    item.amethyst_torch: Amethyst Torch
+    item.amethyst_lantern: Amethyst Lantern
     category.default.name: Default Assets
     category.default.lore: Contains the default configuration of CraftEngine
     category.palm_tree: Palm Tree
