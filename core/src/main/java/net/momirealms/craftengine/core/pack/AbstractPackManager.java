@@ -499,7 +499,7 @@ public abstract class AbstractPackManager implements PackManager {
         plugin.saveResource("resources/default/configuration/blocks/amethyst_torch.yml");
         plugin.saveResource("resources/default/configuration/blocks/hami_melon.yml");
         plugin.saveResource("resources/default/configuration/blocks/magma_plant.yml");
-        plugin.saveResource("resources/default/configuration/blocks/amethyst_torch.yml");
+        plugin.saveResource("resources/default/configuration/blocks/amethyst_lantern.yml");
         // assets
         plugin.saveResource("resources/default/resourcepack/assets/minecraft/textures/font/image/emojis.png");
         plugin.saveResource("resources/default/resourcepack/assets/minecraft/textures/block/custom/chinese_lantern.png");
