@@ -499,6 +499,7 @@ public abstract class AbstractPackManager implements PackManager {
         plugin.saveResource("resources/default/configuration/blocks/amethyst_torch.yml");
         plugin.saveResource("resources/default/configuration/blocks/hami_melon.yml");
         plugin.saveResource("resources/default/configuration/blocks/magma_plant.yml");
+        plugin.saveResource("resources/default/configuration/blocks/amethyst_torch.yml");
         // assets
         plugin.saveResource("resources/default/resourcepack/assets/minecraft/textures/font/image/emojis.png");
         plugin.saveResource("resources/default/resourcepack/assets/minecraft/textures/block/custom/chinese_lantern.png");
@@ -619,6 +620,9 @@ public abstract class AbstractPackManager implements PackManager {
         plugin.saveResource("resources/default/resourcepack/assets/minecraft/models/block/custom/magma_plant_stage_1.json");
         plugin.saveResource("resources/default/resourcepack/assets/minecraft/models/block/custom/magma_plant_stage_2.json");
         plugin.saveResource("resources/default/resourcepack/assets/minecraft/models/block/custom/magma_plant_stage_3.json");
+        plugin.saveResource("resources/default/resourcepack/assets/minecraft/textures/block/custom/amethyst_lantern.png");
+        plugin.saveResource("resources/default/resourcepack/assets/minecraft/textures/block/custom/amethyst_lantern.png.mcmeta");
+        plugin.saveResource("resources/default/resourcepack/assets/minecraft/textures/item/custom/amethyst_lantern.png.mcmeta");
     }
 
     @Override
