@@ -46,6 +46,7 @@ public class BukkitBlockBehaviors extends BlockBehaviors {
     public static final Key SEAT_BLOCK = Key.from("craftengine:seat_block");
     public static final Key SURFACE_SPREADING_BLOCK = Key.from("craftengine:surface_spreading_block");
     public static final Key SNOWY_BLOCK = Key.from("craftengine:snowy_block");
+    public static final Key LANTERN_BLOCK = Key.from("craftengine:lantern_block");
 
     public static void init() {
         register(EMPTY, (block, args) -> EmptyBlockBehavior.INSTANCE);
@@ -90,5 +91,6 @@ public class BukkitBlockBehaviors extends BlockBehaviors {
         register(SEAT_BLOCK, SeatBlockBehavior.FACTORY);
         register(SURFACE_SPREADING_BLOCK, SurfaceSpreadingBlockBehavior.FACTORY);
         register(SNOWY_BLOCK, SnowyBlockBehavior.FACTORY);
+        register(LANTERN_BLOCK, LanternBlockBehavior.FACTORY);
     }
 }
