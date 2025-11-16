@@ -622,7 +622,7 @@ public abstract class AbstractPackManager implements PackManager {
         plugin.saveResource("resources/default/resourcepack/assets/minecraft/models/block/custom/magma_plant_stage_3.json");
         plugin.saveResource("resources/default/resourcepack/assets/minecraft/textures/block/custom/amethyst_lantern.png");
         plugin.saveResource("resources/default/resourcepack/assets/minecraft/textures/block/custom/amethyst_lantern.png.mcmeta");
-        plugin.saveResource("resources/default/resourcepack/assets/minecraft/textures/item/custom/amethyst_lantern.png.mcmeta");
+        plugin.saveResource("resources/default/resourcepack/assets/minecraft/textures/item/custom/amethyst_lantern.png");
     }
 
     @Override
