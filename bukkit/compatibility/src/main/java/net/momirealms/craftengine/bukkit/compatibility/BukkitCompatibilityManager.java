@@ -1,5 +1,6 @@
 package net.momirealms.craftengine.bukkit.compatibility;
 
+import com.sk89q.worldedit.world.block.BlockType;
 import net.kyori.adventure.text.minimessage.tag.resolver.TagResolver;
 import net.momirealms.craftengine.bukkit.block.BukkitBlockManager;
 import net.momirealms.craftengine.bukkit.block.entity.renderer.element.BukkitBlockEntityElementConfigs;
@@ -76,7 +77,6 @@ public class BukkitCompatibilityManager implements CompatibilityManager {
         if (this.isPluginEnabled("FastAsyncWorldEdit")) {
             try {
                 this.initFastAsyncWorldEditHook();
-                logHook("FastAsyncWorldEdit");
             } catch (Exception e) {
                 this.plugin.logger().warn("[Compatibility] Failed to initialize FastAsyncWorldEdit hook", e);
             }
@@ -248,28 +248,28 @@ public class BukkitCompatibilityManager implements CompatibilityManager {
     private void initFastAsyncWorldEditHook() {
         Plugin fastAsyncWorldEdit = Bukkit.getPluginManager().getPlugin("FastAsyncWorldEdit");
         String version = VersionHelper.isPaper() ? fastAsyncWorldEdit.getPluginMeta().getVersion() : fastAsyncWorldEdit.getDescription().getVersion();
-        if (!this.fastAsyncWorldEditVersionCheck(version)) {
-            if (VersionHelper.isOrAbove1_20_3()) {
-                this.plugin.logger().severe("");
+        if (BlockType.REGISTRY.get("craftengine:custom_0") == null) { // 确保没有任何外部强行兼容的情况下
+            if (!VersionHelper.isOrAbove1_20_2()) { // 最低要求的 #1039 构建版本不支持1.20(.1)
                 if (Locale.getDefault() == Locale.SIMPLIFIED_CHINESE) {
-                    this.plugin.logger().severe("[Compatibility] 插件需要更新 FastAsyncWorldEdit 到 2.13.0 或更高版本，以获得更好的兼容性。(当前版本: " + version + ")");
-                    this.plugin.logger().severe("[Compatibility] 请前往 https://ci.athion.net/job/FastAsyncWorldEdit/ 下载最新版本");
+                    this.plugin.logger().warn("[Compatibility] 无法兼容 FastAsyncWorldEdit，请更新到 1.20.2 或更高版本的服务端");
                 } else {
-                    this.plugin.logger().severe("[Compatibility] Update FastAsyncWorldEdit to v2.13.0+ for better compatibility (Current: " + version + ")");
-                    this.plugin.logger().severe("[Compatibility] Download latest version: https://ci.athion.net/job/FastAsyncWorldEdit/");
+                    this.plugin.logger().warn("[Compatibility] Unable to hook FastAsyncWorldEdit. Please update your server to 1.20.2+");
                 }
-                this.plugin.logger().severe("");
+                return;
             }
+            this.plugin.logger().severe("");
+            if (Locale.getDefault() == Locale.SIMPLIFIED_CHINESE) {
+                this.plugin.logger().severe("[Compatibility] 无法兼容 FastAsyncWorldEdit，请更新到 2.13.0 或更高版本（当前版本: " + version + "）");
+                this.plugin.logger().severe("[Compatibility] 请前往 https://ci.athion.net/job/FastAsyncWorldEdit/ 下载最新版本");
+            } else {
+                this.plugin.logger().severe("[Compatibility] Unable to hook FastAsyncWorldEdit. Please update to v2.13.0+ (Current: " + version + ")");
+                this.plugin.logger().severe("[Compatibility] Download latest version: https://ci.athion.net/job/FastAsyncWorldEdit/");
+            }
+            this.plugin.logger().severe("");
+            return;
         }
         new WorldEditBlockRegister(BukkitBlockManager.instance(), true);
-    }
-
-    private boolean fastAsyncWorldEditVersionCheck(String version) {
-        String cleanVersion = version.split("-")[0];
-        String[] parts = cleanVersion.split("\\.");
-        int first = Integer.parseInt(parts[0]);
-        int second = Integer.parseInt(parts[1]);
-        return first >= 2 && second >= 13;
+        logHook("FastAsyncWorldEdit");
     }
 
     private void initWorldEditHook() {
