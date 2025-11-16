@@ -4289,6 +4289,25 @@ block-state-mappings:
     oxidized_copper_grate[waterlogged=false]: waxed_oxidized_copper_grate[waterlogged=false]
     oxidized_copper_grate[waterlogged=true]: waxed_oxidized_copper_grate[waterlogged=true]
 
+  #### Lantern ####
+  $$>=1.21.9#lantern:
+    copper_lantern[hanging=false,waterlogged=false]: waxed_copper_lantern[hanging=false,waterlogged=false]
+    copper_lantern[hanging=true,waterlogged=false]: waxed_copper_lantern[hanging=true,waterlogged=false]
+    copper_lantern[hanging=false,waterlogged=true]: waxed_copper_lantern[hanging=false,waterlogged=true]
+    copper_lantern[hanging=true,waterlogged=true]: waxed_copper_lantern[hanging=true,waterlogged=true]
+    exposed_copper_lantern[hanging=false,waterlogged=false]: waxed_exposed_copper_lantern[hanging=false,waterlogged=false]
+    exposed_copper_lantern[hanging=true,waterlogged=false]: waxed_exposed_copper_lantern[hanging=true,waterlogged=false]
+    exposed_copper_lantern[hanging=false,waterlogged=true]: waxed_exposed_copper_lantern[hanging=false,waterlogged=true]
+    exposed_copper_lantern[hanging=true,waterlogged=true]: waxed_exposed_copper_lantern[hanging=true,waterlogged=true]
+    weathered_copper_lantern[hanging=false,waterlogged=false]: waxed_weathered_copper_lantern[hanging=false,waterlogged=false]
+    weathered_copper_lantern[hanging=true,waterlogged=false]: waxed_weathered_copper_lantern[hanging=true,waterlogged=false]
+    weathered_copper_lantern[hanging=false,waterlogged=true]: waxed_weathered_copper_lantern[hanging=false,waterlogged=true]
+    weathered_copper_lantern[hanging=true,waterlogged=true]: waxed_weathered_copper_lantern[hanging=true,waterlogged=true]
+    oxidized_copper_lantern[hanging=false,waterlogged=false]: waxed_oxidized_copper_lantern[hanging=false,waterlogged=false]
+    oxidized_copper_lantern[hanging=true,waterlogged=false]: waxed_oxidized_copper_lantern[hanging=true,waterlogged=false]
+    oxidized_copper_lantern[hanging=false,waterlogged=true]: waxed_oxidized_copper_lantern[hanging=false,waterlogged=true]
+    oxidized_copper_lantern[hanging=true,waterlogged=true]: waxed_oxidized_copper_lantern[hanging=true,waterlogged=true]
+
   #### Pressure Plate ####
   # Triggered pressure plates appear identical, even though they output different signal strengths.
   light_weighted_pressure_plate[power=2]: light_weighted_pressure_plate[power=1]
