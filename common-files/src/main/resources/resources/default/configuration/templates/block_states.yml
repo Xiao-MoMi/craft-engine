@@ -2242,3 +2242,49 @@ templates:
         appearance: east=false,north=true,south=true,waterlogged=true,west=true
       east=true,north=true,south=true,waterlogged=true,west=true:
         appearance: east=true,north=true,south=true,waterlogged=true,west=true
+
+  # lantern
+  default:block_state/lantern:
+    properties:
+      hanging:
+        type: boolean
+        default: false
+      waterlogged:
+        type: boolean
+        default: false
+    appearances:
+      hanging=false,waterlogged=false:
+        state: ${base_block}[hanging=false,waterlogged=false]
+        model:
+          path: ${model_path}
+          generation: ${model_generation}
+      hanging=true,waterlogged=false:
+        state: ${base_block}[hanging=true,waterlogged=false]
+        model:
+          path: ${model_hanging_path}
+          generation: ${model_hanging_generation}
+      hanging=false,waterlogged=true:
+        state: ${base_block}[hanging=false,waterlogged=true]
+        model:
+          path: ${model_path}
+      hanging=true,waterlogged=true:
+        state: ${base_block}[hanging=true,waterlogged=true]
+        model:
+          path: ${model_hanging_path}
+    variants:
+      hanging=false,waterlogged=false:
+        appearance: hanging=false,waterlogged=false
+      hanging=true,waterlogged=false:
+        appearance: hanging=true,waterlogged=false
+      hanging=false,waterlogged=true:
+        appearance: hanging=false,waterlogged=true
+        settings:
+          resistance: 1200.0
+          burnable: false
+          fluid-state: water
+      hanging=true,waterlogged=true:
+        appearance: hanging=true,waterlogged=true
+        settings:
+          resistance: 1200.0
+          burnable: false
+          fluid-state: water
