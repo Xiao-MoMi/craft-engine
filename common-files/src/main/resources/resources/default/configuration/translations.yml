@@ -55,6 +55,7 @@ translations:
     item.hami_melon: Hami Melon
     item.hami_melon_seeds: Hami Melon Seeds
     item.magma_fruit: Magma Fruit
+    item.amethyst_torch: Amethyst Torch
     category.default.name: Default Assets
     category.default.lore: Contains the default configuration of CraftEngine
     category.palm_tree: Palm Tree
@@ -167,6 +168,7 @@ lang:
     block_name:default:hami_melon_stem: Hami Melon Stem
     block_name:default:attached_hami_melon_stem: Hami Melon Stem
     block_name:default:magma_plant: Magma Plant
+    block_name:default:amethyst_lantern: Amethyst Lantern
   zh_cn:
     block_name:default:chinese_lantern: 灯笼
     block_name:default:netherite_anvil: 下界合金砧
