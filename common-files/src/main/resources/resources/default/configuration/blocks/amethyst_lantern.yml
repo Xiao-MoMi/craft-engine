@@ -1,0 +1,51 @@
+items:
+  default:amethyst_lantern:
+    material: nether_brick
+    data:
+      item-name: <!i><l10n:item.amethyst_lantern>
+    texture: minecraft:item/custom/amethyst_lantern
+    behavior:
+      type: block_item
+      block:
+        loot:
+          template: default:loot_table/self
+        settings:
+          template:
+            - default:sound/lantern
+          overrides:
+            push-reaction: destroy
+            map-color: 6
+            hardness: 3.5
+            resistance: 3.5
+            luminance: 15
+            tags:
+              - minecraft:mineable/pickaxe
+        behaviors:
+          - type: lantern_block
+        states:
+          template: default:block_state/lantern
+          arguments:
+            base_block: copper_lantern
+            model_path: minecraft:block/custom/amethyst_lantern
+            model_hanging_path: minecraft:block/custom/amethyst_lantern_hanging
+            model_generation:
+              parent: minecraft:block/template_lantern
+              textures:
+                lantern: minecraft:block/custom/amethyst_lantern
+            model_hanging_generation:
+              parent: minecraft:block/template_hanging_lantern
+              textures:
+                lantern: minecraft:block/custom/amethyst_lantern
+recipes:
+  default:amethyst_lantern:
+    type: shaped
+    pattern:
+      - 'AAA'
+      - 'ABA'
+      - 'AAA'
+    ingredients:
+      A: minecraft:iron_nugget
+      B: default:amethyst_torch
+    result:
+      id: default:amethyst_lantern
+      count: 1
