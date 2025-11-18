@@ -20,5 +20,6 @@ public class PlaceholderAPIUtils {
     public static void registerExpansions(CraftEngine plugin) {
         new ImageExpansion(plugin).register();
         new ShiftExpansion(plugin).register();
+        new CheckItemExpansion().register();
     }
 }
