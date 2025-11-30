@@ -19,7 +19,8 @@ public enum ProtocolVersion {
     V1_21_7(772, "1.21.7"),
     V1_21_8(772, "1.21.8"),
     V1_21_9(773, "1.21.9"),
-    V1_21_10(773, "1.21.10");
+    V1_21_10(773, "1.21.10"),
+    V1_21_11(774, "1.21.11"); // todo 确认正式版协议ID
 
     private final int id;
     private final String name;
