@@ -3958,6 +3958,27 @@ public final class CoreReflections {
         }
     }
 
+    // 1.20.2+
+    public static final Method method$ServerConfigurationPacketListenerImpl$startNextTask = Optional.ofNullable(clazz$ServerConfigurationPacketListenerImpl)
+            .map(it -> ReflectionUtils.getDeclaredMethod(it, void.class, VersionHelper.isOrAbove1_20_5() ? new String[]{"startNextTask", "o"} : new String[]{"startNextTask", "p"}))
+            .orElse(null);
+
+    public static final MethodHandle methodHandle$ServerConfigurationPacketListenerImpl$startNextTask;
+
+    static {
+        try {
+            if (VersionHelper.isOrAbove1_20_2()) {
+                methodHandle$ServerConfigurationPacketListenerImpl$startNextTask =
+                        ReflectionUtils.unreflectMethod(method$ServerConfigurationPacketListenerImpl$startNextTask)
+                                .asType(MethodType.methodType(void.class, Object.class));
+            } else {
+                methodHandle$ServerConfigurationPacketListenerImpl$startNextTask = null;
+            }
+        } catch (IllegalAccessException e) {
+            throw new ReflectionInitException("Failed to initialize reflection", e);
+        }
+    }
+
     public static final Class<?> clazz$JoinWorldTask = MiscUtils.requireNonNullIf(
             ReflectionUtils.getClazz(
                     BukkitReflectionUtils.assembleMCClass("server.network.config.JoinWorldTask")

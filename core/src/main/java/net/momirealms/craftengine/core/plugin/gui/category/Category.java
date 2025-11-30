@@ -1,7 +1,10 @@
 package net.momirealms.craftengine.core.plugin.gui.category;
 
+import net.momirealms.craftengine.core.plugin.context.Condition;
+import net.momirealms.craftengine.core.plugin.context.Context;
 import net.momirealms.craftengine.core.util.Key;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -14,8 +17,9 @@ public class Category implements Comparable<Category> {
     private final List<String> members;
     private final int priority;
     private final boolean hidden;
+    private final Condition<Context> condition;
 
-    public Category(Key id, String displayName, List<String> displayLore, Key icon, List<String> members, int priority, boolean hidden) {
+    public Category(Key id, String displayName, List<String> displayLore, Key icon, List<String> members, int priority, boolean hidden, Condition<Context> condition) {
         this.id = id;
         this.displayName = displayName;
         this.members = new ArrayList<>(members);
@@ -23,6 +27,7 @@ public class Category implements Comparable<Category> {
         this.priority = priority;
         this.displayLore = new ArrayList<>(displayLore);
         this.hidden = hidden;
+        this.condition = condition;
     }
 
     public void addMember(String member) {
@@ -43,6 +48,11 @@ public class Category implements Comparable<Category> {
 
     public boolean hidden() {
         return hidden;
+    }
+
+    @Nullable
+    public Condition<Context> condition() {
+        return condition;
     }
 
     public List<String> displayLore() {
