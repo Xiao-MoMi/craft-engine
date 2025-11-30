@@ -1,8 +1,9 @@
 package net.momirealms.craftengine.core.plugin.config.template;
 
+import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import net.momirealms.craftengine.core.plugin.config.template.argument.TemplateArgument;
 import net.momirealms.craftengine.core.plugin.locale.LocalizedResourceConfigException;
-import net.momirealms.craftengine.core.util.SNBTReader;
+import net.momirealms.craftengine.core.util.snbt.TagParser;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -67,8 +68,14 @@ public interface ArgumentString {
             } else {
                 this.placeholder = placeholderContent.substring(0, separatorIndex);
                 String defaultValueString = placeholderContent.substring(separatorIndex + 2);
+                Object parsed;
                 try {
-                    this.defaultValue = ((TemplateManagerImpl) TemplateManager.INSTANCE).preprocessUnknownValue(new SNBTReader(defaultValueString).deserializeAsJava());
+                    parsed = TagParser.parseObjectFully(defaultValueString);
+                } catch (CommandSyntaxException e) {
+                    throw new LocalizedResourceConfigException("warning.config.type.snbt.invalid_syntax", e.getMessage());
+                }
+                try {
+                    this.defaultValue = ((TemplateManagerImpl) TemplateManager.INSTANCE).preprocessUnknownValue(parsed);
                 } catch (LocalizedResourceConfigException e) {
                     e.appendTailArgument(this.placeholder);
                     throw e;

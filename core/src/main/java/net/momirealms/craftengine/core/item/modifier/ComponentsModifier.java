@@ -1,12 +1,15 @@
 package net.momirealms.craftengine.core.item.modifier;
 
 import com.google.gson.JsonElement;
+import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import net.momirealms.craftengine.core.item.*;
 import net.momirealms.craftengine.core.plugin.CraftEngine;
+import net.momirealms.craftengine.core.plugin.locale.LocalizedResourceConfigException;
 import net.momirealms.craftengine.core.util.GsonHelper;
 import net.momirealms.craftengine.core.util.Key;
 import net.momirealms.craftengine.core.util.Pair;
 import net.momirealms.craftengine.core.util.ResourceConfigUtils;
+import net.momirealms.craftengine.core.util.snbt.TagParser;
 import net.momirealms.sparrow.nbt.CompoundTag;
 import net.momirealms.sparrow.nbt.Tag;
 
@@ -41,7 +44,12 @@ public class ComponentsModifier<I> implements ItemDataModifier<I> {
             if (string.startsWith("(json) ")) {
                 return CraftEngine.instance().platform().jsonToSparrowNBT(GsonHelper.get().fromJson(string.substring("(json) ".length()), JsonElement.class));
             } else if (string.startsWith("(snbt) ")) {
-                return CraftEngine.instance().platform().snbtToSparrowNBT(string.substring("(snbt) ".length()));
+                String snbt = string.substring("(snbt) ".length());
+                try {
+                    return TagParser.parseCompoundFully(snbt);
+                } catch (CommandSyntaxException e) {
+                    throw new LocalizedResourceConfigException("warning.config.type.snbt.invalid_syntax", e.getMessage());
+                }
             }
         }
         return CraftEngine.instance().platform().javaToSparrowNBT(value);

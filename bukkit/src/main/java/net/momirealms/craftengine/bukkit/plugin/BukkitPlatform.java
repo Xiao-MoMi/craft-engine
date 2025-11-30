@@ -31,32 +31,9 @@ public class BukkitPlatform implements Platform {
         Bukkit.getServer().dispatchCommand(Bukkit.getConsoleSender(), command);
     }
 
-    @SuppressWarnings("unchecked")
-    @Override
-    public Object snbtToJava(String nbt) {
-        try {
-            Object tag = FastNMS.INSTANCE.method$TagParser$parseCompoundFully("{\"root\":" + nbt + "}");
-            Map<String, Object> map = (Map<String, Object>) MRegistryOps.NBT.convertTo(MRegistryOps.JAVA, tag);
-            return map.get("root");
-        } catch (CommandSyntaxException e) {
-            throw new LocalizedResourceConfigException("warning.config.type.snbt.invalid_syntax", e, nbt);
-        }
-    }
-
     @Override
     public Tag jsonToSparrowNBT(JsonElement json) {
         return MRegistryOps.JSON.convertTo(MRegistryOps.SPARROW_NBT, json);
-    }
-
-    @Override
-    public Tag snbtToSparrowNBT(String nbt) {
-        try {
-            Object tag = FastNMS.INSTANCE.method$TagParser$parseCompoundFully("{\"root\":" + nbt + "}");
-            CompoundTag map = (CompoundTag) MRegistryOps.NBT.convertTo(MRegistryOps.SPARROW_NBT, tag);
-            return map.get("root");
-        } catch (CommandSyntaxException e) {
-            throw new LocalizedResourceConfigException("warning.config.type.snbt.invalid_syntax", e, nbt);
-        }
     }
 
     @Override
