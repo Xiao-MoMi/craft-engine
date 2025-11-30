@@ -19,10 +19,7 @@ import net.momirealms.craftengine.core.util.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
+import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -158,6 +155,7 @@ public class CustomSmithingTransformRecipe<T> extends AbstractedFixedResultRecip
     private T createSmithingResult(Item<T> base, T result) {
         Item<T> wrappedResult = (Item<T>) CraftEngine.instance().itemManager().wrap(result);
         Item<T> finalResult = wrappedResult;
+        Optional<Key> customId = finalResult.customId(); // 修复在保留custom_data组件的时候意外保留前物品的id
         if (this.mergeComponents) {
             finalResult = base.mergeCopy(wrappedResult);
         }
@@ -165,6 +163,9 @@ public class CustomSmithingTransformRecipe<T> extends AbstractedFixedResultRecip
             for (ItemDataProcessor processor : this.processors) {
                 processor.accept(base, wrappedResult, finalResult);
             }
+        }
+        if (customId.isPresent()) {
+            finalResult.customId(customId.get());
         }
         return finalResult.getItem();
     }
