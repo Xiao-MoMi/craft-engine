@@ -21,5 +21,6 @@ public final class MinecraftVersions {
     public static final MinecraftVersion V1_21_8 = new MinecraftVersion("1.21.8");
     public static final MinecraftVersion V1_21_9 = new MinecraftVersion("1.21.9");
     public static final MinecraftVersion V1_21_10 = new MinecraftVersion("1.21.10");
+    public static final MinecraftVersion V1_21_11 = new MinecraftVersion("1.21.11");
     public static final MinecraftVersion FUTURE = new MinecraftVersion("1.99.99");
 }
