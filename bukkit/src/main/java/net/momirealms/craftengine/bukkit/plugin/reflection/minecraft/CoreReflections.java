@@ -4644,4 +4644,35 @@ public final class CoreReflections {
                     "world.scores.PlayerTeam"
             )
     );
+
+    public static final Class<?> clazz$Rotations = requireNonNull(
+            BukkitReflectionUtils.findReobfOrMojmapClass(
+                    "core.Vector3f",
+                    "core.Rotations"
+            )
+    );
+
+    public static final Constructor<?> constructor$Rotations = requireNonNull(
+            ReflectionUtils.getConstructor(clazz$Rotations, float.class, float.class, float.class)
+    );
+
+    public static final Object instance$ArmorStand$DEFAULT_HEAD_POSE;
+    public static final Object instance$ArmorStand$DEFAULT_BODY_POSE;
+    public static final Object instance$ArmorStand$DEFAULT_LEFT_ARM_POSE;
+    public static final Object instance$ArmorStand$DEFAULT_RIGHT_ARM_POSE;
+    public static final Object instance$ArmorStand$DEFAULT_LEFT_LEG_POSE;
+    public static final Object instance$ArmorStand$DEFAULT_RIGHT_LEG_POSE;
+
+    static {
+        try {
+            instance$ArmorStand$DEFAULT_HEAD_POSE = constructor$Rotations.newInstance(0.0F, 0.0F, 0.0F);
+            instance$ArmorStand$DEFAULT_BODY_POSE = constructor$Rotations.newInstance(0.0F, 0.0F, 0.0F);
+            instance$ArmorStand$DEFAULT_LEFT_ARM_POSE = constructor$Rotations.newInstance(-10.0F, 0.0F, -10.0F);
+            instance$ArmorStand$DEFAULT_RIGHT_ARM_POSE = constructor$Rotations.newInstance(-15.0F, 0.0F, 10.0F);
+            instance$ArmorStand$DEFAULT_LEFT_LEG_POSE = constructor$Rotations.newInstance(-1.0F, 0.0F, -1.0F);
+            instance$ArmorStand$DEFAULT_RIGHT_LEG_POSE = constructor$Rotations.newInstance(1.0F, 0.0F, 1.0F);
+        } catch (ReflectiveOperationException e) {
+            throw new ReflectionInitException("Failed to init ArmorStand", e);
+        }
+    }
 }
