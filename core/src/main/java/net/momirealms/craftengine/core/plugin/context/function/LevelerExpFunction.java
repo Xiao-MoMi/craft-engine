@@ -33,12 +33,14 @@ public class LevelerExpFunction<CTX extends Context> extends AbstractConditional
     public void runInternal(CTX ctx) {
         if (this.selector == null) {
             ctx.getOptionalParameter(DirectContextParameters.PLAYER).ifPresent(it -> {
-                CraftEngine.instance().compatibilityManager().getLevelerProvider(this.plugin).addExp(it, this.leveler, this.count.getDouble(ctx));
+                CraftEngine.instance().compatibilityManager().levelerBridge().provider(this.plugin)
+                        .ifPresent(provider -> provider.addExperience(it.platformPlayer(), this.leveler, this.count.getDouble(ctx)));
             });
         } else {
             for (Player target : this.selector.get(ctx)) {
                 RelationalContext relationalContext = ViewerContext.of(ctx, PlayerOptionalContext.of(target));
-                CraftEngine.instance().compatibilityManager().getLevelerProvider(this.plugin).addExp(target, this.leveler, this.count.getDouble(relationalContext));
+                CraftEngine.instance().compatibilityManager().levelerBridge().provider(this.plugin)
+                        .ifPresent(provider -> provider.addExperience(target.platformPlayer(), this.leveler, this.count.getDouble(relationalContext)));
             }
         }
     }
@@ -57,8 +59,8 @@ public class LevelerExpFunction<CTX extends Context> extends AbstractConditional
         @Override
         public Function<CTX> create(Map<String, Object> arguments) {
             Object count = ResourceConfigUtils.requireNonNullOrThrow(arguments.get("count"), "warning.config.function.leveler_exp.missing_count");
-            String leveler = ResourceConfigUtils.requireNonEmptyStringOrThrow(arguments.get("leveler"), "warning.config.function.leveler_exp.missing_leveler").toLowerCase(Locale.ROOT);
-            String plugin = ResourceConfigUtils.requireNonEmptyStringOrThrow(arguments.get("plugin"), "warning.config.function.leveler_exp.missing_plugin");
+            String leveler = ResourceConfigUtils.requireNonEmptyStringOrThrow(arguments.get("leveler"), "warning.config.function.leveler_exp.missing_leveler");
+            String plugin = ResourceConfigUtils.requireNonEmptyStringOrThrow(arguments.get("plugin"), "warning.config.function.leveler_exp.missing_plugin").toLowerCase(Locale.ROOT);
             return new LevelerExpFunction<>(getPredicates(arguments), leveler, plugin, PlayerSelectors.fromObject(arguments.get("target"), conditionFactory()), NumberProviders.fromObject(count));
         }
     }

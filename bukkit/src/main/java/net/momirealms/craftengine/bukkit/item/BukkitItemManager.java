@@ -1,5 +1,7 @@
 package net.momirealms.craftengine.bukkit.item;
 
+import cn.gtemc.itembridge.api.ItemBridge;
+import cn.gtemc.itembridge.api.Provider;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
@@ -20,7 +22,6 @@ import net.momirealms.craftengine.core.item.*;
 import net.momirealms.craftengine.core.item.recipe.DatapackRecipeResult;
 import net.momirealms.craftengine.core.item.recipe.UniqueIdItem;
 import net.momirealms.craftengine.core.pack.AbstractPackManager;
-import net.momirealms.craftengine.core.plugin.compatibility.ItemSource;
 import net.momirealms.craftengine.core.plugin.config.Config;
 import net.momirealms.craftengine.core.plugin.locale.LocalizedResourceConfigException;
 import net.momirealms.craftengine.core.util.GsonHelper;
@@ -84,15 +85,14 @@ public class BukkitItemManager extends AbstractItemManager<ItemStack> {
     @Override
     public void delayedLoad() {
         super.delayedLoad();
-        List<ItemSource<ItemStack>> sources = new ArrayList<>();
+        List<Provider<ItemStack, org.bukkit.entity.Player>> sources = new ArrayList<>();
         for (String externalSource : Config.recipeIngredientSources()) {
-            String sourceId = externalSource.toLowerCase(Locale.ENGLISH);
-            ItemSource<?> itemSource = this.plugin.compatibilityManager().getItemSource(sourceId);
-            if (itemSource != null) {
-                sources.add((ItemSource<ItemStack>) itemSource);
-            }
+            String sourceId = externalSource.toLowerCase(Locale.ROOT);
+            ItemBridge<ItemStack, org.bukkit.entity.Player> itemBridge = this.plugin.compatibilityManager().itemBridge();
+            Optional<Provider<ItemStack, org.bukkit.entity.Player>> itemSource = itemBridge.provider(sourceId);
+            itemSource.ifPresent(sources::add);
         }
-        this.factory.resetRecipeIngredientSources(sources.isEmpty() ? null : sources.toArray(new ItemSource[0]));
+        this.factory.resetRecipeIngredientSources(sources.isEmpty() ? null : sources.toArray(new Provider[0]));
     }
 
     @Override

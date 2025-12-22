@@ -6,9 +6,9 @@ plugins {
 repositories {
     mavenCentral()
     maven("https://jitpack.io/")
-    maven("https://repo.momirealms.net/releases/")
     maven("https://libraries.minecraft.net/")
     maven("https://repo.papermc.io/repository/maven-public/")
+    maven("https://repo.momirealms.net/releases/")
     maven("https://repo.gtemc.net/releases/")
 }
 
@@ -64,9 +64,9 @@ dependencies {
     // concurrentutil
     compileOnly("ca.spottedleaf:concurrentutil:${rootProject.properties["concurrent_util_version"]}")
     // ItemBridge
-    compileOnly("cn.gtemc:itembridge:${rootProject.properties["itembridge_version"]}")
+    implementation("cn.gtemc:itembridge:${rootProject.properties["itembridge_version"]}")
     // LevelerBridge
-    compileOnly("cn.gtemc:levelerbridge:${rootProject.properties["levelerbridge_version"]}")
+    implementation("cn.gtemc:levelerbridge:${rootProject.properties["levelerbridge_version"]}")
 }
 
 java {

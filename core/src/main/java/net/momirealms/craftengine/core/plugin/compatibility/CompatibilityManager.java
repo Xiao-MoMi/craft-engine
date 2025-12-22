@@ -1,5 +1,8 @@
 package net.momirealms.craftengine.core.plugin.compatibility;
 
+import cn.gtemc.itembridge.api.ItemBridge;
+import cn.gtemc.itembridge.api.Provider;
+import cn.gtemc.levelerbridge.api.LevelerBridge;
 import net.kyori.adventure.text.minimessage.tag.resolver.TagResolver;
 import net.momirealms.craftengine.core.entity.furniture.ExternalModel;
 import net.momirealms.craftengine.core.entity.player.Player;
@@ -38,11 +41,31 @@ public interface CompatibilityManager {
 
     boolean isBedrockPlayer(Player player);
 
+    /**
+     * Please obtain the ItemBridge via {@link #itemBridge()} and utilise {@link ItemBridge#provider(String)}.
+     */
+    @Deprecated(forRemoval = true)
     ItemSource<?> getItemSource(String id);
 
+    /**
+     * Please obtain the ItemBridge via {@link #itemBridge()} and utilise {@link ItemBridge#register(Provider)}.
+     */
+    @Deprecated(forRemoval = true)
     void registerItemSource(ItemSource<?> itemSource);
 
+    /**
+     * Please obtain the LevelerBridge via {@link #levelerBridge()} and use {@link LevelerBridge#provider(String)}
+     */
+    @Deprecated(forRemoval = true)
     LevelerProvider getLevelerProvider(String id);
 
+    /**
+     * Please obtain the LevelerBridge via {@link #levelerBridge()} and use {@link LevelerBridge#register(cn.gtemc.levelerbridge.api.LevelerProvider)}
+     */
+    @Deprecated(forRemoval = true)
     void registerLevelerProvider(LevelerProvider provider);
+
+    <I, P> ItemBridge<I, P> itemBridge();
+
+    <P> LevelerBridge<P> levelerBridge();
 }

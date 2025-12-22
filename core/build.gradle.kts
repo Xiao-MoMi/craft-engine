@@ -72,6 +72,10 @@ dependencies {
     compileOnly("ca.spottedleaf:concurrentutil:${rootProject.properties["concurrent_util_version"]}")
     // bucket4j
     compileOnly("com.bucket4j:bucket4j_jdk17-core:${rootProject.properties["bucket4j_version"]}")
+    // ItemBridge
+    compileOnly("cn.gtemc:itembridge-api:${rootProject.properties["itembridge_version"]}")
+    // LevelerBridge
+    compileOnly("cn.gtemc:levelerbridge-api:${rootProject.properties["levelerbridge_version"]}")
 }
 
 java {

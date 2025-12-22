@@ -32,8 +32,6 @@ dependencies {
     implementation("net.momirealms:sparrow-util:${rootProject.properties["sparrow_util_version"]}")
     implementation("net.momirealms:antigrieflib:${rootProject.properties["anti_grief_version"]}")
     implementation("net.momirealms:craft-engine-nms-helper-mojmap:${rootProject.properties["nms_helper_version"]}")
-    implementation("cn.gtemc:itembridge:${rootProject.properties["itembridge_version"]}")
-    implementation("cn.gtemc:levelerbridge:${rootProject.properties["levelerbridge_version"]}")
 }
 
 java {

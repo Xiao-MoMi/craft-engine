@@ -1,10 +1,13 @@
 package net.momirealms.craftengine.core.item.modifier;
 
+import cn.gtemc.itembridge.api.ItemBridge;
+import cn.gtemc.itembridge.api.Provider;
+import cn.gtemc.itembridge.api.context.BuildContext;
+import net.momirealms.craftengine.core.entity.player.Player;
 import net.momirealms.craftengine.core.item.Item;
 import net.momirealms.craftengine.core.item.ItemBuildContext;
 import net.momirealms.craftengine.core.item.ItemDataModifierFactory;
 import net.momirealms.craftengine.core.plugin.CraftEngine;
-import net.momirealms.craftengine.core.plugin.compatibility.ItemSource;
 import net.momirealms.craftengine.core.util.Key;
 import net.momirealms.craftengine.core.util.LazyReference;
 import net.momirealms.craftengine.core.util.ResourceConfigUtils;
@@ -16,9 +19,9 @@ public class ExternalModifier<I> implements ItemDataModifier<I> {
     public static final Factory<?> FACTORY = new Factory<>();
     private static final ThreadLocal<Set<Dependency>> BUILD_STACK = ThreadLocal.withInitial(LinkedHashSet::new);
     private final String id;
-    private final LazyReference<ItemSource<I>> provider;
+    private final LazyReference<Provider<I, Object>> provider;
 
-    public ExternalModifier(String id, LazyReference<ItemSource<I>> provider) {
+    public ExternalModifier(String id, LazyReference<Provider<I, Object>> provider) {
         this.id = id;
         this.provider = provider;
     }
@@ -35,7 +38,7 @@ public class ExternalModifier<I> implements ItemDataModifier<I> {
     @SuppressWarnings("unchecked")
     @Override
     public Item<I> apply(Item<I> item, ItemBuildContext context) {
-        ItemSource<I> provider = this.provider.get();
+        Provider<I, Object> provider = this.provider.get();
         if (provider == null) return item;
 
         Dependency dependency = new Dependency(provider.plugin(), this.id);
@@ -53,7 +56,8 @@ public class ExternalModifier<I> implements ItemDataModifier<I> {
 
         buildStack.add(dependency);
         try {
-            I another = provider.build(this.id, context);
+            Player player = context.player();
+            I another = provider.buildOrNull(this.id, player != null ? player.platformPlayer() : null, BuildContext.empty());
             if (another == null) {
                 CraftEngine.instance().logger().warn("'" + this.id + "' could not be found in " + provider.plugin());
                 return item;
@@ -72,18 +76,18 @@ public class ExternalModifier<I> implements ItemDataModifier<I> {
 
     public static class Factory<I> implements ItemDataModifierFactory<I> {
 
-        @SuppressWarnings("unchecked")
         @Override
         public ItemDataModifier<I> create(Object arg) {
             Map<String, Object> data = ResourceConfigUtils.getAsMap(arg, "external");
             String plugin = ResourceConfigUtils.requireNonEmptyStringOrThrow(ResourceConfigUtils.get(data, "plugin", "source"), "warning.config.item.data.external.missing_source");
             String id = ResourceConfigUtils.requireNonEmptyStringOrThrow(data.get("id"), "warning.config.item.data.external.missing_id");
             return new ExternalModifier<>(id, LazyReference.lazyReference(() -> {
-                ItemSource<?> itemSource = CraftEngine.instance().compatibilityManager().getItemSource(plugin.toLowerCase(Locale.ENGLISH));
-                if (itemSource == null) {
+                ItemBridge<I, Object> itemBridge = CraftEngine.instance().compatibilityManager().itemBridge();
+                Optional<Provider<I, Object>> itemSource = itemBridge.provider(plugin.toLowerCase(Locale.ROOT));
+                if (itemSource.isEmpty()) {
                     CraftEngine.instance().logger().warn("Item source '" + plugin + "' not found for item '" + id + "'");
                 }
-                return (ItemSource<I>) itemSource;
+                return itemSource.orElse(null);
             }));
         }
     }
