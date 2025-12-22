@@ -165,11 +165,25 @@ public class BukkitCompatibilityManager implements CompatibilityManager {
         if (this.isPluginEnabled("GrimAC") && Config.injectPacketEvents()) {
             runCatchingHook(() -> WrappedBlockStateHelper.register("ac{}grim{}grimac{}shaded{}com{}github{}retrooper{}packetevents"), "GrimAC");
         }
-        BukkitLevelerBridge levelerBridge = BukkitLevelerBridge.builder(false).build();
+        BukkitLevelerBridge levelerBridge = BukkitLevelerBridge.builder()
+                .onHookSuccess(this::logHook)
+                .onHookFailure((p, e) -> this.plugin.logger().warn("Failed to hook " + p, e))
+                .detectSupportedPlugins()
+                .build();
         for (cn.gtemc.levelerbridge.api.LevelerProvider<org.bukkit.entity.Player> provider : levelerBridge.providers()) {
             this.registerLevelerProvider(new LevelerBridgeLeveler(provider));
         }
-        BukkitItemBridge itemBridge = BukkitItemBridge.builder(true).build();
+        BukkitItemBridge itemBridge = BukkitItemBridge.builder()
+                .onHookSuccess(p -> {
+                    if (p.equals("CraftEngine")) {
+                        return;
+                    }
+                    logHook(p);
+                })
+                .onHookFailure((p, e) -> this.plugin.logger().warn("Failed to hook " + p, e))
+                .detectSupportedPlugins()
+                .removeById("craftengine")
+                .build();
         for (Provider<ItemStack, org.bukkit.entity.Player> provider : itemBridge.providers()) {
             this.registerItemSource(new ItemBridgeSource(provider));
         }
