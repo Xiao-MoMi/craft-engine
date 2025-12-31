@@ -1,5 +1,6 @@
 package net.momirealms.craftengine.core.entity.furniture.behavior;
 
+import net.momirealms.craftengine.core.entity.furniture.CustomFurniture;
 import net.momirealms.craftengine.core.plugin.locale.LocalizedResourceConfigException;
 import net.momirealms.craftengine.core.registry.BuiltInRegistries;
 import net.momirealms.craftengine.core.registry.Registries;
@@ -14,10 +15,18 @@ import java.util.Map;
 
 @ApiStatus.Experimental
 public class FurnitureBehaviors {
+    public static final FurnitureBehaviorType<EmptyFurnitureBehavior> EMPTY = register(Key.ce("empty"), (furniture, properties) -> EmptyFurnitureBehavior.INSTANCE);
 
     protected FurnitureBehaviors() {}
 
-    public static FurnitureBehavior fromMap(@Nullable Map<String, Object> map) {
+    public static <T extends FurnitureBehavior> FurnitureBehaviorType<T> register(Key id, FurnitureBehaviorFactory<T> factory) {
+        FurnitureBehaviorType<T> type = new FurnitureBehaviorType<>(id, factory);
+        ((WritableRegistry<FurnitureBehaviorType<? extends FurnitureBehavior>>) BuiltInRegistries.FURNITURE_BEHAVIOR_TYPE)
+                .register(ResourceKey.create(Registries.FURNITURE_BEHAVIOR_TYPE.location(), id), type);
+        return type;
+    }
+
+    public static FurnitureBehavior fromMap(CustomFurniture furniture, @Nullable Map<String, Object> map) {
         if (map == null || map.isEmpty()) return EmptyFurnitureBehavior.INSTANCE;
         String type = ResourceConfigUtils.requireNonEmptyStringOrThrow(map.get("type"), "warning.config.furniture.behavior.missing_type");
         Key key = Key.withDefaultNamespace(type, Key.DEFAULT_NAMESPACE);
@@ -25,13 +34,6 @@ public class FurnitureBehaviors {
         if (furnitureBehaviorType == null) {
             throw new LocalizedResourceConfigException("warning.config.furniture.behavior.invalid_type", type);
         }
-        return furnitureBehaviorType.factory().create(map);
-    }
-
-    public static <T extends FurnitureBehavior> FurnitureBehaviorType<T> register(Key id, FurnitureBehaviorFactory<T> factory) {
-        FurnitureBehaviorType<T> type = new FurnitureBehaviorType<>(id, factory);
-        ((WritableRegistry<FurnitureBehaviorType<? extends FurnitureBehavior>>) BuiltInRegistries.FURNITURE_BEHAVIOR_TYPE)
-                .register(ResourceKey.create(Registries.FURNITURE_BEHAVIOR_TYPE.location(), id), type);
-        return type;
+        return furnitureBehaviorType.factory().create(furniture, map);
     }
 }

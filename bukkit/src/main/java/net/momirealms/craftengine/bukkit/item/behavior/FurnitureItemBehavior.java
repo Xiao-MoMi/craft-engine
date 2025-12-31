@@ -186,6 +186,15 @@ public class FurnitureItemBehavior extends ItemBehavior {
                 return InteractionResult.FAIL;
             }
         }
+
+        InteractionResult result = bukkitFurniture.config.behavior().onPlace(bukkitFurniture, context, LocationUtils.toWorldPosition(furnitureLocation));
+        if (result == InteractionResult.SUCCESS_AND_CANCEL) {
+            return InteractionResult.SUCCESS_AND_CANCEL;
+        } else if (!result.success()) {
+            bukkitFurniture.destroy();
+            return result;
+        }
+
         // 触发ce事件
         Cancellable dummy = Cancellable.dummy();
         PlayerOptionalContext functionContext = PlayerOptionalContext.of(player, ContextHolder.builder()

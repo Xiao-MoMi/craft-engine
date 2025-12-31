@@ -11,19 +11,16 @@ import net.momirealms.craftengine.core.util.Key;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 
 class CustomFurnitureImpl implements CustomFurniture {
     private final Key id;
     private final FurnitureSettings settings;
     private final Map<String, FurnitureVariant> variants;
     private final Map<EventTrigger, List<Function<Context>>> events;
-    private final FurnitureBehavior behavior;
     @Nullable
     private final LootTable<?> lootTable;
+    private FurnitureBehavior behavior;
 
     private CustomFurnitureImpl(@NotNull Key id,
                                 @NotNull FurnitureSettings settings,
@@ -35,8 +32,8 @@ class CustomFurnitureImpl implements CustomFurniture {
         this.settings = settings;
         this.variants = ImmutableSortedMap.copyOf(variants);
         this.lootTable = lootTable;
-        this.behavior = behavior;
         this.events = events;
+        this.behavior = behavior;
     }
 
     @Override
@@ -57,8 +54,9 @@ class CustomFurnitureImpl implements CustomFurniture {
     }
 
     @Override
-    public @Nullable LootTable<?> lootTable() {
-        return this.lootTable;
+    public @Nullable LootTable<?> lootTable(@Nullable Furniture furniture) {
+        if (furniture == null) return this.lootTable;
+        return behavior.getLootTable(furniture, this.lootTable);
     }
 
     @Override
@@ -69,6 +67,11 @@ class CustomFurnitureImpl implements CustomFurniture {
     @Override
     public @NotNull FurnitureBehavior behavior() {
         return this.behavior;
+    }
+
+    @Override
+    public void setBehavior(@NotNull FurnitureBehavior behavior) {
+        this.behavior = Objects.requireNonNull(behavior, "behavior cannot be null");
     }
 
     @Nullable
@@ -122,7 +125,7 @@ class CustomFurnitureImpl implements CustomFurniture {
 
         @Override
         public Builder behavior(FurnitureBehavior behavior) {
-            this.behavior = behavior;
+            this.behavior = Objects.requireNonNull(behavior, "behavior cannot be null");
             return this;
         }
     }

@@ -237,6 +237,7 @@ public abstract class Furniture implements Cullable {
 
     @Override
     public void show(Player player) {
+        this.config.behavior().asyncShow(this, player);
         for (FurnitureElement element : this.elements) {
             if (element != null) {
                 element.show(player);
@@ -251,6 +252,7 @@ public abstract class Furniture implements Cullable {
 
     @Override
     public void hide(Player player) {
+        this.config.behavior().asyncHide(this, player);
         for (FurnitureElement element : this.elements) {
             if (element != null) {
                 element.hide(player);

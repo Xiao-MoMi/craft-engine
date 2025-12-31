@@ -251,8 +251,8 @@ public abstract class AbstractFurnitureManager implements FurnitureManager {
                     .variants(variants)
                     .events(CommonFunctions.parseEvents(ResourceConfigUtils.get(section, "events", "event")))
                     .lootTable(LootTable.fromMap(MiscUtils.castToMap(section.get("loot"), true)))
-                    .behavior(FurnitureBehaviors.fromMap(ResourceConfigUtils.getAsMapOrNull(ResourceConfigUtils.get(section, "behaviors", "behavior"), "behavior")))
                     .build();
+            furniture.setBehavior(FurnitureBehaviors.fromMap(furniture, ResourceConfigUtils.getAsMapOrNull(ResourceConfigUtils.get(section, "behaviors", "behavior"), "behavior")));
             AbstractFurnitureManager.this.byId.put(id, furniture);
         }
 

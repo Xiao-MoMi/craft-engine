@@ -1335,7 +1335,12 @@ public class BukkitNetworkManager implements NetworkManager, Listener {
             if (state == null) return;
             Key itemId = state.settings().itemId();
             if (itemId == null) return;
-            pickItem(player, itemId, pos, null);
+            Item<ItemStack> item = BukkitCraftEngine.instance().itemManager().createWrappedItem(itemId, BukkitCraftEngine.instance().adapt(player));
+            if (item == null) {
+                CraftEngine.instance().logger().warn("Item: " + itemId + " is not a valid item");
+                return;
+            }
+            pickItem(player, item, pos, null);
         }
     }
 
@@ -1357,7 +1362,7 @@ public class BukkitNetworkManager implements NetworkManager, Listener {
             if (VersionHelper.isFolia()) {
                 player.getScheduler().run(BukkitCraftEngine.instance().javaPlugin(), (t) -> {
                     try {
-                        handlePickItemFromEntityOnMainThread(player, furniture);
+                        handlePickItemFromEntityOnMainThread(player, furniture, (BukkitServerPlayer) user);
                     } catch (Throwable e) {
                         CraftEngine.instance().logger().warn("Failed to handle ServerboundPickItemFromEntityPacket on region thread", e);
                     }
@@ -1365,7 +1370,7 @@ public class BukkitNetworkManager implements NetworkManager, Listener {
             } else {
                 BukkitCraftEngine.instance().scheduler().sync().run(() -> {
                     try {
-                        handlePickItemFromEntityOnMainThread(player, furniture);
+                        handlePickItemFromEntityOnMainThread(player, furniture, (BukkitServerPlayer) user);
                     } catch (Throwable e) {
                         CraftEngine.instance().logger().warn("Failed to handle ServerboundPickItemFromEntityPacket on main thread", e);
                     }
@@ -1373,27 +1378,29 @@ public class BukkitNetworkManager implements NetworkManager, Listener {
             }
         }
 
-        private static void handlePickItemFromEntityOnMainThread(Player player, BukkitFurniture furniture) throws Throwable {
+        private static void handlePickItemFromEntityOnMainThread(Player player, BukkitFurniture furniture, BukkitServerPlayer serverPlayer) throws Throwable {
             Key itemId = furniture.config().settings().itemId();
             if (itemId == null) return;
-            pickItem(player, itemId, null, FastNMS.INSTANCE.method$CraftEntity$getHandle(furniture.getBukkitEntity()));
+            Item<ItemStack> item = BukkitCraftEngine.instance().itemManager().createWrappedItem(itemId, BukkitCraftEngine.instance().adapt(player));
+            if (item == null) {
+                CraftEngine.instance().logger().warn("Item: " + itemId + " is not a valid item");
+                return;
+            }
+            item = furniture.config.behavior().getPickItem(furniture, serverPlayer, item);
+            if (item == null) return;
+            pickItem(player, item, null, FastNMS.INSTANCE.method$CraftEntity$getHandle(furniture.getBukkitEntity()));
         }
     }
 
-    private static void pickItem(Player player, Key itemId, @Nullable Object blockPos, @Nullable Object entity) throws Throwable {
-        ItemStack itemStack = BukkitCraftEngine.instance().itemManager().buildItemStack(itemId, BukkitCraftEngine.instance().adapt(player));
-        if (itemStack == null) {
-            CraftEngine.instance().logger().warn("Item: " + itemId + " is not a valid item");
-            return;
-        }
+    private static void pickItem(Player player, Item<ItemStack> item, @Nullable Object blockPos, @Nullable Object entity) throws Throwable {
         assert CoreReflections.method$ServerGamePacketListenerImpl$tryPickItem != null;
         if (VersionHelper.isOrAbove1_21_5()) {
             CoreReflections.method$ServerGamePacketListenerImpl$tryPickItem.invoke(
                     CoreReflections.methodHandle$ServerPlayer$connectionGetter.invokeExact(FastNMS.INSTANCE.method$CraftPlayer$getHandle(player)),
-                    FastNMS.INSTANCE.method$CraftItemStack$asNMSCopy(itemStack), blockPos, entity, true);
+                    item.getLiteralObject(), blockPos, entity, true);
         } else {
             CoreReflections.method$ServerGamePacketListenerImpl$tryPickItem.invoke(
-                    CoreReflections.methodHandle$ServerPlayer$connectionGetter.invokeExact(FastNMS.INSTANCE.method$CraftPlayer$getHandle(player)), FastNMS.INSTANCE.method$CraftItemStack$asNMSCopy(itemStack));
+                    CoreReflections.methodHandle$ServerPlayer$connectionGetter.invokeExact(FastNMS.INSTANCE.method$CraftPlayer$getHandle(player)), item.getLiteralObject());
         }
     }
 
@@ -4032,6 +4039,13 @@ public class BukkitNetworkManager implements NetworkManager, Listener {
                     if (EventUtils.fireAndCheckCancel(breakEvent))
                         return;
 
+                    boolean canBreak = furniture.config.behavior().onBreak(
+                            furniture, serverPlayer, hitBox, usingSecondaryAction
+                    );
+                    if (!canBreak) {
+                        return;
+                    }
+
                     Cancellable cancellable = Cancellable.of(breakEvent::isCancelled, breakEvent::setCancelled);
                     // execute functions
                     PlayerOptionalContext context = PlayerOptionalContext.of(serverPlayer, ContextHolder.builder()
@@ -4107,6 +4121,15 @@ public class BukkitNetworkManager implements NetworkManager, Listener {
                     // 触发事件
                     FurnitureInteractEvent interactEvent = new FurnitureInteractEvent(serverPlayer.platformPlayer(), furniture, hand, interactionPoint, hitBox);
                     if (EventUtils.fireAndCheckCancel(interactEvent)) {
+                        return;
+                    }
+
+                    boolean canInteract = furniture.config.behavior().onInteract(
+                            furniture, serverPlayer, hand,
+                            LocationUtils.toWorldPosition(interactionPoint),
+                            hitBox, usingSecondaryAction
+                    );
+                    if (!canInteract) {
                         return;
                     }
 

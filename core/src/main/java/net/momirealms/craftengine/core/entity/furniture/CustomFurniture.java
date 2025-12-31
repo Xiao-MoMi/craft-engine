@@ -28,7 +28,7 @@ public interface CustomFurniture {
     }
 
     @Nullable
-    LootTable<?> lootTable();
+    LootTable<?> lootTable(@Nullable Furniture furniture);
 
     Map<String, FurnitureVariant> variants();
 
@@ -45,6 +45,8 @@ public interface CustomFurniture {
 
     @NotNull
     FurnitureBehavior behavior();
+
+    void setBehavior(@NotNull FurnitureBehavior behavior);
 
     @NotNull
     default FurnitureVariant getVariant(FurnitureDataAccessor accessor) {
