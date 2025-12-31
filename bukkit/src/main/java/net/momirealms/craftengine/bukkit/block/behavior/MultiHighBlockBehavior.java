@@ -17,6 +17,7 @@ import net.momirealms.craftengine.core.block.behavior.BlockBehaviorFactory;
 import net.momirealms.craftengine.core.block.properties.IntegerProperty;
 import net.momirealms.craftengine.core.entity.player.InteractionHand;
 import net.momirealms.craftengine.core.item.Item;
+import net.momirealms.craftengine.core.plugin.locale.LocalizedResourceConfigException;
 import net.momirealms.craftengine.core.util.Direction;
 import net.momirealms.craftengine.core.util.ResourceConfigUtils;
 import net.momirealms.craftengine.core.world.*;
@@ -29,11 +30,11 @@ import java.util.concurrent.Callable;
 
 public class MultiHighBlockBehavior extends BukkitBlockBehavior {
     public static final BlockBehaviorFactory FACTORY = new Factory();
-    public final IntegerProperty highProperty;
+    public final IntegerProperty property;
 
-    public MultiHighBlockBehavior(CustomBlock customBlock, IntegerProperty highProperty) {
+    public MultiHighBlockBehavior(CustomBlock customBlock, IntegerProperty property) {
         super(customBlock);
-        this.highProperty = highProperty;
+        this.property = property;
     }
 
     @SuppressWarnings("DuplicatedCode")
@@ -48,12 +49,12 @@ public class MultiHighBlockBehavior extends BukkitBlockBehavior {
         if (behavior == null) {
             return MBlocks.AIR$defaultState;
         }
-        IntegerProperty property = behavior.highProperty;
-        int high = customState.get(property);
+        IntegerProperty property = behavior.property;
+        int value = customState.get(property);
         Object direction = args[updateShape$direction];
         Object level = args[updateShape$level];
         Object blockPos = args[updateShape$blockPos];
-        if (direction == CoreReflections.instance$Direction$UP && high != property.max) {
+        if (direction == CoreReflections.instance$Direction$UP && value != property.max) {
             Object abovePos = LocationUtils.above(blockPos);
             Object aboveState = FastNMS.INSTANCE.method$BlockGetter$getBlockState(level, abovePos);
             ImmutableBlockState state = BlockStateUtils.getOptionalCustomBlockState(aboveState).orElse(null);
@@ -62,16 +63,16 @@ public class MultiHighBlockBehavior extends BukkitBlockBehavior {
                 return MBlocks.AIR$defaultState;
             }
             MultiHighBlockBehavior aboveBehavior = state.behavior().getAs(MultiHighBlockBehavior.class).orElse(null);
-            if (aboveBehavior == null || aboveBehavior.highProperty != property) {
+            if (aboveBehavior == null || aboveBehavior.property != property) {
                 playBreakEffect(customState, blockPos, level);
                 return MBlocks.AIR$defaultState;
             }
-            Integer aboveHigh = state.get(property);
-            if (high + 1 != aboveHigh) {
+            Integer aboveValue = state.get(property);
+            if (value + 1 != aboveValue) {
                 playBreakEffect(customState, blockPos, level);
                 return MBlocks.AIR$defaultState;
             }
-        } else if (direction == CoreReflections.instance$Direction$DOWN && high != property.min) {
+        } else if (direction == CoreReflections.instance$Direction$DOWN && value != property.min) {
             Object belowPos = LocationUtils.below(blockPos);
             Object belowState = FastNMS.INSTANCE.method$BlockGetter$getBlockState(level, belowPos);
             ImmutableBlockState state = BlockStateUtils.getOptionalCustomBlockState(belowState).orElse(null);
@@ -80,12 +81,12 @@ public class MultiHighBlockBehavior extends BukkitBlockBehavior {
                 return MBlocks.AIR$defaultState;
             }
             MultiHighBlockBehavior belowBehavior = state.behavior().getAs(MultiHighBlockBehavior.class).orElse(null);
-            if (belowBehavior == null || belowBehavior.highProperty != property) {
+            if (belowBehavior == null || belowBehavior.property != property) {
                 playBreakEffect(customState, blockPos, level);
                 return MBlocks.AIR$defaultState;
             }
-            Integer belowHigh = state.get(property);
-            if (high - 1 != belowHigh) {
+            Integer belowValue = state.get(property);
+            if (value - 1 != belowValue) {
                 playBreakEffect(customState, blockPos, level);
                 return MBlocks.AIR$defaultState;
             }
@@ -124,12 +125,12 @@ public class MultiHighBlockBehavior extends BukkitBlockBehavior {
         if (behavior == null) {
             return;
         }
-        IntegerProperty property = behavior.highProperty;
-        int high = state.get(property);
-        if (high == property.min) {
+        IntegerProperty property = behavior.property;
+        int value = state.get(property);
+        if (value == property.min) {
             return;
         }
-        Object basePos = LocationUtils.below(pos, high - property.min);
+        Object basePos = LocationUtils.below(pos, value - property.min);
         Object blockState = FastNMS.INSTANCE.method$BlockGetter$getBlockState(level, basePos);
         ImmutableBlockState baseState = BlockStateUtils.getOptionalCustomBlockState(blockState).orElse(null);
         if (baseState == null || baseState.isEmpty()) {
@@ -139,7 +140,7 @@ public class MultiHighBlockBehavior extends BukkitBlockBehavior {
         if (baseBehavior.isEmpty()) {
             return;
         }
-        IntegerProperty baseProperty = baseBehavior.get().highProperty;
+        IntegerProperty baseProperty = baseBehavior.get().property;
         if (baseState.get(baseProperty) != baseProperty.min) {
             return;
         }
@@ -163,15 +164,15 @@ public class MultiHighBlockBehavior extends BukkitBlockBehavior {
         if (behavior == null) {
             return false;
         }
-        IntegerProperty property = behavior.highProperty;
-        int high = customState.get(property);
-        if (high != property.min && high != property.max) {
+        IntegerProperty property = behavior.property;
+        int value = customState.get(property);
+        if (value != property.min && value != property.max) {
             Object aboveState = FastNMS.INSTANCE.method$BlockGetter$getBlockState(world, LocationUtils.above(blockPos));
             Object belowState = FastNMS.INSTANCE.method$BlockGetter$getBlockState(world, LocationUtils.below(blockPos));
             CustomBlock aboveCustomBlock = BlockStateUtils.getOptionalCustomBlockState(aboveState).map(blockState -> blockState.owner().value()).orElse(null);
             CustomBlock belowCustomBlock = BlockStateUtils.getOptionalCustomBlockState(belowState).map(blockState -> blockState.owner().value()).orElse(null);
             return aboveCustomBlock == behavior.customBlock && belowCustomBlock == behavior.customBlock;
-        } else if (high == property.max) {
+        } else if (value == property.max) {
             Object belowState = FastNMS.INSTANCE.method$BlockGetter$getBlockState(world, LocationUtils.below(blockPos));
             CustomBlock belowCustomBlock = BlockStateUtils.getOptionalCustomBlockState(belowState).map(blockState -> blockState.owner().value()).orElse(null);
             return belowCustomBlock == behavior.customBlock;
@@ -191,7 +192,7 @@ public class MultiHighBlockBehavior extends BukkitBlockBehavior {
         if (behavior == null) {
             return;
         }
-        IntegerProperty property = behavior.highProperty;
+        IntegerProperty property = behavior.property;
         for (int i = property.min + 1; i <= property.max; i++) {
             FastNMS.INSTANCE.method$LevelWriter$setBlock(args[0], LocationUtils.above(pos, i), state.with(property, i).customBlockState().literalObject(), UpdateOption.UPDATE_ALL.flags());
         }
@@ -199,7 +200,7 @@ public class MultiHighBlockBehavior extends BukkitBlockBehavior {
 
     @Override
     public boolean hasMultiState(ImmutableBlockState baseState) {
-        return this.highProperty.max - this.highProperty.min > 0;
+        return this.property.max - this.property.min > 0;
     }
 
     @Override
@@ -208,7 +209,7 @@ public class MultiHighBlockBehavior extends BukkitBlockBehavior {
         if (behavior == null) {
             return false;
         }
-        IntegerProperty property = behavior.highProperty;
+        IntegerProperty property = behavior.property;
         if (pos.y() >= accessor.worldHeight().getMaxBuildHeight() - property.max) {
             return false;
         }
@@ -228,7 +229,7 @@ public class MultiHighBlockBehavior extends BukkitBlockBehavior {
         if (behavior == null) {
             return null;
         }
-        IntegerProperty property = behavior.highProperty;
+        IntegerProperty property = behavior.property;
         if (pos.y() >= context.getLevel().worldHeight().getMaxBuildHeight() - property.max) {
             return null;
         }
@@ -244,8 +245,11 @@ public class MultiHighBlockBehavior extends BukkitBlockBehavior {
 
         @Override
         public BlockBehavior create(CustomBlock block, Map<String, Object> arguments) {
-            IntegerProperty high = (IntegerProperty) ResourceConfigUtils.requireNonNullOrThrow(block.getProperty("high"), "warning.config.block.behavior.multi_high.missing_high");
-            return new MultiHighBlockBehavior(block, high);
+            String propertyName = ResourceConfigUtils.requireNonEmptyStringOrThrow(arguments.get("property"), "warning.config.block.behavior.multi_high.missing_property_name");
+            IntegerProperty property = (IntegerProperty) ResourceConfigUtils.requireNonNullOrThrow(block.getProperty(propertyName), () -> {
+                throw new LocalizedResourceConfigException("warning.config.block.behavior.multi_high.missing_property", propertyName);
+            });
+            return new MultiHighBlockBehavior(block, property);
         }
     }
 }

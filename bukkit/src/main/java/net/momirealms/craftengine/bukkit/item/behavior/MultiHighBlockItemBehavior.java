@@ -50,7 +50,7 @@ public class MultiHighBlockItemBehavior extends BlockItemBehavior {
         if (behavior == null) {
             return false;
         }
-        IntegerProperty property = behavior.highProperty;
+        IntegerProperty property = behavior.property;
         Player cePlayer = context.getPlayer();
         Object player = cePlayer != null ? cePlayer.serverPlayer() : null;
         Object blockState = state.customBlockState().literalObject();
@@ -91,7 +91,7 @@ public class MultiHighBlockItemBehavior extends BlockItemBehavior {
         if (behavior == null) {
             return false;
         }
-        IntegerProperty property = behavior.highProperty;
+        IntegerProperty property = behavior.property;
         for (int i = property.min + 1; i <= property.max; i++) {
             Object level = FastNMS.INSTANCE.field$CraftWorld$ServerLevel(location.getWorld());
             Object blockPos = FastNMS.INSTANCE.constructor$BlockPos(location.getBlockX(), location.getBlockY() + i, location.getBlockZ());
