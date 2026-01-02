@@ -37,9 +37,14 @@ public final class CustomNameplateHatSettings implements Listener {
         Bukkit.getPluginManager().registerEvents(this, BukkitCraftEngine.instance().javaPlugin());
     }
 
+    @SuppressWarnings("deprecation")
     @EventHandler(ignoreCancelled = true, priority = EventPriority.HIGHEST)
     public void onPlayerArmorChange(PlayerArmorChangeEvent event) {
-        if (event.getSlot() != EquipmentSlot.HEAD) {
+        if (VersionHelper.isOrAbove1_21_4()) {
+            if (event.getSlot() != EquipmentSlot.HEAD) {
+                return;
+            }
+        } else if (event.getSlotType() != PlayerArmorChangeEvent.SlotType.HEAD) {
             return;
         }
         ItemStack newItem = event.getNewItem();

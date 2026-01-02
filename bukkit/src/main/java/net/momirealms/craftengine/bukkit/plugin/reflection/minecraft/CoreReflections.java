@@ -4691,4 +4691,10 @@ public final class CoreReflections {
             ReflectionUtils.unreflectSetter(field$DedicatedServerProperties$enforceSecureProfile)
     ).asType(MethodType.methodType(void.class, Object.class, boolean.class));
 
+    public static final Class<?> clazz$LevelCallback = requireNonNull(
+            ReflectionUtils.getClazz(
+                    BukkitReflectionUtils.assembleMCClass("world.level.entity.LevelCallback")
+            )
+    );
+
 }

@@ -5,9 +5,12 @@ import io.papermc.paper.event.player.AsyncChatDecorateEvent;
 import it.unimi.dsi.fastutil.longs.LongOpenHashSet;
 import net.momirealms.craftengine.bukkit.plugin.reflection.bukkit.CraftBukkitReflections;
 import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.CoreReflections;
+import net.momirealms.craftengine.core.util.MiscUtils;
 import net.momirealms.craftengine.core.util.ReflectionUtils;
 import net.momirealms.craftengine.core.util.VersionHelper;
 
+import java.lang.invoke.MethodHandle;
+import java.lang.invoke.MethodType;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 
@@ -117,4 +120,24 @@ public final class PaperReflections {
                     clazz$RegionizedPlayerChunkLoader$PlayerChunkLoaderData, LongOpenHashSet.class, 0
             )
     );
+
+    public static final Field field$EntityLookup$worldCallback = requireNonNull(
+            ReflectionUtils.getDeclaredField(
+                    clazz$EntityLookup, CoreReflections.clazz$LevelCallback, 0
+            )
+    );
+
+    public static final MethodHandle methodHandle$EntityLookup$worldCallbackGetter;
+    public static final MethodHandle methodHandle$EntityLookup$worldCallbackSetter;
+
+    static {
+        try {
+            methodHandle$EntityLookup$worldCallbackGetter = ReflectionUtils.unreflectGetter(field$EntityLookup$worldCallback)
+                    .asType(MethodType.methodType(Object.class, Object.class));
+            methodHandle$EntityLookup$worldCallbackSetter = requireNonNull(ReflectionUtils.unreflectSetter(field$EntityLookup$worldCallback))
+                    .asType(MethodType.methodType(void.class, Object.class, Object.class));
+        } catch (ReflectiveOperationException e) {
+            throw new RuntimeException(e);
+        }
+    }
 }
