@@ -5,6 +5,10 @@ import net.momirealms.craftengine.core.entity.furniture.ExternalModel;
 import net.momirealms.craftengine.core.entity.player.Player;
 import net.momirealms.craftengine.core.plugin.context.Context;
 import net.momirealms.craftengine.core.plugin.network.NetWorkUser;
+import net.momirealms.craftengine.core.world.BlockPos;
+import net.momirealms.craftengine.core.world.World;
+
+import java.util.function.Supplier;
 
 public interface CompatibilityManager {
 
@@ -45,4 +49,6 @@ public interface CompatibilityManager {
     LevelerProvider getLevelerProvider(String id);
 
     void registerLevelerProvider(LevelerProvider provider);
+
+    void logContainerOperation(Player player, World world, BlockPos pos, Supplier<Object> container, boolean isInventory);
 }

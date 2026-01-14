@@ -5,14 +5,15 @@ repositories {
     maven("https://repo.gtemc.net/releases/")
     maven("https://repo.extendedclip.com/content/repositories/placeholderapi/") // papi
     maven("https://maven.enginehub.org/repo/") // worldguard worldedit
-    maven("https://repo.rapture.pw/repository/maven-releases/")  // slime world
-    maven("https://repo.infernalsuite.com/repository/maven-snapshots/")  // slime world
     maven("https://mvn.lumine.io/repository/maven-public/") // model engine mythic mobs
     maven("https://repo.viaversion.com") // via
     maven("https://repo.skriptlang.org/releases/") // skript
     maven("https://jitpack.io")
     maven("https://repo.codemc.io/repository/maven-public/") // quickshop
     maven("https://repo.opencollab.dev/main/") // geyser
+    maven("https://maven.playpro.com") // coreprotect
+    maven("https://repo.rapture.pw/repository/maven-releases/")  // slime world
+    maven("https://repo.infernalsuite.com/repository/maven-snapshots/")  // slime world
 }
 
 dependencies {
@@ -62,6 +63,8 @@ dependencies {
     compileOnly("cn.gtemc:itembridge:${rootProject.properties["itembridge_version"]}")
     // LevelerBridge
     compileOnly("cn.gtemc:levelerbridge:${rootProject.properties["levelerbridge_version"]}")
+    // CoreProtect
+    compileOnly("net.coreprotect:coreprotect:23.1")
 }
 
 java {

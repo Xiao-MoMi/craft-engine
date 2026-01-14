@@ -7,6 +7,7 @@ import net.kyori.adventure.text.minimessage.tag.resolver.TagResolver;
 import net.momirealms.craftengine.bukkit.block.entity.renderer.element.BukkitBlockEntityElementConfigs;
 import net.momirealms.craftengine.bukkit.compatibility.bedrock.FloodgateUtils;
 import net.momirealms.craftengine.bukkit.compatibility.bedrock.GeyserUtils;
+import net.momirealms.craftengine.bukkit.compatibility.coreprotect.CoreProtectHelper;
 import net.momirealms.craftengine.bukkit.compatibility.item.ItemBridgeSource;
 import net.momirealms.craftengine.bukkit.compatibility.legacy.slimeworld.LegacySlimeFormatStorageAdaptor;
 import net.momirealms.craftengine.bukkit.compatibility.leveler.LevelerBridgeLeveler;
@@ -43,12 +44,16 @@ import net.momirealms.craftengine.core.plugin.network.NetWorkUser;
 import net.momirealms.craftengine.core.plugin.text.minimessage.FormattedLine;
 import net.momirealms.craftengine.core.util.Key;
 import net.momirealms.craftengine.core.util.VersionHelper;
+import net.momirealms.craftengine.core.world.BlockPos;
+import net.momirealms.craftengine.core.world.World;
 import net.momirealms.craftengine.core.world.WorldManager;
+import net.momirealms.craftengine.core.world.WorldPosition;
 import org.bukkit.Bukkit;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.plugin.Plugin;
 
 import java.util.*;
+import java.util.function.Supplier;
 
 public class BukkitCompatibilityManager implements CompatibilityManager {
     private final BukkitCraftEngine plugin;
@@ -60,6 +65,7 @@ public class BukkitCompatibilityManager implements CompatibilityManager {
     private boolean hasPlaceholderAPI;
     private boolean hasGeyser;
     private boolean hasFloodgate;
+    private boolean hasCoreProtect;
 
     public BukkitCompatibilityManager(BukkitCraftEngine plugin) {
         this.plugin = plugin;
@@ -134,6 +140,10 @@ public class BukkitCompatibilityManager implements CompatibilityManager {
         }
         if (this.hasPlugin("floodgate")) {
             this.hasFloodgate = true;
+        }
+        if (this.hasPlugin("CoreProtect")) {
+            this.hasCoreProtect = true;
+            logHook("CoreProtect");
         }
     }
 
@@ -343,5 +353,12 @@ public class BukkitCompatibilityManager implements CompatibilityManager {
             return GeyserUtils.isGeyserPlayer(uuid);
         }
         return uuid.version() == 0;
+    }
+
+    @Override
+    public void logContainerOperation(Player player, World world, BlockPos pos, Supplier<Object> container, boolean isInventory) {
+        if (this.hasCoreProtect) {
+            CoreProtectHelper.logContainerOperation(player, new WorldPosition(world, pos), container.get(), isInventory);
+        }
     }
 }

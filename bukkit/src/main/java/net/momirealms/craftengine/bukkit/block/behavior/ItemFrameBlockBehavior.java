@@ -22,6 +22,7 @@ import net.momirealms.craftengine.core.entity.player.InteractionHand;
 import net.momirealms.craftengine.core.entity.player.InteractionResult;
 import net.momirealms.craftengine.core.entity.player.Player;
 import net.momirealms.craftengine.core.item.Item;
+import net.momirealms.craftengine.core.plugin.CraftEngine;
 import net.momirealms.craftengine.core.sound.SoundData;
 import net.momirealms.craftengine.core.util.Direction;
 import net.momirealms.craftengine.core.util.ItemUtils;
@@ -31,6 +32,7 @@ import net.momirealms.craftengine.core.world.Vec3d;
 import net.momirealms.craftengine.core.world.World;
 import net.momirealms.craftengine.core.world.context.UseOnContext;
 import org.bukkit.Location;
+import org.bukkit.Material;
 import org.bukkit.inventory.ItemStack;
 import org.joml.Vector3f;
 
@@ -154,6 +156,11 @@ public class ItemFrameBlockBehavior extends BukkitBlockBehavior implements Entit
             }
             playSound(world, pos, this.takeSound);
             player.swingHand(context.getHand());
+            CraftEngine.instance().compatibilityManager().logContainerOperation(
+                    player, world, pos,
+                    () -> new Object[]{new ItemStack[]{item.getItem().clone()}, new ItemStack[]{new ItemStack(Material.AIR)}},
+                    false
+            );
             return InteractionResult.SUCCESS_AND_CANCEL;
         }
         // 当方块实体内部没有物品切换手上物品不为空则放入
@@ -167,6 +174,11 @@ public class ItemFrameBlockBehavior extends BukkitBlockBehavior implements Entit
             itemFrame.updateItem(copied); // 然后放进去
             playSound(world, pos, this.putSound);
             player.swingHand(context.getHand());
+            CraftEngine.instance().compatibilityManager().logContainerOperation(
+                    player, world, pos,
+                    () -> new Object[]{new ItemStack[]{new ItemStack(Material.AIR)}, new ItemStack[]{itemFrame.item().getItem().clone()}},
+                    false
+            );
             return InteractionResult.SUCCESS_AND_CANCEL;
         }
         return InteractionResult.SUCCESS_AND_CANCEL;
