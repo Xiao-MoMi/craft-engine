@@ -6,10 +6,10 @@ import net.momirealms.craftengine.core.entity.data.EntityData;
 
 public class BukkitEntityData<T> implements EntityData<T> {
     public static final ClassTreeIdRegistry ID_REGISTRY = new ClassTreeIdRegistry();
-    private final int id;
-    private final Object serializer;
-    private final T defaultValue;
-    private final Object entityDataAccessor;
+    public final int id;
+    public final Object serializer;
+    public final T defaultValue;
+    public final Object entityDataAccessor;
 
     public BukkitEntityData(Class<?> clazz, Object serializer, T defaultValue) {
         this.id = ID_REGISTRY.define(clazz);

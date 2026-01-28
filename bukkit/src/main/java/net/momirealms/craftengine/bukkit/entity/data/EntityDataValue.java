@@ -45,6 +45,8 @@ public class EntityDataValue {
     public static final Object Serializers$SNIFFER_STATE;
     public static final Object Serializers$VECTOR3;
     public static final Object Serializers$QUATERNION;
+    public static final Object Serializers$RESOLVABLE_PROFILE;
+    public static final Object Serializers$HUMANOID_ARM;
 
     static {
         try {
@@ -86,6 +88,10 @@ public class EntityDataValue {
             Serializers$SNIFFER_STATE = initSerializersByName("SNIFFER_STATE");
             Serializers$VECTOR3 = initSerializersByName("VECTOR3");
             Serializers$QUATERNION = initSerializersByName("QUATERNION");
+            if (VersionHelper.isOrAbove1_21_9()) Serializers$RESOLVABLE_PROFILE = initSerializersByName("RESOLVABLE_PROFILE");
+            else Serializers$RESOLVABLE_PROFILE = null;
+            if (VersionHelper.isOrAbove1_21_11()) Serializers$HUMANOID_ARM = initSerializersByName("HUMANOID_ARM");
+            else Serializers$HUMANOID_ARM = null;
         } catch (ReflectiveOperationException e) {
             throw new ExceptionInInitializerError(e);
         }

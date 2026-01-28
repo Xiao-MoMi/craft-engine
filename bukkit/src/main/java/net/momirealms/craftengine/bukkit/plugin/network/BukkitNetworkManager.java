@@ -1,10 +1,13 @@
 package net.momirealms.craftengine.bukkit.plugin.network;
 
+import com.google.common.collect.ImmutableMultimap;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
+import com.mojang.authlib.properties.Property;
+import com.mojang.authlib.properties.PropertyMap;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import com.mojang.datafixers.util.Either;
 import com.mojang.serialization.DataResult;
@@ -31,6 +34,7 @@ import net.momirealms.craftengine.bukkit.api.event.FurnitureBreakEvent;
 import net.momirealms.craftengine.bukkit.api.event.FurnitureHitEvent;
 import net.momirealms.craftengine.bukkit.api.event.FurnitureInteractEvent;
 import net.momirealms.craftengine.bukkit.block.BukkitBlockManager;
+import net.momirealms.craftengine.bukkit.block.entity.BedBlockEntity;
 import net.momirealms.craftengine.bukkit.entity.data.BaseEntityData;
 import net.momirealms.craftengine.bukkit.entity.furniture.BukkitFurniture;
 import net.momirealms.craftengine.bukkit.entity.furniture.BukkitFurnitureManager;
@@ -548,6 +552,12 @@ public class BukkitNetworkManager extends AbstractNetworkManager implements List
         if (serverPlayer != null) {
             this.resetUserArray();
             this.saveCooldown(player, serverPlayer.cooldown());
+            // 床方块实体特殊处理
+            BedBlockEntity bed = serverPlayer.bedBlockEntity();
+            serverPlayer.setBedBlockEntity(null);
+            if (bed != null) {
+                bed.setOccupier(null);
+            }
         }
     }
 
@@ -2058,6 +2068,29 @@ public class BukkitNetworkManager extends AbstractNetworkManager implements List
             FriendlyByteBuf buffer = event.getBuffer();
             user.setVerifiedUUID(buffer.readUUID());
             user.setVerifiedName(buffer.readUtf(16));
+            int count = buffer.readVarInt();
+            PropertyMap propertyMap;
+            if (VersionHelper.isOrAbove1_21_9()) {
+                ImmutableMultimap.Builder<String, Property> builder = ImmutableMultimap.builder();
+                for (int i = 0; i < count; ++i) {
+                    String name = buffer.readUtf(64);
+                    String value = buffer.readUtf();
+                    String signature = buffer.readNullable(buf -> buf.readUtf(1024));
+                    Property property = new Property(name, value, signature);
+                    builder.put(name, property);
+                }
+                propertyMap = new PropertyMap(builder.build());
+            } else {
+                propertyMap = LegacyAuthLibUtils.constructor$PropertyMap();
+                for (int i = 0; i < count; ++i) {
+                    String name = buffer.readUtf(64);
+                    String value = buffer.readUtf();
+                    String signature = buffer.readNullable(buf -> buf.readUtf(1024));
+                    Property property = new Property(name, value, signature);
+                    propertyMap.put(name, property);
+                }
+            }
+            user.setPropertyMap(propertyMap);
         }
     }
 
