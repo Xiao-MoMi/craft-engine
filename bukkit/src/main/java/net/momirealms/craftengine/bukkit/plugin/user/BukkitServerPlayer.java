@@ -4,12 +4,14 @@ import ca.spottedleaf.concurrentutil.map.ConcurrentLong2ReferenceChainedHashTabl
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.collect.Lists;
+import com.mojang.authlib.properties.PropertyMap;
 import io.netty.buffer.Unpooled;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelHandler;
 import net.kyori.adventure.text.Component;
 import net.momirealms.craftengine.bukkit.api.BukkitAdaptors;
 import net.momirealms.craftengine.bukkit.api.CraftEngineFurniture;
+import net.momirealms.craftengine.bukkit.block.entity.BedBlockEntity;
 import net.momirealms.craftengine.bukkit.block.entity.BlockEntityHolder;
 import net.momirealms.craftengine.bukkit.entity.furniture.BukkitFurniture;
 import net.momirealms.craftengine.bukkit.item.BukkitItemManager;
@@ -95,6 +97,7 @@ public class BukkitServerPlayer extends Player {
     private ChannelHandler connection;
     private String name;
     private UUID uuid;
+    private PropertyMap propertyMap;
     private boolean isNameVerified;
     private boolean isUUIDVerified;
     private ConnectionState decoderState; // inbound(decode|c2s)
@@ -188,6 +191,8 @@ public class BukkitServerPlayer extends Player {
             .concurrencyLevel(4)
             .build();
     private final Set<UniqueKey> obtainedItems = new HashSet<>();
+    // 玩家正在使用的床方块实体
+    private BedBlockEntity bedBlockEntity;
 
     public BukkitServerPlayer(BukkitCraftEngine plugin, @Nullable Channel channel) {
         this.channel = channel;
@@ -435,6 +440,16 @@ public class BukkitServerPlayer extends Player {
         if (this.isUUIDVerified) return;
         this.uuid = uuid;
         this.isUUIDVerified = true;
+    }
+
+    @Override
+    public PropertyMap propertyMap() {
+        return this.propertyMap;
+    }
+
+    @Override
+    public void setPropertyMap(PropertyMap map) {
+        this.propertyMap = map;
     }
 
     @Override
@@ -1676,5 +1691,17 @@ public class BukkitServerPlayer extends Player {
 
     public Set<UniqueKey> obtainedItems() {
         return this.obtainedItems;
+    }
+
+    @Nullable
+    public BedBlockEntity bedBlockEntity() {
+        return bedBlockEntity;
+    }
+
+    public void setBedBlockEntity(@Nullable BedBlockEntity bedBlockEntity) {
+        if (this.bedBlockEntity != null) {
+            this.bedBlockEntity.setOccupier(null);
+        }
+        this.bedBlockEntity = bedBlockEntity;
     }
 }

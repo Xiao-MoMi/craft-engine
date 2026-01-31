@@ -25,6 +25,7 @@ public final class Properties {
     public static final PropertyType<?> SLAB_TYPE = register(Key.ce("slab_type"), EnumProperty.factory(SlabType.class));
     public static final PropertyType<?> SOFA_SHAPE = register(Key.ce("sofa_shape"), EnumProperty.factory(SofaShape.class));
     public static final PropertyType<?> ANCHOR_TYPE = register(Key.ce("anchor_type"), EnumProperty.factory(AnchorType.class));
+    public static final PropertyType<?> BED_PART = register(Key.ce("bed_part"), EnumProperty.factory(BedPart.class));
 
     private Properties() {}
 

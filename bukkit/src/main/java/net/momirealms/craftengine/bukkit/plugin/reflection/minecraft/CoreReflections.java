@@ -891,6 +891,21 @@ public final class CoreReflections {
             )
     );
 
+    public static final Method method$GameType$values = requireNonNull(
+            ReflectionUtils.getStaticMethod(clazz$GameType, clazz$GameType.arrayType())
+    );
+
+    public static final Object instance$GameType$SURVIVAL;
+
+    static {
+        try {
+            Object[] values = (Object[]) method$GameType$values.invoke(null);
+            instance$GameType$SURVIVAL = values[0];
+        } catch (ReflectiveOperationException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
     public static final Method method$GameType$getId = requireNonNull(
             ReflectionUtils.getMethod(clazz$GameType, new String[] { "getId", "a" })
     );
@@ -4868,6 +4883,31 @@ public final class CoreReflections {
             instance$DataFixer = (DataFixer) method$DataFixers$getDataFixer.invoke(null);
         } catch (ReflectiveOperationException e) {
             throw new ReflectionInitException("Failed to get DataFixer", e);
+        }
+    }
+
+    public static final Class<?> clazz$HumanoidArm = requireNonNull(
+            BukkitReflectionUtils.findReobfOrMojmapClass(
+                    "world.entity.EnumMainHand",
+                    "world.entity.HumanoidArm"
+            )
+    );
+
+    public static final Method method$HumanoidArm$values = requireNonNull(
+            ReflectionUtils.getStaticMethod(clazz$HumanoidArm, clazz$HumanoidArm.arrayType())
+    );
+
+    public static final Object[] instance$HumanoidArm$values;
+    public static final Object instance$HumanoidArm$LEFT;
+    public static final Object instance$HumanoidArm$RIGHT;
+
+    static {
+        try {
+            instance$HumanoidArm$values = (Object[]) method$HumanoidArm$values.invoke(null);
+            instance$HumanoidArm$LEFT = instance$HumanoidArm$values[0];
+            instance$HumanoidArm$RIGHT = instance$HumanoidArm$values[1];
+        } catch (ReflectiveOperationException e) {
+            throw new ReflectionInitException("Failed to init HumanoidArm", e);
         }
     }
 }

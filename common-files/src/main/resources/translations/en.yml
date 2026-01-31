@@ -444,6 +444,8 @@ warning.config.block.behavior.multi_high.missing_property_name: "<yellow>Issue f
 warning.config.block.behavior.multi_high.missing_property: "<yellow>Issue found in file <arg:0> - The block '<arg:1>' is missing the required '<arg:2>' property for 'multi_high_block' behavior.</yellow>"
 warning.config.block.behavior.spreading.missing_target_block: "<yellow>Issue found in file <arg:0> - The block '<arg:1>' is missing the required 'target-block' argument for 'spreading_block' behavior.</yellow>"
 warning.config.block.behavior.item_frame.missing_facing: "<yellow>Issue found in file <arg:0> - The block '<arg:1>' is missing the required 'facing' property for 'item_frame_block' behavior.</yellow>"
+warning.config.block.behavior.bed.missing_facing: "<yellow>Issue found in file <arg:0> - The block '<arg:1>' is missing the required 'facing' property for 'bed_block' behavior.</yellow>"
+warning.config.block.behavior.bed.missing_part: "<yellow>Issue found in file <arg:0> - The block '<arg:1>' is missing the required 'part' property for 'bed_block' behavior.</yellow>"
 warning.config.model.generation.missing_parent: "<yellow>Issue found in file <arg:0> - The config '<arg:1>' is missing the required 'parent' argument in 'generation' section.</yellow>"
 warning.config.model.generation.conflict: "<yellow>Issue found in file <arg:0> - Failed to generate model for '<arg:1>' as two or more configurations attempt to generate different json models with the same path: '<arg:2>'.</yellow>"
 warning.config.model.generation.invalid_display_position: "<yellow>Issue found in file <arg:0> - The config '<arg:1>' is using an invalid display position '<arg:2>' in 'generation.display' section. Allowed display positions: [<arg:3>]</yellow>"

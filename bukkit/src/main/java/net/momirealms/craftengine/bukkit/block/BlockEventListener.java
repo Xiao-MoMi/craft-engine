@@ -1,8 +1,12 @@
 package net.momirealms.craftengine.bukkit.block;
 
 import io.papermc.paper.event.block.BlockBreakBlockEvent;
+import io.papermc.paper.event.player.PlayerArmSwingEvent;
+import io.papermc.paper.event.player.PlayerInventorySlotChangeEvent;
 import net.momirealms.craftengine.bukkit.api.BukkitAdaptors;
 import net.momirealms.craftengine.bukkit.api.event.CustomBlockBreakEvent;
+import net.momirealms.craftengine.bukkit.block.entity.BedBlockEntity;
+import net.momirealms.craftengine.bukkit.block.entity.renderer.DynamicPlayerRenderer;
 import net.momirealms.craftengine.bukkit.nms.FastNMS;
 import net.momirealms.craftengine.bukkit.plugin.BukkitCraftEngine;
 import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.CoreReflections;
@@ -40,7 +44,9 @@ import org.bukkit.event.block.BlockPhysicsEvent;
 import org.bukkit.event.block.BlockPlaceEvent;
 import org.bukkit.event.entity.EntityDamageByEntityEvent;
 import org.bukkit.event.entity.EntityDamageEvent;
+import org.bukkit.event.player.PlayerItemHeldEvent;
 import org.bukkit.event.world.GenericGameEvent;
+import org.bukkit.inventory.EquipmentSlot;
 import org.bukkit.inventory.ItemStack;
 
 import java.util.Optional;
@@ -333,5 +339,43 @@ public final class BlockEventListener implements Listener {
                 }
             }
         }
+    }
+
+    // 床方块实体辅助监听器
+    @EventHandler(priority = EventPriority.MONITOR)
+    public void onPlayerInventorySlotChange(PlayerInventorySlotChangeEvent event) {
+        int slot = event.getSlot();
+        if (slot != 40 && slot != 39 && slot != 38 && slot != 37 && slot != 36) return; // 副手和装备栏
+        Player player = event.getPlayer();
+        BukkitServerPlayer serverPlayer = BukkitAdaptors.adapt(player);
+        if (serverPlayer == null) return;
+        BedBlockEntity bed = serverPlayer.bedBlockEntity();
+        if (bed == null) return;
+        DynamicPlayerRenderer renderer = bed.renderer();
+        if (renderer == null) return;
+        renderer.updateEquipment(serverPlayer);
+        player.updateInventory();
+    }
+
+    @EventHandler(priority = EventPriority.MONITOR)
+    public void onPlayerItemHeld(PlayerItemHeldEvent event) {
+        Player player = event.getPlayer();
+        BukkitServerPlayer serverPlayer = BukkitAdaptors.adapt(player);
+        if (serverPlayer == null) return;
+        BedBlockEntity bed = serverPlayer.bedBlockEntity();
+        if (bed == null) return;
+        DynamicPlayerRenderer renderer = bed.renderer();
+        if (renderer == null) return;
+        renderer.updateEquipment(serverPlayer, event.getNewSlot());
+        player.updateInventory();
+    }
+
+    @EventHandler(priority = EventPriority.MONITOR)
+    public void onPlayerArmSwing(PlayerArmSwingEvent event) {
+        BukkitServerPlayer serverPlayer = BukkitAdaptors.adapt(event.getPlayer());
+        if (serverPlayer == null) return;
+        BedBlockEntity bed = serverPlayer.bedBlockEntity();
+        if (bed == null) return;
+        bed.playAnimation(event.getHand() == EquipmentSlot.HAND ? 0 : 3);
     }
 }

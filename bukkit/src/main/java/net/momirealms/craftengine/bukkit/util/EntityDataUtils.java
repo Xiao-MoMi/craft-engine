@@ -10,6 +10,13 @@ public final class EntityDataUtils {
     private static final int LEFT_ALIGNMENT = 0x08; // 8
     private static final int RIGHT_ALIGNMENT = 0x10; // 16
     public static final int UNSAFE_ITEM_DATA_ID = 8; // 正常来说应该通过定义 Data 获取 id 这样的做法未经验证可能不安全
+    public static final int SHARED_FLAG_ON_FIRE = 0;
+    public static final int SHARED_FLAG_SNEAKING = 1;
+    public static final int SHARED_FLAG_SPRINTING = 3;
+    public static final int SHARED_FLAG_SWIMMING = 4;
+    public static final int SHARED_FLAG_INVISIBLE = 5;
+    public static final int SHARED_FLAG_GLOWING = 6;
+    public static final int SHARED_FLAG_FLYING_WITH_ELYTRA = 7;
 
     public static byte encodeTextDisplayMask(boolean hasShadow, boolean isSeeThrough, boolean useDefaultBackground, int alignment) {
         int bitMask = 0;
@@ -81,5 +88,13 @@ public final class EntityDataUtils {
 
     public static boolean isCrouching(byte mask) {
         return (mask & IS_CROUCHING) != 0;
+    }
+
+    public static boolean getSharedFlag(byte flags, int flag) {
+        return (flags & 1 << flag) != 0;
+    }
+
+    public static byte setSharedFlag(byte flags, int flag, boolean value) {
+        return (byte) (value ? (flags | 1 << flag) : (flags & ~(1 << flag)));
     }
 }
