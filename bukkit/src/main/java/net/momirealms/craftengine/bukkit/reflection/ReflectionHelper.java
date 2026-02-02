@@ -101,8 +101,8 @@ public final class ReflectionHelper {
 
         @Override
         public String remapClassName(String className) {
-            if (PREFIX_CRAFTBUKKIT.startsWith(className)) {
-                return PREFIX_CRAFTBUKKIT + CB_PKG_VERSION + className.substring(PREFIX_CRAFTBUKKIT.length());
+            if (className != null && className.startsWith(PREFIX_CRAFTBUKKIT)) {
+                return PREFIX_CRAFTBUKKIT + CB_PKG_VERSION + className.substring(PREFIX_CRAFTBUKKIT.length() + 1);
             }
             return this.remapper.remapClassName(className);
         }

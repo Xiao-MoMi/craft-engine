@@ -5,7 +5,6 @@ import net.momirealms.sparrow.reflection.proxy.Strategy;
 import net.momirealms.sparrow.reflection.proxy.annotation.FieldGetter;
 import net.momirealms.sparrow.reflection.proxy.annotation.FieldSetter;
 import net.momirealms.sparrow.reflection.proxy.annotation.ReflectionProxy;
-import org.bukkit.inventory.InventoryView;
 
 @ReflectionProxy(name = "org.bukkit.craftbukkit.inventory.CraftInventoryView")
 public interface CraftInventoryViewProxy {
@@ -13,8 +12,8 @@ public interface CraftInventoryViewProxy {
     Class<?> CLAZZ = ReflectionHelper.getClass(CraftInventoryViewProxy.class);
 
     @FieldGetter(name = "container")
-    Object container(InventoryView instance);
+    Object container(Object instance);
 
     @FieldSetter(name = "container", strategy = Strategy.MH)
-    void container(InventoryView instance, Object container);
+    void container(Object instance, Object container);
 }
