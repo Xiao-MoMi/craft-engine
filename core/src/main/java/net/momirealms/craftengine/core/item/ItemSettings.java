@@ -507,7 +507,7 @@ public final class ItemSettings {
             }));
             registerFactory("equipment", (value -> {
                 Map<String, Object> args = MiscUtils.castToMap(value, false);
-                Tristate clientBoundModel = Tristate.of((Boolean) args.get("client-bound-model"));
+                Tristate clientBoundModel = VersionHelper.PREMIUM ? Tristate.of((Boolean) args.get("client-bound-model")) : Tristate.UNDEFINED;
                 Key assetId = Key.of(ResourceConfigUtils.requireNonEmptyStringOrThrow(args.get("asset-id"), "warning.config.item.settings.equipment.missing_asset_id"));
                 Optional<Equipment> optionalEquipment = CraftEngine.instance().itemManager().getEquipment(assetId);
                 if (optionalEquipment.isEmpty()) {

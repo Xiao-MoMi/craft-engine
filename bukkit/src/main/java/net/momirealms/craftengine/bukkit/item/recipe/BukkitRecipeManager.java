@@ -9,10 +9,10 @@ import net.momirealms.craftengine.bukkit.item.BukkitItemManager;
 import net.momirealms.craftengine.bukkit.nms.FastNMS;
 import net.momirealms.craftengine.bukkit.plugin.BukkitCraftEngine;
 import net.momirealms.craftengine.bukkit.plugin.injector.RecipeInjector;
-import net.momirealms.craftengine.bukkit.plugin.reflection.ReflectionInitException;
-import net.momirealms.craftengine.bukkit.plugin.reflection.bukkit.CraftBukkitReflections;
 import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.CoreReflections;
 import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.MRegistries;
+import net.momirealms.craftengine.bukkit.reflection.ReflectionInitException;
+import net.momirealms.craftengine.bukkit.reflection.craftbukkit.CraftServerProxy;
 import net.momirealms.craftengine.bukkit.util.ItemStackUtils;
 import net.momirealms.craftengine.bukkit.util.KeyUtils;
 import net.momirealms.craftengine.core.item.BuildableItem;
@@ -396,7 +396,7 @@ public class BukkitRecipeManager extends AbstractRecipeManager<ItemStack> {
             }
 
             // send to players
-            CoreReflections.methodHandle$DedicatedPlayerList$reloadRecipes.invokeExact(CraftBukkitReflections.methodHandle$CraftServer$playerListGetter.invokeExact(Bukkit.getServer()));
+            CoreReflections.methodHandle$DedicatedPlayerList$reloadRecipes.invokeExact(CraftServerProxy.INSTANCE.playerList(Bukkit.getServer()));
         } catch (Throwable e) {
             this.plugin.logger().warn("Failed to run delayed recipe tasks", e);
         }

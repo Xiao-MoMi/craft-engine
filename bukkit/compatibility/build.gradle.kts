@@ -23,6 +23,8 @@ dependencies {
     compileOnly("net.momirealms:craft-engine-nms-helper:${rootProject.properties["nms_helper_version"]}")
     // Platform
     compileOnly("io.papermc.paper:paper-api:${rootProject.properties["paper_version"]}-R0.1-SNAPSHOT")
+    // Reflection
+    compileOnly("net.momirealms:sparrow-reflection:${rootProject.properties["sparrow_reflection_version"]}")
     // Netty
     compileOnly("io.netty:netty-all:${rootProject.properties["netty_version"]}")
     // Placeholder

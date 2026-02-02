@@ -91,5 +91,6 @@ tasks {
         relocate("io.netty.handler.codec.spdy", "net.momirealms.craftengine.libraries.netty.handler.codec.spdy")
         relocate("io.netty.handler.codec.http2", "net.momirealms.craftengine.libraries.netty.handler.codec.http2")
         relocate("io.github.bucket4j", "net.momirealms.craftengine.libraries.bucket4j")
+        relocate("net.momirealms.sparrow.reflection", "net.momirealms.craftengine.libraries.reflection")
     }
 }

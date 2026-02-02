@@ -34,6 +34,8 @@ dependencies {
     implementation("net.momirealms:sparrow-nbt-legacy-codec:${rootProject.properties["sparrow_nbt_version"]}")
     // S3
     implementation("net.momirealms:craft-engine-s3:0.14")
+    // Reflection
+    implementation("net.momirealms:sparrow-reflection:${rootProject.properties["sparrow_reflection_version"]}")
     // Util
     compileOnly("net.momirealms:sparrow-util:${rootProject.properties["sparrow_util_version"]}")
     // Adventure
@@ -130,6 +132,7 @@ tasks {
         relocate("io.github.bucket4j", "net.momirealms.craftengine.libraries.bucket4j") // bucket4j
         relocate("cn.gtemc.itembridge", "net.momirealms.craftengine.libraries.itembridge")
         relocate("cn.gtemc.levelerbridge", "net.momirealms.craftengine.libraries.levelerbridge")
+        relocate("net.momirealms.sparrow.reflection", "net.momirealms.craftengine.libraries.reflection")
     }
 }
 

@@ -3,10 +3,10 @@ package net.momirealms.craftengine.bukkit.util;
 import com.mojang.serialization.Dynamic;
 import net.momirealms.craftengine.bukkit.item.BukkitItemManager;
 import net.momirealms.craftengine.bukkit.nms.FastNMS;
-import net.momirealms.craftengine.bukkit.plugin.reflection.bukkit.CraftBukkitReflections;
 import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.CoreReflections;
 import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.MReferences;
 import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.MRegistryOps;
+import net.momirealms.craftengine.bukkit.reflection.craftbukkit.inventory.CraftItemStackProxy;
 import net.momirealms.craftengine.core.item.Item;
 import net.momirealms.craftengine.core.item.recipe.UniqueIdItem;
 import net.momirealms.craftengine.core.plugin.CraftEngine;
@@ -48,7 +48,7 @@ public final class ItemStackUtils {
     }
 
     public static ItemStack ensureCraftItemStack(ItemStack itemStack) {
-        if (CraftBukkitReflections.clazz$CraftItemStack.isInstance(itemStack)) {
+        if (CraftItemStackProxy.CLAZZ.isInstance(itemStack)) {
             return itemStack;
         } else {
             return FastNMS.INSTANCE.method$CraftItemStack$asCraftCopy(itemStack);

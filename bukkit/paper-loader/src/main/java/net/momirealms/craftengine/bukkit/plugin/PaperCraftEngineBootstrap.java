@@ -7,6 +7,7 @@ import io.papermc.paper.plugin.lifecycle.event.types.LifecycleEvents;
 import net.momirealms.craftengine.bukkit.plugin.agent.RuntimePatcher;
 import net.momirealms.craftengine.bukkit.plugin.classpath.BukkitClassPathAppender;
 import net.momirealms.craftengine.bukkit.plugin.classpath.PaperPluginClassPathAppender;
+import net.momirealms.craftengine.bukkit.reflection.ReflectionHelper;
 import net.momirealms.craftengine.core.plugin.logger.PluginLogger;
 import net.momirealms.craftengine.core.plugin.logger.Slf4jPluginLogger;
 import net.momirealms.craftengine.core.util.ReflectionUtils;
@@ -34,6 +35,7 @@ public final class PaperCraftEngineBootstrap implements PluginBootstrap {
 
     @Override
     public void bootstrap(@NotNull BootstrapContext context) {
+        ReflectionHelper.init();
         PluginLogger logger;
         try {
             logger = new Slf4jPluginLogger((org.slf4j.Logger) method$PluginProviderContext$getLogger.invoke(context));

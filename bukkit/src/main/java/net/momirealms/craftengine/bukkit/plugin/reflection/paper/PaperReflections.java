@@ -3,8 +3,9 @@ package net.momirealms.craftengine.bukkit.plugin.reflection.paper;
 import com.google.gson.Gson;
 import io.papermc.paper.event.player.AsyncChatDecorateEvent;
 import it.unimi.dsi.fastutil.longs.LongOpenHashSet;
-import net.momirealms.craftengine.bukkit.plugin.reflection.bukkit.CraftBukkitReflections;
 import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.CoreReflections;
+import net.momirealms.craftengine.bukkit.reflection.bukkit.event.block.SignChangeEventProxy;
+import net.momirealms.craftengine.bukkit.reflection.bukkit.inventory.meta.BookMetaProxy;
 import net.momirealms.craftengine.core.util.ReflectionUtils;
 import net.momirealms.craftengine.core.util.VersionHelper;
 
@@ -98,11 +99,11 @@ public final class PaperReflections {
     }
 
     public static final Method method$SignChangeEvent$line = requireNonNull(
-            ReflectionUtils.getMethod(CraftBukkitReflections.clazz$SignChangeEvent, void.class, int.class, clazz$AdventureComponent)
+            ReflectionUtils.getMethod(SignChangeEventProxy.CLAZZ, void.class, int.class, clazz$AdventureComponent)
     );
 
     public static final Method method$BookMeta$page = requireNonNull(
-            ReflectionUtils.getMethod(CraftBukkitReflections.clazz$BookMeta, void.class, int.class, clazz$AdventureComponent)
+            ReflectionUtils.getMethod(BookMetaProxy.CLAZZ, void.class, int.class, clazz$AdventureComponent)
     );
 
     public static final Class<?> clazz$RegionizedPlayerChunkLoader$PlayerChunkLoaderData = requireNonNull(

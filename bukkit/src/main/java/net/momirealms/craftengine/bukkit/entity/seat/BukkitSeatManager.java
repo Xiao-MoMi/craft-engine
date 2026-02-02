@@ -1,7 +1,6 @@
 package net.momirealms.craftengine.bukkit.entity.seat;
 
 import net.momirealms.craftengine.bukkit.api.BukkitAdaptors;
-import net.momirealms.craftengine.bukkit.block.entity.BedBlockEntity;
 import net.momirealms.craftengine.bukkit.entity.furniture.DismountListener1_20;
 import net.momirealms.craftengine.bukkit.entity.furniture.DismountListener1_20_3;
 import net.momirealms.craftengine.bukkit.plugin.BukkitCraftEngine;

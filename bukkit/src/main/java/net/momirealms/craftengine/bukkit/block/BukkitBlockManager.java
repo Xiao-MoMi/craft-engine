@@ -9,9 +9,9 @@ import net.momirealms.craftengine.bukkit.plugin.injector.BlockGenerator;
 import net.momirealms.craftengine.bukkit.plugin.network.BukkitNetworkManager;
 import net.momirealms.craftengine.bukkit.plugin.network.payload.PayloadHelper;
 import net.momirealms.craftengine.bukkit.plugin.network.payload.protocol.VisualBlockStatePacket;
-import net.momirealms.craftengine.bukkit.plugin.reflection.bukkit.CraftBukkitReflections;
 import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.*;
 import net.momirealms.craftengine.bukkit.plugin.user.BukkitServerPlayer;
+import net.momirealms.craftengine.bukkit.reflection.craftbukkit.util.CraftMagicNumbersProxy;
 import net.momirealms.craftengine.bukkit.util.*;
 import net.momirealms.craftengine.core.block.*;
 import net.momirealms.craftengine.core.block.behavior.BlockBehavior;
@@ -362,7 +362,7 @@ public final class BukkitBlockManager extends AbstractBlockManager {
                 DelegatingBlock customBlock;
                 try {
                     customBlock = BlockGenerator.generateBlock(customBlockId);
-                } catch (Throwable t) {
+                } catch (ReflectiveOperationException t) {
                     CraftEngine.instance().logger().warn("Failed to generate custom block " + customBlockId, t);
                     break;
                 }
@@ -465,33 +465,29 @@ public final class BukkitBlockManager extends AbstractBlockManager {
         }
     }
 
-    @SuppressWarnings("unchecked")
     private void deceiveBukkitRegistry() {
-        try {
-            Map<Object, Material> magicMap = (Map<Object, Material>) CraftBukkitReflections.field$CraftMagicNumbers$BLOCK_MATERIAL.get(null);
-            Set<String> invalid = new HashSet<>();
-            for (int i = 0; i < this.customBlocks.length; i++) {
-                DelegatingBlock customBlock = this.customBlocks[i];
-                String value = Config.deceiveBukkitMaterial(i).value();
-                Material material;
-                try {
-                    material = Material.valueOf(value.toUpperCase(Locale.ROOT));
-                } catch (IllegalArgumentException e) {
-                    if (invalid.add(value)) {
-                        this.plugin.logger().warn("Cannot load 'deceive-bukkit-material'. '" + value + "' is an invalid bukkit material", e);
-                    }
-                    material = Material.BRICKS;
+        @SuppressWarnings("unchecked")
+        Map<Object, Material> magicMap = (Map<Object, Material>) CraftMagicNumbersProxy.INSTANCE.BLOCK_MATERIAL();
+        Set<String> invalid = new HashSet<>();
+        for (int i = 0; i < this.customBlocks.length; i++) {
+            DelegatingBlock customBlock = this.customBlocks[i];
+            String value = Config.deceiveBukkitMaterial(i).value();
+            Material material;
+            try {
+                material = Material.valueOf(value.toUpperCase(Locale.ROOT));
+            } catch (IllegalArgumentException e) {
+                if (invalid.add(value)) {
+                    this.plugin.logger().warn("Cannot load 'deceive-bukkit-material'. '" + value + "' is an invalid bukkit material", e);
                 }
-                if (!material.isBlock()) {
-                    if (invalid.add(value)) {
-                        this.plugin.logger().warn("Cannot load 'deceive-bukkit-material'. '" + value + "' is an invalid bukkit block material");
-                    }
-                    material = Material.BRICKS;
-                }
-                magicMap.put(customBlock, material);
+                material = Material.BRICKS;
             }
-        } catch (ReflectiveOperationException e) {
-            this.plugin.logger().warn("Failed to deceive bukkit magic blocks", e);
+            if (!material.isBlock()) {
+                if (invalid.add(value)) {
+                    this.plugin.logger().warn("Cannot load 'deceive-bukkit-material'. '" + value + "' is an invalid bukkit block material");
+                }
+                material = Material.BRICKS;
+            }
+            magicMap.put(customBlock, material);
         }
     }
 

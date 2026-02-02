@@ -1,10 +1,12 @@
 package net.momirealms.craftengine.bukkit.block.behavior;
 
 import net.momirealms.craftengine.bukkit.nms.FastNMS;
-import net.momirealms.craftengine.bukkit.plugin.reflection.bukkit.CraftBukkitReflections;
 import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.CoreReflections;
 import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.MBlocks;
 import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.MFluids;
+import net.momirealms.craftengine.bukkit.reflection.craftbukkit.block.CraftBlockStateProxy;
+import net.momirealms.craftengine.bukkit.reflection.craftbukkit.block.CraftBlockStatesProxy;
+import net.momirealms.craftengine.bukkit.reflection.craftbukkit.event.CraftEventFactoryProxy;
 import net.momirealms.craftengine.bukkit.util.BlockStateUtils;
 import net.momirealms.craftengine.bukkit.util.EventUtils;
 import net.momirealms.craftengine.bukkit.util.LocationUtils;
@@ -49,7 +51,7 @@ public class ConcretePowderBlockBehavior extends BukkitBlockBehavior {
             if (!shouldSolidify(level, blockPos, previousState)) {
                 return super.updateStateForPlacement(context, state);
             } else {
-                BlockState craftBlockState = (BlockState) CraftBukkitReflections.method$CraftBlockStates$getBlockState.invoke(null, level, blockPos);
+                BlockState craftBlockState = CraftBlockStatesProxy.INSTANCE.getBlockState(level, blockPos);
                 craftBlockState.setBlockData(BlockStateUtils.fromBlockData(getDefaultBlockState()));
                 BlockFormEvent event = new BlockFormEvent(craftBlockState.getBlock(), craftBlockState);
                 if (!EventUtils.fireAndCheckCancel(event)) {
@@ -70,7 +72,7 @@ public class ConcretePowderBlockBehavior extends BukkitBlockBehavior {
         Object blockPos = args[1];
         Object replaceableState = args[3];
         if (shouldSolidify(world, blockPos, replaceableState)) {
-            CraftBukkitReflections.method$CraftEventFactory$handleBlockFormEvent.invoke(null, world, blockPos, getDefaultBlockState(), UpdateOption.UPDATE_ALL.flags());
+            CraftEventFactoryProxy.INSTANCE.handleBlockFormEvent(world, blockPos, getDefaultBlockState(), UpdateOption.UPDATE_ALL.flags(), null);
         }
     }
 
@@ -83,11 +85,11 @@ public class ConcretePowderBlockBehavior extends BukkitBlockBehavior {
             if (!CoreReflections.clazz$Level.isInstance(level)) {
                 return getDefaultBlockState();
             } else {
-                BlockState craftBlockState = (BlockState) CraftBukkitReflections.method$CraftBlockStates$getBlockState.invoke(null, level, pos);
+                BlockState craftBlockState = CraftBlockStatesProxy.INSTANCE.getBlockState(level, pos);
                 craftBlockState.setBlockData(BlockStateUtils.fromBlockData(getDefaultBlockState()));
                 BlockFormEvent event = new BlockFormEvent(craftBlockState.getBlock(), craftBlockState);
                 if (!EventUtils.fireAndCheckCancel(event)) {
-                    return CraftBukkitReflections.method$CraftBlockState$getHandle.invoke(craftBlockState);
+                    return CraftBlockStateProxy.INSTANCE.getHandle(craftBlockState);
                 }
             }
         }

@@ -7,9 +7,11 @@ import net.momirealms.craftengine.bukkit.item.BukkitItemManager;
 import net.momirealms.craftengine.bukkit.item.DataComponentTypes;
 import net.momirealms.craftengine.bukkit.nms.FastNMS;
 import net.momirealms.craftengine.bukkit.plugin.BukkitCraftEngine;
-import net.momirealms.craftengine.bukkit.plugin.reflection.bukkit.CraftBukkitReflections;
 import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.CoreReflections;
 import net.momirealms.craftengine.bukkit.plugin.user.BukkitServerPlayer;
+import net.momirealms.craftengine.bukkit.reflection.craftbukkit.inventory.CraftComplexRecipeProxy;
+import net.momirealms.craftengine.bukkit.reflection.craftbukkit.inventory.CraftInventoryAnvilProxy;
+import net.momirealms.craftengine.bukkit.reflection.craftbukkit.inventory.CraftInventoryViewProxy;
 import net.momirealms.craftengine.bukkit.util.*;
 import net.momirealms.craftengine.core.entity.player.InteractionHand;
 import net.momirealms.craftengine.core.item.*;
@@ -461,9 +463,9 @@ public class RecipeEventListener implements Listener {
         try {
             Object anvilMenu;
             if (VersionHelper.isOrAbove1_21()) {
-                anvilMenu = CraftBukkitReflections.field$CraftInventoryView$container.get(event.getView());
+                anvilMenu = CraftInventoryViewProxy.INSTANCE.container(event.getView());
             } else {
-                anvilMenu = CraftBukkitReflections.field$CraftInventoryAnvil$menu.get(inventory);
+                anvilMenu = CraftInventoryAnvilProxy.INSTANCE.container(inventory);
             }
             CoreReflections.method$AbstractContainerMenu$broadcastFullState.invoke(anvilMenu);
         } catch (ReflectiveOperationException e) {
@@ -550,11 +552,11 @@ public class RecipeEventListener implements Listener {
         boolean hasCustomItem = ItemStackUtils.hasCustomItem(inventory.getMatrix());
         if (!hasCustomItem)
             return;
-        if (!CraftBukkitReflections.clazz$CraftComplexRecipe.isInstance(complexRecipe)) {
+        if (!CraftComplexRecipeProxy.CLAZZ.isInstance(complexRecipe)) {
             return;
         }
         try {
-            Object mcRecipe = CraftBukkitReflections.field$CraftComplexRecipe$recipe.get(complexRecipe);
+            Object mcRecipe = CraftComplexRecipeProxy.INSTANCE.recipe(complexRecipe);
             if (CoreReflections.clazz$ArmorDyeRecipe.isInstance(mcRecipe) || CoreReflections.clazz$FireworkStarFadeRecipe.isInstance(mcRecipe)) {
                 return;
             }

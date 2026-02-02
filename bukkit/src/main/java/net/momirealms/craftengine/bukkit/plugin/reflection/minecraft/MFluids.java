@@ -1,7 +1,7 @@
 package net.momirealms.craftengine.bukkit.plugin.reflection.minecraft;
 
 import net.momirealms.craftengine.bukkit.nms.FastNMS;
-import net.momirealms.craftengine.bukkit.plugin.reflection.ReflectionInitException;
+import net.momirealms.craftengine.bukkit.reflection.ReflectionInitException;
 
 public final class MFluids {
     private MFluids() {}

@@ -1,6 +1,6 @@
 package net.momirealms.craftengine.bukkit.plugin.reflection.minecraft;
 
-import net.momirealms.craftengine.bukkit.plugin.reflection.ReflectionInitException;
+import net.momirealms.craftengine.bukkit.reflection.ReflectionInitException;
 import net.momirealms.craftengine.core.util.VersionHelper;
 
 import java.lang.reflect.Field;
