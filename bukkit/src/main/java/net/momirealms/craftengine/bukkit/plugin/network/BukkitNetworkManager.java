@@ -55,10 +55,10 @@ import net.momirealms.craftengine.bukkit.plugin.network.payload.DiscardedPayload
 import net.momirealms.craftengine.bukkit.plugin.network.payload.Payload;
 import net.momirealms.craftengine.bukkit.plugin.network.payload.PayloadHelper;
 import net.momirealms.craftengine.bukkit.plugin.network.payload.UnknownPayload;
-import net.momirealms.craftengine.bukkit.plugin.reflection.leaves.LeavesReflections;
 import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.*;
 import net.momirealms.craftengine.bukkit.plugin.user.BukkitServerPlayer;
 import net.momirealms.craftengine.bukkit.plugin.user.FakeBukkitServerPlayer;
+import net.momirealms.craftengine.bukkit.reflection.leaves.bot.BotListProxy;
 import net.momirealms.craftengine.bukkit.util.*;
 import net.momirealms.craftengine.bukkit.world.BukkitWorldManager;
 import net.momirealms.craftengine.bukkit.world.score.BukkitTeamManager;
@@ -324,17 +324,13 @@ public class BukkitNetworkManager extends AbstractNetworkManager implements List
 
     @SuppressWarnings("unchecked")
     private void injectLeavesBotList() {
-        try {
-            Object botList = LeavesReflections.field$BotList$INSTANCE.get(null);
-            List<Object> bots = (List<Object>) LeavesReflections.field$BotList$bots.get(botList);
-            ListMonitor<Object> monitor = new ListMonitor<>(bots,
-                    (bot) -> addFakePlayer(FastNMS.INSTANCE.method$ServerPlayer$getBukkitEntity(bot)),
-                    (bot) -> removeFakePlayer(FastNMS.INSTANCE.method$ServerPlayer$getBukkitEntity(bot))
-            );
-            LeavesReflections.field$BotList$bots.set(botList, monitor);
-        } catch (ReflectiveOperationException e) {
-            this.plugin.logger().severe("Failed to inject leaves bot list");
-        }
+        Object botList = BotListProxy.INSTANCE.INSTANCE();
+        List<Object> bots = (List<Object>) BotListProxy.INSTANCE.bots(botList);
+        ListMonitor<Object> monitor = new ListMonitor<>(bots,
+                (bot) -> addFakePlayer(FastNMS.INSTANCE.method$ServerPlayer$getBukkitEntity(bot)),
+                (bot) -> removeFakePlayer(FastNMS.INSTANCE.method$ServerPlayer$getBukkitEntity(bot))
+        );
+        BotListProxy.INSTANCE.bots(botList, monitor);
     }
 
     public void registerBlockStatePacketListeners(int[] blockStateMappings, Predicate<Integer> occlusionPredicate) {
