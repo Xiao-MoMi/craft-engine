@@ -92,7 +92,7 @@ public class VersionHelper {
             v1_21_9 = version >= 12109;
             v1_21_10 = version >= 12110;
             v1_21_11 = version >= 12111;
-            v26_1 = version >= 12601;
+            v26_1 = version >= 260100;
 
             majorVersion = major;
             minorVersion = minor;
@@ -140,16 +140,9 @@ public class VersionHelper {
         } else if (part == 2) {  // 两个点号：如 "1.2.3"
             v3 = currentNumber;
         }
-
-        // 新版命名法
-        if (v1 >= 26) {
-            return 10000 + v1 * 100 + v2;
-        }
-        // 旧版命名法
-        else {
-            return 10000 + v2 * 100 + v3;
-        }
+        return 10000 * v1 + v2 * 100 + v3;
     }
+
 
     public static int majorVersion() {
         return majorVersion;

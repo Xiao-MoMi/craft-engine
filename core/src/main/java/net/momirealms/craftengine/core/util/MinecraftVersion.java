@@ -45,8 +45,8 @@ public class MinecraftVersion implements Comparable<MinecraftVersion> {
         PACK_FORMATS.put(1_21_09, new PackVersion(69, 0));
         PACK_FORMATS.put(1_21_10, new PackVersion(69, 0));
         PACK_FORMATS.put(1_21_11, new PackVersion(75, 0));
-        PACK_FORMATS.put(1_26_01, new PackVersion(76, 0));
-        PACK_FORMATS.put(1_99_99, new PackVersion(1000, 0));
+        PACK_FORMATS.put(26_01_00, new PackVersion(76, 0));
+        PACK_FORMATS.put(99_99_99, new PackVersion(1000, 0));
     }
 
     private static final Map<String, MinecraftVersion> BY_NAME = new LinkedHashMap<>();
@@ -87,7 +87,7 @@ public class MinecraftVersion implements Comparable<MinecraftVersion> {
     public static final MinecraftVersion V1_21_10 = new MinecraftVersion("1.21.10");
     public static final MinecraftVersion V1_21_11 = new MinecraftVersion("1.21.11");
     public static final MinecraftVersion V26_1 = new MinecraftVersion("26.1");
-    public static final MinecraftVersion FUTURE = new MinecraftVersion("99.99");
+    public static final MinecraftVersion FUTURE = new MinecraftVersion("99.99.99");
 
     private final int version;
     private final String versionString;
@@ -124,7 +124,7 @@ public class MinecraftVersion implements Comparable<MinecraftVersion> {
     private MinecraftVersion(String version) {
         this.version = VersionHelper.parseVersionToInteger(version);
         this.versionString = version;
-        this.packFormat = Objects.requireNonNull(PACK_FORMATS.get(this.version));
+        this.packFormat = Objects.requireNonNull(PACK_FORMATS.get(this.version), String.valueOf(this.version));
         BY_NAME.put(this.versionString, this);
         BY_PACK_FORMAT.put(this.packFormat.major(), this);
     }
