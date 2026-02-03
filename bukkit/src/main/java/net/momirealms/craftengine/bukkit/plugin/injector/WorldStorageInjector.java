@@ -30,10 +30,10 @@ import net.momirealms.craftengine.core.world.SectionPos;
 import net.momirealms.craftengine.core.world.chunk.CEChunk;
 import net.momirealms.craftengine.core.world.chunk.CESection;
 import net.momirealms.craftengine.core.world.chunk.InjectedHolder;
+import net.momirealms.sparrow.reflection.clazz.SparrowClass;
+import net.momirealms.sparrow.reflection.constructor.SConstructor2;
+import net.momirealms.sparrow.reflection.constructor.matcher.ConstructorMatcher;
 
-import java.lang.invoke.MethodHandle;
-import java.lang.invoke.MethodHandles;
-import java.lang.invoke.MethodType;
 import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.Callable;
@@ -41,7 +41,7 @@ import java.util.function.Consumer;
 
 public final class WorldStorageInjector {
     private static Class<?> clazz$InjectedPalettedContainer;
-    private static MethodHandle constructor$InjectedLevelChunkSection;
+    private static SConstructor2 constructor$InjectedLevelChunkSection;
 
     private WorldStorageInjector() {}
 
@@ -104,9 +104,9 @@ public final class WorldStorageInjector {
                 .load(WorldStorageInjector.class.getClassLoader())
                 .getLoaded();
 
-        constructor$InjectedLevelChunkSection = MethodHandles.publicLookup().in(clazz$InjectedLevelChunkSection)
-                .findConstructor(clazz$InjectedLevelChunkSection, MethodType.methodType(void.class, CoreReflections.clazz$PalettedContainer, CoreReflections.clazz$PalettedContainer))
-                .asType(MethodType.methodType(CoreReflections.clazz$LevelChunkSection, CoreReflections.clazz$PalettedContainer, CoreReflections.clazz$PalettedContainer));
+        constructor$InjectedLevelChunkSection = SparrowClass.of(clazz$InjectedLevelChunkSection)
+                .getSparrowConstructor(ConstructorMatcher.takeArguments(CoreReflections.clazz$PalettedContainer, CoreReflections.clazz$PalettedContainer))
+                .asm$2();
     }
 
     public synchronized static void injectLevelChunkSection(Object targetSection, CESection ceSection, CEChunk chunk, SectionPos pos, Consumer<Object> callback) {
@@ -140,8 +140,9 @@ public final class WorldStorageInjector {
                     if (Config.fastInjection()) {
                         injectedObject = FastNMS.INSTANCE.createInjectedLevelChunkSectionHolder(targetSection);
                     } else {
-                        injectedObject = (InjectedHolder.Section) constructor$InjectedLevelChunkSection.invoke(
-                                FastNMS.INSTANCE.field$LevelChunkSection$states(targetSection), FastNMS.INSTANCE.field$LevelChunkSection$biomes(targetSection));
+                        injectedObject = (InjectedHolder.Section) constructor$InjectedLevelChunkSection.newInstance(
+                                FastNMS.INSTANCE.field$LevelChunkSection$states(targetSection), FastNMS.INSTANCE.field$LevelChunkSection$biomes(targetSection)
+                        );
                     }
                     injectedObject.ceChunk(chunk);
                     injectedObject.ceSection(ceSection);
@@ -155,7 +156,7 @@ public final class WorldStorageInjector {
                     holder.setActive(true);
                 }
             }
-        } catch (Throwable e) {
+        } catch (Exception e) {
             CraftEngine.instance().logger().severe("Failed to inject chunk section " + pos, e);
         }
     }

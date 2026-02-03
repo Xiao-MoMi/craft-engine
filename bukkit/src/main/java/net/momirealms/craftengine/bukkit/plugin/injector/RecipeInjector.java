@@ -28,6 +28,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.lang.reflect.Constructor;
+import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -103,7 +104,7 @@ public final class RecipeInjector {
     }
 
     @NotNull
-    private static Object createSpecialRecipe(Key id, Class<?> clazz$InjectedRepairItemRecipe) throws InstantiationException, IllegalAccessException, java.lang.reflect.InvocationTargetException {
+    private static Object createSpecialRecipe(Key id, Class<?> clazz$InjectedRepairItemRecipe) throws ReflectiveOperationException {
         if (VersionHelper.isOrAbove1_20_2()) {
             Constructor<?> constructor = ReflectionUtils.getConstructor(clazz$InjectedRepairItemRecipe, CoreReflections.clazz$CraftingBookCategory);
             return constructor.newInstance(CoreReflections.instance$CraftingBookCategory$MISC);

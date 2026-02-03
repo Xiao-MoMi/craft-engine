@@ -766,16 +766,16 @@ public final class NetworkReflections {
             .map(it -> ReflectionUtils.getInstanceDeclaredField(it, int.class, 0))
             .orElse(null);
 
-    public static final Class<?> clazz$ClientboundMoveEntityPacket = requireNonNull(
-            BukkitReflectionUtils.findReobfOrMojmapClass(
-                    "network.protocol.game.PacketPlayOutEntity",
-                    "network.protocol.game.ClientboundMoveEntityPacket"
-            )
-    );
+    // public static final Class<?> clazz$ClientboundMoveEntityPacket = requireNonNull(
+    //         BukkitReflectionUtils.findReobfOrMojmapClass(
+    //                 "network.protocol.game.PacketPlayOutEntity",
+    //                 "network.protocol.game.ClientboundMoveEntityPacket"
+    //         )
+    // );
 
-    public static final Field field$ClientboundMoveEntityPacket$entityId = requireNonNull(
-            ReflectionUtils.getInstanceDeclaredField(clazz$ClientboundMoveEntityPacket, int.class, 0)
-    );
+    // public static final Field field$ClientboundMoveEntityPacket$entityId = requireNonNull(
+    //         ReflectionUtils.getInstanceDeclaredField(clazz$ClientboundMoveEntityPacket, int.class, 0)
+    // );
 
     public static final Class<?> clazz$ClientboundMoveEntityPacket$Pos = requireNonNull(
             BukkitReflectionUtils.findReobfOrMojmapClass(

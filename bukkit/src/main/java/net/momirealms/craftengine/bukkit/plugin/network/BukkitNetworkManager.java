@@ -48,7 +48,6 @@ import net.momirealms.craftengine.bukkit.nms.FastNMS;
 import net.momirealms.craftengine.bukkit.plugin.BukkitCraftEngine;
 import net.momirealms.craftengine.bukkit.plugin.command.feature.TotemAnimationCommand;
 import net.momirealms.craftengine.bukkit.plugin.injector.InjectionException;
-import net.momirealms.craftengine.bukkit.plugin.injector.ProtectedFieldVisitor;
 import net.momirealms.craftengine.bukkit.plugin.network.handler.*;
 import net.momirealms.craftengine.bukkit.plugin.network.id.PacketIdHelper;
 import net.momirealms.craftengine.bukkit.plugin.network.id.PacketIds1_20;
@@ -62,6 +61,7 @@ import net.momirealms.craftengine.bukkit.plugin.user.BukkitServerPlayer;
 import net.momirealms.craftengine.bukkit.plugin.user.FakeBukkitServerPlayer;
 import net.momirealms.craftengine.bukkit.reflection.leaves.bot.BotListProxy;
 import net.momirealms.craftengine.bukkit.reflection.minecraft.network.ConnectionProxy;
+import net.momirealms.craftengine.bukkit.reflection.minecraft.network.protocol.game.ClientboundMoveEntityPacketProxy;
 import net.momirealms.craftengine.bukkit.reflection.netty.handler.codec.ByteToMessageDecoderProxy;
 import net.momirealms.craftengine.bukkit.reflection.netty.handler.codec.MessageToByteEncoderProxy;
 import net.momirealms.craftengine.bukkit.util.*;
@@ -1918,7 +1918,7 @@ public class BukkitNetworkManager extends AbstractNetworkManager implements List
 
         @Override
         public void onPacketSend(NetWorkUser user, NMSPacketEvent event, Object packet) {
-            int entityId = ProtectedFieldVisitor.get().field$ClientboundMoveEntityPacket$entityId(packet);
+            int entityId = ClientboundMoveEntityPacketProxy.INSTANCE.entityId(packet);
             EntityPacketHandler handler = user.entityPacketHandlers().get(entityId);
             if (handler != null) {
                 handler.handleMoveAndRotate(user, event, packet);
@@ -1930,7 +1930,7 @@ public class BukkitNetworkManager extends AbstractNetworkManager implements List
 
         @Override
         public void onPacketSend(NetWorkUser user, NMSPacketEvent event, Object packet) {
-            int entityId = ProtectedFieldVisitor.get().field$ClientboundMoveEntityPacket$entityId(packet);
+            int entityId = ClientboundMoveEntityPacketProxy.INSTANCE.entityId(packet);
             EntityPacketHandler handler = user.entityPacketHandlers().get(entityId);
             if (handler != null) {
                 handler.handleMove(user, event, packet);

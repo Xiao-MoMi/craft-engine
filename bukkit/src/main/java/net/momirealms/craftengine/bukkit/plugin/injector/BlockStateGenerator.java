@@ -29,22 +29,21 @@ import net.momirealms.craftengine.core.block.properties.Property;
 import net.momirealms.craftengine.core.item.Item;
 import net.momirealms.craftengine.core.plugin.context.ContextHolder;
 import net.momirealms.craftengine.core.plugin.context.parameter.DirectContextParameters;
-import net.momirealms.craftengine.core.util.ReflectionUtils;
 import net.momirealms.craftengine.core.util.VersionHelper;
 import net.momirealms.craftengine.core.world.World;
 import net.momirealms.craftengine.core.world.WorldPosition;
+import net.momirealms.sparrow.reflection.clazz.SparrowClass;
+import net.momirealms.sparrow.reflection.constructor.SConstructor3;
+import net.momirealms.sparrow.reflection.constructor.matcher.ConstructorMatcher;
 import org.bukkit.inventory.ItemStack;
 
-import java.lang.invoke.MethodHandle;
-import java.lang.invoke.MethodHandles;
-import java.lang.invoke.MethodType;
 import java.util.List;
 
 public final class BlockStateGenerator {
-    private static MethodHandle constructor$CraftEngineBlockState;
+    private static SConstructor3 constructor$CraftEngineBlockState;
     public static Object instance$StateDefinition$Factory;
 
-    public static void init() throws ReflectiveOperationException {
+    public static void init() {
         ByteBuddy byteBuddy = new ByteBuddy(ClassFileVersion.JAVA_V17);
         String packageWithName = BlockStateGenerator.class.getName();
         String generatedStateClassName = packageWithName.substring(0, packageWithName.lastIndexOf('.')) + ".CraftEngineBlockState";
@@ -67,14 +66,9 @@ public final class BlockStateGenerator {
                 .intercept(MethodDelegation.to(SetPropertyValueInterceptor.INSTANCE))
                 .method(ElementMatchers.is(CoreReflections.method$BlockStateBase$isBlock))
                 .intercept(MethodDelegation.to(IsBlockInterceptor.INSTANCE));
-        Class<?> clazz$CraftEngineBlock = stateBuilder.make().load(BlockStateGenerator.class.getClassLoader()).getLoaded();
-        constructor$CraftEngineBlockState = VersionHelper.isOrAbove1_20_5() ?
-                MethodHandles.publicLookup().in(clazz$CraftEngineBlock)
-                        .findConstructor(clazz$CraftEngineBlock, MethodType.methodType(void.class, CoreReflections.clazz$Block, Reference2ObjectArrayMap.class, MapCodec.class))
-                        .asType(MethodType.methodType(CoreReflections.clazz$BlockState, CoreReflections.clazz$Block, Reference2ObjectArrayMap.class, MapCodec.class)) :
-                MethodHandles.publicLookup().in(clazz$CraftEngineBlock)
-                        .findConstructor(clazz$CraftEngineBlock, MethodType.methodType(void.class, CoreReflections.clazz$Block, ImmutableMap.class, MapCodec.class))
-                        .asType(MethodType.methodType(CoreReflections.clazz$BlockState, CoreReflections.clazz$Block, ImmutableMap.class, MapCodec.class));
+        SparrowClass<?> clazz$CraftEngineBlock = SparrowClass.of(stateBuilder.make().load(BlockStateGenerator.class.getClassLoader()).getLoaded());
+        ConstructorMatcher matcher = ConstructorMatcher.takeArguments(CoreReflections.clazz$Block, VersionHelper.isOrAbove1_20_5() ? Reference2ObjectArrayMap.class : ImmutableMap.class, MapCodec.class);
+        constructor$CraftEngineBlockState = clazz$CraftEngineBlock.getSparrowConstructor(matcher).asm$3();
 
         String generatedFactoryClassName = packageWithName.substring(0, packageWithName.lastIndexOf('.')) + ".CraftEngineStateFactory";
         DynamicType.Builder<?> factoryBuilder = byteBuddy
@@ -84,8 +78,8 @@ public final class BlockStateGenerator {
                 .method(ElementMatchers.named("create"))
                 .intercept(MethodDelegation.to(CreateStateInterceptor.INSTANCE));
 
-        Class<?> clazz$Factory = factoryBuilder.make().load(BlockStateGenerator.class.getClassLoader()).getLoaded();
-        instance$StateDefinition$Factory = ReflectionUtils.getTheOnlyConstructor(clazz$Factory).newInstance();
+        SparrowClass<?> clazz$Factory = SparrowClass.of(factoryBuilder.make().load(BlockStateGenerator.class.getClassLoader()).getLoaded());
+        instance$StateDefinition$Factory = clazz$Factory.getSparrowConstructor(ConstructorMatcher.any(), 0).asm$0().newInstance();
     }
 
     public static class GetDropsInterceptor {
@@ -206,8 +200,8 @@ public final class BlockStateGenerator {
         public static final CreateStateInterceptor INSTANCE = new CreateStateInterceptor();
 
         @RuntimeType
-        public Object intercept(@AllArguments Object[] args) throws Throwable {
-            return constructor$CraftEngineBlockState.invoke(args[0], args[1], args[2]);
+        public Object intercept(@AllArguments Object[] args) {
+            return constructor$CraftEngineBlockState.newInstance(args[0], args[1], args[2]);
         }
     }
 }
