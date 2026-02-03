@@ -7,7 +7,7 @@ import net.momirealms.craftengine.bukkit.plugin.BukkitCraftEngine;
 import net.momirealms.craftengine.bukkit.plugin.injector.WorldStorageInjector;
 import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.CoreReflections;
 import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.MRegistryOps;
-import net.momirealms.craftengine.bukkit.plugin.reflection.paper.PaperReflections;
+import net.momirealms.craftengine.bukkit.reflection.paper.chunk.system.entity.EntityLookupProxy;
 import net.momirealms.craftengine.bukkit.util.BlockStateUtils;
 import net.momirealms.craftengine.bukkit.util.KeyUtils;
 import net.momirealms.craftengine.bukkit.util.LegacyDFUUtils;
@@ -298,15 +298,11 @@ public final class BukkitWorldManager implements WorldManager, Listener {
 
     // 用于从实体tick列表中移除家具实体以降低遍历开销
     private void injectWorldCallback(Object serverLevel) {
-        try {
-            Object entityLookup = FastNMS.INSTANCE.method$ServerLevel$getEntityLookup(serverLevel);
-            Object worldCallback = PaperReflections.methodHandle$EntityLookup$worldCallbackGetter.invokeExact(entityLookup);
-            Object injectedWorldCallback = FastNMS.INSTANCE.createInjectedEntityCallbacks(worldCallback, entityLookup);
-            if (worldCallback == injectedWorldCallback) return;
-            PaperReflections.methodHandle$EntityLookup$worldCallbackSetter.invokeExact(entityLookup, injectedWorldCallback);
-        } catch (Throwable e) {
-            this.plugin.logger().warn( "Failed to inject world callback", e);
-        }
+        Object entityLookup = FastNMS.INSTANCE.method$ServerLevel$getEntityLookup(serverLevel);
+        Object worldCallback = EntityLookupProxy.INSTANCE.worldCallback(entityLookup);
+        Object injectedWorldCallback = FastNMS.INSTANCE.createInjectedEntityCallbacks(worldCallback, entityLookup);
+        if (worldCallback == injectedWorldCallback) return;
+        EntityLookupProxy.INSTANCE.worldCallback(entityLookup, injectedWorldCallback);
     }
 
     @Override

@@ -13,6 +13,7 @@ import java.util.List;
 @ReflectionProxy(name = "org.leavesmc.leaves.bot.BotList")
 public interface BotListProxy {
     BotListProxy INSTANCE = MiscUtils.ifGet(() -> ReflectionHelper.getProxy(BotListProxy.class), VersionHelper.isLeaves());
+    Class<?> CLAZZ = MiscUtils.ifGet(() -> ReflectionHelper.getClass(BotListProxy.class), VersionHelper.isLeaves());
 
     @FieldGetter(name = "INSTANCE", isStatic = true)
     Object INSTANCE();

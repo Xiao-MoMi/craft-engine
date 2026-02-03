@@ -9,7 +9,8 @@ import net.momirealms.craftengine.bukkit.nms.FastNMS;
 import net.momirealms.craftengine.bukkit.plugin.network.payload.PayloadHelper;
 import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.CoreReflections;
 import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.NetworkReflections;
-import net.momirealms.craftengine.bukkit.plugin.reflection.paper.PaperReflections;
+import net.momirealms.craftengine.bukkit.reflection.minecraft.server.level.ServerPlayerProxy;
+import net.momirealms.craftengine.bukkit.reflection.paper.chunk.system.RegionizedPlayerChunkLoaderProxy;
 import net.momirealms.craftengine.bukkit.util.BlockStateUtils;
 import net.momirealms.craftengine.bukkit.util.RegistryUtils;
 import net.momirealms.craftengine.core.plugin.CraftEngine;
@@ -71,8 +72,8 @@ public record ClientCustomBlockPacket(int vanillaSize, int currentSize) implemen
             // 因为旧版本没有配置阶段需要重新发送区块
             CraftEngine.instance().scheduler().executeSync(() -> {
                 try {
-                    Object chunkLoader = PaperReflections.field$ServerPlayer$chunkLoader.get(user.serverPlayer());
-                    LongOpenHashSet sentChunks = (LongOpenHashSet) PaperReflections.field$RegionizedPlayerChunkLoader$PlayerChunkLoaderData$sentChunks.get(chunkLoader);
+                    Object chunkLoader = ServerPlayerProxy.INSTANCE.chunkLoader(user.serverPlayer());
+                    LongOpenHashSet sentChunks = RegionizedPlayerChunkLoaderProxy.PlayerChunkLoaderDataProxy.INSTANCE.sentChunks(chunkLoader);
                     if (sentChunks.isEmpty()) {
                         return;
                     }

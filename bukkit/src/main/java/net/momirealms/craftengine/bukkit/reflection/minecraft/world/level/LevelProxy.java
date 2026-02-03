@@ -12,4 +12,7 @@ public interface LevelProxy {
 
     @MethodInvoker(name = "getWorld")
     World getWorld(Object instance);
+
+    @MethodInvoker(name = "moonrise$getEntityLookup", version = ">=1.21")
+    Object moonrise$getEntityLookup(Object instance);
 }
