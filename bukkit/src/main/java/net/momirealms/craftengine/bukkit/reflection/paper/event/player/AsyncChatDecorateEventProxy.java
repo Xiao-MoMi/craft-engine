@@ -11,7 +11,7 @@ import net.momirealms.sparrow.reflection.proxy.annotation.ReflectionProxy;
 @ReflectionProxy(clazz = AsyncChatDecorateEvent.class)
 public interface AsyncChatDecorateEventProxy {
     AsyncChatDecorateEventProxy INSTANCE = ReflectionHelper.getProxy(AsyncChatDecorateEventProxy.class);
-    Class<?> CLAZZ = ReflectionHelper.getClass(AsyncChatDecorateEventProxy.class);
+    Class<?> CLAZZ = AsyncChatDecorateEvent.class;
 
     @FieldGetter(name = "originalMessage")
     Object originalMessage(AsyncChatDecorateEvent instance);

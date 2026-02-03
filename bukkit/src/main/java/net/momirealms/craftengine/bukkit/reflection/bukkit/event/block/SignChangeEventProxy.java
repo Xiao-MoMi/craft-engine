@@ -10,7 +10,7 @@ import org.bukkit.event.block.SignChangeEvent;
 @ReflectionProxy(clazz = SignChangeEvent.class)
 public interface SignChangeEventProxy {
     SignChangeEventProxy INSTANCE = ReflectionHelper.getProxy(SignChangeEventProxy.class);
-    Class<?> CLAZZ = ReflectionHelper.getClass(SignChangeEventProxy.class);
+    Class<?> CLAZZ = SignChangeEvent.class;
 
     @MethodInvoker(name = "line")
     void line(SignChangeEvent instance, int index, @Type(clazz = ComponentProxy.class) Object line);

@@ -11,7 +11,7 @@ import org.bukkit.event.block.BlockPhysicsEvent;
 @ReflectionProxy(clazz = BlockPhysicsEvent.class)
 public interface BlockPhysicsEventProxy {
     BlockPhysicsEventProxy INSTANCE = ReflectionHelper.getProxy(BlockPhysicsEventProxy.class);
-    Class<?> CLAZZ = ReflectionHelper.getClass(BlockPhysicsEventProxy.class);
+    Class<?> CLAZZ = BlockPhysicsEvent.class;
 
     @FieldGetter(name = "changed")
     BlockData changed(BlockPhysicsEvent instance);

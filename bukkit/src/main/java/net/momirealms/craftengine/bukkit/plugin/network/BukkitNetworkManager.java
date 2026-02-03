@@ -14,6 +14,8 @@ import com.mojang.serialization.DataResult;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
 import io.netty.channel.*;
+import io.netty.handler.codec.ByteToMessageDecoder;
+import io.netty.handler.codec.MessageToByteEncoder;
 import io.netty.handler.codec.MessageToMessageDecoder;
 import io.netty.handler.codec.MessageToMessageEncoder;
 import io.netty.util.internal.logging.InternalLogger;
@@ -59,6 +61,8 @@ import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.*;
 import net.momirealms.craftengine.bukkit.plugin.user.BukkitServerPlayer;
 import net.momirealms.craftengine.bukkit.plugin.user.FakeBukkitServerPlayer;
 import net.momirealms.craftengine.bukkit.reflection.leaves.bot.BotListProxy;
+import net.momirealms.craftengine.bukkit.reflection.netty.handler.codec.ByteToMessageDecoderProxy;
+import net.momirealms.craftengine.bukkit.reflection.netty.handler.codec.MessageToByteEncoderProxy;
 import net.momirealms.craftengine.bukkit.util.*;
 import net.momirealms.craftengine.bukkit.world.BukkitWorldManager;
 import net.momirealms.craftengine.bukkit.world.score.BukkitTeamManager;
@@ -1083,11 +1087,10 @@ public class BukkitNetworkManager extends AbstractNetworkManager implements List
     }
 
     private void compress(ChannelHandlerContext ctx, ByteBuf input) {
-        ChannelHandler compressor = ctx.pipeline().get("compress");
         ByteBuf temp = ctx.alloc().buffer();
         try {
-            if (compressor != null) {
-                callEncode(compressor, ctx, input, temp);
+            if (ctx.pipeline().get("compress") instanceof MessageToByteEncoder<?> compressor) {
+                MessageToByteEncoderProxy.INSTANCE.encode(compressor, ctx, input, temp);
             }
         } finally {
             input.clear().writeBytes(temp);
@@ -1096,33 +1099,16 @@ public class BukkitNetworkManager extends AbstractNetworkManager implements List
     }
 
     private void decompress(ChannelHandlerContext ctx, ByteBuf input, ByteBuf output) {
-        ChannelHandler decompressor = ctx.pipeline().get("decompress");
-        if (decompressor != null) {
-            ByteBuf temp = (ByteBuf) callDecode(decompressor, ctx, input).getFirst();
+        if (ctx.pipeline().get("decompress") instanceof ByteToMessageDecoder decompressor) {
+            List<Object> list = new ArrayList<>();
+            ByteToMessageDecoderProxy.INSTANCE.decode(decompressor, ctx, input, list);
+            ByteBuf temp = (ByteBuf) list.getFirst();
             try {
                 output.clear().writeBytes(temp);
             } finally {
                 temp.release();
             }
         }
-    }
-
-    private static void callEncode(Object encoder, ChannelHandlerContext ctx, ByteBuf msg, ByteBuf output) {
-        try {
-            LibraryReflections.method$messageToByteEncoder$encode.invoke(encoder, ctx, msg, output);
-        } catch (ReflectiveOperationException e) {
-            CraftEngine.instance().logger().warn("Failed to call encode", e);
-        }
-    }
-
-    public static List<Object> callDecode(Object decoder, Object ctx, Object input) {
-        List<Object> output = new ArrayList<>();
-        try {
-            LibraryReflections.method$byteToMessageDecoder$decode.invoke(decoder, ctx, input, output);
-        } catch (ReflectiveOperationException e) {
-            CraftEngine.instance().logger().warn("Failed to call decode", e);
-        }
-        return output;
     }
 
     /*

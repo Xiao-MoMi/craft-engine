@@ -15,7 +15,7 @@ import java.util.Map;
 @ReflectionProxy(clazz = Registry.class)
 public interface RegistryProxy {
     RegistryProxy INSTANCE = ReflectionHelper.getProxy(RegistryProxy.class);
-    Class<?> CLAZZ = ReflectionHelper.getClass(RegistryProxy.class);
+    Class<?> CLAZZ = Registry.class;
 
     @SuppressWarnings("UnstableApiUsage")
     @ReflectionProxy(clazz = Registry.SimpleRegistry.class)
