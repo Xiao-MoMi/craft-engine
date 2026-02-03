@@ -1,7 +1,7 @@
 package net.momirealms.craftengine.bukkit.reflection.adventure.text.serializer;
 
 import net.momirealms.craftengine.bukkit.reflection.ReflectionHelper;
-import net.momirealms.craftengine.bukkit.reflection.adventure.text.ComponentProxy;
+import net.momirealms.craftengine.bukkit.reflection.adventure.text.AdventureComponentProxy;
 import net.momirealms.sparrow.reflection.proxy.annotation.MethodInvoker;
 import net.momirealms.sparrow.reflection.proxy.annotation.ReflectionProxy;
 import net.momirealms.sparrow.reflection.proxy.annotation.Type;
@@ -12,7 +12,7 @@ public interface ComponentSerializerProxy {
     Class<?> CLAZZ = ReflectionHelper.getClass(ComponentSerializerProxy.class);
 
     @MethodInvoker(name = "serialize")
-    Object serialize(Object instance, @Type(clazz = ComponentProxy.class) Object component);
+    Object serialize(Object instance, @Type(clazz = AdventureComponentProxy.class) Object component);
 
     @MethodInvoker(name = "deserialize")
     Object deserialize(Object instance, Object input);

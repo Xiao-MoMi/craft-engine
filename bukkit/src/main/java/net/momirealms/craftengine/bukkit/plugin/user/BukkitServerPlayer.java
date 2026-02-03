@@ -24,6 +24,7 @@ import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.CoreReflect
 import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.MAttributeHolders;
 import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.MMobEffects;
 import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.NetworkReflections;
+import net.momirealms.craftengine.bukkit.reflection.minecraft.network.ConnectionProxy;
 import net.momirealms.craftengine.bukkit.util.*;
 import net.momirealms.craftengine.core.advancement.AdvancementType;
 import net.momirealms.craftengine.core.block.BlockStateWrapper;
@@ -200,7 +201,7 @@ public class BukkitServerPlayer extends Player {
         if (channel != null) {
             for (String name : channel.pipeline().names()) {
                 ChannelHandler handler = channel.pipeline().get(name);
-                if (NetworkReflections.clazz$Connection.isInstance(handler)) {
+                if (ConnectionProxy.CLAZZ.isInstance(handler)) {
                     this.connection = handler;
                     break;
                 }

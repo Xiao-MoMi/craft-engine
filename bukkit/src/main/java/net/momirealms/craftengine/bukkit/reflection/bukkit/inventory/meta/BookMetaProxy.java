@@ -1,7 +1,7 @@
 package net.momirealms.craftengine.bukkit.reflection.bukkit.inventory.meta;
 
 import net.momirealms.craftengine.bukkit.reflection.ReflectionHelper;
-import net.momirealms.craftengine.bukkit.reflection.adventure.text.ComponentProxy;
+import net.momirealms.craftengine.bukkit.reflection.adventure.text.AdventureComponentProxy;
 import net.momirealms.sparrow.reflection.proxy.annotation.MethodInvoker;
 import net.momirealms.sparrow.reflection.proxy.annotation.ReflectionProxy;
 import net.momirealms.sparrow.reflection.proxy.annotation.Type;
@@ -13,5 +13,5 @@ public interface BookMetaProxy {
     Class<?> CLAZZ = BookMeta.class;
 
     @MethodInvoker(name = "page")
-    void page(BookMeta instance, int page, @Type(clazz = ComponentProxy.class) Object data);
+    void page(BookMeta instance, int page, @Type(clazz = AdventureComponentProxy.class) Object data);
 }

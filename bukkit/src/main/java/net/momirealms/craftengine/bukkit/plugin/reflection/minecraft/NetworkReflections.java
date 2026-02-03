@@ -20,56 +20,58 @@ import static java.util.Objects.requireNonNull;
 public final class NetworkReflections {
     private NetworkReflections() {}
 
-    public static final Class<?> clazz$Connection = requireNonNull(
-            BukkitReflectionUtils.findReobfOrMojmapClass(
-                    "network.NetworkManager",
-                    "network.Connection"
-            )
-    );
+    // public static final Class<?> clazz$Connection = requireNonNull(
+    //         BukkitReflectionUtils.findReobfOrMojmapClass(
+    //                 "network.NetworkManager",
+    //                 "network.Connection"
+    //         )
+    // );
 
-    public static final Class<?> clazz$ClientboundSetActionBarTextPacket = requireNonNull(
-            ReflectionUtils.getClazz(
-                    BukkitReflectionUtils.assembleMCClass("network.protocol.game.ClientboundSetActionBarTextPacket")
-            )
-    );
+    // public static final Class<?> clazz$ClientboundSetActionBarTextPacket = requireNonNull(
+    //         ReflectionUtils.getClazz(
+    //                 BukkitReflectionUtils.assembleMCClass("network.protocol.game.ClientboundSetActionBarTextPacket")
+    //         )
+    // );
 
-    public static final Field field$ClientboundSetActionBarTextPacket$text = requireNonNull(
-            ReflectionUtils.getDeclaredField(
-                    clazz$ClientboundSetActionBarTextPacket, CoreReflections.clazz$Component, 0
-            )
-    );
+    // public static final Field field$ClientboundSetActionBarTextPacket$text = requireNonNull(
+    //         ReflectionUtils.getDeclaredField(
+    //                 clazz$ClientboundSetActionBarTextPacket, CoreReflections.clazz$Component, 0
+    //         )
+    // );
 
-    public static final Constructor<?> constructor$ClientboundSetActionBarTextPacket = requireNonNull(
-            ReflectionUtils.getConstructor(
-                    clazz$ClientboundSetActionBarTextPacket, CoreReflections.clazz$Component
-            )
-    );
+    // public static final Constructor<?> constructor$ClientboundSetActionBarTextPacket = requireNonNull(
+    //         ReflectionUtils.getConstructor(
+    //                 clazz$ClientboundSetActionBarTextPacket, CoreReflections.clazz$Component
+    //         )
+    // );
 
-    public static final Class<?> clazz$ClientboundSystemChatPacket = requireNonNull(
-            ReflectionUtils.getClazz(
-                    BukkitReflectionUtils.assembleMCClass("network.protocol.game.ClientboundSystemChatPacket")
-            )
-    );
+    // public static final Class<?> clazz$ClientboundSystemChatPacket = requireNonNull(
+    //         ReflectionUtils.getClazz(
+    //                 BukkitReflectionUtils.assembleMCClass("network.protocol.game.ClientboundSystemChatPacket")
+    //         )
+    // );
 
 //    public static final Constructor<?> constructor$ClientboundSystemChatPacket = requireNonNull(
 //            ReflectionUtils.getConstructor(clazz$ClientboundSystemChatPacket, CoreReflections.clazz$Component, boolean.class)
 //    );
 
-    public static final Field field$ClientboundSystemChatPacket$overlay = requireNonNull(
-            ReflectionUtils.getDeclaredField(
-                    clazz$ClientboundSystemChatPacket, boolean.class, 0
-            )
-    );
-
-    public static final Field field$ClientboundSystemChatPacket$component =
-            ReflectionUtils.getDeclaredField(
-                    clazz$ClientboundSystemChatPacket, CoreReflections.clazz$Component, 0
-            );
-
-    public static final Field field$ClientboundSystemChatPacket$text =
-            ReflectionUtils.getDeclaredField(
-                    clazz$ClientboundSystemChatPacket, String.class, 0
-            );
+    // public static final Field field$ClientboundSystemChatPacket$overlay = requireNonNull(
+    //         ReflectionUtils.getDeclaredField(
+    //                 clazz$ClientboundSystemChatPacket, boolean.class, 0
+    //         )
+    // );
+    //
+    // // >=1.20.3
+    // public static final Field field$ClientboundSystemChatPacket$component =
+    //         ReflectionUtils.getDeclaredField(
+    //                 clazz$ClientboundSystemChatPacket, CoreReflections.clazz$Component, 0
+    //         );
+    //
+    // // <1.20.3
+    // public static final Field field$ClientboundSystemChatPacket$text =
+    //         ReflectionUtils.getDeclaredField(
+    //                 clazz$ClientboundSystemChatPacket, String.class, 0
+    //         );
 
     public static final Class<?> clazz$ClientboundBossEventPacket = requireNonNull(
             BukkitReflectionUtils.findReobfOrMojmapClass(

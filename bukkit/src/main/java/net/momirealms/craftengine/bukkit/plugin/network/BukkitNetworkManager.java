@@ -61,6 +61,7 @@ import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.*;
 import net.momirealms.craftengine.bukkit.plugin.user.BukkitServerPlayer;
 import net.momirealms.craftengine.bukkit.plugin.user.FakeBukkitServerPlayer;
 import net.momirealms.craftengine.bukkit.reflection.leaves.bot.BotListProxy;
+import net.momirealms.craftengine.bukkit.reflection.minecraft.network.ConnectionProxy;
 import net.momirealms.craftengine.bukkit.reflection.netty.handler.codec.ByteToMessageDecoderProxy;
 import net.momirealms.craftengine.bukkit.reflection.netty.handler.codec.MessageToByteEncoderProxy;
 import net.momirealms.craftengine.bukkit.util.*;
@@ -807,7 +808,7 @@ public class BukkitNetworkManager extends AbstractNetworkManager implements List
             pipeline.remove(PACKET_DECODER);
         }
         for (Map.Entry<String, ChannelHandler> entry : pipeline.toMap().entrySet()) {
-            if (NetworkReflections.clazz$Connection.isAssignableFrom(entry.getValue().getClass())) {
+            if (ConnectionProxy.CLAZZ.isAssignableFrom(entry.getValue().getClass())) {
                 pipeline.addBefore(entry.getKey(), PLAYER_CHANNEL_HANDLER_NAME, new PluginChannelHandler(user));
                 break;
             }

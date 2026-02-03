@@ -2,6 +2,8 @@ package net.momirealms.craftengine.bukkit.plugin.network.id;
 
 import net.momirealms.craftengine.bukkit.plugin.network.PacketIds;
 import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.NetworkReflections;
+import net.momirealms.craftengine.bukkit.reflection.minecraft.network.protocol.game.ClientboundSetActionBarTextPacketProxy;
+import net.momirealms.craftengine.bukkit.reflection.minecraft.network.protocol.game.ClientboundSystemChatPacketProxy;
 import net.momirealms.craftengine.core.plugin.network.ConnectionState;
 import net.momirealms.craftengine.core.plugin.network.PacketFlow;
 
@@ -64,7 +66,7 @@ public class PacketIds1_20 implements PacketIds {
 
     @Override
     public int clientboundSetActionBarTextPacket() {
-        return PacketIdHelper.byClazz(NetworkReflections.clazz$ClientboundSetActionBarTextPacket, PacketFlow.CLIENTBOUND, ConnectionState.PLAY);
+        return PacketIdHelper.byClazz(ClientboundSetActionBarTextPacketProxy.CLAZZ, PacketFlow.CLIENTBOUND, ConnectionState.PLAY);
     }
 
     @Override
@@ -74,7 +76,7 @@ public class PacketIds1_20 implements PacketIds {
 
     @Override
     public int clientboundSystemChatPacket() {
-        return PacketIdHelper.byClazz(NetworkReflections.clazz$ClientboundSystemChatPacket, PacketFlow.CLIENTBOUND, ConnectionState.PLAY);
+        return PacketIdHelper.byClazz(ClientboundSystemChatPacketProxy.CLAZZ, PacketFlow.CLIENTBOUND, ConnectionState.PLAY);
     }
 
     @Override

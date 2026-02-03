@@ -3,7 +3,7 @@ package net.momirealms.craftengine.bukkit.util;
 import com.google.gson.JsonElement;
 import net.kyori.adventure.text.Component;
 import net.momirealms.craftengine.bukkit.nms.FastNMS;
-import net.momirealms.craftengine.bukkit.reflection.adventure.text.ComponentProxy;
+import net.momirealms.craftengine.bukkit.reflection.adventure.text.AdventureComponentProxy;
 import net.momirealms.craftengine.bukkit.reflection.adventure.text.serializer.gson.GsonComponentSerializerProxy;
 import net.momirealms.craftengine.core.util.AdventureHelper;
 
@@ -36,7 +36,7 @@ public final class ComponentUtils {
     }
 
     public static Object jsonToPaperAdventure(String json) {
-        return GsonComponentSerializerProxy.Constant.serializer.fromJson(json, ComponentProxy.CLAZZ);
+        return GsonComponentSerializerProxy.Constant.serializer.fromJson(json, AdventureComponentProxy.CLAZZ);
     }
 
     public static JsonElement paperAdventureToJsonElement(Object component) {
@@ -44,6 +44,6 @@ public final class ComponentUtils {
     }
 
     public static Object jsonElementToPaperAdventure(JsonElement json) {
-        return GsonComponentSerializerProxy.Constant.serializer.fromJson(json, ComponentProxy.CLAZZ);
+        return GsonComponentSerializerProxy.Constant.serializer.fromJson(json, AdventureComponentProxy.CLAZZ);
     }
 }
