@@ -1,5 +1,7 @@
 package net.momirealms.craftengine.bukkit.reflection;
 
+import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
+import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import net.momirealms.craftengine.core.util.ReflectionUtils;
 import net.momirealms.craftengine.core.util.VersionHelper;
 import net.momirealms.sparrow.reflection.SReflection;
@@ -8,12 +10,12 @@ import net.momirealms.sparrow.reflection.proxy.ProxyFactory;
 import net.momirealms.sparrow.reflection.proxy.annotation.ReflectionProxy;
 import net.momirealms.sparrow.reflection.remapper.Remapper;
 import net.momirealms.sparrow.reflection.util.MinecraftVersionPredicate;
+import net.momirealms.sparrow.reflection.util.VersionPredicate;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.InputStream;
 import java.lang.invoke.MethodHandles;
-import java.util.Arrays;
-import java.util.Objects;
+import java.util.*;
 
 public final class ReflectionHelper {
     public static final ProxyFactory PROXY_FACTORY;
@@ -68,9 +70,50 @@ public final class ReflectionHelper {
             throw new ReflectionInitException(e);
         }
         SReflection.setAsmClassPrefix("CraftEngine");
-        SReflection.setRemapper(VersionHelper.isMojmap() ? Remapper.createFromPaperJar() : WithCraftBukkitClassNameRemapper.INSTANCE);
-        SReflection.setVersionMatcher(new MinecraftVersionPredicate(VersionHelper.MINECRAFT_VERSION.version()));
+        SReflection.setRemapper(VersionHelper.isMojmap() ? Remapper.noOp() : WithCraftBukkitClassNameRemapper.INSTANCE);
+        MixedPredicate.PREDICATES.put("version", new MinecraftVersionPredicate(VersionHelper.MINECRAFT_VERSION.version()));
+        MixedPredicate.PREDICATES.put("server", ServerSoftwarePredicate.INSTANCE);
+        SReflection.setVersionMatcher(MixedPredicate.INSTANCE);
         PROXY_FACTORY = ProxyFactory.create(ReflectionHelper.class.getClassLoader());
+    }
+
+    private static final class ServerSoftwarePredicate implements VersionPredicate {
+        private static final ServerSoftwarePredicate INSTANCE = new ServerSoftwarePredicate();
+        private static final ObjectArrayList<String> CURRENT = new ObjectArrayList<>(5);
+
+        static {
+            CURRENT.add("bukkit");
+            CURRENT.add("spigot");
+            if (VersionHelper.isPaper()) CURRENT.add("paper");
+            if (VersionHelper.isFolia()) CURRENT.add("folia");
+            if (VersionHelper.isLeaves()) CURRENT.add("leaves");
+        }
+
+        @Override
+        public boolean test(String server) {
+            return CURRENT.contains(server.toLowerCase(Locale.ROOT));
+        }
+    }
+
+    private static final class MixedPredicate implements VersionPredicate {
+        private static final MixedPredicate INSTANCE = new MixedPredicate();
+        private static final Map<String, VersionPredicate> PREDICATES = new Object2ObjectOpenHashMap<>(2);
+
+        @Override
+        public boolean test(String mixed) {
+            if (mixed.isEmpty()) return true;
+            for (String s : mixed.split(";")) {
+                if (s.isEmpty()) continue;
+                int i = s.indexOf(':');
+                boolean noKey = i == -1;
+                String key = noKey ? "version" : s.substring(0, i);
+                String value = noKey ? s : s.substring(i + 1);
+                VersionPredicate predicate = PREDICATES.get(key);
+                if (predicate == null) continue;
+                if (!predicate.test(value)) return false;
+            }
+            return true;
+        }
     }
 
     private static final class WithCraftBukkitClassNameRemapper implements Remapper {
@@ -101,7 +144,7 @@ public final class ReflectionHelper {
 
         @Override
         public String remapClassName(String className) {
-            if (className != null && className.startsWith(PREFIX_CRAFTBUKKIT)) {
+            if (className.startsWith(PREFIX_CRAFTBUKKIT)) {
                 return PREFIX_CRAFTBUKKIT + CB_PKG_VERSION + className.substring(PREFIX_CRAFTBUKKIT.length() + 1);
             }
             return this.remapper.remapClassName(className);

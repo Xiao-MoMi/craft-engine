@@ -61,6 +61,7 @@ import net.momirealms.craftengine.bukkit.plugin.user.BukkitServerPlayer;
 import net.momirealms.craftengine.bukkit.plugin.user.FakeBukkitServerPlayer;
 import net.momirealms.craftengine.bukkit.reflection.leaves.bot.BotListProxy;
 import net.momirealms.craftengine.bukkit.reflection.minecraft.network.ConnectionProxy;
+import net.momirealms.craftengine.bukkit.reflection.minecraft.network.protocol.game.ClientboundBundlePacketProxy;
 import net.momirealms.craftengine.bukkit.reflection.minecraft.network.protocol.game.ClientboundMoveEntityPacketProxy;
 import net.momirealms.craftengine.bukkit.reflection.netty.handler.codec.ByteToMessageDecoderProxy;
 import net.momirealms.craftengine.bukkit.reflection.netty.handler.codec.MessageToByteEncoderProxy;
@@ -327,10 +328,9 @@ public class BukkitNetworkManager extends AbstractNetworkManager implements List
         return true;
     }
 
-    @SuppressWarnings("unchecked")
     private void injectLeavesBotList() {
         Object botList = BotListProxy.INSTANCE.INSTANCE();
-        List<Object> bots = (List<Object>) BotListProxy.INSTANCE.bots(botList);
+        List<Object> bots = BotListProxy.INSTANCE.bots(botList);
         ListMonitor<Object> monitor = new ListMonitor<>(bots,
                 (bot) -> addFakePlayer(FastNMS.INSTANCE.method$ServerPlayer$getBukkitEntity(bot)),
                 (bot) -> removeFakePlayer(FastNMS.INSTANCE.method$ServerPlayer$getBukkitEntity(bot))
@@ -1007,7 +1007,7 @@ public class BukkitNetworkManager extends AbstractNetworkManager implements List
     }
 
     private void onNMSPacketSend(NetWorkUser player, NMSPacketEvent event, Object packet) {
-        if (NetworkReflections.clazz$ClientboundBundlePacket.isInstance(packet)) {
+        if (ClientboundBundlePacketProxy.CLAZZ.isInstance(packet)) {
             Iterable<Object> packets = FastNMS.INSTANCE.method$ClientboundBundlePacket$subPackets(packet);
             for (Object p : packets) {
                 onNMSPacketSend(player, event, p);

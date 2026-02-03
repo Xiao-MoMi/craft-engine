@@ -12,6 +12,7 @@ import net.momirealms.craftengine.bukkit.plugin.network.payload.protocol.VisualB
 import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.*;
 import net.momirealms.craftengine.bukkit.plugin.user.BukkitServerPlayer;
 import net.momirealms.craftengine.bukkit.reflection.craftbukkit.util.CraftMagicNumbersProxy;
+import net.momirealms.craftengine.bukkit.reflection.minecraft.world.level.block.state.BlockBehaviourProxy;
 import net.momirealms.craftengine.bukkit.util.*;
 import net.momirealms.craftengine.core.block.*;
 import net.momirealms.craftengine.core.block.behavior.BlockBehavior;
@@ -283,14 +284,14 @@ public final class BukkitBlockManager extends AbstractBlockManager {
             if (VersionHelper.isOrAbove1_21_2()) {
                 int blockLight = settings.blockLight() != -1 ? settings.blockLight() : CoreReflections.field$BlockStateBase$lightBlock.getInt(nmsVisualState);
                 CoreReflections.field$BlockStateBase$lightBlock.set(nmsState, blockLight);
-                boolean propagatesSkylightDown = settings.propagatesSkylightDown() == Tristate.UNDEFINED ? CoreReflections.field$BlockStateBase$propagatesSkylightDown.getBoolean(nmsVisualState) : settings.propagatesSkylightDown().asBoolean();
-                CoreReflections.field$BlockStateBase$propagatesSkylightDown.set(nmsState, propagatesSkylightDown);
+                boolean propagatesSkylightDown = settings.propagatesSkylightDown() == Tristate.UNDEFINED ? BlockBehaviourProxy.BlockStateBaseProxy.INSTANCE.propagatesSkylightDown(nmsVisualState) : settings.propagatesSkylightDown().asBoolean();
+                BlockBehaviourProxy.BlockStateBaseProxy.INSTANCE.propagatesSkylightDown(nmsState, propagatesSkylightDown);
             } else {
-                Object cache = CoreReflections.field$BlockStateBase$cache.get(nmsState);
-                int blockLight = settings.blockLight() != -1 ? settings.blockLight() : CoreReflections.field$BlockStateBase$Cache$lightBlock.getInt(CoreReflections.field$BlockStateBase$cache.get(nmsVisualState));
-                CoreReflections.field$BlockStateBase$Cache$lightBlock.set(cache, blockLight);
-                boolean propagatesSkylightDown = settings.propagatesSkylightDown() == Tristate.UNDEFINED ? CoreReflections.field$BlockStateBase$Cache$propagatesSkylightDown.getBoolean(CoreReflections.field$BlockStateBase$cache.get(nmsVisualState)) : settings.propagatesSkylightDown().asBoolean();
-                CoreReflections.field$BlockStateBase$Cache$propagatesSkylightDown.set(cache, propagatesSkylightDown);
+                Object cache = BlockBehaviourProxy.BlockStateBaseProxy.INSTANCE.cache(nmsState);
+                int blockLight = settings.blockLight() != -1 ? settings.blockLight() : BlockBehaviourProxy.BlockStateBaseProxy.CacheProxy.INSTANCE.lightBlock(BlockBehaviourProxy.BlockStateBaseProxy.INSTANCE.cache(nmsVisualState));
+                BlockBehaviourProxy.BlockStateBaseProxy.CacheProxy.INSTANCE.lightBlock(cache, blockLight);
+                boolean propagatesSkylightDown = settings.propagatesSkylightDown() == Tristate.UNDEFINED ? BlockBehaviourProxy.BlockStateBaseProxy.CacheProxy.INSTANCE.propagatesSkylightDown(BlockBehaviourProxy.BlockStateBaseProxy.INSTANCE.cache(nmsVisualState)) : settings.propagatesSkylightDown().asBoolean();
+                BlockBehaviourProxy.BlockStateBaseProxy.CacheProxy.INSTANCE.propagatesSkylightDown(cache, propagatesSkylightDown);
                 if (!isConditionallyFullOpaque) {
                     CoreReflections.field$BlockStateBase$opacityIfCached.set(nmsState, blockLight);
                 }

@@ -10,6 +10,7 @@ import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelFuture;
 import it.unimi.dsi.fastutil.objects.Object2IntMap;
 import net.momirealms.craftengine.bukkit.reflection.ReflectionInitException;
+import net.momirealms.craftengine.bukkit.reflection.minecraft.core.HolderLookupProxy;
 import net.momirealms.craftengine.bukkit.util.BukkitReflectionUtils;
 import net.momirealms.craftengine.core.util.MiscUtils;
 import net.momirealms.craftengine.core.util.ReflectionUtils;
@@ -1347,20 +1348,20 @@ public final class CoreReflections {
             )
     );
 
-    public static final Class<?> clazz$BlockStateBase$Cache = requireNonNull(
-            BukkitReflectionUtils.findReobfOrMojmapClass(
-                    "world.level.block.state.BlockBase$BlockData$Cache",
-                    "world.level.block.state.BlockBehaviour$BlockStateBase$Cache"
-            )
-    );
+    // public static final Class<?> clazz$BlockStateBase$Cache = requireNonNull(
+    //         BukkitReflectionUtils.findReobfOrMojmapClass(
+    //                 "world.level.block.state.BlockBase$BlockData$Cache",
+    //                 "world.level.block.state.BlockBehaviour$BlockStateBase$Cache"
+    //         )
+    // );
 
-    public static final Field field$BlockStateBase$cache = requireNonNull(
-            ReflectionUtils.getDeclaredField(clazz$BlockStateBase, clazz$BlockStateBase$Cache, 0)
-    );
+    // public static final Field field$BlockStateBase$cache = requireNonNull(
+    //         ReflectionUtils.getDeclaredField(clazz$BlockStateBase, clazz$BlockStateBase$Cache, 0)
+    // );
 
-    // 1.20-1.21.1
-    public static final Field field$BlockStateBase$Cache$lightBlock =
-            ReflectionUtils.getInstanceDeclaredField(clazz$BlockStateBase$Cache, int.class, 0);
+    // // 1.20-1.21.1
+    // public static final Field field$BlockStateBase$Cache$lightBlock =
+    //         ReflectionUtils.getInstanceDeclaredField(clazz$BlockStateBase$Cache, int.class, 0);
 
     public static final Method method$BlockStateBase$initCache = requireNonNull(
             ReflectionUtils.getMethod(clazz$BlockStateBase, void.class, new String[] { "initCache", "a" })
@@ -1415,14 +1416,14 @@ public final class CoreReflections {
             ReflectionUtils.getDeclaredField(clazz$BlockStateBase, boolean.class, VersionHelper.isOrAbove1_21() ? 10 : 11)
     );
 
-    // 1.21.2+，其他版本在cache里
-    public static final Field field$BlockStateBase$propagatesSkylightDown = requireNonNull(
-            ReflectionUtils.getDeclaredField(clazz$BlockStateBase, boolean.class, 11)
-    );
+    // // 1.21.2+，其他版本在cache里
+    // public static final Field field$BlockStateBase$propagatesSkylightDown = requireNonNull(
+    //         ReflectionUtils.getDeclaredField(clazz$BlockStateBase, boolean.class, 11)
+    // );
 
-    public static final Field field$BlockStateBase$Cache$propagatesSkylightDown = ReflectionUtils.getDeclaredField(
-            clazz$BlockStateBase$Cache, boolean.class, 2
-    );
+    // public static final Field field$BlockStateBase$Cache$propagatesSkylightDown = ReflectionUtils.getDeclaredField(
+    //         clazz$BlockStateBase$Cache, boolean.class, 2
+    // );
 
     public static final Field field$BlockStateBase$requiresCorrectToolForDrops = requireNonNull(
             ReflectionUtils.getDeclaredField(clazz$BlockStateBase, boolean.class, 5)
@@ -3206,20 +3207,20 @@ public final class CoreReflections {
             )
     );
 
-    public static final Class<?> clazz$ChunkHolder$PlayerProvider = requireNonNull(
-            BukkitReflectionUtils.findReobfOrMojmapClass(
-                    "server.level.PlayerChunk$d",
-                    "server.level.ChunkHolder$PlayerProvider"
-            )
-    );
+    // public static final Class<?> clazz$ChunkHolder$PlayerProvider = requireNonNull(
+    //         BukkitReflectionUtils.findReobfOrMojmapClass(
+    //                 "server.level.PlayerChunk$d",
+    //                 "server.level.ChunkHolder$PlayerProvider"
+    //         )
+    // );
 
-    public static final Field field$ChunkHolder$playerProvider = requireNonNull(
-            ReflectionUtils.getDeclaredField(clazz$ChunkHolder, clazz$ChunkHolder$PlayerProvider, 0)
-    );
+    // public static final Field field$ChunkHolder$playerProvider = requireNonNull(
+    //         ReflectionUtils.getDeclaredField(clazz$ChunkHolder, clazz$ChunkHolder$PlayerProvider, 0)
+    // );
 
-    public static final Method method$ChunkHolder$PlayerProvider$getPlayers = requireNonNull(
-            ReflectionUtils.getMethod(clazz$ChunkHolder$PlayerProvider, List.class, clazz$ChunkPos, boolean.class)
-    );
+    // public static final Method method$ChunkHolder$PlayerProvider$getPlayers = requireNonNull(
+    //         ReflectionUtils.getMethod(clazz$ChunkHolder$PlayerProvider, List.class, clazz$ChunkPos, boolean.class)
+    // );
 
     public static final Method method$ChunkHolder$getPlayers =
             ReflectionUtils.getMethod(clazz$ChunkHolder, List.class, boolean.class);
@@ -3473,13 +3474,13 @@ public final class CoreReflections {
                     ReflectionUtils.getDeclaredMethod(clazz$ServerGamePacketListenerImpl, void.class, clazz$ItemStack, clazz$BlockPos, clazz$Entity, boolean.class) :
                     ReflectionUtils.getDeclaredMethod(clazz$ServerGamePacketListenerImpl, void.class, clazz$ItemStack);
 
-    public static final Method method$ServerPlayer$nextContainerCounter = requireNonNull(
-            ReflectionUtils.getMethod(clazz$ServerPlayer, int.class, new String[] {"nextContainerCounter"})
-    );
+    // public static final Method method$ServerPlayer$nextContainerCounter = requireNonNull(
+    //         ReflectionUtils.getMethod(clazz$ServerPlayer, int.class, new String[] {"nextContainerCounter"})
+    // );
 
-    public static final Method method$ServerPlayer$initMenu = requireNonNull(
-            ReflectionUtils.getMethod(clazz$ServerPlayer, void.class, clazz$AbstractContainerMenu)
-    );
+    // public static final Method method$ServerPlayer$initMenu = requireNonNull(
+    //         ReflectionUtils.getMethod(clazz$ServerPlayer, void.class, clazz$AbstractContainerMenu)
+    // );
 
     public static final Class<?> clazz$DedicatedServerProperties = requireNonNull(
             ReflectionUtils.getClazz(BukkitReflectionUtils.assembleMCClass("server.dedicated.DedicatedServerProperties"))
@@ -3698,31 +3699,31 @@ public final class CoreReflections {
             )
     );
 
-    public static final Class<?> clazz$HolderLookup = requireNonNull(
-            BukkitReflectionUtils.findReobfOrMojmapClass(
-                    "core.HolderLookup",
-                    "core.HolderLookup"
-            )
-    );
+    // public static final Class<?> clazz$HolderLookup = requireNonNull(
+    //         BukkitReflectionUtils.findReobfOrMojmapClass(
+    //                 "core.HolderLookup",
+    //                 "core.HolderLookup"
+    //         )
+    // );
 
-    public static final Class<?> clazz$HolderLookup$RegistryLookup = requireNonNull(
-            BukkitReflectionUtils.findReobfOrMojmapClass(
-                    "core.HolderLookup$c",
-                    "core.HolderLookup$RegistryLookup"
-            )
-    );
+    // public static final Class<?> clazz$HolderLookup$RegistryLookup = requireNonNull(
+    //         BukkitReflectionUtils.findReobfOrMojmapClass(
+    //                 "core.HolderLookup$c",
+    //                 "core.HolderLookup$RegistryLookup"
+    //         )
+    // );
 
     public static final Method method$BlockStateParser$BlockResult$blockState = requireNonNull(
             ReflectionUtils.getMethod(clazz$BlockStateParser$BlockResult, clazz$BlockState, 0)
     );
 
     public static final Method method$BlockStateParser$parseForBlock = requireNonNull(
-            ReflectionUtils.getStaticMethod(clazz$BlockStateParser, clazz$BlockStateParser$BlockResult, new String[]{"parseForBlock", "a"}, clazz$HolderLookup, String.class, boolean.class)
+            ReflectionUtils.getStaticMethod(clazz$BlockStateParser, clazz$BlockStateParser$BlockResult, new String[]{"parseForBlock", "a"}, HolderLookupProxy.CLAZZ, String.class, boolean.class)
     );
 
     // 1.21.1-
     public static final Method method$Registry$asLookup = ReflectionUtils.getMethod(
-            clazz$Registry, clazz$HolderLookup$RegistryLookup, new String[]{"asLookup", "p"}
+            clazz$Registry, HolderLookupProxy.RegistryLookupProxy.CLAZZ, new String[]{"asLookup", "p"}
     );
 
     // public static final Field field$ServerEntity$broadcast = requireNonNull(

@@ -7,7 +7,6 @@ import java.util.*;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Predicate;
-import java.util.function.Supplier;
 
 public class MiscUtils {
     private MiscUtils() {
@@ -419,9 +418,5 @@ public class MiscUtils {
 
     public static int growByHalf(int value, int minValue) {
         return (int) Math.max(Math.min((long) value + (value >> 1), 2147483639L), minValue);
-    }
-
-    public static <T> T ifGet(Supplier<T> getter, boolean condition) {
-        return condition ? getter.get() : null;
     }
 }

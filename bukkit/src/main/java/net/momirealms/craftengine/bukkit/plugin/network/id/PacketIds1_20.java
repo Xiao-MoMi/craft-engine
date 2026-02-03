@@ -2,6 +2,8 @@ package net.momirealms.craftengine.bukkit.plugin.network.id;
 
 import net.momirealms.craftengine.bukkit.plugin.network.PacketIds;
 import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.NetworkReflections;
+import net.momirealms.craftengine.bukkit.reflection.minecraft.network.protocol.game.ClientboundAddEntityPacketProxy;
+import net.momirealms.craftengine.bukkit.reflection.minecraft.network.protocol.game.ClientboundBossEventPacketProxy;
 import net.momirealms.craftengine.bukkit.reflection.minecraft.network.protocol.game.ClientboundSetActionBarTextPacketProxy;
 import net.momirealms.craftengine.bukkit.reflection.minecraft.network.protocol.game.ClientboundSystemChatPacketProxy;
 import net.momirealms.craftengine.core.plugin.network.ConnectionState;
@@ -31,7 +33,7 @@ public class PacketIds1_20 implements PacketIds {
 
     @Override
     public int clientboundAddEntityPacket() {
-        return PacketIdHelper.byClazz(NetworkReflections.clazz$ClientboundAddEntityPacket, PacketFlow.CLIENTBOUND, ConnectionState.PLAY);
+        return PacketIdHelper.byClazz(ClientboundAddEntityPacketProxy.CLAZZ, PacketFlow.CLIENTBOUND, ConnectionState.PLAY);
     }
 
     @Override
@@ -71,7 +73,7 @@ public class PacketIds1_20 implements PacketIds {
 
     @Override
     public int clientboundBossEventPacket() {
-        return PacketIdHelper.byClazz(NetworkReflections.clazz$ClientboundBossEventPacket, PacketFlow.CLIENTBOUND, ConnectionState.PLAY);
+        return PacketIdHelper.byClazz(ClientboundBossEventPacketProxy.CLAZZ, PacketFlow.CLIENTBOUND, ConnectionState.PLAY);
     }
 
     @Override
