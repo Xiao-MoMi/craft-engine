@@ -9,12 +9,13 @@ import net.momirealms.craftengine.core.entity.furniture.hitbox.FurnitureHitBoxCo
 import net.momirealms.craftengine.core.entity.furniture.hitbox.FurnitureHitBoxes;
 import net.momirealms.craftengine.core.entity.furniture.tick.TickingFurniture;
 import net.momirealms.craftengine.core.loot.LootTable;
-import net.momirealms.craftengine.core.pack.LoadingSequence;
 import net.momirealms.craftengine.core.pack.Pack;
 import net.momirealms.craftengine.core.pack.PendingConfigSection;
 import net.momirealms.craftengine.core.plugin.CraftEngine;
 import net.momirealms.craftengine.core.plugin.config.Config;
 import net.momirealms.craftengine.core.plugin.config.IdSectionConfigParser;
+import net.momirealms.craftengine.core.plugin.config.lifecycle.LoadingStage;
+import net.momirealms.craftengine.core.plugin.config.lifecycle.LoadingStages;
 import net.momirealms.craftengine.core.plugin.context.CommonFunctions;
 import net.momirealms.craftengine.core.plugin.locale.LocalizedResourceConfigException;
 import net.momirealms.craftengine.core.plugin.scheduler.SchedulerTask;
@@ -165,7 +166,7 @@ public abstract class AbstractFurnitureManager implements FurnitureManager {
 
     protected abstract FurnitureHitBoxConfig<?> defaultHitBox();
 
-    public class FurnitureParser extends IdSectionConfigParser {
+    public final class FurnitureParser extends IdSectionConfigParser {
         public static final String[] CONFIG_SECTION_NAME = new String[] { "furniture" };
         private final List<PendingConfigSection> pendingConfigSections = new ArrayList<>();
 
@@ -192,13 +193,18 @@ public abstract class AbstractFurnitureManager implements FurnitureManager {
         }
 
         @Override
-        public int loadingSequence() {
-            return LoadingSequence.FURNITURE;
+        public int count() {
+            return AbstractFurnitureManager.this.byId.size();
         }
 
         @Override
-        public int count() {
-            return AbstractFurnitureManager.this.byId.size();
+        public LoadingStage loadingStage() {
+            return LoadingStages.FURNITURE;
+        }
+
+        @Override
+        public List<LoadingStage> dependencies() {
+            return List.of(LoadingStages.ITEM);
         }
 
         @Override

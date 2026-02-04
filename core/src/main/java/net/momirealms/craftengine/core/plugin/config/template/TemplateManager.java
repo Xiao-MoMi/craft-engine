@@ -11,4 +11,6 @@ public interface TemplateManager extends Manageable {
     ConfigParser parser();
 
     Object applyTemplates(Key id, Object input);
+
+    Object applyTemplates(Object input);
 }

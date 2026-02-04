@@ -1,11 +1,14 @@
 package net.momirealms.craftengine.core.plugin.config.template;
 
-import net.momirealms.craftengine.core.pack.LoadingSequence;
+import net.momirealms.craftengine.core.pack.CachedConfigSection;
 import net.momirealms.craftengine.core.pack.Pack;
 import net.momirealms.craftengine.core.plugin.config.ConfigParser;
 import net.momirealms.craftengine.core.plugin.config.IdObjectConfigParser;
+import net.momirealms.craftengine.core.plugin.config.lifecycle.LoadingStage;
+import net.momirealms.craftengine.core.plugin.config.lifecycle.LoadingStages;
 import net.momirealms.craftengine.core.plugin.config.template.argument.*;
 import net.momirealms.craftengine.core.plugin.locale.LocalizedResourceConfigException;
+import net.momirealms.craftengine.core.util.GsonHelper;
 import net.momirealms.craftengine.core.util.Key;
 import net.momirealms.craftengine.core.util.MiscUtils;
 import net.momirealms.craftengine.core.util.ResourceConfigUtils;
@@ -40,7 +43,7 @@ public final class TemplateManagerImpl implements TemplateManager {
         return this.templateParser;
     }
 
-    public class TemplateParser extends IdObjectConfigParser {
+    public final class TemplateParser extends IdObjectConfigParser {
         public static final String[] CONFIG_SECTION_NAME = new String[] {"templates", "template"};
 
         @Override
@@ -49,13 +52,13 @@ public final class TemplateManagerImpl implements TemplateManager {
         }
 
         @Override
-        public int loadingSequence() {
-            return LoadingSequence.TEMPLATE;
+        public int count() {
+            return TemplateManagerImpl.this.templates.size();
         }
 
         @Override
-        public int count() {
-            return TemplateManagerImpl.this.templates.size();
+        public LoadingStage loadingStage() {
+            return LoadingStages.TEMPLATE;
         }
 
         @Override
@@ -66,6 +69,22 @@ public final class TemplateManagerImpl implements TemplateManager {
             // 预处理会将 string类型的键或值解析为ArgumentString，以加速模板应用。所以处理后不可能存在String类型。
             TemplateManagerImpl.this.templates.put(id, preprocessUnknownValue(obj));
         }
+
+        // 覆写父类逻辑，禁止应用模板
+        @Override
+        protected void parseSection(CachedConfigSection cached) {
+            for (Map.Entry<String, Object> configEntry : cached.config().entrySet()) {
+                String key = configEntry.getKey();
+                Key id = Key.withDefaultNamespace(key, cached.pack().namespace());
+                String node = cached.prefix() + "." + key;
+                ResourceConfigUtils.runCatching(
+                        cached.filePath(),
+                        node,
+                        () -> parseObject(cached.pack(), cached.filePath(), node, id, configEntry.getValue()),
+                        () -> GsonHelper.get().toJson(configEntry.getValue())
+                );
+            }
+        }
     }
 
     @Override
@@ -75,6 +94,12 @@ public final class TemplateManagerImpl implements TemplateManager {
                 "__NAMESPACE__", PlainStringTemplateArgument.plain(id.namespace()),
                 "__ID__", PlainStringTemplateArgument.plain(id.value())
         ));
+    }
+
+    @Override
+    public Object applyTemplates(Object input) {
+        Object preprocessedInput = preprocessUnknownValue(input);
+        return processUnknownValue(preprocessedInput, Collections.emptyMap());
     }
 
     public Object preprocessUnknownValue(Object value) {

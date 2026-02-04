@@ -18,12 +18,13 @@ import net.momirealms.craftengine.core.block.BlockStateWrapper;
 import net.momirealms.craftengine.core.block.CustomBlock;
 import net.momirealms.craftengine.core.block.ImmutableBlockState;
 import net.momirealms.craftengine.core.block.properties.Property;
-import net.momirealms.craftengine.core.pack.LoadingSequence;
 import net.momirealms.craftengine.core.pack.Pack;
 import net.momirealms.craftengine.core.plugin.CraftEngine;
 import net.momirealms.craftengine.core.plugin.config.Config;
 import net.momirealms.craftengine.core.plugin.config.ConfigParser;
 import net.momirealms.craftengine.core.plugin.config.IdSectionConfigParser;
+import net.momirealms.craftengine.core.plugin.config.lifecycle.LoadingStage;
+import net.momirealms.craftengine.core.plugin.config.lifecycle.LoadingStages;
 import net.momirealms.craftengine.core.plugin.locale.LocalizedException;
 import net.momirealms.craftengine.core.plugin.locale.LocalizedResourceConfigException;
 import net.momirealms.craftengine.core.util.*;
@@ -573,7 +574,7 @@ public final class BukkitWorldManager implements WorldManager, Listener {
     }
 
     public class ConfiguredFeatureParser extends IdSectionConfigParser {
-        public static final String[] CONFIG_SECTION_NAME = new String[] {"configured-feature", "configured-features"};
+        public static final String[] CONFIG_SECTION_NAME = new String[] {"configured-feature", "configured-features", "configured_feature", "configured_features"};
 
         @Override
         protected void parseSection(Pack pack, Path path, String node, Key id, Map<String, Object> section) throws LocalizedException {
@@ -596,13 +597,18 @@ public final class BukkitWorldManager implements WorldManager, Listener {
         }
 
         @Override
-        public String[] sectionId() {
-            return CONFIG_SECTION_NAME;
+        public LoadingStage loadingStage() {
+            return LoadingStages.CONFIGURED_FEATURE;
         }
 
         @Override
-        public int loadingSequence() {
-            return LoadingSequence.CONFIGURED_FEATURE;
+        public List<LoadingStage> dependencies() {
+            return List.of(LoadingStages.BLOCK);
+        }
+
+        @Override
+        public String[] sectionId() {
+            return CONFIG_SECTION_NAME;
         }
 
         @Override
@@ -612,7 +618,7 @@ public final class BukkitWorldManager implements WorldManager, Listener {
     }
 
     public class PlacedFeatureParser extends IdSectionConfigParser {
-        public static final String[] CONFIG_SECTION_NAME = new String[] {"placed-feature", "placed-features"};
+        public static final String[] CONFIG_SECTION_NAME = new String[] {"placed-feature", "placed-features", "placed_feature", "placed_features"};
         private List<ConditionalFeature> tempFeatures = null;
         private int id;
 
@@ -626,6 +632,16 @@ public final class BukkitWorldManager implements WorldManager, Listener {
         public void postProcess() {
             BukkitWorldManager.this.placedFeatures = this.tempFeatures;
             BukkitWorldManager.this.lastReloadFeatureTime = System.currentTimeMillis();
+        }
+
+        @Override
+        public LoadingStage loadingStage() {
+            return LoadingStages.PLACED_FEATURE;
+        }
+
+        @Override
+        public List<LoadingStage> dependencies() {
+            return List.of(LoadingStages.CONFIGURED_FEATURE);
         }
 
         @Override
@@ -696,11 +712,6 @@ public final class BukkitWorldManager implements WorldManager, Listener {
         @Override
         public String[] sectionId() {
             return CONFIG_SECTION_NAME;
-        }
-
-        @Override
-        public int loadingSequence() {
-            return LoadingSequence.PLACED_FEATURE;
         }
 
         private <T> Predicate<T> parseFilter(Object config, Function<String, T> mapper) {

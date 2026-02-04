@@ -11,12 +11,13 @@ import net.momirealms.craftengine.core.item.Item;
 import net.momirealms.craftengine.core.loot.AbstractLootManager;
 import net.momirealms.craftengine.core.loot.LootTable;
 import net.momirealms.craftengine.core.loot.VanillaLoot;
-import net.momirealms.craftengine.core.pack.LoadingSequence;
 import net.momirealms.craftengine.core.pack.Pack;
 import net.momirealms.craftengine.core.plugin.compatibility.EntityProvider;
 import net.momirealms.craftengine.core.plugin.config.Config;
 import net.momirealms.craftengine.core.plugin.config.ConfigParser;
 import net.momirealms.craftengine.core.plugin.config.IdSectionConfigParser;
+import net.momirealms.craftengine.core.plugin.config.lifecycle.LoadingStage;
+import net.momirealms.craftengine.core.plugin.config.lifecycle.LoadingStages;
 import net.momirealms.craftengine.core.plugin.context.ContextHolder;
 import net.momirealms.craftengine.core.plugin.context.parameter.DirectContextParameters;
 import net.momirealms.craftengine.core.plugin.locale.LocalizedResourceConfigException;
@@ -40,12 +41,12 @@ import java.util.*;
 // note: block listeners are in BlockEventListener to reduce performance cost
 public class BukkitLootManager extends AbstractLootManager implements Listener {
     private final BukkitCraftEngine plugin;
-    private final VanillaLootParser vanillaLootParser;
+    private final LootParser vanillaLootParser;
     private EntityProvider[] entitySources;
 
     public BukkitLootManager(BukkitCraftEngine plugin) {
         this.plugin = plugin;
-        this.vanillaLootParser = new VanillaLootParser();
+        this.vanillaLootParser = new LootParser();
     }
 
     @Override
@@ -121,14 +122,9 @@ public class BukkitLootManager extends AbstractLootManager implements Listener {
         return this.vanillaLootParser;
     }
 
-    public class VanillaLootParser extends IdSectionConfigParser {
+    public class LootParser extends IdSectionConfigParser {
         public static final String[] CONFIG_SECTION_NAME = new String[] {"loots", "loot", "vanilla-loots", "vanilla-loot"};
         private int count;
-
-        @Override
-        public int loadingSequence() {
-            return LoadingSequence.VANILLA_LOOTS;
-        }
 
         @Override
         public String[] sectionId() {
@@ -143,6 +139,16 @@ public class BukkitLootManager extends AbstractLootManager implements Listener {
         @Override
         public void preProcess() {
             this.count = 0;
+        }
+
+        @Override
+        public LoadingStage loadingStage() {
+            return LoadingStages.LOOT;
+        }
+
+        @Override
+        public List<LoadingStage> dependencies() {
+            return List.of(LoadingStages.TEMPLATE);
         }
 
         @Override

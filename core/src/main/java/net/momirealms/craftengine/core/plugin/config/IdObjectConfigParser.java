@@ -2,6 +2,7 @@ package net.momirealms.craftengine.core.plugin.config;
 
 import net.momirealms.craftengine.core.pack.CachedConfigSection;
 import net.momirealms.craftengine.core.pack.Pack;
+import net.momirealms.craftengine.core.plugin.config.template.TemplateManager;
 import net.momirealms.craftengine.core.plugin.locale.LocalizedException;
 import net.momirealms.craftengine.core.util.GsonHelper;
 import net.momirealms.craftengine.core.util.Key;
@@ -21,7 +22,7 @@ public abstract class IdObjectConfigParser extends AbstractConfigParser {
             ResourceConfigUtils.runCatching(
                     cached.filePath(),
                     node,
-                    () -> parseObject(cached.pack(), cached.filePath(), node, id, configEntry.getValue()),
+                    () -> parseObject(cached.pack(), cached.filePath(), node, id, TemplateManager.INSTANCE.applyTemplates(id, configEntry.getValue())),
                     () -> GsonHelper.get().toJson(configEntry.getValue())
             );
         }

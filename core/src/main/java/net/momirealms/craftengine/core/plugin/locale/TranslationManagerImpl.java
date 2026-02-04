@@ -2,12 +2,13 @@ package net.momirealms.craftengine.core.plugin.locale;
 
 import net.kyori.adventure.key.Key;
 import net.kyori.adventure.text.Component;
-import net.momirealms.craftengine.core.pack.LoadingSequence;
 import net.momirealms.craftengine.core.pack.Pack;
 import net.momirealms.craftengine.core.plugin.CraftEngine;
 import net.momirealms.craftengine.core.plugin.Plugin;
 import net.momirealms.craftengine.core.plugin.PluginProperties;
 import net.momirealms.craftengine.core.plugin.config.*;
+import net.momirealms.craftengine.core.plugin.config.lifecycle.LoadingStage;
+import net.momirealms.craftengine.core.plugin.config.lifecycle.LoadingStages;
 import net.momirealms.craftengine.core.plugin.text.minimessage.ImageTag;
 import net.momirealms.craftengine.core.plugin.text.minimessage.IndexedArgumentTag;
 import net.momirealms.craftengine.core.plugin.text.minimessage.ShiftTag;
@@ -300,11 +301,6 @@ public class TranslationManagerImpl implements TranslationManager {
         private int count;
 
         @Override
-        public int loadingSequence() {
-            return LoadingSequence.TRANSLATION;
-        }
-
-        @Override
         public String[] sectionId() {
             return CONFIG_SECTION_NAME;
         }
@@ -317,6 +313,16 @@ public class TranslationManagerImpl implements TranslationManager {
         @Override
         public void preProcess() {
             this.count = 0;
+        }
+
+        @Override
+        public LoadingStage loadingStage() {
+            return LoadingStages.TRANSLATION;
+        }
+
+        @Override
+        public List<LoadingStage> dependencies() {
+            return List.of(LoadingStages.TEMPLATE);
         }
 
         @Override
@@ -345,11 +351,6 @@ public class TranslationManagerImpl implements TranslationManager {
         private int count;
 
         @Override
-        public int loadingSequence() {
-            return LoadingSequence.LANG;
-        }
-
-        @Override
         public String[] sectionId() {
             return CONFIG_SECTION_NAME;
         }
@@ -365,12 +366,20 @@ public class TranslationManagerImpl implements TranslationManager {
         }
 
         @Override
+        public LoadingStage loadingStage() {
+            return LoadingStages.LANG;
+        }
+
+        @Override
+        public List<LoadingStage> dependencies() {
+            return List.of(LoadingStages.IMAGE);
+        }
+
+        @Override
         public void parseSection(Pack pack, Path path, String node, net.momirealms.craftengine.core.util.Key id, Map<String, Object> section) {
             String langId = id.value().toLowerCase(Locale.ENGLISH);
             Map<String, String> sectionData = new HashMap<>();
-            loadLangKeyDeeply("", section, (key, value) -> {
-                sectionData.put(key, this.langProcessor.apply(value));
-            });
+            loadLangKeyDeeply("", section, (key, value) -> sectionData.put(key, this.langProcessor.apply(value)));
             this.count += sectionData.size();
             TranslationManagerImpl.this.addClientTranslation(langId, sectionData);
         }

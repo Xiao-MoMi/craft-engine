@@ -3,6 +3,7 @@ package net.momirealms.craftengine.core.plugin.config;
 import net.momirealms.craftengine.core.pack.CachedConfigSection;
 import net.momirealms.craftengine.core.pack.Pack;
 import net.momirealms.craftengine.core.plugin.CraftEngine;
+import net.momirealms.craftengine.core.plugin.config.template.TemplateManager;
 import net.momirealms.craftengine.core.plugin.locale.LocalizedException;
 import net.momirealms.craftengine.core.plugin.locale.TranslationManager;
 import net.momirealms.craftengine.core.util.GsonHelper;
@@ -34,7 +35,7 @@ public abstract class IdSectionConfigParser extends AbstractConfigParser {
                 if (!ResourceConfigUtils.runCatching(
                         cached.filePath(),
                         node,
-                        () -> CraftEngine.instance().logger().info(GsonHelper.get().toJson(CraftEngine.instance().templateManager().applyTemplates(id, config))),
+                        () -> CraftEngine.instance().logger().info(GsonHelper.get().toJson(TemplateManager.INSTANCE.applyTemplates(id, config))),
                         () -> GsonHelper.get().toJson(section)
                 )) {
                     // 发生异常
@@ -47,7 +48,7 @@ public abstract class IdSectionConfigParser extends AbstractConfigParser {
             ResourceConfigUtils.runCatching(
                     cached.filePath(),
                     node,
-                    () -> parseSection(cached.pack(), cached.filePath(), node, id, MiscUtils.castToMap(CraftEngine.instance().templateManager().applyTemplates(id, config), false)),
+                    () -> parseSection(cached.pack(), cached.filePath(), node, id, MiscUtils.castToMap(TemplateManager.INSTANCE.applyTemplates(id, config), false)),
                     () -> GsonHelper.get().toJson(section)
             );
         }

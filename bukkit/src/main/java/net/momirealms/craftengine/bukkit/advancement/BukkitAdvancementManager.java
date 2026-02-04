@@ -10,10 +10,11 @@ import net.momirealms.craftengine.core.advancement.AbstractAdvancementManager;
 import net.momirealms.craftengine.core.advancement.AdvancementType;
 import net.momirealms.craftengine.core.entity.player.Player;
 import net.momirealms.craftengine.core.item.Item;
-import net.momirealms.craftengine.core.pack.LoadingSequence;
 import net.momirealms.craftengine.core.pack.Pack;
 import net.momirealms.craftengine.core.plugin.config.ConfigParser;
 import net.momirealms.craftengine.core.plugin.config.IdSectionConfigParser;
+import net.momirealms.craftengine.core.plugin.config.lifecycle.LoadingStage;
+import net.momirealms.craftengine.core.plugin.config.lifecycle.LoadingStages;
 import net.momirealms.craftengine.core.util.Key;
 import net.momirealms.craftengine.core.util.MiscUtils;
 import net.momirealms.craftengine.core.util.VersionHelper;
@@ -23,77 +24,11 @@ import java.util.*;
 
 public final class BukkitAdvancementManager extends AbstractAdvancementManager {
     private final BukkitCraftEngine plugin;
-    private final AdvancementParser advancementParser;
-    private final Map<Key, Object> advancements = new HashMap<>();
 
     public BukkitAdvancementManager(BukkitCraftEngine plugin) {
         super(plugin);
         this.plugin = plugin;
-        this.advancementParser = new AdvancementParser();
     }
-
-    public void unload() {
-        this.advancements.clear();
-    }
-
-    @Override
-    public ConfigParser parser() {
-        return this.advancementParser;
-    }
-
-//    @Override
-//    public void runDelayedSyncTasks() {
-//        Map<Object, Object> advancements = new HashMap<>();
-//        for (Map.Entry<Key, Object> entry : this.advancements.entrySet()) {
-//            Object identifier = KeyUtils.toResourceLocation(entry.getKey());
-//            try {
-//                Object advancementHolder = CoreReflections.constructor$AdvancementHolder.newInstance(identifier, entry.getValue());
-//                advancements.put(identifier, advancementHolder);
-//            } catch (ReflectiveOperationException e) {
-//                this.plugin.logger().warn("Failed to create advancement holder", e);
-//            }
-//        }
-//        try {
-//            Object serverAdvancementManager = CoreReflections.method$MinecraftServer$getAdvancements.invoke(FastNMS.INSTANCE.method$MinecraftServer$getServer());
-//            // 进度管理器里新的map
-//            Map<Object, Object> mapBuilder = new HashMap<>();
-//            Map<Object, Object> serverAdvancementManager$advancements = getAdvancementMap(serverAdvancementManager);
-//            mapBuilder.putAll(serverAdvancementManager$advancements);
-//            mapBuilder.putAll(advancements);
-//            CoreReflections.field$ServerAdvancementManager$advancements.set(serverAdvancementManager, mapBuilder);
-//            Object advancementTree = CoreReflections.method$ServerAdvancementManager$tree.invoke(serverAdvancementManager);
-//            CoreReflections.method$AdvancementTree$addAll.invoke(advancementTree, advancements.values());
-//            HashSet<Object> processedRoots = new HashSet<>();
-//            for (Map.Entry<Object, Object> entry : advancements.entrySet()) {
-//                Object node = CoreReflections.method$AdvancementTree$get.invoke(advancementTree, entry.getKey());
-//                if (node != null) {
-//                    Object root = CoreReflections.method$AdvancementNode$root.invoke(node);
-//                    if (processedRoots.add(root)) {
-//                        Object advancementHolder = CoreReflections.method$AdvancementNode$holder.invoke(root);
-//                        Object advancement = CoreReflections.field$AdvancementHolder$value.get(advancementHolder);
-//                        Optional<?> optionalDisplay = (Optional<?>) CoreReflections.field$Advancement$display.get(advancement);
-//                        if (optionalDisplay.isPresent()) {
-//                            CoreReflections.method$TreeNodePosition$run.invoke(null, root);
-//                        }
-//                    }
-//                }
-//            }
-//        } catch (ReflectiveOperationException e) {
-//            this.plugin.logger().warn("Failed to register advancements", e);
-//        }
-//    }
-//
-//    @SuppressWarnings("unchecked")
-//    private static Map<Object, Object> getAdvancementMap(Object serverAdvancementManager) throws IllegalAccessException {
-//        Map<Object, Object> serverAdvancementManager$advancements;
-//        if (VersionHelper.isOrAbove1_20_2()) {
-//            serverAdvancementManager$advancements = (Map<Object, Object>) CoreReflections.field$ServerAdvancementManager$advancements.get(serverAdvancementManager);
-//        } else {
-//            Object advancementList = CoreReflections.field$ServerAdvancementManager$advancements.get(serverAdvancementManager);
-//            serverAdvancementManager$advancements = (Map<Object, Object>) CoreReflections.field$AdvancementList$advancements.get(advancementList);
-//        }
-//        return serverAdvancementManager$advancements;
-//    }
 
     @Override
     public void sendToast(Player player, Item<?> icon, Component message, AdvancementType type) {
@@ -158,98 +93,4 @@ public final class BukkitAdvancementManager extends AbstractAdvancementManager {
             this.plugin.logger().warn("Failed to send toast for player " + player.name(), e);
         }
     }
-
-    public class AdvancementParser extends IdSectionConfigParser {
-        public static final String[] CONFIG_SECTION_NAME = new String[] {"advancements", "advancement"};
-
-        @Override
-        public String[] sectionId() {
-            return CONFIG_SECTION_NAME;
-        }
-
-        @Override
-        public int loadingSequence() {
-            return LoadingSequence.ADVANCEMENT;
-        }
-
-        @Override
-        public int count() {
-            return BukkitAdvancementManager.this.advancements.size();
-        }
-
-        @Override
-        public void parseSection(Pack pack, Path path, String node, Key id, Map<String, Object> section) {
-//            if (BukkitAdvancementManager.this.advancements.containsKey(id)) {
-//                throw new LocalizedResourceConfigException("warning.config.advancement.duplicate", path, id);
-//            }
-//            Map<String, Object> processed = processAdvancement(section);
-//            JsonElement json = GsonHelper.get().toJsonTree(processed);
-//            Object advancement;
-//            if (VersionHelper.isOrAbove1_20_5()) {
-//                advancement = CoreReflections.instance$Advancement$CODEC.parse(MRegistryOps.JSON, json)
-//                        .resultOrPartial(error -> {
-//                            throw new LocalizedResourceConfigException("warning.config.advancement.invalid_advancement", json.toString(), error);
-//                        })
-//                        .orElse(null);
-//            } else {
-//                advancement = LegacyDFUUtils.parse(CoreReflections.instance$Advancement$CODEC, MRegistryOps.JSON, json, (error) -> {
-//                    throw new LocalizedResourceConfigException("warning.config.advancement.invalid_advancement", json.toString(), error);
-//                });
-//            }
-//            if (advancement == null) {
-//                return;
-//            }
-//            BukkitAdvancementManager.this.advancements.put(id, advancement);
-        }
-    }
-//
-//    @SuppressWarnings({"DuplicatedCode"})
-//    private Map<String, Object> processAdvancement(Map<String, Object> map) {
-//        if (map == null) {
-//            return null;
-//        }
-//        Map<String, Object> result = new LinkedHashMap<>();
-//        for (Map.Entry<String, Object> entry : map.entrySet()) {
-//            String originalKey = entry.getKey();
-//            Object value = entry.getValue();
-//            String newKey = originalKey.replace("-", "_");
-//            Object processedValue = processValue(value);
-//            result.put(newKey, processedValue);
-//        }
-//        Object rawName = result.get("items");
-//        if (rawName instanceof String itemId) {
-//            Optional<CustomItem<ItemStack>> optionalCustomItem = this.plugin.itemManager().getCustomItem(Key.of(itemId));
-//            if (optionalCustomItem.isPresent()) {
-//                CustomItem<ItemStack> customItem = optionalCustomItem.get();
-//                result.put("items", customItem.material().asString());
-//                Item<ItemStack> item = customItem.buildItem(ItemBuildContext.empty());
-//                if (VersionHelper.isOrAbove1_20_5()) {
-//                    Object customData = item.getJavaComponent(DataComponentTypes.CUSTOM_DATA);
-//                    result.put("predicates", Map.of("minecraft:custom_data", customData));
-//                } else {
-//                    Object javaTag = item.getJavaTag();
-//                    result.put("nbt", GsonHelper.get().toJson(javaTag));
-//                }
-//            }
-//        }
-//        return result;
-//    }
-//
-//    @SuppressWarnings({"unchecked", "DuplicatedCode"})
-//    private Object processValue(Object value) {
-//        if (value == null) return null;
-//        if (value instanceof Map) {
-//            Map<String, Object> nestedMap = (Map<String, Object>) value;
-//            return processAdvancement(nestedMap);
-//        }
-//        if (value instanceof List) {
-//            List<Object> originalList = (List<Object>) value;
-//            List<Object> processedList = new ArrayList<>();
-//            for (Object item : originalList) {
-//                processedList.add(processValue(item));
-//            }
-//            return processedList;
-//        }
-//        return value;
-//    }
 }

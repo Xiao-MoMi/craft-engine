@@ -2,7 +2,6 @@ package net.momirealms.craftengine.core.font;
 
 import net.kyori.adventure.text.Component;
 import net.momirealms.craftengine.core.entity.player.Player;
-import net.momirealms.craftengine.core.pack.LoadingSequence;
 import net.momirealms.craftengine.core.pack.Pack;
 import net.momirealms.craftengine.core.pack.ResourceLocation;
 import net.momirealms.craftengine.core.pack.allocator.IdAllocator;
@@ -10,6 +9,8 @@ import net.momirealms.craftengine.core.plugin.CraftEngine;
 import net.momirealms.craftengine.core.plugin.config.Config;
 import net.momirealms.craftengine.core.plugin.config.ConfigParser;
 import net.momirealms.craftengine.core.plugin.config.IdSectionConfigParser;
+import net.momirealms.craftengine.core.plugin.config.lifecycle.LoadingStage;
+import net.momirealms.craftengine.core.plugin.config.lifecycle.LoadingStages;
 import net.momirealms.craftengine.core.plugin.context.ContextHolder;
 import net.momirealms.craftengine.core.plugin.context.PlayerOptionalContext;
 import net.momirealms.craftengine.core.plugin.locale.LocalizedResourceConfigException;
@@ -327,13 +328,18 @@ public abstract class AbstractFontManager implements FontManager {
         }
 
         @Override
-        public int loadingSequence() {
-            return LoadingSequence.EMOJI;
+        public int count() {
+            return AbstractFontManager.this.emojis.size();
         }
 
         @Override
-        public int count() {
-            return AbstractFontManager.this.emojis.size();
+        public LoadingStage loadingStage() {
+            return LoadingStages.EMOJI;
+        }
+
+        @Override
+        public List<LoadingStage> dependencies() {
+            return List.of(LoadingStages.IMAGE);
         }
 
         @Override
@@ -400,13 +406,18 @@ public abstract class AbstractFontManager implements FontManager {
         }
 
         @Override
-        public int loadingSequence() {
-            return LoadingSequence.IMAGE;
+        public int count() {
+            return AbstractFontManager.this.bitmapImages.size();
         }
 
         @Override
-        public int count() {
-            return AbstractFontManager.this.bitmapImages.size();
+        public LoadingStage loadingStage() {
+            return LoadingStages.IMAGE;
+        }
+
+        @Override
+        public List<LoadingStage> dependencies() {
+            return List.of(LoadingStages.TEMPLATE);
         }
 
         @Override

@@ -11,7 +11,6 @@ import net.momirealms.craftengine.core.item.updater.ItemUpdateResult;
 import net.momirealms.craftengine.core.item.updater.ItemUpdater;
 import net.momirealms.craftengine.core.item.updater.ItemUpdaters;
 import net.momirealms.craftengine.core.pack.AbstractPackManager;
-import net.momirealms.craftengine.core.pack.LoadingSequence;
 import net.momirealms.craftengine.core.pack.Pack;
 import net.momirealms.craftengine.core.pack.allocator.IdAllocator;
 import net.momirealms.craftengine.core.pack.model.definition.*;
@@ -27,6 +26,8 @@ import net.momirealms.craftengine.core.plugin.CraftEngine;
 import net.momirealms.craftengine.core.plugin.config.Config;
 import net.momirealms.craftengine.core.plugin.config.ConfigParser;
 import net.momirealms.craftengine.core.plugin.config.IdSectionConfigParser;
+import net.momirealms.craftengine.core.plugin.config.lifecycle.LoadingStage;
+import net.momirealms.craftengine.core.plugin.config.lifecycle.LoadingStages;
 import net.momirealms.craftengine.core.plugin.context.CommonFunctions;
 import net.momirealms.craftengine.core.plugin.context.Context;
 import net.momirealms.craftengine.core.plugin.context.EventTrigger;
@@ -316,11 +317,6 @@ public abstract class AbstractItemManager<I> extends AbstractModelGenerator impl
         }
 
         @Override
-        public int loadingSequence() {
-            return LoadingSequence.EQUIPMENT;
-        }
-
-        @Override
         public void parseSection(Pack pack, Path path, String node, Key id, Map<String, Object> section) {
             if (AbstractItemManager.this.equipments.containsKey(id)) {
                 throw new LocalizedResourceConfigException("warning.config.equipment.duplicate");
@@ -336,6 +332,16 @@ public abstract class AbstractItemManager<I> extends AbstractModelGenerator impl
                     .map(Equipment::assetId)
                     .toList();
             registerArmorTrimPattern(trims);
+        }
+
+        @Override
+        public LoadingStage loadingStage() {
+            return LoadingStages.EQUIPMENT;
+        }
+
+        @Override
+        public List<LoadingStage> dependencies() {
+            return List.of(LoadingStages.TEMPLATE);
         }
 
         @Override
@@ -380,6 +386,16 @@ public abstract class AbstractItemManager<I> extends AbstractModelGenerator impl
             return Config.packMaxVersion().isAtOrAbove(MinecraftVersion.V1_21_2) && VersionHelper.isOrAbove1_21_2(); //todo 能否通过客户端包解决问题
         }
 
+        @Override
+        public LoadingStage loadingStage() {
+            return LoadingStages.ITEM;
+        }
+
+        @Override
+        public List<LoadingStage> dependencies() {
+            return List.of(LoadingStages.EQUIPMENT);
+        }
+
         public Map<Key, IdAllocator> idAllocators() {
             return this.idAllocators;
         }
@@ -387,11 +403,6 @@ public abstract class AbstractItemManager<I> extends AbstractModelGenerator impl
         @Override
         public String[] sectionId() {
             return CONFIG_SECTION_NAME;
-        }
-
-        @Override
-        public int loadingSequence() {
-            return LoadingSequence.ITEM;
         }
 
         @Override

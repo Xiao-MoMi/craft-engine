@@ -9,11 +9,12 @@ import net.momirealms.craftengine.core.item.ItemBuildContext;
 import net.momirealms.craftengine.core.item.ItemKeys;
 import net.momirealms.craftengine.core.item.ItemManager;
 import net.momirealms.craftengine.core.item.recipe.*;
-import net.momirealms.craftengine.core.pack.LoadingSequence;
 import net.momirealms.craftengine.core.pack.Pack;
 import net.momirealms.craftengine.core.plugin.CraftEngine;
 import net.momirealms.craftengine.core.plugin.config.ConfigParser;
 import net.momirealms.craftengine.core.plugin.config.IdSectionConfigParser;
+import net.momirealms.craftengine.core.plugin.config.lifecycle.LoadingStage;
+import net.momirealms.craftengine.core.plugin.config.lifecycle.LoadingStages;
 import net.momirealms.craftengine.core.plugin.context.*;
 import net.momirealms.craftengine.core.plugin.gui.*;
 import net.momirealms.craftengine.core.plugin.gui.Ingredient;
@@ -106,13 +107,18 @@ public class ItemBrowserManagerImpl implements ItemBrowserManager {
         }
 
         @Override
-        public int loadingSequence() {
-            return LoadingSequence.CATEGORY;
+        public int count() {
+            return ItemBrowserManagerImpl.this.byId.size();
         }
 
         @Override
-        public int count() {
-            return ItemBrowserManagerImpl.this.byId.size();
+        public LoadingStage loadingStage() {
+            return LoadingStages.CATEGORY;
+        }
+
+        @Override
+        public List<LoadingStage> dependencies() {
+            return List.of(LoadingStages.ITEM);
         }
 
         @Override

@@ -1,11 +1,12 @@
 package net.momirealms.craftengine.core.sound;
 
 import net.kyori.adventure.text.Component;
-import net.momirealms.craftengine.core.pack.LoadingSequence;
 import net.momirealms.craftengine.core.pack.Pack;
 import net.momirealms.craftengine.core.plugin.CraftEngine;
 import net.momirealms.craftengine.core.plugin.config.ConfigParser;
 import net.momirealms.craftengine.core.plugin.config.IdSectionConfigParser;
+import net.momirealms.craftengine.core.plugin.config.lifecycle.LoadingStage;
+import net.momirealms.craftengine.core.plugin.config.lifecycle.LoadingStages;
 import net.momirealms.craftengine.core.plugin.locale.LocalizedResourceConfigException;
 import net.momirealms.craftengine.core.util.*;
 import org.incendo.cloud.suggestion.Suggestion;
@@ -20,14 +21,14 @@ public abstract class AbstractSoundManager implements SoundManager {
     protected final Map<String, List<SoundEvent>> byNamespace = new HashMap<>();
     protected final Map<Key, JukeboxSong> songs = new HashMap<>();
     protected final SoundParser soundParser;
-    protected final SongParser songParser;
+    protected final JukeboxSongParser songParser;
     protected final Map<Integer, Key> customSoundsInRegistry = new HashMap<>();
     protected final List<Suggestion> soundSuggestions = new ArrayList<>();
 
     public AbstractSoundManager(CraftEngine plugin) {
         this.plugin = plugin;
         this.soundParser = new SoundParser();
-        this.songParser = new SongParser();
+        this.songParser = new JukeboxSongParser();
     }
 
     @Override
@@ -84,13 +85,8 @@ public abstract class AbstractSoundManager implements SoundManager {
 
     protected abstract void registerSounds(Collection<Key> sounds);
 
-    public class SongParser extends IdSectionConfigParser {
+    public final class JukeboxSongParser extends IdSectionConfigParser {
         public static final String[] CONFIG_SECTION_NAME = new String[] {"jukebox-songs", "jukebox-song", "jukebox_songs", "jukebox_song"};
-
-        @Override
-        public int loadingSequence() {
-            return LoadingSequence.JUKEBOX_SONG;
-        }
 
         @Override
         public String[] sectionId() {
@@ -100,6 +96,16 @@ public abstract class AbstractSoundManager implements SoundManager {
         @Override
         public int count() {
             return AbstractSoundManager.this.songs.size();
+        }
+
+        @Override
+        public LoadingStage loadingStage() {
+            return LoadingStages.JUKEBOX_SONG;
+        }
+
+        @Override
+        public List<LoadingStage> dependencies() {
+            return List.of(LoadingStages.SOUND);
         }
 
         @Override
@@ -116,13 +122,8 @@ public abstract class AbstractSoundManager implements SoundManager {
         }
     }
 
-    public class SoundParser extends IdSectionConfigParser {
+    public final class SoundParser extends IdSectionConfigParser {
         public static final String[] CONFIG_SECTION_NAME = new String[] {"sounds", "sound"};
-
-        @Override
-        public int loadingSequence() {
-            return LoadingSequence.SOUND;
-        }
 
         @Override
         public String[] sectionId() {
@@ -132,6 +133,16 @@ public abstract class AbstractSoundManager implements SoundManager {
         @Override
         public int count() {
             return AbstractSoundManager.this.byId.size();
+        }
+
+        @Override
+        public LoadingStage loadingStage() {
+            return LoadingStages.SOUND;
+        }
+
+        @Override
+        public List<LoadingStage> dependencies() {
+            return List.of(LoadingStages.TEMPLATE);
         }
 
         @Override

@@ -1,12 +1,13 @@
 package net.momirealms.craftengine.core.item.recipe;
 
 import net.momirealms.craftengine.core.item.recipe.input.RecipeInput;
-import net.momirealms.craftengine.core.pack.LoadingSequence;
 import net.momirealms.craftengine.core.pack.Pack;
 import net.momirealms.craftengine.core.plugin.CraftEngine;
 import net.momirealms.craftengine.core.plugin.config.Config;
 import net.momirealms.craftengine.core.plugin.config.ConfigParser;
 import net.momirealms.craftengine.core.plugin.config.IdSectionConfigParser;
+import net.momirealms.craftengine.core.plugin.config.lifecycle.LoadingStage;
+import net.momirealms.craftengine.core.plugin.config.lifecycle.LoadingStages;
 import net.momirealms.craftengine.core.plugin.locale.LocalizedResourceConfigException;
 import net.momirealms.craftengine.core.util.Key;
 import net.momirealms.craftengine.core.util.UniqueKey;
@@ -145,13 +146,8 @@ public abstract class AbstractRecipeManager<T> implements RecipeManager<T> {
         return true;
     }
 
-    public class RecipeParser extends IdSectionConfigParser {
+    public final class RecipeParser extends IdSectionConfigParser {
         public static final String[] CONFIG_SECTION_NAME = new String[] {"recipes", "recipe"};
-
-        @Override
-        public int loadingSequence() {
-            return LoadingSequence.RECIPE;
-        }
 
         @Override
         public String[] sectionId() {
@@ -161,6 +157,16 @@ public abstract class AbstractRecipeManager<T> implements RecipeManager<T> {
         @Override
         public int count() {
             return Math.max(0, AbstractRecipeManager.this.byId.size() - AbstractRecipeManager.this.dataPackRecipes.size());
+        }
+
+        @Override
+        public LoadingStage loadingStage() {
+            return LoadingStages.RECIPE;
+        }
+
+        @Override
+        public List<LoadingStage> dependencies() {
+            return List.of(LoadingStages.TEMPLATE, LoadingStages.ITEM);
         }
 
         @Override

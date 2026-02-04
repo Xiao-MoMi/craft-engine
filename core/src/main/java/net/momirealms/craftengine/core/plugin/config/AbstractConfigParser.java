@@ -24,7 +24,7 @@ public abstract class AbstractConfigParser implements ConfigParser {
     }
 
     @Override
-    public void clear() {
+    public void clearConfigs() {
         this.configStorage.clear();
     }
 

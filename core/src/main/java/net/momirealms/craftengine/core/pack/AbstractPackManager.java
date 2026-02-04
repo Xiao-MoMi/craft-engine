@@ -40,6 +40,9 @@ import net.momirealms.craftengine.core.plugin.config.Config;
 import net.momirealms.craftengine.core.plugin.config.ConfigParser;
 import net.momirealms.craftengine.core.plugin.config.SectionConfigParser;
 import net.momirealms.craftengine.core.plugin.config.StringKeyConstructor;
+import net.momirealms.craftengine.core.plugin.config.lifecycle.LoadingPyramid;
+import net.momirealms.craftengine.core.plugin.config.lifecycle.LoadingStage;
+import net.momirealms.craftengine.core.plugin.config.lifecycle.LoadingStages;
 import net.momirealms.craftengine.core.plugin.locale.LangData;
 import net.momirealms.craftengine.core.plugin.locale.LocalizedException;
 import net.momirealms.craftengine.core.plugin.locale.LocalizedResourceConfigException;
@@ -135,7 +138,7 @@ public abstract class AbstractPackManager implements PackManager {
     private final BiConsumer<Path, Path> generationEventDispatcher;
     private final Map<String, Pack> loadedPacks = new HashMap<>();
     private final Map<String, ConfigParser> sectionParsers = new HashMap<>();
-    private final TreeSet<ConfigParser> sortedParsers = new TreeSet<>();
+    private final List<ConfigParser> parsers = new ArrayList<>();
     public final JsonObject vanillaBlockAtlas;
     public final JsonObject vanillaItemAtlas;
     private Map<Path, CachedConfigFile> cachedConfigFiles = Collections.emptyMap();
@@ -366,7 +369,7 @@ public abstract class AbstractPackManager implements PackManager {
         for (String id : parser.sectionId()) {
             this.sectionParsers.put(id, parser);
         }
-        this.sortedParsers.add(parser);
+        this.parsers.add(parser);
         return true;
     }
 
@@ -658,7 +661,7 @@ public abstract class AbstractPackManager implements PackManager {
     @Override
     public void updateCachedConfigFiles() {
         Map<Path, CachedConfigFile> previousFiles = this.cachedConfigFiles;
-        this.cachedConfigFiles = new HashMap<>(64, 0.5f);
+        this.cachedConfigFiles = new HashMap<>(128, 0.5f);
         for (Pack pack : loadedPacks()) {
             if (!pack.enabled()) continue;
             for (Path configurationFolderPath : pack.configurationFolders()) {
@@ -753,28 +756,32 @@ public abstract class AbstractPackManager implements PackManager {
     }
 
     private void loadResourceConfigs(Predicate<ConfigParser> predicate) {
-        for (ConfigParser parser : this.sortedParsers) {
+        LoadingPyramid pyramid = new LoadingPyramid();
+        for (ConfigParser parser : this.parsers) {
             if (!predicate.test(parser)) {
                 continue;
             }
-            long t1 = System.nanoTime();
-            parser.preProcess();
-            parser.loadAll();
-            parser.postProcess();
-            long t2 = System.nanoTime();
-            int count = parser.count();
-            if (parser.silentIfNotExists() && count == 0) {
-               continue;
-            }
-            this.plugin.logger().info(TranslationManager.instance().translateLog("info.resource.load",
-                    parser.sectionId()[0], String.format("%.2f", ((t2 - t1) / 1_000_000.0)), String.valueOf(count)));
+            pyramid.addTask(parser.loadingStage(), parser.dependencies(), () -> {
+                long t1 = System.nanoTime();
+                parser.preProcess();
+                parser.loadAll();
+                parser.postProcess();
+                long t2 = System.nanoTime();
+                int count = parser.count();
+                if (parser.silentIfNotExists() && count == 0) {
+                    return;
+                }
+                this.plugin.logger().info(TranslationManager.instance().translateLog("info.resource.load",
+                        parser.sectionId()[0], String.format("%.2f", ((t2 - t1) / 1_000_000.0)), String.valueOf(count)));
+            });
         }
+        pyramid.execute().join();
     }
 
     @Override
     public void clearResourceConfigs() {
-        for (ConfigParser parser : this.sortedParsers) {
-            parser.clear();
+        for (ConfigParser parser : this.parsers) {
+            parser.clearConfigs();
         }
     }
 
@@ -805,7 +812,7 @@ public abstract class AbstractPackManager implements PackManager {
             Path generatedPackPath = fs.getPath("resource_pack");
             List<Pair<String, List<Path>>> duplicated = this.updateCachedAssets(cacheData, fs);
             if (!duplicated.isEmpty()) {
-                plugin.logger().severe(AdventureHelper.miniMessage().stripTags(TranslationManager.instance().miniMessageTranslation("warning.config.pack.duplicated_files")));
+                this.plugin.logger().severe(AdventureHelper.miniMessage().stripTags(TranslationManager.instance().miniMessageTranslation("warning.config.pack.duplicated_files")));
                 int x = 1;
                 for (Pair<String, List<Path>> path : duplicated) {
                     this.plugin.logger().warn("[ " + (x++) + " ] " + path.left());
@@ -3610,16 +3617,21 @@ public abstract class AbstractPackManager implements PackManager {
         }
 
         @Override
+        public LoadingStage loadingStage() {
+            return LoadingStages.SKIP_OPTIMIZATION;
+        }
+
+        @Override
         public int count() {
             return this.excludeJson.size() + this.excludeTexture.size();
         }
 
         public Set<String> excludeTexture() {
-            return excludeTexture;
+            return this.excludeTexture;
         }
 
         public Set<String> excludeJson() {
-            return excludeJson;
+            return this.excludeJson;
         }
 
         @Override
@@ -3652,9 +3664,5 @@ public abstract class AbstractPackManager implements PackManager {
             return SECTION_ID;
         }
 
-        @Override
-        public int loadingSequence() {
-            return LoadingSequence.SKIP_OPTIMIZATION;
-        }
     }
 }
