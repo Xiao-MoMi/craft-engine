@@ -68,7 +68,7 @@ public final class GlobalVariableManager implements Manageable {
 
         @Override
         public LoadingStage loadingStage() {
-            return LoadingStages.GLOBAL_VAR;
+            return LoadingStages.GLOBAL_VARIABLE;
         }
 
         @Override

@@ -9,7 +9,7 @@ import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 
-public class LoadingPyramid {
+public final class LoadingPyramid {
     private final Map<LoadingStage, ConfigTask> tasks = new ConcurrentHashMap<>();
     private final Map<LoadingStage, CompletableFuture<Void>> futures = new ConcurrentHashMap<>();
 

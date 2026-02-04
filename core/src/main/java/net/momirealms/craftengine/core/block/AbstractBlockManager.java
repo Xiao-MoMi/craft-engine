@@ -284,7 +284,7 @@ public abstract class AbstractBlockManager extends AbstractModelGenerator implem
 
         @Override
         public LoadingStage loadingStage() {
-            return LoadingStages.BLOCK_STATE_MAPPINGS;
+            return LoadingStages.BLOCK_STATE_MAPPING;
         }
 
         @Override
@@ -371,7 +371,7 @@ public abstract class AbstractBlockManager extends AbstractModelGenerator implem
 
         @Override
         public List<LoadingStage> dependencies() {
-            return List.of(LoadingStages.BLOCK_STATE_MAPPINGS, LoadingStages.ITEM);
+            return List.of(LoadingStages.BLOCK_STATE_MAPPING, LoadingStages.ITEM);
         }
 
         @Override

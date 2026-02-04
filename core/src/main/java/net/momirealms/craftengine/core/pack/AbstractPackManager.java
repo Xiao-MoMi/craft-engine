@@ -772,7 +772,7 @@ public abstract class AbstractPackManager implements PackManager {
                     return;
                 }
                 this.plugin.logger().info(TranslationManager.instance().translateLog("info.resource.load",
-                        parser.sectionId()[0], String.format("%.2f", ((t2 - t1) / 1_000_000.0)), String.valueOf(count)));
+                       parser.loadingStage().name(), String.format("%.2f", ((t2 - t1) / 1_000_000.0)), String.valueOf(count)));
             });
         }
         pyramid.execute().join();
