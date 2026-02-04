@@ -3039,7 +3039,7 @@ public abstract class AbstractPackManager implements PackManager {
     }
 
     private void generateBlockOverrides(Path generatedPackPath) {
-        for (Map.Entry<Key, Map<String, JsonElement>> entry : plugin.blockManager().blockOverrides().entrySet()) {
+        for (Map.Entry<Key, Map<String, JsonElement>> entry : this.plugin.blockManager().blockOverrides().entrySet()) {
             Key key = entry.getKey();
             Path overridedBlockPath = generatedPackPath
                     .resolve("assets")
@@ -3055,6 +3055,9 @@ public abstract class AbstractPackManager implements PackManager {
                     if (stateJson.has("variants")) {
                         previousVariants = stateJson.get("variants").getAsJsonObject();
                     }
+                    if (stateJson.has("multipart")) {
+                        stateJson.remove("multipart");
+                    }
                 } catch (IOException e) {
                     stateJson = new JsonObject();
                 }
@@ -3063,9 +3066,6 @@ public abstract class AbstractPackManager implements PackManager {
             }
 
             JsonObject newVariants = new JsonObject();
-            for (Map.Entry<String, JsonElement> resourcePathEntry : entry.getValue().entrySet()) {
-                newVariants.add(resourcePathEntry.getKey(), resourcePathEntry.getValue());
-            }
             if (previousVariants != null) {
                 for (Map.Entry<String, JsonElement> variantEntry : previousVariants.entrySet()) {
                     String variantName = variantEntry.getKey();
@@ -3074,7 +3074,9 @@ public abstract class AbstractPackManager implements PackManager {
                     }
                 }
             }
-
+            for (Map.Entry<String, JsonElement> resourcePathEntry : entry.getValue().entrySet()) {
+                newVariants.add(resourcePathEntry.getKey(), resourcePathEntry.getValue());
+            }
             stateJson.add("variants", newVariants);
             try {
                 Files.createDirectories(overridedBlockPath.getParent());
