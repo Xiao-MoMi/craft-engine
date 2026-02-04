@@ -9,7 +9,7 @@ import net.momirealms.craftengine.core.util.Key;
 import java.util.Optional;
 import java.util.function.Function;
 
-public class AdvancementDisplay<I> {
+public final class AdvancementDisplay<I> {
     public static final int FLAG_BACKGROUND = 0b001;
     public static final int FLAG_SHOW_TOAST = 0b010;
     public static final int FLAG_HIDDEN = 0b100;

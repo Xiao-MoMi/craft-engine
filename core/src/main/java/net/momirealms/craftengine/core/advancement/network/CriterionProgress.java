@@ -5,7 +5,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.time.Instant;
 
-public class CriterionProgress {
+public final class CriterionProgress {
     @Nullable
     private Instant obtainedTimestamp;
 

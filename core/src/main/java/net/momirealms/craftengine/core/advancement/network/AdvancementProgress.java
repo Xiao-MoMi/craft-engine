@@ -5,7 +5,7 @@ import net.momirealms.craftengine.core.util.FriendlyByteBuf;
 import java.util.HashMap;
 import java.util.Map;
 
-public class AdvancementProgress {
+public final class AdvancementProgress {
     private final Map<String, CriterionProgress> progress;
 
     public AdvancementProgress(Map<String, CriterionProgress> progress) {

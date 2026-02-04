@@ -11,7 +11,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.function.Function;
 
-public class Advancement<I> {
+public final class Advancement<I> {
     private final Optional<Key> parent;
     private final Optional<AdvancementDisplay<I>> displayInfo;
 

@@ -5,7 +5,7 @@ import net.momirealms.craftengine.core.util.FriendlyByteBuf;
 import java.util.ArrayList;
 import java.util.List;
 
-public class AdvancementRequirements {
+public final class AdvancementRequirements {
     public static final AdvancementRequirements EMPTY = new AdvancementRequirements(List.of());
     private final List<List<String>> requirements;
 

@@ -4,7 +4,7 @@ import net.kyori.adventure.text.Component;
 import net.momirealms.craftengine.core.util.Key;
 import org.jetbrains.annotations.Nullable;
 
-public class AttributeModifier {
+public final class AttributeModifier {
     private final String type;
     private final Slot slot;
     private final Key id;
