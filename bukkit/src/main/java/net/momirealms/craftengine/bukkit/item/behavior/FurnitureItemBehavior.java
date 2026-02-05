@@ -9,6 +9,7 @@ import net.momirealms.craftengine.bukkit.nms.FastNMS;
 import net.momirealms.craftengine.bukkit.plugin.BukkitCraftEngine;
 import net.momirealms.craftengine.bukkit.util.EventUtils;
 import net.momirealms.craftengine.bukkit.util.LocationUtils;
+import net.momirealms.craftengine.bukkit.item.DataComponentTypes;
 import net.momirealms.craftengine.core.entity.furniture.*;
 import net.momirealms.craftengine.core.entity.furniture.hitbox.FurnitureHitBoxConfig;
 import net.momirealms.craftengine.core.entity.player.InteractionResult;
@@ -178,6 +179,9 @@ public class FurnitureItemBehavior extends ItemBehavior {
         dataAccessor.setItem(item.copyWithCount(1));
         dataAccessor.setDyedColor(item.dyedColor().orElse(null));
         dataAccessor.setFireworkExplosionColors(item.fireworkExplosion().map(explosion -> explosion.colors().toIntArray()).orElse(null));
+        if (DataComponentTypes.POTION_CONTENTS != null) {
+            dataAccessor.setPotionContents(item.getSparrowNBTComponent(DataComponentTypes.POTION_CONTENTS));
+        }
         // 放置家具
         BukkitFurniture bukkitFurniture = BukkitFurnitureManager.instance().place(furnitureLocation.clone(), customFurniture, dataAccessor, false);
         // 触发放置事件

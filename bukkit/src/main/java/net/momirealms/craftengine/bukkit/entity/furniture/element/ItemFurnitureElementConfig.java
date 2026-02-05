@@ -3,6 +3,7 @@ package net.momirealms.craftengine.bukkit.entity.furniture.element;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
 import net.momirealms.craftengine.bukkit.entity.data.ItemEntityData;
 import net.momirealms.craftengine.bukkit.item.BukkitItemManager;
+import net.momirealms.craftengine.bukkit.item.DataComponentTypes;
 import net.momirealms.craftengine.core.entity.furniture.Furniture;
 import net.momirealms.craftengine.core.entity.furniture.FurnitureColorSource;
 import net.momirealms.craftengine.core.entity.furniture.element.FurnitureElementConfig;
@@ -58,6 +59,9 @@ public final class ItemFurnitureElementConfig implements FurnitureElementConfig<
                         false,
                         false
                 )));
+                if (DataComponentTypes.POTION_CONTENTS != null) {
+                    Optional.ofNullable(colorSource.potionContents()).ifPresent(contents -> wrappedItem.setComponent(DataComponentTypes.POTION_CONTENTS, contents));
+                }
             }
             return Optional.ofNullable(wrappedItem).orElseGet(() -> BukkitItemManager.instance().createWrappedItem(ItemKeys.BARRIER, null));
         };

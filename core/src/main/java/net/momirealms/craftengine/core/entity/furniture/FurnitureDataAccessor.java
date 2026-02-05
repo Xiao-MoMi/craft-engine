@@ -17,6 +17,7 @@ public final class FurnitureDataAccessor {
     public static final String ITEM = "item";
     public static final String DYED_COLOR = "dyed_color";
     public static final String FIREWORK_EXPLOSION_COLORS = "firework_explosion_colors";
+    public static final String POTION_CONTENTS = "potion_contents";
     public static final String VARIANT = "variant";
     @ApiStatus.Obsolete
     public static final String ANCHOR_TYPE = "anchor_type";
@@ -75,12 +76,30 @@ public final class FurnitureDataAccessor {
     }
 
     public FurnitureColorSource getColorSource() {
-        return new FurnitureColorSource(dyedColor().orElse(null), fireworkExplosionColors().orElse(null));
+        return new FurnitureColorSource(
+                dyedColor().orElse(null),
+                fireworkExplosionColors().orElse(null),
+                potionContents().orElse(null)
+        );
     }
 
     public Optional<int[]> fireworkExplosionColors() {
         if (this.data.containsKey(FIREWORK_EXPLOSION_COLORS)) return Optional.of(this.data.getIntArray(FIREWORK_EXPLOSION_COLORS));
         return Optional.empty();
+    }
+
+    public Optional<Tag> potionContents() {
+        Tag tag = this.data.get(POTION_CONTENTS);
+        if (tag == null) return Optional.empty();
+        return Optional.of(tag.copy());
+    }
+
+    public void setPotionContents(@Nullable Tag tag) {
+        if (tag == null) {
+            this.data.remove(POTION_CONTENTS);
+            return;
+        }
+        this.data.put(POTION_CONTENTS, tag.copy());
     }
 
     public void setFireworkExplosionColors(int[] colors) {
