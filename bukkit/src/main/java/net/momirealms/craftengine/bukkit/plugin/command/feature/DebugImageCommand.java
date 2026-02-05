@@ -46,7 +46,7 @@ public class DebugImageCommand extends BukkitCommandFeature<CommandSender> {
                 .optional("row", IntegerParser.integerParser(0))
                 .optional("column", IntegerParser.integerParser(0))
                 .handler(context -> {
-                    Key imageId = KeyUtils.namespacedKey2Key(context.get("id"));
+                    Key imageId = KeyUtils.namespacedKeyToKey(context.get("id"));
                     plugin().fontManager().imageById(imageId).ifPresent(image -> {
                         if (image instanceof ReferenceImage referenceImage) {
                             int row = referenceImage.row();

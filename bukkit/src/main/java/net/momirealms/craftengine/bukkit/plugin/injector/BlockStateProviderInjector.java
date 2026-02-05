@@ -24,7 +24,7 @@ public final class BlockStateProviderInjector {
     }
 
     private static void register(Key id, Object type) throws ReflectiveOperationException {
-        Object resourceLocation = KeyUtils.toResourceLocation(id);
+        Object resourceLocation = KeyUtils.toIdentifier(id);
         Object holder = CoreReflections.method$Registry$registerForHolder.invoke(null, MBuiltInRegistries.BLOCKSTATE_PROVIDER_TYPE, resourceLocation, type);
         CoreReflections.method$Holder$Reference$bindValue.invoke(holder, type);
         CoreReflections.field$Holder$Reference$tags.set(holder, Set.of());

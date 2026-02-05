@@ -43,7 +43,7 @@ public final class EntityUtils {
         Object nmsEntity = FastNMS.INSTANCE.method$CraftEntity$getHandle(entity);
         Object entityType = FastNMS.INSTANCE.method$Entity$getType(nmsEntity);
         Object id = FastNMS.INSTANCE.method$Registry$getKey(MBuiltInRegistries.ENTITY_TYPE, entityType);
-        return KeyUtils.resourceLocationToKey(id);
+        return KeyUtils.identifierToKey(id);
     }
 
     public static void safeDismount(Player player, Location location) {

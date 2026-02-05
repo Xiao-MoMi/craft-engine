@@ -24,7 +24,7 @@ public class ComponentItemType implements ItemType {
 
     @Override
     public Key id() {
-        return KeyUtils.resourceLocationToKey(FastNMS.INSTANCE.method$Registry$getKey(MBuiltInRegistries.ITEM, this.item));
+        return KeyUtils.identifierToKey(FastNMS.INSTANCE.method$Registry$getKey(MBuiltInRegistries.ITEM, this.item));
     }
 
     @Override
@@ -74,7 +74,7 @@ public class ComponentItemType implements ItemType {
     private Object ensureDataComponentType(Object type) {
         if (!CoreReflections.clazz$DataComponentType.isInstance(type)) {
             Key key = Key.of(type.toString());
-            return FastNMS.INSTANCE.method$Registry$getValue(MBuiltInRegistries.DATA_COMPONENT_TYPE, KeyUtils.toResourceLocation(key));
+            return FastNMS.INSTANCE.method$Registry$getValue(MBuiltInRegistries.DATA_COMPONENT_TYPE, KeyUtils.toIdentifier(key));
         }
         return type;
     }

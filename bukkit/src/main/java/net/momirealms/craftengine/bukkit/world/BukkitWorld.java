@@ -151,7 +151,7 @@ public class BukkitWorld implements World {
 
     @Override
     public Key getNoiseBiome(int x, int y, int z) {
-        return KeyUtils.resourceLocationToKey(FastNMS.INSTANCE.method$LevelReader$getNoiseBiome(serverWorld(), x >> 2, y >> 2, z >> 2));
+        return KeyUtils.identifierToKey(FastNMS.INSTANCE.method$LevelReader$getNoiseBiome(serverWorld(), x >> 2, y >> 2, z >> 2));
     }
 
     @Override

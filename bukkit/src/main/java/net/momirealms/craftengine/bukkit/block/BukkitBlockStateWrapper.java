@@ -40,7 +40,7 @@ public abstract class BukkitBlockStateWrapper extends AbstractBlockStateWrapper 
     @Override
     public Key fluidState() {
         Object fluid = FastNMS.INSTANCE.method$FluidState$getType(FastNMS.INSTANCE.field$BlockBehaviour$BlockStateBase$fluidState(super.blockState));
-        return KeyUtils.resourceLocationToKey(FastNMS.INSTANCE.method$Registry$getKey(MRegistries.FLUID, fluid));
+        return KeyUtils.identifierToKey(FastNMS.INSTANCE.method$Registry$getKey(MRegistries.FLUID, fluid));
     }
 
     @Override

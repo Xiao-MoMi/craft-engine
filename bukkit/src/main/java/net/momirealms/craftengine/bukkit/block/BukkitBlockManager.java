@@ -33,6 +33,13 @@ import net.momirealms.craftengine.core.util.ObjectHolder;
 import net.momirealms.craftengine.core.util.Tristate;
 import net.momirealms.craftengine.core.util.VersionHelper;
 import net.momirealms.craftengine.proxy.block.BlockBehaviorProxy;
+import net.momirealms.craftengine.proxy.block.BlockStateBaseProxy;
+import net.momirealms.craftengine.proxy.block.SoundTypeProxy;
+import net.momirealms.craftengine.proxy.block.property.NoteBlockInstrumentProxy;
+import net.momirealms.craftengine.proxy.core.HolderProxy;
+import net.momirealms.craftengine.proxy.material.MapColorProxy;
+import net.momirealms.craftengine.proxy.material.PushReactionProxy;
+import net.momirealms.craftengine.proxy.resource.ResourceKeyProxy;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.event.HandlerList;
@@ -236,27 +243,27 @@ public final class BukkitBlockManager extends AbstractBlockManager {
 
         BlockSettings settings = state.settings();
         try {
-            CoreReflections.field$BlockStateBase$lightEmission.set(nmsState, settings.luminance());
-            CoreReflections.field$BlockStateBase$burnable.set(nmsState, settings.burnable());
-            CoreReflections.field$BlockStateBase$hardness.set(nmsState, settings.hardness());
-            CoreReflections.field$BlockStateBase$replaceable.set(nmsState, settings.replaceable());
-            Object mcMapColor = CoreReflections.method$MapColor$byId.invoke(null, settings.mapColor().id);
-            CoreReflections.field$BlockStateBase$mapColor.set(nmsState, mcMapColor);
-            CoreReflections.field$BlockStateBase$instrument.set(nmsState, CoreReflections.instance$NoteBlockInstrument$values[settings.instrument().ordinal()]);
-            CoreReflections.field$BlockStateBase$pushReaction.set(nmsState, CoreReflections.instance$PushReaction$values[settings.pushReaction().ordinal()]);
+            BlockStateBaseProxy.INSTANCE.setLightEmission(nmsState, settings.luminance());
+            BlockStateBaseProxy.INSTANCE.setIgnitedByLava(nmsState, settings.burnable());
+            BlockStateBaseProxy.INSTANCE.setDestroySpeed(nmsState, settings.hardness());
+            BlockStateBaseProxy.INSTANCE.setReplaceable(nmsState, settings.replaceable());
+            BlockStateBaseProxy.INSTANCE.setMapColor(nmsState, MapColorProxy.INSTANCE.byId(settings.mapColor().id));
+            BlockStateBaseProxy.INSTANCE.setInstrument(nmsState, NoteBlockInstrumentProxy.VALUES[settings.instrument().ordinal()]);
+            BlockStateBaseProxy.INSTANCE.setPushReaction(nmsState, PushReactionProxy.VALUES[settings.pushReaction().ordinal()]);
             boolean canOcclude = settings.canOcclude() == Tristate.UNDEFINED ? BlockStateUtils.isOcclude(nmsVisualState) : settings.canOcclude().asBoolean();
-            CoreReflections.field$BlockStateBase$canOcclude.set(nmsState, canOcclude);
-            boolean useShapeForLightOcclusion = settings.useShapeForLightOcclusion() == Tristate.UNDEFINED ? CoreReflections.field$BlockStateBase$useShapeForLightOcclusion.getBoolean(nmsVisualState) : settings.useShapeForLightOcclusion().asBoolean();
-            CoreReflections.field$BlockStateBase$useShapeForLightOcclusion.set(nmsState, useShapeForLightOcclusion);
-            CoreReflections.field$BlockStateBase$isRedstoneConductor.set(nmsState, settings.isRedstoneConductor().asBoolean() ? ALWAYS_TRUE : ALWAYS_FALSE);
+            BlockStateBaseProxy.INSTANCE.setCanOcclude(nmsState, canOcclude);
+            boolean useShapeForLightOcclusion = settings.useShapeForLightOcclusion() == Tristate.UNDEFINED
+                    ? BlockStateBaseProxy.INSTANCE.isUseShapeForLightOcclusion(nmsVisualState) : settings.useShapeForLightOcclusion().asBoolean();
+            BlockStateBaseProxy.INSTANCE.setUseShapeForLightOcclusion(nmsState, useShapeForLightOcclusion);
+            BlockStateBaseProxy.INSTANCE.setIsRedstoneConductor(nmsState, settings.isRedstoneConductor().asBoolean() ? ALWAYS_TRUE : ALWAYS_FALSE);
 
             boolean suffocating = settings.isSuffocating() == Tristate.UNDEFINED ? (canBlockView(state.visualBlockState())) : (settings.isSuffocating().asBoolean());
-            CoreReflections.field$BlockStateBase$isSuffocating.set(nmsState, suffocating ? ALWAYS_TRUE : ALWAYS_FALSE);
-            CoreReflections.field$BlockStateBase$isSuffocating.set(nmsState, settings.isSuffocating().asBoolean() ? ALWAYS_TRUE : ALWAYS_FALSE);
-            CoreReflections.field$BlockStateBase$isViewBlocking.set(nmsState,
+            BlockStateBaseProxy.INSTANCE.setIsSuffocating(nmsState, suffocating ? ALWAYS_TRUE : ALWAYS_FALSE);
+            BlockStateBaseProxy.INSTANCE.setIsViewBlocking(
+                    nmsState,
                     settings.isViewBlocking() == Tristate.UNDEFINED ?
-                            (suffocating ? ALWAYS_TRUE : ALWAYS_FALSE) :
-                            (settings.isViewBlocking().asBoolean() ? ALWAYS_TRUE : ALWAYS_FALSE)
+                    (suffocating ? ALWAYS_TRUE : ALWAYS_FALSE) :
+                    (settings.isViewBlocking().asBoolean() ? ALWAYS_TRUE : ALWAYS_FALSE)
             );
 
             DelegatingBlock nmsBlock = (DelegatingBlock) BlockStateUtils.getBlockOwner(nmsState);
@@ -274,19 +281,19 @@ public final class BukkitBlockManager extends AbstractBlockManager {
             BlockBehaviorProxy.INSTANCE.setFriction(nmsBlock, settings.friction());
             BlockBehaviorProxy.INSTANCE.setSpeedFactor(nmsBlock, settings.speedFactor());
             BlockBehaviorProxy.INSTANCE.setJumpFactor(nmsBlock, settings.jumpFactor());
-            BlockBehaviorProxy.INSTANCE.setSoundType(nmsBlock, SoundUtils.toSoundType(settings.sounds()));
+            BlockBehaviorProxy.INSTANCE.setSoundType(nmsBlock, SoundUtils.toNMSSoundType(settings.sounds()));
 
-            CoreReflections.method$BlockStateBase$initCache.invoke(nmsState);
+            BlockStateBaseProxy.INSTANCE.initCache(nmsState);
             boolean isConditionallyFullOpaque = canOcclude & useShapeForLightOcclusion;
             if (!VersionHelper.isOrAbove1_21_2()) {
                 CoreReflections.field$BlockStateBase$isConditionallyFullOpaque.set(nmsState, isConditionallyFullOpaque);
             }
 
             if (VersionHelper.isOrAbove1_21_2()) {
-                int blockLight = settings.blockLight() != -1 ? settings.blockLight() : CoreReflections.field$BlockStateBase$lightBlock.getInt(nmsVisualState);
-                CoreReflections.field$BlockStateBase$lightBlock.set(nmsState, blockLight);
-                boolean propagatesSkylightDown = settings.propagatesSkylightDown() == Tristate.UNDEFINED ? CoreReflections.field$BlockStateBase$propagatesSkylightDown.getBoolean(nmsVisualState) : settings.propagatesSkylightDown().asBoolean();
-                CoreReflections.field$BlockStateBase$propagatesSkylightDown.set(nmsState, propagatesSkylightDown);
+                int blockLight = settings.blockLight() != -1 ? settings.blockLight() : BlockStateBaseProxy.INSTANCE.getLightBlock(nmsVisualState);
+                BlockStateBaseProxy.INSTANCE.setLightBlock(nmsState, blockLight);
+                boolean propagatesSkylightDown = settings.propagatesSkylightDown() == Tristate.UNDEFINED ? BlockStateBaseProxy.INSTANCE.isPropagatesSkylightDown(nmsVisualState) : settings.propagatesSkylightDown().asBoolean();
+                BlockStateBaseProxy.INSTANCE.setPropagatesSkylightDown(nmsState, propagatesSkylightDown);
             } else {
                 Object cache = CoreReflections.field$BlockStateBase$cache.get(nmsState);
                 int blockLight = settings.blockLight() != -1 ? settings.blockLight() : CoreReflections.field$BlockStateBase$Cache$lightBlock.getInt(CoreReflections.field$BlockStateBase$cache.get(nmsVisualState));
@@ -298,14 +305,15 @@ public final class BukkitBlockManager extends AbstractBlockManager {
                 }
             }
 
-            CoreReflections.field$BlockStateBase$fluidState.set(nmsState, settings.fluidState() ? MFluids.WATER$defaultState : MFluids.EMPTY$defaultState);
-            CoreReflections.field$BlockStateBase$isRandomlyTicking.set(nmsState, settings.isRandomlyTicking());
+            BlockStateBaseProxy.INSTANCE.setIsRandomlyTicking(nmsState, settings.isRandomlyTicking());
+            BlockStateBaseProxy.INSTANCE.setFluidState(nmsState, settings.fluidState() ? MFluids.WATER$defaultState : MFluids.EMPTY$defaultState);
+
             Object holder = BukkitCraftEngine.instance().blockManager().getMinecraftBlockHolder(state.customBlockState().registryId());
             Set<Object> tags = new HashSet<>();
             for (Key tag : settings.tags()) {
-                tags.add(CoreReflections.method$TagKey$create.invoke(null, MRegistries.BLOCK, KeyUtils.toResourceLocation(tag)));
+                tags.add(ResourceKeyProxy.INSTANCE.create(MRegistries.BLOCK, KeyUtils.toIdentifier(tag)));
             }
-            CoreReflections.field$Holder$Reference$tags.set(holder, tags);
+            HolderProxy.ReferenceProxy.INSTANCE.setTags(holder, tags);
             if (settings.burnable()) {
                 this.igniteOdds.put(nmsBlock, settings.burnChance());
                 this.burnOdds.put(nmsBlock, settings.fireSpreadChance());
@@ -322,23 +330,24 @@ public final class BukkitBlockManager extends AbstractBlockManager {
             }
             // 根据客户端的状态决定其是否阻挡视线
             super.viewBlockingBlocks[state.customBlockState().registryId()] = canBlockView(state.visualBlockState());
-        } catch (ReflectiveOperationException e) {
+        } catch (Throwable e) {
             this.plugin.logger().warn("Failed to apply platform block settings for block state " + state, e);
         }
     }
 
-    private BlockSounds toBlockSounds(Object soundType) throws ReflectiveOperationException {
+    private BlockSounds toBlockSounds(Object soundType) {
+
         return new BlockSounds(
-                toSoundData(CoreReflections.field$SoundType$breakSound.get(soundType), SoundData.SoundValue.FIXED_1, SoundData.SoundValue.FIXED_0_8),
-                toSoundData(CoreReflections.field$SoundType$stepSound.get(soundType), SoundData.SoundValue.FIXED_0_15, SoundData.SoundValue.FIXED_1),
-                toSoundData(CoreReflections.field$SoundType$placeSound.get(soundType), SoundData.SoundValue.FIXED_1, SoundData.SoundValue.FIXED_0_8),
-                toSoundData(CoreReflections.field$SoundType$hitSound.get(soundType), SoundData.SoundValue.FIXED_0_5, SoundData.SoundValue.FIXED_0_5),
-                toSoundData(CoreReflections.field$SoundType$fallSound.get(soundType), SoundData.SoundValue.FIXED_0_5, SoundData.SoundValue.FIXED_0_75)
+                toSoundData(SoundTypeProxy.INSTANCE.getBreakSound(soundType), SoundData.SoundValue.FIXED_1, SoundData.SoundValue.FIXED_0_8),
+                toSoundData(SoundTypeProxy.INSTANCE.getStepSound(soundType), SoundData.SoundValue.FIXED_0_15, SoundData.SoundValue.FIXED_1),
+                toSoundData(SoundTypeProxy.INSTANCE.getPlaceSound(soundType), SoundData.SoundValue.FIXED_1, SoundData.SoundValue.FIXED_0_8),
+                toSoundData(SoundTypeProxy.INSTANCE.getHitSound(soundType), SoundData.SoundValue.FIXED_0_5, SoundData.SoundValue.FIXED_0_5),
+                toSoundData(SoundTypeProxy.INSTANCE.getFallSound(soundType), SoundData.SoundValue.FIXED_0_5, SoundData.SoundValue.FIXED_0_75)
         );
     }
 
     private SoundData toSoundData(Object soundEvent, SoundData.SoundValue volume, SoundData.SoundValue pitch) {
-        Key soundId = KeyUtils.resourceLocationToKey(FastNMS.INSTANCE.field$SoundEvent$location(soundEvent));
+        Key soundId = KeyUtils.identifierToKey(FastNMS.INSTANCE.field$SoundEvent$location(soundEvent));
         return new SoundData(soundId, volume, pitch);
     }
 
@@ -370,7 +379,7 @@ public final class BukkitBlockManager extends AbstractBlockManager {
                 }
                 this.customBlocks[i] = customBlock;
                 try {
-                    Object resourceLocation = KeyUtils.toResourceLocation(customBlockId);
+                    Object resourceLocation = KeyUtils.toIdentifier(customBlockId);
                     Object blockHolder = CoreReflections.method$Registry$registerForHolder.invoke(null, MBuiltInRegistries.BLOCK, resourceLocation, customBlock);
                     this.customBlockHolders[i] = blockHolder;
                     CoreReflections.method$Holder$Reference$bindValue.invoke(blockHolder, customBlock);
@@ -397,7 +406,7 @@ public final class BukkitBlockManager extends AbstractBlockManager {
 
     private void markVanillaNoteBlocks() {
         try {
-            Object block = FastNMS.INSTANCE.method$Registry$getValue(MBuiltInRegistries.BLOCK, KeyUtils.toResourceLocation(BlockKeys.NOTE_BLOCK));
+            Object block = FastNMS.INSTANCE.method$Registry$getValue(MBuiltInRegistries.BLOCK, KeyUtils.toIdentifier(BlockKeys.NOTE_BLOCK));
             Object stateDefinition = CoreReflections.field$Block$StateDefinition.get(block);
             @SuppressWarnings("unchecked")
             ImmutableList<Object> states = (ImmutableList<Object>) CoreReflections.field$StateDefinition$states.get(stateDefinition);
@@ -426,7 +435,7 @@ public final class BukkitBlockManager extends AbstractBlockManager {
 
     @Override
     protected void setVanillaBlockTags(Key id, List<String> tags) {
-        Object block = FastNMS.INSTANCE.method$Registry$getValue(MBuiltInRegistries.BLOCK, KeyUtils.toResourceLocation(id));
+        Object block = FastNMS.INSTANCE.method$Registry$getValue(MBuiltInRegistries.BLOCK, KeyUtils.toIdentifier(id));
         this.clientBoundTags.put(FastNMS.INSTANCE.method$IdMap$getId(MBuiltInRegistries.BLOCK, block).orElseThrow(() -> new IllegalStateException("Block " + id + " not found")), tags);
     }
 
@@ -503,7 +512,7 @@ public final class BukkitBlockManager extends AbstractBlockManager {
             return false;
         if (id.value().equals("air"))
             return true;
-        return FastNMS.INSTANCE.method$Registry$getValue(MBuiltInRegistries.BLOCK, KeyUtils.toResourceLocation(id)) != MBlocks.AIR;
+        return FastNMS.INSTANCE.method$Registry$getValue(MBuiltInRegistries.BLOCK, KeyUtils.toIdentifier(id)) != MBlocks.AIR;
     }
 
     public boolean isBurnable(Object blockState) {
@@ -538,19 +547,19 @@ public final class BukkitBlockManager extends AbstractBlockManager {
 
         ImmutableMap.Builder<Key, Key> soundReplacementBuilder = ImmutableMap.builder();
         for (Object soundId : placeSounds) {
-            Key previousId = KeyUtils.resourceLocationToKey(soundId);
+            Key previousId = KeyUtils.identifierToKey(soundId);
             soundReplacementBuilder.put(previousId, Key.of(previousId.namespace(), "replaced." + previousId.value()));
         }
         for (Object soundId : breakSounds) {
-            Key previousId = KeyUtils.resourceLocationToKey(soundId);
+            Key previousId = KeyUtils.identifierToKey(soundId);
             soundReplacementBuilder.put(previousId, Key.of(previousId.namespace(), "replaced." + previousId.value()));
         }
         for (Object soundId : stepSounds) {
-            Key previousId = KeyUtils.resourceLocationToKey(soundId);
+            Key previousId = KeyUtils.identifierToKey(soundId);
             soundReplacementBuilder.put(previousId, Key.of(previousId.namespace(), "replaced." + previousId.value()));
         }
         for (Object soundId : hitSounds) {
-            Key previousId = KeyUtils.resourceLocationToKey(soundId);
+            Key previousId = KeyUtils.identifierToKey(soundId);
             soundReplacementBuilder.put(previousId, Key.of(previousId.namespace(), "replaced." + previousId.value()));
         }
 

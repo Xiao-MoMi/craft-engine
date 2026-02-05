@@ -22,6 +22,7 @@ import net.momirealms.craftengine.core.sound.SoundData;
 import net.momirealms.craftengine.core.util.*;
 import net.momirealms.craftengine.core.world.BlockPos;
 import net.momirealms.craftengine.core.world.context.UseOnContext;
+import net.momirealms.craftengine.proxy.sound.SoundSourceProxy;
 import org.bukkit.Location;
 import org.bukkit.World;
 
@@ -191,8 +192,8 @@ public class ButtonBlockBehavior extends BukkitBlockBehavior {
     private void playSound(Object level, Object pos, boolean on) {
         SoundData soundData = getSound(on);
         if (soundData == null) return;
-        Object sound = FastNMS.INSTANCE.constructor$SoundEvent(KeyUtils.toResourceLocation(soundData.id()), Optional.empty());
-        FastNMS.INSTANCE.method$LevelAccessor$playSound(level, null, pos, sound, CoreReflections.instance$SoundSource$BLOCKS, soundData.volume().get(), soundData.pitch().get());
+        Object sound = FastNMS.INSTANCE.constructor$SoundEvent(KeyUtils.toIdentifier(soundData.id()), Optional.empty());
+        FastNMS.INSTANCE.method$LevelAccessor$playSound(level, null, pos, sound, SoundSourceProxy.BLOCKS, soundData.volume().get(), soundData.pitch().get());
     }
 
     private SoundData getSound(boolean on) {

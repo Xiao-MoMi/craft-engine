@@ -36,7 +36,7 @@ public final class ParticleUtils {
     @Nullable
     public static Particle getParticle(Key particle) {
         return CACHE.computeIfAbsent(particle, k -> {
-            Object nmsParticle = FastNMS.INSTANCE.method$Registry$getValue(MBuiltInRegistries.PARTICLE_TYPE, KeyUtils.toResourceLocation(particle));
+            Object nmsParticle = FastNMS.INSTANCE.method$Registry$getValue(MBuiltInRegistries.PARTICLE_TYPE, KeyUtils.toIdentifier(particle));
             if (nmsParticle == null) return null;
             return FastNMS.INSTANCE.method$CraftParticle$toBukkit(nmsParticle);
         });

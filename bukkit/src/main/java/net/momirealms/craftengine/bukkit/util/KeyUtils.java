@@ -1,21 +1,21 @@
 package net.momirealms.craftengine.bukkit.util;
 
-import net.momirealms.craftengine.bukkit.nms.FastNMS;
 import net.momirealms.craftengine.core.util.Key;
+import net.momirealms.craftengine.proxy.resource.IdentifierProxy;
 import org.bukkit.NamespacedKey;
 
 public final class KeyUtils {
     private KeyUtils() {}
 
-    public static Key resourceLocationToKey(Object resourceLocation) {
-        return Key.of(FastNMS.INSTANCE.method$ResourceLocation$namespace(resourceLocation), FastNMS.INSTANCE.method$ResourceLocation$path(resourceLocation));
+    public static Key identifierToKey(Object identifier) {
+        return Key.of(IdentifierProxy.INSTANCE.getNamespace(identifier), IdentifierProxy.INSTANCE.getPath(identifier));
     }
 
-    public static Key namespacedKey2Key(NamespacedKey key) {
+    public static Key namespacedKeyToKey(NamespacedKey key) {
         return Key.of(key.getNamespace(), key.getKey());
     }
 
-    public static Key adventureKey2Key(net.kyori.adventure.key.Key key) {
+    public static Key adventureKeyToKey(net.kyori.adventure.key.Key key) {
         return Key.of(key.namespace(), key.value());
     }
 
@@ -24,12 +24,12 @@ public final class KeyUtils {
         return net.kyori.adventure.key.Key.key(key.namespace(), key.value());
     }
 
-    public static Object toResourceLocation(String namespace, String path) {
-        return FastNMS.INSTANCE.method$ResourceLocation$fromNamespaceAndPath(namespace, path);
+    public static Object toIdentifier(String namespace, String path) {
+        return IdentifierProxy.INSTANCE.fromNamespaceAndPath(namespace, path);
     }
 
-    public static Object toResourceLocation(Key key) {
-        return toResourceLocation(key.namespace(), key.value());
+    public static Object toIdentifier(Key key) {
+        return toIdentifier(key.namespace(), key.value());
     }
 
     public static NamespacedKey toNamespacedKey(Key key) {

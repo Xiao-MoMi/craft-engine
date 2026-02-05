@@ -46,7 +46,7 @@ public class DebugSpawnFurnitureCommand extends BukkitCommandFeature<CommandSend
                     @Override
                     public @NonNull CompletableFuture<? extends @NonNull Iterable<? extends @NonNull Suggestion>> suggestionsFuture(@NonNull CommandContext<Object> context, @NonNull CommandInput input) {
                         NamespacedKey namespacedKey = context.get("id");
-                        Key id = KeyUtils.namespacedKey2Key(namespacedKey);
+                        Key id = KeyUtils.namespacedKeyToKey(namespacedKey);
                         BukkitFurnitureManager furnitureManager = BukkitFurnitureManager.instance();
                         Optional<CustomFurniture> optionalCustomFurniture = furnitureManager.furnitureById(id);
                         return optionalCustomFurniture.<CompletableFuture<? extends Iterable<? extends Suggestion>>>map(config -> CompletableFuture.completedFuture(config.variants().keySet().stream().map(Suggestion::suggestion).toList())).orElseGet(() -> CompletableFuture.completedFuture(List.of()));
@@ -55,7 +55,7 @@ public class DebugSpawnFurnitureCommand extends BukkitCommandFeature<CommandSend
                 .flag(FlagKeys.SILENT_FLAG)
                 .handler(context -> {
                     NamespacedKey namespacedKey = context.get("id");
-                    Key id = KeyUtils.namespacedKey2Key(namespacedKey);
+                    Key id = KeyUtils.namespacedKeyToKey(namespacedKey);
                     BukkitFurnitureManager furnitureManager = BukkitFurnitureManager.instance();
                     Optional<CustomFurniture> optionalCustomFurniture = furnitureManager.furnitureById(id);
                     if (optionalCustomFurniture.isEmpty()) {

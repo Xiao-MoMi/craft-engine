@@ -15,7 +15,7 @@ public final class FeatureInjector {
     public static void init() throws ReflectiveOperationException {
         Object registry = MBuiltInRegistries.FEATURE;
         CoreReflections.field$MappedRegistry$frozen.set(registry, false);
-        Object resourceLocation = KeyUtils.toResourceLocation(Key.ce("simple_block"));
+        Object resourceLocation = KeyUtils.toIdentifier(Key.ce("simple_block"));
         Object type = FastNMS.INSTANCE.getCraftEngineCustomSimpleBlockFeature();
         Object holder = CoreReflections.method$Registry$registerForHolder.invoke(null, registry, resourceLocation, type);
         CoreReflections.method$Holder$Reference$bindValue.invoke(holder, type);

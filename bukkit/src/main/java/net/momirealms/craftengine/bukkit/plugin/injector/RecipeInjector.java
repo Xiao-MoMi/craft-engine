@@ -109,7 +109,7 @@ public final class RecipeInjector {
             return constructor.newInstance(CoreReflections.instance$CraftingBookCategory$MISC);
         } else {
             Constructor<?> constructor = ReflectionUtils.getConstructor(clazz$InjectedRepairItemRecipe, CoreReflections.clazz$ResourceLocation, CoreReflections.clazz$CraftingBookCategory);
-            return constructor.newInstance(KeyUtils.toResourceLocation(id), CoreReflections.instance$CraftingBookCategory$MISC);
+            return constructor.newInstance(KeyUtils.toIdentifier(id), CoreReflections.instance$CraftingBookCategory$MISC);
         }
     }
 

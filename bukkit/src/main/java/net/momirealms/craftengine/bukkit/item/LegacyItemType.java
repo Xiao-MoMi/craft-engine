@@ -19,7 +19,7 @@ public class LegacyItemType implements ItemType {
 
     @Override
     public Key id() {
-        return KeyUtils.resourceLocationToKey(FastNMS.INSTANCE.method$Registry$getKey(MBuiltInRegistries.ITEM, this.item));
+        return KeyUtils.identifierToKey(FastNMS.INSTANCE.method$Registry$getKey(MBuiltInRegistries.ITEM, this.item));
     }
 
     @Override

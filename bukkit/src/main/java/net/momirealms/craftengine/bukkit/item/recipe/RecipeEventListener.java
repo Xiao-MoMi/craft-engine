@@ -781,12 +781,12 @@ public class RecipeEventListener implements Listener {
         Object recipeHolderOrRecipe = FastNMS.INSTANCE.method$CraftingContainer$getCurrentRecipe(craftContainer);
         if (recipeHolderOrRecipe == null) return null;
         if (VersionHelper.isOrAbove1_21_2()) {
-            return KeyUtils.resourceLocationToKey(FastNMS.INSTANCE.field$ResourceKey$location(FastNMS.INSTANCE.field$RecipeHolder$id(recipeHolderOrRecipe)));
+            return KeyUtils.identifierToKey(FastNMS.INSTANCE.field$ResourceKey$location(FastNMS.INSTANCE.field$RecipeHolder$id(recipeHolderOrRecipe)));
         } else if (VersionHelper.isOrAbove1_20_2()) {
-            return KeyUtils.resourceLocationToKey(FastNMS.INSTANCE.field$RecipeHolder$id(recipeHolderOrRecipe));
+            return KeyUtils.identifierToKey(FastNMS.INSTANCE.field$RecipeHolder$id(recipeHolderOrRecipe));
         } else {
             // 其实是recipe getId的实现
-            return KeyUtils.resourceLocationToKey(FastNMS.INSTANCE.field$RecipeHolder$id(recipeHolderOrRecipe));
+            return KeyUtils.identifierToKey(FastNMS.INSTANCE.field$RecipeHolder$id(recipeHolderOrRecipe));
         }
     }
 
@@ -884,7 +884,7 @@ public class RecipeEventListener implements Listener {
         if (serverPlayer == null) return;
 
         if (recipe instanceof SmithingTransformRecipe transformRecipe) {
-            Key recipeId = KeyUtils.namespacedKey2Key(transformRecipe.getKey());
+            Key recipeId = KeyUtils.namespacedKeyToKey(transformRecipe.getKey());
             Optional<Recipe<ItemStack>> optionalRecipe = this.recipeManager.recipeById(recipeId);
             // 也许是其他插件注册的配方，直接无视
             if (optionalRecipe.isEmpty() || !(optionalRecipe.get() instanceof CustomSmithingTransformRecipe<ItemStack> ceRecipe)) {
@@ -958,7 +958,7 @@ public class RecipeEventListener implements Listener {
 
                 for (;;) {
                     // 这个时候配方已经更新了，如果变化了，那么就不要操作
-                    if (!(inventory.getRecipe() instanceof SmithingTransformRecipe newTransform) || !recipeId.equals(KeyUtils.namespacedKey2Key(newTransform.getKey()))) {
+                    if (!(inventory.getRecipe() instanceof SmithingTransformRecipe newTransform) || !recipeId.equals(KeyUtils.namespacedKeyToKey(newTransform.getKey()))) {
                         break;
                     }
 
@@ -1028,7 +1028,7 @@ public class RecipeEventListener implements Listener {
 
         // trim 配方只能执行函数
         else if (recipe instanceof SmithingTrimRecipe trimRecipe) {
-            Key recipeId = KeyUtils.namespacedKey2Key(trimRecipe.getKey());
+            Key recipeId = KeyUtils.namespacedKeyToKey(trimRecipe.getKey());
             Optional<Recipe<ItemStack>> optionalRecipe = this.recipeManager.recipeById(recipeId);
             if (optionalRecipe.isEmpty() || !(optionalRecipe.get() instanceof CustomSmithingTrimRecipe<ItemStack> ceRecipe)) {
                 return;
@@ -1082,7 +1082,7 @@ public class RecipeEventListener implements Listener {
 
                 for (;;) {
                     // 这个时候配方已经更新了，如果变化了，那么就不要操作
-                    if (!(inventory.getRecipe() instanceof SmithingTrimRecipe newTrim) || !recipeId.equals(KeyUtils.namespacedKey2Key(newTrim.getKey()))) {
+                    if (!(inventory.getRecipe() instanceof SmithingTrimRecipe newTrim) || !recipeId.equals(KeyUtils.namespacedKeyToKey(newTrim.getKey()))) {
                         break;
                     }
                     // 连续获取

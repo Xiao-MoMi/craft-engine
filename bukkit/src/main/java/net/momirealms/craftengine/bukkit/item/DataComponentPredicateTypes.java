@@ -11,6 +11,6 @@ public final class DataComponentPredicateTypes {
 
     public static Object byId(Key key) {
         if (!VersionHelper.isOrAbove1_21_5()) return null;
-        return FastNMS.INSTANCE.method$Registry$getValue(MBuiltInRegistries.DATA_COMPONENT_PREDICATE_TYPE, KeyUtils.toResourceLocation(key));
+        return FastNMS.INSTANCE.method$Registry$getValue(MBuiltInRegistries.DATA_COMPONENT_PREDICATE_TYPE, KeyUtils.toIdentifier(key));
     }
 }

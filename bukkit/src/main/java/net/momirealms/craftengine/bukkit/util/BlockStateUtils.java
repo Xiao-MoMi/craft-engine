@@ -50,7 +50,7 @@ public final class BlockStateUtils {
     @SuppressWarnings("unchecked")
     public static List<Object> getPossibleBlockStates(Key block) {
         try {
-            Object blockIns = FastNMS.INSTANCE.method$Registry$getValue(MBuiltInRegistries.BLOCK, KeyUtils.toResourceLocation(block));
+            Object blockIns = FastNMS.INSTANCE.method$Registry$getValue(MBuiltInRegistries.BLOCK, KeyUtils.toIdentifier(block));
             Object definition = CoreReflections.field$Block$StateDefinition.get(blockIns);
             return (List<Object>) CoreReflections.field$StateDefinition$states.get(definition);
         } catch (Exception e) {
@@ -73,7 +73,7 @@ public final class BlockStateUtils {
     public static Key getBlockOwnerIdFromState(Object blockState) {
         Object blockOwner = FastNMS.INSTANCE.method$BlockState$getBlock(blockState);
         Object resourceLocation = FastNMS.INSTANCE.method$Registry$getKey(MBuiltInRegistries.BLOCK, blockOwner);
-        return KeyUtils.resourceLocationToKey(resourceLocation);
+        return KeyUtils.identifierToKey(resourceLocation);
     }
 
     public static Object blockDataToBlockState(BlockData blockData) {

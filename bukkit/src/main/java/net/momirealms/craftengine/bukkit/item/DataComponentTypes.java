@@ -38,6 +38,6 @@ public final class DataComponentTypes {
 
     public static Object byId(Key key) {
         if (!VersionHelper.isOrAbove1_20_5()) return null;
-        return FastNMS.INSTANCE.method$Registry$getValue(MBuiltInRegistries.DATA_COMPONENT_TYPE, KeyUtils.toResourceLocation(key));
+        return FastNMS.INSTANCE.method$Registry$getValue(MBuiltInRegistries.DATA_COMPONENT_TYPE, KeyUtils.toIdentifier(key));
     }
 }

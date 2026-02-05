@@ -10,16 +10,10 @@ import net.momirealms.craftengine.core.advancement.AbstractAdvancementManager;
 import net.momirealms.craftengine.core.advancement.AdvancementType;
 import net.momirealms.craftengine.core.entity.player.Player;
 import net.momirealms.craftengine.core.item.Item;
-import net.momirealms.craftengine.core.pack.Pack;
-import net.momirealms.craftengine.core.plugin.config.ConfigParser;
-import net.momirealms.craftengine.core.plugin.config.IdSectionConfigParser;
-import net.momirealms.craftengine.core.plugin.config.lifecycle.LoadingStage;
-import net.momirealms.craftengine.core.plugin.config.lifecycle.LoadingStages;
 import net.momirealms.craftengine.core.util.Key;
 import net.momirealms.craftengine.core.util.MiscUtils;
 import net.momirealms.craftengine.core.util.VersionHelper;
 
-import java.nio.file.Path;
 import java.util.*;
 
 public final class BukkitAdvancementManager extends AbstractAdvancementManager {
@@ -46,7 +40,7 @@ public final class BukkitAdvancementManager extends AbstractAdvancementManager {
             if (VersionHelper.isOrAbove1_20_2()) {
                 displayInfo = Optional.of(displayInfo);
             }
-            Object resourceLocation = KeyUtils.toResourceLocation(Key.of("craftengine", "toast"));
+            Object resourceLocation = KeyUtils.toIdentifier(Key.of("craftengine", "toast"));
             Object criterion = VersionHelper.isOrAbove1_20_2() ?
                     CoreReflections.constructor$Criterion.newInstance(CoreReflections.constructor$ImpossibleTrigger.newInstance(), CoreReflections.constructor$ImpossibleTrigger$TriggerInstance.newInstance()) :
                     CoreReflections.constructor$Criterion.newInstance(CoreReflections.constructor$ImpossibleTrigger$TriggerInstance.newInstance());

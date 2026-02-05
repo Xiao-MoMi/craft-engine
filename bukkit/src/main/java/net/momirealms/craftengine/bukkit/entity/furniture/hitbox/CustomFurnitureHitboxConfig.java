@@ -90,7 +90,7 @@ public final class CustomFurnitureHitboxConfig extends AbstractFurnitureHitBoxCo
             Vector3f position = ResourceConfigUtils.getAsVector3f(arguments.getOrDefault("position", "0"), "position");
             float scale = ResourceConfigUtils.getAsFloat(arguments.getOrDefault("scale", 1), "scale");
             String type = (String) arguments.getOrDefault("entity-type", "slime");
-            Object nmsEntityType = FastNMS.INSTANCE.method$Registry$getValue(MBuiltInRegistries.ENTITY_TYPE, KeyUtils.toResourceLocation(Key.of(type)));
+            Object nmsEntityType = FastNMS.INSTANCE.method$Registry$getValue(MBuiltInRegistries.ENTITY_TYPE, KeyUtils.toIdentifier(Key.of(type)));
             if (nmsEntityType == null) {
                 throw new LocalizedResourceConfigException("warning.config.furniture.hitbox.custom.invalid_entity", new IllegalArgumentException("EntityType not found: " + type), type);
             }

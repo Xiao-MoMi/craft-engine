@@ -501,7 +501,7 @@ public class BukkitServerPlayer extends Player {
     @Override
     public void sendCustomPayload(Key channelId, byte[] data) {
         try {
-            Object channelResourceLocation = KeyUtils.toResourceLocation(channelId);
+            Object channelResourceLocation = KeyUtils.toIdentifier(channelId);
             Object responsePacket;
             if (VersionHelper.isOrAbove1_20_2()) {
                 Object dataPayload;
@@ -861,7 +861,7 @@ public class BukkitServerPlayer extends Player {
             } else {
                 if (VersionHelper.isOrAbove1_20_5()) {
                     Object attributeModifier = VersionHelper.isOrAbove1_21() ?
-                            CoreReflections.constructor$AttributeModifier.newInstance(KeyUtils.toResourceLocation(Key.DEFAULT_NAMESPACE, "custom_hardness"), -9999d, CoreReflections.instance$AttributeModifier$Operation$ADD_VALUE) :
+                            CoreReflections.constructor$AttributeModifier.newInstance(KeyUtils.toIdentifier(Key.DEFAULT_NAMESPACE, "custom_hardness"), -9999d, CoreReflections.instance$AttributeModifier$Operation$ADD_VALUE) :
                             CoreReflections.constructor$AttributeModifier.newInstance(UUID.randomUUID(), Key.DEFAULT_NAMESPACE + ":custom_hardness", -9999d, CoreReflections.instance$AttributeModifier$Operation$ADD_VALUE);
                     Object attributeSnapshot = NetworkReflections.constructor$ClientboundUpdateAttributesPacket$AttributeSnapshot.newInstance(MAttributeHolders.BLOCK_BREAK_SPEED, 1d, Lists.newArrayList(attributeModifier));
                     Object newPacket = NetworkReflections.constructor$ClientboundUpdateAttributesPacket1.newInstance(entityId(), Lists.newArrayList(attributeSnapshot));

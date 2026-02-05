@@ -418,7 +418,7 @@ public final class ResourceConfigUtils {
         } catch (LocalizedException e) {
             printWarningRecursively(e, configPath, node);
             return false;
-        } catch (Exception e) {
+        } catch (Throwable e) {
             String message = "Unexpected error loading file " + configPath + " - '" + node + "'.";
             if (config != null) {
                 message += " Configuration details: " + config.get();

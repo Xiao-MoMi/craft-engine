@@ -14,7 +14,7 @@ public record UnknownPayload(Key channel, Object rawPayload) implements Payload 
     public static UnknownPayload from(Object payload) {
         try {
             Object id = NetworkReflections.field$ServerboundCustomPayloadPacket$UnknownPayload$id.get(payload);
-            Key channel = KeyUtils.resourceLocationToKey(id);
+            Key channel = KeyUtils.identifierToKey(id);
             return new UnknownPayload(channel, payload);
         } catch (Exception e) {
             CraftEngine.instance().logger().warn("Failed to create UnknownPayload", e);

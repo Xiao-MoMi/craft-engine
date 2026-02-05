@@ -23,6 +23,8 @@ import net.momirealms.craftengine.core.item.recipe.*;
 import net.momirealms.craftengine.core.plugin.config.Config;
 import net.momirealms.craftengine.core.registry.BuiltInRegistries;
 import net.momirealms.craftengine.core.util.*;
+import net.momirealms.craftengine.proxy.resource.FileToIdConverterProxy;
+import net.momirealms.craftengine.proxy.resource.ResourceManagerProxy;
 import org.bukkit.Bukkit;
 import org.bukkit.NamespacedKey;
 import org.bukkit.event.HandlerList;
@@ -44,7 +46,7 @@ public class BukkitRecipeManager extends AbstractRecipeManager<ItemStack> {
                 FastNMS.INSTANCE.method$RecipeMap$removeRecipe(FastNMS.INSTANCE.field$RecipeManager$recipes(minecraftRecipeManager()), resourceKey);
             }) :
             (id -> {
-                Object resourceLocation = KeyUtils.toResourceLocation(id);
+                Object resourceLocation = KeyUtils.toIdentifier(id);
                 FastNMS.INSTANCE.method$RecipeManager$removeRecipe(minecraftRecipeManager(), resourceLocation);
             });
     private static final BiFunction<Key, Object, Object> MINECRAFT_RECIPE_ADDER =
@@ -57,7 +59,7 @@ public class BukkitRecipeManager extends AbstractRecipeManager<ItemStack> {
             } :
             VersionHelper.isOrAbove1_20_2() ?
             (id, recipe) -> {
-                Object resourceLocation = KeyUtils.toResourceLocation(id);
+                Object resourceLocation = KeyUtils.toIdentifier(id);
                 Object recipeHolder = FastNMS.INSTANCE.constructor$RecipeHolder(resourceLocation, recipe);
                 FastNMS.INSTANCE.method$RecipeManager$addRecipe(minecraftRecipeManager(), recipeHolder);
                 return recipeHolder;
@@ -132,7 +134,7 @@ public class BukkitRecipeManager extends AbstractRecipeManager<ItemStack> {
     }
 
     public static Object toRecipeResourceKey(Key id) {
-        return FastNMS.INSTANCE.method$ResourceKey$create(MRegistries.RECIPE, KeyUtils.toResourceLocation(id));
+        return FastNMS.INSTANCE.method$ResourceKey$create(MRegistries.RECIPE, KeyUtils.toIdentifier(id));
     }
 
     /*
@@ -314,7 +316,7 @@ public class BukkitRecipeManager extends AbstractRecipeManager<ItemStack> {
 
     @SuppressWarnings("unchecked")
     private Map<Key, JsonObject> scanResources() throws Throwable {
-        Object fileToIdConverter = CoreReflections.methodHandle$FileToIdConverter$json.invokeExact((String) (VersionHelper.isOrAbove1_21() ? "recipe" : "recipes"));
+        Object fileToIdConverter = FileToIdConverterProxy.INSTANCE.json(VersionHelper.isOrAbove1_21() ? "recipe" : "recipes");
         Object minecraftServer = FastNMS.INSTANCE.method$MinecraftServer$getServer();
         Object packRepository = CoreReflections.methodHandle$MinecraftServer$getPackRepository.invokeExact(minecraftServer);
         List<Object> selected = (List<Object>) CoreReflections.methodHandle$PackRepository$selectedGetter.invokeExact(packRepository);
@@ -325,7 +327,7 @@ public class BukkitRecipeManager extends AbstractRecipeManager<ItemStack> {
         Map<Key, JsonObject> recipes = new HashMap<>();
 
         try (AutoCloseable resourceManager = (AutoCloseable) CoreReflections.methodHandle$MultiPackResourceManagerConstructor.invokeExact(CoreReflections.instance$PackType$SERVER_DATA, packResources)) {
-            Map<Object, Object> scannedResources = (Map<Object, Object>) CoreReflections.methodHandle$FileToIdConverter$listMatchingResources.invokeExact(fileToIdConverter, resourceManager);
+            Map<Object, Object> scannedResources = FileToIdConverterProxy.INSTANCE.listMatchingResources(fileToIdConverter, resourceManager);
             for (Map.Entry<Object, Object> entry : scannedResources.entrySet()) {
                 Key id = extractKeyFromResourceLocation(entry.getKey().toString());
                 try (Reader reader = (Reader) CoreReflections.methodHandle$Resource$openAsReader.invokeExact(entry.getValue())) {

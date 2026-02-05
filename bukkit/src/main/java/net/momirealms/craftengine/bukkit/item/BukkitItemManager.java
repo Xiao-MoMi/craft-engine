@@ -79,7 +79,7 @@ public class BukkitItemManager extends AbstractItemManager<ItemStack> {
         this.slotChangeListener = VersionHelper.isOrAbove1_20_3() ? new SlotChangeListener(this) : null;
         this.networkItemHandler = VersionHelper.isOrAbove1_20_5() ? new ModernNetworkItemHandler() : new LegacyNetworkItemHandler();
         this.registerAllVanillaItems();
-        this.bedrockItemHolder = FastNMS.INSTANCE.method$Registry$getHolderByResourceKey(MBuiltInRegistries.ITEM, FastNMS.INSTANCE.method$ResourceKey$create(MRegistries.ITEM, KeyUtils.toResourceLocation(Key.of("minecraft:bedrock")))).get();
+        this.bedrockItemHolder = FastNMS.INSTANCE.method$Registry$getHolderByResourceKey(MBuiltInRegistries.ITEM, FastNMS.INSTANCE.method$ResourceKey$create(MRegistries.ITEM, KeyUtils.toIdentifier(Key.of("minecraft:bedrock")))).get();
         this.registerCustomTrimMaterial();
         this.loadLastRegisteredPatterns();
         ItemStack emptyStack = FastNMS.INSTANCE.method$CraftItemStack$asCraftMirror(CoreReflections.instance$ItemStack$EMPTY);
@@ -209,7 +209,7 @@ public class BukkitItemManager extends AbstractItemManager<ItemStack> {
         try {
             CoreReflections.field$MappedRegistry$frozen.set(registry, false);
             for (Key assetId : this.lastRegisteredPatterns) {
-                Object resourceLocation = KeyUtils.toResourceLocation(assetId);
+                Object resourceLocation = KeyUtils.toIdentifier(assetId);
                 Object previous = FastNMS.INSTANCE.method$Registry$getValue(registry, resourceLocation);
                 if (previous == null) {
                     Object trimPattern = createTrimPattern(assetId);
@@ -277,7 +277,7 @@ public class BukkitItemManager extends AbstractItemManager<ItemStack> {
 
     private void registerCustomTrimMaterial() {
         Object registry = FastNMS.INSTANCE.method$RegistryAccess$lookupOrThrow(FastNMS.INSTANCE.registryAccess(), MRegistries.TRIM_MATERIAL);
-        Object resourceLocation = KeyUtils.toResourceLocation(Key.of("minecraft", AbstractPackManager.NEW_TRIM_MATERIAL));
+        Object resourceLocation = KeyUtils.toIdentifier(Key.of("minecraft", AbstractPackManager.NEW_TRIM_MATERIAL));
         Object previous = FastNMS.INSTANCE.method$Registry$getValue(registry, resourceLocation);
         if (previous == null) {
             try {
@@ -299,11 +299,11 @@ public class BukkitItemManager extends AbstractItemManager<ItemStack> {
 
     private Object createTrimPattern(Key key) throws ReflectiveOperationException {
         if (VersionHelper.isOrAbove1_21_5()) {
-            return CoreReflections.constructor$TrimPattern.newInstance(KeyUtils.toResourceLocation(key), CoreReflections.instance$Component$empty, false);
+            return CoreReflections.constructor$TrimPattern.newInstance(KeyUtils.toIdentifier(key), CoreReflections.instance$Component$empty, false);
         } else if (VersionHelper.isOrAbove1_20_2()) {
-            return CoreReflections.constructor$TrimPattern.newInstance(KeyUtils.toResourceLocation(key), this.bedrockItemHolder, CoreReflections.instance$Component$empty, false);
+            return CoreReflections.constructor$TrimPattern.newInstance(KeyUtils.toIdentifier(key), this.bedrockItemHolder, CoreReflections.instance$Component$empty, false);
         } else {
-            return CoreReflections.constructor$TrimPattern.newInstance(KeyUtils.toResourceLocation(key), this.bedrockItemHolder, CoreReflections.instance$Component$empty);
+            return CoreReflections.constructor$TrimPattern.newInstance(KeyUtils.toIdentifier(key), this.bedrockItemHolder, CoreReflections.instance$Component$empty);
         }
     }
 
@@ -358,7 +358,7 @@ public class BukkitItemManager extends AbstractItemManager<ItemStack> {
 
     @Nullable
     private ItemStack createVanillaItemStack(Key id) {
-        Object item = FastNMS.INSTANCE.method$Registry$getValue(MBuiltInRegistries.ITEM, KeyUtils.toResourceLocation(id));
+        Object item = FastNMS.INSTANCE.method$Registry$getValue(MBuiltInRegistries.ITEM, KeyUtils.toIdentifier(id));
         if (item == MItems.AIR && !id.equals(ItemKeys.AIR)) {
             return null;
         }
@@ -373,8 +373,8 @@ public class BukkitItemManager extends AbstractItemManager<ItemStack> {
 
     @Override
     protected CustomItem.Builder<ItemStack> createPlatformItemBuilder(UniqueKey id, Key materialId, Key clientBoundMaterialId) {
-        Object item = FastNMS.INSTANCE.method$Registry$getValue(MBuiltInRegistries.ITEM, KeyUtils.toResourceLocation(materialId));
-        Object clientBoundItem = materialId == clientBoundMaterialId ? item : FastNMS.INSTANCE.method$Registry$getValue(MBuiltInRegistries.ITEM, KeyUtils.toResourceLocation(clientBoundMaterialId));
+        Object item = FastNMS.INSTANCE.method$Registry$getValue(MBuiltInRegistries.ITEM, KeyUtils.toIdentifier(materialId));
+        Object clientBoundItem = materialId == clientBoundMaterialId ? item : FastNMS.INSTANCE.method$Registry$getValue(MBuiltInRegistries.ITEM, KeyUtils.toIdentifier(clientBoundMaterialId));
         if (item == MItems.AIR) {
             throw new LocalizedResourceConfigException("warning.config.item.invalid_material", materialId.toString());
         }
@@ -392,7 +392,7 @@ public class BukkitItemManager extends AbstractItemManager<ItemStack> {
         try {
             for (Object item : (Iterable<?>) MBuiltInRegistries.ITEM) {
                 Object resourceLocation = FastNMS.INSTANCE.method$Registry$getKey(MBuiltInRegistries.ITEM, item);
-                Key itemKey = KeyUtils.resourceLocationToKey(resourceLocation);
+                Key itemKey = KeyUtils.identifierToKey(resourceLocation);
                 VANILLA_ITEMS.add(itemKey);
                 super.cachedVanillaItemSuggestions.add(Suggestion.suggestion(itemKey.asString()));
                 UniqueKey uniqueKey = UniqueKey.create(itemKey);
@@ -414,7 +414,7 @@ public class BukkitItemManager extends AbstractItemManager<ItemStack> {
     public Item<ItemStack> applyTrim(Item<ItemStack> base, Item<ItemStack> addition, Item<ItemStack> template, Key pattern) {
         Optional<?> optionalMaterial = FastNMS.INSTANCE.method$TrimMaterials$getFromIngredient(addition.getLiteralObject());
         Optional<?> optionalPattern = VersionHelper.isOrAbove1_21_5() ?
-                FastNMS.INSTANCE.method$Registry$getHolderByResourceLocation(FastNMS.INSTANCE.method$RegistryAccess$lookupOrThrow(FastNMS.INSTANCE.registryAccess(), MRegistries.TRIM_PATTERN), KeyUtils.toResourceLocation(pattern)) :
+                FastNMS.INSTANCE.method$Registry$getHolderByResourceLocation(FastNMS.INSTANCE.method$RegistryAccess$lookupOrThrow(FastNMS.INSTANCE.registryAccess(), MRegistries.TRIM_PATTERN), KeyUtils.toIdentifier(pattern)) :
                 FastNMS.INSTANCE.method$TrimPatterns$getFromTemplate(template.getLiteralObject());
         if (optionalMaterial.isPresent() && optionalPattern.isPresent()) {
             Object armorTrim = FastNMS.INSTANCE.constructor$ArmorTrim(optionalMaterial.get(), optionalPattern.get());

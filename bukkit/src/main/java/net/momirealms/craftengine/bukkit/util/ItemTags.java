@@ -19,7 +19,7 @@ public final class ItemTags {
     public static Object getOrCreate(Key key) {
         Object value = CACHE.get(key);
         if (value == null) {
-            value = FastNMS.INSTANCE.method$TagKey$create(MRegistries.ITEM, KeyUtils.toResourceLocation(key));
+            value = FastNMS.INSTANCE.method$TagKey$create(MRegistries.ITEM, KeyUtils.toIdentifier(key));
             CACHE.put(key, value);
         }
         return value;

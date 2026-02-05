@@ -80,7 +80,7 @@ public abstract class BukkitItemFactory<W extends ItemWrapper<ItemStack>> extend
     protected Key vanillaId(W item) {
         Object i = FastNMS.INSTANCE.method$ItemStack$getItem(item.getLiteralObject());
         if (i == null) return ItemKeys.AIR;
-        return KeyUtils.resourceLocationToKey(FastNMS.INSTANCE.method$Registry$getKey(MBuiltInRegistries.ITEM, i));
+        return KeyUtils.identifierToKey(FastNMS.INSTANCE.method$Registry$getKey(MBuiltInRegistries.ITEM, i));
     }
 
     @Override

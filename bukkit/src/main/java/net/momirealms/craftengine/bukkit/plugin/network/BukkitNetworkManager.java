@@ -113,6 +113,7 @@ import net.momirealms.craftengine.core.world.chunk.packet.BlockEntityData;
 import net.momirealms.craftengine.core.world.chunk.packet.MCSection;
 import net.momirealms.craftengine.core.world.context.InteractEntityContext;
 import net.momirealms.craftengine.core.world.context.UseOnContext;
+import net.momirealms.craftengine.proxy.sound.SoundSourceProxy;
 import net.momirealms.sparrow.nbt.CompoundTag;
 import net.momirealms.sparrow.nbt.ListTag;
 import net.momirealms.sparrow.nbt.Tag;
@@ -1490,8 +1491,8 @@ public class BukkitNetworkManager extends AbstractNetworkManager implements List
             Object vanillaBlock = FastNMS.INSTANCE.method$BlockState$getBlock(state.visualBlockState().literalObject());
             Object vanillaBlockItem = FastNMS.INSTANCE.method$Block$asItem(vanillaBlock);
             if (vanillaBlockItem == null) return;
-            Key addItemId = KeyUtils.namespacedKey2Key(item.getType().getKey());
-            Key blockItemId = KeyUtils.resourceLocationToKey(FastNMS.INSTANCE.method$Registry$getKey(MBuiltInRegistries.ITEM, vanillaBlockItem));
+            Key addItemId = KeyUtils.namespacedKeyToKey(item.getType().getKey());
+            Key blockItemId = KeyUtils.identifierToKey(FastNMS.INSTANCE.method$Registry$getKey(MBuiltInRegistries.ITEM, vanillaBlockItem));
             if (!addItemId.equals(blockItemId)) return;
             ItemStack itemStack = BukkitCraftEngine.instance().itemManager().buildCustomItemStack(itemId, player);
             if (ItemStackUtils.isEmpty(itemStack)) {
@@ -2785,11 +2786,11 @@ public class BukkitNetworkManager extends AbstractNetworkManager implements List
             Object rawSoundId = FastNMS.INSTANCE.field$SoundEvent$location(soundEvent);
             if (BlockStateUtils.isVanillaBlock(state)) {
                 if (BukkitBlockManager.instance().isBreakSoundMissing(rawSoundId)) {
-                    Key mappedSoundId = BukkitBlockManager.instance().replaceSoundIfExist(KeyUtils.resourceLocationToKey(rawSoundId));
+                    Key mappedSoundId = BukkitBlockManager.instance().replaceSoundIfExist(KeyUtils.identifierToKey(rawSoundId));
                     if (mappedSoundId != null) {
                         Object packet = FastNMS.INSTANCE.constructor$ClientboundSoundPacket(
-                                FastNMS.INSTANCE.method$Holder$direct(FastNMS.INSTANCE.constructor$SoundEvent(KeyUtils.toResourceLocation(mappedSoundId), Optional.empty())),
-                                CoreReflections.instance$SoundSource$BLOCKS,
+                                FastNMS.INSTANCE.method$Holder$direct(FastNMS.INSTANCE.constructor$SoundEvent(KeyUtils.toIdentifier(mappedSoundId), Optional.empty())),
+                                SoundSourceProxy.BLOCKS,
                                 blockPos.x() + 0.5, blockPos.y() + 0.5, blockPos.z() + 0.5, 1f, 0.8F,
                                 RandomUtils.generateRandomLong()
                         );
@@ -2797,12 +2798,12 @@ public class BukkitNetworkManager extends AbstractNetworkManager implements List
                     }
                 }
             } else {
-                Key soundId = KeyUtils.resourceLocationToKey(rawSoundId);
+                Key soundId = KeyUtils.identifierToKey(rawSoundId);
                 Key mappedSoundId = BukkitBlockManager.instance().replaceSoundIfExist(soundId);
-                Object finalSoundId = KeyUtils.toResourceLocation(mappedSoundId == null ? soundId : mappedSoundId);
+                Object finalSoundId = KeyUtils.toIdentifier(mappedSoundId == null ? soundId : mappedSoundId);
                 Object packet = FastNMS.INSTANCE.constructor$ClientboundSoundPacket(
                         FastNMS.INSTANCE.method$Holder$direct(FastNMS.INSTANCE.constructor$SoundEvent(finalSoundId, Optional.empty())),
-                        CoreReflections.instance$SoundSource$BLOCKS,
+                        SoundSourceProxy.BLOCKS,
                         blockPos.x() + 0.5, blockPos.y() + 0.5, blockPos.z() + 0.5, 1f, 0.8F,
                         RandomUtils.generateRandomLong()
                 );
@@ -3738,7 +3739,7 @@ public class BukkitNetworkManager extends AbstractNetworkManager implements List
                 Optional<Object> optionalSound = FastNMS.INSTANCE.method$IdMap$byId(MBuiltInRegistries.SOUND_EVENT, id - 1);
                 if (optionalSound.isEmpty()) return;
                 Object soundEvent = optionalSound.get();
-                Key soundId = KeyUtils.resourceLocationToKey(FastNMS.INSTANCE.method$SoundEvent$location(soundEvent));
+                Key soundId = KeyUtils.identifierToKey(FastNMS.INSTANCE.method$SoundEvent$location(soundEvent));
                 int source = buf.readVarInt();
                 int x = buf.readInt();
                 int y = buf.readInt();
@@ -3752,7 +3753,7 @@ public class BukkitNetworkManager extends AbstractNetworkManager implements List
                     buf.clear();
                     buf.writeVarInt(event.packetID());
                     buf.writeVarInt(0);
-                    Object newId = KeyUtils.toResourceLocation(mapped);
+                    Object newId = KeyUtils.toIdentifier(mapped);
                     Object newSoundEvent = FastNMS.INSTANCE.constructor$SoundEvent(newId, FastNMS.INSTANCE.method$SoundEvent$fixedRange(soundEvent));
                     FastNMS.INSTANCE.method$SoundEvent$directEncode(buf, newSoundEvent);
                     buf.writeVarInt(source);

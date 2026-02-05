@@ -21,7 +21,7 @@ public final class MItems {
 
     @Nullable
     public static Object getById(Key id) {
-        return FastNMS.INSTANCE.method$Registry$getValue(MBuiltInRegistries.ITEM, KeyUtils.toResourceLocation(id));
+        return FastNMS.INSTANCE.method$Registry$getValue(MBuiltInRegistries.ITEM, KeyUtils.toIdentifier(id));
     }
 
     static {

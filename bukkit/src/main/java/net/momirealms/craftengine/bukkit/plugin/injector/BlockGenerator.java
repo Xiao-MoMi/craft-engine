@@ -227,7 +227,7 @@ public final class BlockGenerator {
 
     private static Object createEmptyBlockProperties(Key id) throws ReflectiveOperationException {
         Object blockProperties = CoreReflections.method$BlockBehaviour$Properties$of.invoke(null);
-        Object resourceLocation = KeyUtils.toResourceLocation(id);
+        Object resourceLocation = KeyUtils.toIdentifier(id);
         Object resourceKey = FastNMS.INSTANCE.method$ResourceKey$create(MRegistries.BLOCK, resourceLocation);
         if (CoreReflections.field$BlockBehaviour$Properties$id != null) {
             CoreReflections.field$BlockBehaviour$Properties$id.set(blockProperties, resourceKey);

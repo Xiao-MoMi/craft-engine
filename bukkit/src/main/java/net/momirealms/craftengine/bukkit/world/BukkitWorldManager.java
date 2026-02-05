@@ -38,6 +38,7 @@ import net.momirealms.craftengine.core.world.chunk.PalettedContainer;
 import net.momirealms.craftengine.core.world.chunk.storage.DefaultStorageAdaptor;
 import net.momirealms.craftengine.core.world.chunk.storage.StorageAdaptor;
 import net.momirealms.craftengine.core.world.chunk.storage.WorldDataStorage;
+import net.momirealms.craftengine.proxy.util.CrudeIncrementalIntIdentityHashBiMapProxy;
 import org.bukkit.Bukkit;
 import org.bukkit.Chunk;
 import org.bukkit.World;
@@ -105,10 +106,10 @@ public final class BukkitWorldManager implements WorldManager, Listener {
     public synchronized CraftEngineFeatures fetchFeatures(Object serverLevel) {
         World world = FastNMS.INSTANCE.method$Level$getCraftWorld(serverLevel);
         String name = world.getName();
-        Key dimension = KeyUtils.resourceLocationToKey(FastNMS.INSTANCE.field$ResourceKey$location(FastNMS.INSTANCE.method$Level$dimension(serverLevel)));
+        Key dimension = KeyUtils.identifierToKey(FastNMS.INSTANCE.field$ResourceKey$location(FastNMS.INSTANCE.method$Level$dimension(serverLevel)));
         Object holder = FastNMS.INSTANCE.method$Level$dimensionTypeRegistration(serverLevel);
         Key dimensionType = CoreReflections.clazz$Holder$Reference.isInstance(holder)
-                ? KeyUtils.resourceLocationToKey(FastNMS.INSTANCE.method$Holder$Reference$identifier(holder))
+                ? KeyUtils.identifierToKey(FastNMS.INSTANCE.method$Holder$Reference$identifier(holder))
                 : null;
         List<ConditionalFeature> features = new ArrayList<>();
         for (ConditionalFeature feature : this.placedFeatures) {
@@ -505,7 +506,7 @@ public final class BukkitWorldManager implements WorldManager, Listener {
                                 }
                             } else if (CoreReflections.clazz$HashMapPalette.isInstance(palette)) {
                                 Object biMap = CoreReflections.field$HashMapPalette$values.get(palette);
-                                Object[] blockStates = (Object[]) CoreReflections.field$CrudeIncrementalIntIdentityHashBiMap$keys.get(biMap);
+                                Object[] blockStates = CrudeIncrementalIntIdentityHashBiMapProxy.INSTANCE.getKeys(biMap);
                                 for (Object blockState : blockStates) {
                                     if (blockState != null) {
                                         if (BlockStateUtils.isCustomBlock(blockState)) {

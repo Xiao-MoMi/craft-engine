@@ -9,10 +9,10 @@ public final class FeatureUtils {
     private FeatureUtils() {}
 
     public static Object createConfiguredFeatureKey(Key id) {
-        return FastNMS.INSTANCE.method$ResourceKey$create(MRegistries.CONFIGURED_FEATURE, KeyUtils.toResourceLocation(id));
+        return FastNMS.INSTANCE.method$ResourceKey$create(MRegistries.CONFIGURED_FEATURE, KeyUtils.toIdentifier(id));
     }
 
     public static Object createPlacedFeatureKey(Key id) {
-        return FastNMS.INSTANCE.method$ResourceKey$create(MRegistries.PLACED_FEATURE, KeyUtils.toResourceLocation(id));
+        return FastNMS.INSTANCE.method$ResourceKey$create(MRegistries.PLACED_FEATURE, KeyUtils.toIdentifier(id));
     }
 }

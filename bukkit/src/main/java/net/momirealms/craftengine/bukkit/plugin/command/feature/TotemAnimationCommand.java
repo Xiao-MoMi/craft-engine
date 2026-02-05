@@ -20,6 +20,7 @@ import net.momirealms.craftengine.core.plugin.locale.MessageConstants;
 import net.momirealms.craftengine.core.sound.SoundData;
 import net.momirealms.craftengine.core.util.Key;
 import net.momirealms.craftengine.core.util.VersionHelper;
+import net.momirealms.craftengine.proxy.sound.SoundSourceProxy;
 import org.bukkit.NamespacedKey;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
@@ -43,7 +44,7 @@ import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 
 public class TotemAnimationCommand extends BukkitCommandFeature<CommandSender> {
-    public static final Object FIX_TOTEM_SOUND_PACKET = FastNMS.INSTANCE.constructor$ClientboundSoundPacket(FastNMS.INSTANCE.method$Holder$direct(MSoundEvents.TOTEM_USE), CoreReflections.instance$SoundSource$MUSIC, 0, Integer.MIN_VALUE, 0, 0, 0, 0);
+    public static final Object FIX_TOTEM_SOUND_PACKET = FastNMS.INSTANCE.constructor$ClientboundSoundPacket(FastNMS.INSTANCE.method$Holder$direct(MSoundEvents.TOTEM_USE), SoundSourceProxy.MUSIC, 0, Integer.MIN_VALUE, 0, 0, 0, 0);
 
     public TotemAnimationCommand(CraftEngineCommandManager<CommandSender> commandManager, CraftEngine plugin) {
         super(commandManager, plugin);
@@ -86,7 +87,7 @@ public class TotemAnimationCommand extends BukkitCommandFeature<CommandSender> {
                         float pitch = context.getOrDefault("pitch", 1.0f);
                         float minVolume = context.getOrDefault("min-volume", 1.0f);
                         float minPitch = context.getOrDefault("min-pitch", 1.0f);
-                        soundData = SoundData.of(KeyUtils.namespacedKey2Key(soundKey.get()), SoundData.SoundValue.ranged(minVolume, volume), SoundData.SoundValue.ranged(minPitch, pitch));
+                        soundData = SoundData.of(KeyUtils.namespacedKeyToKey(soundKey.get()), SoundData.SoundValue.ranged(minVolume, volume), SoundData.SoundValue.ranged(minPitch, pitch));
                     }
                     boolean removeSound = context.flags().hasFlag("no-sound");
                     MultiplePlayerSelector selector = context.get("players");

@@ -153,7 +153,7 @@ public class FenceBlockBehavior extends BukkitBlockBehavior implements IsPathFin
             BooleanProperty east = (BooleanProperty) ResourceConfigUtils.requireNonNullOrThrow(block.getProperty("east"), "warning.config.block.behavior.fence.missing_east");
             BooleanProperty south = (BooleanProperty) ResourceConfigUtils.requireNonNullOrThrow(block.getProperty("south"), "warning.config.block.behavior.fence.missing_south");
             BooleanProperty west = (BooleanProperty) ResourceConfigUtils.requireNonNullOrThrow(block.getProperty("west"), "warning.config.block.behavior.fence.missing_west");
-            Object connectableBlockTag = FastNMS.INSTANCE.method$TagKey$create(MRegistries.BLOCK, KeyUtils.toResourceLocation(Key.of(arguments.getOrDefault("connectable-block-tag", "minecraft:wooden_fences").toString())));
+            Object connectableBlockTag = FastNMS.INSTANCE.method$TagKey$create(MRegistries.BLOCK, KeyUtils.toIdentifier(Key.of(arguments.getOrDefault("connectable-block-tag", "minecraft:wooden_fences").toString())));
             connectableBlockTag = connectableBlockTag != null ? connectableBlockTag : MTagKeys.Block$WOODEN_FENCES;
             boolean canLeash = ResourceConfigUtils.getAsBoolean(arguments.getOrDefault("can-leash", false), "can-leash");
             return new FenceBlockBehavior(block, north, east, south, west, connectableBlockTag, canLeash);

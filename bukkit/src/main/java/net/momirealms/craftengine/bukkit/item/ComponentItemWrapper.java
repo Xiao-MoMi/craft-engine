@@ -171,7 +171,7 @@ public class ComponentItemWrapper implements ItemWrapper<ItemStack> {
     private Object ensureDataComponentType(Object type) {
         if (!CoreReflections.clazz$DataComponentType.isInstance(type)) {
             Key key = Key.of(type.toString());
-            return FastNMS.INSTANCE.method$Registry$getValue(MBuiltInRegistries.DATA_COMPONENT_TYPE, KeyUtils.toResourceLocation(key));
+            return FastNMS.INSTANCE.method$Registry$getValue(MBuiltInRegistries.DATA_COMPONENT_TYPE, KeyUtils.toIdentifier(key));
         }
         return type;
     }

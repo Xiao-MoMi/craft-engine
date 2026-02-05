@@ -27,7 +27,7 @@ public class BukkitSoundManager extends AbstractSoundManager {
         super(plugin);
         for (Object soundEvent : (Iterable<?>) MBuiltInRegistries.SOUND_EVENT) {
             Object resourceLocation = FastNMS.INSTANCE.field$SoundEvent$location(soundEvent);
-            VANILLA_SOUND_EVENTS.add(KeyUtils.resourceLocationToKey(resourceLocation));
+            VANILLA_SOUND_EVENTS.add(KeyUtils.identifierToKey(resourceLocation));
         }
         this.registerSongs(this.loadLastRegisteredSongs());
     }
@@ -97,7 +97,7 @@ public class BukkitSoundManager extends AbstractSoundManager {
         try {
             CoreReflections.field$MappedRegistry$frozen.set(registry, false);
             for (Key soundEventId : sounds) {
-                Object resourceLocation = KeyUtils.toResourceLocation(soundEventId);
+                Object resourceLocation = KeyUtils.toIdentifier(soundEventId);
                 // 检查之前有没有注册过了
                 Object soundEvent = FastNMS.INSTANCE.method$Registry$getValue(registry, resourceLocation);
                 // 只有没注册才注册，否则会报错
@@ -131,8 +131,8 @@ public class BukkitSoundManager extends AbstractSoundManager {
             for (Map.Entry<Key, JukeboxSong> entry : songs.entrySet()) {
                 Key id = entry.getKey();
                 JukeboxSong jukeboxSong = entry.getValue();
-                Object resourceLocation = KeyUtils.toResourceLocation(id);
-                Object soundId = KeyUtils.toResourceLocation(jukeboxSong.sound());
+                Object resourceLocation = KeyUtils.toIdentifier(id);
+                Object soundId = KeyUtils.toIdentifier(jukeboxSong.sound());
                 // 检查之前有没有注册过了
                 Object song = FastNMS.INSTANCE.method$Registry$getValue(registry, resourceLocation);
                 // 只有没注册才注册，否则会报错

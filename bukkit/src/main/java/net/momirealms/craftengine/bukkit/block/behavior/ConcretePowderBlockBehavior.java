@@ -18,6 +18,7 @@ import net.momirealms.craftengine.core.util.Direction;
 import net.momirealms.craftengine.core.util.LazyReference;
 import net.momirealms.craftengine.core.util.ResourceConfigUtils;
 import net.momirealms.craftengine.core.world.context.BlockPlaceContext;
+import net.momirealms.craftengine.proxy.block.BlockStateBaseProxy;
 import org.bukkit.block.BlockState;
 import org.bukkit.event.block.BlockFormEvent;
 import org.jetbrains.annotations.Nullable;
@@ -98,8 +99,8 @@ public class ConcretePowderBlockBehavior extends BukkitBlockBehavior {
         return canSolidify(blockState) || touchesLiquid(level, blockPos);
     }
 
-    private static boolean canSolidify(Object state) throws ReflectiveOperationException {
-        Object fluidState = CoreReflections.field$BlockStateBase$fluidState.get(state);
+    private static boolean canSolidify(Object state) {
+        Object fluidState = BlockStateBaseProxy.INSTANCE.getFluidState(state);
         if (fluidState == null) return false;
         Object fluidType = FastNMS.INSTANCE.method$FluidState$getType(fluidState);
         return fluidType == MFluids.WATER || fluidType == MFluids.FLOWING_WATER;

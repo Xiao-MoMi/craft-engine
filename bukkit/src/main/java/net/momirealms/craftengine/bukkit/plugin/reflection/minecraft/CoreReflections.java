@@ -36,25 +36,6 @@ public final class CoreReflections {
             ReflectionUtils.getClazz(BukkitReflectionUtils.assembleMCClass("util.RandomSource"))
     );
 
-    public static final Class<?> clazz$BitStorage = requireNonNull(
-            BukkitReflectionUtils.findReobfOrMojmapClass(
-                    "util.DataBits",
-                    "util.BitStorage"
-            )
-    );
-
-    public static final Method method$BitStorage$getBits = requireNonNull(
-            ReflectionUtils.getMethod(clazz$BitStorage, int.class)
-    );
-
-    public static final Method method$BitStorage$getRaw = requireNonNull(
-            ReflectionUtils.getMethod(clazz$BitStorage, long[].class)
-    );
-
-    public static final Method method$RandomSource$nextFloat = requireNonNull(
-            ReflectionUtils.getMethod(clazz$RandomSource, float.class)
-    );
-
     public static final Class<?> clazz$CrudeIncrementalIntIdentityHashBiMap = requireNonNull(
             BukkitReflectionUtils.findReobfOrMojmapClass(
                     "util.RegistryID",
@@ -62,10 +43,6 @@ public final class CoreReflections {
             )
     );
 
-    public static final Field field$CrudeIncrementalIntIdentityHashBiMap$keys = requireNonNull(
-            ReflectionUtils.getDeclaredField(clazz$CrudeIncrementalIntIdentityHashBiMap, Object.class.arrayType(), 0)
-    );
-    
     public static final Class<?> clazz$ResourceLocation = requireNonNull(
             BukkitReflectionUtils.findReobfOrMojmapClass(
                     List.of("resources.MinecraftKey"),
@@ -77,41 +54,6 @@ public final class CoreReflections {
             ReflectionUtils.getClazz(BukkitReflectionUtils.assembleMCClass("resources.ResourceKey"))
     );
 
-    public static final Field field$ResourceKey$registry = requireNonNull(
-            ReflectionUtils.getDeclaredField(clazz$ResourceKey, clazz$ResourceLocation, 0)
-    );
-
-    public static final Field field$ResourceKey$location = requireNonNull(
-            ReflectionUtils.getDeclaredField(clazz$ResourceKey, clazz$ResourceLocation, 1)
-    );
-
-    public static final Method method$ResourceKey$create = requireNonNull(
-            ReflectionUtils.getStaticMethod(clazz$ResourceKey, clazz$ResourceKey, clazz$ResourceKey, clazz$ResourceLocation)
-    );
-
-    public static final Method method$ResourceLocation$fromNamespaceAndPath = requireNonNull(
-            ReflectionUtils.getStaticMethod(clazz$ResourceLocation, clazz$ResourceLocation, String.class, String.class)
-    );
-
-    public static final Class<?> clazz$FileToIdConverter = requireNonNull(
-            ReflectionUtils.getClazz(BukkitReflectionUtils.assembleMCClass("resources.FileToIdConverter"))
-    );
-
-    public static final Method method$FileToIdConverter$json = requireNonNull(
-            ReflectionUtils.getStaticMethod(clazz$FileToIdConverter, clazz$FileToIdConverter, String.class)
-    );
-
-    public static final MethodHandle methodHandle$FileToIdConverter$json;
-
-    static {
-        try {
-            methodHandle$FileToIdConverter$json = ReflectionUtils.unreflectMethod(method$FileToIdConverter$json)
-                    .asType(MethodType.methodType(Object.class, String.class));
-        } catch (Throwable t) {
-            throw new ReflectionInitException("Failed to initialize methodHandle$FileToIdConverter$json", t);
-        }
-    }
-    
     public static final Class<?> clazz$RegistryOps = requireNonNull(
             BukkitReflectionUtils.findReobfOrMojmapClass(
                     "resources.RegistryOps",
@@ -132,30 +74,6 @@ public final class CoreReflections {
                     ReflectionUtils.getDeclaredConstructor(clazz$SoundEvent, clazz$ResourceLocation, float.class, boolean.class)
     );
 
-    // 1.21.2+
-    public static final Field field$SoundEvent$fixedRange = ReflectionUtils.getInstanceDeclaredField(
-            clazz$SoundEvent, Optional.class, 0
-    );
-
-    // 1.21.2-
-    public static final Field field$SoundEvent$range = ReflectionUtils.getInstanceDeclaredField(
-            clazz$SoundEvent, float.class, 0
-    );
-
-    public static final Field field$SoundEvent$newSystem = ReflectionUtils.getInstanceDeclaredField(
-            clazz$SoundEvent, boolean.class, 0
-    );
-
-    public static final Method method$SoundEvent$createVariableRangeEvent = requireNonNull(
-            ReflectionUtils.getStaticMethod(
-                    clazz$SoundEvent, clazz$SoundEvent, clazz$ResourceLocation
-            )
-    );
-
-    public static final Field field$SoundEvent$location = requireNonNull(
-            ReflectionUtils.getInstanceDeclaredField(clazz$SoundEvent, clazz$ResourceLocation, 0)
-    );
-
     public static final Class<?> clazz$SoundSource = requireNonNull(
             BukkitReflectionUtils.findReobfOrMojmapClass(
                     "sounds.SoundCategory",
@@ -163,70 +81,10 @@ public final class CoreReflections {
             )
     );
 
-    public static final Method method$SoundSource$values = requireNonNull(
-            ReflectionUtils.getStaticMethod(clazz$SoundSource, clazz$SoundSource.arrayType())
-    );
-
-    public static final Object instance$SoundSource$MASTER;
-    public static final Object instance$SoundSource$MUSIC;
-    public static final Object instance$SoundSource$RECORDS;
-    public static final Object instance$SoundSource$WEATHER;
-    public static final Object instance$SoundSource$BLOCKS;
-    public static final Object instance$SoundSource$HOSTILE;
-    public static final Object instance$SoundSource$NEUTRAL;
-    public static final Object instance$SoundSource$PLAYERS;
-    public static final Object instance$SoundSource$AMBIENT;
-    public static final Object instance$SoundSource$VOICE;
-
-    static {
-        try {
-            Object[] values = (Object[]) method$SoundSource$values.invoke(null);
-            instance$SoundSource$MASTER = values[0];
-            instance$SoundSource$MUSIC = values[1];
-            instance$SoundSource$RECORDS = values[2];
-            instance$SoundSource$WEATHER = values[3];
-            instance$SoundSource$BLOCKS = values[4];
-            instance$SoundSource$HOSTILE = values[5];
-            instance$SoundSource$NEUTRAL = values[6];
-            instance$SoundSource$PLAYERS = values[7];
-            instance$SoundSource$AMBIENT = values[8];
-            instance$SoundSource$VOICE = values[9];
-        } catch (ReflectiveOperationException e) {
-            throw new ReflectionInitException("Failed to init SoundSource", e);
-        }
-    }
-
-    // 1.21+
-    public static final Class<?> clazz$PacketReport =
-            ReflectionUtils.getClazz(BukkitReflectionUtils.assembleMCClass("data.info.PacketReport"));
-
-    // 1.21+
-    public static final Constructor<?> constructor$PacketReport = Optional.ofNullable(clazz$PacketReport)
-            .map(it -> ReflectionUtils.getConstructor(it, 0))
-            .orElse(null);
-
-    // 1.21+
-    public static final Method method$PacketReport$serializePackets = Optional.ofNullable(clazz$PacketReport)
-            .map(it -> ReflectionUtils.getDeclaredMethod(it, JsonElement.class))
-            .orElse(null);
-
     public static final Class<?> clazz$Component = requireNonNull(
             BukkitReflectionUtils.findReobfOrMojmapClass(
                     "network.chat.IChatBaseComponent",
                     "network.chat.Component"
-            )
-    );
-
-    // 1.20~1.21.5
-    public static final Class<?> clazz$Component$Serializer =
-            BukkitReflectionUtils.findReobfOrMojmapClass(
-                    "network.chat.IChatBaseComponent$ChatSerializer",
-                    "network.chat.Component$Serializer"
-            );
-
-    public static final Class<?> clazz$ComponentContents = requireNonNull(
-            ReflectionUtils.getClazz(
-                    BukkitReflectionUtils.assembleMCClass("network.chat.ComponentContents")
             )
     );
 
@@ -989,10 +847,6 @@ public final class CoreReflections {
             ReflectionUtils.findVarHandle(field$PalettedContainer$data)
     );
 
-    public static final Field field$PalettedContainer$Data$storage = requireNonNull(
-            ReflectionUtils.getDeclaredField(clazz$PalettedContainer$Data, clazz$BitStorage, 0)
-    );
-
     public static final Field field$PalettedContainer$Data$palette = requireNonNull(
             ReflectionUtils.getDeclaredField(clazz$PalettedContainer$Data, clazz$Palette, 0)
     );
@@ -1362,53 +1216,6 @@ public final class CoreReflections {
     public static final Field field$BlockStateBase$Cache$lightBlock =
             ReflectionUtils.getInstanceDeclaredField(clazz$BlockStateBase$Cache, int.class, 0);
 
-    public static final Method method$BlockStateBase$initCache = requireNonNull(
-            ReflectionUtils.getMethod(clazz$BlockStateBase, void.class, new String[] { "initCache", "a" })
-    );
-
-    public static final Field field$BlockStateBase$isRedstoneConductor = requireNonNull(
-            ReflectionUtils.getDeclaredField(clazz$BlockStateBase, clazz$StatePredicate, 0)
-    );
-
-    public static final Field field$BlockStateBase$isSuffocating = requireNonNull(
-            ReflectionUtils.getDeclaredField(clazz$BlockStateBase, clazz$StatePredicate, 1)
-    );
-
-    public static final Field field$BlockStateBase$isViewBlocking = requireNonNull(
-            ReflectionUtils.getDeclaredField(clazz$BlockStateBase, clazz$StatePredicate, 2)
-    );
-
-    public static final Field field$BlockStateBase$fluidState = requireNonNull(
-            ReflectionUtils.getDeclaredField(clazz$BlockStateBase, clazz$FluidState, 0)
-    );
-
-    public static final Field field$BlockStateBase$pushReaction = requireNonNull(
-            ReflectionUtils.getDeclaredField(clazz$BlockStateBase, clazz$PushReaction, 0)
-    );
-
-    public static final Field field$BlockStateBase$mapColor = requireNonNull(
-            ReflectionUtils.getDeclaredField(clazz$BlockStateBase, clazz$MapColor, 0)
-    );
-
-    public static final Field field$BlockStateBase$instrument = requireNonNull(
-            ReflectionUtils.getDeclaredField(clazz$BlockStateBase, clazz$NoteBlockInstrument, 0)
-    );
-
-    public static final Field field$BlockStateBase$hardness = requireNonNull(
-            ReflectionUtils.getDeclaredField(clazz$BlockStateBase, float.class, 0)
-    );
-
-    public static final Field field$BlockStateBase$useShapeForLightOcclusion = requireNonNull(
-            ReflectionUtils.getDeclaredField(clazz$BlockStateBase, boolean.class, 0)
-    );
-
-    public static final Field field$BlockStateBase$burnable = requireNonNull(
-            ReflectionUtils.getDeclaredField(clazz$BlockStateBase, boolean.class, 2)
-    );
-
-    public static final Field field$BlockStateBase$isRandomlyTicking = requireNonNull(
-            ReflectionUtils.getDeclaredField(clazz$BlockStateBase, boolean.class, 9)
-    );
 
     // 1.21.2以前用
     public static final Field field$BlockStateBase$isConditionallyFullOpaque = requireNonNull(
@@ -1422,22 +1229,6 @@ public final class CoreReflections {
 
     public static final Field field$BlockStateBase$Cache$propagatesSkylightDown = ReflectionUtils.getDeclaredField(
             clazz$BlockStateBase$Cache, boolean.class, 2
-    );
-
-    public static final Field field$BlockStateBase$requiresCorrectToolForDrops = requireNonNull(
-            ReflectionUtils.getDeclaredField(clazz$BlockStateBase, boolean.class, 5)
-    );
-
-    public static final Field field$BlockStateBase$canOcclude = requireNonNull(
-            ReflectionUtils.getDeclaredField(clazz$BlockStateBase, boolean.class, 6)
-    );
-
-    public static final Field field$BlockStateBase$replaceable = requireNonNull(
-            ReflectionUtils.getDeclaredField(clazz$BlockStateBase, boolean.class, 8)
-    );
-
-    public static final Field field$BlockStateBase$lightEmission = requireNonNull(
-            ReflectionUtils.getDeclaredField(clazz$BlockStateBase, int.class, 0)
     );
 
     // 1.21.2+
@@ -3660,21 +3451,6 @@ public final class CoreReflections {
                     !VersionHelper.isOrAbove1_21_2() ? "e_" /* 1.20.5-1.21.1 */ : "f_" // 1.21.2+
             }, clazz$BlockState)
     );
-
-    public static final Method method$FileToIdConverter$listMatchingResources = requireNonNull(
-            ReflectionUtils.getMethod(clazz$FileToIdConverter, Map.class, new String[]{"listMatchingResources", "a"}, clazz$ResourceManager)
-    );
-
-    public static final MethodHandle methodHandle$FileToIdConverter$listMatchingResources;
-
-    static {
-        try {
-            methodHandle$FileToIdConverter$listMatchingResources = ReflectionUtils.unreflectMethod(method$FileToIdConverter$listMatchingResources)
-                    .asType(MethodType.methodType(Map.class, Object.class, AutoCloseable.class));
-        } catch (Exception e) {
-            throw new ReflectionInitException("Failed to initialize methodHandle$FileToIdConverter$listMatchingResources", e);
-        }
-    }
 
     public static final Method method$RegistryOps$create = requireNonNull(
             ReflectionUtils.getStaticMethod(clazz$RegistryOps, clazz$RegistryOps, DynamicOps.class, clazz$HolderLookup$Provider)

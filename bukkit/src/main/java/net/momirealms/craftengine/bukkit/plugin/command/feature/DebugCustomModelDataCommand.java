@@ -58,7 +58,7 @@ public class DebugCustomModelDataCommand extends BukkitCommandFeature<CommandSen
         @Nullable BukkitServerPlayer player = context.sender() instanceof Player p ? BukkitAdaptors.adapt(p) : null;
 
         if (namespacedKey != null) {
-            Key itemId = KeyUtils.namespacedKey2Key(namespacedKey);
+            Key itemId = KeyUtils.namespacedKeyToKey(namespacedKey);
             CustomItem<ItemStack> customItem = CraftEngineItems.byId(itemId);
             if (customItem == null) return;
             Item<ItemStack> item = customItem.buildItem(player);

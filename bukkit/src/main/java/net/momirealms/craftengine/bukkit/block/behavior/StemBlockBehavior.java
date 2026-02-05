@@ -135,8 +135,8 @@ public class StemBlockBehavior extends BukkitBlockBehavior implements IsPathFind
             Key fruit = Key.of(ResourceConfigUtils.requireNonEmptyStringOrThrow(arguments.get("fruit"), "warning.config.block.behavior.stem.missing_fruit"));
             Key attachedStem = Key.of(ResourceConfigUtils.requireNonEmptyStringOrThrow(arguments.get("attached-stem"), "warning.config.block.behavior.stem.missing_attached_stem"));
             int minGrowLight = ResourceConfigUtils.getAsInt(arguments.getOrDefault("light-requirement", 9), "light-requirement");
-            Object tagMayPlaceFruit = FastNMS.INSTANCE.method$TagKey$create(MRegistries.BLOCK, KeyUtils.toResourceLocation(Key.of(arguments.getOrDefault("may-place-fruit", "minecraft:dirt").toString())));
-            Object blockMayPlaceFruit = FastNMS.INSTANCE.method$Registry$getValue(MBuiltInRegistries.BLOCK, KeyUtils.toResourceLocation(Key.of(arguments.getOrDefault("may-place-fruit", "minecraft:farmland").toString())));
+            Object tagMayPlaceFruit = FastNMS.INSTANCE.method$TagKey$create(MRegistries.BLOCK, KeyUtils.toIdentifier(Key.of(arguments.getOrDefault("may-place-fruit", "minecraft:dirt").toString())));
+            Object blockMayPlaceFruit = FastNMS.INSTANCE.method$Registry$getValue(MBuiltInRegistries.BLOCK, KeyUtils.toIdentifier(Key.of(arguments.getOrDefault("may-place-fruit", "minecraft:farmland").toString())));
             return new StemBlockBehavior(block, ageProperty, fruit, attachedStem, minGrowLight, tagMayPlaceFruit, blockMayPlaceFruit);
         }
     }

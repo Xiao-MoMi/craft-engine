@@ -378,7 +378,7 @@ public class UniversalItemFactory extends BukkitItemFactory<LegacyItemWrapper> {
 
     @Override
     protected LegacyItemWrapper transmuteCopy(LegacyItemWrapper item, Key newItem, int amount) {
-        Object copied = FastNMS.INSTANCE.constructor$ItemStack(FastNMS.INSTANCE.method$Registry$getValue(MBuiltInRegistries.ITEM, KeyUtils.toResourceLocation(newItem)), amount);
+        Object copied = FastNMS.INSTANCE.constructor$ItemStack(FastNMS.INSTANCE.method$Registry$getValue(MBuiltInRegistries.ITEM, KeyUtils.toIdentifier(newItem)), amount);
         Object copiedTag = FastNMS.INSTANCE.field$ItemStack$getOrCreateTag(copied);
         Object thisTag = FastNMS.INSTANCE.field$ItemStack$getOrCreateTag(item.getLiteralObject());
         FastNMS.INSTANCE.method$CompoundTag$merge(copiedTag, thisTag);

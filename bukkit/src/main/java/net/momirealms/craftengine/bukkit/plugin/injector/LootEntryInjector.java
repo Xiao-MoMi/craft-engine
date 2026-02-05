@@ -15,7 +15,7 @@ public final class LootEntryInjector {
     public static void init() throws ReflectiveOperationException {
         Object registry = MBuiltInRegistries.LOOT_POOL_ENTRY_TYPE;
         CoreReflections.field$MappedRegistry$frozen.set(registry, false);
-        Object resourceLocation = KeyUtils.toResourceLocation(Key.ce("item"));
+        Object resourceLocation = KeyUtils.toIdentifier(Key.ce("item"));
         Object type = FastNMS.INSTANCE.getCraftEngineLootItemType();
         Object holder = CoreReflections.method$Registry$registerForHolder.invoke(null, registry, resourceLocation, type);
         CoreReflections.method$Holder$Reference$bindValue.invoke(holder, type);

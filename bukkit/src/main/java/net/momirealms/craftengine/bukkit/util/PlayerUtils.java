@@ -16,6 +16,7 @@ import net.momirealms.craftengine.core.sound.SoundSource;
 import net.momirealms.craftengine.core.sound.Sounds;
 import net.momirealms.craftengine.core.util.VersionHelper;
 import net.momirealms.craftengine.core.util.random.RandomUtils;
+import net.momirealms.craftengine.proxy.sound.SoundSourceProxy;
 import org.bukkit.inventory.ItemStack;
 import org.jetbrains.annotations.Nullable;
 
@@ -90,13 +91,13 @@ public final class PlayerUtils {
             if (sound != null || silent) {
                 packets.add(NetworkReflections.constructor$ClientboundStopSoundPacket.newInstance(
                         FastNMS.INSTANCE.method$ResourceLocation$fromNamespaceAndPath("minecraft", "item.totem.use"),
-                        CoreReflections.instance$SoundSource$PLAYERS
+                        SoundSourceProxy.PLAYERS
                 ));
             }
             if (sound != null) {
                 packets.add(FastNMS.INSTANCE.constructor$ClientboundSoundPacket(
-                        FastNMS.INSTANCE.method$Holder$direct(FastNMS.INSTANCE.constructor$SoundEvent(KeyUtils.toResourceLocation(sound.id()), Optional.empty())),
-                        CoreReflections.instance$SoundSource$PLAYERS,
+                        FastNMS.INSTANCE.method$Holder$direct(FastNMS.INSTANCE.constructor$SoundEvent(KeyUtils.toIdentifier(sound.id()), Optional.empty())),
+                        SoundSourceProxy.PLAYERS,
                         player.x(), player.y(), player.z(), sound.volume().get(), sound.pitch().get(),
                         RandomUtils.generateRandomLong()
                 ));

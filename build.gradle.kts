@@ -1,3 +1,6 @@
+import java.text.SimpleDateFormat
+import java.util.Date
+
 plugins {
     id("java")
 }
@@ -24,7 +27,9 @@ subprojects {
         filteringCharset = "UTF-8"
 
         filesMatching(arrayListOf("craft-engine.properties")) {
-            expand(rootProject.properties)
+            expand(
+                rootProject.properties + mapOf("proxy_version" to getTimestamp())
+            )
         }
 
         filesMatching(arrayListOf("commands.yml", "config.yml")) {
@@ -44,3 +49,7 @@ fun versionBanner(): String = project.providers.exec {
 fun builder(): String = project.providers.exec {
     commandLine("git", "config", "user.name")
 }.standardOutput.asText.map { it.trim() }.getOrElse("Unknown")
+
+fun getTimestamp(): String {
+    return SimpleDateFormat("yyyyMMdd_HHmm").format(Date())
+}
