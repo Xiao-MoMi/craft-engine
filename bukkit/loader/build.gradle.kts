@@ -64,9 +64,11 @@ artifacts {
 
 tasks {
     shadowJar {
+        from(project(":bukkit:proxy").tasks.shadowJar.flatMap { it.archiveFile })
         archiveFileName = "${rootProject.name}-bukkit-plugin-${rootProject.properties["project_version"]}.jar"
         destinationDirectory.set(file("$rootDir/target"))
         relocate("net.kyori", "net.momirealms.craftengine.libraries")
+        relocate("net.momirealms.sparrow.reflection", "net.momirealms.craftengine.libraries.reflection")
         relocate("net.momirealms.sparrow.nbt", "net.momirealms.craftengine.libraries.nbt")
         relocate("net.momirealms.antigrieflib", "net.momirealms.craftengine.libraries.antigrieflib")
         relocate("cn.gtemc.itembridge", "net.momirealms.craftengine.libraries.itembridge")

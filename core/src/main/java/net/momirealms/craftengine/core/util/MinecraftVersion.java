@@ -110,7 +110,7 @@ public class MinecraftVersion implements Comparable<MinecraftVersion> {
     }
 
     public String version() {
-        return versionString;
+        return this.versionString;
     }
 
     public PackVersion packFormat() {

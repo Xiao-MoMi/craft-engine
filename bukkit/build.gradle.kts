@@ -15,6 +15,7 @@ repositories {
 dependencies {
     compileOnly(project(":core"))
     compileOnly(project(":bukkit:legacy"))
+    compileOnly(project(":bukkit:proxy"))
     // Anti Grief
     compileOnly("net.momirealms:antigrieflib:${rootProject.properties["anti_grief_version"]}")
     // NBT
@@ -22,6 +23,7 @@ dependencies {
     compileOnly("net.momirealms:sparrow-nbt-adventure:${rootProject.properties["sparrow_nbt_version"]}")
     compileOnly("net.momirealms:sparrow-nbt-codec:${rootProject.properties["sparrow_nbt_version"]}")
     compileOnly("net.momirealms:sparrow-nbt-legacy-codec:${rootProject.properties["sparrow_nbt_version"]}")
+    compileOnly("net.momirealms:sparrow-reflection:${rootProject.properties["sparrow_reflection_version"]}")
     // Util
     compileOnly("net.momirealms:sparrow-util:${rootProject.properties["sparrow_util_version"]}")
     // NMS

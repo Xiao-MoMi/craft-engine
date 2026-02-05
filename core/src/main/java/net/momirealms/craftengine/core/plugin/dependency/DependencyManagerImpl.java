@@ -8,6 +8,7 @@ import net.momirealms.craftengine.core.plugin.dependency.relocation.RelocationHa
 import net.momirealms.craftengine.core.util.FileUtils;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.nio.file.DirectoryStream;
@@ -17,6 +18,7 @@ import java.nio.file.Path;
 import java.util.*;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Executor;
+import java.util.function.Supplier;
 import java.util.stream.Stream;
 
 public class DependencyManagerImpl implements DependencyManager {
@@ -147,24 +149,39 @@ public class DependencyManagerImpl implements DependencyManager {
                 throw new RuntimeException("Failed to clean " + versionFolder, e);
             }
         }
-
-        DependencyDownloadException lastError = null;
-        List<DependencyRepository> repository = DependencyRepository.getByID("maven");
-        if (!repository.isEmpty()) {
-            int i = 0;
-            while (i < repository.size()) {
-                try {
-                    plugin.logger().info("Downloading dependency " + repository.get(i).getUrl() + dependency.mavenPath());
-                    repository.get(i).download(dependency, file);
-                    plugin.logger().info("Successfully downloaded " + fileName);
+        // if the dependency is inside the jar
+        if (dependency.hasJarInJarPath()) {
+            try (InputStream in = this.getClass().getClassLoader().getResourceAsStream(dependency.jarInJarPath())) {
+                if (in != null) {
+                    Files.createDirectories(file.getParent());
+                    Files.copy(in, file, java.nio.file.StandardCopyOption.REPLACE_EXISTING);
                     return file;
-                } catch (DependencyDownloadException e) {
-                    lastError = e;
-                    i++;
                 }
+                throw new RuntimeException("Failed to find " + dependency.jarInJarPath());
+            } catch (IOException e) {
+                throw new RuntimeException("Failed to save " + dependency.jarInJarPath(), e);
             }
         }
-        throw Objects.requireNonNull(lastError);
+        // otherwise we download it
+        else {
+            DependencyDownloadException lastError = null;
+            List<DependencyRepository> repository = DependencyRepository.getByID("maven");
+            if (!repository.isEmpty()) {
+                int i = 0;
+                while (i < repository.size()) {
+                    try {
+                        this.plugin.logger().info("Downloading dependency " + repository.get(i).getUrl() + dependency.mavenPath());
+                        repository.get(i).download(dependency, file);
+                        this.plugin.logger().info("Successfully downloaded " + fileName);
+                        return file;
+                    } catch (DependencyDownloadException e) {
+                        lastError = e;
+                        i++;
+                    }
+                }
+            }
+            throw Objects.requireNonNull(lastError);
+        }
     }
 
     private Path remapDependency(Dependency dependency, Path normalFile) throws Exception {
@@ -176,7 +193,7 @@ public class DependencyManagerImpl implements DependencyManager {
         Path remappedFile = this.cacheDirectory.resolve(dependency.toLocalPath()).resolve(dependency.fileName(DependencyRegistry.isGsonRelocated() ? "remapped-legacy" : "remapped"));
 
         // if the remapped source exists already, just use that.
-        if (Files.exists(remappedFile) && dependency.verify(remappedFile)) {
+        if (Files.exists(remappedFile)) {
             return remappedFile;
         }
 

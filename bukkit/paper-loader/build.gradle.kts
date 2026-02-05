@@ -1,3 +1,4 @@
+import com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar
 import net.minecrell.pluginyml.paper.PaperPluginDescription
 import xyz.jpenilla.runpaper.task.RunServer
 
@@ -176,9 +177,11 @@ tasks {
         manifest {
             attributes["paperweight-mappings-namespace"] = "mojang"
         }
+        from(project(":bukkit:proxy").tasks.shadowJar.flatMap { it.archiveFile })
         archiveFileName = "${rootProject.name}-paper-plugin-${rootProject.properties["project_version"]}.jar"
         destinationDirectory.set(file("$rootDir/target"))
         relocate("net.kyori", "net.momirealms.craftengine.libraries")
+        relocate("net.momirealms.sparrow.reflection", "net.momirealms.craftengine.libraries.reflection")
         relocate("net.momirealms.sparrow.nbt", "net.momirealms.craftengine.libraries.nbt")
         relocate("net.momirealms.antigrieflib", "net.momirealms.craftengine.libraries.antigrieflib")
         relocate("cn.gtemc.itembridge", "net.momirealms.craftengine.libraries.itembridge")

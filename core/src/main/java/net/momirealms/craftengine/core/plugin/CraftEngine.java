@@ -510,6 +510,8 @@ public abstract class CraftEngine implements Plugin {
         this.dependencyManager.loadDependencies(dependenciesToLoad);
     }
 
+    public abstract void setupProxy();
+
     protected abstract void platformDelayedEnable();
 
     protected abstract List<Dependency> platformDependencies();

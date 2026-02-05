@@ -32,6 +32,7 @@ import net.momirealms.craftengine.core.util.Key;
 import net.momirealms.craftengine.core.util.ObjectHolder;
 import net.momirealms.craftengine.core.util.Tristate;
 import net.momirealms.craftengine.core.util.VersionHelper;
+import net.momirealms.craftengine.proxy.block.BlockBehaviorProxy;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.event.HandlerList;
@@ -264,15 +265,16 @@ public final class BukkitBlockManager extends AbstractBlockManager {
             ObjectHolder<BlockBehavior> behaviorHolder = nmsBlock.behaviorDelegate();
             behaviorHolder.bindValue(state.behavior());
             if (VersionHelper.isOrAbove1_21_2()) {
-                CoreReflections.field$BlockBehaviour$descriptionId.set(nmsBlock, block.translationKey());
+                BlockBehaviorProxy.INSTANCE.setDescriptionId(nmsBlock, block.translationKey());
             } else {
                 CoreReflections.field$Block$descriptionId.set(nmsBlock, block.translationKey());
             }
-            CoreReflections.field$BlockBehaviour$explosionResistance.set(nmsBlock, settings.resistance());
-            CoreReflections.field$BlockBehaviour$friction.set(nmsBlock, settings.friction());
-            CoreReflections.field$BlockBehaviour$speedFactor.set(nmsBlock, settings.speedFactor());
-            CoreReflections.field$BlockBehaviour$jumpFactor.set(nmsBlock, settings.jumpFactor());
-            CoreReflections.field$BlockBehaviour$soundType.set(nmsBlock, SoundUtils.toSoundType(settings.sounds()));
+
+            BlockBehaviorProxy.INSTANCE.setExplosionResistance(nmsBlock, settings.resistance());
+            BlockBehaviorProxy.INSTANCE.setFriction(nmsBlock, settings.friction());
+            BlockBehaviorProxy.INSTANCE.setSpeedFactor(nmsBlock, settings.speedFactor());
+            BlockBehaviorProxy.INSTANCE.setJumpFactor(nmsBlock, settings.jumpFactor());
+            BlockBehaviorProxy.INSTANCE.setSoundType(nmsBlock, SoundUtils.toSoundType(settings.sounds()));
 
             CoreReflections.method$BlockStateBase$initCache.invoke(nmsState);
             boolean isConditionallyFullOpaque = canOcclude & useShapeForLightOcclusion;

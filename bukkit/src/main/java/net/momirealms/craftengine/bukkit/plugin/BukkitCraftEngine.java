@@ -45,6 +45,8 @@ import net.momirealms.craftengine.core.plugin.scheduler.SchedulerTask;
 import net.momirealms.craftengine.core.util.CharacterUtils;
 import net.momirealms.craftengine.core.util.ReflectionUtils;
 import net.momirealms.craftengine.core.util.VersionHelper;
+import net.momirealms.craftengine.proxy.BukkitProxy;
+import net.momirealms.sparrow.reflection.SReflection;
 import org.bstats.bukkit.Metrics;
 import org.bukkit.Bukkit;
 import org.bukkit.World;
@@ -207,6 +209,7 @@ public final class BukkitCraftEngine extends CraftEngine {
     @Override
     protected List<Dependency> platformDependencies() {
         return List.of(
+                Dependencies.CRAFT_ENGINE_BUKKIT_PROXY,
                 Dependencies.BSTATS_BUKKIT,
                 Dependencies.CLOUD_BUKKIT, Dependencies.CLOUD_PAPER, Dependencies.CLOUD_BRIGADIER, Dependencies.CLOUD_MINECRAFT_EXTRAS
         );
@@ -279,6 +282,11 @@ public final class BukkitCraftEngine extends CraftEngine {
                 }
             }, 1, 1);
         }
+    }
+
+    @Override
+    public void setupProxy() {
+        BukkitProxy.init(VersionHelper.MINECRAFT_VERSION.version());
     }
 
     @Override

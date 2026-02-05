@@ -5,7 +5,8 @@ import net.momirealms.craftengine.core.plugin.dependency.relocation.Relocation;
 import java.util.Collections;
 import java.util.List;
 
-public class Dependencies {
+public final class Dependencies {
+    private Dependencies() {}
 
     public static final Dependency ASM = new Dependency(
             "asm",
@@ -26,6 +27,15 @@ public class Dependencies {
             "me.lucko",
             "jar-relocator",
             Collections.emptyList()
+    );
+
+    public static final Dependency CRAFT_ENGINE_BUKKIT_PROXY = new Dependency(
+            "craft-engine-bukkit-proxy",
+            "net.momirealms",
+            "craft-engine-bukkit-proxy",
+            Collections.emptyList(),
+            true,
+            "proxy.jarinjar"
     );
 
     public static final Dependency GEANTY_REF = new Dependency(

@@ -14,71 +14,66 @@ public class Dependency {
     private final String groupId;
     private final String rawArtifactId;
     private final List<Relocation> relocations;
-    private final Predicate<Path> verifier;
     private final boolean shared;
+    private final String jarInJarPath;
 
     public Dependency(String id, String groupId, String artifactId, List<Relocation> relocations) {
         this(id, groupId, artifactId, relocations, false);
     }
 
     public Dependency(String id, String groupId, String artifactId, List<Relocation> relocations, boolean shared) {
+        this(id, groupId, artifactId, relocations, shared, null);
+    }
+
+    public Dependency(String id, String groupId, String artifactId, List<Relocation> relocations, boolean shared, String jarInJarPath) {
         this.id = id;
         this.groupId = groupId;
         this.rawArtifactId = artifactId;
         this.relocations = relocations;
-        this.verifier = (p) -> true;
         this.shared = shared;
-    }
-
-    public Dependency(String id, String groupId, String artifactId, List<Relocation> relocations, Predicate<Path> verifier) {
-        this(id, groupId, artifactId, relocations, verifier, false);
-    }
-
-    public Dependency(String id, String groupId, String artifactId, List<Relocation> relocations, Predicate<Path> verifier, boolean shared) {
-        this.id = id;
-        this.groupId = groupId;
-        this.rawArtifactId = artifactId;
-        this.relocations = relocations;
-        this.verifier = verifier;
-        this.shared = shared;
+        this.jarInJarPath = jarInJarPath;
     }
 
     public boolean shared() {
-        return shared;
-    }
-
-    public boolean verify(Path remapped) {
-        return this.verifier.test(remapped);
+        return this.shared;
     }
 
     public String id() {
-        return id;
+        return this.id;
     }
 
     public String groupId() {
-        return groupId;
+        return this.groupId;
     }
 
     public String rawArtifactId() {
-        return rawArtifactId;
+        return this.rawArtifactId;
     }
 
     public List<Relocation> relocations() {
-        return relocations;
+        return this.relocations;
     }
 
     public String toLocalPath() {
-        return rewriteEscaping(groupId).replace(".", "/") + "/" + this.rawArtifactId + "/" + getVersion();
+        return rewriteEscaping(this.groupId).replace(".", "/") + "/" + this.rawArtifactId + "/" + getVersion();
+    }
+
+    public boolean hasJarInJarPath() {
+        return this.jarInJarPath != null;
+    }
+
+    public String jarInJarPath() {
+        return jarInJarPath;
     }
 
     private static final String MAVEN_FORMAT = "%s/%s/%s/%s-%s.jar";
 
     public String mavenPath() {
         return String.format(MAVEN_FORMAT,
-                rewriteEscaping(groupId).replace(".", "/"),
-                rewriteEscaping(rawArtifactId),
+                rewriteEscaping(this.groupId).replace(".", "/"),
+                rewriteEscaping(this.rawArtifactId),
                 getVersion(),
-                rewriteEscaping(rawArtifactId),
+                rewriteEscaping(this.rawArtifactId),
                 getVersion()
         );
     }
@@ -92,7 +87,7 @@ public class Dependency {
     }
 
     public String getVersion() {
-        return PluginProperties.getValue(id);
+        return PluginProperties.getValue(this.id);
     }
 
     public static String rewriteEscaping(String s) {
@@ -103,12 +98,12 @@ public class Dependency {
     public final boolean equals(Object o) {
         if (this == o) return true;
         if (!(o instanceof Dependency that)) return false;
-        return Objects.equals(id, that.id);
+        return Objects.equals(this.id, that.id);
     }
 
     @Override
     public int hashCode() {
-        return id.hashCode();
+        return this.id.hashCode();
     }
 
     @Override
