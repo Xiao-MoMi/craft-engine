@@ -28,6 +28,7 @@ public final class DataComponentTypes {
     public static final Object CUSTOM_DATA = byId(DataComponentKeys.CUSTOM_DATA);
     public static final Object PROFILE = byId(DataComponentKeys.PROFILE);
     public static final Object DYED_COLOR = byId(DataComponentKeys.DYED_COLOR);
+    public static final Object POTION_CONTENTS = byId(DataComponentKeys.POTION_CONTENTS);
     public static final Object DEATH_PROTECTION = byId(DataComponentKeys.DEATH_PROTECTION);
     public static final Object FIREWORK_EXPLOSION = byId(DataComponentKeys.FIREWORK_EXPLOSION);
     public static final Object BUNDLE_CONTENTS = byId(DataComponentKeys.BUNDLE_CONTENTS);
