@@ -14,6 +14,10 @@ import net.momirealms.craftengine.core.util.Direction;
 import net.momirealms.craftengine.core.util.Key;
 import net.momirealms.craftengine.core.util.ResourceConfigUtils;
 import net.momirealms.craftengine.core.world.BlockPos;
+import net.momirealms.craftengine.proxy.minecraft.core.DirectionProxy;
+import net.momirealms.craftengine.proxy.minecraft.core.MutableBlockPosProxy;
+import net.momirealms.craftengine.proxy.minecraft.world.level.block.LeavesBlockProxy;
+import net.momirealms.craftengine.proxy.minecraft.world.level.block.state.StateHolderProxy;
 import org.bukkit.Bukkit;
 import org.bukkit.World;
 import org.bukkit.event.block.LeavesDecayEvent;
@@ -128,11 +132,11 @@ public class LeavesBlockBehavior extends BukkitBlockBehavior {
 
     private ImmutableBlockState updateDistance(ImmutableBlockState state, Object world, Object blockPos) throws ReflectiveOperationException {
         int i = this.maxDistance;
-        Object mutablePos = CoreReflections.constructor$MutableBlockPos.newInstance();
+        Object mutablePos = MutableBlockPosProxy.INSTANCE.newInstance();
         int j = Direction.values().length;
         for (int k = 0; k < j; ++k) {
-            Object direction = CoreReflections.instance$Direction$values[k];
-            CoreReflections.method$MutableBlockPos$setWithOffset.invoke(mutablePos, blockPos, direction);
+            Object direction = DirectionProxy.VALUES[k];
+            MutableBlockPosProxy.INSTANCE.setWithOffset(mutablePos, blockPos, direction);
             Object blockState = FastNMS.INSTANCE.method$BlockGetter$getBlockState(world, mutablePos);
             i = Math.min(i, getDistanceAt(blockState) + 1);
             if (i == 1) {
@@ -142,15 +146,15 @@ public class LeavesBlockBehavior extends BukkitBlockBehavior {
         return state.with(this.distanceProperty, i);
     }
 
-    private int getDistanceAt(Object blockState) throws ReflectiveOperationException {
+    private int getDistanceAt(Object blockState) {
         boolean isLog = FastNMS.INSTANCE.method$BlockStateBase$is(blockState, LOG_TAG);
         if (isLog) return 0;
         Optional<ImmutableBlockState> optionalCustomState = BlockStateUtils.getOptionalCustomBlockState(blockState);
         if (optionalCustomState.isEmpty()) {
-            Object distanceProperty = CoreReflections.field$LeavesBlock$DISTANCE.get(null);
-            boolean hasDistanceProperty = (boolean) CoreReflections.method$StateHolder$hasProperty.invoke(blockState, distanceProperty);
+            Object distanceProperty = LeavesBlockProxy.INSTANCE.getDistanceProperty();
+            boolean hasDistanceProperty = StateHolderProxy.INSTANCE.hasProperty(blockState, distanceProperty);
             if (!hasDistanceProperty) return this.maxDistance;
-            return (int) CoreReflections.method$StateHolder$getValue.invoke(blockState, distanceProperty);
+            return StateHolderProxy.INSTANCE.getValue(blockState, distanceProperty);
         } else {
             ImmutableBlockState anotherBlockState = optionalCustomState.get();
             Optional<LeavesBlockBehavior> optionalAnotherBehavior = anotherBlockState.behavior().getAs(LeavesBlockBehavior.class);

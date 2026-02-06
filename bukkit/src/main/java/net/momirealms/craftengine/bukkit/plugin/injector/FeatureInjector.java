@@ -1,25 +1,26 @@
 package net.momirealms.craftengine.bukkit.plugin.injector;
 
 import net.momirealms.craftengine.bukkit.nms.FastNMS;
-import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.CoreReflections;
 import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.MBuiltInRegistries;
 import net.momirealms.craftengine.bukkit.util.KeyUtils;
 import net.momirealms.craftengine.core.util.Key;
+import net.momirealms.craftengine.proxy.minecraft.core.HolderProxy;
+import net.momirealms.craftengine.proxy.minecraft.core.MappedRegistryProxy;
+import net.momirealms.craftengine.proxy.minecraft.core.RegistryProxy;
 
 import java.util.Set;
 
 public final class FeatureInjector {
-
     private FeatureInjector() {}
 
-    public static void init() throws ReflectiveOperationException {
+    public static void init() {
         Object registry = MBuiltInRegistries.FEATURE;
-        CoreReflections.field$MappedRegistry$frozen.set(registry, false);
+        MappedRegistryProxy.INSTANCE.setFrozen(registry, false);
         Object resourceLocation = KeyUtils.toIdentifier(Key.ce("simple_block"));
         Object type = FastNMS.INSTANCE.getCraftEngineCustomSimpleBlockFeature();
-        Object holder = CoreReflections.method$Registry$registerForHolder.invoke(null, registry, resourceLocation, type);
-        CoreReflections.method$Holder$Reference$bindValue.invoke(holder, type);
-        CoreReflections.field$Holder$Reference$tags.set(holder, Set.of());
-        CoreReflections.field$MappedRegistry$frozen.set(registry, true);
+        Object holder = RegistryProxy.INSTANCE.registerForHolder$1(registry, resourceLocation, type);
+        HolderProxy.ReferenceProxy.INSTANCE.bindValue(holder, type);
+        HolderProxy.ReferenceProxy.INSTANCE.setTags(holder, Set.of());
+        MappedRegistryProxy.INSTANCE.setFrozen(registry, true);
     }
 }

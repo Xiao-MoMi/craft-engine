@@ -1,7 +1,6 @@
 package net.momirealms.craftengine.bukkit.block.behavior;
 
 import net.momirealms.craftengine.bukkit.nms.FastNMS;
-import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.CoreReflections;
 import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.MFluids;
 import net.momirealms.craftengine.bukkit.util.BlockStateUtils;
 import net.momirealms.craftengine.bukkit.util.LocationUtils;
@@ -19,6 +18,7 @@ import net.momirealms.craftengine.core.item.behavior.ItemBehavior;
 import net.momirealms.craftengine.core.util.*;
 import net.momirealms.craftengine.core.world.BlockPos;
 import net.momirealms.craftengine.core.world.context.BlockPlaceContext;
+import net.momirealms.craftengine.proxy.minecraft.world.level.pathfinder.PathComputationTypeProxy;
 import org.bukkit.inventory.ItemStack;
 
 import java.util.Map;
@@ -107,7 +107,7 @@ public class SlabBlockBehavior extends BukkitBlockBehavior implements IsPathFind
         Object blockState = args[0];
         Optional<ImmutableBlockState> optionalCustomState = BlockStateUtils.getOptionalCustomBlockState(blockState);
         if (optionalCustomState.isEmpty()) return false;
-        if (type == CoreReflections.instance$PathComputationType$WATER) {
+        if (type == PathComputationTypeProxy.WATER) {
             return super.waterloggedProperty != null && optionalCustomState.get().get(this.typeProperty) != SlabType.DOUBLE && optionalCustomState.get().get(super.waterloggedProperty);
         }
         return false;

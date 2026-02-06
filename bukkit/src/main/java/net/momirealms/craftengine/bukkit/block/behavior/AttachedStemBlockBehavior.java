@@ -2,7 +2,6 @@ package net.momirealms.craftengine.bukkit.block.behavior;
 
 import net.momirealms.craftengine.bukkit.block.BukkitBlockManager;
 import net.momirealms.craftengine.bukkit.nms.FastNMS;
-import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.CoreReflections;
 import net.momirealms.craftengine.bukkit.util.BlockStateUtils;
 import net.momirealms.craftengine.bukkit.util.DirectionUtils;
 import net.momirealms.craftengine.core.block.CustomBlock;
@@ -15,6 +14,7 @@ import net.momirealms.craftengine.core.util.HorizontalDirection;
 import net.momirealms.craftengine.core.util.Key;
 import net.momirealms.craftengine.core.util.ResourceConfigUtils;
 import net.momirealms.craftengine.core.util.VersionHelper;
+import net.momirealms.craftengine.proxy.minecraft.world.level.pathfinder.PathComputationTypeProxy;
 
 import java.util.Map;
 import java.util.Optional;
@@ -38,7 +38,7 @@ public class AttachedStemBlockBehavior extends BukkitBlockBehavior implements Is
 
     @Override
     public boolean isPathFindable(Object thisBlock, Object[] args, Callable<Object> superMethod) throws Exception {
-        return (VersionHelper.isOrAbove1_20_5() ? args[1] : args[3]).equals(CoreReflections.instance$PathComputationType$AIR)
+        return (VersionHelper.isOrAbove1_20_5() ? args[1] : args[3]).equals(PathComputationTypeProxy.AIR)
                 && !FastNMS.INSTANCE.field$BlockBehavior$hasCollision(thisBlock) || (boolean) superMethod.call();
     }
 

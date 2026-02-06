@@ -4,7 +4,6 @@ import com.google.common.cache.Cache;
 import it.unimi.dsi.fastutil.ints.IntList;
 import net.momirealms.craftengine.bukkit.block.entity.ItemFrameBlockEntity;
 import net.momirealms.craftengine.bukkit.nms.FastNMS;
-import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.CoreReflections;
 import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.MEntityTypes;
 import net.momirealms.craftengine.core.block.entity.render.DynamicBlockEntityRenderer;
 import net.momirealms.craftengine.core.entity.player.Player;
@@ -13,6 +12,8 @@ import net.momirealms.craftengine.core.util.Direction;
 import net.momirealms.craftengine.core.world.BlockPos;
 import net.momirealms.craftengine.core.world.CEWorld;
 import net.momirealms.craftengine.core.world.Vec3i;
+import net.momirealms.craftengine.proxy.minecraft.world.entity.EntityProxy;
+import net.momirealms.craftengine.proxy.minecraft.world.phys.Vec3Proxy;
 import org.joml.Vector3f;
 
 import java.util.UUID;
@@ -24,7 +25,7 @@ public class DynamicItemFrameRenderer implements DynamicBlockEntityRenderer {
     public final int entityId;
 
     public DynamicItemFrameRenderer(ItemFrameBlockEntity blockEntity, BlockPos pos) {
-        this.entityId = CoreReflections.instance$Entity$ENTITY_COUNTER.incrementAndGet();
+        this.entityId = EntityProxy.ENTITY_COUNTER.incrementAndGet();
         this.blockEntity = blockEntity;
         Vector3f position = this.blockEntity.behavior.position;
         Direction direction = blockEntity.blockState().get(blockEntity.behavior.directionProperty);
@@ -43,7 +44,7 @@ public class DynamicItemFrameRenderer implements DynamicBlockEntityRenderer {
         this.cachedSpawnPacket = FastNMS.INSTANCE.constructor$ClientboundAddEntityPacket(
                 this.entityId, UUID.randomUUID(), worldX, worldY, worldZ, 0, 0,
                 this.blockEntity.behavior.glow ? MEntityTypes.GLOW_ITEM_FRAME : MEntityTypes.ITEM_FRAME,
-                direction.ordinal(), CoreReflections.instance$Vec3$Zero, 0
+                direction.ordinal(), Vec3Proxy.ZERO, 0
         );
         this.cachedDespawnPacket = FastNMS.INSTANCE.constructor$ClientboundRemoveEntitiesPacket(IntList.of(entityId));
     }

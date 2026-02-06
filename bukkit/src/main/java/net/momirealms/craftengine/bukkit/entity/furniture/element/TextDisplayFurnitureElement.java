@@ -2,13 +2,14 @@ package net.momirealms.craftengine.bukkit.entity.furniture.element;
 
 import it.unimi.dsi.fastutil.ints.IntArrayList;
 import net.momirealms.craftengine.bukkit.nms.FastNMS;
-import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.CoreReflections;
 import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.MEntityTypes;
 import net.momirealms.craftengine.core.entity.furniture.Furniture;
 import net.momirealms.craftengine.core.entity.player.Player;
 import net.momirealms.craftengine.core.util.MiscUtils;
 import net.momirealms.craftengine.core.world.Vec3d;
 import net.momirealms.craftengine.core.world.WorldPosition;
+import net.momirealms.craftengine.proxy.minecraft.world.entity.EntityProxy;
+import net.momirealms.craftengine.proxy.minecraft.world.phys.Vec3Proxy;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
@@ -27,7 +28,7 @@ public final class TextDisplayFurnitureElement extends AbstractFurnitureElement 
         super(config.predicate, config.hasCondition);
         this.furniture = furniture;
         this.config = config;
-        this.entityId = CoreReflections.instance$Entity$ENTITY_COUNTER.incrementAndGet();
+        this.entityId = EntityProxy.ENTITY_COUNTER.incrementAndGet();
         WorldPosition furniturePos = furniture.position();
         Vec3d position = Furniture.getRelativePosition(furniturePos, config.position);
         this.position = new WorldPosition(furniturePos.world, position.x, position.y, position.z, furniturePos.xRot, furniturePos.yRot);
@@ -45,7 +46,7 @@ public final class TextDisplayFurnitureElement extends AbstractFurnitureElement 
                 FastNMS.INSTANCE.constructor$ClientboundAddEntityPacket(
                         this.entityId, this.uuid,
                         this.position.x, this.position.y, this.position.z, 0, this.position.yRot,
-                        MEntityTypes.TEXT_DISPLAY, 0, CoreReflections.instance$Vec3$Zero, 0
+                        MEntityTypes.TEXT_DISPLAY, 0, Vec3Proxy.ZERO, 0
                 ),
                 FastNMS.INSTANCE.constructor$ClientboundSetEntityDataPacket(this.entityId, this.config.metadata.apply(player))
         )), false);

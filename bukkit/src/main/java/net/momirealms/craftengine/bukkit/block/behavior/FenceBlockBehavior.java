@@ -3,11 +3,11 @@ package net.momirealms.craftengine.bukkit.block.behavior;
 import net.momirealms.antigrieflib.Flag;
 import net.momirealms.craftengine.bukkit.nms.FastNMS;
 import net.momirealms.craftengine.bukkit.plugin.BukkitCraftEngine;
-import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.CoreReflections;
-import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.MFluids;
-import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.MRegistries;
-import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.MTagKeys;
-import net.momirealms.craftengine.bukkit.util.*;
+import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.*;
+import net.momirealms.craftengine.bukkit.util.BlockStateUtils;
+import net.momirealms.craftengine.bukkit.util.DirectionUtils;
+import net.momirealms.craftengine.bukkit.util.KeyUtils;
+import net.momirealms.craftengine.bukkit.util.LocationUtils;
 import net.momirealms.craftengine.core.block.BlockStateWrapper;
 import net.momirealms.craftengine.core.block.CustomBlock;
 import net.momirealms.craftengine.core.block.ImmutableBlockState;
@@ -26,6 +26,8 @@ import net.momirealms.craftengine.core.world.BlockPos;
 import net.momirealms.craftengine.core.world.World;
 import net.momirealms.craftengine.core.world.context.BlockPlaceContext;
 import net.momirealms.craftengine.core.world.context.UseOnContext;
+import net.momirealms.craftengine.proxy.minecraft.core.DirectionProxy;
+import net.momirealms.craftengine.proxy.minecraft.world.level.block.FenceGateBlockProxy;
 import org.bukkit.Location;
 
 import java.util.Locale;
@@ -65,10 +67,21 @@ public class FenceBlockBehavior extends BukkitBlockBehavior implements IsPathFin
 
     public boolean connectsTo(BlockStateWrapper state, boolean isSideSolid, HorizontalDirection direction) {
         boolean isSameFence = this.isSameFence(state);
-        boolean flag = CoreReflections.clazz$FenceGateBlock.isInstance(BlockStateUtils.getBlockOwner(state.literalObject()))
+        boolean flag = FenceGateBlockProxy.CLASS.isInstance(BlockStateUtils.getBlockOwner(state.literalObject()))
                 ? FastNMS.INSTANCE.method$FenceGateBlock$connectsToDirection(state.literalObject(), DirectionUtils.toNMSDirection(direction.toDirection()))
                 : FenceGateBlockBehavior.connectsToDirection(state, direction);
-        return !BlockUtils.isExceptionForConnection(state) && isSideSolid || isSameFence || flag;
+        return !isExceptionForConnection(state) && isSideSolid || isSameFence || flag;
+    }
+
+    public static boolean isExceptionForConnection(BlockStateWrapper state) {
+        Object blockState = state.literalObject();
+        return CoreReflections.clazz$LeavesBlock.isInstance(BlockStateUtils.getBlockOwner(blockState))
+                || FastNMS.INSTANCE.method$BlockStateBase$isBlock(blockState, MBlocks.BARRIER)
+                || FastNMS.INSTANCE.method$BlockStateBase$isBlock(blockState, MBlocks.CARVED_PUMPKIN)
+                || FastNMS.INSTANCE.method$BlockStateBase$isBlock(blockState, MBlocks.JACK_O_LANTERN)
+                || FastNMS.INSTANCE.method$BlockStateBase$isBlock(blockState, MBlocks.MELON)
+                || FastNMS.INSTANCE.method$BlockStateBase$isBlock(blockState, MBlocks.PUMPKIN)
+                || FastNMS.INSTANCE.method$BlockStateBase$is(blockState, MTagKeys.Block$SHULKER_BOXES);
     }
 
     private boolean isSameFence(BlockStateWrapper state) {
@@ -114,10 +127,10 @@ public class FenceBlockBehavior extends BukkitBlockBehavior implements IsPathFin
             state = state.with(waterlogged, FastNMS.INSTANCE.method$FluidState$getType(fluidState) == MFluids.WATER);
         }
         return state
-                .with(this.northProperty, this.connectsTo(blockState, FastNMS.INSTANCE.method$BlockStateBase$isFaceSturdy(blockState.literalObject(), level.serverWorld(), LocationUtils.toBlockPos(blockPos), CoreReflections.instance$Direction$SOUTH, CoreReflections.instance$SupportType$FULL), HorizontalDirection.SOUTH))
-                .with(this.eastProperty, this.connectsTo(blockState1, FastNMS.INSTANCE.method$BlockStateBase$isFaceSturdy(blockState1.literalObject(), level.serverWorld(), LocationUtils.toBlockPos(blockPos1), CoreReflections.instance$Direction$WEST, CoreReflections.instance$SupportType$FULL), HorizontalDirection.WEST))
-                .with(this.southProperty, this.connectsTo(blockState2, FastNMS.INSTANCE.method$BlockStateBase$isFaceSturdy(blockState2.literalObject(), level.serverWorld(), LocationUtils.toBlockPos(blockPos2), CoreReflections.instance$Direction$NORTH, CoreReflections.instance$SupportType$FULL), HorizontalDirection.NORTH))
-                .with(this.westProperty, this.connectsTo(blockState3, FastNMS.INSTANCE.method$BlockStateBase$isFaceSturdy(blockState3.literalObject(), level.serverWorld(), LocationUtils.toBlockPos(blockPos3), CoreReflections.instance$Direction$EAST, CoreReflections.instance$SupportType$FULL), HorizontalDirection.EAST));
+                .with(this.northProperty, this.connectsTo(blockState, FastNMS.INSTANCE.method$BlockStateBase$isFaceSturdy(blockState.literalObject(), level.serverWorld(), LocationUtils.toBlockPos(blockPos), DirectionProxy.SOUTH, CoreReflections.instance$SupportType$FULL), HorizontalDirection.SOUTH))
+                .with(this.eastProperty, this.connectsTo(blockState1, FastNMS.INSTANCE.method$BlockStateBase$isFaceSturdy(blockState1.literalObject(), level.serverWorld(), LocationUtils.toBlockPos(blockPos1), DirectionProxy.WEST, CoreReflections.instance$SupportType$FULL), HorizontalDirection.WEST))
+                .with(this.southProperty, this.connectsTo(blockState2, FastNMS.INSTANCE.method$BlockStateBase$isFaceSturdy(blockState2.literalObject(), level.serverWorld(), LocationUtils.toBlockPos(blockPos2), DirectionProxy.NORTH, CoreReflections.instance$SupportType$FULL), HorizontalDirection.NORTH))
+                .with(this.westProperty, this.connectsTo(blockState3, FastNMS.INSTANCE.method$BlockStateBase$isFaceSturdy(blockState3.literalObject(), level.serverWorld(), LocationUtils.toBlockPos(blockPos3), DirectionProxy.EAST, CoreReflections.instance$SupportType$FULL), HorizontalDirection.EAST));
     }
 
     @Override

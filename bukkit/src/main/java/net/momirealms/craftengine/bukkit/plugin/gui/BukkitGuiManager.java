@@ -6,7 +6,6 @@ import net.momirealms.craftengine.bukkit.block.entity.BlockEntityHolder;
 import net.momirealms.craftengine.bukkit.block.entity.SimpleStorageBlockEntity;
 import net.momirealms.craftengine.bukkit.nms.FastNMS;
 import net.momirealms.craftengine.bukkit.plugin.BukkitCraftEngine;
-import net.momirealms.craftengine.bukkit.plugin.reflection.bukkit.CraftBukkitReflections;
 import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.CoreReflections;
 import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.NetworkReflections;
 import net.momirealms.craftengine.bukkit.util.ComponentUtils;
@@ -17,6 +16,8 @@ import net.momirealms.craftengine.core.item.trade.MerchantOffer;
 import net.momirealms.craftengine.core.plugin.CraftEngine;
 import net.momirealms.craftengine.core.plugin.gui.*;
 import net.momirealms.craftengine.core.util.VersionHelper;
+import net.momirealms.craftengine.proxy.bukkit.craftbukkit.inventory.CraftMerchantCustomProxy;
+import net.momirealms.craftengine.proxy.bukkit.craftbukkit.inventory.CraftMerchantProxy;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.EntityType;
 import org.bukkit.entity.ExperienceOrb;
@@ -176,12 +177,8 @@ public class BukkitGuiManager implements GuiManager, Listener {
         }
         merchant.setRecipes(recipes);
         if (title != null) {
-            try {
-                Object minecraftMerchant = CraftBukkitReflections.method$CraftMerchant$getMerchant.invoke(merchant);
-                CraftBukkitReflections.field$MinecraftMerchant$title.set(minecraftMerchant, ComponentUtils.adventureToMinecraft(title));
-            } catch (ReflectiveOperationException e) {
-                this.plugin.logger().warn("Failed to update merchant title", e);
-            }
+            Object minecraftMerchant = CraftMerchantProxy.INSTANCE.getMerchant(merchant);
+            CraftMerchantCustomProxy.MinecraftMerchantProxy.INSTANCE.setTitle(minecraftMerchant, ComponentUtils.adventureToMinecraft(title));
         }
         LegacyInventoryUtils.openMerchant((org.bukkit.entity.Player) player.platformPlayer(), merchant);
     }

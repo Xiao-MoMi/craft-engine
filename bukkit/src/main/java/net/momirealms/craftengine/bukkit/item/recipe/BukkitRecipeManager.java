@@ -10,7 +10,6 @@ import net.momirealms.craftengine.bukkit.nms.FastNMS;
 import net.momirealms.craftengine.bukkit.plugin.BukkitCraftEngine;
 import net.momirealms.craftengine.bukkit.plugin.injector.RecipeInjector;
 import net.momirealms.craftengine.bukkit.plugin.reflection.ReflectionInitException;
-import net.momirealms.craftengine.bukkit.plugin.reflection.bukkit.CraftBukkitReflections;
 import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.CoreReflections;
 import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.MRegistries;
 import net.momirealms.craftengine.bukkit.util.ItemStackUtils;
@@ -23,8 +22,15 @@ import net.momirealms.craftengine.core.item.recipe.*;
 import net.momirealms.craftengine.core.plugin.config.Config;
 import net.momirealms.craftengine.core.registry.BuiltInRegistries;
 import net.momirealms.craftengine.core.util.*;
-import net.momirealms.craftengine.proxy.resource.FileToIdConverterProxy;
-import net.momirealms.craftengine.proxy.resource.ResourceManagerProxy;
+import net.momirealms.craftengine.proxy.bukkit.craftbukkit.CraftServerProxy;
+import net.momirealms.craftengine.proxy.minecraft.resources.FileToIdConverterProxy;
+import net.momirealms.craftengine.proxy.minecraft.server.MinecraftServerProxy;
+import net.momirealms.craftengine.proxy.minecraft.server.packs.PackTypeProxy;
+import net.momirealms.craftengine.proxy.minecraft.server.packs.repository.PackProxy;
+import net.momirealms.craftengine.proxy.minecraft.server.packs.repository.PackRepositoryProxy;
+import net.momirealms.craftengine.proxy.minecraft.server.packs.resources.MultiPackResourceManagerProxy;
+import net.momirealms.craftengine.proxy.minecraft.server.packs.resources.ResourceProxy;
+import net.momirealms.craftengine.proxy.minecraft.server.players.PlayerListProxy;
 import org.bukkit.Bukkit;
 import org.bukkit.NamespacedKey;
 import org.bukkit.event.HandlerList;
@@ -314,23 +320,21 @@ public class BukkitRecipeManager extends AbstractRecipeManager<ItemStack> {
         }
     }
 
-    @SuppressWarnings("unchecked")
-    private Map<Key, JsonObject> scanResources() throws Throwable {
+    private Map<Key, JsonObject> scanResources() {
         Object fileToIdConverter = FileToIdConverterProxy.INSTANCE.json(VersionHelper.isOrAbove1_21() ? "recipe" : "recipes");
         Object minecraftServer = FastNMS.INSTANCE.method$MinecraftServer$getServer();
-        Object packRepository = CoreReflections.methodHandle$MinecraftServer$getPackRepository.invokeExact(minecraftServer);
-        List<Object> selected = (List<Object>) CoreReflections.methodHandle$PackRepository$selectedGetter.invokeExact(packRepository);
+        Object packRepository = MinecraftServerProxy.INSTANCE.getPackRepository(minecraftServer);
+        List<Object> selected = PackRepositoryProxy.INSTANCE.getSelected(packRepository);
         List<Object> packResources = new ArrayList<>();
         for (Object pack : selected) {
-            packResources.add(CoreReflections.methodHandle$Pack$open.invokeExact(pack));
+            packResources.add(PackProxy.INSTANCE.open(pack));
         }
         Map<Key, JsonObject> recipes = new HashMap<>();
-
-        try (AutoCloseable resourceManager = (AutoCloseable) CoreReflections.methodHandle$MultiPackResourceManagerConstructor.invokeExact(CoreReflections.instance$PackType$SERVER_DATA, packResources)) {
+        try (AutoCloseable resourceManager = (AutoCloseable) MultiPackResourceManagerProxy.INSTANCE.newInstance(PackTypeProxy.SERVER_DATA, packResources)) {
             Map<Object, Object> scannedResources = FileToIdConverterProxy.INSTANCE.listMatchingResources(fileToIdConverter, resourceManager);
             for (Map.Entry<Object, Object> entry : scannedResources.entrySet()) {
                 Key id = extractKeyFromResourceLocation(entry.getKey().toString());
-                try (Reader reader = (Reader) CoreReflections.methodHandle$Resource$openAsReader.invokeExact(entry.getValue())) {
+                try (Reader reader = ResourceProxy.INSTANCE.openAsReader(entry.getValue())) {
                     JsonObject jsonObject = JsonParser.parseReader(reader).getAsJsonObject();
                     recipes.put(id, jsonObject);
                 }
@@ -398,7 +402,7 @@ public class BukkitRecipeManager extends AbstractRecipeManager<ItemStack> {
             }
 
             // send to players
-            CoreReflections.methodHandle$DedicatedPlayerList$reloadRecipes.invokeExact(CraftBukkitReflections.methodHandle$CraftServer$playerListGetter.invokeExact(Bukkit.getServer()));
+            PlayerListProxy.INSTANCE.reloadRecipeData(CraftServerProxy.INSTANCE.getPlayerList(Bukkit.getServer()));
         } catch (Throwable e) {
             this.plugin.logger().warn("Failed to run delayed recipe tasks", e);
         }

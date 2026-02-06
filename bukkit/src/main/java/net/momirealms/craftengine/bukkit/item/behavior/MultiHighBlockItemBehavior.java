@@ -19,6 +19,8 @@ import net.momirealms.craftengine.core.util.Direction;
 import net.momirealms.craftengine.core.util.Key;
 import net.momirealms.craftengine.core.util.VersionHelper;
 import net.momirealms.craftengine.core.world.context.BlockPlaceContext;
+import net.momirealms.craftengine.proxy.minecraft.server.level.ServerLevelProxy;
+import net.momirealms.craftengine.proxy.minecraft.world.phys.shape.CollisionContextProxy;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.World;
@@ -55,29 +57,24 @@ public final class MultiHighBlockItemBehavior extends BlockItemBehavior {
         Object blockState = state.customBlockState().literalObject();
         for (int i = property.min + 1; i <= property.max; i++) {
             Object blockPos = LocationUtils.toBlockPos(context.getClickedPos().relative(Direction.UP, i));
-            try {
-                Object voxelShape;
-                if (VersionHelper.isOrAbove1_21_6()) {
-                    voxelShape = CoreReflections.method$CollisionContext$placementContext.invoke(null, player);
-                } else if (player != null) {
-                    voxelShape = CoreReflections.method$CollisionContext$of.invoke(null, player);
-                } else {
-                    voxelShape = CoreReflections.instance$CollisionContext$empty;
-                }
-                Object world = FastNMS.INSTANCE.field$CraftWorld$ServerLevel((World) context.getLevel().platformWorld());
-                boolean defaultReturn = (boolean) CoreReflections.method$ServerLevel$checkEntityCollision.invoke(world, blockState, player, voxelShape, blockPos, true); // paper only
-                Block block = FastNMS.INSTANCE.method$CraftBlock$at(world, blockPos);
-                BlockData blockData = FastNMS.INSTANCE.method$CraftBlockData$fromData(blockState);
-                BlockCanBuildEvent canBuildEvent = new BlockCanBuildEvent(
-                        block, cePlayer != null ? (org.bukkit.entity.Player) cePlayer.platformPlayer() : null, blockData, defaultReturn,
-                        context.getHand() == InteractionHand.MAIN_HAND ? EquipmentSlot.HAND : EquipmentSlot.OFF_HAND
-                );
-                Bukkit.getPluginManager().callEvent(canBuildEvent);
-                if (!canBuildEvent.isBuildable()) {
-                    return false;
-                }
-            } catch (ReflectiveOperationException e) {
-                CraftEngine.instance().logger().warn("Failed to check canPlace", e);
+            Object voxelShape;
+            if (VersionHelper.isOrAbove1_21_6()) {
+                voxelShape = CollisionContextProxy.INSTANCE.placementContext(player);
+            } else if (player != null) {
+                voxelShape = CollisionContextProxy.INSTANCE.of(player);
+            } else {
+                voxelShape = CollisionContextProxy.INSTANCE.empty();
+            }
+            Object world = FastNMS.INSTANCE.field$CraftWorld$ServerLevel((World) context.getLevel().platformWorld());
+            boolean defaultReturn = ServerLevelProxy.INSTANCE.checkEntityCollision(world, blockState, player, voxelShape, blockPos, true); // paper only
+            Block block = FastNMS.INSTANCE.method$CraftBlock$at(world, blockPos);
+            BlockData blockData = FastNMS.INSTANCE.method$CraftBlockData$fromData(blockState);
+            BlockCanBuildEvent canBuildEvent = new BlockCanBuildEvent(
+                    block, cePlayer != null ? (org.bukkit.entity.Player) cePlayer.platformPlayer() : null, blockData, defaultReturn,
+                    context.getHand() == InteractionHand.MAIN_HAND ? EquipmentSlot.HAND : EquipmentSlot.OFF_HAND
+            );
+            Bukkit.getPluginManager().callEvent(canBuildEvent);
+            if (!canBuildEvent.isBuildable()) {
                 return false;
             }
         }

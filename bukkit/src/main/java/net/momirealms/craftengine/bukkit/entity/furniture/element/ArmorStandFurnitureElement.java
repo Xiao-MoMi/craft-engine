@@ -3,7 +3,6 @@ package net.momirealms.craftengine.bukkit.entity.furniture.element;
 import com.mojang.datafixers.util.Pair;
 import it.unimi.dsi.fastutil.ints.IntList;
 import net.momirealms.craftengine.bukkit.nms.FastNMS;
-import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.CoreReflections;
 import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.MAttributeHolders;
 import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.MEntityTypes;
 import net.momirealms.craftengine.bukkit.world.score.BukkitTeamManager;
@@ -12,6 +11,9 @@ import net.momirealms.craftengine.core.entity.player.Player;
 import net.momirealms.craftengine.core.util.VersionHelper;
 import net.momirealms.craftengine.core.world.Vec3d;
 import net.momirealms.craftengine.core.world.WorldPosition;
+import net.momirealms.craftengine.proxy.minecraft.world.entity.EntityProxy;
+import net.momirealms.craftengine.proxy.minecraft.world.entity.EquipmentSlotProxy;
+import net.momirealms.craftengine.proxy.minecraft.world.phys.Vec3Proxy;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collections;
@@ -38,12 +40,12 @@ public final class ArmorStandFurnitureElement extends AbstractFurnitureElement {
         super(config.predicate, config.hasCondition);
         this.config = config;
         this.furniture = furniture;
-        this.entityId = CoreReflections.instance$Entity$ENTITY_COUNTER.incrementAndGet();
+        this.entityId = EntityProxy.ENTITY_COUNTER.incrementAndGet();
         WorldPosition furniturePos = furniture.position();
         Vec3d position = Furniture.getRelativePosition(furniturePos, config.position);
         this.cachedSpawnPacket = FastNMS.INSTANCE.constructor$ClientboundAddEntityPacket(
                 this.entityId, this.uuid, position.x, position.y, position.z,
-                furniturePos.xRot, furniturePos.yRot, MEntityTypes.ARMOR_STAND, 0, CoreReflections.instance$Vec3$Zero, furniturePos.yRot
+                furniturePos.xRot, furniturePos.yRot, MEntityTypes.ARMOR_STAND, 0, Vec3Proxy.ZERO, furniturePos.yRot
         );
         this.cachedDespawnPacket = FastNMS.INSTANCE.constructor$ClientboundRemoveEntitiesPacket(IntList.of(this.entityId));
         if (VersionHelper.isOrAbove1_20_5() && config.scale != 1) {
@@ -67,7 +69,7 @@ public final class ArmorStandFurnitureElement extends AbstractFurnitureElement {
     public void showInternal(Player player) {
         player.sendPackets(List.of(this.cachedSpawnPacket, FastNMS.INSTANCE.constructor$ClientboundSetEntityDataPacket(this.entityId, this.config.metadata.apply(player))), false);
         player.sendPacket(FastNMS.INSTANCE.constructor$ClientboundSetEquipmentPacket(this.entityId, List.of(
-                Pair.of(CoreReflections.instance$EquipmentSlot$HEAD, this.config.item(player, this.furniture.dataAccessor.getColorSource()).getLiteralObject())
+                Pair.of(EquipmentSlotProxy.HEAD, this.config.item(player, this.furniture.dataAccessor.getColorSource()).getLiteralObject())
         )), false);
         if (this.cachedScalePacket != null) {
             player.sendPacket(this.cachedScalePacket, false);
@@ -85,7 +87,7 @@ public final class ArmorStandFurnitureElement extends AbstractFurnitureElement {
     @Override
     public void refresh(Player player) {
         player.sendPacket(FastNMS.INSTANCE.constructor$ClientboundSetEquipmentPacket(this.entityId, List.of(
-                Pair.of(CoreReflections.instance$EquipmentSlot$HEAD, this.config.item(player, this.furniture.dataAccessor.getColorSource()).getLiteralObject())
+                Pair.of(EquipmentSlotProxy.HEAD, this.config.item(player, this.furniture.dataAccessor.getColorSource()).getLiteralObject())
         )), false);
     }
 

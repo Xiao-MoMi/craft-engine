@@ -33,115 +33,16 @@ public final class NetworkReflections {
             )
     );
 
-    public static final Field field$ClientboundSetActionBarTextPacket$text = requireNonNull(
-            ReflectionUtils.getDeclaredField(
-                    clazz$ClientboundSetActionBarTextPacket, CoreReflections.clazz$Component, 0
-            )
-    );
-
-    public static final Constructor<?> constructor$ClientboundSetActionBarTextPacket = requireNonNull(
-            ReflectionUtils.getConstructor(
-                    clazz$ClientboundSetActionBarTextPacket, CoreReflections.clazz$Component
-            )
-    );
-
     public static final Class<?> clazz$ClientboundSystemChatPacket = requireNonNull(
             ReflectionUtils.getClazz(
                     BukkitReflectionUtils.assembleMCClass("network.protocol.game.ClientboundSystemChatPacket")
             )
     );
 
-//    public static final Constructor<?> constructor$ClientboundSystemChatPacket = requireNonNull(
-//            ReflectionUtils.getConstructor(clazz$ClientboundSystemChatPacket, CoreReflections.clazz$Component, boolean.class)
-//    );
-
-    public static final Field field$ClientboundSystemChatPacket$overlay = requireNonNull(
-            ReflectionUtils.getDeclaredField(
-                    clazz$ClientboundSystemChatPacket, boolean.class, 0
-            )
-    );
-
-    public static final Field field$ClientboundSystemChatPacket$component =
-            ReflectionUtils.getDeclaredField(
-                    clazz$ClientboundSystemChatPacket, CoreReflections.clazz$Component, 0
-            );
-
-    public static final Field field$ClientboundSystemChatPacket$text =
-            ReflectionUtils.getDeclaredField(
-                    clazz$ClientboundSystemChatPacket, String.class, 0
-            );
-
     public static final Class<?> clazz$ClientboundBossEventPacket = requireNonNull(
             BukkitReflectionUtils.findReobfOrMojmapClass(
                     "network.protocol.game.PacketPlayOutBoss",
                     "network.protocol.game.ClientboundBossEventPacket"
-            )
-    );
-
-    public static final Class<?> clazz$ClientboundBossEventPacket$Operation = requireNonNull(
-            BukkitReflectionUtils.findReobfOrMojmapClass(
-                    "network.protocol.game.PacketPlayOutBoss$Action",
-                    "network.protocol.game.ClientboundBossEventPacket$Operation"
-            )
-    );
-
-    public static final Constructor<?> constructor$ClientboundBossEventPacket = requireNonNull(
-            ReflectionUtils.getDeclaredConstructor(
-                    clazz$ClientboundBossEventPacket,
-                    UUID.class, clazz$ClientboundBossEventPacket$Operation
-            )
-    );
-
-    public static final Class<?> clazz$ClientboundBossEventPacket$AddOperation = requireNonNull(
-            BukkitReflectionUtils.findReobfOrMojmapClass(
-                    "network.protocol.game.PacketPlayOutBoss$a",
-                    "network.protocol.game.ClientboundBossEventPacket$AddOperation"
-            )
-    );
-
-    public static final Field field$ClientboundBossEventPacket$AddOperation$name = requireNonNull(
-            ReflectionUtils.getDeclaredField(clazz$ClientboundBossEventPacket$AddOperation, 0)
-    );
-
-    public static final Field field$ClientboundBossEventPacket$AddOperation$progress = requireNonNull(
-            ReflectionUtils.getDeclaredField(clazz$ClientboundBossEventPacket$AddOperation, 1)
-    );
-
-    public static final Field field$ClientboundBossEventPacket$AddOperation$color = requireNonNull(
-            ReflectionUtils.getDeclaredField(clazz$ClientboundBossEventPacket$AddOperation, 2)
-    );
-
-    public static final Field field$ClientboundBossEventPacket$AddOperation$overlay = requireNonNull(
-            ReflectionUtils.getDeclaredField(clazz$ClientboundBossEventPacket$AddOperation, 3)
-    );
-
-    public static final Field field$ClientboundBossEventPacket$AddOperation$darkenScreen = requireNonNull(
-            ReflectionUtils.getDeclaredField(clazz$ClientboundBossEventPacket$AddOperation, 4)
-    );
-
-    public static final Field field$ClientboundBossEventPacket$AddOperation$playMusic = requireNonNull(
-            ReflectionUtils.getDeclaredField(clazz$ClientboundBossEventPacket$AddOperation, 5)
-    );
-
-    public static final Field field$ClientboundBossEventPacket$AddOperation$createWorldFog = requireNonNull(
-            ReflectionUtils.getDeclaredField(clazz$ClientboundBossEventPacket$AddOperation, 6)
-    );
-
-    public static Object allocateAddOperationInstance() throws InstantiationException {
-        return ReflectionUtils.UNSAFE.allocateInstance(clazz$ClientboundBossEventPacket$AddOperation);
-    }
-
-    public static final Class<?> clazz$ClientboundBossEventPacket$UpdateNameOperation = requireNonNull(
-            BukkitReflectionUtils.findReobfOrMojmapClass(
-                    "network.protocol.game.PacketPlayOutBoss$e",
-                    "network.protocol.game.ClientboundBossEventPacket$UpdateNameOperation"
-            )
-    );
-
-    public static final Constructor<?> constructor$ClientboundBossEventPacket$UpdateNameOperation = requireNonNull(
-            ReflectionUtils.getDeclaredConstructor(
-                    clazz$ClientboundBossEventPacket$UpdateNameOperation,
-                    CoreReflections.clazz$Component
             )
     );
 
@@ -153,28 +54,11 @@ public final class NetworkReflections {
             ReflectionUtils.getClazz(BukkitReflectionUtils.assembleMCClass("network.protocol.Packet"))
     );
 
-    public static final Class<?> clazz$PacketSendListener = requireNonNull(
-            ReflectionUtils.getClazz(BukkitReflectionUtils.assembleMCClass("network.PacketSendListener"))
-    );
-
-    public static final Field field$BundlePacket$packets = requireNonNull(
-            ReflectionUtils.getDeclaredField(clazz$ClientboundBundlePacket.getSuperclass(), Iterable.class, 0)
-    );
-
     public static final Class<?> clazz$ClientboundAddEntityPacket = requireNonNull(
             BukkitReflectionUtils.findReobfOrMojmapClass(
                     "network.protocol.game.PacketPlayOutSpawnEntity",
                     "network.protocol.game.ClientboundAddEntityPacket"
             )
-    );
-
-    public static final Field field$ClientboundAddEntityPacket$type = requireNonNull(
-            ReflectionUtils.getDeclaredField(clazz$ClientboundAddEntityPacket, CoreReflections.clazz$EntityType, 0)
-    );
-
-    public static final Class<?> clazz$ClientboundAddPlayerPacket = BukkitReflectionUtils.findReobfOrMojmapClass(
-            "network.protocol.game.PacketPlayOutNamedEntitySpawn",
-            "network.protocol.game.ClientboundAddPlayerPacket"
     );
 
     public static final Class<?> clazz$ClientboundRemoveEntitiesPacket = requireNonNull(
@@ -184,27 +68,8 @@ public final class NetworkReflections {
             )
     );
 
-    public static final Field field$ClientboundAddPlayerPacket$entityId = Optional.ofNullable(clazz$ClientboundAddPlayerPacket)
-            .map(it -> ReflectionUtils.getDeclaredField(it, int.class, 0))
-            .orElse(null);
-
     public static final Constructor<?> constructor$ClientboundRemoveEntitiesPacket = requireNonNull(
             ReflectionUtils.getConstructor(clazz$ClientboundRemoveEntitiesPacket, int[].class)
-    );
-
-    public static final Class<?> clazz$ClientboundSetPassengersPacket = requireNonNull(
-            BukkitReflectionUtils.findReobfOrMojmapClass(
-                    "network.protocol.game.PacketPlayOutMount",
-                    "network.protocol.game.ClientboundSetPassengersPacket"
-            )
-    );
-
-    public static final Field field$ClientboundSetPassengersPacket$vehicle = requireNonNull(
-            ReflectionUtils.getInstanceDeclaredField(clazz$ClientboundSetPassengersPacket, 0)
-    );
-
-    public static final Field field$ClientboundSetPassengersPacket$passengers = requireNonNull(
-            ReflectionUtils.getInstanceDeclaredField(clazz$ClientboundSetPassengersPacket, 1)
     );
 
     public static final Class<?> clazz$ClientboundSetEntityDataPacket = requireNonNull(
@@ -229,14 +94,6 @@ public final class NetworkReflections {
             ReflectionUtils.getConstructor(clazz$ClientboundUpdateAttributesPacket, 1)
     );
 
-    public static final Field field$ClientboundUpdateAttributesPacket$id = requireNonNull(
-            ReflectionUtils.getDeclaredField(clazz$ClientboundUpdateAttributesPacket, int.class, 0)
-    );
-
-    public static final Field field$ClientboundUpdateAttributesPacket$attributes = requireNonNull(
-            ReflectionUtils.getDeclaredField(clazz$ClientboundUpdateAttributesPacket, List.class, 0)
-    );
-
     public static final Class<?> clazz$ClientboundUpdateAttributesPacket$AttributeSnapshot = requireNonNull(
             BukkitReflectionUtils.findReobfOrMojmapClass(
                     "network.protocol.game.PacketPlayOutUpdateAttributes$AttributeSnapshot",
@@ -244,46 +101,10 @@ public final class NetworkReflections {
             )
     );
 
-    public static final Field field$ClientboundUpdateAttributesPacket$AttributeSnapshot$attribute =
-            ReflectionUtils.getDeclaredField(clazz$ClientboundUpdateAttributesPacket$AttributeSnapshot, CoreReflections.clazz$Holder, 0);
-
-    public static final Field field$ClientboundUpdateAttributesPacket$AttributeSnapshot$base =
-            ReflectionUtils.getDeclaredField(clazz$ClientboundUpdateAttributesPacket$AttributeSnapshot, double.class, 0);
-
-    public static final Field field$ClientboundUpdateAttributesPacket$AttributeSnapshot$modifiers =
-            ReflectionUtils.getDeclaredField(clazz$ClientboundUpdateAttributesPacket$AttributeSnapshot, Collection.class, 0);
-
     public static final Constructor<?> constructor$ClientboundUpdateAttributesPacket$AttributeSnapshot = requireNonNull(
             VersionHelper.isOrAbove1_20_5() ?
                     ReflectionUtils.getConstructor(clazz$ClientboundUpdateAttributesPacket$AttributeSnapshot, CoreReflections.clazz$Holder, double.class, Collection.class) :
                     ReflectionUtils.getConstructor(clazz$ClientboundUpdateAttributesPacket$AttributeSnapshot, CoreReflections.clazz$Attribute, double.class, Collection.class)
-    );
-
-    public static final Class<?> clazz$ClientboundGameEventPacket = requireNonNull(
-            BukkitReflectionUtils.findReobfOrMojmapClass(
-                    "network.protocol.game.PacketPlayOutGameStateChange",
-                    "network.protocol.game.ClientboundGameEventPacket"
-            )
-    );
-
-    public static final Class<?> clazz$ClientboundGameEventPacket$Type = requireNonNull(
-            BukkitReflectionUtils.findReobfOrMojmapClass(
-                    "network.protocol.game.PacketPlayOutGameStateChange$a",
-                    "network.protocol.game.ClientboundGameEventPacket$Type"
-            )
-    );
-
-    public static final Field field$ClientboundGameEventPacket$event = requireNonNull(
-            ReflectionUtils.getDeclaredField(clazz$ClientboundGameEventPacket, clazz$ClientboundGameEventPacket$Type, 0)
-    );
-
-
-    public static final Field field$ClientboundGameEventPacket$param = requireNonNull(
-            ReflectionUtils.getDeclaredField(clazz$ClientboundGameEventPacket, float.class, 0)
-    );
-
-    public static final Field field$ClientboundGameEventPacket$Type$id = requireNonNull(
-            ReflectionUtils.getDeclaredField(clazz$ClientboundGameEventPacket$Type, int.class, 0)
     );
     
     public static final Class<?> clazz$ClientboundSetPlayerTeamPacket = requireNonNull(
@@ -291,29 +112,6 @@ public final class NetworkReflections {
                     "network.protocol.game.PacketPlayOutScoreboardTeam",
                     "network.protocol.game.ClientboundSetPlayerTeamPacket"
             )
-    );
-
-    public static final Field field$ClientboundSetPlayerTeamPacket$method = requireNonNull(
-            ReflectionUtils.getInstanceDeclaredField(clazz$ClientboundSetPlayerTeamPacket, int.class, 0)
-    );
-
-    public static final Field field$ClientboundSetPlayerTeamPacket$players = requireNonNull(
-            ReflectionUtils.getInstanceDeclaredField(clazz$ClientboundSetPlayerTeamPacket, Collection.class, 0)
-    );
-
-    public static final Field field$ClientboundSetPlayerTeamPacket$parameters = requireNonNull(
-            ReflectionUtils.getInstanceDeclaredField(clazz$ClientboundSetPlayerTeamPacket, Optional.class, 0)
-    );
-
-    public static final Class<?> clazz$ClientboundSetPlayerTeamPacket$Parameters = requireNonNull(
-            BukkitReflectionUtils.findReobfOrMojmapClass(
-                    "network.protocol.game.PacketPlayOutScoreboardTeam$b",
-                    "network.protocol.game.ClientboundSetPlayerTeamPacket$Parameters"
-            )
-    );
-
-    public static final Field field$ClientboundSetPlayerTeamPacket$Parameters$nametagVisibility = requireNonNull(
-            ReflectionUtils.getInstanceDeclaredField(clazz$ClientboundSetPlayerTeamPacket$Parameters, VersionHelper.isOrAbove1_21_5() ? CoreReflections.clazz$Team$Visibility : String.class, 0)
     );
 
     public static final Class<?> clazz$ClientboundBlockUpdatePacket = requireNonNull(
@@ -330,30 +128,6 @@ public final class NetworkReflections {
             )
     );
 
-    public static final Field field$ClientboundSectionBlocksUpdatePacket$positions = requireNonNull(
-            ReflectionUtils.getDeclaredField(clazz$ClientboundSectionBlocksUpdatePacket, short[].class, 0)
-    );
-
-    public static final Field field$ClientboundSectionBlocksUpdatePacket$states = requireNonNull(
-            ReflectionUtils.getDeclaredField(clazz$ClientboundSectionBlocksUpdatePacket, CoreReflections.clazz$BlockState.arrayType(), 0)
-    );
-
-    public static final Field field$ClientboundSectionBlocksUpdatePacket$sectionPos = requireNonNull(
-            ReflectionUtils.getDeclaredField(clazz$ClientboundSectionBlocksUpdatePacket, CoreReflections.clazz$SectionPos, 0)
-    );
-
-    public static final Field field$ClientboundBlockUpdatePacket$blockstate = requireNonNull(
-            ReflectionUtils.getDeclaredField(clazz$ClientboundBlockUpdatePacket, CoreReflections.clazz$BlockState, 0)
-    );
-
-    public static final Field field$ClientboundBlockUpdatePacket$blockPos = requireNonNull(
-            ReflectionUtils.getDeclaredField(clazz$ClientboundBlockUpdatePacket, CoreReflections.clazz$BlockPos, 0)
-    );
-
-    public static final Constructor<?> constructor$ClientboundBlockUpdatePacket = requireNonNull(
-            ReflectionUtils.getConstructor(clazz$ClientboundBlockUpdatePacket, CoreReflections.clazz$BlockPos, CoreReflections.clazz$BlockState)
-    );
-
     public static final Class<?> clazz$ClientboundLevelChunkWithLightPacket = requireNonNull(
             ReflectionUtils.getClazz(BukkitReflectionUtils.assembleMCClass("network.protocol.game.ClientboundLevelChunkWithLightPacket"))
     );
@@ -364,10 +138,6 @@ public final class NetworkReflections {
 
     public static final Class<?> clazz$ClientboundPlayerInfoUpdatePacket = requireNonNull(
             ReflectionUtils.getClazz(BukkitReflectionUtils.assembleMCClass("network.protocol.game.ClientboundPlayerInfoUpdatePacket"))
-    );
-
-    public static final Field field$ClientboundPlayerInfoUpdatePacket$entries = requireNonNull(
-            ReflectionUtils.getDeclaredField(clazz$ClientboundPlayerInfoUpdatePacket, List.class, 0)
     );
 
     public static final Class<?> clazz$ClientboundPlayerInfoUpdatePacket$Action = requireNonNull(
@@ -394,48 +164,11 @@ public final class NetworkReflections {
         }
     }
 
-    public static final Field field$ClientboundLevelChunkWithLightPacket$chunkData = requireNonNull(
-            ReflectionUtils.getDeclaredField(clazz$ClientboundLevelChunkWithLightPacket, clazz$ClientboundLevelChunkPacketData, 0)
-    );
-
-    public static final Field field$ClientboundLevelChunkWithLightPacket$x = requireNonNull(
-            ReflectionUtils.getDeclaredField(clazz$ClientboundLevelChunkWithLightPacket, int.class, 0)
-    );
-
-    public static final Field field$ClientboundLevelChunkWithLightPacket$z = requireNonNull(
-            ReflectionUtils.getDeclaredField(clazz$ClientboundLevelChunkWithLightPacket, int.class, 1)
-    );
-
-    public static final Field field$ClientboundLevelChunkPacketData$buffer = requireNonNull(
-            ReflectionUtils.getDeclaredField(clazz$ClientboundLevelChunkPacketData, byte[].class, 0)
-    );
-
     public static final Class<?> clazz$ClientboundLevelParticlesPacket = requireNonNull(
             BukkitReflectionUtils.findReobfOrMojmapClass(
                     "network.protocol.game.PacketPlayOutWorldParticles",
                     "network.protocol.game.ClientboundLevelParticlesPacket"
             )
-    );
-
-    public static final Constructor<?> constructor$ClientboundLevelParticlesPacket = requireNonNull(
-            VersionHelper.isOrAbove1_20_5() ?
-                    ReflectionUtils.getDeclaredConstructor(clazz$ClientboundLevelParticlesPacket, CoreReflections.clazz$RegistryFriendlyByteBuf) :
-                    ReflectionUtils.getConstructor(clazz$ClientboundLevelParticlesPacket, CoreReflections.clazz$FriendlyByteBuf)
-    );
-
-    public static final Field field$ClientboundLevelParticlesPacket$particle = requireNonNull(
-            ReflectionUtils.getDeclaredField(clazz$ClientboundLevelParticlesPacket, CoreReflections.clazz$ParticleOptions, 0)
-    );
-
-    public static final Class<?> clazz$ClientboundLightUpdatePacket = requireNonNull(
-            BukkitReflectionUtils.findReobfOrMojmapClass(
-                    "network.protocol.game.PacketPlayOutLightUpdate",
-                    "network.protocol.game.ClientboundLightUpdatePacket"
-            )
-    );
-
-    public static final Constructor<?> constructor$ClientboundLightUpdatePacket = requireNonNull(
-            ReflectionUtils.getConstructor(clazz$ClientboundLightUpdatePacket, CoreReflections.clazz$ChunkPos, CoreReflections.clazz$LevelLightEngine, BitSet.class, BitSet.class)
     );
 
     public static final Class<?> clazz$ServerboundPlayerActionPacket = requireNonNull(
@@ -450,14 +183,6 @@ public final class NetworkReflections {
                     "network.protocol.game.PacketPlayInBlockDig$EnumPlayerDigType",
                     "network.protocol.game.ServerboundPlayerActionPacket$Action"
             )
-    );
-
-    public static final Field field$ServerboundPlayerActionPacket$pos = requireNonNull(
-            ReflectionUtils.getDeclaredField(clazz$ServerboundPlayerActionPacket, CoreReflections.clazz$BlockPos, 0)
-    );
-
-    public static final Field field$ServerboundPlayerActionPacket$action = requireNonNull(
-            ReflectionUtils.getDeclaredField(clazz$ServerboundPlayerActionPacket, clazz$ServerboundPlayerActionPacket$Action, 0)
     );
 
     public static final Method method$ServerboundPlayerActionPacket$Action$values = requireNonNull(
@@ -483,22 +208,11 @@ public final class NetworkReflections {
         }
     }
 
-    public static final Class<?> clazz$ClientboundBlockDestructionPacket = requireNonNull(
-            BukkitReflectionUtils.findReobfOrMojmapClass(
-                    "network.protocol.game.PacketPlayOutBlockBreakAnimation",
-                    "network.protocol.game.ClientboundBlockDestructionPacket"
-            )
-    );
-
     public static final Class<?> clazz$ServerboundSwingPacket = requireNonNull(
             BukkitReflectionUtils.findReobfOrMojmapClass(
                     "network.protocol.game.PacketPlayInArmAnimation",
                     "network.protocol.game.ServerboundSwingPacket"
             )
-    );
-
-    public static final Field field$ServerboundSwingPacket$hand = requireNonNull(
-            ReflectionUtils.getDeclaredField(clazz$ServerboundSwingPacket, CoreReflections.clazz$InteractionHand, 0)
     );
 
     public static final Class<?> clazz$ClientboundSetEquipmentPacket = requireNonNull(
@@ -550,10 +264,6 @@ public final class NetworkReflections {
                     "network.protocol.game.PacketPlayInUseEntity$d",
                     "network.protocol.game.ServerboundInteractPacket$InteractionAction"
             )
-    );
-
-    public static final Field field$ServerboundInteractPacket$InteractionAction$hand = requireNonNull(
-            ReflectionUtils.getDeclaredField(clazz$ServerboundInteractPacket$InteractionAction, CoreReflections.clazz$InteractionHand, 0)
     );
 
     public static final Class<?> clazz$ServerboundInteractPacket$InteractionAtLocationAction = requireNonNull(
@@ -1739,12 +1449,6 @@ public final class NetworkReflections {
             BukkitReflectionUtils.findReobfOrMojmapClass(
                 "network.protocol.game.PacketPlayOutTileEntityData",
                 "network.protocol.game.ClientboundBlockEntityDataPacket"
-            )
-    );
-
-    public static final Field field$ClientboundUpdateTagsPacket$tags = requireNonNull(
-            ReflectionUtils.getDeclaredField(
-                    clazz$ClientboundUpdateTagsPacket, Map.class, 0
             )
     );
 

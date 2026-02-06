@@ -2,11 +2,9 @@ package net.momirealms.craftengine.bukkit.block.behavior;
 
 import net.momirealms.craftengine.bukkit.api.BukkitAdaptors;
 import net.momirealms.craftengine.bukkit.nms.FastNMS;
-import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.CoreReflections;
 import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.MBlocks;
 import net.momirealms.craftengine.bukkit.plugin.user.BukkitServerPlayer;
 import net.momirealms.craftengine.bukkit.util.BlockStateUtils;
-import net.momirealms.craftengine.bukkit.util.DirectionUtils;
 import net.momirealms.craftengine.bukkit.util.LocationUtils;
 import net.momirealms.craftengine.core.block.CustomBlock;
 import net.momirealms.craftengine.core.block.ImmutableBlockState;
@@ -19,6 +17,8 @@ import net.momirealms.craftengine.core.item.Item;
 import net.momirealms.craftengine.core.util.ResourceConfigUtils;
 import net.momirealms.craftengine.core.world.*;
 import net.momirealms.craftengine.core.world.context.BlockPlaceContext;
+import net.momirealms.craftengine.proxy.minecraft.core.AxisProxy;
+import net.momirealms.craftengine.proxy.minecraft.core.DirectionProxy;
 import org.bukkit.inventory.ItemStack;
 
 import java.util.Map;
@@ -43,7 +43,7 @@ public class DoubleHighBlockBehavior extends AbstractCanSurviveBlockBehavior {
         if (customState == null || customState.isEmpty()) return blockState;
         DoubleBlockHalf half = customState.get(this.halfProperty);
         Object direction = args[updateShape$direction];
-        if (DirectionUtils.isYAxis(direction) && half == DoubleBlockHalf.LOWER == (direction == CoreReflections.instance$Direction$UP)) {
+        if (DirectionProxy.INSTANCE.getAxis(direction) == AxisProxy.Y && half == DoubleBlockHalf.LOWER == (direction == DirectionProxy.UP)) {
             ImmutableBlockState neighborState = BlockStateUtils.getOptionalCustomBlockState(args[updateShape$neighborState]).orElse(null);
             if (neighborState == null || neighborState.isEmpty()) return MBlocks.AIR$defaultState;
             DoubleHighBlockBehavior anotherDoorBehavior = neighborState.behavior().getAs(DoubleHighBlockBehavior.class).orElse(null);
@@ -52,7 +52,7 @@ public class DoubleHighBlockBehavior extends AbstractCanSurviveBlockBehavior {
                 return neighborState.with(anotherDoorBehavior.halfProperty, half).customBlockState().literalObject();
             }
             return MBlocks.AIR$defaultState;
-        } else if (half == DoubleBlockHalf.LOWER && direction == CoreReflections.instance$Direction$DOWN && !canSurvive(thisBlock, blockState, level, blockPos)) {
+        } else if (half == DoubleBlockHalf.LOWER && direction == DirectionProxy.DOWN && !canSurvive(thisBlock, blockState, level, blockPos)) {
             BlockPos pos = LocationUtils.fromBlockPos(blockPos);
             World world = BukkitAdaptors.adapt(FastNMS.INSTANCE.method$Level$getCraftWorld(level));
             WorldPosition position = new WorldPosition(world, Vec3d.atCenterOf(pos));
@@ -86,7 +86,7 @@ public class DoubleHighBlockBehavior extends AbstractCanSurviveBlockBehavior {
 
     private void preventDropFromBottomPart(Object level, Object pos, ImmutableBlockState state, Object player) {
         if (state.get(this.halfProperty) != DoubleBlockHalf.UPPER) return;
-        Object blockPos = FastNMS.INSTANCE.method$BlockPos$relative(pos, CoreReflections.instance$Direction$DOWN);
+        Object blockPos = FastNMS.INSTANCE.method$BlockPos$relative(pos, DirectionProxy.DOWN);
         Object blockState = FastNMS.INSTANCE.method$BlockGetter$getBlockState(level, blockPos);
         ImmutableBlockState belowState = BlockStateUtils.getOptionalCustomBlockState(blockState).orElse(null);
         if (belowState == null || belowState.isEmpty()) return;

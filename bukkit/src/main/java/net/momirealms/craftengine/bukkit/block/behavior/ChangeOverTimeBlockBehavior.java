@@ -1,6 +1,5 @@
 package net.momirealms.craftengine.bukkit.block.behavior;
 
-import net.momirealms.craftengine.bukkit.plugin.reflection.bukkit.CraftBukkitReflections;
 import net.momirealms.craftengine.bukkit.util.BlockStateUtils;
 import net.momirealms.craftengine.core.block.BlockStateWrapper;
 import net.momirealms.craftengine.core.block.CustomBlock;
@@ -11,6 +10,7 @@ import net.momirealms.craftengine.core.util.LazyReference;
 import net.momirealms.craftengine.core.util.MiscUtils;
 import net.momirealms.craftengine.core.util.ResourceConfigUtils;
 import net.momirealms.craftengine.core.util.random.RandomUtils;
+import net.momirealms.craftengine.proxy.bukkit.craftbukkit.event.CraftEventFactoryProxy;
 import net.momirealms.sparrow.nbt.CompoundTag;
 
 import java.util.List;
@@ -33,7 +33,7 @@ public class ChangeOverTimeBlockBehavior extends BukkitBlockBehavior {
     }
 
     public String nextBlock() {
-        return nextBlock;
+        return this.nextBlock;
     }
 
     public BlockStateWrapper nextState() {
@@ -55,11 +55,7 @@ public class ChangeOverTimeBlockBehavior extends BukkitBlockBehavior {
             BlockStateWrapper nextState = this.nextState();
             if (nextState == null) return;
             nextState = nextState.withProperties(filter(state.propertiesNbt()));
-            try {
-                CraftBukkitReflections.method$CraftEventFactory$handleBlockFormEvent.invoke(null, args[1], args[2], nextState.literalObject(), UpdateOption.UPDATE_ALL.flags());
-            } catch (ReflectiveOperationException e) {
-                CraftEngine.instance().logger().warn("Failed to call block form event", e);
-            }
+            CraftEventFactoryProxy.INSTANCE.handleBlockFormEvent(args[1], args[2], nextState.literalObject(), UpdateOption.UPDATE_ALL.flags());
         });
     }
 

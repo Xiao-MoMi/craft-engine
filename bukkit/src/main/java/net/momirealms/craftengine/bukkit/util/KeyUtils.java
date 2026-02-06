@@ -1,7 +1,7 @@
 package net.momirealms.craftengine.bukkit.util;
 
 import net.momirealms.craftengine.core.util.Key;
-import net.momirealms.craftengine.proxy.resource.IdentifierProxy;
+import net.momirealms.craftengine.proxy.minecraft.resources.IdentifierProxy;
 import org.bukkit.NamespacedKey;
 
 public final class KeyUtils {

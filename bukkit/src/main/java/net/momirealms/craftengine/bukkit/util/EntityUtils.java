@@ -9,6 +9,9 @@ import net.momirealms.craftengine.core.util.MiscUtils;
 import net.momirealms.craftengine.core.util.VersionHelper;
 import net.momirealms.craftengine.core.world.BlockPos;
 import net.momirealms.craftengine.core.world.Vec3d;
+import net.momirealms.craftengine.proxy.minecraft.world.entity.LivingEntityProxy;
+import net.momirealms.craftengine.proxy.minecraft.world.entity.vehicle.DismountHelperProxy;
+import net.momirealms.craftengine.proxy.minecraft.world.level.BlockGetterProxy;
 import org.bukkit.Location;
 import org.bukkit.World;
 import org.bukkit.entity.Entity;
@@ -57,39 +60,35 @@ public final class EntityUtils {
             Object serverPlayer = FastNMS.INSTANCE.method$CraftPlayer$getHandle(player);
             for (Object pose : List.of(CoreReflections.instance$Pose$STANDING, CoreReflections.instance$Pose$CROUCHING, CoreReflections.instance$Pose$SWIMMING)) {
                 BlockPos pos = new BlockPos(MiscUtils.floor(x), MiscUtils.floor(y), MiscUtils.floor(z));
-                try {
-                    double floorHeight = (double) CoreReflections.method$BlockGetter$getBlockFloorHeight.invoke(serverLevel, LocationUtils.toBlockPos(pos));
-                    if (pos.y() + floorHeight > y + 0.75 || !isBlockFloorValid(floorHeight)) {
-                        floorHeight = (double) CoreReflections.method$BlockGetter$getBlockFloorHeight.invoke(serverLevel, LocationUtils.toBlockPos(pos.below()));
-                        if (pos.y() + floorHeight - 1 < y - 0.75 || !isBlockFloorValid(floorHeight)) {
-                            continue;
-                        }
-                        floorHeight -= 1;
-                    }
-                    Object aabb = CoreReflections.method$LivingEntity$getLocalBoundsForPose.invoke(serverPlayer, pose);
-                    Object vec3 = FastNMS.INSTANCE.constructor$Vec3(x, pos.y() + floorHeight, z);
-                    Object newAABB = FastNMS.INSTANCE.method$AABB$move(aabb, vec3);
-                    boolean canDismount = (boolean) CoreReflections.method$DismountHelper$canDismountTo0.invoke(null, serverLevel, serverPlayer, newAABB);
-                    if (!canDismount) {
+                double floorHeight = BlockGetterProxy.INSTANCE.getBlockFloorHeight(serverLevel, LocationUtils.toBlockPos(pos));
+                if (pos.y() + floorHeight > y + 0.75 || !isBlockFloorValid(floorHeight)) {
+                    floorHeight = BlockGetterProxy.INSTANCE.getBlockFloorHeight(serverLevel, LocationUtils.toBlockPos(pos.below()));
+                    if (pos.y() + floorHeight - 1 < y - 0.75 || !isBlockFloorValid(floorHeight)) {
                         continue;
                     }
-                    if (!FastNMS.INSTANCE.checkEntityCollision(serverLevel, List.of(newAABB), o -> true)) {
-                        continue;
-                    }
-                    if (VersionHelper.isFolia()) {
-                        player.teleportAsync(new Location(player.getWorld(), x, pos.y() + floorHeight, z, player.getYaw(), player.getPitch()));
-                    } else {
-                        player.teleport(new Location(player.getWorld(), x, pos.y() + floorHeight, z, player.getYaw(), player.getPitch()));
-                    }
-                    if (pose == CoreReflections.instance$Pose$STANDING) {
-                        player.setPose(Pose.STANDING);
-                    } else if (pose == CoreReflections.instance$Pose$CROUCHING) {
-                        player.setPose(Pose.SNEAKING);
-                    } else if (pose == CoreReflections.instance$Pose$SWIMMING) {
-                        player.setPose(Pose.SWIMMING);
-                    }
-                } catch (ReflectiveOperationException e) {
-                    throw new RuntimeException(e);
+                    floorHeight -= 1;
+                }
+                Object aabb = LivingEntityProxy.INSTANCE.getLocalBoundsForPose(serverPlayer, pose);
+                Object vec3 = FastNMS.INSTANCE.constructor$Vec3(x, pos.y() + floorHeight, z);
+                Object newAABB = FastNMS.INSTANCE.method$AABB$move(aabb, vec3);
+                boolean canDismount = DismountHelperProxy.INSTANCE.canDismountTo(serverLevel, serverPlayer, newAABB);
+                if (!canDismount) {
+                    continue;
+                }
+                if (!FastNMS.INSTANCE.checkEntityCollision(serverLevel, List.of(newAABB), o -> true)) {
+                    continue;
+                }
+                if (VersionHelper.isFolia()) {
+                    player.teleportAsync(new Location(player.getWorld(), x, pos.y() + floorHeight, z, player.getYaw(), player.getPitch()));
+                } else {
+                    player.teleport(new Location(player.getWorld(), x, pos.y() + floorHeight, z, player.getYaw(), player.getPitch()));
+                }
+                if (pose == CoreReflections.instance$Pose$STANDING) {
+                    player.setPose(Pose.STANDING);
+                } else if (pose == CoreReflections.instance$Pose$CROUCHING) {
+                    player.setPose(Pose.SNEAKING);
+                } else if (pose == CoreReflections.instance$Pose$SWIMMING) {
+                    player.setPose(Pose.SWIMMING);
                 }
             }
         }

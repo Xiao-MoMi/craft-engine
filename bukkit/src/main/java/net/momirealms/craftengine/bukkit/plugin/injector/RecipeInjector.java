@@ -23,6 +23,8 @@ import net.momirealms.craftengine.core.item.Item;
 import net.momirealms.craftengine.core.item.ItemKeys;
 import net.momirealms.craftengine.core.item.data.FireworkExplosion;
 import net.momirealms.craftengine.core.util.*;
+import net.momirealms.craftengine.proxy.minecraft.world.item.ItemStackProxy;
+import net.momirealms.craftengine.proxy.minecraft.world.item.crafting.CraftingBookCategoryProxy;
 import org.bukkit.inventory.ItemStack;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -106,10 +108,10 @@ public final class RecipeInjector {
     private static Object createSpecialRecipe(Key id, Class<?> clazz$InjectedRepairItemRecipe) throws InstantiationException, IllegalAccessException, java.lang.reflect.InvocationTargetException {
         if (VersionHelper.isOrAbove1_20_2()) {
             Constructor<?> constructor = ReflectionUtils.getConstructor(clazz$InjectedRepairItemRecipe, CoreReflections.clazz$CraftingBookCategory);
-            return constructor.newInstance(CoreReflections.instance$CraftingBookCategory$MISC);
+            return constructor.newInstance(CraftingBookCategoryProxy.MISC);
         } else {
             Constructor<?> constructor = ReflectionUtils.getConstructor(clazz$InjectedRepairItemRecipe, CoreReflections.clazz$ResourceLocation, CoreReflections.clazz$CraftingBookCategory);
-            return constructor.newInstance(KeyUtils.toIdentifier(id), CoreReflections.instance$CraftingBookCategory$MISC);
+            return constructor.newInstance(KeyUtils.toIdentifier(id), CraftingBookCategoryProxy.MISC);
         }
     }
 
@@ -179,7 +181,7 @@ public final class RecipeInjector {
                 if (isFireworkDye(wrapped)) {
                     Color color = getFireworkColor(wrapped);
                     if (color == null) {
-                        return CoreReflections.instance$ItemStack$EMPTY;
+                        return ItemStackProxy.EMPTY;
                     }
                     colors.add(color.color());
                 } else if (wrapped.id().equals(ItemKeys.FIREWORK_STAR)) {
@@ -187,7 +189,7 @@ public final class RecipeInjector {
                 }
             }
             if (starItem == null || colors.isEmpty()) {
-                return CoreReflections.instance$ItemStack$EMPTY;
+                return ItemStackProxy.EMPTY;
             }
             FireworkExplosion explosion = starItem.fireworkExplosion().orElse(FireworkExplosion.DEFAULT);
             starItem.fireworkExplosion(explosion.withFadeColors(colors));
@@ -314,12 +316,12 @@ public final class RecipeInjector {
                     if (dyeColor != null) {
                         colors.add(dyeColor);
                     } else {
-                        return CoreReflections.instance$ItemStack$EMPTY;
+                        return ItemStackProxy.EMPTY;
                     }
                 }
             }
             if (itemToDye == null || itemToDye.isEmpty() || colors.isEmpty()) {
-                return CoreReflections.instance$ItemStack$EMPTY;
+                return ItemStackProxy.EMPTY;
             }
             return itemToDye.applyDyedColors(colors).getLiteralObject();
         }

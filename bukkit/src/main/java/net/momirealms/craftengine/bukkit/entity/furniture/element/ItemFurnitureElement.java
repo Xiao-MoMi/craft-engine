@@ -2,13 +2,14 @@ package net.momirealms.craftengine.bukkit.entity.furniture.element;
 
 import it.unimi.dsi.fastutil.ints.IntArrayList;
 import net.momirealms.craftengine.bukkit.nms.FastNMS;
-import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.CoreReflections;
 import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.MEntityTypes;
 import net.momirealms.craftengine.core.entity.furniture.Furniture;
 import net.momirealms.craftengine.core.entity.player.Player;
 import net.momirealms.craftengine.core.util.MiscUtils;
 import net.momirealms.craftengine.core.world.Vec3d;
 import net.momirealms.craftengine.core.world.WorldPosition;
+import net.momirealms.craftengine.proxy.minecraft.world.entity.EntityProxy;
+import net.momirealms.craftengine.proxy.minecraft.world.phys.Vec3Proxy;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
@@ -29,17 +30,17 @@ public final class ItemFurnitureElement extends AbstractFurnitureElement {
         super(config.predicate, config.hasCondition);
         this.furniture = furniture;
         this.config = config;
-        this.entityId1 = CoreReflections.instance$Entity$ENTITY_COUNTER.incrementAndGet();
-        this.entityId2 = CoreReflections.instance$Entity$ENTITY_COUNTER.incrementAndGet();
+        this.entityId1 = EntityProxy.ENTITY_COUNTER.incrementAndGet();
+        this.entityId2 = EntityProxy.ENTITY_COUNTER.incrementAndGet();
         WorldPosition furniturePos = furniture.position();
         Vec3d position = Furniture.getRelativePosition(furniturePos, config.position);
         this.cachedSpawnPacket1 = FastNMS.INSTANCE.constructor$ClientboundAddEntityPacket(
                 entityId1, UUID.randomUUID(), position.x, position.y, position.z,
-                0, 0, MEntityTypes.ITEM_DISPLAY, 0, CoreReflections.instance$Vec3$Zero, 0
+                0, 0, MEntityTypes.ITEM_DISPLAY, 0, Vec3Proxy.ZERO, 0
         );
         this.cachedSpawnPacket2 = FastNMS.INSTANCE.constructor$ClientboundAddEntityPacket(
                 entityId2, UUID.randomUUID(), position.x, position.y, position.z,
-                0, 0, MEntityTypes.ITEM, 0, CoreReflections.instance$Vec3$Zero, 0
+                0, 0, MEntityTypes.ITEM, 0, Vec3Proxy.ZERO, 0
         );
         this.cachedRidePacket = FastNMS.INSTANCE.constructor$ClientboundSetPassengersPacket(entityId1, entityId2);
         this.despawnPacket = FastNMS.INSTANCE.constructor$ClientboundRemoveEntitiesPacket(MiscUtils.init(new IntArrayList(),

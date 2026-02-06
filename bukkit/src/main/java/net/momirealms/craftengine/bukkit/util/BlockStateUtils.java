@@ -2,11 +2,12 @@ package net.momirealms.craftengine.bukkit.util;
 
 import net.momirealms.craftengine.bukkit.block.BukkitBlockManager;
 import net.momirealms.craftengine.bukkit.nms.FastNMS;
-import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.CoreReflections;
 import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.MBuiltInRegistries;
 import net.momirealms.craftengine.core.block.*;
 import net.momirealms.craftengine.core.item.Item;
 import net.momirealms.craftengine.core.util.Key;
+import net.momirealms.craftengine.proxy.minecraft.world.level.block.BlockProxy;
+import net.momirealms.craftengine.proxy.minecraft.world.level.block.state.StateDefinitionProxy;
 import org.bukkit.block.Block;
 import org.bukkit.block.data.BlockData;
 import org.bukkit.inventory.ItemStack;
@@ -47,15 +48,10 @@ public final class BlockStateUtils {
         return true;
     }
 
-    @SuppressWarnings("unchecked")
     public static List<Object> getPossibleBlockStates(Key block) {
-        try {
-            Object blockIns = FastNMS.INSTANCE.method$Registry$getValue(MBuiltInRegistries.BLOCK, KeyUtils.toIdentifier(block));
-            Object definition = CoreReflections.field$Block$StateDefinition.get(blockIns);
-            return (List<Object>) CoreReflections.field$StateDefinition$states.get(definition);
-        } catch (Exception e) {
-            throw new RuntimeException("Failed to get possible block states for " + block, e);
-        }
+        Object blockIns = FastNMS.INSTANCE.method$Registry$getValue(MBuiltInRegistries.BLOCK, KeyUtils.toIdentifier(block));
+        Object definition = BlockProxy.INSTANCE.getStateDefinition(blockIns);
+        return StateDefinitionProxy.INSTANCE.getStates(definition);
     }
 
     public static BlockData fromBlockData(Object blockState) {
@@ -81,11 +77,11 @@ public final class BlockStateUtils {
     }
 
     public static Object idToBlockState(int id) {
-        return FastNMS.INSTANCE.method$IdMapper$byId(CoreReflections.instance$Block$BLOCK_STATE_REGISTRY, id);
+        return FastNMS.INSTANCE.method$IdMapper$byId(BlockProxy.BLOCK_STATE_REGISTRY, id);
     }
 
     public static int blockStateToId(Object blockState) {
-        return FastNMS.INSTANCE.method$IdMapper$getId(CoreReflections.instance$Block$BLOCK_STATE_REGISTRY, blockState);
+        return FastNMS.INSTANCE.method$IdMapper$getId(BlockProxy.BLOCK_STATE_REGISTRY, blockState);
     }
 
     public static Object getBlockOwner(Object blockState) {

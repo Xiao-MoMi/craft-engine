@@ -5,13 +5,14 @@ import net.kyori.adventure.text.event.ClickEvent;
 import net.kyori.adventure.text.format.NamedTextColor;
 import net.momirealms.craftengine.bukkit.block.BukkitBlockManager;
 import net.momirealms.craftengine.bukkit.plugin.command.BukkitCommandFeature;
-import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.CoreReflections;
 import net.momirealms.craftengine.bukkit.util.BlockStateUtils;
 import net.momirealms.craftengine.bukkit.util.LocationUtils;
 import net.momirealms.craftengine.core.block.ImmutableBlockState;
 import net.momirealms.craftengine.core.plugin.CraftEngine;
 import net.momirealms.craftengine.core.plugin.command.CraftEngineCommandManager;
 import net.momirealms.craftengine.core.plugin.command.sender.Sender;
+import net.momirealms.craftengine.proxy.minecraft.core.HolderProxy;
+import net.momirealms.craftengine.proxy.minecraft.tags.TagKeyProxy;
 import org.bukkit.Location;
 import org.bukkit.block.Block;
 import org.bukkit.command.CommandSender;
@@ -63,17 +64,12 @@ public class DebugTargetBlockCommand extends BukkitCommandFeature<CommandSender>
                         sender.sendMessage(Component.text("name: ").append(Component.translatable(block.translationKey())));
                         ImmutableBlockState dataInCache = plugin().worldManager().getWorld(block.getWorld().getUID()).getBlockStateAtIfLoaded(LocationUtils.toBlockPos(block.getLocation()));
                         sender.sendMessage(Component.text("storage: " + (dataInCache != null && !dataInCache.isEmpty())));
-                        try {
-                            @SuppressWarnings("unchecked")
-                            Set<Object> tags = (Set<Object>) CoreReflections.field$Holder$Reference$tags.get(holder);
-                            if (!tags.isEmpty()) {
-                                sender.sendMessage(Component.text("tags: "));
-                                for (Object tag : tags) {
-                                    sender.sendMessage(Component.text(" - " + CoreReflections.field$TagKey$location.get(tag).toString()));
-                                }
+                        Set<Object> tags = HolderProxy.ReferenceProxy.INSTANCE.getTags(holder);
+                        if (!tags.isEmpty()) {
+                            sender.sendMessage(Component.text("tags: "));
+                            for (Object tag : tags) {
+                                sender.sendMessage(Component.text(" - " + TagKeyProxy.INSTANCE.getLocation(tag).toString()));
                             }
-                        } catch (ReflectiveOperationException e) {
-                            plugin().logger().warn("Could not get tags", e);
                         }
                     }
                 });

@@ -13,6 +13,7 @@ import net.momirealms.craftengine.core.item.Item;
 import net.momirealms.craftengine.core.plugin.scheduler.SchedulerTask;
 import net.momirealms.craftengine.core.util.ItemUtils;
 import net.momirealms.craftengine.core.util.VersionHelper;
+import net.momirealms.craftengine.proxy.minecraft.server.level.ServerEntityProxy;
 import org.bukkit.Bukkit;
 import org.bukkit.World;
 import org.bukkit.enchantments.Enchantment;
@@ -187,12 +188,8 @@ public class BukkitProjectileManager implements Listener, ProjectileManager {
 
         private void updateProjectileUpdateInterval(int updateInterval) {
             if (this.lastInjectedInterval == updateInterval) return;
-            try {
-                CoreReflections.methodHandle$ServerEntity$updateIntervalSetter.invokeExact(this.cachedServerEntity, updateInterval);
-                this.lastInjectedInterval = updateInterval;
-            } catch (Throwable e) {
-                BukkitProjectileManager.this.plugin.logger().warn("Failed to update server entity update interval for " + this.projectile.getType().getKey() + "[" + this.projectile.getUniqueId() + "]", e);
-            }
+            ServerEntityProxy.INSTANCE.setUpdateInterval(this.cachedServerEntity, updateInterval);
+            this.lastInjectedInterval = updateInterval;
         }
 
         private static boolean canSpawnParticle(Object nmsEntity, boolean inGround) {

@@ -2,7 +2,6 @@ package net.momirealms.craftengine.bukkit.entity.furniture.hitbox;
 
 import it.unimi.dsi.fastutil.ints.IntArrayList;
 import net.momirealms.craftengine.bukkit.nms.FastNMS;
-import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.CoreReflections;
 import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.MAttributeHolders;
 import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.MEntityTypes;
 import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.NetworkReflections;
@@ -14,6 +13,8 @@ import net.momirealms.craftengine.core.plugin.CraftEngine;
 import net.momirealms.craftengine.core.util.QuaternionUtils;
 import net.momirealms.craftengine.core.util.VersionHelper;
 import net.momirealms.craftengine.core.world.WorldPosition;
+import net.momirealms.craftengine.proxy.minecraft.world.entity.EntityProxy;
+import net.momirealms.craftengine.proxy.minecraft.world.phys.Vec3Proxy;
 import org.joml.Quaternionf;
 import org.joml.Vector3f;
 
@@ -35,7 +36,7 @@ public final class ShulkerFurnitureHitbox extends AbstractFurnitureHitBox {
     ShulkerFurnitureHitbox(Furniture furniture, ShulkerFurnitureHitboxConfig config) {
         super(furniture, config);
         this.config = config;
-        this.entityIds = acquireEntityIds(CoreReflections.instance$Entity$ENTITY_COUNTER::incrementAndGet);
+        this.entityIds = acquireEntityIds(EntityProxy.ENTITY_COUNTER::incrementAndGet);
         WorldPosition position = furniture.position();
         Quaternionf conjugated = QuaternionUtils.toQuaternionf(0f, (float) Math.toRadians(180 - position.yRot()), 0f).conjugate();
         Vector3f offset = conjugated.transform(new Vector3f(config.position()));
@@ -53,11 +54,11 @@ public final class ShulkerFurnitureHitbox extends AbstractFurnitureHitBox {
 
         packets.add(FastNMS.INSTANCE.constructor$ClientboundAddEntityPacket(
                 entityIds[0], UUID.randomUUID(), x + offset.x, originalY, z - offset.z, 0, yaw,
-                MEntityTypes.ITEM_DISPLAY, 0, CoreReflections.instance$Vec3$Zero, 0
+                MEntityTypes.ITEM_DISPLAY, 0, Vec3Proxy.ZERO, 0
         ));
         packets.add(FastNMS.INSTANCE.constructor$ClientboundAddEntityPacket(
                 entityIds[1], UUID.randomUUID(), x + offset.x, processedY, z - offset.z, 0, yaw,
-                MEntityTypes.SHULKER, 0, CoreReflections.instance$Vec3$Zero, 0
+                MEntityTypes.SHULKER, 0, Vec3Proxy.ZERO, 0
         ));
         packets.add(FastNMS.INSTANCE.constructor$ClientboundSetEntityDataPacket(entityIds[1], config.cachedShulkerValues()));
         packets.add(FastNMS.INSTANCE.constructor$ClientboundSetPassengersPacket(entityIds[0], entityIds[1]));

@@ -18,6 +18,7 @@ import net.momirealms.craftengine.core.item.data.FireworkExplosion;
 import net.momirealms.craftengine.core.item.data.Trim;
 import net.momirealms.craftengine.core.plugin.CraftEngine;
 import net.momirealms.craftengine.core.util.*;
+import net.momirealms.craftengine.proxy.minecraft.nbt.CompoundTagProxy;
 import net.momirealms.sparrow.nbt.CompoundTag;
 import net.momirealms.sparrow.nbt.ListTag;
 import net.momirealms.sparrow.nbt.Tag;
@@ -87,7 +88,7 @@ public class ComponentItemFactory1_20_5 extends BukkitItemFactory<ComponentItemW
             if (i == path.length - 1) {
                 return currentTag;
             }
-            if (!CoreReflections.clazz$CompoundTag.isInstance(currentTag)) {
+            if (!CompoundTagProxy.CLASS.isInstance(currentTag)) {
                 return null;
             }
         }
@@ -431,15 +432,10 @@ public class ComponentItemFactory1_20_5 extends BukkitItemFactory<ComponentItemW
     protected Optional<Enchantment> getEnchantment(ComponentItemWrapper item, Key key) {
         Object enchant = item.getExactComponent(DataComponentTypes.ENCHANTMENTS);
         if (enchant == null) return Optional.empty();
-        try {
-            Map<String, Integer> map = EnchantmentUtils.toMap(enchant);
-            Integer level = map.get(key.toString());
-            if (level == null) return Optional.empty();
-            return Optional.of(new Enchantment(key, level));
-        } catch (ReflectiveOperationException e) {
-            plugin.logger().warn("Failed to get enchantment " + key, e);
-            return Optional.empty();
-        }
+        Map<String, Integer> map = EnchantmentUtils.toMap(enchant);
+        Integer level = map.get(key.toString());
+        if (level == null) return Optional.empty();
+        return Optional.of(new Enchantment(key, level));
     }
 
     @Override
@@ -459,24 +455,14 @@ public class ComponentItemFactory1_20_5 extends BukkitItemFactory<ComponentItemW
     protected Optional<List<Enchantment>> enchantments(ComponentItemWrapper item) {
         Object exactEnchantments = item.getExactComponent(DataComponentTypes.ENCHANTMENTS);
         if (exactEnchantments == null) return Optional.empty();
-        try {
-            return Optional.of(EnchantmentUtils.toList(exactEnchantments));
-        } catch (ReflectiveOperationException e) {
-            this.plugin.logger().warn("Failed to get enchantments " + exactEnchantments, e);
-            return Optional.empty();
-        }
+        return Optional.of(EnchantmentUtils.toList(exactEnchantments));
     }
 
     @Override
     protected Optional<List<Enchantment>> storedEnchantments(ComponentItemWrapper item) {
         Object exactEnchantments = item.getExactComponent(DataComponentTypes.STORED_ENCHANTMENTS);
         if (exactEnchantments == null) return Optional.empty();
-        try {
-            return Optional.of(EnchantmentUtils.toList(exactEnchantments));
-        } catch (ReflectiveOperationException e) {
-            this.plugin.logger().warn("Failed to get stored enchantments " + exactEnchantments, e);
-            return Optional.empty();
-        }
+        return Optional.of(EnchantmentUtils.toList(exactEnchantments));
     }
 
     @Override

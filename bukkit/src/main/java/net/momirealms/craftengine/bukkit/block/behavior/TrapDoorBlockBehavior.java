@@ -5,7 +5,6 @@ import net.momirealms.craftengine.bukkit.api.BukkitAdaptors;
 import net.momirealms.craftengine.bukkit.item.BukkitItemManager;
 import net.momirealms.craftengine.bukkit.nms.FastNMS;
 import net.momirealms.craftengine.bukkit.plugin.BukkitCraftEngine;
-import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.CoreReflections;
 import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.MBlocks;
 import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.MFluids;
 import net.momirealms.craftengine.bukkit.util.BlockStateUtils;
@@ -29,6 +28,8 @@ import net.momirealms.craftengine.core.world.Vec3d;
 import net.momirealms.craftengine.core.world.World;
 import net.momirealms.craftengine.core.world.context.BlockPlaceContext;
 import net.momirealms.craftengine.core.world.context.UseOnContext;
+import net.momirealms.craftengine.proxy.minecraft.world.level.block.RedstoneWireBlockProxy;
+import net.momirealms.craftengine.proxy.minecraft.world.level.pathfinder.PathComputationTypeProxy;
 import org.bukkit.Bukkit;
 import org.bukkit.GameEvent;
 import org.bukkit.Location;
@@ -139,9 +140,9 @@ public class TrapDoorBlockBehavior extends BukkitBlockBehavior implements IsPath
         Object blockState = args[0];
         Optional<ImmutableBlockState> optionalCustomState = BlockStateUtils.getOptionalCustomBlockState(blockState);
         if (optionalCustomState.isEmpty()) return false;
-        if (type == CoreReflections.instance$PathComputationType$LAND || type == CoreReflections.instance$PathComputationType$AIR) {
+        if (type == PathComputationTypeProxy.LAND || type == PathComputationTypeProxy.AIR) {
             return optionalCustomState.get().get(this.openProperty);
-        } else if (type == CoreReflections.instance$PathComputationType$WATER) {
+        } else if (type == PathComputationTypeProxy.WATER) {
             return optionalCustomState.get().get(super.waterloggedProperty);
         }
         return false;
@@ -184,7 +185,7 @@ public class TrapDoorBlockBehavior extends BukkitBlockBehavior implements IsPath
         if (hasSignal && changed) {
             Object abovePos = LocationUtils.above(blockPos);
             Object aboveBlockState = FastNMS.INSTANCE.method$BlockGetter$getBlockState(level, abovePos);
-            if (CoreReflections.clazz$RedStoneWireBlock.isInstance(FastNMS.INSTANCE.method$BlockState$getBlock(aboveBlockState))) {
+            if (RedstoneWireBlockProxy.CLASS.isInstance(FastNMS.INSTANCE.method$BlockState$getBlock(aboveBlockState))) {
                 FastNMS.INSTANCE.method$LevelWriter$setBlock(level, abovePos, MBlocks.AIR$defaultState, UpdateOption.UPDATE_ALL.flags());
                 world.dropItemNaturally(
                         new Vec3d(FastNMS.INSTANCE.field$Vec3i$x(abovePos) + 0.5, FastNMS.INSTANCE.field$Vec3i$y(abovePos) + 0.5, FastNMS.INSTANCE.field$Vec3i$z(abovePos) + 0.5),

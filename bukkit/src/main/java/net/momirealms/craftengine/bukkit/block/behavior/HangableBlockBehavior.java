@@ -1,7 +1,6 @@
 package net.momirealms.craftengine.bukkit.block.behavior;
 
 import net.momirealms.craftengine.bukkit.nms.FastNMS;
-import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.CoreReflections;
 import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.MBlocks;
 import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.MFluids;
 import net.momirealms.craftengine.bukkit.util.BlockStateUtils;
@@ -14,6 +13,7 @@ import net.momirealms.craftengine.core.block.properties.BooleanProperty;
 import net.momirealms.craftengine.core.util.Direction;
 import net.momirealms.craftengine.core.util.ResourceConfigUtils;
 import net.momirealms.craftengine.core.world.context.BlockPlaceContext;
+import net.momirealms.craftengine.proxy.minecraft.core.DirectionProxy;
 
 import java.util.Map;
 import java.util.concurrent.Callable;
@@ -51,8 +51,8 @@ public class HangableBlockBehavior extends BukkitBlockBehavior implements IsPath
         BooleanProperty hangingProperty = (BooleanProperty) blockState.owner().value().getProperty("hanging");
         if (hangingProperty == null) return false;
         Boolean hanging = blockState.get(hangingProperty);
-        Object relativePos = FastNMS.INSTANCE.method$BlockPos$relative(blockPos, hanging ? CoreReflections.instance$Direction$UP : CoreReflections.instance$Direction$DOWN);
-        return FastNMS.INSTANCE.method$Block$canSupportCenter(world, relativePos, hanging ? CoreReflections.instance$Direction$DOWN : CoreReflections.instance$Direction$UP);
+        Object relativePos = FastNMS.INSTANCE.method$BlockPos$relative(blockPos, hanging ? DirectionProxy.UP : DirectionProxy.DOWN);
+        return FastNMS.INSTANCE.method$Block$canSupportCenter(world, relativePos, hanging ? DirectionProxy.DOWN : DirectionProxy.UP);
     }
 
     @Override
@@ -62,7 +62,7 @@ public class HangableBlockBehavior extends BukkitBlockBehavior implements IsPath
         if (super.waterloggedProperty != null && state.get(super.waterloggedProperty)) {
             FastNMS.INSTANCE.method$ScheduledTickAccess$scheduleFluidTick(args[updateShape$level], args[updateShape$blockPos], MFluids.WATER, 5);
         }
-        if ((state.get(this.hangingProperty) ? CoreReflections.instance$Direction$UP : CoreReflections.instance$Direction$DOWN) == args[updateShape$direction]
+        if ((state.get(this.hangingProperty) ? DirectionProxy.UP : DirectionProxy.DOWN) == args[updateShape$direction]
                 && !FastNMS.INSTANCE.method$BlockStateBase$canSurvive(args[0], args[updateShape$level], args[updateShape$blockPos])) {
             return MBlocks.AIR$defaultState;
         }

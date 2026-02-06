@@ -1,7 +1,6 @@
 package net.momirealms.craftengine.bukkit.block.behavior;
 
 import net.momirealms.craftengine.bukkit.nms.FastNMS;
-import net.momirealms.craftengine.bukkit.plugin.reflection.bukkit.CraftBukkitReflections;
 import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.CoreReflections;
 import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.MBlocks;
 import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.MFluids;
@@ -18,7 +17,13 @@ import net.momirealms.craftengine.core.util.Direction;
 import net.momirealms.craftengine.core.util.LazyReference;
 import net.momirealms.craftengine.core.util.ResourceConfigUtils;
 import net.momirealms.craftengine.core.world.context.BlockPlaceContext;
-import net.momirealms.craftengine.proxy.block.BlockStateBaseProxy;
+import net.momirealms.craftengine.proxy.bukkit.craftbukkit.block.CraftBlockStateProxy;
+import net.momirealms.craftengine.proxy.bukkit.craftbukkit.block.CraftBlockStatesProxy;
+import net.momirealms.craftengine.proxy.bukkit.craftbukkit.event.CraftEventFactoryProxy;
+import net.momirealms.craftengine.proxy.minecraft.core.BlockPosProxy;
+import net.momirealms.craftengine.proxy.minecraft.core.DirectionProxy;
+import net.momirealms.craftengine.proxy.minecraft.core.MutableBlockPosProxy;
+import net.momirealms.craftengine.proxy.minecraft.world.level.block.state.BlockStateBaseProxy;
 import org.bukkit.block.BlockState;
 import org.bukkit.event.block.BlockFormEvent;
 import org.jetbrains.annotations.Nullable;
@@ -50,7 +55,7 @@ public class ConcretePowderBlockBehavior extends BukkitBlockBehavior {
             if (!shouldSolidify(level, blockPos, previousState)) {
                 return super.updateStateForPlacement(context, state);
             } else {
-                BlockState craftBlockState = (BlockState) CraftBukkitReflections.method$CraftBlockStates$getBlockState.invoke(null, level, blockPos);
+                BlockState craftBlockState = (BlockState) CraftBlockStatesProxy.INSTANCE.getBlockState(level, blockPos);
                 craftBlockState.setBlockData(BlockStateUtils.fromBlockData(getDefaultBlockState()));
                 BlockFormEvent event = new BlockFormEvent(craftBlockState.getBlock(), craftBlockState);
                 if (!EventUtils.fireAndCheckCancel(event)) {
@@ -71,7 +76,7 @@ public class ConcretePowderBlockBehavior extends BukkitBlockBehavior {
         Object blockPos = args[1];
         Object replaceableState = args[3];
         if (shouldSolidify(world, blockPos, replaceableState)) {
-            CraftBukkitReflections.method$CraftEventFactory$handleBlockFormEvent.invoke(null, world, blockPos, getDefaultBlockState(), UpdateOption.UPDATE_ALL.flags());
+            CraftEventFactoryProxy.INSTANCE.handleBlockFormEvent(world, blockPos, getDefaultBlockState(), UpdateOption.UPDATE_ALL.flags());
         }
     }
 
@@ -84,11 +89,11 @@ public class ConcretePowderBlockBehavior extends BukkitBlockBehavior {
             if (!CoreReflections.clazz$Level.isInstance(level)) {
                 return getDefaultBlockState();
             } else {
-                BlockState craftBlockState = (BlockState) CraftBukkitReflections.method$CraftBlockStates$getBlockState.invoke(null, level, pos);
+                BlockState craftBlockState = (BlockState) CraftBlockStatesProxy.INSTANCE.getBlockState(level, pos);
                 craftBlockState.setBlockData(BlockStateUtils.fromBlockData(getDefaultBlockState()));
                 BlockFormEvent event = new BlockFormEvent(craftBlockState.getBlock(), craftBlockState);
                 if (!EventUtils.fireAndCheckCancel(event)) {
-                    return CraftBukkitReflections.method$CraftBlockState$getHandle.invoke(craftBlockState);
+                    return CraftBlockStateProxy.INSTANCE.getHandle(craftBlockState);
                 }
             }
         }
@@ -108,13 +113,13 @@ public class ConcretePowderBlockBehavior extends BukkitBlockBehavior {
 
     private static boolean touchesLiquid(Object level, Object pos) throws ReflectiveOperationException {
         boolean flag = false;
-        Object mutablePos = CoreReflections.method$BlockPos$mutable.invoke(pos);
+        Object mutablePos = BlockPosProxy.INSTANCE.mutable(pos);
         int j = Direction.values().length;
         for (int k = 0; k < j; k++) {
-            Object direction = CoreReflections.instance$Direction$values[k];
+            Object direction = DirectionProxy.VALUES[k];
             Object blockState = FastNMS.INSTANCE.method$BlockGetter$getBlockState(level, mutablePos);
-            if (direction != CoreReflections.instance$Direction$DOWN || canSolidify(blockState)) {
-                CoreReflections.method$MutableBlockPos$setWithOffset.invoke(mutablePos, pos, direction);
+            if (direction != DirectionProxy.DOWN || canSolidify(blockState)) {
+                MutableBlockPosProxy.INSTANCE.setWithOffset(mutablePos, pos, direction);
                 blockState = FastNMS.INSTANCE.method$BlockGetter$getBlockState(level, mutablePos);
                 if (canSolidify(blockState) && !(boolean) CoreReflections.method$BlockStateBase$isFaceSturdy.invoke(blockState, level, pos, FastNMS.INSTANCE.method$Direction$getOpposite(direction), CoreReflections.instance$SupportType$FULL)) {
                     flag = true;

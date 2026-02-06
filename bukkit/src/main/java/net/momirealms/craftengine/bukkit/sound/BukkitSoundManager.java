@@ -15,6 +15,9 @@ import net.momirealms.craftengine.core.util.AdventureHelper;
 import net.momirealms.craftengine.core.util.GsonHelper;
 import net.momirealms.craftengine.core.util.Key;
 import net.momirealms.craftengine.core.util.VersionHelper;
+import net.momirealms.craftengine.proxy.minecraft.core.HolderProxy;
+import net.momirealms.craftengine.proxy.minecraft.core.MappedRegistryProxy;
+import net.momirealms.craftengine.proxy.minecraft.core.RegistryProxy;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -95,7 +98,7 @@ public class BukkitSoundManager extends AbstractSoundManager {
         if (sounds.isEmpty()) return;
         Object registry = MBuiltInRegistries.SOUND_EVENT;
         try {
-            CoreReflections.field$MappedRegistry$frozen.set(registry, false);
+            MappedRegistryProxy.INSTANCE.setFrozen(registry, false);
             for (Key soundEventId : sounds) {
                 Object resourceLocation = KeyUtils.toIdentifier(soundEventId);
                 // 检查之前有没有注册过了
@@ -105,9 +108,9 @@ public class BukkitSoundManager extends AbstractSoundManager {
                     soundEvent = VersionHelper.isOrAbove1_21_2() ?
                             CoreReflections.constructor$SoundEvent.newInstance(resourceLocation, Optional.of(0)) :
                             CoreReflections.constructor$SoundEvent.newInstance(resourceLocation, 0, false);
-                    Object holder = CoreReflections.method$Registry$registerForHolder.invoke(null, registry, resourceLocation, soundEvent);
-                    CoreReflections.method$Holder$Reference$bindValue.invoke(holder, soundEvent);
-                    CoreReflections.field$Holder$Reference$tags.set(holder, Set.of());
+                    Object holder = RegistryProxy.INSTANCE.registerForHolder$1(registry, resourceLocation, soundEvent);
+                    HolderProxy.ReferenceProxy.INSTANCE.bindValue(holder, soundEvent);
+                    HolderProxy.ReferenceProxy.INSTANCE.setTags(holder, Set.of());
                     int id = FastNMS.INSTANCE.method$Registry$getId(registry, soundEvent);
                     super.customSoundsInRegistry.put(id, soundEventId);
                 }
@@ -115,9 +118,7 @@ public class BukkitSoundManager extends AbstractSoundManager {
         } catch (Exception e) {
             this.plugin.logger().warn("Failed to register jukebox songs.", e);
         } finally {
-            try {
-                CoreReflections.field$MappedRegistry$frozen.set(registry, true);
-            } catch (ReflectiveOperationException ignored) {}
+            MappedRegistryProxy.INSTANCE.setFrozen(registry, true);
         }
     }
 
@@ -127,7 +128,7 @@ public class BukkitSoundManager extends AbstractSoundManager {
         Object registry = FastNMS.INSTANCE.method$RegistryAccess$lookupOrThrow(FastNMS.INSTANCE.registryAccess(), MRegistries.JUKEBOX_SONG);
         try {
             // 获取 JUKEBOX_SONG 注册表
-            CoreReflections.field$MappedRegistry$frozen.set(registry, false);
+            MappedRegistryProxy.INSTANCE.setFrozen(registry, false);
             for (Map.Entry<Key, JukeboxSong> entry : songs.entrySet()) {
                 Key id = entry.getKey();
                 JukeboxSong jukeboxSong = entry.getValue();
@@ -140,19 +141,17 @@ public class BukkitSoundManager extends AbstractSoundManager {
                     Object soundEvent = VersionHelper.isOrAbove1_21_2() ?
                             CoreReflections.constructor$SoundEvent.newInstance(soundId, Optional.of(jukeboxSong.range())) :
                             CoreReflections.constructor$SoundEvent.newInstance(soundId, jukeboxSong.range(), false);
-                    Object soundHolder = CoreReflections.method$Holder$direct.invoke(null, soundEvent);
+                    Object soundHolder = HolderProxy.INSTANCE.direct(soundEvent);
                     song = CoreReflections.constructor$JukeboxSong.newInstance(soundHolder, ComponentUtils.adventureToMinecraft(jukeboxSong.description()), jukeboxSong.lengthInSeconds(), jukeboxSong.comparatorOutput());
-                    Object holder = CoreReflections.method$Registry$registerForHolder.invoke(null, registry, resourceLocation, song);
-                    CoreReflections.method$Holder$Reference$bindValue.invoke(holder, song);
-                    CoreReflections.field$Holder$Reference$tags.set(holder, Set.of());
+                    Object holder = RegistryProxy.INSTANCE.registerForHolder$1(registry, resourceLocation, song);
+                    HolderProxy.ReferenceProxy.INSTANCE.bindValue(holder, song);
+                    HolderProxy.ReferenceProxy.INSTANCE.setTags(holder, Set.of());
                 }
             }
         } catch (Exception e) {
             this.plugin.logger().warn("Failed to register jukebox songs.", e);
         } finally {
-            try {
-                CoreReflections.field$MappedRegistry$frozen.set(registry, true);
-            } catch (ReflectiveOperationException ignored) {}
+            MappedRegistryProxy.INSTANCE.setFrozen(registry, true);
         }
     }
 }

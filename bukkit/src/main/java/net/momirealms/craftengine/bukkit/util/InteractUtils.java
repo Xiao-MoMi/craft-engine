@@ -7,7 +7,6 @@ import net.momirealms.craftengine.bukkit.item.behavior.BlockItemBehavior;
 import net.momirealms.craftengine.bukkit.item.behavior.FlintAndSteelItemBehavior;
 import net.momirealms.craftengine.bukkit.item.recipe.BukkitRecipeManager;
 import net.momirealms.craftengine.bukkit.nms.FastNMS;
-import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.CoreReflections;
 import net.momirealms.craftengine.bukkit.world.BukkitExistingBlock;
 import net.momirealms.craftengine.bukkit.world.BukkitWorld;
 import net.momirealms.craftengine.core.block.BlockKeys;
@@ -26,6 +25,7 @@ import net.momirealms.craftengine.core.util.*;
 import net.momirealms.craftengine.core.world.BlockHitResult;
 import net.momirealms.craftengine.core.world.BlockPos;
 import net.momirealms.craftengine.core.world.context.BlockPlaceContext;
+import net.momirealms.craftengine.proxy.minecraft.world.InteractionHandProxy;
 import org.bukkit.DyeColor;
 import org.bukkit.GameMode;
 import org.bukkit.Registry;
@@ -1102,7 +1102,7 @@ public final class InteractUtils {
         return FastNMS.INSTANCE.constructor$BlockPlaceContext(
                 context.getLevel().serverWorld(),
                 Optional.ofNullable(context.getPlayer()).map(net.momirealms.craftengine.core.entity.player.Player::serverPlayer).orElse(null),
-                context.getHand() == InteractionHand.MAIN_HAND ? CoreReflections.instance$InteractionHand$MAIN_HAND : CoreReflections.instance$InteractionHand$OFF_HAND,
+                context.getHand() == InteractionHand.MAIN_HAND ? InteractionHandProxy.MAIN_HAND : InteractionHandProxy.OFF_HAND,
                 context.getItem().getLiteralObject(),
                 toNMSHitResult(context.getHitResult())
         );

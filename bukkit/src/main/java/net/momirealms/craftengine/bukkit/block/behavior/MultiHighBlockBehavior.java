@@ -2,7 +2,6 @@ package net.momirealms.craftengine.bukkit.block.behavior;
 
 import net.momirealms.craftengine.bukkit.api.BukkitAdaptors;
 import net.momirealms.craftengine.bukkit.nms.FastNMS;
-import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.CoreReflections;
 import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.MBlocks;
 import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.MFluids;
 import net.momirealms.craftengine.bukkit.plugin.user.BukkitServerPlayer;
@@ -21,6 +20,7 @@ import net.momirealms.craftengine.core.util.Direction;
 import net.momirealms.craftengine.core.util.ResourceConfigUtils;
 import net.momirealms.craftengine.core.world.*;
 import net.momirealms.craftengine.core.world.context.BlockPlaceContext;
+import net.momirealms.craftengine.proxy.minecraft.core.DirectionProxy;
 import org.bukkit.inventory.ItemStack;
 
 import java.util.Map;
@@ -53,7 +53,7 @@ public class MultiHighBlockBehavior extends BukkitBlockBehavior {
         Object direction = args[updateShape$direction];
         Object level = args[updateShape$level];
         Object blockPos = args[updateShape$blockPos];
-        if (direction == CoreReflections.instance$Direction$UP && value != property.max) {
+        if (direction == DirectionProxy.UP && value != property.max) {
             Object abovePos = LocationUtils.above(blockPos);
             Object aboveState = FastNMS.INSTANCE.method$BlockGetter$getBlockState(level, abovePos);
             ImmutableBlockState state = BlockStateUtils.getOptionalCustomBlockState(aboveState).orElse(null);
@@ -71,7 +71,7 @@ public class MultiHighBlockBehavior extends BukkitBlockBehavior {
                 playBreakEffect(customState, blockPos, level);
                 return MBlocks.AIR$defaultState;
             }
-        } else if (direction == CoreReflections.instance$Direction$DOWN && value != property.min) {
+        } else if (direction == DirectionProxy.DOWN && value != property.min) {
             Object belowPos = LocationUtils.below(blockPos);
             Object belowState = FastNMS.INSTANCE.method$BlockGetter$getBlockState(level, belowPos);
             ImmutableBlockState state = BlockStateUtils.getOptionalCustomBlockState(belowState).orElse(null);

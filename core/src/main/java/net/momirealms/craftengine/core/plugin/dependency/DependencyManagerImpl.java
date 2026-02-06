@@ -18,7 +18,6 @@ import java.nio.file.Path;
 import java.util.*;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Executor;
-import java.util.function.Supplier;
 import java.util.stream.Stream;
 
 public class DependencyManagerImpl implements DependencyManager {

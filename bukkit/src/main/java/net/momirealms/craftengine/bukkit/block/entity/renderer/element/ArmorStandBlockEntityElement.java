@@ -3,7 +3,6 @@ package net.momirealms.craftengine.bukkit.block.entity.renderer.element;
 import com.mojang.datafixers.util.Pair;
 import it.unimi.dsi.fastutil.ints.IntList;
 import net.momirealms.craftengine.bukkit.nms.FastNMS;
-import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.CoreReflections;
 import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.MAttributeHolders;
 import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.MEntityTypes;
 import net.momirealms.craftengine.bukkit.world.score.BukkitTeamManager;
@@ -11,6 +10,9 @@ import net.momirealms.craftengine.core.block.entity.render.element.BlockEntityEl
 import net.momirealms.craftengine.core.entity.player.Player;
 import net.momirealms.craftengine.core.util.VersionHelper;
 import net.momirealms.craftengine.core.world.BlockPos;
+import net.momirealms.craftengine.proxy.minecraft.world.entity.EntityProxy;
+import net.momirealms.craftengine.proxy.minecraft.world.entity.EquipmentSlotProxy;
+import net.momirealms.craftengine.proxy.minecraft.world.phys.Vec3Proxy;
 import org.joml.Vector3f;
 
 import java.util.Collections;
@@ -29,14 +31,14 @@ public class ArmorStandBlockEntityElement implements BlockEntityElement {
     public final UUID uuid = UUID.randomUUID();
 
     public ArmorStandBlockEntityElement(ArmorStandBlockEntityElementConfig config, BlockPos pos) {
-        this(config, pos, CoreReflections.instance$Entity$ENTITY_COUNTER.incrementAndGet(), false);
+        this(config, pos, EntityProxy.ENTITY_COUNTER.incrementAndGet(), false);
     }
 
     public ArmorStandBlockEntityElement(ArmorStandBlockEntityElementConfig config, BlockPos pos, int entityId, boolean posChanged) {
         Vector3f position = config.position();
         this.cachedSpawnPacket = FastNMS.INSTANCE.constructor$ClientboundAddEntityPacket(
                 entityId, this.uuid, pos.x() + position.x, pos.y() + position.y, pos.z() + position.z,
-                config.xRot(), config.yRot(), MEntityTypes.ARMOR_STAND, 0, CoreReflections.instance$Vec3$Zero, config.yRot()
+                config.xRot(), config.yRot(), MEntityTypes.ARMOR_STAND, 0, Vec3Proxy.ZERO, config.yRot()
         );
         this.config = config;
         this.cachedDespawnPacket = FastNMS.INSTANCE.constructor$ClientboundRemoveEntitiesPacket(IntList.of(entityId));
@@ -68,7 +70,7 @@ public class ArmorStandBlockEntityElement implements BlockEntityElement {
     public void show(Player player) {
         player.sendPackets(List.of(this.cachedSpawnPacket, FastNMS.INSTANCE.constructor$ClientboundSetEntityDataPacket(this.entityId, this.config.metadataValues(player))), false);
         player.sendPacket(FastNMS.INSTANCE.constructor$ClientboundSetEquipmentPacket(this.entityId, List.of(
-                Pair.of(CoreReflections.instance$EquipmentSlot$HEAD, this.config.item(player).getLiteralObject())
+                Pair.of(EquipmentSlotProxy.HEAD, this.config.item(player).getLiteralObject())
         )), false);
         if (this.cachedDespawnPacket != null) {
             player.sendPacket(this.cachedDespawnPacket, false);
@@ -85,13 +87,13 @@ public class ArmorStandBlockEntityElement implements BlockEntityElement {
                     this.cachedUpdatePosPacket,
                     FastNMS.INSTANCE.constructor$ClientboundSetEntityDataPacket(this.entityId, this.config.metadataValues(player)),
                     FastNMS.INSTANCE.constructor$ClientboundSetEquipmentPacket(this.entityId, List.of(
-                            Pair.of(CoreReflections.instance$EquipmentSlot$HEAD, this.config.item(player).getLiteralObject())
+                            Pair.of(EquipmentSlotProxy.HEAD, this.config.item(player).getLiteralObject())
                     ))
             ), false);
         } else {
             player.sendPacket(FastNMS.INSTANCE.constructor$ClientboundSetEntityDataPacket(this.entityId, this.config.metadataValues(player)), false);
             player.sendPacket(FastNMS.INSTANCE.constructor$ClientboundSetEquipmentPacket(this.entityId, List.of(
-                    Pair.of(CoreReflections.instance$EquipmentSlot$HEAD, this.config.item(player).getLiteralObject())
+                    Pair.of(EquipmentSlotProxy.HEAD, this.config.item(player).getLiteralObject())
             )), false);
         }
     }

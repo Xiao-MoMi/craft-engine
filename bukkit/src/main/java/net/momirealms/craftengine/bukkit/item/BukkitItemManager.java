@@ -15,7 +15,10 @@ import net.momirealms.craftengine.bukkit.item.listener.SlotChangeListener;
 import net.momirealms.craftengine.bukkit.item.recipe.BukkitRecipeManager;
 import net.momirealms.craftengine.bukkit.nms.FastNMS;
 import net.momirealms.craftengine.bukkit.plugin.BukkitCraftEngine;
-import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.*;
+import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.MBuiltInRegistries;
+import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.MItems;
+import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.MRegistries;
+import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.MRegistryOps;
 import net.momirealms.craftengine.bukkit.plugin.user.BukkitServerPlayer;
 import net.momirealms.craftengine.bukkit.util.ItemStackUtils;
 import net.momirealms.craftengine.bukkit.util.KeyUtils;
@@ -32,6 +35,16 @@ import net.momirealms.craftengine.core.util.GsonHelper;
 import net.momirealms.craftengine.core.util.Key;
 import net.momirealms.craftengine.core.util.UniqueKey;
 import net.momirealms.craftengine.core.util.VersionHelper;
+import net.momirealms.craftengine.proxy.minecraft.core.HolderProxy;
+import net.momirealms.craftengine.proxy.minecraft.core.MappedRegistryProxy;
+import net.momirealms.craftengine.proxy.minecraft.core.RegistryProxy;
+import net.momirealms.craftengine.proxy.minecraft.network.chat.ComponentProxy;
+import net.momirealms.craftengine.proxy.minecraft.tags.TagKeyProxy;
+import net.momirealms.craftengine.proxy.minecraft.world.item.ItemStackProxy;
+import net.momirealms.craftengine.proxy.minecraft.world.item.equipment.trim.ArmorTrimProxy;
+import net.momirealms.craftengine.proxy.minecraft.world.item.equipment.trim.MaterialAssetGroupProxy;
+import net.momirealms.craftengine.proxy.minecraft.world.item.equipment.trim.TrimMaterialProxy;
+import net.momirealms.craftengine.proxy.minecraft.world.item.equipment.trim.TrimPatternProxy;
 import org.bukkit.Bukkit;
 import org.bukkit.NamespacedKey;
 import org.bukkit.event.HandlerList;
@@ -82,7 +95,7 @@ public class BukkitItemManager extends AbstractItemManager<ItemStack> {
         this.bedrockItemHolder = FastNMS.INSTANCE.method$Registry$getHolderByResourceKey(MBuiltInRegistries.ITEM, FastNMS.INSTANCE.method$ResourceKey$create(MRegistries.ITEM, KeyUtils.toIdentifier(Key.of("minecraft:bedrock")))).get();
         this.registerCustomTrimMaterial();
         this.loadLastRegisteredPatterns();
-        ItemStack emptyStack = FastNMS.INSTANCE.method$CraftItemStack$asCraftMirror(CoreReflections.instance$ItemStack$EMPTY);
+        ItemStack emptyStack = FastNMS.INSTANCE.method$CraftItemStack$asCraftMirror(ItemStackProxy.EMPTY);
         this.emptyItem = this.factory.wrap(emptyStack);
         this.emptyUniqueItem = UniqueIdItem.of(this.emptyItem);
         this.decoratedHashOpsGenerator = VersionHelper.isOrAbove1_21_5() ? (Function<Object, Integer>) FastNMS.INSTANCE.createDecoratedHashOpsGenerator(MRegistryOps.HASHCODE) : null;
@@ -158,7 +171,7 @@ public class BukkitItemManager extends AbstractItemManager<ItemStack> {
             jsonObject.addProperty("id", result.id());
             jsonObject.addProperty("count", result.count());
             jsonObject.add("components", result.components());
-            Object nmsStack = CoreReflections.instance$ItemStack$CODEC.parse(MRegistryOps.JSON, jsonObject)
+            Object nmsStack = ItemStackProxy.INSTANCE.getCodec().parse(MRegistryOps.JSON, jsonObject)
                     .resultOrPartial((error) -> plugin.logger().severe("Tried to load invalid item: '" + error + "'")).orElse(null);
             if (nmsStack == null) {
                 return this.emptyItem;
@@ -206,26 +219,18 @@ public class BukkitItemManager extends AbstractItemManager<ItemStack> {
         if (Config.sacrificedAssetId() != null)
             this.lastRegisteredPatterns.add(Config.sacrificedAssetId());
         Object registry = FastNMS.INSTANCE.method$RegistryAccess$lookupOrThrow(FastNMS.INSTANCE.registryAccess(), MRegistries.TRIM_PATTERN);
-        try {
-            CoreReflections.field$MappedRegistry$frozen.set(registry, false);
-            for (Key assetId : this.lastRegisteredPatterns) {
-                Object resourceLocation = KeyUtils.toIdentifier(assetId);
-                Object previous = FastNMS.INSTANCE.method$Registry$getValue(registry, resourceLocation);
-                if (previous == null) {
-                    Object trimPattern = createTrimPattern(assetId);
-                    Object holder = CoreReflections.method$Registry$registerForHolder.invoke(null, registry, resourceLocation, trimPattern);
-                    CoreReflections.method$Holder$Reference$bindValue.invoke(holder, trimPattern);
-                    CoreReflections.field$Holder$Reference$tags.set(holder, Set.of());
-                }
-            }
-        } catch (Exception e) {
-            this.plugin.logger().warn("Failed to register armor trim pattern.", e);
-        } finally {
-            try {
-                CoreReflections.field$MappedRegistry$frozen.set(registry, true);
-            } catch (ReflectiveOperationException ignored) {
+        MappedRegistryProxy.INSTANCE.setFrozen(registry, false);
+        for (Key assetId : this.lastRegisteredPatterns) {
+            Object resourceLocation = KeyUtils.toIdentifier(assetId);
+            Object previous = FastNMS.INSTANCE.method$Registry$getValue(registry, resourceLocation);
+            if (previous == null) {
+                Object trimPattern = createTrimPattern(assetId);
+                Object holder = RegistryProxy.INSTANCE.registerForHolder$1(registry, resourceLocation, trimPattern);
+                HolderProxy.ReferenceProxy.INSTANCE.bindValue(holder, trimPattern);
+                HolderProxy.ReferenceProxy.INSTANCE.setTags(holder, Set.of());
             }
         }
+        MappedRegistryProxy.INSTANCE.setFrozen(registry, true);
     }
 
     private void persistLastRegisteredPatterns() {
@@ -280,41 +285,33 @@ public class BukkitItemManager extends AbstractItemManager<ItemStack> {
         Object resourceLocation = KeyUtils.toIdentifier(Key.of("minecraft", AbstractPackManager.NEW_TRIM_MATERIAL));
         Object previous = FastNMS.INSTANCE.method$Registry$getValue(registry, resourceLocation);
         if (previous == null) {
-            try {
-                CoreReflections.field$MappedRegistry$frozen.set(registry, false);
-                Object trimMaterial = createTrimMaterial();
-                Object holder = CoreReflections.method$Registry$registerForHolder.invoke(null, registry, resourceLocation, trimMaterial);
-                CoreReflections.method$Holder$Reference$bindValue.invoke(holder, trimMaterial);
-                CoreReflections.field$Holder$Reference$tags.set(holder, Set.of());
-            } catch (Exception e) {
-                this.plugin.logger().warn("Failed to register trim material.", e);
-            } finally {
-                try {
-                    CoreReflections.field$MappedRegistry$frozen.set(registry, true);
-                } catch (ReflectiveOperationException ignored) {
-                }
-            }
+            MappedRegistryProxy.INSTANCE.setFrozen(registry, false);
+            Object trimMaterial = createTrimMaterial();
+            Object holder = RegistryProxy.INSTANCE.registerForHolder$1(registry, resourceLocation, trimMaterial);
+            HolderProxy.ReferenceProxy.INSTANCE.bindValue(holder, trimMaterial);
+            HolderProxy.ReferenceProxy.INSTANCE.setTags(holder, Set.of());
+            MappedRegistryProxy.INSTANCE.setFrozen(registry, true);
         }
     }
 
-    private Object createTrimPattern(Key key) throws ReflectiveOperationException {
+    private Object createTrimPattern(Key key) {
         if (VersionHelper.isOrAbove1_21_5()) {
-            return CoreReflections.constructor$TrimPattern.newInstance(KeyUtils.toIdentifier(key), CoreReflections.instance$Component$empty, false);
+            return TrimPatternProxy.INSTANCE.newInstance(KeyUtils.toIdentifier(key), ComponentProxy.INSTANCE.empty(), false);
         } else if (VersionHelper.isOrAbove1_20_2()) {
-            return CoreReflections.constructor$TrimPattern.newInstance(KeyUtils.toIdentifier(key), this.bedrockItemHolder, CoreReflections.instance$Component$empty, false);
+            return TrimPatternProxy.INSTANCE.newInstance(KeyUtils.toIdentifier(key), this.bedrockItemHolder, ComponentProxy.INSTANCE.empty(), false);
         } else {
-            return CoreReflections.constructor$TrimPattern.newInstance(KeyUtils.toIdentifier(key), this.bedrockItemHolder, CoreReflections.instance$Component$empty);
+            return TrimPatternProxy.INSTANCE.newInstance(KeyUtils.toIdentifier(key), this.bedrockItemHolder, ComponentProxy.INSTANCE.empty());
         }
     }
 
-    private Object createTrimMaterial() throws ReflectiveOperationException {
+    private Object createTrimMaterial() {
         if (VersionHelper.isOrAbove1_21_5()) {
-            Object assetGroup = CoreReflections.method$MaterialAssetGroup$create.invoke(null, "custom");
-            return CoreReflections.constructor$TrimMaterial.newInstance(assetGroup, CoreReflections.instance$Component$empty);
+            Object assetGroup = MaterialAssetGroupProxy.INSTANCE.create("custom");
+            return TrimMaterialProxy.INSTANCE.newInstance(assetGroup, ComponentProxy.INSTANCE.empty());
         } else if (VersionHelper.isOrAbove1_21_4()) {
-            return CoreReflections.constructor$TrimMaterial.newInstance("custom", this.bedrockItemHolder, Map.of(), CoreReflections.instance$Component$empty);
+            return TrimMaterialProxy.INSTANCE.newInstance("custom", this.bedrockItemHolder, Map.of(), ComponentProxy.INSTANCE.empty());
         } else {
-            return CoreReflections.constructor$TrimMaterial.newInstance("custom", this.bedrockItemHolder, 0f, Map.of(), CoreReflections.instance$Component$empty);
+            return TrimMaterialProxy.INSTANCE.newInstance("custom", this.bedrockItemHolder, 0f, Map.of(), ComponentProxy.INSTANCE.empty());
         }
     }
 
@@ -387,24 +384,19 @@ public class BukkitItemManager extends AbstractItemManager<ItemStack> {
                 .clientBoundMaterial(clientBoundMaterialId);
     }
 
-    @SuppressWarnings("unchecked")
     private void registerAllVanillaItems() {
-        try {
-            for (Object item : (Iterable<?>) MBuiltInRegistries.ITEM) {
-                Object resourceLocation = FastNMS.INSTANCE.method$Registry$getKey(MBuiltInRegistries.ITEM, item);
-                Key itemKey = KeyUtils.identifierToKey(resourceLocation);
-                VANILLA_ITEMS.add(itemKey);
-                super.cachedVanillaItemSuggestions.add(Suggestion.suggestion(itemKey.asString()));
-                UniqueKey uniqueKey = UniqueKey.create(itemKey);
-                Object mcHolder = FastNMS.INSTANCE.method$Registry$getHolderByResourceKey(MBuiltInRegistries.ITEM, FastNMS.INSTANCE.method$ResourceKey$create(MRegistries.ITEM, resourceLocation)).get();
-                Set<Object> tags = (Set<Object>) CoreReflections.field$Holder$Reference$tags.get(mcHolder);
-                for (Object tag : tags) {
-                    Key tagId = Key.of(CoreReflections.field$TagKey$location.get(tag).toString());
-                    VANILLA_ITEM_TAGS.computeIfAbsent(tagId, (key) -> new ArrayList<>()).add(uniqueKey);
-                }
+        for (Object item : (Iterable<?>) MBuiltInRegistries.ITEM) {
+            Object resourceLocation = FastNMS.INSTANCE.method$Registry$getKey(MBuiltInRegistries.ITEM, item);
+            Key itemKey = KeyUtils.identifierToKey(resourceLocation);
+            VANILLA_ITEMS.add(itemKey);
+            super.cachedVanillaItemSuggestions.add(Suggestion.suggestion(itemKey.asString()));
+            UniqueKey uniqueKey = UniqueKey.create(itemKey);
+            Object mcHolder = FastNMS.INSTANCE.method$Registry$getHolderByResourceKey(MBuiltInRegistries.ITEM, FastNMS.INSTANCE.method$ResourceKey$create(MRegistries.ITEM, resourceLocation)).get();
+            Set<Object> tags = HolderProxy.ReferenceProxy.INSTANCE.getTags(mcHolder);
+            for (Object tag : tags) {
+                Key tagId = KeyUtils.identifierToKey(TagKeyProxy.INSTANCE.getLocation(tag));
+                VANILLA_ITEM_TAGS.computeIfAbsent(tagId, (key) -> new ArrayList<>()).add(uniqueKey);
             }
-        } catch (ReflectiveOperationException e) {
-            plugin.logger().warn("Failed to init vanilla items", e);
         }
     }
 
@@ -422,13 +414,10 @@ public class BukkitItemManager extends AbstractItemManager<ItemStack> {
             if (VersionHelper.isOrAbove1_20_5()) {
                 previousTrim = base.getExactComponent(DataComponentKeys.TRIM);
             } else {
-                try {
-                    previousTrim = VersionHelper.isOrAbove1_20_2() ?
-                    ((Optional<?>) CoreReflections.method$ArmorTrim$getTrim.invoke(null, FastNMS.INSTANCE.registryAccess(), base.getLiteralObject(), true)).orElse(null) :
-                    ((Optional<?>) CoreReflections.method$ArmorTrim$getTrim.invoke(null, FastNMS.INSTANCE.registryAccess(), base.getLiteralObject())).orElse(null);
-                } catch (ReflectiveOperationException e) {
-                    this.plugin.logger().warn("Failed to get armor trim", e);
-                    return this.emptyItem;
+                if (VersionHelper.isOrAbove1_20_2()) {
+                    previousTrim = ArmorTrimProxy.INSTANCE.getTrim(FastNMS.INSTANCE.registryAccess(), base.getLiteralObject(), true);
+                } else {
+                    previousTrim = ArmorTrimProxy.INSTANCE.getTrim(FastNMS.INSTANCE.registryAccess(), base.getLiteralObject());
                 }
             }
             if (armorTrim.equals(previousTrim)) {
@@ -438,12 +427,7 @@ public class BukkitItemManager extends AbstractItemManager<ItemStack> {
             if (VersionHelper.isOrAbove1_20_5()) {
                 newItem.setExactComponent(DataComponentKeys.TRIM, armorTrim);
             } else {
-                try {
-                    CoreReflections.method$ArmorTrim$setTrim.invoke(null, FastNMS.INSTANCE.registryAccess(), newItem.getLiteralObject(), armorTrim);
-                } catch (ReflectiveOperationException e) {
-                    this.plugin.logger().warn("Failed to set armor trim", e);
-                    return this.emptyItem;
-                }
+                ArmorTrimProxy.INSTANCE.setTrim(FastNMS.INSTANCE.registryAccess(), newItem.getLiteralObject(), armorTrim);
             }
             return newItem;
         }

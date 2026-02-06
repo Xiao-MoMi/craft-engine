@@ -20,6 +20,8 @@ import net.momirealms.craftengine.core.sound.SoundData;
 import net.momirealms.craftengine.core.util.*;
 import net.momirealms.craftengine.core.world.World;
 import net.momirealms.craftengine.core.world.WorldEvents;
+import net.momirealms.craftengine.proxy.minecraft.core.DirectionProxy;
+import net.momirealms.craftengine.proxy.minecraft.world.level.block.BasePressurePlateBlockProxy;
 import org.bukkit.GameEvent;
 import org.bukkit.block.Block;
 import org.bukkit.entity.Entity;
@@ -79,7 +81,7 @@ public class PressurePlateBlockBehavior extends BukkitBlockBehavior {
         Object blockPos = LocationUtils.below(args[2]);
         Object level = args[1];
         return FastNMS.INSTANCE.method$Block$canSupportRigidBlock(level, blockPos)
-                || FastNMS.INSTANCE.method$Block$canSupportCenter(level, blockPos, CoreReflections.instance$Direction$UP);
+                || FastNMS.INSTANCE.method$Block$canSupportCenter(level, blockPos, DirectionProxy.UP);
     }
 
     @Override
@@ -116,7 +118,7 @@ public class PressurePlateBlockBehavior extends BukkitBlockBehavior {
             case EVERYTHING -> CoreReflections.clazz$Entity;
             case MOBS -> CoreReflections.clazz$LivingEntity;
         };
-        Object box = FastNMS.INSTANCE.method$AABB$move(CoreReflections.instance$BasePressurePlateBlock$TOUCH_AABB, pos);
+        Object box = FastNMS.INSTANCE.method$AABB$move(BasePressurePlateBlockProxy.INSTANCE.getTouchAABB(), pos);
         return !FastNMS.INSTANCE.method$EntityGetter$getEntitiesOfClass(
                 level, clazz, box,
                 MEntitySelectors.NO_SPECTATORS.and(entity -> !FastNMS.INSTANCE.method$Entity$isIgnoringBlockTriggers(entity))

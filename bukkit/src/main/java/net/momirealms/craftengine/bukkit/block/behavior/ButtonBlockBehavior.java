@@ -22,7 +22,9 @@ import net.momirealms.craftengine.core.sound.SoundData;
 import net.momirealms.craftengine.core.util.*;
 import net.momirealms.craftengine.core.world.BlockPos;
 import net.momirealms.craftengine.core.world.context.UseOnContext;
-import net.momirealms.craftengine.proxy.sound.SoundSourceProxy;
+import net.momirealms.craftengine.proxy.minecraft.core.DirectionProxy;
+import net.momirealms.craftengine.proxy.minecraft.sounds.SoundSourceProxy;
+import net.momirealms.craftengine.proxy.minecraft.world.phys.shape.CollisionContextProxy;
 import org.bukkit.Location;
 import org.bukkit.World;
 
@@ -149,7 +151,7 @@ public class ButtonBlockBehavior extends BukkitBlockBehavior {
         Object arrow = this.canButtonBeActivatedByArrows ? FastNMS.INSTANCE.method$EntityGetter$getEntitiesOfClass(
                 level, CoreReflections.clazz$AbstractArrow, FastNMS.INSTANCE.method$AABB$move(
                         FastNMS.INSTANCE.method$VoxelShape$bounds(FastNMS.INSTANCE.method$BlockState$getShape(
-                                state, level, pos, CoreReflections.instance$CollisionContext$empty
+                                state, level, pos, CollisionContextProxy.INSTANCE.empty()
                         )), pos), MEntitySelectors.NO_SPECTATORS).stream().findFirst().orElse(null) : null;
         boolean on = arrow != null;
         ImmutableBlockState blockState = BlockStateUtils.getOptionalCustomBlockState(state).orElse(null);
@@ -181,7 +183,7 @@ public class ButtonBlockBehavior extends BukkitBlockBehavior {
             Property<HorizontalDirection> facing = (Property<HorizontalDirection>) state.owner().value().getProperty("facing");
             if (facing != null) {
                 orientation = FastNMS.INSTANCE.method$ExperimentalRedstoneUtils$initialOrientation(
-                        level, nmsDirection, opposite.axis().isHorizontal() ? CoreReflections.instance$Direction$UP : DirectionUtils.toNMSDirection(state.get(facing).toDirection())
+                        level, nmsDirection, opposite.axis().isHorizontal() ? DirectionProxy.UP : DirectionUtils.toNMSDirection(state.get(facing).toDirection())
                 );
             }
         }

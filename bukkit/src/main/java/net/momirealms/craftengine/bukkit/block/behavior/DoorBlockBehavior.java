@@ -9,7 +9,6 @@ import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.CoreReflect
 import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.MBlocks;
 import net.momirealms.craftengine.bukkit.plugin.user.BukkitServerPlayer;
 import net.momirealms.craftengine.bukkit.util.BlockStateUtils;
-import net.momirealms.craftengine.bukkit.util.DirectionUtils;
 import net.momirealms.craftengine.bukkit.util.LocationUtils;
 import net.momirealms.craftengine.core.block.CustomBlock;
 import net.momirealms.craftengine.core.block.ImmutableBlockState;
@@ -31,6 +30,9 @@ import net.momirealms.craftengine.core.util.VersionHelper;
 import net.momirealms.craftengine.core.world.*;
 import net.momirealms.craftengine.core.world.context.BlockPlaceContext;
 import net.momirealms.craftengine.core.world.context.UseOnContext;
+import net.momirealms.craftengine.proxy.minecraft.core.AxisProxy;
+import net.momirealms.craftengine.proxy.minecraft.core.DirectionProxy;
+import net.momirealms.craftengine.proxy.minecraft.world.level.pathfinder.PathComputationTypeProxy;
 import org.bukkit.Bukkit;
 import org.bukkit.GameEvent;
 import org.bukkit.Location;
@@ -98,7 +100,7 @@ public class DoorBlockBehavior extends AbstractCanSurviveBlockBehavior implement
         ImmutableBlockState customState = optionalCustomState.get();
         DoubleBlockHalf half = customState.get(this.halfProperty);
         Object direction = VersionHelper.isOrAbove1_21_2() ? args[4] : args[1];
-        if (DirectionUtils.isYAxis(direction) && half == DoubleBlockHalf.LOWER == (direction == CoreReflections.instance$Direction$UP)) {
+        if (DirectionProxy.INSTANCE.getAxis(direction) == AxisProxy.Y && half == DoubleBlockHalf.LOWER == (direction == DirectionProxy.UP)) {
             Optional<ImmutableBlockState> optionalNeighborState = BlockStateUtils.getOptionalCustomBlockState(args[updateShape$neighborState]);
             if (optionalNeighborState.isEmpty()) {
                 return MBlocks.AIR$defaultState;
@@ -113,7 +115,7 @@ public class DoorBlockBehavior extends AbstractCanSurviveBlockBehavior implement
             }
             return MBlocks.AIR$defaultState;
         } else {
-            if (half == DoubleBlockHalf.LOWER && direction == CoreReflections.instance$Direction$DOWN
+            if (half == DoubleBlockHalf.LOWER && direction == DirectionProxy.DOWN
                     && !canSurvive(thisBlock, blockState, level, blockPos)) {
                 MultiHighBlockBehavior.playBreakEffect(customState, blockPos, level);
                 return MBlocks.AIR$defaultState;
@@ -142,7 +144,7 @@ public class DoorBlockBehavior extends AbstractCanSurviveBlockBehavior implement
     private void preventDropFromBottomPart(Object level, Object pos, ImmutableBlockState state, Object player) {
         DoubleBlockHalf half = state.get(this.halfProperty);
         if (half == DoubleBlockHalf.UPPER) {
-            Object blockPos = FastNMS.INSTANCE.method$BlockPos$relative(pos, CoreReflections.instance$Direction$DOWN);
+            Object blockPos = FastNMS.INSTANCE.method$BlockPos$relative(pos, DirectionProxy.DOWN);
             Object blockState = FastNMS.INSTANCE.method$BlockGetter$getBlockState(level, blockPos);
             ImmutableBlockState belowState = BukkitBlockManager.instance().getImmutableBlockState(BlockStateUtils.blockStateToId(blockState));
             if (belowState == null || belowState.isEmpty()) return;
@@ -294,7 +296,7 @@ public class DoorBlockBehavior extends AbstractCanSurviveBlockBehavior implement
         Object blockState = args[0];
         Optional<ImmutableBlockState> optionalCustomState = BlockStateUtils.getOptionalCustomBlockState(blockState);
         if (optionalCustomState.isEmpty()) return false;
-        if (type == CoreReflections.instance$PathComputationType$LAND || type == CoreReflections.instance$PathComputationType$AIR) {
+        if (type == PathComputationTypeProxy.LAND || type == PathComputationTypeProxy.AIR) {
             return optionalCustomState.get().get(this.openProperty);
         }
         return false;
@@ -347,7 +349,7 @@ public class DoorBlockBehavior extends AbstractCanSurviveBlockBehavior implement
             return belowCustomState.filter(immutableBlockState -> immutableBlockState.owner().value() == super.customBlock).isPresent();
         } else {
             return FastNMS.INSTANCE.method$BlockStateBase$isFaceSturdy(
-                    belowState, world, belowPos, CoreReflections.instance$Direction$UP,
+                    belowState, world, belowPos, DirectionProxy.UP,
                     CoreReflections.instance$SupportType$FULL
             );
         }

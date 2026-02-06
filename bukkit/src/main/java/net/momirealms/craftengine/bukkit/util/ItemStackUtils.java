@@ -3,8 +3,6 @@ package net.momirealms.craftengine.bukkit.util;
 import com.mojang.serialization.Dynamic;
 import net.momirealms.craftengine.bukkit.item.BukkitItemManager;
 import net.momirealms.craftengine.bukkit.nms.FastNMS;
-import net.momirealms.craftengine.bukkit.plugin.reflection.bukkit.CraftBukkitReflections;
-import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.CoreReflections;
 import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.MReferences;
 import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.MRegistryOps;
 import net.momirealms.craftengine.core.item.Item;
@@ -12,6 +10,9 @@ import net.momirealms.craftengine.core.item.recipe.UniqueIdItem;
 import net.momirealms.craftengine.core.plugin.CraftEngine;
 import net.momirealms.craftengine.core.plugin.config.Config;
 import net.momirealms.craftengine.core.util.VersionHelper;
+import net.momirealms.craftengine.proxy.bukkit.craftbukkit.inventory.CraftItemStackProxy;
+import net.momirealms.craftengine.proxy.minecraft.util.DataFixersProxy;
+import net.momirealms.craftengine.proxy.minecraft.world.item.ItemStackProxy;
 import net.momirealms.sparrow.nbt.Tag;
 import org.bukkit.Material;
 import org.bukkit.inventory.ItemStack;
@@ -48,7 +49,7 @@ public final class ItemStackUtils {
     }
 
     public static ItemStack ensureCraftItemStack(ItemStack itemStack) {
-        if (CraftBukkitReflections.clazz$CraftItemStack.isInstance(itemStack)) {
+        if (CraftItemStackProxy.CLASS.isInstance(itemStack)) {
             return itemStack;
         } else {
             return FastNMS.INSTANCE.method$CraftItemStack$asCraftCopy(itemStack);
@@ -64,11 +65,10 @@ public final class ItemStackUtils {
         return FastNMS.INSTANCE.method$CraftItemStack$asCraftMirror(itemStack);
     }
 
-    @SuppressWarnings("DataFlowIssue")
     @Nullable
     public static Tag saveNMSItemStackAsTag(Object nmsStack) {
         if (VersionHelper.COMPONENT_RELEASE) {
-            return CoreReflections.instance$ItemStack$CODEC.encodeStart(MRegistryOps.SPARROW_NBT, nmsStack)
+            return ItemStackProxy.INSTANCE.getCodec().encodeStart(MRegistryOps.SPARROW_NBT, nmsStack)
                     .resultOrPartial(error -> CraftEngine.instance().logger().severe("Error while saving item: " + error))
                     .orElse(null);
         } else {
@@ -82,18 +82,17 @@ public final class ItemStackUtils {
         return saveNMSItemStackAsTag(FastNMS.INSTANCE.field$CraftItemStack$handle(ensureCraftItemStack(itemStack)));
     }
 
-    @SuppressWarnings("DataFlowIssue")
     @Nullable
     public static Object parseNMSItemStack(Tag tag, int dataVersion) {
         Tag itemTag = tag;
         int currentVersion = VersionHelper.WORLD_VERSION;
         if (Config.enableItemDataFixerUpper() && dataVersion != currentVersion) {
             Dynamic<Tag> input = new Dynamic<>(MRegistryOps.SPARROW_NBT, itemTag);
-            itemTag = CoreReflections.instance$DataFixer.update(MReferences.ITEM_STACK, input, dataVersion, currentVersion).getValue();
+            itemTag = DataFixersProxy.INSTANCE.getDataFixer().update(MReferences.ITEM_STACK, input, dataVersion, currentVersion).getValue();
         }
         final Tag finalItemTag = itemTag;
         if (VersionHelper.COMPONENT_RELEASE) {
-            return CoreReflections.instance$ItemStack$CODEC.parse(MRegistryOps.SPARROW_NBT, finalItemTag)
+            return ItemStackProxy.INSTANCE.getCodec().parse(MRegistryOps.SPARROW_NBT, finalItemTag)
                     .resultOrPartial(error -> CraftEngine.instance().logger().severe("Tried to load invalid item: '" + finalItemTag + "'. " + error))
                     .orElse(null);
         } else {

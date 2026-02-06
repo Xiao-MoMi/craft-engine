@@ -19,8 +19,6 @@ import net.momirealms.craftengine.bukkit.item.BukkitItemManager;
 import net.momirealms.craftengine.bukkit.nms.FastNMS;
 import net.momirealms.craftengine.bukkit.plugin.BukkitCraftEngine;
 import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.CoreReflections;
-import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.MBlockStateProperties;
-import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.MLootContextParams;
 import net.momirealms.craftengine.bukkit.plugin.user.BukkitServerPlayer;
 import net.momirealms.craftengine.core.block.BlockSettings;
 import net.momirealms.craftengine.core.block.DelegatingBlockState;
@@ -33,6 +31,8 @@ import net.momirealms.craftengine.core.util.ReflectionUtils;
 import net.momirealms.craftengine.core.util.VersionHelper;
 import net.momirealms.craftengine.core.world.World;
 import net.momirealms.craftengine.core.world.WorldPosition;
+import net.momirealms.craftengine.proxy.minecraft.world.level.block.state.properties.BlockStatePropertiesProxy;
+import net.momirealms.craftengine.proxy.minecraft.world.level.storage.loot.parameters.LootContextParamsProxy;
 import org.bukkit.inventory.ItemStack;
 
 import java.lang.invoke.MethodHandle;
@@ -96,12 +96,12 @@ public final class BlockStateGenerator {
             ImmutableBlockState state = ((DelegatingBlockState) thisObj).blockState();
             if (state == null) return List.of();
             Object builder = args[0];
-            Object vec3 = FastNMS.INSTANCE.method$LootParams$Builder$getOptionalParameter(builder, MLootContextParams.ORIGIN);
+            Object vec3 = FastNMS.INSTANCE.method$LootParams$Builder$getOptionalParameter(builder, LootContextParamsProxy.INSTANCE.getOrigin());
             if (vec3 == null) return List.of();
 
-            Object tool = FastNMS.INSTANCE.method$LootParams$Builder$getOptionalParameter(builder, MLootContextParams.TOOL);
+            Object tool = FastNMS.INSTANCE.method$LootParams$Builder$getOptionalParameter(builder, LootContextParamsProxy.INSTANCE.getTool());
             Item<ItemStack> item = BukkitItemManager.instance().wrap(tool == null ? null : FastNMS.INSTANCE.method$CraftItemStack$asCraftMirror(tool));
-            Object optionalPlayer = FastNMS.INSTANCE.method$LootParams$Builder$getOptionalParameter(builder, MLootContextParams.THIS_ENTITY);
+            Object optionalPlayer = FastNMS.INSTANCE.method$LootParams$Builder$getOptionalParameter(builder, LootContextParamsProxy.INSTANCE.getThisEntity());
             if (!CoreReflections.clazz$Player.isInstance(optionalPlayer)) {
                 optionalPlayer = null;
             }
@@ -127,7 +127,7 @@ public final class BlockStateGenerator {
             if (player != null) {
                 lootBuilder.withParameter(DirectContextParameters.PLAYER, player);
             }
-            Float radius = (Float) FastNMS.INSTANCE.method$LootParams$Builder$getOptionalParameter(builder, MLootContextParams.EXPLOSION_RADIUS);
+            Float radius = (Float) FastNMS.INSTANCE.method$LootParams$Builder$getOptionalParameter(builder, LootContextParamsProxy.INSTANCE.getExplosionRadius());
             if (radius != null) {
                 lootBuilder.withParameter(DirectContextParameters.EXPLOSION_RADIUS, radius);
             }
@@ -142,7 +142,7 @@ public final class BlockStateGenerator {
         @RuntimeType
         public boolean intercept(@This Object thisObj, @AllArguments Object[] args) {
             Object property = args[0];
-            if (property != MBlockStateProperties.WATERLOGGED) return false;
+            if (property != BlockStatePropertiesProxy.WATERLOGGED) return false;
             DelegatingBlockState customState = (DelegatingBlockState) thisObj;
             ImmutableBlockState state = customState.blockState();
             if (state == null) return false;
@@ -151,6 +151,7 @@ public final class BlockStateGenerator {
         }
     }
 
+    // TODO 将 property 获取代理到同名 property 上，并检查类型是否兼容
     public static class GetPropertyValueInterceptor {
         public static final GetPropertyValueInterceptor INSTANCE = new GetPropertyValueInterceptor();
 
@@ -158,7 +159,7 @@ public final class BlockStateGenerator {
         @RuntimeType
         public Object intercept(@This Object thisObj, @AllArguments Object[] args) {
             Object property = args[0];
-            if (property != MBlockStateProperties.WATERLOGGED) return null;
+            if (property != BlockStatePropertiesProxy.WATERLOGGED) return null;
             DelegatingBlockState customState = (DelegatingBlockState) thisObj;
             ImmutableBlockState state = customState.blockState();
             if (state == null) return null;
@@ -175,7 +176,7 @@ public final class BlockStateGenerator {
         @RuntimeType
         public Object intercept(@This Object thisObj, @AllArguments Object[] args) {
             Object property = args[0];
-            if (property != MBlockStateProperties.WATERLOGGED) return thisObj;
+            if (property != BlockStatePropertiesProxy.WATERLOGGED) return thisObj;
             DelegatingBlockState customState = (DelegatingBlockState) thisObj;
             ImmutableBlockState state = customState.blockState();
             if (state == null) return thisObj;

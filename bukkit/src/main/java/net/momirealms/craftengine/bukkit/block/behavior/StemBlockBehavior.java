@@ -2,7 +2,6 @@ package net.momirealms.craftengine.bukkit.block.behavior;
 
 import net.momirealms.craftengine.bukkit.block.BukkitBlockManager;
 import net.momirealms.craftengine.bukkit.nms.FastNMS;
-import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.CoreReflections;
 import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.MBuiltInRegistries;
 import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.MRegistries;
 import net.momirealms.craftengine.bukkit.util.BlockStateUtils;
@@ -20,6 +19,8 @@ import net.momirealms.craftengine.core.util.Key;
 import net.momirealms.craftengine.core.util.ResourceConfigUtils;
 import net.momirealms.craftengine.core.util.VersionHelper;
 import net.momirealms.craftengine.core.util.random.RandomUtils;
+import net.momirealms.craftengine.proxy.minecraft.core.DirectionProxy;
+import net.momirealms.craftengine.proxy.minecraft.world.level.pathfinder.PathComputationTypeProxy;
 
 import java.util.Map;
 import java.util.Optional;
@@ -52,7 +53,7 @@ public class StemBlockBehavior extends BukkitBlockBehavior implements IsPathFind
 
     @Override
     public boolean isPathFindable(Object thisBlock, Object[] args, Callable<Object> superMethod) throws Exception {
-        return (VersionHelper.isOrAbove1_20_5() ? args[1] : args[3]).equals(CoreReflections.instance$PathComputationType$AIR)
+        return (VersionHelper.isOrAbove1_20_5() ? args[1] : args[3]).equals(PathComputationTypeProxy.AIR)
                 && !FastNMS.INSTANCE.field$BlockBehavior$hasCollision(thisBlock) || (boolean) superMethod.call();
     }
 
@@ -69,11 +70,11 @@ public class StemBlockBehavior extends BukkitBlockBehavior implements IsPathFind
             FastNMS.INSTANCE.method$LevelWriter$setBlock(level, pos, customState.with(ageProperty, age + 1).customBlockState().literalObject(), 2);
             return;
         }
-        Object randomDirection = CoreReflections.instance$Direction$values[RandomUtils.generateRandomInt(2, 6)];
+        Object randomDirection = DirectionProxy.VALUES[RandomUtils.generateRandomInt(2, 6)];
         Object blockPos = FastNMS.INSTANCE.method$BlockPos$relative(pos, randomDirection);
         if (!FastNMS.INSTANCE.method$BlockStateBase$isAir(FastNMS.INSTANCE.method$BlockGetter$getBlockState(level, blockPos)))
             return;
-        Object blockState = FastNMS.INSTANCE.method$BlockGetter$getBlockState(level, FastNMS.INSTANCE.method$BlockPos$relative(blockPos, CoreReflections.instance$Direction$DOWN));
+        Object blockState = FastNMS.INSTANCE.method$BlockGetter$getBlockState(level, FastNMS.INSTANCE.method$BlockPos$relative(blockPos, DirectionProxy.DOWN));
         if (mayPlaceFruit(blockState)) {
             Optional<CustomBlock> optionalFruit = BukkitBlockManager.instance().blockById(this.fruit);
             Object fruitState = null;

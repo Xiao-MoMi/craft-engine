@@ -5,7 +5,6 @@ import net.momirealms.craftengine.bukkit.block.BukkitBlockManager;
 import net.momirealms.craftengine.bukkit.entity.BukkitEntity;
 import net.momirealms.craftengine.bukkit.entity.data.BaseEntityData;
 import net.momirealms.craftengine.bukkit.nms.FastNMS;
-import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.CoreReflections;
 import net.momirealms.craftengine.bukkit.util.BlockStateUtils;
 import net.momirealms.craftengine.bukkit.util.LocationUtils;
 import net.momirealms.craftengine.core.block.CustomBlock;
@@ -15,6 +14,12 @@ import net.momirealms.craftengine.core.sound.SoundData;
 import net.momirealms.craftengine.core.util.ResourceConfigUtils;
 import net.momirealms.craftengine.core.world.Vec3d;
 import net.momirealms.craftengine.core.world.WorldPosition;
+import net.momirealms.craftengine.proxy.minecraft.core.Vec3iProxy;
+import net.momirealms.craftengine.proxy.minecraft.world.entity.EntityProxy;
+import net.momirealms.craftengine.proxy.minecraft.world.entity.item.FallingBlockEntityProxy;
+import net.momirealms.craftengine.proxy.minecraft.world.level.LevelReaderProxy;
+import net.momirealms.craftengine.proxy.minecraft.world.level.block.FallingBlockProxy;
+import net.momirealms.craftengine.proxy.minecraft.world.level.dimension.DimensionTypeProxy;
 
 import java.util.Map;
 import java.util.Optional;
@@ -53,25 +58,26 @@ public class FallingBlockBehavior extends BukkitBlockBehavior {
     @Override
     public void tick(Object thisBlock, Object[] args, Callable<Object> superMethod) throws Exception {
         Object blockPos = args[2];
-        int y = FastNMS.INSTANCE.field$Vec3i$y(blockPos);
+        int y = Vec3iProxy.INSTANCE.getY(blockPos);
         Object world = args[1];
-        Object dimension = CoreReflections.method$LevelReader$dimensionType.invoke(world);
-        int minY = CoreReflections.field$DimensionType$minY.getInt(dimension);
+        Object dimension = LevelReaderProxy.INSTANCE.dimensionType(world);
+        int minY = DimensionTypeProxy.INSTANCE.getMinY(dimension);
         if (y < minY) {
             return;
         }
-        int x = FastNMS.INSTANCE.field$Vec3i$x(blockPos);
-        int z = FastNMS.INSTANCE.field$Vec3i$z(blockPos);
+
+        int x = Vec3iProxy.INSTANCE.getX(blockPos);
+        int z = Vec3iProxy.INSTANCE.getZ(blockPos);
         Object belowPos = LocationUtils.toBlockPos(x, y - 1, z);
         Object belowState = FastNMS.INSTANCE.method$BlockGetter$getBlockState(world, belowPos);
-        boolean isFree = (boolean) CoreReflections.method$FallingBlock$isFree.invoke(null, belowState);
+        boolean isFree = FallingBlockProxy.INSTANCE.isFree(belowState);
         if (!isFree) {
             return;
         }
         Object blockState = args[0];
         Object fallingBlockEntity = FastNMS.INSTANCE.createInjectedFallingBlockEntity(world, blockPos, blockState);
         if (this.hurtAmount > 0 && this.maxHurt > 0) {
-            CoreReflections.method$FallingBlockEntity$setHurtsEntities.invoke(fallingBlockEntity, this.hurtAmount, this.maxHurt);
+            FallingBlockEntityProxy.INSTANCE.setHurtsEntities(fallingBlockEntity, this.hurtAmount, this.maxHurt);
         }
     }
 
@@ -82,11 +88,11 @@ public class FallingBlockBehavior extends BukkitBlockBehavior {
         Object fallingBlockEntity = args[2];
         BukkitEntity entity = BukkitAdaptors.adapt(FastNMS.INSTANCE.method$Entity$getBukkitEntity(fallingBlockEntity));
         if (!entity.getEntityData(BaseEntityData.Silent)) {
-            Object blockState = CoreReflections.field$FallingBlockEntity$blockState.get(fallingBlockEntity);
+            Object blockState = FallingBlockEntityProxy.INSTANCE.getBlockState(fallingBlockEntity);
             Optional<ImmutableBlockState> optionalCustomState = BlockStateUtils.getOptionalCustomBlockState(blockState);
             if (optionalCustomState.isEmpty()) return;
             net.momirealms.craftengine.core.world.World world = BukkitAdaptors.adapt(FastNMS.INSTANCE.method$Level$getCraftWorld(level));
-            WorldPosition position = new WorldPosition(world, CoreReflections.field$Entity$xo.getDouble(fallingBlockEntity), CoreReflections.field$Entity$yo.getDouble(fallingBlockEntity), CoreReflections.field$Entity$zo.getDouble(fallingBlockEntity));
+            WorldPosition position = new WorldPosition(world, EntityProxy.INSTANCE.getXo(fallingBlockEntity), EntityProxy.INSTANCE.getYo(fallingBlockEntity), EntityProxy.INSTANCE.getZo(fallingBlockEntity));
             if (this.destroySound != null) {
                 world.playBlockSound(position, this.destroySound);
             }

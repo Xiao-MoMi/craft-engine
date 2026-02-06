@@ -5,7 +5,6 @@ import net.momirealms.craftengine.bukkit.item.BukkitItemManager;
 import net.momirealms.craftengine.bukkit.item.DataComponentTypes;
 import net.momirealms.craftengine.bukkit.nms.FastNMS;
 import net.momirealms.craftengine.bukkit.plugin.BukkitCraftEngine;
-import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.CoreReflections;
 import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.NetworkReflections;
 import net.momirealms.craftengine.core.entity.player.InteractionHand;
 import net.momirealms.craftengine.core.entity.player.Player;
@@ -16,7 +15,8 @@ import net.momirealms.craftengine.core.sound.SoundSource;
 import net.momirealms.craftengine.core.sound.Sounds;
 import net.momirealms.craftengine.core.util.VersionHelper;
 import net.momirealms.craftengine.core.util.random.RandomUtils;
-import net.momirealms.craftengine.proxy.sound.SoundSourceProxy;
+import net.momirealms.craftengine.proxy.minecraft.sounds.SoundSourceProxy;
+import net.momirealms.craftengine.proxy.minecraft.world.entity.EquipmentSlotProxy;
 import org.bukkit.inventory.ItemStack;
 import org.jetbrains.annotations.Nullable;
 
@@ -73,20 +73,20 @@ public final class PlayerUtils {
             Object previousOffHandItem = player.getItemInHand(InteractionHand.OFF_HAND).getLiteralObject();
             if (isMainHandTotem) {
                 packets.add(NetworkReflections.constructor$ClientboundSetEquipmentPacket.newInstance(
-                        player.entityId(), List.of(Pair.of(CoreReflections.instance$EquipmentSlot$MAINHAND, BukkitItemManager.instance().uniqueEmptyItem().item().getLiteralObject()))
+                        player.entityId(), List.of(Pair.of(EquipmentSlotProxy.MAINHAND, BukkitItemManager.instance().uniqueEmptyItem().item().getLiteralObject()))
                 ));
             }
             packets.add(NetworkReflections.constructor$ClientboundSetEquipmentPacket.newInstance(
-                    player.entityId(), List.of(Pair.of(CoreReflections.instance$EquipmentSlot$OFFHAND, totemItem))
+                    player.entityId(), List.of(Pair.of(EquipmentSlotProxy.OFFHAND, totemItem))
             ));
             packets.add(NetworkReflections.constructor$ClientboundEntityEventPacket.newInstance(player.serverPlayer(), (byte) 35));
             if (isMainHandTotem) {
                 packets.add(NetworkReflections.constructor$ClientboundSetEquipmentPacket.newInstance(
-                        player.entityId(), List.of(Pair.of(CoreReflections.instance$EquipmentSlot$MAINHAND, previousMainHandItem.getLiteralObject()))
+                        player.entityId(), List.of(Pair.of(EquipmentSlotProxy.MAINHAND, previousMainHandItem.getLiteralObject()))
                 ));
             }
             packets.add(NetworkReflections.constructor$ClientboundSetEquipmentPacket.newInstance(
-                    player.entityId(), List.of(Pair.of(CoreReflections.instance$EquipmentSlot$OFFHAND, previousOffHandItem))
+                    player.entityId(), List.of(Pair.of(EquipmentSlotProxy.OFFHAND, previousOffHandItem))
             ));
             if (sound != null || silent) {
                 packets.add(NetworkReflections.constructor$ClientboundStopSoundPacket.newInstance(

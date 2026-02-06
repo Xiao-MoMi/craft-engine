@@ -1,7 +1,6 @@
 package net.momirealms.craftengine.bukkit.plugin.gui;
 
 import net.kyori.adventure.text.Component;
-import net.momirealms.craftengine.bukkit.plugin.reflection.bukkit.CraftBukkitReflections;
 import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.CoreReflections;
 import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.NetworkReflections;
 import net.momirealms.craftengine.bukkit.plugin.user.BukkitServerPlayer;
@@ -10,6 +9,9 @@ import net.momirealms.craftengine.core.entity.player.Player;
 import net.momirealms.craftengine.core.item.Item;
 import net.momirealms.craftengine.core.plugin.CraftEngine;
 import net.momirealms.craftengine.core.plugin.gui.Inventory;
+import net.momirealms.craftengine.proxy.bukkit.craftbukkit.event.CraftEventFactoryProxy;
+import net.momirealms.craftengine.proxy.bukkit.craftbukkit.inventory.CraftContainerProxy;
+import net.momirealms.craftengine.proxy.minecraft.server.level.ServerPlayerProxy;
 import org.bukkit.inventory.ItemStack;
 
 public class BukkitInventory implements Inventory {
@@ -24,15 +26,15 @@ public class BukkitInventory implements Inventory {
         BukkitServerPlayer serverPlayer = (BukkitServerPlayer) player;
         Object nmsPlayer = serverPlayer.serverPlayer();
         try {
-            Object menuType = CraftBukkitReflections.method$CraftContainer$getNotchInventoryType.invoke(null, this.inventory);
-            int nextId = (int) CoreReflections.method$ServerPlayer$nextContainerCounter.invoke(nmsPlayer);
-            Object menu = CraftBukkitReflections.constructor$CraftContainer.newInstance(this.inventory, nmsPlayer, nextId);
+            Object menuType = CraftContainerProxy.INSTANCE.getNotchInventoryType(this.inventory);
+            int nextId = ServerPlayerProxy.INSTANCE.nextContainerCounter(nmsPlayer);
+            Object menu = CraftContainerProxy.INSTANCE.newInstance(this.inventory, nmsPlayer, nextId);
             CoreReflections.field$AbstractContainerMenu$checkReachable.set(menu, false);
-            CraftBukkitReflections.method$CraftEventFactory$callInventoryOpenEvent.invoke(null, nmsPlayer, menu);
+            CraftEventFactoryProxy.INSTANCE.callInventoryOpenEvent(nmsPlayer, menu);
             Object packet = NetworkReflections.constructor$ClientboundOpenScreenPacket.newInstance(nextId, menuType, ComponentUtils.adventureToMinecraft(title));
             serverPlayer.sendPacket(packet, false);
             CoreReflections.field$Player$containerMenu.set(nmsPlayer, menu);
-            CoreReflections.method$ServerPlayer$initMenu.invoke(nmsPlayer, menu);
+            ServerPlayerProxy.INSTANCE.initMenu(nmsPlayer, menu);
         } catch (Exception e) {
             CraftEngine.instance().logger().warn("Failed to create bukkit inventory", e);
         }

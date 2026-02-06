@@ -26,7 +26,6 @@ import net.momirealms.craftengine.bukkit.plugin.scheduler.BukkitSchedulerAdapter
 import net.momirealms.craftengine.bukkit.plugin.user.BukkitServerPlayer;
 import net.momirealms.craftengine.bukkit.sound.BukkitSoundManager;
 import net.momirealms.craftengine.bukkit.util.EventUtils;
-import net.momirealms.craftengine.bukkit.util.RegistryUtils;
 import net.momirealms.craftengine.bukkit.world.BukkitWorldManager;
 import net.momirealms.craftengine.bukkit.world.score.BukkitTeamManager;
 import net.momirealms.craftengine.core.item.ItemManager;
@@ -46,7 +45,6 @@ import net.momirealms.craftengine.core.util.CharacterUtils;
 import net.momirealms.craftengine.core.util.ReflectionUtils;
 import net.momirealms.craftengine.core.util.VersionHelper;
 import net.momirealms.craftengine.proxy.BukkitProxy;
-import net.momirealms.sparrow.reflection.SReflection;
 import org.bstats.bukkit.Metrics;
 import org.bukkit.Bukkit;
 import org.bukkit.World;
@@ -60,6 +58,7 @@ import java.io.*;
 import java.net.URL;
 import java.net.URLConnection;
 import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
@@ -286,7 +285,21 @@ public final class BukkitCraftEngine extends CraftEngine {
 
     @Override
     public void setupProxy() {
-        BukkitProxy.init(VersionHelper.MINECRAFT_VERSION.version());
+        BukkitProxy.init(VersionHelper.MINECRAFT_VERSION.version(), getPatches());
+    }
+
+    private List<String> getPatches() {
+        List<String> patches = new ArrayList<>();
+        if (VersionHelper.isPaper()) {
+            patches.add("paper");
+        }
+        if (VersionHelper.isFolia()) {
+            patches.add("folia");
+        }
+        if (VersionHelper.isLeaves()) {
+            patches.add("leaves");
+        }
+        return patches;
     }
 
     @Override

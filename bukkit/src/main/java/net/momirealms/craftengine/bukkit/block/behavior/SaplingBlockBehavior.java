@@ -28,6 +28,8 @@ import net.momirealms.craftengine.core.util.ResourceConfigUtils;
 import net.momirealms.craftengine.core.util.random.RandomUtils;
 import net.momirealms.craftengine.core.world.BlockPos;
 import net.momirealms.craftengine.core.world.context.UseOnContext;
+import net.momirealms.craftengine.proxy.minecraft.server.level.ServerChunkCacheProxy;
+import net.momirealms.craftengine.proxy.minecraft.server.level.ServerLevelProxy;
 import org.bukkit.Location;
 import org.bukkit.World;
 
@@ -95,14 +97,14 @@ public class SaplingBlockBehavior extends BukkitBlockBehavior {
             }
             holder = optionalHolder.get();
         }
-        Object chunkGenerator = CoreReflections.method$ServerChunkCache$getGenerator.invoke(FastNMS.INSTANCE.method$ServerLevel$getChunkSource(world));
+        Object chunkGenerator = ServerChunkCacheProxy.INSTANCE.getGenerator(FastNMS.INSTANCE.method$ServerLevel$getChunkSource(world));
         Object configuredFeature = FastNMS.INSTANCE.method$Holder$value(holder);
         Object fluidState = FastNMS.INSTANCE.method$BlockGetter$getFluidState(world, blockPos);
         Object legacyState = CoreReflections.method$FluidState$createLegacyBlock.invoke(fluidState);
         FastNMS.INSTANCE.method$LevelWriter$setBlock(world, blockPos, legacyState, UpdateOption.UPDATE_NONE.flags());
         if ((boolean) CoreReflections.method$ConfiguredFeature$place.invoke(configuredFeature, world, chunkGenerator, randomSource, blockPos)) {
             if (FastNMS.INSTANCE.method$BlockGetter$getBlockState(world, blockPos) == legacyState) {
-                CoreReflections.method$ServerLevel$sendBlockUpdated.invoke(world, blockPos, blockState, legacyState, 2);
+                ServerLevelProxy.INSTANCE.sendBlockUpdated(world, blockPos, blockState, legacyState, UpdateOption.Flags.UPDATE_CLIENTS);
             }
         } else {
             // failed to place, rollback changes

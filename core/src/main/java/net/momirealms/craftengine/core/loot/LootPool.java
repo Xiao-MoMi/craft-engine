@@ -43,18 +43,9 @@ public final class LootPool<T> {
             Consumer<Item<T>> consumer = LootFunction.decorate(this.compositeFunction, lootConsumer, context);
             int i = this.rolls.getInt(context) + MiscUtils.floor(this.bonusRolls.getFloat(context) * context.luck());
             for (int j = 0; j < i; ++j) {
-                this.addRandomItem(createFunctionApplier(consumer, context), context);
+                this.addRandomItem(consumer, context);
             }
         }
-    }
-
-    private Consumer<Item<T>> createFunctionApplier(Consumer<Item<T>> lootConsumer, LootContext context) {
-        return (item -> {
-            for (LootFunction<T> function : this.functions) {
-                function.apply(item, context);
-            }
-            lootConsumer.accept(item);
-        });
     }
 
     private void addRandomItem(Consumer<Item<T>> lootConsumer, LootContext context) {

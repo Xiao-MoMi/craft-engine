@@ -2,7 +2,6 @@ package net.momirealms.craftengine.bukkit.block.behavior;
 
 import net.momirealms.craftengine.bukkit.block.BukkitBlockManager;
 import net.momirealms.craftengine.bukkit.nms.FastNMS;
-import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.CoreReflections;
 import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.MBlocks;
 import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.MTagKeys;
 import net.momirealms.craftengine.core.block.CustomBlock;
@@ -14,6 +13,8 @@ import net.momirealms.craftengine.core.util.LazyReference;
 import net.momirealms.craftengine.core.util.ResourceConfigUtils;
 import net.momirealms.craftengine.core.util.VersionHelper;
 import net.momirealms.craftengine.core.util.random.RandomUtils;
+import net.momirealms.craftengine.proxy.minecraft.core.DirectionProxy;
+import net.momirealms.craftengine.proxy.minecraft.world.level.block.SnowLayerBlockProxy;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Map;
@@ -42,7 +43,7 @@ public class SurfaceSpreadingBlockBehavior extends BukkitBlockBehavior {
             FastNMS.INSTANCE.method$LevelWriter$setBlock(level, pos, this.baseBlock.get(), 3);
             return;
         }
-        if (FastNMS.INSTANCE.method$LevelReader$getMaxLocalRawBrightness(level, FastNMS.INSTANCE.method$BlockPos$relative(pos, CoreReflections.instance$Direction$UP)) < this.requiredLight) return;
+        if (FastNMS.INSTANCE.method$LevelReader$getMaxLocalRawBrightness(level, FastNMS.INSTANCE.method$BlockPos$relative(pos, DirectionProxy.UP)) < this.requiredLight) return;
 
         for (int i = 0; i < 4; i++) {
             Object blockPos = FastNMS.INSTANCE.method$BlockPos$offset(
@@ -62,7 +63,7 @@ public class SurfaceSpreadingBlockBehavior extends BukkitBlockBehavior {
                 if (this.snowyProperty != null) {
                     boolean hasSnow = FastNMS.INSTANCE.method$BlockStateBase$isBlock(
                         FastNMS.INSTANCE.method$BlockGetter$getBlockState(level, 
-                            FastNMS.INSTANCE.method$BlockPos$relative(blockPos, CoreReflections.instance$Direction$UP)), 
+                            FastNMS.INSTANCE.method$BlockPos$relative(blockPos, DirectionProxy.UP)), 
                         MBlocks.SNOW
                     );
                     newState = newState.with(this.snowyProperty, hasSnow);
@@ -74,9 +75,9 @@ public class SurfaceSpreadingBlockBehavior extends BukkitBlockBehavior {
     }
 
     private static boolean canBeGrass(Object state, Object level, Object pos) {
-        Object blockPos = FastNMS.INSTANCE.method$BlockPos$relative(pos, CoreReflections.instance$Direction$UP);
+        Object blockPos = FastNMS.INSTANCE.method$BlockPos$relative(pos, DirectionProxy.UP);
         Object blockState = FastNMS.INSTANCE.method$BlockGetter$getBlockState(level, blockPos);
-        if (FastNMS.INSTANCE.method$BlockStateBase$isBlock(blockState, MBlocks.SNOW) && ((Integer) FastNMS.INSTANCE.method$StateHolder$getValue(blockState, CoreReflections.instance$SnowLayerBlock$LAYERS)) == 1) return true;
+        if (FastNMS.INSTANCE.method$BlockStateBase$isBlock(blockState, MBlocks.SNOW) && ((Integer) FastNMS.INSTANCE.method$StateHolder$getValue(blockState, SnowLayerBlockProxy.INSTANCE.getLayersProperty())) == 1) return true;
         else if (FastNMS.INSTANCE.field$FluidState$amount(FastNMS.INSTANCE.field$BlockBehaviour$BlockStateBase$fluidState(blockState)) == 8) return false;
         else {
             return FastNMS.INSTANCE.method$LightEngine$getLightBlockInto(
@@ -85,7 +86,7 @@ public class SurfaceSpreadingBlockBehavior extends BukkitBlockBehavior {
                     VersionHelper.isOrAbove1_21_2() ? null : pos,
                     blockState,
                     VersionHelper.isOrAbove1_21_2() ? null : blockPos,
-                    CoreReflections.instance$Direction$UP,
+                    DirectionProxy.UP,
                     FastNMS.INSTANCE.method$BlockBehaviour$BlockStateBase$getLightBlock(
                             blockState,
                             VersionHelper.isOrAbove1_21_2() ? null : level,
@@ -96,7 +97,7 @@ public class SurfaceSpreadingBlockBehavior extends BukkitBlockBehavior {
     }
 
     private static boolean canPropagate(Object state, Object level, Object pos) {
-        Object blockPos = FastNMS.INSTANCE.method$BlockPos$relative(pos, CoreReflections.instance$Direction$UP);
+        Object blockPos = FastNMS.INSTANCE.method$BlockPos$relative(pos, DirectionProxy.UP);
         return canBeGrass(state, level, pos) && !FastNMS.INSTANCE.method$FluidState$is(FastNMS.INSTANCE.method$BlockGetter$getFluidState(level, blockPos), MTagKeys.Fluid$WATER);
     }
 

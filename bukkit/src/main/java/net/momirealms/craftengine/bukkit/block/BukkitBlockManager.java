@@ -9,8 +9,10 @@ import net.momirealms.craftengine.bukkit.plugin.injector.BlockGenerator;
 import net.momirealms.craftengine.bukkit.plugin.network.BukkitNetworkManager;
 import net.momirealms.craftengine.bukkit.plugin.network.payload.PayloadHelper;
 import net.momirealms.craftengine.bukkit.plugin.network.payload.protocol.VisualBlockStatePacket;
-import net.momirealms.craftengine.bukkit.plugin.reflection.bukkit.CraftBukkitReflections;
-import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.*;
+import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.MBlocks;
+import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.MBuiltInRegistries;
+import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.MFluids;
+import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.MRegistries;
 import net.momirealms.craftengine.bukkit.plugin.user.BukkitServerPlayer;
 import net.momirealms.craftengine.bukkit.util.*;
 import net.momirealms.craftengine.core.block.*;
@@ -32,14 +34,23 @@ import net.momirealms.craftengine.core.util.Key;
 import net.momirealms.craftengine.core.util.ObjectHolder;
 import net.momirealms.craftengine.core.util.Tristate;
 import net.momirealms.craftengine.core.util.VersionHelper;
-import net.momirealms.craftengine.proxy.block.BlockBehaviorProxy;
-import net.momirealms.craftengine.proxy.block.BlockStateBaseProxy;
-import net.momirealms.craftengine.proxy.block.SoundTypeProxy;
-import net.momirealms.craftengine.proxy.block.property.NoteBlockInstrumentProxy;
-import net.momirealms.craftengine.proxy.core.HolderProxy;
-import net.momirealms.craftengine.proxy.material.MapColorProxy;
-import net.momirealms.craftengine.proxy.material.PushReactionProxy;
-import net.momirealms.craftengine.proxy.resource.ResourceKeyProxy;
+import net.momirealms.craftengine.proxy.bukkit.craftbukkit.util.CraftMagicNumbersProxy;
+import net.momirealms.craftengine.proxy.minecraft.commands.arguments.blocks.BlockStateParserProxy;
+import net.momirealms.craftengine.proxy.minecraft.core.HolderProxy;
+import net.momirealms.craftengine.proxy.minecraft.core.IdMapperProxy;
+import net.momirealms.craftengine.proxy.minecraft.core.MappedRegistryProxy;
+import net.momirealms.craftengine.proxy.minecraft.core.RegistryProxy;
+import net.momirealms.craftengine.proxy.minecraft.resources.ResourceKeyProxy;
+import net.momirealms.craftengine.proxy.minecraft.world.level.EmptyBlockGetterProxy;
+import net.momirealms.craftengine.proxy.minecraft.world.level.block.BlockProxy;
+import net.momirealms.craftengine.proxy.minecraft.world.level.block.FireBlockProxy;
+import net.momirealms.craftengine.proxy.minecraft.world.level.block.SoundTypeProxy;
+import net.momirealms.craftengine.proxy.minecraft.world.level.block.state.BlockBehaviorProxy;
+import net.momirealms.craftengine.proxy.minecraft.world.level.block.state.BlockStateBaseProxy;
+import net.momirealms.craftengine.proxy.minecraft.world.level.block.state.StateDefinitionProxy;
+import net.momirealms.craftengine.proxy.minecraft.world.level.block.state.properties.NoteBlockInstrumentProxy;
+import net.momirealms.craftengine.proxy.minecraft.world.level.material.MapColorProxy;
+import net.momirealms.craftengine.proxy.minecraft.world.level.material.PushReactionProxy;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.event.HandlerList;
@@ -199,11 +210,11 @@ public final class BukkitBlockManager extends AbstractBlockManager {
     private Object parseBlockState(String state) {
         try {
             Object registryOrLookUp = MBuiltInRegistries.BLOCK;
-            if (CoreReflections.method$Registry$asLookup != null) {
-                registryOrLookUp = CoreReflections.method$Registry$asLookup.invoke(registryOrLookUp);
+            if (!VersionHelper.isOrAbove1_21_2()) {
+                registryOrLookUp = RegistryProxy.INSTANCE.asLookup(registryOrLookUp);
             }
-            Object result = CoreReflections.method$BlockStateParser$parseForBlock.invoke(null, registryOrLookUp, state, false);
-            return CoreReflections.method$BlockStateParser$BlockResult$blockState.invoke(result);
+            Object result = BlockStateParserProxy.INSTANCE.parseForBlock(registryOrLookUp, state, false);
+            return BlockStateParserProxy.BlockResultProxy.INSTANCE.getBlockState(result);
         } catch (Exception e) {
             Debugger.BLOCK.warn(() -> "Failed to create block state: " + state, e);
             return null;
@@ -225,14 +236,9 @@ public final class BukkitBlockManager extends AbstractBlockManager {
         return BlockStateUtils.getBlockOwnerIdFromState(BlockStateUtils.idToBlockState(id));
     }
 
-    @SuppressWarnings("unchecked")
     private void initFireBlock() {
-        try {
-            this.igniteOdds = (Map<Object, Integer>) CoreReflections.field$FireBlock$igniteOdds.get(MBlocks.FIRE);
-            this.burnOdds = (Map<Object, Integer>) CoreReflections.field$FireBlock$burnOdds.get(MBlocks.FIRE);
-        } catch (IllegalAccessException e) {
-            this.plugin.logger().warn("Failed to get ignite odds", e);
-        }
+        this.igniteOdds = FireBlockProxy.INSTANCE.getIgniteOdds(MBlocks.FIRE);
+        this.burnOdds = FireBlockProxy.INSTANCE.getBurnOdds(MBlocks.FIRE);
     }
 
     @Override
@@ -274,7 +280,7 @@ public final class BukkitBlockManager extends AbstractBlockManager {
             if (VersionHelper.isOrAbove1_21_2()) {
                 BlockBehaviorProxy.INSTANCE.setDescriptionId(nmsBlock, block.translationKey());
             } else {
-                CoreReflections.field$Block$descriptionId.set(nmsBlock, block.translationKey());
+                BlockProxy.INSTANCE.setDescriptionId(nmsBlock, block.translationKey());
             }
 
             BlockBehaviorProxy.INSTANCE.setExplosionResistance(nmsBlock, settings.resistance());
@@ -286,7 +292,7 @@ public final class BukkitBlockManager extends AbstractBlockManager {
             BlockStateBaseProxy.INSTANCE.initCache(nmsState);
             boolean isConditionallyFullOpaque = canOcclude & useShapeForLightOcclusion;
             if (!VersionHelper.isOrAbove1_21_2()) {
-                CoreReflections.field$BlockStateBase$isConditionallyFullOpaque.set(nmsState, isConditionallyFullOpaque);
+                BlockStateBaseProxy.INSTANCE.setConditionallyFullOpaque(nmsState, isConditionallyFullOpaque);
             }
 
             if (VersionHelper.isOrAbove1_21_2()) {
@@ -295,13 +301,13 @@ public final class BukkitBlockManager extends AbstractBlockManager {
                 boolean propagatesSkylightDown = settings.propagatesSkylightDown() == Tristate.UNDEFINED ? BlockStateBaseProxy.INSTANCE.isPropagatesSkylightDown(nmsVisualState) : settings.propagatesSkylightDown().asBoolean();
                 BlockStateBaseProxy.INSTANCE.setPropagatesSkylightDown(nmsState, propagatesSkylightDown);
             } else {
-                Object cache = CoreReflections.field$BlockStateBase$cache.get(nmsState);
-                int blockLight = settings.blockLight() != -1 ? settings.blockLight() : CoreReflections.field$BlockStateBase$Cache$lightBlock.getInt(CoreReflections.field$BlockStateBase$cache.get(nmsVisualState));
-                CoreReflections.field$BlockStateBase$Cache$lightBlock.set(cache, blockLight);
-                boolean propagatesSkylightDown = settings.propagatesSkylightDown() == Tristate.UNDEFINED ? CoreReflections.field$BlockStateBase$Cache$propagatesSkylightDown.getBoolean(CoreReflections.field$BlockStateBase$cache.get(nmsVisualState)) : settings.propagatesSkylightDown().asBoolean();
-                CoreReflections.field$BlockStateBase$Cache$propagatesSkylightDown.set(cache, propagatesSkylightDown);
+                Object cache = BlockStateBaseProxy.INSTANCE.getCache(nmsState);
+                int blockLight = settings.blockLight() != -1 ? settings.blockLight() : BlockStateBaseProxy.CacheProxy.INSTANCE.getLightBlock(BlockStateBaseProxy.INSTANCE.getCache(nmsVisualState));
+                BlockStateBaseProxy.CacheProxy.INSTANCE.setLightBlock(cache, blockLight);
+                boolean propagatesSkylightDown = settings.propagatesSkylightDown() == Tristate.UNDEFINED ? BlockStateBaseProxy.CacheProxy.INSTANCE.propagatesSkylightDown(BlockStateBaseProxy.INSTANCE.getCache(nmsVisualState)) : settings.propagatesSkylightDown().asBoolean();
+                BlockStateBaseProxy.CacheProxy.INSTANCE.setPropagatesSkylightDown(cache, propagatesSkylightDown);
                 if (!isConditionallyFullOpaque) {
-                    CoreReflections.field$BlockStateBase$opacityIfCached.set(nmsState, blockLight);
+                    BlockStateBaseProxy.INSTANCE.setOpacityIfCached(nmsState, blockLight);
                 }
             }
 
@@ -378,18 +384,14 @@ public final class BukkitBlockManager extends AbstractBlockManager {
                     break;
                 }
                 this.customBlocks[i] = customBlock;
-                try {
-                    Object resourceLocation = KeyUtils.toIdentifier(customBlockId);
-                    Object blockHolder = CoreReflections.method$Registry$registerForHolder.invoke(null, MBuiltInRegistries.BLOCK, resourceLocation, customBlock);
-                    this.customBlockHolders[i] = blockHolder;
-                    CoreReflections.method$Holder$Reference$bindValue.invoke(blockHolder, customBlock);
-                    CoreReflections.field$Holder$Reference$tags.set(blockHolder, Set.of());
-                    DelegatingBlockState newBlockState = (DelegatingBlockState) FastNMS.INSTANCE.method$Block$defaultState(customBlock);
-                    this.customBlockStates[i] = newBlockState;
-                    CoreReflections.method$IdMapper$add.invoke(CoreReflections.instance$Block$BLOCK_STATE_REGISTRY, newBlockState);
-                } catch (ReflectiveOperationException e) {
-                    CraftEngine.instance().logger().warn("Failed to register custom block " + customBlockId, e);
-                }
+                Object resourceLocation = KeyUtils.toIdentifier(customBlockId);
+                Object blockHolder = RegistryProxy.INSTANCE.registerForHolder$1(MBuiltInRegistries.BLOCK, resourceLocation, customBlock);
+                this.customBlockHolders[i] = blockHolder;
+                HolderProxy.ReferenceProxy.INSTANCE.bindValue(blockHolder, customBlock);
+                HolderProxy.ReferenceProxy.INSTANCE.setTags(blockHolder, Set.of());
+                DelegatingBlockState newBlockState = (DelegatingBlockState) FastNMS.INSTANCE.method$Block$defaultState(customBlock);
+                this.customBlockStates[i] = newBlockState;
+                IdMapperProxy.INSTANCE.add(BlockProxy.BLOCK_STATE_REGISTRY, newBlockState);
             }
         } finally {
             freezeRegistry();
@@ -405,15 +407,10 @@ public final class BukkitBlockManager extends AbstractBlockManager {
     }
 
     private void markVanillaNoteBlocks() {
-        try {
-            Object block = FastNMS.INSTANCE.method$Registry$getValue(MBuiltInRegistries.BLOCK, KeyUtils.toIdentifier(BlockKeys.NOTE_BLOCK));
-            Object stateDefinition = CoreReflections.field$Block$StateDefinition.get(block);
-            @SuppressWarnings("unchecked")
-            ImmutableList<Object> states = (ImmutableList<Object>) CoreReflections.field$StateDefinition$states.get(stateDefinition);
-            CLIENT_SIDE_NOTE_BLOCKS.addAll(states);
-        } catch (ReflectiveOperationException e) {
-            this.plugin.logger().warn("Failed to init vanilla note block", e);
-        }
+        Object block = FastNMS.INSTANCE.method$Registry$getValue(MBuiltInRegistries.BLOCK, KeyUtils.toIdentifier(BlockKeys.NOTE_BLOCK));
+        Object stateDefinition = BlockProxy.INSTANCE.getStateDefinition(block);
+        ImmutableList<Object> states = StateDefinitionProxy.INSTANCE.getStates(stateDefinition);
+        CLIENT_SIDE_NOTE_BLOCKS.addAll(states);
     }
 
     public boolean canBlockView(BlockStateWrapper wrapper) {
@@ -421,7 +418,7 @@ public final class BukkitBlockManager extends AbstractBlockManager {
         if (!BlockStateUtils.isOcclude(blockState)) {
             return false;
         }
-        return FastNMS.INSTANCE.method$BlockStateBase$isCollisionShapeFullBlock(blockState, CoreReflections.instance$EmptyBlockGetter$INSTANCE, BLOCK_POS$ZERO);
+        return FastNMS.INSTANCE.method$BlockStateBase$isCollisionShapeFullBlock(blockState, EmptyBlockGetterProxy.GETTER_INSTANCE, BLOCK_POS$ZERO);
     }
 
     private void findViewBlockingVanillaBlocks() {
@@ -460,49 +457,36 @@ public final class BukkitBlockManager extends AbstractBlockManager {
     }
 
     private void unfreezeRegistry() {
-        try {
-            CoreReflections.field$MappedRegistry$frozen.set(MBuiltInRegistries.BLOCK, false);
-            CoreReflections.field$MappedRegistry$unregisteredIntrusiveHolders.set(MBuiltInRegistries.BLOCK, new IdentityHashMap<>());
-        } catch (IllegalAccessException e) {
-            this.plugin.logger().warn("Failed to unfreeze block registry", e);
-        }
+        MappedRegistryProxy.INSTANCE.setFrozen(MBuiltInRegistries.BLOCK, false);
+        MappedRegistryProxy.INSTANCE.setUnregisteredIntrusiveHolders(MBuiltInRegistries.BLOCK, new IdentityHashMap<>());
     }
 
     private void freezeRegistry() {
-        try {
-            CoreReflections.field$MappedRegistry$frozen.set(MBuiltInRegistries.BLOCK, true);
-        } catch (IllegalAccessException e) {
-            this.plugin.logger().warn("Failed to freeze block registry", e);
-        }
+        MappedRegistryProxy.INSTANCE.setFrozen(MBuiltInRegistries.BLOCK, true);
     }
 
-    @SuppressWarnings("unchecked")
     private void deceiveBukkitRegistry() {
-        try {
-            Map<Object, Material> magicMap = (Map<Object, Material>) CraftBukkitReflections.field$CraftMagicNumbers$BLOCK_MATERIAL.get(null);
-            Set<String> invalid = new HashSet<>();
-            for (int i = 0; i < this.customBlocks.length; i++) {
-                DelegatingBlock customBlock = this.customBlocks[i];
-                String value = Config.deceiveBukkitMaterial(i).value();
-                Material material;
-                try {
-                    material = Material.valueOf(value.toUpperCase(Locale.ROOT));
-                } catch (IllegalArgumentException e) {
-                    if (invalid.add(value)) {
-                        this.plugin.logger().warn("Cannot load 'deceive-bukkit-material'. '" + value + "' is an invalid bukkit material", e);
-                    }
-                    material = Material.BRICKS;
+        Map<Object, Material> magicMap = CraftMagicNumbersProxy.INSTANCE.getBlockMaterial();
+        Set<String> invalid = new HashSet<>();
+        for (int i = 0; i < this.customBlocks.length; i++) {
+            DelegatingBlock customBlock = this.customBlocks[i];
+            String value = Config.deceiveBukkitMaterial(i).value();
+            Material material;
+            try {
+                material = Material.valueOf(value.toUpperCase(Locale.ROOT));
+            } catch (IllegalArgumentException e) {
+                if (invalid.add(value)) {
+                    this.plugin.logger().warn("Cannot load 'deceive-bukkit-material'. '" + value + "' is an invalid bukkit material", e);
                 }
-                if (!material.isBlock()) {
-                    if (invalid.add(value)) {
-                        this.plugin.logger().warn("Cannot load 'deceive-bukkit-material'. '" + value + "' is an invalid bukkit block material");
-                    }
-                    material = Material.BRICKS;
-                }
-                magicMap.put(customBlock, material);
+                material = Material.BRICKS;
             }
-        } catch (ReflectiveOperationException e) {
-            this.plugin.logger().warn("Failed to deceive bukkit magic blocks", e);
+            if (!material.isBlock()) {
+                if (invalid.add(value)) {
+                    this.plugin.logger().warn("Cannot load 'deceive-bukkit-material'. '" + value + "' is an invalid bukkit block material");
+                }
+                material = Material.BRICKS;
+            }
+            magicMap.put(customBlock, material);
         }
     }
 

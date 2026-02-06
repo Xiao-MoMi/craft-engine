@@ -2,7 +2,6 @@ package net.momirealms.craftengine.bukkit.entity.furniture.hitbox;
 
 import it.unimi.dsi.fastutil.ints.IntArrayList;
 import net.momirealms.craftengine.bukkit.nms.FastNMS;
-import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.CoreReflections;
 import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.MAttributeHolders;
 import net.momirealms.craftengine.core.entity.furniture.Collider;
 import net.momirealms.craftengine.core.entity.furniture.Furniture;
@@ -13,6 +12,8 @@ import net.momirealms.craftengine.core.util.VersionHelper;
 import net.momirealms.craftengine.core.world.Vec3d;
 import net.momirealms.craftengine.core.world.WorldPosition;
 import net.momirealms.craftengine.core.world.collision.AABB;
+import net.momirealms.craftengine.proxy.minecraft.world.entity.EntityProxy;
+import net.momirealms.craftengine.proxy.minecraft.world.phys.Vec3Proxy;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -35,11 +36,11 @@ public final class CustomFurnitureHitbox extends AbstractFurnitureHitBox {
         Vec3d pos = Furniture.getRelativePosition(position, config.position());
         AABB aabb = AABB.makeBoundingBox(pos, config.width(), config.height());
         this.collider = createCollider(furniture.world(), pos, aabb, false, config.blocksBuilding(), config.canBeHitByProjectile());
-        int entityId = CoreReflections.instance$Entity$ENTITY_COUNTER.incrementAndGet();
+        int entityId = EntityProxy.ENTITY_COUNTER.incrementAndGet();
         List<Object> packets = new ArrayList<>(3);
         packets.add(FastNMS.INSTANCE.constructor$ClientboundAddEntityPacket(
                 entityId, UUID.randomUUID(), pos.x, pos.y, pos.z, 0, position.yRot,
-                config.entityType(), 0, CoreReflections.instance$Vec3$Zero, 0
+                config.entityType(), 0, Vec3Proxy.ZERO, 0
         ));
         packets.add(FastNMS.INSTANCE.constructor$ClientboundSetEntityDataPacket(entityId, config.cachedValues()));
         if (VersionHelper.isOrAbove1_20_5()) {

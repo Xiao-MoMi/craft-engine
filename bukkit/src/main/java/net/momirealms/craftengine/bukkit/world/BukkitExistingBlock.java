@@ -3,7 +3,6 @@ package net.momirealms.craftengine.bukkit.world;
 import net.momirealms.craftengine.bukkit.api.BukkitAdaptors;
 import net.momirealms.craftengine.bukkit.api.CraftEngineBlocks;
 import net.momirealms.craftengine.bukkit.nms.FastNMS;
-import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.CoreReflections;
 import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.MBlocks;
 import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.MFluids;
 import net.momirealms.craftengine.bukkit.util.BlockStateUtils;
@@ -13,6 +12,7 @@ import net.momirealms.craftengine.core.util.Key;
 import net.momirealms.craftengine.core.world.ExistingBlock;
 import net.momirealms.craftengine.core.world.World;
 import net.momirealms.craftengine.core.world.context.BlockPlaceContext;
+import net.momirealms.craftengine.proxy.minecraft.world.level.block.SnowLayerBlockProxy;
 import org.bukkit.Location;
 import org.bukkit.block.Block;
 import org.jetbrains.annotations.NotNull;
@@ -34,7 +34,7 @@ public class BukkitExistingBlock implements ExistingBlock {
             return customState.behavior().canBeReplaced(context, customState);
         }
         if (BlockStateUtils.getBlockOwner(state) == MBlocks.SNOW) {
-            return (int) FastNMS.INSTANCE.method$StateHolder$getValue(state, CoreReflections.instance$SnowLayerBlock$LAYERS) == 1;
+            return (int) FastNMS.INSTANCE.method$StateHolder$getValue(state, SnowLayerBlockProxy.INSTANCE.getLayersProperty()) == 1;
         }
         return BlockStateUtils.isReplaceable(state);
     }

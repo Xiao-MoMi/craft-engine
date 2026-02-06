@@ -2,7 +2,6 @@ package net.momirealms.craftengine.bukkit.entity.furniture.hitbox;
 
 import net.momirealms.craftengine.bukkit.entity.data.BaseEntityData;
 import net.momirealms.craftengine.bukkit.nms.FastNMS;
-import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.CoreReflections;
 import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.MBuiltInRegistries;
 import net.momirealms.craftengine.bukkit.util.KeyUtils;
 import net.momirealms.craftengine.core.entity.furniture.Furniture;
@@ -15,6 +14,8 @@ import net.momirealms.craftengine.core.util.ResourceConfigUtils;
 import net.momirealms.craftengine.core.world.Vec3d;
 import net.momirealms.craftengine.core.world.WorldPosition;
 import net.momirealms.craftengine.core.world.collision.AABB;
+import net.momirealms.craftengine.proxy.minecraft.world.entity.EntityDimensionsProxy;
+import net.momirealms.craftengine.proxy.minecraft.world.entity.EntityTypeProxy;
 import org.joml.Vector3f;
 
 import java.util.ArrayList;
@@ -94,17 +95,10 @@ public final class CustomFurnitureHitboxConfig extends AbstractFurnitureHitBoxCo
             if (nmsEntityType == null) {
                 throw new LocalizedResourceConfigException("warning.config.furniture.hitbox.custom.invalid_entity", new IllegalArgumentException("EntityType not found: " + type), type);
             }
-            float width;
-            float height;
-            boolean fixed;
-            try {
-                Object dimensions = CoreReflections.field$EntityType$dimensions.get(nmsEntityType);
-                width = CoreReflections.field$EntityDimensions$width.getFloat(dimensions);
-                height = CoreReflections.field$EntityDimensions$height.getFloat(dimensions);
-                fixed = CoreReflections.field$EntityDimensions$fixed.getBoolean(dimensions);
-            } catch (ReflectiveOperationException e) {
-                throw new RuntimeException("Failed to get dimensions for " + nmsEntityType, e);
-            }
+            Object dimensions = EntityTypeProxy.INSTANCE.getDimensions(nmsEntityType);
+            float width = EntityDimensionsProxy.INSTANCE.getWidth(dimensions);
+            float height = EntityDimensionsProxy.INSTANCE.getHeight(dimensions);
+            boolean fixed = EntityDimensionsProxy.INSTANCE.isFixed(dimensions);
             boolean canUseItemOn = ResourceConfigUtils.getAsBoolean(arguments.getOrDefault("can-use-item-on", false), "can-use-item-on");
             boolean canBeHitByProjectile = ResourceConfigUtils.getAsBoolean(arguments.getOrDefault("can-be-hit-by-projectile", false), "can-be-hit-by-projectile");
             boolean blocksBuilding = ResourceConfigUtils.getAsBoolean(arguments.getOrDefault("blocks-building", true), "blocks-building");

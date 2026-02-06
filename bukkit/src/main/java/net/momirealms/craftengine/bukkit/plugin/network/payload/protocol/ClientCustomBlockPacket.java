@@ -7,9 +7,7 @@ import net.kyori.adventure.text.TranslationArgument;
 import net.momirealms.craftengine.bukkit.block.BukkitBlockManager;
 import net.momirealms.craftengine.bukkit.nms.FastNMS;
 import net.momirealms.craftengine.bukkit.plugin.network.payload.PayloadHelper;
-import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.CoreReflections;
 import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.NetworkReflections;
-import net.momirealms.craftengine.bukkit.plugin.reflection.paper.PaperReflections;
 import net.momirealms.craftengine.bukkit.util.BlockStateUtils;
 import net.momirealms.craftengine.bukkit.util.RegistryUtils;
 import net.momirealms.craftengine.core.plugin.CraftEngine;
@@ -18,6 +16,9 @@ import net.momirealms.craftengine.core.plugin.network.NetWorkUser;
 import net.momirealms.craftengine.core.plugin.network.codec.NetworkCodec;
 import net.momirealms.craftengine.core.registry.BuiltInRegistries;
 import net.momirealms.craftengine.core.util.*;
+import net.momirealms.craftengine.proxy.minecraft.server.level.ServerPlayerProxy;
+import net.momirealms.craftengine.proxy.minecraft.world.level.BlockAndTintGetterProxy;
+import net.momirealms.craftengine.proxy.paper.chunk.system.entity.RegionizedPlayerChunkLoaderProxy;
 import org.bukkit.entity.Player;
 
 public record ClientCustomBlockPacket(int vanillaSize, int currentSize) implements ModPacket {
@@ -71,14 +72,14 @@ public record ClientCustomBlockPacket(int vanillaSize, int currentSize) implemen
             // 因为旧版本没有配置阶段需要重新发送区块
             CraftEngine.instance().scheduler().executeSync(() -> {
                 try {
-                    Object chunkLoader = PaperReflections.field$ServerPlayer$chunkLoader.get(user.serverPlayer());
-                    LongOpenHashSet sentChunks = (LongOpenHashSet) PaperReflections.field$RegionizedPlayerChunkLoader$PlayerChunkLoaderData$sentChunks.get(chunkLoader);
+                    Object chunkLoader = ServerPlayerProxy.INSTANCE.getChunkLoader(user.serverPlayer());
+                    LongOpenHashSet sentChunks = RegionizedPlayerChunkLoaderProxy.PlayerChunkLoaderDataProxy.INSTANCE.getSentChunks(chunkLoader);
                     if (sentChunks.isEmpty()) {
                         return;
                     }
                     sentChunks = sentChunks.clone();
                     Object serverLevel = FastNMS.INSTANCE.field$CraftWorld$ServerLevel(((Player) user.platformPlayer()).getWorld());
-                    Object lightEngine = CoreReflections.method$BlockAndTintGetter$getLightEngine.invoke(serverLevel);
+                    Object lightEngine = BlockAndTintGetterProxy.INSTANCE.getLightEngine(serverLevel);
                     Object chunkSource = FastNMS.INSTANCE.method$ServerLevel$getChunkSource(serverLevel);
                     for (long chunkPos : sentChunks) {
                         int chunkX = (int) chunkPos;

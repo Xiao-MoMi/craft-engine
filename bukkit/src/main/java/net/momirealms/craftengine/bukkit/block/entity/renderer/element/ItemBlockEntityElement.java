@@ -2,11 +2,12 @@ package net.momirealms.craftengine.bukkit.block.entity.renderer.element;
 
 import it.unimi.dsi.fastutil.ints.IntList;
 import net.momirealms.craftengine.bukkit.nms.FastNMS;
-import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.CoreReflections;
 import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.MEntityTypes;
 import net.momirealms.craftengine.core.block.entity.render.element.BlockEntityElement;
 import net.momirealms.craftengine.core.entity.player.Player;
 import net.momirealms.craftengine.core.world.BlockPos;
+import net.momirealms.craftengine.proxy.minecraft.world.entity.EntityProxy;
+import net.momirealms.craftengine.proxy.minecraft.world.phys.Vec3Proxy;
 import org.joml.Vector3f;
 
 import java.util.List;
@@ -23,7 +24,7 @@ public class ItemBlockEntityElement implements BlockEntityElement {
     public final int entityId2;
 
     public ItemBlockEntityElement(ItemBlockEntityElementConfig config, BlockPos pos) {
-        this(config, pos, CoreReflections.instance$Entity$ENTITY_COUNTER.incrementAndGet(), CoreReflections.instance$Entity$ENTITY_COUNTER.incrementAndGet(), false);
+        this(config, pos, EntityProxy.ENTITY_COUNTER.incrementAndGet(), EntityProxy.ENTITY_COUNTER.incrementAndGet(), false);
     }
 
     public ItemBlockEntityElement(ItemBlockEntityElementConfig config, BlockPos pos, int entityId1, int entityId2, boolean posChanged) {
@@ -31,11 +32,11 @@ public class ItemBlockEntityElement implements BlockEntityElement {
         Vector3f position = config.position();
         this.cachedSpawnPacket1 = FastNMS.INSTANCE.constructor$ClientboundAddEntityPacket(
                 entityId1, UUID.randomUUID(), pos.x() + position.x, pos.y() + position.y, pos.z() + position.z,
-                0, 0, MEntityTypes.ITEM_DISPLAY, 0, CoreReflections.instance$Vec3$Zero, 0
+                0, 0, MEntityTypes.ITEM_DISPLAY, 0, Vec3Proxy.ZERO, 0
         );
         this.cachedSpawnPacket2 = FastNMS.INSTANCE.constructor$ClientboundAddEntityPacket(
                 entityId2, UUID.randomUUID(), pos.x() + position.x, pos.y() + position.y, pos.z() + position.z,
-                0, 0, MEntityTypes.ITEM, 0, CoreReflections.instance$Vec3$Zero, 0
+                0, 0, MEntityTypes.ITEM, 0, Vec3Proxy.ZERO, 0
         );
         this.cachedRidePacket = FastNMS.INSTANCE.constructor$ClientboundSetPassengersPacket(entityId1, entityId2);
         this.cachedDespawnPacket = FastNMS.INSTANCE.constructor$ClientboundRemoveEntitiesPacket(IntList.of(entityId1, entityId2));

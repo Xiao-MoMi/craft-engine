@@ -30,6 +30,7 @@ import net.momirealms.craftengine.core.world.SectionPos;
 import net.momirealms.craftengine.core.world.chunk.CEChunk;
 import net.momirealms.craftengine.core.world.chunk.CESection;
 import net.momirealms.craftengine.core.world.chunk.InjectedHolder;
+import net.momirealms.craftengine.proxy.minecraft.world.level.chunk.PalettedContainerProxy;
 
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
@@ -126,7 +127,7 @@ public final class WorldStorageInjector {
                     injectedObject.ceSection(ceSection);
                     injectedObject.cePos(pos);
                     injectedObject.setActive(true);
-                    CoreReflections.varHandle$PalettedContainer$data.setVolatile(injectedObject, CoreReflections.varHandle$PalettedContainer$data.get(container));
+                    PalettedContainerProxy.INSTANCE.setData(injectedObject, PalettedContainerProxy.INSTANCE.getData(container));
                     CoreReflections.field$LevelChunkSection$states.set(targetSection, injectedObject);
                 } else {
                     holder.ceChunk(chunk);

@@ -6,6 +6,7 @@ import net.momirealms.craftengine.core.item.Item;
 import net.momirealms.craftengine.core.plugin.CraftEngine;
 import net.momirealms.craftengine.core.world.BlockPos;
 import net.momirealms.craftengine.core.world.World;
+import net.momirealms.craftengine.proxy.minecraft.world.item.ItemStackProxy;
 import org.bukkit.Location;
 import org.bukkit.inventory.ItemStack;
 
@@ -34,7 +35,7 @@ public final class AdventureModeUtils {
 
     public static boolean canPlace(Item<?> itemStack, World world, BlockPos pos, Object state) {
         Object blockPos = LocationUtils.toBlockPos(pos);
-        Object item = itemStack == null ? CoreReflections.instance$ItemStack$EMPTY : itemStack.getLiteralObject();
+        Object item = itemStack == null ? ItemStackProxy.EMPTY : itemStack.getLiteralObject();
         Object blockInWorld = FastNMS.INSTANCE.constructor$BlockInWorld(FastNMS.INSTANCE.field$CraftWorld$ServerLevel((org.bukkit.World) world.platformWorld()), blockPos, false);
         if (state != null) {
             try {

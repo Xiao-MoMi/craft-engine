@@ -4,7 +4,6 @@ import net.momirealms.craftengine.bukkit.entity.data.InteractionEntityData;
 import net.momirealms.craftengine.bukkit.entity.data.ShulkerData;
 import net.momirealms.craftengine.bukkit.entity.furniture.BukkitCollider;
 import net.momirealms.craftengine.bukkit.nms.FastNMS;
-import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.CoreReflections;
 import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.MEntityTypes;
 import net.momirealms.craftengine.bukkit.util.DirectionUtils;
 import net.momirealms.craftengine.core.entity.furniture.Collider;
@@ -21,6 +20,8 @@ import net.momirealms.craftengine.core.world.Vec3d;
 import net.momirealms.craftengine.core.world.World;
 import net.momirealms.craftengine.core.world.WorldPosition;
 import net.momirealms.craftengine.core.world.collision.AABB;
+import net.momirealms.craftengine.proxy.minecraft.core.DirectionProxy;
+import net.momirealms.craftengine.proxy.minecraft.world.phys.Vec3Proxy;
 import org.joml.Quaternionf;
 import org.joml.Vector3f;
 
@@ -80,7 +81,7 @@ public final class ShulkerFurnitureHitboxConfig extends AbstractFurnitureHitBoxC
                 if (interactionEntity) {
                     packets.accept(FastNMS.INSTANCE.constructor$ClientboundAddEntityPacket(
                             entityIds[2], UUID.randomUUID(), x + offset.x, y + offset.y - 0.005f, z - offset.z, 0, yaw,
-                            MEntityTypes.INTERACTION, 0, CoreReflections.instance$Vec3$Zero, 0
+                            MEntityTypes.INTERACTION, 0, Vec3Proxy.ZERO, 0
                     ));
                     packets.accept(FastNMS.INSTANCE.constructor$ClientboundSetEntityDataPacket(entityIds[2], List.copyOf(cachedInteractionValues)));
                     Vec3d vec3d = new Vec3d(x + offset.x, y + offset.y, z - offset.z);
@@ -94,11 +95,11 @@ public final class ShulkerFurnitureHitboxConfig extends AbstractFurnitureHitBoxC
             InteractionEntityData.Responsive.addEntityDataIfNotDefaultValue(interactive, cachedInteractionValues);
             this.spawner = (entityIds, world, x, y, z, yaw, offset, packets, collider, aabb) -> {
                 collider.accept(this.createCollider(Direction.DOWN, world, offset, x, y, z, entityIds[1], aabb));
-                packets.accept(FastNMS.INSTANCE.constructor$ClientboundSetEntityDataPacket(entityIds[1], List.of(ShulkerData.AttachFace.createEntityDataIfNotDefaultValue(CoreReflections.instance$Direction$UP))));
+                packets.accept(FastNMS.INSTANCE.constructor$ClientboundSetEntityDataPacket(entityIds[1], List.of(ShulkerData.AttachFace.createEntityDataIfNotDefaultValue(DirectionProxy.UP))));
                 if (interactionEntity) {
                     packets.accept(FastNMS.INSTANCE.constructor$ClientboundAddEntityPacket(
                             entityIds[2], UUID.randomUUID(), x + offset.x, y + offset.y - 0.005f - shulkerHeight + scale, z - offset.z, 0, yaw,
-                            MEntityTypes.INTERACTION, 0, CoreReflections.instance$Vec3$Zero, 0
+                            MEntityTypes.INTERACTION, 0, Vec3Proxy.ZERO, 0
                     ));
                     packets.accept(FastNMS.INSTANCE.constructor$ClientboundSetEntityDataPacket(entityIds[2], List.copyOf(cachedInteractionValues)));
                     Vec3d vec3d = new Vec3d(x + offset.x, y + offset.y - shulkerHeight + scale, z - offset.z);
@@ -119,14 +120,14 @@ public final class ShulkerFurnitureHitboxConfig extends AbstractFurnitureHitBoxC
                     // first interaction
                     packets.accept(FastNMS.INSTANCE.constructor$ClientboundAddEntityPacket(
                             entityIds[2], UUID.randomUUID(), x + offset.x, y + offset.y - 0.005f, z - offset.z, 0, yaw,
-                            MEntityTypes.INTERACTION, 0, CoreReflections.instance$Vec3$Zero, 0
+                            MEntityTypes.INTERACTION, 0, Vec3Proxy.ZERO, 0
                     ));
                     packets.accept(FastNMS.INSTANCE.constructor$ClientboundSetEntityDataPacket(entityIds[2], List.copyOf(cachedInteractionValues)));
                     // second interaction
                     double distance = shulkerHeight - scale;
                     packets.accept(FastNMS.INSTANCE.constructor$ClientboundAddEntityPacket(
                             entityIds[3], UUID.randomUUID(), x + offset.x + shulkerDirection.stepX() * distance, y + offset.y - 0.005f, z - offset.z + shulkerDirection.stepZ() * distance, 0, yaw,
-                            MEntityTypes.INTERACTION, 0, CoreReflections.instance$Vec3$Zero, 0
+                            MEntityTypes.INTERACTION, 0, Vec3Proxy.ZERO, 0
                     ));
                     packets.accept(FastNMS.INSTANCE.constructor$ClientboundSetEntityDataPacket(entityIds[3], List.copyOf(cachedInteractionValues)));
                     Vec3d vec3d1 = new Vec3d(x + offset.x, y + offset.y, z - offset.z);

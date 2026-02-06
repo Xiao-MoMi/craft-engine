@@ -3,7 +3,6 @@ package net.momirealms.craftengine.bukkit.plugin.network.handler;
 import net.kyori.adventure.text.Component;
 import net.momirealms.craftengine.bukkit.entity.data.TextDisplayEntityData;
 import net.momirealms.craftengine.bukkit.nms.FastNMS;
-import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.CoreReflections;
 import net.momirealms.craftengine.bukkit.util.ComponentUtils;
 import net.momirealms.craftengine.core.entity.player.Player;
 import net.momirealms.craftengine.core.plugin.CraftEngine;
@@ -14,6 +13,7 @@ import net.momirealms.craftengine.core.plugin.network.event.ByteBufPacketEvent;
 import net.momirealms.craftengine.core.plugin.text.component.ComponentProvider;
 import net.momirealms.craftengine.core.util.AdventureHelper;
 import net.momirealms.craftengine.core.util.FriendlyByteBuf;
+import net.momirealms.craftengine.proxy.minecraft.network.chat.ComponentProxy;
 
 import java.util.List;
 import java.util.Map;
@@ -35,7 +35,7 @@ public class TextDisplayPacketHandler implements EntityPacketHandler {
             int entityDataId = FastNMS.INSTANCE.field$SynchedEntityData$DataValue$id(packedItem);
             if (entityDataId != TextDisplayEntityData.Text.id()) continue;
             Object textComponent = FastNMS.INSTANCE.field$SynchedEntityData$DataValue$value(packedItem);
-            if (textComponent == CoreReflections.instance$Component$empty) break;
+            if (textComponent == ComponentProxy.INSTANCE.empty()) break;
             String json = ComponentUtils.minecraftToJson(textComponent);
             Map<String, ComponentProvider> tokens = CraftEngine.instance().networkManager().matchNetworkTags(json);
             if (tokens.isEmpty()) break;

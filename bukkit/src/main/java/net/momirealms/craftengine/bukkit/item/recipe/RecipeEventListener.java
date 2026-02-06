@@ -7,7 +7,6 @@ import net.momirealms.craftengine.bukkit.item.BukkitItemManager;
 import net.momirealms.craftengine.bukkit.item.DataComponentTypes;
 import net.momirealms.craftengine.bukkit.nms.FastNMS;
 import net.momirealms.craftengine.bukkit.plugin.BukkitCraftEngine;
-import net.momirealms.craftengine.bukkit.plugin.reflection.bukkit.CraftBukkitReflections;
 import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.CoreReflections;
 import net.momirealms.craftengine.bukkit.plugin.user.BukkitServerPlayer;
 import net.momirealms.craftengine.bukkit.util.*;
@@ -28,6 +27,10 @@ import net.momirealms.craftengine.core.plugin.context.ContextKey;
 import net.momirealms.craftengine.core.plugin.context.PlayerOptionalContext;
 import net.momirealms.craftengine.core.plugin.context.function.Function;
 import net.momirealms.craftengine.core.util.*;
+import net.momirealms.craftengine.proxy.bukkit.craftbukkit.inventory.CraftComplexRecipeProxy;
+import net.momirealms.craftengine.proxy.bukkit.craftbukkit.inventory.CraftInventoryAnvilProxy;
+import net.momirealms.craftengine.proxy.bukkit.craftbukkit.inventory.CraftInventoryViewProxy;
+import net.momirealms.craftengine.proxy.minecraft.network.chat.ComponentProxy;
 import org.bukkit.Material;
 import org.bukkit.entity.Player;
 import org.bukkit.event.Event;
@@ -437,15 +440,11 @@ public class RecipeEventListener implements Listener {
         int repairPenalty = wrappedFirst.repairCost().orElse(0) + wrappedSecond.repairCost().orElse(0);
 
         if (renameText != null && !renameText.isBlank()) {
-            try {
-                if (!renameText.equals(CoreReflections.method$Component$getString.invoke(ComponentUtils.jsonToMinecraft(wrappedFirst.hoverNameJson().orElse(AdventureHelper.EMPTY_COMPONENT))))) {
-                    wrappedFirst.customNameJson(AdventureHelper.componentToJson(Component.text(renameText)));
-                    repairCost += 1;
-                } else if (repairCost == 0) {
-                    hasResult = false;
-                }
-            } catch (ReflectiveOperationException e) {
-                plugin.logger().warn("Failed to get hover name", e);
+            if (!renameText.equals(ComponentProxy.INSTANCE.getString(ComponentUtils.jsonToMinecraft(wrappedFirst.hoverNameJson().orElse(AdventureHelper.EMPTY_COMPONENT))))) {
+                wrappedFirst.customNameJson(AdventureHelper.componentToJson(Component.text(renameText)));
+                repairCost += 1;
+            } else if (repairCost == 0) {
+                hasResult = false;
             }
         } else if (VersionHelper.isOrAbove1_20_5() && wrappedFirst.hasComponent(DataComponentTypes.CUSTOM_NAME)) {
             repairCost += 1;
@@ -461,9 +460,9 @@ public class RecipeEventListener implements Listener {
         try {
             Object anvilMenu;
             if (VersionHelper.isOrAbove1_21()) {
-                anvilMenu = CraftBukkitReflections.field$CraftInventoryView$container.get(event.getView());
+                anvilMenu = CraftInventoryViewProxy.INSTANCE.getContainer(event.getView());
             } else {
-                anvilMenu = CraftBukkitReflections.field$CraftInventoryAnvil$menu.get(inventory);
+                anvilMenu = CraftInventoryAnvilProxy.INSTANCE.getContainer(inventory);
             }
             CoreReflections.method$AbstractContainerMenu$broadcastFullState.invoke(anvilMenu);
         } catch (ReflectiveOperationException e) {
@@ -521,12 +520,8 @@ public class RecipeEventListener implements Listener {
                     renameText = LegacyInventoryUtils.getRenameText(inventory);
                 }
                 if (renameText != null && !renameText.isBlank()) {
-                    try {
-                        if (!renameText.equals(CoreReflections.method$Component$getString.invoke(ComponentUtils.jsonToMinecraft(wrappedFirst.hoverNameJson().orElse(AdventureHelper.EMPTY_COMPONENT))))) {
-                            event.setResult(null);
-                        }
-                    } catch (Exception e) {
-                        this.plugin.logger().warn("Failed to get hover name", e);
+                    if (!renameText.equals(ComponentProxy.INSTANCE.getString(ComponentUtils.jsonToMinecraft(wrappedFirst.hoverNameJson().orElse(AdventureHelper.EMPTY_COMPONENT))))) {
+                        event.setResult(null);
                     }
                 }
             }
@@ -550,11 +545,11 @@ public class RecipeEventListener implements Listener {
         boolean hasCustomItem = ItemStackUtils.hasCustomItem(inventory.getMatrix());
         if (!hasCustomItem)
             return;
-        if (!CraftBukkitReflections.clazz$CraftComplexRecipe.isInstance(complexRecipe)) {
+        if (!CraftComplexRecipeProxy.CLASS.isInstance(complexRecipe)) {
             return;
         }
         try {
-            Object mcRecipe = CraftBukkitReflections.field$CraftComplexRecipe$recipe.get(complexRecipe);
+            Object mcRecipe = CraftComplexRecipeProxy.INSTANCE.getRecipe(complexRecipe);
             if (CoreReflections.clazz$ArmorDyeRecipe.isInstance(mcRecipe) || CoreReflections.clazz$FireworkStarFadeRecipe.isInstance(mcRecipe)) {
                 return;
             }

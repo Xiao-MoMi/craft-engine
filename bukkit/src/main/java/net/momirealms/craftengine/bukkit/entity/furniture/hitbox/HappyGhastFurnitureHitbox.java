@@ -2,7 +2,6 @@ package net.momirealms.craftengine.bukkit.entity.furniture.hitbox;
 
 import it.unimi.dsi.fastutil.ints.IntArrayList;
 import net.momirealms.craftengine.bukkit.nms.FastNMS;
-import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.CoreReflections;
 import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.MAttributeHolders;
 import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.MEntityTypes;
 import net.momirealms.craftengine.core.entity.furniture.Collider;
@@ -12,6 +11,8 @@ import net.momirealms.craftengine.core.entity.player.Player;
 import net.momirealms.craftengine.core.world.Vec3d;
 import net.momirealms.craftengine.core.world.WorldPosition;
 import net.momirealms.craftengine.core.world.collision.AABB;
+import net.momirealms.craftengine.proxy.minecraft.world.entity.EntityProxy;
+import net.momirealms.craftengine.proxy.minecraft.world.phys.Vec3Proxy;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -37,7 +38,7 @@ public final class HappyGhastFurnitureHitbox extends AbstractFurnitureHitBox {
         double bbSize = 4 * config.scale();
         AABB aabb = AABB.makeBoundingBox(this.pos, bbSize, bbSize);
         this.yaw = position.yRot;
-        this.entityId = CoreReflections.instance$Entity$ENTITY_COUNTER.incrementAndGet();
+        this.entityId = EntityProxy.ENTITY_COUNTER.incrementAndGet();
         this.packets = new ArrayList<>(3);
         this.packets.add(FastNMS.INSTANCE.constructor$ClientboundSetEntityDataPacket(this.entityId, config.cachedValues()));
         if (config.scale() != 1) {
@@ -66,7 +67,7 @@ public final class HappyGhastFurnitureHitbox extends AbstractFurnitureHitBox {
         List<Object> packets = new ArrayList<>();
         packets.add(FastNMS.INSTANCE.constructor$ClientboundAddEntityPacket(
                 this.entityId, UUID.randomUUID(), this.pos.x, player.y() - (this.config.scale() * 4 + 16), this.pos.z, 0, this.yaw,
-                MEntityTypes.HAPPY_GHAST, 0, CoreReflections.instance$Vec3$Zero, 0
+                MEntityTypes.HAPPY_GHAST, 0, Vec3Proxy.ZERO, 0
         ));
         packets.addAll(this.packets);
         player.sendPacket(FastNMS.INSTANCE.constructor$ClientboundBundlePacket(packets), false);

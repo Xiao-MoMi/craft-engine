@@ -45,7 +45,6 @@ import net.momirealms.craftengine.bukkit.item.behavior.FurnitureItemBehavior;
 import net.momirealms.craftengine.bukkit.nms.FastNMS;
 import net.momirealms.craftengine.bukkit.plugin.BukkitCraftEngine;
 import net.momirealms.craftengine.bukkit.plugin.command.feature.TotemAnimationCommand;
-import net.momirealms.craftengine.bukkit.plugin.injector.InjectionException;
 import net.momirealms.craftengine.bukkit.plugin.injector.ProtectedFieldVisitor;
 import net.momirealms.craftengine.bukkit.plugin.network.handler.*;
 import net.momirealms.craftengine.bukkit.plugin.network.id.PacketIdHelper;
@@ -113,7 +112,22 @@ import net.momirealms.craftengine.core.world.chunk.packet.BlockEntityData;
 import net.momirealms.craftengine.core.world.chunk.packet.MCSection;
 import net.momirealms.craftengine.core.world.context.InteractEntityContext;
 import net.momirealms.craftengine.core.world.context.UseOnContext;
-import net.momirealms.craftengine.proxy.sound.SoundSourceProxy;
+import net.momirealms.craftengine.proxy.minecraft.network.ServerCommonPacketListenerImplProxy;
+import net.momirealms.craftengine.proxy.minecraft.network.ServerConfigurationPacketListenerImplProxy;
+import net.momirealms.craftengine.proxy.minecraft.network.config.JoinWorldTaskProxy;
+import net.momirealms.craftengine.proxy.minecraft.network.config.ServerResourcePackConfigurationTaskProxy;
+import net.momirealms.craftengine.proxy.minecraft.server.MinecraftServerProxy;
+import net.momirealms.craftengine.proxy.minecraft.server.dedicated.DedicatedServerPropertiesProxy;
+import net.momirealms.craftengine.proxy.minecraft.server.dedicated.DedicatedServerProxy;
+import net.momirealms.craftengine.proxy.minecraft.server.dedicated.DedicatedServerSettingsProxy;
+import net.momirealms.craftengine.proxy.minecraft.server.level.ClientInformationProxy;
+import net.momirealms.craftengine.proxy.minecraft.server.level.ServerPlayerProxy;
+import net.momirealms.craftengine.proxy.minecraft.server.network.ServerConnectionListenerProxy;
+import net.momirealms.craftengine.proxy.minecraft.server.network.ServerGamePacketListenerImplProxy;
+import net.momirealms.craftengine.proxy.minecraft.sounds.SoundSourceProxy;
+import net.momirealms.craftengine.proxy.minecraft.world.InteractionHandProxy;
+import net.momirealms.craftengine.proxy.minecraft.world.entity.EquipmentSlotProxy;
+import net.momirealms.craftengine.proxy.minecraft.world.item.ItemStackProxy;
 import net.momirealms.sparrow.nbt.CompoundTag;
 import net.momirealms.sparrow.nbt.ListTag;
 import net.momirealms.sparrow.nbt.Tag;
@@ -234,20 +248,17 @@ public class BukkitNetworkManager extends AbstractNetworkManager implements List
             this.immediatePacketConsumer.accept(channel, bundle, sendListener);
         };
         // Inject server channel
-        try {
+        {
             Object server = FastNMS.INSTANCE.method$MinecraftServer$getServer();
-            Object serverConnection = CoreReflections.field$MinecraftServer$connection.get(server);
-            @SuppressWarnings("unchecked")
-            List<ChannelFuture> channels = (List<ChannelFuture>) CoreReflections.field$ServerConnectionListener$channels.get(serverConnection);
+            Object serverConnection = MinecraftServerProxy.INSTANCE.getConnection(server);
+            List<ChannelFuture> channels = ServerConnectionListenerProxy.INSTANCE.getChannels(serverConnection);
             ListMonitor<ChannelFuture> monitor = new ListMonitor<>(channels, (future) -> {
                 Channel channel = future.channel();
                 injectServerChannel(channel);
                 this.injectedChannels.add(channel);
             }, (object) -> {
             });
-            CoreReflections.field$ServerConnectionListener$channels.set(serverConnection, monitor);
-        } catch (ReflectiveOperationException e) {
-            throw new RuntimeException("Failed to init server connection", e);
+            ServerConnectionListenerProxy.INSTANCE.setChannels(serverConnection, monitor);
         }
         // Inject Leaves bot list
         if (VersionHelper.isLeaves()) {
@@ -585,13 +596,9 @@ public class BukkitNetworkManager extends AbstractNetworkManager implements List
 
     private void updateEnforceSecureProfile() {
         // 更新聊天验证
-        try {
-            Object settings = CoreReflections.field$DedicatedServer$settings.get(FastNMS.INSTANCE.method$MinecraftServer$getServer());
-            Object properties = CoreReflections.field$DedicatedServerSettings$properties.get(settings);
-            CoreReflections.methodHandle$DedicatedServerProperties$enforceSecureProfileSetter.invoke(properties, false);
-        } catch (Throwable e) {
-            throw new InjectionException("Error injecting secure profile", e);
-        }
+        Object settings = DedicatedServerProxy.INSTANCE.getSettings(MinecraftServerProxy.INSTANCE.getServer());
+        Object properties = DedicatedServerSettingsProxy.INSTANCE.getProperties(settings);
+        DedicatedServerPropertiesProxy.INSTANCE.setEnforceSecureProfile(properties, false);
     }
 
     @Override
@@ -1255,7 +1262,7 @@ public class BukkitNetworkManager extends AbstractNetworkManager implements List
         public void onPacketReceive(NetWorkUser user, NMSPacketEvent event, Object packet) {
             BukkitServerPlayer player = (BukkitServerPlayer) user;
             Object hand = FastNMS.INSTANCE.field$ServerboundSwingPacket$hand(packet);
-            if (hand == CoreReflections.instance$InteractionHand$MAIN_HAND) {
+            if (hand == InteractionHandProxy.MAIN_HAND) {
                 player.onSwingHand();
             }
         }
@@ -1358,7 +1365,7 @@ public class BukkitNetworkManager extends AbstractNetworkManager implements List
             } else {
                 itemStack = (ItemStack) item.getItem();
             }
-            pickItem(player.platformPlayer(), itemStack, pos, null);
+            tryPickItem(player.platformPlayer(), itemStack, pos, null);
         }
     }
 
@@ -1403,19 +1410,17 @@ public class BukkitNetworkManager extends AbstractNetworkManager implements List
             } else {
                 itemStack = (ItemStack) item.getItem();
             }
-            pickItem(player.platformPlayer(), itemStack, null, FastNMS.INSTANCE.method$CraftEntity$getHandle(furniture.bukkitEntity()));
+            tryPickItem(player.platformPlayer(), itemStack, null, FastNMS.INSTANCE.method$CraftEntity$getHandle(furniture.bukkitEntity()));
         }
     }
 
-    private static void pickItem(Player player, ItemStack itemStack, @Nullable Object blockPos, @Nullable Object entity) throws Throwable {
-        assert CoreReflections.method$ServerGamePacketListenerImpl$tryPickItem != null;
+    private static void tryPickItem(Player player, ItemStack itemStack, @Nullable Object blockPos, @Nullable Object entity) {
         if (VersionHelper.isOrAbove1_21_5()) {
-            CoreReflections.method$ServerGamePacketListenerImpl$tryPickItem.invoke(
-                    CoreReflections.methodHandle$ServerPlayer$connectionGetter.invokeExact(FastNMS.INSTANCE.method$CraftPlayer$getHandle(player)),
+            ServerGamePacketListenerImplProxy.INSTANCE.tryPickItem(ServerPlayerProxy.INSTANCE.getConnection(FastNMS.INSTANCE.method$CraftPlayer$getHandle(player)),
                     FastNMS.INSTANCE.method$CraftItemStack$asNMSCopy(itemStack), blockPos, entity, true);
-        } else {
-            CoreReflections.method$ServerGamePacketListenerImpl$tryPickItem.invoke(
-                    CoreReflections.methodHandle$ServerPlayer$connectionGetter.invokeExact(FastNMS.INSTANCE.method$CraftPlayer$getHandle(player)), FastNMS.INSTANCE.method$CraftItemStack$asNMSCopy(itemStack));
+        } else if (VersionHelper.isOrAbove1_21_4()) {
+            ServerGamePacketListenerImplProxy.INSTANCE.tryPickItem(ServerPlayerProxy.INSTANCE.getConnection(FastNMS.INSTANCE.method$CraftPlayer$getHandle(player)),
+                    FastNMS.INSTANCE.method$CraftItemStack$asNMSCopy(itemStack));
         }
     }
 
@@ -1427,7 +1432,7 @@ public class BukkitNetworkManager extends AbstractNetworkManager implements List
                 if (VersionHelper.isOrAbove1_20_2()) {
                     Object clientInfo = NetworkReflections.field$ServerboundClientInformationPacket$information.get(packet);
                     if (clientInfo == null) return;
-                    String locale = (String) CoreReflections.field$ClientInformation$language.get(clientInfo);
+                    String locale = ClientInformationProxy.INSTANCE.getLanguage(clientInfo);
                     if (locale == null) return;
                     ((BukkitServerPlayer) user).setClientLocale(TranslationManager.parseLocale(locale));
                 } else {
@@ -1890,13 +1895,13 @@ public class BukkitNetworkManager extends AbstractNetworkManager implements List
             if (isTerminal && VersionHelper.isOrAbove1_20_2()) {
                 event.setCancelled(true);
                 Object packetListener = FastNMS.INSTANCE.method$Connection$getPacketListener(user.connection());
-                if (!CoreReflections.clazz$ServerConfigurationPacketListenerImpl.isInstance(packetListener)) return;
+                if (!ServerConfigurationPacketListenerImplProxy.CLASS.isInstance(packetListener)) return;
                 // 主线程上处理这个包
                 CraftEngine.instance().scheduler().executeSync(() -> {
                     try {
                         // 当客户端发出多次成功包的时候，finish会报错，我们忽略他
                         NetworkReflections.methodHandle$ServerCommonPacketListener$handleResourcePackResponse.invokeExact(packetListener, packet);
-                        CoreReflections.methodHandle$ServerConfigurationPacketListenerImpl$finishCurrentTask.invokeExact(packetListener, CoreReflections.instance$ServerResourcePackConfigurationTask$TYPE);
+                        ServerConfigurationPacketListenerImplProxy.INSTANCE.finishCurrentTask(packetListener, ServerResourcePackConfigurationTaskProxy.TYPE);
                     } catch (Throwable e) {
                         Debugger.RESOURCE_PACK.warn(() -> "Cannot finish current task", e);
                     }
@@ -1959,15 +1964,10 @@ public class BukkitNetworkManager extends AbstractNetworkManager implements List
     public static class S2CFinishConfigurationListener implements NMSPacketListener {
 
         private void returnToWorld(NetWorkUser user, Queue<Object> configurationTasks, Object packetListener) {
-            configurationTasks.add(CoreReflections.instance$JoinWorldTask);
-            try {
-                CoreReflections.methodHandle$ServerConfigurationPacketListenerImpl$startNextTask.invokeExact(packetListener);
-            } catch (Throwable e) {
-                CraftEngine.instance().logger().warn("Cannot return to world for " + user.name(), e);
-            }
+            configurationTasks.add(JoinWorldTaskProxy.INSTANCE.newInstance());
+            ServerConfigurationPacketListenerImplProxy.INSTANCE.startNextTask(packetListener);
         }
 
-        @SuppressWarnings("unchecked")
         @Override
         public void onPacketSend(NetWorkUser user, NMSPacketEvent event, Object packet) {
             if (!VersionHelper.isOrAbove1_20_2() || !Config.sendPackOnJoin()) {
@@ -1980,7 +1980,7 @@ public class BukkitNetworkManager extends AbstractNetworkManager implements List
                 return;
             }
             Object packetListener = FastNMS.INSTANCE.method$Connection$getPacketListener(user.connection());
-            if (!CoreReflections.clazz$ServerConfigurationPacketListenerImpl.isInstance(packetListener)) {
+            if (!ServerConfigurationPacketListenerImplProxy.CLASS.isInstance(packetListener)) {
                 return;
             }
 
@@ -2002,31 +2002,20 @@ public class BukkitNetworkManager extends AbstractNetworkManager implements List
             // 取消 ClientboundFinishConfigurationPacket，让客户端发呆，并结束掉当前的进入世界任务
             event.setCancelled(true);
             try {
-                CoreReflections.methodHandle$ServerConfigurationPacketListenerImpl$finishCurrentTask.invokeExact(packetListener, CoreReflections.instance$JoinWorldTask$TYPE);
+                ServerConfigurationPacketListenerImplProxy.INSTANCE.finishCurrentTask(packetListener, JoinWorldTaskProxy.TYPE);
             } catch (Throwable e) {
                 CraftEngine.instance().logger().warn("Failed to finish current task for " + user.name(), e);
             }
 
             if (VersionHelper.isOrAbove1_20_5()) {
                 // 1.20.5+开始会检查是否结束需要重新设置回去，不然不会发keepAlive包
-                try {
-                    CoreReflections.methodHandle$ServerCommonPacketListenerImpl$closedSetter.invokeExact(packetListener, false);
-                } catch (Throwable e) {
-                    CraftEngine.instance().logger().warn("Failed to set the 'closed' field of ServerCommonPacketListenerImpl for" + user.name(), e);
-                }
+                ServerCommonPacketListenerImplProxy.INSTANCE.setClosed(packetListener, false);
             }
 
             // 请求资源包
             ResourcePackHost host = CraftEngine.instance().packManager().resourcePackHost();
             host.requestResourcePackDownloadLink(user.uuid()).whenComplete((dataList, t) -> {
-                Queue<Object> configurationTasks;
-                try {
-                    configurationTasks = (Queue<Object>) CoreReflections.methodHandle$ServerConfigurationPacketListenerImpl$configurationTasksGetter.invokeExact(packetListener);
-                } catch (Throwable e) {
-                    CraftEngine.instance().logger().warn("Failed to get configuration tasks for player " + user.name(), e);
-                    FastNMS.INSTANCE.method$ServerConfigurationPacketListenerImpl$returnToWorld(packetListener);
-                    return;
-                }
+                Queue<Object> configurationTasks = ServerConfigurationPacketListenerImplProxy.INSTANCE.getConfigurationTasks(packetListener);
                 if (t != null) {
                     CraftEngine.instance().logger().warn("Failed to get pack data for player " + user.name(), t);
                     returnToWorld(user, configurationTasks, packetListener);
@@ -2878,7 +2867,7 @@ public class BukkitNetworkManager extends AbstractNetworkManager implements List
                 }
                 itemTag.put("components", componentsTag);
             }
-            DataResult<Object> nmsItemStackResult = CoreReflections.instance$ItemStack$CODEC.parse(MRegistryOps.SPARROW_NBT, itemTag);
+            DataResult<Object> nmsItemStackResult = ItemStackProxy.INSTANCE.getCodec().parse(MRegistryOps.SPARROW_NBT, itemTag);
             Optional<Object> result = nmsItemStackResult.result();
             if (result.isEmpty()) {
                 return showItem;
@@ -2910,7 +2899,7 @@ public class BukkitNetworkManager extends AbstractNetworkManager implements List
         net.kyori.adventure.key.Key id = KeyUtils.toAdventureKey(clientBoundItem.vanillaId());
         int count = clientBoundItem.count();
         if (VersionHelper.COMPONENT_RELEASE) {
-            DataResult<Tag> tagDataResult = CoreReflections.instance$ItemStack$CODEC.encodeStart(MRegistryOps.SPARROW_NBT, clientBoundItem.getLiteralObject());
+            DataResult<Tag> tagDataResult = ItemStackProxy.INSTANCE.getCodec().encodeStart(MRegistryOps.SPARROW_NBT, clientBoundItem.getLiteralObject());
             Optional<Tag> result = tagDataResult.result();
             if (result.isEmpty()) {
                 return showItem;
@@ -3896,7 +3885,7 @@ public class BukkitNetworkManager extends AbstractNetworkManager implements List
             int slotMask;
             do {
                 slotMask = buf.readByte();
-                Object equipmentSlot = CoreReflections.instance$EquipmentSlot$values[slotMask & 127];
+                Object equipmentSlot = EquipmentSlotProxy.VALUES[slotMask & 127];
                 ItemStack itemStack = FastNMS.INSTANCE.method$FriendlyByteBuf$readItem(friendlyBuf);
                 Optional<ItemStack> optional = BukkitItemManager.instance().s2c(itemStack, serverPlayer);
                 if (optional.isPresent()) {
@@ -4672,7 +4661,7 @@ public class BukkitNetworkManager extends AbstractNetworkManager implements List
                         byte slot = itemCompoundTag.getByte("Slot");
                         Object nmsStack;
                         if (VersionHelper.isOrAbove1_20_5()) {
-                            nmsStack = CoreReflections.instance$ItemStack$CODEC.parse(MRegistryOps.SPARROW_NBT, itemCompoundTag)
+                            nmsStack = ItemStackProxy.INSTANCE.getCodec().parse(MRegistryOps.SPARROW_NBT, itemCompoundTag)
                                     .resultOrPartial((error) -> CraftEngine.instance().logger().severe("Tried to parse invalid item: '" + error + "'")).orElse(null);
                         } else {
                             Object nmsTag = MRegistryOps.SPARROW_NBT.convertTo(MRegistryOps.NBT, itemTag);
@@ -4693,7 +4682,7 @@ public class BukkitNetworkManager extends AbstractNetworkManager implements List
                     for (Pair<Byte, ItemStack> pair : items) {
                         CompoundTag newItemCompoundTag;
                         if (VersionHelper.isOrAbove1_20_5()) {
-                            newItemCompoundTag = (CompoundTag) CoreReflections.instance$ItemStack$CODEC.encodeStart(MRegistryOps.SPARROW_NBT, FastNMS.INSTANCE.field$CraftItemStack$handle(pair.right()))
+                            newItemCompoundTag = (CompoundTag) ItemStackProxy.INSTANCE.getCodec().encodeStart(MRegistryOps.SPARROW_NBT, FastNMS.INSTANCE.field$CraftItemStack$handle(pair.right()))
                                     .resultOrPartial((error) -> CraftEngine.instance().logger().severe("Tried to encode invalid item: '" + error + "'")).orElse(null);
                         } else {
                             Object nmsTag = FastNMS.INSTANCE.method$itemStack$save(FastNMS.INSTANCE.field$CraftItemStack$handle(pair.right()), FastNMS.INSTANCE.constructor$CompoundTag());

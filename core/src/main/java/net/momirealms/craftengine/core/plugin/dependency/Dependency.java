@@ -3,11 +3,9 @@ package net.momirealms.craftengine.core.plugin.dependency;
 import net.momirealms.craftengine.core.plugin.PluginProperties;
 import net.momirealms.craftengine.core.plugin.dependency.relocation.Relocation;
 
-import java.nio.file.Path;
 import java.util.List;
 import java.util.Locale;
 import java.util.Objects;
-import java.util.function.Predicate;
 
 public class Dependency {
     private final String id;

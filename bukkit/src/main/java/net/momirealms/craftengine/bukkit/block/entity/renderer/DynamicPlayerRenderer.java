@@ -16,9 +16,16 @@ import net.momirealms.craftengine.core.block.ImmutableBlockState;
 import net.momirealms.craftengine.core.block.entity.render.DynamicBlockEntityRenderer;
 import net.momirealms.craftengine.core.entity.player.InteractionHand;
 import net.momirealms.craftengine.core.entity.player.Player;
-import net.momirealms.craftengine.core.util.*;
+import net.momirealms.craftengine.core.util.LazyReference;
+import net.momirealms.craftengine.core.util.QuaternionUtils;
 import net.momirealms.craftengine.core.world.BlockPos;
 import net.momirealms.craftengine.core.world.Vec3d;
+import net.momirealms.craftengine.proxy.minecraft.world.entity.EntityProxy;
+import net.momirealms.craftengine.proxy.minecraft.world.entity.EquipmentSlotProxy;
+import net.momirealms.craftengine.proxy.minecraft.world.item.ItemStackProxy;
+import net.momirealms.craftengine.proxy.minecraft.world.level.GameTypeProxy;
+import net.momirealms.craftengine.proxy.minecraft.world.phys.Vec3Proxy;
+import net.momirealms.craftengine.proxy.minecraft.world.phys.shape.CollisionContextProxy;
 import org.jetbrains.annotations.Nullable;
 import org.joml.Vector3f;
 
@@ -30,12 +37,12 @@ import java.util.UUID;
 public class DynamicPlayerRenderer implements DynamicBlockEntityRenderer {
     private static final EnumSet<?> ADD_PLAYER_ACTION = createAction();
     private static final List<Object> EMPTY_EQUIPMENT = List.of(
-            Pair.of(CoreReflections.instance$EquipmentSlot$HEAD, CoreReflections.instance$ItemStack$EMPTY),
-            Pair.of(CoreReflections.instance$EquipmentSlot$CHEST, CoreReflections.instance$ItemStack$EMPTY),
-            Pair.of(CoreReflections.instance$EquipmentSlot$LEGS, CoreReflections.instance$ItemStack$EMPTY),
-            Pair.of(CoreReflections.instance$EquipmentSlot$FEET, CoreReflections.instance$ItemStack$EMPTY),
-            Pair.of(CoreReflections.instance$EquipmentSlot$OFFHAND, CoreReflections.instance$ItemStack$EMPTY),
-            Pair.of(CoreReflections.instance$EquipmentSlot$MAINHAND, CoreReflections.instance$ItemStack$EMPTY)
+            Pair.of(EquipmentSlotProxy.HEAD, ItemStackProxy.EMPTY),
+            Pair.of(EquipmentSlotProxy.CHEST, ItemStackProxy.EMPTY),
+            Pair.of(EquipmentSlotProxy.LEGS, ItemStackProxy.EMPTY),
+            Pair.of(EquipmentSlotProxy.FEET, ItemStackProxy.EMPTY),
+            Pair.of(EquipmentSlotProxy.OFFHAND, ItemStackProxy.EMPTY),
+            Pair.of(EquipmentSlotProxy.MAINHAND, ItemStackProxy.EMPTY)
     );
     public final UUID uuid = UUID.randomUUID();
     public final BedBlockEntity blockEntity;
@@ -57,7 +64,7 @@ public class DynamicPlayerRenderer implements DynamicBlockEntityRenderer {
 
     public DynamicPlayerRenderer(BedBlockEntity blockEntity, BlockPos pos, Vector3f sleepOffset) {
         this.blockEntity = blockEntity;
-        this.entityId = CoreReflections.instance$Entity$ENTITY_COUNTER.incrementAndGet();
+        this.entityId = EntityProxy.ENTITY_COUNTER.incrementAndGet();
         ImmutableBlockState blockState = this.blockEntity.blockState();
         BedBlockBehavior behavior = blockState.behavior().getAs(BedBlockBehavior.class).orElse(null);
         if (behavior != null) {
@@ -74,7 +81,7 @@ public class DynamicPlayerRenderer implements DynamicBlockEntityRenderer {
         }
         this.pos = LazyReference.lazyReference(() -> {
             Object state = blockState.visualBlockState().literalObject();
-            Object shape = FastNMS.INSTANCE.method$BlockState$getShape(state, blockEntity.world.world.serverWorld(), LocationUtils.toBlockPos(pos), CoreReflections.instance$CollisionContext$empty);
+            Object shape = FastNMS.INSTANCE.method$BlockState$getShape(state, blockEntity.world.world.serverWorld(), LocationUtils.toBlockPos(pos), CollisionContextProxy.INSTANCE.empty());
             Object bounds = FastNMS.INSTANCE.method$VoxelShape$bounds(shape);
             double maxY = FastNMS.INSTANCE.field$AABB$maxY(bounds);
             return new Vec3d(pos.x + 0.5, pos.y + maxY, pos.z + 0.5);
@@ -146,12 +153,12 @@ public class DynamicPlayerRenderer implements DynamicBlockEntityRenderer {
             }
             this.cachedSetOccupierDataPacket = FastNMS.INSTANCE.constructor$ClientboundSetEntityDataPacket(before.entityId(), metadata);
             this.cachedSetOccupierEquipmentPacket = FastNMS.INSTANCE.constructor$ClientboundSetEquipmentPacket(before.entityId(), List.of(
-                    Pair.of(CoreReflections.instance$EquipmentSlot$HEAD, before.getItemBySlot(39).getLiteralObject()),
-                    Pair.of(CoreReflections.instance$EquipmentSlot$CHEST, before.getItemBySlot(38).getLiteralObject()),
-                    Pair.of(CoreReflections.instance$EquipmentSlot$LEGS, before.getItemBySlot(37).getLiteralObject()),
-                    Pair.of(CoreReflections.instance$EquipmentSlot$FEET, before.getItemBySlot(36).getLiteralObject()),
-                    Pair.of(CoreReflections.instance$EquipmentSlot$OFFHAND, before.getItemBySlot(40).getLiteralObject()),
-                    Pair.of(CoreReflections.instance$EquipmentSlot$MAINHAND, before.getItemInHand(InteractionHand.MAIN_HAND).getLiteralObject())
+                    Pair.of(EquipmentSlotProxy.HEAD, before.getItemBySlot(39).getLiteralObject()),
+                    Pair.of(EquipmentSlotProxy.CHEST, before.getItemBySlot(38).getLiteralObject()),
+                    Pair.of(EquipmentSlotProxy.LEGS, before.getItemBySlot(37).getLiteralObject()),
+                    Pair.of(EquipmentSlotProxy.FEET, before.getItemBySlot(36).getLiteralObject()),
+                    Pair.of(EquipmentSlotProxy.OFFHAND, before.getItemBySlot(40).getLiteralObject()),
+                    Pair.of(EquipmentSlotProxy.MAINHAND, before.getItemInHand(InteractionHand.MAIN_HAND).getLiteralObject())
             ));
             this.isShow = false;
             this.hasCachedPacket = true;
@@ -161,12 +168,12 @@ public class DynamicPlayerRenderer implements DynamicBlockEntityRenderer {
         double y = pos.y + 0.1125 * FastNMS.INSTANCE.method$LivingEntity$getScale(player.serverPlayer());
         Object entry = FastNMS.INSTANCE.constructor$ClientboundPlayerInfoUpdatePacket$Entry1(
                 this.uuid, gameProfile, false, 0,
-                CoreReflections.instance$GameType$SURVIVAL, null, false, 0, null
+                GameTypeProxy.SURVIVAL, null, false, 0, null
         );
         this.cachedPlayerInfoUpdatePacket = FastNMS.INSTANCE.constructor$ClientboundPlayerInfoUpdatePacket(ADD_PLAYER_ACTION, List.of(entry));
         this.cachedSpawnPacket = FastNMS.INSTANCE.constructor$ClientboundAddEntityPacket(
                 this.entityId, this.uuid, pos.x + this.offset.x, y + this.offset.y, pos.z + this.offset.z,
-                0, this.yRot, MEntityTypes.PLAYER, 0, CoreReflections.instance$Vec3$Zero, this.yRot
+                0, this.yRot, MEntityTypes.PLAYER, 0, Vec3Proxy.ZERO, this.yRot
         );
         @SuppressWarnings({"rawtypes", "unchecked"})
         List<Object> metadata = new ArrayList<>(FastNMS.INSTANCE.method$SynchedEntityData$getNonDefaultValues(player.entityData()));
@@ -185,23 +192,23 @@ public class DynamicPlayerRenderer implements DynamicBlockEntityRenderer {
 
     public void updateEquipment(Player player, int mainSlot) {
         this.cachedSetEquipmentPacket = FastNMS.INSTANCE.constructor$ClientboundSetEquipmentPacket(this.entityId, List.of(
-                Pair.of(CoreReflections.instance$EquipmentSlot$HEAD, player.getItemBySlot(39).getLiteralObject()),
-                Pair.of(CoreReflections.instance$EquipmentSlot$CHEST, player.getItemBySlot(38).getLiteralObject()),
-                Pair.of(CoreReflections.instance$EquipmentSlot$LEGS, player.getItemBySlot(37).getLiteralObject()),
-                Pair.of(CoreReflections.instance$EquipmentSlot$FEET, player.getItemBySlot(36).getLiteralObject()),
-                Pair.of(CoreReflections.instance$EquipmentSlot$OFFHAND, player.getItemBySlot(40).getLiteralObject()),
-                Pair.of(CoreReflections.instance$EquipmentSlot$MAINHAND, player.getItemBySlot(mainSlot).getLiteralObject())
+                Pair.of(EquipmentSlotProxy.HEAD, player.getItemBySlot(39).getLiteralObject()),
+                Pair.of(EquipmentSlotProxy.CHEST, player.getItemBySlot(38).getLiteralObject()),
+                Pair.of(EquipmentSlotProxy.LEGS, player.getItemBySlot(37).getLiteralObject()),
+                Pair.of(EquipmentSlotProxy.FEET, player.getItemBySlot(36).getLiteralObject()),
+                Pair.of(EquipmentSlotProxy.OFFHAND, player.getItemBySlot(40).getLiteralObject()),
+                Pair.of(EquipmentSlotProxy.MAINHAND, player.getItemBySlot(mainSlot).getLiteralObject())
         ));
     }
 
     public void updateEquipment(Player player) {
         this.cachedSetEquipmentPacket = FastNMS.INSTANCE.constructor$ClientboundSetEquipmentPacket(this.entityId, List.of(
-                Pair.of(CoreReflections.instance$EquipmentSlot$HEAD, player.getItemBySlot(39).getLiteralObject()),
-                Pair.of(CoreReflections.instance$EquipmentSlot$CHEST, player.getItemBySlot(38).getLiteralObject()),
-                Pair.of(CoreReflections.instance$EquipmentSlot$LEGS, player.getItemBySlot(37).getLiteralObject()),
-                Pair.of(CoreReflections.instance$EquipmentSlot$FEET, player.getItemBySlot(36).getLiteralObject()),
-                Pair.of(CoreReflections.instance$EquipmentSlot$OFFHAND, player.getItemBySlot(40).getLiteralObject()),
-                Pair.of(CoreReflections.instance$EquipmentSlot$MAINHAND, player.getItemInHand(InteractionHand.MAIN_HAND).getLiteralObject())
+                Pair.of(EquipmentSlotProxy.HEAD, player.getItemBySlot(39).getLiteralObject()),
+                Pair.of(EquipmentSlotProxy.CHEST, player.getItemBySlot(38).getLiteralObject()),
+                Pair.of(EquipmentSlotProxy.LEGS, player.getItemBySlot(37).getLiteralObject()),
+                Pair.of(EquipmentSlotProxy.FEET, player.getItemBySlot(36).getLiteralObject()),
+                Pair.of(EquipmentSlotProxy.OFFHAND, player.getItemBySlot(40).getLiteralObject()),
+                Pair.of(EquipmentSlotProxy.MAINHAND, player.getItemInHand(InteractionHand.MAIN_HAND).getLiteralObject())
         ));
     }
 

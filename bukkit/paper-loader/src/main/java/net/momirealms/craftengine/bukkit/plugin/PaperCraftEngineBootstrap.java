@@ -10,11 +10,9 @@ import net.momirealms.craftengine.bukkit.plugin.classpath.PaperPluginClassPathAp
 import net.momirealms.craftengine.core.plugin.logger.PluginLogger;
 import net.momirealms.craftengine.core.plugin.logger.Slf4jPluginLogger;
 import net.momirealms.craftengine.core.util.ReflectionUtils;
-import org.bukkit.Bukkit;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.jetbrains.annotations.NotNull;
 
-import java.io.InputStream;
 import java.lang.reflect.Method;
 import java.util.Objects;
 

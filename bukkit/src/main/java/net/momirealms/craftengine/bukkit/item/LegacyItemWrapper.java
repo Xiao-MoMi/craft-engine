@@ -10,6 +10,7 @@ import net.momirealms.craftengine.core.entity.player.Player;
 import net.momirealms.craftengine.core.item.ItemType;
 import net.momirealms.craftengine.core.item.ItemWrapper;
 import net.momirealms.craftengine.core.util.random.RandomUtils;
+import net.momirealms.craftengine.proxy.minecraft.nbt.CompoundTagProxy;
 import net.momirealms.sparrow.nbt.Tag;
 import org.bukkit.enchantments.Enchantment;
 import org.bukkit.inventory.ItemStack;
@@ -43,7 +44,7 @@ public class LegacyItemWrapper implements ItemWrapper<ItemStack> {
         }
 
         if (path == null || path.length == 0) {
-            if (CoreReflections.clazz$CompoundTag.isInstance(finalNMSTag)) {
+            if (CompoundTagProxy.CLASS.isInstance(finalNMSTag)) {
                 FastNMS.INSTANCE.method$ItemStack$setTag(this.nmsStack, finalNMSTag);
                 return true;
             }
@@ -56,7 +57,7 @@ public class LegacyItemWrapper implements ItemWrapper<ItemStack> {
             Object pathSegment = path[i];
             if (pathSegment == null) return false;
             Object childTag = FastNMS.INSTANCE.method$CompoundTag$get(currentTag, pathSegment.toString());
-            if (!CoreReflections.clazz$CompoundTag.isInstance(childTag)) {
+            if (!CompoundTagProxy.CLASS.isInstance(childTag)) {
                 childTag = FastNMS.INSTANCE.constructor$CompoundTag();
                 FastNMS.INSTANCE.method$CompoundTag$put(currentTag, pathSegment.toString(), childTag);
             }
@@ -106,7 +107,7 @@ public class LegacyItemWrapper implements ItemWrapper<ItemStack> {
             if (i == path.length - 1) {
                 return currentTag;
             }
-            if (!CoreReflections.clazz$CompoundTag.isInstance(currentTag)) {
+            if (!CompoundTagProxy.CLASS.isInstance(currentTag)) {
                 return null;
             }
         }
@@ -130,7 +131,7 @@ public class LegacyItemWrapper implements ItemWrapper<ItemStack> {
             Object pathSegment = path[i];
             if (pathSegment == null) return false;
             currentTag = FastNMS.INSTANCE.method$CompoundTag$get(currentTag, path[i].toString());
-            if (!CoreReflections.clazz$CompoundTag.isInstance(currentTag)) {
+            if (!CompoundTagProxy.CLASS.isInstance(currentTag)) {
                 return false;
             }
         }
