@@ -10,6 +10,7 @@ import net.momirealms.craftengine.core.util.VersionHelper;
 import net.momirealms.craftengine.core.world.BlockPos;
 import net.momirealms.craftengine.core.world.Vec3d;
 import net.momirealms.craftengine.proxy.minecraft.world.entity.LivingEntityProxy;
+import net.momirealms.craftengine.proxy.minecraft.world.entity.PoseProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.entity.vehicle.DismountHelperProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.level.BlockGetterProxy;
 import org.bukkit.Location;
@@ -58,7 +59,7 @@ public final class EntityUtils {
             double z = location.getZ() + direction.z;
             Object serverLevel = BukkitAdaptors.adapt(player.getWorld()).serverWorld();
             Object serverPlayer = FastNMS.INSTANCE.method$CraftPlayer$getHandle(player);
-            for (Object pose : List.of(CoreReflections.instance$Pose$STANDING, CoreReflections.instance$Pose$CROUCHING, CoreReflections.instance$Pose$SWIMMING)) {
+            for (Object pose : List.of(PoseProxy.STANDING, PoseProxy.CROUCHING, PoseProxy.SWIMMING)) {
                 BlockPos pos = new BlockPos(MiscUtils.floor(x), MiscUtils.floor(y), MiscUtils.floor(z));
                 double floorHeight = BlockGetterProxy.INSTANCE.getBlockFloorHeight(serverLevel, LocationUtils.toBlockPos(pos));
                 if (pos.y() + floorHeight > y + 0.75 || !isBlockFloorValid(floorHeight)) {
@@ -83,11 +84,11 @@ public final class EntityUtils {
                 } else {
                     player.teleport(new Location(player.getWorld(), x, pos.y() + floorHeight, z, player.getYaw(), player.getPitch()));
                 }
-                if (pose == CoreReflections.instance$Pose$STANDING) {
+                if (pose == PoseProxy.STANDING) {
                     player.setPose(Pose.STANDING);
-                } else if (pose == CoreReflections.instance$Pose$CROUCHING) {
+                } else if (pose == PoseProxy.CROUCHING) {
                     player.setPose(Pose.SNEAKING);
-                } else if (pose == CoreReflections.instance$Pose$SWIMMING) {
+                } else if (pose == PoseProxy.SWIMMING) {
                     player.setPose(Pose.SWIMMING);
                 }
             }

@@ -32,6 +32,7 @@ import net.momirealms.craftengine.core.world.context.BlockPlaceContext;
 import net.momirealms.craftengine.core.world.context.UseOnContext;
 import net.momirealms.craftengine.proxy.minecraft.core.AxisProxy;
 import net.momirealms.craftengine.proxy.minecraft.core.DirectionProxy;
+import net.momirealms.craftengine.proxy.minecraft.world.level.block.SupportTypeProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.level.pathfinder.PathComputationTypeProxy;
 import org.bukkit.Bukkit;
 import org.bukkit.GameEvent;
@@ -350,7 +351,7 @@ public class DoorBlockBehavior extends AbstractCanSurviveBlockBehavior implement
         } else {
             return FastNMS.INSTANCE.method$BlockStateBase$isFaceSturdy(
                     belowState, world, belowPos, DirectionProxy.UP,
-                    CoreReflections.instance$SupportType$FULL
+                    SupportTypeProxy.FULL
             );
         }
     }

@@ -32,13 +32,6 @@ public final class CoreReflections {
             ReflectionUtils.getClazz(BukkitReflectionUtils.assembleMCClass("resources.ResourceKey"))
     );
 
-    public static final Class<?> clazz$RegistryOps = requireNonNull(
-            BukkitReflectionUtils.findReobfOrMojmapClass(
-                    "resources.RegistryOps",
-                    "resources.RegistryOps"
-            )
-    );
-
     public static final Class<?> clazz$SoundEvent = requireNonNull(
             BukkitReflectionUtils.findReobfOrMojmapClass(
                     "sounds.SoundEffect",
@@ -87,13 +80,6 @@ public final class CoreReflections {
                     "core.IRegistryCustom",
                     "core.RegistryAccess"
             )
-    );
-
-    public static final Class<?> clazz$Registry = requireNonNull(
-            requireNonNull(BukkitReflectionUtils.findReobfOrMojmapClass(
-                    "core.IRegistryWritable",
-                    "core.WritableRegistry"
-            )).getInterfaces()[0]
     );
 
     public static final Class<?> clazz$Registries = requireNonNull(
@@ -186,13 +172,6 @@ public final class CoreReflections {
                     "network.syncher.EntityDataSerializers"
             )
     );
-
-    public static final Class<?> clazz$EntityDataAccessor = requireNonNull(
-            BukkitReflectionUtils.findReobfOrMojmapClass(
-                    "network.syncher.DataWatcherObject",
-                    "network.syncher.EntityDataAccessor"
-            )
-    );
     
     public static final Class<?> clazz$FriendlyByteBuf = requireNonNull(
             BukkitReflectionUtils.findReobfOrMojmapClass(
@@ -205,13 +184,6 @@ public final class CoreReflections {
             ReflectionUtils.getClazz(
                     BukkitReflectionUtils.assembleMCClass("network.RegistryFriendlyByteBuf")
             );
-
-    public static final Class<?> clazz$LevelWriter = requireNonNull(
-            BukkitReflectionUtils.findReobfOrMojmapClass(
-                    "world.level.IWorldWriter",
-                    "world.level.LevelWriter"
-            )
-    );
 
     public static final Class<?> clazz$LevelReader = requireNonNull(
             BukkitReflectionUtils.findReobfOrMojmapClass(
@@ -242,13 +214,6 @@ public final class CoreReflections {
             BukkitReflectionUtils.findReobfOrMojmapClass(
                     "world.phys.Vec3D",
                     "world.phys.Vec3"
-            )
-    );
-
-    public static final Class<?> clazz$AttributeInstance = requireNonNull(
-            BukkitReflectionUtils.findReobfOrMojmapClass(
-                    "world.entity.ai.attributes.AttributeModifiable",
-                    "world.entity.ai.attributes.AttributeInstance"
             )
     );
 
@@ -436,13 +401,6 @@ public final class CoreReflections {
             )
     );
 
-    public static final Class<?> clazz$AABB = requireNonNull(
-            BukkitReflectionUtils.findReobfOrMojmapClass(
-                    "world.phys.AxisAlignedBB",
-                    "world.phys.AABB"
-            )
-    );
-
     public static final Class<?> clazz$BlockGetter = requireNonNull(
             BukkitReflectionUtils.findReobfOrMojmapClass(
                     "world.level.IBlockAccess",
@@ -582,13 +540,6 @@ public final class CoreReflections {
             )
     );
 
-    public static final Class<?> clazz$IntegerProperty = requireNonNull(
-            BukkitReflectionUtils.findReobfOrMojmapClass(
-                    "world.level.block.state.properties.BlockStateInteger",
-                    "world.level.block.state.properties.IntegerProperty"
-            )
-    );
-
     public static final Class<?> clazz$Property = requireNonNull(
             BukkitReflectionUtils.findReobfOrMojmapClass(
                     "world.level.block.state.properties.IBlockState",
@@ -612,17 +563,6 @@ public final class CoreReflections {
             ReflectionUtils.getMethod(
                     // flags   // depth
                     clazz$BlockStateBase, void.class, clazz$LevelAccessor, clazz$BlockPos, int.class, int.class
-            )
-    );
-
-    public static final Method method$CollisionContext$empty = requireNonNull(
-            ReflectionUtils.getStaticMethod(clazz$CollisionContext, clazz$CollisionContext)
-    );
-
-    public static final Class<?> clazz$FireBlock = requireNonNull(
-            BukkitReflectionUtils.findReobfOrMojmapClass(
-                    "world.level.block.BlockFire",
-                    "world.level.block.FireBlock"
             )
     );
 
@@ -650,13 +590,6 @@ public final class CoreReflections {
 
     public static final Field field$RecipeManager$featureflagset =
             ReflectionUtils.getDeclaredField(clazz$RecipeManager, clazz$FeatureFlagSet, 0);
-
-    public static final Class<?> clazz$Inventory = requireNonNull(
-            BukkitReflectionUtils.findReobfOrMojmapClass(
-                    "world.entity.player.PlayerInventory",
-                    "world.entity.player.Inventory"
-            )
-    );
 
     public static final Class<?> clazz$Ingredient = requireNonNull(
             BukkitReflectionUtils.findReobfOrMojmapClass(
@@ -862,13 +795,6 @@ public final class CoreReflections {
         method$RecipeManager$byKey = requireNonNull(method$RecipeManager$byKey0);
     }
 
-    public static final Class<?> clazz$Container = requireNonNull(
-            BukkitReflectionUtils.findReobfOrMojmapClass(
-                    "world.IInventory",
-                    "world.Container"
-            )
-    );
-
     public static final Class<?> clazz$Recipe = requireNonNull(
             BukkitReflectionUtils.findReobfOrMojmapClass(
                     "world.item.crafting.IRecipe",
@@ -1022,13 +948,6 @@ public final class CoreReflections {
             .map(it -> ReflectionUtils.getConstructor(it, clazz$Holder, clazz$Component, float.class, int.class))
             .orElse(null);
 
-    public static final Class<?> clazz$CustomRecipe = requireNonNull(
-            BukkitReflectionUtils.findReobfOrMojmapClass(
-                    "world.item.crafting.IRecipeComplex",
-                    "world.item.crafting.CustomRecipe"
-            )
-    );
-
     public static final Class<?> clazz$RepairItemRecipe = requireNonNull(
             BukkitReflectionUtils.findReobfOrMojmapClass(
                     "world.item.crafting.RecipeRepair",
@@ -1047,13 +966,6 @@ public final class CoreReflections {
             BukkitReflectionUtils.findReobfOrMojmapClass(
                     "world.item.crafting.RecipeFireworksFade",
                     "world.item.crafting.FireworkStarFadeRecipe"
-            )
-    );
-
-    public static final Class<?> clazz$AnvilMenu = requireNonNull(
-            BukkitReflectionUtils.findReobfOrMojmapClass(
-                    "world.inventory.ContainerAnvil",
-                    "world.inventory.AnvilMenu"
             )
     );
 
@@ -1098,21 +1010,6 @@ public final class CoreReflections {
             ReflectionUtils.getDeclaredMethod(clazz$Item, clazz$BlockHitResult, clazz$Level, clazz$Player, clazz$ClipContext$Fluid)
     );
 
-    public static final Field field$BlockHitResult$inside = requireNonNull(
-            ReflectionUtils.getDeclaredField(clazz$BlockHitResult, boolean.class, 1)
-    );
-
-    public static final Class<?> clazz$HitResult = requireNonNull(
-            BukkitReflectionUtils.findReobfOrMojmapClass(
-                    "world.phys.MovingObjectPosition",
-                    "world.phys.HitResult"
-            )
-    );
-
-    public static final Field field$HitResult$location = requireNonNull(
-            ReflectionUtils.getDeclaredField(clazz$HitResult, clazz$Vec3, 0)
-    );
-
     public static final Class<?> clazz$SimpleWaterloggedBlock = requireNonNull(
             BukkitReflectionUtils.findReobfOrMojmapClass(
                     "world.level.block.IBlockWaterlogged",
@@ -1144,30 +1041,6 @@ public final class CoreReflections {
             ReflectionUtils.getMethod(clazz$Fluid, clazz$FluidState, 0)
     );
 
-    public static final Object instance$Entity$DATA_SILENT;
-
-    static {
-        int i = 0;
-        Field targetField = null;
-        for (Field field : clazz$Entity.getDeclaredFields()) {
-            Type fieldType = field.getGenericType();
-            if (field.getType() == clazz$EntityDataAccessor && fieldType instanceof ParameterizedType paramType) {
-                if (paramType.getActualTypeArguments()[0] == Boolean.class) {
-                    i++;
-                    if (i == 2) {
-                        targetField = field;
-                        break;
-                    }
-                }
-            }
-        }
-        try {
-            instance$Entity$DATA_SILENT = ReflectionUtils.setAccessible(requireNonNull(targetField)).get(null);
-        } catch (ReflectiveOperationException e) {
-            throw new RuntimeException(e);
-        }
-    }
-
     public static final Class<?> clazz$SupportType = requireNonNull(
             BukkitReflectionUtils.findReobfOrMojmapClass(
                     "world.level.block.EnumBlockSupport",
@@ -1175,147 +1048,15 @@ public final class CoreReflections {
             )
     );
 
-    public static final Method method$SupportType$values = requireNonNull(
-            ReflectionUtils.getStaticMethod(clazz$SupportType, clazz$SupportType.arrayType())
-    );
-
-    public static final Object instance$SupportType$FULL;
-    public static final Object instance$SupportType$CENTER;
-    public static final Object instance$SupportType$RIGID;
-
-    static {
-        try {
-            Object[] values = (Object[]) method$SupportType$values.invoke(null);
-            instance$SupportType$FULL = values[0];
-            instance$SupportType$CENTER = values[1];
-            instance$SupportType$RIGID = values[2];
-        } catch (ReflectiveOperationException e) {
-            throw new RuntimeException(e);
-        }
-    }
-
     public static final Method method$BlockStateBase$isFaceSturdy = requireNonNull(
             ReflectionUtils.getMethod(clazz$BlockStateBase, boolean.class, clazz$BlockGetter, clazz$BlockPos, clazz$Direction, clazz$SupportType)
     );
-
-    public static final Class<?> clazz$BlockInWorld = requireNonNull(
-            BukkitReflectionUtils.findReobfOrMojmapClass(
-                    "world.level.block.state.pattern.ShapeDetectorBlock",
-                    "world.level.block.state.pattern.BlockInWorld"
-            )
-    );
-
-    public static final Field field$BlockInWorld$state = requireNonNull(
-            ReflectionUtils.getDeclaredField(clazz$BlockInWorld, clazz$BlockState, 0)
-    );
-
-    public static final Class<?> clazz$BlockAndTintGetter = requireNonNull(
-            BukkitReflectionUtils.findReobfOrMojmapClass(
-                    "world.level.IBlockLightAccess",
-                    "world.level.BlockAndTintGetter"
-            )
-    );
-
-    public static final Class<?> clazz$Shulker = requireNonNull(
-            BukkitReflectionUtils.findReobfOrMojmapClass(
-                    "world.entity.monster.EntityShulker",
-                    "world.entity.monster.Shulker"
-            )
-    );
-
-    public static final Class<?> clazz$Pose = requireNonNull(
-            BukkitReflectionUtils.findReobfOrMojmapClass(
-                    "world.entity.EntityPose",
-                    "world.entity.Pose"
-            )
-    );
-
-    public static final Method method$Pose$values = requireNonNull(
-            ReflectionUtils.getStaticMethod(clazz$Pose, clazz$Pose.arrayType())
-    );
-
-    public static final Object instance$Pose$STANDING;
-    public static final Object instance$Pose$FALL_FLYING;
-    public static final Object instance$Pose$SLEEPING;
-    public static final Object instance$Pose$SWIMMING;
-    public static final Object instance$Pose$SPIN_ATTACK;
-    public static final Object instance$Pose$CROUCHING;
-    public static final Object instance$Pose$LONG_JUMPING;
-    public static final Object instance$Pose$DYING;
-    public static final Object instance$Pose$CROAKING;
-    public static final Object instance$Pose$USING_TONGUE;
-    public static final Object instance$Pose$SITTING;
-    public static final Object instance$Pose$ROARING;
-    public static final Object instance$Pose$SNIFFING;
-    public static final Object instance$Pose$EMERGING;
-    public static final Object instance$Pose$DIGGING;
-    public static final Object instance$Pose$SLIDING;
-    public static final Object instance$Pose$SHOOTING;
-    public static final Object instance$Pose$INHALING;
-    public static final Object[] instance$Poses;
-
-    static {
-        try {
-            instance$Poses = (Object[]) method$Pose$values.invoke(null);
-            instance$Pose$STANDING = instance$Poses[0];
-            instance$Pose$FALL_FLYING = instance$Poses[1];
-            instance$Pose$SLEEPING = instance$Poses[2];
-            instance$Pose$SWIMMING = instance$Poses[3];
-            instance$Pose$SPIN_ATTACK = instance$Poses[4];
-            instance$Pose$CROUCHING = instance$Poses[5];
-            instance$Pose$LONG_JUMPING = instance$Poses[6];
-            instance$Pose$DYING = instance$Poses[7];
-            instance$Pose$CROAKING = instance$Poses[8];
-            instance$Pose$USING_TONGUE = instance$Poses[9];
-            instance$Pose$SITTING = instance$Poses[10];
-            instance$Pose$ROARING = instance$Poses[11];
-            instance$Pose$SNIFFING = instance$Poses[12];
-            instance$Pose$EMERGING = instance$Poses[13];
-            instance$Pose$DIGGING = instance$Poses[14];
-            if (VersionHelper.isOrAbove1_20_3()) {
-                instance$Pose$SLIDING = instance$Poses[15];
-                instance$Pose$SHOOTING = instance$Poses[16];
-                instance$Pose$INHALING = instance$Poses[17];
-            } else {
-                instance$Pose$SLIDING = null;
-                instance$Pose$SHOOTING = null;
-                instance$Pose$INHALING = null;
-            }
-        } catch (ReflectiveOperationException e) {
-            throw new RuntimeException(e);
-        }
-    }
 
     public static final Class<?> clazz$Rotation = requireNonNull(
             BukkitReflectionUtils.findReobfOrMojmapClass(
                     "world.level.block.EnumBlockRotation",
                     "world.level.block.Rotation"
             )
-    );
-
-    public static final Method method$Rotation$values = requireNonNull(
-            ReflectionUtils.getStaticMethod(clazz$Rotation, clazz$Rotation.arrayType())
-    );
-
-    public static final Object instance$Rotation$NONE;
-    public static final Object instance$Rotation$CLOCKWISE_90;
-    public static final Object instance$Rotation$CLOCKWISE_180;
-    public static final Object instance$Rotation$COUNTERCLOCKWISE_90;
-
-    static {
-        try {
-            Object[] values = (Object[]) method$Rotation$values.invoke(null);
-            instance$Rotation$NONE = values[0];
-            instance$Rotation$CLOCKWISE_90 = values[1];
-            instance$Rotation$CLOCKWISE_180 = values[2];
-            instance$Rotation$COUNTERCLOCKWISE_90 = values[3];
-        } catch (ReflectiveOperationException e) {
-            throw new RuntimeException(e);
-        }
-    }
-
-    public static final Method method$Rotation$ordinal = requireNonNull(
-            ReflectionUtils.getMethod(clazz$Rotation, int.class, new String[]{"ordinal"})
     );
 
     public static final Class<?> clazz$Mirror = requireNonNull(
@@ -1325,32 +1066,6 @@ public final class CoreReflections {
             )
     );
 
-
-    public static final Method method$Mirror$values = requireNonNull(
-            ReflectionUtils.getStaticMethod(
-                    clazz$Mirror, clazz$Mirror.arrayType()
-            )
-    );
-
-    public static final Object instance$Mirror$NONE;
-    public static final Object instance$Mirror$LEFT_RIGHT;
-    public static final Object instance$Mirror$FRONT_BACK;
-
-    static {
-        try {
-            Object[] values = (Object[]) method$Mirror$values.invoke(null);
-            instance$Mirror$NONE = values[0];
-            instance$Mirror$LEFT_RIGHT = values[1];
-            instance$Mirror$FRONT_BACK = values[2];
-        } catch (ReflectiveOperationException e) {
-            throw new RuntimeException(e);
-        }
-    }
-
-    public static final Method method$Mirror$ordinal = requireNonNull(
-            ReflectionUtils.getMethod(clazz$Mirror, int.class, new String[]{"ordinal"})
-    );
-
     public static final Method method$BlockBehaviour$rotate = requireNonNull(
             ReflectionUtils.getDeclaredMethod(clazz$BlockBehaviour, clazz$BlockState, clazz$BlockState, clazz$Rotation)
     );
@@ -1358,71 +1073,6 @@ public final class CoreReflections {
     public static final Method method$BlockBehaviour$mirror = requireNonNull(
             ReflectionUtils.getDeclaredMethod(clazz$BlockBehaviour, clazz$BlockState, clazz$BlockState, clazz$Mirror)
     );
-
-    public static final Class<?> clazz$AbstractArrow = requireNonNull(
-            BukkitReflectionUtils.findReobfOrMojmapClass(
-                    List.of("world.entity.projectile.EntityArrow", "world.entity.projectile.arrow.EntityArrow"),
-                    List.of("world.entity.projectile.AbstractArrow", "world.entity.projectile.arrow.AbstractArrow")
-            )
-    );
-
-    public static final Class<?> clazz$MoverType = requireNonNull(
-            BukkitReflectionUtils.findReobfOrMojmapClass(
-                    "world.entity.EnumMoveType",
-                    "world.entity.MoverType"
-            )
-    );
-
-    public static final Method method$MoverType$values = requireNonNull(
-            ReflectionUtils.getStaticMethod(
-                    clazz$MoverType, clazz$MoverType.arrayType()
-            )
-    );
-
-    public static final Object instance$MoverType$SELF;
-    public static final Object instance$MoverType$PLAYER;
-    public static final Object instance$MoverType$PISTON;
-    public static final Object instance$MoverType$SHULKER_BOX;
-    public static final Object instance$MoverType$SHULKER;
-
-    static {
-        try {
-            Object[] values = (Object[]) method$MoverType$values.invoke(null);
-            instance$MoverType$SELF = values[0];
-            instance$MoverType$PLAYER = values[1];
-            instance$MoverType$PISTON = values[2];
-            instance$MoverType$SHULKER_BOX = values[3];
-            instance$MoverType$SHULKER = values[4];
-        } catch (ReflectiveOperationException e) {
-            throw new AssertionError(e);
-        }
-    }
-
-    public static final Class<?> clazz$AbstractArrow$Pickup = requireNonNull(
-            BukkitReflectionUtils.findReobfOrMojmapClass(
-                    List.of("world.entity.projectile.EntityArrow$PickupStatus", "world.entity.projectile.arrow.EntityArrow$PickupStatus"),
-                    List.of("world.entity.projectile.AbstractArrow$Pickup", "world.entity.projectile.arrow.AbstractArrow$Pickup")
-            )
-    );
-
-    public static final Method method$AbstractArrow$Pickup$values = requireNonNull(
-            ReflectionUtils.getStaticMethod(clazz$AbstractArrow$Pickup, clazz$AbstractArrow$Pickup.arrayType())
-    );
-
-    public static final Object instance$AbstractArrow$Pickup$DISALLOWED;
-    public static final Object instance$AbstractArrow$Pickup$ALLOWED;
-    public static final Object instance$AbstractArrow$Pickup$CREATIVE_ONLY;
-
-    static {
-        try {
-            Object[] values = (Object[]) method$AbstractArrow$Pickup$values.invoke(null);
-            instance$AbstractArrow$Pickup$DISALLOWED = values[0];
-            instance$AbstractArrow$Pickup$ALLOWED = values[1];
-            instance$AbstractArrow$Pickup$CREATIVE_ONLY = values[2];
-        } catch (ReflectiveOperationException e) {
-            throw new AssertionError(e);
-        }
-    }
 
     public static final Class<?> clazz$Orientation =
             BukkitReflectionUtils.findReobfOrMojmapClass(

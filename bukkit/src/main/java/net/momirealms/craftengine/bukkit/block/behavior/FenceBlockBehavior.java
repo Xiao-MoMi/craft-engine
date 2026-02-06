@@ -28,6 +28,7 @@ import net.momirealms.craftengine.core.world.context.BlockPlaceContext;
 import net.momirealms.craftengine.core.world.context.UseOnContext;
 import net.momirealms.craftengine.proxy.minecraft.core.DirectionProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.level.block.FenceGateBlockProxy;
+import net.momirealms.craftengine.proxy.minecraft.world.level.block.SupportTypeProxy;
 import org.bukkit.Location;
 
 import java.util.Locale;
@@ -127,10 +128,10 @@ public class FenceBlockBehavior extends BukkitBlockBehavior implements IsPathFin
             state = state.with(waterlogged, FastNMS.INSTANCE.method$FluidState$getType(fluidState) == MFluids.WATER);
         }
         return state
-                .with(this.northProperty, this.connectsTo(blockState, FastNMS.INSTANCE.method$BlockStateBase$isFaceSturdy(blockState.literalObject(), level.serverWorld(), LocationUtils.toBlockPos(blockPos), DirectionProxy.SOUTH, CoreReflections.instance$SupportType$FULL), HorizontalDirection.SOUTH))
-                .with(this.eastProperty, this.connectsTo(blockState1, FastNMS.INSTANCE.method$BlockStateBase$isFaceSturdy(blockState1.literalObject(), level.serverWorld(), LocationUtils.toBlockPos(blockPos1), DirectionProxy.WEST, CoreReflections.instance$SupportType$FULL), HorizontalDirection.WEST))
-                .with(this.southProperty, this.connectsTo(blockState2, FastNMS.INSTANCE.method$BlockStateBase$isFaceSturdy(blockState2.literalObject(), level.serverWorld(), LocationUtils.toBlockPos(blockPos2), DirectionProxy.NORTH, CoreReflections.instance$SupportType$FULL), HorizontalDirection.NORTH))
-                .with(this.westProperty, this.connectsTo(blockState3, FastNMS.INSTANCE.method$BlockStateBase$isFaceSturdy(blockState3.literalObject(), level.serverWorld(), LocationUtils.toBlockPos(blockPos3), DirectionProxy.EAST, CoreReflections.instance$SupportType$FULL), HorizontalDirection.EAST));
+                .with(this.northProperty, this.connectsTo(blockState, FastNMS.INSTANCE.method$BlockStateBase$isFaceSturdy(blockState.literalObject(), level.serverWorld(), LocationUtils.toBlockPos(blockPos), DirectionProxy.SOUTH, SupportTypeProxy.FULL), HorizontalDirection.SOUTH))
+                .with(this.eastProperty, this.connectsTo(blockState1, FastNMS.INSTANCE.method$BlockStateBase$isFaceSturdy(blockState1.literalObject(), level.serverWorld(), LocationUtils.toBlockPos(blockPos1), DirectionProxy.WEST, SupportTypeProxy.FULL), HorizontalDirection.WEST))
+                .with(this.southProperty, this.connectsTo(blockState2, FastNMS.INSTANCE.method$BlockStateBase$isFaceSturdy(blockState2.literalObject(), level.serverWorld(), LocationUtils.toBlockPos(blockPos2), DirectionProxy.NORTH, SupportTypeProxy.FULL), HorizontalDirection.NORTH))
+                .with(this.westProperty, this.connectsTo(blockState3, FastNMS.INSTANCE.method$BlockStateBase$isFaceSturdy(blockState3.literalObject(), level.serverWorld(), LocationUtils.toBlockPos(blockPos3), DirectionProxy.EAST, SupportTypeProxy.FULL), HorizontalDirection.EAST));
     }
 
     @Override
@@ -151,7 +152,7 @@ public class FenceBlockBehavior extends BukkitBlockBehavior implements IsPathFin
                 BooleanProperty booleanProperty = (BooleanProperty) state.owner().value().getProperty(direction.name().toLowerCase(Locale.ROOT));
                 if (booleanProperty != null) {
                     BlockStateWrapper wrapper = BlockStateUtils.toBlockStateWrapper(args[updateShape$neighborState]);
-                    return state.with(booleanProperty, this.connectsTo(wrapper, FastNMS.INSTANCE.method$BlockStateBase$isFaceSturdy(wrapper.literalObject(), args[updateShape$level], args[5], DirectionUtils.toNMSDirection(direction.opposite()), CoreReflections.instance$SupportType$FULL), direction.opposite().toHorizontalDirection())).customBlockState().literalObject();
+                    return state.with(booleanProperty, this.connectsTo(wrapper, FastNMS.INSTANCE.method$BlockStateBase$isFaceSturdy(wrapper.literalObject(), args[updateShape$level], args[5], DirectionUtils.toNMSDirection(direction.opposite()), SupportTypeProxy.FULL), direction.opposite().toHorizontalDirection())).customBlockState().literalObject();
                 }
             }
         }

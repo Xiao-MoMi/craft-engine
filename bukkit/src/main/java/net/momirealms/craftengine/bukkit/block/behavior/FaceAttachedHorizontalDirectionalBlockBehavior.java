@@ -16,6 +16,7 @@ import net.momirealms.craftengine.core.util.HorizontalDirection;
 import net.momirealms.craftengine.core.util.ResourceConfigUtils;
 import net.momirealms.craftengine.core.util.Tuple;
 import net.momirealms.craftengine.core.world.context.BlockPlaceContext;
+import net.momirealms.craftengine.proxy.minecraft.world.level.block.SupportTypeProxy;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
@@ -118,7 +119,7 @@ public class FaceAttachedHorizontalDirectionalBlockBehavior extends BukkitBlockB
         return FastNMS.INSTANCE.method$BlockStateBase$isFaceSturdy(
                 targetState, level, targetPos,
                 FastNMS.INSTANCE.method$Direction$getOpposite(direction),
-                CoreReflections.instance$SupportType$FULL
+                SupportTypeProxy.FULL
         );
     }
 

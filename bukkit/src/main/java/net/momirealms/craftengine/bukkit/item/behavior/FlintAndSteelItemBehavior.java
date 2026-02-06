@@ -22,6 +22,7 @@ import net.momirealms.craftengine.core.world.BlockPos;
 import net.momirealms.craftengine.core.world.context.UseOnContext;
 import net.momirealms.craftengine.proxy.minecraft.core.DirectionProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.level.block.BaseFireBlockProxy;
+import net.momirealms.craftengine.proxy.minecraft.world.level.block.SupportTypeProxy;
 import org.bukkit.block.Block;
 import org.bukkit.block.data.BlockData;
 import org.bukkit.entity.Player;
@@ -61,7 +62,7 @@ public final class FlintAndSteelItemBehavior extends ItemBehavior {
         try {
             isClickedBlockBurnable = BlockStateUtils.isBurnable(clickedBlockState) ||
                     (context.getClickedFace() == Direction.UP && (boolean) CoreReflections.method$BlockStateBase$isFaceSturdy.invoke(
-                            clickedBlockState, context.getLevel().serverWorld(), LocationUtils.toBlockPos(clickedPos), DirectionProxy.UP, CoreReflections.instance$SupportType$FULL));
+                            clickedBlockState, context.getLevel().serverWorld(), LocationUtils.toBlockPos(clickedPos), DirectionProxy.UP, SupportTypeProxy.FULL));
         } catch (ReflectiveOperationException e) {
             CraftEngine.instance().logger().warn("Failed to call method$BlockStateBase$isFaceSturdy", e);
             return InteractionResult.PASS;
@@ -100,7 +101,7 @@ public final class FlintAndSteelItemBehavior extends ItemBehavior {
                         Block belowBlock = belowFireBlock.block();
                         belowCanBurn = BlockStateUtils.isBurnable(BlockStateUtils.blockDataToBlockState(belowBlock.getBlockData())) ||
                                 (boolean) CoreReflections.method$BlockStateBase$isFaceSturdy.invoke(
-                                        BlockStateUtils.blockDataToBlockState(belowFireBlock.block().getBlockData()), context.getLevel().serverWorld(), LocationUtils.toBlockPos(belowFirePos), DirectionProxy.UP, CoreReflections.instance$SupportType$FULL);
+                                        BlockStateUtils.blockDataToBlockState(belowFireBlock.block().getBlockData()), context.getLevel().serverWorld(), LocationUtils.toBlockPos(belowFirePos), DirectionProxy.UP, SupportTypeProxy.FULL);
                     } catch (ReflectiveOperationException e) {
                         CraftEngine.instance().logger().warn("Failed to call method$BlockStateBase$isFaceSturdy", e);
                         return InteractionResult.PASS;
@@ -143,7 +144,7 @@ public final class FlintAndSteelItemBehavior extends ItemBehavior {
                     }
                     try {
                         if (dir == Direction.DOWN && (boolean) CoreReflections.method$BlockStateBase$isFaceSturdy.invoke(
-                                nearbyBlockState, context.getLevel().serverWorld(), LocationUtils.toBlockPos(relPos), DirectionProxy.UP, CoreReflections.instance$SupportType$FULL)) {
+                                nearbyBlockState, context.getLevel().serverWorld(), LocationUtils.toBlockPos(relPos), DirectionProxy.UP,SupportTypeProxy.FULL)) {
                             return InteractionResult.PASS;
                         }
                     } catch (ReflectiveOperationException e) {

@@ -22,6 +22,7 @@ import net.momirealms.craftengine.core.world.BlockPos;
 import net.momirealms.craftengine.core.world.Vec3d;
 import net.momirealms.craftengine.proxy.minecraft.world.entity.EntityProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.entity.EquipmentSlotProxy;
+import net.momirealms.craftengine.proxy.minecraft.world.entity.PoseProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.item.ItemStackProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.level.GameTypeProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.phys.Vec3Proxy;
@@ -181,7 +182,7 @@ public class DynamicPlayerRenderer implements DynamicBlockEntityRenderer {
         ArrayList<Object> occupierMetadata = new ArrayList<>(metadata);
         PlayerData.SharedFlags.addEntityData((byte) (1 << 5), occupierMetadata);
         this.cachedHideOccupierPacket = FastNMS.INSTANCE.constructor$ClientboundSetEntityDataPacket(player.entityId(), occupierMetadata);
-        PlayerData.Pose.addEntityData(CoreReflections.instance$Pose$SLEEPING, metadata);
+        PlayerData.Pose.addEntityData(PoseProxy.SLEEPING, metadata);
         PlayerData.SharedFlags.addEntityData(PlayerData.SharedFlags.defaultValue, metadata);
         this.cachedSetEntityDataPacket = FastNMS.INSTANCE.constructor$ClientboundSetEntityDataPacket(this.entityId, metadata);
         this.updateEquipment(player);

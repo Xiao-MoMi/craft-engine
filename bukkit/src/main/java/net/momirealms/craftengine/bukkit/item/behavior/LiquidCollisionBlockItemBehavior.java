@@ -20,6 +20,8 @@ import net.momirealms.craftengine.core.world.BlockPos;
 import net.momirealms.craftengine.core.world.Vec3d;
 import net.momirealms.craftengine.core.world.World;
 import net.momirealms.craftengine.core.world.context.UseOnContext;
+import net.momirealms.craftengine.proxy.minecraft.world.phys.BlockHitResultProxy;
+import net.momirealms.craftengine.proxy.minecraft.world.phys.HitResultProxy;
 import org.jetbrains.annotations.Nullable;
 
 import java.nio.file.Path;
@@ -48,7 +50,7 @@ public final class LiquidCollisionBlockItemBehavior extends BlockItemBehavior {
             BlockPos above = new BlockPos(FastNMS.INSTANCE.field$Vec3i$x(blockPos), FastNMS.INSTANCE.field$Vec3i$y(blockPos) + offsetY, FastNMS.INSTANCE.field$Vec3i$z(blockPos));
             Direction direction = DirectionUtils.fromNMSDirection(FastNMS.INSTANCE.field$BlockHitResul$direction(blockHitResult));
             boolean miss = FastNMS.INSTANCE.field$BlockHitResul$miss(blockHitResult);
-            Vec3d hitPos = LocationUtils.fromVec(CoreReflections.field$HitResult$location.get(blockHitResult));
+            Vec3d hitPos = LocationUtils.fromVec(HitResultProxy.INSTANCE.getLocation(blockHitResult));
             Object fluidType = FastNMS.INSTANCE.method$FluidState$getType(FastNMS.INSTANCE.method$BlockGetter$getFluidState(world.serverWorld(), blockPos));
             if (fluidType != MFluids.WATER && fluidType != MFluids.LAVA) {
                 return InteractionResult.PASS;
@@ -56,7 +58,7 @@ public final class LiquidCollisionBlockItemBehavior extends BlockItemBehavior {
             if (miss) {
                 return super.useOnBlock(new UseOnContext(player, hand, BlockHitResult.miss(hitPos, direction, above)));
             } else {
-                boolean inside = CoreReflections.field$BlockHitResult$inside.getBoolean(blockHitResult);
+                boolean inside = BlockHitResultProxy.INSTANCE.isInside(blockHitResult);
                 return super.useOnBlock(new UseOnContext(player, hand, new BlockHitResult(hitPos, direction, above, inside)));
             }
         } catch (Exception e) {

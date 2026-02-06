@@ -23,6 +23,7 @@ import net.momirealms.craftengine.proxy.bukkit.craftbukkit.event.CraftEventFacto
 import net.momirealms.craftengine.proxy.minecraft.core.BlockPosProxy;
 import net.momirealms.craftengine.proxy.minecraft.core.DirectionProxy;
 import net.momirealms.craftengine.proxy.minecraft.core.MutableBlockPosProxy;
+import net.momirealms.craftengine.proxy.minecraft.world.level.block.SupportTypeProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.level.block.state.BlockStateBaseProxy;
 import org.bukkit.block.BlockState;
 import org.bukkit.event.block.BlockFormEvent;
@@ -121,7 +122,7 @@ public class ConcretePowderBlockBehavior extends BukkitBlockBehavior {
             if (direction != DirectionProxy.DOWN || canSolidify(blockState)) {
                 MutableBlockPosProxy.INSTANCE.setWithOffset(mutablePos, pos, direction);
                 blockState = FastNMS.INSTANCE.method$BlockGetter$getBlockState(level, mutablePos);
-                if (canSolidify(blockState) && !(boolean) CoreReflections.method$BlockStateBase$isFaceSturdy.invoke(blockState, level, pos, FastNMS.INSTANCE.method$Direction$getOpposite(direction), CoreReflections.instance$SupportType$FULL)) {
+                if (canSolidify(blockState) && !(boolean) CoreReflections.method$BlockStateBase$isFaceSturdy.invoke(blockState, level, pos, FastNMS.INSTANCE.method$Direction$getOpposite(direction), SupportTypeProxy.FULL)) {
                     flag = true;
                     break;
                 }

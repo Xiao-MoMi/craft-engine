@@ -1,0 +1,13 @@
+package net.momirealms.craftengine.proxy.minecraft.world.phys;
+
+import net.momirealms.sparrow.reflection.proxy.ASMProxyFactory;
+import net.momirealms.sparrow.reflection.proxy.annotation.FieldGetter;
+import net.momirealms.sparrow.reflection.proxy.annotation.ReflectionProxy;
+
+@ReflectionProxy(name = "net.minecraft.world.phys.HitResult")
+public interface HitResultProxy {
+    HitResultProxy INSTANCE = ASMProxyFactory.create(HitResultProxy.class);
+
+    @FieldGetter(name = "location")
+    Object getLocation(Object target);
+}

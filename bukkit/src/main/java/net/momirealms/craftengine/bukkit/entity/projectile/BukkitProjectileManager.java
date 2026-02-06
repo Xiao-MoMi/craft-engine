@@ -14,6 +14,7 @@ import net.momirealms.craftengine.core.plugin.scheduler.SchedulerTask;
 import net.momirealms.craftengine.core.util.ItemUtils;
 import net.momirealms.craftengine.core.util.VersionHelper;
 import net.momirealms.craftengine.proxy.minecraft.server.level.ServerEntityProxy;
+import net.momirealms.craftengine.proxy.minecraft.world.entity.projectile.AbstractArrowProxy;
 import org.bukkit.Bukkit;
 import org.bukkit.World;
 import org.bukkit.enchantments.Enchantment;
@@ -166,7 +167,7 @@ public class BukkitProjectileManager implements Listener, ProjectileManager {
                 this.cachedServerEntity = serverEntity;
             }
 
-            if (!CoreReflections.clazz$AbstractArrow.isInstance(nmsEntity)) {
+            if (!AbstractArrowProxy.CLASS.isInstance(nmsEntity)) {
                 updateProjectileUpdateInterval(1);
             } else if (!this.checkInGround) {
                 updateProjectileUpdateInterval(1);
@@ -194,7 +195,7 @@ public class BukkitProjectileManager implements Listener, ProjectileManager {
 
         private static boolean canSpawnParticle(Object nmsEntity, boolean inGround) {
             if (!FastNMS.INSTANCE.field$Entity$wasTouchingWater(nmsEntity)) return false;
-            if (CoreReflections.clazz$AbstractArrow.isInstance(nmsEntity)) {
+            if (AbstractArrowProxy.CLASS.isInstance(nmsEntity)) {
                 return !inGround;
             }
             return true;
