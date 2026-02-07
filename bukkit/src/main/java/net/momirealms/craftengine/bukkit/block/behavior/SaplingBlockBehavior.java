@@ -30,6 +30,9 @@ import net.momirealms.craftengine.core.world.BlockPos;
 import net.momirealms.craftengine.core.world.context.UseOnContext;
 import net.momirealms.craftengine.proxy.minecraft.server.level.ServerChunkCacheProxy;
 import net.momirealms.craftengine.proxy.minecraft.server.level.ServerLevelProxy;
+import net.momirealms.craftengine.proxy.minecraft.world.level.LevelReaderProxy;
+import net.momirealms.craftengine.proxy.minecraft.world.level.levelgen.feature.ConfiguredFeatureProxy;
+import net.momirealms.craftengine.proxy.minecraft.world.level.material.FluidStateProxy;
 import org.bukkit.Location;
 import org.bukkit.World;
 
@@ -58,17 +61,17 @@ public class SaplingBlockBehavior extends BukkitBlockBehavior {
     }
 
     @Override
-    public void randomTick(Object thisBlock, Object[] args, Callable<Object> superMethod) throws Exception {
+    public void randomTick(Object thisBlock, Object[] args, Callable<Object> superMethod) {
         Object world = args[1];
         Object blockPos = args[2];
         Object blockState = args[0];
         Object aboveBlockPos = LocationUtils.above(blockPos);
-        if ((int) CoreReflections.method$LevelReader$getMaxLocalRawBrightness.invoke(world, aboveBlockPos) >= 9 && RandomUtils.generateRandomFloat(0, 1) < this.growSpeed) {
+        if (LevelReaderProxy.INSTANCE.getMaxLocalRawBrightness(world, aboveBlockPos) >= 9 && RandomUtils.generateRandomFloat(0, 1) < this.growSpeed) {
             increaseStage(world, blockPos, blockState, args[3]);
         }
     }
 
-    private void increaseStage(Object world, Object blockPos, Object blockState, Object randomSource) throws Exception {
+    private void increaseStage(Object world, Object blockPos, Object blockState, Object randomSource) {
         Optional<ImmutableBlockState> optionalCustomState = BlockStateUtils.getOptionalCustomBlockState(blockState);
         if (optionalCustomState.isEmpty()) return;
         ImmutableBlockState customState = optionalCustomState.get();
@@ -85,7 +88,7 @@ public class SaplingBlockBehavior extends BukkitBlockBehavior {
         }
     }
 
-    private void generateTree(Object world, Object blockPos, Object blockState, Object randomSource) throws Exception {
+    private void generateTree(Object world, Object blockPos, Object blockState, Object randomSource) {
         Object holder = BukkitWorldManager.instance().configuredFeatureById(treeFeature());
         if (holder == null) {
             Object registry = FastNMS.INSTANCE.method$RegistryAccess$lookupOrThrow(FastNMS.INSTANCE.registryAccess(), MRegistries.CONFIGURED_FEATURE);
@@ -100,9 +103,9 @@ public class SaplingBlockBehavior extends BukkitBlockBehavior {
         Object chunkGenerator = ServerChunkCacheProxy.INSTANCE.getGenerator(FastNMS.INSTANCE.method$ServerLevel$getChunkSource(world));
         Object configuredFeature = FastNMS.INSTANCE.method$Holder$value(holder);
         Object fluidState = FastNMS.INSTANCE.method$BlockGetter$getFluidState(world, blockPos);
-        Object legacyState = CoreReflections.method$FluidState$createLegacyBlock.invoke(fluidState);
+        Object legacyState = FluidStateProxy.INSTANCE.createLegacyBlock(fluidState);
         FastNMS.INSTANCE.method$LevelWriter$setBlock(world, blockPos, legacyState, UpdateOption.UPDATE_NONE.flags());
-        if ((boolean) CoreReflections.method$ConfiguredFeature$place.invoke(configuredFeature, world, chunkGenerator, randomSource, blockPos)) {
+        if (ConfiguredFeatureProxy.INSTANCE.place(configuredFeature, world, chunkGenerator, randomSource, blockPos)) {
             if (FastNMS.INSTANCE.method$BlockGetter$getBlockState(world, blockPos) == legacyState) {
                 ServerLevelProxy.INSTANCE.sendBlockUpdated(world, blockPos, blockState, legacyState, UpdateOption.Flags.UPDATE_CLIENTS);
             }

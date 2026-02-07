@@ -46,6 +46,7 @@ import net.momirealms.craftengine.proxy.minecraft.world.level.chunk.LinearPalett
 import net.momirealms.craftengine.proxy.minecraft.world.level.chunk.PalettedContainerProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.level.chunk.SingleValuePaletteProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.level.levelgen.feature.ConfiguredFeatureProxy;
+import net.momirealms.craftengine.proxy.minecraft.world.level.levelgen.placement.PlacedFeatureProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.level.levelgen.placement.PlacementModifierProxy;
 import net.momirealms.craftengine.proxy.paper.chunk.system.entity.EntityLookupProxy;
 import org.bukkit.Bukkit;
@@ -701,12 +702,8 @@ public final class BukkitWorldManager implements WorldManager, Listener {
             if (placements.isEmpty()) {
                 throw new LocalizedResourceConfigException("warning.config.placed_feature.missing_placement");
             }
-            try {
-                Object placedFeature = CoreReflections.constructor$PlacedFeature.newInstance(configuredFeature, placements);
-                this.tempFeatures.add(new ConditionalFeature(this.id++, placedFeature, biomeFilter, worldFilter, environmentFilter, dimensionTypeFilter));
-            } catch (ReflectiveOperationException e) {
-                BukkitWorldManager.this.plugin.logger().warn("Failed to create placed feature '" + id + "': " + e, e);
-            }
+            Object placedFeature = PlacedFeatureProxy.INSTANCE.newInstance(configuredFeature, placements);
+            this.tempFeatures.add(new ConditionalFeature(this.id++, placedFeature, biomeFilter, worldFilter, environmentFilter, dimensionTypeFilter));
         }
 
         @Override

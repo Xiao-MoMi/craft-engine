@@ -18,6 +18,7 @@ import net.momirealms.craftengine.core.plugin.gui.*;
 import net.momirealms.craftengine.core.util.VersionHelper;
 import net.momirealms.craftengine.proxy.bukkit.craftbukkit.inventory.CraftMerchantCustomProxy;
 import net.momirealms.craftengine.proxy.bukkit.craftbukkit.inventory.CraftMerchantProxy;
+import net.momirealms.craftengine.proxy.minecraft.world.inventory.AbstractContainerMenuProxy;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.EntityType;
 import org.bukkit.entity.ExperienceOrb;
@@ -76,8 +77,8 @@ public class BukkitGuiManager implements GuiManager, Listener {
         Object nmsPlayer = player.serverPlayer();
         try {
             Object containerMenu = FastNMS.INSTANCE.field$Player$containerMenu(nmsPlayer);
-            int containerId = CoreReflections.field$AbstractContainerMenu$containerId.getInt(containerMenu);
-            Object menuType = CoreReflections.field$AbstractContainerMenu$menuType.get(containerMenu);
+            int containerId = AbstractContainerMenuProxy.INSTANCE.getContainerId(containerMenu);
+            Object menuType = AbstractContainerMenuProxy.INSTANCE.getMenuType(containerMenu);
             Object packet = NetworkReflections.constructor$ClientboundOpenScreenPacket.newInstance(containerId, menuType, ComponentUtils.adventureToMinecraft(component));
             player.sendPacket(packet, false);
         } catch (Exception e) {

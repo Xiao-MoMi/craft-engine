@@ -31,6 +31,10 @@ import net.momirealms.craftengine.proxy.bukkit.craftbukkit.inventory.CraftComple
 import net.momirealms.craftengine.proxy.bukkit.craftbukkit.inventory.CraftInventoryAnvilProxy;
 import net.momirealms.craftengine.proxy.bukkit.craftbukkit.inventory.CraftInventoryViewProxy;
 import net.momirealms.craftengine.proxy.minecraft.network.chat.ComponentProxy;
+import net.momirealms.craftengine.proxy.minecraft.world.inventory.AbstractContainerMenuProxy;
+import net.momirealms.craftengine.proxy.minecraft.world.item.crafting.ArmorDyeRecipeProxy;
+import net.momirealms.craftengine.proxy.minecraft.world.item.crafting.FireworkStarFadeRecipeProxy;
+import net.momirealms.craftengine.proxy.minecraft.world.item.crafting.RepairItemRecipeProxy;
 import org.bukkit.Material;
 import org.bukkit.entity.Player;
 import org.bukkit.event.Event;
@@ -457,17 +461,13 @@ public class RecipeEventListener implements Listener {
         int finalCost = repairCost + repairPenalty;
 
         // To fix some client side visual issues
-        try {
-            Object anvilMenu;
-            if (VersionHelper.isOrAbove1_21()) {
-                anvilMenu = CraftInventoryViewProxy.INSTANCE.getContainer(event.getView());
-            } else {
-                anvilMenu = CraftInventoryAnvilProxy.INSTANCE.getContainer(inventory);
-            }
-            CoreReflections.method$AbstractContainerMenu$broadcastFullState.invoke(anvilMenu);
-        } catch (ReflectiveOperationException e) {
-            this.plugin.logger().warn("Failed to broadcast changes", e);
+        Object anvilMenu;
+        if (VersionHelper.isOrAbove1_21()) {
+            anvilMenu = CraftInventoryViewProxy.INSTANCE.getContainer(event.getView());
+        } else {
+            anvilMenu = CraftInventoryAnvilProxy.INSTANCE.getContainer(inventory);
         }
+        AbstractContainerMenuProxy.INSTANCE.broadcastFullState(anvilMenu);
 
         if (VersionHelper.isOrAbove1_21()) {
             AnvilView anvilView = event.getView();
@@ -550,11 +550,11 @@ public class RecipeEventListener implements Listener {
         }
         try {
             Object mcRecipe = CraftComplexRecipeProxy.INSTANCE.getRecipe(complexRecipe);
-            if (CoreReflections.clazz$ArmorDyeRecipe.isInstance(mcRecipe) || CoreReflections.clazz$FireworkStarFadeRecipe.isInstance(mcRecipe)) {
+            if (ArmorDyeRecipeProxy.CLASS.isInstance(mcRecipe) || FireworkStarFadeRecipeProxy.CLASS.isInstance(mcRecipe)) {
                 return;
             }
             // 处理修复配方，在此处理才能使用玩家参数构建物品
-            if (CoreReflections.clazz$RepairItemRecipe.isInstance(mcRecipe)) {
+            if (RepairItemRecipeProxy.CLASS.isInstance(mcRecipe)) {
                 Pair<ItemStack, ItemStack> theOnlyTwoItem = getTheOnlyTwoItem(inventory.getMatrix());
                 if (theOnlyTwoItem == null) return;
                 Item<ItemStack> first = BukkitItemManager.instance().wrap(theOnlyTwoItem.left());

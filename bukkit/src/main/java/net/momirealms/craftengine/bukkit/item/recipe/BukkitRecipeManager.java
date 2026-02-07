@@ -31,6 +31,7 @@ import net.momirealms.craftengine.proxy.minecraft.server.packs.repository.PackRe
 import net.momirealms.craftengine.proxy.minecraft.server.packs.resources.MultiPackResourceManagerProxy;
 import net.momirealms.craftengine.proxy.minecraft.server.packs.resources.ResourceProxy;
 import net.momirealms.craftengine.proxy.minecraft.server.players.PlayerListProxy;
+import net.momirealms.craftengine.proxy.minecraft.world.item.crafting.RecipeManagerProxy;
 import org.bukkit.Bukkit;
 import org.bukkit.NamespacedKey;
 import org.bukkit.event.HandlerList;
@@ -193,12 +194,8 @@ public class BukkitRecipeManager extends AbstractRecipeManager<ItemStack> {
     public void load() {
         if (!Config.enableRecipeSystem()) return;
         if (VersionHelper.isOrAbove1_21_2()) {
-            try {
-                this.stolenFeatureFlagSet = CoreReflections.methodHandle$RecipeManager$featureflagsetGetter.invokeExact(minecraftRecipeManager());
-                CoreReflections.methodHandle$RecipeManager$featureflagsetSetter.invokeExact(minecraftRecipeManager(), (Object) null);
-            } catch (Throwable e) {
-                this.plugin.logger().warn("Failed to steal feature flag set", e);
-            }
+            this.stolenFeatureFlagSet = RecipeManagerProxy.INSTANCE.getFeatureFlagSet(minecraftRecipeManager());
+            RecipeManagerProxy.INSTANCE.setFeatureFlagSet(minecraftRecipeManager(), null);
         }
     }
 
@@ -392,13 +389,13 @@ public class BukkitRecipeManager extends AbstractRecipeManager<ItemStack> {
         try {
             // give flags back on 1.21.2+
             if (VersionHelper.isOrAbove1_21_2() && this.stolenFeatureFlagSet != null) {
-                CoreReflections.methodHandle$RecipeManager$featureflagsetSetter.invokeExact(minecraftRecipeManager(), (Object) this.stolenFeatureFlagSet);
+                RecipeManagerProxy.INSTANCE.setFeatureFlagSet(minecraftRecipeManager(), this.stolenFeatureFlagSet);
                 this.stolenFeatureFlagSet = null;
             }
 
             // refresh recipes
             if (VersionHelper.isOrAbove1_21_2()) {
-                CoreReflections.methodHandle$RecipeManager$finalizeRecipeLoading.invokeExact(minecraftRecipeManager());
+                RecipeManagerProxy.INSTANCE.finalizeRecipeLoading(minecraftRecipeManager());
             }
 
             // send to players

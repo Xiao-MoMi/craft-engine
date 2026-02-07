@@ -23,27 +23,27 @@ public final class AttributeModifier {
     }
 
     public double amount() {
-        return amount;
+        return this.amount;
     }
 
     public @Nullable Display display() {
-        return display;
+        return this.display;
     }
 
     public Key id() {
-        return id;
+        return this.id;
     }
 
     public Operation operation() {
-        return operation;
+        return this.operation;
     }
 
     public Slot slot() {
-        return slot;
+        return this.slot;
     }
 
     public String type() {
-        return type;
+        return this.type;
     }
 
     public enum Slot {

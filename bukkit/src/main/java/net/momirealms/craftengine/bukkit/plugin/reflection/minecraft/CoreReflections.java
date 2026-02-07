@@ -217,22 +217,6 @@ public final class CoreReflections {
             )
     );
 
-    public static final Class<?> clazz$AttributeModifier = requireNonNull(
-            ReflectionUtils.getClazz(
-                    BukkitReflectionUtils.assembleMCClass("world.entity.ai.attributes.AttributeModifier")
-            )
-    );
-
-    public static final Class<?> clazz$AttributeModifier$Operation = requireNonNull(
-            ReflectionUtils.getClazz(BukkitReflectionUtils.assembleMCClass("world.entity.ai.attributes.AttributeModifier$Operation"))
-    );
-
-    public static final Constructor<?> constructor$AttributeModifier = requireNonNull(
-            !VersionHelper.isOrAbove1_20_5() ? ReflectionUtils.getConstructor(clazz$AttributeModifier, String.class, double.class, clazz$AttributeModifier$Operation) :
-                    (!VersionHelper.isOrAbove1_21() ? ReflectionUtils.getConstructor(clazz$AttributeModifier, UUID.class, String.class, double.class, clazz$AttributeModifier$Operation) :
-                            (ReflectionUtils.getConstructor(clazz$AttributeModifier, clazz$ResourceLocation, double.class, clazz$AttributeModifier$Operation)))
-    );
-
     public static final Class<?> clazz$Attribute = requireNonNull(
             BukkitReflectionUtils.findReobfOrMojmapClass(
                     "world.entity.ai.attributes.AttributeBase",
@@ -365,10 +349,6 @@ public final class CoreReflections {
 
     public static final Class<?> clazz$PlacedFeature = requireNonNull(
             ReflectionUtils.getClazz(BukkitReflectionUtils.assembleMCClass("world.level.levelgen.placement.PlacedFeature"))
-    );
-
-    public static final Constructor<?> constructor$PlacedFeature = requireNonNull(
-            ReflectionUtils.getConstructor(clazz$PlacedFeature, clazz$Holder, List.class)
     );
 
     // 1.21+
@@ -566,14 +546,6 @@ public final class CoreReflections {
             )
     );
 
-    public static final Field field$LevelChunkSection$states = requireNonNull(
-            ReflectionUtils.getDeclaredField(clazz$LevelChunkSection, clazz$PalettedContainer, 0)
-    );
-
-    public static final Method method$FluidState$createLegacyBlock = requireNonNull(
-            ReflectionUtils.getMethod(clazz$FluidState, clazz$BlockState)
-    );
-
     public static final Class<?> clazz$RecipeManager = requireNonNull(
             BukkitReflectionUtils.findReobfOrMojmapClass(
                     "world.item.crafting.CraftingManager",
@@ -581,59 +553,12 @@ public final class CoreReflections {
             )
     );
 
-    public static final Method method$RecipeManager$finalizeRecipeLoading =
-            ReflectionUtils.getMethod(clazz$RecipeManager, new String[]{"finalizeRecipeLoading"});
-
-    public static final Class<?> clazz$FeatureFlagSet = requireNonNull(
-            ReflectionUtils.getClazz(BukkitReflectionUtils.assembleMCClass("world.flag.FeatureFlagSet"))
-    );
-
-    public static final Field field$RecipeManager$featureflagset =
-            ReflectionUtils.getDeclaredField(clazz$RecipeManager, clazz$FeatureFlagSet, 0);
-
     public static final Class<?> clazz$Ingredient = requireNonNull(
             BukkitReflectionUtils.findReobfOrMojmapClass(
                     "world.item.crafting.RecipeItemStack",
                     "world.item.crafting.Ingredient"
             )
     );
-
-    public static final Field field$Ingredient$itemStacks = requireNonNull(
-            ReflectionUtils.getDeclaredField(
-                    clazz$Ingredient,
-                    VersionHelper.isOrAbove1_21_4() ? Set.class : VersionHelper.isOrAbove1_21_2() ? List.class : clazz$ItemStack.arrayType(),
-                    VersionHelper.isOrAbove1_21_4() ? 0 : VersionHelper.isOrAbove1_21_2() ? 1 : 0
-            )
-    );
-
-    public static final MethodHandle methodHandle$RecipeManager$finalizeRecipeLoading;
-    public static final MethodHandle methodHandle$RecipeManager$featureflagsetGetter;
-    public static final MethodHandle methodHandle$RecipeManager$featureflagsetSetter;
-    public static final MethodHandle methodHandle$Ingredient$itemStacksSetter;
-
-    static {
-        try {
-            if (method$RecipeManager$finalizeRecipeLoading != null) {
-                methodHandle$RecipeManager$finalizeRecipeLoading = ReflectionUtils.unreflectMethod(method$RecipeManager$finalizeRecipeLoading)
-                        .asType(MethodType.methodType(void.class, Object.class));
-            } else {
-                methodHandle$RecipeManager$finalizeRecipeLoading = null;
-            }
-            if (field$RecipeManager$featureflagset != null) {
-                methodHandle$RecipeManager$featureflagsetGetter = ReflectionUtils.unreflectGetter(field$RecipeManager$featureflagset)
-                        .asType(MethodType.methodType(Object.class, Object.class));
-                methodHandle$RecipeManager$featureflagsetSetter = ReflectionUtils.unreflectSetter(field$RecipeManager$featureflagset)
-                        .asType(MethodType.methodType(void.class, Object.class, Object.class));
-            } else {
-                methodHandle$RecipeManager$featureflagsetGetter = null;
-                methodHandle$RecipeManager$featureflagsetSetter = null;
-            }
-            methodHandle$Ingredient$itemStacksSetter = ReflectionUtils.unreflectSetter(field$Ingredient$itemStacks)
-                    .asType(MethodType.methodType(void.class, Object.class, VersionHelper.isOrAbove1_21_4() ? Set.class : VersionHelper.isOrAbove1_21_2() ? List.class : Object.class));
-        } catch (Exception e) {
-            throw new ReflectionInitException("Failed to initialize CoreReflections", e);
-        }
-    }
 
     public static final Class<?> clazz$ShapedRecipe = requireNonNull(
             BukkitReflectionUtils.findReobfOrMojmapClass(
@@ -856,10 +781,6 @@ public final class CoreReflections {
         }
     }
 
-    public static final Method method$LevelReader$getMaxLocalRawBrightness = requireNonNull(
-            ReflectionUtils.getMethod(clazz$LevelReader, int.class, clazz$BlockPos)
-    );
-
     public static final Method method$ConfiguredFeature$place = requireNonNull(
             ReflectionUtils.getMethod(clazz$ConfiguredFeature, boolean.class, clazz$WorldGenLevel, clazz$ChunkGenerator, clazz$RandomSource, clazz$BlockPos)
     );
@@ -917,97 +838,11 @@ public final class CoreReflections {
             )
     );
 
-    public static final Class<?> clazz$AbstractContainerMenu = requireNonNull(
-            BukkitReflectionUtils.findReobfOrMojmapClass(
-                    "world.inventory.Container",
-                    "world.inventory.AbstractContainerMenu"
-            )
-    );
-
-    public static final Field field$Player$containerMenu = requireNonNull(
-            ReflectionUtils.getDeclaredField(clazz$Player, clazz$AbstractContainerMenu, 0)
-    );
-
-    public static final Field field$AbstractContainerMenu$containerId = requireNonNull(
-            ReflectionUtils.getDeclaredField(clazz$AbstractContainerMenu, int.class, 1)
-    );
-
-    public static final Field field$AbstractContainerMenu$menuType = requireNonNull(
-            ReflectionUtils.getDeclaredField(clazz$AbstractContainerMenu, clazz$MenuType, 0)
-    );
-
-    public static final Method method$AbstractContainerMenu$broadcastFullState = requireNonNull(
-            ReflectionUtils.getMethod(clazz$AbstractContainerMenu, void.class, new String[]{ "broadcastFullState", "e" })
-    );
-
-    public static final Field field$AbstractContainerMenu$checkReachable = requireNonNull(
-            ReflectionUtils.getDeclaredFieldBackwards(clazz$AbstractContainerMenu, boolean.class, 0)
-    );
-
-    public static final Constructor<?> constructor$JukeboxSong = Optional.ofNullable(clazz$JukeboxSong)
-            .map(it -> ReflectionUtils.getConstructor(it, clazz$Holder, clazz$Component, float.class, int.class))
-            .orElse(null);
-
-    public static final Class<?> clazz$RepairItemRecipe = requireNonNull(
-            BukkitReflectionUtils.findReobfOrMojmapClass(
-                    "world.item.crafting.RecipeRepair",
-                    "world.item.crafting.RepairItemRecipe"
-            )
-    );
-
-    public static final Class<?> clazz$ArmorDyeRecipe = requireNonNull(
-            BukkitReflectionUtils.findReobfOrMojmapClass(
-                    "world.item.crafting.RecipeArmorDye",
-                    "world.item.crafting.ArmorDyeRecipe"
-            )
-    );
-
-    public static final Class<?> clazz$FireworkStarFadeRecipe = requireNonNull(
-            BukkitReflectionUtils.findReobfOrMojmapClass(
-                    "world.item.crafting.RecipeFireworksFade",
-                    "world.item.crafting.FireworkStarFadeRecipe"
-            )
-    );
-
-    public static final Method method$ItemStack$getItem = requireNonNull(
-            ReflectionUtils.getMethod(clazz$ItemStack, clazz$Item)
-    );
-
     public static final Class<?> clazz$BlockHitResult = requireNonNull(
             BukkitReflectionUtils.findReobfOrMojmapClass(
                     "world.phys.MovingObjectPositionBlock",
                     "world.phys.BlockHitResult"
             )
-    );
-
-    public static final Class<?> clazz$ClipContext$Fluid = requireNonNull(
-            BukkitReflectionUtils.findReobfOrMojmapClass(
-                    "world.level.RayTrace$FluidCollisionOption",
-                    "world.level.ClipContext$Fluid"
-            )
-    );
-
-    public static final Method method$ClipContext$Fluid$values = requireNonNull(
-            ReflectionUtils.getStaticMethod(clazz$ClipContext$Fluid, clazz$ClipContext$Fluid.arrayType())
-    );
-
-    public static final Object instance$ClipContext$Fluid$NONE;
-    public static final Object instance$ClipContext$Fluid$SOURCE_ONLY;
-    public static final Object instance$ClipContext$Fluid$ANY;
-
-    static {
-        try {
-            Object[] values = (Object[]) method$ClipContext$Fluid$values.invoke(null);
-            instance$ClipContext$Fluid$NONE = values[0];
-            instance$ClipContext$Fluid$SOURCE_ONLY = values[1];
-            instance$ClipContext$Fluid$ANY = values[2];
-        } catch (ReflectiveOperationException e) {
-            throw new RuntimeException(e);
-        }
-    }
-
-    public static final Method method$Item$getPlayerPOVHitResult = requireNonNull(
-            ReflectionUtils.getDeclaredMethod(clazz$Item, clazz$BlockHitResult, clazz$Level, clazz$Player, clazz$ClipContext$Fluid)
     );
 
     public static final Class<?> clazz$SimpleWaterloggedBlock = requireNonNull(

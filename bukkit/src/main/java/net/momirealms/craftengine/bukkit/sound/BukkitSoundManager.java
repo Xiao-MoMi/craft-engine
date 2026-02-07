@@ -18,6 +18,7 @@ import net.momirealms.craftengine.core.util.VersionHelper;
 import net.momirealms.craftengine.proxy.minecraft.core.HolderProxy;
 import net.momirealms.craftengine.proxy.minecraft.core.MappedRegistryProxy;
 import net.momirealms.craftengine.proxy.minecraft.core.RegistryProxy;
+import net.momirealms.craftengine.proxy.minecraft.world.item.JukeboxSongProxy;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -142,7 +143,7 @@ public class BukkitSoundManager extends AbstractSoundManager {
                             CoreReflections.constructor$SoundEvent.newInstance(soundId, Optional.of(jukeboxSong.range())) :
                             CoreReflections.constructor$SoundEvent.newInstance(soundId, jukeboxSong.range(), false);
                     Object soundHolder = HolderProxy.INSTANCE.direct(soundEvent);
-                    song = CoreReflections.constructor$JukeboxSong.newInstance(soundHolder, ComponentUtils.adventureToMinecraft(jukeboxSong.description()), jukeboxSong.lengthInSeconds(), jukeboxSong.comparatorOutput());
+                    song = JukeboxSongProxy.INSTANCE.newInstance(soundHolder, ComponentUtils.adventureToMinecraft(jukeboxSong.description()), jukeboxSong.lengthInSeconds(), jukeboxSong.comparatorOutput());
                     Object holder = RegistryProxy.INSTANCE.registerForHolder$1(registry, resourceLocation, song);
                     HolderProxy.ReferenceProxy.INSTANCE.bindValue(holder, song);
                     HolderProxy.ReferenceProxy.INSTANCE.setTags(holder, Set.of());

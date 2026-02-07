@@ -24,7 +24,10 @@ import net.momirealms.craftengine.core.item.ItemKeys;
 import net.momirealms.craftengine.core.item.data.FireworkExplosion;
 import net.momirealms.craftengine.core.util.*;
 import net.momirealms.craftengine.proxy.minecraft.world.item.ItemStackProxy;
+import net.momirealms.craftengine.proxy.minecraft.world.item.crafting.ArmorDyeRecipeProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.item.crafting.CraftingBookCategoryProxy;
+import net.momirealms.craftengine.proxy.minecraft.world.item.crafting.FireworkStarFadeRecipeProxy;
+import net.momirealms.craftengine.proxy.minecraft.world.item.crafting.RepairItemRecipeProxy;
 import org.bukkit.inventory.ItemStack;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -60,7 +63,7 @@ public final class RecipeInjector {
         ).and(ElementMatchers.returns(CoreReflections.clazz$ItemStack));
 
         clazz$InjectedArmorDyeRecipe = byteBuddy
-                .subclass(CoreReflections.clazz$ArmorDyeRecipe, ConstructorStrategy.Default.IMITATE_SUPER_CLASS_OPENING)
+                .subclass(ArmorDyeRecipeProxy.CLASS, ConstructorStrategy.Default.IMITATE_SUPER_CLASS_OPENING)
                 .name("net.momirealms.craftengine.bukkit.item.recipe.ArmorDyeRecipe")
                 .method(matches)
                 .intercept(MethodDelegation.to(DyeMatchesInterceptor.INSTANCE))
@@ -71,7 +74,7 @@ public final class RecipeInjector {
                 .getLoaded();
 
         clazz$InjectedFireworkStarFadeRecipe = byteBuddy
-                .subclass(CoreReflections.clazz$FireworkStarFadeRecipe)
+                .subclass(FireworkStarFadeRecipeProxy.CLASS)
                 .name("net.momirealms.craftengine.bukkit.item.recipe.FireworkStarFadeRecipe")
                 .method(matches)
                 .intercept(MethodDelegation.to(FireworkStarFadeMatchesInterceptor.INSTANCE))
@@ -82,7 +85,7 @@ public final class RecipeInjector {
                 .getLoaded();
 
         clazz$InjectedRepairItemRecipe = byteBuddy
-                .subclass(CoreReflections.clazz$RepairItemRecipe, ConstructorStrategy.Default.IMITATE_SUPER_CLASS_OPENING)
+                .subclass(RepairItemRecipeProxy.CLASS, ConstructorStrategy.Default.IMITATE_SUPER_CLASS_OPENING)
                 .name("net.momirealms.craftengine.bukkit.item.recipe.RepairItemRecipe")
                 // 只修改match逻辑，合并需要在事件里处理，否则无法应用变量
                 .method(matches)
