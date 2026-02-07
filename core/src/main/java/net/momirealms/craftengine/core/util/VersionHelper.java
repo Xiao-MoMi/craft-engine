@@ -156,41 +156,32 @@ public class VersionHelper {
         return version;
     }
 
-    private static boolean checkMojMap() {
-        // Check if the server is Mojmap
-        try {
-            Class.forName("net.neoforged.art.internal.RenamerImpl");
-            return true;
-        } catch (ClassNotFoundException ignored) {
+    private static boolean exists(String... classNames) {
+        for (String className : classNames) {
+            try {
+                Class.forName(className.replace("{}", "."), false, VersionHelper.class.getClassLoader());
+                return true;
+            } catch (ClassNotFoundException ignored) {
+            }
         }
         return false;
+    }
+
+    private static boolean checkMojMap() {
+        // Check if the server is Mojmap
+        return exists("net.neoforged.art.internal.RenamerImpl");
     }
 
     private static boolean checkFolia() {
-        try {
-            Class.forName("io.papermc.paper.threadedregions.RegionizedServer");
-            return true;
-        } catch (ClassNotFoundException ignored) {
-        }
-        return false;
+        return exists("io.papermc.paper.threadedregions.RegionizedServer");
     }
 
     private static boolean checkPaper() {
-        try {
-            Class.forName("io.papermc.paper.adventure.PaperAdventure");
-            return true;
-        } catch (ClassNotFoundException ignored) {
-        }
-        return false;
+        return exists("io.papermc.paper.adventure.PaperAdventure");
     }
 
     private static boolean checkLeaves() {
-        try {
-            Class.forName("org.leavesmc.leaves.bot.ServerBot");
-            return true;
-        } catch (ClassNotFoundException ignored) {
-        }
-        return false;
+        return exists("org.leavesmc.leaves.bot.BotList");
     }
 
     public static boolean isFolia() {
