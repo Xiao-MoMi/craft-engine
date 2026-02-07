@@ -52,10 +52,10 @@ public interface BlockBehaviorProxy {
     @FieldSetter(name = "jumpFactor")
     void setJumpFactor(Object target, float jumpFactor);
 
-    @FieldGetter(name = "descriptionId", activeIf = ">=1.21.2")
+    @FieldGetter(name = "descriptionId", activeIf = "min_version=1.21.2")
     String getDescriptionId(Object target);
 
-    @FieldSetter(name = "descriptionId", activeIf = ">=1.21.2")
+    @FieldSetter(name = "descriptionId", activeIf = "min_version=1.21.2")
     void setDescriptionId(Object target, String descriptionId);
 
     @ReflectionProxy(name = "net.minecraft.world.level.block.state.BlockBehaviour$Properties")
@@ -65,7 +65,7 @@ public interface BlockBehaviorProxy {
         @MethodInvoker(name = "of", isStatic = true)
         Object of();
 
-        @FieldGetter(name = "id", activeIf = "min_version=1.21.2")
+        @FieldSetter(name = "id", activeIf = "min_version=1.21.2")
         void setId(Object target, Object id);
     }
 }

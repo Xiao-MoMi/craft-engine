@@ -21,6 +21,6 @@ public interface AdvancementProgressProxy {
     @MethodInvoker(name = "update", activeIf = "max_version=1.20.1")
     void update(Object target, Map<String, Object> criteria, String[][] requirements);
 
-    @MethodInvoker(name = "update")
+    @MethodInvoker(name = "grantProgress")
     boolean grantProgress(Object target, String criterionName);
 }

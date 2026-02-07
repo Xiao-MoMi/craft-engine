@@ -6,10 +6,11 @@ import net.momirealms.sparrow.reflection.proxy.annotation.FieldGetter;
 import net.momirealms.sparrow.reflection.proxy.annotation.MethodInvoker;
 import net.momirealms.sparrow.reflection.proxy.annotation.ReflectionProxy;
 import net.momirealms.sparrow.reflection.proxy.annotation.Type;
+import org.bukkit.event.block.SignChangeEvent;
 
 import java.util.List;
 
-@ReflectionProxy(name = "org.bukkit.event.block.SignChangeEvent")
+@ReflectionProxy(clazz = SignChangeEvent.class)
 public interface SignChangeEventProxy {
     SignChangeEventProxy INSTANCE = ASMProxyFactory.create(SignChangeEventProxy.class);
 

@@ -19,7 +19,7 @@ public interface ArmorTrimProxy {
     @FieldGetter(name = "CODEC", isStatic = true)
     Codec<Object> getCodec();
 
-    @MethodInvoker(name = "setTrim", isStatic = true)
+    @MethodInvoker(name = "setTrim", isStatic = true, activeIf = "max_version=1.20.4")
     boolean setTrim(@Type(clazz = RegistryAccessProxy.class) Object registryAccess,
                     @Type(clazz = ItemStackProxy.class) Object itemStack,
                     @Type(clazz = ArmorTrimProxy.class) Object armorTrim);

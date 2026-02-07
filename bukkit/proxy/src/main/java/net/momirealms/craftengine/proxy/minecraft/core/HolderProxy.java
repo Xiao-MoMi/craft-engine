@@ -18,10 +18,10 @@ public interface HolderProxy {
     boolean isBound(Object target);
 
     @MethodInvoker(name = "is")
-    boolean is$0(Object target, @Type(clazz = IdentifierProxy.class) Object id);
+    boolean is$0(Object target, @Type(clazz = IdentifierProxy.class) Object identifier);
 
     @MethodInvoker(name = "is")
-    boolean is$1(Object target, @Type(clazz = ResourceKeyProxy.class) Object id);
+    boolean is$1(Object target, @Type(clazz = ResourceKeyProxy.class) Object resourceKey);
 
     @MethodInvoker(name = "getRegisteredName", activeIf = "min_version=1.20.5")
     String getRegisteredName(Object target);

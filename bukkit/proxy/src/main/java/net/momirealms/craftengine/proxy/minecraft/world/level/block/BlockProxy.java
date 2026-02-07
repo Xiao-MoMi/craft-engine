@@ -20,7 +20,7 @@ public interface BlockProxy extends BlockBehaviorProxy {
     @FieldSetter(name = "stateDefinition")
     void setStateDefinition(Object target, Object value);
 
-    @FieldSetter(name = "setDescriptionId", activeIf = "max_version=1.21.1")
+    @FieldSetter(name = "descriptionId", activeIf = "max_version=1.21.1")
     void setDescriptionId(Object target, String descriptionId);
 
     @FieldGetter(name = "defaultBlockState")

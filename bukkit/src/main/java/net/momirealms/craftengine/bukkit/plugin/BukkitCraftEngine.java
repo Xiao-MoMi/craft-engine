@@ -1,5 +1,6 @@
 package net.momirealms.craftengine.bukkit.plugin;
 
+import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import net.momirealms.antigrieflib.AntiGriefLib;
 import net.momirealms.craftengine.bukkit.advancement.BukkitAdvancementManager;
 import net.momirealms.craftengine.bukkit.api.event.CraftEngineReloadEvent;
@@ -58,7 +59,6 @@ import java.io.*;
 import java.net.URL;
 import java.net.URLConnection;
 import java.nio.file.Path;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
@@ -289,7 +289,7 @@ public final class BukkitCraftEngine extends CraftEngine {
     }
 
     private List<String> getPatches() {
-        List<String> patches = new ArrayList<>();
+        List<String> patches = new ObjectArrayList<>(3);
         if (VersionHelper.isPaper()) {
             patches.add("paper");
         }

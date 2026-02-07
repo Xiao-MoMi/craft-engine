@@ -16,8 +16,8 @@ public interface SoundEventProxy {
     @FieldGetter(name = "location")
     Object getLocation(Object target);
 
-    @FieldGetter(name = "fixedRange")
-    Optional<Float> getFixedRange(Object target);
+    @MethodInvoker(name = "fixedRange")
+    Optional<Float> fixedRange(Object target);
 
     @MethodInvoker(name = "createVariableRangeEvent", isStatic = true)
     Object createVariableRangeEvent(@Type(clazz = IdentifierProxy.class) Object identifier);
