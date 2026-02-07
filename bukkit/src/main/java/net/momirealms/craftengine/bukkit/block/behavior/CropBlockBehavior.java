@@ -31,6 +31,7 @@ import net.momirealms.craftengine.core.world.Vec3d;
 import net.momirealms.craftengine.core.world.Vec3i;
 import net.momirealms.craftengine.core.world.WorldPosition;
 import net.momirealms.craftengine.core.world.context.UseOnContext;
+import net.momirealms.craftengine.proxy.minecraft.world.level.BlockAndTintGetterProxy;
 import org.bukkit.Location;
 import org.bukkit.World;
 
@@ -81,7 +82,7 @@ public class CropBlockBehavior extends BukkitBlockBehavior {
     }
 
     public static int getRawBrightness(Object level, Object pos) {
-        return FastNMS.INSTANCE.method$BlockAndTintGetter$getRawBrightness(level, pos, 0);
+        return BlockAndTintGetterProxy.INSTANCE.getRawBrightness(level, pos, 0);
     }
 
     private boolean hasSufficientLight(Object level, Object pos) {

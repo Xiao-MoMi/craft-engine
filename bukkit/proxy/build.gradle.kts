@@ -15,6 +15,7 @@ dependencies {
     compileOnly("org.ow2.asm:asm:${rootProject.properties["asm_version"]}")
     implementation("net.momirealms:sparrow-reflection:${rootProject.properties["sparrow_reflection_version"]}")
     compileOnly("com.mojang:datafixerupper:${rootProject.properties["datafixerupper_version"]}")
+    compileOnly("com.mojang:authlib:${rootProject.properties["authlib_version"]}")
 }
 
 tasks.shadowJar {

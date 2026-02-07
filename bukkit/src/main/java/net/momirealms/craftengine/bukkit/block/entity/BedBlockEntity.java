@@ -16,6 +16,7 @@ import net.momirealms.craftengine.core.util.HorizontalDirection;
 import net.momirealms.craftengine.core.util.LazyReference;
 import net.momirealms.craftengine.core.util.VersionHelper;
 import net.momirealms.craftengine.core.world.*;
+import net.momirealms.craftengine.proxy.minecraft.world.entity.LivingEntityProxy;
 import net.momirealms.sparrow.nbt.CompoundTag;
 import org.jetbrains.annotations.Nullable;
 
@@ -100,7 +101,7 @@ public sealed abstract class BedBlockEntity extends BlockEntity permits BedBlock
                 this.seat.destroy();
             } else if (before != occupier) {
                 Vec3d pos = this.renderer.pos.get();
-                double y = pos.y + 0.1125 * FastNMS.INSTANCE.method$LivingEntity$getScale(occupier.serverPlayer());
+                double y = pos.y + 0.1125 * LivingEntityProxy.INSTANCE.getScale(occupier.serverPlayer());
                 this.seat.spawnSeat(occupier, new WorldPosition(super.world.world, pos.x, y, pos.z, 0, this.yRot));
             }
         }

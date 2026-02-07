@@ -5,6 +5,7 @@ import net.momirealms.craftengine.proxy.minecraft.world.entity.EntityProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.level.block.state.BlockStateProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.phys.shape.CollisionContextProxy;
 import net.momirealms.sparrow.reflection.proxy.ASMProxyFactory;
+import net.momirealms.sparrow.reflection.proxy.annotation.FieldGetter;
 import net.momirealms.sparrow.reflection.proxy.annotation.MethodInvoker;
 import net.momirealms.sparrow.reflection.proxy.annotation.ReflectionProxy;
 import net.momirealms.sparrow.reflection.proxy.annotation.Type;
@@ -20,4 +21,10 @@ public interface LevelProxy {
                                  @Type(clazz = CollisionContextProxy.class) Object context,
                                  @Type(clazz = BlockPosProxy.class) Object pos,
                                  boolean checkCanSee);
+
+    @FieldGetter(name = "dimensionTypeRegistration")
+    Object dimensionTypeRegistration(Object target);
+
+    @FieldGetter(name = "dimension")
+    Object dimension(Object target);
 }

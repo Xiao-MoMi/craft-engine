@@ -26,4 +26,7 @@ public interface LivingEntityProxy extends EntityProxy {
 
     @MethodInvoker(name = "getEffect", activeIf = "min_version=1.20.5")
     Object getEffect(Object target, @Type(clazz = HolderProxy.class) Object effect);
+
+    @MethodInvoker(name = "getScale")
+    float getScale(Object target);
 }
