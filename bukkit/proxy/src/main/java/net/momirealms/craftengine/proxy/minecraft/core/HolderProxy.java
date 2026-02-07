@@ -46,5 +46,8 @@ public interface HolderProxy {
 
         @MethodInvoker(name = "bindValue")
         void bindValue(Object target, Object value);
+
+        @FieldGetter(name = "key")
+        Object getKey(Object target);
     }
 }

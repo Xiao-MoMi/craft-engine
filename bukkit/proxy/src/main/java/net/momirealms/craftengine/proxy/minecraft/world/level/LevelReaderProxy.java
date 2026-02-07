@@ -10,4 +10,7 @@ public interface LevelReaderProxy {
 
     @MethodInvoker(name = "dimensionType")
     Object dimensionType(Object target);
+
+    @MethodInvoker(name = "getNoiseBiome")
+    Object getNoiseBiome(Object target, int x, int y, int z);
 }

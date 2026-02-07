@@ -289,7 +289,7 @@ public final class BukkitCraftEngine extends CraftEngine {
     }
 
     private List<String> getPatches() {
-        List<String> patches = new ObjectArrayList<>(3);
+        List<String> patches = new ObjectArrayList<>();
         if (VersionHelper.isPaper()) {
             patches.add("paper");
         }

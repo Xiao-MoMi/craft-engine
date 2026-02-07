@@ -17,4 +17,7 @@ public interface MinecraftServerProxy {
 
     @FieldGetter(name = "connection")
     Object getConnection(Object target);
+
+    @FieldGetter(name = "scoreboard")
+    Object getScoreboard(Object target);
 }

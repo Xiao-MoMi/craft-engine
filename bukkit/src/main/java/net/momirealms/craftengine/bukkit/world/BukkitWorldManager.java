@@ -37,7 +37,10 @@ import net.momirealms.craftengine.core.world.chunk.PalettedContainer;
 import net.momirealms.craftengine.core.world.chunk.storage.DefaultStorageAdaptor;
 import net.momirealms.craftengine.core.world.chunk.storage.StorageAdaptor;
 import net.momirealms.craftengine.core.world.chunk.storage.WorldDataStorage;
+import net.momirealms.craftengine.proxy.minecraft.core.HolderProxy;
+import net.momirealms.craftengine.proxy.minecraft.resources.ResourceKeyProxy;
 import net.momirealms.craftengine.proxy.minecraft.util.CrudeIncrementalIntIdentityHashBiMapProxy;
+import net.momirealms.craftengine.proxy.minecraft.world.level.LevelProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.level.chunk.HashMapPaletteProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.level.chunk.LinearPaletteProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.level.chunk.PalettedContainerProxy;
@@ -112,10 +115,10 @@ public final class BukkitWorldManager implements WorldManager, Listener {
     public synchronized CraftEngineFeatures fetchFeatures(Object serverLevel) {
         World world = FastNMS.INSTANCE.method$Level$getCraftWorld(serverLevel);
         String name = world.getName();
-        Key dimension = KeyUtils.identifierToKey(FastNMS.INSTANCE.field$ResourceKey$location(FastNMS.INSTANCE.method$Level$dimension(serverLevel)));
-        Object holder = FastNMS.INSTANCE.method$Level$dimensionTypeRegistration(serverLevel);
+        Key dimension = KeyUtils.identifierToKey(FastNMS.INSTANCE.field$ResourceKey$location(LevelProxy.INSTANCE.dimension(serverLevel)));
+        Object holder = LevelProxy.INSTANCE.dimensionTypeRegistration(serverLevel);
         Key dimensionType = CoreReflections.clazz$Holder$Reference.isInstance(holder)
-                ? KeyUtils.identifierToKey(FastNMS.INSTANCE.method$Holder$Reference$identifier(holder))
+                ? KeyUtils.identifierToKey(ResourceKeyProxy.INSTANCE.getLocation(HolderProxy.ReferenceProxy.INSTANCE.getKey(holder)))
                 : null;
         List<ConditionalFeature> features = new ArrayList<>();
         for (ConditionalFeature feature : this.placedFeatures) {

@@ -14,6 +14,7 @@ import net.momirealms.craftengine.core.util.VersionHelper;
 import net.momirealms.craftengine.core.world.*;
 import net.momirealms.craftengine.core.world.particle.ParticleData;
 import net.momirealms.craftengine.core.world.particle.ParticleType;
+import net.momirealms.craftengine.proxy.minecraft.world.level.LevelReaderProxy;
 import org.bukkit.Location;
 import org.bukkit.Particle;
 import org.bukkit.SoundCategory;
@@ -151,7 +152,7 @@ public class BukkitWorld implements World {
 
     @Override
     public Key getNoiseBiome(int x, int y, int z) {
-        return KeyUtils.identifierToKey(FastNMS.INSTANCE.method$LevelReader$getNoiseBiome(serverWorld(), x >> 2, y >> 2, z >> 2));
+        return KeyUtils.identifierToKey(LevelReaderProxy.INSTANCE.getNoiseBiome(serverWorld(), x >> 2, y >> 2, z >> 2));
     }
 
     @Override
