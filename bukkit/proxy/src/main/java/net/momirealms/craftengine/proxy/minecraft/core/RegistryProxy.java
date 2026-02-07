@@ -13,12 +13,12 @@ public interface RegistryProxy {
 
     @MethodInvoker(name = "registerForHolder", isStatic = true)
     Object registerForHolder$0(@Type(clazz = RegistryProxy.class) Object registry,
-                               @Type(clazz = ResourceKeyProxy.class) Object key,
+                               @Type(clazz = ResourceKeyProxy.class) Object resourceKey,
                                Object value);
 
     @MethodInvoker(name = "registerForHolder", isStatic = true)
     Object registerForHolder$1(@Type(clazz = RegistryProxy.class) Object registry,
-                               @Type(clazz = IdentifierProxy.class) Object key,
+                               @Type(clazz = IdentifierProxy.class) Object identifier,
                                Object value);
 
     @MethodInvoker(name = "asLookup", activeIf = "max_version=1.21.1")

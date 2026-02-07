@@ -1301,4 +1301,22 @@ public final class CoreReflections {
                     "world.level.levelgen.feature.Feature"
             )
     );
+
+    @Deprecated(forRemoval = true)
+    public static final Class<?> clazz$ChunkMap = requireNonNull(
+            ReflectionUtils.getClazz(
+                    BukkitReflectionUtils.assembleMCClass("server.level.PlayerChunkMap"),  // 这里paper会自动获取到NM.server.level.ChunkMap
+                    BukkitReflectionUtils.assembleMCClass("server.level.ChunkMap") // paper柠檬酸了
+            )
+    );
+
+    @Deprecated(forRemoval = true)
+    public static final Class<?> clazz$WorldGenContext = MiscUtils.requireNonNullIf(
+            ReflectionUtils.getClazz(BukkitReflectionUtils.assembleMCClass("world.level.chunk.status.WorldGenContext")), VersionHelper.isOrAbove1_20_5()
+    );
+
+    @Deprecated(forRemoval = true)
+    public static final Field field$ChunkMap$worldGenContext = MiscUtils.requireNonNullIf(
+            ReflectionUtils.getDeclaredField(clazz$ChunkMap, clazz$WorldGenContext, 0), VersionHelper.isOrAbove1_20_5()
+    );
 }

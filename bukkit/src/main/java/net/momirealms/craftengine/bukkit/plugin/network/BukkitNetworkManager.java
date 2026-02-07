@@ -54,7 +54,6 @@ import net.momirealms.craftengine.bukkit.plugin.network.payload.DiscardedPayload
 import net.momirealms.craftengine.bukkit.plugin.network.payload.Payload;
 import net.momirealms.craftengine.bukkit.plugin.network.payload.PayloadHelper;
 import net.momirealms.craftengine.bukkit.plugin.network.payload.UnknownPayload;
-import net.momirealms.craftengine.bukkit.plugin.reflection.leaves.LeavesReflections;
 import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.*;
 import net.momirealms.craftengine.bukkit.plugin.user.BukkitServerPlayer;
 import net.momirealms.craftengine.bukkit.plugin.user.FakeBukkitServerPlayer;
@@ -112,6 +111,7 @@ import net.momirealms.craftengine.core.world.chunk.packet.BlockEntityData;
 import net.momirealms.craftengine.core.world.chunk.packet.MCSection;
 import net.momirealms.craftengine.core.world.context.InteractEntityContext;
 import net.momirealms.craftengine.core.world.context.UseOnContext;
+import net.momirealms.craftengine.proxy.leaves.bot.BotListProxy;
 import net.momirealms.craftengine.proxy.minecraft.network.ServerCommonPacketListenerImplProxy;
 import net.momirealms.craftengine.proxy.minecraft.network.ServerConfigurationPacketListenerImplProxy;
 import net.momirealms.craftengine.proxy.minecraft.network.config.JoinWorldTaskProxy;
@@ -334,19 +334,14 @@ public class BukkitNetworkManager extends AbstractNetworkManager implements List
         return true;
     }
 
-    @SuppressWarnings("unchecked")
     private void injectLeavesBotList() {
-        try {
-            Object botList = LeavesReflections.field$BotList$INSTANCE.get(null);
-            List<Object> bots = (List<Object>) LeavesReflections.field$BotList$bots.get(botList);
-            ListMonitor<Object> monitor = new ListMonitor<>(bots,
-                    (bot) -> addFakePlayer(FastNMS.INSTANCE.method$ServerPlayer$getBukkitEntity(bot)),
-                    (bot) -> removeFakePlayer(FastNMS.INSTANCE.method$ServerPlayer$getBukkitEntity(bot))
-            );
-            LeavesReflections.field$BotList$bots.set(botList, monitor);
-        } catch (ReflectiveOperationException e) {
-            this.plugin.logger().severe("Failed to inject leaves bot list");
-        }
+        Object botList = BotListProxy.INSTANCE.getInstance();
+        List<Object> bots = BotListProxy.INSTANCE.getBots(botList);
+        ListMonitor<Object> monitor = new ListMonitor<>(bots,
+                (bot) -> addFakePlayer(FastNMS.INSTANCE.method$ServerPlayer$getBukkitEntity(bot)),
+                (bot) -> removeFakePlayer(FastNMS.INSTANCE.method$ServerPlayer$getBukkitEntity(bot))
+        );
+        BotListProxy.INSTANCE.setBots(botList, monitor);
     }
 
     public void registerBlockStatePacketListeners(int[] blockStateMappings, Predicate<Integer> occlusionPredicate) {

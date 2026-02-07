@@ -46,7 +46,7 @@ import net.momirealms.craftengine.proxy.minecraft.world.level.block.BlockProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.level.block.FireBlockProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.level.block.SoundTypeProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.level.block.state.BlockBehaviorProxy;
-import net.momirealms.craftengine.proxy.minecraft.world.level.block.state.BlockStateBaseProxy;
+import net.momirealms.craftengine.proxy.minecraft.world.level.block.state.BlockBehaviourProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.level.block.state.StateDefinitionProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.level.block.state.properties.NoteBlockInstrumentProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.level.material.MapColorProxy;
@@ -249,23 +249,23 @@ public final class BukkitBlockManager extends AbstractBlockManager {
 
         BlockSettings settings = state.settings();
         try {
-            BlockStateBaseProxy.INSTANCE.setLightEmission(nmsState, settings.luminance());
-            BlockStateBaseProxy.INSTANCE.setIgnitedByLava(nmsState, settings.burnable());
-            BlockStateBaseProxy.INSTANCE.setDestroySpeed(nmsState, settings.hardness());
-            BlockStateBaseProxy.INSTANCE.setReplaceable(nmsState, settings.replaceable());
-            BlockStateBaseProxy.INSTANCE.setMapColor(nmsState, MapColorProxy.INSTANCE.byId(settings.mapColor().id));
-            BlockStateBaseProxy.INSTANCE.setInstrument(nmsState, NoteBlockInstrumentProxy.VALUES[settings.instrument().ordinal()]);
-            BlockStateBaseProxy.INSTANCE.setPushReaction(nmsState, PushReactionProxy.VALUES[settings.pushReaction().ordinal()]);
+            BlockBehaviourProxy.BlockStateBaseProxy.INSTANCE.setLightEmission(nmsState, settings.luminance());
+            BlockBehaviourProxy.BlockStateBaseProxy.INSTANCE.setIgnitedByLava(nmsState, settings.burnable());
+            BlockBehaviourProxy.BlockStateBaseProxy.INSTANCE.setDestroySpeed(nmsState, settings.hardness());
+            BlockBehaviourProxy.BlockStateBaseProxy.INSTANCE.setReplaceable(nmsState, settings.replaceable());
+            BlockBehaviourProxy.BlockStateBaseProxy.INSTANCE.setMapColor(nmsState, MapColorProxy.INSTANCE.byId(settings.mapColor().id));
+            BlockBehaviourProxy.BlockStateBaseProxy.INSTANCE.setInstrument(nmsState, NoteBlockInstrumentProxy.VALUES[settings.instrument().ordinal()]);
+            BlockBehaviourProxy.BlockStateBaseProxy.INSTANCE.setPushReaction(nmsState, PushReactionProxy.VALUES[settings.pushReaction().ordinal()]);
             boolean canOcclude = settings.canOcclude() == Tristate.UNDEFINED ? BlockStateUtils.isOcclude(nmsVisualState) : settings.canOcclude().asBoolean();
-            BlockStateBaseProxy.INSTANCE.setCanOcclude(nmsState, canOcclude);
+            BlockBehaviourProxy.BlockStateBaseProxy.INSTANCE.setCanOcclude(nmsState, canOcclude);
             boolean useShapeForLightOcclusion = settings.useShapeForLightOcclusion() == Tristate.UNDEFINED
-                    ? BlockStateBaseProxy.INSTANCE.isUseShapeForLightOcclusion(nmsVisualState) : settings.useShapeForLightOcclusion().asBoolean();
-            BlockStateBaseProxy.INSTANCE.setUseShapeForLightOcclusion(nmsState, useShapeForLightOcclusion);
-            BlockStateBaseProxy.INSTANCE.setIsRedstoneConductor(nmsState, settings.isRedstoneConductor().asBoolean() ? ALWAYS_TRUE : ALWAYS_FALSE);
+                    ? BlockBehaviourProxy.BlockStateBaseProxy.INSTANCE.isUseShapeForLightOcclusion(nmsVisualState) : settings.useShapeForLightOcclusion().asBoolean();
+            BlockBehaviourProxy.BlockStateBaseProxy.INSTANCE.setUseShapeForLightOcclusion(nmsState, useShapeForLightOcclusion);
+            BlockBehaviourProxy.BlockStateBaseProxy.INSTANCE.setIsRedstoneConductor(nmsState, settings.isRedstoneConductor().asBoolean() ? ALWAYS_TRUE : ALWAYS_FALSE);
 
             boolean suffocating = settings.isSuffocating() == Tristate.UNDEFINED ? (canBlockView(state.visualBlockState())) : (settings.isSuffocating().asBoolean());
-            BlockStateBaseProxy.INSTANCE.setIsSuffocating(nmsState, suffocating ? ALWAYS_TRUE : ALWAYS_FALSE);
-            BlockStateBaseProxy.INSTANCE.setIsViewBlocking(
+            BlockBehaviourProxy.BlockStateBaseProxy.INSTANCE.setIsSuffocating(nmsState, suffocating ? ALWAYS_TRUE : ALWAYS_FALSE);
+            BlockBehaviourProxy.BlockStateBaseProxy.INSTANCE.setIsViewBlocking(
                     nmsState,
                     settings.isViewBlocking() == Tristate.UNDEFINED ?
                     (suffocating ? ALWAYS_TRUE : ALWAYS_FALSE) :
@@ -289,30 +289,30 @@ public final class BukkitBlockManager extends AbstractBlockManager {
             BlockBehaviorProxy.INSTANCE.setJumpFactor(nmsBlock, settings.jumpFactor());
             BlockBehaviorProxy.INSTANCE.setSoundType(nmsBlock, SoundUtils.toNMSSoundType(settings.sounds()));
 
-            BlockStateBaseProxy.INSTANCE.initCache(nmsState);
+            BlockBehaviourProxy.BlockStateBaseProxy.INSTANCE.initCache(nmsState);
             boolean isConditionallyFullOpaque = canOcclude & useShapeForLightOcclusion;
             if (!VersionHelper.isOrAbove1_21_2()) {
-                BlockStateBaseProxy.INSTANCE.setConditionallyFullOpaque(nmsState, isConditionallyFullOpaque);
+                BlockBehaviourProxy.BlockStateBaseProxy.INSTANCE.setConditionallyFullOpaque(nmsState, isConditionallyFullOpaque);
             }
 
             if (VersionHelper.isOrAbove1_21_2()) {
-                int blockLight = settings.blockLight() != -1 ? settings.blockLight() : BlockStateBaseProxy.INSTANCE.getLightBlock(nmsVisualState);
-                BlockStateBaseProxy.INSTANCE.setLightBlock(nmsState, blockLight);
-                boolean propagatesSkylightDown = settings.propagatesSkylightDown() == Tristate.UNDEFINED ? BlockStateBaseProxy.INSTANCE.isPropagatesSkylightDown(nmsVisualState) : settings.propagatesSkylightDown().asBoolean();
-                BlockStateBaseProxy.INSTANCE.setPropagatesSkylightDown(nmsState, propagatesSkylightDown);
+                int blockLight = settings.blockLight() != -1 ? settings.blockLight() : BlockBehaviourProxy.BlockStateBaseProxy.INSTANCE.getLightBlock(nmsVisualState);
+                BlockBehaviourProxy.BlockStateBaseProxy.INSTANCE.setLightBlock(nmsState, blockLight);
+                boolean propagatesSkylightDown = settings.propagatesSkylightDown() == Tristate.UNDEFINED ? BlockBehaviourProxy.BlockStateBaseProxy.INSTANCE.isPropagatesSkylightDown(nmsVisualState) : settings.propagatesSkylightDown().asBoolean();
+                BlockBehaviourProxy.BlockStateBaseProxy.INSTANCE.setPropagatesSkylightDown(nmsState, propagatesSkylightDown);
             } else {
-                Object cache = BlockStateBaseProxy.INSTANCE.getCache(nmsState);
-                int blockLight = settings.blockLight() != -1 ? settings.blockLight() : BlockStateBaseProxy.CacheProxy.INSTANCE.getLightBlock(BlockStateBaseProxy.INSTANCE.getCache(nmsVisualState));
-                BlockStateBaseProxy.CacheProxy.INSTANCE.setLightBlock(cache, blockLight);
-                boolean propagatesSkylightDown = settings.propagatesSkylightDown() == Tristate.UNDEFINED ? BlockStateBaseProxy.CacheProxy.INSTANCE.propagatesSkylightDown(BlockStateBaseProxy.INSTANCE.getCache(nmsVisualState)) : settings.propagatesSkylightDown().asBoolean();
-                BlockStateBaseProxy.CacheProxy.INSTANCE.setPropagatesSkylightDown(cache, propagatesSkylightDown);
+                Object cache = BlockBehaviourProxy.BlockStateBaseProxy.INSTANCE.getCache(nmsState);
+                int blockLight = settings.blockLight() != -1 ? settings.blockLight() : BlockBehaviourProxy.BlockStateBaseProxy.CacheProxy.INSTANCE.getLightBlock(BlockBehaviourProxy.BlockStateBaseProxy.INSTANCE.getCache(nmsVisualState));
+                BlockBehaviourProxy.BlockStateBaseProxy.CacheProxy.INSTANCE.setLightBlock(cache, blockLight);
+                boolean propagatesSkylightDown = settings.propagatesSkylightDown() == Tristate.UNDEFINED ? BlockBehaviourProxy.BlockStateBaseProxy.CacheProxy.INSTANCE.propagatesSkylightDown(BlockBehaviourProxy.BlockStateBaseProxy.INSTANCE.getCache(nmsVisualState)) : settings.propagatesSkylightDown().asBoolean();
+                BlockBehaviourProxy.BlockStateBaseProxy.CacheProxy.INSTANCE.setPropagatesSkylightDown(cache, propagatesSkylightDown);
                 if (!isConditionallyFullOpaque) {
-                    BlockStateBaseProxy.INSTANCE.setOpacityIfCached(nmsState, blockLight);
+                    BlockBehaviourProxy.BlockStateBaseProxy.INSTANCE.setOpacityIfCached(nmsState, blockLight);
                 }
             }
 
-            BlockStateBaseProxy.INSTANCE.setIsRandomlyTicking(nmsState, settings.isRandomlyTicking());
-            BlockStateBaseProxy.INSTANCE.setFluidState(nmsState, settings.fluidState() ? MFluids.WATER$defaultState : MFluids.EMPTY$defaultState);
+            BlockBehaviourProxy.BlockStateBaseProxy.INSTANCE.setIsRandomlyTicking(nmsState, settings.isRandomlyTicking());
+            BlockBehaviourProxy.BlockStateBaseProxy.INSTANCE.setFluidState(nmsState, settings.fluidState() ? MFluids.WATER$defaultState : MFluids.EMPTY$defaultState);
 
             Object holder = BukkitCraftEngine.instance().blockManager().getMinecraftBlockHolder(state.customBlockState().registryId());
             Set<Object> tags = new HashSet<>();

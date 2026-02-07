@@ -19,7 +19,7 @@ public interface ServerGamePacketListenerImplProxy {
                      @Type(clazz = EntityProxy.class) Object entity,
                      boolean includeData);
 
-    @MethodInvoker(name = "tryPickItem", activeIf = "min_version=1.21.5")
+    @MethodInvoker(name = "tryPickItem", activeIf = "version=1.21.4")
     void tryPickItem(Object target,
                      @Type(clazz = ItemStackProxy.class) Object item);
 }

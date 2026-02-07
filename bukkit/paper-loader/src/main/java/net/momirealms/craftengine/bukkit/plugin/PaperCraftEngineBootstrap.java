@@ -56,6 +56,7 @@ public final class PaperCraftEngineBootstrap implements PluginBootstrap {
             );
         }
         this.plugin.applyDependencies();
+        this.plugin.setupProxy();
         this.plugin.setUpConfigAndLocale();
         if (isDatapackDiscoveryAvailable()) {
             new ModernEventHandler(context, this.plugin).register();

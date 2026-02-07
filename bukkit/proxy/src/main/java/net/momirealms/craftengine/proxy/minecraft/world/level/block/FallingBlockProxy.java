@@ -1,13 +1,15 @@
 package net.momirealms.craftengine.proxy.minecraft.world.level.block;
 
+import net.momirealms.craftengine.proxy.minecraft.world.level.block.state.BlockStateProxy;
 import net.momirealms.sparrow.reflection.proxy.ASMProxyFactory;
 import net.momirealms.sparrow.reflection.proxy.annotation.MethodInvoker;
 import net.momirealms.sparrow.reflection.proxy.annotation.ReflectionProxy;
+import net.momirealms.sparrow.reflection.proxy.annotation.Type;
 
 @ReflectionProxy(name = "net.minecraft.world.level.block.FallingBlock")
 public interface FallingBlockProxy {
     FallingBlockProxy INSTANCE = ASMProxyFactory.create(FallingBlockProxy.class);
 
     @MethodInvoker(name = "isFree", isStatic = true)
-    boolean isFree(Object state);
+    boolean isFree(@Type(clazz = BlockStateProxy.class) Object state);
 }

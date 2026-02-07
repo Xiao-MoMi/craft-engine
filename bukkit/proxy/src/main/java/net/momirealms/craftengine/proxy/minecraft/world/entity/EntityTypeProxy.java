@@ -8,6 +8,6 @@ import net.momirealms.sparrow.reflection.proxy.annotation.ReflectionProxy;
 public interface EntityTypeProxy {
     EntityTypeProxy INSTANCE = ASMProxyFactory.create(EntityTypeProxy.class);
 
-    @FieldGetter(name = "target")
+    @FieldGetter(name = "dimensions")
     Object getDimensions(Object target);
 }

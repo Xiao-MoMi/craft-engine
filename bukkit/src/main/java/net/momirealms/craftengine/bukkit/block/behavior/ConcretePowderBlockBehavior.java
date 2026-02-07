@@ -24,7 +24,7 @@ import net.momirealms.craftengine.proxy.minecraft.core.BlockPosProxy;
 import net.momirealms.craftengine.proxy.minecraft.core.DirectionProxy;
 import net.momirealms.craftengine.proxy.minecraft.core.MutableBlockPosProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.level.block.SupportTypeProxy;
-import net.momirealms.craftengine.proxy.minecraft.world.level.block.state.BlockStateBaseProxy;
+import net.momirealms.craftengine.proxy.minecraft.world.level.block.state.BlockBehaviourProxy;
 import org.bukkit.block.BlockState;
 import org.bukkit.event.block.BlockFormEvent;
 import org.jetbrains.annotations.Nullable;
@@ -106,7 +106,7 @@ public class ConcretePowderBlockBehavior extends BukkitBlockBehavior {
     }
 
     private static boolean canSolidify(Object state) {
-        Object fluidState = BlockStateBaseProxy.INSTANCE.getFluidState(state);
+        Object fluidState = BlockBehaviourProxy.BlockStateBaseProxy.INSTANCE.getFluidState(state);
         if (fluidState == null) return false;
         Object fluidType = FastNMS.INSTANCE.method$FluidState$getType(fluidState);
         return fluidType == MFluids.WATER || fluidType == MFluids.FLOWING_WATER;

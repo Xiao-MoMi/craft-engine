@@ -9,7 +9,7 @@ import net.momirealms.sparrow.reflection.proxy.annotation.*;
 public interface ServerPlayerProxy extends PlayerProxy {
     ServerPlayerProxy INSTANCE = ASMProxyFactory.create(ServerPlayerProxy.class);
 
-    @FieldSetter(name = "chunkLoader")
+    @FieldGetter(name = "chunkLoader")
     Object getChunkLoader(Object target);
 
     @FieldGetter(name = "connection")

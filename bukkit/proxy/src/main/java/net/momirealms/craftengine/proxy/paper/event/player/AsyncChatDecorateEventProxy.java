@@ -1,11 +1,13 @@
 package net.momirealms.craftengine.proxy.paper.event.player;
 
+import io.papermc.paper.event.player.AsyncChatDecorateEvent;
 import net.momirealms.sparrow.reflection.proxy.ASMProxyFactory;
 import net.momirealms.sparrow.reflection.proxy.annotation.FieldGetter;
 import net.momirealms.sparrow.reflection.proxy.annotation.FieldSetter;
 import net.momirealms.sparrow.reflection.proxy.annotation.ReflectionProxy;
 
-@ReflectionProxy(name = "io.papermc.paper.event.player.AsyncChatDecorateEvent")
+@SuppressWarnings("UnstableApiUsage")
+@ReflectionProxy(clazz = AsyncChatDecorateEvent.class)
 public interface AsyncChatDecorateEventProxy {
     AsyncChatDecorateEventProxy INSTANCE = ASMProxyFactory.create(AsyncChatDecorateEventProxy.class);
 
