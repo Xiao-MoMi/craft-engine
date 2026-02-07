@@ -56,7 +56,8 @@ public final class AttributeModifier {
         CHEST,
         LEGS,
         FEET,
-        BODY
+        BODY,
+        SADDLE
     }
 
     public enum Operation {
