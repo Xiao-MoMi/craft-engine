@@ -19,6 +19,7 @@ import net.momirealms.craftengine.core.item.data.Trim;
 import net.momirealms.craftengine.core.plugin.CraftEngine;
 import net.momirealms.craftengine.core.util.*;
 import net.momirealms.craftengine.proxy.minecraft.nbt.CompoundTagProxy;
+import net.momirealms.craftengine.proxy.minecraft.world.item.component.CustomDataProxy;
 import net.momirealms.sparrow.nbt.CompoundTag;
 import net.momirealms.sparrow.nbt.ListTag;
 import net.momirealms.sparrow.nbt.Tag;
@@ -79,7 +80,7 @@ public class ComponentItemFactory1_20_5 extends BukkitItemFactory<ComponentItemW
     protected Object getExactTag(ComponentItemWrapper item, Object... path) {
         Object customData = getExactComponent(item, DataComponentTypes.CUSTOM_DATA);
         if (customData == null) return null;
-        Object currentTag = FastNMS.INSTANCE.method$CustomData$getUnsafe(customData);
+        Object currentTag = CustomDataProxy.INSTANCE.getTag(customData);
         for (int i = 0; i < path.length; i++) {
             Object pathSegment = path[i];
             if (pathSegment == null) return null;

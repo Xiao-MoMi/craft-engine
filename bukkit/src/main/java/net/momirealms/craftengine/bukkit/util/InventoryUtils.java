@@ -57,7 +57,7 @@ public final class InventoryUtils {
     public static boolean isCustomContainer(Inventory inventory) {
         if (inventory == null) return false;
         if (!CraftInventoryProxy.CLASS.isInstance(inventory)) return false;
-        Object container = FastNMS.INSTANCE.method$CraftInventory$getInventory(inventory);
+        Object container = CraftInventoryProxy.INSTANCE.getInventory(inventory);
         if (container == null) return false;
         return container instanceof StorageContainer;
     }

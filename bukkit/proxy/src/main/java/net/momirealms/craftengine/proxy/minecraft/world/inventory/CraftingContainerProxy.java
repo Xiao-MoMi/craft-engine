@@ -8,4 +8,7 @@ import net.momirealms.sparrow.reflection.proxy.annotation.ReflectionProxy;
 @ReflectionProxy(name = "net.minecraft.world.inventory.CraftingContainer")
 public interface CraftingContainerProxy extends ContainerProxy {
     CraftingContainerProxy INSTANCE = ASMProxyFactory.create(CraftingContainerProxy.class);
+
+    @MethodInvoker(name = "getCurrentRecipe", activeIf = "min_version=1.21")
+    Object getCurrentRecipe(Object target);
 }

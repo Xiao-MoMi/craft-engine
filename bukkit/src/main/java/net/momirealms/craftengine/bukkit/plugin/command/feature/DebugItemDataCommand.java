@@ -10,6 +10,8 @@ import net.momirealms.craftengine.core.plugin.CraftEngine;
 import net.momirealms.craftengine.core.plugin.command.CraftEngineCommandManager;
 import net.momirealms.craftengine.core.plugin.command.FlagKeys;
 import net.momirealms.craftengine.core.util.AdventureHelper;
+import net.momirealms.craftengine.core.util.VersionHelper;
+import net.momirealms.craftengine.proxy.minecraft.world.item.ItemStackProxy;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
@@ -53,9 +55,15 @@ public class DebugItemDataCommand extends BukkitCommandFeature<CommandSender> {
     }
 
     @SuppressWarnings("unchecked")
-    private static Map<String, Object> toMap(ItemStack object) {
-        Object tag = FastNMS.INSTANCE.method$itemStack$save(FastNMS.INSTANCE.field$CraftItemStack$handle(object), FastNMS.INSTANCE.constructor$CompoundTag());
-        return (Map<String, Object>) MRegistryOps.NBT.convertTo(MRegistryOps.JAVA, tag);
+    private static Map<String, Object> toMap(ItemStack nmsStack) {
+        if (VersionHelper.COMPONENT_RELEASE) {
+            return (Map<String, Object>) ItemStackProxy.INSTANCE.getCodec().encodeStart(MRegistryOps.JAVA, nmsStack)
+                    .resultOrPartial(error -> CraftEngine.instance().logger().severe("Error while saving item: " + error))
+                    .orElse(null);
+        } else {
+            Object nmsTag = ItemStackProxy.INSTANCE.save(nmsStack, FastNMS.INSTANCE.constructor$CompoundTag());
+            return (Map<String, Object>) MRegistryOps.NBT.convertTo(MRegistryOps.JAVA, nmsTag);
+        }
     }
 
     private List<String> mapToList(Map<String, Object> readableDataMap) {
@@ -104,27 +112,18 @@ public class DebugItemDataCommand extends BukkitCommandFeature<CommandSender> {
             } else  {
                 String value;
                 if (nbt.getClass().isArray()) {
-                    if (nbt instanceof Object[]) {
-                        value = Arrays.deepToString((Object[]) nbt);
-                    } else if (nbt instanceof int[]) {
-                        value = Arrays.toString((int[]) nbt);
-                    } else if (nbt instanceof long[]) {
-                        value = Arrays.toString((long[]) nbt);
-                    } else if (nbt instanceof double[]) {
-                        value = Arrays.toString((double[]) nbt);
-                    } else if (nbt instanceof float[]) {
-                        value = Arrays.toString((float[]) nbt);
-                    } else if (nbt instanceof boolean[]) {
-                        value = Arrays.toString((boolean[]) nbt);
-                    } else if (nbt instanceof byte[]) {
-                        value = Arrays.toString((byte[]) nbt);
-                    } else if (nbt instanceof char[]) {
-                        value = Arrays.toString((char[]) nbt);
-                    } else if (nbt instanceof short[]) {
-                        value = Arrays.toString((short[]) nbt);
-                    } else {
-                        value = "Unknown array type";
-                    }
+                    value = switch (nbt) {
+                        case Object[] objects -> Arrays.deepToString(objects);
+                        case int[] ints -> Arrays.toString(ints);
+                        case long[] longs -> Arrays.toString(longs);
+                        case double[] doubles -> Arrays.toString(doubles);
+                        case float[] floats -> Arrays.toString(floats);
+                        case boolean[] booleans -> Arrays.toString(booleans);
+                        case byte[] bytes -> Arrays.toString(bytes);
+                        case char[] chars -> Arrays.toString(chars);
+                        case short[] shorts -> Arrays.toString(shorts);
+                        default -> "Unknown array type";
+                    };
                 } else {
                     value = nbt.toString();
                 }

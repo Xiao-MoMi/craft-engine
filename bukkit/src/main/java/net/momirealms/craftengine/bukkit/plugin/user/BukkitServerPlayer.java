@@ -55,13 +55,17 @@ import net.momirealms.craftengine.core.world.*;
 import net.momirealms.craftengine.core.world.World;
 import net.momirealms.craftengine.core.world.chunk.client.ClientChunk;
 import net.momirealms.craftengine.core.world.collision.AABB;
+import net.momirealms.craftengine.proxy.minecraft.network.ConnectionProxy;
 import net.momirealms.craftengine.proxy.minecraft.network.protocol.game.ClientboundUpdateAttributesPacketProxy;
 import net.momirealms.craftengine.proxy.minecraft.network.syncher.SynchedEntityDataProxy;
+import net.momirealms.craftengine.proxy.minecraft.server.MinecraftServerProxy;
 import net.momirealms.craftengine.proxy.minecraft.server.level.ServerPlayerGameModeProxy;
 import net.momirealms.craftengine.proxy.minecraft.server.level.ServerPlayerProxy;
+import net.momirealms.craftengine.proxy.minecraft.util.thread.BlockableEventLoopProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.entity.EntityProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.entity.LivingEntityProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.entity.ai.attributes.AttributeModifierProxy;
+import net.momirealms.craftengine.proxy.minecraft.world.entity.player.AbilitiesProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.entity.player.InventoryProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.entity.player.PlayerProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.inventory.InventoryMenuProxy;
@@ -403,8 +407,8 @@ public class BukkitServerPlayer extends Player {
 
     @Override
     public boolean canInstabuild() {
-        Object abilities = FastNMS.INSTANCE.field$Player$abilities(serverPlayer());
-        return FastNMS.INSTANCE.field$Abilities$instabuild(abilities);
+        Object abilities = PlayerProxy.INSTANCE.getAbilities(serverPlayer());
+        return AbilitiesProxy.INSTANCE.isInstantBuild(abilities);
     }
 
     @Override
@@ -535,20 +539,20 @@ public class BukkitServerPlayer extends Player {
     public void kick(@Nullable Component message) {
         Object reason = message != null ? ComponentUtils.adventureToMinecraft(message) : null;
         if (this.encoderState == ConnectionState.HANDSHAKING || this.encoderState == ConnectionState.STATUS) {
-            FastNMS.INSTANCE.method$Connection$disconnect(this.connection(), reason);
+            ConnectionProxy.INSTANCE.disconnect(this.connection(), reason);
             return;
         }
         try {
             if (this.encoderState == ConnectionState.LOGIN) {
                 this.sendPacket(NetworkReflections.constructor$ClientboundLoginDisconnectPacket.newInstance(reason), false);
-                FastNMS.INSTANCE.method$Connection$disconnect(this.connection(), reason);
+                ConnectionProxy.INSTANCE.disconnect(this.connection(), reason);
                 return;
             }
             Object kickPacket = NetworkReflections.constructor$ClientboundDisconnectPacket.newInstance(reason);
-            this.sendPacket(kickPacket, false, () -> FastNMS.INSTANCE.method$Connection$disconnect(this.connection(), reason));
+            this.sendPacket(kickPacket, false, () -> ConnectionProxy.INSTANCE.disconnect(this.connection(), reason));
             this.nettyChannel().config().setAutoRead(false);
-            Runnable handleDisconnection = () -> FastNMS.INSTANCE.method$Connection$handleDisconnection(this.connection());
-            FastNMS.INSTANCE.method$BlockableEventLoop$scheduleOnMain(handleDisconnection);
+            Runnable handleDisconnection = () -> ConnectionProxy.INSTANCE.handleDisconnection(this.connection());
+            BlockableEventLoopProxy.INSTANCE.scheduleOnMain(MinecraftServerProxy.INSTANCE.getServer(), handleDisconnection);
         } catch (Exception e) {
             CraftEngine.instance().logger().warn("Failed to kick " + name(), e);
         }
@@ -1585,7 +1589,7 @@ public class BukkitServerPlayer extends Player {
     @Override
     public int clearOrCountMatchingInventoryItems(Predicate<Item<?>> predicate, int count) {
         Predicate<Object> nmsPredicate = nmsStack -> predicate.test(this.plugin.itemManager().wrap(ItemStackUtils.asCraftMirror(nmsStack)));
-        Object inventory = FastNMS.INSTANCE.method$Player$getInventory(serverPlayer());
+        Object inventory = PlayerProxy.INSTANCE.getInventory(serverPlayer());
         Object inventoryMenu = PlayerProxy.INSTANCE.getInventoryMenu(serverPlayer());
         Object craftSlots = InventoryMenuProxy.INSTANCE.getCraftSlots(inventoryMenu);
         return InventoryProxy.INSTANCE.clearOrCountMatchingItems(inventory, nmsPredicate, count, craftSlots);

@@ -8,6 +8,7 @@ import net.momirealms.craftengine.bukkit.nms.StorageContainer;
 import net.momirealms.craftengine.bukkit.plugin.user.BukkitServerPlayer;
 import net.momirealms.craftengine.bukkit.util.BlockStateUtils;
 import net.momirealms.craftengine.bukkit.util.ItemStackUtils;
+import net.momirealms.craftengine.bukkit.util.LevelUtils;
 import net.momirealms.craftengine.bukkit.util.LocationUtils;
 import net.momirealms.craftengine.core.block.ImmutableBlockState;
 import net.momirealms.craftengine.core.block.UpdateOption;
@@ -20,6 +21,7 @@ import net.momirealms.craftengine.core.util.VersionHelper;
 import net.momirealms.craftengine.core.world.BlockPos;
 import net.momirealms.craftengine.core.world.CEWorld;
 import net.momirealms.craftengine.core.world.Vec3d;
+import net.momirealms.craftengine.proxy.bukkit.craftbukkit.inventory.CraftInventoryProxy;
 import net.momirealms.sparrow.nbt.CompoundTag;
 import net.momirealms.sparrow.nbt.ListTag;
 import org.bukkit.GameEvent;
@@ -45,7 +47,7 @@ public class SimpleStorageBlockEntity extends BlockEntity {
         BlockEntityHolder holder = new BlockEntityHolder(this);
         this.inventory = FastNMS.INSTANCE.createSimpleStorageContainer(holder, this.behavior.rows() * 9, this.behavior.canPlaceItem(), this.behavior.canTakeItem());
         holder.setInventory(this.inventory);
-        StorageContainer container = (StorageContainer) FastNMS.INSTANCE.method$CraftInventory$getInventory(this.inventory);
+        StorageContainer container = (StorageContainer) CraftInventoryProxy.INSTANCE.getInventory(this.inventory);
         container.onContentsChanged($ -> {
             CEWorld ceWorld = super.world;
             if (ceWorld == null) return;
@@ -98,7 +100,7 @@ public class SimpleStorageBlockEntity extends BlockEntity {
             if (!hasNoViewer(this.inventory.getViewers())) return;
             this.maxInteractionDistance = Math.max(player.getCachedInteractionRange(), this.maxInteractionDistance);
             this.setOpen(player);
-            FastNMS.INSTANCE.method$ScheduledTickAccess$scheduleBlockTick(super.world.world().serverWorld(), LocationUtils.toBlockPos(this.pos), BlockStateUtils.getBlockOwner(this.blockState.customBlockState().literalObject()), 5);
+            LevelUtils.scheduleBlockTick(super.world.world().serverWorld(), LocationUtils.toBlockPos(this.pos), BlockStateUtils.getBlockOwner(this.blockState.customBlockState().literalObject()), 5);
         }
     }
 
@@ -194,7 +196,7 @@ public class SimpleStorageBlockEntity extends BlockEntity {
 
         this.maxInteractionDistance = maxInteractionDistance;
         if (!viewers.isEmpty()) {
-            FastNMS.INSTANCE.method$ScheduledTickAccess$scheduleBlockTick(level, pos, BlockStateUtils.getBlockOwner(blockState), 5);
+            LevelUtils.scheduleBlockTick(level, pos, BlockStateUtils.getBlockOwner(blockState), 5);
         }
     }
 

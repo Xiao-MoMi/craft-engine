@@ -2,6 +2,7 @@ package net.momirealms.craftengine.proxy.minecraft.world.item;
 
 import com.mojang.serialization.Codec;
 import net.momirealms.craftengine.proxy.minecraft.nbt.CompoundTagProxy;
+import net.momirealms.craftengine.proxy.minecraft.tags.TagKeyProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.entity.EquipmentSlotProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.entity.LivingEntityProxy;
 import net.momirealms.sparrow.reflection.proxy.ASMProxyFactory;
@@ -34,4 +35,13 @@ public interface ItemStackProxy {
 
     @MethodInvoker(name = "of", isStatic = true, activeIf = "max_version=1.20.4")
     Object of(@Type(clazz = CompoundTagProxy.class) Object nbt);
+
+    @MethodInvoker(name = "is")
+    boolean is(Object target, @Type(clazz = TagKeyProxy.class) Object tag);
+
+    @MethodInvoker(name = "getTag", activeIf = "max_version=1.20.4")
+    Object getTag(Object target);
+
+    @MethodInvoker(name = "save", activeIf = "max_version=1.20.4")
+    Object save(Object target, @Type(clazz = CompoundTagProxy.class) Object nbt);
 }

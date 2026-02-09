@@ -29,6 +29,9 @@ import net.momirealms.craftengine.core.util.random.RandomUtils;
 import net.momirealms.craftengine.core.world.BlockPos;
 import net.momirealms.craftengine.core.world.context.UseOnContext;
 import net.momirealms.craftengine.proxy.minecraft.core.HolderProxy;
+import net.momirealms.craftengine.proxy.minecraft.core.RegistryAccessProxy;
+import net.momirealms.craftengine.proxy.minecraft.core.RegistryProxy;
+import net.momirealms.craftengine.proxy.minecraft.server.MinecraftServerProxy;
 import net.momirealms.craftengine.proxy.minecraft.server.level.ServerChunkCacheProxy;
 import net.momirealms.craftengine.proxy.minecraft.server.level.ServerLevelProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.level.LevelReaderProxy;
@@ -92,9 +95,10 @@ public class SaplingBlockBehavior extends BukkitBlockBehavior {
     private void generateTree(Object world, Object blockPos, Object blockState, Object randomSource) {
         Object holder = BukkitWorldManager.instance().configuredFeatureById(treeFeature());
         if (holder == null) {
-            Object registry = FastNMS.INSTANCE.method$RegistryAccess$lookupOrThrow(FastNMS.INSTANCE.registryAccess(), MRegistries.CONFIGURED_FEATURE);
+            Object registryAccess = MinecraftServerProxy.INSTANCE.registryAccess(MinecraftServerProxy.INSTANCE.getServer());
+            Object registry = RegistryAccessProxy.INSTANCE.registryOrThrow(registryAccess, MRegistries.CONFIGURED_FEATURE);
             if (registry == null) return;
-            Optional<Object> optionalHolder = FastNMS.INSTANCE.method$Registry$getHolderByResourceKey(registry, FeatureUtils.createConfiguredFeatureKey(treeFeature()));
+            Optional<Object> optionalHolder = RegistryProxy.INSTANCE.get$1(registry, FeatureUtils.createConfiguredFeatureKey(treeFeature()));
             if (optionalHolder.isEmpty()) {
                 CraftEngine.instance().logger().warn("Configured feature not found: " + treeFeature());
                 return;

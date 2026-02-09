@@ -9,6 +9,7 @@ import net.momirealms.craftengine.core.util.ResourceConfigUtils;
 import net.momirealms.craftengine.core.util.VersionHelper;
 import net.momirealms.craftengine.proxy.minecraft.sounds.SoundSourceProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.level.LevelAccessorProxy;
+import net.momirealms.craftengine.proxy.minecraft.world.phys.BlockHitResultProxy;
 
 import java.util.Map;
 import java.util.Optional;
@@ -25,7 +26,7 @@ public class ChimeBlockBehavior extends BukkitBlockBehavior {
 
     @Override
     public void onProjectileHit(Object thisBlock, Object[] args, Callable<Object> superMethod) {
-        Object blockPos = FastNMS.INSTANCE.field$BlockHitResult$blockPos(args[2]);
+        Object blockPos = BlockHitResultProxy.INSTANCE.getBlockPos(args[2]);
         Object sound = FastNMS.INSTANCE.constructor$SoundEvent(KeyUtils.toIdentifier(hitSound.id()), Optional.empty());
         if (VersionHelper.isOrAbove1_21_5()) {
             LevelAccessorProxy.INSTANCE.playSound$0(args[0], null, blockPos, sound, SoundSourceProxy.BLOCKS, hitSound.volume().get(), hitSound.pitch().get());

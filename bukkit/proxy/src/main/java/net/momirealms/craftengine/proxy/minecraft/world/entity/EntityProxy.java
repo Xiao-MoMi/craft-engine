@@ -95,4 +95,7 @@ public interface EntityProxy {
 
     @MethodInvoker(name = "causeFallDamage", activeIf = "min_version=1.21.5")
     boolean causeFallDamage(Object target, double fallDistance, float damageMultiplier, @Type(clazz = DamageSourceProxy.class) Object damageSource);
+
+    @MethodInvoker(name = "getType")
+    Object getType(Object target);
 }

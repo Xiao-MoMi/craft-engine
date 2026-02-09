@@ -13,6 +13,7 @@ import net.momirealms.craftengine.core.world.ExistingBlock;
 import net.momirealms.craftengine.core.world.World;
 import net.momirealms.craftengine.core.world.context.BlockPlaceContext;
 import net.momirealms.craftengine.proxy.minecraft.world.level.block.SnowLayerBlockProxy;
+import net.momirealms.craftengine.proxy.minecraft.world.level.block.state.StateHolderProxy;
 import org.bukkit.Location;
 import org.bukkit.block.Block;
 import org.jetbrains.annotations.NotNull;
@@ -34,7 +35,7 @@ public class BukkitExistingBlock implements ExistingBlock {
             return customState.behavior().canBeReplaced(context, customState);
         }
         if (BlockStateUtils.getBlockOwner(state) == MBlocks.SNOW) {
-            return (int) FastNMS.INSTANCE.method$StateHolder$getValue(state, SnowLayerBlockProxy.INSTANCE.getLayersProperty()) == 1;
+            return (int) StateHolderProxy.INSTANCE.getValue(state, SnowLayerBlockProxy.INSTANCE.getLayersProperty()) == 1;
         }
         return BlockStateUtils.isReplaceable(state);
     }

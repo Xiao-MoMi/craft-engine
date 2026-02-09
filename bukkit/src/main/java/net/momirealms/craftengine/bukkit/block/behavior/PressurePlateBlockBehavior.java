@@ -7,10 +7,7 @@ import net.momirealms.craftengine.bukkit.plugin.BukkitCraftEngine;
 import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.CoreReflections;
 import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.MBlocks;
 import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.MEntitySelectors;
-import net.momirealms.craftengine.bukkit.util.BlockStateUtils;
-import net.momirealms.craftengine.bukkit.util.DirectionUtils;
-import net.momirealms.craftengine.bukkit.util.EventUtils;
-import net.momirealms.craftengine.bukkit.util.LocationUtils;
+import net.momirealms.craftengine.bukkit.util.*;
 import net.momirealms.craftengine.bukkit.world.BukkitWorldManager;
 import net.momirealms.craftengine.core.block.CustomBlock;
 import net.momirealms.craftengine.core.block.ImmutableBlockState;
@@ -23,6 +20,7 @@ import net.momirealms.craftengine.core.world.WorldEvents;
 import net.momirealms.craftengine.proxy.minecraft.core.DirectionProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.entity.EntityProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.level.block.BasePressurePlateBlockProxy;
+import net.momirealms.craftengine.proxy.minecraft.world.level.block.state.BlockBehaviourProxy;
 import org.bukkit.GameEvent;
 import org.bukkit.block.Block;
 import org.bukkit.entity.Entity;
@@ -157,7 +155,7 @@ public class PressurePlateBlockBehavior extends BukkitBlockBehavior {
         }
 
         if (isActive) {
-            FastNMS.INSTANCE.method$ScheduledTickAccess$scheduleBlockTick(level, pos, thisBlock, this.pressedTime);
+            LevelUtils.scheduleBlockTick(level, pos, thisBlock, this.pressedTime);
         }
     }
 
@@ -196,7 +194,7 @@ public class PressurePlateBlockBehavior extends BukkitBlockBehavior {
         Object pos = args[2];
         Object newState = args[3];
         boolean movedByPiston = (boolean) args[4];
-        if (!movedByPiston && !FastNMS.INSTANCE.method$BlockStateBase$isBlock(state, FastNMS.INSTANCE.method$BlockState$getBlock(newState))) {
+        if (!movedByPiston && !BlockBehaviourProxy.BlockStateBaseProxy.INSTANCE.is(state, FastNMS.INSTANCE.method$BlockState$getBlock(newState))) {
             if (this.getSignalForState(state) > 0) {
                 this.updateNeighbours(level, pos, thisBlock);
             }

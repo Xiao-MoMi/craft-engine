@@ -4,6 +4,7 @@ import net.momirealms.craftengine.bukkit.nms.FastNMS;
 import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.CoreReflections;
 import net.momirealms.craftengine.bukkit.util.BlockStateUtils;
 import net.momirealms.craftengine.bukkit.util.BlockTags;
+import net.momirealms.craftengine.bukkit.util.LevelUtils;
 import net.momirealms.craftengine.bukkit.util.LocationUtils;
 import net.momirealms.craftengine.core.block.CustomBlock;
 import net.momirealms.craftengine.core.block.ImmutableBlockState;
@@ -16,6 +17,7 @@ import net.momirealms.craftengine.core.util.ResourceConfigUtils;
 import net.momirealms.craftengine.core.world.BlockPos;
 import net.momirealms.craftengine.proxy.minecraft.core.DirectionProxy;
 import net.momirealms.craftengine.proxy.minecraft.core.MutableBlockPosProxy;
+import net.momirealms.craftengine.proxy.minecraft.world.level.block.BlockProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.level.block.LeavesBlockProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.level.block.state.StateHolderProxy;
 import org.bukkit.Bukkit;
@@ -69,7 +71,7 @@ public class LeavesBlockBehavior extends BukkitBlockBehavior {
                 LeavesBlockBehavior behavior = optionalBehavior.get();
                 int distance = behavior.getDistanceAt(neighborState) + 1;
                 if (distance != 1 || behavior.getDistance(optionalCustomState.get()) != distance) {
-                    FastNMS.INSTANCE.method$ScheduledTickAccess$scheduleBlockTick(world, blockPos, thisBlock, 1);
+                    LevelUtils.scheduleBlockTick(world, blockPos, thisBlock, 1);
                 }
             }
         }
@@ -120,7 +122,7 @@ public class LeavesBlockBehavior extends BukkitBlockBehavior {
                         return;
                     }
                     FastNMS.INSTANCE.method$Level$removeBlock(level, blockPos, false);
-                    FastNMS.INSTANCE.method$Block$dropResources(blockState, level, blockPos);
+                    BlockProxy.INSTANCE.dropResources(blockState, level, blockPos);
                 }
             }
         });

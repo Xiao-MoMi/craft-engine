@@ -4,6 +4,8 @@ import net.momirealms.craftengine.proxy.minecraft.core.BlockPosProxy;
 import net.momirealms.craftengine.proxy.minecraft.server.level.ServerLevelProxy;
 import net.momirealms.craftengine.proxy.minecraft.util.RandomSourceProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.level.BlockGetterProxy;
+import net.momirealms.craftengine.proxy.minecraft.world.level.block.BlockProxy;
+import net.momirealms.craftengine.proxy.minecraft.world.level.pathfinder.PathComputationTypeProxy;
 import net.momirealms.sparrow.reflection.proxy.ASMProxyFactory;
 import net.momirealms.sparrow.reflection.proxy.annotation.*;
 
@@ -269,6 +271,15 @@ public interface BlockBehaviourProxy {
 
         @MethodInvoker(name = "getSoundType")
         Object getSoundType(Object target);
+
+        @MethodInvoker(name = "is")
+        boolean is(Object target, @Type(clazz = BlockProxy.class) Object block);
+
+        @MethodInvoker(name = "isPathfindable", activeIf = "min_version=1.20.5")
+        boolean isPathfindable(Object target, @Type(clazz = PathComputationTypeProxy.class) Object type);
+
+        @MethodInvoker(name = "isPathfindable", activeIf = "max_version=1.20.4")
+        boolean isPathfindable(Object target, @Type(clazz = BlockGetterProxy.class) Object world, @Type(clazz = BlockPosProxy.class) Object pos, @Type(clazz = PathComputationTypeProxy.class) Object type);
 
         @ReflectionProxy(name = "net.minecraft.world.level.block.state.BlockBehaviour$BlockStateBase$Cache")
         interface CacheProxy {

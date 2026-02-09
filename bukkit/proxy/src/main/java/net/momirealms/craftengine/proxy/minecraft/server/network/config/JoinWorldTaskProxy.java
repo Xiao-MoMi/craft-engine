@@ -1,4 +1,4 @@
-package net.momirealms.craftengine.proxy.minecraft.network.config;
+package net.momirealms.craftengine.proxy.minecraft.server.network.config;
 
 import net.momirealms.sparrow.reflection.proxy.ASMProxyFactory;
 import net.momirealms.sparrow.reflection.proxy.annotation.ConstructorInvoker;

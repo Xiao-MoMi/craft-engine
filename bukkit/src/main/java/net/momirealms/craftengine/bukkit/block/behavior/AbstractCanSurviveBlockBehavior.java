@@ -4,12 +4,14 @@ import net.momirealms.craftengine.bukkit.api.BukkitAdaptors;
 import net.momirealms.craftengine.bukkit.nms.FastNMS;
 import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.MBlocks;
 import net.momirealms.craftengine.bukkit.util.BlockStateUtils;
+import net.momirealms.craftengine.bukkit.util.LevelUtils;
 import net.momirealms.craftengine.bukkit.util.LocationUtils;
 import net.momirealms.craftengine.core.block.CustomBlock;
 import net.momirealms.craftengine.core.block.ImmutableBlockState;
 import net.momirealms.craftengine.core.world.Vec3d;
 import net.momirealms.craftengine.core.world.WorldEvents;
 import net.momirealms.craftengine.core.world.WorldPosition;
+import net.momirealms.craftengine.proxy.minecraft.world.level.LevelWriterProxy;
 
 import java.util.Optional;
 import java.util.concurrent.Callable;
@@ -34,7 +36,7 @@ public abstract class AbstractCanSurviveBlockBehavior extends BukkitBlockBehavio
                     net.momirealms.craftengine.core.world.World world = BukkitAdaptors.adapt(FastNMS.INSTANCE.method$Level$getCraftWorld(level));
                     WorldPosition position = new WorldPosition(world, Vec3d.atCenterOf(LocationUtils.fromBlockPos(blockPos)));
                     world.playBlockSound(position, customState.settings().sounds().breakSound());
-                    FastNMS.INSTANCE.method$LevelWriter$destroyBlock(level, blockPos, true);
+                    LevelWriterProxy.INSTANCE.destroyBlock(level, blockPos, true);
                 }
             });
         }
@@ -52,7 +54,7 @@ public abstract class AbstractCanSurviveBlockBehavior extends BukkitBlockBehavio
     public void onPlace(Object thisBlock, Object[] args, Callable<Object> superMethod) {
         Object world = args[1];
         Object blockPos = args[2];
-        FastNMS.INSTANCE.method$ScheduledTickAccess$scheduleBlockTick(world, blockPos, thisBlock, 2);
+        LevelUtils.scheduleBlockTick(world, blockPos, thisBlock, 2);
     }
 
     @Override
@@ -65,7 +67,7 @@ public abstract class AbstractCanSurviveBlockBehavior extends BukkitBlockBehavio
             return state;
         }
         if (this.delay != 0) {
-            FastNMS.INSTANCE.method$ScheduledTickAccess$scheduleBlockTick(level, blockPos, thisBlock, this.delay);
+            LevelUtils.scheduleBlockTick(level, blockPos, thisBlock, this.delay);
             return state;
         }
         if (!FastNMS.INSTANCE.method$BlockStateBase$canSurvive(state, level, blockPos)) {

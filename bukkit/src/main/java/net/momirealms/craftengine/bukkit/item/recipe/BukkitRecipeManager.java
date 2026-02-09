@@ -30,7 +30,9 @@ import net.momirealms.craftengine.proxy.minecraft.server.packs.repository.PackRe
 import net.momirealms.craftengine.proxy.minecraft.server.packs.resources.MultiPackResourceManagerProxy;
 import net.momirealms.craftengine.proxy.minecraft.server.packs.resources.ResourceProxy;
 import net.momirealms.craftengine.proxy.minecraft.server.players.PlayerListProxy;
+import net.momirealms.craftengine.proxy.minecraft.world.item.crafting.RecipeHolderProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.item.crafting.RecipeManagerProxy;
+import net.momirealms.craftengine.proxy.minecraft.world.item.crafting.RecipeMapProxy;
 import org.bukkit.Bukkit;
 import org.bukkit.NamespacedKey;
 import org.bukkit.event.HandlerList;
@@ -49,29 +51,29 @@ public class BukkitRecipeManager extends AbstractRecipeManager<ItemStack> {
     private static final Consumer<Key> MINECRAFT_RECIPE_REMOVER = VersionHelper.isOrAbove1_21_2() ?
             (id -> {
                 Object resourceKey = toRecipeResourceKey(id);
-                FastNMS.INSTANCE.method$RecipeMap$removeRecipe(FastNMS.INSTANCE.field$RecipeManager$recipes(minecraftRecipeManager()), resourceKey);
+                RecipeMapProxy.INSTANCE.removeRecipe(RecipeManagerProxy.INSTANCE.getRecipes(minecraftRecipeManager()), resourceKey);
             }) :
             (id -> {
                 Object resourceLocation = KeyUtils.toIdentifier(id);
-                FastNMS.INSTANCE.method$RecipeManager$removeRecipe(minecraftRecipeManager(), resourceLocation);
+                RecipeManagerProxy.INSTANCE.removeRecipe$1(minecraftRecipeManager(), resourceLocation);
             });
     private static final BiFunction<Key, Object, Object> MINECRAFT_RECIPE_ADDER =
             VersionHelper.isOrAbove1_21_2() ?
             (id, recipe) -> {
                 Object resourceKey = toRecipeResourceKey(id);
-                Object recipeHolder = FastNMS.INSTANCE.constructor$RecipeHolder(resourceKey, recipe);
-                FastNMS.INSTANCE.method$RecipeManager$addRecipe(minecraftRecipeManager(), recipeHolder);
+                Object recipeHolder = RecipeHolderProxy.INSTANCE.newInstance$0(resourceKey, recipe);
+                RecipeManagerProxy.INSTANCE.addRecipe$0(minecraftRecipeManager(), recipeHolder);
                 return recipeHolder;
             } :
             VersionHelper.isOrAbove1_20_2() ?
             (id, recipe) -> {
                 Object resourceLocation = KeyUtils.toIdentifier(id);
-                Object recipeHolder = FastNMS.INSTANCE.constructor$RecipeHolder(resourceLocation, recipe);
-                FastNMS.INSTANCE.method$RecipeManager$addRecipe(minecraftRecipeManager(), recipeHolder);
+                Object recipeHolder = RecipeHolderProxy.INSTANCE.newInstance$1(resourceLocation, recipe);
+                RecipeManagerProxy.INSTANCE.addRecipe$0(minecraftRecipeManager(), recipeHolder);
                 return recipeHolder;
             } :
             (id, recipe) -> {
-                FastNMS.INSTANCE.method$RecipeManager$addRecipe(minecraftRecipeManager(), recipe);
+                RecipeManagerProxy.INSTANCE.addRecipe$1(minecraftRecipeManager(), recipe);
                 return recipe;
             };
 
@@ -174,7 +176,7 @@ public class BukkitRecipeManager extends AbstractRecipeManager<ItemStack> {
     }
 
     public static Object minecraftRecipeManager() {
-        return FastNMS.INSTANCE.method$MinecraftServer$getRecipeManager(FastNMS.INSTANCE.method$MinecraftServer$getServer());
+        return MinecraftServerProxy.INSTANCE.getRecipeManager(MinecraftServerProxy.INSTANCE.getServer());
     }
 
     public static BukkitRecipeManager instance() {
@@ -318,7 +320,7 @@ public class BukkitRecipeManager extends AbstractRecipeManager<ItemStack> {
 
     private Map<Key, JsonObject> scanResources() {
         Object fileToIdConverter = FileToIdConverterProxy.INSTANCE.json(VersionHelper.isOrAbove1_21() ? "recipe" : "recipes");
-        Object minecraftServer = FastNMS.INSTANCE.method$MinecraftServer$getServer();
+        Object minecraftServer = MinecraftServerProxy.INSTANCE.getServer();
         Object packRepository = MinecraftServerProxy.INSTANCE.getPackRepository(minecraftServer);
         List<Object> selected = PackRepositoryProxy.INSTANCE.getSelected(packRepository);
         List<Object> packResources = new ArrayList<>();

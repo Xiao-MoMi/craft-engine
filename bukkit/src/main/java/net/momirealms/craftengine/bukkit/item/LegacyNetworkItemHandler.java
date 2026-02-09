@@ -56,7 +56,7 @@ public final class LegacyNetworkItemHandler implements NetworkItemHandler<ItemSt
             if (changed) {
                 Object listTag = FastNMS.INSTANCE.constructor$ListTag();
                 for (Object newItem : newItems) {
-                    FastNMS.INSTANCE.method$ListTag$add(listTag, 0, FastNMS.INSTANCE.method$itemStack$save(newItem, FastNMS.INSTANCE.constructor$CompoundTag()));
+                    FastNMS.INSTANCE.method$ListTag$add(listTag, 0, ItemStackProxy.INSTANCE.save(newItem, FastNMS.INSTANCE.constructor$CompoundTag()));
                 }
                 wrapped.setTag(listTag, "Items");
                 forceReturn = true;
@@ -84,7 +84,7 @@ public final class LegacyNetworkItemHandler implements NetworkItemHandler<ItemSt
                 if (changed) {
                     Object listTag = FastNMS.INSTANCE.constructor$ListTag();
                     for (Pair<Byte, Object> newItem : newItems) {
-                        Object newTag = FastNMS.INSTANCE.method$itemStack$save(newItem.right(), FastNMS.INSTANCE.constructor$CompoundTag());
+                        Object newTag = ItemStackProxy.INSTANCE.save(newItem.right(), FastNMS.INSTANCE.constructor$CompoundTag());
                         Object slotTag = FastNMS.INSTANCE.constructor$ByteTag(newItem.left());
                         FastNMS.INSTANCE.method$CompoundTag$put(newTag, "Slot", slotTag);
                         FastNMS.INSTANCE.method$ListTag$add(listTag, 0, newTag);
@@ -142,7 +142,7 @@ public final class LegacyNetworkItemHandler implements NetworkItemHandler<ItemSt
             if (changed) {
                 Object listTag = FastNMS.INSTANCE.constructor$ListTag();
                 for (Object newItem : newItems) {
-                    FastNMS.INSTANCE.method$ListTag$add(listTag, 0, FastNMS.INSTANCE.method$itemStack$save(newItem, FastNMS.INSTANCE.constructor$CompoundTag()));
+                    FastNMS.INSTANCE.method$ListTag$add(listTag, 0, ItemStackProxy.INSTANCE.save(newItem, FastNMS.INSTANCE.constructor$CompoundTag()));
                 }
                 wrapped.setTag(listTag, "Items");
                 forceReturn = true;
@@ -170,7 +170,7 @@ public final class LegacyNetworkItemHandler implements NetworkItemHandler<ItemSt
                 if (changed) {
                     Object listTag = FastNMS.INSTANCE.constructor$ListTag();
                     for (Pair<Byte, Object> newItem : newItems) {
-                        Object newTag = FastNMS.INSTANCE.method$itemStack$save(newItem.right(), FastNMS.INSTANCE.constructor$CompoundTag());
+                        Object newTag = ItemStackProxy.INSTANCE.save(newItem.right(), FastNMS.INSTANCE.constructor$CompoundTag());
                         Object slotTag = FastNMS.INSTANCE.constructor$ByteTag(newItem.left());
                         FastNMS.INSTANCE.method$CompoundTag$put(newTag, "Slot", slotTag);
                         FastNMS.INSTANCE.method$ListTag$add(listTag, 0, newTag);

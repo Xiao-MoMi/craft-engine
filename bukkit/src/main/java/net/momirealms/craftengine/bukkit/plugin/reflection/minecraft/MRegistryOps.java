@@ -10,6 +10,7 @@ import net.momirealms.craftengine.bukkit.util.BukkitReflectionUtils;
 import net.momirealms.craftengine.core.util.ReflectionUtils;
 import net.momirealms.craftengine.core.util.VersionHelper;
 import net.momirealms.craftengine.proxy.minecraft.resources.RegistryOpsProxy;
+import net.momirealms.craftengine.proxy.minecraft.server.MinecraftServerProxy;
 import net.momirealms.craftengine.proxy.minecraft.util.HashOpsProxy;
 import net.momirealms.sparrow.nbt.Tag;
 import net.momirealms.sparrow.nbt.codec.LegacyJavaOps;
@@ -41,20 +42,21 @@ public final class MRegistryOps {
 
     static {
         try {
+            Object registryAccess = MinecraftServerProxy.INSTANCE.registryAccess(MinecraftServerProxy.INSTANCE.getServer());
             if (clazz$JavaOps != null) {
                 // 1.20.5+
                 Object javaOps = ReflectionUtils.getDeclaredField(clazz$JavaOps, clazz$JavaOps, 0).get(null);
-                JAVA = (DynamicOps<Object>) RegistryOpsProxy.INSTANCE.create((DynamicOps<?>) javaOps, FastNMS.INSTANCE.registryAccess());
+                JAVA = (DynamicOps<Object>) RegistryOpsProxy.INSTANCE.create((DynamicOps<?>) javaOps, registryAccess);
             } else if (!VersionHelper.isOrAbove1_20_5()) {
                 // 1.20.1-1.20.4
-                JAVA = (DynamicOps<Object>) RegistryOpsProxy.INSTANCE.create(LegacyJavaOps.INSTANCE, FastNMS.INSTANCE.registryAccess());
+                JAVA = (DynamicOps<Object>) RegistryOpsProxy.INSTANCE.create(LegacyJavaOps.INSTANCE, registryAccess);
             } else {
                 throw new ReflectionInitException("Could not find JavaOps");
             }
-            NBT = (DynamicOps<Object>) RegistryOpsProxy.INSTANCE.create((DynamicOps<?>) ReflectionUtils.getDeclaredField(clazz$NbtOps, clazz$NbtOps, 0).get(null), FastNMS.INSTANCE.registryAccess());
-            JSON = (DynamicOps<JsonElement>) RegistryOpsProxy.INSTANCE.create(JsonOps.INSTANCE, FastNMS.INSTANCE.registryAccess());
-            SPARROW_NBT = (DynamicOps<Tag>) RegistryOpsProxy.INSTANCE.create(VersionHelper.isOrAbove1_20_5() ? NBTOps.INSTANCE : LegacyNBTOps.INSTANCE, FastNMS.INSTANCE.registryAccess());
-            HASHCODE = VersionHelper.isOrAbove1_21_5() ? (DynamicOps<HashCode>) RegistryOpsProxy.INSTANCE.create((DynamicOps<?>) HashOpsProxy.CRC32C_INSTANCE, FastNMS.INSTANCE.registryAccess()) : null;
+            NBT = (DynamicOps<Object>) RegistryOpsProxy.INSTANCE.create((DynamicOps<?>) ReflectionUtils.getDeclaredField(clazz$NbtOps, clazz$NbtOps, 0).get(null), registryAccess);
+            JSON = (DynamicOps<JsonElement>) RegistryOpsProxy.INSTANCE.create(JsonOps.INSTANCE, registryAccess);
+            SPARROW_NBT = (DynamicOps<Tag>) RegistryOpsProxy.INSTANCE.create(VersionHelper.isOrAbove1_20_5() ? NBTOps.INSTANCE : LegacyNBTOps.INSTANCE, registryAccess);
+            HASHCODE = VersionHelper.isOrAbove1_21_5() ? (DynamicOps<HashCode>) RegistryOpsProxy.INSTANCE.create((DynamicOps<?>) HashOpsProxy.CRC32C_INSTANCE, registryAccess) : null;
         } catch (ReflectiveOperationException e) {
             throw new ReflectionInitException("Failed to init DynamicOps", e);
         }

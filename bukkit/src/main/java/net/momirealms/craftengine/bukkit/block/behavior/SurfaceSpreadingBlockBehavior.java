@@ -18,6 +18,7 @@ import net.momirealms.craftengine.proxy.minecraft.core.DirectionProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.level.LevelReaderProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.level.block.SnowLayerBlockProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.level.block.state.BlockBehaviourProxy;
+import net.momirealms.craftengine.proxy.minecraft.world.level.block.state.StateHolderProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.level.lighting.LightEngineProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.level.material.FluidStateProxy;
 import org.jetbrains.annotations.Nullable;
@@ -58,14 +59,14 @@ public class SurfaceSpreadingBlockBehavior extends BukkitBlockBehavior {
                     RandomUtils.generateRandomInt(-3, 2),
                     RandomUtils.generateRandomInt(-1, 2)
             );
-            boolean isTargetBlock = FastNMS.INSTANCE.method$BlockStateBase$isBlock(
+            boolean isTargetBlock = BlockBehaviourProxy.BlockStateBaseProxy.INSTANCE.is(
                     FastNMS.INSTANCE.method$BlockGetter$getBlockState(level, blockPos),
                     FastNMS.INSTANCE.method$BlockState$getBlock(this.baseBlock.get())
             );
             if (!isTargetBlock || !canPropagate(state, level, blockPos)) continue;
             ImmutableBlockState newState = this.block().defaultState();
             if (this.snowyProperty != null) {
-                boolean hasSnow = FastNMS.INSTANCE.method$BlockStateBase$isBlock(
+                boolean hasSnow = BlockBehaviourProxy.BlockStateBaseProxy.INSTANCE.is(
                         FastNMS.INSTANCE.method$BlockGetter$getBlockState(
                                 level, FastNMS.INSTANCE.method$BlockPos$relative(blockPos, DirectionProxy.UP)
                         ),
@@ -80,7 +81,7 @@ public class SurfaceSpreadingBlockBehavior extends BukkitBlockBehavior {
     private static boolean canBeGrass(Object state, Object level, Object pos) {
         Object blockPos = FastNMS.INSTANCE.method$BlockPos$relative(pos, DirectionProxy.UP);
         Object blockState = FastNMS.INSTANCE.method$BlockGetter$getBlockState(level, blockPos);
-        if (FastNMS.INSTANCE.method$BlockStateBase$isBlock(blockState, MBlocks.SNOW) && ((Integer) FastNMS.INSTANCE.method$StateHolder$getValue(blockState, SnowLayerBlockProxy.INSTANCE.getLayersProperty())) == 1) {
+        if (BlockBehaviourProxy.BlockStateBaseProxy.INSTANCE.is(blockState, MBlocks.SNOW) && ((Integer) StateHolderProxy.INSTANCE.getValue(blockState, SnowLayerBlockProxy.INSTANCE.getLayersProperty())) == 1) {
             return true;
         } else if (FluidStateProxy.INSTANCE.getAmount(BlockBehaviourProxy.BlockStateBaseProxy.INSTANCE.getFluidState(blockState)) == 8) {
             return false;

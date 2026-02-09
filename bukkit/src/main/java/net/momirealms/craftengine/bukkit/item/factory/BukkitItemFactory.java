@@ -17,6 +17,7 @@ import net.momirealms.craftengine.core.util.Key;
 import net.momirealms.craftengine.core.util.StringUtils;
 import net.momirealms.craftengine.core.util.UniqueKey;
 import net.momirealms.craftengine.core.util.VersionHelper;
+import net.momirealms.craftengine.proxy.minecraft.world.item.ItemStackProxy;
 import net.momirealms.sparrow.nbt.Tag;
 import org.bukkit.Bukkit;
 import org.bukkit.inventory.ItemStack;
@@ -116,7 +117,7 @@ public abstract class BukkitItemFactory<W extends ItemWrapper<ItemStack>> extend
     protected boolean hasItemTag(W item, Key itemTag) {
         Object literalObject = item.getLiteralObject();
         Object tag = ItemTags.getOrCreate(itemTag);
-        return FastNMS.INSTANCE.method$ItemStack$is(literalObject, tag);
+        return ItemStackProxy.INSTANCE.is(literalObject, tag);
     }
 
     @Override

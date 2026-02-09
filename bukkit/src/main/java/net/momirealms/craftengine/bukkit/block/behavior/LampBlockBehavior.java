@@ -2,6 +2,7 @@ package net.momirealms.craftengine.bukkit.block.behavior;
 
 import net.momirealms.craftengine.bukkit.nms.FastNMS;
 import net.momirealms.craftengine.bukkit.util.BlockStateUtils;
+import net.momirealms.craftengine.bukkit.util.LevelUtils;
 import net.momirealms.craftengine.bukkit.util.LocationUtils;
 import net.momirealms.craftengine.core.block.CustomBlock;
 import net.momirealms.craftengine.core.block.ImmutableBlockState;
@@ -9,6 +10,7 @@ import net.momirealms.craftengine.core.block.behavior.BlockBehaviorFactory;
 import net.momirealms.craftengine.core.block.properties.Property;
 import net.momirealms.craftengine.core.util.ResourceConfigUtils;
 import net.momirealms.craftengine.core.world.context.BlockPlaceContext;
+import net.momirealms.craftengine.proxy.bukkit.craftbukkit.event.CraftEventFactoryProxy;
 
 import java.util.Map;
 import java.util.Optional;
@@ -40,7 +42,7 @@ public class LampBlockBehavior extends BukkitBlockBehavior {
         Object blockPos = args[2];
         ImmutableBlockState customState = optionalCustomState.get();
         if (customState.get(this.litProperty) && !FastNMS.INSTANCE.method$SignalGetter$hasNeighborSignal(world, blockPos)) {
-            if (FastNMS.INSTANCE.method$CraftEventFactory$callRedstoneChange(world, blockPos, 0, 15).getNewCurrent() != 15) {
+            if (CraftEventFactoryProxy.INSTANCE.callRedstoneChange(world, blockPos, 0, 15).getNewCurrent() != 15) {
                 return;
             }
             FastNMS.INSTANCE.method$LevelWriter$setBlock(world, blockPos, customState.cycle(this.litProperty).customBlockState().literalObject(), 2);
@@ -58,9 +60,9 @@ public class LampBlockBehavior extends BukkitBlockBehavior {
         boolean lit = customState.get(this.litProperty);
         if (lit != FastNMS.INSTANCE.method$SignalGetter$hasNeighborSignal(world, blockPos)) {
             if (lit) {
-                FastNMS.INSTANCE.method$ScheduledTickAccess$scheduleBlockTick(world, blockPos, thisBlock, 4);
+                LevelUtils.scheduleBlockTick(world, blockPos, thisBlock, 4);
             } else {
-                if (FastNMS.INSTANCE.method$CraftEventFactory$callRedstoneChange(world, blockPos, 0, 15).getNewCurrent() != 15) {
+                if (CraftEventFactoryProxy.INSTANCE.callRedstoneChange(world, blockPos, 0, 15).getNewCurrent() != 15) {
                     return;
                 }
                 FastNMS.INSTANCE.method$LevelWriter$setBlock(world, blockPos, customState.cycle(this.litProperty).customBlockState().literalObject(), 2);

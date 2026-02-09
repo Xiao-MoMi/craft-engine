@@ -9,6 +9,7 @@ import net.momirealms.craftengine.core.util.LazyReference;
 import net.momirealms.craftengine.core.util.ResourceConfigUtils;
 import net.momirealms.craftengine.core.util.random.RandomUtils;
 import net.momirealms.craftengine.proxy.minecraft.core.BlockPosProxy;
+import net.momirealms.craftengine.proxy.minecraft.world.level.block.state.BlockBehaviourProxy;
 
 import java.util.Map;
 import java.util.Objects;
@@ -28,7 +29,7 @@ public class SpreadingBlockBehavior extends BukkitBlockBehavior {
         Object level = args[1];
         Object pos = args[2];
         Object blockPos = BlockPosProxy.INSTANCE.offset(pos, RandomUtils.generateRandomInt(-1, 2), RandomUtils.generateRandomInt(-3, 2), RandomUtils.generateRandomInt(-1, 2));
-        if (FastNMS.INSTANCE.method$BlockStateBase$isBlock(FastNMS.INSTANCE.method$BlockGetter$getBlockState(level, blockPos), FastNMS.INSTANCE.method$BlockState$getBlock(this.targetBlock.get()))) {
+        if (BlockBehaviourProxy.BlockStateBaseProxy.INSTANCE.is(FastNMS.INSTANCE.method$BlockGetter$getBlockState(level, blockPos), FastNMS.INSTANCE.method$BlockState$getBlock(this.targetBlock.get()))) {
             FastNMS.INSTANCE.method$LevelWriter$setBlock(level, blockPos, this.block().defaultState().customBlockState().literalObject(), UpdateOption.UPDATE_ALL.flags());
         }
     }

@@ -24,6 +24,9 @@ import net.momirealms.craftengine.core.util.random.RandomUtils;
 import net.momirealms.craftengine.core.world.BlockPos;
 import net.momirealms.craftengine.core.world.context.UseOnContext;
 import net.momirealms.craftengine.proxy.minecraft.core.HolderProxy;
+import net.momirealms.craftengine.proxy.minecraft.core.RegistryAccessProxy;
+import net.momirealms.craftengine.proxy.minecraft.core.RegistryProxy;
+import net.momirealms.craftengine.proxy.minecraft.server.MinecraftServerProxy;
 import net.momirealms.craftengine.proxy.minecraft.server.level.ServerChunkCacheProxy;
 import org.bukkit.Location;
 import org.bukkit.World;
@@ -121,9 +124,10 @@ public class GrassBlockBehavior extends BukkitBlockBehavior {
 
     @Override
     public void performBoneMeal(Object thisBlock, Object[] args) throws Exception {
-        Object registry = FastNMS.INSTANCE.method$RegistryAccess$lookupOrThrow(FastNMS.INSTANCE.registryAccess(), MRegistries.PLACED_FEATURE);
+        Object registryAccess = MinecraftServerProxy.INSTANCE.registryAccess(MinecraftServerProxy.INSTANCE.getServer());
+        Object registry = RegistryAccessProxy.INSTANCE.registryOrThrow(registryAccess, MRegistries.PLACED_FEATURE);
         if (registry == null) return;
-        Optional<Object> holder = FastNMS.INSTANCE.method$Registry$getHolderByResourceKey(registry, FeatureUtils.createPlacedFeatureKey(boneMealFeature()));
+        Optional<Object> holder = RegistryProxy.INSTANCE.get$1(registry, FeatureUtils.createPlacedFeatureKey(boneMealFeature()));
         if (holder.isEmpty()) {
             CraftEngine.instance().logger().warn("Placed feature not found: " + boneMealFeature());
             return;

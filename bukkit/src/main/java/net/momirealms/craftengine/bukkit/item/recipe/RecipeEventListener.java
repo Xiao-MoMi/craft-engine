@@ -28,10 +28,12 @@ import net.momirealms.craftengine.core.plugin.context.function.Function;
 import net.momirealms.craftengine.core.util.*;
 import net.momirealms.craftengine.proxy.bukkit.craftbukkit.inventory.CraftComplexRecipeProxy;
 import net.momirealms.craftengine.proxy.bukkit.craftbukkit.inventory.CraftInventoryAnvilProxy;
+import net.momirealms.craftengine.proxy.bukkit.craftbukkit.inventory.CraftInventoryProxy;
 import net.momirealms.craftengine.proxy.bukkit.craftbukkit.inventory.CraftInventoryViewProxy;
 import net.momirealms.craftengine.proxy.minecraft.network.chat.ComponentProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.ContainerProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.inventory.AbstractContainerMenuProxy;
+import net.momirealms.craftengine.proxy.minecraft.world.inventory.CraftingContainerProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.item.crafting.ArmorDyeRecipeProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.item.crafting.FireworkStarFadeRecipeProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.item.crafting.RepairItemRecipeProxy;
@@ -772,8 +774,13 @@ public class RecipeEventListener implements Listener {
     // bukkit的getRecipe会生成新的recipe对象，过程较慢，只需要获取配方id即可
     @Nullable
     private Key getCurrentCraftingRecipeId(CraftingInventory inventory) {
-        Object craftContainer = FastNMS.INSTANCE.method$CraftInventory$getInventory(inventory);
-        Object recipeHolderOrRecipe = ContainerProxy.INSTANCE.getCurrentRecipe(craftContainer);
+        Object craftContainer = CraftInventoryProxy.INSTANCE.getInventory(inventory);
+        Object recipeHolderOrRecipe;
+        if (VersionHelper.isOrAbove1_21()) {
+            recipeHolderOrRecipe = CraftingContainerProxy.INSTANCE.getCurrentRecipe(craftContainer);
+        } else {
+            recipeHolderOrRecipe = ContainerProxy.INSTANCE.getCurrentRecipe(craftContainer);
+        }
         if (recipeHolderOrRecipe == null) return null;
         if (VersionHelper.isOrAbove1_21_2()) {
             return KeyUtils.identifierToKey(FastNMS.INSTANCE.field$ResourceKey$location(FastNMS.INSTANCE.field$RecipeHolder$id(recipeHolderOrRecipe)));

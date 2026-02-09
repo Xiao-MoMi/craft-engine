@@ -1,7 +1,10 @@
 package net.momirealms.craftengine.proxy.minecraft.world.level.block;
 
+import net.momirealms.craftengine.proxy.minecraft.core.BlockPosProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.item.context.BlockPlaceContextProxy;
+import net.momirealms.craftengine.proxy.minecraft.world.level.LevelProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.level.block.state.BlockBehaviourProxy;
+import net.momirealms.craftengine.proxy.minecraft.world.level.block.state.BlockStateProxy;
 import net.momirealms.sparrow.reflection.proxy.ASMProxyFactory;
 import net.momirealms.sparrow.reflection.proxy.annotation.*;
 
@@ -30,4 +33,10 @@ public interface BlockProxy extends BlockBehaviourProxy {
 
     @MethodInvoker(name = "getStateForPlacement")
     Object getStateForPlacement(Object target, @Type(clazz = BlockPlaceContextProxy.class) Object ctx);
+
+    @MethodInvoker(name = "asItem")
+    Object asItem(Object target);
+
+    @MethodInvoker(name = "dropResources", isStatic = true)
+    void dropResources(@Type(clazz = BlockStateProxy.class) Object state, @Type(clazz = LevelProxy.class) Object level, @Type(clazz = BlockPosProxy.class) Object pos);
 }

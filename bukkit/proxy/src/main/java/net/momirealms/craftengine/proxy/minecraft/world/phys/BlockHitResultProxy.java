@@ -20,6 +20,15 @@ public interface BlockHitResultProxy extends HitResultProxy {
             boolean insideBlock
     );
 
+    @FieldGetter(name = "direction")
+    Object getDirection(Object target);
+
+    @FieldGetter(name = "blockPos")
+    Object getBlockPos(Object target);
+
+    @FieldGetter(name = "miss")
+    boolean isMiss(Object target);
+
     @FieldGetter(name = "inside")
     boolean isInside(Object target);
 }

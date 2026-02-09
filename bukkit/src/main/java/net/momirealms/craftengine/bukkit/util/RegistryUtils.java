@@ -4,6 +4,8 @@ import net.momirealms.craftengine.bukkit.nms.FastNMS;
 import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.CoreReflections;
 import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.MBuiltInRegistries;
 import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.MRegistries;
+import net.momirealms.craftengine.proxy.minecraft.core.RegistryAccessProxy;
+import net.momirealms.craftengine.proxy.minecraft.server.MinecraftServerProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.level.block.BlockProxy;
 
 public final class RegistryUtils {
@@ -20,7 +22,7 @@ public final class RegistryUtils {
 
     public static int currentBiomeRegistrySize() {
         try {
-            return (int) CoreReflections.method$IdMap$size.invoke(FastNMS.INSTANCE.method$RegistryAccess$lookupOrThrow(FastNMS.INSTANCE.registryAccess(), MRegistries.BIOME));
+            return (int) CoreReflections.method$IdMap$size.invoke(RegistryAccessProxy.INSTANCE.registryOrThrow(MinecraftServerProxy.INSTANCE.registryAccess(MinecraftServerProxy.INSTANCE.getServer()), MRegistries.BIOME));
         } catch (ReflectiveOperationException e) {
             throw new RuntimeException(e);
         }

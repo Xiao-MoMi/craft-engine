@@ -4,10 +4,7 @@ import net.momirealms.antigrieflib.Flag;
 import net.momirealms.craftengine.bukkit.nms.FastNMS;
 import net.momirealms.craftengine.bukkit.plugin.BukkitCraftEngine;
 import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.*;
-import net.momirealms.craftengine.bukkit.util.BlockStateUtils;
-import net.momirealms.craftengine.bukkit.util.DirectionUtils;
-import net.momirealms.craftengine.bukkit.util.KeyUtils;
-import net.momirealms.craftengine.bukkit.util.LocationUtils;
+import net.momirealms.craftengine.bukkit.util.*;
 import net.momirealms.craftengine.core.block.BlockStateWrapper;
 import net.momirealms.craftengine.core.block.CustomBlock;
 import net.momirealms.craftengine.core.block.ImmutableBlockState;
@@ -28,6 +25,7 @@ import net.momirealms.craftengine.proxy.minecraft.world.InteractionResultProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.item.LeadItemProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.level.block.FenceGateBlockProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.level.block.SupportTypeProxy;
+import net.momirealms.craftengine.proxy.minecraft.world.level.block.state.BlockBehaviourProxy;
 import org.bukkit.Location;
 
 import java.util.Locale;
@@ -77,11 +75,11 @@ public class FenceBlockBehavior extends BukkitBlockBehavior implements IsPathFin
     public static boolean isExceptionForConnection(BlockStateWrapper state) {
         Object blockState = state.literalObject();
         return CoreReflections.clazz$LeavesBlock.isInstance(BlockStateUtils.getBlockOwner(blockState))
-                || FastNMS.INSTANCE.method$BlockStateBase$isBlock(blockState, MBlocks.BARRIER)
-                || FastNMS.INSTANCE.method$BlockStateBase$isBlock(blockState, MBlocks.CARVED_PUMPKIN)
-                || FastNMS.INSTANCE.method$BlockStateBase$isBlock(blockState, MBlocks.JACK_O_LANTERN)
-                || FastNMS.INSTANCE.method$BlockStateBase$isBlock(blockState, MBlocks.MELON)
-                || FastNMS.INSTANCE.method$BlockStateBase$isBlock(blockState, MBlocks.PUMPKIN)
+                || BlockBehaviourProxy.BlockStateBaseProxy.INSTANCE.is(blockState, MBlocks.BARRIER)
+                || BlockBehaviourProxy.BlockStateBaseProxy.INSTANCE.is(blockState, MBlocks.CARVED_PUMPKIN)
+                || BlockBehaviourProxy.BlockStateBaseProxy.INSTANCE.is(blockState, MBlocks.JACK_O_LANTERN)
+                || BlockBehaviourProxy.BlockStateBaseProxy.INSTANCE.is(blockState, MBlocks.MELON)
+                || BlockBehaviourProxy.BlockStateBaseProxy.INSTANCE.is(blockState, MBlocks.PUMPKIN)
                 || FastNMS.INSTANCE.method$BlockStateBase$is(blockState, MTagKeys.Block$SHULKER_BOXES);
     }
 
@@ -144,7 +142,7 @@ public class FenceBlockBehavior extends BukkitBlockBehavior implements IsPathFin
                 .map(block -> block.getProperty("waterlogged"))
                 .orElse(null);
         if (waterlogged != null) {
-            FastNMS.INSTANCE.method$ScheduledTickAccess$scheduleFluidTick(args[updateShape$level], args[updateShape$blockPos], MFluids.WATER, 5);
+            LevelUtils.scheduleFluidTick(args[updateShape$level], args[updateShape$blockPos], MFluids.WATER, 5);
         }
         if (DirectionUtils.fromNMSDirection(args[updateShape$direction]).axis().isHorizontal() && optionalState.isPresent()) {
             Direction direction = DirectionUtils.fromNMSDirection(args[updateShape$direction]);

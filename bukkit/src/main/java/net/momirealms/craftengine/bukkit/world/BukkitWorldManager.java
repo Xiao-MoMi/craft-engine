@@ -487,7 +487,7 @@ public final class BukkitWorldManager implements WorldManager, Listener {
             CESection[] ceSections = ceChunk.sections();
             Object worldServer = FastNMS.INSTANCE.field$CraftChunk$worldServer(chunk);
             Object chunkSource = FastNMS.INSTANCE.method$ServerLevel$getChunkSource(worldServer);
-            Object lightEngine = FastNMS.INSTANCE.method$ChunkSource$getLightEngine(chunkSource);
+            Object lightEngine = ChunkSourceProxy.INSTANCE.getLightEngine(chunkSource);
             Object levelChunk = FastNMS.INSTANCE.method$ServerChunkCache$getChunkAtIfLoadedMainThread(chunkSource, chunkX, chunkZ);
             Object[] sections = FastNMS.INSTANCE.method$ChunkAccess$getSections(levelChunk);
             synchronized (sections) {

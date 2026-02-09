@@ -40,4 +40,7 @@ public interface LevelProxy {
 
     @MethodInvoker(name = "updateNeighborsAt", activeIf = "max_version=1.21.1")
     void updateNeighborsAt(Object target, @Type(clazz = BlockPosProxy.class) Object pos, @Type(clazz = BlockProxy.class) Object sourceBlock);
+
+    @MethodInvoker(name = "updateNeighbourForOutputSignal")
+    void updateNeighbourForOutputSignal(Object target, @Type(clazz = BlockPosProxy.class) Object pos, @Type(clazz = BlockProxy.class) Object block);
 }

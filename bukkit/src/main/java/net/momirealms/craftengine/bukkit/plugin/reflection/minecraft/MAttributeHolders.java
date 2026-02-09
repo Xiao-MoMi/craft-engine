@@ -2,6 +2,7 @@ package net.momirealms.craftengine.bukkit.plugin.reflection.minecraft;
 
 import net.momirealms.craftengine.bukkit.nms.FastNMS;
 import net.momirealms.craftengine.core.util.VersionHelper;
+import net.momirealms.craftengine.proxy.minecraft.core.RegistryProxy;
 
 public final class MAttributeHolders {
     private MAttributeHolders() {}
@@ -12,7 +13,7 @@ public final class MAttributeHolders {
 
     private static Object getById(String id) {
         Object rl = FastNMS.INSTANCE.method$ResourceLocation$fromNamespaceAndPath("minecraft", id);
-        return FastNMS.INSTANCE.method$Registry$getHolderByResourceLocation(MBuiltInRegistries.ATTRIBUTE, rl).get();
+        return RegistryProxy.INSTANCE.get$0(MBuiltInRegistries.ATTRIBUTE, rl).orElseThrow();
     }
 
     static {

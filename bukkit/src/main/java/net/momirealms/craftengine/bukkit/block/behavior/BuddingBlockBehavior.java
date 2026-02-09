@@ -89,7 +89,7 @@ public class BuddingBlockBehavior extends BukkitBlockBehavior {
 
     public static boolean canClusterGrowAtState(Object state) {
         return FastNMS.INSTANCE.method$BlockStateBase$isAir(state)
-                || FastNMS.INSTANCE.method$BlockStateBase$isBlock(state, MBlocks.WATER)
+                || BlockBehaviourProxy.BlockStateBaseProxy.INSTANCE.is(state, MBlocks.WATER)
                 && FluidStateProxy.INSTANCE.getAmount(BlockBehaviourProxy.BlockStateBaseProxy.INSTANCE.getFluidState(state)) == 8;
     }
 

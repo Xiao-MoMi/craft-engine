@@ -47,10 +47,10 @@ public final class LiquidCollisionBlockItemBehavior extends BlockItemBehavior {
         try {
             if (player == null) return InteractionResult.FAIL;
             Object blockHitResult = ItemProxy.INSTANCE.getPlayerPOVHitResult(world.serverWorld(), player.serverPlayer(), ClipContextProxy.FluidProxy.SOURCE_ONLY);
-            Object blockPos = FastNMS.INSTANCE.field$BlockHitResult$blockPos(blockHitResult);
+            Object blockPos = BlockHitResultProxy.INSTANCE.getBlockPos(blockHitResult);
             BlockPos above = new BlockPos(FastNMS.INSTANCE.field$Vec3i$x(blockPos), FastNMS.INSTANCE.field$Vec3i$y(blockPos) + offsetY, FastNMS.INSTANCE.field$Vec3i$z(blockPos));
-            Direction direction = DirectionUtils.fromNMSDirection(FastNMS.INSTANCE.field$BlockHitResul$direction(blockHitResult));
-            boolean miss = FastNMS.INSTANCE.field$BlockHitResul$miss(blockHitResult);
+            Direction direction = DirectionUtils.fromNMSDirection(BlockHitResultProxy.INSTANCE.getDirection(blockHitResult));
+            boolean miss = BlockHitResultProxy.INSTANCE.isMiss(blockHitResult);
             Vec3d hitPos = LocationUtils.fromVec(HitResultProxy.INSTANCE.getLocation(blockHitResult));
             Object fluidType = FastNMS.INSTANCE.method$FluidState$getType(FastNMS.INSTANCE.method$BlockGetter$getFluidState(world.serverWorld(), blockPos));
             if (fluidType != MFluids.WATER && fluidType != MFluids.LAVA) {

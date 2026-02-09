@@ -4,6 +4,7 @@ import net.momirealms.craftengine.bukkit.nms.FastNMS;
 import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.MFluids;
 import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.MItems;
 import net.momirealms.craftengine.bukkit.util.BlockStateUtils;
+import net.momirealms.craftengine.bukkit.util.LevelUtils;
 import net.momirealms.craftengine.bukkit.util.MirrorUtils;
 import net.momirealms.craftengine.bukkit.util.RotationUtils;
 import net.momirealms.craftengine.core.block.BlockStateWrapper;
@@ -13,6 +14,7 @@ import net.momirealms.craftengine.core.block.behavior.BlockBehavior;
 import net.momirealms.craftengine.core.block.properties.Property;
 import net.momirealms.craftengine.core.util.*;
 import net.momirealms.craftengine.proxy.minecraft.world.item.ItemStackProxy;
+import net.momirealms.craftengine.proxy.minecraft.world.level.block.state.BlockBehaviourProxy;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -156,7 +158,7 @@ public abstract class BukkitBlockBehavior extends BlockBehavior {
         Object fluidType = FastNMS.INSTANCE.method$FluidState$getType(args[3]);
         if (!immutableBlockState.get(this.waterloggedProperty) && fluidType == MFluids.WATER) {
             FastNMS.INSTANCE.method$LevelWriter$setBlock(args[0], args[1], immutableBlockState.with(this.waterloggedProperty, true).customBlockState().literalObject(), 3);
-            FastNMS.INSTANCE.method$ScheduledTickAccess$scheduleFluidTick(args[0], args[1], fluidType, 5);
+            LevelUtils.scheduleFluidTick(args[0], args[1], fluidType, 5);
             return true;
         }
         return false;
@@ -183,6 +185,10 @@ public abstract class BukkitBlockBehavior extends BlockBehavior {
         if (optionalCustomState.isEmpty()) return false;
         BlockStateWrapper vanillaState = optionalCustomState.get().visualBlockState();
         if (vanillaState == null) return false;
-        return FastNMS.INSTANCE.method$BlockStateBase$isPathFindable(vanillaState.literalObject(), VersionHelper.isOrAbove1_20_5() ? null : args[1], VersionHelper.isOrAbove1_20_5() ? null : args[2], args[isPathFindable$type]);
+        if (VersionHelper.isOrAbove1_20_5()) {
+            return BlockBehaviourProxy.BlockStateBaseProxy.INSTANCE.isPathfindable(vanillaState.literalObject(), args[isPathFindable$type]);
+        } else {
+            return BlockBehaviourProxy.BlockStateBaseProxy.INSTANCE.isPathfindable(vanillaState.literalObject(), args[1], args[2], args[isPathFindable$type]);
+        }
     }
 }

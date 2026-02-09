@@ -9,6 +9,7 @@ import net.momirealms.sparrow.reflection.proxy.annotation.MethodInvoker;
 import net.momirealms.sparrow.reflection.proxy.annotation.ReflectionProxy;
 import net.momirealms.sparrow.reflection.proxy.annotation.Type;
 import org.bukkit.entity.Item;
+import org.bukkit.entity.Player;
 import org.jspecify.annotations.Nullable;
 
 import java.util.function.Consumer;
@@ -34,4 +35,7 @@ public interface ServerPlayerProxy extends PlayerProxy {
 
     @MethodInvoker(name = "drop", activeIf = "max_version=1.21.3")
     Object drop(Object target, @Type(clazz = ItemStackProxy.class) Object droppedItem, boolean dropAround, boolean traceItem, boolean callEvent);
+
+    @MethodInvoker(name = "getBukkitEntity")
+    Player getBukkitEntity(Object target);
 }

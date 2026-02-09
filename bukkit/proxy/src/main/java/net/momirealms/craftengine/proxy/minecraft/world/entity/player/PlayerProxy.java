@@ -21,4 +21,16 @@ public interface PlayerProxy extends LivingEntityProxy {
 
     @FieldSetter(name = "inventoryMenu")
     void setInventoryMenu(Object target, Object inventoryMenu);
+
+    @FieldGetter(name = "inventory")
+    Object getInventory(Object target);
+
+    @FieldSetter(name = "inventory")
+    void setInventory(Object target, Object inventory);
+
+    @FieldGetter(name = "abilities")
+    Object getAbilities(Object target);
+
+    @FieldSetter(name = "abilities")
+    void setAbilities(Object target, Object abilities);
 }

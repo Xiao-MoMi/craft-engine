@@ -17,7 +17,9 @@ import net.momirealms.craftengine.core.util.Key;
 import net.momirealms.craftengine.core.util.VersionHelper;
 import net.momirealms.craftengine.proxy.minecraft.core.HolderProxy;
 import net.momirealms.craftengine.proxy.minecraft.core.MappedRegistryProxy;
+import net.momirealms.craftengine.proxy.minecraft.core.RegistryAccessProxy;
 import net.momirealms.craftengine.proxy.minecraft.core.RegistryProxy;
+import net.momirealms.craftengine.proxy.minecraft.server.MinecraftServerProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.item.JukeboxSongProxy;
 
 import java.io.IOException;
@@ -112,7 +114,7 @@ public class BukkitSoundManager extends AbstractSoundManager {
                     Object holder = RegistryProxy.INSTANCE.registerForHolder$1(registry, resourceLocation, soundEvent);
                     HolderProxy.ReferenceProxy.INSTANCE.bindValue(holder, soundEvent);
                     HolderProxy.ReferenceProxy.INSTANCE.setTags(holder, Set.of());
-                    int id = FastNMS.INSTANCE.method$Registry$getId(registry, soundEvent);
+                    int id = RegistryProxy.INSTANCE.getId(registry, soundEvent);
                     super.customSoundsInRegistry.put(id, soundEventId);
                 }
             }
@@ -126,7 +128,8 @@ public class BukkitSoundManager extends AbstractSoundManager {
     @Override
     protected void registerSongs(Map<Key, JukeboxSong> songs) {
         if (songs.isEmpty()) return;
-        Object registry = FastNMS.INSTANCE.method$RegistryAccess$lookupOrThrow(FastNMS.INSTANCE.registryAccess(), MRegistries.JUKEBOX_SONG);
+        Object registryAccess = MinecraftServerProxy.INSTANCE.registryAccess(MinecraftServerProxy.INSTANCE.getServer());
+        Object registry = RegistryAccessProxy.INSTANCE.registryOrThrow(registryAccess, MRegistries.JUKEBOX_SONG);
         try {
             // 获取 JUKEBOX_SONG 注册表
             MappedRegistryProxy.INSTANCE.setFrozen(registry, false);

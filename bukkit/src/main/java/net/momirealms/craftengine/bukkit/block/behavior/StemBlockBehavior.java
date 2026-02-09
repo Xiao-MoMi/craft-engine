@@ -56,7 +56,7 @@ public class StemBlockBehavior extends BukkitBlockBehavior implements IsPathFind
     @Override
     public boolean isPathFindable(Object thisBlock, Object[] args, Callable<Object> superMethod) throws Exception {
         return (VersionHelper.isOrAbove1_20_5() ? args[1] : args[3]).equals(PathComputationTypeProxy.AIR)
-                && !FastNMS.INSTANCE.field$BlockBehavior$hasCollision(thisBlock) || (boolean) superMethod.call();
+                && !BlockBehaviourProxy.INSTANCE.hasCollision(thisBlock) || (boolean) superMethod.call();
     }
 
     @Override
@@ -125,7 +125,7 @@ public class StemBlockBehavior extends BukkitBlockBehavior implements IsPathFind
 
     private boolean mayPlaceFruit(Object blockState) {
         boolean flag1 = tagMayPlaceFruit != null && FastNMS.INSTANCE.method$BlockStateBase$is(blockState, tagMayPlaceFruit);
-        boolean flag2 = blockMayPlaceFruit != null && FastNMS.INSTANCE.method$BlockStateBase$isBlock(blockState, blockMayPlaceFruit);
+        boolean flag2 = blockMayPlaceFruit != null && BlockBehaviourProxy.BlockStateBaseProxy.INSTANCE.is(blockState, blockMayPlaceFruit);
         if (tagMayPlaceFruit == null && blockMayPlaceFruit == null) return true;
         return flag1 || flag2;
     }

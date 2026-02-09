@@ -73,7 +73,7 @@ public final class ItemStackUtils {
                     .resultOrPartial(error -> CraftEngine.instance().logger().severe("Error while saving item: " + error))
                     .orElse(null);
         } else {
-            Object nmsTag = FastNMS.INSTANCE.method$itemStack$save(nmsStack, FastNMS.INSTANCE.constructor$CompoundTag());
+            Object nmsTag = ItemStackProxy.INSTANCE.save(nmsStack, FastNMS.INSTANCE.constructor$CompoundTag());
             return MRegistryOps.NBT.convertTo(MRegistryOps.SPARROW_NBT, nmsTag);
         }
     }

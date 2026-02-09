@@ -11,6 +11,7 @@ import net.momirealms.craftengine.core.item.ItemType;
 import net.momirealms.craftengine.core.item.ItemWrapper;
 import net.momirealms.craftengine.core.util.random.RandomUtils;
 import net.momirealms.craftengine.proxy.minecraft.nbt.CompoundTagProxy;
+import net.momirealms.craftengine.proxy.minecraft.world.item.ItemStackProxy;
 import net.momirealms.sparrow.nbt.Tag;
 import org.bukkit.enchantments.Enchantment;
 import org.bukkit.inventory.ItemStack;
@@ -93,7 +94,7 @@ public class LegacyItemWrapper implements ItemWrapper<ItemStack> {
 
     @SuppressWarnings("DuplicatedCode")
     public Object getExactTag(Object... path) {
-        Object compoundTag = FastNMS.INSTANCE.method$ItemStack$getTag(this.nmsStack);
+        Object compoundTag = ItemStackProxy.INSTANCE.getTag(this.nmsStack);
         if (compoundTag == null) return null;
         Object currentTag = compoundTag;
         if (path == null || path.length == 0) {
@@ -115,7 +116,7 @@ public class LegacyItemWrapper implements ItemWrapper<ItemStack> {
     }
 
     public boolean remove(Object... path) {
-        Object compoundTag = FastNMS.INSTANCE.method$ItemStack$getTag(this.nmsStack);
+        Object compoundTag = ItemStackProxy.INSTANCE.getTag(this.nmsStack);
         if (compoundTag == null || path == null || path.length == 0) return false;
 
         if (path.length == 1) {

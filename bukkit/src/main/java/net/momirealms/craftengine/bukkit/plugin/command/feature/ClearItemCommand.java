@@ -76,7 +76,7 @@ public class ClearItemCommand extends BukkitCommandFeature<CommandSender> {
                     Collection<Player> players = selector.values();
                     for (Player player : players) {
                         Object serverPlayer = FastNMS.INSTANCE.method$CraftPlayer$getHandle(player);
-                        Object inventory = FastNMS.INSTANCE.method$Player$getInventory(serverPlayer);
+                        Object inventory = PlayerProxy.INSTANCE.getInventory(serverPlayer);
                         Object inventoryMenu = PlayerProxy.INSTANCE.getInventoryMenu(serverPlayer);
                         totalCount += InventoryProxy.INSTANCE.clearOrCountMatchingItems(inventory, predicate, amount, InventoryMenuProxy.INSTANCE.getCraftSlots(inventoryMenu));
                         AbstractContainerMenuProxy.INSTANCE.broadcastChanges(FastNMS.INSTANCE.field$Player$containerMenu(serverPlayer));

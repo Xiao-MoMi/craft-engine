@@ -7,6 +7,8 @@ import net.momirealms.sparrow.reflection.proxy.annotation.MethodInvoker;
 import net.momirealms.sparrow.reflection.proxy.annotation.ReflectionProxy;
 import net.momirealms.sparrow.reflection.proxy.annotation.Type;
 
+import java.util.Optional;
+
 @ReflectionProxy(name = "net.minecraft.core.Registry")
 public interface RegistryProxy {
     RegistryProxy INSTANCE = ASMProxyFactory.create(RegistryProxy.class);
@@ -23,4 +25,13 @@ public interface RegistryProxy {
 
     @MethodInvoker(name = "asLookup", activeIf = "max_version=1.21.1")
     Object asLookup(Object target);
+
+    @MethodInvoker(name = {"get", "getHolder"})
+    Optional<Object> get$0(Object target, @Type(clazz = IdentifierProxy.class) Object id);
+
+    @MethodInvoker(name = {"get", "getHolder"})
+    Optional<Object> get$1(Object target, @Type(clazz = ResourceKeyProxy.class) Object key);
+
+    @MethodInvoker(name = "getId")
+    int getId(Object target, Object value);
 }

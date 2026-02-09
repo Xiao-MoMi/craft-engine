@@ -22,6 +22,7 @@ import net.momirealms.craftengine.core.world.BlockPos;
 import net.momirealms.craftengine.core.world.Vec3d;
 import net.momirealms.craftengine.core.world.chunk.CEChunk;
 import net.momirealms.craftengine.proxy.minecraft.world.item.MapItemProxy;
+import net.momirealms.craftengine.proxy.minecraft.world.level.LevelProxy;
 import net.momirealms.sparrow.nbt.CompoundTag;
 import net.momirealms.sparrow.nbt.Tag;
 import org.bukkit.inventory.ItemStack;
@@ -114,7 +115,7 @@ public class ItemFrameBlockEntity extends BlockEntity {
 
     private void update() {
         super.world.blockEntityChanged(super.pos);
-        FastNMS.INSTANCE.method$Level$updateNeighbourForOutputSignal(
+        LevelProxy.INSTANCE.updateNeighbourForOutputSignal(
                 super.world.world.serverWorld(),
                 LocationUtils.toBlockPos(super.pos),
                 BlockStateUtils.getBlockOwner(super.blockState.customBlockState().literalObject())

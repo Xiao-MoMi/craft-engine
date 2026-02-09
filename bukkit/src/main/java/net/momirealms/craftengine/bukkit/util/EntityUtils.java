@@ -83,7 +83,7 @@ public final class EntityUtils {
 
     public static Key getEntityType(Entity entity) {
         Object nmsEntity = FastNMS.INSTANCE.method$CraftEntity$getHandle(entity);
-        Object entityType = FastNMS.INSTANCE.method$Entity$getType(nmsEntity);
+        Object entityType = EntityProxy.INSTANCE.getType(nmsEntity);
         Object id = FastNMS.INSTANCE.method$Registry$getKey(MBuiltInRegistries.ENTITY_TYPE, entityType);
         return KeyUtils.identifierToKey(id);
     }

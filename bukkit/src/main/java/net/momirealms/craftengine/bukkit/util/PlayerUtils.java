@@ -22,6 +22,7 @@ import net.momirealms.craftengine.proxy.minecraft.sounds.SoundSourceProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.entity.EquipmentSlotProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.entity.item.ItemEntityProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.entity.player.InventoryProxy;
+import net.momirealms.craftengine.proxy.minecraft.world.entity.player.PlayerProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.inventory.AbstractContainerMenuProxy;
 import org.bukkit.inventory.ItemStack;
 import org.jetbrains.annotations.Nullable;
@@ -47,7 +48,7 @@ public final class PlayerUtils {
     public static void giveItem(Player player, Item<ItemStack> original, Item<ItemStack> item) {
         if (player == null) return;
         Object serverPlayer = player.serverPlayer();
-        Object inventory = FastNMS.INSTANCE.method$Player$getInventory(serverPlayer);
+        Object inventory = PlayerProxy.INSTANCE.getInventory(serverPlayer);
         boolean flag = InventoryProxy.INSTANCE.add(inventory, item.getLiteralObject());
         if (flag && item.isEmpty()) {
             Object droppedItem;

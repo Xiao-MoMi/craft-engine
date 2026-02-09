@@ -22,4 +22,7 @@ public interface ItemProxy {
             @Type(clazz = PlayerProxy.class) Object player,
             @Type(clazz = ClipContextProxy.FluidProxy.class) Object fluidMode
     );
+
+    @MethodInvoker(name = "canBeDepleted", activeIf = "max_version=1.20.4")
+    boolean canBeDepleted(Object target);
 }

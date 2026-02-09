@@ -6,6 +6,7 @@ import net.momirealms.craftengine.bukkit.entity.BukkitEntity;
 import net.momirealms.craftengine.bukkit.entity.data.BaseEntityData;
 import net.momirealms.craftengine.bukkit.nms.FastNMS;
 import net.momirealms.craftengine.bukkit.util.BlockStateUtils;
+import net.momirealms.craftengine.bukkit.util.LevelUtils;
 import net.momirealms.craftengine.bukkit.util.LocationUtils;
 import net.momirealms.craftengine.core.block.CustomBlock;
 import net.momirealms.craftengine.core.block.ImmutableBlockState;
@@ -44,14 +45,14 @@ public class FallingBlockBehavior extends BukkitBlockBehavior {
     public void onPlace(Object thisBlock, Object[] args, Callable<Object> superMethod) {
         Object world = args[1];
         Object blockPos = args[2];
-        FastNMS.INSTANCE.method$ScheduledTickAccess$scheduleBlockTick(world, blockPos, thisBlock, 2);
+        LevelUtils.scheduleBlockTick(world, blockPos, thisBlock, 2);
     }
 
     @Override
     public Object updateShape(Object thisBlock, Object[] args, Callable<Object> superMethod) {
         Object world = args[updateShape$level];
         Object blockPos = args[updateShape$blockPos];
-        FastNMS.INSTANCE.method$ScheduledTickAccess$scheduleBlockTick(world, blockPos, thisBlock, 2);
+        LevelUtils.scheduleBlockTick(world, blockPos, thisBlock, 2);
         return args[0];
     }
 

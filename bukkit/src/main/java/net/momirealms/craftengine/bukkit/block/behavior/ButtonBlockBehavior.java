@@ -5,10 +5,7 @@ import net.momirealms.craftengine.bukkit.nms.FastNMS;
 import net.momirealms.craftengine.bukkit.plugin.BukkitCraftEngine;
 import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.MEntitySelectors;
 import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.MGameEvents;
-import net.momirealms.craftengine.bukkit.util.BlockStateUtils;
-import net.momirealms.craftengine.bukkit.util.DirectionUtils;
-import net.momirealms.craftengine.bukkit.util.KeyUtils;
-import net.momirealms.craftengine.bukkit.util.LocationUtils;
+import net.momirealms.craftengine.bukkit.util.*;
 import net.momirealms.craftengine.core.block.CustomBlock;
 import net.momirealms.craftengine.core.block.ImmutableBlockState;
 import net.momirealms.craftengine.core.block.UpdateOption;
@@ -173,7 +170,7 @@ public class ButtonBlockBehavior extends BukkitBlockBehavior {
         }
 
         if (on) {
-            FastNMS.INSTANCE.method$ScheduledTickAccess$scheduleBlockTick(level, pos, thisBlock, this.ticksToStayPressed);
+            LevelUtils.scheduleBlockTick(level, pos, thisBlock, this.ticksToStayPressed);
         }
     }
 
@@ -217,7 +214,7 @@ public class ButtonBlockBehavior extends BukkitBlockBehavior {
     private void press(Object thisBlock, ImmutableBlockState state, Object level, Object pos, @Nullable Object player) {
         FastNMS.INSTANCE.method$LevelWriter$setBlock(level, pos, state.with(this.poweredProperty, true).customBlockState().literalObject(), UpdateOption.UPDATE_ALL.flags());
         this.updateNeighbours(thisBlock, state, level, pos);
-        FastNMS.INSTANCE.method$ScheduledTickAccess$scheduleBlockTick(level, pos, thisBlock, this.ticksToStayPressed);
+        LevelUtils.scheduleBlockTick(level, pos, thisBlock, this.ticksToStayPressed);
         playSound(level, pos, true);
         if (VersionHelper.isOrAbove1_20_5()) {
             LevelAccessorProxy.INSTANCE.gameEvent$0(level, player, MGameEvents.BLOCK_ACTIVATE$holder, pos);

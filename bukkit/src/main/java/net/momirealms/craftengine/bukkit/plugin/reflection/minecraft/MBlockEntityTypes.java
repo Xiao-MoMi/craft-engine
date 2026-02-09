@@ -3,6 +3,7 @@ package net.momirealms.craftengine.bukkit.plugin.reflection.minecraft;
 import net.momirealms.craftengine.bukkit.nms.FastNMS;
 import net.momirealms.craftengine.core.util.MiscUtils;
 import net.momirealms.craftengine.core.util.VersionHelper;
+import net.momirealms.craftengine.proxy.minecraft.core.RegistryProxy;
 
 public final class MBlockEntityTypes {
     private MBlockEntityTypes() {}
@@ -18,7 +19,7 @@ public final class MBlockEntityTypes {
 
     private static int getRegistryId(Object type) {
         if (type == null) return -1;
-        return FastNMS.INSTANCE.method$Registry$getId(MBuiltInRegistries.BLOCK_ENTITY_TYPE, type);
+        return RegistryProxy.INSTANCE.getId(MBuiltInRegistries.BLOCK_ENTITY_TYPE, type);
     }
 
     static {

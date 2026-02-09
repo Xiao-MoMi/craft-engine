@@ -1,6 +1,7 @@
 package net.momirealms.craftengine.bukkit.plugin.reflection.minecraft;
 
 import net.momirealms.craftengine.bukkit.nms.FastNMS;
+import net.momirealms.craftengine.proxy.minecraft.core.RegistryProxy;
 
 public final class MEntityTypes {
     private MEntityTypes() {}
@@ -83,6 +84,6 @@ public final class MEntityTypes {
 
     private static int getRegistryId(Object type) {
         if (type == null) return -1;
-        return FastNMS.INSTANCE.method$Registry$getId(MBuiltInRegistries.ENTITY_TYPE, type);
+        return RegistryProxy.INSTANCE.getId(MBuiltInRegistries.ENTITY_TYPE, type);
     }
 }

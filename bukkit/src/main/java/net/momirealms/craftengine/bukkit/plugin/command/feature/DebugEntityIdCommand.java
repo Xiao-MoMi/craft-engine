@@ -4,6 +4,7 @@ import net.momirealms.craftengine.bukkit.nms.FastNMS;
 import net.momirealms.craftengine.bukkit.plugin.command.BukkitCommandFeature;
 import net.momirealms.craftengine.core.plugin.CraftEngine;
 import net.momirealms.craftengine.core.plugin.command.CraftEngineCommandManager;
+import net.momirealms.craftengine.proxy.paper.chunk.system.entity.EntityLookupProxy;
 import org.bukkit.World;
 import org.bukkit.command.CommandSender;
 import org.incendo.cloud.Command;
@@ -26,7 +27,7 @@ public class DebugEntityIdCommand extends BukkitCommandFeature<CommandSender> {
                     World world = context.get("world");
                     int entityId = context.get("entityId");
                     Object entityLookup = FastNMS.INSTANCE.method$ServerLevel$getEntityLookup(FastNMS.INSTANCE.field$CraftWorld$ServerLevel(world));
-                    Object entity = FastNMS.INSTANCE.method$EntityLookup$get(entityLookup, entityId);
+                    Object entity = EntityLookupProxy.INSTANCE.get(entityLookup, entityId);
                     if (entity == null) {
                         context.sender().sendMessage("entity not found");
                         return;

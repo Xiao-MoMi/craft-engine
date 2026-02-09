@@ -8,6 +8,12 @@ import net.momirealms.sparrow.reflection.proxy.annotation.ReflectionProxy;
 public interface ContainerProxy {
     ContainerProxy INSTANCE = ASMProxyFactory.create(ContainerProxy.class);
 
-    @MethodInvoker(name = "getCurrentRecipe")
+    @MethodInvoker(name = "getCurrentRecipe", activeIf = "max_version=1.20.6")
     Object getCurrentRecipe(Object target);
+
+    @MethodInvoker(name = "getContainerSize")
+    int getContainerSize(Object target);
+
+    @MethodInvoker(name = "getItem")
+    Object getItem(Object target, int index);
 }
