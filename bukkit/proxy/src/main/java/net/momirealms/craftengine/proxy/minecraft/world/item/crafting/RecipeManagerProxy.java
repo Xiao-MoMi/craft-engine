@@ -10,12 +10,12 @@ import net.momirealms.sparrow.reflection.proxy.annotation.ReflectionProxy;
 public interface RecipeManagerProxy {
     RecipeManagerProxy INSTANCE = ASMProxyFactory.create(RecipeManagerProxy.class);
 
-    @MethodInvoker(name = "finalizeRecipeLoading")
+    @MethodInvoker(name = "finalizeRecipeLoading", activeIf = "min_version=1.21.2")
     void finalizeRecipeLoading(Object target);
 
-    @FieldGetter(name = "featureflagset")
+    @FieldGetter(name = "featureflagset", activeIf = "min_version=1.21.2")
     Object getFeatureFlagSet(Object target);
 
-    @FieldSetter(name = "featureflagset")
+    @FieldSetter(name = "featureflagset", activeIf = "min_version=1.21.2")
     void setFeatureFlagSet(Object target, Object value);
 }

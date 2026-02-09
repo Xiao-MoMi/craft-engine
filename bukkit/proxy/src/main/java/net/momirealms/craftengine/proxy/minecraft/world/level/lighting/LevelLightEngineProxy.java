@@ -4,8 +4,7 @@ import net.momirealms.sparrow.reflection.proxy.ASMProxyFactory;
 import net.momirealms.sparrow.reflection.proxy.annotation.ReflectionProxy;
 
 @ReflectionProxy(name = "net.minecraft.world.level.lighting.LevelLightEngine")
-public interface LevelLightEngineProxy {
+public interface LevelLightEngineProxy extends LightEventListenerProxy {
     LevelLightEngineProxy INSTANCE = ASMProxyFactory.create(LevelLightEngineProxy.class);
-
 
 }

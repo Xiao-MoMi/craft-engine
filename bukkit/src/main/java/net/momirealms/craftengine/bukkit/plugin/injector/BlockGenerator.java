@@ -33,7 +33,7 @@ import net.momirealms.craftengine.proxy.minecraft.core.DirectionProxy;
 import net.momirealms.craftengine.proxy.minecraft.resources.ResourceKeyProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.item.ItemStackProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.level.block.BlockProxy;
-import net.momirealms.craftengine.proxy.minecraft.world.level.block.state.BlockBehaviorProxy;
+import net.momirealms.craftengine.proxy.minecraft.world.level.block.state.BlockBehaviourProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.level.block.state.StateDefinitionProxy;
 
 import java.lang.invoke.MethodHandle;
@@ -230,11 +230,11 @@ public final class BlockGenerator {
     }
 
     private static Object createEmptyBlockProperties(Key id) {
-        Object blockProperties = BlockBehaviorProxy.PropertiesProxy.INSTANCE.of();
+        Object blockProperties = BlockBehaviourProxy.PropertiesProxy.INSTANCE.of();
         Object resourceLocation = KeyUtils.toIdentifier(id);
         Object resourceKey = ResourceKeyProxy.INSTANCE.create(MRegistries.BLOCK, resourceLocation);
         if (VersionHelper.isOrAbove1_21_2()) {
-            BlockBehaviorProxy.PropertiesProxy.INSTANCE.setId(blockProperties, resourceKey);
+            BlockBehaviourProxy.PropertiesProxy.INSTANCE.setId(blockProperties, resourceKey);
         }
         return blockProperties;
     }

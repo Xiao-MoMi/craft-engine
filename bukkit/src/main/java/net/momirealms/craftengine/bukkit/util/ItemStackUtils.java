@@ -12,6 +12,7 @@ import net.momirealms.craftengine.core.plugin.config.Config;
 import net.momirealms.craftengine.core.util.VersionHelper;
 import net.momirealms.craftengine.proxy.bukkit.craftbukkit.inventory.CraftItemStackProxy;
 import net.momirealms.craftengine.proxy.minecraft.util.DataFixersProxy;
+import net.momirealms.craftengine.proxy.minecraft.world.entity.LivingEntityProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.item.ItemStackProxy;
 import net.momirealms.sparrow.nbt.Tag;
 import org.bukkit.Material;
@@ -97,12 +98,20 @@ public final class ItemStackUtils {
                     .orElse(null);
         } else {
             Object nmsTag = MRegistryOps.SPARROW_NBT.convertTo(MRegistryOps.NBT, finalItemTag);
-            return FastNMS.INSTANCE.method$ItemStack$of(nmsTag);
+            return ItemStackProxy.INSTANCE.of(nmsTag);
         }
     }
 
     @Nullable
     public static ItemStack parseItemStack(Tag tag, int dataVersion) {
         return asCraftMirror(parseNMSItemStack(tag, dataVersion));
+    }
+
+    public static void hurtAndBreak(Object nmsStack, int amount, Object livingEntity, Object slot) {
+        if (VersionHelper.isOrAbove1_20_5()) {
+            ItemStackProxy.INSTANCE.hurtAndBreak(nmsStack, amount, livingEntity, slot);
+        } else {
+            ItemStackProxy.INSTANCE.hurtAndBreak(nmsStack, amount, livingEntity, entity -> LivingEntityProxy.INSTANCE.broadcastBreakEvent(entity, slot));
+        }
     }
 }

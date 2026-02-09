@@ -33,6 +33,7 @@ public final class DataComponentTypes {
     public static final Object BUNDLE_CONTENTS = byId(DataComponentKeys.BUNDLE_CONTENTS);
     public static final Object CONTAINER = byId(DataComponentKeys.CONTAINER);
     public static final Object BLOCK_STATE = byId(DataComponentKeys.BLOCK_STATE);
+    public static final Object MAP_ID = byId(DataComponentKeys.MAP_ID);
 
     private DataComponentTypes() {}
 

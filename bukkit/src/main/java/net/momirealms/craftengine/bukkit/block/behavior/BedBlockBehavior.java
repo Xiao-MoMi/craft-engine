@@ -30,6 +30,8 @@ import net.momirealms.craftengine.core.util.VersionHelper;
 import net.momirealms.craftengine.core.world.*;
 import net.momirealms.craftengine.core.world.context.BlockPlaceContext;
 import net.momirealms.craftengine.core.world.context.UseOnContext;
+import net.momirealms.craftengine.proxy.minecraft.core.BlockPosProxy;
+import net.momirealms.craftengine.proxy.minecraft.world.level.block.state.BlockBehaviourProxy;
 import org.bukkit.inventory.ItemStack;
 import org.joml.Vector3f;
 
@@ -124,7 +126,7 @@ public class BedBlockBehavior extends BukkitBlockBehavior implements EntityBlock
             return;
         }
         HorizontalDirection direction = state.get(behavior.facingProperty);
-        pos = FastNMS.INSTANCE.method$BlockPos$offset(pos, direction.stepX(), 0, direction.stepZ());
+        pos = BlockPosProxy.INSTANCE.offset(pos, direction.stepX(), 0, direction.stepZ());
         Object blockState = FastNMS.INSTANCE.method$BlockGetter$getBlockState(level, pos);
         ImmutableBlockState headState = BlockStateUtils.getOptionalCustomBlockState(blockState).orElse(null);
         if (headState == null || headState.isEmpty()) {
@@ -137,7 +139,7 @@ public class BedBlockBehavior extends BukkitBlockBehavior implements EntityBlock
         if (state.owner() != headState.owner() || headState.get(headBehavior.partProperty) != BedPart.HEAD) {
             return;
         }
-        Object emptyState = FastNMS.INSTANCE.method$FluidState$getType(FastNMS.INSTANCE.field$BlockBehaviour$BlockStateBase$fluidState(blockState)) == MFluids.WATER
+        Object emptyState = FastNMS.INSTANCE.method$FluidState$getType(BlockBehaviourProxy.BlockStateBaseProxy.INSTANCE.getFluidState(blockState)) == MFluids.WATER
                 ? MBlocks.WATER$defaultState
                 : MBlocks.AIR$defaultState;
         FastNMS.INSTANCE.method$LevelWriter$setBlock(level, pos, emptyState, UpdateOption.builder().updateSuppressDrops().updateClients().updateNeighbors().build().flags());
@@ -160,7 +162,7 @@ public class BedBlockBehavior extends BukkitBlockBehavior implements EntityBlock
         HorizontalDirection direction = state.get(behavior.facingProperty);
         FastNMS.INSTANCE.method$LevelWriter$setBlock(
                 level,
-                FastNMS.INSTANCE.method$BlockPos$offset(pos, direction.stepX(), 0, direction.stepZ()),
+                BlockPosProxy.INSTANCE.offset(pos, direction.stepX(), 0, direction.stepZ()),
                 state.with(behavior.partProperty, BedPart.HEAD).customBlockState().literalObject(),
                 UpdateOption.UPDATE_ALL.flags()
         );

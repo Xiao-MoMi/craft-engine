@@ -45,7 +45,6 @@ import net.momirealms.craftengine.proxy.minecraft.world.level.EmptyBlockGetterPr
 import net.momirealms.craftengine.proxy.minecraft.world.level.block.BlockProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.level.block.FireBlockProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.level.block.SoundTypeProxy;
-import net.momirealms.craftengine.proxy.minecraft.world.level.block.state.BlockBehaviorProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.level.block.state.BlockBehaviourProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.level.block.state.StateDefinitionProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.level.block.state.properties.NoteBlockInstrumentProxy;
@@ -278,16 +277,16 @@ public final class BukkitBlockManager extends AbstractBlockManager {
             ObjectHolder<BlockBehavior> behaviorHolder = nmsBlock.behaviorDelegate();
             behaviorHolder.bindValue(state.behavior());
             if (VersionHelper.isOrAbove1_21_2()) {
-                BlockBehaviorProxy.INSTANCE.setDescriptionId(nmsBlock, block.translationKey());
+                BlockBehaviourProxy.INSTANCE.setDescriptionId(nmsBlock, block.translationKey());
             } else {
                 BlockProxy.INSTANCE.setDescriptionId(nmsBlock, block.translationKey());
             }
 
-            BlockBehaviorProxy.INSTANCE.setExplosionResistance(nmsBlock, settings.resistance());
-            BlockBehaviorProxy.INSTANCE.setFriction(nmsBlock, settings.friction());
-            BlockBehaviorProxy.INSTANCE.setSpeedFactor(nmsBlock, settings.speedFactor());
-            BlockBehaviorProxy.INSTANCE.setJumpFactor(nmsBlock, settings.jumpFactor());
-            BlockBehaviorProxy.INSTANCE.setSoundType(nmsBlock, SoundUtils.toNMSSoundType(settings.sounds()));
+            BlockBehaviourProxy.INSTANCE.setExplosionResistance(nmsBlock, settings.resistance());
+            BlockBehaviourProxy.INSTANCE.setFriction(nmsBlock, settings.friction());
+            BlockBehaviourProxy.INSTANCE.setSpeedFactor(nmsBlock, settings.speedFactor());
+            BlockBehaviourProxy.INSTANCE.setJumpFactor(nmsBlock, settings.jumpFactor());
+            BlockBehaviourProxy.INSTANCE.setSoundType(nmsBlock, SoundUtils.toNMSSoundType(settings.sounds()));
 
             BlockBehaviourProxy.BlockStateBaseProxy.INSTANCE.initCache(nmsState);
             boolean isConditionallyFullOpaque = canOcclude & useShapeForLightOcclusion;
@@ -296,7 +295,7 @@ public final class BukkitBlockManager extends AbstractBlockManager {
             }
 
             if (VersionHelper.isOrAbove1_21_2()) {
-                int blockLight = settings.blockLight() != -1 ? settings.blockLight() : BlockBehaviourProxy.BlockStateBaseProxy.INSTANCE.getLightBlock(nmsVisualState);
+                int blockLight = settings.blockLight() != -1 ? settings.blockLight() : BlockBehaviourProxy.BlockStateBaseProxy.INSTANCE.getLightBlock$0(nmsVisualState);
                 BlockBehaviourProxy.BlockStateBaseProxy.INSTANCE.setLightBlock(nmsState, blockLight);
                 boolean propagatesSkylightDown = settings.propagatesSkylightDown() == Tristate.UNDEFINED ? BlockBehaviourProxy.BlockStateBaseProxy.INSTANCE.isPropagatesSkylightDown(nmsVisualState) : settings.propagatesSkylightDown().asBoolean();
                 BlockBehaviourProxy.BlockStateBaseProxy.INSTANCE.setPropagatesSkylightDown(nmsState, propagatesSkylightDown);
@@ -514,7 +513,7 @@ public final class BukkitBlockManager extends AbstractBlockManager {
     protected void processSounds() {
         Set<Object> affectedBlockSoundTypes = new HashSet<>();
         for (BlockStateWrapper vanillaBlockState : super.tempVisualBlockStatesInUse) {
-            affectedBlockSoundTypes.add(FastNMS.INSTANCE.method$BlockBehaviour$BlockStateBase$getSoundType(vanillaBlockState.literalObject()));
+            affectedBlockSoundTypes.add(BlockBehaviourProxy.BlockStateBaseProxy.INSTANCE.getSoundType(vanillaBlockState.literalObject()));
         }
 
         Set<Object> placeSounds = new HashSet<>();
@@ -523,10 +522,10 @@ public final class BukkitBlockManager extends AbstractBlockManager {
         Set<Object> hitSounds = new HashSet<>();
 
         for (Object soundType : affectedBlockSoundTypes) {
-            placeSounds.add(FastNMS.INSTANCE.field$SoundEvent$location(FastNMS.INSTANCE.field$SoundType$placeSound(soundType)));
-            breakSounds.add(FastNMS.INSTANCE.field$SoundEvent$location(FastNMS.INSTANCE.field$SoundType$breakSound(soundType)));
-            stepSounds.add(FastNMS.INSTANCE.field$SoundEvent$location(FastNMS.INSTANCE.field$SoundType$stepSound(soundType)));
-            hitSounds.add(FastNMS.INSTANCE.field$SoundEvent$location(FastNMS.INSTANCE.field$SoundType$hitSound(soundType)));
+            placeSounds.add(FastNMS.INSTANCE.field$SoundEvent$location(SoundTypeProxy.INSTANCE.getPlaceSound(soundType)));
+            breakSounds.add(FastNMS.INSTANCE.field$SoundEvent$location(SoundTypeProxy.INSTANCE.getBreakSound(soundType)));
+            stepSounds.add(FastNMS.INSTANCE.field$SoundEvent$location(SoundTypeProxy.INSTANCE.getStepSound(soundType)));
+            hitSounds.add(FastNMS.INSTANCE.field$SoundEvent$location(SoundTypeProxy.INSTANCE.getHitSound(soundType)));
         }
 
         ImmutableMap.Builder<Key, Key> soundReplacementBuilder = ImmutableMap.builder();

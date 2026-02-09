@@ -17,6 +17,7 @@ import net.momirealms.craftengine.core.plugin.context.NetworkTextReplaceContext;
 import net.momirealms.craftengine.core.plugin.text.component.ComponentProvider;
 import net.momirealms.craftengine.core.util.AdventureHelper;
 import net.momirealms.craftengine.core.util.Pair;
+import net.momirealms.craftengine.proxy.minecraft.world.item.ItemStackProxy;
 import net.momirealms.sparrow.nbt.CompoundTag;
 import net.momirealms.sparrow.nbt.ListTag;
 import net.momirealms.sparrow.nbt.StringTag;
@@ -43,7 +44,7 @@ public final class LegacyNetworkItemHandler implements NetworkItemHandler<ItemSt
             List<Object> newItems = new ArrayList<>();
             boolean changed = false;
             for (Object tag : (Iterable<?>) bundleContents) {
-                Object previousItem = FastNMS.INSTANCE.method$ItemStack$of(tag);
+                Object previousItem = ItemStackProxy.INSTANCE.of(tag);
                 Optional<ItemStack> itemStack = BukkitItemManager.instance().c2s(FastNMS.INSTANCE.method$CraftItemStack$asCraftMirror(previousItem));
                 if (itemStack.isPresent()) {
                     newItems.add(FastNMS.INSTANCE.field$CraftItemStack$handle(itemStack.get()));
@@ -70,7 +71,7 @@ public final class LegacyNetworkItemHandler implements NetworkItemHandler<ItemSt
                 boolean changed = false;
                 List<Pair<Byte, Object>> newItems = new ArrayList<>();
                 for (Object tag : (Iterable<?>) itemTags) {
-                    Object previousItem = FastNMS.INSTANCE.method$ItemStack$of(tag);
+                    Object previousItem = ItemStackProxy.INSTANCE.of(tag);
                     Optional<ItemStack> itemStack = BukkitItemManager.instance().c2s(FastNMS.INSTANCE.method$CraftItemStack$asCraftMirror(previousItem));
                     byte slot = FastNMS.INSTANCE.method$ByteTag$value(FastNMS.INSTANCE.method$CompoundTag$get(tag, "Slot"));
                     if (itemStack.isPresent()) {
@@ -129,7 +130,7 @@ public final class LegacyNetworkItemHandler implements NetworkItemHandler<ItemSt
             List<Object> newItems = new ArrayList<>();
             boolean changed = false;
             for (Object tag : (Iterable<?>) bundleContents) {
-                Object previousItem = FastNMS.INSTANCE.method$ItemStack$of(tag);
+                Object previousItem = ItemStackProxy.INSTANCE.of(tag);
                 Optional<ItemStack> itemStack = BukkitItemManager.instance().s2c(FastNMS.INSTANCE.method$CraftItemStack$asCraftMirror(previousItem), player);
                 if (itemStack.isPresent()) {
                     newItems.add(FastNMS.INSTANCE.field$CraftItemStack$handle(itemStack.get()));
@@ -156,7 +157,7 @@ public final class LegacyNetworkItemHandler implements NetworkItemHandler<ItemSt
                 boolean changed = false;
                 List<Pair<Byte, Object>> newItems = new ArrayList<>();
                 for (Object tag : (Iterable<?>) itemTags) {
-                    Object previousItem = FastNMS.INSTANCE.method$ItemStack$of(tag);
+                    Object previousItem = ItemStackProxy.INSTANCE.of(tag);
                     Optional<ItemStack> itemStack = BukkitItemManager.instance().s2c(FastNMS.INSTANCE.method$CraftItemStack$asCraftMirror(previousItem), player);
                     byte slot = FastNMS.INSTANCE.method$ByteTag$value(FastNMS.INSTANCE.method$CompoundTag$get(tag, "Slot"));
                     if (itemStack.isPresent()) {

@@ -20,6 +20,8 @@ import net.momirealms.craftengine.core.util.ResourceConfigUtils;
 import net.momirealms.craftengine.core.util.VersionHelper;
 import net.momirealms.craftengine.core.util.random.RandomUtils;
 import net.momirealms.craftengine.proxy.minecraft.core.DirectionProxy;
+import net.momirealms.craftengine.proxy.minecraft.world.level.LevelProxy;
+import net.momirealms.craftengine.proxy.minecraft.world.level.block.state.BlockBehaviourProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.level.pathfinder.PathComputationTypeProxy;
 
 import java.util.Map;
@@ -117,7 +119,7 @@ public class StemBlockBehavior extends BukkitBlockBehavior implements IsPathFind
         Object blockState = state.with(ageProperty, min).customBlockState().literalObject();
         FastNMS.INSTANCE.method$LevelWriter$setBlock(args[0], args[2], blockState, 2);
         if (min >= ageProperty.max) {
-            FastNMS.INSTANCE.method$BlockBehaviour$BlockStateBase$randomTick(blockState, args[0], args[2]);
+            BlockBehaviourProxy.BlockStateBaseProxy.INSTANCE.randomTick(blockState, args[0], args[2], LevelProxy.INSTANCE.getRandom(args[0]));
         }
     }
 

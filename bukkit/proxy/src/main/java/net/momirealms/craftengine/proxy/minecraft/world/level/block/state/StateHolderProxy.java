@@ -17,5 +17,8 @@ public interface StateHolderProxy {
     <T extends Comparable<T>> T getValue(Object target, @Type(clazz = PropertyProxy.class) Object property);
 
     @MethodInvoker(name = "setValue")
-    Object setValue(Object target, @Type(clazz = PropertyProxy.class) Object property, Comparable<Object> value);
+    Object setValue(Object target, @Type(clazz = PropertyProxy.class) Object property, Comparable<?> value);
+
+    @MethodInvoker(name = "trySetValue")
+    Object trySetValue(Object target, @Type(clazz = PropertyProxy.class) Object property, Comparable<?> value);
 }

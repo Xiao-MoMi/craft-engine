@@ -38,16 +38,17 @@ import net.momirealms.craftengine.core.world.chunk.storage.DefaultStorageAdaptor
 import net.momirealms.craftengine.core.world.chunk.storage.StorageAdaptor;
 import net.momirealms.craftengine.core.world.chunk.storage.WorldDataStorage;
 import net.momirealms.craftengine.proxy.minecraft.core.HolderProxy;
+import net.momirealms.craftengine.proxy.minecraft.core.SectionPosProxy;
 import net.momirealms.craftengine.proxy.minecraft.resources.ResourceKeyProxy;
+import net.momirealms.craftengine.proxy.minecraft.server.level.ServerChunkCacheProxy;
+import net.momirealms.craftengine.proxy.minecraft.server.level.ThreadedLevelLightEngineProxy;
 import net.momirealms.craftengine.proxy.minecraft.util.CrudeIncrementalIntIdentityHashBiMapProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.level.LevelProxy;
-import net.momirealms.craftengine.proxy.minecraft.world.level.chunk.HashMapPaletteProxy;
-import net.momirealms.craftengine.proxy.minecraft.world.level.chunk.LinearPaletteProxy;
-import net.momirealms.craftengine.proxy.minecraft.world.level.chunk.PalettedContainerProxy;
-import net.momirealms.craftengine.proxy.minecraft.world.level.chunk.SingleValuePaletteProxy;
+import net.momirealms.craftengine.proxy.minecraft.world.level.chunk.*;
 import net.momirealms.craftengine.proxy.minecraft.world.level.levelgen.feature.ConfiguredFeatureProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.level.levelgen.placement.PlacedFeatureProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.level.levelgen.placement.PlacementModifierProxy;
+import net.momirealms.craftengine.proxy.minecraft.world.level.lighting.LightEventListenerProxy;
 import net.momirealms.craftengine.proxy.paper.chunk.system.entity.EntityLookupProxy;
 import org.bukkit.Bukkit;
 import org.bukkit.Chunk;
@@ -116,8 +117,8 @@ public final class BukkitWorldManager implements WorldManager, Listener {
     public synchronized CraftEngineFeatures fetchFeatures(Object serverLevel) {
         World world = FastNMS.INSTANCE.method$Level$getCraftWorld(serverLevel);
         String name = world.getName();
-        Key dimension = KeyUtils.identifierToKey(FastNMS.INSTANCE.field$ResourceKey$location(LevelProxy.INSTANCE.dimension(serverLevel)));
-        Object holder = LevelProxy.INSTANCE.dimensionTypeRegistration(serverLevel);
+        Key dimension = KeyUtils.identifierToKey(FastNMS.INSTANCE.field$ResourceKey$location(LevelProxy.INSTANCE.getDimension(serverLevel)));
+        Object holder = LevelProxy.INSTANCE.getDimensionTypeRegistration(serverLevel);
         Key dimensionType = CoreReflections.clazz$Holder$Reference.isInstance(holder)
                 ? KeyUtils.identifierToKey(ResourceKeyProxy.INSTANCE.getLocation(HolderProxy.ReferenceProxy.INSTANCE.getKey(holder)))
                 : null;
@@ -301,7 +302,7 @@ public final class BukkitWorldManager implements WorldManager, Listener {
     private void injectWorld(CEWorld world) {
         Object serverLevel = world.world.serverWorld();
         Object serverChunkCache = FastNMS.INSTANCE.method$ServerLevel$getChunkSource(serverLevel);
-        Object chunkMap = FastNMS.INSTANCE.field$ServerChunkCache$chunkMap(serverChunkCache);
+        Object chunkMap = ServerChunkCacheProxy.INSTANCE.getChunkMap(serverChunkCache);
         FastNMS.INSTANCE.injectedWorldGen(world, chunkMap);
         if (!VersionHelper.isFolia()) {
             this.injectWorldCallback(serverLevel);
@@ -542,13 +543,13 @@ public final class BukkitWorldManager implements WorldManager, Listener {
                         }
                     }
                     if (Config.restoreCustomBlocks()) {
-                        boolean isEmptyBefore = FastNMS.INSTANCE.method$LevelSection$hasOnlyAir(section);
+                        boolean isEmptyBefore = LevelChunkSectionProxy.INSTANCE.hasOnlyAir(section);
                         int sectionY = ceSection.sectionY;
                         // 有自定义方块
                         PalettedContainer<ImmutableBlockState> palettedContainer = ceSection.statesContainer();
                         if (!palettedContainer.isEmpty()) {
                             if (isEmptyBefore) {
-                                FastNMS.INSTANCE.method$LightEventListener$updateSectionStatus(lightEngine, FastNMS.INSTANCE.method$SectionPos$of(chunkX, sectionY, chunkZ), false);
+                                LightEventListenerProxy.INSTANCE.updateSectionStatus(lightEngine, SectionPosProxy.INSTANCE.newInstance(chunkX, sectionY, chunkZ), false);
                             }
                             for (int x = 0; x < 16; x++) {
                                 for (int z = 0; z < 16; z++) {
@@ -558,7 +559,7 @@ public final class BukkitWorldManager implements WorldManager, Listener {
                                             Object newState = customState.customBlockState().literalObject();
                                             Object previous = FastNMS.INSTANCE.method$LevelChunkSection$setBlockState(section, x, y, z, newState, false);
                                             if (newState != previous && FastNMS.INSTANCE.method$LightEngine$hasDifferentLightProperties(newState, previous)) {
-                                                FastNMS.INSTANCE.method$ThreadedLevelLightEngine$checkBlock(lightEngine, LocationUtils.toBlockPos(chunkX * 16 + x, sectionY * 16 + y, chunkZ * 16 + z));
+                                                ThreadedLevelLightEngineProxy.INSTANCE.checkBlock(lightEngine, LocationUtils.toBlockPos(chunkX * 16 + x, sectionY * 16 + y, chunkZ * 16 + z));
                                             }
                                         }
                                     }

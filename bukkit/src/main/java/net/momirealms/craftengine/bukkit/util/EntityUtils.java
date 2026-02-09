@@ -2,17 +2,22 @@ package net.momirealms.craftengine.bukkit.util;
 
 import net.momirealms.craftengine.bukkit.api.BukkitAdaptors;
 import net.momirealms.craftengine.bukkit.nms.FastNMS;
-import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.CoreReflections;
 import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.MBuiltInRegistries;
 import net.momirealms.craftengine.core.util.Key;
 import net.momirealms.craftengine.core.util.MiscUtils;
 import net.momirealms.craftengine.core.util.VersionHelper;
 import net.momirealms.craftengine.core.world.BlockPos;
 import net.momirealms.craftengine.core.world.Vec3d;
+import net.momirealms.craftengine.proxy.bukkit.craftbukkit.entity.CraftEntityProxy;
+import net.momirealms.craftengine.proxy.minecraft.network.protocol.game.ClientboundEntityPositionSyncPacketProxy;
+import net.momirealms.craftengine.proxy.minecraft.network.protocol.game.ClientboundTeleportEntityPacketProxy;
+import net.momirealms.craftengine.proxy.minecraft.world.entity.EntityProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.entity.LivingEntityProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.entity.PoseProxy;
+import net.momirealms.craftengine.proxy.minecraft.world.entity.PositionMoveRotationProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.entity.vehicle.DismountHelperProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.level.BlockGetterProxy;
+import net.momirealms.craftengine.proxy.minecraft.world.phys.Vec3Proxy;
 import org.bukkit.Location;
 import org.bukkit.World;
 import org.bukkit.entity.Entity;
@@ -26,12 +31,45 @@ import java.util.function.Consumer;
 
 public final class EntityUtils {
 
-    private EntityUtils() {
+    private EntityUtils() {}
+
+    public static Object createUpdatePosPacket(int entityId, double x, double y, double z, float yRot, float xRot, boolean onGround) {
+        if (VersionHelper.isOrAbove1_21_2()) {
+            Object position = Vec3Proxy.INSTANCE.newInstance(x, y, z);
+            Object values = PositionMoveRotationProxy.INSTANCE.newInstance(position, Vec3Proxy.ZERO, yRot, xRot);
+            return ClientboundEntityPositionSyncPacketProxy.INSTANCE.newInstance(entityId, values, onGround);
+        } else {
+            Object packet = ClientboundTeleportEntityPacketProxy.UNSAFE_CONSTRUCTOR.newInstance();
+            ClientboundTeleportEntityPacketProxy.INSTANCE.setId(packet, entityId);
+            ClientboundTeleportEntityPacketProxy.INSTANCE.setX(packet, x);
+            ClientboundTeleportEntityPacketProxy.INSTANCE.setY(packet, y);
+            ClientboundTeleportEntityPacketProxy.INSTANCE.setZ(packet, z);
+            ClientboundTeleportEntityPacketProxy.INSTANCE.setYRot(packet, MiscUtils.packDegrees(yRot));
+            ClientboundTeleportEntityPacketProxy.INSTANCE.setXRot(packet, MiscUtils.packDegrees(xRot));
+            ClientboundTeleportEntityPacketProxy.INSTANCE.setOnGround(packet, onGround);
+            return packet;
+        }
+    }
+
+    public static Vec3d getPassengerRidingPosition(Entity vehicle, Entity passenger) {
+        Object nmsVehicle = CraftEntityProxy.INSTANCE.getEntity(vehicle);
+        Object nmsPassenger = CraftEntityProxy.INSTANCE.getEntity(passenger);
+        if (VersionHelper.isOrAbove1_20_5()) {
+            Vec3d passengerRidingPosition = LocationUtils.fromVec(EntityProxy.INSTANCE.getPassengerRidingPosition(nmsVehicle, nmsPassenger));
+            Vec3d vehicleAttachmentPoint = LocationUtils.fromVec(EntityProxy.INSTANCE.getVehicleAttachmentPoint(nmsVehicle, nmsPassenger));
+            return passengerRidingPosition.subtract(vehicleAttachmentPoint);
+        } else if (VersionHelper.isOrAbove1_20_2()) {
+            Vec3d passengerRidingPosition = LocationUtils.fromVec(EntityProxy.INSTANCE.getPassengerRidingPosition(nmsVehicle, nmsPassenger));
+            return passengerRidingPosition.add(0, EntityProxy.INSTANCE.getMyRidingOffset(nmsVehicle, nmsPassenger), 0);
+        } else {
+            Vec3d pos = LocationUtils.fromVec(EntityProxy.INSTANCE.getPosition(nmsVehicle));
+            return pos.add(0, EntityProxy.INSTANCE.getPassengersRidingOffset(nmsVehicle) + EntityProxy.INSTANCE.getMyRidingOffset(nmsPassenger), 0);
+        }
     }
 
     public static BlockPos getOnPos(Player player) {
         Object serverPlayer = FastNMS.INSTANCE.method$CraftPlayer$getHandle(player);
-        Object blockPos = FastNMS.INSTANCE.method$Entity$getOnPos(serverPlayer);
+        Object blockPos = EntityProxy.INSTANCE.getOnPos(serverPlayer);
         return LocationUtils.fromBlockPos(blockPos);
     }
 
@@ -70,7 +108,7 @@ public final class EntityUtils {
                     floorHeight -= 1;
                 }
                 Object aabb = LivingEntityProxy.INSTANCE.getLocalBoundsForPose(serverPlayer, pose);
-                Object vec3 = FastNMS.INSTANCE.constructor$Vec3(x, pos.y() + floorHeight, z);
+                Object vec3 = Vec3Proxy.INSTANCE.newInstance(x, pos.y() + floorHeight, z);
                 Object newAABB = FastNMS.INSTANCE.method$AABB$move(aabb, vec3);
                 boolean canDismount = DismountHelperProxy.INSTANCE.canDismountTo(serverLevel, serverPlayer, newAABB);
                 if (!canDismount) {

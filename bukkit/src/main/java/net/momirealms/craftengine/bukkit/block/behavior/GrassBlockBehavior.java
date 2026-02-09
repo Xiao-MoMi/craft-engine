@@ -23,6 +23,7 @@ import net.momirealms.craftengine.core.util.*;
 import net.momirealms.craftengine.core.util.random.RandomUtils;
 import net.momirealms.craftengine.core.world.BlockPos;
 import net.momirealms.craftengine.core.world.context.UseOnContext;
+import net.momirealms.craftengine.proxy.minecraft.core.HolderProxy;
 import net.momirealms.craftengine.proxy.minecraft.server.level.ServerChunkCacheProxy;
 import org.bukkit.Location;
 import org.bukkit.World;
@@ -157,7 +158,7 @@ public class GrassBlockBehavior extends BukkitBlockBehavior {
                 }
                 if (FastNMS.INSTANCE.method$BlockStateBase$isAir(currentState)) {
                     Object chunkGenerator = ServerChunkCacheProxy.INSTANCE.getGenerator(FastNMS.INSTANCE.method$ServerLevel$getChunkSource(world));
-                    Object placedFeature = FastNMS.INSTANCE.method$Holder$value(holder.get());
+                    Object placedFeature = HolderProxy.INSTANCE.value(holder.get());
                     CoreReflections.method$PlacedFeature$place.invoke(placedFeature, world, chunkGenerator, random, nmsCurrentPos);
                 }
             }

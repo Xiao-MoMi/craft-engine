@@ -1,10 +1,8 @@
 package net.momirealms.craftengine.proxy.minecraft.world.inventory;
 
+import net.momirealms.craftengine.proxy.minecraft.world.entity.player.PlayerProxy;
 import net.momirealms.sparrow.reflection.proxy.ASMProxyFactory;
-import net.momirealms.sparrow.reflection.proxy.annotation.FieldGetter;
-import net.momirealms.sparrow.reflection.proxy.annotation.FieldSetter;
-import net.momirealms.sparrow.reflection.proxy.annotation.MethodInvoker;
-import net.momirealms.sparrow.reflection.proxy.annotation.ReflectionProxy;
+import net.momirealms.sparrow.reflection.proxy.annotation.*;
 
 @ReflectionProxy(name = "net.minecraft.world.inventory.AbstractContainerMenu")
 public interface AbstractContainerMenuProxy {
@@ -24,4 +22,10 @@ public interface AbstractContainerMenuProxy {
 
     @FieldSetter(name = "checkReachable")
     void setCheckReachable(Object target, boolean checkReachable);
+
+    @MethodInvoker(name = "quickMoveStack")
+    Object quickMoveStack(Object target, @Type(clazz = PlayerProxy.class) Object player, int slot);
+
+    @MethodInvoker(name = "broadcastChanges")
+    void broadcastChanges(Object target);
 }

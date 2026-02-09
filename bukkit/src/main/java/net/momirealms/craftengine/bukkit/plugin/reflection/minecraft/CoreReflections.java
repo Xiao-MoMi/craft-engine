@@ -9,7 +9,9 @@ import net.momirealms.craftengine.core.util.VersionHelper;
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodType;
 import java.lang.reflect.*;
-import java.util.*;
+import java.util.List;
+import java.util.Objects;
+import java.util.Optional;
 import java.util.function.BiConsumer;
 
 import static java.util.Objects.requireNonNull;

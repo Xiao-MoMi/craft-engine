@@ -15,4 +15,10 @@ public interface PlayerProxy extends LivingEntityProxy {
 
     @FieldSetter(name = "containerMenu")
     void setContainerMenu(Object target, Object containerMenu);
+
+    @FieldGetter(name = "inventoryMenu")
+    Object getInventoryMenu(Object target);
+
+    @FieldSetter(name = "inventoryMenu")
+    void setInventoryMenu(Object target, Object inventoryMenu);
 }

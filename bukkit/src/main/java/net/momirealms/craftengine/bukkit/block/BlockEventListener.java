@@ -32,6 +32,8 @@ import net.momirealms.craftengine.core.util.VersionHelper;
 import net.momirealms.craftengine.core.world.BlockPos;
 import net.momirealms.craftengine.core.world.WorldPosition;
 import net.momirealms.craftengine.proxy.minecraft.core.DirectionProxy;
+import net.momirealms.craftengine.proxy.minecraft.world.level.block.SoundTypeProxy;
+import net.momirealms.craftengine.proxy.minecraft.world.level.block.state.BlockBehaviourProxy;
 import org.bukkit.*;
 import org.bukkit.block.Block;
 import org.bukkit.entity.Entity;
@@ -85,8 +87,8 @@ public final class BlockEventListener implements Listener {
             Block block = event.getBlock();
             Object blockState = BlockStateUtils.getBlockState(block);
             if (blockState != MBlocks.AIR$defaultState && BlockStateUtils.isVanillaBlock(blockState)) {
-                Object soundType = FastNMS.INSTANCE.method$BlockBehaviour$BlockStateBase$getSoundType(blockState);
-                Object soundEvent = FastNMS.INSTANCE.field$SoundType$placeSound(soundType);
+                Object soundType = BlockBehaviourProxy.BlockStateBaseProxy.INSTANCE.getSoundType(blockState);
+                Object soundEvent = SoundTypeProxy.INSTANCE.getPlaceSound(soundType);
                 Object soundId = FastNMS.INSTANCE.field$SoundEvent$location(soundEvent);
                 if (this.manager.isPlaceSoundMissing(soundId)) {
                     if (player.getInventory().getItemInMainHand().getType() != Material.DEBUG_STICK) {
@@ -100,8 +102,8 @@ public final class BlockEventListener implements Listener {
         if (serverPlayer.shouldResendSound()) {
             Block block = event.getBlock();
             Object blockState = BlockStateUtils.getBlockState(block);
-            Object soundType = FastNMS.INSTANCE.method$BlockBehaviour$BlockStateBase$getSoundType(blockState);
-            Object soundEvent = FastNMS.INSTANCE.field$SoundType$placeSound(soundType);
+            Object soundType = BlockBehaviourProxy.BlockStateBaseProxy.INSTANCE.getSoundType(blockState);
+            Object soundEvent = SoundTypeProxy.INSTANCE.getPlaceSound(soundType);
             Object soundId = FastNMS.INSTANCE.field$SoundEvent$location(soundEvent);
             player.playSound(block.getLocation().add(0.5, 0.5, 0.5), soundId.toString(), SoundCategory.BLOCKS, 1f, 0.8f);
         }
@@ -217,8 +219,8 @@ public final class BlockEventListener implements Listener {
             // sound system
             if (Config.enableSoundSystem() && (!event.isCancelled() || Config.processCancelledBreak())) {
                 if (BukkitItemUtils.isDebugStick(itemInHand)) return;
-                Object soundType = FastNMS.INSTANCE.method$BlockBehaviour$BlockStateBase$getSoundType(blockState);
-                Object soundEvent = FastNMS.INSTANCE.field$SoundType$breakSound(soundType);
+                Object soundType = BlockBehaviourProxy.BlockStateBaseProxy.INSTANCE.getSoundType(blockState);
+                Object soundEvent = SoundTypeProxy.INSTANCE.getBreakSound(soundType);
                 Object soundId = FastNMS.INSTANCE.field$SoundEvent$location(soundEvent);
                 if (this.manager.isBreakSoundMissing(soundId)) {
                     player.playSound(block.getLocation().add(0.5, 0.5, 0.5), soundId.toString(), SoundCategory.BLOCKS, 1f, 0.8f);
@@ -284,8 +286,8 @@ public final class BlockEventListener implements Listener {
             if (event.isCancelled() && !Config.processCancelledStep()) {
                 return;
             }
-            Object soundType = FastNMS.INSTANCE.method$BlockBehaviour$BlockStateBase$getSoundType(blockState);
-            Object soundEvent = FastNMS.INSTANCE.field$SoundType$stepSound(soundType);
+            Object soundType = BlockBehaviourProxy.BlockStateBaseProxy.INSTANCE.getSoundType(blockState);
+            Object soundEvent = SoundTypeProxy.INSTANCE.getStepSound(soundType);
             Object soundId = FastNMS.INSTANCE.field$SoundEvent$location(soundEvent);
             if (this.manager.isStepSoundMissing(soundId)) {
                 player.playSound(player.getLocation(), soundId.toString(), SoundCategory.BLOCKS, 0.15f, 1f);
@@ -310,8 +312,8 @@ public final class BlockEventListener implements Listener {
             if (event.isCancelled() && !Config.processCancelledStep()) {
                 return;
             }
-            Object soundType = FastNMS.INSTANCE.method$BlockBehaviour$BlockStateBase$getSoundType(blockState);
-            Object soundEvent = FastNMS.INSTANCE.field$SoundType$fallSound(soundType);
+            Object soundType = BlockBehaviourProxy.BlockStateBaseProxy.INSTANCE.getSoundType(blockState);
+            Object soundEvent = SoundTypeProxy.INSTANCE.getFallSound(soundType);
             Object soundId = FastNMS.INSTANCE.field$SoundEvent$location(soundEvent);
             if (this.manager.isStepSoundMissing(soundId)) {
                 player.playSound(player.getLocation(), soundId.toString(), SoundCategory.BLOCKS, 0.15f, 1f);

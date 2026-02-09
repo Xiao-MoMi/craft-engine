@@ -16,6 +16,7 @@ public final class MinecraftPredicate implements Predicate<String> {
 
     @Override
     public boolean test(String expression) {
+        if (expression == null || expression.isEmpty()) return true;
         return compile(expression).test(this.context);
     }
 
@@ -40,9 +41,7 @@ public final class MinecraftPredicate implements Predicate<String> {
                     }
                     ops.push(token);
                 }
-                default -> {
-                    nodes.push(compileLeaf(token));
-                }
+                default -> nodes.push(compileLeaf(token));
             }
         }
         while (!ops.isEmpty()) {
@@ -77,7 +76,7 @@ public final class MinecraftPredicate implements Predicate<String> {
             case "max_version" -> new VersionCheck(param, false);
             case "version" -> new ExactVersionCheck(param);
             case "has_patch" -> new PatchCheck(param);
-            default -> ctx -> true;
+            default -> throw new IllegalArgumentException("Invalid predicate: " + token);
         };
     }
 

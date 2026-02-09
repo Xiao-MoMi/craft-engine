@@ -9,10 +9,15 @@ import net.momirealms.craftengine.core.block.entity.render.DynamicBlockEntityRen
 import net.momirealms.craftengine.core.entity.player.Player;
 import net.momirealms.craftengine.core.plugin.CraftEngine;
 import net.momirealms.craftengine.core.util.Direction;
+import net.momirealms.craftengine.core.util.VersionHelper;
 import net.momirealms.craftengine.core.world.BlockPos;
 import net.momirealms.craftengine.core.world.CEWorld;
 import net.momirealms.craftengine.core.world.Vec3i;
+import net.momirealms.craftengine.proxy.minecraft.network.protocol.game.ClientboundMapItemDataPacketProxy;
+import net.momirealms.craftengine.proxy.minecraft.network.protocol.game.ClientboundRemoveEntitiesPacketProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.entity.EntityProxy;
+import net.momirealms.craftengine.proxy.minecraft.world.item.MapItemProxy;
+import net.momirealms.craftengine.proxy.minecraft.world.level.saveddata.maps.MapItemSavedDataProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.phys.Vec3Proxy;
 import org.joml.Vector3f;
 
@@ -46,7 +51,7 @@ public class DynamicItemFrameRenderer implements DynamicBlockEntityRenderer {
                 this.blockEntity.behavior.glow ? MEntityTypes.GLOW_ITEM_FRAME : MEntityTypes.ITEM_FRAME,
                 direction.ordinal(), Vec3Proxy.ZERO, 0
         );
-        this.cachedDespawnPacket = FastNMS.INSTANCE.constructor$ClientboundRemoveEntitiesPacket(IntList.of(entityId));
+        this.cachedDespawnPacket = ClientboundRemoveEntitiesPacketProxy.INSTANCE.newInstance(IntList.of(entityId));
     }
 
     @Override
@@ -76,7 +81,11 @@ public class DynamicItemFrameRenderer implements DynamicBlockEntityRenderer {
         if (world == null) return;
         Object savedData = this.blockEntity.mapItemSavedData();
         if (savedData == null) {
-            savedData = FastNMS.INSTANCE.method$MapItem$getSavedData(mapId, world.world.serverWorld());
+            if (VersionHelper.isOrAbove1_20_5()) {
+                savedData = MapItemProxy.INSTANCE.getSavedData$0(mapId, world.world.serverWorld());
+            } else {
+                savedData = MapItemProxy.INSTANCE.getSavedData$1((Integer) mapId, world.world.serverWorld());
+            }
             if (savedData == null) return;
             this.blockEntity.setMapItemSavedData(savedData);
         }
@@ -85,11 +94,16 @@ public class DynamicItemFrameRenderer implements DynamicBlockEntityRenderer {
             Object received = receivedMapData.getIfPresent(savedData);
             if (received != null) return; // 节约带宽静态渲染
             receivedMapData.put(savedData, Boolean.TRUE); // 存入用于标记的单例对象
-            byte[] colors = FastNMS.INSTANCE.field$MapItemSavedData$colors(savedData);
-            Object patch = FastNMS.INSTANCE.constructor$MapItemSavedData$MapPatch(0, 0, 128, 128, colors);
-            byte scale = FastNMS.INSTANCE.field$MapItemSavedData$scale(savedData);
-            boolean locked = FastNMS.INSTANCE.field$MapItemSavedData$locked(savedData);
-            Object packet = FastNMS.INSTANCE.constructor$ClientboundMapItemDataPacket(mapId, scale, locked, null, patch);
+            byte[] colors = MapItemSavedDataProxy.INSTANCE.getColors(savedData);
+            Object patch = MapItemSavedDataProxy.MapPatchProxy.INSTANCE.newInstance(0, 0, 128, 128, colors);
+            byte scale = MapItemSavedDataProxy.INSTANCE.getScale(savedData);
+            boolean locked = MapItemSavedDataProxy.INSTANCE.getLocked(savedData);
+            Object packet;
+            if (VersionHelper.isOrAbove1_20_5()) {
+                packet = ClientboundMapItemDataPacketProxy.INSTANCE.newInstance$0(mapId, scale, locked, null, patch);
+            } else {
+                packet = ClientboundMapItemDataPacketProxy.INSTANCE.newInstance$1((Integer) mapId, scale, locked, null, patch);
+            }
             player.sendPacket(packet, false);
         } catch (Throwable e) {
             CraftEngine.instance().logger().warn("Cannot update map item for player " + player.name(), e);

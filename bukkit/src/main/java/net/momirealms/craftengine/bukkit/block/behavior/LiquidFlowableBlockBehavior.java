@@ -7,6 +7,7 @@ import net.momirealms.craftengine.core.block.UpdateOption;
 import net.momirealms.craftengine.core.block.behavior.BlockBehaviorFactory;
 import net.momirealms.craftengine.core.block.behavior.PlaceLiquidBlockBehavior;
 import net.momirealms.craftengine.core.world.WorldEvents;
+import net.momirealms.craftengine.proxy.minecraft.world.level.material.FluidStateProxy;
 
 import java.util.Map;
 import java.util.concurrent.Callable;
@@ -35,7 +36,7 @@ public class LiquidFlowableBlockBehavior extends BukkitBlockBehavior implements 
         } else {
             FastNMS.INSTANCE.method$Block$dropResources(blockState, level, pos);
         }
-        FastNMS.INSTANCE.method$LevelWriter$setBlock(level, pos, FastNMS.INSTANCE.method$FluidState$createLegacyBlock(fluidState), UpdateOption.UPDATE_ALL.flags());
+        FastNMS.INSTANCE.method$LevelWriter$setBlock(level, pos, FluidStateProxy.INSTANCE.createLegacyBlock(fluidState), UpdateOption.UPDATE_ALL.flags());
         return true;
     }
 

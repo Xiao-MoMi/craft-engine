@@ -3,7 +3,6 @@ package net.momirealms.craftengine.bukkit.plugin.command.feature;
 import net.kyori.adventure.text.Component;
 import net.momirealms.craftengine.bukkit.api.BukkitAdaptors;
 import net.momirealms.craftengine.bukkit.item.DataComponentTypes;
-import net.momirealms.craftengine.bukkit.nms.FastNMS;
 import net.momirealms.craftengine.bukkit.plugin.command.BukkitCommandFeature;
 import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.MSoundEvents;
 import net.momirealms.craftengine.bukkit.plugin.user.BukkitServerPlayer;
@@ -19,6 +18,8 @@ import net.momirealms.craftengine.core.plugin.locale.MessageConstants;
 import net.momirealms.craftengine.core.sound.SoundData;
 import net.momirealms.craftengine.core.util.Key;
 import net.momirealms.craftengine.core.util.VersionHelper;
+import net.momirealms.craftengine.proxy.minecraft.core.HolderProxy;
+import net.momirealms.craftengine.proxy.minecraft.network.protocol.game.ClientboundSoundPacketProxy;
 import net.momirealms.craftengine.proxy.minecraft.sounds.SoundSourceProxy;
 import org.bukkit.NamespacedKey;
 import org.bukkit.command.CommandSender;
@@ -43,7 +44,7 @@ import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 
 public class TotemAnimationCommand extends BukkitCommandFeature<CommandSender> {
-    public static final Object FIX_TOTEM_SOUND_PACKET = FastNMS.INSTANCE.constructor$ClientboundSoundPacket(FastNMS.INSTANCE.method$Holder$direct(MSoundEvents.TOTEM_USE), SoundSourceProxy.MUSIC, 0, Integer.MIN_VALUE, 0, 0, 0, 0);
+    public static final Object FIX_TOTEM_SOUND_PACKET = ClientboundSoundPacketProxy.INSTANCE.newInstance(HolderProxy.INSTANCE.direct(MSoundEvents.TOTEM_USE), SoundSourceProxy.MUSIC, 0, Integer.MIN_VALUE, 0, 0, 0, 0);
 
     public TotemAnimationCommand(CraftEngineCommandManager<CommandSender> commandManager, CraftEngine plugin) {
         super(commandManager, plugin);

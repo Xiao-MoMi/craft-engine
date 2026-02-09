@@ -18,15 +18,14 @@ import net.momirealms.craftengine.core.entity.player.InteractionHand;
 import net.momirealms.craftengine.core.entity.player.InteractionResult;
 import net.momirealms.craftengine.core.entity.player.Player;
 import net.momirealms.craftengine.core.registry.Holder;
-import net.momirealms.craftengine.core.util.Direction;
-import net.momirealms.craftengine.core.util.HorizontalDirection;
-import net.momirealms.craftengine.core.util.Key;
-import net.momirealms.craftengine.core.util.ResourceConfigUtils;
+import net.momirealms.craftengine.core.util.*;
 import net.momirealms.craftengine.core.world.BlockPos;
 import net.momirealms.craftengine.core.world.World;
 import net.momirealms.craftengine.core.world.context.BlockPlaceContext;
 import net.momirealms.craftengine.core.world.context.UseOnContext;
 import net.momirealms.craftengine.proxy.minecraft.core.DirectionProxy;
+import net.momirealms.craftengine.proxy.minecraft.world.InteractionResultProxy;
+import net.momirealms.craftengine.proxy.minecraft.world.item.LeadItemProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.level.block.FenceGateBlockProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.level.block.SupportTypeProxy;
 import org.bukkit.Location;
@@ -38,6 +37,7 @@ import java.util.concurrent.Callable;
 
 public class FenceBlockBehavior extends BukkitBlockBehavior implements IsPathFindableBlockBehavior {
     public static final BlockBehaviorFactory<FenceBlockBehavior> FACTORY = new Factory();
+    public static final Object InteractionResult$SUCCESS_SERVER = VersionHelper.isOrAbove1_21_2() ? InteractionResultProxy.INSTANCE.getSuccessServer() : InteractionResultProxy.INSTANCE.getSuccess();
     private final BooleanProperty northProperty;
     private final BooleanProperty eastProperty;
     private final BooleanProperty southProperty;
@@ -69,7 +69,7 @@ public class FenceBlockBehavior extends BukkitBlockBehavior implements IsPathFin
     public boolean connectsTo(BlockStateWrapper state, boolean isSideSolid, HorizontalDirection direction) {
         boolean isSameFence = this.isSameFence(state);
         boolean flag = FenceGateBlockProxy.CLASS.isInstance(BlockStateUtils.getBlockOwner(state.literalObject()))
-                ? FastNMS.INSTANCE.method$FenceGateBlock$connectsToDirection(state.literalObject(), DirectionUtils.toNMSDirection(direction.toDirection()))
+                ? FenceGateBlockProxy.INSTANCE.connectsToDirection(state.literalObject(), DirectionUtils.toNMSDirection(direction.toDirection()))
                 : FenceGateBlockBehavior.connectsToDirection(state, direction);
         return !isExceptionForConnection(state) && isSideSolid || isSameFence || flag;
     }
@@ -103,7 +103,8 @@ public class FenceBlockBehavior extends BukkitBlockBehavior implements IsPathFin
         if (!BukkitCraftEngine.instance().antiGriefProvider().test((org.bukkit.entity.Player) player.platformPlayer(), Flag.INTERACT, location)) {
             return InteractionResult.SUCCESS_AND_CANCEL;
         }
-        if (FastNMS.INSTANCE.method$LeadItem$bindPlayerMobs(player.serverPlayer(), context.getLevel().serverWorld(), LocationUtils.toBlockPos(pos))) {
+        Object interactionResult = LeadItemProxy.INSTANCE.bindPlayerMobs(player.serverPlayer(), context.getLevel().serverWorld(), LocationUtils.toBlockPos(pos));
+        if (interactionResult == InteractionResult$SUCCESS_SERVER) {
             player.swingHand(InteractionHand.MAIN_HAND);
             return InteractionResult.SUCCESS;
         }

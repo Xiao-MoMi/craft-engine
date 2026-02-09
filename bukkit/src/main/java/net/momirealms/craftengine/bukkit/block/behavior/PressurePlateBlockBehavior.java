@@ -21,6 +21,7 @@ import net.momirealms.craftengine.core.util.*;
 import net.momirealms.craftengine.core.world.World;
 import net.momirealms.craftengine.core.world.WorldEvents;
 import net.momirealms.craftengine.proxy.minecraft.core.DirectionProxy;
+import net.momirealms.craftengine.proxy.minecraft.world.entity.EntityProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.level.block.BasePressurePlateBlockProxy;
 import org.bukkit.GameEvent;
 import org.bukkit.block.Block;
@@ -121,7 +122,7 @@ public class PressurePlateBlockBehavior extends BukkitBlockBehavior {
         Object box = FastNMS.INSTANCE.method$AABB$move(BasePressurePlateBlockProxy.INSTANCE.getTouchAABB(), pos);
         return !FastNMS.INSTANCE.method$EntityGetter$getEntitiesOfClass(
                 level, clazz, box,
-                MEntitySelectors.NO_SPECTATORS.and(entity -> !FastNMS.INSTANCE.method$Entity$isIgnoringBlockTriggers(entity))
+                MEntitySelectors.NO_SPECTATORS.and(entity -> !EntityProxy.INSTANCE.isIgnoringBlockTriggers(entity))
         ).isEmpty() ? 15 : 0;
     }
 

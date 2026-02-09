@@ -16,7 +16,10 @@ import net.momirealms.craftengine.core.block.properties.Property;
 import net.momirealms.craftengine.core.util.*;
 import net.momirealms.craftengine.core.util.random.RandomUtils;
 import net.momirealms.craftengine.proxy.minecraft.core.DirectionProxy;
+import net.momirealms.craftengine.proxy.minecraft.world.level.block.state.BlockBehaviourProxy;
+import net.momirealms.craftengine.proxy.minecraft.world.level.block.state.StateHolderProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.level.block.state.properties.BlockStatePropertiesProxy;
+import net.momirealms.craftengine.proxy.minecraft.world.level.material.FluidStateProxy;
 
 import java.util.List;
 import java.util.Map;
@@ -71,15 +74,15 @@ public class BuddingBlockBehavior extends BukkitBlockBehavior {
             }
             BooleanProperty waterlogged = (BooleanProperty) customBlock.getProperty("waterlogged");
             if (waterlogged != null) {
-                newState = newState.with(waterlogged, FastNMS.INSTANCE.method$FluidState$getType(FastNMS.INSTANCE.field$BlockBehaviour$BlockStateBase$fluidState(blockState)) == MFluids.WATER);
+                newState = newState.with(waterlogged, FastNMS.INSTANCE.method$FluidState$getType(BlockBehaviourProxy.BlockStateBaseProxy.INSTANCE.getFluidState(blockState)) == MFluids.WATER);
             }
             FastNMS.INSTANCE.method$LevelWriter$setBlock(level, blockPos, newState.customBlockState().literalObject(), 3);
         } else if (blockId.namespace().equals("minecraft")) {
             Object block = FastNMS.INSTANCE.method$Registry$getValue(MBuiltInRegistries.BLOCK, FastNMS.INSTANCE.method$ResourceLocation$fromNamespaceAndPath("minecraft", blockId.value()));
             if (block == null) return;
             Object newState = FastNMS.INSTANCE.method$Block$defaultState(block);
-            newState = FastNMS.INSTANCE.method$StateHolder$trySetValue(newState, BlockStatePropertiesProxy.WATERLOGGED, FastNMS.INSTANCE.method$FluidState$getType(FastNMS.INSTANCE.field$BlockBehaviour$BlockStateBase$fluidState(blockState)) == MFluids.WATER);
-            newState = FastNMS.INSTANCE.method$StateHolder$trySetValue(newState, BlockStatePropertiesProxy.FACING, (Comparable<?>) nmsDirection);
+            newState = StateHolderProxy.INSTANCE.trySetValue(newState, BlockStatePropertiesProxy.WATERLOGGED, FastNMS.INSTANCE.method$FluidState$getType(BlockBehaviourProxy.BlockStateBaseProxy.INSTANCE.getFluidState(blockState)) == MFluids.WATER);
+            newState = StateHolderProxy.INSTANCE.trySetValue(newState, BlockStatePropertiesProxy.FACING, (Comparable<?>) nmsDirection);
             FastNMS.INSTANCE.method$LevelWriter$setBlock(level, blockPos, newState, 3);
         }
     }
@@ -87,7 +90,7 @@ public class BuddingBlockBehavior extends BukkitBlockBehavior {
     public static boolean canClusterGrowAtState(Object state) {
         return FastNMS.INSTANCE.method$BlockStateBase$isAir(state)
                 || FastNMS.INSTANCE.method$BlockStateBase$isBlock(state, MBlocks.WATER)
-                && FastNMS.INSTANCE.field$FluidState$amount(FastNMS.INSTANCE.field$BlockBehaviour$BlockStateBase$fluidState(state)) == 8;
+                && FluidStateProxy.INSTANCE.getAmount(BlockBehaviourProxy.BlockStateBaseProxy.INSTANCE.getFluidState(state)) == 8;
     }
 
     private static class Factory implements BlockBehaviorFactory<BuddingBlockBehavior> {

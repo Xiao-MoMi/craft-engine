@@ -13,4 +13,7 @@ public interface ComponentProxy {
 
     @MethodInvoker(name = "getString")
     String getString(Object target);
+
+    @MethodInvoker(name = "literal", isStatic = true)
+    Object literal(String text);
 }

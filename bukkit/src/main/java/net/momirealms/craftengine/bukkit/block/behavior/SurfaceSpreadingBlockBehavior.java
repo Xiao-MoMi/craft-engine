@@ -13,8 +13,13 @@ import net.momirealms.craftengine.core.util.LazyReference;
 import net.momirealms.craftengine.core.util.ResourceConfigUtils;
 import net.momirealms.craftengine.core.util.VersionHelper;
 import net.momirealms.craftengine.core.util.random.RandomUtils;
+import net.momirealms.craftengine.proxy.minecraft.core.BlockPosProxy;
 import net.momirealms.craftengine.proxy.minecraft.core.DirectionProxy;
+import net.momirealms.craftengine.proxy.minecraft.world.level.LevelReaderProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.level.block.SnowLayerBlockProxy;
+import net.momirealms.craftengine.proxy.minecraft.world.level.block.state.BlockBehaviourProxy;
+import net.momirealms.craftengine.proxy.minecraft.world.level.lighting.LightEngineProxy;
+import net.momirealms.craftengine.proxy.minecraft.world.level.material.FluidStateProxy;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Map;
@@ -43,62 +48,60 @@ public class SurfaceSpreadingBlockBehavior extends BukkitBlockBehavior {
             FastNMS.INSTANCE.method$LevelWriter$setBlock(level, pos, this.baseBlock.get(), 3);
             return;
         }
-        if (FastNMS.INSTANCE.method$LevelReader$getMaxLocalRawBrightness(level, FastNMS.INSTANCE.method$BlockPos$relative(pos, DirectionProxy.UP)) < this.requiredLight) return;
-
+        if (LevelReaderProxy.INSTANCE.getMaxLocalRawBrightness(level, FastNMS.INSTANCE.method$BlockPos$relative(pos, DirectionProxy.UP)) < this.requiredLight) {
+            return;
+        }
         for (int i = 0; i < 4; i++) {
-            Object blockPos = FastNMS.INSTANCE.method$BlockPos$offset(
-                pos, 
-                RandomUtils.generateRandomInt(-1, 2), 
-                RandomUtils.generateRandomInt(-3, 2), 
-                RandomUtils.generateRandomInt(-1, 2)
+            Object blockPos = BlockPosProxy.INSTANCE.offset(
+                    pos,
+                    RandomUtils.generateRandomInt(-1, 2),
+                    RandomUtils.generateRandomInt(-3, 2),
+                    RandomUtils.generateRandomInt(-1, 2)
             );
-            
-            if (FastNMS.INSTANCE.method$BlockStateBase$isBlock(
-                FastNMS.INSTANCE.method$BlockGetter$getBlockState(level, blockPos), 
-                FastNMS.INSTANCE.method$BlockState$getBlock(this.baseBlock.get())
-            ) && canPropagate(state, level, blockPos)) {
-                
-                ImmutableBlockState newState = this.block().defaultState();
-                
-                if (this.snowyProperty != null) {
-                    boolean hasSnow = FastNMS.INSTANCE.method$BlockStateBase$isBlock(
-                        FastNMS.INSTANCE.method$BlockGetter$getBlockState(level, 
-                            FastNMS.INSTANCE.method$BlockPos$relative(blockPos, DirectionProxy.UP)), 
+            boolean isTargetBlock = FastNMS.INSTANCE.method$BlockStateBase$isBlock(
+                    FastNMS.INSTANCE.method$BlockGetter$getBlockState(level, blockPos),
+                    FastNMS.INSTANCE.method$BlockState$getBlock(this.baseBlock.get())
+            );
+            if (!isTargetBlock || !canPropagate(state, level, blockPos)) continue;
+            ImmutableBlockState newState = this.block().defaultState();
+            if (this.snowyProperty != null) {
+                boolean hasSnow = FastNMS.INSTANCE.method$BlockStateBase$isBlock(
+                        FastNMS.INSTANCE.method$BlockGetter$getBlockState(
+                                level, FastNMS.INSTANCE.method$BlockPos$relative(blockPos, DirectionProxy.UP)
+                        ),
                         MBlocks.SNOW
-                    );
-                    newState = newState.with(this.snowyProperty, hasSnow);
-                }
-                
-                FastNMS.INSTANCE.method$LevelWriter$setBlock(level, blockPos, newState.customBlockState().literalObject(), UpdateOption.UPDATE_ALL.flags());
+                );
+                newState = newState.with(this.snowyProperty, hasSnow);
             }
+            FastNMS.INSTANCE.method$LevelWriter$setBlock(level, blockPos, newState.customBlockState().literalObject(), UpdateOption.UPDATE_ALL.flags());
         }
     }
 
     private static boolean canBeGrass(Object state, Object level, Object pos) {
         Object blockPos = FastNMS.INSTANCE.method$BlockPos$relative(pos, DirectionProxy.UP);
         Object blockState = FastNMS.INSTANCE.method$BlockGetter$getBlockState(level, blockPos);
-        if (FastNMS.INSTANCE.method$BlockStateBase$isBlock(blockState, MBlocks.SNOW) && ((Integer) FastNMS.INSTANCE.method$StateHolder$getValue(blockState, SnowLayerBlockProxy.INSTANCE.getLayersProperty())) == 1) return true;
-        else if (FastNMS.INSTANCE.field$FluidState$amount(FastNMS.INSTANCE.field$BlockBehaviour$BlockStateBase$fluidState(blockState)) == 8) return false;
-        else {
-            return FastNMS.INSTANCE.method$LightEngine$getLightBlockInto(
-                    VersionHelper.isOrAbove1_21_2() ? null : level,
-                    state,
-                    VersionHelper.isOrAbove1_21_2() ? null : pos,
-                    blockState,
-                    VersionHelper.isOrAbove1_21_2() ? null : blockPos,
-                    DirectionProxy.UP,
-                    FastNMS.INSTANCE.method$BlockBehaviour$BlockStateBase$getLightBlock(
-                            blockState,
-                            VersionHelper.isOrAbove1_21_2() ? null : level,
-                            VersionHelper.isOrAbove1_21_2() ? null : pos
-                    )
-            ) < 15;
+        if (FastNMS.INSTANCE.method$BlockStateBase$isBlock(blockState, MBlocks.SNOW) && ((Integer) FastNMS.INSTANCE.method$StateHolder$getValue(blockState, SnowLayerBlockProxy.INSTANCE.getLayersProperty())) == 1) {
+            return true;
+        } else if (FluidStateProxy.INSTANCE.getAmount(BlockBehaviourProxy.BlockStateBaseProxy.INSTANCE.getFluidState(blockState)) == 8) {
+            return false;
+        } else {
+            if (VersionHelper.isOrAbove1_21_2()) {
+                return LightEngineProxy.INSTANCE.getLightBlockInto(
+                        state, blockState, DirectionProxy.UP,
+                        BlockBehaviourProxy.BlockStateBaseProxy.INSTANCE.getLightBlock$1(blockState)
+                ) < 15;
+            } else {
+                return LightEngineProxy.INSTANCE.getLightBlockInto(
+                        level, state, pos, blockState, blockPos, DirectionProxy.UP,
+                        BlockBehaviourProxy.BlockStateBaseProxy.INSTANCE.getLightBlock(blockState, level, pos)
+                ) < 15;
+            }
         }
     }
 
     private static boolean canPropagate(Object state, Object level, Object pos) {
         Object blockPos = FastNMS.INSTANCE.method$BlockPos$relative(pos, DirectionProxy.UP);
-        return canBeGrass(state, level, pos) && !FastNMS.INSTANCE.method$FluidState$is(FastNMS.INSTANCE.method$BlockGetter$getFluidState(level, blockPos), MTagKeys.Fluid$WATER);
+        return canBeGrass(state, level, pos) && !FluidStateProxy.INSTANCE.is(FastNMS.INSTANCE.method$BlockGetter$getFluidState(level, blockPos), MTagKeys.Fluid$WATER);
     }
 
     private static class Factory implements BlockBehaviorFactory<SurfaceSpreadingBlockBehavior> {

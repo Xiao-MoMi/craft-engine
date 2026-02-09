@@ -19,4 +19,7 @@ public interface LevelChunkSectionProxy {
 
     @FieldSetter(name = "states")
     void setStates(Object target, Object states);
+
+    @MethodInvoker(name = "hasOnlyAir")
+    boolean hasOnlyAir(Object target);
 }

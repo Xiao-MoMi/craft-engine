@@ -222,7 +222,7 @@ public class ComponentItemWrapper implements ItemWrapper<ItemStack> {
             }
             return;
         }
-        FastNMS.INSTANCE.method$ItemStack$hurtAndBreak(
+        ItemStackUtils.hurtAndBreak(
                 this.handle,
                 amount,
                 player.serverPlayer(),

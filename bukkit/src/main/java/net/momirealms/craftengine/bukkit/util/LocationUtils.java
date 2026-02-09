@@ -5,6 +5,7 @@ import net.momirealms.craftengine.bukkit.nms.FastNMS;
 import net.momirealms.craftengine.core.world.BlockPos;
 import net.momirealms.craftengine.core.world.Vec3d;
 import net.momirealms.craftengine.core.world.WorldPosition;
+import net.momirealms.craftengine.proxy.minecraft.world.phys.Vec3Proxy;
 import org.bukkit.Location;
 import org.bukkit.World;
 import org.jetbrains.annotations.NotNull;
@@ -22,7 +23,7 @@ public final class LocationUtils {
     }
 
     public static Object toVec(Vec3d vec) {
-        return FastNMS.INSTANCE.constructor$Vec3(vec.x, vec.y, vec.z);
+        return Vec3Proxy.INSTANCE.newInstance(vec.x, vec.y, vec.z);
     }
 
     public static Vec3d toVec3d(Location loc) {

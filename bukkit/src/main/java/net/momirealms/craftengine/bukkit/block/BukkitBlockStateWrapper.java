@@ -10,6 +10,7 @@ import net.momirealms.craftengine.core.block.AbstractBlockStateWrapper;
 import net.momirealms.craftengine.core.util.Key;
 import net.momirealms.craftengine.core.world.BlockPos;
 import net.momirealms.craftengine.core.world.WorldAccessor;
+import net.momirealms.craftengine.proxy.minecraft.world.level.block.state.BlockBehaviourProxy;
 
 public abstract class BukkitBlockStateWrapper extends AbstractBlockStateWrapper {
 
@@ -39,7 +40,7 @@ public abstract class BukkitBlockStateWrapper extends AbstractBlockStateWrapper 
 
     @Override
     public Key fluidState() {
-        Object fluid = FastNMS.INSTANCE.method$FluidState$getType(FastNMS.INSTANCE.field$BlockBehaviour$BlockStateBase$fluidState(super.blockState));
+        Object fluid = FastNMS.INSTANCE.method$FluidState$getType(BlockBehaviourProxy.BlockStateBaseProxy.INSTANCE.getFluidState(super.blockState));
         return KeyUtils.identifierToKey(FastNMS.INSTANCE.method$Registry$getKey(MRegistries.FLUID, fluid));
     }
 

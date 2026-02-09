@@ -13,7 +13,10 @@ import net.momirealms.craftengine.core.plugin.CraftEngine;
 import net.momirealms.craftengine.core.util.QuaternionUtils;
 import net.momirealms.craftengine.core.util.VersionHelper;
 import net.momirealms.craftengine.core.world.WorldPosition;
+import net.momirealms.craftengine.proxy.minecraft.network.protocol.game.ClientboundRemoveEntitiesPacketProxy;
+import net.momirealms.craftengine.proxy.minecraft.network.protocol.game.ClientboundUpdateAttributesPacketProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.entity.EntityProxy;
+import net.momirealms.craftengine.proxy.minecraft.world.entity.ai.attributes.AttributeInstanceProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.phys.Vec3Proxy;
 import org.joml.Quaternionf;
 import org.joml.Vector3f;
@@ -76,15 +79,15 @@ public final class ShulkerFurnitureHitbox extends AbstractFurnitureHitBox {
             }
         }
         if (VersionHelper.isOrAbove1_20_5() && config.scale() != 1) {
-            Object attributeIns = FastNMS.INSTANCE.constructor$AttributeInstance(MAttributeHolders.SCALE, (Consumer<?>) (o) -> {});
-            FastNMS.INSTANCE.method$AttributeInstance$setBaseValue(attributeIns, config.scale());
-            packets.add(FastNMS.INSTANCE.constructor$ClientboundUpdateAttributesPacket(this.entityIds[1], Collections.singletonList(attributeIns)));
+            Object attributeIns = AttributeInstanceProxy.INSTANCE.newInstance$0(MAttributeHolders.SCALE, $ -> {});
+            AttributeInstanceProxy.INSTANCE.setBaseValue(attributeIns, config.scale());
+            packets.add(ClientboundUpdateAttributesPacketProxy.INSTANCE.newInstance(this.entityIds[1], Collections.singletonList(attributeIns)));
         }
         config.spawner().accept(entityIds, position.world(), x, y, z, yaw, offset, packets::add, colliders::add, parts::add);
         this.parts = parts;
         this.colliders = colliders;
         this.spawnPacket = FastNMS.INSTANCE.constructor$ClientboundBundlePacket(packets);
-        this.despawnPacket = FastNMS.INSTANCE.constructor$ClientboundRemoveEntitiesPacket(new IntArrayList(entityIds));
+        this.despawnPacket = ClientboundRemoveEntitiesPacketProxy.INSTANCE.newInstance(new IntArrayList(entityIds));
     }
 
     @Override

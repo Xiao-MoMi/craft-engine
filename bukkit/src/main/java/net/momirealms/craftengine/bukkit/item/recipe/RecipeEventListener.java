@@ -7,7 +7,6 @@ import net.momirealms.craftengine.bukkit.item.BukkitItemManager;
 import net.momirealms.craftengine.bukkit.item.DataComponentTypes;
 import net.momirealms.craftengine.bukkit.nms.FastNMS;
 import net.momirealms.craftengine.bukkit.plugin.BukkitCraftEngine;
-import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.CoreReflections;
 import net.momirealms.craftengine.bukkit.plugin.user.BukkitServerPlayer;
 import net.momirealms.craftengine.bukkit.util.*;
 import net.momirealms.craftengine.core.entity.player.InteractionHand;
@@ -31,6 +30,7 @@ import net.momirealms.craftengine.proxy.bukkit.craftbukkit.inventory.CraftComple
 import net.momirealms.craftengine.proxy.bukkit.craftbukkit.inventory.CraftInventoryAnvilProxy;
 import net.momirealms.craftengine.proxy.bukkit.craftbukkit.inventory.CraftInventoryViewProxy;
 import net.momirealms.craftengine.proxy.minecraft.network.chat.ComponentProxy;
+import net.momirealms.craftengine.proxy.minecraft.world.ContainerProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.inventory.AbstractContainerMenuProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.item.crafting.ArmorDyeRecipeProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.item.crafting.FireworkStarFadeRecipeProxy;
@@ -690,7 +690,7 @@ public class RecipeEventListener implements Listener {
                 inventory.setResult(ceRecipe.assemble(null, ItemBuildContext.of(serverPlayer)));
             }
             // 先取一次
-            Object itemMoved = FastNMS.INSTANCE.method$AbstractContainerMenu$quickMoveStack(craftingMenu, mcPlayer, 0 /* result slot */);
+            Object itemMoved = AbstractContainerMenuProxy.INSTANCE.quickMoveStack(craftingMenu, mcPlayer, 0 /* result slot */);
             if (FastNMS.INSTANCE.method$ItemStack$isEmpty(itemMoved)) {
                 // 发现取了个寂寞，根本没地方放，给他复原成视觉结果
                 inventory.setResult(visualResultOrReal);
@@ -717,7 +717,7 @@ public class RecipeEventListener implements Listener {
                 }
 
                 // 连续获取
-                itemMoved = FastNMS.INSTANCE.method$AbstractContainerMenu$quickMoveStack(craftingMenu, mcPlayer, 0 /* result slot */);
+                itemMoved = AbstractContainerMenuProxy.INSTANCE.quickMoveStack(craftingMenu, mcPlayer, 0 /* result slot */);
                 if (FastNMS.INSTANCE.method$ItemStack$isEmpty(itemMoved)) {
                     // 发现取了个寂寞，根本没地方放，给他复原成视觉结果
                     inventory.setResult(visualResultOrReal);
@@ -773,7 +773,7 @@ public class RecipeEventListener implements Listener {
     @Nullable
     private Key getCurrentCraftingRecipeId(CraftingInventory inventory) {
         Object craftContainer = FastNMS.INSTANCE.method$CraftInventory$getInventory(inventory);
-        Object recipeHolderOrRecipe = FastNMS.INSTANCE.method$CraftingContainer$getCurrentRecipe(craftContainer);
+        Object recipeHolderOrRecipe = ContainerProxy.INSTANCE.getCurrentRecipe(craftContainer);
         if (recipeHolderOrRecipe == null) return null;
         if (VersionHelper.isOrAbove1_21_2()) {
             return KeyUtils.identifierToKey(FastNMS.INSTANCE.field$ResourceKey$location(FastNMS.INSTANCE.field$RecipeHolder$id(recipeHolderOrRecipe)));
@@ -932,7 +932,7 @@ public class RecipeEventListener implements Listener {
                     inventory.setResult(ceRecipe.assemble(getSmithingInput(inventory), ItemBuildContext.of(serverPlayer)));
                 }
                 // 先取一次
-                Object itemMoved = FastNMS.INSTANCE.method$AbstractContainerMenu$quickMoveStack(smithingMenu, mcPlayer, 3 /* result slot */);
+                Object itemMoved = AbstractContainerMenuProxy.INSTANCE.quickMoveStack(smithingMenu, mcPlayer, 3 /* result slot */);
                 if (FastNMS.INSTANCE.method$ItemStack$isEmpty(itemMoved)) {
                     // 发现取了个寂寞，根本没地方放，给他复原成视觉结果
                     inventory.setResult(visualResultOrReal);
@@ -964,7 +964,7 @@ public class RecipeEventListener implements Listener {
                     }
 
                     // 连续获取
-                    itemMoved = FastNMS.INSTANCE.method$AbstractContainerMenu$quickMoveStack(smithingMenu, mcPlayer, 3 /* result slot */);
+                    itemMoved = AbstractContainerMenuProxy.INSTANCE.quickMoveStack(smithingMenu, mcPlayer, 3 /* result slot */);
                     if (FastNMS.INSTANCE.method$ItemStack$isEmpty(itemMoved)) {
                         // 发现取了个寂寞，根本没地方放，给他复原成视觉结果
                         inventory.setResult(visualResultOrReal);
@@ -1062,7 +1062,7 @@ public class RecipeEventListener implements Listener {
                 Object smithingMenu = FastNMS.INSTANCE.field$Player$containerMenu(mcPlayer);
 
                 // 先取一次
-                Object itemMoved = FastNMS.INSTANCE.method$AbstractContainerMenu$quickMoveStack(smithingMenu, mcPlayer, 3 /* result slot */);
+                Object itemMoved = AbstractContainerMenuProxy.INSTANCE.quickMoveStack(smithingMenu, mcPlayer, 3 /* result slot */);
                 if (FastNMS.INSTANCE.method$ItemStack$isEmpty(itemMoved)) {
                     // 发现取了个寂寞，根本没地方放
                     return;
@@ -1081,7 +1081,7 @@ public class RecipeEventListener implements Listener {
                         break;
                     }
                     // 连续获取
-                    itemMoved = FastNMS.INSTANCE.method$AbstractContainerMenu$quickMoveStack(smithingMenu, mcPlayer, 3 /* result slot */);
+                    itemMoved = AbstractContainerMenuProxy.INSTANCE.quickMoveStack(smithingMenu, mcPlayer, 3 /* result slot */);
                     if (FastNMS.INSTANCE.method$ItemStack$isEmpty(itemMoved)) {
                         // 发现取了个寂寞，根本没地方放
                         break;

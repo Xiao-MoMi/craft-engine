@@ -1,5 +1,6 @@
 package net.momirealms.craftengine.bukkit.plugin.network.handler;
 
+import com.google.common.collect.ImmutableList;
 import net.kyori.adventure.text.Component;
 import net.momirealms.craftengine.bukkit.entity.data.BaseEntityData;
 import net.momirealms.craftengine.bukkit.entity.data.ItemEntityData;
@@ -23,6 +24,8 @@ import net.momirealms.craftengine.core.util.AdventureHelper;
 import net.momirealms.craftengine.core.util.ArrayUtils;
 import net.momirealms.craftengine.core.util.FriendlyByteBuf;
 import net.momirealms.craftengine.core.util.LegacyChatFormatter;
+import net.momirealms.craftengine.proxy.minecraft.network.protocol.game.ClientboundSetPlayerTeamPacketProxy;
+import net.momirealms.craftengine.proxy.minecraft.world.entity.EntityProxy;
 import org.bukkit.inventory.ItemStack;
 
 import java.util.List;
@@ -96,8 +99,8 @@ public class ItemPacketHandler implements EntityPacketHandler {
             }
         }
         if (glowColor != null) {
-            Object teamByColor = BukkitTeamManager.instance().getTeamByColor(glowColor);
-            if (teamByColor != null) {
+            String teamName = BukkitTeamManager.instance().getTeamNameByColor(glowColor);
+            if (teamName != null) {
                 changed = true;
                 outer: {
                     for (int i = 0; i < packedItems.size(); i++) {
@@ -115,7 +118,7 @@ public class ItemPacketHandler implements EntityPacketHandler {
                 Object entityLookup = FastNMS.INSTANCE.method$ServerLevel$getEntityLookup(user.clientSideWorld().serverWorld());
                 Object entity = FastNMS.INSTANCE.method$EntityLookup$get(entityLookup, id);
                 if (entity != null) {
-                    user.sendPacket(FastNMS.INSTANCE.method$ClientboundSetPlayerTeamPacket$createMultiplePlayerPacket(teamByColor, List.of(FastNMS.INSTANCE.method$Entity$getUUID(entity).toString()), true), false);
+                    user.sendPacket(ClientboundSetPlayerTeamPacketProxy.INSTANCE.newInstance(teamName, 3, Optional.empty(), ImmutableList.of(EntityProxy.INSTANCE.getUUID(entity).toString())), false);
                 }
             }
         }

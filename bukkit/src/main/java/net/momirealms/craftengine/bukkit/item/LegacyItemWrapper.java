@@ -184,7 +184,7 @@ public class LegacyItemWrapper implements ItemWrapper<ItemStack> {
             }
             return;
         }
-        FastNMS.INSTANCE.method$ItemStack$hurtAndBreak(
+        ItemStackUtils.hurtAndBreak(
                 this.nmsStack,
                 amount,
                 player.serverPlayer(),

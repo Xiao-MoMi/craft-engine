@@ -20,7 +20,6 @@ import net.momirealms.craftengine.bukkit.plugin.BukkitCraftEngine;
 import net.momirealms.craftengine.bukkit.plugin.gui.CraftEngineGUIHolder;
 import net.momirealms.craftengine.bukkit.plugin.network.payload.DiscardedPayload;
 import net.momirealms.craftengine.bukkit.plugin.network.payload.UnknownPayload;
-import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.CoreReflections;
 import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.MAttributeHolders;
 import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.MMobEffects;
 import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.NetworkReflections;
@@ -56,10 +55,18 @@ import net.momirealms.craftengine.core.world.*;
 import net.momirealms.craftengine.core.world.World;
 import net.momirealms.craftengine.core.world.chunk.client.ClientChunk;
 import net.momirealms.craftengine.core.world.collision.AABB;
+import net.momirealms.craftengine.proxy.minecraft.network.protocol.game.ClientboundUpdateAttributesPacketProxy;
+import net.momirealms.craftengine.proxy.minecraft.network.syncher.SynchedEntityDataProxy;
 import net.momirealms.craftengine.proxy.minecraft.server.level.ServerPlayerGameModeProxy;
 import net.momirealms.craftengine.proxy.minecraft.server.level.ServerPlayerProxy;
+import net.momirealms.craftengine.proxy.minecraft.world.entity.EntityProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.entity.LivingEntityProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.entity.ai.attributes.AttributeModifierProxy;
+import net.momirealms.craftengine.proxy.minecraft.world.entity.player.InventoryProxy;
+import net.momirealms.craftengine.proxy.minecraft.world.entity.player.PlayerProxy;
+import net.momirealms.craftengine.proxy.minecraft.world.inventory.InventoryMenuProxy;
+import net.momirealms.craftengine.proxy.minecraft.world.level.block.SoundTypeProxy;
+import net.momirealms.craftengine.proxy.minecraft.world.level.block.state.BlockBehaviourProxy;
 import org.bukkit.*;
 import org.bukkit.attribute.Attribute;
 import org.bukkit.attribute.AttributeInstance;
@@ -628,8 +635,8 @@ public class BukkitServerPlayer extends Player {
             Location unsureEyeLocation = bukkitPlayer.getEyeLocation();
             Entity vehicle = bukkitPlayer.getVehicle();
             if (vehicle != null) {
-                Object mountPos = FastNMS.INSTANCE.method$Entity$getPassengerRidingPosition(FastNMS.INSTANCE.method$CraftEntity$getHandle(vehicle), serverPlayer);
-                unsureEyeLocation.set(FastNMS.INSTANCE.field$Vec3$x(mountPos), FastNMS.INSTANCE.field$Vec3$y(mountPos) + bukkitPlayer.getEyeHeight(), FastNMS.INSTANCE.field$Vec3$z(mountPos));
+                Vec3d mountPos = EntityUtils.getPassengerRidingPosition(vehicle, bukkitPlayer);
+                unsureEyeLocation.set(mountPos.x, mountPos.y + bukkitPlayer.getEyeHeight(), mountPos.z);
             }
             this.eyeLocation = unsureEyeLocation;
         }
@@ -848,7 +855,7 @@ public class BukkitServerPlayer extends Player {
                 if (VersionHelper.isOrAbove1_20_5()) {
                     Object serverPlayer = serverPlayer();
                     Object attributeInstance = LivingEntityProxy.INSTANCE.getAttribute(serverPlayer, MAttributeHolders.BLOCK_BREAK_SPEED);
-                    sendPacket(FastNMS.INSTANCE.constructor$ClientboundUpdateAttributesPacket(entityId(), Lists.newArrayList(attributeInstance)), true);
+                    sendPacket(ClientboundUpdateAttributesPacketProxy.INSTANCE.newInstance(entityId(), Lists.newArrayList(attributeInstance)), true);
                 } else {
                     resetEffect(MMobEffects.MINING_FATIGUE);
                     resetEffect(MMobEffects.HASTE);
@@ -967,8 +974,8 @@ public class BukkitServerPlayer extends Player {
         if (currentTick - this.lastHitBlockTime > 3) {
             // 手上物品不是debug棒
             if (!BukkitItemUtils.isDebugStick(item)) {
-                Object soundType = FastNMS.INSTANCE.method$BlockBehaviour$BlockStateBase$getSoundType(destroyedState);
-                Object soundEvent = FastNMS.INSTANCE.field$SoundType$hitSound(soundType);
+                Object soundType = BlockBehaviourProxy.BlockStateBaseProxy.INSTANCE.getSoundType(destroyedState);
+                Object soundEvent = SoundTypeProxy.INSTANCE.getHitSound(soundType);
                 Object soundId = FastNMS.INSTANCE.field$SoundEvent$location(soundEvent);
                 player.playSound(location, soundId.toString(), SoundCategory.BLOCKS, 0.5F, 0.5F);
             }
@@ -1421,18 +1428,17 @@ public class BukkitServerPlayer extends Player {
 
     @Override
     public Object entityData() {
-        return FastNMS.INSTANCE.field$Entity$entityData(serverEntity());
+        return EntityProxy.INSTANCE.getEntityData(serverEntity());
     }
 
-    @SuppressWarnings("unchecked")
     @Override
     public <T> T getEntityData(EntityData<T> data) {
-        return (T) FastNMS.INSTANCE.method$SynchedEntityData$get(entityData(), data.entityDataAccessor());
+        return SynchedEntityDataProxy.INSTANCE.get(entityData(), data.entityDataAccessor());
     }
 
     @Override
     public <T> void setEntityData(EntityData<T> data, T value, boolean force) {
-        FastNMS.INSTANCE.method$SynchedEntityData$set(entityData(), data.entityDataAccessor(), value, force);
+        SynchedEntityDataProxy.INSTANCE.set(entityData(), data.entityDataAccessor(), value, force);
     }
 
     @Override
@@ -1580,9 +1586,9 @@ public class BukkitServerPlayer extends Player {
     public int clearOrCountMatchingInventoryItems(Predicate<Item<?>> predicate, int count) {
         Predicate<Object> nmsPredicate = nmsStack -> predicate.test(this.plugin.itemManager().wrap(ItemStackUtils.asCraftMirror(nmsStack)));
         Object inventory = FastNMS.INSTANCE.method$Player$getInventory(serverPlayer());
-        Object inventoryMenu = FastNMS.INSTANCE.field$Player$inventoryMenu(serverPlayer());
-        Object craftSlots = FastNMS.INSTANCE.method$InventoryMenu$getCraftSlots(inventoryMenu);
-        return FastNMS.INSTANCE.method$Inventory$clearOrCountMatchingItems(inventory, nmsPredicate, count, craftSlots);
+        Object inventoryMenu = PlayerProxy.INSTANCE.getInventoryMenu(serverPlayer());
+        Object craftSlots = InventoryMenuProxy.INSTANCE.getCraftSlots(inventoryMenu);
+        return InventoryProxy.INSTANCE.clearOrCountMatchingItems(inventory, nmsPredicate, count, craftSlots);
     }
 
     @Override
@@ -1634,8 +1640,8 @@ public class BukkitServerPlayer extends Player {
         Location eyeLocation = player.getEyeLocation();
         Entity vehicle = player.getVehicle();
         if (vehicle != null) {
-            Object mountPos = FastNMS.INSTANCE.method$Entity$getPassengerRidingPosition(FastNMS.INSTANCE.method$CraftEntity$getHandle(vehicle), serverPlayer());
-            eyeLocation.set(FastNMS.INSTANCE.field$Vec3$x(mountPos), FastNMS.INSTANCE.field$Vec3$y(mountPos) + player.getEyeHeight(), FastNMS.INSTANCE.field$Vec3$z(mountPos));
+            Vec3d mountPos = EntityUtils.getPassengerRidingPosition(vehicle, player);
+            eyeLocation.set(mountPos.x, mountPos.y + player.getEyeHeight(), mountPos.z);
         }
         return eyeLocation;
     }
@@ -1644,8 +1650,8 @@ public class BukkitServerPlayer extends Player {
         org.bukkit.entity.Player player = platformPlayer();
         Entity vehicle = player.getVehicle();
         if (vehicle != null) {
-            Object mountPos = FastNMS.INSTANCE.method$Entity$getPassengerRidingPosition(FastNMS.INSTANCE.method$CraftEntity$getHandle(vehicle), serverPlayer());
-            return new Vec3d(FastNMS.INSTANCE.field$Vec3$x(mountPos), FastNMS.INSTANCE.field$Vec3$y(mountPos) + player.getEyeHeight(), FastNMS.INSTANCE.field$Vec3$z(mountPos));
+            Vec3d mountPos = EntityUtils.getPassengerRidingPosition(vehicle, player);
+            return new Vec3d(mountPos.x, mountPos.y + player.getEyeHeight(), mountPos.z);
         } else {
             Location location = player.getLocation();
             return new Vec3d(location.getX(), location.getY() + player.getEyeHeight(), location.getZ());

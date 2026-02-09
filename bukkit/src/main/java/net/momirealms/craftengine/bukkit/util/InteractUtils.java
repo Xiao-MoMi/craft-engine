@@ -26,6 +26,10 @@ import net.momirealms.craftengine.core.world.BlockHitResult;
 import net.momirealms.craftengine.core.world.BlockPos;
 import net.momirealms.craftengine.core.world.context.BlockPlaceContext;
 import net.momirealms.craftengine.proxy.minecraft.world.InteractionHandProxy;
+import net.momirealms.craftengine.proxy.minecraft.world.item.BlockItemProxy;
+import net.momirealms.craftengine.proxy.minecraft.world.item.context.BlockPlaceContextProxy;
+import net.momirealms.craftengine.proxy.minecraft.world.level.block.BlockProxy;
+import net.momirealms.craftengine.proxy.minecraft.world.phys.BlockHitResultProxy;
 import org.bukkit.DyeColor;
 import org.bukkit.GameMode;
 import org.bukkit.Registry;
@@ -1084,13 +1088,13 @@ public final class InteractUtils {
 
     public static boolean canPlaceBlock(BlockPlaceContext context) {
         Object item = FastNMS.INSTANCE.method$ItemStack$getItem(context.getItem().getLiteralObject());
-        Object block = FastNMS.INSTANCE.method$BlockItem$getBlock(item);
-        Object stateToPlace = FastNMS.INSTANCE.method$Block$getStateForPlacement(block, toNMSBlockPlaceContext(context));
+        Object block = BlockItemProxy.INSTANCE.getBlock(item);
+        Object stateToPlace = BlockProxy.INSTANCE.getStateForPlacement(block, toNMSBlockPlaceContext(context));
         return FastNMS.INSTANCE.method$BlockStateBase$canSurvive(stateToPlace, context.getLevel().serverWorld(), LocationUtils.toBlockPos(context.getClickedPos()));
     }
 
     private static Object toNMSHitResult(BlockHitResult result) {
-        return FastNMS.INSTANCE.constructor$BlockHitResult(
+        return BlockHitResultProxy.INSTANCE.newInstance(
                 LocationUtils.toVec(result.location()),
                 DirectionUtils.toNMSDirection(result.direction()),
                 LocationUtils.toBlockPos(result.blockPos()),
@@ -1099,7 +1103,7 @@ public final class InteractUtils {
     }
 
     private static Object toNMSBlockPlaceContext(BlockPlaceContext context) {
-        return FastNMS.INSTANCE.constructor$BlockPlaceContext(
+        return BlockPlaceContextProxy.INSTANCE.newInstance(
                 context.getLevel().serverWorld(),
                 Optional.ofNullable(context.getPlayer()).map(net.momirealms.craftengine.core.entity.player.Player::serverPlayer).orElse(null),
                 context.getHand() == InteractionHand.MAIN_HAND ? InteractionHandProxy.MAIN_HAND : InteractionHandProxy.OFF_HAND,

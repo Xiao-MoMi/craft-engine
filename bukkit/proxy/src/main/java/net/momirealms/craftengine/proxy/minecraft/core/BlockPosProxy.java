@@ -10,4 +10,7 @@ public interface BlockPosProxy extends Vec3iProxy {
 
     @MethodInvoker(name = "mutable")
     Object mutable(Object target);
+
+    @MethodInvoker(name = "offset")
+    Object offset(Object target, int x, int y, int z);
 }

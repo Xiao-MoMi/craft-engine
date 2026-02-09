@@ -14,6 +14,8 @@ import net.momirealms.craftengine.core.plugin.context.NetworkTextReplaceContext;
 import net.momirealms.craftengine.core.plugin.text.component.ComponentProvider;
 import net.momirealms.craftengine.core.util.AdventureHelper;
 import net.momirealms.craftengine.core.util.VersionHelper;
+import net.momirealms.craftengine.proxy.minecraft.world.item.component.BundleContentsProxy;
+import net.momirealms.craftengine.proxy.minecraft.world.item.component.ItemContainerContentsProxy;
 import net.momirealms.sparrow.nbt.CompoundTag;
 import net.momirealms.sparrow.nbt.ListTag;
 import net.momirealms.sparrow.nbt.StringTag;
@@ -39,7 +41,7 @@ public final class ModernNetworkItemHandler implements NetworkItemHandler<ItemSt
             Object bundleContents = wrapped.getExactComponent(DataComponentTypes.BUNDLE_CONTENTS);
             List<Object> newItems = new ArrayList<>();
             boolean changed = false;
-            for (Object previousItem : FastNMS.INSTANCE.method$BundleContents$items(bundleContents)) {
+            for (Object previousItem : BundleContentsProxy.INSTANCE.getItems(bundleContents)) {
                 Optional<ItemStack> itemStack = BukkitItemManager.instance().c2s(FastNMS.INSTANCE.method$CraftItemStack$asCraftMirror(previousItem));
                 if (itemStack.isPresent()) {
                     newItems.add(FastNMS.INSTANCE.field$CraftItemStack$handle(itemStack.get()));
@@ -49,7 +51,7 @@ public final class ModernNetworkItemHandler implements NetworkItemHandler<ItemSt
                 }
             }
             if (changed) {
-                wrapped.setExactComponent(DataComponentTypes.BUNDLE_CONTENTS, FastNMS.INSTANCE.constructor$BundleContents(newItems));
+                wrapped.setExactComponent(DataComponentTypes.BUNDLE_CONTENTS, BundleContentsProxy.INSTANCE.newInstance(newItems));
                 forceReturn = true;
             }
         }
@@ -59,7 +61,7 @@ public final class ModernNetworkItemHandler implements NetworkItemHandler<ItemSt
             Object containerContents = wrapped.getExactComponent(DataComponentTypes.CONTAINER);
             List<Object> newItems = new ArrayList<>();
             boolean changed = false;
-            for (Object previousItem : FastNMS.INSTANCE.field$ItemContainerContents$items(containerContents)) {
+            for (Object previousItem : ItemContainerContentsProxy.INSTANCE.getItems(containerContents)) {
                 Optional<ItemStack> itemStack = BukkitItemManager.instance().c2s(FastNMS.INSTANCE.method$CraftItemStack$asCraftMirror(previousItem));
                 if (itemStack.isPresent()) {
                     newItems.add(FastNMS.INSTANCE.field$CraftItemStack$handle(itemStack.get()));
@@ -69,7 +71,7 @@ public final class ModernNetworkItemHandler implements NetworkItemHandler<ItemSt
                 }
             }
             if (changed) {
-                wrapped.setExactComponent(DataComponentTypes.CONTAINER, FastNMS.INSTANCE.method$ItemContainerContents$fromItems(newItems));
+                wrapped.setExactComponent(DataComponentTypes.CONTAINER, ItemContainerContentsProxy.INSTANCE.fromItems(newItems));
                 forceReturn = true;
             }
         }
@@ -119,7 +121,7 @@ public final class ModernNetworkItemHandler implements NetworkItemHandler<ItemSt
             Object bundleContents = wrapped.getExactComponent(DataComponentTypes.BUNDLE_CONTENTS);
             List<Object> newItems = new ArrayList<>();
             boolean changed = false;
-            for (Object previousItem : FastNMS.INSTANCE.method$BundleContents$items(bundleContents)) {
+            for (Object previousItem : BundleContentsProxy.INSTANCE.getItems(bundleContents)) {
                 ItemStack cloned = FastNMS.INSTANCE.method$CraftItemStack$asCraftMirror(previousItem).clone();
                 Optional<ItemStack> itemStack = BukkitItemManager.instance().s2c(cloned, player);
                 if (itemStack.isPresent()) {
@@ -130,7 +132,7 @@ public final class ModernNetworkItemHandler implements NetworkItemHandler<ItemSt
                 }
             }
             if (changed) {
-                wrapped.setExactComponent(DataComponentTypes.BUNDLE_CONTENTS, FastNMS.INSTANCE.constructor$BundleContents(newItems));
+                wrapped.setExactComponent(DataComponentTypes.BUNDLE_CONTENTS, BundleContentsProxy.INSTANCE.newInstance(newItems));
                 forceReturn = true;
             }
         }
@@ -139,7 +141,7 @@ public final class ModernNetworkItemHandler implements NetworkItemHandler<ItemSt
         if (wrapped.hasComponent(DataComponentTypes.CONTAINER)) {
             Object containerContents = wrapped.getExactComponent(DataComponentTypes.CONTAINER);
             List<Object> newItems = new ArrayList<>();
-            for (Object previousItem : FastNMS.INSTANCE.field$ItemContainerContents$items(containerContents)) {
+            for (Object previousItem : ItemContainerContentsProxy.INSTANCE.getItems(containerContents)) {
                 boolean changed = false;
                 ItemStack cloned = FastNMS.INSTANCE.method$CraftItemStack$asCraftMirror(previousItem).clone();
                 Optional<ItemStack> itemStack = BukkitItemManager.instance().s2c(cloned, player);
@@ -150,7 +152,7 @@ public final class ModernNetworkItemHandler implements NetworkItemHandler<ItemSt
                     newItems.add(FastNMS.INSTANCE.field$CraftItemStack$handle(cloned));
                 }
                 if (changed) {
-                    wrapped.setExactComponent(DataComponentTypes.CONTAINER, FastNMS.INSTANCE.method$ItemContainerContents$fromItems(newItems));
+                    wrapped.setExactComponent(DataComponentTypes.CONTAINER, ItemContainerContentsProxy.INSTANCE.fromItems(newItems));
                     forceReturn = true;
                 }
             }

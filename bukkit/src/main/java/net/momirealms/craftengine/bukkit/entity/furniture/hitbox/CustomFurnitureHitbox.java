@@ -12,7 +12,10 @@ import net.momirealms.craftengine.core.util.VersionHelper;
 import net.momirealms.craftengine.core.world.Vec3d;
 import net.momirealms.craftengine.core.world.WorldPosition;
 import net.momirealms.craftengine.core.world.collision.AABB;
+import net.momirealms.craftengine.proxy.minecraft.network.protocol.game.ClientboundRemoveEntitiesPacketProxy;
+import net.momirealms.craftengine.proxy.minecraft.network.protocol.game.ClientboundUpdateAttributesPacketProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.entity.EntityProxy;
+import net.momirealms.craftengine.proxy.minecraft.world.entity.ai.attributes.AttributeInstanceProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.phys.Vec3Proxy;
 
 import java.util.ArrayList;
@@ -44,13 +47,13 @@ public final class CustomFurnitureHitbox extends AbstractFurnitureHitBox {
         ));
         packets.add(FastNMS.INSTANCE.constructor$ClientboundSetEntityDataPacket(entityId, config.cachedValues()));
         if (VersionHelper.isOrAbove1_20_5()) {
-            Object attributeIns = FastNMS.INSTANCE.constructor$AttributeInstance(MAttributeHolders.SCALE, (Consumer<?>) (o) -> {});
-            FastNMS.INSTANCE.method$AttributeInstance$setBaseValue(attributeIns, config.scale());
-            packets.add(FastNMS.INSTANCE.constructor$ClientboundUpdateAttributesPacket(entityId, Collections.singletonList(attributeIns)));
+            Object attributeIns = AttributeInstanceProxy.INSTANCE.newInstance$0(MAttributeHolders.SCALE, $ -> {});
+            AttributeInstanceProxy.INSTANCE.setBaseValue(attributeIns, config.scale());
+            packets.add(ClientboundUpdateAttributesPacketProxy.INSTANCE.newInstance(entityId, Collections.singletonList(attributeIns)));
         }
         this.spawnPacket = FastNMS.INSTANCE.constructor$ClientboundBundlePacket(packets);
         this.part = new FurnitureHitboxPart(entityId, aabb, pos, false);
-        this.despawnPacket = FastNMS.INSTANCE.constructor$ClientboundRemoveEntitiesPacket(MiscUtils.init(new IntArrayList(), l -> l.add(entityId)));
+        this.despawnPacket = ClientboundRemoveEntitiesPacketProxy.INSTANCE.newInstance(MiscUtils.init(new IntArrayList(), l -> l.add(entityId)));
         this.entityId = entityId;
     }
 
