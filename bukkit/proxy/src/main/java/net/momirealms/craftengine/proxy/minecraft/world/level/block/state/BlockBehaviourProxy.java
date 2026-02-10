@@ -1,11 +1,16 @@
 package net.momirealms.craftengine.proxy.minecraft.world.level.block.state;
 
 import net.momirealms.craftengine.proxy.minecraft.core.BlockPosProxy;
+import net.momirealms.craftengine.proxy.minecraft.core.DirectionProxy;
 import net.momirealms.craftengine.proxy.minecraft.server.level.ServerLevelProxy;
+import net.momirealms.craftengine.proxy.minecraft.tags.TagKeyProxy;
 import net.momirealms.craftengine.proxy.minecraft.util.RandomSourceProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.level.BlockGetterProxy;
+import net.momirealms.craftengine.proxy.minecraft.world.level.LevelReaderProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.level.block.BlockProxy;
+import net.momirealms.craftengine.proxy.minecraft.world.level.block.SupportTypeProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.level.pathfinder.PathComputationTypeProxy;
+import net.momirealms.craftengine.proxy.minecraft.world.phys.shape.CollisionContextProxy;
 import net.momirealms.sparrow.reflection.proxy.ASMProxyFactory;
 import net.momirealms.sparrow.reflection.proxy.annotation.*;
 
@@ -273,13 +278,40 @@ public interface BlockBehaviourProxy {
         Object getSoundType(Object target);
 
         @MethodInvoker(name = "is")
-        boolean is(Object target, @Type(clazz = BlockProxy.class) Object block);
+        boolean is$0(Object target, @Type(clazz = BlockProxy.class) Object block);
 
         @MethodInvoker(name = "isPathfindable", activeIf = "min_version=1.20.5")
         boolean isPathfindable(Object target, @Type(clazz = PathComputationTypeProxy.class) Object type);
 
         @MethodInvoker(name = "isPathfindable", activeIf = "max_version=1.20.4")
         boolean isPathfindable(Object target, @Type(clazz = BlockGetterProxy.class) Object world, @Type(clazz = BlockPosProxy.class) Object pos, @Type(clazz = PathComputationTypeProxy.class) Object type);
+
+        @MethodInvoker(name = "isFaceSturdy")
+        boolean isFaceSturdy(Object target, @Type(clazz = BlockGetterProxy.class) Object world, @Type(clazz = BlockPosProxy.class) Object pos, @Type(clazz = DirectionProxy.class) Object face, @Type(clazz = SupportTypeProxy.class) Object supportType);
+
+        @MethodInvoker(name = "is")
+        boolean is$1(Object target, @Type(clazz = TagKeyProxy.class) Object tag);
+
+        @MethodInvoker(name = "isCollisionShapeFullBlock")
+        boolean isCollisionShapeFullBlock(Object target, @Type(clazz = BlockGetterProxy.class) Object world, @Type(clazz = BlockPosProxy.class) Object pos);
+
+        @MethodInvoker(name = "canSurvive")
+        boolean canSurvive(Object target, @Type(clazz = LevelReaderProxy.class) Object world, @Type(clazz = BlockPosProxy.class) Object pos);
+
+        @MethodInvoker(name = "isSignalSource")
+        boolean isSignalSource(Object target);
+
+        @MethodInvoker(name = "getShape")
+        Object getShape(Object target, @Type(clazz = BlockGetterProxy.class) Object world, @Type(clazz = BlockPosProxy.class) Object pos, @Type(clazz = CollisionContextProxy.class) Object context);
+
+        @MethodInvoker(name = "getCollisionShape")
+        Object getCollisionShape(Object target, @Type(clazz = BlockGetterProxy.class) Object world, @Type(clazz = BlockPosProxy.class) Object pos, @Type(clazz = CollisionContextProxy.class) Object context);
+
+        @MethodInvoker(name = "getBlockSupportShape")
+        Object getBlockSupportShape(Object target, @Type(clazz = BlockGetterProxy.class) Object world, @Type(clazz = BlockPosProxy.class) Object pos);
+
+        @MethodInvoker(name = "getBlock")
+        Object getBlock(Object target);
 
         @ReflectionProxy(name = "net.minecraft.world.level.block.state.BlockBehaviour$BlockStateBase$Cache")
         interface CacheProxy {

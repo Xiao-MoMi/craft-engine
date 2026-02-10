@@ -4,6 +4,7 @@ import net.momirealms.craftengine.bukkit.nms.FastNMS;
 import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.CoreReflections;
 import net.momirealms.craftengine.core.util.ReflectionUtils;
 import net.momirealms.craftengine.core.util.VersionHelper;
+import net.momirealms.craftengine.proxy.minecraft.network.syncher.SynchedEntityDataProxy;
 
 public class EntityDataValue {
     private static int internalID = 0;
@@ -106,6 +107,6 @@ public class EntityDataValue {
     }
 
     public static Object create(Object entityDataAccessor, Object value) {
-        return FastNMS.INSTANCE.method$SynchedEntityData$DataValue$create(entityDataAccessor, value);
+        return SynchedEntityDataProxy.DataValueProxy.INSTANCE.create(entityDataAccessor, value);
     }
 }

@@ -8,7 +8,9 @@ import net.momirealms.craftengine.core.entity.player.Player;
 import net.momirealms.craftengine.core.util.MiscUtils;
 import net.momirealms.craftengine.core.world.Vec3d;
 import net.momirealms.craftengine.core.world.WorldPosition;
+import net.momirealms.craftengine.proxy.minecraft.network.protocol.game.ClientboundAddEntityPacketProxy;
 import net.momirealms.craftengine.proxy.minecraft.network.protocol.game.ClientboundRemoveEntitiesPacketProxy;
+import net.momirealms.craftengine.proxy.minecraft.network.protocol.game.ClientboundSetEntityDataPacketProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.entity.EntityProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.phys.Vec3Proxy;
 import org.jetbrains.annotations.NotNull;
@@ -35,11 +37,11 @@ public final class ItemFurnitureElement extends AbstractFurnitureElement {
         this.entityId2 = EntityProxy.ENTITY_COUNTER.incrementAndGet();
         WorldPosition furniturePos = furniture.position();
         Vec3d position = Furniture.getRelativePosition(furniturePos, config.position);
-        this.cachedSpawnPacket1 = FastNMS.INSTANCE.constructor$ClientboundAddEntityPacket(
+        this.cachedSpawnPacket1 = ClientboundAddEntityPacketProxy.INSTANCE.newInstance(
                 entityId1, UUID.randomUUID(), position.x, position.y, position.z,
                 0, 0, MEntityTypes.ITEM_DISPLAY, 0, Vec3Proxy.ZERO, 0
         );
-        this.cachedSpawnPacket2 = FastNMS.INSTANCE.constructor$ClientboundAddEntityPacket(
+        this.cachedSpawnPacket2 = ClientboundAddEntityPacketProxy.INSTANCE.newInstance(
                 entityId2, UUID.randomUUID(), position.x, position.y, position.z,
                 0, 0, MEntityTypes.ITEM, 0, Vec3Proxy.ZERO, 0
         );
@@ -63,7 +65,7 @@ public final class ItemFurnitureElement extends AbstractFurnitureElement {
                 this.cachedSpawnPacket1,
                 this.cachedSpawnPacket2,
                 this.cachedRidePacket,
-                FastNMS.INSTANCE.constructor$ClientboundSetEntityDataPacket(this.entityId2, this.config.metadata.apply(player, this.furniture.dataAccessor.getColorSource())
+                ClientboundSetEntityDataPacketProxy.INSTANCE.newInstance(this.entityId2, this.config.metadata.apply(player, this.furniture.dataAccessor.getColorSource())
         )), false);
     }
 
@@ -74,7 +76,7 @@ public final class ItemFurnitureElement extends AbstractFurnitureElement {
 
     @Override
     public void refresh(Player player) {
-        player.sendPacket(FastNMS.INSTANCE.constructor$ClientboundSetEntityDataPacket(this.entityId2, this.config.metadata.apply(player, this.furniture.dataAccessor.getColorSource())), false);
+        player.sendPacket(ClientboundSetEntityDataPacketProxy.INSTANCE.newInstance(this.entityId2, this.config.metadata.apply(player, this.furniture.dataAccessor.getColorSource())), false);
     }
 
     @Override

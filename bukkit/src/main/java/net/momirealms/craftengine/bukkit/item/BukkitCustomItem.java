@@ -11,6 +11,7 @@ import net.momirealms.craftengine.core.plugin.context.EventTrigger;
 import net.momirealms.craftengine.core.plugin.context.function.Function;
 import net.momirealms.craftengine.core.util.Key;
 import net.momirealms.craftengine.core.util.UniqueKey;
+import net.momirealms.craftengine.proxy.minecraft.world.item.ItemStackProxy;
 import org.bukkit.inventory.ItemStack;
 
 import java.util.ArrayList;
@@ -35,7 +36,7 @@ public class BukkitCustomItem extends AbstractCustomItem<ItemStack> {
 
     @Override
     public ItemStack buildItemStack(ItemBuildContext context, int count) {
-        ItemStack item = FastNMS.INSTANCE.method$CraftItemStack$asCraftMirror(FastNMS.INSTANCE.constructor$ItemStack(this.item, count));
+        ItemStack item = FastNMS.INSTANCE.method$CraftItemStack$asCraftMirror(ItemStackProxy.INSTANCE.newInstance(this.item, count));
         Item<ItemStack> wrapped = BukkitCraftEngine.instance().itemManager().wrap(item);
         for (ItemProcessor modifier : this.modifiers) {
             modifier.apply(wrapped, context);
@@ -45,7 +46,7 @@ public class BukkitCustomItem extends AbstractCustomItem<ItemStack> {
 
     @Override
     public Item<ItemStack> buildItem(ItemBuildContext context, int count) {
-        ItemStack item = FastNMS.INSTANCE.method$CraftItemStack$asCraftMirror(FastNMS.INSTANCE.constructor$ItemStack(this.item, count));
+        ItemStack item = FastNMS.INSTANCE.method$CraftItemStack$asCraftMirror(ItemStackProxy.INSTANCE.newInstance(this.item, count));
         Item<ItemStack> wrapped = BukkitCraftEngine.instance().itemManager().wrap(item);
         for (ItemProcessor modifier : dataModifiers()) {
             modifier.apply(wrapped, context);

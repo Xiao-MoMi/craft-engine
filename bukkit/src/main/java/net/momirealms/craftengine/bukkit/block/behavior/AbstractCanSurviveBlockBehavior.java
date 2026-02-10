@@ -12,6 +12,7 @@ import net.momirealms.craftengine.core.world.Vec3d;
 import net.momirealms.craftengine.core.world.WorldEvents;
 import net.momirealms.craftengine.core.world.WorldPosition;
 import net.momirealms.craftengine.proxy.minecraft.world.level.LevelWriterProxy;
+import net.momirealms.craftengine.proxy.minecraft.world.level.block.state.BlockBehaviourProxy;
 
 import java.util.Optional;
 import java.util.concurrent.Callable;
@@ -70,7 +71,7 @@ public abstract class AbstractCanSurviveBlockBehavior extends BukkitBlockBehavio
             LevelUtils.scheduleBlockTick(level, blockPos, thisBlock, this.delay);
             return state;
         }
-        if (!FastNMS.INSTANCE.method$BlockStateBase$canSurvive(state, level, blockPos)) {
+        if (!BlockBehaviourProxy.BlockStateBaseProxy.INSTANCE.canSurvive(state, level, blockPos)) {
             FastNMS.INSTANCE.method$LevelAccessor$levelEvent(level, WorldEvents.BLOCK_BREAK_EFFECT, blockPos, optionalCustomState.get().customBlockState().registryId());
             return MBlocks.AIR$defaultState;
         }

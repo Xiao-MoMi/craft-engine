@@ -27,8 +27,10 @@ import net.momirealms.craftengine.core.world.BlockPos;
 import net.momirealms.craftengine.core.world.context.BlockPlaceContext;
 import net.momirealms.craftengine.proxy.minecraft.world.InteractionHandProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.item.BlockItemProxy;
+import net.momirealms.craftengine.proxy.minecraft.world.item.ItemStackProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.item.context.BlockPlaceContextProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.level.block.BlockProxy;
+import net.momirealms.craftengine.proxy.minecraft.world.level.block.state.BlockBehaviourProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.phys.BlockHitResultProxy;
 import org.bukkit.DyeColor;
 import org.bukkit.GameMode;
@@ -1087,10 +1089,10 @@ public final class InteractUtils {
     }
 
     public static boolean canPlaceBlock(BlockPlaceContext context) {
-        Object item = FastNMS.INSTANCE.method$ItemStack$getItem(context.getItem().getLiteralObject());
+        Object item = ItemStackProxy.INSTANCE.getItem(context.getItem().getLiteralObject());
         Object block = BlockItemProxy.INSTANCE.getBlock(item);
         Object stateToPlace = BlockProxy.INSTANCE.getStateForPlacement(block, toNMSBlockPlaceContext(context));
-        return FastNMS.INSTANCE.method$BlockStateBase$canSurvive(stateToPlace, context.getLevel().serverWorld(), LocationUtils.toBlockPos(context.getClickedPos()));
+        return BlockBehaviourProxy.BlockStateBaseProxy.INSTANCE.canSurvive(stateToPlace, context.getLevel().serverWorld(), LocationUtils.toBlockPos(context.getClickedPos()));
     }
 
     private static Object toNMSHitResult(BlockHitResult result) {

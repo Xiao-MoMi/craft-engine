@@ -23,8 +23,8 @@ public final class BlockStateProviderInjector {
     }
 
     private static void register(Key id, Object type) {
-        Object resourceLocation = KeyUtils.toIdentifier(id);
-        Object holder = RegistryProxy.INSTANCE.registerForHolder$1(MBuiltInRegistries.BLOCKSTATE_PROVIDER_TYPE, resourceLocation, type);
+        Object identifier = KeyUtils.toIdentifier(id);
+        Object holder = RegistryProxy.INSTANCE.registerForHolder$1(MBuiltInRegistries.BLOCKSTATE_PROVIDER_TYPE, identifier, type);
         HolderProxy.ReferenceProxy.INSTANCE.bindValue(holder, type);
         HolderProxy.ReferenceProxy.INSTANCE.setTags(holder, Set.of());
     }

@@ -18,12 +18,12 @@ public class DynamicBoundRegistry<T> extends AbstractMappedRegistry<T> {
         if (!key.registry().equals(this.key.location())) {
             throw new IllegalStateException(key + " is not allowed to be registered in " + this.key);
         }
-        if (this.byResourceLocation.containsKey(key.location())) {
+        if (this.byIdentifier.containsKey(key.location())) {
             throw new IllegalStateException("Adding duplicate key '" + key + "' to registry");
         } else {
             Holder.Reference<T> reference = this.byResourceKey.computeIfAbsent(key, k -> Holder.Reference.create(this, k));
             this.byResourceKey.put(key, reference);
-            this.byResourceLocation.put(key.location(), reference);
+            this.byIdentifier.put(key.location(), reference);
             this.byId.add(reference);
             return reference;
         }

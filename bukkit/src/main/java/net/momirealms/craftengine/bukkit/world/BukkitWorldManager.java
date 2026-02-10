@@ -440,8 +440,12 @@ public final class BukkitWorldManager implements WorldManager, Listener {
                     }
                 }
             }
-            if (unsaved /*&& !FastNMS.INSTANCE.method$LevelChunk$isUnsaved(levelChunk)*/) {
-                FastNMS.INSTANCE.method$LevelChunk$markUnsaved(levelChunk);
+            if (unsaved /*&& !LevelChunkProxy.INSTANCE.isUnsaved(levelChunk)*/) {
+                if (VersionHelper.isOrAbove1_21_2()) {
+                    LevelChunkProxy.INSTANCE.markUnsaved(levelChunk);
+                } else {
+                    LevelChunkProxy.INSTANCE.setUnsaved(levelChunk, true);
+                }
             }
             ceChunk.unload();
             ceChunk.deactivateAllBlockEntities();

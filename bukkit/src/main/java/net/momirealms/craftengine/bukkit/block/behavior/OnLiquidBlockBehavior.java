@@ -10,6 +10,9 @@ import net.momirealms.craftengine.core.block.ImmutableBlockState;
 import net.momirealms.craftengine.core.block.behavior.BlockBehaviorFactory;
 import net.momirealms.craftengine.core.util.MiscUtils;
 import net.momirealms.craftengine.core.util.ResourceConfigUtils;
+import net.momirealms.craftengine.proxy.minecraft.world.level.BlockGetterProxy;
+import net.momirealms.craftengine.proxy.minecraft.world.level.block.state.BlockBehaviourProxy;
+import net.momirealms.craftengine.proxy.minecraft.world.level.material.FluidStateProxy;
 
 import java.util.List;
 import java.util.Map;
@@ -64,15 +67,15 @@ public class OnLiquidBlockBehavior extends AbstractCanSurviveBlockBehavior {
                 return true;
             }
         }
-        Object fluidState = FastNMS.INSTANCE.method$BlockGetter$getFluidState(world, belowPos);
-        Object fluidStateAbove = FastNMS.INSTANCE.method$BlockGetter$getFluidState(world, LocationUtils.above(belowPos));
-        if (FastNMS.INSTANCE.method$FluidState$getType(fluidStateAbove) != MFluids.EMPTY) {
+        Object fluidState = BlockGetterProxy.INSTANCE.getFluidState(world, belowPos);
+        Object fluidStateAbove = BlockGetterProxy.INSTANCE.getFluidState(world, LocationUtils.above(belowPos));
+        if (FluidStateProxy.INSTANCE.getType(fluidStateAbove) != MFluids.EMPTY) {
             return false;
         }
-        if (this.onWater && (FastNMS.INSTANCE.method$FluidState$getType(fluidState) == MFluids.WATER || FastNMS.INSTANCE.method$BlockState$getBlock(belowState) == MBlocks.ICE)) {
+        if (this.onWater && (FluidStateProxy.INSTANCE.getType(fluidState) == MFluids.WATER || BlockBehaviourProxy.BlockStateBaseProxy.INSTANCE.getBlock(belowState) == MBlocks.ICE)) {
             return true;
         }
-        if (this.onLava && FastNMS.INSTANCE.method$FluidState$getType(fluidState) == MFluids.LAVA) {
+        if (this.onLava && FluidStateProxy.INSTANCE.getType(fluidState) == MFluids.LAVA) {
             return true;
         }
         return false;

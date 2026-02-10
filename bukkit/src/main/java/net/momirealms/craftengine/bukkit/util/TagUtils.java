@@ -3,9 +3,10 @@ package net.momirealms.craftengine.bukkit.util;
 import io.netty.buffer.Unpooled;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
 import it.unimi.dsi.fastutil.ints.IntList;
-import net.momirealms.craftengine.bukkit.nms.FastNMS;
 import net.momirealms.craftengine.core.util.FriendlyByteBuf;
 import net.momirealms.craftengine.core.util.MarkedHashMap;
+import net.momirealms.craftengine.proxy.minecraft.network.protocol.common.ClientboundUpdateTagsPacketProxy;
+import net.momirealms.craftengine.proxy.minecraft.tags.TagNetworkSerializationProxy;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -52,7 +53,7 @@ public final class TagUtils {
                 continue;
             }
             FriendlyByteBuf deserializeBuf = new FriendlyByteBuf(Unpooled.buffer());
-            FastNMS.INSTANCE.method$TagNetworkSerialization$NetworkPayload$write(payload.getValue(), deserializeBuf);
+            TagNetworkSerializationProxy.NetworkPayloadProxy.INSTANCE.write(payload.getValue(), PacketUtils.wrapByteBuf(deserializeBuf));
             Map<String, IntList> originalTags = deserializeBuf.readMap(
                     FriendlyByteBuf::readUtf,
                     FriendlyByteBuf::readIntIdList
@@ -80,9 +81,9 @@ public final class TagUtils {
                     FriendlyByteBuf::writeUtf,
                     FriendlyByteBuf::writeIntIdList
             );
-            Object mergedPayload = FastNMS.INSTANCE.method$TagNetworkSerialization$NetworkPayload$read(serializeBuf);
+            Object mergedPayload = TagNetworkSerializationProxy.NetworkPayloadProxy.INSTANCE.read(PacketUtils.wrapByteBuf(serializeBuf));
             modified.put(payload.getKey(), mergedPayload);
         }
-        return FastNMS.INSTANCE.constructor$ClientboundUpdateTagsPacket(modified);
+        return ClientboundUpdateTagsPacketProxy.INSTANCE.newInstance(modified);
     }
 }

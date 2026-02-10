@@ -13,7 +13,9 @@ import net.momirealms.craftengine.core.plugin.CraftEngine;
 import net.momirealms.craftengine.core.util.QuaternionUtils;
 import net.momirealms.craftengine.core.util.VersionHelper;
 import net.momirealms.craftengine.core.world.WorldPosition;
+import net.momirealms.craftengine.proxy.minecraft.network.protocol.game.ClientboundAddEntityPacketProxy;
 import net.momirealms.craftengine.proxy.minecraft.network.protocol.game.ClientboundRemoveEntitiesPacketProxy;
+import net.momirealms.craftengine.proxy.minecraft.network.protocol.game.ClientboundSetEntityDataPacketProxy;
 import net.momirealms.craftengine.proxy.minecraft.network.protocol.game.ClientboundUpdateAttributesPacketProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.entity.EntityProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.entity.ai.attributes.AttributeInstanceProxy;
@@ -55,15 +57,15 @@ public final class ShulkerFurnitureHitbox extends AbstractFurnitureHitBox {
         List<Collider> colliders = new ArrayList<>();
         List<FurnitureHitboxPart> parts = new ArrayList<>();
 
-        packets.add(FastNMS.INSTANCE.constructor$ClientboundAddEntityPacket(
+        packets.add(ClientboundAddEntityPacketProxy.INSTANCE.newInstance(
                 entityIds[0], UUID.randomUUID(), x + offset.x, originalY, z - offset.z, 0, yaw,
                 MEntityTypes.ITEM_DISPLAY, 0, Vec3Proxy.ZERO, 0
         ));
-        packets.add(FastNMS.INSTANCE.constructor$ClientboundAddEntityPacket(
+        packets.add(ClientboundAddEntityPacketProxy.INSTANCE.newInstance(
                 entityIds[1], UUID.randomUUID(), x + offset.x, processedY, z - offset.z, 0, yaw,
                 MEntityTypes.SHULKER, 0, Vec3Proxy.ZERO, 0
         ));
-        packets.add(FastNMS.INSTANCE.constructor$ClientboundSetEntityDataPacket(entityIds[1], config.cachedShulkerValues()));
+        packets.add(ClientboundSetEntityDataPacketProxy.INSTANCE.newInstance(entityIds[1], config.cachedShulkerValues()));
         packets.add(FastNMS.INSTANCE.constructor$ClientboundSetPassengersPacket(entityIds[0], entityIds[1]));
 
         // fix some special occasions

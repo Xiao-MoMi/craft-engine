@@ -9,6 +9,7 @@ import net.momirealms.craftengine.core.item.behavior.ItemBehaviorFactory;
 import net.momirealms.craftengine.core.pack.Pack;
 import net.momirealms.craftengine.core.plugin.locale.LocalizedResourceConfigException;
 import net.momirealms.craftengine.core.util.Key;
+import net.momirealms.craftengine.proxy.minecraft.world.level.BlockGetterProxy;
 import org.bukkit.Location;
 import org.bukkit.block.BlockState;
 
@@ -28,7 +29,7 @@ public final class DoubleHighBlockItemBehavior extends BlockItemBehavior {
         Object level = FastNMS.INSTANCE.field$CraftWorld$ServerLevel(location.getWorld());
         Object blockPos = FastNMS.INSTANCE.constructor$BlockPos(location.getBlockX(), location.getBlockY() + 1, location.getBlockZ());
         UpdateOption option = UpdateOption.builder().updateNeighbors().updateClients().updateImmediate().updateKnownShape().build();
-        Object fluidData = FastNMS.INSTANCE.method$BlockGetter$getFluidState(level, blockPos);
+        Object fluidData = BlockGetterProxy.INSTANCE.getFluidState(level, blockPos);
         Object stateToPlace = fluidData == MFluids.WATER$defaultState ? MBlocks.WATER$defaultState : MBlocks.AIR$defaultState;
         revertState.add(location.getWorld().getBlockAt(location.getBlockX(), location.getBlockY() + 1, location.getBlockZ()).getState());
         FastNMS.INSTANCE.method$LevelWriter$setBlock(level, blockPos, stateToPlace, option.flags());

@@ -11,6 +11,7 @@ import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.MRegistryOp
 import net.momirealms.craftengine.bukkit.util.EquipmentSlotUtils;
 import net.momirealms.craftengine.bukkit.util.ItemStackUtils;
 import net.momirealms.craftengine.bukkit.util.KeyUtils;
+import net.momirealms.craftengine.bukkit.util.RegistryUtils;
 import net.momirealms.craftengine.core.entity.EquipmentSlot;
 import net.momirealms.craftengine.core.entity.player.Player;
 import net.momirealms.craftengine.core.item.ItemType;
@@ -18,6 +19,12 @@ import net.momirealms.craftengine.core.item.ItemWrapper;
 import net.momirealms.craftengine.core.util.Key;
 import net.momirealms.craftengine.core.util.VersionHelper;
 import net.momirealms.craftengine.core.util.random.RandomUtils;
+import net.momirealms.craftengine.proxy.minecraft.core.RegistryProxy;
+import net.momirealms.craftengine.proxy.minecraft.core.component.DataComponentGetterProxy;
+import net.momirealms.craftengine.proxy.minecraft.core.component.DataComponentMapProxy;
+import net.momirealms.craftengine.proxy.minecraft.core.component.DataComponentTypeProxy;
+import net.momirealms.craftengine.proxy.minecraft.world.item.ItemProxy;
+import net.momirealms.craftengine.proxy.minecraft.world.item.ItemStackProxy;
 import net.momirealms.sparrow.nbt.Tag;
 import org.bukkit.enchantments.Enchantment;
 import org.bukkit.inventory.ItemStack;
@@ -49,21 +56,26 @@ public class ComponentItemWrapper implements ItemWrapper<ItemStack> {
 
     public ItemType itemType() {
         if (this.itemType == null) {
-            this.itemType = new ComponentItemType(FastNMS.INSTANCE.method$ItemStack$getItem(this.getLiteralObject()));
+            this.itemType = new ComponentItemType(ItemStackProxy.INSTANCE.getItem(this.getLiteralObject()));
         }
         return this.itemType;
     }
 
     public void removeComponent(Object type) {
-        FastNMS.INSTANCE.method$ItemStack$removeComponent(this.getLiteralObject(), ensureDataComponentType(type));
+        ItemStackProxy.INSTANCE.remove(this.getLiteralObject(), ensureDataComponentType(type));
     }
 
     public void resetComponent(Object type) {
-        Object item = FastNMS.INSTANCE.method$ItemStack$getItem(this.getLiteralObject());
-        Object componentMap = FastNMS.INSTANCE.method$Item$components(item);
+        Object item = ItemStackProxy.INSTANCE.getItem(this.getLiteralObject());
+        Object componentMap = ItemProxy.INSTANCE.components(item);
         Object componentType = ensureDataComponentType(type);
-        Object defaultComponent = FastNMS.INSTANCE.method$DataComponentMap$get(componentMap, componentType);
-        FastNMS.INSTANCE.method$ItemStack$setComponent(this.getLiteralObject(), componentType, defaultComponent);
+        Object defaultComponent;
+        if (VersionHelper.isOrAbove1_21_5()) {
+            defaultComponent = DataComponentGetterProxy.INSTANCE.get(componentMap, componentType);
+        } else {
+            defaultComponent = DataComponentMapProxy.INSTANCE.get(componentMap, componentType);
+        }
+        ItemStackProxy.INSTANCE.set(this.getLiteralObject(), componentType, defaultComponent);
     }
 
     public void setComponent(Object type, final Object value) {
@@ -79,7 +91,7 @@ public class ComponentItemWrapper implements ItemWrapper<ItemStack> {
     }
 
     public Object getExactComponent(Object type) {
-        return FastNMS.INSTANCE.method$ItemStack$getComponent(getLiteralObject(), ensureDataComponentType(type));
+        return ItemStackProxy.INSTANCE.get(getLiteralObject(), ensureDataComponentType(type));
     }
 
     @SuppressWarnings("unchecked")
@@ -99,38 +111,42 @@ public class ComponentItemWrapper implements ItemWrapper<ItemStack> {
         return getComponentInternal(type, MRegistryOps.SPARROW_NBT).map(Tag::copy);
     }
 
-    @SuppressWarnings({"rawtypes", "unchecked"})
     private <T> Optional<T> getComponentInternal(Object type, DynamicOps<T> ops) {
         Object componentType = ensureDataComponentType(type);
-        Codec codec = FastNMS.INSTANCE.method$DataComponentType$codec(componentType);
+        Codec<T> codec = DataComponentTypeProxy.INSTANCE.codec(componentType);
         try {
-            Object componentData = FastNMS.INSTANCE.method$ItemStack$getComponent(getLiteralObject(), componentType);
+            T componentData = ItemStackProxy.INSTANCE.get(getLiteralObject(), componentType);
             if (componentData == null) return Optional.empty();
-            DataResult<Object> result = codec.encodeStart(ops, componentData);
-            return (Optional<T>) result.result();
+            DataResult<T> result = codec.encodeStart(ops, componentData);
+            return result.result();
         } catch (Throwable t) {
             throw new RuntimeException("Cannot read component " + type.toString(), t);
         }
     }
 
     public boolean hasComponent(Object type) {
-        return FastNMS.INSTANCE.method$ItemStack$hasComponent(getLiteralObject(), ensureDataComponentType(type));
+        return ItemStackProxy.INSTANCE.has(getLiteralObject(), ensureDataComponentType(type));
     }
 
     public boolean hasNonDefaultComponent(Object type) {
         if (VersionHelper.isOrAbove1_21_4()) {
-            return FastNMS.INSTANCE.method$ItemStack$hasNonDefaultComponent(getLiteralObject(), ensureDataComponentType(type));
+            return ItemStackProxy.INSTANCE.hasNonDefault(getLiteralObject(), ensureDataComponentType(type));
         } else {
-            Object item = FastNMS.INSTANCE.method$ItemStack$getItem(this.getLiteralObject());
-            Object componentMap = FastNMS.INSTANCE.method$Item$components(item);
+            Object item = ItemStackProxy.INSTANCE.getItem(this.getLiteralObject());
+            Object componentMap = ItemProxy.INSTANCE.components(item);
             Object componentType = ensureDataComponentType(type);
-            Object defaultComponent = FastNMS.INSTANCE.method$DataComponentMap$get(componentMap, componentType);
+            Object defaultComponent;
+            if (VersionHelper.isOrAbove1_21_5()) {
+                defaultComponent = DataComponentGetterProxy.INSTANCE.get(componentMap, componentType);
+            } else {
+                defaultComponent = DataComponentMapProxy.INSTANCE.get(componentMap, componentType);
+            }
             return !Objects.equals(defaultComponent, getExactComponent(componentType));
         }
     }
 
     public void setExactComponent(Object type, final Object value) {
-        FastNMS.INSTANCE.method$ItemStack$setComponent(this.getLiteralObject(), ensureDataComponentType(type), value);
+        ItemStackProxy.INSTANCE.set(this.getLiteralObject(), ensureDataComponentType(type), value);
     }
 
     public void setJavaComponent(Object type, Object value) {
@@ -149,29 +165,28 @@ public class ComponentItemWrapper implements ItemWrapper<ItemStack> {
         setComponentInternal(type, MRegistryOps.SPARROW_NBT, value);
     }
 
-    @SuppressWarnings({"rawtypes", "unchecked"})
-    private void setComponentInternal(Object type, DynamicOps ops, Object value) {
+    private <T> void setComponentInternal(Object type, DynamicOps<T> ops, T value) {
         if (value == null) return;
         Object componentType = ensureDataComponentType(type);
         if (componentType == null) {
             return;
         }
-        Codec codec = FastNMS.INSTANCE.method$DataComponentType$codec(componentType);
+        Codec<T> codec = DataComponentTypeProxy.INSTANCE.codec(componentType);
         try {
-            DataResult<Object> result = codec.parse(ops, value);
+            DataResult<T> result = codec.parse(ops, value);
             if (result.isError()) {
                 throw new IllegalArgumentException(result.toString());
             }
-            result.result().ifPresent(it -> FastNMS.INSTANCE.method$ItemStack$setComponent(this.getLiteralObject(), componentType, it));
+            result.result().ifPresent(it -> ItemStackProxy.INSTANCE.set(this.getLiteralObject(), componentType, it));
         } catch (Throwable t) {
             throw new RuntimeException("Cannot parse component " + type.toString(), t);
         }
     }
 
     private Object ensureDataComponentType(Object type) {
-        if (!CoreReflections.clazz$DataComponentType.isInstance(type)) {
+        if (!DataComponentTypeProxy.CLASS.isInstance(type)) {
             Key key = Key.of(type.toString());
-            return FastNMS.INSTANCE.method$Registry$getValue(MBuiltInRegistries.DATA_COMPONENT_TYPE, KeyUtils.toIdentifier(key));
+            return RegistryUtils.getRegistryValue(MBuiltInRegistries.DATA_COMPONENT_TYPE, KeyUtils.toIdentifier(key));
         }
         return type;
     }

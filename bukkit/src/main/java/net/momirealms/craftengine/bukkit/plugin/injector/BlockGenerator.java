@@ -223,7 +223,7 @@ public final class BlockGenerator {
         field$CraftEngineBlock$shape.set(newBlockInstance, shapeHolder);
         Object stateDefinitionBuilder = StateDefinitionProxy.BuilderProxy.INSTANCE.newInstance(newBlockInstance);
         Object stateDefinition = StateDefinitionProxy.BuilderProxy.INSTANCE.create(stateDefinitionBuilder,
-                FastNMS.INSTANCE::method$Block$defaultState, BlockStateGenerator.instance$StateDefinition$Factory);
+                BlockProxy.INSTANCE::getDefaultBlockState, BlockStateGenerator.instance$StateDefinition$Factory);
         BlockProxy.INSTANCE.setStateDefinition(newBlockInstance, stateDefinition);
         BlockProxy.INSTANCE.setDefaultBlockState(newBlockInstance, StateDefinitionProxy.INSTANCE.getStates(stateDefinition).getFirst());
         return (DelegatingBlock) newBlockInstance;
@@ -231,8 +231,8 @@ public final class BlockGenerator {
 
     private static Object createEmptyBlockProperties(Key id) {
         Object blockProperties = BlockBehaviourProxy.PropertiesProxy.INSTANCE.of();
-        Object resourceLocation = KeyUtils.toIdentifier(id);
-        Object resourceKey = ResourceKeyProxy.INSTANCE.create(MRegistries.BLOCK, resourceLocation);
+        Object identifier = KeyUtils.toIdentifier(id);
+        Object resourceKey = ResourceKeyProxy.INSTANCE.create(MRegistries.BLOCK, identifier);
         if (VersionHelper.isOrAbove1_21_2()) {
             BlockBehaviourProxy.PropertiesProxy.INSTANCE.setId(blockProperties, resourceKey);
         }

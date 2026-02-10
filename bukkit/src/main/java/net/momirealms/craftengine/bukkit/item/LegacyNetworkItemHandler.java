@@ -17,6 +17,9 @@ import net.momirealms.craftengine.core.plugin.context.NetworkTextReplaceContext;
 import net.momirealms.craftengine.core.plugin.text.component.ComponentProvider;
 import net.momirealms.craftengine.core.util.AdventureHelper;
 import net.momirealms.craftengine.core.util.Pair;
+import net.momirealms.craftengine.proxy.minecraft.nbt.ByteTagProxy;
+import net.momirealms.craftengine.proxy.minecraft.nbt.CompoundTagProxy;
+import net.momirealms.craftengine.proxy.minecraft.nbt.ListTagProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.item.ItemStackProxy;
 import net.momirealms.sparrow.nbt.CompoundTag;
 import net.momirealms.sparrow.nbt.ListTag;
@@ -54,9 +57,9 @@ public final class LegacyNetworkItemHandler implements NetworkItemHandler<ItemSt
                 }
             }
             if (changed) {
-                Object listTag = FastNMS.INSTANCE.constructor$ListTag();
+                Object listTag = ListTagProxy.INSTANCE.newInstance();
                 for (Object newItem : newItems) {
-                    FastNMS.INSTANCE.method$ListTag$add(listTag, 0, ItemStackProxy.INSTANCE.save(newItem, FastNMS.INSTANCE.constructor$CompoundTag()));
+                    ListTagProxy.INSTANCE.addTag(listTag, 0, ItemStackProxy.INSTANCE.save(newItem, CompoundTagProxy.INSTANCE.newInstance()));
                 }
                 wrapped.setTag(listTag, "Items");
                 forceReturn = true;
@@ -66,14 +69,14 @@ public final class LegacyNetworkItemHandler implements NetworkItemHandler<ItemSt
         // 处理container
         Object containerContents = wrapped.getExactTag("BlockEntityTag");
         if (containerContents != null) {
-            Object itemTags = FastNMS.INSTANCE.method$CompoundTag$get(containerContents, "Items");
+            Object itemTags = CompoundTagProxy.INSTANCE.get(containerContents, "Items");
             if (itemTags != null) {
                 boolean changed = false;
                 List<Pair<Byte, Object>> newItems = new ArrayList<>();
                 for (Object tag : (Iterable<?>) itemTags) {
                     Object previousItem = ItemStackProxy.INSTANCE.of(tag);
                     Optional<ItemStack> itemStack = BukkitItemManager.instance().c2s(FastNMS.INSTANCE.method$CraftItemStack$asCraftMirror(previousItem));
-                    byte slot = FastNMS.INSTANCE.method$ByteTag$value(FastNMS.INSTANCE.method$CompoundTag$get(tag, "Slot"));
+                    byte slot = ByteTagProxy.INSTANCE.value(CompoundTagProxy.INSTANCE.get(tag, "Slot"));
                     if (itemStack.isPresent()) {
                         newItems.add(Pair.of(slot, FastNMS.INSTANCE.field$CraftItemStack$handle(itemStack.get())));
                         changed = true;
@@ -82,12 +85,12 @@ public final class LegacyNetworkItemHandler implements NetworkItemHandler<ItemSt
                     }
                 }
                 if (changed) {
-                    Object listTag = FastNMS.INSTANCE.constructor$ListTag();
+                    Object listTag = ListTagProxy.INSTANCE.newInstance();
                     for (Pair<Byte, Object> newItem : newItems) {
-                        Object newTag = ItemStackProxy.INSTANCE.save(newItem.right(), FastNMS.INSTANCE.constructor$CompoundTag());
-                        Object slotTag = FastNMS.INSTANCE.constructor$ByteTag(newItem.left());
-                        FastNMS.INSTANCE.method$CompoundTag$put(newTag, "Slot", slotTag);
-                        FastNMS.INSTANCE.method$ListTag$add(listTag, 0, newTag);
+                        Object newTag = ItemStackProxy.INSTANCE.save(newItem.right(), CompoundTagProxy.INSTANCE.newInstance());
+                        Object slotTag = ByteTagProxy.INSTANCE.valueOf(newItem.left());
+                        CompoundTagProxy.INSTANCE.put(newTag, "Slot", slotTag);
+                        ListTagProxy.INSTANCE.addTag(listTag, 0, newTag);
                     }
                     wrapped.setTag(listTag, "BlockEntityTag", "Items");
                     forceReturn = true;
@@ -98,7 +101,7 @@ public final class LegacyNetworkItemHandler implements NetworkItemHandler<ItemSt
         Optional<CustomItem<ItemStack>> optionalCustomItem = wrapped.getCustomItem();
         if (optionalCustomItem.isPresent()) {
             BukkitCustomItem customItem = (BukkitCustomItem) optionalCustomItem.get();
-            if (customItem.item() != FastNMS.INSTANCE.method$ItemStack$getItem(wrapped.getLiteralObject())) {
+            if (customItem.item() != ItemStackProxy.INSTANCE.getItem(wrapped.getLiteralObject())) {
                 wrapped = wrapped.unsafeTransmuteCopy(customItem.item(), wrapped.count());
                 forceReturn = true;
             }
@@ -140,9 +143,9 @@ public final class LegacyNetworkItemHandler implements NetworkItemHandler<ItemSt
                 }
             }
             if (changed) {
-                Object listTag = FastNMS.INSTANCE.constructor$ListTag();
+                Object listTag = ListTagProxy.INSTANCE.newInstance();
                 for (Object newItem : newItems) {
-                    FastNMS.INSTANCE.method$ListTag$add(listTag, 0, ItemStackProxy.INSTANCE.save(newItem, FastNMS.INSTANCE.constructor$CompoundTag()));
+                    ListTagProxy.INSTANCE.addTag(listTag, 0, ItemStackProxy.INSTANCE.save(newItem, CompoundTagProxy.INSTANCE.newInstance()));
                 }
                 wrapped.setTag(listTag, "Items");
                 forceReturn = true;
@@ -152,14 +155,14 @@ public final class LegacyNetworkItemHandler implements NetworkItemHandler<ItemSt
         // 处理container
         Object containerContents = wrapped.getExactTag("BlockEntityTag");
         if (containerContents != null) {
-            Object itemTags = FastNMS.INSTANCE.method$CompoundTag$get(containerContents, "Items");
+            Object itemTags = CompoundTagProxy.INSTANCE.get(containerContents, "Items");
             if (itemTags != null) {
                 boolean changed = false;
                 List<Pair<Byte, Object>> newItems = new ArrayList<>();
                 for (Object tag : (Iterable<?>) itemTags) {
                     Object previousItem = ItemStackProxy.INSTANCE.of(tag);
                     Optional<ItemStack> itemStack = BukkitItemManager.instance().s2c(FastNMS.INSTANCE.method$CraftItemStack$asCraftMirror(previousItem), player);
-                    byte slot = FastNMS.INSTANCE.method$ByteTag$value(FastNMS.INSTANCE.method$CompoundTag$get(tag, "Slot"));
+                    byte slot = ByteTagProxy.INSTANCE.value(CompoundTagProxy.INSTANCE.get(tag, "Slot"));
                     if (itemStack.isPresent()) {
                         newItems.add(Pair.of(slot, FastNMS.INSTANCE.field$CraftItemStack$handle(itemStack.get())));
                         changed = true;
@@ -168,12 +171,12 @@ public final class LegacyNetworkItemHandler implements NetworkItemHandler<ItemSt
                     }
                 }
                 if (changed) {
-                    Object listTag = FastNMS.INSTANCE.constructor$ListTag();
+                    Object listTag = ListTagProxy.INSTANCE.newInstance();
                     for (Pair<Byte, Object> newItem : newItems) {
-                        Object newTag = ItemStackProxy.INSTANCE.save(newItem.right(), FastNMS.INSTANCE.constructor$CompoundTag());
-                        Object slotTag = FastNMS.INSTANCE.constructor$ByteTag(newItem.left());
-                        FastNMS.INSTANCE.method$CompoundTag$put(newTag, "Slot", slotTag);
-                        FastNMS.INSTANCE.method$ListTag$add(listTag, 0, newTag);
+                        Object newTag = ItemStackProxy.INSTANCE.save(newItem.right(), CompoundTagProxy.INSTANCE.newInstance());
+                        Object slotTag = ByteTagProxy.INSTANCE.valueOf(newItem.left());
+                        CompoundTagProxy.INSTANCE.put(newTag, "Slot", slotTag);
+                        ListTagProxy.INSTANCE.addTag(listTag, 0, newTag);
                     }
                     wrapped.setTag(listTag, "BlockEntityTag", "Items");
                     forceReturn = true;
@@ -194,7 +197,7 @@ public final class LegacyNetworkItemHandler implements NetworkItemHandler<ItemSt
 
         // 应用 client-bound-material
         BukkitCustomItem customItem = (BukkitCustomItem) optionalCustomItem.get();
-        if (customItem.hasClientboundMaterial() && FastNMS.INSTANCE.method$ItemStack$getItem(wrapped.getLiteralObject()) != customItem.clientItem()) {
+        if (customItem.hasClientboundMaterial() && ItemStackProxy.INSTANCE.getItem(wrapped.getLiteralObject()) != customItem.clientItem()) {
             wrapped = wrapped.unsafeTransmuteCopy(customItem.clientItem(), wrapped.count());
             forceReturn = true;
         }

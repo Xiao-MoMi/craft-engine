@@ -56,7 +56,8 @@ import net.momirealms.craftengine.core.world.World;
 import net.momirealms.craftengine.core.world.chunk.client.ClientChunk;
 import net.momirealms.craftengine.core.world.collision.AABB;
 import net.momirealms.craftengine.proxy.minecraft.network.ConnectionProxy;
-import net.momirealms.craftengine.proxy.minecraft.network.protocol.game.ClientboundUpdateAttributesPacketProxy;
+import net.momirealms.craftengine.proxy.minecraft.network.FriendlyByteBufProxy;
+import net.momirealms.craftengine.proxy.minecraft.network.protocol.game.*;
 import net.momirealms.craftengine.proxy.minecraft.network.syncher.SynchedEntityDataProxy;
 import net.momirealms.craftengine.proxy.minecraft.server.MinecraftServerProxy;
 import net.momirealms.craftengine.proxy.minecraft.server.level.ServerPlayerGameModeProxy;
@@ -339,21 +340,21 @@ public class BukkitServerPlayer extends Player {
 
     @Override
     public void sendActionBar(Component text) {
-        Object packet = FastNMS.INSTANCE.constructor$ClientboundActionBarPacket(ComponentUtils.adventureToMinecraft(text));
+        Object packet = ClientboundSetActionBarTextPacketProxy.INSTANCE.newInstance(ComponentUtils.adventureToMinecraft(text));
         sendPacket(packet, false);
     }
 
     @Override
     public void sendTitle(Component title, Component subtitle, int fadeIn, int stay, int fadeOut) {
-        Object titlePacket = FastNMS.INSTANCE.constructor$ClientboundSetTitleTextPacket(ComponentUtils.adventureToMinecraft(title));
-        Object subtitlePacket = FastNMS.INSTANCE.constructor$ClientboundSetSubtitleTextPacket(ComponentUtils.adventureToMinecraft(subtitle));
-        Object timePacket = FastNMS.INSTANCE.constructor$ClientboundSetTitlesAnimationPacket(fadeIn, stay, fadeOut);
+        Object titlePacket = ClientboundSetTitleTextPacketProxy.INSTANCE.newInstance(ComponentUtils.adventureToMinecraft(title));
+        Object subtitlePacket = ClientboundSetSubtitleTextPacketProxy.INSTANCE.newInstance(ComponentUtils.adventureToMinecraft(subtitle));
+        Object timePacket = ClientboundSetTitlesAnimationPacketProxy.INSTANCE.newInstance(fadeIn, stay, fadeOut);
         sendPackets(List.of(titlePacket, subtitlePacket, timePacket), false);
     }
 
     @Override
     public void sendMessage(Component text, boolean overlay) {
-        Object packet = FastNMS.INSTANCE.constructor$ClientboundSystemChatPacket(ComponentUtils.adventureToMinecraft(text), overlay);
+        Object packet = ClientboundSystemChatPacketProxy.INSTANCE.newInstance(ComponentUtils.adventureToMinecraft(text), overlay);
         sendPacket(packet, false);
     }
 
@@ -516,18 +517,18 @@ public class BukkitServerPlayer extends Player {
     @Override
     public void sendCustomPayload(Key channelId, byte[] data) {
         try {
-            Object channelResourceLocation = KeyUtils.toIdentifier(channelId);
+            Object channelIdentifier = KeyUtils.toIdentifier(channelId);
             Object responsePacket;
             if (VersionHelper.isOrAbove1_20_2()) {
                 Object dataPayload;
                 if (VersionHelper.isOrAbove1_20_5()) {
-                    dataPayload = NetworkReflections.constructor$DiscardedPayload.newInstance(channelResourceLocation, DiscardedPayload.useNewMethod ? data : Unpooled.wrappedBuffer(data));
+                    dataPayload = NetworkReflections.constructor$DiscardedPayload.newInstance(channelIdentifier, DiscardedPayload.useNewMethod ? data : Unpooled.wrappedBuffer(data));
                 } else {
-                    dataPayload = NetworkReflections.constructor$ServerboundCustomPayloadPacket$UnknownPayload.newInstance(channelResourceLocation, UnknownPayload.isByteArray ? data : Unpooled.wrappedBuffer(data));
+                    dataPayload = NetworkReflections.constructor$ServerboundCustomPayloadPacket$UnknownPayload.newInstance(channelIdentifier, UnknownPayload.isByteArray ? data : Unpooled.wrappedBuffer(data));
                 }
                 responsePacket = NetworkReflections.constructor$ClientboundCustomPayloadPacket.newInstance(dataPayload);
             } else {
-                responsePacket = NetworkReflections.constructor$ClientboundCustomPayloadPacket.newInstance(channelResourceLocation, FastNMS.INSTANCE.constructor$FriendlyByteBuf(Unpooled.wrappedBuffer(data)));
+                responsePacket = NetworkReflections.constructor$ClientboundCustomPayloadPacket.newInstance(channelIdentifier, PacketUtils.wrapByteBuf(Unpooled.wrappedBuffer(data)));
             }
             this.sendPacket(responsePacket, true);
         } catch (Exception e) {

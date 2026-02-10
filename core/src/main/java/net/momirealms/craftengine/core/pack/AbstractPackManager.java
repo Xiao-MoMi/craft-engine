@@ -398,7 +398,7 @@ public abstract class AbstractPackManager implements PackManager {
                     if (namespace.charAt(0) == '.') {
                         continue;
                     }
-                    if (!ResourceLocation.isValidNamespace(namespace)) {
+                    if (!Identifier.isValidNamespace(namespace)) {
                         namespace = "minecraft";
                     }
                     Path metaFile = path.resolve("pack.yml");
@@ -1587,8 +1587,8 @@ public abstract class AbstractPackManager implements PackManager {
                                         JsonPrimitive filePrimitive = providerJO.getAsJsonPrimitive("file");
                                         if (filePrimitive == null) continue;
                                         String pngFile = filePrimitive.getAsString();
-                                        Key resourceLocation = Key.of(FileUtils.pathWithoutExtension(pngFile));
-                                        glyphToFonts.put(resourceLocation, fontName);
+                                        Key identifier = Key.of(FileUtils.pathWithoutExtension(pngFile));
+                                        glyphToFonts.put(identifier, fontName);
                                     }
                                 }
                                 return FileVisitResult.CONTINUE;
@@ -1615,7 +1615,7 @@ public abstract class AbstractPackManager implements PackManager {
                                     return FileVisitResult.CONTINUE;
                                 }
                                 Key item = Key.of(namespace, FileUtils.pathWithoutExtension(file.getFileName().toString()));
-                                collectItemModelsDeeply(itemJson, (resourceLocation) -> modelToItemDefinitions.put(resourceLocation, item));
+                                collectItemModelsDeeply(itemJson, (identifier) -> modelToItemDefinitions.put(identifier, item));
                                 return FileVisitResult.CONTINUE;
                             }
                         });
@@ -2738,17 +2738,17 @@ public abstract class AbstractPackManager implements PackManager {
     private Pair<Boolean, Boolean> processTrimBasedEquipment(TrimBasedEquipment trimBasedEquipment, Path generatedPackPath) {
         Key assetId = trimBasedEquipment.assetId();
 
-        Key humanoidResourceLocation = trimBasedEquipment.humanoid();
-        boolean hasLayer1 = humanoidResourceLocation != null;
-        Key humanoidLeggingsResourceLocation = trimBasedEquipment.humanoidLeggings();
-        boolean hasLayer2 = humanoidLeggingsResourceLocation != null;
+        Key humanoidIdentifier = trimBasedEquipment.humanoid();
+        boolean hasLayer1 = humanoidIdentifier != null;
+        Key humanoidLeggingsIdentifier = trimBasedEquipment.humanoidLeggings();
+        boolean hasLayer2 = humanoidLeggingsIdentifier != null;
 
         if (hasLayer1) {
             Path texture = generatedPackPath
                     .resolve("assets")
-                    .resolve(humanoidResourceLocation.namespace())
+                    .resolve(humanoidIdentifier.namespace())
                     .resolve("textures")
-                    .resolve(humanoidResourceLocation.value() + ".png");
+                    .resolve(humanoidIdentifier.value() + ".png");
             if (!Files.exists(texture) || !Files.isRegularFile(texture)) {
                 TranslationManager.instance().log("warning.config.resource_pack.generation.missing_equipment_texture", assetId.asString(), texture.toString());
                 return null;
@@ -2805,9 +2805,9 @@ public abstract class AbstractPackManager implements PackManager {
         if (hasLayer2) {
             Path texture = generatedPackPath
                     .resolve("assets")
-                    .resolve(humanoidLeggingsResourceLocation.namespace())
+                    .resolve(humanoidLeggingsIdentifier.namespace())
                     .resolve("textures")
-                    .resolve(humanoidLeggingsResourceLocation.value() + ".png");
+                    .resolve(humanoidLeggingsIdentifier.value() + ".png");
             if (!Files.exists(texture) && !Files.isRegularFile(texture)) {
                 TranslationManager.instance().log("warning.config.resource_pack.generation.missing_equipment_texture", assetId.asString(), texture.toString());
                 return null;

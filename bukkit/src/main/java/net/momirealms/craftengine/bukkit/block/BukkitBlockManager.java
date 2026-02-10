@@ -133,7 +133,7 @@ public final class BukkitBlockManager extends AbstractBlockManager {
         for (DelegatingBlock block : this.customBlocks) {
             block.behaviorDelegate().bindValue(EmptyBlockBehavior.INSTANCE);
             block.shapeDelegate().bindValue(BukkitBlockShape.STONE);
-            DelegatingBlockState state = (DelegatingBlockState) FastNMS.INSTANCE.method$Block$defaultState(block);
+            DelegatingBlockState state = (DelegatingBlockState) BlockProxy.INSTANCE.getDefaultBlockState(block);
             state.setBlockState(null);
         }
     }
@@ -383,12 +383,12 @@ public final class BukkitBlockManager extends AbstractBlockManager {
                     break;
                 }
                 this.customBlocks[i] = customBlock;
-                Object resourceLocation = KeyUtils.toIdentifier(customBlockId);
-                Object blockHolder = RegistryProxy.INSTANCE.registerForHolder$1(MBuiltInRegistries.BLOCK, resourceLocation, customBlock);
+                Object identifier = KeyUtils.toIdentifier(customBlockId);
+                Object blockHolder = RegistryProxy.INSTANCE.registerForHolder$1(MBuiltInRegistries.BLOCK, identifier, customBlock);
                 this.customBlockHolders[i] = blockHolder;
                 HolderProxy.ReferenceProxy.INSTANCE.bindValue(blockHolder, customBlock);
                 HolderProxy.ReferenceProxy.INSTANCE.setTags(blockHolder, Set.of());
-                DelegatingBlockState newBlockState = (DelegatingBlockState) FastNMS.INSTANCE.method$Block$defaultState(customBlock);
+                DelegatingBlockState newBlockState = (DelegatingBlockState) BlockProxy.INSTANCE.getDefaultBlockState(customBlock);
                 this.customBlockStates[i] = newBlockState;
                 IdMapperProxy.INSTANCE.add(BlockProxy.BLOCK_STATE_REGISTRY, newBlockState);
             }
@@ -406,7 +406,7 @@ public final class BukkitBlockManager extends AbstractBlockManager {
     }
 
     private void markVanillaNoteBlocks() {
-        Object block = FastNMS.INSTANCE.method$Registry$getValue(MBuiltInRegistries.BLOCK, KeyUtils.toIdentifier(BlockKeys.NOTE_BLOCK));
+        Object block = RegistryUtils.getRegistryValue(MBuiltInRegistries.BLOCK, KeyUtils.toIdentifier(BlockKeys.NOTE_BLOCK));
         Object stateDefinition = BlockProxy.INSTANCE.getStateDefinition(block);
         ImmutableList<Object> states = StateDefinitionProxy.INSTANCE.getStates(stateDefinition);
         CLIENT_SIDE_NOTE_BLOCKS.addAll(states);
@@ -417,7 +417,7 @@ public final class BukkitBlockManager extends AbstractBlockManager {
         if (!BlockStateUtils.isOcclude(blockState)) {
             return false;
         }
-        return FastNMS.INSTANCE.method$BlockStateBase$isCollisionShapeFullBlock(blockState, EmptyBlockGetterProxy.GETTER_INSTANCE, BLOCK_POS$ZERO);
+        return BlockBehaviourProxy.BlockStateBaseProxy.INSTANCE.isCollisionShapeFullBlock(blockState, EmptyBlockGetterProxy.GETTER_INSTANCE, BLOCK_POS$ZERO);
     }
 
     private void findViewBlockingVanillaBlocks() {
@@ -431,7 +431,7 @@ public final class BukkitBlockManager extends AbstractBlockManager {
 
     @Override
     protected void setVanillaBlockTags(Key id, List<String> tags) {
-        Object block = FastNMS.INSTANCE.method$Registry$getValue(MBuiltInRegistries.BLOCK, KeyUtils.toIdentifier(id));
+        Object block = RegistryUtils.getRegistryValue(MBuiltInRegistries.BLOCK, KeyUtils.toIdentifier(id));
         this.clientBoundTags.put(FastNMS.INSTANCE.method$IdMap$getId(MBuiltInRegistries.BLOCK, block).orElseThrow(() -> new IllegalStateException("Block " + id + " not found")), tags);
     }
 
@@ -495,7 +495,7 @@ public final class BukkitBlockManager extends AbstractBlockManager {
             return false;
         if (id.value().equals("air"))
             return true;
-        return FastNMS.INSTANCE.method$Registry$getValue(MBuiltInRegistries.BLOCK, KeyUtils.toIdentifier(id)) != MBlocks.AIR;
+        return RegistryUtils.getRegistryValue(MBuiltInRegistries.BLOCK, KeyUtils.toIdentifier(id)) != MBlocks.AIR;
     }
 
     public boolean isBurnable(Object blockState) {

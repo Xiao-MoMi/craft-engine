@@ -31,7 +31,7 @@ public class LiquidFlowableBlockBehavior extends BukkitBlockBehavior implements 
         Object pos = args[1];
         Object blockState = args[2];
         Object fluidState = args[3];
-        Object fluidType = FastNMS.INSTANCE.method$FluidState$getType(fluidState);
+        Object fluidType = FluidStateProxy.INSTANCE.getType(fluidState);
         if (fluidType == MFluids.LAVA || fluidType == MFluids.FLOWING_LAVA) {
             FastNMS.INSTANCE.method$LevelAccessor$levelEvent(level, WorldEvents.LAVA_CONVERTS_BLOCK, pos, 0);
         } else {

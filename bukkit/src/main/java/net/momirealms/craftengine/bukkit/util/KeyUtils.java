@@ -35,23 +35,4 @@ public final class KeyUtils {
     public static NamespacedKey toNamespacedKey(Key key) {
         return new NamespacedKey(key.namespace(), key.value());
     }
-
-    /*
-    todo 暂时保留兼容性后续请删除
-     */
-
-    @Deprecated(forRemoval = true)
-    public static Key resourceLocationToKey(Object identifier) {
-        return identifierToKey(identifier);
-    }
-
-    @Deprecated(forRemoval = true)
-    public static Object toResourceLocation(String namespace, String path) {
-        return toIdentifier(namespace, path);
-    }
-
-    @Deprecated(forRemoval = true)
-    public static Object toResourceLocation(Key key) {
-        return toIdentifier(key.namespace(), key.value());
-    }
 }

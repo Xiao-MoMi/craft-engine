@@ -3,7 +3,7 @@ package net.momirealms.craftengine.core.pack.model.definition;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
-import net.momirealms.craftengine.core.pack.ResourceLocation;
+import net.momirealms.craftengine.core.pack.Identifier;
 import net.momirealms.craftengine.core.pack.model.definition.tint.Tint;
 import net.momirealms.craftengine.core.pack.model.definition.tint.Tints;
 import net.momirealms.craftengine.core.pack.model.generation.ModelGeneration;
@@ -84,7 +84,7 @@ public final class BaseItemModel implements ItemModel {
         @Override
         public BaseItemModel create(Map<String, Object> arguments) {
             String modelPath = ResourceConfigUtils.requireNonEmptyStringOrThrow(arguments.get("path"), "warning.config.item.model.base.missing_path");
-            if (!ResourceLocation.isValid(modelPath)) {
+            if (!Identifier.isValid(modelPath)) {
                 throw new LocalizedResourceConfigException("warning.config.item.model.base.invalid_path", modelPath);
             }
             Map<String, Object> generation = MiscUtils.castToMap(arguments.get("generation"), true);

@@ -79,7 +79,7 @@ public class ClearItemCommand extends BukkitCommandFeature<CommandSender> {
                         Object inventory = PlayerProxy.INSTANCE.getInventory(serverPlayer);
                         Object inventoryMenu = PlayerProxy.INSTANCE.getInventoryMenu(serverPlayer);
                         totalCount += InventoryProxy.INSTANCE.clearOrCountMatchingItems(inventory, predicate, amount, InventoryMenuProxy.INSTANCE.getCraftSlots(inventoryMenu));
-                        AbstractContainerMenuProxy.INSTANCE.broadcastChanges(FastNMS.INSTANCE.field$Player$containerMenu(serverPlayer));
+                        AbstractContainerMenuProxy.INSTANCE.broadcastChanges(PlayerProxy.INSTANCE.getContainerMenu(serverPlayer));
                         InventoryMenuProxy.INSTANCE.slotsChanged(inventoryMenu, inventory);
                     }
                     if (totalCount == 0) {

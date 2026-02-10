@@ -7,6 +7,7 @@ import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.MRegistries
 import net.momirealms.craftengine.bukkit.util.BlockStateUtils;
 import net.momirealms.craftengine.bukkit.util.DirectionUtils;
 import net.momirealms.craftengine.bukkit.util.KeyUtils;
+import net.momirealms.craftengine.bukkit.util.RegistryUtils;
 import net.momirealms.craftengine.core.block.CustomBlock;
 import net.momirealms.craftengine.core.block.ImmutableBlockState;
 import net.momirealms.craftengine.core.block.UpdateOption;
@@ -20,7 +21,11 @@ import net.momirealms.craftengine.core.util.ResourceConfigUtils;
 import net.momirealms.craftengine.core.util.VersionHelper;
 import net.momirealms.craftengine.core.util.random.RandomUtils;
 import net.momirealms.craftengine.proxy.minecraft.core.DirectionProxy;
+import net.momirealms.craftengine.proxy.minecraft.core.RegistryProxy;
+import net.momirealms.craftengine.proxy.minecraft.resources.IdentifierProxy;
+import net.momirealms.craftengine.proxy.minecraft.tags.TagKeyProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.level.LevelProxy;
+import net.momirealms.craftengine.proxy.minecraft.world.level.block.BlockProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.level.block.state.BlockBehaviourProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.level.pathfinder.PathComputationTypeProxy;
 
@@ -74,7 +79,7 @@ public class StemBlockBehavior extends BukkitBlockBehavior implements IsPathFind
         }
         Object randomDirection = DirectionProxy.VALUES[RandomUtils.generateRandomInt(2, 6)];
         Object blockPos = FastNMS.INSTANCE.method$BlockPos$relative(pos, randomDirection);
-        if (!FastNMS.INSTANCE.method$BlockStateBase$isAir(FastNMS.INSTANCE.method$BlockGetter$getBlockState(level, blockPos)))
+        if (!BlockBehaviourProxy.BlockStateBaseProxy.INSTANCE.isAir(FastNMS.INSTANCE.method$BlockGetter$getBlockState(level, blockPos)))
             return;
         Object blockState = FastNMS.INSTANCE.method$BlockGetter$getBlockState(level, FastNMS.INSTANCE.method$BlockPos$relative(blockPos, DirectionProxy.DOWN));
         if (mayPlaceFruit(blockState)) {
@@ -83,9 +88,9 @@ public class StemBlockBehavior extends BukkitBlockBehavior implements IsPathFind
             if (optionalFruit.isPresent()) {
                 fruitState = optionalFruit.get().defaultState().customBlockState().literalObject();
             } else if (fruit.namespace().equals("minecraft")) {
-                fruitState = FastNMS.INSTANCE.method$Block$defaultState(FastNMS.INSTANCE.method$Registry$getValue(
+                fruitState = BlockProxy.INSTANCE.getDefaultBlockState(RegistryUtils.getRegistryValue(
                         MBuiltInRegistries.BLOCK,
-                        FastNMS.INSTANCE.method$ResourceLocation$fromNamespaceAndPath("minecraft", fruit.value())
+                        IdentifierProxy.INSTANCE.newInstance("minecraft", fruit.value())
                 ));
             }
             Optional<CustomBlock> optionalAttachedStem = BukkitBlockManager.instance().blockById(this.attachedStem);
@@ -124,8 +129,8 @@ public class StemBlockBehavior extends BukkitBlockBehavior implements IsPathFind
     }
 
     private boolean mayPlaceFruit(Object blockState) {
-        boolean flag1 = tagMayPlaceFruit != null && FastNMS.INSTANCE.method$BlockStateBase$is(blockState, tagMayPlaceFruit);
-        boolean flag2 = blockMayPlaceFruit != null && BlockBehaviourProxy.BlockStateBaseProxy.INSTANCE.is(blockState, blockMayPlaceFruit);
+        boolean flag1 = tagMayPlaceFruit != null && BlockBehaviourProxy.BlockStateBaseProxy.INSTANCE.is$1(blockState, tagMayPlaceFruit);
+        boolean flag2 = blockMayPlaceFruit != null && BlockBehaviourProxy.BlockStateBaseProxy.INSTANCE.is$0(blockState, blockMayPlaceFruit);
         if (tagMayPlaceFruit == null && blockMayPlaceFruit == null) return true;
         return flag1 || flag2;
     }
@@ -138,8 +143,8 @@ public class StemBlockBehavior extends BukkitBlockBehavior implements IsPathFind
             Key fruit = Key.of(ResourceConfigUtils.requireNonEmptyStringOrThrow(arguments.get("fruit"), "warning.config.block.behavior.stem.missing_fruit"));
             Key attachedStem = Key.of(ResourceConfigUtils.requireNonEmptyStringOrThrow(arguments.get("attached-stem"), "warning.config.block.behavior.stem.missing_attached_stem"));
             int minGrowLight = ResourceConfigUtils.getAsInt(arguments.getOrDefault("light-requirement", 9), "light-requirement");
-            Object tagMayPlaceFruit = FastNMS.INSTANCE.method$TagKey$create(MRegistries.BLOCK, KeyUtils.toIdentifier(Key.of(arguments.getOrDefault("may-place-fruit", "minecraft:dirt").toString())));
-            Object blockMayPlaceFruit = FastNMS.INSTANCE.method$Registry$getValue(MBuiltInRegistries.BLOCK, KeyUtils.toIdentifier(Key.of(arguments.getOrDefault("may-place-fruit", "minecraft:farmland").toString())));
+            Object tagMayPlaceFruit = TagKeyProxy.INSTANCE.create(MRegistries.BLOCK, KeyUtils.toIdentifier(Key.of(arguments.getOrDefault("may-place-fruit", "minecraft:dirt").toString())));
+            Object blockMayPlaceFruit = RegistryUtils.getRegistryValue(MBuiltInRegistries.BLOCK, KeyUtils.toIdentifier(Key.of(arguments.getOrDefault("may-place-fruit", "minecraft:farmland").toString())));
             return new StemBlockBehavior(block, ageProperty, fruit, attachedStem, minGrowLight, tagMayPlaceFruit, blockMayPlaceFruit);
         }
     }

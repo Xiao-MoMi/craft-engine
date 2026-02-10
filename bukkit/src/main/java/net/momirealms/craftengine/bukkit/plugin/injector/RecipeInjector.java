@@ -114,7 +114,7 @@ public final class RecipeInjector {
             Constructor<?> constructor = ReflectionUtils.getConstructor(clazz$InjectedRepairItemRecipe, CoreReflections.clazz$CraftingBookCategory);
             return constructor.newInstance(CraftingBookCategoryProxy.MISC);
         } else {
-            Constructor<?> constructor = ReflectionUtils.getConstructor(clazz$InjectedRepairItemRecipe, CoreReflections.clazz$ResourceLocation, CoreReflections.clazz$CraftingBookCategory);
+            Constructor<?> constructor = ReflectionUtils.getConstructor(clazz$InjectedRepairItemRecipe, CoreReflections.clazz$Identifier, CoreReflections.clazz$CraftingBookCategory);
             return constructor.newInstance(KeyUtils.toIdentifier(id), CraftingBookCategoryProxy.MISC);
         }
     }
@@ -147,7 +147,7 @@ public final class RecipeInjector {
             int size = INGREDIENT_SIZE_GETTER.apply(input);
             for (int i = 0; i < size; i++) {
                 Object itemStack = INGREDIENT_GETTER.apply(input, i);
-                if (FastNMS.INSTANCE.method$ItemStack$isEmpty(itemStack)) {
+                if (ItemStackProxy.INSTANCE.isEmpty(itemStack)) {
                     continue;
                 }
                 Item<ItemStack> wrapped = BukkitItemManager.instance().wrap(FastNMS.INSTANCE.method$CraftItemStack$asCraftMirror(itemStack));
@@ -178,7 +178,7 @@ public final class RecipeInjector {
             int size = INGREDIENT_SIZE_GETTER.apply(input);
             for (int i = 0; i < size; i++) {
                 Object itemStack = INGREDIENT_GETTER.apply(input, i);
-                if (FastNMS.INSTANCE.method$ItemStack$isEmpty(itemStack)) {
+                if (ItemStackProxy.INSTANCE.isEmpty(itemStack)) {
                     continue;
                 }
                 Item<ItemStack> wrapped = BukkitItemManager.instance().wrap(FastNMS.INSTANCE.method$CraftItemStack$asCraftMirror(itemStack));
@@ -221,7 +221,7 @@ public final class RecipeInjector {
         int size = INGREDIENT_SIZE_GETTER.apply(input);
         for (int i = 0; i < size; i++) {
             Object itemStack = INGREDIENT_GETTER.apply(input, i);
-            if (FastNMS.INSTANCE.method$ItemStack$isEmpty(itemStack)) {
+            if (ItemStackProxy.INSTANCE.isEmpty(itemStack)) {
                 continue;
             }
             Item<ItemStack> wrapped = BukkitItemManager.instance().wrap(FastNMS.INSTANCE.method$CraftItemStack$asCraftMirror(itemStack));
@@ -255,7 +255,7 @@ public final class RecipeInjector {
         if (VersionHelper.isOrAbove1_20_5()) {
             return item.hasComponent(DataComponentTypes.MAX_DAMAGE) && item.hasComponent(DataComponentTypes.DAMAGE);
         } else {
-            return ItemProxy.INSTANCE.canBeDepleted(FastNMS.INSTANCE.method$ItemStack$getItem(item.getLiteralObject()));
+            return ItemProxy.INSTANCE.canBeDepleted(ItemStackProxy.INSTANCE.getItem(item.getLiteralObject()));
         }
     }
 
@@ -278,7 +278,7 @@ public final class RecipeInjector {
             boolean hasDye = false;
             for (int i = 0; i < size; i++) {
                 Object itemStack = INGREDIENT_GETTER.apply(input, i);
-                if (FastNMS.INSTANCE.method$ItemStack$isEmpty(itemStack)) {
+                if (ItemStackProxy.INSTANCE.isEmpty(itemStack)) {
                     continue;
                 }
                 Item<ItemStack> wrapped = BukkitItemManager.instance().wrap(FastNMS.INSTANCE.method$CraftItemStack$asCraftMirror(itemStack));
@@ -309,7 +309,7 @@ public final class RecipeInjector {
             int size = INGREDIENT_SIZE_GETTER.apply(input);
             for (int i = 0; i < size; i++) {
                 Object itemStack = INGREDIENT_GETTER.apply(input, i);
-                if (FastNMS.INSTANCE.method$ItemStack$isEmpty(itemStack)) {
+                if (ItemStackProxy.INSTANCE.isEmpty(itemStack)) {
                     continue;
                 }
                 Item<ItemStack> wrapped = BukkitItemManager.instance().wrap(FastNMS.INSTANCE.method$CraftItemStack$asCraftMirror(itemStack));
@@ -355,7 +355,7 @@ public final class RecipeInjector {
             VersionHelper.isOrAbove1_20_5() ?
                     (item -> item.hasItemTag(ItemTags.DYEABLE)) :
                     (item -> {
-                       Object itemLike = FastNMS.INSTANCE.method$ItemStack$getItem(item.getLiteralObject());
+                       Object itemLike = ItemStackProxy.INSTANCE.getItem(item.getLiteralObject());
                        return CoreReflections.clazz$DyeableLeatherItem.isInstance(itemLike);
                     });
 
@@ -377,8 +377,8 @@ public final class RecipeInjector {
     @Nullable
     private static Color getVanillaDyeColor(final Item<ItemStack> item) {
         Object itemStack = item.getLiteralObject();
-        Object dyeItem = FastNMS.INSTANCE.method$ItemStack$getItem(itemStack);
-        if (!CoreReflections.clazz$DyeItem.isInstance(dyeItem)) return null;
+        Object dyeItem = ItemStackProxy.INSTANCE.getItem(itemStack);
+        if (!DyeItemProxy.CLASS.isInstance(dyeItem)) return null;
         Object dyeColor = DyeItemProxy.INSTANCE.getDyeColor(dyeItem);
         int textureDiffuseColor;
         if (VersionHelper.isOrAbove1_21()) {
@@ -396,8 +396,8 @@ public final class RecipeInjector {
     @Nullable
     private static Color getVanillaFireworkColor(final Item<ItemStack> item) {
         Object itemStack = item.getLiteralObject();
-        Object dyeItem = FastNMS.INSTANCE.method$ItemStack$getItem(itemStack);
-        if (!CoreReflections.clazz$DyeItem.isInstance(dyeItem)) return null;
+        Object dyeItem = ItemStackProxy.INSTANCE.getItem(itemStack);
+        if (!DyeItemProxy.CLASS.isInstance(dyeItem)) return null;
         return Color.fromDecimal(DyeColorProxy.INSTANCE.getFireworkColor(DyeItemProxy.INSTANCE.getDyeColor(dyeItem)));
     }
 
@@ -420,6 +420,6 @@ public final class RecipeInjector {
     }
 
     private static boolean isVanillaDyeItem(Item<ItemStack> item) {
-        return CoreReflections.clazz$DyeItem.isInstance(FastNMS.INSTANCE.method$ItemStack$getItem(item.getLiteralObject()));
+        return DyeItemProxy.CLASS.isInstance(ItemStackProxy.INSTANCE.getItem(item.getLiteralObject()));
     }
 }

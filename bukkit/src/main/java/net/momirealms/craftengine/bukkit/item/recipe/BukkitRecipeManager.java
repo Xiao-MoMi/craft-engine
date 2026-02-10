@@ -23,6 +23,7 @@ import net.momirealms.craftengine.core.registry.BuiltInRegistries;
 import net.momirealms.craftengine.core.util.*;
 import net.momirealms.craftengine.proxy.bukkit.craftbukkit.CraftServerProxy;
 import net.momirealms.craftengine.proxy.minecraft.resources.FileToIdConverterProxy;
+import net.momirealms.craftengine.proxy.minecraft.resources.ResourceKeyProxy;
 import net.momirealms.craftengine.proxy.minecraft.server.MinecraftServerProxy;
 import net.momirealms.craftengine.proxy.minecraft.server.packs.PackTypeProxy;
 import net.momirealms.craftengine.proxy.minecraft.server.packs.repository.PackProxy;
@@ -54,8 +55,8 @@ public class BukkitRecipeManager extends AbstractRecipeManager<ItemStack> {
                 RecipeMapProxy.INSTANCE.removeRecipe(RecipeManagerProxy.INSTANCE.getRecipes(minecraftRecipeManager()), resourceKey);
             }) :
             (id -> {
-                Object resourceLocation = KeyUtils.toIdentifier(id);
-                RecipeManagerProxy.INSTANCE.removeRecipe$1(minecraftRecipeManager(), resourceLocation);
+                Object identifier = KeyUtils.toIdentifier(id);
+                RecipeManagerProxy.INSTANCE.removeRecipe$1(minecraftRecipeManager(), identifier);
             });
     private static final BiFunction<Key, Object, Object> MINECRAFT_RECIPE_ADDER =
             VersionHelper.isOrAbove1_21_2() ?
@@ -67,8 +68,8 @@ public class BukkitRecipeManager extends AbstractRecipeManager<ItemStack> {
             } :
             VersionHelper.isOrAbove1_20_2() ?
             (id, recipe) -> {
-                Object resourceLocation = KeyUtils.toIdentifier(id);
-                Object recipeHolder = RecipeHolderProxy.INSTANCE.newInstance$1(resourceLocation, recipe);
+                Object identifier = KeyUtils.toIdentifier(id);
+                Object recipeHolder = RecipeHolderProxy.INSTANCE.newInstance$1(identifier, recipe);
                 RecipeManagerProxy.INSTANCE.addRecipe$0(minecraftRecipeManager(), recipeHolder);
                 return recipeHolder;
             } :
@@ -142,7 +143,7 @@ public class BukkitRecipeManager extends AbstractRecipeManager<ItemStack> {
     }
 
     public static Object toRecipeResourceKey(Key id) {
-        return FastNMS.INSTANCE.method$ResourceKey$create(MRegistries.RECIPE, KeyUtils.toIdentifier(id));
+        return ResourceKeyProxy.INSTANCE.create(MRegistries.RECIPE, KeyUtils.toIdentifier(id));
     }
 
     /*
@@ -331,7 +332,7 @@ public class BukkitRecipeManager extends AbstractRecipeManager<ItemStack> {
         try (AutoCloseable resourceManager = (AutoCloseable) MultiPackResourceManagerProxy.INSTANCE.newInstance(PackTypeProxy.SERVER_DATA, packResources)) {
             Map<Object, Object> scannedResources = FileToIdConverterProxy.INSTANCE.listMatchingResources(fileToIdConverter, resourceManager);
             for (Map.Entry<Object, Object> entry : scannedResources.entrySet()) {
-                Key id = extractKeyFromResourceLocation(entry.getKey().toString());
+                Key id = extractKeyFromIdentifier(entry.getKey().toString());
                 try (Reader reader = ResourceProxy.INSTANCE.openAsReader(entry.getValue())) {
                     JsonObject jsonObject = JsonParser.parseReader(reader).getAsJsonObject();
                     recipes.put(id, jsonObject);
@@ -343,7 +344,7 @@ public class BukkitRecipeManager extends AbstractRecipeManager<ItemStack> {
         return recipes;
     }
 
-    private Key extractKeyFromResourceLocation(String input) {
+    private Key extractKeyFromIdentifier(String input) {
         int prefixEndIndex = input.indexOf(':');
         String prefix = input.substring(0, prefixEndIndex);
         int lastSlashIndex = input.lastIndexOf('/');

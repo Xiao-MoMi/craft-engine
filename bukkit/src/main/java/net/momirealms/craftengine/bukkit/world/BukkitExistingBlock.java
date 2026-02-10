@@ -12,8 +12,10 @@ import net.momirealms.craftengine.core.util.Key;
 import net.momirealms.craftengine.core.world.ExistingBlock;
 import net.momirealms.craftengine.core.world.World;
 import net.momirealms.craftengine.core.world.context.BlockPlaceContext;
+import net.momirealms.craftengine.proxy.minecraft.world.level.BlockGetterProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.level.block.SnowLayerBlockProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.level.block.state.StateHolderProxy;
+import net.momirealms.craftengine.proxy.minecraft.world.level.material.FluidStateProxy;
 import org.bukkit.Location;
 import org.bukkit.block.Block;
 import org.jetbrains.annotations.NotNull;
@@ -35,7 +37,7 @@ public class BukkitExistingBlock implements ExistingBlock {
             return customState.behavior().canBeReplaced(context, customState);
         }
         if (BlockStateUtils.getBlockOwner(state) == MBlocks.SNOW) {
-            return (int) StateHolderProxy.INSTANCE.getValue(state, SnowLayerBlockProxy.INSTANCE.getLayersProperty()) == 1;
+            return (Integer) StateHolderProxy.INSTANCE.getValue(state, SnowLayerBlockProxy.INSTANCE.getLayersProperty()) == 1;
         }
         return BlockStateUtils.isReplaceable(state);
     }
@@ -44,9 +46,9 @@ public class BukkitExistingBlock implements ExistingBlock {
     public boolean isWaterSource(BlockPlaceContext blockPlaceContext) {
         Location location = this.block.getLocation();
         Object serverLevel = FastNMS.INSTANCE.field$CraftWorld$ServerLevel(this.block.getWorld());
-        Object fluidData = FastNMS.INSTANCE.method$BlockGetter$getFluidState(serverLevel, LocationUtils.toBlockPos(location.getBlockX(), location.getBlockY(), location.getBlockZ()));
+        Object fluidData = BlockGetterProxy.INSTANCE.getFluidState(serverLevel, LocationUtils.toBlockPos(location.getBlockX(), location.getBlockY(), location.getBlockZ()));
         if (fluidData == null) return false;
-        return FastNMS.INSTANCE.method$FluidState$getType(fluidData) == MFluids.WATER;
+        return FluidStateProxy.INSTANCE.getType(fluidData) == MFluids.WATER;
     }
 
     @Override

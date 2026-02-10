@@ -32,7 +32,11 @@ import net.momirealms.craftengine.core.world.Vec3d;
 import net.momirealms.craftengine.core.world.World;
 import net.momirealms.craftengine.core.world.context.BlockPlaceContext;
 import net.momirealms.craftengine.core.world.context.UseOnContext;
+import net.momirealms.craftengine.proxy.minecraft.world.level.ExplosionProxy;
+import net.momirealms.craftengine.proxy.minecraft.world.level.SignalGetterProxy;
+import net.momirealms.craftengine.proxy.minecraft.world.level.block.BlockProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.level.block.RedstoneWireBlockProxy;
+import net.momirealms.craftengine.proxy.minecraft.world.level.block.state.BlockBehaviourProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.level.pathfinder.PathComputationTypeProxy;
 import org.bukkit.Bukkit;
 import org.bukkit.GameEvent;
@@ -88,7 +92,7 @@ public class FenceGateBlockBehavior extends BukkitBlockBehavior implements IsPat
 
     public boolean isWall(Object state) {
         if (state == null) return false;
-        return FastNMS.INSTANCE.method$BlockStateBase$is(state, MTagKeys.Block$WALLS);
+        return BlockBehaviourProxy.BlockStateBaseProxy.INSTANCE.is$1(state, MTagKeys.Block$WALLS);
     }
 
     private Object getBlockState(Object level, BlockPos blockPos) {
@@ -124,7 +128,7 @@ public class FenceGateBlockBehavior extends BukkitBlockBehavior implements IsPat
     public ImmutableBlockState updateStateForPlacement(BlockPlaceContext context, ImmutableBlockState state) {
         Object level = context.getLevel().serverWorld();
         BlockPos clickedPos = context.getClickedPos();
-        boolean hasNeighborSignal = FastNMS.INSTANCE.method$SignalGetter$hasNeighborSignal(level, LocationUtils.toBlockPos(clickedPos));
+        boolean hasNeighborSignal = SignalGetterProxy.INSTANCE.hasNeighborSignal(level, LocationUtils.toBlockPos(clickedPos));
         Direction horizontalDirection = context.getHorizontalDirection();
         Direction.Axis axis = horizontalDirection.axis();
         boolean flag = axis == Direction.Axis.Z && (this.isWall(getBlockState(level, clickedPos.relative(Direction.WEST))))
@@ -177,7 +181,7 @@ public class FenceGateBlockBehavior extends BukkitBlockBehavior implements IsPat
 
     @Override
     public void onExplosionHit(Object thisBlock, Object[] args, Callable<Object> superMethod) {
-        if (this.canOpenByWindCharge && FastNMS.INSTANCE.method$Explosion$canTriggerBlocks(args[3])) {
+        if (this.canOpenByWindCharge && ExplosionProxy.INSTANCE.canTriggerBlocks(args[3])) {
             Optional<ImmutableBlockState> optionalCustomState = BlockStateUtils.getOptionalCustomBlockState(args[0]);
             if (optionalCustomState.isEmpty()) return;
             this.toggle(optionalCustomState.get(), BukkitAdaptors.adapt(FastNMS.INSTANCE.method$Level$getCraftWorld(args[1])), LocationUtils.fromBlockPos(args[2]), null);
@@ -192,7 +196,7 @@ public class FenceGateBlockBehavior extends BukkitBlockBehavior implements IsPat
         if (optionalCustomState.isEmpty()) return;
         Object level = args[1];
         Object blockPos = args[2];
-        boolean hasSignal = FastNMS.INSTANCE.method$SignalGetter$hasNeighborSignal(level, blockPos);
+        boolean hasSignal = SignalGetterProxy.INSTANCE.hasNeighborSignal(level, blockPos);
         ImmutableBlockState customState = optionalCustomState.get();
         if (hasSignal == customState.get(this.poweredProperty)) return;
 
@@ -201,7 +205,7 @@ public class FenceGateBlockBehavior extends BukkitBlockBehavior implements IsPat
         int oldPower = isOpen(customState) ? 15 : 0;
         Object neighborBlock = args[3];
 
-        if (oldPower == 0 ^ power == 0 || FastNMS.INSTANCE.method$BlockStateBase$isSignalSource(FastNMS.INSTANCE.method$Block$defaultState(neighborBlock))) {
+        if (oldPower == 0 ^ power == 0 || BlockBehaviourProxy.BlockStateBaseProxy.INSTANCE.isSignalSource(BlockProxy.INSTANCE.getDefaultBlockState(neighborBlock))) {
             BlockRedstoneEvent event = new BlockRedstoneEvent(bblock, oldPower, power);
             Bukkit.getPluginManager().callEvent(event);
             hasSignal = event.getNewCurrent() > 0;
@@ -212,7 +216,7 @@ public class FenceGateBlockBehavior extends BukkitBlockBehavior implements IsPat
         if (hasSignal && changed) {
             Object abovePos = LocationUtils.above(blockPos);
             Object aboveBlockState = FastNMS.INSTANCE.method$BlockGetter$getBlockState(level, abovePos);
-            if (RedstoneWireBlockProxy.CLASS.isInstance(FastNMS.INSTANCE.method$BlockState$getBlock(aboveBlockState))) {
+            if (RedstoneWireBlockProxy.CLASS.isInstance(BlockBehaviourProxy.BlockStateBaseProxy.INSTANCE.getBlock(aboveBlockState))) {
                 FastNMS.INSTANCE.method$LevelWriter$setBlock(level, abovePos, MBlocks.AIR$defaultState, UpdateOption.UPDATE_ALL.flags());
                 world.dropItemNaturally(
                         new Vec3d(FastNMS.INSTANCE.field$Vec3i$x(abovePos) + 0.5, FastNMS.INSTANCE.field$Vec3i$y(abovePos) + 0.5, FastNMS.INSTANCE.field$Vec3i$z(abovePos) + 0.5),

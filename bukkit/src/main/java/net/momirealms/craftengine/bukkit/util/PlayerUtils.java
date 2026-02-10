@@ -17,7 +17,9 @@ import net.momirealms.craftengine.core.util.VersionHelper;
 import net.momirealms.craftengine.core.util.random.RandomUtils;
 import net.momirealms.craftengine.proxy.minecraft.core.HolderProxy;
 import net.momirealms.craftengine.proxy.minecraft.network.protocol.game.ClientboundSoundPacketProxy;
+import net.momirealms.craftengine.proxy.minecraft.resources.IdentifierProxy;
 import net.momirealms.craftengine.proxy.minecraft.server.level.ServerPlayerProxy;
+import net.momirealms.craftengine.proxy.minecraft.sounds.SoundEventProxy;
 import net.momirealms.craftengine.proxy.minecraft.sounds.SoundSourceProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.entity.EquipmentSlotProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.entity.item.ItemEntityProxy;
@@ -61,7 +63,7 @@ public final class PlayerUtils {
                 ItemEntityProxy.INSTANCE.makeFakeItem(droppedItem);
             }
             player.world().playSound(player.position(), Sounds.ENTITY_ITEM_PICKUP, 0.2F, ((RandomUtils.generateRandomFloat(0, 1) - RandomUtils.generateRandomFloat(0, 1)) * 0.7F + 1.0F) * 2.0F, SoundSource.PLAYER);
-            AbstractContainerMenuProxy.INSTANCE.broadcastChanges(FastNMS.INSTANCE.field$Player$containerMenu(serverPlayer));
+            AbstractContainerMenuProxy.INSTANCE.broadcastChanges(PlayerProxy.INSTANCE.getContainerMenu(serverPlayer));
         } else {
             Object droppedItem;
             if (VersionHelper.isOrAbove1_21_4()) {
@@ -107,13 +109,13 @@ public final class PlayerUtils {
             ));
             if (sound != null || silent) {
                 packets.add(NetworkReflections.constructor$ClientboundStopSoundPacket.newInstance(
-                        FastNMS.INSTANCE.method$ResourceLocation$fromNamespaceAndPath("minecraft", "item.totem.use"),
+                        IdentifierProxy.INSTANCE.newInstance("minecraft", "item.totem.use"),
                         SoundSourceProxy.PLAYERS
                 ));
             }
             if (sound != null) {
                 packets.add(ClientboundSoundPacketProxy.INSTANCE.newInstance(
-                        HolderProxy.INSTANCE.direct(FastNMS.INSTANCE.constructor$SoundEvent(KeyUtils.toIdentifier(sound.id()), Optional.empty())),
+                        HolderProxy.INSTANCE.direct(SoundEventProxy.INSTANCE.create(KeyUtils.toIdentifier(sound.id()), Optional.empty())),
                         SoundSourceProxy.PLAYERS,
                         player.x(), player.y(), player.z(), sound.volume().get(), sound.pitch().get(),
                         RandomUtils.generateRandomLong()

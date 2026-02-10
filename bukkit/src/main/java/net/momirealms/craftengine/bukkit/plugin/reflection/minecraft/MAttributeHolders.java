@@ -1,30 +1,18 @@
 package net.momirealms.craftengine.bukkit.plugin.reflection.minecraft;
 
-import net.momirealms.craftengine.bukkit.nms.FastNMS;
 import net.momirealms.craftengine.core.util.VersionHelper;
 import net.momirealms.craftengine.proxy.minecraft.core.RegistryProxy;
+import net.momirealms.craftengine.proxy.minecraft.resources.IdentifierProxy;
 
 public final class MAttributeHolders {
     private MAttributeHolders() {}
 
-    public static final Object BLOCK_BREAK_SPEED;
-    public static final Object BLOCK_INTERACTION_RANGE;
-    public static final Object SCALE;
+    public static final Object BLOCK_BREAK_SPEED = VersionHelper.isOrAbove1_20_5() ? getById(VersionHelper.isOrAbove1_21_2() ? "block_break_speed" : "player.block_break_speed") : null;
+    public static final Object BLOCK_INTERACTION_RANGE = VersionHelper.isOrAbove1_20_5() ? getById(VersionHelper.isOrAbove1_21_2() ? "block_interaction_range" : "player.block_interaction_range") : null;
+    public static final Object SCALE = VersionHelper.isOrAbove1_20_5() ? getById(VersionHelper.isOrAbove1_21_2() ? "scale" : "generic.scale") : null;
 
-    private static Object getById(String id) {
-        Object rl = FastNMS.INSTANCE.method$ResourceLocation$fromNamespaceAndPath("minecraft", id);
-        return RegistryProxy.INSTANCE.get$0(MBuiltInRegistries.ATTRIBUTE, rl).orElseThrow();
-    }
-
-    static {
-        if (VersionHelper.isOrAbove1_20_5()) {
-            BLOCK_BREAK_SPEED = getById(VersionHelper.isOrAbove1_21_2() ? "block_break_speed" : "player.block_break_speed");
-            BLOCK_INTERACTION_RANGE = getById(VersionHelper.isOrAbove1_21_2() ? "block_interaction_range" : "player.block_interaction_range");
-            SCALE = getById(VersionHelper.isOrAbove1_21_2() ? "scale" : "generic.scale");
-        } else {
-            BLOCK_BREAK_SPEED = null;
-            BLOCK_INTERACTION_RANGE = null;
-            SCALE = null;
-        }
+    private static Object getById(String path) {
+        Object id = IdentifierProxy.INSTANCE.newInstance("minecraft", path);
+        return RegistryProxy.INSTANCE.get$0(MBuiltInRegistries.ATTRIBUTE, id).orElseThrow();
     }
 }

@@ -21,4 +21,7 @@ public interface SoundEventProxy {
 
     @MethodInvoker(name = "createVariableRangeEvent", isStatic = true)
     Object createVariableRangeEvent(@Type(clazz = IdentifierProxy.class) Object identifier);
+
+    @MethodInvoker(name = "create", isStatic = true)
+    Object create(@Type(clazz = IdentifierProxy.class) Object location, Optional<Float> range);
 }

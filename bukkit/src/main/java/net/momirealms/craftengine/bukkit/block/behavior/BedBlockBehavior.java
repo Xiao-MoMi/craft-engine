@@ -34,6 +34,7 @@ import net.momirealms.craftengine.core.world.context.UseOnContext;
 import net.momirealms.craftengine.proxy.minecraft.core.BlockPosProxy;
 import net.momirealms.craftengine.proxy.minecraft.server.level.ServerPlayerProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.level.block.state.BlockBehaviourProxy;
+import net.momirealms.craftengine.proxy.minecraft.world.level.material.FluidStateProxy;
 import org.bukkit.inventory.ItemStack;
 import org.joml.Vector3f;
 
@@ -141,7 +142,7 @@ public class BedBlockBehavior extends BukkitBlockBehavior implements EntityBlock
         if (state.owner() != headState.owner() || headState.get(headBehavior.partProperty) != BedPart.HEAD) {
             return;
         }
-        Object emptyState = FastNMS.INSTANCE.method$FluidState$getType(BlockBehaviourProxy.BlockStateBaseProxy.INSTANCE.getFluidState(blockState)) == MFluids.WATER
+        Object emptyState = FluidStateProxy.INSTANCE.getType(BlockBehaviourProxy.BlockStateBaseProxy.INSTANCE.getFluidState(blockState)) == MFluids.WATER
                 ? MBlocks.WATER$defaultState
                 : MBlocks.AIR$defaultState;
         FastNMS.INSTANCE.method$LevelWriter$setBlock(level, pos, emptyState, UpdateOption.builder().updateSuppressDrops().updateClients().updateNeighbors().build().flags());

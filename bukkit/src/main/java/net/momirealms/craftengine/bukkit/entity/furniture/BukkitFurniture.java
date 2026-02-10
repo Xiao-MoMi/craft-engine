@@ -13,6 +13,7 @@ import net.momirealms.craftengine.core.util.MiscUtils;
 import net.momirealms.craftengine.core.util.QuaternionUtils;
 import net.momirealms.craftengine.core.world.WorldPosition;
 import net.momirealms.craftengine.core.world.collision.AABB;
+import net.momirealms.craftengine.proxy.minecraft.network.protocol.game.ClientboundAddEntityPacketProxy;
 import net.momirealms.craftengine.proxy.minecraft.network.protocol.game.ClientboundRemoveEntitiesPacketProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.phys.Vec3Proxy;
 import org.bukkit.Location;
@@ -142,7 +143,7 @@ public class BukkitFurniture extends Furniture {
                         super.setVariantInternal(currentVariant());
                         BukkitFurnitureManager.instance().initFurniture(this);
                         this.addCollidersToWorld();
-                        Object addPacket = FastNMS.INSTANCE.constructor$ClientboundAddEntityPacket(itemDisplay.getEntityId(), itemDisplay.getUniqueId(),
+                        Object addPacket = ClientboundAddEntityPacketProxy.INSTANCE.newInstance(itemDisplay.getEntityId(), itemDisplay.getUniqueId(),
                                 itemDisplay.getX(), itemDisplay.getY(), itemDisplay.getZ(), itemDisplay.getPitch(), itemDisplay.getYaw(), MEntityTypes.ITEM_DISPLAY, 0, Vec3Proxy.ZERO, 0);
                         for (Player player : itemDisplay.getTrackedPlayers()) {
                             BukkitServerPlayer serverPlayer = BukkitAdaptors.adapt(player);
@@ -169,7 +170,7 @@ public class BukkitFurniture extends Furniture {
         ItemDisplay itemDisplay = this.metaEntity.get();
         if (itemDisplay == null) return;
         Object removePacket = ClientboundRemoveEntitiesPacketProxy.INSTANCE.newInstance(MiscUtils.init(new IntArrayList(), l -> l.add(itemDisplay.getEntityId())));
-        Object addPacket = FastNMS.INSTANCE.constructor$ClientboundAddEntityPacket(itemDisplay.getEntityId(), itemDisplay.getUniqueId(),
+        Object addPacket = ClientboundAddEntityPacketProxy.INSTANCE.newInstance(itemDisplay.getEntityId(), itemDisplay.getUniqueId(),
                 itemDisplay.getX(), itemDisplay.getY(), itemDisplay.getZ(), itemDisplay.getPitch(), itemDisplay.getYaw(), MEntityTypes.ITEM_DISPLAY, 0, Vec3Proxy.ZERO, 0);
         for (Player player : itemDisplay.getTrackedPlayers()) {
             BukkitServerPlayer serverPlayer = BukkitAdaptors.adapt(player);
@@ -184,7 +185,7 @@ public class BukkitFurniture extends Furniture {
         ItemDisplay itemDisplay = this.metaEntity.get();
         if (itemDisplay == null) return;
         Object removePacket = ClientboundRemoveEntitiesPacketProxy.INSTANCE.newInstance(MiscUtils.init(new IntArrayList(), l -> l.add(itemDisplay.getEntityId())));
-        Object addPacket = FastNMS.INSTANCE.constructor$ClientboundAddEntityPacket(itemDisplay.getEntityId(), itemDisplay.getUniqueId(),
+        Object addPacket = ClientboundAddEntityPacketProxy.INSTANCE.newInstance(itemDisplay.getEntityId(), itemDisplay.getUniqueId(),
                 itemDisplay.getX(), itemDisplay.getY(), itemDisplay.getZ(), itemDisplay.getPitch(), itemDisplay.getYaw(), MEntityTypes.ITEM_DISPLAY, 0, Vec3Proxy.ZERO, 0);
         player.sendPacket(removePacket, false);
         player.sendPacket(addPacket, false);

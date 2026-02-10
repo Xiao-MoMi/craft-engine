@@ -8,6 +8,7 @@ import net.momirealms.craftengine.bukkit.util.ComponentUtils;
 import net.momirealms.craftengine.core.plugin.command.sender.Sender;
 import net.momirealms.craftengine.core.plugin.command.sender.SenderFactory;
 import net.momirealms.craftengine.core.util.Tristate;
+import net.momirealms.craftengine.proxy.minecraft.network.protocol.game.ClientboundSystemChatPacketProxy;
 import org.bukkit.Bukkit;
 import org.bukkit.command.CommandSender;
 import org.bukkit.command.ConsoleCommandSender;
@@ -44,7 +45,7 @@ public class BukkitSenderFactory extends SenderFactory<BukkitCraftEngine, Comman
         if (sender instanceof Player player) {
             FastNMS.INSTANCE.method$Connection$send(
                     FastNMS.INSTANCE.field$ServerGamePacketListenerImpl$connection(FastNMS.INSTANCE.field$Player$connection(FastNMS.INSTANCE.method$CraftPlayer$getHandle(player))),
-                    FastNMS.INSTANCE.constructor$ClientboundSystemChatPacket(ComponentUtils.adventureToMinecraft(message), false), null);
+                    ClientboundSystemChatPacketProxy.INSTANCE.newInstance(ComponentUtils.adventureToMinecraft(message), false), null);
         } else if (sender instanceof ConsoleCommandSender commandSender) {
             commandSender.sendMessage(LegacyComponentSerializer.legacySection().serialize(message));
         } else if (sender instanceof RemoteConsoleCommandSender commandSender) {

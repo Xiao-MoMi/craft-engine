@@ -23,7 +23,7 @@ public final class CoreReflections {
             ReflectionUtils.getClazz(BukkitReflectionUtils.assembleMCClass("util.RandomSource"))
     );
 
-    public static final Class<?> clazz$ResourceLocation = requireNonNull(
+    public static final Class<?> clazz$Identifier = requireNonNull(
             BukkitReflectionUtils.findReobfOrMojmapClass(
                     List.of("resources.MinecraftKey"),
                     List.of("resources.ResourceLocation", "resources.Identifier")
@@ -43,8 +43,8 @@ public final class CoreReflections {
 
     public static final Constructor<?> constructor$SoundEvent = requireNonNull(
             VersionHelper.isOrAbove1_21_2() ?
-                    ReflectionUtils.getConstructor(clazz$SoundEvent, clazz$ResourceLocation, Optional.class) :
-                    ReflectionUtils.getDeclaredConstructor(clazz$SoundEvent, clazz$ResourceLocation, float.class, boolean.class)
+                    ReflectionUtils.getConstructor(clazz$SoundEvent, clazz$Identifier, Optional.class) :
+                    ReflectionUtils.getDeclaredConstructor(clazz$SoundEvent, clazz$Identifier, float.class, boolean.class)
     );
 
     public static final Class<?> clazz$SoundSource = requireNonNull(
@@ -701,7 +701,7 @@ public final class CoreReflections {
             }
         } else if (VersionHelper.isOrAbove1_20_2()) {
             for (Method method : clazz$RecipeManager.getMethods()) {
-                if (method.getParameterCount() == 1 && method.getParameterTypes()[0] == clazz$ResourceLocation) {
+                if (method.getParameterCount() == 1 && method.getParameterTypes()[0] == clazz$Identifier) {
                     if (method.getReturnType() == Optional.class && method.getGenericReturnType() instanceof ParameterizedType type) {
                         Type[] actualTypeArguments = type.getActualTypeArguments();
                         if (actualTypeArguments.length == 1) {
@@ -712,7 +712,7 @@ public final class CoreReflections {
             }
         } else {
             for (Method method : clazz$RecipeManager.getMethods()) {
-                if (method.getParameterCount() == 1 && method.getParameterTypes()[0] == clazz$ResourceLocation) {
+                if (method.getParameterCount() == 1 && method.getParameterTypes()[0] == clazz$Identifier) {
                     if (method.getReturnType() == Optional.class) {
                         method$RecipeManager$byKey0 = method;
                     }
@@ -1137,23 +1137,5 @@ public final class CoreReflections {
                     "world.level.levelgen.feature.WorldGenerator",
                     "world.level.levelgen.feature.Feature"
             )
-    );
-
-    @Deprecated(forRemoval = true)
-    public static final Class<?> clazz$ChunkMap = requireNonNull(
-            ReflectionUtils.getClazz(
-                    BukkitReflectionUtils.assembleMCClass("server.level.PlayerChunkMap"),  // 这里paper会自动获取到NM.server.level.ChunkMap
-                    BukkitReflectionUtils.assembleMCClass("server.level.ChunkMap") // paper柠檬酸了
-            )
-    );
-
-    @Deprecated(forRemoval = true)
-    public static final Class<?> clazz$WorldGenContext = MiscUtils.requireNonNullIf(
-            ReflectionUtils.getClazz(BukkitReflectionUtils.assembleMCClass("world.level.chunk.status.WorldGenContext")), VersionHelper.isOrAbove1_20_5()
-    );
-
-    @Deprecated(forRemoval = true)
-    public static final Field field$ChunkMap$worldGenContext = MiscUtils.requireNonNullIf(
-            ReflectionUtils.getDeclaredField(clazz$ChunkMap, clazz$WorldGenContext, 0), VersionHelper.isOrAbove1_20_5()
     );
 }

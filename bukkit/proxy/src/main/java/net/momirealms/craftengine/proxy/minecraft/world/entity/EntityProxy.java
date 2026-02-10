@@ -54,6 +54,18 @@ public interface EntityProxy {
     @FieldSetter(name = "hurtMarked")
     void setHurtMarked(Object target, boolean hurtMarked);
 
+    @FieldGetter(name = {"trackedEntity", "tracker"})
+    Object getTrackedEntity(Object target);
+
+    @FieldSetter(name = {"trackedEntity", "tracker"})
+    void setTrackedEntity(Object target, Object trackedEntity);
+
+    @FieldGetter(name = "wasTouchingWater")
+    boolean isWasTouchingWater(Object target);
+
+    @FieldSetter(name = "wasTouchingWater")
+    void setWasTouchingWater(Object target, boolean wasTouchingWater);
+
     @MethodInvoker(name = "getOnPos")
     Object getOnPos(Object target);
 

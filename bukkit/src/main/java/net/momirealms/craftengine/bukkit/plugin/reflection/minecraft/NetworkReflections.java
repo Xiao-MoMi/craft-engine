@@ -738,7 +738,7 @@ public final class NetworkReflections {
 
     // 1.20.5+
     public static final Method method$CustomPacketPayload$Type$id = Optional.ofNullable(clazz$CustomPacketPayload$Type)
-            .map(it -> ReflectionUtils.getMethod(it, CoreReflections.clazz$ResourceLocation))
+            .map(it -> ReflectionUtils.getMethod(it, CoreReflections.clazz$Identifier))
             .orElse(null);
 
     // 1.20.5~1.21.4#221
@@ -975,20 +975,20 @@ public final class NetworkReflections {
     public static final Constructor<?> constructor$ClientboundCustomPayloadPacket = requireNonNull(
             VersionHelper.isOrAbove1_20_2()
                     ? ReflectionUtils.getConstructor(clazz$ClientboundCustomPayloadPacket, clazz$CustomPacketPayload)
-                    : ReflectionUtils.getConstructor(clazz$ClientboundCustomPayloadPacket, CoreReflections.clazz$ResourceLocation, CoreReflections.clazz$FriendlyByteBuf)
+                    : ReflectionUtils.getConstructor(clazz$ClientboundCustomPayloadPacket, CoreReflections.clazz$Identifier, CoreReflections.clazz$FriendlyByteBuf)
     );
 
     // 1.20.2+
     public static final Constructor<?> constructor$DiscardedPayload = Optional.ofNullable(clazz$DiscardedPayload)
             .map(it -> {
                 if (VersionHelper.isOrAbove1_20_5()) {
-                    Constructor<?> constructor1 = ReflectionUtils.getConstructor(it, CoreReflections.clazz$ResourceLocation, ByteBuf.class);
+                    Constructor<?> constructor1 = ReflectionUtils.getConstructor(it, CoreReflections.clazz$Identifier, ByteBuf.class);
                     if (constructor1 != null) {
                         return constructor1;
                     }
-                    return ReflectionUtils.getConstructor(it, CoreReflections.clazz$ResourceLocation, byte[].class);
+                    return ReflectionUtils.getConstructor(it, CoreReflections.clazz$Identifier, byte[].class);
                 } else {
-                    return ReflectionUtils.getConstructor(it, CoreReflections.clazz$ResourceLocation);
+                    return ReflectionUtils.getConstructor(it, CoreReflections.clazz$Identifier);
                 }
             })
             .orElse(null);
@@ -1369,7 +1369,7 @@ public final class NetworkReflections {
 
     // 1.20.2~1.20.4
     public static final Field field$ServerboundCustomPayloadPacket$UnknownPayload$id = Optional.ofNullable(clazz$ServerboundCustomPayloadPacket$UnknownPayload)
-            .map(it -> ReflectionUtils.getDeclaredField(it, CoreReflections.clazz$ResourceLocation, 0))
+            .map(it -> ReflectionUtils.getDeclaredField(it, CoreReflections.clazz$Identifier, 0))
             .orElse(null);
 
     // 1.20.2~1.20.4
@@ -1384,7 +1384,7 @@ public final class NetworkReflections {
 
     // 1.20.2~1.20.4
     public static final Constructor<?> constructor$ServerboundCustomPayloadPacket$UnknownPayload = Optional.ofNullable(clazz$ServerboundCustomPayloadPacket$UnknownPayload)
-            .map(it -> ReflectionUtils.getConstructor(it, CoreReflections.clazz$ResourceLocation, ByteBuf.class))
+            .map(it -> ReflectionUtils.getConstructor(it, CoreReflections.clazz$Identifier, ByteBuf.class))
             .orElse(null);
 
     // 1.21.5+
@@ -1419,7 +1419,7 @@ public final class NetworkReflections {
     public static final Constructor<?> constructor$ClientboundStopSoundPacket = requireNonNull(
             ReflectionUtils.getDeclaredConstructor(
                     clazz$ClientboundStopSoundPacket,
-                    CoreReflections.clazz$ResourceLocation,
+                    CoreReflections.clazz$Identifier,
                     CoreReflections.clazz$SoundSource
             )
     );

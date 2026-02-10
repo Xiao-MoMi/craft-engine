@@ -10,6 +10,7 @@ import net.momirealms.craftengine.core.block.behavior.BlockBehaviorFactory;
 import net.momirealms.craftengine.core.util.Direction;
 import net.momirealms.craftengine.core.util.MiscUtils;
 import net.momirealms.craftengine.core.util.ResourceConfigUtils;
+import net.momirealms.craftengine.proxy.minecraft.world.level.block.BlockProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.level.block.SupportTypeProxy;
 
 import java.util.List;
@@ -47,10 +48,10 @@ public class SturdyBaseBlockBehavior extends AbstractCanSurviveBlockBehavior {
         )) {
             return true;
         }
-        if (this.checkRigid && FastNMS.INSTANCE.method$Block$canSupportRigidBlock(world, targetPos)) {
+        if (this.checkRigid && BlockProxy.INSTANCE.canSupportRigidBlock(world, targetPos)) {
             return true;
         }
-        if (this.checkCenter && FastNMS.INSTANCE.method$Block$canSupportCenter(world, targetPos, DirectionUtils.toNMSDirection(this.direction.opposite()))) {
+        if (this.checkCenter && BlockProxy.INSTANCE.canSupportCenter(world, targetPos, DirectionUtils.toNMSDirection(this.direction.opposite()))) {
             return true;
         }
         if (!this.stackable) {

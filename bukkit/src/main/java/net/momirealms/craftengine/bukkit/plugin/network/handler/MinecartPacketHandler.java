@@ -7,6 +7,7 @@ import net.momirealms.craftengine.bukkit.nms.FastNMS;
 import net.momirealms.craftengine.bukkit.plugin.network.BukkitNetworkManager;
 import net.momirealms.craftengine.bukkit.util.BlockStateUtils;
 import net.momirealms.craftengine.bukkit.util.ComponentUtils;
+import net.momirealms.craftengine.bukkit.util.PacketUtils;
 import net.momirealms.craftengine.core.entity.player.Player;
 import net.momirealms.craftengine.core.plugin.CraftEngine;
 import net.momirealms.craftengine.core.plugin.config.Config;
@@ -32,7 +33,7 @@ public class MinecartPacketHandler implements EntityPacketHandler {
         FriendlyByteBuf buf = event.getBuffer();
         int id = buf.readVarInt();
         boolean isChanged = false;
-        List<Object> packedItems = FastNMS.INSTANCE.method$ClientboundSetEntityDataPacket$unpack(buf);
+        List<Object> packedItems = PacketUtils.clientboundSetEntityDataPacket$unpack(buf);
         for (int i = packedItems.size() - 1; i >= 0; i--) {
             Object packedItem = packedItems.get(i);
             int entityDataId = FastNMS.INSTANCE.field$SynchedEntityData$DataValue$id(packedItem);
@@ -61,7 +62,7 @@ public class MinecartPacketHandler implements EntityPacketHandler {
             buf.clear();
             buf.writeVarInt(event.packetID());
             buf.writeVarInt(id);
-            FastNMS.INSTANCE.method$ClientboundSetEntityDataPacket$pack(packedItems, buf);
+            PacketUtils.clientboundSetEntityDataPacket$pack(packedItems, buf);
         }
     }
 

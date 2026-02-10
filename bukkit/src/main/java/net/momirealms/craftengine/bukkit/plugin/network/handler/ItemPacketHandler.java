@@ -7,6 +7,7 @@ import net.momirealms.craftengine.bukkit.entity.data.ItemEntityData;
 import net.momirealms.craftengine.bukkit.item.BukkitItemManager;
 import net.momirealms.craftengine.bukkit.nms.FastNMS;
 import net.momirealms.craftengine.bukkit.util.ComponentUtils;
+import net.momirealms.craftengine.bukkit.util.PacketUtils;
 import net.momirealms.craftengine.bukkit.world.score.BukkitTeamManager;
 import net.momirealms.craftengine.core.entity.player.Player;
 import net.momirealms.craftengine.core.item.CustomItem;
@@ -41,7 +42,7 @@ public class ItemPacketHandler implements EntityPacketHandler {
         FriendlyByteBuf buf = event.getBuffer();
         int id = buf.readVarInt();
         boolean changed = false;
-        List<Object> packedItems = FastNMS.INSTANCE.method$ClientboundSetEntityDataPacket$unpack(buf);
+        List<Object> packedItems = PacketUtils.clientboundSetEntityDataPacket$unpack(buf);
         Component nameToShow = null;
         LegacyChatFormatter glowColor = null;
         for (int i = 0; i < packedItems.size(); i++) {
@@ -134,7 +135,7 @@ public class ItemPacketHandler implements EntityPacketHandler {
             buf.clear();
             buf.writeVarInt(event.packetID());
             buf.writeVarInt(id);
-            FastNMS.INSTANCE.method$ClientboundSetEntityDataPacket$pack(packedItems, buf);
+            PacketUtils.clientboundSetEntityDataPacket$pack(packedItems, buf);
         }
     }
 }

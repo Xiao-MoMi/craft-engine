@@ -11,6 +11,9 @@ import net.momirealms.craftengine.core.block.behavior.BlockBehaviorFactory;
 import net.momirealms.craftengine.core.util.MiscUtils;
 import net.momirealms.craftengine.core.util.ResourceConfigUtils;
 import net.momirealms.craftengine.core.world.BlockPos;
+import net.momirealms.craftengine.proxy.minecraft.world.level.BlockGetterProxy;
+import net.momirealms.craftengine.proxy.minecraft.world.level.block.state.BlockBehaviourProxy;
+import net.momirealms.craftengine.proxy.minecraft.world.level.material.FluidStateProxy;
 
 import java.util.List;
 import java.util.Map;
@@ -86,15 +89,15 @@ public class NearLiquidBlockBehavior extends AbstractCanSurviveBlockBehavior {
     }
 
     protected boolean mayPlaceOn(Object belowState, Object world, Object belowPos) {
-        Object fluidState = FastNMS.INSTANCE.method$BlockGetter$getFluidState(world, belowPos);
-        Object fluidStateAbove = FastNMS.INSTANCE.method$BlockGetter$getFluidState(world, LocationUtils.above(belowPos));
-        if (FastNMS.INSTANCE.method$FluidState$getType(fluidStateAbove) != MFluids.EMPTY) {
+        Object fluidState = BlockGetterProxy.INSTANCE.getFluidState(world, belowPos);
+        Object fluidStateAbove = BlockGetterProxy.INSTANCE.getFluidState(world, LocationUtils.above(belowPos));
+        if (FluidStateProxy.INSTANCE.getType(fluidStateAbove) != MFluids.EMPTY) {
             return false;
         }
-        if (this.onWater && (WATER.contains(FastNMS.INSTANCE.method$FluidState$getType(fluidState)) || FastNMS.INSTANCE.method$BlockState$getBlock(belowState) == MBlocks.ICE)) {
+        if (this.onWater && (WATER.contains(FluidStateProxy.INSTANCE.getType(fluidState)) || BlockBehaviourProxy.BlockStateBaseProxy.INSTANCE.getBlock(belowState) == MBlocks.ICE)) {
             return true;
         }
-        if (this.onLava && LAVA.contains(FastNMS.INSTANCE.method$FluidState$getType(fluidState))) {
+        if (this.onLava && LAVA.contains(FluidStateProxy.INSTANCE.getType(fluidState))) {
             return true;
         }
         return false;

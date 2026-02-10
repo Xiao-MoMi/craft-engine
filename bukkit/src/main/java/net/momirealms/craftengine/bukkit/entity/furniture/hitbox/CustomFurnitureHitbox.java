@@ -12,7 +12,9 @@ import net.momirealms.craftengine.core.util.VersionHelper;
 import net.momirealms.craftengine.core.world.Vec3d;
 import net.momirealms.craftengine.core.world.WorldPosition;
 import net.momirealms.craftengine.core.world.collision.AABB;
+import net.momirealms.craftengine.proxy.minecraft.network.protocol.game.ClientboundAddEntityPacketProxy;
 import net.momirealms.craftengine.proxy.minecraft.network.protocol.game.ClientboundRemoveEntitiesPacketProxy;
+import net.momirealms.craftengine.proxy.minecraft.network.protocol.game.ClientboundSetEntityDataPacketProxy;
 import net.momirealms.craftengine.proxy.minecraft.network.protocol.game.ClientboundUpdateAttributesPacketProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.entity.EntityProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.entity.ai.attributes.AttributeInstanceProxy;
@@ -41,11 +43,11 @@ public final class CustomFurnitureHitbox extends AbstractFurnitureHitBox {
         this.collider = createCollider(furniture.world(), pos, aabb, false, config.blocksBuilding(), config.canBeHitByProjectile());
         int entityId = EntityProxy.ENTITY_COUNTER.incrementAndGet();
         List<Object> packets = new ArrayList<>(3);
-        packets.add(FastNMS.INSTANCE.constructor$ClientboundAddEntityPacket(
+        packets.add(ClientboundAddEntityPacketProxy.INSTANCE.newInstance(
                 entityId, UUID.randomUUID(), pos.x, pos.y, pos.z, 0, position.yRot,
                 config.entityType(), 0, Vec3Proxy.ZERO, 0
         ));
-        packets.add(FastNMS.INSTANCE.constructor$ClientboundSetEntityDataPacket(entityId, config.cachedValues()));
+        packets.add(ClientboundSetEntityDataPacketProxy.INSTANCE.newInstance(entityId, config.cachedValues()));
         if (VersionHelper.isOrAbove1_20_5()) {
             Object attributeIns = AttributeInstanceProxy.INSTANCE.newInstance$0(MAttributeHolders.SCALE, $ -> {});
             AttributeInstanceProxy.INSTANCE.setBaseValue(attributeIns, config.scale());

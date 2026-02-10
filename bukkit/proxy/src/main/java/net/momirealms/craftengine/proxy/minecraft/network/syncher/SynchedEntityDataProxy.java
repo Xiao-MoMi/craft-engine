@@ -22,4 +22,12 @@ public interface SynchedEntityDataProxy {
 
     @MethodInvoker(name = "get")
     <T> T get(Object target, @Type(clazz = EntityDataAccessorProxy.class) Object key);
+
+    @ReflectionProxy(name = "net.minecraft.network.syncher.SynchedEntityData$DataValue")
+    interface DataValueProxy {
+        DataValueProxy INSTANCE = ASMProxyFactory.create(DataValueProxy.class);
+
+        @MethodInvoker(name = "create", isStatic = true)
+        Object create(@Type(clazz = EntityDataAccessorProxy.class) Object dataAccessor, Object value);
+    }
 }

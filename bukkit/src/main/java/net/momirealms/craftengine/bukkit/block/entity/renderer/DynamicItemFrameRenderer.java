@@ -13,8 +13,10 @@ import net.momirealms.craftengine.core.util.VersionHelper;
 import net.momirealms.craftengine.core.world.BlockPos;
 import net.momirealms.craftengine.core.world.CEWorld;
 import net.momirealms.craftengine.core.world.Vec3i;
+import net.momirealms.craftengine.proxy.minecraft.network.protocol.game.ClientboundAddEntityPacketProxy;
 import net.momirealms.craftengine.proxy.minecraft.network.protocol.game.ClientboundMapItemDataPacketProxy;
 import net.momirealms.craftengine.proxy.minecraft.network.protocol.game.ClientboundRemoveEntitiesPacketProxy;
+import net.momirealms.craftengine.proxy.minecraft.network.protocol.game.ClientboundSetEntityDataPacketProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.entity.EntityProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.item.MapItemProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.level.saveddata.maps.MapItemSavedDataProxy;
@@ -46,7 +48,7 @@ public class DynamicItemFrameRenderer implements DynamicBlockEntityRenderer {
             worldY = pos.y + position.y;
             worldZ = pos.z + (axisX.z * position.x) + (axisZ.z * position.z);
         }
-        this.cachedSpawnPacket = FastNMS.INSTANCE.constructor$ClientboundAddEntityPacket(
+        this.cachedSpawnPacket = ClientboundAddEntityPacketProxy.INSTANCE.newInstance(
                 this.entityId, UUID.randomUUID(), worldX, worldY, worldZ, 0, 0,
                 this.blockEntity.behavior.glow ? MEntityTypes.GLOW_ITEM_FRAME : MEntityTypes.ITEM_FRAME,
                 direction.ordinal(), Vec3Proxy.ZERO, 0
@@ -67,7 +69,7 @@ public class DynamicItemFrameRenderer implements DynamicBlockEntityRenderer {
 
     @Override
     public void update(Player player) {
-        player.sendPacket(FastNMS.INSTANCE.constructor$ClientboundSetEntityDataPacket(this.entityId, this.blockEntity.cacheMetadata()), false);
+        player.sendPacket(ClientboundSetEntityDataPacketProxy.INSTANCE.newInstance(this.entityId, this.blockEntity.cacheMetadata()), false);
         if (this.blockEntity.behavior.renderMapItem) {
             updateMapItem(player);
         }

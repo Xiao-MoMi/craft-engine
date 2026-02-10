@@ -4,6 +4,8 @@ import net.momirealms.craftengine.proxy.minecraft.world.entity.player.PlayerProx
 import net.momirealms.sparrow.reflection.proxy.ASMProxyFactory;
 import net.momirealms.sparrow.reflection.proxy.annotation.*;
 
+import java.util.List;
+
 @ReflectionProxy(name = "net.minecraft.world.inventory.AbstractContainerMenu")
 public interface AbstractContainerMenuProxy {
     AbstractContainerMenuProxy INSTANCE = ASMProxyFactory.create(AbstractContainerMenuProxy.class);
@@ -28,4 +30,13 @@ public interface AbstractContainerMenuProxy {
 
     @MethodInvoker(name = "broadcastChanges")
     void broadcastChanges(Object target);
+
+    @MethodInvoker(name = "getSlot")
+    Object getSlot(Object target, int slotIndex);
+
+    @FieldGetter(name = "dataSlots")
+    List<Object> getDataSlots(Object target);
+
+    @MethodInvoker(name = "getCarried")
+    Object getCarried(Object target);
 }

@@ -17,6 +17,8 @@ import net.momirealms.craftengine.core.util.ResourceConfigUtils;
 import net.momirealms.craftengine.core.util.VersionHelper;
 import net.momirealms.craftengine.core.world.BlockPos;
 import net.momirealms.craftengine.core.world.context.BlockPlaceContext;
+import net.momirealms.craftengine.proxy.minecraft.world.level.BlockGetterProxy;
+import net.momirealms.craftengine.proxy.minecraft.world.level.material.FluidStateProxy;
 
 import java.util.Map;
 import java.util.Optional;
@@ -39,8 +41,8 @@ public class SofaBlockBehavior extends BukkitBlockBehavior {
         ImmutableBlockState blockState = state.owner().value().defaultState()
                 .with(this.facingProperty, context.getHorizontalDirection().toHorizontalDirection());
         if (super.waterloggedProperty != null) {
-            Object fluidState = FastNMS.INSTANCE.method$BlockGetter$getFluidState(context.getLevel().serverWorld(), LocationUtils.toBlockPos(clickedPos));
-            blockState = blockState.with(this.waterloggedProperty, FastNMS.INSTANCE.method$FluidState$getType(fluidState) == MFluids.WATER);
+            Object fluidState = BlockGetterProxy.INSTANCE.getFluidState(context.getLevel().serverWorld(), LocationUtils.toBlockPos(clickedPos));
+            blockState = blockState.with(this.waterloggedProperty, FluidStateProxy.INSTANCE.getType(fluidState) == MFluids.WATER);
         }
         return blockState.with(this.shapeProperty, getSofaShape(blockState, context.getLevel().serverWorld(), clickedPos));
     }

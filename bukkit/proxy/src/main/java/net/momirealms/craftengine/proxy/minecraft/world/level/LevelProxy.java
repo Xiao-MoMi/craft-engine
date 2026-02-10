@@ -38,9 +38,12 @@ public interface LevelProxy {
     @MethodInvoker(name = "updateNeighborsAt", activeIf = "min_version=1.21.2")
     void updateNeighborsAt(Object target, @Type(clazz = BlockPosProxy.class) Object pos, @Type(clazz = BlockProxy.class) Object sourceBlock, @Type(clazz = OrientationProxy.class) Object orientation);
 
-    @MethodInvoker(name = "updateNeighborsAt", activeIf = "max_version=1.21.1")
+    @MethodInvoker(name = "updateNeighborsAt", activeIf = "max_version=1.21.4") // 1.21.5+ 在 LevelAccessorProxy
     void updateNeighborsAt(Object target, @Type(clazz = BlockPosProxy.class) Object pos, @Type(clazz = BlockProxy.class) Object sourceBlock);
 
     @MethodInvoker(name = "updateNeighbourForOutputSignal")
     void updateNeighbourForOutputSignal(Object target, @Type(clazz = BlockPosProxy.class) Object pos, @Type(clazz = BlockProxy.class) Object block);
+
+    @MethodInvoker(name = "setBlocksDirty")
+    void setBlocksDirty(Object target, @Type(clazz = BlockPosProxy.class) Object pos, @Type(clazz = BlockStateProxy.class) Object oldState, @Type(clazz = BlockStateProxy.class) Object newState);
 }

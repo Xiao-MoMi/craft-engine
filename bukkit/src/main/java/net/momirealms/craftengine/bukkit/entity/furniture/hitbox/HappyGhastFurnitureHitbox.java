@@ -12,7 +12,9 @@ import net.momirealms.craftengine.core.entity.player.Player;
 import net.momirealms.craftengine.core.world.Vec3d;
 import net.momirealms.craftengine.core.world.WorldPosition;
 import net.momirealms.craftengine.core.world.collision.AABB;
+import net.momirealms.craftengine.proxy.minecraft.network.protocol.game.ClientboundAddEntityPacketProxy;
 import net.momirealms.craftengine.proxy.minecraft.network.protocol.game.ClientboundRemoveEntitiesPacketProxy;
+import net.momirealms.craftengine.proxy.minecraft.network.protocol.game.ClientboundSetEntityDataPacketProxy;
 import net.momirealms.craftengine.proxy.minecraft.network.protocol.game.ClientboundUpdateAttributesPacketProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.entity.EntityProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.entity.ai.attributes.AttributeInstanceProxy;
@@ -44,7 +46,7 @@ public final class HappyGhastFurnitureHitbox extends AbstractFurnitureHitBox {
         this.yaw = position.yRot;
         this.entityId = EntityProxy.ENTITY_COUNTER.incrementAndGet();
         this.packets = new ArrayList<>(3);
-        this.packets.add(FastNMS.INSTANCE.constructor$ClientboundSetEntityDataPacket(this.entityId, config.cachedValues()));
+        this.packets.add(ClientboundSetEntityDataPacketProxy.INSTANCE.newInstance(this.entityId, config.cachedValues()));
         if (config.scale() != 1) {
             Object attributeIns = AttributeInstanceProxy.INSTANCE.newInstance$0(MAttributeHolders.SCALE, $ -> {});
             AttributeInstanceProxy.INSTANCE.setBaseValue(attributeIns, config.scale());
@@ -69,7 +71,7 @@ public final class HappyGhastFurnitureHitbox extends AbstractFurnitureHitBox {
     @Override
     public void show(Player player) {
         List<Object> packets = new ArrayList<>();
-        packets.add(FastNMS.INSTANCE.constructor$ClientboundAddEntityPacket(
+        packets.add(ClientboundAddEntityPacketProxy.INSTANCE.newInstance(
                 this.entityId, UUID.randomUUID(), this.pos.x, player.y() - (this.config.scale() * 4 + 16), this.pos.z, 0, this.yaw,
                 MEntityTypes.HAPPY_GHAST, 0, Vec3Proxy.ZERO, 0
         ));

@@ -21,6 +21,8 @@ import net.momirealms.craftengine.core.world.World;
 import net.momirealms.craftengine.core.world.WorldPosition;
 import net.momirealms.craftengine.core.world.collision.AABB;
 import net.momirealms.craftengine.proxy.minecraft.core.DirectionProxy;
+import net.momirealms.craftengine.proxy.minecraft.network.protocol.game.ClientboundAddEntityPacketProxy;
+import net.momirealms.craftengine.proxy.minecraft.network.protocol.game.ClientboundSetEntityDataPacketProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.phys.Vec3Proxy;
 import org.joml.Quaternionf;
 import org.joml.Vector3f;
@@ -79,11 +81,11 @@ public final class ShulkerFurnitureHitboxConfig extends AbstractFurnitureHitBoxC
             this.spawner = (entityIds, world, x, y, z, yaw, offset, packets, collider, aabb) -> {
                 collider.accept(this.createCollider(Direction.UP, world, offset, x, y, z, entityIds[1], aabb));
                 if (interactionEntity) {
-                    packets.accept(FastNMS.INSTANCE.constructor$ClientboundAddEntityPacket(
+                    packets.accept(ClientboundAddEntityPacketProxy.INSTANCE.newInstance(
                             entityIds[2], UUID.randomUUID(), x + offset.x, y + offset.y - 0.005f, z - offset.z, 0, yaw,
                             MEntityTypes.INTERACTION, 0, Vec3Proxy.ZERO, 0
                     ));
-                    packets.accept(FastNMS.INSTANCE.constructor$ClientboundSetEntityDataPacket(entityIds[2], List.copyOf(cachedInteractionValues)));
+                    packets.accept(ClientboundSetEntityDataPacketProxy.INSTANCE.newInstance(entityIds[2], List.copyOf(cachedInteractionValues)));
                     Vec3d vec3d = new Vec3d(x + offset.x, y + offset.y, z - offset.z);
                     aabb.accept(new FurnitureHitboxPart(entityIds[2], AABB.makeBoundingBox(vec3d, scale, shulkerHeight), vec3d, interactive));
                 }
@@ -95,13 +97,13 @@ public final class ShulkerFurnitureHitboxConfig extends AbstractFurnitureHitBoxC
             InteractionEntityData.Responsive.addEntityDataIfNotDefaultValue(interactive, cachedInteractionValues);
             this.spawner = (entityIds, world, x, y, z, yaw, offset, packets, collider, aabb) -> {
                 collider.accept(this.createCollider(Direction.DOWN, world, offset, x, y, z, entityIds[1], aabb));
-                packets.accept(FastNMS.INSTANCE.constructor$ClientboundSetEntityDataPacket(entityIds[1], List.of(ShulkerData.AttachFace.createEntityDataIfNotDefaultValue(DirectionProxy.UP))));
+                packets.accept(ClientboundSetEntityDataPacketProxy.INSTANCE.newInstance(entityIds[1], List.of(ShulkerData.AttachFace.createEntityDataIfNotDefaultValue(DirectionProxy.UP))));
                 if (interactionEntity) {
-                    packets.accept(FastNMS.INSTANCE.constructor$ClientboundAddEntityPacket(
+                    packets.accept(ClientboundAddEntityPacketProxy.INSTANCE.newInstance(
                             entityIds[2], UUID.randomUUID(), x + offset.x, y + offset.y - 0.005f - shulkerHeight + scale, z - offset.z, 0, yaw,
                             MEntityTypes.INTERACTION, 0, Vec3Proxy.ZERO, 0
                     ));
-                    packets.accept(FastNMS.INSTANCE.constructor$ClientboundSetEntityDataPacket(entityIds[2], List.copyOf(cachedInteractionValues)));
+                    packets.accept(ClientboundSetEntityDataPacketProxy.INSTANCE.newInstance(entityIds[2], List.copyOf(cachedInteractionValues)));
                     Vec3d vec3d = new Vec3d(x + offset.x, y + offset.y - shulkerHeight + scale, z - offset.z);
                     aabb.accept(new FurnitureHitboxPart(entityIds[2], AABB.makeBoundingBox(vec3d, scale, shulkerHeight), vec3d, interactive));
                 }
@@ -115,21 +117,21 @@ public final class ShulkerFurnitureHitboxConfig extends AbstractFurnitureHitBoxC
                 Direction shulkerAnchor = getOriginalDirection(direction, Direction.fromYaw(yaw));
                 Direction shulkerDirection = shulkerAnchor.opposite();
                 collider.accept(this.createCollider(shulkerDirection, world, offset, x, y, z, entityIds[1], aabb));
-                packets.accept(FastNMS.INSTANCE.constructor$ClientboundSetEntityDataPacket(entityIds[1], List.of(ShulkerData.AttachFace.createEntityDataIfNotDefaultValue(DirectionUtils.toNMSDirection(shulkerAnchor)))));
+                packets.accept(ClientboundSetEntityDataPacketProxy.INSTANCE.newInstance(entityIds[1], List.of(ShulkerData.AttachFace.createEntityDataIfNotDefaultValue(DirectionUtils.toNMSDirection(shulkerAnchor)))));
                 if (interactionEntity) {
                     // first interaction
-                    packets.accept(FastNMS.INSTANCE.constructor$ClientboundAddEntityPacket(
+                    packets.accept(ClientboundAddEntityPacketProxy.INSTANCE.newInstance(
                             entityIds[2], UUID.randomUUID(), x + offset.x, y + offset.y - 0.005f, z - offset.z, 0, yaw,
                             MEntityTypes.INTERACTION, 0, Vec3Proxy.ZERO, 0
                     ));
-                    packets.accept(FastNMS.INSTANCE.constructor$ClientboundSetEntityDataPacket(entityIds[2], List.copyOf(cachedInteractionValues)));
+                    packets.accept(ClientboundSetEntityDataPacketProxy.INSTANCE.newInstance(entityIds[2], List.copyOf(cachedInteractionValues)));
                     // second interaction
                     double distance = shulkerHeight - scale;
-                    packets.accept(FastNMS.INSTANCE.constructor$ClientboundAddEntityPacket(
+                    packets.accept(ClientboundAddEntityPacketProxy.INSTANCE.newInstance(
                             entityIds[3], UUID.randomUUID(), x + offset.x + shulkerDirection.stepX() * distance, y + offset.y - 0.005f, z - offset.z + shulkerDirection.stepZ() * distance, 0, yaw,
                             MEntityTypes.INTERACTION, 0, Vec3Proxy.ZERO, 0
                     ));
-                    packets.accept(FastNMS.INSTANCE.constructor$ClientboundSetEntityDataPacket(entityIds[3], List.copyOf(cachedInteractionValues)));
+                    packets.accept(ClientboundSetEntityDataPacketProxy.INSTANCE.newInstance(entityIds[3], List.copyOf(cachedInteractionValues)));
                     Vec3d vec3d1 = new Vec3d(x + offset.x, y + offset.y, z - offset.z);
                     Vec3d vec3d2 = new Vec3d(x + offset.x + shulkerDirection.stepX() * distance, y + offset.y, z - offset.z + shulkerDirection.stepZ() * distance);
                     aabb.accept(new FurnitureHitboxPart(entityIds[2], AABB.makeBoundingBox(vec3d1, scale, scale), vec3d1, interactive));

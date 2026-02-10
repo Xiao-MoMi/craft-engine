@@ -11,7 +11,9 @@ import net.momirealms.craftengine.core.util.MiscUtils;
 import net.momirealms.craftengine.core.world.Vec3d;
 import net.momirealms.craftengine.core.world.WorldPosition;
 import net.momirealms.craftengine.core.world.collision.AABB;
+import net.momirealms.craftengine.proxy.minecraft.network.protocol.game.ClientboundAddEntityPacketProxy;
 import net.momirealms.craftengine.proxy.minecraft.network.protocol.game.ClientboundRemoveEntitiesPacketProxy;
+import net.momirealms.craftengine.proxy.minecraft.network.protocol.game.ClientboundSetEntityDataPacketProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.entity.EntityProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.phys.Vec3Proxy;
 
@@ -36,11 +38,11 @@ public final class InteractionFurnitureHitbox extends AbstractFurnitureHitBox {
         this.collider = createCollider(furniture.world(), pos, aabb, false, config.blocksBuilding(), config.canBeHitByProjectile());
         int interactionId = EntityProxy.ENTITY_COUNTER.incrementAndGet();
         this.spawnPacket = FastNMS.INSTANCE.constructor$ClientboundBundlePacket(List.of(
-                FastNMS.INSTANCE.constructor$ClientboundAddEntityPacket(
+                ClientboundAddEntityPacketProxy.INSTANCE.newInstance(
                         interactionId, UUID.randomUUID(), pos.x, pos.y, pos.z, 0, position.yRot,
                         MEntityTypes.INTERACTION, 0, Vec3Proxy.ZERO, 0
                 ),
-                FastNMS.INSTANCE.constructor$ClientboundSetEntityDataPacket(interactionId, config.cachedValues())
+                ClientboundSetEntityDataPacketProxy.INSTANCE.newInstance(interactionId, config.cachedValues())
         ));
         this.part = new FurnitureHitboxPart(interactionId, aabb, pos, config.responsive());
         this.despawnPacket = ClientboundRemoveEntitiesPacketProxy.INSTANCE.newInstance(MiscUtils.init(new IntArrayList(), l -> l.add(interactionId)));

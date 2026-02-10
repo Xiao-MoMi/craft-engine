@@ -6,10 +6,7 @@ import net.momirealms.craftengine.bukkit.nms.FastNMS;
 import net.momirealms.craftengine.bukkit.plugin.BukkitCraftEngine;
 import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.CoreReflections;
 import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.MRegistries;
-import net.momirealms.craftengine.bukkit.util.BlockStateUtils;
-import net.momirealms.craftengine.bukkit.util.FeatureUtils;
-import net.momirealms.craftengine.bukkit.util.LocationUtils;
-import net.momirealms.craftengine.bukkit.util.ParticleUtils;
+import net.momirealms.craftengine.bukkit.util.*;
 import net.momirealms.craftengine.bukkit.world.BukkitWorldManager;
 import net.momirealms.craftengine.core.block.CustomBlock;
 import net.momirealms.craftengine.core.block.ImmutableBlockState;
@@ -31,9 +28,9 @@ import net.momirealms.craftengine.core.world.context.UseOnContext;
 import net.momirealms.craftengine.proxy.minecraft.core.HolderProxy;
 import net.momirealms.craftengine.proxy.minecraft.core.RegistryAccessProxy;
 import net.momirealms.craftengine.proxy.minecraft.core.RegistryProxy;
-import net.momirealms.craftengine.proxy.minecraft.server.MinecraftServerProxy;
 import net.momirealms.craftengine.proxy.minecraft.server.level.ServerChunkCacheProxy;
 import net.momirealms.craftengine.proxy.minecraft.server.level.ServerLevelProxy;
+import net.momirealms.craftengine.proxy.minecraft.world.level.BlockGetterProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.level.LevelReaderProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.level.levelgen.feature.ConfiguredFeatureProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.level.material.FluidStateProxy;
@@ -95,8 +92,8 @@ public class SaplingBlockBehavior extends BukkitBlockBehavior {
     private void generateTree(Object world, Object blockPos, Object blockState, Object randomSource) {
         Object holder = BukkitWorldManager.instance().configuredFeatureById(treeFeature());
         if (holder == null) {
-            Object registryAccess = MinecraftServerProxy.INSTANCE.registryAccess(MinecraftServerProxy.INSTANCE.getServer());
-            Object registry = RegistryAccessProxy.INSTANCE.registryOrThrow(registryAccess, MRegistries.CONFIGURED_FEATURE);
+            Object registryAccess = RegistryUtils.getRegistryAccess();
+            Object registry = RegistryAccessProxy.INSTANCE.lookupOrThrow(registryAccess, MRegistries.CONFIGURED_FEATURE);
             if (registry == null) return;
             Optional<Object> optionalHolder = RegistryProxy.INSTANCE.get$1(registry, FeatureUtils.createConfiguredFeatureKey(treeFeature()));
             if (optionalHolder.isEmpty()) {
@@ -107,7 +104,7 @@ public class SaplingBlockBehavior extends BukkitBlockBehavior {
         }
         Object chunkGenerator = ServerChunkCacheProxy.INSTANCE.getGenerator(FastNMS.INSTANCE.method$ServerLevel$getChunkSource(world));
         Object configuredFeature = HolderProxy.INSTANCE.value(holder);
-        Object fluidState = FastNMS.INSTANCE.method$BlockGetter$getFluidState(world, blockPos);
+        Object fluidState = BlockGetterProxy.INSTANCE.getFluidState(world, blockPos);
         Object legacyState = FluidStateProxy.INSTANCE.createLegacyBlock(fluidState);
         FastNMS.INSTANCE.method$LevelWriter$setBlock(world, blockPos, legacyState, UpdateOption.UPDATE_NONE.flags());
         if (ConfiguredFeatureProxy.INSTANCE.place(configuredFeature, world, chunkGenerator, randomSource, blockPos)) {

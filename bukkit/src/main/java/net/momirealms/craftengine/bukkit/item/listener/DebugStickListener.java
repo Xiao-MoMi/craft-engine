@@ -17,6 +17,7 @@ import net.momirealms.craftengine.core.block.properties.Property;
 import net.momirealms.craftengine.core.entity.player.InteractionHand;
 import net.momirealms.craftengine.core.item.Item;
 import net.momirealms.craftengine.core.util.MiscUtils;
+import net.momirealms.craftengine.proxy.minecraft.network.protocol.game.ClientboundSystemChatPacketProxy;
 import org.bukkit.block.Block;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
@@ -66,7 +67,7 @@ public class DebugStickListener implements Listener {
             Collection<Property<?>> properties = block.properties();
             String blockId = block.id().toString();
             if (properties.isEmpty()) {
-                Object systemChatPacket = FastNMS.INSTANCE.constructor$ClientboundSystemChatPacket(
+                Object systemChatPacket = ClientboundSystemChatPacketProxy.INSTANCE.newInstance(
                         ComponentUtils.adventureToMinecraft(Component.translatable("item.minecraft.debug_stick.empty").arguments(Component.text(blockId))), true);
                 player.sendPacket(systemChatPacket, false);
             } else {
@@ -82,7 +83,7 @@ public class DebugStickListener implements Listener {
                     if (update) {
                         ImmutableBlockState nextState = cycleState(customState, currentProperty, player.isSecondaryUseActive());
                         CraftEngineBlocks.place(clickedBlock.getLocation(), nextState, new UpdateOption.Builder().updateClients().updateKnownShape().build(), false);
-                        Object systemChatPacket = FastNMS.INSTANCE.constructor$ClientboundSystemChatPacket(
+                        Object systemChatPacket = ClientboundSystemChatPacketProxy.INSTANCE.newInstance(
                                 ComponentUtils.adventureToMinecraft(Component.translatable("item.minecraft.debug_stick.update")
                                         .arguments(
                                                 Component.text(currentProperty.name()),
@@ -93,7 +94,7 @@ public class DebugStickListener implements Listener {
                         currentProperty = getRelative(properties, currentProperty, player.isSecondaryUseActive());
                         data.put(blockId, currentProperty.name());
                         itemInHand.setTag(data, "craftengine:debug_stick_state");
-                        Object systemChatPacket = FastNMS.INSTANCE.constructor$ClientboundSystemChatPacket(
+                        Object systemChatPacket = ClientboundSystemChatPacketProxy.INSTANCE.newInstance(
                                 ComponentUtils.adventureToMinecraft(Component.translatable("item.minecraft.debug_stick.select")
                                         .arguments(
                                                 Component.text(currentProperty.name()),

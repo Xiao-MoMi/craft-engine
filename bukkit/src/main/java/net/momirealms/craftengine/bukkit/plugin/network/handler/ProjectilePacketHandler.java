@@ -4,8 +4,8 @@ import net.momirealms.craftengine.bukkit.entity.data.ItemDisplayEntityData;
 import net.momirealms.craftengine.bukkit.entity.projectile.BukkitCustomProjectile;
 import net.momirealms.craftengine.bukkit.item.BukkitItemManager;
 import net.momirealms.craftengine.bukkit.nms.FastNMS;
-import net.momirealms.craftengine.bukkit.plugin.injector.ProtectedFieldVisitor;
 import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.MEntityTypes;
+import net.momirealms.craftengine.bukkit.util.PacketUtils;
 import net.momirealms.craftengine.core.entity.player.Player;
 import net.momirealms.craftengine.core.entity.projectile.ProjectileMeta;
 import net.momirealms.craftengine.core.item.CustomItem;
@@ -19,6 +19,10 @@ import net.momirealms.craftengine.core.util.FriendlyByteBuf;
 import net.momirealms.craftengine.core.util.MiscUtils;
 import net.momirealms.craftengine.core.util.VersionHelper;
 import net.momirealms.craftengine.core.world.Vec3d;
+import net.momirealms.craftengine.proxy.minecraft.network.protocol.game.ClientboundEntityPositionSyncPacketProxy;
+import net.momirealms.craftengine.proxy.minecraft.network.protocol.game.ClientboundMoveEntityPacketProxy;
+import net.momirealms.craftengine.proxy.minecraft.network.protocol.game.ClientboundSetEntityDataPacketProxy;
+import net.momirealms.craftengine.proxy.minecraft.world.entity.PositionMoveRotationProxy;
 import org.bukkit.inventory.ItemStack;
 
 import java.util.ArrayList;
@@ -43,22 +47,27 @@ public class ProjectilePacketHandler implements EntityPacketHandler {
         buf.clear();
         buf.writeVarInt(event.packetID());
         buf.writeVarInt(id);
-        FastNMS.INSTANCE.method$ClientboundSetEntityDataPacket$pack(this.createCustomProjectileEntityDataValues(user), buf);
+        PacketUtils.clientboundSetEntityDataPacket$pack(this.createCustomProjectileEntityDataValues(user), buf);
     }
 
     @Override
     public void handleSyncEntityPosition(NetWorkUser user, NMSPacketEvent event, Object packet) {
-        Object converted = convertCustomProjectilePositionSyncPacket(packet);
-        event.replacePacket(converted);
+        Object positionMoveRotation = ClientboundEntityPositionSyncPacketProxy.INSTANCE.getValues(packet);
+        float xRot = PositionMoveRotationProxy.INSTANCE.getXRot(positionMoveRotation);
+        float yRot = PositionMoveRotationProxy.INSTANCE.getYRot(positionMoveRotation);
+        PositionMoveRotationProxy.INSTANCE.setXRot(positionMoveRotation, Math.clamp(-xRot, -90.0F, 90.0F));
+        PositionMoveRotationProxy.INSTANCE.setYRot(positionMoveRotation, -yRot);
     }
 
     @Override
     public void handleMoveAndRotate(NetWorkUser user, NMSPacketEvent event, Object packet) {
-        int entityId = ProtectedFieldVisitor.get().field$ClientboundMoveEntityPacket$entityId(packet);
-        event.replacePacket(FastNMS.INSTANCE.constructor$ClientboundBundlePacket(List.of(
-                FastNMS.INSTANCE.constructor$ClientboundSetEntityDataPacket(entityId, this.createCustomProjectileEntityDataValues((Player) user)),
-                convertCustomProjectileMovePacket(packet, entityId)
-        )));
+        float xRot = MiscUtils.unpackDegrees(ClientboundMoveEntityPacketProxy.INSTANCE.getXRot(packet));
+        float yRot = MiscUtils.unpackDegrees(ClientboundMoveEntityPacketProxy.INSTANCE.getYRot(packet));
+        ClientboundMoveEntityPacketProxy.INSTANCE.setXRot(packet, MiscUtils.packDegrees(MiscUtils.clamp(-xRot, -90.0F, 90.0F)));
+        ClientboundMoveEntityPacketProxy.INSTANCE.setYRot(packet, MiscUtils.packDegrees(-yRot));
+        int entityId = ClientboundMoveEntityPacketProxy.INSTANCE.getEntityId(packet);
+        Object setEntityDataPacket = ClientboundSetEntityDataPacketProxy.INSTANCE.newInstance(entityId, this.createCustomProjectileEntityDataValues((Player) user));
+        event.replacePacket(FastNMS.INSTANCE.constructor$ClientboundBundlePacket(List.of(packet, setEntityDataPacket)));
     }
 
     public void convertAddCustomProjectilePacket(FriendlyByteBuf buf, ByteBufPacketEvent event) {
@@ -94,18 +103,6 @@ public class ProjectilePacketHandler implements EntityPacketHandler {
         if (!VersionHelper.isOrAbove1_21_9()) buf.writeShort(za);
     }
 
-    private Object convertCustomProjectilePositionSyncPacket(Object packet) {
-        int entityId = FastNMS.INSTANCE.method$ClientboundEntityPositionSyncPacket$id(packet);
-        Object positionMoveRotation = FastNMS.INSTANCE.field$ClientboundEntityPositionSyncPacket$values(packet);
-        boolean onGround = FastNMS.INSTANCE.field$ClientboundEntityPositionSyncPacket$onGround(packet);
-        Object position = FastNMS.INSTANCE.field$PositionMoveRotation$position(positionMoveRotation);
-        Object deltaMovement = FastNMS.INSTANCE.field$PositionMoveRotation$deltaMovement(positionMoveRotation);
-        float yRot = FastNMS.INSTANCE.field$PositionMoveRotation$yRot(positionMoveRotation);
-        float xRot = FastNMS.INSTANCE.field$PositionMoveRotation$xRot(positionMoveRotation);
-        Object newPositionMoveRotation = FastNMS.INSTANCE.constructor$PositionMoveRotation(position, deltaMovement, -yRot, Math.clamp(-xRot, -90.0F, 90.0F));
-        return FastNMS.INSTANCE.constructor$ClientboundEntityPositionSyncPacket(entityId, newPositionMoveRotation, onGround);
-    }
-
     public List<Object> createCustomProjectileEntityDataValues(Player player) {
         List<Object> itemDisplayValues = new ArrayList<>();
         Optional<CustomItem<ItemStack>> customItem = BukkitItemManager.instance().getCustomItem(this.projectile.metadata().item());
@@ -131,19 +128,5 @@ public class ProjectilePacketHandler implements EntityPacketHandler {
         ItemDisplayEntityData.DisplayType.addEntityDataIfNotDefaultValue(meta.displayType().id(), itemDisplayValues);
         ItemDisplayEntityData.BillboardConstraints.addEntityDataIfNotDefaultValue(meta.billboard().id(), itemDisplayValues);
         return itemDisplayValues;
-    }
-
-    private Object convertCustomProjectileMovePacket(Object packet, int entityId) {
-        short xa = FastNMS.INSTANCE.field$ClientboundMoveEntityPacket$xa(packet);
-        short ya = FastNMS.INSTANCE.field$ClientboundMoveEntityPacket$ya(packet);
-        short za = FastNMS.INSTANCE.field$ClientboundMoveEntityPacket$za(packet);
-        float xRot = MiscUtils.unpackDegrees(FastNMS.INSTANCE.field$ClientboundMoveEntityPacket$xRot(packet));
-        float yRot = MiscUtils.unpackDegrees(FastNMS.INSTANCE.field$ClientboundMoveEntityPacket$yRot(packet));
-        boolean onGround = FastNMS.INSTANCE.field$ClientboundMoveEntityPacket$onGround(packet);
-        return FastNMS.INSTANCE.constructor$ClientboundMoveEntityPacket$PosRot(
-                entityId, xa, ya, za,
-                MiscUtils.packDegrees(-yRot), MiscUtils.packDegrees(MiscUtils.clamp(-xRot, -90.0F, 90.0F)),
-                onGround
-        );
     }
 }

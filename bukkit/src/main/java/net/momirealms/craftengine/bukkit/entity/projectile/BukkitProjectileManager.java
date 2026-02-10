@@ -12,7 +12,9 @@ import net.momirealms.craftengine.core.item.Item;
 import net.momirealms.craftengine.core.plugin.scheduler.SchedulerTask;
 import net.momirealms.craftengine.core.util.ItemUtils;
 import net.momirealms.craftengine.core.util.VersionHelper;
+import net.momirealms.craftengine.proxy.minecraft.server.level.ChunkMapProxy;
 import net.momirealms.craftengine.proxy.minecraft.server.level.ServerEntityProxy;
+import net.momirealms.craftengine.proxy.minecraft.world.entity.EntityProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.entity.projectile.AbstractArrowProxy;
 import org.bukkit.Bukkit;
 import org.bukkit.World;
@@ -159,9 +161,9 @@ public class BukkitProjectileManager implements Listener, ProjectileManager {
             Object nmsEntity = FastNMS.INSTANCE.method$CraftEntity$getHandle(this.projectile);
             // 获取server entity
             if (this.cachedServerEntity == null) {
-                Object trackedEntity = FastNMS.INSTANCE.field$Entity$trackedEntity(nmsEntity);
+                Object trackedEntity = EntityProxy.INSTANCE.getTrackedEntity(nmsEntity);
                 if (trackedEntity == null) return;
-                Object serverEntity = FastNMS.INSTANCE.field$ChunkMap$TrackedEntity$serverEntity(trackedEntity);
+                Object serverEntity = ChunkMapProxy.TrackedEntityProxy.INSTANCE.getServerEntity(trackedEntity);
                 if (serverEntity == null) return;
                 this.cachedServerEntity = serverEntity;
             }
@@ -170,11 +172,16 @@ public class BukkitProjectileManager implements Listener, ProjectileManager {
                 updateProjectileUpdateInterval(1);
             } else if (!this.checkInGround) {
                 updateProjectileUpdateInterval(1);
-                if (FastNMS.INSTANCE.field$Entity$wasTouchingWater(nmsEntity)) {
+                if (EntityProxy.INSTANCE.isWasTouchingWater(nmsEntity)) {
                     this.projectile.getWorld().spawnParticle(ParticleUtils.BUBBLE, this.projectile.getLocation(), 3, 0.1, 0.1, 0.1, 0);
                 }
             } else {
-                boolean inGround = FastNMS.INSTANCE.method$AbstractArrow$isInGround(nmsEntity);
+                boolean inGround;
+                if (VersionHelper.isOrAbove1_21_2()) {
+                    inGround = AbstractArrowProxy.INSTANCE.isInGround$0(nmsEntity);
+                } else {
+                    inGround = AbstractArrowProxy.INSTANCE.isInGround$1(nmsEntity);
+                }
                 if (canSpawnParticle(nmsEntity, inGround)) {
                     this.projectile.getWorld().spawnParticle(ParticleUtils.BUBBLE, this.projectile.getLocation(), 3, 0.1, 0.1, 0.1, 0);
                 }
@@ -193,7 +200,7 @@ public class BukkitProjectileManager implements Listener, ProjectileManager {
         }
 
         private static boolean canSpawnParticle(Object nmsEntity, boolean inGround) {
-            if (!FastNMS.INSTANCE.field$Entity$wasTouchingWater(nmsEntity)) return false;
+            if (!EntityProxy.INSTANCE.isWasTouchingWater(nmsEntity)) return false;
             if (AbstractArrowProxy.CLASS.isInstance(nmsEntity)) {
                 return !inGround;
             }

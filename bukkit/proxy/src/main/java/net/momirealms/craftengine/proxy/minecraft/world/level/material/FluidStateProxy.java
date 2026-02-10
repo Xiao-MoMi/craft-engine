@@ -2,7 +2,9 @@ package net.momirealms.craftengine.proxy.minecraft.world.level.material;
 
 import net.momirealms.craftengine.proxy.minecraft.tags.TagKeyProxy;
 import net.momirealms.sparrow.reflection.proxy.ASMProxyFactory;
-import net.momirealms.sparrow.reflection.proxy.annotation.*;
+import net.momirealms.sparrow.reflection.proxy.annotation.MethodInvoker;
+import net.momirealms.sparrow.reflection.proxy.annotation.ReflectionProxy;
+import net.momirealms.sparrow.reflection.proxy.annotation.Type;
 
 @ReflectionProxy(name = "net.minecraft.world.level.material.FluidState")
 public interface FluidStateProxy {
@@ -16,4 +18,7 @@ public interface FluidStateProxy {
 
     @MethodInvoker(name = "createLegacyBlock")
     Object createLegacyBlock(Object target);
+
+    @MethodInvoker(name = "getType")
+    Object getType(Object target);
 }

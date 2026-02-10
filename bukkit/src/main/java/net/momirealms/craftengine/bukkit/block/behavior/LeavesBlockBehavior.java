@@ -19,6 +19,7 @@ import net.momirealms.craftengine.proxy.minecraft.core.DirectionProxy;
 import net.momirealms.craftengine.proxy.minecraft.core.MutableBlockPosProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.level.block.BlockProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.level.block.LeavesBlockProxy;
+import net.momirealms.craftengine.proxy.minecraft.world.level.block.state.BlockBehaviourProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.level.block.state.StateHolderProxy;
 import org.bukkit.Bukkit;
 import org.bukkit.World;
@@ -149,7 +150,7 @@ public class LeavesBlockBehavior extends BukkitBlockBehavior {
     }
 
     private int getDistanceAt(Object blockState) {
-        boolean isLog = FastNMS.INSTANCE.method$BlockStateBase$is(blockState, LOG_TAG);
+        boolean isLog = BlockBehaviourProxy.BlockStateBaseProxy.INSTANCE.is$1(blockState, LOG_TAG);
         if (isLog) return 0;
         Optional<ImmutableBlockState> optionalCustomState = BlockStateUtils.getOptionalCustomBlockState(blockState);
         if (optionalCustomState.isEmpty()) {

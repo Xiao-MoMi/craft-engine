@@ -6,10 +6,7 @@ import net.momirealms.craftengine.bukkit.plugin.BukkitCraftEngine;
 import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.CoreReflections;
 import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.MBlocks;
 import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.MRegistries;
-import net.momirealms.craftengine.bukkit.util.BlockStateUtils;
-import net.momirealms.craftengine.bukkit.util.FeatureUtils;
-import net.momirealms.craftengine.bukkit.util.LocationUtils;
-import net.momirealms.craftengine.bukkit.util.ParticleUtils;
+import net.momirealms.craftengine.bukkit.util.*;
 import net.momirealms.craftengine.bukkit.world.BukkitExistingBlock;
 import net.momirealms.craftengine.core.block.CustomBlock;
 import net.momirealms.craftengine.core.block.ImmutableBlockState;
@@ -26,8 +23,8 @@ import net.momirealms.craftengine.core.world.context.UseOnContext;
 import net.momirealms.craftengine.proxy.minecraft.core.HolderProxy;
 import net.momirealms.craftengine.proxy.minecraft.core.RegistryAccessProxy;
 import net.momirealms.craftengine.proxy.minecraft.core.RegistryProxy;
-import net.momirealms.craftengine.proxy.minecraft.server.MinecraftServerProxy;
 import net.momirealms.craftengine.proxy.minecraft.server.level.ServerChunkCacheProxy;
+import net.momirealms.craftengine.proxy.minecraft.world.level.block.state.BlockBehaviourProxy;
 import org.bukkit.Location;
 import org.bukkit.World;
 import org.bukkit.block.Block;
@@ -53,7 +50,7 @@ public class GrassBlockBehavior extends BukkitBlockBehavior {
     public boolean isValidBoneMealTarget(Object thisBlock, Object[] args) {
         Object above = LocationUtils.above(args[1]);
         Object aboveState = FastNMS.INSTANCE.method$BlockGetter$getBlockState(args[0], above);
-        return FastNMS.INSTANCE.method$BlockStateBase$isAir(aboveState);
+        return BlockBehaviourProxy.BlockStateBaseProxy.INSTANCE.isAir(aboveState);
     }
 
     @Override
@@ -124,8 +121,8 @@ public class GrassBlockBehavior extends BukkitBlockBehavior {
 
     @Override
     public void performBoneMeal(Object thisBlock, Object[] args) throws Exception {
-        Object registryAccess = MinecraftServerProxy.INSTANCE.registryAccess(MinecraftServerProxy.INSTANCE.getServer());
-        Object registry = RegistryAccessProxy.INSTANCE.registryOrThrow(registryAccess, MRegistries.PLACED_FEATURE);
+        Object registryAccess = RegistryUtils.getRegistryAccess();
+        Object registry = RegistryAccessProxy.INSTANCE.lookupOrThrow(registryAccess, MRegistries.PLACED_FEATURE);
         if (registry == null) return;
         Optional<Object> holder = RegistryProxy.INSTANCE.get$1(registry, FeatureUtils.createPlacedFeatureKey(boneMealFeature()));
         if (holder.isEmpty()) {
@@ -154,13 +151,13 @@ public class GrassBlockBehavior extends BukkitBlockBehavior {
                 }
                 Object nmsCurrentPos = LocationUtils.toBlockPos(currentPos);
                 Object currentState = FastNMS.INSTANCE.method$BlockGetter$getBlockState(world, nmsCurrentPos);
-                if (FastNMS.INSTANCE.method$BlockStateBase$isCollisionShapeFullBlock(currentState, world, nmsCurrentPos)) {
+                if (BlockBehaviourProxy.BlockStateBaseProxy.INSTANCE.isCollisionShapeFullBlock(currentState, world, nmsCurrentPos)) {
                     continue out;
                 }
                 if (BlockStateUtils.getBlockOwner(currentState) == MBlocks.SHORT_GRASS && RandomUtils.generateRandomInt(0, 10) == 0) {
                     CoreReflections.method$BonemealableBlock$performBonemeal.invoke(MBlocks.SHORT_GRASS, world, random, nmsCurrentPos, currentState);
                 }
-                if (FastNMS.INSTANCE.method$BlockStateBase$isAir(currentState)) {
+                if (BlockBehaviourProxy.BlockStateBaseProxy.INSTANCE.isAir(currentState)) {
                     Object chunkGenerator = ServerChunkCacheProxy.INSTANCE.getGenerator(FastNMS.INSTANCE.method$ServerLevel$getChunkSource(world));
                     Object placedFeature = HolderProxy.INSTANCE.value(holder.get());
                     CoreReflections.method$PlacedFeature$place.invoke(placedFeature, world, chunkGenerator, random, nmsCurrentPos);

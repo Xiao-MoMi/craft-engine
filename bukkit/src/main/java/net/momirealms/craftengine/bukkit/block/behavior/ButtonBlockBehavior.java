@@ -19,11 +19,16 @@ import net.momirealms.craftengine.core.util.*;
 import net.momirealms.craftengine.core.world.BlockPos;
 import net.momirealms.craftengine.core.world.context.UseOnContext;
 import net.momirealms.craftengine.proxy.minecraft.core.DirectionProxy;
+import net.momirealms.craftengine.proxy.minecraft.sounds.SoundEventProxy;
 import net.momirealms.craftengine.proxy.minecraft.sounds.SoundSourceProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.entity.projectile.AbstractArrowProxy;
+import net.momirealms.craftengine.proxy.minecraft.world.level.EntityGetterProxy;
+import net.momirealms.craftengine.proxy.minecraft.world.level.ExplosionProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.level.LevelAccessorProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.level.LevelProxy;
+import net.momirealms.craftengine.proxy.minecraft.world.level.block.state.BlockBehaviourProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.level.redstone.ExperimentalRedstoneUtilsProxy;
+import net.momirealms.craftengine.proxy.minecraft.world.phys.AABBProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.phys.shape.CollisionContextProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.phys.shape.VoxelShapeProxy;
 import org.bukkit.Location;
@@ -80,7 +85,7 @@ public class ButtonBlockBehavior extends BukkitBlockBehavior {
     public void onExplosionHit(Object thisBlock, Object[] args, Callable<Object> superMethod) {
         ImmutableBlockState blockState = BlockStateUtils.getOptionalCustomBlockState(args[0]).orElse(null);
         if (blockState == null) return;
-        if (FastNMS.INSTANCE.method$Explosion$canTriggerBlocks(args[3]) && !blockState.get(this.poweredProperty)) {
+        if (ExplosionProxy.INSTANCE.canTriggerBlocks(args[3]) && !blockState.get(this.poweredProperty)) {
             press(thisBlock, blockState, args[1], args[2], null);
         }
     }
@@ -149,9 +154,9 @@ public class ButtonBlockBehavior extends BukkitBlockBehavior {
     }
 
     private void checkPressed(Object thisBlock, Object state, Object level, Object pos) {
-        Object arrow = this.canButtonBeActivatedByArrows ? FastNMS.INSTANCE.method$EntityGetter$getEntitiesOfClass(
-                level, AbstractArrowProxy.CLASS, FastNMS.INSTANCE.method$AABB$move(
-                        VoxelShapeProxy.INSTANCE.bounds(FastNMS.INSTANCE.method$BlockState$getShape(
+        Object arrow = this.canButtonBeActivatedByArrows ? EntityGetterProxy.INSTANCE.getEntitiesOfClass(
+                level, AbstractArrowProxy.CLASS, AABBProxy.INSTANCE.move$1(
+                        VoxelShapeProxy.INSTANCE.bounds(BlockBehaviourProxy.BlockStateBaseProxy.INSTANCE.getShape(
                                 state, level, pos, CollisionContextProxy.INSTANCE.empty()
                         )), pos), MEntitySelectors.NO_SPECTATORS).stream().findFirst().orElse(null) : null;
         boolean on = arrow != null;
@@ -199,7 +204,7 @@ public class ButtonBlockBehavior extends BukkitBlockBehavior {
     private void playSound(Object level, Object pos, boolean on) {
         SoundData soundData = getSound(on);
         if (soundData == null) return;
-        Object sound = FastNMS.INSTANCE.constructor$SoundEvent(KeyUtils.toIdentifier(soundData.id()), Optional.empty());
+        Object sound = SoundEventProxy.INSTANCE.create(KeyUtils.toIdentifier(soundData.id()), Optional.empty());
         if (VersionHelper.isOrAbove1_21_5()) {
             LevelAccessorProxy.INSTANCE.playSound$0(level, null, pos, sound, SoundSourceProxy.BLOCKS, soundData.volume().get(), soundData.pitch().get());
         } else {

@@ -16,9 +16,9 @@ public final class FeatureInjector {
     public static void init() {
         Object registry = MBuiltInRegistries.FEATURE;
         MappedRegistryProxy.INSTANCE.setFrozen(registry, false);
-        Object resourceLocation = KeyUtils.toIdentifier(Key.ce("simple_block"));
+        Object identifier = KeyUtils.toIdentifier(Key.ce("simple_block"));
         Object type = FastNMS.INSTANCE.getCraftEngineCustomSimpleBlockFeature();
-        Object holder = RegistryProxy.INSTANCE.registerForHolder$1(registry, resourceLocation, type);
+        Object holder = RegistryProxy.INSTANCE.registerForHolder$1(registry, identifier, type);
         HolderProxy.ReferenceProxy.INSTANCE.bindValue(holder, type);
         HolderProxy.ReferenceProxy.INSTANCE.setTags(holder, Set.of());
         MappedRegistryProxy.INSTANCE.setFrozen(registry, true);

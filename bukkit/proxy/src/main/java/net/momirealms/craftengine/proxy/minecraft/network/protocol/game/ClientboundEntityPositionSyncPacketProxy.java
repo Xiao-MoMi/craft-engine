@@ -3,6 +3,7 @@ package net.momirealms.craftengine.proxy.minecraft.network.protocol.game;
 import net.momirealms.craftengine.proxy.minecraft.world.entity.PositionMoveRotationProxy;
 import net.momirealms.sparrow.reflection.proxy.ASMProxyFactory;
 import net.momirealms.sparrow.reflection.proxy.annotation.ConstructorInvoker;
+import net.momirealms.sparrow.reflection.proxy.annotation.FieldGetter;
 import net.momirealms.sparrow.reflection.proxy.annotation.ReflectionProxy;
 import net.momirealms.sparrow.reflection.proxy.annotation.Type;
 
@@ -12,4 +13,10 @@ public interface ClientboundEntityPositionSyncPacketProxy {
 
     @ConstructorInvoker
     Object newInstance(int id, @Type(clazz = PositionMoveRotationProxy.class) Object values, boolean onGround);
+
+    @FieldGetter(name = "id")
+    int getId(Object target);
+
+    @FieldGetter(name = "values")
+    Object getValues(Object target);
 }

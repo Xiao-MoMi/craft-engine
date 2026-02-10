@@ -25,4 +25,7 @@ public interface ItemProxy {
 
     @MethodInvoker(name = "canBeDepleted", activeIf = "max_version=1.20.4")
     boolean canBeDepleted(Object target);
+
+    @MethodInvoker(name = "components", activeIf = "min_version=1.20.5")
+    Iterable<Object> components(Object target);
 }

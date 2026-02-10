@@ -11,6 +11,7 @@ import net.momirealms.craftengine.core.block.properties.Property;
 import net.momirealms.craftengine.core.util.ResourceConfigUtils;
 import net.momirealms.craftengine.core.world.context.BlockPlaceContext;
 import net.momirealms.craftengine.proxy.bukkit.craftbukkit.event.CraftEventFactoryProxy;
+import net.momirealms.craftengine.proxy.minecraft.world.level.SignalGetterProxy;
 
 import java.util.Map;
 import java.util.Optional;
@@ -29,7 +30,7 @@ public class LampBlockBehavior extends BukkitBlockBehavior {
     @Override
     public ImmutableBlockState updateStateForPlacement(BlockPlaceContext context, ImmutableBlockState state) {
         Object level = context.getLevel().serverWorld();
-        state = state.with(this.litProperty, FastNMS.INSTANCE.method$SignalGetter$hasNeighborSignal(level, LocationUtils.toBlockPos(context.getClickedPos())));
+        state = state.with(this.litProperty, SignalGetterProxy.INSTANCE.hasNeighborSignal(level, LocationUtils.toBlockPos(context.getClickedPos())));
         return state;
     }
 
@@ -41,7 +42,7 @@ public class LampBlockBehavior extends BukkitBlockBehavior {
         Object world = args[1];
         Object blockPos = args[2];
         ImmutableBlockState customState = optionalCustomState.get();
-        if (customState.get(this.litProperty) && !FastNMS.INSTANCE.method$SignalGetter$hasNeighborSignal(world, blockPos)) {
+        if (customState.get(this.litProperty) && !SignalGetterProxy.INSTANCE.hasNeighborSignal(world, blockPos)) {
             if (CraftEventFactoryProxy.INSTANCE.callRedstoneChange(world, blockPos, 0, 15).getNewCurrent() != 15) {
                 return;
             }
@@ -58,7 +59,7 @@ public class LampBlockBehavior extends BukkitBlockBehavior {
         Object blockPos = args[2];
         ImmutableBlockState customState = optionalCustomState.get();
         boolean lit = customState.get(this.litProperty);
-        if (lit != FastNMS.INSTANCE.method$SignalGetter$hasNeighborSignal(world, blockPos)) {
+        if (lit != SignalGetterProxy.INSTANCE.hasNeighborSignal(world, blockPos)) {
             if (lit) {
                 LevelUtils.scheduleBlockTick(world, blockPos, thisBlock, 4);
             } else {

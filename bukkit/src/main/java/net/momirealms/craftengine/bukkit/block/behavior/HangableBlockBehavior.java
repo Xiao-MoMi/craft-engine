@@ -15,6 +15,10 @@ import net.momirealms.craftengine.core.util.Direction;
 import net.momirealms.craftengine.core.util.ResourceConfigUtils;
 import net.momirealms.craftengine.core.world.context.BlockPlaceContext;
 import net.momirealms.craftengine.proxy.minecraft.core.DirectionProxy;
+import net.momirealms.craftengine.proxy.minecraft.world.level.BlockGetterProxy;
+import net.momirealms.craftengine.proxy.minecraft.world.level.block.BlockProxy;
+import net.momirealms.craftengine.proxy.minecraft.world.level.block.state.BlockBehaviourProxy;
+import net.momirealms.craftengine.proxy.minecraft.world.level.material.FluidStateProxy;
 
 import java.util.Map;
 import java.util.concurrent.Callable;
@@ -32,11 +36,11 @@ public class HangableBlockBehavior extends BukkitBlockBehavior implements IsPath
     public ImmutableBlockState updateStateForPlacement(BlockPlaceContext context, ImmutableBlockState state) {
         Object world = context.getLevel().serverWorld();
         Object blockPos = LocationUtils.toBlockPos(context.getClickedPos());
-        Object fluidType = FastNMS.INSTANCE.method$FluidState$getType(FastNMS.INSTANCE.method$BlockGetter$getFluidState(world, blockPos));
+        Object fluidType = FluidStateProxy.INSTANCE.getType(BlockGetterProxy.INSTANCE.getFluidState(world, blockPos));
         for (Direction direction : context.getNearestLookingDirections()) {
             if (direction.axis() != Direction.Axis.Y) continue;
             ImmutableBlockState blockState = state.with(this.hangingProperty, direction == Direction.UP);
-            if (!FastNMS.INSTANCE.method$BlockStateBase$canSurvive(blockState.customBlockState().literalObject(), world, blockPos)) continue;
+            if (!BlockBehaviourProxy.BlockStateBaseProxy.INSTANCE.canSurvive(blockState.customBlockState().literalObject(), world, blockPos)) continue;
             return super.waterloggedProperty != null ? blockState.with(super.waterloggedProperty, fluidType == MFluids.WATER) : blockState;
         }
         return state;
@@ -53,7 +57,7 @@ public class HangableBlockBehavior extends BukkitBlockBehavior implements IsPath
         if (hangingProperty == null) return false;
         Boolean hanging = blockState.get(hangingProperty);
         Object relativePos = FastNMS.INSTANCE.method$BlockPos$relative(blockPos, hanging ? DirectionProxy.UP : DirectionProxy.DOWN);
-        return FastNMS.INSTANCE.method$Block$canSupportCenter(world, relativePos, hanging ? DirectionProxy.DOWN : DirectionProxy.UP);
+        return BlockProxy.INSTANCE.canSupportCenter(world, relativePos, hanging ? DirectionProxy.DOWN : DirectionProxy.UP);
     }
 
     @Override
@@ -64,7 +68,7 @@ public class HangableBlockBehavior extends BukkitBlockBehavior implements IsPath
             LevelUtils.scheduleFluidTick(args[updateShape$level], args[updateShape$blockPos], MFluids.WATER, 5);
         }
         if ((state.get(this.hangingProperty) ? DirectionProxy.UP : DirectionProxy.DOWN) == args[updateShape$direction]
-                && !FastNMS.INSTANCE.method$BlockStateBase$canSurvive(args[0], args[updateShape$level], args[updateShape$blockPos])) {
+                && !BlockBehaviourProxy.BlockStateBaseProxy.INSTANCE.canSurvive(args[0], args[updateShape$level], args[updateShape$blockPos])) {
             return MBlocks.AIR$defaultState;
         }
         return superMethod.call();

@@ -11,6 +11,7 @@ import net.momirealms.craftengine.core.util.Key;
 import net.momirealms.craftengine.core.util.MiscUtils;
 import net.momirealms.craftengine.core.util.ResourceConfigUtils;
 import net.momirealms.craftengine.core.util.Tuple;
+import net.momirealms.craftengine.proxy.minecraft.world.level.block.state.BlockBehaviourProxy;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.NamespacedKey;
@@ -87,7 +88,7 @@ public class BushBlockBehavior extends AbstractCanSurviveBlockBehavior {
 
     protected boolean mayPlaceOn(Object belowState, Object world, Object belowPos) {
         for (Object tag : this.tagsCanSurviveOn) {
-            if (FastNMS.INSTANCE.method$BlockStateBase$is(belowState, tag)) {
+            if (BlockBehaviourProxy.BlockStateBaseProxy.INSTANCE.is$1(belowState, tag)) {
                 return !this.blacklistMode;
             }
         }

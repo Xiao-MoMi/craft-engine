@@ -2,8 +2,8 @@ package net.momirealms.craftengine.core.font;
 
 import net.kyori.adventure.text.Component;
 import net.momirealms.craftengine.core.entity.player.Player;
+import net.momirealms.craftengine.core.pack.Identifier;
 import net.momirealms.craftengine.core.pack.Pack;
-import net.momirealms.craftengine.core.pack.ResourceLocation;
 import net.momirealms.craftengine.core.pack.allocator.IdAllocator;
 import net.momirealms.craftengine.core.plugin.CraftEngine;
 import net.momirealms.craftengine.core.plugin.config.Config;
@@ -512,12 +512,12 @@ public abstract class AbstractFontManager implements FontManager {
                 throw new LocalizedResourceConfigException("warning.config.image.missing_file");
             }
 
-            String resourceLocation = MiscUtils.make(CharacterUtils.replaceBackslashWithSlash(file.toString()), s -> s.endsWith(".png") ? s : s + ".png");
-            if (!ResourceLocation.isValid(resourceLocation)) {
-                throw new LocalizedResourceConfigException("warning.config.image.invalid_file_chars", resourceLocation);
+            String identifier = MiscUtils.make(CharacterUtils.replaceBackslashWithSlash(file.toString()), s -> s.endsWith(".png") ? s : s + ".png");
+            if (!Identifier.isValid(identifier)) {
+                throw new LocalizedResourceConfigException("warning.config.image.invalid_file_chars", identifier);
             }
             String fontName = section.getOrDefault("font", pack.namespace()+ ":default").toString();
-            if (!ResourceLocation.isValid(fontName)) {
+            if (!Identifier.isValid(fontName)) {
                 throw new LocalizedResourceConfigException("warning.config.image.invalid_font_chars", fontName);
             }
 
@@ -650,7 +650,7 @@ public abstract class AbstractFontManager implements FontManager {
 
                 Object heightObj = section.get("height");
                 if (heightObj == null) {
-                    Key namespacedPath = Key.of(resourceLocation);
+                    Key namespacedPath = Key.of(identifier);
                     Path targetImagePath = pack.resourcePackFolder()
                             .resolve("assets")
                             .resolve(namespacedPath.namespace())
@@ -675,7 +675,7 @@ public abstract class AbstractFontManager implements FontManager {
                     throw new LocalizedResourceConfigException("warning.config.image.height_ascent_conflict", String.valueOf(height), String.valueOf(ascent));
                 }
 
-                BitmapImage bitmapImage = new BitmapImage(id, fontId, height, ascent, resourceLocation, codepointGrid);
+                BitmapImage bitmapImage = new BitmapImage(id, fontId, height, ascent, identifier, codepointGrid);
                 for (int[] y : codepointGrid) {
                     for (int x : y) {
                         font.addBitmapImage(x, bitmapImage);

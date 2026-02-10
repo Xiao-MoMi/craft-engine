@@ -57,7 +57,7 @@ public final class BukkitAdvancementManager extends AbstractAdvancementManager {
             if (VersionHelper.isOrAbove1_20_2()) {
                 displayInfo = Optional.of(displayInfo);
             }
-            Object resourceLocation = KeyUtils.toIdentifier(Key.of("craftengine", "toast"));
+            Object identifier = KeyUtils.toIdentifier(Key.of("craftengine", "toast"));
             Object criterion;
             if (VersionHelper.isOrAbove1_20_2()) {
                 criterion = CriterionProxy.INSTANCE.newInstance(ImpossibleTriggerProxy.INSTANCE.newInstance(), ImpossibleTriggerProxy.TriggerInstanceProxy.INSTANCE.newInstance());
@@ -80,10 +80,10 @@ public final class BukkitAdvancementManager extends AbstractAdvancementManager {
                         false
                 );
                 AdvancementProgressProxy.INSTANCE.update(advancementProgress, advancementRequirements);
-                advancement = AdvancementHolderProxy.INSTANCE.newInstance(resourceLocation, advancement);
+                advancement = AdvancementHolderProxy.INSTANCE.newInstance(identifier, advancement);
             } else {
                 advancement = AdvancementProxy.INSTANCE.newInstance(
-                        resourceLocation,
+                        identifier,
                         null, // parent
                         displayInfo,
                         AdvancementRewardsProxy.EMPTY,
@@ -95,13 +95,13 @@ public final class BukkitAdvancementManager extends AbstractAdvancementManager {
             }
             AdvancementProgressProxy.INSTANCE.grantProgress(advancementProgress, "impossible");
             Map<Object, Object> advancementsToGrant = new HashMap<>();
-            advancementsToGrant.put(resourceLocation, advancementProgress);
+            advancementsToGrant.put(identifier, advancementProgress);
             Object grantPacket = VersionHelper.isOrAbove1_21_5() ?
                     NetworkReflections.constructor$ClientboundUpdateAdvancementsPacket.newInstance(false, Arrays.asList(advancement), new HashSet<>(), advancementsToGrant, true) :
                     NetworkReflections.constructor$ClientboundUpdateAdvancementsPacket.newInstance(false, Arrays.asList(advancement), new HashSet<>(), advancementsToGrant);
             Object removePacket = VersionHelper.isOrAbove1_21_5() ?
-                    NetworkReflections.constructor$ClientboundUpdateAdvancementsPacket.newInstance(false, new ArrayList<>(), MiscUtils.init(new HashSet<>(), s -> s.add(resourceLocation)), new HashMap<>(), true) :
-                    NetworkReflections.constructor$ClientboundUpdateAdvancementsPacket.newInstance(false, new ArrayList<>(), MiscUtils.init(new HashSet<>(), s -> s.add(resourceLocation)), new HashMap<>());
+                    NetworkReflections.constructor$ClientboundUpdateAdvancementsPacket.newInstance(false, new ArrayList<>(), MiscUtils.init(new HashSet<>(), s -> s.add(identifier)), new HashMap<>(), true) :
+                    NetworkReflections.constructor$ClientboundUpdateAdvancementsPacket.newInstance(false, new ArrayList<>(), MiscUtils.init(new HashSet<>(), s -> s.add(identifier)), new HashMap<>());
             player.sendPackets(List.of(grantPacket, removePacket), false);
         } catch (ReflectiveOperationException e) {
             this.plugin.logger().warn("Failed to send toast for player " + player.name(), e);

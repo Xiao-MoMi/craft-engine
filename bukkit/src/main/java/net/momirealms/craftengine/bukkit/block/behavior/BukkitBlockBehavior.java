@@ -15,6 +15,7 @@ import net.momirealms.craftengine.core.block.properties.Property;
 import net.momirealms.craftengine.core.util.*;
 import net.momirealms.craftengine.proxy.minecraft.world.item.ItemStackProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.level.block.state.BlockBehaviourProxy;
+import net.momirealms.craftengine.proxy.minecraft.world.level.material.FluidStateProxy;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -143,7 +144,7 @@ public abstract class BukkitBlockBehavior extends BlockBehavior {
         ImmutableBlockState immutableBlockState = optionalCustomState.get();
         if (immutableBlockState.get(this.waterloggedProperty)) {
             FastNMS.INSTANCE.method$LevelWriter$setBlock(world, pos, immutableBlockState.with(this.waterloggedProperty, false).customBlockState().literalObject(), 3);
-            return FastNMS.INSTANCE.constructor$ItemStack(MItems.WATER_BUCKET, 1);
+            return ItemStackProxy.INSTANCE.newInstance(MItems.WATER_BUCKET, 1);
         }
         return ItemStackProxy.EMPTY;
     }
@@ -155,7 +156,7 @@ public abstract class BukkitBlockBehavior extends BlockBehavior {
         Optional<ImmutableBlockState> optionalCustomState = BlockStateUtils.getOptionalCustomBlockState(blockState);
         if (optionalCustomState.isEmpty()) return false;
         ImmutableBlockState immutableBlockState = optionalCustomState.get();
-        Object fluidType = FastNMS.INSTANCE.method$FluidState$getType(args[3]);
+        Object fluidType = FluidStateProxy.INSTANCE.getType(args[3]);
         if (!immutableBlockState.get(this.waterloggedProperty) && fluidType == MFluids.WATER) {
             FastNMS.INSTANCE.method$LevelWriter$setBlock(args[0], args[1], immutableBlockState.with(this.waterloggedProperty, true).customBlockState().literalObject(), 3);
             LevelUtils.scheduleFluidTick(args[0], args[1], fluidType, 5);

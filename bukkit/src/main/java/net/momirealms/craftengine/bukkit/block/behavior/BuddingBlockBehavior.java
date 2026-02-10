@@ -8,6 +8,7 @@ import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.MBuiltInReg
 import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.MFluids;
 import net.momirealms.craftengine.bukkit.util.BlockStateUtils;
 import net.momirealms.craftengine.bukkit.util.DirectionUtils;
+import net.momirealms.craftengine.bukkit.util.RegistryUtils;
 import net.momirealms.craftengine.core.block.CustomBlock;
 import net.momirealms.craftengine.core.block.ImmutableBlockState;
 import net.momirealms.craftengine.core.block.behavior.BlockBehaviorFactory;
@@ -16,6 +17,9 @@ import net.momirealms.craftengine.core.block.properties.Property;
 import net.momirealms.craftengine.core.util.*;
 import net.momirealms.craftengine.core.util.random.RandomUtils;
 import net.momirealms.craftengine.proxy.minecraft.core.DirectionProxy;
+import net.momirealms.craftengine.proxy.minecraft.core.RegistryProxy;
+import net.momirealms.craftengine.proxy.minecraft.resources.IdentifierProxy;
+import net.momirealms.craftengine.proxy.minecraft.world.level.block.BlockProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.level.block.state.BlockBehaviourProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.level.block.state.StateHolderProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.level.block.state.properties.BlockStatePropertiesProxy;
@@ -74,22 +78,22 @@ public class BuddingBlockBehavior extends BukkitBlockBehavior {
             }
             BooleanProperty waterlogged = (BooleanProperty) customBlock.getProperty("waterlogged");
             if (waterlogged != null) {
-                newState = newState.with(waterlogged, FastNMS.INSTANCE.method$FluidState$getType(BlockBehaviourProxy.BlockStateBaseProxy.INSTANCE.getFluidState(blockState)) == MFluids.WATER);
+                newState = newState.with(waterlogged, FluidStateProxy.INSTANCE.getType(BlockBehaviourProxy.BlockStateBaseProxy.INSTANCE.getFluidState(blockState)) == MFluids.WATER);
             }
             FastNMS.INSTANCE.method$LevelWriter$setBlock(level, blockPos, newState.customBlockState().literalObject(), 3);
         } else if (blockId.namespace().equals("minecraft")) {
-            Object block = FastNMS.INSTANCE.method$Registry$getValue(MBuiltInRegistries.BLOCK, FastNMS.INSTANCE.method$ResourceLocation$fromNamespaceAndPath("minecraft", blockId.value()));
+            Object block = RegistryUtils.getRegistryValue(MBuiltInRegistries.BLOCK, IdentifierProxy.INSTANCE.newInstance("minecraft", blockId.value()));
             if (block == null) return;
-            Object newState = FastNMS.INSTANCE.method$Block$defaultState(block);
-            newState = StateHolderProxy.INSTANCE.trySetValue(newState, BlockStatePropertiesProxy.WATERLOGGED, FastNMS.INSTANCE.method$FluidState$getType(BlockBehaviourProxy.BlockStateBaseProxy.INSTANCE.getFluidState(blockState)) == MFluids.WATER);
+            Object newState = BlockProxy.INSTANCE.getDefaultBlockState(block);
+            newState = StateHolderProxy.INSTANCE.trySetValue(newState, BlockStatePropertiesProxy.WATERLOGGED, FluidStateProxy.INSTANCE.getType(BlockBehaviourProxy.BlockStateBaseProxy.INSTANCE.getFluidState(blockState)) == MFluids.WATER);
             newState = StateHolderProxy.INSTANCE.trySetValue(newState, BlockStatePropertiesProxy.FACING, (Comparable<?>) nmsDirection);
             FastNMS.INSTANCE.method$LevelWriter$setBlock(level, blockPos, newState, 3);
         }
     }
 
     public static boolean canClusterGrowAtState(Object state) {
-        return FastNMS.INSTANCE.method$BlockStateBase$isAir(state)
-                || BlockBehaviourProxy.BlockStateBaseProxy.INSTANCE.is(state, MBlocks.WATER)
+        return BlockBehaviourProxy.BlockStateBaseProxy.INSTANCE.isAir(state)
+                || BlockBehaviourProxy.BlockStateBaseProxy.INSTANCE.is$0(state, MBlocks.WATER)
                 && FluidStateProxy.INSTANCE.getAmount(BlockBehaviourProxy.BlockStateBaseProxy.INSTANCE.getFluidState(state)) == 8;
     }
 

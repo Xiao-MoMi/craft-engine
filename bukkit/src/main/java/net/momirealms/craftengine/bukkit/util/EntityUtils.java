@@ -9,6 +9,7 @@ import net.momirealms.craftengine.core.util.VersionHelper;
 import net.momirealms.craftengine.core.world.BlockPos;
 import net.momirealms.craftengine.core.world.Vec3d;
 import net.momirealms.craftengine.proxy.bukkit.craftbukkit.entity.CraftEntityProxy;
+import net.momirealms.craftengine.proxy.minecraft.core.RegistryProxy;
 import net.momirealms.craftengine.proxy.minecraft.network.protocol.game.ClientboundEntityPositionSyncPacketProxy;
 import net.momirealms.craftengine.proxy.minecraft.network.protocol.game.ClientboundTeleportEntityPacketProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.entity.EntityProxy;
@@ -17,6 +18,7 @@ import net.momirealms.craftengine.proxy.minecraft.world.entity.PoseProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.entity.PositionMoveRotationProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.entity.vehicle.DismountHelperProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.level.BlockGetterProxy;
+import net.momirealms.craftengine.proxy.minecraft.world.phys.AABBProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.phys.Vec3Proxy;
 import org.bukkit.Location;
 import org.bukkit.World;
@@ -84,7 +86,7 @@ public final class EntityUtils {
     public static Key getEntityType(Entity entity) {
         Object nmsEntity = FastNMS.INSTANCE.method$CraftEntity$getHandle(entity);
         Object entityType = EntityProxy.INSTANCE.getType(nmsEntity);
-        Object id = FastNMS.INSTANCE.method$Registry$getKey(MBuiltInRegistries.ENTITY_TYPE, entityType);
+        Object id = RegistryProxy.INSTANCE.getKey(MBuiltInRegistries.ENTITY_TYPE, entityType);
         return KeyUtils.identifierToKey(id);
     }
 
@@ -109,7 +111,7 @@ public final class EntityUtils {
                 }
                 Object aabb = LivingEntityProxy.INSTANCE.getLocalBoundsForPose(serverPlayer, pose);
                 Object vec3 = Vec3Proxy.INSTANCE.newInstance(x, pos.y() + floorHeight, z);
-                Object newAABB = FastNMS.INSTANCE.method$AABB$move(aabb, vec3);
+                Object newAABB = AABBProxy.INSTANCE.move$2(aabb, vec3);
                 boolean canDismount = DismountHelperProxy.INSTANCE.canDismountTo(serverLevel, serverPlayer, newAABB);
                 if (!canDismount) {
                     continue;

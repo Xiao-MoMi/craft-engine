@@ -2,6 +2,7 @@ package net.momirealms.craftengine.bukkit.plugin.reflection.minecraft;
 
 import net.momirealms.craftengine.bukkit.plugin.reflection.ReflectionInitException;
 import net.momirealms.craftengine.core.util.VersionHelper;
+import net.momirealms.craftengine.proxy.minecraft.core.component.DataComponentTypeProxy;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.ParameterizedType;
@@ -67,7 +68,7 @@ public final class MBuiltInRegistries {
                             registries$BlockStateProviderType = field.get(null);
                         } else if (rawType == CoreReflections.clazz$Feature) {
                             registries$Feature = field.get(null);
-                        } else if (VersionHelper.isOrAbove1_20_5() && rawType == CoreReflections.clazz$DataComponentType && registries$DataComponentType == null) {
+                        } else if (VersionHelper.isOrAbove1_20_5() && rawType == DataComponentTypeProxy.CLASS && registries$DataComponentType == null) {
                             registries$DataComponentType = field.get(null);
                         } else if (VersionHelper.isOrAbove1_21_5() && rawType == CoreReflections.clazz$DataComponentPredicate$Type) {
                             registries$DataComponentPredicateType = field.get(null);

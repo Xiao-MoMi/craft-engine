@@ -22,4 +22,10 @@ public interface LevelChunkSectionProxy {
 
     @MethodInvoker(name = "hasOnlyAir")
     boolean hasOnlyAir(Object target);
+
+    @FieldGetter(name = "biomes")
+    Object getBiomes(Object target);
+
+    @FieldSetter(name = "biomes")
+    void setBiomes(Object target, Object biomes);
 }

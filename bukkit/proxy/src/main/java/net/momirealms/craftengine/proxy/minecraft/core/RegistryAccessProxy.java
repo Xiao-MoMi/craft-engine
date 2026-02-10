@@ -10,6 +10,6 @@ import net.momirealms.sparrow.reflection.proxy.annotation.Type;
 public interface RegistryAccessProxy extends HolderLookupProxy.ProviderProxy {
     RegistryAccessProxy INSTANCE = ASMProxyFactory.create(RegistryAccessProxy.class);
 
-    @MethodInvoker(name = "registryOrThrow")
-    Object registryOrThrow(Object target, @Type(clazz = ResourceKeyProxy.class) Object resourceKey);
+    @MethodInvoker(name = {"lookupOrThrow", "registryOrThrow"})
+    Object lookupOrThrow(Object target, @Type(clazz = ResourceKeyProxy.class) Object resourceKey);
 }

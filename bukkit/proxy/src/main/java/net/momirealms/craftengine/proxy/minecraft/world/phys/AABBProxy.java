@@ -1,10 +1,8 @@
 package net.momirealms.craftengine.proxy.minecraft.world.phys;
 
+import net.momirealms.craftengine.proxy.minecraft.core.BlockPosProxy;
 import net.momirealms.sparrow.reflection.proxy.ASMProxyFactory;
-import net.momirealms.sparrow.reflection.proxy.annotation.ConstructorInvoker;
-import net.momirealms.sparrow.reflection.proxy.annotation.FieldGetter;
-import net.momirealms.sparrow.reflection.proxy.annotation.MethodInvoker;
-import net.momirealms.sparrow.reflection.proxy.annotation.ReflectionProxy;
+import net.momirealms.sparrow.reflection.proxy.annotation.*;
 
 @ReflectionProxy(name = "net.minecraft.world.phys.AABB")
 public interface AABBProxy {
@@ -48,4 +46,13 @@ public interface AABBProxy {
 
     @MethodInvoker(name = "setMaxZ")
     Object setMaxZ(Object target, double maxZ);
+
+    @MethodInvoker(name = "move")
+    Object move$0(Object target, double x, double y, double z);
+
+    @MethodInvoker(name = "move")
+    Object move$1(Object target, @Type(clazz = BlockPosProxy.class) Object blockPos);
+
+    @MethodInvoker(name = "move")
+    Object move$2(Object target, @Type(clazz = Vec3Proxy.class) Object vec);
 }

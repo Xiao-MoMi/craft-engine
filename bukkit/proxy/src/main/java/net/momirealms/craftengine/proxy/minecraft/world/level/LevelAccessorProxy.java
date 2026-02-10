@@ -50,4 +50,7 @@ public interface LevelAccessorProxy extends LevelReaderProxy {
 
     @MethodInvoker(name = "levelEvent", activeIf = "max_version=1.21.4")
     void levelEvent$1(Object target, @Nullable @Type(clazz = PlayerProxy.class) Object source, int eventId, @Type(clazz = BlockPosProxy.class) Object pos, int data);
+
+    @MethodInvoker(name = "updateNeighborsAt", activeIf = "min_version=1.21.5")
+    void updateNeighborsAt(Object target, @Type(clazz = BlockPosProxy.class) Object pos, @Type(clazz = BlockProxy.class) Object block);
 }

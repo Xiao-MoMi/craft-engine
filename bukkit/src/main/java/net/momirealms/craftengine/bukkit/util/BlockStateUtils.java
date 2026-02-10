@@ -6,7 +6,10 @@ import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.MBuiltInReg
 import net.momirealms.craftengine.core.block.*;
 import net.momirealms.craftengine.core.item.Item;
 import net.momirealms.craftengine.core.util.Key;
+import net.momirealms.craftengine.proxy.minecraft.core.IdMapProxy;
+import net.momirealms.craftengine.proxy.minecraft.core.RegistryProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.level.block.BlockProxy;
+import net.momirealms.craftengine.proxy.minecraft.world.level.block.state.BlockBehaviourProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.level.block.state.StateDefinitionProxy;
 import org.bukkit.block.Block;
 import org.bukkit.block.data.BlockData;
@@ -25,7 +28,7 @@ public final class BlockStateUtils {
     }
 
     public static boolean isTag(Object blockState, Key tag) {
-        return FastNMS.INSTANCE.method$BlockStateBase$is(blockState, BlockTags.getOrCreate(tag));
+        return BlockBehaviourProxy.BlockStateBaseProxy.INSTANCE.is$1(blockState, BlockTags.getOrCreate(tag));
     }
 
     public static BlockStateWrapper toBlockStateWrapper(BlockData blockData) {
@@ -49,7 +52,7 @@ public final class BlockStateUtils {
     }
 
     public static List<Object> getPossibleBlockStates(Key block) {
-        Object blockIns = FastNMS.INSTANCE.method$Registry$getValue(MBuiltInRegistries.BLOCK, KeyUtils.toIdentifier(block));
+        Object blockIns = RegistryUtils.getRegistryValue(MBuiltInRegistries.BLOCK, KeyUtils.toIdentifier(block));
         Object definition = BlockProxy.INSTANCE.getStateDefinition(blockIns);
         return StateDefinitionProxy.INSTANCE.getStates(definition);
     }
@@ -67,9 +70,9 @@ public final class BlockStateUtils {
     }
 
     public static Key getBlockOwnerIdFromState(Object blockState) {
-        Object blockOwner = FastNMS.INSTANCE.method$BlockState$getBlock(blockState);
-        Object resourceLocation = FastNMS.INSTANCE.method$Registry$getKey(MBuiltInRegistries.BLOCK, blockOwner);
-        return KeyUtils.identifierToKey(resourceLocation);
+        Object blockOwner = BlockBehaviourProxy.BlockStateBaseProxy.INSTANCE.getBlock(blockState);
+        Object identifier = RegistryProxy.INSTANCE.getKey(MBuiltInRegistries.BLOCK, blockOwner);
+        return KeyUtils.identifierToKey(identifier);
     }
 
     public static Object blockDataToBlockState(BlockData blockData) {
@@ -77,23 +80,23 @@ public final class BlockStateUtils {
     }
 
     public static Object idToBlockState(int id) {
-        return FastNMS.INSTANCE.method$IdMapper$byId(BlockProxy.BLOCK_STATE_REGISTRY, id);
+        return IdMapProxy.INSTANCE.byId(BlockProxy.BLOCK_STATE_REGISTRY, id);
     }
 
     public static int blockStateToId(Object blockState) {
-        return FastNMS.INSTANCE.method$IdMapper$getId(BlockProxy.BLOCK_STATE_REGISTRY, blockState);
+        return IdMapProxy.INSTANCE.getId$1(BlockProxy.BLOCK_STATE_REGISTRY, blockState);
     }
 
     public static Object getBlockOwner(Object blockState) {
-        return FastNMS.INSTANCE.method$BlockState$getBlock(blockState);
+        return BlockBehaviourProxy.BlockStateBaseProxy.INSTANCE.getBlock(blockState);
     }
 
     public static boolean isOcclude(Object state) {
-        return FastNMS.INSTANCE.method$BlockStateBase$canOcclude(state);
+        return BlockBehaviourProxy.BlockStateBaseProxy.INSTANCE.isCanOcclude(state);
     }
 
     public static boolean isReplaceable(Object state) {
-        return FastNMS.INSTANCE.method$BlockStateBase$isReplaceable(state);
+        return BlockBehaviourProxy.BlockStateBaseProxy.INSTANCE.isReplaceable(state);
     }
 
     public static boolean isVanillaBlock(Object state) {

@@ -1,13 +1,13 @@
 package net.momirealms.craftengine.core.pack;
 
-public final class ResourceLocation {
+public final class Identifier {
 
-    public static boolean isValid(final String resourceLocation) {
-        int index = resourceLocation.indexOf(":");
+    public static boolean isValid(final String identifier) {
+        int index = identifier.indexOf(":");
         if (index == -1) {
-            return isValidPath(resourceLocation);
+            return isValidPath(identifier);
         } else {
-            return isValidNamespace(resourceLocation.substring(0, index)) && isValidPath(resourceLocation.substring(index + 1));
+            return isValidNamespace(identifier.substring(0, index)) && isValidPath(identifier.substring(index + 1));
         }
     }
 

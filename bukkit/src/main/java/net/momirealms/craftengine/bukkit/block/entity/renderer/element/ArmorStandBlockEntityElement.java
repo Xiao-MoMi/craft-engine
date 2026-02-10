@@ -12,10 +12,7 @@ import net.momirealms.craftengine.core.block.entity.render.element.BlockEntityEl
 import net.momirealms.craftengine.core.entity.player.Player;
 import net.momirealms.craftengine.core.util.VersionHelper;
 import net.momirealms.craftengine.core.world.BlockPos;
-import net.momirealms.craftengine.proxy.minecraft.network.protocol.game.ClientboundRemoveEntitiesPacketProxy;
-import net.momirealms.craftengine.proxy.minecraft.network.protocol.game.ClientboundSetEquipmentPacketProxy;
-import net.momirealms.craftengine.proxy.minecraft.network.protocol.game.ClientboundSetPlayerTeamPacketProxy;
-import net.momirealms.craftengine.proxy.minecraft.network.protocol.game.ClientboundUpdateAttributesPacketProxy;
+import net.momirealms.craftengine.proxy.minecraft.network.protocol.game.*;
 import net.momirealms.craftengine.proxy.minecraft.world.entity.EntityProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.entity.EquipmentSlotProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.entity.ai.attributes.AttributeInstanceProxy;
@@ -43,7 +40,7 @@ public class ArmorStandBlockEntityElement implements BlockEntityElement {
 
     public ArmorStandBlockEntityElement(ArmorStandBlockEntityElementConfig config, BlockPos pos, int entityId, boolean posChanged) {
         Vector3f position = config.position();
-        this.cachedSpawnPacket = FastNMS.INSTANCE.constructor$ClientboundAddEntityPacket(
+        this.cachedSpawnPacket = ClientboundAddEntityPacketProxy.INSTANCE.newInstance(
                 entityId, this.uuid, pos.x() + position.x, pos.y() + position.y, pos.z() + position.z,
                 config.xRot(), config.yRot(), MEntityTypes.ARMOR_STAND, 0, Vec3Proxy.ZERO, config.yRot()
         );
@@ -75,7 +72,7 @@ public class ArmorStandBlockEntityElement implements BlockEntityElement {
 
     @Override
     public void show(Player player) {
-        player.sendPackets(List.of(this.cachedSpawnPacket, FastNMS.INSTANCE.constructor$ClientboundSetEntityDataPacket(this.entityId, this.config.metadataValues(player))), false);
+        player.sendPackets(List.of(this.cachedSpawnPacket, ClientboundSetEntityDataPacketProxy.INSTANCE.newInstance(this.entityId, this.config.metadataValues(player))), false);
         player.sendPacket(ClientboundSetEquipmentPacketProxy.INSTANCE.newInstance(this.entityId, List.of(
                 Pair.of(EquipmentSlotProxy.HEAD, this.config.item(player).getLiteralObject())
         )), false);
@@ -92,13 +89,13 @@ public class ArmorStandBlockEntityElement implements BlockEntityElement {
         if (this.cachedUpdatePosPacket != null) {
             player.sendPackets(List.of(
                     this.cachedUpdatePosPacket,
-                    FastNMS.INSTANCE.constructor$ClientboundSetEntityDataPacket(this.entityId, this.config.metadataValues(player)),
+                    ClientboundSetEntityDataPacketProxy.INSTANCE.newInstance(this.entityId, this.config.metadataValues(player)),
                     ClientboundSetEquipmentPacketProxy.INSTANCE.newInstance(this.entityId, List.of(
                             Pair.of(EquipmentSlotProxy.HEAD, this.config.item(player).getLiteralObject())
                     ))
             ), false);
         } else {
-            player.sendPacket(FastNMS.INSTANCE.constructor$ClientboundSetEntityDataPacket(this.entityId, this.config.metadataValues(player)), false);
+            player.sendPacket(ClientboundSetEntityDataPacketProxy.INSTANCE.newInstance(this.entityId, this.config.metadataValues(player)), false);
             player.sendPacket(ClientboundSetEquipmentPacketProxy.INSTANCE.newInstance(this.entityId, List.of(
                     Pair.of(EquipmentSlotProxy.HEAD, this.config.item(player).getLiteralObject())
             )), false);

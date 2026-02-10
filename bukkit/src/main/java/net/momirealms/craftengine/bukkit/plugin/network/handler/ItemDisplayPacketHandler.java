@@ -3,6 +3,7 @@ package net.momirealms.craftengine.bukkit.plugin.network.handler;
 import net.momirealms.craftengine.bukkit.entity.data.ItemDisplayEntityData;
 import net.momirealms.craftengine.bukkit.item.BukkitItemManager;
 import net.momirealms.craftengine.bukkit.nms.FastNMS;
+import net.momirealms.craftengine.bukkit.util.PacketUtils;
 import net.momirealms.craftengine.core.entity.player.Player;
 import net.momirealms.craftengine.core.plugin.config.Config;
 import net.momirealms.craftengine.core.plugin.network.EntityPacketHandler;
@@ -22,7 +23,7 @@ public class ItemDisplayPacketHandler implements EntityPacketHandler {
         FriendlyByteBuf buf = event.getBuffer();
         int id = buf.readVarInt();
         boolean changed = false;
-        List<Object> packedItems = FastNMS.INSTANCE.method$ClientboundSetEntityDataPacket$unpack(buf);
+        List<Object> packedItems = PacketUtils.clientboundSetEntityDataPacket$unpack(buf);
         for (int i = packedItems.size() - 1; i >= 0; i--) {
             Object packedItem = packedItems.get(i);
             int entityDataId = FastNMS.INSTANCE.field$SynchedEntityData$DataValue$id(packedItem);
@@ -42,7 +43,7 @@ public class ItemDisplayPacketHandler implements EntityPacketHandler {
             buf.clear();
             buf.writeVarInt(event.packetID());
             buf.writeVarInt(id);
-            FastNMS.INSTANCE.method$ClientboundSetEntityDataPacket$pack(packedItems, buf);
+            PacketUtils.clientboundSetEntityDataPacket$pack(packedItems, buf);
         }
     }
 }

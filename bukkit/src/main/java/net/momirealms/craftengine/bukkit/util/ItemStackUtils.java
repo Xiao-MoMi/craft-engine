@@ -11,6 +11,7 @@ import net.momirealms.craftengine.core.plugin.CraftEngine;
 import net.momirealms.craftengine.core.plugin.config.Config;
 import net.momirealms.craftengine.core.util.VersionHelper;
 import net.momirealms.craftengine.proxy.bukkit.craftbukkit.inventory.CraftItemStackProxy;
+import net.momirealms.craftengine.proxy.minecraft.nbt.CompoundTagProxy;
 import net.momirealms.craftengine.proxy.minecraft.util.DataFixersProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.entity.LivingEntityProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.item.ItemStackProxy;
@@ -53,7 +54,7 @@ public final class ItemStackUtils {
         if (CraftItemStackProxy.CLASS.isInstance(itemStack)) {
             return itemStack;
         } else {
-            return FastNMS.INSTANCE.method$CraftItemStack$asCraftCopy(itemStack);
+            return CraftItemStackProxy.INSTANCE.asCraftCopy(itemStack);
         }
     }
 
@@ -73,7 +74,7 @@ public final class ItemStackUtils {
                     .resultOrPartial(error -> CraftEngine.instance().logger().severe("Error while saving item: " + error))
                     .orElse(null);
         } else {
-            Object nmsTag = ItemStackProxy.INSTANCE.save(nmsStack, FastNMS.INSTANCE.constructor$CompoundTag());
+            Object nmsTag = ItemStackProxy.INSTANCE.save(nmsStack, CompoundTagProxy.INSTANCE.newInstance());
             return MRegistryOps.NBT.convertTo(MRegistryOps.SPARROW_NBT, nmsTag);
         }
     }

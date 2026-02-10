@@ -32,7 +32,9 @@ import net.momirealms.craftengine.core.util.VersionHelper;
 import net.momirealms.craftengine.core.world.World;
 import net.momirealms.craftengine.core.world.WorldPosition;
 import net.momirealms.craftengine.proxy.minecraft.server.level.ServerPlayerProxy;
+import net.momirealms.craftengine.proxy.minecraft.world.level.block.BlockProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.level.block.state.properties.BlockStatePropertiesProxy;
+import net.momirealms.craftengine.proxy.minecraft.world.level.storage.loot.LootParamsProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.level.storage.loot.parameters.LootContextParamsProxy;
 import org.bukkit.inventory.ItemStack;
 
@@ -97,12 +99,12 @@ public final class BlockStateGenerator {
             ImmutableBlockState state = ((DelegatingBlockState) thisObj).blockState();
             if (state == null) return List.of();
             Object builder = args[0];
-            Object vec3 = FastNMS.INSTANCE.method$LootParams$Builder$getOptionalParameter(builder, LootContextParamsProxy.INSTANCE.getOrigin());
+            Object vec3 = LootParamsProxy.BuilderProxy.INSTANCE.getOptionalParameter(builder, LootContextParamsProxy.INSTANCE.getOrigin());
             if (vec3 == null) return List.of();
 
-            Object tool = FastNMS.INSTANCE.method$LootParams$Builder$getOptionalParameter(builder, LootContextParamsProxy.INSTANCE.getTool());
+            Object tool = LootParamsProxy.BuilderProxy.INSTANCE.getOptionalParameter(builder, LootContextParamsProxy.INSTANCE.getTool());
             Item<ItemStack> item = BukkitItemManager.instance().wrap(tool == null ? null : FastNMS.INSTANCE.method$CraftItemStack$asCraftMirror(tool));
-            Object optionalPlayer = FastNMS.INSTANCE.method$LootParams$Builder$getOptionalParameter(builder, LootContextParamsProxy.INSTANCE.getThisEntity());
+            Object optionalPlayer = LootParamsProxy.BuilderProxy.INSTANCE.getOptionalParameter(builder, LootContextParamsProxy.INSTANCE.getThisEntity());
             if (!CoreReflections.clazz$Player.isInstance(optionalPlayer)) {
                 optionalPlayer = null;
             }
@@ -117,7 +119,7 @@ public final class BlockStateGenerator {
                 }
             }
 
-            Object serverLevel = FastNMS.INSTANCE.method$LootParams$Builder$getLevel(builder);
+            Object serverLevel = LootParamsProxy.BuilderProxy.INSTANCE.getLevel(builder);
             World world = BukkitAdaptors.adapt(FastNMS.INSTANCE.method$Level$getCraftWorld(serverLevel));
             ContextHolder.Builder lootBuilder = new ContextHolder.Builder()
                     .withParameter(DirectContextParameters.POSITION, new WorldPosition(world, FastNMS.INSTANCE.field$Vec3$x(vec3), FastNMS.INSTANCE.field$Vec3$y(vec3), FastNMS.INSTANCE.field$Vec3$z(vec3)));
@@ -128,7 +130,7 @@ public final class BlockStateGenerator {
             if (player != null) {
                 lootBuilder.withParameter(DirectContextParameters.PLAYER, player);
             }
-            Float radius = (Float) FastNMS.INSTANCE.method$LootParams$Builder$getOptionalParameter(builder, LootContextParamsProxy.INSTANCE.getExplosionRadius());
+            Float radius = LootParamsProxy.BuilderProxy.INSTANCE.getOptionalParameter(builder, LootContextParamsProxy.INSTANCE.getExplosionRadius());
             if (radius != null) {
                 lootBuilder.withParameter(DirectContextParameters.EXPLOSION_RADIUS, radius);
             }
@@ -195,7 +197,7 @@ public final class BlockStateGenerator {
             DelegatingBlockState customState = (DelegatingBlockState) thisObj;
             ImmutableBlockState thisState = customState.blockState();
             if (thisState == null) return false;
-            if (FastNMS.INSTANCE.method$Block$defaultState(args[0]) instanceof DelegatingBlockState holder) {
+            if (BlockProxy.INSTANCE.getDefaultBlockState(args[0]) instanceof DelegatingBlockState holder) {
                 ImmutableBlockState holderState = holder.blockState();
                 if (holderState == null) return false;
                 return holderState.owner().equals(thisState.owner());

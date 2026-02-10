@@ -18,6 +18,7 @@ import net.momirealms.craftengine.core.util.MiscUtils;
 import net.momirealms.craftengine.core.util.ResourceConfigUtils;
 import net.momirealms.craftengine.core.world.CEWorld;
 import net.momirealms.craftengine.core.world.chunk.CEChunk;
+import net.momirealms.craftengine.proxy.minecraft.network.protocol.game.ClientboundSystemChatPacketProxy;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.ItemDisplay;
 import org.bukkit.entity.Player;
@@ -145,7 +146,7 @@ public class FurnitureEventListener implements Listener {
             String propertyName = state.name().toLowerCase(Locale.ROOT);
             data.put("furniture", propertyName);
             itemInHand.setTag(data, "craftengine:debug_stick_state");
-            Object systemChatPacket = FastNMS.INSTANCE.constructor$ClientboundSystemChatPacket(
+            Object systemChatPacket = ClientboundSystemChatPacketProxy.INSTANCE.newInstance(
                     ComponentUtils.adventureToMinecraft(Component.translatable("item.minecraft.debug_stick.select")
                             .arguments(
                                     Component.text(propertyName),
@@ -173,7 +174,7 @@ public class FurnitureEventListener implements Listener {
             FurnitureDebugStickState state = ResourceConfigUtils.getAsEnum(data.get("furniture"), FurnitureDebugStickState.class, FurnitureDebugStickState.VARIANT);
             BukkitFurniture furniture = event.furniture();
             state.handler().onInteract(player.isSecondaryUseActive(), furniture, (s1, s2) -> {
-                Object systemChatPacket = FastNMS.INSTANCE.constructor$ClientboundSystemChatPacket(
+                Object systemChatPacket = ClientboundSystemChatPacketProxy.INSTANCE.newInstance(
                         ComponentUtils.adventureToMinecraft(Component.translatable("item.minecraft.debug_stick.update")
                                 .arguments(
                                         Component.text(s1),
@@ -181,7 +182,7 @@ public class FurnitureEventListener implements Listener {
                                 )), true);
                 player.sendPacket(systemChatPacket, false);
             }, () -> {
-                Object systemChatPacket = FastNMS.INSTANCE.constructor$ClientboundSystemChatPacket(
+                Object systemChatPacket = ClientboundSystemChatPacketProxy.INSTANCE.newInstance(
                         ComponentUtils.adventureToMinecraft(Component.translatable("item.minecraft.debug_stick.empty").arguments(Component.text(furniture.id().asString()))), true);
                 player.sendPacket(systemChatPacket, false);
             });

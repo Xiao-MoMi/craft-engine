@@ -1,11 +1,11 @@
 package net.momirealms.craftengine.bukkit.item;
 
 import com.google.gson.JsonElement;
-import net.momirealms.craftengine.bukkit.nms.FastNMS;
 import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.MBuiltInRegistries;
 import net.momirealms.craftengine.bukkit.util.KeyUtils;
 import net.momirealms.craftengine.core.item.ItemType;
 import net.momirealms.craftengine.core.util.Key;
+import net.momirealms.craftengine.proxy.minecraft.core.RegistryProxy;
 import net.momirealms.sparrow.nbt.Tag;
 
 import java.util.Optional;
@@ -19,7 +19,7 @@ public class LegacyItemType implements ItemType {
 
     @Override
     public Key id() {
-        return KeyUtils.identifierToKey(FastNMS.INSTANCE.method$Registry$getKey(MBuiltInRegistries.ITEM, this.item));
+        return KeyUtils.identifierToKey(RegistryProxy.INSTANCE.getKey(MBuiltInRegistries.ITEM, this.item));
     }
 
     @Override

@@ -29,7 +29,7 @@ public class LegacyItemWrapper implements ItemWrapper<ItemStack> {
 
     public ItemType itemType() {
         if (this.itemType == null) {
-            this.itemType = new ComponentItemType(FastNMS.INSTANCE.method$ItemStack$getItem(this.getLiteralObject()));
+            this.itemType = new ComponentItemType(ItemStackProxy.INSTANCE.getItem(this.getLiteralObject()));
         }
         return this.itemType;
     }
@@ -46,27 +46,27 @@ public class LegacyItemWrapper implements ItemWrapper<ItemStack> {
 
         if (path == null || path.length == 0) {
             if (CompoundTagProxy.CLASS.isInstance(finalNMSTag)) {
-                FastNMS.INSTANCE.method$ItemStack$setTag(this.nmsStack, finalNMSTag);
+                ItemStackProxy.INSTANCE.setTag(this.nmsStack, finalNMSTag);
                 return true;
             }
             return false;
         }
 
-        Object currentTag = FastNMS.INSTANCE.field$ItemStack$getOrCreateTag(this.nmsStack);
+        Object currentTag = ItemStackProxy.INSTANCE.getOrCreateTag(this.nmsStack);
 
         for (int i = 0; i < path.length - 1; i++) {
             Object pathSegment = path[i];
             if (pathSegment == null) return false;
-            Object childTag = FastNMS.INSTANCE.method$CompoundTag$get(currentTag, pathSegment.toString());
+            Object childTag = CompoundTagProxy.INSTANCE.get(currentTag, pathSegment.toString());
             if (!CompoundTagProxy.CLASS.isInstance(childTag)) {
-                childTag = FastNMS.INSTANCE.constructor$CompoundTag();
-                FastNMS.INSTANCE.method$CompoundTag$put(currentTag, pathSegment.toString(), childTag);
+                childTag = CompoundTagProxy.INSTANCE.newInstance();
+                CompoundTagProxy.INSTANCE.put(currentTag, pathSegment.toString(), childTag);
             }
             currentTag = childTag;
         }
 
         String finalKey = path[path.length - 1].toString();
-        FastNMS.INSTANCE.method$CompoundTag$put(currentTag, finalKey, finalNMSTag);
+        CompoundTagProxy.INSTANCE.put(currentTag, finalKey, finalNMSTag);
         return true;
     }
 
@@ -103,7 +103,7 @@ public class LegacyItemWrapper implements ItemWrapper<ItemStack> {
         for (int i = 0; i < path.length; i++) {
             Object pathSegment = path[i];
             if (pathSegment == null) return null;
-            currentTag = FastNMS.INSTANCE.method$CompoundTag$get(currentTag, path[i].toString());
+            currentTag = CompoundTagProxy.INSTANCE.get(currentTag, path[i].toString());
             if (currentTag == null) return null;
             if (i == path.length - 1) {
                 return currentTag;
@@ -121,8 +121,8 @@ public class LegacyItemWrapper implements ItemWrapper<ItemStack> {
 
         if (path.length == 1) {
             String key = path[0].toString();
-            if (FastNMS.INSTANCE.method$CompoundTag$get(compoundTag, key) != null) {
-                FastNMS.INSTANCE.method$CompoundTag$remove(compoundTag, key);
+            if (CompoundTagProxy.INSTANCE.get(compoundTag, key) != null) {
+                CompoundTagProxy.INSTANCE.remove(compoundTag, key);
                 return true;
             }
         }
@@ -131,15 +131,15 @@ public class LegacyItemWrapper implements ItemWrapper<ItemStack> {
         for (int i = 0; i < path.length - 1; i++) {
             Object pathSegment = path[i];
             if (pathSegment == null) return false;
-            currentTag = FastNMS.INSTANCE.method$CompoundTag$get(currentTag, path[i].toString());
+            currentTag = CompoundTagProxy.INSTANCE.get(currentTag, path[i].toString());
             if (!CompoundTagProxy.CLASS.isInstance(currentTag)) {
                 return false;
             }
         }
 
         String finalKey = path[path.length - 1].toString();
-        if (FastNMS.INSTANCE.method$CompoundTag$get(currentTag, finalKey) != null) {
-            FastNMS.INSTANCE.method$CompoundTag$remove(currentTag, finalKey);
+        if (CompoundTagProxy.INSTANCE.get(currentTag, finalKey) != null) {
+            CompoundTagProxy.INSTANCE.remove(currentTag, finalKey);
             return true;
         }
         return false;

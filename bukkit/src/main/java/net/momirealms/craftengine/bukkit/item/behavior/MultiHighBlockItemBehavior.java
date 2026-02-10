@@ -18,6 +18,7 @@ import net.momirealms.craftengine.core.util.Key;
 import net.momirealms.craftengine.core.util.VersionHelper;
 import net.momirealms.craftengine.core.world.context.BlockPlaceContext;
 import net.momirealms.craftengine.proxy.minecraft.server.level.ServerLevelProxy;
+import net.momirealms.craftengine.proxy.minecraft.world.level.BlockGetterProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.phys.shape.CollisionContextProxy;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
@@ -90,7 +91,7 @@ public final class MultiHighBlockItemBehavior extends BlockItemBehavior {
             Object level = FastNMS.INSTANCE.field$CraftWorld$ServerLevel(location.getWorld());
             Object blockPos = FastNMS.INSTANCE.constructor$BlockPos(location.getBlockX(), location.getBlockY() + i, location.getBlockZ());
             UpdateOption option = UpdateOption.builder().updateNeighbors().updateClients().updateImmediate().updateKnownShape().build();
-            Object fluidData = FastNMS.INSTANCE.method$BlockGetter$getFluidState(level, blockPos);
+            Object fluidData = BlockGetterProxy.INSTANCE.getFluidState(level, blockPos);
             Object stateToPlace = fluidData == MFluids.WATER$defaultState ? MBlocks.WATER$defaultState : MBlocks.AIR$defaultState;
             revertState.add(location.getWorld().getBlockAt(location.getBlockX(), location.getBlockY() + i, location.getBlockZ()).getState());
             FastNMS.INSTANCE.method$LevelWriter$setBlock(level, blockPos, stateToPlace, option.flags());

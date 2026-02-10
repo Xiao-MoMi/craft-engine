@@ -15,9 +15,9 @@ import net.momirealms.craftengine.core.block.properties.Properties;
 import net.momirealms.craftengine.core.block.properties.Property;
 import net.momirealms.craftengine.core.entity.culling.CullingData;
 import net.momirealms.craftengine.core.loot.LootTable;
+import net.momirealms.craftengine.core.pack.Identifier;
 import net.momirealms.craftengine.core.pack.Pack;
 import net.momirealms.craftengine.core.pack.PendingConfigSection;
-import net.momirealms.craftengine.core.pack.ResourceLocation;
 import net.momirealms.craftengine.core.pack.allocator.BlockStateCandidate;
 import net.momirealms.craftengine.core.pack.allocator.IdAllocator;
 import net.momirealms.craftengine.core.pack.allocator.VisualBlockStateAllocator;
@@ -440,7 +440,7 @@ public abstract class AbstractBlockManager extends AbstractModelGenerator implem
             if (settings != null) {
                 Object clientBoundTags = settings.get("client-bound-tags");
                 if (clientBoundTags instanceof List<?> list) {
-                    List<String> clientSideTags = MiscUtils.getAsStringList(list).stream().filter(ResourceLocation::isValid).toList();
+                    List<String> clientSideTags = MiscUtils.getAsStringList(list).stream().filter(Identifier::isValid).toList();
                     AbstractBlockManager.this.setVanillaBlockTags(id, clientSideTags);
                 }
             }
@@ -798,7 +798,7 @@ public abstract class AbstractBlockManager extends AbstractModelGenerator implem
         private JsonObject parseAppearanceModelSectionAsJson(Map<String, Object> section) {
             JsonObject json = new JsonObject();
             String modelPath = ResourceConfigUtils.requireNonEmptyStringOrThrow(section.get("path"), "warning.config.block.state.model.missing_path");
-            if (!ResourceLocation.isValid(modelPath)) {
+            if (!Identifier.isValid(modelPath)) {
                 throw new LocalizedResourceConfigException("warning.config.block.state.model.invalid_path", modelPath);
             }
             json.addProperty("model", modelPath);

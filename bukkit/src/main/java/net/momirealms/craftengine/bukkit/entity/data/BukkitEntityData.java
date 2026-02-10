@@ -3,6 +3,7 @@ package net.momirealms.craftengine.bukkit.entity.data;
 import net.momirealms.craftengine.bukkit.nms.FastNMS;
 import net.momirealms.craftengine.core.entity.data.ClassTreeIdRegistry;
 import net.momirealms.craftengine.core.entity.data.EntityData;
+import net.momirealms.craftengine.proxy.minecraft.network.syncher.EntityDataAccessorProxy;
 
 public class BukkitEntityData<T> implements EntityData<T> {
     public static final ClassTreeIdRegistry ID_REGISTRY = new ClassTreeIdRegistry();
@@ -15,7 +16,7 @@ public class BukkitEntityData<T> implements EntityData<T> {
         this.id = ID_REGISTRY.define(clazz);
         this.serializer = serializer;
         this.defaultValue = defaultValue;
-        this.entityDataAccessor = FastNMS.INSTANCE.constructor$EntityDataAccessor(id, serializer);
+        this.entityDataAccessor = EntityDataAccessorProxy.INSTANCE.newInstance(id, serializer);
     }
 
     @Override

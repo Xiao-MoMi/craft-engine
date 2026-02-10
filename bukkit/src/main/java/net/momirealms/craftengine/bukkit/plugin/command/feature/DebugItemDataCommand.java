@@ -11,6 +11,7 @@ import net.momirealms.craftengine.core.plugin.command.CraftEngineCommandManager;
 import net.momirealms.craftengine.core.plugin.command.FlagKeys;
 import net.momirealms.craftengine.core.util.AdventureHelper;
 import net.momirealms.craftengine.core.util.VersionHelper;
+import net.momirealms.craftengine.proxy.minecraft.nbt.CompoundTagProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.item.ItemStackProxy;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
@@ -61,7 +62,7 @@ public class DebugItemDataCommand extends BukkitCommandFeature<CommandSender> {
                     .resultOrPartial(error -> CraftEngine.instance().logger().severe("Error while saving item: " + error))
                     .orElse(null);
         } else {
-            Object nmsTag = ItemStackProxy.INSTANCE.save(nmsStack, FastNMS.INSTANCE.constructor$CompoundTag());
+            Object nmsTag = ItemStackProxy.INSTANCE.save(nmsStack, CompoundTagProxy.INSTANCE.newInstance());
             return (Map<String, Object>) MRegistryOps.NBT.convertTo(MRegistryOps.JAVA, nmsTag);
         }
     }

@@ -143,7 +143,7 @@ public final class WorldStorageInjector {
                         injectedObject = FastNMS.INSTANCE.createInjectedLevelChunkSectionHolder(targetSection);
                     } else {
                         injectedObject = (InjectedHolder.Section) constructor$InjectedLevelChunkSection.invoke(
-                                FastNMS.INSTANCE.field$LevelChunkSection$states(targetSection), FastNMS.INSTANCE.field$LevelChunkSection$biomes(targetSection));
+                                FastNMS.INSTANCE.field$LevelChunkSection$states(targetSection), LevelChunkSectionProxy.INSTANCE.getBiomes(targetSection));
                     }
                     injectedObject.ceChunk(chunk);
                     injectedObject.ceSection(ceSection);

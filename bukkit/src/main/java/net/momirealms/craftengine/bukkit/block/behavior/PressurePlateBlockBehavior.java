@@ -19,8 +19,13 @@ import net.momirealms.craftengine.core.world.World;
 import net.momirealms.craftengine.core.world.WorldEvents;
 import net.momirealms.craftengine.proxy.minecraft.core.DirectionProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.entity.EntityProxy;
+import net.momirealms.craftengine.proxy.minecraft.world.level.EntityGetterProxy;
+import net.momirealms.craftengine.proxy.minecraft.world.level.LevelAccessorProxy;
+import net.momirealms.craftengine.proxy.minecraft.world.level.LevelProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.level.block.BasePressurePlateBlockProxy;
+import net.momirealms.craftengine.proxy.minecraft.world.level.block.BlockProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.level.block.state.BlockBehaviourProxy;
+import net.momirealms.craftengine.proxy.minecraft.world.phys.AABBProxy;
 import org.bukkit.GameEvent;
 import org.bukkit.block.Block;
 import org.bukkit.entity.Entity;
@@ -63,7 +68,7 @@ public class PressurePlateBlockBehavior extends BukkitBlockBehavior {
         Object level = args[updateShape$level];
         Object blockPos = args[updateShape$blockPos];
         Direction direction = DirectionUtils.fromNMSDirection(VersionHelper.isOrAbove1_21_2() ? args[4] : args[1]);
-        if (direction == Direction.DOWN && !FastNMS.INSTANCE.method$BlockStateBase$canSurvive(state, level, blockPos)) {
+        if (direction == Direction.DOWN && !BlockBehaviourProxy.BlockStateBaseProxy.INSTANCE.canSurvive(state, level, blockPos)) {
             Optional<ImmutableBlockState> optionalCustomState = BlockStateUtils.getOptionalCustomBlockState(state);
             if (optionalCustomState.isEmpty()) {
                 return MBlocks.AIR$defaultState;
@@ -79,8 +84,8 @@ public class PressurePlateBlockBehavior extends BukkitBlockBehavior {
     public boolean canSurvive(Object thisBlock, Object[] args, Callable<Object> superMethod) throws Exception {
         Object blockPos = LocationUtils.below(args[2]);
         Object level = args[1];
-        return FastNMS.INSTANCE.method$Block$canSupportRigidBlock(level, blockPos)
-                || FastNMS.INSTANCE.method$Block$canSupportCenter(level, blockPos, DirectionProxy.UP);
+        return BlockProxy.INSTANCE.canSupportRigidBlock(level, blockPos)
+                || BlockProxy.INSTANCE.canSupportCenter(level, blockPos, DirectionProxy.UP);
     }
 
     @Override
@@ -117,8 +122,8 @@ public class PressurePlateBlockBehavior extends BukkitBlockBehavior {
             case EVERYTHING -> CoreReflections.clazz$Entity;
             case MOBS -> CoreReflections.clazz$LivingEntity;
         };
-        Object box = FastNMS.INSTANCE.method$AABB$move(BasePressurePlateBlockProxy.INSTANCE.getTouchAABB(), pos);
-        return !FastNMS.INSTANCE.method$EntityGetter$getEntitiesOfClass(
+        Object box = AABBProxy.INSTANCE.move$1(BasePressurePlateBlockProxy.INSTANCE.getTouchAABB(), pos);
+        return !EntityGetterProxy.INSTANCE.getEntitiesOfClass(
                 level, clazz, box,
                 MEntitySelectors.NO_SPECTATORS.and(entity -> !EntityProxy.INSTANCE.isIgnoringBlockTriggers(entity))
         ).isEmpty() ? 15 : 0;
@@ -139,7 +144,7 @@ public class PressurePlateBlockBehavior extends BukkitBlockBehavior {
             Object blockState = this.setSignalForState(state, signalStrength);
             FastNMS.INSTANCE.method$LevelWriter$setBlock(level, pos, blockState, 2);
             this.updateNeighbours(level, pos, thisBlock);
-            FastNMS.INSTANCE.method$Level$setBlocksDirty(level, pos, state, blockState);
+            LevelProxy.INSTANCE.setBlocksDirty(level, pos, state, blockState);
         }
 
         org.bukkit.World craftWorld = FastNMS.INSTANCE.method$Level$getCraftWorld(level);
@@ -194,7 +199,7 @@ public class PressurePlateBlockBehavior extends BukkitBlockBehavior {
         Object pos = args[2];
         Object newState = args[3];
         boolean movedByPiston = (boolean) args[4];
-        if (!movedByPiston && !BlockBehaviourProxy.BlockStateBaseProxy.INSTANCE.is(state, FastNMS.INSTANCE.method$BlockState$getBlock(newState))) {
+        if (!movedByPiston && !BlockBehaviourProxy.BlockStateBaseProxy.INSTANCE.is$0(state, BlockBehaviourProxy.BlockStateBaseProxy.INSTANCE.getBlock(newState))) {
             if (this.getSignalForState(state) > 0) {
                 this.updateNeighbours(level, pos, thisBlock);
             }
@@ -203,8 +208,13 @@ public class PressurePlateBlockBehavior extends BukkitBlockBehavior {
     }
 
     private void updateNeighbours(Object level, Object pos, Object thisBlock) {
-        FastNMS.INSTANCE.method$Level$updateNeighborsAt(level, pos, thisBlock);
-        FastNMS.INSTANCE.method$Level$updateNeighborsAt(level, LocationUtils.below(pos), thisBlock);
+        if (VersionHelper.isOrAbove1_21_5()) {
+            LevelAccessorProxy.INSTANCE.updateNeighborsAt(level, pos, thisBlock);
+            LevelAccessorProxy.INSTANCE.updateNeighborsAt(level, LocationUtils.below(pos), thisBlock);
+        } else {
+            LevelProxy.INSTANCE.updateNeighborsAt(level, pos, thisBlock);
+            LevelProxy.INSTANCE.updateNeighborsAt(level, LocationUtils.below(pos), thisBlock);
+        }
     }
 
     @Override

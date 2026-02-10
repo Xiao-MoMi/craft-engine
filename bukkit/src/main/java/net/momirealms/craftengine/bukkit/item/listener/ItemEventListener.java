@@ -38,7 +38,13 @@ import net.momirealms.craftengine.core.world.BlockPos;
 import net.momirealms.craftengine.core.world.Vec3d;
 import net.momirealms.craftengine.core.world.context.BlockPlaceContext;
 import net.momirealms.craftengine.core.world.context.UseOnContext;
+import net.momirealms.craftengine.proxy.minecraft.network.protocol.game.ClientboundContainerSetDataPacketProxy;
+import net.momirealms.craftengine.proxy.minecraft.world.entity.player.PlayerProxy;
+import net.momirealms.craftengine.proxy.minecraft.world.inventory.AbstractContainerMenuProxy;
+import net.momirealms.craftengine.proxy.minecraft.world.inventory.DataSlotProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.inventory.EnchantmentMenuProxy;
+import net.momirealms.craftengine.proxy.minecraft.world.inventory.SlotProxy;
+import net.momirealms.craftengine.proxy.minecraft.world.item.ItemStackProxy;
 import org.bukkit.GameMode;
 import org.bukkit.Location;
 import org.bukkit.Material;
@@ -541,20 +547,20 @@ public class ItemEventListener implements Listener {
         Optional<CustomItem<ItemStack>> optionalCustomItem = wrapped.getCustomItem();
         if (optionalCustomItem.isEmpty()) return;
         BukkitCustomItem customItem = (BukkitCustomItem) optionalCustomItem.get();
-        if (customItem.clientItem() == FastNMS.INSTANCE.method$ItemStack$getItem(wrapped.getLiteralObject())) return;
+        if (customItem.clientItem() == ItemStackProxy.INSTANCE.getItem(wrapped.getLiteralObject())) return;
         BukkitServerPlayer serverPlayer = BukkitAdaptors.adapt(player);
         if (serverPlayer == null) return;
         this.plugin.scheduler().sync().runDelayed(() -> {
-            Object container = FastNMS.INSTANCE.field$Player$containerMenu(serverPlayer.serverPlayer());
+            Object container = PlayerProxy.INSTANCE.getContainerMenu(serverPlayer.serverPlayer());
             if (!EnchantmentMenuProxy.CLASS.isInstance(container)) return;
-            Object secondSlotItem = FastNMS.INSTANCE.method$Slot$getItem(FastNMS.INSTANCE.method$AbstractContainerMenu$getSlot(container, 1));
-            if (secondSlotItem == null || FastNMS.INSTANCE.method$ItemStack$isEmpty(secondSlotItem)) return;
-            Object[] dataSlots = FastNMS.INSTANCE.field$AbstractContainerMenu$dataSlots(container).toArray();
+            Object secondSlotItem = SlotProxy.INSTANCE.getItem(AbstractContainerMenuProxy.INSTANCE.getSlot(container, 1));
+            if (secondSlotItem == null || ItemStackProxy.INSTANCE.isEmpty(secondSlotItem)) return;
+            Object[] dataSlots = AbstractContainerMenuProxy.INSTANCE.getDataSlots(container).toArray();
             List<Object> packets = new ArrayList<>(dataSlots.length);
             for (int i = 0; i < dataSlots.length; i++) {
                 Object dataSlot = dataSlots[i];
-                int data = FastNMS.INSTANCE.method$DataSlot$get(dataSlot);
-                packets.add(FastNMS.INSTANCE.constructor$ClientboundContainerSetDataPacket(FastNMS.INSTANCE.field$AbstractContainerMenu$containerId(container), i, data));
+                int data = DataSlotProxy.INSTANCE.get(dataSlot);
+                packets.add(ClientboundContainerSetDataPacketProxy.INSTANCE.newInstance(AbstractContainerMenuProxy.INSTANCE.getContainerId(container), i, data));
             }
             serverPlayer.sendPackets(packets, false);
         });

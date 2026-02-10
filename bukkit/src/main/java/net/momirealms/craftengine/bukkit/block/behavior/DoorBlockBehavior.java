@@ -33,7 +33,10 @@ import net.momirealms.craftengine.core.world.context.UseOnContext;
 import net.momirealms.craftengine.proxy.minecraft.core.AxisProxy;
 import net.momirealms.craftengine.proxy.minecraft.core.DirectionProxy;
 import net.momirealms.craftengine.proxy.minecraft.server.level.ServerPlayerProxy;
+import net.momirealms.craftengine.proxy.minecraft.world.level.ExplosionProxy;
+import net.momirealms.craftengine.proxy.minecraft.world.level.SignalGetterProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.level.block.SupportTypeProxy;
+import net.momirealms.craftengine.proxy.minecraft.world.level.block.state.BlockBehaviourProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.level.pathfinder.PathComputationTypeProxy;
 import org.bukkit.Bukkit;
 import org.bukkit.GameEvent;
@@ -159,7 +162,7 @@ public class DoorBlockBehavior extends AbstractCanSurviveBlockBehavior implement
 
     @Override
     public void onExplosionHit(Object thisBlock, Object[] args, Callable<Object> superMethod) {
-        if (this.canOpenByWindCharge && FastNMS.INSTANCE.method$Explosion$canTriggerBlocks(args[3])) {
+        if (this.canOpenByWindCharge && ExplosionProxy.INSTANCE.canTriggerBlocks(args[3])) {
             Optional<ImmutableBlockState> optionalCustomState = BlockStateUtils.getOptionalCustomBlockState(args[0]);
             if (optionalCustomState.isEmpty()) return;
             ImmutableBlockState state = optionalCustomState.get();
@@ -197,7 +200,7 @@ public class DoorBlockBehavior extends AbstractCanSurviveBlockBehavior implement
         Object level = world.serverWorld();
         BlockPos pos = context.getClickedPos();
         if (pos.y() < world.worldHeight().getMaxBuildHeight() - 1 && world.getBlock(pos.above()).canBeReplaced(context)) {
-            boolean hasSignal = FastNMS.INSTANCE.method$SignalGetter$hasNeighborSignal(level, LocationUtils.toBlockPos(pos)) || FastNMS.INSTANCE.method$SignalGetter$hasNeighborSignal(level, LocationUtils.toBlockPos(pos.above()));
+            boolean hasSignal = SignalGetterProxy.INSTANCE.hasNeighborSignal(level, LocationUtils.toBlockPos(pos)) || SignalGetterProxy.INSTANCE.hasNeighborSignal(level, LocationUtils.toBlockPos(pos.above()));
             return state.with(this.poweredProperty, hasSignal)
                     .with(this.facingProperty, context.getHorizontalDirection().toHorizontalDirection())
                     .with(this.openProperty, hasSignal)
@@ -225,10 +228,10 @@ public class DoorBlockBehavior extends AbstractCanSurviveBlockBehavior implement
         Object blockPos4 = LocationUtils.toBlockPos(blockPos.relative(clockWise));
         Object blockState4 = FastNMS.INSTANCE.method$BlockGetter$getBlockState(serverLevel, blockPos4);
 
-        int i = (FastNMS.INSTANCE.method$BlockStateBase$isCollisionShapeFullBlock(blockState1, serverLevel, blockPos1) ? -1 : 0) +
-                (FastNMS.INSTANCE.method$BlockStateBase$isCollisionShapeFullBlock(blockState2, serverLevel, blockPos2) ? -1 : 0) +
-                (FastNMS.INSTANCE.method$BlockStateBase$isCollisionShapeFullBlock(blockState3, serverLevel, blockPos3) ? 1 : 0) +
-                (FastNMS.INSTANCE.method$BlockStateBase$isCollisionShapeFullBlock(blockState4, serverLevel, blockPos4) ? 1 : 0);
+        int i = (BlockBehaviourProxy.BlockStateBaseProxy.INSTANCE.isCollisionShapeFullBlock(blockState1, serverLevel, blockPos1) ? -1 : 0) +
+                (BlockBehaviourProxy.BlockStateBaseProxy.INSTANCE.isCollisionShapeFullBlock(blockState2, serverLevel, blockPos2) ? -1 : 0) +
+                (BlockBehaviourProxy.BlockStateBaseProxy.INSTANCE.isCollisionShapeFullBlock(blockState3, serverLevel, blockPos3) ? 1 : 0) +
+                (BlockBehaviourProxy.BlockStateBaseProxy.INSTANCE.isCollisionShapeFullBlock(blockState4, serverLevel, blockPos4) ? 1 : 0);
 
         boolean anotherDoor1 = isAnotherDoor(blockState1);
         boolean anotherDoor2 = isAnotherDoor(blockState3);
@@ -350,7 +353,7 @@ public class DoorBlockBehavior extends AbstractCanSurviveBlockBehavior implement
             Optional<ImmutableBlockState> belowCustomState = BlockStateUtils.getOptionalCustomBlockState(belowState);
             return belowCustomState.filter(immutableBlockState -> immutableBlockState.owner().value() == super.customBlock).isPresent();
         } else {
-            return FastNMS.INSTANCE.method$BlockStateBase$isFaceSturdy(
+            return BlockBehaviourProxy.BlockStateBaseProxy.INSTANCE.isFaceSturdy(
                     belowState, world, belowPos, DirectionProxy.UP,
                     SupportTypeProxy.FULL
             );

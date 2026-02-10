@@ -1,7 +1,7 @@
 package net.momirealms.craftengine.core.util;
 
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
-import net.momirealms.craftengine.core.pack.ResourceLocation;
+import net.momirealms.craftengine.core.pack.Identifier;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
@@ -98,7 +98,7 @@ public class FileUtils {
         try (Stream<Path> paths = Files.list(assetsFolder)) {
             folders = new ObjectArrayList<>(paths
                     .filter(Files::isDirectory)
-                    .filter(path -> ResourceLocation.isValidNamespace(path.getFileName().toString()))
+                    .filter(path -> Identifier.isValidNamespace(path.getFileName().toString()))
                     .toList());
         }
         return folders;

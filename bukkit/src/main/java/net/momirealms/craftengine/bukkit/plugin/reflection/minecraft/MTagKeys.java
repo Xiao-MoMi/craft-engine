@@ -1,6 +1,7 @@
 package net.momirealms.craftengine.bukkit.plugin.reflection.minecraft;
 
-import net.momirealms.craftengine.bukkit.nms.FastNMS;
+import net.momirealms.craftengine.proxy.minecraft.resources.IdentifierProxy;
+import net.momirealms.craftengine.proxy.minecraft.tags.TagKeyProxy;
 
 import java.util.Objects;
 
@@ -17,8 +18,8 @@ public final class MTagKeys {
     public static final Object Block$SNOW = create(MRegistries.BLOCK, "snow");
 
     private static Object create(Object registry, String location) {
-        Object resourceLocation = FastNMS.INSTANCE.method$ResourceLocation$fromNamespaceAndPath("minecraft", location);
-        Object tagKey = FastNMS.INSTANCE.method$TagKey$create(registry, resourceLocation);
+        Object identifier = IdentifierProxy.INSTANCE.newInstance("minecraft", location);
+        Object tagKey = TagKeyProxy.INSTANCE.create(registry, identifier);
         return Objects.requireNonNull(tagKey);
     }
 }

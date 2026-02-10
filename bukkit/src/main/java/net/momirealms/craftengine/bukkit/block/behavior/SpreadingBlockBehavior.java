@@ -29,7 +29,7 @@ public class SpreadingBlockBehavior extends BukkitBlockBehavior {
         Object level = args[1];
         Object pos = args[2];
         Object blockPos = BlockPosProxy.INSTANCE.offset(pos, RandomUtils.generateRandomInt(-1, 2), RandomUtils.generateRandomInt(-3, 2), RandomUtils.generateRandomInt(-1, 2));
-        if (BlockBehaviourProxy.BlockStateBaseProxy.INSTANCE.is(FastNMS.INSTANCE.method$BlockGetter$getBlockState(level, blockPos), FastNMS.INSTANCE.method$BlockState$getBlock(this.targetBlock.get()))) {
+        if (BlockBehaviourProxy.BlockStateBaseProxy.INSTANCE.is$0(FastNMS.INSTANCE.method$BlockGetter$getBlockState(level, blockPos), BlockBehaviourProxy.BlockStateBaseProxy.INSTANCE.getBlock(this.targetBlock.get()))) {
             FastNMS.INSTANCE.method$LevelWriter$setBlock(level, blockPos, this.block().defaultState().customBlockState().literalObject(), UpdateOption.UPDATE_ALL.flags());
         }
     }

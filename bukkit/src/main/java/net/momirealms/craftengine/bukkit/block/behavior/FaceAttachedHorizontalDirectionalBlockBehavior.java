@@ -16,6 +16,7 @@ import net.momirealms.craftengine.core.util.ResourceConfigUtils;
 import net.momirealms.craftengine.core.util.Tuple;
 import net.momirealms.craftengine.core.world.context.BlockPlaceContext;
 import net.momirealms.craftengine.proxy.minecraft.world.level.block.SupportTypeProxy;
+import net.momirealms.craftengine.proxy.minecraft.world.level.block.state.BlockBehaviourProxy;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
@@ -74,7 +75,7 @@ public class FaceAttachedHorizontalDirectionalBlockBehavior extends BukkitBlockB
             } else {
                 state = state.with(face, AnchorType.WALL).with(facing, direction.opposite().toHorizontalDirection());
             }
-            if (FastNMS.INSTANCE.method$BlockStateBase$canSurvive(state.customBlockState().literalObject(), context.getLevel().serverWorld(), LocationUtils.toBlockPos(context.getClickedPos()))) {
+            if (BlockBehaviourProxy.BlockStateBaseProxy.INSTANCE.canSurvive(state.customBlockState().literalObject(), context.getLevel().serverWorld(), LocationUtils.toBlockPos(context.getClickedPos()))) {
                 return state;
             }
         }
@@ -85,7 +86,7 @@ public class FaceAttachedHorizontalDirectionalBlockBehavior extends BukkitBlockB
     public Object updateShape(Object thisBlock, Object[] args, Callable<Object> superMethod) throws Exception {
         Direction direction = getConnectedDirection(BlockStateUtils.getOptionalCustomBlockState(args[0]).orElse(null));
         if (direction == null) return MBlocks.AIR$defaultState;
-        if (DirectionUtils.toNMSDirection(direction.opposite()) == args[updateShape$direction] && !FastNMS.INSTANCE.method$BlockStateBase$canSurvive(args[0], args[updateShape$level], args[updateShape$blockPos])) {
+        if (DirectionUtils.toNMSDirection(direction.opposite()) == args[updateShape$direction] && !BlockBehaviourProxy.BlockStateBaseProxy.INSTANCE.canSurvive(args[0], args[updateShape$level], args[updateShape$blockPos])) {
             return MBlocks.AIR$defaultState;
         }
         return superMethod.call();
@@ -93,7 +94,7 @@ public class FaceAttachedHorizontalDirectionalBlockBehavior extends BukkitBlockB
 
     private boolean mayPlaceOn(Object state) {
         for (Object tag : this.tagsCanSurviveOn) {
-            if (FastNMS.INSTANCE.method$BlockStateBase$is(state, tag)) {
+            if (BlockBehaviourProxy.BlockStateBaseProxy.INSTANCE.is$1(state, tag)) {
                 return !this.blacklistMode;
             }
         }
@@ -115,7 +116,7 @@ public class FaceAttachedHorizontalDirectionalBlockBehavior extends BukkitBlockB
     }
 
     public static boolean canAttach(Object level, Object targetPos, Object direction, Object targetState) {
-        return FastNMS.INSTANCE.method$BlockStateBase$isFaceSturdy(
+        return BlockBehaviourProxy.BlockStateBaseProxy.INSTANCE.isFaceSturdy(
                 targetState, level, targetPos,
                 FastNMS.INSTANCE.method$Direction$getOpposite(direction),
                 SupportTypeProxy.FULL

@@ -20,7 +20,9 @@ import net.momirealms.craftengine.core.world.Vec3d;
 import net.momirealms.craftengine.core.world.World;
 import net.momirealms.craftengine.core.world.context.UseOnContext;
 import net.momirealms.craftengine.proxy.minecraft.world.item.ItemProxy;
+import net.momirealms.craftengine.proxy.minecraft.world.level.BlockGetterProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.level.ClipContextProxy;
+import net.momirealms.craftengine.proxy.minecraft.world.level.material.FluidStateProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.phys.BlockHitResultProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.phys.HitResultProxy;
 import org.jetbrains.annotations.Nullable;
@@ -52,7 +54,7 @@ public final class LiquidCollisionBlockItemBehavior extends BlockItemBehavior {
             Direction direction = DirectionUtils.fromNMSDirection(BlockHitResultProxy.INSTANCE.getDirection(blockHitResult));
             boolean miss = BlockHitResultProxy.INSTANCE.isMiss(blockHitResult);
             Vec3d hitPos = LocationUtils.fromVec(HitResultProxy.INSTANCE.getLocation(blockHitResult));
-            Object fluidType = FastNMS.INSTANCE.method$FluidState$getType(FastNMS.INSTANCE.method$BlockGetter$getFluidState(world.serverWorld(), blockPos));
+            Object fluidType = FluidStateProxy.INSTANCE.getType(BlockGetterProxy.INSTANCE.getFluidState(world.serverWorld(), blockPos));
             if (fluidType != MFluids.WATER && fluidType != MFluids.LAVA) {
                 return InteractionResult.PASS;
             }

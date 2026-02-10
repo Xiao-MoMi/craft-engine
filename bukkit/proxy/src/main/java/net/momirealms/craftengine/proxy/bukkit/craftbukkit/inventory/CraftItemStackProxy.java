@@ -2,10 +2,15 @@ package net.momirealms.craftengine.proxy.bukkit.craftbukkit.inventory;
 
 import net.momirealms.sparrow.reflection.clazz.SparrowClass;
 import net.momirealms.sparrow.reflection.proxy.ASMProxyFactory;
+import net.momirealms.sparrow.reflection.proxy.annotation.MethodInvoker;
 import net.momirealms.sparrow.reflection.proxy.annotation.ReflectionProxy;
+import org.bukkit.inventory.ItemStack;
 
 @ReflectionProxy(name = "org.bukkit.craftbukkit.inventory.CraftItemStack")
 public interface CraftItemStackProxy {
     CraftItemStackProxy INSTANCE = ASMProxyFactory.create(CraftItemStackProxy.class);
     Class<?> CLASS = SparrowClass.find("org.bukkit.craftbukkit.inventory.CraftItemStack");
+
+    @MethodInvoker(name = "asCraftCopy", isStatic = true)
+    ItemStack asCraftCopy(ItemStack original);
 }
