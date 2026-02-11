@@ -2,7 +2,6 @@ package net.momirealms.craftengine.bukkit.entity.projectile;
 
 import com.destroystokyo.paper.event.entity.EntityAddToWorldEvent;
 import com.destroystokyo.paper.event.entity.EntityRemoveFromWorldEvent;
-import net.momirealms.craftengine.bukkit.nms.FastNMS;
 import net.momirealms.craftengine.bukkit.plugin.BukkitCraftEngine;
 import net.momirealms.craftengine.bukkit.plugin.scheduler.impl.FoliaTask;
 import net.momirealms.craftengine.bukkit.util.ParticleUtils;
@@ -12,6 +11,7 @@ import net.momirealms.craftengine.core.item.Item;
 import net.momirealms.craftengine.core.plugin.scheduler.SchedulerTask;
 import net.momirealms.craftengine.core.util.ItemUtils;
 import net.momirealms.craftengine.core.util.VersionHelper;
+import net.momirealms.craftengine.proxy.bukkit.craftbukkit.entity.CraftEntityProxy;
 import net.momirealms.craftengine.proxy.minecraft.server.level.ChunkMapProxy;
 import net.momirealms.craftengine.proxy.minecraft.server.level.ServerEntityProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.entity.EntityProxy;
@@ -158,7 +158,7 @@ public class BukkitProjectileManager implements Listener, ProjectileManager {
                 return;
             }
 
-            Object nmsEntity = FastNMS.INSTANCE.method$CraftEntity$getHandle(this.projectile);
+            Object nmsEntity = CraftEntityProxy.INSTANCE.getEntity(this.projectile);
             // 获取server entity
             if (this.cachedServerEntity == null) {
                 Object trackedEntity = EntityProxy.INSTANCE.getTrackedEntity(nmsEntity);

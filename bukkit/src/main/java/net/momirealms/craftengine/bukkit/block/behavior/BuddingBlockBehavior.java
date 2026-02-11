@@ -2,7 +2,6 @@ package net.momirealms.craftengine.bukkit.block.behavior;
 
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import net.momirealms.craftengine.bukkit.block.BukkitBlockManager;
-import net.momirealms.craftengine.bukkit.nms.FastNMS;
 import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.MBlocks;
 import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.MBuiltInRegistries;
 import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.MFluids;
@@ -16,9 +15,11 @@ import net.momirealms.craftengine.core.block.properties.BooleanProperty;
 import net.momirealms.craftengine.core.block.properties.Property;
 import net.momirealms.craftengine.core.util.*;
 import net.momirealms.craftengine.core.util.random.RandomUtils;
+import net.momirealms.craftengine.proxy.minecraft.core.BlockPosProxy;
 import net.momirealms.craftengine.proxy.minecraft.core.DirectionProxy;
-import net.momirealms.craftengine.proxy.minecraft.core.RegistryProxy;
 import net.momirealms.craftengine.proxy.minecraft.resources.IdentifierProxy;
+import net.momirealms.craftengine.proxy.minecraft.world.level.BlockGetterProxy;
+import net.momirealms.craftengine.proxy.minecraft.world.level.LevelWriterProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.level.block.BlockProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.level.block.state.BlockBehaviourProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.level.block.state.StateHolderProxy;
@@ -45,8 +46,8 @@ public class BuddingBlockBehavior extends BukkitBlockBehavior {
         if (RandomUtils.generateRandomFloat(0, 1) >= growthChance) return;
         Object nmsDirection = DirectionProxy.VALUES[RandomUtils.generateRandomInt(0, 6)];
         Direction direction = DirectionUtils.fromNMSDirection(nmsDirection);
-        Object blockPos = FastNMS.INSTANCE.method$BlockPos$relative(args[2], nmsDirection);
-        Object blockState = FastNMS.INSTANCE.method$BlockGetter$getBlockState(args[1], blockPos);
+        Object blockPos = BlockPosProxy.INSTANCE.relative(args[2], nmsDirection);
+        Object blockState = BlockGetterProxy.INSTANCE.getBlockState(args[1], blockPos);
         if (canClusterGrowAtState(blockState)) {
             Key blockId = blocks.getFirst();
             CustomBlock firstBlock = BukkitBlockManager.instance().blockById(blockId).orElse(null);
@@ -80,14 +81,14 @@ public class BuddingBlockBehavior extends BukkitBlockBehavior {
             if (waterlogged != null) {
                 newState = newState.with(waterlogged, FluidStateProxy.INSTANCE.getType(BlockBehaviourProxy.BlockStateBaseProxy.INSTANCE.getFluidState(blockState)) == MFluids.WATER);
             }
-            FastNMS.INSTANCE.method$LevelWriter$setBlock(level, blockPos, newState.customBlockState().literalObject(), 3);
+            LevelWriterProxy.INSTANCE.setBlock(level, blockPos, newState.customBlockState().literalObject(), 3);
         } else if (blockId.namespace().equals("minecraft")) {
             Object block = RegistryUtils.getRegistryValue(MBuiltInRegistries.BLOCK, IdentifierProxy.INSTANCE.newInstance("minecraft", blockId.value()));
             if (block == null) return;
             Object newState = BlockProxy.INSTANCE.getDefaultBlockState(block);
             newState = StateHolderProxy.INSTANCE.trySetValue(newState, BlockStatePropertiesProxy.WATERLOGGED, FluidStateProxy.INSTANCE.getType(BlockBehaviourProxy.BlockStateBaseProxy.INSTANCE.getFluidState(blockState)) == MFluids.WATER);
             newState = StateHolderProxy.INSTANCE.trySetValue(newState, BlockStatePropertiesProxy.FACING, (Comparable<?>) nmsDirection);
-            FastNMS.INSTANCE.method$LevelWriter$setBlock(level, blockPos, newState, 3);
+            LevelWriterProxy.INSTANCE.setBlock(level, blockPos, newState, 3);
         }
     }
 

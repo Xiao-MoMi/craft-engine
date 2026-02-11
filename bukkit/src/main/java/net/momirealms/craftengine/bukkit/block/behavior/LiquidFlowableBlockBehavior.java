@@ -1,12 +1,13 @@
 package net.momirealms.craftengine.bukkit.block.behavior;
 
-import net.momirealms.craftengine.bukkit.nms.FastNMS;
 import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.MFluids;
 import net.momirealms.craftengine.core.block.CustomBlock;
 import net.momirealms.craftengine.core.block.UpdateOption;
 import net.momirealms.craftengine.core.block.behavior.BlockBehaviorFactory;
 import net.momirealms.craftengine.core.block.behavior.PlaceLiquidBlockBehavior;
 import net.momirealms.craftengine.core.world.WorldEvents;
+import net.momirealms.craftengine.proxy.minecraft.world.level.LevelAccessorProxy;
+import net.momirealms.craftengine.proxy.minecraft.world.level.LevelWriterProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.level.block.BlockProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.level.material.FluidStateProxy;
 
@@ -33,11 +34,11 @@ public class LiquidFlowableBlockBehavior extends BukkitBlockBehavior implements 
         Object fluidState = args[3];
         Object fluidType = FluidStateProxy.INSTANCE.getType(fluidState);
         if (fluidType == MFluids.LAVA || fluidType == MFluids.FLOWING_LAVA) {
-            FastNMS.INSTANCE.method$LevelAccessor$levelEvent(level, WorldEvents.LAVA_CONVERTS_BLOCK, pos, 0);
+            LevelAccessorProxy.INSTANCE.levelEvent(level, WorldEvents.LAVA_CONVERTS_BLOCK, pos, 0);
         } else {
             BlockProxy.INSTANCE.dropResources(blockState, level, pos);
         }
-        FastNMS.INSTANCE.method$LevelWriter$setBlock(level, pos, FluidStateProxy.INSTANCE.createLegacyBlock(fluidState), UpdateOption.UPDATE_ALL.flags());
+        LevelWriterProxy.INSTANCE.setBlock(level, pos, FluidStateProxy.INSTANCE.createLegacyBlock(fluidState), UpdateOption.UPDATE_ALL.flags());
         return true;
     }
 

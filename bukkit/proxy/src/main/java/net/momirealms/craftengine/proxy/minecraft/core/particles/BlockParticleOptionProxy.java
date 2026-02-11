@@ -15,5 +15,8 @@ public interface BlockParticleOptionProxy {
     Object newInstance(@Type(clazz = ParticleTypeProxy.class) Object type, @Type(clazz = BlockStateProxy.class) Object blockState);
 
     @FieldGetter(name = "type")
-    ParticleTypeProxy getType(Object target);
+    Object getType(Object target);
+
+    @FieldGetter(name = "state")
+    Object getState(Object target);
 }

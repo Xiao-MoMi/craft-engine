@@ -11,13 +11,13 @@ public interface ClipContextProxy {
     @ReflectionProxy(name = "net.minecraft.world.level.ClipContext$Fluid")
     interface FluidProxy {
         FluidProxy INSTANCE = ASMProxyFactory.create(FluidProxy.class);
-        Object[] VALUES = INSTANCE.values();
-        Object NONE = VALUES[0];
-        Object SOURCE_ONLY = VALUES[1];
-        Object ANY = VALUES[2];
-        Object WATER = VALUES[3];
+        Enum<?>[] VALUES = INSTANCE.values();
+        Enum<?> NONE = VALUES[0];
+        Enum<?> SOURCE_ONLY = VALUES[1];
+        Enum<?> ANY = VALUES[2];
+        Enum<?> WATER = VALUES[3];
 
         @MethodInvoker(name = "values", isStatic = true)
-        Object[] values();
+        Enum<?>[] values();
     }
 }

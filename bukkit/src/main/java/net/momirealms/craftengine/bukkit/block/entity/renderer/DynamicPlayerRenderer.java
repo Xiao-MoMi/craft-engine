@@ -6,9 +6,7 @@ import it.unimi.dsi.fastutil.ints.IntList;
 import net.momirealms.craftengine.bukkit.block.behavior.BedBlockBehavior;
 import net.momirealms.craftengine.bukkit.block.entity.BedBlockEntity;
 import net.momirealms.craftengine.bukkit.entity.data.PlayerData;
-import net.momirealms.craftengine.bukkit.nms.FastNMS;
 import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.MEntityTypes;
-import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.NetworkReflections;
 import net.momirealms.craftengine.bukkit.plugin.user.BukkitServerPlayer;
 import net.momirealms.craftengine.bukkit.util.LocationUtils;
 import net.momirealms.craftengine.core.block.ImmutableBlockState;
@@ -149,7 +147,7 @@ public class DynamicPlayerRenderer implements DynamicBlockEntityRenderer {
             List<Object> metadata = new ArrayList<>(SynchedEntityDataProxy.INSTANCE.getNonDefaultValues(before.entityData()));
             boolean noSharedFlags = true;
             for (Object entry : metadata) {
-                int id = FastNMS.INSTANCE.field$SynchedEntityData$DataValue$id(entry);
+                int id = SynchedEntityDataProxy.DataValueProxy.INSTANCE.getId(entry);
                 if (id != PlayerData.SharedFlags.id) continue;
                 noSharedFlags = false;
                 break;
@@ -180,7 +178,7 @@ public class DynamicPlayerRenderer implements DynamicBlockEntityRenderer {
         } else {
             entry = ClientboundPlayerInfoUpdatePacketProxy.EntryProxy.INSTANCE.newInstance(this.uuid, gameProfile, false, 0, GameTypeProxy.SURVIVAL, null, null);
         }
-        this.cachedPlayerInfoUpdatePacket = FastNMS.INSTANCE.constructor$ClientboundPlayerInfoUpdatePacket(ADD_PLAYER_ACTION, List.of(entry));
+        this.cachedPlayerInfoUpdatePacket = ClientboundPlayerInfoUpdatePacketProxy.INSTANCE.newInstance(ADD_PLAYER_ACTION, List.of(entry));
         this.cachedSpawnPacket = ClientboundAddEntityPacketProxy.INSTANCE.newInstance(
                 this.entityId, this.uuid, pos.x + this.offset.x, y + this.offset.y, pos.z + this.offset.z,
                 0, this.yRot, MEntityTypes.PLAYER, 0, Vec3Proxy.ZERO, this.yRot
@@ -230,6 +228,6 @@ public class DynamicPlayerRenderer implements DynamicBlockEntityRenderer {
 
     @SuppressWarnings("unchecked")
     private static <E extends Enum<E>> EnumSet<E> createAction() {
-        return EnumSet.of((E) NetworkReflections.instance$ClientboundPlayerInfoUpdatePacket$Action$ADD_PLAYER);
+        return EnumSet.of((E) ClientboundPlayerInfoUpdatePacketProxy.ActionProxy.ADD_PLAYER);
     }
 }

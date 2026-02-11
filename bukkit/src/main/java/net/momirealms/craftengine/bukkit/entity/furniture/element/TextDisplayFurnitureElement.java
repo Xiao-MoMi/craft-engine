@@ -1,7 +1,6 @@
 package net.momirealms.craftengine.bukkit.entity.furniture.element;
 
 import it.unimi.dsi.fastutil.ints.IntArrayList;
-import net.momirealms.craftengine.bukkit.nms.FastNMS;
 import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.MEntityTypes;
 import net.momirealms.craftengine.core.entity.furniture.Furniture;
 import net.momirealms.craftengine.core.entity.player.Player;
@@ -9,6 +8,7 @@ import net.momirealms.craftengine.core.util.MiscUtils;
 import net.momirealms.craftengine.core.world.Vec3d;
 import net.momirealms.craftengine.core.world.WorldPosition;
 import net.momirealms.craftengine.proxy.minecraft.network.protocol.game.ClientboundAddEntityPacketProxy;
+import net.momirealms.craftengine.proxy.minecraft.network.protocol.game.ClientboundBundlePacketProxy;
 import net.momirealms.craftengine.proxy.minecraft.network.protocol.game.ClientboundRemoveEntitiesPacketProxy;
 import net.momirealms.craftengine.proxy.minecraft.network.protocol.game.ClientboundSetEntityDataPacketProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.entity.EntityProxy;
@@ -45,7 +45,7 @@ public final class TextDisplayFurnitureElement extends AbstractFurnitureElement 
 
     @Override
     public void showInternal(Player player) {
-        player.sendPacket(FastNMS.INSTANCE.constructor$ClientboundBundlePacket(List.of(
+        player.sendPacket(ClientboundBundlePacketProxy.INSTANCE.newInstance(List.of(
                 ClientboundAddEntityPacketProxy.INSTANCE.newInstance(
                         this.entityId, this.uuid,
                         this.position.x, this.position.y, this.position.z, 0, this.position.yRot,

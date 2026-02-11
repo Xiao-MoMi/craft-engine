@@ -2,7 +2,6 @@ package net.momirealms.craftengine.bukkit.entity.furniture.hitbox;
 
 import net.momirealms.craftengine.bukkit.entity.furniture.BukkitCollider;
 import net.momirealms.craftengine.bukkit.entity.seat.BukkitSeat;
-import net.momirealms.craftengine.bukkit.nms.FastNMS;
 import net.momirealms.craftengine.core.entity.furniture.Collider;
 import net.momirealms.craftengine.core.entity.furniture.Furniture;
 import net.momirealms.craftengine.core.entity.furniture.hitbox.FurnitureHitBox;
@@ -12,6 +11,7 @@ import net.momirealms.craftengine.core.entity.seat.SeatConfig;
 import net.momirealms.craftengine.core.world.Vec3d;
 import net.momirealms.craftengine.core.world.World;
 import net.momirealms.craftengine.core.world.collision.AABB;
+import net.momirealms.craftengine.proxy.minecraft.world.phys.AABBProxy;
 import net.momirealms.sparrow.nbt.CompoundTag;
 
 public abstract class AbstractFurnitureHitBox implements FurnitureHitBox {
@@ -46,7 +46,7 @@ public abstract class AbstractFurnitureHitBox implements FurnitureHitBox {
     }
 
     protected Collider createCollider(World world, Vec3d position, AABB ceAABB, boolean canCollide, boolean blocksBuilding, boolean canBeHitByProjectile) {
-        Object nmsAABB = FastNMS.INSTANCE.constructor$AABB(ceAABB.minX, ceAABB.minY, ceAABB.minZ, ceAABB.maxX, ceAABB.maxY, ceAABB.maxZ);
+        Object nmsAABB = AABBProxy.INSTANCE.newInstance(ceAABB.minX, ceAABB.minY, ceAABB.minZ, ceAABB.maxX, ceAABB.maxY, ceAABB.maxZ);
         return new BukkitCollider(world.serverWorld(), nmsAABB, position.x, position.y, position.z, canBeHitByProjectile, canCollide, blocksBuilding);
     }
 }

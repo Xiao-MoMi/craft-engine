@@ -14,7 +14,6 @@ import net.bytebuddy.matcher.ElementMatcher;
 import net.bytebuddy.matcher.ElementMatchers;
 import net.momirealms.craftengine.bukkit.item.BukkitItemManager;
 import net.momirealms.craftengine.bukkit.item.DataComponentTypes;
-import net.momirealms.craftengine.bukkit.nms.FastNMS;
 import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.CoreReflections;
 import net.momirealms.craftengine.bukkit.util.ItemTags;
 import net.momirealms.craftengine.bukkit.util.KeyUtils;
@@ -23,6 +22,7 @@ import net.momirealms.craftengine.core.item.Item;
 import net.momirealms.craftengine.core.item.ItemKeys;
 import net.momirealms.craftengine.core.item.data.FireworkExplosion;
 import net.momirealms.craftengine.core.util.*;
+import net.momirealms.craftengine.proxy.bukkit.craftbukkit.inventory.CraftItemStackProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.ContainerProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.item.DyeColorProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.item.DyeItemProxy;
@@ -150,7 +150,7 @@ public final class RecipeInjector {
                 if (ItemStackProxy.INSTANCE.isEmpty(itemStack)) {
                     continue;
                 }
-                Item<ItemStack> wrapped = BukkitItemManager.instance().wrap(FastNMS.INSTANCE.method$CraftItemStack$asCraftMirror(itemStack));
+                Item<ItemStack> wrapped = BukkitItemManager.instance().wrap(CraftItemStackProxy.INSTANCE.asCraftMirror(itemStack));
                 if (isFireworkDye(wrapped)) {
                     hasDye = true;
                 } else {
@@ -181,7 +181,7 @@ public final class RecipeInjector {
                 if (ItemStackProxy.INSTANCE.isEmpty(itemStack)) {
                     continue;
                 }
-                Item<ItemStack> wrapped = BukkitItemManager.instance().wrap(FastNMS.INSTANCE.method$CraftItemStack$asCraftMirror(itemStack));
+                Item<ItemStack> wrapped = BukkitItemManager.instance().wrap(CraftItemStackProxy.INSTANCE.asCraftMirror(itemStack));
                 if (isFireworkDye(wrapped)) {
                     Color color = getFireworkColor(wrapped);
                     if (color == null) {
@@ -224,7 +224,7 @@ public final class RecipeInjector {
             if (ItemStackProxy.INSTANCE.isEmpty(itemStack)) {
                 continue;
             }
-            Item<ItemStack> wrapped = BukkitItemManager.instance().wrap(FastNMS.INSTANCE.method$CraftItemStack$asCraftMirror(itemStack));
+            Item<ItemStack> wrapped = BukkitItemManager.instance().wrap(CraftItemStackProxy.INSTANCE.asCraftMirror(itemStack));
             if (item1 == null) {
                 item1 = wrapped;
             } else {
@@ -281,7 +281,7 @@ public final class RecipeInjector {
                 if (ItemStackProxy.INSTANCE.isEmpty(itemStack)) {
                     continue;
                 }
-                Item<ItemStack> wrapped = BukkitItemManager.instance().wrap(FastNMS.INSTANCE.method$CraftItemStack$asCraftMirror(itemStack));
+                Item<ItemStack> wrapped = BukkitItemManager.instance().wrap(CraftItemStackProxy.INSTANCE.asCraftMirror(itemStack));
                 if (isDyeable(wrapped)) {
                     if (itemToDye != null) {
                         return false;
@@ -312,7 +312,7 @@ public final class RecipeInjector {
                 if (ItemStackProxy.INSTANCE.isEmpty(itemStack)) {
                     continue;
                 }
-                Item<ItemStack> wrapped = BukkitItemManager.instance().wrap(FastNMS.INSTANCE.method$CraftItemStack$asCraftMirror(itemStack));
+                Item<ItemStack> wrapped = BukkitItemManager.instance().wrap(CraftItemStackProxy.INSTANCE.asCraftMirror(itemStack));
                 if (isDyeable(wrapped)) {
                     itemToDye = wrapped.copyWithCount(1);
                 } else {

@@ -1,7 +1,6 @@
 package net.momirealms.craftengine.bukkit.api;
 
 import net.momirealms.craftengine.bukkit.block.BukkitBlockManager;
-import net.momirealms.craftengine.bukkit.nms.FastNMS;
 import net.momirealms.craftengine.bukkit.plugin.BukkitCraftEngine;
 import net.momirealms.craftengine.bukkit.plugin.user.BukkitServerPlayer;
 import net.momirealms.craftengine.bukkit.util.BlockStateUtils;
@@ -17,6 +16,13 @@ import net.momirealms.craftengine.core.util.Key;
 import net.momirealms.craftengine.core.world.World;
 import net.momirealms.craftengine.core.world.WorldEvents;
 import net.momirealms.craftengine.core.world.WorldPosition;
+import net.momirealms.craftengine.proxy.bukkit.craftbukkit.CraftWorldProxy;
+import net.momirealms.craftengine.proxy.minecraft.core.BlockPosProxy;
+import net.momirealms.craftengine.proxy.minecraft.world.level.BlockGetterProxy;
+import net.momirealms.craftengine.proxy.minecraft.world.level.LevelAccessorProxy;
+import net.momirealms.craftengine.proxy.minecraft.world.level.LevelProxy;
+import net.momirealms.craftengine.proxy.minecraft.world.level.LevelWriterProxy;
+import net.momirealms.craftengine.proxy.minecraft.world.level.block.state.BlockBehaviourProxy;
 import net.momirealms.sparrow.nbt.CompoundTag;
 import org.bukkit.Location;
 import org.bukkit.SoundCategory;
@@ -141,13 +147,13 @@ public final class CraftEngineBlocks {
                                 @NotNull UpdateOption option,
                                 boolean playSound) {
         boolean success;
-        Object worldServer = FastNMS.INSTANCE.field$CraftWorld$ServerLevel(location.getWorld());
-        Object blockPos = FastNMS.INSTANCE.constructor$BlockPos(location.getBlockX(), location.getBlockY(), location.getBlockZ());
+        Object worldServer = CraftWorldProxy.INSTANCE.getWorld(location.getWorld());
+        Object blockPos = BlockPosProxy.INSTANCE.newInstance$1(location.getBlockX(), location.getBlockY(), location.getBlockZ());
         Object blockState = block.customBlockState().literalObject();
-        Object oldBlockState = FastNMS.INSTANCE.method$BlockGetter$getBlockState(worldServer, blockPos);
-        success = FastNMS.INSTANCE.method$LevelWriter$setBlock(worldServer, blockPos, blockState, option.flags());
+        Object oldBlockState = BlockGetterProxy.INSTANCE.getBlockState(worldServer, blockPos);
+        success = LevelWriterProxy.INSTANCE.setBlock(worldServer, blockPos, blockState, option.flags());
         if (success) {
-            FastNMS.INSTANCE.method$BlockStateBase$onPlace(blockState, worldServer, blockPos, oldBlockState, false);
+            BlockBehaviourProxy.BlockStateBaseProxy.INSTANCE.onPlace(blockState, worldServer, blockPos, oldBlockState, false);
             if (playSound) {
                 SoundData data = block.settings().sounds().placeSound();
                 location.getWorld().playSound(location, data.id().toString(), SoundCategory.BLOCKS, data.volume().get(), data.pitch().get());
@@ -170,13 +176,13 @@ public final class CraftEngineBlocks {
      * Removes a block from the world if it's custom
      *
      * @param block block to remove
-     * @param isMoving is moving
+     * @param movedByPiston moved by piston
      * @return success or not
      */
     public static boolean remove(@NotNull Block block,
-                                 boolean isMoving) {
+                                 boolean movedByPiston) {
         if (!isCustomBlock(block)) return false;
-        FastNMS.INSTANCE.method$Level$removeBlock(FastNMS.INSTANCE.field$CraftWorld$ServerLevel(block.getWorld()), LocationUtils.toBlockPos(block.getX(), block.getY(), block.getZ()), isMoving);
+        LevelProxy.INSTANCE.removeBlock(CraftWorldProxy.INSTANCE.getWorld(block.getWorld()), LocationUtils.toBlockPos(block.getX(), block.getY(), block.getZ()), movedByPiston);
         return true;
     }
 
@@ -186,13 +192,13 @@ public final class CraftEngineBlocks {
      * @param block block to remove
      * @param player player who breaks the block
      * @param dropLoot whether to drop block loots
-     * @param isMoving is moving
+     * @param movedByPiston moved by piston
      * @param sendLevelEvent whether to send break particles and sounds
      * @return success or not
      */
     public static boolean remove(@NotNull Block block,
                                  @Nullable Player player,
-                                 boolean isMoving,
+                                 boolean movedByPiston,
                                  boolean dropLoot,
                                  boolean sendLevelEvent) {
         ImmutableBlockState state = getCustomBlockState(block);
@@ -213,9 +219,9 @@ public final class CraftEngineBlocks {
             }
         }
         if (sendLevelEvent) {
-            FastNMS.INSTANCE.method$LevelAccessor$levelEvent(world.serverWorld(), WorldEvents.BLOCK_BREAK_EFFECT, LocationUtils.toBlockPos(location.getBlockX(), location.getBlockY(), location.getBlockZ()), state.customBlockState().registryId());
+            LevelAccessorProxy.INSTANCE.levelEvent(world.serverWorld(), WorldEvents.BLOCK_BREAK_EFFECT, LocationUtils.toBlockPos(location.getBlockX(), location.getBlockY(), location.getBlockZ()), state.customBlockState().registryId());
         }
-        FastNMS.INSTANCE.method$Level$removeBlock(world.serverWorld(), LocationUtils.toBlockPos(location.getBlockX(), location.getBlockY(), location.getBlockZ()), isMoving);
+        LevelProxy.INSTANCE.removeBlock(world.serverWorld(), LocationUtils.toBlockPos(location.getBlockX(), location.getBlockY(), location.getBlockZ()), movedByPiston);
         return true;
     }
 
@@ -247,7 +253,7 @@ public final class CraftEngineBlocks {
      * @return is custom block or not
      */
     public static boolean isCustomBlock(@NotNull Block block) {
-        Object state = FastNMS.INSTANCE.method$BlockGetter$getBlockState(FastNMS.INSTANCE.field$CraftWorld$ServerLevel(block.getWorld()), LocationUtils.toBlockPos(block.getX(), block.getY(), block.getZ()));
+        Object state = BlockGetterProxy.INSTANCE.getBlockState(CraftWorldProxy.INSTANCE.getWorld(block.getWorld()), LocationUtils.toBlockPos(block.getX(), block.getY(), block.getZ()));
         return BlockStateUtils.isCustomBlock(state);
     }
 
@@ -259,7 +265,7 @@ public final class CraftEngineBlocks {
      */
     @Nullable
     public static ImmutableBlockState getCustomBlockState(@NotNull Block block) {
-        Object state = FastNMS.INSTANCE.method$BlockGetter$getBlockState(FastNMS.INSTANCE.field$CraftWorld$ServerLevel(block.getWorld()), LocationUtils.toBlockPos(block.getX(), block.getY(), block.getZ()));
+        Object state = BlockGetterProxy.INSTANCE.getBlockState(CraftWorldProxy.INSTANCE.getWorld(block.getWorld()), LocationUtils.toBlockPos(block.getX(), block.getY(), block.getZ()));
         return BlockStateUtils.getOptionalCustomBlockState(state).orElse(null);
     }
 

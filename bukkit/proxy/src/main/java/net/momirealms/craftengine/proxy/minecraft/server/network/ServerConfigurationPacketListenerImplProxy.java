@@ -1,5 +1,6 @@
-package net.momirealms.craftengine.proxy.minecraft.network;
+package net.momirealms.craftengine.proxy.minecraft.server.network;
 
+import net.momirealms.craftengine.proxy.minecraft.network.ConfigurationTaskProxy;
 import net.momirealms.sparrow.reflection.clazz.SparrowClass;
 import net.momirealms.sparrow.reflection.proxy.ASMProxyFactory;
 import net.momirealms.sparrow.reflection.proxy.annotation.FieldGetter;

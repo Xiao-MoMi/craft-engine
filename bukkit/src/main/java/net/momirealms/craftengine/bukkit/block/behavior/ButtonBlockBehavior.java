@@ -1,7 +1,6 @@
 package net.momirealms.craftengine.bukkit.block.behavior;
 
 import net.momirealms.antigrieflib.Flag;
-import net.momirealms.craftengine.bukkit.nms.FastNMS;
 import net.momirealms.craftengine.bukkit.plugin.BukkitCraftEngine;
 import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.MEntitySelectors;
 import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.MGameEvents;
@@ -18,14 +17,12 @@ import net.momirealms.craftengine.core.sound.SoundData;
 import net.momirealms.craftengine.core.util.*;
 import net.momirealms.craftengine.core.world.BlockPos;
 import net.momirealms.craftengine.core.world.context.UseOnContext;
+import net.momirealms.craftengine.proxy.minecraft.core.BlockPosProxy;
 import net.momirealms.craftengine.proxy.minecraft.core.DirectionProxy;
 import net.momirealms.craftengine.proxy.minecraft.sounds.SoundEventProxy;
 import net.momirealms.craftengine.proxy.minecraft.sounds.SoundSourceProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.entity.projectile.AbstractArrowProxy;
-import net.momirealms.craftengine.proxy.minecraft.world.level.EntityGetterProxy;
-import net.momirealms.craftengine.proxy.minecraft.world.level.ExplosionProxy;
-import net.momirealms.craftengine.proxy.minecraft.world.level.LevelAccessorProxy;
-import net.momirealms.craftengine.proxy.minecraft.world.level.LevelProxy;
+import net.momirealms.craftengine.proxy.minecraft.world.level.*;
 import net.momirealms.craftengine.proxy.minecraft.world.level.block.state.BlockBehaviourProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.level.redstone.ExperimentalRedstoneUtilsProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.phys.AABBProxy;
@@ -164,7 +161,7 @@ public class ButtonBlockBehavior extends BukkitBlockBehavior {
         if (blockState == null) return;
         boolean poweredValue = blockState.get(this.poweredProperty);
         if (on != poweredValue) {
-            FastNMS.INSTANCE.method$LevelWriter$setBlock(level, pos, blockState.with(this.poweredProperty, on).customBlockState().literalObject(), UpdateOption.UPDATE_ALL.flags());
+            LevelWriterProxy.INSTANCE.setBlock(level, pos, blockState.with(this.poweredProperty, on).customBlockState().literalObject(), UpdateOption.UPDATE_ALL.flags());
             updateNeighbours(thisBlock, blockState, level, pos);
             playSound(level, pos, on);
             if (VersionHelper.isOrAbove1_20_5()) {
@@ -194,10 +191,10 @@ public class ButtonBlockBehavior extends BukkitBlockBehavior {
                 );
             }
             LevelProxy.INSTANCE.updateNeighborsAt(level, pos, thisBlock, orientation);
-            LevelProxy.INSTANCE.updateNeighborsAt(level, FastNMS.INSTANCE.method$BlockPos$relative(pos, nmsDirection), thisBlock, orientation);
+            LevelProxy.INSTANCE.updateNeighborsAt(level, BlockPosProxy.INSTANCE.relative(pos, nmsDirection), thisBlock, orientation);
         } else {
             LevelProxy.INSTANCE.updateNeighborsAt(level, pos, thisBlock);
-            LevelProxy.INSTANCE.updateNeighborsAt(level, FastNMS.INSTANCE.method$BlockPos$relative(pos, nmsDirection), thisBlock);
+            LevelProxy.INSTANCE.updateNeighborsAt(level, BlockPosProxy.INSTANCE.relative(pos, nmsDirection), thisBlock);
         }
     }
 
@@ -217,7 +214,7 @@ public class ButtonBlockBehavior extends BukkitBlockBehavior {
     }
 
     private void press(Object thisBlock, ImmutableBlockState state, Object level, Object pos, @Nullable Object player) {
-        FastNMS.INSTANCE.method$LevelWriter$setBlock(level, pos, state.with(this.poweredProperty, true).customBlockState().literalObject(), UpdateOption.UPDATE_ALL.flags());
+        LevelWriterProxy.INSTANCE.setBlock(level, pos, state.with(this.poweredProperty, true).customBlockState().literalObject(), UpdateOption.UPDATE_ALL.flags());
         this.updateNeighbours(thisBlock, state, level, pos);
         LevelUtils.scheduleBlockTick(level, pos, thisBlock, this.ticksToStayPressed);
         playSound(level, pos, true);

@@ -1,6 +1,5 @@
 package net.momirealms.craftengine.bukkit.block.behavior;
 
-import net.momirealms.craftengine.bukkit.nms.FastNMS;
 import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.MBlocks;
 import net.momirealms.craftengine.bukkit.util.BlockStateUtils;
 import net.momirealms.craftengine.bukkit.util.DirectionUtils;
@@ -15,6 +14,9 @@ import net.momirealms.craftengine.core.util.HorizontalDirection;
 import net.momirealms.craftengine.core.util.ResourceConfigUtils;
 import net.momirealms.craftengine.core.util.Tuple;
 import net.momirealms.craftengine.core.world.context.BlockPlaceContext;
+import net.momirealms.craftengine.proxy.minecraft.core.BlockPosProxy;
+import net.momirealms.craftengine.proxy.minecraft.core.DirectionProxy;
+import net.momirealms.craftengine.proxy.minecraft.world.level.BlockGetterProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.level.block.SupportTypeProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.level.block.state.BlockBehaviourProxy;
 import org.jetbrains.annotations.Nullable;
@@ -56,8 +58,8 @@ public class FaceAttachedHorizontalDirectionalBlockBehavior extends BukkitBlockB
         if (direction == null) return false;
         direction = direction.opposite();
         Object nmsDirection = DirectionUtils.toNMSDirection(direction);
-        Object targetPos = FastNMS.INSTANCE.method$BlockPos$relative(args[2], nmsDirection);
-        Object targetState = FastNMS.INSTANCE.method$BlockGetter$getBlockState(args[1], targetPos);
+        Object targetPos = BlockPosProxy.INSTANCE.relative(args[2], nmsDirection);
+        Object targetState = BlockGetterProxy.INSTANCE.getBlockState(args[1], targetPos);
         return canAttach(args[1], targetPos, nmsDirection, targetState) && mayPlaceOn(targetState);
     }
 
@@ -118,7 +120,7 @@ public class FaceAttachedHorizontalDirectionalBlockBehavior extends BukkitBlockB
     public static boolean canAttach(Object level, Object targetPos, Object direction, Object targetState) {
         return BlockBehaviourProxy.BlockStateBaseProxy.INSTANCE.isFaceSturdy(
                 targetState, level, targetPos,
-                FastNMS.INSTANCE.method$Direction$getOpposite(direction),
+                DirectionProxy.INSTANCE.getOpposite(direction),
                 SupportTypeProxy.FULL
         );
     }

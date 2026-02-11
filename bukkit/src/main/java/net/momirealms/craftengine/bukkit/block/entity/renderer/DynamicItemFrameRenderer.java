@@ -3,7 +3,6 @@ package net.momirealms.craftengine.bukkit.block.entity.renderer;
 import com.google.common.cache.Cache;
 import it.unimi.dsi.fastutil.ints.IntList;
 import net.momirealms.craftengine.bukkit.block.entity.ItemFrameBlockEntity;
-import net.momirealms.craftengine.bukkit.nms.FastNMS;
 import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.MEntityTypes;
 import net.momirealms.craftengine.core.block.entity.render.DynamicBlockEntityRenderer;
 import net.momirealms.craftengine.core.entity.player.Player;

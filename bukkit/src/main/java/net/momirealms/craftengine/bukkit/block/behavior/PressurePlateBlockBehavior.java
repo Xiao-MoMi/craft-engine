@@ -2,7 +2,6 @@ package net.momirealms.craftengine.bukkit.block.behavior;
 
 import io.papermc.paper.event.entity.EntityInsideBlockEvent;
 import net.momirealms.antigrieflib.Flag;
-import net.momirealms.craftengine.bukkit.nms.FastNMS;
 import net.momirealms.craftengine.bukkit.plugin.BukkitCraftEngine;
 import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.CoreReflections;
 import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.MBlocks;
@@ -17,11 +16,14 @@ import net.momirealms.craftengine.core.sound.SoundData;
 import net.momirealms.craftengine.core.util.*;
 import net.momirealms.craftengine.core.world.World;
 import net.momirealms.craftengine.core.world.WorldEvents;
+import net.momirealms.craftengine.proxy.bukkit.craftbukkit.block.CraftBlockProxy;
 import net.momirealms.craftengine.proxy.minecraft.core.DirectionProxy;
+import net.momirealms.craftengine.proxy.minecraft.core.Vec3iProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.entity.EntityProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.level.EntityGetterProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.level.LevelAccessorProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.level.LevelProxy;
+import net.momirealms.craftengine.proxy.minecraft.world.level.LevelWriterProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.level.block.BasePressurePlateBlockProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.level.block.BlockProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.level.block.state.BlockBehaviourProxy;
@@ -74,7 +76,7 @@ public class PressurePlateBlockBehavior extends BukkitBlockBehavior {
                 return MBlocks.AIR$defaultState;
             }
             ImmutableBlockState customState = optionalCustomState.get();
-            FastNMS.INSTANCE.method$LevelAccessor$levelEvent(level, WorldEvents.BLOCK_BREAK_EFFECT, blockPos, customState.customBlockState().registryId());
+            LevelAccessorProxy.INSTANCE.levelEvent(level, WorldEvents.BLOCK_BREAK_EFFECT, blockPos, customState.customBlockState().registryId());
             return MBlocks.AIR$defaultState;
         }
         return state;
@@ -100,8 +102,8 @@ public class PressurePlateBlockBehavior extends BukkitBlockBehavior {
     @Override
     @SuppressWarnings("UnstableApiUsage")
     public void entityInside(Object thisBlock, Object[] args, Callable<Object> superMethod) {
-        Entity entity = FastNMS.INSTANCE.method$Entity$getBukkitEntity(args[3]);
-        Block block = FastNMS.INSTANCE.method$CraftBlock$at(args[1], args[2]);
+        Entity entity = EntityProxy.INSTANCE.getBukkitEntity(args[3]);
+        Block block = CraftBlockProxy.INSTANCE.at(args[1], args[2]);
         EntityInsideBlockEvent event = new EntityInsideBlockEvent(entity, block);
         if (EventUtils.fireAndCheckCancel(event)) {
             return;
@@ -142,15 +144,15 @@ public class PressurePlateBlockBehavior extends BukkitBlockBehavior {
 
         if (currentSignal != signalStrength) {
             Object blockState = this.setSignalForState(state, signalStrength);
-            FastNMS.INSTANCE.method$LevelWriter$setBlock(level, pos, blockState, 2);
+            LevelWriterProxy.INSTANCE.setBlock(level, pos, blockState, 2);
             this.updateNeighbours(level, pos, thisBlock);
             LevelProxy.INSTANCE.setBlocksDirty(level, pos, state, blockState);
         }
 
-        org.bukkit.World craftWorld = FastNMS.INSTANCE.method$Level$getCraftWorld(level);
-        int x = FastNMS.INSTANCE.field$Vec3i$x(pos);
-        int y = FastNMS.INSTANCE.field$Vec3i$y(pos);
-        int z = FastNMS.INSTANCE.field$Vec3i$z(pos);
+        org.bukkit.World craftWorld = LevelProxy.INSTANCE.getWorld(level);
+        int x = Vec3iProxy.INSTANCE.getX(pos);
+        int y = Vec3iProxy.INSTANCE.getY(pos);
+        int z = Vec3iProxy.INSTANCE.getZ(pos);
         Vector positionVector = new Vector(x, y, z);
 
         if (!isActive && wasActive) {
@@ -168,7 +170,7 @@ public class PressurePlateBlockBehavior extends BukkitBlockBehavior {
         World world = BukkitWorldManager.instance().getWorld(craftWorld).world();
         world.playBlockSound(LocationUtils.toVec3d(LocationUtils.fromBlockPos(pos)), this.offSound);
         craftWorld.sendGameEvent(
-                entity != null ? FastNMS.INSTANCE.method$Entity$getBukkitEntity(entity) : null,
+                entity != null ? EntityProxy.INSTANCE.getBukkitEntity(entity) : null,
                 GameEvent.BLOCK_DEACTIVATE,
                 positionVector
         );
@@ -178,7 +180,7 @@ public class PressurePlateBlockBehavior extends BukkitBlockBehavior {
         World world = BukkitWorldManager.instance().getWorld(craftWorld).world();
         world.playBlockSound(LocationUtils.toVec3d(LocationUtils.fromBlockPos(pos)), this.onSound);
         craftWorld.sendGameEvent(
-                entity != null ? FastNMS.INSTANCE.method$Entity$getBukkitEntity(entity) : null,
+                entity != null ? EntityProxy.INSTANCE.getBukkitEntity(entity) : null,
                 GameEvent.BLOCK_ACTIVATE,
                 positionVector
         );

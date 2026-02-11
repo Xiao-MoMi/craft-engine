@@ -3,7 +3,6 @@ package net.momirealms.craftengine.bukkit.plugin.network.handler;
 import net.momirealms.craftengine.bukkit.entity.data.ItemDisplayEntityData;
 import net.momirealms.craftengine.bukkit.entity.projectile.BukkitCustomProjectile;
 import net.momirealms.craftengine.bukkit.item.BukkitItemManager;
-import net.momirealms.craftengine.bukkit.nms.FastNMS;
 import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.MEntityTypes;
 import net.momirealms.craftengine.bukkit.util.PacketUtils;
 import net.momirealms.craftengine.core.entity.player.Player;
@@ -19,6 +18,7 @@ import net.momirealms.craftengine.core.util.FriendlyByteBuf;
 import net.momirealms.craftengine.core.util.MiscUtils;
 import net.momirealms.craftengine.core.util.VersionHelper;
 import net.momirealms.craftengine.core.world.Vec3d;
+import net.momirealms.craftengine.proxy.minecraft.network.protocol.game.ClientboundBundlePacketProxy;
 import net.momirealms.craftengine.proxy.minecraft.network.protocol.game.ClientboundEntityPositionSyncPacketProxy;
 import net.momirealms.craftengine.proxy.minecraft.network.protocol.game.ClientboundMoveEntityPacketProxy;
 import net.momirealms.craftengine.proxy.minecraft.network.protocol.game.ClientboundSetEntityDataPacketProxy;
@@ -67,7 +67,7 @@ public class ProjectilePacketHandler implements EntityPacketHandler {
         ClientboundMoveEntityPacketProxy.INSTANCE.setYRot(packet, MiscUtils.packDegrees(-yRot));
         int entityId = ClientboundMoveEntityPacketProxy.INSTANCE.getEntityId(packet);
         Object setEntityDataPacket = ClientboundSetEntityDataPacketProxy.INSTANCE.newInstance(entityId, this.createCustomProjectileEntityDataValues((Player) user));
-        event.replacePacket(FastNMS.INSTANCE.constructor$ClientboundBundlePacket(List.of(packet, setEntityDataPacket)));
+        event.replacePacket(ClientboundBundlePacketProxy.INSTANCE.newInstance(List.of(packet, setEntityDataPacket)));
     }
 
     public void convertAddCustomProjectilePacket(FriendlyByteBuf buf, ByteBufPacketEvent event) {

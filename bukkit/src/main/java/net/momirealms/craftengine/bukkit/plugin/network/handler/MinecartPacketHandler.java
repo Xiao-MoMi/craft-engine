@@ -3,7 +3,6 @@ package net.momirealms.craftengine.bukkit.plugin.network.handler;
 import net.kyori.adventure.text.Component;
 import net.momirealms.craftengine.bukkit.entity.data.AbstractMinecartData;
 import net.momirealms.craftengine.bukkit.entity.data.BaseEntityData;
-import net.momirealms.craftengine.bukkit.nms.FastNMS;
 import net.momirealms.craftengine.bukkit.plugin.network.BukkitNetworkManager;
 import net.momirealms.craftengine.bukkit.util.BlockStateUtils;
 import net.momirealms.craftengine.bukkit.util.ComponentUtils;
@@ -19,6 +18,7 @@ import net.momirealms.craftengine.core.plugin.text.component.ComponentProvider;
 import net.momirealms.craftengine.core.util.AdventureHelper;
 import net.momirealms.craftengine.core.util.FriendlyByteBuf;
 import net.momirealms.craftengine.core.util.VersionHelper;
+import net.momirealms.craftengine.proxy.minecraft.network.syncher.SynchedEntityDataProxy;
 
 import java.util.List;
 import java.util.Map;
@@ -36,24 +36,18 @@ public class MinecartPacketHandler implements EntityPacketHandler {
         List<Object> packedItems = PacketUtils.clientboundSetEntityDataPacket$unpack(buf);
         for (int i = packedItems.size() - 1; i >= 0; i--) {
             Object packedItem = packedItems.get(i);
-            int entityDataId = FastNMS.INSTANCE.field$SynchedEntityData$DataValue$id(packedItem);
-            Object blockState = BLOCK_STATE_HANDLER.handle(user, packedItem, entityDataId);
-            if (blockState != null) {
-                packedItems.set(i, blockState);
+            int entityDataId = SynchedEntityDataProxy.DataValueProxy.INSTANCE.getId(packedItem);
+            if (BLOCK_STATE_HANDLER.handle(user, packedItem, entityDataId)) {
                 isChanged = true;
             } else if (Config.interceptEntityName() && entityDataId == BaseEntityData.CustomName.id()) {
-                @SuppressWarnings("unchecked")
-                Optional<Object> optionalTextComponent = (Optional<Object>) FastNMS.INSTANCE.field$SynchedEntityData$DataValue$value(packedItem);
+                Optional<Object> optionalTextComponent = SynchedEntityDataProxy.DataValueProxy.INSTANCE.getValue(packedItem);
                 if (optionalTextComponent.isEmpty()) continue;
                 Object textComponent = optionalTextComponent.get();
                 String json = ComponentUtils.minecraftToJson(textComponent);
                 Map<String, ComponentProvider> tokens = CraftEngine.instance().networkManager().matchNetworkTags(json);
                 if (tokens.isEmpty()) continue;
                 Component component = AdventureHelper.replaceText(AdventureHelper.jsonToComponent(json), tokens, NetworkTextReplaceContext.of(user));
-                Object serializer = FastNMS.INSTANCE.field$SynchedEntityData$DataValue$serializer(packedItem);
-                packedItems.set(i, FastNMS.INSTANCE.constructor$SynchedEntityData$DataValue(
-                        entityDataId, serializer, Optional.of(ComponentUtils.adventureToMinecraft(component))
-                ));
+                SynchedEntityDataProxy.DataValueProxy.INSTANCE.setValue(packedItem, Optional.of(ComponentUtils.adventureToMinecraft(component)));
                 isChanged = true;
             }
         }
@@ -67,25 +61,22 @@ public class MinecartPacketHandler implements EntityPacketHandler {
     }
 
     interface BlockStateHandler {
-        Object handle(NetWorkUser user, Object packedItem, int entityDataId);
+        boolean handle(NetWorkUser user, Object packedItem, int entityDataId);
     }
 
     static class BlockStateHandler_1_21_5 implements BlockStateHandler {
         protected static final BlockStateHandler INSTANCE = new BlockStateHandler_1_21_5();
 
         @Override
-        public Object handle(NetWorkUser user, Object packedItem, int entityDataId) {
-            if (entityDataId != AbstractMinecartData.CustomDisplayBlock.id()) return null;
-            @SuppressWarnings("unchecked")
-            Optional<Object> blockState = (Optional<Object>) FastNMS.INSTANCE.field$SynchedEntityData$DataValue$value(packedItem);
-            if (blockState.isEmpty()) return null;
+        public boolean handle(NetWorkUser user, Object packedItem, int entityDataId) {
+            if (entityDataId != AbstractMinecartData.CustomDisplayBlock.id()) return false;
+            Optional<Object> blockState = SynchedEntityDataProxy.DataValueProxy.INSTANCE.getValue(packedItem);
+            if (blockState.isEmpty()) return false;
             int stateId = BlockStateUtils.blockStateToId(blockState.get());
             int newStateId = BukkitNetworkManager.instance().remapBlockState(stateId, user.clientModEnabled());
-            if (newStateId == stateId) return null;
-            Object serializer = FastNMS.INSTANCE.field$SynchedEntityData$DataValue$serializer(packedItem);
-            return FastNMS.INSTANCE.constructor$SynchedEntityData$DataValue(
-                    entityDataId, serializer, Optional.of(BlockStateUtils.idToBlockState(newStateId))
-            );
+            if (newStateId == stateId) return false;
+            SynchedEntityDataProxy.DataValueProxy.INSTANCE.setValue(packedItem, Optional.of(BlockStateUtils.idToBlockState(newStateId)));
+            return true;
         }
     }
 
@@ -93,13 +84,13 @@ public class MinecartPacketHandler implements EntityPacketHandler {
         protected static final BlockStateHandler INSTANCE = new BlockStateHandler_1_20();
 
         @Override
-        public Object handle(NetWorkUser user, Object packedItem, int entityDataId) {
-            if (entityDataId != AbstractMinecartData.DisplayBlock.id()) return null;
-            int stateId = (int) FastNMS.INSTANCE.field$SynchedEntityData$DataValue$value(packedItem);
+        public boolean handle(NetWorkUser user, Object packedItem, int entityDataId) {
+            if (entityDataId != AbstractMinecartData.DisplayBlock.id()) return false;
+            int stateId = SynchedEntityDataProxy.DataValueProxy.INSTANCE.getValue(packedItem);
             int newStateId = BukkitNetworkManager.instance().remapBlockState(stateId, user.clientModEnabled());
-            if (newStateId == stateId) return null;
-            Object serializer = FastNMS.INSTANCE.field$SynchedEntityData$DataValue$serializer(packedItem);
-            return FastNMS.INSTANCE.constructor$SynchedEntityData$DataValue(entityDataId, serializer, newStateId);
+            if (newStateId == stateId) return false;
+            SynchedEntityDataProxy.DataValueProxy.INSTANCE.setValue(packedItem, newStateId);
+            return true;
         }
     }
 }

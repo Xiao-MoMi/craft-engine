@@ -70,7 +70,7 @@ public final class EntityUtils {
     }
 
     public static BlockPos getOnPos(Player player) {
-        Object serverPlayer = FastNMS.INSTANCE.method$CraftPlayer$getHandle(player);
+        Object serverPlayer = CraftEntityProxy.INSTANCE.getEntity(player);
         Object blockPos = EntityProxy.INSTANCE.getOnPos(serverPlayer);
         return LocationUtils.fromBlockPos(blockPos);
     }
@@ -84,7 +84,7 @@ public final class EntityUtils {
     }
 
     public static Key getEntityType(Entity entity) {
-        Object nmsEntity = FastNMS.INSTANCE.method$CraftEntity$getHandle(entity);
+        Object nmsEntity = CraftEntityProxy.INSTANCE.getEntity(entity);
         Object entityType = EntityProxy.INSTANCE.getType(nmsEntity);
         Object id = RegistryProxy.INSTANCE.getKey(MBuiltInRegistries.ENTITY_TYPE, entityType);
         return KeyUtils.identifierToKey(id);
@@ -98,7 +98,7 @@ public final class EntityUtils {
             double y = location.getY();
             double z = location.getZ() + direction.z;
             Object serverLevel = BukkitAdaptors.adapt(player.getWorld()).serverWorld();
-            Object serverPlayer = FastNMS.INSTANCE.method$CraftPlayer$getHandle(player);
+            Object serverPlayer = CraftEntityProxy.INSTANCE.getEntity(player);
             for (Object pose : List.of(PoseProxy.STANDING, PoseProxy.CROUCHING, PoseProxy.SWIMMING)) {
                 BlockPos pos = new BlockPos(MiscUtils.floor(x), MiscUtils.floor(y), MiscUtils.floor(z));
                 double floorHeight = BlockGetterProxy.INSTANCE.getBlockFloorHeight(serverLevel, LocationUtils.toBlockPos(pos));

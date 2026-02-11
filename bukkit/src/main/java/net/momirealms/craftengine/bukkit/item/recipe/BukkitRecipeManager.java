@@ -22,6 +22,7 @@ import net.momirealms.craftengine.core.plugin.config.Config;
 import net.momirealms.craftengine.core.registry.BuiltInRegistries;
 import net.momirealms.craftengine.core.util.*;
 import net.momirealms.craftengine.proxy.bukkit.craftbukkit.CraftServerProxy;
+import net.momirealms.craftengine.proxy.bukkit.craftbukkit.inventory.CraftItemStackProxy;
 import net.momirealms.craftengine.proxy.minecraft.resources.FileToIdConverterProxy;
 import net.momirealms.craftengine.proxy.minecraft.resources.ResourceKeyProxy;
 import net.momirealms.craftengine.proxy.minecraft.server.MinecraftServerProxy;
@@ -130,7 +131,7 @@ public class BukkitRecipeManager extends AbstractRecipeManager<ItemStack> {
             Optional<? extends BuildableItem<ItemStack>> buildableItem = BukkitItemManager.instance().getBuildableItem(holder.key());
             if (buildableItem.isPresent()) {
                 ItemStack itemStack = buildableItem.get().buildItemStack(ItemBuildContext.empty(), ingredient.count());
-                Object nmsStack = FastNMS.INSTANCE.field$CraftItemStack$handle(ItemStackUtils.ensureCraftItemStack(itemStack));
+                Object nmsStack = CraftItemStackProxy.INSTANCE.unwrap(ItemStackUtils.ensureCraftItemStack(itemStack));
                 itemStacks.add(nmsStack);
             } else {
                 Item<ItemStack> barrier = BukkitItemManager.instance().createWrappedItem(ItemKeys.BARRIER, null);

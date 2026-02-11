@@ -1,6 +1,5 @@
 package net.momirealms.craftengine.bukkit.block.behavior;
 
-import net.momirealms.craftengine.bukkit.nms.FastNMS;
 import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.MBlocks;
 import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.MFluids;
 import net.momirealms.craftengine.bukkit.util.BlockStateUtils;
@@ -10,6 +9,8 @@ import net.momirealms.craftengine.core.block.ImmutableBlockState;
 import net.momirealms.craftengine.core.block.behavior.BlockBehaviorFactory;
 import net.momirealms.craftengine.core.util.MiscUtils;
 import net.momirealms.craftengine.core.util.ResourceConfigUtils;
+import net.momirealms.craftengine.proxy.minecraft.core.BlockPosProxy;
+import net.momirealms.craftengine.proxy.minecraft.core.Vec3iProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.level.BlockGetterProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.level.block.state.BlockBehaviourProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.level.material.FluidStateProxy;
@@ -52,11 +53,11 @@ public class OnLiquidBlockBehavior extends AbstractCanSurviveBlockBehavior {
     @SuppressWarnings("DuplicatedCode")
     @Override
     protected boolean canSurvive(Object thisBlock, Object state, Object world, Object blockPos) {
-        int y = FastNMS.INSTANCE.field$Vec3i$y(blockPos);
-        int x = FastNMS.INSTANCE.field$Vec3i$x(blockPos);
-        int z = FastNMS.INSTANCE.field$Vec3i$z(blockPos);
-        Object belowPos = FastNMS.INSTANCE.constructor$BlockPos(x, y - 1, z);
-        Object belowState = FastNMS.INSTANCE.method$BlockGetter$getBlockState(world, belowPos);
+        int x = Vec3iProxy.INSTANCE.getX(blockPos);
+        int y = Vec3iProxy.INSTANCE.getY(blockPos);
+        int z = Vec3iProxy.INSTANCE.getZ(blockPos);
+        Object belowPos = BlockPosProxy.INSTANCE.newInstance$1(x, y - 1, z);
+        Object belowState = BlockGetterProxy.INSTANCE.getBlockState(world, belowPos);
         return mayPlaceOn(belowState, world, belowPos);
     }
 

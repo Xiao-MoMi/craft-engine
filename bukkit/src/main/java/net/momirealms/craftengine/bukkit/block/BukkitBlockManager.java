@@ -36,11 +36,9 @@ import net.momirealms.craftengine.core.util.Tristate;
 import net.momirealms.craftengine.core.util.VersionHelper;
 import net.momirealms.craftengine.proxy.bukkit.craftbukkit.util.CraftMagicNumbersProxy;
 import net.momirealms.craftengine.proxy.minecraft.commands.arguments.blocks.BlockStateParserProxy;
-import net.momirealms.craftengine.proxy.minecraft.core.HolderProxy;
-import net.momirealms.craftengine.proxy.minecraft.core.IdMapperProxy;
-import net.momirealms.craftengine.proxy.minecraft.core.MappedRegistryProxy;
-import net.momirealms.craftengine.proxy.minecraft.core.RegistryProxy;
+import net.momirealms.craftengine.proxy.minecraft.core.*;
 import net.momirealms.craftengine.proxy.minecraft.resources.ResourceKeyProxy;
+import net.momirealms.craftengine.proxy.minecraft.sounds.SoundEventProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.level.EmptyBlockGetterProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.level.block.BlockProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.level.block.FireBlockProxy;
@@ -352,7 +350,7 @@ public final class BukkitBlockManager extends AbstractBlockManager {
     }
 
     private SoundData toSoundData(Object soundEvent, SoundData.SoundValue volume, SoundData.SoundValue pitch) {
-        Key soundId = KeyUtils.identifierToKey(FastNMS.INSTANCE.field$SoundEvent$location(soundEvent));
+        Key soundId = KeyUtils.identifierToKey(SoundEventProxy.INSTANCE.getLocation(soundEvent));
         return new SoundData(soundId, volume, pitch);
     }
 
@@ -432,7 +430,11 @@ public final class BukkitBlockManager extends AbstractBlockManager {
     @Override
     protected void setVanillaBlockTags(Key id, List<String> tags) {
         Object block = RegistryUtils.getRegistryValue(MBuiltInRegistries.BLOCK, KeyUtils.toIdentifier(id));
-        this.clientBoundTags.put(FastNMS.INSTANCE.method$IdMap$getId(MBuiltInRegistries.BLOCK, block).orElseThrow(() -> new IllegalStateException("Block " + id + " not found")), tags);
+        int blockId = IdMapProxy.INSTANCE.getId$1(MBuiltInRegistries.BLOCK, block);
+        if (blockId == -1) {
+            throw new IllegalStateException("Block " + id + " not found");
+        }
+        this.clientBoundTags.put(blockId, tags);
     }
 
     public boolean isPlaceSoundMissing(Object sound) {
@@ -522,10 +524,10 @@ public final class BukkitBlockManager extends AbstractBlockManager {
         Set<Object> hitSounds = new HashSet<>();
 
         for (Object soundType : affectedBlockSoundTypes) {
-            placeSounds.add(FastNMS.INSTANCE.field$SoundEvent$location(SoundTypeProxy.INSTANCE.getPlaceSound(soundType)));
-            breakSounds.add(FastNMS.INSTANCE.field$SoundEvent$location(SoundTypeProxy.INSTANCE.getBreakSound(soundType)));
-            stepSounds.add(FastNMS.INSTANCE.field$SoundEvent$location(SoundTypeProxy.INSTANCE.getStepSound(soundType)));
-            hitSounds.add(FastNMS.INSTANCE.field$SoundEvent$location(SoundTypeProxy.INSTANCE.getHitSound(soundType)));
+            placeSounds.add(SoundEventProxy.INSTANCE.getLocation(SoundTypeProxy.INSTANCE.getPlaceSound(soundType)));
+            breakSounds.add(SoundEventProxy.INSTANCE.getLocation(SoundTypeProxy.INSTANCE.getBreakSound(soundType)));
+            stepSounds.add(SoundEventProxy.INSTANCE.getLocation(SoundTypeProxy.INSTANCE.getStepSound(soundType)));
+            hitSounds.add(SoundEventProxy.INSTANCE.getLocation(SoundTypeProxy.INSTANCE.getHitSound(soundType)));
         }
 
         ImmutableMap.Builder<Key, Key> soundReplacementBuilder = ImmutableMap.builder();

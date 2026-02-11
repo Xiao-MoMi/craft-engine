@@ -1,6 +1,5 @@
 package net.momirealms.craftengine.bukkit.block.behavior;
 
-import net.momirealms.craftengine.bukkit.nms.FastNMS;
 import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.MBlocks;
 import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.MFluids;
 import net.momirealms.craftengine.bukkit.util.BlockStateUtils;
@@ -14,6 +13,7 @@ import net.momirealms.craftengine.core.block.properties.BooleanProperty;
 import net.momirealms.craftengine.core.util.Direction;
 import net.momirealms.craftengine.core.util.ResourceConfigUtils;
 import net.momirealms.craftengine.core.world.context.BlockPlaceContext;
+import net.momirealms.craftengine.proxy.minecraft.core.BlockPosProxy;
 import net.momirealms.craftengine.proxy.minecraft.core.DirectionProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.level.BlockGetterProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.level.block.BlockProxy;
@@ -56,7 +56,7 @@ public class HangableBlockBehavior extends BukkitBlockBehavior implements IsPath
         BooleanProperty hangingProperty = (BooleanProperty) blockState.owner().value().getProperty("hanging");
         if (hangingProperty == null) return false;
         Boolean hanging = blockState.get(hangingProperty);
-        Object relativePos = FastNMS.INSTANCE.method$BlockPos$relative(blockPos, hanging ? DirectionProxy.UP : DirectionProxy.DOWN);
+        Object relativePos = BlockPosProxy.INSTANCE.relative(blockPos, hanging ? DirectionProxy.UP : DirectionProxy.DOWN);
         return BlockProxy.INSTANCE.canSupportCenter(world, relativePos, hanging ? DirectionProxy.DOWN : DirectionProxy.UP);
     }
 

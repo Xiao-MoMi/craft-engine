@@ -5,6 +5,7 @@ import net.momirealms.craftengine.core.util.VersionHelper;
 import net.momirealms.craftengine.proxy.minecraft.network.FriendlyByteBufProxy;
 import net.momirealms.craftengine.proxy.minecraft.network.RegistryFriendlyByteBufProxy;
 import net.momirealms.craftengine.proxy.minecraft.network.protocol.game.ClientboundSetEntityDataPacketProxy;
+import net.momirealms.craftengine.proxy.minecraft.network.protocol.game.ClientboundSetPassengersPacketProxy;
 
 import java.util.List;
 
@@ -33,5 +34,12 @@ public final class PacketUtils {
         } else {
             return FriendlyByteBufProxy.INSTANCE.newInstance(buf);
         }
+    }
+
+    public static Object createClientboundSetPassengersPacket(int vehicle, int... passengers) {
+        Object packet = ClientboundSetPassengersPacketProxy.UNSAFE_CONSTRUCTOR.newInstance();
+        ClientboundSetPassengersPacketProxy.INSTANCE.setVehicle(packet, vehicle);
+        ClientboundSetPassengersPacketProxy.INSTANCE.setPassengers(packet, passengers);
+        return packet;
     }
 }

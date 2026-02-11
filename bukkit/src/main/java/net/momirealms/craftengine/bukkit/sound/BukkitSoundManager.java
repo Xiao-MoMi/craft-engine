@@ -2,7 +2,6 @@ package net.momirealms.craftengine.bukkit.sound;
 
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
-import net.momirealms.craftengine.bukkit.nms.FastNMS;
 import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.CoreReflections;
 import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.MBuiltInRegistries;
 import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.MRegistries;
@@ -20,6 +19,7 @@ import net.momirealms.craftengine.proxy.minecraft.core.HolderProxy;
 import net.momirealms.craftengine.proxy.minecraft.core.MappedRegistryProxy;
 import net.momirealms.craftengine.proxy.minecraft.core.RegistryAccessProxy;
 import net.momirealms.craftengine.proxy.minecraft.core.RegistryProxy;
+import net.momirealms.craftengine.proxy.minecraft.sounds.SoundEventProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.item.JukeboxSongProxy;
 
 import java.io.IOException;
@@ -32,7 +32,7 @@ public class BukkitSoundManager extends AbstractSoundManager {
     public BukkitSoundManager(CraftEngine plugin) {
         super(plugin);
         for (Object soundEvent : (Iterable<?>) MBuiltInRegistries.SOUND_EVENT) {
-            Object identifier = FastNMS.INSTANCE.field$SoundEvent$location(soundEvent);
+            Object identifier = SoundEventProxy.INSTANCE.getLocation(soundEvent);
             VANILLA_SOUND_EVENTS.add(KeyUtils.identifierToKey(identifier));
         }
         this.registerSongs(this.loadLastRegisteredSongs());

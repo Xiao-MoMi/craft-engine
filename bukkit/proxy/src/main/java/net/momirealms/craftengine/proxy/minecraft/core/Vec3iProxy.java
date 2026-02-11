@@ -11,7 +11,7 @@ public interface Vec3iProxy {
     Vec3iProxy INSTANCE = ASMProxyFactory.create(Vec3iProxy.class);
 
     @ConstructorInvoker
-    Object newInstance(int x, int y, int z);
+    Object newInstance$0(int x, int y, int z); // fixme 无法覆写接口
 
     @FieldGetter(name = "x")
     int getX(Object target);

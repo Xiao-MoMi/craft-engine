@@ -3,6 +3,7 @@ package net.momirealms.craftengine.proxy.minecraft.server.level;
 import net.momirealms.sparrow.reflection.proxy.ASMProxyFactory;
 import net.momirealms.sparrow.reflection.proxy.annotation.FieldGetter;
 import net.momirealms.sparrow.reflection.proxy.annotation.FieldSetter;
+import net.momirealms.sparrow.reflection.proxy.annotation.MethodInvoker;
 import net.momirealms.sparrow.reflection.proxy.annotation.ReflectionProxy;
 
 @ReflectionProxy(name = "net.minecraft.server.level.ChunkMap")
@@ -14,6 +15,9 @@ public interface ChunkMapProxy {
 
     @FieldSetter(name = "worldGenContext")
     void setWorldGenContext(Object target, Object worldGenContext);
+
+    @MethodInvoker(name = "getVisibleChunkIfPresent")
+    Object getVisibleChunkIfPresent(Object target, long chunkPos);
 
     @ReflectionProxy(name = "net.minecraft.server.level.ChunkMap$TrackedEntity")
     interface TrackedEntityProxy {

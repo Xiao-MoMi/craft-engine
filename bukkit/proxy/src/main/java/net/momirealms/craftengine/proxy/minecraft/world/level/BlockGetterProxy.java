@@ -21,4 +21,7 @@ public interface BlockGetterProxy {
 
     @MethodInvoker(name = "getFluidState")
     Object getFluidState(Object target, @Type(clazz = BlockPosProxy.class) Object blockPos);
+
+    @MethodInvoker(name = "getBlockState")
+    Object getBlockState(Object target, @Type(clazz = BlockPosProxy.class) Object blockPos);
 }

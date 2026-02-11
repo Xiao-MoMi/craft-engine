@@ -1,6 +1,5 @@
 package net.momirealms.craftengine.bukkit.item;
 
-import net.momirealms.craftengine.bukkit.nms.FastNMS;
 import net.momirealms.craftengine.core.entity.player.Player;
 import net.momirealms.craftengine.core.item.CustomItem;
 import net.momirealms.craftengine.core.item.Item;
@@ -17,6 +16,7 @@ import net.momirealms.craftengine.core.plugin.context.NetworkTextReplaceContext;
 import net.momirealms.craftengine.core.plugin.text.component.ComponentProvider;
 import net.momirealms.craftengine.core.util.AdventureHelper;
 import net.momirealms.craftengine.core.util.Pair;
+import net.momirealms.craftengine.proxy.bukkit.craftbukkit.inventory.CraftItemStackProxy;
 import net.momirealms.craftengine.proxy.minecraft.nbt.ByteTagProxy;
 import net.momirealms.craftengine.proxy.minecraft.nbt.CompoundTagProxy;
 import net.momirealms.craftengine.proxy.minecraft.nbt.ListTagProxy;
@@ -48,9 +48,9 @@ public final class LegacyNetworkItemHandler implements NetworkItemHandler<ItemSt
             boolean changed = false;
             for (Object tag : (Iterable<?>) bundleContents) {
                 Object previousItem = ItemStackProxy.INSTANCE.of(tag);
-                Optional<ItemStack> itemStack = BukkitItemManager.instance().c2s(FastNMS.INSTANCE.method$CraftItemStack$asCraftMirror(previousItem));
+                Optional<ItemStack> itemStack = BukkitItemManager.instance().c2s(CraftItemStackProxy.INSTANCE.asCraftMirror(previousItem));
                 if (itemStack.isPresent()) {
-                    newItems.add(FastNMS.INSTANCE.field$CraftItemStack$handle(itemStack.get()));
+                    newItems.add(CraftItemStackProxy.INSTANCE.unwrap(itemStack.get()));
                     changed = true;
                 } else {
                     newItems.add(previousItem);
@@ -75,10 +75,10 @@ public final class LegacyNetworkItemHandler implements NetworkItemHandler<ItemSt
                 List<Pair<Byte, Object>> newItems = new ArrayList<>();
                 for (Object tag : (Iterable<?>) itemTags) {
                     Object previousItem = ItemStackProxy.INSTANCE.of(tag);
-                    Optional<ItemStack> itemStack = BukkitItemManager.instance().c2s(FastNMS.INSTANCE.method$CraftItemStack$asCraftMirror(previousItem));
+                    Optional<ItemStack> itemStack = BukkitItemManager.instance().c2s(CraftItemStackProxy.INSTANCE.asCraftMirror(previousItem));
                     byte slot = ByteTagProxy.INSTANCE.value(CompoundTagProxy.INSTANCE.get(tag, "Slot"));
                     if (itemStack.isPresent()) {
-                        newItems.add(Pair.of(slot, FastNMS.INSTANCE.field$CraftItemStack$handle(itemStack.get())));
+                        newItems.add(Pair.of(slot, CraftItemStackProxy.INSTANCE.unwrap(itemStack.get())));
                         changed = true;
                     } else {
                         newItems.add(Pair.of(slot, previousItem));
@@ -134,9 +134,9 @@ public final class LegacyNetworkItemHandler implements NetworkItemHandler<ItemSt
             boolean changed = false;
             for (Object tag : (Iterable<?>) bundleContents) {
                 Object previousItem = ItemStackProxy.INSTANCE.of(tag);
-                Optional<ItemStack> itemStack = BukkitItemManager.instance().s2c(FastNMS.INSTANCE.method$CraftItemStack$asCraftMirror(previousItem), player);
+                Optional<ItemStack> itemStack = BukkitItemManager.instance().s2c(CraftItemStackProxy.INSTANCE.asCraftMirror(previousItem), player);
                 if (itemStack.isPresent()) {
-                    newItems.add(FastNMS.INSTANCE.field$CraftItemStack$handle(itemStack.get()));
+                    newItems.add(CraftItemStackProxy.INSTANCE.unwrap(itemStack.get()));
                     changed = true;
                 } else {
                     newItems.add(previousItem);
@@ -161,10 +161,10 @@ public final class LegacyNetworkItemHandler implements NetworkItemHandler<ItemSt
                 List<Pair<Byte, Object>> newItems = new ArrayList<>();
                 for (Object tag : (Iterable<?>) itemTags) {
                     Object previousItem = ItemStackProxy.INSTANCE.of(tag);
-                    Optional<ItemStack> itemStack = BukkitItemManager.instance().s2c(FastNMS.INSTANCE.method$CraftItemStack$asCraftMirror(previousItem), player);
+                    Optional<ItemStack> itemStack = BukkitItemManager.instance().s2c(CraftItemStackProxy.INSTANCE.asCraftMirror(previousItem), player);
                     byte slot = ByteTagProxy.INSTANCE.value(CompoundTagProxy.INSTANCE.get(tag, "Slot"));
                     if (itemStack.isPresent()) {
-                        newItems.add(Pair.of(slot, FastNMS.INSTANCE.field$CraftItemStack$handle(itemStack.get())));
+                        newItems.add(Pair.of(slot, CraftItemStackProxy.INSTANCE.unwrap(itemStack.get())));
                         changed = true;
                     } else {
                         newItems.add(Pair.of(slot, previousItem));

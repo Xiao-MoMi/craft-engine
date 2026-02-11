@@ -1,7 +1,6 @@
 package net.momirealms.craftengine.bukkit.entity;
 
 import net.momirealms.craftengine.bukkit.api.BukkitAdaptors;
-import net.momirealms.craftengine.bukkit.nms.FastNMS;
 import net.momirealms.craftengine.bukkit.util.DirectionUtils;
 import net.momirealms.craftengine.bukkit.util.EntityUtils;
 import net.momirealms.craftengine.bukkit.util.LocationUtils;
@@ -11,6 +10,7 @@ import net.momirealms.craftengine.core.util.Direction;
 import net.momirealms.craftengine.core.util.Key;
 import net.momirealms.craftengine.core.world.World;
 import net.momirealms.craftengine.core.world.WorldPosition;
+import net.momirealms.craftengine.proxy.bukkit.craftbukkit.entity.CraftEntityProxy;
 import net.momirealms.craftengine.proxy.minecraft.network.syncher.SynchedEntityDataProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.entity.EntityProxy;
 import org.bukkit.entity.Entity;
@@ -81,7 +81,7 @@ public class BukkitEntity extends AbstractEntity {
 
     @Override
     public Object serverEntity() {
-        return FastNMS.INSTANCE.method$CraftEntity$getHandle(platformEntity());
+        return CraftEntityProxy.INSTANCE.getEntity(platformEntity());
     }
 
     @Override

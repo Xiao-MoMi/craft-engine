@@ -2,7 +2,6 @@ package net.momirealms.craftengine.bukkit.util;
 
 import com.mojang.serialization.Dynamic;
 import net.momirealms.craftengine.bukkit.item.BukkitItemManager;
-import net.momirealms.craftengine.bukkit.nms.FastNMS;
 import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.MReferences;
 import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.MRegistryOps;
 import net.momirealms.craftengine.core.item.Item;
@@ -64,7 +63,7 @@ public final class ItemStackUtils {
     }
 
     public static ItemStack asCraftMirror(Object itemStack) {
-        return FastNMS.INSTANCE.method$CraftItemStack$asCraftMirror(itemStack);
+        return CraftItemStackProxy.INSTANCE.asCraftMirror(itemStack);
     }
 
     @Nullable
@@ -81,7 +80,7 @@ public final class ItemStackUtils {
 
     @Nullable
     public static Tag saveItemStackAsTag(ItemStack itemStack) {
-        return saveNMSItemStackAsTag(FastNMS.INSTANCE.field$CraftItemStack$handle(ensureCraftItemStack(itemStack)));
+        return saveNMSItemStackAsTag(CraftItemStackProxy.INSTANCE.unwrap(ensureCraftItemStack(itemStack)));
     }
 
     @Nullable

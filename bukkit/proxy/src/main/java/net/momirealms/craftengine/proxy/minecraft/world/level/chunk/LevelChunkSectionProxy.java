@@ -28,4 +28,7 @@ public interface LevelChunkSectionProxy {
 
     @FieldSetter(name = "biomes")
     void setBiomes(Object target, Object biomes);
+
+    @MethodInvoker(name = "getBlockState")
+    Object getBlockState(Object target, int x, int y, int z);
 }

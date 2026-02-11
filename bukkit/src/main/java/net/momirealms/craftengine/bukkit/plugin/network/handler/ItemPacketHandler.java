@@ -5,7 +5,6 @@ import net.kyori.adventure.text.Component;
 import net.momirealms.craftengine.bukkit.entity.data.BaseEntityData;
 import net.momirealms.craftengine.bukkit.entity.data.ItemEntityData;
 import net.momirealms.craftengine.bukkit.item.BukkitItemManager;
-import net.momirealms.craftengine.bukkit.nms.FastNMS;
 import net.momirealms.craftengine.bukkit.util.ComponentUtils;
 import net.momirealms.craftengine.bukkit.util.PacketUtils;
 import net.momirealms.craftengine.bukkit.world.score.BukkitTeamManager;
@@ -21,12 +20,13 @@ import net.momirealms.craftengine.core.plugin.context.parameter.DirectContextPar
 import net.momirealms.craftengine.core.plugin.network.EntityPacketHandler;
 import net.momirealms.craftengine.core.plugin.network.event.ByteBufPacketEvent;
 import net.momirealms.craftengine.core.plugin.text.minimessage.CustomTagResolver;
-import net.momirealms.craftengine.core.util.AdventureHelper;
-import net.momirealms.craftengine.core.util.ArrayUtils;
-import net.momirealms.craftengine.core.util.FriendlyByteBuf;
-import net.momirealms.craftengine.core.util.LegacyChatFormatter;
+import net.momirealms.craftengine.core.util.*;
+import net.momirealms.craftengine.proxy.bukkit.craftbukkit.inventory.CraftItemStackProxy;
 import net.momirealms.craftengine.proxy.minecraft.network.protocol.game.ClientboundSetPlayerTeamPacketProxy;
+import net.momirealms.craftengine.proxy.minecraft.network.syncher.SynchedEntityDataProxy;
+import net.momirealms.craftengine.proxy.minecraft.server.level.ServerLevelProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.entity.EntityProxy;
+import net.momirealms.craftengine.proxy.minecraft.world.level.LevelProxy;
 import net.momirealms.craftengine.proxy.paper.chunk.system.entity.EntityLookupProxy;
 import org.bukkit.inventory.ItemStack;
 
@@ -47,18 +47,17 @@ public class ItemPacketHandler implements EntityPacketHandler {
         LegacyChatFormatter glowColor = null;
         for (int i = 0; i < packedItems.size(); i++) {
             Object packedItem = packedItems.get(i);
-            int entityDataId = FastNMS.INSTANCE.field$SynchedEntityData$DataValue$id(packedItem);
+            int entityDataId = SynchedEntityDataProxy.DataValueProxy.INSTANCE.getId(packedItem);
             if (entityDataId == ItemEntityData.Item.id()) {
-                Object nmsItemStack = FastNMS.INSTANCE.field$SynchedEntityData$DataValue$value(packedItem);
-                ItemStack itemStack = FastNMS.INSTANCE.method$CraftItemStack$asCraftMirror(nmsItemStack);
+                Object nmsItemStack = SynchedEntityDataProxy.DataValueProxy.INSTANCE.getValue(packedItem);
+                ItemStack itemStack = CraftItemStackProxy.INSTANCE.asCraftMirror(nmsItemStack);
 
                 // 转换为客户端侧物品
                 Optional<ItemStack> optional = BukkitItemManager.instance().s2c(itemStack, user);
                 if (optional.isPresent()) {
                     changed = true;
                     itemStack = optional.get();
-                    Object serializer = FastNMS.INSTANCE.field$SynchedEntityData$DataValue$serializer(packedItem);
-                    packedItems.set(i, FastNMS.INSTANCE.constructor$SynchedEntityData$DataValue(entityDataId, serializer, FastNMS.INSTANCE.method$CraftItemStack$asNMSCopy(itemStack)));
+                    SynchedEntityDataProxy.DataValueProxy.INSTANCE.setValue(packedItem, CraftItemStackProxy.INSTANCE.asNMSCopy(itemStack));
                 }
 
                 // 处理 drop-display 物品设置
@@ -107,9 +106,9 @@ public class ItemPacketHandler implements EntityPacketHandler {
                 outer: {
                     for (int i = 0; i < packedItems.size(); i++) {
                         Object packedItem = packedItems.get(i);
-                        int entityDataId = FastNMS.INSTANCE.field$SynchedEntityData$DataValue$id(packedItem);
+                        int entityDataId = SynchedEntityDataProxy.DataValueProxy.INSTANCE.getId(packedItem);
                         if (entityDataId == BaseEntityData.SharedFlags.id()) {
-                            byte flags = (Byte) FastNMS.INSTANCE.field$SynchedEntityData$DataValue$value(packedItem);
+                            byte flags = SynchedEntityDataProxy.DataValueProxy.INSTANCE.getValue(packedItem);
                             flags |= (byte) 0x40;
                             packedItems.set(i, BaseEntityData.SharedFlags.createEntityData(flags));
                             break outer;
@@ -117,7 +116,13 @@ public class ItemPacketHandler implements EntityPacketHandler {
                     }
                     packedItems.add(BaseEntityData.SharedFlags.createEntityData((byte) 0x40));
                 }
-                Object entityLookup = FastNMS.INSTANCE.method$ServerLevel$getEntityLookup(user.clientSideWorld().serverWorld());
+                Object level = user.clientSideWorld().serverWorld();
+                Object entityLookup;
+                if (VersionHelper.isOrAbove1_21()) {
+                    entityLookup = LevelProxy.INSTANCE.moonrise$getEntityLookup(level);
+                } else {
+                    entityLookup = ServerLevelProxy.INSTANCE.getEntityLookup(level);
+                }
                 Object entity = EntityLookupProxy.INSTANCE.get(entityLookup, id);
                 if (entity != null) {
                     user.sendPacket(ClientboundSetPlayerTeamPacketProxy.INSTANCE.newInstance(teamName, 3, Optional.empty(), ImmutableList.of(EntityProxy.INSTANCE.getUUID(entity).toString())), false);

@@ -11,6 +11,7 @@ import net.momirealms.sparrow.reflection.proxy.annotation.FieldGetter;
 import net.momirealms.sparrow.reflection.proxy.annotation.MethodInvoker;
 import net.momirealms.sparrow.reflection.proxy.annotation.ReflectionProxy;
 import net.momirealms.sparrow.reflection.proxy.annotation.Type;
+import org.bukkit.World;
 
 @ReflectionProxy(name = "net.minecraft.world.level.Level")
 public interface LevelProxy {
@@ -46,4 +47,13 @@ public interface LevelProxy {
 
     @MethodInvoker(name = "setBlocksDirty")
     void setBlocksDirty(Object target, @Type(clazz = BlockPosProxy.class) Object pos, @Type(clazz = BlockStateProxy.class) Object oldState, @Type(clazz = BlockStateProxy.class) Object newState);
+
+    @MethodInvoker(name = "moonrise$getEntityLookup", activeIf = "min_version=1.21")
+    Object moonrise$getEntityLookup(Object target);
+
+    @MethodInvoker(name = "removeBlock")
+    boolean removeBlock(Object target, @Type(clazz = BlockPosProxy.class) Object pos, boolean movedByPiston);
+
+    @MethodInvoker(name = "getWorld")
+    World getWorld(Object target);
 }

@@ -13,13 +13,18 @@ import net.momirealms.craftengine.core.util.MiscUtils;
 import net.momirealms.craftengine.core.util.QuaternionUtils;
 import net.momirealms.craftengine.core.world.WorldPosition;
 import net.momirealms.craftengine.core.world.collision.AABB;
+import net.momirealms.craftengine.proxy.bukkit.craftbukkit.CraftWorldProxy;
 import net.momirealms.craftengine.proxy.minecraft.network.protocol.game.ClientboundAddEntityPacketProxy;
 import net.momirealms.craftengine.proxy.minecraft.network.protocol.game.ClientboundRemoveEntitiesPacketProxy;
+import net.momirealms.craftengine.proxy.minecraft.world.entity.EntityProxy;
+import net.momirealms.craftengine.proxy.minecraft.world.level.LevelWriterProxy;
+import net.momirealms.craftengine.proxy.minecraft.world.phys.AABBProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.phys.Vec3Proxy;
 import org.bukkit.Location;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.ItemDisplay;
 import org.bukkit.entity.Player;
+import org.bukkit.event.entity.CreatureSpawnEvent;
 import org.bukkit.persistence.PersistentDataType;
 import org.joml.Quaternionf;
 import org.joml.Vector3f;
@@ -43,13 +48,13 @@ public class BukkitFurniture extends Furniture {
 
     @Override
     public void addCollidersToWorld() {
-        Object world = FastNMS.INSTANCE.field$CraftWorld$ServerLevel(this.location.getWorld());
+        Object world = CraftWorldProxy.INSTANCE.getWorld(this.location.getWorld());
         for (Collider entity : super.colliders) {
-            Entity bukkitEntity = FastNMS.INSTANCE.method$Entity$getBukkitEntity(entity.handle());
+            Entity bukkitEntity = EntityProxy.INSTANCE.getBukkitEntity(entity.handle());
             bukkitEntity.getPersistentDataContainer().set(BukkitFurnitureManager.FURNITURE_COLLISION, PersistentDataType.BYTE, (byte) 1);
             bukkitEntity.setPersistent(false);
             if (!bukkitEntity.isValid()) {
-                FastNMS.INSTANCE.method$LevelWriter$addFreshEntity(world, entity.handle());
+                LevelWriterProxy.INSTANCE.addFreshEntity(world, entity.handle(), CreatureSpawnEvent.SpawnReason.CUSTOM);
             }
         }
     }
@@ -67,7 +72,7 @@ public class BukkitFurniture extends Furniture {
                 hitBoxConfig.prepareBoundingBox(position, aabbs::add, false);
             }
             if (!aabbs.isEmpty()) {
-                if (!FastNMS.INSTANCE.checkEntityCollision(position.world.serverWorld(), aabbs.stream().map(it -> FastNMS.INSTANCE.constructor$AABB(it.minX, it.minY, it.minZ, it.maxX, it.maxY, it.maxZ)).toList(),
+                if (!FastNMS.INSTANCE.checkEntityCollision(position.world.serverWorld(), aabbs.stream().map(it -> AABBProxy.INSTANCE.newInstance(it.minX, it.minY, it.minZ, it.maxX, it.maxY, it.maxZ)).toList(),
                         o -> {
                             for (Collider collider : super.colliders) {
                                 if (o == collider.handle()) {
@@ -111,7 +116,7 @@ public class BukkitFurniture extends Furniture {
                     hitBoxConfig.prepareBoundingBox(position, aabbs::add, false);
                 }
                 if (!aabbs.isEmpty()) {
-                    if (!FastNMS.INSTANCE.checkEntityCollision(position.world.serverWorld(), aabbs.stream().map(it -> FastNMS.INSTANCE.constructor$AABB(it.minX, it.minY, it.minZ, it.maxX, it.maxY, it.maxZ)).toList(),
+                    if (!FastNMS.INSTANCE.checkEntityCollision(position.world.serverWorld(), aabbs.stream().map(it -> AABBProxy.INSTANCE.newInstance(it.minX, it.minY, it.minZ, it.maxX, it.maxY, it.maxZ)).toList(),
                             o -> {
                                 for (Collider collider : super.colliders) {
                                     if (o == collider.handle()) {

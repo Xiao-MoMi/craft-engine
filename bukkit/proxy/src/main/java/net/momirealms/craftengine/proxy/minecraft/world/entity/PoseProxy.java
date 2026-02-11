@@ -7,26 +7,26 @@ import net.momirealms.sparrow.reflection.proxy.annotation.ReflectionProxy;
 @ReflectionProxy(name = "net.minecraft.world.entity.Pose")
 public interface PoseProxy {
     PoseProxy INSTANCE = ASMProxyFactory.create(PoseProxy.class);
-    Object[] VALUES = INSTANCE.values();
-    Object STANDING = VALUES[0];
-    Object FALL_FLYING = VALUES[1];
-    Object SLEEPING = VALUES[2];
-    Object SWIMMING = VALUES[3];
-    Object SPIN_ATTACK = VALUES[4];
-    Object CROUCHING = VALUES[5];
-    Object LONG_JUMPING = VALUES[6];
-    Object DYING = VALUES[7];
-    Object CROAKING = VALUES[8];
-    Object USING_TONGUE = VALUES[9];
-    Object SITTING = VALUES[10];
-    Object ROARING = VALUES[11];
-    Object SNIFFING = VALUES[12];
-    Object EMERGING = VALUES[13];
-    Object DIGGING = VALUES[14];
-    Object SLIDING = VALUES.length > 15 ? VALUES[15] : null;
-    Object SHOOTING = VALUES.length > 16 ? VALUES[16] : null;
-    Object INHALING = VALUES.length > 17 ? VALUES[17] : null;
+    Enum<?>[] VALUES = INSTANCE.values();
+    Enum<?> STANDING = VALUES[0];
+    Enum<?> FALL_FLYING = VALUES[1];
+    Enum<?> SLEEPING = VALUES[2];
+    Enum<?> SWIMMING = VALUES[3];
+    Enum<?> SPIN_ATTACK = VALUES[4];
+    Enum<?> CROUCHING = VALUES[5];
+    Enum<?> LONG_JUMPING = VALUES[6];
+    Enum<?> DYING = VALUES[7];
+    Enum<?> CROAKING = VALUES[8];
+    Enum<?> USING_TONGUE = VALUES[9];
+    Enum<?> SITTING = VALUES[10];
+    Enum<?> ROARING = VALUES[11];
+    Enum<?> SNIFFING = VALUES[12];
+    Enum<?> EMERGING = VALUES[13];
+    Enum<?> DIGGING = VALUES[14];
+    Enum<?> SLIDING = VALUES.length > 15 ? VALUES[15] : null;
+    Enum<?> SHOOTING = VALUES.length > 16 ? VALUES[16] : null;
+    Enum<?> INHALING = VALUES.length > 17 ? VALUES[17] : null;
 
     @MethodInvoker(name = "values", isStatic = true)
-    Object[] values();
+    Enum<?>[] values();
 }

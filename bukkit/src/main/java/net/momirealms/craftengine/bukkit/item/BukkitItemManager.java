@@ -13,7 +13,6 @@ import net.momirealms.craftengine.bukkit.item.listener.DebugStickListener;
 import net.momirealms.craftengine.bukkit.item.listener.ItemEventListener;
 import net.momirealms.craftengine.bukkit.item.listener.SlotChangeListener;
 import net.momirealms.craftengine.bukkit.item.recipe.BukkitRecipeManager;
-import net.momirealms.craftengine.bukkit.nms.FastNMS;
 import net.momirealms.craftengine.bukkit.plugin.BukkitCraftEngine;
 import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.MBuiltInRegistries;
 import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.MItems;
@@ -36,6 +35,7 @@ import net.momirealms.craftengine.core.util.GsonHelper;
 import net.momirealms.craftengine.core.util.Key;
 import net.momirealms.craftengine.core.util.UniqueKey;
 import net.momirealms.craftengine.core.util.VersionHelper;
+import net.momirealms.craftengine.proxy.bukkit.craftbukkit.inventory.CraftItemStackProxy;
 import net.momirealms.craftengine.proxy.minecraft.core.HolderProxy;
 import net.momirealms.craftengine.proxy.minecraft.core.MappedRegistryProxy;
 import net.momirealms.craftengine.proxy.minecraft.core.RegistryAccessProxy;
@@ -92,7 +92,7 @@ public class BukkitItemManager extends AbstractItemManager<ItemStack> {
         this.bedrockItemHolder = RegistryProxy.INSTANCE.get$1(MBuiltInRegistries.ITEM, ResourceKeyProxy.INSTANCE.create(MRegistries.ITEM, KeyUtils.toIdentifier(Key.of("minecraft:bedrock")))).orElseThrow();
         this.registerCustomTrimMaterial();
         this.loadLastRegisteredPatterns();
-        ItemStack emptyStack = FastNMS.INSTANCE.method$CraftItemStack$asCraftMirror(ItemStackProxy.EMPTY);
+        ItemStack emptyStack = CraftItemStackProxy.INSTANCE.asCraftMirror(ItemStackProxy.EMPTY);
         this.emptyItem = this.factory.wrap(emptyStack);
         this.emptyUniqueItem = UniqueIdItem.of(this.emptyItem);
     }
@@ -172,7 +172,7 @@ public class BukkitItemManager extends AbstractItemManager<ItemStack> {
             if (nmsStack == null) {
                 return this.emptyItem;
             }
-            return wrap(FastNMS.INSTANCE.method$CraftItemStack$asCraftMirror(nmsStack));
+            return wrap(CraftItemStackProxy.INSTANCE.asCraftMirror(nmsStack));
         }
     }
 
@@ -358,7 +358,7 @@ public class BukkitItemManager extends AbstractItemManager<ItemStack> {
         if (item == MItems.AIR && !id.equals(ItemKeys.AIR)) {
             return null;
         }
-        return FastNMS.INSTANCE.method$CraftItemStack$asCraftMirror(ItemStackProxy.INSTANCE.newInstance(item, 1));
+        return CraftItemStackProxy.INSTANCE.asCraftMirror(ItemStackProxy.INSTANCE.newInstance(item, 1));
     }
 
     @Override

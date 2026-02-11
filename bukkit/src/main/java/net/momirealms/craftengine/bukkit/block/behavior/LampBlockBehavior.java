@@ -1,6 +1,5 @@
 package net.momirealms.craftengine.bukkit.block.behavior;
 
-import net.momirealms.craftengine.bukkit.nms.FastNMS;
 import net.momirealms.craftengine.bukkit.util.BlockStateUtils;
 import net.momirealms.craftengine.bukkit.util.LevelUtils;
 import net.momirealms.craftengine.bukkit.util.LocationUtils;
@@ -11,6 +10,7 @@ import net.momirealms.craftengine.core.block.properties.Property;
 import net.momirealms.craftengine.core.util.ResourceConfigUtils;
 import net.momirealms.craftengine.core.world.context.BlockPlaceContext;
 import net.momirealms.craftengine.proxy.bukkit.craftbukkit.event.CraftEventFactoryProxy;
+import net.momirealms.craftengine.proxy.minecraft.world.level.LevelWriterProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.level.SignalGetterProxy;
 
 import java.util.Map;
@@ -46,7 +46,7 @@ public class LampBlockBehavior extends BukkitBlockBehavior {
             if (CraftEventFactoryProxy.INSTANCE.callRedstoneChange(world, blockPos, 0, 15).getNewCurrent() != 15) {
                 return;
             }
-            FastNMS.INSTANCE.method$LevelWriter$setBlock(world, blockPos, customState.cycle(this.litProperty).customBlockState().literalObject(), 2);
+            LevelWriterProxy.INSTANCE.setBlock(world, blockPos, customState.cycle(this.litProperty).customBlockState().literalObject(), 2);
         }
     }
 
@@ -66,7 +66,7 @@ public class LampBlockBehavior extends BukkitBlockBehavior {
                 if (CraftEventFactoryProxy.INSTANCE.callRedstoneChange(world, blockPos, 0, 15).getNewCurrent() != 15) {
                     return;
                 }
-                FastNMS.INSTANCE.method$LevelWriter$setBlock(world, blockPos, customState.cycle(this.litProperty).customBlockState().literalObject(), 2);
+                LevelWriterProxy.INSTANCE.setBlock(world, blockPos, customState.cycle(this.litProperty).customBlockState().literalObject(), 2);
             }
         }
     }

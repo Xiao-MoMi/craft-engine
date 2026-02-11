@@ -18,6 +18,8 @@ import net.momirealms.craftengine.core.world.WorldPosition;
 import net.momirealms.craftengine.proxy.minecraft.core.Vec3iProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.entity.EntityProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.entity.item.FallingBlockEntityProxy;
+import net.momirealms.craftengine.proxy.minecraft.world.level.BlockGetterProxy;
+import net.momirealms.craftengine.proxy.minecraft.world.level.LevelProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.level.LevelReaderProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.level.block.FallingBlockProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.level.dimension.DimensionTypeProxy;
@@ -70,7 +72,7 @@ public class FallingBlockBehavior extends BukkitBlockBehavior {
         int x = Vec3iProxy.INSTANCE.getX(blockPos);
         int z = Vec3iProxy.INSTANCE.getZ(blockPos);
         Object belowPos = LocationUtils.toBlockPos(x, y - 1, z);
-        Object belowState = FastNMS.INSTANCE.method$BlockGetter$getBlockState(world, belowPos);
+        Object belowState = BlockGetterProxy.INSTANCE.getBlockState(world, belowPos);
         boolean isFree = FallingBlockProxy.INSTANCE.isFree(belowState);
         if (!isFree) {
             return;
@@ -84,15 +86,15 @@ public class FallingBlockBehavior extends BukkitBlockBehavior {
 
     @SuppressWarnings("DuplicatedCode")
     @Override
-    public void onBrokenAfterFall(Object thisBlock, Object[] args) throws Exception {
+    public void onBrokenAfterFall(Object thisBlock, Object[] args) {
         Object level = args[0];
         Object fallingBlockEntity = args[2];
-        BukkitEntity entity = BukkitAdaptors.adapt(FastNMS.INSTANCE.method$Entity$getBukkitEntity(fallingBlockEntity));
+        BukkitEntity entity = BukkitAdaptors.adapt(EntityProxy.INSTANCE.getBukkitEntity(fallingBlockEntity));
         if (!entity.getEntityData(BaseEntityData.Silent)) {
             Object blockState = FallingBlockEntityProxy.INSTANCE.getBlockState(fallingBlockEntity);
             Optional<ImmutableBlockState> optionalCustomState = BlockStateUtils.getOptionalCustomBlockState(blockState);
             if (optionalCustomState.isEmpty()) return;
-            net.momirealms.craftengine.core.world.World world = BukkitAdaptors.adapt(FastNMS.INSTANCE.method$Level$getCraftWorld(level));
+            net.momirealms.craftengine.core.world.World world = BukkitAdaptors.adapt(LevelProxy.INSTANCE.getWorld(level));
             WorldPosition position = new WorldPosition(world, EntityProxy.INSTANCE.getXo(fallingBlockEntity), EntityProxy.INSTANCE.getYo(fallingBlockEntity), EntityProxy.INSTANCE.getZo(fallingBlockEntity));
             if (this.destroySound != null) {
                 world.playBlockSound(position, this.destroySound);
@@ -105,13 +107,13 @@ public class FallingBlockBehavior extends BukkitBlockBehavior {
         Object fallingBlock = args[4];
         Object level = args[0];
         Object pos = args[1];
-        BukkitEntity entity = BukkitAdaptors.adapt(FastNMS.INSTANCE.method$Entity$getBukkitEntity(fallingBlock));
+        BukkitEntity entity = BukkitAdaptors.adapt(EntityProxy.INSTANCE.getBukkitEntity(fallingBlock));
         Object blockState = args[2];
         int stateId = BlockStateUtils.blockStateToId(blockState);
         ImmutableBlockState immutableBlockState = BukkitBlockManager.instance().getImmutableBlockState(stateId);
         if (immutableBlockState == null || immutableBlockState.isEmpty()) return;
         if (!entity.getEntityData(BaseEntityData.Silent)) {
-            net.momirealms.craftengine.core.world.World world = BukkitAdaptors.adapt(FastNMS.INSTANCE.method$Level$getCraftWorld(level));
+            net.momirealms.craftengine.core.world.World world = BukkitAdaptors.adapt(LevelProxy.INSTANCE.getWorld(level));
             if (this.landSound != null) {
                 world.playBlockSound(Vec3d.atCenterOf(LocationUtils.fromBlockPos(pos)), this.landSound);
             }

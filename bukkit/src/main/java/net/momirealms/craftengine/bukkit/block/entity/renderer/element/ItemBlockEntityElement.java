@@ -1,9 +1,9 @@
 package net.momirealms.craftengine.bukkit.block.entity.renderer.element;
 
 import it.unimi.dsi.fastutil.ints.IntList;
-import net.momirealms.craftengine.bukkit.nms.FastNMS;
 import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.MEntityTypes;
 import net.momirealms.craftengine.bukkit.util.EntityUtils;
+import net.momirealms.craftengine.bukkit.util.PacketUtils;
 import net.momirealms.craftengine.core.block.entity.render.element.BlockEntityElement;
 import net.momirealms.craftengine.core.entity.player.Player;
 import net.momirealms.craftengine.core.world.BlockPos;
@@ -42,7 +42,7 @@ public class ItemBlockEntityElement implements BlockEntityElement {
                 entityId2, UUID.randomUUID(), pos.x() + position.x, pos.y() + position.y, pos.z() + position.z,
                 0, 0, MEntityTypes.ITEM, 0, Vec3Proxy.ZERO, 0
         );
-        this.cachedRidePacket = FastNMS.INSTANCE.constructor$ClientboundSetPassengersPacket(entityId1, entityId2);
+        this.cachedRidePacket = PacketUtils.createClientboundSetPassengersPacket(entityId1, entityId2);
         this.cachedDespawnPacket = ClientboundRemoveEntitiesPacketProxy.INSTANCE.newInstance(IntList.of(entityId1, entityId2));
         this.entityId1 = entityId1;
         this.entityId2 = entityId2;

@@ -1,13 +1,16 @@
 package net.momirealms.craftengine.bukkit.util;
 
 import net.momirealms.craftengine.bukkit.block.BukkitBlockManager;
-import net.momirealms.craftengine.bukkit.nms.FastNMS;
 import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.MBuiltInRegistries;
 import net.momirealms.craftengine.core.block.*;
 import net.momirealms.craftengine.core.item.Item;
 import net.momirealms.craftengine.core.util.Key;
+import net.momirealms.craftengine.proxy.bukkit.craftbukkit.CraftWorldProxy;
+import net.momirealms.craftengine.proxy.bukkit.craftbukkit.block.data.CraftBlockDataProxy;
 import net.momirealms.craftengine.proxy.minecraft.core.IdMapProxy;
 import net.momirealms.craftengine.proxy.minecraft.core.RegistryProxy;
+import net.momirealms.craftengine.proxy.minecraft.world.item.ItemStackProxy;
+import net.momirealms.craftengine.proxy.minecraft.world.level.BlockGetterProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.level.block.BlockProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.level.block.state.BlockBehaviourProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.level.block.state.StateDefinitionProxy;
@@ -46,7 +49,7 @@ public final class BlockStateUtils {
         if (settings.requireCorrectTool()) {
             if (itemInHand == null || itemInHand.isEmpty()) return false;
             return settings.isCorrectTool(itemInHand.id()) ||
-                    (settings.respectToolComponent() && FastNMS.INSTANCE.method$ItemStack$isCorrectToolForDrops(itemInHand.getLiteralObject(), state.customBlockState().literalObject()));
+                    (settings.respectToolComponent() && ItemStackProxy.INSTANCE.isCorrectToolForDrops(itemInHand.getLiteralObject(), state.customBlockState().literalObject()));
         }
         return true;
     }
@@ -58,7 +61,7 @@ public final class BlockStateUtils {
     }
 
     public static BlockData fromBlockData(Object blockState) {
-        return FastNMS.INSTANCE.method$CraftBlockData$fromData(blockState);
+        return CraftBlockDataProxy.INSTANCE.fromData(blockState);
     }
 
     public static int blockDataToId(BlockData blockData) {
@@ -76,7 +79,7 @@ public final class BlockStateUtils {
     }
 
     public static Object blockDataToBlockState(BlockData blockData) {
-        return FastNMS.INSTANCE.method$CraftBlockData$getState(blockData);
+        return CraftBlockDataProxy.INSTANCE.getState(blockData);
     }
 
     public static Object idToBlockState(int id) {
@@ -124,7 +127,7 @@ public final class BlockStateUtils {
     }
 
     public static Object getBlockState(Block block) {
-        return FastNMS.INSTANCE.method$BlockGetter$getBlockState(FastNMS.INSTANCE.field$CraftWorld$ServerLevel(block.getWorld()), LocationUtils.toBlockPos(block.getX(), block.getY(), block.getZ()));
+        return BlockGetterProxy.INSTANCE.getBlockState(CraftWorldProxy.INSTANCE.getWorld(block.getWorld()), LocationUtils.toBlockPos(block.getX(), block.getY(), block.getZ()));
     }
 
     public static boolean isBurnable(Object blockState) {

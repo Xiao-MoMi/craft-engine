@@ -1,6 +1,5 @@
 package net.momirealms.craftengine.bukkit.block.behavior;
 
-import net.momirealms.craftengine.bukkit.nms.FastNMS;
 import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.MBlocks;
 import net.momirealms.craftengine.bukkit.util.BlockStateUtils;
 import net.momirealms.craftengine.bukkit.util.BlockTags;
@@ -15,6 +14,7 @@ import net.momirealms.craftengine.core.util.*;
 import net.momirealms.craftengine.core.world.BlockPos;
 import net.momirealms.craftengine.core.world.World;
 import net.momirealms.craftengine.core.world.context.BlockPlaceContext;
+import net.momirealms.craftengine.proxy.minecraft.world.level.BlockGetterProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.level.block.SupportTypeProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.level.block.state.BlockBehaviourProxy;
 import org.bukkit.Bukkit;
@@ -81,7 +81,7 @@ public class DirectionalAttachedBlockBehavior extends BukkitBlockBehavior {
         }
         BlockPos blockPos = LocationUtils.fromBlockPos(args[2]).relative(direction.opposite());
         Object nmsPos = LocationUtils.toBlockPos(blockPos);
-        Object nmsState = FastNMS.INSTANCE.method$BlockGetter$getBlockState(args[1], nmsPos);
+        Object nmsState = BlockGetterProxy.INSTANCE.getBlockState(args[1], nmsPos);
         return BlockBehaviourProxy.BlockStateBaseProxy.INSTANCE.isFaceSturdy(nmsState, args[1], nmsPos, DirectionUtils.toNMSDirection(direction), SupportTypeProxy.FULL)
                 && mayPlaceOn(nmsState);
     }

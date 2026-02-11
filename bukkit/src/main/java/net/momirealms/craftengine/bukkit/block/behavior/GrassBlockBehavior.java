@@ -1,7 +1,6 @@
 package net.momirealms.craftengine.bukkit.block.behavior;
 
 import net.momirealms.antigrieflib.Flag;
-import net.momirealms.craftengine.bukkit.nms.FastNMS;
 import net.momirealms.craftengine.bukkit.plugin.BukkitCraftEngine;
 import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.CoreReflections;
 import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.MBlocks;
@@ -23,7 +22,12 @@ import net.momirealms.craftengine.core.world.context.UseOnContext;
 import net.momirealms.craftengine.proxy.minecraft.core.HolderProxy;
 import net.momirealms.craftengine.proxy.minecraft.core.RegistryAccessProxy;
 import net.momirealms.craftengine.proxy.minecraft.core.RegistryProxy;
+import net.momirealms.craftengine.proxy.minecraft.core.Vec3iProxy;
 import net.momirealms.craftengine.proxy.minecraft.server.level.ServerChunkCacheProxy;
+import net.momirealms.craftengine.proxy.minecraft.server.level.ServerLevelProxy;
+import net.momirealms.craftengine.proxy.minecraft.world.level.BlockGetterProxy;
+import net.momirealms.craftengine.proxy.minecraft.world.level.LevelProxy;
+import net.momirealms.craftengine.proxy.minecraft.world.level.block.BonemealableBlockProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.level.block.state.BlockBehaviourProxy;
 import org.bukkit.Location;
 import org.bukkit.World;
@@ -49,7 +53,7 @@ public class GrassBlockBehavior extends BukkitBlockBehavior {
     @Override
     public boolean isValidBoneMealTarget(Object thisBlock, Object[] args) {
         Object above = LocationUtils.above(args[1]);
-        Object aboveState = FastNMS.INSTANCE.method$BlockGetter$getBlockState(args[0], above);
+        Object aboveState = BlockGetterProxy.INSTANCE.getBlockState(args[0], above);
         return BlockBehaviourProxy.BlockStateBaseProxy.INSTANCE.isAir(aboveState);
     }
 
@@ -68,7 +72,7 @@ public class GrassBlockBehavior extends BukkitBlockBehavior {
         Object visualState = customState.visualBlockState().literalObject();
         Object visualStateBlock = BlockStateUtils.getBlockOwner(visualState);
         if (CoreReflections.clazz$BonemealableBlock.isInstance(visualStateBlock)) {
-            boolean is = FastNMS.INSTANCE.method$BonemealableBlock$isValidBonemealTarget(visualStateBlock, level, blockPos, visualState);
+            boolean is = BonemealableBlockProxy.INSTANCE.isValidBonemealTarget(visualStateBlock, level, blockPos, visualState);
             if (!is) {
                 sendParticles = true;
             }
@@ -76,10 +80,10 @@ public class GrassBlockBehavior extends BukkitBlockBehavior {
             sendParticles = true;
         }
         if (sendParticles) {
-            World world = FastNMS.INSTANCE.method$Level$getCraftWorld(level);
-            int x = FastNMS.INSTANCE.field$Vec3i$x(blockPos);
-            int y = FastNMS.INSTANCE.field$Vec3i$y(blockPos);
-            int z = FastNMS.INSTANCE.field$Vec3i$z(blockPos);
+            World world = LevelProxy.INSTANCE.getWorld(level);
+            int x = Vec3iProxy.INSTANCE.getX(blockPos);
+            int y = Vec3iProxy.INSTANCE.getY(blockPos);
+            int z = Vec3iProxy.INSTANCE.getZ(blockPos);
             world.spawnParticle(ParticleUtils.HAPPY_VILLAGER, x + 0.5, y + 1.5, z + 0.5, 20, 2, 0, 2);
         }
         return true;
@@ -106,7 +110,12 @@ public class GrassBlockBehavior extends BukkitBlockBehavior {
         Object visualState = state.visualBlockState().literalObject();
         Object visualStateBlock = BlockStateUtils.getBlockOwner(visualState);
         if (CoreReflections.clazz$BonemealableBlock.isInstance(visualStateBlock)) {
-            boolean is = FastNMS.INSTANCE.method$BonemealableBlock$isValidBonemealTarget(visualStateBlock, world.serverWorld(), LocationUtils.toBlockPos(pos), visualState);
+            boolean is;
+            if (VersionHelper.isOrAbove1_20_2()) {
+                is = BonemealableBlockProxy.INSTANCE.isValidBonemealTarget(visualStateBlock, world.serverWorld(), LocationUtils.toBlockPos(pos), visualState);
+            } else {
+                is = BonemealableBlockProxy.INSTANCE.isValidBonemealTarget(visualStateBlock, world.serverWorld(), LocationUtils.toBlockPos(pos), visualState, true);
+            }
             if (!is) {
                 sendSwing = true;
             }
@@ -141,7 +150,7 @@ public class GrassBlockBehavior extends BukkitBlockBehavior {
                         RandomUtils.generateRandomInt(-1, 2), RandomUtils.generateRandomInt(-1, 2) * RandomUtils.generateRandomInt(0, 3) / 2, RandomUtils.generateRandomInt(-1, 2)
                 );
                 BlockPos belowPos = currentPos.relative(Direction.DOWN);
-                Object belowState = FastNMS.INSTANCE.method$BlockGetter$getBlockState(world, LocationUtils.toBlockPos(belowPos));
+                Object belowState = BlockGetterProxy.INSTANCE.getBlockState(world, LocationUtils.toBlockPos(belowPos));
                 Optional<ImmutableBlockState> optionalCustomState = BlockStateUtils.getOptionalCustomBlockState(belowState);
                 if (optionalCustomState.isEmpty()) {
                     continue out;
@@ -150,7 +159,7 @@ public class GrassBlockBehavior extends BukkitBlockBehavior {
                     continue out;
                 }
                 Object nmsCurrentPos = LocationUtils.toBlockPos(currentPos);
-                Object currentState = FastNMS.INSTANCE.method$BlockGetter$getBlockState(world, nmsCurrentPos);
+                Object currentState = BlockGetterProxy.INSTANCE.getBlockState(world, nmsCurrentPos);
                 if (BlockBehaviourProxy.BlockStateBaseProxy.INSTANCE.isCollisionShapeFullBlock(currentState, world, nmsCurrentPos)) {
                     continue out;
                 }
@@ -158,7 +167,7 @@ public class GrassBlockBehavior extends BukkitBlockBehavior {
                     CoreReflections.method$BonemealableBlock$performBonemeal.invoke(MBlocks.SHORT_GRASS, world, random, nmsCurrentPos, currentState);
                 }
                 if (BlockBehaviourProxy.BlockStateBaseProxy.INSTANCE.isAir(currentState)) {
-                    Object chunkGenerator = ServerChunkCacheProxy.INSTANCE.getGenerator(FastNMS.INSTANCE.method$ServerLevel$getChunkSource(world));
+                    Object chunkGenerator = ServerChunkCacheProxy.INSTANCE.getGenerator(ServerLevelProxy.INSTANCE.getChunkSource(world));
                     Object placedFeature = HolderProxy.INSTANCE.value(holder.get());
                     CoreReflections.method$PlacedFeature$place.invoke(placedFeature, world, chunkGenerator, random, nmsCurrentPos);
                 }

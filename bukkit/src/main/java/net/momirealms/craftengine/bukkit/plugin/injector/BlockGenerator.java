@@ -13,7 +13,6 @@ import net.bytebuddy.implementation.bind.annotation.SuperCall;
 import net.bytebuddy.implementation.bind.annotation.This;
 import net.bytebuddy.matcher.ElementMatchers;
 import net.momirealms.craftengine.bukkit.block.BukkitBlockShape;
-import net.momirealms.craftengine.bukkit.nms.FastNMS;
 import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.CoreReflections;
 import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.MBlocks;
 import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.MRegistries;
@@ -31,6 +30,8 @@ import net.momirealms.craftengine.core.util.ObjectHolder;
 import net.momirealms.craftengine.core.util.VersionHelper;
 import net.momirealms.craftengine.proxy.minecraft.core.DirectionProxy;
 import net.momirealms.craftengine.proxy.minecraft.resources.ResourceKeyProxy;
+import net.momirealms.craftengine.proxy.minecraft.server.level.ServerChunkCacheProxy;
+import net.momirealms.craftengine.proxy.minecraft.server.level.ServerLevelProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.item.ItemStackProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.level.block.BlockProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.level.block.state.BlockBehaviourProxy;
@@ -268,12 +269,12 @@ public final class BlockGenerator {
             Object blockPos = args[posIndex];
             // Y axis
             if (direction == DirectionProxy.DOWN) {
-                Object chunkSource = FastNMS.INSTANCE.method$ServerLevel$getChunkSource(serverLevel);
-                FastNMS.INSTANCE.method$ServerChunkCache$blockChanged(chunkSource, blockPos);
+                Object chunkSource = ServerLevelProxy.INSTANCE.getChunkSource(serverLevel);
+                ServerChunkCacheProxy.INSTANCE.blockChanged(chunkSource, blockPos);
                 NoteBlockChainUpdateUtils.noteBlockChainUpdate(serverLevel, chunkSource, DirectionProxy.UP, blockPos, Config.maxNoteBlockChainUpdate());
             } else if (direction == DirectionProxy.UP) {
-                Object chunkSource = FastNMS.INSTANCE.method$ServerLevel$getChunkSource(serverLevel);
-                FastNMS.INSTANCE.method$ServerChunkCache$blockChanged(chunkSource, blockPos);
+                Object chunkSource = ServerLevelProxy.INSTANCE.getChunkSource(serverLevel);
+                ServerChunkCacheProxy.INSTANCE.blockChanged(chunkSource, blockPos);
                 NoteBlockChainUpdateUtils.noteBlockChainUpdate(serverLevel, chunkSource, DirectionProxy.DOWN, blockPos, Config.maxNoteBlockChainUpdate());
             }
         }

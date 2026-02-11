@@ -1,6 +1,5 @@
 package net.momirealms.craftengine.bukkit.block.behavior;
 
-import net.momirealms.craftengine.bukkit.nms.FastNMS;
 import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.MFluids;
 import net.momirealms.craftengine.bukkit.util.BlockStateUtils;
 import net.momirealms.craftengine.bukkit.util.DirectionUtils;
@@ -67,7 +66,7 @@ public class SofaBlockBehavior extends BukkitBlockBehavior {
 
     private SofaShape getSofaShape(ImmutableBlockState state, Object level, BlockPos pos) {
         Direction direction = state.get(this.facingProperty).toDirection();
-        Object relativeBlockState = FastNMS.INSTANCE.method$BlockGetter$getBlockState(level, LocationUtils.toBlockPos(pos.relative(direction.opposite())));
+        Object relativeBlockState = BlockGetterProxy.INSTANCE.getBlockState(level, LocationUtils.toBlockPos(pos.relative(direction.opposite())));
         Optional<ImmutableBlockState> optionalCustomState = BlockStateUtils.getOptionalCustomBlockState(relativeBlockState);
         if (optionalCustomState.isPresent()) {
             ImmutableBlockState customState = optionalCustomState.get();
@@ -87,7 +86,7 @@ public class SofaBlockBehavior extends BukkitBlockBehavior {
     }
 
     private boolean canTakeShape(ImmutableBlockState state, Object level, BlockPos pos, Direction face) {
-        Object blockState = FastNMS.INSTANCE.method$BlockGetter$getBlockState(level, LocationUtils.toBlockPos(pos.relative(face)));
+        Object blockState = BlockGetterProxy.INSTANCE.getBlockState(level, LocationUtils.toBlockPos(pos.relative(face)));
         Optional<ImmutableBlockState> optionalAnotherState = BlockStateUtils.getOptionalCustomBlockState(blockState);
         if (optionalAnotherState.isEmpty()) {
             return true;

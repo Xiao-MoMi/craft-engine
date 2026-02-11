@@ -5,7 +5,6 @@ import it.unimi.dsi.fastutil.longs.LongOpenHashSet;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.TranslationArgument;
 import net.momirealms.craftengine.bukkit.block.BukkitBlockManager;
-import net.momirealms.craftengine.bukkit.nms.FastNMS;
 import net.momirealms.craftengine.bukkit.plugin.network.payload.PayloadHelper;
 import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.NetworkReflections;
 import net.momirealms.craftengine.bukkit.util.BlockStateUtils;
@@ -16,6 +15,9 @@ import net.momirealms.craftengine.core.plugin.network.NetWorkUser;
 import net.momirealms.craftengine.core.plugin.network.codec.NetworkCodec;
 import net.momirealms.craftengine.core.registry.BuiltInRegistries;
 import net.momirealms.craftengine.core.util.*;
+import net.momirealms.craftengine.proxy.bukkit.craftbukkit.CraftWorldProxy;
+import net.momirealms.craftengine.proxy.minecraft.server.level.ServerChunkCacheProxy;
+import net.momirealms.craftengine.proxy.minecraft.server.level.ServerLevelProxy;
 import net.momirealms.craftengine.proxy.minecraft.server.level.ServerPlayerProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.level.BlockAndTintGetterProxy;
 import net.momirealms.craftengine.proxy.paper.chunk.system.entity.RegionizedPlayerChunkLoaderProxy;
@@ -78,13 +80,13 @@ public record ClientCustomBlockPacket(int vanillaSize, int currentSize) implemen
                         return;
                     }
                     sentChunks = sentChunks.clone();
-                    Object serverLevel = FastNMS.INSTANCE.field$CraftWorld$ServerLevel(((Player) user.platformPlayer()).getWorld());
+                    Object serverLevel = CraftWorldProxy.INSTANCE.getWorld(((Player) user.platformPlayer()).getWorld());
                     Object lightEngine = BlockAndTintGetterProxy.INSTANCE.getLightEngine(serverLevel);
-                    Object chunkSource = FastNMS.INSTANCE.method$ServerLevel$getChunkSource(serverLevel);
+                    Object chunkSource = ServerLevelProxy.INSTANCE.getChunkSource(serverLevel);
                     for (long chunkPos : sentChunks) {
                         int chunkX = (int) chunkPos;
                         int chunkZ = (int) (chunkPos >> 32);
-                        Object levelChunk = FastNMS.INSTANCE.method$ServerChunkCache$getChunk(chunkSource, chunkX, chunkZ, false);
+                        Object levelChunk = ServerChunkCacheProxy.INSTANCE.getChunk(chunkSource, chunkX, chunkZ, false);
                         Object packet = NetworkReflections.constructor$ClientboundLevelChunkWithLightPacket.newInstance(levelChunk, lightEngine, null, null);
                         user.sendPacket(packet, true);
                     }

@@ -1,6 +1,5 @@
 package net.momirealms.craftengine.bukkit.item;
 
-import net.momirealms.craftengine.bukkit.nms.FastNMS;
 import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.CoreReflections;
 import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.MRegistryOps;
 import net.momirealms.craftengine.bukkit.util.EquipmentSlotUtils;
@@ -10,6 +9,7 @@ import net.momirealms.craftengine.core.entity.player.Player;
 import net.momirealms.craftengine.core.item.ItemType;
 import net.momirealms.craftengine.core.item.ItemWrapper;
 import net.momirealms.craftengine.core.util.random.RandomUtils;
+import net.momirealms.craftengine.proxy.bukkit.craftbukkit.inventory.CraftItemStackProxy;
 import net.momirealms.craftengine.proxy.minecraft.nbt.CompoundTagProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.item.ItemStackProxy;
 import net.momirealms.sparrow.nbt.Tag;
@@ -24,7 +24,7 @@ public class LegacyItemWrapper implements ItemWrapper<ItemStack> {
 
     public LegacyItemWrapper(ItemStack item) {
         this.itemStack = ItemStackUtils.ensureCraftItemStack(item);
-        this.nmsStack = FastNMS.INSTANCE.field$CraftItemStack$handle(this.itemStack);
+        this.nmsStack = CraftItemStackProxy.INSTANCE.unwrap(this.itemStack);
     }
 
     public ItemType itemType() {

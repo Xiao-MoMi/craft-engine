@@ -1,7 +1,6 @@
 package net.momirealms.craftengine.bukkit.block.entity.renderer.element;
 
 import it.unimi.dsi.fastutil.ints.IntList;
-import net.momirealms.craftengine.bukkit.nms.FastNMS;
 import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.MEntityTypes;
 import net.momirealms.craftengine.bukkit.util.EntityUtils;
 import net.momirealms.craftengine.core.block.entity.render.element.BlockEntityElement;

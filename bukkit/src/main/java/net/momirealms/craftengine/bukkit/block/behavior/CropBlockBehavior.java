@@ -2,7 +2,6 @@ package net.momirealms.craftengine.bukkit.block.behavior;
 
 import net.momirealms.antigrieflib.Flag;
 import net.momirealms.craftengine.bukkit.api.BukkitAdaptors;
-import net.momirealms.craftengine.bukkit.nms.FastNMS;
 import net.momirealms.craftengine.bukkit.plugin.BukkitCraftEngine;
 import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.CoreReflections;
 import net.momirealms.craftengine.bukkit.util.BlockStateUtils;
@@ -25,13 +24,18 @@ import net.momirealms.craftengine.core.plugin.context.number.NumberProviders;
 import net.momirealms.craftengine.core.plugin.context.parameter.DirectContextParameters;
 import net.momirealms.craftengine.core.util.ItemUtils;
 import net.momirealms.craftengine.core.util.ResourceConfigUtils;
+import net.momirealms.craftengine.core.util.VersionHelper;
 import net.momirealms.craftengine.core.util.random.RandomUtils;
 import net.momirealms.craftengine.core.world.BlockPos;
 import net.momirealms.craftengine.core.world.Vec3d;
 import net.momirealms.craftengine.core.world.Vec3i;
 import net.momirealms.craftengine.core.world.WorldPosition;
 import net.momirealms.craftengine.core.world.context.UseOnContext;
+import net.momirealms.craftengine.proxy.minecraft.core.Vec3iProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.level.BlockAndTintGetterProxy;
+import net.momirealms.craftengine.proxy.minecraft.world.level.LevelProxy;
+import net.momirealms.craftengine.proxy.minecraft.world.level.LevelWriterProxy;
+import net.momirealms.craftengine.proxy.minecraft.world.level.block.BonemealableBlockProxy;
 import org.bukkit.Location;
 import org.bukkit.World;
 
@@ -98,7 +102,7 @@ public class CropBlockBehavior extends BukkitBlockBehavior {
             BlockStateUtils.getOptionalCustomBlockState(state).ifPresent(customState -> {
                 int age = this.getAge(customState);
                 if (age < this.ageProperty.max && RandomUtils.generateRandomFloat(0, 1) < this.growSpeed) {
-                    FastNMS.INSTANCE.method$LevelWriter$setBlock(level, pos, customState.with(this.ageProperty, age + 1).customBlockState().literalObject(), UpdateOption.UPDATE_ALL.flags());
+                    LevelWriterProxy.INSTANCE.setBlock(level, pos, customState.with(this.ageProperty, age + 1).customBlockState().literalObject(), UpdateOption.UPDATE_ALL.flags());
                 }
             });
         }
@@ -147,7 +151,12 @@ public class CropBlockBehavior extends BukkitBlockBehavior {
         Object visualState = state.visualBlockState().literalObject();
         Object visualStateBlock = BlockStateUtils.getBlockOwner(visualState);
         if (CoreReflections.clazz$BonemealableBlock.isInstance(visualStateBlock)) {
-            boolean is = FastNMS.INSTANCE.method$BonemealableBlock$isValidBonemealTarget(visualStateBlock, world.serverWorld(), LocationUtils.toBlockPos(pos), visualState);
+            boolean is;
+            if (VersionHelper.isOrAbove1_20_2()) {
+                is = BonemealableBlockProxy.INSTANCE.isValidBonemealTarget(visualStateBlock, world.serverWorld(), LocationUtils.toBlockPos(pos), visualState);
+            } else {
+                is = BonemealableBlockProxy.INSTANCE.isValidBonemealTarget(visualStateBlock, world.serverWorld(), LocationUtils.toBlockPos(pos), visualState, true);
+            }
             if (!is) {
                 sendSwing = true;
             }
@@ -170,17 +179,22 @@ public class CropBlockBehavior extends BukkitBlockBehavior {
         Object visualState = customState.visualBlockState().literalObject();
         Object visualStateBlock = BlockStateUtils.getBlockOwner(visualState);
         if (CoreReflections.clazz$BonemealableBlock.isInstance(visualStateBlock)) {
-            boolean is = FastNMS.INSTANCE.method$BonemealableBlock$isValidBonemealTarget(visualStateBlock, level, pos, visualState);
+            boolean is;
+            if (VersionHelper.isOrAbove1_20_2()) {
+                is = BonemealableBlockProxy.INSTANCE.isValidBonemealTarget(visualStateBlock, level, pos, visualState);
+            } else {
+                is = BonemealableBlockProxy.INSTANCE.isValidBonemealTarget(visualStateBlock, level, pos, visualState, true);
+            }
             if (!is) {
                 sendParticles = true;
             }
         } else {
             sendParticles = true;
         }
-        World world = FastNMS.INSTANCE.method$Level$getCraftWorld(level);
-        int x = FastNMS.INSTANCE.field$Vec3i$x(pos);
-        int y = FastNMS.INSTANCE.field$Vec3i$y(pos);
-        int z = FastNMS.INSTANCE.field$Vec3i$z(pos);
+        World world = LevelProxy.INSTANCE.getWorld(level);
+        int x = Vec3iProxy.INSTANCE.getX(pos);
+        int y = Vec3iProxy.INSTANCE.getY(pos);
+        int z = Vec3iProxy.INSTANCE.getZ(pos);
         int i = this.getAge(customState) + this.boneMealBonus.getInt(
                 SimpleContext.of(ContextHolder.builder()
                             .withParameter(DirectContextParameters.CUSTOM_BLOCK_STATE, customState)
@@ -191,7 +205,7 @@ public class CropBlockBehavior extends BukkitBlockBehavior {
         if (i > maxAge) {
             i = maxAge;
         }
-        FastNMS.INSTANCE.method$LevelWriter$setBlock(level, pos, customState.with(this.ageProperty, i).customBlockState().literalObject(), UpdateOption.UPDATE_ALL.flags());
+        LevelWriterProxy.INSTANCE.setBlock(level, pos, customState.with(this.ageProperty, i).customBlockState().literalObject(), UpdateOption.UPDATE_ALL.flags());
         if (sendParticles) {
             world.spawnParticle(ParticleUtils.HAPPY_VILLAGER, x + 0.5, y + 0.5, z + 0.5, 15, 0.25, 0.25, 0.25);
         }

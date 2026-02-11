@@ -1,6 +1,5 @@
 package net.momirealms.craftengine.bukkit.block.behavior;
 
-import net.momirealms.craftengine.bukkit.nms.FastNMS;
 import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.CoreReflections;
 import net.momirealms.craftengine.bukkit.util.BlockStateUtils;
 import net.momirealms.craftengine.bukkit.util.DirectionUtils;
@@ -10,6 +9,9 @@ import net.momirealms.craftengine.core.block.behavior.BlockBehaviorFactory;
 import net.momirealms.craftengine.core.util.Direction;
 import net.momirealms.craftengine.core.util.MiscUtils;
 import net.momirealms.craftengine.core.util.ResourceConfigUtils;
+import net.momirealms.craftengine.proxy.minecraft.core.BlockPosProxy;
+import net.momirealms.craftengine.proxy.minecraft.core.Vec3iProxy;
+import net.momirealms.craftengine.proxy.minecraft.world.level.BlockGetterProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.level.block.BlockProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.level.block.SupportTypeProxy;
 
@@ -37,11 +39,11 @@ public class SturdyBaseBlockBehavior extends AbstractCanSurviveBlockBehavior {
 
     @Override
     protected boolean canSurvive(Object thisBlock, Object state, Object world, Object blockPos) throws Exception {
-        int x = FastNMS.INSTANCE.field$Vec3i$x(blockPos) + this.direction.stepX();
-        int y = FastNMS.INSTANCE.field$Vec3i$y(blockPos) + this.direction.stepY();
-        int z = FastNMS.INSTANCE.field$Vec3i$z(blockPos) + this.direction.stepZ();
-        Object targetPos = FastNMS.INSTANCE.constructor$BlockPos(x, y, z);
-        Object blockState = FastNMS.INSTANCE.method$BlockGetter$getBlockState(world, targetPos);
+        int x = Vec3iProxy.INSTANCE.getX(blockPos) + this.direction.stepX();
+        int y = Vec3iProxy.INSTANCE.getY(blockPos) + this.direction.stepY();
+        int z = Vec3iProxy.INSTANCE.getZ(blockPos) + this.direction.stepZ();
+        Object targetPos = BlockPosProxy.INSTANCE.newInstance$1(x, y, z);
+        Object blockState = BlockGetterProxy.INSTANCE.getBlockState(world, targetPos);
         if (this.checkFull && (boolean) CoreReflections.method$BlockStateBase$isFaceSturdy.invoke(
                 blockState, world, targetPos, DirectionUtils.toNMSDirection(this.direction.opposite()),
                 SupportTypeProxy.FULL

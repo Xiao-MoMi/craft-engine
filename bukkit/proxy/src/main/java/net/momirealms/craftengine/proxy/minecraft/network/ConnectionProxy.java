@@ -1,5 +1,6 @@
 package net.momirealms.craftengine.proxy.minecraft.network;
 
+import io.netty.channel.Channel;
 import net.momirealms.craftengine.proxy.minecraft.network.chat.ComponentProxy;
 import net.momirealms.sparrow.reflection.proxy.ASMProxyFactory;
 import net.momirealms.sparrow.reflection.proxy.annotation.*;
@@ -19,4 +20,10 @@ public interface ConnectionProxy {
 
     @FieldSetter(name = "packetListener")
     void setPacketListener(Object target, Object packetListener);
+
+    @FieldGetter(name = "channel")
+    Channel getChannel(Object target);
+
+    @FieldSetter(name = "channel")
+    void setChannel(Object target, Channel channel);
 }

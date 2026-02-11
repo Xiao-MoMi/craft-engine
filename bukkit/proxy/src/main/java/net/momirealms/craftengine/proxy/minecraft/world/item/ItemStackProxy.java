@@ -9,6 +9,7 @@ import net.momirealms.craftengine.proxy.minecraft.tags.TagKeyProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.entity.EquipmentSlotProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.entity.LivingEntityProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.level.ItemLikeProxy;
+import net.momirealms.craftengine.proxy.minecraft.world.level.block.state.BlockStateProxy;
 import net.momirealms.sparrow.reflection.proxy.ASMProxyFactory;
 import net.momirealms.sparrow.reflection.proxy.annotation.*;
 
@@ -75,4 +76,7 @@ public interface ItemStackProxy extends DataComponentHolderProxy {
 
     @MethodInvoker(name = "applyComponents", activeIf = "min_version=1.20.5")
     void applyComponents(Object target, @Type(clazz = DataComponentPatchProxy.class) Object changes);
+
+    @MethodInvoker(name = "isCorrectToolForDrops")
+    boolean isCorrectToolForDrops(Object target, @Type(clazz = BlockStateProxy.class) Object state);
 }

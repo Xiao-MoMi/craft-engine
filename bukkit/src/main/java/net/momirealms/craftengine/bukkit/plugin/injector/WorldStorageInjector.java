@@ -114,7 +114,7 @@ public final class WorldStorageInjector {
     public synchronized static void injectLevelChunkSection(Object targetSection, CESection ceSection, CEChunk chunk, SectionPos pos, Consumer<Object> callback) {
         try {
             if (Config.injectionTarget()) {
-                Object container = FastNMS.INSTANCE.field$LevelChunkSection$states(targetSection);
+                Object container = LevelChunkSectionProxy.INSTANCE.getStates(targetSection);
                 if (!(container instanceof InjectedHolder.Palette holder)) {
                     InjectedHolder.Palette injectedObject;
                     if (Config.fastInjection()) {
@@ -143,7 +143,7 @@ public final class WorldStorageInjector {
                         injectedObject = FastNMS.INSTANCE.createInjectedLevelChunkSectionHolder(targetSection);
                     } else {
                         injectedObject = (InjectedHolder.Section) constructor$InjectedLevelChunkSection.invoke(
-                                FastNMS.INSTANCE.field$LevelChunkSection$states(targetSection), LevelChunkSectionProxy.INSTANCE.getBiomes(targetSection));
+                                LevelChunkSectionProxy.INSTANCE.getStates(targetSection), LevelChunkSectionProxy.INSTANCE.getBiomes(targetSection));
                     }
                     injectedObject.ceChunk(chunk);
                     injectedObject.ceSection(ceSection);
@@ -164,7 +164,7 @@ public final class WorldStorageInjector {
 
     public static boolean isSectionInjected(Object section) {
         if (Config.injectionTarget()) {
-            Object container = FastNMS.INSTANCE.field$LevelChunkSection$states(section);
+            Object container = LevelChunkSectionProxy.INSTANCE.getStates(section);
             return container instanceof InjectedHolder.Palette;
         } else {
             return section instanceof InjectedHolder.Section;
@@ -173,7 +173,7 @@ public final class WorldStorageInjector {
 
     public synchronized static Object uninjectLevelChunkSection(Object section) {
         if (Config.injectionTarget()) {
-            Object states = FastNMS.INSTANCE.field$LevelChunkSection$states(section);
+            Object states = LevelChunkSectionProxy.INSTANCE.getStates(section);
             if (states instanceof InjectedHolder.Palette holder) {
                 holder.setActive(false);
             }
@@ -214,7 +214,7 @@ public final class WorldStorageInjector {
             int y = (int) args[1];
             int z = (int) args[2];
             Object newState = args[3];
-            Object previousState = FastNMS.INSTANCE.method$PalettedContainer$getAndSet(targetStates, x, y, z, newState);
+            Object previousState = PalettedContainerProxy.INSTANCE.getAndSet(targetStates, x, y, z, newState);
             if (holder.isActive()) {
                 compareAndUpdateBlockState(x, y, z, newState, previousState, holder);
             }
@@ -233,7 +233,7 @@ public final class WorldStorageInjector {
             int y = (int) args[1];
             int z = (int) args[2];
             Object newState = args[3];
-            Object previousState = FastNMS.INSTANCE.method$PalettedContainer$getAndSetUnchecked(targetStates, x, y, z, newState);
+            Object previousState = PalettedContainerProxy.INSTANCE.getAndSetUnchecked(targetStates, x, y, z, newState);
             if (holder.isActive()) {
                 compareAndUpdateBlockState(x, y, z, newState, previousState, holder);
             }

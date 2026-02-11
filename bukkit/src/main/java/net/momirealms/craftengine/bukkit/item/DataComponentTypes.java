@@ -1,13 +1,11 @@
 package net.momirealms.craftengine.bukkit.item;
 
-import net.momirealms.craftengine.bukkit.nms.FastNMS;
 import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.MBuiltInRegistries;
 import net.momirealms.craftengine.bukkit.util.KeyUtils;
 import net.momirealms.craftengine.bukkit.util.RegistryUtils;
 import net.momirealms.craftengine.core.item.DataComponentKeys;
 import net.momirealms.craftengine.core.util.Key;
 import net.momirealms.craftengine.core.util.VersionHelper;
-import net.momirealms.craftengine.proxy.minecraft.core.RegistryProxy;
 
 public final class DataComponentTypes {
     public static final Object CUSTOM_MODEL_DATA = byId(DataComponentKeys.CUSTOM_MODEL_DATA);

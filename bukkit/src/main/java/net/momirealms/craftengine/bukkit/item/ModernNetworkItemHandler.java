@@ -1,6 +1,5 @@
 package net.momirealms.craftengine.bukkit.item;
 
-import net.momirealms.craftengine.bukkit.nms.FastNMS;
 import net.momirealms.craftengine.core.entity.player.Player;
 import net.momirealms.craftengine.core.item.*;
 import net.momirealms.craftengine.core.item.processor.ArgumentsProcessor;
@@ -14,6 +13,7 @@ import net.momirealms.craftengine.core.plugin.context.NetworkTextReplaceContext;
 import net.momirealms.craftengine.core.plugin.text.component.ComponentProvider;
 import net.momirealms.craftengine.core.util.AdventureHelper;
 import net.momirealms.craftengine.core.util.VersionHelper;
+import net.momirealms.craftengine.proxy.bukkit.craftbukkit.inventory.CraftItemStackProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.item.ItemStackProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.item.component.BundleContentsProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.item.component.ItemContainerContentsProxy;
@@ -43,9 +43,9 @@ public final class ModernNetworkItemHandler implements NetworkItemHandler<ItemSt
             List<Object> newItems = new ArrayList<>();
             boolean changed = false;
             for (Object previousItem : BundleContentsProxy.INSTANCE.getItems(bundleContents)) {
-                Optional<ItemStack> itemStack = BukkitItemManager.instance().c2s(FastNMS.INSTANCE.method$CraftItemStack$asCraftMirror(previousItem));
+                Optional<ItemStack> itemStack = BukkitItemManager.instance().c2s(CraftItemStackProxy.INSTANCE.asCraftMirror(previousItem));
                 if (itemStack.isPresent()) {
-                    newItems.add(FastNMS.INSTANCE.field$CraftItemStack$handle(itemStack.get()));
+                    newItems.add(CraftItemStackProxy.INSTANCE.unwrap(itemStack.get()));
                     changed = true;
                 } else {
                     newItems.add(previousItem);
@@ -63,9 +63,9 @@ public final class ModernNetworkItemHandler implements NetworkItemHandler<ItemSt
             List<Object> newItems = new ArrayList<>();
             boolean changed = false;
             for (Object previousItem : ItemContainerContentsProxy.INSTANCE.getItems(containerContents)) {
-                Optional<ItemStack> itemStack = BukkitItemManager.instance().c2s(FastNMS.INSTANCE.method$CraftItemStack$asCraftMirror(previousItem));
+                Optional<ItemStack> itemStack = BukkitItemManager.instance().c2s(CraftItemStackProxy.INSTANCE.asCraftMirror(previousItem));
                 if (itemStack.isPresent()) {
-                    newItems.add(FastNMS.INSTANCE.field$CraftItemStack$handle(itemStack.get()));
+                    newItems.add(CraftItemStackProxy.INSTANCE.unwrap(itemStack.get()));
                     changed = true;
                 } else {
                     newItems.add(previousItem);
@@ -123,13 +123,13 @@ public final class ModernNetworkItemHandler implements NetworkItemHandler<ItemSt
             List<Object> newItems = new ArrayList<>();
             boolean changed = false;
             for (Object previousItem : BundleContentsProxy.INSTANCE.getItems(bundleContents)) {
-                ItemStack cloned = FastNMS.INSTANCE.method$CraftItemStack$asCraftMirror(previousItem).clone();
+                ItemStack cloned = CraftItemStackProxy.INSTANCE.asCraftMirror(previousItem).clone();
                 Optional<ItemStack> itemStack = BukkitItemManager.instance().s2c(cloned, player);
                 if (itemStack.isPresent()) {
-                    newItems.add(FastNMS.INSTANCE.field$CraftItemStack$handle(itemStack.get()));
+                    newItems.add(CraftItemStackProxy.INSTANCE.unwrap(itemStack.get()));
                     changed = true;
                 } else {
-                    newItems.add(FastNMS.INSTANCE.field$CraftItemStack$handle(cloned));
+                    newItems.add(CraftItemStackProxy.INSTANCE.unwrap(cloned));
                 }
             }
             if (changed) {
@@ -144,13 +144,13 @@ public final class ModernNetworkItemHandler implements NetworkItemHandler<ItemSt
             List<Object> newItems = new ArrayList<>();
             for (Object previousItem : ItemContainerContentsProxy.INSTANCE.getItems(containerContents)) {
                 boolean changed = false;
-                ItemStack cloned = FastNMS.INSTANCE.method$CraftItemStack$asCraftMirror(previousItem).clone();
+                ItemStack cloned = CraftItemStackProxy.INSTANCE.asCraftMirror(previousItem).clone();
                 Optional<ItemStack> itemStack = BukkitItemManager.instance().s2c(cloned, player);
                 if (itemStack.isPresent()) {
-                    newItems.add(FastNMS.INSTANCE.field$CraftItemStack$handle(itemStack.get()));
+                    newItems.add(CraftItemStackProxy.INSTANCE.unwrap(itemStack.get()));
                     changed = true;
                 } else {
-                    newItems.add(FastNMS.INSTANCE.field$CraftItemStack$handle(cloned));
+                    newItems.add(CraftItemStackProxy.INSTANCE.unwrap(cloned));
                 }
                 if (changed) {
                     wrapped.setExactComponent(DataComponentTypes.CONTAINER, ItemContainerContentsProxy.INSTANCE.fromItems(newItems));

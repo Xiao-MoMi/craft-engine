@@ -17,6 +17,7 @@ repositories {
 dependencies {
     compileOnly(project(":core"))
     compileOnly(project(":bukkit"))
+    compileOnly(project(":bukkit:proxy"))
     compileOnly(project(":bukkit:compatibility:legacy"))
     compileOnly("net.momirealms:sparrow-nbt:${rootProject.properties["sparrow_nbt_version"]}")
     // NMS

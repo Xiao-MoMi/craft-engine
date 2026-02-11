@@ -4,7 +4,6 @@ import net.momirealms.antigrieflib.Flag;
 import net.momirealms.craftengine.bukkit.api.BukkitAdaptors;
 import net.momirealms.craftengine.bukkit.block.entity.BukkitBlockEntityTypes;
 import net.momirealms.craftengine.bukkit.block.entity.ItemFrameBlockEntity;
-import net.momirealms.craftengine.bukkit.nms.FastNMS;
 import net.momirealms.craftengine.bukkit.plugin.BukkitCraftEngine;
 import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.CoreReflections;
 import net.momirealms.craftengine.bukkit.util.BlockStateUtils;
@@ -30,6 +29,7 @@ import net.momirealms.craftengine.core.world.BlockPos;
 import net.momirealms.craftengine.core.world.Vec3d;
 import net.momirealms.craftengine.core.world.World;
 import net.momirealms.craftengine.core.world.context.UseOnContext;
+import net.momirealms.craftengine.proxy.minecraft.world.level.LevelProxy;
 import org.bukkit.Location;
 import org.bukkit.inventory.ItemStack;
 import org.joml.Vector3f;
@@ -105,7 +105,7 @@ public class ItemFrameBlockBehavior extends BukkitBlockBehavior implements Entit
         if (state.get(blockBehavior.directionProperty) != DirectionUtils.fromNMSDirection(side)) {
             return 0;
         }
-        BukkitWorld world = BukkitAdaptors.adapt(FastNMS.INSTANCE.method$Level$getCraftWorld(blockAccess));
+        BukkitWorld world = BukkitAdaptors.adapt(LevelProxy.INSTANCE.getWorld(blockAccess));
         BlockEntity blockEntity = world.storageWorld().getBlockEntityAtIfLoaded(LocationUtils.fromBlockPos(pos));
         if (!(blockEntity instanceof ItemFrameBlockEntity itemFrame && itemFrame.isValid())) {
             return 0;

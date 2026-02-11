@@ -21,6 +21,8 @@ import net.momirealms.craftengine.core.util.VersionHelper;
 import net.momirealms.craftengine.core.world.CEWorld;
 import net.momirealms.craftengine.core.world.WorldPosition;
 import net.momirealms.craftengine.core.world.chunk.CEChunk;
+import net.momirealms.craftengine.proxy.bukkit.craftbukkit.CraftWorldProxy;
+import net.momirealms.craftengine.proxy.bukkit.craftbukkit.entity.CraftEntityProxy;
 import net.momirealms.craftengine.proxy.minecraft.network.protocol.game.ClientboundAddEntityPacketProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.phys.Vec3Proxy;
 import org.bukkit.*;
@@ -172,7 +174,7 @@ public class BukkitFurnitureManager extends AbstractFurnitureManager {
         if (furniture != null) {
             Location location = entity.getLocation();
             // 区块还在加载的时候，就重复卸载了。为极其特殊情况
-            boolean isPreventing = FastNMS.INSTANCE.method$ServerLevel$isPreventingStatusUpdates(FastNMS.INSTANCE.field$CraftWorld$ServerLevel(location.getWorld()), location.getBlockX() >> 4, location.getBlockZ() >> 4);
+            boolean isPreventing = FastNMS.INSTANCE.method$ServerLevel$isPreventingStatusUpdates(CraftWorldProxy.INSTANCE.getWorld(location.getWorld()), location.getBlockX() >> 4, location.getBlockZ() >> 4);
             if (!isPreventing) {
                 furniture.destroySeats();
             }
@@ -284,7 +286,7 @@ public class BukkitFurnitureManager extends AbstractFurnitureManager {
 
     protected void handleCollisionEntityAfterChunkLoad(Entity entity) {
         // 如果是碰撞实体，那么就忽略
-        if (FastNMS.INSTANCE.method$CraftEntity$getHandle(entity) instanceof CollisionEntity) {
+        if (CraftEntityProxy.INSTANCE.getEntity(entity) instanceof CollisionEntity) {
             return;
         }
         // 看看有没有碰撞实体的pdc
@@ -304,7 +306,7 @@ public class BukkitFurnitureManager extends AbstractFurnitureManager {
 
     public void handleCollisionEntityDuringChunkLoad(Entity collisionEntity) {
         // faster
-        if (FastNMS.INSTANCE.method$CraftEntity$getHandle(collisionEntity) instanceof CollisionEntity) {
+        if (CraftEntityProxy.INSTANCE.getEntity(collisionEntity) instanceof CollisionEntity) {
             collisionEntity.remove();
             return;
         }
@@ -379,7 +381,7 @@ public class BukkitFurnitureManager extends AbstractFurnitureManager {
     }
 
     private void runSafeEntityOperation(Location location, Runnable action) {
-        boolean preventChange = FastNMS.INSTANCE.method$ServerLevel$isPreventingStatusUpdates(FastNMS.INSTANCE.field$CraftWorld$ServerLevel(location.getWorld()), location.getBlockX() >> 4, location.getBlockZ() >> 4);
+        boolean preventChange = FastNMS.INSTANCE.method$ServerLevel$isPreventingStatusUpdates(CraftWorldProxy.INSTANCE.getWorld(location.getWorld()), location.getBlockX() >> 4, location.getBlockZ() >> 4);
         if (preventChange) {
             this.plugin.scheduler().sync().runLater(action, 1, location.getWorld(), location.getBlockX() >> 4, location.getBlockZ() >> 4);
         } else {

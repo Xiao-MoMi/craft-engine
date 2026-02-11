@@ -12,6 +12,7 @@ import net.momirealms.craftengine.core.util.Key;
 import net.momirealms.craftengine.core.world.ExistingBlock;
 import net.momirealms.craftengine.core.world.World;
 import net.momirealms.craftengine.core.world.context.BlockPlaceContext;
+import net.momirealms.craftengine.proxy.bukkit.craftbukkit.CraftWorldProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.level.BlockGetterProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.level.block.SnowLayerBlockProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.level.block.state.StateHolderProxy;
@@ -45,7 +46,7 @@ public class BukkitExistingBlock implements ExistingBlock {
     @Override
     public boolean isWaterSource(BlockPlaceContext blockPlaceContext) {
         Location location = this.block.getLocation();
-        Object serverLevel = FastNMS.INSTANCE.field$CraftWorld$ServerLevel(this.block.getWorld());
+        Object serverLevel = CraftWorldProxy.INSTANCE.getWorld(this.block.getWorld());
         Object fluidData = BlockGetterProxy.INSTANCE.getFluidState(serverLevel, LocationUtils.toBlockPos(location.getBlockX(), location.getBlockY(), location.getBlockZ()));
         if (fluidData == null) return false;
         return FluidStateProxy.INSTANCE.getType(fluidData) == MFluids.WATER;
@@ -113,7 +114,7 @@ public class BukkitExistingBlock implements ExistingBlock {
 
     @Override
     public boolean is(Key tag) {
-        Object state = FastNMS.INSTANCE.method$BlockGetter$getBlockState(FastNMS.INSTANCE.field$CraftWorld$ServerLevel(block.getWorld()), LocationUtils.toBlockPos(block.getX(), block.getY(), block.getZ()));
+        Object state = BlockGetterProxy.INSTANCE.getBlockState(CraftWorldProxy.INSTANCE.getWorld(block.getWorld()), LocationUtils.toBlockPos(block.getX(), block.getY(), block.getZ()));
         return BlockStateUtils.isTag(state, tag);
     }
 

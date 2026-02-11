@@ -19,7 +19,7 @@ import net.momirealms.craftengine.core.item.data.FireworkExplosion;
 import net.momirealms.craftengine.core.item.data.Trim;
 import net.momirealms.craftengine.core.plugin.CraftEngine;
 import net.momirealms.craftengine.core.util.*;
-import net.momirealms.craftengine.proxy.minecraft.core.RegistryProxy;
+import net.momirealms.craftengine.proxy.bukkit.craftbukkit.inventory.CraftItemStackProxy;
 import net.momirealms.craftengine.proxy.minecraft.nbt.CompoundTagProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.item.ItemStackProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.item.component.CustomDataProxy;
@@ -587,7 +587,7 @@ public class ComponentItemFactory1_20_5 extends BukkitItemFactory<ComponentItemW
         Object itemStack2 = item2.getLiteralObject();
         Object itemStack3 = ItemStackProxy.INSTANCE.transmuteCopy(itemStack1, ItemStackProxy.INSTANCE.getItem(itemStack2), item2.count());
         ItemStackProxy.INSTANCE.applyComponents(itemStack3, ItemStackProxy.INSTANCE.getComponentsPatch(itemStack2));
-        return new ComponentItemWrapper(FastNMS.INSTANCE.method$CraftItemStack$asCraftMirror(itemStack3));
+        return new ComponentItemWrapper(CraftItemStackProxy.INSTANCE.asCraftMirror(itemStack3));
     }
 
     @Override
@@ -601,14 +601,14 @@ public class ComponentItemFactory1_20_5 extends BukkitItemFactory<ComponentItemW
     protected ComponentItemWrapper transmuteCopy(ComponentItemWrapper item, Key newItem, int amount) {
         Object itemStack1 = item.getLiteralObject();
         Object itemStack2 = ItemStackProxy.INSTANCE.transmuteCopy(itemStack1, RegistryUtils.getRegistryValue(MBuiltInRegistries.ITEM, KeyUtils.toIdentifier(newItem)), amount);
-        return new ComponentItemWrapper(FastNMS.INSTANCE.method$CraftItemStack$asCraftMirror(itemStack2));
+        return new ComponentItemWrapper(CraftItemStackProxy.INSTANCE.asCraftMirror(itemStack2));
     }
 
     @Override
     protected ComponentItemWrapper unsafeTransmuteCopy(ComponentItemWrapper item, Object newItem, int amount) {
         Object itemStack1 = item.getLiteralObject();
         Object itemStack2 = ItemStackProxy.INSTANCE.transmuteCopy(itemStack1, newItem, amount);
-        return new ComponentItemWrapper(FastNMS.INSTANCE.method$CraftItemStack$asCraftMirror(itemStack2));
+        return new ComponentItemWrapper(CraftItemStackProxy.INSTANCE.asCraftMirror(itemStack2));
     }
 
     @Override

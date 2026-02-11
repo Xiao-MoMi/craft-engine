@@ -1,5 +1,6 @@
 package net.momirealms.craftengine.proxy.minecraft.network.protocol.game;
 
+import net.momirealms.craftengine.proxy.minecraft.network.protocol.PacketProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.scores.PlayerTeamProxy;
 import net.momirealms.sparrow.reflection.proxy.ASMProxyFactory;
 import net.momirealms.sparrow.reflection.proxy.annotation.ConstructorInvoker;
@@ -11,7 +12,7 @@ import java.util.Collection;
 import java.util.Optional;
 
 @ReflectionProxy(name = "net.minecraft.network.protocol.game.ClientboundSetPlayerTeamPacket")
-public interface ClientboundSetPlayerTeamPacketProxy {
+public interface ClientboundSetPlayerTeamPacketProxy extends PacketProxy {
     ClientboundSetPlayerTeamPacketProxy INSTANCE = ASMProxyFactory.create(ClientboundSetPlayerTeamPacketProxy.class);
 
     @ConstructorInvoker

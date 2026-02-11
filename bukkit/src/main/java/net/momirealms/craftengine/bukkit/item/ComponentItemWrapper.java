@@ -4,7 +4,6 @@ import com.google.gson.JsonElement;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.DataResult;
 import com.mojang.serialization.DynamicOps;
-import net.momirealms.craftengine.bukkit.nms.FastNMS;
 import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.CoreReflections;
 import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.MBuiltInRegistries;
 import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.MRegistryOps;
@@ -19,7 +18,7 @@ import net.momirealms.craftengine.core.item.ItemWrapper;
 import net.momirealms.craftengine.core.util.Key;
 import net.momirealms.craftengine.core.util.VersionHelper;
 import net.momirealms.craftengine.core.util.random.RandomUtils;
-import net.momirealms.craftengine.proxy.minecraft.core.RegistryProxy;
+import net.momirealms.craftengine.proxy.bukkit.craftbukkit.inventory.CraftItemStackProxy;
 import net.momirealms.craftengine.proxy.minecraft.core.component.DataComponentGetterProxy;
 import net.momirealms.craftengine.proxy.minecraft.core.component.DataComponentMapProxy;
 import net.momirealms.craftengine.proxy.minecraft.core.component.DataComponentTypeProxy;
@@ -40,18 +39,18 @@ public class ComponentItemWrapper implements ItemWrapper<ItemStack> {
 
     public ComponentItemWrapper(final Object handle) {
         this.handle = handle;
-        this.item = FastNMS.INSTANCE.method$CraftItemStack$asCraftMirror(handle);
+        this.item = CraftItemStackProxy.INSTANCE.asCraftMirror(handle);
     }
 
     public ComponentItemWrapper(final ItemStack item) {
         this.item = ItemStackUtils.ensureCraftItemStack(item);
-        this.handle = FastNMS.INSTANCE.field$CraftItemStack$handle(this.item);
+        this.handle = CraftItemStackProxy.INSTANCE.unwrap(this.item);
     }
 
     public ComponentItemWrapper(final ItemStack item, int count) {
         this.item = ItemStackUtils.ensureCraftItemStack(item);
         this.item.setAmount(count);
-        this.handle = FastNMS.INSTANCE.field$CraftItemStack$handle(this.item);
+        this.handle = CraftItemStackProxy.INSTANCE.unwrap(this.item);
     }
 
     public ItemType itemType() {

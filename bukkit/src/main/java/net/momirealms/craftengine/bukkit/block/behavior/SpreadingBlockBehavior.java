@@ -1,7 +1,6 @@
 package net.momirealms.craftengine.bukkit.block.behavior;
 
 import net.momirealms.craftengine.bukkit.block.BukkitBlockManager;
-import net.momirealms.craftengine.bukkit.nms.FastNMS;
 import net.momirealms.craftengine.core.block.CustomBlock;
 import net.momirealms.craftengine.core.block.UpdateOption;
 import net.momirealms.craftengine.core.block.behavior.BlockBehaviorFactory;
@@ -9,6 +8,8 @@ import net.momirealms.craftengine.core.util.LazyReference;
 import net.momirealms.craftengine.core.util.ResourceConfigUtils;
 import net.momirealms.craftengine.core.util.random.RandomUtils;
 import net.momirealms.craftengine.proxy.minecraft.core.BlockPosProxy;
+import net.momirealms.craftengine.proxy.minecraft.world.level.BlockGetterProxy;
+import net.momirealms.craftengine.proxy.minecraft.world.level.LevelWriterProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.level.block.state.BlockBehaviourProxy;
 
 import java.util.Map;
@@ -29,8 +30,8 @@ public class SpreadingBlockBehavior extends BukkitBlockBehavior {
         Object level = args[1];
         Object pos = args[2];
         Object blockPos = BlockPosProxy.INSTANCE.offset(pos, RandomUtils.generateRandomInt(-1, 2), RandomUtils.generateRandomInt(-3, 2), RandomUtils.generateRandomInt(-1, 2));
-        if (BlockBehaviourProxy.BlockStateBaseProxy.INSTANCE.is$0(FastNMS.INSTANCE.method$BlockGetter$getBlockState(level, blockPos), BlockBehaviourProxy.BlockStateBaseProxy.INSTANCE.getBlock(this.targetBlock.get()))) {
-            FastNMS.INSTANCE.method$LevelWriter$setBlock(level, blockPos, this.block().defaultState().customBlockState().literalObject(), UpdateOption.UPDATE_ALL.flags());
+        if (BlockBehaviourProxy.BlockStateBaseProxy.INSTANCE.is$0(BlockGetterProxy.INSTANCE.getBlockState(level, blockPos), BlockBehaviourProxy.BlockStateBaseProxy.INSTANCE.getBlock(this.targetBlock.get()))) {
+            LevelWriterProxy.INSTANCE.setBlock(level, blockPos, this.block().defaultState().customBlockState().literalObject(), UpdateOption.UPDATE_ALL.flags());
         }
     }
 

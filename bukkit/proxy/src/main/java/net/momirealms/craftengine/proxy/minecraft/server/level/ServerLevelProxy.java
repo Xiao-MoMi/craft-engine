@@ -18,4 +18,10 @@ public interface ServerLevelProxy extends LevelProxy {
                           @Type(clazz = BlockStateProxy.class) Object oldState,
                           @Type(clazz = BlockStateProxy.class) Object newState,
                           int flags);
+
+    @MethodInvoker(name = "getEntityLookup", activeIf = "max_version=1.20.6")
+    Object getEntityLookup(Object target);
+
+    @MethodInvoker(name = "getChunkSource")
+    Object getChunkSource(Object target);
 }

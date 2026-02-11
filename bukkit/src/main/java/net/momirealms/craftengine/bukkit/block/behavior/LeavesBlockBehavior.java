@@ -1,6 +1,5 @@
 package net.momirealms.craftengine.bukkit.block.behavior;
 
-import net.momirealms.craftengine.bukkit.nms.FastNMS;
 import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.CoreReflections;
 import net.momirealms.craftengine.bukkit.util.BlockStateUtils;
 import net.momirealms.craftengine.bukkit.util.BlockTags;
@@ -17,6 +16,9 @@ import net.momirealms.craftengine.core.util.ResourceConfigUtils;
 import net.momirealms.craftengine.core.world.BlockPos;
 import net.momirealms.craftengine.proxy.minecraft.core.DirectionProxy;
 import net.momirealms.craftengine.proxy.minecraft.core.MutableBlockPosProxy;
+import net.momirealms.craftengine.proxy.minecraft.world.level.BlockGetterProxy;
+import net.momirealms.craftengine.proxy.minecraft.world.level.LevelProxy;
+import net.momirealms.craftengine.proxy.minecraft.world.level.LevelWriterProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.level.block.BlockProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.level.block.LeavesBlockProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.level.block.state.BlockBehaviourProxy;
@@ -95,7 +97,7 @@ public class LeavesBlockBehavior extends BukkitBlockBehavior {
                     if (blockState == newState.customBlockState().literalObject()) {
                         CoreReflections.method$BlockStateBase$updateNeighbourShapes.invoke(blockState, level, blockPos, UpdateOption.UPDATE_ALL.flags(), 512);
                     } else {
-                        FastNMS.INSTANCE.method$LevelWriter$setBlock(level, blockPos, newState.customBlockState().literalObject(), UpdateOption.UPDATE_ALL.flags());
+                        LevelWriterProxy.INSTANCE.setBlock(level, blockPos, newState.customBlockState().literalObject(), UpdateOption.UPDATE_ALL.flags());
                     }
                 }
             }
@@ -114,7 +116,7 @@ public class LeavesBlockBehavior extends BukkitBlockBehavior {
             if (optionalBehavior.isPresent()) {
                 LeavesBlockBehavior behavior = optionalBehavior.get();
                 if (behavior.isDecaying(customState)) {
-                    World bukkitWorld = FastNMS.INSTANCE.method$Level$getCraftWorld(level);
+                    World bukkitWorld = LevelProxy.INSTANCE.getWorld(level);
                     BlockPos pos = LocationUtils.fromBlockPos(blockPos);
                     // call bukkit event
                     LeavesDecayEvent event = new LeavesDecayEvent(bukkitWorld.getBlockAt(pos.x(), pos.y(), pos.z()));
@@ -122,7 +124,7 @@ public class LeavesBlockBehavior extends BukkitBlockBehavior {
                     if (event.isCancelled()) {
                         return;
                     }
-                    FastNMS.INSTANCE.method$Level$removeBlock(level, blockPos, false);
+                    LevelProxy.INSTANCE.removeBlock(level, blockPos, false);
                     BlockProxy.INSTANCE.dropResources(blockState, level, blockPos);
                 }
             }
@@ -140,7 +142,7 @@ public class LeavesBlockBehavior extends BukkitBlockBehavior {
         for (int k = 0; k < j; ++k) {
             Object direction = DirectionProxy.VALUES[k];
             MutableBlockPosProxy.INSTANCE.setWithOffset(mutablePos, blockPos, direction);
-            Object blockState = FastNMS.INSTANCE.method$BlockGetter$getBlockState(world, mutablePos);
+            Object blockState = BlockGetterProxy.INSTANCE.getBlockState(world, mutablePos);
             i = Math.min(i, getDistanceAt(blockState) + 1);
             if (i == 1) {
                 break;

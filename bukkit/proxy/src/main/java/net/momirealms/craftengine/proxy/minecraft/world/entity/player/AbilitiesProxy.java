@@ -14,4 +14,10 @@ public interface AbilitiesProxy {
 
     @FieldSetter(name = "instabuild")
     void setInstantBuild(Object target, boolean instantBuild);
+
+    @FieldGetter(name = "mayBuild")
+    boolean isMayBuild(Object target);
+
+    @FieldSetter(name = "mayBuild")
+    void setMayBuild(Object target, boolean mayBuild);
 }

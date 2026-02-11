@@ -3,7 +3,6 @@ package net.momirealms.craftengine.bukkit.block.behavior;
 import net.momirealms.antigrieflib.Flag;
 import net.momirealms.craftengine.bukkit.block.entity.BukkitBlockEntityTypes;
 import net.momirealms.craftengine.bukkit.block.entity.SimpleStorageBlockEntity;
-import net.momirealms.craftengine.bukkit.nms.FastNMS;
 import net.momirealms.craftengine.bukkit.plugin.BukkitCraftEngine;
 import net.momirealms.craftengine.bukkit.plugin.gui.BukkitInventory;
 import net.momirealms.craftengine.bukkit.util.BlockStateUtils;
@@ -109,7 +108,7 @@ public class SimpleStorageBlockBehavior extends BukkitBlockBehavior implements E
         Object world = args[1];
         Object blockPos = args[2];
         BlockPos pos = LocationUtils.fromBlockPos(blockPos);
-        World bukkitWorld = FastNMS.INSTANCE.method$Level$getCraftWorld(world);
+        World bukkitWorld = LevelProxy.INSTANCE.getWorld(world);
         CEWorld ceWorld = BukkitWorldManager.instance().getWorld(bukkitWorld.getUID());
         BlockEntity blockEntity = ceWorld.getBlockEntityAtIfLoaded(pos);
         if (blockEntity instanceof SimpleStorageBlockEntity entity) {
@@ -164,7 +163,7 @@ public class SimpleStorageBlockBehavior extends BukkitBlockBehavior implements E
         Object world = args[1];
         Object blockPos = args[2];
         BlockPos pos = LocationUtils.fromBlockPos(blockPos);
-        World bukkitWorld = FastNMS.INSTANCE.method$Level$getCraftWorld(world);
+        World bukkitWorld = LevelProxy.INSTANCE.getWorld(world);
         CEWorld ceWorld = BukkitWorldManager.instance().getWorld(bukkitWorld.getUID());
         BlockEntity blockEntity = ceWorld.getBlockEntityAtIfLoaded(pos);
         if (blockEntity instanceof SimpleStorageBlockEntity entity) {
@@ -191,7 +190,7 @@ public class SimpleStorageBlockBehavior extends BukkitBlockBehavior implements E
 
     @Override
     public Object getContainer(Object thisBlock, Object[] args) {
-        CEWorld ceWorld = BukkitWorldManager.instance().getWorld(FastNMS.INSTANCE.method$Level$getCraftWorld(args[1]));
+        CEWorld ceWorld = BukkitWorldManager.instance().getWorld(LevelProxy.INSTANCE.getWorld(args[1]));
         BlockPos blockPos = LocationUtils.fromBlockPos(args[2]);
         BlockEntity blockEntity = ceWorld.getBlockEntityAtIfLoaded(blockPos);
         if (blockEntity instanceof SimpleStorageBlockEntity entity) {

@@ -4,7 +4,6 @@ import net.momirealms.craftengine.bukkit.entity.furniture.BukkitFurniture;
 import net.momirealms.craftengine.bukkit.entity.furniture.BukkitFurnitureManager;
 import net.momirealms.craftengine.bukkit.entity.seat.BukkitSeatManager;
 import net.momirealms.craftengine.bukkit.nms.CollisionEntity;
-import net.momirealms.craftengine.bukkit.nms.FastNMS;
 import net.momirealms.craftengine.bukkit.plugin.BukkitCraftEngine;
 import net.momirealms.craftengine.bukkit.plugin.user.BukkitServerPlayer;
 import net.momirealms.craftengine.core.entity.furniture.AnchorType;
@@ -19,6 +18,7 @@ import net.momirealms.craftengine.core.plugin.context.parameter.DirectContextPar
 import net.momirealms.craftengine.core.util.Key;
 import net.momirealms.craftengine.core.world.World;
 import net.momirealms.craftengine.core.world.WorldPosition;
+import net.momirealms.craftengine.proxy.bukkit.craftbukkit.entity.CraftEntityProxy;
 import net.momirealms.sparrow.nbt.CompoundTag;
 import org.bukkit.FluidCollisionMode;
 import org.bukkit.Location;
@@ -268,7 +268,7 @@ public final class CraftEngineFurniture {
      * @return is collision entity or not
      */
     public static boolean isCollisionEntity(@NotNull Entity entity) {
-        Object nmsEntity = FastNMS.INSTANCE.method$CraftEntity$getHandle(entity);
+        Object nmsEntity = CraftEntityProxy.INSTANCE.getEntity(entity);
         return nmsEntity instanceof CollisionEntity;
     }
 
@@ -329,7 +329,7 @@ public final class CraftEngineFurniture {
      */
     @Nullable
     public static BukkitFurniture getLoadedFurnitureByCollider(@NotNull Entity collider) {
-        Object nmsEntity = FastNMS.INSTANCE.method$CraftEntity$getHandle(collider);
+        Object nmsEntity = CraftEntityProxy.INSTANCE.getEntity(collider);
         if (nmsEntity instanceof CollisionEntity collisionEntity) {
             return BukkitFurnitureManager.instance().loadedFurnitureByColliderEntityId(collisionEntity.getEntityId());
         }

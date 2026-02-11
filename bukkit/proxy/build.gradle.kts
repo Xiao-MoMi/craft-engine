@@ -12,9 +12,9 @@ repositories {
 dependencies {
     // Platform
     compileOnly("io.papermc.paper:paper-api:${rootProject.properties["paper_version"]}-R0.1-SNAPSHOT")
-    compileOnly("io.netty:netty-all:${rootProject.properties["netty_version"]}")
     compileOnly("org.ow2.asm:asm:${rootProject.properties["asm_version"]}")
     implementation("net.momirealms:sparrow-reflection:${rootProject.properties["sparrow_reflection_version"]}")
+    compileOnly("io.netty:netty-all:${rootProject.properties["netty_version"]}")
     compileOnly("com.mojang:datafixerupper:${rootProject.properties["datafixerupper_version"]}")
     compileOnly("com.mojang:authlib:${rootProject.properties["authlib_version"]}")
 }

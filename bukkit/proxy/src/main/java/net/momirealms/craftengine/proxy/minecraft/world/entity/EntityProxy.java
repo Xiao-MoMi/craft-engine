@@ -3,6 +3,7 @@ package net.momirealms.craftengine.proxy.minecraft.world.entity;
 import net.momirealms.craftengine.proxy.minecraft.world.damagesource.DamageSourceProxy;
 import net.momirealms.sparrow.reflection.proxy.ASMProxyFactory;
 import net.momirealms.sparrow.reflection.proxy.annotation.*;
+import org.bukkit.entity.Entity;
 
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -110,4 +111,10 @@ public interface EntityProxy {
 
     @MethodInvoker(name = "getType")
     Object getType(Object target);
+
+    @MethodInvoker(name = "getId")
+    int getId(Object target);
+
+    @MethodInvoker(name = "getBukkitEntity")
+    Entity getBukkitEntity(Object target);
 }

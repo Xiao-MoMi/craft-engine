@@ -1,8 +1,8 @@
 package net.momirealms.craftengine.bukkit.entity.furniture.element;
 
 import it.unimi.dsi.fastutil.ints.IntArrayList;
-import net.momirealms.craftengine.bukkit.nms.FastNMS;
 import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.MEntityTypes;
+import net.momirealms.craftengine.bukkit.util.PacketUtils;
 import net.momirealms.craftengine.core.entity.furniture.Furniture;
 import net.momirealms.craftengine.core.entity.player.Player;
 import net.momirealms.craftengine.core.util.MiscUtils;
@@ -45,7 +45,7 @@ public final class ItemFurnitureElement extends AbstractFurnitureElement {
                 entityId2, UUID.randomUUID(), position.x, position.y, position.z,
                 0, 0, MEntityTypes.ITEM, 0, Vec3Proxy.ZERO, 0
         );
-        this.cachedRidePacket = FastNMS.INSTANCE.constructor$ClientboundSetPassengersPacket(entityId1, entityId2);
+        this.cachedRidePacket = PacketUtils.createClientboundSetPassengersPacket(entityId1, entityId2);
         this.despawnPacket = ClientboundRemoveEntitiesPacketProxy.INSTANCE.newInstance(MiscUtils.init(new IntArrayList(),
                 a -> {
                     a.add(entityId1);

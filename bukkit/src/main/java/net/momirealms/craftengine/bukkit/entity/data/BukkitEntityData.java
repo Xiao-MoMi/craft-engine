@@ -1,6 +1,5 @@
 package net.momirealms.craftengine.bukkit.entity.data;
 
-import net.momirealms.craftengine.bukkit.nms.FastNMS;
 import net.momirealms.craftengine.core.entity.data.ClassTreeIdRegistry;
 import net.momirealms.craftengine.core.entity.data.EntityData;
 import net.momirealms.craftengine.proxy.minecraft.network.syncher.EntityDataAccessorProxy;

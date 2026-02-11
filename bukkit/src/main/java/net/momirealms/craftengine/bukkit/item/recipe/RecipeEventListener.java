@@ -31,6 +31,7 @@ import net.momirealms.craftengine.proxy.bukkit.craftbukkit.inventory.CraftInvent
 import net.momirealms.craftengine.proxy.bukkit.craftbukkit.inventory.CraftInventoryProxy;
 import net.momirealms.craftengine.proxy.bukkit.craftbukkit.inventory.CraftInventoryViewProxy;
 import net.momirealms.craftengine.proxy.minecraft.network.chat.ComponentProxy;
+import net.momirealms.craftengine.proxy.minecraft.resources.ResourceKeyProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.ContainerProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.entity.player.PlayerProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.inventory.AbstractContainerMenuProxy;
@@ -785,7 +786,7 @@ public class RecipeEventListener implements Listener {
         }
         if (recipeHolderOrRecipe == null) return null;
         if (VersionHelper.isOrAbove1_21_2()) {
-            return KeyUtils.identifierToKey(FastNMS.INSTANCE.field$ResourceKey$location(FastNMS.INSTANCE.field$RecipeHolder$id(recipeHolderOrRecipe)));
+            return KeyUtils.identifierToKey(ResourceKeyProxy.INSTANCE.getIdentifier(FastNMS.INSTANCE.field$RecipeHolder$id(recipeHolderOrRecipe)));
         } else if (VersionHelper.isOrAbove1_20_2()) {
             return KeyUtils.identifierToKey(FastNMS.INSTANCE.field$RecipeHolder$id(recipeHolderOrRecipe));
         } else {

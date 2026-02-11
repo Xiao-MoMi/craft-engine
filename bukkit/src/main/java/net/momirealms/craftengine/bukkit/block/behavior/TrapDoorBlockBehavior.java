@@ -3,7 +3,6 @@ package net.momirealms.craftengine.bukkit.block.behavior;
 import net.momirealms.antigrieflib.Flag;
 import net.momirealms.craftengine.bukkit.api.BukkitAdaptors;
 import net.momirealms.craftengine.bukkit.item.BukkitItemManager;
-import net.momirealms.craftengine.bukkit.nms.FastNMS;
 import net.momirealms.craftengine.bukkit.plugin.BukkitCraftEngine;
 import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.MBlocks;
 import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.MFluids;
@@ -29,9 +28,9 @@ import net.momirealms.craftengine.core.world.Vec3d;
 import net.momirealms.craftengine.core.world.World;
 import net.momirealms.craftengine.core.world.context.BlockPlaceContext;
 import net.momirealms.craftengine.core.world.context.UseOnContext;
-import net.momirealms.craftengine.proxy.minecraft.world.level.BlockGetterProxy;
-import net.momirealms.craftengine.proxy.minecraft.world.level.ExplosionProxy;
-import net.momirealms.craftengine.proxy.minecraft.world.level.SignalGetterProxy;
+import net.momirealms.craftengine.proxy.bukkit.craftbukkit.block.CraftBlockProxy;
+import net.momirealms.craftengine.proxy.minecraft.core.Vec3iProxy;
+import net.momirealms.craftengine.proxy.minecraft.world.level.*;
 import net.momirealms.craftengine.proxy.minecraft.world.level.block.BlockProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.level.block.RedstoneWireBlockProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.level.block.state.BlockBehaviourProxy;
@@ -160,7 +159,7 @@ public class TrapDoorBlockBehavior extends BukkitBlockBehavior implements IsPath
         if (this.canOpenByWindCharge && ExplosionProxy.INSTANCE.canTriggerBlocks(args[3])) {
             Optional<ImmutableBlockState> optionalCustomState = BlockStateUtils.getOptionalCustomBlockState(args[0]);
             if (optionalCustomState.isEmpty()) return;
-            this.toggle(optionalCustomState.get(), BukkitAdaptors.adapt(FastNMS.INSTANCE.method$Level$getCraftWorld(args[1])), LocationUtils.fromBlockPos(args[2]), null);
+            this.toggle(optionalCustomState.get(), BukkitAdaptors.adapt(LevelProxy.INSTANCE.getWorld(args[1])), LocationUtils.fromBlockPos(args[2]), null);
         }
     }
 
@@ -176,7 +175,7 @@ public class TrapDoorBlockBehavior extends BukkitBlockBehavior implements IsPath
         boolean hasSignal = SignalGetterProxy.INSTANCE.hasNeighborSignal(level, blockPos);
         if (hasSignal == customState.get(this.poweredProperty)) return;
 
-        Block bblock = FastNMS.INSTANCE.method$CraftBlock$at(level, blockPos);
+        Block bblock = CraftBlockProxy.INSTANCE.at(level, blockPos);
         int power = bblock.getBlockPower();
         int oldPower = customState.get(this.openProperty) ? 15 : 0;
         Object neighborBlock = args[3];
@@ -187,18 +186,18 @@ public class TrapDoorBlockBehavior extends BukkitBlockBehavior implements IsPath
             hasSignal = event.getNewCurrent() > 0;
         }
 
-        World world = BukkitAdaptors.adapt(FastNMS.INSTANCE.method$Level$getCraftWorld(level));
+        World world = BukkitAdaptors.adapt(LevelProxy.INSTANCE.getWorld(level));
         boolean changed = customState.get(this.openProperty) != hasSignal;
         if (hasSignal && changed) {
             Object abovePos = LocationUtils.above(blockPos);
-            Object aboveBlockState = FastNMS.INSTANCE.method$BlockGetter$getBlockState(level, abovePos);
+            Object aboveBlockState = BlockGetterProxy.INSTANCE.getBlockState(level, abovePos);
             if (RedstoneWireBlockProxy.CLASS.isInstance(BlockBehaviourProxy.BlockStateBaseProxy.INSTANCE.getBlock(aboveBlockState))) {
-                FastNMS.INSTANCE.method$LevelWriter$setBlock(level, abovePos, MBlocks.AIR$defaultState, UpdateOption.UPDATE_ALL.flags());
+                LevelWriterProxy.INSTANCE.setBlock(level, abovePos, MBlocks.AIR$defaultState, UpdateOption.UPDATE_ALL.flags());
                 world.dropItemNaturally(
-                        new Vec3d(FastNMS.INSTANCE.field$Vec3i$x(abovePos) + 0.5, FastNMS.INSTANCE.field$Vec3i$y(abovePos) + 0.5, FastNMS.INSTANCE.field$Vec3i$z(abovePos) + 0.5),
+                        new Vec3d(Vec3iProxy.INSTANCE.getX(abovePos) + 0.5, Vec3iProxy.INSTANCE.getY(abovePos) + 0.5, Vec3iProxy.INSTANCE.getZ(abovePos) + 0.5),
                         BukkitItemManager.instance().createWrappedItem(ItemKeys.REDSTONE, null)
                 );
-                if (FastNMS.INSTANCE.method$BlockGetter$getBlockState(level, blockPos) != blockPos) {
+                if (BlockGetterProxy.INSTANCE.getBlockState(level, blockPos) != blockPos) {
                     return;
                 }
             }
@@ -206,14 +205,14 @@ public class TrapDoorBlockBehavior extends BukkitBlockBehavior implements IsPath
 
         if (changed) {
             customState = customState.with(this.openProperty, hasSignal);
-            FastNMS.INSTANCE.method$Level$getCraftWorld(level).sendGameEvent(null,
+            LevelProxy.INSTANCE.getWorld(level).sendGameEvent(null,
                     hasSignal ? GameEvent.BLOCK_OPEN : GameEvent.BLOCK_CLOSE,
-                    new Vector(FastNMS.INSTANCE.field$Vec3i$x(blockPos), FastNMS.INSTANCE.field$Vec3i$y(blockPos), FastNMS.INSTANCE.field$Vec3i$z(blockPos))
+                    new Vector(Vec3iProxy.INSTANCE.getX(blockPos), Vec3iProxy.INSTANCE.getY(blockPos), Vec3iProxy.INSTANCE.getZ(blockPos))
             );
             this.playSound(LocationUtils.fromBlockPos(blockPos), world, hasSignal);
         }
 
-        FastNMS.INSTANCE.method$LevelWriter$setBlock(level, blockPos, customState.with(this.poweredProperty, hasSignal).customBlockState().literalObject(), UpdateOption.Flags.UPDATE_CLIENTS);
+        LevelWriterProxy.INSTANCE.setBlock(level, blockPos, customState.with(this.poweredProperty, hasSignal).customBlockState().literalObject(), UpdateOption.Flags.UPDATE_CLIENTS);
         if (this.waterloggedProperty != null && customState.get(this.waterloggedProperty)) {
             LevelUtils.scheduleFluidTick(level, blockPos, MFluids.WATER, 5);
         }
@@ -221,7 +220,7 @@ public class TrapDoorBlockBehavior extends BukkitBlockBehavior implements IsPath
 
     private void toggle(ImmutableBlockState state, World world, BlockPos pos, @Nullable Player player) {
         ImmutableBlockState newState = state.cycle(this.openProperty);
-        FastNMS.INSTANCE.method$LevelWriter$setBlock(world.serverWorld(), LocationUtils.toBlockPos(pos), newState.customBlockState().literalObject(), UpdateOption.UPDATE_ALL.flags());
+        LevelWriterProxy.INSTANCE.setBlock(world.serverWorld(), LocationUtils.toBlockPos(pos), newState.customBlockState().literalObject(), UpdateOption.UPDATE_ALL.flags());
         boolean open = newState.get(this.openProperty);
         ((org.bukkit.World) world.platformWorld()).sendGameEvent(
                 player != null ? (org.bukkit.entity.Player) player.platformPlayer() : null,

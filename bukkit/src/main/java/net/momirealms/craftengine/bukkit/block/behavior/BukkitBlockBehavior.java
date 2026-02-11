@@ -1,6 +1,5 @@
 package net.momirealms.craftengine.bukkit.block.behavior;
 
-import net.momirealms.craftengine.bukkit.nms.FastNMS;
 import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.MFluids;
 import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.MItems;
 import net.momirealms.craftengine.bukkit.util.BlockStateUtils;
@@ -14,6 +13,7 @@ import net.momirealms.craftengine.core.block.behavior.BlockBehavior;
 import net.momirealms.craftengine.core.block.properties.Property;
 import net.momirealms.craftengine.core.util.*;
 import net.momirealms.craftengine.proxy.minecraft.world.item.ItemStackProxy;
+import net.momirealms.craftengine.proxy.minecraft.world.level.LevelWriterProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.level.block.state.BlockBehaviourProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.level.material.FluidStateProxy;
 import org.jetbrains.annotations.NotNull;
@@ -143,7 +143,7 @@ public abstract class BukkitBlockBehavior extends BlockBehavior {
         if (optionalCustomState.isEmpty()) return ItemStackProxy.EMPTY;
         ImmutableBlockState immutableBlockState = optionalCustomState.get();
         if (immutableBlockState.get(this.waterloggedProperty)) {
-            FastNMS.INSTANCE.method$LevelWriter$setBlock(world, pos, immutableBlockState.with(this.waterloggedProperty, false).customBlockState().literalObject(), 3);
+            LevelWriterProxy.INSTANCE.setBlock(world, pos, immutableBlockState.with(this.waterloggedProperty, false).customBlockState().literalObject(), 3);
             return ItemStackProxy.INSTANCE.newInstance(MItems.WATER_BUCKET, 1);
         }
         return ItemStackProxy.EMPTY;
@@ -158,7 +158,7 @@ public abstract class BukkitBlockBehavior extends BlockBehavior {
         ImmutableBlockState immutableBlockState = optionalCustomState.get();
         Object fluidType = FluidStateProxy.INSTANCE.getType(args[3]);
         if (!immutableBlockState.get(this.waterloggedProperty) && fluidType == MFluids.WATER) {
-            FastNMS.INSTANCE.method$LevelWriter$setBlock(args[0], args[1], immutableBlockState.with(this.waterloggedProperty, true).customBlockState().literalObject(), 3);
+            LevelWriterProxy.INSTANCE.setBlock(args[0], args[1], immutableBlockState.with(this.waterloggedProperty, true).customBlockState().literalObject(), 3);
             LevelUtils.scheduleFluidTick(args[0], args[1], fluidType, 5);
             return true;
         }

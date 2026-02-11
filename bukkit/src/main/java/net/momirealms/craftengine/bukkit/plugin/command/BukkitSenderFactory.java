@@ -1,5 +1,6 @@
 package net.momirealms.craftengine.bukkit.plugin.command;
 
+import io.netty.channel.SimpleChannelInboundHandler;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
 import net.momirealms.craftengine.bukkit.nms.FastNMS;
@@ -8,7 +9,12 @@ import net.momirealms.craftengine.bukkit.util.ComponentUtils;
 import net.momirealms.craftengine.core.plugin.command.sender.Sender;
 import net.momirealms.craftengine.core.plugin.command.sender.SenderFactory;
 import net.momirealms.craftengine.core.util.Tristate;
+import net.momirealms.craftengine.core.util.VersionHelper;
+import net.momirealms.craftengine.proxy.bukkit.craftbukkit.entity.CraftEntityProxy;
 import net.momirealms.craftengine.proxy.minecraft.network.protocol.game.ClientboundSystemChatPacketProxy;
+import net.momirealms.craftengine.proxy.minecraft.server.level.ServerPlayerProxy;
+import net.momirealms.craftengine.proxy.minecraft.server.network.ServerCommonPacketListenerImplProxy;
+import net.momirealms.craftengine.proxy.minecraft.server.network.ServerGamePacketListenerImplProxy;
 import org.bukkit.Bukkit;
 import org.bukkit.command.CommandSender;
 import org.bukkit.command.ConsoleCommandSender;
@@ -33,8 +39,8 @@ public class BukkitSenderFactory extends SenderFactory<BukkitCraftEngine, Comman
 
     @Override
     protected UUID uniqueId(CommandSender sender) {
-        if (sender instanceof Player) {
-            return ((Player) sender).getUniqueId();
+        if (sender instanceof Player player) {
+            return player.getUniqueId();
         }
         return Sender.CONSOLE_UUID;
     }
@@ -42,17 +48,28 @@ public class BukkitSenderFactory extends SenderFactory<BukkitCraftEngine, Comman
     @Override
     protected void sendMessage(CommandSender sender, Component message) {
         // we can safely send async for players and the console - otherwise, send it sync
-        if (sender instanceof Player player) {
-            FastNMS.INSTANCE.method$Connection$send(
-                    FastNMS.INSTANCE.field$ServerGamePacketListenerImpl$connection(FastNMS.INSTANCE.field$Player$connection(FastNMS.INSTANCE.method$CraftPlayer$getHandle(player))),
-                    ClientboundSystemChatPacketProxy.INSTANCE.newInstance(ComponentUtils.adventureToMinecraft(message), false), null);
-        } else if (sender instanceof ConsoleCommandSender commandSender) {
-            commandSender.sendMessage(LegacyComponentSerializer.legacySection().serialize(message));
-        } else if (sender instanceof RemoteConsoleCommandSender commandSender) {
-            commandSender.sendMessage(LegacyComponentSerializer.legacySection().serialize(message));
-        } else {
-            String legacy = LegacyComponentSerializer.legacySection().serialize(message);
-            plugin().scheduler().sync().run(() -> sender.sendMessage(legacy));
+        switch (sender) {
+            case Player player -> {
+                SimpleChannelInboundHandler<Object> connection;
+                if (VersionHelper.isOrAbove1_20_2()) {
+                    connection = ServerCommonPacketListenerImplProxy.INSTANCE.getConnection$0(ServerPlayerProxy.INSTANCE.getConnection(CraftEntityProxy.INSTANCE.getEntity(player)));
+                } else {
+                    connection = ServerGamePacketListenerImplProxy.INSTANCE.getConnection$1(ServerPlayerProxy.INSTANCE.getConnection(CraftEntityProxy.INSTANCE.getEntity(player)));
+                }
+                FastNMS.INSTANCE.method$Connection$send(
+                        connection,
+                        ClientboundSystemChatPacketProxy.INSTANCE.newInstance(ComponentUtils.adventureToMinecraft(message), false),
+                        null
+                );
+            }
+            case ConsoleCommandSender commandSender ->
+                    commandSender.sendMessage(LegacyComponentSerializer.legacySection().serialize(message));
+            case RemoteConsoleCommandSender commandSender ->
+                    commandSender.sendMessage(LegacyComponentSerializer.legacySection().serialize(message));
+            default -> {
+                String legacy = LegacyComponentSerializer.legacySection().serialize(message);
+                plugin().scheduler().sync().run(() -> sender.sendMessage(legacy));
+            }
         }
     }
 

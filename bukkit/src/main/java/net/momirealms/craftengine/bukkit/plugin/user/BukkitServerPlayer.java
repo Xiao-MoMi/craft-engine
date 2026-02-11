@@ -55,13 +55,18 @@ import net.momirealms.craftengine.core.world.*;
 import net.momirealms.craftengine.core.world.World;
 import net.momirealms.craftengine.core.world.chunk.client.ClientChunk;
 import net.momirealms.craftengine.core.world.collision.AABB;
+import net.momirealms.craftengine.proxy.bukkit.craftbukkit.CraftWorldProxy;
+import net.momirealms.craftengine.proxy.bukkit.craftbukkit.entity.CraftEntityProxy;
 import net.momirealms.craftengine.proxy.minecraft.network.ConnectionProxy;
-import net.momirealms.craftengine.proxy.minecraft.network.FriendlyByteBufProxy;
+import net.momirealms.craftengine.proxy.minecraft.network.protocol.common.ClientboundResourcePackPopPacketProxy;
 import net.momirealms.craftengine.proxy.minecraft.network.protocol.game.*;
 import net.momirealms.craftengine.proxy.minecraft.network.syncher.SynchedEntityDataProxy;
 import net.momirealms.craftengine.proxy.minecraft.server.MinecraftServerProxy;
 import net.momirealms.craftengine.proxy.minecraft.server.level.ServerPlayerGameModeProxy;
 import net.momirealms.craftengine.proxy.minecraft.server.level.ServerPlayerProxy;
+import net.momirealms.craftengine.proxy.minecraft.server.network.ServerCommonPacketListenerImplProxy;
+import net.momirealms.craftengine.proxy.minecraft.server.network.ServerGamePacketListenerImplProxy;
+import net.momirealms.craftengine.proxy.minecraft.sounds.SoundEventProxy;
 import net.momirealms.craftengine.proxy.minecraft.util.thread.BlockableEventLoopProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.entity.EntityProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.entity.LivingEntityProxy;
@@ -227,7 +232,7 @@ public class BukkitServerPlayer extends Player {
 
     public void setPlayer(org.bukkit.entity.Player player) {
         this.playerRef = new WeakReference<>(player);
-        this.serverPlayerRef = new WeakReference<>(FastNMS.INSTANCE.method$CraftPlayer$getHandle(player));
+        this.serverPlayerRef = new WeakReference<>(CraftEntityProxy.INSTANCE.getEntity(player));
         this.uuid = player.getUniqueId();
         this.isUUIDVerified = true;
         this.name = player.getName();
@@ -599,7 +604,7 @@ public class BukkitServerPlayer extends Player {
         if (serverPlayer == null) return;
 
         // 更新玩家游戏刻
-        this.gameTicks = ServerPlayerGameModeProxy.INSTANCE.getGameTicks(FastNMS.INSTANCE.field$ServerPlayer$gameMode(serverPlayer));
+        this.gameTicks = ServerPlayerGameModeProxy.INSTANCE.getGameTicks(ServerPlayerProxy.INSTANCE.getGameMode(serverPlayer));
 
         // 更新CE UI
         if (this.gameTicks % 20 == 0) {
@@ -782,7 +787,7 @@ public class BukkitServerPlayer extends Player {
     @Override
     public float getDestroyProgress(Object blockState, BlockPos pos) {
         Optional<ImmutableBlockState> optionalCustomState = BlockStateUtils.getOptionalCustomBlockState(blockState);
-        float progress = FastNMS.INSTANCE.method$BlockStateBase$getDestroyProgress(blockState, serverPlayer(), FastNMS.INSTANCE.field$CraftWorld$ServerLevel(platformPlayer().getWorld()), LocationUtils.toBlockPos(pos));
+        float progress = BlockBehaviourProxy.BlockStateBaseProxy.INSTANCE.getDestroyProgress(blockState, serverPlayer(), CraftWorldProxy.INSTANCE.getWorld(platformPlayer().getWorld()), LocationUtils.toBlockPos(pos));
         if (optionalCustomState.isPresent()) {
             ImmutableBlockState customState = optionalCustomState.get();
             Item<ItemStack> tool = getItemInHand(InteractionHand.MAIN_HAND);
@@ -829,7 +834,7 @@ public class BukkitServerPlayer extends Player {
                     boolean attributeCannotBreak = VersionHelper.isOrAbove1_20_5() && !this.clientSideCanBreak;
                     // 2. 客户端侧的方块就是不能秒破
                     if (attributeCannotBreak || getDestroyProgress(vanillaBlockState.literalObject(), pos) < 1f) {
-                        Object levelEventPacket = FastNMS.INSTANCE.constructor$ClientboundLevelEventPacket(
+                        Object levelEventPacket = ClientboundLevelEventPacketProxy.INSTANCE.newInstance(
                                 WorldEvents.BLOCK_BREAK_EFFECT, LocationUtils.toBlockPos(pos), BlockStateUtils.blockStateToId(state), false);
                         sendPacket(levelEventPacket, false);
                     }
@@ -838,7 +843,7 @@ public class BukkitServerPlayer extends Player {
         } else {
             // 客户端此时觉得自己不能秒破，但实际可以秒破
             if (canInstantBreak && VersionHelper.isOrAbove1_20_5() && !this.clientSideCanBreak) {
-                Object levelEventPacket = FastNMS.INSTANCE.constructor$ClientboundLevelEventPacket(
+                Object levelEventPacket = ClientboundLevelEventPacketProxy.INSTANCE.newInstance(
                         WorldEvents.BLOCK_BREAK_EFFECT, LocationUtils.toBlockPos(pos), BlockStateUtils.blockStateToId(state), false);
                 sendPacket(levelEventPacket, false);
             }
@@ -981,7 +986,7 @@ public class BukkitServerPlayer extends Player {
             if (!BukkitItemUtils.isDebugStick(item)) {
                 Object soundType = BlockBehaviourProxy.BlockStateBaseProxy.INSTANCE.getSoundType(destroyedState);
                 Object soundEvent = SoundTypeProxy.INSTANCE.getHitSound(soundType);
-                Object soundId = FastNMS.INSTANCE.field$SoundEvent$location(soundEvent);
+                Object soundId = SoundEventProxy.INSTANCE.getLocation(soundEvent);
                 player.playSound(location, soundId.toString(), SoundCategory.BLOCKS, 0.5F, 0.5F);
             }
             this.lastHitBlockTime = currentTick;
@@ -990,7 +995,7 @@ public class BukkitServerPlayer extends Player {
         // accumulate progress (custom blocks only)
         if (this.isDestroyingCustomBlock) {
             // prevent server from taking over breaking custom blocks
-            Object gameMode = FastNMS.INSTANCE.field$ServerPlayer$gameMode(serverPlayer);
+            Object gameMode = ServerPlayerProxy.INSTANCE.getGameMode(serverPlayer);
             ServerPlayerGameModeProxy.INSTANCE.setIsDestroyingBlock(gameMode, false);
             if (!item.isEmpty()) {
                 Material itemMaterial = item.getItem().getType();
@@ -1025,11 +1030,12 @@ public class BukkitServerPlayer extends Player {
                         // check the appearance state
                         if (canBreak(hitPos, customState.visualBlockState().literalObject())) {
                             // Error might occur so we use try here
+                            Object abilities = PlayerProxy.INSTANCE.getAbilities(serverPlayer);
                             try {
-                                FastNMS.INSTANCE.field$Player$mayBuild(serverPlayer, true);
+                                AbilitiesProxy.INSTANCE.setMayBuild(abilities, true);
                                 breakResult = ServerPlayerGameModeProxy.INSTANCE.destroyBlock(gameMode, blockPos);
                             } finally {
-                                FastNMS.INSTANCE.field$Player$mayBuild(serverPlayer, false);
+                                AbilitiesProxy.INSTANCE.setMayBuild(abilities, false);
                             }
                         }
                     } else {
@@ -1038,7 +1044,7 @@ public class BukkitServerPlayer extends Player {
                     }
                     // send break particle + (removed sounds)
                     if (breakResult) {
-                        sendPacket(FastNMS.INSTANCE.constructor$ClientboundLevelEventPacket(WorldEvents.BLOCK_BREAK_EFFECT, blockPos, customState.customBlockState().registryId(), false), false);
+                        sendPacket(ClientboundLevelEventPacketProxy.INSTANCE.newInstance(WorldEvents.BLOCK_BREAK_EFFECT, blockPos, customState.customBlockState().registryId(), false), false);
                         this.destroyPos = null;
                         this.miningProgress = 0;
                         this.isDestroyingBlock = false;
@@ -1067,7 +1073,7 @@ public class BukkitServerPlayer extends Player {
 
     @SuppressWarnings("deprecation")
     private void broadcastDestroyProgress(BlockPos hitPos, int stage) {
-        Object packet = FastNMS.INSTANCE.constructor$ClientboundBlockDestructionPacket(Integer.MAX_VALUE - entityId(), LocationUtils.toBlockPos(hitPos), stage);
+        Object packet = ClientboundBlockDestructionPacketProxy.INSTANCE.newInstance(Integer.MAX_VALUE - entityId(), LocationUtils.toBlockPos(hitPos), stage);
         sendPacket(packet, false);
         for (org.bukkit.entity.Player other : platformPlayer().getTrackedPlayers()) {
             double d0 = (double) hitPos.x() - other.getX();
@@ -1191,9 +1197,11 @@ public class BukkitServerPlayer extends Player {
         if (this.connection == null) {
             Object serverPlayer = serverPlayer();
             if (serverPlayer != null) {
-                this.connection = (ChannelHandler) FastNMS.INSTANCE.field$ServerGamePacketListenerImpl$connection(
-                        FastNMS.INSTANCE.field$Player$connection(serverPlayer)
-                );
+                if (VersionHelper.isOrAbove1_20_2()) {
+                    this.connection = ServerCommonPacketListenerImplProxy.INSTANCE.getConnection$0(ServerPlayerProxy.INSTANCE.getConnection(serverPlayer));
+                } else {
+                    this.connection = ServerGamePacketListenerImplProxy.INSTANCE.getConnection$1(ServerPlayerProxy.INSTANCE.getConnection(serverPlayer));
+                }
             } else {
                 throw new IllegalStateException("Cannot init or find connection instance for player " + name());
             }
@@ -1301,7 +1309,7 @@ public class BukkitServerPlayer extends Player {
         }
         if (decoderState() == ConnectionState.PLAY && !this.resourcePackUUID.isEmpty()) {
             for (UUID u : this.resourcePackUUID) {
-                sendPacket(FastNMS.INSTANCE.constructor$ClientboundResourcePackPopPacket(u), true);
+                sendPacket(ClientboundResourcePackPopPacketProxy.INSTANCE.newInstance(Optional.ofNullable(u)), true);
             }
             this.resourcePackUUID.clear();
         }

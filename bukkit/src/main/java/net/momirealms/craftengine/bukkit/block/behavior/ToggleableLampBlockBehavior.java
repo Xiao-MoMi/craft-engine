@@ -1,7 +1,6 @@
 package net.momirealms.craftengine.bukkit.block.behavior;
 
 import net.momirealms.antigrieflib.Flag;
-import net.momirealms.craftengine.bukkit.nms.FastNMS;
 import net.momirealms.craftengine.bukkit.plugin.BukkitCraftEngine;
 import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.CoreReflections;
 import net.momirealms.craftengine.bukkit.util.BlockStateUtils;
@@ -16,6 +15,7 @@ import net.momirealms.craftengine.core.util.ResourceConfigUtils;
 import net.momirealms.craftengine.core.world.BlockPos;
 import net.momirealms.craftengine.core.world.World;
 import net.momirealms.craftengine.core.world.context.UseOnContext;
+import net.momirealms.craftengine.proxy.minecraft.world.level.LevelWriterProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.level.SignalGetterProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.level.block.state.BlockBehaviourProxy;
 import org.bukkit.Location;
@@ -53,7 +53,7 @@ public class ToggleableLampBlockBehavior extends BukkitBlockBehavior {
         }
         ToggleableLampBlockBehavior behavior = state.behavior().getAs(ToggleableLampBlockBehavior.class).orElse(null);
         if (behavior == null) return InteractionResult.PASS;
-        FastNMS.INSTANCE.method$LevelWriter$setBlock(
+        LevelWriterProxy.INSTANCE.setBlock(
                 world.serverWorld(),
                 LocationUtils.toBlockPos(pos),
                 state.cycle(behavior.litProperty).customBlockState().literalObject(),
@@ -98,7 +98,7 @@ public class ToggleableLampBlockBehavior extends BukkitBlockBehavior {
             if (!isPowered) {
                 blockState = blockState.cycle(this.litProperty);
             }
-            FastNMS.INSTANCE.method$LevelWriter$setBlock(level, pos, blockState.with(this.poweredProperty, hasNeighborSignal).customBlockState().literalObject(), 3);
+            LevelWriterProxy.INSTANCE.setBlock(level, pos, blockState.with(this.poweredProperty, hasNeighborSignal).customBlockState().literalObject(), 3);
         }
 
     }

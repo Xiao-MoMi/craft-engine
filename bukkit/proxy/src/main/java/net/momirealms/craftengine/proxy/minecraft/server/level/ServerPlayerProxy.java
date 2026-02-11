@@ -4,10 +4,7 @@ import net.momirealms.craftengine.proxy.minecraft.world.entity.player.PlayerProx
 import net.momirealms.craftengine.proxy.minecraft.world.inventory.AbstractContainerMenuProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.item.ItemStackProxy;
 import net.momirealms.sparrow.reflection.proxy.ASMProxyFactory;
-import net.momirealms.sparrow.reflection.proxy.annotation.FieldGetter;
-import net.momirealms.sparrow.reflection.proxy.annotation.MethodInvoker;
-import net.momirealms.sparrow.reflection.proxy.annotation.ReflectionProxy;
-import net.momirealms.sparrow.reflection.proxy.annotation.Type;
+import net.momirealms.sparrow.reflection.proxy.annotation.*;
 import org.bukkit.entity.Item;
 import org.bukkit.entity.Player;
 import org.jspecify.annotations.Nullable;
@@ -38,4 +35,10 @@ public interface ServerPlayerProxy extends PlayerProxy {
 
     @MethodInvoker(name = "getBukkitEntity")
     Player getBukkitEntity(Object target);
+
+    @FieldGetter(name = "gameMode")
+    Object getGameMode(Object target);
+
+    @FieldSetter(name = "gameMode")
+    void setGameMode(Object target, Object gameMode);
 }

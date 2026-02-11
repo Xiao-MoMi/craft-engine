@@ -1,11 +1,12 @@
 package net.momirealms.craftengine.proxy.minecraft.network.protocol.game;
 
+import net.momirealms.craftengine.proxy.minecraft.network.protocol.PacketProxy;
 import net.momirealms.sparrow.reflection.proxy.ASMProxyFactory;
 import net.momirealms.sparrow.reflection.proxy.annotation.ConstructorInvoker;
 import net.momirealms.sparrow.reflection.proxy.annotation.ReflectionProxy;
 
 @ReflectionProxy(name = "net.minecraft.network.protocol.game.ClientboundSetTitlesAnimationPacket")
-public interface ClientboundSetTitlesAnimationPacketProxy {
+public interface ClientboundSetTitlesAnimationPacketProxy extends PacketProxy {
     ClientboundSetTitlesAnimationPacketProxy INSTANCE = ASMProxyFactory.create(ClientboundSetTitlesAnimationPacketProxy.class);
 
     @ConstructorInvoker

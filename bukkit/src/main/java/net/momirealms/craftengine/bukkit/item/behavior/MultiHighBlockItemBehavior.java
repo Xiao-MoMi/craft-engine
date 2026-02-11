@@ -1,7 +1,6 @@
 package net.momirealms.craftengine.bukkit.item.behavior;
 
 import net.momirealms.craftengine.bukkit.block.behavior.MultiHighBlockBehavior;
-import net.momirealms.craftengine.bukkit.nms.FastNMS;
 import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.MBlocks;
 import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.MFluids;
 import net.momirealms.craftengine.bukkit.util.LocationUtils;
@@ -17,8 +16,13 @@ import net.momirealms.craftengine.core.util.Direction;
 import net.momirealms.craftengine.core.util.Key;
 import net.momirealms.craftengine.core.util.VersionHelper;
 import net.momirealms.craftengine.core.world.context.BlockPlaceContext;
+import net.momirealms.craftengine.proxy.bukkit.craftbukkit.CraftWorldProxy;
+import net.momirealms.craftengine.proxy.bukkit.craftbukkit.block.CraftBlockProxy;
+import net.momirealms.craftengine.proxy.bukkit.craftbukkit.block.data.CraftBlockDataProxy;
+import net.momirealms.craftengine.proxy.minecraft.core.BlockPosProxy;
 import net.momirealms.craftengine.proxy.minecraft.server.level.ServerLevelProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.level.BlockGetterProxy;
+import net.momirealms.craftengine.proxy.minecraft.world.level.LevelWriterProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.phys.shape.CollisionContextProxy;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
@@ -64,10 +68,10 @@ public final class MultiHighBlockItemBehavior extends BlockItemBehavior {
             } else {
                 voxelShape = CollisionContextProxy.INSTANCE.empty();
             }
-            Object world = FastNMS.INSTANCE.field$CraftWorld$ServerLevel((World) context.getLevel().platformWorld());
+            Object world = CraftWorldProxy.INSTANCE.getWorld((World) context.getLevel().platformWorld());
             boolean defaultReturn = ServerLevelProxy.INSTANCE.checkEntityCollision(world, blockState, player, voxelShape, blockPos, true); // paper only
-            Block block = FastNMS.INSTANCE.method$CraftBlock$at(world, blockPos);
-            BlockData blockData = FastNMS.INSTANCE.method$CraftBlockData$fromData(blockState);
+            Block block = CraftBlockProxy.INSTANCE.at(world, blockPos);
+            BlockData blockData = CraftBlockDataProxy.INSTANCE.fromData(blockState);
             BlockCanBuildEvent canBuildEvent = new BlockCanBuildEvent(
                     block, cePlayer != null ? (org.bukkit.entity.Player) cePlayer.platformPlayer() : null, blockData, defaultReturn,
                     context.getHand() == InteractionHand.MAIN_HAND ? EquipmentSlot.HAND : EquipmentSlot.OFF_HAND
@@ -88,13 +92,13 @@ public final class MultiHighBlockItemBehavior extends BlockItemBehavior {
         }
         IntegerProperty property = behavior.property;
         for (int i = property.min + 1; i <= property.max; i++) {
-            Object level = FastNMS.INSTANCE.field$CraftWorld$ServerLevel(location.getWorld());
-            Object blockPos = FastNMS.INSTANCE.constructor$BlockPos(location.getBlockX(), location.getBlockY() + i, location.getBlockZ());
+            Object level = CraftWorldProxy.INSTANCE.getWorld(location.getWorld());
+            Object blockPos = BlockPosProxy.INSTANCE.newInstance$1(location.getBlockX(), location.getBlockY() + i, location.getBlockZ());
             UpdateOption option = UpdateOption.builder().updateNeighbors().updateClients().updateImmediate().updateKnownShape().build();
             Object fluidData = BlockGetterProxy.INSTANCE.getFluidState(level, blockPos);
             Object stateToPlace = fluidData == MFluids.WATER$defaultState ? MBlocks.WATER$defaultState : MBlocks.AIR$defaultState;
             revertState.add(location.getWorld().getBlockAt(location.getBlockX(), location.getBlockY() + i, location.getBlockZ()).getState());
-            FastNMS.INSTANCE.method$LevelWriter$setBlock(level, blockPos, stateToPlace, option.flags());
+            LevelWriterProxy.INSTANCE.setBlock(level, blockPos, stateToPlace, option.flags());
         }
         return super.placeBlock(location, blockState, revertState);
     }

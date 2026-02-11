@@ -1,5 +1,6 @@
 package net.momirealms.craftengine.proxy.minecraft.network.protocol.game;
 
+import net.momirealms.craftengine.proxy.minecraft.network.protocol.PacketProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.entity.PositionMoveRotationProxy;
 import net.momirealms.sparrow.reflection.clazz.SparrowClass;
 import net.momirealms.sparrow.reflection.constructor.UnsafeConstructor;
@@ -9,7 +10,7 @@ import net.momirealms.sparrow.reflection.proxy.annotation.*;
 import java.util.Set;
 
 @ReflectionProxy(name = "net.minecraft.network.protocol.game.ClientboundTeleportEntityPacket")
-public interface ClientboundTeleportEntityPacketProxy {
+public interface ClientboundTeleportEntityPacketProxy extends PacketProxy {
     ClientboundTeleportEntityPacketProxy INSTANCE = ASMProxyFactory.create(ClientboundTeleportEntityPacketProxy.class);
     UnsafeConstructor UNSAFE_CONSTRUCTOR = new UnsafeConstructor(SparrowClass.find("net.minecraft.network.protocol.game.ClientboundTeleportEntityPacket"));
 

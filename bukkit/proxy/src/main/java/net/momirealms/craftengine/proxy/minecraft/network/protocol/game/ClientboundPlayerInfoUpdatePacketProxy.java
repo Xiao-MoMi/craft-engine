@@ -3,18 +3,28 @@ package net.momirealms.craftengine.proxy.minecraft.network.protocol.game;
 import com.mojang.authlib.GameProfile;
 import net.momirealms.craftengine.proxy.minecraft.network.chat.ComponentProxy;
 import net.momirealms.craftengine.proxy.minecraft.network.chat.RemoteChatSessionProxy;
+import net.momirealms.craftengine.proxy.minecraft.network.protocol.PacketProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.level.GameTypeProxy;
 import net.momirealms.sparrow.reflection.proxy.ASMProxyFactory;
-import net.momirealms.sparrow.reflection.proxy.annotation.ConstructorInvoker;
-import net.momirealms.sparrow.reflection.proxy.annotation.ReflectionProxy;
-import net.momirealms.sparrow.reflection.proxy.annotation.Type;
+import net.momirealms.sparrow.reflection.proxy.annotation.*;
 
 import javax.annotation.Nullable;
+import java.util.EnumSet;
+import java.util.List;
 import java.util.UUID;
 
 @ReflectionProxy(name = "net.minecraft.network.protocol.game.ClientboundPlayerInfoUpdatePacket")
-public interface ClientboundPlayerInfoUpdatePacketProxy {
+public interface ClientboundPlayerInfoUpdatePacketProxy extends PacketProxy {
     ClientboundPlayerInfoUpdatePacketProxy INSTANCE = ASMProxyFactory.create(ClientboundPlayerInfoUpdatePacketProxy.class);
+
+    @ConstructorInvoker
+    Object newInstance(EnumSet<?> actions, List<?> entries);
+
+    @FieldGetter(name = "actions")
+    EnumSet<? extends Enum<?>> getActions(Object target);
+
+    @FieldGetter(name = "entries")
+    List<Object> getEntries(Object target);
 
     @ReflectionProxy(name = "net.minecraft.network.protocol.game.ClientboundPlayerInfoUpdatePacket$Entry")
     interface EntryProxy {
@@ -55,5 +65,26 @@ public interface ClientboundPlayerInfoUpdatePacketProxy {
                 @Nullable @Type(clazz = ComponentProxy.class) Object displayName,
                 @Nullable @Type(clazz = RemoteChatSessionProxy.DataProxy.class) Object chatSession
         );
+
+        @FieldGetter(name = "displayName")
+        Object getDisplayName(Object target);
+
+        @FieldSetter(name = "displayName")
+        void setDisplayName(Object target, Object displayName);
+    }
+
+    @ReflectionProxy(name = "net.minecraft.network.protocol.game.ClientboundPlayerInfoUpdatePacket$Action")
+    interface ActionProxy {
+        ActionProxy INSTANCE = ASMProxyFactory.create(ActionProxy.class);
+        Enum<?>[] VALUES = INSTANCE.values();
+        Enum<?> ADD_PLAYER = VALUES[0];
+        Enum<?> INITIALIZE_CHAT = VALUES[1];
+        Enum<?> UPDATE_GAME_MODE = VALUES[2];
+        Enum<?> UPDATE_LISTED = VALUES[3];
+        Enum<?> UPDATE_LATENCY = VALUES[4];
+        Enum<?> UPDATE_DISPLAY_NAME = VALUES[5];
+
+        @MethodInvoker(name = "values", isStatic = true)
+        Enum<?>[] values();
     }
 }
