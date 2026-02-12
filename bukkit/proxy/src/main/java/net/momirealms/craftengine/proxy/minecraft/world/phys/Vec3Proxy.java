@@ -12,9 +12,6 @@ public interface Vec3Proxy {
     @ConstructorInvoker
     Object newInstance(double x, double y, double z);
 
-    @ConstructorInvoker
-    Object newInstance(Vector3f vec);
-
     @FieldGetter(name = "ZERO", isStatic = true)
     Object getZero();
 
