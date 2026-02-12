@@ -12,7 +12,7 @@ import java.util.Optional;
 public interface HolderGetterProxy {
     HolderGetterProxy INSTANCE = ASMProxyFactory.create(HolderLookupProxy.class);
 
-    @MethodInvoker(name = "get")
+    @MethodInvoker(name = "get", activeIf = "min_version=1.21.2")
     Optional<Object> get$1(Object target, @Type(clazz = ResourceKeyProxy.class) Object key);
 
     @ReflectionProxy(name = "net.minecraft.core.HolderGetter$Provider")

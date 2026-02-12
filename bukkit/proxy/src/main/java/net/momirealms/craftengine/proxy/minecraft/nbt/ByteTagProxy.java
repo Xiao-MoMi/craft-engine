@@ -11,6 +11,6 @@ public interface ByteTagProxy {
     @MethodInvoker(name = "valueOf", isStatic = true)
     Object valueOf(byte value);
 
-    @MethodInvoker(name = "value")
+    @MethodInvoker(name = {"value", "getAsByte"})
     byte value(Object target);
 }

@@ -1,7 +1,8 @@
 package net.momirealms.craftengine.bukkit.util;
 
-import net.momirealms.craftengine.bukkit.nms.FastNMS;
+import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.MBuiltInRegistries;
 import net.momirealms.craftengine.core.item.Item;
+import net.momirealms.craftengine.core.util.VersionHelper;
 import net.momirealms.craftengine.core.world.BlockPos;
 import net.momirealms.craftengine.core.world.World;
 import net.momirealms.craftengine.proxy.bukkit.craftbukkit.CraftWorldProxy;
@@ -26,7 +27,11 @@ public final class AdventureModeUtils {
         if (state != null) {
             BlockInWorldProxy.INSTANCE.setState(blockInWorld, state);
         }
-        return FastNMS.INSTANCE.method$ItemStack$canBreakInAdventureMode(CraftItemStackProxy.INSTANCE.unwrap(itemStack), blockInWorld);
+        if (VersionHelper.isOrAbove1_20_5()) {
+            return ItemStackProxy.INSTANCE.canBreakBlockInAdventureMode(CraftItemStackProxy.INSTANCE.unwrap(itemStack), blockInWorld);
+        } else {
+            return ItemStackProxy.INSTANCE.hasAdventureModeBreakTagForBlock(CraftItemStackProxy.INSTANCE.unwrap(itemStack), MBuiltInRegistries.BLOCK, blockInWorld);
+        }
     }
 
     public static boolean canPlace(Item<?> itemStack, World world, BlockPos pos, Object state) {
@@ -36,7 +41,11 @@ public final class AdventureModeUtils {
         if (state != null) {
             BlockInWorldProxy.INSTANCE.setState(blockInWorld, state);
         }
-        return FastNMS.INSTANCE.method$ItemStack$canPlaceInAdventureMode(item, blockInWorld);
+        if (VersionHelper.isOrAbove1_20_5()) {
+            return ItemStackProxy.INSTANCE.canPlaceOnBlockInAdventureMode(item, blockInWorld);
+        } else {
+            return ItemStackProxy.INSTANCE.hasAdventureModePlaceTagForBlock(item, MBuiltInRegistries.BLOCK, blockInWorld);
+        }
     }
 
     public static boolean canPlace(ItemStack itemStack, Location pos, Object state) {
@@ -45,6 +54,10 @@ public final class AdventureModeUtils {
         if (state != null) {
             BlockInWorldProxy.INSTANCE.setState(blockInWorld, state);
         }
-        return FastNMS.INSTANCE.method$ItemStack$canPlaceInAdventureMode(CraftItemStackProxy.INSTANCE.unwrap(itemStack), blockInWorld);
+        if (VersionHelper.isOrAbove1_20_5()) {
+            return ItemStackProxy.INSTANCE.canPlaceOnBlockInAdventureMode(CraftItemStackProxy.INSTANCE.unwrap(itemStack), blockInWorld);
+        } else {
+            return ItemStackProxy.INSTANCE.hasAdventureModePlaceTagForBlock(CraftItemStackProxy.INSTANCE.unwrap(itemStack), MBuiltInRegistries.BLOCK, blockInWorld);
+        }
     }
 }

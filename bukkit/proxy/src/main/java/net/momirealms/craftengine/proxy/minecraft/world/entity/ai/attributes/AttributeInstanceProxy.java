@@ -21,4 +21,7 @@ public interface AttributeInstanceProxy {
 
     @MethodInvoker(name = "setBaseValue")
     void setBaseValue(Object target, double baseValue);
+
+    @MethodInvoker(name = "getValue")
+    double getValue(Object target);
 }

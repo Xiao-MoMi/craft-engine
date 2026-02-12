@@ -20,5 +20,5 @@ public interface MapItemProxy {
     Object getSavedData$1(@Nullable Integer mapId, @Type(clazz = LevelProxy.class) Object level);
 
     @MethodInvoker(name = "getMapId", activeIf = "max_version=1.20.4", isStatic = true)
-    Integer getMapId(@Type(clazz = MapItemProxy.class) Object mapItem);
+    Integer getMapId(@Type(clazz = ItemStackProxy.class) Object mapItem);
 }

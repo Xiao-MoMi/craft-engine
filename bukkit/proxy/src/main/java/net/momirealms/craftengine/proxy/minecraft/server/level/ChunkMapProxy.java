@@ -10,10 +10,10 @@ import net.momirealms.sparrow.reflection.proxy.annotation.ReflectionProxy;
 public interface ChunkMapProxy {
     ChunkMapProxy INSTANCE = ASMProxyFactory.create(ChunkMapProxy.class);
 
-    @FieldGetter(name = "worldGenContext")
+    @FieldGetter(name = "worldGenContext", activeIf = "min_version=1.20.5")
     Object getWorldGenContext(Object target);
 
-    @FieldSetter(name = "worldGenContext")
+    @FieldSetter(name = "worldGenContext", activeIf = "min_version=1.20.5")
     void setWorldGenContext(Object target, Object worldGenContext);
 
     @MethodInvoker(name = "getVisibleChunkIfPresent")

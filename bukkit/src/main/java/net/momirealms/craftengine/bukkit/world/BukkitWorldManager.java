@@ -7,10 +7,7 @@ import net.momirealms.craftengine.bukkit.plugin.BukkitCraftEngine;
 import net.momirealms.craftengine.bukkit.plugin.injector.WorldStorageInjector;
 import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.CoreReflections;
 import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.MRegistryOps;
-import net.momirealms.craftengine.bukkit.util.BlockStateUtils;
-import net.momirealms.craftengine.bukkit.util.KeyUtils;
-import net.momirealms.craftengine.bukkit.util.LegacyDFUUtils;
-import net.momirealms.craftengine.bukkit.util.LocationUtils;
+import net.momirealms.craftengine.bukkit.util.*;
 import net.momirealms.craftengine.bukkit.world.gen.ConditionalFeature;
 import net.momirealms.craftengine.bukkit.world.gen.CraftEngineFeatures;
 import net.momirealms.craftengine.core.block.BlockStateWrapper;
@@ -452,11 +449,11 @@ public final class BukkitWorldManager implements WorldManager, Listener {
                     }
                 }
             }
-            if (unsaved /*&& !LevelChunkProxy.INSTANCE.isUnsaved(levelChunk)*/) {
+            if (unsaved /*&& !ChunkAccessProxy.INSTANCE.isUnsaved(levelChunk)*/) {
                 if (VersionHelper.isOrAbove1_21_2()) {
                     LevelChunkProxy.INSTANCE.markUnsaved(levelChunk);
                 } else {
-                    LevelChunkProxy.INSTANCE.setUnsaved(levelChunk, true);
+                    ChunkAccessProxy.INSTANCE.setUnsaved(levelChunk, true);
                 }
             }
             ceChunk.unload();
@@ -579,7 +576,7 @@ public final class BukkitWorldManager implements WorldManager, Listener {
                                         if (!customState.isEmpty() && customState.customBlockState() != null) {
                                             Object newState = customState.customBlockState().literalObject();
                                             Object previous = LevelChunkSectionProxy.INSTANCE.setBlockState(section, x, y, z, newState, false);
-                                            if (newState != previous && FastNMS.INSTANCE.method$LightEngine$hasDifferentLightProperties(newState, previous)) {
+                                            if (newState != previous && LightUtils.hasDifferentLightProperties(newState, previous)) {
                                                 ThreadedLevelLightEngineProxy.INSTANCE.checkBlock(lightEngine, LocationUtils.toBlockPos(chunkX * 16 + x, sectionY * 16 + y, chunkZ * 16 + z));
                                             }
                                         }

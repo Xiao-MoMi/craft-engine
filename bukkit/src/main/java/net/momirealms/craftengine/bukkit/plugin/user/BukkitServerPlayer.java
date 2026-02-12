@@ -15,7 +15,6 @@ import net.momirealms.craftengine.bukkit.block.entity.BedBlockEntity;
 import net.momirealms.craftengine.bukkit.block.entity.BlockEntityHolder;
 import net.momirealms.craftengine.bukkit.entity.furniture.BukkitFurniture;
 import net.momirealms.craftengine.bukkit.item.BukkitItemManager;
-import net.momirealms.craftengine.bukkit.nms.FastNMS;
 import net.momirealms.craftengine.bukkit.plugin.BukkitCraftEngine;
 import net.momirealms.craftengine.bukkit.plugin.gui.CraftEngineGUIHolder;
 import net.momirealms.craftengine.bukkit.plugin.network.payload.DiscardedPayload;
@@ -70,6 +69,7 @@ import net.momirealms.craftengine.proxy.minecraft.sounds.SoundEventProxy;
 import net.momirealms.craftengine.proxy.minecraft.util.thread.BlockableEventLoopProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.entity.EntityProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.entity.LivingEntityProxy;
+import net.momirealms.craftengine.proxy.minecraft.world.entity.ai.attributes.AttributeInstanceProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.entity.ai.attributes.AttributeModifierProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.entity.player.AbilitiesProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.entity.player.InventoryProxy;
@@ -533,7 +533,7 @@ public class BukkitServerPlayer extends Player {
                 }
                 responsePacket = NetworkReflections.constructor$ClientboundCustomPayloadPacket.newInstance(dataPayload);
             } else {
-                responsePacket = NetworkReflections.constructor$ClientboundCustomPayloadPacket.newInstance(channelIdentifier, PacketUtils.wrapByteBuf(Unpooled.wrappedBuffer(data)));
+                responsePacket = NetworkReflections.constructor$ClientboundCustomPayloadPacket.newInstance(channelIdentifier, PacketUtils.ensureNMSFriendlyByteBuf(Unpooled.wrappedBuffer(data)));
             }
             this.sendPacket(responsePacket, true);
         } catch (Exception e) {
@@ -1089,12 +1089,21 @@ public class BukkitServerPlayer extends Player {
 
     @Override
     public double getCachedInteractionRange() {
-        if (this.lastUpdateInteractionRangeTick + 20 > gameTicks()) {
+        if (VersionHelper.isOrAbove1_20_5()) {
+            if (this.lastUpdateInteractionRangeTick + 20 > gameTicks()) {
+                return this.cachedInteractionRange;
+            }
+            Object attribute = LivingEntityProxy.INSTANCE.getAttribute(serverPlayer(), MAttributeHolders.BLOCK_INTERACTION_RANGE);
+            if (attribute == null) {
+                this.cachedInteractionRange = 4.5d;
+            } else {
+                this.cachedInteractionRange = AttributeInstanceProxy.INSTANCE.getValue(attribute);
+            }
+            this.lastUpdateInteractionRangeTick = gameTicks();
             return this.cachedInteractionRange;
+        } else {
+            return 4.5d;
         }
-        this.cachedInteractionRange = FastNMS.INSTANCE.method$Player$getInteractionRange(serverPlayer());
-        this.lastUpdateInteractionRangeTick = gameTicks();
-        return this.cachedInteractionRange;
     }
 
     @Override

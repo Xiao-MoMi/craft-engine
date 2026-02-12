@@ -14,6 +14,7 @@ import net.bytebuddy.implementation.bytecode.assign.Assigner;
 import net.bytebuddy.matcher.ElementMatchers;
 import net.momirealms.craftengine.bukkit.nms.FastNMS;
 import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.CoreReflections;
+import net.momirealms.craftengine.bukkit.util.LightUtils;
 import net.momirealms.craftengine.core.block.BlockStateWrapper;
 import net.momirealms.craftengine.core.block.DelegatingBlockState;
 import net.momirealms.craftengine.core.block.EmptyBlock;
@@ -346,7 +347,7 @@ public final class WorldStorageInjector {
     @SuppressWarnings("DuplicatedCode")
     private static void updateLight(@This InjectedHolder thisObj, Object clientState, Object serverState, int x, int y, int z) {
         CEWorld world = thisObj.ceChunk().world;
-        if (FastNMS.INSTANCE.method$LightEngine$hasDifferentLightProperties(serverState, clientState)) {
+        if (LightUtils.hasDifferentLightProperties(serverState, clientState)) {
             SectionPos sectionPos = thisObj.cePos();
             List<SectionPos> pos = SectionPosUtils.calculateAffectedRegions((sectionPos.x() << 4) + x, (sectionPos.y() << 4) + y, (sectionPos.z() << 4) + z, 15);
             world.sectionLightUpdated(pos);
@@ -357,13 +358,13 @@ public final class WorldStorageInjector {
     private static void updateLight$complex(@This InjectedHolder thisObj, Object newClientState, Object newServerState, Object oldServerState, int x, int y, int z) {
         CEWorld world = thisObj.ceChunk().world;
         // 如果客户端新状态和服务端新状态光照属性不同
-        if (FastNMS.INSTANCE.method$LightEngine$hasDifferentLightProperties(newClientState, newServerState)) {
+        if (LightUtils.hasDifferentLightProperties(newClientState, newServerState)) {
             SectionPos sectionPos = thisObj.cePos();
             List<SectionPos> pos = SectionPosUtils.calculateAffectedRegions((sectionPos.x() << 4) + x, (sectionPos.y() << 4) + y, (sectionPos.z() << 4) + z, 15);
             world.sectionLightUpdated(pos);
             return;
         }
-        if (FastNMS.INSTANCE.method$LightEngine$hasDifferentLightProperties(newServerState, oldServerState)) {
+        if (LightUtils.hasDifferentLightProperties(newServerState, oldServerState)) {
             SectionPos sectionPos = thisObj.cePos();
             List<SectionPos> pos = SectionPosUtils.calculateAffectedRegions((sectionPos.x() << 4) + x, (sectionPos.y() << 4) + y, (sectionPos.z() << 4) + z, 15);
             world.sectionLightUpdated(pos);

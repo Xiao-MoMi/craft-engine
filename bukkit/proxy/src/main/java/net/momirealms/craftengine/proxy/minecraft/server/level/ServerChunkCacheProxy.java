@@ -1,11 +1,12 @@
 package net.momirealms.craftengine.proxy.minecraft.server.level;
 
 import net.momirealms.craftengine.proxy.minecraft.core.BlockPosProxy;
+import net.momirealms.craftengine.proxy.minecraft.world.level.chunk.ChunkSourceProxy;
 import net.momirealms.sparrow.reflection.proxy.ASMProxyFactory;
 import net.momirealms.sparrow.reflection.proxy.annotation.*;
 
 @ReflectionProxy(name = "net.minecraft.server.level.ServerChunkCache")
-public interface ServerChunkCacheProxy {
+public interface ServerChunkCacheProxy extends ChunkSourceProxy {
     ServerChunkCacheProxy INSTANCE = ASMProxyFactory.create(ServerChunkCacheProxy.class);
 
     @MethodInvoker(name = "getGenerator")
@@ -19,9 +20,6 @@ public interface ServerChunkCacheProxy {
 
     @MethodInvoker(name = "blockChanged")
     void blockChanged(Object target, @Type(clazz = BlockPosProxy.class) Object blockPos);
-
-    @MethodInvoker(name = "getChunk")
-    Object getChunk(Object target, int chunkX, int chunkZ, boolean load);
 
     @MethodInvoker(name = "getChunkAtIfLoadedMainThread", activeIf = "max_version=1.20.6")
     Object getChunkAtIfLoadedMainThread(Object target, int chunkX, int chunkZ);

@@ -8,6 +8,6 @@ import net.momirealms.sparrow.reflection.proxy.annotation.ReflectionProxy;
 public interface StreamEncoderProxy {
     StreamEncoderProxy INSTANCE = ASMProxyFactory.create(StreamEncoderProxy.class);
 
-    @MethodInvoker(name = "encode")
+    @MethodInvoker(name = "encode", activeIf = "min_version=1.20.5")
     void encode(Object target, Object buf, Object value);
 }

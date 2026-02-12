@@ -1,9 +1,13 @@
 package net.momirealms.craftengine.core.util;
 
+import net.momirealms.craftengine.core.plugin.CraftEngine;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import sun.misc.Unsafe;
 
+import java.io.ByteArrayInputStream;
+import java.io.IOException;
+import java.io.InputStream;
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.VarHandle;
@@ -11,6 +15,8 @@ import java.lang.reflect.*;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipInputStream;
 
 public class ReflectionUtils {
     public static final Unsafe UNSAFE;
@@ -589,5 +595,43 @@ public class ReflectionUtils {
         } catch (IllegalAccessException | NoSuchFieldException e) {
             return null;
         }
+    }
+
+    public static void preCheckASMProxy() {
+        if (!Boolean.getBoolean("net.momirealms.craftengine.pre-check-asm-proxy")) return;
+        CraftEngine.instance().logger().info("Pre-checking ASM proxy...");
+        Throwable throwable = null;
+        ClassLoader classLoader = ReflectionUtils.class.getClassLoader();
+        try (InputStream resourceAsStream = classLoader.getResourceAsStream("proxy.jarinjar")) {
+            if (resourceAsStream == null) return;
+            try (ByteArrayInputStream bais = new ByteArrayInputStream(resourceAsStream.readAllBytes());
+                 ZipInputStream zis = new ZipInputStream(bais)) {
+                ZipEntry entry;
+                while ((entry = zis.getNextEntry()) != null) {
+                    String entryName = entry.getName();
+                    if (!entryName.endsWith(".class")) continue;
+                    String className = entryName.replace('/', '.').substring(0, entryName.length() - 6);
+                    try {
+                        Class.forName(className);
+                    } catch (Throwable e) {
+                        if (throwable == null) {
+                            throwable = e;
+                        } else {
+                            throwable.addSuppressed(e);
+                        }
+                    }
+                }
+            }
+        } catch (IOException e) {
+            if (throwable == null) {
+                throwable = e;
+            } else {
+                throwable.addSuppressed(e);
+            }
+        }
+        if (throwable != null) {
+            throw new RuntimeException(throwable);
+        }
+        CraftEngine.instance().logger().info("Pre-checking ASM proxy completed.");
     }
 }

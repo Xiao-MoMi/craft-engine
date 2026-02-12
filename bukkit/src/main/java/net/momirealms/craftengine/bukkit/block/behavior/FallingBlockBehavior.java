@@ -89,7 +89,7 @@ public class FallingBlockBehavior extends BukkitBlockBehavior {
     public void onBrokenAfterFall(Object thisBlock, Object[] args) {
         Object level = args[0];
         Object fallingBlockEntity = args[2];
-        BukkitEntity entity = BukkitAdaptors.adapt(EntityProxy.INSTANCE.getBukkitEntity(fallingBlockEntity));
+        BukkitEntity entity = BukkitAdaptors.adapt(EntityProxy.INSTANCE.getBukkitEntity$0(fallingBlockEntity));
         if (!entity.getEntityData(BaseEntityData.Silent)) {
             Object blockState = FallingBlockEntityProxy.INSTANCE.getBlockState(fallingBlockEntity);
             Optional<ImmutableBlockState> optionalCustomState = BlockStateUtils.getOptionalCustomBlockState(blockState);
@@ -107,7 +107,7 @@ public class FallingBlockBehavior extends BukkitBlockBehavior {
         Object fallingBlock = args[4];
         Object level = args[0];
         Object pos = args[1];
-        BukkitEntity entity = BukkitAdaptors.adapt(EntityProxy.INSTANCE.getBukkitEntity(fallingBlock));
+        BukkitEntity entity = BukkitAdaptors.adapt(EntityProxy.INSTANCE.getBukkitEntity$0(fallingBlock));
         Object blockState = args[2];
         int stateId = BlockStateUtils.blockStateToId(blockState);
         ImmutableBlockState immutableBlockState = BukkitBlockManager.instance().getImmutableBlockState(stateId);

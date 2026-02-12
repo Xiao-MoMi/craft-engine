@@ -10,4 +10,7 @@ public interface ChunkSourceProxy {
 
     @MethodInvoker(name = "getLightEngine")
     Object getLightEngine(Object target);
+
+    @MethodInvoker(name = "getChunk")
+    Object getChunk(Object target, int chunkX, int chunkZ, boolean load);
 }

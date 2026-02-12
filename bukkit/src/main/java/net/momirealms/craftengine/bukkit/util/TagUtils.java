@@ -53,7 +53,7 @@ public final class TagUtils {
                 continue;
             }
             FriendlyByteBuf deserializeBuf = new FriendlyByteBuf(Unpooled.buffer());
-            TagNetworkSerializationProxy.NetworkPayloadProxy.INSTANCE.write(payload.getValue(), PacketUtils.wrapByteBuf(deserializeBuf));
+            TagNetworkSerializationProxy.NetworkPayloadProxy.INSTANCE.write(payload.getValue(), PacketUtils.ensureNMSFriendlyByteBuf(deserializeBuf));
             Map<String, IntList> originalTags = deserializeBuf.readMap(
                     FriendlyByteBuf::readUtf,
                     FriendlyByteBuf::readIntIdList
@@ -81,7 +81,7 @@ public final class TagUtils {
                     FriendlyByteBuf::writeUtf,
                     FriendlyByteBuf::writeIntIdList
             );
-            Object mergedPayload = TagNetworkSerializationProxy.NetworkPayloadProxy.INSTANCE.read(PacketUtils.wrapByteBuf(serializeBuf));
+            Object mergedPayload = TagNetworkSerializationProxy.NetworkPayloadProxy.INSTANCE.read(PacketUtils.ensureNMSFriendlyByteBuf(serializeBuf));
             modified.put(payload.getKey(), mergedPayload);
         }
         return ClientboundUpdateTagsPacketProxy.INSTANCE.newInstance(modified);

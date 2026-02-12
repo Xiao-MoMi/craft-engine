@@ -31,4 +31,7 @@ public interface LightEngineProxy {
             @Type(clazz = DirectionProxy.class) Object direction,
             int defaultReturnValue
     );
+
+    @MethodInvoker(name = "hasDifferentLightProperties", isStatic = true, activeIf = "min_version=1.21.2")
+    boolean hasDifferentLightProperties( @Type(clazz = BlockStateProxy.class) Object oldState, @Type(clazz = BlockStateProxy.class) Object newState);
 }

@@ -35,9 +35,9 @@ import net.momirealms.craftengine.core.world.ChunkPos;
 import net.momirealms.craftengine.core.world.SectionPos;
 import net.momirealms.craftengine.core.world.chunk.CEChunk;
 import net.momirealms.craftengine.core.world.chunk.CESection;
-import net.momirealms.craftengine.proxy.minecraft.server.level.ServerChunkCacheProxy;
 import net.momirealms.craftengine.proxy.minecraft.server.level.ServerLevelProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.level.chunk.ChunkAccessProxy;
+import net.momirealms.craftengine.proxy.minecraft.world.level.chunk.ChunkSourceProxy;
 import org.bukkit.Bukkit;
 import org.jetbrains.annotations.Nullable;
 
@@ -95,7 +95,7 @@ final class FastAsyncWorldEditDelegate extends AbstractDelegateExtent {
 
     private static void injectLevelChunk(Object chunkSource, CEChunk ceChunk) {
         ChunkPos pos = ceChunk.chunkPos();
-        Object levelChunk = ServerChunkCacheProxy.INSTANCE.getChunk(chunkSource, pos.x, pos.z, false);
+        Object levelChunk = ChunkSourceProxy.INSTANCE.getChunk(chunkSource, pos.x, pos.z, false);
         if (levelChunk != null) {
             Object[] sections = ChunkAccessProxy.INSTANCE.getSections(levelChunk);
             CESection[] ceSections = ceChunk.sections();

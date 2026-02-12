@@ -1,5 +1,6 @@
 package net.momirealms.craftengine.proxy.minecraft.sounds;
 
+import net.momirealms.craftengine.proxy.minecraft.network.FriendlyByteBufProxy;
 import net.momirealms.craftengine.proxy.minecraft.resources.IdentifierProxy;
 import net.momirealms.sparrow.reflection.proxy.ASMProxyFactory;
 import net.momirealms.sparrow.reflection.proxy.annotation.FieldGetter;
@@ -13,6 +14,9 @@ import java.util.Optional;
 public interface SoundEventProxy {
     SoundEventProxy INSTANCE = ASMProxyFactory.create(SoundEventProxy.class);
 
+    @FieldGetter(name = "DIRECT_STREAM_CODEC", isStatic = true, activeIf = "min_version=1.20.5")
+    Object getDirectStreamCodec();
+
     @FieldGetter(name = "location")
     Object getLocation(Object target);
 
@@ -24,4 +28,7 @@ public interface SoundEventProxy {
 
     @MethodInvoker(name = "create", isStatic = true)
     Object create(@Type(clazz = IdentifierProxy.class) Object location, Optional<Float> range);
+
+    @MethodInvoker(name = "writeToNetwork", activeIf = "max_version=1.20.4")
+    void writeToNetwork(Object target, @Type(clazz = FriendlyByteBufProxy.class) Object buf);
 }

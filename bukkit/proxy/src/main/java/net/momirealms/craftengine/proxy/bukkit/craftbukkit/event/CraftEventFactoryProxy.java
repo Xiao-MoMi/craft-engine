@@ -45,9 +45,17 @@ public interface CraftEventFactoryProxy {
             int flags
     );
 
-    @MethodInvoker(name = "callRedstoneChange", isStatic = true)
-    BlockRedstoneEvent callRedstoneChange(
+    @MethodInvoker(name = "callRedstoneChange", isStatic = true, activeIf = "min_version=1.21.9")
+    BlockRedstoneEvent callRedstoneChange$0(
             @Type(clazz = LevelAccessorProxy.class) Object level,
+            @Type(clazz = BlockPosProxy.class) Object pos,
+            int oldCurrent,
+            int newCurrent
+    );
+
+    @MethodInvoker(name = "callRedstoneChange", isStatic = true, activeIf = "max_version=1.21.8")
+    BlockRedstoneEvent callRedstoneChange$1(
+            @Type(clazz = LevelProxy.class) Object level,
             @Type(clazz = BlockPosProxy.class) Object pos,
             int oldCurrent,
             int newCurrent

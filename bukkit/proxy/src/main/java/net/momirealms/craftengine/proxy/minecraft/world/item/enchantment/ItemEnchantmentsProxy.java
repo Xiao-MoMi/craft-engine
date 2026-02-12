@@ -5,7 +5,7 @@ import net.momirealms.sparrow.reflection.proxy.ASMProxyFactory;
 import net.momirealms.sparrow.reflection.proxy.annotation.FieldGetter;
 import net.momirealms.sparrow.reflection.proxy.annotation.ReflectionProxy;
 
-@ReflectionProxy(name = "net.minecraft.world.item.enchantment.ItemEnchantments")
+@ReflectionProxy(name = "net.minecraft.world.item.enchantment.ItemEnchantments", activeIf = "min_version=1.20.5")
 public interface ItemEnchantmentsProxy {
     ItemEnchantmentsProxy INSTANCE = ASMProxyFactory.create(ItemEnchantmentsProxy.class);
 

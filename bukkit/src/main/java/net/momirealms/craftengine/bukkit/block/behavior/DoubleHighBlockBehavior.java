@@ -80,7 +80,7 @@ public class DoubleHighBlockBehavior extends AbstractCanSurviveBlockBehavior {
         if (blockState == null || blockState.isEmpty()) {
             return superMethod.call();
         }
-        BukkitServerPlayer cePlayer = BukkitAdaptors.adapt(ServerPlayerProxy.INSTANCE.getBukkitEntity(player));
+        BukkitServerPlayer cePlayer = BukkitAdaptors.adapt(ServerPlayerProxy.INSTANCE.getBukkitEntity$1(player));
         if (cePlayer == null) {
             return superMethod.call();
         }

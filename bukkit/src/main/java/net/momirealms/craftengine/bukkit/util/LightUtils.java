@@ -1,12 +1,15 @@
 package net.momirealms.craftengine.bukkit.util;
 
 import net.momirealms.craftengine.core.plugin.CraftEngine;
+import net.momirealms.craftengine.core.util.VersionHelper;
 import net.momirealms.craftengine.proxy.bukkit.craftbukkit.CraftWorldProxy;
 import net.momirealms.craftengine.proxy.minecraft.network.protocol.game.ClientboundLightUpdatePacketProxy;
 import net.momirealms.craftengine.proxy.minecraft.server.level.*;
 import net.momirealms.craftengine.proxy.minecraft.server.network.ServerPlayerConnectionProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.level.ChunkPosProxy;
+import net.momirealms.craftengine.proxy.minecraft.world.level.block.state.BlockBehaviourProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.level.chunk.ChunkSourceProxy;
+import net.momirealms.craftengine.proxy.minecraft.world.level.lighting.LightEngineProxy;
 import org.bukkit.World;
 
 import java.util.BitSet;
@@ -17,6 +20,17 @@ public final class LightUtils {
 
     private LightUtils() {}
 
+    public static boolean hasDifferentLightProperties(Object oldState, Object newState) {
+        if (VersionHelper.isOrAbove1_21_2()) {
+            return LightEngineProxy.INSTANCE.hasDifferentLightProperties(oldState, newState);
+        } else {
+            return BlockBehaviourProxy.BlockStateBaseProxy.INSTANCE.getLightEmission(newState)
+                    != BlockBehaviourProxy.BlockStateBaseProxy.INSTANCE.getLightEmission(oldState)
+                    || BlockBehaviourProxy.BlockStateBaseProxy.INSTANCE.isUseShapeForLightOcclusion(newState)
+                    || BlockBehaviourProxy.BlockStateBaseProxy.INSTANCE.isUseShapeForLightOcclusion(oldState);
+        }
+    }
+
     public static void updateChunkLight(World world, Map<Long, BitSet> sectionPosSet) {
         try {
             Object serverLevel = CraftWorldProxy.INSTANCE.getWorld(world);
@@ -26,7 +40,7 @@ public final class LightUtils {
                 long chunkKey = entry.getKey();
                 Object chunkHolder = ChunkMapProxy.INSTANCE.getVisibleChunkIfPresent(chunkMap, chunkKey);
                 if (chunkHolder == null) continue;
-                List<Object> players = ChunkHolderProxy.INSTANCE.getPlayers(chunkHolder);
+                List<Object> players = ChunkHolderProxy.INSTANCE.getPlayers(chunkHolder, false);
                 if (players.isEmpty()) continue;
                 Object lightEngine = ChunkSourceProxy.INSTANCE.getLightEngine(chunkSource);
                 Object chunkPos = ChunkPosProxy.INSTANCE.newInstance((int) chunkKey, (int) (chunkKey >> 32));

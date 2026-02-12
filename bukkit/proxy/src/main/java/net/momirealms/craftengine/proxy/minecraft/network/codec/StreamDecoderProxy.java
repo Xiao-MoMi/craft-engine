@@ -8,6 +8,6 @@ import net.momirealms.sparrow.reflection.proxy.annotation.ReflectionProxy;
 public interface StreamDecoderProxy {
     StreamDecoderProxy INSTANCE = ASMProxyFactory.create(StreamDecoderProxy.class);
 
-    @MethodInvoker(name = "decode")
+    @MethodInvoker(name = "decode", activeIf = "min_version=1.20.5")
     <T> T decode(Object target, Object buf);
 }

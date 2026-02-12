@@ -4,7 +4,7 @@ import net.momirealms.sparrow.reflection.proxy.ASMProxyFactory;
 import net.momirealms.sparrow.reflection.proxy.annotation.MethodInvoker;
 import net.momirealms.sparrow.reflection.proxy.annotation.ReflectionProxy;
 
-@ReflectionProxy(name = "net.minecraft.advancements.AdvancementType")
+@ReflectionProxy(name = {"net.minecraft.advancements.AdvancementType", "net.minecraft.advancements.FrameType"})
 public interface AdvancementTypeProxy {
     AdvancementTypeProxy INSTANCE = ASMProxyFactory.create(AdvancementTypeProxy.class);
     Enum<?>[] VALUES = INSTANCE.values();

@@ -55,8 +55,10 @@ public final class PlayerUtils {
             Object droppedItem;
             if (VersionHelper.isOrAbove1_21_4()) {
                 droppedItem = ServerPlayerProxy.INSTANCE.drop(serverPlayer, original.copyWithCount(1).getLiteralObject(), false, false, false, null);
+            } else if (VersionHelper.isOrAbove1_20_3()) {
+                droppedItem = ServerPlayerProxy.INSTANCE.drop$1(serverPlayer, original.copyWithCount(1).getLiteralObject(), false, false, false);
             } else {
-                droppedItem = ServerPlayerProxy.INSTANCE.drop(serverPlayer, original.copyWithCount(1).getLiteralObject(), false, false, false);
+                droppedItem = PlayerProxy.INSTANCE.drop$0(serverPlayer, original.copyWithCount(1).getLiteralObject(), false, false, true);
             }
             if (droppedItem != null) {
                 ItemEntityProxy.INSTANCE.makeFakeItem(droppedItem);
@@ -67,8 +69,10 @@ public final class PlayerUtils {
             Object droppedItem;
             if (VersionHelper.isOrAbove1_21_4()) {
                 droppedItem = ServerPlayerProxy.INSTANCE.drop(serverPlayer, item.getLiteralObject(), false, false, !VersionHelper.isOrAbove1_21_5(), null);
+            } else if (VersionHelper.isOrAbove1_20_3()) {
+                droppedItem = ServerPlayerProxy.INSTANCE.drop$1(serverPlayer, item.getLiteralObject(), false, false, true);
             } else {
-                droppedItem = ServerPlayerProxy.INSTANCE.drop(serverPlayer, item.getLiteralObject(), false, false, true);
+                droppedItem = PlayerProxy.INSTANCE.drop$0(serverPlayer, item.getLiteralObject(), false, false, true);
             }
             if (droppedItem != null) {
                 ItemEntityProxy.INSTANCE.setNoPickUpDelay(droppedItem);

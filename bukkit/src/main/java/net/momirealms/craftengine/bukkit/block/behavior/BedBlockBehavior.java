@@ -109,7 +109,7 @@ public class BedBlockBehavior extends BukkitBlockBehavior implements EntityBlock
         if (blockState == null || blockState.isEmpty()) {
             return superMethod.call();
         }
-        BukkitServerPlayer serverPlayer = BukkitAdaptors.adapt(ServerPlayerProxy.INSTANCE.getBukkitEntity(player));
+        BukkitServerPlayer serverPlayer = BukkitAdaptors.adapt(ServerPlayerProxy.INSTANCE.getBukkitEntity$1(player));
         if (serverPlayer == null) {
             return superMethod.call();
         }

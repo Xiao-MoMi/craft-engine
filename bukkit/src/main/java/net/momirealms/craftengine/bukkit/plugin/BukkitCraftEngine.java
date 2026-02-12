@@ -222,6 +222,8 @@ public final class BukkitCraftEngine extends CraftEngine {
             Bukkit.getPluginManager().disablePlugin(this.javaPlugin);
             return;
         }
+        // 预检查ASM代理可用性，添加 -Dnet.momirealms.craftengine.pre-check-asm-proxy 启动参数启用
+        ReflectionUtils.preCheckASMProxy();
         this.successfullyEnabled = true;
         if (!this.successfullyLoaded) {
             logger().severe(" ");

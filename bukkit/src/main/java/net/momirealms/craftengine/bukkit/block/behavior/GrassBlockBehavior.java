@@ -133,7 +133,12 @@ public class GrassBlockBehavior extends BukkitBlockBehavior {
         Object registryAccess = RegistryUtils.getRegistryAccess();
         Object registry = RegistryAccessProxy.INSTANCE.lookupOrThrow(registryAccess, MRegistries.PLACED_FEATURE);
         if (registry == null) return;
-        Optional<Object> holder = RegistryProxy.INSTANCE.get$1(registry, FeatureUtils.createPlacedFeatureKey(boneMealFeature()));
+        Optional<Object> holder;
+        if (VersionHelper.isOrAbove1_21_2()) {
+            holder = RegistryProxy.INSTANCE.get$1(registry, FeatureUtils.createPlacedFeatureKey(boneMealFeature()));
+        } else {
+            holder = RegistryProxy.INSTANCE.getHolder$1(registry, FeatureUtils.createPlacedFeatureKey(boneMealFeature()));
+        }
         if (holder.isEmpty()) {
             CraftEngine.instance().logger().warn("Placed feature not found: " + boneMealFeature());
             return;

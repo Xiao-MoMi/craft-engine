@@ -5,7 +5,6 @@ import net.kyori.adventure.text.Component;
 import net.momirealms.craftengine.bukkit.api.BukkitAdaptors;
 import net.momirealms.craftengine.bukkit.item.BukkitItemManager;
 import net.momirealms.craftengine.bukkit.item.DataComponentTypes;
-import net.momirealms.craftengine.bukkit.nms.FastNMS;
 import net.momirealms.craftengine.bukkit.plugin.BukkitCraftEngine;
 import net.momirealms.craftengine.bukkit.plugin.user.BukkitServerPlayer;
 import net.momirealms.craftengine.bukkit.util.*;
@@ -37,9 +36,7 @@ import net.momirealms.craftengine.proxy.minecraft.world.entity.player.PlayerProx
 import net.momirealms.craftengine.proxy.minecraft.world.inventory.AbstractContainerMenuProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.inventory.CraftingContainerProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.item.ItemStackProxy;
-import net.momirealms.craftengine.proxy.minecraft.world.item.crafting.ArmorDyeRecipeProxy;
-import net.momirealms.craftengine.proxy.minecraft.world.item.crafting.FireworkStarFadeRecipeProxy;
-import net.momirealms.craftengine.proxy.minecraft.world.item.crafting.RepairItemRecipeProxy;
+import net.momirealms.craftengine.proxy.minecraft.world.item.crafting.*;
 import org.bukkit.Material;
 import org.bukkit.entity.Player;
 import org.bukkit.event.Event;
@@ -786,12 +783,12 @@ public class RecipeEventListener implements Listener {
         }
         if (recipeHolderOrRecipe == null) return null;
         if (VersionHelper.isOrAbove1_21_2()) {
-            return KeyUtils.identifierToKey(ResourceKeyProxy.INSTANCE.getIdentifier(FastNMS.INSTANCE.field$RecipeHolder$id(recipeHolderOrRecipe)));
+            return KeyUtils.identifierToKey(ResourceKeyProxy.INSTANCE.getIdentifier(RecipeHolderProxy.INSTANCE.getId(recipeHolderOrRecipe)));
         } else if (VersionHelper.isOrAbove1_20_2()) {
-            return KeyUtils.identifierToKey(FastNMS.INSTANCE.field$RecipeHolder$id(recipeHolderOrRecipe));
+            return KeyUtils.identifierToKey(RecipeHolderProxy.INSTANCE.getId(recipeHolderOrRecipe));
         } else {
             // 其实是recipe getId的实现
-            return KeyUtils.identifierToKey(FastNMS.INSTANCE.field$RecipeHolder$id(recipeHolderOrRecipe));
+            return KeyUtils.identifierToKey(RecipeProxy.INSTANCE.getId(recipeHolderOrRecipe));
         }
     }
 

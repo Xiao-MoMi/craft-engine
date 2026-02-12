@@ -11,5 +11,5 @@ public interface ChunkHolderProxy {
     ChunkHolderProxy INSTANCE = ASMProxyFactory.create(ChunkHolderProxy.class);
 
     @MethodInvoker(name = {"moonrise$getPlayers", "getPlayers"})
-    List<Object> getPlayers(Object target);
+    List<Object> getPlayers(Object target, boolean onlyOnWatchDistanceEdge);
 }

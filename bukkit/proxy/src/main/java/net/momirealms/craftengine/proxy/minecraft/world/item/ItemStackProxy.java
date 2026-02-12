@@ -1,15 +1,18 @@
 package net.momirealms.craftengine.proxy.minecraft.world.item;
 
 import com.mojang.serialization.Codec;
+import net.momirealms.craftengine.proxy.minecraft.core.RegistryProxy;
 import net.momirealms.craftengine.proxy.minecraft.core.component.DataComponentHolderProxy;
 import net.momirealms.craftengine.proxy.minecraft.core.component.DataComponentPatchProxy;
 import net.momirealms.craftengine.proxy.minecraft.core.component.DataComponentTypeProxy;
 import net.momirealms.craftengine.proxy.minecraft.nbt.CompoundTagProxy;
+import net.momirealms.craftengine.proxy.minecraft.network.codec.StreamCodecProxy;
 import net.momirealms.craftengine.proxy.minecraft.tags.TagKeyProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.entity.EquipmentSlotProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.entity.LivingEntityProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.level.ItemLikeProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.level.block.state.BlockStateProxy;
+import net.momirealms.craftengine.proxy.minecraft.world.level.block.state.pattern.BlockInWorldProxy;
 import net.momirealms.sparrow.reflection.proxy.ASMProxyFactory;
 import net.momirealms.sparrow.reflection.proxy.annotation.*;
 
@@ -28,6 +31,9 @@ public interface ItemStackProxy extends DataComponentHolderProxy {
 
     @FieldGetter(name = "CODEC", isStatic = true, activeIf = "min_version=1.20.5")
     Codec<Object> getCodec();
+
+    @FieldGetter(name = "OPTIONAL_STREAM_CODEC", isStatic = true, activeIf = "min_version=1.20.5")
+    Object getOptionalStreamCodec();
 
     @MethodInvoker(name = "hurtAndBreak", activeIf = "min_version=1.20.5")
     void hurtAndBreak(Object target, int amount, @Type(clazz = LivingEntityProxy.class) Object entity, @Type(clazz = EquipmentSlotProxy.class) Object slot);
@@ -79,4 +85,19 @@ public interface ItemStackProxy extends DataComponentHolderProxy {
 
     @MethodInvoker(name = "isCorrectToolForDrops")
     boolean isCorrectToolForDrops(Object target, @Type(clazz = BlockStateProxy.class) Object state);
+
+    @MethodInvoker(name = "canBreakBlockInAdventureMode", activeIf = "min_version=1.20.5")
+    boolean canBreakBlockInAdventureMode(Object target, @Type(clazz = BlockInWorldProxy.class) Object block);
+
+    @MethodInvoker(name = "canPlaceOnBlockInAdventureMode", activeIf = "min_version=1.20.5")
+    boolean canPlaceOnBlockInAdventureMode(Object target, @Type(clazz = BlockInWorldProxy.class) Object block);
+
+    @MethodInvoker(name = "hasAdventureModeBreakTagForBlock", activeIf = "max_version=1.20.4")
+    boolean hasAdventureModeBreakTagForBlock(Object target, @Type(clazz = RegistryProxy.class) Object blockRegistry, @Type(clazz = BlockInWorldProxy.class) Object block);
+
+    @MethodInvoker(name = "hasAdventureModePlaceTagForBlock", activeIf = "max_version=1.20.4")
+    boolean hasAdventureModePlaceTagForBlock(Object target, @Type(clazz = RegistryProxy.class) Object blockRegistry, @Type(clazz = BlockInWorldProxy.class) Object block);
+
+    @MethodInvoker(name = "validatedStreamCodec", isStatic = true, activeIf = "min_version=1.20.5")
+    Object validatedStreamCodec(@Type(clazz = StreamCodecProxy.class) Object basePacketCodec);
 }

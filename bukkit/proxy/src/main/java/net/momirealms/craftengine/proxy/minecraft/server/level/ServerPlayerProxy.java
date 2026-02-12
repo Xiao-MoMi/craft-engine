@@ -30,11 +30,11 @@ public interface ServerPlayerProxy extends PlayerProxy {
     @MethodInvoker(name = "drop", activeIf = "min_version=1.21.4")
     Object drop(Object target, @Type(clazz = ItemStackProxy.class) Object droppedItem, boolean dropAround, boolean traceItem, boolean callEvent, @Nullable Consumer<Item> entityOperation);
 
-    @MethodInvoker(name = "drop", activeIf = "max_version=1.21.3")
-    Object drop(Object target, @Type(clazz = ItemStackProxy.class) Object droppedItem, boolean dropAround, boolean traceItem, boolean callEvent);
+    @MethodInvoker(name = "drop", activeIf = "min_version=1.20.3 && max_version=1.21.3")
+    Object drop$1(Object target, @Type(clazz = ItemStackProxy.class) Object droppedItem, boolean dropAround, boolean traceItem, boolean callEvent);
 
     @MethodInvoker(name = "getBukkitEntity")
-    Player getBukkitEntity(Object target);
+    Player getBukkitEntity$1(Object target); // fixme 无法覆写方法
 
     @FieldGetter(name = "gameMode")
     Object getGameMode(Object target);

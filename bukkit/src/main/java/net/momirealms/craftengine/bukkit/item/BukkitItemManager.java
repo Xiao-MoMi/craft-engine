@@ -89,7 +89,11 @@ public class BukkitItemManager extends AbstractItemManager<ItemStack> {
         this.slotChangeListener = VersionHelper.isOrAbove1_20_3() ? new SlotChangeListener(this) : null;
         this.networkItemHandler = VersionHelper.isOrAbove1_20_5() ? new ModernNetworkItemHandler() : new LegacyNetworkItemHandler();
         this.registerAllVanillaItems();
-        this.bedrockItemHolder = RegistryProxy.INSTANCE.get$1(MBuiltInRegistries.ITEM, ResourceKeyProxy.INSTANCE.create(MRegistries.ITEM, KeyUtils.toIdentifier(Key.of("minecraft:bedrock")))).orElseThrow();
+        if (VersionHelper.isOrAbove1_21_2()) {
+            this.bedrockItemHolder = RegistryProxy.INSTANCE.get$1(MBuiltInRegistries.ITEM, ResourceKeyProxy.INSTANCE.create(MRegistries.ITEM, KeyUtils.toIdentifier(Key.of("minecraft:bedrock")))).orElseThrow();
+        } else {
+            this.bedrockItemHolder = RegistryProxy.INSTANCE.getHolder$1(MBuiltInRegistries.ITEM, ResourceKeyProxy.INSTANCE.create(MRegistries.ITEM, KeyUtils.toIdentifier(Key.of("minecraft:bedrock")))).orElseThrow();
+        }
         this.registerCustomTrimMaterial();
         this.loadLastRegisteredPatterns();
         ItemStack emptyStack = CraftItemStackProxy.INSTANCE.asCraftMirror(ItemStackProxy.EMPTY);
@@ -390,7 +394,12 @@ public class BukkitItemManager extends AbstractItemManager<ItemStack> {
             VANILLA_ITEMS.add(itemKey);
             super.cachedVanillaItemSuggestions.add(Suggestion.suggestion(itemKey.asString()));
             UniqueKey uniqueKey = UniqueKey.create(itemKey);
-            Object mcHolder = RegistryProxy.INSTANCE.get$1(MBuiltInRegistries.ITEM, ResourceKeyProxy.INSTANCE.create(MRegistries.ITEM, identifier)).orElseThrow();
+            Object mcHolder;
+            if (VersionHelper.isOrAbove1_21_2()) {
+                mcHolder = RegistryProxy.INSTANCE.get$1(MBuiltInRegistries.ITEM, ResourceKeyProxy.INSTANCE.create(MRegistries.ITEM, identifier)).orElseThrow();
+            } else {
+                mcHolder = RegistryProxy.INSTANCE.getHolder$1(MBuiltInRegistries.ITEM, ResourceKeyProxy.INSTANCE.create(MRegistries.ITEM, identifier)).orElseThrow();
+            }
             Set<Object> tags = HolderProxy.ReferenceProxy.INSTANCE.getTags(mcHolder);
             for (Object tag : tags) {
                 Key tagId = KeyUtils.identifierToKey(TagKeyProxy.INSTANCE.getLocation(tag));

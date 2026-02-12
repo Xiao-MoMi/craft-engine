@@ -102,7 +102,7 @@ public class PressurePlateBlockBehavior extends BukkitBlockBehavior {
     @Override
     @SuppressWarnings("UnstableApiUsage")
     public void entityInside(Object thisBlock, Object[] args, Callable<Object> superMethod) {
-        Entity entity = EntityProxy.INSTANCE.getBukkitEntity(args[3]);
+        Entity entity = EntityProxy.INSTANCE.getBukkitEntity$0(args[3]);
         Block block = CraftBlockProxy.INSTANCE.at(args[1], args[2]);
         EntityInsideBlockEvent event = new EntityInsideBlockEvent(entity, block);
         if (EventUtils.fireAndCheckCancel(event)) {
@@ -170,7 +170,7 @@ public class PressurePlateBlockBehavior extends BukkitBlockBehavior {
         World world = BukkitWorldManager.instance().getWorld(craftWorld).world();
         world.playBlockSound(LocationUtils.toVec3d(LocationUtils.fromBlockPos(pos)), this.offSound);
         craftWorld.sendGameEvent(
-                entity != null ? EntityProxy.INSTANCE.getBukkitEntity(entity) : null,
+                entity != null ? EntityProxy.INSTANCE.getBukkitEntity$0(entity) : null,
                 GameEvent.BLOCK_DEACTIVATE,
                 positionVector
         );
@@ -180,7 +180,7 @@ public class PressurePlateBlockBehavior extends BukkitBlockBehavior {
         World world = BukkitWorldManager.instance().getWorld(craftWorld).world();
         world.playBlockSound(LocationUtils.toVec3d(LocationUtils.fromBlockPos(pos)), this.onSound);
         craftWorld.sendGameEvent(
-                entity != null ? EntityProxy.INSTANCE.getBukkitEntity(entity) : null,
+                entity != null ? EntityProxy.INSTANCE.getBukkitEntity$0(entity) : null,
                 GameEvent.BLOCK_ACTIVATE,
                 positionVector
         );

@@ -16,10 +16,10 @@ import net.momirealms.craftengine.core.plugin.network.codec.NetworkCodec;
 import net.momirealms.craftengine.core.registry.BuiltInRegistries;
 import net.momirealms.craftengine.core.util.*;
 import net.momirealms.craftengine.proxy.bukkit.craftbukkit.CraftWorldProxy;
-import net.momirealms.craftengine.proxy.minecraft.server.level.ServerChunkCacheProxy;
 import net.momirealms.craftengine.proxy.minecraft.server.level.ServerLevelProxy;
 import net.momirealms.craftengine.proxy.minecraft.server.level.ServerPlayerProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.level.BlockAndTintGetterProxy;
+import net.momirealms.craftengine.proxy.minecraft.world.level.chunk.ChunkSourceProxy;
 import net.momirealms.craftengine.proxy.paper.chunk.system.entity.RegionizedPlayerChunkLoaderProxy;
 import org.bukkit.entity.Player;
 
@@ -86,7 +86,7 @@ public record ClientCustomBlockPacket(int vanillaSize, int currentSize) implemen
                     for (long chunkPos : sentChunks) {
                         int chunkX = (int) chunkPos;
                         int chunkZ = (int) (chunkPos >> 32);
-                        Object levelChunk = ServerChunkCacheProxy.INSTANCE.getChunk(chunkSource, chunkX, chunkZ, false);
+                        Object levelChunk = ChunkSourceProxy.INSTANCE.getChunk(chunkSource, chunkX, chunkZ, false);
                         Object packet = NetworkReflections.constructor$ClientboundLevelChunkWithLightPacket.newInstance(levelChunk, lightEngine, null, null);
                         user.sendPacket(packet, true);
                     }

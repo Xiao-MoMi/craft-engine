@@ -26,8 +26,11 @@ public interface RegistryProxy extends IdMapProxy, HolderLookupProxy {
     @MethodInvoker(name = "asLookup", activeIf = "max_version=1.21.1")
     Object asLookup(Object target);
 
-    @MethodInvoker(name = {"get", "getHolder"})
+    @MethodInvoker(name = "get", activeIf = "min_version=1.21.2")
     Optional<Object> get$0(Object target, @Type(clazz = IdentifierProxy.class) Object id);
+
+    @MethodInvoker(name = "getHolder", activeIf = "min_version=1.20.5 && max_version=1.21.1")
+    Optional<Object> getHolder$0(Object target, @Type(clazz = IdentifierProxy.class) Object id);
 
     @MethodInvoker(name = "getId")
     int getId$0(Object target, Object value);
@@ -40,4 +43,7 @@ public interface RegistryProxy extends IdMapProxy, HolderLookupProxy {
 
     @MethodInvoker(name = "get", activeIf = "max_version=1.21.1")
     Object get$2(Object target, @Type(clazz = IdentifierProxy.class) Object id);
+
+    @MethodInvoker(name = "getHolder", activeIf = "max_version=1.21.1")
+    Optional<Object> getHolder$1(Object target, @Type(clazz = ResourceKeyProxy.class) Object key);
 }

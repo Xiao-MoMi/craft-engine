@@ -99,7 +99,12 @@ public class SaplingBlockBehavior extends BukkitBlockBehavior {
             Object registryAccess = RegistryUtils.getRegistryAccess();
             Object registry = RegistryAccessProxy.INSTANCE.lookupOrThrow(registryAccess, MRegistries.CONFIGURED_FEATURE);
             if (registry == null) return;
-            Optional<Object> optionalHolder = RegistryProxy.INSTANCE.get$1(registry, FeatureUtils.createConfiguredFeatureKey(treeFeature()));
+            Optional<Object> optionalHolder;
+            if (VersionHelper.isOrAbove1_21_2()) {
+                optionalHolder = RegistryProxy.INSTANCE.get$1(registry, FeatureUtils.createConfiguredFeatureKey(treeFeature()));
+            } else {
+                optionalHolder = RegistryProxy.INSTANCE.getHolder$1(registry, FeatureUtils.createConfiguredFeatureKey(treeFeature()));
+            }
             if (optionalHolder.isEmpty()) {
                 CraftEngine.instance().logger().warn("Configured feature not found: " + treeFeature());
                 return;
@@ -164,7 +169,7 @@ public class SaplingBlockBehavior extends BukkitBlockBehavior {
     }
 
     @Override
-    public void performBoneMeal(Object thisBlock, Object[] args) throws Exception {
+    public void performBoneMeal(Object thisBlock, Object[] args) {
         this.increaseStage(args[0], args[2], args[3], args[1]);
     }
 

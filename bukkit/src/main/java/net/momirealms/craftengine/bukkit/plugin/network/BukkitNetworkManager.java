@@ -266,7 +266,9 @@ public class BukkitNetworkManager extends AbstractNetworkManager implements List
         this.registerPacketListeners();
         PayloadHelper.init();
         // set up packet senders
-        this.packetConsumer = FastNMS.INSTANCE::method$Connection$send;
+        this.packetConsumer = VersionHelper.isOrAbove1_21_6()
+                ? (target, packet, sendListener) -> ConnectionProxy.INSTANCE.send$0(target, packet, (ChannelFutureListener) sendListener)
+                : ConnectionProxy.INSTANCE::send$1;
         this.packetsConsumer = (connection, packets, sendListener) -> {
             Object bundle = ClientboundBundlePacketProxy.INSTANCE.newInstance(packets);
             this.packetConsumer.accept(connection, bundle, sendListener);
@@ -378,8 +380,8 @@ public class BukkitNetworkManager extends AbstractNetworkManager implements List
         Object botList = BotListProxy.INSTANCE.getInstance();
         List<Object> bots = BotListProxy.INSTANCE.getBots(botList);
         ListMonitor<Object> monitor = new ListMonitor<>(bots,
-                (bot) -> addFakePlayer(ServerPlayerProxy.INSTANCE.getBukkitEntity(bot)),
-                (bot) -> removeFakePlayer(ServerPlayerProxy.INSTANCE.getBukkitEntity(bot))
+                (bot) -> addFakePlayer(ServerPlayerProxy.INSTANCE.getBukkitEntity$1(bot)),
+                (bot) -> removeFakePlayer(ServerPlayerProxy.INSTANCE.getBukkitEntity$1(bot))
         );
         BotListProxy.INSTANCE.setBots(botList, monitor);
     }
@@ -707,7 +709,11 @@ public class BukkitNetworkManager extends AbstractNetworkManager implements List
         if (immediately) {
             this.immediatePacketConsumer.accept(player.nettyChannel(), packet, sendListener);
         } else {
-            this.packetConsumer.accept(player.connection(), packet, sendListener != null ? PacketSendListenerProxy.INSTANCE.thenRun(sendListener) : null);
+            if (VersionHelper.isOrAbove1_21_6()) {
+                this.packetConsumer.accept(player.connection(), packet, sendListener != null ? (ChannelFutureListener) $ -> sendListener.run() : null);
+            } else {
+                this.packetConsumer.accept(player.connection(), packet, sendListener != null ? PacketSendListenerProxy.INSTANCE.thenRun(sendListener) : null);
+            }
         }
     }
 
@@ -717,7 +723,11 @@ public class BukkitNetworkManager extends AbstractNetworkManager implements List
         if (immediately) {
             this.immediatePacketsConsumer.accept(player.nettyChannel(), packet, sendListener);
         } else {
-            this.packetsConsumer.accept(player.connection(), packet, sendListener != null ? PacketSendListenerProxy.INSTANCE.thenRun(sendListener) : null);
+            if (VersionHelper.isOrAbove1_21_6()) {
+                this.packetsConsumer.accept(player.connection(), packet, sendListener != null ? (ChannelFutureListener) $ -> sendListener.run() : null);
+            } else {
+                this.packetsConsumer.accept(player.connection(), packet, sendListener != null ? PacketSendListenerProxy.INSTANCE.thenRun(sendListener) : null);
+            }
         }
     }
 
@@ -1874,6 +1884,7 @@ public class BukkitNetworkManager extends AbstractNetworkManager implements List
     }
 
     public static class ResourcePackResponseListener implements NMSPacketListener {
+        public static final Object ServerResourcePackConfigurationTask$TYPE = VersionHelper.isOrAbove1_20_2() ? ServerResourcePackConfigurationTaskProxy.INSTANCE.getType() : null;
 
         @Override
         public void onPacketReceive(NetWorkUser user, NMSPacketEvent event, Object packet) {
@@ -1919,7 +1930,7 @@ public class BukkitNetworkManager extends AbstractNetworkManager implements List
                     try {
                         // 当客户端发出多次成功包的时候，finish会报错，我们忽略他
                         NetworkReflections.methodHandle$ServerCommonPacketListener$handleResourcePackResponse.invokeExact(packetListener, packet);
-                        ServerConfigurationPacketListenerImplProxy.INSTANCE.finishCurrentTask(packetListener, ServerResourcePackConfigurationTaskProxy.TYPE);
+                        ServerConfigurationPacketListenerImplProxy.INSTANCE.finishCurrentTask(packetListener, ServerResourcePackConfigurationTask$TYPE);
                     } catch (Throwable e) {
                         Debugger.RESOURCE_PACK.warn(() -> "Cannot finish current task", e);
                     }
@@ -1980,6 +1991,7 @@ public class BukkitNetworkManager extends AbstractNetworkManager implements List
     }
 
     public static class S2CFinishConfigurationListener implements NMSPacketListener {
+        public static final Object JoinWorldTask$TYPE = VersionHelper.isOrAbove1_20_2() ? JoinWorldTaskProxy.INSTANCE.getType() : null;
 
         private void returnToWorld(Queue<Object> configurationTasks, Object packetListener) {
             configurationTasks.add(JoinWorldTaskProxy.INSTANCE.newInstance());
@@ -2020,7 +2032,7 @@ public class BukkitNetworkManager extends AbstractNetworkManager implements List
             // 取消 ClientboundFinishConfigurationPacket，让客户端发呆，并结束掉当前的进入世界任务
             event.setCancelled(true);
             try {
-                ServerConfigurationPacketListenerImplProxy.INSTANCE.finishCurrentTask(packetListener, JoinWorldTaskProxy.TYPE);
+                ServerConfigurationPacketListenerImplProxy.INSTANCE.finishCurrentTask(packetListener, JoinWorldTask$TYPE);
             } catch (Throwable e) {
                 CraftEngine.instance().logger().warn("Failed to finish current task for " + user.name(), e);
             }
@@ -2636,7 +2648,7 @@ public class BukkitNetworkManager extends AbstractNetworkManager implements List
             float zDist = buf.readFloat();
             float maxSpeed = buf.readFloat();
             int count = buf.readInt();
-            Object option = StreamDecoderProxy.INSTANCE.decode(NetworkReflections.instance$ParticleTypes$STREAM_CODEC, PacketUtils.wrapByteBuf(buf.source()));
+            Object option = StreamDecoderProxy.INSTANCE.decode(NetworkReflections.instance$ParticleTypes$STREAM_CODEC, PacketUtils.ensureNMSFriendlyByteBuf(buf.source()));
             if (option == null) return;
             if (!CoreReflections.clazz$BlockParticleOption.isInstance(option)) return;
             Object blockState = BlockParticleOptionProxy.INSTANCE.getState(option);
@@ -2658,7 +2670,7 @@ public class BukkitNetworkManager extends AbstractNetworkManager implements List
             buf.writeFloat(zDist);
             buf.writeFloat(maxSpeed);
             buf.writeInt(count);
-            StreamEncoderProxy.INSTANCE.encode(NetworkReflections.instance$ParticleTypes$STREAM_CODEC, PacketUtils.wrapByteBuf(buf.source()), remappedOption);
+            StreamEncoderProxy.INSTANCE.encode(NetworkReflections.instance$ParticleTypes$STREAM_CODEC, PacketUtils.ensureNMSFriendlyByteBuf(buf.source()), remappedOption);
         }
     }
 
@@ -2683,7 +2695,7 @@ public class BukkitNetworkManager extends AbstractNetworkManager implements List
             float zDist = buf.readFloat();
             float maxSpeed = buf.readFloat();
             int count = buf.readInt();
-            Object option = StreamDecoderProxy.INSTANCE.decode(NetworkReflections.instance$ParticleTypes$STREAM_CODEC, PacketUtils.wrapByteBuf(buf.source()));
+            Object option = StreamDecoderProxy.INSTANCE.decode(NetworkReflections.instance$ParticleTypes$STREAM_CODEC, PacketUtils.ensureNMSFriendlyByteBuf(buf.source()));
             if (option == null) return;
             if (!CoreReflections.clazz$BlockParticleOption.isInstance(option)) return;
             Object blockState = BlockParticleOptionProxy.INSTANCE.getState(option);
@@ -2704,7 +2716,7 @@ public class BukkitNetworkManager extends AbstractNetworkManager implements List
             buf.writeFloat(zDist);
             buf.writeFloat(maxSpeed);
             buf.writeInt(count);
-            StreamEncoderProxy.INSTANCE.encode(NetworkReflections.instance$ParticleTypes$STREAM_CODEC, PacketUtils.wrapByteBuf(buf.source()), remappedOption);
+            StreamEncoderProxy.INSTANCE.encode(NetworkReflections.instance$ParticleTypes$STREAM_CODEC, PacketUtils.ensureNMSFriendlyByteBuf(buf.source()), remappedOption);
         }
     }
 
@@ -2731,7 +2743,7 @@ public class BukkitNetworkManager extends AbstractNetworkManager implements List
             float maxSpeed = buf.readFloat();
             int count = buf.readInt();
             Object deserializer = ParticleTypeProxy.INSTANCE.getDeserializer(particleType);
-            Object option = ParticleOptionsProxy.DeserializerProxy.INSTANCE.fromNetwork(deserializer, particleType, PacketUtils.wrapByteBuf(buf));
+            Object option = ParticleOptionsProxy.DeserializerProxy.INSTANCE.fromNetwork(deserializer, particleType, PacketUtils.ensureNMSFriendlyByteBuf(buf));
             if (option == null) return;
             if (!CoreReflections.clazz$BlockParticleOption.isInstance(option)) return;
             Object blockState = BlockParticleOptionProxy.INSTANCE.getState(option);
@@ -2753,7 +2765,7 @@ public class BukkitNetworkManager extends AbstractNetworkManager implements List
             buf.writeFloat(zDist);
             buf.writeFloat(maxSpeed);
             buf.writeInt(count);
-            ParticleOptionsProxy.INSTANCE.writeToNetwork(remappedOption, PacketUtils.wrapByteBuf(buf));
+            ParticleOptionsProxy.INSTANCE.writeToNetwork(remappedOption, PacketUtils.ensureNMSFriendlyByteBuf(buf));
         }
     }
 
@@ -3484,9 +3496,8 @@ public class BukkitNetworkManager extends AbstractNetworkManager implements List
             MutableBoolean changed = new MutableBoolean(false);
             FriendlyByteBuf buf = event.getBuffer();
             BukkitItemManager itemManager = BukkitItemManager.instance();
-            Object friendlyBuf = PacketUtils.wrapByteBuf(buf.source());
             List<RecipeBookEntry<ItemStack>> entries = buf.readCollection(ArrayList::new, byteBuf -> {
-                RecipeBookEntry<ItemStack> entry = RecipeBookEntry.read(byteBuf, __ -> itemManager.wrap(FastNMS.INSTANCE.method$FriendlyByteBuf$readItem(friendlyBuf)));
+                RecipeBookEntry<ItemStack> entry = RecipeBookEntry.read(byteBuf, $ -> itemManager.wrap(PacketUtils.readItem(buf)));
                 entry.applyClientboundData(item -> {
                     Optional<Item<ItemStack>> remapped = itemManager.s2c(item, player);
                     if (remapped.isEmpty()) {
@@ -3503,7 +3514,7 @@ public class BukkitNetworkManager extends AbstractNetworkManager implements List
                 buf.clear();
                 buf.writeVarInt(event.packetID());
                 buf.writeCollection(entries, ((byteBuf, recipeBookEntry) -> recipeBookEntry.write(byteBuf,
-                        (__, item) -> FastNMS.INSTANCE.method$FriendlyByteBuf$writeItem(friendlyBuf, item.getItem()))));
+                        ($, item) -> PacketUtils.writeItem(buf, item.getItem()))));
                 buf.writeBoolean(replace);
             }
         }
@@ -3517,11 +3528,10 @@ public class BukkitNetworkManager extends AbstractNetworkManager implements List
             if (!VersionHelper.isOrAbove1_21_2()) return;
             MutableBoolean changed = new MutableBoolean(false);
             FriendlyByteBuf buf = event.getBuffer();
-            Object friendlyBuf = PacketUtils.wrapByteBuf(buf.source());
             BukkitServerPlayer player = (BukkitServerPlayer) user;
             BukkitItemManager itemManager = BukkitItemManager.instance();
             int containerId = buf.readContainerId();
-            RecipeDisplay<ItemStack> display = RecipeDisplay.read(buf, __ -> itemManager.wrap(FastNMS.INSTANCE.method$FriendlyByteBuf$readItem(friendlyBuf)));
+            RecipeDisplay<ItemStack> display = RecipeDisplay.read(buf, $ -> itemManager.wrap(PacketUtils.readItem(buf)));
             display.applyClientboundData(item -> {
                 Optional<Item<ItemStack>> remapped = itemManager.s2c(item, player);
                 if (remapped.isEmpty()) {
@@ -3536,7 +3546,7 @@ public class BukkitNetworkManager extends AbstractNetworkManager implements List
                 buf.clear();
                 buf.writeVarInt(event.packetID());
                 buf.writeContainerId(containerId);
-                display.write(buf, (__, item) -> FastNMS.INSTANCE.method$FriendlyByteBuf$writeItem(friendlyBuf, item.getItem()));
+                display.write(buf, ($, item) -> PacketUtils.writeItem(buf, item.getItem()));
             }
         }
     }
@@ -3550,9 +3560,8 @@ public class BukkitNetworkManager extends AbstractNetworkManager implements List
             FriendlyByteBuf buf = event.getBuffer();
             BukkitItemManager itemManager = BukkitItemManager.instance();
             BukkitServerPlayer player = (BukkitServerPlayer) user;
-            Object friendlyBuf = PacketUtils.wrapByteBuf(buf.source());
             List<LegacyRecipeHolder<ItemStack>> holders = buf.readCollection(ArrayList::new, byteBuf -> {
-                LegacyRecipeHolder<ItemStack> holder = LegacyRecipeHolder.read(byteBuf, __ -> itemManager.wrap(FastNMS.INSTANCE.method$FriendlyByteBuf$readItem(friendlyBuf)));
+                LegacyRecipeHolder<ItemStack> holder = LegacyRecipeHolder.read(byteBuf, $ -> itemManager.wrap(PacketUtils.readItem(buf)));
                 holder.recipe().applyClientboundData(item -> {
                     Optional<Item<ItemStack>> remapped = itemManager.s2c(item, player);
                     if (remapped.isEmpty()) {
@@ -3569,7 +3578,7 @@ public class BukkitNetworkManager extends AbstractNetworkManager implements List
                 buf.writeVarInt(event.packetID());
                 buf.writeCollection(holders, ((byteBuf, recipeHolder)
                         -> recipeHolder.write(byteBuf,
-                        (__, item) -> FastNMS.INSTANCE.method$FriendlyByteBuf$writeItem(friendlyBuf, item.getItem()))));
+                        ($, item) -> PacketUtils.writeItem(buf, item.getItem()))));
             }
         }
     }
@@ -3583,13 +3592,12 @@ public class BukkitNetworkManager extends AbstractNetworkManager implements List
             FriendlyByteBuf buf = event.getBuffer();
             BukkitItemManager itemManager = BukkitItemManager.instance();
             BukkitServerPlayer player = (BukkitServerPlayer) user;
-            Object friendlyBuf = PacketUtils.wrapByteBuf(buf.source());
             Map<Key, List<Integer>> itemSets = buf.readMap(
                     FriendlyByteBuf::readKey,
                     b -> b.readCollection(ArrayList::new, FriendlyByteBuf::readVarInt)
             );
             List<SingleInputButtonDisplay<ItemStack>> displays = buf.readCollection(ArrayList::new, b -> {
-                SingleInputButtonDisplay<ItemStack> display = SingleInputButtonDisplay.read(b, __ -> itemManager.wrap(FastNMS.INSTANCE.method$FriendlyByteBuf$readItem(friendlyBuf)));
+                SingleInputButtonDisplay<ItemStack> display = SingleInputButtonDisplay.read(b, $ -> itemManager.wrap(PacketUtils.readItem(buf)));
                 display.applyClientboundData(item -> {
                     Optional<Item<ItemStack>> remapped = itemManager.s2c(item, player);
                     if (remapped.isEmpty()) {
@@ -3609,7 +3617,7 @@ public class BukkitNetworkManager extends AbstractNetworkManager implements List
                         (b, c) -> b.writeCollection(c, FriendlyByteBuf::writeVarInt)
                 );
                 buf.writeCollection(displays, (b, d) -> {
-                    d.write(b, (__, item) -> FastNMS.INSTANCE.method$FriendlyByteBuf$writeItem(friendlyBuf, item.getItem()));
+                    d.write(b, ($, item) -> PacketUtils.writeItem(buf, item.getItem()));
                 });
             }
         }
@@ -3624,10 +3632,9 @@ public class BukkitNetworkManager extends AbstractNetworkManager implements List
             FriendlyByteBuf buf = event.getBuffer();
             BukkitItemManager itemManager = BukkitItemManager.instance();
             BukkitServerPlayer player = (BukkitServerPlayer) user;
-            Object friendlyBuf = PacketUtils.wrapByteBuf(buf.source());
             boolean reset = buf.readBoolean();
             List<AdvancementHolder<ItemStack>> added = buf.readCollection(ArrayList::new, byteBuf -> {
-                AdvancementHolder<ItemStack> holder = AdvancementHolder.read(byteBuf, __ -> itemManager.wrap(FastNMS.INSTANCE.method$FriendlyByteBuf$readItem(friendlyBuf)));
+                AdvancementHolder<ItemStack> holder = AdvancementHolder.read(byteBuf, $ -> itemManager.wrap(PacketUtils.readItem(buf)));
                 if (!Config.disableItemOperations()) {
                     holder.applyClientboundData(item -> {
                         Optional<Item<ItemStack>> remapped = itemManager.s2c(item, player);
@@ -3664,7 +3671,7 @@ public class BukkitNetworkManager extends AbstractNetworkManager implements List
 
                 buf.writeBoolean(reset);
                 buf.writeCollection(added, (byteBuf, advancementHolder) -> advancementHolder.write(byteBuf,
-                        (__, item) -> FastNMS.INSTANCE.method$FriendlyByteBuf$writeItem(friendlyBuf, item.getItem())));
+                        ($, item) -> PacketUtils.writeItem(buf, item.getItem())));
                 buf.writeCollection(removed, FriendlyByteBuf::writeKey);
                 buf.writeMap(progress, FriendlyByteBuf::writeKey, (byteBuf, advancementProgress) -> advancementProgress.write(byteBuf));
                 if (VersionHelper.isOrAbove1_21_5()) {
@@ -3698,6 +3705,7 @@ public class BukkitNetworkManager extends AbstractNetworkManager implements List
     }
 
     public static class SoundListener implements ByteBufferPacketListener {
+        public static final Object SoundEvent$DIRECT_STREAM_CODEC = VersionHelper.isOrAbove1_20_5() ? SoundEventProxy.INSTANCE.getDirectStreamCodec() : null;
 
         @Override
         public void onPacketSend(NetWorkUser user, ByteBufPacketEvent event) {
@@ -3756,7 +3764,11 @@ public class BukkitNetworkManager extends AbstractNetworkManager implements List
                     buf.writeVarInt(0);
                     Object newId = KeyUtils.toIdentifier(mapped);
                     Object newSoundEvent = SoundEventProxy.INSTANCE.create(newId, SoundEventProxy.INSTANCE.fixedRange(soundEvent));
-                    FastNMS.INSTANCE.method$SoundEvent$directEncode(buf, newSoundEvent);
+                    if (VersionHelper.isOrAbove1_20_5()) {
+                        StreamEncoderProxy.INSTANCE.encode(SoundEvent$DIRECT_STREAM_CODEC, buf, newSoundEvent);
+                    } else {
+                        SoundEventProxy.INSTANCE.writeToNetwork(newSoundEvent, PacketUtils.ensureNMSFriendlyByteBuf(buf));
+                    }
                     buf.writeVarInt(source);
                     buf.writeInt(x);
                     buf.writeInt(y);
@@ -3781,9 +3793,8 @@ public class BukkitNetworkManager extends AbstractNetworkManager implements List
             int listSize = buf.readVarInt();
             List<ItemStack> items = new ArrayList<>(listSize);
             boolean changed = false;
-            Object friendlyBuf = PacketUtils.wrapByteBuf(buf.source());
             for (int i = 0; i < listSize; i++) {
-                ItemStack itemStack = FastNMS.INSTANCE.method$FriendlyByteBuf$readItem(friendlyBuf);
+                ItemStack itemStack = PacketUtils.readItem(buf);
                 Optional<ItemStack> optional = BukkitItemManager.instance().s2c(itemStack, serverPlayer);
                 if (optional.isPresent()) {
                     items.add(optional.get());
@@ -3792,7 +3803,7 @@ public class BukkitNetworkManager extends AbstractNetworkManager implements List
                     items.add(itemStack);
                 }
             }
-            ItemStack carriedItem = FastNMS.INSTANCE.method$FriendlyByteBuf$readItem(friendlyBuf);
+            ItemStack carriedItem = PacketUtils.readItem(buf);
             ItemStack newCarriedItem = carriedItem;
             Optional<ItemStack> optional = BukkitItemManager.instance().s2c(carriedItem, serverPlayer);
             if (optional.isPresent()) {
@@ -3807,9 +3818,9 @@ public class BukkitNetworkManager extends AbstractNetworkManager implements List
             buf.writeVarInt(stateId);
             buf.writeVarInt(listSize);
             for (ItemStack itemStack : items) {
-                FastNMS.INSTANCE.method$FriendlyByteBuf$writeItem(friendlyBuf, itemStack);
+                PacketUtils.writeItem(buf, itemStack);
             }
-            FastNMS.INSTANCE.method$FriendlyByteBuf$writeItem(friendlyBuf, newCarriedItem);
+            PacketUtils.writeItem(buf, newCarriedItem);
         }
     }
 
@@ -3823,10 +3834,9 @@ public class BukkitNetworkManager extends AbstractNetworkManager implements List
             int containerId = buf.readContainerId();
             int stateId = buf.readVarInt();
             int slot = buf.readShort();
-            Object friendlyBuf = PacketUtils.wrapByteBuf(buf.source());
             ItemStack itemStack;
             try {
-                itemStack = FastNMS.INSTANCE.method$FriendlyByteBuf$readItem(friendlyBuf);
+                itemStack = PacketUtils.readItem(buf);
             } catch (Exception e) {
                 // 其他插件干的，发送了非法的物品
                 return;
@@ -3838,7 +3848,7 @@ public class BukkitNetworkManager extends AbstractNetworkManager implements List
                 buf.writeContainerId(containerId);
                 buf.writeVarInt(stateId);
                 buf.writeShort(slot);
-                FastNMS.INSTANCE.method$FriendlyByteBuf$writeItem(friendlyBuf, newItemStack);
+                PacketUtils.writeItem(buf, newItemStack);
             });
         }
     }
@@ -3850,8 +3860,7 @@ public class BukkitNetworkManager extends AbstractNetworkManager implements List
             if (Config.disableItemOperations()) return;
             if (!(user instanceof BukkitServerPlayer serverPlayer)) return;
             FriendlyByteBuf buf = event.getBuffer();
-            Object friendlyBuf = PacketUtils.wrapByteBuf(buf.source());
-            ItemStack itemStack = FastNMS.INSTANCE.method$FriendlyByteBuf$readItem(friendlyBuf);
+            ItemStack itemStack = PacketUtils.readItem(buf);
 
             // 为了避免其他插件造成的手感冲突
             if (VersionHelper.isOrAbove1_21_5()) {
@@ -3866,8 +3875,7 @@ public class BukkitNetworkManager extends AbstractNetworkManager implements List
                             event.setChanged(true);
                             buf.clear();
                             buf.writeVarInt(event.packetID());
-                            Object newFriendlyBuf = PacketUtils.wrapByteBuf(buf);
-                            FastNMS.INSTANCE.method$FriendlyByteBuf$writeItem(newFriendlyBuf, carried);
+                            PacketUtils.writeItem(buf, carried);
                             return;
                         }
                     }
@@ -3878,7 +3886,7 @@ public class BukkitNetworkManager extends AbstractNetworkManager implements List
                 event.setChanged(true);
                 buf.clear();
                 buf.writeVarInt(event.packetID());
-                FastNMS.INSTANCE.method$FriendlyByteBuf$writeItem(friendlyBuf, newItemStack);
+                PacketUtils.writeItem(buf, newItemStack);
             });
         }
     }
@@ -3891,14 +3899,13 @@ public class BukkitNetworkManager extends AbstractNetworkManager implements List
             if (!(user instanceof BukkitServerPlayer serverPlayer)) return;
             FriendlyByteBuf buf = event.getBuffer();
             boolean changed = false;
-            Object friendlyBuf = PacketUtils.wrapByteBuf(buf.source());
             int entity = buf.readVarInt();
             List<com.mojang.datafixers.util.Pair<Object, ItemStack>> slots = Lists.newArrayList();
             int slotMask;
             do {
                 slotMask = buf.readByte();
                 Object equipmentSlot = EquipmentSlotProxy.VALUES[slotMask & 127];
-                ItemStack itemStack = FastNMS.INSTANCE.method$FriendlyByteBuf$readItem(friendlyBuf);
+                ItemStack itemStack = PacketUtils.readItem(buf);
                 Optional<ItemStack> optional = BukkitItemManager.instance().s2c(itemStack, serverPlayer);
                 if (optional.isPresent()) {
                     changed = true;
@@ -3918,7 +3925,7 @@ public class BukkitNetworkManager extends AbstractNetworkManager implements List
                     boolean bl = j != i - 1;
                     int k = equipmentSlot.ordinal();
                     buf.writeByte(bl ? k | -128 : k);
-                    FastNMS.INSTANCE.method$FriendlyByteBuf$writeItem(friendlyBuf, pair.getSecond());
+                    PacketUtils.writeItem(buf, pair.getSecond());
                 }
             }
         }
@@ -3932,14 +3939,13 @@ public class BukkitNetworkManager extends AbstractNetworkManager implements List
             if (!(user instanceof BukkitServerPlayer serverPlayer)) return;
             FriendlyByteBuf buf = event.getBuffer();
             int slot = buf.readVarInt();
-            Object friendlyBuf = PacketUtils.wrapByteBuf(buf.source());
-            ItemStack itemStack = FastNMS.INSTANCE.method$FriendlyByteBuf$readItem(friendlyBuf);
+            ItemStack itemStack = PacketUtils.readItem(buf);
             BukkitItemManager.instance().s2c(itemStack, serverPlayer).ifPresent((newItemStack) -> {
                 event.setChanged(true);
                 buf.clear();
                 buf.writeVarInt(event.packetID());
                 buf.writeVarInt(slot);
-                FastNMS.INSTANCE.method$FriendlyByteBuf$writeItem(friendlyBuf, newItemStack);
+                PacketUtils.writeItem(buf, newItemStack);
             });
         }
     }
@@ -3952,12 +3958,11 @@ public class BukkitNetworkManager extends AbstractNetworkManager implements List
             if (!(user instanceof BukkitServerPlayer serverPlayer)) return;
             if (!serverPlayer.isCreativeMode()) return;
             FriendlyByteBuf buf = event.getBuffer();
-            Object friendlyBuf = PacketUtils.wrapByteBuf(buf.source());
             short slotNum = buf.readShort();
             ItemStack itemStack;
             try {
                 itemStack = VersionHelper.isOrAbove1_20_5() ?
-                        FastNMS.INSTANCE.method$FriendlyByteBuf$readUntrustedItem(friendlyBuf) : FastNMS.INSTANCE.method$FriendlyByteBuf$readItem(friendlyBuf);
+                        PacketUtils.readUntrustedItem(buf) : PacketUtils.readItem(buf);
             } catch (Exception e) {
                 return;
             }
@@ -3967,9 +3972,9 @@ public class BukkitNetworkManager extends AbstractNetworkManager implements List
                 buf.writeVarInt(event.packetID());
                 buf.writeShort(slotNum);
                 if (VersionHelper.isOrAbove1_20_5()) {
-                    FastNMS.INSTANCE.method$FriendlyByteBuf$writeUntrustedItem(friendlyBuf, newItemStack);
+                    PacketUtils.writeUntrustedItem(buf, newItemStack);
                 } else {
-                    FastNMS.INSTANCE.method$FriendlyByteBuf$writeItem(friendlyBuf, newItemStack);
+                    PacketUtils.writeItem(buf, newItemStack);
                 }
             });
         }
@@ -3983,7 +3988,6 @@ public class BukkitNetworkManager extends AbstractNetworkManager implements List
             if (!VersionHelper.PREMIUM && !Config.interceptItem()) return;
             FriendlyByteBuf buf = event.getBuffer();
             boolean changed = false;
-            Object friendlyBuf = PacketUtils.wrapByteBuf(buf.source());
             int containerId = buf.readContainerId();
             int stateId = buf.readVarInt();
             short slotNum = buf.readShort();
@@ -3993,7 +3997,7 @@ public class BukkitNetworkManager extends AbstractNetworkManager implements List
             Int2ObjectMap<ItemStack> changedSlots = new Int2ObjectOpenHashMap<>(i);
             for (int j = 0; j < i; ++j) {
                 int k = buf.readShort();
-                ItemStack itemStack = FastNMS.INSTANCE.method$FriendlyByteBuf$readItem(friendlyBuf);
+                ItemStack itemStack = PacketUtils.readItem(buf);
                 Optional<ItemStack> optional = BukkitItemManager.instance().c2s(itemStack);
                 if (optional.isPresent()) {
                     changed = true;
@@ -4001,7 +4005,7 @@ public class BukkitNetworkManager extends AbstractNetworkManager implements List
                 }
                 changedSlots.put(k, itemStack);
             }
-            ItemStack carriedItem = FastNMS.INSTANCE.method$FriendlyByteBuf$readItem(friendlyBuf);
+            ItemStack carriedItem = PacketUtils.readItem(buf);
             Optional<ItemStack> optional = BukkitItemManager.instance().c2s(carriedItem);
             if (optional.isPresent()) {
                 changed = true;
@@ -4019,9 +4023,9 @@ public class BukkitNetworkManager extends AbstractNetworkManager implements List
                 buf.writeVarInt(changedSlots.size());
                 for (Map.Entry<Integer, ItemStack> entry : changedSlots.int2ObjectEntrySet()) {
                     buf.writeShort(entry.getKey());
-                    FastNMS.INSTANCE.method$FriendlyByteBuf$writeItem(friendlyBuf, entry.getValue());
+                    PacketUtils.writeItem(buf, entry.getValue());
                 }
-                FastNMS.INSTANCE.method$FriendlyByteBuf$writeItem(friendlyBuf, carriedItem);
+                PacketUtils.writeItem(buf, carriedItem);
             }
         }
     }
@@ -4513,11 +4517,10 @@ public class BukkitNetworkManager extends AbstractNetworkManager implements List
             FriendlyByteBuf buf = event.getBuffer();
             int containerId = buf.readContainerId();
             BukkitItemManager manager = BukkitItemManager.instance();
-            Object friendlyBuf = PacketUtils.wrapByteBuf(buf.source());
             List<MerchantOffer<ItemStack>> merchantOffers = buf.readCollection(ArrayList::new, byteBuf -> {
-                ItemStack cost1 = FastNMS.INSTANCE.method$FriendlyByteBuf$readItem(friendlyBuf);
-                ItemStack result = FastNMS.INSTANCE.method$FriendlyByteBuf$readItem(friendlyBuf);
-                ItemStack cost2 = FastNMS.INSTANCE.method$FriendlyByteBuf$readItem(friendlyBuf);
+                ItemStack cost1 = PacketUtils.readItem(buf);
+                ItemStack result = PacketUtils.readItem(buf);
+                ItemStack cost2 = PacketUtils.readItem(buf);
                 boolean outOfStock = byteBuf.readBoolean();
                 int uses = byteBuf.readInt();
                 int maxUses = byteBuf.readInt();
@@ -4551,9 +4554,9 @@ public class BukkitNetworkManager extends AbstractNetworkManager implements List
                 buf.writeVarInt(event.packetID());
                 buf.writeContainerId(containerId);
                 buf.writeCollection(merchantOffers, (byteBuf, offer) -> {
-                    FastNMS.INSTANCE.method$FriendlyByteBuf$writeItem(friendlyBuf, offer.cost1().getItem());
-                    FastNMS.INSTANCE.method$FriendlyByteBuf$writeItem(friendlyBuf, offer.result().getItem());
-                    FastNMS.INSTANCE.method$FriendlyByteBuf$writeItem(friendlyBuf, offer.cost2().get().getItem());
+                    PacketUtils.writeItem(buf, offer.cost1().getItem());
+                    PacketUtils.writeItem(buf, offer.result().getItem());
+                    PacketUtils.writeItem(buf, offer.cost2().get().getItem());
                     byteBuf.writeBoolean(offer.outOfStock());
                     byteBuf.writeInt(offer.uses());
                     byteBuf.writeInt(offer.maxUses());
@@ -4581,10 +4584,10 @@ public class BukkitNetworkManager extends AbstractNetworkManager implements List
             FriendlyByteBuf buf = event.getBuffer();
             int containerId = buf.readContainerId();
             BukkitItemManager manager = BukkitItemManager.instance();
-            Object friendlyBuf = PacketUtils.wrapByteBuf(buf.source());
+            ByteBuf friendlyBuf = PacketUtils.ensureNMSFriendlyByteBuf(buf.source());
             List<MerchantOffer<ItemStack>> merchantOffers = buf.readCollection(ArrayList::new, byteBuf -> {
                 ItemStack cost1 = CraftItemStackProxy.INSTANCE.asCraftMirror(ItemCostProxy.INSTANCE.getItemStack(StreamDecoderProxy.INSTANCE.decode(NetworkReflections.instance$ItemCost$STREAM_CODEC, friendlyBuf)));
-                ItemStack result = FastNMS.INSTANCE.method$FriendlyByteBuf$readItem(friendlyBuf);
+                ItemStack result = PacketUtils.readItem(friendlyBuf);
                 Optional<ItemStack> cost2 = ((Optional<Object>) StreamDecoderProxy.INSTANCE.decode(NetworkReflections.instance$ItemCost$OPTIONAL_STREAM_CODEC, friendlyBuf))
                         .map(cost -> CraftItemStackProxy.INSTANCE.asCraftMirror(ItemCostProxy.INSTANCE.getItemStack(cost)));
                 boolean outOfStock = byteBuf.readBoolean();
@@ -4621,7 +4624,7 @@ public class BukkitNetworkManager extends AbstractNetworkManager implements List
                 buf.writeContainerId(containerId);
                 buf.writeCollection(merchantOffers, (byteBuf, offer) -> {
                     StreamEncoderProxy.INSTANCE.encode(NetworkReflections.instance$ItemCost$STREAM_CODEC, friendlyBuf, itemStackToItemCost(offer.cost1().getLiteralObject(), offer.cost1().count()));
-                    FastNMS.INSTANCE.method$FriendlyByteBuf$writeItem(friendlyBuf, offer.result().getItem());
+                    PacketUtils.writeItem(friendlyBuf, offer.result().getItem());
                     StreamEncoderProxy.INSTANCE.encode(NetworkReflections.instance$ItemCost$OPTIONAL_STREAM_CODEC, friendlyBuf, offer.cost2().map(it -> itemStackToItemCost(it.getLiteralObject(), it.count())));
                     byteBuf.writeBoolean(offer.outOfStock());
                     byteBuf.writeInt(offer.uses());

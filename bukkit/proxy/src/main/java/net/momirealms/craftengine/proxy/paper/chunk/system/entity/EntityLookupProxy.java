@@ -18,4 +18,7 @@ public interface EntityLookupProxy {
 
     @MethodInvoker(name = "get")
     Object get(Object target, int id);
+
+    @MethodInvoker(name = "getChunk")
+    Object getChunk(Object target, int chunkX, int chunkZ);
 }

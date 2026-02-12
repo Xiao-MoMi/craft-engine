@@ -167,11 +167,11 @@ public class BukkitWorld implements World {
         Object chunkMap = ServerChunkCacheProxy.INSTANCE.getChunkMap(chunkSource);
         Object chunkHolder = ChunkMapProxy.INSTANCE.getVisibleChunkIfPresent(chunkMap, pos.longKey);
         if (chunkHolder == null) return Collections.emptyList();
-        List<Object> players = ChunkHolderProxy.INSTANCE.getPlayers(chunkHolder);
+        List<Object> players = ChunkHolderProxy.INSTANCE.getPlayers(chunkHolder, false);
         if (players.isEmpty()) return Collections.emptyList();
         List<Player> tracked = new ArrayList<>(players.size());
         for (Object player : players) {
-            BukkitServerPlayer serverPlayer = BukkitAdaptors.adapt(ServerPlayerProxy.INSTANCE.getBukkitEntity(player));
+            BukkitServerPlayer serverPlayer = BukkitAdaptors.adapt(ServerPlayerProxy.INSTANCE.getBukkitEntity$1(player));
             if (serverPlayer == null) continue;
             tracked.add(serverPlayer);
         }

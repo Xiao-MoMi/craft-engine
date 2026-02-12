@@ -246,6 +246,7 @@ fun registerPaperTask(
             }
             systemProperties["com.mojang.eula.agree"] = true
             systemProperties["net.momirealms.craftengine.dev"] = true
+            systemProperties["net.momirealms.craftengine.pre-check-asm-proxy"] = true // 预检查ASM代理可用性
             jvmArgs("-Dsun.stdout.encoding=UTF-8")
             jvmArgs("-Dsun.stderr.encoding=UTF-8")
             jvmArgs("-Ddisable.watchdog=true")

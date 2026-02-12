@@ -7,6 +7,7 @@ import net.momirealms.craftengine.proxy.minecraft.tags.TagKeyProxy;
 import net.momirealms.craftengine.proxy.minecraft.util.RandomSourceProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.entity.player.PlayerProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.level.BlockGetterProxy;
+import net.momirealms.craftengine.proxy.minecraft.world.level.LevelProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.level.LevelReaderProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.level.block.BlockProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.level.block.SupportTypeProxy;
@@ -173,12 +174,6 @@ public interface BlockBehaviourProxy {
         @FieldSetter(name = "offsetFunction")
         void setOffsetFunction(Object target, Object offsetFunction);
 
-        @FieldGetter(name = "spawnTerrainParticles")
-        boolean isSpawnTerrainParticles(Object target);
-
-        @FieldSetter(name = "spawnTerrainParticles")
-        void setSpawnTerrainParticles(Object target, boolean spawnTerrainParticles);
-
         @FieldGetter(name = "instrument")
         Object getInstrument(Object target);
 
@@ -226,18 +221,6 @@ public interface BlockBehaviourProxy {
 
         @FieldSetter(name = "lightBlock", activeIf = "min_version=1.21.2")
         void setLightBlock(Object target, int lightBlock);
-
-        @FieldGetter(name = "occludesFullBlock")
-        boolean isOccludesFullBlock(Object target);
-
-        @FieldSetter(name = "occludesFullBlock")
-        void setOccludesFullBlock(Object target, boolean occludesFullBlock);
-
-        @FieldGetter(name = "emptyCollisionShape")
-        boolean isEmptyCollisionShape(Object target);
-
-        @FieldSetter(name = "emptyCollisionShape")
-        void setEmptyCollisionShape(Object target, boolean emptyCollisionShape);
 
         @FieldGetter(name = "shapeExceedsCube")
         boolean isShapeExceedsCube(Object target);
@@ -315,7 +298,7 @@ public interface BlockBehaviourProxy {
         Object getBlock(Object target);
 
         @MethodInvoker(name = "onPlace")
-        void onPlace(Object target, @Type(clazz = BlockGetterProxy.class) Object world, @Type(clazz = BlockPosProxy.class) Object pos, @Type(clazz = BlockStateProxy.class) Object oldState, boolean movedByPiston);
+        void onPlace(Object target, @Type(clazz = LevelProxy.class) Object world, @Type(clazz = BlockPosProxy.class) Object pos, @Type(clazz = BlockStateProxy.class) Object oldState, boolean movedByPiston);
 
         @MethodInvoker(name = "getDestroyProgress")
         float getDestroyProgress(Object target, @Type(clazz = PlayerProxy.class) Object player, @Type(clazz = BlockGetterProxy.class) Object world, @Type(clazz = BlockPosProxy.class) Object pos);
