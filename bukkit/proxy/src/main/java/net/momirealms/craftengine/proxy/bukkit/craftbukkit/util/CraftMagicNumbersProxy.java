@@ -10,6 +10,7 @@ import java.util.Map;
 @ReflectionProxy(name = "org.bukkit.craftbukkit.util.CraftMagicNumbers")
 public interface CraftMagicNumbersProxy {
     CraftMagicNumbersProxy INSTANCE = ASMProxyFactory.create(CraftMagicNumbersProxy.class);
+    Map<Object, Material> BLOCK_MATERIAL = INSTANCE.getBlockMaterial();
 
     @FieldGetter(name = "BLOCK_MATERIAL", isStatic = true)
     Map<Object, Material> getBlockMaterial();

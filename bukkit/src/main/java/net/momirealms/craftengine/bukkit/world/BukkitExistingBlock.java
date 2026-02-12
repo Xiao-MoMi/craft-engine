@@ -38,7 +38,7 @@ public class BukkitExistingBlock implements ExistingBlock {
             return customState.behavior().canBeReplaced(context, customState);
         }
         if (BlockStateUtils.getBlockOwner(state) == MBlocks.SNOW) {
-            return (Integer) StateHolderProxy.INSTANCE.getValue(state, SnowLayerBlockProxy.INSTANCE.getLayersProperty()) == 1;
+            return (Integer) StateHolderProxy.INSTANCE.getValue(state, SnowLayerBlockProxy.LAYERS) == 1;
         }
         return BlockStateUtils.isReplaceable(state);
     }

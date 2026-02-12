@@ -82,7 +82,7 @@ public class SurfaceSpreadingBlockBehavior extends BukkitBlockBehavior {
     private static boolean canBeGrass(Object state, Object level, Object pos) {
         Object blockPos = BlockPosProxy.INSTANCE.relative(pos, DirectionProxy.UP);
         Object blockState = BlockGetterProxy.INSTANCE.getBlockState(level, blockPos);
-        if (BlockBehaviourProxy.BlockStateBaseProxy.INSTANCE.is$0(blockState, MBlocks.SNOW) && ((Integer) StateHolderProxy.INSTANCE.getValue(blockState, SnowLayerBlockProxy.INSTANCE.getLayersProperty())) == 1) {
+        if (BlockBehaviourProxy.BlockStateBaseProxy.INSTANCE.is$0(blockState, MBlocks.SNOW) && ((Integer) StateHolderProxy.INSTANCE.getValue(blockState, SnowLayerBlockProxy.LAYERS)) == 1) {
             return true;
         } else if (FluidStateProxy.INSTANCE.getAmount(BlockBehaviourProxy.BlockStateBaseProxy.INSTANCE.getFluidState(blockState)) == 8) {
             return false;

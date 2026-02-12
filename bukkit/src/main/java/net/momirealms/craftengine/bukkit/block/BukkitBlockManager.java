@@ -467,7 +467,6 @@ public final class BukkitBlockManager extends AbstractBlockManager {
     }
 
     private void deceiveBukkitRegistry() {
-        Map<Object, Material> magicMap = CraftMagicNumbersProxy.INSTANCE.getBlockMaterial();
         Set<String> invalid = new HashSet<>();
         for (int i = 0; i < this.customBlocks.length; i++) {
             DelegatingBlock customBlock = this.customBlocks[i];
@@ -487,7 +486,7 @@ public final class BukkitBlockManager extends AbstractBlockManager {
                 }
                 material = Material.BRICKS;
             }
-            magicMap.put(customBlock, material);
+            CraftMagicNumbersProxy.BLOCK_MATERIAL.put(customBlock, material);
         }
     }
 

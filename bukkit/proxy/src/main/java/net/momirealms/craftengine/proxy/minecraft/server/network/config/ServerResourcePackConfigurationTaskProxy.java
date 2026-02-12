@@ -10,6 +10,7 @@ import net.momirealms.sparrow.reflection.proxy.annotation.Type;
 @ReflectionProxy(name = "net.minecraft.server.network.config.ServerResourcePackConfigurationTask", activeIf = "min_version=1.20.2")
 public interface ServerResourcePackConfigurationTaskProxy {
     ServerResourcePackConfigurationTaskProxy INSTANCE = ASMProxyFactory.create(ServerResourcePackConfigurationTaskProxy.class);
+    Object TYPE = INSTANCE != null ? INSTANCE.getType() : null;
 
     @ConstructorInvoker
     Object newInstance(@Type(clazz = MinecraftServerProxy.ServerResourcePackInfoProxy.class) Object packProperties);

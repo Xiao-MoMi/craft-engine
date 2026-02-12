@@ -1884,7 +1884,6 @@ public class BukkitNetworkManager extends AbstractNetworkManager implements List
     }
 
     public static class ResourcePackResponseListener implements NMSPacketListener {
-        public static final Object ServerResourcePackConfigurationTask$TYPE = VersionHelper.isOrAbove1_20_2() ? ServerResourcePackConfigurationTaskProxy.INSTANCE.getType() : null;
 
         @Override
         public void onPacketReceive(NetWorkUser user, NMSPacketEvent event, Object packet) {
@@ -1930,7 +1929,7 @@ public class BukkitNetworkManager extends AbstractNetworkManager implements List
                     try {
                         // 当客户端发出多次成功包的时候，finish会报错，我们忽略他
                         NetworkReflections.methodHandle$ServerCommonPacketListener$handleResourcePackResponse.invokeExact(packetListener, packet);
-                        ServerConfigurationPacketListenerImplProxy.INSTANCE.finishCurrentTask(packetListener, ServerResourcePackConfigurationTask$TYPE);
+                        ServerConfigurationPacketListenerImplProxy.INSTANCE.finishCurrentTask(packetListener, ServerResourcePackConfigurationTaskProxy.TYPE);
                     } catch (Throwable e) {
                         Debugger.RESOURCE_PACK.warn(() -> "Cannot finish current task", e);
                     }
@@ -1991,7 +1990,6 @@ public class BukkitNetworkManager extends AbstractNetworkManager implements List
     }
 
     public static class S2CFinishConfigurationListener implements NMSPacketListener {
-        public static final Object JoinWorldTask$TYPE = VersionHelper.isOrAbove1_20_2() ? JoinWorldTaskProxy.INSTANCE.getType() : null;
 
         private void returnToWorld(Queue<Object> configurationTasks, Object packetListener) {
             configurationTasks.add(JoinWorldTaskProxy.INSTANCE.newInstance());
@@ -2032,7 +2030,7 @@ public class BukkitNetworkManager extends AbstractNetworkManager implements List
             // 取消 ClientboundFinishConfigurationPacket，让客户端发呆，并结束掉当前的进入世界任务
             event.setCancelled(true);
             try {
-                ServerConfigurationPacketListenerImplProxy.INSTANCE.finishCurrentTask(packetListener, JoinWorldTask$TYPE);
+                ServerConfigurationPacketListenerImplProxy.INSTANCE.finishCurrentTask(packetListener, JoinWorldTaskProxy.TYPE);
             } catch (Throwable e) {
                 CraftEngine.instance().logger().warn("Failed to finish current task for " + user.name(), e);
             }
