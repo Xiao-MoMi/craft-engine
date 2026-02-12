@@ -334,6 +334,7 @@ public class BukkitFurnitureManager extends AbstractFurnitureManager {
         initFurniture(bukkitFurniture);
         Location location = display.getLocation();
         runSafeEntityOperation(location, bukkitFurniture::addCollidersToWorld);
+        furniture.behavior().onAdd(bukkitFurniture);
         return bukkitFurniture;
     }
 

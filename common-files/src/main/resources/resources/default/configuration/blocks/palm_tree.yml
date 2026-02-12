@@ -1,6 +1,5 @@
 items:
   default:palm_log:
-    material: nether_brick
     settings:
       fuel-time: 300
       tags:
@@ -28,7 +27,6 @@ items:
             model_vertical_path: minecraft:block/custom/palm_log
             model_horizontal_path: minecraft:block/custom/palm_log_horizontal
   default:stripped_palm_log:
-    material: nether_brick
     settings:
       fuel-time: 300
       tags:
@@ -53,7 +51,6 @@ items:
             model_vertical_path: minecraft:block/custom/stripped_palm_log
             model_horizontal_path: minecraft:block/custom/stripped_palm_log_horizontal
   default:palm_wood:
-    material: nether_brick
     settings:
       fuel-time: 300
       tags:
@@ -81,7 +78,6 @@ items:
             model_vertical_path: minecraft:block/custom/palm_wood
             model_horizontal_path: minecraft:block/custom/palm_wood_horizontal
   default:stripped_palm_wood:
-    material: nether_brick
     settings:
       fuel-time: 300
       tags:
@@ -106,7 +102,6 @@ items:
             model_vertical_path: minecraft:block/custom/stripped_palm_wood
             model_horizontal_path: minecraft:block/custom/stripped_palm_wood_horizontal
   default:palm_planks:
-    material: nether_brick
     settings:
       fuel-time: 300
       tags:
@@ -129,14 +124,10 @@ items:
               path: minecraft:block/custom/palm_planks
           auto-state: solid
   default:palm_sapling:
-    material: nether_brick
     settings:
       fuel-time: 100
     data:
       item-name: <!i><lang:item.default.palm_sapling>
-      lore:
-        - "<!i><gray>Requires the datapack tree configuration to function."
-        - "<!i><gray>If not configured, an oak tree will grow by default."
     texture: minecraft:block/custom/palm_sapling
     behavior:
       type: block_item
@@ -151,7 +142,7 @@ items:
               - minecraft:farmland
               - minecraft:sand
           - type: sapling_block
-            feature: minecraft:fancy_oak # use custom tree configuration here
+            feature: default:palm_tree
             bone-meal-success-chance: 0.45
         loot:
           template: default:loot_table/self
@@ -201,7 +192,6 @@ items:
             model_path: minecraft:block/custom/palm_leaves
             texture_path: minecraft:block/custom/palm_leaves
   default:palm_trapdoor:
-    material: nether_brick
     data:
       item-name: <!i><lang:item.default.palm_trapdoor>
     settings:
@@ -251,7 +241,6 @@ items:
               textures:
                 texture: minecraft:block/custom/palm_trapdoor
   default:palm_door:
-    material: nether_brick
     data:
       item-name: <!i><lang:item.default.palm_door>
     settings:
@@ -322,7 +311,6 @@ items:
               parent: minecraft:block/door_bottom_right_open
               textures: *textures
   default:palm_fence_gate:
-    material: nether_brick
     data:
       item-name: <!i><lang:item.default.palm_fence_gate>
     settings:
@@ -374,7 +362,6 @@ items:
               parent: minecraft:block/template_fence_gate_wall_open
               textures: *textures
   default:palm_slab:
-    material: nether_brick
     data:
       item-name: <!i><lang:item.default.palm_slab>
     settings:
@@ -416,7 +403,6 @@ items:
               textures: *textures
             model_double_path: minecraft:block/custom/palm_planks
   default:palm_stairs:
-    material: nether_brick
     model: minecraft:block/custom/palm_stairs
     data:
       item-name: <!i><lang:item.default.palm_stairs>
@@ -461,7 +447,6 @@ items:
               parent: minecraft:block/stairs
               textures: *textures
   default:palm_pressure_plate:
-    material: nether_brick
     model: minecraft:block/custom/palm_pressure_plate
     data:
       item-name: <!i><lang:item.default.palm_pressure_plate>
@@ -511,8 +496,8 @@ items:
 
 items#fence:
   default:palm_fence:
-    material: nether_brick
-    data::item-name: <!i><lang:item.default.palm_fence>
+    data:
+      item-name: <!i><lang:item.default.palm_fence>
     model:
       type: minecraft:model
       path: minecraft:item/custom/palm_fence_inventory
@@ -524,8 +509,8 @@ items#fence:
       type: block_item
       block: default:palm_fence
   default:palm_fence_post:
-    material: nether_brick
-    data::item-name: <!i><lang:item.default.palm_fence>
+    data:
+      item-name: <!i><lang:item.default.palm_fence>
     model:
       type: minecraft:model
       path: minecraft:block/custom/palm_fence_post
@@ -534,8 +519,8 @@ items#fence:
         textures:
           texture: minecraft:block/custom/palm_planks
   default:palm_fence_side:
-    material: nether_brick
-    data::item-name: <!i><lang:item.default.palm_fence>
+    data:
+      item-name: <!i><lang:item.default.palm_fence>
     model:
       type: minecraft:model
       path: minecraft:block/custom/palm_fence_side
@@ -577,7 +562,6 @@ blocks#fence:
 
 items#button:
   default:palm_button:
-    material: nether_brick
     model:
       type: minecraft:model
       path: minecraft:item/custom/palm_button
@@ -593,8 +577,8 @@ items#button:
       type: block_item
       block: default:palm_button
   default:palm_button_pressed:
-    material: nether_brick
-    data::item-name: <!i><lang:item.default.palm_button>
+    data:
+      item-name: <!i><lang:item.default.palm_button>
     model:
       type: minecraft:model
       path: minecraft:block/custom/palm_button_pressed
@@ -603,8 +587,8 @@ items#button:
         textures:
           texture: minecraft:block/custom/palm_planks
   default:palm_button_not_pressed:
-    material: nether_brick
-    data::item-name: <!i><lang:item.default.palm_button>
+    data:
+      item-name: <!i><lang:item.default.palm_button>
     model:
       type: minecraft:model
       path: minecraft:block/custom/palm_button_not_pressed
@@ -738,3 +722,81 @@ recipes:
     result:
       id: default:palm_fence
       count: 3
+configured-feature:
+  default:palm_tree:
+    type: 'minecraft:tree'
+    config:
+      ignore_vines: true
+      force_dirt: false
+      minimum_size:
+        type: 'minecraft:two_layers_feature_size'
+        min_clipped_height: 10
+        limit: 1
+        lower_size: 0
+        upper_size: 2
+      dirt_provider:
+        type: 'minecraft:simple_state_provider'
+        state:
+          Name: 'minecraft:sand'
+      trunk_provider:
+        type: 'minecraft:simple_state_provider'
+        state:
+          Name: 'default:palm_log'
+          Properties:
+            axis: 'y'
+      foliage_provider:
+        type: 'minecraft:simple_state_provider'
+        state:
+          Name: 'default:palm_leaves'
+          Properties:
+            distance: '7'
+            persistent: 'false'
+            waterlogged: 'false'
+      trunk_placer:
+        type: 'minecraft:straight_trunk_placer'
+        base_height: 6
+        height_rand_a: 5
+        height_rand_b: 0
+      foliage_placer:
+        type: 'minecraft:cherry_foliage_placer'
+        radius: 5
+        offset: 0
+        height: 4
+        wide_bottom_layer_hole_chance: 0.8
+        corner_hole_chance: 1
+        hanging_leaves_chance: 0.8
+        hanging_leaves_extension_chance: 0.4
+      decorators: []
+placed-features:
+  default:palm_tree:
+    biome:
+      - minecraft:beach
+    environment:
+      - minecraft:overworld
+    feature: default:palm_tree
+    placement:
+      - type: 'minecraft:rarity_filter'
+        chance: 7
+      - type: 'minecraft:count'
+        count:
+          type: 'minecraft:weighted_list'
+          distribution:
+            - weight: 10
+              data: 1
+            - weight: 3
+              data: 2
+            - weight: 1
+              data: 3
+      - type: 'minecraft:in_square'
+      - type: 'minecraft:heightmap'
+        heightmap: WORLD_SURFACE
+      - type: 'minecraft:block_predicate_filter'
+        predicate:
+          type: 'minecraft:matching_blocks'
+          blocks: 'minecraft:air'
+      - type: 'minecraft:block_predicate_filter'
+        predicate:
+          type: 'minecraft:matching_blocks'
+          blocks: 'minecraft:sand'
+          offset: [0,-1,0]
+      - type: 'minecraft:biome'

@@ -203,7 +203,7 @@ public class MultiHighBlockBehavior extends BukkitBlockBehavior {
     }
 
     @Override
-    public boolean canPlaceMultiState(BlockAccessor accessor, BlockPos pos, ImmutableBlockState state) {
+    public boolean canPlaceMultiState(WorldAccessor accessor, BlockPos pos, ImmutableBlockState state) {
         MultiHighBlockBehavior behavior = state.behavior().getAs(MultiHighBlockBehavior.class).orElse(null);
         if (behavior == null) {
             return false;

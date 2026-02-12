@@ -264,7 +264,7 @@ public class RecipeEventListener implements Listener {
         }
     }
 
-    @EventHandler(ignoreCancelled = true, priority = EventPriority.LOWEST)
+    @EventHandler(ignoreCancelled = true, priority = EventPriority.HIGHEST)
     public void onAnvilEvent(PrepareAnvilEvent event) {
         preProcess(event);
         processRepairable(event);

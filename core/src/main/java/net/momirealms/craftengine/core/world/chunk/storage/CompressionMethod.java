@@ -20,17 +20,18 @@ import java.util.zip.GZIPInputStream;
 import java.util.zip.GZIPOutputStream;
 import java.util.zip.InflaterInputStream;
 
-public class CompressionMethod {
+public final class CompressionMethod {
     public static final int METHOD_COUNT = 5;
     public static final CompressionMethod[] METHODS = new CompressionMethod[METHOD_COUNT +1];
     public static final CompressionMethod NONE = register(new CompressionMethod(1, (stream) -> stream, (stream) -> stream));
     public static final CompressionMethod DEFLATE = register(new CompressionMethod(2, (stream) -> new FastBufferedInputStream(new InflaterInputStream(stream)), (stream) -> new FastBufferedOutputStream(new DeflaterOutputStream(stream))));
     public static final CompressionMethod GZIP = register(new CompressionMethod(3, (stream) -> new FastBufferedInputStream(new GZIPInputStream(stream)), (stream) -> new FastBufferedOutputStream(new GZIPOutputStream(stream))));
-    public static final CompressionMethod LZ4 = register(new CompressionMethod(4, LZ4BlockInputStream::new, LZ4BlockOutputStream::new));
+    public static final CompressionMethod LZ4 = register(new CompressionMethod(4, is -> LZ4BlockInputStream.newBuilder().build(is), LZ4BlockOutputStream::new));
     public static final CompressionMethod ZSTD;
 
     static {
         ClassLoader classLoader = CraftEngine.instance().dependencyManager().obtainClassLoaderWith(Set.of(Dependencies.ZSTD));
+
         try {
             Class<?> inputStreamClass = classLoader.loadClass("com.github.luben.zstd.ZstdInputStream");
             MethodHandle inputStreamConstructor = ReflectionUtils.unreflectConstructor(inputStreamClass.getConstructor(InputStream.class))

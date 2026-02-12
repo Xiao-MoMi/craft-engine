@@ -2,7 +2,7 @@ package net.momirealms.craftengine.core.world.chunk.client;
 
 import java.util.Arrays;
 
-public class PackedOcclusionStorage implements ClientSectionOcclusionStorage {
+public final class PackedOcclusionStorage implements ClientSectionOcclusionStorage {
     private static final int SIZE = 4096;
     private static final int LONGS = SIZE / 64;
     private final long[] data;

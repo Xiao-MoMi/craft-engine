@@ -14,6 +14,8 @@ public interface FurnitureElement {
 
     void hide(Player player);
 
+    void refresh(Player player);
+
     default void deactivate() {}
 
     default void activate() {}

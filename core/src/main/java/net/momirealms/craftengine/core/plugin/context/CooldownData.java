@@ -16,8 +16,8 @@ public class CooldownData {
     private final Map<String, Long> cooldownMap = Collections.synchronizedMap(new HashMap<>());
 
     public boolean isOnCooldown(String key) {
-        long currentTime = System.currentTimeMillis();
         if (this.cooldownMap.containsKey(key)) {
+            long currentTime = System.currentTimeMillis();
             long expirationTime = this.cooldownMap.get(key);
             return currentTime < expirationTime;
         }
@@ -44,7 +44,7 @@ public class CooldownData {
         this.cooldownMap.clear();
     }
 
-    public Long getCooldown(String key) {
+    public Long getExpirationTime(String key) {
         return this.cooldownMap.get(key);
     }
 

@@ -1,8 +1,8 @@
 package net.momirealms.craftengine.core.plugin.context.number;
 
-import net.momirealms.craftengine.core.plugin.context.Context;
 import net.momirealms.craftengine.core.util.MiscUtils;
 import net.momirealms.craftengine.core.util.ResourceConfigUtils;
+import net.momirealms.craftengine.core.util.random.RandomSource;
 
 import java.util.Map;
 import java.util.Random;
@@ -98,30 +98,29 @@ public final class SkewNormalNumberProvider implements NumberProvider {
     }
 
     @Override
-    public int getInt(Context context) {
+    public int getInt(RandomSource random) {
         // 四舍五入取整
-        return (int) Math.round(getDouble(context));
+        return (int) Math.round(getDouble(random));
     }
 
     @Override
-    public float getFloat(Context context) {
-        return (float) getDouble(context);
+    public float getFloat(RandomSource random) {
+        return (float) getDouble(random);
     }
 
     @Override
-    public double getDouble(Context context) {
+    public double getDouble(RandomSource random) {
         // 如果没有偏度，直接使用更快的标准高斯生成
         if (Math.abs(this.skewness) < 1e-6) {
             return generateNormalBounded();
         }
-        return generateSkewNormalBounded();
+        return generateSkewNormalBounded(random);
     }
 
     /**
      * 生成有界偏态分布随机数
      */
-    private double generateSkewNormalBounded() {
-        Random random = ThreadLocalRandom.current();
+    private double generateSkewNormalBounded(RandomSource random) {
         for (int i = 0; i < this.maxAttempts; i++) {
             // 生成标准正态变量
             double u0 = random.nextGaussian();

@@ -1,7 +1,6 @@
 package net.momirealms.craftengine.bukkit.block;
 
 import net.momirealms.craftengine.bukkit.util.BlockStateUtils;
-import net.momirealms.craftengine.core.block.AbstractBlockStateWrapper;
 import net.momirealms.craftengine.core.block.BlockStateWrapper;
 import net.momirealms.craftengine.core.block.CustomBlockStateWrapper;
 import net.momirealms.craftengine.core.block.ImmutableBlockState;
@@ -12,7 +11,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 
-public class BukkitCustomBlockStateWrapper extends AbstractBlockStateWrapper implements CustomBlockStateWrapper {
+public class BukkitCustomBlockStateWrapper extends BukkitBlockStateWrapper implements CustomBlockStateWrapper {
 
     public BukkitCustomBlockStateWrapper(Object blockState, int registryId) {
         super(blockState, registryId);

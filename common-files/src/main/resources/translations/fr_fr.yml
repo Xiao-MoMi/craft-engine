@@ -200,7 +200,6 @@ warning.config.item.data.external.missing_id: "<yellow>Problème trouvé dans le
 warning.config.item.data.external.invalid_source: "<yellow>Problème trouvé dans le fichier <arg:0> - L’objet '<arg:1>' utilise une source de données 'external' invalide '<arg:2>'.</yellow>"
 warning.config.item.missing_material: "<yellow>Problème trouvé dans le fichier <arg:0> - L’objet '<arg:1>' manque l’argument obligatoire 'material'.</yellow>"
 warning.config.item.invalid_material: "<yellow>Problème trouvé dans le fichier <arg:0> - L’objet '<arg:1>' utilise un type de matériau invalide '<arg:2>'.</yellow>"
-warning.config.item.invalid_custom_model_data: "<yellow>Problème trouvé dans le fichier <arg:0> - L’objet '<arg:1>' utilise des données de modèle personnalisées négatives '<arg:2>', ce qui est invalide.</yellow>"
 warning.config.item.bad_custom_model_data: "<yellow>Problème trouvé dans le fichier <arg:0> - L’objet '<arg:1>' utilise des données de modèle personnalisées trop grandes '<arg:2>'. Il est recommandé d’utiliser une valeur inférieure à 16 777 216.</yellow>"
 warning.config.item.item_model.conflict: "<yellow>Problème trouvé dans le fichier <arg:0> - L’objet '<arg:1>' utilise une option 'item-model' invalide car ce modèle est déjà utilisé par un objet vanilla.</yellow>"
 warning.config.item.custom_model_data.conflict: "<yellow>Problème trouvé dans le fichier <arg:0> - L’objet '<arg:1>' utilise des données de modèle personnalisées '<arg:2>' déjà attribuées à l’objet '<arg:3>'.</yellow>"

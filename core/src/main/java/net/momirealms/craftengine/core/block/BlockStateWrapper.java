@@ -1,6 +1,8 @@
 package net.momirealms.craftengine.core.block;
 
 import net.momirealms.craftengine.core.util.Key;
+import net.momirealms.craftengine.core.world.BlockPos;
+import net.momirealms.craftengine.core.world.WorldAccessor;
 import net.momirealms.sparrow.nbt.*;
 import org.jetbrains.annotations.NotNull;
 
@@ -30,6 +32,14 @@ public interface BlockStateWrapper extends Comparable<BlockStateWrapper> {
     boolean isCustom();
 
     boolean isAir();
+
+    boolean hasTag(Key tag);
+
+    boolean replaceable();
+
+    boolean canSurvive(WorldAccessor world, BlockPos pos);
+
+    Key fluidState();
 
     @Override
     default int compareTo(@NotNull BlockStateWrapper o) {

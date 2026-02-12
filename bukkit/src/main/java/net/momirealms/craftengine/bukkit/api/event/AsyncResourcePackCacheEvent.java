@@ -3,6 +3,7 @@ package net.momirealms.craftengine.bukkit.api.event;
 import net.momirealms.craftengine.core.pack.PackCacheData;
 import org.bukkit.event.Event;
 import org.bukkit.event.HandlerList;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.nio.file.Files;
@@ -25,6 +26,7 @@ public final class AsyncResourcePackCacheEvent extends Event {
     private static final HandlerList HANDLER_LIST = new HandlerList();
     private final PackCacheData cacheData;
 
+    @ApiStatus.Internal
     public AsyncResourcePackCacheEvent(@NotNull PackCacheData cacheData) {
         super(true);
         this.cacheData = cacheData;

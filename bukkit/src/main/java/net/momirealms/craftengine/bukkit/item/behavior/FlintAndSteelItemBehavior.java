@@ -17,7 +17,7 @@ import net.momirealms.craftengine.core.plugin.CraftEngine;
 import net.momirealms.craftengine.core.sound.SoundSource;
 import net.momirealms.craftengine.core.util.Direction;
 import net.momirealms.craftengine.core.util.Key;
-import net.momirealms.craftengine.core.util.RandomUtils;
+import net.momirealms.craftengine.core.util.random.RandomUtils;
 import net.momirealms.craftengine.core.world.BlockPos;
 import net.momirealms.craftengine.core.world.context.UseOnContext;
 import org.bukkit.block.Block;
@@ -28,10 +28,12 @@ import org.bukkit.inventory.ItemStack;
 import java.nio.file.Path;
 import java.util.Map;
 
-public class FlintAndSteelItemBehavior extends ItemBehavior {
+public final class FlintAndSteelItemBehavior extends ItemBehavior {
     public static final FlintAndSteelItemBehavior INSTANCE = new FlintAndSteelItemBehavior();
     public static final ItemBehaviorFactory<FlintAndSteelItemBehavior> FACTORY = new Factory();
     private static final Key FLINT_SOUND = Key.of("item.flintandsteel.use");
+
+    private FlintAndSteelItemBehavior() {}
 
     @SuppressWarnings("unchecked")
     @Override

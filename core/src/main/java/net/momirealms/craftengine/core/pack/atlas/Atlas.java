@@ -25,12 +25,15 @@ public final class Atlas {
     // 所需准备的图集贴图
     private final Set<Key> unstitch;
     private final Set<Key> palettedPermutations;
+    // 被CE移除的
+    private final Set<Key> deleted;
 
     public Atlas(JsonObject atlasJson) {
         this.directory = new LinkedHashMap<>();
         this.single = new HashSet<>();
         this.defined = new HashSet<>();
         this.unstitch = new HashSet<>();
+        this.deleted = new HashSet<>();
         this.palettedPermutations = new HashSet<>();
         List<Predicate<Key>> filtered = new ArrayList<>();
         JsonArray sources = atlasJson.getAsJsonArray("sources");
@@ -148,10 +151,16 @@ public final class Atlas {
         this.defined.add(key);
     }
 
+    public void addDeleted(Key key) {
+        this.deleted.add(key);
+    }
+
     // 获取贴图源文件路径，有些类型可能查不到
     public Key getSourceTexturePath(Key texture) {
         // 被筛选掉了
         if (this.filtered.test(texture)) return null;
+        // 被修复过
+        if (this.deleted.contains(texture)) return null;
         // single直接包含
         if (this.single.contains(texture)) return texture;
         // 被unstitch或者调色盘定义

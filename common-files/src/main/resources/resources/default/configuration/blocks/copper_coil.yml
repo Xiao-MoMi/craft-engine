@@ -1,6 +1,5 @@
 items:
   default:copper_coil:
-    material: nether_brick
     data:
       item-name: <!i><lang:item.default.copper_coil>
     model: minecraft:block/custom/copper_coil

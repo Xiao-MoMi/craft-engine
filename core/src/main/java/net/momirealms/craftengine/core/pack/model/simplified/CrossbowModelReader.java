@@ -10,6 +10,8 @@ import java.util.Map;
 public final class CrossbowModelReader implements SimplifiedModelReader {
     public static final CrossbowModelReader INSTANCE = new CrossbowModelReader();
 
+    private CrossbowModelReader() {}
+
     @Override
     public @NotNull Map<String, Object> convert(List<String> textures, List<String> optionalModelPaths, Key id) {
         if (textures.size() != 6) {

@@ -1,6 +1,5 @@
 items:
   default:flame_cane:
-    material: nether_brick
     data:
       item-name: <!i><lang:item.default.flame_cane>
     texture: minecraft:item/custom/flame_cane
@@ -93,10 +92,93 @@ recipes:
   default:magma_block:
     type: shapeless
     ingredients:
-      A1: minecraft:cobblestone
-      A2: minecraft:cobblestone
-      B1: default:flame_cane
-      B2: default:flame_cane
+      - minecraft:cobblestone
+      - minecraft:cobblestone
+      - default:flame_cane
+      - default:flame_cane
     result:
       id: minecraft:magma_block
       count: 2
+placed-features:
+  default:flame_cane:
+    environment:
+      - minecraft:the_nether
+    feature:
+      type: 'minecraft:random_patch'
+      config:
+        feature:
+          feature:
+            type: 'minecraft:block_column'
+            config:
+              allowed_placement:
+                type: 'minecraft:matching_blocks'
+                blocks: 'minecraft:air'
+              direction: up
+              layers:
+                - height:
+                    type: 'minecraft:biased_to_bottom'
+                    max_inclusive: 4
+                    min_inclusive: 2
+                  provider:
+                    type: 'minecraft:simple_state_provider'
+                    state:
+                      Name: 'default:flame_cane'
+                      Properties:
+                        age: '0'
+              prioritize_tip: false
+          placement:
+            - type: 'minecraft:block_predicate_filter'
+              predicate:
+                type: 'minecraft:all_of'
+                predicates:
+                  - type: 'minecraft:matching_blocks'
+                    blocks: 'minecraft:air'
+                  - type: 'minecraft:would_survive'
+                    state:
+                      Name: 'default:flame_cane'
+                      Properties:
+                        age: '0'
+                  - type: 'minecraft:any_of'
+                    predicates:
+                      - type: 'minecraft:matching_fluids'
+                        fluids:
+                          - 'minecraft:lava'
+                          - 'minecraft:flowing_lava'
+                        offset:
+                          - 1
+                          - -1
+                          - 0
+                      - type: 'minecraft:matching_fluids'
+                        fluids:
+                          - 'minecraft:lava'
+                          - 'minecraft:flowing_lava'
+                        offset:
+                          - -1
+                          - -1
+                          - 0
+                      - type: 'minecraft:matching_fluids'
+                        fluids:
+                          - 'minecraft:lava'
+                          - 'minecraft:flowing_lava'
+                        offset:
+                          - 0
+                          - -1
+                          - 1
+                      - type: 'minecraft:matching_fluids'
+                        fluids:
+                          - 'minecraft:lava'
+                          - 'minecraft:flowing_lava'
+                        offset:
+                          - 0
+                          - -1
+                          - -1
+        tries: 20
+        xz_spread: 4
+        y_spread: 0
+    placement:
+      - type: 'minecraft:rarity_filter'
+        chance: 6
+      - type: 'minecraft:in_square'
+      - type: 'minecraft:height_range'
+        height:
+          absolute: 32

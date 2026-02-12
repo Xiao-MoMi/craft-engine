@@ -37,6 +37,11 @@ public class AbstractItem<W extends ItemWrapper<I>, I> implements Item<I> {
     }
 
     @Override
+    public ItemType type() {
+        return this.factory.type(this.item);
+    }
+
+    @Override
     public Item<I> itemModel(String data) {
         this.factory.itemModel(this.item, data);
         return this;

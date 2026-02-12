@@ -19,9 +19,9 @@ public class BlockPlaceContext extends UseOnContext {
 
     public BlockPlaceContext(World world, @Nullable Player player, InteractionHand hand, Item<?> stack, BlockHitResult hit) {
         super(world, player, hand, stack, hit);
-        this.relativePos = hit.getBlockPos().relative(hit.getDirection());
+        this.relativePos = hit.blockPos().relative(hit.direction());
         this.replaceClicked = true;
-        this.replaceClicked = world.getBlock(hit.getBlockPos()).canBeReplaced(this);
+        this.replaceClicked = world.getBlock(hit.blockPos()).canBeReplaced(this);
     }
 
     @Override
@@ -41,7 +41,7 @@ public class BlockPlaceContext extends UseOnContext {
         return this.getLevel().getBlock(this.getClickedPos()).isWaterSource(this);
     }
 
-    public boolean replacingClickedOnBlock() {
+    public boolean replacingClickedBlock() {
         return this.replaceClicked;
     }
 

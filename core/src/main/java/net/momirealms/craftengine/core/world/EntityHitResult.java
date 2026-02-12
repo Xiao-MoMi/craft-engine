@@ -43,6 +43,6 @@ public class EntityHitResult {
     }
 
     public BlockPos blockPos() {
-        return blockPos;
+        return this.blockPos;
     }
 }

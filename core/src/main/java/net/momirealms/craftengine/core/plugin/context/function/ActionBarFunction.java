@@ -49,7 +49,7 @@ public class ActionBarFunction<CTX extends Context> extends AbstractConditionalF
         @Override
         public ActionBarFunction<CTX> create(Map<String, Object> arguments) {
             String message = ResourceConfigUtils.requireNonEmptyStringOrThrow(ResourceConfigUtils.get(arguments, "actionbar", "message"), "warning.config.function.actionbar.missing_actionbar");
-            return new ActionBarFunction<>(getPredicates(arguments), PlayerSelectors.fromObject(arguments.get("target"), conditionFactory()), message);
+            return new ActionBarFunction<>(getPredicates(arguments), PlayerSelectors.fromObject(arguments.get("target"), conditionFactory()), AdventureHelper.legacyToMiniMessage(message));
         }
     }
 }

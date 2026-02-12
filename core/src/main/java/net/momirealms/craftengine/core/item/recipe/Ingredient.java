@@ -13,12 +13,14 @@ public class Ingredient<T> implements Predicate<UniqueIdItem<T>>, StackedContent
     private final List<UniqueKey> vanillaItems;
     // ingredient里是否含有自定义物品
     private final boolean hasCustomItem;
+    private final int count;
 
-    private Ingredient(List<IngredientElement> elements, List<UniqueKey> items, List<UniqueKey> vanillaItems, boolean hasCustomItem) {
+    private Ingredient(List<IngredientElement> elements, List<UniqueKey> items, List<UniqueKey> vanillaItems, boolean hasCustomItem, int count) {
         this.elements = List.copyOf(elements);
         this.items = List.copyOf(items);
         this.vanillaItems = List.copyOf(vanillaItems);
         this.hasCustomItem = hasCustomItem;
+        this.count = count;
     }
 
     public static <T> boolean isInstance(Optional<Ingredient<T>> optionalIngredient, UniqueIdItem<T> stack) {
@@ -26,15 +28,19 @@ public class Ingredient<T> implements Predicate<UniqueIdItem<T>>, StackedContent
                 .orElseGet(stack::isEmpty);
     }
 
-    public static <T> Ingredient<T> of(List<IngredientElement> elements, Set<UniqueKey> items, Set<UniqueKey> minecraftItems, boolean hasCustomItem) {
-        return new Ingredient<>(elements, new ArrayList<>(items), new ArrayList<>(minecraftItems), hasCustomItem);
+    public static <T> Ingredient<T> of(List<IngredientElement> elements, Set<UniqueKey> items, Set<UniqueKey> minecraftItems, boolean hasCustomItem, int count) {
+        return new Ingredient<>(elements, new ArrayList<>(items), new ArrayList<>(minecraftItems), hasCustomItem, count);
     }
 
     @Override
     public boolean test(UniqueIdItem<T> uniqueIdItem) {
         for (UniqueKey item : this.items()) {
             if (uniqueIdItem.is(item)) {
-                return true;
+                if (this.count == 1) {
+                    return true;
+                } else {
+                    return uniqueIdItem.item().count() >= this.count;
+                }
             }
         }
         return false;

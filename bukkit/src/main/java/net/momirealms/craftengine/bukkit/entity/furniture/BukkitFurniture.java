@@ -23,9 +23,7 @@ import org.joml.Quaternionf;
 import org.joml.Vector3f;
 
 import java.lang.ref.WeakReference;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 import java.util.concurrent.CompletableFuture;
 
 @SuppressWarnings("DuplicatedCode")
@@ -97,7 +95,7 @@ public class BukkitFurniture extends Furniture {
         if (!force) {
             // 检查新位置是否可用
             List<AABB> aabbs = new ArrayList<>();
-            for (FurnitureHitBoxConfig<?> hitBoxConfig : getCurrentVariant().hitBoxConfigs()) {
+            for (FurnitureHitBoxConfig<?> hitBoxConfig : currentVariant().hitBoxConfigs()) {
                 hitBoxConfig.prepareBoundingBox(position, aabbs::add, false);
             }
             if (!aabbs.isEmpty()) {
@@ -129,7 +127,7 @@ public class BukkitFurniture extends Furniture {
         }
         itemDisplay.teleportAsync(this.location).thenAccept(result -> {
             if (result) {
-                super.setVariantInternal(getCurrentVariant());
+                super.setVariantInternal(currentVariant());
                 BukkitFurnitureManager.instance().initFurniture(this);
                 this.addCollidersToWorld();
                 Object addPacket = FastNMS.INSTANCE.constructor$ClientboundAddEntityPacket(itemDisplay.getEntityId(), itemDisplay.getUniqueId(),
@@ -176,15 +174,19 @@ public class BukkitFurniture extends Furniture {
 
     @Override
     public void destroy() {
-        Optional.ofNullable(this.metaEntity.get()).ifPresent(Entity::remove);
-        for (Collider entity : super.colliders) {
-            entity.destroy();
+        try {
+            this.config.behavior().onRemove(this);
+        } finally {
+            Optional.ofNullable(this.metaEntity.get()).ifPresent(Entity::remove);
+            for (Collider entity : super.colliders) {
+                entity.destroy();
+            }
         }
     }
 
     // 获取掉落物的位置，受到家具变种的影响
     public Location getDropLocation() {
-        Vector3f dropOffset = this.getCurrentVariant().dropOffset();
+        Vector3f dropOffset = this.currentVariant().dropOffset();
         Quaternionf conjugated = QuaternionUtils.toQuaternionf(0, Math.toRadians(180 - this.location.getYaw()), 0).conjugate();
         Vector3f offset = conjugated.transform(new Vector3f(dropOffset));
         return new Location(this.location.getWorld(), this.location.getX() + offset.x, this.location.getY() + offset.y, this.location.getZ() - offset.z);
@@ -195,14 +197,31 @@ public class BukkitFurniture extends Furniture {
     }
 
     public Entity getBukkitEntity() {
+        return bukkitEntity();
+    }
+
+    public Entity bukkitEntity() {
         return this.metaEntity.get();
     }
 
     /**
-     * Use {@link #getBukkitEntity()} instead
+     * Use {@link #bukkitEntity()} instead
      */
     @Deprecated
     public Entity baseEntity() {
-        return getBukkitEntity();
+        return bukkitEntity();
+    }
+
+    @SuppressWarnings("deprecation")
+    @Override
+    public Set<net.momirealms.craftengine.core.entity.player.Player> getTrackedBy() {
+        ItemDisplay itemDisplay = this.metaEntity.get();
+        if (itemDisplay == null) return Set.of();
+        Set<Player> trackedPlayers = itemDisplay.getTrackedPlayers();
+        Set<net.momirealms.craftengine.core.entity.player.Player> players = new HashSet<>();
+        for (Player player : trackedPlayers) {
+            players.add(BukkitAdaptors.adapt(player));
+        }
+        return players;
     }
 }

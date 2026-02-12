@@ -1,6 +1,5 @@
 items:
   default:sleeper_sofa:
-    material: nether_brick
     data:
       item-name: <!i><lang:item.default.sofa>
     model: minecraft:item/custom/sleeper_sofa
@@ -41,10 +40,8 @@ items:
           entity-renderer:
             item: default:sleeper_sofa
   default:sofa_inner:
-    material: nether_brick
     model: minecraft:item/custom/sofa_inner
   default:sofa:
-    material: nether_brick
     data:
       item-name: <!i><lang:item.default.sofa>
     model:

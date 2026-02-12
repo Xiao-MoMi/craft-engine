@@ -1,6 +1,6 @@
 package net.momirealms.craftengine.core.world.chunk.client;
 
-public class SingularOcclusionStorage implements ClientSectionOcclusionStorage {
+public final class SingularOcclusionStorage implements ClientSectionOcclusionStorage {
     private final boolean isOccluding;
 
     public SingularOcclusionStorage(boolean isOccluding) {

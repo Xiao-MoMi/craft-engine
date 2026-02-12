@@ -1,6 +1,5 @@
 items:
   default:table_lamp:
-    material: nether_brick
     data:
       item-name: <!i><lang:item.default.table_lamp>
     model: minecraft:item/custom/table_lamp
@@ -100,7 +99,6 @@ items:
               settings:
                 luminance: 15
   default:table_lamp_on:
-    material: nether_brick
     data:
       item-name: <!i><lang:item.default.table_lamp>
     model:

@@ -15,6 +15,7 @@ import net.momirealms.craftengine.bukkit.util.LegacyInventoryUtils;
 import net.momirealms.craftengine.core.font.*;
 import net.momirealms.craftengine.core.item.Item;
 import net.momirealms.craftengine.core.plugin.config.Config;
+import net.momirealms.craftengine.core.plugin.network.IllegalCharacterProcessResult;
 import net.momirealms.craftengine.core.util.AdventureHelper;
 import net.momirealms.craftengine.core.util.VersionHelper;
 import org.bukkit.Bukkit;
@@ -36,7 +37,6 @@ import java.lang.reflect.InvocationTargetException;
 import java.util.*;
 
 public class BukkitFontManager extends AbstractFontManager implements Listener {
-
     private static BukkitFontManager instance;
     private final BukkitCraftEngine plugin;
 
@@ -75,7 +75,7 @@ public class BukkitFontManager extends AbstractFontManager implements Listener {
 
     @EventHandler(priority = EventPriority.LOWEST)
     public void onPlayerJoin(PlayerJoinEvent event) {
-        plugin.scheduler().async().execute(() -> this.addEmojiSuggestions(event.getPlayer(), getEmojiSuggestion(event.getPlayer())));
+        this.plugin.scheduler().async().execute(() -> this.addEmojiSuggestions(event.getPlayer(), getEmojiSuggestion(event.getPlayer())));
     }
 
     @Override
@@ -125,7 +125,7 @@ public class BukkitFontManager extends AbstractFontManager implements Listener {
         Player player = event.getPlayer();
         if (!Config.filterCommand()) return;
         if (!player.hasPermission(FontManager.BYPASS_COMMAND)) {
-            IllegalCharacterProcessResult result = processIllegalCharacters(event.getMessage());
+            IllegalCharacterProcessResult result = this.plugin.networkManager().processIllegalCharacters(event.getMessage());
             if (result.has()) {
                 event.setMessage(result.text());
             }
@@ -133,7 +133,7 @@ public class BukkitFontManager extends AbstractFontManager implements Listener {
     }
 
     @SuppressWarnings("UnstableApiUsage")
-    @EventHandler(priority = EventPriority.NORMAL, ignoreCancelled = true)
+    @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
     public void onAnvilRename(PrepareAnvilEvent event) {
         if (!Config.allowEmojiAnvil() || super.emojiKeywordTrie == null) {
             return;
@@ -220,11 +220,11 @@ public class BukkitFontManager extends AbstractFontManager implements Listener {
         Player player = event.player();
         if (player == null) return;
         try {
-            Object originalMessage = PaperReflections.field$AsyncChatDecorateEvent$originalMessage.get(event);
+            Object originalMessage = PaperReflections.field$AsyncChatDecorateEvent$result.get(event);
             String rawJsonMessage = ComponentUtils.paperAdventureToJson(originalMessage);
             boolean changed = false;
             if (!player.hasPermission(FontManager.BYPASS_CHAT)) {
-                IllegalCharacterProcessResult result = processIllegalCharacters(rawJsonMessage);
+                IllegalCharacterProcessResult result = this.plugin.networkManager().processIllegalCharacters(rawJsonMessage);
                 if (result.has()) {
                     rawJsonMessage = result.text();
                     changed = true;

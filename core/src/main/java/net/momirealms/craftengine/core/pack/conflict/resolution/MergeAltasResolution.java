@@ -7,8 +7,7 @@ import net.momirealms.craftengine.core.pack.conflict.PathContext;
 import net.momirealms.craftengine.core.plugin.CraftEngine;
 import net.momirealms.craftengine.core.util.GsonHelper;
 
-import java.util.HashSet;
-import java.util.Map;
+import java.util.*;
 
 public final class MergeAltasResolution implements Resolution {
     public static final ResolutionFactory<MergeAltasResolution> FACTORY = new Factory();
@@ -27,13 +26,17 @@ public final class MergeAltasResolution implements Resolution {
             JsonArray ja3 = new JsonArray();
             HashSet<String> elements = new HashSet<>();
             for (JsonElement je : ja1) {
-                if (elements.add(je.toString())) {
-                    ja3.add(je);
+                if (je instanceof JsonObject jo) {
+                    if (elements.add(normalizeWithSortedKeys(jo).toString())) {
+                        ja3.add(jo);
+                    }
                 }
             }
             for (JsonElement je : ja2) {
-                if (elements.add(je.toString())) {
-                    ja3.add(je);
+                if (je instanceof JsonObject jo) {
+                    if (elements.add(normalizeWithSortedKeys(jo).toString())) {
+                        ja3.add(jo);
+                    }
                 }
             }
             j3.add("sources", ja3);
@@ -41,6 +44,26 @@ public final class MergeAltasResolution implements Resolution {
         } catch (Exception e) {
             CraftEngine.instance().logger().severe("Failed to merge altas when resolving file conflicts", e);
         }
+    }
+
+    // 不完全对，因为还有array未排序
+    private JsonObject normalizeWithSortedKeys(JsonObject obj) {
+        // 收集所有键并排序
+        List<String> keys = new ArrayList<>(obj.keySet());
+        Collections.sort(keys);
+
+        // 按排序后的键构建规范化的JSON
+        JsonObject sortedObj = new JsonObject();
+        for (String key : keys) {
+            JsonElement element = obj.get(key);
+            if (element instanceof JsonObject innerJo) {
+                sortedObj.add(key, normalizeWithSortedKeys(innerJo));
+            } else {
+                sortedObj.add(key, element);
+            }
+        }
+
+        return sortedObj;
     }
 
     private static class Factory implements ResolutionFactory<MergeAltasResolution> {

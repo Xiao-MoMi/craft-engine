@@ -1,13 +1,11 @@
 package net.momirealms.craftengine.core.plugin.context.number;
 
-import net.momirealms.craftengine.core.plugin.context.Context;
 import net.momirealms.craftengine.core.util.MiscUtils;
 import net.momirealms.craftengine.core.util.ResourceConfigUtils;
+import net.momirealms.craftengine.core.util.random.RandomSource;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Map;
-import java.util.Random;
-import java.util.concurrent.ThreadLocalRandom;
 
 /**
  * 对数正态分布提供器 (Log-Normal Distribution)
@@ -51,19 +49,17 @@ public record LogNormalNumberProvider(
     }
 
     @Override
-    public int getInt(Context context) {
-        return (int) Math.round(getDouble(context));
+    public int getInt(RandomSource random) {
+        return (int) Math.round(getDouble(random));
     }
 
     @Override
-    public float getFloat(Context context) {
-        return (float) getDouble(context);
+    public float getFloat(RandomSource random) {
+        return (float) getDouble(random);
     }
 
     @Override
-    public double getDouble(Context context) {
-        Random random = ThreadLocalRandom.current();
-
+    public double getDouble(RandomSource random) {
         // 快速路径：如果范围极小，直接返回均值
         if (max - min < EPSILON) {
             return min;

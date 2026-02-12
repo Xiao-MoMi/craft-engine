@@ -7,6 +7,7 @@ import net.kyori.adventure.text.Component;
 import net.momirealms.craftengine.core.plugin.context.Context;
 import net.momirealms.craftengine.core.util.AdventureHelper;
 import net.momirealms.craftengine.core.util.ResourceConfigUtils;
+import net.momirealms.craftengine.core.util.random.RandomSource;
 
 import java.util.Map;
 
@@ -26,6 +27,16 @@ public record ExpressionNumberProvider(String expression) implements NumberProvi
     }
 
     @Override
+    public float getFloat(RandomSource random) {
+        Expression expression = new Expression(this.expression);
+        try {
+            return expression.evaluate().getNumberValue().floatValue();
+        } catch (EvaluationException | ParseException e) {
+            throw new RuntimeException("Invalid expression: " + this.expression, e);
+        }
+    }
+
+    @Override
     public double getDouble(Context context) {
         Component resultComponent = AdventureHelper.customMiniMessage().deserialize(this.expression, context.tagResolvers());
         String resultString = AdventureHelper.plainTextContent(resultComponent);
@@ -34,6 +45,16 @@ public record ExpressionNumberProvider(String expression) implements NumberProvi
             return expression.evaluate().getNumberValue().doubleValue();
         } catch (EvaluationException | ParseException e) {
             throw new RuntimeException("Invalid expression: " + this.expression + " -> " + resultString + " -> Cannot parse", e);
+        }
+    }
+
+    @Override
+    public double getDouble(RandomSource random) {
+        Expression expression = new Expression(this.expression);
+        try {
+            return expression.evaluate().getNumberValue().doubleValue();
+        } catch (EvaluationException | ParseException e) {
+            throw new RuntimeException("Invalid expression: " + this.expression, e);
         }
     }
 

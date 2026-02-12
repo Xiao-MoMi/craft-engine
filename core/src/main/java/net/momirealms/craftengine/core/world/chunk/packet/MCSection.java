@@ -4,7 +4,7 @@ import net.momirealms.craftengine.core.util.FriendlyByteBuf;
 import net.momirealms.craftengine.core.util.IndexedIterable;
 import net.momirealms.craftengine.core.world.chunk.PalettedContainer;
 
-public class MCSection {
+public final class MCSection {
     private short nonEmptyBlockCount;
     private final PalettedContainer<Integer> serverBlockStateContainer;
     private final IndexedIterable<Integer> clientBlockStateList;

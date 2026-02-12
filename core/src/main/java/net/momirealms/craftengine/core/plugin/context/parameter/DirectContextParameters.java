@@ -67,5 +67,6 @@ public final class DirectContextParameters {
     public static final ContextKey<Boolean> IS_BLOCK_ITEM = ContextKey.direct("is_block_item");
     public static final ContextKey<GameMode> GAMEMODE = ContextKey.direct("gamemode");
     public static final ContextKey<Integer> COUNT = ContextKey.direct("count");
+    public static final ContextKey<Integer> HIT_TIMES = ContextKey.direct("hit_times");
     public static final ContextKey<GameEdition> GAME_EDITION = ContextKey.direct("game_edition");
 }

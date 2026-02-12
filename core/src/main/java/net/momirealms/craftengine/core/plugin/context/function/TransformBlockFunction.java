@@ -50,7 +50,8 @@ public class TransformBlockFunction<CTX extends Context> extends AbstractConditi
             BlockStateWrapper existingBlockState = world.getBlock(x, y, z).blockState().withProperties(this.properties);
             CompoundTag newProperties = new CompoundTag();
             for (String propertyName : existingBlockState.getPropertyNames()) {
-                newProperties.putString(propertyName, String.valueOf(existingBlockState.getProperty(propertyName)).toLowerCase(Locale.ROOT));
+                Object property = existingBlockState.getProperty(propertyName);
+                newProperties.putString(propertyName, String.valueOf(property).toLowerCase(Locale.ROOT));
             }
             if (!this.properties.isEmpty()) {
                 for (Map.Entry<String, Tag> tagEntry : this.properties.entrySet()) {

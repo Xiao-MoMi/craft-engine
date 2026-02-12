@@ -4,17 +4,11 @@
 # https://xiao-momi.github.io/craft-engine-wiki/configuration/i18n
 translations:
   en_us:
-    emoji.tip: Use <yellow>'<arg:keyword>'</yellow> to send the '<arg:emoji>' emoji
-    emoji.time: '<bold>Current time: <papi:player_world_time_12></bold>'
-    emoji.location: '<bold>Current coordinates: <papi:player_x>,<papi:player_y>,<papi:player_z></bold>'
+    emoji.tip: Use <yellow>'<arg:0>'</yellow> to send the '<arg:1>' emoji
   zh_cn:
-    emoji.tip: 使用<yellow>'<arg:keyword>'</yellow>来发送表情'<arg:emoji>'
-    emoji.time: '<bold>当前时间: <papi:player_world_time_12></bold>'
-    emoji.location: '<bold>当前坐标: <papi:player_x>,<papi:player_y>,<papi:player_z></bold>'
+    emoji.tip: 使用<yellow>'<arg:0>'</yellow>来发送表情'<arg:1>'
   fr_fr:
-    emoji.tip: Utilisez <yellow>'<arg:keyword>'</yellow> pour envoyer l'emoji '<arg:emoji>'
-    emoji.time: '<bold>Heure actuelle: <papi:player_world_time_12></bold>'
-    emoji.location: '<bold>Coordonnées actuelles: <papi:player_x>,<papi:player_y>,<papi:player_z></bold>'
+    emoji.tip: Utilisez <yellow>'<arg:0>'</yellow> pour envoyer l'emoji '<arg:1>'
 
 # An emoji is always an image, but an image is not necessarily an emoji.
 # You need to configure the corresponding image for your emoji first. Here, I have configured a 4x4 bitmap for it.
@@ -30,7 +24,7 @@ images:
 # https://xiao-momi.github.io/craft-engine-wiki/reference/template
 templates:
   default:emoji/basic:
-    content: <hover:show_text:'<i18n:emoji.tip>'><!shadow><white><arg:emoji></white></!shadow></hover>
+    content: <hover:show_text:'<l10n:emoji.tip:"<arg:keyword>":"<arg:emoji>">'><!shadow><white><arg:emoji></white></!shadow></hover>
 
 # Here are the specific configurations for the emoji.
 # However, I have used templates in this section. If you would like to see the complete configuration, please refer to the wiki.

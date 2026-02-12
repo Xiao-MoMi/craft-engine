@@ -16,14 +16,14 @@ import java.util.UUID;
 import java.util.function.Consumer;
 
 public final class ItemFurnitureElement extends AbstractFurnitureElement {
-    private final ItemFurnitureElementConfig config;
-    private final Furniture furniture;
-    private final int entityId1;
-    private final int entityId2;
-    private final Object despawnPacket;
-    private final Object cachedSpawnPacket1;
-    private final Object cachedSpawnPacket2;
-    private final Object cachedRidePacket;
+    public final ItemFurnitureElementConfig config;
+    public final Furniture furniture;
+    public final int entityId1;
+    public final int entityId2;
+    public final Object despawnPacket;
+    public final Object cachedSpawnPacket1;
+    public final Object cachedSpawnPacket2;
+    public final Object cachedRidePacket;
 
     ItemFurnitureElement(Furniture furniture, ItemFurnitureElementConfig config) {
         super(config.predicate, config.hasCondition);
@@ -68,6 +68,11 @@ public final class ItemFurnitureElement extends AbstractFurnitureElement {
     @Override
     public void hide(Player player) {
         player.sendPacket(this.despawnPacket, false);
+    }
+
+    @Override
+    public void refresh(Player player) {
+        player.sendPacket(FastNMS.INSTANCE.constructor$ClientboundSetEntityDataPacket(this.entityId2, this.config.metadata.apply(player, this.furniture.dataAccessor.getColorSource())), false);
     }
 
     @Override

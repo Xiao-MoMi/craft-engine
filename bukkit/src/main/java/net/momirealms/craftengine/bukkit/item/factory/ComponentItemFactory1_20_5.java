@@ -12,6 +12,7 @@ import net.momirealms.craftengine.bukkit.util.EnchantmentUtils;
 import net.momirealms.craftengine.bukkit.util.KeyUtils;
 import net.momirealms.craftengine.core.attribute.AttributeModifier;
 import net.momirealms.craftengine.core.item.DataComponentKeys;
+import net.momirealms.craftengine.core.item.ItemType;
 import net.momirealms.craftengine.core.item.data.Enchantment;
 import net.momirealms.craftengine.core.item.data.FireworkExplosion;
 import net.momirealms.craftengine.core.item.data.Trim;
@@ -29,6 +30,11 @@ public class ComponentItemFactory1_20_5 extends BukkitItemFactory<ComponentItemW
 
     public ComponentItemFactory1_20_5(CraftEngine plugin) {
         super(plugin);
+    }
+
+    @Override
+    protected ItemType type(ComponentItemWrapper item) {
+        return item.itemType();
     }
 
     @Override
@@ -234,12 +240,12 @@ public class ComponentItemFactory1_20_5 extends BukkitItemFactory<ComponentItemW
 
     @Override
     protected Object getExactComponent(ComponentItemWrapper item, Object type) {
-        return item.getComponentExact(type);
+        return item.getExactComponent(type);
     }
 
     @Override
     protected void setExactComponent(ComponentItemWrapper item, Object type, Object value) {
-        item.setComponentExact(type, value);
+        item.setExactComponent(type, value);
     }
 
     @Override
@@ -359,7 +365,7 @@ public class ComponentItemFactory1_20_5 extends BukkitItemFactory<ComponentItemW
 
     @Override
     protected Optional<Boolean> glint(ComponentItemWrapper item) {
-        return Optional.ofNullable((Boolean) item.getComponentExact(DataComponentTypes.ENCHANTMENT_GLINT_OVERRIDE));
+        return Optional.ofNullable((Boolean) item.getExactComponent(DataComponentTypes.ENCHANTMENT_GLINT_OVERRIDE));
     }
 
     @Override
@@ -423,7 +429,7 @@ public class ComponentItemFactory1_20_5 extends BukkitItemFactory<ComponentItemW
 
     @Override
     protected Optional<Enchantment> getEnchantment(ComponentItemWrapper item, Key key) {
-        Object enchant = item.getComponentExact(DataComponentTypes.ENCHANTMENTS);
+        Object enchant = item.getExactComponent(DataComponentTypes.ENCHANTMENTS);
         if (enchant == null) return Optional.empty();
         try {
             Map<String, Integer> map = EnchantmentUtils.toMap(enchant);
@@ -451,7 +457,7 @@ public class ComponentItemFactory1_20_5 extends BukkitItemFactory<ComponentItemW
 
     @Override
     protected Optional<List<Enchantment>> enchantments(ComponentItemWrapper item) {
-        Object exactEnchantments = item.getComponentExact(DataComponentTypes.ENCHANTMENTS);
+        Object exactEnchantments = item.getExactComponent(DataComponentTypes.ENCHANTMENTS);
         if (exactEnchantments == null) return Optional.empty();
         try {
             return Optional.of(EnchantmentUtils.toList(exactEnchantments));
@@ -463,7 +469,7 @@ public class ComponentItemFactory1_20_5 extends BukkitItemFactory<ComponentItemW
 
     @Override
     protected Optional<List<Enchantment>> storedEnchantments(ComponentItemWrapper item) {
-        Object exactEnchantments = item.getComponentExact(DataComponentTypes.STORED_ENCHANTMENTS);
+        Object exactEnchantments = item.getExactComponent(DataComponentTypes.STORED_ENCHANTMENTS);
         if (exactEnchantments == null) return Optional.empty();
         try {
             return Optional.of(EnchantmentUtils.toList(exactEnchantments));

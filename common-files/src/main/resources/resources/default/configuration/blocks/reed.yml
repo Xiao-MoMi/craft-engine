@@ -1,6 +1,5 @@
 items:
   default:reed:
-    material: nether_brick
     data:
       item-name: <!i><lang:item.default.reed>
     texture: minecraft:item/custom/reed
@@ -35,3 +34,44 @@ recipes:
     result:
       id: minecraft:paper
       count: 3
+placed-features:
+  default:reed:
+    biome:
+      - minecraft:river
+    environment:
+      - minecraft:overworld
+    feature:
+      type: 'minecraft:random_patch'
+      config:
+        feature:
+          feature:
+            type: 'minecraft:simple_block'
+            config:
+              to_place:
+                type: 'craftengine:simple_state_provider'
+                state:
+                  Name: 'default:reed'
+          placement:
+            - type: 'minecraft:block_predicate_filter'
+              predicate:
+                type: 'minecraft:all_of'
+                predicates:
+                  - type: 'minecraft:replaceable'
+                  - type: 'minecraft:matching_fluids'
+                    fluids: 'minecraft:empty'
+                  - type: 'minecraft:matching_fluids'
+                    fluids: '#minecraft:water'
+                    offset:
+                      - 0
+                      - -1
+                      - 0
+        tries: 96
+        xz_spread: 7
+        y_spread: 1
+    placement:
+      - type: 'minecraft:rarity_filter'
+        chance: 48
+      - type: 'minecraft:in_square'
+      - type: 'minecraft:heightmap'
+        heightmap: WORLD_SURFACE
+      - type: 'minecraft:biome'

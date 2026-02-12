@@ -1,6 +1,5 @@
 items:
   default:flower_basket:
-    material: nether_brick
     data:
       item-name: <!i><lang:item.default.flower_basket>
     texture: minecraft:item/custom/flower_basket_2d
@@ -18,17 +17,17 @@ items:
           rotation: any
           alignment: any
   default:flower_basket_ground:
-    material: nether_brick
     model: minecraft:item/custom/flower_basket_ground
-    data::item-name: <!i><lang:item.default.flower_basket>
+    data:
+      item-name: <!i><lang:item.default.flower_basket>
   default:flower_basket_wall:
-    material: nether_brick
     model: minecraft:item/custom/flower_basket_wall
-    data::item-name: <!i><lang:item.default.flower_basket>
+    data:
+      item-name: <!i><lang:item.default.flower_basket>
   default:flower_basket_ceiling:
-    material: nether_brick
     model: minecraft:item/custom/flower_basket_ceiling
-    data::item-name: <!i><lang:item.default.flower_basket>
+    data:
+      item-name: <!i><lang:item.default.flower_basket>
 furniture:
   default:flower_basket:
     events:
@@ -38,9 +37,11 @@ furniture:
             - wall
     settings:
       item: default:flower_basket
+      hit-times: 3
       sounds:
         break: minecraft:block.grass.break
         place: minecraft:block.grass.place
+        hit: minecraft:block.grass.hit
     loot:
       template: default:loot_table/furniture
       arguments:

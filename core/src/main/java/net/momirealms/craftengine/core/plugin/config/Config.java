@@ -70,6 +70,7 @@ public class Config {
     protected Path resource_pack$path;
     protected String resource_pack$description;
 
+    protected boolean resource_pack$protection$unprotected_copy;
     protected boolean resource_pack$protection$crash_tools$method_1;
     protected boolean resource_pack$protection$crash_tools$method_2;
     protected boolean resource_pack$protection$crash_tools$method_3;
@@ -82,6 +83,7 @@ public class Config {
 
     protected boolean resource_pack$validation$enable;
     protected boolean resource_pack$validation$fix_atlas;
+    protected boolean resource_pack$validation$fix_missing_texture;
     protected boolean resource_pack$exclude_core_shaders;
 
     protected boolean resource_pack$protection$obfuscation$enable;
@@ -109,11 +111,9 @@ public class Config {
     protected boolean resource_pack$optimization$enable;
     protected boolean resource_pack$optimization$texture$enable;
     protected Set<String> resource_pack$optimization$texture$exlude;
-    protected Set<String> resource_pack$optimization$texture$exclude_path;
     protected int resource_pack$optimization$texture$zopfli_iterations;
     protected boolean resource_pack$optimization$json$enable;
     protected Set<String> resource_pack$optimization$json$exclude;
-    protected Set<String> resource_pack$optimization$json$exclude_path;
 
     protected MinecraftVersion resource_pack$supported_version$min;
     protected MinecraftVersion resource_pack$supported_version$max;
@@ -201,9 +201,13 @@ public class Config {
     protected int item$custom_model_data_starting_value$default;
     protected Map<Key, Integer> item$custom_model_data_starting_value$overrides;
     protected boolean item$always_use_item_model;
+    protected boolean item$always_use_custom_model_data;
+    protected boolean item$always_generate_model_overrides;
     protected String item$default_material = "";
     protected boolean item$default_drop_display$enable = false;
     protected String item$default_drop_display$format = null;
+    protected boolean item$data_fixer_upper$enable = true;
+    protected int item$data_fixer_upper$fallback_version = 3463;
 
     protected String equipment$sacrificed_vanilla_armor$type;
     protected Key equipment$sacrificed_vanilla_armor$asset_id;
@@ -356,7 +360,7 @@ public class Config {
         resource_pack$delivery$strict_player_uuid_validation = config.getBoolean("resource-pack.delivery.strict-player-uuid-validation", true);
         resource_pack$delivery$file_to_upload = resolvePath(config.getString("resource-pack.delivery.file-to-upload", "./generated/resource_pack.zip"));
         resource_pack$send$prompt = AdventureHelper.miniMessage().deserialize(config.getString("resource-pack.delivery.prompt", "<yellow>To fully experience our server, please accept our custom resource pack.</yellow>"));
-        resource_pack$protection$crash_tools$method_1 = config.getBoolean("resource-pack.protection.crash-tools.method-1", false);
+        resource_pack$protection$unprotected_copy = config.getBoolean("resource-pack.protection.unprotected-copy", false);
         resource_pack$protection$crash_tools$method_2 = config.getBoolean("resource-pack.protection.crash-tools.method-2", false);
         resource_pack$protection$crash_tools$method_3 = config.getBoolean("resource-pack.protection.crash-tools.method-3", false);
         resource_pack$protection$crash_tools$method_4 = config.getBoolean("resource-pack.protection.crash-tools.method-4", false);
@@ -380,7 +384,7 @@ public class Config {
         resource_pack$protection$obfuscation$path$block_source = config.getString("resource-pack.protection.obfuscation.path.block-source", "obf_block");
         resource_pack$protection$obfuscation$path$item_source = config.getString("resource-pack.protection.obfuscation.path.block-source", "obf_item");
         resource_pack$protection$obfuscation$path$anti_unzip = config.getBoolean("resource-pack.protection.obfuscation.path.anti-unzip", false);
-        resource_pack$protection$obfuscation$atlas$images_per_canvas = config.getInt("resource-pack.protection.obfuscation.atlas.images-per-canvas", 256);
+        resource_pack$protection$obfuscation$atlas$images_per_canvas = Math.max(0, config.getInt("resource-pack.protection.obfuscation.atlas.images-per-canvas", 256));
         resource_pack$protection$obfuscation$atlas$prefix = config.getString("resource-pack.protection.obfuscation.atlas.prefix", "atlas");
         resource_pack$protection$obfuscation$bypass_textures = config.getStringList("resource-pack.protection.obfuscation.bypass-textures");
         resource_pack$protection$obfuscation$bypass_models = config.getStringList("resource-pack.protection.obfuscation.bypass-models");
@@ -390,24 +394,19 @@ public class Config {
         resource_pack$optimization$texture$enable = config.getBoolean("resource-pack.optimization.texture.enable", true);
         resource_pack$optimization$texture$zopfli_iterations = config.getInt("resource-pack.optimization.texture.zopfli-iterations", 0);
         resource_pack$optimization$texture$exlude = config.getStringList("resource-pack.optimization.texture.exclude").stream().map(p -> {
+            if (p.endsWith("/")) return p;
             if (!p.endsWith(".png")) return p + ".png";
-            return p;
-        }).collect(Collectors.toSet());
-        resource_pack$optimization$texture$exclude_path = config.getStringList("resource-pack.optimization.texture.exclude-path").stream().map(p -> {
-            if (p.endsWith("/")) return p.substring(0, p.length() - 1);
             return p;
         }).collect(Collectors.toSet());
         resource_pack$optimization$json$enable = config.getBoolean("resource-pack.optimization.json.enable", true);
         resource_pack$optimization$json$exclude = config.getStringList("resource-pack.optimization.json.exclude").stream().map(p -> {
+            if (p.endsWith("/")) return p;
             if (!p.endsWith(".json") && !p.endsWith(".mcmeta")) return p + ".json";
-            return p;
-        }).collect(Collectors.toSet());
-        resource_pack$optimization$json$exclude_path = config.getStringList("resource-pack.optimization.json.exclude-path").stream().map(p -> {
-            if (p.endsWith("/")) return p.substring(0, p.length() - 1);
             return p;
         }).collect(Collectors.toSet());
         resource_pack$validation$enable = config.getBoolean("resource-pack.validation.enable", true);
         resource_pack$validation$fix_atlas = config.getBoolean("resource-pack.validation.fix-atlas", true);
+        resource_pack$validation$fix_missing_texture = config.getBoolean("resource-pack.validation.fix-missing-texture", true);
         resource_pack$exclude_core_shaders = config.getBoolean("resource-pack.exclude-core-shaders", false);
         resource_pack$overlay_format = config.getString("resource-pack.overlay-format", "overlay_{version}");
         if (!resource_pack$overlay_format.contains("{version}")) {
@@ -497,9 +496,13 @@ public class Config {
         item$update_triggers$pick_up = config.getBoolean("item.update-triggers.pick-up", false);
         item$custom_model_data_starting_value$default = config.getInt("item.custom-model-data-starting-value.default", 10000);
         item$always_use_item_model = config.getBoolean("item.always-use-item-model", true) && VersionHelper.isOrAbove1_21_2();
+        item$always_generate_model_overrides = config.getBoolean("item.always-generate-model-overrides", false);
+        item$always_use_custom_model_data = item$always_generate_model_overrides || (config.getBoolean("item.always-use-custom-model-data", false) && VersionHelper.isOrAbove1_21_2());
         item$default_material = config.getString("item.default-material", "");
         item$default_drop_display$enable = config.getBoolean("item.default-drop-display.enable", false);
         item$default_drop_display$format = item$default_drop_display$enable ? config.getString("item.default-drop-display.format", "<arg:count>x <name>"): null;
+        item$data_fixer_upper$enable = config.getBoolean("item.data-fixer-upper.enable", true);
+        item$data_fixer_upper$fallback_version = config.getInt("item.data-fixer-upper.fallback-version", 3463);
 
         Section customModelDataOverridesSection = config.getSection("item.custom-model-data-starting-value.overrides");
         if (customModelDataOverridesSection != null) {
@@ -692,6 +695,14 @@ public class Config {
 
     public static boolean alwaysUseItemModel() {
         return instance.item$always_use_item_model;
+    }
+
+    public static boolean alwaysUseCustomModelData() {
+        return instance.item$always_use_custom_model_data;
+    }
+
+    public static boolean alwaysGenerateModelOverrides() {
+        return instance.item$always_generate_model_overrides;
     }
 
     public static boolean filterConfigurationPhaseDisconnect() {
@@ -1135,6 +1146,10 @@ public class Config {
         return instance.resource_pack$validation$fix_atlas;
     }
 
+    public static boolean fixMissingTexture() {
+        return instance.resource_pack$validation$fix_missing_texture;
+    }
+
     public static boolean excludeShaders() {
         return instance.resource_pack$exclude_core_shaders;
     }
@@ -1219,20 +1234,12 @@ public class Config {
         return instance.resource_pack$optimization$texture$exlude;
     }
 
-    public static Set<String> optimizeTextureExcludePath() {
-        return instance.resource_pack$optimization$texture$exclude_path;
-    }
-
     public static boolean optimizeJson() {
         return instance.resource_pack$optimization$json$enable;
     }
 
     public static Set<String> optimizeJsonExclude() {
         return instance.resource_pack$optimization$json$exclude;
-    }
-
-    public static Set<String> optimizeJsonExcludePath() {
-        return instance.resource_pack$optimization$json$exclude_path;
     }
 
     public static int zopfliIterations() {
@@ -1245,6 +1252,14 @@ public class Config {
 
     public static String defaultDropDisplayFormat() {
         return instance.item$default_drop_display$format;
+    }
+
+    public static boolean enableItemDataFixerUpper() {
+        return instance.item$data_fixer_upper$enable;
+    }
+
+    public static int itemDataFixerUpperFallbackVersion() {
+        return instance.item$data_fixer_upper$fallback_version;
     }
 
     public static boolean enableEntityCulling() {
@@ -1285,6 +1300,10 @@ public class Config {
 
     public static String bedrockEditionPlayerPrefix() {
         return instance.bedrock_edition_support$player_prefix;
+    }
+
+    public static boolean createUnprotectedCopy() {
+        return instance.resource_pack$protection$unprotected_copy;
     }
 
     public YamlDocument loadOrCreateYamlData(String fileName) {

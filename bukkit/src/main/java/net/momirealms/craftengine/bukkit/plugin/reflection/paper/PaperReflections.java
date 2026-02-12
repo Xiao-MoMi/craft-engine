@@ -5,7 +5,6 @@ import io.papermc.paper.event.player.AsyncChatDecorateEvent;
 import it.unimi.dsi.fastutil.longs.LongOpenHashSet;
 import net.momirealms.craftengine.bukkit.plugin.reflection.bukkit.CraftBukkitReflections;
 import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.CoreReflections;
-import net.momirealms.craftengine.core.util.MiscUtils;
 import net.momirealms.craftengine.core.util.ReflectionUtils;
 import net.momirealms.craftengine.core.util.VersionHelper;
 
@@ -26,6 +25,10 @@ public final class PaperReflections {
 
     public static final Field field$AsyncChatDecorateEvent$originalMessage = requireNonNull(
             ReflectionUtils.getDeclaredField(AsyncChatDecorateEvent.class, clazz$AdventureComponent, 0)
+    );
+
+    public static final Field field$AsyncChatDecorateEvent$result = requireNonNull(
+            ReflectionUtils.getDeclaredField(AsyncChatDecorateEvent.class, clazz$AdventureComponent, 1)
     );
 
     public static final Class<?> clazz$ComponentSerializer = requireNonNull(

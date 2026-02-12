@@ -1,6 +1,5 @@
 items:
   default:pebble:
-    material: nether_brick
     data:
       item-name: <!i><lang:item.default.pebble>
     texture: minecraft:item/custom/pebble

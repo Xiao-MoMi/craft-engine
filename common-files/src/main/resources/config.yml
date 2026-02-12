@@ -96,8 +96,9 @@ resource-pack:
     enable: true
     # Fix textures that are not within the atlas. It is unreasonable to always rely on plugins to fix your mistakes.
     # You should strive to make your resource pack more standardized after gaining some experience with resource packs.
-    # The fix-atlas feature is not all-powerful since 1.21.11. In some cases, CraftEngine cannot fix it for you, and you will need to fix your model yourself.
     fix-atlas: true
+    # Fixing model errors in the atlas caused by #missing.
+    fix-missing-texture: true
   # Optimize your resource pack by reducing its size without any quality loss.
   optimization:
     enable: false
@@ -109,17 +110,17 @@ resource-pack:
       zopfli-iterations: 0 # 0 = disable
       # If your image is special, for example, containing color pixels that need to be specifically recognized by a shader, the optimization might break it. You can add exclusions here.
       exclude:
-        - assets/minecraft/textures/block/do_not_optimize.png
-      exclude-path:
-        - assets/minecraft/textures/block/do_not_optimize_path
+        - assets/minecraft/textures/block/do_not_optimize
     # .json / .mcmeta
     json:
       enable: true
       exclude: []
-      exclude-path: []
   # [Premium Exclusive]
   # Protect your resource pack from being cracked by others
   protection:
+    # Create a copy without any protection applied. This copy is entirely created using the standard Java library
+    # and maintains good compatibility with other programs (such as bedrock resource pack converters).
+    unprotected-copy: false
     # Prevent thieves from extracting your resource pack. These options will crash their software.
     # Some of these options may impact your resource pack size.
     crash-tools:
@@ -219,15 +220,15 @@ item:
   # You can override this global setting per item using the
   # client-bound-model option.
   client-bound-model: true
-  # When enabled (recommended), this option adds both custom-model-data
-  # and an item-model to optimize client-side rendering.
-  #
-  # If disabled, the system falls back to using only custom-model-data.
-  # You can override this behavior by setting the item-model option
-  # on a per-item basis.
-  #
-  # This option only works if your resource pack supports 1.21.1 or below
+  # When enabled (recommended), this option adds both custom-model-data and an item-model
+  # to optimize client-side rendering if your resource pack supports 1.21.1 or below.
   always-use-item-model: true
+  # When enabled, custom model data will be applied to items even if your resource pack only supports 1.21.2 and above.
+  # You can decide whether to enable this feature based on your needs
+  always-use-custom-model-data: false
+  # Even if your resource pack only supports version 1.21.2+, also generate overrides for older versions.
+  # This may be helpful for some Bedrock resource pack converters working based on this.
+  always-generate-model-overrides: false
   # Since Minecraft renders lore text in italics by default, you can
   # optionally prefix any lore with <!i> to remove the italic formatting.
   non-italic-tag: false
@@ -252,6 +253,9 @@ item:
   default-drop-display:
     enable: false
     format: "<arg:count>x <name>"
+  data-fixer-upper:
+    enable: true
+    fallback-version: 3463 # https://minecraft.wiki/w/Data_version#Java_Edition
 
 equipment:
   # The sacrificed-vanilla-armor argument determines which vanilla armor gets completely removed (loses all its trims)

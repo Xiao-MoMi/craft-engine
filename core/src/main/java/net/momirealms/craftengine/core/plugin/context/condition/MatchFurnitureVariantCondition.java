@@ -19,7 +19,7 @@ public final class MatchFurnitureVariantCondition<CTX extends Context> implement
     @Override
     public boolean test(CTX ctx) {
         Optional<Furniture> furniture = ctx.getOptionalParameter(DirectContextParameters.FURNITURE);
-        return furniture.filter(value -> this.variants.contains(value.getCurrentVariant().name())).isPresent();
+        return furniture.filter(value -> this.variants.contains(value.currentVariant().name())).isPresent();
     }
 
     public static <CTX extends Context> ConditionFactory<CTX, MatchFurnitureVariantCondition<CTX>> factory() {

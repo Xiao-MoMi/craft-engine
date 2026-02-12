@@ -3,11 +3,13 @@ package net.momirealms.craftengine.bukkit.api.event;
 import net.momirealms.craftengine.bukkit.plugin.user.BukkitServerPlayer;
 import net.momirealms.craftengine.core.block.CustomBlock;
 import net.momirealms.craftengine.core.block.ImmutableBlockState;
+import net.momirealms.craftengine.core.plugin.context.ContextHolder;
 import org.bukkit.Location;
 import org.bukkit.block.Block;
 import org.bukkit.event.Cancellable;
 import org.bukkit.event.HandlerList;
 import org.bukkit.event.player.PlayerEvent;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 public final class CustomBlockBreakEvent extends PlayerEvent implements Cancellable {
@@ -19,12 +21,15 @@ public final class CustomBlockBreakEvent extends PlayerEvent implements Cancella
     private final BukkitServerPlayer player;
     private boolean cancelled;
     private boolean dropItems = true;
+    private final ContextHolder.Builder contextBuilder;
 
+    @ApiStatus.Internal
     public CustomBlockBreakEvent(@NotNull BukkitServerPlayer player,
                                  @NotNull Location location,
                                  @NotNull Block bukkitBlock,
                                  @NotNull ImmutableBlockState state,
-                                 boolean dropItems) {
+                                 boolean dropItems,
+                                 @NotNull ContextHolder.Builder contextBuilder) {
         super(player.platformPlayer());
         this.customBlock = state.owner().value();
         this.state = state;
@@ -32,14 +37,20 @@ public final class CustomBlockBreakEvent extends PlayerEvent implements Cancella
         this.location = location;
         this.player = player;
         this.dropItems = dropItems;
+        this.contextBuilder = contextBuilder;
+    }
+
+    @NotNull
+    public ContextHolder.Builder contextBuilder() {
+        return this.contextBuilder;
     }
 
     public BukkitServerPlayer player() {
-        return player;
+        return this.player;
     }
 
     public boolean dropItems() {
-        return dropItems;
+        return this.dropItems;
     }
 
     public void setDropItems(boolean dropItems) {
@@ -48,7 +59,7 @@ public final class CustomBlockBreakEvent extends PlayerEvent implements Cancella
 
     @NotNull
     public Block bukkitBlock() {
-        return bukkitBlock;
+        return this.bukkitBlock;
     }
 
     @NotNull

@@ -1,12 +1,11 @@
 package net.momirealms.craftengine.core.plugin.context.number;
 
-import net.momirealms.craftengine.core.plugin.context.Context;
 import net.momirealms.craftengine.core.util.MiscUtils;
 import net.momirealms.craftengine.core.util.ResourceConfigUtils;
+import net.momirealms.craftengine.core.util.random.RandomSource;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Map;
-import java.util.concurrent.ThreadLocalRandom;
 
 /**
  * 指数分布提供器
@@ -34,22 +33,22 @@ public record ExponentialNumberProvider(
     }
 
     @Override
-    public int getInt(Context context) {
-        return (int) Math.round(getDouble(context));
+    public int getInt(RandomSource random) {
+        return (int) Math.round(getDouble(random));
     }
 
     @Override
-    public float getFloat(Context context) {
-        return (float) getDouble(context);
+    public float getFloat(RandomSource random) {
+        return (float) getDouble(random);
     }
 
     @Override
-    public double getDouble(Context context) {
+    public double getDouble(RandomSource random) {
         for (int i = 0; i < this.maxAttempts; i++) {
             // 逆变换采样法 (Inverse Transform Sampling)
             // 公式: X = -ln(1 - U) / λ  或者简单的 -ln(U) / λ
             // 其中 U 是 [0, 1) 之间的均匀分布随机数
-            double u = ThreadLocalRandom.current().nextDouble();
+            double u = random.nextDouble();
             
             // 防止 u 为 0 导致 ln(0) 出现负无穷
             if (u < 1e-10) continue;

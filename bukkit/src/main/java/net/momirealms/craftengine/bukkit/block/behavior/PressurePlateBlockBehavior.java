@@ -1,6 +1,7 @@
 package net.momirealms.craftengine.bukkit.block.behavior;
 
 import io.papermc.paper.event.entity.EntityInsideBlockEvent;
+import net.momirealms.antigrieflib.Flag;
 import net.momirealms.craftengine.bukkit.nms.FastNMS;
 import net.momirealms.craftengine.bukkit.plugin.BukkitCraftEngine;
 import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.CoreReflections;
@@ -99,7 +100,7 @@ public class PressurePlateBlockBehavior extends BukkitBlockBehavior {
         if (EventUtils.fireAndCheckCancel(event)) {
             return;
         }
-        boolean cannotInteract = entity instanceof Player p && !BukkitCraftEngine.instance().antiGriefProvider().canInteract(p, block.getLocation());
+        boolean cannotInteract = entity instanceof Player p && !BukkitCraftEngine.instance().antiGriefProvider().test(p, Flag.USE_PRESSURE_PLATE, block.getLocation());
         if (cannotInteract) {
             return;
         }

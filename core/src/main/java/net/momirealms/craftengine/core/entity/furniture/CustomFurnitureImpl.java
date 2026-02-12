@@ -21,22 +21,24 @@ class CustomFurnitureImpl implements CustomFurniture {
     private final FurnitureSettings settings;
     private final Map<String, FurnitureVariant> variants;
     private final Map<EventTrigger, List<Function<Context>>> events;
-    private final FurnitureBehavior behavior;
     @Nullable
     private final LootTable<?> lootTable;
+    private FurnitureBehavior behavior = EmptyFurnitureBehavior.INSTANCE;
 
     private CustomFurnitureImpl(@NotNull Key id,
                                 @NotNull FurnitureSettings settings,
                                 @NotNull Map<String, FurnitureVariant> variants,
                                 @NotNull Map<EventTrigger, List<Function<Context>>> events,
-                                @NotNull FurnitureBehavior behavior,
                                 @Nullable LootTable<?> lootTable) {
         this.id = id;
         this.settings = settings;
         this.variants = ImmutableSortedMap.copyOf(variants);
         this.lootTable = lootTable;
-        this.behavior = behavior;
         this.events = events;
+    }
+
+    public void setBehavior(FurnitureBehavior behavior) {
+        this.behavior = behavior;
     }
 
     @Override
@@ -83,11 +85,10 @@ class CustomFurnitureImpl implements CustomFurniture {
         private FurnitureSettings settings;
         private Map<EventTrigger, List<Function<Context>>> events;
         private LootTable<?> lootTable;
-        private FurnitureBehavior behavior = EmptyFurnitureBehavior.INSTANCE;
 
         @Override
         public CustomFurniture build() {
-            return new CustomFurnitureImpl(this.id, this.settings, this.variants, this.events, this.behavior, this.lootTable);
+            return new CustomFurnitureImpl(this.id, this.settings, this.variants, this.events, this.lootTable);
         }
 
         @Override
@@ -117,12 +118,6 @@ class CustomFurnitureImpl implements CustomFurniture {
         @Override
         public Builder events(Map<EventTrigger, List<Function<Context>>> events) {
             this.events = events;
-            return this;
-        }
-
-        @Override
-        public Builder behavior(FurnitureBehavior behavior) {
-            this.behavior = behavior;
             return this;
         }
     }

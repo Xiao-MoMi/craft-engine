@@ -4,7 +4,7 @@ import net.momirealms.craftengine.core.world.SectionPos;
 import net.momirealms.craftengine.core.world.WorldHeight;
 import org.jetbrains.annotations.Nullable;
 
-public class ClientChunk {
+public final class ClientChunk {
     @Nullable
     public final ClientSection[] sections;
     private final WorldHeight worldHeight;

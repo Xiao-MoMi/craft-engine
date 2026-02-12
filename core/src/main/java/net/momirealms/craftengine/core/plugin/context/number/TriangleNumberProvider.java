@@ -1,11 +1,10 @@
 package net.momirealms.craftengine.core.plugin.context.number;
 
-import net.momirealms.craftengine.core.plugin.context.Context;
 import net.momirealms.craftengine.core.util.ResourceConfigUtils;
+import net.momirealms.craftengine.core.util.random.RandomSource;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Map;
-import java.util.concurrent.ThreadLocalRandom;
 
 /**
  * 三角形分布提供器
@@ -30,18 +29,18 @@ public record TriangleNumberProvider(
     }
 
     @Override
-    public int getInt(Context context) {
-        return (int) Math.round(getDouble(context));
+    public int getInt(RandomSource random) {
+        return (int) Math.round(getDouble(random));
     }
 
     @Override
-    public float getFloat(Context context) {
-        return (float) getDouble(context);
+    public float getFloat(RandomSource random) {
+        return (float) getDouble(random);
     }
 
     @Override
-    public double getDouble(Context context) {
-        double u = ThreadLocalRandom.current().nextDouble();
+    public double getDouble(RandomSource random) {
+        double u = random.nextDouble();
         
         // 逆变换采样法 (Inverse Transform Sampling)
         // 概率转折点：F(mode) = (mode - min) / (max - min)

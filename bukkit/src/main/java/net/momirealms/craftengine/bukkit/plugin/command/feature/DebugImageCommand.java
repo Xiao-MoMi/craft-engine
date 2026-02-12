@@ -8,6 +8,8 @@ import net.kyori.adventure.text.format.TextColor;
 import net.momirealms.craftengine.bukkit.plugin.command.BukkitCommandFeature;
 import net.momirealms.craftengine.bukkit.util.KeyUtils;
 import net.momirealms.craftengine.core.font.BitmapImage;
+import net.momirealms.craftengine.core.font.Image;
+import net.momirealms.craftengine.core.font.ReferenceImage;
 import net.momirealms.craftengine.core.plugin.CraftEngine;
 import net.momirealms.craftengine.core.plugin.command.CraftEngineCommandManager;
 import net.momirealms.craftengine.core.util.FormatUtils;
@@ -45,21 +47,39 @@ public class DebugImageCommand extends BukkitCommandFeature<CommandSender> {
                 .optional("column", IntegerParser.integerParser(0))
                 .handler(context -> {
                     Key imageId = KeyUtils.namespacedKey2Key(context.get("id"));
-                    plugin().fontManager().bitmapImageByImageId(imageId).ifPresent(image -> {
-                        int row = context.getOrDefault("row", 0);
-                        int column = context.getOrDefault("column", 0);
-                        String string = image.isValidCoordinate(row, column)
-                                ? imageId.asString() + ((row != 0 || column != 0) ? ":" + row + ":" + column : "") // 自动最小化
-                                : imageId.asString() + ":" + (row = 0) + ":" + (column = 0); // 因为是无效的所以说要强调告诉获取的是00
-                        Component component = Component.empty().children(
-                                List.of(
-                                        Component.text(string)
-                                                .hoverEvent(image.componentAt(row, column).color(NamedTextColor.WHITE))
-                                                .clickEvent(ClickEvent.suggestCommand(string)),
-                                        getHelperInfo(image, row, column)
-                                )
-                        );
-                        plugin().senderFactory().wrap(context.sender()).sendMessage(component);
+                    plugin().fontManager().imageById(imageId).ifPresent(image -> {
+                        if (image instanceof ReferenceImage referenceImage) {
+                            int row = referenceImage.row();
+                            int column = referenceImage.col();
+                            Image ref = referenceImage.image();
+                            if (ref instanceof BitmapImage bitmapImage) {
+                                String string = referenceImage.image().id().asString() + ((row != 0 || column != 0) ? ":" + row + ":" + column : "");
+                                Component component = Component.empty().children(
+                                        List.of(
+                                                Component.text(string)
+                                                        .hoverEvent(image.componentAt(row, column).color(NamedTextColor.WHITE))
+                                                        .clickEvent(ClickEvent.suggestCommand(string)),
+                                                getHelperInfo(bitmapImage, row, column)
+                                        )
+                                );
+                                plugin().senderFactory().wrap(context.sender()).sendMessage(component);
+                            }
+                        } else if (image instanceof BitmapImage bitmapImage) {
+                            int row = context.getOrDefault("row", 0);
+                            int column = context.getOrDefault("column", 0);
+                            String string = bitmapImage.isValidCoordinate(row, column)
+                                    ? imageId.asString() + ((row != 0 || column != 0) ? ":" + row + ":" + column : "") // 自动最小化
+                                    : imageId.asString() + ":" + (row = 0) + ":" + (column = 0); // 因为是无效的所以说要强调告诉获取的是00
+                            Component component = Component.empty().children(
+                                    List.of(
+                                            Component.text(string)
+                                                    .hoverEvent(image.componentAt(row, column).color(NamedTextColor.WHITE))
+                                                    .clickEvent(ClickEvent.suggestCommand(string)),
+                                            getHelperInfo(bitmapImage, row, column)
+                                    )
+                            );
+                            plugin().senderFactory().wrap(context.sender()).sendMessage(component);
+                        }
                     });
                 });
     }

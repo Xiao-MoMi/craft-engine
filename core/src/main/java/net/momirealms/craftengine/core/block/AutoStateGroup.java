@@ -85,7 +85,11 @@ public enum AutoStateGroup {
     }
 
     public int candidateCount() {
-        return candidates.size();
+        return this.candidates.size();
+    }
+
+    public List<BlockStateCandidate> candidates() {
+        return Collections.unmodifiableList(this.candidates);
     }
 
     @Nullable
@@ -116,7 +120,7 @@ public enum AutoStateGroup {
     }
 
     public List<String> ids() {
-        return id;
+        return this.id;
     }
 
     private static final Map<String, AutoStateGroup> BY_ID = new HashMap<>();

@@ -50,8 +50,8 @@ public class SlabBlockBehavior extends BukkitBlockBehavior implements IsPathFind
             }
         }
         if (blockId == null || !blockId.equals(super.customBlock.id())) return false;
-        if (!context.replacingClickedOnBlock()) return true;
-        boolean upper = context.getClickLocation().y - (double) context.getClickedPos().y() > (double) 0.5F;
+        if (!context.replacingClickedBlock()) return true;
+        boolean upper = context.getClickedLocation().y - (double) context.getClickedPos().y() > (double) 0.5F;
         Direction clickedFace = context.getClickedFace();
         return type == SlabType.BOTTOM ?
                 clickedFace == Direction.UP || (upper && clickedFace.axis().isHorizontal()) :
@@ -71,7 +71,7 @@ public class SlabBlockBehavior extends BukkitBlockBehavior implements IsPathFind
             if (super.waterloggedProperty != null)
                 state = state.with(super.waterloggedProperty, FastNMS.INSTANCE.method$FluidState$getType(fluidState) == MFluids.WATER);
             Direction clickedFace = context.getClickedFace();
-            return clickedFace == Direction.DOWN || clickedFace != Direction.UP && context.getClickLocation().y - (double) clickedPos.y() > (double) 0.5F ? state.with(this.typeProperty, SlabType.TOP) : state.with(this.typeProperty, SlabType.BOTTOM);
+            return clickedFace == Direction.DOWN || clickedFace != Direction.UP && context.getClickedLocation().y - (double) clickedPos.y() > (double) 0.5F ? state.with(this.typeProperty, SlabType.TOP) : state.with(this.typeProperty, SlabType.BOTTOM);
         }
     }
 

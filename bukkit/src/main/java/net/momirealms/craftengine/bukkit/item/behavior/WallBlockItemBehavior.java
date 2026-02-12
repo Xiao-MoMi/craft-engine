@@ -11,10 +11,10 @@ import net.momirealms.craftengine.core.world.context.UseOnContext;
 import java.nio.file.Path;
 import java.util.Map;
 
-public class WallBlockItemBehavior extends BlockItemBehavior {
+public final class WallBlockItemBehavior extends BlockItemBehavior {
     public static final ItemBehaviorFactory<WallBlockItemBehavior> FACTORY = new Factory();
 
-    public WallBlockItemBehavior(Key wallBlockId) {
+    private WallBlockItemBehavior(Key wallBlockId) {
         super(wallBlockId);
     }
 

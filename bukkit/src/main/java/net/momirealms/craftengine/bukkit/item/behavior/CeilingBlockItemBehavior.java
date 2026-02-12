@@ -12,10 +12,10 @@ import net.momirealms.craftengine.core.world.context.UseOnContext;
 import java.nio.file.Path;
 import java.util.Map;
 
-public class CeilingBlockItemBehavior extends BlockItemBehavior {
+public final class CeilingBlockItemBehavior extends BlockItemBehavior {
     public static final ItemBehaviorFactory<CeilingBlockItemBehavior> FACTORY = new Factory();
 
-    public CeilingBlockItemBehavior(Key ceilingBlockId) {
+    private CeilingBlockItemBehavior(Key ceilingBlockId) {
         super(ceilingBlockId);
     }
 

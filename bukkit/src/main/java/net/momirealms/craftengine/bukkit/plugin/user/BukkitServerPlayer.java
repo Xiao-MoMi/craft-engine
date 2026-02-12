@@ -1,6 +1,8 @@
 package net.momirealms.craftengine.bukkit.plugin.user;
 
 import ca.spottedleaf.concurrentutil.map.ConcurrentLong2ReferenceChainedHashTable;
+import com.google.common.cache.Cache;
+import com.google.common.cache.CacheBuilder;
 import com.google.common.collect.Lists;
 import io.netty.buffer.Unpooled;
 import io.netty.channel.Channel;
@@ -26,8 +28,9 @@ import net.momirealms.craftengine.core.block.BlockStateWrapper;
 import net.momirealms.craftengine.core.block.ImmutableBlockState;
 import net.momirealms.craftengine.core.block.entity.BlockEntity;
 import net.momirealms.craftengine.core.block.entity.render.ConstantBlockEntityRenderer;
+import net.momirealms.craftengine.core.entity.culling.Cullable;
 import net.momirealms.craftengine.core.entity.data.EntityData;
-import net.momirealms.craftengine.core.entity.furniture.Furniture;
+import net.momirealms.craftengine.core.entity.furniture.FurnitureHitData;
 import net.momirealms.craftengine.core.entity.furniture.FurnitureVariant;
 import net.momirealms.craftengine.core.entity.furniture.hitbox.FurnitureHitBoxConfig;
 import net.momirealms.craftengine.core.entity.player.GameMode;
@@ -37,8 +40,8 @@ import net.momirealms.craftengine.core.item.Item;
 import net.momirealms.craftengine.core.plugin.CraftEngine;
 import net.momirealms.craftengine.core.plugin.config.Config;
 import net.momirealms.craftengine.core.plugin.context.CooldownData;
-import net.momirealms.craftengine.core.plugin.entityculling.CullingData;
-import net.momirealms.craftengine.core.plugin.entityculling.EntityCulling;
+import net.momirealms.craftengine.core.entity.culling.CullingData;
+import net.momirealms.craftengine.core.entity.culling.EntityCulling;
 import net.momirealms.craftengine.core.plugin.locale.TranslationManager;
 import net.momirealms.craftengine.core.plugin.network.ConnectionState;
 import net.momirealms.craftengine.core.plugin.network.EntityPacketHandler;
@@ -49,7 +52,7 @@ import net.momirealms.craftengine.core.util.*;
 import net.momirealms.craftengine.core.world.*;
 import net.momirealms.craftengine.core.world.World;
 import net.momirealms.craftengine.core.world.chunk.client.ClientChunk;
-import net.momirealms.craftengine.core.world.chunk.client.VirtualCullableObject;
+import net.momirealms.craftengine.core.entity.culling.CullableHolder;
 import net.momirealms.craftengine.core.world.collision.AABB;
 import org.bukkit.*;
 import org.bukkit.attribute.Attribute;
@@ -76,6 +79,7 @@ import java.lang.ref.Reference;
 import java.lang.ref.WeakReference;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.TimeUnit;
 import java.util.function.Predicate;
 
 public class BukkitServerPlayer extends Player {
@@ -146,8 +150,8 @@ public class BukkitServerPlayer extends Player {
     // 客户端选择的语言
     private Locale clientLocale;
     // 跟踪到的方块实体渲染器
-    private final Map<BlockPos, VirtualCullableObject> trackedBlockEntityRenderers = new ConcurrentHashMap<>();
-    private final Map<Integer, VirtualCullableObject> trackedFurniture = new ConcurrentHashMap<>();
+    private final Map<BlockPos, CullableHolder> trackedBlockEntityRenderers = new ConcurrentHashMap<>();
+    private final Map<Integer, CullableHolder> trackedEntities = new ConcurrentHashMap<>();
     private final EntityCulling culling;
     private Vec3d firstPersonCameraVec3;
     private Vec3d thirdPersonCameraVec3;
@@ -164,17 +168,25 @@ public class BukkitServerPlayer extends Player {
     // 控制展示实体可见距离
     private double displayEntityViewDistance;
     // 玩家使用的游戏版本
-    private GameEdition gameEdition = GameEdition.UNKNOWN;
+    private GameEdition gameEdition;
     // 客户端协议
     private ProtocolVersion protocolVersion = ProtocolVersion.UNKNOWN;
     // 有概率出现如下情况
     // 客户端发送了stop包，但是仍然在继续破坏且未发出start包
     // 这种情况下可能就会卡无限挖掘状态
     private int awfulBreakFixer;
-    // 用于修正与raytrace不统一的情况
-    private int awfulBreakCorrector;
     // 上一次停止挖掘包发出的时间
     private int preventBreakTick;
+    // 用于辨别是否在范围挖掘
+    private boolean isRangeMining;
+    // 家具击打记录
+    private final FurnitureHitData furnitureHitData = new FurnitureHitData();
+    // 缓存的已接收的地图数据，为了防止动态物品展示框渲染器在渲染地图物品的时候重复发送地图数据导致服务器带宽消耗过大
+    private final Cache<Object, Boolean> receivedMapData = CacheBuilder.newBuilder()
+            .weakKeys()
+            .expireAfterAccess(30, TimeUnit.MINUTES)
+            .concurrencyLevel(4)
+            .build();
 
     public BukkitServerPlayer(BukkitCraftEngine plugin, @Nullable Channel channel) {
         this.channel = channel;
@@ -579,7 +591,7 @@ public class BukkitServerPlayer extends Player {
             }
             this.lastHitFurniture = furniture;
             if (furniture != null && forceShow) {
-                FurnitureVariant currentVariant = furniture.getCurrentVariant();
+                FurnitureVariant currentVariant = furniture.currentVariant();
                 List<AABB> aabbs = new ArrayList<>();
                 for (FurnitureHitBoxConfig<?> config : currentVariant.hitBoxConfigs()) {
                     config.prepareBoundingBox(furniture.position(), aabbs::add, true);
@@ -661,23 +673,23 @@ public class BukkitServerPlayer extends Player {
         }
         boolean useRayTracing = Config.entityCullingRayTracing();
         if (this.enableEntityCulling) {
-            for (VirtualCullableObject cullableObject : this.trackedBlockEntityRenderers.values()) {
+            for (CullableHolder cullableObject : this.trackedBlockEntityRenderers.values()) {
                 cullEntity(useRayTracing, cullableObject);
             }
-            for (VirtualCullableObject cullableObject : this.trackedFurniture.values()) {
+            for (CullableHolder cullableObject : this.trackedEntities.values()) {
                 cullEntity(useRayTracing, cullableObject);
             }
         } else {
-            for (VirtualCullableObject cullableObject : this.trackedBlockEntityRenderers.values()) {
+            for (CullableHolder cullableObject : this.trackedBlockEntityRenderers.values()) {
                 cullableObject.setShown(this, true);
             }
-            for (VirtualCullableObject cullableObject : this.trackedFurniture.values()) {
+            for (CullableHolder cullableObject : this.trackedEntities.values()) {
                 cullableObject.setShown(this, true);
             }
         }
     }
 
-    private void cullEntity(boolean useRayTracing, VirtualCullableObject cullableObject) {
+    private void cullEntity(boolean useRayTracing, CullableHolder cullableObject) {
         CullingData cullingData = cullableObject.cullable.cullingData();
         if (cullingData != null) {
             boolean firstPersonVisible = this.culling.isVisible(cullingData, this.firstPersonCameraVec3, useRayTracing);
@@ -1115,6 +1127,13 @@ public class BukkitServerPlayer extends Player {
     }
 
     @Override
+    public void setItemInHand(InteractionHand hand, Item<?> item) {
+        PlayerInventory inventory = platformPlayer().getInventory();
+        EquipmentSlot slot = hand == InteractionHand.MAIN_HAND ? EquipmentSlot.HAND : EquipmentSlot.OFF_HAND;
+        inventory.setItem(slot, (ItemStack) item.getItem());
+    }
+
+    @Override
     public World world() {
         return BukkitAdaptors.adapt(platformPlayer().getWorld());
     }
@@ -1519,26 +1538,26 @@ public class BukkitServerPlayer extends Player {
     @Override
     public void addTrackedBlockEntities(Map<BlockPos, ConstantBlockEntityRenderer> renders) {
         for (Map.Entry<BlockPos, ConstantBlockEntityRenderer> entry : renders.entrySet()) {
-            this.trackedBlockEntityRenderers.put(entry.getKey(), new VirtualCullableObject(entry.getValue()));
+            this.trackedBlockEntityRenderers.put(entry.getKey(), new CullableHolder(entry.getValue()));
         }
     }
 
     @Override
     public void addTrackedBlockEntity(BlockPos blockPos, ConstantBlockEntityRenderer renderer) {
-        this.trackedBlockEntityRenderers.put(blockPos, new VirtualCullableObject(renderer));
+        this.trackedBlockEntityRenderers.put(blockPos, new CullableHolder(renderer));
     }
 
     @Override
-    public VirtualCullableObject getTrackedBlockEntity(BlockPos blockPos) {
+    public CullableHolder getTrackedBlockEntity(BlockPos blockPos) {
         return this.trackedBlockEntityRenderers.get(blockPos);
     }
 
     @Override
     public void removeTrackedBlockEntities(Collection<BlockPos> renders) {
         for (BlockPos render : renders) {
-            VirtualCullableObject remove = this.trackedBlockEntityRenderers.remove(render);
-            if (remove != null && remove.isShown()) {
-                remove.cullable().hide(this);
+            CullableHolder remove = this.trackedBlockEntityRenderers.remove(render);
+            if (remove != null && remove.isShown) {
+                remove.cullable.hide(this);
             }
         }
     }
@@ -1559,33 +1578,38 @@ public class BukkitServerPlayer extends Player {
 
     @Override
     public GameEdition gameEdition() {
-        if (this.gameEdition == GameEdition.UNKNOWN) {
+        if (this.gameEdition == null) {
             this.gameEdition = this.plugin.compatibilityManager().isBedrockPlayer(this) ? GameEdition.BEDROCK : GameEdition.JAVA;
         }
         return this.gameEdition;
     }
 
     @Override
-    public void addTrackedFurniture(int entityId, Furniture furniture) {
-        this.trackedFurniture.put(entityId, new VirtualCullableObject(furniture));
+    public void addTrackedEntity(int entityId, Cullable cullable) {
+        this.trackedEntities.put(entityId, new CullableHolder(cullable));
     }
 
     @Override
-    public void removeTrackedFurniture(int entityId) {
-        VirtualCullableObject remove = this.trackedFurniture.remove(entityId);
-        if (remove != null && remove.isShown()) {
-            remove.cullable().hide(this);
+    public void removeTrackedEntity(int entityId) {
+        CullableHolder remove = this.trackedEntities.remove(entityId);
+        if (remove != null && remove.isShown) {
+            remove.cullable.hide(this);
         }
     }
 
     @Override
-    public void clearTrackedFurniture() {
-        this.trackedFurniture.clear();
+    public void clearTrackedEntities() {
+        this.trackedEntities.clear();
     }
 
     @Override
     public WorldPosition eyePosition() {
         return LocationUtils.toWorldPosition(this.getEyeLocation());
+    }
+
+    @Override
+    public Cache<Object, Boolean> receivedMapData() {
+        return this.receivedMapData;
     }
 
     @Override
@@ -1623,11 +1647,23 @@ public class BukkitServerPlayer extends Player {
         return start.getWorld().rayTraceBlocks(start, start.getDirection(), range, mode);
     }
 
-    public Map<BlockPos, VirtualCullableObject> trackedBlockEntityRenderers() {
+    public Map<BlockPos, CullableHolder> trackedBlockEntityRenderers() {
         return Collections.unmodifiableMap(this.trackedBlockEntityRenderers);
     }
 
-    public Map<Integer, VirtualCullableObject> trackedFurniture() {
-        return Collections.unmodifiableMap(this.trackedFurniture);
+    public Map<Integer, CullableHolder> trackedFurniture() {
+        return Collections.unmodifiableMap(this.trackedEntities);
+    }
+
+    public boolean isRangeMining() {
+        return this.isRangeMining;
+    }
+
+    public void setRangeMining(boolean rangeMining) {
+        this.isRangeMining = rangeMining;
+    }
+
+    public FurnitureHitData furnitureHitData() {
+        return furnitureHitData;
     }
 }

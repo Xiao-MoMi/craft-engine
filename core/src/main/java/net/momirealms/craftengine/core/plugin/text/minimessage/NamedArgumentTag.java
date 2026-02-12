@@ -6,7 +6,6 @@ import net.kyori.adventure.text.minimessage.tag.resolver.ArgumentQueue;
 import net.kyori.adventure.text.minimessage.tag.resolver.TagResolver;
 import net.momirealms.craftengine.core.plugin.context.Context;
 import net.momirealms.craftengine.core.plugin.context.ContextKey;
-import net.momirealms.craftengine.core.util.AdventureHelper;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -31,7 +30,7 @@ public class NamedArgumentTag implements TagResolver {
         if (value == null) {
             value = arguments.popOr("No default value provided").toString();
         }
-        return Tag.selfClosingInserting(AdventureHelper.miniMessage().deserialize(String.valueOf(value), this.context.tagResolvers()));
+        return Tag.selfClosingInserting(ctx.deserialize(String.valueOf(value)));
     }
 
     @Override

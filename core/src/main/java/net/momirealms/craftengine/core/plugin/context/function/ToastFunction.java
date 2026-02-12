@@ -68,7 +68,7 @@ public class ToastFunction<CTX extends Context> extends AbstractConditionalFunct
             } catch (IllegalArgumentException e) {
                 throw new LocalizedResourceConfigException("warning.config.function.toast.invalid_advancement_type", advancementName, EnumUtils.toString(AdvancementType.values()));
             }
-            String toast = ResourceConfigUtils.requireNonEmptyStringOrThrow(ResourceConfigUtils.get(arguments, "toast", "message"), "warning.config.function.toast.missing_toast");
+            String toast = AdventureHelper.legacyToMiniMessage(ResourceConfigUtils.requireNonEmptyStringOrThrow(ResourceConfigUtils.get(arguments, "toast", "message"), "warning.config.function.toast.missing_toast"));
             Key item = Key.of(ResourceConfigUtils.requireNonEmptyStringOrThrow(ResourceConfigUtils.get(arguments, "item", "icon"), "warning.config.function.toast.missing_icon"));
             return new ToastFunction<>(
                     getPredicates(arguments),

@@ -4,6 +4,7 @@ import net.momirealms.craftengine.core.plugin.locale.LocalizedResourceConfigExce
 import net.momirealms.craftengine.core.util.CustomDataType;
 import net.momirealms.craftengine.core.util.Key;
 import net.momirealms.craftengine.core.util.MiscUtils;
+import net.momirealms.craftengine.core.util.ResourceConfigUtils;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.HashMap;
@@ -16,6 +17,7 @@ public class FurnitureSettings {
     @Nullable
     Key itemId;
     Map<CustomDataType<?>, Object> customData = new IdentityHashMap<>(4);
+    int hitTimes;
 
     private FurnitureSettings() {}
 
@@ -32,6 +34,7 @@ public class FurnitureSettings {
         newSettings.sounds = settings.sounds;
         newSettings.itemId = settings.itemId;
         newSettings.minimized = settings.minimized;
+        newSettings.hitTimes = settings.hitTimes;
         newSettings.customData = new IdentityHashMap<>(settings.customData);
         return newSettings;
     }
@@ -69,16 +72,20 @@ public class FurnitureSettings {
     }
 
     public FurnitureSounds sounds() {
-        return sounds;
+        return this.sounds;
     }
 
     public boolean minimized() {
-        return minimized;
+        return this.minimized;
     }
 
     @Nullable
     public Key itemId() {
-        return itemId;
+        return this.itemId;
+    }
+
+    public int hitTimes() {
+        return this.hitTimes;
     }
 
     public FurnitureSettings sounds(FurnitureSounds sounds) {
@@ -88,6 +95,11 @@ public class FurnitureSettings {
 
     public FurnitureSettings itemId(Key itemId) {
         this.itemId = itemId;
+        return this;
+    }
+
+    public FurnitureSettings hitTimes(int hitTimes) {
+        this.hitTimes = hitTimes;
         return this;
     }
 
@@ -123,6 +135,10 @@ public class FurnitureSettings {
             registerFactory("minimized", (value -> {
                 boolean bool = (boolean) value;
                 return settings -> settings.minimized(bool);
+            }));
+            registerFactory("hit-times", (value -> {
+                int times = ResourceConfigUtils.getAsInt(value, "hit-times");
+                return settings -> settings.hitTimes(times);
             }));
         }
 

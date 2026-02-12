@@ -23,11 +23,12 @@ import net.kyori.adventure.nbt.api.BinaryTagHolder;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.event.DataComponentValue;
 import net.kyori.adventure.text.event.HoverEvent;
+import net.momirealms.antigrieflib.Flag;
 import net.momirealms.craftengine.bukkit.api.BukkitAdaptors;
 import net.momirealms.craftengine.bukkit.api.CraftEngineBlocks;
 import net.momirealms.craftengine.bukkit.api.CraftEngineFurniture;
-import net.momirealms.craftengine.bukkit.api.event.FurnitureAttemptBreakEvent;
 import net.momirealms.craftengine.bukkit.api.event.FurnitureBreakEvent;
+import net.momirealms.craftengine.bukkit.api.event.FurnitureHitEvent;
 import net.momirealms.craftengine.bukkit.api.event.FurnitureInteractEvent;
 import net.momirealms.craftengine.bukkit.block.BukkitBlockManager;
 import net.momirealms.craftengine.bukkit.entity.data.BaseEntityData;
@@ -60,13 +61,15 @@ import net.momirealms.craftengine.bukkit.world.score.BukkitTeamManager;
 import net.momirealms.craftengine.core.advancement.network.AdvancementHolder;
 import net.momirealms.craftengine.core.advancement.network.AdvancementProgress;
 import net.momirealms.craftengine.core.block.ImmutableBlockState;
+import net.momirealms.craftengine.core.entity.furniture.FurnitureHitData;
+import net.momirealms.craftengine.core.entity.furniture.behavior.FurnitureBehavior;
 import net.momirealms.craftengine.core.entity.furniture.hitbox.FurnitureHitBox;
 import net.momirealms.craftengine.core.entity.furniture.hitbox.FurnitureHitboxPart;
 import net.momirealms.craftengine.core.entity.player.InteractionHand;
+import net.momirealms.craftengine.core.entity.player.InteractionResult;
 import net.momirealms.craftengine.core.entity.seat.Seat;
 import net.momirealms.craftengine.core.font.EmojiTextProcessResult;
 import net.momirealms.craftengine.core.font.FontManager;
-import net.momirealms.craftengine.core.font.IllegalCharacterProcessResult;
 import net.momirealms.craftengine.core.item.CustomItem;
 import net.momirealms.craftengine.core.item.Item;
 import net.momirealms.craftengine.core.item.behavior.ItemBehavior;
@@ -90,7 +93,10 @@ import net.momirealms.craftengine.core.plugin.network.listener.ByteBufferPacketL
 import net.momirealms.craftengine.core.plugin.network.listener.ByteBufferPacketListenerHolder;
 import net.momirealms.craftengine.core.plugin.network.listener.NMSPacketListener;
 import net.momirealms.craftengine.core.plugin.text.component.ComponentProvider;
+import net.momirealms.craftengine.core.sound.SoundData;
+import net.momirealms.craftengine.core.sound.SoundSource;
 import net.momirealms.craftengine.core.util.*;
+import net.momirealms.craftengine.core.util.random.RandomUtils;
 import net.momirealms.craftengine.core.world.*;
 import net.momirealms.craftengine.core.world.chunk.CEChunk;
 import net.momirealms.craftengine.core.world.chunk.Palette;
@@ -101,6 +107,7 @@ import net.momirealms.craftengine.core.world.chunk.client.PackedOcclusionStorage
 import net.momirealms.craftengine.core.world.chunk.client.SingularOcclusionStorage;
 import net.momirealms.craftengine.core.world.chunk.packet.BlockEntityData;
 import net.momirealms.craftengine.core.world.chunk.packet.MCSection;
+import net.momirealms.craftengine.core.world.context.InteractEntityContext;
 import net.momirealms.craftengine.core.world.context.UseOnContext;
 import net.momirealms.sparrow.nbt.CompoundTag;
 import net.momirealms.sparrow.nbt.ListTag;
@@ -133,7 +140,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.BiFunction;
 import java.util.function.Predicate;
 
-public class BukkitNetworkManager implements NetworkManager, Listener {
+public class BukkitNetworkManager extends AbstractNetworkManager implements Listener {
     private static BukkitNetworkManager instance;
     private final BukkitCraftEngine plugin;
     private final Map<Class<?>, NMSPacketListener> nmsPacketListeners = new IdentityHashMap<>(128);
@@ -189,6 +196,7 @@ public class BukkitNetworkManager implements NetworkManager, Listener {
     private int[] modBlockStateRemapper;
 
     public BukkitNetworkManager(BukkitCraftEngine plugin) {
+        super(plugin);
         instance = this;
         Plugin modelEngine = Bukkit.getPluginManager().getPlugin("ModelEngine");
         this.hasModelEngine = modelEngine != null && modelEngine.getPluginMeta().getVersion().startsWith("R4");
@@ -279,6 +287,7 @@ public class BukkitNetworkManager implements NetworkManager, Listener {
 
     @Override
     public void delayedLoad() {
+        super.delayedLoad();
         this.resendTags();
     }
 
@@ -1157,7 +1166,7 @@ public class BukkitNetworkManager implements NetworkManager, Listener {
         }
     }
 
-    public static class PlayerActionListener implements NMSPacketListener {
+    public class PlayerActionListener implements NMSPacketListener {
 
         @Override
         public void onPacketReceive(NetWorkUser user, NMSPacketEvent event, Object packet) {
@@ -1166,17 +1175,16 @@ public class BukkitNetworkManager implements NetworkManager, Listener {
             World world = platformPlayer.getWorld();
             Object blockPos = FastNMS.INSTANCE.field$ServerboundPlayerActionPacket$pos(packet);
             BlockPos pos = LocationUtils.fromBlockPos(blockPos);
-            if (VersionHelper.isFolia()) {
-                platformPlayer.getScheduler().run(BukkitCraftEngine.instance().javaPlugin(), (t) -> {
-                    try {
-                        handlePlayerActionPacketOnMainThread(player, world, pos, packet);
-                    } catch (Exception e) {
-                        CraftEngine.instance().logger().warn("Failed to handle ServerboundPlayerActionPacket", e);
-                    }
-                }, () -> {});
-            } else {
-                handlePlayerActionPacketOnMainThread(player, world, pos, packet);
-            }
+            BukkitNetworkManager.this.plugin.scheduler().sync().run(() -> {
+                if (!player.canInteractPoint(new Vec3d(pos.x, pos.y, pos.z), 4)) {
+                    return;
+                }
+                try {
+                    handlePlayerActionPacketOnMainThread(player, world, pos, packet);
+                } catch (Exception e) {
+                    CraftEngine.instance().logger().warn("Failed to handle ServerboundPlayerActionPacket", e);
+                }
+            }, world, pos.x >> 4, pos.z >> 4);
         }
 
         private static void handlePlayerActionPacketOnMainThread(BukkitServerPlayer player, World world, BlockPos pos, Object packet) {
@@ -1251,7 +1259,7 @@ public class BukkitNetworkManager implements NetworkManager, Listener {
         }
     }
 
-    public static class PlayerInfoUpdateListener implements NMSPacketListener {
+    public class PlayerInfoUpdateListener implements NMSPacketListener {
 
         @Override
         public void onPacketSend(NetWorkUser user, NMSPacketEvent event, Object packet) {
@@ -1277,7 +1285,7 @@ public class BukkitNetworkManager implements NetworkManager, Listener {
                     newEntries.add(entry);
                 } else {
                     String json = ComponentUtils.minecraftToJson(mcComponent);
-                    Map<String, ComponentProvider> tokens = CraftEngine.instance().fontManager().matchTags(json);
+                    Map<String, ComponentProvider> tokens = matchNetworkTags(json);
                     if (tokens.isEmpty()) {
                         newEntries.add(entry);
                     } else {
@@ -1294,11 +1302,11 @@ public class BukkitNetworkManager implements NetworkManager, Listener {
         }
     }
 
-    public static class PickItemFromBlockListener implements NMSPacketListener {
+    public class PickItemFromBlockListener implements NMSPacketListener {
 
         @Override
         public void onPacketReceive(NetWorkUser user, NMSPacketEvent event, Object packet) {
-            Player player = (Player) user.platformPlayer();
+            BukkitServerPlayer player = (BukkitServerPlayer) user;
             if (player == null) return;
             Object pos;
             try {
@@ -1307,42 +1315,48 @@ public class BukkitNetworkManager implements NetworkManager, Listener {
                 CraftEngine.instance().logger().warn("Failed to get pos from ServerboundPickItemFromBlockPacket", e);
                 return;
             }
-            if (VersionHelper.isFolia()) {
-                int x = FastNMS.INSTANCE.field$Vec3i$x(pos);
-                int z = FastNMS.INSTANCE.field$Vec3i$z(pos);
-                BukkitCraftEngine.instance().scheduler().sync().run(() -> {
-                    try {
-                        handlePickItemFromBlockPacketOnMainThread(player, pos);
-                    } catch (Throwable e) {
-                        CraftEngine.instance().logger().warn("Failed to handle ServerboundPickItemFromBlockPacket on region thread", e);
-                    }
-                }, player.getWorld(), x >> 4, z >> 4);
-            } else {
-                BukkitCraftEngine.instance().scheduler().sync().run(() -> {
-                    try {
-                        handlePickItemFromBlockPacketOnMainThread(player, pos);
-                    } catch (Throwable e) {
-                        CraftEngine.instance().logger().warn("Failed to handle ServerboundPickItemFromBlockPacket on main thread", e);
-                    }
-                });
-            }
+            int x = FastNMS.INSTANCE.field$Vec3i$x(pos);
+            int y = FastNMS.INSTANCE.field$Vec3i$y(pos);
+            int z = FastNMS.INSTANCE.field$Vec3i$z(pos);
+            // 太远了，有挂
+            BukkitNetworkManager.this.plugin.scheduler().sync().run(() -> {
+                if (!player.canInteractPoint(new Vec3d(x, y, z), 4)) {
+                    return;
+                }
+                try {
+                    handlePickItemFromBlockPacketOnMainThread((BukkitServerPlayer) user, pos);
+                } catch (Throwable e) {
+                    CraftEngine.instance().logger().warn("Failed to handle ServerboundPickItemFromBlockPacket on region thread", e);
+                }
+            }, player.platformPlayer().getWorld(), x >> 4, z >> 4);
         }
 
-        private static void handlePickItemFromBlockPacketOnMainThread(Player player, Object pos) throws Throwable {
-            Object serverLevel = FastNMS.INSTANCE.field$CraftWorld$ServerLevel(player.getWorld());
+        private static void handlePickItemFromBlockPacketOnMainThread(BukkitServerPlayer player, Object pos) throws Throwable {
+            Object serverLevel = player.world().serverWorld();
             Object blockState = FastNMS.INSTANCE.method$BlockGetter$getBlockState(serverLevel, pos);
-            ImmutableBlockState state = BukkitBlockManager.instance().getImmutableBlockState(BlockStateUtils.blockStateToId(blockState));
-            if (state == null) return;
-            Key itemId = state.settings().itemId();
-            if (itemId == null) return;
-            pickItem(player, itemId, pos, null);
+            Optional<ImmutableBlockState> optionalState = BlockStateUtils.getOptionalCustomBlockState(blockState);
+            if (optionalState.isEmpty()) return;
+            ImmutableBlockState customBlockState = optionalState.get();
+            Item<?> item = customBlockState.behavior().itemToPickup(player.world(), LocationUtils.fromBlockPos(pos), customBlockState, player);
+            ItemStack itemStack;
+            if (item == null) {
+                Key itemId = customBlockState.settings().itemId();
+                if (itemId == null) return;
+                itemStack = BukkitCraftEngine.instance().itemManager().buildItemStack(itemId, player);
+                if (itemStack == null) return;
+            } else {
+                itemStack = (ItemStack) item.getItem();
+            }
+            pickItem(player.platformPlayer(), itemStack, pos, null);
         }
     }
 
-    public static class PickItemFromEntityListener implements NMSPacketListener {
+    public class PickItemFromEntityListener implements NMSPacketListener {
 
         @Override
         public void onPacketReceive(NetWorkUser user, NMSPacketEvent event, Object packet) {
+            BukkitServerPlayer player = (BukkitServerPlayer) user;
+            if (player == null) return;
             int entityId;
             try {
                 entityId = (int) NetworkReflections.methodHandle$ServerboundPickItemFromEntityPacket$idGetter.invokeExact(packet);
@@ -1351,41 +1365,38 @@ public class BukkitNetworkManager implements NetworkManager, Listener {
                 return;
             }
             BukkitFurniture furniture = BukkitFurnitureManager.instance().loadedFurnitureByVirtualEntityId(entityId);
-            if (furniture == null) return;
-            Player player = (Player) user.platformPlayer();
-            if (player == null) return;
-            if (VersionHelper.isFolia()) {
-                player.getScheduler().run(BukkitCraftEngine.instance().javaPlugin(), (t) -> {
-                    try {
-                        handlePickItemFromEntityOnMainThread(player, furniture);
-                    } catch (Throwable e) {
-                        CraftEngine.instance().logger().warn("Failed to handle ServerboundPickItemFromEntityPacket on region thread", e);
-                    }
-                }, () -> {});
-            } else {
-                BukkitCraftEngine.instance().scheduler().sync().run(() -> {
-                    try {
-                        handlePickItemFromEntityOnMainThread(player, furniture);
-                    } catch (Throwable e) {
-                        CraftEngine.instance().logger().warn("Failed to handle ServerboundPickItemFromEntityPacket on main thread", e);
-                    }
-                });
+            if (furniture == null) {
+                return;
             }
+            Location location = furniture.location();
+            BukkitNetworkManager.this.plugin.scheduler().sync().run(() -> {
+                if (!player.canInteractPoint(furniture.position().toVec3d(), 16)) {
+                    return;
+                }
+                try {
+                    handlePickItemFromEntityOnMainThread((BukkitServerPlayer) user, furniture);
+                } catch (Throwable e) {
+                    CraftEngine.instance().logger().warn("Failed to handle ServerboundPickItemFromEntityPacket on region thread", e);
+                }
+            }, location.getWorld(), location.getBlockX() >> 4, location.getBlockZ() >> 4);
         }
 
-        private static void handlePickItemFromEntityOnMainThread(Player player, BukkitFurniture furniture) throws Throwable {
-            Key itemId = furniture.config().settings().itemId();
-            if (itemId == null) return;
-            pickItem(player, itemId, null, FastNMS.INSTANCE.method$CraftEntity$getHandle(furniture.getBukkitEntity()));
+        private static void handlePickItemFromEntityOnMainThread(BukkitServerPlayer player, BukkitFurniture furniture) throws Throwable {
+            Item<?> item = furniture.config().behavior().itemToPickup(furniture, player);
+            ItemStack itemStack;
+            if (item == null) {
+                Key itemId = furniture.config().settings().itemId();
+                if (itemId == null) return;
+                itemStack = BukkitCraftEngine.instance().itemManager().buildItemStack(itemId, player);
+                if (itemStack == null) return;
+            } else {
+                itemStack = (ItemStack) item.getItem();
+            }
+            pickItem(player.platformPlayer(), itemStack, null, FastNMS.INSTANCE.method$CraftEntity$getHandle(furniture.bukkitEntity()));
         }
     }
 
-    private static void pickItem(Player player, Key itemId, @Nullable Object blockPos, @Nullable Object entity) throws Throwable {
-        ItemStack itemStack = BukkitCraftEngine.instance().itemManager().buildItemStack(itemId, BukkitCraftEngine.instance().adapt(player));
-        if (itemStack == null) {
-            CraftEngine.instance().logger().warn("Item: " + itemId + " is not a valid item");
-            return;
-        }
+    private static void pickItem(Player player, ItemStack itemStack, @Nullable Object blockPos, @Nullable Object entity) throws Throwable {
         assert CoreReflections.method$ServerGamePacketListenerImpl$tryPickItem != null;
         if (VersionHelper.isOrAbove1_21_5()) {
             CoreReflections.method$ServerGamePacketListenerImpl$tryPickItem.invoke(
@@ -1638,7 +1649,7 @@ public class BukkitNetworkManager implements NetworkManager, Listener {
                 player.setClientSideWorld(BukkitAdaptors.adapt(world));
                 player.clearTrackedChunks();
                 player.clearTrackedBlockEntities();
-                player.clearTrackedFurniture();
+                player.clearTrackedEntities();
             } else {
                 CraftEngine.instance().logger().warn("Failed to handle ClientboundRespawnPacket: World " + location + " does not exist");
             }
@@ -1658,7 +1669,7 @@ public class BukkitNetworkManager implements NetworkManager, Listener {
         }
     }
 
-    public static class RenameItemListener implements NMSPacketListener {
+    public class RenameItemListener implements NMSPacketListener {
 
         @Override
         public void onPacketReceive(NetWorkUser user, NMSPacketEvent event, Object packet) {
@@ -1676,7 +1687,7 @@ public class BukkitNetworkManager implements NetworkManager, Listener {
             if (message != null && !message.isEmpty()) {
                 // check bypass
                 FontManager manager = CraftEngine.instance().fontManager();
-                IllegalCharacterProcessResult result = manager.processIllegalCharacters(message);
+                IllegalCharacterProcessResult result = processIllegalCharacters(message);
                 if (result.has()) {
                     try {
                         NetworkReflections.methodHandle$ServerboundRenameItemPacket$nameSetter.invokeExact(packet, result.text());
@@ -1688,7 +1699,7 @@ public class BukkitNetworkManager implements NetworkManager, Listener {
         }
     }
 
-    public static class SignUpdateListener implements NMSPacketListener {
+    public class SignUpdateListener implements NMSPacketListener {
 
         @Override
         public void onPacketReceive(NetWorkUser user, NMSPacketEvent event, Object packet) {
@@ -1709,7 +1720,7 @@ public class BukkitNetworkManager implements NetworkManager, Listener {
             for (int i = 0; i < lines.length; i++) {
                 String line = lines[i];
                 if (line != null && !line.isEmpty()) {
-                    IllegalCharacterProcessResult result = manager.processIllegalCharacters(line);
+                    IllegalCharacterProcessResult result = processIllegalCharacters(line);
                     if (result.has()) {
                         lines[i] = result.text();
                     }
@@ -2777,7 +2788,7 @@ public class BukkitNetworkManager implements NetworkManager, Listener {
         }
     }
 
-    public static class OpenScreenListener1_20 implements ByteBufferPacketListener {
+    public class OpenScreenListener1_20 implements ByteBufferPacketListener {
 
         @Override
         public void onPacketSend(NetWorkUser user, ByteBufPacketEvent event) {
@@ -2786,7 +2797,7 @@ public class BukkitNetworkManager implements NetworkManager, Listener {
             int containerId = buf.readVarInt();
             int type = buf.readVarInt();
             String json = buf.readUtf();
-            Map<String, ComponentProvider> tokens = CraftEngine.instance().fontManager().matchTags(json);
+            Map<String, ComponentProvider> tokens = matchNetworkTags(json);
             if (tokens.isEmpty()) return;
             event.setChanged(true);
             buf.clear();
@@ -2797,7 +2808,7 @@ public class BukkitNetworkManager implements NetworkManager, Listener {
         }
     }
 
-    public static class OpenScreenListener1_20_3 implements ByteBufferPacketListener {
+    public class OpenScreenListener1_20_3 implements ByteBufferPacketListener {
 
         @Override
         public void onPacketSend(NetWorkUser user, ByteBufPacketEvent event) {
@@ -2807,7 +2818,7 @@ public class BukkitNetworkManager implements NetworkManager, Listener {
             int type = buf.readVarInt();
             Tag nbt = buf.readNbt(false);
             if (nbt == null) return;
-            Map<String, ComponentProvider> tokens = CraftEngine.instance().fontManager().matchTags(nbt.getAsString());
+            Map<String, ComponentProvider> tokens = matchNetworkTags(nbt.getAsString());
             if (tokens.isEmpty()) return;
             buf.clear();
             buf.writeVarInt(event.packetID());
@@ -2905,7 +2916,7 @@ public class BukkitNetworkManager implements NetworkManager, Listener {
             buf.clear();
             buf.writeVarInt(event.packetID());
             if (Config.interceptSystemChat()) {
-                Map<String, ComponentProvider> tokens = CraftEngine.instance().fontManager().matchTags(jsonOrPlainString);
+                Map<String, ComponentProvider> tokens = matchNetworkTags(jsonOrPlainString);
                 if (!tokens.isEmpty()) {
                     component = AdventureHelper.replaceText(component, tokens, NetworkTextReplaceContext.of((BukkitServerPlayer) user));
                 }
@@ -2932,7 +2943,7 @@ public class BukkitNetworkManager implements NetworkManager, Listener {
             buf.writeVarInt(event.packetID());
             Component component = AdventureHelper.tagToComponent(nbt);
             if (Config.interceptSystemChat()) {
-                Map<String, ComponentProvider> tokens = CraftEngine.instance().fontManager().matchTags(nbt);
+                Map<String, ComponentProvider> tokens = matchNetworkTags(nbt);
                 if (!tokens.isEmpty()) {
                     component = AdventureHelper.replaceText(component, tokens, NetworkTextReplaceContext.of((BukkitServerPlayer) user));
                 }
@@ -2945,7 +2956,7 @@ public class BukkitNetworkManager implements NetworkManager, Listener {
         }
     }
 
-    public static class TabListListener1_20 implements ByteBufferPacketListener {
+    public class TabListListener1_20 implements ByteBufferPacketListener {
 
         @Override
         public void onPacketSend(NetWorkUser user, ByteBufPacketEvent event) {
@@ -2953,8 +2964,8 @@ public class BukkitNetworkManager implements NetworkManager, Listener {
             FriendlyByteBuf buf = event.getBuffer();
             String json1 = buf.readUtf();
             String json2 = buf.readUtf();
-            Map<String, ComponentProvider> tokens1 = CraftEngine.instance().fontManager().matchTags(json1);
-            Map<String, ComponentProvider> tokens2 = CraftEngine.instance().fontManager().matchTags(json2);
+            Map<String, ComponentProvider> tokens1 = matchNetworkTags(json1);
+            Map<String, ComponentProvider> tokens2 = matchNetworkTags(json2);
             if (tokens1.isEmpty() && tokens2.isEmpty()) return;
             event.setChanged(true);
             buf.clear();
@@ -2965,7 +2976,7 @@ public class BukkitNetworkManager implements NetworkManager, Listener {
         }
     }
 
-    public static class TabListListener1_20_3 implements ByteBufferPacketListener {
+    public class TabListListener1_20_3 implements ByteBufferPacketListener {
 
         @Override
         public void onPacketSend(NetWorkUser user, ByteBufPacketEvent event) {
@@ -2975,8 +2986,8 @@ public class BukkitNetworkManager implements NetworkManager, Listener {
             if (nbt1 == null) return;
             Tag nbt2 = buf.readNbt(false);
             if (nbt2 == null) return;
-            Map<String, ComponentProvider> tokens1 = CraftEngine.instance().fontManager().matchTags(nbt1);
-            Map<String, ComponentProvider> tokens2 = CraftEngine.instance().fontManager().matchTags(nbt2);
+            Map<String, ComponentProvider> tokens1 = matchNetworkTags(nbt1);
+            Map<String, ComponentProvider> tokens2 = matchNetworkTags(nbt2);
             if (tokens1.isEmpty() && tokens2.isEmpty()) return;
             event.setChanged(true);
             buf.clear();
@@ -2987,14 +2998,14 @@ public class BukkitNetworkManager implements NetworkManager, Listener {
         }
     }
 
-    public static class SetActionBarListener1_20 implements ByteBufferPacketListener {
+    public class SetActionBarListener1_20 implements ByteBufferPacketListener {
 
         @Override
         public void onPacketSend(NetWorkUser user, ByteBufPacketEvent event) {
             if (!Config.interceptActionBar()) return;
             FriendlyByteBuf buf = event.getBuffer();
             String json = buf.readUtf();
-            Map<String, ComponentProvider> tokens = CraftEngine.instance().fontManager().matchTags(json);
+            Map<String, ComponentProvider> tokens = matchNetworkTags(json);
             if (tokens.isEmpty()) return;
             event.setChanged(true);
             buf.clear();
@@ -3003,7 +3014,7 @@ public class BukkitNetworkManager implements NetworkManager, Listener {
         }
     }
 
-    public static class SetActionBarListener1_20_3 implements ByteBufferPacketListener {
+    public class SetActionBarListener1_20_3 implements ByteBufferPacketListener {
 
         @Override
         public void onPacketSend(NetWorkUser user, ByteBufPacketEvent event) {
@@ -3011,7 +3022,7 @@ public class BukkitNetworkManager implements NetworkManager, Listener {
             FriendlyByteBuf buf = event.getBuffer();
             Tag nbt = buf.readNbt(false);
             if (nbt == null) return;
-            Map<String, ComponentProvider> tokens = CraftEngine.instance().fontManager().matchTags(nbt);
+            Map<String, ComponentProvider> tokens = matchNetworkTags(nbt);
             if (tokens.isEmpty()) return;
             event.setChanged(true);
             buf.clear();
@@ -3020,14 +3031,14 @@ public class BukkitNetworkManager implements NetworkManager, Listener {
         }
     }
 
-    public static class SetTitleListener1_20 implements ByteBufferPacketListener {
+    public class SetTitleListener1_20 implements ByteBufferPacketListener {
 
         @Override
         public void onPacketSend(NetWorkUser user, ByteBufPacketEvent event) {
             if (!Config.interceptTitle()) return;
             FriendlyByteBuf buf = event.getBuffer();
             String json = buf.readUtf();
-            Map<String, ComponentProvider> tokens = CraftEngine.instance().fontManager().matchTags(json);
+            Map<String, ComponentProvider> tokens = matchNetworkTags(json);
             if (tokens.isEmpty()) return;
             event.setChanged(true);
             buf.clear();
@@ -3036,7 +3047,7 @@ public class BukkitNetworkManager implements NetworkManager, Listener {
         }
     }
 
-    public static class SetTitleListener1_20_3 implements ByteBufferPacketListener {
+    public class SetTitleListener1_20_3 implements ByteBufferPacketListener {
 
         @Override
         public void onPacketSend(NetWorkUser user, ByteBufPacketEvent event) {
@@ -3044,7 +3055,7 @@ public class BukkitNetworkManager implements NetworkManager, Listener {
             FriendlyByteBuf buf = event.getBuffer();
             Tag nbt = buf.readNbt(false);
             if (nbt == null) return;
-            Map<String, ComponentProvider> tokens = CraftEngine.instance().fontManager().matchTags(nbt);
+            Map<String, ComponentProvider> tokens = matchNetworkTags(nbt);
             if (tokens.isEmpty()) return;
             event.setChanged(true);
             buf.clear();
@@ -3053,14 +3064,14 @@ public class BukkitNetworkManager implements NetworkManager, Listener {
         }
     }
 
-    public static class SetSubtitleListener1_20 implements ByteBufferPacketListener {
+    public class SetSubtitleListener1_20 implements ByteBufferPacketListener {
 
         @Override
         public void onPacketSend(NetWorkUser user, ByteBufPacketEvent event) {
             if (!Config.interceptTitle()) return;
             FriendlyByteBuf buf = event.getBuffer();
             String json = buf.readUtf();
-            Map<String, ComponentProvider> tokens = CraftEngine.instance().fontManager().matchTags(json);
+            Map<String, ComponentProvider> tokens = matchNetworkTags(json);
             if (tokens.isEmpty()) return;
             event.setChanged(true);
             buf.clear();
@@ -3069,7 +3080,7 @@ public class BukkitNetworkManager implements NetworkManager, Listener {
         }
     }
 
-    public static class SetSubtitleListener1_20_3 implements ByteBufferPacketListener {
+    public class SetSubtitleListener1_20_3 implements ByteBufferPacketListener {
 
         @Override
         public void onPacketSend(NetWorkUser user, ByteBufPacketEvent event) {
@@ -3077,7 +3088,7 @@ public class BukkitNetworkManager implements NetworkManager, Listener {
             FriendlyByteBuf buf = event.getBuffer();
             Tag nbt = buf.readNbt(false);
             if (nbt == null) return;
-            Map<String, ComponentProvider> tokens = CraftEngine.instance().fontManager().matchTags(nbt);
+            Map<String, ComponentProvider> tokens = matchNetworkTags(nbt);
             if (tokens.isEmpty()) return;
             event.setChanged(true);
             buf.clear();
@@ -3086,7 +3097,7 @@ public class BukkitNetworkManager implements NetworkManager, Listener {
         }
     }
 
-    public static class BossEventListener1_20 implements ByteBufferPacketListener {
+    public class BossEventListener1_20 implements ByteBufferPacketListener {
 
         @Override
         public void onPacketSend(NetWorkUser user, ByteBufPacketEvent event) {
@@ -3096,7 +3107,7 @@ public class BukkitNetworkManager implements NetworkManager, Listener {
             int actionType = buf.readVarInt();
             if (actionType == 0) {
                 String json = buf.readUtf();
-                Map<String, ComponentProvider> tokens = CraftEngine.instance().fontManager().matchTags(json);
+                Map<String, ComponentProvider> tokens = matchNetworkTags(json);
                 if (tokens.isEmpty()) return;
                 float health = buf.readFloat();
                 int color = buf.readVarInt();
@@ -3114,7 +3125,7 @@ public class BukkitNetworkManager implements NetworkManager, Listener {
                 buf.writeByte(flag);
             } else if (actionType == 3) {
                 String json = buf.readUtf();
-                Map<String, ComponentProvider> tokens = CraftEngine.instance().fontManager().matchTags(json);
+                Map<String, ComponentProvider> tokens = matchNetworkTags(json);
                 if (tokens.isEmpty()) return;
                 event.setChanged(true);
                 buf.clear();
@@ -3126,7 +3137,7 @@ public class BukkitNetworkManager implements NetworkManager, Listener {
         }
     }
 
-    public static class BossEventListener1_20_3 implements ByteBufferPacketListener {
+    public class BossEventListener1_20_3 implements ByteBufferPacketListener {
 
         @Override
         public void onPacketSend(NetWorkUser user, ByteBufPacketEvent event) {
@@ -3137,7 +3148,7 @@ public class BukkitNetworkManager implements NetworkManager, Listener {
             if (actionType == 0) {
                 Tag nbt = buf.readNbt(false);
                 if (nbt == null) return;
-                Map<String, ComponentProvider> tokens = CraftEngine.instance().fontManager().matchTags(nbt);
+                Map<String, ComponentProvider> tokens = matchNetworkTags(nbt);
                 if (tokens.isEmpty()) return;
                 float health = buf.readFloat();
                 int color = buf.readVarInt();
@@ -3156,7 +3167,7 @@ public class BukkitNetworkManager implements NetworkManager, Listener {
             } else if (actionType == 3) {
                 Tag nbt = buf.readNbt(false);
                 if (nbt == null) return;
-                Map<String, ComponentProvider> tokens = CraftEngine.instance().fontManager().matchTags(nbt);
+                Map<String, ComponentProvider> tokens = matchNetworkTags(nbt);
                 if (tokens.isEmpty()) return;
                 event.setChanged(true);
                 buf.clear();
@@ -3168,7 +3179,7 @@ public class BukkitNetworkManager implements NetworkManager, Listener {
         }
     }
 
-    public static class TeamListener1_20 implements ByteBufferPacketListener {
+    public class TeamListener1_20 implements ByteBufferPacketListener {
 
         @Override
         public void onPacketSend(NetWorkUser user, ByteBufPacketEvent event) {
@@ -3186,9 +3197,9 @@ public class BukkitNetworkManager implements NetworkManager, Listener {
             String prefix = buf.readUtf();
             String suffix = buf.readUtf();
 
-            Map<String, ComponentProvider> tokens1 = CraftEngine.instance().fontManager().matchTags(displayName);
-            Map<String, ComponentProvider> tokens2 = CraftEngine.instance().fontManager().matchTags(prefix);
-            Map<String, ComponentProvider> tokens3 = CraftEngine.instance().fontManager().matchTags(suffix);
+            Map<String, ComponentProvider> tokens1 = matchNetworkTags(displayName);
+            Map<String, ComponentProvider> tokens2 = matchNetworkTags(prefix);
+            Map<String, ComponentProvider> tokens3 = matchNetworkTags(suffix);
             if (tokens1.isEmpty() && tokens2.isEmpty() && tokens3.isEmpty()) return;
             event.setChanged(true);
             NetworkTextReplaceContext context = NetworkTextReplaceContext.of((BukkitServerPlayer) user);
@@ -3211,7 +3222,7 @@ public class BukkitNetworkManager implements NetworkManager, Listener {
         }
     }
 
-    public static class TeamListener1_20_3 implements ByteBufferPacketListener {
+    public class TeamListener1_20_3 implements ByteBufferPacketListener {
 
         @Override
         public void onPacketSend(NetWorkUser user, ByteBufPacketEvent event) {
@@ -3230,9 +3241,9 @@ public class BukkitNetworkManager implements NetworkManager, Listener {
             if (prefix == null) return;
             Tag suffix = buf.readNbt(false);
             if (suffix == null) return;
-            Map<String, ComponentProvider> tokens1 = CraftEngine.instance().fontManager().matchTags(displayName);
-            Map<String, ComponentProvider> tokens2 = CraftEngine.instance().fontManager().matchTags(prefix);
-            Map<String, ComponentProvider> tokens3 = CraftEngine.instance().fontManager().matchTags(suffix);
+            Map<String, ComponentProvider> tokens1 = matchNetworkTags(displayName);
+            Map<String, ComponentProvider> tokens2 = matchNetworkTags(prefix);
+            Map<String, ComponentProvider> tokens3 = matchNetworkTags(suffix);
             if (tokens1.isEmpty() && tokens2.isEmpty() && tokens3.isEmpty()) return;
             NetworkTextReplaceContext context = NetworkTextReplaceContext.of((BukkitServerPlayer) user);
             List<String> entities = method == 0 ? buf.readStringList() : null;
@@ -3254,7 +3265,7 @@ public class BukkitNetworkManager implements NetworkManager, Listener {
         }
     }
 
-    public static class SetObjectiveListener1_20 implements ByteBufferPacketListener {
+    public class SetObjectiveListener1_20 implements ByteBufferPacketListener {
 
         @Override
         public void onPacketSend(NetWorkUser user, ByteBufPacketEvent event) {
@@ -3265,7 +3276,7 @@ public class BukkitNetworkManager implements NetworkManager, Listener {
             if (mode != 0 && mode != 2) return;
             String displayName = buf.readUtf();
             int renderType = buf.readVarInt();
-            Map<String, ComponentProvider> tokens = CraftEngine.instance().fontManager().matchTags(displayName);
+            Map<String, ComponentProvider> tokens = matchNetworkTags(displayName);
             if (tokens.isEmpty()) return;
             event.setChanged(true);
             buf.clear();
@@ -3277,7 +3288,7 @@ public class BukkitNetworkManager implements NetworkManager, Listener {
         }
     }
 
-    public static class SetObjectiveListener1_20_3 implements ByteBufferPacketListener {
+    public class SetObjectiveListener1_20_3 implements ByteBufferPacketListener {
 
         @Override
         public void onPacketSend(NetWorkUser user, ByteBufPacketEvent event) {
@@ -3293,7 +3304,7 @@ public class BukkitNetworkManager implements NetworkManager, Listener {
             if (optionalNumberFormat) {
                 int format = buf.readVarInt();
                 if (format == 0) {
-                    Map<String, ComponentProvider> tokens = CraftEngine.instance().fontManager().matchTags(displayName);
+                    Map<String, ComponentProvider> tokens = matchNetworkTags(displayName);
                     if (tokens.isEmpty()) return;
                     event.setChanged(true);
                     buf.clear();
@@ -3305,7 +3316,7 @@ public class BukkitNetworkManager implements NetworkManager, Listener {
                     buf.writeBoolean(true);
                     buf.writeVarInt(0);
                 } else if (format == 1) {
-                    Map<String, ComponentProvider> tokens = CraftEngine.instance().fontManager().matchTags(displayName);
+                    Map<String, ComponentProvider> tokens = matchNetworkTags(displayName);
                     if (tokens.isEmpty()) return;
                     Tag style = buf.readNbt(false);
                     event.setChanged(true);
@@ -3321,8 +3332,8 @@ public class BukkitNetworkManager implements NetworkManager, Listener {
                 } else if (format == 2) {
                     Tag fixed = buf.readNbt(false);
                     if (fixed == null) return;
-                    Map<String, ComponentProvider> tokens1 = CraftEngine.instance().fontManager().matchTags(displayName);
-                    Map<String, ComponentProvider> tokens2 = CraftEngine.instance().fontManager().matchTags(fixed);
+                    Map<String, ComponentProvider> tokens1 = matchNetworkTags(displayName);
+                    Map<String, ComponentProvider> tokens2 = matchNetworkTags(fixed);
                     if (tokens1.isEmpty() && tokens2.isEmpty()) return;
                     event.setChanged(true);
                     buf.clear();
@@ -3336,7 +3347,7 @@ public class BukkitNetworkManager implements NetworkManager, Listener {
                     buf.writeNbt(tokens2.isEmpty() ? fixed : AdventureHelper.componentToTag(AdventureHelper.replaceText(AdventureHelper.tagToComponent(fixed), tokens2, NetworkTextReplaceContext.of((BukkitServerPlayer) user))), false);
                 }
             } else {
-                Map<String, ComponentProvider> tokens = CraftEngine.instance().fontManager().matchTags(displayName);
+                Map<String, ComponentProvider> tokens = matchNetworkTags(displayName);
                 if (tokens.isEmpty()) return;
                 event.setChanged(true);
                 buf.clear();
@@ -3350,7 +3361,7 @@ public class BukkitNetworkManager implements NetworkManager, Listener {
         }
     }
 
-    public static class SetScoreListener1_20_3 implements ByteBufferPacketListener {
+    public class SetScoreListener1_20_3 implements ByteBufferPacketListener {
 
         @Override
         public void onPacketSend(NetWorkUser user, ByteBufPacketEvent event) {
@@ -3368,7 +3379,7 @@ public class BukkitNetworkManager implements NetworkManager, Listener {
             }
             outside:
             if (displayName != null) {
-                Map<String, ComponentProvider> tokens = CraftEngine.instance().fontManager().matchTags(displayName);
+                Map<String, ComponentProvider> tokens = matchNetworkTags(displayName);
                 if (tokens.isEmpty()) break outside;
                 Component component = AdventureHelper.tagToComponent(displayName);
                 component = AdventureHelper.replaceText(component, tokens, NetworkTextReplaceContext.of(serverPlayer));
@@ -3389,7 +3400,7 @@ public class BukkitNetworkManager implements NetworkManager, Listener {
                 } else if (format == 2) {
                     fixed = buf.readNbt(false);
                     if (fixed == null) return;
-                    Map<String, ComponentProvider> tokens = CraftEngine.instance().fontManager().matchTags(fixed);
+                    Map<String, ComponentProvider> tokens = matchNetworkTags(fixed);
                     if (tokens.isEmpty() && !isChanged) return;
                     if (!tokens.isEmpty()) {
                         Component component = AdventureHelper.tagToComponent(fixed);
@@ -3568,7 +3579,7 @@ public class BukkitNetworkManager implements NetworkManager, Listener {
         }
     }
 
-    public static class UpdateAdvancementsListener implements ByteBufferPacketListener {
+    public class UpdateAdvancementsListener implements ByteBufferPacketListener {
 
         @Override
         public void onPacketSend(NetWorkUser user, ByteBufPacketEvent event) {
@@ -3593,7 +3604,7 @@ public class BukkitNetworkManager implements NetworkManager, Listener {
                 }
                 if (Config.interceptAdvancement()) {
                     holder.replaceNetworkTags(component -> {
-                        Map<String, ComponentProvider> tokens = CraftEngine.instance().fontManager().matchTags(AdventureHelper.componentToJson(component));
+                        Map<String, ComponentProvider> tokens = matchNetworkTags(AdventureHelper.componentToJson(component));
                         if (tokens.isEmpty()) return component;
                         changed.set(true);
                         return AdventureHelper.replaceText(component, tokens, NetworkTextReplaceContext.of(player));
@@ -4014,45 +4025,64 @@ public class BukkitNetworkManager implements NetworkManager, Listener {
                     // todo 冒险模式破坏工具白名单
                     if (serverPlayer.isAdventureMode() || !furniture.isValid()) return;
 
+                    if (!serverPlayer.canInteractPoint(new Vec3d(location.getX(), location.getY(), location.getZ()), 16d)) {
+                        return;
+                    }
+
                     // 先检查碰撞箱部分是否存在
                     FurnitureHitBox hitBox = furniture.hitboxByEntityId(entityId);
                     if (hitBox == null) return;
-                    for (FurnitureHitboxPart part : hitBox.parts()) {
-                        if (part.entityId() == entityId) {
-                            // 检查玩家是否能破坏此点
-                            if (!serverPlayer.canInteractPoint(part.pos(), 16d)) {
-                                return;
-                            }
+
+                    ContextHolder.Builder contextBuilder = ContextHolder.builder()
+                            .withParameter(DirectContextParameters.FURNITURE, furniture)
+                            .withParameter(DirectContextParameters.HAND, InteractionHand.MAIN_HAND)
+                            .withParameter(DirectContextParameters.ITEM_IN_HAND, serverPlayer.getItemInHand(InteractionHand.MAIN_HAND))
+                            .withParameter(DirectContextParameters.POSITION, furniture.position());
+                    FurnitureHitEvent hitEvent = new FurnitureHitEvent(serverPlayer.platformPlayer(), furniture, contextBuilder);
+                    if (EventUtils.fireAndCheckCancel(hitEvent))
+                        return;
+                    if (!BukkitCraftEngine.instance().antiGriefProvider().test(platformPlayer, Flag.BREAK, location))
+                        return;
+
+                    int hitTimes = furniture.config.settings().hitTimes();
+                    if (hitTimes > 1) {
+                        FurnitureHitData furnitureHitData = serverPlayer.furnitureHitData();
+                        int previousTimes = furnitureHitData.times(furniture.entityId());
+                        int alreadyHit = furnitureHitData.hit(furniture.entityId());
+
+                        // execute functions
+                        PlayerOptionalContext context = PlayerOptionalContext.of(serverPlayer,
+                                contextBuilder
+                                        .withParameter(DirectContextParameters.EVENT, Cancellable.of(hitEvent::isCancelled, hitEvent::setCancelled))
+                                        .withParameter(DirectContextParameters.HIT_TIMES, alreadyHit)
+                        );
+                        furniture.config().execute(context, EventTrigger.LEFT_CLICK);
+                        if (hitEvent.isCancelled()) {
+                            furnitureHitData.setTimes(previousTimes);
+                            return;
+                        }
+
+                        if (alreadyHit < hitTimes) {
+                            SoundData soundData = furniture.config.settings().sounds().hitSound();
+                            serverPlayer.world().playSound(furniture.position(), soundData.id(), soundData.volume().get(), soundData.pitch().get(), SoundSource.PLAYER);
+                            return;
+                        } else {
+                            serverPlayer.furnitureHitData().reset();
                         }
                     }
 
-                    FurnitureAttemptBreakEvent preBreakEvent = new FurnitureAttemptBreakEvent(serverPlayer.platformPlayer(), furniture);
-                    if (EventUtils.fireAndCheckCancel(preBreakEvent))
-                        return;
-
-                    if (!BukkitCraftEngine.instance().antiGriefProvider().canBreak(platformPlayer, location))
-                        return;
-
-                    FurnitureBreakEvent breakEvent = new FurnitureBreakEvent(serverPlayer.platformPlayer(), furniture);
+                    FurnitureBreakEvent breakEvent = new FurnitureBreakEvent(serverPlayer.platformPlayer(), furniture, contextBuilder);
                     breakEvent.setDropItems(!serverPlayer.isCreativeMode());
                     if (EventUtils.fireAndCheckCancel(breakEvent))
                         return;
 
-                    Cancellable cancellable = Cancellable.of(breakEvent::isCancelled, breakEvent::setCancelled);
                     // execute functions
-                    PlayerOptionalContext context = PlayerOptionalContext.of(serverPlayer, ContextHolder.builder()
-                            .withParameter(DirectContextParameters.FURNITURE, furniture)
-                            .withParameter(DirectContextParameters.EVENT, cancellable)
-                            .withParameter(DirectContextParameters.HAND, InteractionHand.MAIN_HAND)
-                            .withParameter(DirectContextParameters.ITEM_IN_HAND, serverPlayer.getItemInHand(InteractionHand.MAIN_HAND))
-                            .withParameter(DirectContextParameters.POSITION, furniture.position())
-                    );
-                    furniture.config().execute(context, EventTrigger.LEFT_CLICK);
+                    PlayerOptionalContext context = PlayerOptionalContext.of(serverPlayer,
+                            contextBuilder.withParameter(DirectContextParameters.EVENT, Cancellable.of(breakEvent::isCancelled, breakEvent::setCancelled)));
                     furniture.config().execute(context, EventTrigger.BREAK);
-                    if (cancellable.isCancelled()) {
+                    if (breakEvent.isCancelled()) {
                         return;
                     }
-
                     CraftEngineFurniture.remove(furniture, serverPlayer, breakEvent.dropItems(), true);
                 };
             } else if (actionType == 2) {
@@ -4078,18 +4108,18 @@ public class BukkitNetworkManager implements NetworkManager, Listener {
                         return;
                     }
 
+                    if (!serverPlayer.canInteractPoint(new Vec3d(location.getX(), location.getY(), location.getZ()), 16d)) {
+                        return;
+                    }
+
                     // 先检查碰撞箱部分是否存在
                     FurnitureHitBox hitBox = furniture.hitboxByEntityId(entityId);
                     if (hitBox == null) return;
                     FurnitureHitboxPart part = null;
                     for (FurnitureHitboxPart p : hitBox.parts()) {
                         if (p.entityId() == entityId) {
-                            Vec3d pos = p.pos();
-                            // 检测距离
-                            if (!serverPlayer.canInteractPoint(pos, 16d)) {
-                                return;
-                            }
                             part = p;
+                            break;
                         }
                     }
                     if (part == null) {
@@ -4101,18 +4131,38 @@ public class BukkitNetworkManager implements NetworkManager, Listener {
                     Vector direction = eyeLocation.getDirection();
                     Location endLocation = eyeLocation.clone();
                     endLocation.add(direction.multiply(serverPlayer.getCachedInteractionRange()));
-                    Optional<EntityHitResult> result = part.aabb().clip(LocationUtils.toVec3d(eyeLocation), LocationUtils.toVec3d(endLocation));
-                    if (result.isEmpty()) {
+                    Optional<EntityHitResult> optionalHitResult = part.aabb().clip(LocationUtils.toVec3d(eyeLocation), LocationUtils.toVec3d(endLocation));
+                    if (optionalHitResult.isEmpty()) {
                         return;
                     }
-                    EntityHitResult hitResult = result.get();
+                    EntityHitResult hitResult = optionalHitResult.get();
                     Vec3d hitLocation = hitResult.hitLocation();
 
                     // 获取正确的交互点
                     Location interactionPoint = new Location(platformPlayer.getWorld(), hitLocation.x, hitLocation.y, hitLocation.z);
                     // 触发事件
-                    FurnitureInteractEvent interactEvent = new FurnitureInteractEvent(serverPlayer.platformPlayer(), furniture, hand, interactionPoint, hitBox);
+                    ContextHolder.Builder contextBuilder = ContextHolder.builder();
+                    FurnitureInteractEvent interactEvent = new FurnitureInteractEvent(serverPlayer.platformPlayer(), furniture, hand, interactionPoint, hitBox, contextBuilder);
                     if (EventUtils.fireAndCheckCancel(interactEvent)) {
+                        return;
+                    }
+
+                    // 执行家具行为
+                    FurnitureBehavior behavior = furniture.config.behavior();
+                    InteractEntityContext interactEntityContext = new InteractEntityContext(serverPlayer, hand, hitResult);
+                    InteractionResult result = behavior.useOnFurniture(interactEntityContext, furniture);
+                    if (result.success()) {
+                        serverPlayer.updateLastSuccessfulInteractionTick(serverPlayer.gameTicks());
+                        return;
+                    }
+                    if (result == InteractionResult.TRY_EMPTY_HAND && hand == InteractionHand.MAIN_HAND) {
+                        result = behavior.useWithoutItem(interactEntityContext, furniture);
+                        if (result.success()) {
+                            serverPlayer.updateLastSuccessfulInteractionTick(serverPlayer.gameTicks());
+                            return;
+                        }
+                    }
+                    if (result == InteractionResult.FAIL) {
                         return;
                     }
 
@@ -4120,7 +4170,8 @@ public class BukkitNetworkManager implements NetworkManager, Listener {
                     Item<ItemStack> itemInHand = serverPlayer.getItemInHand(InteractionHand.MAIN_HAND);
                     Cancellable cancellable = Cancellable.of(interactEvent::isCancelled, interactEvent::setCancelled);
                     // execute functions
-                    PlayerOptionalContext context = PlayerOptionalContext.of(serverPlayer, ContextHolder.builder()
+                    PlayerOptionalContext context = PlayerOptionalContext.of(serverPlayer,
+                            contextBuilder
                             .withParameter(DirectContextParameters.EVENT, cancellable)
                             .withParameter(DirectContextParameters.FURNITURE, furniture)
                             .withParameter(DirectContextParameters.ITEM_IN_HAND, itemInHand)
@@ -4143,9 +4194,9 @@ public class BukkitNetworkManager implements NetworkManager, Listener {
                     if (serverPlayer.isSecondaryUseActive() && !itemInHand.isEmpty() && hitBox.config().canUseItemOn()) {
                         Optional<CustomItem<ItemStack>> optionalCustomItem = itemInHand.getCustomItem();
                         if (optionalCustomItem.isPresent() && !optionalCustomItem.get().behaviors().isEmpty()) {
-                            for (ItemBehavior behavior : optionalCustomItem.get().behaviors()) {
-                                if (behavior instanceof FurnitureItemBehavior) {
-                                    behavior.useOnBlock(new UseOnContext(serverPlayer, InteractionHand.MAIN_HAND, new BlockHitResult(hitResult.hitLocation(), hitResult.direction(), BlockPos.fromVec3d(hitResult.hitLocation()), false)));
+                            for (ItemBehavior itemBehavior : optionalCustomItem.get().behaviors()) {
+                                if (itemBehavior instanceof FurnitureItemBehavior) {
+                                    itemBehavior.useOnBlock(new UseOnContext(serverPlayer, InteractionHand.MAIN_HAND, new BlockHitResult(hitResult.hitLocation(), hitResult.direction(), BlockPos.fromVec3d(hitResult.hitLocation()), false)));
                                     return;
                                 }
                             }
@@ -4158,6 +4209,9 @@ public class BukkitNetworkManager implements NetworkManager, Listener {
                                 hitResult.hitLocation().x, hitResult.hitLocation().y, hitResult.hitLocation().z,
                                 LocationUtils.toBlockPos(hitResult.blockPos())
                         );
+                        if (!part.interactive()) {
+                            serverPlayer.swingHand(InteractionHand.MAIN_HAND);
+                        }
                     } else {
                         if (!serverPlayer.isSecondaryUseActive()) {
                             for (Seat<FurnitureHitBox> seat : hitBox.seats()) {
@@ -4191,7 +4245,7 @@ public class BukkitNetworkManager implements NetworkManager, Listener {
             }
 
             if (VersionHelper.isFolia()) {
-                platformPlayer.getScheduler().run(BukkitCraftEngine.instance().javaPlugin(), t -> mainThreadTask.run(), () -> {});
+                BukkitNetworkManager.this.plugin.scheduler().sync().run(mainThreadTask, location.getWorld(), location.getBlockX() >> 4, location.getBlockZ() >> 4);
             } else {
                 BukkitCraftEngine.instance().scheduler().executeSync(mainThreadTask);
             }
@@ -4293,7 +4347,7 @@ public class BukkitNetworkManager implements NetworkManager, Listener {
                 if (furniture != null) {
                     EntityPacketHandler previous = serverPlayer.entityPacketHandlers().put(id, new FurniturePacketHandler(id, furniture.virtualEntityIds()));
                     if (Config.enableEntityCulling()) {
-                        serverPlayer.addTrackedFurniture(id, furniture);
+                        serverPlayer.addTrackedEntity(id, furniture);
                     } else {
                         // 修复addEntityToWorld，包比事件先发的问题 (WE)
                         if (previous == null || previous instanceof ItemDisplayPacketHandler) {
@@ -4377,7 +4431,7 @@ public class BukkitNetworkManager implements NetworkManager, Listener {
         }
     }
 
-    public static class SetEntityDataListener implements ByteBufferPacketListener {
+    public class SetEntityDataListener implements ByteBufferPacketListener {
 
         @Override
         public void onPacketSend(NetWorkUser user, ByteBufPacketEvent event) {
@@ -4392,7 +4446,7 @@ public class BukkitNetworkManager implements NetworkManager, Listener {
             if (Config.interceptEntityName()) {
                 boolean isChanged = false;
                 List<Object> packedItems = FastNMS.INSTANCE.method$ClientboundSetEntityDataPacket$unpack(buf);
-                for (int i = 0; i < packedItems.size(); i++) {
+                for (int i = packedItems.size() - 1; i >= 0; i--) {
                     Object packedItem = packedItems.get(i);
                     int entityDataId = FastNMS.INSTANCE.field$SynchedEntityData$DataValue$id(packedItem);
                     if (entityDataId != BaseEntityData.CustomName.id()) continue;
@@ -4401,7 +4455,7 @@ public class BukkitNetworkManager implements NetworkManager, Listener {
                     if (optionalTextComponent.isEmpty()) continue;
                     Object textComponent = optionalTextComponent.get();
                     String json = ComponentUtils.minecraftToJson(textComponent);
-                    Map<String, ComponentProvider> tokens = CraftEngine.instance().fontManager().matchTags(json);
+                    Map<String, ComponentProvider> tokens = matchNetworkTags(json);
                     if (tokens.isEmpty()) continue;
                     Component component = AdventureHelper.jsonToComponent(json);
                     component = AdventureHelper.replaceText(component, tokens, NetworkTextReplaceContext.of(serverPlayer));
@@ -4633,7 +4687,8 @@ public class BukkitNetworkManager implements NetworkManager, Listener {
             }
         }
     }
-    public static class PlayerChatListener_1_20 implements ByteBufferPacketListener {
+
+    public class PlayerChatListener_1_20 implements ByteBufferPacketListener {
 
         public void onPacketSend(NetWorkUser user, ByteBufPacketEvent event) {
             if (!Config.interceptPlayerChat() || Config.disableChatReport()) return;
@@ -4665,7 +4720,7 @@ public class BukkitNetworkManager implements NetworkManager, Listener {
             // SignedMessageBody.Packed end
             @Nullable String unsignedContent = buf.readNullable(FriendlyByteBuf::readUtf);
             if (unsignedContent != null) {
-                Map<String, ComponentProvider> unsignedContentTokens = CraftEngine.instance().fontManager().matchTags(unsignedContent);
+                Map<String, ComponentProvider> unsignedContentTokens = matchNetworkTags(unsignedContent);
                 if (!unsignedContentTokens.isEmpty()) {
                     Tag tag = MRegistryOps.JSON.convertTo(MRegistryOps.SPARROW_NBT, GsonHelper.get().fromJson(unsignedContent, JsonElement.class));
                     Component component = AdventureHelper.nbtToComponent(tag);
@@ -4681,7 +4736,7 @@ public class BukkitNetworkManager implements NetworkManager, Listener {
             // ChatType.BoundNetwork start
             int chatType = buf.readVarInt();
             String name = buf.readUtf();
-            Map<String, ComponentProvider> nameTokens = CraftEngine.instance().fontManager().matchTags(name);
+            Map<String, ComponentProvider> nameTokens = matchNetworkTags(name);
             if (!nameTokens.isEmpty()) {
                 Tag tag = MRegistryOps.JSON.convertTo(MRegistryOps.SPARROW_NBT, GsonHelper.get().fromJson(name, JsonElement.class));
                 Component component = AdventureHelper.nbtToComponent(tag);
@@ -4691,7 +4746,7 @@ public class BukkitNetworkManager implements NetworkManager, Listener {
             }
             @Nullable String targetName = buf.readNullable(FriendlyByteBuf::readUtf);
             if (targetName != null) {
-                Map<String, ComponentProvider> targetNameTokens = CraftEngine.instance().fontManager().matchTags(targetName);
+                Map<String, ComponentProvider> targetNameTokens = matchNetworkTags(targetName);
                 if (!targetNameTokens.isEmpty()) {
                     Tag tag = MRegistryOps.JSON.convertTo(MRegistryOps.SPARROW_NBT, GsonHelper.get().fromJson(targetName, JsonElement.class));
                     Component component = AdventureHelper.nbtToComponent(tag);
@@ -4727,7 +4782,7 @@ public class BukkitNetworkManager implements NetworkManager, Listener {
         }
     }
 
-    public static class PlayerChatListener_1_20_3 implements ByteBufferPacketListener {
+    public class PlayerChatListener_1_20_3 implements ByteBufferPacketListener {
 
         public void onPacketSend(NetWorkUser user, ByteBufPacketEvent event) {
             if (!Config.interceptPlayerChat() || Config.disableChatReport()) return;
@@ -4760,7 +4815,7 @@ public class BukkitNetworkManager implements NetworkManager, Listener {
             // SignedMessageBody.Packed end
             @Nullable Tag unsignedContent = buf.readNullable(b -> b.readNbt(false));
             if (unsignedContent != null) {
-                Map<String, ComponentProvider> tokens = CraftEngine.instance().fontManager().matchTags(unsignedContent);
+                Map<String, ComponentProvider> tokens = matchNetworkTags(unsignedContent);
                 if (!tokens.isEmpty()) {
                     Component component = AdventureHelper.tagToComponent(unsignedContent);
                     component = AdventureHelper.replaceText(component, tokens, NetworkTextReplaceContext.of((BukkitServerPlayer) user));
@@ -4776,7 +4831,7 @@ public class BukkitNetworkManager implements NetworkManager, Listener {
             int chatType = buf.readVarInt();
             Tag name = buf.readNbt(false);
             if (name != null) {
-                Map<String, ComponentProvider> tokens = CraftEngine.instance().fontManager().matchTags(name);
+                Map<String, ComponentProvider> tokens = matchNetworkTags(name);
                 if (!tokens.isEmpty()) {
                     Component component = AdventureHelper.tagToComponent(name);
                     component = AdventureHelper.replaceText(component, tokens, NetworkTextReplaceContext.of((BukkitServerPlayer) user));
@@ -4786,7 +4841,7 @@ public class BukkitNetworkManager implements NetworkManager, Listener {
             }
             @Nullable Tag targetName = buf.readNullable(b -> b.readNbt(false));
             if (targetName != null) {
-                Map<String, ComponentProvider> tokens = CraftEngine.instance().fontManager().matchTags(targetName);
+                Map<String, ComponentProvider> tokens = matchNetworkTags(targetName);
                 if (!tokens.isEmpty()) {
                     Component component = AdventureHelper.tagToComponent(targetName);
                     component = AdventureHelper.replaceText(component, tokens, NetworkTextReplaceContext.of((BukkitServerPlayer) user));

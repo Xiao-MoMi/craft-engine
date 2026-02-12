@@ -10,7 +10,7 @@ import java.util.BitSet;
  * A class that manages a bitmap for tracking used and free regions of memory or storage.
  * This class provides methods to allocate, free, and query regions in the bitmap.
  */
-public class RegionBitmap {
+public final class RegionBitmap {
     private final BitSet used = new BitSet();
 
     /**

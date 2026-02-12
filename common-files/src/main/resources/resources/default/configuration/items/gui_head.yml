@@ -1,6 +1,8 @@
 items:
   default:gui_head_size_1:
     material: player_head
+    client-bound-data:
+      profile: <arg:player.name>
     model:
       type: minecraft:special
       path: minecraft:item/custom/gui_head_size_1
@@ -15,6 +17,8 @@ items:
         type: minecraft:player_head
   default:gui_head_size_4:
     material: player_head
+    client-bound-data:
+      profile: <arg:player.name>
     model:
       type: minecraft:special
       path: minecraft:item/custom/gui_head_size_4

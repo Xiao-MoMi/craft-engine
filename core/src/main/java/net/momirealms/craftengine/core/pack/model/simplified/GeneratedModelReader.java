@@ -14,7 +14,7 @@ public final class GeneratedModelReader implements SimplifiedModelReader {
 
     private final String model;
 
-    public GeneratedModelReader(String model) {
+    private GeneratedModelReader(String model) {
         this.model = model;
     }
 

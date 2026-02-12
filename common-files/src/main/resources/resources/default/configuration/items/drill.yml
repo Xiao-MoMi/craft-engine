@@ -1,0 +1,34 @@
+items:
+  default:drill:
+    material: stone_pickaxe
+    data:
+      item-name: <!i><white><lang:item.default.drill>
+      max-damage: 512
+    behavior:
+      - type: range_mining_item
+        range:
+          - 0,0,1
+          - 0,0,2
+    model:
+      type: minecraft:condition
+      property: "minecraft:selected"
+      on-false:
+        type: "minecraft:model"
+        path: "minecraft:item/custom/drill"
+        generation:
+          parent: minecraft:item/handheld
+          textures:
+            layer0: minecraft:item/custom/drill
+      on-true:
+        type: "minecraft:model"
+        path: "minecraft:item/custom/drill_selected"
+        generation:
+          parent: minecraft:item/handheld
+          textures:
+            layer0: minecraft:item/custom/drill_selected
+    legacy-model:
+      path: minecraft:item/custom/drill_selected
+      generation:
+        parent: minecraft:item/handheld
+        textures:
+          layer0: minecraft:item/custom/drill_selected

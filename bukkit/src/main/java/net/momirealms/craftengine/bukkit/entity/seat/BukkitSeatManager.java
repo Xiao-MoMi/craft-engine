@@ -119,7 +119,7 @@ public class BukkitSeatManager implements SeatManager, Listener {
             location.add(0,-0.35,0);
         }
         seat.remove();
-        location.add(0, 0.2, 0); // 防止座椅较低卡进地下
+        location.add(0, 0.301, 0); // 防止座椅较低卡进地下
         EntityUtils.safeDismount(player, location);
     }
 

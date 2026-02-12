@@ -9,7 +9,7 @@ import net.momirealms.craftengine.core.util.Key;
 
 import java.util.function.Supplier;
 
-public class BitmapImage implements Supplier<JsonObject> {
+public final class BitmapImage implements Supplier<JsonObject>, Image {
     private final Key id;
     private final Key font;
     private final int height;
@@ -26,9 +26,16 @@ public class BitmapImage implements Supplier<JsonObject> {
         this.codepointGrid = codepointGrid;
     }
 
+    @Override
     public String miniMessageAt(int row, int col) {
-        int codepoint = codepointGrid[row][col];
+        int codepoint = this.codepointGrid[row][col];
         return FormatUtils.miniMessageFont(new String(Character.toChars(codepoint)), this.font.toString());
+    }
+
+    @Override
+    public String mineDownAt(int row, int col) {
+        int codepoint = this.codepointGrid[row][col];
+        return FormatUtils.mineDownFont(new String(Character.toChars(codepoint)), this.font.toString());
     }
 
     public int height() {
@@ -47,37 +54,40 @@ public class BitmapImage implements Supplier<JsonObject> {
         return font;
     }
 
+    @Override
     public Key id() {
         return id;
     }
 
     public int[][] codepointGrid() {
-        return codepointGrid.clone();
+        return this.codepointGrid.clone();
     }
 
     public int rows() {
-        return codepointGrid.length;
+        return this.codepointGrid.length;
     }
 
     public int columns() {
-        return codepointGrid[0].length;
+        return this.codepointGrid[0].length;
     }
 
+    @Override
     public int codepointAt(int row, int column) {
         if (!isValidCoordinate(row, column)) {
             throw new IndexOutOfBoundsException("Invalid index: (" + row + ", " + column + ") for image " + id());
         }
-        return codepointGrid[row][column];
+        return this.codepointGrid[row][column];
     }
 
     @SuppressWarnings("all")
+    @Override
     public Component componentAt(int row, int column) {
         int codepoint = codepointAt(row, column);
         return Component.text(new String(Character.toChars(codepoint))).font(net.kyori.adventure.key.Key.key(font().toString()));
     }
 
     public boolean isValidCoordinate(int row, int column) {
-        return row >= 0 && row < codepointGrid.length && column >= 0 && column < codepointGrid[row].length;
+        return row >= 0 && row < this.codepointGrid.length && column >= 0 && column < this.codepointGrid[row].length;
     }
 
     @Override
@@ -85,24 +95,24 @@ public class BitmapImage implements Supplier<JsonObject> {
         if (this == object) return true;
         if (object == null || getClass() != object.getClass()) return false;
         BitmapImage image = (BitmapImage) object;
-        return id.equals(image.id);
+        return this.id.equals(image.id);
     }
 
     @Override
     public int hashCode() {
-        return id.hashCode();
+        return this.id.hashCode();
     }
 
     @Override
     public JsonObject get() {
         JsonObject jsonObject = new JsonObject();
         jsonObject.addProperty("type", "bitmap");
-        jsonObject.addProperty("height", height);
-        jsonObject.addProperty("ascent", ascent);
-        jsonObject.addProperty("file", file);
+        jsonObject.addProperty("height", this.height);
+        jsonObject.addProperty("ascent", this.ascent);
+        jsonObject.addProperty("file", this.file);
         JsonArray charArray = new JsonArray();
         jsonObject.add("chars", charArray);
-        for (int[] codepoints : codepointGrid) {
+        for (int[] codepoints : this.codepointGrid) {
             StringBuilder stringBuilder = new StringBuilder();
             for (int codepoint : codepoints) {
                 stringBuilder.append(CharacterUtils.encodeCharsToUnicode(Character.toChars(codepoint)));

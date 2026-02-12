@@ -118,7 +118,7 @@ public class DebugCleanCacheCommand extends BukkitCommandFeature<CommandSender> 
     private void handleFont(CommandContext<CommandSender> context) {
         BukkitFontManager instance = this.plugin().fontManager();
         Map<Key, Set<String>> idsMap = new HashMap<>();
-        for (BitmapImage image : instance.loadedImages().values()) {
+        for (BitmapImage image : instance.loadedBitmapImages().values()) {
             Set<String> ids = idsMap.computeIfAbsent(image.font(), k -> new HashSet<>());
             String id = image.id().toString();
             ids.add(id);

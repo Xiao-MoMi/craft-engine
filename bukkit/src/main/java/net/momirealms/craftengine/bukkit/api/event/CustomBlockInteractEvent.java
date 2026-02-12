@@ -3,6 +3,7 @@ package net.momirealms.craftengine.bukkit.api.event;
 import net.momirealms.craftengine.core.block.CustomBlock;
 import net.momirealms.craftengine.core.block.ImmutableBlockState;
 import net.momirealms.craftengine.core.entity.player.InteractionHand;
+import net.momirealms.craftengine.core.plugin.context.ContextHolder;
 import org.bukkit.Location;
 import org.bukkit.block.Block;
 import org.bukkit.block.BlockFace;
@@ -27,7 +28,9 @@ public final class CustomBlockInteractEvent extends PlayerEvent implements Cance
     private final Action action;
     private final BlockFace clickedFace;
     private final ItemStack item;
+    private final ContextHolder.Builder contextBuilder;
 
+    @ApiStatus.Internal
     public CustomBlockInteractEvent(@NotNull Player player,
                                     @NotNull Location location,
                                     @Nullable Location interactionPoint,
@@ -36,7 +39,8 @@ public final class CustomBlockInteractEvent extends PlayerEvent implements Cance
                                     @NotNull BlockFace clickedFace,
                                     @NotNull InteractionHand hand,
                                     @NotNull Action action,
-                                    @Nullable ItemStack item) {
+                                    @Nullable ItemStack item,
+                                    @NotNull ContextHolder.Builder contextBuilder) {
         super(player);
         this.customBlock = state.owner().value();
         this.bukkitBlock = bukkitBlock;
@@ -47,31 +51,37 @@ public final class CustomBlockInteractEvent extends PlayerEvent implements Cance
         this.action = action;
         this.clickedFace = clickedFace;
         this.item = item;
+        this.contextBuilder = contextBuilder;
+    }
+
+    @NotNull
+    public ContextHolder.Builder contextBuilder() {
+        return this.contextBuilder;
     }
 
     @NotNull
     public BlockFace clickedFace() {
-        return clickedFace;
+        return this.clickedFace;
     }
 
     @Nullable
     public Location interactionPoint() {
-        return interactionPoint;
+        return this.interactionPoint;
     }
 
     @NotNull
     public Action action() {
-        return action;
+        return this.action;
     }
 
     @NotNull
     public InteractionHand hand() {
-        return hand;
+        return this.hand;
     }
 
     @NotNull
     public Block bukkitBlock() {
-        return bukkitBlock;
+        return this.bukkitBlock;
     }
 
     @NotNull

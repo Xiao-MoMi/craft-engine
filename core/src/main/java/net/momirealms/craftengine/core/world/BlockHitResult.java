@@ -42,16 +42,16 @@ public class BlockHitResult extends HitResult {
         return new BlockHitResult(this.miss, this.location, this.direction, this.blockPos, this.inside, true);
     }
 
-    public BlockPos getBlockPos() {
+    public BlockPos blockPos() {
         return this.blockPos;
     }
 
-    public Direction getDirection() {
+    public Direction direction() {
         return this.direction;
     }
 
     @Override
-    public HitResult.Type getType() {
+    public HitResult.Type type() {
         return this.miss ? HitResult.Type.MISS : HitResult.Type.BLOCK;
     }
 

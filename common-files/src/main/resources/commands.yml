@@ -183,12 +183,23 @@ debug_get_block_internal_id:
     - /craftengine debug get-block-internal-id
     - /ce debug get-block-internal-id
 
-debug_appearance_state_usage:
+debug_visual_state_usage:
   enable: true
   permission: ce.command.debug.state_usage
   usage:
+    - /craftengine debug visual-state-usage
     - /craftengine debug appearance-state-usage
+    - /craftengine debug clientside-state-usage
+    - /ce debug visual-state-usage
     - /ce debug appearance-state-usage
+    - /ce debug clientside-state-usage
+
+debug_auto_state_usage:
+  enable: true
+  permission: ce.command.debug.state_usage
+  usage:
+    - /craftengine debug auto-state-usage
+    - /ce debug auto-state-usage
 
 debug_real_state_usage:
   enable: true

@@ -4,10 +4,10 @@ import com.destroystokyo.paper.event.player.PlayerArmorChangeEvent;
 import net.momirealms.craftengine.bukkit.item.BukkitItemManager;
 import net.momirealms.craftengine.bukkit.plugin.BukkitCraftEngine;
 import net.momirealms.craftengine.core.item.CustomItem;
+import net.momirealms.craftengine.core.item.CustomItemSettingType;
 import net.momirealms.craftengine.core.item.Item;
 import net.momirealms.craftengine.core.item.ItemSettings;
 import net.momirealms.craftengine.core.plugin.CraftEngine;
-import net.momirealms.craftengine.core.util.CustomDataType;
 import net.momirealms.craftengine.core.util.ResourceConfigUtils;
 import net.momirealms.craftengine.core.util.VersionHelper;
 import net.momirealms.customnameplates.api.CNPlayer;
@@ -27,7 +27,7 @@ import java.util.Objects;
 import java.util.Optional;
 
 public final class CustomNameplateHatSettings implements Listener {
-    public static final CustomDataType<Double> HAT_HEIGHT = new CustomDataType<>();
+    public static final CustomItemSettingType<Double> HAT_HEIGHT = CustomItemSettingType.simple();
 
     public void register() {
         ItemSettings.Modifiers.registerFactory("hat-height", height -> {

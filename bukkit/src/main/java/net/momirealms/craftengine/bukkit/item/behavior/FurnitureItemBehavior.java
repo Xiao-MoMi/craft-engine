@@ -1,5 +1,6 @@
 package net.momirealms.craftengine.bukkit.item.behavior;
 
+import net.momirealms.antigrieflib.Flag;
 import net.momirealms.craftengine.bukkit.api.event.FurnitureAttemptPlaceEvent;
 import net.momirealms.craftengine.bukkit.api.event.FurniturePlaceEvent;
 import net.momirealms.craftengine.bukkit.entity.furniture.BukkitFurniture;
@@ -39,13 +40,13 @@ import java.util.function.Predicate;
 
 public class FurnitureItemBehavior extends ItemBehavior {
     public static final ItemBehaviorFactory<FurnitureItemBehavior> FACTORY = new Factory();
-    protected static final Set<String> ALLOWED_ANCHOR_TYPES = Set.of("wall", "ceiling", "ground");
+    static final Set<String> ALLOWED_ANCHOR_TYPES = Set.of("wall", "ceiling", "ground");
     private final Key id;
     private final Map<AnchorType, Rule> rules;
     private final boolean ignorePlacer;
     private final boolean ignoreEntities;
 
-    public FurnitureItemBehavior(Key id, Map<AnchorType, Rule> rules, boolean ignorePlacer, boolean ignoreEntities) {
+    protected FurnitureItemBehavior(Key id, Map<AnchorType, Rule> rules, boolean ignorePlacer, boolean ignoreEntities) {
         this.id = id;
         this.rules = rules;
         this.ignorePlacer = ignorePlacer;
@@ -103,7 +104,7 @@ public class FurnitureItemBehavior extends ItemBehavior {
             return InteractionResult.FAIL;
         }
 
-        Vec3d clickedPosition = context.getClickLocation();
+        Vec3d clickedPosition = context.getClickedLocation();
 
         // get position and rotation for placement
         Vec3d finalPlacePosition;
@@ -158,12 +159,13 @@ public class FurnitureItemBehavior extends ItemBehavior {
             }
         }
         // 检查其他插件兼容性
-        if (!BukkitCraftEngine.instance().antiGriefProvider().canPlace(bukkitPlayer, furnitureLocation)) {
+        if (!BukkitCraftEngine.instance().antiGriefProvider().test(bukkitPlayer, Flag.PLACE, furnitureLocation)) {
             return InteractionResult.FAIL;
         }
+        ContextHolder.Builder contextBuilder = ContextHolder.builder();
         // 触发尝试放置的事件
         if (player != null) {
-            FurnitureAttemptPlaceEvent attemptPlaceEvent = new FurnitureAttemptPlaceEvent(bukkitPlayer, customFurniture, variant, furnitureLocation.clone(), context.getHand(), world.getBlockAt(context.getClickedPos().x(), context.getClickedPos().y(), context.getClickedPos().z()));
+            FurnitureAttemptPlaceEvent attemptPlaceEvent = new FurnitureAttemptPlaceEvent(bukkitPlayer, customFurniture, variant, furnitureLocation.clone(), context.getHand(), world.getBlockAt(context.getClickedPos().x(), context.getClickedPos().y(), context.getClickedPos().z()), contextBuilder);
             if (EventUtils.fireAndCheckCancel(attemptPlaceEvent)) {
                 return InteractionResult.FAIL;
             }
@@ -180,7 +182,7 @@ public class FurnitureItemBehavior extends ItemBehavior {
         BukkitFurniture bukkitFurniture = BukkitFurnitureManager.instance().place(furnitureLocation.clone(), customFurniture, dataAccessor, false);
         // 触发放置事件
         if (player != null) {
-            FurniturePlaceEvent placeEvent = new FurniturePlaceEvent(bukkitPlayer, bukkitFurniture, furnitureLocation, context.getHand());
+            FurniturePlaceEvent placeEvent = new FurniturePlaceEvent(bukkitPlayer, bukkitFurniture, furnitureLocation, context.getHand(), contextBuilder);
             if (EventUtils.fireAndCheckCancel(placeEvent)) {
                 bukkitFurniture.destroy();
                 return InteractionResult.FAIL;
@@ -188,7 +190,8 @@ public class FurnitureItemBehavior extends ItemBehavior {
         }
         // 触发ce事件
         Cancellable dummy = Cancellable.dummy();
-        PlayerOptionalContext functionContext = PlayerOptionalContext.of(player, ContextHolder.builder()
+        PlayerOptionalContext functionContext = PlayerOptionalContext.of(player,
+                contextBuilder
                 .withParameter(DirectContextParameters.FURNITURE, bukkitFurniture)
                 .withParameter(DirectContextParameters.POSITION, LocationUtils.toWorldPosition(furnitureLocation))
                 .withParameter(DirectContextParameters.EVENT, dummy)

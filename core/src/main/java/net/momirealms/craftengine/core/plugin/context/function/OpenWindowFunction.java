@@ -66,7 +66,7 @@ public class OpenWindowFunction<CTX extends Context> extends AbstractConditional
             String rawType = ResourceConfigUtils.requireNonEmptyStringOrThrow(arguments.get("gui-type"), "warning.config.function.open_window.missing_gui_type");
             try {
                 GuiType type = GuiType.valueOf(rawType.toUpperCase(Locale.ENGLISH));
-                return new OpenWindowFunction<>(getPredicates(arguments), PlayerSelectors.fromObject(arguments.get("target"), conditionFactory()), type, title);
+                return new OpenWindowFunction<>(getPredicates(arguments), PlayerSelectors.fromObject(arguments.get("target"), conditionFactory()), type, title == null ? null : AdventureHelper.legacyToMiniMessage(title));
             } catch (IllegalArgumentException e) {
                 throw new LocalizedResourceConfigException("warning.config.function.open_window.invalid_gui_type", e, rawType, EnumUtils.toString(GuiType.values()));
             }

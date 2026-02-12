@@ -12,10 +12,10 @@ import net.momirealms.craftengine.core.block.entity.render.element.BlockEntityEl
 import net.momirealms.craftengine.core.block.entity.tick.*;
 import net.momirealms.craftengine.core.entity.player.Player;
 import net.momirealms.craftengine.core.plugin.config.Config;
-import net.momirealms.craftengine.core.plugin.entityculling.CullingData;
+import net.momirealms.craftengine.core.entity.culling.CullingData;
 import net.momirealms.craftengine.core.plugin.logger.Debugger;
 import net.momirealms.craftengine.core.world.*;
-import net.momirealms.craftengine.core.world.chunk.client.VirtualCullableObject;
+import net.momirealms.craftengine.core.entity.culling.CullableHolder;
 import net.momirealms.craftengine.core.world.chunk.serialization.DefaultBlockEntityRendererSerializer;
 import net.momirealms.craftengine.core.world.chunk.serialization.DefaultBlockEntitySerializer;
 import net.momirealms.sparrow.nbt.ListTag;
@@ -173,12 +173,12 @@ public class CEChunk {
                                     for (Player player : trackedBy) {
                                         // 如果启用剔除，则暂时保留原先可见度，因为大概率可见度不发生变化
                                         if (Config.enableEntityCulling()) {
-                                            VirtualCullableObject trackedBlockEntity = player.getTrackedBlockEntity(pos);
-                                            if (trackedBlockEntity == null || trackedBlockEntity.isShown) {
+                                            CullableHolder holder = player.getTrackedBlockEntity(pos);
+                                            if (holder == null || holder.isShown) {
                                                 element.transform(player);
                                             }
-                                            if (trackedBlockEntity != null) {
-                                                trackedBlockEntity.setCullable(renderer);
+                                            if (holder != null) {
+                                                holder.cullable = renderer;
                                             } else {
                                                 player.addTrackedBlockEntity(pos, renderer);
                                             }
@@ -195,12 +195,12 @@ public class CEChunk {
                         if (hasTrackedBy) {
                             for (Player player : trackedBy) {
                                 if (Config.enableEntityCulling()) {
-                                    VirtualCullableObject trackedBlockEntity = player.getTrackedBlockEntity(pos);
-                                    if (trackedBlockEntity != null) {
-                                        if (trackedBlockEntity.isShown) {
-                                            trackedBlockEntity.setShown(player, false);
+                                    CullableHolder holder = player.getTrackedBlockEntity(pos);
+                                    if (holder != null) {
+                                        if (holder.isShown) {
+                                            holder.setShown(player, false);
                                         }
-                                        trackedBlockEntity.setCullable(renderer);
+                                        holder.cullable = renderer;
                                     } else {
                                         player.addTrackedBlockEntity(pos, renderer);
                                     }
@@ -219,7 +219,7 @@ public class CEChunk {
                  */
                 else {
 
-                    VirtualCullableObject[] previousObjects = hasTrackedBy ? new VirtualCullableObject[trackedBy.size()] : null;
+                    CullableHolder[] previousObjects = hasTrackedBy ? new CullableHolder[trackedBy.size()] : null;
                     if (hasTrackedBy) {
                         for (int j = 0; j < previousObjects.length; j++) {
                             previousObjects[j] = trackedBy.get(j).getTrackedBlockEntity(pos);
@@ -241,7 +241,7 @@ public class CEChunk {
                                     if (hasTrackedBy) {
                                         for (int k = 0; k < trackedBy.size(); k++) {
                                             Player player = trackedBy.get(k);
-                                            VirtualCullableObject cullableObject = previousObjects[k];
+                                            CullableHolder cullableObject = previousObjects[k];
                                             if (cullableObject == null || cullableObject.isShown) {
                                                 newElement.transform(player);
                                             }
@@ -264,7 +264,7 @@ public class CEChunk {
                                     if (hasTrackedBy) {
                                         for (int k = 0; k < trackedBy.size(); k++) {
                                             Player player = trackedBy.get(k);
-                                            VirtualCullableObject cullableObject = previousObjects[k];
+                                            CullableHolder cullableObject = previousObjects[k];
                                             if (cullableObject == null || cullableObject.isShown) {
                                                 newElement.transform(player);
                                             }
@@ -282,7 +282,7 @@ public class CEChunk {
                         if (hasTrackedBy) {
                             for (int k = 0; k < trackedBy.size(); k++) {
                                 Player player = trackedBy.get(k);
-                                VirtualCullableObject cullableObject = previousObjects[k];
+                                CullableHolder cullableObject = previousObjects[k];
                                 if (cullableObject == null || cullableObject.isShown) {
                                     newElement.show(player);
                                 }
@@ -303,9 +303,9 @@ public class CEChunk {
                         }
                         // 添加 track
                         for (int i = 0; i < previousObjects.length; i++) {
-                            VirtualCullableObject previousObject = previousObjects[i];
-                            if (previousObject != null) {
-                                previousObject.setCullable(renderer);
+                            CullableHolder previousHolder = previousObjects[i];
+                            if (previousHolder != null) {
+                                previousHolder.cullable = renderer;
                             } else {
                                 trackedBy.get(i).addTrackedBlockEntity(pos, renderer);
                             }

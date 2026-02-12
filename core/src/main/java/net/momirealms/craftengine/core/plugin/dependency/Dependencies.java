@@ -353,7 +353,7 @@ public class Dependencies {
 
     public static final Dependency LZ4 = new Dependency(
             "lz4",
-            "org{}lz4",
+            "at{}yawk{}lz4",
             "lz4-java",
             List.of(Relocation.of("jpountz", "net{}jpountz"))
     );

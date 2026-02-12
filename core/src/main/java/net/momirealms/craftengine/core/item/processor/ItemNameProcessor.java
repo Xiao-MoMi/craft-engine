@@ -5,6 +5,7 @@ import net.momirealms.craftengine.core.item.Item;
 import net.momirealms.craftengine.core.item.ItemBuildContext;
 import net.momirealms.craftengine.core.item.ItemProcessorFactory;
 import net.momirealms.craftengine.core.plugin.text.minimessage.FormattedLine;
+import net.momirealms.craftengine.core.util.AdventureHelper;
 import net.momirealms.craftengine.core.util.Key;
 
 public final class ItemNameProcessor implements SimpleNetworkItemProcessor {
@@ -14,12 +15,12 @@ public final class ItemNameProcessor implements SimpleNetworkItemProcessor {
     private final FormattedLine line;
 
     public ItemNameProcessor(String argument) {
-        this.argument = argument;
-        this.line = FormattedLine.create(argument);
+        this.argument = AdventureHelper.legacyToMiniMessage(argument);
+        this.line = FormattedLine.create(this.argument);
     }
 
     public String itemName() {
-        return argument;
+        return this.argument;
     }
 
     @Override

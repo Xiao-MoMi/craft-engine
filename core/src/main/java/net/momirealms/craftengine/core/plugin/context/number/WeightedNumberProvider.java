@@ -1,14 +1,13 @@
 package net.momirealms.craftengine.core.plugin.context.number;
 
-import net.momirealms.craftengine.core.plugin.context.Context;
 import net.momirealms.craftengine.core.util.ResourceConfigUtils;
+import net.momirealms.craftengine.core.util.random.RandomSource;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.HashMap;
 import java.util.Map;
 import java.util.NavigableMap;
 import java.util.TreeMap;
-import java.util.concurrent.ThreadLocalRandom;
 
 /**
  * 权重随机提供器
@@ -40,19 +39,19 @@ public final class WeightedNumberProvider implements NumberProvider {
     }
 
     @Override
-    public int getInt(Context context) {
-        return (int) Math.round(getDouble(context));
+    public int getInt(RandomSource random) {
+        return (int) Math.round(getDouble(random));
     }
 
     @Override
-    public float getFloat(Context context) {
-        return (float) getDouble(context);
+    public float getFloat(RandomSource random) {
+        return (float) getDouble(random);
     }
 
     @Override
-    public double getDouble(Context context) {
+    public double getDouble(RandomSource random) {
         // 生成 [0, totalWeight) 之间的随机数
-        double randomValue = ThreadLocalRandom.current().nextDouble() * totalWeight;
+        double randomValue = random.nextDouble() * totalWeight;
         
         // 查找第一个累计权重值大于 randomValue 的条目 (二分查找，O(log N))
         Map.Entry<Double, Double> entry = weightMap.higherEntry(randomValue);

@@ -1,6 +1,5 @@
 items:
   default:chinese_lantern:
-    material: nether_brick
     data:
       item-name: <!i><lang:item.default.chinese_lantern>
     model: minecraft:block/custom/chinese_lantern

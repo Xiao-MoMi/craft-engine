@@ -64,8 +64,8 @@ public class TitleFunction<CTX extends Context> extends AbstractConditionalFunct
 
         @Override
         public TitleFunction<CTX> create(Map<String, Object> arguments) {
-            String title = arguments.getOrDefault("title", "").toString();
-            String subtitle = arguments.getOrDefault("subtitle", "").toString();
+            String title = AdventureHelper.legacyToMiniMessage(arguments.getOrDefault("title", "").toString());
+            String subtitle = AdventureHelper.legacyToMiniMessage(arguments.getOrDefault("subtitle", "").toString());
             NumberProvider fadeIn = NumberProviders.fromObject(arguments.getOrDefault("fade-in", 10));
             NumberProvider stay = NumberProviders.fromObject(arguments.getOrDefault("stay", 20));
             NumberProvider fadeOut = NumberProviders.fromObject(arguments.getOrDefault("fade-out", 5));

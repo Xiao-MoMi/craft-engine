@@ -38,7 +38,7 @@ public final class CustomFurnitureHitbox extends AbstractFurnitureHitBox {
         int entityId = CoreReflections.instance$Entity$ENTITY_COUNTER.incrementAndGet();
         List<Object> packets = new ArrayList<>(3);
         packets.add(FastNMS.INSTANCE.constructor$ClientboundAddEntityPacket(
-                entityId, UUID.randomUUID(), position.x, position.y, position.z, 0, position.yRot,
+                entityId, UUID.randomUUID(), pos.x, pos.y, pos.z, 0, position.yRot,
                 config.entityType(), 0, CoreReflections.instance$Vec3$Zero, 0
         ));
         packets.add(FastNMS.INSTANCE.constructor$ClientboundSetEntityDataPacket(entityId, config.cachedValues()));

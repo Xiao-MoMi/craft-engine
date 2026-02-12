@@ -1,13 +1,21 @@
 package net.momirealms.craftengine.core.plugin.config;
 
+import it.unimi.dsi.fastutil.doubles.DoubleArrayList;
+import it.unimi.dsi.fastutil.doubles.DoubleList;
+import it.unimi.dsi.fastutil.ints.IntArrayList;
+import it.unimi.dsi.fastutil.ints.IntList;
+import it.unimi.dsi.fastutil.longs.LongArrayList;
+import it.unimi.dsi.fastutil.longs.LongList;
 import net.momirealms.craftengine.core.plugin.locale.TranslationManager;
 import net.momirealms.craftengine.core.util.VersionHelper;
 import org.yaml.snakeyaml.LoaderOptions;
+import org.yaml.snakeyaml.constructor.AbstractConstruct;
 import org.yaml.snakeyaml.constructor.SafeConstructor;
 import org.yaml.snakeyaml.nodes.*;
 
 import java.nio.file.Path;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 
 import static org.yaml.snakeyaml.nodes.Tag.*;
@@ -20,21 +28,47 @@ public class StringKeyConstructor extends SafeConstructor {
     public static final Tag SHORT = new Tag(PREFIX + "short");
     public static final Tag LONG = new Tag(PREFIX + "long");
     public static final Tag DOUBLE = new Tag(PREFIX + "double");
+    public static final Tag BYTE_ARRAY = new Tag(PREFIX + "byte[]");
+    public static final Tag INT_ARRAY = new Tag(PREFIX + "int[]");
+    public static final Tag DOUBLE_ARRAY = new Tag(PREFIX + "double[]");
+    public static final Tag LONG_ARRAY = new Tag(PREFIX + "long[]");
+    public static final Tag INT_LIST = new Tag(PREFIX + "IntList");
+    public static final Tag DOUBLE_LIST = new Tag(PREFIX + "DoubleList");
+    public static final Tag LONG_LIST = new Tag(PREFIX + "LongList");
 
     static {
         standardTags.add(BYTE);
         standardTags.add(SHORT);
         standardTags.add(LONG);
         standardTags.add(DOUBLE);
+        standardTags.add(BYTE_ARRAY);
+        standardTags.add(INT_ARRAY);
+        standardTags.add(DOUBLE_ARRAY);
+        standardTags.add(LONG_ARRAY);
+        standardTags.add(INT_LIST);
+        standardTags.add(DOUBLE_LIST);
+        standardTags.add(LONG_LIST);
     }
 
     public StringKeyConstructor(Path path, LoaderOptions loaderOptions) {
         super(loaderOptions);
+        // 基本类型
         this.yamlConstructors.put(BYTE, new ConstructYamlByte());
         this.yamlConstructors.put(SHORT, new ConstructYamlShort());
         this.yamlConstructors.put(LONG, new ConstructYamlLong());
-        this.yamlConstructors.put(FLOAT, new ConstructYamlFloatSingle()); // 覆盖默认实现
+        this.yamlConstructors.put(FLOAT, new ConstructYamlFloatSingle());
         this.yamlConstructors.put(DOUBLE, new ConstructYamlDouble());
+
+        // 数组类型
+        this.yamlConstructors.put(INT_ARRAY, new ConstructYamlIntArray());
+        this.yamlConstructors.put(BYTE_ARRAY, new ConstructYamlByteArray());
+        this.yamlConstructors.put(LONG_ARRAY, new ConstructYamlLongArray());
+        this.yamlConstructors.put(DOUBLE_ARRAY, new ConstructYamlDoubleArray());
+
+        // FastUtil List 类型
+        this.yamlConstructors.put(INT_LIST, new ConstructYamlIntList());
+        this.yamlConstructors.put(LONG_LIST, new ConstructYamlLongList());
+        this.yamlConstructors.put(DOUBLE_LIST, new ConstructYamlDoubleList());
         this.path = path;
     }
 
@@ -245,6 +279,175 @@ public class StringKeyConstructor extends SafeConstructor {
                 this.path.toAbsolutePath().toString(),
                 configKey,
                 String.valueOf(node.getStartMark().getLine() + 1));
+    }
+
+    public class ConstructYamlIntArray extends AbstractConstruct {
+        @Override
+        public Object construct(Node node) {
+            if (node instanceof SequenceNode sequenceNode) {
+                List<Node> valueNodes = sequenceNode.getValue();
+                int[] array = new int[valueNodes.size()];
+                for (int i = 0; i < valueNodes.size(); i++) {
+                    Object value = StringKeyConstructor.this.constructObject(valueNodes.get(i));
+                    if (value instanceof Number number) {
+                        array[i] = number.intValue();
+                    } else {
+                        // 尝试处理字符串转数字的情况，或者抛出异常
+                        try {
+                            array[i] = Integer.parseInt(value.toString());
+                        } catch (NumberFormatException e) {
+                            throw new IllegalArgumentException("Cannot construct int[]: element '" + value + "' is not a valid integer.", e);
+                        }
+                    }
+                }
+                return array;
+            }
+            return new int[0];
+        }
+    }
+
+    public class ConstructYamlByteArray extends AbstractConstruct {
+        @Override
+        public Object construct(Node node) {
+            if (node instanceof SequenceNode sequenceNode) {
+                List<Node> valueNodes = sequenceNode.getValue();
+                byte[] array = new byte[valueNodes.size()];
+                for (int i = 0; i < valueNodes.size(); i++) {
+                    Object value = StringKeyConstructor.this.constructObject(valueNodes.get(i));
+                    if (value instanceof Number number) {
+                        array[i] = number.byteValue();
+                    } else {
+                        try {
+                            array[i] = Byte.parseByte(value.toString());
+                        } catch (NumberFormatException e) {
+                            throw new IllegalArgumentException("Cannot construct byte[]: element '" + value + "' is not a valid byte.", e);
+                        }
+                    }
+                }
+                return array;
+            }
+            return new byte[0];
+        }
+    }
+
+    public class ConstructYamlLongArray extends AbstractConstruct {
+        @Override
+        public Object construct(Node node) {
+            if (node instanceof SequenceNode sequenceNode) {
+                List<Node> valueNodes = sequenceNode.getValue();
+                long[] array = new long[valueNodes.size()];
+                for (int i = 0; i < valueNodes.size(); i++) {
+                    Object value = StringKeyConstructor.this.constructObject(valueNodes.get(i));
+                    if (value instanceof Number number) {
+                        array[i] = number.longValue();
+                    } else {
+                        try {
+                            array[i] = Long.parseLong(value.toString());
+                        } catch (NumberFormatException e) {
+                            throw new IllegalArgumentException("Cannot construct long[]: element '" + value + "' is not a valid long.", e);
+                        }
+                    }
+                }
+                return array;
+            }
+            return new long[0];
+        }
+    }
+
+    public class ConstructYamlDoubleArray extends AbstractConstruct {
+        @Override
+        public Object construct(Node node) {
+            if (node instanceof SequenceNode sequenceNode) {
+                List<Node> valueNodes = sequenceNode.getValue();
+                double[] array = new double[valueNodes.size()];
+                for (int i = 0; i < valueNodes.size(); i++) {
+                    Object value = StringKeyConstructor.this.constructObject(valueNodes.get(i));
+                    if (value instanceof Number number) {
+                        array[i] = number.doubleValue();
+                    } else {
+                        try {
+                            array[i] = Double.parseDouble(value.toString());
+                        } catch (NumberFormatException e) {
+                            throw new IllegalArgumentException("Cannot construct double[]: element '" + value + "' is not a valid double.", e);
+                        }
+                    }
+                }
+                return array;
+            }
+            return new double[0];
+        }
+    }
+
+    public class ConstructYamlIntList extends AbstractConstruct {
+        @Override
+        public Object construct(Node node) {
+            if (node instanceof SequenceNode sequenceNode) {
+                List<Node> valueNodes = sequenceNode.getValue();
+                IntList list = new IntArrayList(valueNodes.size());
+                for (Node valueNode : valueNodes) {
+                    Object value = StringKeyConstructor.this.constructObject(valueNode);
+                    if (value instanceof Number number) {
+                        list.add(number.intValue());
+                    } else {
+                        try {
+                            list.add(Integer.parseInt(value.toString()));
+                        } catch (NumberFormatException e) {
+                            throw new IllegalArgumentException("Cannot construct IntList: element '" + value + "' is not a valid integer.", e);
+                        }
+                    }
+                }
+                return list;
+            }
+            return new IntArrayList();
+        }
+    }
+
+    public class ConstructYamlLongList extends AbstractConstruct {
+        @Override
+        public Object construct(Node node) {
+            if (node instanceof SequenceNode sequenceNode) {
+                List<Node> valueNodes = sequenceNode.getValue();
+                LongList list = new LongArrayList(valueNodes.size());
+                for (Node valueNode : valueNodes) {
+                    Object value = StringKeyConstructor.this.constructObject(valueNode);
+                    if (value instanceof Number number) {
+                        list.add(number.longValue());
+                    } else {
+                        try {
+                            list.add(Long.parseLong(value.toString()));
+                        } catch (NumberFormatException e) {
+                            throw new IllegalArgumentException("Cannot construct LongList: element '" + value + "' is not a valid long.", e);
+                        }
+                    }
+                }
+                return list;
+            }
+            return new LongArrayList();
+        }
+    }
+
+    public class ConstructYamlDoubleList extends AbstractConstruct {
+        @Override
+        public Object construct(Node node) {
+            if (node instanceof SequenceNode sequenceNode) {
+                List<Node> valueNodes = sequenceNode.getValue();
+                DoubleList list = new DoubleArrayList(valueNodes.size());
+                for (Node valueNode : valueNodes) {
+                    Object value = StringKeyConstructor.this.constructObject(valueNode);
+                    if (value instanceof Number number) {
+                        list.add(number.doubleValue());
+                    } else {
+                        try {
+                            list.add(Double.parseDouble(value.toString()));
+                        } catch (NumberFormatException e) {
+                            throw new IllegalArgumentException("Cannot construct DoubleList: element '" + value + "' is not a valid double.", e);
+                        }
+                    }
+                }
+                return list;
+            }
+            return new DoubleArrayList();
+        }
     }
 
     public class ConstructYamlByte extends ConstructYamlInt {

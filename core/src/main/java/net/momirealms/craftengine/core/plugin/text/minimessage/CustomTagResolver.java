@@ -9,7 +9,7 @@ import net.kyori.adventure.text.minimessage.tag.resolver.TagResolver;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class CustomTagResolver implements TagResolver {
+public final class CustomTagResolver implements TagResolver {
     private final String name;
     private final Component replacement;
 

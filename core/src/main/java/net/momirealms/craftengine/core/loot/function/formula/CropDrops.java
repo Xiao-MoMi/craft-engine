@@ -1,7 +1,7 @@
 package net.momirealms.craftengine.core.loot.function.formula;
 
-import net.momirealms.craftengine.core.util.RandomUtils;
 import net.momirealms.craftengine.core.util.ResourceConfigUtils;
+import net.momirealms.craftengine.core.util.random.RandomUtils;
 
 import java.util.Map;
 

@@ -1,6 +1,8 @@
 package net.momirealms.craftengine.bukkit.block.behavior;
 
+import net.momirealms.antigrieflib.Flag;
 import net.momirealms.craftengine.bukkit.nms.FastNMS;
+import net.momirealms.craftengine.bukkit.plugin.BukkitCraftEngine;
 import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.CoreReflections;
 import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.MFluids;
 import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.MRegistries;
@@ -24,6 +26,7 @@ import net.momirealms.craftengine.core.world.BlockPos;
 import net.momirealms.craftengine.core.world.World;
 import net.momirealms.craftengine.core.world.context.BlockPlaceContext;
 import net.momirealms.craftengine.core.world.context.UseOnContext;
+import org.bukkit.Location;
 
 import java.util.Locale;
 import java.util.Map;
@@ -80,7 +83,13 @@ public class FenceBlockBehavior extends BukkitBlockBehavior implements IsPathFin
         if (!this.canLeash) return InteractionResult.PASS;
         Player player = context.getPlayer();
         if (player == null) return InteractionResult.PASS;
-        if (FastNMS.INSTANCE.method$LeadItem$bindPlayerMobs(player.serverPlayer(), context.getLevel().serverWorld(), LocationUtils.toBlockPos(context.getClickedPos()))) {
+        BlockPos pos = context.getClickedPos();
+        World world = context.getLevel();
+        Location location = new Location((org.bukkit.World) world.platformWorld(), pos.x, pos.y, pos.z);
+        if (!BukkitCraftEngine.instance().antiGriefProvider().test((org.bukkit.entity.Player) player.platformPlayer(), Flag.INTERACT, location)) {
+            return InteractionResult.SUCCESS_AND_CANCEL;
+        }
+        if (FastNMS.INSTANCE.method$LeadItem$bindPlayerMobs(player.serverPlayer(), context.getLevel().serverWorld(), LocationUtils.toBlockPos(pos))) {
             player.swingHand(InteractionHand.MAIN_HAND);
             return InteractionResult.SUCCESS;
         }

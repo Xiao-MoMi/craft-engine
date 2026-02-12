@@ -16,10 +16,10 @@ import java.nio.file.Path;
 import java.util.List;
 import java.util.Map;
 
-public class DoubleHighBlockItemBehavior extends BlockItemBehavior {
+public final class DoubleHighBlockItemBehavior extends BlockItemBehavior {
     public static final ItemBehaviorFactory<DoubleHighBlockItemBehavior> FACTORY = new Factory();
 
-    public DoubleHighBlockItemBehavior(Key blockId) {
+    private DoubleHighBlockItemBehavior(Key blockId) {
         super(blockId);
     }
 

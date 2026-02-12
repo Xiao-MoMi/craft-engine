@@ -19,7 +19,8 @@ public class VanillaRecipeReader1_20 implements VanillaRecipeReader {
     }
 
     @Override
-    public @NotNull DatapackRecipeResult craftingResult(JsonObject object) {
+    public @NotNull DatapackRecipeResult craftingResult(JsonElement je) {
+        JsonObject object = je.getAsJsonObject();
         String item = object.get("item").getAsString();
         int count = object.has("count") ? object.get("count").getAsInt() : 1;
         return new DatapackRecipeResult(item, count, null);

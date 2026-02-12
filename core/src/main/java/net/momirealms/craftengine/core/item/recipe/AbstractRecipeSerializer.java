@@ -1,10 +1,7 @@
 package net.momirealms.craftengine.core.item.recipe;
 
 import net.momirealms.craftengine.core.item.*;
-import net.momirealms.craftengine.core.item.recipe.reader.VanillaRecipeReader;
-import net.momirealms.craftengine.core.item.recipe.reader.VanillaRecipeReader1_20;
-import net.momirealms.craftengine.core.item.recipe.reader.VanillaRecipeReader1_20_5;
-import net.momirealms.craftengine.core.item.recipe.reader.VanillaRecipeReader1_21_2;
+import net.momirealms.craftengine.core.item.recipe.reader.*;
 import net.momirealms.craftengine.core.item.recipe.result.CustomRecipeResult;
 import net.momirealms.craftengine.core.item.recipe.result.PostProcessor;
 import net.momirealms.craftengine.core.item.recipe.result.PostProcessors;
@@ -24,6 +21,8 @@ import java.util.*;
 
 public abstract class AbstractRecipeSerializer<T, R extends Recipe<T>> implements RecipeSerializer<T, R> {
     protected static final VanillaRecipeReader VANILLA_RECIPE_HELPER =
+            VersionHelper.isOrAbove26_1() ?
+            new VanillaRecipeReader26_1() :
             VersionHelper.isOrAbove1_21_2() ?
             new VanillaRecipeReader1_21_2() :
             VersionHelper.isOrAbove1_20_5() ?
@@ -54,6 +53,17 @@ public abstract class AbstractRecipeSerializer<T, R extends Recipe<T>> implement
     protected Ingredient<T> singleInputIngredient(Map<String, Object> arguments) {
         List<String> ingredients = MiscUtils.getAsStringList(getIngredientOrThrow(arguments));
         return toIngredient(ingredients);
+    }
+
+    protected Ingredient<T> parseIngredient(Object rawIngredient) {
+        if (rawIngredient instanceof Map<?,?> map) {
+            List<String> ingredients = MiscUtils.getAsStringList(map.get("items"));
+            int count = ResourceConfigUtils.getAsInt(map.get("count"), "count");
+            return toIngredient(ingredients, Math.max(count, 1));
+        } else {
+            List<String> ingredients = MiscUtils.getAsStringList(rawIngredient);
+            return toIngredient(ingredients, 1);
+        }
     }
 
     // 不确定的类型
@@ -134,12 +144,22 @@ public abstract class AbstractRecipeSerializer<T, R extends Recipe<T>> implement
     }
 
     @NotNull
+    protected Ingredient<T> toIngredient(String item, int count) {
+        return toIngredient(List.of(item), count);
+    }
+
+    @NotNull
     protected Ingredient<T> toIngredient(String item) {
-        return toIngredient(List.of(item));
+        return toIngredient(List.of(item), 1);
     }
 
     @NotNull
     protected Ingredient<T> toIngredient(List<String> items) {
+        return toIngredient(items, 1);
+    }
+
+    @NotNull
+    protected Ingredient<T> toIngredient(List<String> items, int count) {
         Set<UniqueKey> itemIds = new HashSet<>();
         Set<UniqueKey> minecraftItemIds = new HashSet<>();
         ItemManager<T> itemManager = CraftEngine.instance().itemManager();
@@ -196,6 +216,9 @@ public abstract class AbstractRecipeSerializer<T, R extends Recipe<T>> implement
             }
             minecraftItemIds.add(vanillaItem);
         }
-        return itemIds.isEmpty() ? null : Ingredient.of(elements, itemIds, minecraftItemIds, hasCustomItem);
+        if (itemIds.isEmpty()) {
+            throw new IllegalArgumentException("ingredients must contain at least one item");
+        }
+        return Ingredient.of(elements, itemIds, minecraftItemIds, hasCustomItem, count);
     }
 }

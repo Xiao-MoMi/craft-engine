@@ -1,6 +1,6 @@
 package net.momirealms.craftengine.core.world.chunk.client;
 
-public class ClientSection {
+public final class ClientSection {
     private ClientSectionOcclusionStorage storage;
 
     public ClientSection(ClientSectionOcclusionStorage storage) {

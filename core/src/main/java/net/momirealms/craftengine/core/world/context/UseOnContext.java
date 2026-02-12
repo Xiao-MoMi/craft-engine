@@ -40,15 +40,20 @@ public class UseOnContext {
     }
 
     public BlockPos getClickedPos() {
-        return this.hitResult.getBlockPos();
+        return this.hitResult.blockPos();
     }
 
     public Direction getClickedFace() {
-        return this.hitResult.getDirection();
+        return this.hitResult.direction();
     }
 
+    @Deprecated
     public Vec3d getClickLocation() {
-        return this.hitResult.getLocation();
+        return this.hitResult.location();
+    }
+
+    public Vec3d getClickedLocation() {
+        return this.hitResult.location();
     }
 
     public boolean isInside() {

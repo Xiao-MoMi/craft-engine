@@ -20,7 +20,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
-public class DefaultRegionFileStorage implements WorldDataStorage {
+public final class DefaultRegionFileStorage implements WorldDataStorage {
     private final Path folder;
 
     public static final String REGION_FILE_SUFFIX = ".mca";

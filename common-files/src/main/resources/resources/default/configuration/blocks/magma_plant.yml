@@ -12,6 +12,7 @@ items:
     settings:
       invulnerable:
         - lava
+        - fire
         - fire_tick
       $$<1.20.5:
         food:
@@ -46,7 +47,7 @@ blocks:
     behavior:
       - type: crop_block
         grow-speed: 0.25
-        light-requirement: 10
+        light-requirement: 0
         is-bone-meal-target: true
         bone-meal-age-bonus:
           type: uniform
@@ -147,3 +148,67 @@ blocks:
             target: self
             amount: 1.0
             damage-type: on_fire
+          - type: update_interaction_tick
+placed-features:
+  default:reed:
+    environment:
+      - minecraft:the_nether
+    feature:
+      type: 'minecraft:random_patch'
+      config:
+        feature:
+          feature:
+            type: 'minecraft:simple_block'
+            config:
+              to_place:
+                type: 'minecraft:weighted_state_provider'
+                entries:
+                  - weight: 7
+                    data:
+                      Name: 'default:magma_plant'
+                      Properties:
+                        age: 0
+                  - weight: 5
+                    data:
+                      Name: 'default:magma_plant'
+                      Properties:
+                        age: 1
+                  - weight: 2
+                    data:
+                      Name: 'default:magma_plant'
+                      Properties:
+                        age: 2
+                  - weight: 1
+                    data:
+                      Name: 'default:magma_plant'
+                      Properties:
+                        age: 3
+          placement:
+            - type: 'minecraft:block_predicate_filter'
+              predicate:
+                type: 'minecraft:all_of'
+                predicates:
+                  - type: 'minecraft:replaceable'
+                  - type: 'minecraft:matching_fluids'
+                    fluids: 'minecraft:empty'
+                  - type: 'minecraft:matching_fluids'
+                    fluids: '#minecraft:lava'
+                    offset:
+                      - 0
+                      - -1
+                      - 0
+        tries: 32
+        xz_spread: 7
+        y_spread: 1
+    placement:
+      - type: 'minecraft:in_square'
+      - type: 'minecraft:random_offset'
+        xz_spread: 5
+        y_spread: 1
+      - type: 'minecraft:height_range'
+        height:
+          type: 'minecraft:uniform'
+          min_inclusive:
+            absolute: 10
+          max_inclusive:
+            absolute: 100

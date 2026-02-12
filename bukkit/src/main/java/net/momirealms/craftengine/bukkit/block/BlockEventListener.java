@@ -14,6 +14,7 @@ import net.momirealms.craftengine.core.block.ImmutableBlockState;
 import net.momirealms.craftengine.core.entity.player.InteractionHand;
 import net.momirealms.craftengine.core.item.CustomItem;
 import net.momirealms.craftengine.core.item.Item;
+import net.momirealms.craftengine.core.item.behavior.ItemBehavior;
 import net.momirealms.craftengine.core.loot.LootTable;
 import net.momirealms.craftengine.core.plugin.config.Config;
 import net.momirealms.craftengine.core.plugin.context.ContextHolder;
@@ -111,14 +112,16 @@ public final class BlockEventListener implements Listener {
         if (serverPlayer == null) return;
         serverPlayer.updateLastSuccessBreakTick();
         net.momirealms.craftengine.core.world.World world = BukkitAdaptors.adapt(player.getWorld());
+        BlockPos blockPos = LocationUtils.toBlockPos(location);
         WorldPosition position = new WorldPosition(world, location.getBlockX() + 0.5, location.getBlockY() + 0.5, location.getBlockZ() + 0.5);
         Item<ItemStack> itemInHand = serverPlayer.getItemInHand(InteractionHand.MAIN_HAND);
 
         if (!event.isCancelled() && !ItemUtils.isEmpty(itemInHand)) {
             Optional<CustomItem<ItemStack>> optionalCustomItem = itemInHand.getCustomItem();
             if (optionalCustomItem.isPresent()) {
+                CustomItem<ItemStack> customItem = optionalCustomItem.get();
                 Cancellable cancellable = Cancellable.of(event::isCancelled, event::setCancelled);
-                optionalCustomItem.get().execute(
+                customItem.execute(
                         PlayerOptionalContext.of(serverPlayer, ContextHolder.builder()
                             .withParameter(DirectContextParameters.BLOCK, new BukkitExistingBlock(block))
                             .withParameter(DirectContextParameters.POSITION, position)
@@ -130,6 +133,9 @@ public final class BlockEventListener implements Listener {
                 if (cancellable.isCancelled()) {
                     return;
                 }
+                for (ItemBehavior behavior : customItem.behaviors()) {
+                    behavior.breakBlock(world, serverPlayer, blockPos);
+                }
             }
         }
 
@@ -138,12 +144,13 @@ public final class BlockEventListener implements Listener {
             if (!state.isEmpty()) {
                 if (!event.isCancelled()) {
                     // double check adventure mode to prevent dupe
-                    if (!FastNMS.INSTANCE.field$Player$mayBuild(serverPlayer.serverPlayer()) && !serverPlayer.canBreak(LocationUtils.toBlockPos(location), null)) {
+                    if (!FastNMS.INSTANCE.field$Player$mayBuild(serverPlayer.serverPlayer()) && !serverPlayer.canBreak(blockPos, null)) {
                         return;
                     }
 
                     // trigger api event
-                    CustomBlockBreakEvent customBreakEvent = new CustomBlockBreakEvent(serverPlayer, location, block, state, event.isDropItems());
+                    ContextHolder.Builder contextBuilder = ContextHolder.builder();
+                    CustomBlockBreakEvent customBreakEvent = new CustomBlockBreakEvent(serverPlayer, location, block, state, event.isDropItems(), contextBuilder);
                     boolean isCancelled = EventUtils.fireAndCheckCancel(customBreakEvent);
                     if (isCancelled) {
                         event.setCancelled(true);
@@ -155,7 +162,7 @@ public final class BlockEventListener implements Listener {
 
                     // execute functions
                     Cancellable cancellable = Cancellable.of(event::isCancelled, event::setCancelled);
-                    PlayerOptionalContext context = PlayerOptionalContext.of(serverPlayer, ContextHolder.builder()
+                    PlayerOptionalContext context = PlayerOptionalContext.of(serverPlayer, contextBuilder
                             .withParameter(DirectContextParameters.BLOCK, new BukkitExistingBlock(block))
                             .withParameter(DirectContextParameters.CUSTOM_BLOCK_STATE, state)
                             .withParameter(DirectContextParameters.EVENT, cancellable)

@@ -10,7 +10,7 @@ import net.momirealms.craftengine.bukkit.util.RotationUtils;
 import net.momirealms.craftengine.core.block.BlockStateWrapper;
 import net.momirealms.craftengine.core.block.CustomBlock;
 import net.momirealms.craftengine.core.block.ImmutableBlockState;
-import net.momirealms.craftengine.core.block.behavior.AbstractBlockBehavior;
+import net.momirealms.craftengine.core.block.behavior.BlockBehavior;
 import net.momirealms.craftengine.core.block.properties.Property;
 import net.momirealms.craftengine.core.util.*;
 import org.jetbrains.annotations.NotNull;
@@ -22,7 +22,7 @@ import java.util.Optional;
 import java.util.concurrent.Callable;
 import java.util.function.BiConsumer;
 
-public abstract class BukkitBlockBehavior extends AbstractBlockBehavior {
+public abstract class BukkitBlockBehavior extends BlockBehavior {
     private static final Map<String, BiConsumer<@NotNull BukkitBlockBehavior, Property<?>>> HARD_CODED_PROPERTY_DATA = new HashMap<>();
     static {
         HARD_CODED_PROPERTY_DATA.put("axis", (behavior, property) -> {

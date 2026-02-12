@@ -16,7 +16,7 @@ public final class ConditionModelReader implements SimplifiedModelReader {
     private final String property;
     private final String suffix;
 
-    public ConditionModelReader(String model, String property, String suffix) {
+    private ConditionModelReader(String model, String property, String suffix) {
         this.model = model;
         this.property = property;
         this.suffix = suffix;

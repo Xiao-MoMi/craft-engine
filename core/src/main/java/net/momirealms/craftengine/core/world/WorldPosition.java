@@ -82,6 +82,10 @@ public class WorldPosition implements Position {
         return yRot;
     }
 
+    public Vec3d toVec3d() {
+        return new Vec3d(x, y, z);
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;

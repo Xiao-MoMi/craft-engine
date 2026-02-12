@@ -3,6 +3,7 @@ package net.momirealms.craftengine.bukkit.plugin.reflection.minecraft;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.google.gson.JsonElement;
+import com.mojang.datafixers.DataFixer;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.DynamicOps;
 import io.netty.buffer.ByteBuf;
@@ -733,7 +734,7 @@ public final class CoreReflections {
             )
     );
 
-    public static final Method method$$LevelReader$dimensionType = requireNonNull(
+    public static final Method method$LevelReader$dimensionType = requireNonNull(
             ReflectionUtils.getMethod(
                     clazz$LevelReader, clazz$DimensionType
             )
@@ -1157,9 +1158,51 @@ public final class CoreReflections {
             )
     );
 
+    public static final Field field$ConfiguredFeature$DIRECT_CODEC = requireNonNull(
+            ReflectionUtils.getDeclaredField(clazz$ConfiguredFeature, Codec.class, 0)
+    );
+
+    public static final Field field$ConfiguredFeature$CODEC = requireNonNull(
+            ReflectionUtils.getDeclaredField(clazz$ConfiguredFeature, Codec.class, 1)
+    );
+
+    @SuppressWarnings("unchecked")
+    public static Codec<Object> getConfiguredFeature$CODEC() {
+        try {
+            return (Codec<Object>) field$ConfiguredFeature$CODEC.get(null);
+        } catch (ReflectiveOperationException e) {
+            throw new ReflectionInitException("Failed to init instance$ConfiguredFeature$CODEC", e);
+        }
+    }
+
+    public static final Codec<Object> instance$ConfiguredFeature$CODEC = getConfiguredFeature$CODEC();
+
     public static final Class<?> clazz$PlacedFeature = requireNonNull(
             ReflectionUtils.getClazz(BukkitReflectionUtils.assembleMCClass("world.level.levelgen.placement.PlacedFeature"))
     );
+
+    public static final Constructor<?> constructor$PlacedFeature = requireNonNull(
+            ReflectionUtils.getConstructor(clazz$PlacedFeature, clazz$Holder, List.class)
+    );
+
+    public static final Class<?> clazz$PlacementModifier = requireNonNull(
+            ReflectionUtils.getClazz(BukkitReflectionUtils.assembleMCClass("world.level.levelgen.placement.PlacementModifier"))
+    );
+
+    public static final Field field$PlacementModifier$CODEC = requireNonNull(
+            ReflectionUtils.getDeclaredField(clazz$PlacementModifier, Codec.class, 0)
+    );
+
+    @SuppressWarnings("unchecked")
+    public static Codec<Object> getPlacementModifier$CODEC() {
+        try {
+            return (Codec<Object>) field$PlacementModifier$CODEC.get(null);
+        } catch (ReflectiveOperationException e) {
+            throw new ReflectionInitException("Failed to init instance$ConfiguredFeature$CODEC", e);
+        }
+    }
+
+    public static final Codec<Object> instance$PlacementModifier$CODEC = getPlacementModifier$CODEC();
 
     // 1.21+
     public static final Class<?> clazz$JukeboxSong = ReflectionUtils.getClazz(
@@ -4703,4 +4746,24 @@ public final class CoreReflections {
             )
     );
 
+    public static final Class<?> clazz$DataFixers = requireNonNull(
+            BukkitReflectionUtils.findReobfOrMojmapClass(
+                    "util.datafix.DataConverterRegistry",
+                    "util.datafix.DataFixers"
+            )
+    );
+
+    public static final Method method$DataFixers$getDataFixer = requireNonNull(
+            ReflectionUtils.getDeclaredMethod(clazz$DataFixers, DataFixer.class)
+    );
+
+    public static final DataFixer instance$DataFixer;
+
+    static {
+        try {
+            instance$DataFixer = (DataFixer) method$DataFixers$getDataFixer.invoke(null);
+        } catch (ReflectiveOperationException e) {
+            throw new ReflectionInitException("Failed to get DataFixer", e);
+        }
+    }
 }

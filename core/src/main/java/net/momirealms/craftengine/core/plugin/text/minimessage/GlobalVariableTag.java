@@ -6,20 +6,16 @@ import net.kyori.adventure.text.minimessage.tag.Tag;
 import net.kyori.adventure.text.minimessage.tag.resolver.ArgumentQueue;
 import net.kyori.adventure.text.minimessage.tag.resolver.TagResolver;
 import net.momirealms.craftengine.core.plugin.CraftEngine;
-import net.momirealms.craftengine.core.plugin.context.Context;
-import net.momirealms.craftengine.core.util.AdventureHelper;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
 
-public class GlobalVariableTag implements TagResolver {
-    private final Context context;
+public final class GlobalVariableTag implements TagResolver {
+    public static final TagResolver INSTANCE = new GlobalVariableTag();
 
-    public GlobalVariableTag(Context context) {
-        this.context = context;
-    }
+    private GlobalVariableTag() {}
 
     @Override
     public @Nullable Tag resolve(@NotNull String name, @NotNull ArgumentQueue arguments, @NotNull net.kyori.adventure.text.minimessage.Context ctx) throws ParsingException {
@@ -32,16 +28,13 @@ public class GlobalVariableTag implements TagResolver {
             throw ctx.newException("Unknown variable: ", arguments);
         }
         if (!arguments.hasNext()) {
-            return Tag.selfClosingInserting(AdventureHelper.miniMessage().deserialize(value, this.context.tagResolvers()));
+            return Tag.selfClosingInserting(ctx.deserialize(value));
         } else {
             List<Component> args = new ArrayList<>();
             while (arguments.hasNext()) {
-                args.add(AdventureHelper.miniMessage().deserialize(arguments.popOr("No index argument variable id provided").toString(), this.context.tagResolvers()));
+                args.add(ctx.deserialize(arguments.popOr("No index argument variable id provided").toString()));
             }
-            return Tag.selfClosingInserting(AdventureHelper.miniMessage().deserialize(value, TagResolver.builder()
-                    .resolvers(this.context.tagResolvers())
-                    .resolver(new IndexedArgumentTag(args))
-                    .build()));
+            return Tag.selfClosingInserting(ctx.deserialize(value, new IndexedArgumentTag(args)));
         }
     }
 

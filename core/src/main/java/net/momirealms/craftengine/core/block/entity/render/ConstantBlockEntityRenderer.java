@@ -1,9 +1,9 @@
 package net.momirealms.craftengine.core.block.entity.render;
 
 import net.momirealms.craftengine.core.block.entity.render.element.BlockEntityElement;
-import net.momirealms.craftengine.core.entity.Cullable;
+import net.momirealms.craftengine.core.entity.culling.Cullable;
 import net.momirealms.craftengine.core.entity.player.Player;
-import net.momirealms.craftengine.core.plugin.entityculling.CullingData;
+import net.momirealms.craftengine.core.entity.culling.CullingData;
 import org.jetbrains.annotations.Nullable;
 
 public final class ConstantBlockEntityRenderer implements Cullable {

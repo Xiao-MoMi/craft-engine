@@ -1,5 +1,6 @@
 package net.momirealms.craftengine.bukkit.block.behavior;
 
+import net.momirealms.antigrieflib.Flag;
 import net.momirealms.craftengine.bukkit.api.BukkitAdaptors;
 import net.momirealms.craftengine.bukkit.block.BukkitBlockManager;
 import net.momirealms.craftengine.bukkit.nms.FastNMS;
@@ -32,6 +33,7 @@ import net.momirealms.craftengine.core.world.context.BlockPlaceContext;
 import net.momirealms.craftengine.core.world.context.UseOnContext;
 import org.bukkit.Bukkit;
 import org.bukkit.GameEvent;
+import org.bukkit.Location;
 import org.bukkit.block.Block;
 import org.bukkit.block.data.Bisected;
 import org.bukkit.block.data.BlockData;
@@ -165,7 +167,7 @@ public class DoorBlockBehavior extends AbstractCanSurviveBlockBehavior implement
     }
 
     @Override
-    public boolean canPlaceMultiState(BlockAccessor accessor, BlockPos pos, ImmutableBlockState state) {
+    public boolean canPlaceMultiState(WorldAccessor accessor, BlockPos pos, ImmutableBlockState state) {
         if (pos.y() >= accessor.worldHeight().getMaxBuildHeight() - 1) {
             return false;
         }
@@ -230,7 +232,7 @@ public class DoorBlockBehavior extends AbstractCanSurviveBlockBehavior implement
             if ((!anotherDoor2 || anotherDoor1) && i == 0) {
                 int stepX = horizontalDirection.stepX();
                 int stepZ = horizontalDirection.stepZ();
-                Vec3d clickLocation = context.getClickLocation();
+                Vec3d clickLocation = context.getClickedLocation();
                 double d = clickLocation.x - (double) clickedPos.x();
                 double d1 = clickLocation.z - (double) clickedPos.z();
                 return stepX < 0 && d1 < (double) 0.5F || stepX > 0 && d1 > (double) 0.5F || stepZ < 0 && d > (double) 0.5F || stepZ > 0 && d < (double) 0.5F ? DoorHinge.RIGHT : DoorHinge.LEFT;
@@ -273,7 +275,16 @@ public class DoorBlockBehavior extends AbstractCanSurviveBlockBehavior implement
         if (!this.canOpenWithHand) {
             return InteractionResult.PASS;
         }
-        setOpen(context.getPlayer(), context.getLevel().serverWorld(), state, context.getClickedPos(), !state.get(this.openProperty));
+        Player player = context.getPlayer();
+        BlockPos pos = context.getClickedPos();
+        World world = context.getLevel();
+        if (player != null) {
+            Location location = new Location((org.bukkit.World) world.platformWorld(), pos.x, pos.y, pos.z);
+            if (!BukkitCraftEngine.instance().antiGriefProvider().test((org.bukkit.entity.Player) player.platformPlayer(), Flag.OPEN_DOOR, location)) {
+                return InteractionResult.SUCCESS_AND_CANCEL;
+            }
+        }
+        setOpen(player, world.serverWorld(), state, pos, !state.get(this.openProperty));
         return InteractionResult.SUCCESS_AND_CANCEL;
     }
 

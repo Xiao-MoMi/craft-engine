@@ -1,10 +1,12 @@
 package net.momirealms.craftengine.core.entity.furniture.behavior;
 
-import org.jetbrains.annotations.ApiStatus;
+import net.momirealms.craftengine.core.entity.furniture.CustomFurniture;
+import net.momirealms.craftengine.core.entity.furniture.EmptyFurniture;
 
-@ApiStatus.Experimental
-public final class EmptyFurnitureBehavior implements FurnitureBehavior {
-    private EmptyFurnitureBehavior() {}
+public final class EmptyFurnitureBehavior extends FurnitureBehavior {
+    public static final EmptyFurnitureBehavior INSTANCE = new EmptyFurnitureBehavior(EmptyFurniture.INSTANCE);
 
-    public static final EmptyFurnitureBehavior INSTANCE = new EmptyFurnitureBehavior();
+    public EmptyFurnitureBehavior(CustomFurniture furniture) {
+        super(furniture);
+    }
 }

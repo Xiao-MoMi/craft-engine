@@ -25,11 +25,11 @@ import org.jetbrains.annotations.Nullable;
 import java.nio.file.Path;
 import java.util.Map;
 
-public class LiquidCollisionBlockItemBehavior extends BlockItemBehavior {
+public final class LiquidCollisionBlockItemBehavior extends BlockItemBehavior {
     public static final ItemBehaviorFactory<LiquidCollisionBlockItemBehavior> FACTORY = new Factory();
     private final int offsetY;
 
-    public LiquidCollisionBlockItemBehavior(Key blockId, int offsetY) {
+    private LiquidCollisionBlockItemBehavior(Key blockId, int offsetY) {
         super(blockId);
         this.offsetY = offsetY;
     }

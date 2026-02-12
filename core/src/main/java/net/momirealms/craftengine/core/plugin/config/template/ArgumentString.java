@@ -167,11 +167,64 @@ public interface ArgumentString {
         }
     }
 
+    final class Complex3 implements ArgumentString {
+        private final String rawText;
+        private final ArgumentString arg1;
+        private final ArgumentString arg2;
+        private final ArgumentString arg3;
+
+        public Complex3(String rawText, ArgumentString arg1, ArgumentString arg2, ArgumentString arg3) {
+            this.arg1 = arg1;
+            this.arg2 = arg2;
+            this.arg3 = arg3;
+            this.rawText = rawText;
+        }
+
+        @Override
+        public Object get(Map<String, TemplateArgument> arguments) {
+            Object arg1 = this.arg1.get(arguments);
+            Object arg2 = this.arg2.get(arguments);
+            Object arg3 = this.arg3.get(arguments);
+            StringBuilder builder = new StringBuilder();
+            if (arg1 != null) {
+                builder.append(arg1);
+            }
+            if (arg2 != null) {
+                builder.append(arg2);
+            }
+            if (arg3 != null) {
+                builder.append(arg3);
+            }
+            return builder.toString();
+        }
+
+        @Override
+        public String rawValue() {
+            return this.rawText;
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            if (!(o instanceof Complex2 that)) return false;
+            return this.rawText.equals(that.rawText);
+        }
+
+        @Override
+        public int hashCode() {
+            return this.rawText.hashCode();
+        }
+
+        @Override
+        public String toString() {
+            return "Complex2(" + this.rawText + ")";
+        }
+    }
+
     final class Complex implements ArgumentString {
-        private final List<ArgumentString> parts;
+        private final ArgumentString[] parts;
         private final String rawText;
 
-        public Complex(String rawText, List<ArgumentString> parts) {
+        public Complex(String rawText, ArgumentString[] parts) {
             this.parts = parts;
             this.rawText = rawText;
         }
@@ -303,7 +356,8 @@ public interface ArgumentString {
             case 0 -> Literal.literal("");
             case 1 -> arguments.getFirst();
             case 2 -> new Complex2(input, arguments.get(0), arguments.get(1));
-            default -> new Complex(input, arguments);
+            case 3 -> new Complex3(input, arguments.get(0), arguments.get(1), arguments.get(2));
+            default -> new Complex(input, arguments.toArray(new ArgumentString[0]));
         };
     }
 }

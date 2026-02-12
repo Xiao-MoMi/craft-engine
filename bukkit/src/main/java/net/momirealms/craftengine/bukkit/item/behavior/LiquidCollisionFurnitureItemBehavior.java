@@ -32,12 +32,12 @@ import org.jetbrains.annotations.Nullable;
 import java.nio.file.Path;
 import java.util.*;
 
-public class LiquidCollisionFurnitureItemBehavior extends FurnitureItemBehavior {
+public final class LiquidCollisionFurnitureItemBehavior extends FurnitureItemBehavior {
     public static final ItemBehaviorFactory<LiquidCollisionFurnitureItemBehavior> FACTORY = new Factory();
     private final List<String> liquidTypes;
     private final boolean sourceOnly;
 
-    public LiquidCollisionFurnitureItemBehavior(Key id, Map<AnchorType, Rule> rules, boolean ignorePlacer, boolean ignoreEntities, boolean sourceOnly, List<String> liquidTypes) {
+    private LiquidCollisionFurnitureItemBehavior(Key id, Map<AnchorType, Rule> rules, boolean ignorePlacer, boolean ignoreEntities, boolean sourceOnly, List<String> liquidTypes) {
         super(id, rules, ignorePlacer, ignoreEntities);
         this.liquidTypes = liquidTypes;
         this.sourceOnly = sourceOnly;

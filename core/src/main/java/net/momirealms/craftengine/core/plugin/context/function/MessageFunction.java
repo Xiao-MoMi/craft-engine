@@ -56,7 +56,7 @@ public class MessageFunction<CTX extends Context> extends AbstractConditionalFun
         @Override
         public MessageFunction<CTX> create(Map<String, Object> arguments) {
             Object message = ResourceConfigUtils.requireNonNullOrThrow(ResourceConfigUtils.get(arguments, "messages", "message"), "warning.config.function.command.missing_message");
-            List<String> messages = MiscUtils.getAsStringList(message);
+            List<String> messages = MiscUtils.getAsStringList(message).stream().map(AdventureHelper::legacyToMiniMessage).toList();
             boolean overlay = ResourceConfigUtils.getAsBoolean(arguments.getOrDefault("overlay", false), "overlay");
             return new MessageFunction<>(getPredicates(arguments), PlayerSelectors.fromObject(arguments.get("target"), conditionFactory()), messages, overlay);
         }

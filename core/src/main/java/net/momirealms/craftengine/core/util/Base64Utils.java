@@ -1,5 +1,6 @@
 package net.momirealms.craftengine.core.util;
 
+import java.nio.charset.StandardCharsets;
 import java.util.Base64;
 
 public class Base64Utils {
@@ -11,5 +12,9 @@ public class Base64Utils {
             input = Base64.getDecoder().decode(input);
         }
         return input;
+    }
+
+    public static String encode(String input) {
+        return Base64.getEncoder().encodeToString(input.getBytes(StandardCharsets.UTF_8));
     }
 }

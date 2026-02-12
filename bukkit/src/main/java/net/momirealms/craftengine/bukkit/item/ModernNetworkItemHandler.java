@@ -120,12 +120,13 @@ public final class ModernNetworkItemHandler implements NetworkItemHandler<ItemSt
             List<Object> newItems = new ArrayList<>();
             boolean changed = false;
             for (Object previousItem : FastNMS.INSTANCE.method$BundleContents$items(bundleContents)) {
-                Optional<ItemStack> itemStack = BukkitItemManager.instance().s2c(FastNMS.INSTANCE.method$CraftItemStack$asCraftMirror(previousItem), player);
+                ItemStack cloned = FastNMS.INSTANCE.method$CraftItemStack$asCraftMirror(previousItem).clone();
+                Optional<ItemStack> itemStack = BukkitItemManager.instance().s2c(cloned, player);
                 if (itemStack.isPresent()) {
                     newItems.add(FastNMS.INSTANCE.field$CraftItemStack$handle(itemStack.get()));
                     changed = true;
                 } else {
-                    newItems.add(previousItem);
+                    newItems.add(FastNMS.INSTANCE.field$CraftItemStack$handle(cloned));
                 }
             }
             if (changed) {
@@ -140,12 +141,13 @@ public final class ModernNetworkItemHandler implements NetworkItemHandler<ItemSt
             List<Object> newItems = new ArrayList<>();
             for (Object previousItem : FastNMS.INSTANCE.field$ItemContainerContents$items(containerContents)) {
                 boolean changed = false;
-                Optional<ItemStack> itemStack = BukkitItemManager.instance().s2c(FastNMS.INSTANCE.method$CraftItemStack$asCraftMirror(previousItem), player);
+                ItemStack cloned = FastNMS.INSTANCE.method$CraftItemStack$asCraftMirror(previousItem).clone();
+                Optional<ItemStack> itemStack = BukkitItemManager.instance().s2c(cloned, player);
                 if (itemStack.isPresent()) {
                     newItems.add(FastNMS.INSTANCE.field$CraftItemStack$handle(itemStack.get()));
                     changed = true;
                 } else {
-                    newItems.add(previousItem);
+                    newItems.add(FastNMS.INSTANCE.field$CraftItemStack$handle(cloned));
                 }
                 if (changed) {
                     wrapped.setExactComponent(DataComponentTypes.CONTAINER, FastNMS.INSTANCE.method$ItemContainerContents$fromItems(newItems));
@@ -201,24 +203,24 @@ public final class ModernNetworkItemHandler implements NetworkItemHandler<ItemSt
         for (ItemProcessor modifier : customItem.clientBoundDataModifiers()) {
             modifier.prepareNetworkItem(original, context, tag);
         }
-        // 应用阶段
-        for (ItemProcessor modifier : customItem.clientBoundDataModifiers()) {
-            modifier.apply(wrapped, context);
-        }
         // 如果拦截物品的描述名称等
         if (Config.interceptItem()) {
-            if (!tag.containsKey(DataComponentIds.ITEM_NAME)) {
+            if (wrapped.hasComponent(DataComponentTypes.ITEM_NAME)) {
                 if (VersionHelper.isOrAbove1_21_5()) processModernItemName(wrapped, () -> tag, context);
                 else processLegacyItemName(wrapped, () -> tag, context);
             }
-            if (!tag.containsKey(DataComponentIds.CUSTOM_NAME)) {
+            if (wrapped.hasComponent(DataComponentTypes.CUSTOM_NAME)) {
                 if (VersionHelper.isOrAbove1_21_5()) processModernCustomName(wrapped, () -> tag, context);
                 else processLegacyCustomName(wrapped, () -> tag, context);
             }
-            if (!tag.containsKey(DataComponentIds.LORE)) {
+            if (wrapped.hasComponent(DataComponentTypes.LORE)) {
                 if (VersionHelper.isOrAbove1_21_5()) processModernLore(wrapped, () -> tag, context);
                 else processLegacyLore(wrapped, () -> tag, context);
             }
+        }
+        // 应用阶段
+        for (ItemProcessor modifier : customItem.clientBoundDataModifiers()) {
+            modifier.apply(wrapped, context);
         }
         // 如果tag不空，则需要返回
         if (!tag.isEmpty()) {
@@ -236,7 +238,7 @@ public final class ModernNetworkItemHandler implements NetworkItemHandler<ItemSt
             List<String> lore = optionalLore.get();
             List<String> newLore = new ArrayList<>(lore.size());
             for (String line : lore) {
-                Map<String, ComponentProvider> tokens = CraftEngine.instance().fontManager().matchTags(line);
+                Map<String, ComponentProvider> tokens = CraftEngine.instance().networkManager().matchNetworkTags(line);
                 if (tokens.isEmpty()) {
                     newLore.add(line);
                 } else {
@@ -261,7 +263,7 @@ public final class ModernNetworkItemHandler implements NetworkItemHandler<ItemSt
         Optional<String> optionalCustomName = item.customNameJson();
         if (optionalCustomName.isPresent()) {
             String line = optionalCustomName.get();
-            Map<String, ComponentProvider> tokens = CraftEngine.instance().fontManager().matchTags(line);
+            Map<String, ComponentProvider> tokens = CraftEngine.instance().networkManager().matchNetworkTags(line);
             if (!tokens.isEmpty()) {
                 item.customNameJson(AdventureHelper.componentToJson(AdventureHelper.replaceText(AdventureHelper.jsonToComponent(line), tokens, context)));
                 tag.get().put(DataComponentIds.CUSTOM_NAME, NetworkItemHandler.pack(Operation.ADD, new StringTag(line)));
@@ -275,7 +277,7 @@ public final class ModernNetworkItemHandler implements NetworkItemHandler<ItemSt
         Optional<String> optionalItemName = item.itemNameJson();
         if (optionalItemName.isPresent()) {
             String line = optionalItemName.get();
-            Map<String, ComponentProvider> tokens = CraftEngine.instance().fontManager().matchTags(line);
+            Map<String, ComponentProvider> tokens = CraftEngine.instance().networkManager().matchNetworkTags(line);
             if (!tokens.isEmpty()) {
                 item.itemNameJson(AdventureHelper.componentToJson(AdventureHelper.replaceText(AdventureHelper.jsonToComponent(line), tokens, context)));
                 tag.get().put(DataComponentIds.ITEM_NAME, NetworkItemHandler.pack(Operation.ADD, new StringTag(line)));
@@ -288,7 +290,7 @@ public final class ModernNetworkItemHandler implements NetworkItemHandler<ItemSt
     public static boolean processModernItemName(Item<ItemStack> item, Supplier<CompoundTag> tag, Context context) {
         Tag nameTag = item.getSparrowNBTComponent(DataComponentTypes.ITEM_NAME);
         if (nameTag == null) return false;
-        Map<String, ComponentProvider> tokens = CraftEngine.instance().fontManager().matchTags(nameTag);
+        Map<String, ComponentProvider> tokens = CraftEngine.instance().networkManager().matchNetworkTags(nameTag);
         if (!tokens.isEmpty()) {
             item.setNBTComponent(DataComponentKeys.ITEM_NAME, AdventureHelper.componentToNbt(AdventureHelper.replaceText(AdventureHelper.nbtToComponent(nameTag), tokens, context)));
             tag.get().put(DataComponentIds.ITEM_NAME, NetworkItemHandler.pack(Operation.ADD, nameTag));
@@ -300,7 +302,7 @@ public final class ModernNetworkItemHandler implements NetworkItemHandler<ItemSt
     public static boolean processModernCustomName(Item<ItemStack> item, Supplier<CompoundTag> tag, Context context) {
         Tag nameTag = item.getSparrowNBTComponent(DataComponentTypes.CUSTOM_NAME);
         if (nameTag == null) return false;
-        Map<String, ComponentProvider> tokens = CraftEngine.instance().fontManager().matchTags(nameTag);
+        Map<String, ComponentProvider> tokens = CraftEngine.instance().networkManager().matchNetworkTags(nameTag);
         if (!tokens.isEmpty()) {
             item.setNBTComponent(DataComponentKeys.CUSTOM_NAME, AdventureHelper.componentToNbt(AdventureHelper.replaceText(AdventureHelper.nbtToComponent(nameTag), tokens, context)));
             tag.get().put(DataComponentIds.CUSTOM_NAME, NetworkItemHandler.pack(Operation.ADD, nameTag));
@@ -317,7 +319,7 @@ public final class ModernNetworkItemHandler implements NetworkItemHandler<ItemSt
         }
         ListTag newLore = new ListTag();
         for (Tag tag : listTag) {
-            Map<String, ComponentProvider> tokens = CraftEngine.instance().fontManager().matchTags(tag);
+            Map<String, ComponentProvider> tokens = CraftEngine.instance().networkManager().matchNetworkTags(tag);
             if (tokens.isEmpty()) {
                 newLore.add(tag);
             } else {

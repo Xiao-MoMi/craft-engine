@@ -224,18 +224,18 @@ public final class LegacyNetworkItemHandler implements NetworkItemHandler<ItemSt
         for (ItemProcessor modifier : customItem.clientBoundDataModifiers()) {
             modifier.prepareNetworkItem(wrapped, context, tag);
         }
+        // 如果拦截物品的描述名称等
+        if (Config.interceptItem()) {
+            if (wrapped.hasTag("display", "Name")) {
+                processCustomName(wrapped, tag::put, context);
+            }
+            if (wrapped.hasTag("display", "Lore")) {
+                processLore(wrapped, tag::put, context);
+            }
+        }
         // 应用阶段
         for (ItemProcessor modifier : customItem.clientBoundDataModifiers()) {
             modifier.apply(wrapped, context);
-        }
-        // 如果拦截物品的描述名称等
-        if (Config.interceptItem()) {
-            if (!tag.containsKey("display.Name")) {
-                processCustomName(wrapped, tag::put, context);
-            }
-            if (!tag.containsKey("display.Lore")) {
-                processLore(wrapped, tag::put, context);
-            }
         }
         // 如果tag不空，则需要返回
         if (!tag.isEmpty()) {
@@ -249,7 +249,7 @@ public final class LegacyNetworkItemHandler implements NetworkItemHandler<ItemSt
         Optional<String> optionalCustomName = item.customNameJson();
         if (optionalCustomName.isPresent()) {
             String line = optionalCustomName.get();
-            Map<String, ComponentProvider> tokens = CraftEngine.instance().fontManager().matchTags(line);
+            Map<String, ComponentProvider> tokens = CraftEngine.instance().networkManager().matchNetworkTags(line);
             if (!tokens.isEmpty()) {
                 item.customNameJson(AdventureHelper.componentToJson(AdventureHelper.replaceText(AdventureHelper.jsonToComponent(line), tokens, context)));
                 callback.accept("display.Name", NetworkItemHandler.pack(Operation.ADD, new StringTag(line)));
@@ -266,7 +266,7 @@ public final class LegacyNetworkItemHandler implements NetworkItemHandler<ItemSt
             List<String> lore = optionalLore.get();
             List<String> newLore = new ArrayList<>(lore.size());
             for (String line : lore) {
-                Map<String, ComponentProvider> tokens = CraftEngine.instance().fontManager().matchTags(line);
+                Map<String, ComponentProvider> tokens = CraftEngine.instance().networkManager().matchNetworkTags(line);
                 if (tokens.isEmpty()) {
                     newLore.add(line);
                 } else {

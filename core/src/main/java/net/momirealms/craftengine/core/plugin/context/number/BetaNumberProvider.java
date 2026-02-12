@@ -2,9 +2,9 @@ package net.momirealms.craftengine.core.plugin.context.number;
 
 import net.momirealms.craftengine.core.plugin.context.Context;
 import net.momirealms.craftengine.core.util.ResourceConfigUtils;
+import net.momirealms.craftengine.core.util.random.RandomSource;
 
 import java.util.Map;
-import java.util.concurrent.ThreadLocalRandom;
 
 /**
  * 贝塔分布提供器
@@ -24,9 +24,14 @@ public record BetaNumberProvider(
     }
 
     @Override
-    public double getDouble(Context context) {
+    public float getFloat(RandomSource random) {
+        return (float) getDouble(random);
+    }
+
+    @Override
+    public double getDouble(RandomSource random) {
         // 使用针对不同参数范围优化的生成算法
-        double x = generateStandardBeta(this.alpha, this.beta);
+        double x = generateStandardBeta(this.alpha, this.beta, random);
         // 将 [0, 1] 映射到 [min, max]
         return this.min + x * (this.max - this.min);
     }
@@ -35,19 +40,17 @@ public record BetaNumberProvider(
      * 生成标准 Beta(α, β) 分布 (范围 [0, 1])
      * 采用受阻采样法 (Rejection Sampling)
      */
-    private double generateStandardBeta(double a, double b) {
-        ThreadLocalRandom random = ThreadLocalRandom.current();
-        
+    private double generateStandardBeta(double a, double b, RandomSource randomSource) {
         // 特例优化：如果 α=1, β=1，退化为均匀分布
         if (Math.abs(a - 1.0) < 1e-6 && Math.abs(b - 1.0) < 1e-6) {
-            return random.nextDouble();
+            return randomSource.nextDouble();
         }
 
         // 简化的受阻采样实现 (针对 a, b >= 1 的常见场景)
         // 生产环境下如果 a, b < 1，通常建议使用 Gamma 分布转换法
         while (true) {
-            double u1 = random.nextDouble();
-            double u2 = random.nextDouble();
+            double u1 = randomSource.nextDouble();
+            double u2 = randomSource.nextDouble();
             double x = Math.pow(u1, 1.0 / a);
             double y = Math.pow(u2, 1.0 / b);
             
@@ -60,11 +63,6 @@ public record BetaNumberProvider(
     @Override
     public int getInt(Context context) {
         return (int) Math.round(getDouble(context));
-    }
-
-    @Override
-    public float getFloat(Context context) {
-        return (float) getDouble(context);
     }
 
     private static class Factory implements NumberProviderFactory<BetaNumberProvider> {

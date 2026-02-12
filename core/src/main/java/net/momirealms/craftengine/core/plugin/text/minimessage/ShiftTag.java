@@ -10,12 +10,10 @@ import net.momirealms.craftengine.core.util.AdventureHelper;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class ShiftTag implements TagResolver {
+public final class ShiftTag implements TagResolver {
     public static final ShiftTag INSTANCE = new ShiftTag();
 
-    public static ShiftTag instance() {
-        return INSTANCE;
-    }
+    private ShiftTag() {}
 
     @Override
     public @Nullable Tag resolve(@NotNull String name, @NotNull ArgumentQueue arguments, @NotNull Context ctx) throws ParsingException {

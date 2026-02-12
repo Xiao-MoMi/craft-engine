@@ -10,6 +10,7 @@ import net.momirealms.craftengine.core.plugin.config.Config;
 import net.momirealms.craftengine.core.plugin.context.CommonConditions;
 import net.momirealms.craftengine.core.plugin.context.Condition;
 import net.momirealms.craftengine.core.plugin.text.minimessage.FormattedLine;
+import net.momirealms.craftengine.core.util.AdventureHelper;
 import net.momirealms.craftengine.core.util.Key;
 import net.momirealms.craftengine.core.util.MiscUtils;
 import net.momirealms.craftengine.core.util.ResourceConfigUtils;
@@ -54,7 +55,7 @@ public sealed interface LoreProcessor extends SimpleNetworkItemProcessor
                 }
             }
             return new SingleLoreProcessor(new LoreModification(LoreModification.Operation.APPEND, false,
-                    Arrays.stream(rawLore).map(line -> Config.addNonItalicTag() && !line.startsWith("<!i>") ? FormattedLine.create("<!i>" + line) : FormattedLine.create(line))
+                    Arrays.stream(rawLore).map(AdventureHelper::legacyToMiniMessage).map(line -> Config.addNonItalicTag() && !line.startsWith("<!i>") ? FormattedLine.create("<!i>" + line) : FormattedLine.create(line))
                             .toArray(FormattedLine[]::new), c -> true));
         }
 
@@ -68,7 +69,7 @@ public sealed interface LoreProcessor extends SimpleNetworkItemProcessor
                 boolean split = ResourceConfigUtils.getAsBoolean(complexLore.get("split-lines"), "split-lines");
                 List<Condition<ItemBuildContext>> conditions = ResourceConfigUtils.parseConfigAsList(complexLore.get("conditions"), CommonConditions::fromMap);
                 modifications.add(new LoreModificationHolder(new LoreModification(operation, split,
-                        Arrays.stream(content).map(line -> Config.addNonItalicTag() && !line.startsWith("<!i>") ? FormattedLine.create("<!i>" + line) : FormattedLine.create(line))
+                        Arrays.stream(content).map(AdventureHelper::legacyToMiniMessage).map(line -> Config.addNonItalicTag() && !line.startsWith("<!i>") ? FormattedLine.create("<!i>" + line) : FormattedLine.create(line))
                         .toArray(FormattedLine[]::new), MiscUtils.allOf(conditions)), lastPriority));
             }
         }

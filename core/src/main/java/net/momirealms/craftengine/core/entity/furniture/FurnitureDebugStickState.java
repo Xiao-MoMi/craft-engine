@@ -8,7 +8,7 @@ import java.util.function.BiConsumer;
 import java.util.function.Function;
 
 public enum FurnitureDebugStickState {
-    VARIANT(f -> f.getCurrentVariant().name(), new VariantHandler()),
+    VARIANT(f -> f.currentVariant().name(), new VariantHandler()),
     X_0_1(f -> String.format("%.2f", f.position().x), new XPositionHandler(0.1)),
     X_0_0_1(f -> String.format("%.2f", f.position().x), new XPositionHandler(0.01)),
     Y_0_1(f -> String.format("%.2f", f.position().y), new YPositionHandler(0.1)),
@@ -69,7 +69,7 @@ public enum FurnitureDebugStickState {
             if (variants.size() == 1) {
                 noChange.run();
             } else {
-                String variantName = furniture.getCurrentVariant().name();
+                String variantName = furniture.currentVariant().name();
                 int index;
                 if (isSecondaryUsage) {
                     index = variants.indexOf(variantName) - 1;

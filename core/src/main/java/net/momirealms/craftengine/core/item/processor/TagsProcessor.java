@@ -3,24 +3,49 @@ package net.momirealms.craftengine.core.item.processor;
 import net.momirealms.craftengine.core.item.*;
 import net.momirealms.craftengine.core.util.MiscUtils;
 import net.momirealms.craftengine.core.util.ResourceConfigUtils;
-import net.momirealms.craftengine.core.util.TypeUtils;
 import net.momirealms.craftengine.core.util.VersionHelper;
 import net.momirealms.sparrow.nbt.CompoundTag;
 import net.momirealms.sparrow.nbt.Tag;
 
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.function.BiConsumer;
 
 public final class TagsProcessor implements ItemProcessor {
     public static final ItemProcessorFactory<TagsProcessor> FACTORY = new Factory();
     private final Map<String, Object> arguments;
 
     public TagsProcessor(Map<String, Object> arguments) {
-        this.arguments = mapToMap(arguments);
+        this.arguments = new LinkedHashMap<>();
+        for (Map.Entry<String, Object> entry : arguments.entrySet()) {
+            if (entry.getKey().charAt(0) == '@') {
+                this.arguments.put(entry.getKey().substring(1), entry.getValue());
+            } else {
+                if (entry.getValue() instanceof Map<?,?> innerMap) {
+                    processTags(entry.getKey(), MiscUtils.castToMap(innerMap, false), this.arguments::put);
+                } else {
+                    this.arguments.put(entry.getKey(), entry.getValue());
+                }
+            }
+        }
     }
 
     public Map<String, Object> tags() {
-        return arguments;
+        return this.arguments;
+    }
+
+    private void processTags(String path, Map<String, Object> arguments, BiConsumer<String, Object> callback) {
+        for (Map.Entry<String, Object> entry : arguments.entrySet()) {
+            if (entry.getKey().charAt(0) == '@') {
+                callback.accept(path + "." + entry.getKey().substring(1), entry.getValue());
+            } else {
+                if (entry.getValue() instanceof Map<?,?> innerMap) {
+                    processTags(path + "." + entry.getKey(), MiscUtils.castToMap(innerMap, false), callback);
+                } else {
+                    callback.accept(path + "." + entry.getKey(), entry.getValue());
+                }
+            }
+        }
     }
 
     @Override
@@ -28,12 +53,12 @@ public final class TagsProcessor implements ItemProcessor {
         for (Map.Entry<String, Object> entry : this.arguments.entrySet()) {
             String key = entry.getKey();
             Object value = entry.getValue();
-            item.setTag(value, key);
+            String[] split = key.split("\\.");
+            item.setTag(value, (Object[]) split);
         }
         return item;
     }
 
-    // TODO NOT PERFECT
     @Override
     public <I> Item<I> prepareNetworkItem(Item<I> item, ItemBuildContext context, CompoundTag networkData) {
         if (VersionHelper.isOrAbove1_20_5()) {
@@ -45,7 +70,9 @@ public final class TagsProcessor implements ItemProcessor {
             }
         } else {
             for (Map.Entry<String, Object> entry : this.arguments.entrySet()) {
-                Tag previous = item.getTag(entry.getKey());
+                String key = entry.getKey();
+                String[] split = key.split("\\.");
+                Tag previous = item.getTag((Object[]) split);
                 if (previous != null) {
                     networkData.put(entry.getKey(), NetworkItemHandler.pack(NetworkItemHandler.Operation.ADD, previous));
                 } else {
@@ -54,80 +81,6 @@ public final class TagsProcessor implements ItemProcessor {
             }
         }
         return item;
-    }
-
-    private static Map<String, Object> mapToMap(final Map<String, Object> source) {
-        Map<String, Object> resultMap = new LinkedHashMap<>();
-        recursiveMapProcessing(source, resultMap);
-        return resultMap;
-    }
-
-    private static void recursiveMapProcessing(
-            final Map<String, Object> sourceMap,
-            final Map<String, Object> targetMap
-    ) {
-        for (Map.Entry<String, Object> entry : sourceMap.entrySet()) {
-            processMapEntry(entry.getKey(), entry.getValue(), targetMap);
-        }
-    }
-
-    private static void processMapEntry(
-            final String key,
-            final Object value,
-            final Map<String, Object> targetMap
-    ) {
-        if (value instanceof Map) {
-            handleNestedMap(key, MiscUtils.castToMap(value, false), targetMap);
-        } else if (value instanceof String) {
-            handleStringValue(key, (String) value, targetMap);
-        } else {
-            targetMap.put(key, value);
-        }
-    }
-
-    private static void handleNestedMap(
-            final String key,
-            final Map<String, Object> nestedSource,
-            final Map<String, Object> parentMap
-    ) {
-        Map<String, Object> nestedTarget = new LinkedHashMap<>();
-        parentMap.put(key, nestedTarget);
-        recursiveMapProcessing(nestedSource, nestedTarget);
-    }
-
-    private static void handleStringValue(
-            final String key,
-            final String value,
-            final Map<String, Object> targetMap
-    ) {
-        ParsedValue parsed = tryParseTypedValue(value);
-        targetMap.put(key, parsed.success ? parsed.result : value);
-    }
-
-    private static ParsedValue tryParseTypedValue(final String str) {
-        if (str.length() < 3 || str.charAt(0) != '(') {
-            return ParsedValue.FAILURE;
-        }
-
-        int closingBracketPos = str.indexOf(')', 1);
-        if (closingBracketPos == -1 || closingBracketPos + 2 > str.length()) {
-            return ParsedValue.FAILURE;
-        }
-
-        if (str.charAt(closingBracketPos + 1) != ' ') {
-            return ParsedValue.FAILURE;
-        }
-
-        String typeMarker = str.substring(1, closingBracketPos);
-        String content = str.substring(closingBracketPos + 2);
-        return new ParsedValue(
-                true,
-                TypeUtils.castBasicTypes(content, typeMarker)
-        );
-    }
-
-    private record ParsedValue(boolean success, Object result) {
-            static final ParsedValue FAILURE = new ParsedValue(false, null);
     }
 
     private static class Factory implements ItemProcessorFactory<TagsProcessor> {

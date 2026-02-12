@@ -33,7 +33,7 @@ dependencies {
     implementation("net.momirealms:sparrow-nbt-codec:${rootProject.properties["sparrow_nbt_version"]}")
     implementation("net.momirealms:sparrow-nbt-legacy-codec:${rootProject.properties["sparrow_nbt_version"]}")
     // S3
-    implementation("net.momirealms:craft-engine-s3:0.10")
+    implementation("net.momirealms:craft-engine-s3:0.14")
     // Util
     compileOnly("net.momirealms:sparrow-util:${rootProject.properties["sparrow_util_version"]}")
     // Adventure
@@ -63,7 +63,7 @@ dependencies {
     compileOnly("com.github.ben-manes.caffeine:caffeine:${rootProject.properties["caffeine_version"]}")
     // Compression
     compileOnly("com.github.luben:zstd-jni:${rootProject.properties["zstd_version"]}")
-    compileOnly("org.lz4:lz4-java:${rootProject.properties["lz4_version"]}")
+    compileOnly("at.yawk.lz4:lz4-java:${rootProject.properties["lz4_version"]}")
     // Commons IO
     compileOnly("commons-io:commons-io:${rootProject.properties["commons_io_version"]}")
     // Data Fixer Upper

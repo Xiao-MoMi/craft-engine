@@ -21,7 +21,7 @@ import java.util.List;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.Function;
 
-public class RegionFile implements AutoCloseable {
+public final class RegionFile implements AutoCloseable {
     private static final PluginLogger LOGGER = CraftEngine.instance().logger();
     private static final byte FORMAT_VERSION = 1;
     public static final int SECTOR_BYTES = 4096;

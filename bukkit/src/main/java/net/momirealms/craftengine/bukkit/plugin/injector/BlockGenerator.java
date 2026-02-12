@@ -20,7 +20,6 @@ import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.MBlocks;
 import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.MRegistries;
 import net.momirealms.craftengine.bukkit.util.KeyUtils;
 import net.momirealms.craftengine.bukkit.util.NoteBlockChainUpdateUtils;
-import net.momirealms.craftengine.core.block.BlockKeys;
 import net.momirealms.craftengine.core.block.BlockShape;
 import net.momirealms.craftengine.core.block.DelegatingBlock;
 import net.momirealms.craftengine.core.block.behavior.BlockBehavior;
@@ -234,27 +233,6 @@ public final class BlockGenerator {
             CoreReflections.field$BlockBehaviour$Properties$id.set(blockProperties, resourceKey);
         }
         return blockProperties;
-    }
-
-    public static Object generateBlock(Key replacedBlock, Object ownerBlock, Object properties) throws Throwable {
-        Object ownerProperties = CoreReflections.field$BlockBehaviour$properties.get(ownerBlock);
-        CoreReflections.field$BlockBehaviour$Properties$hasCollision.set(properties, CoreReflections.field$BlockBehaviour$Properties$hasCollision.get(ownerProperties));
-
-        ObjectHolder<BlockBehavior> behaviorHolder = new ObjectHolder<>(EmptyBlockBehavior.INSTANCE);
-        ObjectHolder<BlockShape> shapeHolder = new ObjectHolder<>(STONE_SHAPE);
-
-        Object newBlockInstance = constructor$CraftEngineBlock.invoke(properties);
-        field$CraftEngineBlock$behavior.set(newBlockInstance, behaviorHolder);
-        field$CraftEngineBlock$shape.set(newBlockInstance, shapeHolder);
-        field$CraftEngineBlock$isNoteBlock.set(newBlockInstance, replacedBlock.equals(BlockKeys.NOTE_BLOCK));
-        field$CraftEngineBlock$isTripwire.set(newBlockInstance, replacedBlock.equals(BlockKeys.TRIPWIRE));
-
-        Object stateDefinitionBuilder = CoreReflections.constructor$StateDefinition$Builder.newInstance(newBlockInstance);
-        Object stateDefinition = CoreReflections.method$StateDefinition$Builder$create.invoke(stateDefinitionBuilder,
-                (Function<Object, Object>) FastNMS.INSTANCE::method$Block$defaultState, BlockStateGenerator.instance$StateDefinition$Factory);
-        CoreReflections.field$Block$StateDefinition.set(newBlockInstance, stateDefinition);
-        CoreReflections.field$Block$defaultBlockState.set(newBlockInstance, ((ImmutableList<?>) CoreReflections.field$StateDefinition$states.get(stateDefinition)).getFirst());
-        return newBlockInstance;
     }
 
     public static class UpdateShapeInterceptor {

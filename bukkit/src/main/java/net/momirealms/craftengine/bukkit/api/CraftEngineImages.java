@@ -1,7 +1,7 @@
 package net.momirealms.craftengine.bukkit.api;
 
 import net.momirealms.craftengine.bukkit.font.BukkitFontManager;
-import net.momirealms.craftengine.core.font.BitmapImage;
+import net.momirealms.craftengine.core.font.Image;
 import net.momirealms.craftengine.core.util.Key;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -14,7 +14,7 @@ public final class CraftEngineImages {
 
     /**
      * Returns an unmodifiable map of all currently loaded custom images.
-     * The map keys represent unique identifiers, and the values are the corresponding BitmapImage instances.
+     * The map keys represent unique identifiers, and the values are the corresponding Image instances.
      *
      * <p><strong>Important:</strong> Do not attempt to access this method during the onEnable phase
      * as it will be empty. Instead, listen for the {@code CraftEngineReloadEvent} and use this method
@@ -23,7 +23,7 @@ public final class CraftEngineImages {
      * @return a non-null map containing all loaded custom images
      */
     @NotNull
-    public static Map<Key, BitmapImage> loadedImages() {
+    public static Map<Key, Image> loadedImages() {
         return BukkitFontManager.instance().loadedImages();
     }
 
@@ -34,7 +34,7 @@ public final class CraftEngineImages {
      * @return the custom image
      */
     @Nullable
-    public static BitmapImage byId(@NotNull Key id) {
-        return BukkitFontManager.instance().loadedImages().get(id);
+    public static Image byId(@NotNull Key id) {
+        return BukkitFontManager.instance().imageById(id).orElse(null);
     }
 }

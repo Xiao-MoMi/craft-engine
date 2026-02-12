@@ -87,8 +87,6 @@ public interface CustomFurniture {
 
         Builder events(Map<EventTrigger, List<Function<Context>>> events);
 
-        Builder behavior(FurnitureBehavior behavior);
-
         CustomFurniture build();
     }
 }

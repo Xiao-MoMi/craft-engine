@@ -3,7 +3,7 @@ package net.momirealms.craftengine.core.plugin.text.minimessage;
 import net.momirealms.craftengine.core.plugin.context.Context;
 import org.jetbrains.annotations.NotNull;
 
-public class ViewerPlaceholderTag extends PlaceholderTag {
+public final class ViewerPlaceholderTag extends PlaceholderTag {
 
     public ViewerPlaceholderTag(@NotNull Context player) {
         super(player);

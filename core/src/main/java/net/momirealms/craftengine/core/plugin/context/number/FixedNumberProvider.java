@@ -1,9 +1,9 @@
 package net.momirealms.craftengine.core.plugin.context.number;
 
 import com.ezylang.evalex.Expression;
-import net.momirealms.craftengine.core.plugin.context.Context;
 import net.momirealms.craftengine.core.plugin.locale.LocalizedResourceConfigException;
 import net.momirealms.craftengine.core.util.ResourceConfigUtils;
+import net.momirealms.craftengine.core.util.random.RandomSource;
 
 import java.util.Map;
 
@@ -11,12 +11,12 @@ public record FixedNumberProvider(double value) implements NumberProvider {
     public static final NumberProviderFactory<FixedNumberProvider> FACTORY = new Factory();
 
     @Override
-    public float getFloat(Context context) {
+    public float getFloat(RandomSource random) {
         return (float) this.value;
     }
 
     @Override
-    public double getDouble(Context context) {
+    public double getDouble(RandomSource random) {
         return this.value;
     }
 

@@ -12,11 +12,11 @@ import org.jetbrains.annotations.Nullable;
 import java.util.List;
 import java.util.Objects;
 
-public class IndexedArgumentTag implements TagResolver {
-    private final List<? extends ComponentLike> argumentComponents;
+public final class IndexedArgumentTag implements TagResolver {
+    private final List<? extends ComponentLike> args;
 
-    public IndexedArgumentTag(@NotNull List<? extends ComponentLike> argumentComponents) {
-        this.argumentComponents = Objects.requireNonNull(argumentComponents, "argumentComponents");
+    public IndexedArgumentTag(@NotNull List<? extends ComponentLike> args) {
+        this.args = Objects.requireNonNull(args, "argumentComponents");
     }
 
     @Override
@@ -24,14 +24,11 @@ public class IndexedArgumentTag implements TagResolver {
         if (!has(name)) {
             return null;
         }
-
         final int index = arguments.popOr("No argument number provided").asInt().orElseThrow(() -> ctx.newException("Invalid argument number", arguments));
-
-        if (index < 0 || index >= argumentComponents.size()) {
+        if (index < 0 || index >= this.args.size()) {
             throw ctx.newException("Invalid argument number", arguments);
         }
-
-        return Tag.selfClosingInserting(argumentComponents.get(index));
+        return Tag.selfClosingInserting(this.args.get(index));
     }
 
     @Override

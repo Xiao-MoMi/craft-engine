@@ -32,7 +32,7 @@ public class PlaceholderTag implements TagResolver {
         if (parsed.equals(placeholder)) {
             parsed = arguments.popOr("No default papi value provided").toString();
         }
-        return Tag.selfClosingInserting(AdventureHelper.miniMessage().deserialize(parsed));
+        return Tag.selfClosingInserting(ctx.deserialize(parsed));
     }
 
     @Override

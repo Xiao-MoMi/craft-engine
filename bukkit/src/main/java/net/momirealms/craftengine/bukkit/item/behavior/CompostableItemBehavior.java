@@ -12,8 +12,8 @@ import net.momirealms.craftengine.core.item.behavior.ItemBehavior;
 import net.momirealms.craftengine.core.item.behavior.ItemBehaviorFactory;
 import net.momirealms.craftengine.core.pack.Pack;
 import net.momirealms.craftengine.core.util.Key;
-import net.momirealms.craftengine.core.util.RandomUtils;
 import net.momirealms.craftengine.core.util.ResourceConfigUtils;
+import net.momirealms.craftengine.core.util.random.RandomUtils;
 import net.momirealms.craftengine.core.world.WorldEvents;
 import net.momirealms.craftengine.core.world.context.UseOnContext;
 import org.bukkit.GameEvent;
@@ -27,11 +27,11 @@ import org.bukkit.util.Vector;
 import java.nio.file.Path;
 import java.util.Map;
 
-public class CompostableItemBehavior extends ItemBehavior {
+public final class CompostableItemBehavior extends ItemBehavior {
     public static final ItemBehaviorFactory<CompostableItemBehavior> FACTORY = new Factory();
     private final double chance;
 
-    public CompostableItemBehavior(double chance) {
+    private CompostableItemBehavior(double chance) {
         this.chance = chance;
     }
 

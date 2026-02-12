@@ -28,7 +28,7 @@ public final class ItemProcessors {
     public static final ItemProcessorType<FoodProcessor> FOOD = register(Key.ce("food"), FoodProcessor.FACTORY, VersionHelper.isOrAbove1_20_5());
     public static final ItemProcessorType<ExternalSourceProcessor> EXTERNAL = register(Key.ce("external"), ExternalSourceProcessor.FACTORY);
     public static final ItemProcessorType<EquippableProcessor> EQUIPPABLE = register(Key.ce("equippable"), EquippableProcessor.FACTORY, VersionHelper.isOrAbove1_21_2());
-    public static final ItemProcessorType<EquippableAssetIdProcessor> EQUIPPABLE_ASSET_ID = register(Key.ce("equippable_asset_id"), EquippableAssetIdProcessor.FACTORY, VersionHelper.isOrAbove1_21_2());
+    public static final ItemProcessorType<OverwritableEquippableAssetIdProcessor> EQUIPPABLE_ASSET_ID = register(Key.ce("overwritable_equippable_asset_id"), OverwritableEquippableAssetIdProcessor.FACTORY, VersionHelper.isOrAbove1_21_2());
     public static final ItemProcessorType<EnchantmentsProcessor> ENCHANTMENTS = register(Key.ce("enchantments"), EnchantmentsProcessor.FACTORY);
     public static final ItemProcessorType<EnchantmentsProcessor> ENCHANTMENT = register(Key.ce("enchantment"), EnchantmentsProcessor.FACTORY);
     public static final ItemProcessorType<DyedColorProcessor> DYED_COLOR = register(Key.ce("dyed_color"), DyedColorProcessor.FACTORY);
@@ -58,6 +58,8 @@ public final class ItemProcessors {
     public static final ItemProcessorType<BlockStateProcessor> BLOCK_STATE = register(Key.ce("blockstate"), BlockStateProcessor.FACTORY);
     public static final ItemProcessorType<ConditionalProcessor> CONDITIONAL = register(Key.ce("conditional"), ConditionalProcessor.FACTORY, VersionHelper.PREMIUM);
     public static final ItemProcessorType<ConditionalProcessor> CONDITION = register(Key.ce("condition"), ConditionalProcessor.FACTORY, VersionHelper.PREMIUM);
+    public static final ItemProcessorType<ProfileProcessor> PROFILE = register(Key.ce("profile"), ProfileProcessor.FACTORY);
+    public static final ItemProcessorType<OverwritableDyedColorProcessor> OVERWRITABLE_DYED_COLOR = register(Key.ce("overwritable_dyed_color"), OverwritableDyedColorProcessor.FACTORY);
 
     public static <T extends ItemProcessor> ItemProcessorType<T> register(Key key, ItemProcessorFactory<T> factory) {
         ItemProcessorType<T> type = new ItemProcessorType<>(key, factory);

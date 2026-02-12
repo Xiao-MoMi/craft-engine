@@ -20,14 +20,14 @@ import java.util.UUID;
 import java.util.function.Consumer;
 
 public final class ArmorStandFurnitureElement extends AbstractFurnitureElement {
-    private final ArmorStandFurnitureElementConfig config;
-    private final Furniture furniture;
-    private final Object cachedSpawnPacket;
-    private final Object cachedDespawnPacket;
-    private final Object cachedScalePacket;
-    private final Object cachedTeamPacket;
-    private final int entityId;
-    private final UUID uuid = UUID.randomUUID();
+    public final ArmorStandFurnitureElementConfig config;
+    public final Furniture furniture;
+    public final Object cachedSpawnPacket;
+    public final Object cachedDespawnPacket;
+    public final Object cachedScalePacket;
+    public final Object cachedTeamPacket;
+    public final int entityId;
+    public final UUID uuid = UUID.randomUUID();
 
     @Override
     public @NotNull Furniture furniture() {
@@ -80,6 +80,13 @@ public final class ArmorStandFurnitureElement extends AbstractFurnitureElement {
     @Override
     public void hide(Player player) {
         player.sendPacket(this.cachedDespawnPacket, false);
+    }
+
+    @Override
+    public void refresh(Player player) {
+        player.sendPacket(FastNMS.INSTANCE.constructor$ClientboundSetEquipmentPacket(this.entityId, List.of(
+                Pair.of(CoreReflections.instance$EquipmentSlot$HEAD, this.config.item(player, this.furniture.dataAccessor.getColorSource()).getLiteralObject())
+        )), false);
     }
 
     @Override

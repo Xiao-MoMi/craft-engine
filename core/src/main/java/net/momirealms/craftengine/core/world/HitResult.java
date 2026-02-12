@@ -16,13 +16,13 @@ public abstract class HitResult {
         return d * d + e * e + f * f;
     }
 
-    public abstract HitResult.Type getType();
+    public abstract HitResult.Type type();
 
-    public Vec3d getLocation() {
+    public Vec3d location() {
         return this.location;
     }
 
-    public static enum Type {
+    public enum Type {
         MISS,
         BLOCK,
         ENTITY;

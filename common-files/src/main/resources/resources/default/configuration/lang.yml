@@ -2,7 +2,7 @@
 # https://xiao-momi.github.io/craft-engine-wiki/configuration/lang
 lang#items:
   en_us:
-    item.default.default.chinese_lantern: Chinese Lantern
+    item.default.chinese_lantern: Chinese Lantern
     item.default.fairy_flower: Fairy Flower
     item.default.reed: Reed
     item.default.flame_cane: Flame Cane
@@ -58,6 +58,7 @@ lang#items:
     item.default.hami_melon_seeds: Hami Melon Seeds
     item.default.magma_fruit: Magma Fruit
     item.default.globe: Globe
+    item.default.drill: Drill
   zh_cn:
     item.default.chinese_lantern: 灯笼
     item.default.fairy_flower: 仙灵花
@@ -115,6 +116,7 @@ lang#items:
     item.default.hami_melon_seeds: 哈密瓜种子
     item.default.magma_fruit: 岩浆果实
     item.default.globe: 地球仪
+    item.default.drill: 钻头
   fr_fr:
     item.default.chinese_lantern: Lanterne Chinoise
     item.default.fairy_flower: Fleur Fée
@@ -172,116 +174,117 @@ lang#items:
     item.default.hami_melon_seeds: Graines de Melon de Hami
     item.default.magma_fruit: Fruit de Magma
     item.default.globe: Globe
+    item.default.drill: La perceuse
 # Providing translations for blocks is particularly effective for plugins that retrieve server-side block translation keys.
 lang#blocks:
   en_us:
-    block.default.chinese_lantern: Chinese Lantern
-    block.default.netherite_anvil: Netherite Anvil
-    block.default.topaz_ore: Topaz Ore
-    block.default.deepslate_topaz_ore: Deepslate Topaz Ore
-    block.default.palm_log: Palm Log
-    block.default.stripped_palm_log: Stripped Palm Log
-    block.default.palm_wood: Palm Wood
-    block.default.stripped_palm_wood: Stripped Palm Wood
-    block.default.palm_planks: Palm Planks
-    block.default.palm_sapling: Palm Sapling
-    block.default.palm_leaves: Palm Leaves
-    block.default.palm_trapdoor: Palm Trapdoor
-    block.default.palm_door: Palm Door
-    block.default.palm_fence_gate: Palm Fence Gate
-    block.default.palm_slab: Palm Slab
-    block.default.palm_stairs: Palm Stairs
-    block.default.palm_button: Palm Button
-    block.default.palm_fence: Palm Fence
-    block.default.fairy_flower: Fairy Flower
-    block.default.reed: Reed
-    block.default.flame_cane: Flame Cane
-    block.default.ender_pearl_flower: Ender Pearl Flower
-    block.default.gunpowder_block: GunPowder Block
-    block.default.solid_gunpowder_block: Solid GunPowder Block
-    block.default.copper_coil: Copper Coil
-    block.default.chessboard_block: Chessboard Block
-    block.default.safe_block: Safe Block
-    block.default.sleeper_sofa: Sofa
-    block.default.sofa: Sofa
-    block.default.amethyst_torch: Amethyst Torch
-    block.default.amethyst_wall_torch: Amethyst Torch
-    block.default.hami_melon: Hami Melon
-    block.default.hami_melon_stem: Hami Melon Stem
-    block.default.attached_hami_melon_stem: Hami Melon Stem
-    block.default.magma_plant: Magma Plant
+    block_name:default:chinese_lantern: Chinese Lantern
+    block_name:default:netherite_anvil: Netherite Anvil
+    block_name:default:topaz_ore: Topaz Ore
+    block_name:default:deepslate_topaz_ore: Deepslate Topaz Ore
+    block_name:default:palm_log: Palm Log
+    block_name:default:stripped_palm_log: Stripped Palm Log
+    block_name:default:palm_wood: Palm Wood
+    block_name:default:stripped_palm_wood: Stripped Palm Wood
+    block_name:default:palm_planks: Palm Planks
+    block_name:default:palm_sapling: Palm Sapling
+    block_name:default:palm_leaves: Palm Leaves
+    block_name:default:palm_trapdoor: Palm Trapdoor
+    block_name:default:palm_door: Palm Door
+    block_name:default:palm_fence_gate: Palm Fence Gate
+    block_name:default:palm_slab: Palm Slab
+    block_name:default:palm_stairs: Palm Stairs
+    block_name:default:palm_button: Palm Button
+    block_name:default:palm_fence: Palm Fence
+    block_name:default:fairy_flower: Fairy Flower
+    block_name:default:reed: Reed
+    block_name:default:flame_cane: Flame Cane
+    block_name:default:ender_pearl_flower: Ender Pearl Flower
+    block_name:default:gunpowder_block: GunPowder Block
+    block_name:default:solid_gunpowder_block: Solid GunPowder Block
+    block_name:default:copper_coil: Copper Coil
+    block_name:default:chessboard_block: Chessboard Block
+    block_name:default:safe_block: Safe Block
+    block_name:default:sleeper_sofa: Sofa
+    block_name:default:sofa: Sofa
+    block_name:default:amethyst_torch: Amethyst Torch
+    block_name:default:amethyst_wall_torch: Amethyst Torch
+    block_name:default:hami_melon: Hami Melon
+    block_name:default:hami_melon_stem: Hami Melon Stem
+    block_name:default:attached_hami_melon_stem: Hami Melon Stem
+    block_name:default:magma_plant: Magma Plant
   zh_cn:
-    block.default.chinese_lantern: 灯笼
-    block.default.netherite_anvil: 下界合金砧
-    block.default.topaz_ore: 黄玉矿石
-    block.default.deepslate_topaz_ore: 深层黄玉矿石
-    block.default.palm_log: 棕榈原木
-    block.default.stripped_palm_log: 去皮棕榈原木
-    block.default.palm_wood: 棕榈木
-    block.default.stripped_palm_wood: 去皮棕榈木
-    block.default.palm_planks: 棕榈木板
-    block.default.palm_sapling: 棕榈树苗
-    block.default.palm_leaves: 棕榈树叶
-    block.default.palm_trapdoor: 棕榈木活板门
-    block.default.palm_door: 棕榈木门
-    block.default.palm_fence_gate: 棕榈木栅栏门
-    block.default.palm_slab: 棕榈木台阶
-    block.default.palm_stairs: 棕榈木楼梯
-    block.default.palm_button: 棕榈木按钮
-    block.default.palm_fence: 棕榈木栅栏
-    block.default.fairy_flower: 仙灵花
-    block.default.reed: 芦苇
-    block.default.flame_cane: 烈焰甘蔗
-    block.default.ender_pearl_flower: 末影珍珠花
-    block.default.gunpowder_block: 火药粉末
-    block.default.solid_gunpowder_block: 凝固火药块
-    block.default.copper_coil: 铜线圈
-    block.default.chessboard_block: 棋盘方块
-    block.default.safe_block: 保险柜
-    block.default.sleeper_sofa: 沙发
-    block.default.sofa: 沙发
-    block.default.amethyst_torch: 紫水晶火把
-    block.default.amethyst_wall_torch: 紫水晶火把
-    block.default.hami_melon: 哈密瓜
-    block.default.hami_melon_stem: 哈密瓜茎
-    block.default.attached_hami_melon_stem: 哈密瓜茎
-    block.default.magma_plant: 岩浆植物
+    block_name:default:chinese_lantern: 灯笼
+    block_name:default:netherite_anvil: 下界合金砧
+    block_name:default:topaz_ore: 黄玉矿石
+    block_name:default:deepslate_topaz_ore: 深层黄玉矿石
+    block_name:default:palm_log: 棕榈原木
+    block_name:default:stripped_palm_log: 去皮棕榈原木
+    block_name:default:palm_wood: 棕榈木
+    block_name:default:stripped_palm_wood: 去皮棕榈木
+    block_name:default:palm_planks: 棕榈木板
+    block_name:default:palm_sapling: 棕榈树苗
+    block_name:default:palm_leaves: 棕榈树叶
+    block_name:default:palm_trapdoor: 棕榈木活板门
+    block_name:default:palm_door: 棕榈木门
+    block_name:default:palm_fence_gate: 棕榈木栅栏门
+    block_name:default:palm_slab: 棕榈木台阶
+    block_name:default:palm_stairs: 棕榈木楼梯
+    block_name:default:palm_button: 棕榈木按钮
+    block_name:default:palm_fence: 棕榈木栅栏
+    block_name:default:fairy_flower: 仙灵花
+    block_name:default:reed: 芦苇
+    block_name:default:flame_cane: 烈焰甘蔗
+    block_name:default:ender_pearl_flower: 末影珍珠花
+    block_name:default:gunpowder_block: 火药粉末
+    block_name:default:solid_gunpowder_block: 凝固火药块
+    block_name:default:copper_coil: 铜线圈
+    block_name:default:chessboard_block: 棋盘方块
+    block_name:default:safe_block: 保险柜
+    block_name:default:sleeper_sofa: 沙发
+    block_name:default:sofa: 沙发
+    block_name:default:amethyst_torch: 紫水晶火把
+    block_name:default:amethyst_wall_torch: 紫水晶火把
+    block_name:default:hami_melon: 哈密瓜
+    block_name:default:hami_melon_stem: 哈密瓜茎
+    block_name:default:attached_hami_melon_stem: 哈密瓜茎
+    block_name:default:magma_plant: 岩浆植物
   fr_fr:
-    block.default.chinese_lantern: Lanterne Chinoise
-    block.default.netherite_anvil: Enclume en Netherite
-    block.default.topaz_ore: Minerai de Topaze
-    block.default.deepslate_topaz_ore: Minerai de Topaze en Schiste Sombre
-    block.default.palm_log: Bois de Palmier
-    block.default.stripped_palm_log: Bois de Palmier Écorcé
-    block.default.palm_wood: Bois de Palmier
-    block.default.stripped_palm_wood: Bois de Palmier Écorcé
-    block.default.palm_planks: Planches de Palmier
-    block.default.palm_sapling: Pousse de Palmier
-    block.default.palm_leaves: Feuilles de Palmier
-    block.default.palm_trapdoor: Trappe en Palmier
-    block.default.palm_door: Porte en Palmier
-    block.default.palm_fence_gate: Portail de Barrière en Palmier
-    block.default.palm_slab: Dalle en Palmier
-    block.default.palm_stairs: Escalier en Palmier
-    block.default.palm_button: Bouton en Palmier
-    block.default.palm_fence: Barrière en Palmier
-    block.default.fairy_flower: Fleur Fée
-    block.default.reed: Roseau
-    block.default.flame_cane: Canne de Flamme
-    block.default.ender_pearl_flower: Fleur de Perle du Néant
-    block.default.gunpowder_block: Bloc de Poudre à Canon
-    block.default.solid_gunpowder_block: Bloc de Poudre à Canon Solide
-    block.default.copper_coil: Bobine de Cuivre
-    block.default.chessboard_block: Bloc Damier
-    block.default.safe_block: Coffre-Fort
-    block.default.sleeper_sofa: Canapé
-    block.default.sofa: Canapé
-    block.default.amethyst_torch: Torche en Améthyste
-    block.default.amethyst_wall_torch: Torche en Améthyste
-    block.default.hami_melon: Melon de Hami
-    block.default.hami_melon_stem: Tige de Melon de Hami
-    block.default.attached_hami_melon_stem: Tige de Melon de Hami
-    block.default.magma_plant: Plante de Magma
+    block_name:default:chinese_lantern: Lanterne Chinoise
+    block_name:default:netherite_anvil: Enclume en Netherite
+    block_name:default:topaz_ore: Minerai de Topaze
+    block_name:default:deepslate_topaz_ore: Minerai de Topaze en Schiste Sombre
+    block_name:default:palm_log: Bois de Palmier
+    block_name:default:stripped_palm_log: Bois de Palmier Écorcé
+    block_name:default:palm_wood: Bois de Palmier
+    block_name:default:stripped_palm_wood: Bois de Palmier Écorcé
+    block_name:default:palm_planks: Planches de Palmier
+    block_name:default:palm_sapling: Pousse de Palmier
+    block_name:default:palm_leaves: Feuilles de Palmier
+    block_name:default:palm_trapdoor: Trappe en Palmier
+    block_name:default:palm_door: Porte en Palmier
+    block_name:default:palm_fence_gate: Portail de Barrière en Palmier
+    block_name:default:palm_slab: Dalle en Palmier
+    block_name:default:palm_stairs: Escalier en Palmier
+    block_name:default:palm_button: Bouton en Palmier
+    block_name:default:palm_fence: Barrière en Palmier
+    block_name:default:fairy_flower: Fleur Fée
+    block_name:default:reed: Roseau
+    block_name:default:flame_cane: Canne de Flamme
+    block_name:default:ender_pearl_flower: Fleur de Perle du Néant
+    block_name:default:gunpowder_block: Bloc de Poudre à Canon
+    block_name:default:solid_gunpowder_block: Bloc de Poudre à Canon Solide
+    block_name:default:copper_coil: Bobine de Cuivre
+    block_name:default:chessboard_block: Bloc Damier
+    block_name:default:safe_block: Coffre-Fort
+    block_name:default:sleeper_sofa: Canapé
+    block_name:default:sofa: Canapé
+    block_name:default:amethyst_torch: Torche en Améthyste
+    block_name:default:amethyst_wall_torch: Torche en Améthyste
+    block_name:default:hami_melon: Melon de Hami
+    block_name:default:hami_melon_stem: Tige de Melon de Hami
+    block_name:default:attached_hami_melon_stem: Tige de Melon de Hami
+    block_name:default:magma_plant: Plante de Magma
 # Translations for furniture are typically designed for the API.
 # If you are using a plugin that supports displaying furniture names, you will most likely need to configure the translations for the furniture.
 lang#furniture:

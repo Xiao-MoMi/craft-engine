@@ -7,7 +7,7 @@ import net.momirealms.craftengine.core.item.ItemProcessorFactory;
 import net.momirealms.craftengine.core.item.setting.EquipmentData;
 import net.momirealms.craftengine.core.util.Key;
 import net.momirealms.craftengine.core.util.ResourceConfigUtils;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.Map;
 
@@ -20,7 +20,7 @@ public final class EquippableProcessor implements SimpleNetworkItemProcessor {
     }
 
     public EquipmentData data() {
-        return data;
+        return this.data;
     }
 
     @Override
@@ -29,7 +29,7 @@ public final class EquippableProcessor implements SimpleNetworkItemProcessor {
     }
 
     @Override
-    public <I> @Nullable Key componentType(Item<I> item, ItemBuildContext context) {
+    public <I> @NotNull Key componentType(Item<I> item, ItemBuildContext context) {
         return DataComponentKeys.EQUIPPABLE;
     }
 

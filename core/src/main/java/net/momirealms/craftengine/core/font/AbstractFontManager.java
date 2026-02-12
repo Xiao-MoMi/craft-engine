@@ -13,7 +13,6 @@ import net.momirealms.craftengine.core.plugin.config.IdSectionConfigParser;
 import net.momirealms.craftengine.core.plugin.context.ContextHolder;
 import net.momirealms.craftengine.core.plugin.context.PlayerOptionalContext;
 import net.momirealms.craftengine.core.plugin.locale.LocalizedResourceConfigException;
-import net.momirealms.craftengine.core.plugin.text.component.ComponentProvider;
 import net.momirealms.craftengine.core.util.*;
 import org.ahocorasick.trie.Token;
 import org.ahocorasick.trie.Trie;
@@ -41,15 +40,15 @@ public abstract class AbstractFontManager implements FontManager {
     // namespace:id emoji
     private final Map<Key, Emoji> emojis = new HashMap<>();
     // namespace:id image
-    private final Map<Key, BitmapImage> images = new HashMap<>();
+    private final Map<Key, BitmapImage> bitmapImages = new HashMap<>();
+    private final Map<Key, Image> images = new HashMap<>();
+    private final Map<String, Image> imagesByValue = new HashMap<>();
     private final Set<Integer> illegalChars = new HashSet<>();
     private final ImageParser imageParser;
     private final EmojiParser emojiParser;
     private OffsetFont offsetFont;
 
-    protected Trie networkTagTrie;
     protected Trie emojiKeywordTrie;
-    protected Map<String, ComponentProvider> networkTagMapper;
     protected Map<String, Emoji> emojiMapper;
     protected List<Emoji> emojiList;
     protected List<String> allEmojiSuggestions;
@@ -76,16 +75,20 @@ public abstract class AbstractFontManager implements FontManager {
                 .filter(section -> section.getBoolean("enable", true))
                 .map(OffsetFont::new)
                 .orElse(null);
-        this.networkTagMapper = new HashMap<>(1024);
     }
 
     @Override
     public OffsetFont offsetFont() {
-        return offsetFont;
+        return this.offsetFont;
     }
 
     @Override
-    public Map<Key, BitmapImage> loadedImages() {
+    public Map<Key, BitmapImage> loadedBitmapImages() {
+        return Collections.unmodifiableMap(this.bitmapImages);
+    }
+
+    @Override
+    public Map<Key, Image> loadedImages() {
         return Collections.unmodifiableMap(this.images);
     }
 
@@ -97,15 +100,13 @@ public abstract class AbstractFontManager implements FontManager {
     @Override
     public void unload() {
         this.fonts.clear();
+        this.bitmapImages.clear();
         this.images.clear();
+        this.imagesByValue.clear();
         this.cachedImagesSuggestions.clear();
         this.illegalChars.clear();
         this.emojis.clear();
-        this.networkTagTrie = null;
         this.emojiKeywordTrie = null;
-        if (this.networkTagMapper != null) {
-            this.networkTagMapper.clear();
-        }
         if (this.emojiMapper != null) {
             this.emojiMapper.clear();
         }
@@ -124,76 +125,12 @@ public abstract class AbstractFontManager implements FontManager {
     @Override
     public void delayedLoad() {
         Optional.ofNullable(this.fonts.get(DEFAULT_FONT)).ifPresent(font -> this.illegalChars.addAll(font.codepointsInUse()));
-        this.registerImageTags();
-        this.registerShiftTags();
-        this.registerGlobalTags();
-        this.registerL10nTags();
-        this.buildNetworkTagTrie();
+        // global shift l10n image
         this.buildEmojiKeywordsTrie();
         this.emojiList = new ArrayList<>(this.emojis.values());
         this.allEmojiSuggestions = this.emojis.values().stream()
                 .flatMap(emoji -> emoji.keywords().stream())
                 .collect(Collectors.toList());
-    }
-
-    private void registerL10nTags() {
-        for (String key : this.plugin.translationManager().translationKeys()) {
-            String l10nTag = l10nTag(key);
-            this.networkTagMapper.put(l10nTag, ComponentProvider.l10n(key));
-            this.networkTagMapper.put("\\" + l10nTag, ComponentProvider.constant(Component.text(l10nTag)));
-        }
-    }
-
-    private void registerGlobalTags() {
-        for (Map.Entry<String, String> entry : this.plugin.globalVariableManager().globalVariables().entrySet()) {
-            String globalTag = globalTag(entry.getKey());
-            this.networkTagMapper.put(globalTag, ComponentProvider.miniMessageOrConstant(entry.getValue()));
-            this.networkTagMapper.put("\\" + globalTag, ComponentProvider.constant(Component.text(entry.getValue())));
-        }
-    }
-
-    private void registerShiftTags() {
-        if (this.offsetFont == null) return;
-        for (int i = -256; i <= 256; i++) {
-            String shiftTag = "<shift:" + i + ">";
-            this.networkTagMapper.put(shiftTag, ComponentProvider.constant(this.offsetFont.createOffset(i)));
-            this.networkTagMapper.put("\\" + shiftTag, ComponentProvider.constant(Component.text(shiftTag)));
-        }
-    }
-
-    private void registerImageTags() {
-        for (BitmapImage image : this.images.values()) {
-            Key key = image.id();
-            String id = key.toString();
-            String simpleImageTag = imageTag(id);
-            this.networkTagMapper.put(simpleImageTag, ComponentProvider.constant(image.componentAt(0, 0)));
-            this.networkTagMapper.put("\\" + simpleImageTag, ComponentProvider.constant(Component.text(simpleImageTag)));
-            String simplerImageTag = imageTag(key.value());
-            this.networkTagMapper.put(simplerImageTag, ComponentProvider.constant(image.componentAt(0, 0)));
-            this.networkTagMapper.put("\\" + simplerImageTag, ComponentProvider.constant(Component.text(simplerImageTag)));
-            for (int i = 0; i < image.rows(); i++) {
-                for (int j = 0; j < image.columns(); j++) {
-                    String imageArgs = id + ":" + i + ":" + j;
-                    String imageTag = imageTag(imageArgs);
-                    this.networkTagMapper.put(imageTag, ComponentProvider.constant(image.componentAt(i, j)));
-                    this.networkTagMapper.put("\\" + imageTag, ComponentProvider.constant(Component.text(imageTag)));
-                }
-            }
-        }
-    }
-
-    @Override
-    public Map<String, ComponentProvider> matchTags(String text) {
-        if (this.networkTagTrie == null) {
-            return Collections.emptyMap();
-        }
-        Map<String, ComponentProvider> tags = new HashMap<>();
-        for (Token token : this.networkTagTrie.tokenize(text)) {
-            if (token.isMatch()) {
-                tags.put(token.getFragment(), this.networkTagMapper.get(token.getFragment()));
-            }
-        }
-        return tags;
     }
 
     @Override
@@ -308,43 +245,6 @@ public abstract class AbstractFontManager implements FontManager {
         return EmojiComponentProcessResult.success(text);
     }
 
-    @Override
-    public IllegalCharacterProcessResult processIllegalCharacters(String raw, char replacement) {
-        boolean hasIllegal = false;
-        // replace illegal image usage
-        Map<String, ComponentProvider> tokens = matchTags(raw);
-        if (!tokens.isEmpty()) {
-            for (Map.Entry<String, ComponentProvider> entry : tokens.entrySet()) {
-                raw = raw.replace(entry.getKey(), String.valueOf(replacement));
-                hasIllegal = true;
-            }
-        }
-
-        if (this.isDefaultFontInUse()) {
-            // replace illegal codepoint
-            char[] chars = raw.toCharArray();
-            int[] codepoints = CharacterUtils.charsToCodePoints(chars);
-            int[] newCodepoints = new int[codepoints.length];
-
-            for (int i = 0; i < codepoints.length; i++) {
-                int codepoint = codepoints[i];
-                if (!isIllegalCodepoint(codepoint)) {
-                    newCodepoints[i] = codepoint;
-                } else {
-                    newCodepoints[i] = replacement;
-                    hasIllegal = true;
-                }
-            }
-
-            if (hasIllegal) {
-                return IllegalCharacterProcessResult.has(new String(newCodepoints, 0, newCodepoints.length));
-            }
-        } else if (hasIllegal) {
-            return IllegalCharacterProcessResult.has(raw);
-        }
-        return IllegalCharacterProcessResult.not();
-    }
-
     private void buildEmojiKeywordsTrie() {
         this.emojiMapper = new HashMap<>();
         for (Emoji emoji : this.emojis.values()) {
@@ -356,25 +256,6 @@ public abstract class AbstractFontManager implements FontManager {
                 .ignoreOverlaps()
                 .addKeywords(this.emojiMapper.keySet())
                 .build();
-    }
-
-    private void buildNetworkTagTrie() {
-        this.networkTagTrie = Trie.builder()
-                .ignoreOverlaps()
-                .addKeywords(this.networkTagMapper.keySet())
-                .build();
-    }
-
-    private static String imageTag(String text) {
-        return "<image:" + text + ">";
-    }
-
-    private static String globalTag(String text) {
-        return "<global:" + text + ">";
-    }
-
-    private static String l10nTag(String text) {
-        return "<l10n:" + text + ">";
     }
 
     @Override
@@ -398,13 +279,22 @@ public abstract class AbstractFontManager implements FontManager {
     }
 
     @Override
-    public Optional<BitmapImage> bitmapImageByImageId(Key id) {
+    public Optional<BitmapImage> bitmapImageById(Key id) {
+        return Optional.ofNullable(this.bitmapImages.get(id));
+    }
+
+    @Override
+    public Optional<Image> imageById(Key id) {
         return Optional.ofNullable(this.images.get(id));
+    }
+
+    public Optional<Image> imageByIdValue(String value) {
+        return Optional.ofNullable(this.imagesByValue.get(value));
     }
 
     @Override
     public int codepointByImageId(Key key, int x, int y) {
-        BitmapImage image = this.images.get(key);
+        Image image = this.images.get(key);
         if (image == null) return -1;
         return image.codepointAt(x, y);
     }
@@ -418,7 +308,6 @@ public abstract class AbstractFontManager implements FontManager {
     public Optional<Font> fontById(Key id) {
         return Optional.ofNullable(this.fonts.get(id));
     }
-
 
     @Override
     public Collection<Suggestion> cachedImagesSuggestions() {
@@ -474,16 +363,16 @@ public abstract class AbstractFontManager implements FontManager {
                 String[] split = rawImage.split(":");
                 if (split.length == 2) {
                     Key imageId = new Key(split[0], split[1]);
-                    Optional<BitmapImage> bitmapImage = bitmapImageByImageId(imageId);
-                    if (bitmapImage.isPresent()) {
+                    Optional<Image> bitmapImage = imageById(imageId);
+                    if (bitmapImage.isPresent() && bitmapImage.get() != DummyImage.INSTANCE) {
                         image = bitmapImage.get().miniMessageAt(0, 0);
                     } else {
                         throw new LocalizedResourceConfigException("warning.config.emoji.invalid_image", rawImage);
                     }
                 } else if (split.length == 4) {
                     Key imageId = new Key(split[0], split[1]);
-                    Optional<BitmapImage> bitmapImage = bitmapImageByImageId(imageId);
-                    if (bitmapImage.isPresent()) {
+                    Optional<Image> bitmapImage = imageById(imageId);
+                    if (bitmapImage.isPresent() && bitmapImage.get() != DummyImage.INSTANCE) {
                         try {
                             image = bitmapImage.get().miniMessageAt(Integer.parseInt(split[2]), Integer.parseInt(split[3]));
                         } catch (ArrayIndexOutOfBoundsException e) {
@@ -497,7 +386,7 @@ public abstract class AbstractFontManager implements FontManager {
                 }
             }
             Emoji emoji = new Emoji(content, permission, image, keywords);
-            emojis.put(id, emoji);
+            AbstractFontManager.this.emojis.put(id, emoji);
         }
     }
 
@@ -517,7 +406,7 @@ public abstract class AbstractFontManager implements FontManager {
 
         @Override
         public int count() {
-            return AbstractFontManager.this.images.size();
+            return AbstractFontManager.this.bitmapImages.size();
         }
 
         @Override
@@ -552,8 +441,59 @@ public abstract class AbstractFontManager implements FontManager {
 
         @Override
         public void parseSection(Pack pack, Path path, String node, Key id, Map<String, Object> section) {
-            if (AbstractFontManager.this.images.containsKey(id)) {
+            if (AbstractFontManager.this.bitmapImages.containsKey(id)) {
                 throw new LocalizedResourceConfigException("warning.config.image.duplicate");
+            }
+
+            // 引用类型的
+            Object ref = section.get("ref");
+            boolean special = false;
+            if (ref != null) {
+                String rawRef = ref.toString();
+                String[] param = rawRef.split(":", 4);
+                int row;
+                int col;
+                Key refId;
+                if (param.length == 4) {
+                    row = Integer.parseInt(param[2]);
+                    col = Integer.parseInt(param[3]);
+                    refId = Key.of(param[0], param[1]);
+                } else if (param.length == 3) {
+                    row = Integer.parseInt(param[2]);
+                    col = 0;
+                    refId = Key.of(param[0], param[1]);
+                } else {
+                    row = ResourceConfigUtils.getAsInt(section.get("row"), "row");
+                    col = ResourceConfigUtils.getAsInt(section.get("column"), "column");
+                    if (param.length == 1) {
+                        refId = Key.of(param[0]);
+                        special = true;
+                    } else {
+                        refId = Key.of(param[0], param[1]);
+                    }
+                }
+                ReferenceImage referenceImage;
+                if (special) {
+                    referenceImage = new ReferenceImage(LazyReference.lazyReference(() -> {
+                        Image image = AbstractFontManager.this.imagesByValue.get(refId.value());
+                        if (image instanceof BitmapImage bitmapImage) {
+                            return bitmapImage;
+                        }
+                        return DummyImage.INSTANCE;
+                    }), row, col);
+                } else {
+                    referenceImage = new ReferenceImage(LazyReference.lazyReference(() -> {
+                        Optional<BitmapImage> bitmapImage = bitmapImageById(refId);
+                        if (bitmapImage.isPresent()) {
+                            return bitmapImage.get();
+                        }
+                        return DummyImage.INSTANCE;
+                    }), row, col);
+                }
+                AbstractFontManager.this.images.put(id, referenceImage);
+                AbstractFontManager.this.imagesByValue.put(id.value(), referenceImage);
+                AbstractFontManager.this.cachedImagesSuggestions.add(Suggestion.suggestion(id.asString()));
+                return;
             }
 
             Object file = section.get("file");
@@ -731,7 +671,9 @@ public abstract class AbstractFontManager implements FontManager {
                     }
                 }
 
+                AbstractFontManager.this.bitmapImages.put(id, bitmapImage);
                 AbstractFontManager.this.images.put(id, bitmapImage);
+                AbstractFontManager.this.imagesByValue.put(id.value(), bitmapImage);
                 AbstractFontManager.this.cachedImagesSuggestions.add(Suggestion.suggestion(id.asString()));
 
             }, () -> GsonHelper.get().toJson(section)));

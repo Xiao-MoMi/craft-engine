@@ -4,7 +4,7 @@ import com.destroystokyo.paper.event.entity.EntityAddToWorldEvent;
 import com.destroystokyo.paper.event.entity.EntityRemoveFromWorldEvent;
 import net.kyori.adventure.text.Component;
 import net.momirealms.craftengine.bukkit.api.BukkitAdaptors;
-import net.momirealms.craftengine.bukkit.api.event.FurnitureAttemptBreakEvent;
+import net.momirealms.craftengine.bukkit.api.event.FurnitureHitEvent;
 import net.momirealms.craftengine.bukkit.api.event.FurnitureInteractEvent;
 import net.momirealms.craftengine.bukkit.nms.FastNMS;
 import net.momirealms.craftengine.bukkit.plugin.user.BukkitServerPlayer;
@@ -125,7 +125,7 @@ public class FurnitureEventListener implements Listener {
 
     @SuppressWarnings("DuplicatedCode")
     @EventHandler(ignoreCancelled = true, priority = EventPriority.LOWEST)
-    public void onFurniturePreBreak(FurnitureAttemptBreakEvent event) {
+    public void onFurniturePreBreak(FurnitureHitEvent event) {
         Player bukkitPlayer = event.getPlayer();
         BukkitServerPlayer player = BukkitAdaptors.adapt(bukkitPlayer);
         if (player == null) return;

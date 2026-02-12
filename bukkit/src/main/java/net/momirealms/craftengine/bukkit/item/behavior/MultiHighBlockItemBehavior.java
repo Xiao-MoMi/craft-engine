@@ -32,10 +32,10 @@ import java.nio.file.Path;
 import java.util.List;
 import java.util.Map;
 
-public class MultiHighBlockItemBehavior extends BlockItemBehavior {
+public final class MultiHighBlockItemBehavior extends BlockItemBehavior {
     public static final ItemBehaviorFactory<MultiHighBlockItemBehavior> FACTORY = new Factory();
 
-    public MultiHighBlockItemBehavior(Key blockId) {
+    private MultiHighBlockItemBehavior(Key blockId) {
         super(blockId);
     }
 

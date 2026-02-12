@@ -31,7 +31,7 @@ public class ArmorStandPacketHandler implements EntityPacketHandler {
         int id = buf.readVarInt();
         boolean isChanged = false;
         List<Object> packedItems = FastNMS.INSTANCE.method$ClientboundSetEntityDataPacket$unpack(buf);
-        for (int i = 0; i < packedItems.size(); i++) {
+        for (int i = packedItems.size() - 1; i >= 0; i--) {
             Object packedItem = packedItems.get(i);
             int entityDataId = FastNMS.INSTANCE.field$SynchedEntityData$DataValue$id(packedItem);
             if (entityDataId != BaseEntityData.CustomName.id()) continue;
@@ -40,8 +40,8 @@ public class ArmorStandPacketHandler implements EntityPacketHandler {
             if (optionalTextComponent.isEmpty()) continue;
             Object textComponent = optionalTextComponent.get();
             String json = ComponentUtils.minecraftToJson(textComponent);
-            Map<String, ComponentProvider> tokens = CraftEngine.instance().fontManager().matchTags(json);
-            if (tokens.isEmpty()) continue;
+            Map<String, ComponentProvider> tokens = CraftEngine.instance().networkManager().matchNetworkTags(json);
+            if (tokens.isEmpty()) break;
             Component component = AdventureHelper.replaceText(AdventureHelper.jsonToComponent(json), tokens, NetworkTextReplaceContext.of(user));
             Object serializer = FastNMS.INSTANCE.field$SynchedEntityData$DataValue$serializer(packedItem);
             packedItems.set(i, FastNMS.INSTANCE.constructor$SynchedEntityData$DataValue(entityDataId, serializer, Optional.of(ComponentUtils.adventureToMinecraft(component))));

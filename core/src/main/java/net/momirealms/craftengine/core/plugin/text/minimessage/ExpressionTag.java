@@ -16,14 +16,11 @@ import org.jetbrains.annotations.Nullable;
 import java.text.DecimalFormat;
 import java.text.DecimalFormatSymbols;
 import java.util.Locale;
-import java.util.Objects;
 
-public class ExpressionTag implements TagResolver {
-    private final net.momirealms.craftengine.core.plugin.context.Context context;
+public final class ExpressionTag implements TagResolver {
+    public static final TagResolver INSTANCE = new ExpressionTag();
 
-    public ExpressionTag(@NotNull net.momirealms.craftengine.core.plugin.context.Context context) {
-        this.context = Objects.requireNonNull(context, "context");
-    }
+    private ExpressionTag() {}
 
     @Override
     public @Nullable Tag resolve(@NotNull String name, @NotNull ArgumentQueue arguments, @NotNull Context ctx) throws ParsingException {
@@ -34,7 +31,7 @@ public class ExpressionTag implements TagResolver {
         String format = arguments.popOr("No format provided").toString();
         String expr = arguments.popOr("No expression provided").toString();
 
-        Component resultComponent = AdventureHelper.customMiniMessage().deserialize(expr, context.tagResolvers());
+        Component resultComponent = ctx.deserialize(expr);
         String resultString = AdventureHelper.plainTextContent(resultComponent);
         Expression expression = new Expression(resultString);
 

@@ -1,6 +1,5 @@
 items:
   default:ender_pearl_flower_seeds:
-    material: nether_brick
     data:
       item-name: <!i><lang:item.default.ender_pearl_flower_seeds>
     texture: minecraft:item/custom/ender_pearl_flower_seeds
@@ -25,7 +24,7 @@ blocks:
           - minecraft:end_stone
       - type: crop_block
         grow-speed: 0.25
-        light-requirement: 9
+        light-requirement: 0
         is-bone-meal-target: true
         bone-meal-age-bonus: 1
     loot:
@@ -77,6 +76,7 @@ blocks:
             add: true
             count: -1
           - type: swing_hand
+          - type: update_interaction_tick
     states:
       properties:
         age:
@@ -134,3 +134,59 @@ vanilla-loots:
           entries:
             - type: item
               item: default:ender_pearl_flower_seeds
+placed-features:
+  default:ender_pearl_flower:
+    environment:
+      - minecraft:the_end
+    feature:
+      type: 'minecraft:random_patch'
+      config:
+        feature:
+          feature:
+            type: 'minecraft:simple_block'
+            config:
+              to_place:
+                type: 'minecraft:weighted_state_provider'
+                entries:
+                  - weight: 4
+                    data:
+                      Name: 'default:ender_pearl_flower'
+                      Properties:
+                        age: '0'
+                  - weight: 2
+                    data:
+                      Name: 'default:ender_pearl_flower'
+                      Properties:
+                        age: '1'
+                  - weight: 1
+                    data:
+                      Name: 'default:ender_pearl_flower'
+                      Properties:
+                        age: '2'
+          placement:
+            - type: 'minecraft:block_predicate_filter'
+              predicate:
+                type: 'minecraft:all_of'
+                predicates:
+                  - type: 'minecraft:matching_blocks'
+                    blocks: 'minecraft:air'
+                  - type: 'minecraft:matching_blocks'
+                    blocks: 'minecraft:end_stone'
+                    offset:
+                      - 0
+                      - -1
+                      - 0
+        tries: 96
+        xz_spread: 7
+        y_spread: 3
+    placement:
+      - type: 'minecraft:in_square'
+      - type: 'minecraft:rarity_filter'
+        chance: 24
+      - type: 'minecraft:height_range'
+        height:
+          type: 'minecraft:uniform'
+          min_inclusive:
+            absolute: 50
+          max_inclusive:
+            absolute: 70

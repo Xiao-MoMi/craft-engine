@@ -23,6 +23,7 @@ public record UnknownPayload(Key channel, Object rawPayload) implements Payload 
     }
 
     public ByteBuf getData() {
+        if (this.rawPayload() instanceof ByteBuf buf) return buf;
         try {
             if (isByteArray) {
                 return Unpooled.wrappedBuffer((byte[]) NetworkReflections.field$ServerboundCustomPayloadPacket$UnknownPayload$dataByteArray.get(this.rawPayload()));

@@ -63,10 +63,6 @@ dependencies {
     compileOnly("com.mojang:authlib:${rootProject.properties["authlib_version"]}")
     // concurrentutil
     compileOnly("ca.spottedleaf:concurrentutil:${rootProject.properties["concurrent_util_version"]}")
-    // ItemBridge
-    compileOnly("cn.gtemc:itembridge:${rootProject.properties["itembridge_version"]}")
-    // LevelerBridge
-    compileOnly("cn.gtemc:levelerbridge:${rootProject.properties["levelerbridge_version"]}")
 }
 
 java {

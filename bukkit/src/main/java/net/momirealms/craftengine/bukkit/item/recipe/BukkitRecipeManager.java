@@ -327,9 +327,10 @@ public class BukkitRecipeManager extends AbstractRecipeManager<ItemStack> {
             Map<Object, Object> scannedResources = (Map<Object, Object>) CoreReflections.methodHandle$FileToIdConverter$listMatchingResources.invokeExact(fileToIdConverter, resourceManager);
             for (Map.Entry<Object, Object> entry : scannedResources.entrySet()) {
                 Key id = extractKeyFromResourceLocation(entry.getKey().toString());
-                Reader reader = (Reader) CoreReflections.methodHandle$Resource$openAsReader.invokeExact(entry.getValue());
-                JsonObject jsonObject = JsonParser.parseReader(reader).getAsJsonObject();
-                recipes.put(id, jsonObject);
+                try (Reader reader = (Reader) CoreReflections.methodHandle$Resource$openAsReader.invokeExact(entry.getValue())) {
+                    JsonObject jsonObject = JsonParser.parseReader(reader).getAsJsonObject();
+                    recipes.put(id, jsonObject);
+                }
             }
         } catch (Throwable e) {
             this.plugin.logger().warn("Unknown error occurred when loading data pack recipes", e);

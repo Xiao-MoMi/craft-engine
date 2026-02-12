@@ -16,12 +16,12 @@ import java.util.UUID;
 import java.util.function.Consumer;
 
 public final class TextDisplayFurnitureElement extends AbstractFurnitureElement {
-    private final TextDisplayFurnitureElementConfig config;
-    private final Furniture furniture;
-    private final WorldPosition position;
-    private final int entityId;
-    private final Object despawnPacket;
-    private final UUID uuid = UUID.randomUUID();
+    public final TextDisplayFurnitureElementConfig config;
+    public final Furniture furniture;
+    public final WorldPosition position;
+    public final int entityId;
+    public final Object despawnPacket;
+    public final UUID uuid = UUID.randomUUID();
 
     TextDisplayFurnitureElement(Furniture furniture, TextDisplayFurnitureElementConfig config) {
         super(config.predicate, config.hasCondition);
@@ -54,6 +54,11 @@ public final class TextDisplayFurnitureElement extends AbstractFurnitureElement 
     @Override
     public void hide(Player player) {
         player.sendPacket(this.despawnPacket, false);
+    }
+
+    @Override
+    public void refresh(Player player) {
+        player.sendPacket(FastNMS.INSTANCE.constructor$ClientboundSetEntityDataPacket(this.entityId, this.config.metadata.apply(player)), false);
     }
 
     @Override

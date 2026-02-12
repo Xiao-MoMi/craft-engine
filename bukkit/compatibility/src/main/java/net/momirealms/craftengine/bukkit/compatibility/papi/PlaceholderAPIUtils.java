@@ -1,7 +1,7 @@
 package net.momirealms.craftengine.bukkit.compatibility.papi;
 
 import me.clip.placeholderapi.PlaceholderAPI;
-import net.momirealms.craftengine.core.plugin.CraftEngine;
+import net.momirealms.craftengine.bukkit.plugin.BukkitCraftEngine;
 import org.bukkit.OfflinePlayer;
 import org.bukkit.entity.Player;
 
@@ -17,7 +17,7 @@ public class PlaceholderAPIUtils {
         return PlaceholderAPI.setRelationalPlaceholders(player1, player2, text);
     }
 
-    public static void registerExpansions(CraftEngine plugin) {
+    public static void registerExpansions(BukkitCraftEngine plugin) {
         new ImageExpansion(plugin).register();
         new ShiftExpansion(plugin).register();
         new CheckItemExpansion(plugin).register();

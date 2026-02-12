@@ -57,12 +57,12 @@ public class ViewerContext implements RelationalContext {
                         ShiftTag.INSTANCE, ImageTag.INSTANCE,
                         new PlaceholderTag(this.owner), new ViewerPlaceholderTag(this.viewer),
                         new NamedArgumentTag(this.owner), new ViewerNamedArgumentTag(this.viewer),
-                        new I18NTag(this), new ExpressionTag(this), new GlobalVariableTag(this)};
+                        I18NTag.INSTANCE, PlainL10NTag.INSTANCE, ExpressionTag.INSTANCE, GlobalVariableTag.INSTANCE};
             } else {
                 this.tagResolvers = new TagResolver[]{ShiftTag.INSTANCE, ImageTag.INSTANCE,
                         new PlaceholderTag(this.owner), new ViewerPlaceholderTag(this.viewer),
                         new NamedArgumentTag(this.owner), new ViewerNamedArgumentTag(this.viewer),
-                        new I18NTag(this), new ExpressionTag(this), new GlobalVariableTag(this)};
+                        I18NTag.INSTANCE, PlainL10NTag.INSTANCE, ExpressionTag.INSTANCE, GlobalVariableTag.INSTANCE};
             }
         }
         return this.tagResolvers;

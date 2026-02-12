@@ -11,8 +11,7 @@ import java.util.Objects;
 import java.util.concurrent.TimeUnit;
 import java.util.function.BiFunction;
 
-public class OffsetFont {
-    private static OffsetFont instance;
+public final class OffsetFont {
     private final net.momirealms.craftengine.core.util.Key font;
     private final Key fontKey;
 

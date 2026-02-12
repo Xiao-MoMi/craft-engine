@@ -32,6 +32,8 @@ public abstract class ItemFactory<W extends ItemWrapper<I>, I> {
         return new AbstractItem<>(this, wrapInternal(item));
     }
 
+    protected abstract ItemType type(W item);
+
     protected abstract W mergeCopy(W item1, W item2);
 
     protected abstract void merge(W item1, W item2);

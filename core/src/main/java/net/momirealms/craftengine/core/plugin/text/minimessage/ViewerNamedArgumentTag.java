@@ -3,7 +3,7 @@ package net.momirealms.craftengine.core.plugin.text.minimessage;
 import net.momirealms.craftengine.core.plugin.context.Context;
 import org.jetbrains.annotations.NotNull;
 
-public class ViewerNamedArgumentTag extends NamedArgumentTag {
+public final class ViewerNamedArgumentTag extends NamedArgumentTag {
 
     public ViewerNamedArgumentTag(@NotNull Context context) {
         super(context);

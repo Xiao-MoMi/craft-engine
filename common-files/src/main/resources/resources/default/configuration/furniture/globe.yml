@@ -1,6 +1,5 @@
 items:
   default:globe:
-    material: nether_brick
     data:
       item-name: <!i><lang:item.default.globe>
     model: minecraft:item/custom/globe
@@ -13,9 +12,11 @@ items:
       furniture:
         settings:
           item: default:globe
+          hit-times: 3
           sounds:
             break: minecraft:block.copper.break
             place: minecraft:block.copper.place
+            hit: minecraft:block.copper.hit
         variants:
           ground:
             loot-spawn-offset: 0,0.25,0
@@ -37,10 +38,12 @@ items:
         loot:
           template: default:loot_table/furniture
           arguments:
-            item: default:bench
+            item: default:globe
   default:globe_earth:
-    data::item-name: <!i><lang:item.default.globe>
+    data:
+      item-name: <!i><lang:item.default.globe>
     model: minecraft:item/custom/globe_earth
   default:globe_base:
-    data::item-name: <!i><lang:item.default.globe>
+    data:
+      item-name: <!i><lang:item.default.globe>
     model: minecraft:item/custom/globe_base

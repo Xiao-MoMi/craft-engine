@@ -27,8 +27,8 @@ import net.momirealms.craftengine.core.plugin.dependency.Dependencies;
 import net.momirealms.craftengine.core.plugin.dependency.Dependency;
 import net.momirealms.craftengine.core.plugin.dependency.DependencyManager;
 import net.momirealms.craftengine.core.plugin.dependency.DependencyManagerImpl;
-import net.momirealms.craftengine.core.plugin.entityculling.EntityCullingManager;
-import net.momirealms.craftengine.core.plugin.entityculling.EntityCullingManagerImpl;
+import net.momirealms.craftengine.core.entity.culling.EntityCullingManager;
+import net.momirealms.craftengine.core.entity.culling.EntityCullingManagerImpl;
 import net.momirealms.craftengine.core.plugin.gui.GuiManager;
 import net.momirealms.craftengine.core.plugin.gui.category.ItemBrowserManager;
 import net.momirealms.craftengine.core.plugin.gui.category.ItemBrowserManagerImpl;
@@ -175,7 +175,7 @@ public abstract class CraftEngine implements Plugin {
         this.advancementManager.reload();
         this.projectileManager.reload();
         this.seatManager.reload();
-        this.entityCullingManager.reload();
+        this.networkManager.reload();
     }
 
     private void runDelayTasks(boolean reloadRecipe) {
@@ -284,6 +284,8 @@ public abstract class CraftEngine implements Plugin {
         this.vanillaLootManager.delayedInit();
         // 注册脱离坐骑监听器
         this.seatManager.delayedInit();
+        // 加载实体剔除线程
+        this.entityCullingManager.load();
 
         if (!Config.delayConfigurationLoad()) {
             // 注册世界加载相关监听器
@@ -480,6 +482,8 @@ public abstract class CraftEngine implements Plugin {
         this.packManager.registerConfigSectionParser(this.advancementManager.parser());
         // register skip-optimization parser
         this.packManager.registerConfigSectionParser(this.packManager.parser());
+        // register feature parser
+        this.packManager.registerConfigSectionParsers(this.worldManager.parsers());
     }
 
     public void applyDependencies() {

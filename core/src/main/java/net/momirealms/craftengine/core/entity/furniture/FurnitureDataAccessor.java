@@ -13,7 +13,7 @@ import org.jetbrains.annotations.Nullable;
 import java.io.IOException;
 import java.util.Optional;
 
-public class FurnitureDataAccessor {
+public final class FurnitureDataAccessor {
     public static final String ITEM = "item";
     public static final String DYED_COLOR = "dyed_color";
     public static final String FIREWORK_EXPLOSION_COLORS = "firework_explosion_colors";

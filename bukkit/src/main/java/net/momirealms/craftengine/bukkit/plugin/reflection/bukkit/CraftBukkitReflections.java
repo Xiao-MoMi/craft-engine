@@ -400,4 +400,8 @@ public final class CraftBukkitReflections {
     public static final Field field$CraftTeam$team = requireNonNull(
             ReflectionUtils.getDeclaredField(clazz$CraftTeam, CoreReflections.clazz$PlayerTeam, 0)
     );
+
+    public static final Method method$CraftEventFactory$callInventoryOpenEvent = requireNonNull(
+            ReflectionUtils.getStaticMethod(clazz$CraftEventFactory, CoreReflections.clazz$AbstractContainerMenu, CoreReflections.clazz$ServerPlayer, CoreReflections.clazz$AbstractContainerMenu)
+    );
 }

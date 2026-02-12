@@ -50,6 +50,7 @@ import org.bukkit.plugin.Plugin;
 
 import java.util.*;
 
+@SuppressWarnings("unused")
 public class BukkitCompatibilityManager implements CompatibilityManager {
     private final BukkitCraftEngine plugin;
     private final Map<String, ModelProvider> modelProviders;
@@ -123,9 +124,7 @@ public class BukkitCompatibilityManager implements CompatibilityManager {
         }
         Key worldGuardRegion = Key.of("worldguard:region");
         if (this.hasPlugin("WorldGuard")) {
-            runCatchingHook(() -> {
-                CommonConditions.register(worldGuardRegion, WorldGuardRegionCondition.factory());
-            }, "WorldGuard");
+            runCatchingHook(() -> CommonConditions.register(worldGuardRegion, WorldGuardRegionCondition.factory()), "WorldGuard");
         } else {
             CommonConditions.register(worldGuardRegion, AlwaysFalseCondition.factory());
         }
@@ -140,9 +139,10 @@ public class BukkitCompatibilityManager implements CompatibilityManager {
     @Override
     public void onDelayedEnable() {
         if (this.isPluginEnabled("PlaceholderAPI")) {
-            PlaceholderAPIUtils.registerExpansions(this.plugin);
-            this.hasPlaceholderAPI = true;
-            logHook("PlaceholderAPI");
+            runCatchingHook(() -> {
+                PlaceholderAPIUtils.registerExpansions(this.plugin);
+                this.hasPlaceholderAPI = true;
+            }, "PlaceholderAPI");
         }
         if (this.isPluginEnabled("LuckPerms")) {
             runCatchingHook(this::initLuckPermsHook, "LuckPerms");
@@ -220,8 +220,8 @@ public class BukkitCompatibilityManager implements CompatibilityManager {
     }
 
     private void initLuckPermsHook() {
-        new LuckPermsEventListeners(plugin.javaPlugin(), (uuid) -> {
-            BukkitFontManager fontManager = plugin.fontManager();
+        new LuckPermsEventListeners(this.plugin.javaPlugin(), (uuid) -> {
+            BukkitFontManager fontManager = this.plugin.fontManager();
             fontManager.refreshEmojiSuggestions(uuid);
         });
     }
@@ -231,25 +231,28 @@ public class BukkitCompatibilityManager implements CompatibilityManager {
         if (VersionHelper.isOrAbove1_21_4()) {
             try {
                 Class.forName("com.infernalsuite.asp.api.AdvancedSlimePaperAPI");
-                SlimeFormatStorageAdaptor adaptor = new SlimeFormatStorageAdaptor(worldManager);
-                worldManager.setStorageAdaptor(adaptor);
-                Bukkit.getPluginManager().registerEvents(adaptor, plugin.javaPlugin());
-                logHook("AdvancedSlimePaper");
+                runCatchingHook(() -> {
+                    SlimeFormatStorageAdaptor adaptor = new SlimeFormatStorageAdaptor(worldManager);
+                    worldManager.setStorageAdaptor(adaptor);
+                    Bukkit.getPluginManager().registerEvents(adaptor, this.plugin.javaPlugin());
+                }, "AdvancedSlimePaper");
             } catch (ClassNotFoundException ignored) {
             }
         } else {
             try {
                 Class.forName("com.infernalsuite.aswm.api.SlimePlugin");
-                LegacySlimeFormatStorageAdaptor adaptor = new LegacySlimeFormatStorageAdaptor(worldManager, 1);
-                worldManager.setStorageAdaptor(adaptor);
-                Bukkit.getPluginManager().registerEvents(adaptor, plugin.javaPlugin());
-                logHook("AdvancedSlimePaper");
+                runCatchingHook(() -> {
+                    LegacySlimeFormatStorageAdaptor adaptor = new LegacySlimeFormatStorageAdaptor(worldManager, 1);
+                    worldManager.setStorageAdaptor(adaptor);
+                    Bukkit.getPluginManager().registerEvents(adaptor, this.plugin.javaPlugin());
+                }, "AdvancedSlimePaper");
             } catch (ClassNotFoundException ignored) {
                 if (hasPlugin("SlimeWorldPlugin")) {
-                    LegacySlimeFormatStorageAdaptor adaptor = new LegacySlimeFormatStorageAdaptor(worldManager, 2);
-                    worldManager.setStorageAdaptor(adaptor);
-                    Bukkit.getPluginManager().registerEvents(adaptor, plugin.javaPlugin());
-                    logHook("AdvancedSlimePaper");
+                    runCatchingHook(() -> {
+                        LegacySlimeFormatStorageAdaptor adaptor = new LegacySlimeFormatStorageAdaptor(worldManager, 2);
+                        worldManager.setStorageAdaptor(adaptor);
+                        Bukkit.getPluginManager().registerEvents(adaptor, this.plugin.javaPlugin());
+                    }, "AdvancedSlimePaper");
                 }
             }
         }

@@ -12,6 +12,7 @@ import net.momirealms.craftengine.core.block.behavior.BlockBehaviorFactory;
 import net.momirealms.craftengine.core.block.properties.BooleanProperty;
 import net.momirealms.craftengine.core.block.properties.Property;
 import net.momirealms.craftengine.core.util.*;
+import net.momirealms.craftengine.core.util.random.RandomUtils;
 
 import java.util.List;
 import java.util.Map;

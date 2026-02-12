@@ -53,6 +53,7 @@ public class BukkitBlockBehaviors extends BlockBehaviors {
     public static final BlockBehaviorType<DropExperienceBlockBehavior> DROP_EXP_BLOCK = register(Key.ce("drop_exp_block"), DropExperienceBlockBehavior.FACTORY);
     public static final BlockBehaviorType<MultiHighBlockBehavior> MULTI_HIGH_BLOCK = register(Key.ce("multi_high_block"), MultiHighBlockBehavior.FACTORY);
     public static final BlockBehaviorType<SpreadingBlockBehavior> SPREADING_BLOCK = register(Key.ce("spreading_block"), SpreadingBlockBehavior.FACTORY);
+    public static final BlockBehaviorType<ItemFrameBlockBehavior> ITEM_FRAME_BLOCK = register(Key.ce("item_frame_block"), ItemFrameBlockBehavior.FACTORY);
 
     public static void init() {
     }

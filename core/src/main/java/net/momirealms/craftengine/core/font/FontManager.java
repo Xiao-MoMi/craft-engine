@@ -2,6 +2,7 @@ package net.momirealms.craftengine.core.font;
 
 import net.kyori.adventure.text.Component;
 import net.momirealms.craftengine.core.entity.player.Player;
+import net.momirealms.craftengine.core.plugin.CraftEngine;
 import net.momirealms.craftengine.core.plugin.Manageable;
 import net.momirealms.craftengine.core.plugin.config.Config;
 import net.momirealms.craftengine.core.plugin.config.ConfigParser;
@@ -39,15 +40,7 @@ public interface FontManager extends Manageable {
 
     EmojiComponentProcessResult replaceComponentEmoji(@NotNull Component text, @Nullable Player player, @NotNull String raw, int maxTimes);
 
-    default IllegalCharacterProcessResult processIllegalCharacters(String raw) {
-        return processIllegalCharacters(raw, '*');
-    }
-
-    IllegalCharacterProcessResult processIllegalCharacters(String raw, char replacement);
-
     OffsetFont offsetFont();
-
-    Map<Key, BitmapImage> loadedImages();
 
     Map<Key, Emoji> emojis();
 
@@ -71,13 +64,19 @@ public interface FontManager extends Manageable {
 
     Collection<Font> fonts();
 
+    Map<Key, BitmapImage> loadedBitmapImages();
+
+    Map<Key, Image> loadedImages();
+
     Optional<BitmapImage> bitmapImageByCodepoint(Key font, int codepoint);
 
     default Optional<BitmapImage> bitmapImageByChars(Key font, char[] chars) {
         return bitmapImageByCodepoint(font, CharacterUtils.charsToCodePoint(chars));
     }
 
-    Optional<BitmapImage> bitmapImageByImageId(Key imageId);
+    Optional<BitmapImage> bitmapImageById(Key imageId);
+
+    Optional<Image> imageById(Key id);
 
     Optional<Font> fontById(Key font);
 
@@ -111,11 +110,15 @@ public interface FontManager extends Manageable {
         return createOffsets(offset, (raw, font) -> raw);
     }
 
-    Map<String, ComponentProvider> matchTags(String text);
+    void refreshEmojiSuggestions(UUID uuid);
 
-    default Map<String, ComponentProvider> matchTags(Tag nbt) {
-        return matchTags(new StringValueOnlyTagVisitor().visit(nbt));
+    @Deprecated
+    default Map<String, ComponentProvider> matchTags(String text) {
+        return CraftEngine.instance().networkManager().matchNetworkTags(text);
     }
 
-    void refreshEmojiSuggestions(UUID uuid);
+    @Deprecated
+    default Map<String, ComponentProvider> matchTags(Tag nbt) {
+        return CraftEngine.instance().networkManager().matchNetworkTags(new StringValueOnlyTagVisitor().visit(nbt));
+    }
 }

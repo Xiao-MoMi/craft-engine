@@ -49,7 +49,7 @@ public class EvtCustomClick extends SkriptEvent {
         EventValues.registerEventValue(FurnitureInteractEvent.class, Location.class, FurnitureInteractEvent::location, EventValues.TIME_NOW);
         EventValues.registerEventValue(FurnitureInteractEvent.class, Player.class, FurnitureInteractEvent::player, EventValues.TIME_NOW);
         EventValues.registerEventValue(CustomBlockInteractEvent.class, Block.class, event -> null, EventValues.TIME_NOW);
-        EventValues.registerEventValue(FurnitureInteractEvent.class, Entity.class, event -> event.furniture().getBukkitEntity(), EventValues.TIME_NOW);
+        EventValues.registerEventValue(FurnitureInteractEvent.class, Entity.class, event -> event.furniture().bukkitEntity(), EventValues.TIME_NOW);
         EventValues.registerEventValue(FurnitureInteractEvent.class, World.class, event -> event.location().getWorld(), EventValues.TIME_NOW);
     }
 

@@ -24,10 +24,11 @@ public class BukkitInventory implements Inventory {
         BukkitServerPlayer serverPlayer = (BukkitServerPlayer) player;
         Object nmsPlayer = serverPlayer.serverPlayer();
         try {
-            Object menuType = CraftBukkitReflections.method$CraftContainer$getNotchInventoryType.invoke(null, inventory);
+            Object menuType = CraftBukkitReflections.method$CraftContainer$getNotchInventoryType.invoke(null, this.inventory);
             int nextId = (int) CoreReflections.method$ServerPlayer$nextContainerCounter.invoke(nmsPlayer);
-            Object menu = CraftBukkitReflections.constructor$CraftContainer.newInstance(inventory, nmsPlayer, nextId);
+            Object menu = CraftBukkitReflections.constructor$CraftContainer.newInstance(this.inventory, nmsPlayer, nextId);
             CoreReflections.field$AbstractContainerMenu$checkReachable.set(menu, false);
+            CraftBukkitReflections.method$CraftEventFactory$callInventoryOpenEvent.invoke(null, nmsPlayer, menu);
             Object packet = NetworkReflections.constructor$ClientboundOpenScreenPacket.newInstance(nextId, menuType, ComponentUtils.adventureToMinecraft(title));
             serverPlayer.sendPacket(packet, false);
             CoreReflections.field$Player$containerMenu.set(nmsPlayer, menu);

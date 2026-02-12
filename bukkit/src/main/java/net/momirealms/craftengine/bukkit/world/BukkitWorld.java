@@ -149,6 +149,11 @@ public class BukkitWorld implements World {
     }
 
     @Override
+    public Key getNoiseBiome(int x, int y, int z) {
+        return KeyUtils.resourceLocationToKey(FastNMS.INSTANCE.method$LevelReader$getNoiseBiome(serverWorld(), x >> 2, y >> 2, z >> 2));
+    }
+
+    @Override
     public List<Player> getTrackedBy(ChunkPos pos) {
         Object serverLevel = serverWorld();
         Object chunkSource = FastNMS.INSTANCE.method$ServerLevel$getChunkSource(serverLevel);

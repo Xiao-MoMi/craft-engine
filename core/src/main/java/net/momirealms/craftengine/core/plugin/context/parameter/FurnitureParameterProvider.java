@@ -14,7 +14,7 @@ public class FurnitureParameterProvider implements ChainParameterProvider<Furnit
     static {
         CONTEXT_FUNCTIONS.put(DirectContextParameters.ID, f -> f.config().id());
         CONTEXT_FUNCTIONS.put(DirectContextParameters.UUID, Furniture::uuid);
-        CONTEXT_FUNCTIONS.put(DirectContextParameters.VARIANT, f -> f.getCurrentVariant().name());
+        CONTEXT_FUNCTIONS.put(DirectContextParameters.VARIANT, f -> f.currentVariant().name());
         CONTEXT_FUNCTIONS.put(DirectContextParameters.X, furniture -> furniture.position().x());
         CONTEXT_FUNCTIONS.put(DirectContextParameters.Y, furniture -> furniture.position().y());
         CONTEXT_FUNCTIONS.put(DirectContextParameters.Z, furniture -> furniture.position().z());

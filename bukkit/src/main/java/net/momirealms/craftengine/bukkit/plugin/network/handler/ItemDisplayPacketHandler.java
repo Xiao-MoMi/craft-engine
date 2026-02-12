@@ -23,14 +23,14 @@ public class ItemDisplayPacketHandler implements EntityPacketHandler {
         int id = buf.readVarInt();
         boolean changed = false;
         List<Object> packedItems = FastNMS.INSTANCE.method$ClientboundSetEntityDataPacket$unpack(buf);
-        for (int i = 0; i < packedItems.size(); i++) {
+        for (int i = packedItems.size() - 1; i >= 0; i--) {
             Object packedItem = packedItems.get(i);
             int entityDataId = FastNMS.INSTANCE.field$SynchedEntityData$DataValue$id(packedItem);
             if (entityDataId != ItemDisplayEntityData.DisplayedItem.id()) continue;
             Object nmsItemStack = FastNMS.INSTANCE.field$SynchedEntityData$DataValue$value(packedItem);
             ItemStack itemStack = FastNMS.INSTANCE.method$CraftItemStack$asCraftMirror(nmsItemStack);
             Optional<ItemStack> optional = BukkitItemManager.instance().s2c(itemStack, user);
-            if (optional.isEmpty()) continue;
+            if (optional.isEmpty()) break;
             changed = true;
             itemStack = optional.get();
             Object serializer = FastNMS.INSTANCE.field$SynchedEntityData$DataValue$serializer(packedItem);

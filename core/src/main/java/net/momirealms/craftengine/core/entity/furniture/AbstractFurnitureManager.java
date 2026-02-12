@@ -15,7 +15,7 @@ import net.momirealms.craftengine.core.plugin.CraftEngine;
 import net.momirealms.craftengine.core.plugin.config.Config;
 import net.momirealms.craftengine.core.plugin.config.IdSectionConfigParser;
 import net.momirealms.craftengine.core.plugin.context.CommonFunctions;
-import net.momirealms.craftengine.core.plugin.entityculling.CullingData;
+import net.momirealms.craftengine.core.entity.culling.CullingData;
 import net.momirealms.craftengine.core.plugin.locale.LocalizedResourceConfigException;
 import net.momirealms.craftengine.core.plugin.scheduler.SchedulerTask;
 import net.momirealms.craftengine.core.util.*;
@@ -241,7 +241,7 @@ public abstract class AbstractFurnitureManager implements FurnitureManager {
                     elements.toArray(new FurnitureElementConfig[0]),
                     hitboxes.toArray(new FurnitureHitBoxConfig[0]),
                     externalModel,
-                    optionalLootSpawnOffset.orElse(new Vector3f(0, 0.5f,0))
+                    optionalLootSpawnOffset.orElse(new Vector3f(0f, 0f,0f))
                 ));
             }
 
@@ -251,8 +251,9 @@ public abstract class AbstractFurnitureManager implements FurnitureManager {
                     .variants(variants)
                     .events(CommonFunctions.parseEvents(ResourceConfigUtils.get(section, "events", "event")))
                     .lootTable(LootTable.fromMap(MiscUtils.castToMap(section.get("loot"), true)))
-                    .behavior(FurnitureBehaviors.fromMap(ResourceConfigUtils.getAsMapOrNull(ResourceConfigUtils.get(section, "behaviors", "behavior"), "behavior")))
                     .build();
+            ((CustomFurnitureImpl) furniture).setBehavior(FurnitureBehaviors.fromMap(furniture, ResourceConfigUtils.getAsMapOrNull(ResourceConfigUtils.get(section, "behaviors", "behavior"), "behavior")));
+
             AbstractFurnitureManager.this.byId.put(id, furniture);
         }
 

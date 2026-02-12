@@ -74,6 +74,13 @@ public final class ItemKeys {
     public static final Key SWEET_BERRIES = Key.of("minecraft:sweet_berries");
     public static final Key GLOW_BERRIES = Key.of("minecraft:glow_berries");
 
+    public static final Key LEATHER_HELMET = Key.of("minecraft:leather_helmet");
+    public static final Key LEATHER_CHESTPLATE = Key.of("minecraft:leather_chestplate");
+    public static final Key LEATHER_LEGGINGS = Key.of("minecraft:leather_leggings");
+    public static final Key LEATHER_BOOTS = Key.of("minecraft:leather_boots");
+    public static final Key LEATHER_HORSE_ARMOR = Key.of("minecraft:leather_horse_armor");
+    public static final Key WOLF_ARMOR = Key.of("minecraft:wolf_armor");
+
     public static final Key[] AXES = new Key[] {WOODEN_AXE, STONE_AXE, IRON_AXE, GOLDEN_AXE, DIAMOND_AXE, NETHERITE_AXE};
 
     public static final Key[] WATER_BUCKETS = new Key[] {WATER_BUCKET, COD_BUCKET, SALMON_BUCKET, TROPICAL_FISH_BUCKET, TADPOLE_BUCKET, PUFFERFISH_BUCKET, AXOLOTL_BUCKET};

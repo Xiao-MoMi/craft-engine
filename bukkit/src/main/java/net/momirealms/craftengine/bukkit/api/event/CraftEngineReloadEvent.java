@@ -3,6 +3,7 @@ package net.momirealms.craftengine.bukkit.api.event;
 import net.momirealms.craftengine.bukkit.plugin.BukkitCraftEngine;
 import org.bukkit.event.Event;
 import org.bukkit.event.HandlerList;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 public final class CraftEngineReloadEvent extends Event {
@@ -11,6 +12,7 @@ public final class CraftEngineReloadEvent extends Event {
     private static boolean firstFlag = true;
     private final boolean isFirstReload;
 
+    @ApiStatus.Internal
     public CraftEngineReloadEvent(BukkitCraftEngine plugin) {
         this.plugin = plugin;
         this.isFirstReload = firstFlag;

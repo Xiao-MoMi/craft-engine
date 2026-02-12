@@ -30,14 +30,14 @@ public class EvtCustomFurniture extends SkriptEvent {
                 .description("Called when a furniture is broken by a player.");
         EventValues.registerEventValue(FurnitureBreakEvent.class, Location.class, FurnitureBreakEvent::location, EventValues.TIME_NOW);
         EventValues.registerEventValue(FurnitureBreakEvent.class, Player.class, FurnitureBreakEvent::player, EventValues.TIME_NOW);
-        EventValues.registerEventValue(FurnitureBreakEvent.class, Entity.class, event -> event.furniture().getBukkitEntity(), EventValues.TIME_NOW);
+        EventValues.registerEventValue(FurnitureBreakEvent.class, Entity.class, event -> event.furniture().bukkitEntity(), EventValues.TIME_NOW);
         EventValues.registerEventValue(FurnitureBreakEvent.class, World.class, event -> event.location().getWorld(), EventValues.TIME_NOW);
 
         Skript.registerEvent("Place Furniture", EvtCustomFurniture.class, FurniturePlaceEvent.class, "(plac(e|ing)|build[ing]) of [(custom|ce|craft-engine)] furniture[s] [[of] %-strings%]")
                 .description("Called when a player places a furniture.");
         EventValues.registerEventValue(FurniturePlaceEvent.class, Location.class, FurniturePlaceEvent::location, EventValues.TIME_NOW);
         EventValues.registerEventValue(FurniturePlaceEvent.class, Player.class, FurniturePlaceEvent::player, EventValues.TIME_NOW);
-        EventValues.registerEventValue(FurniturePlaceEvent.class, Entity.class, event -> event.furniture().getBukkitEntity(), EventValues.TIME_NOW);
+        EventValues.registerEventValue(FurniturePlaceEvent.class, Entity.class, event -> event.furniture().bukkitEntity(), EventValues.TIME_NOW);
         EventValues.registerEventValue(FurniturePlaceEvent.class, World.class, event -> event.location().getWorld(), EventValues.TIME_NOW);
     }
 

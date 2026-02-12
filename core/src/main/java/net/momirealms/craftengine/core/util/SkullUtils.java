@@ -10,7 +10,7 @@ public final class SkullUtils {
     public static String identifierFromBase64(String base64) {
         byte[] decodedBytes = Base64.getDecoder().decode(base64);
         String decodedString = new String(decodedBytes, StandardCharsets.UTF_8);
-        int urlStartIndex = decodedString.indexOf("\"url\":\"") + 7;
+        int urlStartIndex = decodedString.indexOf("\"url\":\"") + 8;
         int urlEndIndex = decodedString.indexOf("\"", urlStartIndex);
         String textureUrl = decodedString.substring(urlStartIndex, urlEndIndex);
         return textureUrl.substring(textureUrl.lastIndexOf('/') + 1);

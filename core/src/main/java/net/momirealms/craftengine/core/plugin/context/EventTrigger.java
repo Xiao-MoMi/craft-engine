@@ -5,7 +5,7 @@ import java.util.Map;
 import java.util.Optional;
 
 public enum EventTrigger {
-    LEFT_CLICK("attack", "left_click"),
+    LEFT_CLICK("attack", "left_click", "hit"),
     RIGHT_CLICK("right_click", "use_on", "use", "use_item_on"),
     CONSUME("eat", "consume", "drink"),
     BREAK("break", "dig"),

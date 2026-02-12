@@ -35,10 +35,12 @@ import java.nio.file.Path;
 import java.util.Map;
 import java.util.Optional;
 
-public class AxeItemBehavior extends ItemBehavior {
+public final class AxeItemBehavior extends ItemBehavior {
     public static final ItemBehaviorFactory<AxeItemBehavior> FACTORY = new Factory();
     public static final AxeItemBehavior INSTANCE = new AxeItemBehavior();
     private static final Key AXE_STRIP_SOUND = Key.of("minecraft:item.axe.strip");
+
+    private AxeItemBehavior() {}
 
     private boolean canBlockAttack(Item<ItemStack> item) {
         if (VersionHelper.isOrAbove1_21_5()) {

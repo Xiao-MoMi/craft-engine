@@ -181,7 +181,6 @@ warning.config.item.data.external.missing_id: "<yellow>Problem in Datei <arg:0> 
 warning.config.item.data.external.invalid_source: "<yellow>Problem in Datei <arg:0> gefunden - Das Item '<arg:1>' verwendet eine ungültige Item-Quelle '<arg:2>' für 'external'-Daten.</yellow>"
 warning.config.item.missing_material: "<yellow>Problem in Datei <arg:0> gefunden - Beim Item '<arg:1>' fehlt das erforderliche 'material'-Argument.</yellow>"
 warning.config.item.invalid_material: "<yellow>Problem in Datei <arg:0> gefunden - Das Item '<arg:1>' verwendet einen ungültigen Material-Typ '<arg:2>'.</yellow>"
-warning.config.item.invalid_custom_model_data: "<yellow>Problem in Datei <arg:0> gefunden - Das Item '<arg:1>' verwendet eine negative Custom-Model-Data '<arg:2>', was ungültig ist.</yellow>"
 warning.config.item.bad_custom_model_data: "<yellow>Problem in Datei <arg:0> gefunden - Das Item '<arg:1>' verwendet eine Custom-Model-Data '<arg:2>', die zu groß ist. Es wird empfohlen, einen Wert unter 16.777.216 zu verwenden.</yellow>"
 warning.config.item.item_model.conflict: "<yellow>Problem in Datei <arg:0> gefunden - Das Item '<arg:1>' verwendet eine ungültige 'item-model'-Option, da dieses Item-Model bereits von einem Vanilla-Item belegt ist.</yellow>"
 warning.config.item.custom_model_data.conflict: "<yellow>Problem in Datei <arg:0> gefunden - Das Item '<arg:1>' verwendet eine Custom-Model-Data '<arg:2>', die bereits von Item '<arg:3>' belegt ist.</yellow>"

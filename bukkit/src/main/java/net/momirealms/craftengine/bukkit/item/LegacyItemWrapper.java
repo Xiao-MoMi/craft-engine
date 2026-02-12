@@ -7,8 +7,9 @@ import net.momirealms.craftengine.bukkit.util.EquipmentSlotUtils;
 import net.momirealms.craftengine.bukkit.util.ItemStackUtils;
 import net.momirealms.craftengine.core.entity.EquipmentSlot;
 import net.momirealms.craftengine.core.entity.player.Player;
+import net.momirealms.craftengine.core.item.ItemType;
 import net.momirealms.craftengine.core.item.ItemWrapper;
-import net.momirealms.craftengine.core.util.RandomUtils;
+import net.momirealms.craftengine.core.util.random.RandomUtils;
 import net.momirealms.sparrow.nbt.Tag;
 import org.bukkit.enchantments.Enchantment;
 import org.bukkit.inventory.ItemStack;
@@ -17,10 +18,18 @@ import org.jetbrains.annotations.Nullable;
 public class LegacyItemWrapper implements ItemWrapper<ItemStack> {
     private final Object nmsStack;
     private final ItemStack itemStack;
+    private ItemType itemType;
 
     public LegacyItemWrapper(ItemStack item) {
         this.itemStack = ItemStackUtils.ensureCraftItemStack(item);
         this.nmsStack = FastNMS.INSTANCE.field$CraftItemStack$handle(this.itemStack);
+    }
+
+    public ItemType itemType() {
+        if (this.itemType == null) {
+            this.itemType = new ComponentItemType(FastNMS.INSTANCE.method$ItemStack$getItem(this.getLiteralObject()));
+        }
+        return this.itemType;
     }
 
     public boolean setTag(Object value, Object... path) {

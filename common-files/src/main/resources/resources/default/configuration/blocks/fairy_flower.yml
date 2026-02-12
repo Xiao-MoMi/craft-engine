@@ -1,6 +1,5 @@
 items:
   default:fairy_flower:
-    material: nether_brick
     data:
       item-name: <!i><lang:item.default.fairy_flower>
     texture: minecraft:item/custom/fairy_flower
@@ -46,3 +45,41 @@ items:
                 parent: minecraft:block/custom/fairy_flower_1
                 textures:
                   '0': minecraft:block/custom/fairy_flower_4
+placed-features:
+  default:fairy_flower:
+    environment:
+      - minecraft:overworld
+    feature:
+      type: 'minecraft:random_patch'
+      config:
+        feature:
+          feature:
+            type: 'minecraft:simple_block'
+            config:
+              to_place:
+                type: 'minecraft:simple_state_provider'
+                state:
+                  Name: 'default:fairy_flower'
+          placement:
+            - type: 'minecraft:block_predicate_filter'
+              predicate:
+                type: 'minecraft:all_of'
+                predicates:
+                  - type: 'minecraft:replaceable'
+                  - type: 'minecraft:matching_fluids'
+                    fluids: 'minecraft:empty'
+                  - type: 'minecraft:matching_blocks'
+                    blocks: 'minecraft:grass_block'
+                    offset:
+                      - 0
+                      - -1
+                      - 0
+        tries: 64
+        xz_spread: 7
+        y_spread: 3
+    placement:
+      - type: 'minecraft:rarity_filter'
+        chance: 100
+      - type: 'minecraft:in_square'
+      - type: 'minecraft:heightmap'
+        heightmap: MOTION_BLOCKING

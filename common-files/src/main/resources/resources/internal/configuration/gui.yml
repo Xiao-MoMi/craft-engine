@@ -1,7 +1,62 @@
+translations:
+  en:
+    internal.next_page: Next Page
+    internal.previous_page: Previous Page
+    internal.return: Return to Parent Page
+    internal.exit: Exit
+    internal.next_recipe: Next Recipe
+    internal.previous_recipe: Previous Recipe
+    internal.get_item: Get Item
+    internal.get_item.0: Left Click to take one
+    internal.get_item.1: Right Click to take a stack
+    internal.cooking_info: Recipe Information
+    internal.cooking_info.0: 'Time: <arg:0>ticks'
+    internal.cooking_info.1: 'Experience: <arg:0>'
+    category.internal.all: 'All Items'
+  zh_cn:
+    internal.next_page: 下一页
+    internal.previous_page: 上一页
+    internal.return: 返回上一级
+    internal.exit: 退出
+    internal.next_recipe: 下一个配方
+    internal.previous_recipe: 上一个配方
+    internal.get_item: 获取物品
+    internal.get_item.0: 左键单击取一个
+    internal.get_item.1: 右键单击取一组
+    internal.cooking_info: 配方信息
+    internal.cooking_info.0: '时间: <arg:0>刻'
+    internal.cooking_info.1: '经验: <arg:0>'
+    category.internal.all: '全部物品'
+  de:
+    internal.next_page: Nächste Seite
+    internal.previous_page: Vorherige Seite
+    internal.return: Zurück zur vorherigen Seite
+    internal.exit: Verlassen
+    internal.next_recipe: Nächstes Rezept
+    internal.previous_recipe: Vorheriges Rezept
+    internal.get_item: Gegenstand nehmen
+    internal.get_item.0: Linksklick, um eines zu nehmen
+    internal.get_item.1: Rechtsklick, um einen Stapel zu nehmen
+    internal.cooking_info: Rezeptinformationen
+    internal.cooking_info.0: 'Zeit: <arg:0> Ticks'
+    internal.cooking_info.1: 'Erfahrung: <arg:0>'
+  fr_fr:
+    internal.next_page: Page Suivante
+    internal.previous_page: Page Précédente
+    internal.return: Retour à la Page Précédente
+    internal.exit: Quitter
+    internal.next_recipe: Recette Suivante
+    internal.previous_recipe: Recette Précédente
+    internal.get_item: Obtenir l'Objet
+    internal.get_item.0: Clic Gauche pour en prendre un
+    internal.get_item.1: Clic Droit pour prendre une pile
+    internal.cooking_info: Informations sur la Recette
+    internal.cooking_info.0: 'Temps: <arg:0>ticks'
+    internal.cooking_info.1: 'Expérience: <arg:0>'
 categories:
-  craftengine:all:
+  internal:all:
     priority: -1000
-    name: <!i><white><l10n:category.all.name></white>
+    name: <!i><white><l10n:category.internal.all></white>
     icon: minecraft:command_block
     conditions:
       - type: permission
@@ -92,7 +147,7 @@ items:
     arguments:
       model_data: 1000
       texture: next_page_0
-      name: <!i><#FAFAD2><i18n:internal.next_page>
+      name: <!i><#FAFAD2><l10n:internal.next_page>
       lore:
         - <!i><#F5F5F5><arg:current_page>/<arg:max_page>
   internal:next_page_1:
@@ -100,7 +155,7 @@ items:
     arguments:
       model_data: 1001
       texture: next_page_1
-      name: <!i><#808080><i18n:internal.next_page>
+      name: <!i><#808080><l10n:internal.next_page>
       lore:
         - <!i><#696969><arg:current_page>/<arg:max_page>
   internal:previous_page_0:
@@ -108,7 +163,7 @@ items:
     arguments:
       model_data: 1002
       texture: previous_page_0
-      name: <!i><#FAFAD2><i18n:internal.previous_page>
+      name: <!i><#FAFAD2><l10n:internal.previous_page>
       lore:
         - <!i><#F5F5F5><arg:current_page>/<arg:max_page>
   internal:previous_page_1:
@@ -116,7 +171,7 @@ items:
     arguments:
       model_data: 1003
       texture: previous_page_1
-      name: <!i><#808080><i18n:internal.previous_page>
+      name: <!i><#808080><l10n:internal.previous_page>
       lore:
         - <!i><#696969><arg:current_page>/<arg:max_page>
   internal:return:
@@ -124,34 +179,34 @@ items:
     arguments:
       model_data: 1004
       texture: return
-      name: <!i><#DAA520><i18n:internal.return>
+      name: <!i><#DAA520><l10n:internal.return>
       lore: null
   internal:next_recipe_0:
     material: arrow
     custom-model-data: 1000
     data:
-      item-name: <!i><#FAFAD2><i18n:internal.next_recipe>
+      item-name: <!i><#FAFAD2><l10n:internal.next_recipe>
       lore:
         - <!i><#F5F5F5><arg:current_page>/<arg:max_page>
   internal:next_recipe_1:
     material: arrow
     custom-model-data: 1001
     data:
-      item-name: <!i><#808080><i18n:internal.next_recipe>
+      item-name: <!i><#808080><l10n:internal.next_recipe>
       lore:
         - <!i><#696969><arg:current_page>/<arg:max_page>
   internal:previous_recipe_0:
     material: arrow
     custom-model-data: 1002
     data:
-      item-name: <!i><#FAFAD2><i18n:internal.previous_recipe>
+      item-name: <!i><#FAFAD2><l10n:internal.previous_recipe>
       lore:
         - <!i><#F5F5F5><arg:current_page>/<arg:max_page>
   internal:previous_recipe_1:
     material: arrow
     custom-model-data: 1003
     data:
-      item-name: <!i><#808080><i18n:internal.previous_recipe>
+      item-name: <!i><#808080><l10n:internal.previous_recipe>
       lore:
         - <!i><#696969><arg:current_page>/<arg:max_page>
   internal:get_item:
@@ -159,23 +214,23 @@ items:
     arguments:
       model_data: 1005
       texture: get_item
-      name: <!i><#DAA520><i18n:internal.get_item>
+      name: <!i><#DAA520><l10n:internal.get_item>
       lore:
-        - <!i><gray><i18n:internal.get_item.0>
-        - <!i><gray><i18n:internal.get_item.1>
+        - <!i><gray><l10n:internal.get_item.0>
+        - <!i><gray><l10n:internal.get_item.1>
   internal:cooking_info:
     template: internal:icon/2d
     arguments:
       model_data: 1006
       texture: cooking_info
-      name: <!i><#FF8C00><i18n:internal.cooking_info>
+      name: <!i><#FF8C00><l10n:internal.cooking_info>
       lore:
-        - <!i><gray><i18n:internal.cooking_info.0>
-        - <!i><gray><i18n:internal.cooking_info.1>
+        - <!i><gray><l10n:internal.cooking_info.0:'<arg:cooking_time>'>
+        - <!i><gray><l10n:internal.cooking_info.1:'<arg:cooking_experience>'>
   internal:exit:
     template: internal:icon/2d
     arguments:
       model_data: 1007
       texture: exit
-      name: <!i><#DAA520><i18n:internal.exit>
+      name: <!i><#DAA520><l10n:internal.exit>
       lore: null

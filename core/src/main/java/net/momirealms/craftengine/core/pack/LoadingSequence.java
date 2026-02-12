@@ -22,4 +22,6 @@ public final class LoadingSequence {
     public static final int ADVANCEMENT = 150;
     public static final int LANG = 160;
     public static final int SKIP_OPTIMIZATION = 170;
+    public static final int CONFIGURED_FEATURE = 180;
+    public static final int PLACED_FEATURE = 190;
 }

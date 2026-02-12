@@ -92,7 +92,6 @@ public class ItemPacketHandler implements EntityPacketHandler {
                         );
                     }
                 }
-
                 break;
             }
         }

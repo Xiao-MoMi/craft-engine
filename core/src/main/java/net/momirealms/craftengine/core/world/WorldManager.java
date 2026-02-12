@@ -1,6 +1,7 @@
 package net.momirealms.craftengine.core.world;
 
 import net.momirealms.craftengine.core.plugin.Manageable;
+import net.momirealms.craftengine.core.plugin.config.ConfigParser;
 import net.momirealms.craftengine.core.world.chunk.storage.StorageAdaptor;
 import net.momirealms.craftengine.core.world.chunk.storage.WorldDataStorage;
 import org.jetbrains.annotations.NotNull;
@@ -24,4 +25,6 @@ public interface WorldManager extends Manageable {
     void unloadWorld(World world);
 
     <T> World wrap(T world);
+
+    ConfigParser[] parsers();
 }

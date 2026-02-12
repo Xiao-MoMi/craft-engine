@@ -1,6 +1,8 @@
 package net.momirealms.craftengine.bukkit.block.behavior;
 
+import net.momirealms.antigrieflib.Flag;
 import net.momirealms.craftengine.bukkit.nms.FastNMS;
+import net.momirealms.craftengine.bukkit.plugin.BukkitCraftEngine;
 import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.CoreReflections;
 import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.MEntitySelectors;
 import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.MGameEvents;
@@ -15,9 +17,13 @@ import net.momirealms.craftengine.core.block.behavior.BlockBehaviorFactory;
 import net.momirealms.craftengine.core.block.properties.BooleanProperty;
 import net.momirealms.craftengine.core.block.properties.Property;
 import net.momirealms.craftengine.core.entity.player.InteractionResult;
+import net.momirealms.craftengine.core.entity.player.Player;
 import net.momirealms.craftengine.core.sound.SoundData;
 import net.momirealms.craftengine.core.util.*;
+import net.momirealms.craftengine.core.world.BlockPos;
 import net.momirealms.craftengine.core.world.context.UseOnContext;
+import org.bukkit.Location;
+import org.bukkit.World;
 
 import javax.annotation.Nullable;
 import java.util.Map;
@@ -48,10 +54,19 @@ public class ButtonBlockBehavior extends BukkitBlockBehavior {
 
     @Override
     public InteractionResult useWithoutItem(UseOnContext context, ImmutableBlockState state) {
+        Player player = context.getPlayer();
+        BlockPos pos = context.getClickedPos();
+        net.momirealms.craftengine.core.world.World world = context.getLevel();
+        if (player != null) {
+            Location location = new Location((World) world.platformWorld(), pos.x, pos.y, pos.z);
+            if (!BukkitCraftEngine.instance().antiGriefProvider().test((org.bukkit.entity.Player) player.platformPlayer(), Flag.USE_BUTTON, location)) {
+                return InteractionResult.SUCCESS_AND_CANCEL;
+            }
+        }
         if (!state.get(this.poweredProperty)) {
             press(BlockStateUtils.getBlockOwner(state.customBlockState().literalObject()),
-                    state, context.getLevel().serverWorld(), LocationUtils.toBlockPos(context.getClickedPos()),
-                    context.getPlayer() != null ? context.getPlayer().serverPlayer() : null);
+                    state, world.serverWorld(), LocationUtils.toBlockPos(pos),
+                    player != null ? player.serverPlayer() : null);
             return InteractionResult.SUCCESS_AND_CANCEL;
         }
         return InteractionResult.PASS;

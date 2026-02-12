@@ -159,7 +159,6 @@ warning.config.item.settings.invulnerable.invalid_damage_source: "<yellow>Про
 warning.config.item.settings.equippable.missing_slot: "<yellow>Проблема найдена в файле <arg:0> - В предмете '<arg:1>' отсутствует необходимый 'slot' аргумент для 'equippable' настроек.</yellow>"
 warning.config.item.missing_material: "<yellow>Проблема найдена в файле <arg:0> - В предмете '<arg:1>' отсутствует необходимый 'material' аргумент.</yellow>"
 warning.config.item.invalid_material: "<yellow>Проблема найдена в файле <arg:0> - Предмет '<arg:1>' использует недопустимый тип материала '<arg:2>'.</yellow>"
-warning.config.item.invalid_custom_model_data: "<yellow>Проблема найдена в файле <arg:0> - Предмет '<arg:1>' использует отрицательные данные пользовательской модели '<arg:2>', что недействительно.</yellow>"
 warning.config.item.bad_custom_model_data: "<yellow>Проблема найдена в файле <arg:0> - Предмет '<arg:1>' использует пользовательскую модель данных '<arg:2>', которая имеет слишком большое значение. Рекомендуется использовать значение ниже 16,777,216.</yellow>"
 warning.config.item.custom_model_data.conflict: "<yellow>Проблема найдена в файле <arg:0> - Предмет '<arg:1>' использует пользовательскую модель данных '<arg:2>', которая занята элементом '<arg:3>'.</yellow>"
 warning.config.item.invalid_component: "<yellow>Проблема найдена в файле <arg:0> - Предмет '<arg:1>' использует несуществующий тип компонента '<arg:2>'.</yellow>"

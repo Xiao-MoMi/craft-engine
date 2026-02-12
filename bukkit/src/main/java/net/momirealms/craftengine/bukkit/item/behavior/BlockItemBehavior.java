@@ -99,6 +99,8 @@ public class BlockItemBehavior extends BlockBoundItemBehavior {
         Block againstBlock = world.getBlockAt(againstPos.x(), againstPos.y(), againstPos.z());
         org.bukkit.entity.Player bukkitPlayer = player != null ? (org.bukkit.entity.Player) player.platformPlayer() : null;
 
+        ContextHolder.Builder contextBuilder = ContextHolder.builder();
+
         if (player != null) {
 
             if (player.isAdventureMode()) {
@@ -119,7 +121,7 @@ public class BlockItemBehavior extends BlockBoundItemBehavior {
 
             // trigger event
             CustomBlockAttemptPlaceEvent attemptPlaceEvent = new CustomBlockAttemptPlaceEvent(bukkitPlayer, placeLocation.clone(), blockStateToPlace,
-                    DirectionUtils.toBlockFace(context.getClickedFace()), bukkitBlock, context.getHand());
+                    DirectionUtils.toBlockFace(context.getClickedFace()), bukkitBlock, context.getHand(), contextBuilder);
             if (EventUtils.fireAndCheckCancel(attemptPlaceEvent)) {
                 return InteractionResult.FAIL;
             }
@@ -144,7 +146,7 @@ public class BlockItemBehavior extends BlockBoundItemBehavior {
             }
 
             // call custom event
-            CustomBlockPlaceEvent customPlaceEvent = new CustomBlockPlaceEvent(bukkitPlayer, placeLocation.clone(), blockStateToPlace, world.getBlockAt(placeLocation), context.getHand());
+            CustomBlockPlaceEvent customPlaceEvent = new CustomBlockPlaceEvent(bukkitPlayer, placeLocation.clone(), blockStateToPlace, world.getBlockAt(placeLocation), context.getHand(), contextBuilder);
             if (EventUtils.fireAndCheckCancel(customPlaceEvent)) {
                 // revert changes
                 for (BlockState state : revertStates) {
@@ -156,7 +158,8 @@ public class BlockItemBehavior extends BlockBoundItemBehavior {
 
         WorldPosition position = new WorldPosition(context.getLevel(), pos.x() + 0.5, pos.y() + 0.5, pos.z() + 0.5);
         Cancellable dummy = Cancellable.dummy();
-        PlayerOptionalContext functionContext = PlayerOptionalContext.of(player, ContextHolder.builder()
+        PlayerOptionalContext functionContext = PlayerOptionalContext.of(player,
+                contextBuilder
                 .withParameter(DirectContextParameters.BLOCK, new BukkitExistingBlock(bukkitBlock))
                 .withParameter(DirectContextParameters.POSITION, position)
                 .withParameter(DirectContextParameters.EVENT, dummy)

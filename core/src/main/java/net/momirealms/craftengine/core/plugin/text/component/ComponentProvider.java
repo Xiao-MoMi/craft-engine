@@ -3,7 +3,7 @@ package net.momirealms.craftengine.core.plugin.text.component;
 import net.kyori.adventure.text.Component;
 import net.momirealms.craftengine.core.entity.player.Player;
 import net.momirealms.craftengine.core.plugin.context.Context;
-import net.momirealms.craftengine.core.plugin.context.PlayerOptionalContext;
+import net.momirealms.craftengine.core.plugin.context.PlayerContext;
 import net.momirealms.craftengine.core.plugin.locale.TranslationManager;
 import net.momirealms.craftengine.core.util.AdventureHelper;
 
@@ -24,6 +24,10 @@ public sealed interface ComponentProvider extends Function<Context, Component>
         } else {
             return new MiniMessage(line);
         }
+    }
+
+    static ComponentProvider miniMessage(String line) {
+        return new MiniMessage(line);
     }
 
     static ComponentProvider l10n(String translationKey) {
@@ -65,7 +69,7 @@ public sealed interface ComponentProvider extends Function<Context, Component>
 
         @Override
         public Component apply(Context context) {
-            if (context instanceof PlayerOptionalContext playerContext) {
+            if (context instanceof PlayerContext playerContext) {
                 Player player = playerContext.player();
                 if (player != null) {
                     String content = TranslationManager.instance().miniMessageTranslation(this.key, player.selectedLocale());

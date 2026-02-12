@@ -1,9 +1,8 @@
 package net.momirealms.craftengine.bukkit.compatibility.papi;
 
 import me.clip.placeholderapi.expansion.PlaceholderExpansion;
-import net.momirealms.craftengine.core.font.BitmapImage;
-import net.momirealms.craftengine.core.plugin.CraftEngine;
-import net.momirealms.craftengine.core.util.FormatUtils;
+import net.momirealms.craftengine.bukkit.plugin.BukkitCraftEngine;
+import net.momirealms.craftengine.core.font.Image;
 import net.momirealms.craftengine.core.util.Key;
 import org.bukkit.OfflinePlayer;
 import org.jetbrains.annotations.NotNull;
@@ -12,9 +11,9 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Optional;
 
 public class ImageExpansion extends PlaceholderExpansion {
-    private final CraftEngine plugin;
+    private final BukkitCraftEngine plugin;
 
-    public ImageExpansion(CraftEngine plugin) {
+    public ImageExpansion(BukkitCraftEngine plugin) {
         this.plugin = plugin;
     }
 
@@ -43,39 +42,45 @@ public class ImageExpansion extends PlaceholderExpansion {
         String[] split = params.split("_", 2);
         if (split.length != 2) return null;
         String[] param = split[1].split(":", 4);
-        if (param.length < 2) return null;
-        Key key;
-        try {
-            key = Key.of(param[0], param[1]);
-        } catch (IllegalArgumentException e) {
-            plugin.logger().warn("Invalid image namespaced key: " + param[0] + ":" + param[1]);
-            return null;
+        Optional<Image> optional;
+        if (param.length == 1) {
+            optional = this.plugin.fontManager().imageByIdValue(param[0]);
+        } else {
+            Key key;
+            try {
+                key = Key.of(param[0], param[1]);
+            } catch (IllegalArgumentException e) {
+                this.plugin.logger().warn("Invalid image namespaced key: " + param[0] + ":" + param[1]);
+                return null;
+            }
+            optional = this.plugin.fontManager().imageById(key);
         }
-        Optional<BitmapImage> optional = plugin.fontManager().bitmapImageByImageId(key);
         if (optional.isEmpty()) {
             return null;
         }
-        BitmapImage image = optional.get();
-        int codepoint;
+        Image image = optional.get();
+        int row;
+        int col;
         if (param.length == 4) {
-            codepoint = image.codepointAt(Integer.parseInt(param[2]), Integer.parseInt(param[3]));
+            row = Integer.parseInt(param[2]);
+            col = Integer.parseInt(param[3]);
         } else if (param.length == 3) {
-            codepoint = image.codepointAt(Integer.parseInt(param[2]), 0);
-        } else if (param.length == 2) {
-            codepoint = image.codepointAt(0,0);
+            row = Integer.parseInt(param[2]);
+            col = 0;
         } else {
-            return null;
+            row = 0;
+            col = 0;
         }
         try {
             switch (split[0]) {
                 case "mm", "minimessage", "mini" -> {
-                    return FormatUtils.miniMessageFont(new String(Character.toChars(codepoint)), image.font().toString());
+                    return image.miniMessageAt(row, col);
                 }
                 case "md", "minedown" -> {
-                    return FormatUtils.mineDownFont(new String(Character.toChars(codepoint)), image.font().toString());
+                    return image.mineDownAt(row, col);
                 }
                 case "raw" -> {
-                    return new String(Character.toChars(codepoint));
+                    return new String(Character.toChars(image.codepointAt(row, col)));
                 }
                 default -> {
                     return null;

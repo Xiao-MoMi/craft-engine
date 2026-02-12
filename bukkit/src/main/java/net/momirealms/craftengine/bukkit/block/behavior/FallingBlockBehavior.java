@@ -55,7 +55,7 @@ public class FallingBlockBehavior extends BukkitBlockBehavior {
         Object blockPos = args[2];
         int y = FastNMS.INSTANCE.field$Vec3i$y(blockPos);
         Object world = args[1];
-        Object dimension = CoreReflections.method$$LevelReader$dimensionType.invoke(world);
+        Object dimension = CoreReflections.method$LevelReader$dimensionType.invoke(world);
         int minY = CoreReflections.field$DimensionType$minY.getInt(dimension);
         if (y < minY) {
             return;

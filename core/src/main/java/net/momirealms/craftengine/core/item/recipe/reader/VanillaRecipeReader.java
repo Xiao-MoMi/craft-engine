@@ -16,7 +16,7 @@ public interface VanillaRecipeReader {
 
     @NotNull DatapackRecipeResult cookingResult(JsonElement object);
 
-    @NotNull DatapackRecipeResult craftingResult(JsonObject object);
+    @NotNull DatapackRecipeResult craftingResult(JsonElement object);
 
     @NotNull DatapackRecipeResult smithingResult(JsonObject object);
 

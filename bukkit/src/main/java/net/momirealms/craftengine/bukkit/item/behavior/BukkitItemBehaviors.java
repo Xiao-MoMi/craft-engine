@@ -19,6 +19,7 @@ public final class BukkitItemBehaviors extends ItemBehaviors {
     public static final ItemBehaviorType<CeilingBlockItemBehavior> CEILING_BLOCK_ITEM = register(Key.ce("ceiling_block_item"), CeilingBlockItemBehavior.FACTORY);
     public static final ItemBehaviorType<GroundBlockItemBehavior> GROUND_BLOCK_ITEM = register(Key.ce("ground_block_item"), GroundBlockItemBehavior.FACTORY);
     public static final ItemBehaviorType<MultiHighBlockItemBehavior> MULTI_HIGH_BLOCK_ITEM = register(Key.ce("multi_high_block_item"), MultiHighBlockItemBehavior.FACTORY);
+    public static final ItemBehaviorType<RangeMiningItemBehavior> RANGE_MINING_ITEM = register(Key.ce("range_mining_item"), RangeMiningItemBehavior.FACTORY);
 
     public static void init() {
     }

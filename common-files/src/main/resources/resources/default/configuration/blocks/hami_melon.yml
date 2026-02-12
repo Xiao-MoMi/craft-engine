@@ -15,7 +15,6 @@ items:
           nutrition: 2
           saturation: 1.0
   default:hami_melon:
-    material: nether_brick
     data:
       item-name: <!i><lang:item.default.hami_melon>
     model: minecraft:block/custom/hami_melon
@@ -23,7 +22,6 @@ items:
       type: block_item
       block: default:hami_melon
   default:hami_melon_seeds:
-    material: nether_brick
     data:
       item-name: <!i><lang:item.default.hami_melon_seeds>
     texture: minecraft:item/custom/hami_melon_seeds
@@ -211,3 +209,40 @@ recipes:
     result:
       id: default:hami_melon_seeds
       count: 1
+placed-features:
+  default:hami_melon:
+    environment:
+      - minecraft:overworld
+    feature:
+      type: 'minecraft:random_patch'
+      config:
+        feature:
+          feature:
+            type: 'minecraft:simple_block'
+            config:
+              to_place:
+                type: 'craftengine:simple_state_provider'
+                state:
+                  Name: 'default:hami_melon'
+          placement:
+            - type: 'minecraft:block_predicate_filter'
+              predicate:
+                type: 'minecraft:all_of'
+                predicates:
+                  - type: 'minecraft:matching_blocks'
+                    blocks: "minecraft:air"
+                  - type: 'minecraft:matching_blocks'
+                    blocks: 'minecraft:grass_block'
+                    offset:
+                      - 0
+                      - -1
+                      - 0
+        tries: 75
+        xz_spread: 7
+        y_spread: 3
+    placement:
+      - type: 'minecraft:rarity_filter'
+        chance: 300
+      - type: 'minecraft:in_square'
+      - type: 'minecraft:heightmap'
+        heightmap: MOTION_BLOCKING

@@ -247,4 +247,11 @@ public abstract class CEWorld {
         }
         this.isTickingAsyncBlockEntities = false;
     }
+
+    public void blockEntityChanged(BlockPos pos) {
+        CEChunk chunk = this.getChunkAtIfLoaded(pos.x >> 4, pos.z >> 4);
+        if (chunk != null) {
+            chunk.setDirty(true);
+        }
+    }
 }

@@ -32,6 +32,8 @@ import java.util.Optional;
  */
 public interface Item<I> {
 
+    ItemType type();
+
     boolean isEmpty();
 
     Optional<CustomItem<I>> getCustomItem();

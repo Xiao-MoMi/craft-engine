@@ -1,9 +1,7 @@
 repositories {
     mavenCentral()
     maven("https://repo.papermc.io/repository/maven-public/")
-    maven("https://repo.rapture.pw/repository/maven-releases/")
     maven("https://repo.momirealms.net/releases/")
-    maven("https://repo.infernalsuite.com/repository/maven-snapshots/")
 }
 
 dependencies {
@@ -12,7 +10,8 @@ dependencies {
     compileOnly("net.momirealms:sparrow-nbt:${rootProject.properties["sparrow_nbt_version"]}")
     // Platform
     compileOnly("io.papermc.paper:paper-api:${rootProject.properties["paper_version"]}-R0.1-SNAPSHOT")
-    compileOnly("com.infernalsuite.aswm:api:1.20.4-R0.1-SNAPSHOT")
+    compileOnly(files("libs/flow-nbt-2.0.2.jar"))
+    compileOnly(files("libs/awsm-api.jar"))
 }
 
 java {

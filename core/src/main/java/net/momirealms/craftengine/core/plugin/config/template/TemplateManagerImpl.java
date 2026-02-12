@@ -8,23 +8,25 @@ import net.momirealms.craftengine.core.plugin.config.template.argument.*;
 import net.momirealms.craftengine.core.plugin.locale.LocalizedResourceConfigException;
 import net.momirealms.craftengine.core.util.Key;
 import net.momirealms.craftengine.core.util.MiscUtils;
+import net.momirealms.craftengine.core.util.ResourceConfigUtils;
 import org.jetbrains.annotations.NotNull;
 
 import java.nio.file.Path;
 import java.util.*;
 
 @SuppressWarnings("DuplicatedCode")
-public class TemplateManagerImpl implements TemplateManager {
+public final class TemplateManagerImpl implements TemplateManager {
     private static final ArgumentString TEMPLATE = ArgumentString.Literal.literal("template");
+    private static final ArgumentString TEMPLATES = ArgumentString.Literal.literal("templates");
     private static final ArgumentString OVERRIDES = ArgumentString.Literal.literal("overrides");
     private static final ArgumentString ARGUMENTS = ArgumentString.Literal.literal("arguments");
     private static final ArgumentString MERGES = ArgumentString.Literal.literal("merges");
-    private final static Set<ArgumentString> NON_TEMPLATE_ARGUMENTS = new HashSet<>(Set.of(TEMPLATE, ARGUMENTS, OVERRIDES, MERGES));
+    private final static Set<ArgumentString> NON_TEMPLATE_ARGUMENTS = new HashSet<>(Set.of(TEMPLATE, TEMPLATES, ARGUMENTS, OVERRIDES, MERGES));
 
     private final Map<Key, Object> templates = new HashMap<>();
     private final TemplateParser templateParser;
 
-    protected TemplateManagerImpl() {
+    TemplateManagerImpl() {
         this.templateParser = new TemplateParser();
     }
 
@@ -105,8 +107,9 @@ public class TemplateManagerImpl implements TemplateManager {
     private Object processMap(Map<ArgumentString, Object> input,
                               Map<String, TemplateArgument> arguments) {
         // 传入的input是否含有template，这种情况下，返回值有可能是非map
-        if (input.containsKey(TEMPLATE)) {
-            TemplateProcessingResult processingResult = processTemplates(input, arguments);
+        Object template = ResourceConfigUtils.get(input, TEMPLATE, TEMPLATES);
+        if (template != null) {
+            TemplateProcessingResult processingResult = processTemplates(template, input, arguments);
             List<Object> processedTemplates = processingResult.templates();
             if (!processedTemplates.isEmpty()) {
                 // 先获取第一个模板的类型
@@ -220,11 +223,12 @@ public class TemplateManagerImpl implements TemplateManager {
     }
 
     @SuppressWarnings("unchecked")
-    private TemplateProcessingResult processTemplates(Map<ArgumentString, Object> input,
+    private TemplateProcessingResult processTemplates(Object rawTemplate,
+                                                      Map<ArgumentString, Object> input,
                                                       Map<String, TemplateArgument> parentArguments) {
         int knownKeys = 1;
         // 先获取template节点下所有的模板
-        List<ArgumentString> templateIds = MiscUtils.getAsList(input.get(TEMPLATE), ArgumentString.class);
+        List<ArgumentString> templateIds = MiscUtils.getAsList(rawTemplate, ArgumentString.class);
         List<Object> templateList = new ArrayList<>(templateIds.size());
 
         // 获取arguments

@@ -34,10 +34,10 @@ public class BukkitCEWorld extends CEWorld {
                     )
             );
             super.lightSections.clear();
-            super.isUpdatingLights = false;
             List<SectionPos> pendingLightSections = super.pendingLightSections;
             super.pendingLightSections = new ArrayList<>(Math.max(pendingLightSections.size() / 2, 8));
             super.lightSections.addAll(pendingLightSections);
+            super.isUpdatingLights = false;
         }
     }
 }

@@ -2,15 +2,13 @@ package net.momirealms.craftengine.bukkit.block;
 
 import net.momirealms.craftengine.bukkit.nms.FastNMS;
 import net.momirealms.craftengine.bukkit.util.BlockStateUtils;
-import net.momirealms.craftengine.core.block.AbstractBlockStateWrapper;
 import net.momirealms.craftengine.core.block.BlockRegistryMirror;
 import net.momirealms.craftengine.core.block.BlockStateWrapper;
 import net.momirealms.craftengine.core.block.StatePropertyAccessor;
-import net.momirealms.craftengine.core.util.Key;
 
 import java.util.Collection;
 
-public class BukkitVanillaBlockStateWrapper extends AbstractBlockStateWrapper {
+public class BukkitVanillaBlockStateWrapper extends BukkitBlockStateWrapper {
     private final StatePropertyAccessor accessor;
 
     public BukkitVanillaBlockStateWrapper(Object blockState, int registryId) {
@@ -21,11 +19,6 @@ public class BukkitVanillaBlockStateWrapper extends AbstractBlockStateWrapper {
     @Override
     public boolean isCustom() {
         return false;
-    }
-
-    @Override
-    public Key ownerId() {
-        return BlockStateUtils.getBlockOwnerIdFromState(super.blockState);
     }
 
     @Override
@@ -43,10 +36,6 @@ public class BukkitVanillaBlockStateWrapper extends AbstractBlockStateWrapper {
         return this.accessor.getPropertyNames();
     }
 
-    @Override
-    public String getAsString() {
-        return BlockStateUtils.fromBlockData(super.blockState).getAsString();
-    }
 
     @Override
     public BlockStateWrapper withProperty(String propertyName, String propertyValue) {
@@ -60,10 +49,5 @@ public class BukkitVanillaBlockStateWrapper extends AbstractBlockStateWrapper {
         Object newState = this.accessor.cycleProperty(propertyName, backwards);
         if (newState == super.blockState) return this;
         return BlockRegistryMirror.byId(BlockStateUtils.blockStateToId(newState));
-    }
-
-    @Override
-    public boolean isAir() {
-        return FastNMS.INSTANCE.method$BlockStateBase$isAir(super.blockState);
     }
 }

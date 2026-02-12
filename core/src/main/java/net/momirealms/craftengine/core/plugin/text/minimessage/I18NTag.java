@@ -4,18 +4,14 @@ import net.kyori.adventure.text.minimessage.ParsingException;
 import net.kyori.adventure.text.minimessage.tag.Tag;
 import net.kyori.adventure.text.minimessage.tag.resolver.ArgumentQueue;
 import net.kyori.adventure.text.minimessage.tag.resolver.TagResolver;
-import net.momirealms.craftengine.core.plugin.context.Context;
 import net.momirealms.craftengine.core.plugin.locale.TranslationManager;
-import net.momirealms.craftengine.core.util.AdventureHelper;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class I18NTag implements TagResolver {
-    private final Context context;
+public final class I18NTag implements TagResolver {
+    public static final TagResolver INSTANCE = new I18NTag();
 
-    public I18NTag(Context context) {
-        this.context = context;
-    }
+    private I18NTag() {}
 
     @Override
     public @Nullable Tag resolve(@NotNull String name, @NotNull ArgumentQueue arguments, @NotNull net.kyori.adventure.text.minimessage.Context ctx) throws ParsingException {
@@ -24,7 +20,7 @@ public class I18NTag implements TagResolver {
         }
         String i18nKey = arguments.popOr("No argument i18n key provided").toString();
         String translation = TranslationManager.instance().miniMessageTranslation(i18nKey);
-        return Tag.selfClosingInserting(AdventureHelper.miniMessage().deserialize(translation, this.context.tagResolvers()));
+        return Tag.selfClosingInserting(ctx.deserialize(translation));
     }
 
     @Override

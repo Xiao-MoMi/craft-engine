@@ -49,8 +49,8 @@ equipments:
   $$>=1.21.2:
     default:topaz:
       type: component
-      humanoid: minecraft:topaz
-      humanoid-leggings: minecraft:topaz
+      humanoid: minecraft:entity/equipment/humanoid/topaz
+      humanoid-leggings: minecraft:entity/equipment/humanoid_leggings/topaz
   $$<1.21.2:
     default:topaz:
       type: trim

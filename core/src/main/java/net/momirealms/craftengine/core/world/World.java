@@ -15,13 +15,13 @@ import java.nio.file.Path;
 import java.util.List;
 import java.util.UUID;
 
-public interface World extends BlockAccessor {
+public interface World extends WorldAccessor {
 
     CEWorld storageWorld();
 
-    Object platformWorld();
-
     Object serverWorld();
+
+    Object platformWorld();
 
     ExistingBlock getBlock(int x, int y, int z);
 

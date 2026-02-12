@@ -1,6 +1,5 @@
 items:
   default:bench:
-    material: nether_brick
     data:
       item-name: <!i><lang:item.default.bench>
     model: minecraft:item/custom/bench
@@ -15,9 +14,11 @@ items:
           - template: default:rotatable_furniture_4
         settings:
           item: default:bench
+          hit-times: 3
           sounds:
             break: minecraft:block.bamboo_wood.break
             place: minecraft:block.bamboo_wood.place
+            hit: minecraft:block.bamboo_wood.hit
         variants:
           ground:
             loot-spawn-offset: 0.5,0.5,0

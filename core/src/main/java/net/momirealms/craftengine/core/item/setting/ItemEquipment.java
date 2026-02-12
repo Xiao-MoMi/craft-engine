@@ -21,6 +21,12 @@ public class ItemEquipment {
         return this.equipment;
     }
 
+    /**
+     * >= 1.21.2  NonNull
+     * < 1.21.2 Null
+     *
+     * @return equipment data
+     */
     @Nullable
     public EquipmentData equipmentData() {
         return this.equipmentData;

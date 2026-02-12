@@ -92,4 +92,15 @@ public class Color {
     public int r() {
         return red(color);
     }
+
+    @Override
+    public boolean equals(Object o) {
+        if (!(o instanceof Color color1)) return false;
+        return this.color == color1.color;
+    }
+
+    @Override
+    public int hashCode() {
+        return Math.abs(this.color);
+    }
 }

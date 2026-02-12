@@ -6,6 +6,7 @@ import net.momirealms.craftengine.core.item.ItemBuildContext;
 import net.momirealms.craftengine.core.item.ItemProcessorFactory;
 import net.momirealms.craftengine.core.plugin.config.Config;
 import net.momirealms.craftengine.core.plugin.text.minimessage.FormattedLine;
+import net.momirealms.craftengine.core.util.AdventureHelper;
 import net.momirealms.craftengine.core.util.Key;
 
 public final class CustomNameProcessor implements SimpleNetworkItemProcessor {
@@ -15,6 +16,7 @@ public final class CustomNameProcessor implements SimpleNetworkItemProcessor {
     private final FormattedLine line;
 
     public CustomNameProcessor(String argument) {
+        argument = AdventureHelper.legacyToMiniMessage(argument);
         if (Config.addNonItalicTag()) {
             if (argument.startsWith("<!i>")) {
                 this.argument = argument;
@@ -28,7 +30,7 @@ public final class CustomNameProcessor implements SimpleNetworkItemProcessor {
     }
 
     public String customName() {
-        return argument;
+        return this.argument;
     }
 
     @Override

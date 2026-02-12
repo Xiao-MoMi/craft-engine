@@ -1,5 +1,6 @@
 package net.momirealms.craftengine.bukkit.block.behavior;
 
+import net.momirealms.antigrieflib.Flag;
 import net.momirealms.craftengine.bukkit.block.entity.BukkitBlockEntityTypes;
 import net.momirealms.craftengine.bukkit.block.entity.SimpleStorageBlockEntity;
 import net.momirealms.craftengine.bukkit.nms.FastNMS;
@@ -79,7 +80,7 @@ public class SimpleStorageBlockBehavior extends BukkitBlockBehavior implements E
         World bukkitWorld = (World) context.getLevel().platformWorld();
         Location location = new Location(bukkitWorld, blockPos.x(), blockPos.y(), blockPos.z());
         Player bukkitPlayer = (Player) player.platformPlayer();
-        if (!BukkitCraftEngine.instance().antiGriefProvider().canOpenContainer(bukkitPlayer, location)) {
+        if (!BukkitCraftEngine.instance().antiGriefProvider().test(bukkitPlayer, Flag.OPEN_CONTAINER, location)) {
             return InteractionResult.SUCCESS_AND_CANCEL;
         }
         BlockEntity blockEntity = world.getBlockEntityAtIfLoaded(blockPos);

@@ -17,7 +17,7 @@ public class FurniturePacketHandler implements EntityPacketHandler {
 
     @Override
     public boolean handleEntitiesRemove(NetWorkUser user, IntList entityIds) {
-        ((Player) user).removeTrackedFurniture(this.metaEntityId);
+        ((Player) user).removeTrackedEntity(this.metaEntityId);
         for (int entityId : this.virtualHitboxEntities) {
             entityIds.add(entityId);
         }

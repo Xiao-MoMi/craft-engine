@@ -8,7 +8,8 @@ import org.jetbrains.annotations.NotNull;
 public class VanillaRecipeReader1_20_5 extends VanillaRecipeReader1_20 {
 
     @Override
-    public @NotNull DatapackRecipeResult craftingResult(JsonObject object) {
+    public @NotNull DatapackRecipeResult craftingResult(JsonElement je) {
+        JsonObject object = je.getAsJsonObject();
         String item = object.get("id").getAsString();
         JsonObject components = object.has("components") ? object.getAsJsonObject("components") : null;
         int count = object.has("count") ? object.get("count").getAsInt() : 1;

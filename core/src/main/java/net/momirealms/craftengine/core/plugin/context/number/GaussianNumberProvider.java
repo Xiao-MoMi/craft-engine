@@ -1,13 +1,11 @@
 package net.momirealms.craftengine.core.plugin.context.number;
 
-import net.momirealms.craftengine.core.plugin.context.Context;
 import net.momirealms.craftengine.core.util.MiscUtils;
 import net.momirealms.craftengine.core.util.ResourceConfigUtils;
+import net.momirealms.craftengine.core.util.random.RandomSource;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Map;
-import java.util.Random;
-import java.util.concurrent.ThreadLocalRandom;
 
 public record GaussianNumberProvider(double min, double max, double mean, double stdDev, int maxAttempts) implements NumberProvider {
     public static final NumberProviderFactory<GaussianNumberProvider> FACTORY = new Factory();
@@ -34,13 +32,12 @@ public record GaussianNumberProvider(double min, double max, double mean, double
     }
 
     @Override
-    public float getFloat(Context context) {
-        return (float) getDouble(context);
+    public float getFloat(RandomSource random) {
+        return (float) getDouble(random);
     }
 
     @Override
-    public double getDouble(Context context) {
-        Random random = ThreadLocalRandom.current();
+    public double getDouble(RandomSource random) {
         int attempts = 0;
         while (attempts < maxAttempts) {
             double value = random.nextGaussian() * stdDev + mean;

@@ -112,9 +112,10 @@ public final class ResourceConfigUtils {
         }
     }
 
-    public static Object get(Map<String, Object> arguments, String... keys) {
-        for (String key : keys) {
-            Object value = arguments.get(key);
+    @SafeVarargs
+    public static <K, V> V get(Map<K, V> arguments, K... keys) {
+        for (K key : keys) {
+            V value = arguments.get(key);
             if (value != null) {
                 return value;
             }

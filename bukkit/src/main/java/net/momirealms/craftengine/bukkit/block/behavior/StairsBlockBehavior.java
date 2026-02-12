@@ -42,7 +42,7 @@ public class StairsBlockBehavior extends BukkitBlockBehavior {
         BlockPos clickedPos = context.getClickedPos();
         ImmutableBlockState blockState = state.owner().value().defaultState()
                 .with(this.facingProperty, context.getHorizontalDirection().toHorizontalDirection())
-                .with(this.halfProperty, clickedFace != Direction.DOWN && (clickedFace == Direction.UP || !(context.getClickLocation().y - clickedPos.y() > 0.5)) ? SingleBlockHalf.BOTTOM : SingleBlockHalf.TOP);
+                .with(this.halfProperty, clickedFace != Direction.DOWN && (clickedFace == Direction.UP || !(context.getClickedLocation().y - clickedPos.y() > 0.5)) ? SingleBlockHalf.BOTTOM : SingleBlockHalf.TOP);
         if (super.waterloggedProperty != null) {
             Object fluidState = FastNMS.INSTANCE.method$BlockGetter$getFluidState(context.getLevel().serverWorld(), LocationUtils.toBlockPos(clickedPos));
             blockState = blockState.with(this.waterloggedProperty, FastNMS.INSTANCE.method$FluidState$getType(fluidState) == MFluids.WATER);

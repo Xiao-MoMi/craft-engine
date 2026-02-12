@@ -1,13 +1,16 @@
 package net.momirealms.craftengine.bukkit.block.behavior;
 
+import net.momirealms.antigrieflib.Flag;
 import net.momirealms.craftengine.bukkit.api.CraftEngineBlocks;
 import net.momirealms.craftengine.bukkit.nms.FastNMS;
+import net.momirealms.craftengine.bukkit.plugin.BukkitCraftEngine;
 import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.CoreReflections;
 import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.MRegistries;
 import net.momirealms.craftengine.bukkit.util.BlockStateUtils;
 import net.momirealms.craftengine.bukkit.util.FeatureUtils;
 import net.momirealms.craftengine.bukkit.util.LocationUtils;
 import net.momirealms.craftengine.bukkit.util.ParticleUtils;
+import net.momirealms.craftengine.bukkit.world.BukkitWorldManager;
 import net.momirealms.craftengine.core.block.CustomBlock;
 import net.momirealms.craftengine.core.block.ImmutableBlockState;
 import net.momirealms.craftengine.core.block.UpdateOption;
@@ -21,8 +24,9 @@ import net.momirealms.craftengine.core.item.ItemKeys;
 import net.momirealms.craftengine.core.plugin.CraftEngine;
 import net.momirealms.craftengine.core.util.ItemUtils;
 import net.momirealms.craftengine.core.util.Key;
-import net.momirealms.craftengine.core.util.RandomUtils;
 import net.momirealms.craftengine.core.util.ResourceConfigUtils;
+import net.momirealms.craftengine.core.util.random.RandomUtils;
+import net.momirealms.craftengine.core.world.BlockPos;
 import net.momirealms.craftengine.core.world.context.UseOnContext;
 import org.bukkit.Location;
 import org.bukkit.World;
@@ -80,15 +84,19 @@ public class SaplingBlockBehavior extends BukkitBlockBehavior {
     }
 
     private void generateTree(Object world, Object blockPos, Object blockState, Object randomSource) throws Exception {
-        Object registry = FastNMS.INSTANCE.method$RegistryAccess$lookupOrThrow(FastNMS.INSTANCE.registryAccess(), MRegistries.CONFIGURED_FEATURE);
-        if (registry == null) return;
-        Optional<Object> holder = FastNMS.INSTANCE.method$Registry$getHolderByResourceKey(registry, FeatureUtils.createConfiguredFeatureKey(treeFeature()));
-        if (holder.isEmpty()) {
-            CraftEngine.instance().logger().warn("Configured feature not found: " + treeFeature());
-            return;
+        Object holder = BukkitWorldManager.instance().configuredFeatureById(treeFeature());
+        if (holder == null) {
+            Object registry = FastNMS.INSTANCE.method$RegistryAccess$lookupOrThrow(FastNMS.INSTANCE.registryAccess(), MRegistries.CONFIGURED_FEATURE);
+            if (registry == null) return;
+            Optional<Object> optionalHolder = FastNMS.INSTANCE.method$Registry$getHolderByResourceKey(registry, FeatureUtils.createConfiguredFeatureKey(treeFeature()));
+            if (optionalHolder.isEmpty()) {
+                CraftEngine.instance().logger().warn("Configured feature not found: " + treeFeature());
+                return;
+            }
+            holder = optionalHolder.get();
         }
         Object chunkGenerator = CoreReflections.method$ServerChunkCache$getGenerator.invoke(FastNMS.INSTANCE.method$ServerLevel$getChunkSource(world));
-        Object configuredFeature = FastNMS.INSTANCE.method$Holder$value(holder.get());
+        Object configuredFeature = FastNMS.INSTANCE.method$Holder$value(holder);
         Object fluidState = FastNMS.INSTANCE.method$BlockGetter$getFluidState(world, blockPos);
         Object legacyState = CoreReflections.method$FluidState$createLegacyBlock.invoke(fluidState);
         FastNMS.INSTANCE.method$LevelWriter$setBlock(world, blockPos, legacyState, UpdateOption.UPDATE_NONE.flags());
@@ -151,11 +159,17 @@ public class SaplingBlockBehavior extends BukkitBlockBehavior {
         Player player = context.getPlayer();
         if (ItemUtils.isEmpty(item) || !item.vanillaId().equals(ItemKeys.BONE_MEAL) || player == null || player.isAdventureMode())
             return InteractionResult.PASS;
+        BlockPos pos = context.getClickedPos();
+        net.momirealms.craftengine.core.world.World world = context.getLevel();
+        Location location = new Location((World) world.platformWorld(), pos.x, pos.y, pos.z);
+        if (!BukkitCraftEngine.instance().antiGriefProvider().test((org.bukkit.entity.Player) player.platformPlayer(), Flag.INTERACT, location)) {
+            return InteractionResult.SUCCESS_AND_CANCEL;
+        }
         boolean sendSwing = false;
         Object visualState = state.visualBlockState().literalObject();
         Object visualStateBlock = BlockStateUtils.getBlockOwner(visualState);
         if (CoreReflections.clazz$BonemealableBlock.isInstance(visualStateBlock)) {
-            boolean is = FastNMS.INSTANCE.method$BonemealableBlock$isValidBonemealTarget(visualStateBlock, context.getLevel().serverWorld(), LocationUtils.toBlockPos(context.getClickedPos()), visualState);
+            boolean is = FastNMS.INSTANCE.method$BonemealableBlock$isValidBonemealTarget(visualStateBlock, world.serverWorld(), LocationUtils.toBlockPos(pos), visualState);
             if (!is) {
                 sendSwing = true;
             }
