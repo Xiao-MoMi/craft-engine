@@ -29,7 +29,7 @@ public final class DoubleHighBlockItemBehavior extends BlockItemBehavior {
     @Override
     protected boolean placeBlock(Location location, ImmutableBlockState blockState, List<BlockState> revertState) {
         Object level = CraftWorldProxy.INSTANCE.getWorld(location.getWorld());
-        Object blockPos = BlockPosProxy.INSTANCE.newInstance$1(location.getBlockX(), location.getBlockY() + 1, location.getBlockZ());
+        Object blockPos = BlockPosProxy.INSTANCE.newInstance(location.getBlockX(), location.getBlockY() + 1, location.getBlockZ());
         UpdateOption option = UpdateOption.builder().updateNeighbors().updateClients().updateImmediate().updateKnownShape().build();
         Object fluidData = BlockGetterProxy.INSTANCE.getFluidState(level, blockPos);
         Object stateToPlace = fluidData == MFluids.WATER$defaultState ? MBlocks.WATER$defaultState : MBlocks.AIR$defaultState;

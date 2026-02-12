@@ -80,7 +80,7 @@ public class DoubleHighBlockBehavior extends AbstractCanSurviveBlockBehavior {
         if (blockState == null || blockState.isEmpty()) {
             return superMethod.call();
         }
-        BukkitServerPlayer cePlayer = BukkitAdaptors.adapt(ServerPlayerProxy.INSTANCE.getBukkitEntity$1(player));
+        BukkitServerPlayer cePlayer = BukkitAdaptors.adapt(ServerPlayerProxy.INSTANCE.getBukkitEntity(player));
         if (cePlayer == null) {
             return superMethod.call();
         }
@@ -111,7 +111,7 @@ public class DoubleHighBlockBehavior extends AbstractCanSurviveBlockBehavior {
             int x = Vec3iProxy.INSTANCE.getX(blockPos);
             int y = Vec3iProxy.INSTANCE.getY(blockPos) - 1;
             int z = Vec3iProxy.INSTANCE.getZ(blockPos);
-            Object belowPos = BlockPosProxy.INSTANCE.newInstance$1(x, y, z);
+            Object belowPos = BlockPosProxy.INSTANCE.newInstance(x, y, z);
             Object belowState = BlockGetterProxy.INSTANCE.getBlockState(world, belowPos);
             Optional<ImmutableBlockState> belowCustomState = BlockStateUtils.getOptionalCustomBlockState(belowState);
             return belowCustomState.filter(immutableBlockState -> immutableBlockState.owner().value() == super.customBlock).isPresent();

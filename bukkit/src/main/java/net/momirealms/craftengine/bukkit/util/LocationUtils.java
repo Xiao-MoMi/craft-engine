@@ -60,7 +60,7 @@ public final class LocationUtils {
     }
 
     public static Object toBlockPos(int x, int y, int z) {
-        return BlockPosProxy.INSTANCE.newInstance$1(x, y, z);
+        return BlockPosProxy.INSTANCE.newInstance(x, y, z);
     }
 
     public static BlockPos toBlockPos(Location pos) {

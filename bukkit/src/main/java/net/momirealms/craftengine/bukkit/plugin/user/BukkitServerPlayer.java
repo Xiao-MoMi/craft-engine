@@ -1207,9 +1207,9 @@ public class BukkitServerPlayer extends Player {
             Object serverPlayer = serverPlayer();
             if (serverPlayer != null) {
                 if (VersionHelper.isOrAbove1_20_2()) {
-                    this.connection = ServerCommonPacketListenerImplProxy.INSTANCE.getConnection$0(ServerPlayerProxy.INSTANCE.getConnection(serverPlayer));
+                    this.connection = ServerCommonPacketListenerImplProxy.INSTANCE.getConnection(ServerPlayerProxy.INSTANCE.getConnection(serverPlayer));
                 } else {
-                    this.connection = ServerGamePacketListenerImplProxy.INSTANCE.getConnection$1(ServerPlayerProxy.INSTANCE.getConnection(serverPlayer));
+                    this.connection = ServerGamePacketListenerImplProxy.INSTANCE.getConnection(ServerPlayerProxy.INSTANCE.getConnection(serverPlayer));
                 }
             } else {
                 throw new IllegalStateException("Cannot init or find connection instance for player " + name());

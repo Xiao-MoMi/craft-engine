@@ -138,7 +138,7 @@ public class BukkitWorld implements World {
     @Override
     public void setBlockState(int x, int y, int z, BlockStateWrapper blockState, int flags) {
         Object worldServer = serverWorld();
-        Object blockPos = BlockPosProxy.INSTANCE.newInstance$1(x, y, z);
+        Object blockPos = BlockPosProxy.INSTANCE.newInstance(x, y, z);
         LevelWriterProxy.INSTANCE.setBlock(worldServer, blockPos, blockState.literalObject(), flags);
     }
 
@@ -171,7 +171,7 @@ public class BukkitWorld implements World {
         if (players.isEmpty()) return Collections.emptyList();
         List<Player> tracked = new ArrayList<>(players.size());
         for (Object player : players) {
-            BukkitServerPlayer serverPlayer = BukkitAdaptors.adapt(ServerPlayerProxy.INSTANCE.getBukkitEntity$1(player));
+            BukkitServerPlayer serverPlayer = BukkitAdaptors.adapt(ServerPlayerProxy.INSTANCE.getBukkitEntity(player));
             if (serverPlayer == null) continue;
             tracked.add(serverPlayer);
         }

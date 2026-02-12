@@ -34,7 +34,7 @@ public interface ServerPlayerProxy extends PlayerProxy {
     Object drop$1(Object target, @Type(clazz = ItemStackProxy.class) Object droppedItem, boolean dropAround, boolean traceItem, boolean callEvent);
 
     @MethodInvoker(name = "getBukkitEntity")
-    Player getBukkitEntity$1(Object target); // fixme 无法覆写方法
+    Player getBukkitEntity(Object target);
 
     @FieldGetter(name = "gameMode")
     Object getGameMode(Object target);

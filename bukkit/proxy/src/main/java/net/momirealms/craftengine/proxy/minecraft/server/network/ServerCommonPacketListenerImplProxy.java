@@ -11,7 +11,7 @@ public interface ServerCommonPacketListenerImplProxy {
     ServerCommonPacketListenerImplProxy INSTANCE = ASMProxyFactory.create(ServerCommonPacketListenerImplProxy.class);
 
     @FieldGetter(name = "connection", activeIf = "min_version=1.20.2")
-    SimpleChannelInboundHandler<Object> getConnection$0(Object target);
+    SimpleChannelInboundHandler<Object> getConnection(Object target);
 
     @FieldGetter(name = "closed", activeIf = "min_version=1.20.5")
     boolean isClosed(Object target);

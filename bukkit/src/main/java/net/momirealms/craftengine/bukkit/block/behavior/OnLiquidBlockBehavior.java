@@ -56,7 +56,7 @@ public class OnLiquidBlockBehavior extends AbstractCanSurviveBlockBehavior {
         int x = Vec3iProxy.INSTANCE.getX(blockPos);
         int y = Vec3iProxy.INSTANCE.getY(blockPos);
         int z = Vec3iProxy.INSTANCE.getZ(blockPos);
-        Object belowPos = BlockPosProxy.INSTANCE.newInstance$1(x, y - 1, z);
+        Object belowPos = BlockPosProxy.INSTANCE.newInstance(x, y - 1, z);
         Object belowState = BlockGetterProxy.INSTANCE.getBlockState(world, belowPos);
         return mayPlaceOn(belowState, world, belowPos);
     }

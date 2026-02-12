@@ -138,7 +138,7 @@ public class DoorBlockBehavior extends AbstractCanSurviveBlockBehavior implement
         Object player = args[3];
         ImmutableBlockState blockState = BukkitBlockManager.instance().getImmutableBlockState(BlockStateUtils.blockStateToId(state));
         if (blockState == null || blockState.isEmpty()) return superMethod.call();
-        org.bukkit.entity.Player bukkitPlayer = ServerPlayerProxy.INSTANCE.getBukkitEntity$1(player);
+        org.bukkit.entity.Player bukkitPlayer = ServerPlayerProxy.INSTANCE.getBukkitEntity(player);
         BukkitServerPlayer cePlayer = BukkitCraftEngine.instance().adapt(bukkitPlayer);
         Item<ItemStack> item = cePlayer.getItemInHand(InteractionHand.MAIN_HAND);
         if (cePlayer.canInstabuild() || !BlockStateUtils.isCorrectTool(blockState, item)) {
@@ -348,7 +348,7 @@ public class DoorBlockBehavior extends AbstractCanSurviveBlockBehavior implement
         int x = Vec3iProxy.INSTANCE.getX(blockPos);
         int y = Vec3iProxy.INSTANCE.getY(blockPos) - 1;
         int z = Vec3iProxy.INSTANCE.getZ(blockPos);
-        Object belowPos = BlockPosProxy.INSTANCE.newInstance$1(x, y, z);
+        Object belowPos = BlockPosProxy.INSTANCE.newInstance(x, y, z);
         Object belowState = BlockGetterProxy.INSTANCE.getBlockState(world, belowPos);
         if (optionalCustomState.get().get(this.halfProperty) == DoubleBlockHalf.UPPER) {
             Optional<ImmutableBlockState> belowCustomState = BlockStateUtils.getOptionalCustomBlockState(belowState);

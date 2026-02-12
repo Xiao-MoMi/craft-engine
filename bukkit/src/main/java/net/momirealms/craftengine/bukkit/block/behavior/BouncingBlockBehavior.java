@@ -69,7 +69,7 @@ public class BouncingBlockBehavior extends BukkitBlockBehavior implements FallOn
             ) {
                 // 这里一定要延迟 1t 不然就会出问题
                 if (VersionHelper.isFolia()) {
-                    Entity bukkitEntity = EntityProxy.INSTANCE.getBukkitEntity$0(entity);
+                    Entity bukkitEntity = EntityProxy.INSTANCE.getBukkitEntity(entity);
                     bukkitEntity.getScheduler().runDelayed(BukkitCraftEngine.instance().javaPlugin(),
                             r -> EntityProxy.INSTANCE.setHurtMarked(entity, true),
                             null, 1L

@@ -19,8 +19,8 @@ public interface ListTagProxy {
     Object get(Object target, int index);
 
     @MethodInvoker(name = "addTag")
-    void addTag(Object target, int index, @Type(clazz = TagProxy.class) Object value);
+    boolean addTag(Object target, int index, @Type(clazz = TagProxy.class) Object value);
 
     @MethodInvoker(name = "remove")
-    void remove(Object target, int index);
+    Object remove(Object target, int index);
 }

@@ -39,7 +39,7 @@ public interface ItemStackProxy extends DataComponentHolderProxy {
     void hurtAndBreak(Object target, int amount, @Type(clazz = LivingEntityProxy.class) Object entity, @Type(clazz = EquipmentSlotProxy.class) Object slot);
 
     @MethodInvoker(name = "hurtAndBreak", activeIf = "max_version=1.20.4")
-    Object hurtAndBreak(Object target, int amount, @Type(clazz = LivingEntityProxy.class) Object entity, Consumer<Object> breakCallback);
+    void hurtAndBreak(Object target, int amount, @Type(clazz = LivingEntityProxy.class) Object entity, Consumer<Object> breakCallback);
 
     @MethodInvoker(name = "of", isStatic = true, activeIf = "max_version=1.20.4")
     Object of(@Type(clazz = CompoundTagProxy.class) Object nbt);
@@ -63,7 +63,7 @@ public interface ItemStackProxy extends DataComponentHolderProxy {
     Object getOrCreateTag(Object target);
 
     @MethodInvoker(name = "set", activeIf = "min_version=1.20.5")
-    void set(Object target, @Type(clazz = DataComponentTypeProxy.class) Object type, Object value);
+    <T> T set(Object target, @Type(clazz = DataComponentTypeProxy.class) Object type, T value);
 
     @MethodInvoker(name = "remove", activeIf = "min_version=1.20.5")
     <T> T remove(Object target, @Type(clazz = DataComponentTypeProxy.class) Object type);

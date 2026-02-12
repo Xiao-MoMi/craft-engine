@@ -148,7 +148,7 @@ public final class CraftEngineBlocks {
                                 boolean playSound) {
         boolean success;
         Object worldServer = CraftWorldProxy.INSTANCE.getWorld(location.getWorld());
-        Object blockPos = BlockPosProxy.INSTANCE.newInstance$1(location.getBlockX(), location.getBlockY(), location.getBlockZ());
+        Object blockPos = BlockPosProxy.INSTANCE.newInstance(location.getBlockX(), location.getBlockY(), location.getBlockZ());
         Object blockState = block.customBlockState().literalObject();
         Object oldBlockState = BlockGetterProxy.INSTANCE.getBlockState(worldServer, blockPos);
         success = LevelWriterProxy.INSTANCE.setBlock(worldServer, blockPos, blockState, option.flags());

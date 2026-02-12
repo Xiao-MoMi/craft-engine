@@ -21,5 +21,5 @@ public interface FriendlyByteBufProxy {
     Object readItem(ByteBuf target);
 
     @MethodInvoker(name = "writeItem", activeIf = "max_version=1.20.4")
-    void writeItem(ByteBuf target, @Type(clazz = ItemStackProxy.class) Object stack);
+    ByteBuf writeItem(ByteBuf target, @Type(clazz = ItemStackProxy.class) Object stack);
 }

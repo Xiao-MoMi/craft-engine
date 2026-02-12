@@ -93,7 +93,7 @@ public final class MultiHighBlockItemBehavior extends BlockItemBehavior {
         IntegerProperty property = behavior.property;
         for (int i = property.min + 1; i <= property.max; i++) {
             Object level = CraftWorldProxy.INSTANCE.getWorld(location.getWorld());
-            Object blockPos = BlockPosProxy.INSTANCE.newInstance$1(location.getBlockX(), location.getBlockY() + i, location.getBlockZ());
+            Object blockPos = BlockPosProxy.INSTANCE.newInstance(location.getBlockX(), location.getBlockY() + i, location.getBlockZ());
             UpdateOption option = UpdateOption.builder().updateNeighbors().updateClients().updateImmediate().updateKnownShape().build();
             Object fluidData = BlockGetterProxy.INSTANCE.getFluidState(level, blockPos);
             Object stateToPlace = fluidData == MFluids.WATER$defaultState ? MBlocks.WATER$defaultState : MBlocks.AIR$defaultState;

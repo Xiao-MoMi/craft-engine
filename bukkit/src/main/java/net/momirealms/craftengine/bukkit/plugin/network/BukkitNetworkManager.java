@@ -380,8 +380,8 @@ public class BukkitNetworkManager extends AbstractNetworkManager implements List
         Object botList = BotListProxy.INSTANCE.getInstance();
         List<Object> bots = BotListProxy.INSTANCE.getBots(botList);
         ListMonitor<Object> monitor = new ListMonitor<>(bots,
-                (bot) -> addFakePlayer(ServerPlayerProxy.INSTANCE.getBukkitEntity$1(bot)),
-                (bot) -> removeFakePlayer(ServerPlayerProxy.INSTANCE.getBukkitEntity$1(bot))
+                (bot) -> addFakePlayer(ServerPlayerProxy.INSTANCE.getBukkitEntity(bot)),
+                (bot) -> removeFakePlayer(ServerPlayerProxy.INSTANCE.getBukkitEntity(bot))
         );
         BotListProxy.INSTANCE.setBots(botList, monitor);
     }
@@ -696,9 +696,9 @@ public class BukkitNetworkManager extends AbstractNetworkManager implements List
     public Channel getChannel(Player player) {
         SimpleChannelInboundHandler<Object> connection;
         if (VersionHelper.isOrAbove1_20_2()) {
-            connection = ServerCommonPacketListenerImplProxy.INSTANCE.getConnection$0(ServerPlayerProxy.INSTANCE.getConnection(CraftEntityProxy.INSTANCE.getEntity(player)));
+            connection = ServerCommonPacketListenerImplProxy.INSTANCE.getConnection(ServerPlayerProxy.INSTANCE.getConnection(CraftEntityProxy.INSTANCE.getEntity(player)));
         } else {
-            connection = ServerGamePacketListenerImplProxy.INSTANCE.getConnection$1(ServerPlayerProxy.INSTANCE.getConnection(CraftEntityProxy.INSTANCE.getEntity(player)));
+            connection = ServerGamePacketListenerImplProxy.INSTANCE.getConnection(ServerPlayerProxy.INSTANCE.getConnection(CraftEntityProxy.INSTANCE.getEntity(player)));
         }
         return ConnectionProxy.INSTANCE.getChannel(connection);
     }

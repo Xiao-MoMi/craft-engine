@@ -5,9 +5,9 @@ import net.momirealms.sparrow.reflection.proxy.annotation.ConstructorInvoker;
 import net.momirealms.sparrow.reflection.proxy.annotation.ReflectionProxy;
 
 @ReflectionProxy(name = "net.minecraft.core.SectionPos")
-public interface SectionPosProxy /*extends Vec3iProxy*/ {
+public interface SectionPosProxy extends Vec3iProxy {
     SectionPosProxy INSTANCE = ASMProxyFactory.create(SectionPosProxy.class);
 
     @ConstructorInvoker
-    Object newInstance(int x, int y, int z); // fixme 如果启用继承这个方法会爆炸
+    Object newInstance(int x, int y, int z);
 }

@@ -72,7 +72,7 @@ public class NearLiquidBlockBehavior extends AbstractCanSurviveBlockBehavior {
         int y = Vec3iProxy.INSTANCE.getY(blockPos);
         int z = Vec3iProxy.INSTANCE.getZ(blockPos);
         if (this.stackable) {
-            Object belowPos = BlockPosProxy.INSTANCE.newInstance$1(x, y - 1, z);
+            Object belowPos = BlockPosProxy.INSTANCE.newInstance(x, y - 1, z);
             Object belowState = BlockGetterProxy.INSTANCE.getBlockState(world, belowPos);
             Optional<ImmutableBlockState> optionalBelowCustomState = BlockStateUtils.getOptionalCustomBlockState(belowState);
             if (optionalBelowCustomState.isPresent() && optionalBelowCustomState.get().owner().value() == super.customBlock) {
@@ -80,7 +80,7 @@ public class NearLiquidBlockBehavior extends AbstractCanSurviveBlockBehavior {
             }
         }
         for (BlockPos pos : positions) {
-            Object belowPos = BlockPosProxy.INSTANCE.newInstance$1(x + pos.x(), y + pos.y(), z + pos.z());
+            Object belowPos = BlockPosProxy.INSTANCE.newInstance(x + pos.x(), y + pos.y(), z + pos.z());
             Object belowState = BlockGetterProxy.INSTANCE.getBlockState(world, belowPos);
             if (mayPlaceOn(belowState, world, belowPos)) {
                 return true;

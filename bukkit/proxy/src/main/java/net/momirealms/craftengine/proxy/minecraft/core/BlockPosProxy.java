@@ -11,7 +11,7 @@ public interface BlockPosProxy extends Vec3iProxy {
     BlockPosProxy INSTANCE = ASMProxyFactory.create(BlockPosProxy.class);
 
     @ConstructorInvoker
-    Object newInstance$1(int x, int y, int z); // fixme 无法覆写接口
+    Object newInstance(int x, int y, int z);
 
     @MethodInvoker(name = "mutable")
     Object mutable(Object target);

@@ -116,5 +116,5 @@ public interface EntityProxy {
     int getId(Object target);
 
     @MethodInvoker(name = "getBukkitEntity")
-    Entity getBukkitEntity$0(Object target); // fixme 无法覆写方法
+    Entity getBukkitEntity(Object target);
 }

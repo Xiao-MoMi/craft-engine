@@ -129,7 +129,7 @@ public final class BlockStateGenerator {
             if (!item.isEmpty()) {
                 lootBuilder.withParameter(DirectContextParameters.ITEM_IN_HAND, item);
             }
-            BukkitServerPlayer player = optionalPlayer != null ? BukkitCraftEngine.instance().adapt(ServerPlayerProxy.INSTANCE.getBukkitEntity$1(optionalPlayer)) : null;
+            BukkitServerPlayer player = optionalPlayer != null ? BukkitCraftEngine.instance().adapt(ServerPlayerProxy.INSTANCE.getBukkitEntity(optionalPlayer)) : null;
             if (player != null) {
                 lootBuilder.withParameter(DirectContextParameters.PLAYER, player);
             }

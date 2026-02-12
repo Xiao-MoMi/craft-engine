@@ -26,5 +26,5 @@ public interface ServerGamePacketListenerImplProxy extends ServerCommonPacketLis
                      @Type(clazz = ItemStackProxy.class) Object item);
 
     @FieldGetter(name = "connection", activeIf = "max_version=1.20.1")
-    SimpleChannelInboundHandler<Object> getConnection$1(Object target); // fixme 无法覆写方法
+    SimpleChannelInboundHandler<Object> getConnection(Object target);
 }
