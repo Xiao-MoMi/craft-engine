@@ -1,6 +1,5 @@
 package net.momirealms.craftengine.bukkit.block.behavior;
 
-import net.momirealms.craftengine.bukkit.nms.FastNMS;
 import net.momirealms.craftengine.bukkit.util.BlockStateUtils;
 import net.momirealms.craftengine.bukkit.util.LocationUtils;
 import net.momirealms.craftengine.core.block.CustomBlock;
@@ -16,6 +15,7 @@ import net.momirealms.craftengine.core.util.Key;
 import net.momirealms.craftengine.core.util.MiscUtils;
 import net.momirealms.craftengine.core.util.ResourceConfigUtils;
 import net.momirealms.craftengine.core.world.context.BlockPlaceContext;
+import net.momirealms.craftengine.proxy.minecraft.world.level.BlockGetterProxy;
 
 import java.util.List;
 import java.util.Map;
@@ -59,7 +59,7 @@ public class StackableBlockBehavior extends BukkitBlockBehavior implements CanBe
     public ImmutableBlockState updateStateForPlacement(BlockPlaceContext context, ImmutableBlockState state) {
         Object world = context.getLevel().serverWorld();
         Object pos = LocationUtils.toBlockPos(context.getClickedPos());
-        ImmutableBlockState blockState = BlockStateUtils.getOptionalCustomBlockState(FastNMS.INSTANCE.method$BlockGetter$getBlockState(world, pos)).orElse(null);
+        ImmutableBlockState blockState = BlockStateUtils.getOptionalCustomBlockState(BlockGetterProxy.INSTANCE.getBlockState(world, pos)).orElse(null);
         if (blockState == null) {
             return state;
         }

@@ -17,5 +17,5 @@ public interface LevelReaderProxy {
     Object getNoiseBiome(Object target, int x, int y, int z);
 
     @MethodInvoker(name = "getMaxLocalRawBrightness")
-    int getMaxLocalRawBrightness(Object target, @Type(clazz = BlockPosProxy.class) Object pos);
+    int getMaxLocalRawBrightness(Object target, @Type(clazz = BlockPosProxy.class) Object blockPos);
 }

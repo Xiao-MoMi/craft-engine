@@ -1,7 +1,6 @@
 package net.momirealms.craftengine.bukkit.world.score;
 
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
-import net.momirealms.craftengine.bukkit.nms.FastNMS;
 import net.momirealms.craftengine.bukkit.plugin.BukkitCraftEngine;
 import net.momirealms.craftengine.core.util.LegacyChatFormatter;
 import net.momirealms.craftengine.core.world.score.TeamManager;
@@ -18,6 +17,7 @@ public class BukkitTeamManager implements TeamManager {
     private static BukkitTeamManager instance;
     private final BukkitCraftEngine plugin;
     private final Map<LegacyChatFormatter, Object> teamByColor = new EnumMap<>(LegacyChatFormatter.class);
+    private final Map<LegacyChatFormatter, String> teamNameByColor = new EnumMap<>(LegacyChatFormatter.class);
     private List<Object> addTeamsPackets;
 
     public BukkitTeamManager(BukkitCraftEngine plugin) {
@@ -32,6 +32,11 @@ public class BukkitTeamManager implements TeamManager {
     @Override
     public Object getTeamByColor(LegacyChatFormatter color) {
         return this.teamByColor.get(color);
+    }
+
+    @Override
+    public String getTeamNameByColor(LegacyChatFormatter color) {
+        return this.teamNameByColor.get(color);
     }
 
     @Override
@@ -50,6 +55,7 @@ public class BukkitTeamManager implements TeamManager {
             Object team = PlayerTeamProxy.INSTANCE.newInstance(scoreboard, teamName);
             PlayerTeamProxy.INSTANCE.setColor(team, ChatFormattingProxy.INSTANCE.valueOf(color.name()));
             this.teamByColor.put(color, team);
+            this.teamNameByColor.put(color, teamName);
             packets.add(ClientboundSetPlayerTeamPacketProxy.INSTANCE.createAddOrModifyPacket(team, true));
         }
         this.addTeamsPackets = packets;

@@ -1,17 +1,75 @@
 package net.momirealms.craftengine.proxy.minecraft.world.level.block.state;
 
+import net.momirealms.craftengine.proxy.minecraft.core.BlockPosProxy;
+import net.momirealms.craftengine.proxy.minecraft.core.DirectionProxy;
+import net.momirealms.craftengine.proxy.minecraft.server.level.ServerLevelProxy;
+import net.momirealms.craftengine.proxy.minecraft.tags.TagKeyProxy;
+import net.momirealms.craftengine.proxy.minecraft.util.RandomSourceProxy;
+import net.momirealms.craftengine.proxy.minecraft.world.entity.player.PlayerProxy;
+import net.momirealms.craftengine.proxy.minecraft.world.level.BlockGetterProxy;
+import net.momirealms.craftengine.proxy.minecraft.world.level.LevelProxy;
+import net.momirealms.craftengine.proxy.minecraft.world.level.LevelReaderProxy;
+import net.momirealms.craftengine.proxy.minecraft.world.level.block.BlockProxy;
+import net.momirealms.craftengine.proxy.minecraft.world.level.block.SupportTypeProxy;
+import net.momirealms.craftengine.proxy.minecraft.world.level.pathfinder.PathComputationTypeProxy;
+import net.momirealms.craftengine.proxy.minecraft.world.phys.shape.CollisionContextProxy;
 import net.momirealms.sparrow.reflection.proxy.ASMProxyFactory;
-import net.momirealms.sparrow.reflection.proxy.annotation.FieldGetter;
-import net.momirealms.sparrow.reflection.proxy.annotation.FieldSetter;
-import net.momirealms.sparrow.reflection.proxy.annotation.MethodInvoker;
-import net.momirealms.sparrow.reflection.proxy.annotation.ReflectionProxy;
+import net.momirealms.sparrow.reflection.proxy.annotation.*;
 
 @ReflectionProxy(name = "net.minecraft.world.level.block.state.BlockBehaviour")
 public interface BlockBehaviourProxy {
     BlockBehaviourProxy INSTANCE = ASMProxyFactory.create(BlockBehaviourProxy.class);
 
+    @FieldGetter(name = "hasCollision")
+    boolean hasCollision(Object target);
+
+    @FieldSetter(name = "hasCollision")
+    void setHasCollision(Object target, boolean hasCollision);
+
+    @FieldGetter(name = "isRandomlyTicking")
+    boolean isRandomlyTicking(Object target);
+
+    @FieldSetter(name = "isRandomlyTicking")
+    void setIsRandomlyTicking(Object target, boolean isRandomlyTicking);
+
+    @FieldGetter(name = "explosionResistance")
+    float getExplosionResistance(Object target);
+
+    @FieldSetter(name = "explosionResistance")
+    void setExplosionResistance(Object target, float resistance);
+
+    @FieldGetter(name = "soundType")
+    Object getSoundType(Object target);
+
+    @FieldSetter(name = "soundType")
+    void setSoundType(Object target, Object soundType);
+
+    @FieldGetter(name = "friction")
+    float getFriction(Object target);
+
+    @FieldSetter(name = "friction")
+    void setFriction(Object target, float friction);
+
+    @FieldGetter(name = "speedFactor")
+    float getSpeedFactor(Object target);
+
+    @FieldSetter(name = "speedFactor")
+    void setSpeedFactor(Object target, float speedFactor);
+
+    @FieldGetter(name = "jumpFactor")
+    float getJumpFactor(Object target);
+
+    @FieldSetter(name = "jumpFactor")
+    void setJumpFactor(Object target, float jumpFactor);
+
+    @FieldGetter(name = "descriptionId", activeIf = "min_version=1.21.2")
+    String getDescriptionId(Object target);
+
+    @FieldSetter(name = "descriptionId", activeIf = "min_version=1.21.2")
+    void setDescriptionId(Object target, String descriptionId);
+
     @ReflectionProxy(name = "net.minecraft.world.level.block.state.BlockBehaviour$BlockStateBase")
-    interface BlockStateBaseProxy {
+    interface BlockStateBaseProxy extends StateHolderProxy {
         BlockStateBaseProxy INSTANCE = ASMProxyFactory.create(BlockStateBaseProxy.class);
 
         @FieldGetter(name = "lightEmission")
@@ -116,12 +174,6 @@ public interface BlockBehaviourProxy {
         @FieldSetter(name = "offsetFunction")
         void setOffsetFunction(Object target, Object offsetFunction);
 
-        @FieldGetter(name = "spawnTerrainParticles")
-        boolean isSpawnTerrainParticles(Object target);
-
-        @FieldSetter(name = "spawnTerrainParticles")
-        void setSpawnTerrainParticles(Object target, boolean spawnTerrainParticles);
-
         @FieldGetter(name = "instrument")
         Object getInstrument(Object target);
 
@@ -165,22 +217,10 @@ public interface BlockBehaviourProxy {
         void setPropagatesSkylightDown(Object target, boolean propagatesSkylightDown);
 
         @FieldGetter(name = "lightBlock", activeIf = "min_version=1.21.2")
-        int getLightBlock(Object target);
+        int getLightBlock$0(Object target);
 
         @FieldSetter(name = "lightBlock", activeIf = "min_version=1.21.2")
         void setLightBlock(Object target, int lightBlock);
-
-        @FieldGetter(name = "occludesFullBlock")
-        boolean isOccludesFullBlock(Object target);
-
-        @FieldSetter(name = "occludesFullBlock")
-        void setOccludesFullBlock(Object target, boolean occludesFullBlock);
-
-        @FieldGetter(name = "emptyCollisionShape")
-        boolean isEmptyCollisionShape(Object target);
-
-        @FieldSetter(name = "emptyCollisionShape")
-        void setEmptyCollisionShape(Object target, boolean emptyCollisionShape);
 
         @FieldGetter(name = "shapeExceedsCube")
         boolean isShapeExceedsCube(Object target);
@@ -209,6 +249,60 @@ public interface BlockBehaviourProxy {
         @MethodInvoker(name = "initCache")
         void initCache(Object target);
 
+        @MethodInvoker(name = "getLightBlock", activeIf = "min_version=1.21.2")
+        int getLightBlock$1(Object target);
+
+        @MethodInvoker(name = "getLightBlock", activeIf = "max_version=1.21.1")
+        int getLightBlock(Object target, @Type(clazz = BlockGetterProxy.class) Object world, @Type(clazz = BlockPosProxy.class) Object pos);
+
+        @MethodInvoker(name = "randomTick")
+        void randomTick(Object target, @Type(clazz = ServerLevelProxy.class) Object world, @Type(clazz = BlockPosProxy.class) Object pos, @Type(clazz = RandomSourceProxy.class) Object random);
+
+        @MethodInvoker(name = "getSoundType")
+        Object getSoundType(Object target);
+
+        @MethodInvoker(name = "is")
+        boolean is$0(Object target, @Type(clazz = BlockProxy.class) Object block);
+
+        @MethodInvoker(name = "isPathfindable", activeIf = "min_version=1.20.5")
+        boolean isPathfindable(Object target, @Type(clazz = PathComputationTypeProxy.class) Object type);
+
+        @MethodInvoker(name = "isPathfindable", activeIf = "max_version=1.20.4")
+        boolean isPathfindable(Object target, @Type(clazz = BlockGetterProxy.class) Object world, @Type(clazz = BlockPosProxy.class) Object pos, @Type(clazz = PathComputationTypeProxy.class) Object type);
+
+        @MethodInvoker(name = "isFaceSturdy")
+        boolean isFaceSturdy(Object target, @Type(clazz = BlockGetterProxy.class) Object world, @Type(clazz = BlockPosProxy.class) Object pos, @Type(clazz = DirectionProxy.class) Object face, @Type(clazz = SupportTypeProxy.class) Object supportType);
+
+        @MethodInvoker(name = "is")
+        boolean is$1(Object target, @Type(clazz = TagKeyProxy.class) Object tag);
+
+        @MethodInvoker(name = "isCollisionShapeFullBlock")
+        boolean isCollisionShapeFullBlock(Object target, @Type(clazz = BlockGetterProxy.class) Object world, @Type(clazz = BlockPosProxy.class) Object pos);
+
+        @MethodInvoker(name = "canSurvive")
+        boolean canSurvive(Object target, @Type(clazz = LevelReaderProxy.class) Object world, @Type(clazz = BlockPosProxy.class) Object pos);
+
+        @MethodInvoker(name = "isSignalSource")
+        boolean isSignalSource(Object target);
+
+        @MethodInvoker(name = "getShape")
+        Object getShape(Object target, @Type(clazz = BlockGetterProxy.class) Object world, @Type(clazz = BlockPosProxy.class) Object pos, @Type(clazz = CollisionContextProxy.class) Object context);
+
+        @MethodInvoker(name = "getCollisionShape")
+        Object getCollisionShape(Object target, @Type(clazz = BlockGetterProxy.class) Object world, @Type(clazz = BlockPosProxy.class) Object pos, @Type(clazz = CollisionContextProxy.class) Object context);
+
+        @MethodInvoker(name = "getBlockSupportShape")
+        Object getBlockSupportShape(Object target, @Type(clazz = BlockGetterProxy.class) Object world, @Type(clazz = BlockPosProxy.class) Object pos);
+
+        @MethodInvoker(name = "getBlock")
+        Object getBlock(Object target);
+
+        @MethodInvoker(name = "onPlace")
+        void onPlace(Object target, @Type(clazz = LevelProxy.class) Object world, @Type(clazz = BlockPosProxy.class) Object pos, @Type(clazz = BlockStateProxy.class) Object oldState, boolean movedByPiston);
+
+        @MethodInvoker(name = "getDestroyProgress")
+        float getDestroyProgress(Object target, @Type(clazz = PlayerProxy.class) Object player, @Type(clazz = BlockGetterProxy.class) Object world, @Type(clazz = BlockPosProxy.class) Object pos);
+
         @ReflectionProxy(name = "net.minecraft.world.level.block.state.BlockBehaviour$BlockStateBase$Cache")
         interface CacheProxy {
             CacheProxy INSTANCE = ASMProxyFactory.create(CacheProxy.class);
@@ -225,5 +319,16 @@ public interface BlockBehaviourProxy {
             @FieldSetter(name = "propagatesSkylightDown", activeIf = "max_version=1.21.1")
             void setPropagatesSkylightDown(Object target, boolean propagatesSkylightDown);
         }
+    }
+
+    @ReflectionProxy(name = "net.minecraft.world.level.block.state.BlockBehaviour$Properties")
+    interface PropertiesProxy {
+        PropertiesProxy INSTANCE = ASMProxyFactory.create(PropertiesProxy.class);
+
+        @MethodInvoker(name = "of", isStatic = true)
+        Object of();
+
+        @FieldSetter(name = "id", activeIf = "min_version=1.21.2")
+        void setId(Object target, Object id);
     }
 }

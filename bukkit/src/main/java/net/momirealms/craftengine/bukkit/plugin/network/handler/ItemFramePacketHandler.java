@@ -2,12 +2,14 @@ package net.momirealms.craftengine.bukkit.plugin.network.handler;
 
 import net.momirealms.craftengine.bukkit.entity.data.ItemFrameData;
 import net.momirealms.craftengine.bukkit.item.BukkitItemManager;
-import net.momirealms.craftengine.bukkit.nms.FastNMS;
+import net.momirealms.craftengine.bukkit.util.PacketUtils;
 import net.momirealms.craftengine.core.entity.player.Player;
 import net.momirealms.craftengine.core.plugin.config.Config;
 import net.momirealms.craftengine.core.plugin.network.EntityPacketHandler;
 import net.momirealms.craftengine.core.plugin.network.event.ByteBufPacketEvent;
 import net.momirealms.craftengine.core.util.FriendlyByteBuf;
+import net.momirealms.craftengine.proxy.bukkit.craftbukkit.inventory.CraftItemStackProxy;
+import net.momirealms.craftengine.proxy.minecraft.network.syncher.SynchedEntityDataProxy;
 import org.bukkit.inventory.ItemStack;
 
 import java.util.List;
@@ -22,19 +24,18 @@ public class ItemFramePacketHandler implements EntityPacketHandler {
         FriendlyByteBuf buf = event.getBuffer();
         int id = buf.readVarInt();
         boolean changed = false;
-        List<Object> packedItems = FastNMS.INSTANCE.method$ClientboundSetEntityDataPacket$unpack(buf);
+        List<Object> packedItems = PacketUtils.clientboundSetEntityDataPacket$unpack(buf);
         for (int i = packedItems.size() - 1; i >= 0; i--) {
             Object packedItem = packedItems.get(i);
-            int entityDataId = FastNMS.INSTANCE.field$SynchedEntityData$DataValue$id(packedItem);
+            int entityDataId = SynchedEntityDataProxy.DataValueProxy.INSTANCE.getId(packedItem);
             if (entityDataId != ItemFrameData.Item.id()) continue;
-            Object nmsItemStack = FastNMS.INSTANCE.field$SynchedEntityData$DataValue$value(packedItem);
-            ItemStack itemStack = FastNMS.INSTANCE.method$CraftItemStack$asCraftMirror(nmsItemStack);
+            Object nmsItemStack = SynchedEntityDataProxy.DataValueProxy.INSTANCE.getValue(packedItem);
+            ItemStack itemStack = CraftItemStackProxy.INSTANCE.asCraftMirror(nmsItemStack);
             Optional<ItemStack> optional = BukkitItemManager.instance().s2c(itemStack, user);
             if (optional.isEmpty()) break;
             changed = true;
             itemStack = optional.get();
-            Object serializer = FastNMS.INSTANCE.field$SynchedEntityData$DataValue$serializer(packedItem);
-            packedItems.set(i, FastNMS.INSTANCE.constructor$SynchedEntityData$DataValue(entityDataId, serializer, FastNMS.INSTANCE.method$CraftItemStack$asNMSCopy(itemStack)));
+            SynchedEntityDataProxy.DataValueProxy.INSTANCE.setValue(packedItem, CraftItemStackProxy.INSTANCE.asNMSCopy(itemStack));
             break;
         }
         if (changed) {
@@ -42,7 +43,7 @@ public class ItemFramePacketHandler implements EntityPacketHandler {
             buf.clear();
             buf.writeVarInt(event.packetID());
             buf.writeVarInt(id);
-            FastNMS.INSTANCE.method$ClientboundSetEntityDataPacket$pack(packedItems, buf);
+            PacketUtils.clientboundSetEntityDataPacket$pack(packedItems, buf);
         }
     }
 }

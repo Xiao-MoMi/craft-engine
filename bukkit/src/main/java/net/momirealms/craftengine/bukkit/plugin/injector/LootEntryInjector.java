@@ -16,9 +16,9 @@ public final class LootEntryInjector {
     public static void init() {
         Object registry = MBuiltInRegistries.LOOT_POOL_ENTRY_TYPE;
         MappedRegistryProxy.INSTANCE.setFrozen(registry, false);
-        Object resourceLocation = KeyUtils.toIdentifier(Key.ce("item"));
+        Object identifier = KeyUtils.toIdentifier(Key.ce("item"));
         Object type = FastNMS.INSTANCE.getCraftEngineLootItemType();
-        Object holder = RegistryProxy.INSTANCE.registerForHolder$1(registry, resourceLocation, type);
+        Object holder = RegistryProxy.INSTANCE.registerForHolder$1(registry, identifier, type);
         HolderProxy.ReferenceProxy.INSTANCE.bindValue(holder, type);
         HolderProxy.ReferenceProxy.INSTANCE.setTags(holder, Set.of());
         MappedRegistryProxy.INSTANCE.setFrozen(registry, true);

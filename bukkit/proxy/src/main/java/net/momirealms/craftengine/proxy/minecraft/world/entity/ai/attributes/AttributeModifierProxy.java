@@ -27,12 +27,12 @@ public interface AttributeModifierProxy {
     @ReflectionProxy(name = "net.minecraft.world.entity.ai.attributes.AttributeModifier$Operation")
     interface OperationProxy {
         OperationProxy INSTANCE = ASMProxyFactory.create(OperationProxy.class);
-        Object[] VALUES = INSTANCE.values();
-        Object ADD_VALUE = VALUES[0];
-        Object ADD_MULTIPLIED_BASE = VALUES[1];
-        Object ADD_MULTIPLIED_TOTAL = VALUES[2];
+        Enum<?>[] VALUES = INSTANCE.values();
+        Enum<?> ADD_VALUE = VALUES[0];
+        Enum<?> ADD_MULTIPLIED_BASE = VALUES[1];
+        Enum<?> ADD_MULTIPLIED_TOTAL = VALUES[2];
 
         @MethodInvoker(name = "values", isStatic = true)
-        Object[] values();
+        Enum<?>[] values();
     }
 }

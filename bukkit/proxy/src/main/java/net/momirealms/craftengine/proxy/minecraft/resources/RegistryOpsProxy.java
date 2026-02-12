@@ -12,5 +12,5 @@ public interface RegistryOpsProxy {
     RegistryOpsProxy INSTANCE = ASMProxyFactory.create(RegistryOpsProxy.class);
 
     @MethodInvoker(name = "create", isStatic = true)
-    Object create(DynamicOps<?> ops, @Type(clazz = HolderLookupProxy.ProviderProxy.class) Object registries);
+    <T> DynamicOps<T> create(DynamicOps<T> delegate, @Type(clazz = HolderLookupProxy.ProviderProxy.class) Object wrapperLookup);
 }

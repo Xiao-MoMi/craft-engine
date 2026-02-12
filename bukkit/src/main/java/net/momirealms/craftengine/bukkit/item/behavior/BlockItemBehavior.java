@@ -6,8 +6,6 @@ import net.momirealms.craftengine.bukkit.api.CraftEngineBlocks;
 import net.momirealms.craftengine.bukkit.api.event.CustomBlockAttemptPlaceEvent;
 import net.momirealms.craftengine.bukkit.api.event.CustomBlockPlaceEvent;
 import net.momirealms.craftengine.bukkit.block.BukkitBlockManager;
-import net.momirealms.craftengine.bukkit.nms.FastNMS;
-import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.CoreReflections;
 import net.momirealms.craftengine.bukkit.util.*;
 import net.momirealms.craftengine.bukkit.world.BukkitExistingBlock;
 import net.momirealms.craftengine.core.block.CustomBlock;
@@ -33,7 +31,11 @@ import net.momirealms.craftengine.core.world.BlockPos;
 import net.momirealms.craftengine.core.world.WorldPosition;
 import net.momirealms.craftengine.core.world.context.BlockPlaceContext;
 import net.momirealms.craftengine.core.world.context.UseOnContext;
+import net.momirealms.craftengine.proxy.bukkit.craftbukkit.CraftWorldProxy;
+import net.momirealms.craftengine.proxy.bukkit.craftbukkit.block.CraftBlockProxy;
+import net.momirealms.craftengine.proxy.bukkit.craftbukkit.block.data.CraftBlockDataProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.level.LevelProxy;
+import net.momirealms.craftengine.proxy.minecraft.world.level.block.state.BlockBehaviourProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.phys.shape.CollisionContextProxy;
 import org.bukkit.Bukkit;
 import org.bukkit.GameEvent;
@@ -210,11 +212,11 @@ public class BlockItemBehavior extends BlockBoundItemBehavior {
         } else {
             voxelShape = CollisionContextProxy.INSTANCE.empty();
         }
-        Object world = FastNMS.INSTANCE.field$CraftWorld$ServerLevel((World) context.getLevel().platformWorld());
-        boolean defaultReturn = ((!this.checkStatePlacement() || FastNMS.INSTANCE.method$BlockStateBase$canSurvive(blockState, world, blockPos))
+        Object world = CraftWorldProxy.INSTANCE.getWorld((World) context.getLevel().platformWorld());
+        boolean defaultReturn = ((!this.checkStatePlacement() || BlockBehaviourProxy.BlockStateBaseProxy.INSTANCE.canSurvive(blockState, world, blockPos))
                 && LevelProxy.INSTANCE.checkEntityCollision(world, blockState, player, voxelShape, blockPos, true)); // paper only
-        Block block = FastNMS.INSTANCE.method$CraftBlock$at(world, blockPos);
-        BlockData blockData = FastNMS.INSTANCE.method$CraftBlockData$fromData(blockState);
+        Block block = CraftBlockProxy.INSTANCE.at(world, blockPos);
+        BlockData blockData = CraftBlockDataProxy.INSTANCE.fromData(blockState);
         BlockCanBuildEvent canBuildEvent = new BlockCanBuildEvent(
                 block, cePlayer != null ? (org.bukkit.entity.Player) cePlayer.platformPlayer() : null, blockData, defaultReturn,
                 context.getHand() == InteractionHand.MAIN_HAND ? EquipmentSlot.HAND : EquipmentSlot.OFF_HAND

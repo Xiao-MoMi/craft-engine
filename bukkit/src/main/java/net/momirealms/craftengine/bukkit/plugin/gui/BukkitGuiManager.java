@@ -6,7 +6,6 @@ import net.momirealms.craftengine.bukkit.block.entity.BlockEntityHolder;
 import net.momirealms.craftengine.bukkit.block.entity.SimpleStorageBlockEntity;
 import net.momirealms.craftengine.bukkit.nms.FastNMS;
 import net.momirealms.craftengine.bukkit.plugin.BukkitCraftEngine;
-import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.CoreReflections;
 import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.NetworkReflections;
 import net.momirealms.craftengine.bukkit.util.ComponentUtils;
 import net.momirealms.craftengine.bukkit.util.EntityUtils;
@@ -18,6 +17,7 @@ import net.momirealms.craftengine.core.plugin.gui.*;
 import net.momirealms.craftengine.core.util.VersionHelper;
 import net.momirealms.craftengine.proxy.bukkit.craftbukkit.inventory.CraftMerchantCustomProxy;
 import net.momirealms.craftengine.proxy.bukkit.craftbukkit.inventory.CraftMerchantProxy;
+import net.momirealms.craftengine.proxy.minecraft.world.entity.player.PlayerProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.inventory.AbstractContainerMenuProxy;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.EntityType;
@@ -76,7 +76,7 @@ public class BukkitGuiManager implements GuiManager, Listener {
     public void updateInventoryTitle(net.momirealms.craftengine.core.entity.player.Player player, Component component) {
         Object nmsPlayer = player.serverPlayer();
         try {
-            Object containerMenu = FastNMS.INSTANCE.field$Player$containerMenu(nmsPlayer);
+            Object containerMenu = PlayerProxy.INSTANCE.getContainerMenu(nmsPlayer);
             int containerId = AbstractContainerMenuProxy.INSTANCE.getContainerId(containerMenu);
             Object menuType = AbstractContainerMenuProxy.INSTANCE.getMenuType(containerMenu);
             Object packet = NetworkReflections.constructor$ClientboundOpenScreenPacket.newInstance(containerId, menuType, ComponentUtils.adventureToMinecraft(component));

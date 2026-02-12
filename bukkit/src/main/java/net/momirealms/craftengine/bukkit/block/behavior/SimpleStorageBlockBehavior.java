@@ -3,7 +3,6 @@ package net.momirealms.craftengine.bukkit.block.behavior;
 import net.momirealms.antigrieflib.Flag;
 import net.momirealms.craftengine.bukkit.block.entity.BukkitBlockEntityTypes;
 import net.momirealms.craftengine.bukkit.block.entity.SimpleStorageBlockEntity;
-import net.momirealms.craftengine.bukkit.nms.FastNMS;
 import net.momirealms.craftengine.bukkit.plugin.BukkitCraftEngine;
 import net.momirealms.craftengine.bukkit.plugin.gui.BukkitInventory;
 import net.momirealms.craftengine.bukkit.util.BlockStateUtils;
@@ -25,6 +24,8 @@ import net.momirealms.craftengine.core.util.ResourceConfigUtils;
 import net.momirealms.craftengine.core.world.BlockPos;
 import net.momirealms.craftengine.core.world.CEWorld;
 import net.momirealms.craftengine.core.world.context.UseOnContext;
+import net.momirealms.craftengine.proxy.bukkit.craftbukkit.inventory.CraftInventoryProxy;
+import net.momirealms.craftengine.proxy.minecraft.world.level.LevelProxy;
 import org.bukkit.Location;
 import org.bukkit.World;
 import org.bukkit.entity.Player;
@@ -99,7 +100,7 @@ public class SimpleStorageBlockBehavior extends BukkitBlockBehavior implements E
         Object level = args[1];
         Object pos = args[2];
         Object blockState = args[0];
-        FastNMS.INSTANCE.method$Level$updateNeighbourForOutputSignal(level, pos, BlockStateUtils.getBlockOwner(blockState));
+        LevelProxy.INSTANCE.updateNeighbourForOutputSignal(level, pos, BlockStateUtils.getBlockOwner(blockState));
     }
 
     @Override
@@ -107,7 +108,7 @@ public class SimpleStorageBlockBehavior extends BukkitBlockBehavior implements E
         Object world = args[1];
         Object blockPos = args[2];
         BlockPos pos = LocationUtils.fromBlockPos(blockPos);
-        World bukkitWorld = FastNMS.INSTANCE.method$Level$getCraftWorld(world);
+        World bukkitWorld = LevelProxy.INSTANCE.getWorld(world);
         CEWorld ceWorld = BukkitWorldManager.instance().getWorld(bukkitWorld.getUID());
         BlockEntity blockEntity = ceWorld.getBlockEntityAtIfLoaded(pos);
         if (blockEntity instanceof SimpleStorageBlockEntity entity) {
@@ -162,7 +163,7 @@ public class SimpleStorageBlockBehavior extends BukkitBlockBehavior implements E
         Object world = args[1];
         Object blockPos = args[2];
         BlockPos pos = LocationUtils.fromBlockPos(blockPos);
-        World bukkitWorld = FastNMS.INSTANCE.method$Level$getCraftWorld(world);
+        World bukkitWorld = LevelProxy.INSTANCE.getWorld(world);
         CEWorld ceWorld = BukkitWorldManager.instance().getWorld(bukkitWorld.getUID());
         BlockEntity blockEntity = ceWorld.getBlockEntityAtIfLoaded(pos);
         if (blockEntity instanceof SimpleStorageBlockEntity entity) {
@@ -189,11 +190,11 @@ public class SimpleStorageBlockBehavior extends BukkitBlockBehavior implements E
 
     @Override
     public Object getContainer(Object thisBlock, Object[] args) {
-        CEWorld ceWorld = BukkitWorldManager.instance().getWorld(FastNMS.INSTANCE.method$Level$getCraftWorld(args[1]));
+        CEWorld ceWorld = BukkitWorldManager.instance().getWorld(LevelProxy.INSTANCE.getWorld(args[1]));
         BlockPos blockPos = LocationUtils.fromBlockPos(args[2]);
         BlockEntity blockEntity = ceWorld.getBlockEntityAtIfLoaded(blockPos);
         if (blockEntity instanceof SimpleStorageBlockEntity entity) {
-            return FastNMS.INSTANCE.method$CraftInventory$getInventory(entity.inventory());
+            return CraftInventoryProxy.INSTANCE.getInventory(entity.inventory());
         }
         return null;
     }

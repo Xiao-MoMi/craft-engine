@@ -9,13 +9,13 @@ import java.util.*;
 
 public abstract class AbstractMappedRegistry<T> implements WritableRegistry<T> {
     protected final ResourceKey<? extends Registry<T>> key;
-    protected final Map<Key, Holder.Reference<T>> byResourceLocation;
+    protected final Map<Key, Holder.Reference<T>> byIdentifier;
     protected final Map<ResourceKey<T>, Holder.Reference<T>> byResourceKey;
     protected final List<Holder.Reference<T>> byId;
 
     protected AbstractMappedRegistry(ResourceKey<? extends Registry<T>> key, int expectedSize) {
         this.key = key;
-        this.byResourceLocation = new HashMap<>(expectedSize);
+        this.byIdentifier = new HashMap<>(expectedSize);
         this.byResourceKey = new HashMap<>(expectedSize);
         this.byId = new ArrayList<>(expectedSize);
     }
@@ -33,7 +33,7 @@ public abstract class AbstractMappedRegistry<T> implements WritableRegistry<T> {
 
     @Override
     public Optional<Holder.Reference<T>> get(Key id) {
-        return Optional.ofNullable(this.byResourceLocation.get(id));
+        return Optional.ofNullable(this.byIdentifier.get(id));
     }
 
     @Override
@@ -44,7 +44,7 @@ public abstract class AbstractMappedRegistry<T> implements WritableRegistry<T> {
     @Nullable
     @Override
     public T getValue(@Nullable Key id) {
-        Holder.Reference<T> reference = this.byResourceLocation.get(id);
+        Holder.Reference<T> reference = this.byIdentifier.get(id);
         return getValueFromNullable(reference);
     }
 
@@ -61,7 +61,7 @@ public abstract class AbstractMappedRegistry<T> implements WritableRegistry<T> {
 
     @Override
     public Set<Key> keySet() {
-        return Collections.unmodifiableSet(this.byResourceLocation.keySet());
+        return Collections.unmodifiableSet(this.byIdentifier.keySet());
     }
 
     @Override
@@ -71,7 +71,7 @@ public abstract class AbstractMappedRegistry<T> implements WritableRegistry<T> {
 
     @Override
     public boolean containsKey(Key id) {
-        return this.byResourceLocation.containsKey(id);
+        return this.byIdentifier.containsKey(id);
     }
 
     @Override

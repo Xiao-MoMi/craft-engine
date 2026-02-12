@@ -18,6 +18,14 @@ public class Vec3d implements Position {
         return new Vec3d(MiscUtils.floor(x) + 0.5, MiscUtils.floor(y) + 0.5, MiscUtils.floor(z) + 0.5);
     }
 
+    public Vec3d subtract(Vec3d vec) {
+        return this.subtract(vec.x, vec.y, vec.z);
+    }
+
+    public Vec3d subtract(double x, double y, double z) {
+        return this.add(-x, -y, -z);
+    }
+
     public Vec3d add(Vec3d vec) {
         return new Vec3d(x + vec.x, y + vec.y, z + vec.z);
     }

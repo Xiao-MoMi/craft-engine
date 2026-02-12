@@ -1,6 +1,5 @@
 package net.momirealms.craftengine.bukkit.util;
 
-import net.momirealms.craftengine.bukkit.nms.FastNMS;
 import net.momirealms.craftengine.bukkit.nms.StorageContainer;
 import net.momirealms.craftengine.core.util.VersionHelper;
 import net.momirealms.craftengine.proxy.bukkit.craftbukkit.inventory.CraftInventoryProxy;
@@ -57,7 +56,7 @@ public final class InventoryUtils {
     public static boolean isCustomContainer(Inventory inventory) {
         if (inventory == null) return false;
         if (!CraftInventoryProxy.CLASS.isInstance(inventory)) return false;
-        Object container = FastNMS.INSTANCE.method$CraftInventory$getInventory(inventory);
+        Object container = CraftInventoryProxy.INSTANCE.getInventory(inventory);
         if (container == null) return false;
         return container instanceof StorageContainer;
     }

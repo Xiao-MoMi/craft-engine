@@ -29,4 +29,7 @@ public interface LivingEntityProxy extends EntityProxy {
 
     @MethodInvoker(name = "getScale")
     float getScale(Object target);
+
+    @MethodInvoker(name = "broadcastBreakEvent", activeIf = "max_version=1.20.6")
+    void broadcastBreakEvent(Object target, @Type(clazz = EquipmentSlotProxy.class) Object slot);
 }

@@ -3,12 +3,11 @@ package net.momirealms.craftengine.bukkit.block.behavior;
 import net.momirealms.antigrieflib.Flag;
 import net.momirealms.craftengine.bukkit.api.BukkitAdaptors;
 import net.momirealms.craftengine.bukkit.block.BukkitBlockManager;
-import net.momirealms.craftengine.bukkit.nms.FastNMS;
 import net.momirealms.craftengine.bukkit.plugin.BukkitCraftEngine;
-import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.CoreReflections;
 import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.MBlocks;
 import net.momirealms.craftengine.bukkit.plugin.user.BukkitServerPlayer;
 import net.momirealms.craftengine.bukkit.util.BlockStateUtils;
+import net.momirealms.craftengine.bukkit.util.LevelUtils;
 import net.momirealms.craftengine.bukkit.util.LocationUtils;
 import net.momirealms.craftengine.core.block.CustomBlock;
 import net.momirealms.craftengine.core.block.ImmutableBlockState;
@@ -30,9 +29,15 @@ import net.momirealms.craftengine.core.util.VersionHelper;
 import net.momirealms.craftengine.core.world.*;
 import net.momirealms.craftengine.core.world.context.BlockPlaceContext;
 import net.momirealms.craftengine.core.world.context.UseOnContext;
+import net.momirealms.craftengine.proxy.bukkit.craftbukkit.block.CraftBlockProxy;
 import net.momirealms.craftengine.proxy.minecraft.core.AxisProxy;
+import net.momirealms.craftengine.proxy.minecraft.core.BlockPosProxy;
 import net.momirealms.craftengine.proxy.minecraft.core.DirectionProxy;
+import net.momirealms.craftengine.proxy.minecraft.core.Vec3iProxy;
+import net.momirealms.craftengine.proxy.minecraft.server.level.ServerPlayerProxy;
+import net.momirealms.craftengine.proxy.minecraft.world.level.*;
 import net.momirealms.craftengine.proxy.minecraft.world.level.block.SupportTypeProxy;
+import net.momirealms.craftengine.proxy.minecraft.world.level.block.state.BlockBehaviourProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.level.pathfinder.PathComputationTypeProxy;
 import org.bukkit.Bukkit;
 import org.bukkit.GameEvent;
@@ -133,7 +138,7 @@ public class DoorBlockBehavior extends AbstractCanSurviveBlockBehavior implement
         Object player = args[3];
         ImmutableBlockState blockState = BukkitBlockManager.instance().getImmutableBlockState(BlockStateUtils.blockStateToId(state));
         if (blockState == null || blockState.isEmpty()) return superMethod.call();
-        org.bukkit.entity.Player bukkitPlayer = FastNMS.INSTANCE.method$ServerPlayer$getBukkitEntity(player);
+        org.bukkit.entity.Player bukkitPlayer = ServerPlayerProxy.INSTANCE.getBukkitEntity(player);
         BukkitServerPlayer cePlayer = BukkitCraftEngine.instance().adapt(bukkitPlayer);
         Item<ItemStack> item = cePlayer.getItemInHand(InteractionHand.MAIN_HAND);
         if (cePlayer.canInstabuild() || !BlockStateUtils.isCorrectTool(blockState, item)) {
@@ -145,20 +150,20 @@ public class DoorBlockBehavior extends AbstractCanSurviveBlockBehavior implement
     private void preventDropFromBottomPart(Object level, Object pos, ImmutableBlockState state, Object player) {
         DoubleBlockHalf half = state.get(this.halfProperty);
         if (half == DoubleBlockHalf.UPPER) {
-            Object blockPos = FastNMS.INSTANCE.method$BlockPos$relative(pos, DirectionProxy.DOWN);
-            Object blockState = FastNMS.INSTANCE.method$BlockGetter$getBlockState(level, blockPos);
+            Object blockPos = BlockPosProxy.INSTANCE.relative(pos, DirectionProxy.DOWN);
+            Object blockState = BlockGetterProxy.INSTANCE.getBlockState(level, blockPos);
             ImmutableBlockState belowState = BukkitBlockManager.instance().getImmutableBlockState(BlockStateUtils.blockStateToId(blockState));
             if (belowState == null || belowState.isEmpty()) return;
             Optional<DoorBlockBehavior> belowDoorBehavior = belowState.behavior().getAs(DoorBlockBehavior.class);
             if (belowDoorBehavior.isEmpty() || belowState.get(this.halfProperty) != DoubleBlockHalf.LOWER) return;
-            FastNMS.INSTANCE.method$LevelWriter$setBlock(level, blockPos, MBlocks.AIR$defaultState, UpdateOption.builder().updateSuppressDrops().updateClients().updateNeighbors().build().flags());
-            FastNMS.INSTANCE.method$LevelAccessor$levelEvent(level, player, WorldEvents.BLOCK_BREAK_EFFECT, blockPos, belowState.customBlockState().registryId());
+            LevelWriterProxy.INSTANCE.setBlock(level, blockPos, MBlocks.AIR$defaultState, UpdateOption.builder().updateSuppressDrops().updateClients().updateNeighbors().build().flags());
+            LevelUtils.levelEvent(level, player, WorldEvents.BLOCK_BREAK_EFFECT, blockPos, belowState.customBlockState().registryId());
         }
     }
 
     @Override
     public void onExplosionHit(Object thisBlock, Object[] args, Callable<Object> superMethod) {
-        if (this.canOpenByWindCharge && FastNMS.INSTANCE.method$Explosion$canTriggerBlocks(args[3])) {
+        if (this.canOpenByWindCharge && ExplosionProxy.INSTANCE.canTriggerBlocks(args[3])) {
             Optional<ImmutableBlockState> optionalCustomState = BlockStateUtils.getOptionalCustomBlockState(args[0]);
             if (optionalCustomState.isEmpty()) return;
             ImmutableBlockState state = optionalCustomState.get();
@@ -182,7 +187,7 @@ public class DoorBlockBehavior extends AbstractCanSurviveBlockBehavior implement
         Object blockState = args[2];
         Object pos = args[1];
         Optional<ImmutableBlockState> immutableBlockState = BlockStateUtils.getOptionalCustomBlockState(blockState);
-        immutableBlockState.ifPresent(state -> FastNMS.INSTANCE.method$LevelWriter$setBlock(args[0], LocationUtils.above(pos), state.with(this.halfProperty, DoubleBlockHalf.UPPER).customBlockState().literalObject(), UpdateOption.UPDATE_ALL.flags()));
+        immutableBlockState.ifPresent(state -> LevelWriterProxy.INSTANCE.setBlock(args[0], LocationUtils.above(pos), state.with(this.halfProperty, DoubleBlockHalf.UPPER).customBlockState().literalObject(), UpdateOption.UPDATE_ALL.flags()));
     }
 
     @Override
@@ -196,7 +201,7 @@ public class DoorBlockBehavior extends AbstractCanSurviveBlockBehavior implement
         Object level = world.serverWorld();
         BlockPos pos = context.getClickedPos();
         if (pos.y() < world.worldHeight().getMaxBuildHeight() - 1 && world.getBlock(pos.above()).canBeReplaced(context)) {
-            boolean hasSignal = FastNMS.INSTANCE.method$SignalGetter$hasNeighborSignal(level, LocationUtils.toBlockPos(pos)) || FastNMS.INSTANCE.method$SignalGetter$hasNeighborSignal(level, LocationUtils.toBlockPos(pos.above()));
+            boolean hasSignal = SignalGetterProxy.INSTANCE.hasNeighborSignal(level, LocationUtils.toBlockPos(pos)) || SignalGetterProxy.INSTANCE.hasNeighborSignal(level, LocationUtils.toBlockPos(pos.above()));
             return state.with(this.poweredProperty, hasSignal)
                     .with(this.facingProperty, context.getHorizontalDirection().toHorizontalDirection())
                     .with(this.openProperty, hasSignal)
@@ -214,20 +219,20 @@ public class DoorBlockBehavior extends AbstractCanSurviveBlockBehavior implement
 
         Direction counterClockWise = horizontalDirection.counterClockWise();
         Object blockPos1 = LocationUtils.toBlockPos(clickedPos.relative(counterClockWise));
-        Object blockState1 = FastNMS.INSTANCE.method$BlockGetter$getBlockState(serverLevel, blockPos1);
+        Object blockState1 = BlockGetterProxy.INSTANCE.getBlockState(serverLevel, blockPos1);
         Object blockPos2 = LocationUtils.toBlockPos(blockPos.relative(counterClockWise));
-        Object blockState2 = FastNMS.INSTANCE.method$BlockGetter$getBlockState(serverLevel, blockPos2);
+        Object blockState2 = BlockGetterProxy.INSTANCE.getBlockState(serverLevel, blockPos2);
 
         Direction clockWise = horizontalDirection.clockWise();
         Object blockPos3 = LocationUtils.toBlockPos(clickedPos.relative(clockWise));
-        Object blockState3 = FastNMS.INSTANCE.method$BlockGetter$getBlockState(serverLevel, blockPos3);
+        Object blockState3 = BlockGetterProxy.INSTANCE.getBlockState(serverLevel, blockPos3);
         Object blockPos4 = LocationUtils.toBlockPos(blockPos.relative(clockWise));
-        Object blockState4 = FastNMS.INSTANCE.method$BlockGetter$getBlockState(serverLevel, blockPos4);
+        Object blockState4 = BlockGetterProxy.INSTANCE.getBlockState(serverLevel, blockPos4);
 
-        int i = (FastNMS.INSTANCE.method$BlockStateBase$isCollisionShapeFullBlock(blockState1, serverLevel, blockPos1) ? -1 : 0) +
-                (FastNMS.INSTANCE.method$BlockStateBase$isCollisionShapeFullBlock(blockState2, serverLevel, blockPos2) ? -1 : 0) +
-                (FastNMS.INSTANCE.method$BlockStateBase$isCollisionShapeFullBlock(blockState3, serverLevel, blockPos3) ? 1 : 0) +
-                (FastNMS.INSTANCE.method$BlockStateBase$isCollisionShapeFullBlock(blockState4, serverLevel, blockPos4) ? 1 : 0);
+        int i = (BlockBehaviourProxy.BlockStateBaseProxy.INSTANCE.isCollisionShapeFullBlock(blockState1, serverLevel, blockPos1) ? -1 : 0) +
+                (BlockBehaviourProxy.BlockStateBaseProxy.INSTANCE.isCollisionShapeFullBlock(blockState2, serverLevel, blockPos2) ? -1 : 0) +
+                (BlockBehaviourProxy.BlockStateBaseProxy.INSTANCE.isCollisionShapeFullBlock(blockState3, serverLevel, blockPos3) ? 1 : 0) +
+                (BlockBehaviourProxy.BlockStateBaseProxy.INSTANCE.isCollisionShapeFullBlock(blockState4, serverLevel, blockPos4) ? 1 : 0);
 
         boolean anotherDoor1 = isAnotherDoor(blockState1);
         boolean anotherDoor2 = isAnotherDoor(blockState3);
@@ -260,8 +265,8 @@ public class DoorBlockBehavior extends AbstractCanSurviveBlockBehavior implement
 
     public void setOpen(@Nullable Player player, Object serverLevel, ImmutableBlockState state, BlockPos pos, boolean isOpen) {
         if (isOpen(state) != isOpen) {
-            org.bukkit.World world = FastNMS.INSTANCE.method$Level$getCraftWorld(serverLevel);
-            FastNMS.INSTANCE.method$LevelWriter$setBlock(serverLevel, LocationUtils.toBlockPos(pos), state.with(this.openProperty, isOpen).customBlockState().literalObject(), UpdateOption.builder().updateImmediate().updateClients().build().flags());
+            org.bukkit.World world = LevelProxy.INSTANCE.getWorld(serverLevel);
+            LevelWriterProxy.INSTANCE.setBlock(serverLevel, LocationUtils.toBlockPos(pos), state.with(this.openProperty, isOpen).customBlockState().literalObject(), UpdateOption.builder().updateImmediate().updateClients().build().flags());
             world.sendGameEvent(player == null ? null : (org.bukkit.entity.Player) player.platformPlayer(), isOpen ? GameEvent.BLOCK_OPEN : GameEvent.BLOCK_CLOSE, new Vector(pos.x(), pos.y(), pos.z()));
             SoundData soundData = isOpen ? this.openSound : this.closeSound;
             if (soundData != null) {
@@ -313,8 +318,8 @@ public class DoorBlockBehavior extends AbstractCanSurviveBlockBehavior implement
         if (optionalCustomState.isEmpty()) return;
         ImmutableBlockState customState = optionalCustomState.get();
         Object anotherHalfPos = customState.get(this.halfProperty) == DoubleBlockHalf.LOWER ? LocationUtils.above(blockPos) : LocationUtils.below(blockPos);
-        Block bukkitBlock = FastNMS.INSTANCE.method$CraftBlock$at(level, blockPos);
-        Block anotherBukkitBlock = FastNMS.INSTANCE.method$CraftBlock$at(level, anotherHalfPos);
+        Block bukkitBlock = CraftBlockProxy.INSTANCE.at(level, blockPos);
+        Block anotherBukkitBlock = CraftBlockProxy.INSTANCE.at(level, anotherHalfPos);
         int power = Math.max(bukkitBlock.getBlockPower(), anotherBukkitBlock.getBlockPower());
         int oldPower = customState.get(this.poweredProperty) ? 15 : 0;
         if (oldPower == 0 ^ power == 0) {
@@ -322,17 +327,17 @@ public class DoorBlockBehavior extends AbstractCanSurviveBlockBehavior implement
             Bukkit.getPluginManager().callEvent(event);
             boolean flag = event.getNewCurrent() > 0;
             if (flag != customState.get(this.openProperty)) {
-                org.bukkit.World world = FastNMS.INSTANCE.method$Level$getCraftWorld(level);
+                org.bukkit.World world = LevelProxy.INSTANCE.getWorld(level);
                 world.sendGameEvent(null, flag ? GameEvent.BLOCK_OPEN : GameEvent.BLOCK_CLOSE, new Vector(bukkitBlock.getX(), bukkitBlock.getY(), bukkitBlock.getZ()));
                 SoundData soundData = flag ? this.openSound : this.closeSound;
                 if (soundData != null) {
                     BukkitAdaptors.adapt(world).playBlockSound(
-                            new Vec3d(FastNMS.INSTANCE.field$Vec3i$x(blockPos) + 0.5, FastNMS.INSTANCE.field$Vec3i$y(blockPos) + 0.5, FastNMS.INSTANCE.field$Vec3i$z(blockPos) + 0.5),
+                            new Vec3d(Vec3iProxy.INSTANCE.getX(blockPos) + 0.5, Vec3iProxy.INSTANCE.getY(blockPos) + 0.5, Vec3iProxy.INSTANCE.getZ(blockPos) + 0.5),
                             soundData
                     );
                 }
             }
-            FastNMS.INSTANCE.method$LevelWriter$setBlock(level, blockPos, customState.with(this.poweredProperty, flag).with(this.openProperty, flag).customBlockState().literalObject(), UpdateOption.Flags.UPDATE_CLIENTS);
+            LevelWriterProxy.INSTANCE.setBlock(level, blockPos, customState.with(this.poweredProperty, flag).with(this.openProperty, flag).customBlockState().literalObject(), UpdateOption.Flags.UPDATE_CLIENTS);
         }
     }
 
@@ -340,16 +345,16 @@ public class DoorBlockBehavior extends AbstractCanSurviveBlockBehavior implement
     public boolean canSurvive(Object thisBlock, Object state, Object world, Object blockPos) throws Exception {
         Optional<ImmutableBlockState> optionalCustomState = BlockStateUtils.getOptionalCustomBlockState(state);
         if (optionalCustomState.isEmpty()) return false;
-        int x = FastNMS.INSTANCE.field$Vec3i$x(blockPos);
-        int y = FastNMS.INSTANCE.field$Vec3i$y(blockPos) - 1;
-        int z = FastNMS.INSTANCE.field$Vec3i$z(blockPos);
-        Object belowPos = FastNMS.INSTANCE.constructor$BlockPos(x, y, z);
-        Object belowState = FastNMS.INSTANCE.method$BlockGetter$getBlockState(world, belowPos);
+        int x = Vec3iProxy.INSTANCE.getX(blockPos);
+        int y = Vec3iProxy.INSTANCE.getY(blockPos) - 1;
+        int z = Vec3iProxy.INSTANCE.getZ(blockPos);
+        Object belowPos = BlockPosProxy.INSTANCE.newInstance(x, y, z);
+        Object belowState = BlockGetterProxy.INSTANCE.getBlockState(world, belowPos);
         if (optionalCustomState.get().get(this.halfProperty) == DoubleBlockHalf.UPPER) {
             Optional<ImmutableBlockState> belowCustomState = BlockStateUtils.getOptionalCustomBlockState(belowState);
             return belowCustomState.filter(immutableBlockState -> immutableBlockState.owner().value() == super.customBlock).isPresent();
         } else {
-            return FastNMS.INSTANCE.method$BlockStateBase$isFaceSturdy(
+            return BlockBehaviourProxy.BlockStateBaseProxy.INSTANCE.isFaceSturdy(
                     belowState, world, belowPos, DirectionProxy.UP,
                     SupportTypeProxy.FULL
             );

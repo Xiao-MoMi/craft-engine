@@ -1,6 +1,5 @@
 package net.momirealms.craftengine.bukkit.block.behavior;
 
-import net.momirealms.craftengine.bukkit.nms.FastNMS;
 import net.momirealms.craftengine.bukkit.util.BlockStateUtils;
 import net.momirealms.craftengine.bukkit.util.BlockTags;
 import net.momirealms.craftengine.bukkit.util.LocationUtils;
@@ -11,6 +10,8 @@ import net.momirealms.craftengine.core.util.Key;
 import net.momirealms.craftengine.core.util.MiscUtils;
 import net.momirealms.craftengine.core.util.ResourceConfigUtils;
 import net.momirealms.craftengine.core.util.Tuple;
+import net.momirealms.craftengine.proxy.minecraft.world.level.BlockGetterProxy;
+import net.momirealms.craftengine.proxy.minecraft.world.level.block.state.BlockBehaviourProxy;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.NamespacedKey;
@@ -81,13 +82,13 @@ public class BushBlockBehavior extends AbstractCanSurviveBlockBehavior {
     @Override
     protected boolean canSurvive(Object thisBlock, Object state, Object world, Object blockPos) throws Exception {
         Object belowPos = LocationUtils.below(blockPos);
-        Object belowState = FastNMS.INSTANCE.method$BlockGetter$getBlockState(world, belowPos);
+        Object belowState = BlockGetterProxy.INSTANCE.getBlockState(world, belowPos);
         return mayPlaceOn(belowState, world, belowPos);
     }
 
     protected boolean mayPlaceOn(Object belowState, Object world, Object belowPos) {
         for (Object tag : this.tagsCanSurviveOn) {
-            if (FastNMS.INSTANCE.method$BlockStateBase$is(belowState, tag)) {
+            if (BlockBehaviourProxy.BlockStateBaseProxy.INSTANCE.is$1(belowState, tag)) {
                 return !this.blacklistMode;
             }
         }
@@ -120,7 +121,7 @@ public class BushBlockBehavior extends AbstractCanSurviveBlockBehavior {
         Object cursorPos = LocationUtils.below(belowPos);
 
         while (count < this.maxHeight) {
-            Object belowState = FastNMS.INSTANCE.method$BlockGetter$getBlockState(world, cursorPos);
+            Object belowState = BlockGetterProxy.INSTANCE.getBlockState(world, cursorPos);
             Optional<ImmutableBlockState> belowCustomState = BlockStateUtils.getOptionalCustomBlockState(belowState);
             if (belowCustomState.isPresent() && belowCustomState.get().owner().value() == super.customBlock) {
                 count++;

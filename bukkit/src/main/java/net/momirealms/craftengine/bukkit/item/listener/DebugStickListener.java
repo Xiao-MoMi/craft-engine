@@ -3,7 +3,6 @@ package net.momirealms.craftengine.bukkit.item.listener;
 import net.kyori.adventure.text.Component;
 import net.momirealms.craftengine.bukkit.api.BukkitAdaptors;
 import net.momirealms.craftengine.bukkit.api.CraftEngineBlocks;
-import net.momirealms.craftengine.bukkit.nms.FastNMS;
 import net.momirealms.craftengine.bukkit.plugin.BukkitCraftEngine;
 import net.momirealms.craftengine.bukkit.plugin.user.BukkitServerPlayer;
 import net.momirealms.craftengine.bukkit.util.BlockStateUtils;
@@ -17,6 +16,9 @@ import net.momirealms.craftengine.core.block.properties.Property;
 import net.momirealms.craftengine.core.entity.player.InteractionHand;
 import net.momirealms.craftengine.core.item.Item;
 import net.momirealms.craftengine.core.util.MiscUtils;
+import net.momirealms.craftengine.proxy.bukkit.craftbukkit.CraftWorldProxy;
+import net.momirealms.craftengine.proxy.minecraft.network.protocol.game.ClientboundSystemChatPacketProxy;
+import net.momirealms.craftengine.proxy.minecraft.world.level.BlockGetterProxy;
 import org.bukkit.block.Block;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
@@ -58,7 +60,7 @@ public class DebugStickListener implements Listener {
                 return;
             }
         }
-        Object blockState = FastNMS.INSTANCE.method$BlockGetter$getBlockState(FastNMS.INSTANCE.field$CraftWorld$ServerLevel(clickedBlock.getWorld()), LocationUtils.toBlockPos(clickedBlock.getX(), clickedBlock.getY(), clickedBlock.getZ()));
+        Object blockState = BlockGetterProxy.INSTANCE.getBlockState(CraftWorldProxy.INSTANCE.getWorld(clickedBlock.getWorld()), LocationUtils.toBlockPos(clickedBlock.getX(), clickedBlock.getY(), clickedBlock.getZ()));
         BlockStateUtils.getOptionalCustomBlockState(blockState).ifPresent(customState -> {
             event.setCancelled(true);
             boolean update = event.getAction() == Action.RIGHT_CLICK_BLOCK;
@@ -66,7 +68,7 @@ public class DebugStickListener implements Listener {
             Collection<Property<?>> properties = block.properties();
             String blockId = block.id().toString();
             if (properties.isEmpty()) {
-                Object systemChatPacket = FastNMS.INSTANCE.constructor$ClientboundSystemChatPacket(
+                Object systemChatPacket = ClientboundSystemChatPacketProxy.INSTANCE.newInstance(
                         ComponentUtils.adventureToMinecraft(Component.translatable("item.minecraft.debug_stick.empty").arguments(Component.text(blockId))), true);
                 player.sendPacket(systemChatPacket, false);
             } else {
@@ -82,7 +84,7 @@ public class DebugStickListener implements Listener {
                     if (update) {
                         ImmutableBlockState nextState = cycleState(customState, currentProperty, player.isSecondaryUseActive());
                         CraftEngineBlocks.place(clickedBlock.getLocation(), nextState, new UpdateOption.Builder().updateClients().updateKnownShape().build(), false);
-                        Object systemChatPacket = FastNMS.INSTANCE.constructor$ClientboundSystemChatPacket(
+                        Object systemChatPacket = ClientboundSystemChatPacketProxy.INSTANCE.newInstance(
                                 ComponentUtils.adventureToMinecraft(Component.translatable("item.minecraft.debug_stick.update")
                                         .arguments(
                                                 Component.text(currentProperty.name()),
@@ -93,7 +95,7 @@ public class DebugStickListener implements Listener {
                         currentProperty = getRelative(properties, currentProperty, player.isSecondaryUseActive());
                         data.put(blockId, currentProperty.name());
                         itemInHand.setTag(data, "craftengine:debug_stick_state");
-                        Object systemChatPacket = FastNMS.INSTANCE.constructor$ClientboundSystemChatPacket(
+                        Object systemChatPacket = ClientboundSystemChatPacketProxy.INSTANCE.newInstance(
                                 ComponentUtils.adventureToMinecraft(Component.translatable("item.minecraft.debug_stick.select")
                                         .arguments(
                                                 Component.text(currentProperty.name()),

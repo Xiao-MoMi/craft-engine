@@ -6,9 +6,7 @@ import it.unimi.dsi.fastutil.ints.IntList;
 import net.momirealms.craftengine.bukkit.block.behavior.BedBlockBehavior;
 import net.momirealms.craftengine.bukkit.block.entity.BedBlockEntity;
 import net.momirealms.craftengine.bukkit.entity.data.PlayerData;
-import net.momirealms.craftengine.bukkit.nms.FastNMS;
 import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.MEntityTypes;
-import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.NetworkReflections;
 import net.momirealms.craftengine.bukkit.plugin.user.BukkitServerPlayer;
 import net.momirealms.craftengine.bukkit.util.LocationUtils;
 import net.momirealms.craftengine.core.block.ImmutableBlockState;
@@ -20,9 +18,7 @@ import net.momirealms.craftengine.core.util.QuaternionUtils;
 import net.momirealms.craftengine.core.util.VersionHelper;
 import net.momirealms.craftengine.core.world.BlockPos;
 import net.momirealms.craftengine.core.world.Vec3d;
-import net.momirealms.craftengine.proxy.minecraft.network.protocol.game.ClientboundAnimatePacketProxy;
-import net.momirealms.craftengine.proxy.minecraft.network.protocol.game.ClientboundPlayerInfoRemovePacketProxy;
-import net.momirealms.craftengine.proxy.minecraft.network.protocol.game.ClientboundPlayerInfoUpdatePacketProxy;
+import net.momirealms.craftengine.proxy.minecraft.network.protocol.game.*;
 import net.momirealms.craftengine.proxy.minecraft.network.syncher.SynchedEntityDataProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.entity.EntityProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.entity.EquipmentSlotProxy;
@@ -30,9 +26,11 @@ import net.momirealms.craftengine.proxy.minecraft.world.entity.LivingEntityProxy
 import net.momirealms.craftengine.proxy.minecraft.world.entity.PoseProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.item.ItemStackProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.level.GameTypeProxy;
+import net.momirealms.craftengine.proxy.minecraft.world.level.block.state.BlockBehaviourProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.phys.AABBProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.phys.Vec3Proxy;
 import net.momirealms.craftengine.proxy.minecraft.world.phys.shape.CollisionContextProxy;
+import net.momirealms.craftengine.proxy.minecraft.world.phys.shape.VoxelShapeProxy;
 import org.jetbrains.annotations.Nullable;
 import org.joml.Vector3f;
 
@@ -43,7 +41,7 @@ import java.util.UUID;
 
 public class DynamicPlayerRenderer implements DynamicBlockEntityRenderer {
     private static final EnumSet<?> ADD_PLAYER_ACTION = createAction();
-    private static final List<Object> EMPTY_EQUIPMENT = List.of(
+    private static final List<Pair<?, ?>> EMPTY_EQUIPMENT = List.of(
             Pair.of(EquipmentSlotProxy.HEAD, ItemStackProxy.EMPTY),
             Pair.of(EquipmentSlotProxy.CHEST, ItemStackProxy.EMPTY),
             Pair.of(EquipmentSlotProxy.LEGS, ItemStackProxy.EMPTY),
@@ -88,12 +86,12 @@ public class DynamicPlayerRenderer implements DynamicBlockEntityRenderer {
         }
         this.pos = LazyReference.lazyReference(() -> {
             Object state = blockState.visualBlockState().literalObject();
-            Object shape = FastNMS.INSTANCE.method$BlockState$getShape(state, blockEntity.world.world.serverWorld(), LocationUtils.toBlockPos(pos), CollisionContextProxy.INSTANCE.empty());
-            Object bounds = FastNMS.INSTANCE.method$VoxelShape$bounds(shape);
+            Object shape = BlockBehaviourProxy.BlockStateBaseProxy.INSTANCE.getShape(state, blockEntity.world.world.serverWorld(), LocationUtils.toBlockPos(pos), CollisionContextProxy.INSTANCE.empty());
+            Object bounds = VoxelShapeProxy.INSTANCE.bounds(shape);
             double maxY = AABBProxy.INSTANCE.getMaxY(bounds);
             return new Vec3d(pos.x + 0.5, pos.y + maxY, pos.z + 0.5);
         });
-        this.cachedDespawnPacket = FastNMS.INSTANCE.constructor$ClientboundRemoveEntitiesPacket(IntList.of(entityId));
+        this.cachedDespawnPacket = ClientboundRemoveEntitiesPacketProxy.INSTANCE.newInstance(IntList.of(entityId));
         this.cachedPlayerInfoRemovePacket = ClientboundPlayerInfoRemovePacketProxy.INSTANCE.newInstance(List.of(this.uuid));
     }
 
@@ -149,7 +147,7 @@ public class DynamicPlayerRenderer implements DynamicBlockEntityRenderer {
             List<Object> metadata = new ArrayList<>(SynchedEntityDataProxy.INSTANCE.getNonDefaultValues(before.entityData()));
             boolean noSharedFlags = true;
             for (Object entry : metadata) {
-                int id = FastNMS.INSTANCE.field$SynchedEntityData$DataValue$id(entry);
+                int id = SynchedEntityDataProxy.DataValueProxy.INSTANCE.getId(entry);
                 if (id != PlayerData.SharedFlags.id) continue;
                 noSharedFlags = false;
                 break;
@@ -157,8 +155,8 @@ public class DynamicPlayerRenderer implements DynamicBlockEntityRenderer {
             if (noSharedFlags) {
                 PlayerData.SharedFlags.addEntityData(PlayerData.SharedFlags.defaultValue, metadata);
             }
-            this.cachedSetOccupierDataPacket = FastNMS.INSTANCE.constructor$ClientboundSetEntityDataPacket(before.entityId(), metadata);
-            this.cachedSetOccupierEquipmentPacket = FastNMS.INSTANCE.constructor$ClientboundSetEquipmentPacket(before.entityId(), List.of(
+            this.cachedSetOccupierDataPacket = ClientboundSetEntityDataPacketProxy.INSTANCE.newInstance(before.entityId(), metadata);
+            this.cachedSetOccupierEquipmentPacket = ClientboundSetEquipmentPacketProxy.INSTANCE.newInstance(before.entityId(), List.of(
                     Pair.of(EquipmentSlotProxy.HEAD, before.getItemBySlot(39).getLiteralObject()),
                     Pair.of(EquipmentSlotProxy.CHEST, before.getItemBySlot(38).getLiteralObject()),
                     Pair.of(EquipmentSlotProxy.LEGS, before.getItemBySlot(37).getLiteralObject()),
@@ -180,8 +178,8 @@ public class DynamicPlayerRenderer implements DynamicBlockEntityRenderer {
         } else {
             entry = ClientboundPlayerInfoUpdatePacketProxy.EntryProxy.INSTANCE.newInstance(this.uuid, gameProfile, false, 0, GameTypeProxy.SURVIVAL, null, null);
         }
-        this.cachedPlayerInfoUpdatePacket = FastNMS.INSTANCE.constructor$ClientboundPlayerInfoUpdatePacket(ADD_PLAYER_ACTION, List.of(entry));
-        this.cachedSpawnPacket = FastNMS.INSTANCE.constructor$ClientboundAddEntityPacket(
+        this.cachedPlayerInfoUpdatePacket = ClientboundPlayerInfoUpdatePacketProxy.INSTANCE.newInstance(ADD_PLAYER_ACTION, List.of(entry));
+        this.cachedSpawnPacket = ClientboundAddEntityPacketProxy.INSTANCE.newInstance(
                 this.entityId, this.uuid, pos.x + this.offset.x, y + this.offset.y, pos.z + this.offset.z,
                 0, this.yRot, MEntityTypes.PLAYER, 0, Vec3Proxy.ZERO, this.yRot
         );
@@ -189,18 +187,18 @@ public class DynamicPlayerRenderer implements DynamicBlockEntityRenderer {
         this.cachedSetOccupierDataPacket = null;
         ArrayList<Object> occupierMetadata = new ArrayList<>(metadata);
         PlayerData.SharedFlags.addEntityData((byte) (1 << 5), occupierMetadata);
-        this.cachedHideOccupierPacket = FastNMS.INSTANCE.constructor$ClientboundSetEntityDataPacket(player.entityId(), occupierMetadata);
+        this.cachedHideOccupierPacket = ClientboundSetEntityDataPacketProxy.INSTANCE.newInstance(player.entityId(), occupierMetadata);
         PlayerData.Pose.addEntityData(PoseProxy.SLEEPING, metadata);
         PlayerData.SharedFlags.addEntityData(PlayerData.SharedFlags.defaultValue, metadata);
-        this.cachedSetEntityDataPacket = FastNMS.INSTANCE.constructor$ClientboundSetEntityDataPacket(this.entityId, metadata);
+        this.cachedSetEntityDataPacket = ClientboundSetEntityDataPacketProxy.INSTANCE.newInstance(this.entityId, metadata);
         this.updateEquipment(player);
-        this.cachedSetOccupierEquipmentPacket = FastNMS.INSTANCE.constructor$ClientboundSetEquipmentPacket(player.entityId(), EMPTY_EQUIPMENT);
+        this.cachedSetOccupierEquipmentPacket = ClientboundSetEquipmentPacketProxy.INSTANCE.newInstance(player.entityId(), EMPTY_EQUIPMENT);
         this.isShow = true;
         this.hasCachedPacket = true;
     }
 
     public void updateEquipment(Player player, int mainSlot) {
-        this.cachedSetEquipmentPacket = FastNMS.INSTANCE.constructor$ClientboundSetEquipmentPacket(this.entityId, List.of(
+        this.cachedSetEquipmentPacket = ClientboundSetEquipmentPacketProxy.INSTANCE.newInstance(this.entityId, List.of(
                 Pair.of(EquipmentSlotProxy.HEAD, player.getItemBySlot(39).getLiteralObject()),
                 Pair.of(EquipmentSlotProxy.CHEST, player.getItemBySlot(38).getLiteralObject()),
                 Pair.of(EquipmentSlotProxy.LEGS, player.getItemBySlot(37).getLiteralObject()),
@@ -211,7 +209,7 @@ public class DynamicPlayerRenderer implements DynamicBlockEntityRenderer {
     }
 
     public void updateEquipment(Player player) {
-        this.cachedSetEquipmentPacket = FastNMS.INSTANCE.constructor$ClientboundSetEquipmentPacket(this.entityId, List.of(
+        this.cachedSetEquipmentPacket = ClientboundSetEquipmentPacketProxy.INSTANCE.newInstance(this.entityId, List.of(
                 Pair.of(EquipmentSlotProxy.HEAD, player.getItemBySlot(39).getLiteralObject()),
                 Pair.of(EquipmentSlotProxy.CHEST, player.getItemBySlot(38).getLiteralObject()),
                 Pair.of(EquipmentSlotProxy.LEGS, player.getItemBySlot(37).getLiteralObject()),
@@ -230,6 +228,6 @@ public class DynamicPlayerRenderer implements DynamicBlockEntityRenderer {
 
     @SuppressWarnings("unchecked")
     private static <E extends Enum<E>> EnumSet<E> createAction() {
-        return EnumSet.of((E) NetworkReflections.instance$ClientboundPlayerInfoUpdatePacket$Action$ADD_PLAYER);
+        return EnumSet.of((E) ClientboundPlayerInfoUpdatePacketProxy.ActionProxy.ADD_PLAYER);
     }
 }

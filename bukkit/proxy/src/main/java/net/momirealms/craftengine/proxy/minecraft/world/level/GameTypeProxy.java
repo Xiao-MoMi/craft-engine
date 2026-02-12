@@ -7,12 +7,12 @@ import net.momirealms.sparrow.reflection.proxy.annotation.ReflectionProxy;
 @ReflectionProxy(name = "net.minecraft.world.level.GameType")
 public interface GameTypeProxy {
     GameTypeProxy INSTANCE = ASMProxyFactory.create(GameTypeProxy.class);
-    Object[] VALUES = INSTANCE.values();
-    Object SURVIVAL = VALUES[0];
-    Object CREATIVE = VALUES[1];
-    Object ADVENTURE = VALUES[2];
-    Object SPECTATOR = VALUES[3];
+    Enum<?>[] VALUES = INSTANCE.values();
+    Enum<?> SURVIVAL = VALUES[0];
+    Enum<?> CREATIVE = VALUES[1];
+    Enum<?> ADVENTURE = VALUES[2];
+    Enum<?> SPECTATOR = VALUES[3];
 
     @MethodInvoker(name = "values", isStatic = true)
-    Object[] values();
+    Enum<?>[] values();
 }

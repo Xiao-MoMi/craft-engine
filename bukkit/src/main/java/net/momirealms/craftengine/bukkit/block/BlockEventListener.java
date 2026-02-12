@@ -7,7 +7,6 @@ import net.momirealms.craftengine.bukkit.api.BukkitAdaptors;
 import net.momirealms.craftengine.bukkit.api.event.CustomBlockBreakEvent;
 import net.momirealms.craftengine.bukkit.block.entity.BedBlockEntity;
 import net.momirealms.craftengine.bukkit.block.entity.renderer.DynamicPlayerRenderer;
-import net.momirealms.craftengine.bukkit.nms.FastNMS;
 import net.momirealms.craftengine.bukkit.plugin.BukkitCraftEngine;
 import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.MBlocks;
 import net.momirealms.craftengine.bukkit.plugin.user.BukkitServerPlayer;
@@ -31,7 +30,16 @@ import net.momirealms.craftengine.core.util.ItemUtils;
 import net.momirealms.craftengine.core.util.VersionHelper;
 import net.momirealms.craftengine.core.world.BlockPos;
 import net.momirealms.craftengine.core.world.WorldPosition;
+import net.momirealms.craftengine.proxy.bukkit.craftbukkit.CraftWorldProxy;
 import net.momirealms.craftengine.proxy.minecraft.core.DirectionProxy;
+import net.momirealms.craftengine.proxy.minecraft.server.level.ServerChunkCacheProxy;
+import net.momirealms.craftengine.proxy.minecraft.server.level.ServerLevelProxy;
+import net.momirealms.craftengine.proxy.minecraft.sounds.SoundEventProxy;
+import net.momirealms.craftengine.proxy.minecraft.world.entity.player.AbilitiesProxy;
+import net.momirealms.craftengine.proxy.minecraft.world.entity.player.PlayerProxy;
+import net.momirealms.craftengine.proxy.minecraft.world.level.BlockGetterProxy;
+import net.momirealms.craftengine.proxy.minecraft.world.level.block.SoundTypeProxy;
+import net.momirealms.craftengine.proxy.minecraft.world.level.block.state.BlockBehaviourProxy;
 import org.bukkit.*;
 import org.bukkit.block.Block;
 import org.bukkit.entity.Entity;
@@ -85,9 +93,9 @@ public final class BlockEventListener implements Listener {
             Block block = event.getBlock();
             Object blockState = BlockStateUtils.getBlockState(block);
             if (blockState != MBlocks.AIR$defaultState && BlockStateUtils.isVanillaBlock(blockState)) {
-                Object soundType = FastNMS.INSTANCE.method$BlockBehaviour$BlockStateBase$getSoundType(blockState);
-                Object soundEvent = FastNMS.INSTANCE.field$SoundType$placeSound(soundType);
-                Object soundId = FastNMS.INSTANCE.field$SoundEvent$location(soundEvent);
+                Object soundType = BlockBehaviourProxy.BlockStateBaseProxy.INSTANCE.getSoundType(blockState);
+                Object soundEvent = SoundTypeProxy.INSTANCE.getPlaceSound(soundType);
+                Object soundId = SoundEventProxy.INSTANCE.getLocation(soundEvent);
                 if (this.manager.isPlaceSoundMissing(soundId)) {
                     if (player.getInventory().getItemInMainHand().getType() != Material.DEBUG_STICK) {
                         player.playSound(block.getLocation().add(0.5, 0.5, 0.5), soundId.toString(), SoundCategory.BLOCKS, 1f, 0.8f);
@@ -100,9 +108,9 @@ public final class BlockEventListener implements Listener {
         if (serverPlayer.shouldResendSound()) {
             Block block = event.getBlock();
             Object blockState = BlockStateUtils.getBlockState(block);
-            Object soundType = FastNMS.INSTANCE.method$BlockBehaviour$BlockStateBase$getSoundType(blockState);
-            Object soundEvent = FastNMS.INSTANCE.field$SoundType$placeSound(soundType);
-            Object soundId = FastNMS.INSTANCE.field$SoundEvent$location(soundEvent);
+            Object soundType = BlockBehaviourProxy.BlockStateBaseProxy.INSTANCE.getSoundType(blockState);
+            Object soundEvent = SoundTypeProxy.INSTANCE.getPlaceSound(soundType);
+            Object soundId = SoundEventProxy.INSTANCE.getLocation(soundEvent);
             player.playSound(block.getLocation().add(0.5, 0.5, 0.5), soundId.toString(), SoundCategory.BLOCKS, 1f, 0.8f);
         }
     }
@@ -150,7 +158,8 @@ public final class BlockEventListener implements Listener {
             if (!state.isEmpty()) {
                 if (!event.isCancelled()) {
                     // double check adventure mode to prevent dupe
-                    if (!FastNMS.INSTANCE.field$Player$mayBuild(serverPlayer.serverPlayer()) && !serverPlayer.canBreak(blockPos, null)) {
+                    Object abilities = PlayerProxy.INSTANCE.getAbilities(serverPlayer.serverPlayer());
+                    if (!AbilitiesProxy.INSTANCE.isMayBuild(abilities) && !serverPlayer.canBreak(blockPos, null)) {
                         return;
                     }
 
@@ -217,9 +226,9 @@ public final class BlockEventListener implements Listener {
             // sound system
             if (Config.enableSoundSystem() && (!event.isCancelled() || Config.processCancelledBreak())) {
                 if (BukkitItemUtils.isDebugStick(itemInHand)) return;
-                Object soundType = FastNMS.INSTANCE.method$BlockBehaviour$BlockStateBase$getSoundType(blockState);
-                Object soundEvent = FastNMS.INSTANCE.field$SoundType$breakSound(soundType);
-                Object soundId = FastNMS.INSTANCE.field$SoundEvent$location(soundEvent);
+                Object soundType = BlockBehaviourProxy.BlockStateBaseProxy.INSTANCE.getSoundType(blockState);
+                Object soundEvent = SoundTypeProxy.INSTANCE.getBreakSound(soundType);
+                Object soundId = SoundEventProxy.INSTANCE.getLocation(soundEvent);
                 if (this.manager.isBreakSoundMissing(soundId)) {
                     player.playSound(block.getLocation().add(0.5, 0.5, 0.5), soundId.toString(), SoundCategory.BLOCKS, 1f, 0.8f);
                 }
@@ -231,7 +240,7 @@ public final class BlockEventListener implements Listener {
     @EventHandler(ignoreCancelled = true, priority = EventPriority.MONITOR)
     public void onBlockBreakBlock(BlockBreakBlockEvent event) {
         Block block = event.getBlock();
-        Object blockState = FastNMS.INSTANCE.method$BlockGetter$getBlockState(FastNMS.INSTANCE.field$CraftWorld$ServerLevel(block.getWorld()), LocationUtils.toBlockPos(block.getX(), block.getY(), block.getZ()));
+        Object blockState = BlockGetterProxy.INSTANCE.getBlockState(CraftWorldProxy.INSTANCE.getWorld(block.getWorld()), LocationUtils.toBlockPos(block.getX(), block.getY(), block.getZ()));
         if (BlockStateUtils.isVanillaBlock(blockState)) {
             // override vanilla block loots
             this.plugin.vanillaLootManager().getBlockLoot(BlockStateUtils.blockStateToId(blockState)).ifPresent(it -> {
@@ -263,7 +272,7 @@ public final class BlockEventListener implements Listener {
         if (!(entity instanceof Player player)) return;
         BlockPos pos = EntityUtils.getOnPos(player);
         Block block = player.getWorld().getBlockAt(pos.x(), pos.y(), pos.z());
-        Object blockState = FastNMS.INSTANCE.method$BlockGetter$getBlockState(FastNMS.INSTANCE.field$CraftWorld$ServerLevel(player.getWorld()), LocationUtils.toBlockPos(pos));
+        Object blockState = BlockGetterProxy.INSTANCE.getBlockState(CraftWorldProxy.INSTANCE.getWorld(player.getWorld()), LocationUtils.toBlockPos(pos));
         Optional<ImmutableBlockState> optionalCustomState = BlockStateUtils.getOptionalCustomBlockState(blockState);
         if (optionalCustomState.isPresent()) {
             Location location = player.getLocation();
@@ -284,9 +293,9 @@ public final class BlockEventListener implements Listener {
             if (event.isCancelled() && !Config.processCancelledStep()) {
                 return;
             }
-            Object soundType = FastNMS.INSTANCE.method$BlockBehaviour$BlockStateBase$getSoundType(blockState);
-            Object soundEvent = FastNMS.INSTANCE.field$SoundType$stepSound(soundType);
-            Object soundId = FastNMS.INSTANCE.field$SoundEvent$location(soundEvent);
+            Object soundType = BlockBehaviourProxy.BlockStateBaseProxy.INSTANCE.getSoundType(blockState);
+            Object soundEvent = SoundTypeProxy.INSTANCE.getStepSound(soundType);
+            Object soundId = SoundEventProxy.INSTANCE.getLocation(soundEvent);
             if (this.manager.isStepSoundMissing(soundId)) {
                 player.playSound(player.getLocation(), soundId.toString(), SoundCategory.BLOCKS, 0.15f, 1f);
             }
@@ -299,7 +308,7 @@ public final class BlockEventListener implements Listener {
             return;
         if (!(event.getEntity() instanceof Player player)) return;
         BlockPos pos = EntityUtils.getOnPos(player);
-        Object blockState = FastNMS.INSTANCE.method$BlockGetter$getBlockState(FastNMS.INSTANCE.field$CraftWorld$ServerLevel(player.getWorld()), LocationUtils.toBlockPos(pos));
+        Object blockState = BlockGetterProxy.INSTANCE.getBlockState(CraftWorldProxy.INSTANCE.getWorld(player.getWorld()), LocationUtils.toBlockPos(pos));
         Optional<ImmutableBlockState> optionalCustomState = BlockStateUtils.getOptionalCustomBlockState(blockState);
         if (optionalCustomState.isPresent()) {
             Location location = player.getLocation();
@@ -310,9 +319,9 @@ public final class BlockEventListener implements Listener {
             if (event.isCancelled() && !Config.processCancelledStep()) {
                 return;
             }
-            Object soundType = FastNMS.INSTANCE.method$BlockBehaviour$BlockStateBase$getSoundType(blockState);
-            Object soundEvent = FastNMS.INSTANCE.field$SoundType$fallSound(soundType);
-            Object soundId = FastNMS.INSTANCE.field$SoundEvent$location(soundEvent);
+            Object soundType = BlockBehaviourProxy.BlockStateBaseProxy.INSTANCE.getSoundType(blockState);
+            Object soundEvent = SoundTypeProxy.INSTANCE.getFallSound(soundType);
+            Object soundId = SoundEventProxy.INSTANCE.getLocation(soundEvent);
             if (this.manager.isStepSoundMissing(soundId)) {
                 player.playSound(player.getLocation(), soundId.toString(), SoundCategory.BLOCKS, 0.15f, 1f);
             }
@@ -328,10 +337,10 @@ public final class BlockEventListener implements Listener {
             if (block.getX() == sourceBlock.getX() && block.getX() == sourceBlock.getZ()) {
                 World world = block.getWorld();
                 Location location = block.getLocation();
-                Object serverLevel = FastNMS.INSTANCE.field$CraftWorld$ServerLevel(world);
-                Object chunkSource = FastNMS.INSTANCE.method$ServerLevel$getChunkSource(serverLevel);
+                Object serverLevel = CraftWorldProxy.INSTANCE.getWorld(world);
+                Object chunkSource = ServerLevelProxy.INSTANCE.getChunkSource(serverLevel);
                 Object blockPos = LocationUtils.toBlockPos(location.getBlockX(), location.getBlockY(), location.getBlockZ());
-                FastNMS.INSTANCE.method$ServerChunkCache$blockChanged(chunkSource, blockPos);
+                ServerChunkCacheProxy.INSTANCE.blockChanged(chunkSource, blockPos);
                 if (block.getY() > sourceBlock.getY()) {
                     NoteBlockChainUpdateUtils.noteBlockChainUpdate(serverLevel, chunkSource, DirectionProxy.UP, blockPos, Config.maxNoteBlockChainUpdate());
                 } else {

@@ -2,12 +2,14 @@ package net.momirealms.craftengine.bukkit.plugin.command;
 
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
-import net.momirealms.craftengine.bukkit.nms.FastNMS;
+import net.momirealms.craftengine.bukkit.api.BukkitAdaptors;
 import net.momirealms.craftengine.bukkit.plugin.BukkitCraftEngine;
+import net.momirealms.craftengine.bukkit.plugin.user.BukkitServerPlayer;
 import net.momirealms.craftengine.bukkit.util.ComponentUtils;
 import net.momirealms.craftengine.core.plugin.command.sender.Sender;
 import net.momirealms.craftengine.core.plugin.command.sender.SenderFactory;
 import net.momirealms.craftengine.core.util.Tristate;
+import net.momirealms.craftengine.proxy.minecraft.network.protocol.game.ClientboundSystemChatPacketProxy;
 import org.bukkit.Bukkit;
 import org.bukkit.command.CommandSender;
 import org.bukkit.command.ConsoleCommandSender;
@@ -32,8 +34,8 @@ public class BukkitSenderFactory extends SenderFactory<BukkitCraftEngine, Comman
 
     @Override
     protected UUID uniqueId(CommandSender sender) {
-        if (sender instanceof Player) {
-            return ((Player) sender).getUniqueId();
+        if (sender instanceof Player player) {
+            return player.getUniqueId();
         }
         return Sender.CONSOLE_UUID;
     }
@@ -41,17 +43,20 @@ public class BukkitSenderFactory extends SenderFactory<BukkitCraftEngine, Comman
     @Override
     protected void sendMessage(CommandSender sender, Component message) {
         // we can safely send async for players and the console - otherwise, send it sync
-        if (sender instanceof Player player) {
-            FastNMS.INSTANCE.method$Connection$send(
-                    FastNMS.INSTANCE.field$ServerGamePacketListenerImpl$connection(FastNMS.INSTANCE.field$Player$connection(FastNMS.INSTANCE.method$CraftPlayer$getHandle(player))),
-                    FastNMS.INSTANCE.constructor$ClientboundSystemChatPacket(ComponentUtils.adventureToMinecraft(message), false), null);
-        } else if (sender instanceof ConsoleCommandSender commandSender) {
-            commandSender.sendMessage(LegacyComponentSerializer.legacySection().serialize(message));
-        } else if (sender instanceof RemoteConsoleCommandSender commandSender) {
-            commandSender.sendMessage(LegacyComponentSerializer.legacySection().serialize(message));
-        } else {
-            String legacy = LegacyComponentSerializer.legacySection().serialize(message);
-            plugin().scheduler().sync().run(() -> sender.sendMessage(legacy));
+        switch (sender) {
+            case Player player -> {
+                BukkitServerPlayer serverPlayer = BukkitAdaptors.adapt(player);
+                if (serverPlayer == null) return;
+                serverPlayer.sendPacket(ClientboundSystemChatPacketProxy.INSTANCE.newInstance(ComponentUtils.adventureToMinecraft(message), false), false);
+            }
+            case ConsoleCommandSender commandSender ->
+                    commandSender.sendMessage(LegacyComponentSerializer.legacySection().serialize(message));
+            case RemoteConsoleCommandSender commandSender ->
+                    commandSender.sendMessage(LegacyComponentSerializer.legacySection().serialize(message));
+            default -> {
+                String legacy = LegacyComponentSerializer.legacySection().serialize(message);
+                plugin().scheduler().sync().run(() -> sender.sendMessage(legacy));
+            }
         }
     }
 

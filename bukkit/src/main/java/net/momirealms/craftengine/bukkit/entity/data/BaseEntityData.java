@@ -1,6 +1,5 @@
 package net.momirealms.craftengine.bukkit.entity.data;
 
-import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.CoreReflections;
 import net.momirealms.craftengine.proxy.minecraft.world.entity.PoseProxy;
 
 import java.util.Optional;

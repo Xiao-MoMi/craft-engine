@@ -1,8 +1,6 @@
 package net.momirealms.craftengine.bukkit.item.behavior;
 
 import net.momirealms.craftengine.bukkit.entity.furniture.BukkitFurnitureManager;
-import net.momirealms.craftengine.bukkit.nms.FastNMS;
-import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.CoreReflections;
 import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.MFluids;
 import net.momirealms.craftengine.bukkit.util.DirectionUtils;
 import net.momirealms.craftengine.bukkit.util.LocationUtils;
@@ -27,8 +25,11 @@ import net.momirealms.craftengine.core.world.BlockPos;
 import net.momirealms.craftengine.core.world.Vec3d;
 import net.momirealms.craftengine.core.world.World;
 import net.momirealms.craftengine.core.world.context.UseOnContext;
+import net.momirealms.craftengine.proxy.minecraft.core.Vec3iProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.item.ItemProxy;
+import net.momirealms.craftengine.proxy.minecraft.world.level.BlockGetterProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.level.ClipContextProxy;
+import net.momirealms.craftengine.proxy.minecraft.world.level.material.FluidStateProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.phys.BlockHitResultProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.phys.HitResultProxy;
 import org.jetbrains.annotations.Nullable;
@@ -57,12 +58,12 @@ public final class LiquidCollisionFurnitureItemBehavior extends FurnitureItemBeh
         try {
             if (player == null) return InteractionResult.FAIL;
             Object blockHitResult = ItemProxy.INSTANCE.getPlayerPOVHitResult(world.serverWorld(), player.serverPlayer(), ClipContextProxy.FluidProxy.ANY);
-            Object blockPos = FastNMS.INSTANCE.field$BlockHitResult$blockPos(blockHitResult);
-            BlockPos above = new BlockPos(FastNMS.INSTANCE.field$Vec3i$x(blockPos), FastNMS.INSTANCE.field$Vec3i$y(blockPos), FastNMS.INSTANCE.field$Vec3i$z(blockPos));
-            Direction direction = DirectionUtils.fromNMSDirection(FastNMS.INSTANCE.field$BlockHitResul$direction(blockHitResult));
-            boolean miss = FastNMS.INSTANCE.field$BlockHitResul$miss(blockHitResult);
+            Object blockPos = BlockHitResultProxy.INSTANCE.getBlockPos(blockHitResult);
+            BlockPos above = new BlockPos(Vec3iProxy.INSTANCE.getX(blockPos), Vec3iProxy.INSTANCE.getY(blockPos), Vec3iProxy.INSTANCE.getZ(blockPos));
+            Direction direction = DirectionUtils.fromNMSDirection(BlockHitResultProxy.INSTANCE.getDirection(blockHitResult));
+            boolean miss = BlockHitResultProxy.INSTANCE.isMiss(blockHitResult);
             Vec3d hitPos = LocationUtils.fromVec(HitResultProxy.INSTANCE.getLocation(blockHitResult));
-            Object fluidType = FastNMS.INSTANCE.method$FluidState$getType(FastNMS.INSTANCE.method$BlockGetter$getFluidState(world.serverWorld(), blockPos));
+            Object fluidType = FluidStateProxy.INSTANCE.getType(BlockGetterProxy.INSTANCE.getFluidState(world.serverWorld(), blockPos));
             if (fluidType == MFluids.EMPTY) {
                 return InteractionResult.PASS;
             }

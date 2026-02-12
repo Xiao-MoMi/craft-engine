@@ -4,13 +4,18 @@ import com.google.gson.JsonElement;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.DataResult;
 import com.mojang.serialization.DynamicOps;
-import net.momirealms.craftengine.bukkit.nms.FastNMS;
-import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.CoreReflections;
 import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.MBuiltInRegistries;
 import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.MRegistryOps;
 import net.momirealms.craftengine.bukkit.util.KeyUtils;
+import net.momirealms.craftengine.bukkit.util.RegistryUtils;
 import net.momirealms.craftengine.core.item.ItemType;
 import net.momirealms.craftengine.core.util.Key;
+import net.momirealms.craftengine.core.util.VersionHelper;
+import net.momirealms.craftengine.proxy.minecraft.core.RegistryProxy;
+import net.momirealms.craftengine.proxy.minecraft.core.component.DataComponentGetterProxy;
+import net.momirealms.craftengine.proxy.minecraft.core.component.DataComponentMapProxy;
+import net.momirealms.craftengine.proxy.minecraft.core.component.DataComponentTypeProxy;
+import net.momirealms.craftengine.proxy.minecraft.world.item.ItemProxy;
 import net.momirealms.sparrow.nbt.Tag;
 
 import java.util.Optional;
@@ -24,7 +29,7 @@ public class ComponentItemType implements ItemType {
 
     @Override
     public Key id() {
-        return KeyUtils.identifierToKey(FastNMS.INSTANCE.method$Registry$getKey(MBuiltInRegistries.ITEM, this.item));
+        return KeyUtils.identifierToKey(RegistryProxy.INSTANCE.getKey(MBuiltInRegistries.ITEM, this.item));
     }
 
     @Override
@@ -53,28 +58,31 @@ public class ComponentItemType implements ItemType {
         return getDefaultComponentInternal(type, MRegistryOps.SPARROW_NBT).map(Tag::copy);
     }
 
-    private Object getDefaultComponentInternal(Object type) {
-        return FastNMS.INSTANCE.method$DataComponentMap$get(FastNMS.INSTANCE.method$Item$components(this.item), type);
+    private <T> T getDefaultComponentInternal(Object type) {
+        if (VersionHelper.isOrAbove1_21_5()) {
+            return DataComponentGetterProxy.INSTANCE.get(ItemProxy.INSTANCE.components(this.item), type);
+        } else {
+            return DataComponentMapProxy.INSTANCE.get(ItemProxy.INSTANCE.components(this.item), type);
+        }
     }
 
-    @SuppressWarnings({"rawtypes", "unchecked"})
     private <T> Optional<T> getDefaultComponentInternal(Object type, DynamicOps<T> ops) {
         Object componentType = ensureDataComponentType(type);
-        Codec codec = FastNMS.INSTANCE.method$DataComponentType$codec(componentType);
+        Codec<T> codec = DataComponentTypeProxy.INSTANCE.codec(componentType);
         try {
-            Object componentData = getDefaultComponentInternal(componentType);
+            T componentData = getDefaultComponentInternal(componentType);
             if (componentData == null) return Optional.empty();
-            DataResult<Object> result = codec.encodeStart(ops, componentData);
-            return (Optional<T>) result.result();
+            DataResult<T> result = codec.encodeStart(ops, componentData);
+            return result.result();
         } catch (Throwable t) {
             throw new RuntimeException("Cannot read component " + type.toString(), t);
         }
     }
 
     private Object ensureDataComponentType(Object type) {
-        if (!CoreReflections.clazz$DataComponentType.isInstance(type)) {
+        if (!DataComponentTypeProxy.CLASS.isInstance(type)) {
             Key key = Key.of(type.toString());
-            return FastNMS.INSTANCE.method$Registry$getValue(MBuiltInRegistries.DATA_COMPONENT_TYPE, KeyUtils.toIdentifier(key));
+            return RegistryUtils.getRegistryValue(MBuiltInRegistries.DATA_COMPONENT_TYPE, KeyUtils.toIdentifier(key));
         }
         return type;
     }

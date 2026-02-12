@@ -139,6 +139,7 @@ public class DependencyManagerImpl implements DependencyManager {
                         .forEach(dir -> {
                             try {
                                 FileUtils.deleteDirectory(dir);
+                                if (dependency.hasJarInJarPath()) return; // 禁止 jarinjar 依赖打印垃圾日志
                                 plugin.logger().info("Cleaned up outdated dependency " + dir);
                             } catch (IOException e) {
                                 throw new RuntimeException(e);

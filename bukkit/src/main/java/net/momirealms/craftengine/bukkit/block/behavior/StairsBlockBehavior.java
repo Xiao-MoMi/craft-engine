@@ -1,9 +1,9 @@
 package net.momirealms.craftengine.bukkit.block.behavior;
 
-import net.momirealms.craftengine.bukkit.nms.FastNMS;
 import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.MFluids;
 import net.momirealms.craftengine.bukkit.util.BlockStateUtils;
 import net.momirealms.craftengine.bukkit.util.DirectionUtils;
+import net.momirealms.craftengine.bukkit.util.LevelUtils;
 import net.momirealms.craftengine.bukkit.util.LocationUtils;
 import net.momirealms.craftengine.core.block.CustomBlock;
 import net.momirealms.craftengine.core.block.ImmutableBlockState;
@@ -17,6 +17,8 @@ import net.momirealms.craftengine.core.util.ResourceConfigUtils;
 import net.momirealms.craftengine.core.util.VersionHelper;
 import net.momirealms.craftengine.core.world.BlockPos;
 import net.momirealms.craftengine.core.world.context.BlockPlaceContext;
+import net.momirealms.craftengine.proxy.minecraft.world.level.BlockGetterProxy;
+import net.momirealms.craftengine.proxy.minecraft.world.level.material.FluidStateProxy;
 
 import java.util.Map;
 import java.util.Optional;
@@ -44,8 +46,8 @@ public class StairsBlockBehavior extends BukkitBlockBehavior {
                 .with(this.facingProperty, context.getHorizontalDirection().toHorizontalDirection())
                 .with(this.halfProperty, clickedFace != Direction.DOWN && (clickedFace == Direction.UP || !(context.getClickedLocation().y - clickedPos.y() > 0.5)) ? SingleBlockHalf.BOTTOM : SingleBlockHalf.TOP);
         if (super.waterloggedProperty != null) {
-            Object fluidState = FastNMS.INSTANCE.method$BlockGetter$getFluidState(context.getLevel().serverWorld(), LocationUtils.toBlockPos(clickedPos));
-            blockState = blockState.with(this.waterloggedProperty, FastNMS.INSTANCE.method$FluidState$getType(fluidState) == MFluids.WATER);
+            Object fluidState = BlockGetterProxy.INSTANCE.getFluidState(context.getLevel().serverWorld(), LocationUtils.toBlockPos(clickedPos));
+            blockState = blockState.with(this.waterloggedProperty, FluidStateProxy.INSTANCE.getType(fluidState) == MFluids.WATER);
         }
         return blockState.with(this.shapeProperty, getStairsShape(blockState, context.getLevel().serverWorld(), clickedPos));
     }
@@ -59,7 +61,7 @@ public class StairsBlockBehavior extends BukkitBlockBehavior {
         if (optionalCustomState.isEmpty()) return blockState;
         ImmutableBlockState customState = optionalCustomState.get();
         if (super.waterloggedProperty != null && customState.get(this.waterloggedProperty)) {
-            FastNMS.INSTANCE.method$ScheduledTickAccess$scheduleFluidTick(args[updateShape$level], args[updateShape$blockPos], MFluids.WATER, 5);
+            LevelUtils.scheduleFluidTick(args[updateShape$level], args[updateShape$blockPos], MFluids.WATER, 5);
         }
         Direction direction = DirectionUtils.fromNMSDirection(VersionHelper.isOrAbove1_21_2() ? args[4] : args[1]);
         StairsShape stairsShape = getStairsShape(customState, level, LocationUtils.fromBlockPos(blockPos));
@@ -70,7 +72,7 @@ public class StairsBlockBehavior extends BukkitBlockBehavior {
 
     private StairsShape getStairsShape(ImmutableBlockState state, Object level, BlockPos pos) {
         Direction direction = state.get(this.facingProperty).toDirection();
-        Object relativeBlockState1 = FastNMS.INSTANCE.method$BlockGetter$getBlockState(level, LocationUtils.toBlockPos(pos.relative(direction)));
+        Object relativeBlockState1 = BlockGetterProxy.INSTANCE.getBlockState(level, LocationUtils.toBlockPos(pos.relative(direction)));
         Optional<ImmutableBlockState> optionalCustomState1 = BlockStateUtils.getOptionalCustomBlockState(relativeBlockState1);
         if (optionalCustomState1.isPresent()) {
             ImmutableBlockState customState1 = optionalCustomState1.get();
@@ -88,7 +90,7 @@ public class StairsBlockBehavior extends BukkitBlockBehavior {
                 }
             }
         }
-        Object relativeBlockState2 = FastNMS.INSTANCE.method$BlockGetter$getBlockState(level, LocationUtils.toBlockPos(pos.relative(direction.opposite())));
+        Object relativeBlockState2 = BlockGetterProxy.INSTANCE.getBlockState(level, LocationUtils.toBlockPos(pos.relative(direction.opposite())));
         Optional<ImmutableBlockState> optionalCustomState2 = BlockStateUtils.getOptionalCustomBlockState(relativeBlockState2);
         if (optionalCustomState2.isPresent()) {
             ImmutableBlockState customState2 = optionalCustomState2.get();
@@ -110,7 +112,7 @@ public class StairsBlockBehavior extends BukkitBlockBehavior {
     }
 
     private boolean canTakeShape(ImmutableBlockState state, Object level, BlockPos pos, Direction face) {
-        Object blockState = FastNMS.INSTANCE.method$BlockGetter$getBlockState(level, LocationUtils.toBlockPos(pos.relative(face)));
+        Object blockState = BlockGetterProxy.INSTANCE.getBlockState(level, LocationUtils.toBlockPos(pos.relative(face)));
         Optional<ImmutableBlockState> optionalAnotherState = BlockStateUtils.getOptionalCustomBlockState(blockState);
         if (optionalAnotherState.isEmpty()) {
             return true;

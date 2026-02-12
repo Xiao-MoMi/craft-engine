@@ -13,7 +13,6 @@ import net.bytebuddy.implementation.bind.annotation.SuperCall;
 import net.bytebuddy.implementation.bind.annotation.This;
 import net.bytebuddy.matcher.ElementMatchers;
 import net.momirealms.craftengine.bukkit.block.BukkitBlockShape;
-import net.momirealms.craftengine.bukkit.nms.FastNMS;
 import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.CoreReflections;
 import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.MBlocks;
 import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.MRegistries;
@@ -31,9 +30,11 @@ import net.momirealms.craftengine.core.util.ObjectHolder;
 import net.momirealms.craftengine.core.util.VersionHelper;
 import net.momirealms.craftengine.proxy.minecraft.core.DirectionProxy;
 import net.momirealms.craftengine.proxy.minecraft.resources.ResourceKeyProxy;
+import net.momirealms.craftengine.proxy.minecraft.server.level.ServerChunkCacheProxy;
+import net.momirealms.craftengine.proxy.minecraft.server.level.ServerLevelProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.item.ItemStackProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.level.block.BlockProxy;
-import net.momirealms.craftengine.proxy.minecraft.world.level.block.state.BlockBehaviorProxy;
+import net.momirealms.craftengine.proxy.minecraft.world.level.block.state.BlockBehaviourProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.level.block.state.StateDefinitionProxy;
 
 import java.lang.invoke.MethodHandle;
@@ -223,18 +224,18 @@ public final class BlockGenerator {
         field$CraftEngineBlock$shape.set(newBlockInstance, shapeHolder);
         Object stateDefinitionBuilder = StateDefinitionProxy.BuilderProxy.INSTANCE.newInstance(newBlockInstance);
         Object stateDefinition = StateDefinitionProxy.BuilderProxy.INSTANCE.create(stateDefinitionBuilder,
-                FastNMS.INSTANCE::method$Block$defaultState, BlockStateGenerator.instance$StateDefinition$Factory);
+                BlockProxy.INSTANCE::getDefaultBlockState, BlockStateGenerator.instance$StateDefinition$Factory);
         BlockProxy.INSTANCE.setStateDefinition(newBlockInstance, stateDefinition);
         BlockProxy.INSTANCE.setDefaultBlockState(newBlockInstance, StateDefinitionProxy.INSTANCE.getStates(stateDefinition).getFirst());
         return (DelegatingBlock) newBlockInstance;
     }
 
     private static Object createEmptyBlockProperties(Key id) {
-        Object blockProperties = BlockBehaviorProxy.PropertiesProxy.INSTANCE.of();
-        Object resourceLocation = KeyUtils.toIdentifier(id);
-        Object resourceKey = ResourceKeyProxy.INSTANCE.create(MRegistries.BLOCK, resourceLocation);
+        Object blockProperties = BlockBehaviourProxy.PropertiesProxy.INSTANCE.of();
+        Object identifier = KeyUtils.toIdentifier(id);
+        Object resourceKey = ResourceKeyProxy.INSTANCE.create(MRegistries.BLOCK, identifier);
         if (VersionHelper.isOrAbove1_21_2()) {
-            BlockBehaviorProxy.PropertiesProxy.INSTANCE.setId(blockProperties, resourceKey);
+            BlockBehaviourProxy.PropertiesProxy.INSTANCE.setId(blockProperties, resourceKey);
         }
         return blockProperties;
     }
@@ -268,12 +269,12 @@ public final class BlockGenerator {
             Object blockPos = args[posIndex];
             // Y axis
             if (direction == DirectionProxy.DOWN) {
-                Object chunkSource = FastNMS.INSTANCE.method$ServerLevel$getChunkSource(serverLevel);
-                FastNMS.INSTANCE.method$ServerChunkCache$blockChanged(chunkSource, blockPos);
+                Object chunkSource = ServerLevelProxy.INSTANCE.getChunkSource(serverLevel);
+                ServerChunkCacheProxy.INSTANCE.blockChanged(chunkSource, blockPos);
                 NoteBlockChainUpdateUtils.noteBlockChainUpdate(serverLevel, chunkSource, DirectionProxy.UP, blockPos, Config.maxNoteBlockChainUpdate());
             } else if (direction == DirectionProxy.UP) {
-                Object chunkSource = FastNMS.INSTANCE.method$ServerLevel$getChunkSource(serverLevel);
-                FastNMS.INSTANCE.method$ServerChunkCache$blockChanged(chunkSource, blockPos);
+                Object chunkSource = ServerLevelProxy.INSTANCE.getChunkSource(serverLevel);
+                ServerChunkCacheProxy.INSTANCE.blockChanged(chunkSource, blockPos);
                 NoteBlockChainUpdateUtils.noteBlockChainUpdate(serverLevel, chunkSource, DirectionProxy.DOWN, blockPos, Config.maxNoteBlockChainUpdate());
             }
         }

@@ -36,16 +36,13 @@ import net.momirealms.craftengine.core.util.Tristate;
 import net.momirealms.craftengine.core.util.VersionHelper;
 import net.momirealms.craftengine.proxy.bukkit.craftbukkit.util.CraftMagicNumbersProxy;
 import net.momirealms.craftengine.proxy.minecraft.commands.arguments.blocks.BlockStateParserProxy;
-import net.momirealms.craftengine.proxy.minecraft.core.HolderProxy;
-import net.momirealms.craftengine.proxy.minecraft.core.IdMapperProxy;
-import net.momirealms.craftengine.proxy.minecraft.core.MappedRegistryProxy;
-import net.momirealms.craftengine.proxy.minecraft.core.RegistryProxy;
+import net.momirealms.craftengine.proxy.minecraft.core.*;
 import net.momirealms.craftengine.proxy.minecraft.resources.ResourceKeyProxy;
+import net.momirealms.craftengine.proxy.minecraft.sounds.SoundEventProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.level.EmptyBlockGetterProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.level.block.BlockProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.level.block.FireBlockProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.level.block.SoundTypeProxy;
-import net.momirealms.craftengine.proxy.minecraft.world.level.block.state.BlockBehaviorProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.level.block.state.BlockBehaviourProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.level.block.state.StateDefinitionProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.level.block.state.properties.NoteBlockInstrumentProxy;
@@ -134,7 +131,7 @@ public final class BukkitBlockManager extends AbstractBlockManager {
         for (DelegatingBlock block : this.customBlocks) {
             block.behaviorDelegate().bindValue(EmptyBlockBehavior.INSTANCE);
             block.shapeDelegate().bindValue(BukkitBlockShape.STONE);
-            DelegatingBlockState state = (DelegatingBlockState) FastNMS.INSTANCE.method$Block$defaultState(block);
+            DelegatingBlockState state = (DelegatingBlockState) BlockProxy.INSTANCE.getDefaultBlockState(block);
             state.setBlockState(null);
         }
     }
@@ -278,16 +275,16 @@ public final class BukkitBlockManager extends AbstractBlockManager {
             ObjectHolder<BlockBehavior> behaviorHolder = nmsBlock.behaviorDelegate();
             behaviorHolder.bindValue(state.behavior());
             if (VersionHelper.isOrAbove1_21_2()) {
-                BlockBehaviorProxy.INSTANCE.setDescriptionId(nmsBlock, block.translationKey());
+                BlockBehaviourProxy.INSTANCE.setDescriptionId(nmsBlock, block.translationKey());
             } else {
                 BlockProxy.INSTANCE.setDescriptionId(nmsBlock, block.translationKey());
             }
 
-            BlockBehaviorProxy.INSTANCE.setExplosionResistance(nmsBlock, settings.resistance());
-            BlockBehaviorProxy.INSTANCE.setFriction(nmsBlock, settings.friction());
-            BlockBehaviorProxy.INSTANCE.setSpeedFactor(nmsBlock, settings.speedFactor());
-            BlockBehaviorProxy.INSTANCE.setJumpFactor(nmsBlock, settings.jumpFactor());
-            BlockBehaviorProxy.INSTANCE.setSoundType(nmsBlock, SoundUtils.toNMSSoundType(settings.sounds()));
+            BlockBehaviourProxy.INSTANCE.setExplosionResistance(nmsBlock, settings.resistance());
+            BlockBehaviourProxy.INSTANCE.setFriction(nmsBlock, settings.friction());
+            BlockBehaviourProxy.INSTANCE.setSpeedFactor(nmsBlock, settings.speedFactor());
+            BlockBehaviourProxy.INSTANCE.setJumpFactor(nmsBlock, settings.jumpFactor());
+            BlockBehaviourProxy.INSTANCE.setSoundType(nmsBlock, SoundUtils.toNMSSoundType(settings.sounds()));
 
             BlockBehaviourProxy.BlockStateBaseProxy.INSTANCE.initCache(nmsState);
             boolean isConditionallyFullOpaque = canOcclude & useShapeForLightOcclusion;
@@ -296,7 +293,7 @@ public final class BukkitBlockManager extends AbstractBlockManager {
             }
 
             if (VersionHelper.isOrAbove1_21_2()) {
-                int blockLight = settings.blockLight() != -1 ? settings.blockLight() : BlockBehaviourProxy.BlockStateBaseProxy.INSTANCE.getLightBlock(nmsVisualState);
+                int blockLight = settings.blockLight() != -1 ? settings.blockLight() : BlockBehaviourProxy.BlockStateBaseProxy.INSTANCE.getLightBlock$0(nmsVisualState);
                 BlockBehaviourProxy.BlockStateBaseProxy.INSTANCE.setLightBlock(nmsState, blockLight);
                 boolean propagatesSkylightDown = settings.propagatesSkylightDown() == Tristate.UNDEFINED ? BlockBehaviourProxy.BlockStateBaseProxy.INSTANCE.isPropagatesSkylightDown(nmsVisualState) : settings.propagatesSkylightDown().asBoolean();
                 BlockBehaviourProxy.BlockStateBaseProxy.INSTANCE.setPropagatesSkylightDown(nmsState, propagatesSkylightDown);
@@ -353,7 +350,7 @@ public final class BukkitBlockManager extends AbstractBlockManager {
     }
 
     private SoundData toSoundData(Object soundEvent, SoundData.SoundValue volume, SoundData.SoundValue pitch) {
-        Key soundId = KeyUtils.identifierToKey(FastNMS.INSTANCE.field$SoundEvent$location(soundEvent));
+        Key soundId = KeyUtils.identifierToKey(SoundEventProxy.INSTANCE.getLocation(soundEvent));
         return new SoundData(soundId, volume, pitch);
     }
 
@@ -384,12 +381,12 @@ public final class BukkitBlockManager extends AbstractBlockManager {
                     break;
                 }
                 this.customBlocks[i] = customBlock;
-                Object resourceLocation = KeyUtils.toIdentifier(customBlockId);
-                Object blockHolder = RegistryProxy.INSTANCE.registerForHolder$1(MBuiltInRegistries.BLOCK, resourceLocation, customBlock);
+                Object identifier = KeyUtils.toIdentifier(customBlockId);
+                Object blockHolder = RegistryProxy.INSTANCE.registerForHolder$1(MBuiltInRegistries.BLOCK, identifier, customBlock);
                 this.customBlockHolders[i] = blockHolder;
                 HolderProxy.ReferenceProxy.INSTANCE.bindValue(blockHolder, customBlock);
                 HolderProxy.ReferenceProxy.INSTANCE.setTags(blockHolder, Set.of());
-                DelegatingBlockState newBlockState = (DelegatingBlockState) FastNMS.INSTANCE.method$Block$defaultState(customBlock);
+                DelegatingBlockState newBlockState = (DelegatingBlockState) BlockProxy.INSTANCE.getDefaultBlockState(customBlock);
                 this.customBlockStates[i] = newBlockState;
                 IdMapperProxy.INSTANCE.add(BlockProxy.BLOCK_STATE_REGISTRY, newBlockState);
             }
@@ -407,7 +404,7 @@ public final class BukkitBlockManager extends AbstractBlockManager {
     }
 
     private void markVanillaNoteBlocks() {
-        Object block = FastNMS.INSTANCE.method$Registry$getValue(MBuiltInRegistries.BLOCK, KeyUtils.toIdentifier(BlockKeys.NOTE_BLOCK));
+        Object block = RegistryUtils.getRegistryValue(MBuiltInRegistries.BLOCK, KeyUtils.toIdentifier(BlockKeys.NOTE_BLOCK));
         Object stateDefinition = BlockProxy.INSTANCE.getStateDefinition(block);
         ImmutableList<Object> states = StateDefinitionProxy.INSTANCE.getStates(stateDefinition);
         CLIENT_SIDE_NOTE_BLOCKS.addAll(states);
@@ -418,7 +415,7 @@ public final class BukkitBlockManager extends AbstractBlockManager {
         if (!BlockStateUtils.isOcclude(blockState)) {
             return false;
         }
-        return FastNMS.INSTANCE.method$BlockStateBase$isCollisionShapeFullBlock(blockState, EmptyBlockGetterProxy.GETTER_INSTANCE, BLOCK_POS$ZERO);
+        return BlockBehaviourProxy.BlockStateBaseProxy.INSTANCE.isCollisionShapeFullBlock(blockState, EmptyBlockGetterProxy.GETTER_INSTANCE, BLOCK_POS$ZERO);
     }
 
     private void findViewBlockingVanillaBlocks() {
@@ -432,8 +429,12 @@ public final class BukkitBlockManager extends AbstractBlockManager {
 
     @Override
     protected void setVanillaBlockTags(Key id, List<String> tags) {
-        Object block = FastNMS.INSTANCE.method$Registry$getValue(MBuiltInRegistries.BLOCK, KeyUtils.toIdentifier(id));
-        this.clientBoundTags.put(FastNMS.INSTANCE.method$IdMap$getId(MBuiltInRegistries.BLOCK, block).orElseThrow(() -> new IllegalStateException("Block " + id + " not found")), tags);
+        Object block = RegistryUtils.getRegistryValue(MBuiltInRegistries.BLOCK, KeyUtils.toIdentifier(id));
+        int blockId = IdMapProxy.INSTANCE.getId$1(MBuiltInRegistries.BLOCK, block);
+        if (blockId == -1) {
+            throw new IllegalStateException("Block " + id + " not found");
+        }
+        this.clientBoundTags.put(blockId, tags);
     }
 
     public boolean isPlaceSoundMissing(Object sound) {
@@ -466,7 +467,6 @@ public final class BukkitBlockManager extends AbstractBlockManager {
     }
 
     private void deceiveBukkitRegistry() {
-        Map<Object, Material> magicMap = CraftMagicNumbersProxy.INSTANCE.getBlockMaterial();
         Set<String> invalid = new HashSet<>();
         for (int i = 0; i < this.customBlocks.length; i++) {
             DelegatingBlock customBlock = this.customBlocks[i];
@@ -486,7 +486,7 @@ public final class BukkitBlockManager extends AbstractBlockManager {
                 }
                 material = Material.BRICKS;
             }
-            magicMap.put(customBlock, material);
+            CraftMagicNumbersProxy.BLOCK_MATERIAL.put(customBlock, material);
         }
     }
 
@@ -496,7 +496,7 @@ public final class BukkitBlockManager extends AbstractBlockManager {
             return false;
         if (id.value().equals("air"))
             return true;
-        return FastNMS.INSTANCE.method$Registry$getValue(MBuiltInRegistries.BLOCK, KeyUtils.toIdentifier(id)) != MBlocks.AIR;
+        return RegistryUtils.getRegistryValue(MBuiltInRegistries.BLOCK, KeyUtils.toIdentifier(id)) != MBlocks.AIR;
     }
 
     public boolean isBurnable(Object blockState) {
@@ -514,7 +514,7 @@ public final class BukkitBlockManager extends AbstractBlockManager {
     protected void processSounds() {
         Set<Object> affectedBlockSoundTypes = new HashSet<>();
         for (BlockStateWrapper vanillaBlockState : super.tempVisualBlockStatesInUse) {
-            affectedBlockSoundTypes.add(FastNMS.INSTANCE.method$BlockBehaviour$BlockStateBase$getSoundType(vanillaBlockState.literalObject()));
+            affectedBlockSoundTypes.add(BlockBehaviourProxy.BlockStateBaseProxy.INSTANCE.getSoundType(vanillaBlockState.literalObject()));
         }
 
         Set<Object> placeSounds = new HashSet<>();
@@ -523,10 +523,10 @@ public final class BukkitBlockManager extends AbstractBlockManager {
         Set<Object> hitSounds = new HashSet<>();
 
         for (Object soundType : affectedBlockSoundTypes) {
-            placeSounds.add(FastNMS.INSTANCE.field$SoundEvent$location(FastNMS.INSTANCE.field$SoundType$placeSound(soundType)));
-            breakSounds.add(FastNMS.INSTANCE.field$SoundEvent$location(FastNMS.INSTANCE.field$SoundType$breakSound(soundType)));
-            stepSounds.add(FastNMS.INSTANCE.field$SoundEvent$location(FastNMS.INSTANCE.field$SoundType$stepSound(soundType)));
-            hitSounds.add(FastNMS.INSTANCE.field$SoundEvent$location(FastNMS.INSTANCE.field$SoundType$hitSound(soundType)));
+            placeSounds.add(SoundEventProxy.INSTANCE.getLocation(SoundTypeProxy.INSTANCE.getPlaceSound(soundType)));
+            breakSounds.add(SoundEventProxy.INSTANCE.getLocation(SoundTypeProxy.INSTANCE.getBreakSound(soundType)));
+            stepSounds.add(SoundEventProxy.INSTANCE.getLocation(SoundTypeProxy.INSTANCE.getStepSound(soundType)));
+            hitSounds.add(SoundEventProxy.INSTANCE.getLocation(SoundTypeProxy.INSTANCE.getHitSound(soundType)));
         }
 
         ImmutableMap.Builder<Key, Key> soundReplacementBuilder = ImmutableMap.builder();

@@ -2,7 +2,6 @@ package net.momirealms.craftengine.bukkit.item.behavior;
 
 import net.momirealms.craftengine.bukkit.block.behavior.StrippableBlockBehavior;
 import net.momirealms.craftengine.bukkit.item.BukkitItemManager;
-import net.momirealms.craftengine.bukkit.nms.FastNMS;
 import net.momirealms.craftengine.bukkit.util.*;
 import net.momirealms.craftengine.bukkit.world.BukkitExistingBlock;
 import net.momirealms.craftengine.core.block.BlockStateWrapper;
@@ -24,6 +23,8 @@ import net.momirealms.craftengine.core.util.VersionHelper;
 import net.momirealms.craftengine.core.world.BlockPos;
 import net.momirealms.craftengine.core.world.Vec3d;
 import net.momirealms.craftengine.core.world.context.UseOnContext;
+import net.momirealms.craftengine.proxy.minecraft.world.level.BlockGetterProxy;
+import net.momirealms.craftengine.proxy.minecraft.world.level.LevelWriterProxy;
 import org.bukkit.GameEvent;
 import org.bukkit.Material;
 import org.bukkit.Statistic;
@@ -59,7 +60,7 @@ public final class AxeItemBehavior extends ItemBehavior {
             return InteractionResult.PASS;
         }
 
-        Object blockState = FastNMS.INSTANCE.method$BlockGetter$getBlockState(context.getLevel().serverWorld(), LocationUtils.toBlockPos(context.getClickedPos()));
+        Object blockState = BlockGetterProxy.INSTANCE.getBlockState(context.getLevel().serverWorld(), LocationUtils.toBlockPos(context.getClickedPos()));
         Optional<ImmutableBlockState> optionalCustomState = BlockStateUtils.getOptionalCustomBlockState(blockState);
         if (optionalCustomState.isEmpty()) return InteractionResult.PASS;
 
@@ -95,7 +96,7 @@ public final class AxeItemBehavior extends ItemBehavior {
         if (ItemUtils.isEmpty(item)) return InteractionResult.FAIL;
         BlockPos pos = context.getClickedPos();
         context.getLevel().playBlockSound(Vec3d.atCenterOf(pos), AXE_STRIP_SOUND, 1, 1);
-        FastNMS.INSTANCE.method$LevelWriter$setBlock(context.getLevel().serverWorld(), LocationUtils.toBlockPos(pos), newState.literalObject(), UpdateOption.UPDATE_ALL_IMMEDIATE.flags());
+        LevelWriterProxy.INSTANCE.setBlock(context.getLevel().serverWorld(), LocationUtils.toBlockPos(pos), newState.literalObject(), UpdateOption.UPDATE_ALL_IMMEDIATE.flags());
         clicked.block().getWorld().sendGameEvent(bukkitPlayer, GameEvent.BLOCK_CHANGE, new Vector(pos.x(), pos.y(), pos.z()));
         Material material = MaterialUtils.getMaterial(item.vanillaId());
         if (bukkitPlayer != null) {

@@ -14,7 +14,6 @@ import net.bytebuddy.matcher.ElementMatcher;
 import net.bytebuddy.matcher.ElementMatchers;
 import net.momirealms.craftengine.bukkit.item.BukkitItemManager;
 import net.momirealms.craftengine.bukkit.item.DataComponentTypes;
-import net.momirealms.craftengine.bukkit.nms.FastNMS;
 import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.CoreReflections;
 import net.momirealms.craftengine.bukkit.util.ItemTags;
 import net.momirealms.craftengine.bukkit.util.KeyUtils;
@@ -23,11 +22,13 @@ import net.momirealms.craftengine.core.item.Item;
 import net.momirealms.craftengine.core.item.ItemKeys;
 import net.momirealms.craftengine.core.item.data.FireworkExplosion;
 import net.momirealms.craftengine.core.util.*;
+import net.momirealms.craftengine.proxy.bukkit.craftbukkit.inventory.CraftItemStackProxy;
+import net.momirealms.craftengine.proxy.minecraft.world.ContainerProxy;
+import net.momirealms.craftengine.proxy.minecraft.world.item.DyeColorProxy;
+import net.momirealms.craftengine.proxy.minecraft.world.item.DyeItemProxy;
+import net.momirealms.craftengine.proxy.minecraft.world.item.ItemProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.item.ItemStackProxy;
-import net.momirealms.craftengine.proxy.minecraft.world.item.crafting.ArmorDyeRecipeProxy;
-import net.momirealms.craftengine.proxy.minecraft.world.item.crafting.CraftingBookCategoryProxy;
-import net.momirealms.craftengine.proxy.minecraft.world.item.crafting.FireworkStarFadeRecipeProxy;
-import net.momirealms.craftengine.proxy.minecraft.world.item.crafting.RepairItemRecipeProxy;
+import net.momirealms.craftengine.proxy.minecraft.world.item.crafting.*;
 import org.bukkit.inventory.ItemStack;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -113,23 +114,23 @@ public final class RecipeInjector {
             Constructor<?> constructor = ReflectionUtils.getConstructor(clazz$InjectedRepairItemRecipe, CoreReflections.clazz$CraftingBookCategory);
             return constructor.newInstance(CraftingBookCategoryProxy.MISC);
         } else {
-            Constructor<?> constructor = ReflectionUtils.getConstructor(clazz$InjectedRepairItemRecipe, CoreReflections.clazz$ResourceLocation, CoreReflections.clazz$CraftingBookCategory);
+            Constructor<?> constructor = ReflectionUtils.getConstructor(clazz$InjectedRepairItemRecipe, CoreReflections.clazz$Identifier, CoreReflections.clazz$CraftingBookCategory);
             return constructor.newInstance(KeyUtils.toIdentifier(id), CraftingBookCategoryProxy.MISC);
         }
     }
 
     private static final Function<Object, Integer> INGREDIENT_SIZE_GETTER =
             VersionHelper.isOrAbove1_21() ?
-                    FastNMS.INSTANCE::method$CraftingInput$size :
-                    FastNMS.INSTANCE::method$Container$getContainerSize;
+                    CraftingInputProxy.INSTANCE::size :
+                    ContainerProxy.INSTANCE::getContainerSize;
     private static final BiFunction<Object, Integer, Object> INGREDIENT_GETTER =
             VersionHelper.isOrAbove1_21() ?
-                    FastNMS.INSTANCE::method$CraftingInput$getItem :
-                    FastNMS.INSTANCE::method$Container$getItem;
+                    CraftingInputProxy.INSTANCE::getItem :
+                    ContainerProxy.INSTANCE::getItem;
 
     private static final Function<Object, Boolean> REPAIR_INGREDIENT_COUNT_CHECKER =
             VersionHelper.isOrAbove1_21() ?
-                    (input) -> FastNMS.INSTANCE.method$CraftingInput$ingredientCount(input) != 2 :
+                    (input) -> CraftingInputProxy.INSTANCE.ingredientCount(input) != 2 :
                     (container) -> false;
 
     public static class FireworkStarFadeMatchesInterceptor {
@@ -146,10 +147,10 @@ public final class RecipeInjector {
             int size = INGREDIENT_SIZE_GETTER.apply(input);
             for (int i = 0; i < size; i++) {
                 Object itemStack = INGREDIENT_GETTER.apply(input, i);
-                if (FastNMS.INSTANCE.method$ItemStack$isEmpty(itemStack)) {
+                if (ItemStackProxy.INSTANCE.isEmpty(itemStack)) {
                     continue;
                 }
-                Item<ItemStack> wrapped = BukkitItemManager.instance().wrap(FastNMS.INSTANCE.method$CraftItemStack$asCraftMirror(itemStack));
+                Item<ItemStack> wrapped = BukkitItemManager.instance().wrap(CraftItemStackProxy.INSTANCE.asCraftMirror(itemStack));
                 if (isFireworkDye(wrapped)) {
                     hasDye = true;
                 } else {
@@ -177,10 +178,10 @@ public final class RecipeInjector {
             int size = INGREDIENT_SIZE_GETTER.apply(input);
             for (int i = 0; i < size; i++) {
                 Object itemStack = INGREDIENT_GETTER.apply(input, i);
-                if (FastNMS.INSTANCE.method$ItemStack$isEmpty(itemStack)) {
+                if (ItemStackProxy.INSTANCE.isEmpty(itemStack)) {
                     continue;
                 }
-                Item<ItemStack> wrapped = BukkitItemManager.instance().wrap(FastNMS.INSTANCE.method$CraftItemStack$asCraftMirror(itemStack));
+                Item<ItemStack> wrapped = BukkitItemManager.instance().wrap(CraftItemStackProxy.INSTANCE.asCraftMirror(itemStack));
                 if (isFireworkDye(wrapped)) {
                     Color color = getFireworkColor(wrapped);
                     if (color == null) {
@@ -220,10 +221,10 @@ public final class RecipeInjector {
         int size = INGREDIENT_SIZE_GETTER.apply(input);
         for (int i = 0; i < size; i++) {
             Object itemStack = INGREDIENT_GETTER.apply(input, i);
-            if (FastNMS.INSTANCE.method$ItemStack$isEmpty(itemStack)) {
+            if (ItemStackProxy.INSTANCE.isEmpty(itemStack)) {
                 continue;
             }
-            Item<ItemStack> wrapped = BukkitItemManager.instance().wrap(FastNMS.INSTANCE.method$CraftItemStack$asCraftMirror(itemStack));
+            Item<ItemStack> wrapped = BukkitItemManager.instance().wrap(CraftItemStackProxy.INSTANCE.asCraftMirror(itemStack));
             if (item1 == null) {
                 item1 = wrapped;
             } else {
@@ -254,13 +255,13 @@ public final class RecipeInjector {
         if (VersionHelper.isOrAbove1_20_5()) {
             return item.hasComponent(DataComponentTypes.MAX_DAMAGE) && item.hasComponent(DataComponentTypes.DAMAGE);
         } else {
-            return FastNMS.INSTANCE.method$Item$canBeDepleted(FastNMS.INSTANCE.method$ItemStack$getItem(item.getLiteralObject()));
+            return ItemProxy.INSTANCE.canBeDepleted(ItemStackProxy.INSTANCE.getItem(item.getLiteralObject()));
         }
     }
 
     private static final Function<Object, Boolean> DYE_INGREDIENT_COUNT_CHECKER =
             VersionHelper.isOrAbove1_21() ?
-                    (input) -> FastNMS.INSTANCE.method$CraftingInput$ingredientCount(input) < 2 :
+                    (input) -> CraftingInputProxy.INSTANCE.ingredientCount(input) < 2 :
                     (container) -> false;
 
     public static class DyeMatchesInterceptor {
@@ -277,10 +278,10 @@ public final class RecipeInjector {
             boolean hasDye = false;
             for (int i = 0; i < size; i++) {
                 Object itemStack = INGREDIENT_GETTER.apply(input, i);
-                if (FastNMS.INSTANCE.method$ItemStack$isEmpty(itemStack)) {
+                if (ItemStackProxy.INSTANCE.isEmpty(itemStack)) {
                     continue;
                 }
-                Item<ItemStack> wrapped = BukkitItemManager.instance().wrap(FastNMS.INSTANCE.method$CraftItemStack$asCraftMirror(itemStack));
+                Item<ItemStack> wrapped = BukkitItemManager.instance().wrap(CraftItemStackProxy.INSTANCE.asCraftMirror(itemStack));
                 if (isDyeable(wrapped)) {
                     if (itemToDye != null) {
                         return false;
@@ -308,10 +309,10 @@ public final class RecipeInjector {
             int size = INGREDIENT_SIZE_GETTER.apply(input);
             for (int i = 0; i < size; i++) {
                 Object itemStack = INGREDIENT_GETTER.apply(input, i);
-                if (FastNMS.INSTANCE.method$ItemStack$isEmpty(itemStack)) {
+                if (ItemStackProxy.INSTANCE.isEmpty(itemStack)) {
                     continue;
                 }
-                Item<ItemStack> wrapped = BukkitItemManager.instance().wrap(FastNMS.INSTANCE.method$CraftItemStack$asCraftMirror(itemStack));
+                Item<ItemStack> wrapped = BukkitItemManager.instance().wrap(CraftItemStackProxy.INSTANCE.asCraftMirror(itemStack));
                 if (isDyeable(wrapped)) {
                     itemToDye = wrapped.copyWithCount(1);
                 } else {
@@ -354,7 +355,7 @@ public final class RecipeInjector {
             VersionHelper.isOrAbove1_20_5() ?
                     (item -> item.hasItemTag(ItemTags.DYEABLE)) :
                     (item -> {
-                       Object itemLike = FastNMS.INSTANCE.method$ItemStack$getItem(item.getLiteralObject());
+                       Object itemLike = ItemStackProxy.INSTANCE.getItem(item.getLiteralObject());
                        return CoreReflections.clazz$DyeableLeatherItem.isInstance(itemLike);
                     });
 
@@ -372,20 +373,32 @@ public final class RecipeInjector {
         return IS_DYEABLE.test(item);
     }
 
+    @SuppressWarnings("PointlessBitwiseExpression")
     @Nullable
     private static Color getVanillaDyeColor(final Item<ItemStack> item) {
         Object itemStack = item.getLiteralObject();
-        Object dyeItem = FastNMS.INSTANCE.method$ItemStack$getItem(itemStack);
-        if (!CoreReflections.clazz$DyeItem.isInstance(dyeItem)) return null;
-        return Color.fromDecimal(FastNMS.INSTANCE.method$DyeColor$getTextureDiffuseColor(FastNMS.INSTANCE.method$DyeItem$getDyeColor(dyeItem)));
+        Object dyeItem = ItemStackProxy.INSTANCE.getItem(itemStack);
+        if (!DyeItemProxy.CLASS.isInstance(dyeItem)) return null;
+        Object dyeColor = DyeItemProxy.INSTANCE.getDyeColor(dyeItem);
+        int textureDiffuseColor;
+        if (VersionHelper.isOrAbove1_21()) {
+            textureDiffuseColor = DyeColorProxy.INSTANCE.getTextureDiffuseColor(dyeColor);
+        } else {
+            float[] rgb = DyeColorProxy.INSTANCE.getTextureDiffuseColors(dyeColor);
+            int r = (int) (rgb[0] * 255.0F);
+            int g = (int) (rgb[1] * 255.0F);
+            int b = (int) (rgb[2] * 255.0F);
+            textureDiffuseColor = 0 << 24 /*不可省略*/ | r << 16 | g << 8 | b;
+        }
+        return Color.fromDecimal(textureDiffuseColor);
     }
 
     @Nullable
     private static Color getVanillaFireworkColor(final Item<ItemStack> item) {
         Object itemStack = item.getLiteralObject();
-        Object dyeItem = FastNMS.INSTANCE.method$ItemStack$getItem(itemStack);
-        if (!CoreReflections.clazz$DyeItem.isInstance(dyeItem)) return null;
-        return Color.fromDecimal(FastNMS.INSTANCE.method$DyeColor$getFireworkColor(FastNMS.INSTANCE.method$DyeItem$getDyeColor(dyeItem)));
+        Object dyeItem = ItemStackProxy.INSTANCE.getItem(itemStack);
+        if (!DyeItemProxy.CLASS.isInstance(dyeItem)) return null;
+        return Color.fromDecimal(DyeColorProxy.INSTANCE.getFireworkColor(DyeItemProxy.INSTANCE.getDyeColor(dyeItem)));
     }
 
     private static boolean isArmorDye(Item<ItemStack> dyeItem) {
@@ -407,6 +420,6 @@ public final class RecipeInjector {
     }
 
     private static boolean isVanillaDyeItem(Item<ItemStack> item) {
-        return CoreReflections.clazz$DyeItem.isInstance(FastNMS.INSTANCE.method$ItemStack$getItem(item.getLiteralObject()));
+        return DyeItemProxy.CLASS.isInstance(ItemStackProxy.INSTANCE.getItem(item.getLiteralObject()));
     }
 }

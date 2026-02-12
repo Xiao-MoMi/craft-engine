@@ -23,7 +23,6 @@ import com.sk89q.worldedit.world.World;
 import com.sk89q.worldedit.world.block.BaseBlock;
 import com.sk89q.worldedit.world.block.BlockStateHolder;
 import net.momirealms.craftengine.bukkit.block.BukkitBlockManager;
-import net.momirealms.craftengine.bukkit.nms.FastNMS;
 import net.momirealms.craftengine.bukkit.plugin.injector.WorldStorageInjector;
 import net.momirealms.craftengine.bukkit.util.BlockStateUtils;
 import net.momirealms.craftengine.bukkit.world.BukkitWorldManager;
@@ -36,6 +35,9 @@ import net.momirealms.craftengine.core.world.ChunkPos;
 import net.momirealms.craftengine.core.world.SectionPos;
 import net.momirealms.craftengine.core.world.chunk.CEChunk;
 import net.momirealms.craftengine.core.world.chunk.CESection;
+import net.momirealms.craftengine.proxy.minecraft.server.level.ServerLevelProxy;
+import net.momirealms.craftengine.proxy.minecraft.world.level.chunk.ChunkAccessProxy;
+import net.momirealms.craftengine.proxy.minecraft.world.level.chunk.ChunkSourceProxy;
 import org.bukkit.Bukkit;
 import org.jetbrains.annotations.Nullable;
 
@@ -93,9 +95,9 @@ final class FastAsyncWorldEditDelegate extends AbstractDelegateExtent {
 
     private static void injectLevelChunk(Object chunkSource, CEChunk ceChunk) {
         ChunkPos pos = ceChunk.chunkPos();
-        Object levelChunk = FastNMS.INSTANCE.method$ServerChunkCache$getChunk(chunkSource, pos.x, pos.z, false);
+        Object levelChunk = ChunkSourceProxy.INSTANCE.getChunk(chunkSource, pos.x, pos.z, false);
         if (levelChunk != null) {
-            Object[] sections = FastNMS.INSTANCE.method$ChunkAccess$getSections(levelChunk);
+            Object[] sections = ChunkAccessProxy.INSTANCE.getSections(levelChunk);
             CESection[] ceSections = ceChunk.sections();
             synchronized (sections) {
                 for (int i = 0; i < ceSections.length; i++) {
@@ -193,7 +195,7 @@ final class FastAsyncWorldEditDelegate extends AbstractDelegateExtent {
         List<ChunkPos> chunks = new ArrayList<>(this.brokenChunks);
         this.brokenChunks.clear();
             Object worldServer = this.ceWorld().world().serverWorld();
-            Object chunkSource = FastNMS.INSTANCE.method$ServerLevel$getChunkSource(worldServer);
+            Object chunkSource = ServerLevelProxy.INSTANCE.getChunkSource(worldServer);
             for (ChunkPos chunk : chunks) {
                 CEChunk loaded = this.ceWorld().getChunkAtIfLoaded(chunk.longKey());
                 // only inject loaded chunks

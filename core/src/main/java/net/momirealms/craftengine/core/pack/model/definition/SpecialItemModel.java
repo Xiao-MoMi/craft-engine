@@ -1,7 +1,7 @@
 package net.momirealms.craftengine.core.pack.model.definition;
 
 import com.google.gson.JsonObject;
-import net.momirealms.craftengine.core.pack.ResourceLocation;
+import net.momirealms.craftengine.core.pack.Identifier;
 import net.momirealms.craftengine.core.pack.model.definition.special.SpecialModel;
 import net.momirealms.craftengine.core.pack.model.definition.special.SpecialModels;
 import net.momirealms.craftengine.core.pack.model.generation.ModelGeneration;
@@ -70,7 +70,7 @@ public final class SpecialItemModel implements ItemModel {
         @Override
         public SpecialItemModel create(Map<String, Object> arguments) {
             String base = ResourceConfigUtils.requireNonEmptyStringOrThrow(ResourceConfigUtils.get(arguments, "base", "path"), "warning.config.item.model.special.missing_path");
-            if (!ResourceLocation.isValid(base)) {
+            if (!Identifier.isValid(base)) {
                 throw new LocalizedResourceConfigException("warning.config.item.model.special.invalid_path", base);
             }
             Map<String, Object> generation = MiscUtils.castToMap(arguments.get("generation"), true);

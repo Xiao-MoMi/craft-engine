@@ -3,7 +3,6 @@ package net.momirealms.craftengine.bukkit.util;
 import com.mojang.datafixers.util.Pair;
 import net.momirealms.craftengine.bukkit.item.BukkitItemManager;
 import net.momirealms.craftengine.bukkit.item.DataComponentTypes;
-import net.momirealms.craftengine.bukkit.nms.FastNMS;
 import net.momirealms.craftengine.bukkit.plugin.BukkitCraftEngine;
 import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.NetworkReflections;
 import net.momirealms.craftengine.core.entity.player.InteractionHand;
@@ -15,8 +14,17 @@ import net.momirealms.craftengine.core.sound.SoundSource;
 import net.momirealms.craftengine.core.sound.Sounds;
 import net.momirealms.craftengine.core.util.VersionHelper;
 import net.momirealms.craftengine.core.util.random.RandomUtils;
+import net.momirealms.craftengine.proxy.minecraft.core.HolderProxy;
+import net.momirealms.craftengine.proxy.minecraft.network.protocol.game.ClientboundSoundPacketProxy;
+import net.momirealms.craftengine.proxy.minecraft.resources.IdentifierProxy;
+import net.momirealms.craftengine.proxy.minecraft.server.level.ServerPlayerProxy;
+import net.momirealms.craftengine.proxy.minecraft.sounds.SoundEventProxy;
 import net.momirealms.craftengine.proxy.minecraft.sounds.SoundSourceProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.entity.EquipmentSlotProxy;
+import net.momirealms.craftengine.proxy.minecraft.world.entity.item.ItemEntityProxy;
+import net.momirealms.craftengine.proxy.minecraft.world.entity.player.InventoryProxy;
+import net.momirealms.craftengine.proxy.minecraft.world.entity.player.PlayerProxy;
+import net.momirealms.craftengine.proxy.minecraft.world.inventory.AbstractContainerMenuProxy;
 import org.bukkit.inventory.ItemStack;
 import org.jetbrains.annotations.Nullable;
 
@@ -41,20 +49,34 @@ public final class PlayerUtils {
     public static void giveItem(Player player, Item<ItemStack> original, Item<ItemStack> item) {
         if (player == null) return;
         Object serverPlayer = player.serverPlayer();
-        Object inventory = FastNMS.INSTANCE.method$Player$getInventory(serverPlayer);
-        boolean flag = FastNMS.INSTANCE.method$Inventory$add(inventory, item.getLiteralObject());
+        Object inventory = PlayerProxy.INSTANCE.getInventory(serverPlayer);
+        boolean flag = InventoryProxy.INSTANCE.add(inventory, item.getLiteralObject());
         if (flag && item.isEmpty()) {
-            Object droppedItem = FastNMS.INSTANCE.method$ServerPlayer$drop(serverPlayer, original.copyWithCount(1).getLiteralObject(), false, false, false, null);
+            Object droppedItem;
+            if (VersionHelper.isOrAbove1_21_4()) {
+                droppedItem = ServerPlayerProxy.INSTANCE.drop(serverPlayer, original.copyWithCount(1).getLiteralObject(), false, false, false, null);
+            } else if (VersionHelper.isOrAbove1_20_3()) {
+                droppedItem = ServerPlayerProxy.INSTANCE.drop$1(serverPlayer, original.copyWithCount(1).getLiteralObject(), false, false, false);
+            } else {
+                droppedItem = PlayerProxy.INSTANCE.drop$0(serverPlayer, original.copyWithCount(1).getLiteralObject(), false, false, true);
+            }
             if (droppedItem != null) {
-                FastNMS.INSTANCE.method$ItemEntity$makeFakeItem(droppedItem);
+                ItemEntityProxy.INSTANCE.makeFakeItem(droppedItem);
             }
             player.world().playSound(player.position(), Sounds.ENTITY_ITEM_PICKUP, 0.2F, ((RandomUtils.generateRandomFloat(0, 1) - RandomUtils.generateRandomFloat(0, 1)) * 0.7F + 1.0F) * 2.0F, SoundSource.PLAYER);
-            FastNMS.INSTANCE.method$AbstractContainerMenu$broadcastChanges(FastNMS.INSTANCE.field$Player$containerMenu(serverPlayer));
+            AbstractContainerMenuProxy.INSTANCE.broadcastChanges(PlayerProxy.INSTANCE.getContainerMenu(serverPlayer));
         } else {
-            Object droppedItem = FastNMS.INSTANCE.method$ServerPlayer$drop(serverPlayer, item.getLiteralObject(), false, false, !VersionHelper.isOrAbove1_21_5(), null);
+            Object droppedItem;
+            if (VersionHelper.isOrAbove1_21_4()) {
+                droppedItem = ServerPlayerProxy.INSTANCE.drop(serverPlayer, item.getLiteralObject(), false, false, !VersionHelper.isOrAbove1_21_5(), null);
+            } else if (VersionHelper.isOrAbove1_20_3()) {
+                droppedItem = ServerPlayerProxy.INSTANCE.drop$1(serverPlayer, item.getLiteralObject(), false, false, true);
+            } else {
+                droppedItem = PlayerProxy.INSTANCE.drop$0(serverPlayer, item.getLiteralObject(), false, false, true);
+            }
             if (droppedItem != null) {
-                FastNMS.INSTANCE.method$ItemEntity$setNoPickUpDelay(droppedItem);
-                FastNMS.INSTANCE.method$ItemEntity$setTarget(droppedItem, player.uuid());
+                ItemEntityProxy.INSTANCE.setNoPickUpDelay(droppedItem);
+                ItemEntityProxy.INSTANCE.setTarget$1(droppedItem, player.uuid());
             }
         }
     }
@@ -90,13 +112,13 @@ public final class PlayerUtils {
             ));
             if (sound != null || silent) {
                 packets.add(NetworkReflections.constructor$ClientboundStopSoundPacket.newInstance(
-                        FastNMS.INSTANCE.method$ResourceLocation$fromNamespaceAndPath("minecraft", "item.totem.use"),
+                        IdentifierProxy.INSTANCE.newInstance("minecraft", "item.totem.use"),
                         SoundSourceProxy.PLAYERS
                 ));
             }
             if (sound != null) {
-                packets.add(FastNMS.INSTANCE.constructor$ClientboundSoundPacket(
-                        FastNMS.INSTANCE.method$Holder$direct(FastNMS.INSTANCE.constructor$SoundEvent(KeyUtils.toIdentifier(sound.id()), Optional.empty())),
+                packets.add(ClientboundSoundPacketProxy.INSTANCE.newInstance(
+                        HolderProxy.INSTANCE.direct(SoundEventProxy.INSTANCE.create(KeyUtils.toIdentifier(sound.id()), Optional.empty())),
                         SoundSourceProxy.PLAYERS,
                         player.x(), player.y(), player.z(), sound.volume().get(), sound.pitch().get(),
                         RandomUtils.generateRandomLong()

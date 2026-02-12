@@ -18,4 +18,10 @@ public interface BlockGetterProxy {
 
     @MethodInvoker(name = "getBlockFloorHeight")
     double getBlockFloorHeight(Object target, @Type(clazz = VoxelShapeProxy.class) Object shape, Supplier<Object> belowShapeSupplier);
+
+    @MethodInvoker(name = "getFluidState")
+    Object getFluidState(Object target, @Type(clazz = BlockPosProxy.class) Object blockPos);
+
+    @MethodInvoker(name = "getBlockState")
+    Object getBlockState(Object target, @Type(clazz = BlockPosProxy.class) Object blockPos);
 }

@@ -1,23 +1,18 @@
 package net.momirealms.craftengine.bukkit.plugin.reflection.minecraft;
 
-import net.momirealms.craftengine.bukkit.nms.FastNMS;
+import net.momirealms.craftengine.bukkit.util.RegistryUtils;
+import net.momirealms.craftengine.proxy.minecraft.resources.IdentifierProxy;
 
 public final class MMobEffects {
     private MMobEffects() {}
 
-    public static final Object MINING_FATIGUE;
-    public static final Object HASTE;
-    public static final Object INVISIBILITY;
-
-    private static Object getById(String id) {
-        Object rl = FastNMS.INSTANCE.method$ResourceLocation$fromNamespaceAndPath("minecraft", id);
-        return FastNMS.INSTANCE.method$Registry$getValue(MBuiltInRegistries.MOB_EFFECT, rl);
-    }
-
     // for 1.20.1-1.20.4
-    static {
-        MINING_FATIGUE = getById("mining_fatigue");
-        HASTE = getById("haste");
-        INVISIBILITY = getById("invisibility");
+    public static final Object MINING_FATIGUE = getById("mining_fatigue");
+    public static final Object HASTE = getById("haste");
+    public static final Object INVISIBILITY = getById("invisibility");
+
+    private static Object getById(String path) {
+        Object id = IdentifierProxy.INSTANCE.newInstance("minecraft", path);
+        return RegistryUtils.getRegistryValue(MBuiltInRegistries.MOB_EFFECT, id);
     }
 }

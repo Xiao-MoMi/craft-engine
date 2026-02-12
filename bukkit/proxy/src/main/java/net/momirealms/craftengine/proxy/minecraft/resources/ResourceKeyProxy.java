@@ -13,11 +13,11 @@ public interface ResourceKeyProxy {
     @FieldSetter(name = "registryName")
     void setRegistryName(Object target, Object registryName);
 
-    @FieldGetter(name = {"location", "identifier"})
-    Object getLocation(Object target);
+    @FieldGetter(name = {"identifier", "location"})
+    Object getIdentifier(Object target);
 
-    @FieldSetter(name = {"location", "identifier"})
-    void setLocation(Object target, Object location);
+    @FieldSetter(name = {"identifier", "location"})
+    void setIdentifier(Object target, Object identifier);
 
     @MethodInvoker(name = "create", isStatic = true)
     Object create(@Type(clazz = ResourceKeyProxy.class) Object registry, @Type(clazz = IdentifierProxy.class) Object value);

@@ -7,6 +7,7 @@ import net.momirealms.sparrow.reflection.proxy.annotation.ReflectionProxy;
 
 @ReflectionProxy(name = "org.bukkit.craftbukkit.inventory.CraftMerchantCustom")
 public interface CraftMerchantCustomProxy {
+    CraftMerchantCustomProxy INSTANCE = ASMProxyFactory.create(CraftMerchantCustomProxy.class);
 
     @ReflectionProxy(name = "org.bukkit.craftbukkit.inventory.CraftMerchantCustom$MinecraftMerchant")
     interface MinecraftMerchantProxy {

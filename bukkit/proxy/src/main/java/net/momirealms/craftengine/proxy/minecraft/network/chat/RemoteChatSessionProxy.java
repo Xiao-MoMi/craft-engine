@@ -7,8 +7,8 @@ import net.momirealms.sparrow.reflection.proxy.annotation.ReflectionProxy;
 public interface RemoteChatSessionProxy {
     RemoteChatSessionProxy INSTANCE = ASMProxyFactory.create(RemoteChatSessionProxy.class);
 
+    @ReflectionProxy(name = "net.minecraft.network.chat.RemoteChatSession$Data")
     interface DataProxy {
         DataProxy INSTANCE = ASMProxyFactory.create(DataProxy.class);
-
     }
 }

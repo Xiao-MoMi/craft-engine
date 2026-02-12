@@ -1,7 +1,7 @@
 package net.momirealms.craftengine.bukkit.entity.data;
 
-import net.momirealms.craftengine.bukkit.nms.FastNMS;
 import net.momirealms.craftengine.core.util.VersionHelper;
+import net.momirealms.craftengine.proxy.minecraft.nbt.CompoundTagProxy;
 
 import java.util.OptionalInt;
 
@@ -13,8 +13,8 @@ public class PlayerData<T> extends AvatarData<T> {
     // 1.20~1.21.8
     public static final PlayerData<Byte> PLAYER_MODE_CUSTOMISATION = of(PlayerData.class, EntityDataValue.Serializers$BYTE, (byte) 0, !VersionHelper.isOrAbove1_21_9());
     public static final PlayerData<Byte> PLAYER_MAIN_HAND = of(PlayerData.class, EntityDataValue.Serializers$BYTE, (byte) 1, !VersionHelper.isOrAbove1_21_9());
-    public static final PlayerData<Object> SHOULDER_LEFT = of(PlayerData.class, EntityDataValue.Serializers$COMPOUND_TAG, FastNMS.INSTANCE.constructor$CompoundTag(), !VersionHelper.isOrAbove1_21_9());
-    public static final PlayerData<Object> SHOULDER_RIGHT = of(PlayerData.class, EntityDataValue.Serializers$COMPOUND_TAG, FastNMS.INSTANCE.constructor$CompoundTag(), !VersionHelper.isOrAbove1_21_9());
+    public static final PlayerData<Object> SHOULDER_LEFT = of(PlayerData.class, EntityDataValue.Serializers$COMPOUND_TAG, CompoundTagProxy.INSTANCE.newInstance(), !VersionHelper.isOrAbove1_21_9());
+    public static final PlayerData<Object> SHOULDER_RIGHT = of(PlayerData.class, EntityDataValue.Serializers$COMPOUND_TAG, CompoundTagProxy.INSTANCE.newInstance(), !VersionHelper.isOrAbove1_21_9());
 
     // 1.21.9+
     public static final PlayerData<OptionalInt> SHOULDER_PARROT_LEFT = of(PlayerData.class, EntityDataValue.Serializers$OPTIONAL_UNSIGNED_INT, OptionalInt.empty(), VersionHelper.isOrAbove1_21_9());

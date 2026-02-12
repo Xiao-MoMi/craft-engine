@@ -1,7 +1,6 @@
 package net.momirealms.craftengine.bukkit.item.factory;
 
 import com.google.gson.JsonElement;
-import net.momirealms.craftengine.bukkit.nms.FastNMS;
 import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.CoreReflections;
 import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.MBuiltInRegistries;
 import net.momirealms.craftengine.bukkit.util.ItemTags;
@@ -17,6 +16,8 @@ import net.momirealms.craftengine.core.util.Key;
 import net.momirealms.craftengine.core.util.StringUtils;
 import net.momirealms.craftengine.core.util.UniqueKey;
 import net.momirealms.craftengine.core.util.VersionHelper;
+import net.momirealms.craftengine.proxy.minecraft.core.RegistryProxy;
+import net.momirealms.craftengine.proxy.minecraft.world.item.ItemStackProxy;
 import net.momirealms.sparrow.nbt.Tag;
 import org.bukkit.Bukkit;
 import org.bukkit.inventory.ItemStack;
@@ -62,7 +63,7 @@ public abstract class BukkitItemFactory<W extends ItemWrapper<ItemStack>> extend
 
     @Override
     protected boolean isEmpty(W item) {
-        return FastNMS.INSTANCE.method$ItemStack$isEmpty(item.getLiteralObject());
+        return ItemStackProxy.INSTANCE.isEmpty(item.getLiteralObject());
     }
 
     @SuppressWarnings("deprecation")
@@ -73,19 +74,19 @@ public abstract class BukkitItemFactory<W extends ItemWrapper<ItemStack>> extend
 
     @Override
     protected boolean isBlockItem(W item) {
-        return CoreReflections.clazz$BlockItem.isInstance(FastNMS.INSTANCE.method$ItemStack$getItem(item.getLiteralObject()));
+        return CoreReflections.clazz$BlockItem.isInstance(ItemStackProxy.INSTANCE.getItem(item.getLiteralObject()));
     }
 
     @Override
     protected Key vanillaId(W item) {
-        Object i = FastNMS.INSTANCE.method$ItemStack$getItem(item.getLiteralObject());
+        Object i = ItemStackProxy.INSTANCE.getItem(item.getLiteralObject());
         if (i == null) return ItemKeys.AIR;
-        return KeyUtils.identifierToKey(FastNMS.INSTANCE.method$Registry$getKey(MBuiltInRegistries.ITEM, i));
+        return KeyUtils.identifierToKey(RegistryProxy.INSTANCE.getKey(MBuiltInRegistries.ITEM, i));
     }
 
     @Override
     protected Key id(W item) {
-        if (FastNMS.INSTANCE.method$ItemStack$isEmpty(item.getLiteralObject())) {
+        if (ItemStackProxy.INSTANCE.isEmpty(item.getLiteralObject())) {
             return ItemKeys.AIR;
         }
         return customId(item).orElse(vanillaId(item));
@@ -98,7 +99,7 @@ public abstract class BukkitItemFactory<W extends ItemWrapper<ItemStack>> extend
 
     @Override
     protected UniqueKey recipeIngredientID(W item) {
-        if (FastNMS.INSTANCE.method$ItemStack$isEmpty(item.getLiteralObject())) {
+        if (ItemStackProxy.INSTANCE.isEmpty(item.getLiteralObject())) {
             return null;
         }
         if (this.hasExternalRecipeSource) {
@@ -116,7 +117,7 @@ public abstract class BukkitItemFactory<W extends ItemWrapper<ItemStack>> extend
     protected boolean hasItemTag(W item, Key itemTag) {
         Object literalObject = item.getLiteralObject();
         Object tag = ItemTags.getOrCreate(itemTag);
-        return FastNMS.INSTANCE.method$ItemStack$is(literalObject, tag);
+        return ItemStackProxy.INSTANCE.is(literalObject, tag);
     }
 
     @Override

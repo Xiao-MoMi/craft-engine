@@ -1,15 +1,10 @@
 package net.momirealms.craftengine.bukkit.block.behavior;
 
 import net.momirealms.antigrieflib.Flag;
-import net.momirealms.craftengine.bukkit.nms.FastNMS;
 import net.momirealms.craftengine.bukkit.plugin.BukkitCraftEngine;
-import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.CoreReflections;
 import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.MEntitySelectors;
 import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.MGameEvents;
-import net.momirealms.craftengine.bukkit.util.BlockStateUtils;
-import net.momirealms.craftengine.bukkit.util.DirectionUtils;
-import net.momirealms.craftengine.bukkit.util.KeyUtils;
-import net.momirealms.craftengine.bukkit.util.LocationUtils;
+import net.momirealms.craftengine.bukkit.util.*;
 import net.momirealms.craftengine.core.block.CustomBlock;
 import net.momirealms.craftengine.core.block.ImmutableBlockState;
 import net.momirealms.craftengine.core.block.UpdateOption;
@@ -22,10 +17,17 @@ import net.momirealms.craftengine.core.sound.SoundData;
 import net.momirealms.craftengine.core.util.*;
 import net.momirealms.craftengine.core.world.BlockPos;
 import net.momirealms.craftengine.core.world.context.UseOnContext;
+import net.momirealms.craftengine.proxy.minecraft.core.BlockPosProxy;
 import net.momirealms.craftengine.proxy.minecraft.core.DirectionProxy;
+import net.momirealms.craftengine.proxy.minecraft.sounds.SoundEventProxy;
 import net.momirealms.craftengine.proxy.minecraft.sounds.SoundSourceProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.entity.projectile.AbstractArrowProxy;
+import net.momirealms.craftengine.proxy.minecraft.world.level.*;
+import net.momirealms.craftengine.proxy.minecraft.world.level.block.state.BlockBehaviourProxy;
+import net.momirealms.craftengine.proxy.minecraft.world.level.redstone.ExperimentalRedstoneUtilsProxy;
+import net.momirealms.craftengine.proxy.minecraft.world.phys.AABBProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.phys.shape.CollisionContextProxy;
+import net.momirealms.craftengine.proxy.minecraft.world.phys.shape.VoxelShapeProxy;
 import org.bukkit.Location;
 import org.bukkit.World;
 
@@ -80,7 +82,7 @@ public class ButtonBlockBehavior extends BukkitBlockBehavior {
     public void onExplosionHit(Object thisBlock, Object[] args, Callable<Object> superMethod) {
         ImmutableBlockState blockState = BlockStateUtils.getOptionalCustomBlockState(args[0]).orElse(null);
         if (blockState == null) return;
-        if (FastNMS.INSTANCE.method$Explosion$canTriggerBlocks(args[3]) && !blockState.get(this.poweredProperty)) {
+        if (ExplosionProxy.INSTANCE.canTriggerBlocks(args[3]) && !blockState.get(this.poweredProperty)) {
             press(thisBlock, blockState, args[1], args[2], null);
         }
     }
@@ -149,9 +151,9 @@ public class ButtonBlockBehavior extends BukkitBlockBehavior {
     }
 
     private void checkPressed(Object thisBlock, Object state, Object level, Object pos) {
-        Object arrow = this.canButtonBeActivatedByArrows ? FastNMS.INSTANCE.method$EntityGetter$getEntitiesOfClass(
-                level, AbstractArrowProxy.CLASS, FastNMS.INSTANCE.method$AABB$move(
-                        FastNMS.INSTANCE.method$VoxelShape$bounds(FastNMS.INSTANCE.method$BlockState$getShape(
+        Object arrow = this.canButtonBeActivatedByArrows ? EntityGetterProxy.INSTANCE.getEntitiesOfClass(
+                level, AbstractArrowProxy.CLASS, AABBProxy.INSTANCE.move$1(
+                        VoxelShapeProxy.INSTANCE.bounds(BlockBehaviourProxy.BlockStateBaseProxy.INSTANCE.getShape(
                                 state, level, pos, CollisionContextProxy.INSTANCE.empty()
                         )), pos), MEntitySelectors.NO_SPECTATORS).stream().findFirst().orElse(null) : null;
         boolean on = arrow != null;
@@ -159,17 +161,18 @@ public class ButtonBlockBehavior extends BukkitBlockBehavior {
         if (blockState == null) return;
         boolean poweredValue = blockState.get(this.poweredProperty);
         if (on != poweredValue) {
-            FastNMS.INSTANCE.method$LevelWriter$setBlock(level, pos, blockState.with(this.poweredProperty, on).customBlockState().literalObject(), UpdateOption.UPDATE_ALL.flags());
+            LevelWriterProxy.INSTANCE.setBlock(level, pos, blockState.with(this.poweredProperty, on).customBlockState().literalObject(), UpdateOption.UPDATE_ALL.flags());
             updateNeighbours(thisBlock, blockState, level, pos);
             playSound(level, pos, on);
-            Object gameEvent = VersionHelper.isOrAbove1_20_5()
-                    ? on ? MGameEvents.BLOCK_ACTIVATE$holder : MGameEvents.BLOCK_DEACTIVATE$holder
-                    : on ? MGameEvents.BLOCK_ACTIVATE : MGameEvents.BLOCK_DEACTIVATE;
-            FastNMS.INSTANCE.method$LevelAccessor$gameEvent(level, arrow, gameEvent, pos);
+            if (VersionHelper.isOrAbove1_20_5()) {
+                LevelAccessorProxy.INSTANCE.gameEvent$0(level, arrow, on ? MGameEvents.BLOCK_ACTIVATE$holder : MGameEvents.BLOCK_DEACTIVATE$holder, pos);
+            } else {
+                LevelAccessorProxy.INSTANCE.gameEvent$1(level, arrow, on ? MGameEvents.BLOCK_ACTIVATE : MGameEvents.BLOCK_DEACTIVATE, pos);
+            }
         }
 
         if (on) {
-            FastNMS.INSTANCE.method$ScheduledTickAccess$scheduleBlockTick(level, pos, thisBlock, this.ticksToStayPressed);
+            LevelUtils.scheduleBlockTick(level, pos, thisBlock, this.ticksToStayPressed);
         }
     }
 
@@ -178,25 +181,32 @@ public class ButtonBlockBehavior extends BukkitBlockBehavior {
         if (direction == null) return;
         Direction opposite = direction.opposite();
         Object nmsDirection = DirectionUtils.toNMSDirection(opposite);
-        Object orientation = null;
         if (VersionHelper.isOrAbove1_21_2()) {
             @SuppressWarnings("unchecked")
             Property<HorizontalDirection> facing = (Property<HorizontalDirection>) state.owner().value().getProperty("facing");
+            Object orientation = null;
             if (facing != null) {
-                orientation = FastNMS.INSTANCE.method$ExperimentalRedstoneUtils$initialOrientation(
+                orientation = ExperimentalRedstoneUtilsProxy.INSTANCE.initialOrientation(
                         level, nmsDirection, opposite.axis().isHorizontal() ? DirectionProxy.UP : DirectionUtils.toNMSDirection(state.get(facing).toDirection())
                 );
             }
+            LevelProxy.INSTANCE.updateNeighborsAt(level, pos, thisBlock, orientation);
+            LevelProxy.INSTANCE.updateNeighborsAt(level, BlockPosProxy.INSTANCE.relative(pos, nmsDirection), thisBlock, orientation);
+        } else {
+            LevelProxy.INSTANCE.updateNeighborsAt(level, pos, thisBlock);
+            LevelProxy.INSTANCE.updateNeighborsAt(level, BlockPosProxy.INSTANCE.relative(pos, nmsDirection), thisBlock);
         }
-        FastNMS.INSTANCE.method$Level$updateNeighborsAt(level, pos, thisBlock, orientation);
-        FastNMS.INSTANCE.method$Level$updateNeighborsAt(level, FastNMS.INSTANCE.method$BlockPos$relative(pos, nmsDirection), thisBlock, orientation);
     }
 
     private void playSound(Object level, Object pos, boolean on) {
         SoundData soundData = getSound(on);
         if (soundData == null) return;
-        Object sound = FastNMS.INSTANCE.constructor$SoundEvent(KeyUtils.toIdentifier(soundData.id()), Optional.empty());
-        FastNMS.INSTANCE.method$LevelAccessor$playSound(level, null, pos, sound, SoundSourceProxy.BLOCKS, soundData.volume().get(), soundData.pitch().get());
+        Object sound = SoundEventProxy.INSTANCE.create(KeyUtils.toIdentifier(soundData.id()), Optional.empty());
+        if (VersionHelper.isOrAbove1_21_5()) {
+            LevelAccessorProxy.INSTANCE.playSound$0(level, null, pos, sound, SoundSourceProxy.BLOCKS, soundData.volume().get(), soundData.pitch().get());
+        } else {
+            LevelAccessorProxy.INSTANCE.playSound$1(level, null, pos, sound, SoundSourceProxy.BLOCKS, soundData.volume().get(), soundData.pitch().get());
+        }
     }
 
     private SoundData getSound(boolean on) {
@@ -204,12 +214,15 @@ public class ButtonBlockBehavior extends BukkitBlockBehavior {
     }
 
     private void press(Object thisBlock, ImmutableBlockState state, Object level, Object pos, @Nullable Object player) {
-        FastNMS.INSTANCE.method$LevelWriter$setBlock(level, pos, state.with(this.poweredProperty, true).customBlockState().literalObject(), UpdateOption.UPDATE_ALL.flags());
+        LevelWriterProxy.INSTANCE.setBlock(level, pos, state.with(this.poweredProperty, true).customBlockState().literalObject(), UpdateOption.UPDATE_ALL.flags());
         this.updateNeighbours(thisBlock, state, level, pos);
-        FastNMS.INSTANCE.method$ScheduledTickAccess$scheduleBlockTick(level, pos, thisBlock, this.ticksToStayPressed);
+        LevelUtils.scheduleBlockTick(level, pos, thisBlock, this.ticksToStayPressed);
         playSound(level, pos, true);
-        Object gameEvent = VersionHelper.isOrAbove1_20_5() ? MGameEvents.BLOCK_ACTIVATE$holder : MGameEvents.BLOCK_ACTIVATE;
-        FastNMS.INSTANCE.method$LevelAccessor$gameEvent(level, player, gameEvent, pos);
+        if (VersionHelper.isOrAbove1_20_5()) {
+            LevelAccessorProxy.INSTANCE.gameEvent$0(level, player, MGameEvents.BLOCK_ACTIVATE$holder, pos);
+        } else {
+            LevelAccessorProxy.INSTANCE.gameEvent$1(level, player, MGameEvents.BLOCK_ACTIVATE, pos);
+        }
     }
 
     private static class Factory implements BlockBehaviorFactory<ButtonBlockBehavior> {

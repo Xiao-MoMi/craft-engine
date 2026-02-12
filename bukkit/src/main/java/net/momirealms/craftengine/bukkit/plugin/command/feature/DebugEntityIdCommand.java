@@ -1,9 +1,13 @@
 package net.momirealms.craftengine.bukkit.plugin.command.feature;
 
-import net.momirealms.craftengine.bukkit.nms.FastNMS;
 import net.momirealms.craftengine.bukkit.plugin.command.BukkitCommandFeature;
 import net.momirealms.craftengine.core.plugin.CraftEngine;
 import net.momirealms.craftengine.core.plugin.command.CraftEngineCommandManager;
+import net.momirealms.craftengine.core.util.VersionHelper;
+import net.momirealms.craftengine.proxy.bukkit.craftbukkit.CraftWorldProxy;
+import net.momirealms.craftengine.proxy.minecraft.server.level.ServerLevelProxy;
+import net.momirealms.craftengine.proxy.minecraft.world.level.LevelProxy;
+import net.momirealms.craftengine.proxy.paper.chunk.system.entity.EntityLookupProxy;
 import org.bukkit.World;
 import org.bukkit.command.CommandSender;
 import org.incendo.cloud.Command;
@@ -25,8 +29,14 @@ public class DebugEntityIdCommand extends BukkitCommandFeature<CommandSender> {
                 .handler(context -> {
                     World world = context.get("world");
                     int entityId = context.get("entityId");
-                    Object entityLookup = FastNMS.INSTANCE.method$ServerLevel$getEntityLookup(FastNMS.INSTANCE.field$CraftWorld$ServerLevel(world));
-                    Object entity = FastNMS.INSTANCE.method$EntityLookup$get(entityLookup, entityId);
+                    Object level = CraftWorldProxy.INSTANCE.getWorld(world);
+                    Object entityLookup;
+                    if (VersionHelper.isOrAbove1_21()) {
+                        entityLookup = LevelProxy.INSTANCE.moonrise$getEntityLookup(level);
+                    } else {
+                        entityLookup = ServerLevelProxy.INSTANCE.getEntityLookup(level);
+                    }
+                    Object entity = EntityLookupProxy.INSTANCE.get(entityLookup, entityId);
                     if (entity == null) {
                         context.sender().sendMessage("entity not found");
                         return;

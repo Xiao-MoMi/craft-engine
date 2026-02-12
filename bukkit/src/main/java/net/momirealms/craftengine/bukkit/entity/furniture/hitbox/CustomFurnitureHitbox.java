@@ -1,7 +1,6 @@
 package net.momirealms.craftengine.bukkit.entity.furniture.hitbox;
 
 import it.unimi.dsi.fastutil.ints.IntArrayList;
-import net.momirealms.craftengine.bukkit.nms.FastNMS;
 import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.MAttributeHolders;
 import net.momirealms.craftengine.core.entity.furniture.Collider;
 import net.momirealms.craftengine.core.entity.furniture.Furniture;
@@ -12,7 +11,9 @@ import net.momirealms.craftengine.core.util.VersionHelper;
 import net.momirealms.craftengine.core.world.Vec3d;
 import net.momirealms.craftengine.core.world.WorldPosition;
 import net.momirealms.craftengine.core.world.collision.AABB;
+import net.momirealms.craftengine.proxy.minecraft.network.protocol.game.*;
 import net.momirealms.craftengine.proxy.minecraft.world.entity.EntityProxy;
+import net.momirealms.craftengine.proxy.minecraft.world.entity.ai.attributes.AttributeInstanceProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.phys.Vec3Proxy;
 
 import java.util.ArrayList;
@@ -38,19 +39,19 @@ public final class CustomFurnitureHitbox extends AbstractFurnitureHitBox {
         this.collider = createCollider(furniture.world(), pos, aabb, false, config.blocksBuilding(), config.canBeHitByProjectile());
         int entityId = EntityProxy.ENTITY_COUNTER.incrementAndGet();
         List<Object> packets = new ArrayList<>(3);
-        packets.add(FastNMS.INSTANCE.constructor$ClientboundAddEntityPacket(
+        packets.add(ClientboundAddEntityPacketProxy.INSTANCE.newInstance(
                 entityId, UUID.randomUUID(), pos.x, pos.y, pos.z, 0, position.yRot,
                 config.entityType(), 0, Vec3Proxy.ZERO, 0
         ));
-        packets.add(FastNMS.INSTANCE.constructor$ClientboundSetEntityDataPacket(entityId, config.cachedValues()));
+        packets.add(ClientboundSetEntityDataPacketProxy.INSTANCE.newInstance(entityId, config.cachedValues()));
         if (VersionHelper.isOrAbove1_20_5()) {
-            Object attributeIns = FastNMS.INSTANCE.constructor$AttributeInstance(MAttributeHolders.SCALE, (Consumer<?>) (o) -> {});
-            FastNMS.INSTANCE.method$AttributeInstance$setBaseValue(attributeIns, config.scale());
-            packets.add(FastNMS.INSTANCE.constructor$ClientboundUpdateAttributesPacket(entityId, Collections.singletonList(attributeIns)));
+            Object attributeIns = AttributeInstanceProxy.INSTANCE.newInstance$0(MAttributeHolders.SCALE, $ -> {});
+            AttributeInstanceProxy.INSTANCE.setBaseValue(attributeIns, config.scale());
+            packets.add(ClientboundUpdateAttributesPacketProxy.INSTANCE.newInstance(entityId, Collections.singletonList(attributeIns)));
         }
-        this.spawnPacket = FastNMS.INSTANCE.constructor$ClientboundBundlePacket(packets);
+        this.spawnPacket = ClientboundBundlePacketProxy.INSTANCE.newInstance(packets);
         this.part = new FurnitureHitboxPart(entityId, aabb, pos, false);
-        this.despawnPacket = FastNMS.INSTANCE.constructor$ClientboundRemoveEntitiesPacket(MiscUtils.init(new IntArrayList(), l -> l.add(entityId)));
+        this.despawnPacket = ClientboundRemoveEntitiesPacketProxy.INSTANCE.newInstance(MiscUtils.init(new IntArrayList(), l -> l.add(entityId)));
         this.entityId = entityId;
     }
 

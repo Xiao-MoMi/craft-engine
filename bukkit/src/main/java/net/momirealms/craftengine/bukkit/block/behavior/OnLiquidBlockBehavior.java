@@ -1,6 +1,5 @@
 package net.momirealms.craftengine.bukkit.block.behavior;
 
-import net.momirealms.craftengine.bukkit.nms.FastNMS;
 import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.MBlocks;
 import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.MFluids;
 import net.momirealms.craftengine.bukkit.util.BlockStateUtils;
@@ -10,6 +9,11 @@ import net.momirealms.craftengine.core.block.ImmutableBlockState;
 import net.momirealms.craftengine.core.block.behavior.BlockBehaviorFactory;
 import net.momirealms.craftengine.core.util.MiscUtils;
 import net.momirealms.craftengine.core.util.ResourceConfigUtils;
+import net.momirealms.craftengine.proxy.minecraft.core.BlockPosProxy;
+import net.momirealms.craftengine.proxy.minecraft.core.Vec3iProxy;
+import net.momirealms.craftengine.proxy.minecraft.world.level.BlockGetterProxy;
+import net.momirealms.craftengine.proxy.minecraft.world.level.block.state.BlockBehaviourProxy;
+import net.momirealms.craftengine.proxy.minecraft.world.level.material.FluidStateProxy;
 
 import java.util.List;
 import java.util.Map;
@@ -49,11 +53,11 @@ public class OnLiquidBlockBehavior extends AbstractCanSurviveBlockBehavior {
     @SuppressWarnings("DuplicatedCode")
     @Override
     protected boolean canSurvive(Object thisBlock, Object state, Object world, Object blockPos) {
-        int y = FastNMS.INSTANCE.field$Vec3i$y(blockPos);
-        int x = FastNMS.INSTANCE.field$Vec3i$x(blockPos);
-        int z = FastNMS.INSTANCE.field$Vec3i$z(blockPos);
-        Object belowPos = FastNMS.INSTANCE.constructor$BlockPos(x, y - 1, z);
-        Object belowState = FastNMS.INSTANCE.method$BlockGetter$getBlockState(world, belowPos);
+        int x = Vec3iProxy.INSTANCE.getX(blockPos);
+        int y = Vec3iProxy.INSTANCE.getY(blockPos);
+        int z = Vec3iProxy.INSTANCE.getZ(blockPos);
+        Object belowPos = BlockPosProxy.INSTANCE.newInstance(x, y - 1, z);
+        Object belowState = BlockGetterProxy.INSTANCE.getBlockState(world, belowPos);
         return mayPlaceOn(belowState, world, belowPos);
     }
 
@@ -64,15 +68,15 @@ public class OnLiquidBlockBehavior extends AbstractCanSurviveBlockBehavior {
                 return true;
             }
         }
-        Object fluidState = FastNMS.INSTANCE.method$BlockGetter$getFluidState(world, belowPos);
-        Object fluidStateAbove = FastNMS.INSTANCE.method$BlockGetter$getFluidState(world, LocationUtils.above(belowPos));
-        if (FastNMS.INSTANCE.method$FluidState$getType(fluidStateAbove) != MFluids.EMPTY) {
+        Object fluidState = BlockGetterProxy.INSTANCE.getFluidState(world, belowPos);
+        Object fluidStateAbove = BlockGetterProxy.INSTANCE.getFluidState(world, LocationUtils.above(belowPos));
+        if (FluidStateProxy.INSTANCE.getType(fluidStateAbove) != MFluids.EMPTY) {
             return false;
         }
-        if (this.onWater && (FastNMS.INSTANCE.method$FluidState$getType(fluidState) == MFluids.WATER || FastNMS.INSTANCE.method$BlockState$getBlock(belowState) == MBlocks.ICE)) {
+        if (this.onWater && (FluidStateProxy.INSTANCE.getType(fluidState) == MFluids.WATER || BlockBehaviourProxy.BlockStateBaseProxy.INSTANCE.getBlock(belowState) == MBlocks.ICE)) {
             return true;
         }
-        if (this.onLava && FastNMS.INSTANCE.method$FluidState$getType(fluidState) == MFluids.LAVA) {
+        if (this.onLava && FluidStateProxy.INSTANCE.getType(fluidState) == MFluids.LAVA) {
             return true;
         }
         return false;

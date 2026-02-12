@@ -1,13 +1,9 @@
 package net.momirealms.craftengine.bukkit.block.behavior;
 
 import net.momirealms.antigrieflib.Flag;
-import net.momirealms.craftengine.bukkit.nms.FastNMS;
 import net.momirealms.craftengine.bukkit.plugin.BukkitCraftEngine;
 import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.*;
-import net.momirealms.craftengine.bukkit.util.BlockStateUtils;
-import net.momirealms.craftengine.bukkit.util.DirectionUtils;
-import net.momirealms.craftengine.bukkit.util.KeyUtils;
-import net.momirealms.craftengine.bukkit.util.LocationUtils;
+import net.momirealms.craftengine.bukkit.util.*;
 import net.momirealms.craftengine.core.block.BlockStateWrapper;
 import net.momirealms.craftengine.core.block.CustomBlock;
 import net.momirealms.craftengine.core.block.ImmutableBlockState;
@@ -18,17 +14,20 @@ import net.momirealms.craftengine.core.entity.player.InteractionHand;
 import net.momirealms.craftengine.core.entity.player.InteractionResult;
 import net.momirealms.craftengine.core.entity.player.Player;
 import net.momirealms.craftengine.core.registry.Holder;
-import net.momirealms.craftengine.core.util.Direction;
-import net.momirealms.craftengine.core.util.HorizontalDirection;
-import net.momirealms.craftengine.core.util.Key;
-import net.momirealms.craftengine.core.util.ResourceConfigUtils;
+import net.momirealms.craftengine.core.util.*;
 import net.momirealms.craftengine.core.world.BlockPos;
 import net.momirealms.craftengine.core.world.World;
 import net.momirealms.craftengine.core.world.context.BlockPlaceContext;
 import net.momirealms.craftengine.core.world.context.UseOnContext;
 import net.momirealms.craftengine.proxy.minecraft.core.DirectionProxy;
+import net.momirealms.craftengine.proxy.minecraft.tags.TagKeyProxy;
+import net.momirealms.craftengine.proxy.minecraft.world.InteractionResultProxy;
+import net.momirealms.craftengine.proxy.minecraft.world.item.LeadItemProxy;
+import net.momirealms.craftengine.proxy.minecraft.world.level.BlockGetterProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.level.block.FenceGateBlockProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.level.block.SupportTypeProxy;
+import net.momirealms.craftengine.proxy.minecraft.world.level.block.state.BlockBehaviourProxy;
+import net.momirealms.craftengine.proxy.minecraft.world.level.material.FluidStateProxy;
 import org.bukkit.Location;
 
 import java.util.Locale;
@@ -38,6 +37,7 @@ import java.util.concurrent.Callable;
 
 public class FenceBlockBehavior extends BukkitBlockBehavior implements IsPathFindableBlockBehavior {
     public static final BlockBehaviorFactory<FenceBlockBehavior> FACTORY = new Factory();
+    public static final Object InteractionResult$SUCCESS_SERVER = VersionHelper.isOrAbove1_21_2() ? InteractionResultProxy.INSTANCE.getSuccessServer() : InteractionResultProxy.INSTANCE.getSuccess();
     private final BooleanProperty northProperty;
     private final BooleanProperty eastProperty;
     private final BooleanProperty southProperty;
@@ -69,7 +69,7 @@ public class FenceBlockBehavior extends BukkitBlockBehavior implements IsPathFin
     public boolean connectsTo(BlockStateWrapper state, boolean isSideSolid, HorizontalDirection direction) {
         boolean isSameFence = this.isSameFence(state);
         boolean flag = FenceGateBlockProxy.CLASS.isInstance(BlockStateUtils.getBlockOwner(state.literalObject()))
-                ? FastNMS.INSTANCE.method$FenceGateBlock$connectsToDirection(state.literalObject(), DirectionUtils.toNMSDirection(direction.toDirection()))
+                ? FenceGateBlockProxy.INSTANCE.connectsToDirection(state.literalObject(), DirectionUtils.toNMSDirection(direction.toDirection()))
                 : FenceGateBlockBehavior.connectsToDirection(state, direction);
         return !isExceptionForConnection(state) && isSideSolid || isSameFence || flag;
     }
@@ -77,19 +77,19 @@ public class FenceBlockBehavior extends BukkitBlockBehavior implements IsPathFin
     public static boolean isExceptionForConnection(BlockStateWrapper state) {
         Object blockState = state.literalObject();
         return CoreReflections.clazz$LeavesBlock.isInstance(BlockStateUtils.getBlockOwner(blockState))
-                || FastNMS.INSTANCE.method$BlockStateBase$isBlock(blockState, MBlocks.BARRIER)
-                || FastNMS.INSTANCE.method$BlockStateBase$isBlock(blockState, MBlocks.CARVED_PUMPKIN)
-                || FastNMS.INSTANCE.method$BlockStateBase$isBlock(blockState, MBlocks.JACK_O_LANTERN)
-                || FastNMS.INSTANCE.method$BlockStateBase$isBlock(blockState, MBlocks.MELON)
-                || FastNMS.INSTANCE.method$BlockStateBase$isBlock(blockState, MBlocks.PUMPKIN)
-                || FastNMS.INSTANCE.method$BlockStateBase$is(blockState, MTagKeys.Block$SHULKER_BOXES);
+                || BlockBehaviourProxy.BlockStateBaseProxy.INSTANCE.is$0(blockState, MBlocks.BARRIER)
+                || BlockBehaviourProxy.BlockStateBaseProxy.INSTANCE.is$0(blockState, MBlocks.CARVED_PUMPKIN)
+                || BlockBehaviourProxy.BlockStateBaseProxy.INSTANCE.is$0(blockState, MBlocks.JACK_O_LANTERN)
+                || BlockBehaviourProxy.BlockStateBaseProxy.INSTANCE.is$0(blockState, MBlocks.MELON)
+                || BlockBehaviourProxy.BlockStateBaseProxy.INSTANCE.is$0(blockState, MBlocks.PUMPKIN)
+                || BlockBehaviourProxy.BlockStateBaseProxy.INSTANCE.is$1(blockState, MTagKeys.Block$SHULKER_BOXES);
     }
 
     private boolean isSameFence(BlockStateWrapper state) {
         Object blockState = state.literalObject();
-        return FastNMS.INSTANCE.method$BlockStateBase$is(blockState, MTagKeys.Block$FENCES)
-                && FastNMS.INSTANCE.method$BlockStateBase$is(blockState, this.connectableBlockTag)
-                == FastNMS.INSTANCE.method$BlockStateBase$is(this.customBlock.defaultState().customBlockState().literalObject(), this.connectableBlockTag);
+        return BlockBehaviourProxy.BlockStateBaseProxy.INSTANCE.is$1(blockState, MTagKeys.Block$FENCES)
+                && BlockBehaviourProxy.BlockStateBaseProxy.INSTANCE.is$1(blockState, this.connectableBlockTag)
+                == BlockBehaviourProxy.BlockStateBaseProxy.INSTANCE.is$1(this.customBlock.defaultState().customBlockState().literalObject(), this.connectableBlockTag);
     }
 
     @Override
@@ -103,7 +103,8 @@ public class FenceBlockBehavior extends BukkitBlockBehavior implements IsPathFin
         if (!BukkitCraftEngine.instance().antiGriefProvider().test((org.bukkit.entity.Player) player.platformPlayer(), Flag.INTERACT, location)) {
             return InteractionResult.SUCCESS_AND_CANCEL;
         }
-        if (FastNMS.INSTANCE.method$LeadItem$bindPlayerMobs(player.serverPlayer(), context.getLevel().serverWorld(), LocationUtils.toBlockPos(pos))) {
+        Object interactionResult = LeadItemProxy.INSTANCE.bindPlayerMobs(player.serverPlayer(), context.getLevel().serverWorld(), LocationUtils.toBlockPos(pos));
+        if (interactionResult == InteractionResult$SUCCESS_SERVER) {
             player.swingHand(InteractionHand.MAIN_HAND);
             return InteractionResult.SUCCESS;
         }
@@ -114,7 +115,7 @@ public class FenceBlockBehavior extends BukkitBlockBehavior implements IsPathFin
     public ImmutableBlockState updateStateForPlacement(BlockPlaceContext context, ImmutableBlockState state) {
         World level = context.getLevel();
         BlockPos clickedPos = context.getClickedPos();
-        Object fluidState = FastNMS.INSTANCE.method$BlockGetter$getFluidState(level.serverWorld(), LocationUtils.toBlockPos(clickedPos));
+        Object fluidState = BlockGetterProxy.INSTANCE.getFluidState(level.serverWorld(), LocationUtils.toBlockPos(clickedPos));
         BlockPos blockPos = clickedPos.north();
         BlockPos blockPos1 = clickedPos.east();
         BlockPos blockPos2 = clickedPos.south();
@@ -125,13 +126,13 @@ public class FenceBlockBehavior extends BukkitBlockBehavior implements IsPathFin
         BlockStateWrapper blockState3 = level.getBlock(blockPos3).blockState();
         BooleanProperty waterlogged = (BooleanProperty) state.owner().value().getProperty("waterlogged");
         if (waterlogged != null) {
-            state = state.with(waterlogged, FastNMS.INSTANCE.method$FluidState$getType(fluidState) == MFluids.WATER);
+            state = state.with(waterlogged, FluidStateProxy.INSTANCE.getType(fluidState) == MFluids.WATER);
         }
         return state
-                .with(this.northProperty, this.connectsTo(blockState, FastNMS.INSTANCE.method$BlockStateBase$isFaceSturdy(blockState.literalObject(), level.serverWorld(), LocationUtils.toBlockPos(blockPos), DirectionProxy.SOUTH, SupportTypeProxy.FULL), HorizontalDirection.SOUTH))
-                .with(this.eastProperty, this.connectsTo(blockState1, FastNMS.INSTANCE.method$BlockStateBase$isFaceSturdy(blockState1.literalObject(), level.serverWorld(), LocationUtils.toBlockPos(blockPos1), DirectionProxy.WEST, SupportTypeProxy.FULL), HorizontalDirection.WEST))
-                .with(this.southProperty, this.connectsTo(blockState2, FastNMS.INSTANCE.method$BlockStateBase$isFaceSturdy(blockState2.literalObject(), level.serverWorld(), LocationUtils.toBlockPos(blockPos2), DirectionProxy.NORTH, SupportTypeProxy.FULL), HorizontalDirection.NORTH))
-                .with(this.westProperty, this.connectsTo(blockState3, FastNMS.INSTANCE.method$BlockStateBase$isFaceSturdy(blockState3.literalObject(), level.serverWorld(), LocationUtils.toBlockPos(blockPos3), DirectionProxy.EAST, SupportTypeProxy.FULL), HorizontalDirection.EAST));
+                .with(this.northProperty, this.connectsTo(blockState, BlockBehaviourProxy.BlockStateBaseProxy.INSTANCE.isFaceSturdy(blockState.literalObject(), level.serverWorld(), LocationUtils.toBlockPos(blockPos), DirectionProxy.SOUTH, SupportTypeProxy.FULL), HorizontalDirection.SOUTH))
+                .with(this.eastProperty, this.connectsTo(blockState1, BlockBehaviourProxy.BlockStateBaseProxy.INSTANCE.isFaceSturdy(blockState1.literalObject(), level.serverWorld(), LocationUtils.toBlockPos(blockPos1), DirectionProxy.WEST, SupportTypeProxy.FULL), HorizontalDirection.WEST))
+                .with(this.southProperty, this.connectsTo(blockState2, BlockBehaviourProxy.BlockStateBaseProxy.INSTANCE.isFaceSturdy(blockState2.literalObject(), level.serverWorld(), LocationUtils.toBlockPos(blockPos2), DirectionProxy.NORTH, SupportTypeProxy.FULL), HorizontalDirection.NORTH))
+                .with(this.westProperty, this.connectsTo(blockState3, BlockBehaviourProxy.BlockStateBaseProxy.INSTANCE.isFaceSturdy(blockState3.literalObject(), level.serverWorld(), LocationUtils.toBlockPos(blockPos3), DirectionProxy.EAST, SupportTypeProxy.FULL), HorizontalDirection.EAST));
     }
 
     @Override
@@ -143,7 +144,7 @@ public class FenceBlockBehavior extends BukkitBlockBehavior implements IsPathFin
                 .map(block -> block.getProperty("waterlogged"))
                 .orElse(null);
         if (waterlogged != null) {
-            FastNMS.INSTANCE.method$ScheduledTickAccess$scheduleFluidTick(args[updateShape$level], args[updateShape$blockPos], MFluids.WATER, 5);
+            LevelUtils.scheduleFluidTick(args[updateShape$level], args[updateShape$blockPos], MFluids.WATER, 5);
         }
         if (DirectionUtils.fromNMSDirection(args[updateShape$direction]).axis().isHorizontal() && optionalState.isPresent()) {
             Direction direction = DirectionUtils.fromNMSDirection(args[updateShape$direction]);
@@ -152,7 +153,7 @@ public class FenceBlockBehavior extends BukkitBlockBehavior implements IsPathFin
                 BooleanProperty booleanProperty = (BooleanProperty) state.owner().value().getProperty(direction.name().toLowerCase(Locale.ROOT));
                 if (booleanProperty != null) {
                     BlockStateWrapper wrapper = BlockStateUtils.toBlockStateWrapper(args[updateShape$neighborState]);
-                    return state.with(booleanProperty, this.connectsTo(wrapper, FastNMS.INSTANCE.method$BlockStateBase$isFaceSturdy(wrapper.literalObject(), args[updateShape$level], args[5], DirectionUtils.toNMSDirection(direction.opposite()), SupportTypeProxy.FULL), direction.opposite().toHorizontalDirection())).customBlockState().literalObject();
+                    return state.with(booleanProperty, this.connectsTo(wrapper, BlockBehaviourProxy.BlockStateBaseProxy.INSTANCE.isFaceSturdy(wrapper.literalObject(), args[updateShape$level], args[5], DirectionUtils.toNMSDirection(direction.opposite()), SupportTypeProxy.FULL), direction.opposite().toHorizontalDirection())).customBlockState().literalObject();
                 }
             }
         }
@@ -167,7 +168,7 @@ public class FenceBlockBehavior extends BukkitBlockBehavior implements IsPathFin
             BooleanProperty east = (BooleanProperty) ResourceConfigUtils.requireNonNullOrThrow(block.getProperty("east"), "warning.config.block.behavior.fence.missing_east");
             BooleanProperty south = (BooleanProperty) ResourceConfigUtils.requireNonNullOrThrow(block.getProperty("south"), "warning.config.block.behavior.fence.missing_south");
             BooleanProperty west = (BooleanProperty) ResourceConfigUtils.requireNonNullOrThrow(block.getProperty("west"), "warning.config.block.behavior.fence.missing_west");
-            Object connectableBlockTag = FastNMS.INSTANCE.method$TagKey$create(MRegistries.BLOCK, KeyUtils.toIdentifier(Key.of(arguments.getOrDefault("connectable-block-tag", "minecraft:wooden_fences").toString())));
+            Object connectableBlockTag = TagKeyProxy.INSTANCE.create(MRegistries.BLOCK, KeyUtils.toIdentifier(Key.of(arguments.getOrDefault("connectable-block-tag", "minecraft:wooden_fences").toString())));
             connectableBlockTag = connectableBlockTag != null ? connectableBlockTag : MTagKeys.Block$WOODEN_FENCES;
             boolean canLeash = ResourceConfigUtils.getAsBoolean(arguments.getOrDefault("can-leash", false), "can-leash");
             return new FenceBlockBehavior(block, north, east, south, west, connectableBlockTag, canLeash);

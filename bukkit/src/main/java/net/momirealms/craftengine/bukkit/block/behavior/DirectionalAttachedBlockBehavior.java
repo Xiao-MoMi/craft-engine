@@ -1,7 +1,5 @@
 package net.momirealms.craftengine.bukkit.block.behavior;
 
-import net.momirealms.craftengine.bukkit.nms.FastNMS;
-import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.CoreReflections;
 import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.MBlocks;
 import net.momirealms.craftengine.bukkit.util.BlockStateUtils;
 import net.momirealms.craftengine.bukkit.util.BlockTags;
@@ -16,7 +14,9 @@ import net.momirealms.craftengine.core.util.*;
 import net.momirealms.craftengine.core.world.BlockPos;
 import net.momirealms.craftengine.core.world.World;
 import net.momirealms.craftengine.core.world.context.BlockPlaceContext;
+import net.momirealms.craftengine.proxy.minecraft.world.level.BlockGetterProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.level.block.SupportTypeProxy;
+import net.momirealms.craftengine.proxy.minecraft.world.level.block.state.BlockBehaviourProxy;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.NamespacedKey;
@@ -64,7 +64,7 @@ public class DirectionalAttachedBlockBehavior extends BukkitBlockBehavior {
             HorizontalDirection direction = DirectionUtils.fromNMSDirection(args[updateShape$direction]).opposite().toHorizontalDirection();
             flag = direction == state.get(behavior.facingProperty);
         }
-        return flag && !FastNMS.INSTANCE.method$BlockStateBase$canSurvive(args[0], args[updateShape$level], args[updateShape$blockPos]) ? MBlocks.AIR$defaultState : args[0];
+        return flag && !BlockBehaviourProxy.BlockStateBaseProxy.INSTANCE.canSurvive(args[0], args[updateShape$level], args[updateShape$blockPos]) ? MBlocks.AIR$defaultState : args[0];
     }
 
     @Override
@@ -81,14 +81,14 @@ public class DirectionalAttachedBlockBehavior extends BukkitBlockBehavior {
         }
         BlockPos blockPos = LocationUtils.fromBlockPos(args[2]).relative(direction.opposite());
         Object nmsPos = LocationUtils.toBlockPos(blockPos);
-        Object nmsState = FastNMS.INSTANCE.method$BlockGetter$getBlockState(args[1], nmsPos);
-        return FastNMS.INSTANCE.method$BlockStateBase$isFaceSturdy(nmsState, args[1], nmsPos, DirectionUtils.toNMSDirection(direction), SupportTypeProxy.FULL)
+        Object nmsState = BlockGetterProxy.INSTANCE.getBlockState(args[1], nmsPos);
+        return BlockBehaviourProxy.BlockStateBaseProxy.INSTANCE.isFaceSturdy(nmsState, args[1], nmsPos, DirectionUtils.toNMSDirection(direction), SupportTypeProxy.FULL)
                 && mayPlaceOn(nmsState);
     }
 
     private boolean mayPlaceOn(Object state) {
         for (Object tag : this.tagsCanSurviveOn) {
-            if (FastNMS.INSTANCE.method$BlockStateBase$is(state, tag)) {
+            if (BlockBehaviourProxy.BlockStateBaseProxy.INSTANCE.is$1(state, tag)) {
                 return !this.blacklistMode;
             }
         }
@@ -119,12 +119,12 @@ public class DirectionalAttachedBlockBehavior extends BukkitBlockBehavior {
         for (Direction direction : context.getNearestLookingDirections()) {
             if (isSixDirection) {
                 state = state.with((Property<Direction>) behavior.facingProperty, direction.opposite());
-                if (FastNMS.INSTANCE.method$BlockStateBase$canSurvive(state.customBlockState().literalObject(), level.serverWorld(), LocationUtils.toBlockPos(clickedPos))) {
+                if (BlockBehaviourProxy.BlockStateBaseProxy.INSTANCE.canSurvive(state.customBlockState().literalObject(), level.serverWorld(), LocationUtils.toBlockPos(clickedPos))) {
                     return state;
                 }
             } else if (direction.axis().isHorizontal()) {
                 state = state.with((Property<HorizontalDirection>) behavior.facingProperty, direction.opposite().toHorizontalDirection());
-                if (FastNMS.INSTANCE.method$BlockStateBase$canSurvive(state.customBlockState().literalObject(), level.serverWorld(), LocationUtils.toBlockPos(clickedPos))) {
+                if (BlockBehaviourProxy.BlockStateBaseProxy.INSTANCE.canSurvive(state.customBlockState().literalObject(), level.serverWorld(), LocationUtils.toBlockPos(clickedPos))) {
                     return state;
                 }
             }

@@ -7,6 +7,7 @@ import net.momirealms.sparrow.reflection.proxy.annotation.ReflectionProxy;
 @ReflectionProxy(name = "net.minecraft.world.level.block.SnowLayerBlock")
 public interface SnowLayerBlockProxy extends BlockProxy {
     SnowLayerBlockProxy INSTANCE = ASMProxyFactory.create(SnowLayerBlockProxy.class);
+    Object LAYERS = INSTANCE.getLayersProperty();
 
     @FieldGetter(name = "LAYERS", isStatic = true)
     Object getLayersProperty();

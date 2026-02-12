@@ -155,11 +155,6 @@ public final class BukkitCraftEngine extends CraftEngine {
         } catch (Exception e) {
             throw new InjectionException("Error injecting recipes", e);
         }
-        try {
-            ProtectedFieldVisitor.init();
-        } catch (Exception e) {
-            throw new InjectionException("Error initializing ProtectedFieldVisitor", e);
-        }
         // 初始化一些注册表
         super.onPluginLoad();
         BukkitBlockBehaviors.init();
@@ -227,6 +222,8 @@ public final class BukkitCraftEngine extends CraftEngine {
             Bukkit.getPluginManager().disablePlugin(this.javaPlugin);
             return;
         }
+        // 预检查ASM代理可用性，添加 -Dnet.momirealms.craftengine.pre-check-asm-proxy=true 启动参数启用
+        ReflectionUtils.preCheckASMProxy();
         this.successfullyEnabled = true;
         if (!this.successfullyLoaded) {
             logger().severe(" ");

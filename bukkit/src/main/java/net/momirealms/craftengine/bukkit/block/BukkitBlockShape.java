@@ -1,8 +1,8 @@
 package net.momirealms.craftengine.bukkit.block;
 
-import net.momirealms.craftengine.bukkit.nms.FastNMS;
 import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.MBlocks;
 import net.momirealms.craftengine.core.block.BlockShape;
+import net.momirealms.craftengine.proxy.minecraft.world.level.block.state.BlockBehaviourProxy;
 import org.jetbrains.annotations.Nullable;
 
 public final class BukkitBlockShape implements BlockShape {
@@ -17,16 +17,16 @@ public final class BukkitBlockShape implements BlockShape {
 
     @Override
     public Object getShape(Object thisObj, Object[] args) {
-        return FastNMS.INSTANCE.method$BlockState$getShape(this.rawBlockState, args[1], args[2], args[3]);
+        return BlockBehaviourProxy.BlockStateBaseProxy.INSTANCE.getShape(this.rawBlockState, args[1], args[2], args[3]);
     }
 
     @Override
     public Object getCollisionShape(Object thisObj, Object[] args) {
-        return FastNMS.INSTANCE.method$BlockState$getCollisionShape(this.rawBlockState, args[1], args[2], args[3]);
+        return BlockBehaviourProxy.BlockStateBaseProxy.INSTANCE.getCollisionShape(this.rawBlockState, args[1], args[2], args[3]);
     }
 
     @Override
     public Object getSupportShape(Object thisObj, Object[] args) {
-        return FastNMS.INSTANCE.method$BlockState$getBlockSupportShape(this.supportBlockState, args[1], args[2]);
+        return BlockBehaviourProxy.BlockStateBaseProxy.INSTANCE.getBlockSupportShape(this.supportBlockState, args[1], args[2]);
     }
 }

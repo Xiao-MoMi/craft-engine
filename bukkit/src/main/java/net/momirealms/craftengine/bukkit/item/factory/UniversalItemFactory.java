@@ -2,9 +2,9 @@ package net.momirealms.craftengine.bukkit.item.factory;
 
 import it.unimi.dsi.fastutil.ints.IntArrayList;
 import net.momirealms.craftengine.bukkit.item.LegacyItemWrapper;
-import net.momirealms.craftengine.bukkit.nms.FastNMS;
 import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.MBuiltInRegistries;
 import net.momirealms.craftengine.bukkit.util.KeyUtils;
+import net.momirealms.craftengine.bukkit.util.RegistryUtils;
 import net.momirealms.craftengine.core.attribute.AttributeModifier;
 import net.momirealms.craftengine.core.item.ItemType;
 import net.momirealms.craftengine.core.item.data.Enchantment;
@@ -16,6 +16,9 @@ import net.momirealms.craftengine.core.util.Color;
 import net.momirealms.craftengine.core.util.Key;
 import net.momirealms.craftengine.core.util.SkullUtils;
 import net.momirealms.craftengine.core.util.UUIDUtils;
+import net.momirealms.craftengine.proxy.bukkit.craftbukkit.inventory.CraftItemStackProxy;
+import net.momirealms.craftengine.proxy.minecraft.nbt.CompoundTagProxy;
+import net.momirealms.craftengine.proxy.minecraft.world.item.ItemStackProxy;
 import net.momirealms.sparrow.nbt.CompoundTag;
 import net.momirealms.sparrow.nbt.ListTag;
 import net.momirealms.sparrow.nbt.Tag;
@@ -362,34 +365,34 @@ public class UniversalItemFactory extends BukkitItemFactory<LegacyItemWrapper> {
 
     @Override
     protected LegacyItemWrapper mergeCopy(LegacyItemWrapper item1, LegacyItemWrapper item2) {
-        Object copied = FastNMS.INSTANCE.constructor$ItemStack(FastNMS.INSTANCE.method$ItemStack$getItem(item2.getLiteralObject()), item2.count());
-        Object copiedTag = FastNMS.INSTANCE.field$ItemStack$getOrCreateTag(copied);
-        FastNMS.INSTANCE.method$CompoundTag$merge(copiedTag, FastNMS.INSTANCE.field$ItemStack$getOrCreateTag(item1.getLiteralObject()));
-        FastNMS.INSTANCE.method$CompoundTag$merge(copiedTag, FastNMS.INSTANCE.field$ItemStack$getOrCreateTag(item2.getLiteralObject()));
-        return new LegacyItemWrapper(FastNMS.INSTANCE.method$CraftItemStack$asCraftMirror(copied));
+        Object copied = ItemStackProxy.INSTANCE.newInstance(ItemStackProxy.INSTANCE.getItem(item2.getLiteralObject()), item2.count());
+        Object copiedTag = ItemStackProxy.INSTANCE.getOrCreateTag(copied);
+        CompoundTagProxy.INSTANCE.merge(copiedTag, ItemStackProxy.INSTANCE.getOrCreateTag(item1.getLiteralObject()));
+        CompoundTagProxy.INSTANCE.merge(copiedTag, ItemStackProxy.INSTANCE.getOrCreateTag(item2.getLiteralObject()));
+        return new LegacyItemWrapper(CraftItemStackProxy.INSTANCE.asCraftMirror(copied));
     }
 
     @Override
     protected void merge(LegacyItemWrapper item1, LegacyItemWrapper item2) {
-        Object item1Tag = FastNMS.INSTANCE.field$ItemStack$getOrCreateTag(item1.getLiteralObject());
-        Object item2Tag = FastNMS.INSTANCE.field$ItemStack$getOrCreateTag(item2.getLiteralObject());
-        FastNMS.INSTANCE.method$CompoundTag$merge(item1Tag, item2Tag);
+        Object item1Tag = ItemStackProxy.INSTANCE.getOrCreateTag(item1.getLiteralObject());
+        Object item2Tag = ItemStackProxy.INSTANCE.getOrCreateTag(item2.getLiteralObject());
+        CompoundTagProxy.INSTANCE.merge(item1Tag, item2Tag);
     }
 
     @Override
     protected LegacyItemWrapper transmuteCopy(LegacyItemWrapper item, Key newItem, int amount) {
-        Object copied = FastNMS.INSTANCE.constructor$ItemStack(FastNMS.INSTANCE.method$Registry$getValue(MBuiltInRegistries.ITEM, KeyUtils.toIdentifier(newItem)), amount);
-        Object copiedTag = FastNMS.INSTANCE.field$ItemStack$getOrCreateTag(copied);
-        Object thisTag = FastNMS.INSTANCE.field$ItemStack$getOrCreateTag(item.getLiteralObject());
-        FastNMS.INSTANCE.method$CompoundTag$merge(copiedTag, thisTag);
-        return new LegacyItemWrapper(FastNMS.INSTANCE.method$CraftItemStack$asCraftMirror(copied));
+        Object copied = ItemStackProxy.INSTANCE.newInstance(RegistryUtils.getRegistryValue(MBuiltInRegistries.ITEM, KeyUtils.toIdentifier(newItem)), amount);
+        Object copiedTag = ItemStackProxy.INSTANCE.getOrCreateTag(copied);
+        Object thisTag = ItemStackProxy.INSTANCE.getOrCreateTag(item.getLiteralObject());
+        CompoundTagProxy.INSTANCE.merge(copiedTag, thisTag);
+        return new LegacyItemWrapper(CraftItemStackProxy.INSTANCE.asCraftMirror(copied));
     }
 
     @Override
     protected LegacyItemWrapper unsafeTransmuteCopy(LegacyItemWrapper item, Object newItem, int amount) {
-        Object newItemStack = FastNMS.INSTANCE.constructor$ItemStack(newItem, amount);
-        FastNMS.INSTANCE.method$ItemStack$setTag(newItemStack, FastNMS.INSTANCE.method$CompoundTag$copy(FastNMS.INSTANCE.field$ItemStack$getOrCreateTag(item.getLiteralObject())));
-        return new LegacyItemWrapper(FastNMS.INSTANCE.method$CraftItemStack$asCraftMirror(newItemStack));
+        Object newItemStack = ItemStackProxy.INSTANCE.newInstance(newItem, amount);
+        ItemStackProxy.INSTANCE.setTag(newItemStack, CompoundTagProxy.INSTANCE.copy(ItemStackProxy.INSTANCE.getOrCreateTag(item.getLiteralObject())));
+        return new LegacyItemWrapper(CraftItemStackProxy.INSTANCE.asCraftMirror(newItemStack));
     }
 
     @Override

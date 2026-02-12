@@ -1,6 +1,5 @@
 package net.momirealms.craftengine.bukkit.item;
 
-import net.momirealms.craftengine.bukkit.nms.FastNMS;
 import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.CoreReflections;
 import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.MRegistryOps;
 import net.momirealms.craftengine.bukkit.util.EquipmentSlotUtils;
@@ -10,7 +9,9 @@ import net.momirealms.craftengine.core.entity.player.Player;
 import net.momirealms.craftengine.core.item.ItemType;
 import net.momirealms.craftengine.core.item.ItemWrapper;
 import net.momirealms.craftengine.core.util.random.RandomUtils;
+import net.momirealms.craftengine.proxy.bukkit.craftbukkit.inventory.CraftItemStackProxy;
 import net.momirealms.craftengine.proxy.minecraft.nbt.CompoundTagProxy;
+import net.momirealms.craftengine.proxy.minecraft.world.item.ItemStackProxy;
 import net.momirealms.sparrow.nbt.Tag;
 import org.bukkit.enchantments.Enchantment;
 import org.bukkit.inventory.ItemStack;
@@ -23,12 +24,12 @@ public class LegacyItemWrapper implements ItemWrapper<ItemStack> {
 
     public LegacyItemWrapper(ItemStack item) {
         this.itemStack = ItemStackUtils.ensureCraftItemStack(item);
-        this.nmsStack = FastNMS.INSTANCE.field$CraftItemStack$handle(this.itemStack);
+        this.nmsStack = CraftItemStackProxy.INSTANCE.unwrap(this.itemStack);
     }
 
     public ItemType itemType() {
         if (this.itemType == null) {
-            this.itemType = new ComponentItemType(FastNMS.INSTANCE.method$ItemStack$getItem(this.getLiteralObject()));
+            this.itemType = new ComponentItemType(ItemStackProxy.INSTANCE.getItem(this.getLiteralObject()));
         }
         return this.itemType;
     }
@@ -45,27 +46,27 @@ public class LegacyItemWrapper implements ItemWrapper<ItemStack> {
 
         if (path == null || path.length == 0) {
             if (CompoundTagProxy.CLASS.isInstance(finalNMSTag)) {
-                FastNMS.INSTANCE.method$ItemStack$setTag(this.nmsStack, finalNMSTag);
+                ItemStackProxy.INSTANCE.setTag(this.nmsStack, finalNMSTag);
                 return true;
             }
             return false;
         }
 
-        Object currentTag = FastNMS.INSTANCE.field$ItemStack$getOrCreateTag(this.nmsStack);
+        Object currentTag = ItemStackProxy.INSTANCE.getOrCreateTag(this.nmsStack);
 
         for (int i = 0; i < path.length - 1; i++) {
             Object pathSegment = path[i];
             if (pathSegment == null) return false;
-            Object childTag = FastNMS.INSTANCE.method$CompoundTag$get(currentTag, pathSegment.toString());
+            Object childTag = CompoundTagProxy.INSTANCE.get(currentTag, pathSegment.toString());
             if (!CompoundTagProxy.CLASS.isInstance(childTag)) {
-                childTag = FastNMS.INSTANCE.constructor$CompoundTag();
-                FastNMS.INSTANCE.method$CompoundTag$put(currentTag, pathSegment.toString(), childTag);
+                childTag = CompoundTagProxy.INSTANCE.newInstance();
+                CompoundTagProxy.INSTANCE.put(currentTag, pathSegment.toString(), childTag);
             }
             currentTag = childTag;
         }
 
         String finalKey = path[path.length - 1].toString();
-        FastNMS.INSTANCE.method$CompoundTag$put(currentTag, finalKey, finalNMSTag);
+        CompoundTagProxy.INSTANCE.put(currentTag, finalKey, finalNMSTag);
         return true;
     }
 
@@ -93,7 +94,7 @@ public class LegacyItemWrapper implements ItemWrapper<ItemStack> {
 
     @SuppressWarnings("DuplicatedCode")
     public Object getExactTag(Object... path) {
-        Object compoundTag = FastNMS.INSTANCE.method$ItemStack$getTag(this.nmsStack);
+        Object compoundTag = ItemStackProxy.INSTANCE.getTag(this.nmsStack);
         if (compoundTag == null) return null;
         Object currentTag = compoundTag;
         if (path == null || path.length == 0) {
@@ -102,7 +103,7 @@ public class LegacyItemWrapper implements ItemWrapper<ItemStack> {
         for (int i = 0; i < path.length; i++) {
             Object pathSegment = path[i];
             if (pathSegment == null) return null;
-            currentTag = FastNMS.INSTANCE.method$CompoundTag$get(currentTag, path[i].toString());
+            currentTag = CompoundTagProxy.INSTANCE.get(currentTag, path[i].toString());
             if (currentTag == null) return null;
             if (i == path.length - 1) {
                 return currentTag;
@@ -115,13 +116,13 @@ public class LegacyItemWrapper implements ItemWrapper<ItemStack> {
     }
 
     public boolean remove(Object... path) {
-        Object compoundTag = FastNMS.INSTANCE.method$ItemStack$getTag(this.nmsStack);
+        Object compoundTag = ItemStackProxy.INSTANCE.getTag(this.nmsStack);
         if (compoundTag == null || path == null || path.length == 0) return false;
 
         if (path.length == 1) {
             String key = path[0].toString();
-            if (FastNMS.INSTANCE.method$CompoundTag$get(compoundTag, key) != null) {
-                FastNMS.INSTANCE.method$CompoundTag$remove(compoundTag, key);
+            if (CompoundTagProxy.INSTANCE.get(compoundTag, key) != null) {
+                CompoundTagProxy.INSTANCE.remove(compoundTag, key);
                 return true;
             }
         }
@@ -130,15 +131,15 @@ public class LegacyItemWrapper implements ItemWrapper<ItemStack> {
         for (int i = 0; i < path.length - 1; i++) {
             Object pathSegment = path[i];
             if (pathSegment == null) return false;
-            currentTag = FastNMS.INSTANCE.method$CompoundTag$get(currentTag, path[i].toString());
+            currentTag = CompoundTagProxy.INSTANCE.get(currentTag, path[i].toString());
             if (!CompoundTagProxy.CLASS.isInstance(currentTag)) {
                 return false;
             }
         }
 
         String finalKey = path[path.length - 1].toString();
-        if (FastNMS.INSTANCE.method$CompoundTag$get(currentTag, finalKey) != null) {
-            FastNMS.INSTANCE.method$CompoundTag$remove(currentTag, finalKey);
+        if (CompoundTagProxy.INSTANCE.get(currentTag, finalKey) != null) {
+            CompoundTagProxy.INSTANCE.remove(currentTag, finalKey);
             return true;
         }
         return false;
@@ -184,7 +185,7 @@ public class LegacyItemWrapper implements ItemWrapper<ItemStack> {
             }
             return;
         }
-        FastNMS.INSTANCE.method$ItemStack$hurtAndBreak(
+        ItemStackUtils.hurtAndBreak(
                 this.nmsStack,
                 amount,
                 player.serverPlayer(),

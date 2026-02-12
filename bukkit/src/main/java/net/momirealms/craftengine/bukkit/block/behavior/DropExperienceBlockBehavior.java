@@ -1,7 +1,6 @@
 package net.momirealms.craftengine.bukkit.block.behavior;
 
 import net.momirealms.craftengine.bukkit.item.BukkitItemManager;
-import net.momirealms.craftengine.bukkit.nms.FastNMS;
 import net.momirealms.craftengine.bukkit.util.BlockStateUtils;
 import net.momirealms.craftengine.bukkit.util.LocationUtils;
 import net.momirealms.craftengine.bukkit.world.BukkitWorldManager;
@@ -24,6 +23,9 @@ import net.momirealms.craftengine.core.world.BlockPos;
 import net.momirealms.craftengine.core.world.Vec3d;
 import net.momirealms.craftengine.core.world.World;
 import net.momirealms.craftengine.core.world.WorldPosition;
+import net.momirealms.craftengine.proxy.bukkit.craftbukkit.inventory.CraftItemStackProxy;
+import net.momirealms.craftengine.proxy.minecraft.world.item.ItemStackProxy;
+import net.momirealms.craftengine.proxy.minecraft.world.level.LevelProxy;
 import org.bukkit.inventory.ItemStack;
 
 import java.util.List;
@@ -45,7 +47,7 @@ public class DropExperienceBlockBehavior extends BukkitBlockBehavior {
     @Override
     public void spawnAfterBreak(Object thisBlock, Object[] args, Callable<Object> superMethod) {
         boolean dropExperience = (boolean) args[4]; // 通常来说是 false
-        Item<ItemStack> item = BukkitItemManager.instance().wrap(FastNMS.INSTANCE.method$CraftItemStack$asCraftMirror(args[3]));
+        Item<ItemStack> item = BukkitItemManager.instance().wrap(CraftItemStackProxy.INSTANCE.asCraftMirror(args[3]));
         if (!dropExperience) {
             ImmutableBlockState state = BlockStateUtils.getOptionalCustomBlockState(args[0]).orElse(null);
             if (state == null) {
@@ -58,13 +60,13 @@ public class DropExperienceBlockBehavior extends BukkitBlockBehavior {
                 }
                 boolean cannotBreak = !settings.isCorrectTool(item.id())
                         && (!settings.respectToolComponent()
-                        || !FastNMS.INSTANCE.method$ItemStack$isCorrectToolForDrops(args[3], state.customBlockState().literalObject()));
+                        || !ItemStackProxy.INSTANCE.isCorrectToolForDrops(args[3], state.customBlockState().literalObject()));
                 if (cannotBreak) {
                     return;
                 }
             }
         }
-        World world = BukkitWorldManager.instance().wrap(FastNMS.INSTANCE.method$Level$getCraftWorld(args[1]));
+        World world = BukkitWorldManager.instance().wrap(LevelProxy.INSTANCE.getWorld(args[1]));
         BlockPos pos = LocationUtils.fromBlockPos(args[2]);
         tryDropExperience(world, pos, item);
     }

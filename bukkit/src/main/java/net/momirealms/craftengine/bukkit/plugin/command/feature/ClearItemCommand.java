@@ -2,7 +2,6 @@ package net.momirealms.craftengine.bukkit.plugin.command.feature;
 
 import net.kyori.adventure.text.Component;
 import net.momirealms.craftengine.bukkit.item.BukkitItemManager;
-import net.momirealms.craftengine.bukkit.nms.FastNMS;
 import net.momirealms.craftengine.bukkit.plugin.command.BukkitCommandFeature;
 import net.momirealms.craftengine.bukkit.util.ItemStackUtils;
 import net.momirealms.craftengine.core.plugin.CraftEngine;
@@ -11,6 +10,11 @@ import net.momirealms.craftengine.core.plugin.command.FlagKeys;
 import net.momirealms.craftengine.core.plugin.locale.MessageConstants;
 import net.momirealms.craftengine.core.util.Key;
 import net.momirealms.craftengine.core.util.UniqueKey;
+import net.momirealms.craftengine.proxy.bukkit.craftbukkit.entity.CraftEntityProxy;
+import net.momirealms.craftengine.proxy.minecraft.world.entity.player.InventoryProxy;
+import net.momirealms.craftengine.proxy.minecraft.world.entity.player.PlayerProxy;
+import net.momirealms.craftengine.proxy.minecraft.world.inventory.AbstractContainerMenuProxy;
+import net.momirealms.craftengine.proxy.minecraft.world.inventory.InventoryMenuProxy;
 import org.bukkit.NamespacedKey;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
@@ -71,12 +75,12 @@ public class ClearItemCommand extends BukkitCommandFeature<CommandSender> {
                     int totalCount = 0;
                     Collection<Player> players = selector.values();
                     for (Player player : players) {
-                        Object serverPlayer = FastNMS.INSTANCE.method$CraftPlayer$getHandle(player);
-                        Object inventory = FastNMS.INSTANCE.method$Player$getInventory(serverPlayer);
-                        Object inventoryMenu = FastNMS.INSTANCE.field$Player$inventoryMenu(serverPlayer);
-                        totalCount += FastNMS.INSTANCE.method$Inventory$clearOrCountMatchingItems(inventory, predicate, amount, FastNMS.INSTANCE.method$InventoryMenu$getCraftSlots(inventoryMenu));
-                        FastNMS.INSTANCE.method$AbstractContainerMenu$broadcastChanges(FastNMS.INSTANCE.field$Player$containerMenu(serverPlayer));
-                        FastNMS.INSTANCE.method$InventoryMenu$slotsChanged(inventoryMenu, inventory);
+                        Object serverPlayer = CraftEntityProxy.INSTANCE.getEntity(player);
+                        Object inventory = PlayerProxy.INSTANCE.getInventory(serverPlayer);
+                        Object inventoryMenu = PlayerProxy.INSTANCE.getInventoryMenu(serverPlayer);
+                        totalCount += InventoryProxy.INSTANCE.clearOrCountMatchingItems(inventory, predicate, amount, InventoryMenuProxy.INSTANCE.getCraftSlots(inventoryMenu));
+                        AbstractContainerMenuProxy.INSTANCE.broadcastChanges(PlayerProxy.INSTANCE.getContainerMenu(serverPlayer));
+                        InventoryMenuProxy.INSTANCE.slotsChanged(inventoryMenu, inventory);
                     }
                     if (totalCount == 0) {
                         if (players.size() == 1) {

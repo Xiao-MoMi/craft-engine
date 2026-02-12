@@ -4,7 +4,6 @@ import com.mojang.authlib.GameProfile;
 import net.momirealms.craftengine.bukkit.block.behavior.BedBlockBehavior;
 import net.momirealms.craftengine.bukkit.block.entity.renderer.DynamicPlayerRenderer;
 import net.momirealms.craftengine.bukkit.entity.seat.BukkitSeat;
-import net.momirealms.craftengine.bukkit.nms.FastNMS;
 import net.momirealms.craftengine.bukkit.plugin.user.BukkitServerPlayer;
 import net.momirealms.craftengine.bukkit.util.LegacyAuthLibUtils;
 import net.momirealms.craftengine.core.block.ImmutableBlockState;

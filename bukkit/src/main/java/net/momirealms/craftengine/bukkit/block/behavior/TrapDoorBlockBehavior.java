@@ -3,12 +3,12 @@ package net.momirealms.craftengine.bukkit.block.behavior;
 import net.momirealms.antigrieflib.Flag;
 import net.momirealms.craftengine.bukkit.api.BukkitAdaptors;
 import net.momirealms.craftengine.bukkit.item.BukkitItemManager;
-import net.momirealms.craftengine.bukkit.nms.FastNMS;
 import net.momirealms.craftengine.bukkit.plugin.BukkitCraftEngine;
 import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.MBlocks;
 import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.MFluids;
 import net.momirealms.craftengine.bukkit.util.BlockStateUtils;
 import net.momirealms.craftengine.bukkit.util.InteractUtils;
+import net.momirealms.craftengine.bukkit.util.LevelUtils;
 import net.momirealms.craftengine.bukkit.util.LocationUtils;
 import net.momirealms.craftengine.core.block.CustomBlock;
 import net.momirealms.craftengine.core.block.ImmutableBlockState;
@@ -28,7 +28,13 @@ import net.momirealms.craftengine.core.world.Vec3d;
 import net.momirealms.craftengine.core.world.World;
 import net.momirealms.craftengine.core.world.context.BlockPlaceContext;
 import net.momirealms.craftengine.core.world.context.UseOnContext;
+import net.momirealms.craftengine.proxy.bukkit.craftbukkit.block.CraftBlockProxy;
+import net.momirealms.craftengine.proxy.minecraft.core.Vec3iProxy;
+import net.momirealms.craftengine.proxy.minecraft.world.level.*;
+import net.momirealms.craftengine.proxy.minecraft.world.level.block.BlockProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.level.block.RedstoneWireBlockProxy;
+import net.momirealms.craftengine.proxy.minecraft.world.level.block.state.BlockBehaviourProxy;
+import net.momirealms.craftengine.proxy.minecraft.world.level.material.FluidStateProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.level.pathfinder.PathComputationTypeProxy;
 import org.bukkit.Bukkit;
 import org.bukkit.GameEvent;
@@ -81,7 +87,7 @@ public class TrapDoorBlockBehavior extends BukkitBlockBehavior implements IsPath
         if (super.waterloggedProperty != null) {
             BlockStateUtils.getOptionalCustomBlockState(blockState).ifPresent(customState -> {
                 if (customState.get(super.waterloggedProperty)) {
-                    FastNMS.INSTANCE.method$ScheduledTickAccess$scheduleFluidTick(args[updateShape$level], args[updateShape$blockPos], MFluids.WATER, 5);
+                    LevelUtils.scheduleFluidTick(args[updateShape$level], args[updateShape$blockPos], MFluids.WATER, 5);
                 }
             });
         }
@@ -100,10 +106,10 @@ public class TrapDoorBlockBehavior extends BukkitBlockBehavior implements IsPath
             state = state.with(this.facingProperty, context.getHorizontalDirection().opposite().toHorizontalDirection())
                     .with(this.halfProperty, clickedFace == Direction.UP ? SingleBlockHalf.BOTTOM : SingleBlockHalf.TOP);
         }
-        if (FastNMS.INSTANCE.method$SignalGetter$hasNeighborSignal(level, clickedPos)) {
+        if (SignalGetterProxy.INSTANCE.hasNeighborSignal(level, clickedPos)) {
             state = state.with(this.poweredProperty, true).with(this.openProperty, true);
         }
-        if (this.waterloggedProperty != null && FastNMS.INSTANCE.method$FluidState$getType(FastNMS.INSTANCE.method$BlockGetter$getFluidState(level, clickedPos)) == MFluids.WATER) {
+        if (this.waterloggedProperty != null && FluidStateProxy.INSTANCE.getType(BlockGetterProxy.INSTANCE.getFluidState(level, clickedPos)) == MFluids.WATER) {
             state = state.with(this.waterloggedProperty, true);
         }
         return state;
@@ -150,10 +156,10 @@ public class TrapDoorBlockBehavior extends BukkitBlockBehavior implements IsPath
 
     @Override
     public void onExplosionHit(Object thisBlock, Object[] args, Callable<Object> superMethod) {
-        if (this.canOpenByWindCharge && FastNMS.INSTANCE.method$Explosion$canTriggerBlocks(args[3])) {
+        if (this.canOpenByWindCharge && ExplosionProxy.INSTANCE.canTriggerBlocks(args[3])) {
             Optional<ImmutableBlockState> optionalCustomState = BlockStateUtils.getOptionalCustomBlockState(args[0]);
             if (optionalCustomState.isEmpty()) return;
-            this.toggle(optionalCustomState.get(), BukkitAdaptors.adapt(FastNMS.INSTANCE.method$Level$getCraftWorld(args[1])), LocationUtils.fromBlockPos(args[2]), null);
+            this.toggle(optionalCustomState.get(), BukkitAdaptors.adapt(LevelProxy.INSTANCE.getWorld(args[1])), LocationUtils.fromBlockPos(args[2]), null);
         }
     }
 
@@ -166,32 +172,32 @@ public class TrapDoorBlockBehavior extends BukkitBlockBehavior implements IsPath
         ImmutableBlockState customState = optionalCustomState.get();
         Object level = args[1];
         Object blockPos = args[2];
-        boolean hasSignal = FastNMS.INSTANCE.method$SignalGetter$hasNeighborSignal(level, blockPos);
+        boolean hasSignal = SignalGetterProxy.INSTANCE.hasNeighborSignal(level, blockPos);
         if (hasSignal == customState.get(this.poweredProperty)) return;
 
-        Block bblock = FastNMS.INSTANCE.method$CraftBlock$at(level, blockPos);
+        Block bblock = CraftBlockProxy.INSTANCE.at(level, blockPos);
         int power = bblock.getBlockPower();
         int oldPower = customState.get(this.openProperty) ? 15 : 0;
         Object neighborBlock = args[3];
 
-        if (oldPower == 0 ^ power == 0 || FastNMS.INSTANCE.method$BlockStateBase$isSignalSource(FastNMS.INSTANCE.method$Block$defaultState(neighborBlock))) {
+        if (oldPower == 0 ^ power == 0 || BlockBehaviourProxy.BlockStateBaseProxy.INSTANCE.isSignalSource(BlockProxy.INSTANCE.getDefaultBlockState(neighborBlock))) {
             BlockRedstoneEvent event = new BlockRedstoneEvent(bblock, oldPower, power);
             Bukkit.getPluginManager().callEvent(event);
             hasSignal = event.getNewCurrent() > 0;
         }
 
-        World world = BukkitAdaptors.adapt(FastNMS.INSTANCE.method$Level$getCraftWorld(level));
+        World world = BukkitAdaptors.adapt(LevelProxy.INSTANCE.getWorld(level));
         boolean changed = customState.get(this.openProperty) != hasSignal;
         if (hasSignal && changed) {
             Object abovePos = LocationUtils.above(blockPos);
-            Object aboveBlockState = FastNMS.INSTANCE.method$BlockGetter$getBlockState(level, abovePos);
-            if (RedstoneWireBlockProxy.CLASS.isInstance(FastNMS.INSTANCE.method$BlockState$getBlock(aboveBlockState))) {
-                FastNMS.INSTANCE.method$LevelWriter$setBlock(level, abovePos, MBlocks.AIR$defaultState, UpdateOption.UPDATE_ALL.flags());
+            Object aboveBlockState = BlockGetterProxy.INSTANCE.getBlockState(level, abovePos);
+            if (RedstoneWireBlockProxy.CLASS.isInstance(BlockBehaviourProxy.BlockStateBaseProxy.INSTANCE.getBlock(aboveBlockState))) {
+                LevelWriterProxy.INSTANCE.setBlock(level, abovePos, MBlocks.AIR$defaultState, UpdateOption.UPDATE_ALL.flags());
                 world.dropItemNaturally(
-                        new Vec3d(FastNMS.INSTANCE.field$Vec3i$x(abovePos) + 0.5, FastNMS.INSTANCE.field$Vec3i$y(abovePos) + 0.5, FastNMS.INSTANCE.field$Vec3i$z(abovePos) + 0.5),
+                        new Vec3d(Vec3iProxy.INSTANCE.getX(abovePos) + 0.5, Vec3iProxy.INSTANCE.getY(abovePos) + 0.5, Vec3iProxy.INSTANCE.getZ(abovePos) + 0.5),
                         BukkitItemManager.instance().createWrappedItem(ItemKeys.REDSTONE, null)
                 );
-                if (FastNMS.INSTANCE.method$BlockGetter$getBlockState(level, blockPos) != blockPos) {
+                if (BlockGetterProxy.INSTANCE.getBlockState(level, blockPos) != blockPos) {
                     return;
                 }
             }
@@ -199,22 +205,22 @@ public class TrapDoorBlockBehavior extends BukkitBlockBehavior implements IsPath
 
         if (changed) {
             customState = customState.with(this.openProperty, hasSignal);
-            FastNMS.INSTANCE.method$Level$getCraftWorld(level).sendGameEvent(null,
+            LevelProxy.INSTANCE.getWorld(level).sendGameEvent(null,
                     hasSignal ? GameEvent.BLOCK_OPEN : GameEvent.BLOCK_CLOSE,
-                    new Vector(FastNMS.INSTANCE.field$Vec3i$x(blockPos), FastNMS.INSTANCE.field$Vec3i$y(blockPos), FastNMS.INSTANCE.field$Vec3i$z(blockPos))
+                    new Vector(Vec3iProxy.INSTANCE.getX(blockPos), Vec3iProxy.INSTANCE.getY(blockPos), Vec3iProxy.INSTANCE.getZ(blockPos))
             );
             this.playSound(LocationUtils.fromBlockPos(blockPos), world, hasSignal);
         }
 
-        FastNMS.INSTANCE.method$LevelWriter$setBlock(level, blockPos, customState.with(this.poweredProperty, hasSignal).customBlockState().literalObject(), UpdateOption.Flags.UPDATE_CLIENTS);
+        LevelWriterProxy.INSTANCE.setBlock(level, blockPos, customState.with(this.poweredProperty, hasSignal).customBlockState().literalObject(), UpdateOption.Flags.UPDATE_CLIENTS);
         if (this.waterloggedProperty != null && customState.get(this.waterloggedProperty)) {
-            FastNMS.INSTANCE.method$ScheduledTickAccess$scheduleFluidTick(level, blockPos, MFluids.WATER, 5);
+            LevelUtils.scheduleFluidTick(level, blockPos, MFluids.WATER, 5);
         }
     }
 
     private void toggle(ImmutableBlockState state, World world, BlockPos pos, @Nullable Player player) {
         ImmutableBlockState newState = state.cycle(this.openProperty);
-        FastNMS.INSTANCE.method$LevelWriter$setBlock(world.serverWorld(), LocationUtils.toBlockPos(pos), newState.customBlockState().literalObject(), UpdateOption.UPDATE_ALL.flags());
+        LevelWriterProxy.INSTANCE.setBlock(world.serverWorld(), LocationUtils.toBlockPos(pos), newState.customBlockState().literalObject(), UpdateOption.UPDATE_ALL.flags());
         boolean open = newState.get(this.openProperty);
         ((org.bukkit.World) world.platformWorld()).sendGameEvent(
                 player != null ? (org.bukkit.entity.Player) player.platformPlayer() : null,

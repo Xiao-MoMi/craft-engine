@@ -1,11 +1,11 @@
 package net.momirealms.craftengine.bukkit.block.behavior;
 
 import net.momirealms.craftengine.bukkit.api.BukkitAdaptors;
-import net.momirealms.craftengine.bukkit.nms.FastNMS;
 import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.MBlocks;
 import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.MFluids;
 import net.momirealms.craftengine.bukkit.plugin.user.BukkitServerPlayer;
 import net.momirealms.craftengine.bukkit.util.BlockStateUtils;
+import net.momirealms.craftengine.bukkit.util.LevelUtils;
 import net.momirealms.craftengine.bukkit.util.LocationUtils;
 import net.momirealms.craftengine.bukkit.world.BukkitWorld;
 import net.momirealms.craftengine.core.block.CustomBlock;
@@ -21,6 +21,13 @@ import net.momirealms.craftengine.core.util.ResourceConfigUtils;
 import net.momirealms.craftengine.core.world.*;
 import net.momirealms.craftengine.core.world.context.BlockPlaceContext;
 import net.momirealms.craftengine.proxy.minecraft.core.DirectionProxy;
+import net.momirealms.craftengine.proxy.minecraft.server.level.ServerPlayerProxy;
+import net.momirealms.craftengine.proxy.minecraft.world.level.BlockGetterProxy;
+import net.momirealms.craftengine.proxy.minecraft.world.level.LevelAccessorProxy;
+import net.momirealms.craftengine.proxy.minecraft.world.level.LevelProxy;
+import net.momirealms.craftengine.proxy.minecraft.world.level.LevelWriterProxy;
+import net.momirealms.craftengine.proxy.minecraft.world.level.block.state.BlockBehaviourProxy;
+import net.momirealms.craftengine.proxy.minecraft.world.level.material.FluidStateProxy;
 import org.bukkit.inventory.ItemStack;
 
 import java.util.Map;
@@ -55,7 +62,7 @@ public class MultiHighBlockBehavior extends BukkitBlockBehavior {
         Object blockPos = args[updateShape$blockPos];
         if (direction == DirectionProxy.UP && value != property.max) {
             Object abovePos = LocationUtils.above(blockPos);
-            Object aboveState = FastNMS.INSTANCE.method$BlockGetter$getBlockState(level, abovePos);
+            Object aboveState = BlockGetterProxy.INSTANCE.getBlockState(level, abovePos);
             ImmutableBlockState state = BlockStateUtils.getOptionalCustomBlockState(aboveState).orElse(null);
             if (state == null) {
                 playBreakEffect(customState, blockPos, level);
@@ -73,7 +80,7 @@ public class MultiHighBlockBehavior extends BukkitBlockBehavior {
             }
         } else if (direction == DirectionProxy.DOWN && value != property.min) {
             Object belowPos = LocationUtils.below(blockPos);
-            Object belowState = FastNMS.INSTANCE.method$BlockGetter$getBlockState(level, belowPos);
+            Object belowState = BlockGetterProxy.INSTANCE.getBlockState(level, belowPos);
             ImmutableBlockState state = BlockStateUtils.getOptionalCustomBlockState(belowState).orElse(null);
             if (state == null) {
                 playBreakEffect(customState, blockPos, level);
@@ -95,10 +102,10 @@ public class MultiHighBlockBehavior extends BukkitBlockBehavior {
 
     public static void playBreakEffect(ImmutableBlockState customState, Object blockPos, Object level) {
         BlockPos pos = LocationUtils.fromBlockPos(blockPos);
-        net.momirealms.craftengine.core.world.World world = new BukkitWorld(FastNMS.INSTANCE.method$Level$getCraftWorld(level));
+        net.momirealms.craftengine.core.world.World world = new BukkitWorld(LevelProxy.INSTANCE.getWorld(level));
         WorldPosition position = new WorldPosition(world, Vec3d.atCenterOf(pos));
         world.playBlockSound(position, customState.settings().sounds().breakSound());
-        FastNMS.INSTANCE.method$LevelAccessor$levelEvent(level, WorldEvents.BLOCK_BREAK_EFFECT, blockPos, customState.customBlockState().registryId());
+        LevelAccessorProxy.INSTANCE.levelEvent(level, WorldEvents.BLOCK_BREAK_EFFECT, blockPos, customState.customBlockState().registryId());
     }
 
     @Override
@@ -108,7 +115,7 @@ public class MultiHighBlockBehavior extends BukkitBlockBehavior {
         if (blockState == null || blockState.isEmpty()) {
             return superMethod.call();
         }
-        BukkitServerPlayer serverPlayer = BukkitAdaptors.adapt(FastNMS.INSTANCE.method$ServerPlayer$getBukkitEntity(player));
+        BukkitServerPlayer serverPlayer = BukkitAdaptors.adapt(ServerPlayerProxy.INSTANCE.getBukkitEntity(player));
         if (serverPlayer == null) {
             return superMethod.call();
         }
@@ -130,7 +137,7 @@ public class MultiHighBlockBehavior extends BukkitBlockBehavior {
             return;
         }
         Object basePos = LocationUtils.below(pos, value - property.min);
-        Object blockState = FastNMS.INSTANCE.method$BlockGetter$getBlockState(level, basePos);
+        Object blockState = BlockGetterProxy.INSTANCE.getBlockState(level, basePos);
         ImmutableBlockState baseState = BlockStateUtils.getOptionalCustomBlockState(blockState).orElse(null);
         if (baseState == null || baseState.isEmpty()) {
             return;
@@ -143,11 +150,11 @@ public class MultiHighBlockBehavior extends BukkitBlockBehavior {
         if (baseState.get(baseProperty) != baseProperty.min) {
             return;
         }
-        Object emptyState = FastNMS.INSTANCE.method$FluidState$getType(FastNMS.INSTANCE.field$BlockBehaviour$BlockStateBase$fluidState(blockState)) == MFluids.WATER
+        Object emptyState = FluidStateProxy.INSTANCE.getType(BlockBehaviourProxy.BlockStateBaseProxy.INSTANCE.getFluidState(blockState)) == MFluids.WATER
                 ? MBlocks.WATER$defaultState
                 : MBlocks.AIR$defaultState;
-        FastNMS.INSTANCE.method$LevelWriter$setBlock(level, basePos, emptyState, UpdateOption.builder().updateSuppressDrops().updateClients().updateNeighbors().build().flags());
-        FastNMS.INSTANCE.method$LevelAccessor$levelEvent(level, player, WorldEvents.BLOCK_BREAK_EFFECT, basePos, baseState.customBlockState().registryId());
+        LevelWriterProxy.INSTANCE.setBlock(level, basePos, emptyState, UpdateOption.builder().updateSuppressDrops().updateClients().updateNeighbors().build().flags());
+        LevelUtils.levelEvent(level, player, WorldEvents.BLOCK_BREAK_EFFECT, basePos, baseState.customBlockState().registryId());
     }
 
     @Override
@@ -166,13 +173,13 @@ public class MultiHighBlockBehavior extends BukkitBlockBehavior {
         IntegerProperty property = behavior.property;
         int value = customState.get(property);
         if (value != property.min && value != property.max) {
-            Object aboveState = FastNMS.INSTANCE.method$BlockGetter$getBlockState(world, LocationUtils.above(blockPos));
-            Object belowState = FastNMS.INSTANCE.method$BlockGetter$getBlockState(world, LocationUtils.below(blockPos));
+            Object aboveState = BlockGetterProxy.INSTANCE.getBlockState(world, LocationUtils.above(blockPos));
+            Object belowState = BlockGetterProxy.INSTANCE.getBlockState(world, LocationUtils.below(blockPos));
             CustomBlock aboveCustomBlock = BlockStateUtils.getOptionalCustomBlockState(aboveState).map(blockState -> blockState.owner().value()).orElse(null);
             CustomBlock belowCustomBlock = BlockStateUtils.getOptionalCustomBlockState(belowState).map(blockState -> blockState.owner().value()).orElse(null);
             return aboveCustomBlock == behavior.customBlock && belowCustomBlock == behavior.customBlock;
         } else if (value == property.max) {
-            Object belowState = FastNMS.INSTANCE.method$BlockGetter$getBlockState(world, LocationUtils.below(blockPos));
+            Object belowState = BlockGetterProxy.INSTANCE.getBlockState(world, LocationUtils.below(blockPos));
             CustomBlock belowCustomBlock = BlockStateUtils.getOptionalCustomBlockState(belowState).map(blockState -> blockState.owner().value()).orElse(null);
             return belowCustomBlock == behavior.customBlock;
         }
@@ -193,7 +200,7 @@ public class MultiHighBlockBehavior extends BukkitBlockBehavior {
         }
         IntegerProperty property = behavior.property;
         for (int i = property.min + 1; i <= property.max; i++) {
-            FastNMS.INSTANCE.method$LevelWriter$setBlock(args[0], LocationUtils.above(pos, i), state.with(property, i).customBlockState().literalObject(), UpdateOption.UPDATE_ALL.flags());
+            LevelWriterProxy.INSTANCE.setBlock(args[0], LocationUtils.above(pos, i), state.with(property, i).customBlockState().literalObject(), UpdateOption.UPDATE_ALL.flags());
         }
     }
 

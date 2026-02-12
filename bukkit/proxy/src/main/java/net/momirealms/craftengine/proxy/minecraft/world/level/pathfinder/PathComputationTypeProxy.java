@@ -7,11 +7,11 @@ import net.momirealms.sparrow.reflection.proxy.annotation.ReflectionProxy;
 @ReflectionProxy(name = "net.minecraft.world.level.pathfinder.PathComputationType")
 public interface PathComputationTypeProxy {
     PathComputationTypeProxy INSTANCE = ASMProxyFactory.create(PathComputationTypeProxy.class);
-    Object[] VALUES = INSTANCE.values();
-    Object LAND = VALUES[0];
-    Object WATER = VALUES[1];
-    Object AIR = VALUES[2];
+    Enum<?>[] VALUES = INSTANCE.values();
+    Enum<?> LAND = VALUES[0];
+    Enum<?> WATER = VALUES[1];
+    Enum<?> AIR = VALUES[2];
 
     @MethodInvoker(name = "values", isStatic = true)
-    Object[] values();
+    Enum<?>[] values();
 }

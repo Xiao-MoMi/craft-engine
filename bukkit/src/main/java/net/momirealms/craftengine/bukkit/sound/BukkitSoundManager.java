@@ -2,12 +2,12 @@ package net.momirealms.craftengine.bukkit.sound;
 
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
-import net.momirealms.craftengine.bukkit.nms.FastNMS;
 import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.CoreReflections;
 import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.MBuiltInRegistries;
 import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.MRegistries;
 import net.momirealms.craftengine.bukkit.util.ComponentUtils;
 import net.momirealms.craftengine.bukkit.util.KeyUtils;
+import net.momirealms.craftengine.bukkit.util.RegistryUtils;
 import net.momirealms.craftengine.core.plugin.CraftEngine;
 import net.momirealms.craftengine.core.sound.AbstractSoundManager;
 import net.momirealms.craftengine.core.sound.JukeboxSong;
@@ -17,7 +17,9 @@ import net.momirealms.craftengine.core.util.Key;
 import net.momirealms.craftengine.core.util.VersionHelper;
 import net.momirealms.craftengine.proxy.minecraft.core.HolderProxy;
 import net.momirealms.craftengine.proxy.minecraft.core.MappedRegistryProxy;
+import net.momirealms.craftengine.proxy.minecraft.core.RegistryAccessProxy;
 import net.momirealms.craftengine.proxy.minecraft.core.RegistryProxy;
+import net.momirealms.craftengine.proxy.minecraft.sounds.SoundEventProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.item.JukeboxSongProxy;
 
 import java.io.IOException;
@@ -30,8 +32,8 @@ public class BukkitSoundManager extends AbstractSoundManager {
     public BukkitSoundManager(CraftEngine plugin) {
         super(plugin);
         for (Object soundEvent : (Iterable<?>) MBuiltInRegistries.SOUND_EVENT) {
-            Object resourceLocation = FastNMS.INSTANCE.field$SoundEvent$location(soundEvent);
-            VANILLA_SOUND_EVENTS.add(KeyUtils.identifierToKey(resourceLocation));
+            Object identifier = SoundEventProxy.INSTANCE.getLocation(soundEvent);
+            VANILLA_SOUND_EVENTS.add(KeyUtils.identifierToKey(identifier));
         }
         this.registerSongs(this.loadLastRegisteredSongs());
     }
@@ -101,18 +103,18 @@ public class BukkitSoundManager extends AbstractSoundManager {
         try {
             MappedRegistryProxy.INSTANCE.setFrozen(registry, false);
             for (Key soundEventId : sounds) {
-                Object resourceLocation = KeyUtils.toIdentifier(soundEventId);
+                Object identifier = KeyUtils.toIdentifier(soundEventId);
                 // 检查之前有没有注册过了
-                Object soundEvent = FastNMS.INSTANCE.method$Registry$getValue(registry, resourceLocation);
+                Object soundEvent = RegistryUtils.getRegistryValue(registry, identifier);
                 // 只有没注册才注册，否则会报错
                 if (soundEvent == null) {
                     soundEvent = VersionHelper.isOrAbove1_21_2() ?
-                            CoreReflections.constructor$SoundEvent.newInstance(resourceLocation, Optional.of(0)) :
-                            CoreReflections.constructor$SoundEvent.newInstance(resourceLocation, 0, false);
-                    Object holder = RegistryProxy.INSTANCE.registerForHolder$1(registry, resourceLocation, soundEvent);
+                            CoreReflections.constructor$SoundEvent.newInstance(identifier, Optional.of(0)) :
+                            CoreReflections.constructor$SoundEvent.newInstance(identifier, 0, false);
+                    Object holder = RegistryProxy.INSTANCE.registerForHolder$1(registry, identifier, soundEvent);
                     HolderProxy.ReferenceProxy.INSTANCE.bindValue(holder, soundEvent);
                     HolderProxy.ReferenceProxy.INSTANCE.setTags(holder, Set.of());
-                    int id = FastNMS.INSTANCE.method$Registry$getId(registry, soundEvent);
+                    int id = RegistryProxy.INSTANCE.getId$0(registry, soundEvent);
                     super.customSoundsInRegistry.put(id, soundEventId);
                 }
             }
@@ -126,17 +128,18 @@ public class BukkitSoundManager extends AbstractSoundManager {
     @Override
     protected void registerSongs(Map<Key, JukeboxSong> songs) {
         if (songs.isEmpty()) return;
-        Object registry = FastNMS.INSTANCE.method$RegistryAccess$lookupOrThrow(FastNMS.INSTANCE.registryAccess(), MRegistries.JUKEBOX_SONG);
+        Object registryAccess = RegistryUtils.getRegistryAccess();
+        Object registry = RegistryAccessProxy.INSTANCE.lookupOrThrow(registryAccess, MRegistries.JUKEBOX_SONG);
         try {
             // 获取 JUKEBOX_SONG 注册表
             MappedRegistryProxy.INSTANCE.setFrozen(registry, false);
             for (Map.Entry<Key, JukeboxSong> entry : songs.entrySet()) {
                 Key id = entry.getKey();
                 JukeboxSong jukeboxSong = entry.getValue();
-                Object resourceLocation = KeyUtils.toIdentifier(id);
+                Object identifier = KeyUtils.toIdentifier(id);
                 Object soundId = KeyUtils.toIdentifier(jukeboxSong.sound());
                 // 检查之前有没有注册过了
-                Object song = FastNMS.INSTANCE.method$Registry$getValue(registry, resourceLocation);
+                Object song = RegistryUtils.getRegistryValue(registry, identifier);
                 // 只有没注册才注册，否则会报错
                 if (song == null) {
                     Object soundEvent = VersionHelper.isOrAbove1_21_2() ?
@@ -144,7 +147,7 @@ public class BukkitSoundManager extends AbstractSoundManager {
                             CoreReflections.constructor$SoundEvent.newInstance(soundId, jukeboxSong.range(), false);
                     Object soundHolder = HolderProxy.INSTANCE.direct(soundEvent);
                     song = JukeboxSongProxy.INSTANCE.newInstance(soundHolder, ComponentUtils.adventureToMinecraft(jukeboxSong.description()), jukeboxSong.lengthInSeconds(), jukeboxSong.comparatorOutput());
-                    Object holder = RegistryProxy.INSTANCE.registerForHolder$1(registry, resourceLocation, song);
+                    Object holder = RegistryProxy.INSTANCE.registerForHolder$1(registry, identifier, song);
                     HolderProxy.ReferenceProxy.INSTANCE.bindValue(holder, song);
                     HolderProxy.ReferenceProxy.INSTANCE.setTags(holder, Set.of());
                 }

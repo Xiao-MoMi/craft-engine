@@ -4,12 +4,12 @@ import net.momirealms.craftengine.bukkit.api.BukkitAdaptors;
 import net.momirealms.craftengine.bukkit.block.entity.BedBlockEntity;
 import net.momirealms.craftengine.bukkit.block.entity.BukkitBlockEntityTypes;
 import net.momirealms.craftengine.bukkit.entity.seat.BukkitSeat;
-import net.momirealms.craftengine.bukkit.nms.FastNMS;
 import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.MBlocks;
 import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.MFluids;
 import net.momirealms.craftengine.bukkit.plugin.user.BukkitServerPlayer;
 import net.momirealms.craftengine.bukkit.util.BlockStateUtils;
 import net.momirealms.craftengine.bukkit.util.DirectionUtils;
+import net.momirealms.craftengine.bukkit.util.LevelUtils;
 import net.momirealms.craftengine.core.block.CustomBlock;
 import net.momirealms.craftengine.core.block.ImmutableBlockState;
 import net.momirealms.craftengine.core.block.UpdateOption;
@@ -30,6 +30,12 @@ import net.momirealms.craftengine.core.util.VersionHelper;
 import net.momirealms.craftengine.core.world.*;
 import net.momirealms.craftengine.core.world.context.BlockPlaceContext;
 import net.momirealms.craftengine.core.world.context.UseOnContext;
+import net.momirealms.craftengine.proxy.minecraft.core.BlockPosProxy;
+import net.momirealms.craftengine.proxy.minecraft.server.level.ServerPlayerProxy;
+import net.momirealms.craftengine.proxy.minecraft.world.level.BlockGetterProxy;
+import net.momirealms.craftengine.proxy.minecraft.world.level.LevelWriterProxy;
+import net.momirealms.craftengine.proxy.minecraft.world.level.block.state.BlockBehaviourProxy;
+import net.momirealms.craftengine.proxy.minecraft.world.level.material.FluidStateProxy;
 import org.bukkit.inventory.ItemStack;
 import org.joml.Vector3f;
 
@@ -103,7 +109,7 @@ public class BedBlockBehavior extends BukkitBlockBehavior implements EntityBlock
         if (blockState == null || blockState.isEmpty()) {
             return superMethod.call();
         }
-        BukkitServerPlayer serverPlayer = BukkitAdaptors.adapt(FastNMS.INSTANCE.method$ServerPlayer$getBukkitEntity(player));
+        BukkitServerPlayer serverPlayer = BukkitAdaptors.adapt(ServerPlayerProxy.INSTANCE.getBukkitEntity(player));
         if (serverPlayer == null) {
             return superMethod.call();
         }
@@ -124,8 +130,8 @@ public class BedBlockBehavior extends BukkitBlockBehavior implements EntityBlock
             return;
         }
         HorizontalDirection direction = state.get(behavior.facingProperty);
-        pos = FastNMS.INSTANCE.method$BlockPos$offset(pos, direction.stepX(), 0, direction.stepZ());
-        Object blockState = FastNMS.INSTANCE.method$BlockGetter$getBlockState(level, pos);
+        pos = BlockPosProxy.INSTANCE.offset(pos, direction.stepX(), 0, direction.stepZ());
+        Object blockState = BlockGetterProxy.INSTANCE.getBlockState(level, pos);
         ImmutableBlockState headState = BlockStateUtils.getOptionalCustomBlockState(blockState).orElse(null);
         if (headState == null || headState.isEmpty()) {
             return;
@@ -137,11 +143,11 @@ public class BedBlockBehavior extends BukkitBlockBehavior implements EntityBlock
         if (state.owner() != headState.owner() || headState.get(headBehavior.partProperty) != BedPart.HEAD) {
             return;
         }
-        Object emptyState = FastNMS.INSTANCE.method$FluidState$getType(FastNMS.INSTANCE.field$BlockBehaviour$BlockStateBase$fluidState(blockState)) == MFluids.WATER
+        Object emptyState = FluidStateProxy.INSTANCE.getType(BlockBehaviourProxy.BlockStateBaseProxy.INSTANCE.getFluidState(blockState)) == MFluids.WATER
                 ? MBlocks.WATER$defaultState
                 : MBlocks.AIR$defaultState;
-        FastNMS.INSTANCE.method$LevelWriter$setBlock(level, pos, emptyState, UpdateOption.builder().updateSuppressDrops().updateClients().updateNeighbors().build().flags());
-        FastNMS.INSTANCE.method$LevelAccessor$levelEvent(level, player, WorldEvents.BLOCK_BREAK_EFFECT, pos, headState.customBlockState().registryId());
+        LevelWriterProxy.INSTANCE.setBlock(level, pos, emptyState, UpdateOption.builder().updateSuppressDrops().updateClients().updateNeighbors().build().flags());
+        LevelUtils.levelEvent(level, player, WorldEvents.BLOCK_BREAK_EFFECT, pos, headState.customBlockState().registryId());
     }
 
     @Override
@@ -158,9 +164,9 @@ public class BedBlockBehavior extends BukkitBlockBehavior implements EntityBlock
             return;
         }
         HorizontalDirection direction = state.get(behavior.facingProperty);
-        FastNMS.INSTANCE.method$LevelWriter$setBlock(
+        LevelWriterProxy.INSTANCE.setBlock(
                 level,
-                FastNMS.INSTANCE.method$BlockPos$offset(pos, direction.stepX(), 0, direction.stepZ()),
+                BlockPosProxy.INSTANCE.offset(pos, direction.stepX(), 0, direction.stepZ()),
                 state.with(behavior.partProperty, BedPart.HEAD).customBlockState().literalObject(),
                 UpdateOption.UPDATE_ALL.flags()
         );

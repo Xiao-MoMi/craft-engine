@@ -2,7 +2,7 @@ package net.momirealms.craftengine.bukkit.plugin.command.feature;
 
 import net.kyori.adventure.text.Component;
 import net.momirealms.craftengine.bukkit.plugin.command.BukkitCommandFeature;
-import net.momirealms.craftengine.core.pack.ResourceLocation;
+import net.momirealms.craftengine.core.pack.Identifier;
 import net.momirealms.craftengine.core.plugin.CraftEngine;
 import net.momirealms.craftengine.core.plugin.command.CraftEngineCommandManager;
 import net.momirealms.craftengine.core.plugin.config.StringKeyConstructor;
@@ -49,7 +49,7 @@ public class CreateResourceCommand extends BukkitCommandFeature<CommandSender> {
                     Path resourcepackPath = packPath.resolve("resourcepack");
                     Path packMetaPath = packPath.resolve("pack.yml");
                     String namespace = context.getOrDefault("namespace", packFolder);
-                    if (!ResourceLocation.isValidNamespace(namespace)) {
+                    if (!Identifier.isValidNamespace(namespace)) {
                         handleFeedback(context, MessageConstants.COMMAND_RESOURCE_CREATE_FAILURE_INVALID_NAMESPACE, Component.text(packFolder), Component.text(namespace));
                         return;
                     }

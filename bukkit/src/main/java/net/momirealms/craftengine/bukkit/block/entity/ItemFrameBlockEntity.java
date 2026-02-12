@@ -5,7 +5,7 @@ import net.momirealms.craftengine.bukkit.block.behavior.ItemFrameBlockBehavior;
 import net.momirealms.craftengine.bukkit.block.entity.renderer.DynamicItemFrameRenderer;
 import net.momirealms.craftengine.bukkit.entity.data.ItemFrameData;
 import net.momirealms.craftengine.bukkit.item.BukkitItemManager;
-import net.momirealms.craftengine.bukkit.nms.FastNMS;
+import net.momirealms.craftengine.bukkit.item.DataComponentTypes;
 import net.momirealms.craftengine.bukkit.util.BlockStateUtils;
 import net.momirealms.craftengine.bukkit.util.DirectionUtils;
 import net.momirealms.craftengine.bukkit.util.ItemStackUtils;
@@ -20,6 +20,8 @@ import net.momirealms.craftengine.core.util.VersionHelper;
 import net.momirealms.craftengine.core.world.BlockPos;
 import net.momirealms.craftengine.core.world.Vec3d;
 import net.momirealms.craftengine.core.world.chunk.CEChunk;
+import net.momirealms.craftengine.proxy.minecraft.world.item.MapItemProxy;
+import net.momirealms.craftengine.proxy.minecraft.world.level.LevelProxy;
 import net.momirealms.sparrow.nbt.CompoundTag;
 import net.momirealms.sparrow.nbt.Tag;
 import org.bukkit.inventory.ItemStack;
@@ -112,7 +114,7 @@ public class ItemFrameBlockEntity extends BlockEntity {
 
     private void update() {
         super.world.blockEntityChanged(super.pos);
-        FastNMS.INSTANCE.method$Level$updateNeighbourForOutputSignal(
+        LevelProxy.INSTANCE.updateNeighbourForOutputSignal(
                 super.world.world.serverWorld(),
                 LocationUtils.toBlockPos(super.pos),
                 BlockStateUtils.getBlockOwner(super.blockState.customBlockState().literalObject())
@@ -139,10 +141,20 @@ public class ItemFrameBlockEntity extends BlockEntity {
         }
         this.cacheMetadata = metadataValues;
         if (this.behavior.renderMapItem) {
-            this.mapId = FastNMS.INSTANCE.method$MapItem$getMapId(this.item.getLiteralObject());
-            this.mapItemSavedData = this.mapId != null && super.world != null
-                    ? FastNMS.INSTANCE.method$MapItem$getSavedData(mapId, super.world.world.serverWorld())
-                    : null;
+            if (VersionHelper.isOrAbove1_20_5()) {
+                this.mapId = this.item.getExactComponent(DataComponentTypes.MAP_ID);
+            } else {
+                this.mapId = MapItemProxy.INSTANCE.getMapId(this.item.getLiteralObject());
+            }
+            if (this.mapId == null || super.world == null) {
+                this.mapItemSavedData = null;
+                return;
+            }
+            if (VersionHelper.isOrAbove1_20_5()) {
+                this.mapItemSavedData = MapItemProxy.INSTANCE.getSavedData$0(this.mapId, super.world.world.serverWorld());
+            } else {
+                this.mapItemSavedData = MapItemProxy.INSTANCE.getSavedData$1((Integer) this.mapId, super.world.world.serverWorld());
+            }
         }
     }
 }

@@ -1,6 +1,8 @@
 package net.momirealms.craftengine.bukkit.plugin.reflection.minecraft;
 
-import net.momirealms.craftengine.bukkit.nms.FastNMS;
+import net.momirealms.craftengine.bukkit.util.RegistryUtils;
+import net.momirealms.craftengine.proxy.minecraft.core.RegistryProxy;
+import net.momirealms.craftengine.proxy.minecraft.resources.IdentifierProxy;
 
 public final class MEntityTypes {
     private MEntityTypes() {}
@@ -76,13 +78,13 @@ public final class MEntityTypes {
     public static final Object TNT_MINECART = getById("tnt_minecart");
     public static final int TNT_MINECART$registryId = getRegistryId(TNT_MINECART);
 
-    private static Object getById(String id) {
-        Object rl = FastNMS.INSTANCE.method$ResourceLocation$fromNamespaceAndPath("minecraft", id);
-        return FastNMS.INSTANCE.method$Registry$getValue(MBuiltInRegistries.ENTITY_TYPE, rl);
+    private static Object getById(String path) {
+        Object id = IdentifierProxy.INSTANCE.newInstance("minecraft", path);
+        return RegistryUtils.getRegistryValue(MBuiltInRegistries.ENTITY_TYPE, id);
     }
 
     private static int getRegistryId(Object type) {
         if (type == null) return -1;
-        return FastNMS.INSTANCE.method$Registry$getId(MBuiltInRegistries.ENTITY_TYPE, type);
+        return RegistryProxy.INSTANCE.getId$0(MBuiltInRegistries.ENTITY_TYPE, type);
     }
 }

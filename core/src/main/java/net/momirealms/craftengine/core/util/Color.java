@@ -37,6 +37,7 @@ public class Color {
         return new Color(decimal);
     }
 
+    @SuppressWarnings("PointlessBitwiseExpression")
     public static Color fromVector3f(Vector3f vec) {
         return new Color(0 << 24 /*不可省略*/ | MiscUtils.floor(vec.x) << 16 | MiscUtils.floor(vec.y) << 8 | MiscUtils.floor(vec.z));
     }

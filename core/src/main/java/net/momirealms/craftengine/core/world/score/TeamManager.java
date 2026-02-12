@@ -10,6 +10,8 @@ public interface TeamManager extends Manageable {
 
     Object getTeamByColor(LegacyChatFormatter color);
 
+    String getTeamNameByColor(LegacyChatFormatter color);
+
     static String createTeamName(LegacyChatFormatter color) {
         return "ce_" + color.name().toLowerCase(Locale.ROOT);
     }

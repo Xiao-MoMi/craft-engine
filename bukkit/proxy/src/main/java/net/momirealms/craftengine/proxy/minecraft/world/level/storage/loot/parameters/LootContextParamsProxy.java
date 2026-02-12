@@ -7,6 +7,14 @@ import net.momirealms.sparrow.reflection.proxy.annotation.ReflectionProxy;
 @ReflectionProxy(name = "net.minecraft.world.level.storage.loot.parameters.LootContextParams")
 public interface LootContextParamsProxy {
     LootContextParamsProxy INSTANCE = ASMProxyFactory.create(LootContextParamsProxy.class);
+    Object THIS_ENTITY = INSTANCE.getThisEntity();
+    Object LAST_DAMAGE_PLAYER = INSTANCE.getLastDamagePlayer();
+    Object DAMAGE_SOURCE = INSTANCE.getDamageSource();
+    Object ORIGIN = INSTANCE.getOrigin();
+    Object BLOCK_STATE = INSTANCE.getBlockState();
+    Object BLOCK_ENTITY = INSTANCE.getBlockEntity();
+    Object TOOL = INSTANCE.getTool();
+    Object EXPLOSION_RADIUS = INSTANCE.getExplosionRadius();
 
     // 全版本
     @FieldGetter(name = "THIS_ENTITY", isStatic = true)

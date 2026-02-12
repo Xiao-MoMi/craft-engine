@@ -1,12 +1,12 @@
 package net.momirealms.craftengine.bukkit.block.behavior;
 
 import net.momirealms.craftengine.bukkit.block.BukkitBlockManager;
-import net.momirealms.craftengine.bukkit.nms.FastNMS;
 import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.MBuiltInRegistries;
 import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.MRegistries;
 import net.momirealms.craftengine.bukkit.util.BlockStateUtils;
 import net.momirealms.craftengine.bukkit.util.DirectionUtils;
 import net.momirealms.craftengine.bukkit.util.KeyUtils;
+import net.momirealms.craftengine.bukkit.util.RegistryUtils;
 import net.momirealms.craftengine.core.block.CustomBlock;
 import net.momirealms.craftengine.core.block.ImmutableBlockState;
 import net.momirealms.craftengine.core.block.UpdateOption;
@@ -19,7 +19,15 @@ import net.momirealms.craftengine.core.util.Key;
 import net.momirealms.craftengine.core.util.ResourceConfigUtils;
 import net.momirealms.craftengine.core.util.VersionHelper;
 import net.momirealms.craftengine.core.util.random.RandomUtils;
+import net.momirealms.craftengine.proxy.minecraft.core.BlockPosProxy;
 import net.momirealms.craftengine.proxy.minecraft.core.DirectionProxy;
+import net.momirealms.craftengine.proxy.minecraft.resources.IdentifierProxy;
+import net.momirealms.craftengine.proxy.minecraft.tags.TagKeyProxy;
+import net.momirealms.craftengine.proxy.minecraft.world.level.BlockGetterProxy;
+import net.momirealms.craftengine.proxy.minecraft.world.level.LevelProxy;
+import net.momirealms.craftengine.proxy.minecraft.world.level.LevelWriterProxy;
+import net.momirealms.craftengine.proxy.minecraft.world.level.block.BlockProxy;
+import net.momirealms.craftengine.proxy.minecraft.world.level.block.state.BlockBehaviourProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.level.pathfinder.PathComputationTypeProxy;
 
 import java.util.Map;
@@ -54,7 +62,7 @@ public class StemBlockBehavior extends BukkitBlockBehavior implements IsPathFind
     @Override
     public boolean isPathFindable(Object thisBlock, Object[] args, Callable<Object> superMethod) throws Exception {
         return (VersionHelper.isOrAbove1_20_5() ? args[1] : args[3]).equals(PathComputationTypeProxy.AIR)
-                && !FastNMS.INSTANCE.field$BlockBehavior$hasCollision(thisBlock) || (boolean) superMethod.call();
+                && !BlockBehaviourProxy.INSTANCE.hasCollision(thisBlock) || (boolean) superMethod.call();
     }
 
     @Override
@@ -67,23 +75,23 @@ public class StemBlockBehavior extends BukkitBlockBehavior implements IsPathFind
         if (customState == null || customState.isEmpty()) return;
         int age = customState.get(ageProperty);
         if (age < ageProperty.max) {
-            FastNMS.INSTANCE.method$LevelWriter$setBlock(level, pos, customState.with(ageProperty, age + 1).customBlockState().literalObject(), 2);
+            LevelWriterProxy.INSTANCE.setBlock(level, pos, customState.with(ageProperty, age + 1).customBlockState().literalObject(), 2);
             return;
         }
         Object randomDirection = DirectionProxy.VALUES[RandomUtils.generateRandomInt(2, 6)];
-        Object blockPos = FastNMS.INSTANCE.method$BlockPos$relative(pos, randomDirection);
-        if (!FastNMS.INSTANCE.method$BlockStateBase$isAir(FastNMS.INSTANCE.method$BlockGetter$getBlockState(level, blockPos)))
+        Object blockPos = BlockPosProxy.INSTANCE.relative(pos, randomDirection);
+        if (!BlockBehaviourProxy.BlockStateBaseProxy.INSTANCE.isAir(BlockGetterProxy.INSTANCE.getBlockState(level, blockPos)))
             return;
-        Object blockState = FastNMS.INSTANCE.method$BlockGetter$getBlockState(level, FastNMS.INSTANCE.method$BlockPos$relative(blockPos, DirectionProxy.DOWN));
+        Object blockState = BlockGetterProxy.INSTANCE.getBlockState(level, BlockPosProxy.INSTANCE.relative(blockPos, DirectionProxy.DOWN));
         if (mayPlaceFruit(blockState)) {
             Optional<CustomBlock> optionalFruit = BukkitBlockManager.instance().blockById(this.fruit);
             Object fruitState = null;
             if (optionalFruit.isPresent()) {
                 fruitState = optionalFruit.get().defaultState().customBlockState().literalObject();
             } else if (fruit.namespace().equals("minecraft")) {
-                fruitState = FastNMS.INSTANCE.method$Block$defaultState(FastNMS.INSTANCE.method$Registry$getValue(
+                fruitState = BlockProxy.INSTANCE.getDefaultBlockState(RegistryUtils.getRegistryValue(
                         MBuiltInRegistries.BLOCK,
-                        FastNMS.INSTANCE.method$ResourceLocation$fromNamespaceAndPath("minecraft", fruit.value())
+                        IdentifierProxy.INSTANCE.newInstance("minecraft", fruit.value())
                 ));
             }
             Optional<CustomBlock> optionalAttachedStem = BukkitBlockManager.instance().blockById(this.attachedStem);
@@ -92,8 +100,8 @@ public class StemBlockBehavior extends BukkitBlockBehavior implements IsPathFind
             @SuppressWarnings("unchecked")
             Property<HorizontalDirection> facing = (Property<HorizontalDirection>) attachedStem.getProperty("facing");
             if (facing == null) return;
-            FastNMS.INSTANCE.method$LevelWriter$setBlock(level, blockPos, fruitState, UpdateOption.UPDATE_ALL.flags());
-            FastNMS.INSTANCE.method$LevelWriter$setBlock(level, pos, attachedStem.defaultState().with(facing, DirectionUtils.fromNMSDirection(randomDirection).toHorizontalDirection()).customBlockState().literalObject(), UpdateOption.UPDATE_ALL.flags());
+            LevelWriterProxy.INSTANCE.setBlock(level, blockPos, fruitState, UpdateOption.UPDATE_ALL.flags());
+            LevelWriterProxy.INSTANCE.setBlock(level, pos, attachedStem.defaultState().with(facing, DirectionUtils.fromNMSDirection(randomDirection).toHorizontalDirection()).customBlockState().literalObject(), UpdateOption.UPDATE_ALL.flags());
         }
     }
 
@@ -115,15 +123,15 @@ public class StemBlockBehavior extends BukkitBlockBehavior implements IsPathFind
         if (state == null || state.isEmpty()) return;
         int min = Math.min(7, state.get(ageProperty) + RandomUtils.generateRandomInt(Math.min(ageProperty.min + 2, ageProperty.max), Math.min(ageProperty.max - 2, ageProperty.max)));
         Object blockState = state.with(ageProperty, min).customBlockState().literalObject();
-        FastNMS.INSTANCE.method$LevelWriter$setBlock(args[0], args[2], blockState, 2);
+        LevelWriterProxy.INSTANCE.setBlock(args[0], args[2], blockState, 2);
         if (min >= ageProperty.max) {
-            FastNMS.INSTANCE.method$BlockBehaviour$BlockStateBase$randomTick(blockState, args[0], args[2]);
+            BlockBehaviourProxy.BlockStateBaseProxy.INSTANCE.randomTick(blockState, args[0], args[2], LevelProxy.INSTANCE.getRandom(args[0]));
         }
     }
 
     private boolean mayPlaceFruit(Object blockState) {
-        boolean flag1 = tagMayPlaceFruit != null && FastNMS.INSTANCE.method$BlockStateBase$is(blockState, tagMayPlaceFruit);
-        boolean flag2 = blockMayPlaceFruit != null && FastNMS.INSTANCE.method$BlockStateBase$isBlock(blockState, blockMayPlaceFruit);
+        boolean flag1 = tagMayPlaceFruit != null && BlockBehaviourProxy.BlockStateBaseProxy.INSTANCE.is$1(blockState, tagMayPlaceFruit);
+        boolean flag2 = blockMayPlaceFruit != null && BlockBehaviourProxy.BlockStateBaseProxy.INSTANCE.is$0(blockState, blockMayPlaceFruit);
         if (tagMayPlaceFruit == null && blockMayPlaceFruit == null) return true;
         return flag1 || flag2;
     }
@@ -136,8 +144,8 @@ public class StemBlockBehavior extends BukkitBlockBehavior implements IsPathFind
             Key fruit = Key.of(ResourceConfigUtils.requireNonEmptyStringOrThrow(arguments.get("fruit"), "warning.config.block.behavior.stem.missing_fruit"));
             Key attachedStem = Key.of(ResourceConfigUtils.requireNonEmptyStringOrThrow(arguments.get("attached-stem"), "warning.config.block.behavior.stem.missing_attached_stem"));
             int minGrowLight = ResourceConfigUtils.getAsInt(arguments.getOrDefault("light-requirement", 9), "light-requirement");
-            Object tagMayPlaceFruit = FastNMS.INSTANCE.method$TagKey$create(MRegistries.BLOCK, KeyUtils.toIdentifier(Key.of(arguments.getOrDefault("may-place-fruit", "minecraft:dirt").toString())));
-            Object blockMayPlaceFruit = FastNMS.INSTANCE.method$Registry$getValue(MBuiltInRegistries.BLOCK, KeyUtils.toIdentifier(Key.of(arguments.getOrDefault("may-place-fruit", "minecraft:farmland").toString())));
+            Object tagMayPlaceFruit = TagKeyProxy.INSTANCE.create(MRegistries.BLOCK, KeyUtils.toIdentifier(Key.of(arguments.getOrDefault("may-place-fruit", "minecraft:dirt").toString())));
+            Object blockMayPlaceFruit = RegistryUtils.getRegistryValue(MBuiltInRegistries.BLOCK, KeyUtils.toIdentifier(Key.of(arguments.getOrDefault("may-place-fruit", "minecraft:farmland").toString())));
             return new StemBlockBehavior(block, ageProperty, fruit, attachedStem, minGrowLight, tagMayPlaceFruit, blockMayPlaceFruit);
         }
     }

@@ -7,11 +7,11 @@ import net.momirealms.sparrow.reflection.proxy.annotation.ReflectionProxy;
 @ReflectionProxy(name = "net.minecraft.world.level.block.SupportType")
 public interface SupportTypeProxy {
     SupportTypeProxy INSTANCE = ASMProxyFactory.create(SupportTypeProxy.class);
-    Object[] VALUES = INSTANCE.values();
-    Object FULL = VALUES[0];
-    Object CENTER = VALUES[1];
-    Object RIGID = VALUES[2];
+    Enum<?>[] VALUES = INSTANCE.values();
+    Enum<?> FULL = VALUES[0];
+    Enum<?> CENTER = VALUES[1];
+    Enum<?> RIGID = VALUES[2];
 
     @MethodInvoker(name = "values", isStatic = true)
-    Object[] values();
+    Enum<?>[] values();
 }

@@ -1,9 +1,9 @@
 package net.momirealms.craftengine.bukkit.entity.furniture.hitbox;
 
 import net.momirealms.craftengine.bukkit.entity.data.BaseEntityData;
-import net.momirealms.craftengine.bukkit.nms.FastNMS;
 import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.MBuiltInRegistries;
 import net.momirealms.craftengine.bukkit.util.KeyUtils;
+import net.momirealms.craftengine.bukkit.util.RegistryUtils;
 import net.momirealms.craftengine.core.entity.furniture.Furniture;
 import net.momirealms.craftengine.core.entity.furniture.hitbox.AbstractFurnitureHitBoxConfig;
 import net.momirealms.craftengine.core.entity.furniture.hitbox.FurnitureHitBoxConfigFactory;
@@ -91,7 +91,7 @@ public final class CustomFurnitureHitboxConfig extends AbstractFurnitureHitBoxCo
             Vector3f position = ResourceConfigUtils.getAsVector3f(arguments.getOrDefault("position", "0"), "position");
             float scale = ResourceConfigUtils.getAsFloat(arguments.getOrDefault("scale", 1), "scale");
             String type = (String) arguments.getOrDefault("entity-type", "slime");
-            Object nmsEntityType = FastNMS.INSTANCE.method$Registry$getValue(MBuiltInRegistries.ENTITY_TYPE, KeyUtils.toIdentifier(Key.of(type)));
+            Object nmsEntityType = RegistryUtils.getRegistryValue(MBuiltInRegistries.ENTITY_TYPE, KeyUtils.toIdentifier(Key.of(type)));
             if (nmsEntityType == null) {
                 throw new LocalizedResourceConfigException("warning.config.furniture.hitbox.custom.invalid_entity", new IllegalArgumentException("EntityType not found: " + type), type);
             }

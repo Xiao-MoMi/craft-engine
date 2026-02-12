@@ -1,7 +1,15 @@
 package net.momirealms.craftengine.bukkit.util;
 
-import net.momirealms.craftengine.bukkit.nms.FastNMS;
 import net.momirealms.craftengine.core.plugin.CraftEngine;
+import net.momirealms.craftengine.core.util.VersionHelper;
+import net.momirealms.craftengine.proxy.bukkit.craftbukkit.CraftWorldProxy;
+import net.momirealms.craftengine.proxy.minecraft.network.protocol.game.ClientboundLightUpdatePacketProxy;
+import net.momirealms.craftengine.proxy.minecraft.server.level.*;
+import net.momirealms.craftengine.proxy.minecraft.server.network.ServerPlayerConnectionProxy;
+import net.momirealms.craftengine.proxy.minecraft.world.level.ChunkPosProxy;
+import net.momirealms.craftengine.proxy.minecraft.world.level.block.state.BlockBehaviourProxy;
+import net.momirealms.craftengine.proxy.minecraft.world.level.chunk.ChunkSourceProxy;
+import net.momirealms.craftengine.proxy.minecraft.world.level.lighting.LightEngineProxy;
 import org.bukkit.World;
 
 import java.util.BitSet;
@@ -12,23 +20,36 @@ public final class LightUtils {
 
     private LightUtils() {}
 
+    public static boolean hasDifferentLightProperties(Object oldState, Object newState) {
+        if (VersionHelper.isOrAbove1_21_2()) {
+            return LightEngineProxy.INSTANCE.hasDifferentLightProperties(oldState, newState);
+        } else {
+            return BlockBehaviourProxy.BlockStateBaseProxy.INSTANCE.getLightEmission(newState)
+                    != BlockBehaviourProxy.BlockStateBaseProxy.INSTANCE.getLightEmission(oldState)
+                    || BlockBehaviourProxy.BlockStateBaseProxy.INSTANCE.isUseShapeForLightOcclusion(newState)
+                    || BlockBehaviourProxy.BlockStateBaseProxy.INSTANCE.isUseShapeForLightOcclusion(oldState);
+        }
+    }
+
     public static void updateChunkLight(World world, Map<Long, BitSet> sectionPosSet) {
         try {
-            Object serverLevel = FastNMS.INSTANCE.field$CraftWorld$ServerLevel(world);
-            Object chunkSource = FastNMS.INSTANCE.method$ServerLevel$getChunkSource(serverLevel);
+            Object serverLevel = CraftWorldProxy.INSTANCE.getWorld(world);
+            Object chunkSource = ServerLevelProxy.INSTANCE.getChunkSource(serverLevel);
+            Object chunkMap = ServerChunkCacheProxy.INSTANCE.getChunkMap(chunkSource);
             for (Map.Entry<Long, BitSet> entry : sectionPosSet.entrySet()) {
                 long chunkKey = entry.getKey();
-                Object chunkHolder = FastNMS.INSTANCE.method$ServerChunkCache$getVisibleChunkIfPresent(chunkSource, chunkKey);
+                Object chunkHolder = ChunkMapProxy.INSTANCE.getVisibleChunkIfPresent(chunkMap, chunkKey);
                 if (chunkHolder == null) continue;
-                List<Object> players = FastNMS.INSTANCE.method$ChunkHolder$getPlayers(chunkHolder);
+                List<Object> players = ChunkHolderProxy.INSTANCE.getPlayers(chunkHolder, false);
                 if (players.isEmpty()) continue;
-                Object lightEngine = FastNMS.INSTANCE.method$ChunkSource$getLightEngine(chunkSource);
-                Object chunkPos = FastNMS.INSTANCE.constructor$ChunkPos((int) chunkKey, (int) (chunkKey >> 32));
-                Object lightPacket = FastNMS.INSTANCE.constructor$ClientboundLightUpdatePacket(chunkPos, lightEngine, entry.getValue(), entry.getValue());
+                Object lightEngine = ChunkSourceProxy.INSTANCE.getLightEngine(chunkSource);
+                Object chunkPos = ChunkPosProxy.INSTANCE.newInstance((int) chunkKey, (int) (chunkKey >> 32));
+                Object lightPacket = ClientboundLightUpdatePacketProxy.INSTANCE.newInstance(chunkPos, lightEngine, entry.getValue(), entry.getValue());
                 for (Object player : players) {
-                    FastNMS.INSTANCE.method$ServerPlayerConnection$send(
-                            FastNMS.INSTANCE.field$Player$connection(player),
-                            lightPacket);
+                    ServerPlayerConnectionProxy.INSTANCE.send(
+                            ServerPlayerProxy.INSTANCE.getConnection(player),
+                            lightPacket
+                    );
                 }
             }
         } catch (Exception e) {
@@ -50,7 +71,7 @@ public final class LightUtils {
 //        status.setRelighted(true);
 //        net.momirealms.craftengine.core.world.World world = player.world();
 //        Object serverLevel = world.serverWorld();
-//        Object chunkSource = FastNMS.INSTANCE.method$ServerLevel$getChunkSource(serverLevel);
+//        Object chunkSource = ServerLevelProxy.INSTANCE.getChunkSource(serverLevel);
 //        Object chunkHolder = FastNMS.INSTANCE.method$ServerChunkCache$getVisibleChunkIfPresent(chunkSource, chunkKey);
 //        if (chunkHolder == null) return;
 //        CEWorld ceWorld = BukkitWorldManager.instance().getWorld(world.uuid());

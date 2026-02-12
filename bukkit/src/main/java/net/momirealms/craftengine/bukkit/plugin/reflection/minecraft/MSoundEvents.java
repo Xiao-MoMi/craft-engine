@@ -1,6 +1,7 @@
 package net.momirealms.craftengine.bukkit.plugin.reflection.minecraft;
 
-import net.momirealms.craftengine.bukkit.nms.FastNMS;
+import net.momirealms.craftengine.bukkit.util.RegistryUtils;
+import net.momirealms.craftengine.proxy.minecraft.resources.IdentifierProxy;
 
 public final class MSoundEvents {
     private MSoundEvents() {}
@@ -12,8 +13,8 @@ public final class MSoundEvents {
     public static final Object TRIDENT_THROW = getById("item.trident.throw");
     public static final Object TOTEM_USE = getById("item.totem.use");
 
-    private static Object getById(String id) {
-        Object rl = FastNMS.INSTANCE.method$ResourceLocation$fromNamespaceAndPath("minecraft", id);
-        return FastNMS.INSTANCE.method$Registry$getValue(MBuiltInRegistries.SOUND_EVENT, rl);
+    private static Object getById(String path) {
+        Object id = IdentifierProxy.INSTANCE.newInstance("minecraft", path);
+        return RegistryUtils.getRegistryValue(MBuiltInRegistries.SOUND_EVENT, id);
     }
 }
