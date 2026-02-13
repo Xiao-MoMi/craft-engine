@@ -1,12 +1,14 @@
 package net.momirealms.craftengine.proxy.minecraft.world.level.chunk;
 
 import net.momirealms.craftengine.proxy.minecraft.world.level.block.state.BlockStateProxy;
+import net.momirealms.sparrow.reflection.clazz.SparrowClass;
 import net.momirealms.sparrow.reflection.proxy.ASMProxyFactory;
 import net.momirealms.sparrow.reflection.proxy.annotation.*;
 
 @ReflectionProxy(name = "net.minecraft.world.level.chunk.LevelChunkSection")
 public interface LevelChunkSectionProxy {
     LevelChunkSectionProxy INSTANCE = ASMProxyFactory.create(LevelChunkSectionProxy.class);
+    Class<?> CLASS = SparrowClass.find("net.minecraft.world.level.chunk.LevelChunkSection");
 
     @MethodInvoker(name = "setBlockState")
     Object setBlockState(Object target, int x, int y, int z, @Type(clazz =BlockStateProxy.class) Object blockState);

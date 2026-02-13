@@ -12,13 +12,15 @@ import net.momirealms.craftengine.proxy.minecraft.world.level.LevelReaderProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.level.block.BlockProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.level.block.SupportTypeProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.level.pathfinder.PathComputationTypeProxy;
-import net.momirealms.craftengine.proxy.minecraft.world.phys.shape.CollisionContextProxy;
+import net.momirealms.craftengine.proxy.minecraft.world.phys.shapes.CollisionContextProxy;
+import net.momirealms.sparrow.reflection.clazz.SparrowClass;
 import net.momirealms.sparrow.reflection.proxy.ASMProxyFactory;
 import net.momirealms.sparrow.reflection.proxy.annotation.*;
 
 @ReflectionProxy(name = "net.minecraft.world.level.block.state.BlockBehaviour")
 public interface BlockBehaviourProxy {
     BlockBehaviourProxy INSTANCE = ASMProxyFactory.create(BlockBehaviourProxy.class);
+    Class<?> CLASS = SparrowClass.find("net.minecraft.world.level.block.state.BlockBehaviour");
 
     @FieldGetter(name = "hasCollision")
     boolean hasCollision(Object target);
@@ -71,6 +73,7 @@ public interface BlockBehaviourProxy {
     @ReflectionProxy(name = "net.minecraft.world.level.block.state.BlockBehaviour$BlockStateBase")
     interface BlockStateBaseProxy extends StateHolderProxy {
         BlockStateBaseProxy INSTANCE = ASMProxyFactory.create(BlockStateBaseProxy.class);
+        Class<?> CLASS = SparrowClass.find("net.minecraft.world.level.block.state.BlockBehaviour$BlockStateBase");
 
         @FieldGetter(name = "lightEmission")
         int getLightEmission(Object target);
@@ -324,6 +327,7 @@ public interface BlockBehaviourProxy {
     @ReflectionProxy(name = "net.minecraft.world.level.block.state.BlockBehaviour$Properties")
     interface PropertiesProxy {
         PropertiesProxy INSTANCE = ASMProxyFactory.create(PropertiesProxy.class);
+        Class<?> CLASS = SparrowClass.find("net.minecraft.world.level.block.state.BlockBehaviour$Properties");
 
         @MethodInvoker(name = "of", isStatic = true)
         Object of();

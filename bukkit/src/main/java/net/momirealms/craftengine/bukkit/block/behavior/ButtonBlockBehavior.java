@@ -26,8 +26,8 @@ import net.momirealms.craftengine.proxy.minecraft.world.level.*;
 import net.momirealms.craftengine.proxy.minecraft.world.level.block.state.BlockBehaviourProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.level.redstone.ExperimentalRedstoneUtilsProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.phys.AABBProxy;
-import net.momirealms.craftengine.proxy.minecraft.world.phys.shape.CollisionContextProxy;
-import net.momirealms.craftengine.proxy.minecraft.world.phys.shape.VoxelShapeProxy;
+import net.momirealms.craftengine.proxy.minecraft.world.phys.shapes.CollisionContextProxy;
+import net.momirealms.craftengine.proxy.minecraft.world.phys.shapes.VoxelShapeProxy;
 import org.bukkit.Location;
 import org.bukkit.World;
 

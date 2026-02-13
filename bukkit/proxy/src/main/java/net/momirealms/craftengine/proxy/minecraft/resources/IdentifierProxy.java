@@ -1,5 +1,6 @@
 package net.momirealms.craftengine.proxy.minecraft.resources;
 
+import net.momirealms.sparrow.reflection.clazz.SparrowClass;
 import net.momirealms.sparrow.reflection.proxy.ASMProxyFactory;
 import net.momirealms.sparrow.reflection.proxy.annotation.ConstructorInvoker;
 import net.momirealms.sparrow.reflection.proxy.annotation.FieldGetter;
@@ -8,6 +9,7 @@ import net.momirealms.sparrow.reflection.proxy.annotation.ReflectionProxy;
 @ReflectionProxy(name = {"net.minecraft.resources.Identifier", "net.minecraft.resources.ResourceLocation"})
 public interface IdentifierProxy {
     IdentifierProxy INSTANCE = ASMProxyFactory.create(IdentifierProxy.class);
+    Class<?> CLASS = SparrowClass.find("net.minecraft.resources.Identifier", "net.minecraft.resources.ResourceLocation");
 
     @ConstructorInvoker
     Object newInstance(String namespace, String path);

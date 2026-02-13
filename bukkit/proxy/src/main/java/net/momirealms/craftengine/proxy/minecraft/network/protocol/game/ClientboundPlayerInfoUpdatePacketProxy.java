@@ -5,6 +5,7 @@ import net.momirealms.craftengine.proxy.minecraft.network.chat.ComponentProxy;
 import net.momirealms.craftengine.proxy.minecraft.network.chat.RemoteChatSessionProxy;
 import net.momirealms.craftengine.proxy.minecraft.network.protocol.PacketProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.level.GameTypeProxy;
+import net.momirealms.sparrow.reflection.clazz.SparrowClass;
 import net.momirealms.sparrow.reflection.proxy.ASMProxyFactory;
 import net.momirealms.sparrow.reflection.proxy.annotation.*;
 
@@ -16,6 +17,7 @@ import java.util.UUID;
 @ReflectionProxy(name = "net.minecraft.network.protocol.game.ClientboundPlayerInfoUpdatePacket")
 public interface ClientboundPlayerInfoUpdatePacketProxy extends PacketProxy {
     ClientboundPlayerInfoUpdatePacketProxy INSTANCE = ASMProxyFactory.create(ClientboundPlayerInfoUpdatePacketProxy.class);
+    Class<?> CLASS = SparrowClass.find("net.minecraft.network.protocol.game.ClientboundPlayerInfoUpdatePacket");
 
     @ConstructorInvoker
     Object newInstance(EnumSet<?> actions, List<?> entries);

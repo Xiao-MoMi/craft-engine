@@ -6,17 +6,16 @@ import net.momirealms.craftengine.bukkit.block.entity.BlockEntityHolder;
 import net.momirealms.craftengine.bukkit.block.entity.SimpleStorageBlockEntity;
 import net.momirealms.craftengine.bukkit.nms.FastNMS;
 import net.momirealms.craftengine.bukkit.plugin.BukkitCraftEngine;
-import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.NetworkReflections;
 import net.momirealms.craftengine.bukkit.util.ComponentUtils;
 import net.momirealms.craftengine.bukkit.util.EntityUtils;
 import net.momirealms.craftengine.bukkit.util.InventoryUtils;
 import net.momirealms.craftengine.bukkit.util.LegacyInventoryUtils;
 import net.momirealms.craftengine.core.item.trade.MerchantOffer;
-import net.momirealms.craftengine.core.plugin.CraftEngine;
 import net.momirealms.craftengine.core.plugin.gui.*;
 import net.momirealms.craftengine.core.util.VersionHelper;
 import net.momirealms.craftengine.proxy.bukkit.craftbukkit.inventory.CraftMerchantCustomProxy;
 import net.momirealms.craftengine.proxy.bukkit.craftbukkit.inventory.CraftMerchantProxy;
+import net.momirealms.craftengine.proxy.minecraft.network.protocol.game.ClientboundOpenScreenPacketProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.entity.player.PlayerProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.inventory.AbstractContainerMenuProxy;
 import org.bukkit.Bukkit;
@@ -75,15 +74,11 @@ public class BukkitGuiManager implements GuiManager, Listener {
     @Override
     public void updateInventoryTitle(net.momirealms.craftengine.core.entity.player.Player player, Component component) {
         Object nmsPlayer = player.serverPlayer();
-        try {
-            Object containerMenu = PlayerProxy.INSTANCE.getContainerMenu(nmsPlayer);
-            int containerId = AbstractContainerMenuProxy.INSTANCE.getContainerId(containerMenu);
-            Object menuType = AbstractContainerMenuProxy.INSTANCE.getMenuType(containerMenu);
-            Object packet = NetworkReflections.constructor$ClientboundOpenScreenPacket.newInstance(containerId, menuType, ComponentUtils.adventureToMinecraft(component));
-            player.sendPacket(packet, false);
-        } catch (Exception e) {
-            CraftEngine.instance().logger().warn("Failed to update inventory title", e);
-        }
+        Object containerMenu = PlayerProxy.INSTANCE.getContainerMenu(nmsPlayer);
+        int containerId = AbstractContainerMenuProxy.INSTANCE.getContainerId(containerMenu);
+        Object menuType = AbstractContainerMenuProxy.INSTANCE.getMenuType(containerMenu);
+        Object packet = ClientboundOpenScreenPacketProxy.INSTANCE.newInstance(containerId, menuType, ComponentUtils.adventureToMinecraft(component));
+        player.sendPacket(packet, false);
     }
 
     @Override

@@ -3,8 +3,6 @@ package net.momirealms.craftengine.bukkit.sound;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.CoreReflections;
-import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.MBuiltInRegistries;
-import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.MRegistries;
 import net.momirealms.craftengine.bukkit.util.ComponentUtils;
 import net.momirealms.craftengine.bukkit.util.KeyUtils;
 import net.momirealms.craftengine.bukkit.util.RegistryUtils;
@@ -19,6 +17,8 @@ import net.momirealms.craftengine.proxy.minecraft.core.HolderProxy;
 import net.momirealms.craftengine.proxy.minecraft.core.MappedRegistryProxy;
 import net.momirealms.craftengine.proxy.minecraft.core.RegistryAccessProxy;
 import net.momirealms.craftengine.proxy.minecraft.core.RegistryProxy;
+import net.momirealms.craftengine.proxy.minecraft.core.registries.BuiltInRegistriesProxy;
+import net.momirealms.craftengine.proxy.minecraft.core.registries.RegistriesProxy;
 import net.momirealms.craftengine.proxy.minecraft.sounds.SoundEventProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.item.JukeboxSongProxy;
 
@@ -31,7 +31,7 @@ public class BukkitSoundManager extends AbstractSoundManager {
 
     public BukkitSoundManager(CraftEngine plugin) {
         super(plugin);
-        for (Object soundEvent : (Iterable<?>) MBuiltInRegistries.SOUND_EVENT) {
+        for (Object soundEvent : (Iterable<?>) BuiltInRegistriesProxy.SOUND_EVENT) {
             Object identifier = SoundEventProxy.INSTANCE.getLocation(soundEvent);
             VANILLA_SOUND_EVENTS.add(KeyUtils.identifierToKey(identifier));
         }
@@ -99,7 +99,7 @@ public class BukkitSoundManager extends AbstractSoundManager {
     @Override
     protected void registerSounds(Collection<Key> sounds) {
         if (sounds.isEmpty()) return;
-        Object registry = MBuiltInRegistries.SOUND_EVENT;
+        Object registry = BuiltInRegistriesProxy.SOUND_EVENT;
         try {
             MappedRegistryProxy.INSTANCE.setFrozen(registry, false);
             for (Key soundEventId : sounds) {
@@ -108,9 +108,7 @@ public class BukkitSoundManager extends AbstractSoundManager {
                 Object soundEvent = RegistryUtils.getRegistryValue(registry, identifier);
                 // 只有没注册才注册，否则会报错
                 if (soundEvent == null) {
-                    soundEvent = VersionHelper.isOrAbove1_21_2() ?
-                            CoreReflections.constructor$SoundEvent.newInstance(identifier, Optional.of(0)) :
-                            CoreReflections.constructor$SoundEvent.newInstance(identifier, 0, false);
+                    soundEvent = SoundEventProxy.INSTANCE.create(identifier, Optional.of(0f));
                     Object holder = RegistryProxy.INSTANCE.registerForHolder$1(registry, identifier, soundEvent);
                     HolderProxy.ReferenceProxy.INSTANCE.bindValue(holder, soundEvent);
                     HolderProxy.ReferenceProxy.INSTANCE.setTags(holder, Set.of());
@@ -129,7 +127,7 @@ public class BukkitSoundManager extends AbstractSoundManager {
     protected void registerSongs(Map<Key, JukeboxSong> songs) {
         if (songs.isEmpty()) return;
         Object registryAccess = RegistryUtils.getRegistryAccess();
-        Object registry = RegistryAccessProxy.INSTANCE.lookupOrThrow(registryAccess, MRegistries.JUKEBOX_SONG);
+        Object registry = RegistryAccessProxy.INSTANCE.lookupOrThrow(registryAccess, RegistriesProxy.JUKEBOX_SONG);
         try {
             // 获取 JUKEBOX_SONG 注册表
             MappedRegistryProxy.INSTANCE.setFrozen(registry, false);
@@ -142,9 +140,7 @@ public class BukkitSoundManager extends AbstractSoundManager {
                 Object song = RegistryUtils.getRegistryValue(registry, identifier);
                 // 只有没注册才注册，否则会报错
                 if (song == null) {
-                    Object soundEvent = VersionHelper.isOrAbove1_21_2() ?
-                            CoreReflections.constructor$SoundEvent.newInstance(soundId, Optional.of(jukeboxSong.range())) :
-                            CoreReflections.constructor$SoundEvent.newInstance(soundId, jukeboxSong.range(), false);
+                    Object soundEvent = SoundEventProxy.INSTANCE.create(soundId, Optional.of(jukeboxSong.range()));
                     Object soundHolder = HolderProxy.INSTANCE.direct(soundEvent);
                     song = JukeboxSongProxy.INSTANCE.newInstance(soundHolder, ComponentUtils.adventureToMinecraft(jukeboxSong.description()), jukeboxSong.lengthInSeconds(), jukeboxSong.comparatorOutput());
                     Object holder = RegistryProxy.INSTANCE.registerForHolder$1(registry, identifier, song);

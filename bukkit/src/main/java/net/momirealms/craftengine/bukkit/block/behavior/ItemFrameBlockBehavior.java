@@ -91,7 +91,7 @@ public class ItemFrameBlockBehavior extends BukkitBlockBehavior implements Entit
     }
 
     private static int getSignal(Object blockState, Object blockAccess, Object pos, Object side) {
-        if (!CoreReflections.clazz$Level.isInstance(blockAccess)) {
+        if (!LevelProxy.CLASS.isInstance(blockAccess)) {
             return 0;
         }
         ImmutableBlockState state = BlockStateUtils.getOptionalCustomBlockState(blockState).orElse(null);

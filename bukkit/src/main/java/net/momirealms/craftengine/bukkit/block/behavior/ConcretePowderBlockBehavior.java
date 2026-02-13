@@ -23,6 +23,7 @@ import net.momirealms.craftengine.proxy.minecraft.core.BlockPosProxy;
 import net.momirealms.craftengine.proxy.minecraft.core.DirectionProxy;
 import net.momirealms.craftengine.proxy.minecraft.core.MutableBlockPosProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.level.BlockGetterProxy;
+import net.momirealms.craftengine.proxy.minecraft.world.level.LevelProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.level.block.SupportTypeProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.level.block.state.BlockBehaviourProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.level.material.FluidStateProxy;
@@ -88,7 +89,7 @@ public class ConcretePowderBlockBehavior extends BukkitBlockBehavior {
         Object level = args[updateShape$level];
         Object pos = args[updateShape$blockPos];
         if (touchesLiquid(level, pos)) {
-            if (!CoreReflections.clazz$Level.isInstance(level)) {
+            if (!LevelProxy.CLASS.isInstance(level)) {
                 return getDefaultBlockState();
             } else {
                 BlockState craftBlockState = (BlockState) CraftBlockStatesProxy.INSTANCE.getBlockState(level, pos);

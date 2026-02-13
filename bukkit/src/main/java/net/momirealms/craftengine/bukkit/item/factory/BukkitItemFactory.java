@@ -2,7 +2,6 @@ package net.momirealms.craftengine.bukkit.item.factory;
 
 import com.google.gson.JsonElement;
 import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.CoreReflections;
-import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.MBuiltInRegistries;
 import net.momirealms.craftengine.bukkit.util.ItemTags;
 import net.momirealms.craftengine.bukkit.util.KeyUtils;
 import net.momirealms.craftengine.core.item.ItemFactory;
@@ -17,6 +16,8 @@ import net.momirealms.craftengine.core.util.StringUtils;
 import net.momirealms.craftengine.core.util.UniqueKey;
 import net.momirealms.craftengine.core.util.VersionHelper;
 import net.momirealms.craftengine.proxy.minecraft.core.RegistryProxy;
+import net.momirealms.craftengine.proxy.minecraft.core.registries.BuiltInRegistriesProxy;
+import net.momirealms.craftengine.proxy.minecraft.world.item.BlockItemProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.item.ItemStackProxy;
 import net.momirealms.sparrow.nbt.Tag;
 import org.bukkit.Bukkit;
@@ -74,14 +75,14 @@ public abstract class BukkitItemFactory<W extends ItemWrapper<ItemStack>> extend
 
     @Override
     protected boolean isBlockItem(W item) {
-        return CoreReflections.clazz$BlockItem.isInstance(ItemStackProxy.INSTANCE.getItem(item.getLiteralObject()));
+        return BlockItemProxy.CLASS.isInstance(ItemStackProxy.INSTANCE.getItem(item.getLiteralObject()));
     }
 
     @Override
     protected Key vanillaId(W item) {
         Object i = ItemStackProxy.INSTANCE.getItem(item.getLiteralObject());
         if (i == null) return ItemKeys.AIR;
-        return KeyUtils.identifierToKey(RegistryProxy.INSTANCE.getKey(MBuiltInRegistries.ITEM, i));
+        return KeyUtils.identifierToKey(RegistryProxy.INSTANCE.getKey(BuiltInRegistriesProxy.ITEM, i));
     }
 
     @Override

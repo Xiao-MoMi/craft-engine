@@ -3,6 +3,7 @@ package net.momirealms.craftengine.bukkit.plugin.reflection.minecraft;
 import net.momirealms.craftengine.bukkit.util.KeyUtils;
 import net.momirealms.craftengine.bukkit.util.RegistryUtils;
 import net.momirealms.craftengine.core.util.Key;
+import net.momirealms.craftengine.proxy.minecraft.core.registries.BuiltInRegistriesProxy;
 import net.momirealms.craftengine.proxy.minecraft.resources.IdentifierProxy;
 import org.jetbrains.annotations.Nullable;
 
@@ -17,11 +18,11 @@ public final class MItems {
     @Nullable
     private static Object getById(String path) {
         Object id = IdentifierProxy.INSTANCE.newInstance("minecraft", path);
-        return RegistryUtils.getRegistryValue(MBuiltInRegistries.ITEM, id);
+        return RegistryUtils.getRegistryValue(BuiltInRegistriesProxy.ITEM, id);
     }
 
     @Nullable
     public static Object getById(Key id) {
-        return RegistryUtils.getRegistryValue(MBuiltInRegistries.ITEM, KeyUtils.toIdentifier(id));
+        return RegistryUtils.getRegistryValue(BuiltInRegistriesProxy.ITEM, KeyUtils.toIdentifier(id));
     }
 }

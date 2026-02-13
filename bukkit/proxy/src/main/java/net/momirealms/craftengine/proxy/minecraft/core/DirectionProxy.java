@@ -1,5 +1,6 @@
 package net.momirealms.craftengine.proxy.minecraft.core;
 
+import net.momirealms.sparrow.reflection.clazz.SparrowClass;
 import net.momirealms.sparrow.reflection.proxy.ASMProxyFactory;
 import net.momirealms.sparrow.reflection.proxy.annotation.MethodInvoker;
 import net.momirealms.sparrow.reflection.proxy.annotation.ReflectionProxy;
@@ -7,6 +8,7 @@ import net.momirealms.sparrow.reflection.proxy.annotation.ReflectionProxy;
 @ReflectionProxy(name = "net.minecraft.core.Direction")
 public interface DirectionProxy {
     DirectionProxy INSTANCE = ASMProxyFactory.create(DirectionProxy.class);
+    Class<?> CLASS = SparrowClass.find("net.minecraft.core.Direction");
     Enum<?>[] VALUES = INSTANCE.values();
     Enum<?> DOWN = VALUES[0];
     Enum<?> UP = VALUES[1];

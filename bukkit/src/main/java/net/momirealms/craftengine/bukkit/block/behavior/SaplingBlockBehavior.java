@@ -3,8 +3,6 @@ package net.momirealms.craftengine.bukkit.block.behavior;
 import net.momirealms.antigrieflib.Flag;
 import net.momirealms.craftengine.bukkit.api.CraftEngineBlocks;
 import net.momirealms.craftengine.bukkit.plugin.BukkitCraftEngine;
-import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.CoreReflections;
-import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.MRegistries;
 import net.momirealms.craftengine.bukkit.util.*;
 import net.momirealms.craftengine.bukkit.world.BukkitWorldManager;
 import net.momirealms.craftengine.core.block.CustomBlock;
@@ -29,6 +27,7 @@ import net.momirealms.craftengine.proxy.minecraft.core.HolderProxy;
 import net.momirealms.craftengine.proxy.minecraft.core.RegistryAccessProxy;
 import net.momirealms.craftengine.proxy.minecraft.core.RegistryProxy;
 import net.momirealms.craftengine.proxy.minecraft.core.Vec3iProxy;
+import net.momirealms.craftengine.proxy.minecraft.core.registries.RegistriesProxy;
 import net.momirealms.craftengine.proxy.minecraft.server.level.ServerChunkCacheProxy;
 import net.momirealms.craftengine.proxy.minecraft.server.level.ServerLevelProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.level.BlockGetterProxy;
@@ -97,7 +96,7 @@ public class SaplingBlockBehavior extends BukkitBlockBehavior {
         Object holder = BukkitWorldManager.instance().configuredFeatureById(treeFeature());
         if (holder == null) {
             Object registryAccess = RegistryUtils.getRegistryAccess();
-            Object registry = RegistryAccessProxy.INSTANCE.lookupOrThrow(registryAccess, MRegistries.CONFIGURED_FEATURE);
+            Object registry = RegistryAccessProxy.INSTANCE.lookupOrThrow(registryAccess, RegistriesProxy.CONFIGURED_FEATURE);
             if (registry == null) return;
             Optional<Object> optionalHolder;
             if (VersionHelper.isOrAbove1_21_2()) {
@@ -140,7 +139,7 @@ public class SaplingBlockBehavior extends BukkitBlockBehavior {
         boolean sendParticles = false;
         Object visualState = customState.visualBlockState().literalObject();
         Object visualStateBlock = BlockStateUtils.getBlockOwner(visualState);
-        if (CoreReflections.clazz$BonemealableBlock.isInstance(visualStateBlock)) {
+        if (BonemealableBlockProxy.CLASS.isInstance(visualStateBlock)) {
             boolean is;
             if (VersionHelper.isOrAbove1_20_2()) {
                 is = BonemealableBlockProxy.INSTANCE.isValidBonemealTarget(visualStateBlock, level, blockPos, visualState);
@@ -189,7 +188,7 @@ public class SaplingBlockBehavior extends BukkitBlockBehavior {
         boolean sendSwing = false;
         Object visualState = state.visualBlockState().literalObject();
         Object visualStateBlock = BlockStateUtils.getBlockOwner(visualState);
-        if (CoreReflections.clazz$BonemealableBlock.isInstance(visualStateBlock)) {
+        if (BonemealableBlockProxy.CLASS.isInstance(visualStateBlock)) {
             boolean is;
             if (VersionHelper.isOrAbove1_20_2()) {
                 is = BonemealableBlockProxy.INSTANCE.isValidBonemealTarget(visualStateBlock, world.serverWorld(), LocationUtils.toBlockPos(pos), visualState);

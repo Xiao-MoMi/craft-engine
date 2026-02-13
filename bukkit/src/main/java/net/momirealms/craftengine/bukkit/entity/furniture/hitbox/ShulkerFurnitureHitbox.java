@@ -3,13 +3,11 @@ package net.momirealms.craftengine.bukkit.entity.furniture.hitbox;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
 import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.MAttributeHolders;
 import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.MEntityTypes;
-import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.NetworkReflections;
 import net.momirealms.craftengine.bukkit.util.PacketUtils;
 import net.momirealms.craftengine.core.entity.furniture.Collider;
 import net.momirealms.craftengine.core.entity.furniture.Furniture;
 import net.momirealms.craftengine.core.entity.furniture.hitbox.FurnitureHitboxPart;
 import net.momirealms.craftengine.core.entity.player.Player;
-import net.momirealms.craftengine.core.plugin.CraftEngine;
 import net.momirealms.craftengine.core.util.QuaternionUtils;
 import net.momirealms.craftengine.core.util.VersionHelper;
 import net.momirealms.craftengine.core.world.WorldPosition;
@@ -69,13 +67,9 @@ public final class ShulkerFurnitureHitbox extends AbstractFurnitureHitBox {
         if (originalY != processedY) {
             double deltaY = originalY - processedY;
             short ya = (short) (deltaY * 8192);
-            try {
-                packets.add(NetworkReflections.constructor$ClientboundMoveEntityPacket$Pos.newInstance(
-                        entityIds[1], (short) 0, ya, (short) 0, true
-                ));
-            } catch (ReflectiveOperationException e) {
-                CraftEngine.instance().logger().warn("Failed to construct ClientboundMoveEntityPacket$Pos", e);
-            }
+            packets.add(ClientboundMoveEntityPacketProxy.PosProxy.INSTANCE.newInstance(
+                    this.entityIds[1], (short) 0, ya, (short) 0, true
+            ));
         }
         if (VersionHelper.isOrAbove1_20_5() && config.scale() != 1) {
             Object attributeIns = AttributeInstanceProxy.INSTANCE.newInstance$0(MAttributeHolders.SCALE, $ -> {});

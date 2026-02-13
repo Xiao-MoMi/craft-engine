@@ -1,11 +1,12 @@
 package net.momirealms.craftengine.bukkit.util;
 
-import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.MBuiltInRegistries;
+
 import net.momirealms.craftengine.core.plugin.context.Context;
 import net.momirealms.craftengine.core.util.Key;
 import net.momirealms.craftengine.core.util.VersionHelper;
 import net.momirealms.craftengine.core.world.particle.*;
 import net.momirealms.craftengine.proxy.bukkit.craftbukkit.CraftParticleProxy;
+import net.momirealms.craftengine.proxy.minecraft.core.registries.BuiltInRegistriesProxy;
 import org.bukkit.Location;
 import org.bukkit.Particle;
 import org.bukkit.Vibration;
@@ -36,7 +37,7 @@ public final class ParticleUtils {
     @Nullable
     public static Particle getParticle(Key particle) {
         return CACHE.computeIfAbsent(particle, k -> {
-            Object nmsParticle = RegistryUtils.getRegistryValue(MBuiltInRegistries.PARTICLE_TYPE, KeyUtils.toIdentifier(particle));
+            Object nmsParticle = RegistryUtils.getRegistryValue(BuiltInRegistriesProxy.PARTICLE_TYPE, KeyUtils.toIdentifier(particle));
             if (nmsParticle == null) return null;
             return CraftParticleProxy.INSTANCE.minecraftToBukkit(nmsParticle);
         });

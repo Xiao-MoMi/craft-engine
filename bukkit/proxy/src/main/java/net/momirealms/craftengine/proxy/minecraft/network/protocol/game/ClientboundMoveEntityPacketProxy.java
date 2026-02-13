@@ -1,6 +1,7 @@
 package net.momirealms.craftengine.proxy.minecraft.network.protocol.game;
 
 import net.momirealms.craftengine.proxy.minecraft.network.protocol.PacketProxy;
+import net.momirealms.sparrow.reflection.clazz.SparrowClass;
 import net.momirealms.sparrow.reflection.proxy.ASMProxyFactory;
 import net.momirealms.sparrow.reflection.proxy.annotation.ConstructorInvoker;
 import net.momirealms.sparrow.reflection.proxy.annotation.FieldGetter;
@@ -68,8 +69,18 @@ public interface ClientboundMoveEntityPacketProxy extends PacketProxy {
     @ReflectionProxy(name = "net.minecraft.network.protocol.game.ClientboundMoveEntityPacket$PosRot")
     interface PosRotProxy {
         PosRotProxy INSTANCE = ASMProxyFactory.create(PosRotProxy.class);
+        Class<?> CLASS = SparrowClass.find("net.minecraft.network.protocol.game.ClientboundMoveEntityPacket$PosRot");
 
         @ConstructorInvoker
         Object newInstance(int entityId, short xa, short ya, short za, byte yRot, byte xRot, boolean onGround);
+    }
+
+    @ReflectionProxy(name = "net.minecraft.network.protocol.game.ClientboundMoveEntityPacket$Pos")
+    interface PosProxy {
+        PosProxy INSTANCE = ASMProxyFactory.create(PosProxy.class);
+        Class<?> CLASS = SparrowClass.find("net.minecraft.network.protocol.game.ClientboundMoveEntityPacket$Pos");
+
+        @ConstructorInvoker
+        Object newInstance(int entityId, short deltaX, short deltaY, short deltaZ, boolean onGround);
     }
 }

@@ -20,6 +20,7 @@ import net.momirealms.craftengine.proxy.bukkit.craftbukkit.block.CraftBlockProxy
 import net.momirealms.craftengine.proxy.minecraft.core.DirectionProxy;
 import net.momirealms.craftengine.proxy.minecraft.core.Vec3iProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.entity.EntityProxy;
+import net.momirealms.craftengine.proxy.minecraft.world.entity.LivingEntityProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.level.EntityGetterProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.level.LevelAccessorProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.level.LevelProxy;
@@ -122,7 +123,7 @@ public class PressurePlateBlockBehavior extends BukkitBlockBehavior {
     protected int getSignalStrength(Object level, Object pos) {
         Class<?> clazz = switch (this.pressurePlateSensitivity) {
             case EVERYTHING -> CoreReflections.clazz$Entity;
-            case MOBS -> CoreReflections.clazz$LivingEntity;
+            case MOBS -> LivingEntityProxy.CLASS;
         };
         Object box = AABBProxy.INSTANCE.move$1(BasePressurePlateBlockProxy.INSTANCE.getTouchAABB(), pos);
         return !EntityGetterProxy.INSTANCE.getEntitiesOfClass(

@@ -52,10 +52,10 @@ public final class WorldStorageInjector {
         ByteBuddy byteBuddy = new ByteBuddy(ClassFileVersion.JAVA_V17);
         // Paletted Container
         clazz$InjectedPalettedContainer = byteBuddy
-                .subclass(CoreReflections.clazz$PalettedContainer)
+                .subclass(PalettedContainerProxy.CLASS)
                 .name("net.minecraft.world.level.chunk.InjectedPalettedContainer")
                 .implement(InjectedHolder.Palette.class)
-                .defineField("target", CoreReflections.clazz$PalettedContainer, Visibility.PUBLIC)
+                .defineField("target", PalettedContainerProxy.CLASS, Visibility.PUBLIC)
                 .defineField("active", boolean.class, Visibility.PUBLIC)
                 .defineField("cesection", CESection.class, Visibility.PRIVATE)
                 .defineField("cechunk", CEChunk.class, Visibility.PRIVATE)
@@ -86,7 +86,7 @@ public final class WorldStorageInjector {
                 .getLoaded();
         // Level Chunk Section
         Class<?> clazz$InjectedLevelChunkSection = byteBuddy
-                .subclass(CoreReflections.clazz$LevelChunkSection, ConstructorStrategy.Default.IMITATE_SUPER_CLASS_OPENING)
+                .subclass(LevelChunkSectionProxy.CLASS, ConstructorStrategy.Default.IMITATE_SUPER_CLASS_OPENING)
                 .name("net.minecraft.world.level.chunk.InjectedLevelChunkSection")
                 .implement(InjectedHolder.Section.class)
                 .defineField("active", boolean.class, Visibility.PUBLIC)
@@ -108,8 +108,8 @@ public final class WorldStorageInjector {
                 .getLoaded();
 
         constructor$InjectedLevelChunkSection = MethodHandles.publicLookup().in(clazz$InjectedLevelChunkSection)
-                .findConstructor(clazz$InjectedLevelChunkSection, MethodType.methodType(void.class, CoreReflections.clazz$PalettedContainer, CoreReflections.clazz$PalettedContainer))
-                .asType(MethodType.methodType(CoreReflections.clazz$LevelChunkSection, CoreReflections.clazz$PalettedContainer, CoreReflections.clazz$PalettedContainer));
+                .findConstructor(clazz$InjectedLevelChunkSection, MethodType.methodType(void.class, PalettedContainerProxy.CLASS, PalettedContainerProxy.CLASS))
+                .asType(MethodType.methodType(LevelChunkSectionProxy.CLASS, PalettedContainerProxy.CLASS, PalettedContainerProxy.CLASS));
     }
 
     public synchronized static void injectLevelChunkSection(Object targetSection, CESection ceSection, CEChunk chunk, SectionPos pos, Consumer<Object> callback) {

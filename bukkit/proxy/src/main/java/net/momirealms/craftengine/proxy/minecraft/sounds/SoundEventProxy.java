@@ -2,6 +2,7 @@ package net.momirealms.craftengine.proxy.minecraft.sounds;
 
 import net.momirealms.craftengine.proxy.minecraft.network.FriendlyByteBufProxy;
 import net.momirealms.craftengine.proxy.minecraft.resources.IdentifierProxy;
+import net.momirealms.sparrow.reflection.clazz.SparrowClass;
 import net.momirealms.sparrow.reflection.proxy.ASMProxyFactory;
 import net.momirealms.sparrow.reflection.proxy.annotation.FieldGetter;
 import net.momirealms.sparrow.reflection.proxy.annotation.MethodInvoker;
@@ -13,6 +14,7 @@ import java.util.Optional;
 @ReflectionProxy(name = "net.minecraft.sounds.SoundEvent")
 public interface SoundEventProxy {
     SoundEventProxy INSTANCE = ASMProxyFactory.create(SoundEventProxy.class);
+    Class<?> CLASS = SparrowClass.find("net.minecraft.sounds.SoundEvent");
 
     @FieldGetter(name = "DIRECT_STREAM_CODEC", isStatic = true, activeIf = "min_version=1.20.5")
     Object getDirectStreamCodec();

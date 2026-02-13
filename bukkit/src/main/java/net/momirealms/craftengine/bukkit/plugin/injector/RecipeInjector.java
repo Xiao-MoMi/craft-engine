@@ -23,12 +23,14 @@ import net.momirealms.craftengine.core.item.ItemKeys;
 import net.momirealms.craftengine.core.item.data.FireworkExplosion;
 import net.momirealms.craftengine.core.util.*;
 import net.momirealms.craftengine.proxy.bukkit.craftbukkit.inventory.CraftItemStackProxy;
+import net.momirealms.craftengine.proxy.minecraft.core.HolderLookupProxy;
+import net.momirealms.craftengine.proxy.minecraft.core.RegistryAccessProxy;
+import net.momirealms.craftengine.proxy.minecraft.resources.IdentifierProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.ContainerProxy;
-import net.momirealms.craftengine.proxy.minecraft.world.item.DyeColorProxy;
-import net.momirealms.craftengine.proxy.minecraft.world.item.DyeItemProxy;
-import net.momirealms.craftengine.proxy.minecraft.world.item.ItemProxy;
-import net.momirealms.craftengine.proxy.minecraft.world.item.ItemStackProxy;
+import net.momirealms.craftengine.proxy.minecraft.world.inventory.CraftingContainerProxy;
+import net.momirealms.craftengine.proxy.minecraft.world.item.*;
 import net.momirealms.craftengine.proxy.minecraft.world.item.crafting.*;
+import net.momirealms.craftengine.proxy.minecraft.world.level.LevelProxy;
 import org.bukkit.inventory.ItemStack;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -52,16 +54,16 @@ public final class RecipeInjector {
         ByteBuddy byteBuddy = new ByteBuddy(ClassFileVersion.JAVA_V17);
 
         ElementMatcher.Junction<MethodDescription> matches = (VersionHelper.isOrAbove1_21() ?
-                ElementMatchers.takesArguments(CoreReflections.clazz$CraftingInput, CoreReflections.clazz$Level) :
-                ElementMatchers.takesArguments(CoreReflections.clazz$CraftingContainer, CoreReflections.clazz$Level)
+                ElementMatchers.takesArguments(CraftingInputProxy.CLASS, LevelProxy.CLASS) :
+                ElementMatchers.takesArguments(CraftingContainerProxy.CLASS, LevelProxy.CLASS)
         ).and(ElementMatchers.returns(boolean.class));
         ElementMatcher.Junction<MethodDescription> assemble = (
                 VersionHelper.isOrAbove1_21() ?
-                        ElementMatchers.takesArguments(CoreReflections.clazz$CraftingInput, CoreReflections.clazz$HolderLookup$Provider) :
+                        ElementMatchers.takesArguments(CraftingInputProxy.CLASS, HolderLookupProxy.ProviderProxy.CLASS) :
                         VersionHelper.isOrAbove1_20_5() ?
-                                ElementMatchers.takesArguments(CoreReflections.clazz$CraftingContainer, CoreReflections.clazz$HolderLookup$Provider) :
-                                ElementMatchers.takesArguments(CoreReflections.clazz$CraftingContainer, CoreReflections.clazz$RegistryAccess)
-        ).and(ElementMatchers.returns(CoreReflections.clazz$ItemStack));
+                                ElementMatchers.takesArguments(CraftingContainerProxy.CLASS, HolderLookupProxy.ProviderProxy.CLASS) :
+                                ElementMatchers.takesArguments(CraftingContainerProxy.CLASS, RegistryAccessProxy.CLASS)
+        ).and(ElementMatchers.returns(ItemStackProxy.CLASS));
 
         clazz$InjectedArmorDyeRecipe = byteBuddy
                 .subclass(ArmorDyeRecipeProxy.CLASS, ConstructorStrategy.Default.IMITATE_SUPER_CLASS_OPENING)
@@ -111,10 +113,10 @@ public final class RecipeInjector {
     @NotNull
     private static Object createSpecialRecipe(Key id, Class<?> clazz$InjectedRepairItemRecipe) throws InstantiationException, IllegalAccessException, java.lang.reflect.InvocationTargetException {
         if (VersionHelper.isOrAbove1_20_2()) {
-            Constructor<?> constructor = ReflectionUtils.getConstructor(clazz$InjectedRepairItemRecipe, CoreReflections.clazz$CraftingBookCategory);
+            Constructor<?> constructor = ReflectionUtils.getConstructor(clazz$InjectedRepairItemRecipe, CraftingBookCategoryProxy.CLASS);
             return constructor.newInstance(CraftingBookCategoryProxy.MISC);
         } else {
-            Constructor<?> constructor = ReflectionUtils.getConstructor(clazz$InjectedRepairItemRecipe, CoreReflections.clazz$Identifier, CoreReflections.clazz$CraftingBookCategory);
+            Constructor<?> constructor = ReflectionUtils.getConstructor(clazz$InjectedRepairItemRecipe, IdentifierProxy.CLASS, CraftingBookCategoryProxy.CLASS);
             return constructor.newInstance(KeyUtils.toIdentifier(id), CraftingBookCategoryProxy.MISC);
         }
     }
@@ -356,7 +358,7 @@ public final class RecipeInjector {
                     (item -> item.hasItemTag(ItemTags.DYEABLE)) :
                     (item -> {
                        Object itemLike = ItemStackProxy.INSTANCE.getItem(item.getLiteralObject());
-                       return CoreReflections.clazz$DyeableLeatherItem.isInstance(itemLike);
+                       return DyeableLeatherItemProxy.CLASS.isInstance(itemLike);
                     });
 
     private static boolean isDyeable(final Item<ItemStack> item) {

@@ -2,12 +2,14 @@ package net.momirealms.craftengine.proxy.minecraft.world.entity.player;
 
 import net.momirealms.craftengine.proxy.minecraft.world.entity.LivingEntityProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.item.ItemStackProxy;
+import net.momirealms.sparrow.reflection.clazz.SparrowClass;
 import net.momirealms.sparrow.reflection.proxy.ASMProxyFactory;
 import net.momirealms.sparrow.reflection.proxy.annotation.*;
 
 @ReflectionProxy(name = "net.minecraft.world.entity.player.Player")
 public interface PlayerProxy extends LivingEntityProxy {
     PlayerProxy INSTANCE = ASMProxyFactory.create(PlayerProxy.class);
+    Class<?> CLASS = SparrowClass.find("net.minecraft.world.entity.player.Player");
 
     @FieldGetter(name = "containerMenu")
     Object getContainerMenu(Object target);

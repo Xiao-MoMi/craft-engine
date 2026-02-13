@@ -2,6 +2,7 @@ package net.momirealms.craftengine.bukkit.plugin.reflection.minecraft;
 
 import net.momirealms.craftengine.bukkit.util.RegistryUtils;
 import net.momirealms.craftengine.proxy.minecraft.core.RegistryProxy;
+import net.momirealms.craftengine.proxy.minecraft.core.registries.BuiltInRegistriesProxy;
 import net.momirealms.craftengine.proxy.minecraft.resources.IdentifierProxy;
 
 public final class MEntityTypes {
@@ -80,11 +81,11 @@ public final class MEntityTypes {
 
     private static Object getById(String path) {
         Object id = IdentifierProxy.INSTANCE.newInstance("minecraft", path);
-        return RegistryUtils.getRegistryValue(MBuiltInRegistries.ENTITY_TYPE, id);
+        return RegistryUtils.getRegistryValue(BuiltInRegistriesProxy.ENTITY_TYPE, id);
     }
 
     private static int getRegistryId(Object type) {
         if (type == null) return -1;
-        return RegistryProxy.INSTANCE.getId$0(MBuiltInRegistries.ENTITY_TYPE, type);
+        return RegistryProxy.INSTANCE.getId$0(BuiltInRegistriesProxy.ENTITY_TYPE, type);
     }
 }

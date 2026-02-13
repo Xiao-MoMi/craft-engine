@@ -2,6 +2,7 @@ package net.momirealms.craftengine.bukkit.plugin.reflection.minecraft;
 
 import net.momirealms.craftengine.bukkit.util.RegistryUtils;
 import net.momirealms.craftengine.core.util.VersionHelper;
+import net.momirealms.craftengine.proxy.minecraft.core.registries.BuiltInRegistriesProxy;
 import net.momirealms.craftengine.proxy.minecraft.resources.IdentifierProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.level.block.BlockProxy;
 
@@ -37,6 +38,6 @@ public final class MBlocks {
 
     private static Object getById(String path) {
         Object id = IdentifierProxy.INSTANCE.newInstance("minecraft", path);
-        return RegistryUtils.getRegistryValue(MBuiltInRegistries.BLOCK, id);
+        return RegistryUtils.getRegistryValue(BuiltInRegistriesProxy.BLOCK, id);
     }
 }

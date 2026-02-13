@@ -8,6 +8,8 @@ import net.momirealms.sparrow.reflection.proxy.annotation.*;
 @ReflectionProxy(name = "net.minecraft.world.item.trading.ItemCost", activeIf = "min_version=1.20.5")
 public interface ItemCostProxy {
     ItemCostProxy INSTANCE = ASMProxyFactory.create(ItemCostProxy.class);
+    Object STREAM_CODEC = INSTANCE.getStreamCodec();
+    Object OPTIONAL_STREAM_CODEC = INSTANCE.getOptionalStreamCodec();
 
     @ConstructorInvoker
     Object newInstance(@Type(clazz = HolderProxy.class) Object item, int count, @Type(clazz = DataComponentExactPredicateProxy.class) Object components);
@@ -17,4 +19,10 @@ public interface ItemCostProxy {
 
     @FieldSetter(name = "itemStack")
     void setItemStack(Object target, Object itemStack);
+
+    @FieldGetter(name = "STREAM_CODEC", isStatic = true)
+    Object getStreamCodec();
+
+    @FieldGetter(name = "OPTIONAL_STREAM_CODEC", isStatic = true)
+    Object getOptionalStreamCodec();
 }

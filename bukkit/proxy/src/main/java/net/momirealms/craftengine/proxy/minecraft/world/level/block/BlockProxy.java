@@ -8,12 +8,14 @@ import net.momirealms.craftengine.proxy.minecraft.world.level.LevelProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.level.LevelReaderProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.level.block.state.BlockBehaviourProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.level.block.state.BlockStateProxy;
+import net.momirealms.sparrow.reflection.clazz.SparrowClass;
 import net.momirealms.sparrow.reflection.proxy.ASMProxyFactory;
 import net.momirealms.sparrow.reflection.proxy.annotation.*;
 
 @ReflectionProxy(name = "net.minecraft.world.level.block.Block")
 public interface BlockProxy extends BlockBehaviourProxy {
     BlockProxy INSTANCE = ASMProxyFactory.create(BlockProxy.class);
+    Class<?> CLASS = SparrowClass.find("net.minecraft.world.level.block.Block");
     Object BLOCK_STATE_REGISTRY = INSTANCE.getBlockStateRegistry();
 
     @FieldGetter(name = "BLOCK_STATE_REGISTRY", isStatic = true)

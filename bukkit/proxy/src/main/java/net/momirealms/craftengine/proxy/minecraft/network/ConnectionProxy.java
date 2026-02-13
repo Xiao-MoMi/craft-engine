@@ -4,6 +4,7 @@ import io.netty.channel.Channel;
 import io.netty.channel.ChannelFutureListener;
 import net.momirealms.craftengine.proxy.minecraft.network.chat.ComponentProxy;
 import net.momirealms.craftengine.proxy.minecraft.network.protocol.PacketProxy;
+import net.momirealms.sparrow.reflection.clazz.SparrowClass;
 import net.momirealms.sparrow.reflection.proxy.ASMProxyFactory;
 import net.momirealms.sparrow.reflection.proxy.annotation.*;
 import org.jspecify.annotations.Nullable;
@@ -11,6 +12,7 @@ import org.jspecify.annotations.Nullable;
 @ReflectionProxy(name = "net.minecraft.network.Connection")
 public interface ConnectionProxy {
     ConnectionProxy INSTANCE = ASMProxyFactory.create(ConnectionProxy.class);
+    Class<?> CLASS = SparrowClass.find("net.minecraft.network.Connection");
 
     @MethodInvoker(name = "disconnect")
     void disconnect(Object target, @Type(clazz = ComponentProxy.class) Object reason);

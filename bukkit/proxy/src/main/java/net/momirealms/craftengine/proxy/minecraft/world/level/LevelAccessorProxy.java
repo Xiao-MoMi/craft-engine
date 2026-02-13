@@ -10,6 +10,7 @@ import net.momirealms.craftengine.proxy.minecraft.world.level.block.BlockProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.level.gameevent.GameEventProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.level.material.FluidProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.ticks.TickPriorityProxy;
+import net.momirealms.sparrow.reflection.clazz.SparrowClass;
 import net.momirealms.sparrow.reflection.proxy.ASMProxyFactory;
 import net.momirealms.sparrow.reflection.proxy.annotation.MethodInvoker;
 import net.momirealms.sparrow.reflection.proxy.annotation.ReflectionProxy;
@@ -20,6 +21,7 @@ import javax.annotation.Nullable;
 @ReflectionProxy(name = "net.minecraft.world.level.LevelAccessor")
 public interface LevelAccessorProxy extends LevelReaderProxy {
     LevelAccessorProxy INSTANCE = ASMProxyFactory.create(LevelAccessorProxy.class);
+    Class<?> CLASS = SparrowClass.find("net.minecraft.world.level.LevelAccessor");
 
     @MethodInvoker(name = "gameEvent", activeIf = "min_version=1.20.5")
     void gameEvent$0(Object target, @Nullable @Type(clazz = EntityProxy.class) Object entity, @Type(clazz = HolderProxy.class) Object event, @Type(clazz = BlockPosProxy.class) Object pos);

@@ -6,7 +6,6 @@ import net.momirealms.craftengine.bukkit.item.ComponentItemWrapper;
 import net.momirealms.craftengine.bukkit.item.DataComponentTypes;
 import net.momirealms.craftengine.bukkit.nms.FastNMS;
 import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.CoreReflections;
-import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.MBuiltInRegistries;
 import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.MRegistryOps;
 import net.momirealms.craftengine.bukkit.util.EnchantmentUtils;
 import net.momirealms.craftengine.bukkit.util.KeyUtils;
@@ -20,7 +19,9 @@ import net.momirealms.craftengine.core.item.data.Trim;
 import net.momirealms.craftengine.core.plugin.CraftEngine;
 import net.momirealms.craftengine.core.util.*;
 import net.momirealms.craftengine.proxy.bukkit.craftbukkit.inventory.CraftItemStackProxy;
+import net.momirealms.craftengine.proxy.minecraft.core.registries.BuiltInRegistriesProxy;
 import net.momirealms.craftengine.proxy.minecraft.nbt.CompoundTagProxy;
+import net.momirealms.craftengine.proxy.minecraft.nbt.TagProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.item.ItemStackProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.item.component.CustomDataProxy;
 import net.momirealms.sparrow.nbt.CompoundTag;
@@ -127,7 +128,7 @@ public class ComponentItemFactory1_20_5 extends BukkitItemFactory<ComponentItemW
             valueTag = tag;
         } else if (value instanceof JsonElement je) {
             valueTag = MRegistryOps.JSON.convertTo(MRegistryOps.SPARROW_NBT, je);
-        } else if (CoreReflections.clazz$Tag.isInstance(value)) {
+        } else if (TagProxy.CLASS.isInstance(value)) {
             valueTag = MRegistryOps.NBT.convertTo(MRegistryOps.SPARROW_NBT, value);
         } else {
             assert MRegistryOps.JAVA != null;
@@ -600,7 +601,7 @@ public class ComponentItemFactory1_20_5 extends BukkitItemFactory<ComponentItemW
     @Override
     protected ComponentItemWrapper transmuteCopy(ComponentItemWrapper item, Key newItem, int amount) {
         Object itemStack1 = item.getLiteralObject();
-        Object itemStack2 = ItemStackProxy.INSTANCE.transmuteCopy(itemStack1, RegistryUtils.getRegistryValue(MBuiltInRegistries.ITEM, KeyUtils.toIdentifier(newItem)), amount);
+        Object itemStack2 = ItemStackProxy.INSTANCE.transmuteCopy(itemStack1, RegistryUtils.getRegistryValue(BuiltInRegistriesProxy.ITEM, KeyUtils.toIdentifier(newItem)), amount);
         return new ComponentItemWrapper(CraftItemStackProxy.INSTANCE.asCraftMirror(itemStack2));
     }
 

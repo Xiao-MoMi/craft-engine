@@ -1,11 +1,12 @@
 package net.momirealms.craftengine.bukkit.item;
 
-import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.MBuiltInRegistries;
+
 import net.momirealms.craftengine.bukkit.util.KeyUtils;
 import net.momirealms.craftengine.bukkit.util.RegistryUtils;
 import net.momirealms.craftengine.core.item.DataComponentKeys;
 import net.momirealms.craftengine.core.util.Key;
 import net.momirealms.craftengine.core.util.VersionHelper;
+import net.momirealms.craftengine.proxy.minecraft.core.registries.BuiltInRegistriesProxy;
 
 public final class DataComponentTypes {
     public static final Object CUSTOM_MODEL_DATA = byId(DataComponentKeys.CUSTOM_MODEL_DATA);
@@ -39,6 +40,6 @@ public final class DataComponentTypes {
 
     public static Object byId(Key key) {
         if (!VersionHelper.isOrAbove1_20_5()) return null;
-        return RegistryUtils.getRegistryValue(MBuiltInRegistries.DATA_COMPONENT_TYPE, KeyUtils.toIdentifier(key));
+        return RegistryUtils.getRegistryValue(BuiltInRegistriesProxy.DATA_COMPONENT_TYPE, KeyUtils.toIdentifier(key));
     }
 }

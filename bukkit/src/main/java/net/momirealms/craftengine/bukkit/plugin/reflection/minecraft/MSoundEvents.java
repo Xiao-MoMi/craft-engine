@@ -1,6 +1,7 @@
 package net.momirealms.craftengine.bukkit.plugin.reflection.minecraft;
 
 import net.momirealms.craftengine.bukkit.util.RegistryUtils;
+import net.momirealms.craftengine.proxy.minecraft.core.registries.BuiltInRegistriesProxy;
 import net.momirealms.craftengine.proxy.minecraft.resources.IdentifierProxy;
 
 public final class MSoundEvents {
@@ -15,6 +16,6 @@ public final class MSoundEvents {
 
     private static Object getById(String path) {
         Object id = IdentifierProxy.INSTANCE.newInstance("minecraft", path);
-        return RegistryUtils.getRegistryValue(MBuiltInRegistries.SOUND_EVENT, id);
+        return RegistryUtils.getRegistryValue(BuiltInRegistriesProxy.SOUND_EVENT, id);
     }
 }

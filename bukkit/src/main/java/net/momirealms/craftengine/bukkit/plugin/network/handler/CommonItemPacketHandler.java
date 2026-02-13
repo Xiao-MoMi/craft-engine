@@ -14,6 +14,7 @@ import net.momirealms.craftengine.core.util.FriendlyByteBuf;
 import net.momirealms.craftengine.core.util.GsonHelper;
 import net.momirealms.craftengine.proxy.bukkit.craftbukkit.inventory.CraftItemStackProxy;
 import net.momirealms.craftengine.proxy.minecraft.network.syncher.SynchedEntityDataProxy;
+import net.momirealms.craftengine.proxy.minecraft.world.item.ItemStackProxy;
 import org.bukkit.inventory.ItemStack;
 
 import java.util.List;
@@ -35,7 +36,7 @@ public class CommonItemPacketHandler implements EntityPacketHandler {
             int entityDataId = SynchedEntityDataProxy.DataValueProxy.INSTANCE.getId(packedItem);
             if (entityDataId != EntityDataUtils.UNSAFE_ITEM_DATA_ID) continue;
             Object nmsItemStack = SynchedEntityDataProxy.DataValueProxy.INSTANCE.getValue(packedItem);
-            if (!CoreReflections.clazz$ItemStack.isInstance(nmsItemStack)) {
+            if (!ItemStackProxy.CLASS.isInstance(nmsItemStack)) {
                 long time = System.currentTimeMillis();
                 if (time - lastWarningTime > 5000) {
                     BukkitServerPlayer serverPlayer = (BukkitServerPlayer) user;

@@ -1,7 +1,6 @@
 package net.momirealms.craftengine.bukkit.util;
 
 import net.momirealms.craftengine.bukkit.block.BukkitBlockManager;
-import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.MBuiltInRegistries;
 import net.momirealms.craftengine.core.block.*;
 import net.momirealms.craftengine.core.item.Item;
 import net.momirealms.craftengine.core.util.Key;
@@ -9,6 +8,7 @@ import net.momirealms.craftengine.proxy.bukkit.craftbukkit.CraftWorldProxy;
 import net.momirealms.craftengine.proxy.bukkit.craftbukkit.block.data.CraftBlockDataProxy;
 import net.momirealms.craftengine.proxy.minecraft.core.IdMapProxy;
 import net.momirealms.craftengine.proxy.minecraft.core.RegistryProxy;
+import net.momirealms.craftengine.proxy.minecraft.core.registries.BuiltInRegistriesProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.item.ItemStackProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.level.BlockGetterProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.level.block.BlockProxy;
@@ -55,7 +55,7 @@ public final class BlockStateUtils {
     }
 
     public static List<Object> getPossibleBlockStates(Key block) {
-        Object blockIns = RegistryUtils.getRegistryValue(MBuiltInRegistries.BLOCK, KeyUtils.toIdentifier(block));
+        Object blockIns = RegistryUtils.getRegistryValue(BuiltInRegistriesProxy.BLOCK, KeyUtils.toIdentifier(block));
         Object definition = BlockProxy.INSTANCE.getStateDefinition(blockIns);
         return StateDefinitionProxy.INSTANCE.getStates(definition);
     }
@@ -74,7 +74,7 @@ public final class BlockStateUtils {
 
     public static Key getBlockOwnerIdFromState(Object blockState) {
         Object blockOwner = BlockBehaviourProxy.BlockStateBaseProxy.INSTANCE.getBlock(blockState);
-        Object identifier = RegistryProxy.INSTANCE.getKey(MBuiltInRegistries.BLOCK, blockOwner);
+        Object identifier = RegistryProxy.INSTANCE.getKey(BuiltInRegistriesProxy.BLOCK, blockOwner);
         return KeyUtils.identifierToKey(identifier);
     }
 

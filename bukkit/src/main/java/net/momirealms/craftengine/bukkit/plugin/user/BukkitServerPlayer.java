@@ -57,8 +57,10 @@ import net.momirealms.craftengine.core.world.collision.AABB;
 import net.momirealms.craftengine.proxy.bukkit.craftbukkit.CraftWorldProxy;
 import net.momirealms.craftengine.proxy.bukkit.craftbukkit.entity.CraftEntityProxy;
 import net.momirealms.craftengine.proxy.minecraft.network.ConnectionProxy;
+import net.momirealms.craftengine.proxy.minecraft.network.protocol.common.ClientboundCustomPayloadPacketProxy;
 import net.momirealms.craftengine.proxy.minecraft.network.protocol.common.ClientboundResourcePackPopPacketProxy;
 import net.momirealms.craftengine.proxy.minecraft.network.protocol.game.*;
+import net.momirealms.craftengine.proxy.minecraft.network.protocol.login.ClientboundLoginDisconnectPacketProxy;
 import net.momirealms.craftengine.proxy.minecraft.network.syncher.SynchedEntityDataProxy;
 import net.momirealms.craftengine.proxy.minecraft.server.MinecraftServerProxy;
 import net.momirealms.craftengine.proxy.minecraft.server.level.ServerPlayerGameModeProxy;
@@ -221,7 +223,7 @@ public class BukkitServerPlayer extends Player {
         if (channel != null) {
             for (String name : channel.pipeline().names()) {
                 ChannelHandler handler = channel.pipeline().get(name);
-                if (NetworkReflections.clazz$Connection.isInstance(handler)) {
+                if (ConnectionProxy.CLASS.isInstance(handler)) {
                     this.connection = handler;
                     break;
                 }
@@ -531,9 +533,9 @@ public class BukkitServerPlayer extends Player {
                 } else {
                     dataPayload = NetworkReflections.constructor$ServerboundCustomPayloadPacket$UnknownPayload.newInstance(channelIdentifier, UnknownPayload.isByteArray ? data : Unpooled.wrappedBuffer(data));
                 }
-                responsePacket = NetworkReflections.constructor$ClientboundCustomPayloadPacket.newInstance(dataPayload);
+                responsePacket = ClientboundCustomPayloadPacketProxy.INSTANCE.newInstance(dataPayload);
             } else {
-                responsePacket = NetworkReflections.constructor$ClientboundCustomPayloadPacket.newInstance(channelIdentifier, PacketUtils.ensureNMSFriendlyByteBuf(Unpooled.wrappedBuffer(data)));
+                responsePacket = ClientboundCustomPayloadPacketProxy.INSTANCE.newInstance(channelIdentifier, PacketUtils.ensureNMSFriendlyByteBuf(Unpooled.wrappedBuffer(data)));
             }
             this.sendPacket(responsePacket, true);
         } catch (Exception e) {
@@ -548,20 +550,16 @@ public class BukkitServerPlayer extends Player {
             ConnectionProxy.INSTANCE.disconnect(this.connection(), reason);
             return;
         }
-        try {
-            if (this.encoderState == ConnectionState.LOGIN) {
-                this.sendPacket(NetworkReflections.constructor$ClientboundLoginDisconnectPacket.newInstance(reason), false);
-                ConnectionProxy.INSTANCE.disconnect(this.connection(), reason);
-                return;
-            }
-            Object kickPacket = NetworkReflections.constructor$ClientboundDisconnectPacket.newInstance(reason);
-            this.sendPacket(kickPacket, false, () -> ConnectionProxy.INSTANCE.disconnect(this.connection(), reason));
-            this.nettyChannel().config().setAutoRead(false);
-            Runnable handleDisconnection = () -> ConnectionProxy.INSTANCE.handleDisconnection(this.connection());
-            BlockableEventLoopProxy.INSTANCE.scheduleOnMain(MinecraftServerProxy.INSTANCE.getServer(), handleDisconnection);
-        } catch (Exception e) {
-            CraftEngine.instance().logger().warn("Failed to kick " + name(), e);
+        if (this.encoderState == ConnectionState.LOGIN) {
+            this.sendPacket(ClientboundLoginDisconnectPacketProxy.INSTANCE.newInstance(reason), false);
+            ConnectionProxy.INSTANCE.disconnect(this.connection(), reason);
+            return;
         }
+        Object kickPacket = ClientboundDisconnectPacketProxy.INSTANCE.newInstance(reason);
+        this.sendPacket(kickPacket, false, () -> ConnectionProxy.INSTANCE.disconnect(this.connection(), reason));
+        this.nettyChannel().config().setAutoRead(false);
+        Runnable handleDisconnection = () -> ConnectionProxy.INSTANCE.handleDisconnection(this.connection());
+        BlockableEventLoopProxy.INSTANCE.scheduleOnMain(MinecraftServerProxy.INSTANCE.getServer(), handleDisconnection);
     }
 
     @Override
@@ -875,8 +873,8 @@ public class BukkitServerPlayer extends Player {
                     Object attributeModifier = VersionHelper.isOrAbove1_21() ?
                             AttributeModifierProxy.INSTANCE.newInstance(KeyUtils.toIdentifier(Key.DEFAULT_NAMESPACE, "custom_hardness"), -9999d, AttributeModifierProxy.OperationProxy.ADD_VALUE) :
                             AttributeModifierProxy.INSTANCE.newInstance(UUID.randomUUID(), Key.DEFAULT_NAMESPACE + ":custom_hardness", -9999d, AttributeModifierProxy.OperationProxy.ADD_VALUE);
-                    Object attributeSnapshot = NetworkReflections.constructor$ClientboundUpdateAttributesPacket$AttributeSnapshot.newInstance(MAttributeHolders.BLOCK_BREAK_SPEED, 1d, Lists.newArrayList(attributeModifier));
-                    Object newPacket = NetworkReflections.constructor$ClientboundUpdateAttributesPacket1.newInstance(entityId(), Lists.newArrayList(attributeSnapshot));
+                    Object attributeSnapshot = ClientboundUpdateAttributesPacketProxy.AttributeSnapshotProxy.INSTANCE.newInstance(MAttributeHolders.BLOCK_BREAK_SPEED, 1d, Lists.newArrayList(attributeModifier));
+                    Object newPacket = ClientboundUpdateAttributesPacketProxy.INSTANCE.newInstance(entityId(), Lists.newArrayList(attributeSnapshot));
                     sendPacket(newPacket, true);
                 } else {
                     Object fatiguePacket = MobEffectUtils.createPacket(MMobEffects.MINING_FATIGUE, entityId(), (byte) 9, -1, false, false, false);
@@ -939,13 +937,13 @@ public class BukkitServerPlayer extends Player {
         this.isDestroyingCustomBlock = false;
     }
 
-    private void resetEffect(Object mobEffect) throws ReflectiveOperationException {
+    private void resetEffect(Object mobEffect) {
         Object effectInstance = ServerPlayerProxy.INSTANCE.getEffect$legacy(serverPlayer(), mobEffect);
         Object packet;
         if (effectInstance != null) {
-            packet = NetworkReflections.constructor$ClientboundUpdateMobEffectPacket.newInstance(entityId(), effectInstance);
+            packet = ClientboundUpdateMobEffectPacketProxy.INSTANCE.newInstance(entityId(), effectInstance);
         } else {
-            packet = NetworkReflections.constructor$ClientboundRemoveMobEffectPacket.newInstance(entityId(), mobEffect);
+            packet = ClientboundRemoveMobEffectPacketProxy.INSTANCE.newInstance$legacy(entityId(), mobEffect);
         }
         sendPacket(packet, true);
     }

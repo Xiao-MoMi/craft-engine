@@ -3,6 +3,7 @@ package net.momirealms.craftengine.proxy.minecraft.network.protocol.game;
 import net.momirealms.craftengine.proxy.minecraft.network.FriendlyByteBufProxy;
 import net.momirealms.craftengine.proxy.minecraft.network.RegistryFriendlyByteBufProxy;
 import net.momirealms.craftengine.proxy.minecraft.network.protocol.PacketProxy;
+import net.momirealms.sparrow.reflection.clazz.SparrowClass;
 import net.momirealms.sparrow.reflection.proxy.ASMProxyFactory;
 import net.momirealms.sparrow.reflection.proxy.annotation.ConstructorInvoker;
 import net.momirealms.sparrow.reflection.proxy.annotation.MethodInvoker;
@@ -14,6 +15,7 @@ import java.util.List;
 @ReflectionProxy(name = "net.minecraft.network.protocol.game.ClientboundSetEntityDataPacket")
 public interface ClientboundSetEntityDataPacketProxy extends PacketProxy {
     ClientboundSetEntityDataPacketProxy INSTANCE = ASMProxyFactory.create(ClientboundSetEntityDataPacketProxy.class);
+    Class<?> CLASS = SparrowClass.find("net.minecraft.network.protocol.game.ClientboundSetEntityDataPacket");
 
     @ConstructorInvoker
     Object newInstance(int id, List<?> packedItems);

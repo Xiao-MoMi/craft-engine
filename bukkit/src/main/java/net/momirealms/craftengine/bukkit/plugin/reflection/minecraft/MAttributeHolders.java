@@ -2,6 +2,8 @@ package net.momirealms.craftengine.bukkit.plugin.reflection.minecraft;
 
 import net.momirealms.craftengine.core.util.VersionHelper;
 import net.momirealms.craftengine.proxy.minecraft.core.RegistryProxy;
+import net.momirealms.craftengine.proxy.minecraft.core.registries.BuiltInRegistriesProxy;
+import net.momirealms.craftengine.proxy.minecraft.core.registries.RegistriesProxy;
 import net.momirealms.craftengine.proxy.minecraft.resources.IdentifierProxy;
 import net.momirealms.craftengine.proxy.minecraft.resources.ResourceKeyProxy;
 
@@ -15,11 +17,11 @@ public final class MAttributeHolders {
     private static Object getById(String path) {
         Object id = IdentifierProxy.INSTANCE.newInstance("minecraft", path);
         if (VersionHelper.isOrAbove1_21_2()) {
-            return RegistryProxy.INSTANCE.get$0(MBuiltInRegistries.ATTRIBUTE, id).orElseThrow();
+            return RegistryProxy.INSTANCE.get$0(BuiltInRegistriesProxy.ATTRIBUTE, id).orElseThrow();
         } else if (VersionHelper.isOrAbove1_20_5()) {
-            return RegistryProxy.INSTANCE.getHolder$0(MBuiltInRegistries.ATTRIBUTE, id).orElseThrow();
+            return RegistryProxy.INSTANCE.getHolder$0(BuiltInRegistriesProxy.ATTRIBUTE, id).orElseThrow();
         } else {
-            return RegistryProxy.INSTANCE.getHolder$1(MRegistries.ATTRIBUTE, ResourceKeyProxy.INSTANCE.create(MRegistries.ATTRIBUTE, id)).orElseThrow();
+            return RegistryProxy.INSTANCE.getHolder$1(RegistriesProxy.ATTRIBUTE, ResourceKeyProxy.INSTANCE.create(RegistriesProxy.ATTRIBUTE, id)).orElseThrow();
         }
     }
 }

@@ -1,11 +1,12 @@
 package net.momirealms.craftengine.bukkit.util;
 
-import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.CoreReflections;
-import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.MBuiltInRegistries;
-import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.MRegistries;
 import net.momirealms.craftengine.core.util.VersionHelper;
+import net.momirealms.craftengine.proxy.minecraft.core.IdMapProxy;
+import net.momirealms.craftengine.proxy.minecraft.core.IdMapperProxy;
 import net.momirealms.craftengine.proxy.minecraft.core.RegistryAccessProxy;
 import net.momirealms.craftengine.proxy.minecraft.core.RegistryProxy;
+import net.momirealms.craftengine.proxy.minecraft.core.registries.BuiltInRegistriesProxy;
+import net.momirealms.craftengine.proxy.minecraft.core.registries.RegistriesProxy;
 import net.momirealms.craftengine.proxy.minecraft.server.MinecraftServerProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.level.block.BlockProxy;
 
@@ -14,27 +15,15 @@ public final class RegistryUtils {
     private RegistryUtils() {}
 
     public static int currentBlockRegistrySize() {
-        try {
-            return (int) CoreReflections.method$IdMapper$size.invoke(BlockProxy.BLOCK_STATE_REGISTRY);
-        } catch (ReflectiveOperationException e) {
-            throw new RuntimeException(e);
-        }
+        return IdMapperProxy.INSTANCE.size(BlockProxy.BLOCK_STATE_REGISTRY);
     }
 
     public static int currentBiomeRegistrySize() {
-        try {
-            return (int) CoreReflections.method$IdMap$size.invoke(RegistryAccessProxy.INSTANCE.lookupOrThrow(getRegistryAccess(), MRegistries.BIOME));
-        } catch (ReflectiveOperationException e) {
-            throw new RuntimeException(e);
-        }
+        return IdMapProxy.INSTANCE.size(RegistryAccessProxy.INSTANCE.lookupOrThrow(getRegistryAccess(), RegistriesProxy.BIOME));
     }
 
     public static int currentEntityTypeRegistrySize() {
-        try {
-            return (int) CoreReflections.method$IdMap$size.invoke(MBuiltInRegistries.ENTITY_TYPE);
-        } catch (ReflectiveOperationException e) {
-            throw new RuntimeException(e);
-        }
+        return IdMapProxy.INSTANCE.size(BuiltInRegistriesProxy.ENTITY_TYPE);
     }
 
     public static Object getRegistryAccess() {

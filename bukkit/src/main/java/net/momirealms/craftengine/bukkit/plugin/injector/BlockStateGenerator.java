@@ -32,9 +32,12 @@ import net.momirealms.craftengine.core.world.World;
 import net.momirealms.craftengine.core.world.WorldPosition;
 import net.momirealms.craftengine.proxy.bukkit.craftbukkit.inventory.CraftItemStackProxy;
 import net.momirealms.craftengine.proxy.minecraft.server.level.ServerPlayerProxy;
+import net.momirealms.craftengine.proxy.minecraft.world.entity.player.PlayerProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.item.ItemStackProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.level.LevelProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.level.block.BlockProxy;
+import net.momirealms.craftengine.proxy.minecraft.world.level.block.state.BlockStateProxy;
+import net.momirealms.craftengine.proxy.minecraft.world.level.block.state.StateDefinitionProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.level.block.state.properties.BlockStatePropertiesProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.level.storage.loot.LootParamsProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.level.storage.loot.parameters.LootContextParamsProxy;
@@ -55,7 +58,7 @@ public final class BlockStateGenerator {
         String packageWithName = BlockStateGenerator.class.getName();
         String generatedStateClassName = packageWithName.substring(0, packageWithName.lastIndexOf('.')) + ".CraftEngineBlockState";
         DynamicType.Builder<?> stateBuilder = byteBuddy
-                .subclass(CoreReflections.clazz$BlockState, ConstructorStrategy.Default.IMITATE_SUPER_CLASS_OPENING)
+                .subclass(BlockStateProxy.CLASS, ConstructorStrategy.Default.IMITATE_SUPER_CLASS_OPENING)
                 .name(generatedStateClassName)
                 .defineField("immutableBlockState", ImmutableBlockState.class, Visibility.PUBLIC)
                 .implement(DelegatingBlockState.class)
@@ -76,17 +79,17 @@ public final class BlockStateGenerator {
         Class<?> clazz$CraftEngineBlock = stateBuilder.make().load(BlockStateGenerator.class.getClassLoader()).getLoaded();
         constructor$CraftEngineBlockState = VersionHelper.isOrAbove1_20_5() ?
                 MethodHandles.publicLookup().in(clazz$CraftEngineBlock)
-                        .findConstructor(clazz$CraftEngineBlock, MethodType.methodType(void.class, CoreReflections.clazz$Block, Reference2ObjectArrayMap.class, MapCodec.class))
-                        .asType(MethodType.methodType(CoreReflections.clazz$BlockState, CoreReflections.clazz$Block, Reference2ObjectArrayMap.class, MapCodec.class)) :
+                        .findConstructor(clazz$CraftEngineBlock, MethodType.methodType(void.class, BlockProxy.CLASS, Reference2ObjectArrayMap.class, MapCodec.class))
+                        .asType(MethodType.methodType(BlockStateProxy.CLASS, BlockProxy.CLASS, Reference2ObjectArrayMap.class, MapCodec.class)) :
                 MethodHandles.publicLookup().in(clazz$CraftEngineBlock)
-                        .findConstructor(clazz$CraftEngineBlock, MethodType.methodType(void.class, CoreReflections.clazz$Block, ImmutableMap.class, MapCodec.class))
-                        .asType(MethodType.methodType(CoreReflections.clazz$BlockState, CoreReflections.clazz$Block, ImmutableMap.class, MapCodec.class));
+                        .findConstructor(clazz$CraftEngineBlock, MethodType.methodType(void.class, BlockProxy.CLASS, ImmutableMap.class, MapCodec.class))
+                        .asType(MethodType.methodType(BlockStateProxy.CLASS, BlockProxy.CLASS, ImmutableMap.class, MapCodec.class));
 
         String generatedFactoryClassName = packageWithName.substring(0, packageWithName.lastIndexOf('.')) + ".CraftEngineStateFactory";
         DynamicType.Builder<?> factoryBuilder = byteBuddy
                 .subclass(Object.class, ConstructorStrategy.Default.IMITATE_SUPER_CLASS_OPENING)
                 .name(generatedFactoryClassName)
-                .implement(CoreReflections.clazz$StateDefinition$Factory)
+                .implement(StateDefinitionProxy.FactoryProxy.CLASS)
                 .method(ElementMatchers.named("create"))
                 .intercept(MethodDelegation.to(CreateStateInterceptor.INSTANCE));
 
@@ -108,7 +111,7 @@ public final class BlockStateGenerator {
             Object tool = LootParamsProxy.BuilderProxy.INSTANCE.getOptionalParameter(builder, LootContextParamsProxy.TOOL);
             Item<ItemStack> item = BukkitItemManager.instance().wrap(tool == null ? null : CraftItemStackProxy.INSTANCE.asCraftMirror(tool));
             Object optionalPlayer = LootParamsProxy.BuilderProxy.INSTANCE.getOptionalParameter(builder, LootContextParamsProxy.THIS_ENTITY);
-            if (!CoreReflections.clazz$Player.isInstance(optionalPlayer)) {
+            if (!PlayerProxy.CLASS.isInstance(optionalPlayer)) {
                 optionalPlayer = null;
             }
 

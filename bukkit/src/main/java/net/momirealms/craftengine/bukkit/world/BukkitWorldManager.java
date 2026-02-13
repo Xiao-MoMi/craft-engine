@@ -118,7 +118,7 @@ public final class BukkitWorldManager implements WorldManager, Listener {
         String name = world.getName();
         Key dimension = KeyUtils.identifierToKey(ResourceKeyProxy.INSTANCE.getIdentifier(LevelProxy.INSTANCE.getDimension(serverLevel)));
         Object holder = LevelProxy.INSTANCE.getDimensionTypeRegistration(serverLevel);
-        Key dimensionType = CoreReflections.clazz$Holder$Reference.isInstance(holder)
+        Key dimensionType = HolderProxy.ReferenceProxy.CLASS.isInstance(holder)
                 ? KeyUtils.identifierToKey(ResourceKeyProxy.INSTANCE.getIdentifier(HolderProxy.ReferenceProxy.INSTANCE.getKey(holder)))
                 : null;
         List<ConditionalFeature> features = new ArrayList<>();

@@ -1,12 +1,12 @@
 package net.momirealms.craftengine.bukkit.plugin.injector;
 
 import net.momirealms.craftengine.bukkit.nms.FastNMS;
-import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.MBuiltInRegistries;
 import net.momirealms.craftengine.bukkit.util.KeyUtils;
 import net.momirealms.craftengine.core.util.Key;
 import net.momirealms.craftengine.proxy.minecraft.core.HolderProxy;
 import net.momirealms.craftengine.proxy.minecraft.core.MappedRegistryProxy;
 import net.momirealms.craftengine.proxy.minecraft.core.RegistryProxy;
+import net.momirealms.craftengine.proxy.minecraft.core.registries.BuiltInRegistriesProxy;
 
 import java.util.Set;
 
@@ -14,7 +14,7 @@ public final class FeatureInjector {
     private FeatureInjector() {}
 
     public static void init() {
-        Object registry = MBuiltInRegistries.FEATURE;
+        Object registry = BuiltInRegistriesProxy.FEATURE;
         MappedRegistryProxy.INSTANCE.setFrozen(registry, false);
         Object identifier = KeyUtils.toIdentifier(Key.ce("simple_block"));
         Object type = FastNMS.INSTANCE.getCraftEngineCustomSimpleBlockFeature();

@@ -5,7 +5,6 @@ import com.mojang.serialization.Codec;
 import com.mojang.serialization.DataResult;
 import com.mojang.serialization.DynamicOps;
 import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.CoreReflections;
-import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.MBuiltInRegistries;
 import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.MRegistryOps;
 import net.momirealms.craftengine.bukkit.util.EquipmentSlotUtils;
 import net.momirealms.craftengine.bukkit.util.ItemStackUtils;
@@ -22,6 +21,8 @@ import net.momirealms.craftengine.proxy.bukkit.craftbukkit.inventory.CraftItemSt
 import net.momirealms.craftengine.proxy.minecraft.core.component.DataComponentGetterProxy;
 import net.momirealms.craftengine.proxy.minecraft.core.component.DataComponentMapProxy;
 import net.momirealms.craftengine.proxy.minecraft.core.component.DataComponentTypeProxy;
+import net.momirealms.craftengine.proxy.minecraft.core.registries.BuiltInRegistriesProxy;
+import net.momirealms.craftengine.proxy.minecraft.nbt.TagProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.item.ItemProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.item.ItemStackProxy;
 import net.momirealms.sparrow.nbt.Tag;
@@ -80,7 +81,7 @@ public class ComponentItemWrapper implements ItemWrapper<ItemStack> {
     public void setComponent(Object type, final Object value) {
         if (value instanceof JsonElement jsonElement) {
             setJsonComponent(type, jsonElement);
-        } else if (CoreReflections.clazz$Tag.isInstance(value)) {
+        } else if (TagProxy.CLASS.isInstance(value)) {
             setNBTComponent(type, value);
         } else if (value instanceof Tag tag) {
             setSparrowNBTComponent(type, tag);
@@ -185,7 +186,7 @@ public class ComponentItemWrapper implements ItemWrapper<ItemStack> {
     private Object ensureDataComponentType(Object type) {
         if (!DataComponentTypeProxy.CLASS.isInstance(type)) {
             Key key = Key.of(type.toString());
-            return RegistryUtils.getRegistryValue(MBuiltInRegistries.DATA_COMPONENT_TYPE, KeyUtils.toIdentifier(key));
+            return RegistryUtils.getRegistryValue(BuiltInRegistriesProxy.DATA_COMPONENT_TYPE, KeyUtils.toIdentifier(key));
         }
         return type;
     }

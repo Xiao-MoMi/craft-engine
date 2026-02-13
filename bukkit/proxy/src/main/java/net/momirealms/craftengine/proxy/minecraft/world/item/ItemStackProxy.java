@@ -13,6 +13,7 @@ import net.momirealms.craftengine.proxy.minecraft.world.entity.LivingEntityProxy
 import net.momirealms.craftengine.proxy.minecraft.world.level.ItemLikeProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.level.block.state.BlockStateProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.level.block.state.pattern.BlockInWorldProxy;
+import net.momirealms.sparrow.reflection.clazz.SparrowClass;
 import net.momirealms.sparrow.reflection.proxy.ASMProxyFactory;
 import net.momirealms.sparrow.reflection.proxy.annotation.*;
 
@@ -21,6 +22,7 @@ import java.util.function.Consumer;
 @ReflectionProxy(name = "net.minecraft.world.item.ItemStack")
 public interface ItemStackProxy extends DataComponentHolderProxy {
     ItemStackProxy INSTANCE = ASMProxyFactory.create(ItemStackProxy.class);
+    Class<?> CLASS = SparrowClass.find("net.minecraft.world.item.ItemStack");
     Object EMPTY = INSTANCE.getEmpty();
 
     @ConstructorInvoker

@@ -1,8 +1,6 @@
 package net.momirealms.craftengine.bukkit.block.behavior;
 
 import net.momirealms.craftengine.bukkit.block.BukkitBlockManager;
-import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.MBuiltInRegistries;
-import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.MRegistries;
 import net.momirealms.craftengine.bukkit.util.BlockStateUtils;
 import net.momirealms.craftengine.bukkit.util.DirectionUtils;
 import net.momirealms.craftengine.bukkit.util.KeyUtils;
@@ -21,6 +19,8 @@ import net.momirealms.craftengine.core.util.VersionHelper;
 import net.momirealms.craftengine.core.util.random.RandomUtils;
 import net.momirealms.craftengine.proxy.minecraft.core.BlockPosProxy;
 import net.momirealms.craftengine.proxy.minecraft.core.DirectionProxy;
+import net.momirealms.craftengine.proxy.minecraft.core.registries.BuiltInRegistriesProxy;
+import net.momirealms.craftengine.proxy.minecraft.core.registries.RegistriesProxy;
 import net.momirealms.craftengine.proxy.minecraft.resources.IdentifierProxy;
 import net.momirealms.craftengine.proxy.minecraft.tags.TagKeyProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.level.BlockGetterProxy;
@@ -90,7 +90,7 @@ public class StemBlockBehavior extends BukkitBlockBehavior implements IsPathFind
                 fruitState = optionalFruit.get().defaultState().customBlockState().literalObject();
             } else if (fruit.namespace().equals("minecraft")) {
                 fruitState = BlockProxy.INSTANCE.getDefaultBlockState(RegistryUtils.getRegistryValue(
-                        MBuiltInRegistries.BLOCK,
+                        BuiltInRegistriesProxy.BLOCK,
                         IdentifierProxy.INSTANCE.newInstance("minecraft", fruit.value())
                 ));
             }
@@ -144,8 +144,8 @@ public class StemBlockBehavior extends BukkitBlockBehavior implements IsPathFind
             Key fruit = Key.of(ResourceConfigUtils.requireNonEmptyStringOrThrow(arguments.get("fruit"), "warning.config.block.behavior.stem.missing_fruit"));
             Key attachedStem = Key.of(ResourceConfigUtils.requireNonEmptyStringOrThrow(arguments.get("attached-stem"), "warning.config.block.behavior.stem.missing_attached_stem"));
             int minGrowLight = ResourceConfigUtils.getAsInt(arguments.getOrDefault("light-requirement", 9), "light-requirement");
-            Object tagMayPlaceFruit = TagKeyProxy.INSTANCE.create(MRegistries.BLOCK, KeyUtils.toIdentifier(Key.of(arguments.getOrDefault("may-place-fruit", "minecraft:dirt").toString())));
-            Object blockMayPlaceFruit = RegistryUtils.getRegistryValue(MBuiltInRegistries.BLOCK, KeyUtils.toIdentifier(Key.of(arguments.getOrDefault("may-place-fruit", "minecraft:farmland").toString())));
+            Object tagMayPlaceFruit = TagKeyProxy.INSTANCE.create(RegistriesProxy.BLOCK, KeyUtils.toIdentifier(Key.of(arguments.getOrDefault("may-place-fruit", "minecraft:dirt").toString())));
+            Object blockMayPlaceFruit = RegistryUtils.getRegistryValue(BuiltInRegistriesProxy.BLOCK, KeyUtils.toIdentifier(Key.of(arguments.getOrDefault("may-place-fruit", "minecraft:farmland").toString())));
             return new StemBlockBehavior(block, ageProperty, fruit, attachedStem, minGrowLight, tagMayPlaceFruit, blockMayPlaceFruit);
         }
     }

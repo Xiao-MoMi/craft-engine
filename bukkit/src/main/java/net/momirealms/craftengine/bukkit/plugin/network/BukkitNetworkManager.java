@@ -53,7 +53,10 @@ import net.momirealms.craftengine.bukkit.plugin.network.payload.DiscardedPayload
 import net.momirealms.craftengine.bukkit.plugin.network.payload.Payload;
 import net.momirealms.craftengine.bukkit.plugin.network.payload.PayloadHelper;
 import net.momirealms.craftengine.bukkit.plugin.network.payload.UnknownPayload;
-import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.*;
+import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.CoreReflections;
+import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.MBlocks;
+import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.MEntityTypes;
+import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.MRegistryOps;
 import net.momirealms.craftengine.bukkit.plugin.user.BukkitServerPlayer;
 import net.momirealms.craftengine.bukkit.plugin.user.FakeBukkitServerPlayer;
 import net.momirealms.craftengine.bukkit.util.*;
@@ -122,6 +125,9 @@ import net.momirealms.craftengine.proxy.minecraft.core.component.DataComponentEx
 import net.momirealms.craftengine.proxy.minecraft.core.particles.BlockParticleOptionProxy;
 import net.momirealms.craftengine.proxy.minecraft.core.particles.ParticleOptionsProxy;
 import net.momirealms.craftengine.proxy.minecraft.core.particles.ParticleTypeProxy;
+import net.momirealms.craftengine.proxy.minecraft.core.particles.ParticleTypesProxy;
+import net.momirealms.craftengine.proxy.minecraft.core.registries.BuiltInRegistriesProxy;
+import net.momirealms.craftengine.proxy.minecraft.core.registries.RegistriesProxy;
 import net.momirealms.craftengine.proxy.minecraft.nbt.CompoundTagProxy;
 import net.momirealms.craftengine.proxy.minecraft.nbt.IntTagProxy;
 import net.momirealms.craftengine.proxy.minecraft.nbt.StringTagProxy;
@@ -134,9 +140,11 @@ import net.momirealms.craftengine.proxy.minecraft.network.chat.SignedMessageBody
 import net.momirealms.craftengine.proxy.minecraft.network.codec.StreamDecoderProxy;
 import net.momirealms.craftengine.proxy.minecraft.network.codec.StreamEncoderProxy;
 import net.momirealms.craftengine.proxy.minecraft.network.protocol.BundlePacketProxy;
-import net.momirealms.craftengine.proxy.minecraft.network.protocol.common.ClientboundUpdateTagsPacketProxy;
-import net.momirealms.craftengine.proxy.minecraft.network.protocol.common.ServerboundResourcePackPacketProxy;
+import net.momirealms.craftengine.proxy.minecraft.network.protocol.common.*;
+import net.momirealms.craftengine.proxy.minecraft.network.protocol.common.custom.DiscardedPayloadProxy;
+import net.momirealms.craftengine.proxy.minecraft.network.protocol.configuration.ClientboundFinishConfigurationPacketProxy;
 import net.momirealms.craftengine.proxy.minecraft.network.protocol.game.*;
+import net.momirealms.craftengine.proxy.minecraft.network.protocol.login.ServerboundHelloPacketProxy;
 import net.momirealms.craftengine.proxy.minecraft.network.syncher.SynchedEntityDataProxy;
 import net.momirealms.craftengine.proxy.minecraft.resources.ResourceKeyProxy;
 import net.momirealms.craftengine.proxy.minecraft.server.MinecraftServerProxy;
@@ -166,6 +174,8 @@ import net.momirealms.craftengine.proxy.minecraft.world.level.BlockGetterProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.level.block.BlockProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.level.block.SoundTypeProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.level.block.state.BlockBehaviourProxy;
+import net.momirealms.craftengine.proxy.netty.handler.codec.ByteToMessageDecoderProxy;
+import net.momirealms.craftengine.proxy.netty.handler.codec.MessageToByteEncoderProxy;
 import net.momirealms.sparrow.nbt.CompoundTag;
 import net.momirealms.sparrow.nbt.ListTag;
 import net.momirealms.sparrow.nbt.Tag;
@@ -349,7 +359,7 @@ public class BukkitNetworkManager extends AbstractNetworkManager implements List
 
     public void resendTags() {
         Object packet = TagUtils.createUpdateTagsPacket(
-                Map.of(MRegistries.BLOCK, BukkitBlockManager.instance().cachedUpdateTags()),
+                Map.of(RegistriesProxy.BLOCK, BukkitBlockManager.instance().cachedUpdateTags()),
                 TagNetworkSerializationProxy.INSTANCE.serializeTagsToNetwork(MinecraftServerProxy.INSTANCE.registries(RegistryUtils.getServer()))
         );
         for (BukkitServerPlayer player : onlineUsers()) {
@@ -433,32 +443,32 @@ public class BukkitNetworkManager extends AbstractNetworkManager implements List
     }
 
     private void registerPacketListeners() {
-        registerNMSPacketConsumer(new PlayerInfoUpdateListener(), NetworkReflections.clazz$ClientboundPlayerInfoUpdatePacket);
-        registerNMSPacketConsumer(new PlayerActionListener(), NetworkReflections.clazz$ServerboundPlayerActionPacket);
-        registerNMSPacketConsumer(new SwingListener(), NetworkReflections.clazz$ServerboundSwingPacket);
-        registerNMSPacketConsumer(new HelloListener(), NetworkReflections.clazz$ServerboundHelloPacket);
-        registerNMSPacketConsumer(new UseItemOnListener(), NetworkReflections.clazz$ServerboundUseItemOnPacket);
-        registerNMSPacketConsumer(new PickItemFromBlockListener(), NetworkReflections.clazz$ServerboundPickItemFromBlockPacket);
-        registerNMSPacketConsumer(new PickItemFromEntityListener(), NetworkReflections.clazz$ServerboundPickItemFromEntityPacket);
-        registerNMSPacketConsumer(new SetCreativeSlotListener(), NetworkReflections.clazz$ServerboundSetCreativeModeSlotPacket);
-        registerNMSPacketConsumer(new LoginListener(), NetworkReflections.clazz$ClientboundLoginPacket);
-        registerNMSPacketConsumer(new RespawnListener(), NetworkReflections.clazz$ClientboundRespawnPacket);
-        registerNMSPacketConsumer(new SyncEntityPositionListener(), NetworkReflections.clazz$ClientboundEntityPositionSyncPacket);
-        registerNMSPacketConsumer(new RenameItemListener(), NetworkReflections.clazz$ServerboundRenameItemPacket);
-        registerNMSPacketConsumer(new SignUpdateListener(), NetworkReflections.clazz$ServerboundSignUpdatePacket);
-        registerNMSPacketConsumer(new EditBookListener(), NetworkReflections.clazz$ServerboundEditBookPacket);
-        registerNMSPacketConsumer(new CustomPayloadListener1_20_2(), VersionHelper.isOrAbove1_20_2() ? NetworkReflections.clazz$ServerboundCustomPayloadPacket : null);
-        registerNMSPacketConsumer(new ResourcePackResponseListener(), NetworkReflections.clazz$ServerboundResourcePackPacket);
-        registerNMSPacketConsumer(new EntityEventListener(), NetworkReflections.clazz$ClientboundEntityEventPacket);
-        registerNMSPacketConsumer(new MovePosAndRotateEntityListener(), NetworkReflections.clazz$ClientboundMoveEntityPacket$PosRot);
-        registerNMSPacketConsumer(new MovePosEntityListener(), NetworkReflections.clazz$ClientboundMoveEntityPacket$Pos);
-        registerNMSPacketConsumer(new UpdateTagsListener(), NetworkReflections.clazz$ClientboundUpdateTagsPacket);
-        registerNMSPacketConsumer(new ClientInformationListener(), VersionHelper.isOrAbove1_20_2() ? NetworkReflections.clazz$ServerboundClientInformationPacket1 : NetworkReflections.clazz$ServerboundClientInformationPacket0);
-        registerNMSPacketConsumer(new ContainerClickListener1_21_5(), VersionHelper.isOrAbove1_21_5() ? NetworkReflections.clazz$ServerboundContainerClickPacket : null);
-        registerNMSPacketConsumer(new ServerDataListener(), NetworkReflections.clazz$ClientboundServerDataPacket);
-        registerNMSPacketConsumer(new ChatSessionUpdateListener(), NetworkReflections.clazz$ServerboundChatSessionUpdatePacket);
-        registerNMSPacketConsumer(new PlayerChatListener(), NetworkReflections.clazz$ClientboundPlayerChatPacket);
-        registerNMSPacketConsumer(new S2CFinishConfigurationListener(), NetworkReflections.clazz$ClientboundFinishConfigurationPacket);
+        registerNMSPacketConsumer(new PlayerInfoUpdateListener(), ClientboundPlayerInfoUpdatePacketProxy.CLASS);
+        registerNMSPacketConsumer(new PlayerActionListener(), ServerboundPlayerActionPacketProxy.CLASS);
+        registerNMSPacketConsumer(new SwingListener(), ServerboundSwingPacketProxy.CLASS);
+        registerNMSPacketConsumer(new HelloListener(), ServerboundHelloPacketProxy.CLASS);
+        registerNMSPacketConsumer(new UseItemOnListener(), ServerboundUseItemOnPacketProxy.CLASS);
+        registerNMSPacketConsumer(new PickItemFromBlockListener(), ServerboundPickItemFromBlockPacketProxy.CLASS);
+        registerNMSPacketConsumer(new PickItemFromEntityListener(), ServerboundPickItemFromEntityPacketProxy.CLASS);
+        registerNMSPacketConsumer(new SetCreativeSlotListener(), ServerboundSetCreativeModeSlotPacketProxy.CLASS);
+        registerNMSPacketConsumer(new LoginListener(), ClientboundLoginPacketProxy.CLASS);
+        registerNMSPacketConsumer(new RespawnListener(), ClientboundRespawnPacketProxy.CLASS);
+        registerNMSPacketConsumer(new SyncEntityPositionListener(), ClientboundEntityPositionSyncPacketProxy.CLASS);
+        registerNMSPacketConsumer(new RenameItemListener(), ServerboundRenameItemPacketProxy.CLASS);
+        registerNMSPacketConsumer(new SignUpdateListener(), ServerboundSignUpdatePacketProxy.CLASS);
+        registerNMSPacketConsumer(new EditBookListener(), ServerboundEditBookPacketProxy.CLASS);
+        registerNMSPacketConsumer(new CustomPayloadListener1_20_2(), VersionHelper.isOrAbove1_20_2() ? ServerboundCustomPayloadPacketProxy.CLASS : null);
+        registerNMSPacketConsumer(new ResourcePackResponseListener(), ServerboundResourcePackPacketProxy.CLASS);
+        registerNMSPacketConsumer(new EntityEventListener(), ClientboundEntityEventPacketProxy.CLASS);
+        registerNMSPacketConsumer(new MovePosAndRotateEntityListener(), ClientboundMoveEntityPacketProxy.PosRotProxy.CLASS);
+        registerNMSPacketConsumer(new MovePosEntityListener(), ClientboundMoveEntityPacketProxy.PosProxy.CLASS);
+        registerNMSPacketConsumer(new UpdateTagsListener(), ClientboundUpdateTagsPacketProxy.CLASS);
+        registerNMSPacketConsumer(new ClientInformationListener(), ServerboundClientInformationPacketProxy.CLASS);
+        registerNMSPacketConsumer(new ContainerClickListener1_21_5(), VersionHelper.isOrAbove1_21_5() ? ServerboundContainerClickPacketProxy.CLASS : null);
+        registerNMSPacketConsumer(new ServerDataListener(), ClientboundServerDataPacketProxy.CLASS);
+        registerNMSPacketConsumer(new ChatSessionUpdateListener(), ServerboundChatSessionUpdatePacketProxy.CLASS);
+        registerNMSPacketConsumer(new PlayerChatListener(), ClientboundPlayerChatPacketProxy.CLASS);
+        registerNMSPacketConsumer(new S2CFinishConfigurationListener(), ClientboundFinishConfigurationPacketProxy.CLASS);
         // 状态切换相关监听器 - 开始
         // fixme 因为会比 packetevents 在同一秒慢半拍切换，所以说会出现一下下的错误提示，只需要推迟 1 tick 发送即可
         registerByteBufferPacketListener(new C2SFinishConfigurationListener(), this.packetIds.serverboundFinishConfigurationPacket(), "ServerboundFinishConfigurationPacket", ConnectionState.CONFIGURATION, PacketFlow.SERVERBOUND); // 1.20.2+ s2c to play (configuration)
@@ -860,7 +870,7 @@ public class BukkitNetworkManager extends AbstractNetworkManager implements List
             pipeline.remove(PACKET_DECODER);
         }
         for (Map.Entry<String, ChannelHandler> entry : pipeline.toMap().entrySet()) {
-            if (NetworkReflections.clazz$Connection.isAssignableFrom(entry.getValue().getClass())) {
+            if (ConnectionProxy.CLASS.isAssignableFrom(entry.getValue().getClass())) {
                 pipeline.addBefore(entry.getKey(), PLAYER_CHANNEL_HANDLER_NAME, new PluginChannelHandler(user));
                 break;
             }
@@ -1165,20 +1175,12 @@ public class BukkitNetworkManager extends AbstractNetworkManager implements List
     }
 
     private static void callEncode(Object encoder, ChannelHandlerContext ctx, ByteBuf msg, ByteBuf output) {
-        try {
-            LibraryReflections.method$messageToByteEncoder$encode.invoke(encoder, ctx, msg, output);
-        } catch (ReflectiveOperationException e) {
-            CraftEngine.instance().logger().warn("Failed to call encode", e);
-        }
+        MessageToByteEncoderProxy.INSTANCE.encode(encoder, ctx, msg, output);
     }
 
-    public static List<Object> callDecode(Object decoder, Object ctx, Object input) {
+    public static List<Object> callDecode(Object decoder, ChannelHandlerContext ctx, ByteBuf input) {
         List<Object> output = new ArrayList<>();
-        try {
-            LibraryReflections.method$byteToMessageDecoder$decode.invoke(decoder, ctx, input, output);
-        } catch (ReflectiveOperationException e) {
-            CraftEngine.instance().logger().warn("Failed to call decode", e);
-        }
+        ByteToMessageDecoderProxy.INSTANCE.decode(decoder, ctx, input, output);
         return output;
     }
 
@@ -1191,35 +1193,16 @@ public class BukkitNetworkManager extends AbstractNetworkManager implements List
      */
     public static class HelloListener implements NMSPacketListener {
 
-        @SuppressWarnings("unchecked")
         @Override
         public void onPacketReceive(NetWorkUser user, NMSPacketEvent event, Object packet) {
             BukkitServerPlayer player = (BukkitServerPlayer) user;
-            String name;
-            try {
-                name = (String) NetworkReflections.methodHandle$ServerboundHelloPacket$nameGetter.invokeExact(packet);
-            } catch (Throwable t) {
-                CraftEngine.instance().logger().severe("Failed to get name from ServerboundHelloPacket", t);
-                return;
-            }
+            String name = ServerboundHelloPacketProxy.INSTANCE.getName(packet);
             player.setUnverifiedName(name);
             if (VersionHelper.isOrAbove1_20_2()) {
-                UUID uuid;
-                try {
-                    uuid = (UUID) NetworkReflections.methodHandle$ServerboundHelloPacket$uuidGetter.invokeExact(packet);
-                } catch (Throwable t) {
-                    CraftEngine.instance().logger().severe("Failed to get uuid from ServerboundHelloPacket", t);
-                    return;
-                }
+                UUID uuid = ServerboundHelloPacketProxy.INSTANCE.getProfileId(packet);
                 player.setUnverifiedUUID(uuid);
             } else {
-                Optional<UUID> uuid;
-                try {
-                    uuid = (Optional<UUID>) NetworkReflections.methodHandle$ServerboundHelloPacket$uuidGetter.invokeExact(packet);
-                } catch (Throwable t) {
-                    CraftEngine.instance().logger().severe("Failed to get uuid from ServerboundHelloPacket", t);
-                    return;
-                }
+                Optional<UUID> uuid = ServerboundHelloPacketProxy.INSTANCE.getProfileId$legacy(packet);
                 if (uuid.isPresent()) {
                     player.setUnverifiedUUID(uuid.get());
                 } else {
@@ -1353,13 +1336,7 @@ public class BukkitNetworkManager extends AbstractNetworkManager implements List
         public void onPacketReceive(NetWorkUser user, NMSPacketEvent event, Object packet) {
             BukkitServerPlayer player = (BukkitServerPlayer) user;
             if (player == null) return;
-            Object pos;
-            try {
-                pos = NetworkReflections.methodHandle$ServerboundPickItemFromBlockPacket$posGetter.invokeExact(packet);
-            } catch (Throwable e) {
-                CraftEngine.instance().logger().warn("Failed to get pos from ServerboundPickItemFromBlockPacket", e);
-                return;
-            }
+            Object pos = ServerboundPickItemFromBlockPacketProxy.INSTANCE.getPos(packet);
             int x = Vec3iProxy.INSTANCE.getX(pos);
             int y = Vec3iProxy.INSTANCE.getY(pos);
             int z = Vec3iProxy.INSTANCE.getZ(pos);
@@ -1402,13 +1379,7 @@ public class BukkitNetworkManager extends AbstractNetworkManager implements List
         public void onPacketReceive(NetWorkUser user, NMSPacketEvent event, Object packet) {
             BukkitServerPlayer player = (BukkitServerPlayer) user;
             if (player == null) return;
-            int entityId;
-            try {
-                entityId = (int) NetworkReflections.methodHandle$ServerboundPickItemFromEntityPacket$idGetter.invokeExact(packet);
-            } catch (Throwable e) {
-                CraftEngine.instance().logger().warn("Failed to get entityId from ServerboundPickItemFromEntityPacket", e);
-                return;
-            }
+            int entityId = ServerboundPickItemFromEntityPacketProxy.INSTANCE.getId(packet);
             BukkitFurniture furniture = BukkitFurnitureManager.instance().loadedFurnitureByVirtualEntityId(entityId);
             if (furniture == null) {
                 return;
@@ -1455,20 +1426,16 @@ public class BukkitNetworkManager extends AbstractNetworkManager implements List
 
         @Override
         public void onPacketReceive(NetWorkUser user, NMSPacketEvent event, Object packet) {
-            try {
-                if (VersionHelper.isOrAbove1_20_2()) {
-                    Object clientInfo = NetworkReflections.field$ServerboundClientInformationPacket$information.get(packet);
-                    if (clientInfo == null) return;
-                    String locale = ClientInformationProxy.INSTANCE.getLanguage(clientInfo);
-                    if (locale == null) return;
-                    ((BukkitServerPlayer) user).setClientLocale(TranslationManager.parseLocale(locale));
-                } else {
-                    String locale = (String) NetworkReflections.field$ServerboundClientInformationPacket$language.get(packet);
-                    if (locale == null) return;
-                    ((BukkitServerPlayer) user).setClientLocale(TranslationManager.parseLocale(locale));
-                }
-            } catch (ReflectiveOperationException e) {
-                CraftEngine.instance().logger().warn("Failed to handle ServerboundClientInformationPacket", e);
+            if (VersionHelper.isOrAbove1_20_2()) {
+                Object clientInfo = ServerboundClientInformationPacketProxy.INSTANCE.getInformation(packet);
+                if (clientInfo == null) return;
+                String locale = ClientInformationProxy.INSTANCE.getLanguage(clientInfo);
+                if (locale == null) return;
+                ((BukkitServerPlayer) user).setClientLocale(TranslationManager.parseLocale(locale));
+            } else {
+                String locale = (String) ServerboundClientInformationPacketProxy.INSTANCE.getLanguage(packet);
+                if (locale == null) return;
+                ((BukkitServerPlayer) user).setClientLocale(TranslationManager.parseLocale(locale));
             }
         }
     }
@@ -1497,13 +1464,15 @@ public class BukkitNetworkManager extends AbstractNetworkManager implements List
             }
         }
 
-        private static void handleSetCreativeSlotPacketOnMainThread(BukkitServerPlayer player, Object packet) throws Throwable {
+        private static void handleSetCreativeSlotPacketOnMainThread(BukkitServerPlayer player, Object packet) {
             Player bukkitPlayer = player.platformPlayer();
             if (bukkitPlayer == null) return;
             if (bukkitPlayer.getGameMode() != GameMode.CREATIVE) return;
-            int slot = VersionHelper.isOrAbove1_20_5() ? (short) NetworkReflections.methodHandle$ServerboundSetCreativeModeSlotPacket$slotNumGetter.invokeExact(packet) : (int) NetworkReflections.methodHandle$ServerboundSetCreativeModeSlotPacket$slotNumGetter.invokeExact(packet);
+            int slot = VersionHelper.isOrAbove1_20_5() ?
+                    ServerboundSetCreativeModeSlotPacketProxy.INSTANCE.getSlotNum(packet) :
+                    ServerboundSetCreativeModeSlotPacketProxy.INSTANCE.getSlotNum$legacy(packet);
             if (slot < 36 || slot > 44) return;
-            ItemStack item = CraftItemStackProxy.INSTANCE.asCraftMirror(NetworkReflections.methodHandle$ServerboundSetCreativeModeSlotPacket$itemStackGetter.invokeExact(packet));
+            ItemStack item = CraftItemStackProxy.INSTANCE.asCraftMirror(ServerboundSetCreativeModeSlotPacketProxy.INSTANCE.getItemStack(packet));
             if (ItemStackUtils.isEmpty(item)) return;
             if (slot - 36 != bukkitPlayer.getInventory().getHeldItemSlot()) {
                 return;
@@ -1524,7 +1493,7 @@ public class BukkitNetworkManager extends AbstractNetworkManager implements List
             Object vanillaBlockItem = BlockProxy.INSTANCE.asItem(vanillaBlock);
             if (vanillaBlockItem == null) return;
             Key addItemId = KeyUtils.namespacedKeyToKey(item.getType().getKey());
-            Key blockItemId = KeyUtils.identifierToKey(RegistryProxy.INSTANCE.getKey(MBuiltInRegistries.ITEM, vanillaBlockItem));
+            Key blockItemId = KeyUtils.identifierToKey(RegistryProxy.INSTANCE.getKey(BuiltInRegistriesProxy.ITEM, vanillaBlockItem));
             if (!addItemId.equals(blockItemId)) return;
             ItemStack itemStack = BukkitCraftEngine.instance().itemManager().buildCustomItemStack(itemId, player);
             if (ItemStackUtils.isEmpty(itemStack)) {
@@ -1580,30 +1549,20 @@ public class BukkitNetworkManager extends AbstractNetworkManager implements List
         public void onPacketSend(NetWorkUser user, NMSPacketEvent event, Object packet) {
             BukkitServerPlayer player = (BukkitServerPlayer) user;
             Object dimensionKey;
-            try {
-                if (!VersionHelper.isOrAbove1_20_2()) {
-                    dimensionKey = NetworkReflections.methodHandle$ClientboundLoginPacket$dimensionGetter.invokeExact(packet);
-                } else {
-                    Object commonInfo = NetworkReflections.methodHandle$ClientboundLoginPacket$commonPlayerSpawnInfoGetter.invokeExact(packet);
-                    dimensionKey = NetworkReflections.methodHandle$CommonPlayerSpawnInfo$dimensionGetter.invokeExact(commonInfo);
-                }
-            } catch (Throwable t) {
-                CraftEngine.instance().logger().warn("Failed to get dimensionKey from ClientboundLoginPacket", t);
-                return;
+            if (VersionHelper.isOrAbove1_20_2()) {
+                Object commonInfo = ClientboundLoginPacketProxy.INSTANCE.getCommonPlayerSpawnInfo(packet);
+                dimensionKey = CommonPlayerSpawnInfoProxy.INSTANCE.getDimension(commonInfo);
+            } else {
+                dimensionKey = ClientboundLoginPacketProxy.INSTANCE.getDimension(packet);
             }
             Object identifier = ResourceKeyProxy.INSTANCE.getIdentifier(dimensionKey);
             World world = Bukkit.getWorld(Objects.requireNonNull(NamespacedKey.fromString(identifier.toString())));
             if (world != null) {
                 player.setClientSideWorld(BukkitAdaptors.adapt(world));
-            } else {
-                CraftEngine.instance().logger().warn("Failed to handle ClientboundLoginPacket: World " + identifier + " does not exist");
             }
             if (VersionHelper.isOrAbove1_20_5() && Config.disableChatReport()) {
-                try { // 去弹窗警告
-                    NetworkReflections.methodHandle$ClientboundLoginPacket$enforcesSecureChatSetter.invoke(packet, true);
-                } catch (Throwable t) {
-                    CraftEngine.instance().logger().warn("Failed to set enforcesSecureChat to false");
-                }
+                // 去除弹窗警告
+                ClientboundLoginPacketProxy.INSTANCE.setEnforcesSecureChat(packet, true);
             }
         }
     }
@@ -1615,11 +1574,8 @@ public class BukkitNetworkManager extends AbstractNetworkManager implements List
             if (VersionHelper.isOrAbove1_20_5() || !Config.disableChatReport()) {
                 return;
             }
-            try { // 去弹窗警告
-                NetworkReflections.methodHandle$ClientboundServerDataPacket$enforcesSecureChatSetter.invokeExact(packet, true);
-            } catch (Throwable t) {
-                CraftEngine.instance().logger().warn("Failed to set enforcesSecureChat to false");
-            }
+            // 去弹窗警告
+            ClientboundServerDataPacketProxy.INSTANCE.setEnforcesSecureChat(packet, true);
         }
     }
 
@@ -1676,16 +1632,11 @@ public class BukkitNetworkManager extends AbstractNetworkManager implements List
             BukkitServerPlayer player = (BukkitServerPlayer) user;
             player.clearView();
             Object dimensionKey;
-            try {
-                if (!VersionHelper.isOrAbove1_20_2()) {
-                    dimensionKey = NetworkReflections.methodHandle$ClientboundRespawnPacket$dimensionGetter.invokeExact(packet);
-                } else {
-                    Object commonInfo = NetworkReflections.methodHandle$ClientboundRespawnPacket$commonPlayerSpawnInfoGetter.invokeExact(packet);
-                    dimensionKey = NetworkReflections.methodHandle$CommonPlayerSpawnInfo$dimensionGetter.invokeExact(commonInfo);
-                }
-            } catch (Throwable t) {
-                CraftEngine.instance().logger().warn("Failed to get dimensionKey from ClientboundRespawnPacket", t);
-                return;
+            if (VersionHelper.isOrAbove1_20_2()) {
+                Object commonInfo = ClientboundRespawnPacketProxy.INSTANCE.getCommonPlayerSpawnInfo(packet);
+                dimensionKey = CommonPlayerSpawnInfoProxy.INSTANCE.getDimension(commonInfo);
+            } else {
+                dimensionKey = ClientboundRespawnPacketProxy.INSTANCE.getDimension(packet);
             }
             Object identifier = ResourceKeyProxy.INSTANCE.getIdentifier(dimensionKey);
             World world = Bukkit.getWorld(Objects.requireNonNull(NamespacedKey.fromString(identifier.toString())));
@@ -1694,8 +1645,6 @@ public class BukkitNetworkManager extends AbstractNetworkManager implements List
                 player.clearTrackedChunks();
                 player.clearTrackedBlockEntities();
                 player.clearTrackedEntities();
-            } else {
-                CraftEngine.instance().logger().warn("Failed to handle ClientboundRespawnPacket: World " + identifier + " does not exist");
             }
         }
     }
@@ -1721,23 +1670,12 @@ public class BukkitNetworkManager extends AbstractNetworkManager implements List
             if (((BukkitServerPlayer) user).hasPermission(FontManager.BYPASS_ANVIL)) {
                 return;
             }
-            String message;
-            try {
-                message = (String) NetworkReflections.methodHandle$ServerboundRenameItemPacket$nameGetter.invokeExact(packet);
-            } catch (Throwable t) {
-                CraftEngine.instance().logger().warn("Failed to get message from ServerboundRenameItemPacket", t);
-                return;
-            }
+            String message = ServerboundRenameItemPacketProxy.INSTANCE.getName(packet);
             if (message != null && !message.isEmpty()) {
                 // check bypass
-                FontManager manager = CraftEngine.instance().fontManager();
                 IllegalCharacterProcessResult result = processIllegalCharacters(message);
                 if (result.has()) {
-                    try {
-                        NetworkReflections.methodHandle$ServerboundRenameItemPacket$nameSetter.invokeExact(packet, result.text());
-                    } catch (Throwable e) {
-                        CraftEngine.instance().logger().warn("Failed to set field 'name' for ServerboundRenameItemPacket", e);
-                    }
+                    ServerboundRenameItemPacketProxy.INSTANCE.setName(packet, result.text());
                 }
             }
         }
@@ -1752,13 +1690,7 @@ public class BukkitNetworkManager extends AbstractNetworkManager implements List
             if (((BukkitServerPlayer) user).hasPermission(FontManager.BYPASS_SIGN)) {
                 return;
             }
-            String[] lines;
-            try {
-                lines = (String[]) NetworkReflections.methodHandle$ServerboundSignUpdatePacket$linesGetter.invokeExact(packet);
-            } catch (Throwable t) {
-                CraftEngine.instance().logger().warn("Failed to get lines from ServerboundSignUpdatePacket", t);
-                return;
-            }
+            String[] lines = ServerboundSignUpdatePacketProxy.INSTANCE.getLines(packet);
             FontManager manager = CraftEngine.instance().fontManager();
             if (!manager.isDefaultFontInUse()) return;
             for (int i = 0; i < lines.length; i++) {
@@ -1775,7 +1707,6 @@ public class BukkitNetworkManager extends AbstractNetworkManager implements List
 
     public static class EditBookListener implements NMSPacketListener {
 
-        @SuppressWarnings("unchecked")
         @Override
         public void onPacketReceive(NetWorkUser user, NMSPacketEvent event, Object packet) {
             if (!Config.filterBook()) return;
@@ -1788,21 +1719,9 @@ public class BukkitNetworkManager extends AbstractNetworkManager implements List
 
             boolean changed = false;
 
-            List<String> pages;
-            try {
-                pages = (List<String>) NetworkReflections.methodHandle$ServerboundEditBookPacket$pagesGetter.invokeExact(packet);
-            } catch (Throwable t) {
-                CraftEngine.instance().logger().warn("Failed to get pages from ServerboundEditBookPacket", t);
-                return;
-            }
+            List<String> pages = ServerboundEditBookPacketProxy.INSTANCE.getPages(packet);
             List<String> newPages = new ArrayList<>(pages.size());
-            Optional<String> title;
-            try {
-                title = (Optional<String>) NetworkReflections.methodHandle$ServerboundEditBookPacket$titleGetter.invokeExact(packet);
-            } catch (Throwable t) {
-                CraftEngine.instance().logger().warn("Failed to get title from ServerboundEditBookPacket", t);
-                return;
-            }
+            Optional<String> title = ServerboundEditBookPacketProxy.INSTANCE.getTitle(packet);
             Optional<String> newTitle;
 
             if (title.isPresent()) {
@@ -1825,16 +1744,12 @@ public class BukkitNetworkManager extends AbstractNetworkManager implements List
             }
 
             if (changed) {
-                try {
-                    Object newPacket = NetworkReflections.constructor$ServerboundEditBookPacket.newInstance(
-                            (int) NetworkReflections.methodHandle$ServerboundEditBookPacket$slotGetter.invokeExact(packet),
-                            newPages,
-                            newTitle
-                    );
-                    event.replacePacket(newPacket);
-                } catch (Throwable t) {
-                    CraftEngine.instance().logger().warn("Failed to construct ServerboundEditBookPacket", t);
-                }
+                Object newPacket = ServerboundEditBookPacketProxy.INSTANCE.newInstance(
+                        ServerboundEditBookPacketProxy.INSTANCE.getSlot(packet),
+                        newPages,
+                        newTitle
+                );
+                event.replacePacket(newPacket);
             }
         }
 
@@ -1863,17 +1778,11 @@ public class BukkitNetworkManager extends AbstractNetworkManager implements List
         @Override
         public void onPacketReceive(NetWorkUser user, NMSPacketEvent event, Object packet) {
             if (!VersionHelper.isOrAbove1_20_2()) return;
-            Object payload;
-            try {
-                payload = NetworkReflections.methodHandle$ServerboundCustomPayloadPacket$payloadGetter.invokeExact(packet);
-            } catch (Throwable t) {
-                CraftEngine.instance().logger().warn("Failed to get payload from ServerboundCustomPayloadPacket", t);
-                return;
-            }
+            Object payload = ServerboundCustomPayloadPacketProxy.INSTANCE.getPayload(packet);
             Payload clientPayload;
-            if (VersionHelper.isOrAbove1_20_5() && NetworkReflections.clazz$DiscardedPayload.isInstance(payload)) {
+            if (VersionHelper.isOrAbove1_20_5() && DiscardedPayloadProxy.CLASS.isInstance(payload)) {
                 clientPayload = DiscardedPayload.from(payload);
-            } else if (!VersionHelper.isOrAbove1_20_5() && NetworkReflections.clazz$ServerboundCustomPayloadPacket$UnknownPayload.isInstance(payload)) {
+            } else if (!VersionHelper.isOrAbove1_20_5() && ServerboundCustomPayloadPacketProxy.UnknownPayloadProxy.CLASS.isInstance(payload)) {
                 clientPayload = UnknownPayload.from(payload);
             } else {
                 return;
@@ -1928,7 +1837,7 @@ public class BukkitNetworkManager extends AbstractNetworkManager implements List
                 CraftEngine.instance().scheduler().executeSync(() -> {
                     try {
                         // 当客户端发出多次成功包的时候，finish会报错，我们忽略他
-                        NetworkReflections.methodHandle$ServerCommonPacketListener$handleResourcePackResponse.invokeExact(packetListener, packet);
+                        ServerCommonPacketListenerProxy.INSTANCE.handleResourcePackResponse(packetListener, packet);
                         ServerConfigurationPacketListenerImplProxy.INSTANCE.finishCurrentTask(packetListener, ServerResourcePackConfigurationTaskProxy.TYPE);
                     } catch (Throwable e) {
                         Debugger.RESOURCE_PACK.warn(() -> "Cannot finish current task", e);
@@ -1944,21 +1853,9 @@ public class BukkitNetworkManager extends AbstractNetworkManager implements List
         public void onPacketSend(NetWorkUser user, NMSPacketEvent event, Object packet) {
             Object player = user.serverPlayer();
             if (player == null) return;
-            int entityId;
-            try {
-                entityId = (int) NetworkReflections.methodHandle$ClientboundEntityEventPacket$entityIdGetter.invokeExact(packet);
-            } catch (Throwable t) {
-                CraftEngine.instance().logger().warn("Failed to get entity id from ClientboundEntityEventPacket", t);
-                return;
-            }
+            int entityId = ClientboundEntityEventPacketProxy.INSTANCE.getEntityId(packet);
             if (entityId != EntityProxy.INSTANCE.getId(player)) return;
-            byte eventId;
-            try {
-                eventId = (byte) NetworkReflections.methodHandle$ClientboundEntityEventPacket$eventIdGetter.invokeExact(packet);
-            } catch (Throwable t) {
-                CraftEngine.instance().logger().warn("Failed to get event id from ClientboundEntityEventPacket", t);
-                return;
-            }
+            byte eventId = ClientboundEntityEventPacketProxy.INSTANCE.getEventId(packet);
             if (eventId >= 24 && eventId <= 28) {
                 CraftEngine.instance().fontManager().refreshEmojiSuggestions(user.uuid());
             }
@@ -2122,8 +2019,8 @@ public class BukkitNetworkManager extends AbstractNetworkManager implements List
             // 已经替换过了
             if (tags instanceof MarkedHashMap<Object, Object>) return;
             // 需要虚假的block
-            if (tags.get(MRegistries.BLOCK) == null) return;
-            event.replacePacket(TagUtils.createUpdateTagsPacket(Map.of(MRegistries.BLOCK, cachedUpdateTags), tags));
+            if (tags.get(RegistriesProxy.BLOCK) == null) return;
+            event.replacePacket(TagUtils.createUpdateTagsPacket(Map.of(RegistriesProxy.BLOCK, cachedUpdateTags), tags));
         }
     }
 
@@ -2646,9 +2543,9 @@ public class BukkitNetworkManager extends AbstractNetworkManager implements List
             float zDist = buf.readFloat();
             float maxSpeed = buf.readFloat();
             int count = buf.readInt();
-            Object option = StreamDecoderProxy.INSTANCE.decode(NetworkReflections.instance$ParticleTypes$STREAM_CODEC, PacketUtils.ensureNMSFriendlyByteBuf(buf.source()));
+            Object option = StreamDecoderProxy.INSTANCE.decode(ParticleTypesProxy.STREAM_CODEC, PacketUtils.ensureNMSFriendlyByteBuf(buf.source()));
             if (option == null) return;
-            if (!CoreReflections.clazz$BlockParticleOption.isInstance(option)) return;
+            if (!BlockParticleOptionProxy.CLASS.isInstance(option)) return;
             Object blockState = BlockParticleOptionProxy.INSTANCE.getState(option);
             int id = BlockStateUtils.blockStateToId(blockState);
             int remapped = user.clientModEnabled() ? modBlockStateMapper[id] : blockStateMapper[id];
@@ -2668,7 +2565,7 @@ public class BukkitNetworkManager extends AbstractNetworkManager implements List
             buf.writeFloat(zDist);
             buf.writeFloat(maxSpeed);
             buf.writeInt(count);
-            StreamEncoderProxy.INSTANCE.encode(NetworkReflections.instance$ParticleTypes$STREAM_CODEC, PacketUtils.ensureNMSFriendlyByteBuf(buf.source()), remappedOption);
+            StreamEncoderProxy.INSTANCE.encode(ParticleTypesProxy.STREAM_CODEC, PacketUtils.ensureNMSFriendlyByteBuf(buf.source()), remappedOption);
         }
     }
 
@@ -2693,9 +2590,9 @@ public class BukkitNetworkManager extends AbstractNetworkManager implements List
             float zDist = buf.readFloat();
             float maxSpeed = buf.readFloat();
             int count = buf.readInt();
-            Object option = StreamDecoderProxy.INSTANCE.decode(NetworkReflections.instance$ParticleTypes$STREAM_CODEC, PacketUtils.ensureNMSFriendlyByteBuf(buf.source()));
+            Object option = StreamDecoderProxy.INSTANCE.decode(ParticleTypesProxy.STREAM_CODEC, PacketUtils.ensureNMSFriendlyByteBuf(buf.source()));
             if (option == null) return;
-            if (!CoreReflections.clazz$BlockParticleOption.isInstance(option)) return;
+            if (!BlockParticleOptionProxy.CLASS.isInstance(option)) return;
             Object blockState = BlockParticleOptionProxy.INSTANCE.getState(option);
             int id = BlockStateUtils.blockStateToId(blockState);
             int remapped = user.clientModEnabled() ? modBlockStateMapper[id] : blockStateMapper[id];
@@ -2714,7 +2611,7 @@ public class BukkitNetworkManager extends AbstractNetworkManager implements List
             buf.writeFloat(zDist);
             buf.writeFloat(maxSpeed);
             buf.writeInt(count);
-            StreamEncoderProxy.INSTANCE.encode(NetworkReflections.instance$ParticleTypes$STREAM_CODEC, PacketUtils.ensureNMSFriendlyByteBuf(buf.source()), remappedOption);
+            StreamEncoderProxy.INSTANCE.encode(ParticleTypesProxy.STREAM_CODEC, PacketUtils.ensureNMSFriendlyByteBuf(buf.source()), remappedOption);
         }
     }
 
@@ -2730,7 +2627,7 @@ public class BukkitNetworkManager extends AbstractNetworkManager implements List
         @Override
         public void onPacketSend(NetWorkUser user, ByteBufPacketEvent event) {
             FriendlyByteBuf buf = event.getBuffer();
-            Object particleType = IdMapProxy.INSTANCE.byId(MBuiltInRegistries.PARTICLE_TYPE, buf.readVarInt());
+            Object particleType = IdMapProxy.INSTANCE.byId(BuiltInRegistriesProxy.PARTICLE_TYPE, buf.readVarInt());
             boolean overrideLimiter = buf.readBoolean();
             double x = buf.readDouble();
             double y = buf.readDouble();
@@ -2743,7 +2640,7 @@ public class BukkitNetworkManager extends AbstractNetworkManager implements List
             Object deserializer = ParticleTypeProxy.INSTANCE.getDeserializer(particleType);
             Object option = ParticleOptionsProxy.DeserializerProxy.INSTANCE.fromNetwork(deserializer, particleType, PacketUtils.ensureNMSFriendlyByteBuf(buf));
             if (option == null) return;
-            if (!CoreReflections.clazz$BlockParticleOption.isInstance(option)) return;
+            if (!BlockParticleOptionProxy.CLASS.isInstance(option)) return;
             Object blockState = BlockParticleOptionProxy.INSTANCE.getState(option);
             int id = BlockStateUtils.blockStateToId(blockState);
             int remapped = user.clientModEnabled() ? modBlockStateMapper[id] : blockStateMapper[id];
@@ -2753,7 +2650,7 @@ public class BukkitNetworkManager extends AbstractNetworkManager implements List
             event.setChanged(true);
             buf.clear();
             buf.writeVarInt(event.packetID());
-            buf.writeVarInt(RegistryProxy.INSTANCE.getId$0(MBuiltInRegistries.PARTICLE_TYPE, type));
+            buf.writeVarInt(RegistryProxy.INSTANCE.getId$0(BuiltInRegistriesProxy.PARTICLE_TYPE, type));
             buf.writeBoolean(overrideLimiter);
             buf.writeDouble(x);
             buf.writeDouble(y);
@@ -3744,7 +3641,7 @@ public class BukkitNetworkManager extends AbstractNetworkManager implements List
                     buf.writeLong(seed);
                 }
             } else {
-                Object soundEvent = IdMapProxy.INSTANCE.byId(MBuiltInRegistries.SOUND_EVENT, id - 1);
+                Object soundEvent = IdMapProxy.INSTANCE.byId(BuiltInRegistriesProxy.SOUND_EVENT, id - 1);
                 if (soundEvent == null) return;
                 Key soundId = KeyUtils.identifierToKey(SoundEventProxy.INSTANCE.getLocation(soundEvent));
                 int source = buf.readVarInt();
@@ -4584,9 +4481,9 @@ public class BukkitNetworkManager extends AbstractNetworkManager implements List
             BukkitItemManager manager = BukkitItemManager.instance();
             ByteBuf friendlyBuf = PacketUtils.ensureNMSFriendlyByteBuf(buf.source());
             List<MerchantOffer<ItemStack>> merchantOffers = buf.readCollection(ArrayList::new, byteBuf -> {
-                ItemStack cost1 = CraftItemStackProxy.INSTANCE.asCraftMirror(ItemCostProxy.INSTANCE.getItemStack(StreamDecoderProxy.INSTANCE.decode(NetworkReflections.instance$ItemCost$STREAM_CODEC, friendlyBuf)));
+                ItemStack cost1 = CraftItemStackProxy.INSTANCE.asCraftMirror(ItemCostProxy.INSTANCE.getItemStack(StreamDecoderProxy.INSTANCE.decode(ItemCostProxy.STREAM_CODEC, friendlyBuf)));
                 ItemStack result = PacketUtils.readItem(friendlyBuf);
-                Optional<ItemStack> cost2 = ((Optional<Object>) StreamDecoderProxy.INSTANCE.decode(NetworkReflections.instance$ItemCost$OPTIONAL_STREAM_CODEC, friendlyBuf))
+                Optional<ItemStack> cost2 = ((Optional<Object>) StreamDecoderProxy.INSTANCE.decode(ItemCostProxy.OPTIONAL_STREAM_CODEC, friendlyBuf))
                         .map(cost -> CraftItemStackProxy.INSTANCE.asCraftMirror(ItemCostProxy.INSTANCE.getItemStack(cost)));
                 boolean outOfStock = byteBuf.readBoolean();
                 int uses = byteBuf.readInt();
@@ -4621,9 +4518,9 @@ public class BukkitNetworkManager extends AbstractNetworkManager implements List
                 buf.writeVarInt(event.packetID());
                 buf.writeContainerId(containerId);
                 buf.writeCollection(merchantOffers, (byteBuf, offer) -> {
-                    StreamEncoderProxy.INSTANCE.encode(NetworkReflections.instance$ItemCost$STREAM_CODEC, friendlyBuf, itemStackToItemCost(offer.cost1().getLiteralObject(), offer.cost1().count()));
+                    StreamEncoderProxy.INSTANCE.encode(ItemCostProxy.STREAM_CODEC, friendlyBuf, itemStackToItemCost(offer.cost1().getLiteralObject(), offer.cost1().count()));
                     PacketUtils.writeItem(friendlyBuf, offer.result().getItem());
-                    StreamEncoderProxy.INSTANCE.encode(NetworkReflections.instance$ItemCost$OPTIONAL_STREAM_CODEC, friendlyBuf, offer.cost2().map(it -> itemStackToItemCost(it.getLiteralObject(), it.count())));
+                    StreamEncoderProxy.INSTANCE.encode(ItemCostProxy.OPTIONAL_STREAM_CODEC, friendlyBuf, offer.cost2().map(it -> itemStackToItemCost(it.getLiteralObject(), it.count())));
                     byteBuf.writeBoolean(offer.outOfStock());
                     byteBuf.writeInt(offer.uses());
                     byteBuf.writeInt(offer.maxUses());

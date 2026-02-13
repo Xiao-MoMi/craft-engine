@@ -3,7 +3,6 @@ package net.momirealms.craftengine.bukkit.block.behavior;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import net.momirealms.craftengine.bukkit.block.BukkitBlockManager;
 import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.MBlocks;
-import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.MBuiltInRegistries;
 import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.MFluids;
 import net.momirealms.craftengine.bukkit.util.BlockStateUtils;
 import net.momirealms.craftengine.bukkit.util.DirectionUtils;
@@ -17,6 +16,7 @@ import net.momirealms.craftengine.core.util.*;
 import net.momirealms.craftengine.core.util.random.RandomUtils;
 import net.momirealms.craftengine.proxy.minecraft.core.BlockPosProxy;
 import net.momirealms.craftengine.proxy.minecraft.core.DirectionProxy;
+import net.momirealms.craftengine.proxy.minecraft.core.registries.BuiltInRegistriesProxy;
 import net.momirealms.craftengine.proxy.minecraft.resources.IdentifierProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.level.BlockGetterProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.level.LevelWriterProxy;
@@ -83,7 +83,7 @@ public class BuddingBlockBehavior extends BukkitBlockBehavior {
             }
             LevelWriterProxy.INSTANCE.setBlock(level, blockPos, newState.customBlockState().literalObject(), 3);
         } else if (blockId.namespace().equals("minecraft")) {
-            Object block = RegistryUtils.getRegistryValue(MBuiltInRegistries.BLOCK, IdentifierProxy.INSTANCE.newInstance("minecraft", blockId.value()));
+            Object block = RegistryUtils.getRegistryValue(BuiltInRegistriesProxy.BLOCK, IdentifierProxy.INSTANCE.newInstance("minecraft", blockId.value()));
             if (block == null) return;
             Object newState = BlockProxy.INSTANCE.getDefaultBlockState(block);
             newState = StateHolderProxy.INSTANCE.trySetValue(newState, BlockStatePropertiesProxy.WATERLOGGED, FluidStateProxy.INSTANCE.getType(BlockBehaviourProxy.BlockStateBaseProxy.INSTANCE.getFluidState(blockState)) == MFluids.WATER);

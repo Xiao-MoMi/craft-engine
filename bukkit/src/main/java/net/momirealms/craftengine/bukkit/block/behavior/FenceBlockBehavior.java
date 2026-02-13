@@ -2,7 +2,9 @@ package net.momirealms.craftengine.bukkit.block.behavior;
 
 import net.momirealms.antigrieflib.Flag;
 import net.momirealms.craftengine.bukkit.plugin.BukkitCraftEngine;
-import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.*;
+import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.MBlocks;
+import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.MFluids;
+import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.MTagKeys;
 import net.momirealms.craftengine.bukkit.util.*;
 import net.momirealms.craftengine.core.block.BlockStateWrapper;
 import net.momirealms.craftengine.core.block.CustomBlock;
@@ -20,11 +22,13 @@ import net.momirealms.craftengine.core.world.World;
 import net.momirealms.craftengine.core.world.context.BlockPlaceContext;
 import net.momirealms.craftengine.core.world.context.UseOnContext;
 import net.momirealms.craftengine.proxy.minecraft.core.DirectionProxy;
+import net.momirealms.craftengine.proxy.minecraft.core.registries.RegistriesProxy;
 import net.momirealms.craftengine.proxy.minecraft.tags.TagKeyProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.InteractionResultProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.item.LeadItemProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.level.BlockGetterProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.level.block.FenceGateBlockProxy;
+import net.momirealms.craftengine.proxy.minecraft.world.level.block.LeavesBlockProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.level.block.SupportTypeProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.level.block.state.BlockBehaviourProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.level.material.FluidStateProxy;
@@ -76,7 +80,7 @@ public class FenceBlockBehavior extends BukkitBlockBehavior implements IsPathFin
 
     public static boolean isExceptionForConnection(BlockStateWrapper state) {
         Object blockState = state.literalObject();
-        return CoreReflections.clazz$LeavesBlock.isInstance(BlockStateUtils.getBlockOwner(blockState))
+        return LeavesBlockProxy.CLASS.isInstance(BlockStateUtils.getBlockOwner(blockState))
                 || BlockBehaviourProxy.BlockStateBaseProxy.INSTANCE.is$0(blockState, MBlocks.BARRIER)
                 || BlockBehaviourProxy.BlockStateBaseProxy.INSTANCE.is$0(blockState, MBlocks.CARVED_PUMPKIN)
                 || BlockBehaviourProxy.BlockStateBaseProxy.INSTANCE.is$0(blockState, MBlocks.JACK_O_LANTERN)
@@ -168,7 +172,7 @@ public class FenceBlockBehavior extends BukkitBlockBehavior implements IsPathFin
             BooleanProperty east = (BooleanProperty) ResourceConfigUtils.requireNonNullOrThrow(block.getProperty("east"), "warning.config.block.behavior.fence.missing_east");
             BooleanProperty south = (BooleanProperty) ResourceConfigUtils.requireNonNullOrThrow(block.getProperty("south"), "warning.config.block.behavior.fence.missing_south");
             BooleanProperty west = (BooleanProperty) ResourceConfigUtils.requireNonNullOrThrow(block.getProperty("west"), "warning.config.block.behavior.fence.missing_west");
-            Object connectableBlockTag = TagKeyProxy.INSTANCE.create(MRegistries.BLOCK, KeyUtils.toIdentifier(Key.of(arguments.getOrDefault("connectable-block-tag", "minecraft:wooden_fences").toString())));
+            Object connectableBlockTag = TagKeyProxy.INSTANCE.create(RegistriesProxy.BLOCK, KeyUtils.toIdentifier(Key.of(arguments.getOrDefault("connectable-block-tag", "minecraft:wooden_fences").toString())));
             connectableBlockTag = connectableBlockTag != null ? connectableBlockTag : MTagKeys.Block$WOODEN_FENCES;
             boolean canLeash = ResourceConfigUtils.getAsBoolean(arguments.getOrDefault("can-leash", false), "can-leash");
             return new FenceBlockBehavior(block, north, east, south, west, connectableBlockTag, canLeash);

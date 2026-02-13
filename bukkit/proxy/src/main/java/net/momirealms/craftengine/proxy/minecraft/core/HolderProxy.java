@@ -2,6 +2,7 @@ package net.momirealms.craftengine.proxy.minecraft.core;
 
 import net.momirealms.craftengine.proxy.minecraft.resources.IdentifierProxy;
 import net.momirealms.craftengine.proxy.minecraft.resources.ResourceKeyProxy;
+import net.momirealms.sparrow.reflection.clazz.SparrowClass;
 import net.momirealms.sparrow.reflection.proxy.ASMProxyFactory;
 import net.momirealms.sparrow.reflection.proxy.annotation.*;
 
@@ -37,6 +38,7 @@ public interface HolderProxy {
     @ReflectionProxy(name = "net.minecraft.core.Holder$Reference")
     interface ReferenceProxy extends HolderProxy {
         ReferenceProxy INSTANCE = ASMProxyFactory.create(ReferenceProxy.class);
+        Class<?> CLASS = SparrowClass.find("net.minecraft.core.Holder$Reference");
 
         @FieldGetter(name = "tags")
         Set<Object> getTags(Object target);

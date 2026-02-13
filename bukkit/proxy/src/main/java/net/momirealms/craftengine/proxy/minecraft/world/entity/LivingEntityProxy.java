@@ -3,6 +3,7 @@ package net.momirealms.craftengine.proxy.minecraft.world.entity;
 import net.momirealms.craftengine.proxy.minecraft.core.HolderProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.effect.MobEffectProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.entity.ai.attributes.AttributeProxy;
+import net.momirealms.sparrow.reflection.clazz.SparrowClass;
 import net.momirealms.sparrow.reflection.proxy.ASMProxyFactory;
 import net.momirealms.sparrow.reflection.proxy.annotation.MethodInvoker;
 import net.momirealms.sparrow.reflection.proxy.annotation.ReflectionProxy;
@@ -11,6 +12,7 @@ import net.momirealms.sparrow.reflection.proxy.annotation.Type;
 @ReflectionProxy(name = "net.minecraft.world.entity.LivingEntity")
 public interface LivingEntityProxy extends EntityProxy {
     LivingEntityProxy INSTANCE = ASMProxyFactory.create(LivingEntityProxy.class);
+    Class<?> CLASS = SparrowClass.find("net.minecraft.world.entity.LivingEntity");
 
     @MethodInvoker(name = "getLocalBoundsForPose")
     Object getLocalBoundsForPose(Object target, @Type(clazz = PoseProxy.class) Object pos);

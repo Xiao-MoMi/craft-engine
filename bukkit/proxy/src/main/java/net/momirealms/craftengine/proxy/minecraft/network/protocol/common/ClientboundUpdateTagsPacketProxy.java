@@ -1,6 +1,7 @@
 package net.momirealms.craftengine.proxy.minecraft.network.protocol.common;
 
 import net.momirealms.craftengine.proxy.minecraft.network.protocol.PacketProxy;
+import net.momirealms.sparrow.reflection.clazz.SparrowClass;
 import net.momirealms.sparrow.reflection.proxy.ASMProxyFactory;
 import net.momirealms.sparrow.reflection.proxy.annotation.ConstructorInvoker;
 import net.momirealms.sparrow.reflection.proxy.annotation.FieldGetter;
@@ -11,6 +12,7 @@ import java.util.Map;
 @ReflectionProxy(name = {"net.minecraft.network.protocol.common.ClientboundUpdateTagsPacket", "net.minecraft.network.protocol.game.ClientboundUpdateTagsPacket"})
 public interface ClientboundUpdateTagsPacketProxy extends PacketProxy {
     ClientboundUpdateTagsPacketProxy INSTANCE = ASMProxyFactory.create(ClientboundUpdateTagsPacketProxy.class);
+    Class<?> CLASS = SparrowClass.find("net.minecraft.network.protocol.common.ClientboundUpdateTagsPacket", "net.minecraft.network.protocol.game.ClientboundUpdateTagsPacket");
 
     @ConstructorInvoker
     Object newInstance(Map<?, ?> tags);

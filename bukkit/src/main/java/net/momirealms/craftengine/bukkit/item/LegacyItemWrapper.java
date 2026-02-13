@@ -11,6 +11,7 @@ import net.momirealms.craftengine.core.item.ItemWrapper;
 import net.momirealms.craftengine.core.util.random.RandomUtils;
 import net.momirealms.craftengine.proxy.bukkit.craftbukkit.inventory.CraftItemStackProxy;
 import net.momirealms.craftengine.proxy.minecraft.nbt.CompoundTagProxy;
+import net.momirealms.craftengine.proxy.minecraft.nbt.TagProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.item.ItemStackProxy;
 import net.momirealms.sparrow.nbt.Tag;
 import org.bukkit.enchantments.Enchantment;
@@ -38,7 +39,7 @@ public class LegacyItemWrapper implements ItemWrapper<ItemStack> {
         Object finalNMSTag;
         if (value instanceof Tag tag) {
             finalNMSTag = MRegistryOps.SPARROW_NBT.convertTo(MRegistryOps.NBT, tag);
-        } else if (CoreReflections.clazz$Tag.isInstance(value)) {
+        } else if (TagProxy.CLASS.isInstance(value)) {
             finalNMSTag = value;
         } else {
             finalNMSTag = MRegistryOps.JAVA.convertTo(MRegistryOps.NBT, value);

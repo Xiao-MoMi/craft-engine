@@ -15,7 +15,6 @@ import net.bytebuddy.matcher.ElementMatchers;
 import net.momirealms.craftengine.bukkit.block.BukkitBlockShape;
 import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.CoreReflections;
 import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.MBlocks;
-import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.MRegistries;
 import net.momirealms.craftengine.bukkit.util.KeyUtils;
 import net.momirealms.craftengine.bukkit.util.NoteBlockChainUpdateUtils;
 import net.momirealms.craftengine.core.block.BlockShape;
@@ -29,11 +28,16 @@ import net.momirealms.craftengine.core.util.Key;
 import net.momirealms.craftengine.core.util.ObjectHolder;
 import net.momirealms.craftengine.core.util.VersionHelper;
 import net.momirealms.craftengine.proxy.minecraft.core.DirectionProxy;
+import net.momirealms.craftengine.proxy.minecraft.core.registries.RegistriesProxy;
 import net.momirealms.craftengine.proxy.minecraft.resources.ResourceKeyProxy;
 import net.momirealms.craftengine.proxy.minecraft.server.level.ServerChunkCacheProxy;
 import net.momirealms.craftengine.proxy.minecraft.server.level.ServerLevelProxy;
+import net.momirealms.craftengine.proxy.minecraft.world.WorldlyContainerHolderProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.item.ItemStackProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.level.block.BlockProxy;
+import net.momirealms.craftengine.proxy.minecraft.world.level.block.BonemealableBlockProxy;
+import net.momirealms.craftengine.proxy.minecraft.world.level.block.FallableProxy;
+import net.momirealms.craftengine.proxy.minecraft.world.level.block.SimpleWaterloggedBlockProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.level.block.state.BlockBehaviourProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.level.block.state.StateDefinitionProxy;
 
@@ -58,7 +62,7 @@ public final class BlockGenerator {
         String packageWithName = BlockGenerator.class.getName();
         String generatedClassName = packageWithName.substring(0, packageWithName.lastIndexOf('.')) + ".CraftEngineBlock";
         DynamicType.Builder<?> builder = byteBuddy
-                .subclass(CoreReflections.clazz$Block, ConstructorStrategy.Default.IMITATE_SUPER_CLASS_OPENING)
+                .subclass(BlockProxy.CLASS, ConstructorStrategy.Default.IMITATE_SUPER_CLASS_OPENING)
                 .name(generatedClassName)
                 .defineField("behaviorHolder", ObjectHolder.class, Visibility.PUBLIC)
                 .defineField("shapeHolder", ObjectHolder.class, Visibility.PUBLIC)
@@ -66,10 +70,10 @@ public final class BlockGenerator {
                 .defineField("isClientSideTripwire", boolean.class, Visibility.PUBLIC)
                 // should always implement this interface
                 .implement(DelegatingBlock.class)
-                .implement(CoreReflections.clazz$Fallable)
-                .implement(CoreReflections.clazz$BonemealableBlock)
-                .implement(CoreReflections.clazz$SimpleWaterloggedBlock)
-                .implement(CoreReflections.clazz$WorldlyContainerHolder)
+                .implement(FallableProxy.CLASS)
+                .implement(BonemealableBlockProxy.CLASS)
+                .implement(SimpleWaterloggedBlockProxy.CLASS)
+                .implement(WorldlyContainerHolderProxy.CLASS)
                 // internal interfaces
                 .method(ElementMatchers.named("behaviorDelegate"))
                 .intercept(FieldAccessor.ofField("behaviorHolder"))
@@ -200,8 +204,8 @@ public final class BlockGenerator {
         }
         Class<?> clazz$CraftEngineBlock = builder.make().load(BlockGenerator.class.getClassLoader()).getLoaded();
         constructor$CraftEngineBlock = MethodHandles.publicLookup().in(clazz$CraftEngineBlock)
-                .findConstructor(clazz$CraftEngineBlock, MethodType.methodType(void.class, CoreReflections.clazz$BlockBehaviour$Properties))
-                .asType(MethodType.methodType(CoreReflections.clazz$Block, CoreReflections.clazz$BlockBehaviour$Properties));
+                .findConstructor(clazz$CraftEngineBlock, MethodType.methodType(void.class, BlockBehaviourProxy.PropertiesProxy.CLASS))
+                .asType(MethodType.methodType(BlockProxy.CLASS, BlockBehaviourProxy.PropertiesProxy.CLASS));
         field$CraftEngineBlock$behavior = clazz$CraftEngineBlock.getField("behaviorHolder");
         field$CraftEngineBlock$shape = clazz$CraftEngineBlock.getField("shapeHolder");
         field$CraftEngineBlock$isNoteBlock = clazz$CraftEngineBlock.getField("isClientSideNoteBlock");
@@ -233,7 +237,7 @@ public final class BlockGenerator {
     private static Object createEmptyBlockProperties(Key id) {
         Object blockProperties = BlockBehaviourProxy.PropertiesProxy.INSTANCE.of();
         Object identifier = KeyUtils.toIdentifier(id);
-        Object resourceKey = ResourceKeyProxy.INSTANCE.create(MRegistries.BLOCK, identifier);
+        Object resourceKey = ResourceKeyProxy.INSTANCE.create(RegistriesProxy.BLOCK, identifier);
         if (VersionHelper.isOrAbove1_21_2()) {
             BlockBehaviourProxy.PropertiesProxy.INSTANCE.setId(blockProperties, resourceKey);
         }
@@ -252,7 +256,7 @@ public final class BlockGenerator {
             ObjectHolder<BlockBehavior> holder = ((DelegatingBlock) thisObj).behaviorDelegate();
             DelegatingBlock indicator = (DelegatingBlock) thisObj;
             // todo better chain updater
-            if (indicator.isNoteBlock() && CoreReflections.clazz$ServerLevel.isInstance(args[levelIndex])) {
+            if (indicator.isNoteBlock() && ServerLevelProxy.CLASS.isInstance(args[levelIndex])) {
                 startNoteBlockChain(args);
             }
             try {

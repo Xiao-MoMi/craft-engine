@@ -29,8 +29,8 @@ import net.momirealms.craftengine.proxy.minecraft.world.level.GameTypeProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.level.block.state.BlockBehaviourProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.phys.AABBProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.phys.Vec3Proxy;
-import net.momirealms.craftengine.proxy.minecraft.world.phys.shape.CollisionContextProxy;
-import net.momirealms.craftengine.proxy.minecraft.world.phys.shape.VoxelShapeProxy;
+import net.momirealms.craftengine.proxy.minecraft.world.phys.shapes.CollisionContextProxy;
+import net.momirealms.craftengine.proxy.minecraft.world.phys.shapes.VoxelShapeProxy;
 import org.jetbrains.annotations.Nullable;
 import org.joml.Vector3f;
 

@@ -14,9 +14,7 @@ import net.momirealms.craftengine.bukkit.item.listener.ItemEventListener;
 import net.momirealms.craftengine.bukkit.item.listener.SlotChangeListener;
 import net.momirealms.craftengine.bukkit.item.recipe.BukkitRecipeManager;
 import net.momirealms.craftengine.bukkit.plugin.BukkitCraftEngine;
-import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.MBuiltInRegistries;
 import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.MItems;
-import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.MRegistries;
 import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.MRegistryOps;
 import net.momirealms.craftengine.bukkit.plugin.user.BukkitServerPlayer;
 import net.momirealms.craftengine.bukkit.util.ItemStackUtils;
@@ -40,6 +38,8 @@ import net.momirealms.craftengine.proxy.minecraft.core.HolderProxy;
 import net.momirealms.craftengine.proxy.minecraft.core.MappedRegistryProxy;
 import net.momirealms.craftengine.proxy.minecraft.core.RegistryAccessProxy;
 import net.momirealms.craftengine.proxy.minecraft.core.RegistryProxy;
+import net.momirealms.craftengine.proxy.minecraft.core.registries.BuiltInRegistriesProxy;
+import net.momirealms.craftengine.proxy.minecraft.core.registries.RegistriesProxy;
 import net.momirealms.craftengine.proxy.minecraft.network.chat.ComponentProxy;
 import net.momirealms.craftengine.proxy.minecraft.resources.ResourceKeyProxy;
 import net.momirealms.craftengine.proxy.minecraft.tags.TagKeyProxy;
@@ -90,9 +90,9 @@ public class BukkitItemManager extends AbstractItemManager<ItemStack> {
         this.networkItemHandler = VersionHelper.isOrAbove1_20_5() ? new ModernNetworkItemHandler() : new LegacyNetworkItemHandler();
         this.registerAllVanillaItems();
         if (VersionHelper.isOrAbove1_21_2()) {
-            this.bedrockItemHolder = RegistryProxy.INSTANCE.get$1(MBuiltInRegistries.ITEM, ResourceKeyProxy.INSTANCE.create(MRegistries.ITEM, KeyUtils.toIdentifier(Key.of("minecraft:bedrock")))).orElseThrow();
+            this.bedrockItemHolder = RegistryProxy.INSTANCE.get$1(BuiltInRegistriesProxy.ITEM, ResourceKeyProxy.INSTANCE.create(RegistriesProxy.ITEM, KeyUtils.toIdentifier(Key.of("minecraft:bedrock")))).orElseThrow();
         } else {
-            this.bedrockItemHolder = RegistryProxy.INSTANCE.getHolder$1(MBuiltInRegistries.ITEM, ResourceKeyProxy.INSTANCE.create(MRegistries.ITEM, KeyUtils.toIdentifier(Key.of("minecraft:bedrock")))).orElseThrow();
+            this.bedrockItemHolder = RegistryProxy.INSTANCE.getHolder$1(BuiltInRegistriesProxy.ITEM, ResourceKeyProxy.INSTANCE.create(RegistriesProxy.ITEM, KeyUtils.toIdentifier(Key.of("minecraft:bedrock")))).orElseThrow();
         }
         this.registerCustomTrimMaterial();
         this.loadLastRegisteredPatterns();
@@ -220,7 +220,7 @@ public class BukkitItemManager extends AbstractItemManager<ItemStack> {
             this.lastRegisteredPatterns.add(Config.sacrificedAssetId());
         }
         Object registryAccess = RegistryUtils.getRegistryAccess();
-        Object registry = RegistryAccessProxy.INSTANCE.lookupOrThrow(registryAccess, MRegistries.TRIM_PATTERN);
+        Object registry = RegistryAccessProxy.INSTANCE.lookupOrThrow(registryAccess, RegistriesProxy.TRIM_PATTERN);
         MappedRegistryProxy.INSTANCE.setFrozen(registry, false);
         for (Key assetId : this.lastRegisteredPatterns) {
             Object identifier = KeyUtils.toIdentifier(assetId);
@@ -284,7 +284,7 @@ public class BukkitItemManager extends AbstractItemManager<ItemStack> {
 
     private void registerCustomTrimMaterial() {
         Object registryAccess = RegistryUtils.getRegistryAccess();
-        Object registry = RegistryAccessProxy.INSTANCE.lookupOrThrow(registryAccess, MRegistries.TRIM_MATERIAL);
+        Object registry = RegistryAccessProxy.INSTANCE.lookupOrThrow(registryAccess, RegistriesProxy.TRIM_MATERIAL);
         Object identifier = KeyUtils.toIdentifier(Key.of("minecraft", AbstractPackManager.NEW_TRIM_MATERIAL));
         Object previous = RegistryUtils.getRegistryValue(registry, identifier);
         if (previous == null) {
@@ -358,7 +358,7 @@ public class BukkitItemManager extends AbstractItemManager<ItemStack> {
 
     @Nullable
     private ItemStack createVanillaItemStack(Key id) {
-        Object item = RegistryUtils.getRegistryValue(MBuiltInRegistries.ITEM, KeyUtils.toIdentifier(id));
+        Object item = RegistryUtils.getRegistryValue(BuiltInRegistriesProxy.ITEM, KeyUtils.toIdentifier(id));
         if (item == MItems.AIR && !id.equals(ItemKeys.AIR)) {
             return null;
         }
@@ -373,8 +373,8 @@ public class BukkitItemManager extends AbstractItemManager<ItemStack> {
 
     @Override
     protected CustomItem.Builder<ItemStack> createPlatformItemBuilder(UniqueKey id, Key materialId, Key clientBoundMaterialId) {
-        Object item = RegistryUtils.getRegistryValue(MBuiltInRegistries.ITEM, KeyUtils.toIdentifier(materialId));
-        Object clientBoundItem = materialId == clientBoundMaterialId ? item : RegistryUtils.getRegistryValue(MBuiltInRegistries.ITEM, KeyUtils.toIdentifier(clientBoundMaterialId));
+        Object item = RegistryUtils.getRegistryValue(BuiltInRegistriesProxy.ITEM, KeyUtils.toIdentifier(materialId));
+        Object clientBoundItem = materialId == clientBoundMaterialId ? item : RegistryUtils.getRegistryValue(BuiltInRegistriesProxy.ITEM, KeyUtils.toIdentifier(clientBoundMaterialId));
         if (item == MItems.AIR) {
             throw new LocalizedResourceConfigException("warning.config.item.invalid_material", materialId.toString());
         }
@@ -388,17 +388,17 @@ public class BukkitItemManager extends AbstractItemManager<ItemStack> {
     }
 
     private void registerAllVanillaItems() {
-        for (Object item : (Iterable<?>) MBuiltInRegistries.ITEM) {
-            Object identifier = RegistryProxy.INSTANCE.getKey(MBuiltInRegistries.ITEM, item);
+        for (Object item : (Iterable<?>) BuiltInRegistriesProxy.ITEM) {
+            Object identifier = RegistryProxy.INSTANCE.getKey(BuiltInRegistriesProxy.ITEM, item);
             Key itemKey = KeyUtils.identifierToKey(identifier);
             VANILLA_ITEMS.add(itemKey);
             super.cachedVanillaItemSuggestions.add(Suggestion.suggestion(itemKey.asString()));
             UniqueKey uniqueKey = UniqueKey.create(itemKey);
             Object mcHolder;
             if (VersionHelper.isOrAbove1_21_2()) {
-                mcHolder = RegistryProxy.INSTANCE.get$1(MBuiltInRegistries.ITEM, ResourceKeyProxy.INSTANCE.create(MRegistries.ITEM, identifier)).orElseThrow();
+                mcHolder = RegistryProxy.INSTANCE.get$1(BuiltInRegistriesProxy.ITEM, ResourceKeyProxy.INSTANCE.create(RegistriesProxy.ITEM, identifier)).orElseThrow();
             } else {
-                mcHolder = RegistryProxy.INSTANCE.getHolder$1(MBuiltInRegistries.ITEM, ResourceKeyProxy.INSTANCE.create(MRegistries.ITEM, identifier)).orElseThrow();
+                mcHolder = RegistryProxy.INSTANCE.getHolder$1(BuiltInRegistriesProxy.ITEM, ResourceKeyProxy.INSTANCE.create(RegistriesProxy.ITEM, identifier)).orElseThrow();
             }
             Set<Object> tags = HolderProxy.ReferenceProxy.INSTANCE.getTags(mcHolder);
             for (Object tag : tags) {
@@ -421,7 +421,7 @@ public class BukkitItemManager extends AbstractItemManager<ItemStack> {
         }
         Optional<?> optionalPattern;
         if (VersionHelper.isOrAbove1_21_5()) {
-            optionalPattern = RegistryProxy.INSTANCE.get$0(RegistryAccessProxy.INSTANCE.lookupOrThrow(registryAccess, MRegistries.TRIM_PATTERN), KeyUtils.toIdentifier(pattern));
+            optionalPattern = RegistryProxy.INSTANCE.get$0(RegistryAccessProxy.INSTANCE.lookupOrThrow(registryAccess, RegistriesProxy.TRIM_PATTERN), KeyUtils.toIdentifier(pattern));
         } else if (VersionHelper.isOrAbove1_20_5()) {
             optionalPattern = TrimPatternsProxy.INSTANCE.getFromTemplate$1(registryAccess, template.getLiteralObject());
         } else {
