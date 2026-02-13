@@ -14,16 +14,18 @@ public class BukkitClassPathAppender implements ClassPathAppender {
     public BukkitClassPathAppender() {
         // 这个类加载器用于加载重定位后的依赖库，这样所有插件都能访问到
         ClassLoader bukkitClassLoader = Bukkit.class.getClassLoader();
-        if (bukkitClassLoader instanceof URLClassLoader urlClassLoader) {
+        URLClassLoader urlClassLoader = findURLClassLoader(bukkitClassLoader);
+        if (urlClassLoader != null) {
             this.libraryClassLoaderAccess = URLClassLoaderAccess.create(urlClassLoader);
         } else {
-            // ignite会把Bukkit放置于EmberClassLoader中，获取其父DynamicClassLoader
-            if (bukkitClassLoader.getClass().getName().equals("space.vectrix.ignite.launch.ember.EmberClassLoader") && bukkitClassLoader.getParent() instanceof URLClassLoader urlClassLoader) {
-                this.libraryClassLoaderAccess = URLClassLoaderAccess.create(urlClassLoader);
-            } else {
-                throw new UnsupportedOperationException("Unsupported classloader " + bukkitClassLoader.getClass());
-            }
+            throw new UnsupportedOperationException("Unsupported classloader " + bukkitClassLoader.getClass());
         }
+    }
+
+    private static URLClassLoader findURLClassLoader(ClassLoader classLoader) {
+        if (classLoader instanceof URLClassLoader urlClassLoader) return urlClassLoader;
+        ClassLoader parent = classLoader.getParent();
+        return parent == null ? null : findURLClassLoader(parent);
     }
 
     @Override
