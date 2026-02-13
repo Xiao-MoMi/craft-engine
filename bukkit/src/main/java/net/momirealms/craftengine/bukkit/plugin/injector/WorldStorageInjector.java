@@ -82,38 +82,8 @@ public final class WorldStorageInjector {
         }
     }
 
-    // 用于监听注入的LevelChunkSection内的变化
-    public static Object setBlockState(Object thisObj, int x, int y, int z, @NotNull Object newState, boolean useLocks) {
-        InjectedStorage.Section holder = (InjectedStorage.Section) thisObj;
-        Object previousState = LevelChunkSectionProxy.INSTANCE.setBlockState(holder, x, y, z, newState, useLocks);
-        if (holder.isActive()) {
-            compareAndUpdateBlockState(x, y, z, newState, previousState, holder);
-        }
-        return previousState;
-    }
-
-    // 用于监听注入的PalettedContainer内的变化
-    public static Object getAndSet(Object thisObj, int x, int y, int z, @NotNull Object newState) {
-        InjectedStorage.Palette holder = (InjectedStorage.Palette) thisObj;
-        Object previousState = PalettedContainerProxy.INSTANCE.getAndSet(holder.delegated(), x, y, z, newState);
-        if (holder.isActive()) {
-            compareAndUpdateBlockState(x, y, z, newState, previousState, holder);
-        }
-        return previousState;
-    }
-
-    // 用于监听注入的PalettedContainer内的变化
-    public static Object getAndSetUnchecked(Object thisObj, int x, int y, int z, @NotNull Object newState) {
-        InjectedStorage.Palette holder = (InjectedStorage.Palette) thisObj;
-        Object previousState = PalettedContainerProxy.INSTANCE.getAndSetUnchecked(holder.delegated(), x, y, z, newState);
-        if (holder.isActive()) {
-            compareAndUpdateBlockState(x, y, z, newState, previousState, holder);
-        }
-        return previousState;
-    }
-
     @SuppressWarnings("DuplicatedCode")
-    private static void compareAndUpdateBlockState(int x, int y, int z, Object newState, Object previousState, InjectedStorage holder) {
+    public static void compareAndUpdateBlockState(int x, int y, int z, Object newState, Object previousState, InjectedStorage holder) {
         CESection section = holder.section();
         if (newState instanceof DelegatingBlockState delegatingBlockState) {
             ImmutableBlockState newImmutableBlockState = delegatingBlockState.blockState();
