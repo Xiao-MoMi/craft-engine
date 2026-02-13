@@ -1790,7 +1790,6 @@ public class BukkitNetworkManager extends AbstractNetworkManager implements List
             } else {
                 return;
             }
-            if (clientPayload == null) return;
             PayloadHelper.handleReceiver(clientPayload, user);
         }
     }
@@ -4140,7 +4139,7 @@ public class BukkitNetworkManager extends AbstractNetworkManager implements List
 
                         {
                             Object nmsPlayer = serverPlayer.serverPlayer();
-                            Object serverLevel = ServerPlayerProxy.INSTANCE.level(nmsPlayer);
+                            Object serverLevel = ServerPlayerProxy.INSTANCE.getLevel(nmsPlayer);
                             Object blockPos = LocationUtils.toBlockPos(hitResult.blockPos());
                             Object previousBlockState = ServerLevelProxy.INSTANCE.getBlockStateIfLoaded(serverLevel, blockPos);
                             if (previousBlockState != null) {

@@ -8,8 +8,8 @@ import net.momirealms.sparrow.reflection.proxy.annotation.*;
 @ReflectionProxy(name = "net.minecraft.world.item.trading.ItemCost", activeIf = "min_version=1.20.5")
 public interface ItemCostProxy {
     ItemCostProxy INSTANCE = ASMProxyFactory.create(ItemCostProxy.class);
-    Object STREAM_CODEC = INSTANCE.getStreamCodec();
-    Object OPTIONAL_STREAM_CODEC = INSTANCE.getOptionalStreamCodec();
+    Object STREAM_CODEC = INSTANCE != null ? INSTANCE.getStreamCodec() : null;
+    Object OPTIONAL_STREAM_CODEC = INSTANCE != null ? INSTANCE.getOptionalStreamCodec() : null;
 
     @ConstructorInvoker
     Object newInstance(@Type(clazz = HolderProxy.class) Object item, int count, @Type(clazz = DataComponentExactPredicateProxy.class) Object components);

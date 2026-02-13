@@ -237,10 +237,10 @@ public interface BlockBehaviourProxy {
         @FieldSetter(name = "cache")
         void setCache(Object target, Object cache);
 
-        @FieldGetter(name = "conditionallyFullOpaque", activeIf = "max_version=1.21.1")
+        @FieldGetter(name = {"conditionallyFullOpaque", "isConditionallyFullOpaque"}, activeIf = "max_version=1.21.1")
         boolean isConditionallyFullOpaque(Object target);
 
-        @FieldSetter(name = "conditionallyFullOpaque", activeIf = "max_version=1.21.1")
+        @FieldSetter(name = {"conditionallyFullOpaque", "isConditionallyFullOpaque"}, activeIf = "max_version=1.21.1")
         void setConditionallyFullOpaque(Object target, boolean conditionallyFullOpaque);
 
         @FieldGetter(name = "opacityIfCached", activeIf = "max_version=1.21.1")

@@ -41,7 +41,4 @@ public interface ServerPlayerProxy extends PlayerProxy {
 
     @FieldSetter(name = "gameMode")
     void setGameMode(Object target, Object gameMode);
-
-    @MethodInvoker(name = "level")
-    Object level(Object target);
 }

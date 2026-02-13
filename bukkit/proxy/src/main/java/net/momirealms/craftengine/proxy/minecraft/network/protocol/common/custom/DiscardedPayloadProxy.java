@@ -11,6 +11,7 @@ import net.momirealms.sparrow.reflection.proxy.ASMProxyFactory;
 import net.momirealms.sparrow.reflection.proxy.annotation.ConstructorInvoker;
 import net.momirealms.sparrow.reflection.proxy.annotation.FieldGetter;
 import net.momirealms.sparrow.reflection.proxy.annotation.ReflectionProxy;
+import net.momirealms.sparrow.reflection.proxy.annotation.Type;
 
 import java.util.Optional;
 
@@ -34,8 +35,8 @@ public interface DiscardedPayloadProxy extends CustomPacketPayloadProxy {
     Object getId(Object target);
 
     @ConstructorInvoker(activeIf = "max_version=1.20.4")
-    Object newInstance(Object id);
+    Object newInstance(@Type(clazz = IdentifierProxy.class) Object id);
 
-    @FieldGetter(name = "data")
+    @FieldGetter(name = "data", activeIf = "min_version=1.20.5")
     Object getData(Object target);
 }
