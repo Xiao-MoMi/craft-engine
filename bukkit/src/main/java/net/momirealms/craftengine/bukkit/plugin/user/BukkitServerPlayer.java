@@ -17,11 +17,8 @@ import net.momirealms.craftengine.bukkit.entity.furniture.BukkitFurniture;
 import net.momirealms.craftengine.bukkit.item.BukkitItemManager;
 import net.momirealms.craftengine.bukkit.plugin.BukkitCraftEngine;
 import net.momirealms.craftengine.bukkit.plugin.gui.CraftEngineGUIHolder;
-import net.momirealms.craftengine.bukkit.plugin.network.payload.DiscardedPayload;
-import net.momirealms.craftengine.bukkit.plugin.network.payload.UnknownPayload;
 import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.MAttributeHolders;
 import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.MMobEffects;
-import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.NetworkReflections;
 import net.momirealms.craftengine.bukkit.util.*;
 import net.momirealms.craftengine.core.advancement.AdvancementType;
 import net.momirealms.craftengine.core.block.BlockStateWrapper;
@@ -59,6 +56,8 @@ import net.momirealms.craftengine.proxy.bukkit.craftbukkit.entity.CraftEntityPro
 import net.momirealms.craftengine.proxy.minecraft.network.ConnectionProxy;
 import net.momirealms.craftengine.proxy.minecraft.network.protocol.common.ClientboundCustomPayloadPacketProxy;
 import net.momirealms.craftengine.proxy.minecraft.network.protocol.common.ClientboundResourcePackPopPacketProxy;
+import net.momirealms.craftengine.proxy.minecraft.network.protocol.common.ServerboundCustomPayloadPacketProxy;
+import net.momirealms.craftengine.proxy.minecraft.network.protocol.common.custom.DiscardedPayloadProxy;
 import net.momirealms.craftengine.proxy.minecraft.network.protocol.game.*;
 import net.momirealms.craftengine.proxy.minecraft.network.protocol.login.ClientboundLoginDisconnectPacketProxy;
 import net.momirealms.craftengine.proxy.minecraft.network.syncher.SynchedEntityDataProxy;
@@ -523,24 +522,20 @@ public class BukkitServerPlayer extends Player {
 
     @Override
     public void sendCustomPayload(Key channelId, byte[] data) {
-        try {
-            Object channelIdentifier = KeyUtils.toIdentifier(channelId);
-            Object responsePacket;
-            if (VersionHelper.isOrAbove1_20_2()) {
-                Object dataPayload;
-                if (VersionHelper.isOrAbove1_20_5()) {
-                    dataPayload = NetworkReflections.constructor$DiscardedPayload.newInstance(channelIdentifier, DiscardedPayload.useNewMethod ? data : Unpooled.wrappedBuffer(data));
-                } else {
-                    dataPayload = NetworkReflections.constructor$ServerboundCustomPayloadPacket$UnknownPayload.newInstance(channelIdentifier, UnknownPayload.isByteArray ? data : Unpooled.wrappedBuffer(data));
-                }
-                responsePacket = ClientboundCustomPayloadPacketProxy.INSTANCE.newInstance(dataPayload);
+        Object channelIdentifier = KeyUtils.toIdentifier(channelId);
+        Object responsePacket;
+        if (VersionHelper.isOrAbove1_20_2()) {
+            Object dataPayload;
+            if (VersionHelper.isOrAbove1_20_5()) {
+                dataPayload = DiscardedPayloadProxy.CONSTRUCTOR.newInstance(channelIdentifier, DiscardedPayloadProxy.PAPER_PATCH ? data : Unpooled.wrappedBuffer(data));
             } else {
-                responsePacket = ClientboundCustomPayloadPacketProxy.INSTANCE.newInstance(channelIdentifier, PacketUtils.ensureNMSFriendlyByteBuf(Unpooled.wrappedBuffer(data)));
+                dataPayload = ServerboundCustomPayloadPacketProxy.UnknownPayloadProxy.CONSTRUCTOR.newInstance(channelIdentifier, ServerboundCustomPayloadPacketProxy.UnknownPayloadProxy.PAPER_PATCH ? data : Unpooled.wrappedBuffer(data));
             }
-            this.sendPacket(responsePacket, true);
-        } catch (Exception e) {
-            CraftEngine.instance().logger().warn("Failed to send custom payload to " + name(), e);
+            responsePacket = ClientboundCustomPayloadPacketProxy.INSTANCE.newInstance(dataPayload);
+        } else {
+            responsePacket = ClientboundCustomPayloadPacketProxy.INSTANCE.newInstance(channelIdentifier, PacketUtils.ensureNMSFriendlyByteBuf(Unpooled.wrappedBuffer(data)));
         }
+        this.sendPacket(responsePacket, true);
     }
 
     @Override

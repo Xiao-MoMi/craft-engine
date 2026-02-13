@@ -2,7 +2,6 @@ package net.momirealms.craftengine.bukkit.sound;
 
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
-import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.CoreReflections;
 import net.momirealms.craftengine.bukkit.util.ComponentUtils;
 import net.momirealms.craftengine.bukkit.util.KeyUtils;
 import net.momirealms.craftengine.bukkit.util.RegistryUtils;
@@ -12,7 +11,6 @@ import net.momirealms.craftengine.core.sound.JukeboxSong;
 import net.momirealms.craftengine.core.util.AdventureHelper;
 import net.momirealms.craftengine.core.util.GsonHelper;
 import net.momirealms.craftengine.core.util.Key;
-import net.momirealms.craftengine.core.util.VersionHelper;
 import net.momirealms.craftengine.proxy.minecraft.core.HolderProxy;
 import net.momirealms.craftengine.proxy.minecraft.core.MappedRegistryProxy;
 import net.momirealms.craftengine.proxy.minecraft.core.RegistryAccessProxy;

@@ -2,38 +2,24 @@ package net.momirealms.craftengine.bukkit.plugin.network.payload;
 
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
-import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.NetworkReflections;
 import net.momirealms.craftengine.bukkit.util.KeyUtils;
-import net.momirealms.craftengine.core.plugin.CraftEngine;
 import net.momirealms.craftengine.core.util.FriendlyByteBuf;
 import net.momirealms.craftengine.core.util.Key;
+import net.momirealms.craftengine.proxy.minecraft.network.protocol.common.ServerboundCustomPayloadPacketProxy;
 
 public record UnknownPayload(Key channel, Object rawPayload) implements Payload {
-    public static final boolean isByteArray = NetworkReflections.field$ServerboundCustomPayloadPacket$UnknownPayload$data == null;
 
     public static UnknownPayload from(Object payload) {
-        try {
-            Object id = NetworkReflections.field$ServerboundCustomPayloadPacket$UnknownPayload$id.get(payload);
-            Key channel = KeyUtils.identifierToKey(id);
-            return new UnknownPayload(channel, payload);
-        } catch (Exception e) {
-            CraftEngine.instance().logger().warn("Failed to create UnknownPayload", e);
-            return null;
-        }
+        Object id = ServerboundCustomPayloadPacketProxy.UnknownPayloadProxy.INSTANCE.getId(payload);
+        return new UnknownPayload(KeyUtils.identifierToKey(id), payload);
     }
 
     public ByteBuf getData() {
-        if (this.rawPayload() instanceof ByteBuf buf) return buf;
-        try {
-            if (isByteArray) {
-                return Unpooled.wrappedBuffer((byte[]) NetworkReflections.field$ServerboundCustomPayloadPacket$UnknownPayload$dataByteArray.get(this.rawPayload()));
-            } else {
-                return (ByteBuf) NetworkReflections.field$ServerboundCustomPayloadPacket$UnknownPayload$data.get(this.rawPayload());
-            }
-        } catch (Exception e) {
-            CraftEngine.instance().logger().warn("Failed to get data from UnknownPayload", e);
-            return Unpooled.EMPTY_BUFFER;
-        }
+        if (this.rawPayload instanceof ByteBuf buf) return buf;
+        Object data = ServerboundCustomPayloadPacketProxy.UnknownPayloadProxy.INSTANCE.getData(this.rawPayload);
+        if (data instanceof ByteBuf buf) return buf;
+        if (data instanceof byte[] bytes) return Unpooled.wrappedBuffer(bytes);
+        return Unpooled.EMPTY_BUFFER;
     }
 
     @Override

@@ -53,7 +53,6 @@ import net.momirealms.craftengine.bukkit.plugin.network.payload.DiscardedPayload
 import net.momirealms.craftengine.bukkit.plugin.network.payload.Payload;
 import net.momirealms.craftengine.bukkit.plugin.network.payload.PayloadHelper;
 import net.momirealms.craftengine.bukkit.plugin.network.payload.UnknownPayload;
-import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.CoreReflections;
 import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.MBlocks;
 import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.MEntityTypes;
 import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.MRegistryOps;
@@ -1777,7 +1776,6 @@ public class BukkitNetworkManager extends AbstractNetworkManager implements List
 
         @Override
         public void onPacketReceive(NetWorkUser user, NMSPacketEvent event, Object packet) {
-            if (!VersionHelper.isOrAbove1_20_2()) return;
             Object payload = ServerboundCustomPayloadPacketProxy.INSTANCE.getPayload(packet);
             Payload clientPayload;
             if (VersionHelper.isOrAbove1_20_5() && DiscardedPayloadProxy.CLASS.isInstance(payload)) {

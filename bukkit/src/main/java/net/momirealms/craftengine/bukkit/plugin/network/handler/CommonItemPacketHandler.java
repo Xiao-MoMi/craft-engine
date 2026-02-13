@@ -1,7 +1,6 @@
 package net.momirealms.craftengine.bukkit.plugin.network.handler;
 
 import net.momirealms.craftengine.bukkit.item.BukkitItemManager;
-import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.CoreReflections;
 import net.momirealms.craftengine.bukkit.plugin.user.BukkitServerPlayer;
 import net.momirealms.craftengine.bukkit.util.EntityDataUtils;
 import net.momirealms.craftengine.bukkit.util.PacketUtils;
