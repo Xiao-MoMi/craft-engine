@@ -25,6 +25,7 @@ import net.momirealms.craftengine.core.plugin.logger.filter.DisconnectLogFilter;
 import net.momirealms.craftengine.core.util.*;
 import net.momirealms.craftengine.core.world.InjectionTarget;
 import net.momirealms.craftengine.core.world.chunk.storage.CompressionMethod;
+import net.momirealms.craftengine.core.world.chunk.storage.StorageType;
 
 import java.io.*;
 import java.nio.file.Files;
@@ -128,7 +129,6 @@ public final class Config {
     private Path resource_pack$delivery$file_to_upload;
     private Component resource_pack$send$prompt;
 
-    private boolean light_system$force_update_light;
     private boolean light_system$async_update;
     private boolean light_system$enable;
 
@@ -137,12 +137,12 @@ public final class Config {
     private boolean chunk_system$restore_custom_blocks_on_chunk_load;
     private boolean chunk_system$sync_custom_blocks_on_chunk_load;
     private boolean chunk_system$cache_system = true;
-    private boolean chunk_system$injection$use_fast_method;
     private boolean chunk_system$injection$target;
     private boolean chunk_system$process_invalid_furniture$enable;
     private Map<String, String> chunk_system$process_invalid_furniture$mapping;
     private boolean chunk_system$process_invalid_blocks$enable;
     private Map<String, String> chunk_system$process_invalid_blocks$mapping;
+    private StorageType chunk_system$storage_type;
 
     private boolean furniture$hide_base_entity;
     private ColliderType furniture$collision_entity_type;
@@ -420,7 +420,7 @@ public final class Config {
         try {
             resource_pack$duplicated_files_handler = config.getMapList("resource-pack.duplicated-files-handler").stream().map(it -> {
                 Map<String, Object> args = MiscUtils.castToMap(it, false);
-                return (ConditionalResolution) ConditionalResolution.FACTORY.create(args);
+                return ConditionalResolution.FACTORY.create(args);
             }).toList();
         } catch (LocalizedResourceConfigException e) {
             TranslationManager.instance().log(e.node(), e.arguments());
@@ -431,17 +431,17 @@ public final class Config {
         }
 
         // light
-        light_system$force_update_light = config.getBoolean("light-system.force-update-light", false);
         light_system$async_update = config.getBoolean("light-system.async-update", true);
         light_system$enable = config.getBoolean("light-system.enable", true);
 
         // chunk
         chunk_system$compression_method = config.getInt("chunk-system.compression-method", 4);
+        chunk_system$storage_type = config.getString("chunk-system.storage-type", "mca").equalsIgnoreCase("mca") ? StorageType.MCA : StorageType.NONE;
         chunk_system$restore_vanilla_blocks_on_chunk_unload = config.getBoolean("chunk-system.restore-vanilla-blocks-on-chunk-unload", true);
         chunk_system$restore_custom_blocks_on_chunk_load = config.getBoolean("chunk-system.restore-custom-blocks-on-chunk-load", true);
         chunk_system$sync_custom_blocks_on_chunk_load = config.getBoolean("chunk-system.sync-custom-blocks-on-chunk-load", false);
         chunk_system$cache_system = config.getBoolean("chunk-system.cache-system", true);
-        chunk_system$injection$use_fast_method = config.getBoolean("chunk-system.injection.use-fast-method", false);
+
         if (firstTime) {
             chunk_system$injection$target = config.getEnum("chunk-system.injection.target", InjectionTarget.class, InjectionTarget.PALETTE) == InjectionTarget.PALETTE;
         }
@@ -1026,6 +1026,10 @@ public final class Config {
         return id;
     }
 
+    public static StorageType chunkStorageType() {
+        return instance.chunk_system$storage_type;
+    }
+
     public static boolean disableChatReport() {
         return instance.network$disable_chat_report;
     }
@@ -1138,11 +1142,7 @@ public final class Config {
         return instance.item$non_italic_tag;
     }
 
-    public static boolean fastInjection() {
-        return instance.chunk_system$injection$use_fast_method;
-    }
-
-    public static boolean injectionTarget() {
+    public static boolean injectPaletteOrSection() {
         return instance.chunk_system$injection$target;
     }
 

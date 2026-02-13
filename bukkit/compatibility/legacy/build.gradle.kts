@@ -6,6 +6,7 @@ repositories {
 
 dependencies {
     compileOnly(project(":core"))
+    compileOnly(project(":bukkit"))
     // NBT
     compileOnly("net.momirealms:sparrow-nbt:${rootProject.properties["sparrow_nbt_version"]}")
     // Platform

@@ -9,6 +9,9 @@ public class DefaultStorageAdaptor implements StorageAdaptor {
 
     @Override
     public @NotNull WorldDataStorage adapt(@NotNull World world) {
+        if (Config.chunkStorageType() == StorageType.NONE) {
+            return new NoneStorage();
+        }
         if (Config.enableChunkCache()) {
             return new CachedStorage<>(new DefaultRegionFileStorage(world.directory().resolve(CEWorld.REGION_DIRECTORY)));
         } else {

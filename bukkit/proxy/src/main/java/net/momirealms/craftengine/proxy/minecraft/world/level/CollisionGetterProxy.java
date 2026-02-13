@@ -2,7 +2,6 @@ package net.momirealms.craftengine.proxy.minecraft.world.level;
 
 import net.momirealms.craftengine.proxy.minecraft.world.entity.EntityProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.phys.AABBProxy;
-import net.momirealms.craftengine.proxy.minecraft.world.phys.shapes.CollisionContextProxy;
 import net.momirealms.sparrow.reflection.proxy.ASMProxyFactory;
 import net.momirealms.sparrow.reflection.proxy.annotation.MethodInvoker;
 import net.momirealms.sparrow.reflection.proxy.annotation.ReflectionProxy;

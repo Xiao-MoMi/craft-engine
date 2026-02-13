@@ -2,7 +2,6 @@ package net.momirealms.craftengine.proxy.minecraft.server.network;
 
 import io.netty.channel.SimpleChannelInboundHandler;
 import net.momirealms.craftengine.proxy.minecraft.core.BlockPosProxy;
-import net.momirealms.craftengine.proxy.minecraft.network.protocol.PacketProxy;
 import net.momirealms.craftengine.proxy.minecraft.network.protocol.game.ServerboundUseItemOnPacketProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.entity.EntityProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.item.ItemStackProxy;

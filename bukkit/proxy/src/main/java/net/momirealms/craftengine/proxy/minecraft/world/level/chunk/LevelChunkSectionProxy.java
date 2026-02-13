@@ -1,6 +1,5 @@
 package net.momirealms.craftengine.proxy.minecraft.world.level.chunk;
 
-import it.unimi.dsi.fastutil.shorts.ShortList;
 import net.momirealms.craftengine.proxy.minecraft.world.level.block.state.BlockStateProxy;
 import net.momirealms.sparrow.reflection.clazz.SparrowClass;
 import net.momirealms.sparrow.reflection.proxy.ASMProxyFactory;

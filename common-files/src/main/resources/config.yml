@@ -506,15 +506,19 @@ gui:
         title: "<white><shift:-11><image:internal:brewing_recipe>"
 
 light-system:
-  # Required for custom light-emitting blocks
+  # Required for any block with custom light levels
   enable: true
-  # Async light update
+  # Processes light updates asynchronously to reduce main thread load
   async-update: true
 
 chunk-system:
-  # With cache system, those frequently load/unload chunks would consume fewer resources on serialization
-  # Enabling this option will increase memory consumption to a certain extent
+  # Storage format for chunk data persistence
+  # mca: Minecraft Anvil format
+  # none: No persistent storage (in-memory only)
+  storage-type: mca
+  # Caches serialized chunk data to reduce I/O overhead for frequently loaded/unloaded chunks
   cache-system: true
+  # Compression algorithm for chunk data
   # 1 = NONE      |  Compression Speed | Decompress Speed | Compression Ratio | Memory Usage   |
   # 2 = DEFLATE   |     Medium-Slow           Medium          Moderate              Low        |
   # 3 = GZIP      |     Medium-Slow           Medium          Moderate              Low        |
@@ -523,44 +527,25 @@ chunk-system:
   compression-method: 4
   # Settings for injection
   injection:
-    # Requires a restart to apply.
+    # Requires server restart to take effect
     # - section: Injects the LevelChunkSection (Use this if you have installed both FastAsyncWorldEdit and Axiom)
     # - palette: Injects the PalettedContainer
     target: palette
-    # Enables faster injection method
-    # Note: May not work with certain server forks that alter chunk class structure (In most cases it won't conflict)
-    use-fast-method: true
-  # Auto-convert custom blocks -> vanilla blocks when unloading chunks
-  #
-  # - When ENABLED (true):
-  #   - Prevents custom blocks becoming AIR if plugin is uninstalled
-  #   - Ensures world portability for vanilla environments
-  #
-  # - When DISABLED (false):
-  #   ⚠️ IRREVERSIBLE DATA LOSS WARNING:
-  #   - Custom blocks permanently turn to AIR without plugin
-  #   - Recommended for temporary/test worlds only
+  # On chunk unload: Convert custom blocks → vanilla blocks
+  # Prevents custom blocks from becoming AIR when plugin is removed
   restore-vanilla-blocks-on-chunk-unload: true
-  # Convert vanilla blocks -> custom blocks when loading chunks
-  #
-  # - Performance Mode (false):
-  #   ⚠️ REQUIRED CONDITIONS:
-  #     1. Must disable restore-vanilla-blocks-on-chunk-unload
-  #     2. Accept risk of custom block data loss on plugin removal
-  #
-  # - Compatibility Mode (true):
-  #   - Full state recovery with minor performance cost
+  # On chunk load: Convert vanilla blocks → custom blocks
+  # Full state recovery with minimal performance impact
   restore-custom-blocks-on-chunk-load: true
-  # When you edit a map locally using CraftEngine fabric mod, the custom block data is not immediately synchronized with the
-  # server's CraftEngine internal data. Enabling this option will synchronize the data when the chunk is loaded.
-  # (This option only slightly impacts performance, which has been fully optimized, so you don't need to worry too much.)
+  # Synchronizes custom block data edited via CraftEngine Fabric mod with server
+  # Resolves desynchronization between local edits and server-side state
   sync-custom-blocks-on-chunk-load: false
-  # This system processes any invalid block when a chunk is loaded.
+  # Invalid block remediation on chunk load
   process-invalid-blocks:
     enable: false
     remove: []
     convert: {}
-  # This system processes any invalid furniture when a chunk is loaded.
+  # Invalid furniture remediation on chunk load
   process-invalid-furniture:
     enable: false
     remove: []
@@ -568,34 +553,41 @@ chunk-system:
 
 # [Premium Exclusive]
 client-optimization:
-  # Requires a restart to fully apply.
+  # Requires server restart to fully apply
   entity-culling:
     enable: true
-    # Using server-side ray tracing algorithms to hide block entities/furniture and reduce client-side rendering pressure.
+    # Server-side ray tracing to cull block entities/furniture from client view
+    # Reduces client rendering load by hiding off-screen/non-visible elements
     ray-tracing: true
-    # Cull entities based on distance
-    view-distance: 64 # -1 = no limit
-    # Determining the number of threads to execute these raytrace operations
+    # Maximum entity render distance (in blocks)
+    # Entities beyond this distance will be hidden from client
+    # -1 = unlimited (disabled)
+    view-distance: 64
+    # Number of threads allocated for ray tracing operations
+    # Higher values may improve performance on multi-core systems
     threads: 1
-    # Limit the maximum number of entities with visibility changes per tick for one player
-    # This helps mitigate client-side performance impacts and server-side bandwidth spikes caused by a large number of entities appearing.
+    # Rate limiting for entity visibility updates
+    # Prevents client FPS drops and network spikes when many entities appear simultaneously
     rate-limiting:
       enable: true
+      # Maximum number of entities that can change visibility state per tick per player
+      # Larger values = more responsive but higher resource usage
       bucket-size: 1000
+      # Number of visibility changes replenished per tick
+      # Controls how quickly the bucket refills
       restore-per-tick: 25
 
 misc:
-  # Filter configuration phase player disconnection logs
+  # Suppresses connection logs during server configuration phase
   filter-configuration-phase-disconnect: false
-  # This option delays CraftEngine's config reading until after all plugins start.
-  # Don't disable this setting unless you need datapack-generated spawn chunks.
+  # Defers CraftEngine configuration loading until after all plugins have initialized
+  # ENABLED (true) : Recommended - Ensures plugin interoperability
+  # DISABLED (false): Only disable if you require datapack-generated spawn chunks
   delay-configuration-load: true
-  # The registry of packetevents is sometimes inaccurate. This option determines whether
-  # to enable injection to resolve certain issues with plugins that rely on packetevents.
-  # This option may become outdated at any time. If errors occur after enabling it, please report them promptly.
+  # Forces PacketEvents registry injection to resolve plugin compatibility issues
+  # If errors occur after enabling, please report immediately
   inject-packetevents: false
 
-# Enables or disables debug mode
 debug:
   common: false
   furniture: false

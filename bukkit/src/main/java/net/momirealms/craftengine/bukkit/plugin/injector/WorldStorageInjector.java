@@ -37,7 +37,7 @@ public final class WorldStorageInjector {
                               SectionPos pos,
                               Consumer<Object> callback) {
         InjectedStorage storage;
-        if (Config.injectionTarget()) {
+        if (Config.injectPaletteOrSection()) {
             Object container = LevelChunkSectionProxy.INSTANCE.getStates(nmsSection);
             if (container instanceof InjectedStorage.Palette holder) {
                 storage = holder;
@@ -61,7 +61,7 @@ public final class WorldStorageInjector {
     }
 
     public static boolean isSectionInjected(Object section) {
-        if (Config.injectionTarget()) {
+        if (Config.injectPaletteOrSection()) {
             Object container = LevelChunkSectionProxy.INSTANCE.getStates(section);
             return container instanceof InjectedStorage.Palette;
         } else {
@@ -70,7 +70,7 @@ public final class WorldStorageInjector {
     }
 
     public static void uninject(Object section) {
-        if (Config.injectionTarget()) {
+        if (Config.injectPaletteOrSection()) {
             Object states = LevelChunkSectionProxy.INSTANCE.getStates(section);
             if (states instanceof InjectedStorage.Palette holder) {
                 holder.setActive(false);
