@@ -2,7 +2,7 @@ package net.momirealms.craftengine.bukkit.block.behavior;
 
 import net.momirealms.craftengine.bukkit.block.BukkitBlockManager;
 import net.momirealms.craftengine.core.block.CustomBlock;
-import net.momirealms.craftengine.core.block.UpdateOption;
+import net.momirealms.craftengine.core.block.UpdateFlags;
 import net.momirealms.craftengine.core.block.behavior.BlockBehaviorFactory;
 import net.momirealms.craftengine.core.util.LazyReference;
 import net.momirealms.craftengine.core.util.ResourceConfigUtils;
@@ -31,7 +31,7 @@ public class SpreadingBlockBehavior extends BukkitBlockBehavior {
         Object pos = args[2];
         Object blockPos = BlockPosProxy.INSTANCE.offset(pos, RandomUtils.generateRandomInt(-1, 2), RandomUtils.generateRandomInt(-3, 2), RandomUtils.generateRandomInt(-1, 2));
         if (BlockBehaviourProxy.BlockStateBaseProxy.INSTANCE.is$0(BlockGetterProxy.INSTANCE.getBlockState(level, blockPos), BlockBehaviourProxy.BlockStateBaseProxy.INSTANCE.getBlock(this.targetBlock.get()))) {
-            LevelWriterProxy.INSTANCE.setBlock(level, blockPos, this.block().defaultState().customBlockState().literalObject(), UpdateOption.UPDATE_ALL.flags());
+            LevelWriterProxy.INSTANCE.setBlock(level, blockPos, this.block().defaultState().customBlockState().literalObject(), UpdateFlags.UPDATE_ALL);
         }
     }
 

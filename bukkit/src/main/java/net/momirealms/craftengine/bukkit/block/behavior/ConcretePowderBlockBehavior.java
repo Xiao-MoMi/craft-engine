@@ -8,7 +8,7 @@ import net.momirealms.craftengine.bukkit.util.EventUtils;
 import net.momirealms.craftengine.bukkit.util.LocationUtils;
 import net.momirealms.craftengine.core.block.CustomBlock;
 import net.momirealms.craftengine.core.block.ImmutableBlockState;
-import net.momirealms.craftengine.core.block.UpdateOption;
+import net.momirealms.craftengine.core.block.UpdateFlags;
 import net.momirealms.craftengine.core.block.behavior.BlockBehaviorFactory;
 import net.momirealms.craftengine.core.block.parser.BlockStateParser;
 import net.momirealms.craftengine.core.plugin.CraftEngine;
@@ -79,7 +79,7 @@ public class ConcretePowderBlockBehavior extends BukkitBlockBehavior {
         Object blockPos = args[1];
         Object replaceableState = args[3];
         if (shouldSolidify(world, blockPos, replaceableState)) {
-            CraftEventFactoryProxy.INSTANCE.handleBlockFormEvent(world, blockPos, getDefaultBlockState(), UpdateOption.UPDATE_ALL.flags());
+            CraftEventFactoryProxy.INSTANCE.handleBlockFormEvent(world, blockPos, getDefaultBlockState(), UpdateFlags.UPDATE_ALL);
         }
     }
 

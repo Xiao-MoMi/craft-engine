@@ -20,7 +20,6 @@ import net.momirealms.craftengine.core.world.chunk.CESection;
 import net.momirealms.craftengine.core.world.chunk.InjectedStorage;
 import net.momirealms.craftengine.proxy.minecraft.world.level.chunk.LevelChunkSectionProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.level.chunk.PalettedContainerProxy;
-import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 import java.util.Objects;

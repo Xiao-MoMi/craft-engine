@@ -1,7 +1,7 @@
 package net.momirealms.craftengine.core.plugin.context.function;
 
 import net.momirealms.craftengine.core.block.BlockStateWrapper;
-import net.momirealms.craftengine.core.block.UpdateOption;
+import net.momirealms.craftengine.core.block.UpdateFlags;
 import net.momirealms.craftengine.core.plugin.context.Condition;
 import net.momirealms.craftengine.core.plugin.context.Context;
 import net.momirealms.craftengine.core.plugin.context.number.NumberProvider;
@@ -65,7 +65,7 @@ public class UpdateBlockPropertyFunction<CTX extends Context> extends AbstractCo
             for (Map.Entry<String, Object> entry : state.entrySet()) {
                 properties.putString(entry.getKey(), String.valueOf(entry.getValue()));
             }
-            return new UpdateBlockPropertyFunction<>(getPredicates(arguments), NumberProviders.fromObject(arguments.getOrDefault("x", "<arg:position.x>")), NumberProviders.fromObject(arguments.getOrDefault("y", "<arg:position.y>")), NumberProviders.fromObject(arguments.getOrDefault("z", "<arg:position.z>")), Optional.ofNullable(arguments.get("update-flags")).map(NumberProviders::fromObject).orElse(NumberProviders.direct(UpdateOption.UPDATE_ALL.flags())), properties);
+            return new UpdateBlockPropertyFunction<>(getPredicates(arguments), NumberProviders.fromObject(arguments.getOrDefault("x", "<arg:position.x>")), NumberProviders.fromObject(arguments.getOrDefault("y", "<arg:position.y>")), NumberProviders.fromObject(arguments.getOrDefault("z", "<arg:position.z>")), Optional.ofNullable(arguments.get("update-flags")).map(NumberProviders::fromObject).orElse(NumberProviders.direct(UpdateFlags.UPDATE_ALL)), properties);
         }
     }
 }

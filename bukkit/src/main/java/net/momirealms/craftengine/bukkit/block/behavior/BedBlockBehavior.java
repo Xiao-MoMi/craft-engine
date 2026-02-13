@@ -12,7 +12,7 @@ import net.momirealms.craftengine.bukkit.util.DirectionUtils;
 import net.momirealms.craftengine.bukkit.util.LevelUtils;
 import net.momirealms.craftengine.core.block.CustomBlock;
 import net.momirealms.craftengine.core.block.ImmutableBlockState;
-import net.momirealms.craftengine.core.block.UpdateOption;
+import net.momirealms.craftengine.core.block.UpdateFlags;
 import net.momirealms.craftengine.core.block.behavior.BlockBehaviorFactory;
 import net.momirealms.craftengine.core.block.behavior.EntityBlockBehavior;
 import net.momirealms.craftengine.core.block.entity.BlockEntity;
@@ -41,6 +41,8 @@ import org.joml.Vector3f;
 
 import java.util.Map;
 import java.util.concurrent.Callable;
+
+import static net.momirealms.craftengine.core.block.UpdateFlags.*;
 
 public class BedBlockBehavior extends BukkitBlockBehavior implements EntityBlockBehavior {
     public static final BlockBehaviorFactory<BedBlockBehavior> FACTORY = new Factory();
@@ -146,7 +148,7 @@ public class BedBlockBehavior extends BukkitBlockBehavior implements EntityBlock
         Object emptyState = FluidStateProxy.INSTANCE.getType(BlockBehaviourProxy.BlockStateBaseProxy.INSTANCE.getFluidState(blockState)) == MFluids.WATER
                 ? MBlocks.WATER$defaultState
                 : MBlocks.AIR$defaultState;
-        LevelWriterProxy.INSTANCE.setBlock(level, pos, emptyState, UpdateOption.builder().updateSuppressDrops().updateClients().updateNeighbors().build().flags());
+        LevelWriterProxy.INSTANCE.setBlock(level, pos, emptyState, UPDATE_NEIGHBORS | UPDATE_CLIENTS | UPDATE_SUPPRESS_DROPS);
         LevelUtils.levelEvent(level, player, WorldEvents.BLOCK_BREAK_EFFECT, pos, headState.customBlockState().registryId());
     }
 
@@ -168,7 +170,7 @@ public class BedBlockBehavior extends BukkitBlockBehavior implements EntityBlock
                 level,
                 BlockPosProxy.INSTANCE.offset(pos, direction.stepX(), 0, direction.stepZ()),
                 state.with(behavior.partProperty, BedPart.HEAD).customBlockState().literalObject(),
-                UpdateOption.UPDATE_ALL.flags()
+                UpdateFlags.UPDATE_ALL
         );
     }
 

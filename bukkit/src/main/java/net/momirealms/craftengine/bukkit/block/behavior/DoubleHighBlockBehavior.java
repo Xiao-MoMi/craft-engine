@@ -8,7 +8,7 @@ import net.momirealms.craftengine.bukkit.util.LevelUtils;
 import net.momirealms.craftengine.bukkit.util.LocationUtils;
 import net.momirealms.craftengine.core.block.CustomBlock;
 import net.momirealms.craftengine.core.block.ImmutableBlockState;
-import net.momirealms.craftengine.core.block.UpdateOption;
+import net.momirealms.craftengine.core.block.UpdateFlags;
 import net.momirealms.craftengine.core.block.behavior.BlockBehaviorFactory;
 import net.momirealms.craftengine.core.block.properties.Property;
 import net.momirealms.craftengine.core.block.properties.type.DoubleBlockHalf;
@@ -31,6 +31,8 @@ import org.bukkit.inventory.ItemStack;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.Callable;
+
+import static net.momirealms.craftengine.core.block.UpdateFlags.*;
 
 public class DoubleHighBlockBehavior extends AbstractCanSurviveBlockBehavior {
     public static final BlockBehaviorFactory<DoubleHighBlockBehavior> FACTORY = new Factory();
@@ -99,7 +101,7 @@ public class DoubleHighBlockBehavior extends AbstractCanSurviveBlockBehavior {
         if (belowState == null || belowState.isEmpty()) return;
         Optional<DoubleHighBlockBehavior> belowDoubleHighBlockBehavior = belowState.behavior().getAs(DoubleHighBlockBehavior.class);
         if (belowDoubleHighBlockBehavior.isEmpty() || belowState.get(this.halfProperty) != DoubleBlockHalf.LOWER) return;
-        LevelWriterProxy.INSTANCE.setBlock(level, blockPos, MBlocks.AIR$defaultState, UpdateOption.builder().updateSuppressDrops().updateClients().updateNeighbors().build().flags());
+        LevelWriterProxy.INSTANCE.setBlock(level, blockPos, MBlocks.AIR$defaultState, UPDATE_NEIGHBORS | UPDATE_CLIENTS | UPDATE_SUPPRESS_DROPS);
         LevelUtils.levelEvent(level, player, WorldEvents.BLOCK_BREAK_EFFECT, blockPos, belowState.customBlockState().registryId());
     }
 
@@ -124,7 +126,7 @@ public class DoubleHighBlockBehavior extends AbstractCanSurviveBlockBehavior {
         Object blockState = args[2];
         Object pos = args[1];
         Optional<ImmutableBlockState> immutableBlockState = BlockStateUtils.getOptionalCustomBlockState(blockState);
-        immutableBlockState.ifPresent(state -> LevelWriterProxy.INSTANCE.setBlock(args[0], LocationUtils.above(pos), state.with(this.halfProperty, DoubleBlockHalf.UPPER).customBlockState().literalObject(), UpdateOption.UPDATE_ALL.flags()));
+        immutableBlockState.ifPresent(state -> LevelWriterProxy.INSTANCE.setBlock(args[0], LocationUtils.above(pos), state.with(this.halfProperty, DoubleBlockHalf.UPPER).customBlockState().literalObject(), UpdateFlags.UPDATE_ALL));
     }
 
     @Override

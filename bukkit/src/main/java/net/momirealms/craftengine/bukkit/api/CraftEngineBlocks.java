@@ -7,7 +7,7 @@ import net.momirealms.craftengine.bukkit.util.BlockStateUtils;
 import net.momirealms.craftengine.bukkit.util.LocationUtils;
 import net.momirealms.craftengine.core.block.CustomBlock;
 import net.momirealms.craftengine.core.block.ImmutableBlockState;
-import net.momirealms.craftengine.core.block.UpdateOption;
+import net.momirealms.craftengine.core.block.UpdateFlags;
 import net.momirealms.craftengine.core.item.Item;
 import net.momirealms.craftengine.core.plugin.context.ContextHolder;
 import net.momirealms.craftengine.core.plugin.context.parameter.DirectContextParameters;
@@ -76,7 +76,7 @@ public final class CraftEngineBlocks {
     public static boolean place(@NotNull Location location,
                                 @NotNull ImmutableBlockState block,
                                 boolean playSound) {
-        return place(location, block, UpdateOption.UPDATE_ALL, playSound);
+        return place(location, block, UpdateFlags.UPDATE_ALL, playSound);
     }
 
     /**
@@ -92,7 +92,7 @@ public final class CraftEngineBlocks {
                                 boolean playSound) {
         CustomBlock block = byId(blockId);
         if (block == null) return false;
-        return place(location, block.defaultState(), UpdateOption.UPDATE_ALL, playSound);
+        return place(location, block.defaultState(), UpdateFlags.UPDATE_ALL, playSound);
     }
 
     /**
@@ -110,7 +110,56 @@ public final class CraftEngineBlocks {
                                 boolean playSound) {
         CustomBlock block = byId(blockId);
         if (block == null) return false;
-        return place(location, block.getBlockState(properties), UpdateOption.UPDATE_ALL, playSound);
+        return place(location, block.getBlockState(properties), UpdateFlags.UPDATE_ALL, playSound);
+    }
+
+    /**
+     * Place a custom block with given properties
+     *
+     * @param location location
+     * @param blockId block owner id
+     * @param properties properties
+     * @param flags update flags {@link UpdateFlags}
+     * @param playSound whether to play place sounds
+     * @return success or not
+     */
+    public static boolean place(@NotNull Location location,
+                                @NotNull Key blockId,
+                                @NotNull CompoundTag properties,
+                                int flags,
+                                boolean playSound) {
+        CustomBlock block = byId(blockId);
+        if (block == null) return false;
+        return place(location, block.getBlockState(properties), flags, playSound);
+    }
+
+    /**
+     * Places a custom block state at a certain location
+     *
+     * @param location location
+     * @param block block state to place
+     * @param flags update flags {@link UpdateFlags}
+     * @param playSound whether to play place sounds
+     * @return success or not
+     */
+    public static boolean place(@NotNull Location location,
+                                @NotNull ImmutableBlockState block,
+                                int flags,
+                                boolean playSound) {
+        boolean success;
+        Object worldServer = CraftWorldProxy.INSTANCE.getWorld(location.getWorld());
+        Object blockPos = BlockPosProxy.INSTANCE.newInstance(location.getBlockX(), location.getBlockY(), location.getBlockZ());
+        Object blockState = block.customBlockState().literalObject();
+        Object oldBlockState = BlockGetterProxy.INSTANCE.getBlockState(worldServer, blockPos);
+        success = LevelWriterProxy.INSTANCE.setBlock(worldServer, blockPos, blockState, flags);
+        if (success) {
+            BlockBehaviourProxy.BlockStateBaseProxy.INSTANCE.onPlace(blockState, worldServer, blockPos, oldBlockState, false);
+            if (playSound) {
+                SoundData data = block.settings().sounds().placeSound();
+                location.getWorld().playSound(location, data.id().toString(), SoundCategory.BLOCKS, data.volume().get(), data.pitch().get());
+            }
+        }
+        return success;
     }
 
     /**
@@ -123,10 +172,12 @@ public final class CraftEngineBlocks {
      * @param playSound whether to play place sounds
      * @return success or not
      */
+    @SuppressWarnings("removal")
+    @Deprecated(forRemoval = true)
     public static boolean place(@NotNull Location location,
                                 @NotNull Key blockId,
                                 @NotNull CompoundTag properties,
-                                @NotNull UpdateOption option,
+                                @NotNull net.momirealms.craftengine.core.block.UpdateOption option,
                                 boolean playSound) {
         CustomBlock block = byId(blockId);
         if (block == null) return false;
@@ -142,9 +193,11 @@ public final class CraftEngineBlocks {
      * @param playSound whether to play place sounds
      * @return success or not
      */
+    @SuppressWarnings("removal")
+    @Deprecated(forRemoval = true)
     public static boolean place(@NotNull Location location,
                                 @NotNull ImmutableBlockState block,
-                                @NotNull UpdateOption option,
+                                @NotNull net.momirealms.craftengine.core.block.UpdateOption option,
                                 boolean playSound) {
         boolean success;
         Object worldServer = CraftWorldProxy.INSTANCE.getWorld(location.getWorld());

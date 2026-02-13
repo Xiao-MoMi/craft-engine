@@ -10,7 +10,7 @@ import net.momirealms.craftengine.bukkit.util.LocationUtils;
 import net.momirealms.craftengine.bukkit.world.BukkitWorld;
 import net.momirealms.craftengine.core.block.CustomBlock;
 import net.momirealms.craftengine.core.block.ImmutableBlockState;
-import net.momirealms.craftengine.core.block.UpdateOption;
+import net.momirealms.craftengine.core.block.UpdateFlags;
 import net.momirealms.craftengine.core.block.behavior.BlockBehaviorFactory;
 import net.momirealms.craftengine.core.block.properties.IntegerProperty;
 import net.momirealms.craftengine.core.entity.player.InteractionHand;
@@ -33,6 +33,8 @@ import org.bukkit.inventory.ItemStack;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.Callable;
+
+import static net.momirealms.craftengine.core.block.UpdateFlags.*;
 
 public class MultiHighBlockBehavior extends BukkitBlockBehavior {
     public static final BlockBehaviorFactory<MultiHighBlockBehavior> FACTORY = new Factory();
@@ -153,7 +155,7 @@ public class MultiHighBlockBehavior extends BukkitBlockBehavior {
         Object emptyState = FluidStateProxy.INSTANCE.getType(BlockBehaviourProxy.BlockStateBaseProxy.INSTANCE.getFluidState(blockState)) == MFluids.WATER
                 ? MBlocks.WATER$defaultState
                 : MBlocks.AIR$defaultState;
-        LevelWriterProxy.INSTANCE.setBlock(level, basePos, emptyState, UpdateOption.builder().updateSuppressDrops().updateClients().updateNeighbors().build().flags());
+        LevelWriterProxy.INSTANCE.setBlock(level, basePos, emptyState, UPDATE_NEIGHBORS | UPDATE_CLIENTS | UPDATE_SUPPRESS_DROPS);
         LevelUtils.levelEvent(level, player, WorldEvents.BLOCK_BREAK_EFFECT, basePos, baseState.customBlockState().registryId());
     }
 
@@ -200,7 +202,7 @@ public class MultiHighBlockBehavior extends BukkitBlockBehavior {
         }
         IntegerProperty property = behavior.property;
         for (int i = property.min + 1; i <= property.max; i++) {
-            LevelWriterProxy.INSTANCE.setBlock(args[0], LocationUtils.above(pos, i), state.with(property, i).customBlockState().literalObject(), UpdateOption.UPDATE_ALL.flags());
+            LevelWriterProxy.INSTANCE.setBlock(args[0], LocationUtils.above(pos, i), state.with(property, i).customBlockState().literalObject(), UpdateFlags.UPDATE_ALL);
         }
     }
 

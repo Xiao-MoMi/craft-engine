@@ -6,7 +6,7 @@ import net.momirealms.craftengine.bukkit.util.*;
 import net.momirealms.craftengine.bukkit.world.BukkitExistingBlock;
 import net.momirealms.craftengine.core.block.BlockStateWrapper;
 import net.momirealms.craftengine.core.block.ImmutableBlockState;
-import net.momirealms.craftengine.core.block.UpdateOption;
+import net.momirealms.craftengine.core.block.UpdateFlags;
 import net.momirealms.craftengine.core.entity.EquipmentSlot;
 import net.momirealms.craftengine.core.entity.player.InteractionHand;
 import net.momirealms.craftengine.core.entity.player.InteractionResult;
@@ -96,7 +96,7 @@ public final class AxeItemBehavior extends ItemBehavior {
         if (ItemUtils.isEmpty(item)) return InteractionResult.FAIL;
         BlockPos pos = context.getClickedPos();
         context.getLevel().playBlockSound(Vec3d.atCenterOf(pos), AXE_STRIP_SOUND, 1, 1);
-        LevelWriterProxy.INSTANCE.setBlock(context.getLevel().serverWorld(), LocationUtils.toBlockPos(pos), newState.literalObject(), UpdateOption.UPDATE_ALL_IMMEDIATE.flags());
+        LevelWriterProxy.INSTANCE.setBlock(context.getLevel().serverWorld(), LocationUtils.toBlockPos(pos), newState.literalObject(), UpdateFlags.UPDATE_ALL_IMMEDIATE);
         clicked.block().getWorld().sendGameEvent(bukkitPlayer, GameEvent.BLOCK_CHANGE, new Vector(pos.x(), pos.y(), pos.z()));
         Material material = MaterialUtils.getMaterial(item.vanillaId());
         if (bukkitPlayer != null) {

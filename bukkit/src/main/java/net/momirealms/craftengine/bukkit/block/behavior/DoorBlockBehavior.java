@@ -11,7 +11,7 @@ import net.momirealms.craftengine.bukkit.util.LevelUtils;
 import net.momirealms.craftengine.bukkit.util.LocationUtils;
 import net.momirealms.craftengine.core.block.CustomBlock;
 import net.momirealms.craftengine.core.block.ImmutableBlockState;
-import net.momirealms.craftengine.core.block.UpdateOption;
+import net.momirealms.craftengine.core.block.UpdateFlags;
 import net.momirealms.craftengine.core.block.behavior.BlockBehaviorFactory;
 import net.momirealms.craftengine.core.block.behavior.IsPathFindableBlockBehavior;
 import net.momirealms.craftengine.core.block.properties.Property;
@@ -54,6 +54,8 @@ import javax.annotation.Nullable;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.Callable;
+
+import static net.momirealms.craftengine.core.block.UpdateFlags.*;
 
 @SuppressWarnings("DuplicatedCode")
 public class DoorBlockBehavior extends AbstractCanSurviveBlockBehavior implements IsPathFindableBlockBehavior {
@@ -156,7 +158,7 @@ public class DoorBlockBehavior extends AbstractCanSurviveBlockBehavior implement
             if (belowState == null || belowState.isEmpty()) return;
             Optional<DoorBlockBehavior> belowDoorBehavior = belowState.behavior().getAs(DoorBlockBehavior.class);
             if (belowDoorBehavior.isEmpty() || belowState.get(this.halfProperty) != DoubleBlockHalf.LOWER) return;
-            LevelWriterProxy.INSTANCE.setBlock(level, blockPos, MBlocks.AIR$defaultState, UpdateOption.builder().updateSuppressDrops().updateClients().updateNeighbors().build().flags());
+            LevelWriterProxy.INSTANCE.setBlock(level, blockPos, MBlocks.AIR$defaultState, UPDATE_NEIGHBORS | UPDATE_CLIENTS | UPDATE_SUPPRESS_DROPS);
             LevelUtils.levelEvent(level, player, WorldEvents.BLOCK_BREAK_EFFECT, blockPos, belowState.customBlockState().registryId());
         }
     }
@@ -187,7 +189,7 @@ public class DoorBlockBehavior extends AbstractCanSurviveBlockBehavior implement
         Object blockState = args[2];
         Object pos = args[1];
         Optional<ImmutableBlockState> immutableBlockState = BlockStateUtils.getOptionalCustomBlockState(blockState);
-        immutableBlockState.ifPresent(state -> LevelWriterProxy.INSTANCE.setBlock(args[0], LocationUtils.above(pos), state.with(this.halfProperty, DoubleBlockHalf.UPPER).customBlockState().literalObject(), UpdateOption.UPDATE_ALL.flags()));
+        immutableBlockState.ifPresent(state -> LevelWriterProxy.INSTANCE.setBlock(args[0], LocationUtils.above(pos), state.with(this.halfProperty, DoubleBlockHalf.UPPER).customBlockState().literalObject(), UpdateFlags.UPDATE_ALL));
     }
 
     @Override
@@ -266,7 +268,7 @@ public class DoorBlockBehavior extends AbstractCanSurviveBlockBehavior implement
     public void setOpen(@Nullable Player player, Object serverLevel, ImmutableBlockState state, BlockPos pos, boolean isOpen) {
         if (isOpen(state) != isOpen) {
             org.bukkit.World world = LevelProxy.INSTANCE.getWorld(serverLevel);
-            LevelWriterProxy.INSTANCE.setBlock(serverLevel, LocationUtils.toBlockPos(pos), state.with(this.openProperty, isOpen).customBlockState().literalObject(), UpdateOption.builder().updateImmediate().updateClients().build().flags());
+            LevelWriterProxy.INSTANCE.setBlock(serverLevel, LocationUtils.toBlockPos(pos), state.with(this.openProperty, isOpen).customBlockState().literalObject(), UPDATE_CLIENTS | UPDATE_IMMEDIATE);
             world.sendGameEvent(player == null ? null : (org.bukkit.entity.Player) player.platformPlayer(), isOpen ? GameEvent.BLOCK_OPEN : GameEvent.BLOCK_CLOSE, new Vector(pos.x(), pos.y(), pos.z()));
             SoundData soundData = isOpen ? this.openSound : this.closeSound;
             if (soundData != null) {
@@ -337,7 +339,7 @@ public class DoorBlockBehavior extends AbstractCanSurviveBlockBehavior implement
                     );
                 }
             }
-            LevelWriterProxy.INSTANCE.setBlock(level, blockPos, customState.with(this.poweredProperty, flag).with(this.openProperty, flag).customBlockState().literalObject(), UpdateOption.Flags.UPDATE_CLIENTS);
+            LevelWriterProxy.INSTANCE.setBlock(level, blockPos, customState.with(this.poweredProperty, flag).with(this.openProperty, flag).customBlockState().literalObject(), UpdateFlags.UPDATE_CLIENTS);
         }
     }
 

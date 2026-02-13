@@ -3,7 +3,7 @@ package net.momirealms.craftengine.bukkit.plugin.command.feature;
 import net.momirealms.craftengine.bukkit.api.CraftEngineBlocks;
 import net.momirealms.craftengine.bukkit.plugin.command.BukkitCommandFeature;
 import net.momirealms.craftengine.core.block.ImmutableBlockState;
-import net.momirealms.craftengine.core.block.UpdateOption;
+import net.momirealms.craftengine.core.block.UpdateFlags;
 import net.momirealms.craftengine.core.block.parser.BlockStateParser;
 import net.momirealms.craftengine.core.plugin.CraftEngine;
 import net.momirealms.craftengine.core.plugin.command.CraftEngineCommandManager;
@@ -42,7 +42,7 @@ public class DebugSetBlockCommand extends BukkitCommandFeature<CommandSender> {
                     ImmutableBlockState state = BlockStateParser.deserialize(data);
                     if (state == null) return;
                     Location location = context.get("location");
-                    CraftEngineBlocks.place(location, state, UpdateOption.UPDATE_ALL, false);
+                    CraftEngineBlocks.place(location, state, UpdateFlags.UPDATE_ALL, false);
                 });
     }
 
