@@ -8,7 +8,7 @@ import net.momirealms.craftengine.bukkit.util.LocationUtils;
 import net.momirealms.craftengine.bukkit.util.ParticleUtils;
 import net.momirealms.craftengine.core.block.CustomBlock;
 import net.momirealms.craftengine.core.block.ImmutableBlockState;
-import net.momirealms.craftengine.core.block.UpdateOption;
+import net.momirealms.craftengine.core.block.UpdateFlags;
 import net.momirealms.craftengine.core.block.behavior.BlockBehaviorFactory;
 import net.momirealms.craftengine.core.block.properties.IntegerProperty;
 import net.momirealms.craftengine.core.block.properties.Property;
@@ -101,7 +101,7 @@ public class CropBlockBehavior extends BukkitBlockBehavior {
             BlockStateUtils.getOptionalCustomBlockState(state).ifPresent(customState -> {
                 int age = this.getAge(customState);
                 if (age < this.ageProperty.max && RandomUtils.generateRandomFloat(0, 1) < this.growSpeed) {
-                    LevelWriterProxy.INSTANCE.setBlock(level, pos, customState.with(this.ageProperty, age + 1).customBlockState().literalObject(), UpdateOption.UPDATE_ALL.flags());
+                    LevelWriterProxy.INSTANCE.setBlock(level, pos, customState.with(this.ageProperty, age + 1).customBlockState().literalObject(), UpdateFlags.UPDATE_ALL);
                 }
             });
         }
@@ -204,7 +204,7 @@ public class CropBlockBehavior extends BukkitBlockBehavior {
         if (i > maxAge) {
             i = maxAge;
         }
-        LevelWriterProxy.INSTANCE.setBlock(level, pos, customState.with(this.ageProperty, i).customBlockState().literalObject(), UpdateOption.UPDATE_ALL.flags());
+        LevelWriterProxy.INSTANCE.setBlock(level, pos, customState.with(this.ageProperty, i).customBlockState().literalObject(), UpdateFlags.UPDATE_ALL);
         if (sendParticles) {
             world.spawnParticle(ParticleUtils.HAPPY_VILLAGER, x + 0.5, y + 0.5, z + 0.5, 15, 0.25, 0.25, 0.25);
         }

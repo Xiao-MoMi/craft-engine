@@ -7,7 +7,7 @@ import net.momirealms.craftengine.bukkit.util.KeyUtils;
 import net.momirealms.craftengine.bukkit.util.RegistryUtils;
 import net.momirealms.craftengine.core.block.CustomBlock;
 import net.momirealms.craftengine.core.block.ImmutableBlockState;
-import net.momirealms.craftengine.core.block.UpdateOption;
+import net.momirealms.craftengine.core.block.UpdateFlags;
 import net.momirealms.craftengine.core.block.behavior.BlockBehaviorFactory;
 import net.momirealms.craftengine.core.block.behavior.IsPathFindableBlockBehavior;
 import net.momirealms.craftengine.core.block.properties.IntegerProperty;
@@ -100,8 +100,8 @@ public class StemBlockBehavior extends BukkitBlockBehavior implements IsPathFind
             @SuppressWarnings("unchecked")
             Property<HorizontalDirection> facing = (Property<HorizontalDirection>) attachedStem.getProperty("facing");
             if (facing == null) return;
-            LevelWriterProxy.INSTANCE.setBlock(level, blockPos, fruitState, UpdateOption.UPDATE_ALL.flags());
-            LevelWriterProxy.INSTANCE.setBlock(level, pos, attachedStem.defaultState().with(facing, DirectionUtils.fromNMSDirection(randomDirection).toHorizontalDirection()).customBlockState().literalObject(), UpdateOption.UPDATE_ALL.flags());
+            LevelWriterProxy.INSTANCE.setBlock(level, blockPos, fruitState, UpdateFlags.UPDATE_ALL);
+            LevelWriterProxy.INSTANCE.setBlock(level, pos, attachedStem.defaultState().with(facing, DirectionUtils.fromNMSDirection(randomDirection).toHorizontalDirection()).customBlockState().literalObject(), UpdateFlags.UPDATE_ALL);
         }
     }
 

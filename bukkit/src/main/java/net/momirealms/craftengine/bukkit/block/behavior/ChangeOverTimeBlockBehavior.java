@@ -3,7 +3,7 @@ package net.momirealms.craftengine.bukkit.block.behavior;
 import net.momirealms.craftengine.bukkit.util.BlockStateUtils;
 import net.momirealms.craftengine.core.block.BlockStateWrapper;
 import net.momirealms.craftengine.core.block.CustomBlock;
-import net.momirealms.craftengine.core.block.UpdateOption;
+import net.momirealms.craftengine.core.block.UpdateFlags;
 import net.momirealms.craftengine.core.block.behavior.BlockBehaviorFactory;
 import net.momirealms.craftengine.core.plugin.CraftEngine;
 import net.momirealms.craftengine.core.util.LazyReference;
@@ -55,7 +55,7 @@ public class ChangeOverTimeBlockBehavior extends BukkitBlockBehavior {
             BlockStateWrapper nextState = this.nextState();
             if (nextState == null) return;
             nextState = nextState.withProperties(filter(state.propertiesNbt()));
-            CraftEventFactoryProxy.INSTANCE.handleBlockFormEvent(args[1], args[2], nextState.literalObject(), UpdateOption.UPDATE_ALL.flags());
+            CraftEventFactoryProxy.INSTANCE.handleBlockFormEvent(args[1], args[2], nextState.literalObject(), UpdateFlags.UPDATE_ALL);
         });
     }
 

@@ -1,6 +1,6 @@
 package net.momirealms.craftengine.core.block;
 
-@Deprecated
+@Deprecated(forRemoval = true)
 public final class UpdateOption {
     public static final UpdateOption UPDATE_NONE = new UpdateOption(Flags.UPDATE_NONE);
     public static final UpdateOption UPDATE_ALL = new UpdateOption(Flags.UPDATE_ALL);

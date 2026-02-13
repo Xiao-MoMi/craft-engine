@@ -18,7 +18,7 @@ public interface LevelWriterProxy {
     boolean destroyBlock(Object target, @Type(clazz = BlockPosProxy.class) Object pos, boolean drop);
 
     @MethodInvoker(name = "setBlock")
-    boolean setBlock(Object target, @Type(clazz = BlockPosProxy.class) Object pos, @Type(clazz = BlockStateProxy.class) Object newState, int flag);
+    boolean setBlock(Object target, @Type(clazz = BlockPosProxy.class) Object pos, @Type(clazz = BlockStateProxy.class) Object newState, int flags);
 
     @MethodInvoker(name = "addFreshEntity")
     boolean addFreshEntity(Object target, @Type(clazz = EntityProxy.class) Object entity, @Nullable CreatureSpawnEvent.SpawnReason reason);

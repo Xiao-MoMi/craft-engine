@@ -7,7 +7,7 @@ import net.momirealms.craftengine.bukkit.util.*;
 import net.momirealms.craftengine.bukkit.world.BukkitWorldManager;
 import net.momirealms.craftengine.core.block.CustomBlock;
 import net.momirealms.craftengine.core.block.ImmutableBlockState;
-import net.momirealms.craftengine.core.block.UpdateOption;
+import net.momirealms.craftengine.core.block.UpdateFlags;
 import net.momirealms.craftengine.core.block.behavior.BlockBehaviorFactory;
 import net.momirealms.craftengine.core.block.properties.IntegerProperty;
 import net.momirealms.craftengine.core.block.properties.Property;
@@ -86,7 +86,7 @@ public class SaplingBlockBehavior extends BukkitBlockBehavior {
             int x = Vec3iProxy.INSTANCE.getX(blockPos);
             int y = Vec3iProxy.INSTANCE.getY(blockPos);
             int z = Vec3iProxy.INSTANCE.getZ(blockPos);
-            CraftEngineBlocks.place(new Location(bukkitWorld, x, y, z), nextStage, UpdateOption.UPDATE_NONE, false);
+            CraftEngineBlocks.place(new Location(bukkitWorld, x, y, z), nextStage, UpdateFlags.UPDATE_NONE, false);
         } else {
             generateTree(world, blockPos, blockState, randomSource);
         }
@@ -114,14 +114,14 @@ public class SaplingBlockBehavior extends BukkitBlockBehavior {
         Object configuredFeature = HolderProxy.INSTANCE.value(holder);
         Object fluidState = BlockGetterProxy.INSTANCE.getFluidState(world, blockPos);
         Object legacyState = FluidStateProxy.INSTANCE.createLegacyBlock(fluidState);
-        LevelWriterProxy.INSTANCE.setBlock(world, blockPos, legacyState, UpdateOption.UPDATE_NONE.flags());
+        LevelWriterProxy.INSTANCE.setBlock(world, blockPos, legacyState, UpdateFlags.UPDATE_NONE);
         if (ConfiguredFeatureProxy.INSTANCE.place(configuredFeature, world, chunkGenerator, randomSource, blockPos)) {
             if (BlockGetterProxy.INSTANCE.getBlockState(world, blockPos) == legacyState) {
-                ServerLevelProxy.INSTANCE.sendBlockUpdated(world, blockPos, blockState, legacyState, UpdateOption.Flags.UPDATE_CLIENTS);
+                ServerLevelProxy.INSTANCE.sendBlockUpdated(world, blockPos, blockState, legacyState, UpdateFlags.UPDATE_CLIENTS);
             }
         } else {
             // failed to place, rollback changes
-            LevelWriterProxy.INSTANCE.setBlock(world, blockPos, blockState, UpdateOption.UPDATE_NONE.flags());
+            LevelWriterProxy.INSTANCE.setBlock(world, blockPos, blockState, UpdateFlags.UPDATE_NONE);
         }
     }
 

@@ -5,7 +5,7 @@ import net.momirealms.craftengine.bukkit.util.BlockStateUtils;
 import net.momirealms.craftengine.bukkit.util.LocationUtils;
 import net.momirealms.craftengine.core.block.CustomBlock;
 import net.momirealms.craftengine.core.block.ImmutableBlockState;
-import net.momirealms.craftengine.core.block.UpdateOption;
+import net.momirealms.craftengine.core.block.UpdateFlags;
 import net.momirealms.craftengine.core.block.behavior.BlockBehaviorFactory;
 import net.momirealms.craftengine.core.block.properties.IntegerProperty;
 import net.momirealms.craftengine.core.block.properties.Property;
@@ -67,15 +67,15 @@ public class VerticalCropBlockBehavior extends BukkitBlockBehavior {
                     Object nextPos = this.direction ? LocationUtils.above(blockPos) : LocationUtils.below(blockPos);
                     boolean success;
                     if (VersionHelper.isOrAbove1_21_5()) {
-                        success = CraftEventFactoryProxy.INSTANCE.handleBlockGrowEvent(level, nextPos, super.customBlock.defaultState().customBlockState().literalObject(), UpdateOption.UPDATE_ALL.flags());
+                        success = CraftEventFactoryProxy.INSTANCE.handleBlockGrowEvent(level, nextPos, super.customBlock.defaultState().customBlockState().literalObject(), UpdateFlags.UPDATE_ALL);
                     } else {
                         success = CraftEventFactoryProxy.INSTANCE.handleBlockGrowEvent(level, nextPos, super.customBlock.defaultState().customBlockState().literalObject());
                     }
                     if (success) {
-                        LevelWriterProxy.INSTANCE.setBlock(level, blockPos, currentState.with(this.ageProperty, this.ageProperty.min).customBlockState().literalObject(), UpdateOption.UPDATE_NONE.flags());
+                        LevelWriterProxy.INSTANCE.setBlock(level, blockPos, currentState.with(this.ageProperty, this.ageProperty.min).customBlockState().literalObject(), UpdateFlags.UPDATE_NONE);
                     }
                 } else if (RandomUtils.generateRandomFloat(0, 1) < this.growSpeed) {
-                    LevelWriterProxy.INSTANCE.setBlock(level, blockPos, currentState.with(this.ageProperty, age + 1).customBlockState().literalObject(), UpdateOption.UPDATE_NONE.flags());
+                    LevelWriterProxy.INSTANCE.setBlock(level, blockPos, currentState.with(this.ageProperty, age + 1).customBlockState().literalObject(), UpdateFlags.UPDATE_NONE);
                 }
             }
         }

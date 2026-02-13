@@ -5,7 +5,6 @@ import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.MBlocks;
 import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.MFluids;
 import net.momirealms.craftengine.bukkit.util.LocationUtils;
 import net.momirealms.craftengine.core.block.ImmutableBlockState;
-import net.momirealms.craftengine.core.block.UpdateOption;
 import net.momirealms.craftengine.core.block.properties.IntegerProperty;
 import net.momirealms.craftengine.core.entity.player.InteractionHand;
 import net.momirealms.craftengine.core.entity.player.Player;
@@ -36,6 +35,8 @@ import org.bukkit.inventory.EquipmentSlot;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Map;
+
+import static net.momirealms.craftengine.core.block.UpdateFlags.*;
 
 public final class MultiHighBlockItemBehavior extends BlockItemBehavior {
     public static final ItemBehaviorFactory<MultiHighBlockItemBehavior> FACTORY = new Factory();
@@ -94,11 +95,10 @@ public final class MultiHighBlockItemBehavior extends BlockItemBehavior {
         for (int i = property.min + 1; i <= property.max; i++) {
             Object level = CraftWorldProxy.INSTANCE.getWorld(location.getWorld());
             Object blockPos = BlockPosProxy.INSTANCE.newInstance(location.getBlockX(), location.getBlockY() + i, location.getBlockZ());
-            UpdateOption option = UpdateOption.builder().updateNeighbors().updateClients().updateImmediate().updateKnownShape().build();
             Object fluidData = BlockGetterProxy.INSTANCE.getFluidState(level, blockPos);
             Object stateToPlace = fluidData == MFluids.WATER$defaultState ? MBlocks.WATER$defaultState : MBlocks.AIR$defaultState;
             revertState.add(location.getWorld().getBlockAt(location.getBlockX(), location.getBlockY() + i, location.getBlockZ()).getState());
-            LevelWriterProxy.INSTANCE.setBlock(level, blockPos, stateToPlace, option.flags());
+            LevelWriterProxy.INSTANCE.setBlock(level, blockPos, stateToPlace, UPDATE_NEIGHBORS | UPDATE_CLIENTS | UPDATE_IMMEDIATE | UPDATE_SUPPRESS_DROPS);
         }
         return super.placeBlock(location, blockState, revertState);
     }

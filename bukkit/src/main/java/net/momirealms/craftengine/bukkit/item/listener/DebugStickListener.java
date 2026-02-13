@@ -11,7 +11,6 @@ import net.momirealms.craftengine.bukkit.util.ComponentUtils;
 import net.momirealms.craftengine.bukkit.util.LocationUtils;
 import net.momirealms.craftengine.core.block.CustomBlock;
 import net.momirealms.craftengine.core.block.ImmutableBlockState;
-import net.momirealms.craftengine.core.block.UpdateOption;
 import net.momirealms.craftengine.core.block.properties.Property;
 import net.momirealms.craftengine.core.entity.player.InteractionHand;
 import net.momirealms.craftengine.core.item.Item;
@@ -32,6 +31,8 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
+
+import static net.momirealms.craftengine.core.block.UpdateFlags.*;
 
 public class DebugStickListener implements Listener {
     private final BukkitCraftEngine plugin;
@@ -83,7 +84,7 @@ public class DebugStickListener implements Listener {
                     }
                     if (update) {
                         ImmutableBlockState nextState = cycleState(customState, currentProperty, player.isSecondaryUseActive());
-                        CraftEngineBlocks.place(clickedBlock.getLocation(), nextState, new UpdateOption.Builder().updateClients().updateKnownShape().build(), false);
+                        CraftEngineBlocks.place(clickedBlock.getLocation(), nextState, UPDATE_CLIENTS | UPDATE_KNOWN_SHAPE, false);
                         Object systemChatPacket = ClientboundSystemChatPacketProxy.INSTANCE.newInstance(
                                 ComponentUtils.adventureToMinecraft(Component.translatable("item.minecraft.debug_stick.update")
                                         .arguments(

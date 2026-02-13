@@ -3,7 +3,6 @@ package net.momirealms.craftengine.bukkit.item.behavior;
 import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.MBlocks;
 import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.MFluids;
 import net.momirealms.craftengine.core.block.ImmutableBlockState;
-import net.momirealms.craftengine.core.block.UpdateOption;
 import net.momirealms.craftengine.core.item.behavior.ItemBehaviorFactory;
 import net.momirealms.craftengine.core.pack.Pack;
 import net.momirealms.craftengine.core.plugin.locale.LocalizedResourceConfigException;
@@ -19,6 +18,8 @@ import java.nio.file.Path;
 import java.util.List;
 import java.util.Map;
 
+import static net.momirealms.craftengine.core.block.UpdateFlags.*;
+
 public final class DoubleHighBlockItemBehavior extends BlockItemBehavior {
     public static final ItemBehaviorFactory<DoubleHighBlockItemBehavior> FACTORY = new Factory();
 
@@ -30,11 +31,10 @@ public final class DoubleHighBlockItemBehavior extends BlockItemBehavior {
     protected boolean placeBlock(Location location, ImmutableBlockState blockState, List<BlockState> revertState) {
         Object level = CraftWorldProxy.INSTANCE.getWorld(location.getWorld());
         Object blockPos = BlockPosProxy.INSTANCE.newInstance(location.getBlockX(), location.getBlockY() + 1, location.getBlockZ());
-        UpdateOption option = UpdateOption.builder().updateNeighbors().updateClients().updateImmediate().updateKnownShape().build();
         Object fluidData = BlockGetterProxy.INSTANCE.getFluidState(level, blockPos);
         Object stateToPlace = fluidData == MFluids.WATER$defaultState ? MBlocks.WATER$defaultState : MBlocks.AIR$defaultState;
         revertState.add(location.getWorld().getBlockAt(location.getBlockX(), location.getBlockY() + 1, location.getBlockZ()).getState());
-        LevelWriterProxy.INSTANCE.setBlock(level, blockPos, stateToPlace, option.flags());
+        LevelWriterProxy.INSTANCE.setBlock(level, blockPos, stateToPlace, UPDATE_NEIGHBORS | UPDATE_CLIENTS | UPDATE_IMMEDIATE | UPDATE_SUPPRESS_DROPS);
         return super.placeBlock(location, blockState, revertState);
     }
 

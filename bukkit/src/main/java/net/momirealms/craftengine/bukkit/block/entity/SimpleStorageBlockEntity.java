@@ -11,7 +11,7 @@ import net.momirealms.craftengine.bukkit.util.ItemStackUtils;
 import net.momirealms.craftengine.bukkit.util.LevelUtils;
 import net.momirealms.craftengine.bukkit.util.LocationUtils;
 import net.momirealms.craftengine.core.block.ImmutableBlockState;
-import net.momirealms.craftengine.core.block.UpdateOption;
+import net.momirealms.craftengine.core.block.UpdateFlags;
 import net.momirealms.craftengine.core.block.entity.BlockEntity;
 import net.momirealms.craftengine.core.block.properties.Property;
 import net.momirealms.craftengine.core.entity.player.Player;
@@ -169,7 +169,7 @@ public class SimpleStorageBlockEntity extends BlockEntity {
         if (behavior == null) return;
         Property<Boolean> property = behavior.openProperty();
         if (property == null) return;
-        super.world.world().setBlockState(this.pos.x(), this.pos.y(), this.pos.z(), state.with(property, open), UpdateOption.UPDATE_ALL.flags());
+        super.world.world().setBlockState(this.pos.x(), this.pos.y(), this.pos.z(), state.with(property, open), UpdateFlags.UPDATE_ALL);
     }
 
     public void checkOpeners(Object level, Object pos, Object blockState) {
