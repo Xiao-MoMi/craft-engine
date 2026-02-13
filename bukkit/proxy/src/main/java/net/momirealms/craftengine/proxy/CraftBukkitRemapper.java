@@ -9,13 +9,13 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 
-public final class WithCraftBukkitClassNameRemapper implements Remapper {
+public final class CraftBukkitRemapper implements Remapper {
     private static final String PREFIX_CRAFTBUKKIT = "org.bukkit.craftbukkit.";
     private static final String CB_PKG_VERSION;
     private static final boolean NEED_REMAP;
     private final Remapper delegate;
 
-    public WithCraftBukkitClassNameRemapper(Remapper delegate) {
+    private CraftBukkitRemapper(Remapper delegate) {
         this.delegate = delegate;
     }
 
@@ -61,9 +61,17 @@ public final class WithCraftBukkitClassNameRemapper implements Remapper {
         }
     }
 
+    public static Remapper create(Remapper delegate) {
+        if (NEED_REMAP) {
+            return new CraftBukkitRemapper(delegate);
+        } else {
+            return delegate;
+        }
+    }
+
     @Override
     public String remapClassName(String className) {
-        if (!NEED_REMAP || className == null || !className.startsWith(PREFIX_CRAFTBUKKIT)) {
+        if (!className.startsWith(PREFIX_CRAFTBUKKIT)) {
             return this.delegate.remapClassName(className);
         }
         return PREFIX_CRAFTBUKKIT + CB_PKG_VERSION + className.substring(PREFIX_CRAFTBUKKIT.length());
