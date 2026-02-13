@@ -64,6 +64,8 @@ import net.momirealms.craftengine.bukkit.world.score.BukkitTeamManager;
 import net.momirealms.craftengine.core.advancement.network.AdvancementHolder;
 import net.momirealms.craftengine.core.advancement.network.AdvancementProgress;
 import net.momirealms.craftengine.core.block.ImmutableBlockState;
+import net.momirealms.craftengine.core.block.UpdateFlags;
+import net.momirealms.craftengine.core.block.UpdateOption;
 import net.momirealms.craftengine.core.entity.furniture.FurnitureHitData;
 import net.momirealms.craftengine.core.entity.furniture.behavior.FurnitureBehavior;
 import net.momirealms.craftengine.core.entity.furniture.hitbox.FurnitureHitBox;
@@ -151,6 +153,7 @@ import net.momirealms.craftengine.proxy.minecraft.server.dedicated.DedicatedServ
 import net.momirealms.craftengine.proxy.minecraft.server.dedicated.DedicatedServerProxy;
 import net.momirealms.craftengine.proxy.minecraft.server.dedicated.DedicatedServerSettingsProxy;
 import net.momirealms.craftengine.proxy.minecraft.server.level.ClientInformationProxy;
+import net.momirealms.craftengine.proxy.minecraft.server.level.ServerLevelProxy;
 import net.momirealms.craftengine.proxy.minecraft.server.level.ServerPlayerProxy;
 import net.momirealms.craftengine.proxy.minecraft.server.network.ServerCommonPacketListenerImplProxy;
 import net.momirealms.craftengine.proxy.minecraft.server.network.ServerConfigurationPacketListenerImplProxy;
@@ -171,8 +174,11 @@ import net.momirealms.craftengine.proxy.minecraft.world.item.ItemStackProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.item.trading.ItemCostProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.level.BlockGetterProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.level.block.BlockProxy;
+import net.momirealms.craftengine.proxy.minecraft.world.level.block.BlocksProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.level.block.SoundTypeProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.level.block.state.BlockBehaviourProxy;
+import net.momirealms.craftengine.proxy.minecraft.world.phys.BlockHitResultProxy;
+import net.momirealms.craftengine.proxy.minecraft.world.phys.Vec3Proxy;
 import net.momirealms.craftengine.proxy.netty.handler.codec.ByteToMessageDecoderProxy;
 import net.momirealms.craftengine.proxy.netty.handler.codec.MessageToByteEncoderProxy;
 import net.momirealms.sparrow.nbt.CompoundTag;
@@ -2032,9 +2038,9 @@ public class BukkitNetworkManager extends AbstractNetworkManager implements List
             Int2ObjectMap<Object> changedSlots = ServerboundContainerClickPacketProxy.INSTANCE.getChangedSlots(packet);
             Int2ObjectMap<Object> newChangedSlots = new Int2ObjectOpenHashMap<>(changedSlots.size());
             for (Int2ObjectMap.Entry<Object> entry : changedSlots.int2ObjectEntrySet()) {
-                newChangedSlots.put(entry.getIntKey(), FastNMS.INSTANCE.constructor$InjectedHashedStack(entry.getValue(), player));
+                newChangedSlots.put(entry.getIntKey(), FastNMS.INSTANCE.createInjectedHashedStack(entry.getValue(), player));
             }
-            Object carriedItem = FastNMS.INSTANCE.constructor$InjectedHashedStack(ServerboundContainerClickPacketProxy.INSTANCE.getCarriedItem(packet), player);
+            Object carriedItem = FastNMS.INSTANCE.createInjectedHashedStack(ServerboundContainerClickPacketProxy.INSTANCE.getCarriedItem(packet), player);
             ServerboundContainerClickPacketProxy.INSTANCE.setCarriedItem(packet, carriedItem);
             ServerboundContainerClickPacketProxy.INSTANCE.setChangedSlots(packet, Int2ObjectMaps.unmodifiable(newChangedSlots));
         }
@@ -4129,14 +4135,34 @@ public class BukkitNetworkManager extends AbstractNetworkManager implements List
                                 }
                             }
                         }
-                        // now simulate vanilla item behavior
+
+                        // 模拟原版物品交互行为
                         serverPlayer.setResendSound();
-                        FastNMS.INSTANCE.simulateInteraction(
-                                serverPlayer.serverPlayer(),
-                                DirectionUtils.toNMSDirection(hitResult.direction()),
-                                hitResult.hitLocation().x, hitResult.hitLocation().y, hitResult.hitLocation().z,
-                                LocationUtils.toBlockPos(hitResult.blockPos())
-                        );
+
+                        {
+                            Object nmsPlayer = serverPlayer.serverPlayer();
+                            Object serverLevel = ServerPlayerProxy.INSTANCE.level(nmsPlayer);
+                            Object blockPos = LocationUtils.toBlockPos(hitResult.blockPos());
+                            Object previousBlockState = ServerLevelProxy.INSTANCE.getBlockStateIfLoaded(serverLevel, blockPos);
+                            if (previousBlockState != null) {
+                                Object clickedPoint = Vec3Proxy.INSTANCE.newInstance(hitResult.hitLocation().x, hitResult.hitLocation().y, hitResult.hitLocation().z);
+                                Object nmsDirection = DirectionUtils.toNMSDirection(hitResult.direction());
+                                Object useItemPacket = ServerboundUseItemOnPacketProxy.INSTANCE.newInstance(
+                                        InteractionHandProxy.MAIN_HAND,
+                                        BlockHitResultProxy.INSTANCE.newInstance(clickedPoint, nmsDirection, blockPos, false),
+                                        0
+                                );
+                                try {
+                                    ServerLevelProxy.INSTANCE.setBlock(serverLevel, BlockProxy.INSTANCE.getDefaultBlockState(BlocksProxy.COBWEB), previousBlockState, UpdateFlags.UPDATE_INVISIBLE);
+                                    ServerboundUseItemOnPacketProxy.INSTANCE.setTimestamp(useItemPacket, System.currentTimeMillis());
+                                    ServerGamePacketListenerImplProxy.INSTANCE.handleUseItemOn(ServerPlayerProxy.INSTANCE.getConnection(nmsPlayer), useItemPacket);
+                                } finally {
+                                    ServerLevelProxy.INSTANCE.setBlock(serverLevel, blockPos, previousBlockState, UpdateFlags.UPDATE_INVISIBLE);
+                                    serverPlayer.sendPacket(ClientboundBlockUpdatePacketProxy.INSTANCE.newInstance(serverLevel, blockPos), false);
+                                }
+                            }
+                        }
+
                         if (!part.interactive()) {
                             serverPlayer.swingHand(InteractionHand.MAIN_HAND);
                         }

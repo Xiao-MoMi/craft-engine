@@ -29,6 +29,9 @@ public interface CompoundTagProxy {
     @MethodInvoker(name = "put")
     Object put(Object target, String key, @Type(clazz = TagProxy.class) Object value);
 
+    @MethodInvoker(name = "putString")
+    void putString(Object target, String key, String value);
+
     @MethodInvoker(name = "remove")
     void remove(Object target, String key);
 }

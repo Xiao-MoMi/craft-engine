@@ -15,7 +15,7 @@ import net.momirealms.sparrow.reflection.proxy.annotation.Type;
 import org.bukkit.World;
 
 @ReflectionProxy(name = "net.minecraft.world.level.Level")
-public interface LevelProxy {
+public interface LevelProxy extends LevelAccessorProxy {
     LevelProxy INSTANCE = ASMProxyFactory.create(LevelProxy.class);
     Class<?> CLASS = SparrowClass.find("net.minecraft.world.level.Level");
 

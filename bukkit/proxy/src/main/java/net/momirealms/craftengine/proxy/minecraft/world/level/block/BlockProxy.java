@@ -17,7 +17,7 @@ public interface BlockProxy extends BlockBehaviourProxy {
     BlockProxy INSTANCE = ASMProxyFactory.create(BlockProxy.class);
     Class<?> CLASS = SparrowClass.find("net.minecraft.world.level.block.Block");
     Object BLOCK_STATE_REGISTRY = INSTANCE.getBlockStateRegistry();
-
+    
     @FieldGetter(name = "BLOCK_STATE_REGISTRY", isStatic = true)
     Object getBlockStateRegistry();
 

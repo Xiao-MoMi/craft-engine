@@ -19,7 +19,7 @@ import net.momirealms.sparrow.reflection.proxy.annotation.Type;
 import javax.annotation.Nullable;
 
 @ReflectionProxy(name = "net.minecraft.world.level.LevelAccessor")
-public interface LevelAccessorProxy extends LevelReaderProxy {
+public interface LevelAccessorProxy extends CommonLevelAccessorProxy {
     LevelAccessorProxy INSTANCE = ASMProxyFactory.create(LevelAccessorProxy.class);
     Class<?> CLASS = SparrowClass.find("net.minecraft.world.level.LevelAccessor");
 

@@ -1,6 +1,7 @@
 package net.momirealms.craftengine.proxy.minecraft.nbt;
 
 import net.momirealms.sparrow.reflection.proxy.ASMProxyFactory;
+import net.momirealms.sparrow.reflection.proxy.annotation.FieldGetter;
 import net.momirealms.sparrow.reflection.proxy.annotation.MethodInvoker;
 import net.momirealms.sparrow.reflection.proxy.annotation.ReflectionProxy;
 
@@ -10,4 +11,7 @@ public interface StringTagProxy {
 
     @MethodInvoker(name = "valueOf", isStatic = true)
     Object valueOf(String value);
+
+    @FieldGetter(name = {"value", "data"})
+    String getData(Object target);
 }

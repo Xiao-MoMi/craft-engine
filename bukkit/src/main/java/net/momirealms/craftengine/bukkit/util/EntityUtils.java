@@ -18,8 +18,13 @@ import net.momirealms.craftengine.proxy.minecraft.world.entity.PoseProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.entity.PositionMoveRotationProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.entity.vehicle.DismountHelperProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.level.BlockGetterProxy;
+import net.momirealms.craftengine.proxy.minecraft.world.level.CollisionGetterProxy;
+import net.momirealms.craftengine.proxy.minecraft.world.level.EntityGetterProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.phys.AABBProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.phys.Vec3Proxy;
+import net.momirealms.craftengine.proxy.minecraft.world.phys.shapes.BooleanOpProxy;
+import net.momirealms.craftengine.proxy.minecraft.world.phys.shapes.ShapesProxy;
+import net.momirealms.craftengine.proxy.minecraft.world.phys.shapes.VoxelShapeProxy;
 import org.bukkit.Location;
 import org.bukkit.World;
 import org.bukkit.entity.Entity;
@@ -28,11 +33,12 @@ import org.bukkit.entity.Player;
 import org.bukkit.entity.Pose;
 import org.bukkit.event.entity.CreatureSpawnEvent;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Consumer;
+import java.util.function.Predicate;
 
 public final class EntityUtils {
-
     private EntityUtils() {}
 
     public static Object createUpdatePosPacket(int entityId, double x, double y, double z, float yRot, float xRot, boolean onGround) {
@@ -116,7 +122,7 @@ public final class EntityUtils {
                 if (!canDismount) {
                     continue;
                 }
-                if (!FastNMS.INSTANCE.checkEntityCollision(serverLevel, List.of(newAABB), o -> true)) {
+                if (!CollisionUtils.test(serverLevel, List.of(newAABB), o -> true)) {
                     continue;
                 }
                 if (VersionHelper.isFolia()) {

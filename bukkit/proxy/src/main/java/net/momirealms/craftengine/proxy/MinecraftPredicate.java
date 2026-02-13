@@ -7,7 +7,8 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public final class MinecraftPredicate implements Predicate<String> {
-    private static final Pattern TOKEN_PATTERN = Pattern.compile("\\s*(\\(|\\)|&&|\\|\\||[^\\s()&|]+)\\s*");
+    // [修改点 1] 正则表达式：增加了 "!" 作为捕获组，并在非操作符匹配中排除了 "!"
+    private static final Pattern TOKEN_PATTERN = Pattern.compile("\\s*(\\(|\\)|&&|\\|\\||!|[^\\s()&|!]+)\\s*");
     private final Context context;
 
     public MinecraftPredicate(String version, List<String> patches) {
@@ -28,7 +29,7 @@ public final class MinecraftPredicate implements Predicate<String> {
             String token = matcher.group(1);
             if (token.isEmpty()) continue;
             switch (token) {
-                case "(" -> ops.push(token);
+                case "(", "!" -> ops.push(token);
                 case ")" -> {
                     while (!ops.isEmpty() && !ops.peek().equals("(")) {
                         processOperator(nodes, ops.pop());
@@ -51,16 +52,24 @@ public final class MinecraftPredicate implements Predicate<String> {
     }
 
     private static void processOperator(Stack<Condition> nodes, String op) {
-        Condition right = nodes.pop();
-        Condition left = nodes.pop();
-        if ("&&".equals(op)) {
-            nodes.push(ctx -> left.test(ctx) && right.test(ctx));
-        } else if ("||".equals(op)) {
-            nodes.push(ctx -> left.test(ctx) || right.test(ctx));
+        if ("!".equals(op)) {
+            if (nodes.isEmpty()) throw new IllegalArgumentException("Invalid syntax: '!' used without operand");
+            Condition node = nodes.pop();
+            nodes.push(ctx -> !node.test(ctx));
+        } else {
+            if (nodes.size() < 2) throw new IllegalArgumentException("Invalid syntax: missing operands for " + op);
+            Condition right = nodes.pop();
+            Condition left = nodes.pop();
+            if ("&&".equals(op)) {
+                nodes.push(ctx -> left.test(ctx) && right.test(ctx));
+            } else if ("||".equals(op)) {
+                nodes.push(ctx -> left.test(ctx) || right.test(ctx));
+            }
         }
     }
 
     private static int precedence(String op) {
+        if ("!".equals(op)) return 3;
         if ("&&".equals(op)) return 2;
         if ("||".equals(op)) return 1;
         return 0;
@@ -104,12 +113,11 @@ public final class MinecraftPredicate implements Predicate<String> {
                 }
             }
         }
-        // 处理最后一个数字部分
-        if (part == 0) {  // 没有点号：如 "26"
+        if (part == 0) {
             v1 = currentNumber;
-        } else if (part == 1) {  // 一个点号：如 "26.1"
+        } else if (part == 1) {
             v2 = currentNumber;
-        } else if (part == 2) {  // 两个点号：如 "1.2.3"
+        } else if (part == 2) {
             v3 = currentNumber;
         }
         return v1 * 10000 + v2 * 100 + v3;

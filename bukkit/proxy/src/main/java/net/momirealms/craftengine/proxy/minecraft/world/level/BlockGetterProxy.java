@@ -11,7 +11,7 @@ import net.momirealms.sparrow.reflection.proxy.annotation.Type;
 import java.util.function.Supplier;
 
 @ReflectionProxy(name = "net.minecraft.world.level.BlockGetter")
-public interface BlockGetterProxy {
+public interface BlockGetterProxy extends LevelHeightAccessorProxy {
     BlockGetterProxy INSTANCE = ASMProxyFactory.create(BlockGetterProxy.class);
     Class<?> CLASS = SparrowClass.find("net.minecraft.world.level.BlockGetter");
 
@@ -26,4 +26,7 @@ public interface BlockGetterProxy {
 
     @MethodInvoker(name = "getBlockState")
     Object getBlockState(Object target, @Type(clazz = BlockPosProxy.class) Object blockPos);
+
+    @MethodInvoker(name = "getBlockStateIfLoaded")
+    Object getBlockStateIfLoaded(Object target, @Type(clazz = BlockPosProxy.class) Object blockPos);
 }

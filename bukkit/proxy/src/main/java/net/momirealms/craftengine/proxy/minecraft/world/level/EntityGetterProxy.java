@@ -1,5 +1,6 @@
 package net.momirealms.craftengine.proxy.minecraft.world.level;
 
+import net.momirealms.craftengine.proxy.minecraft.world.entity.EntityProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.phys.AABBProxy;
 import net.momirealms.sparrow.reflection.proxy.ASMProxyFactory;
 import net.momirealms.sparrow.reflection.proxy.annotation.MethodInvoker;
@@ -14,5 +15,12 @@ public interface EntityGetterProxy {
     EntityGetterProxy INSTANCE = ASMProxyFactory.create(EntityGetterProxy.class);
 
     @MethodInvoker(name = "getEntitiesOfClass")
-    List<Object> getEntitiesOfClass(Object target, Class<?> entityClass, @Type(clazz = AABBProxy.class) Object area, Predicate<Object> filter);
+    List<Object> getEntitiesOfClass(Object target,
+                                    Class<?> entityClass,
+                                    @Type(clazz = AABBProxy.class) Object area,
+                                    Predicate<Object> filter);
+    @MethodInvoker(name = "getEntities")
+    List<Object> getEntities(Object target,
+                             @Type(clazz = EntityProxy.class) Object except,
+                             @Type(clazz = AABBProxy.class) Object aabb);
 }

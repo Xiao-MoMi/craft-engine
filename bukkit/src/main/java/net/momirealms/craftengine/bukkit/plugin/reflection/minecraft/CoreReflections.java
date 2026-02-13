@@ -22,7 +22,6 @@ import net.momirealms.craftengine.proxy.minecraft.world.level.block.state.BlockB
 import net.momirealms.craftengine.proxy.minecraft.world.level.block.state.BlockStateProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.level.block.state.StateHolderProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.level.block.state.properties.PropertyProxy;
-import net.momirealms.craftengine.proxy.minecraft.world.level.chunk.LevelChunkSectionProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.level.chunk.PalettedContainerProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.level.material.FluidProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.level.material.FluidStateProxy;
@@ -43,10 +42,6 @@ import static java.util.Objects.requireNonNull;
 
 public final class CoreReflections {
     private CoreReflections() {}
-
-    public static final Method method$LevelChunkSection$setBlockState = requireNonNull(
-            ReflectionUtils.getMethod(LevelChunkSectionProxy.CLASS, BlockStateProxy.CLASS, int.class, int.class, int.class, BlockStateProxy.CLASS, boolean.class)
-    );
 
     public static final Method method$BlockBehaviour$isPathFindable = requireNonNull(
             VersionHelper.isOrAbove1_20_5() ?

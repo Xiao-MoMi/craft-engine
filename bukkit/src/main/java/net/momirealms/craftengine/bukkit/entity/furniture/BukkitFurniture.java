@@ -6,6 +6,8 @@ import net.momirealms.craftengine.bukkit.entity.BukkitEntity;
 import net.momirealms.craftengine.bukkit.nms.FastNMS;
 import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.MEntityTypes;
 import net.momirealms.craftengine.bukkit.plugin.user.BukkitServerPlayer;
+import net.momirealms.craftengine.bukkit.util.CollisionUtils;
+import net.momirealms.craftengine.bukkit.util.EntityUtils;
 import net.momirealms.craftengine.bukkit.util.LocationUtils;
 import net.momirealms.craftengine.core.entity.furniture.*;
 import net.momirealms.craftengine.core.entity.furniture.hitbox.FurnitureHitBoxConfig;
@@ -72,7 +74,7 @@ public class BukkitFurniture extends Furniture {
                 hitBoxConfig.prepareBoundingBox(position, aabbs::add, false);
             }
             if (!aabbs.isEmpty()) {
-                if (!FastNMS.INSTANCE.checkEntityCollision(position.world.serverWorld(), aabbs.stream().map(it -> AABBProxy.INSTANCE.newInstance(it.minX, it.minY, it.minZ, it.maxX, it.maxY, it.maxZ)).toList(),
+                if (!CollisionUtils.test(position.world.serverWorld(), aabbs.stream().map(it -> AABBProxy.INSTANCE.newInstance(it.minX, it.minY, it.minZ, it.maxX, it.maxY, it.maxZ)).toList(),
                         o -> {
                             for (Collider collider : super.colliders) {
                                 if (o == collider.handle()) {
@@ -116,7 +118,7 @@ public class BukkitFurniture extends Furniture {
                     hitBoxConfig.prepareBoundingBox(position, aabbs::add, false);
                 }
                 if (!aabbs.isEmpty()) {
-                    if (!FastNMS.INSTANCE.checkEntityCollision(position.world.serverWorld(), aabbs.stream().map(it -> AABBProxy.INSTANCE.newInstance(it.minX, it.minY, it.minZ, it.maxX, it.maxY, it.maxZ)).toList(),
+                    if (!CollisionUtils.test(position.world.serverWorld(), aabbs.stream().map(it -> AABBProxy.INSTANCE.newInstance(it.minX, it.minY, it.minZ, it.maxX, it.maxY, it.maxZ)).toList(),
                             o -> {
                                 for (Collider collider : super.colliders) {
                                     if (o == collider.handle()) {

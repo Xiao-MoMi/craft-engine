@@ -146,11 +146,6 @@ public final class BukkitCraftEngine extends CraftEngine {
         }
         // 注入一些新的类型，但是并不需要太早
         try {
-            WorldStorageInjector.init();
-        } catch (Exception e) {
-            throw new InjectionException("Error injecting world storage", e);
-        }
-        try {
             RecipeInjector.init();
         } catch (Exception e) {
             throw new InjectionException("Error injecting recipes", e);

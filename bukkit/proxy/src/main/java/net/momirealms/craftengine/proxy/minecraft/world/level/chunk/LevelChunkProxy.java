@@ -10,4 +10,8 @@ public interface LevelChunkProxy extends ChunkAccessProxy {
 
     @MethodInvoker(name = "markUnsaved", activeIf = "min_version=1.21.2")
     void markUnsaved(Object target);
+
+    @ReflectionProxy(name = "net.minecraft.world.level.chunk.LevelChunk$UnsavedListener", activeIf = "min_version=1.21.2")
+    interface UnsavedListenerProxy {
+    }
 }

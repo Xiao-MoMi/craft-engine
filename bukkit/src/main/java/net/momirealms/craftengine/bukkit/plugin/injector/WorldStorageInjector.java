@@ -1,19 +1,7 @@
 package net.momirealms.craftengine.bukkit.plugin.injector;
 
-import net.bytebuddy.ByteBuddy;
-import net.bytebuddy.ClassFileVersion;
-import net.bytebuddy.description.modifier.Visibility;
-import net.bytebuddy.dynamic.scaffold.subclass.ConstructorStrategy;
-import net.bytebuddy.implementation.FieldAccessor;
-import net.bytebuddy.implementation.MethodDelegation;
-import net.bytebuddy.implementation.bind.annotation.AllArguments;
-import net.bytebuddy.implementation.bind.annotation.RuntimeType;
-import net.bytebuddy.implementation.bind.annotation.SuperCall;
 import net.bytebuddy.implementation.bind.annotation.This;
-import net.bytebuddy.implementation.bytecode.assign.Assigner;
-import net.bytebuddy.matcher.ElementMatchers;
 import net.momirealms.craftengine.bukkit.nms.FastNMS;
-import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.CoreReflections;
 import net.momirealms.craftengine.bukkit.util.LightUtils;
 import net.momirealms.craftengine.core.block.BlockStateWrapper;
 import net.momirealms.craftengine.core.block.DelegatingBlockState;
@@ -23,240 +11,121 @@ import net.momirealms.craftengine.core.block.entity.BlockEntity;
 import net.momirealms.craftengine.core.block.entity.render.ConstantBlockEntityRenderer;
 import net.momirealms.craftengine.core.plugin.CraftEngine;
 import net.momirealms.craftengine.core.plugin.config.Config;
-import net.momirealms.craftengine.core.util.ReflectionUtils;
 import net.momirealms.craftengine.core.util.SectionPosUtils;
 import net.momirealms.craftengine.core.world.BlockPos;
 import net.momirealms.craftengine.core.world.CEWorld;
 import net.momirealms.craftengine.core.world.SectionPos;
 import net.momirealms.craftengine.core.world.chunk.CEChunk;
 import net.momirealms.craftengine.core.world.chunk.CESection;
-import net.momirealms.craftengine.core.world.chunk.InjectedHolder;
+import net.momirealms.craftengine.core.world.chunk.InjectedStorage;
 import net.momirealms.craftengine.proxy.minecraft.world.level.chunk.LevelChunkSectionProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.level.chunk.PalettedContainerProxy;
+import org.jetbrains.annotations.NotNull;
 
-import java.lang.invoke.MethodHandle;
-import java.lang.invoke.MethodHandles;
-import java.lang.invoke.MethodType;
 import java.util.List;
 import java.util.Objects;
-import java.util.concurrent.Callable;
 import java.util.function.Consumer;
 
 public final class WorldStorageInjector {
-    private static Class<?> clazz$InjectedPalettedContainer;
-    private static MethodHandle constructor$InjectedLevelChunkSection;
-
     private WorldStorageInjector() {}
 
-    public static void init() throws ReflectiveOperationException {
-        ByteBuddy byteBuddy = new ByteBuddy(ClassFileVersion.JAVA_V17);
-        // Paletted Container
-        clazz$InjectedPalettedContainer = byteBuddy
-                .subclass(PalettedContainerProxy.CLASS)
-                .name("net.minecraft.world.level.chunk.InjectedPalettedContainer")
-                .implement(InjectedHolder.Palette.class)
-                .defineField("target", PalettedContainerProxy.CLASS, Visibility.PUBLIC)
-                .defineField("active", boolean.class, Visibility.PUBLIC)
-                .defineField("cesection", CESection.class, Visibility.PRIVATE)
-                .defineField("cechunk", CEChunk.class, Visibility.PRIVATE)
-                .defineField("cepos", SectionPos.class, Visibility.PRIVATE)
-                .method(ElementMatchers.any()
-                        .and(ElementMatchers.not(ElementMatchers.is(CoreReflections.method$PalettedContainer$getAndSet)))
-                        .and(ElementMatchers.not(ElementMatchers.isDeclaredBy(Object.class)))
-                )
-                .intercept(MethodDelegation.toField("target"))
-                .method(ElementMatchers.is(CoreReflections.method$PalettedContainer$getAndSet))
-                .intercept(MethodDelegation.to(GetAndSetInterceptor.INSTANCE))
-                .method(ElementMatchers.is(CoreReflections.method$PalettedContainer$getAndSetUnchecked))
-                .intercept(MethodDelegation.to(GetAndSetUncheckedInterceptor.INSTANCE))
-                .method(ElementMatchers.named("target"))
-                .intercept(FieldAccessor.ofField("target"))
-                .method(ElementMatchers.named("setTarget"))
-                .intercept(FieldAccessor.ofField("target").withAssigner(Assigner.DEFAULT, Assigner.Typing.DYNAMIC))
-                .method(ElementMatchers.named("isActive").or(ElementMatchers.named("setActive")))
-                .intercept(FieldAccessor.ofField("active"))
-                .method(ElementMatchers.named("ceSection"))
-                .intercept(FieldAccessor.ofField("cesection"))
-                .method(ElementMatchers.named("ceChunk"))
-                .intercept(FieldAccessor.ofField("cechunk"))
-                .method(ElementMatchers.named("cePos"))
-                .intercept(FieldAccessor.ofField("cepos"))
-                .make()
-                .load(WorldStorageInjector.class.getClassLoader())
-                .getLoaded();
-        // Level Chunk Section
-        Class<?> clazz$InjectedLevelChunkSection = byteBuddy
-                .subclass(LevelChunkSectionProxy.CLASS, ConstructorStrategy.Default.IMITATE_SUPER_CLASS_OPENING)
-                .name("net.minecraft.world.level.chunk.InjectedLevelChunkSection")
-                .implement(InjectedHolder.Section.class)
-                .defineField("active", boolean.class, Visibility.PUBLIC)
-                .defineField("cesection", CESection.class, Visibility.PRIVATE)
-                .defineField("cechunk", CEChunk.class, Visibility.PRIVATE)
-                .defineField("cepos", SectionPos.class, Visibility.PRIVATE)
-                .method(ElementMatchers.is(CoreReflections.method$LevelChunkSection$setBlockState))
-                .intercept(MethodDelegation.to(SetBlockStateInterceptor.INSTANCE))
-                .method(ElementMatchers.named("ceSection"))
-                .intercept(FieldAccessor.ofField("cesection"))
-                .method(ElementMatchers.named("ceChunk"))
-                .intercept(FieldAccessor.ofField("cechunk"))
-                .method(ElementMatchers.named("cePos"))
-                .intercept(FieldAccessor.ofField("cepos"))
-                .method(ElementMatchers.named("isActive").or(ElementMatchers.named("setActive")))
-                .intercept(FieldAccessor.ofField("active"))
-                .make()
-                .load(WorldStorageInjector.class.getClassLoader())
-                .getLoaded();
-
-        constructor$InjectedLevelChunkSection = MethodHandles.publicLookup().in(clazz$InjectedLevelChunkSection)
-                .findConstructor(clazz$InjectedLevelChunkSection, MethodType.methodType(void.class, PalettedContainerProxy.CLASS, PalettedContainerProxy.CLASS))
-                .asType(MethodType.methodType(LevelChunkSectionProxy.CLASS, PalettedContainerProxy.CLASS, PalettedContainerProxy.CLASS));
-    }
-
-    public synchronized static void injectLevelChunkSection(Object targetSection, CESection ceSection, CEChunk chunk, SectionPos pos, Consumer<Object> callback) {
-        try {
-            if (Config.injectionTarget()) {
-                Object container = LevelChunkSectionProxy.INSTANCE.getStates(targetSection);
-                if (!(container instanceof InjectedHolder.Palette holder)) {
-                    InjectedHolder.Palette injectedObject;
-                    if (Config.fastInjection()) {
-                        injectedObject = FastNMS.INSTANCE.createInjectedPalettedContainerHolder(container);
-                    } else {
-                        injectedObject = (InjectedHolder.Palette) ReflectionUtils.UNSAFE.allocateInstance(clazz$InjectedPalettedContainer);
-                        injectedObject.setTarget(container);
-                        //varHandle$InjectedPalettedContainer$target.set(injectedObject, container);
-                    }
-                    injectedObject.ceChunk(chunk);
-                    injectedObject.ceSection(ceSection);
-                    injectedObject.cePos(pos);
-                    injectedObject.setActive(true);
-                    PalettedContainerProxy.INSTANCE.setData(injectedObject, PalettedContainerProxy.INSTANCE.getData(container));
-                    LevelChunkSectionProxy.INSTANCE.setStates(targetSection, injectedObject);
-                } else {
-                    holder.ceChunk(chunk);
-                    holder.ceSection(ceSection);
-                    holder.cePos(pos);
-                    holder.setActive(true);
-                }
+    // 注入某个section，根据配置文件里的注册目标对象而定
+    // callback负责是否需要将注入对象设置回去
+    public static void inject(Object nmsSection,
+                              CESection ceSection,
+                              CEChunk ceChunk,
+                              SectionPos pos,
+                              Consumer<Object> callback) {
+        InjectedStorage storage;
+        if (Config.injectionTarget()) {
+            Object container = LevelChunkSectionProxy.INSTANCE.getStates(nmsSection);
+            if (container instanceof InjectedStorage.Palette holder) {
+                storage = holder;
             } else {
-                if (!(targetSection instanceof InjectedHolder.Section holder)) {
-                    InjectedHolder.Section injectedObject;
-                    if (Config.fastInjection()) {
-                        injectedObject = FastNMS.INSTANCE.createInjectedLevelChunkSectionHolder(targetSection);
-                    } else {
-                        injectedObject = (InjectedHolder.Section) constructor$InjectedLevelChunkSection.invoke(
-                                LevelChunkSectionProxy.INSTANCE.getStates(targetSection), LevelChunkSectionProxy.INSTANCE.getBiomes(targetSection));
-                    }
-                    injectedObject.ceChunk(chunk);
-                    injectedObject.ceSection(ceSection);
-                    injectedObject.cePos(pos);
-                    injectedObject.setActive(true);
-                    callback.accept(injectedObject);
-                } else {
-                    holder.ceChunk(chunk);
-                    holder.ceSection(ceSection);
-                    holder.cePos(pos);
-                    holder.setActive(true);
-                }
+                storage = FastNMS.INSTANCE.createInjectedPalettedContainer(container);
+                PalettedContainerProxy.INSTANCE.setData(storage, PalettedContainerProxy.INSTANCE.getData(container));
+                LevelChunkSectionProxy.INSTANCE.setStates(nmsSection, storage);
             }
-        } catch (Throwable e) {
-            CraftEngine.instance().logger().severe("Failed to inject chunk section " + pos, e);
+        } else {
+            if (nmsSection instanceof InjectedStorage.Section holder) {
+                storage = holder;
+            } else {
+                storage = FastNMS.INSTANCE.createInjectedLevelChunkSection(nmsSection);
+                callback.accept(storage);
+            }
         }
+        storage.setChunk(ceChunk);
+        storage.setSection(ceSection);
+        storage.setPos(pos);
+        storage.setActive(true);
     }
 
     public static boolean isSectionInjected(Object section) {
         if (Config.injectionTarget()) {
             Object container = LevelChunkSectionProxy.INSTANCE.getStates(section);
-            return container instanceof InjectedHolder.Palette;
+            return container instanceof InjectedStorage.Palette;
         } else {
-            return section instanceof InjectedHolder.Section;
+            return section instanceof InjectedStorage.Section;
         }
     }
 
-    public synchronized static Object uninjectLevelChunkSection(Object section) {
+    public static void uninject(Object section) {
         if (Config.injectionTarget()) {
             Object states = LevelChunkSectionProxy.INSTANCE.getStates(section);
-            if (states instanceof InjectedHolder.Palette holder) {
+            if (states instanceof InjectedStorage.Palette holder) {
                 holder.setActive(false);
             }
         } else {
-            if (section instanceof InjectedHolder.Section holder) {
+            if (section instanceof InjectedStorage.Section holder) {
                 holder.setActive(false);
             }
         }
-        return section;
     }
 
-    public static class SetBlockStateInterceptor {
-        public static final SetBlockStateInterceptor INSTANCE = new SetBlockStateInterceptor();
-
-        @RuntimeType
-        public Object intercept(@This Object thisObj, @AllArguments Object[] args, @SuperCall Callable<Object> superMethod) throws Exception {
-            InjectedHolder.Section holder = (InjectedHolder.Section) thisObj;
-            int x = (int) args[0];
-            int y = (int) args[1];
-            int z = (int) args[2];
-            Object newState = args[3];
-            Object previousState = superMethod.call();
-            if (holder.isActive()) {
-                compareAndUpdateBlockState(x, y, z, newState, previousState, holder);
-            }
-            return previousState;
+    // 用于监听注入的LevelChunkSection内的变化
+    public static Object setBlockState(Object thisObj, int x, int y, int z, @NotNull Object newState, boolean useLocks) {
+        InjectedStorage.Section holder = (InjectedStorage.Section) thisObj;
+        Object previousState = LevelChunkSectionProxy.INSTANCE.setBlockState(holder, x, y, z, newState, useLocks);
+        if (holder.isActive()) {
+            compareAndUpdateBlockState(x, y, z, newState, previousState, holder);
         }
+        return previousState;
     }
 
-    public static class GetAndSetInterceptor {
-        public static final GetAndSetInterceptor INSTANCE = new GetAndSetInterceptor();
-
-        @RuntimeType
-        public Object intercept(@This Object thisObj, @AllArguments Object[] args) {
-            InjectedHolder.Palette holder = (InjectedHolder.Palette) thisObj;
-            Object targetStates = holder.target();
-            int x = (int) args[0];
-            int y = (int) args[1];
-            int z = (int) args[2];
-            Object newState = args[3];
-            Object previousState = PalettedContainerProxy.INSTANCE.getAndSet(targetStates, x, y, z, newState);
-            if (holder.isActive()) {
-                compareAndUpdateBlockState(x, y, z, newState, previousState, holder);
-            }
-            return previousState;
+    // 用于监听注入的PalettedContainer内的变化
+    public static Object getAndSet(Object thisObj, int x, int y, int z, @NotNull Object newState) {
+        InjectedStorage.Palette holder = (InjectedStorage.Palette) thisObj;
+        Object previousState = PalettedContainerProxy.INSTANCE.getAndSet(holder.delegated(), x, y, z, newState);
+        if (holder.isActive()) {
+            compareAndUpdateBlockState(x, y, z, newState, previousState, holder);
         }
+        return previousState;
     }
 
-    public static class GetAndSetUncheckedInterceptor {
-        public static final GetAndSetInterceptor INSTANCE = new GetAndSetInterceptor();
-
-        @RuntimeType
-        public Object intercept(@This Object thisObj, @AllArguments Object[] args) {
-            InjectedHolder.Palette holder = (InjectedHolder.Palette) thisObj;
-            Object targetStates = holder.target();
-            int x = (int) args[0];
-            int y = (int) args[1];
-            int z = (int) args[2];
-            Object newState = args[3];
-            Object previousState = PalettedContainerProxy.INSTANCE.getAndSetUnchecked(targetStates, x, y, z, newState);
-            if (holder.isActive()) {
-                compareAndUpdateBlockState(x, y, z, newState, previousState, holder);
-            }
-            return previousState;
+    // 用于监听注入的PalettedContainer内的变化
+    public static Object getAndSetUnchecked(Object thisObj, int x, int y, int z, @NotNull Object newState) {
+        InjectedStorage.Palette holder = (InjectedStorage.Palette) thisObj;
+        Object previousState = PalettedContainerProxy.INSTANCE.getAndSetUnchecked(holder.delegated(), x, y, z, newState);
+        if (holder.isActive()) {
+            compareAndUpdateBlockState(x, y, z, newState, previousState, holder);
         }
+        return previousState;
     }
 
     @SuppressWarnings("DuplicatedCode")
-    private static void compareAndUpdateBlockState(int x, int y, int z, Object newState, Object previousState, InjectedHolder holder) {
-        CESection section = holder.ceSection();
+    private static void compareAndUpdateBlockState(int x, int y, int z, Object newState, Object previousState, InjectedStorage holder) {
+        CESection section = holder.section();
         if (newState instanceof DelegatingBlockState delegatingBlockState) {
             ImmutableBlockState newImmutableBlockState = delegatingBlockState.blockState();
             if (newImmutableBlockState == null) return;
             ImmutableBlockState previousImmutableBlockState = section.setBlockState(x, y, z, newImmutableBlockState);
             if (previousImmutableBlockState == newImmutableBlockState) return;
             // 处理  自定义块到自定义块或原版块到自定义块
-            CEChunk chunk = holder.ceChunk();
+            CEChunk chunk = holder.chunk();
             chunk.setDirty(true);
 
             ConstantBlockEntityRenderer previousRenderer = null;
             // 如果两个方块没有相同的主人 且 旧方块有方块实体
-
             if (!previousImmutableBlockState.isEmpty()) {
                 if (previousImmutableBlockState.owner() != newImmutableBlockState.owner() && previousImmutableBlockState.hasBlockEntity()) {
                     BlockPos pos = new BlockPos(chunk.chunkPos.x * 16 + x, section.sectionY * 16 + y, chunk.chunkPos.z * 16 + z);
@@ -319,7 +188,7 @@ public final class WorldStorageInjector {
             ImmutableBlockState previous = section.setBlockState(x, y, z, EmptyBlock.STATE);
             // 处理  自定义块 -> 原版块
             if (previous != null && !previous.isEmpty()) {
-                CEChunk chunk = holder.ceChunk();
+                CEChunk chunk = holder.chunk();
                 chunk.setDirty(true);
                 if (previous.hasBlockEntity()) {
                     BlockPos pos = new BlockPos(chunk.chunkPos.x * 16 + x, section.sectionY * 16 + y, chunk.chunkPos.z * 16 + z);
@@ -345,27 +214,27 @@ public final class WorldStorageInjector {
     }
 
     @SuppressWarnings("DuplicatedCode")
-    private static void updateLight(@This InjectedHolder thisObj, Object clientState, Object serverState, int x, int y, int z) {
-        CEWorld world = thisObj.ceChunk().world;
+    private static void updateLight(@This InjectedStorage thisObj, Object clientState, Object serverState, int x, int y, int z) {
+        CEWorld world = thisObj.chunk().world;
         if (LightUtils.hasDifferentLightProperties(serverState, clientState)) {
-            SectionPos sectionPos = thisObj.cePos();
+            SectionPos sectionPos = thisObj.pos();
             List<SectionPos> pos = SectionPosUtils.calculateAffectedRegions((sectionPos.x() << 4) + x, (sectionPos.y() << 4) + y, (sectionPos.z() << 4) + z, 15);
             world.sectionLightUpdated(pos);
         }
     }
 
     @SuppressWarnings("DuplicatedCode")
-    private static void updateLight$complex(@This InjectedHolder thisObj, Object newClientState, Object newServerState, Object oldServerState, int x, int y, int z) {
-        CEWorld world = thisObj.ceChunk().world;
+    private static void updateLight$complex(@This InjectedStorage thisObj, Object newClientState, Object newServerState, Object oldServerState, int x, int y, int z) {
+        CEWorld world = thisObj.chunk().world;
         // 如果客户端新状态和服务端新状态光照属性不同
         if (LightUtils.hasDifferentLightProperties(newClientState, newServerState)) {
-            SectionPos sectionPos = thisObj.cePos();
+            SectionPos sectionPos = thisObj.pos();
             List<SectionPos> pos = SectionPosUtils.calculateAffectedRegions((sectionPos.x() << 4) + x, (sectionPos.y() << 4) + y, (sectionPos.z() << 4) + z, 15);
             world.sectionLightUpdated(pos);
             return;
         }
         if (LightUtils.hasDifferentLightProperties(newServerState, oldServerState)) {
-            SectionPos sectionPos = thisObj.cePos();
+            SectionPos sectionPos = thisObj.pos();
             List<SectionPos> pos = SectionPosUtils.calculateAffectedRegions((sectionPos.x() << 4) + x, (sectionPos.y() << 4) + y, (sectionPos.z() << 4) + z, 15);
             world.sectionLightUpdated(pos);
         }

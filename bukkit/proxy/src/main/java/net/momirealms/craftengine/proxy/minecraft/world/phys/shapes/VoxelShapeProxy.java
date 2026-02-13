@@ -12,4 +12,7 @@ public interface VoxelShapeProxy {
 
     @MethodInvoker(name = "bounds")
     Object bounds(Object target);
+
+    @MethodInvoker(name = "isEmpty")
+    boolean isEmpty(Object target);
 }

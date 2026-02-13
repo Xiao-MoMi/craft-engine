@@ -38,6 +38,7 @@ import net.momirealms.craftengine.proxy.minecraft.core.registries.BuiltInRegistr
 import net.momirealms.craftengine.proxy.minecraft.core.registries.RegistriesProxy;
 import net.momirealms.craftengine.proxy.minecraft.resources.ResourceKeyProxy;
 import net.momirealms.craftengine.proxy.minecraft.sounds.SoundEventProxy;
+import net.momirealms.craftengine.proxy.minecraft.tags.TagKeyProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.level.EmptyBlockGetterProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.level.block.BlockProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.level.block.FireBlockProxy;
@@ -58,8 +59,8 @@ import java.util.*;
 public final class BukkitBlockManager extends AbstractBlockManager {
     public static final Set<Object> CLIENT_SIDE_NOTE_BLOCKS = new HashSet<>(2048, 0.6f);
     private static final Object BLOCK_POS$ZERO = LocationUtils.toBlockPos(0,0,0);
-    private static final Object ALWAYS_FALSE = FastNMS.INSTANCE.method$StatePredicate$always(false);
-    private static final Object ALWAYS_TRUE = FastNMS.INSTANCE.method$StatePredicate$always(true);
+    private static final Object ALWAYS_FALSE = FastNMS.INSTANCE.createAlwaysStatePredicate(false);
+    private static final Object ALWAYS_TRUE = FastNMS.INSTANCE.createAlwaysStatePredicate(true);
     private static BukkitBlockManager instance;
     private final BukkitCraftEngine plugin;
     // 事件监听器
@@ -313,7 +314,7 @@ public final class BukkitBlockManager extends AbstractBlockManager {
             Object holder = BukkitCraftEngine.instance().blockManager().getMinecraftBlockHolder(state.customBlockState().registryId());
             Set<Object> tags = new HashSet<>();
             for (Key tag : settings.tags()) {
-                tags.add(ResourceKeyProxy.INSTANCE.create(RegistriesProxy.BLOCK, KeyUtils.toIdentifier(tag)));
+                tags.add(TagKeyProxy.INSTANCE.create(RegistriesProxy.BLOCK, KeyUtils.toIdentifier(tag)));
             }
             HolderProxy.ReferenceProxy.INSTANCE.setTags(holder, tags);
             if (settings.burnable()) {

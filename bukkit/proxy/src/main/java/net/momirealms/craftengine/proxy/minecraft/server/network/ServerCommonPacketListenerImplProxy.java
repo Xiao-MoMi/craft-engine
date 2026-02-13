@@ -7,7 +7,7 @@ import net.momirealms.sparrow.reflection.proxy.annotation.FieldSetter;
 import net.momirealms.sparrow.reflection.proxy.annotation.ReflectionProxy;
 
 @ReflectionProxy(name = "net.minecraft.server.network.ServerCommonPacketListenerImpl", activeIf = "min_version=1.20.2")
-public interface ServerCommonPacketListenerImplProxy {
+public interface ServerCommonPacketListenerImplProxy extends ServerPlayerConnectionProxy {
     ServerCommonPacketListenerImplProxy INSTANCE = ASMProxyFactory.create(ServerCommonPacketListenerImplProxy.class);
 
     @FieldGetter(name = "connection", activeIf = "min_version=1.20.2")

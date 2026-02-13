@@ -104,7 +104,7 @@ final class FastAsyncWorldEditDelegate extends AbstractDelegateExtent {
                     CESection ceSection = ceSections[i];
                     Object section = sections[i];
                     int finalI = i;
-                    WorldStorageInjector.injectLevelChunkSection(section, ceSection, ceChunk, new SectionPos(pos.x, ceChunk.sectionY(i), pos.z),
+                    WorldStorageInjector.inject(section, ceSection, ceChunk, new SectionPos(pos.x, ceChunk.sectionY(i), pos.z),
                             (injected) -> sections[finalI] = injected);
                 }
             }

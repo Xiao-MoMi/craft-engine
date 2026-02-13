@@ -117,4 +117,13 @@ public interface EntityProxy {
 
     @MethodInvoker(name = "getBukkitEntity")
     Entity getBukkitEntity(Object target);
+
+    @MethodInvoker(name = "isRemoved")
+    boolean isRemoved(Object target);
+
+    @FieldGetter(name = "blocksBuilding")
+    boolean getBlocksBuilding(Object target);
+
+    @MethodInvoker(name = "getBoundingBox")
+    Object getBoundingBox(Object target);
 }

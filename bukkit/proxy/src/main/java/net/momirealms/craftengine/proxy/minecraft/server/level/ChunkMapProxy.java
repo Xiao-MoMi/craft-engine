@@ -19,6 +19,12 @@ public interface ChunkMapProxy {
     @MethodInvoker(name = "getVisibleChunkIfPresent")
     Object getVisibleChunkIfPresent(Object target, long chunkPos);
 
+    @FieldGetter(name = "generator", activeIf = "max_version=1.20.6")
+    Object getGenerator(Object target);
+
+    @FieldSetter(name = "generator", activeIf = "max_version=1.20.6")
+    void setGenerator(Object target, Object generator);
+
     @ReflectionProxy(name = "net.minecraft.server.level.ChunkMap$TrackedEntity")
     interface TrackedEntityProxy {
         TrackedEntityProxy INSTANCE = ASMProxyFactory.create(TrackedEntityProxy.class);

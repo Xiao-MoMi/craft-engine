@@ -15,12 +15,15 @@ import net.momirealms.craftengine.core.item.ItemType;
 import net.momirealms.craftengine.core.item.data.Enchantment;
 import net.momirealms.craftengine.core.item.data.FireworkExplosion;
 import net.momirealms.craftengine.core.item.data.Trim;
+import net.momirealms.craftengine.core.item.processor.IdProcessor;
 import net.momirealms.craftengine.core.plugin.CraftEngine;
 import net.momirealms.craftengine.core.util.*;
 import net.momirealms.craftengine.proxy.bukkit.craftbukkit.inventory.CraftItemStackProxy;
 import net.momirealms.craftengine.proxy.minecraft.core.registries.BuiltInRegistriesProxy;
 import net.momirealms.craftengine.proxy.minecraft.nbt.CompoundTagProxy;
+import net.momirealms.craftengine.proxy.minecraft.nbt.StringTagProxy;
 import net.momirealms.craftengine.proxy.minecraft.nbt.TagProxy;
+import net.momirealms.craftengine.proxy.minecraft.resources.IdentifierProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.item.ItemStackProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.item.component.CustomDataProxy;
 import net.momirealms.sparrow.nbt.CompoundTag;
@@ -44,12 +47,27 @@ public class ComponentItemFactory1_20_5 extends BukkitItemFactory<ComponentItemW
 
     @Override
     protected void customId(ComponentItemWrapper item, Key id) {
-        FastNMS.INSTANCE.setCustomItemId(item.getLiteralObject(), id.toString());
+        Object nmsStack = item.getLiteralObject();
+        Object customData = ItemStackProxy.INSTANCE.get(nmsStack, DataComponentTypes.CUSTOM_DATA);
+        Object tag;
+        if (customData != null) {
+            tag = CustomDataProxy.INSTANCE.copyTag(customData);
+        } else {
+            tag = CompoundTagProxy.INSTANCE.newInstance();
+        }
+        CompoundTagProxy.INSTANCE.putString(tag, IdProcessor.CRAFT_ENGINE_ID, id.asString());
+        ItemStackProxy.INSTANCE.set(nmsStack, DataComponentTypes.CUSTOM_DATA, CustomDataProxy.INSTANCE.newInstance(tag));
     }
 
     @Override
     protected Optional<Key> customId(ComponentItemWrapper item) {
-        return Optional.ofNullable(FastNMS.INSTANCE.getCustomItemId(item.getLiteralObject())).map(Key::of);
+        Object nmsStack = item.getLiteralObject();
+        Object customData = ItemStackProxy.INSTANCE.get(nmsStack, DataComponentTypes.CUSTOM_DATA);
+        if (customData == null) return Optional.empty();
+        Object tag = CustomDataProxy.INSTANCE.getTag(customData);
+        Object stringTag = CompoundTagProxy.INSTANCE.get(tag, IdProcessor.CRAFT_ENGINE_ID);
+        if (stringTag == null) return Optional.empty();
+        return Optional.of(Key.of(StringTagProxy.INSTANCE.getData(stringTag)));
     }
 
     @Override

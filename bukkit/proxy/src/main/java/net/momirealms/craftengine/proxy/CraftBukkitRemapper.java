@@ -24,10 +24,7 @@ public final class CraftBukkitRemapper implements Remapper {
             CB_PKG_VERSION = "";
             NEED_REMAP = false;
         } else {
-            Class<?> minecraftClass = SparrowClass.find(
-                    "net.minecraft.obfuscate.DontObfuscate",
-                    "net.minecraft.server.Main"
-            );
+            Class<?> minecraftClass = SparrowClass.find("net.minecraft.obfuscate.DontObfuscate", "net.minecraft.server.Main");
             int major;
             int minor;
             try (InputStream inputStream = minecraftClass.getResourceAsStream("/version.json")) {
