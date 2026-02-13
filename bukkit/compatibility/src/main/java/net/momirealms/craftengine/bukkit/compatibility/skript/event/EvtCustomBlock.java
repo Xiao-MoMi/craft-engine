@@ -27,7 +27,7 @@ import java.util.Arrays;
 @Name("On Custom Block Place And Break")
 @Description({"Fires when a Custom block gets place and broken"})
 @Since("1.0")
-public class EvtCustomBlock extends SkriptEvent {
+public final class EvtCustomBlock extends SkriptEvent {
 
     public static void register() {
         Skript.registerEvent("Break Custom Block", EvtCustomBlock.class, CustomBlockBreakEvent.class, "(break[ing]|1¦min(e|ing)) of (custom|ce|craft-engine) block[s] [[of] %-unsafeblockstatematchers%]")

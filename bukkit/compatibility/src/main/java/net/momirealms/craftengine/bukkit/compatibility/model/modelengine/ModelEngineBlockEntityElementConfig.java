@@ -9,7 +9,7 @@ import org.joml.Vector3f;
 
 import java.util.Map;
 
-public class ModelEngineBlockEntityElementConfig implements BlockEntityElementConfig<ModelEngineBlockEntityElement> {
+public final class ModelEngineBlockEntityElementConfig implements BlockEntityElementConfig<ModelEngineBlockEntityElement> {
     private final Vector3f position;
     private final float yaw;
     private final float pitch;

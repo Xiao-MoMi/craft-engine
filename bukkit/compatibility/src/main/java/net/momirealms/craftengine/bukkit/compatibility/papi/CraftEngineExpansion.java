@@ -11,7 +11,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Optional;
 
-public class CraftEngineExpansion extends PlaceholderExpansion {
+public final class CraftEngineExpansion extends PlaceholderExpansion {
     private final CraftEngine plugin;
 
     public CraftEngineExpansion(CraftEngine plugin) {

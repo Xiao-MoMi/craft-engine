@@ -13,7 +13,7 @@ import org.bukkit.inventory.ItemStack;
 import org.bukkit.plugin.Plugin;
 import org.jetbrains.annotations.NotNull;
 
-public class QuickShopItemExpressionHandler implements ItemExpressionHandler, Listener {
+public final class QuickShopItemExpressionHandler implements ItemExpressionHandler, Listener {
     private final BukkitCraftEngine plugin;
 
     public QuickShopItemExpressionHandler(BukkitCraftEngine plugin) {

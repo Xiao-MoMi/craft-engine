@@ -14,7 +14,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Map;
 import java.util.function.Supplier;
 
-public class ItemBridgeSource implements ItemSource<ItemStack> {
+public final class ItemBridgeSource implements ItemSource<ItemStack> {
     private final Provider<ItemStack, Player> provider;
 
     public ItemBridgeSource(Provider<ItemStack, Player> provider) {

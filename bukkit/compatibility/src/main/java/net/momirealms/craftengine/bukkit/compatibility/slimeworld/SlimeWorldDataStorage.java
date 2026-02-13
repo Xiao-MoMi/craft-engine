@@ -11,10 +11,11 @@ import net.momirealms.sparrow.nbt.CompoundTag;
 import net.momirealms.sparrow.nbt.NBT;
 import org.jetbrains.annotations.NotNull;
 
+import java.io.IOException;
 import java.lang.ref.WeakReference;
 import java.util.Map;
 
-public class SlimeWorldDataStorage implements WorldDataStorage {
+public final class SlimeWorldDataStorage implements WorldDataStorage {
     private final WeakReference<SlimeWorld> slimeWorld;
     private final SlimeFormatStorageAdaptor adaptor;
 
@@ -39,11 +40,11 @@ public class SlimeWorldDataStorage implements WorldDataStorage {
         Object tag = slimeChunk.getExtraData().get("craftengine");
         if (tag == null) return new CEChunk(world, pos);
         try {
-            CompoundTag compoundTag = NBT.fromBytes(adaptor.byteArrayTagToBytes(tag));
+            CompoundTag compoundTag = NBT.fromBytes(this.adaptor.byteArrayTagToBytes(tag));
             if (compoundTag == null) return new CEChunk(world, pos);
             return DefaultChunkSerializer.deserialize(world, pos, compoundTag);
-        } catch (Exception e) {
-            throw new RuntimeException("Failed to read chunk tag from slime world. " + pos, e);
+        } catch (IOException e) {
+            throw new RuntimeException("Failed to read chunk tag from slime world " + getWorld().getName() + " " + pos, e);
         }
     }
 
@@ -57,11 +58,11 @@ public class SlimeWorldDataStorage implements WorldDataStorage {
             slimeChunk.getExtraData().remove("craftengine");
         } else {
             try {
-                Object tag = adaptor.bytesToByteArrayTag(NBT.toBytes(nbt));
+                Object tag = this.adaptor.bytesToByteArrayTag(NBT.toBytes(nbt));
                 Map<String, Object> data2 = (Map) slimeChunk.getExtraData();
                 data2.put("craftengine", tag);
-            } catch (Exception e) {
-                throw new RuntimeException("Failed to write chunk tag to slime world. " + pos, e);
+            } catch (IOException e) {
+                throw new RuntimeException("Failed to write chunk tag to slime world " + getWorld().getName() + " "  + pos, e);
             }
         }
     }

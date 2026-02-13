@@ -13,7 +13,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Optional;
 
-public class BubbleTag implements TagResolver {
+public final class BubbleTag implements TagResolver {
     private final net.momirealms.craftengine.core.plugin.context.Context context;
 
     public BubbleTag(net.momirealms.craftengine.core.plugin.context.Context context) {

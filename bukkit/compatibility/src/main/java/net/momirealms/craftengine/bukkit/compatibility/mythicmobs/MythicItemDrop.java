@@ -22,7 +22,7 @@ import org.bukkit.inventory.ItemStack;
 
 import java.lang.reflect.Constructor;
 
-public class MythicItemDrop extends ItemDrop implements IItemDrop {
+public final class MythicItemDrop extends ItemDrop implements IItemDrop {
     private static final Constructor<?> constructor$BukkitItemStack = ReflectionUtils.getConstructor(BukkitItemStack.class, ItemStack.class);
     private static final boolean useReflection = constructor$BukkitItemStack != null;
     private final LazyReference<CustomItem<ItemStack>> customItem;

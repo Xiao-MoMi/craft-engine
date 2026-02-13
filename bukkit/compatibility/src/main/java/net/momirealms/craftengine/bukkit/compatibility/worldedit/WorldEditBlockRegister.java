@@ -23,6 +23,7 @@ import java.util.stream.Stream;
 public final class WorldEditBlockRegister {
     private static final Field field$BlockType$blockMaterial = ReflectionUtils.getDeclaredField(BlockType.class, "blockMaterial");
     private static boolean init = false;
+    private WorldEditBlockRegister() {}
 
     public static void init(boolean isFAWE) {
         if (init) {

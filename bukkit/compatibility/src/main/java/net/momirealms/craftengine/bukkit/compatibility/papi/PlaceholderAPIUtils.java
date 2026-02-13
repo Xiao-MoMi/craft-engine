@@ -5,8 +5,7 @@ import net.momirealms.craftengine.bukkit.plugin.BukkitCraftEngine;
 import org.bukkit.OfflinePlayer;
 import org.bukkit.entity.Player;
 
-public class PlaceholderAPIUtils {
-
+public final class PlaceholderAPIUtils {
     private PlaceholderAPIUtils() {}
 
     public static String parse(OfflinePlayer player, String text) {

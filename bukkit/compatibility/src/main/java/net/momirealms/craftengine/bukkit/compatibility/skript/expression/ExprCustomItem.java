@@ -24,7 +24,7 @@ import java.util.List;
 @Name("CraftEngine Item")
 @Description({"Get CraftEngine items."})
 @Since("1.0")
-public class ExprCustomItem extends SimpleExpression<ItemType> {
+public final class ExprCustomItem extends SimpleExpression<ItemType> {
 
     public static void register() {
         Skript.registerExpression(ExprCustomItem.class, ItemType.class, ExpressionType.SIMPLE, "[(the|a)] (custom|ce|craft-engine) item [with [namespace] id] %strings%");

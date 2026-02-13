@@ -52,7 +52,7 @@ import org.bukkit.plugin.Plugin;
 import java.util.*;
 
 @SuppressWarnings("unused")
-public class BukkitCompatibilityManager implements CompatibilityManager {
+public final class BukkitCompatibilityManager implements CompatibilityManager {
     private final BukkitCraftEngine plugin;
     private final Map<String, ModelProvider> modelProviders;
     private final Map<String, TagResolverProvider> tagResolverProviders;

@@ -12,7 +12,7 @@ import org.bukkit.entity.Entity;
 import org.bukkit.event.Event;
 import org.jetbrains.annotations.Nullable;
 
-public class CondIsFurniture extends Condition {
+public final class CondIsFurniture extends Condition {
 
     public static void register() {
         Skript.registerCondition(CondIsFurniture.class,

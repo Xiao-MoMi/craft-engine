@@ -13,7 +13,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Optional;
 
-public class BackgroundTag implements TagResolver {
+public final class BackgroundTag implements TagResolver {
     private final net.momirealms.craftengine.core.plugin.context.Context context;
 
     public BackgroundTag(net.momirealms.craftengine.core.plugin.context.Context context) {

@@ -11,7 +11,7 @@ import org.bukkit.entity.Player;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class CheckItemExpansion extends PlaceholderExpansion {
+public final class CheckItemExpansion extends PlaceholderExpansion {
     private final CraftEngine plugin;
 
     public CheckItemExpansion(CraftEngine plugin) {

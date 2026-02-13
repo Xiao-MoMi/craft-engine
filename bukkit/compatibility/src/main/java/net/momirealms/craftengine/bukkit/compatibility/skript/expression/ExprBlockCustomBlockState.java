@@ -7,7 +7,7 @@ import org.bukkit.block.Block;
 import org.bukkit.block.data.BlockData;
 import org.jetbrains.annotations.Nullable;
 
-public class ExprBlockCustomBlockState extends SimplePropertyExpression<Object, ImmutableBlockState> {
+public final class ExprBlockCustomBlockState extends SimplePropertyExpression<Object, ImmutableBlockState> {
 
     public static void register() {
         register(ExprBlockCustomBlockState.class, ImmutableBlockState.class, "(custom|ce|craft-engine) block[ ]state", "blocks/blockdata");

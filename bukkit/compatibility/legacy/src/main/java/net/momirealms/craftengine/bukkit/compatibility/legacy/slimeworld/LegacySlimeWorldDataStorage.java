@@ -15,7 +15,7 @@ import org.jetbrains.annotations.NotNull;
 import java.lang.ref.WeakReference;
 import java.util.Optional;
 
-public class LegacySlimeWorldDataStorage implements WorldDataStorage {
+public final class LegacySlimeWorldDataStorage implements WorldDataStorage {
     private final WeakReference<com.infernalsuite.aswm.api.world.SlimeWorld> slimeWorld;
 
     public LegacySlimeWorldDataStorage(SlimeWorld slimeWorld) {

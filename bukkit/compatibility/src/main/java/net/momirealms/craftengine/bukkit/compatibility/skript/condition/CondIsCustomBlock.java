@@ -11,7 +11,7 @@ import org.bukkit.block.Block;
 import org.bukkit.event.Event;
 import org.jetbrains.annotations.Nullable;
 
-public class CondIsCustomBlock extends Condition {
+public final class CondIsCustomBlock extends Condition {
 
     public static void register() {
         Skript.registerCondition(CondIsCustomBlock.class,

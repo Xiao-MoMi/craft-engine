@@ -15,7 +15,7 @@ import org.jetbrains.annotations.Nullable;
 @Name("CraftEngine has been load")
 @Description({"Checks CraftEngine has been load."})
 @Since("1.0")
-public class CondIsCraftEngineHasBeenLoad extends Condition {
+public final class CondIsCraftEngineHasBeenLoad extends Condition {
 
     public static void register() {
         Skript.registerCondition(CondIsCraftEngineHasBeenLoad.class,
@@ -41,6 +41,4 @@ public class CondIsCraftEngineHasBeenLoad extends Condition {
     public String toString(@Nullable Event event, boolean debug) {
         return "craft-engine " + (isNegated() ? "is not" : "is") + " loaded";
     }
-
-
 }

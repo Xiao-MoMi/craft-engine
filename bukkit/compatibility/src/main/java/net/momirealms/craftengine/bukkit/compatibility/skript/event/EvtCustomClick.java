@@ -29,7 +29,7 @@ import java.util.function.Predicate;
 @Name("On Click on Custom Block and Furniture")
 @Description({"Fires when click on custom block and furniture"})
 @Since("1.0")
-public class EvtCustomClick extends SkriptEvent {
+public final class EvtCustomClick extends SkriptEvent {
 
     private final static int RIGHT = 1, LEFT = 2, ANY = RIGHT | LEFT;
     public final static ClickEventTracker interactTracker = new ClickEventTracker(Skript.getInstance());

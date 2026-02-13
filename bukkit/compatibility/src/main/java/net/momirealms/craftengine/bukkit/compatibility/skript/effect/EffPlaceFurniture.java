@@ -12,7 +12,7 @@ import org.bukkit.Location;
 import org.bukkit.event.Event;
 import org.jetbrains.annotations.Nullable;
 
-public class EffPlaceFurniture extends Effect {
+public final class EffPlaceFurniture extends Effect {
 
     public static void register() {
         Skript.registerEffect(EffPlaceFurniture.class, "place [(custom|ce|craft-engine)] furniture[s] %strings% [at] [%directions% %locations%]");

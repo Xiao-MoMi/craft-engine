@@ -23,7 +23,7 @@ import java.util.Optional;
 @Name("CraftEngine Item ID")
 @Description({"Get CraftEngine item id."})
 @Since("1.0")
-public class ExprItemCustomItemID extends SimpleExpression<String> {
+public final class ExprItemCustomItemID extends SimpleExpression<String> {
 
     public static void register() {
         Skript.registerExpression(ExprItemCustomItemID.class, String.class, ExpressionType.PROPERTY,

@@ -11,7 +11,7 @@ import org.bukkit.entity.Entity;
 import org.bukkit.event.Event;
 import org.jetbrains.annotations.Nullable;
 
-public class EffRemoveFurniture extends Effect {
+public final class EffRemoveFurniture extends Effect {
 
     public static void register() {
         Skript.registerEffect(EffRemoveFurniture.class, "remove [(custom|ce|craft-engine)] furniture %entities%");

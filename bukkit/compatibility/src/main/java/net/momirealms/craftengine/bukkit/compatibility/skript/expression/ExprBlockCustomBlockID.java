@@ -10,7 +10,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Optional;
 
-public class ExprBlockCustomBlockID extends SimplePropertyExpression<Object, String> {
+public final class ExprBlockCustomBlockID extends SimplePropertyExpression<Object, String> {
 
     public static void register() {
         register(ExprBlockCustomBlockID.class, String.class, "(custom|ce|craft-engine) block [namespace] id", "blocks/blockdata/customblockstates");

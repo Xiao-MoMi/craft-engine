@@ -14,7 +14,8 @@ import net.momirealms.craftengine.bukkit.compatibility.skript.event.EvtCustomCli
 import net.momirealms.craftengine.bukkit.compatibility.skript.event.EvtCustomFurniture;
 import net.momirealms.craftengine.bukkit.compatibility.skript.expression.*;
 
-public class SkriptHook {
+public final class SkriptHook {
+    private SkriptHook() {}
 
     public static void register() {
         CraftEngineClasses.register();

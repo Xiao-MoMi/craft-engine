@@ -11,7 +11,7 @@ import net.momirealms.craftengine.core.world.World;
 import org.bukkit.Location;
 import org.joml.Vector3f;
 
-public class ModelEngineBlockEntityElement implements BlockEntityElement {
+public final class ModelEngineBlockEntityElement implements BlockEntityElement {
     private Dummy<?> dummy;
     private final Location location;
     private final ModelEngineBlockEntityElementConfig config;

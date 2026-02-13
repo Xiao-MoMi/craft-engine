@@ -1,6 +1,7 @@
 package net.momirealms.craftengine.bukkit.compatibility.model.bettermodel;
 
 import kr.toxicity.model.api.BetterModel;
+import kr.toxicity.model.api.bukkit.platform.BukkitAdapter;
 import kr.toxicity.model.api.data.renderer.ModelRenderer;
 import kr.toxicity.model.api.tracker.DummyTracker;
 import kr.toxicity.model.api.tracker.TrackerModifier;
@@ -11,7 +12,9 @@ import net.momirealms.craftengine.core.world.World;
 import org.bukkit.Location;
 import org.joml.Vector3f;
 
-public class BetterModelBlockEntityElement implements BlockEntityElement {
+import java.util.Optional;
+
+public final class BetterModelBlockEntityElement implements BlockEntityElement {
     private DummyTracker dummyTracker;
     private final Location location;
     private final BetterModelBlockEntityElementConfig config;
@@ -24,27 +27,25 @@ public class BetterModelBlockEntityElement implements BlockEntityElement {
     }
 
     private DummyTracker createDummyTracker() {
-        ModelRenderer modelRenderer = BetterModel.plugin().modelManager().model(this.config.model());
-        if (modelRenderer == null) {
-            return null;
-        } else {
-            return modelRenderer.create(this.location, TrackerModifier.builder()
-                    .sightTrace(this.config.sightTrace())
-                    .build());
-        }
+        Optional<ModelRenderer> modelRenderer = BetterModel.model(this.config.model());
+        return modelRenderer.map(renderer -> renderer.create(BukkitAdapter.adapt(this.location),
+                TrackerModifier.builder()
+                .sightTrace(this.config.sightTrace())
+                .build())
+        ).orElse(null);
     }
 
     @Override
     public void hide(Player player) {
         if (this.dummyTracker != null) {
-            this.dummyTracker.remove((org.bukkit.entity.Player) player.platformPlayer());
+            this.dummyTracker.remove(BukkitAdapter.adapt((org.bukkit.entity.Player) player.platformPlayer()));
         }
     }
 
     @Override
     public void show(Player player) {
         if (this.dummyTracker != null) {
-            this.dummyTracker.spawn((org.bukkit.entity.Player) player.platformPlayer());
+            this.dummyTracker.spawn(BukkitAdapter.adapt((org.bukkit.entity.Player) player.platformPlayer()));
         }
     }
 

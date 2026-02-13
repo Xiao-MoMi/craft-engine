@@ -19,7 +19,7 @@ import org.jetbrains.annotations.Nullable;
 @Name("Is CraftEngine Item")
 @Description({"Checks if the Item is CraftEngine item."})
 @Since("1.0")
-public class CondIsCustomItem extends Condition {
+public final class CondIsCustomItem extends Condition {
 
     public static void register() {
         Skript.registerCondition(CondIsCustomItem.class,
@@ -30,7 +30,6 @@ public class CondIsCustomItem extends Condition {
 
     private Expression<?> item;
 
-    @SuppressWarnings("unchecked")
     @Override
     public boolean init(Expression<?>[] expressions, int matchedPattern, Kleenean isDelayed, SkriptParser.ParseResult parseResult) {
         item = expressions[0];

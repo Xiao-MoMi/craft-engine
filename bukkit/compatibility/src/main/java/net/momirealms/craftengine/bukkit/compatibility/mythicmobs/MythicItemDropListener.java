@@ -11,7 +11,7 @@ import org.bukkit.event.Listener;
 
 import java.util.Locale;
 
-public class MythicItemDropListener implements Listener {
+public final class MythicItemDropListener implements Listener {
     private final BukkitCraftEngine plugin;
 
     public MythicItemDropListener(BukkitCraftEngine plugin) {

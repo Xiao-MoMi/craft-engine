@@ -12,7 +12,7 @@ import org.bukkit.Location;
 import org.bukkit.event.Event;
 import org.jetbrains.annotations.Nullable;
 
-public class EffPlaceCustomBlock extends Effect {
+public final class EffPlaceCustomBlock extends Effect {
 
     public static void register() {
         Skript.registerEffect(EffPlaceCustomBlock.class, "place (custom|ce|craft-engine) block %customblockstates% [at] [%directions% %locations%]");

@@ -4,25 +4,20 @@ import com.infernalsuite.asp.api.AdvancedSlimePaperAPI;
 import com.infernalsuite.asp.api.events.LoadSlimeWorldEvent;
 import com.infernalsuite.asp.api.world.SlimeWorld;
 import net.momirealms.craftengine.core.plugin.config.Config;
-import net.momirealms.craftengine.core.util.ReflectionUtils;
 import net.momirealms.craftengine.core.world.CEWorld;
 import net.momirealms.craftengine.core.world.World;
 import net.momirealms.craftengine.core.world.WorldManager;
 import net.momirealms.craftengine.core.world.chunk.storage.CachedStorage;
 import net.momirealms.craftengine.core.world.chunk.storage.DefaultStorageAdaptor;
 import net.momirealms.craftengine.core.world.chunk.storage.WorldDataStorage;
+import net.momirealms.craftengine.proxy.adventure.nbt.ByteArrayBinaryTagProxy;
 import org.bukkit.Bukkit;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.jetbrains.annotations.NotNull;
 
-import java.lang.reflect.Method;
-
-public class SlimeFormatStorageAdaptor extends DefaultStorageAdaptor implements Listener {
+public final class SlimeFormatStorageAdaptor extends DefaultStorageAdaptor implements Listener {
     private final WorldManager worldManager;
-    private final Class<?> byteArrayTagClass = ReflectionUtils.getClazz("net{}kyori{}adventure{}nbt{}ByteArrayBinaryTag".replace("{}", "."));
-    private final Method method$ByteArrayBinaryTag$byteArrayBinaryTag = ReflectionUtils.getStaticMethod(byteArrayTagClass, byteArrayTagClass, byte.class.arrayType());
-    private final Method method$ByteArrayBinaryTag$value = ReflectionUtils.getMethod(byteArrayTagClass, byte.class.arrayType());
 
     @EventHandler
     public void onWorldLoad(LoadSlimeWorldEvent event) {
@@ -52,18 +47,10 @@ public class SlimeFormatStorageAdaptor extends DefaultStorageAdaptor implements 
     }
 
     public byte[] byteArrayTagToBytes(Object byteArrayTag) {
-        try {
-            return (byte[]) method$ByteArrayBinaryTag$value.invoke(byteArrayTag);
-        } catch (ReflectiveOperationException e) {
-            throw new RuntimeException("Failed to convert byte array tag to byte[]", e);
-        }
+        return ByteArrayBinaryTagProxy.INSTANCE.value(byteArrayTag);
     }
 
     public Object bytesToByteArrayTag(byte[] bytes) {
-        try {
-            return method$ByteArrayBinaryTag$byteArrayBinaryTag.invoke(null, (Object) bytes);
-        } catch (ReflectiveOperationException e) {
-            throw new RuntimeException("Failed to convert byte array tag to byte[]", e);
-        }
+        return ByteArrayBinaryTagProxy.INSTANCE.byteArrayBinaryTag(bytes);
     }
 }

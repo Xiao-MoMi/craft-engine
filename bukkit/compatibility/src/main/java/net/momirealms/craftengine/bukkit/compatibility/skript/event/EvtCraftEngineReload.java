@@ -14,7 +14,7 @@ import org.jetbrains.annotations.Nullable;
 @Name("On CraftEngine Reload")
 @Description({"Fires when CraftEngine reload"})
 @Since("1.0")
-public class EvtCraftEngineReload extends SkriptEvent {
+public final class EvtCraftEngineReload extends SkriptEvent {
 
     public static void register() {
         Skript.registerEvent("CraftEngine Loaded", EvtCraftEngineReload.class, CraftEngineReloadEvent.class, "(ce|craft(engine|-engine)) [first] (load[ed]|reload)")

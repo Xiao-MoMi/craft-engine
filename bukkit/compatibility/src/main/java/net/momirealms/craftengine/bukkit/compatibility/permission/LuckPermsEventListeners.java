@@ -17,7 +17,7 @@ import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 
-public class LuckPermsEventListeners {
+public final class LuckPermsEventListeners {
     private final JavaPlugin plugin;
     private final LuckPerms luckPerms;
     private final Consumer<UUID> playerCallback;
@@ -53,9 +53,7 @@ public class LuckPermsEventListeners {
 //    }
 
     private void onUserPermissionChange(UserDataRecalculateEvent event) {
-        CraftEngine.instance().scheduler().async().execute(() -> {
-            this.playerCallback.accept(event.getUser().getUniqueId());
-        });
+        CraftEngine.instance().scheduler().async().execute(() -> this.playerCallback.accept(event.getUser().getUniqueId()));
     }
 
     private void onGroupPermissionChange(GroupDataRecalculateEvent event) {

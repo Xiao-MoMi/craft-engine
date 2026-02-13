@@ -7,7 +7,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Optional;
 
-public class ExprEntityFurnitureID extends SimplePropertyExpression<Object, String> {
+public final class ExprEntityFurnitureID extends SimplePropertyExpression<Object, String> {
 
     public static void register() {
         register(ExprEntityFurnitureID.class, String.class, "[(custom|ce|craft-engine)] furniture [namespace] id", "entities");

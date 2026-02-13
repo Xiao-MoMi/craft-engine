@@ -18,7 +18,7 @@ import org.jetbrains.annotations.NotNull;
 import java.lang.reflect.Method;
 import java.util.function.Function;
 
-public class LegacySlimeFormatStorageAdaptor extends DefaultStorageAdaptor implements Listener {
+public final class LegacySlimeFormatStorageAdaptor extends DefaultStorageAdaptor implements Listener {
     private final WorldManager worldManager;
     private final Function<String, SlimeWorld> SLIME_WORLD_GETTER;
 

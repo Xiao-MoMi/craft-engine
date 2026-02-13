@@ -13,7 +13,8 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.StreamCorruptedException;
 
-public class CraftEngineClasses {
+public final class CraftEngineClasses {
+    private CraftEngineClasses() {}
 
     public static void register() {
         Classes.registerClass(new ClassInfo<>(ImmutableBlockState.class, "customblockstate")

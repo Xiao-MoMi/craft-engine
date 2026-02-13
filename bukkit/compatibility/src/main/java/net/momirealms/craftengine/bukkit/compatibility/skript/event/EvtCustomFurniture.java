@@ -23,7 +23,7 @@ import java.util.Arrays;
 @Name("On Custom Furniture Place And Break")
 @Description({"Fires when a Custom furniture gets place and broken"})
 @Since("1.0")
-public class EvtCustomFurniture extends SkriptEvent {
+public final class EvtCustomFurniture extends SkriptEvent {
 
     public static void register() {
         Skript.registerEvent("Break Furniture", EvtCustomFurniture.class, FurnitureBreakEvent.class, "(break[ing]) of [(custom|ce|craft-engine)] furniture[s] [[of] %-strings%]")
