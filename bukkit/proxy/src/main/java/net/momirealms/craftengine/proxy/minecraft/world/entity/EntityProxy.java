@@ -126,4 +126,10 @@ public interface EntityProxy {
 
     @MethodInvoker(name = "getBoundingBox")
     Object getBoundingBox(Object target);
+
+    @FieldGetter(name = "level")
+    Object getLevel(Object target);
+
+    @FieldSetter(name = "level")
+    void setLevel(Object target, Object level);
 }

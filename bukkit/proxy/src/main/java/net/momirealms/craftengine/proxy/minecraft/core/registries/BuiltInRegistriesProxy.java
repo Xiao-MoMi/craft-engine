@@ -59,7 +59,7 @@ public interface BuiltInRegistriesProxy {
         return null;
     }
 
-    @FieldGetter(name = "DATA_COMPONENT_PREDICATE_TYPE", isStatic = true, activeIf = "min_version=1.20.5")
+    @FieldGetter(name = "DATA_COMPONENT_PREDICATE_TYPE", isStatic = true, activeIf = "min_version=1.21.5")
     default Object getDataComponentPredicateType() {
         return null;
     }
