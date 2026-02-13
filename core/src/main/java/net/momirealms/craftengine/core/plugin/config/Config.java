@@ -443,7 +443,7 @@ public final class Config {
         chunk_system$cache_system = config.getBoolean("chunk-system.cache-system", true);
 
         if (firstTime) {
-            chunk_system$injection$target = config.getEnum("chunk-system.injection.target", InjectionTarget.class, InjectionTarget.PALETTE) == InjectionTarget.PALETTE;
+            chunk_system$injection$target = config.getString("chunk-system.injection.target", "palette").equalsIgnoreCase("palette");
         }
 
         chunk_system$process_invalid_furniture$enable = config.getBoolean("chunk-system.process-invalid-furniture.enable", false);
