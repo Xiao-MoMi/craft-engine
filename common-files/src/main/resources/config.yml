@@ -299,15 +299,9 @@ block:
   simplify-adventure-break-check: false
   # Similar to the option above, but designed for block placement
   simplify-adventure-place-check: false
-  # Defines the return value of Bukkit Block.getMaterial() for custom blocks
-  # If another plugin causes incompatibility due to its reliance on this method, try changing this option to a different vanilla block.
+  # Inject new enum into Bukkit Material. If encounter issues, disable this option.
   # A restart is required to apply the changes.
-  deceive-bukkit-material:
-    default: bricks
-    # The numbers here represent the internal real IDs of the blocks. You can find them through command /ce debug real-state-usage
-    overrides:
-      0: bricks
-      1~8: bricks
+  inject-bukkit-material: true
 
 furniture:
   # Hide technical entities used for storing furniture metadata.
