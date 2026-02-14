@@ -1,7 +1,6 @@
 package net.momirealms.craftengine.bukkit.block.behavior;
 
 import net.momirealms.craftengine.bukkit.api.BukkitAdaptors;
-import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.MBlocks;
 import net.momirealms.craftengine.bukkit.plugin.user.BukkitServerPlayer;
 import net.momirealms.craftengine.bukkit.util.BlockStateUtils;
 import net.momirealms.craftengine.bukkit.util.LevelUtils;
@@ -26,6 +25,7 @@ import net.momirealms.craftengine.proxy.minecraft.world.level.BlockGetterProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.level.LevelAccessorProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.level.LevelProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.level.LevelWriterProxy;
+import net.momirealms.craftengine.proxy.minecraft.world.level.block.BlocksProxy;
 import org.bukkit.inventory.ItemStack;
 
 import java.util.Map;
@@ -54,20 +54,20 @@ public class DoubleHighBlockBehavior extends AbstractCanSurviveBlockBehavior {
         Object direction = args[updateShape$direction];
         if (DirectionProxy.INSTANCE.getAxis(direction) == AxisProxy.Y && half == DoubleBlockHalf.LOWER == (direction == DirectionProxy.UP)) {
             ImmutableBlockState neighborState = BlockStateUtils.getOptionalCustomBlockState(args[updateShape$neighborState]).orElse(null);
-            if (neighborState == null || neighborState.isEmpty()) return MBlocks.AIR$defaultState;
+            if (neighborState == null || neighborState.isEmpty()) return BlocksProxy.AIR$defaultState;
             DoubleHighBlockBehavior anotherDoorBehavior = neighborState.behavior().getAs(DoubleHighBlockBehavior.class).orElse(null);
-            if (anotherDoorBehavior == null) return MBlocks.AIR$defaultState;
+            if (anotherDoorBehavior == null) return BlocksProxy.AIR$defaultState;
             if (neighborState.get(anotherDoorBehavior.halfProperty) != half) {
                 return neighborState.with(anotherDoorBehavior.halfProperty, half).customBlockState().literalObject();
             }
-            return MBlocks.AIR$defaultState;
+            return BlocksProxy.AIR$defaultState;
         } else if (half == DoubleBlockHalf.LOWER && direction == DirectionProxy.DOWN && !canSurvive(thisBlock, blockState, level, blockPos)) {
             BlockPos pos = LocationUtils.fromBlockPos(blockPos);
             World world = BukkitAdaptors.adapt(LevelProxy.INSTANCE.getWorld(level));
             WorldPosition position = new WorldPosition(world, Vec3d.atCenterOf(pos));
             world.playBlockSound(position, customState.settings().sounds().breakSound());
             LevelAccessorProxy.INSTANCE.levelEvent(level, WorldEvents.BLOCK_BREAK_EFFECT, blockPos, customState.customBlockState().registryId());
-            return MBlocks.AIR$defaultState;
+            return BlocksProxy.AIR$defaultState;
         }
         return blockState;
     }
@@ -101,7 +101,7 @@ public class DoubleHighBlockBehavior extends AbstractCanSurviveBlockBehavior {
         if (belowState == null || belowState.isEmpty()) return;
         Optional<DoubleHighBlockBehavior> belowDoubleHighBlockBehavior = belowState.behavior().getAs(DoubleHighBlockBehavior.class);
         if (belowDoubleHighBlockBehavior.isEmpty() || belowState.get(this.halfProperty) != DoubleBlockHalf.LOWER) return;
-        LevelWriterProxy.INSTANCE.setBlock(level, blockPos, MBlocks.AIR$defaultState, UPDATE_NEIGHBORS | UPDATE_CLIENTS | UPDATE_SUPPRESS_DROPS);
+        LevelWriterProxy.INSTANCE.setBlock(level, blockPos, BlocksProxy.AIR$defaultState, UPDATE_NEIGHBORS | UPDATE_CLIENTS | UPDATE_SUPPRESS_DROPS);
         LevelUtils.levelEvent(level, player, WorldEvents.BLOCK_BREAK_EFFECT, blockPos, belowState.customBlockState().registryId());
     }
 

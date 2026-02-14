@@ -15,7 +15,6 @@ import net.momirealms.craftengine.core.world.World;
 import net.momirealms.craftengine.core.world.WorldAccessor;
 import net.momirealms.craftengine.core.world.context.BlockPlaceContext;
 import net.momirealms.craftengine.core.world.context.UseOnContext;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Optional;
@@ -64,7 +63,8 @@ public abstract class BlockBehavior {
         return args[0];
     }
 
-    // BlockState state, Level level, BlockPos pos, Block neighborBlock, @Nullable Orientation orientation, boolean movedByPiston
+    // 1.20.1-1.21.1 BlockState state, Level level, BlockPos pos, Block neighborBlock, BlockPos neighborPos, boolean movedByPiston
+    // 1.21.2+ BlockState state, Level level, BlockPos pos, Block neighborBlock, @Nullable Orientation orientation, boolean movedByPiston
     public void neighborChanged(Object thisBlock, Object[] args, Callable<Object> superMethod) throws Exception {
         superMethod.call();
     }
@@ -160,13 +160,9 @@ public abstract class BlockBehavior {
     public void entityInside(Object thisBlock, Object[] args, Callable<Object> superMethod) throws Exception {
     }
 
+    // 1.20~1.21.4 BlockState state, Level level, BlockPos pos, BlockState newState, boolean movedByPiston
     // 1.21.5+ BlockState state, ServerLevel level, BlockPos pos, boolean movedByPiston
     public void affectNeighborsAfterRemoval(Object thisBlock, Object[] args, Callable<Object> superMethod) throws Exception {
-    }
-
-    // 1.20~1.21.4 BlockState state, Level level, BlockPos pos, BlockState newState, boolean movedByPiston
-    @ApiStatus.Obsolete
-    public void onRemove(Object thisBlock, Object[] args, Callable<Object> superMethod) throws Exception {
     }
 
     // BlockState blockState, BlockGetter blockAccess, BlockPos pos, Direction side

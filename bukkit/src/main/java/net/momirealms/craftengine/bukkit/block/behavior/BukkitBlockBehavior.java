@@ -1,7 +1,5 @@
 package net.momirealms.craftengine.bukkit.block.behavior;
 
-import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.MFluids;
-import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.MItems;
 import net.momirealms.craftengine.bukkit.util.BlockStateUtils;
 import net.momirealms.craftengine.bukkit.util.LevelUtils;
 import net.momirealms.craftengine.bukkit.util.MirrorUtils;
@@ -13,9 +11,11 @@ import net.momirealms.craftengine.core.block.behavior.BlockBehavior;
 import net.momirealms.craftengine.core.block.properties.Property;
 import net.momirealms.craftengine.core.util.*;
 import net.momirealms.craftengine.proxy.minecraft.world.item.ItemStackProxy;
+import net.momirealms.craftengine.proxy.minecraft.world.item.ItemsProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.level.LevelWriterProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.level.block.state.BlockBehaviourProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.level.material.FluidStateProxy;
+import net.momirealms.craftengine.proxy.minecraft.world.level.material.FluidsProxy;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -144,7 +144,7 @@ public abstract class BukkitBlockBehavior extends BlockBehavior {
         ImmutableBlockState immutableBlockState = optionalCustomState.get();
         if (immutableBlockState.get(this.waterloggedProperty)) {
             LevelWriterProxy.INSTANCE.setBlock(world, pos, immutableBlockState.with(this.waterloggedProperty, false).customBlockState().literalObject(), 3);
-            return ItemStackProxy.INSTANCE.newInstance(MItems.WATER_BUCKET, 1);
+            return ItemStackProxy.INSTANCE.newInstance(ItemsProxy.WATER_BUCKET, 1);
         }
         return ItemStackProxy.EMPTY;
     }
@@ -157,7 +157,7 @@ public abstract class BukkitBlockBehavior extends BlockBehavior {
         if (optionalCustomState.isEmpty()) return false;
         ImmutableBlockState immutableBlockState = optionalCustomState.get();
         Object fluidType = FluidStateProxy.INSTANCE.getType(args[3]);
-        if (!immutableBlockState.get(this.waterloggedProperty) && fluidType == MFluids.WATER) {
+        if (!immutableBlockState.get(this.waterloggedProperty) && fluidType == FluidsProxy.WATER) {
             LevelWriterProxy.INSTANCE.setBlock(args[0], args[1], immutableBlockState.with(this.waterloggedProperty, true).customBlockState().literalObject(), 3);
             LevelUtils.scheduleFluidTick(args[0], args[1], fluidType, 5);
             return true;
@@ -170,7 +170,7 @@ public abstract class BukkitBlockBehavior extends BlockBehavior {
     @Override
     public boolean canPlaceLiquid(Object thisBlock, Object[] args, Callable<Object> superMethod) {
         if (this.waterloggedProperty == null) return false;
-        return args[canPlaceLiquid$liquid] == MFluids.WATER;
+        return args[canPlaceLiquid$liquid] == FluidsProxy.WATER;
     }
 
     protected static final int updateShape$level = VersionHelper.isOrAbove1_21_2() ? 1 : 3;

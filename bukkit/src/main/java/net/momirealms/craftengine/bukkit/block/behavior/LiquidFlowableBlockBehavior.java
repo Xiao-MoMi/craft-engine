@@ -1,6 +1,5 @@
 package net.momirealms.craftengine.bukkit.block.behavior;
 
-import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.MFluids;
 import net.momirealms.craftengine.core.block.CustomBlock;
 import net.momirealms.craftengine.core.block.UpdateFlags;
 import net.momirealms.craftengine.core.block.behavior.BlockBehaviorFactory;
@@ -10,6 +9,7 @@ import net.momirealms.craftengine.proxy.minecraft.world.level.LevelAccessorProxy
 import net.momirealms.craftengine.proxy.minecraft.world.level.LevelWriterProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.level.block.BlockProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.level.material.FluidStateProxy;
+import net.momirealms.craftengine.proxy.minecraft.world.level.material.FluidsProxy;
 
 import java.util.Map;
 import java.util.concurrent.Callable;
@@ -33,7 +33,7 @@ public class LiquidFlowableBlockBehavior extends BukkitBlockBehavior implements 
         Object blockState = args[2];
         Object fluidState = args[3];
         Object fluidType = FluidStateProxy.INSTANCE.getType(fluidState);
-        if (fluidType == MFluids.LAVA || fluidType == MFluids.FLOWING_LAVA) {
+        if (fluidType == FluidsProxy.LAVA || fluidType == FluidsProxy.FLOWING_LAVA) {
             LevelAccessorProxy.INSTANCE.levelEvent(level, WorldEvents.LAVA_CONVERTS_BLOCK, pos, 0);
         } else {
             BlockProxy.INSTANCE.dropResources(blockState, level, pos);

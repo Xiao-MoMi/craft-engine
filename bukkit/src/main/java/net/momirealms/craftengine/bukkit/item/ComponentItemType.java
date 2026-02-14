@@ -4,7 +4,7 @@ import com.google.gson.JsonElement;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.DataResult;
 import com.mojang.serialization.DynamicOps;
-import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.MRegistryOps;
+import net.momirealms.craftengine.bukkit.util.RegistryOps;
 import net.momirealms.craftengine.bukkit.util.KeyUtils;
 import net.momirealms.craftengine.bukkit.util.RegistryUtils;
 import net.momirealms.craftengine.core.item.ItemType;
@@ -40,22 +40,22 @@ public class ComponentItemType implements ItemType {
     @SuppressWarnings("unchecked")
     @Override
     public <T> Optional<T> getJavaComponent(Object type) {
-        return (Optional<T>) getDefaultComponentInternal(type, MRegistryOps.JAVA);
+        return (Optional<T>) getDefaultComponentInternal(type, RegistryOps.JAVA);
     }
 
     @Override
     public Optional<JsonElement> getJsonComponent(Object type) {
-        return getDefaultComponentInternal(type, MRegistryOps.JSON);
+        return getDefaultComponentInternal(type, RegistryOps.JSON);
     }
 
     @Override
     public Optional<Object> getNBTComponent(Object type) {
-        return getDefaultComponentInternal(type, MRegistryOps.NBT);
+        return getDefaultComponentInternal(type, RegistryOps.NBT);
     }
 
     @Override
     public Optional<Tag> getSparrowNBTComponent(Object type) {
-        return getDefaultComponentInternal(type, MRegistryOps.SPARROW_NBT).map(Tag::copy);
+        return getDefaultComponentInternal(type, RegistryOps.SPARROW_NBT).map(Tag::copy);
     }
 
     private <T> T getDefaultComponentInternal(Object type) {

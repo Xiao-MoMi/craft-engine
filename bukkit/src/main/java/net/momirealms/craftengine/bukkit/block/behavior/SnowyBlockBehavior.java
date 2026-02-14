@@ -1,6 +1,5 @@
 package net.momirealms.craftengine.bukkit.block.behavior;
 
-import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.MTagKeys;
 import net.momirealms.craftengine.bukkit.util.BlockStateUtils;
 import net.momirealms.craftengine.bukkit.util.LocationUtils;
 import net.momirealms.craftengine.core.block.CustomBlock;
@@ -10,6 +9,7 @@ import net.momirealms.craftengine.core.block.properties.BooleanProperty;
 import net.momirealms.craftengine.core.util.ResourceConfigUtils;
 import net.momirealms.craftengine.core.world.context.BlockPlaceContext;
 import net.momirealms.craftengine.proxy.minecraft.core.DirectionProxy;
+import net.momirealms.craftengine.proxy.minecraft.tags.BlockTagsProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.level.BlockGetterProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.level.block.state.BlockBehaviourProxy;
 
@@ -41,7 +41,7 @@ public class SnowyBlockBehavior extends BukkitBlockBehavior {
     }
 
     private static boolean isSnowySetting(Object state) {
-        return BlockBehaviourProxy.BlockStateBaseProxy.INSTANCE.is$1(state, MTagKeys.Block$SNOW);
+        return BlockBehaviourProxy.BlockStateBaseProxy.INSTANCE.is$1(state, BlockTagsProxy.SNOW);
     }
 
     private static class Factory implements BlockBehaviorFactory<SnowyBlockBehavior> {

@@ -3,7 +3,6 @@ package net.momirealms.craftengine.bukkit.loot;
 import net.momirealms.craftengine.bukkit.api.BukkitAdaptors;
 import net.momirealms.craftengine.bukkit.entity.BukkitEntity;
 import net.momirealms.craftengine.bukkit.plugin.BukkitCraftEngine;
-import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.MBlocks;
 import net.momirealms.craftengine.bukkit.plugin.user.BukkitServerPlayer;
 import net.momirealms.craftengine.bukkit.util.BlockStateUtils;
 import net.momirealms.craftengine.core.entity.player.InteractionHand;
@@ -23,6 +22,7 @@ import net.momirealms.craftengine.core.plugin.context.parameter.DirectContextPar
 import net.momirealms.craftengine.core.plugin.locale.LocalizedResourceConfigException;
 import net.momirealms.craftengine.core.util.*;
 import net.momirealms.craftengine.core.world.WorldPosition;
+import net.momirealms.craftengine.proxy.minecraft.world.level.block.BlocksProxy;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.entity.Entity;
@@ -168,14 +168,14 @@ public class BukkitLootManager extends AbstractLootManager implements Listener {
                     for (String target : targets) {
                         if (target.endsWith("]") && target.contains("[")) {
                             java.lang.Object blockState = BlockStateUtils.blockDataToBlockState(Bukkit.createBlockData(target));
-                            if (blockState == MBlocks.AIR$defaultState) {
+                            if (blockState == BlocksProxy.AIR$defaultState) {
                                 throw new LocalizedResourceConfigException("warning.config.loot.block.invalid_target", target);
                             }
                             VanillaLoot vanillaLoot = blockLoots.computeIfAbsent(BlockStateUtils.blockStateToId(blockState), k -> new VanillaLoot(VanillaLoot.Type.BLOCK));
                             vanillaLoot.addLootTable(lootTable);
                         } else {
                             for (Object blockState : BlockStateUtils.getPossibleBlockStates(Key.of(target))) {
-                                if (blockState == MBlocks.AIR$defaultState) {
+                                if (blockState == BlocksProxy.AIR$defaultState) {
                                     throw new LocalizedResourceConfigException("warning.config.loot.block.invalid_target", target);
                                 }
                                 VanillaLoot vanillaLoot = blockLoots.computeIfAbsent(BlockStateUtils.blockStateToId(blockState), k -> new VanillaLoot(VanillaLoot.Type.BLOCK));

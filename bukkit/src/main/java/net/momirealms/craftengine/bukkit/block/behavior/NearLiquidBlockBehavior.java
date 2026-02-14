@@ -1,7 +1,5 @@
 package net.momirealms.craftengine.bukkit.block.behavior;
 
-import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.MBlocks;
-import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.MFluids;
 import net.momirealms.craftengine.bukkit.util.BlockStateUtils;
 import net.momirealms.craftengine.bukkit.util.LocationUtils;
 import net.momirealms.craftengine.core.block.CustomBlock;
@@ -13,16 +11,18 @@ import net.momirealms.craftengine.core.world.BlockPos;
 import net.momirealms.craftengine.proxy.minecraft.core.BlockPosProxy;
 import net.momirealms.craftengine.proxy.minecraft.core.Vec3iProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.level.BlockGetterProxy;
+import net.momirealms.craftengine.proxy.minecraft.world.level.block.BlocksProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.level.block.state.BlockBehaviourProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.level.material.FluidStateProxy;
+import net.momirealms.craftengine.proxy.minecraft.world.level.material.FluidsProxy;
 
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
 public class NearLiquidBlockBehavior extends AbstractCanSurviveBlockBehavior {
-    private static final List<Object> WATER = List.of(MFluids.WATER, MFluids.FLOWING_WATER);
-    private static final List<Object> LAVA = List.of(MFluids.LAVA, MFluids.FLOWING_LAVA);
+    private static final List<Object> WATER = List.of(FluidsProxy.WATER, FluidsProxy.FLOWING_WATER);
+    private static final List<Object> LAVA = List.of(FluidsProxy.LAVA, FluidsProxy.FLOWING_LAVA);
     public static final BlockBehaviorFactory<NearLiquidBlockBehavior> FACTORY = new Factory();
     private final boolean onWater;
     private final boolean onLava;
@@ -92,10 +92,10 @@ public class NearLiquidBlockBehavior extends AbstractCanSurviveBlockBehavior {
     protected boolean mayPlaceOn(Object belowState, Object world, Object belowPos) {
         Object fluidState = BlockGetterProxy.INSTANCE.getFluidState(world, belowPos);
         Object fluidStateAbove = BlockGetterProxy.INSTANCE.getFluidState(world, LocationUtils.above(belowPos));
-        if (FluidStateProxy.INSTANCE.getType(fluidStateAbove) != MFluids.EMPTY) {
+        if (FluidStateProxy.INSTANCE.getType(fluidStateAbove) != FluidsProxy.EMPTY) {
             return false;
         }
-        if (this.onWater && (WATER.contains(FluidStateProxy.INSTANCE.getType(fluidState)) || BlockBehaviourProxy.BlockStateBaseProxy.INSTANCE.getBlock(belowState) == MBlocks.ICE)) {
+        if (this.onWater && (WATER.contains(FluidStateProxy.INSTANCE.getType(fluidState)) || BlockBehaviourProxy.BlockStateBaseProxy.INSTANCE.getBlock(belowState) == BlocksProxy.ICE)) {
             return true;
         }
         if (this.onLava && LAVA.contains(FluidStateProxy.INSTANCE.getType(fluidState))) {

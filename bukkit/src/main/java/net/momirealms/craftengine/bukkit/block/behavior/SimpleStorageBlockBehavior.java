@@ -94,7 +94,6 @@ public class SimpleStorageBlockBehavior extends BukkitBlockBehavior implements E
         return InteractionResult.SUCCESS_AND_CANCEL;
     }
 
-    // 1.21.5+
     @Override
     public void affectNeighborsAfterRemoval(Object thisBlock, Object[] args, Callable<Object> superMethod) {
         Object level = args[1];

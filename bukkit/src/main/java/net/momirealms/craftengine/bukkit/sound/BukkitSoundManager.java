@@ -110,7 +110,7 @@ public class BukkitSoundManager extends AbstractSoundManager {
                     Object holder = RegistryProxy.INSTANCE.registerForHolder$1(registry, identifier, soundEvent);
                     HolderProxy.ReferenceProxy.INSTANCE.bindValue(holder, soundEvent);
                     HolderProxy.ReferenceProxy.INSTANCE.setTags(holder, Set.of());
-                    int id = RegistryProxy.INSTANCE.getId$0(registry, soundEvent);
+                    int id = RegistryProxy.INSTANCE.getId(registry, soundEvent);
                     super.customSoundsInRegistry.put(id, soundEventId);
                 }
             }

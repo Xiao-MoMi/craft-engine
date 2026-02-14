@@ -5,7 +5,7 @@ import net.momirealms.craftengine.bukkit.api.BukkitAdaptors;
 import net.momirealms.craftengine.bukkit.nms.FastNMS;
 import net.momirealms.craftengine.bukkit.plugin.BukkitCraftEngine;
 import net.momirealms.craftengine.bukkit.plugin.injector.WorldStorageInjector;
-import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.MRegistryOps;
+import net.momirealms.craftengine.bukkit.util.RegistryOps;
 import net.momirealms.craftengine.bukkit.util.*;
 import net.momirealms.craftengine.bukkit.world.gen.ConditionalFeature;
 import net.momirealms.craftengine.bukkit.world.gen.CraftEngineFeatures;
@@ -637,13 +637,13 @@ public final class BukkitWorldManager implements WorldManager, Listener {
             Map<String, Object> processedSection = processPlacedFeature(section);
             Object feature;
             if (VersionHelper.isOrAbove1_20_5()) {
-                feature = ConfiguredFeatureProxy.CODEC.parse(MRegistryOps.JSON, GsonHelper.get().toJsonTree(processedSection))
+                feature = ConfiguredFeatureProxy.CODEC.parse(RegistryOps.JSON, GsonHelper.get().toJsonTree(processedSection))
                         .resultOrPartial(error -> {
                             throw new LocalizedResourceConfigException("warning.config.configured_feature.invalid_feature", error);
                         })
                         .orElse(null);
             } else {
-                feature = LegacyDFUUtils.parse(ConfiguredFeatureProxy.CODEC, MRegistryOps.JSON, GsonHelper.get().toJsonTree(processedSection), (error) -> {
+                feature = LegacyDFUUtils.parse(ConfiguredFeatureProxy.CODEC, RegistryOps.JSON, GsonHelper.get().toJsonTree(processedSection), (error) -> {
                     throw new LocalizedResourceConfigException("warning.config.configured_feature.invalid_feature", error);
                 });
             }
@@ -715,13 +715,13 @@ public final class BukkitWorldManager implements WorldManager, Listener {
             }
             if (configuredFeature == null) {
                 if (VersionHelper.isOrAbove1_20_5()) {
-                    configuredFeature = ConfiguredFeatureProxy.CODEC.parse(MRegistryOps.JSON, GsonHelper.get().toJsonTree(rawFeature))
+                    configuredFeature = ConfiguredFeatureProxy.CODEC.parse(RegistryOps.JSON, GsonHelper.get().toJsonTree(rawFeature))
                             .resultOrPartial(error -> {
                                 throw new LocalizedResourceConfigException("warning.config.placed_feature.invalid_feature", error);
                             })
                             .orElse(null);
                 } else {
-                    configuredFeature = LegacyDFUUtils.parse(ConfiguredFeatureProxy.CODEC, MRegistryOps.JSON, GsonHelper.get().toJsonTree(rawFeature), (error) -> {
+                    configuredFeature = LegacyDFUUtils.parse(ConfiguredFeatureProxy.CODEC, RegistryOps.JSON, GsonHelper.get().toJsonTree(rawFeature), (error) -> {
                         throw new LocalizedResourceConfigException("warning.config.placed_feature.invalid_feature", error);
                     });
                 }
@@ -738,13 +738,13 @@ public final class BukkitWorldManager implements WorldManager, Listener {
                 }
                 JsonElement json = GsonHelper.get().toJsonTree(map);
                 if (VersionHelper.isOrAbove1_20_5()) {
-                    return PlacementModifierProxy.CODEC.parse(MRegistryOps.JSON, json)
+                    return PlacementModifierProxy.CODEC.parse(RegistryOps.JSON, json)
                             .resultOrPartial(error -> {
                                 throw new LocalizedResourceConfigException("warning.config.placed_feature.invalid_placement", json.toString(), error);
                             })
                             .orElse(null);
                 } else {
-                    return LegacyDFUUtils.parse(PlacementModifierProxy.CODEC, MRegistryOps.JSON, json, (error) -> {
+                    return LegacyDFUUtils.parse(PlacementModifierProxy.CODEC, RegistryOps.JSON, json, (error) -> {
                         throw new LocalizedResourceConfigException("warning.config.placed_feature.invalid_placement", json.toString(), error);
                     });
                 }

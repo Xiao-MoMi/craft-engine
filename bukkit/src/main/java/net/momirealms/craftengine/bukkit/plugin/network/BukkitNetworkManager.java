@@ -53,9 +53,7 @@ import net.momirealms.craftengine.bukkit.plugin.network.payload.DiscardedPayload
 import net.momirealms.craftengine.bukkit.plugin.network.payload.Payload;
 import net.momirealms.craftengine.bukkit.plugin.network.payload.PayloadHelper;
 import net.momirealms.craftengine.bukkit.plugin.network.payload.UnknownPayload;
-import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.MBlocks;
-import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.MEntityTypes;
-import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.MRegistryOps;
+import net.momirealms.craftengine.bukkit.util.RegistryOps;
 import net.momirealms.craftengine.bukkit.plugin.user.BukkitServerPlayer;
 import net.momirealms.craftengine.bukkit.plugin.user.FakeBukkitServerPlayer;
 import net.momirealms.craftengine.bukkit.util.*;
@@ -165,6 +163,7 @@ import net.momirealms.craftengine.proxy.minecraft.sounds.SoundSourceProxy;
 import net.momirealms.craftengine.proxy.minecraft.tags.TagNetworkSerializationProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.InteractionHandProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.entity.EntityProxy;
+import net.momirealms.craftengine.proxy.minecraft.world.entity.EntityTypeProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.entity.EquipmentSlotProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.entity.player.PlayerProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.inventory.AbstractContainerMenuProxy;
@@ -401,7 +400,7 @@ public class BukkitNetworkManager extends AbstractNetworkManager implements List
     }
 
     public void registerBlockStatePacketListeners(int[] blockStateMappings, Predicate<Integer> occlusionPredicate) {
-        int stoneId = BlockStateUtils.blockStateToId(MBlocks.STONE$defaultState);
+        int stoneId = BlockStateUtils.blockStateToId(BlocksProxy.STONE$defaultState);
         int vanillaBlocks = BlockStateUtils.vanillaBlockStateCount();
         int[] newMappings = new int[blockStateMappings.length];
         int[] newMappingsMOD = new int[blockStateMappings.length];
@@ -2652,7 +2651,7 @@ public class BukkitNetworkManager extends AbstractNetworkManager implements List
             event.setChanged(true);
             buf.clear();
             buf.writeVarInt(event.packetID());
-            buf.writeVarInt(RegistryProxy.INSTANCE.getId$0(BuiltInRegistriesProxy.PARTICLE_TYPE, type));
+            buf.writeVarInt(RegistryProxy.INSTANCE.getId(BuiltInRegistriesProxy.PARTICLE_TYPE, type));
             buf.writeBoolean(overrideLimiter);
             buf.writeDouble(x);
             buf.writeDouble(y);
@@ -2789,7 +2788,7 @@ public class BukkitNetworkManager extends AbstractNetworkManager implements List
                 }
                 itemTag.put("components", componentsTag);
             }
-            DataResult<Object> nmsItemStackResult = ItemStackProxy.INSTANCE.getCodec().parse(MRegistryOps.SPARROW_NBT, itemTag);
+            DataResult<Object> nmsItemStackResult = ItemStackProxy.INSTANCE.getCodec().parse(RegistryOps.SPARROW_NBT, itemTag);
             Optional<Object> result = nmsItemStackResult.result();
             if (result.isEmpty()) {
                 return showItem;
@@ -2821,7 +2820,7 @@ public class BukkitNetworkManager extends AbstractNetworkManager implements List
         net.kyori.adventure.key.Key id = KeyUtils.toAdventureKey(clientBoundItem.vanillaId());
         int count = clientBoundItem.count();
         if (VersionHelper.COMPONENT_RELEASE) {
-            DataResult<Tag> tagDataResult = ItemStackProxy.INSTANCE.getCodec().encodeStart(MRegistryOps.SPARROW_NBT, clientBoundItem.getLiteralObject());
+            DataResult<Tag> tagDataResult = ItemStackProxy.INSTANCE.getCodec().encodeStart(RegistryOps.SPARROW_NBT, clientBoundItem.getLiteralObject());
             Optional<Tag> result = tagDataResult.result();
             if (result.isEmpty()) {
                 return showItem;
@@ -2854,7 +2853,7 @@ public class BukkitNetworkManager extends AbstractNetworkManager implements List
             if (!Config.interceptSystemChat() && Config.disableItemOperations()) return;
             FriendlyByteBuf buf = event.getBuffer();
             String jsonOrPlainString = buf.readUtf();
-            Tag tag = MRegistryOps.JSON.convertTo(MRegistryOps.SPARROW_NBT, GsonHelper.get().fromJson(jsonOrPlainString, JsonElement.class));
+            Tag tag = RegistryOps.JSON.convertTo(RegistryOps.SPARROW_NBT, GsonHelper.get().fromJson(jsonOrPlainString, JsonElement.class));
             Component component = AdventureHelper.nbtToComponent(tag);
             boolean overlay = buf.readBoolean();
             event.setChanged(true);
@@ -2869,7 +2868,7 @@ public class BukkitNetworkManager extends AbstractNetworkManager implements List
             if (!Config.disableItemOperations()) {
                 component = AdventureHelper.replaceShowItem(component, s -> replaceShowItem(s, (BukkitServerPlayer) user));
             }
-            buf.writeUtf(MRegistryOps.SPARROW_NBT.convertTo(MRegistryOps.JSON, AdventureHelper.componentToNbt(component)).toString());
+            buf.writeUtf(RegistryOps.SPARROW_NBT.convertTo(RegistryOps.JSON, AdventureHelper.componentToNbt(component)).toString());
             buf.writeBoolean(overlay);
         }
     }
@@ -4221,39 +4220,39 @@ public class BukkitNetworkManager extends AbstractNetworkManager implements List
         public AddEntityListener(int entityTypes) {
             this.handlers = new EntityTypeHandler[entityTypes];
             Arrays.fill(this.handlers, EntityTypeHandler.DoNothing.INSTANCE);
-            this.handlers[MEntityTypes.BLOCK_DISPLAY$registryId] = simpleAddEntityHandler(BlockDisplayPacketHandler.INSTANCE);
-            this.handlers[MEntityTypes.TEXT_DISPLAY$registryId] = simpleAddEntityHandler(TextDisplayPacketHandler.INSTANCE);
-            this.handlers[MEntityTypes.ARMOR_STAND$registryId] = simpleAddEntityHandler(ArmorStandPacketHandler.INSTANCE);
-            this.handlers[MEntityTypes.ITEM$registryId] = simpleAddEntityHandler(ItemPacketHandler.INSTANCE);
-            this.handlers[MEntityTypes.ITEM_FRAME$registryId] = simpleAddEntityHandler(ItemFramePacketHandler.INSTANCE);
-            this.handlers[MEntityTypes.GLOW_ITEM_FRAME$registryId] = simpleAddEntityHandler(ItemFramePacketHandler.INSTANCE);
-            this.handlers[MEntityTypes.ENDERMAN$registryId] = simpleAddEntityHandler(EndermanPacketHandler.INSTANCE);
-            this.handlers[MEntityTypes.CHEST_MINECART$registryId] = simpleAddEntityHandler(MinecartPacketHandler.INSTANCE);
-            this.handlers[MEntityTypes.COMMAND_BLOCK_MINECART$registryId] = simpleAddEntityHandler(MinecartPacketHandler.INSTANCE);
-            this.handlers[MEntityTypes.FURNACE_MINECART$registryId] = simpleAddEntityHandler(MinecartPacketHandler.INSTANCE);
-            this.handlers[MEntityTypes.HOPPER_MINECART$registryId] = simpleAddEntityHandler(MinecartPacketHandler.INSTANCE);
-            this.handlers[MEntityTypes.MINECART$registryId] = simpleAddEntityHandler(MinecartPacketHandler.INSTANCE);
-            this.handlers[MEntityTypes.SPAWNER_MINECART$registryId] = simpleAddEntityHandler(MinecartPacketHandler.INSTANCE);
-            this.handlers[MEntityTypes.TNT_MINECART$registryId] = simpleAddEntityHandler(MinecartPacketHandler.INSTANCE);
-            this.handlers[MEntityTypes.FIREBALL$registryId] = createOptionalCustomProjectileEntityHandler(true);
-            this.handlers[MEntityTypes.EYE_OF_ENDER$registryId] = createOptionalCustomProjectileEntityHandler(true);
-            this.handlers[MEntityTypes.FIREWORK_ROCKET$registryId] = createOptionalCustomProjectileEntityHandler(true);
-            this.handlers[MEntityTypes.SMALL_FIREBALL$registryId] = createOptionalCustomProjectileEntityHandler(true);
-            this.handlers[MEntityTypes.EGG$registryId] = createOptionalCustomProjectileEntityHandler(true);
-            this.handlers[MEntityTypes.ENDER_PEARL$registryId] = createOptionalCustomProjectileEntityHandler(true);
-            this.handlers[MEntityTypes.EXPERIENCE_BOTTLE$registryId] = createOptionalCustomProjectileEntityHandler(true);
-            this.handlers[MEntityTypes.SNOWBALL$registryId] = createOptionalCustomProjectileEntityHandler(true);
-            this.handlers[MEntityTypes.POTION$registryId] = createOptionalCustomProjectileEntityHandler(true);
-            this.handlers[MEntityTypes.TRIDENT$registryId] = createOptionalCustomProjectileEntityHandler(false);
-            this.handlers[MEntityTypes.ARROW$registryId] = createOptionalCustomProjectileEntityHandler(false);
-            this.handlers[MEntityTypes.SPECTRAL_ARROW$registryId] = createOptionalCustomProjectileEntityHandler(false);
+            this.handlers[EntityTypeProxy.BLOCK_DISPLAY$registryId] = simpleAddEntityHandler(BlockDisplayPacketHandler.INSTANCE);
+            this.handlers[EntityTypeProxy.TEXT_DISPLAY$registryId] = simpleAddEntityHandler(TextDisplayPacketHandler.INSTANCE);
+            this.handlers[EntityTypeProxy.ARMOR_STAND$registryId] = simpleAddEntityHandler(ArmorStandPacketHandler.INSTANCE);
+            this.handlers[EntityTypeProxy.ITEM$registryId] = simpleAddEntityHandler(ItemPacketHandler.INSTANCE);
+            this.handlers[EntityTypeProxy.ITEM_FRAME$registryId] = simpleAddEntityHandler(ItemFramePacketHandler.INSTANCE);
+            this.handlers[EntityTypeProxy.GLOW_ITEM_FRAME$registryId] = simpleAddEntityHandler(ItemFramePacketHandler.INSTANCE);
+            this.handlers[EntityTypeProxy.ENDERMAN$registryId] = simpleAddEntityHandler(EndermanPacketHandler.INSTANCE);
+            this.handlers[EntityTypeProxy.CHEST_MINECART$registryId] = simpleAddEntityHandler(MinecartPacketHandler.INSTANCE);
+            this.handlers[EntityTypeProxy.COMMAND_BLOCK_MINECART$registryId] = simpleAddEntityHandler(MinecartPacketHandler.INSTANCE);
+            this.handlers[EntityTypeProxy.FURNACE_MINECART$registryId] = simpleAddEntityHandler(MinecartPacketHandler.INSTANCE);
+            this.handlers[EntityTypeProxy.HOPPER_MINECART$registryId] = simpleAddEntityHandler(MinecartPacketHandler.INSTANCE);
+            this.handlers[EntityTypeProxy.MINECART$registryId] = simpleAddEntityHandler(MinecartPacketHandler.INSTANCE);
+            this.handlers[EntityTypeProxy.SPAWNER_MINECART$registryId] = simpleAddEntityHandler(MinecartPacketHandler.INSTANCE);
+            this.handlers[EntityTypeProxy.TNT_MINECART$registryId] = simpleAddEntityHandler(MinecartPacketHandler.INSTANCE);
+            this.handlers[EntityTypeProxy.FIREBALL$registryId] = createOptionalCustomProjectileEntityHandler(true);
+            this.handlers[EntityTypeProxy.EYE_OF_ENDER$registryId] = createOptionalCustomProjectileEntityHandler(true);
+            this.handlers[EntityTypeProxy.FIREWORK_ROCKET$registryId] = createOptionalCustomProjectileEntityHandler(true);
+            this.handlers[EntityTypeProxy.SMALL_FIREBALL$registryId] = createOptionalCustomProjectileEntityHandler(true);
+            this.handlers[EntityTypeProxy.EGG$registryId] = createOptionalCustomProjectileEntityHandler(true);
+            this.handlers[EntityTypeProxy.ENDER_PEARL$registryId] = createOptionalCustomProjectileEntityHandler(true);
+            this.handlers[EntityTypeProxy.EXPERIENCE_BOTTLE$registryId] = createOptionalCustomProjectileEntityHandler(true);
+            this.handlers[EntityTypeProxy.SNOWBALL$registryId] = createOptionalCustomProjectileEntityHandler(true);
+            this.handlers[EntityTypeProxy.POTION$registryId] = createOptionalCustomProjectileEntityHandler(true);
+            this.handlers[EntityTypeProxy.TRIDENT$registryId] = createOptionalCustomProjectileEntityHandler(false);
+            this.handlers[EntityTypeProxy.ARROW$registryId] = createOptionalCustomProjectileEntityHandler(false);
+            this.handlers[EntityTypeProxy.SPECTRAL_ARROW$registryId] = createOptionalCustomProjectileEntityHandler(false);
             if (VersionHelper.isOrAbove1_20_3()) {
-                this.handlers[MEntityTypes.TNT$registryId] = simpleAddEntityHandler(PrimedTNTPacketHandler.INSTANCE);
+                this.handlers[EntityTypeProxy.TNT$registryId] = simpleAddEntityHandler(PrimedTNTPacketHandler.INSTANCE);
             }
             if (VersionHelper.isOrAbove1_20_5()) {
-                this.handlers[MEntityTypes.OMINOUS_ITEM_SPAWNER$registryId] = simpleAddEntityHandler(ItemPacketHandler.INSTANCE);
+                this.handlers[EntityTypeProxy.OMINOUS_ITEM_SPAWNER$registryId] = simpleAddEntityHandler(ItemPacketHandler.INSTANCE);
             }
-            this.handlers[MEntityTypes.FALLING_BLOCK$registryId] = (user, event) -> {
+            this.handlers[EntityTypeProxy.FALLING_BLOCK$registryId] = (user, event) -> {
                 FriendlyByteBuf buf = event.getBuffer();
                 int id = buf.readVarInt();
                 UUID uuid = buf.readUUID();
@@ -4291,7 +4290,7 @@ public class BukkitNetworkManager extends AbstractNetworkManager implements List
                     if (!VersionHelper.isOrAbove1_21_9()) buf.writeShort(za);
                 }
             };
-            this.handlers[MEntityTypes.ITEM_DISPLAY$registryId] = (user, event) -> {
+            this.handlers[EntityTypeProxy.ITEM_DISPLAY$registryId] = (user, event) -> {
                 FriendlyByteBuf buf = event.getBuffer();
                 int id = buf.readVarInt();
                 BukkitServerPlayer serverPlayer = (BukkitServerPlayer) user;
@@ -4313,8 +4312,8 @@ public class BukkitNetworkManager extends AbstractNetworkManager implements List
                     user.entityPacketHandlers().put(id, ItemDisplayPacketHandler.INSTANCE);
                 }
             };
-            this.handlers[MEntityTypes.INTERACTION$registryId] = (user, event) -> {
-                if (BukkitFurnitureManager.NMS_COLLISION_ENTITY_TYPE != MEntityTypes.INTERACTION) return;
+            this.handlers[EntityTypeProxy.INTERACTION$registryId] = (user, event) -> {
+                if (BukkitFurnitureManager.NMS_COLLISION_ENTITY_TYPE != EntityTypeProxy.INTERACTION) return;
                 FriendlyByteBuf buf = event.getBuffer();
                 int id = buf.readVarInt();
                 // Cancel collider entity packet
@@ -4324,8 +4323,8 @@ public class BukkitNetworkManager extends AbstractNetworkManager implements List
                     user.entityPacketHandlers().put(id, FurnitureCollisionPacketHandler.INSTANCE);
                 }
             };
-            this.handlers[MEntityTypes.OAK_BOAT$registryId] = (user, event) -> {
-                if (BukkitFurnitureManager.NMS_COLLISION_ENTITY_TYPE != MEntityTypes.OAK_BOAT) return;
+            this.handlers[EntityTypeProxy.OAK_BOAT$registryId] = (user, event) -> {
+                if (BukkitFurnitureManager.NMS_COLLISION_ENTITY_TYPE != EntityTypeProxy.OAK_BOAT) return;
                 FriendlyByteBuf buf = event.getBuffer();
                 int id = buf.readVarInt();
                 // Cancel collider entity packet
@@ -4591,10 +4590,10 @@ public class BukkitNetworkManager extends AbstractNetworkManager implements List
                         byte slot = itemCompoundTag.getByte("Slot");
                         Object nmsStack;
                         if (VersionHelper.isOrAbove1_20_5()) {
-                            nmsStack = ItemStackProxy.INSTANCE.getCodec().parse(MRegistryOps.SPARROW_NBT, itemCompoundTag)
+                            nmsStack = ItemStackProxy.INSTANCE.getCodec().parse(RegistryOps.SPARROW_NBT, itemCompoundTag)
                                     .resultOrPartial((error) -> CraftEngine.instance().logger().severe("Tried to parse invalid item: '" + error + "'")).orElse(null);
                         } else {
-                            Object nmsTag = MRegistryOps.SPARROW_NBT.convertTo(MRegistryOps.NBT, itemTag);
+                            Object nmsTag = RegistryOps.SPARROW_NBT.convertTo(RegistryOps.NBT, itemTag);
                             nmsStack = ItemStackProxy.INSTANCE.of(nmsTag);
                         }
                         ItemStack bukkitStack = CraftItemStackProxy.INSTANCE.asCraftMirror(nmsStack);
@@ -4612,11 +4611,11 @@ public class BukkitNetworkManager extends AbstractNetworkManager implements List
                     for (Pair<Byte, ItemStack> pair : items) {
                         CompoundTag newItemCompoundTag;
                         if (VersionHelper.isOrAbove1_20_5()) {
-                            newItemCompoundTag = (CompoundTag) ItemStackProxy.INSTANCE.getCodec().encodeStart(MRegistryOps.SPARROW_NBT, CraftItemStackProxy.INSTANCE.unwrap(pair.right()))
+                            newItemCompoundTag = (CompoundTag) ItemStackProxy.INSTANCE.getCodec().encodeStart(RegistryOps.SPARROW_NBT, CraftItemStackProxy.INSTANCE.unwrap(pair.right()))
                                     .resultOrPartial((error) -> CraftEngine.instance().logger().severe("Tried to encode invalid item: '" + error + "'")).orElse(null);
                         } else {
                             Object nmsTag = ItemStackProxy.INSTANCE.save(CraftItemStackProxy.INSTANCE.unwrap(pair.right()), CompoundTagProxy.INSTANCE.newInstance());
-                            newItemCompoundTag = (CompoundTag) MRegistryOps.NBT.convertTo(MRegistryOps.SPARROW_NBT, nmsTag);
+                            newItemCompoundTag = (CompoundTag) RegistryOps.NBT.convertTo(RegistryOps.SPARROW_NBT, nmsTag);
                         }
                         if (newItemCompoundTag != null) {
                             newItemCompoundTag.putByte("Slot", pair.left());
@@ -4671,10 +4670,10 @@ public class BukkitNetworkManager extends AbstractNetworkManager implements List
             if (unsignedContent != null) {
                 Map<String, ComponentProvider> unsignedContentTokens = matchNetworkTags(unsignedContent);
                 if (!unsignedContentTokens.isEmpty()) {
-                    Tag tag = MRegistryOps.JSON.convertTo(MRegistryOps.SPARROW_NBT, GsonHelper.get().fromJson(unsignedContent, JsonElement.class));
+                    Tag tag = RegistryOps.JSON.convertTo(RegistryOps.SPARROW_NBT, GsonHelper.get().fromJson(unsignedContent, JsonElement.class));
                     Component component = AdventureHelper.nbtToComponent(tag);
                     component = AdventureHelper.replaceText(component, unsignedContentTokens, NetworkTextReplaceContext.of((BukkitServerPlayer) user));
-                    unsignedContent = MRegistryOps.SPARROW_NBT.convertTo(MRegistryOps.JSON, AdventureHelper.componentToNbt(component)).toString();
+                    unsignedContent = RegistryOps.SPARROW_NBT.convertTo(RegistryOps.JSON, AdventureHelper.componentToNbt(component)).toString();
                     changed = true;
                 }
             }
@@ -4687,20 +4686,20 @@ public class BukkitNetworkManager extends AbstractNetworkManager implements List
             String name = buf.readUtf();
             Map<String, ComponentProvider> nameTokens = matchNetworkTags(name);
             if (!nameTokens.isEmpty()) {
-                Tag tag = MRegistryOps.JSON.convertTo(MRegistryOps.SPARROW_NBT, GsonHelper.get().fromJson(name, JsonElement.class));
+                Tag tag = RegistryOps.JSON.convertTo(RegistryOps.SPARROW_NBT, GsonHelper.get().fromJson(name, JsonElement.class));
                 Component component = AdventureHelper.nbtToComponent(tag);
                 component = AdventureHelper.replaceText(component, nameTokens, NetworkTextReplaceContext.of((BukkitServerPlayer) user));
-                name = MRegistryOps.SPARROW_NBT.convertTo(MRegistryOps.JSON, AdventureHelper.componentToNbt(component)).toString();
+                name = RegistryOps.SPARROW_NBT.convertTo(RegistryOps.JSON, AdventureHelper.componentToNbt(component)).toString();
                 changed = true;
             }
             @Nullable String targetName = buf.readNullable(FriendlyByteBuf::readUtf);
             if (targetName != null) {
                 Map<String, ComponentProvider> targetNameTokens = matchNetworkTags(targetName);
                 if (!targetNameTokens.isEmpty()) {
-                    Tag tag = MRegistryOps.JSON.convertTo(MRegistryOps.SPARROW_NBT, GsonHelper.get().fromJson(targetName, JsonElement.class));
+                    Tag tag = RegistryOps.JSON.convertTo(RegistryOps.SPARROW_NBT, GsonHelper.get().fromJson(targetName, JsonElement.class));
                     Component component = AdventureHelper.nbtToComponent(tag);
                     component = AdventureHelper.replaceText(component, targetNameTokens, NetworkTextReplaceContext.of((BukkitServerPlayer) user));
-                    targetName = MRegistryOps.SPARROW_NBT.convertTo(MRegistryOps.JSON, AdventureHelper.componentToNbt(component)).toString();
+                    targetName = RegistryOps.SPARROW_NBT.convertTo(RegistryOps.JSON, AdventureHelper.componentToNbt(component)).toString();
                     changed = true;
                 }
             }

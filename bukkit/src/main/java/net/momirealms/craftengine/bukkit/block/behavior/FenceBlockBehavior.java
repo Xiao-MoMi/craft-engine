@@ -2,9 +2,6 @@ package net.momirealms.craftengine.bukkit.block.behavior;
 
 import net.momirealms.antigrieflib.Flag;
 import net.momirealms.craftengine.bukkit.plugin.BukkitCraftEngine;
-import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.MBlocks;
-import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.MFluids;
-import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.MTagKeys;
 import net.momirealms.craftengine.bukkit.util.*;
 import net.momirealms.craftengine.core.block.BlockStateWrapper;
 import net.momirealms.craftengine.core.block.CustomBlock;
@@ -23,15 +20,18 @@ import net.momirealms.craftengine.core.world.context.BlockPlaceContext;
 import net.momirealms.craftengine.core.world.context.UseOnContext;
 import net.momirealms.craftengine.proxy.minecraft.core.DirectionProxy;
 import net.momirealms.craftengine.proxy.minecraft.core.registries.RegistriesProxy;
+import net.momirealms.craftengine.proxy.minecraft.tags.BlockTagsProxy;
 import net.momirealms.craftengine.proxy.minecraft.tags.TagKeyProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.InteractionResultProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.item.LeadItemProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.level.BlockGetterProxy;
+import net.momirealms.craftengine.proxy.minecraft.world.level.block.BlocksProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.level.block.FenceGateBlockProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.level.block.LeavesBlockProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.level.block.SupportTypeProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.level.block.state.BlockBehaviourProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.level.material.FluidStateProxy;
+import net.momirealms.craftengine.proxy.minecraft.world.level.material.FluidsProxy;
 import org.bukkit.Location;
 
 import java.util.Locale;
@@ -81,17 +81,17 @@ public class FenceBlockBehavior extends BukkitBlockBehavior implements IsPathFin
     public static boolean isExceptionForConnection(BlockStateWrapper state) {
         Object blockState = state.literalObject();
         return LeavesBlockProxy.CLASS.isInstance(BlockStateUtils.getBlockOwner(blockState))
-                || BlockBehaviourProxy.BlockStateBaseProxy.INSTANCE.is$0(blockState, MBlocks.BARRIER)
-                || BlockBehaviourProxy.BlockStateBaseProxy.INSTANCE.is$0(blockState, MBlocks.CARVED_PUMPKIN)
-                || BlockBehaviourProxy.BlockStateBaseProxy.INSTANCE.is$0(blockState, MBlocks.JACK_O_LANTERN)
-                || BlockBehaviourProxy.BlockStateBaseProxy.INSTANCE.is$0(blockState, MBlocks.MELON)
-                || BlockBehaviourProxy.BlockStateBaseProxy.INSTANCE.is$0(blockState, MBlocks.PUMPKIN)
-                || BlockBehaviourProxy.BlockStateBaseProxy.INSTANCE.is$1(blockState, MTagKeys.Block$SHULKER_BOXES);
+                || BlockBehaviourProxy.BlockStateBaseProxy.INSTANCE.is$0(blockState, BlocksProxy.BARRIER)
+                || BlockBehaviourProxy.BlockStateBaseProxy.INSTANCE.is$0(blockState, BlocksProxy.CARVED_PUMPKIN)
+                || BlockBehaviourProxy.BlockStateBaseProxy.INSTANCE.is$0(blockState, BlocksProxy.JACK_O_LANTERN)
+                || BlockBehaviourProxy.BlockStateBaseProxy.INSTANCE.is$0(blockState, BlocksProxy.MELON)
+                || BlockBehaviourProxy.BlockStateBaseProxy.INSTANCE.is$0(blockState, BlocksProxy.PUMPKIN)
+                || BlockBehaviourProxy.BlockStateBaseProxy.INSTANCE.is$1(blockState, BlockTagsProxy.SHULKER_BOXES);
     }
 
     private boolean isSameFence(BlockStateWrapper state) {
         Object blockState = state.literalObject();
-        return BlockBehaviourProxy.BlockStateBaseProxy.INSTANCE.is$1(blockState, MTagKeys.Block$FENCES)
+        return BlockBehaviourProxy.BlockStateBaseProxy.INSTANCE.is$1(blockState, BlockTagsProxy.FENCES)
                 && BlockBehaviourProxy.BlockStateBaseProxy.INSTANCE.is$1(blockState, this.connectableBlockTag)
                 == BlockBehaviourProxy.BlockStateBaseProxy.INSTANCE.is$1(this.customBlock.defaultState().customBlockState().literalObject(), this.connectableBlockTag);
     }
@@ -130,7 +130,7 @@ public class FenceBlockBehavior extends BukkitBlockBehavior implements IsPathFin
         BlockStateWrapper blockState3 = level.getBlock(blockPos3).blockState();
         BooleanProperty waterlogged = (BooleanProperty) state.owner().value().getProperty("waterlogged");
         if (waterlogged != null) {
-            state = state.with(waterlogged, FluidStateProxy.INSTANCE.getType(fluidState) == MFluids.WATER);
+            state = state.with(waterlogged, FluidStateProxy.INSTANCE.getType(fluidState) == FluidsProxy.WATER);
         }
         return state
                 .with(this.northProperty, this.connectsTo(blockState, BlockBehaviourProxy.BlockStateBaseProxy.INSTANCE.isFaceSturdy(blockState.literalObject(), level.serverWorld(), LocationUtils.toBlockPos(blockPos), DirectionProxy.SOUTH, SupportTypeProxy.FULL), HorizontalDirection.SOUTH))
@@ -148,7 +148,7 @@ public class FenceBlockBehavior extends BukkitBlockBehavior implements IsPathFin
                 .map(block -> block.getProperty("waterlogged"))
                 .orElse(null);
         if (waterlogged != null) {
-            LevelUtils.scheduleFluidTick(args[updateShape$level], args[updateShape$blockPos], MFluids.WATER, 5);
+            LevelUtils.scheduleFluidTick(args[updateShape$level], args[updateShape$blockPos], FluidsProxy.WATER, 5);
         }
         if (DirectionUtils.fromNMSDirection(args[updateShape$direction]).axis().isHorizontal() && optionalState.isPresent()) {
             Direction direction = DirectionUtils.fromNMSDirection(args[updateShape$direction]);
@@ -173,7 +173,7 @@ public class FenceBlockBehavior extends BukkitBlockBehavior implements IsPathFin
             BooleanProperty south = (BooleanProperty) ResourceConfigUtils.requireNonNullOrThrow(block.getProperty("south"), "warning.config.block.behavior.fence.missing_south");
             BooleanProperty west = (BooleanProperty) ResourceConfigUtils.requireNonNullOrThrow(block.getProperty("west"), "warning.config.block.behavior.fence.missing_west");
             Object connectableBlockTag = TagKeyProxy.INSTANCE.create(RegistriesProxy.BLOCK, KeyUtils.toIdentifier(Key.of(arguments.getOrDefault("connectable-block-tag", "minecraft:wooden_fences").toString())));
-            connectableBlockTag = connectableBlockTag != null ? connectableBlockTag : MTagKeys.Block$WOODEN_FENCES;
+            connectableBlockTag = connectableBlockTag != null ? connectableBlockTag : BlockTagsProxy.WOODEN_FENCES;
             boolean canLeash = ResourceConfigUtils.getAsBoolean(arguments.getOrDefault("can-leash", false), "can-leash");
             return new FenceBlockBehavior(block, north, east, south, west, connectableBlockTag, canLeash);
         }

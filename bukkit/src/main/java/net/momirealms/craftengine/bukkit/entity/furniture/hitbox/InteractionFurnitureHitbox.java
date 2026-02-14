@@ -1,7 +1,6 @@
 package net.momirealms.craftengine.bukkit.entity.furniture.hitbox;
 
 import it.unimi.dsi.fastutil.ints.IntArrayList;
-import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.MEntityTypes;
 import net.momirealms.craftengine.core.entity.furniture.Collider;
 import net.momirealms.craftengine.core.entity.furniture.Furniture;
 import net.momirealms.craftengine.core.entity.furniture.hitbox.FurnitureHitboxPart;
@@ -15,6 +14,7 @@ import net.momirealms.craftengine.proxy.minecraft.network.protocol.game.Clientbo
 import net.momirealms.craftengine.proxy.minecraft.network.protocol.game.ClientboundRemoveEntitiesPacketProxy;
 import net.momirealms.craftengine.proxy.minecraft.network.protocol.game.ClientboundSetEntityDataPacketProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.entity.EntityProxy;
+import net.momirealms.craftengine.proxy.minecraft.world.entity.EntityTypeProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.phys.Vec3Proxy;
 
 import java.util.List;
@@ -40,7 +40,7 @@ public final class InteractionFurnitureHitbox extends AbstractFurnitureHitBox {
         this.spawnPacket = ClientboundBundlePacketProxy.INSTANCE.newInstance(List.of(
                 ClientboundAddEntityPacketProxy.INSTANCE.newInstance(
                         interactionId, UUID.randomUUID(), pos.x, pos.y, pos.z, 0, position.yRot,
-                        MEntityTypes.INTERACTION, 0, Vec3Proxy.ZERO, 0
+                        EntityTypeProxy.INTERACTION, 0, Vec3Proxy.ZERO, 0
                 ),
                 ClientboundSetEntityDataPacketProxy.INSTANCE.newInstance(interactionId, config.cachedValues())
         ));

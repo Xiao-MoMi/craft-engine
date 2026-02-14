@@ -33,7 +33,7 @@ public interface RegistryProxy extends IdMapProxy, HolderLookupProxy {
     Optional<Object> getHolder$0(Object target, @Type(clazz = IdentifierProxy.class) Object id);
 
     @MethodInvoker(name = "getId")
-    int getId$0(Object target, Object value);
+    int getId(Object target, Object value);
 
     @MethodInvoker(name = "getKey")
     Object getKey(Object target, Object value);

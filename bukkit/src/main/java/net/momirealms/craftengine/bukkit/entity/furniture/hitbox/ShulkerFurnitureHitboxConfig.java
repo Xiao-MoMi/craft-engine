@@ -3,7 +3,6 @@ package net.momirealms.craftengine.bukkit.entity.furniture.hitbox;
 import net.momirealms.craftengine.bukkit.entity.data.InteractionEntityData;
 import net.momirealms.craftengine.bukkit.entity.data.ShulkerData;
 import net.momirealms.craftengine.bukkit.entity.furniture.BukkitCollider;
-import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.MEntityTypes;
 import net.momirealms.craftengine.bukkit.util.DirectionUtils;
 import net.momirealms.craftengine.core.entity.furniture.Collider;
 import net.momirealms.craftengine.core.entity.furniture.Furniture;
@@ -22,6 +21,7 @@ import net.momirealms.craftengine.core.world.collision.AABB;
 import net.momirealms.craftengine.proxy.minecraft.core.DirectionProxy;
 import net.momirealms.craftengine.proxy.minecraft.network.protocol.game.ClientboundAddEntityPacketProxy;
 import net.momirealms.craftengine.proxy.minecraft.network.protocol.game.ClientboundSetEntityDataPacketProxy;
+import net.momirealms.craftengine.proxy.minecraft.world.entity.EntityTypeProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.phys.AABBProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.phys.Vec3Proxy;
 import org.joml.Quaternionf;
@@ -83,7 +83,7 @@ public final class ShulkerFurnitureHitboxConfig extends AbstractFurnitureHitBoxC
                 if (interactionEntity) {
                     packets.accept(ClientboundAddEntityPacketProxy.INSTANCE.newInstance(
                             entityIds[2], UUID.randomUUID(), x + offset.x, y + offset.y - 0.005f, z - offset.z, 0, yaw,
-                            MEntityTypes.INTERACTION, 0, Vec3Proxy.ZERO, 0
+                            EntityTypeProxy.INTERACTION, 0, Vec3Proxy.ZERO, 0
                     ));
                     packets.accept(ClientboundSetEntityDataPacketProxy.INSTANCE.newInstance(entityIds[2], List.copyOf(cachedInteractionValues)));
                     Vec3d vec3d = new Vec3d(x + offset.x, y + offset.y, z - offset.z);
@@ -101,7 +101,7 @@ public final class ShulkerFurnitureHitboxConfig extends AbstractFurnitureHitBoxC
                 if (interactionEntity) {
                     packets.accept(ClientboundAddEntityPacketProxy.INSTANCE.newInstance(
                             entityIds[2], UUID.randomUUID(), x + offset.x, y + offset.y - 0.005f - shulkerHeight + scale, z - offset.z, 0, yaw,
-                            MEntityTypes.INTERACTION, 0, Vec3Proxy.ZERO, 0
+                            EntityTypeProxy.INTERACTION, 0, Vec3Proxy.ZERO, 0
                     ));
                     packets.accept(ClientboundSetEntityDataPacketProxy.INSTANCE.newInstance(entityIds[2], List.copyOf(cachedInteractionValues)));
                     Vec3d vec3d = new Vec3d(x + offset.x, y + offset.y - shulkerHeight + scale, z - offset.z);
@@ -122,14 +122,14 @@ public final class ShulkerFurnitureHitboxConfig extends AbstractFurnitureHitBoxC
                     // first interaction
                     packets.accept(ClientboundAddEntityPacketProxy.INSTANCE.newInstance(
                             entityIds[2], UUID.randomUUID(), x + offset.x, y + offset.y - 0.005f, z - offset.z, 0, yaw,
-                            MEntityTypes.INTERACTION, 0, Vec3Proxy.ZERO, 0
+                            EntityTypeProxy.INTERACTION, 0, Vec3Proxy.ZERO, 0
                     ));
                     packets.accept(ClientboundSetEntityDataPacketProxy.INSTANCE.newInstance(entityIds[2], List.copyOf(cachedInteractionValues)));
                     // second interaction
                     double distance = shulkerHeight - scale;
                     packets.accept(ClientboundAddEntityPacketProxy.INSTANCE.newInstance(
                             entityIds[3], UUID.randomUUID(), x + offset.x + shulkerDirection.stepX() * distance, y + offset.y - 0.005f, z - offset.z + shulkerDirection.stepZ() * distance, 0, yaw,
-                            MEntityTypes.INTERACTION, 0, Vec3Proxy.ZERO, 0
+                            EntityTypeProxy.INTERACTION, 0, Vec3Proxy.ZERO, 0
                     ));
                     packets.accept(ClientboundSetEntityDataPacketProxy.INSTANCE.newInstance(entityIds[3], List.copyOf(cachedInteractionValues)));
                     Vec3d vec3d1 = new Vec3d(x + offset.x, y + offset.y, z - offset.z);

@@ -4,7 +4,7 @@ import com.google.gson.JsonElement;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
 import net.momirealms.craftengine.bukkit.item.ComponentItemWrapper;
 import net.momirealms.craftengine.bukkit.item.DataComponentTypes;
-import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.MRegistryOps;
+import net.momirealms.craftengine.bukkit.util.RegistryOps;
 import net.momirealms.craftengine.bukkit.util.EnchantmentUtils;
 import net.momirealms.craftengine.bukkit.util.KeyUtils;
 import net.momirealms.craftengine.bukkit.util.RegistryUtils;
@@ -142,12 +142,12 @@ public class ComponentItemFactory1_20_5 extends BukkitItemFactory<ComponentItemW
         if (value instanceof Tag tag) {
             valueTag = tag;
         } else if (value instanceof JsonElement je) {
-            valueTag = MRegistryOps.JSON.convertTo(MRegistryOps.SPARROW_NBT, je);
+            valueTag = RegistryOps.JSON.convertTo(RegistryOps.SPARROW_NBT, je);
         } else if (TagProxy.CLASS.isInstance(value)) {
-            valueTag = MRegistryOps.NBT.convertTo(MRegistryOps.SPARROW_NBT, value);
+            valueTag = RegistryOps.NBT.convertTo(RegistryOps.SPARROW_NBT, value);
         } else {
-            assert MRegistryOps.JAVA != null;
-            valueTag = MRegistryOps.JAVA.convertTo(MRegistryOps.SPARROW_NBT, value);
+            assert RegistryOps.JAVA != null;
+            valueTag = RegistryOps.JAVA.convertTo(RegistryOps.SPARROW_NBT, value);
         }
 
         CompoundTag rootTag = (CompoundTag) item.getSparrowNBTComponent(DataComponentTypes.CUSTOM_DATA).orElseGet(CompoundTag::new);

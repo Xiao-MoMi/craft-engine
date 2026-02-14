@@ -1,6 +1,5 @@
 package net.momirealms.craftengine.bukkit.item.behavior;
 
-import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.MBlocks;
 import net.momirealms.craftengine.bukkit.util.BlockStateUtils;
 import net.momirealms.craftengine.bukkit.util.EventUtils;
 import net.momirealms.craftengine.bukkit.util.LevelUtils;
@@ -16,6 +15,7 @@ import net.momirealms.craftengine.core.util.ResourceConfigUtils;
 import net.momirealms.craftengine.core.util.random.RandomUtils;
 import net.momirealms.craftengine.core.world.WorldEvents;
 import net.momirealms.craftengine.core.world.context.UseOnContext;
+import net.momirealms.craftengine.proxy.minecraft.world.level.block.BlocksProxy;
 import org.bukkit.GameEvent;
 import org.bukkit.World;
 import org.bukkit.block.data.BlockData;
@@ -41,7 +41,7 @@ public final class CompostableItemBehavior extends ItemBehavior {
         BukkitExistingBlock block = (BukkitExistingBlock) context.getLevel().getBlock(context.getClickedPos());
         BlockData blockData = block.block().getBlockData();
         Object blockOwner = BlockStateUtils.getBlockOwner(BlockStateUtils.blockDataToBlockState(blockData));
-        if (blockOwner != MBlocks.COMPOSTER) return InteractionResult.PASS;
+        if (blockOwner != BlocksProxy.COMPOSTER) return InteractionResult.PASS;
         if (!(blockData instanceof Levelled levelled)) {
             return InteractionResult.PASS;
         }

@@ -3,9 +3,6 @@ package net.momirealms.craftengine.bukkit.block.behavior;
 import io.papermc.paper.event.entity.EntityInsideBlockEvent;
 import net.momirealms.antigrieflib.Flag;
 import net.momirealms.craftengine.bukkit.plugin.BukkitCraftEngine;
-import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.CoreReflections;
-import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.MBlocks;
-import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.MEntitySelectors;
 import net.momirealms.craftengine.bukkit.util.*;
 import net.momirealms.craftengine.bukkit.world.BukkitWorldManager;
 import net.momirealms.craftengine.core.block.CustomBlock;
@@ -20,6 +17,7 @@ import net.momirealms.craftengine.proxy.bukkit.craftbukkit.block.CraftBlockProxy
 import net.momirealms.craftengine.proxy.minecraft.core.DirectionProxy;
 import net.momirealms.craftengine.proxy.minecraft.core.Vec3iProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.entity.EntityProxy;
+import net.momirealms.craftengine.proxy.minecraft.world.entity.EntitySelectorProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.entity.LivingEntityProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.level.EntityGetterProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.level.LevelAccessorProxy;
@@ -27,6 +25,7 @@ import net.momirealms.craftengine.proxy.minecraft.world.level.LevelProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.level.LevelWriterProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.level.block.BasePressurePlateBlockProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.level.block.BlockProxy;
+import net.momirealms.craftengine.proxy.minecraft.world.level.block.BlocksProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.level.block.state.BlockBehaviourProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.phys.AABBProxy;
 import org.bukkit.GameEvent;
@@ -74,11 +73,11 @@ public class PressurePlateBlockBehavior extends BukkitBlockBehavior {
         if (direction == Direction.DOWN && !BlockBehaviourProxy.BlockStateBaseProxy.INSTANCE.canSurvive(state, level, blockPos)) {
             Optional<ImmutableBlockState> optionalCustomState = BlockStateUtils.getOptionalCustomBlockState(state);
             if (optionalCustomState.isEmpty()) {
-                return MBlocks.AIR$defaultState;
+                return BlocksProxy.AIR$defaultState;
             }
             ImmutableBlockState customState = optionalCustomState.get();
             LevelAccessorProxy.INSTANCE.levelEvent(level, WorldEvents.BLOCK_BREAK_EFFECT, blockPos, customState.customBlockState().registryId());
-            return MBlocks.AIR$defaultState;
+            return BlocksProxy.AIR$defaultState;
         }
         return state;
     }
@@ -122,13 +121,13 @@ public class PressurePlateBlockBehavior extends BukkitBlockBehavior {
 
     protected int getSignalStrength(Object level, Object pos) {
         Class<?> clazz = switch (this.pressurePlateSensitivity) {
-            case EVERYTHING -> CoreReflections.clazz$Entity;
+            case EVERYTHING -> EntityProxy.CLASS;
             case MOBS -> LivingEntityProxy.CLASS;
         };
         Object box = AABBProxy.INSTANCE.move$1(BasePressurePlateBlockProxy.INSTANCE.getTouchAABB(), pos);
         return !EntityGetterProxy.INSTANCE.getEntitiesOfClass(
                 level, clazz, box,
-                MEntitySelectors.NO_SPECTATORS.and(entity -> !EntityProxy.INSTANCE.isIgnoringBlockTriggers(entity))
+                EntitySelectorProxy.NO_SPECTATORS.and(entity -> !EntityProxy.INSTANCE.isIgnoringBlockTriggers(entity))
         ).isEmpty() ? 15 : 0;
     }
 
@@ -188,25 +187,20 @@ public class PressurePlateBlockBehavior extends BukkitBlockBehavior {
     }
 
     @Override
-    public void affectNeighborsAfterRemoval(Object thisBlock, Object[] args, Callable<Object> superMethod) {
-        boolean movedByPiston = (boolean) args[3];
-        if (!movedByPiston && this.getSignalForState(args[0]) > 0) {
-            this.updateNeighbours(args[1], args[2], thisBlock);
+    public void affectNeighborsAfterRemoval(Object thisBlock, Object[] args, Callable<Object> superMethod) throws Exception {
+        boolean flag;
+        if (VersionHelper.isOrAbove1_21_5()) {
+            flag = !(boolean) args[3];
+        } else {
+            flag = !(boolean) args[4] && !BlockBehaviourProxy.BlockStateBaseProxy.INSTANCE.is$0(args[0], BlockBehaviourProxy.BlockStateBaseProxy.INSTANCE.getBlock(args[3]));
         }
-    }
-
-    @Override
-    public void onRemove(Object thisBlock, Object[] args, Callable<Object> superMethod) throws Exception {
-        Object state = args[0];
-        Object level = args[1];
-        Object pos = args[2];
-        Object newState = args[3];
-        boolean movedByPiston = (boolean) args[4];
-        if (!movedByPiston && !BlockBehaviourProxy.BlockStateBaseProxy.INSTANCE.is$0(state, BlockBehaviourProxy.BlockStateBaseProxy.INSTANCE.getBlock(newState))) {
-            if (this.getSignalForState(state) > 0) {
-                this.updateNeighbours(level, pos, thisBlock);
+        if (flag) {
+            if (this.getSignalForState(args[0]) > 0) {
+                this.updateNeighbours(args[1], args[2], thisBlock);
             }
-            superMethod.call();
+            if (!VersionHelper.isOrAbove1_21_5()) {
+                superMethod.call();
+            }
         }
     }
 

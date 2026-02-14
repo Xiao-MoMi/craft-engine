@@ -32,7 +32,8 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 
-import static net.momirealms.craftengine.core.block.UpdateFlags.*;
+import static net.momirealms.craftengine.core.block.UpdateFlags.UPDATE_CLIENTS;
+import static net.momirealms.craftengine.core.block.UpdateFlags.UPDATE_KNOWN_SHAPE;
 
 public class DebugStickListener implements Listener {
     private final BukkitCraftEngine plugin;

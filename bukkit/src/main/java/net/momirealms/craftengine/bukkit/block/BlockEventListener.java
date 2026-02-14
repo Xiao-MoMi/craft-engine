@@ -8,7 +8,6 @@ import net.momirealms.craftengine.bukkit.api.event.CustomBlockBreakEvent;
 import net.momirealms.craftengine.bukkit.block.entity.BedBlockEntity;
 import net.momirealms.craftengine.bukkit.block.entity.renderer.DynamicPlayerRenderer;
 import net.momirealms.craftengine.bukkit.plugin.BukkitCraftEngine;
-import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.MBlocks;
 import net.momirealms.craftengine.bukkit.plugin.user.BukkitServerPlayer;
 import net.momirealms.craftengine.bukkit.util.*;
 import net.momirealms.craftengine.bukkit.world.BukkitExistingBlock;
@@ -38,6 +37,7 @@ import net.momirealms.craftengine.proxy.minecraft.sounds.SoundEventProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.entity.player.AbilitiesProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.entity.player.PlayerProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.level.BlockGetterProxy;
+import net.momirealms.craftengine.proxy.minecraft.world.level.block.BlocksProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.level.block.SoundTypeProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.level.block.state.BlockBehaviourProxy;
 import org.bukkit.*;
@@ -92,7 +92,7 @@ public final class BlockEventListener implements Listener {
         if (Config.enableSoundSystem()) {
             Block block = event.getBlock();
             Object blockState = BlockStateUtils.getBlockState(block);
-            if (blockState != MBlocks.AIR$defaultState && BlockStateUtils.isVanillaBlock(blockState)) {
+            if (blockState != BlocksProxy.AIR$defaultState && BlockStateUtils.isVanillaBlock(blockState)) {
                 Object soundType = BlockBehaviourProxy.BlockStateBaseProxy.INSTANCE.getSoundType(blockState);
                 Object soundEvent = SoundTypeProxy.INSTANCE.getPlaceSound(soundType);
                 Object soundId = SoundEventProxy.INSTANCE.getLocation(soundEvent);
