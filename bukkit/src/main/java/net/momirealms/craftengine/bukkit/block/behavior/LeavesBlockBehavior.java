@@ -155,7 +155,7 @@ public class LeavesBlockBehavior extends BukkitBlockBehavior {
         if (isLog) return 0;
         Optional<ImmutableBlockState> optionalCustomState = BlockStateUtils.getOptionalCustomBlockState(blockState);
         if (optionalCustomState.isEmpty()) {
-            boolean hasDistanceProperty = StateHolderProxy.INSTANCE.hasProperty(blockState, distanceProperty);
+            boolean hasDistanceProperty = StateHolderProxy.INSTANCE.hasProperty(blockState, LeavesBlockProxy.DISTANCE);
             if (!hasDistanceProperty) return this.maxDistance;
             return StateHolderProxy.INSTANCE.getValue(blockState, LeavesBlockProxy.DISTANCE);
         } else {
