@@ -280,13 +280,6 @@ public class UnsafeCompositeBlockBehavior extends BukkitBlockBehavior
     }
 
     @Override
-    public void onRemove(Object thisBlock, Object[] args, Callable<Object> superMethod) throws Exception {
-        for (BlockBehavior behavior : this.behaviors) {
-            behavior.onRemove(thisBlock, args, superMethod);
-        }
-    }
-
-    @Override
     public int getSignal(Object thisBlock, Object[] args, Callable<Object> superMethod) {
         for (BlockBehavior behavior : this.behaviors) {
             int signal = behavior.getSignal(thisBlock, args, superMethod);

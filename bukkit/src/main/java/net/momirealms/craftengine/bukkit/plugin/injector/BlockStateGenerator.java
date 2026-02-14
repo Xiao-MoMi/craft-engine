@@ -17,7 +17,6 @@ import net.bytebuddy.matcher.ElementMatchers;
 import net.momirealms.craftengine.bukkit.api.BukkitAdaptors;
 import net.momirealms.craftengine.bukkit.item.BukkitItemManager;
 import net.momirealms.craftengine.bukkit.plugin.BukkitCraftEngine;
-import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.CoreReflections;
 import net.momirealms.craftengine.bukkit.plugin.user.BukkitServerPlayer;
 import net.momirealms.craftengine.core.block.BlockSettings;
 import net.momirealms.craftengine.core.block.DelegatingBlockState;
@@ -66,15 +65,15 @@ public final class BlockStateGenerator {
                 .intercept(FieldAccessor.ofField("immutableBlockState"))
                 .method(ElementMatchers.named("setBlockState"))
                 .intercept(FieldAccessor.ofField("immutableBlockState"))
-                .method(ElementMatchers.is(CoreReflections.method$BlockStateBase$getDrops))
+                .method(ElementMatchers.is(BlockReflections.method$BlockStateBase$getDrops))
                 .intercept(MethodDelegation.to(GetDropsInterceptor.INSTANCE))
-                .method(ElementMatchers.is(CoreReflections.method$StateHolder$hasProperty))
+                .method(ElementMatchers.is(BlockReflections.method$StateHolder$hasProperty))
                 .intercept(MethodDelegation.to(HasPropertyInterceptor.INSTANCE))
-                .method(ElementMatchers.is(CoreReflections.method$StateHolder$getValue))
+                .method(ElementMatchers.is(BlockReflections.method$StateHolder$getValue))
                 .intercept(MethodDelegation.to(GetPropertyValueInterceptor.INSTANCE))
-                .method(ElementMatchers.is(CoreReflections.method$StateHolder$setValue))
+                .method(ElementMatchers.is(BlockReflections.method$StateHolder$setValue))
                 .intercept(MethodDelegation.to(SetPropertyValueInterceptor.INSTANCE))
-                .method(ElementMatchers.is(CoreReflections.method$BlockStateBase$isBlock))
+                .method(ElementMatchers.is(BlockReflections.method$BlockStateBase$is))
                 .intercept(MethodDelegation.to(IsBlockInterceptor.INSTANCE));
         Class<?> clazz$CraftEngineBlock = stateBuilder.make().load(BlockStateGenerator.class.getClassLoader()).getLoaded();
         constructor$CraftEngineBlockState = VersionHelper.isOrAbove1_20_5() ?

@@ -1,6 +1,8 @@
 package net.momirealms.craftengine.proxy.minecraft.world.level.block;
 
 import net.momirealms.craftengine.proxy.minecraft.core.BlockPosProxy;
+import net.momirealms.craftengine.proxy.minecraft.server.level.ServerLevelProxy;
+import net.momirealms.craftengine.proxy.minecraft.util.RandomSourceProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.level.LevelReaderProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.level.block.state.BlockStateProxy;
 import net.momirealms.sparrow.reflection.clazz.SparrowClass;
@@ -19,4 +21,7 @@ public interface BonemealableBlockProxy {
 
     @MethodInvoker(name = "isValidBonemealTarget", activeIf = "max_version=1.20.1")
     boolean isValidBonemealTarget(Object target, @Type(clazz = LevelReaderProxy.class) Object world, @Type(clazz = BlockPosProxy.class) Object pos, @Type(clazz = BlockStateProxy.class) Object state, boolean isClient);
+
+    @MethodInvoker(name = "performBonemeal")
+    void performBonemeal(Object target, @Type(clazz = ServerLevelProxy.class) Object world, @Type(clazz = RandomSourceProxy.class) Object random, @Type(clazz = BlockPosProxy.class) Object pos, @Type(clazz = BlockStateProxy.class) Object state);
 }

@@ -4,8 +4,6 @@ import net.momirealms.sparrow.reflection.proxy.ASMProxyFactory;
 import net.momirealms.sparrow.reflection.proxy.annotation.FieldGetter;
 import net.momirealms.sparrow.reflection.proxy.annotation.ReflectionProxy;
 
-import java.util.Optional;
-
 @ReflectionProxy(name = "net.minecraft.network.HashedStack", activeIf = "min_version=1.21.5")
 public interface HashedStackProxy {
     HashedStackProxy INSTANCE = ASMProxyFactory.create(HashedStackProxy.class);

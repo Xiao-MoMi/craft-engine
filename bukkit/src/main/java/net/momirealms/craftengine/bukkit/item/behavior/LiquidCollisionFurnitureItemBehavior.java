@@ -1,7 +1,6 @@
 package net.momirealms.craftengine.bukkit.item.behavior;
 
 import net.momirealms.craftengine.bukkit.entity.furniture.BukkitFurnitureManager;
-import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.MFluids;
 import net.momirealms.craftengine.bukkit.util.DirectionUtils;
 import net.momirealms.craftengine.bukkit.util.LocationUtils;
 import net.momirealms.craftengine.core.entity.furniture.AlignmentRule;
@@ -30,6 +29,7 @@ import net.momirealms.craftengine.proxy.minecraft.world.item.ItemProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.level.BlockGetterProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.level.ClipContextProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.level.material.FluidStateProxy;
+import net.momirealms.craftengine.proxy.minecraft.world.level.material.FluidsProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.phys.BlockHitResultProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.phys.HitResultProxy;
 import org.jetbrains.annotations.Nullable;
@@ -64,18 +64,18 @@ public final class LiquidCollisionFurnitureItemBehavior extends FurnitureItemBeh
             boolean miss = BlockHitResultProxy.INSTANCE.isMiss(blockHitResult);
             Vec3d hitPos = LocationUtils.fromVec(HitResultProxy.INSTANCE.getLocation(blockHitResult));
             Object fluidType = FluidStateProxy.INSTANCE.getType(BlockGetterProxy.INSTANCE.getFluidState(world.serverWorld(), blockPos));
-            if (fluidType == MFluids.EMPTY) {
+            if (fluidType == FluidsProxy.EMPTY) {
                 return InteractionResult.PASS;
             }
             String liquid = null;
-            if (fluidType == MFluids.LAVA) {
+            if (fluidType == FluidsProxy.LAVA) {
                 liquid = "lava";
-            } else if (fluidType == MFluids.WATER) {
+            } else if (fluidType == FluidsProxy.WATER) {
                 liquid = "water";
-            } else if (fluidType == MFluids.FLOWING_LAVA) {
+            } else if (fluidType == FluidsProxy.FLOWING_LAVA) {
                 if (this.sourceOnly) return InteractionResult.PASS;
                 liquid = "lava";
-            } else if (fluidType == MFluids.FLOWING_WATER) {
+            } else if (fluidType == FluidsProxy.FLOWING_WATER) {
                 if (this.sourceOnly) return InteractionResult.PASS;
                 liquid = "water";
             }

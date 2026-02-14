@@ -1,8 +1,5 @@
 package net.momirealms.craftengine.bukkit.block.behavior;
 
-import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.CoreReflections;
-import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.MBlocks;
-import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.MFluids;
 import net.momirealms.craftengine.bukkit.util.BlockStateUtils;
 import net.momirealms.craftengine.bukkit.util.EventUtils;
 import net.momirealms.craftengine.bukkit.util.LocationUtils;
@@ -24,9 +21,11 @@ import net.momirealms.craftengine.proxy.minecraft.core.DirectionProxy;
 import net.momirealms.craftengine.proxy.minecraft.core.MutableBlockPosProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.level.BlockGetterProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.level.LevelProxy;
+import net.momirealms.craftengine.proxy.minecraft.world.level.block.BlocksProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.level.block.SupportTypeProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.level.block.state.BlockBehaviourProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.level.material.FluidStateProxy;
+import net.momirealms.craftengine.proxy.minecraft.world.level.material.FluidsProxy;
 import org.bukkit.block.BlockState;
 import org.bukkit.event.block.BlockFormEvent;
 import org.jetbrains.annotations.Nullable;
@@ -45,7 +44,7 @@ public class ConcretePowderBlockBehavior extends BukkitBlockBehavior {
 
     public Object getDefaultBlockState() {
         ImmutableBlockState state = this.targetBlock.get();
-        return state != null ? state.customBlockState().literalObject() : MBlocks.STONE$defaultState;
+        return state != null ? state.customBlockState().literalObject() : BlocksProxy.STONE$defaultState;
     }
 
     @SuppressWarnings("UnstableApiUsage")
@@ -111,10 +110,10 @@ public class ConcretePowderBlockBehavior extends BukkitBlockBehavior {
         Object fluidState = BlockBehaviourProxy.BlockStateBaseProxy.INSTANCE.getFluidState(state);
         if (fluidState == null) return false;
         Object fluidType = FluidStateProxy.INSTANCE.getType(fluidState);
-        return fluidType == MFluids.WATER || fluidType == MFluids.FLOWING_WATER;
+        return fluidType == FluidsProxy.WATER || fluidType == FluidsProxy.FLOWING_WATER;
     }
 
-    private static boolean touchesLiquid(Object level, Object pos) throws ReflectiveOperationException {
+    private static boolean touchesLiquid(Object level, Object pos) {
         boolean flag = false;
         Object mutablePos = BlockPosProxy.INSTANCE.mutable(pos);
         int j = Direction.values().length;
@@ -124,7 +123,7 @@ public class ConcretePowderBlockBehavior extends BukkitBlockBehavior {
             if (direction != DirectionProxy.DOWN || canSolidify(blockState)) {
                 MutableBlockPosProxy.INSTANCE.setWithOffset(mutablePos, pos, direction);
                 blockState = BlockGetterProxy.INSTANCE.getBlockState(level, mutablePos);
-                if (canSolidify(blockState) && !(boolean) CoreReflections.method$BlockStateBase$isFaceSturdy.invoke(blockState, level, pos, DirectionProxy.INSTANCE.getOpposite(direction), SupportTypeProxy.FULL)) {
+                if (canSolidify(blockState) && !BlockBehaviourProxy.BlockStateBaseProxy.INSTANCE.isFaceSturdy(blockState, level, pos, DirectionProxy.INSTANCE.getOpposite(direction), SupportTypeProxy.FULL)) {
                     flag = true;
                     break;
                 }

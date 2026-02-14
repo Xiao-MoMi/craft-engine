@@ -4,7 +4,6 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonParseException;
 import com.mojang.serialization.Codec;
 import net.kyori.adventure.text.Component;
-import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.MRegistryOps;
 import net.momirealms.craftengine.core.util.AdventureHelper;
 import net.momirealms.craftengine.core.util.GsonHelper;
 import net.momirealms.craftengine.core.util.VersionHelper;
@@ -28,7 +27,7 @@ public final class ComponentUtils {
     public static Object jsonElementToMinecraft(JsonElement json) {
         if (VersionHelper.isOrAbove1_21_6()) {
             if (json == null) return null;
-            return ComponentSerialization$CODEC.parse(MRegistryOps.JSON, json).getOrThrow(JsonParseException::new);
+            return ComponentSerialization$CODEC.parse(RegistryOps.JSON, json).getOrThrow(JsonParseException::new);
         } else if (VersionHelper.isOrAbove1_20_5()) {
             return ComponentProxy.SerializerProxy.INSTANCE.fromJson(json, RegistryUtils.getRegistryAccess());
         } else {
@@ -39,7 +38,7 @@ public final class ComponentUtils {
     public static Object jsonToMinecraft(String json) {
         if (VersionHelper.isOrAbove1_21_6()) {
             JsonElement jsonElement = GsonHelper.get().fromJson(json, JsonElement.class);
-            return ComponentSerialization$CODEC.parse(MRegistryOps.JSON, jsonElement).getOrThrow(JsonParseException::new);
+            return ComponentSerialization$CODEC.parse(RegistryOps.JSON, jsonElement).getOrThrow(JsonParseException::new);
         } else if (VersionHelper.isOrAbove1_20_5()) {
             return ComponentProxy.SerializerProxy.INSTANCE.fromJson(json, RegistryUtils.getRegistryAccess());
         } else {
@@ -49,7 +48,7 @@ public final class ComponentUtils {
 
     public static String minecraftToJson(Object component) {
         if (VersionHelper.isOrAbove1_21_6()) {
-            JsonElement jsonElement = ComponentSerialization$CODEC.encodeStart(MRegistryOps.JSON, component).getOrThrow(JsonParseException::new);
+            JsonElement jsonElement = ComponentSerialization$CODEC.encodeStart(RegistryOps.JSON, component).getOrThrow(JsonParseException::new);
             return GsonHelper.get().toJson(jsonElement);
         } else if (VersionHelper.isOrAbove1_20_5()) {
             return ComponentProxy.SerializerProxy.INSTANCE.toJson(component, RegistryUtils.getRegistryAccess());

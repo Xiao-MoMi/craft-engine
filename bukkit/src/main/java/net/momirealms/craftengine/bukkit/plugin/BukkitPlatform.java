@@ -2,7 +2,7 @@ package net.momirealms.craftengine.bukkit.plugin;
 
 import com.google.gson.JsonElement;
 import net.momirealms.craftengine.bukkit.api.BukkitAdaptors;
-import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.MRegistryOps;
+import net.momirealms.craftengine.bukkit.util.RegistryOps;
 import net.momirealms.craftengine.bukkit.util.ParticleUtils;
 import net.momirealms.craftengine.bukkit.util.RegistryUtils;
 import net.momirealms.craftengine.bukkit.world.particle.BukkitParticleType;
@@ -38,12 +38,12 @@ public class BukkitPlatform implements Platform {
 
     @Override
     public Tag jsonToSparrowNBT(JsonElement json) {
-        return MRegistryOps.JSON.convertTo(MRegistryOps.SPARROW_NBT, json);
+        return RegistryOps.JSON.convertTo(RegistryOps.SPARROW_NBT, json);
     }
 
     @Override
     public Tag javaToSparrowNBT(Object object) {
-        return MRegistryOps.JAVA.convertTo(MRegistryOps.SPARROW_NBT, object);
+        return RegistryOps.JAVA.convertTo(RegistryOps.SPARROW_NBT, object);
     }
 
     @Override

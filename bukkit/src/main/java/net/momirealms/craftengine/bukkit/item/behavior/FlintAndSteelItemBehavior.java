@@ -1,7 +1,6 @@
 package net.momirealms.craftengine.bukkit.item.behavior;
 
 import net.momirealms.craftengine.bukkit.block.BukkitBlockManager;
-import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.CoreReflections;
 import net.momirealms.craftengine.bukkit.util.BlockStateUtils;
 import net.momirealms.craftengine.bukkit.util.DirectionUtils;
 import net.momirealms.craftengine.bukkit.util.InteractUtils;
@@ -13,7 +12,6 @@ import net.momirealms.craftengine.core.item.Item;
 import net.momirealms.craftengine.core.item.behavior.ItemBehavior;
 import net.momirealms.craftengine.core.item.behavior.ItemBehaviorFactory;
 import net.momirealms.craftengine.core.pack.Pack;
-import net.momirealms.craftengine.core.plugin.CraftEngine;
 import net.momirealms.craftengine.core.sound.SoundSource;
 import net.momirealms.craftengine.core.util.Direction;
 import net.momirealms.craftengine.core.util.Key;
@@ -23,6 +21,7 @@ import net.momirealms.craftengine.core.world.context.UseOnContext;
 import net.momirealms.craftengine.proxy.minecraft.core.DirectionProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.level.block.BaseFireBlockProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.level.block.SupportTypeProxy;
+import net.momirealms.craftengine.proxy.minecraft.world.level.block.state.BlockBehaviourProxy;
 import org.bukkit.block.Block;
 import org.bukkit.block.data.BlockData;
 import org.bukkit.entity.Player;
@@ -59,14 +58,9 @@ public final class FlintAndSteelItemBehavior extends ItemBehavior {
         BlockData clickedBlockData = block.getBlockData();
         Object clickedBlockState = BlockStateUtils.blockDataToBlockState(clickedBlockData);
         boolean isClickedBlockBurnable;
-        try {
-            isClickedBlockBurnable = BlockStateUtils.isBurnable(clickedBlockState) ||
-                    (context.getClickedFace() == Direction.UP && (boolean) CoreReflections.method$BlockStateBase$isFaceSturdy.invoke(
-                            clickedBlockState, context.getLevel().serverWorld(), LocationUtils.toBlockPos(clickedPos), DirectionProxy.UP, SupportTypeProxy.FULL));
-        } catch (ReflectiveOperationException e) {
-            CraftEngine.instance().logger().warn("Failed to call method$BlockStateBase$isFaceSturdy", e);
-            return InteractionResult.PASS;
-        }
+        isClickedBlockBurnable = BlockStateUtils.isBurnable(clickedBlockState)
+                || (context.getClickedFace() == Direction.UP
+                && BlockBehaviourProxy.BlockStateBaseProxy.INSTANCE.isFaceSturdy(clickedBlockState, context.getLevel().serverWorld(), LocationUtils.toBlockPos(clickedPos), DirectionProxy.UP, SupportTypeProxy.FULL));
 
         // 点击对象直接可燃，则忽略
         if (isClickedBlockBurnable) {
@@ -97,15 +91,10 @@ public final class FlintAndSteelItemBehavior extends ItemBehavior {
                     BlockPos belowFirePos = firePos.relative(Direction.DOWN);
                     BukkitExistingBlock belowFireBlock = (BukkitExistingBlock) context.getLevel().getBlock(belowFirePos);
                     boolean belowCanBurn;
-                    try {
-                        Block belowBlock = belowFireBlock.block();
-                        belowCanBurn = BlockStateUtils.isBurnable(BlockStateUtils.blockDataToBlockState(belowBlock.getBlockData())) ||
-                                (boolean) CoreReflections.method$BlockStateBase$isFaceSturdy.invoke(
-                                        BlockStateUtils.blockDataToBlockState(belowFireBlock.block().getBlockData()), context.getLevel().serverWorld(), LocationUtils.toBlockPos(belowFirePos), DirectionProxy.UP, SupportTypeProxy.FULL);
-                    } catch (ReflectiveOperationException e) {
-                        CraftEngine.instance().logger().warn("Failed to call method$BlockStateBase$isFaceSturdy", e);
-                        return InteractionResult.PASS;
-                    }
+                    Block belowBlock = belowFireBlock.block();
+                    belowCanBurn = BlockStateUtils.isBurnable(BlockStateUtils.blockDataToBlockState(belowBlock.getBlockData())) ||
+                            BlockBehaviourProxy.BlockStateBaseProxy.INSTANCE.isFaceSturdy(
+                                    BlockStateUtils.blockDataToBlockState(belowFireBlock.block().getBlockData()), context.getLevel().serverWorld(), LocationUtils.toBlockPos(belowFirePos), DirectionProxy.UP, SupportTypeProxy.FULL);
 
                     // 客户端觉得这玩意可交互，就会忽略声音
                     if (InteractUtils.isInteractable((Player) player.platformPlayer(), vanillaBlockState, context.getHitResult(), (Item<ItemStack>) context.getItem())) {
@@ -142,13 +131,8 @@ public final class FlintAndSteelItemBehavior extends ItemBehavior {
                     if (BlockStateUtils.isBurnable(nearbyBlockState)) {
                         return InteractionResult.PASS;
                     }
-                    try {
-                        if (dir == Direction.DOWN && (boolean) CoreReflections.method$BlockStateBase$isFaceSturdy.invoke(
-                                nearbyBlockState, context.getLevel().serverWorld(), LocationUtils.toBlockPos(relPos), DirectionProxy.UP,SupportTypeProxy.FULL)) {
-                            return InteractionResult.PASS;
-                        }
-                    } catch (ReflectiveOperationException e) {
-                        CraftEngine.instance().logger().warn("Failed to call method$BlockStateBase$isFaceSturdy", e);
+                    if (dir == Direction.DOWN && BlockBehaviourProxy.BlockStateBaseProxy.INSTANCE.isFaceSturdy(
+                            nearbyBlockState, context.getLevel().serverWorld(), LocationUtils.toBlockPos(relPos), DirectionProxy.UP,SupportTypeProxy.FULL)) {
                         return InteractionResult.PASS;
                     }
                 }

@@ -1,6 +1,5 @@
 package net.momirealms.craftengine.bukkit.block.behavior;
 
-import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.CoreReflections;
 import net.momirealms.craftengine.bukkit.util.BlockStateUtils;
 import net.momirealms.craftengine.bukkit.util.DirectionUtils;
 import net.momirealms.craftengine.core.block.CustomBlock;
@@ -14,6 +13,7 @@ import net.momirealms.craftengine.proxy.minecraft.core.Vec3iProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.level.BlockGetterProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.level.block.BlockProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.level.block.SupportTypeProxy;
+import net.momirealms.craftengine.proxy.minecraft.world.level.block.state.BlockBehaviourProxy;
 
 import java.util.List;
 import java.util.Locale;
@@ -44,7 +44,7 @@ public class SturdyBaseBlockBehavior extends AbstractCanSurviveBlockBehavior {
         int z = Vec3iProxy.INSTANCE.getZ(blockPos) + this.direction.stepZ();
         Object targetPos = BlockPosProxy.INSTANCE.newInstance(x, y, z);
         Object blockState = BlockGetterProxy.INSTANCE.getBlockState(world, targetPos);
-        if (this.checkFull && (boolean) CoreReflections.method$BlockStateBase$isFaceSturdy.invoke(
+        if (this.checkFull && BlockBehaviourProxy.BlockStateBaseProxy.INSTANCE.isFaceSturdy(
                 blockState, world, targetPos, DirectionUtils.toNMSDirection(this.direction.opposite()),
                 SupportTypeProxy.FULL
         )) {

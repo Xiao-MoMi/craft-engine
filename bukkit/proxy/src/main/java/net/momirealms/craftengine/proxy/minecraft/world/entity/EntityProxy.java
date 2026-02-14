@@ -1,6 +1,7 @@
 package net.momirealms.craftengine.proxy.minecraft.world.entity;
 
 import net.momirealms.craftengine.proxy.minecraft.world.damagesource.DamageSourceProxy;
+import net.momirealms.sparrow.reflection.clazz.SparrowClass;
 import net.momirealms.sparrow.reflection.proxy.ASMProxyFactory;
 import net.momirealms.sparrow.reflection.proxy.annotation.*;
 import org.bukkit.entity.Entity;
@@ -11,6 +12,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 @ReflectionProxy(name = "net.minecraft.world.entity.Entity")
 public interface EntityProxy {
     EntityProxy INSTANCE = ASMProxyFactory.create(EntityProxy.class);
+    Class<?> CLASS = SparrowClass.find("net.minecraft.world.entity.Entity");
     AtomicInteger ENTITY_COUNTER = INSTANCE.getEntityCounter();
 
     @FieldGetter(name = "ENTITY_COUNTER")

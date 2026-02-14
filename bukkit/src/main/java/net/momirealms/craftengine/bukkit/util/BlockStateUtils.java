@@ -87,7 +87,7 @@ public final class BlockStateUtils {
     }
 
     public static int blockStateToId(Object blockState) {
-        return IdMapProxy.INSTANCE.getId$1(BlockProxy.BLOCK_STATE_REGISTRY, blockState);
+        return IdMapProxy.INSTANCE.getId(BlockProxy.BLOCK_STATE_REGISTRY, blockState);
     }
 
     public static Object getBlockOwner(Object blockState) {

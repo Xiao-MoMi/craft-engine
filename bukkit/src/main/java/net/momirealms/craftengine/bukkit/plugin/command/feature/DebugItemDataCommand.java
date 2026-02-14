@@ -3,7 +3,7 @@ package net.momirealms.craftengine.bukkit.plugin.command.feature;
 import net.momirealms.craftengine.bukkit.api.BukkitAdaptors;
 import net.momirealms.craftengine.bukkit.item.BukkitItemManager;
 import net.momirealms.craftengine.bukkit.plugin.command.BukkitCommandFeature;
-import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.MRegistryOps;
+import net.momirealms.craftengine.bukkit.util.RegistryOps;
 import net.momirealms.craftengine.bukkit.util.ItemStackUtils;
 import net.momirealms.craftengine.core.plugin.CraftEngine;
 import net.momirealms.craftengine.core.plugin.command.CraftEngineCommandManager;
@@ -57,12 +57,12 @@ public class DebugItemDataCommand extends BukkitCommandFeature<CommandSender> {
     @SuppressWarnings("unchecked")
     private static Map<String, Object> toMap(ItemStack nmsStack) {
         if (VersionHelper.COMPONENT_RELEASE) {
-            return (Map<String, Object>) ItemStackProxy.INSTANCE.getCodec().encodeStart(MRegistryOps.JAVA, nmsStack)
+            return (Map<String, Object>) ItemStackProxy.INSTANCE.getCodec().encodeStart(RegistryOps.JAVA, nmsStack)
                     .resultOrPartial(error -> CraftEngine.instance().logger().severe("Error while saving item: " + error))
                     .orElse(null);
         } else {
             Object nmsTag = ItemStackProxy.INSTANCE.save(nmsStack, CompoundTagProxy.INSTANCE.newInstance());
-            return (Map<String, Object>) MRegistryOps.NBT.convertTo(MRegistryOps.JAVA, nmsTag);
+            return (Map<String, Object>) RegistryOps.NBT.convertTo(RegistryOps.JAVA, nmsTag);
         }
     }
 

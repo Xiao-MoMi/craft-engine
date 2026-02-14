@@ -9,7 +9,7 @@ public interface IdMapProxy {
     IdMapProxy INSTANCE = ASMProxyFactory.create(IdMapProxy.class);
 
     @MethodInvoker(name = "getId")
-    int getId$1(Object target, Object value);
+    int getId(Object target, Object value);
 
     @MethodInvoker(name = "byId")
     <T> T byId(Object target, int id);

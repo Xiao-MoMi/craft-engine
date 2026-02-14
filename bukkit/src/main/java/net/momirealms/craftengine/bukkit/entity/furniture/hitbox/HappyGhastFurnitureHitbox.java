@@ -1,8 +1,6 @@
 package net.momirealms.craftengine.bukkit.entity.furniture.hitbox;
 
 import it.unimi.dsi.fastutil.ints.IntArrayList;
-import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.MAttributeHolders;
-import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.MEntityTypes;
 import net.momirealms.craftengine.bukkit.util.EntityUtils;
 import net.momirealms.craftengine.core.entity.furniture.Collider;
 import net.momirealms.craftengine.core.entity.furniture.Furniture;
@@ -13,7 +11,9 @@ import net.momirealms.craftengine.core.world.WorldPosition;
 import net.momirealms.craftengine.core.world.collision.AABB;
 import net.momirealms.craftengine.proxy.minecraft.network.protocol.game.*;
 import net.momirealms.craftengine.proxy.minecraft.world.entity.EntityProxy;
+import net.momirealms.craftengine.proxy.minecraft.world.entity.EntityTypeProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.entity.ai.attributes.AttributeInstanceProxy;
+import net.momirealms.craftengine.proxy.minecraft.world.entity.ai.attributes.AttributesProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.phys.Vec3Proxy;
 
 import java.util.ArrayList;
@@ -44,7 +44,7 @@ public final class HappyGhastFurnitureHitbox extends AbstractFurnitureHitBox {
         this.packets = new ArrayList<>(3);
         this.packets.add(ClientboundSetEntityDataPacketProxy.INSTANCE.newInstance(this.entityId, config.cachedValues()));
         if (config.scale() != 1) {
-            Object attributeIns = AttributeInstanceProxy.INSTANCE.newInstance$0(MAttributeHolders.SCALE, $ -> {});
+            Object attributeIns = AttributeInstanceProxy.INSTANCE.newInstance$0(AttributesProxy.SCALE, $ -> {});
             AttributeInstanceProxy.INSTANCE.setBaseValue(attributeIns, config.scale());
             this.packets.add(ClientboundUpdateAttributesPacketProxy.INSTANCE.newInstance(this.entityId, Collections.singletonList(attributeIns)));
         }
@@ -69,7 +69,7 @@ public final class HappyGhastFurnitureHitbox extends AbstractFurnitureHitBox {
         List<Object> packets = new ArrayList<>();
         packets.add(ClientboundAddEntityPacketProxy.INSTANCE.newInstance(
                 this.entityId, UUID.randomUUID(), this.pos.x, player.y() - (this.config.scale() * 4 + 16), this.pos.z, 0, this.yaw,
-                MEntityTypes.HAPPY_GHAST, 0, Vec3Proxy.ZERO, 0
+                EntityTypeProxy.HAPPY_GHAST, 0, Vec3Proxy.ZERO, 0
         ));
         packets.addAll(this.packets);
         player.sendPacket(ClientboundBundlePacketProxy.INSTANCE.newInstance(packets), false);

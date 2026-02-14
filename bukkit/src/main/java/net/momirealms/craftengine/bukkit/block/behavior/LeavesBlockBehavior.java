@@ -1,6 +1,5 @@
 package net.momirealms.craftengine.bukkit.block.behavior;
 
-import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.CoreReflections;
 import net.momirealms.craftengine.bukkit.util.BlockStateUtils;
 import net.momirealms.craftengine.bukkit.util.BlockTags;
 import net.momirealms.craftengine.bukkit.util.LevelUtils;
@@ -95,7 +94,7 @@ public class LeavesBlockBehavior extends BukkitBlockBehavior {
                 ImmutableBlockState newState = behavior.updateDistance(customState, level, blockPos);
                 if (newState != customState) {
                     if (blockState == newState.customBlockState().literalObject()) {
-                        CoreReflections.method$BlockStateBase$updateNeighbourShapes.invoke(blockState, level, blockPos, UpdateFlags.UPDATE_ALL, 512);
+                        BlockBehaviourProxy.BlockStateBaseProxy.INSTANCE.updateNeighbourShapes(blockState, level, blockPos, UpdateFlags.UPDATE_ALL, 512);
                     } else {
                         LevelWriterProxy.INSTANCE.setBlock(level, blockPos, newState.customBlockState().literalObject(), UpdateFlags.UPDATE_ALL);
                     }

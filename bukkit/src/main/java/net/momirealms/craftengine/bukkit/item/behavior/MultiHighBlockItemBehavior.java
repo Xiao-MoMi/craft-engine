@@ -1,8 +1,6 @@
 package net.momirealms.craftengine.bukkit.item.behavior;
 
 import net.momirealms.craftengine.bukkit.block.behavior.MultiHighBlockBehavior;
-import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.MBlocks;
-import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.MFluids;
 import net.momirealms.craftengine.bukkit.util.LocationUtils;
 import net.momirealms.craftengine.core.block.ImmutableBlockState;
 import net.momirealms.craftengine.core.block.properties.IntegerProperty;
@@ -22,6 +20,8 @@ import net.momirealms.craftengine.proxy.minecraft.core.BlockPosProxy;
 import net.momirealms.craftengine.proxy.minecraft.server.level.ServerLevelProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.level.BlockGetterProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.level.LevelWriterProxy;
+import net.momirealms.craftengine.proxy.minecraft.world.level.block.BlocksProxy;
+import net.momirealms.craftengine.proxy.minecraft.world.level.material.FluidsProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.phys.shapes.CollisionContextProxy;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
@@ -96,7 +96,7 @@ public final class MultiHighBlockItemBehavior extends BlockItemBehavior {
             Object level = CraftWorldProxy.INSTANCE.getWorld(location.getWorld());
             Object blockPos = BlockPosProxy.INSTANCE.newInstance(location.getBlockX(), location.getBlockY() + i, location.getBlockZ());
             Object fluidData = BlockGetterProxy.INSTANCE.getFluidState(level, blockPos);
-            Object stateToPlace = fluidData == MFluids.WATER$defaultState ? MBlocks.WATER$defaultState : MBlocks.AIR$defaultState;
+            Object stateToPlace = fluidData == FluidsProxy.WATER$defaultState ? BlocksProxy.WATER$defaultState : BlocksProxy.AIR$defaultState;
             revertState.add(location.getWorld().getBlockAt(location.getBlockX(), location.getBlockY() + i, location.getBlockZ()).getState());
             LevelWriterProxy.INSTANCE.setBlock(level, blockPos, stateToPlace, UPDATE_NEIGHBORS | UPDATE_CLIENTS | UPDATE_IMMEDIATE | UPDATE_SUPPRESS_DROPS);
         }

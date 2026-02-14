@@ -9,8 +9,6 @@ import net.momirealms.craftengine.bukkit.plugin.injector.BlockGenerator;
 import net.momirealms.craftengine.bukkit.plugin.network.BukkitNetworkManager;
 import net.momirealms.craftengine.bukkit.plugin.network.payload.PayloadHelper;
 import net.momirealms.craftengine.bukkit.plugin.network.payload.protocol.VisualBlockStatePacket;
-import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.MBlocks;
-import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.MFluids;
 import net.momirealms.craftengine.bukkit.plugin.user.BukkitServerPlayer;
 import net.momirealms.craftengine.bukkit.util.*;
 import net.momirealms.craftengine.core.block.*;
@@ -40,11 +38,13 @@ import net.momirealms.craftengine.proxy.minecraft.sounds.SoundEventProxy;
 import net.momirealms.craftengine.proxy.minecraft.tags.TagKeyProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.level.EmptyBlockGetterProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.level.block.BlockProxy;
+import net.momirealms.craftengine.proxy.minecraft.world.level.block.BlocksProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.level.block.FireBlockProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.level.block.SoundTypeProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.level.block.state.BlockBehaviourProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.level.block.state.StateDefinitionProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.level.block.state.properties.NoteBlockInstrumentProxy;
+import net.momirealms.craftengine.proxy.minecraft.world.level.material.FluidsProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.level.material.MapColorProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.level.material.PushReactionProxy;
 import org.bukkit.Bukkit;
@@ -233,8 +233,8 @@ public final class BukkitBlockManager extends AbstractBlockManager {
     }
 
     private void initFireBlock() {
-        this.igniteOdds = FireBlockProxy.INSTANCE.getIgniteOdds(MBlocks.FIRE);
-        this.burnOdds = FireBlockProxy.INSTANCE.getBurnOdds(MBlocks.FIRE);
+        this.igniteOdds = FireBlockProxy.INSTANCE.getIgniteOdds(BlocksProxy.FIRE);
+        this.burnOdds = FireBlockProxy.INSTANCE.getBurnOdds(BlocksProxy.FIRE);
     }
 
     @Override
@@ -308,7 +308,7 @@ public final class BukkitBlockManager extends AbstractBlockManager {
             }
 
             BlockBehaviourProxy.BlockStateBaseProxy.INSTANCE.setIsRandomlyTicking(nmsState, settings.isRandomlyTicking());
-            BlockBehaviourProxy.BlockStateBaseProxy.INSTANCE.setFluidState(nmsState, settings.fluidState() ? MFluids.WATER$defaultState : MFluids.EMPTY$defaultState);
+            BlockBehaviourProxy.BlockStateBaseProxy.INSTANCE.setFluidState(nmsState, settings.fluidState() ? FluidsProxy.WATER$defaultState : FluidsProxy.EMPTY$defaultState);
 
             Object holder = BukkitCraftEngine.instance().blockManager().getMinecraftBlockHolder(state.customBlockState().registryId());
             Set<Object> tags = new HashSet<>();
@@ -346,7 +346,7 @@ public final class BukkitBlockManager extends AbstractBlockManager {
         for (int i = this.vanillaBlockStateCount; i < size; i++) {
             states[i] = new BukkitCustomBlockStateWrapper(BlockStateUtils.idToBlockState(i), i);
         }
-        BlockRegistryMirror.init(states, states[BlockStateUtils.blockStateToId(MBlocks.STONE$defaultState)]);
+        BlockRegistryMirror.init(states, states[BlockStateUtils.blockStateToId(BlocksProxy.STONE$defaultState)]);
     }
 
     // 注册服务端侧的真实方块
@@ -413,7 +413,7 @@ public final class BukkitBlockManager extends AbstractBlockManager {
     @Override
     protected void setVanillaBlockTags(Key id, List<String> tags) {
         Object block = RegistryUtils.getRegistryValue(BuiltInRegistriesProxy.BLOCK, KeyUtils.toIdentifier(id));
-        int blockId = IdMapProxy.INSTANCE.getId$1(BuiltInRegistriesProxy.BLOCK, block);
+        int blockId = IdMapProxy.INSTANCE.getId(BuiltInRegistriesProxy.BLOCK, block);
         if (blockId == -1) {
             throw new IllegalStateException("Block " + id + " not found");
         }
@@ -479,7 +479,7 @@ public final class BukkitBlockManager extends AbstractBlockManager {
             return false;
         if (id.value().equals("air"))
             return true;
-        return RegistryUtils.getRegistryValue(BuiltInRegistriesProxy.BLOCK, KeyUtils.toIdentifier(id)) != MBlocks.AIR;
+        return RegistryUtils.getRegistryValue(BuiltInRegistriesProxy.BLOCK, KeyUtils.toIdentifier(id)) != BlocksProxy.AIR;
     }
 
     public boolean isBurnable(Object blockState) {

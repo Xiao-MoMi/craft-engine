@@ -1,8 +1,6 @@
 package net.momirealms.craftengine.bukkit.block.behavior;
 
 import net.momirealms.craftengine.bukkit.api.BukkitAdaptors;
-import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.MBlocks;
-import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.MFluids;
 import net.momirealms.craftengine.bukkit.plugin.user.BukkitServerPlayer;
 import net.momirealms.craftengine.bukkit.util.BlockStateUtils;
 import net.momirealms.craftengine.bukkit.util.LevelUtils;
@@ -26,8 +24,10 @@ import net.momirealms.craftengine.proxy.minecraft.world.level.BlockGetterProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.level.LevelAccessorProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.level.LevelProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.level.LevelWriterProxy;
+import net.momirealms.craftengine.proxy.minecraft.world.level.block.BlocksProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.level.block.state.BlockBehaviourProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.level.material.FluidStateProxy;
+import net.momirealms.craftengine.proxy.minecraft.world.level.material.FluidsProxy;
 import org.bukkit.inventory.ItemStack;
 
 import java.util.Map;
@@ -51,11 +51,11 @@ public class MultiHighBlockBehavior extends BukkitBlockBehavior {
         Object blockState = args[0];
         ImmutableBlockState customState = BlockStateUtils.getOptionalCustomBlockState(blockState).orElse(null);
         if (customState == null || customState.isEmpty()) {
-            return MBlocks.AIR$defaultState;
+            return BlocksProxy.AIR$defaultState;
         }
         MultiHighBlockBehavior behavior = customState.behavior().getAs(MultiHighBlockBehavior.class).orElse(null);
         if (behavior == null) {
-            return MBlocks.AIR$defaultState;
+            return BlocksProxy.AIR$defaultState;
         }
         IntegerProperty property = behavior.property;
         int value = customState.get(property);
@@ -68,17 +68,17 @@ public class MultiHighBlockBehavior extends BukkitBlockBehavior {
             ImmutableBlockState state = BlockStateUtils.getOptionalCustomBlockState(aboveState).orElse(null);
             if (state == null) {
                 playBreakEffect(customState, blockPos, level);
-                return MBlocks.AIR$defaultState;
+                return BlocksProxy.AIR$defaultState;
             }
             MultiHighBlockBehavior aboveBehavior = state.behavior().getAs(MultiHighBlockBehavior.class).orElse(null);
             if (aboveBehavior == null || aboveBehavior.property != property) {
                 playBreakEffect(customState, blockPos, level);
-                return MBlocks.AIR$defaultState;
+                return BlocksProxy.AIR$defaultState;
             }
             Integer aboveValue = state.get(property);
             if (value + 1 != aboveValue) {
                 playBreakEffect(customState, blockPos, level);
-                return MBlocks.AIR$defaultState;
+                return BlocksProxy.AIR$defaultState;
             }
         } else if (direction == DirectionProxy.DOWN && value != property.min) {
             Object belowPos = LocationUtils.below(blockPos);
@@ -86,17 +86,17 @@ public class MultiHighBlockBehavior extends BukkitBlockBehavior {
             ImmutableBlockState state = BlockStateUtils.getOptionalCustomBlockState(belowState).orElse(null);
             if (state == null) {
                 playBreakEffect(customState, blockPos, level);
-                return MBlocks.AIR$defaultState;
+                return BlocksProxy.AIR$defaultState;
             }
             MultiHighBlockBehavior belowBehavior = state.behavior().getAs(MultiHighBlockBehavior.class).orElse(null);
             if (belowBehavior == null || belowBehavior.property != property) {
                 playBreakEffect(customState, blockPos, level);
-                return MBlocks.AIR$defaultState;
+                return BlocksProxy.AIR$defaultState;
             }
             Integer belowValue = state.get(property);
             if (value - 1 != belowValue) {
                 playBreakEffect(customState, blockPos, level);
-                return MBlocks.AIR$defaultState;
+                return BlocksProxy.AIR$defaultState;
             }
         }
         return blockState;
@@ -152,9 +152,9 @@ public class MultiHighBlockBehavior extends BukkitBlockBehavior {
         if (baseState.get(baseProperty) != baseProperty.min) {
             return;
         }
-        Object emptyState = FluidStateProxy.INSTANCE.getType(BlockBehaviourProxy.BlockStateBaseProxy.INSTANCE.getFluidState(blockState)) == MFluids.WATER
-                ? MBlocks.WATER$defaultState
-                : MBlocks.AIR$defaultState;
+        Object emptyState = FluidStateProxy.INSTANCE.getType(BlockBehaviourProxy.BlockStateBaseProxy.INSTANCE.getFluidState(blockState)) == FluidsProxy.WATER
+                ? BlocksProxy.WATER$defaultState
+                : BlocksProxy.AIR$defaultState;
         LevelWriterProxy.INSTANCE.setBlock(level, basePos, emptyState, UPDATE_NEIGHBORS | UPDATE_CLIENTS | UPDATE_SUPPRESS_DROPS);
         LevelUtils.levelEvent(level, player, WorldEvents.BLOCK_BREAK_EFFECT, basePos, baseState.customBlockState().registryId());
     }

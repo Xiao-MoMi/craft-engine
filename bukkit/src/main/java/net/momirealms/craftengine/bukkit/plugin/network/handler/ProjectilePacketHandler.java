@@ -3,7 +3,6 @@ package net.momirealms.craftengine.bukkit.plugin.network.handler;
 import net.momirealms.craftengine.bukkit.entity.data.ItemDisplayEntityData;
 import net.momirealms.craftengine.bukkit.entity.projectile.BukkitCustomProjectile;
 import net.momirealms.craftengine.bukkit.item.BukkitItemManager;
-import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.MEntityTypes;
 import net.momirealms.craftengine.bukkit.util.PacketUtils;
 import net.momirealms.craftengine.core.entity.player.Player;
 import net.momirealms.craftengine.core.entity.projectile.ProjectileMeta;
@@ -22,6 +21,7 @@ import net.momirealms.craftengine.proxy.minecraft.network.protocol.game.Clientbo
 import net.momirealms.craftengine.proxy.minecraft.network.protocol.game.ClientboundEntityPositionSyncPacketProxy;
 import net.momirealms.craftengine.proxy.minecraft.network.protocol.game.ClientboundMoveEntityPacketProxy;
 import net.momirealms.craftengine.proxy.minecraft.network.protocol.game.ClientboundSetEntityDataPacketProxy;
+import net.momirealms.craftengine.proxy.minecraft.world.entity.EntityTypeProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.entity.PositionMoveRotationProxy;
 import org.bukkit.inventory.ItemStack;
 
@@ -89,7 +89,7 @@ public class ProjectilePacketHandler implements EntityPacketHandler {
         buf.writeVarInt(event.packetID());
         buf.writeVarInt(this.entityId);
         buf.writeUUID(uuid);
-        buf.writeVarInt(MEntityTypes.ITEM_DISPLAY$registryId);
+        buf.writeVarInt(EntityTypeProxy.ITEM_DISPLAY$registryId);
         buf.writeDouble(x);
         buf.writeDouble(y);
         buf.writeDouble(z);

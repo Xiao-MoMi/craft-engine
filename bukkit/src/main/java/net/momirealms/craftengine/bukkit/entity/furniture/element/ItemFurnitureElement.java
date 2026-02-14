@@ -1,7 +1,6 @@
 package net.momirealms.craftengine.bukkit.entity.furniture.element;
 
 import it.unimi.dsi.fastutil.ints.IntArrayList;
-import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.MEntityTypes;
 import net.momirealms.craftengine.bukkit.util.PacketUtils;
 import net.momirealms.craftengine.core.entity.furniture.Furniture;
 import net.momirealms.craftengine.core.entity.player.Player;
@@ -12,6 +11,7 @@ import net.momirealms.craftengine.proxy.minecraft.network.protocol.game.Clientbo
 import net.momirealms.craftengine.proxy.minecraft.network.protocol.game.ClientboundRemoveEntitiesPacketProxy;
 import net.momirealms.craftengine.proxy.minecraft.network.protocol.game.ClientboundSetEntityDataPacketProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.entity.EntityProxy;
+import net.momirealms.craftengine.proxy.minecraft.world.entity.EntityTypeProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.phys.Vec3Proxy;
 import org.jetbrains.annotations.NotNull;
 
@@ -39,11 +39,11 @@ public final class ItemFurnitureElement extends AbstractFurnitureElement {
         Vec3d position = Furniture.getRelativePosition(furniturePos, config.position);
         this.cachedSpawnPacket1 = ClientboundAddEntityPacketProxy.INSTANCE.newInstance(
                 entityId1, UUID.randomUUID(), position.x, position.y, position.z,
-                0, 0, MEntityTypes.ITEM_DISPLAY, 0, Vec3Proxy.ZERO, 0
+                0, 0, EntityTypeProxy.ITEM_DISPLAY, 0, Vec3Proxy.ZERO, 0
         );
         this.cachedSpawnPacket2 = ClientboundAddEntityPacketProxy.INSTANCE.newInstance(
                 entityId2, UUID.randomUUID(), position.x, position.y, position.z,
-                0, 0, MEntityTypes.ITEM, 0, Vec3Proxy.ZERO, 0
+                0, 0, EntityTypeProxy.ITEM, 0, Vec3Proxy.ZERO, 0
         );
         this.cachedRidePacket = PacketUtils.createClientboundSetPassengersPacket(entityId1, entityId2);
         this.despawnPacket = ClientboundRemoveEntitiesPacketProxy.INSTANCE.newInstance(MiscUtils.init(new IntArrayList(),

@@ -2,8 +2,6 @@ package net.momirealms.craftengine.bukkit.block.behavior;
 
 import net.momirealms.antigrieflib.Flag;
 import net.momirealms.craftengine.bukkit.plugin.BukkitCraftEngine;
-import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.MEntitySelectors;
-import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.MGameEvents;
 import net.momirealms.craftengine.bukkit.util.*;
 import net.momirealms.craftengine.core.block.CustomBlock;
 import net.momirealms.craftengine.core.block.ImmutableBlockState;
@@ -21,9 +19,11 @@ import net.momirealms.craftengine.proxy.minecraft.core.BlockPosProxy;
 import net.momirealms.craftengine.proxy.minecraft.core.DirectionProxy;
 import net.momirealms.craftengine.proxy.minecraft.sounds.SoundEventProxy;
 import net.momirealms.craftengine.proxy.minecraft.sounds.SoundSourceProxy;
+import net.momirealms.craftengine.proxy.minecraft.world.entity.EntitySelectorProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.entity.projectile.AbstractArrowProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.level.*;
 import net.momirealms.craftengine.proxy.minecraft.world.level.block.state.BlockBehaviourProxy;
+import net.momirealms.craftengine.proxy.minecraft.world.level.gameevent.GameEventProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.level.redstone.ExperimentalRedstoneUtilsProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.phys.AABBProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.phys.shapes.CollisionContextProxy;
@@ -91,16 +91,7 @@ public class ButtonBlockBehavior extends BukkitBlockBehavior {
     public void affectNeighborsAfterRemoval(Object thisBlock, Object[] args, Callable<Object> superMethod) {
         ImmutableBlockState blockState = BlockStateUtils.getOptionalCustomBlockState(args[0]).orElse(null);
         if (blockState == null) return;
-        if (!(boolean) args[3] && blockState.get(this.poweredProperty)) {
-            updateNeighbours(thisBlock, blockState, args[1], args[2]);
-        }
-    }
-
-    @Override
-    public void onRemove(Object thisBlock, Object[] args, Callable<Object> superMethod) {
-        ImmutableBlockState blockState = BlockStateUtils.getOptionalCustomBlockState(args[0]).orElse(null);
-        if (blockState == null) return;
-        if (!(boolean) args[4] && blockState.get(this.poweredProperty)) {
+        if (!(boolean) args[args.length - 1] && blockState.get(this.poweredProperty)) {
             updateNeighbours(thisBlock, blockState, args[1], args[2]);
         }
     }
@@ -155,7 +146,7 @@ public class ButtonBlockBehavior extends BukkitBlockBehavior {
                 level, AbstractArrowProxy.CLASS, AABBProxy.INSTANCE.move$1(
                         VoxelShapeProxy.INSTANCE.bounds(BlockBehaviourProxy.BlockStateBaseProxy.INSTANCE.getShape(
                                 state, level, pos, CollisionContextProxy.INSTANCE.empty()
-                        )), pos), MEntitySelectors.NO_SPECTATORS).stream().findFirst().orElse(null) : null;
+                        )), pos), EntitySelectorProxy.NO_SPECTATORS).stream().findFirst().orElse(null) : null;
         boolean on = arrow != null;
         ImmutableBlockState blockState = BlockStateUtils.getOptionalCustomBlockState(state).orElse(null);
         if (blockState == null) return;
@@ -165,9 +156,9 @@ public class ButtonBlockBehavior extends BukkitBlockBehavior {
             updateNeighbours(thisBlock, blockState, level, pos);
             playSound(level, pos, on);
             if (VersionHelper.isOrAbove1_20_5()) {
-                LevelAccessorProxy.INSTANCE.gameEvent$0(level, arrow, on ? MGameEvents.BLOCK_ACTIVATE$holder : MGameEvents.BLOCK_DEACTIVATE$holder, pos);
+                LevelAccessorProxy.INSTANCE.gameEvent$0(level, arrow, on ? GameEventProxy.BLOCK_ACTIVATE : GameEventProxy.BLOCK_DEACTIVATE, pos);
             } else {
-                LevelAccessorProxy.INSTANCE.gameEvent$1(level, arrow, on ? MGameEvents.BLOCK_ACTIVATE : MGameEvents.BLOCK_DEACTIVATE, pos);
+                LevelAccessorProxy.INSTANCE.gameEvent$1(level, arrow, on ? GameEventProxy.BLOCK_ACTIVATE : GameEventProxy.BLOCK_DEACTIVATE, pos);
             }
         }
 
@@ -219,9 +210,9 @@ public class ButtonBlockBehavior extends BukkitBlockBehavior {
         LevelUtils.scheduleBlockTick(level, pos, thisBlock, this.ticksToStayPressed);
         playSound(level, pos, true);
         if (VersionHelper.isOrAbove1_20_5()) {
-            LevelAccessorProxy.INSTANCE.gameEvent$0(level, player, MGameEvents.BLOCK_ACTIVATE$holder, pos);
+            LevelAccessorProxy.INSTANCE.gameEvent$0(level, player, GameEventProxy.BLOCK_ACTIVATE, pos);
         } else {
-            LevelAccessorProxy.INSTANCE.gameEvent$1(level, player, MGameEvents.BLOCK_ACTIVATE, pos);
+            LevelAccessorProxy.INSTANCE.gameEvent$1(level, player, GameEventProxy.BLOCK_ACTIVATE, pos);
         }
     }
 

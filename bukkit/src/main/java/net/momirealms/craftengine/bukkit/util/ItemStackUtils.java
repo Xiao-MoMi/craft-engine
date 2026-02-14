@@ -2,8 +2,6 @@ package net.momirealms.craftengine.bukkit.util;
 
 import com.mojang.serialization.Dynamic;
 import net.momirealms.craftengine.bukkit.item.BukkitItemManager;
-import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.MReferences;
-import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.MRegistryOps;
 import net.momirealms.craftengine.core.item.Item;
 import net.momirealms.craftengine.core.item.recipe.UniqueIdItem;
 import net.momirealms.craftengine.core.plugin.CraftEngine;
@@ -12,6 +10,7 @@ import net.momirealms.craftengine.core.util.VersionHelper;
 import net.momirealms.craftengine.proxy.bukkit.craftbukkit.inventory.CraftItemStackProxy;
 import net.momirealms.craftengine.proxy.minecraft.nbt.CompoundTagProxy;
 import net.momirealms.craftengine.proxy.minecraft.util.DataFixersProxy;
+import net.momirealms.craftengine.proxy.minecraft.util.datafix.fixes.ReferencesProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.entity.LivingEntityProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.item.ItemStackProxy;
 import net.momirealms.sparrow.nbt.Tag;
@@ -69,12 +68,12 @@ public final class ItemStackUtils {
     @Nullable
     public static Tag saveNMSItemStackAsTag(Object nmsStack) {
         if (VersionHelper.COMPONENT_RELEASE) {
-            return ItemStackProxy.INSTANCE.getCodec().encodeStart(MRegistryOps.SPARROW_NBT, nmsStack)
+            return ItemStackProxy.INSTANCE.getCodec().encodeStart(RegistryOps.SPARROW_NBT, nmsStack)
                     .resultOrPartial(error -> CraftEngine.instance().logger().severe("Error while saving item: " + error))
                     .orElse(null);
         } else {
             Object nmsTag = ItemStackProxy.INSTANCE.save(nmsStack, CompoundTagProxy.INSTANCE.newInstance());
-            return MRegistryOps.NBT.convertTo(MRegistryOps.SPARROW_NBT, nmsTag);
+            return RegistryOps.NBT.convertTo(RegistryOps.SPARROW_NBT, nmsTag);
         }
     }
 
@@ -88,16 +87,16 @@ public final class ItemStackUtils {
         Tag itemTag = tag;
         int currentVersion = VersionHelper.WORLD_VERSION;
         if (Config.enableItemDataFixerUpper() && dataVersion != currentVersion) {
-            Dynamic<Tag> input = new Dynamic<>(MRegistryOps.SPARROW_NBT, itemTag);
-            itemTag = DataFixersProxy.INSTANCE.getDataFixer().update(MReferences.ITEM_STACK, input, dataVersion, currentVersion).getValue();
+            Dynamic<Tag> input = new Dynamic<>(RegistryOps.SPARROW_NBT, itemTag);
+            itemTag = DataFixersProxy.INSTANCE.getDataFixer().update(ReferencesProxy.ITEM_STACK, input, dataVersion, currentVersion).getValue();
         }
         final Tag finalItemTag = itemTag;
         if (VersionHelper.COMPONENT_RELEASE) {
-            return ItemStackProxy.INSTANCE.getCodec().parse(MRegistryOps.SPARROW_NBT, finalItemTag)
+            return ItemStackProxy.INSTANCE.getCodec().parse(RegistryOps.SPARROW_NBT, finalItemTag)
                     .resultOrPartial(error -> CraftEngine.instance().logger().severe("Tried to load invalid item: '" + finalItemTag + "'. " + error))
                     .orElse(null);
         } else {
-            Object nmsTag = MRegistryOps.SPARROW_NBT.convertTo(MRegistryOps.NBT, finalItemTag);
+            Object nmsTag = RegistryOps.SPARROW_NBT.convertTo(RegistryOps.NBT, finalItemTag);
             return ItemStackProxy.INSTANCE.of(nmsTag);
         }
     }

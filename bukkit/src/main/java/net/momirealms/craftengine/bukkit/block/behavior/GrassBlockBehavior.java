@@ -2,8 +2,6 @@ package net.momirealms.craftengine.bukkit.block.behavior;
 
 import net.momirealms.antigrieflib.Flag;
 import net.momirealms.craftengine.bukkit.plugin.BukkitCraftEngine;
-import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.CoreReflections;
-import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.MBlocks;
 import net.momirealms.craftengine.bukkit.util.*;
 import net.momirealms.craftengine.bukkit.world.BukkitExistingBlock;
 import net.momirealms.craftengine.core.block.CustomBlock;
@@ -27,6 +25,7 @@ import net.momirealms.craftengine.proxy.minecraft.server.level.ServerChunkCacheP
 import net.momirealms.craftengine.proxy.minecraft.server.level.ServerLevelProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.level.BlockGetterProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.level.LevelProxy;
+import net.momirealms.craftengine.proxy.minecraft.world.level.block.BlocksProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.level.block.BonemealableBlockProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.level.block.state.BlockBehaviourProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.level.levelgen.placement.PlacedFeatureProxy;
@@ -130,7 +129,7 @@ public class GrassBlockBehavior extends BukkitBlockBehavior {
     }
 
     @Override
-    public void performBoneMeal(Object thisBlock, Object[] args) throws Exception {
+    public void performBoneMeal(Object thisBlock, Object[] args) {
         Object registryAccess = RegistryUtils.getRegistryAccess();
         Object registry = RegistryAccessProxy.INSTANCE.lookupOrThrow(registryAccess, RegistriesProxy.PLACED_FEATURE);
         if (registry == null) return;
@@ -169,8 +168,8 @@ public class GrassBlockBehavior extends BukkitBlockBehavior {
                 if (BlockBehaviourProxy.BlockStateBaseProxy.INSTANCE.isCollisionShapeFullBlock(currentState, world, nmsCurrentPos)) {
                     continue out;
                 }
-                if (BlockStateUtils.getBlockOwner(currentState) == MBlocks.SHORT_GRASS && RandomUtils.generateRandomInt(0, 10) == 0) {
-                    CoreReflections.method$BonemealableBlock$performBonemeal.invoke(MBlocks.SHORT_GRASS, world, random, nmsCurrentPos, currentState);
+                if (BlockStateUtils.getBlockOwner(currentState) == BlocksProxy.SHORT_GRASS && RandomUtils.generateRandomInt(0, 10) == 0) {
+                    BonemealableBlockProxy.INSTANCE.performBonemeal(BlocksProxy.SHORT_GRASS, world, random, nmsCurrentPos, currentState);
                 }
                 if (BlockBehaviourProxy.BlockStateBaseProxy.INSTANCE.isAir(currentState)) {
                     Object chunkGenerator = ServerChunkCacheProxy.INSTANCE.getGenerator(ServerLevelProxy.INSTANCE.getChunkSource(world));

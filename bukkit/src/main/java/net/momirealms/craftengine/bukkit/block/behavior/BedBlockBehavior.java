@@ -4,8 +4,6 @@ import net.momirealms.craftengine.bukkit.api.BukkitAdaptors;
 import net.momirealms.craftengine.bukkit.block.entity.BedBlockEntity;
 import net.momirealms.craftengine.bukkit.block.entity.BukkitBlockEntityTypes;
 import net.momirealms.craftengine.bukkit.entity.seat.BukkitSeat;
-import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.MBlocks;
-import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.MFluids;
 import net.momirealms.craftengine.bukkit.plugin.user.BukkitServerPlayer;
 import net.momirealms.craftengine.bukkit.util.BlockStateUtils;
 import net.momirealms.craftengine.bukkit.util.DirectionUtils;
@@ -34,8 +32,10 @@ import net.momirealms.craftengine.proxy.minecraft.core.BlockPosProxy;
 import net.momirealms.craftengine.proxy.minecraft.server.level.ServerPlayerProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.level.BlockGetterProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.level.LevelWriterProxy;
+import net.momirealms.craftengine.proxy.minecraft.world.level.block.BlocksProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.level.block.state.BlockBehaviourProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.level.material.FluidStateProxy;
+import net.momirealms.craftengine.proxy.minecraft.world.level.material.FluidsProxy;
 import org.bukkit.inventory.ItemStack;
 import org.joml.Vector3f;
 
@@ -85,20 +85,20 @@ public class BedBlockBehavior extends BukkitBlockBehavior implements EntityBlock
         ImmutableBlockState neighborState = BlockStateUtils.getOptionalCustomBlockState(args[updateShape$neighborState]).orElse(null);
         if (neighborState == null) {
             MultiHighBlockBehavior.playBreakEffect(state, blockPos, level);
-            return MBlocks.AIR$defaultState;
+            return BlocksProxy.AIR$defaultState;
         }
         if (state.owner() != neighborState.owner()) {
             MultiHighBlockBehavior.playBreakEffect(state, blockPos, level);
-            return MBlocks.AIR$defaultState;
+            return BlocksProxy.AIR$defaultState;
         }
         BedBlockBehavior neighborBehavior = neighborState.behavior().getAs(BedBlockBehavior.class).orElse(null);
         if (neighborBehavior == null) {
             MultiHighBlockBehavior.playBreakEffect(state, blockPos, level);
-            return MBlocks.AIR$defaultState;
+            return BlocksProxy.AIR$defaultState;
         }
         if (state.get(behavior.partProperty) == neighborState.get(neighborBehavior.partProperty)) {
             MultiHighBlockBehavior.playBreakEffect(state, blockPos, level);
-            return MBlocks.AIR$defaultState;
+            return BlocksProxy.AIR$defaultState;
         }
         return args[0];
     }
@@ -145,9 +145,9 @@ public class BedBlockBehavior extends BukkitBlockBehavior implements EntityBlock
         if (state.owner() != headState.owner() || headState.get(headBehavior.partProperty) != BedPart.HEAD) {
             return;
         }
-        Object emptyState = FluidStateProxy.INSTANCE.getType(BlockBehaviourProxy.BlockStateBaseProxy.INSTANCE.getFluidState(blockState)) == MFluids.WATER
-                ? MBlocks.WATER$defaultState
-                : MBlocks.AIR$defaultState;
+        Object emptyState = FluidStateProxy.INSTANCE.getType(BlockBehaviourProxy.BlockStateBaseProxy.INSTANCE.getFluidState(blockState)) == FluidsProxy.WATER
+                ? BlocksProxy.WATER$defaultState
+                : BlocksProxy.AIR$defaultState;
         LevelWriterProxy.INSTANCE.setBlock(level, pos, emptyState, UPDATE_NEIGHBORS | UPDATE_CLIENTS | UPDATE_SUPPRESS_DROPS);
         LevelUtils.levelEvent(level, player, WorldEvents.BLOCK_BREAK_EFFECT, pos, headState.customBlockState().registryId());
     }

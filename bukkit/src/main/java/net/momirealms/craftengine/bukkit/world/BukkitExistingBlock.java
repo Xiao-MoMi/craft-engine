@@ -3,8 +3,6 @@ package net.momirealms.craftengine.bukkit.world;
 import net.momirealms.craftengine.bukkit.api.BukkitAdaptors;
 import net.momirealms.craftengine.bukkit.api.CraftEngineBlocks;
 import net.momirealms.craftengine.bukkit.nms.FastNMS;
-import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.MBlocks;
-import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.MFluids;
 import net.momirealms.craftengine.bukkit.util.BlockStateUtils;
 import net.momirealms.craftengine.bukkit.util.LocationUtils;
 import net.momirealms.craftengine.core.block.*;
@@ -14,9 +12,11 @@ import net.momirealms.craftengine.core.world.World;
 import net.momirealms.craftengine.core.world.context.BlockPlaceContext;
 import net.momirealms.craftengine.proxy.bukkit.craftbukkit.CraftWorldProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.level.BlockGetterProxy;
+import net.momirealms.craftengine.proxy.minecraft.world.level.block.BlocksProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.level.block.SnowLayerBlockProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.level.block.state.StateHolderProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.level.material.FluidStateProxy;
+import net.momirealms.craftengine.proxy.minecraft.world.level.material.FluidsProxy;
 import org.bukkit.Location;
 import org.bukkit.block.Block;
 import org.jetbrains.annotations.NotNull;
@@ -37,7 +37,7 @@ public class BukkitExistingBlock implements ExistingBlock {
         if (customState != null && !customState.isEmpty()) {
             return customState.behavior().canBeReplaced(context, customState);
         }
-        if (BlockStateUtils.getBlockOwner(state) == MBlocks.SNOW) {
+        if (BlockStateUtils.getBlockOwner(state) == BlocksProxy.SNOW) {
             return (Integer) StateHolderProxy.INSTANCE.getValue(state, SnowLayerBlockProxy.LAYERS) == 1;
         }
         return BlockStateUtils.isReplaceable(state);
@@ -49,7 +49,7 @@ public class BukkitExistingBlock implements ExistingBlock {
         Object serverLevel = CraftWorldProxy.INSTANCE.getWorld(this.block.getWorld());
         Object fluidData = BlockGetterProxy.INSTANCE.getFluidState(serverLevel, LocationUtils.toBlockPos(location.getBlockX(), location.getBlockY(), location.getBlockZ()));
         if (fluidData == null) return false;
-        return FluidStateProxy.INSTANCE.getType(fluidData) == MFluids.WATER;
+        return FluidStateProxy.INSTANCE.getType(fluidData) == FluidsProxy.WATER;
     }
 
     @Override

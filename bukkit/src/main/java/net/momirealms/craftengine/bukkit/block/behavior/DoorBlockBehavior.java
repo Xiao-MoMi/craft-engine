@@ -4,7 +4,6 @@ import net.momirealms.antigrieflib.Flag;
 import net.momirealms.craftengine.bukkit.api.BukkitAdaptors;
 import net.momirealms.craftengine.bukkit.block.BukkitBlockManager;
 import net.momirealms.craftengine.bukkit.plugin.BukkitCraftEngine;
-import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.MBlocks;
 import net.momirealms.craftengine.bukkit.plugin.user.BukkitServerPlayer;
 import net.momirealms.craftengine.bukkit.util.BlockStateUtils;
 import net.momirealms.craftengine.bukkit.util.LevelUtils;
@@ -36,6 +35,7 @@ import net.momirealms.craftengine.proxy.minecraft.core.DirectionProxy;
 import net.momirealms.craftengine.proxy.minecraft.core.Vec3iProxy;
 import net.momirealms.craftengine.proxy.minecraft.server.level.ServerPlayerProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.level.*;
+import net.momirealms.craftengine.proxy.minecraft.world.level.block.BlocksProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.level.block.SupportTypeProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.level.block.state.BlockBehaviourProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.level.pathfinder.PathComputationTypeProxy;
@@ -111,22 +111,22 @@ public class DoorBlockBehavior extends AbstractCanSurviveBlockBehavior implement
         if (DirectionProxy.INSTANCE.getAxis(direction) == AxisProxy.Y && half == DoubleBlockHalf.LOWER == (direction == DirectionProxy.UP)) {
             Optional<ImmutableBlockState> optionalNeighborState = BlockStateUtils.getOptionalCustomBlockState(args[updateShape$neighborState]);
             if (optionalNeighborState.isEmpty()) {
-                return MBlocks.AIR$defaultState;
+                return BlocksProxy.AIR$defaultState;
             }
             ImmutableBlockState neighborState = optionalNeighborState.get();
             Optional<DoorBlockBehavior> anotherDoorBehavior = neighborState.behavior().getAs(DoorBlockBehavior.class);
             if (anotherDoorBehavior.isEmpty()) {
-                return MBlocks.AIR$defaultState;
+                return BlocksProxy.AIR$defaultState;
             }
             if (neighborState.get(anotherDoorBehavior.get().halfProperty) != half) {
                 return neighborState.with(anotherDoorBehavior.get().halfProperty, half).customBlockState().literalObject();
             }
-            return MBlocks.AIR$defaultState;
+            return BlocksProxy.AIR$defaultState;
         } else {
             if (half == DoubleBlockHalf.LOWER && direction == DirectionProxy.DOWN
                     && !canSurvive(thisBlock, blockState, level, blockPos)) {
                 MultiHighBlockBehavior.playBreakEffect(customState, blockPos, level);
-                return MBlocks.AIR$defaultState;
+                return BlocksProxy.AIR$defaultState;
             }
             return blockState;
         }
@@ -158,7 +158,7 @@ public class DoorBlockBehavior extends AbstractCanSurviveBlockBehavior implement
             if (belowState == null || belowState.isEmpty()) return;
             Optional<DoorBlockBehavior> belowDoorBehavior = belowState.behavior().getAs(DoorBlockBehavior.class);
             if (belowDoorBehavior.isEmpty() || belowState.get(this.halfProperty) != DoubleBlockHalf.LOWER) return;
-            LevelWriterProxy.INSTANCE.setBlock(level, blockPos, MBlocks.AIR$defaultState, UPDATE_NEIGHBORS | UPDATE_CLIENTS | UPDATE_SUPPRESS_DROPS);
+            LevelWriterProxy.INSTANCE.setBlock(level, blockPos, BlocksProxy.AIR$defaultState, UPDATE_NEIGHBORS | UPDATE_CLIENTS | UPDATE_SUPPRESS_DROPS);
             LevelUtils.levelEvent(level, player, WorldEvents.BLOCK_BREAK_EFFECT, blockPos, belowState.customBlockState().registryId());
         }
     }

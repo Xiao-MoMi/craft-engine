@@ -1,7 +1,5 @@
 package net.momirealms.craftengine.bukkit.block.behavior;
 
-import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.MBlocks;
-import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.MFluids;
 import net.momirealms.craftengine.bukkit.util.BlockStateUtils;
 import net.momirealms.craftengine.bukkit.util.LevelUtils;
 import net.momirealms.craftengine.bukkit.util.LocationUtils;
@@ -17,8 +15,10 @@ import net.momirealms.craftengine.proxy.minecraft.core.BlockPosProxy;
 import net.momirealms.craftengine.proxy.minecraft.core.DirectionProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.level.BlockGetterProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.level.block.BlockProxy;
+import net.momirealms.craftengine.proxy.minecraft.world.level.block.BlocksProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.level.block.state.BlockBehaviourProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.level.material.FluidStateProxy;
+import net.momirealms.craftengine.proxy.minecraft.world.level.material.FluidsProxy;
 
 import java.util.Map;
 import java.util.concurrent.Callable;
@@ -41,7 +41,7 @@ public class HangableBlockBehavior extends BukkitBlockBehavior implements IsPath
             if (direction.axis() != Direction.Axis.Y) continue;
             ImmutableBlockState blockState = state.with(this.hangingProperty, direction == Direction.UP);
             if (!BlockBehaviourProxy.BlockStateBaseProxy.INSTANCE.canSurvive(blockState.customBlockState().literalObject(), world, blockPos)) continue;
-            return super.waterloggedProperty != null ? blockState.with(super.waterloggedProperty, fluidType == MFluids.WATER) : blockState;
+            return super.waterloggedProperty != null ? blockState.with(super.waterloggedProperty, fluidType == FluidsProxy.WATER) : blockState;
         }
         return state;
     }
@@ -63,13 +63,13 @@ public class HangableBlockBehavior extends BukkitBlockBehavior implements IsPath
     @Override
     public Object updateShape(Object thisBlock, Object[] args, Callable<Object> superMethod) throws Exception {
         ImmutableBlockState state = BlockStateUtils.getOptionalCustomBlockState(args[0]).orElse(null);
-        if (state == null) return MBlocks.AIR$defaultState;
+        if (state == null) return BlocksProxy.AIR$defaultState;
         if (super.waterloggedProperty != null && state.get(super.waterloggedProperty)) {
-            LevelUtils.scheduleFluidTick(args[updateShape$level], args[updateShape$blockPos], MFluids.WATER, 5);
+            LevelUtils.scheduleFluidTick(args[updateShape$level], args[updateShape$blockPos], FluidsProxy.WATER, 5);
         }
         if ((state.get(this.hangingProperty) ? DirectionProxy.UP : DirectionProxy.DOWN) == args[updateShape$direction]
                 && !BlockBehaviourProxy.BlockStateBaseProxy.INSTANCE.canSurvive(args[0], args[updateShape$level], args[updateShape$blockPos])) {
-            return MBlocks.AIR$defaultState;
+            return BlocksProxy.AIR$defaultState;
         }
         return superMethod.call();
     }

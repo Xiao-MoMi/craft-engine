@@ -1,8 +1,6 @@
 package net.momirealms.craftengine.bukkit.block.behavior;
 
 import net.momirealms.craftengine.bukkit.block.BukkitBlockManager;
-import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.MBlocks;
-import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.MTagKeys;
 import net.momirealms.craftengine.core.block.CustomBlock;
 import net.momirealms.craftengine.core.block.ImmutableBlockState;
 import net.momirealms.craftengine.core.block.UpdateFlags;
@@ -14,9 +12,11 @@ import net.momirealms.craftengine.core.util.VersionHelper;
 import net.momirealms.craftengine.core.util.random.RandomUtils;
 import net.momirealms.craftengine.proxy.minecraft.core.BlockPosProxy;
 import net.momirealms.craftengine.proxy.minecraft.core.DirectionProxy;
+import net.momirealms.craftengine.proxy.minecraft.tags.FluidTagsProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.level.BlockGetterProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.level.LevelReaderProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.level.LevelWriterProxy;
+import net.momirealms.craftengine.proxy.minecraft.world.level.block.BlocksProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.level.block.SnowLayerBlockProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.level.block.state.BlockBehaviourProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.level.block.state.StateHolderProxy;
@@ -71,7 +71,7 @@ public class SurfaceSpreadingBlockBehavior extends BukkitBlockBehavior {
                         BlockGetterProxy.INSTANCE.getBlockState(
                                 level, BlockPosProxy.INSTANCE.relative(blockPos, DirectionProxy.UP)
                         ),
-                        MBlocks.SNOW
+                        BlocksProxy.SNOW
                 );
                 newState = newState.with(this.snowyProperty, hasSnow);
             }
@@ -82,7 +82,7 @@ public class SurfaceSpreadingBlockBehavior extends BukkitBlockBehavior {
     private static boolean canBeGrass(Object state, Object level, Object pos) {
         Object blockPos = BlockPosProxy.INSTANCE.relative(pos, DirectionProxy.UP);
         Object blockState = BlockGetterProxy.INSTANCE.getBlockState(level, blockPos);
-        if (BlockBehaviourProxy.BlockStateBaseProxy.INSTANCE.is$0(blockState, MBlocks.SNOW) && ((Integer) StateHolderProxy.INSTANCE.getValue(blockState, SnowLayerBlockProxy.LAYERS)) == 1) {
+        if (BlockBehaviourProxy.BlockStateBaseProxy.INSTANCE.is$0(blockState, BlocksProxy.SNOW) && ((Integer) StateHolderProxy.INSTANCE.getValue(blockState, SnowLayerBlockProxy.LAYERS)) == 1) {
             return true;
         } else if (FluidStateProxy.INSTANCE.getAmount(BlockBehaviourProxy.BlockStateBaseProxy.INSTANCE.getFluidState(blockState)) == 8) {
             return false;
@@ -103,7 +103,7 @@ public class SurfaceSpreadingBlockBehavior extends BukkitBlockBehavior {
 
     private static boolean canPropagate(Object state, Object level, Object pos) {
         Object blockPos = BlockPosProxy.INSTANCE.relative(pos, DirectionProxy.UP);
-        return canBeGrass(state, level, pos) && !FluidStateProxy.INSTANCE.is(BlockGetterProxy.INSTANCE.getFluidState(level, blockPos), MTagKeys.Fluid$WATER);
+        return canBeGrass(state, level, pos) && !FluidStateProxy.INSTANCE.is(BlockGetterProxy.INSTANCE.getFluidState(level, blockPos), FluidTagsProxy.WATER);
     }
 
     private static class Factory implements BlockBehaviorFactory<SurfaceSpreadingBlockBehavior> {

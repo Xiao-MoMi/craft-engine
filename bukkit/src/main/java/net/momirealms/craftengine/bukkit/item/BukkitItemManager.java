@@ -14,8 +14,7 @@ import net.momirealms.craftengine.bukkit.item.listener.ItemEventListener;
 import net.momirealms.craftengine.bukkit.item.listener.SlotChangeListener;
 import net.momirealms.craftengine.bukkit.item.recipe.BukkitRecipeManager;
 import net.momirealms.craftengine.bukkit.plugin.BukkitCraftEngine;
-import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.MItems;
-import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.MRegistryOps;
+import net.momirealms.craftengine.bukkit.util.RegistryOps;
 import net.momirealms.craftengine.bukkit.plugin.user.BukkitServerPlayer;
 import net.momirealms.craftengine.bukkit.util.ItemStackUtils;
 import net.momirealms.craftengine.bukkit.util.KeyUtils;
@@ -44,6 +43,7 @@ import net.momirealms.craftengine.proxy.minecraft.network.chat.ComponentProxy;
 import net.momirealms.craftengine.proxy.minecraft.resources.ResourceKeyProxy;
 import net.momirealms.craftengine.proxy.minecraft.tags.TagKeyProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.item.ItemStackProxy;
+import net.momirealms.craftengine.proxy.minecraft.world.item.ItemsProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.item.equipment.trim.*;
 import org.bukkit.Bukkit;
 import org.bukkit.NamespacedKey;
@@ -171,7 +171,7 @@ public class BukkitItemManager extends AbstractItemManager<ItemStack> {
             jsonObject.addProperty("id", result.id());
             jsonObject.addProperty("count", result.count());
             jsonObject.add("components", result.components());
-            Object nmsStack = ItemStackProxy.INSTANCE.getCodec().parse(MRegistryOps.JSON, jsonObject)
+            Object nmsStack = ItemStackProxy.INSTANCE.getCodec().parse(RegistryOps.JSON, jsonObject)
                     .resultOrPartial((error) -> plugin.logger().severe("Tried to load invalid item: '" + error + "'")).orElse(null);
             if (nmsStack == null) {
                 return this.emptyItem;
@@ -359,7 +359,7 @@ public class BukkitItemManager extends AbstractItemManager<ItemStack> {
     @Nullable
     private ItemStack createVanillaItemStack(Key id) {
         Object item = RegistryUtils.getRegistryValue(BuiltInRegistriesProxy.ITEM, KeyUtils.toIdentifier(id));
-        if (item == MItems.AIR && !id.equals(ItemKeys.AIR)) {
+        if (item == ItemsProxy.AIR && !id.equals(ItemKeys.AIR)) {
             return null;
         }
         return CraftItemStackProxy.INSTANCE.asCraftMirror(ItemStackProxy.INSTANCE.newInstance(item, 1));
@@ -375,10 +375,10 @@ public class BukkitItemManager extends AbstractItemManager<ItemStack> {
     protected CustomItem.Builder<ItemStack> createPlatformItemBuilder(UniqueKey id, Key materialId, Key clientBoundMaterialId) {
         Object item = RegistryUtils.getRegistryValue(BuiltInRegistriesProxy.ITEM, KeyUtils.toIdentifier(materialId));
         Object clientBoundItem = materialId == clientBoundMaterialId ? item : RegistryUtils.getRegistryValue(BuiltInRegistriesProxy.ITEM, KeyUtils.toIdentifier(clientBoundMaterialId));
-        if (item == MItems.AIR) {
+        if (item == ItemsProxy.AIR) {
             throw new LocalizedResourceConfigException("warning.config.item.invalid_material", materialId.toString());
         }
-        if (clientBoundItem == MItems.AIR) {
+        if (clientBoundItem == ItemsProxy.AIR) {
             throw new LocalizedResourceConfigException("warning.config.item.invalid_material", clientBoundMaterialId.toString());
         }
         return BukkitCustomItem.builder(item, clientBoundItem)

@@ -2,8 +2,6 @@ package net.momirealms.craftengine.bukkit.block.behavior;
 
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import net.momirealms.craftengine.bukkit.block.BukkitBlockManager;
-import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.MBlocks;
-import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.MFluids;
 import net.momirealms.craftengine.bukkit.util.BlockStateUtils;
 import net.momirealms.craftengine.bukkit.util.DirectionUtils;
 import net.momirealms.craftengine.bukkit.util.RegistryUtils;
@@ -21,10 +19,12 @@ import net.momirealms.craftengine.proxy.minecraft.resources.IdentifierProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.level.BlockGetterProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.level.LevelWriterProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.level.block.BlockProxy;
+import net.momirealms.craftengine.proxy.minecraft.world.level.block.BlocksProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.level.block.state.BlockBehaviourProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.level.block.state.StateHolderProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.level.block.state.properties.BlockStatePropertiesProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.level.material.FluidStateProxy;
+import net.momirealms.craftengine.proxy.minecraft.world.level.material.FluidsProxy;
 
 import java.util.List;
 import java.util.Map;
@@ -79,14 +79,14 @@ public class BuddingBlockBehavior extends BukkitBlockBehavior {
             }
             BooleanProperty waterlogged = (BooleanProperty) customBlock.getProperty("waterlogged");
             if (waterlogged != null) {
-                newState = newState.with(waterlogged, FluidStateProxy.INSTANCE.getType(BlockBehaviourProxy.BlockStateBaseProxy.INSTANCE.getFluidState(blockState)) == MFluids.WATER);
+                newState = newState.with(waterlogged, FluidStateProxy.INSTANCE.getType(BlockBehaviourProxy.BlockStateBaseProxy.INSTANCE.getFluidState(blockState)) == FluidsProxy.WATER);
             }
             LevelWriterProxy.INSTANCE.setBlock(level, blockPos, newState.customBlockState().literalObject(), 3);
         } else if (blockId.namespace().equals("minecraft")) {
             Object block = RegistryUtils.getRegistryValue(BuiltInRegistriesProxy.BLOCK, IdentifierProxy.INSTANCE.newInstance("minecraft", blockId.value()));
             if (block == null) return;
             Object newState = BlockProxy.INSTANCE.getDefaultBlockState(block);
-            newState = StateHolderProxy.INSTANCE.trySetValue(newState, BlockStatePropertiesProxy.WATERLOGGED, FluidStateProxy.INSTANCE.getType(BlockBehaviourProxy.BlockStateBaseProxy.INSTANCE.getFluidState(blockState)) == MFluids.WATER);
+            newState = StateHolderProxy.INSTANCE.trySetValue(newState, BlockStatePropertiesProxy.WATERLOGGED, FluidStateProxy.INSTANCE.getType(BlockBehaviourProxy.BlockStateBaseProxy.INSTANCE.getFluidState(blockState)) == FluidsProxy.WATER);
             newState = StateHolderProxy.INSTANCE.trySetValue(newState, BlockStatePropertiesProxy.FACING, (Comparable<?>) nmsDirection);
             LevelWriterProxy.INSTANCE.setBlock(level, blockPos, newState, 3);
         }
@@ -94,7 +94,7 @@ public class BuddingBlockBehavior extends BukkitBlockBehavior {
 
     public static boolean canClusterGrowAtState(Object state) {
         return BlockBehaviourProxy.BlockStateBaseProxy.INSTANCE.isAir(state)
-                || BlockBehaviourProxy.BlockStateBaseProxy.INSTANCE.is$0(state, MBlocks.WATER)
+                || BlockBehaviourProxy.BlockStateBaseProxy.INSTANCE.is$0(state, BlocksProxy.WATER)
                 && FluidStateProxy.INSTANCE.getAmount(BlockBehaviourProxy.BlockStateBaseProxy.INSTANCE.getFluidState(state)) == 8;
     }
 

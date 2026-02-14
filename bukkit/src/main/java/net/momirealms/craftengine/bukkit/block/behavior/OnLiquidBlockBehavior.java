@@ -1,7 +1,5 @@
 package net.momirealms.craftengine.bukkit.block.behavior;
 
-import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.MBlocks;
-import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.MFluids;
 import net.momirealms.craftengine.bukkit.util.BlockStateUtils;
 import net.momirealms.craftengine.bukkit.util.LocationUtils;
 import net.momirealms.craftengine.core.block.CustomBlock;
@@ -12,8 +10,10 @@ import net.momirealms.craftengine.core.util.ResourceConfigUtils;
 import net.momirealms.craftengine.proxy.minecraft.core.BlockPosProxy;
 import net.momirealms.craftengine.proxy.minecraft.core.Vec3iProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.level.BlockGetterProxy;
+import net.momirealms.craftengine.proxy.minecraft.world.level.block.BlocksProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.level.block.state.BlockBehaviourProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.level.material.FluidStateProxy;
+import net.momirealms.craftengine.proxy.minecraft.world.level.material.FluidsProxy;
 
 import java.util.List;
 import java.util.Map;
@@ -70,13 +70,13 @@ public class OnLiquidBlockBehavior extends AbstractCanSurviveBlockBehavior {
         }
         Object fluidState = BlockGetterProxy.INSTANCE.getFluidState(world, belowPos);
         Object fluidStateAbove = BlockGetterProxy.INSTANCE.getFluidState(world, LocationUtils.above(belowPos));
-        if (FluidStateProxy.INSTANCE.getType(fluidStateAbove) != MFluids.EMPTY) {
+        if (FluidStateProxy.INSTANCE.getType(fluidStateAbove) != FluidsProxy.EMPTY) {
             return false;
         }
-        if (this.onWater && (FluidStateProxy.INSTANCE.getType(fluidState) == MFluids.WATER || BlockBehaviourProxy.BlockStateBaseProxy.INSTANCE.getBlock(belowState) == MBlocks.ICE)) {
+        if (this.onWater && (FluidStateProxy.INSTANCE.getType(fluidState) == FluidsProxy.WATER || BlockBehaviourProxy.BlockStateBaseProxy.INSTANCE.getBlock(belowState) == BlocksProxy.ICE)) {
             return true;
         }
-        if (this.onLava && FluidStateProxy.INSTANCE.getType(fluidState) == MFluids.LAVA) {
+        if (this.onLava && FluidStateProxy.INSTANCE.getType(fluidState) == FluidsProxy.LAVA) {
             return true;
         }
         return false;

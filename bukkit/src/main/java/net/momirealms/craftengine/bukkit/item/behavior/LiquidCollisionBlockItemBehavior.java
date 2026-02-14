@@ -1,6 +1,5 @@
 package net.momirealms.craftengine.bukkit.item.behavior;
 
-import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.MFluids;
 import net.momirealms.craftengine.bukkit.util.DirectionUtils;
 import net.momirealms.craftengine.bukkit.util.LocationUtils;
 import net.momirealms.craftengine.core.entity.player.InteractionHand;
@@ -23,6 +22,7 @@ import net.momirealms.craftengine.proxy.minecraft.world.item.ItemProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.level.BlockGetterProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.level.ClipContextProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.level.material.FluidStateProxy;
+import net.momirealms.craftengine.proxy.minecraft.world.level.material.FluidsProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.phys.BlockHitResultProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.phys.HitResultProxy;
 import org.jetbrains.annotations.Nullable;
@@ -55,7 +55,7 @@ public final class LiquidCollisionBlockItemBehavior extends BlockItemBehavior {
             boolean miss = BlockHitResultProxy.INSTANCE.isMiss(blockHitResult);
             Vec3d hitPos = LocationUtils.fromVec(HitResultProxy.INSTANCE.getLocation(blockHitResult));
             Object fluidType = FluidStateProxy.INSTANCE.getType(BlockGetterProxy.INSTANCE.getFluidState(world.serverWorld(), blockPos));
-            if (fluidType != MFluids.WATER && fluidType != MFluids.LAVA) {
+            if (fluidType != FluidsProxy.WATER && fluidType != FluidsProxy.LAVA) {
                 return InteractionResult.PASS;
             }
             if (miss) {
