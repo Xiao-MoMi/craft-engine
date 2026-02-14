@@ -6,6 +6,7 @@ import net.momirealms.craftengine.bukkit.block.behavior.UnsafeCompositeBlockBeha
 import net.momirealms.craftengine.bukkit.nms.FastNMS;
 import net.momirealms.craftengine.bukkit.plugin.BukkitCraftEngine;
 import net.momirealms.craftengine.bukkit.plugin.injector.BlockGenerator;
+import net.momirealms.craftengine.bukkit.plugin.injector.MaterialInjector;
 import net.momirealms.craftengine.bukkit.plugin.network.BukkitNetworkManager;
 import net.momirealms.craftengine.bukkit.plugin.network.payload.PayloadHelper;
 import net.momirealms.craftengine.bukkit.plugin.network.payload.protocol.VisualBlockStatePacket;
@@ -354,6 +355,9 @@ public final class BukkitBlockManager extends AbstractBlockManager {
         // 这个会影响全局调色盘
         try {
             unfreezeRegistry();
+            boolean injectBukkitMaterial = Config.injectBukkitMaterial();
+            int length = injectBukkitMaterial ? Material.values().length : 0;
+            Material[] newMaterial = injectBukkitMaterial ? Arrays.copyOf(Material.values(), length + count) : null;
             for (int i = 0; i < count; i++) {
                 Key customBlockId = BlockManager.createCustomBlockKey(i);
                 DelegatingBlock customBlock;
@@ -372,6 +376,12 @@ public final class BukkitBlockManager extends AbstractBlockManager {
                 DelegatingBlockState newBlockState = (DelegatingBlockState) BlockProxy.INSTANCE.getDefaultBlockState(customBlock);
                 this.customBlockStates[i] = newBlockState;
                 IdMapperProxy.INSTANCE.add(BlockProxy.BLOCK_STATE_REGISTRY, newBlockState);
+                if (injectBukkitMaterial) {
+                    newMaterial[length + i] = MaterialInjector.createMaterial(customBlockId, length + i, customBlock);
+                }
+            }
+            if (injectBukkitMaterial) {
+                MaterialInjector.resetMaterial(newMaterial);
             }
         } finally {
             freezeRegistry();
@@ -450,26 +460,8 @@ public final class BukkitBlockManager extends AbstractBlockManager {
     }
 
     private void deceiveBukkitRegistry() {
-        Set<String> invalid = new HashSet<>();
-        for (int i = 0; i < this.customBlocks.length; i++) {
-            DelegatingBlock customBlock = this.customBlocks[i];
-            String value = Config.deceiveBukkitMaterial(i).value();
-            Material material;
-            try {
-                material = Material.valueOf(value.toUpperCase(Locale.ROOT));
-            } catch (IllegalArgumentException e) {
-                if (invalid.add(value)) {
-                    this.plugin.logger().warn("Cannot load 'deceive-bukkit-material'. '" + value + "' is an invalid bukkit material", e);
-                }
-                material = Material.BRICKS;
-            }
-            if (!material.isBlock()) {
-                if (invalid.add(value)) {
-                    this.plugin.logger().warn("Cannot load 'deceive-bukkit-material'. '" + value + "' is an invalid bukkit block material");
-                }
-                material = Material.BRICKS;
-            }
-            CraftMagicNumbersProxy.BLOCK_MATERIAL.put(customBlock, material);
+        for (DelegatingBlock customBlock : this.customBlocks) {
+            CraftMagicNumbersProxy.BLOCK_MATERIAL.put(customBlock, Config.injectBukkitMaterial() ? MaterialInjector.getByBlock(customBlock) : Material.STONE);
         }
     }
 
