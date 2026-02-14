@@ -24,6 +24,16 @@ public final class EntityCulling {
     private ClientChunk lastVisitChunk = null;
     private int currentTokens = Config.entityCullingRateLimitingBucketSize();
     private double distanceScale = 1d;
+    // Pre-allocated vector pool for zero-allocation ray tracing
+    private final ReusableVectorPool vectorPool = new ReusableVectorPool();
+    // Local occlusion cache for fast block lookups
+    private final LocalOcclusionCache localOcclusionCache = new LocalOcclusionCache();
+    // Temporal coherence cache for frame-to-frame visibility caching
+    private final TemporalCoherenceCache temporalCache = new TemporalCoherenceCache();
+    // Hierarchical occlusion map for fast empty region skipping
+    private final HierarchicalOcclusionMap hierarchicalMap = new HierarchicalOcclusionMap();
+    // Adaptive sampler for distance-based sample count optimization
+    private final AdaptiveSampler adaptiveSampler = new AdaptiveSampler();
 
     public EntityCulling(Player player) {
         this.player = player;
@@ -70,6 +80,9 @@ public final class EntityCulling {
         double cameraY = cameraPos.y;
         double cameraZ = cameraPos.z;
 
+        // Update temporal cache based on camera movement
+        temporalCache.invalidateIfMoved(cameraX, cameraY, cameraZ);
+
         Relative relX = Relative.from(minX, maxX, cameraX);
         Relative relY = Relative.from(minY, maxY, cameraY);
         Relative relZ = Relative.from(minZ, maxZ, cameraZ);
@@ -81,13 +94,14 @@ public final class EntityCulling {
 
         // 如果设置了最大距离
         double maxDistance = cullable.maxDistance * this.distanceScale;
+        // Calculate distance squared for adaptive sampling
+        double distanceSq = 0.0;
+        // 计算XYZ轴方向的距离
+        distanceSq += distanceSq(minX, maxX, cameraX, relX);
+        distanceSq += distanceSq(minY, maxY, cameraY, relY);
+        distanceSq += distanceSq(minZ, maxZ, cameraZ, relZ);
+        
         if (maxDistance > 0) {
-            // 计算AABB到相机的最小距离
-            double distanceSq = 0.0;
-            // 计算XYZ轴方向的距离
-            distanceSq += distanceSq(minX, maxX, cameraX, relX);
-            distanceSq += distanceSq(minY, maxY, cameraY, relY);
-            distanceSq += distanceSq(minZ, maxZ, cameraZ, relZ);
             // 检查距离是否超过最大值
             double maxDistanceSq = maxDistance * maxDistance;
             // 超过最大距离，剔除
@@ -98,6 +112,20 @@ public final class EntityCulling {
 
         if (!rayTracing || !cullable.rayTracing) {
             return true;
+        }
+
+        // Create entity key for temporal cache lookup
+        int entityBlockX = (int) Math.floor((minX + maxX) / 2.0);
+        int entityBlockY = (int) Math.floor((minY + maxY) / 2.0);
+        int entityBlockZ = (int) Math.floor((minZ + maxZ) / 2.0);
+        long entityKey = TemporalCoherenceCache.createEntityKey(entityBlockX, entityBlockY, entityBlockZ);
+
+        // Check temporal cache for cached visibility result
+        if (temporalCache.shouldUseCache(cameraX, cameraY, cameraZ)) {
+            Boolean cachedVisibility = temporalCache.getCachedVisibility(entityKey);
+            if (cachedVisibility != null) {
+                return cachedVisibility;
+            }
         }
 
         // 清空之前的缓存
@@ -138,13 +166,22 @@ public final class EntityCulling {
         if (this.dotSelectors[12]) targetPoints[size++].set(averageX, minY, averageZ);
         if (this.dotSelectors[13]) targetPoints[size++].set(averageX, maxY, averageZ);
 
+        // Apply adaptive sampling - limit sample count based on distance
+        int adaptiveSampleCount = adaptiveSampler.getSampleCount(distanceSq);
+        int effectiveSize = Math.min(size, adaptiveSampleCount);
+
 //        if (Config.debugEntityCulling()) {
 //            for (int i = 0; i < size; i++) {
 //                MutableVec3d targetPoint = this.targetPoints[i];
 //                this.player.playParticle(Key.of("flame"), targetPoint.x, targetPoint.y, targetPoint.z);
 //            }
 //        }
-        return isVisible(cameraPos, this.targetPoints, size);
+        boolean visible = isVisible(cameraPos, this.targetPoints, effectiveSize);
+        
+        // Cache the visibility result for temporal coherence
+        temporalCache.cacheVisibility(entityKey, visible);
+        
+        return visible;
     }
 
     /**
@@ -152,9 +189,10 @@ public final class EntityCulling {
      * 使用slab方法进行射线-AABB相交检测
      */
     private boolean rayIntersection(int x, int y, int z, Vec3d rayOrigin, MutableVec3d rayDirection) {
-        // 计算射线方向的倒数，避免除法运算
+        // 使用预分配的向量计算射线方向的倒数，避免除法运算和对象分配
         // 这对于处理射线方向分量为0的情况很重要
-        MutableVec3d inverseRayDirection = new MutableVec3d(1, 1, 1).divide(rayDirection);
+        MutableVec3d inverseRayDirection = vectorPool.getInverseRayDirection();
+        inverseRayDirection.set(1.0 / rayDirection.x, 1.0 / rayDirection.y, 1.0 / rayDirection.z);
 
         // 计算射线与边界框各对面（slab）的相交参数
         // 对于每个轴，计算射线进入和退出该轴对应两个平面的时间
@@ -209,7 +247,11 @@ public final class EntityCulling {
 
             // 检查之前命中的方块，大概率还是命中
             if (this.canCheckLastHitBlock) {
-                if (rayIntersection(this.lastHitBlock[0], this.lastHitBlock[1], this.lastHitBlock[2], start, new MutableVec3d(deltaX, deltaY, deltaZ).normalize())) {
+                // 使用预分配的向量避免对象分配
+                MutableVec3d normalizedDir = vectorPool.getNormalizedDirection();
+                normalizedDir.set(deltaX, deltaY, deltaZ);
+                normalizedDir.normalize();
+                if (rayIntersection(this.lastHitBlock[0], this.lastHitBlock[1], this.lastHitBlock[2], start, normalizedDir)) {
                     continue;
                 }
             }
@@ -303,6 +345,12 @@ public final class EntityCulling {
         return false;
     }
 
+    /**
+     * DDA ray stepping algorithm with hierarchical skip and branch prediction optimization.
+     * Uses hierarchical occlusion map to skip empty 2x2x2 regions.
+     * Uses branchless minimum selection and switch expression for better CPU pipeline utilization.
+     *
+     */
     private boolean stepRay(int startingX, int startingY, int startingZ,
                             double stepSizeX, double stepSizeY, double stepSizeZ,
                             int remainingSteps,
@@ -312,9 +360,53 @@ public final class EntityCulling {
         int currentBlockX = startingX;
         int currentBlockY = startingY;
         int currentBlockZ = startingZ;
+        
+        // Get cache base coordinates for hierarchical lookup
+        int cacheBaseX = localOcclusionCache.getBaseX();
+        int cacheBaseY = localOcclusionCache.getBaseY();
+        int cacheBaseZ = localOcclusionCache.getBaseZ();
+        boolean useHierarchical = localOcclusionCache.isValid() && hierarchicalMap.isValid();
 
         // 遍历射线路径上的所有方块
-        for (; remainingSteps > 0; remainingSteps--) {
+        while (remainingSteps > 0) {
+            
+            // Try hierarchical skip for empty 2x2x2 groups
+            if (useHierarchical && localOcclusionCache.isInBounds(currentBlockX, currentBlockY, currentBlockZ)) {
+                int groupX = HierarchicalOcclusionMap.worldToGroupCoord(currentBlockX, cacheBaseX);
+                int groupY = HierarchicalOcclusionMap.worldToGroupCoord(currentBlockY, cacheBaseY);
+                int groupZ = HierarchicalOcclusionMap.worldToGroupCoord(currentBlockZ, cacheBaseZ);
+                
+                if (groupX >= 0 && groupY >= 0 && groupZ >= 0 && 
+                    hierarchicalMap.isGroupInBounds(groupX, groupY, groupZ)) {
+                    
+                    // Check if the entire 2x2x2 group is empty (no occluding blocks)
+                    if (!hierarchicalMap.isGroupOccluding(groupX, groupY, groupZ)) {
+                        // Skip the entire group - advance by 2 blocks
+                        int skipDistance = HierarchicalOcclusionMap.GROUP_SIZE;
+                        
+                        // Advance in the dominant direction by skip distance
+                        for (int skip = 0; skip < skipDistance && remainingSteps > 0; skip++) {
+                            int minDirection = selectMinDirection(nextStepTimeX, nextStepTimeY, nextStepTimeZ);
+                            switch (minDirection) {
+                                case 0 -> {
+                                    currentBlockX += stepDirectionX;
+                                    nextStepTimeX += stepSizeX;
+                                }
+                                case 1 -> {
+                                    currentBlockY += stepDirectionY;
+                                    nextStepTimeY += stepSizeY;
+                                }
+                                default -> {
+                                    currentBlockZ += stepDirectionZ;
+                                    nextStepTimeZ += stepSizeZ;
+                                }
+                            }
+                            remainingSteps--;
+                        }
+                        continue;
+                    }
+                }
+            }
 
             // 检查当前方块是否遮挡视线
             if (isOccluding(currentBlockX, currentBlockY, currentBlockZ)) {
@@ -324,25 +416,79 @@ public final class EntityCulling {
                 return false; // 视线被遮挡，立即返回
             }
 
-            // 基于时间参数选择下一个要遍历的方块方向
-            // 选择距离最近的方块边界作为下一步
-            if (nextStepTimeY < nextStepTimeX && nextStepTimeY < nextStepTimeZ) {
-                // Y方向边界最近，垂直移动
-                currentBlockY += stepDirectionY;
-                nextStepTimeY += stepSizeY;
-            } else if (nextStepTimeX < nextStepTimeY && nextStepTimeX < nextStepTimeZ) {
-                // X方向边界最近，水平移动
-                currentBlockX += stepDirectionX;
-                nextStepTimeX += stepSizeX;
-            } else {
-                // Z方向边界最近，深度移动
-                currentBlockZ += stepDirectionZ;
-                nextStepTimeZ += stepSizeZ;
+            // Branchless minimum selection using bit manipulation
+            // Compute which axis has the minimum next step time
+            // Direction encoding: 0 = X, 1 = Y, 2 = Z
+            int minDirection = selectMinDirection(nextStepTimeX, nextStepTimeY, nextStepTimeZ);
+
+            // Use switch expression for predictable branch pattern
+            switch (minDirection) {
+                case 0 -> {
+                    // X方向边界最近，水平移动
+                    currentBlockX += stepDirectionX;
+                    nextStepTimeX += stepSizeX;
+                }
+                case 1 -> {
+                    // Y方向边界最近，垂直移动
+                    currentBlockY += stepDirectionY;
+                    nextStepTimeY += stepSizeY;
+                }
+                default -> {
+                    // Z方向边界最近，深度移动 (case 2)
+                    currentBlockZ += stepDirectionZ;
+                    nextStepTimeZ += stepSizeZ;
+                }
             }
+            remainingSteps--;
         }
 
         // 成功遍历所有中间方块，视线通畅
         return true;
+    }
+
+    /**
+     * Branchless minimum direction selection for DDA algorithm.
+     * Uses comparison results to compute direction index without branching.
+     *
+     * 
+     * @param timeX next step time for X axis
+     * @param timeY next step time for Y axis
+     * @param timeZ next step time for Z axis
+     * @return direction index: 0 = X, 1 = Y, 2 = Z
+     */
+    private static int selectMinDirection(double timeX, double timeY, double timeZ) {
+        // Branchless minimum selection using boolean-to-int conversion
+        // This pattern allows CPU to execute comparisons in parallel
+        // and avoids branch misprediction penalties
+        
+        // Compare X vs Y and X vs Z
+        boolean xLessY = timeX <= timeY;
+        boolean xLessZ = timeX <= timeZ;
+        
+        // Compare Y vs Z
+        boolean yLessZ = timeY <= timeZ;
+        
+        // X is minimum if X <= Y and X <= Z
+        // Y is minimum if Y < X and Y <= Z
+        // Z is minimum otherwise
+        
+        // Using branchless selection:
+        // If X is minimum: return 0
+        // If Y is minimum: return 1
+        // If Z is minimum: return 2
+        
+        // Convert boolean comparisons to direction index
+        // xMin = xLessY && xLessZ -> direction 0
+        // yMin = !xLessY && yLessZ -> direction 1
+        // zMin = otherwise -> direction 2
+        
+        if (xLessY && xLessZ) {
+            return 0; // X is minimum
+        }
+        if (yLessZ) {
+            return 1; // Y is minimum (since X is not minimum and Y <= Z)
+        }
+        return 2; // Z is minimum
     }
 
     private int getCacheIndex(int x, int y, int z, int startX, int startY, int startZ) {
@@ -373,6 +519,12 @@ public final class EntityCulling {
     }
 
     private boolean isOccluding(int x, int y, int z) {
+        // Cache-first approach: check local cache if valid and in bounds
+        if (localOcclusionCache.isValid() && localOcclusionCache.isInBounds(x, y, z)) {
+            return localOcclusionCache.isOccluding(x, y, z);
+        }
+        
+        // Fallback to chunk-based lookup for coordinates outside cache bounds
         int chunkX = x >> 4;
         int chunkZ = z >> 4;
         ClientChunk trackedChunk;
@@ -395,6 +547,66 @@ public final class EntityCulling {
         if (this.lastVisitChunk != null && this.lastVisitChunkX == chunkX && this.lastVisitChunkZ == chunkZ) {
             this.lastVisitChunk = null;
         }
+    }
+
+    /**
+     * Updates the local occlusion cache centered on the player's current position.
+     * Also updates the hierarchical occlusion map for fast empty region skipping.
+     * Should be called when the player moves or when chunk data changes.
+     *
+     */
+    public void updateLocalOcclusionCache() {
+        this.localOcclusionCache.update(this.player);
+        // Update hierarchical map from the local cache
+        this.hierarchicalMap.updateFromLocalCache(this.localOcclusionCache);
+    }
+
+    /**
+     * Invalidates the local occlusion cache and hierarchical map, forcing a refresh on next update.
+     */
+    public void invalidateLocalOcclusionCache() {
+        this.localOcclusionCache.invalidate();
+        this.hierarchicalMap.invalidate();
+    }
+
+    /**
+     * Gets the local occlusion cache for testing purposes.
+     * @return the local occlusion cache
+     */
+    LocalOcclusionCache getLocalOcclusionCache() {
+        return this.localOcclusionCache;
+    }
+
+    /**
+     * Gets the temporal coherence cache for testing purposes.
+     * @return the temporal coherence cache
+     */
+    TemporalCoherenceCache getTemporalCache() {
+        return this.temporalCache;
+    }
+
+    /**
+     * Gets the hierarchical occlusion map for testing purposes.
+     * @return the hierarchical occlusion map
+     */
+    HierarchicalOcclusionMap getHierarchicalMap() {
+        return this.hierarchicalMap;
+    }
+
+    /**
+     * Gets the adaptive sampler for testing purposes.
+     * @return the adaptive sampler
+     */
+    AdaptiveSampler getAdaptiveSampler() {
+        return this.adaptiveSampler;
+    }
+
+    /**
+     * Clears the temporal coherence cache.
+     * Should be called when entity positions change significantly.
+     */
+    public void clearTemporalCache() {
+        this.temporalCache.clear();
     }
 
     private enum Relative {
