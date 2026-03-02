@@ -3,6 +3,7 @@ package net.momirealms.craftengine.core.pack.model.legacy;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonPrimitive;
+import net.momirealms.craftengine.core.util.Key;
 import net.momirealms.craftengine.core.util.ResourceConfigUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -13,10 +14,10 @@ import java.util.Objects;
 
 public final class LegacyOverridesModel implements Comparable<LegacyOverridesModel> {
     private final Map<String, Object> predicate;
-    private final String model;
+    private final Key model;
     private final int customModelData;
 
-    public LegacyOverridesModel(@Nullable Map<String, Object> predicate, @NotNull String model, int customModelData) {
+    public LegacyOverridesModel(@Nullable Map<String, Object> predicate, @NotNull Key model, int customModelData) {
         this.predicate = predicate == null ? Map.of() : predicate;
         this.model = model;
         this.customModelData = customModelData;
@@ -26,7 +27,7 @@ public final class LegacyOverridesModel implements Comparable<LegacyOverridesMod
     }
 
     public LegacyOverridesModel(JsonObject json) {
-        this.model = json.get("model").getAsString();
+        this.model = Key.of(json.get("model").getAsString());
         JsonObject predicate = json.getAsJsonObject("predicate");
         if (predicate != null) {
             this.predicate = new HashMap<>();
@@ -61,7 +62,7 @@ public final class LegacyOverridesModel implements Comparable<LegacyOverridesMod
         return this.predicate != null && !this.predicate.isEmpty();
     }
 
-    public String model() {
+    public Key model() {
         return this.model;
     }
 
@@ -80,7 +81,7 @@ public final class LegacyOverridesModel implements Comparable<LegacyOverridesMod
             }
             json.add("predicate", predicateJson);
         }
-        json.addProperty("model", this.model);
+        json.addProperty("model", this.model.asString());
         return json;
     }
 

@@ -418,7 +418,7 @@ public final class Config {
 
         try {
             resource_pack$duplicated_files_handler = config.getMapList("resource-pack.duplicated-files-handler").stream().map(it -> {
-                Map<String, Object> args = MiscUtils.castToMap(it, false);
+                ConfigSection args = ConfigSection.of("resource-pack.duplicated-files-handler", it);
                 return ConditionalResolution.FACTORY.create(args);
             }).toList();
         } catch (LocalizedResourceConfigException e) {

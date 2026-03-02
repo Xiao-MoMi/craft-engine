@@ -17,7 +17,7 @@ public final class AlwaysFalseCondition<CTX extends Context> implements Conditio
 
         @SuppressWarnings("unchecked")
         @Override
-        public AlwaysFalseCondition<CTX> create(ConfigSection arguments) {
+        public AlwaysFalseCondition<CTX> create(ConfigSection section) {
             return (AlwaysFalseCondition<CTX>) INSTANCE;
         }
     }

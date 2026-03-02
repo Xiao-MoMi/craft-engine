@@ -136,7 +136,7 @@ public final class ItemBrowserManagerImpl implements ItemBrowserManager {
             int priority = section.getInt("priority");
             List<String> lore = section.getStringList("lore");
             boolean hidden = section.getBoolean("hidden");
-            List<Condition<Context>> conditionList = section.parseSectionList(s -> CommonConditions.fromConfig(s.values()), "conditions", "condition");
+            List<Condition<Context>> conditionList = section.parseSectionList(CommonConditions::fromConfig, "conditions", "condition");
             Category category = new Category(id, name, lore, icon, new ArrayList<>(members), priority, hidden, MiscUtils.allOf(conditionList));
             ItemBrowserManagerImpl.this.byId.put(id, category);
         }

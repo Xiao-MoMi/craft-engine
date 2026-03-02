@@ -31,7 +31,7 @@ public final class SurvivesExplosionCondition<CTX extends Context> implements Co
 
         @SuppressWarnings("unchecked")
         @Override
-        public SurvivesExplosionCondition<CTX> create(ConfigSection arguments) {
+        public SurvivesExplosionCondition<CTX> create(ConfigSection section) {
             return (SurvivesExplosionCondition<CTX>) INSTANCE;
         }
     }

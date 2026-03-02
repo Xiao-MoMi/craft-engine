@@ -1,6 +1,7 @@
 package net.momirealms.craftengine.core.pack.host;
 
 import net.momirealms.craftengine.core.pack.host.impl.*;
+import net.momirealms.craftengine.core.plugin.config.ConfigSection;
 import net.momirealms.craftengine.core.plugin.locale.LocalizedException;
 import net.momirealms.craftengine.core.registry.BuiltInRegistries;
 import net.momirealms.craftengine.core.registry.Registries;
@@ -30,16 +31,12 @@ public final class ResourcePackHosts {
         return type;
     }
 
-    public static ResourcePackHost fromMap(Map<String, Object> map) {
-        String type = (String) map.get("type");
-        if (type == null) {
-            throw new LocalizedException("warning.config.host.missing_type");
-        }
-        Key key = Key.withDefaultNamespace(type, Key.DEFAULT_NAMESPACE);
-        ResourcePackHostType<? extends ResourcePackHost> hostType = BuiltInRegistries.RESOURCE_PACK_HOST_TYPE.getValue(key);
+    public static ResourcePackHost fromConfig(ConfigSection section) {
+        Key type = section.getNonNullIdentifier("type");
+        ResourcePackHostType<? extends ResourcePackHost> hostType = BuiltInRegistries.RESOURCE_PACK_HOST_TYPE.getValue(type);
         if (hostType == null) {
-            throw new LocalizedException("warning.config.host.invalid_type", type);
+            throw new LocalizedException("warning.config.host.invalid_type", type.asString());
         }
-        return hostType.factory().create(map);
+        return hostType.factory().create(section);
     }
 }

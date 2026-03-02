@@ -27,7 +27,7 @@ public final class HasPlayerCondition<CTX extends Context> implements Condition<
 
         @SuppressWarnings("unchecked")
         @Override
-        public HasPlayerCondition<CTX> create(ConfigSection arguments) {
+        public HasPlayerCondition<CTX> create(ConfigSection section) {
             return (HasPlayerCondition<CTX>) INSTANCE;
         }
     }

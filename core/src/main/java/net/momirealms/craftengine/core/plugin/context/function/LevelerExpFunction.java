@@ -2,6 +2,7 @@ package net.momirealms.craftengine.core.plugin.context.function;
 
 import net.momirealms.craftengine.core.entity.player.Player;
 import net.momirealms.craftengine.core.plugin.CraftEngine;
+import net.momirealms.craftengine.core.plugin.config.ConfigConstants;
 import net.momirealms.craftengine.core.plugin.config.ConfigSection;
 import net.momirealms.craftengine.core.plugin.context.*;
 import net.momirealms.craftengine.core.plugin.context.number.NumberProvider;
@@ -56,7 +57,7 @@ public final class LevelerExpFunction<CTX extends Context> extends AbstractCondi
                     section.getNonNullString("leveler", "skill", "job"),
                     section.getNonNullString("plugin"),
                     getPlayerSelector(section),
-                    section.getNonNull(NumberProviders::fromObject, ConfigSection.ARGUMENT_NUMBER, "count", "exp", "amount")
+                    section.getNonNull(NumberProviders::fromObject, ConfigConstants.ARGUMENT_NUMBER, "count", "exp", "amount")
             );
         }
     }

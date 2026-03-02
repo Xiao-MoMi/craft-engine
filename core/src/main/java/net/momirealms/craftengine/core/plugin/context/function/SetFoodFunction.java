@@ -1,6 +1,7 @@
 package net.momirealms.craftengine.core.plugin.context.function;
 
 import net.momirealms.craftengine.core.entity.player.Player;
+import net.momirealms.craftengine.core.plugin.config.ConfigConstants;
 import net.momirealms.craftengine.core.plugin.config.ConfigSection;
 import net.momirealms.craftengine.core.plugin.context.*;
 import net.momirealms.craftengine.core.plugin.context.number.NumberProvider;
@@ -52,7 +53,7 @@ public final class SetFoodFunction<CTX extends Context> extends AbstractConditio
                     getPredicates(section),
                     section.getBoolean("add"),
                     getPlayerSelector(section),
-                    NumberProviders.fromObject(section.getNonNull(NumberProviders::fromObject, ConfigSection.ARGUMENT_NUMBER, "food"))
+                    NumberProviders.fromObject(section.getNonNull(NumberProviders::fromObject, ConfigConstants.ARGUMENT_NUMBER, "food"))
             );
         }
     }

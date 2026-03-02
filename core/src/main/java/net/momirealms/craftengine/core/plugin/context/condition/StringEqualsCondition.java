@@ -27,10 +27,10 @@ public final class StringEqualsCondition<CTX extends Context> implements Conditi
     private static class Factory<CTX extends Context> implements ConditionFactory<CTX, StringEqualsCondition<CTX>> {
 
         @Override
-        public StringEqualsCondition<CTX> create(ConfigSection arguments) {
+        public StringEqualsCondition<CTX> create(ConfigSection section) {
             return new StringEqualsCondition<>(
-                    TextProviders.fromString(arguments.getNonNullString("value1")),
-                    TextProviders.fromString(arguments.getNonNullString("value2"))
+                    TextProviders.fromString(section.getNonNullString("value1")),
+                    TextProviders.fromString(section.getNonNullString("value2"))
             );
         }
     }

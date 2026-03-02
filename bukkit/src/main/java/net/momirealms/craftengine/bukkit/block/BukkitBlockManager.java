@@ -19,6 +19,7 @@ import net.momirealms.craftengine.core.block.parser.BlockStateParser;
 import net.momirealms.craftengine.core.loot.LootTable;
 import net.momirealms.craftengine.core.plugin.CraftEngine;
 import net.momirealms.craftengine.core.plugin.config.Config;
+import net.momirealms.craftengine.core.plugin.config.ConfigSection;
 import net.momirealms.craftengine.core.plugin.context.Context;
 import net.momirealms.craftengine.core.plugin.context.EventTrigger;
 import net.momirealms.craftengine.core.plugin.context.function.Function;
@@ -158,15 +159,15 @@ public final class BukkitBlockManager extends AbstractBlockManager {
     }
 
     @Override
-    public BlockBehavior createBlockBehavior(CustomBlock customBlock, List<Map<String, Object>> behaviorConfig) {
+    public BlockBehavior createBlockBehavior(CustomBlock customBlock, List<ConfigSection> behaviorConfig) {
         if (behaviorConfig == null || behaviorConfig.isEmpty()) {
             return new EmptyBlockBehavior(customBlock);
         } else if (behaviorConfig.size() == 1) {
-            return BlockBehaviors.fromMap(customBlock, behaviorConfig.getFirst());
+            return BlockBehaviors.fromConfig(customBlock, behaviorConfig.getFirst());
         } else {
             List<BlockBehavior> behaviors = new ArrayList<>();
-            for (Map<String, Object> config : behaviorConfig) {
-                behaviors.add(BlockBehaviors.fromMap(customBlock, config));
+            for (ConfigSection config : behaviorConfig) {
+                behaviors.add(BlockBehaviors.fromConfig(customBlock, config));
             }
             return new UnsafeCompositeBlockBehavior(customBlock, behaviors);
         }

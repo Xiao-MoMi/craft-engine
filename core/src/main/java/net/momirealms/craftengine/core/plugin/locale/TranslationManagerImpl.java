@@ -343,7 +343,7 @@ public final class TranslationManagerImpl implements TranslationManager {
                 }
                 Object langData = entry.getValue();
                 if (!(langData instanceof Map<?,?> map)) {
-                    collector.add(new KnownResourceException(ConfigSection.PARSE_SECTION_FAILED, section.assemblePath(langId), langData.getClass().getSimpleName()));
+                    collector.add(new KnownResourceException(ConfigConstants.PARSE_SECTION_FAILED, section.assemblePath(langId), langData.getClass().getSimpleName()));
                     continue;
                 }
                 Map<String, String> bundle = new HashMap<>();
@@ -399,7 +399,7 @@ public final class TranslationManagerImpl implements TranslationManager {
                 String langId = entry.getKey();
                 Object langData = entry.getValue();
                 if (!(langData instanceof Map<?,?> map)) {
-                    collector.add(new KnownResourceException(ConfigSection.PARSE_SECTION_FAILED, section.assemblePath(langId), langData.getClass().getSimpleName()));
+                    collector.add(new KnownResourceException(ConfigConstants.PARSE_SECTION_FAILED, section.assemblePath(langId), langData.getClass().getSimpleName()));
                     continue;
                 }
                 Map<String, String> sectionData = new HashMap<>();

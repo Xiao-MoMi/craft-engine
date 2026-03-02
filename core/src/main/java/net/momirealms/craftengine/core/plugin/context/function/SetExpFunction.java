@@ -1,6 +1,7 @@
 package net.momirealms.craftengine.core.plugin.context.function;
 
 import net.momirealms.craftengine.core.entity.player.Player;
+import net.momirealms.craftengine.core.plugin.config.ConfigConstants;
 import net.momirealms.craftengine.core.plugin.config.ConfigSection;
 import net.momirealms.craftengine.core.plugin.context.Condition;
 import net.momirealms.craftengine.core.plugin.context.Context;
@@ -51,7 +52,7 @@ public final class SetExpFunction<CTX extends Context> extends AbstractCondition
             return new SetExpFunction<>(
                     getPredicates(section),
                     getPlayerSelector(section),
-                    NumberProviders.fromObject(section.getNonNull(NumberProviders::fromObject, ConfigSection.ARGUMENT_NUMBER, "count", "value", "exp")),
+                    NumberProviders.fromObject(section.getNonNull(NumberProviders::fromObject, ConfigConstants.ARGUMENT_NUMBER, "count", "value", "exp")),
                     section.getBoolean("add") ? ADD_POINTS : SET_POINTS
             );
         }

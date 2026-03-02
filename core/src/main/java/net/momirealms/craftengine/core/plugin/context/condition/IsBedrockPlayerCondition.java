@@ -28,7 +28,7 @@ public final class IsBedrockPlayerCondition<CTX extends Context> implements Cond
 
         @SuppressWarnings("unchecked")
         @Override
-        public IsBedrockPlayerCondition<CTX> create(ConfigSection arguments) {
+        public IsBedrockPlayerCondition<CTX> create(ConfigSection section) {
             return (IsBedrockPlayerCondition<CTX>) INSTANCE;
         }
     }

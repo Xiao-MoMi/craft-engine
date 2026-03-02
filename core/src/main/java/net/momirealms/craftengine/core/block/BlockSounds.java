@@ -14,7 +14,7 @@ public final class BlockSounds {
     Land 0.3 1
     Destroy 1 1
      */
-    public static final SoundData EMPTY_SOUND = new SoundData(Key.of("minecraft:intentionally_empty"), SoundData.SoundValue.FIXED_1, SoundData.SoundValue.FIXED_1);    public static final SoundData EMPTY_SOUND = new SoundData(Key.of("minecraft:intentionally_empty"), SoundData.SoundValue.FIXED_1, SoundData.SoundValue.FIXED_1);    public static final SoundData EMPTY_SOUND = new SoundData(Key.of("minecraft:intentionally_empty"), SoundData.SoundValue.FIXED_1, SoundData.SoundValue.FIXED_1);
+    public static final SoundData EMPTY_SOUND = new SoundData(Key.of("minecraft:intentionally_empty"), SoundData.SoundValue.FIXED_1, SoundData.SoundValue.FIXED_1);
     public static final BlockSounds EMPTY = new BlockSounds(SoundData.EMPTY, SoundData.EMPTY, SoundData.EMPTY, SoundData.EMPTY, SoundData.EMPTY);
 
     private final SoundData breakSound;

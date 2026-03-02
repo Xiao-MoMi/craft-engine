@@ -60,7 +60,7 @@ public final class NumberProviders {
                 return new ConstantNumberProvider(bool ? 1 : 0);
             }
             case Map<?, ?> map -> {
-                return fromConfig((Map<String, Object>) map);
+                return fromConfig(ConfigSection.ofRoot((Map<String, Object>) map)); // todo 更好的传递路径
             }
             default -> {
                 String string = object.toString();

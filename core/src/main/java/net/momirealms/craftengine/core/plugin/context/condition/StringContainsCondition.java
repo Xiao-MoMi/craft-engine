@@ -27,10 +27,10 @@ public final class StringContainsCondition<CTX extends Context> implements Condi
     private static class Factory<CTX extends Context> implements ConditionFactory<CTX, StringContainsCondition<CTX>> {
 
         @Override
-        public StringContainsCondition<CTX> create(ConfigSection arguments) {
+        public StringContainsCondition<CTX> create(ConfigSection section) {
             return new StringContainsCondition<>(
-                    TextProviders.fromString(arguments.getNonNullString("value1")),
-                    TextProviders.fromString(arguments.getNonNullString("value2"))
+                    TextProviders.fromString(section.getNonNullString("value1")),
+                    TextProviders.fromString(section.getNonNullString("value2"))
             );
         }
     }

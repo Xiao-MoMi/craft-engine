@@ -20,7 +20,7 @@ public final class FallingBlockCondition<CTX extends Context> implements Conditi
     private static class Factory<CTX extends Context> implements ConditionFactory<CTX, FallingBlockCondition<CTX>> {
 
         @Override
-        public FallingBlockCondition<CTX> create(ConfigSection arguments) {
+        public FallingBlockCondition<CTX> create(ConfigSection section) {
             return new FallingBlockCondition<>();
         }
     }

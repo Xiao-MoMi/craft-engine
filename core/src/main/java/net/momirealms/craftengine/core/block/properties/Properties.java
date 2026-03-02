@@ -1,13 +1,12 @@
 package net.momirealms.craftengine.core.block.properties;
 
 import net.momirealms.craftengine.core.block.properties.type.*;
+import net.momirealms.craftengine.core.plugin.config.ConfigSection;
 import net.momirealms.craftengine.core.plugin.locale.LocalizedResourceConfigException;
 import net.momirealms.craftengine.core.registry.BuiltInRegistries;
 import net.momirealms.craftengine.core.registry.Registries;
 import net.momirealms.craftengine.core.registry.WritableRegistry;
 import net.momirealms.craftengine.core.util.*;
-
-import java.util.Map;
 
 public final class Properties {
     public static final PropertyType<?> BOOLEAN = register(Key.ce("boolean"), BooleanProperty.FACTORY);
@@ -37,13 +36,12 @@ public final class Properties {
     }
 
     @SuppressWarnings("unchecked")
-    public static <T extends Comparable<T>> Property<T> fromMap(String name, Map<String, Object> map) {
-        String type = ResourceConfigUtils.requireNonEmptyStringOrThrow(map.get("type"), "warning.config.block.state.property.missing_type");
-        Key key = Key.withDefaultNamespace(type, Key.DEFAULT_NAMESPACE);
-        PropertyType<T> propertyType = (PropertyType<T>) BuiltInRegistries.PROPERTY_TYPE.getValue(key);
+    public static <T extends Comparable<T>> Property<T> fromConfig(String name, ConfigSection section) {
+        Key type = section.getNonNullIdentifier("type");
+        PropertyType<T> propertyType = (PropertyType<T>) BuiltInRegistries.PROPERTY_TYPE.getValue(type);
         if (propertyType == null) {
-            throw new LocalizedResourceConfigException("warning.config.block.state.property.invalid_type", key.toString(), name);
+            throw new LocalizedResourceConfigException("warning.config.block.state.property.invalid_type", type.asString(), name);
         }
-        return propertyType.factory().create(name, map);
+        return propertyType.factory().create(name, section);
     }
 }

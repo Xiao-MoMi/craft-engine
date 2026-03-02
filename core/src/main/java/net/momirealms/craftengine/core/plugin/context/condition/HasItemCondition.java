@@ -31,7 +31,7 @@ public final class HasItemCondition<CTX extends Context> implements Condition<CT
 
         @SuppressWarnings("unchecked")
         @Override
-        public HasItemCondition<CTX> create(ConfigSection arguments) {
+        public HasItemCondition<CTX> create(ConfigSection section) {
             return (HasItemCondition<CTX>) INSTANCE;
         }
     }

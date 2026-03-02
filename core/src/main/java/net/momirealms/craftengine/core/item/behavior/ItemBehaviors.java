@@ -1,6 +1,7 @@
 package net.momirealms.craftengine.core.item.behavior;
 
 import net.momirealms.craftengine.core.pack.Pack;
+import net.momirealms.craftengine.core.plugin.config.ConfigSection;
 import net.momirealms.craftengine.core.plugin.locale.LocalizedResourceConfigException;
 import net.momirealms.craftengine.core.registry.BuiltInRegistries;
 import net.momirealms.craftengine.core.registry.Registries;
@@ -8,6 +9,7 @@ import net.momirealms.craftengine.core.registry.WritableRegistry;
 import net.momirealms.craftengine.core.util.Key;
 import net.momirealms.craftengine.core.util.ResourceConfigUtils;
 import net.momirealms.craftengine.core.util.ResourceKey;
+import org.jetbrains.annotations.Nullable;
 
 import java.nio.file.Path;
 import java.util.Map;
@@ -22,14 +24,13 @@ public class ItemBehaviors {
         return type;
     }
 
-    public static ItemBehavior fromMap(Pack pack, Path path, String node, Key id, Map<String, Object> map) {
-        if (map == null || map.isEmpty()) return EmptyItemBehavior.INSTANCE;
-        String type = ResourceConfigUtils.requireNonEmptyStringOrThrow(map.get("type"), "warning.config.item.behavior.missing_type");
-        Key key = Key.withDefaultNamespace(type, Key.DEFAULT_NAMESPACE);
-        ItemBehaviorType<? extends ItemBehavior> behaviorType = BuiltInRegistries.ITEM_BEHAVIOR_TYPE.getValue(key);
+    public static ItemBehavior fromConfig(Pack pack, Path path, String node, Key id, @Nullable ConfigSection section) {
+        if (section == null || section.values().isEmpty()) return EmptyItemBehavior.INSTANCE;
+        Key type = section.getNonNullIdentifier("type");
+        ItemBehaviorType<? extends ItemBehavior> behaviorType = BuiltInRegistries.ITEM_BEHAVIOR_TYPE.getValue(type);
         if (behaviorType == null) {
-            throw new LocalizedResourceConfigException("warning.config.item.behavior.invalid_type", type);
+            throw new LocalizedResourceConfigException("warning.config.item.behavior.invalid_type", type.asString());
         }
-        return behaviorType.factory().create(pack, path, node, id, map);
+        return behaviorType.factory().create(pack, path, node, id, section);
     }
 }

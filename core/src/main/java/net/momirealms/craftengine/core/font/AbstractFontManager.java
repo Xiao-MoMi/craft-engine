@@ -446,13 +446,13 @@ public abstract class AbstractFontManager implements FontManager {
                     try {
                         row = Integer.parseInt(param[2]);
                     } catch (NumberFormatException e) {
-                        throw new KnownResourceException(ConfigSection.PARSE_INT_FAILED, section.assemblePath("ref"), param[2]);
+                        throw new KnownResourceException(ConfigConstants.PARSE_INT_FAILED, section.assemblePath("ref"), param[2]);
                     }
                     if (param.length == 4) {
                         try {
                             col = Integer.parseInt(param[3]);
                         } catch (NumberFormatException e) {
-                            throw new KnownResourceException(ConfigSection.PARSE_INT_FAILED, section.assemblePath("ref"), param[3]);
+                            throw new KnownResourceException(ConfigConstants.PARSE_INT_FAILED, section.assemblePath("ref"), param[3]);
                         }
                     }
                     refId = Key.of(param[0], param[1]);
@@ -493,11 +493,11 @@ public abstract class AbstractFontManager implements FontManager {
             String file = section.getNonNullString("file");
             String identifier = MiscUtils.make(CharacterUtils.replaceBackslashWithSlash(file), s -> s.endsWith(".png") ? s : s + ".png");
             if (!Identifier.isValid(identifier)) {
-                throw new KnownResourceException(ConfigSection.PARSE_IDENTIFIER_FAILED, section.assemblePath("file"), file);
+                throw new KnownResourceException(ConfigConstants.PARSE_IDENTIFIER_FAILED, section.assemblePath("file"), file);
             }
             String fontName = section.getDefaultedString(pack.namespace()+ ":default", "font");
             if (!Identifier.isValid(fontName)) {
-                throw new KnownResourceException(ConfigSection.PARSE_IDENTIFIER_FAILED, section.assemblePath("font"), fontName);
+                throw new KnownResourceException(ConfigConstants.PARSE_IDENTIFIER_FAILED, section.assemblePath("font"), fontName);
             }
 
             Key fontId = Key.withDefaultNamespace(fontName, id.namespace());

@@ -22,7 +22,7 @@ public final class AlwaysTrueCondition<CTX extends Context> implements Condition
 
         @SuppressWarnings("unchecked")
         @Override
-        public AlwaysTrueCondition<CTX> create(ConfigSection arguments) {
+        public AlwaysTrueCondition<CTX> create(ConfigSection section) {
             return (AlwaysTrueCondition<CTX>) INSTANCE;
         }
     }

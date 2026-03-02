@@ -70,9 +70,9 @@ public final class MerchantTradeFunction<CTX extends Context> extends AbstractCo
         public MerchantTradeFunction<CTX> create(ConfigSection section) {
             List<TempOffer> merchantOffers = section.parseSectionList(s -> {
                 TempItem cost1 = s.getNonNull(o -> parseTempItem(o, section.assemblePath("cost_1")), ConfigConstants.ARGUMENT_SECTION, "cost_1", "cost-1");
-                TempItem cost2 = s.get(o -> parseTempItem(o, section.assemblePath("cost_2")), (TempItem) null, "cost_2", "cost-2");
+                TempItem cost2 = s.getOrDefault(o -> parseTempItem(o, section.assemblePath("cost_2")), (TempItem) null, "cost_2", "cost-2");
                 TempItem result = s.getNonNull(o -> parseTempItem(o, section.assemblePath("result")), ConfigConstants.ARGUMENT_SECTION, "result");
-                NumberProvider exp = s.get(NumberProviders::fromObject, NumberProviders.direct(0), "exp", "experience");
+                NumberProvider exp = s.getOrDefault(NumberProviders::fromObject, NumberProviders.direct(0), "exp", "experience");
                 return new TempOffer(cost1, cost2, result, exp);
             }, "offers", "offer");
 

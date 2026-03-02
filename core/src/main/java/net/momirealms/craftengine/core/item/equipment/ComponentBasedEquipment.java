@@ -5,6 +5,7 @@ import com.google.gson.JsonObject;
 import net.momirealms.craftengine.core.item.processor.ItemProcessor;
 import net.momirealms.craftengine.core.item.processor.OverwritableEquippableAssetIdProcessor;
 import net.momirealms.craftengine.core.pack.Identifier;
+import net.momirealms.craftengine.core.plugin.config.ConfigConstants;
 import net.momirealms.craftengine.core.plugin.config.ConfigSection;
 import net.momirealms.craftengine.core.plugin.config.KnownResourceException;
 import net.momirealms.craftengine.core.util.CharacterUtils;
@@ -90,7 +91,7 @@ public final class ComponentBasedEquipment extends AbstractEquipment implements 
                 case String texture -> {
                     texture = CharacterUtils.replaceBackslashWithSlash(texture);
                     if (!Identifier.isValid(texture)) {
-                        throw new KnownResourceException(ConfigSection.PARSE_IDENTIFIER_FAILED, path, texture);
+                        throw new KnownResourceException(ConfigConstants.PARSE_IDENTIFIER_FAILED, path, texture);
                     }
                     Key textureKey = Key.of(texture);
                     return List.of(new Layer(getCorrectTexturePath(textureKey, layer), null, false));
@@ -107,7 +108,7 @@ public final class ComponentBasedEquipment extends AbstractEquipment implements 
                 case List<?> list -> {
                     List<Layer> layers = new ArrayList<>();
                     for (Object inner : list) {
-                        layers.addAll(fromConfig(layer, inner));
+                        layers.addAll(fromConfig(layer, path, inner));
                     }
                     return layers;
                 }

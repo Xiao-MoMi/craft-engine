@@ -85,10 +85,10 @@ public final class WorldGuardRegionCondition<CTX extends Context> implements Con
     private static class Factory<CTX extends Context> implements ConditionFactory<CTX, WorldGuardRegionCondition<CTX>> {
 
         @Override
-        public WorldGuardRegionCondition<CTX> create(ConfigSection arguments) {
-            int mode = ResourceConfigUtils.getAsInt(arguments.getOrDefault("mode", 1), "mode") - 1;
+        public WorldGuardRegionCondition<CTX> create(ConfigSection section) {
+            int mode = section.getInt(1, "mode") - 1;
             MatchMode matchMode = MatchMode.values()[mode];
-            List<String> regions = MiscUtils.getAsStringList(arguments.get("regions"));
+            List<String> regions = section.getStringList("regions");
             return new WorldGuardRegionCondition<>(matchMode, regions);
         }
     }

@@ -60,14 +60,14 @@ public final class BetterModelBlockEntityElementConfig implements BlockEntityEle
     public static class Factory implements BlockEntityElementConfigFactory<BetterModelBlockEntityElement> {
 
         @Override
-        public BetterModelBlockEntityElementConfig create(ConfigSection arguments) {
-            String model = ResourceConfigUtils.requireNonEmptyStringOrThrow(arguments.get("model"), "warning.config.block.state.entity_renderer.better_model.missing_model");
+        public BetterModelBlockEntityElementConfig create(ConfigSection section) {
+            String model = section.getNonEmptyString("model");
             return new BetterModelBlockEntityElementConfig(
                     model,
-                    ResourceConfigUtils.getAsVector3f(arguments.getOrDefault("position", 0.5f), "position"),
-                    ResourceConfigUtils.getAsFloat(arguments.getOrDefault("yaw", 0f), "yaw"),
-                    ResourceConfigUtils.getAsFloat(arguments.getOrDefault("pitch", 0f), "pitch"),
-                    ResourceConfigUtils.getAsBoolean(arguments.getOrDefault("sight-trace", true), "sight-trace")
+                    section.getVector3f(new Vector3f(0.5f), "position"),
+                    section.getFloat(0f, "yaw"),
+                    section.getFloat(0f, "pitch"),
+                    section.getBoolean(true, "sight_trace", "sight-trace")
             );
         }
     }

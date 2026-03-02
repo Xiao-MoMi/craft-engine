@@ -50,13 +50,13 @@ public final class ModelEngineBlockEntityElementConfig implements BlockEntityEle
     public static class Factory implements BlockEntityElementConfigFactory<ModelEngineBlockEntityElement> {
 
         @Override
-        public ModelEngineBlockEntityElementConfig create(ConfigSection arguments) {
-            String model = ResourceConfigUtils.requireNonEmptyStringOrThrow(arguments.get("model"), "warning.config.block.state.entity_renderer.model_engine.missing_model");
+        public ModelEngineBlockEntityElementConfig create(ConfigSection section) {
+            String model = section.getNonEmptyString("model");
             return new ModelEngineBlockEntityElementConfig(
                     model,
-                    ResourceConfigUtils.getAsVector3f(arguments.getOrDefault("position", 0.5f), "position"),
-                    ResourceConfigUtils.getAsFloat(arguments.getOrDefault("yaw", 0f), "yaw"),
-                    ResourceConfigUtils.getAsFloat(arguments.getOrDefault("pitch", 0f), "pitch")
+                    section.getVector3f(new Vector3f(0.5f), "position"),
+                    section.getFloat(0f, "yaw"),
+                    section.getFloat(0f, "pitch")
             );
         }
     }

@@ -27,10 +27,10 @@ public final class StringRegexCondition<CTX extends Context> implements Conditio
     private static class Factory<CTX extends Context> implements ConditionFactory<CTX, StringRegexCondition<CTX>> {
 
         @Override
-        public StringRegexCondition<CTX> create(ConfigSection arguments) {
+        public StringRegexCondition<CTX> create(ConfigSection section) {
             return new StringRegexCondition<>(
-                    TextProviders.fromString(arguments.getNonNullString("value")),
-                    TextProviders.fromString(arguments.getNonNullString("regex"))
+                    TextProviders.fromString(section.getNonNullString("value")),
+                    TextProviders.fromString(section.getNonNullString("regex"))
             );
         }
     }

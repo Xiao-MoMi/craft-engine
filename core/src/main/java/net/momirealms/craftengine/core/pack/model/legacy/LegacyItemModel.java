@@ -1,22 +1,20 @@
 package net.momirealms.craftengine.core.pack.model.legacy;
 
 import net.momirealms.craftengine.core.pack.model.generation.ModelGeneration;
+import net.momirealms.craftengine.core.plugin.config.ConfigSection;
 import net.momirealms.craftengine.core.plugin.locale.LocalizedResourceConfigException;
 import net.momirealms.craftengine.core.util.Key;
-import net.momirealms.craftengine.core.util.MiscUtils;
-import net.momirealms.craftengine.core.util.ResourceConfigUtils;
 
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 public final class LegacyItemModel {
     private final List<ModelGeneration> modelsToGenerate;
-    private final String path;
+    private final Key path;
     private final List<LegacyOverridesModel> overrides;
 
-    public LegacyItemModel(String path, List<LegacyOverridesModel> overrides, List<ModelGeneration> modelsToGenerate) {
+    public LegacyItemModel(Key path, List<LegacyOverridesModel> overrides, List<ModelGeneration> modelsToGenerate) {
         this.modelsToGenerate = modelsToGenerate;
         this.path = path;
         this.overrides = overrides;
@@ -30,35 +28,34 @@ public final class LegacyItemModel {
         return overrides;
     }
 
-    public String path() {
+    public Key path() {
         return path;
     }
 
-    @SuppressWarnings("unchecked")
-    public static LegacyItemModel fromMap(Map<String, Object> legacyModel, int customModelData) {
-        String legacyModelPath = ResourceConfigUtils.requireNonEmptyStringOrThrow(legacyModel.get("path"), "warning.config.item.legacy_model.missing_path");
-        Map<String, Object> generation = MiscUtils.castToMap(legacyModel.get("generation"), true);
+    public static LegacyItemModel fromConfig(ConfigSection legacyModel, int customModelData) {
+        Key legacyModelPath = legacyModel.getNonNullIdentifier("path");
+        ConfigSection generation = legacyModel.getSection("generation");
         ModelGeneration baseModelGeneration = null;
         if (generation != null) {
-            baseModelGeneration = ModelGeneration.of(Key.of(legacyModelPath), generation);
+            baseModelGeneration = ModelGeneration.of(legacyModelPath, generation);
         }
-        List<Map<String, Object>> overrides = (List<Map<String, Object>>) legacyModel.get("overrides");
-        if (overrides != null) {
+        List<ConfigSection> overrides = legacyModel.parseSectionList(it -> it, "overrides");
+        if (!overrides.isEmpty()) {
             List<ModelGeneration> modelGenerations = new ArrayList<>();
             List<LegacyOverridesModel> legacyOverridesModels = new ArrayList<>();
             if (baseModelGeneration != null) modelGenerations.add(baseModelGeneration);
             legacyOverridesModels.add(new LegacyOverridesModel(new HashMap<>(), legacyModelPath, customModelData));
-            for (Map<String, Object> override : overrides) {
-                String overrideModelPath = ResourceConfigUtils.requireNonEmptyStringOrThrow(override.get("path"), () -> new LocalizedResourceConfigException("warning.config.item.legacy_model.overrides.missing_path"));
-                Map<String, Object> predicate = MiscUtils.castToMap(ResourceConfigUtils.requireNonNullOrThrow(override.get("predicate"), "warning.config.item.legacy_model.overrides.missing_predicate"), false);
-                if (predicate.isEmpty()) {
+            for (ConfigSection override : overrides) {
+                Key overrideModelPath = override.getNonNullIdentifier("path");
+                ConfigSection predicate = override.getNonNullSection("predicate");
+                if (predicate.values().isEmpty()) {
                     throw new LocalizedResourceConfigException("warning.config.item.legacy_model.overrides.missing_predicate");
                 }
-                Map<String, Object> overrideGeneration = MiscUtils.castToMap(override.get("generation"), true);
+                ConfigSection overrideGeneration = override.getSection("generation");
                 if (overrideGeneration != null) {
-                    modelGenerations.add(ModelGeneration.of(Key.of(overrideModelPath), overrideGeneration));
+                    modelGenerations.add(ModelGeneration.of(overrideModelPath, overrideGeneration));
                 }
-                legacyOverridesModels.add(new LegacyOverridesModel(predicate, overrideModelPath, customModelData));
+                legacyOverridesModels.add(new LegacyOverridesModel(predicate.values(), overrideModelPath, customModelData));
             }
             return new LegacyItemModel(legacyModelPath, legacyOverridesModels, modelGenerations);
         } else {

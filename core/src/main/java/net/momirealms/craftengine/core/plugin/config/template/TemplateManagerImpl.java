@@ -82,7 +82,7 @@ public final class TemplateManagerImpl implements TemplateManager {
                 ResourceConfigUtils.runCatching(
                         path,
                         currentNode,
-                        () -> parseValue(cached.pack(), filePath, id, new ConfigValue(key, currentNode, entry.getValue())),
+                        () -> parseValue(cached.pack(), filePath, id, new ConfigValue(currentNode + "." + key, entry.getValue())),
                         super.errorHandler
                 );
             }
@@ -341,7 +341,7 @@ public final class TemplateManagerImpl implements TemplateManager {
             if (result.containsKey(placeholder)) continue;
             Object processedPlaceholderValue = processUnknownValue(argumentEntry.getValue(), result);
             switch (processedPlaceholderValue) {
-                case Map<?, ?> map -> result.put(placeholder, TemplateArguments.fromConfig(MiscUtils.castToMap(map)));
+                case Map<?, ?> map -> result.put(placeholder, TemplateArguments.fromConfig(ConfigSection.ofRoot((Map<String, Object>) map))); // todo 更好的传递路径
                 case List<?> listArgument -> result.put(placeholder, ListTemplateArgument.list((List<Object>) listArgument));
                 case null -> result.put(placeholder, NullTemplateArgument.INSTANCE);
                 default -> result.put(placeholder, ObjectTemplateArgument.object(processedPlaceholderValue));

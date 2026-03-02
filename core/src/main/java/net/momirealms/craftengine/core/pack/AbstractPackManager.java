@@ -201,7 +201,7 @@ public abstract class AbstractPackManager implements PackManager {
         for (int i = 0; i < 256; i++) {
             VANILLA_TEXTURES.add(Key.of("minecraft", "font/unicode_page_" + String.format("%02x", i)));
         }
-        VANILLA_TEXTURES.add(Util.MISSING_NO);
+        VANILLA_TEXTURES.add(MISSING_NO);
         loadInternalList("internal/textures/processed.json", VANILLA_TEXTURES::add);
         loadInternalList("internal/sounds/processed.json", VANILLA_SOUNDS::add);
 
@@ -285,19 +285,19 @@ public abstract class AbstractPackManager implements PackManager {
 
     @Override
     public void load() {
-        Object hostingObj = Config.instance().settings().get("resource-pack.delivery.hosting");
-        Map<String, Object> arguments;
-        if (hostingObj instanceof Map<?,?>) {
-            arguments = MiscUtils.castToMap(hostingObj, false);
-        } else if (hostingObj instanceof List<?> list && !list.isEmpty()) {
-            arguments = MiscUtils.castToMap(list.getFirst(), false);
+        ConfigValue value = new ConfigValue("resource-pack.delivery.hosting", Config.instance().settings().get("resource-pack.delivery.hosting"));
+        ConfigSection section;
+        if (value.is(Map.class)) {
+            section = value.getAsSection();
+        } else if (value.is(List.class) && !value.getAsList().isEmpty()) {
+            section = value.getAsValueList().getFirst().getAsSection();
         } else {
             this.resourcePackHost = NoneHost.INSTANCE;
             return;
         }
         try {
             // we might add multiple host methods in future versions
-            this.resourcePackHost = ResourcePackHosts.fromMap(arguments);
+            this.resourcePackHost = ResourcePackHosts.fromConfig(section);
         } catch (LocalizedException e) {
             if (e instanceof LocalizedResourceConfigException exception) {
                 exception.setPath(plugin.dataFolderPath().resolve("config.yml"));
@@ -2099,9 +2099,9 @@ public abstract class AbstractPackManager implements PackManager {
                         }
                     }
 
-                    itemAtlasToAdd.remove(Util.MISSING_NO);
-                    itemAtlasToRemove.remove(Util.MISSING_NO);
-                    blockAtlasToAdd.remove(Util.MISSING_NO);
+                    itemAtlasToAdd.remove(MISSING_NO);
+                    itemAtlasToRemove.remove(MISSING_NO);
+                    blockAtlasToAdd.remove(MISSING_NO);
 
                     JsonObject fixedItemAtlas = null;
                     if (!itemAtlasToAdd.isEmpty() || !itemAtlasToRemove.isEmpty()) {
@@ -2176,7 +2176,7 @@ public abstract class AbstractPackManager implements PackManager {
                     }
                 }
 
-                blockAtlasToAdd.remove(Util.MISSING_NO);
+                blockAtlasToAdd.remove(MISSING_NO);
 
                 if (Config.fixTextureAtlas()) {
                     JsonObject fixedBlockAtlas = null;
@@ -3183,7 +3183,7 @@ public abstract class AbstractPackManager implements PackManager {
                     firstBaseModel = legacyOverridesModels.getFirst();
                 }
 
-                itemJson.addProperty("parent", firstBaseModel.model());
+                itemJson.addProperty("parent", firstBaseModel.model().asString());
                 if (!overrideJsons.isEmpty()) {
                     JsonArray overrides = new JsonArray();
                     for (JsonObject override : overrideJsons) {

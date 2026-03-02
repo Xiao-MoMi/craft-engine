@@ -1,6 +1,7 @@
 package net.momirealms.craftengine.core.plugin.context.function;
 
 import net.momirealms.craftengine.core.item.Item;
+import net.momirealms.craftengine.core.plugin.config.ConfigConstants;
 import net.momirealms.craftengine.core.plugin.config.ConfigSection;
 import net.momirealms.craftengine.core.plugin.context.Condition;
 import net.momirealms.craftengine.core.plugin.context.Context;
@@ -49,7 +50,7 @@ public final class SetCountFunction<CTX extends Context> extends AbstractConditi
             return new SetCountFunction<>(
                     getPredicates(section),
                     section.getBoolean("add"),
-                    NumberProviders.fromObject(section.getNonNull(NumberProviders::fromObject, ConfigSection.ARGUMENT_NUMBER, "count", "amount"))
+                    NumberProviders.fromObject(section.getNonNull(NumberProviders::fromObject, ConfigConstants.ARGUMENT_NUMBER, "count", "amount"))
             );
         }
     }

@@ -1,5 +1,6 @@
 package net.momirealms.craftengine.core.plugin.context.number;
 
+import net.momirealms.craftengine.core.plugin.config.ConfigConstants;
 import net.momirealms.craftengine.core.plugin.config.ConfigSection;
 import net.momirealms.craftengine.core.util.random.RandomSource;
 import net.momirealms.craftengine.core.util.random.RandomUtils;
@@ -36,8 +37,8 @@ public record BinomialNumberProvider(NumberProvider trials, NumberProvider succe
         @Override
         public BinomialNumberProvider create(ConfigSection section) {
             return new BinomialNumberProvider(
-                    section.getNonNull(NumberProviders::fromObject, ConfigSection.ARGUMENT_NUMBER, "extra"),
-                    section.getNonNull(NumberProviders::fromObject, ConfigSection.ARGUMENT_NUMBER, "probability")
+                    section.getNonNull(NumberProviders::fromObject, ConfigConstants.ARGUMENT_NUMBER, "extra"),
+                    section.getNonNull(NumberProviders::fromObject, ConfigConstants.ARGUMENT_NUMBER, "probability")
             );
         }
     }

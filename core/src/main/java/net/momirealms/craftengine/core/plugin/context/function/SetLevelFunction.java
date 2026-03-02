@@ -1,6 +1,7 @@
 package net.momirealms.craftengine.core.plugin.context.function;
 
 import net.momirealms.craftengine.core.entity.player.Player;
+import net.momirealms.craftengine.core.plugin.config.ConfigConstants;
 import net.momirealms.craftengine.core.plugin.config.ConfigSection;
 import net.momirealms.craftengine.core.plugin.context.Condition;
 import net.momirealms.craftengine.core.plugin.context.Context;
@@ -54,7 +55,7 @@ public final class SetLevelFunction<CTX extends Context> extends AbstractConditi
             return new SetLevelFunction<>(
                     getPredicates(section),
                     getPlayerSelector(section),
-                    NumberProviders.fromObject(section.getNonNull(NumberProviders::fromObject, ConfigSection.ARGUMENT_NUMBER, "count")),
+                    NumberProviders.fromObject(section.getNonNull(NumberProviders::fromObject, ConfigConstants.ARGUMENT_NUMBER, "count")),
                     section.getBoolean("add") ? ADD_LEVELS : SET_LEVELS
             );
         }

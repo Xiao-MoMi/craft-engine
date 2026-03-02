@@ -580,12 +580,12 @@ public record ConfigValue(String path, @NotNull Object value) {
         return Ingredient.of(elements, itemIds, minecraftItemIds, hasCustomItem, count);
     }
 
-    @SuppressWarnings("unchecked")
     public <T> CustomRecipeResult<T> getAsCustomRecipeResult() {
         ConfigSection section = getAsSection();
         Key id = section.getNonNullIdentifier("id");
         int count = section.getInt(1, "count");
-        Optional<BuildableItem<T>> buildableItem = (Optional<BuildableItem<T>>) CraftEngine.instance().itemManager().getBuildableItem(id);
+        ItemManager<T> itemManager = CraftEngine.instance().itemManager();
+        Optional<? extends BuildableItem<T>> buildableItem = itemManager.getBuildableItem(id);
         if (buildableItem.isEmpty()) {
             throw new KnownResourceException("resource.recipe.result.item_not_exist", section.assemblePath("id"), id.asString());
         }
