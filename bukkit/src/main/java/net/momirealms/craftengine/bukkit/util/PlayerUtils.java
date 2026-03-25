@@ -43,12 +43,12 @@ public final class PlayerUtils {
         Object inventory = FastNMS.INSTANCE.method$Player$getInventory(serverPlayer);
         boolean flag = FastNMS.INSTANCE.method$Inventory$add(inventory, item.getLiteralObject());
         if (flag && item.isEmpty()) {
-            Object droppedItem = FastNMS.INSTANCE.method$ServerPlayer$drop(serverPlayer, original.copyWithCount(1).getLiteralObject(), false, false, false, null);
-            if (droppedItem != null) {
-                FastNMS.INSTANCE.method$ItemEntity$makeFakeItem(droppedItem);
-            }
-            player.world().playSound(player.position(), Sounds.ENTITY_ITEM_PICKUP, 0.2F, ((RandomUtils.generateRandomFloat(0, 1) - RandomUtils.generateRandomFloat(0, 1)) * 0.7F + 1.0F) * 2.0F, SoundSource.PLAYER);
-            FastNMS.INSTANCE.method$AbstractContainerMenu$broadcastChanges(FastNMS.INSTANCE.field$Player$containerMenu(serverPlayer));
+//            Object droppedItem = FastNMS.INSTANCE.method$ServerPlayer$drop(serverPlayer, original.copyWithCount(1).getLiteralObject(), false, false, false, null);
+//            if (droppedItem != null) {
+//                FastNMS.INSTANCE.method$ItemEntity$makeFakeItem(droppedItem);
+//            }
+//            player.world().playSound(player.position(), Sounds.ENTITY_ITEM_PICKUP, 0.2F, ((RandomUtils.generateRandomFloat(0, 1) - RandomUtils.generateRandomFloat(0, 1)) * 0.7F + 1.0F) * 2.0F, SoundSource.PLAYER);
+//            FastNMS.INSTANCE.method$AbstractContainerMenu$broadcastChanges(FastNMS.INSTANCE.field$Player$containerMenu(serverPlayer));
         } else {
             Object droppedItem = FastNMS.INSTANCE.method$ServerPlayer$drop(serverPlayer, item.getLiteralObject(), false, false, !VersionHelper.isOrAbove1_21_5(), null);
             if (droppedItem != null) {
