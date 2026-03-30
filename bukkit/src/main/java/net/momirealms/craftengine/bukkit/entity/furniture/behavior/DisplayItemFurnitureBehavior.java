@@ -188,10 +188,18 @@ public final class DisplayItemFurnitureBehavior extends FurnitureBehavior<Displa
     }
 
     @Override
-    public @Nullable Item getItemToPickup(Furniture furniture, Player player, Data data) {
-        Item tempData = data.displayItem;
-        if (ItemUtils.isEmpty(tempData)) return null;
-        return tempData;
+    public @Nullable Item getItemToPickup(Furniture furniture, Player player, FurnitureHitBox hitBox, Data data) {
+        Item displayItem = data.displayItem;
+        if (ItemUtils.isEmpty(displayItem)) return null;
+        Set<FurnitureHitBox> trackedHitboxes = data.trackedHitboxes;
+        boolean hasSpecialHitBoxes = (trackedHitboxes != null);
+        if (hasSpecialHitBoxes) {
+            if (trackedHitboxes.contains(hitBox)) {
+                return displayItem;
+            }
+            return null;
+        }
+        return displayItem;
     }
 
     @Override

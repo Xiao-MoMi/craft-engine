@@ -80,7 +80,7 @@ public abstract class FurnitureBehavior<D> {
     }
 
     @Nullable
-    public Item getItemToPickup(Furniture furniture, Player player, D data) {
+    public Item getItemToPickup(Furniture furniture, Player player, FurnitureHitBox hitbox, D data) {
         return null;
     }
 
