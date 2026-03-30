@@ -1,7 +1,9 @@
 package net.momirealms.craftengine.core.entity.furniture;
 
 import net.momirealms.craftengine.core.entity.culling.CullingData;
+import net.momirealms.craftengine.core.entity.furniture.behavior.FurnitureBehavior;
 import net.momirealms.craftengine.core.entity.furniture.behavior.FurnitureBehaviors;
+import net.momirealms.craftengine.core.entity.furniture.behavior.UnsafeCompositeFurnitureBehavior;
 import net.momirealms.craftengine.core.entity.furniture.element.FurnitureElement;
 import net.momirealms.craftengine.core.entity.furniture.element.FurnitureElementConfig;
 import net.momirealms.craftengine.core.entity.furniture.element.FurnitureElementConfigs;
@@ -293,10 +295,12 @@ public abstract class AbstractFurnitureManager implements FurnitureManager {
                     .lootTable(lootTable)
                     .build();
 
-            // TODO 复合行为
-            ConfigSection behaviorSection = section.getSection(BEHAVIORS);
-            if (behaviorSection != null) {
-                ((CustomFurnitureImpl) furniture).setBehavior(FurnitureBehaviors.fromConfig(furniture, behaviorSection));
+            // 家具行为
+            List<FurnitureBehavior<?>> behaviors = section.getSectionList(BEHAVIORS, it -> FurnitureBehaviors.fromConfig(furniture, it));
+            if (behaviors.size() == 1) {
+                ((CustomFurnitureImpl) furniture).setBehavior(behaviors.getFirst());
+            } else if (behaviors.size() > 1) {
+                ((CustomFurnitureImpl) furniture).setBehavior(new UnsafeCompositeFurnitureBehavior(furniture, behaviors));
             }
             AbstractFurnitureManager.this.byId.put(id, furniture);
         }

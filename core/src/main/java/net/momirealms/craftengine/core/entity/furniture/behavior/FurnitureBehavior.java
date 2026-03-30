@@ -16,67 +16,71 @@ import org.jetbrains.annotations.Nullable;
 import java.util.function.Consumer;
 
 @ApiStatus.Experimental
-public abstract class FurnitureBehavior {
+public abstract class FurnitureBehavior<D> {
     public final CustomFurniture furniture;
 
     protected FurnitureBehavior(CustomFurniture furniture) {
         this.furniture = furniture;
     }
 
+    public D createData(Furniture furniture) {
+        return null;
+    }
+
     /**
      * Creates a ticker that runs on the main server thread.
      */
-    public <T extends Furniture> FurnitureTicker<T> createFurnitureTicker(T furniture) {
+    public <T extends Furniture> FurnitureTicker<T> createFurnitureTicker(T furniture, D data) {
         return null;
     }
 
     /**
      * Creates a ticker that runs asynchronously.
      */
-    public <T extends Furniture> FurnitureTicker<T> createAsyncFurnitureTicker(T furniture) {
+    public <T extends Furniture> FurnitureTicker<T> createAsyncFurnitureTicker(T furniture, D data) {
         return null;
     }
 
-    public InteractionResult useOnFurniture(Furniture furniture, FurnitureHitBox hitBox, InteractEntityContext context) {
+    public InteractionResult useOnFurniture(Furniture furniture, FurnitureHitBox hitBox, InteractEntityContext context, D data) {
         return InteractionResult.TRY_EMPTY_HAND;
     }
 
-    public InteractionResult useWithoutItem(Furniture furniture, InteractEntityContext context) {
+    public InteractionResult useWithoutItem(Furniture furniture, InteractEntityContext context, D data) {
         return InteractionResult.PASS;
     }
 
-    public void createFurnitureElements(Furniture furniture, Consumer<FurnitureElement> consumer) {
+    public void createFurnitureElements(Furniture furniture, Consumer<FurnitureElement> consumer, D data) {
     }
 
-    public void createFurnitureHitboxes(Furniture furniture, Consumer<FurnitureHitBox> consumer) {
+    public void createFurnitureHitboxes(Furniture furniture, Consumer<FurnitureHitBox> consumer, D data) {
     }
 
     /**
      * Triggered when the furniture is broken.
      */
-    public void onDestroy(Furniture furniture) {
+    public void onDestroy(Furniture furniture, D data) {
     }
 
     /**
      * Triggered when the furniture is first placed in the world.
      */
-    public void onPlace(Furniture furniture, UseOnContext context) {
+    public void onPlace(Furniture furniture, UseOnContext context, D data) {
     }
 
     /**
      * Triggered when the chunk containing the furniture is unloaded.
      */
-    public void onUnload(Furniture furniture) {
+    public void onUnload(Furniture furniture, D data) {
     }
 
     /**
      * Triggered when the chunk containing the furniture is loaded into the world.
      */
-    public void onLoad(Furniture furniture) {
+    public void onLoad(Furniture furniture, D data) {
     }
 
     @Nullable
-    public Item getItemToPickup(Furniture furniture, Player player) {
+    public Item getItemToPickup(Furniture furniture, Player player, D data) {
         return null;
     }
 

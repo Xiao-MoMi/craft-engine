@@ -18,7 +18,6 @@ import net.momirealms.craftengine.core.entity.player.Player;
 import net.momirealms.craftengine.core.entity.seat.Seat;
 import net.momirealms.craftengine.core.item.Item;
 import net.momirealms.craftengine.core.plugin.CraftEngine;
-import net.momirealms.craftengine.core.util.CustomDataType;
 import net.momirealms.craftengine.core.util.Key;
 import net.momirealms.craftengine.core.util.LazyReference;
 import net.momirealms.craftengine.core.util.QuaternionUtils;
@@ -39,12 +38,12 @@ public abstract class Furniture implements Cullable {
     public final CustomFurniture config;
     /** Accessor for persistent furniture data */
     public final FurniturePersistentData persistentData;
-    /** Temp data that won't be persisted **/
-    public final LazyReference<Map<CustomDataType<?>, Object>> tempData = LazyReference.lazyReference(IdentityHashMap::new);
     /** The base entity that carries metadata for this furniture */
     public final Entity metaDataEntity;
     /** Cached entity ID of the metadata entity */
     public final int metaDataEntityId;
+    /** Runtime data */
+    public final Object data;
 
     protected CullingData cullingData;
     protected FurnitureSnapshotState snapshot;
@@ -61,6 +60,7 @@ public abstract class Furniture implements Cullable {
         this.persistentData = data;
         this.metaDataEntity = metaDataEntity;
         this.metaDataEntityId = metaDataEntity.entityId();
+        this.data = config.behavior().createData(this);
         this.setVariantInternal(config.getVariant(data));
         this.sourceItem = data.item().orElse(null);
     }
@@ -266,7 +266,7 @@ public abstract class Furniture implements Cullable {
         this.config.behavior().createFurnitureElements(this, element -> {
             elements.add(element);
             element.collectInteractableEntityId(interactableEntityIds::addLast);
-        });
+        }, this.data);
 
         // 初始化碰撞箱
         List<FurnitureHitBoxConfig<? extends FurnitureHitBox>> furnitureHitBoxConfigs = variant.hitBoxConfigs();
@@ -279,7 +279,7 @@ public abstract class Furniture implements Cullable {
             FurnitureHitBox hitbox = furnitureHitBoxConfig.create(this);
             hitboxes.add(hitbox);
         }
-        this.config.behavior().createFurnitureHitboxes(this, hitboxes::add);
+        this.config.behavior().createFurnitureHitboxes(this, hitboxes::add, this.data);
 
         for (FurnitureHitBox hitbox : hitboxes) {
             for (FurnitureHitboxPart part : hitbox.parts()) {
@@ -470,47 +470,6 @@ public abstract class Furniture implements Cullable {
      */
     public FurniturePersistentData persistentData() {
         return this.persistentData;
-    }
-
-    /**
-     * Removes the temporary data associated with the specified key.
-     *
-     * @param key The key of the data to remove.
-     * @param <T> The expected type of the data.
-     * @return The previously associated value, or null if there was no mapping.
-     */
-    @Nullable
-    @SuppressWarnings("unchecked")
-    public <T> T removeTempData(CustomDataType<T> key) {
-        return (T) this.tempData.get().remove(key);
-    }
-
-    /**
-     * Associates the specified value with the specified key in the temporary data storage.
-     * If a value was already present for this key, it is replaced.
-     *
-     * @param key   The key with which the value is to be associated.
-     * @param value The value to be stored.
-     * @param <T>   The type of the data.
-     * @return The previous value associated with the key, or null if there was none.
-     */
-    @Nullable
-    @SuppressWarnings("unchecked")
-    public <T> T putTempData(CustomDataType<T> key, T value) {
-        return (T) this.tempData.get().put(key, value);
-    }
-
-    /**
-     * Retrieves the temporary data associated with the specified key.
-     *
-     * @param key The key whose associated value is to be returned.
-     * @param <T> The expected type of the data.
-     * @return The value associated with the key, or null if no mapping exists.
-     */
-    @Nullable
-    @SuppressWarnings("unchecked")
-    public <T> T getTempData(CustomDataType<T> key) {
-        return (T) this.tempData.get().get(key);
     }
 
     /**

@@ -44,7 +44,7 @@ public interface CustomFurniture {
     FurnitureVariant getVariant(String variantName);
 
     @NotNull
-    FurnitureBehavior behavior();
+    FurnitureBehavior<Object> behavior();
 
     @NotNull
     default FurnitureVariant getVariant(FurniturePersistentData accessor) {

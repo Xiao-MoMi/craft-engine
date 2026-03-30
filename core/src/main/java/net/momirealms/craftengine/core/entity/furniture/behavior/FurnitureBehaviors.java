@@ -14,7 +14,7 @@ import org.jetbrains.annotations.ApiStatus;
 public abstract class FurnitureBehaviors {
     protected FurnitureBehaviors() {}
 
-    public static FurnitureBehavior fromConfig(CustomFurniture furniture, ConfigSection section) {
+    public static FurnitureBehavior<?> fromConfig(CustomFurniture furniture, ConfigSection section) {
         String type = section.getNonNullString("type");
         Key key = Key.ce(type);
         FurnitureBehaviorType<?> furnitureBehaviorType = BuiltInRegistries.FURNITURE_BEHAVIOR_TYPE.getValue(key);
@@ -24,9 +24,9 @@ public abstract class FurnitureBehaviors {
         return furnitureBehaviorType.factory().create(furniture, section);
     }
 
-    public static <T extends FurnitureBehavior> FurnitureBehaviorType<T> register(Key id, FurnitureBehaviorFactory<T> factory) {
+    public static <T extends FurnitureBehavior<?>> FurnitureBehaviorType<T> register(Key id, FurnitureBehaviorFactory<T> factory) {
         FurnitureBehaviorType<T> type = new FurnitureBehaviorType<>(id, factory);
-        ((WritableRegistry<FurnitureBehaviorType<? extends FurnitureBehavior>>) BuiltInRegistries.FURNITURE_BEHAVIOR_TYPE)
+        ((WritableRegistry<FurnitureBehaviorType<? extends FurnitureBehavior<?>>>) BuiltInRegistries.FURNITURE_BEHAVIOR_TYPE)
                 .register(ResourceKey.create(Registries.FURNITURE_BEHAVIOR_TYPE.location(), id), type);
         return type;
     }

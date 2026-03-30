@@ -19,7 +19,6 @@ import net.momirealms.craftengine.core.plugin.context.PlayerOptionalContext;
 import net.momirealms.craftengine.core.sound.SoundData;
 import net.momirealms.craftengine.core.sound.SoundSource;
 import net.momirealms.craftengine.core.util.AdventureHelper;
-import net.momirealms.craftengine.core.util.CustomDataType;
 import net.momirealms.craftengine.core.util.VersionHelper;
 import net.momirealms.craftengine.core.world.BlockPos;
 import net.momirealms.craftengine.core.world.context.InteractEntityContext;
@@ -36,7 +35,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.Optional;
 
-public final class SimpleStorageFurnitureBehavior extends FurnitureBehavior {
+public final class SimpleStorageFurnitureBehavior extends FurnitureBehavior<SimpleStorageFurnitureBehavior.ItemStorage> {
     public static final FurnitureBehaviorFactory<SimpleStorageFurnitureBehavior> FACTORY = new Factory();
     public final String containerTitle;
     public final int rows;
@@ -56,9 +55,12 @@ public final class SimpleStorageFurnitureBehavior extends FurnitureBehavior {
     }
 
     @Override
-    public InteractionResult useOnFurniture(Furniture furniture, FurnitureHitBox hitBox, InteractEntityContext context) {
-        ItemStorage storage = furniture.getTempData(ItemStorage.TYPE);
-        if (storage == null) return InteractionResult.SUCCESS_AND_CANCEL;
+    public ItemStorage createData(Furniture furniture) {
+        return new ItemStorage(furniture, this);
+    }
+
+    @Override
+    public InteractionResult useOnFurniture(Furniture furniture, FurnitureHitBox hitBox, InteractEntityContext context, ItemStorage storage) {
         BlockPos blockPos = context.getClickedPos();
         World bukkitWorld = (World) context.getLevel().platformWorld();
         Location location = new Location(bukkitWorld, blockPos.x(), blockPos.y(), blockPos.z());
@@ -71,33 +73,23 @@ public final class SimpleStorageFurnitureBehavior extends FurnitureBehavior {
     }
 
     @Override
-    public void onDestroy(Furniture furniture) {
-        ItemStorage storage = furniture.getTempData(ItemStorage.TYPE);
-        if (storage == null) return;
+    public void onDestroy(Furniture furniture, ItemStorage storage) {
         storage.destroy();
-        furniture.removeTempData(ItemStorage.TYPE);
     }
 
     @Override
-    public void onLoad(Furniture furniture) {
-        ItemStorage storage = furniture.getTempData(ItemStorage.TYPE);
-        if (storage == null) {
-            storage = new ItemStorage(furniture, this);
-            furniture.putTempData(ItemStorage.TYPE, storage);
-        }
+    public void onLoad(Furniture furniture, ItemStorage storage) {
         storage.load();
     }
 
     @Override
-    public void onUnload(Furniture furniture) {
-        ItemStorage itemStorage = furniture.getTempData(ItemStorage.TYPE);
-        if (itemStorage == null) return;
-        itemStorage.unload();
-        furniture.removeTempData(ItemStorage.TYPE);
+    public void onUnload(Furniture furniture, ItemStorage storage) {
+        storage.unload();
     }
 
     private static class Factory implements FurnitureBehaviorFactory<SimpleStorageFurnitureBehavior> {
 
+        @SuppressWarnings("DuplicatedCode")
         @Override
         public SimpleStorageFurnitureBehavior create(CustomFurniture furniture, ConfigSection section) {
             ConfigSection soundSection = section.getSection("sounds");
@@ -118,7 +110,6 @@ public final class SimpleStorageFurnitureBehavior extends FurnitureBehavior {
     }
 
     public static final class ItemStorage implements InventoryHolder {
-        private static final CustomDataType<ItemStorage> TYPE = new CustomDataType<>();
         private static final String KEY = "craftengine:simple_storage_furniture";
         public final Furniture furniture;
         private final SimpleStorageFurnitureBehavior behavior;

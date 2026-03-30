@@ -48,7 +48,7 @@ public final class EmptyFurniture implements CustomFurniture {
     }
 
     @Override
-    public @NotNull FurnitureBehavior behavior() {
+    public @NotNull FurnitureBehavior<Object> behavior() {
         return EmptyFurnitureBehavior.INSTANCE;
     }
 }
