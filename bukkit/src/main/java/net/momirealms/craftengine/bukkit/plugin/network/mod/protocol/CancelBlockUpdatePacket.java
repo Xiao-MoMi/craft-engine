@@ -1,9 +1,9 @@
-package net.momirealms.craftengine.bukkit.plugin.network.payload.protocol;
+package net.momirealms.craftengine.bukkit.plugin.network.mod.protocol;
 
-import net.momirealms.craftengine.bukkit.plugin.network.payload.PayloadHelper;
-import net.momirealms.craftengine.core.plugin.network.ModPacket;
+import net.momirealms.craftengine.core.plugin.network.mod.ModPacket;
 import net.momirealms.craftengine.core.plugin.network.NetWorkUser;
 import net.momirealms.craftengine.core.plugin.network.codec.NetworkCodec;
+import net.momirealms.craftengine.core.plugin.network.mod.ModPackets;
 import net.momirealms.craftengine.core.registry.BuiltInRegistries;
 import net.momirealms.craftengine.core.util.FriendlyByteBuf;
 import net.momirealms.craftengine.core.util.Key;
@@ -34,6 +34,6 @@ public record CancelBlockUpdatePacket(boolean enabled) implements ModPacket {
     @Override
     public void handle(NetWorkUser user) {
         if (!this.enabled) return;
-        PayloadHelper.sendData(user, this);
+        ModPackets.sendPacket(user, this);
     }
 }

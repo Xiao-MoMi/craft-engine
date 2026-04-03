@@ -11,6 +11,7 @@ import dev.dejvokep.boostedyaml.settings.general.GeneralSettings;
 import dev.dejvokep.boostedyaml.settings.loader.LoaderSettings;
 import dev.dejvokep.boostedyaml.settings.updater.UpdaterSettings;
 import dev.dejvokep.boostedyaml.utils.format.NodeRole;
+import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import net.kyori.adventure.text.Component;
 import net.momirealms.craftengine.core.entity.furniture.ColliderType;
 import net.momirealms.craftengine.core.item.ItemKeys;
@@ -47,6 +48,11 @@ public final class Config {
     private boolean checkUpdate;
     private boolean metrics;
     private Locale forcedLocale;
+
+    private boolean client_communication$enable;
+    private boolean client_communication$permission$enable;
+    private Map<Key, String> client_communication$permission$clientbound;
+    private Map<Key, String> client_communication$permission$serverbound;
 
     private boolean misc$filterConfigurationPhaseDisconnect;
     private boolean misc$delayConfigurationLoad;
@@ -661,6 +667,32 @@ public final class Config {
         this.bedrock_edition_support$enable = config.getBoolean("bedrock-edition-support.enable", true);
         this.bedrock_edition_support$player_prefix = config.getString("bedrock-edition-support.player-prefix", "!");
 
+        // client communication
+        this.client_communication$enable = config.getBoolean("client-communication.enable", true);
+        this.client_communication$permission$enable = config.getBoolean("client-communication.permission.enable", false);
+        {
+            Section section = config.getSection("client-communication.permission.clientbound");
+            Map<Key, String> map = new Object2ObjectOpenHashMap<>();
+            if (section != null) {
+                for (Map.Entry<String, Object> entry : section.getStringRouteMappedValues(false).entrySet()) {
+                    Key key = Key.ce(StringUtils.normalizeSettingsType(entry.getKey()));
+                    map.put(key, String.valueOf(entry.getValue()));
+                }
+            }
+            this.client_communication$permission$clientbound = map;
+        }
+        {
+            Section section = config.getSection("client-communication.permission.serverbound");
+            Map<Key, String> map = new Object2ObjectOpenHashMap<>();
+            if (section != null) {
+                for (Map.Entry<String, Object> entry : section.getStringRouteMappedValues(false).entrySet()) {
+                    Key key = Key.ce(StringUtils.normalizeSettingsType(entry.getKey()));
+                    map.put(key, String.valueOf(entry.getValue()));
+                }
+            }
+            this.client_communication$permission$serverbound = map;
+        }
+
         this.firstTime = false;
     }
 
@@ -688,6 +720,22 @@ public final class Config {
 
     public static boolean injectPacketEvents() {
         return instance.misc$inject_packet_vents;
+    }
+
+    public static boolean clientCommunication() {
+        return instance.client_communication$enable;
+    }
+
+    public static boolean clientCommunicationPermission() {
+        return instance.client_communication$permission$enable;
+    }
+
+    public static String clientCommunicationPermissionClientbound(Key key) {
+        return instance.client_communication$permission$clientbound.get(key);
+    }
+
+    public static String clientCommunicationPermissionServerbound(Key key) {
+        return instance.client_communication$permission$serverbound.get(key);
     }
 
     public static boolean debugCommon() {

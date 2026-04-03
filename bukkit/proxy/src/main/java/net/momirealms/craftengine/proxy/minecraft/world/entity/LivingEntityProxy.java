@@ -19,8 +19,9 @@ public interface LivingEntityProxy extends EntityProxy {
     @FieldGetter(name = "lastDamageSource")
     Object getLastDamageSource(Object target);
 
-    // 1_21_R4 / 1.21.5 之前, 返回对象为 Player
-    // 1_21_R4 / 1.21.5 之后, 返回对象为 EntityReference<Player>
+    /**
+     * @return 1.21.5+ {@code EntityReference<Player>}</br>1.21.5- {@code Player}
+     */
     @FieldGetter(name = "lastHurtByPlayer")
     Object getLastHurtByPlayerField(Object target);
 

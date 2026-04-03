@@ -26,6 +26,7 @@ import net.momirealms.craftengine.bukkit.compatibility.nameplates.CustomNameplat
 import net.momirealms.craftengine.bukkit.compatibility.packetevents.WrappedBlockStateHelper;
 import net.momirealms.craftengine.bukkit.compatibility.papi.PlaceholderAPIUtils;
 import net.momirealms.craftengine.bukkit.compatibility.permission.LuckPermsEventListeners;
+import net.momirealms.craftengine.bukkit.compatibility.permission.LuckPermsUtils;
 import net.momirealms.craftengine.bukkit.compatibility.quickshop.QuickShopItemExpressionHandler;
 import net.momirealms.craftengine.bukkit.compatibility.skript.SkriptHook;
 import net.momirealms.craftengine.bukkit.compatibility.slimeworld.SlimeFormatStorageAdaptor;
@@ -67,7 +68,7 @@ public final class BukkitCompatibilityManager implements CompatibilityManager {
     private boolean hasPlaceholderAPI;
     private boolean hasGeyser;
     private boolean hasFloodgate;
-    private boolean hasMythicMobs;
+    private boolean hasLuckPerms;
 
     public BukkitCompatibilityManager(BukkitCraftEngine plugin) {
         this.plugin = plugin;
@@ -272,6 +273,7 @@ public final class BukkitCompatibilityManager implements CompatibilityManager {
 
     private void initLuckPermsHook() {
         new LuckPermsEventListeners(this.plugin.javaPlugin(), this.plugin.fontManager()::refreshEmojiSuggestions);
+        this.hasLuckPerms = true;
     }
 
     private void initSlimeWorldHook() {
@@ -394,5 +396,16 @@ public final class BukkitCompatibilityManager implements CompatibilityManager {
             return GeyserUtils.isGeyserPlayer(uuid);
         }
         return uuid.version() == 0;
+    }
+
+    @Override
+    public boolean hasPermission(NetWorkUser user, String permission) {
+        if (user.platformPlayer() instanceof org.bukkit.entity.Player player) {
+            return player.hasPermission(permission);
+        }
+        if (this.hasLuckPerms) {
+            return LuckPermsUtils.hasPermission(user, permission);
+        }
+        return false;
     }
 }

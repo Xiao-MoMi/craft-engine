@@ -89,7 +89,7 @@ public final class SurfaceSpreadingBlockBehavior extends BukkitBlockBehavior {
             if (VersionHelper.isOrAbove1_21_2()) {
                 return LightEngineProxy.INSTANCE.getLightBlockInto(
                         state, blockState, DirectionProxy.UP,
-                        BlockBehaviourProxy.BlockStateBaseProxy.INSTANCE.getLightBlock$1(blockState)
+                        BlockBehaviourProxy.BlockStateBaseProxy.INSTANCE.getLightDampening$1(blockState)
                 ) < 15;
             } else {
                 return LightEngineProxy.INSTANCE.getLightBlockInto(

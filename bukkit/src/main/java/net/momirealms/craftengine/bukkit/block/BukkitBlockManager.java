@@ -8,8 +8,7 @@ import net.momirealms.craftengine.bukkit.plugin.BukkitCraftEngine;
 import net.momirealms.craftengine.bukkit.plugin.injector.BlockGenerator;
 import net.momirealms.craftengine.bukkit.plugin.injector.MaterialInjector;
 import net.momirealms.craftengine.bukkit.plugin.network.BukkitNetworkManager;
-import net.momirealms.craftengine.bukkit.plugin.network.payload.PayloadHelper;
-import net.momirealms.craftengine.bukkit.plugin.network.payload.protocol.VisualBlockStatePacket;
+import net.momirealms.craftengine.bukkit.plugin.network.mod.protocol.VisualBlockStatePacket;
 import net.momirealms.craftengine.bukkit.plugin.user.BukkitServerPlayer;
 import net.momirealms.craftengine.bukkit.util.*;
 import net.momirealms.craftengine.core.block.*;
@@ -25,6 +24,7 @@ import net.momirealms.craftengine.core.plugin.context.Context;
 import net.momirealms.craftengine.core.plugin.context.EventTrigger;
 import net.momirealms.craftengine.core.plugin.context.function.Function;
 import net.momirealms.craftengine.core.plugin.logger.Debugger;
+import net.momirealms.craftengine.core.plugin.network.mod.ModPackets;
 import net.momirealms.craftengine.core.registry.Holder;
 import net.momirealms.craftengine.core.sound.SoundSet;
 import net.momirealms.craftengine.core.util.Key;
@@ -151,7 +151,7 @@ public final class BukkitBlockManager extends AbstractBlockManager {
         this.cachedVisualBlockStatePacket = VisualBlockStatePacket.create();
         for (BukkitServerPlayer player : BukkitNetworkManager.instance().onlineUsers()) {
             if (!player.clientModEnabled()) continue;
-            PayloadHelper.sendData(player, this.cachedVisualBlockStatePacket);
+            ModPackets.sendPacket(player, this.cachedVisualBlockStatePacket);
         }
     }
 
@@ -299,8 +299,8 @@ public final class BukkitBlockManager extends AbstractBlockManager {
             }
 
             if (VersionHelper.isOrAbove1_21_2()) {
-                int blockLight = settings.blockLight() != -1 ? settings.blockLight() : BlockBehaviourProxy.BlockStateBaseProxy.INSTANCE.getLightBlock$0(nmsVisualState);
-                BlockBehaviourProxy.BlockStateBaseProxy.INSTANCE.setLightBlock(nmsState, blockLight);
+                int blockLight = settings.blockLight() != -1 ? settings.blockLight() : BlockBehaviourProxy.BlockStateBaseProxy.INSTANCE.getLightDampening$0(nmsVisualState);
+                BlockBehaviourProxy.BlockStateBaseProxy.INSTANCE.setLightDampening(nmsState, blockLight);
                 boolean propagatesSkylightDown = settings.propagatesSkylightDown() == Tristate.UNDEFINED ? BlockBehaviourProxy.BlockStateBaseProxy.INSTANCE.isPropagatesSkylightDown(nmsVisualState) : settings.propagatesSkylightDown().asBoolean();
                 BlockBehaviourProxy.BlockStateBaseProxy.INSTANCE.setPropagatesSkylightDown(nmsState, propagatesSkylightDown);
             } else {

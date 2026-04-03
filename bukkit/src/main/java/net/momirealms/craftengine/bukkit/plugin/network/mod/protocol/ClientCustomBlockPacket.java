@@ -1,17 +1,17 @@
-package net.momirealms.craftengine.bukkit.plugin.network.payload.protocol;
+package net.momirealms.craftengine.bukkit.plugin.network.mod.protocol;
 
 
 import it.unimi.dsi.fastutil.longs.LongOpenHashSet;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.TranslationArgument;
 import net.momirealms.craftengine.bukkit.block.BukkitBlockManager;
-import net.momirealms.craftengine.bukkit.plugin.network.payload.PayloadHelper;
 import net.momirealms.craftengine.bukkit.util.BlockStateUtils;
 import net.momirealms.craftengine.bukkit.util.RegistryUtils;
 import net.momirealms.craftengine.core.plugin.CraftEngine;
-import net.momirealms.craftengine.core.plugin.network.ModPacket;
+import net.momirealms.craftengine.core.plugin.network.mod.ModPacket;
 import net.momirealms.craftengine.core.plugin.network.NetWorkUser;
 import net.momirealms.craftengine.core.plugin.network.codec.NetworkCodec;
+import net.momirealms.craftengine.core.plugin.network.mod.ModPackets;
 import net.momirealms.craftengine.core.registry.BuiltInRegistries;
 import net.momirealms.craftengine.core.util.*;
 import net.momirealms.craftengine.proxy.bukkit.craftbukkit.CraftWorldProxy;
@@ -69,7 +69,7 @@ public record ClientCustomBlockPacket(int vanillaSize, int currentSize) implemen
         }
         user.setClientModState(true);
         user.setClientBlockList(new IntIdentityList(this.currentSize));
-        PayloadHelper.sendData(user, BukkitBlockManager.instance().cachedVisualBlockStatePacket());
+        ModPackets.sendPacket(user, BukkitBlockManager.instance().cachedVisualBlockStatePacket());
         if (!VersionHelper.isOrAbove1_20_2()) {
             // 因为旧版本没有配置阶段需要重新发送区块
             CraftEngine.instance().scheduler().executeSync(() -> {
