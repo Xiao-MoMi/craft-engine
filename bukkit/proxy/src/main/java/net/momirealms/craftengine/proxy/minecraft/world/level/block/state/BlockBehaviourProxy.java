@@ -161,10 +161,10 @@ public interface BlockBehaviourProxy {
         @FieldSetter(name = "isViewBlocking")
         void setIsViewBlocking(Object target, Object isViewBlocking);
 
-        @FieldGetter(name = "hasPostProcess")
+        @FieldGetter(name = {"postProcess", "hasPostProcess"})
         Object getHasPostProcess(Object target);
 
-        @FieldSetter(name = "hasPostProcess")
+        @FieldSetter(name = {"postProcess", "hasPostProcess"})
         void setHasPostProcess(Object target, Object hasPostProcess);
 
         @FieldGetter(name = "emissiveRendering")
@@ -221,11 +221,11 @@ public interface BlockBehaviourProxy {
         @FieldSetter(name = "propagatesSkylightDown", activeIf = "min_version=1.21.2")
         void setPropagatesSkylightDown(Object target, boolean propagatesSkylightDown);
 
-        @FieldGetter(name = "lightBlock", activeIf = "min_version=1.21.2")
-        int getLightBlock$0(Object target);
+        @FieldGetter(name = {"lightDampening", "lightBlock"}, activeIf = "min_version=1.21.2")
+        int getLightDampening$0(Object target);
 
-        @FieldSetter(name = "lightBlock", activeIf = "min_version=1.21.2")
-        void setLightBlock(Object target, int lightBlock);
+        @FieldSetter(name = {"lightDampening", "lightBlock"}, activeIf = "min_version=1.21.2")
+        void setLightDampening(Object target, int lightBlock);
 
         @FieldGetter(name = "shapeExceedsCube")
         boolean isShapeExceedsCube(Object target);
@@ -254,8 +254,8 @@ public interface BlockBehaviourProxy {
         @MethodInvoker(name = "initCache")
         void initCache(Object target);
 
-        @MethodInvoker(name = "getLightBlock", activeIf = "min_version=1.21.2")
-        int getLightBlock$1(Object target);
+        @MethodInvoker(name = {"getLightDampening", "getLightBlock"}, activeIf = "min_version=1.21.2")
+        int getLightDampening$1(Object target);
 
         @MethodInvoker(name = "getLightBlock", activeIf = "max_version=1.21.1")
         int getLightBlock(Object target, @Type(clazz = BlockGetterProxy.class) Object world, @Type(clazz = BlockPosProxy.class) Object pos);

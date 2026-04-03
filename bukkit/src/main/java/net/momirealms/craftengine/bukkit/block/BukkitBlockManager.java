@@ -299,8 +299,8 @@ public final class BukkitBlockManager extends AbstractBlockManager {
             }
 
             if (VersionHelper.isOrAbove1_21_2()) {
-                int blockLight = settings.blockLight() != -1 ? settings.blockLight() : BlockBehaviourProxy.BlockStateBaseProxy.INSTANCE.getLightBlock$0(nmsVisualState);
-                BlockBehaviourProxy.BlockStateBaseProxy.INSTANCE.setLightBlock(nmsState, blockLight);
+                int blockLight = settings.blockLight() != -1 ? settings.blockLight() : BlockBehaviourProxy.BlockStateBaseProxy.INSTANCE.getLightDampening$0(nmsVisualState);
+                BlockBehaviourProxy.BlockStateBaseProxy.INSTANCE.setLightDampening(nmsState, blockLight);
                 boolean propagatesSkylightDown = settings.propagatesSkylightDown() == Tristate.UNDEFINED ? BlockBehaviourProxy.BlockStateBaseProxy.INSTANCE.isPropagatesSkylightDown(nmsVisualState) : settings.propagatesSkylightDown().asBoolean();
                 BlockBehaviourProxy.BlockStateBaseProxy.INSTANCE.setPropagatesSkylightDown(nmsState, propagatesSkylightDown);
             } else {
