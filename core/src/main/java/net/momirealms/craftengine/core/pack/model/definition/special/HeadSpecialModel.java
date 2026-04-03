@@ -41,16 +41,22 @@ public final class HeadSpecialModel implements SpecialModel {
 
     @Override
     public JsonObject apply(MinecraftVersion version) {
-        JsonObject json = new JsonObject();
-        json.addProperty("type", "head");
-        json.addProperty("kind", this.kind);
-        if (this.texture != null) {
-            json.addProperty("texture", this.texture);
+        if (version.isAtOrAbove(MinecraftVersion.V1_21_6) && this.kind.equals("player")) {
+            JsonObject json = new JsonObject();
+            json.addProperty("type", "player_head");
+            return json;
+        } else {
+            JsonObject json = new JsonObject();
+            json.addProperty("type", "head");
+            json.addProperty("kind", this.kind);
+            if (this.texture != null) {
+                json.addProperty("texture", this.texture);
+            }
+            if (this.animation != 0) {
+                json.addProperty("animation", this.animation);
+            }
+            return json;
         }
-        if (this.animation != 0) {
-            json.addProperty("animation", this.animation);
-        }
-        return json;
     }
 
     private static class Factory implements SpecialModelFactory<HeadSpecialModel> {
