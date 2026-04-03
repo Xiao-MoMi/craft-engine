@@ -24,7 +24,7 @@ public class ModPackets {
     }
 
     public static void sendPacket(NetWorkUser user, ModPacket packet) {
-        if (!Config.clientCommunicationEnabled()) return;
+        if (!Config.clientCommunication()) return;
         @SuppressWarnings("unchecked")
         NetworkCodec<FriendlyByteBuf, ModPacket> codec = (NetworkCodec<FriendlyByteBuf, ModPacket>) BuiltInRegistries.MOD_PACKET.getValue(packet.type());
         if (codec == null) {
@@ -46,7 +46,7 @@ public class ModPackets {
     }
 
     public static void handlePayload(NetWorkUser user, Payload payload) {
-        if (!Config.clientCommunicationEnabled()) return;
+        if (!Config.clientCommunication()) return;
         try {
             if (payload.channel().equals(ModChannelKeys.CRAFTENGINE_CHANNEL)) {
                 handleCraftEnginePayload(user, payload);

@@ -722,7 +722,7 @@ public final class Config {
         return instance.misc$inject_packet_vents;
     }
 
-    public static boolean clientCommunicationEnabled() {
+    public static boolean clientCommunication() {
         return instance.client_communication$enable;
     }
 
