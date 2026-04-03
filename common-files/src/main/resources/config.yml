@@ -603,7 +603,7 @@ client-communication:
       visual-block-state: ce.mod.clientbound.visual_block_state
     serverbound:
       cancel-block-update: ce.mod.serverbound.cancel_block_update
-      client-block-state_size: ce.mod.serverbound.client_block_state_size
+      client-block-state-size: ce.mod.serverbound.client_block_state_size
       client-custom-block: ce.mod.serverbound.client_custom_block
 
 misc:
