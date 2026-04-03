@@ -1232,13 +1232,10 @@ public final class BukkitNetworkManager extends AbstractNetworkManager implement
             if (!player.canInteractPoint(new Vec3d(pos.x, pos.y, pos.z), 4)) {
                 return;
             }
-            BukkitNetworkManager.this.plugin.scheduler().sync().run(() -> {
-                try {
-                    handlePlayerActionPacketOnMainThread(player, world, pos, packet);
-                } catch (Exception e) {
-                    CraftEngine.instance().logger().warn("Failed to handle ServerboundPlayerActionPacket", e);
-                }
-            }, world, pos.x >> 4, pos.z >> 4);
+            BukkitNetworkManager.this.plugin.scheduler().sync().run(
+                    () -> handlePlayerActionPacketOnMainThread(player, world, pos, packet),
+                    world, pos.x >> 4, pos.z >> 4
+            );
         }
 
         private static void handlePlayerActionPacketOnMainThread(BukkitServerPlayer player, World world, BlockPos pos, Object packet) {
@@ -1349,16 +1346,13 @@ public final class BukkitNetworkManager extends AbstractNetworkManager implement
             if (!player.canInteractPoint(new Vec3d(x, y, z), 4)) {
                 return;
             }
-            BukkitNetworkManager.this.plugin.scheduler().sync().run(() -> {
-                try {
-                    handlePickItemFromBlockPacketOnMainThread((BukkitServerPlayer) user, pos);
-                } catch (Throwable e) {
-                    CraftEngine.instance().logger().warn("Failed to handle ServerboundPickItemFromBlockPacket on region thread", e);
-                }
-            }, player.platformPlayer().getWorld(), x >> 4, z >> 4);
+            BukkitNetworkManager.this.plugin.scheduler().sync().run(
+                    () -> handlePickItemFromBlockPacketOnMainThread((BukkitServerPlayer) user, pos),
+                    player.platformPlayer().getWorld(), x >> 4, z >> 4
+            );
         }
 
-        private static void handlePickItemFromBlockPacketOnMainThread(BukkitServerPlayer player, Object pos) throws Throwable {
+        private static void handlePickItemFromBlockPacketOnMainThread(BukkitServerPlayer player, Object pos) {
             Object serverLevel = player.world().serverWorld();
             Object blockState = BlockGetterProxy.INSTANCE.getBlockState(serverLevel, pos);
             Optional<ImmutableBlockState> optionalState = BlockStateUtils.getOptionalCustomBlockState(blockState);
@@ -1394,16 +1388,13 @@ public final class BukkitNetworkManager extends AbstractNetworkManager implement
             if (!player.canInteractPoint(LocationUtils.toVec3d(location), 16)) {
                 return;
             }
-            BukkitNetworkManager.this.plugin.scheduler().sync().run(() -> {
-                try {
-                    handlePickItemFromEntityOnMainThread((BukkitServerPlayer) user, furniture, furniture.hitboxByEntityId(entityId));
-                } catch (Throwable e) {
-                    CraftEngine.instance().logger().warn("Failed to handle ServerboundPickItemFromEntityPacket on region thread", e);
-                }
-            }, location.getWorld(), location.getBlockX() >> 4, location.getBlockZ() >> 4);
+            BukkitNetworkManager.this.plugin.scheduler().sync().run(
+                    () -> handlePickItemFromEntityOnMainThread((BukkitServerPlayer) user, furniture, furniture.hitboxByEntityId(entityId)),
+                    location.getWorld(), location.getBlockX() >> 4, location.getBlockZ() >> 4
+            );
         }
 
-        private static void handlePickItemFromEntityOnMainThread(BukkitServerPlayer player, BukkitFurniture furniture, FurnitureHitBox hitbox) throws Throwable {
+        private static void handlePickItemFromEntityOnMainThread(BukkitServerPlayer player, BukkitFurniture furniture, FurnitureHitBox hitbox) {
             Item item = furniture.controller.getItemToPickup(player, hitbox);
             Object itemStack;
             if (item == null) {
@@ -1453,19 +1444,13 @@ public final class BukkitNetworkManager extends AbstractNetworkManager implement
             if (!user.isOnline()) return;
             BukkitServerPlayer player = (BukkitServerPlayer) user;
             if (VersionHelper.isFolia()) {
-                player.platformPlayer().getScheduler().run(BukkitCraftEngine.instance().javaPlugin(), (t) -> {
-                    try {
-                        handleSetCreativeSlotPacketOnMainThread(player, packet);
-                    } catch (Throwable e) {
-                        CraftEngine.instance().logger().warn("Failed to handle ServerboundSetCreativeModeSlotPacket on region thread", e);
-                    }
-                }, () -> {});
+                player.platformPlayer().getScheduler().run(
+                        BukkitCraftEngine.instance().javaPlugin(),
+                        t -> handleSetCreativeSlotPacketOnMainThread(player, packet),
+                        () -> {}
+                );
             } else {
-                try {
-                    handleSetCreativeSlotPacketOnMainThread(player, packet);
-                } catch (Throwable e) {
-                    CraftEngine.instance().logger().warn("Failed to handle ServerboundSetCreativeModeSlotPacket on main thread", e);
-                }
+                handleSetCreativeSlotPacketOnMainThread(player, packet);
             }
         }
 
