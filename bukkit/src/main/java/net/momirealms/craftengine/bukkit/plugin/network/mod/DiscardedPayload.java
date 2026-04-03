@@ -1,8 +1,9 @@
-package net.momirealms.craftengine.bukkit.plugin.network.payload;
+package net.momirealms.craftengine.bukkit.plugin.network.mod;
 
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
 import net.momirealms.craftengine.bukkit.util.KeyUtils;
+import net.momirealms.craftengine.core.plugin.network.mod.Payload;
 import net.momirealms.craftengine.core.util.FriendlyByteBuf;
 import net.momirealms.craftengine.core.util.Key;
 import net.momirealms.craftengine.proxy.minecraft.network.protocol.common.custom.CustomPacketPayloadProxy;

@@ -45,8 +45,8 @@ public class EntityLootContext extends BukkitLootContext {
             LootParamsProxy.BuilderProxy.INSTANCE.withOptionalParameter(lootParamsBuilder, LootContextParamsProxy.LAST_DAMAGE_PLAYER, lastHurtByPlayer);
         }
         if (VersionHelper.isOrAbove1_21_9() && lastDamageSource != null) {
-            LootParamsProxy.BuilderProxy.INSTANCE.withParameter(lootParamsBuilder, LootContextParamsProxy.INSTANCE.getAttackingEntity(), DamageSourceProxy.INSTANCE.getCausingEntity(lastDamageSource));
-            LootParamsProxy.BuilderProxy.INSTANCE.withParameter(lootParamsBuilder, LootContextParamsProxy.INSTANCE.getDirectAttackingEntity(), DamageSourceProxy.INSTANCE.getDirectEntity(lastDamageSource));
+            LootParamsProxy.BuilderProxy.INSTANCE.withParameter(lootParamsBuilder, LootContextParamsProxy.ATTACKING_ENTITY, DamageSourceProxy.INSTANCE.getCausingEntity(lastDamageSource));
+            LootParamsProxy.BuilderProxy.INSTANCE.withParameter(lootParamsBuilder, LootContextParamsProxy.DIRECT_ATTACKING_ENTITY, DamageSourceProxy.INSTANCE.getDirectEntity(lastDamageSource));
         }
         // 额外参数
         this.getOptionalParameter(DirectContextParameters.PLAYER).ifPresent(data -> {

@@ -49,10 +49,7 @@ import net.momirealms.craftengine.bukkit.plugin.network.handler.*;
 import net.momirealms.craftengine.bukkit.plugin.network.id.PacketIdHelper;
 import net.momirealms.craftengine.bukkit.plugin.network.id.PacketIds1_20;
 import net.momirealms.craftengine.bukkit.plugin.network.id.PacketIds1_20_5;
-import net.momirealms.craftengine.bukkit.plugin.network.payload.DiscardedPayload;
-import net.momirealms.craftengine.bukkit.plugin.network.payload.Payload;
-import net.momirealms.craftengine.bukkit.plugin.network.payload.PayloadHelper;
-import net.momirealms.craftengine.bukkit.plugin.network.payload.UnknownPayload;
+import net.momirealms.craftengine.bukkit.plugin.network.mod.*;
 import net.momirealms.craftengine.bukkit.plugin.user.BukkitServerPlayer;
 import net.momirealms.craftengine.bukkit.plugin.user.FakeBukkitServerPlayer;
 import net.momirealms.craftengine.bukkit.util.*;
@@ -93,6 +90,8 @@ import net.momirealms.craftengine.core.plugin.network.event.NMSPacketEvent;
 import net.momirealms.craftengine.core.plugin.network.listener.ByteBufferPacketListener;
 import net.momirealms.craftengine.core.plugin.network.listener.ByteBufferPacketListenerHolder;
 import net.momirealms.craftengine.core.plugin.network.listener.NMSPacketListener;
+import net.momirealms.craftengine.core.plugin.network.mod.ModPackets;
+import net.momirealms.craftengine.core.plugin.network.mod.Payload;
 import net.momirealms.craftengine.core.plugin.text.component.ComponentProvider;
 import net.momirealms.craftengine.core.sound.SoundData;
 import net.momirealms.craftengine.core.sound.SoundSource;
@@ -275,7 +274,7 @@ public final class BukkitNetworkManager extends AbstractNetworkManager implement
         this.packetIds = VersionHelper.isOrAbove1_20_5() ? new PacketIds1_20_5() : new PacketIds1_20();
         // register packet handlers
         this.registerPacketListeners();
-        PayloadHelper.init();
+        BukkitModPackets.init();
         // set up packet senders
         this.packetConsumer = VersionHelper.isOrAbove1_21_6()
                 ? (target, packet, sendListener) -> ConnectionProxy.INSTANCE.send$0(target, packet, (ChannelFutureListener) sendListener)
@@ -1793,7 +1792,7 @@ public final class BukkitNetworkManager extends AbstractNetworkManager implement
             } else {
                 return;
             }
-            PayloadHelper.handleReceiver(clientPayload, user);
+            ModPackets.handlePayload(user, clientPayload);
         }
     }
 
@@ -4213,7 +4212,7 @@ public final class BukkitNetworkManager extends AbstractNetworkManager implement
             if (VersionHelper.isOrAbove1_20_2()) return;
             FriendlyByteBuf byteBuf = event.getBuffer();
             Key key = byteBuf.readKey();
-            PayloadHelper.handleReceiver(new UnknownPayload(key, byteBuf.readBytes(byteBuf.readableBytes())), user);
+            ModPackets.handlePayload(user, new UnknownPayload(key, byteBuf.readBytes(byteBuf.readableBytes())));
         }
     }
 
