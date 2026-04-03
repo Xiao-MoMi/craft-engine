@@ -314,13 +314,4 @@ final class BlockReflections {
             VersionHelper.isOrAbove1_21()
     );
 
-    public static final Method method$BlockStateBase$getBlock = requireNonNull(
-            SparrowClass.of(BlockBehaviourProxy.BlockStateBaseProxy.CLASS).getDeclaredMethod(MethodMatcher.named("getBlock")
-                    .and(MethodMatcher.returnType(BlockProxy.CLASS)))
-    );
-
-    public static final Method method$BlockStateBase$getBlockHolder = requireNonNull(
-            SparrowClass.of(BlockBehaviourProxy.BlockStateBaseProxy.CLASS).getDeclaredMethod(MethodMatcher.named("getBlockHolder")
-                    .and(MethodMatcher.returnType(HolderProxy.CLASS)))
-    );
 }
