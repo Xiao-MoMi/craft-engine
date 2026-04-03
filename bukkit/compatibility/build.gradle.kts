@@ -28,6 +28,8 @@ dependencies {
     compileOnly(project(":bukkit:proxy"))
     compileOnly(project(":bukkit:compatibility:legacy"))
 
+    // Reflection
+    compileOnly("net.momirealms:sparrow-reflection:${rootProject.properties["sparrow_reflection_version"]}")
     // NMS
     compileOnly("net.momirealms:craft-engine-nms-helper:${rootProject.properties["nms_helper_version"]}")
     // Placeholder
@@ -35,7 +37,7 @@ dependencies {
     // SlimeWorld
     compileOnly("com.infernalsuite.asp:api:4.2.0-SNAPSHOT")
     // ModelEngine
-    compileOnly("com.ticxo.modelengine:ModelEngine:R4.0.8")
+    compileOnly("com.ticxo.modelengine:ModelEngine:R4.0.9")
     // BetterModel
     compileOnly("io.github.toxicity188:bettermodel-bukkit-api:2.0.1")
     compileOnly("com.mojang:authlib:${rootProject.properties["authlib_version"]}")

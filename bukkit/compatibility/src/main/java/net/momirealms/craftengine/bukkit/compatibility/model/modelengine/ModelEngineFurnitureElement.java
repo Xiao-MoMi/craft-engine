@@ -2,6 +2,7 @@ package net.momirealms.craftengine.bukkit.compatibility.model.modelengine;
 
 import com.ticxo.modelengine.api.ModelEngineAPI;
 import com.ticxo.modelengine.api.entity.Dummy;
+import com.ticxo.modelengine.api.entity.data.DummyEntityData;
 import com.ticxo.modelengine.api.model.ActiveModel;
 import com.ticxo.modelengine.api.model.ModeledEntity;
 import net.momirealms.craftengine.bukkit.entity.furniture.element.AbstractFurnitureElement;
@@ -9,13 +10,19 @@ import net.momirealms.craftengine.core.entity.furniture.Furniture;
 import net.momirealms.craftengine.core.entity.player.Player;
 import net.momirealms.craftengine.core.world.Vec3d;
 import net.momirealms.craftengine.core.world.WorldPosition;
+import net.momirealms.sparrow.reflection.clazz.SparrowClass;
+import net.momirealms.sparrow.reflection.field.SField;
+import net.momirealms.sparrow.reflection.field.SparrowField;
+import net.momirealms.sparrow.reflection.field.matcher.FieldMatcher;
 import org.bukkit.Location;
 import org.bukkit.World;
 import org.jspecify.annotations.NonNull;
 
+import java.util.Optional;
 import java.util.function.Consumer;
 
 public final class ModelEngineFurnitureElement extends AbstractFurnitureElement {
+    private static final SField field$DummyEntityData$culler = Optional.ofNullable(SparrowClass.of(DummyEntityData.class).getDeclaredSparrowField(FieldMatcher.named("culler"))).map(SparrowField::mh).orElse(null);
     public final Furniture furniture;
     public final ModelEngineFurnitureElementConfig config;
     public final Location location;
@@ -37,6 +44,10 @@ public final class ModelEngineFurnitureElement extends AbstractFurnitureElement 
         Dummy<?> dummy = new Dummy<>();
         dummy.syncLocation(this.location);
         dummy.setDetectingPlayers(false);
+        if (field$DummyEntityData$culler != null) {
+            DummyEntityData<?> data = dummy.getData();
+            field$DummyEntityData$culler.set(data, new DummyModelCuller(data));
+        }
         ModeledEntity modeledEntity = ModelEngineAPI.createModeledEntity(dummy);
         modeledEntity.addModel(activeModel, false);
         return dummy;
