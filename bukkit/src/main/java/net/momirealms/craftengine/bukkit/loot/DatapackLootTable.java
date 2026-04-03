@@ -104,21 +104,21 @@ public class DatapackLootTable implements Loot {
             ContextKeySetProxy.BuilderProxy.INSTANCE.optional(builder, LootContextParamsProxy.EXPLOSION_RADIUS);
 
             if (VersionHelper.isOrAbove1_21()) {
-                ContextKeySetProxy.BuilderProxy.INSTANCE.optional(builder, LootContextParamsProxy.INSTANCE.getAttackingEntity());
-                ContextKeySetProxy.BuilderProxy.INSTANCE.optional(builder, LootContextParamsProxy.INSTANCE.getDirectAttackingEntity());
-                ContextKeySetProxy.BuilderProxy.INSTANCE.optional(builder, LootContextParamsProxy.INSTANCE.getEnchantmentLevel());
-                ContextKeySetProxy.BuilderProxy.INSTANCE.optional(builder, LootContextParamsProxy.INSTANCE.getEnchantmentActive());
+                ContextKeySetProxy.BuilderProxy.INSTANCE.optional(builder, LootContextParamsProxy.ATTACKING_ENTITY);
+                ContextKeySetProxy.BuilderProxy.INSTANCE.optional(builder, LootContextParamsProxy.DIRECT_ATTACKING_ENTITY);
+                ContextKeySetProxy.BuilderProxy.INSTANCE.optional(builder, LootContextParamsProxy.ENCHANTMENT_LEVEL);
+                ContextKeySetProxy.BuilderProxy.INSTANCE.optional(builder, LootContextParamsProxy.ENCHANTMENT_ACTIVE);
             }
             // 仅 1.21 版本以下.
             else {
-                ContextKeySetProxy.BuilderProxy.INSTANCE.optional(builder, LootContextParamsProxy.INSTANCE.getKillerEntity());
-                ContextKeySetProxy.BuilderProxy.INSTANCE.optional(builder, LootContextParamsProxy.INSTANCE.getDirectKillerEntity());
-                ContextKeySetProxy.BuilderProxy.INSTANCE.optional(builder, LootContextParamsProxy.INSTANCE.getLootMod());
+                ContextKeySetProxy.BuilderProxy.INSTANCE.optional(builder, LootContextParamsProxy.KILLER_ENTITY);
+                ContextKeySetProxy.BuilderProxy.INSTANCE.optional(builder, LootContextParamsProxy.DIRECT_KILLER_ENTITY);
+                ContextKeySetProxy.BuilderProxy.INSTANCE.optional(builder, LootContextParamsProxy.LOOTING_MOD);
             }
 
             if (VersionHelper.isOrAbove1_21_9()) {
-                ContextKeySetProxy.BuilderProxy.INSTANCE.optional(builder, LootContextParamsProxy.INSTANCE.getInteractingEntity());
-                ContextKeySetProxy.BuilderProxy.INSTANCE.optional(builder, LootContextParamsProxy.INSTANCE.getTargetEntity());
+                ContextKeySetProxy.BuilderProxy.INSTANCE.optional(builder, LootContextParamsProxy.INTERACTING_ENTITY);
+                ContextKeySetProxy.BuilderProxy.INSTANCE.optional(builder, LootContextParamsProxy.TARGET_ENTITY);
             }
         });
     }

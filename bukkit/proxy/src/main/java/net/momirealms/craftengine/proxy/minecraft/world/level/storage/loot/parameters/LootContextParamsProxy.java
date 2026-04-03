@@ -8,23 +8,36 @@ import net.momirealms.sparrow.reflection.proxy.annotation.ReflectionProxy;
 public interface LootContextParamsProxy {
     LootContextParamsProxy INSTANCE = ASMProxyFactory.create(LootContextParamsProxy.class);
     Object THIS_ENTITY = INSTANCE.getThisEntity();
+    Object INTERACTING_ENTITY = INSTANCE.getInteractingEntity();
+    Object TARGET_ENTITY  = INSTANCE.getTargetEntity();
     Object LAST_DAMAGE_PLAYER = INSTANCE.getLastDamagePlayer();
     Object DAMAGE_SOURCE = INSTANCE.getDamageSource();
+    Object ATTACKING_ENTITY = INSTANCE.getAttackingEntity();
+    Object KILLER_ENTITY = INSTANCE.getKillerEntity();
+    Object DIRECT_ATTACKING_ENTITY = INSTANCE.getDirectAttackingEntity();
+    Object DIRECT_KILLER_ENTITY = INSTANCE.getDirectKillerEntity();
     Object ORIGIN = INSTANCE.getOrigin();
     Object BLOCK_STATE = INSTANCE.getBlockState();
     Object BLOCK_ENTITY = INSTANCE.getBlockEntity();
     Object TOOL = INSTANCE.getTool();
     Object EXPLOSION_RADIUS = INSTANCE.getExplosionRadius();
+    Object LOOTING_MOD = INSTANCE.getLootMod();
+    Object ENCHANTMENT_LEVEL = INSTANCE.getEnchantmentLevel();
+    Object ENCHANTMENT_ACTIVE = INSTANCE.getEnchantmentActive();
 
     // 全版本
     @FieldGetter(name = "THIS_ENTITY", isStatic = true)
     Object getThisEntity();
 
     @FieldGetter(name = "INTERACTING_ENTITY", isStatic = true, activeIf = "min_version=1.21.9")
-    Object getInteractingEntity();
+    default Object getInteractingEntity() {
+        return null;
+    }
 
     @FieldGetter(name = "TARGET_ENTITY", isStatic = true, activeIf = "min_version=1.21.9")
-    Object getTargetEntity();
+    default Object getTargetEntity() {
+        return null;
+    }
 
     // 全版本
     @FieldGetter(name = "LAST_DAMAGE_PLAYER", isStatic = true)
@@ -35,16 +48,24 @@ public interface LootContextParamsProxy {
     Object getDamageSource();
 
     @FieldGetter(name = "ATTACKING_ENTITY", isStatic = true, activeIf = "min_version=1.21")
-    Object getAttackingEntity();
+    default Object getAttackingEntity() {
+        return null;
+    }
 
     @FieldGetter(name = "KILLER_ENTITY", isStatic = true, activeIf = "max_version=1.20.6")
-    Object getKillerEntity();
+    default Object getKillerEntity() {
+        return null;
+    }
 
     @FieldGetter(name = "DIRECT_ATTACKING_ENTITY", isStatic = true, activeIf = "min_version=1.21")
-    Object getDirectAttackingEntity();
+    default Object getDirectAttackingEntity() {
+        return null;
+    }
 
     @FieldGetter(name = "DIRECT_KILLER_ENTITY", isStatic = true, activeIf = "max_version=1.20.6")
-    Object getDirectKillerEntity();
+    default Object getDirectKillerEntity() {
+        return null;
+    }
 
     // 全版本
     @FieldGetter(name = "ORIGIN", isStatic = true)
@@ -67,11 +88,17 @@ public interface LootContextParamsProxy {
     Object getExplosionRadius();
 
     @FieldGetter(name = "LOOTING_MOD", isStatic = true, activeIf = "max_version=1.20.6")
-    Object getLootMod();
+    default Object getLootMod() {
+        return null;
+    }
 
     @FieldGetter(name = "ENCHANTMENT_LEVEL", isStatic = true, activeIf = "min_version=1.21")
-    Object getEnchantmentLevel();
+    default Object getEnchantmentLevel() {
+        return null;
+    }
 
     @FieldGetter(name = "ENCHANTMENT_ACTIVE", isStatic = true, activeIf = "min_version=1.21")
-    Object getEnchantmentActive();
+    default Object getEnchantmentActive() {
+        return null;
+    }
 }

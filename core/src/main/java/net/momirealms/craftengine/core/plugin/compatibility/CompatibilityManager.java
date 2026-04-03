@@ -51,4 +51,6 @@ public interface CompatibilityManager {
     EntityProvider getEntityProvider(String id);
 
     void registerEntityProvider(EntityProvider provider);
+
+    boolean hasPermission(NetWorkUser user, String permission);
 }

@@ -1,4 +1,4 @@
-package net.momirealms.craftengine.core.plugin.network;
+package net.momirealms.craftengine.core.plugin.network.mod;
 
 import net.momirealms.craftengine.core.plugin.network.codec.NetworkCodec;
 import net.momirealms.craftengine.core.util.FriendlyByteBuf;
