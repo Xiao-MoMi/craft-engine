@@ -15,9 +15,12 @@ public final class SlotDisplayTypes {
 
     public static final SlotDisplay.Type<EmptySlotDisplay> EMPTY = register(Key.of("empty"), EmptySlotDisplay::read);
     public static final SlotDisplay.Type<AnyFuelDisplay> ANY_FUEL = register(Key.of("any_fuel"), AnyFuelDisplay::read);
+    // todo: with_any_potion
+    // todo: only_with_component
     public static final SlotDisplay.Type<ItemSlotDisplay> ITEM = register(Key.of("item"), ItemSlotDisplay::read);
     public static final SlotDisplay.Type<ItemStackSlotDisplay> ITEM_STACK = register(Key.of("item_stack"), ItemStackSlotDisplay::read);
     public static final SlotDisplay.Type<TagSlotDisplay> TAG = register(Key.of("tag"), TagSlotDisplay::read);
+    // todo: dyed
     public static final SlotDisplay.Type<SmithingTrimDemoSlotDisplay> SMITHING_TRIM = register(Key.of("smithing_trim"), SmithingTrimDemoSlotDisplay::read);
     public static final SlotDisplay.Type<WithRemainderSlotDisplay> WITH_REMAINDER = register(Key.of("with_remainder"), WithRemainderSlotDisplay::read);
     public static final SlotDisplay.Type<CompositeSlotDisplay> COMPOSITE = register(Key.of("composite"), CompositeSlotDisplay::read);
