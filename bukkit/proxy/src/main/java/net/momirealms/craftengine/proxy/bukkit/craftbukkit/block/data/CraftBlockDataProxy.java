@@ -14,6 +14,6 @@ public interface CraftBlockDataProxy {
     @MethodInvoker(name = "getState")
     Object getState(BlockData target);
 
-    @MethodInvoker(name = "fromData", isStatic = true)
-    BlockData fromData(@Type(clazz = BlockStateProxy.class) Object data);
+    @MethodInvoker(name = {"createData", "fromData"}, isStatic = true)
+    BlockData createData(@Type(clazz = BlockStateProxy.class) Object data);
 }

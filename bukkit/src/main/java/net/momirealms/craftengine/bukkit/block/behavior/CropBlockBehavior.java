@@ -31,7 +31,7 @@ import net.momirealms.craftengine.core.world.Vec3i;
 import net.momirealms.craftengine.core.world.WorldPosition;
 import net.momirealms.craftengine.core.world.context.UseOnContext;
 import net.momirealms.craftengine.proxy.minecraft.core.Vec3iProxy;
-import net.momirealms.craftengine.proxy.minecraft.world.level.BlockAndTintGetterProxy;
+import net.momirealms.craftengine.proxy.minecraft.world.level.BlockAndLightGetterProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.level.LevelProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.level.LevelWriterProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.level.block.BonemealableBlockProxy;
@@ -68,7 +68,7 @@ public final class CropBlockBehavior extends BukkitBlockBehavior {
     }
 
     public static int getRawBrightness(Object level, Object pos) {
-        return BlockAndTintGetterProxy.INSTANCE.getRawBrightness(level, pos, 0);
+        return BlockAndLightGetterProxy.INSTANCE.getRawBrightness(level, pos, 0);
     }
 
     private boolean hasSufficientLight(Object level, Object pos) {

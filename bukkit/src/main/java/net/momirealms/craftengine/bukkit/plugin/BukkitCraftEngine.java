@@ -42,10 +42,7 @@ import net.momirealms.craftengine.core.plugin.logger.JavaPluginLogger;
 import net.momirealms.craftengine.core.plugin.logger.PluginLogger;
 import net.momirealms.craftengine.core.plugin.scheduler.SchedulerAdapter;
 import net.momirealms.craftengine.core.plugin.scheduler.SchedulerTask;
-import net.momirealms.craftengine.core.util.CharacterUtils;
-import net.momirealms.craftengine.core.util.ReflectionUtils;
-import net.momirealms.craftengine.core.util.ThrowableUtils;
-import net.momirealms.craftengine.core.util.VersionHelper;
+import net.momirealms.craftengine.core.util.*;
 import net.momirealms.craftengine.proxy.BukkitProxy;
 import org.bstats.bukkit.Metrics;
 import org.bukkit.Bukkit;
@@ -146,10 +143,12 @@ public final class BukkitCraftEngine extends CraftEngine {
             this.injectRegistries();
         }
         // 注入一些新的类型，但是并不需要太早
-        try {
-            RecipeInjector.init();
-        } catch (Throwable e) {
-            throw new InjectionException("Error injecting recipes", e);
+        if (!VersionHelper.isOrAbove26_1()) { // fixme 26.1+
+            try {
+                RecipeInjector.init();
+            } catch (Throwable e) {
+                throw new InjectionException("Error injecting recipes", e);
+            }
         }
         // 初始化一些注册表
         super.onPluginLoad();
@@ -285,6 +284,7 @@ public final class BukkitCraftEngine extends CraftEngine {
         if (!VersionHelper.IS_RUNNING_IN_DEV) return;
         CraftEngine.instance().logger().info("Initializing ASM proxies...");
         ClassLoader classLoader = ReflectionUtils.class.getClassLoader();
+        ExceptionCollector<Throwable> collector = new ExceptionCollector<>(Throwable.class);
         try (InputStream resourceAsStream = classLoader.getResourceAsStream("proxy.jarinjar")) {
             if (resourceAsStream == null) return;
             try (ByteArrayInputStream bais = new ByteArrayInputStream(resourceAsStream.readAllBytes());
@@ -297,12 +297,19 @@ public final class BukkitCraftEngine extends CraftEngine {
                     try {
                         Class.forName(className);
                     } catch (Throwable e) {
-                        ThrowableUtils.sneakyThrow(() -> e);
+                        collector.add(e);
                     }
                 }
+            } catch (Throwable e) {
+                collector.add(e);
             }
-        } catch (IOException e) {
-            ThrowableUtils.sneakyThrow(() -> e);
+        } catch (Throwable e) {
+            collector.add(e);
+        }
+        try {
+            collector.throwIfPresent();
+        } catch (Throwable e) {
+            throw new RuntimeException(e);
         }
     }
 

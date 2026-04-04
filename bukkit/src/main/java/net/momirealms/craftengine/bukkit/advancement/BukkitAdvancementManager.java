@@ -3,6 +3,7 @@ package net.momirealms.craftengine.bukkit.advancement;
 import net.kyori.adventure.text.Component;
 import net.momirealms.craftengine.bukkit.plugin.BukkitCraftEngine;
 import net.momirealms.craftengine.bukkit.util.ComponentUtils;
+import net.momirealms.craftengine.bukkit.util.ItemStackUtils;
 import net.momirealms.craftengine.bukkit.util.KeyUtils;
 import net.momirealms.craftengine.core.advancement.AbstractAdvancementManager;
 import net.momirealms.craftengine.core.advancement.AdvancementType;
@@ -15,6 +16,8 @@ import net.momirealms.craftengine.proxy.minecraft.advancements.*;
 import net.momirealms.craftengine.proxy.minecraft.advancements.criterion.ImpossibleTriggerProxy;
 import net.momirealms.craftengine.proxy.minecraft.network.chat.ComponentProxy;
 import net.momirealms.craftengine.proxy.minecraft.network.protocol.game.ClientboundUpdateAdvancementsPacketProxy;
+import net.momirealms.craftengine.proxy.minecraft.world.item.ItemStackProxy;
+import net.momirealms.craftengine.proxy.minecraft.world.item.ItemStackTemplateProxy;
 
 import java.util.*;
 
@@ -30,7 +33,18 @@ public final class BukkitAdvancementManager extends AbstractAdvancementManager {
     @Override
     public void sendToast(Player player, Item icon, Component message, AdvancementType type) {
         Object displayInfo;
-        if (VersionHelper.isOrAbove1_20_3()) {
+        if (VersionHelper.isOrAbove26_1()) {
+            displayInfo = DisplayInfoProxy.INSTANCE.newInstance$new(
+                    ItemStackUtils.toItemStackTemplate(icon),
+                    ComponentUtils.adventureToMinecraft(message),  // title
+                    ComponentProxy.INSTANCE.empty(), // description
+                    Optional.empty(), // background
+                    AdvancementTypeProxy.VALUES[type.ordinal()],
+                    true, // show toast
+                    false, // announce to chat
+                    true // hidden
+            );
+        } else if (VersionHelper.isOrAbove1_20_3()) {
             displayInfo = DisplayInfoProxy.INSTANCE.newInstance(
                     icon.getMinecraftItem(),
                     ComponentUtils.adventureToMinecraft(message),  // title

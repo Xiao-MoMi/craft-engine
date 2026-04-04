@@ -98,8 +98,8 @@ public final class BlockStateGenerator {
 
         constructor$CraftEngineBlockState = clazz$CraftEngineBlock.getSparrowConstructor(ConstructorMatcher.takeArguments(
                 BlockProxy.CLASS,
-                VersionHelper.isOrAbove1_20_5() ? Reference2ObjectArrayMap.class : ImmutableMap.class,
-                MapCodec.class
+                VersionHelper.isOrAbove26_1() ? PropertyProxy.CLASS.arrayType() : VersionHelper.isOrAbove1_20_5() ? Reference2ObjectArrayMap.class : ImmutableMap.class,
+                VersionHelper.isOrAbove26_1() ? Comparable.class.arrayType() : MapCodec.class
         )).asm$3();
 
         String generatedFactoryClassName = packageWithName.substring(0, packageWithName.lastIndexOf('.')) + ".CraftEngineStateFactory";

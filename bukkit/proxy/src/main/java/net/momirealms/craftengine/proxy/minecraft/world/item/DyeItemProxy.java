@@ -10,6 +10,6 @@ public interface DyeItemProxy {
     DyeItemProxy INSTANCE = ASMProxyFactory.create(DyeItemProxy.class);
     Class<?> CLASS = SparrowClass.find("net.minecraft.world.item.DyeItem");
 
-    @FieldGetter(name = "dyeColor")
+    @FieldGetter(name = "dyeColor", activeIf = "max_version=1.21.11")
     Object getDyeColor(Object target);
 }

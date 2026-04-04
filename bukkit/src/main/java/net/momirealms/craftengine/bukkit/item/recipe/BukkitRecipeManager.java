@@ -190,12 +190,14 @@ public final class BukkitRecipeManager extends AbstractRecipeManager {
         }
 
         // 重新注入特殊配方
-        super.recipeRegistry.unregister(RecipeInjector.ARMOR_DYE);
-        super.recipeRegistry.unregister(RecipeInjector.REPAIR_ITEM);
-        super.recipeRegistry.unregister(RecipeInjector.FIREWORK_STAR_FADE);
-        super.recipeRegistry.register(RecipeInjector.ARMOR_DYE, RecipeInjector.ARMOR_DYE_RECIPE);
-        super.recipeRegistry.register(RecipeInjector.REPAIR_ITEM, RecipeInjector.REPAIR_ITEM_RECIPE);
-        super.recipeRegistry.register(RecipeInjector.FIREWORK_STAR_FADE, RecipeInjector.FIREWORK_STAR_FADE_RECIPE);
+        if (!VersionHelper.isOrAbove26_1()) { // fixme 26.1+
+            super.recipeRegistry.unregister(RecipeInjector.ARMOR_DYE);
+            super.recipeRegistry.unregister(RecipeInjector.REPAIR_ITEM);
+            super.recipeRegistry.unregister(RecipeInjector.FIREWORK_STAR_FADE);
+            super.recipeRegistry.register(RecipeInjector.ARMOR_DYE, RecipeInjector.ARMOR_DYE_RECIPE);
+            super.recipeRegistry.register(RecipeInjector.REPAIR_ITEM, RecipeInjector.REPAIR_ITEM_RECIPE);
+            super.recipeRegistry.register(RecipeInjector.FIREWORK_STAR_FADE, RecipeInjector.FIREWORK_STAR_FADE_RECIPE);
+        }
 
         // 完成注册
         super.recipeRegistry.finalizeRegistration();
@@ -203,7 +205,7 @@ public final class BukkitRecipeManager extends AbstractRecipeManager {
         // 刷新配方
         if (VersionHelper.isOrAbove1_21_2()) {
             Object manager = minecraftRecipeManager();
-            RecipeManagerProxy.INSTANCE.finalizeRecipeLoading(manager, RecipeManagerProxy.INSTANCE.getFeatureFlagSet(manager));
+            RecipeManagerProxy.INSTANCE.finalizeRecipeLoading(manager, RecipeManagerProxy.INSTANCE.getEnabledFlags(manager));
         }
         // 1.21.6以下直接发包
         if (!VersionHelper.isOrAbove1_21_6() || VersionHelper.isFolia()) {

@@ -81,7 +81,7 @@ public abstract class BukkitItemFactory<W extends BukkitItemWrapper> extends Ite
     protected boolean hasItemTag(W item, Key itemTag) {
         Object literalObject = item.getMinecraftItem();
         Object tag = ItemTags.getOrCreate(itemTag);
-        return ItemStackProxy.INSTANCE.is(literalObject, tag);
+        return ItemStackProxy.INSTANCE.is$0(literalObject, tag);
     }
 
     @Override

@@ -16,11 +16,11 @@ public interface RecipeManagerProxy {
     @MethodInvoker(name = "finalizeRecipeLoading", activeIf = "min_version=1.21.2")
     void finalizeRecipeLoading(Object target, @Type(clazz = FeatureFlagSetProxy.class) Object flagSet);
 
-    @FieldGetter(name = "featureflagset", activeIf = "min_version=1.21.2")
-    Object getFeatureFlagSet(Object target);
+    @FieldGetter(name = {"enabledFlags", "featureflagset"}, activeIf = "min_version=1.21.2")
+    Object getEnabledFlags(Object target);
 
-    @FieldSetter(name = "featureflagset", activeIf = "min_version=1.21.2")
-    void setFeatureFlagSet(Object target, Object value);
+    @FieldSetter(name = {"enabledFlags", "featureflagset"}, activeIf = "min_version=1.21.2")
+    void setEnabledFlags(Object target, Object value);
 
     @FieldGetter(name = "byType", activeIf = "min_version=1.20.5 && max_version=1.21.1")
     Multimap<Object, Object> getByType(Object target);

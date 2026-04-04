@@ -20,9 +20,11 @@ public final class CraftBukkitRemapper implements Remapper {
     }
 
     static {
+        String cbPkgVersion = "";
+        boolean needRemap = true;
         if (SparrowClass.existsNoRemap("net.neoforged.art.internal.RenamerImpl")) {
-            CB_PKG_VERSION = "";
-            NEED_REMAP = false;
+            cbPkgVersion = "";
+            needRemap = false;
         } else {
             Class<?> minecraftClass = SparrowClass.find("net.minecraft.obfuscate.DontObfuscate", "net.minecraft.server.Main");
             int major;
@@ -36,26 +38,31 @@ public final class CraftBukkitRemapper implements Remapper {
                         .split("-", 2)[0]
                         .split("_", 2)[0];
                 String[] split = versionString.split("\\.");
+                if ("26".equals(split[0])) needRemap = false;
                 major = Integer.parseInt(split[1]);
                 minor = split.length == 3 ? Integer.parseInt(split[2]) : 0;
             } catch (Exception e) {
                 throw new RuntimeException("Failed to init WithCraftBukkitClassNameRemapper", e);
             }
-            String name;
-            label: {
-                for (int i = 0; i <= minor; i++) {
-                    try {
-                        name = "v1_" + major + "_R" + i + ".";
-                        Class.forName(PREFIX_CRAFTBUKKIT + name + "CraftServer");
-                        break label;
-                    } catch (ClassNotFoundException ignored) {
+            if (needRemap) {
+                String name;
+                label:
+                {
+                    for (int i = 0; i <= minor; i++) {
+                        try {
+                            name = "v1_" + major + "_R" + i + ".";
+                            Class.forName(PREFIX_CRAFTBUKKIT + name + "CraftServer");
+                            break label;
+                        } catch (ClassNotFoundException ignored) {
+                        }
                     }
+                    throw new RuntimeException("Could not find CraftServer version");
                 }
-                throw new RuntimeException("Could not find CraftServer version");
+                cbPkgVersion = name;
             }
-            CB_PKG_VERSION = name;
-            NEED_REMAP = true;
         }
+        CB_PKG_VERSION = cbPkgVersion;
+        NEED_REMAP = needRemap;
     }
 
     public static Remapper create(Remapper delegate) {

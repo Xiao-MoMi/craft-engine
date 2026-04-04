@@ -21,7 +21,7 @@ import org.bukkit.inventory.ItemStack;
 import java.util.function.Consumer;
 
 @ReflectionProxy(name = "net.minecraft.world.item.ItemStack")
-public interface ItemStackProxy extends DataComponentHolderProxy {
+public interface ItemStackProxy extends DataComponentHolderProxy, ItemInstanceProxy {
     ItemStackProxy INSTANCE = ASMProxyFactory.create(ItemStackProxy.class);
     Class<?> CLASS = SparrowClass.find("net.minecraft.world.item.ItemStack");
     Object EMPTY = INSTANCE.getEmpty();
@@ -68,8 +68,8 @@ public interface ItemStackProxy extends DataComponentHolderProxy {
     @MethodInvoker(name = "shrink")
     void shrink(Object target, int count);
 
-    @MethodInvoker(name = "is")
-    boolean is(Object target, @Type(clazz = TagKeyProxy.class) Object tag);
+    @MethodInvoker(name = "is", activeIf = "max_version=1.21.11")
+    boolean is$0(Object target, @Type(clazz = TagKeyProxy.class) Object tag);
 
     @MethodInvoker(name = "getTag", activeIf = "max_version=1.20.4")
     Object getTag(Object target);

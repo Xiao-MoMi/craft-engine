@@ -2,6 +2,7 @@ package net.momirealms.craftengine.bukkit.item.factory;
 
 import net.momirealms.craftengine.bukkit.item.ComponentItemWrapper;
 import net.momirealms.craftengine.bukkit.item.DataComponentTypes;
+import net.momirealms.craftengine.bukkit.util.ItemStackUtils;
 import net.momirealms.craftengine.core.entity.EquipmentSlot;
 import net.momirealms.craftengine.core.item.DataComponentKeys;
 import net.momirealms.craftengine.core.item.Item;
@@ -9,6 +10,7 @@ import net.momirealms.craftengine.core.item.setting.EquipmentData;
 import net.momirealms.craftengine.core.plugin.CraftEngine;
 import net.momirealms.craftengine.core.util.Key;
 import net.momirealms.craftengine.core.util.MiscUtils;
+import net.momirealms.craftengine.core.util.VersionHelper;
 import net.momirealms.craftengine.proxy.minecraft.world.item.component.UseRemainderProxy;
 
 import java.util.Locale;
@@ -52,7 +54,12 @@ public class ComponentItemFactory1_21_2 extends ComponentItemFactory1_21 {
     @Override
     protected void useRemainder(ComponentItemWrapper item, Item data, int count) {
         data.count(count);
-        Object useRemainder = UseRemainderProxy.INSTANCE.newInstance(data.getMinecraftItem());
+        Object useRemainder;
+        if (VersionHelper.isOrAbove26_1()) {
+            useRemainder = UseRemainderProxy.INSTANCE.newInstance$1(ItemStackUtils.toItemStackTemplate(data));
+        } else {
+            useRemainder = UseRemainderProxy.INSTANCE.newInstance$0(data.getMinecraftItem());
+        }
         item.setExactComponent(DataComponentTypes.USE_REMAINDER, useRemainder);
     }
 

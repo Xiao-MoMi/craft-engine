@@ -60,7 +60,7 @@ public final class BlockStateUtils {
     }
 
     public static BlockData fromBlockData(Object blockState) {
-        return CraftBlockDataProxy.INSTANCE.fromData(blockState);
+        return CraftBlockDataProxy.INSTANCE.createData(blockState);
     }
 
     public static int blockDataToId(BlockData blockData) {

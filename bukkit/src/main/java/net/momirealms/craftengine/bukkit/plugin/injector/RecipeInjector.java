@@ -58,11 +58,13 @@ public final class RecipeInjector {
                 ElementMatchers.takesArguments(CraftingContainerProxy.CLASS, LevelProxy.CLASS)
         ).and(ElementMatchers.returns(boolean.class));
         ElementMatcher.Junction<MethodDescription> assemble = (
-                VersionHelper.isOrAbove1_21() ?
-                        ElementMatchers.takesArguments(CraftingInputProxy.CLASS, HolderLookupProxy.ProviderProxy.CLASS) :
-                        VersionHelper.isOrAbove1_20_5() ?
-                                ElementMatchers.takesArguments(CraftingContainerProxy.CLASS, HolderLookupProxy.ProviderProxy.CLASS) :
-                                ElementMatchers.takesArguments(CraftingContainerProxy.CLASS, RegistryAccessProxy.CLASS)
+                VersionHelper.isOrAbove26_1() ?
+                        ElementMatchers.takesArguments(CraftingInputProxy.CLASS) :
+                            VersionHelper.isOrAbove1_21() ?
+                                    ElementMatchers.takesArguments(CraftingInputProxy.CLASS, HolderLookupProxy.ProviderProxy.CLASS) :
+                                    VersionHelper.isOrAbove1_20_5() ?
+                                            ElementMatchers.takesArguments(CraftingContainerProxy.CLASS, HolderLookupProxy.ProviderProxy.CLASS) :
+                                            ElementMatchers.takesArguments(CraftingContainerProxy.CLASS, RegistryAccessProxy.CLASS)
         ).and(ElementMatchers.returns(ItemStackProxy.CLASS));
 
         Class<?> clazz$InjectedArmorDyeRecipe = byteBuddy

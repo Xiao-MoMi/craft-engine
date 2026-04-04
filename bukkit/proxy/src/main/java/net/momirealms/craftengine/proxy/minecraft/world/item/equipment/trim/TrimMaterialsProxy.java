@@ -14,7 +14,7 @@ import java.util.Optional;
 public interface TrimMaterialsProxy {
     TrimMaterialsProxy INSTANCE = ASMProxyFactory.create(TrimMaterialsProxy.class);
 
-    @MethodInvoker(name = "getFromIngredient", activeIf = "min_version=1.20.5", isStatic = true)
+    @MethodInvoker(name = "getFromIngredient", activeIf = "min_version=1.20.5 && max_version=1.21.11", isStatic = true)
     Optional<Object> getFromIngredient$0(@Type(clazz = HolderLookupProxy.ProviderProxy.class) Object registriesLookup, @Type(clazz = ItemStackProxy.class) Object stack);
 
     @MethodInvoker(name = "getFromIngredient", activeIf = "max_version=1.20.4", isStatic = true)

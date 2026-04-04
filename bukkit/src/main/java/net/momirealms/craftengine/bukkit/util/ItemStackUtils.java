@@ -15,6 +15,7 @@ import net.momirealms.craftengine.proxy.minecraft.util.DataFixersProxy;
 import net.momirealms.craftengine.proxy.minecraft.util.datafix.fixes.ReferencesProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.entity.LivingEntityProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.item.ItemStackProxy;
+import net.momirealms.craftengine.proxy.minecraft.world.item.ItemStackTemplateProxy;
 import net.momirealms.sparrow.nbt.CompoundTag;
 import net.momirealms.sparrow.nbt.ListTag;
 import net.momirealms.sparrow.nbt.Tag;
@@ -151,5 +152,14 @@ public final class ItemStackUtils {
             itemsTag.add(itemTag);
         }
         return itemsTag;
+    }
+
+    public static Object toItemStackTemplate(Item item) {
+        Object minecraftItem = item.getMinecraftItem();
+        return ItemStackTemplateProxy.INSTANCE.newInstance(
+                ItemStackProxy.INSTANCE.typeHolder(minecraftItem),
+                ItemStackProxy.INSTANCE.getCount(minecraftItem),
+                ItemStackProxy.INSTANCE.getComponents(minecraftItem)
+        );
     }
 }

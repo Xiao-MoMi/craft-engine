@@ -6,9 +6,9 @@ import net.momirealms.sparrow.reflection.proxy.annotation.MethodInvoker;
 import net.momirealms.sparrow.reflection.proxy.annotation.ReflectionProxy;
 import net.momirealms.sparrow.reflection.proxy.annotation.Type;
 
-@ReflectionProxy(name = "net.minecraft.world.level.BlockAndTintGetter")
-public interface BlockAndTintGetterProxy extends BlockGetterProxy {
-    BlockAndTintGetterProxy INSTANCE = ASMProxyFactory.create(BlockAndTintGetterProxy.class);
+@ReflectionProxy(name = {"net.minecraft.world.level.BlockAndLightGetter", "net.minecraft.world.level.BlockAndTintGetter"})
+public interface BlockAndLightGetterProxy extends BlockGetterProxy {
+    BlockAndLightGetterProxy INSTANCE = ASMProxyFactory.create(BlockAndLightGetterProxy.class);
 
     @MethodInvoker(name = "getLightEngine")
     Object getLightEngine(Object target);

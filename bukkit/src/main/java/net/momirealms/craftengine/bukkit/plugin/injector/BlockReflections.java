@@ -4,7 +4,7 @@ import net.momirealms.craftengine.core.util.MiscUtils;
 import net.momirealms.craftengine.core.util.VersionHelper;
 import net.momirealms.craftengine.proxy.minecraft.core.BlockPosProxy;
 import net.momirealms.craftengine.proxy.minecraft.core.DirectionProxy;
-import net.momirealms.craftengine.proxy.minecraft.core.HolderProxy;
+import net.momirealms.craftengine.proxy.minecraft.core.TypedInstanceProxy;
 import net.momirealms.craftengine.proxy.minecraft.server.level.ServerLevelProxy;
 import net.momirealms.craftengine.proxy.minecraft.util.RandomSourceProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.WorldlyContainerHolderProxy;
@@ -289,8 +289,8 @@ final class BlockReflections {
     );
 
     public static final Method method$BlockStateBase$is = requireNonNull(
-            SparrowClass.of(BlockBehaviourProxy.BlockStateBaseProxy.CLASS).getDeclaredMethod(MethodMatcher.named("is")
-                    .and(MethodMatcher.takeArguments(BlockProxy.CLASS))
+            SparrowClass.of((Class<?>) (VersionHelper.isOrAbove26_1() ? TypedInstanceProxy.CLASS : BlockBehaviourProxy.BlockStateBaseProxy.CLASS)).getDeclaredMethod(MethodMatcher.named("is")
+                    .and(MethodMatcher.takeArguments(VersionHelper.isOrAbove26_1() ? Object.class : BlockProxy.CLASS))
                     .and(MethodMatcher.returnType(boolean.class)))
     );
 
