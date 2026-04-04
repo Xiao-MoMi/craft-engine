@@ -673,7 +673,7 @@ public class BukkitServerPlayer extends Player {
         }
 
         // 实体剔除更新相机位置
-        if (Config.entityCullingRayTracing()) {
+        if (Config.enableEntityCulling()) {
             org.bukkit.entity.Player player = platformPlayer();
             Location eyeLocation = this.eyeLocation.clone();
             this.firstPersonCameraVec3 = LocationUtils.toVec3d(eyeLocation);
