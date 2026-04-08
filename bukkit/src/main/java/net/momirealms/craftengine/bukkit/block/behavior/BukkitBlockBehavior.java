@@ -22,7 +22,7 @@ import java.util.Optional;
 import java.util.concurrent.Callable;
 import java.util.function.BiConsumer;
 
-public abstract class BukkitBlockBehavior extends BlockBehavior {
+public class BukkitBlockBehavior extends BlockBehavior {
     private static final Map<String, BiConsumer<@NotNull BukkitBlockBehavior, Property<?>>> HARD_CODED_PROPERTY_DATA = new HashMap<>();
     static {
         HARD_CODED_PROPERTY_DATA.put("axis", (behavior, property) -> {

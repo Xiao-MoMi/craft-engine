@@ -2,6 +2,7 @@ package net.momirealms.craftengine.bukkit.block;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
+import net.momirealms.craftengine.bukkit.block.behavior.BukkitBlockBehavior;
 import net.momirealms.craftengine.bukkit.block.behavior.UnsafeCompositeBlockBehavior;
 import net.momirealms.craftengine.bukkit.nms.FastNMS;
 import net.momirealms.craftengine.bukkit.plugin.BukkitCraftEngine;
@@ -145,7 +146,7 @@ public final class BukkitBlockManager extends AbstractBlockManager {
     @Override
     public BlockBehavior createBlockBehavior(CustomBlock customBlock, List<Map<String, Object>> behaviorConfig) {
         if (behaviorConfig == null || behaviorConfig.isEmpty()) {
-            return new EmptyBlockBehavior(customBlock);
+            return new BukkitBlockBehavior(customBlock);
         } else if (behaviorConfig.size() == 1) {
             return BlockBehaviors.fromMap(customBlock, behaviorConfig.getFirst());
         } else {
