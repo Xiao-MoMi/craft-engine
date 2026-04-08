@@ -112,6 +112,8 @@ public class Config {
     protected boolean resource_pack$optimization$texture$enable;
     protected Set<String> resource_pack$optimization$texture$exlude;
     protected int resource_pack$optimization$texture$zopfli_iterations;
+    protected String resource_pack$optimization$texture$safety_mode;
+    protected boolean resource_pack$optimization$texture$log_skipped;
     protected boolean resource_pack$optimization$json$enable;
     protected Set<String> resource_pack$optimization$json$exclude;
 
@@ -393,6 +395,8 @@ public class Config {
         resource_pack$optimization$enable = config.getBoolean("resource-pack.optimization.enable", false);
         resource_pack$optimization$texture$enable = config.getBoolean("resource-pack.optimization.texture.enable", true);
         resource_pack$optimization$texture$zopfli_iterations = config.getInt("resource-pack.optimization.texture.zopfli-iterations", 0);
+        resource_pack$optimization$texture$safety_mode = config.getString("resource-pack.optimization.texture.safety-mode", "strict").toLowerCase(Locale.ENGLISH);
+        resource_pack$optimization$texture$log_skipped = config.getBoolean("resource-pack.optimization.texture.log-skipped", true);
         resource_pack$optimization$texture$exlude = config.getStringList("resource-pack.optimization.texture.exclude").stream().map(p -> {
             if (p.endsWith("/")) return p;
             if (!p.endsWith(".png")) return p + ".png";
@@ -1244,6 +1248,18 @@ public class Config {
 
     public static int zopfliIterations() {
         return instance.resource_pack$optimization$texture$zopfli_iterations;
+    }
+
+    public static String optimizeTextureSafetyMode() {
+        String mode = instance.resource_pack$optimization$texture$safety_mode;
+        if (mode == null || mode.isBlank()) {
+            return "strict";
+        }
+        return mode;
+    }
+
+    public static boolean optimizeTextureLogSkipped() {
+        return instance.resource_pack$optimization$texture$log_skipped;
     }
 
     public static boolean enableDefaultDropDisplay() {

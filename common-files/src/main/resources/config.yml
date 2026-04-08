@@ -108,6 +108,13 @@ resource-pack:
       # Use Zopfli for PNG compression (very slow). More iterations = smaller files.
       # In fact, setting the number of iterations between 4 and 8 is generally sufficient. Increasing it further rarely leads to significant optimization in size.
       zopfli-iterations: 0 # 0 = disable
+      # Safety mode for fragile textures.
+      # - strict: safest (skip optimize for animated/non-square/hi-res/known-fragile-name textures)
+      # - balanced: moderate safety
+      # - aggressive: smallest size, highest risk of visual breakage
+      safety-mode: strict
+      # Log skipped textures and reason in console
+      log-skipped: true
       # If your image is special, for example, containing color pixels that need to be specifically recognized by a shader, the optimization might break it. You can add exclusions here.
       exclude:
         - assets/minecraft/textures/block/do_not_optimize

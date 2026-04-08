@@ -1057,7 +1057,7 @@ public abstract class AbstractPackManager implements PackManager {
         if (Config.optimizeJson()) {
             Path metaPath = path.resolve("pack.mcmeta");
             if (Files.exists(metaPath)) {
-                if (jsonExcluder.test(metaPath)) {
+                if (!jsonExcluder.test(metaPath)) {
                     commonJsonToOptimize.add(metaPath);
                 }
             }
@@ -1066,7 +1066,7 @@ public abstract class AbstractPackManager implements PackManager {
         if (Config.optimizeTexture()) {
             Path packPngPath = path.resolve("pack.png");
             if (Files.exists(packPngPath)) {
-                if (textureExcluder.test(packPngPath)) {
+                if (!textureExcluder.test(packPngPath)) {
                     imagesToOptimize.add(packPngPath);
                 }
             }
@@ -1225,12 +1225,14 @@ public abstract class AbstractPackManager implements PackManager {
             long optimizedSize = afterBytes.get();
             double compressionRatio = ((double) optimizedSize / originalSize) * 100;
             this.plugin.logger().info(TranslationManager.instance().translateLog("info.resource_pack.optimize.result", formatSize(originalSize), formatSize(optimizedSize), String.format("%.2f%%", compressionRatio)));
+            this.plugin.logger().info("Texture optimization safety-skip count: " + skippedBySafety.get() + " (mode=" + Config.optimizeTextureSafetyMode() + ")");
         }
 
         if (Config.optimizeTexture()) {
             this.plugin.logger().info(TranslationManager.instance().translateLog("info.resource_pack.optimize.texture"));
             AtomicLong previousBytes = new AtomicLong(0L);
             AtomicLong afterBytes = new AtomicLong(0L);
+            AtomicInteger skippedBySafety = new AtomicInteger(0);
             List<CompletableFuture<Void>> futures = new ArrayList<>();
             int amount = imagesToOptimize.size();
             AtomicInteger finished = new AtomicInteger(0);
@@ -1238,13 +1240,20 @@ public abstract class AbstractPackManager implements PackManager {
                 futures.add(CompletableFuture.runAsync(() -> {
                     try {
                         byte[] previousImageBytes = Files.readAllBytes(imagePath);
-                        byte[] optimized = optimizeImage(imagePath, previousImageBytes);
+                        StringBuilder skipReason = new StringBuilder();
+                        byte[] optimized = optimizeImage(imagePath, previousImageBytes, skipReason);
                         previousBytes.addAndGet(previousImageBytes.length);
                         if (optimized.length < previousImageBytes.length) {
                             afterBytes.addAndGet(optimized.length);
                             Files.write(imagePath, optimized);
                         } else {
                             afterBytes.addAndGet(previousImageBytes.length);
+                            if (!skipReason.isEmpty()) {
+                                skippedBySafety.incrementAndGet();
+                                if (Config.optimizeTextureLogSkipped()) {
+                                    Debugger.RESOURCE_PACK.debug(() -> "Skip optimize texture " + imagePath + " reason=" + skipReason);
+                                }
+                            }
                         }
                         finished.incrementAndGet();
                     } catch (IOException ignored) {
@@ -1306,20 +1315,59 @@ public abstract class AbstractPackManager implements PackManager {
         }
     }
 
-    private byte[] optimizeImage(Path imagePath, byte[] previousImageBytes) throws IOException {
+    private byte[] optimizeImage(Path imagePath, byte[] previousImageBytes, StringBuilder skipReason) throws IOException {
+        String mode = Config.optimizeTextureSafetyMode().toLowerCase(Locale.ENGLISH);
+        if (hasMcMetaSibling(imagePath)) {
+            skipReason.append("has-mcmeta");
+            return previousImageBytes;
+        }
         try (ByteArrayInputStream is = new ByteArrayInputStream(previousImageBytes)) {
             BufferedImage src = ImageIO.read(is);
             if (src == null) {
                 Debugger.RESOURCE_PACK.debug(() -> "Cannot read image " + imagePath.toString());
+                skipReason.append("unreadable");
                 return previousImageBytes;
             }
             if (src.getType() == BufferedImage.TYPE_CUSTOM) {
+                skipReason.append("custom-buffer-type");
                 return previousImageBytes;
             }
+
+            int width = src.getWidth();
+            int height = src.getHeight();
+            String fileName = imagePath.getFileName().toString().toLowerCase(Locale.ENGLISH);
+            boolean riskyByName = fileName.contains("ctm") || fileName.contains("connected") || fileName.contains("overlay") || fileName.contains("emissive") || fileName.contains("sheet") || fileName.contains("anim");
+            boolean riskyByShape = width != height;
+            boolean riskyByResolution = width >= 128 || height >= 128;
+
+            boolean shouldSkip = switch (mode) {
+                case "aggressive" -> false;
+                case "balanced" -> riskyByName || (riskyByShape && riskyByResolution);
+                default -> riskyByName || riskyByShape || riskyByResolution;
+            };
+
+            if (shouldSkip) {
+                if (riskyByName) {
+                    skipReason.append("risky-name");
+                } else if (riskyByShape) {
+                    skipReason.append("non-square");
+                } else if (riskyByResolution) {
+                    skipReason.append("high-resolution");
+                } else {
+                    skipReason.append("safety-mode");
+                }
+                return previousImageBytes;
+            }
+
             ByteArrayOutputStream baos = new ByteArrayOutputStream();
             new PngOptimizer(src).write(baos);
             return baos.toByteArray();
         }
+    }
+
+    private boolean hasMcMetaSibling(Path imagePath) {
+        Path mcmetaPath = imagePath.resolveSibling(imagePath.getFileName().toString() + ".mcmeta");
+        return Files.exists(mcmetaPath);
     }
 
     private void validateResourcePack(Path path, JsonObject packMetaJson) {
