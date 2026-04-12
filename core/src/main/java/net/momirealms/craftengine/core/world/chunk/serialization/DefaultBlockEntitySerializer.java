@@ -36,7 +36,9 @@ public final class DefaultBlockEntitySerializer {
         List<BlockEntity> blockEntities = new ArrayList<>(tag.size());
         for (int i = 0; i < tag.size(); i++) {
             CompoundTag data = tag.getCompound(i);
-            Key id = Key.of(data.getString("id"));
+            String idString = data.getString("id");
+            if (idString == null) continue;
+            Key id = Key.of(idString);
             BlockEntityType<?> type = BuiltInRegistries.BLOCK_ENTITY_TYPE.getValue(id);
             BlockPos pos = BlockEntity.readPosAndVerify(data, chunk.chunkPos());
             ImmutableBlockState blockState = chunk.getBlockState(pos);
