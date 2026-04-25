@@ -10,7 +10,7 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-public class EntityCullingThread {
+public final class EntityCullingThread {
     private final ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1);
     private final AtomicBoolean isRunning = new AtomicBoolean(false);
     private final int id;

@@ -138,7 +138,7 @@ public abstract class CraftEngine implements Plugin {
         // 初始化物品浏览器
         this.itemBrowserManager = new ItemBrowserManagerImpl(this);
         // 初始化实体剔除器
-        this.entityCullingManager = new EntityCullingManagerImpl();
+        this.entityCullingManager = EntityCullingManager.INSTANCE;
     }
 
     public void setUpConfigAndLocale() {
