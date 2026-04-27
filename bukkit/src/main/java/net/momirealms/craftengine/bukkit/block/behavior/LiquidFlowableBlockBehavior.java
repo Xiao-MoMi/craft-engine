@@ -34,7 +34,7 @@ public class LiquidFlowableBlockBehavior extends BukkitBlockBehavior implements 
         if (fluidType == MFluids.LAVA || fluidType == MFluids.FLOWING_LAVA) {
             FastNMS.INSTANCE.method$LevelAccessor$levelEvent(level, WorldEvents.LAVA_CONVERTS_BLOCK, pos, 0);
         } else {
-            if (!CoreReflections.clazz$WorldGenLevel.isInstance(level)) {
+            if (!CoreReflections.clazz$WorldGenRegion.isInstance(level)) {
                 FastNMS.INSTANCE.method$Block$dropResources(blockState, level, pos);
             }
         }

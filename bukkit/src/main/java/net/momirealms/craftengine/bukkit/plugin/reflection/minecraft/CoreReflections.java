@@ -1154,6 +1154,13 @@ public final class CoreReflections {
             )
     );
 
+    public static final Class<?> clazz$WorldGenRegion = requireNonNull(
+            BukkitReflectionUtils.findReobfOrMojmapClass(
+                    "server.level.RegionLimitedWorldAccess",
+                    "server.level.WorldGenRegion"
+            )
+    );
+
     public static final Class<?> clazz$ChunkGenerator = requireNonNull(
             ReflectionUtils.getClazz(
                     BukkitReflectionUtils.assembleMCClass("world.level.chunk.ChunkGenerator")
