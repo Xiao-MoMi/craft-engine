@@ -591,6 +591,7 @@ public final class BukkitNetworkManager extends AbstractNetworkManager implement
                 user.sendPacket(packet, false);
             }
             Channel channel = user.nettyChannel();
+            injectChannel(channel); // 确保ce优先
             if (this.hasAntiPopup && Config.disableChatReport() && channel != null) {
                 if (Locale.getDefault() == Locale.SIMPLIFIED_CHINESE) {
                     plugin.logger().warn("CraftEngine 的禁用聊天举报功能和 AntiPopup 冲突，可能会导致 Emoji 解析异常，请卸载 AntiPopup 或关闭禁用聊天举报功能");
