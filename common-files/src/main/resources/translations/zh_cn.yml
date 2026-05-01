@@ -151,6 +151,8 @@ resource_pack.compression_finished: 资源包压缩完成，耗时<arg:0>毫秒
 resource_pack.duplicated_files: 发现重复文件。请通过config.yml文件中的“resource-pack.duplicated-files-handler”部分进行处理
 resource_pack.malformatted_json: Json文件“<arg:0>”的格式不正确
 resource_pack.conflict_resolution.unknown_type: 未知的文件冲突解决方案类型“<arg:0>”
+resource_pack.model_generation.conflict: 无法生成模型，因为模型文件“<arg:0>”已存在
+resource_pack.item_model.conflict: 无法生成物品模型映射“<arg:0>”，因为文件“<arg:1>”已存在
 resource.argument.type.section: 配置部分
 resource.argument.type.boolean: 布尔值
 resource.argument.type.int: 整数
