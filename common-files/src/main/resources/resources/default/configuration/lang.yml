@@ -285,6 +285,42 @@ lang#blocks:
     block_name:default:hami_melon_stem: Tige de Melon de Hami
     block_name:default:attached_hami_melon_stem: Tige de Melon de Hami
     block_name:default:magma_plant: Plante de Magma
+  ko_kr:
+    block_name:default:chinese_lantern: 중국식 등불
+    block_name:default:netherite_anvil: 네더라이트 모루
+    block_name:default:topaz_ore: 토파즈 원석
+    block_name:default:deepslate_topaz_ore: 심층암 토파즈 원석
+    block_name:default:palm_log: 야자나무 원목
+    block_name:default:stripped_palm_log: 껍질 벗긴 야자나무 원목
+    block_name:default:palm_wood: 야자나무
+    block_name:default:stripped_palm_wood: 껍질 벗긴 야자나무
+    block_name:default:palm_planks: 야자나무 판자
+    block_name:default:palm_sapling: 야자나무 묘목
+    block_name:default:palm_leaves: 야자나무 잎
+    block_name:default:palm_trapdoor: 야자나무 다락문
+    block_name:default:palm_door: 야자나무 문
+    block_name:default:palm_fence_gate: 야자나무 울타리 문
+    block_name:default:palm_slab: 야자나무 반 블록
+    block_name:default:palm_stairs: 야자나무 계단
+    block_name:default:palm_button: 야자나무 버튼
+    block_name:default:palm_fence: 야자나무 울타리
+    block_name:default:fairy_flower: 요정 꽃
+    block_name:default:reed: 갈대
+    block_name:default:flame_cane: 화염 지팡이
+    block_name:default:ender_pearl_flower: 엔더 진주 꽃
+    block_name:default:gunpowder_block: 화약 블록
+    block_name:default:solid_gunpowder_block: 압축 화약 블록
+    block_name:default:copper_coil: 구리 코일
+    block_name:default:chessboard_block: 체스판 블록
+    block_name:default:safe_block: 금고
+    block_name:default:sleeper_sofa: 소파
+    block_name:default:sofa: 소파
+    block_name:default:amethyst_torch: 자수정 횃불
+    block_name:default:amethyst_wall_torch: 자수정 횃불
+    block_name:default:hami_melon: 하미 멜론
+    block_name:default:hami_melon_stem: 하미 멜론 줄기
+    block_name:default:attached_hami_melon_stem: 하미 멜론 줄기
+    block_name:default:magma_plant: 마그마 식물
 # Translations for furniture are typically designed for the API.
 # If you are using a plugin that supports displaying furniture names, you will most likely need to configure the translations for the furniture.
 lang#furniture:
@@ -298,3 +334,8 @@ lang#furniture:
     furniture.default.flower_basket: 花篮
     furniture.default.globe: 地球仪
     furniture.default.wooden_chair: 木椅
+  ko_kr:
+    furniture.default.bench: 벤치
+    furniture.default.flower_basket: 꽃바구니
+    furniture.default.globe: 지구본
+    furniture.default.wooden_chair: 나무 의자
