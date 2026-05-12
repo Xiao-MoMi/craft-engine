@@ -1,0 +1,15 @@
+translations:
+  ko_kr:
+    internal.next_page: 다음 페이지
+    internal.previous_page: 이전 페이지
+    internal.return: 뒤로 가기
+    internal.exit: 나가기
+    internal.next_recipe: 다음 조합법
+    internal.previous_recipe: 이전 조합법
+    internal.get_item: 아이템 얻기
+    internal.get_item.0: 좌클릭하여 하나 얻기
+    internal.get_item.1: 우클릭하여 한 세트 얻기
+    internal.cooking_info: 제작 정보
+    internal.cooking_info.0: '제작 시간: <arg:0>틱'
+    internal.cooking_info.1: '획득 경험치: <arg:0>'
+    category.internal.all: 모든 아이템
