@@ -10,7 +10,7 @@ translations:
   fr_fr:
     emoji.tip: Utilisez <yellow>'<arg:0>'</yellow> pour envoyer l'emoji '<arg:1>'
   ko_kr:
-    emoji.tip: "<yellow>'<arg:0>'</yellow>을(를) 사용해 '<arg:1>' 이모지를 보내세요"
+    emoji.tip: "<yellow>'<arg:0>'</yellow> 입력 시 '<arg:1>' 이모지가 표시됩니다"
 
 # An emoji is always an image, but an image is not necessarily an emoji.
 # You need to configure the corresponding image for your emoji first. Here, I have configured a 4x4 bitmap for it.

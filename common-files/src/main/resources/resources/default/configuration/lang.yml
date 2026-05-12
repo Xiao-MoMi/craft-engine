@@ -176,7 +176,7 @@ lang#items:
     item.default.globe: Globe
     item.default.drill: La perceuse
   ko_kr:
-    item.default.chinese_lantern: 중국식 등불
+    item.default.chinese_lantern: 청사초롱
     item.default.fairy_flower: 요정 꽃
     item.default.reed: 갈대
     item.default.flame_cane: 화염 지팡이
@@ -197,8 +197,8 @@ lang#items:
     item.default.topaz_leggings: 토파즈 레깅스
     item.default.topaz_boots: 토파즈 부츠
     item.default.topaz_trident: 토파즈 삼지창
-    item.default.topaz_ore: 토파즈 원석
-    item.default.deepslate_topaz_ore: 심층암 토파즈 원석
+    item.default.topaz_ore: 토파즈 광석
+    item.default.deepslate_topaz_ore: 심층암 토파즈 광석
     item.default.topaz: 토파즈
     item.default.palm_log: 야자나무 원목
     item.default.stripped_palm_log: 껍질 벗긴 야자나무 원목
@@ -217,10 +217,10 @@ lang#items:
     item.default.palm_fence: 야자나무 울타리
     item.default.netherite_anvil: 네더라이트 모루
     item.default.gunpowder_block: 화약 블록
-    item.default.solid_gunpowder_block: 압축 화약 블록
+    item.default.solid_gunpowder_block: 단단한 화약 블록
     item.default.copper_coil: 구리 코일
     item.default.flame_elytra: 화염 겉날개
-    item.default.pebble: 조약돌
+    item.default.pebble: 자갈돌
     item.default.cap: 모자
     item.default.flower_basket: 꽃바구니
     item.default.chessboard_block: 체스판 블록
@@ -370,7 +370,7 @@ lang#blocks:
     block_name:default:solid_gunpowder_block: 압축 화약 블록
     block_name:default:copper_coil: 구리 코일
     block_name:default:chessboard_block: 체스판 블록
-    block_name:default:safe_block: 금고 블록
+    block_name:default:safe_block: 금고
     block_name:default:sleeper_sofa: 소파
     block_name:default:sofa: 소파
     block_name:default:amethyst_torch: 자수정 횃불
