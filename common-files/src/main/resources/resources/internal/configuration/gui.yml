@@ -1,5 +1,5 @@
 translations:
-  en:
+  en_us:
     internal.next_page: Next Page
     internal.previous_page: Previous Page
     internal.return: Return to Parent Page
@@ -53,6 +53,20 @@ translations:
     internal.cooking_info: Informations sur la Recette
     internal.cooking_info.0: 'Temps: <arg:0>ticks'
     internal.cooking_info.1: 'Expérience: <arg:0>'
+  ko_kr:
+    internal.next_page: 다음 페이지
+    internal.previous_page: 이전 페이지
+    internal.return: 상위 페이지로 돌아가기
+    internal.exit: 나가기
+    internal.next_recipe: 다음 조합법
+    internal.previous_recipe: 이전 조합법
+    internal.get_item: 아이템 가져오기
+    internal.get_item.0: 좌클릭하여 하나 가져가기
+    internal.get_item.1: 우클릭하여 한 묶음 가져가기
+    internal.cooking_info: 조합 정보
+    internal.cooking_info.0: '시간: <arg:0>틱'
+    internal.cooking_info.1: '경험치: <arg:0>'
+    category.internal.all: '모든 아이템'
 categories:
   internal:all:
     priority: -1000
