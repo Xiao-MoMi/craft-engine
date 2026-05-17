@@ -1,0 +1,129 @@
+# 아래의 모든 설정은 클라이언트 측 리소스팩을 기반으로 구현된 로컬라이제이션 시스템을 사용합니다.
+# https://xiao-momi.github.io/craft-engine-wiki/configuration/lang
+lang#items:
+  ko_kr:
+    item.default.chinese_lantern: 중국식 등불
+    item.default.fairy_flower: 요정 꽃
+    item.default.reed: 갈대
+    item.default.flame_cane: 화염 지팡이
+    item.default.ender_pearl_flower_seeds: 엔더 진주 꽃 씨앗
+    item.default.bench: 벤치
+    item.default.table_lamp: 테이블 램프
+    item.default.wooden_chair: 나무 의자
+    item.default.topaz_rod: 토파즈 지팡이
+    item.default.topaz_bow: 토파즈 활
+    item.default.topaz_crossbow: 토파즈 석궁
+    item.default.topaz_pickaxe: 토파즈 곡괭이
+    item.default.topaz_axe: 토파즈 도끼
+    item.default.topaz_hoe: 토파즈 괭이
+    item.default.topaz_shovel: 토파즈 삽
+    item.default.topaz_sword: 토파즈 검
+    item.default.topaz_helmet: 토파즈 투구
+    item.default.topaz_chestplate: 토파즈 흉갑
+    item.default.topaz_leggings: 토파즈 다리보호구
+    item.default.topaz_boots: 토파즈 부츠
+    item.default.topaz_trident: 토파즈 삼지창
+    item.default.topaz_ore: 토파즈 원석
+    item.default.deepslate_topaz_ore: 심층암 토파즈 원석
+    item.default.topaz: 토파즈
+    item.default.palm_log: 야자나무 원목
+    item.default.stripped_palm_log: 껍질 벗긴 야자나무 원목
+    item.default.palm_wood: 야자나무
+    item.default.stripped_palm_wood: 껍질 벗긴 야자나무
+    item.default.palm_planks: 야자나무 판자
+    item.default.palm_sapling: 야자나무 묘목
+    item.default.palm_leaves: 야자나무 잎
+    item.default.palm_trapdoor: 야자나무 다락문
+    item.default.palm_door: 야자나무 문
+    item.default.palm_fence_gate: 야자나무 울타리 문
+    item.default.palm_slab: 야자나무 반 블록
+    item.default.palm_stairs: 야자나무 계단
+    item.default.palm_pressure_plate: 야자나무 압력판
+    item.default.palm_button: 야자나무 버튼
+    item.default.palm_fence: 야자나무 울타리
+    item.default.netherite_anvil: 네더라이트 모루
+    item.default.gunpowder_block: 화약 블록
+    item.default.solid_gunpowder_block: 압축 화약 블록
+    item.default.copper_coil: 구리 코일
+    item.default.flame_elytra: 불꽃 겉날개
+    item.default.pebble: 조약돌
+    item.default.cap: 모자
+    item.default.flower_basket: 꽃바구니
+    item.default.chessboard_block: 체스판 블록
+    item.default.safe_block: 금고
+    item.default.sofa: 소파
+    item.default.amethyst_torch: 자수정 횃불
+    item.default.hami_melon_slice: 하미 멜론 조각
+    item.default.hami_melon: 하미 멜론
+    item.default.hami_melon_seeds: 하미 멜론 씨앗
+    item.default.magma_fruit: 마그마 과일
+    item.default.globe: 지구본
+    item.default.drill: 드릴
+    item.default.togglable_light_block: 빛 조절 블록
+    item.default.showcase: 전시대
+    item.default.drawer_block: 서랍
+    item.default.candelabrum: 촛대
+# 블록 번역 제공은 서버 측 블록 번역 키를 가져오는 플러그인에서 특히 효과적입니다.
+lang#blocks:
+  ko_kr:
+    block_name:default:chinese_lantern: 중국식 등불
+    block_name:default:netherite_anvil: 네더라이트 모루
+    block_name:default:topaz_ore: 토파즈 원석
+    block_name:default:deepslate_topaz_ore: 심층암 토파즈 원석
+    block_name:default:palm_log: 아자나무 원목
+    block_name:default:stripped_palm_log: 껍질 벗긴 야자나무 원목
+    block_name:default:palm_wood: 야자나무
+    block_name:default:stripped_palm_wood: 껍질 벗긴 야자나무
+    block_name:default:palm_planks: 야자나무 판자
+    block_name:default:palm_sapling: 야자나무 묘목
+    block_name:default:palm_leaves: 야자나무 잎
+    block_name:default:palm_trapdoor: 야자나무 다락문
+    block_name:default:palm_door: 야자나무 문
+    block_name:default:palm_fence_gate: 야자나무 울타리 문
+    block_name:default:palm_slab: 야자나무 반 블록
+    block_name:default:palm_stairs: 야자나무 계단
+    block_name:default:palm_button: 야자나무 버튼
+    block_name:default:palm_fence: 야자나무 울타리
+    block_name:default:fairy_flower: 요정 꽃
+    block_name:default:reed: 갈대
+    block_name:default:flame_cane: 화염 지팡이
+    block_name:default:ender_pearl_flower: 엔더 진주 꽃
+    block_name:default:gunpowder_block: 화약 블록
+    block_name:default:solid_gunpowder_block: 압축 화약 블록
+    block_name:default:copper_coil: 구리 코일
+    block_name:default:chessboard_block: 체스판 블록
+    block_name:default:safe_block: 금고
+    block_name:default:sleeper_sofa: 소파
+    block_name:default:sofa: 소파
+    block_name:default:amethyst_torch: 자수정 횃불
+    block_name:default:amethyst_wall_torch: 자수정 횃불
+    block_name:default:hami_melon: 하미 멜론
+    block_name:default:hami_melon_stem: 하미 멜론 줄기
+    block_name:default:attached_hami_melon_stem: 하미 멜론 줄기
+    block_name:default:magma_plant: 마그마 식물
+    block_name:default:togglable_light_block: 빛 조절 블록
+    block_name:default:drawer_block: 서랍
+# 가구 번역은 일반적으로 API 용도로 설계됩니다.
+# 가구 이름 표시를 지원하는 플러그인을 사용하는 경우, 가구 번역을 별도로 설정해야 할 가능성이 높습니다.
+lang#furniture:
+  ko_kr:
+    furniture.default.bench: 벤치
+    furniture.default.flower_basket: 꽃바구니
+    furniture.default.globe: 지구본
+    furniture.default.wooden_chair: 나무 의자
+    furniture.default.showcase: 전시대
+    furniture.default.candelabrum: 촛대
+# 여기서 "번역(translation)"이라는 용어는 서버 측 로컬라이제이션을 의미합니다.
+# 즉, 사용자가 작성한 내용이 클라이언트 측 리소스팩에 직접 포함되지 않습니다.
+# 서버가 사용자가 설정한 키를 번역한 후, 이미 로컬라이즈된 텍스트를 클라이언트로 전송합니다.
+# https://xiao-momi.github.io/craft-engine-wiki/configuration/i18n
+translations#categories:
+  ko_kr:
+    category.default.name: 기본 에셋
+    category.default.lore: CraftEngine의 기본 설정을 포함합니다
+    category.palm_tree: 야자나무
+    category.topaz: 토파즈
+    category.misc: 기타
+translations#emoji:
+  ko_kr:
+    emoji.tip: "<yellow>'<arg:0>'</yellow> 입력 시 '<arg:1>' 이모지가 표시됩니다"

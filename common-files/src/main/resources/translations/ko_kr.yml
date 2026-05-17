@@ -1,0 +1,282 @@
+exception.invalid_syntax: '<red>잘못된 구문입니다. 올바른 구문: <white><arg:0></white></red>'
+exception.invalid_argument: '<red>잘못된 인수입니다. 이유: <white><arg:0></white></red>'
+exception.invalid_sender: <red><arg:0>은 이 명령어를 실행할 수 없습니다. <arg:1> 타입이어야 합니다.</red>'
+exception.unexpected: '<red>명령어 실행 중 내부 오류가 발생했습니다.</red>'
+exception.no_permission: '<red>죄송하지만, 이 명령어를 실행할 권한이 없습니다.</red>'
+exception.no_such_command: '<red>알 수 없는 명령어입니다.</red>'
+argument.entity.notfound.player: '<red>플레이어를 찾을 수 없습니다.</red>'
+argument.entity.notfound.entity: '<red>엔티티를 찾을 수 없습니다.</red>'
+argument.parse.failure.time: '<red>''<arg:0>''은 올바른 시간 형식이 아닙니다.</red>'
+argument.parse.failure.material: '<red>''<arg:0>''은 올바른 재료 이름이 아닙니다.</red>'
+argument.parse.failure.enchantment: '<red>''<arg:0>''은 올바른 인챈트가 아닙니다.</red>'
+argument.parse.failure.offlineplayer: '<red>입력값 ''<arg:0>''에 해당하는 플레이어를 찾을 수 없습니다.</red>'
+argument.parse.failure.player: '<red>입력값 ''<arg:0>''에 해당하는 플레이어를 찾을 수 없습니다.</red>'
+argument.parse.failure.world: '<red>''<arg:0>''은 유효한 마인크래프트 월드가 아닙니다.</red>'
+argument.parse.failure.location.invalid_format: '<red>''<arg:0>''은 올바른 좌표 형식이 아닙니다. 필요한 형식: ''<arg:1> <arg:2> <arg:3>''</red>'
+argument.parse.failure.location.mixed_local_absolute: '<red>로컬 좌표와 절대 좌표를 혼합할 수 없습니다. (모든 좌표가 ^를 사용하거나 전혀 사용하지 않아야 합니다.)</red>'
+argument.parse.failure.namespacedkey.namespace: '<red>잘못된 네임스페이스 ''<arg:0>''. [a-z0-9._-]만 허용됩니다.</red>'
+argument.parse.failure.namespacedkey.key: '<red>잘못된 키 ''<arg:0>''. [a-z0-9/._-]만 허용됩니다.</red>'
+argument.parse.failure.namespacedkey.need_namespace: '<red>입력값 ''<arg:0>''에는 명시적인 네임스페이스가 필요합니다.</red>'
+argument.parse.failure.boolean: '<red>''<arg:0>''에서 불리언 값을 파싱할 수 없습니다.</red>'
+argument.parse.failure.number: '<red>''<arg:0>''은 <arg:1>에서 <arg:2> 범위의 올바른 숫자가 아닙니다.</red>'
+argument.parse.failure.char: '<red>''<arg:0>''은 올바른 문자(character)가 아닙니다.</red>'
+argument.parse.failure.string: '<red>''<arg:0>''은 <arg:1> 타입의 올바른 문자열이 아닙니다.</red>'
+argument.parse.failure.uuid: '<red>''<arg:0>''은 유효한 UUID가 아닙니다.</red>'
+argument.parse.failure.enum: '<red>''<arg:0>''은 다음 중 하나가 아닙니다: <arg:1></red>'
+argument.parse.failure.regex: '<red>''<arg:0>''은 ''<arg:1>''와 일치하지 않습니다.</red>'
+argument.parse.failure.flag.unknown: '<red>알 수 없는 플래그 ''<arg:0>''입니다.</red>'
+argument.parse.failure.flag.duplicate_flag: '<red>중복된 플래그 ''<arg:0>''입니다.</red>'
+argument.parse.failure.flag.no_flag_started: '<red>플래그가 시작되지 않았습니다. ''<arg:0>''을 처리할 수 없습니다.</red>'
+argument.parse.failure.flag.missing_argument: '<red>''<arg:0>''에 대한 인수가 누락되었습니다.</red>'
+argument.parse.failure.flag.no_permission: '<red>''<arg:0>''을 사용할 권한이 없습니다.</red>'
+argument.parse.failure.color: '<red>''<arg:0>''은 유효한 색상이 아닙니다.</red>'
+argument.parse.failure.duration: '<red>''<arg:0>''은 유효한 지속 시간 형식이 아닙니다.</red>'
+argument.parse.failure.aggregate.missing: '<red>구성 요소 ''<arg:0>''이 누락되었습니다.</red>'
+argument.parse.failure.aggregate.failure: '<red>잘못된 구성 요소 ''<arg:0>'': <arg:1></red>'
+argument.parse.failure.either: '<red>''<arg:0>''에서 <arg:1> 또는 <arg:2>를 해결할 수 없습니다.</red>'
+argument.parse.failure.namedtextcolor: '<red>''<arg:0>''은 이름이 지정된 텍스트 색상이 아닙니다.</red>'
+command.reload.too_fast: '<red>플러그인을 너무 빨리 리로드하고 있습니다. 이전 리로드가 아직 완료되지 않았습니다.</red>'
+command.reload.config.failure: '<red>설정 파일을 다시 불러오는 데 실패했습니다. 콘솔 로그를 확인하세요.</red>'
+command.reload.config.success: '<dark_gray>» </dark_gray><gradient:#F4A460:#FFD700><b>CraftEngine</b></gradient> <gray>•</gray> <white>설정 파일이 다시 불러와졌습니다 <gray>(<hover:show_text:''<gray>비동기/동기''><color:#FFD700><arg:1></color>/<color:#F4A460><arg:2></color></hover> ms)</gray>'
+command.reload.config.issues: '<#FF5555>⚠ <bold><arg:0></bold>개의 문제 발견 <gray><italic>(자세한 내용은 콘솔 확인)</italic></gray>'
+command.reload.pack.failure: '<red>리소스 팩 생성에 실패했습니다. 콘솔 로그를 확인하세요.</red>'
+command.reload.pack.success: '<dark_gray>» </dark_gray><gradient:#F4A460:#FFD700><b>CraftEngine</b></gradient> <gray>•</gray> <white>리소스 팩 생성 완료 <gray>(<hover:show_text:"<gray>비동기 처리"><color:#FFD700><arg:0></color> ms</hover>)</gray>'
+command.item.get.success: '<white><arg:0> <arg:1>을(를) 획득했습니다.</white>'
+command.item.get.failure.not_exist: '<red>알 수 없는 아이템 ''<arg:0>''</red>'
+command.item.give.success.single: '<white><arg:0> <arg:1>을(를) <arg:2>에게 지급했습니다.</white>'
+command.item.give.success.multiple: '<white><arg:0> <arg:1>을(를) <arg:2>명의 플레이어에게 지급했습니다.</white>'
+command.item.give.failure.not_exist: '<red>알 수 없는 아이템 ''<arg:0>''</red>'
+command.item.clear.failed.single: '<red><arg:0>에게 아이템이 없습니다.</red>'
+command.item.clear.failed.multiple: '<red><arg:0>명의 플레이어에게 아이템이 없습니다.</red>'
+command.item.clear.success.single: '<white><arg:1>로부터 <arg:0>개의 아이템을 제거했습니다.</white>'
+command.item.clear.success.multiple: '<white><arg:1>명으로부터 <arg:0>개의 아이템을 제거했습니다.</white>'
+command.item.clear.test.single: '<white><arg:1>에게 <arg:0>개의 일치하는 아이템이 있습니다.</white>'
+command.item.clear.test.multiple: '<white><arg:1>명에게 <arg:0>개의 일치하는 아이템이 있습니다.</white>'
+command.item.set_custom_model_data: '<white>CustomModelData를 ''<arg:0>''로 설정했습니다.</white>'
+command.item.set_item_model: '<white>ItemModel을 ''<arg:0>''로 설정했습니다.</white>'
+command.item.remove_item_component: '<white>아이템 구성 요소 ''<arg:0>''을(를) 제거했습니다.</white>'
+command.search_recipe.not_found: '<red>이 아이템에 대한 레시피를 찾을 수 없습니다.</red>'
+command.search_usage.not_found: '<red>이 아이템의 사용법을 찾을 수 없습니다.</red>'
+command.search_recipe.no_item: '<red>명령어를 실행하기 전에 아이템을 들고 있어야 합니다.</red>'
+command.search_usage.no_item: '<red>명령어를 실행하기 전에 아이템을 들고 있어야 합니다.</red>'
+command.totem_animation.failure.not_totem: '<red>아이템 ''<arg:0>''은 minecraft:totem_of_undying가 아닙니다.</red>'
+command.totem_animation.success.single: '<white><arg:0> 토템 애니메이션을 <arg:1>에게 재생했습니다.</white>'
+command.totem_animation.success.multiple: '<white><arg:0> 토템 애니메이션을 <arg:1>명에게 재생했습니다.</white>'
+command.resource.enable.success: '<white>리소스 <arg:0>를 활성화했습니다. 변경 사항 적용을 위해 <click:run_command:/ce reload all><u>/ce reload all</u></click> 실행</white>'
+command.resource.enable.failure.unknown: '<red>알 수 없는 리소스 <arg:0></red>'
+command.resource.disable.success: '<white>리소스 <arg:0>를 비활성화했습니다. 변경 사항 적용을 위해 <click:run_command:/ce reload all><u>/ce reload all</u></click> 실행</white>'
+command.resource.disable.failure.unknown: '<red>알 수 없는 리소스 <arg:0></red>'
+command.resource.list: '<white>활성화된 리소스(<arg:0>): <green><arg:1></green><newline>비활성화된 리소스(<arg:2>): <red><arg:3></red></white>'
+command.resource.create.success: '<white>리소스 <arg:0>가 생성되었습니다.</white>'
+command.resource.create.failure.unknown: '<red>리소스 <arg:0> 생성 실패, 오류: <arg:1></red>'
+command.resource.create.failure.invalid_namespace: '<red>리소스 <arg:0> 생성 실패, 네임스페이스 <arg:1>이(가) 유효하지 않습니다.</red>'
+command.resource.create.failure.exists: '<red>리소스 <arg:0>가 이미 존재합니다.</red>'
+command.upload.failure.not_supported: '<red>현재 호스팅 방식 ''<arg:0>''은 리소스 팩 업로드를 지원하지 않습니다.</red>'
+command.upload.on_progress: '<white>업로드를 시작했습니다. 자세한 내용은 콘솔을 확인하세요.</white>'
+command.send_resource_pack.success.single: '<white><arg:0>에게 리소스 팩을 전송했습니다.</white>'
+command.send_resource_pack.success.multiple: '<white><arg:0>명에게 리소스 팩을 전송했습니다.</white>'
+command.locale.set.failure: '<red>잘못된 로케일 형식: <arg:0></red>'
+command.locale.set.success: '<white><arg:1>의 선택된 로케일이 <arg:0>로 설정되었습니다.</white>'
+command.locale.unset.success: '<white><arg:0>의 선택된 로케일을 초기화했습니다.</white>'
+command.display_entity_view_distance_scale.set.success: '<white><arg:1>의 엔티티 표시 거리 스케일이 <arg:0>로 업데이트되었습니다.</white>'
+command.entity_culling_distance_scale.set.success: '<white><arg:1>의 엔티티 컬링 거리 스케일이 <arg:0>로 업데이트되었습니다.</white>'
+command.entity_culling.toggle.success: '<white><arg:1>의 엔티티 컬링 상태가 <arg:0>로 업데이트되었습니다.</white>'
+command.place_feature.failed: '<red>특징 배치에 실패했습니다.</red>'
+command.place_feature.success: '<white>특징 "<arg:0>"을(를) <arg:1>, <arg:2>, <arg:3>에 배치했습니다.</white>'
+command.place_feature.invalid: '<red>유형이 "<arg:0>"인 특징이 존재하지 않습니다.</red>'
+command.chunk.not_loaded: '<red>해당 위치가 로드되지 않았습니다.</red>'
+command.player.itemless: '<red><arg:0>이(가) 아무 아이템도 들고 있지 않습니다.</red>'
+snbt.invalid_syntax.parse_error: '<arg:0> 위치 <arg:1>: <arg:2>'
+snbt.invalid_syntax.here: "<--[여기]"
+snbt.parser.expected_string_uuid: "유효한 UUID를 나타내는 문자열이 필요합니다."
+snbt.parser.expected_number_or_boolean: "숫자나 불리언 값이 필요합니다."
+snbt.parser.trailing: "예상치 못한 데이터가 뒤에 있습니다."
+snbt.parser.expected.compound: "컴파운드 태그가 필요합니다."
+snbt.parser.number_parse_failure: "숫자 파싱 실패: <arg:0>"
+snbt.parser.expected_hex_escape: "길이 <arg:0>의 문자 리터럴이 필요합니다."
+snbt.parser.invalid_codepoint: "잘못된 유니코드 문자 값: <arg:0>"
+snbt.parser.no_such_operation: "존재하지 않는 연산: <arg:0>"
+snbt.parser.expected_integer_type: "정수형 숫자가 필요합니다."
+snbt.parser.expected_float_type: "부동소수점 숫자가 필요합니다."
+snbt.parser.expected_non_negative_number: "0 이상의 숫자가 필요합니다."
+snbt.parser.invalid_character_name: "잘못된 유니코드 문자 이름입니다."
+snbt.parser.invalid_array_element_type: "잘못된 배열 요소 타입입니다."
+snbt.parser.invalid_unquoted_start: "따옴표 없는 문자열은 0-9, +, -로 시작할 수 없습니다."
+snbt.parser.expected_unquoted_string: "유효한 따옴표 없는 문자열이 필요합니다."
+snbt.parser.invalid_string_contents: "잘못된 문자열 내용입니다."
+snbt.parser.expected_binary_numeral: "2진수 숫자가 필요합니다."
+snbt.parser.underscore_not_allowed: "2진수에서는 밑줄(_)을 사용할 수 없습니다."
+snbt.parser.expected_decimal_numeral: "10진수 숫자가 필요합니다."
+snbt.parser.expected_hex_numeral: "16진수 숫자가 필요합니다."
+snbt.parser.empty_key: "키는 비어 있을 수 없습니다."
+snbt.parser.leading_zero_not_allowed: "10진수 숫자는 0으로 시작할 수 없습니다."
+snbt.parser.infinity_not_allowed: "무한대 숫자는 허용되지 않습니다."
+snbt.parser.incorrect: "리터럴 <arg:0>이(가) 필요합니다."
+yaml.duplicated_key: "파일 <arg:0>의 <arg:2>번째 줄에서 중복된 키 '<arg:1>' 발견"
+yaml.inconsistent_value_type: "파일 <arg:0>의 <arg:2>번째 줄에서 값 타입이 다른 중복 키 '<arg:1>' 발견"
+plugin.compatibility: "[호환성] <arg:0>와 연결됨"
+number.unknown_type: "알 수 없는 숫자 타입 '<arg:0>'"
+number.fixed.invalid_expression: "잘못된 수식 '<arg:0>'. https://ezylang.github.io/EvalEx/references/references.html"
+number.greater_than: "'<arg:0>'는 '<arg:1>'보다 커야 합니다."
+number.no_greater_than: "'<arg:0>'는 '<arg:1>'보다 크지 않아야 합니다."
+number.less_than: "'<arg:0>'는 '<arg:1>'보다 작아야 합니다."
+number.no_less_than: "'<arg:0>'는 '<arg:1>'보다 작지 않아야 합니다."
+condition.unknown_type: "알 수 없는 조건 타입 '<arg:0>'"
+condition.enchantment.invalid_format: "잘못된 인챈트 조건 형식 '<arg:0>'. (예: minecraft:sharpness>=4)"
+function.unknown_type: "알 수 없는 함수 타입 '<arg:0>'"
+player_selector.unknown_type: "알 수 없는 플레이어 선택기 타입 '<arg:0>'"
+loot.entry.unknown_type: "알 수 없는 룻 항목 타입 '<arg:0>'"
+loot.function.unknown_type: "알 수 없는 룻 함수 타입 '<arg:0>'"
+loot.function.formula.unknown_type: "알 수 없는 수식 타입 '<arg:0>'"
+host.unknown_type: "알 수 없는 리소스 팩 호스트 타입 '<arg:0>'"
+host.missing_environment_variable: "환경 변수 '<arg:0>'이(가) 누락되었습니다."
+host.get_url_failed: "플레이어 <arg:0>의 리소스 팩 다운로드 URL을 가져오는 데 실패했습니다."
+host.handle_response_failed: "플레이어 <arg:0>의 리소스 팩 응답 처리 실패"
+host.upload_started: "리소스 팩 업로드를 시작합니다..."
+host.upload_finished: "리소스 팩 업로드 완료 (<arg:0> ms)"
+host.upload_failed: "리소스 팩 업로드 실패"
+host.lobfile.storage_usage: "계정 사용량: <arg:0>/<arg:1> MB | <arg:2>/<arg:3> 파일"
+host.self.http_server_started: "Netty HTTP 서버가 포트 <arg:0>에서 시작되었습니다."
+config.errors_detected: "config.yml에서 오류 발견 - <arg:0>"
+update.available: "새 버전 <arg:0> 이용 가능: <arg:1>"
+update.is_latest: "최신 버전을 사용 중입니다."
+resource_pack.invalid_overlay_format: "잘못된 오버레이 형식 '<arg:0>'. 오버레이에는 '{version}' 플레이스홀더가 포함되어야 합니다."
+resource_pack.generation_started: "리소스 팩 생성 중..."
+resource_pack.generation_finished: "리소스 팩 생성 완료 (<arg:0>ms)"
+resource_pack.validation_started: "리소스 팩 검증 중... (진행: <arg:0>/<arg:1> | Pack Format: <arg:2>~<arg:3> | 오버레이: <arg:4>)"
+resource_pack.validation_finished: "리소스 팩 검증 완료 (<arg:0>ms)"
+resource_pack.json_optimization_started: "> JSON 파일 최적화 중..."
+resource_pack.texture_optimization_started: "> 텍스처 파일 최적화 중..."
+resource_pack.optimization_result: "> □ 이전/이후/비율: <arg:0>/<arg:1>/<arg:2>"
+resource_pack.optimization_finished: "리소스 팩 최적화 완료 (<arg:0>ms)"
+resource_pack.compression_started: "리소스 팩 압축 중...(난독화 사용 시 진행이 느릴 수 있음)"
+resource_pack.compression_finished: "리소스 팩 압축 완료 (<arg:0>ms)"
+resource_pack.duplicated_files: "중복 파일 발견. config.yml의 'resource-pack.duplicated-files-handler' 섹션에서 해결하세요."
+resource_pack.malformatted_json: "JSON 파일 '<arg:0>' 형식이 잘못되었습니다."
+resource_pack.not_a_json_object: "JSON 파일 '<arg:0>'이(가) JSON 객체가 아닙니다."
+resource_pack.conflict_resolution.unknown_type: "알 수 없는 충돌 해결 타입 '<arg:0>'"
+resource_pack.model_generation.conflict: "모델 파일 '<arg:0>'이(가) 이미 존재하여 모델 생성 실패"
+resource_pack.item_model.conflict: "아이템 모델 '<arg:0>' 생성 실패: 파일 '<arg:1>'이(가) 이미 존재"
+resource_pack.missing_font_texture: "폰트 '<arg:0>'에 텍스처 '<arg:1>'이(가) 없습니다"
+resource_pack.missing_model_texture: "모델 '<arg:0>'에 텍스처 '<arg:1>'이(가) 없습니다"
+resource_pack.missing_equipment_texture: "장비 '<arg:0>'에 텍스처 '<arg:1>'이(가) 없습니다"
+resource_pack.missing_atlas_texture: "아틀라스 '<arg:0>'에 텍스처 '<arg:1>'이(가) 없습니다"
+resource_pack.missing_item_model: "아이템 '<arg:0>'에 모델 파일 '<arg:1>'이(가) 없습니다"
+resource_pack.missing_block_model: "블록 상태 '<arg:0>'에 모델 파일 '<arg:1>'이(가) 없습니다"
+resource_pack.missing_parent_model: "모델 '<arg:0>'가 부모 모델 '<arg:1>'을(를) 찾을 수 없습니다"
+resource_pack.missing_sound: "사운드 이벤트 '<arg:0>'에 ogg 파일 '<arg:1>'이(가) 없습니다"
+resource_pack.texture_not_in_atlas: "텍스처 '<arg:0>'이(가) 아틀라스에 정의되지 않았습니다. 아틀라스에 텍스처 경로를 추가하거나 config.yml에서 'fix-atlas' 옵션을 활성화하세요"
+resource_pack.multiple_atlases: "모델 '<arg:0>'가 여러 아틀라스를 사용합니다: 기대값 '<arg:1>', 발견 '<arg:2>'. 모든 모델 텍스처가 동일 아틀라스에서 나오는지 확인하세요"
+resource_pack.duplicated_sprite: "모델 '<arg:0>' 로드 실패. 아틀라스 '<arg:2>'의 스프라이트 '<arg:1>'이(가) 이미 아틀라스 '<arg:3>'에 정의됨"
+resource_pack.bad_atlas: "모델 '<arg:0>' 로드 실패. 스프라이트 '<arg:1>'은 아틀라스 '<arg:2>'에서 나와야 하지만 실제로는 아틀라스 '<arg:3>'에서 나옴"
+resource.argument.type.section: "설정 섹션"
+resource.argument.type.boolean: "불리언"
+resource.argument.type.int: "정수"
+resource.argument.type.long: "롱 정수"
+resource.argument.type.float: "소수"
+resource.argument.type.double: "고정밀 소수"
+resource.argument.type.string: "문자열"
+resource.argument.type.enum: "다음 중 하나: [<arg:0>]"
+resource.argument.type.vec3: "벡터3"
+resource.argument.type.quaternion: "쿼터니언 (Quaternion) https://quaternions.online/"
+resource.argument.type.aabb: "축 정렬 경계 상자 (AABB)"
+resource.argument.type.snbt: "SNBT https://minecraft.wiki/w/NBT_format#SNBT_format"
+resource.argument.type.identifier: "식별자 (Identifier) https://minecraft.wiki/w/Identifier"
+resource.argument.type.list: "리스트"
+resource.argument.type.color: "색상"
+resource.argument.type.number: "숫자 https://xiao-momi.github.io/craft-engine-wiki/reference/number_format"
+resource.argument.type.item_model_definition: "아이템 모델 정의"
+resource.argument.type.json: "JSON"
+resource.argument.type.any: "임의"
+resource.argument.type.blockstate: "블록 상태"
+
+resource.argument.parser.section: "설정 섹션이 필요하지만 '<arg:0>'이(가) 발견됨"
+resource.argument.parser.boolean: "불리언으로 '<arg:0>'을(를) 파싱할 수 없습니다. (허용값: true/false, yes/no, on/off)"
+resource.argument.parser.int: "'<arg:0>'을(를) 정수로 파싱할 수 없습니다. ('_' 사용 가능, 예: 1_000)"
+resource.argument.parser.long: "'<arg:0>'을(를) 롱 정수로 파싱할 수 없습니다. (예: 2_147_483_648)"
+resource.argument.parser.float: "'<arg:0>'을(를) 소수로 파싱할 수 없습니다. (예: 3.14 또는 1_000.5)"
+resource.argument.parser.double: "'<arg:0>'을(를) 고정밀 소수로 파싱할 수 없습니다. (예: 0.0000001)"
+resource.argument.parser.enum: "잘못된 상수 '<arg:0>'. ([<arg:1>] 중 하나여야 합니다)"
+resource.argument.parser.vec3: "'<arg:0>'을(를) 벡터로 파싱할 수 없습니다. (형식: 'x,y,z', 예: 1.5,22,0)"
+resource.argument.parser.quaternion: "'<arg:0>'을(를) 쿼터니언으로 파싱할 수 없습니다. (형식: 'x,y,z,w', 예: 0,0,0,1)"
+resource.argument.parser.snbt: "잘못된 SNBT 형식 '<arg:0>'. 상세: <arg:1>. 가이드: https://minecraft.wiki/w/NBT_format#SNBT_format"
+resource.argument.parser.aabb: "'<arg:0>'을(를) AABB로 파싱할 수 없습니다. (형식: 'x1,y1,z1,x2,y2,z2', 예: 0,0,0,1,1,1)"
+resource.argument.parser.blockstate: "'<arg:0>'을(를) 블록 상태로 파싱할 수 없습니다. (예: minecraft:wheat[age=3])"
+resource.argument.parser.identifier: "'<arg:0>'을(를) 식별자로 파싱할 수 없습니다. 가이드: https://minecraft.wiki/w/Identifier#Legal_characters"
+resource.argument.parser.list: "리스트여야 하지만 '<arg:0>'이(가) 발견됨"
+resource.argument.parser.nonempty_list: "비어 있지 않은 리스트가 필요합니다"
+resource.argument.parser.fixed_size_list: "'<arg:0>'개의 요소를 가진 리스트가 필요합니다"
+resource.argument.parser.nonempty_string: "비어 있지 않은 문자열이 필요합니다"
+resource.argument.parser.split: "'<arg:0>'개의 부분으로 나뉘어야 하지만, '<arg:1>'개 발견됨"
+resource.argument.parser.number: "숫자가 필요하지만 '<arg:0>'이(가) 발견됨"
+resource.argument.parser.uuid: "'<arg:0>'을(를) UUID로 파싱할 수 없습니다"
+resource.config_loaded: "<arg:0>을(를) <arg:1>ms에 로드했습니다 (<arg:2>)"
+resource.pack_loaded: "리소스 팩 로드됨: <arg:0>. 기본 네임스페이스: <arg:1>"
+resource.errors_detected: "파일 '<arg:0>'에서 <arg:1>개의 문제 발견:"
+resource.errors_detail: "[<arg:0>] <arg:1> - <arg:2>"
+resource.unknown_error: "알 수 없는 오류 유형"
+resource.duplicated_id: "다른 파일('<arg:0>')에 동일한 ID를 가진 섹션이 있습니다"
+resource.missing_argument: "필수 인수 '<arg:0>'가 누락되었습니다. 예상: '<arg:1>'"
+resource.placed_feature.invalid_placement: "잘못된 배치 수정자. 입력: '<arg:0>'. 원인: '<arg:1>'"
+resource.configured_feature.invalid_feature: "잘못된 구성된 피처. 입력: '<arg:0>'. 원인: '<arg:1>'"
+resource.mapping.conflict: "블록 상태 '<arg:0>'을(를) '<arg:1>'에 매핑할 수 없습니다. 이미 '<arg:2>'에 매핑되어 있음"
+resource.lang.unknown_locale: "알 수 없는 로케일 '<arg:0>'. (예: en, zh_cn)"
+resource.image.invalid_grid_size: "잘못된 그리드 크기 '<arg:0>'. (예: 3,4)"
+resource.image.empty_chars: "'chars' 옵션은 비어 있을 수 없습니다"
+resource.image.invalid_chars_grid: "<arg:0>번째 행의 문자 수가 예상 <arg:1>과 일치하지 않음"
+resource.image.codepoint_conflict: "폰트 '<arg:2>'에서 문자 '<arg:0>(<arg:1>)'가 다른 이미지 '<arg:3>'에 의해 이미 사용됨"
+resource.image.codepoint_exhausted: "폰트 '<arg:0>'의 코드포인트가 모두 소진됨"
+resource.image.height_ascent_conflict: "높이 '<arg:0>'가 어센트 '<arg:1>'보다 낮을 수 없습니다"
+resource.emoji.invalid_image_format: "잘못된 이미지 형식 '<arg:0>'"
+resource.emoji.unknown_image: "알 수 없는 이미지 '<arg:0>'"
+resource.equipment.unknown_type: "알 수 없는 장비 타입 '<arg:0>'"
+resource.equipment.unknown_layer_type: "알 수 없는 장비 레이어 타입 '<arg:0>'"
+resource.equipment.invalid_sacrificed_armor: "잘못된 기본 갑옷 타입 '<arg:0>'"
+resource.furniture.element.unknown_type: "알 수 없는 가구 요소 타입 '<arg:0>'"
+resource.furniture.element.tint_source.unknown_type: "알 수 없는 가구 색상 소스 타입 '<arg:0>'"
+resource.furniture.hitbox.unknown_type: "알 수 없는 가구 히트박스 타입 '<arg:0>'"
+resource.furniture.behavior.unknown_type: "알 수 없는 가구 동작 타입 '<arg:0>'"
+resource.furniture.hitbox.custom.invalid_entity_type: "잘못된 엔티티 타입 '<arg:0>'"
+resource.template.unknown_argument_type: "알 수 없는 템플릿 인수 타입 '<arg:0>'"
+resource.template.invalid_template: "잘못된 템플릿 '<arg:0>'"
+resource.template.missing_argument: "누락된 템플릿 인수: '<arg:0>'. 'arguments' 옵션으로 제공하거나 기본값을 설정하세요"
+resource.block.behavior.missing_property: "블록 동작에 블록 상태 속성 '<arg:0>' 정의가 필요합니다. https://xiao-momi.github.io/craft-engine-wiki/configuration/block/states/properties"
+resource.block.behavior.property_type_mismatch: "속성 타입 '<arg:0>'가 필요하지만 '<arg:1>'이(가) 입력됨"
+resource.block.behavior.unknown_type: "알 수 없는 블록 동작 타입 '<arg:0>'"
+resource.block.state.property.unknown_type: "알 수 없는 속성 타입 '<arg:0>'"
+resource.block.state.real_state_conflict: "'<arg:0>'을(를) 실제 블록 상태 '<arg:1>'에 바인딩할 수 없습니다. 이미 블록 '<arg:2>'에 사용됨"
+resource.block.state.real_state_exhausted: "충분한 실제 블록 상태를 할당할 수 없습니다. config.yml에서 서버측 블록 수를 늘리세요"
+resource.block.state.visual_state_exhausted: "시각적 상태 그룹 '<arg:0>'가 최대 '<arg:1>' 슬롯에 도달하여 '<arg:2>'를 위한 상태를 할당할 수 없습니다"
+resource.block.state.unreleased_state: "이 형식으로 블록 상태를 할당할 수 없습니다. 상태 '<arg:0>'이(가) 블록 상태 매핑에서 아직 릴리스되지 않았습니다"
+resource.block.state.entity_renderer.unknown_type: "알 수 없는 블록 엔티티 렌더러 타입 '<arg:0>'"
+resource.block.state.invalid_variant_nbt: "잘못된 부분 블록 상태 NBT '<arg:0>'"
+resource.block.state.undefined_appearance: "정의되지 않은 블록 상태 외형 '<arg:0>'"
+resource.block.state.model_conflict: "모델 '<arg:0>'을(를) 블록 상태 '<arg:1>'에 바인딩할 수 없습니다. 이미 모델 '<arg:2>'에 바인딩됨"
+resource.block.entity_renderer.tint_source.unknown_type: "알 수 없는 블록 엔티티 색상 소스 타입 '<arg:0>'"
+resource.item.model_definition.unknown_type: "알 수 없는 아이템 모델 정의 타입 '<arg:0>'"
+resource.item.model_definition.condition.unknown_type: "알 수 없는 조건 속성 타입 '<arg:0>'"
+resource.item.model_definition.range_dispatch.unknown_type: "알 수 없는 범위 분배 속성 타입 '<arg:0>'"
+resource.item.model_definition.select.unknown_type: "알 수 없는 선택 속성 타입 '<arg:0>'"
+resource.item.model_definition.special.unknown_type: "알 수 없는 특수 모델 타입 '<arg:0>'"
+resource.item.model_definition.tint.unknown_type: "알 수 없는 색상 타입 '<arg:0>'"
+resource.item.model_definition.downgrade_failure: "1.21.4+ 아이템 모델 정의를 레거시 형식으로 변환할 수 없습니다. 해당 아이템의 'legacy_model'을 수동으로 설정하세요: https://xiao-momi.github.io/craft-engine-wiki/configuration/item/models#legacy-model"
+resource.item.settings.craft_remainder.unknown_type: "알 수 없는 제작 잔여 타입 '<arg:0>'"
+resource.item.settings.equippable: "이 필드는 'data' 섹션에 있어야 합니다"
+resource.item.settings.equipment.invalid_asset_id: "아이디 '<arg:0>'를 가진 장비를 찾을 수 없습니다. 도움말: https://xiao-momi.github.io/craft-engine-wiki/configuration/equipment"
+resource.item.behavior.unknown_type: "알 수 없는 아이템 동작 타입 '<arg:0>'"
+resource.item.updater.unknown_type: "알 수 없는 아이템 업데이트 타입 '<arg:0>'"
+resource.item.custom_model_data_exhausted: "재질 '<arg:0>'에 대한 CustomModelData가 모두 소진됨"
+resource.item.custom_model_data_conflict: "CustomModelData '<arg:0>'가 아이템 '<arg:1>'에 의해 이미 사용됨"
+resource.item.missing_model_id: "커스텀 모델을 사용하려면 'custom_model_data' 또는 'item_model'이 필요합니다"
+resource.item.occupied_vanilla_item_model: "아이템 모델 '<arg:0>'이(가) 기본 아이템에 의해 이미 사용됨"
+resource.item.invalid_material: "잘못된 재질 타입 '<arg:0>'"
+resource.model.generation.conflict: "모델 '<arg:0>' 생성 실패: 두 개 이상의 설정이 동일 경로에 대해 서로 다른 JSON 모델을 생성하려고 시도함"
+resource.recipe.transform_processor.unknown_type: "알 수 없는 대장간 변환 후처리기 타입 '<arg:0>'"
+resource.recipe.ingredient.invalid_tag: "아이템 태그 '<arg:0>'에 아이템이 포함되어 있지 않습니다"
+resource.recipe.ingredient.item_not_exist: "재료 아이템 '<arg:0>'이(가) 존재하지 않습니다"
+resource.recipe.result.item_not_exist: "결과 아이템 '<arg:0>'이(가) 존재하지 않습니다"
+resource.recipe.shaped.invalid_pattern: "잘못된 패턴 '<arg:0>'"
+resource.recipe.shaped.invalid_symbol: "잘못된 기호 '<arg:0>'"
+resource.recipe.post_processor.unknown_type: "알 수 없는 레시피 후처리기 타입 '<arg:0>'"
+resource.recipe.unknown_type: "알 수 없는 레시피 타입 '<arg:0>'"
+resource.vanilla_loot.block.invalid_target: "잘못된 블록 대상 '<arg:0>'"
