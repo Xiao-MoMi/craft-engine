@@ -72,8 +72,8 @@ public final class TranslationManagerImpl implements TranslationManager {
         this.supportedLanguages = getSupportedLanguages();
         this.langParser = new LangParser();
         this.translationParser = new TranslationParser();
-        try (InputStream is = plugin.resourceStream("translations/en_us.yml")) {
-            LoadSettings settings = LoadSettings.builder().setLabel("translations/en_us.yml").build();
+        try (InputStream is = plugin.resourceStream("translations/en.yml")) {
+            LoadSettings settings = LoadSettings.builder().setLabel("translations/en.yml").build();
             TranslationConfigConstructor constructor = new TranslationConfigConstructor(settings);
             Load load = new Load(settings, constructor);
             @SuppressWarnings("unchecked")
