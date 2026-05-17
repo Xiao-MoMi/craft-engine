@@ -3,29 +3,30 @@ package net.momirealms.craftengine.core.plugin.context.function;
 import net.momirealms.craftengine.core.entity.player.Player;
 import net.momirealms.craftengine.core.plugin.CraftEngine;
 import net.momirealms.craftengine.core.plugin.Platform;
+import net.momirealms.craftengine.core.plugin.config.ConfigSection;
 import net.momirealms.craftengine.core.plugin.context.*;
 import net.momirealms.craftengine.core.plugin.context.parameter.DirectContextParameters;
 import net.momirealms.craftengine.core.plugin.context.selector.PlayerSelector;
-import net.momirealms.craftengine.core.plugin.context.selector.PlayerSelectors;
 import net.momirealms.craftengine.core.plugin.context.text.TextProvider;
 import net.momirealms.craftengine.core.plugin.context.text.TextProviders;
-import net.momirealms.craftengine.core.util.MiscUtils;
-import net.momirealms.craftengine.core.util.ResourceConfigUtils;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
-import java.util.Map;
 import java.util.function.Consumer;
 
-public class CommandFunction<CTX extends Context> extends AbstractConditionalFunction<CTX> {
+public final class CommandFunction<CTX extends Context> extends AbstractConditionalFunction<CTX> {
     private final List<TextProvider> command;
     private final PlayerSelector<CTX> selector;
     private final boolean asPlayer;
     private final boolean asEvent;
     private final boolean asOp;
 
-    public CommandFunction(List<Condition<CTX>> predicates, @Nullable PlayerSelector<CTX> selector, List<TextProvider> command,
-                           boolean asPlayer, boolean asEvent, boolean asOp) {
+    private CommandFunction(List<Condition<CTX>> predicates,
+                            @Nullable PlayerSelector<CTX> selector,
+                            List<TextProvider> command,
+                            boolean asPlayer,
+                            boolean asEvent,
+                            boolean asOp) {
         super(predicates);
         this.command = command;
         this.selector = selector;
@@ -62,24 +63,30 @@ public class CommandFunction<CTX extends Context> extends AbstractConditionalFun
         }
     }
 
-    public static <CTX extends Context> FunctionFactory<CTX, CommandFunction<CTX>> factory(java.util.function.Function<Map<String, Object>, Condition<CTX>> factory) {
+    public static <CTX extends Context> FunctionFactory<CTX, CommandFunction<CTX>> factory(java.util.function.Function<ConfigSection, Condition<CTX>> factory) {
         return new Factory<>(factory);
     }
 
     private static class Factory<CTX extends Context> extends AbstractFactory<CTX, CommandFunction<CTX>> {
+        private static final String[] COMMAND = new String[]{"command", "commands"};
+        private static final String[] AS_PLAYER = new String[]{"as_player", "as-player"};
+        private static final String[] AS_EVENT = new String[]{"as_event", "as-event"};
+        private static final String[] AS_OP = new String[]{"as_op", "as-op"};
 
-        public Factory(java.util.function.Function<Map<String, Object>, Condition<CTX>> factory) {
+        public Factory(java.util.function.Function<ConfigSection, Condition<CTX>> factory) {
             super(factory);
         }
 
         @Override
-        public CommandFunction<CTX> create(Map<String, Object> arguments) {
-            Object command = ResourceConfigUtils.requireNonNullOrThrow(ResourceConfigUtils.get(arguments, "command", "commands"), "warning.config.function.command.missing_command");
-            List<TextProvider> commands = MiscUtils.getAsStringList(command).stream().map(TextProviders::fromString).toList();
-            boolean asPlayer = ResourceConfigUtils.getAsBoolean(arguments.getOrDefault("as-player", false), "as-player");
-            boolean asEvent = ResourceConfigUtils.getAsBoolean(arguments.getOrDefault("as-event", false), "as-event");
-            boolean asOp = ResourceConfigUtils.getAsBoolean(arguments.getOrDefault("as-op", false), "as-op");
-            return new CommandFunction<>(getPredicates(arguments), PlayerSelectors.fromObject(arguments.get("target"), conditionFactory()), commands, asPlayer, asEvent, asOp);
+        public CommandFunction<CTX> create(ConfigSection section) {
+            return new CommandFunction<>(
+                    getPredicates(section),
+                    getPlayerSelector(section),
+                    section.getNonEmptyList(COMMAND, v -> TextProviders.fromString(v.getAsString())),
+                    section.getBoolean(AS_PLAYER),
+                    section.getBoolean(AS_EVENT),
+                    section.getBoolean(AS_OP)
+            );
         }
     }
 }

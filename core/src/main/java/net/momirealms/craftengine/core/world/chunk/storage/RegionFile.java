@@ -131,7 +131,7 @@ public final class RegionFile implements AutoCloseable {
 
         // If the buffer has less than 5 bytes, the chunk's header is corrupted (or truncated).
         if (bytebuffer.remaining() < 5) {
-            LOGGER.severe(String.format("Chunk %s header is truncated: expected %s but read %s", pos, totalSize, bytebuffer.remaining()));
+            LOGGER.error(String.format("Chunk %s header is truncated: expected %s but read %s", pos, totalSize, bytebuffer.remaining()));
             return null;
         }
 
@@ -168,11 +168,11 @@ public final class RegionFile implements AutoCloseable {
             }
         } else if (actualSize > bytebuffer.remaining()) {
             // If the declared size of the chunk is greater than the remaining bytes in the buffer, the stream is truncated.
-            LOGGER.severe(String.format("Chunk %s stream is truncated: expected %s but read %s", pos, actualSize, bytebuffer.remaining()));
+            LOGGER.error(String.format("Chunk %s stream is truncated: expected %s but read %s", pos, actualSize, bytebuffer.remaining()));
             return null;
         } else if (actualSize < 0) {
             // If the declared chunk size is negative, log an error.
-            LOGGER.severe(String.format("Declared size %s of chunk %s is negative", size, pos));
+            LOGGER.error(String.format("Declared size %s of chunk %s is negative", size, pos));
             return null;
         } else {
             if (version == FORMAT_VERSION) {
@@ -221,7 +221,7 @@ public final class RegionFile implements AutoCloseable {
     private DataInputStream createChunkInputStream(ChunkPos pos, byte flags, InputStream stream) throws IOException {
         CompressionMethod compressionMethod = CompressionMethod.fromId(flags);
         if (compressionMethod == null) {
-            LOGGER.severe(String.format("Chunk %s has invalid chunk stream version %s", pos, flags));
+            LOGGER.error(String.format("Chunk %s has invalid chunk stream version %s", pos, flags));
             return null;
         } else {
             return new DataInputStream(compressionMethod.wrap(stream));
@@ -232,7 +232,7 @@ public final class RegionFile implements AutoCloseable {
     private DataInputStream createExternalChunkInputStream(ChunkPos pos, byte flags) throws IOException {
         Path path = this.getExternalChunkPath(pos);
         if (!Files.isRegularFile(path)) {
-            LOGGER.severe(String.format("External chunk path %s is not file", path));
+            LOGGER.error(String.format("External chunk path %s is not file", path));
             return null;
         } else {
             return this.createChunkInputStream(pos, flags, Files.newInputStream(path));

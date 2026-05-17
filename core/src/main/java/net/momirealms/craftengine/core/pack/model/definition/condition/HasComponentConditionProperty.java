@@ -1,9 +1,8 @@
 package net.momirealms.craftengine.core.pack.model.definition.condition;
 
 import com.google.gson.JsonObject;
-import net.momirealms.craftengine.core.util.ResourceConfigUtils;
-
-import java.util.Map;
+import net.momirealms.craftengine.core.plugin.config.ConfigSection;
+import org.jetbrains.annotations.NotNull;
 
 public final class HasComponentConditionProperty implements ConditionProperty {
     public static final ConditionPropertyFactory<HasComponentConditionProperty> FACTORY = new Factory();
@@ -11,11 +10,12 @@ public final class HasComponentConditionProperty implements ConditionProperty {
     private final String component;
     private final boolean ignoreDefault;
 
-    public HasComponentConditionProperty(String component, boolean ignoreDefault) {
+    public HasComponentConditionProperty(@NotNull String component, boolean ignoreDefault) {
         this.component = component;
         this.ignoreDefault = ignoreDefault;
     }
 
+    @NotNull
     public String component() {
         return this.component;
     }
@@ -25,29 +25,33 @@ public final class HasComponentConditionProperty implements ConditionProperty {
     }
 
     @Override
-    public void accept(JsonObject jsonObject) {
-        jsonObject.addProperty("property", "has_component");
-        jsonObject.addProperty("component", this.component);
+    public void writeProperty(JsonObject model) {
+        model.addProperty("property", "has_component");
+        model.addProperty("component", this.component);
         if (this.ignoreDefault) {
-            jsonObject.addProperty("ignore_default", true);
+            model.addProperty("ignore_default", true);
         }
     }
 
     private static class Factory implements ConditionPropertyFactory<HasComponentConditionProperty> {
+        private static final String[] IGNORE_DEFAULT = new String[]{"ignore_default", "ignore-default"};
+
         @Override
-        public HasComponentConditionProperty create(Map<String, Object> arguments) {
-            boolean ignoreDefault = ResourceConfigUtils.getAsBoolean(arguments.getOrDefault("ignore-default", false), "ignore-default");
-            String componentObj = ResourceConfigUtils.requireNonEmptyStringOrThrow(arguments.get("component"), "warning.config.item.model.condition.has_component.missing_component");
-            return new HasComponentConditionProperty(componentObj, ignoreDefault);
+        public HasComponentConditionProperty create(ConfigSection section) {
+            return new HasComponentConditionProperty(
+                    section.getNonNullString("component"),
+                    section.getBoolean(IGNORE_DEFAULT)
+            );
         }
     }
 
     private static class Reader implements ConditionPropertyReader<HasComponentConditionProperty> {
         @Override
         public HasComponentConditionProperty read(JsonObject json) {
-            String component = json.get("component").getAsString();
-            boolean ignoreDefault = json.has("ignore_default") && json.get("ignore_default").getAsBoolean();
-            return new HasComponentConditionProperty(component, ignoreDefault);
+            return new HasComponentConditionProperty(
+                    json.get("component").getAsString(),
+                    json.has("ignore_default") && json.get("ignore_default").getAsBoolean()
+            );
         }
     }
 }

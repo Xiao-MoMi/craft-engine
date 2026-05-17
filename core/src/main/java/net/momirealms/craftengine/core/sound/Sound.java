@@ -3,22 +3,15 @@ package net.momirealms.craftengine.core.sound;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonPrimitive;
-import net.momirealms.craftengine.core.plugin.locale.LocalizedResourceConfigException;
-import net.momirealms.craftengine.core.util.ResourceConfigUtils;
+import net.momirealms.craftengine.core.plugin.config.ConfigSection;
 
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Optional;
+import java.util.Locale;
 import java.util.function.Supplier;
 
 public interface Sound extends Supplier<JsonElement> {
 
     static SoundPath path(final String path) {
         return new SoundPath(path);
-    }
-
-    static SoundFile.Builder file(final String name) {
-        return new SoundFile.Builder(name);
     }
 
     record SoundPath(String path) implements Sound {
@@ -29,6 +22,11 @@ public interface Sound extends Supplier<JsonElement> {
         }
     }
 
+    enum Type {
+        FILE,
+        EVENT
+    }
+
     class SoundFile implements Sound {
         private final String name;
         private final float volume;
@@ -37,9 +35,9 @@ public interface Sound extends Supplier<JsonElement> {
         private final boolean stream;
         private final int attenuationDistance;
         private final boolean preload;
-        private final String type;
+        private final Type type;
 
-        public SoundFile(String name, float volume, float pitch, int weight, boolean stream, int attenuationDistance, boolean preload, String type) {
+        public SoundFile(String name, float volume, float pitch, int weight, boolean stream, int attenuationDistance, boolean preload, Type type) {
             this.name = name;
             this.volume = volume;
             this.pitch = pitch;
@@ -50,14 +48,18 @@ public interface Sound extends Supplier<JsonElement> {
             this.type = type;
         }
 
-        public static SoundFile fromMap(Map<String, Object> map) {
-            Object name = map.get("name");
-            if (name == null) throw new LocalizedResourceConfigException("warning.config.sound.missing_name");
-            Builder builder = file(name.toString());
-            for (Map.Entry<String, Object> entry : map.entrySet()) {
-                Optional.ofNullable(Builder.MODIFIERS.get(entry.getKey())).ifPresent(modifier -> modifier.apply(builder, entry.getValue()));
-            }
-            return builder.build();
+        private static final String[] ATTENUATION_DISTANCE = new String[] {"attenuation_distance", "attenuation-distance"};
+
+        public static SoundFile fromConfig(ConfigSection section) {
+            return new SoundFile.Builder(section.getNonEmptyString("name"))
+                    .attenuationDistance(section.getInt(ATTENUATION_DISTANCE, 16))
+                    .volume(section.getFloat("volume", 1.0f))
+                    .pitch(section.getFloat("pitch", 1.0f))
+                    .weight(section.getInt("weight", 1))
+                    .stream(section.getBoolean("stream"))
+                    .preload(section.getBoolean("preload"))
+                    .type(section.getEnum("type", Type.class))
+                    .build();
         }
 
         @Override
@@ -82,25 +84,13 @@ public interface Sound extends Supplier<JsonElement> {
             if (this.preload) {
                 json.addProperty("preload", true);
             }
-            if (this.type != null && !this.type.equals("file")) {
-                json.addProperty("type", this.type);
+            if (this.type != null && this.type != Type.FILE) {
+                json.addProperty("type", this.type.name().toLowerCase(Locale.ROOT));
             }
             return json;
         }
 
-        public static class Builder {
-            public static final Map<String, Modifier> MODIFIERS = new HashMap<>();
-
-            static {
-                MODIFIERS.put("volume", (b, o) -> b.volume(ResourceConfigUtils.getAsFloat(o, "volume")));
-                MODIFIERS.put("pitch", (b, o) -> b.pitch(ResourceConfigUtils.getAsFloat(o, "pitch")));
-                MODIFIERS.put("weight", (b, o) -> b.pitch(ResourceConfigUtils.getAsInt(o, "weight")));
-                MODIFIERS.put("stream", (b, o) -> b.stream((boolean) o));
-                MODIFIERS.put("attenuation-distance", (b, o) -> b.attenuationDistance(ResourceConfigUtils.getAsInt(o, "attenuation-distance")));
-                MODIFIERS.put("preload", (b, o) -> b.preload((boolean) o));
-                MODIFIERS.put("type", (b, o) -> b.type(o.toString()));
-            }
-
+        public static final class Builder {
             private final String name;
             private float volume = 1.0f;
             private float pitch = 1.0f;
@@ -108,7 +98,7 @@ public interface Sound extends Supplier<JsonElement> {
             private boolean stream = false;
             private int attenuationDistance = 16;
             private boolean preload = false;
-            private String type = "file";
+            private Type type = Type.FILE;
 
             public Builder(String name) {
                 this.name = name;
@@ -144,19 +134,22 @@ public interface Sound extends Supplier<JsonElement> {
                 return this;
             }
 
-            public Builder type(String type) {
+            public Builder type(Type type) {
                 this.type = type;
                 return this;
             }
 
             public SoundFile build() {
-                return new SoundFile(name, volume, pitch, weight, stream, attenuationDistance, preload, type);
-            }
-
-            @FunctionalInterface
-            public interface Modifier {
-
-                void apply(Builder builder, Object value);
+                return new SoundFile(
+                        this.name,
+                        this.volume,
+                        this.pitch,
+                        this.weight,
+                        this.stream,
+                        this.attenuationDistance,
+                        this.preload,
+                        this.type
+                );
             }
         }
     }

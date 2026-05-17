@@ -4,7 +4,7 @@ import net.momirealms.craftengine.core.util.Key;
 import net.momirealms.craftengine.core.world.particle.ParticleType;
 import org.bukkit.Particle;
 
-public class BukkitParticleType implements ParticleType {
+public final class BukkitParticleType implements ParticleType {
     private final Particle particle;
     private final Key type;
 

@@ -4,8 +4,8 @@ import net.momirealms.sparrow.nbt.*;
 
 import java.util.Map;
 
-public class StringValueOnlyTagVisitor implements TagVisitor  {
-    protected final StringBuilder builder = new StringBuilder();
+public final class StringValueOnlyTagVisitor implements TagVisitor  {
+    private final StringBuilder builder = new StringBuilder();
 
     public String visit(Tag element) {
         element.accept(this);

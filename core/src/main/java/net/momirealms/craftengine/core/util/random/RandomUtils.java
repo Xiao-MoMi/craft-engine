@@ -14,6 +14,10 @@ public final class RandomUtils {
         return min + (max - min) * ThreadLocalRandom.current().nextFloat();
     }
 
+    public static float generateRandomFloat() {
+        return ThreadLocalRandom.current().nextFloat();
+    }
+
     public static int generateRandomInt(int minInclusive, int maxExclusive) {
         return minInclusive >= maxExclusive ? minInclusive : ThreadLocalRandom.current().nextInt(maxExclusive - minInclusive) + minInclusive;
     }

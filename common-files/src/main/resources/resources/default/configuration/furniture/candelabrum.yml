@@ -1,0 +1,246 @@
+items:
+  default:candelabrum:
+    data:
+      item_name: <!i><lang:item.default.candelabrum>
+    texture: minecraft:item/custom/candelabrum_2d
+    behavior:
+      type: furniture_item
+      furniture: default:candelabrum
+      rules:
+        ground:
+          rotation: sixteen
+          alignment: any
+        ceiling:
+          rotation: sixteen
+          alignment: any
+        wall:
+          alignment: any
+  default:candelabrum_ground:
+    model: minecraft:item/custom/candelabrum_ground
+    data:
+      item_name: <!i><lang:item.default.candelabrum>
+  default:candelabrum_wall:
+    model: minecraft:item/custom/candelabrum_wall
+    data:
+      item_name: <!i><lang:item.default.candelabrum>
+  default:candelabrum_ceiling:
+    model: minecraft:item/custom/candelabrum_ceiling
+    data:
+      item_name: <!i><lang:item.default.candelabrum>
+  default:candelabrum_lit_ground:
+    model: minecraft:item/custom/candelabrum_lit_ground
+    data:
+      item_name: <!i><lang:item.default.candelabrum>
+  default:candelabrum_lit_wall:
+    model: minecraft:item/custom/candelabrum_lit_wall
+    data:
+      item_name: <!i><lang:item.default.candelabrum>
+  default:candelabrum_lit_ceiling:
+    model: minecraft:item/custom/candelabrum_lit_ceiling
+    data:
+      item_name: <!i><lang:item.default.candelabrum>
+
+furniture:
+  default:candelabrum:
+    behaviors:
+      type: glowing_furniture
+      variants:
+        ground_lit:
+          - position: 0,0,0
+            level: 15
+        wall_lit:
+          - position: 0,0,0.3
+            level: 15
+        ceiling_lit:
+          - position: 0,-1,0
+            level: 15
+    events:
+      - on: right_click
+        conditions:
+          - type: match_item
+            id: "minecraft:flint_and_steel"
+            regex: false
+        functions:
+          - type: update_interaction_tick
+          - type: when
+            source: <arg:furniture.variant>
+            cases:
+              - when: "ground"
+                functions:
+                  - type: set_furniture_variant
+                    variant: "ground_lit"
+                  - type: damage_item
+                  - type: play_sound
+                    sound: minecraft:item.flintandsteel.use
+                    x: <arg:position.x>
+                    y: <arg:position.y>
+                    z: <arg:position.z>
+              - when: "wall"
+                functions:
+                  - type: set_furniture_variant
+                    variant: "wall_lit"
+                  - type: damage_item
+                  - type: play_sound
+                    sound: minecraft:item.flintandsteel.use
+                    x: <arg:position.x>
+                    y: <arg:position.y>
+                    z: <arg:position.z>
+              - when: "ceiling"
+                functions:
+                  - type: set_furniture_variant
+                    variant: "ceiling_lit"
+                  - type: damage_item
+                  - type: play_sound
+                    sound: minecraft:item.flintandsteel.use
+                    x: <arg:position.x>
+                    y: <arg:position.y>
+                    z: <arg:position.z>
+      - on: left_click
+        conditions:
+          - type: "!has_item"
+        functions:
+          - type: update_interaction_tick
+          - type: when
+            source: <arg:furniture.variant>
+            cases:
+              - when: "ground_lit"
+                functions:
+                  - type: set_furniture_variant
+                    variant: "ground"
+                  - type: play_sound
+                    sound: minecraft:block.fire.extinguish
+                    x: <arg:position.x>
+                    y: <arg:position.y>
+                    z: <arg:position.z>
+                    pitch: 2.6
+                    volume: 0.5
+              - when: "wall_lit"
+                functions:
+                  - type: set_furniture_variant
+                    variant: "wall"
+                  - type: play_sound
+                    sound: minecraft:block.fire.extinguish
+                    x: <arg:position.x>
+                    y: <arg:position.y>
+                    z: <arg:position.z>
+                    pitch: 2.6
+                    volume: 0.5
+              - when: "ceiling_lit"
+                functions:
+                  - type: set_furniture_variant
+                    variant: "ceiling"
+                  - type: play_sound
+                    sound: minecraft:block.fire.extinguish
+                    x: <arg:position.x>
+                    y: <arg:position.y>
+                    z: <arg:position.z>
+                    pitch: 2.6
+                    volume: 0.5
+    settings:
+      item: default:candelabrum
+      hit_times: 3
+      sounds:
+        break: minecraft:block.candle.break
+        place: minecraft:block.candle.place
+        hit: minecraft:block.candle.hit
+    variants:
+      ground:
+        loot_spawn_offset: 0,0.25,0
+        elements:
+          - type: item_display
+            item: default:candelabrum_ground
+            position: 0,0.5,0
+        hitboxes:
+          - type: interaction
+            can_use_item_on: true
+            can_be_hit_by_projectile: true
+            blocks_building: true
+            position: 0,0,0
+            width: 0.7
+            height: 0.8
+            interactive: true
+            invisible: false
+      ground_lit:
+        loot_spawn_offset: 0,0.25,0
+        elements:
+          - type: item_display
+            item: default:candelabrum_lit_ground
+            position: 0,0.5,0
+        hitboxes:
+          - type: interaction
+            can_use_item_on: true
+            can_be_hit_by_projectile: true
+            blocks_building: true
+            position: 0,0,0
+            width: 0.7
+            height: 0.8
+            interactive: true
+            invisible: false
+      wall:
+        loot_spawn_offset: 0,0.25,0
+        elements:
+          - type: item_display
+            item: default:candelabrum_wall
+            position: 0,0,0.5
+        hitboxes:
+          - type: interaction
+            can_use_item_on: true
+            can_be_hit_by_projectile: true
+            blocks_building: true
+            position: 0,-0.3,0.35
+            width: 0.65
+            height: 0.75
+            interactive: true
+            invisible: false
+      wall_lit:
+        loot_spawn_offset: 0,0.25,0
+        elements:
+          - type: item_display
+            item: default:candelabrum_lit_wall
+            position: 0,0,0.5
+        hitboxes:
+          - type: interaction
+            can_use_item_on: true
+            can_be_hit_by_projectile: true
+            blocks_building: true
+            position: 0,-0.3,0.35
+            width: 0.65
+            height: 0.75
+            interactive: true
+            invisible: false
+      ceiling:
+        loot_spawn_offset: 0,-0.5,0
+        elements:
+          - type: item_display
+            item: default:candelabrum_ceiling
+            position: 0,-0.5,0
+        hitboxes:
+          - type: interaction
+            can_use_item_on: true
+            can_be_hit_by_projectile: true
+            blocks_building: true
+            position: 0,-0.85,0
+            width: 0.75
+            height: 0.85
+            interactive: true
+            invisible: false
+      ceiling_lit:
+        loot_spawn_offset: 0,-0.5,0
+        elements:
+          - type: item_display
+            item: default:candelabrum_lit_ceiling
+            position: 0,-0.5,0
+        hitboxes:
+          - type: interaction
+            can_use_item_on: true
+            can_be_hit_by_projectile: true
+            blocks_building: true
+            position: 0,-0.85,0
+            width: 0.75
+            height: 0.85
+            interactive: true
+            invisible: false
+    loot:
+      template: default:loot_table/furniture
+      arguments:
+        item: default:candelabrum

@@ -2,7 +2,7 @@ package net.momirealms.craftengine.core.world.particle;
 
 import net.momirealms.craftengine.core.util.Color;
 
-public class DustData implements ParticleData {
+public final class DustData implements ParticleData {
     private final Color color;
     private final float size;
 

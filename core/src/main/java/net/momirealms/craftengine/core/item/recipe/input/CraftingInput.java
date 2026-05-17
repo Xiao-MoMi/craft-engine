@@ -9,19 +9,19 @@ import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 
-public final class CraftingInput<T> implements RecipeInput, Iterable<UniqueIdItem<T>> {
+public final class CraftingInput implements RecipeInput, Iterable<UniqueIdItem> {
     public final int width;
     public final int height;
-    public final List<UniqueIdItem<T>> items;
+    public final List<UniqueIdItem> items;
     public final int ingredientCount;
     public final RecipeFinder finder = new RecipeFinder();
 
-    private CraftingInput(int width, int height, List<UniqueIdItem<T>> items) {
+    private CraftingInput(int width, int height, List<UniqueIdItem> items) {
         this.height = height;
         this.width = width;
         this.items = items;
         int i = 0;
-        for (UniqueIdItem<T> item : items) {
+        for (UniqueIdItem item : items) {
             if (!item.isEmpty()) {
                 i++;
                 this.finder.addInput(item);
@@ -31,12 +31,12 @@ public final class CraftingInput<T> implements RecipeInput, Iterable<UniqueIdIte
     }
 
     public RecipeFinder finder() {
-        return finder;
+        return this.finder;
     }
 
-    public static <T> CraftingInput<T> of(int width, int height, List<UniqueIdItem<T>> stacks) {
+    public static <T> CraftingInput of(int width, int height, List<UniqueIdItem> stacks) {
         if (width <= 0 || height <= 0) {
-            return new CraftingInput<>(0, 0, Collections.emptyList());
+            return new CraftingInput(0, 0, Collections.emptyList());
         }
 
         int minCol = width;
@@ -45,7 +45,7 @@ public final class CraftingInput<T> implements RecipeInput, Iterable<UniqueIdIte
         int maxRow = -1;
 
         for (int index = 0; index < width * height; index++) {
-            UniqueIdItem<T> item = stacks.get(index);
+            UniqueIdItem item = stacks.get(index);
             if (!item.isEmpty()) {
                 int row = index / width;
                 int col = index % width;
@@ -57,17 +57,17 @@ public final class CraftingInput<T> implements RecipeInput, Iterable<UniqueIdIte
         }
 
         if (maxCol < minCol) {
-            return new CraftingInput<>(0, 0, Collections.emptyList());
+            return new CraftingInput(0, 0, Collections.emptyList());
         }
 
         int newWidth = maxCol - minCol + 1;
         int newHeight = maxRow - minRow + 1;
 
         if (newWidth == width && newHeight == height) {
-            return new CraftingInput<>(width, height, stacks);
+            return new CraftingInput(width, height, stacks);
         }
 
-        List<UniqueIdItem<T>> trimmed = new ArrayList<>(newWidth * newHeight);
+        List<UniqueIdItem> trimmed = new ArrayList<>(newWidth * newHeight);
         for (int row = minRow; row <= maxRow; row++) {
             for (int col = minCol; col <= maxCol; col++) {
                 int originalIndex = col + row * width;
@@ -75,35 +75,35 @@ public final class CraftingInput<T> implements RecipeInput, Iterable<UniqueIdIte
             }
         }
 
-        return new CraftingInput<>(newWidth, newHeight, trimmed);
+        return new CraftingInput(newWidth, newHeight, trimmed);
     }
 
     public int ingredientCount() {
-        return ingredientCount;
+        return this.ingredientCount;
     }
 
     public int width() {
-        return width;
+        return this.width;
     }
 
     public int height() {
-        return height;
+        return this.height;
     }
 
     public int size() {
-        return items.size();
+        return this.items.size();
     }
 
-    public UniqueIdItem<T> getItem(int x, int y) {
-        return this.items.get(x + y * width);
+    public UniqueIdItem getItem(int x, int y) {
+        return this.items.get(x + y * this.width);
     }
 
-    public UniqueIdItem<T> getItem(int index) {
+    public UniqueIdItem getItem(int index) {
         return this.items.get(index);
     }
 
     @Override
-    public @NotNull Iterator<UniqueIdItem<T>> iterator() {
+    public @NotNull Iterator<UniqueIdItem> iterator() {
         return this.items.iterator();
     }
 }

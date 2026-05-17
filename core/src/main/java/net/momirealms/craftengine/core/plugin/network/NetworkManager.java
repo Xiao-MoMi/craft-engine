@@ -7,9 +7,11 @@ import net.momirealms.craftengine.core.plugin.text.component.ComponentProvider;
 import net.momirealms.craftengine.core.util.StringValueOnlyTagVisitor;
 import net.momirealms.sparrow.nbt.Tag;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 
 public interface NetworkManager extends Manageable {
 
@@ -20,6 +22,8 @@ public interface NetworkManager extends Manageable {
     NetWorkUser removeUser(Channel channel);
 
     Channel getChannel(Player player);
+
+    @Nullable NetWorkUser getOnlineUser(UUID uuid);
 
     int remapBlockState(int stateId, boolean enableMod);
 
@@ -44,6 +48,8 @@ public interface NetworkManager extends Manageable {
     }
 
     void sendPackets(@NotNull NetWorkUser player, List<Object> packet, boolean immediately, Runnable sendListener);
+
+    void simulatePacket(@NotNull NetWorkUser player, Object packet);
 
     Map<String, ComponentProvider> matchNetworkTags(String text);
 

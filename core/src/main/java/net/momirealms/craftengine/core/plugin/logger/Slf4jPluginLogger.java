@@ -2,7 +2,7 @@ package net.momirealms.craftengine.core.plugin.logger;
 
 import org.slf4j.Logger;
 
-public class Slf4jPluginLogger implements PluginLogger {
+public final class Slf4jPluginLogger implements PluginLogger {
     private final Logger logger;
 
     public Slf4jPluginLogger(Logger logger) {
@@ -25,12 +25,12 @@ public class Slf4jPluginLogger implements PluginLogger {
     }
 
     @Override
-    public void severe(String s) {
+    public void error(String s) {
         this.logger.error(s);
     }
 
     @Override
-    public void severe(String s, Throwable t) {
+    public void error(String s, Throwable t) {
         this.logger.error(s, t);
     }
 }

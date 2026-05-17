@@ -5,14 +5,15 @@ import net.momirealms.craftengine.bukkit.plugin.command.BukkitCommandFeature;
 import net.momirealms.craftengine.core.plugin.CraftEngine;
 import net.momirealms.craftengine.core.plugin.command.CraftEngineCommandManager;
 import net.momirealms.craftengine.core.plugin.locale.MessageConstants;
-import net.momirealms.craftengine.core.util.VersionHelper;
+import net.momirealms.craftengine.core.util.Timestamp;
 import org.bukkit.command.CommandSender;
+import org.bukkit.entity.Player;
 import org.incendo.cloud.Command;
 import org.incendo.cloud.parser.standard.EnumParser;
 
 import java.util.Optional;
 
-public class ReloadCommand extends BukkitCommandFeature<CommandSender> {
+public final class ReloadCommand extends BukkitCommandFeature<CommandSender> {
     public static boolean RELOAD_PACK_FLAG = false;
 
     public ReloadCommand(CraftEngineCommandManager<CommandSender> commandManager, CraftEngine plugin) {
@@ -26,7 +27,7 @@ public class ReloadCommand extends BukkitCommandFeature<CommandSender> {
                 .optional("content", EnumParser.enumParser(ReloadArgument.class))
                 .handler(context -> {
                     if (plugin().isReloading()) {
-                        handleFeedback(context, MessageConstants.COMMAND_RELOAD_FAILURE_IS_LOADING);
+                        handleFeedback(context, MessageConstants.COMMAND_RELOAD_TOO_FAST);
                         return;
                     }
                     Optional<ReloadArgument> optional = context.optional("content");
@@ -34,71 +35,59 @@ public class ReloadCommand extends BukkitCommandFeature<CommandSender> {
                     if (optional.isPresent()) {
                         argument = optional.get();
                     }
-                    if (argument == ReloadArgument.CONFIG) {
-                        try {
-                            plugin().reloadPlugin(plugin().scheduler().async(), r -> plugin().scheduler().sync().run(r), false).thenAccept(reloadResult -> {
+                    if (argument == ReloadArgument.CONFIG || argument == ReloadArgument.RECIPE) {
+                        plugin().reloadPlugin(plugin().scheduler().async(), r -> plugin().scheduler().platform().run(r), argument == ReloadArgument.RECIPE).thenAccept(reloadResult -> {
+                            if (reloadResult.success()) {
                                 handleFeedback(context, MessageConstants.COMMAND_RELOAD_CONFIG_SUCCESS,
                                         Component.text(reloadResult.asyncTime() + reloadResult.syncTime()),
                                         Component.text(reloadResult.asyncTime()),
                                         Component.text(reloadResult.syncTime())
                                 );
-                            });
-                        } catch (Throwable e) {
-                            handleFeedback(context, MessageConstants.COMMAND_RELOAD_CONFIG_FAILURE);
-                            plugin().logger().warn("Failed to reload config", e);
-                        }
-                    } else if (argument == ReloadArgument.RECIPE) {
-                        try {
-                            plugin().reloadPlugin(plugin().scheduler().async(), r -> plugin().scheduler().sync().run(r), true).thenAccept(reloadResult -> {
-                                handleFeedback(context, MessageConstants.COMMAND_RELOAD_CONFIG_SUCCESS,
-                                        Component.text(reloadResult.asyncTime() + reloadResult.syncTime()),
-                                        Component.text(reloadResult.asyncTime()),
-                                        Component.text(reloadResult.syncTime())
-                                );
-                            });
-                        } catch (Throwable e) {
-                            handleFeedback(context, MessageConstants.COMMAND_RELOAD_CONFIG_FAILURE);
-                            plugin().logger().warn("Failed to reload config", e);
-                        }
+                                if (reloadResult.issues() != 0 && context.sender() instanceof Player) {
+                                    handleFeedback(context, MessageConstants.COMMAND_RELOAD_CONFIG_ISSUES, Component.text(reloadResult.issues()));
+                                }
+                            } else {
+                                handleFeedback(context, MessageConstants.COMMAND_RELOAD_CONFIG_FAILURE);
+                            }
+                        });
                     } else if (argument == ReloadArgument.PACK) {
                         plugin().scheduler().executeAsync(() -> {
                             try {
-                                long time1 = System.currentTimeMillis();
+                                Timestamp timestamp = new Timestamp();
                                 plugin().packManager().generateResourcePack();
-                                long time2 = System.currentTimeMillis();
-                                long packTime = time2 - time1;
-                                handleFeedback(context, MessageConstants.COMMAND_RELOAD_PACK_SUCCESS, Component.text(packTime));
+                                handleFeedback(context, MessageConstants.COMMAND_RELOAD_PACK_SUCCESS, Component.text(timestamp.deltaMillis()));
                             } catch (Throwable e) {
-                                handleFeedback(context, MessageConstants.COMMAND_RELOAD_PACK_FAILURE);
                                 plugin().logger().warn("Failed to generate resource pack", e);
+                                handleFeedback(context, MessageConstants.COMMAND_RELOAD_PACK_FAILURE);
                             }
                         });
                     } else if (argument == ReloadArgument.ALL) {
                         RELOAD_PACK_FLAG = true;
-                        try {
-                            plugin().reloadPlugin(plugin().scheduler().async(), r -> plugin().scheduler().sync().run(r), !VersionHelper.isFolia()).thenAcceptAsync(reloadResult -> {
+                        plugin().reloadPlugin(plugin().scheduler().async(), r -> plugin().scheduler().platform().run(r), true).thenAcceptAsync(reloadResult -> {
+                            if (reloadResult.success()) {
+                                handleFeedback(context, MessageConstants.COMMAND_RELOAD_CONFIG_SUCCESS,
+                                        Component.text(reloadResult.asyncTime() + reloadResult.syncTime()),
+                                        Component.text(reloadResult.asyncTime()),
+                                        Component.text(reloadResult.syncTime())
+                                );
+                                if (reloadResult.issues() != 0 && context.sender() instanceof Player) {
+                                    handleFeedback(context, MessageConstants.COMMAND_RELOAD_CONFIG_ISSUES, Component.text(reloadResult.issues()));
+                                }
                                 try {
-                                    long time1 = System.currentTimeMillis();
+                                    Timestamp timestamp = new Timestamp();
                                     plugin().packManager().generateResourcePack();
-                                    long time2 = System.currentTimeMillis();
-                                    long packTime = time2 - time1;
-                                    handleFeedback(context, MessageConstants.COMMAND_RELOAD_ALL_SUCCESS,
-                                            Component.text(reloadResult.asyncTime() + reloadResult.syncTime() + packTime),
-                                            Component.text(reloadResult.asyncTime()),
-                                            Component.text(reloadResult.syncTime()),
-                                            Component.text(packTime)
-                                    );
+                                    handleFeedback(context, MessageConstants.COMMAND_RELOAD_PACK_SUCCESS, Component.text(timestamp.deltaMillis()));
                                 } catch (Throwable e) {
-                                    handleFeedback(context, MessageConstants.COMMAND_RELOAD_PACK_FAILURE);
                                     plugin().logger().warn("Failed to generate resource pack", e);
+                                    handleFeedback(context, MessageConstants.COMMAND_RELOAD_PACK_FAILURE);
                                 } finally {
                                     RELOAD_PACK_FLAG = false;
                                 }
-                            }, plugin().scheduler().async());
-                        } catch (Exception e) {
-                            handleFeedback(context, MessageConstants.COMMAND_RELOAD_ALL_FAILURE);
-                            plugin().logger().warn("Failed to generate resource pack", e);
-                        }
+                            } else {
+                                handleFeedback(context, MessageConstants.COMMAND_RELOAD_CONFIG_FAILURE);
+                                RELOAD_PACK_FLAG = false;
+                            }
+                        }, plugin().scheduler().async());
                     }
                 });
     }

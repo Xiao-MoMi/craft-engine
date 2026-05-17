@@ -2,6 +2,7 @@ templates:
   default:rotatable_block:
     on: right_click
     conditions:
+      - type: "!has_item"
       - type: expression
         expression: <arg:player.is_sneaking>
     functions:
@@ -19,28 +20,28 @@ templates:
   default:rotatable_furniture_4:
     on: right_click
     conditions:
+      - type: "!has_item"
       - type: expression
         expression: <arg:player.is_sneaking>
-      - type: "!has_item"
     functions:
       - type: update_interaction_tick
       - type: rotate_furniture
         degree: 90
-        on-success:
+        on_success:
           - type: swing_hand
           - type: play_sound
             sound: ${rotate_sound:-'minecraft:block.bamboo.place'}
-        on-failure:
+        on_failure:
           - type: rotate_furniture
             degree: 180
-            on-success:
+            on_success:
               - type: swing_hand
               - type: play_sound
                 sound: ${rotate_sound:-'minecraft:block.bamboo.place'}
-            on-failure:
+            on_failure:
               - type: rotate_furniture
                 degree: 270
-                on-success:
+                on_success:
                   - type: swing_hand
                   - type: play_sound
                     sound: ${rotate_sound:-'minecraft:block.bamboo.place'}
@@ -56,21 +57,21 @@ templates:
       - type: update_interaction_tick
       - type: rotate_furniture
         degree: 45
-        on-success:
+        on_success:
           - type: swing_hand
           - type: play_sound
             sound: ${rotate_sound:-'minecraft:block.bamboo.place'}
-        on-failure:
+        on_failure:
           - type: rotate_furniture
             degree: 90
-            on-success:
+            on_success:
               - type: swing_hand
               - type: play_sound
                 sound: ${rotate_sound:-'minecraft:block.bamboo.place'}
-            on-failure:
+            on_failure:
               - type: rotate_furniture
                 degree: 135
-                on-success:
+                on_success:
                   - type: swing_hand
                   - type: play_sound
                     sound: ${rotate_sound:-'minecraft:block.bamboo.place'}

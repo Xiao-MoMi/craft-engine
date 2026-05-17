@@ -1,7 +1,7 @@
 items:
   default:flower_basket:
     data:
-      item-name: <!i><lang:item.default.flower_basket>
+      item_name: <!i><lang:item.default.flower_basket>
     texture: minecraft:item/custom/flower_basket_2d
     behavior:
       type: furniture_item
@@ -19,15 +19,15 @@ items:
   default:flower_basket_ground:
     model: minecraft:item/custom/flower_basket_ground
     data:
-      item-name: <!i><lang:item.default.flower_basket>
+      item_name: <!i><lang:item.default.flower_basket>
   default:flower_basket_wall:
     model: minecraft:item/custom/flower_basket_wall
     data:
-      item-name: <!i><lang:item.default.flower_basket>
+      item_name: <!i><lang:item.default.flower_basket>
   default:flower_basket_ceiling:
     model: minecraft:item/custom/flower_basket_ceiling
     data:
-      item-name: <!i><lang:item.default.flower_basket>
+      item_name: <!i><lang:item.default.flower_basket>
 furniture:
   default:flower_basket:
     events:
@@ -37,7 +37,7 @@ furniture:
             - wall
     settings:
       item: default:flower_basket
-      hit-times: 3
+      hit_times: 3
       sounds:
         break: minecraft:block.grass.break
         place: minecraft:block.grass.place
@@ -50,17 +50,17 @@ furniture:
       ground:
         elements:
           - item: default:flower_basket_ground
-            display-transform: none
+            display_transform: none
             billboard: fixed
             position: 0,0,0
             translation: 0,0.5,0
-            shadow-radius: 0.5
-            shadow-strength: 0.5
+            shadow_radius: 0.5
+            shadow_strength: 0.5
         hitboxes:
           - type: interaction
-            can-use-item-on: true
-            can-be-hit-by-projectile: true
-            blocks-building: true
+            can_use_item_on: true
+            can_be_hit_by_projectile: true
+            blocks_building: true
             position: 0,0,0
             width: 0.7
             height: 0.5
@@ -69,24 +69,24 @@ furniture:
       wall:
         elements:
           - item: default:flower_basket_wall
-            display-transform: none
+            display_transform: none
             billboard: fixed
             position: 0,0,0.2
             translation: 0,0,0
         hitboxes:
           - type: interaction
-            can-use-item-on: true
-            can-be-hit-by-projectile: true
-            blocks-building: true
+            can_use_item_on: true
+            can_be_hit_by_projectile: true
+            blocks_building: true
             position: 0.215,-0.3,0.23
             width: 0.46
             height: 0.75
             interactive: true
             invisible: true
           - type: interaction
-            can-use-item-on: true
-            can-be-hit-by-projectile: true
-            blocks-building: true
+            can_use_item_on: true
+            can_be_hit_by_projectile: true
+            blocks_building: true
             position: -0.215,-0.3,0.23
             width: 0.46
             height: 0.75
@@ -95,15 +95,15 @@ furniture:
       ceiling:
         elements:
           - item: default:flower_basket_ceiling
-            display-transform: none
+            display_transform: none
             billboard: fixed
             position: 0,-0.46,0
             translation: 0,0,0
         hitboxes:
           - type: interaction
-            can-use-item-on: true
-            can-be-hit-by-projectile: true
-            blocks-building: true
+            can_use_item_on: true
+            can_be_hit_by_projectile: true
+            blocks_building: true
             position: 0,-0.7,0
             width: 0.7
             height: 0.7

@@ -6,7 +6,7 @@ import org.bukkit.OfflinePlayer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class ShiftExpansion extends PlaceholderExpansion {
+public final class ShiftExpansion extends PlaceholderExpansion {
     private final CraftEngine plugin;
 
     public ShiftExpansion(CraftEngine plugin) {

@@ -1,8 +1,10 @@
 package net.momirealms.craftengine.core.plugin.network;
 
+import com.mojang.authlib.properties.PropertyMap;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelHandler;
 import net.kyori.adventure.text.Component;
+import net.momirealms.craftengine.core.pack.host.ResourcePackDownloadData;
 import net.momirealms.craftengine.core.plugin.Plugin;
 import net.momirealms.craftengine.core.util.IntIdentityList;
 import net.momirealms.craftengine.core.util.Key;
@@ -45,6 +47,10 @@ public interface NetWorkUser {
     void setUnverifiedUUID(UUID uuid);
 
     void setVerifiedUUID(UUID uuid);
+
+    PropertyMap propertyMap();
+
+    void setPropertyMap(PropertyMap map);
 
     void sendPacket(Object packet, boolean immediately);
 
@@ -110,4 +116,13 @@ public interface NetWorkUser {
     void setDecoderState(ConnectionState decoderState);
 
     void setEncoderState(ConnectionState encoderState);
+
+    void resendChunks();
+
+    /**
+     * <code>1.20(.1)</code> 只能在游玩阶段调用</br>
+     * <code>1.20.2+</code> 只能在配置阶段调用</br>
+     * <code>1.20.3+</code> 可以提供多个资源包，在不支持的版本只会使用列表的首个资源包</br>
+     */
+    void addResourcePackTasks(List<ResourcePackDownloadData> dataList);
 }

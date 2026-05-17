@@ -1,13 +1,10 @@
 package net.momirealms.craftengine.core.pack.conflict.matcher;
 
 import net.momirealms.craftengine.core.pack.conflict.PathContext;
+import net.momirealms.craftengine.core.plugin.config.ConfigSection;
 import net.momirealms.craftengine.core.plugin.context.Condition;
 import net.momirealms.craftengine.core.plugin.context.condition.ConditionFactory;
-import net.momirealms.craftengine.core.plugin.locale.LocalizedException;
 import net.momirealms.craftengine.core.util.CharacterUtils;
-import net.momirealms.craftengine.core.util.ResourceConfigUtils;
-
-import java.util.Map;
 
 public record ContainsPathMatcher(String path) implements Condition<PathContext> {
     public static final ConditionFactory<PathContext, ContainsPathMatcher> FACTORY = new Factory();
@@ -20,9 +17,8 @@ public record ContainsPathMatcher(String path) implements Condition<PathContext>
 
     private static class Factory implements ConditionFactory<PathContext, ContainsPathMatcher> {
         @Override
-        public ContainsPathMatcher create(Map<String, Object> arguments) {
-            String path = ResourceConfigUtils.requireNonEmptyStringOrThrow(arguments.get("path"), () -> new LocalizedException("warning.config.conflict_matcher.contains.missing_path"));
-            return new ContainsPathMatcher(path);
+        public ContainsPathMatcher create(ConfigSection section) {
+            return new ContainsPathMatcher(section.getNonNullString("path"));
         }
     }
 }

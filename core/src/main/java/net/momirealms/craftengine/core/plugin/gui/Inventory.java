@@ -9,5 +9,5 @@ public interface Inventory {
 
     void open(Player player, Component title);
 
-    void setItem(int index, @Nullable Item<?> item);
+    void setItem(int index, @Nullable Item item);
 }

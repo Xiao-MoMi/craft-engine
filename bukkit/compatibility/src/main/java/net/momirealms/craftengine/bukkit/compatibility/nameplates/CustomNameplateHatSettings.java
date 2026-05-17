@@ -3,12 +3,11 @@ package net.momirealms.craftengine.bukkit.compatibility.nameplates;
 import com.destroystokyo.paper.event.player.PlayerArmorChangeEvent;
 import net.momirealms.craftengine.bukkit.item.BukkitItemManager;
 import net.momirealms.craftengine.bukkit.plugin.BukkitCraftEngine;
-import net.momirealms.craftengine.core.item.CustomItem;
-import net.momirealms.craftengine.core.item.CustomItemSettingType;
 import net.momirealms.craftengine.core.item.Item;
-import net.momirealms.craftengine.core.item.ItemSettings;
-import net.momirealms.craftengine.core.plugin.CraftEngine;
-import net.momirealms.craftengine.core.util.ResourceConfigUtils;
+import net.momirealms.craftengine.core.item.ItemDefinition;
+import net.momirealms.craftengine.core.item.setting.CustomItemSettingType;
+import net.momirealms.craftengine.core.item.setting.ItemSettingsModifiers;
+import net.momirealms.craftengine.core.util.Key;
 import net.momirealms.craftengine.core.util.VersionHelper;
 import net.momirealms.customnameplates.api.CNPlayer;
 import net.momirealms.customnameplates.api.CustomNameplates;
@@ -30,17 +29,14 @@ public final class CustomNameplateHatSettings implements Listener {
     public static final CustomItemSettingType<Double> HAT_HEIGHT = CustomItemSettingType.simple();
 
     public void register() {
-        ItemSettings.Modifiers.registerFactory("hat-height", height -> {
-            double heightD = ResourceConfigUtils.getAsDouble(height, "hat-height");
-            return settings -> settings.addCustomData(HAT_HEIGHT, heightD);
-        });
+        ItemSettingsModifiers.register(Key.ce("hat_height"), value -> settings -> settings.addCustomData(HAT_HEIGHT, value.getAsDouble()));
         Bukkit.getPluginManager().registerEvents(this, BukkitCraftEngine.instance().javaPlugin());
     }
 
     @SuppressWarnings("deprecation")
     @EventHandler(ignoreCancelled = true, priority = EventPriority.HIGHEST)
     public void onPlayerArmorChange(PlayerArmorChangeEvent event) {
-        if (VersionHelper.isOrAbove1_21_4()) {
+        if (VersionHelper.isOrAbove1_21_4) {
             if (event.getSlot() != EquipmentSlot.HEAD) {
                 return;
             }
@@ -55,19 +51,11 @@ public final class CustomNameplateHatSettings implements Listener {
     public void onPlayerJoin(PlayerJoinEvent event) {
         Player player = event.getPlayer();
         // 稍微延迟一下，可以等待背包同步插件的处理
-        if (VersionHelper.isFolia()) {
-            player.getScheduler().runDelayed(BukkitCraftEngine.instance().javaPlugin(), t1 -> {
-                if (player.isOnline()) {
-                    updateHatHeight(player, player.getInventory().getItem(EquipmentSlot.HEAD));
-                }
-            }, null, 10);
-        } else {
-            CraftEngine.instance().scheduler().sync().runLater(() -> {
-                if (player.isOnline()) {
-                    updateHatHeight(player, player.getInventory().getItem(EquipmentSlot.HEAD));
-                }
-            }, 10);
-        }
+        BukkitCraftEngine.instance().scheduler().platform().runLater(() -> {
+            if (player.isOnline()) {
+                updateHatHeight(player, player.getInventory().getItem(EquipmentSlot.HEAD));
+            }
+        }, null, 10, player);
     }
 
     public void updateHatHeight(Player player, ItemStack newItem) {
@@ -75,8 +63,8 @@ public final class CustomNameplateHatSettings implements Listener {
         if (cnPlayer == null) return;
         TagRenderer tagRender = CustomNameplates.getInstance().getUnlimitedTagManager().getTagRender(cnPlayer);
         if (tagRender == null) return;
-        Item<ItemStack> wrapped = BukkitItemManager.instance().wrap(newItem);
-        Optional<CustomItem<ItemStack>> optionalCustomItem = wrapped.getCustomItem();
+        Item wrapped = BukkitItemManager.instance().wrap(newItem);
+        Optional<ItemDefinition> optionalCustomItem = wrapped.getDefinition();
         if (optionalCustomItem.isEmpty()) {
             tagRender.hatOffset(0d);
             return;

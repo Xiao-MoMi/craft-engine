@@ -3,11 +3,11 @@ package net.momirealms.craftengine.core.util;
 import net.momirealms.craftengine.core.item.ItemKeys;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 public final class UniqueKey {
-    private static final Map<Key, UniqueKey> CACHE = new HashMap<>(4096, 0.5f);
+    private static final Map<Key, UniqueKey> CACHE = new ConcurrentHashMap<>(4096, 0.5f);
     public static final UniqueKey AIR = UniqueKey.create(ItemKeys.AIR);
 
     private final Key key;

@@ -2,22 +2,18 @@ package net.momirealms.craftengine.core.block;
 
 import it.unimi.dsi.fastutil.objects.Reference2ObjectArrayMap;
 import net.momirealms.craftengine.core.block.behavior.BlockBehavior;
-import net.momirealms.craftengine.core.block.behavior.EntityBlockBehavior;
-import net.momirealms.craftengine.core.block.entity.BlockEntity;
-import net.momirealms.craftengine.core.block.entity.BlockEntityType;
-import net.momirealms.craftengine.core.block.entity.render.element.BlockEntityElement;
 import net.momirealms.craftengine.core.block.entity.render.element.BlockEntityElementConfig;
-import net.momirealms.craftengine.core.block.entity.tick.BlockEntityTicker;
-import net.momirealms.craftengine.core.block.properties.Property;
+import net.momirealms.craftengine.core.block.entity.render.element.ConstantBlockEntityElement;
+import net.momirealms.craftengine.core.block.property.Property;
+import net.momirealms.craftengine.core.block.setting.BlockSettings;
+import net.momirealms.craftengine.core.entity.culling.CullingData;
 import net.momirealms.craftengine.core.entity.player.Player;
 import net.momirealms.craftengine.core.item.Item;
-import net.momirealms.craftengine.core.loot.LootTable;
+import net.momirealms.craftengine.core.loot.Loot;
 import net.momirealms.craftengine.core.plugin.context.ContextHolder;
 import net.momirealms.craftengine.core.plugin.context.parameter.DirectContextParameters;
-import net.momirealms.craftengine.core.entity.culling.CullingData;
 import net.momirealms.craftengine.core.registry.Holder;
 import net.momirealms.craftengine.core.util.MiscUtils;
-import net.momirealms.craftengine.core.world.CEWorld;
 import net.momirealms.craftengine.core.world.World;
 import net.momirealms.sparrow.nbt.CompoundTag;
 import net.momirealms.sparrow.nbt.NBT;
@@ -30,7 +26,8 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 public final class ImmutableBlockState {
-    private final Holder.Reference<CustomBlock> owner;
+    private final Holder.Reference<BlockDefinition> owner;
+    private final BlockStateVariantProvider variantProvider;
     private final Reference2ObjectArrayMap<Property<?>, Comparable<?>> propertyMap;
     private Map<Property<?>, ImmutableBlockState[]> withMap;
 
@@ -41,17 +38,19 @@ public final class ImmutableBlockState {
     private BlockStateWrapper restoreBlockState;
     private BlockBehavior behavior;
     private BlockSettings settings;
-    private BlockEntityType<? extends BlockEntity> blockEntityType;
     @Nullable
-    private BlockEntityElementConfig<? extends BlockEntityElement>[] renderers;
+    private BlockEntityElementConfig<? extends ConstantBlockEntityElement>[] renderers;
     @Nullable
     private CullingData cullingData;
+    private boolean hasBlockEntity;
 
     ImmutableBlockState(
-            Holder.Reference<CustomBlock> owner,
+            Holder.Reference<BlockDefinition> owner,
+            BlockStateVariantProvider variantProvider,
             Reference2ObjectArrayMap<Property<?>, Comparable<?>> propertyMap
     ) {
         this.owner = owner;
+        this.variantProvider = variantProvider;
         this.propertyMap = new Reference2ObjectArrayMap<>(propertyMap);
     }
 
@@ -71,23 +70,15 @@ public final class ImmutableBlockState {
         this.settings = settings;
     }
 
-    public BlockEntityType<? extends BlockEntity> blockEntityType() {
-        return blockEntityType;
-    }
-
-    public void setBlockEntityType(BlockEntityType<? extends BlockEntity> blockEntityType) {
-        this.blockEntityType = blockEntityType;
-    }
-
     public boolean isEmpty() {
-        return this == EmptyBlock.STATE;
+        return this == EmptyBlockDefinition.STATE;
     }
 
-    public BlockEntityElementConfig<? extends BlockEntityElement>[] constantRenderers() {
+    public BlockEntityElementConfig<? extends ConstantBlockEntityElement>[] constantRenderers() {
         return this.renderers;
     }
 
-    public void setConstantRenderers(BlockEntityElementConfig<? extends BlockEntityElement>[] renderers) {
+    public void setConstantRenderers(BlockEntityElementConfig<? extends ConstantBlockEntityElement>[] renderers) {
         this.renderers = renderers;
     }
 
@@ -101,7 +92,11 @@ public final class ImmutableBlockState {
     }
 
     public boolean hasBlockEntity() {
-        return this.blockEntityType != null;
+        return this.hasBlockEntity;
+    }
+
+    public void setHasBlockEntity() {
+        this.hasBlockEntity = true;
     }
 
     public boolean hasConstantBlockEntityRenderer() {
@@ -156,30 +151,15 @@ public final class ImmutableBlockState {
         this.tag = tag;
     }
 
-    @SuppressWarnings("unchecked")
-    public List<Item<Object>> getDrops(@NotNull ContextHolder.Builder builder, @NotNull World world, @Nullable Player player) {
-        CustomBlock block = this.owner.value();
+    public List<Item> getDrops(@NotNull ContextHolder.Builder builder, @NotNull World world, @Nullable Player player) {
+        BlockDefinition block = this.owner.value();
         if (block == null) return List.of();
-        LootTable<Object> lootTable = (LootTable<Object>) block.lootTable();
+        Loot lootTable = block.loot();
         if (lootTable == null) return List.of();
         return lootTable.getRandomItems(builder.withParameter(DirectContextParameters.CUSTOM_BLOCK_STATE, this).build(), world, player);
     }
 
-    @SuppressWarnings("unchecked")
-    public <T extends BlockEntity> BlockEntityTicker<T> createSyncBlockEntityTicker(CEWorld world, BlockEntityType<? extends BlockEntity> type) {
-        EntityBlockBehavior blockBehavior = this.behavior.getEntityBehavior();
-        if (blockBehavior == null) return null;
-        return (BlockEntityTicker<T>) blockBehavior.createSyncBlockEntityTicker(world, this, type);
-    }
-
-    @SuppressWarnings("unchecked")
-    public <T extends BlockEntity> BlockEntityTicker<T> createAsyncBlockEntityTicker(CEWorld world, BlockEntityType<? extends BlockEntity> type) {
-        EntityBlockBehavior blockBehavior = this.behavior.getEntityBehavior();
-        if (blockBehavior == null) return null;
-        return (BlockEntityTicker<T>) blockBehavior.createAsyncBlockEntityTicker(world, this, type);
-    }
-
-    public Holder<CustomBlock> owner() {
+    public Holder<BlockDefinition> owner() {
         return this.owner;
     }
 
@@ -240,6 +220,11 @@ public final class ImmutableBlockState {
         return value;
     }
 
+    @SuppressWarnings("unchecked")
+    public <T extends Comparable<T>> Property<T> getProperty(String name) {
+        return (Property<T>) this.variantProvider.getProperty(name);
+    }
+
     public <T extends Comparable<T>> T get(Property<T> property, T fallback) {
         return Objects.requireNonNullElse(getNullable(property), fallback);
     }
@@ -270,7 +255,7 @@ public final class ImmutableBlockState {
     }
 
     public ImmutableBlockState with(CompoundTag propertiesNBT) {
-        CustomBlock owner = this.owner.value();
+        BlockDefinition owner = this.owner.value();
         ImmutableBlockState finalState = this;
         for (Map.Entry<String, Tag> entry : propertiesNBT.entrySet()) {
             Property<?> property = owner.getProperty(entry.getKey());

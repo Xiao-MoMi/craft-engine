@@ -1,6 +1,6 @@
 package net.momirealms.craftengine.core.plugin.scheduler;
 
-public class DummyTask implements SchedulerTask {
+public final class DummyTask implements SchedulerTask {
 
     @Override
     public void cancel() {

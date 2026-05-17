@@ -1,12 +1,13 @@
 package net.momirealms.craftengine.core.plugin.context.condition;
 
+import net.momirealms.craftengine.core.plugin.config.ConfigSection;
 import net.momirealms.craftengine.core.plugin.context.Condition;
 import net.momirealms.craftengine.core.plugin.context.Context;
 
-import java.util.Map;
-
 public final class AlwaysTrueCondition<CTX extends Context> implements Condition<CTX> {
     public static final AlwaysTrueCondition<Context> INSTANCE = new AlwaysTrueCondition<Context>();
+
+    private AlwaysTrueCondition() {}
 
     @Override
     public boolean test(CTX ctx) {
@@ -21,7 +22,7 @@ public final class AlwaysTrueCondition<CTX extends Context> implements Condition
 
         @SuppressWarnings("unchecked")
         @Override
-        public AlwaysTrueCondition<CTX> create(Map<String, Object> arguments) {
+        public AlwaysTrueCondition<CTX> create(ConfigSection arguments) {
             return (AlwaysTrueCondition<CTX>) INSTANCE;
         }
     }

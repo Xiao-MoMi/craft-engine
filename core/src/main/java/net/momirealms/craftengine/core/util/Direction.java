@@ -83,51 +83,6 @@ public enum Direction {
         return angle;
     }
 
-    public HorizontalDirection toHorizontalDirection() {
-        return switch (this) {
-            case DOWN, UP -> null;
-            case NORTH -> HorizontalDirection.NORTH;
-            case SOUTH -> HorizontalDirection.SOUTH;
-            case WEST -> HorizontalDirection.WEST;
-            case EAST -> HorizontalDirection.EAST;
-        };
-    }
-
-//    public static Direction[] orderedByNearest(AbstractEntity entity) {
-//        float xRotation = entity.xRot() * (float) (Math.PI / 180.0);
-//        float yRotation = -entity.yRot() * (float) (Math.PI / 180.0);
-//        float sinX = (float) Math.sin(xRotation);
-//        float cosX = (float) Math.cos(xRotation);
-//        float sinY = (float) Math.sin(yRotation);
-//        float cosY = (float) Math.cos(yRotation);
-//        boolean isFacingPositiveY = sinY > 0.0F;
-//        boolean isFacingNegativeX = sinX < 0.0F;
-//        boolean isFacingPositiveX = cosY > 0.0F;
-//        float adjustedSinY = isFacingPositiveY ? sinY : -sinY;
-//        float adjustedSinX = isFacingNegativeX ? -sinX : sinX;
-//        float adjustedCosY = isFacingPositiveX ? cosY : -cosY;
-//        float horizontalProjection = adjustedSinY * cosX;
-//        float verticalProjection = adjustedCosY * cosX;
-//        Direction horizontalDirection = isFacingPositiveY ? EAST : WEST;
-//        Direction verticalDirection = isFacingNegativeX ? UP : DOWN;
-//        Direction depthDirection = isFacingPositiveX ? SOUTH : NORTH;
-//        if (adjustedSinY > adjustedCosY) {
-//            if (adjustedSinX > horizontalProjection) {
-//                return createDirectionArray(verticalDirection, horizontalDirection, depthDirection);
-//            } else {
-//                return verticalProjection > adjustedSinX
-//                        ? createDirectionArray(horizontalDirection, depthDirection, verticalDirection)
-//                        : createDirectionArray(horizontalDirection, verticalDirection, depthDirection);
-//            }
-//        } else if (adjustedSinX > verticalProjection) {
-//            return createDirectionArray(verticalDirection, depthDirection, horizontalDirection);
-//        } else {
-//            return horizontalProjection > adjustedSinX
-//                    ? createDirectionArray(depthDirection, horizontalDirection, verticalDirection)
-//                    : createDirectionArray(depthDirection, verticalDirection, horizontalDirection);
-//        }
-//    }
-
     public static Direction[] orderedByNearest(AbstractEntity entity) {
         float f = entity.xRot() * ((float)Math.PI / 180F);
         float f1 = -entity.yRot() * ((float)Math.PI / 180F);

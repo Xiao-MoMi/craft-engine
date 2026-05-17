@@ -1,8 +1,9 @@
 package net.momirealms.craftengine.bukkit.api;
 
+import net.momirealms.craftengine.bukkit.item.BukkitItemDefinition;
 import net.momirealms.craftengine.bukkit.item.BukkitItemManager;
 import net.momirealms.craftengine.bukkit.util.ItemStackUtils;
-import net.momirealms.craftengine.core.item.CustomItem;
+import net.momirealms.craftengine.core.item.ItemDefinition;
 import net.momirealms.craftengine.core.util.Key;
 import org.bukkit.inventory.ItemStack;
 import org.jetbrains.annotations.NotNull;
@@ -11,7 +12,6 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Map;
 
 public final class CraftEngineItems {
-
     private CraftEngineItems() {}
 
     /**
@@ -26,7 +26,7 @@ public final class CraftEngineItems {
      * @throws IllegalStateException if the BukkitItemManager instance is not available
      */
     @NotNull
-    public static Map<Key, CustomItem<ItemStack>> loadedItems() {
+    public static Map<Key, ItemDefinition> loadedItems() {
         return BukkitItemManager.instance().loadedItems();
     }
 
@@ -37,8 +37,20 @@ public final class CraftEngineItems {
      * @return the custom item
      */
     @Nullable
-    public static CustomItem<ItemStack> byId(@NotNull Key id) {
-        return BukkitItemManager.instance().getCustomItem(id).orElse(null);
+    public static BukkitItemDefinition byId(@NotNull final Key id) {
+        return (BukkitItemDefinition) BukkitItemManager.instance().getItemDefinition(id).orElse(null);
+    }
+
+    /**
+     * Gets a custom item by ID
+     */
+    @Nullable
+    public static BukkitItemDefinition byId(@NotNull final String id) {
+        if (id.contains(":")) {
+            return byId(Key.of(id));
+        } else {
+            return (BukkitItemDefinition) BukkitItemManager.instance().getItemDefinitionByPath(id).orElse(null);
+        }
     }
 
     /**
@@ -48,9 +60,9 @@ public final class CraftEngineItems {
      * @return the custom item
      */
     @Nullable
-    public static CustomItem<ItemStack> byItemStack(@NotNull ItemStack itemStack) {
+    public static BukkitItemDefinition byItemStack(@NotNull ItemStack itemStack) {
         if (ItemStackUtils.isEmpty(itemStack)) return null;
-        return BukkitItemManager.instance().wrap(itemStack).getCustomItem().orElse(null);
+        return (BukkitItemDefinition) BukkitItemManager.instance().wrap(itemStack).getDefinition().orElse(null);
     }
 
     /**

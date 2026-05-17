@@ -1,24 +1,24 @@
 package net.momirealms.craftengine.core.util;
 
-import net.momirealms.craftengine.core.plugin.locale.LocalizedResourceConfigException;
-
 import java.util.stream.IntStream;
 
-public class CharacterUtils {
+public final class CharacterUtils {
     private CharacterUtils() {}
 
     public static char[] decodeUnicodeToChars(String unicodeString) {
-        int count = unicodeString.length() / 6;
         if (unicodeString.length() % 6 != 0) {
-            throw new LocalizedResourceConfigException("warning.config.image.invalid_unicode_string", unicodeString);
+            throw new IllegalArgumentException("Malformed Unicode escape sequence length: " + unicodeString);
         }
+
+        int count = unicodeString.length() / 6;
         char[] chars = new char[count];
+
         for (int i = 0, j = 0; j < count; i += 6, j++) {
             String hex = unicodeString.substring(i + 2, i + 6);
             try {
                 chars[j] = (char) Integer.parseInt(hex, 16);
             } catch (NumberFormatException e) {
-                throw new LocalizedResourceConfigException("warning.config.image.invalid_hex_value", e, hex);
+                throw new IllegalArgumentException("Invalid Unicode hex sequence: " + hex + " in string: " + unicodeString, e);
             }
         }
         return chars;

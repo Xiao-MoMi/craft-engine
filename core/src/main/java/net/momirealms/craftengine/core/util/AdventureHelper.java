@@ -1,8 +1,9 @@
 package net.momirealms.craftengine.core.util;
 
+import com.github.benmanes.caffeine.cache.Cache;
+import com.github.benmanes.caffeine.cache.Caffeine;
 import com.google.gson.JsonElement;
 import net.kyori.adventure.text.Component;
-import net.kyori.adventure.text.ComponentIteratorType;
 import net.kyori.adventure.text.TextComponent;
 import net.kyori.adventure.text.TextReplacementConfig;
 import net.kyori.adventure.text.event.HoverEvent;
@@ -17,8 +18,11 @@ import net.momirealms.craftengine.core.plugin.text.component.ComponentProvider;
 import net.momirealms.sparrow.nbt.Tag;
 import net.momirealms.sparrow.nbt.adventure.NBTComponentSerializer;
 import net.momirealms.sparrow.nbt.adventure.NBTSerializerOptions;
+import net.momirealms.sparrow.reflection.clazz.SparrowClass;
+import net.momirealms.sparrow.reflection.field.matcher.FieldMatcher;
 
 import java.util.*;
+import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -26,8 +30,11 @@ import java.util.stream.Collectors;
 /**
  * Helper class for handling Adventure components and related functionalities.
  */
-public class AdventureHelper {
+public final class AdventureHelper {
     public static final String EMPTY_COMPONENT = componentToJson(Component.empty());
+    private static final Cache<String, Pattern> PATTERN_CACHE = Caffeine.newBuilder()
+            .expireAfterAccess(10, TimeUnit.MINUTES)
+            .build();
     private final MiniMessage miniMessage;
     private final MiniMessage miniMessageStrict;
     private final MiniMessage miniMessageCustom;
@@ -35,31 +42,21 @@ public class AdventureHelper {
     private final NBTComponentSerializer nbtComponentSerializer;
     private final LegacyComponentSerializer legacyComponentSerializer;
     private static final TextReplacementConfig REPLACE_LF = TextReplacementConfig.builder().matchLiteral("\n").replacement(Component.newline()).build();
-    /**
-     * This iterator slices a component into individual parts that
-     * <ul>
-     *     <li>Can be used individually without style loss</li>
-     *     <li>Can be concatenated to form the original component, given that children are dropped</li>
-     * </ul>
-     * Any {@link net.kyori.adventure.text.ComponentIteratorFlag}s are ignored.
-     */
-    private static final ComponentIteratorType SLICER = (component, deque, flags) -> {
-        final List<Component> children = component.children();
-        for (int i = children.size() - 1; i >= 0; i--) {
-            deque.addFirst(children.get(i).applyFallbackStyle(component.style()));
-        }
-    };
+
+    static {
+        SparrowClass.of(SparrowClass.findNoRemap("net.kyori.adventure.text.TextComponentImpl")).getDeclaredSparrowField(FieldMatcher.named("WARN_WHEN_LEGACY_FORMATTING_DETECTED")).mh().set(null, false);
+    }
 
     private AdventureHelper() {
         this.miniMessage = MiniMessage.builder().build();
         this.miniMessageStrict = MiniMessage.builder().strict(true).build();
         this.miniMessageCustom = MiniMessage.builder().tags(TagResolver.empty()).build();
         GsonComponentSerializer.Builder gsonBuilder = GsonComponentSerializer.builder();
-        if (!VersionHelper.isOrAbove1_20_5()) {
+        if (!VersionHelper.isOrAbove1_20_5) {
             gsonBuilder.legacyHoverEventSerializer(NBTLegacyHoverEventSerializer.get());
             gsonBuilder.editOptions((b) -> b.value(JSONOptions.EMIT_HOVER_SHOW_ENTITY_ID_AS_INT_ARRAY, false));
         }
-        if (!VersionHelper.isOrAbove1_21_5()) {
+        if (!VersionHelper.isOrAbove1_21_5) {
             gsonBuilder.editOptions((b) -> {
                 b.value(JSONOptions.EMIT_CLICK_EVENT_TYPE, JSONOptions.ClickEventValueMode.CAMEL_CASE);
                 b.value(JSONOptions.EMIT_HOVER_EVENT_TYPE, JSONOptions.HoverEventValueMode.CAMEL_CASE);
@@ -70,14 +67,16 @@ public class AdventureHelper {
         this.gsonComponentSerializer = gsonBuilder.build();
         this.nbtComponentSerializer = NBTComponentSerializer.builder()
                 .editOptions((b) -> {
-                    if (!VersionHelper.isOrAbove1_21_5()) {
-                        b.value(NBTSerializerOptions.EMIT_CLICK_EVENT_TYPE, false);
-                        b.value(NBTSerializerOptions.EMIT_HOVER_EVENT_TYPE, false);
+                    if (!VersionHelper.isOrAbove1_21_5) {
+                        b.value(NBTSerializerOptions.MODERN_EVENT_TYPE, false);
                     }
-                    if (!VersionHelper.isOrAbove1_20_5()) {
+                    if (!VersionHelper.isOrAbove1_20_5) {
                         b.value(NBTSerializerOptions.DATA_COMPONENT_RELEASE, false);
                     }
-                    b.value(NBTSerializerOptions.SERIALIZE_COMPONENT_TYPES, false);
+                    if (!VersionHelper.isOrAbove1_20_3) {
+                        b.value(NBTSerializerOptions.INT_ARRAY_UUID, false);
+                    }
+                    b.value(NBTSerializerOptions.SERIALIZE_COMPONENT_TYPE, false);
                 }).build();
     }
 
@@ -185,15 +184,24 @@ public class AdventureHelper {
     }
 
     public static List<Component> splitLines(Component component) {
-        List<Component> result = new ArrayList<>(1);
+        List<Component> result = new ArrayList<>(4);
         Component line = Component.empty();
-        for (Iterator<Component> it = component.replaceText(REPLACE_LF).iterator(SLICER); it.hasNext(); ) {
-            Component child = it.next().children(Collections.emptyList());
-            if (child instanceof TextComponent text && text.content().equals(Component.newline().content())) {
+        Deque<Component> deque = new ArrayDeque<>();
+        deque.addLast(component.replaceText(REPLACE_LF));
+        while (!deque.isEmpty()) {
+            Component current = deque.pollFirst();
+            List<Component> children = current.children();
+            for (int i = children.size() - 1; i >= 0; i--) {
+                Component child = children.get(i).applyFallbackStyle(current.style());
+                deque.addFirst(child);
+            }
+            current = current.children(Collections.emptyList());
+            if (current instanceof TextComponent text
+                    && text.content().equals(Component.newline().content())) {
                 result.add(line.compact());
                 line = Component.empty();
             } else {
-                line = line.append(child);
+                line = line.append(current);
             }
         }
         if (Component.IS_NOT_EMPTY.test(line)) {
@@ -211,6 +219,12 @@ public class AdventureHelper {
     @SuppressWarnings("BooleanMethodIsAlwaysInverted")
     public static boolean isLegacyColorCode(char c) {
         return c == '§' || c == '&';
+    }
+
+    public static boolean isHexColorCode(char c) {
+        return (c >= '0' && c <= '9') ||
+                (c >= 'a' && c <= 'f') ||
+                (c >= 'A' && c <= 'F');
     }
 
     /**
@@ -254,6 +268,28 @@ public class AdventureHelper {
                 case 'o' -> stringBuilder.append("<i>");
                 case 'n' -> stringBuilder.append("<u>");
                 case 'k' -> stringBuilder.append("<obf>");
+                case '#' -> {
+                    if (i + 7 >= chars.length
+                            || !isHexColorCode(chars[i+2])
+                            || !isHexColorCode(chars[i+3])
+                            || !isHexColorCode(chars[i+4])
+                            || !isHexColorCode(chars[i+5])
+                            || !isHexColorCode(chars[i+6])
+                            || !isHexColorCode(chars[i+7])) {
+                        stringBuilder.append(chars[i]);
+                        continue;
+                    }
+                    stringBuilder
+                            .append("<#")
+                            .append(chars[i+2])
+                            .append(chars[i+3])
+                            .append(chars[i+4])
+                            .append(chars[i+5])
+                            .append(chars[i+6])
+                            .append(chars[i+7])
+                            .append(">");
+                    i += 6;
+                }
                 case 'x' -> {
                     if (i + 13 >= chars.length
                             || !isLegacyColorCode(chars[i+2])
@@ -315,15 +351,25 @@ public class AdventureHelper {
     }
 
     public static Component replaceText(Component text, Map<String, ComponentProvider> replacements, Context context) {
-        if (replacements.isEmpty()) return text;
-        String patternString = replacements.keySet().stream()
-                .map(Pattern::quote)
-                .collect(Collectors.joining("|"));
-        return text.replaceText(builder ->
-                builder.match(Pattern.compile(patternString))
-                        .replacement((result, b) ->
-                                Optional.ofNullable(replacements.get(result.group())).orElseThrow(() -> new IllegalStateException("Could not find tag '" + result.group() + "'")).apply(context)
-                        )
-        );
+        int size = replacements.size();
+        if (size == 0) return text;
+        if (size == 1) {
+            return text.replaceText(builder ->
+                    builder.matchLiteral(replacements.keySet().iterator().next())
+                            .replacement((result, b) ->
+                                    Optional.ofNullable(replacements.get(result.group())).orElseThrow(() -> new IllegalStateException("Could not find tag '" + result.group() + "'")).apply(context)
+                            )
+            );
+        } else {
+            String patternString = replacements.keySet().stream()
+                    .map(Pattern::quote)
+                    .collect(Collectors.joining("|"));
+            return text.replaceText(builder ->
+                    builder.match(Objects.requireNonNull(PATTERN_CACHE.get(patternString, Pattern::compile)))
+                            .replacement((result, b) ->
+                                    Optional.ofNullable(replacements.get(result.group())).orElseThrow(() -> new IllegalStateException("Could not find tag '" + result.group() + "'")).apply(context)
+                            )
+            );
+        }
     }
 }

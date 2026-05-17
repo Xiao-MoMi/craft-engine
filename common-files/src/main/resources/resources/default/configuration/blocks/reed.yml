@@ -1,7 +1,7 @@
 items:
   default:reed:
     data:
-      item-name: <!i><lang:item.default.reed>
+      item_name: <!i><lang:item.default.reed>
     texture: minecraft:item/custom/reed
     behavior:
       type: liquid_collision_block_item
@@ -11,17 +11,17 @@ items:
             - default:hardness/none
             - default:sound/grass
           overrides:
-            push-reaction: destroy
-            map-color: 60
+            push_reaction: destroy
+            map_color: 60
         behavior:
           type: on_liquid_block
-          liquid-type: water
+          liquid_type: water
           positions:
             - 0,-1,0
         loot:
           template: default:loot_table/self
         state:
-          auto-state: sugar_cane
+          auto_state: sugar_cane
           model:
             path: minecraft:block/custom/reed
 recipes:
@@ -34,44 +34,88 @@ recipes:
     result:
       id: minecraft:paper
       count: 3
-placed-features:
+placed_features:
   default:reed:
     biome:
       - minecraft:river
-    environment:
+    dimension_type:
       - minecraft:overworld
     feature:
-      type: 'minecraft:random_patch'
-      config:
-        feature:
+      $$>=26.1:
+        type: 'minecraft:simple_block'
+        config:
+          to_place:
+            type: 'minecraft:rule_based_state_provider'
+            rules:
+              - if_true:
+                  type: 'minecraft:all_of'
+                  predicates:
+                    - type: 'minecraft:replaceable'
+                    - type: 'minecraft:matching_fluids'
+                      fluids: 'minecraft:empty'
+                    - type: 'minecraft:matching_fluids'
+                      offset:
+                        - 0
+                        - -1
+                        - 0
+                      fluids: '#minecraft:water'
+                then:
+                  type: 'minecraft:simple_state_provider'
+                  state:
+                    Name: 'default:reed'
+      $$fallback:
+        type: 'minecraft:random_patch'
+        config:
           feature:
-            type: 'minecraft:simple_block'
-            config:
-              to_place:
-                type: 'craftengine:simple_state_provider'
-                state:
-                  Name: 'default:reed'
-          placement:
-            - type: 'minecraft:block_predicate_filter'
-              predicate:
-                type: 'minecraft:all_of'
-                predicates:
-                  - type: 'minecraft:replaceable'
-                  - type: 'minecraft:matching_fluids'
-                    fluids: 'minecraft:empty'
-                  - type: 'minecraft:matching_fluids'
-                    fluids: '#minecraft:water'
-                    offset:
-                      - 0
-                      - -1
-                      - 0
-        tries: 96
-        xz_spread: 7
-        y_spread: 1
+            feature:
+              type: 'minecraft:simple_block'
+              config:
+                to_place:
+                  type: 'craftengine:simple_state_provider'
+                  state:
+                    Name: 'default:reed'
+            placement:
+              - type: 'minecraft:block_predicate_filter'
+                predicate:
+                  type: 'minecraft:all_of'
+                  predicates:
+                    - type: 'minecraft:replaceable'
+                    - type: 'minecraft:matching_fluids'
+                      fluids: 'minecraft:empty'
+                    - type: 'minecraft:matching_fluids'
+                      fluids: '#minecraft:water'
+                      offset:
+                        - 0
+                        - -1
+                        - 0
+          tries: 96
+          xz_spread: 7
+          y_spread: 1
     placement:
-      - type: 'minecraft:rarity_filter'
-        chance: 48
-      - type: 'minecraft:in_square'
-      - type: 'minecraft:heightmap'
-        heightmap: WORLD_SURFACE
-      - type: 'minecraft:biome'
+      $$>=26.1:
+        - type: 'minecraft:rarity_filter'
+          chance: 48
+        - type: 'minecraft:in_square'
+        - type: 'minecraft:heightmap'
+          heightmap: WORLD_SURFACE
+        - type: 'minecraft:biome'
+        - type: 'minecraft:count'
+          count: 96
+        - type: 'minecraft:random_offset'
+          xz_spread:
+            type: 'minecraft:trapezoid'
+            max: 7
+            min: -7
+            plateau: 0
+          y_spread:
+            type: 'minecraft:trapezoid'
+            max: 1
+            min: -1
+            plateau: 0
+      $$fallback:
+        - type: 'minecraft:rarity_filter'
+          chance: 48
+        - type: 'minecraft:in_square'
+        - type: 'minecraft:heightmap'
+          heightmap: WORLD_SURFACE
+        - type: 'minecraft:biome'

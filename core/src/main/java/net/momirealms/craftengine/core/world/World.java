@@ -6,6 +6,7 @@ import net.momirealms.craftengine.core.plugin.context.Context;
 import net.momirealms.craftengine.core.sound.SoundData;
 import net.momirealms.craftengine.core.sound.SoundSource;
 import net.momirealms.craftengine.core.util.Key;
+import net.momirealms.craftengine.core.world.chunk.Chunk;
 import net.momirealms.craftengine.core.world.particle.ParticleData;
 import net.momirealms.craftengine.core.world.particle.ParticleType;
 import org.jetbrains.annotations.NotNull;
@@ -17,11 +18,23 @@ import java.util.UUID;
 
 public interface World extends WorldAccessor {
 
+    default CEWorld ceWorld() {
+        return this.storageWorld();
+    }
+
     CEWorld storageWorld();
 
-    Object serverWorld();
+    Object minecraftWorld();
 
-    Object platformWorld();
+    default Object platformWorld() {
+        return minecraftWorld();
+    }
+
+    default Chunk getChunkIfLoaded(ChunkPos chunkPos) {
+        return getChunkIfLoaded(chunkPos.x, chunkPos.z);
+    }
+
+    Chunk getChunkIfLoaded(int x, int z);
 
     ExistingBlock getBlock(int x, int y, int z);
 
@@ -35,7 +48,7 @@ public interface World extends WorldAccessor {
 
     UUID uuid();
 
-    void dropItemNaturally(Position location, Item<?> item);
+    void dropItemNaturally(Position location, Item item);
 
     void dropExp(Position location, int amount);
 

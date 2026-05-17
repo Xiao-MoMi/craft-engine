@@ -2,7 +2,7 @@ package net.momirealms.craftengine.core.world.particle;
 
 import net.momirealms.craftengine.core.plugin.context.number.NumberProvider;
 
-public class VibrationData implements ParticleData {
+public final class VibrationData implements ParticleData {
     private final NumberProvider destinationX;
     private final NumberProvider destinationY;
     private final NumberProvider destinationZ;

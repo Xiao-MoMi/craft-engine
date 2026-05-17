@@ -11,7 +11,7 @@ import org.bukkit.event.Listener;
 
 import java.util.Locale;
 
-public class MythicItemDropListener implements Listener {
+public final class MythicItemDropListener implements Listener {
     private final BukkitCraftEngine plugin;
 
     public MythicItemDropListener(BukkitCraftEngine plugin) {
@@ -30,7 +30,7 @@ public class MythicItemDropListener implements Listener {
             return;
         }
         event.register(new MythicItemDrop(line, event.getConfig(),
-                LazyReference.lazyReference(() -> this.plugin.itemManager().getCustomItem(Key.of(itemId)).orElse(null)),
+                LazyReference.lazyReference(() -> this.plugin.itemManager().getItemDefinition(Key.of(itemId)).orElse(null)),
                 itemId
         ));
     }

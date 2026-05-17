@@ -1,77 +1,67 @@
 package net.momirealms.craftengine.core.pack.model.simplified;
 
-import net.momirealms.craftengine.core.plugin.locale.LocalizedResourceConfigException;
+import net.momirealms.craftengine.core.pack.model.definition.BaseItemModel;
+import net.momirealms.craftengine.core.pack.model.definition.ConditionItemModel;
+import net.momirealms.craftengine.core.pack.model.definition.ItemModel;
+import net.momirealms.craftengine.core.pack.model.definition.condition.BrokenConditionProperty;
+import net.momirealms.craftengine.core.pack.model.definition.condition.ConditionProperty;
+import net.momirealms.craftengine.core.pack.model.definition.condition.RodCastConditionProperty;
+import net.momirealms.craftengine.core.pack.model.definition.condition.UsingItemConditionProperty;
+import net.momirealms.craftengine.core.pack.model.generation.ModelGeneration;
+import net.momirealms.craftengine.core.plugin.config.ConfigValue;
 import net.momirealms.craftengine.core.util.Key;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 public final class ConditionModelReader implements SimplifiedModelReader {
-    public static final ConditionModelReader FISHING_ROD = new ConditionModelReader("fishing_rod", "fishing_rod/cast", "_cast");
-    public static final ConditionModelReader ELYTRA = new ConditionModelReader("generated", "broken", "_broken");
-    public static final ConditionModelReader SHIELD = new ConditionModelReader("", "using_item", "_blocking");
-    private final String model;
-    private final String property;
+    public static final ConditionModelReader FISHING_ROD = new ConditionModelReader(Key.of("item/fishing_rod"), RodCastConditionProperty.INSTANCE, "_cast");
+    public static final ConditionModelReader ELYTRA = new ConditionModelReader(Key.of("item/generated"), BrokenConditionProperty.INSTANCE, "_broken");
+    public static final ConditionModelReader SHIELD = new ConditionModelReader(Key.of("item/generated"), UsingItemConditionProperty.INSTANCE, "_blocking");
+    private final Key model;
+    private final ConditionProperty property;
     private final String suffix;
 
-    private ConditionModelReader(String model, String property, String suffix) {
+    private ConditionModelReader(Key model, ConditionProperty property, String suffix) {
         this.model = model;
         this.property = property;
         this.suffix = suffix;
     }
 
     @Override
-    public @Nullable Map<String, Object> convert(List<String> textures, List<String> optionalModelPaths, Key id) {
-        if (this.model.isEmpty()) {
-            return null;
-        }
-        if (textures.size() != 2) {
-            throw new LocalizedResourceConfigException("warning.config.item.simplified_model.invalid_texture", "2", String.valueOf(textures.size()));
-        }
-        boolean autoModel = optionalModelPaths.isEmpty();
-        if (!autoModel && optionalModelPaths.size() != 2) {
-            throw new LocalizedResourceConfigException("warning.config.item.simplified_model.invalid_model", "2", String.valueOf(optionalModelPaths.size()));
-        }
-        return Map.of(
-                "type", "condition",
-                "property", this.property,
-                "on-false", Map.of(
-                        "path", autoModel ? id.namespace() + ":item/" + id.value() : optionalModelPaths.getFirst(),
-                        "generation", Map.of(
-                                "parent", "item/" + this.model,
-                                "textures", Map.of(
-                                        "layer0", textures.getFirst()
-                                )
-                        )
+    public ItemModel read(ConfigValue textureValue, Optional<ConfigValue> optionalModelValue, Key id) {
+        List<Key> textures = textureValue.getAsFixedSizeList(2, ConfigValue::getAsAssetPath);
+        List<Key> models = optionalModelValue.map(it -> it.getAsFixedSizeList(2, ConfigValue::getAsAssetPath)).orElse(null);
+        boolean autoModel = models == null;
+        return new ConditionItemModel(
+                this.property,
+                new BaseItemModel(
+                        autoModel ? Key.of(id.namespace(), "item/" + id.value() + this.suffix) : models.getLast(),
+                        List.of(),
+                        ModelGeneration.builder()
+                                .parentModelPath(this.model)
+                                .texturesOverride(Map.of("layer0", textures.getLast().asMinimalString()))
+                                .build()
                 ),
-                "on-true", Map.of(
-                        "path", autoModel ? id.namespace() + ":item/" + id.value() + this.suffix : optionalModelPaths.getLast(),
-                        "generation", Map.of(
-                                "parent", "item/" + this.model,
-                                "textures", Map.of(
-                                        "layer0", textures.getLast()
-                                )
-                        )
+                new BaseItemModel(
+                        autoModel ? Key.of(id.namespace(), "item/" + id.value()) : models.getFirst(),
+                        List.of(),
+                        ModelGeneration.builder()
+                                .parentModelPath(this.model)
+                                .texturesOverride(Map.of("layer0", textures.getFirst().asMinimalString()))
+                                .build()
                 )
         );
     }
 
     @Override
-    public @NotNull Map<String, Object> convert(List<String> models) {
-        if (models.size() != 2) {
-            throw new LocalizedResourceConfigException("warning.config.item.simplified_model.invalid_model", "2", String.valueOf(models.size()));
-        }
-        return Map.of(
-                "type", "condition",
-                "property", this.property,
-                "on-false", Map.of(
-                        "path", models.getFirst()
-                ),
-                "on-true", Map.of(
-                        "path", models.getLast()
-                )
+    public ItemModel read(ConfigValue modelValue) {
+        List<Key> models = modelValue.getAsFixedSizeList(2, ConfigValue::getAsAssetPath);
+        return new ConditionItemModel(
+                this.property,
+                new BaseItemModel(models.getLast()),
+                new BaseItemModel(models.getFirst())
         );
     }
 }

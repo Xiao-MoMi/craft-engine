@@ -24,7 +24,7 @@ public class BukkitCEWorld extends CEWorld {
 
     @Override
     public void updateLight() {
-        if (Config.enableLightSystem()) {
+        if (Config.enableBlockLightSystem()) {
             super.isUpdatingLights = true;
             LightUtils.updateChunkLight(
                     (org.bukkit.World) this.world.platformWorld(),

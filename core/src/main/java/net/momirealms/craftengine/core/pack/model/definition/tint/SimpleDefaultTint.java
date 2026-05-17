@@ -1,12 +1,12 @@
 package net.momirealms.craftengine.core.pack.model.definition.tint;
 
 import com.google.gson.JsonObject;
+import com.mojang.datafixers.util.Either;
+import net.momirealms.craftengine.core.plugin.config.ConfigSection;
 import net.momirealms.craftengine.core.util.Key;
-import org.incendo.cloud.type.Either;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
-import java.util.Map;
 
 public final class SimpleDefaultTint implements Tint {
     public static final TintFactory<SimpleDefaultTint> FACTORY = new Factory();
@@ -31,16 +31,19 @@ public final class SimpleDefaultTint implements Tint {
     public JsonObject get() {
         JsonObject json = new JsonObject();
         json.addProperty("type", this.type.asMinimalString());
-        applyAnyTint(json, this.defaultValue, "default");
+        applyTint(json, this.defaultValue, "default");
         return json;
     }
 
     private static class Factory implements TintFactory<SimpleDefaultTint> {
+        private static final String[] DEFAULT = new String[]{"default", "value"};
+
         @Override
-        public SimpleDefaultTint create(Map<String, Object> arguments) {
-            Object value = arguments.containsKey("default") ? arguments.getOrDefault("default", 0) : arguments.getOrDefault("value", 0);
-            Key type = Key.of(arguments.get("type").toString());
-            return new SimpleDefaultTint(type, parseTintValue(value));
+        public SimpleDefaultTint create(ConfigSection section) {
+            return new SimpleDefaultTint(
+                    section.getNonNullIdentifier("type"),
+                    section.getValue(DEFAULT, Tints::getTintValue)
+            );
         }
     }
 

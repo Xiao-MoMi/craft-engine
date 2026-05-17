@@ -1,15 +1,13 @@
 package net.momirealms.craftengine.bukkit.util;
 
-import net.momirealms.craftengine.bukkit.nms.FastNMS;
-import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.MItems;
 import net.momirealms.craftengine.core.item.Item;
-import org.bukkit.inventory.ItemStack;
+import net.momirealms.craftengine.proxy.minecraft.world.item.ItemStackProxy;
+import net.momirealms.craftengine.proxy.minecraft.world.item.ItemsProxy;
 
 public final class BukkitItemUtils {
-
     private BukkitItemUtils() {}
 
-    public static boolean isDebugStick(Item<ItemStack> item) {
-        return FastNMS.INSTANCE.method$ItemStack$getItem(item.getLiteralObject()) == MItems.DEBUG_STICK;
+    public static boolean isDebugStick(Item item) {
+        return ItemStackProxy.INSTANCE.getItem(item.minecraftItem()) == ItemsProxy.DEBUG_STICK;
     }
 }

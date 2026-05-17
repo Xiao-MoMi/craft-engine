@@ -2,8 +2,7 @@ package net.momirealms.craftengine.core.util;
 
 import org.joml.Quaternionf;
 
-public class QuaternionUtils {
-
+public final class QuaternionUtils {
     private QuaternionUtils() {}
 
     public static Quaternionf toQuaternionf(double yaw, double pitch, double roll) {

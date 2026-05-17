@@ -2,21 +2,28 @@ package net.momirealms.craftengine.core.item;
 
 import net.momirealms.craftengine.core.entity.EquipmentSlot;
 import net.momirealms.craftengine.core.entity.player.Player;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public interface ItemWrapper<I> {
+public interface ItemWrapper {
 
-    I getItem();
+    Object minecraftItem();
 
-    Object getLiteralObject();
+    default Object platformItem() {
+        return minecraftItem();
+    }
 
     int count();
 
     void count(int amount);
 
-    ItemWrapper<I> copyWithCount(int count);
+    ItemWrapper copy();
+
+    ItemWrapper copyWithCount(int count);
 
     void shrink(int amount);
 
-    void hurtAndBreak(int amount, @Nullable Player player, @Nullable EquipmentSlot slot);
+    void grow(int amount);
+
+    void hurtAndBreak(int amount, @NotNull Player player, @Nullable EquipmentSlot slot);
 }

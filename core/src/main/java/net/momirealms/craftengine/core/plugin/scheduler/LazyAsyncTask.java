@@ -2,7 +2,7 @@ package net.momirealms.craftengine.core.plugin.scheduler;
 
 import java.util.concurrent.ScheduledFuture;
 
-public class LazyAsyncTask implements SchedulerTask {
+public final class LazyAsyncTask implements SchedulerTask {
 
     public ScheduledFuture<?> future;
 

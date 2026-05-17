@@ -1,99 +1,117 @@
 package net.momirealms.craftengine.bukkit.block.behavior;
 
-import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import net.momirealms.craftengine.bukkit.block.BukkitBlockManager;
-import net.momirealms.craftengine.bukkit.nms.FastNMS;
-import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.*;
 import net.momirealms.craftengine.bukkit.util.BlockStateUtils;
 import net.momirealms.craftengine.bukkit.util.DirectionUtils;
-import net.momirealms.craftengine.core.block.CustomBlock;
+import net.momirealms.craftengine.bukkit.util.KeyUtils;
+import net.momirealms.craftengine.bukkit.util.RegistryUtils;
+import net.momirealms.craftengine.core.block.BlockDefinition;
 import net.momirealms.craftengine.core.block.ImmutableBlockState;
+import net.momirealms.craftengine.core.block.UpdateFlags;
 import net.momirealms.craftengine.core.block.behavior.BlockBehaviorFactory;
-import net.momirealms.craftengine.core.block.properties.BooleanProperty;
-import net.momirealms.craftengine.core.block.properties.Property;
-import net.momirealms.craftengine.core.util.*;
+import net.momirealms.craftengine.core.block.behavior.RandomTickBlock;
+import net.momirealms.craftengine.core.block.property.BooleanProperty;
+import net.momirealms.craftengine.core.block.property.Property;
+import net.momirealms.craftengine.core.plugin.config.ConfigSection;
+import net.momirealms.craftengine.core.plugin.config.ConfigValue;
+import net.momirealms.craftengine.core.util.Direction;
+import net.momirealms.craftengine.core.util.Key;
 import net.momirealms.craftengine.core.util.random.RandomUtils;
+import net.momirealms.craftengine.proxy.minecraft.core.BlockPosProxy;
+import net.momirealms.craftengine.proxy.minecraft.core.DirectionProxy;
+import net.momirealms.craftengine.proxy.minecraft.core.registries.BuiltInRegistriesProxy;
+import net.momirealms.craftengine.proxy.minecraft.world.level.BlockGetterProxy;
+import net.momirealms.craftengine.proxy.minecraft.world.level.LevelWriterProxy;
+import net.momirealms.craftengine.proxy.minecraft.world.level.block.BlockProxy;
+import net.momirealms.craftengine.proxy.minecraft.world.level.block.BlocksProxy;
+import net.momirealms.craftengine.proxy.minecraft.world.level.block.state.BlockBehaviourProxy;
+import net.momirealms.craftengine.proxy.minecraft.world.level.block.state.StateHolderProxy;
+import net.momirealms.craftengine.proxy.minecraft.world.level.block.state.properties.BlockStatePropertiesProxy;
+import net.momirealms.craftengine.proxy.minecraft.world.level.material.FluidStateProxy;
+import net.momirealms.craftengine.proxy.minecraft.world.level.material.FluidsProxy;
 
 import java.util.List;
-import java.util.Map;
-import java.util.concurrent.Callable;
 
-public class BuddingBlockBehavior extends BukkitBlockBehavior {
+public final class BuddingBlockBehavior extends BukkitBlockBehavior implements RandomTickBlock {
     public static final BlockBehaviorFactory<BuddingBlockBehavior> FACTORY = new Factory();
-    private final float growthChance;
-    private final List<Key> blocks;
+    public final float growthChance;
+    public final List<Key> blocks;
 
-    public BuddingBlockBehavior(CustomBlock customBlock, float growthChance, List<Key> blocks) {
-        super(customBlock);
+    private BuddingBlockBehavior(BlockDefinition blockDefinition,
+                                 float growthChance,
+                                 List<Key> blocks) {
+        super(blockDefinition);
         this.growthChance = growthChance;
-        this.blocks = blocks;
+        this.blocks = List.copyOf(blocks);
     }
 
     @Override
-    public void randomTick(Object thisBlock, Object[] args, Callable<Object> superMethod) throws Exception {
-        if (RandomUtils.generateRandomFloat(0, 1) >= growthChance) return;
-        Object nmsDirection = CoreReflections.instance$Direction$values[RandomUtils.generateRandomInt(0, 6)];
+    public void randomTick(Object thisBlock, Object[] args) {
+        if (RandomUtils.generateRandomFloat(0, 1) >= this.growthChance) return;
+        Object nmsDirection = DirectionProxy.VALUES[RandomUtils.generateRandomInt(0, 6)];
         Direction direction = DirectionUtils.fromNMSDirection(nmsDirection);
-        Object blockPos = FastNMS.INSTANCE.method$BlockPos$relative(args[2], nmsDirection);
-        Object blockState = FastNMS.INSTANCE.method$BlockGetter$getBlockState(args[1], blockPos);
+        Object blockPos = BlockPosProxy.INSTANCE.relative(args[2], nmsDirection);
+        Object blockState = BlockGetterProxy.INSTANCE.getBlockState(args[1], blockPos);
         if (canClusterGrowAtState(blockState)) {
-            Key blockId = blocks.getFirst();
-            CustomBlock firstBlock = BukkitBlockManager.instance().blockById(blockId).orElse(null);
+            Key blockId = this.blocks.getFirst();
+            BlockDefinition firstBlock = BukkitBlockManager.instance().blockById(blockId).orElse(null);
             placeWithPropertyBlock(firstBlock, blockId, direction, nmsDirection, args[1], blockPos, blockState);
         } else {
             Key blockId = BlockStateUtils.getOptionalCustomBlockState(blockState)
                     .map(it -> it.owner().value().id())
                     .orElseGet(() -> BlockStateUtils.getBlockOwnerIdFromState(blockState));
-            int blockIdIndex = blocks.indexOf(blockId);
-            if (blockIdIndex < 0 || blockIdIndex == blocks.size() - 1) return;
-            Key nextBlockId = blocks.get(blockIdIndex + 1);
-            CustomBlock nextBlock = BukkitBlockManager.instance().blockById(nextBlockId).orElse(null);
+            int blockIdIndex = this.blocks.indexOf(blockId);
+            if (blockIdIndex < 0 || blockIdIndex == this.blocks.size() - 1) return;
+            Key nextBlockId = this.blocks.get(blockIdIndex + 1);
+            BlockDefinition nextBlock = BukkitBlockManager.instance().blockById(nextBlockId).orElse(null);
             placeWithPropertyBlock(nextBlock, nextBlockId, direction, nmsDirection, args[1], blockPos, blockState);
         }
     }
 
+    @Override
+    public boolean canRandomlyTick(ImmutableBlockState state) {
+        return true;
+    }
+
     @SuppressWarnings("unchecked")
-    private void placeWithPropertyBlock(CustomBlock customBlock, Key blockId, Direction direction, Object nmsDirection, Object level, Object blockPos, Object blockState) {
-        if (customBlock != null) {
-            ImmutableBlockState newState = customBlock.defaultState();
-            Property<?> facing = customBlock.getProperty("facing");
+    private void placeWithPropertyBlock(BlockDefinition blockDefinition, Key blockId, Direction direction, Object nmsDirection, Object level, Object blockPos, Object blockState) {
+        if (blockDefinition != null) {
+            ImmutableBlockState newState = blockDefinition.defaultState();
+            Property<Direction> facing = (Property<Direction>) blockDefinition.getProperty("facing");
             if (facing != null) {
-                if (facing.valueClass() == Direction.class) {
-                    newState = newState.with((Property<Direction>) facing, direction);
-                } else if (facing.valueClass() == HorizontalDirection.class) {
-                    if (!direction.axis().isHorizontal()) return;
-                    newState = newState.with((Property<HorizontalDirection>) facing, direction.toHorizontalDirection());
-                }
+                newState = newState.with(facing, direction);
             }
-            BooleanProperty waterlogged = (BooleanProperty) customBlock.getProperty("waterlogged");
+            BooleanProperty waterlogged = (BooleanProperty) blockDefinition.getProperty("waterlogged");
             if (waterlogged != null) {
-                newState = newState.with(waterlogged, FastNMS.INSTANCE.method$FluidState$getType(FastNMS.INSTANCE.field$BlockBehaviour$BlockStateBase$fluidState(blockState)) == MFluids.WATER);
+                newState = newState.with(waterlogged, FluidStateProxy.INSTANCE.getType(BlockBehaviourProxy.BlockStateBaseProxy.INSTANCE.getFluidState(blockState)) == FluidsProxy.WATER);
             }
-            FastNMS.INSTANCE.method$LevelWriter$setBlock(level, blockPos, newState.customBlockState().literalObject(), 3);
-        } else if (blockId.namespace().equals("minecraft")) {
-            Object block = FastNMS.INSTANCE.method$Registry$getValue(MBuiltInRegistries.BLOCK, FastNMS.INSTANCE.method$ResourceLocation$fromNamespaceAndPath("minecraft", blockId.value()));
+            LevelWriterProxy.INSTANCE.setBlock(level, blockPos, newState.customBlockState().minecraftState(), UpdateFlags.UPDATE_ALL);
+        } else {
+            Object block = RegistryUtils.getRegistryValue(BuiltInRegistriesProxy.BLOCK, KeyUtils.toIdentifier(blockId));
             if (block == null) return;
-            Object newState = FastNMS.INSTANCE.method$Block$defaultState(block);
-            newState = FastNMS.INSTANCE.method$StateHolder$trySetValue(newState, MBlockStateProperties.WATERLOGGED, FastNMS.INSTANCE.method$FluidState$getType(FastNMS.INSTANCE.field$BlockBehaviour$BlockStateBase$fluidState(blockState)) == MFluids.WATER);
-            newState = FastNMS.INSTANCE.method$StateHolder$trySetValue(newState, MBlockStateProperties.FACING, (Comparable<?>) nmsDirection);
-            FastNMS.INSTANCE.method$LevelWriter$setBlock(level, blockPos, newState, 3);
+            Object newState = BlockProxy.INSTANCE.getDefaultBlockState(block);
+            newState = StateHolderProxy.INSTANCE.trySetValue(newState, BlockStatePropertiesProxy.WATERLOGGED, FluidStateProxy.INSTANCE.getType(BlockBehaviourProxy.BlockStateBaseProxy.INSTANCE.getFluidState(blockState)) == FluidsProxy.WATER);
+            newState = StateHolderProxy.INSTANCE.trySetValue(newState, BlockStatePropertiesProxy.FACING, (Comparable<?>) nmsDirection);
+            LevelWriterProxy.INSTANCE.setBlock(level, blockPos, newState, UpdateFlags.UPDATE_ALL);
         }
     }
 
     public static boolean canClusterGrowAtState(Object state) {
-        return FastNMS.INSTANCE.method$BlockStateBase$isAir(state)
-                || FastNMS.INSTANCE.method$BlockStateBase$isBlock(state, MBlocks.WATER)
-                && FastNMS.INSTANCE.field$FluidState$amount(FastNMS.INSTANCE.field$BlockBehaviour$BlockStateBase$fluidState(state)) == 8;
+        return BlockBehaviourProxy.BlockStateBaseProxy.INSTANCE.isAir(state)
+                || BlockBehaviourProxy.BlockStateBaseProxy.INSTANCE.is$0(state, BlocksProxy.WATER)
+                && FluidStateProxy.INSTANCE.getAmount(BlockBehaviourProxy.BlockStateBaseProxy.INSTANCE.getFluidState(state)) == 8;
     }
 
     private static class Factory implements BlockBehaviorFactory<BuddingBlockBehavior> {
+        private static final String[] GROWTH_CHANCE = new String[] {"growth_chance", "growth-chance"};
 
         @Override
-        public BuddingBlockBehavior create(CustomBlock block, Map<String, Object> arguments) {
-            float growthChance = ResourceConfigUtils.getAsFloat(arguments.getOrDefault("growth-chance", 0.2), "growth-chance");
-            List<Key> blocks = new ObjectArrayList<>();
-            MiscUtils.getAsStringList(arguments.get("blocks")).forEach(s -> blocks.add(Key.of(s)));
-            return new BuddingBlockBehavior(block, growthChance, blocks);
+        public BuddingBlockBehavior create(BlockDefinition block, ConfigSection section) {
+            return new BuddingBlockBehavior(
+                    block,
+                    section.getFloat(GROWTH_CHANCE, 0.2f),
+                    section.getList("blocks", ConfigValue::getAsIdentifier)
+            );
         }
     }
 }

@@ -2,24 +2,39 @@ package net.momirealms.craftengine.bukkit.compatibility.model.modelengine;
 
 import net.momirealms.craftengine.core.block.entity.render.element.BlockEntityElementConfig;
 import net.momirealms.craftengine.core.block.entity.render.element.BlockEntityElementConfigFactory;
-import net.momirealms.craftengine.core.util.ResourceConfigUtils;
+import net.momirealms.craftengine.core.plugin.config.ConfigConstants;
+import net.momirealms.craftengine.core.plugin.config.ConfigSection;
+import net.momirealms.craftengine.core.plugin.context.CommonConditions;
+import net.momirealms.craftengine.core.plugin.context.Condition;
+import net.momirealms.craftengine.core.plugin.context.PlayerContext;
+import net.momirealms.craftengine.core.util.MiscUtils;
 import net.momirealms.craftengine.core.world.BlockPos;
-import net.momirealms.craftengine.core.world.World;
+import net.momirealms.craftengine.core.world.chunk.CEChunk;
 import org.joml.Vector3f;
 
-import java.util.Map;
+import java.util.List;
+import java.util.function.Predicate;
 
-public class ModelEngineBlockEntityElementConfig implements BlockEntityElementConfig<ModelEngineBlockEntityElement> {
-    private final Vector3f position;
-    private final float yaw;
-    private final float pitch;
-    private final String model;
+public final class ModelEngineBlockEntityElementConfig implements BlockEntityElementConfig<ModelEngineBlockEntityElement> {
+    public final Vector3f position;
+    public final float yaw;
+    public final float pitch;
+    public final String model;
+    public final Predicate<PlayerContext> predicate;
+    public final boolean hasCondition;
 
-    public ModelEngineBlockEntityElementConfig(String model, Vector3f position, float yaw, float pitch) {
+    public ModelEngineBlockEntityElementConfig(String model,
+                                               Vector3f position,
+                                               float yaw,
+                                               float pitch,
+                                               Predicate<PlayerContext> predicate,
+                                               boolean hasCondition) {
         this.pitch = pitch;
         this.position = position;
         this.yaw = yaw;
         this.model = model;
+        this.predicate = predicate;
+        this.hasCondition = hasCondition;
     }
 
     public String model() {
@@ -39,8 +54,8 @@ public class ModelEngineBlockEntityElementConfig implements BlockEntityElementCo
     }
 
     @Override
-    public ModelEngineBlockEntityElement create(World world, BlockPos pos) {
-        return new ModelEngineBlockEntityElement(world, pos, this);
+    public ModelEngineBlockEntityElement create(CEChunk chunk, BlockPos pos) {
+        return new ModelEngineBlockEntityElement(this, chunk.world.world, pos);
     }
 
     @Override
@@ -51,13 +66,16 @@ public class ModelEngineBlockEntityElementConfig implements BlockEntityElementCo
     public static class Factory implements BlockEntityElementConfigFactory<ModelEngineBlockEntityElement> {
 
         @Override
-        public ModelEngineBlockEntityElementConfig create(Map<String, Object> arguments) {
-            String model = ResourceConfigUtils.requireNonEmptyStringOrThrow(arguments.get("model"), "warning.config.block.state.entity_renderer.model_engine.missing_model");
+        public ModelEngineBlockEntityElementConfig create(ConfigSection section) {
+            String model = section.getNonEmptyString("model");
+            List<Condition<PlayerContext>> conditions = section.getSectionList("conditions", CommonConditions::fromConfig);
             return new ModelEngineBlockEntityElementConfig(
                     model,
-                    ResourceConfigUtils.getAsVector3f(arguments.getOrDefault("position", 0.5f), "position"),
-                    ResourceConfigUtils.getAsFloat(arguments.getOrDefault("yaw", 0f), "yaw"),
-                    ResourceConfigUtils.getAsFloat(arguments.getOrDefault("pitch", 0f), "pitch")
+                    section.getVector3f("position", ConfigConstants.CENTER_VECTOR3),
+                    section.getFloat("yaw"),
+                    section.getFloat("pitch"),
+                    MiscUtils.allOf(conditions),
+                    !conditions.isEmpty()
             );
         }
     }

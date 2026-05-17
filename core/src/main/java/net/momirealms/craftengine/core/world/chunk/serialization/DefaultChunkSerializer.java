@@ -4,13 +4,13 @@ import net.momirealms.craftengine.core.world.CEWorld;
 import net.momirealms.craftengine.core.world.ChunkPos;
 import net.momirealms.craftengine.core.world.chunk.CEChunk;
 import net.momirealms.craftengine.core.world.chunk.CESection;
+import net.momirealms.craftengine.core.world.chunk.storage.ChunkFactory;
 import net.momirealms.sparrow.nbt.CompoundTag;
 import net.momirealms.sparrow.nbt.ListTag;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public final class DefaultChunkSerializer {
-
     private DefaultChunkSerializer() {}
 
     @Nullable
@@ -40,7 +40,7 @@ public final class DefaultChunkSerializer {
     }
 
     @NotNull
-    public static CEChunk deserialize(@NotNull CEWorld world, @NotNull ChunkPos pos, @NotNull CompoundTag chunkNbt) {
+    public static CEChunk deserialize(ChunkFactory factory, @NotNull CEWorld world, @NotNull ChunkPos pos, @NotNull CompoundTag chunkNbt) {
         ListTag sections = chunkNbt.getList("sections");
         CESection[] sectionArray = new CESection[world.worldHeight().getSectionsCount()];
         for (int i = 0, size = sections.size(); i < size; ++i) {
@@ -55,6 +55,6 @@ public final class DefaultChunkSerializer {
         }
         ListTag blockEntities = chunkNbt.getList("block_entities");
         ListTag blockEntityRenders = chunkNbt.getList("block_entity_renderers");
-        return new CEChunk(world, pos, sectionArray, blockEntities, blockEntityRenders, null);
+        return factory.create(world, pos, sectionArray, blockEntities, blockEntityRenders);
     }
 }

@@ -1,9 +1,7 @@
 package net.momirealms.craftengine.core.pack.model.definition.select;
 
 import com.google.gson.JsonObject;
-import net.momirealms.craftengine.core.util.ResourceConfigUtils;
-
-import java.util.Map;
+import net.momirealms.craftengine.core.plugin.config.ConfigSection;
 
 public final class ComponentSelectProperty implements SelectProperty {
     public static final SelectPropertyFactory<ComponentSelectProperty> FACTORY = new Factory();
@@ -19,24 +17,22 @@ public final class ComponentSelectProperty implements SelectProperty {
     }
 
     @Override
-    public void accept(JsonObject jsonObject) {
-        jsonObject.addProperty("property", "component");
-        jsonObject.addProperty("component", this.component);
+    public void writeProperty(JsonObject model) {
+        model.addProperty("property", "component");
+        model.addProperty("component", this.component);
     }
 
     private static class Factory implements SelectPropertyFactory<ComponentSelectProperty> {
         @Override
-        public ComponentSelectProperty create(Map<String, Object> arguments) {
-            String component = ResourceConfigUtils.requireNonEmptyStringOrThrow(arguments.get("component"), "warning.config.item.model.select.component.missing_component");
-            return new ComponentSelectProperty(component);
+        public ComponentSelectProperty create(ConfigSection section) {
+            return new ComponentSelectProperty(section.getNonNullString("component"));
         }
     }
 
     private static class Reader implements SelectPropertyReader<ComponentSelectProperty> {
         @Override
         public ComponentSelectProperty read(JsonObject json) {
-            String component = json.get("component").getAsString();
-            return new ComponentSelectProperty(component);
+            return new ComponentSelectProperty(json.get("component").getAsString());
         }
     }
 }

@@ -1,14 +1,12 @@
 package net.momirealms.craftengine.core.item.equipment;
 
-import net.momirealms.craftengine.core.plugin.locale.LocalizedResourceConfigException;
+import net.momirealms.craftengine.core.plugin.config.ConfigSection;
+import net.momirealms.craftengine.core.plugin.config.KnownResourceException;
 import net.momirealms.craftengine.core.registry.BuiltInRegistries;
 import net.momirealms.craftengine.core.registry.Registries;
 import net.momirealms.craftengine.core.registry.WritableRegistry;
 import net.momirealms.craftengine.core.util.Key;
-import net.momirealms.craftengine.core.util.ResourceConfigUtils;
 import net.momirealms.craftengine.core.util.ResourceKey;
-
-import java.util.Map;
 
 public final class Equipments {
     public static final EquipmentType<TrimBasedEquipment> TRIM = register(Key.ce("trim"), TrimBasedEquipment.FACTORY);
@@ -24,13 +22,13 @@ public final class Equipments {
     }
 
     @SuppressWarnings("unchecked")
-    public static <E extends Equipment> E fromMap(Key id, Map<String, Object> map) {
-        String type = ResourceConfigUtils.requireNonEmptyStringOrThrow(map.get("type"), "warning.config.equipment.missing_type");
-        Key key = Key.ce(type);
+    public static <E extends Equipment> E fromConfig(Key id, ConfigSection section) {
+        String typeName = section.getNonEmptyString("type");
+        Key key = Key.ce(typeName);
         EquipmentType<E> equipmentType = (EquipmentType<E>) BuiltInRegistries.EQUIPMENT_TYPE.getValue(key);
         if (equipmentType == null) {
-            throw new LocalizedResourceConfigException("warning.config.equipment.invalid_type", type);
+            throw new KnownResourceException("resource.equipment.unknown_type", section.assemblePath("type"), key.asString());
         }
-        return equipmentType.factory().create(id, map);
+        return equipmentType.factory().create(id, section);
     }
 }

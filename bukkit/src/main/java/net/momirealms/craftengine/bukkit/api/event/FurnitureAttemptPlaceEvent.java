@@ -1,6 +1,6 @@
 package net.momirealms.craftengine.bukkit.api.event;
 
-import net.momirealms.craftengine.core.entity.furniture.CustomFurniture;
+import net.momirealms.craftengine.core.entity.furniture.FurnitureDefinition;
 import net.momirealms.craftengine.core.entity.furniture.FurnitureVariant;
 import net.momirealms.craftengine.core.entity.player.InteractionHand;
 import net.momirealms.craftengine.core.plugin.context.ContextHolder;
@@ -16,7 +16,7 @@ import org.jetbrains.annotations.NotNull;
 public final class FurnitureAttemptPlaceEvent extends PlayerEvent implements Cancellable {
     private static final HandlerList HANDLER_LIST = new HandlerList();
     private boolean cancelled;
-    private final CustomFurniture furniture;
+    private final FurnitureDefinition furniture;
     private final Location location;
     private final FurnitureVariant variant;
     private final Block clickedBlock;
@@ -25,7 +25,7 @@ public final class FurnitureAttemptPlaceEvent extends PlayerEvent implements Can
 
     @ApiStatus.Internal
     public FurnitureAttemptPlaceEvent(@NotNull Player player,
-                                      @NotNull CustomFurniture furniture,
+                                      @NotNull FurnitureDefinition furniture,
                                       @NotNull FurnitureVariant variant,
                                       @NotNull Location location,
                                       @NotNull InteractionHand hand,
@@ -71,7 +71,7 @@ public final class FurnitureAttemptPlaceEvent extends PlayerEvent implements Can
     }
 
     @NotNull
-    public CustomFurniture furniture() {
+    public FurnitureDefinition furniture() {
         return this.furniture;
     }
 

@@ -1,15 +1,13 @@
 package net.momirealms.craftengine.core.pack.model.definition.condition;
 
 import com.google.gson.JsonObject;
-import net.momirealms.craftengine.core.plugin.locale.LocalizedResourceConfigException;
+import net.momirealms.craftengine.core.plugin.config.ConfigSection;
+import net.momirealms.craftengine.core.plugin.config.KnownResourceException;
 import net.momirealms.craftengine.core.registry.BuiltInRegistries;
 import net.momirealms.craftengine.core.registry.Registries;
 import net.momirealms.craftengine.core.registry.WritableRegistry;
 import net.momirealms.craftengine.core.util.Key;
-import net.momirealms.craftengine.core.util.ResourceConfigUtils;
 import net.momirealms.craftengine.core.util.ResourceKey;
-
-import java.util.Map;
 
 public final class ConditionProperties {
     public static final ConditionPropertyType<BrokenConditionProperty> BROKEN = register(Key.of("broken"), BrokenConditionProperty.FACTORY, BrokenConditionProperty.READER);
@@ -35,14 +33,14 @@ public final class ConditionProperties {
         return type;
     }
 
-    public static ConditionProperty fromMap(Map<String, Object> map) {
-        String type = ResourceConfigUtils.requireNonEmptyStringOrThrow(map.get("property"), "warning.config.item.model.condition.missing_property");
-        Key key = Key.withDefaultNamespace(type, "minecraft");
-        ConditionPropertyType<? extends ConditionProperty> propertyType = BuiltInRegistries.CONDITION_PROPERTY_TYPE.getValue(key);
+    public static ConditionProperty fromConfig(ConfigSection section) {
+        String typeName = section.getNonEmptyString("property");
+        Key type = Key.minecraft(typeName);
+        ConditionPropertyType<? extends ConditionProperty> propertyType = BuiltInRegistries.CONDITION_PROPERTY_TYPE.getValue(type);
         if (propertyType == null) {
-            throw new LocalizedResourceConfigException("warning.config.item.model.condition.invalid_property", type);
+            throw new KnownResourceException("resource.item.model_definition.condition.unknown_type", section.assemblePath("property"), type.asString());
         }
-        return propertyType.factory().create(map);
+        return propertyType.factory().create(section);
     }
 
     public static ConditionProperty fromJson(JsonObject json) {

@@ -1,6 +1,6 @@
 package net.momirealms.craftengine.core.pack.atlas;
 
-public class TextureStatus {
+public final class TextureStatus {
     private boolean inBlockAtlas;
     private boolean shouldBeInBlockAtlas;
     private boolean inItemAtlas;

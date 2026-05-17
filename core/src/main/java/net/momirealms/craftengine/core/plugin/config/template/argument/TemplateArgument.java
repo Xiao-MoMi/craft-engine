@@ -4,5 +4,5 @@ import java.util.Map;
 
 public interface TemplateArgument {
 
-    Object get(Map<String, TemplateArgument> arguments);
+    Object get(String node, Map<String, TemplateArgument> arguments);
 }

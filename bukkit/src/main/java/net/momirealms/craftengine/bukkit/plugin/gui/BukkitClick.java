@@ -1,7 +1,7 @@
 package net.momirealms.craftengine.bukkit.plugin.gui;
 
+import net.momirealms.craftengine.bukkit.api.BukkitAdaptor;
 import net.momirealms.craftengine.bukkit.item.BukkitItemManager;
-import net.momirealms.craftengine.bukkit.plugin.BukkitCraftEngine;
 import net.momirealms.craftengine.bukkit.util.ItemStackUtils;
 import net.momirealms.craftengine.core.entity.player.Player;
 import net.momirealms.craftengine.core.item.Item;
@@ -11,7 +11,7 @@ import net.momirealms.craftengine.core.plugin.gui.Inventory;
 import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.inventory.ItemStack;
 
-public class BukkitClick implements Click {
+public final class BukkitClick implements Click {
     private final InventoryClickEvent event;
     private final Inventory inventory;
     private final Gui gui;
@@ -59,17 +59,17 @@ public class BukkitClick implements Click {
 
     @Override
     public Player clicker() {
-        return BukkitCraftEngine.instance().adapt((org.bukkit.entity.Player) event.getWhoClicked());
+        return BukkitAdaptor.adapt((org.bukkit.entity.Player) event.getWhoClicked());
     }
 
     @SuppressWarnings("deprecation")
     @Override
-    public void setItemOnCursor(Item<?> item) {
-        this.event.setCursor((ItemStack) item.getItem());
+    public void setItemOnCursor(Item item) {
+        this.event.setCursor(ItemStackUtils.getBukkitStack(item));
     }
 
     @Override
-    public Item<?> itemOnCursor() {
+    public Item itemOnCursor() {
         ItemStack itemStack = this.event.getCursor();
         if (ItemStackUtils.isEmpty(itemStack)) return null;
         return BukkitItemManager.instance().wrap(itemStack);

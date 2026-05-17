@@ -4,19 +4,21 @@ import com.ticxo.modelengine.api.ModelEngineAPI;
 import com.ticxo.modelengine.api.entity.Dummy;
 import com.ticxo.modelengine.api.model.ActiveModel;
 import com.ticxo.modelengine.api.model.ModeledEntity;
-import net.momirealms.craftengine.core.block.entity.render.element.BlockEntityElement;
+import net.momirealms.craftengine.core.block.entity.render.element.AbstractConstantBlockEntityElement;
 import net.momirealms.craftengine.core.entity.player.Player;
 import net.momirealms.craftengine.core.world.BlockPos;
 import net.momirealms.craftengine.core.world.World;
 import org.bukkit.Location;
+import org.jetbrains.annotations.NotNull;
 import org.joml.Vector3f;
 
-public class ModelEngineBlockEntityElement implements BlockEntityElement {
+public final class ModelEngineBlockEntityElement extends AbstractConstantBlockEntityElement {
     private Dummy<?> dummy;
     private final Location location;
     private final ModelEngineBlockEntityElementConfig config;
 
-    public ModelEngineBlockEntityElement(World world, BlockPos pos, ModelEngineBlockEntityElementConfig config) {
+    public ModelEngineBlockEntityElement(ModelEngineBlockEntityElementConfig config, World world, BlockPos pos) {
+        super(config.predicate, config.hasCondition);
         this.config = config;
         Vector3f position = config.position();
         this.location = new Location((org.bukkit.World) world.platformWorld(), pos.x() + position.x, pos.y() + position.y, pos.z() + position.z, config.yaw(), config.pitch());
@@ -29,7 +31,7 @@ public class ModelEngineBlockEntityElement implements BlockEntityElement {
             return null;
         } else {
             Dummy<?> dummy = new Dummy<>();
-            dummy.setLocation(this.location);
+            dummy.syncLocation(this.location);
             dummy.setDetectingPlayers(false);
             ModeledEntity modeledEntity = ModelEngineAPI.createModeledEntity(dummy);
             modeledEntity.addModel(activeModel, false);
@@ -38,14 +40,14 @@ public class ModelEngineBlockEntityElement implements BlockEntityElement {
     }
 
     @Override
-    public void hide(Player player) {
+    public void hide(@NotNull Player player) {
         if (this.dummy != null) {
             this.dummy.setForceHidden((org.bukkit.entity.Player) player.platformPlayer(), true);
         }
     }
 
     @Override
-    public void show(Player player) {
+    public void showInternal(@NotNull Player player) {
         if (this.dummy != null) {
             this.dummy.setForceViewing((org.bukkit.entity.Player) player.platformPlayer(), true);
         }

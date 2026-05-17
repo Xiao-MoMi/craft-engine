@@ -1,0 +1,67 @@
+items:
+  default:togglable_light_block:
+    data:
+      item_name: <!i><lang:item.default.togglable_light_block>
+    texture: minecraft:item/light
+    behavior:
+      type: block_item
+      block: default:togglable_light_block
+blocks:
+  default:togglable_light_block:
+    loot:
+      template: default:loot_table/basic
+      arguments:
+        item: default:togglable_light_block
+    settings:
+      template:
+        - default:sound/amethyst_block
+        - default:hardness/none
+      overrides:
+        push_reaction: destroy
+        replaceable: false
+        luminance: 15
+    events:
+      - on: right_click
+        conditions:
+          - type: "!has_item"
+          - type: hand
+            hand: main_hand
+        functions:
+          - type: cycle_block_property
+            property: light
+            inverse: false
+          - type: swing_hand
+          - type: play_sound
+            sound: minecraft:block.stone_button.click_on
+            source: block
+            x: <arg:position.x>
+            y: <arg:position.y>
+            z: <arg:position.z>
+    states:
+      properties:
+        light:
+          type: int
+          default: 15
+          range: 1~15
+      appearances:
+        transparent:
+          auto_state:
+            type: sugar_cane
+            id: default:transparent
+          transparent: true
+      variants:
+        light=1::settings::luminance: 1
+        light=2::settings::luminance: 2
+        light=3::settings::luminance: 3
+        light=4::settings::luminance: 4
+        light=5::settings::luminance: 5
+        light=6::settings::luminance: 6
+        light=7::settings::luminance: 7
+        light=8::settings::luminance: 8
+        light=9::settings::luminance: 9
+        light=10::settings::luminance: 10
+        light=11::settings::luminance: 11
+        light=12::settings::luminance: 12
+        light=13::settings::luminance: 13
+        light=14::settings::luminance: 14
+        light=15::settings::luminance: 15

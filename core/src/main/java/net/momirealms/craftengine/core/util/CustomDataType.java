@@ -1,4 +1,4 @@
 package net.momirealms.craftengine.core.util;
 
-public class CustomDataType<T> {
+public final class CustomDataType<T> {
 }

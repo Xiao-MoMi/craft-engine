@@ -5,7 +5,6 @@ import java.util.Collections;
 import java.util.List;
 
 public final class ListUtils {
-
     private ListUtils() {}
 
     public static <T> List<T> compact(final List<T> list) {

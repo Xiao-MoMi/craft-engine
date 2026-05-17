@@ -1,24 +1,22 @@
 package net.momirealms.craftengine.core.item.recipe;
 
-import net.momirealms.craftengine.core.util.UniqueKey;
-
 import java.util.List;
 
-public class RecipeFinder {
-    private final StackedContents<UniqueKey> stackedContents = new StackedContents<>();
+public final class RecipeFinder {
+    private final StackedContents<UniqueIdItem> stackedContents = new StackedContents<>();
 
-    public <T> void addInput(UniqueIdItem<T> item) {
+    public void addInput(UniqueIdItem item) {
         if (!item.isEmpty()) {
-            this.stackedContents.add(item.id(), 1);
+            this.stackedContents.add(item, 1);
         }
     }
 
-    public <T> boolean canCraft(CustomShapelessRecipe<T> recipe) {
-        PlacementInfo<T> placementInfo = recipe.placementInfo();
+    public boolean canCraft(CustomShapelessRecipe recipe) {
+        PlacementInfo placementInfo = recipe.placementInfo();
         return !placementInfo.isImpossibleToPlace() && canCraft(placementInfo.ingredients());
     }
 
-    private boolean canCraft(List<? extends StackedContents.IngredientInfo<UniqueKey>> rawIngredients) {
+    private boolean canCraft(List<? extends StackedContents.IngredientInfo<UniqueIdItem>> rawIngredients) {
         return this.stackedContents.tryPick(rawIngredients);
     }
 }

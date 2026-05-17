@@ -9,7 +9,7 @@ import net.momirealms.craftengine.core.plugin.locale.MessageConstants;
 import org.bukkit.command.CommandSender;
 import org.incendo.cloud.Command;
 
-public class UploadPackCommand extends BukkitCommandFeature<CommandSender> {
+public final class UploadPackCommand extends BukkitCommandFeature<CommandSender> {
 
     public UploadPackCommand(CraftEngineCommandManager<CommandSender> commandManager, CraftEngine plugin) {
         super(commandManager, plugin);

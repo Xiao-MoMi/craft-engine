@@ -1,9 +1,9 @@
 package net.momirealms.craftengine.core.block.entity.render.element;
 
-import java.util.Map;
+import net.momirealms.craftengine.core.plugin.config.ConfigSection;
 
 @FunctionalInterface
-public interface BlockEntityElementConfigFactory<E extends BlockEntityElement> {
+public interface BlockEntityElementConfigFactory<E extends ConstantBlockEntityElement> {
 
-    BlockEntityElementConfig<E> create(Map<String, Object> args);
+    BlockEntityElementConfig<E> create(ConfigSection section);
 }

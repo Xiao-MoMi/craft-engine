@@ -1,16 +1,16 @@
 package net.momirealms.craftengine.core.entity.furniture.element;
 
-import net.momirealms.craftengine.core.plugin.locale.LocalizedResourceConfigException;
+import net.momirealms.craftengine.core.plugin.config.ConfigSection;
+import net.momirealms.craftengine.core.plugin.config.KnownResourceException;
 import net.momirealms.craftengine.core.registry.BuiltInRegistries;
 import net.momirealms.craftengine.core.registry.Registries;
 import net.momirealms.craftengine.core.registry.WritableRegistry;
 import net.momirealms.craftengine.core.util.Key;
 import net.momirealms.craftengine.core.util.ResourceKey;
 
-import java.util.Map;
 import java.util.Optional;
 
-public class FurnitureElementConfigs {
+public abstract class FurnitureElementConfigs {
     protected FurnitureElementConfigs() {}
 
     public static <E extends FurnitureElement> FurnitureElementConfigType<E> register(Key key, FurnitureElementConfigFactory<E> factory) {
@@ -20,22 +20,24 @@ public class FurnitureElementConfigs {
         return type;
     }
 
-    @SuppressWarnings("unchecked")
-    public static <E extends FurnitureElement> FurnitureElementConfig<E> fromMap(Map<String, Object> arguments) {
-        Key type = guessType(arguments);
-        FurnitureElementConfigType<E> configType = (FurnitureElementConfigType<E>) BuiltInRegistries.FURNITURE_ELEMENT_TYPE.getValue(type);
+    public static FurnitureElementConfig<? extends FurnitureElement> fromConfig(ConfigSection section) {
+        Key type = getOrGuessType(section);
+        FurnitureElementConfigType<? extends FurnitureElement> configType = BuiltInRegistries.FURNITURE_ELEMENT_TYPE.getValue(type);
         if (configType == null) {
-            throw new LocalizedResourceConfigException("warning.config.furniture.element.invalid_type", type.toString());
+            throw new KnownResourceException("resource.furniture.element.unknown_type", section.assemblePath("type"), type.asString());
         }
-        return configType.factory().create(arguments);
+        return configType.factory().create(section);
     }
 
-    private static Key guessType(Map<String, Object> arguments) {
-        return Key.ce(Optional.ofNullable(arguments.get("type")).map(String::valueOf).orElseGet(() -> {
-            if (arguments.containsKey("text")) {
+    private static Key getOrGuessType(ConfigSection section) {
+        return Key.ce(Optional.ofNullable(section.getString("type")).orElseGet(() -> {
+            if (section.containsKey("text")) {
                 return "text_display";
-            } else {
+            } else if (section.containsKey("item")) {
                 return "item_display";
+            } else {
+                // 到这里必定抛出异常
+                return section.getNonNullString("type");
             }
         }));
     }

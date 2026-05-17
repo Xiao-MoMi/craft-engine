@@ -4,7 +4,7 @@ import net.momirealms.craftengine.core.block.ImmutableBlockState;
 import net.momirealms.craftengine.core.world.BlockPos;
 import org.jetbrains.annotations.ApiStatus;
 
-public class CESection {
+public final class CESection {
     public final int sectionY;
     public final PalettedContainer<ImmutableBlockState> statesContainer;
 
@@ -40,12 +40,12 @@ public class CESection {
 
     @ApiStatus.Internal
     public ImmutableBlockState getBlockState(int index) {
-        return statesContainer.get(index);
+        return this.statesContainer.get(index);
     }
 
     @ApiStatus.Internal
     public PalettedContainer<ImmutableBlockState> statesContainer() {
-        return statesContainer;
+        return this.statesContainer;
     }
 
     public int sectionY() {

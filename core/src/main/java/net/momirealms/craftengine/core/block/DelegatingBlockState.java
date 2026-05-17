@@ -23,4 +23,19 @@ public interface DelegatingBlockState {
      * @param state The new immutable state to delegate to
      */
     void setBlockState(@Nullable ImmutableBlockState state);
+
+    /**
+     * Gets the owner of the block.
+     *
+     * @return The owner of the block
+     */
+    @Nullable
+    Object blockOwner();
+
+    /**
+     * Sets the owner of the block.
+     *
+     * @param block The new owner of the block
+     */
+    void setBlockOwner(@Nullable Object block);
 }

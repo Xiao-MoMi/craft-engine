@@ -4,7 +4,7 @@ import net.kyori.adventure.text.minimessage.tag.resolver.TagResolver;
 import net.momirealms.craftengine.core.plugin.compatibility.TagResolverProvider;
 import net.momirealms.craftengine.core.plugin.context.Context;
 
-public class CustomNameplateProviders {
+public final class CustomNameplateProviders {
 
     public static class Background implements TagResolverProvider {
         @Override

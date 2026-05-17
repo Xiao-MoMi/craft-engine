@@ -1,7 +1,7 @@
 items:
   default:chessboard_block:
     data:
-      item-name: <!i><lang:item.default.chessboard_block>
+      item_name: <!i><lang:item.default.chessboard_block>
     model: minecraft:block/custom/chessboard_block
     behavior:
       type: block_item
@@ -11,11 +11,11 @@ items:
         settings:
           hardness: 1.4
           resistance: 1.4
-          is-suffocating: true
-          is-redstone-conductor: true
-          push-reaction: push_only
+          is_suffocating: true
+          is_redstone_conductor: true
+          push_reaction: push_only
           instrument: basedrum
-          map-color: 36
+          map_color: 36
           tags: ["minecraft:mineable/pickaxe"]
           sounds:
             break: minecraft:block.stone.break
@@ -30,7 +30,7 @@ items:
               default: north
           appearances:
             east:
-              auto-state: solid
+              auto_state: solid
               model:
                 path: minecraft:block/custom/chessboard_block
                 y: 270
@@ -39,16 +39,16 @@ items:
                   textures:
                     pattern: minecraft:block/custom/chessboard_block
             north:
-              auto-state: solid
+              auto_state: solid
               model:
                 path: minecraft:block/custom/chessboard_block
                 y: 180
             south:
-              auto-state: solid
+              auto_state: solid
               model:
                 path: minecraft:block/custom/chessboard_block
             west:
-              auto-state: solid
+              auto_state: solid
               model:
                 path: minecraft:block/custom/chessboard_block
                 y: 90

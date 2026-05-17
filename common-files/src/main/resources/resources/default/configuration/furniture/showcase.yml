@@ -1,0 +1,45 @@
+items:
+  default:showcase:
+    data:
+      item_name: <!i><lang:item.default.showcase>
+    model: minecraft:item/custom/showcase
+    behavior:
+      type: furniture_item
+      rules:
+        ground:
+          rotation: four
+          alignment: center
+      furniture:
+        behaviors:
+          - type: display_item_furniture
+            sounds:
+              put: minecraft:block.decorated_pot.insert
+              take: minecraft:block.decorated_pot.insert_fail
+            variants:
+              ground::item_position: 0,0.07,0
+        settings:
+          item: default:showcase
+          hit_times: 3
+          sounds:
+            break: minecraft:block.glass.break
+            place: minecraft:block.glass.place
+            hit: minecraft:block.glass.hit
+        variants:
+          ground:
+            loot_spawn_offset: 0,0.25,0
+            elements:
+              - type: item_display
+                item: default:showcase
+                position: 0,0.5,0
+            hitboxes:
+              - position: 0,0,0
+                type: shulker
+                peek: 28
+                scale: 0.75
+                blocks_building: true
+                interactive: true
+                interaction_entity: true
+        loot:
+          template: default:loot_table/furniture
+          arguments:
+            item: default:showcase

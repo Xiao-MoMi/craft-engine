@@ -4,14 +4,17 @@ import net.bytebuddy.agent.builder.AgentBuilder;
 import net.bytebuddy.asm.Advice;
 import net.bytebuddy.matcher.ElementMatchers;
 
+import java.lang.instrument.ClassFileTransformer;
 import java.lang.instrument.Instrumentation;
 import java.lang.reflect.Field;
-import java.lang.reflect.Method;
 
 public final class BlocksAgent {
+    public static ClassFileTransformer transformer;
+
+    private BlocksAgent() {}
 
     public static void agentmain(String args, Instrumentation instrumentation) {
-        new AgentBuilder.Default()
+        transformer = new AgentBuilder.Default()
                 .with(AgentBuilder.RedefinitionStrategy.RETRANSFORMATION)
                 .with(AgentBuilder.RedefinitionStrategy.REDEFINITION)
                 .type(ElementMatchers.named("net.minecraft.server.Bootstrap")
@@ -29,10 +32,9 @@ public final class BlocksAgent {
         public static void onExit() {
             try {
                 Class<?> holder = Class.forName("net.momirealms.craftengine.bukkit.plugin.agent.PluginHolder");
-                Field field = holder.getField("plugin");
-                Object plugin = field.get(null);
-                Method injectRegistries = plugin.getClass().getMethod("injectRegistries");
-                injectRegistries.invoke(plugin);
+                Field field = holder.getField("runnable");
+                Runnable runnable = (Runnable) field.get(null);
+                runnable.run();
             } catch (Exception e) {
                 e.printStackTrace();
             }

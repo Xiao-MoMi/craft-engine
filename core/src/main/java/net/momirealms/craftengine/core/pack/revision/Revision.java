@@ -1,11 +1,14 @@
 package net.momirealms.craftengine.core.pack.revision;
 
+import net.momirealms.craftengine.core.pack.mcmeta.Overlay;
 import net.momirealms.craftengine.core.pack.mcmeta.PackVersion;
+import net.momirealms.craftengine.core.plugin.config.Config;
 import net.momirealms.craftengine.core.util.MinecraftVersion;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.Objects;
 
-public interface Revision {
+public interface Revision extends Comparable<Revision> {
 
     PackVersion minPackVersion();
 
@@ -18,6 +21,19 @@ public interface Revision {
     MinecraftVersion minVersion();
 
     MinecraftVersion maxVersion();
+
+    default Overlay createOverlay() {
+        return new Overlay(minPackVersion(), maxPackVersion(), Config.createOverlayFolderName(versionString()));
+    }
+
+    @Override
+    default int compareTo(@NotNull Revision o) {
+        int minCompare = this.minVersion().compareTo(o.minVersion());
+        if (minCompare != 0) {
+            return minCompare;
+        }
+        return this.maxVersion().compareTo(o.maxVersion());
+    }
 
     static Revision since(MinecraftVersion minecraftVersion) {
         return new Since(minecraftVersion);

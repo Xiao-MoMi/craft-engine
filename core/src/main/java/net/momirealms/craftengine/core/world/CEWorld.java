@@ -23,7 +23,6 @@ public abstract class CEWorld {
     protected final ConcurrentLong2ReferenceChainedHashTable<CEChunk> loadedChunkMap;
     protected final WorldDataStorage worldDataStorage;
     protected final WorldHeight worldHeightAccessor;
-    protected List<SectionPos> pendingLightSections = new ArrayList<>();
     protected final Set<SectionPos> lightSections = ConcurrentHashMap.newKeySet(128);
     protected final TickersList<TickingBlockEntity> syncTickingBlockEntities = new TickersList<>();
     protected final List<TickingBlockEntity> pendingSyncTickingBlockEntities = new ArrayList<>();
@@ -32,6 +31,7 @@ public abstract class CEWorld {
     protected volatile boolean isTickingSyncBlockEntities = false;
     protected volatile boolean isTickingAsyncBlockEntities = false;
     protected volatile boolean isUpdatingLights = false;
+    protected List<SectionPos> pendingLightSections = new ArrayList<>();
     protected SchedulerTask syncTickTask;
     protected SchedulerTask asyncTickTask;
 
@@ -52,9 +52,11 @@ public abstract class CEWorld {
     public void setTicking(boolean ticking) {
         if (ticking) {
             if (this.syncTickTask == null || this.syncTickTask.cancelled())
-                this.syncTickTask = CraftEngine.instance().scheduler().sync().runRepeating(this::syncTick, 1, 1);
+                this.syncTickTask = CraftEngine.instance().scheduler().platform().runRepeating(this::syncTick, 1, 1);
             if (this.asyncTickTask == null || this.asyncTickTask.cancelled())
-                this.asyncTickTask = CraftEngine.instance().scheduler().sync().runAsyncRepeating(this::asyncTick, 1, 1);
+                this.asyncTickTask = CraftEngine.instance().scheduler().platform().runRepeating(() -> {
+                    CraftEngine.instance().scheduler().async().execute(this::asyncTick);
+                }, 1, 1);
         } else {
             if (this.syncTickTask != null && !this.syncTickTask.cancelled())
                 this.syncTickTask.cancel();
@@ -75,9 +77,9 @@ public abstract class CEWorld {
         try {
             for (ConcurrentLong2ReferenceChainedHashTable.TableEntry<CEChunk> entry : this.loadedChunkMap.entrySet()) {
                 CEChunk chunk = entry.getValue();
-                if (chunk.dirty()) {
+                if (chunk.isUnsaved()) {
                     this.worldDataStorage.writeChunkAt(new ChunkPos(entry.getKey()), chunk);
-                    chunk.setDirty(false);
+                    chunk.setUnsaved(false);
                 }
             }
         } catch (IOException e) {
@@ -109,6 +111,11 @@ public abstract class CEWorld {
     @Nullable
     public CEChunk getChunkAtIfLoaded(int x, int z) {
         return getChunkAtIfLoaded(ChunkPos.asLong(x, z));
+    }
+
+    @Nullable
+    public CEChunk getChunkAtIfLoaded(BlockPos pos) {
+        return getChunkAtIfLoaded(pos.x >> 4, pos.z >> 4);
     }
 
     @Nullable
@@ -148,6 +155,10 @@ public abstract class CEWorld {
 
     @Nullable
     public BlockEntity getBlockEntityAtIfLoaded(BlockPos blockPos) {
+        return getBlockEntityAtIfLoaded(blockPos, true);
+    }
+
+    public BlockEntity getBlockEntityAtIfLoaded(BlockPos blockPos, boolean create) {
         if (this.worldHeightAccessor.isOutsideBuildHeight(blockPos)) {
             return null;
         }
@@ -155,9 +166,9 @@ public abstract class CEWorld {
         if (chunk == null) {
             return null;
         }
-        return chunk.getBlockEntity(blockPos, true);
+        return chunk.getBlockEntity(blockPos, create);
     }
-
+    
     public WorldDataStorage worldDataStorage() {
         return worldDataStorage;
     }
@@ -190,7 +201,7 @@ public abstract class CEWorld {
 
     public abstract void updateLight();
 
-    public synchronized void addSyncBlockEntityTicker(TickingBlockEntity ticker) {
+    public void addSyncBlockEntityTicker(TickingBlockEntity ticker) {
         if (this.isTickingSyncBlockEntities) {
             this.pendingSyncTickingBlockEntities.add(ticker);
         } else {
@@ -198,7 +209,7 @@ public abstract class CEWorld {
         }
     }
 
-    public synchronized void addAsyncBlockEntityTicker(TickingBlockEntity ticker) {
+    public void addAsyncBlockEntityTicker(TickingBlockEntity ticker) {
         if (this.isTickingAsyncBlockEntities) {
             this.pendingAsyncTickingBlockEntities.add(ticker);
         } else {
@@ -206,6 +217,7 @@ public abstract class CEWorld {
         }
     }
 
+    @SuppressWarnings("DuplicatedCode")
     protected void tickSyncBlockEntities() {
         this.isTickingSyncBlockEntities = true;
         if (!this.pendingSyncTickingBlockEntities.isEmpty()) {
@@ -251,7 +263,7 @@ public abstract class CEWorld {
     public void blockEntityChanged(BlockPos pos) {
         CEChunk chunk = this.getChunkAtIfLoaded(pos.x >> 4, pos.z >> 4);
         if (chunk != null) {
-            chunk.setDirty(true);
+            chunk.setUnsaved(true);
         }
     }
 }

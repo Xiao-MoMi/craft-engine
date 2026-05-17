@@ -1,45 +1,55 @@
 package net.momirealms.craftengine.core.entity.furniture;
 
-import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
+import net.momirealms.craftengine.core.entity.culling.CullingData;
+import net.momirealms.craftengine.core.entity.furniture.behavior.FurnitureBehaviorTemplate;
 import net.momirealms.craftengine.core.entity.furniture.behavior.FurnitureBehaviors;
+import net.momirealms.craftengine.core.entity.furniture.element.FurnitureElement;
 import net.momirealms.craftengine.core.entity.furniture.element.FurnitureElementConfig;
 import net.momirealms.craftengine.core.entity.furniture.element.FurnitureElementConfigs;
+import net.momirealms.craftengine.core.entity.furniture.hitbox.FurnitureHitBox;
 import net.momirealms.craftengine.core.entity.furniture.hitbox.FurnitureHitBoxConfig;
-import net.momirealms.craftengine.core.entity.furniture.hitbox.FurnitureHitBoxes;
+import net.momirealms.craftengine.core.entity.furniture.hitbox.FurnitureHitBoxConfigs;
+import net.momirealms.craftengine.core.entity.furniture.setting.FurnitureSettings;
 import net.momirealms.craftengine.core.entity.furniture.tick.TickingFurniture;
-import net.momirealms.craftengine.core.loot.LootTable;
-import net.momirealms.craftengine.core.pack.LoadingSequence;
+import net.momirealms.craftengine.core.loot.Loot;
 import net.momirealms.craftengine.core.pack.Pack;
-import net.momirealms.craftengine.core.pack.PendingConfigSection;
 import net.momirealms.craftengine.core.plugin.CraftEngine;
-import net.momirealms.craftengine.core.plugin.config.Config;
-import net.momirealms.craftengine.core.plugin.config.IdSectionConfigParser;
+import net.momirealms.craftengine.core.plugin.config.*;
+import net.momirealms.craftengine.core.plugin.config.lifecycle.LoadingStage;
+import net.momirealms.craftengine.core.plugin.config.lifecycle.LoadingStages;
 import net.momirealms.craftengine.core.plugin.context.CommonFunctions;
-import net.momirealms.craftengine.core.entity.culling.CullingData;
-import net.momirealms.craftengine.core.plugin.locale.LocalizedResourceConfigException;
+import net.momirealms.craftengine.core.plugin.context.Context;
+import net.momirealms.craftengine.core.plugin.context.EventTrigger;
+import net.momirealms.craftengine.core.plugin.context.function.Function;
 import net.momirealms.craftengine.core.plugin.scheduler.SchedulerTask;
-import net.momirealms.craftengine.core.util.*;
+import net.momirealms.craftengine.core.util.Key;
+import net.momirealms.craftengine.core.util.TickersList;
+import net.momirealms.craftengine.core.util.VersionHelper;
 import org.incendo.cloud.suggestion.Suggestion;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.joml.Vector3f;
 
 import java.nio.file.Path;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.function.Supplier;
 
 public abstract class AbstractFurnitureManager implements FurnitureManager {
-    protected final Map<Key, CustomFurniture> byId = new HashMap<>();
-    private final CraftEngine plugin;
-    private final FurnitureParser furnitureParser;
+    protected final Map<Key, FurnitureDefinition> byId = new ConcurrentHashMap<>();
+    protected final CraftEngine plugin;
+    protected final IdSectionConfigParser furnitureParser;
     // Cached command suggestions
-    private final List<Suggestion> cachedSuggestions = new ArrayList<>();
+    protected final List<Suggestion> cachedSuggestions = new ArrayList<>();
 
-    protected final Int2ObjectOpenHashMap<TickingFurniture> syncTickers = new Int2ObjectOpenHashMap<>(256, 0.5f);
-    protected final Int2ObjectOpenHashMap<TickingFurniture> asyncTickers = new Int2ObjectOpenHashMap<>(256, 0.5f);
+    protected final Map<Integer, TickingFurniture> syncTickers = new ConcurrentHashMap<>(256, 0.5f);
+    protected final Map<Integer, TickingFurniture> asyncTickers = new ConcurrentHashMap<>(256, 0.5f);
     protected final TickersList<TickingFurniture> syncTickingFurniture = new TickersList<>();
     protected final List<TickingFurniture> pendingSyncTickingFurniture = new ArrayList<>();
     protected final TickersList<TickingFurniture> asyncTickingFurniture = new TickersList<>();
-    protected final List<TickingFurniture> pendingAsyncTickingFurniture = new ArrayList<>();
+    protected final Queue<TickingFurniture> pendingAsyncTickingFurniture = new ConcurrentLinkedQueue<>();
     private boolean isTickingSyncFurniture = false;
-    private boolean isTickingAsyncFurniture = false;
 
     protected SchedulerTask syncTickTask;
     protected SchedulerTask asyncTickTask;
@@ -50,7 +60,7 @@ public abstract class AbstractFurnitureManager implements FurnitureManager {
     }
 
     @Override
-    public FurnitureParser parser() {
+    public IdSectionConfigParser parser() {
         return this.furnitureParser;
     }
 
@@ -73,12 +83,12 @@ public abstract class AbstractFurnitureManager implements FurnitureManager {
     }
 
     @Override
-    public Optional<CustomFurniture> furnitureById(Key id) {
+    public Optional<FurnitureDefinition> furnitureById(Key id) {
         return Optional.ofNullable(this.byId.get(id));
     }
 
     @Override
-    public Map<Key, CustomFurniture> loadedFurniture() {
+    public Map<Key, FurnitureDefinition> loadedFurniture() {
         return Collections.unmodifiableMap(this.byId);
     }
 
@@ -105,11 +115,11 @@ public abstract class AbstractFurnitureManager implements FurnitureManager {
     }
 
     private void asyncTick() {
-        this.isTickingAsyncFurniture = true;
-        if (!this.pendingAsyncTickingFurniture.isEmpty()) {
-            this.asyncTickingFurniture.addAll(this.pendingAsyncTickingFurniture);
-            this.pendingAsyncTickingFurniture.clear();
+        TickingFurniture pending;
+        while ((pending = this.pendingAsyncTickingFurniture.poll()) != null) {
+            this.asyncTickingFurniture.add(pending);
         }
+
         if (!this.asyncTickingFurniture.isEmpty()) {
             Object[] entities = this.asyncTickingFurniture.elements();
             for (int i = 0, size = this.asyncTickingFurniture.size(); i < size; i++) {
@@ -123,10 +133,9 @@ public abstract class AbstractFurnitureManager implements FurnitureManager {
             }
             this.asyncTickingFurniture.removeMarkedEntries();
         }
-        this.isTickingAsyncFurniture = false;
     }
 
-    public synchronized void addSyncFurnitureTicker(TickingFurniture ticker) {
+    public void addSyncFurnitureTicker(TickingFurniture ticker) {
         if (this.isTickingSyncFurniture) {
             this.pendingSyncTickingFurniture.add(ticker);
         } else {
@@ -134,20 +143,21 @@ public abstract class AbstractFurnitureManager implements FurnitureManager {
         }
     }
 
-    public synchronized void addAsyncFurnitureTicker(TickingFurniture ticker) {
-        if (this.isTickingAsyncFurniture) {
-            this.pendingAsyncTickingFurniture.add(ticker);
-        } else {
-            this.asyncTickingFurniture.add(ticker);
-        }
+    // 此方法可能会被多个区域线程同时调用
+    public void addAsyncFurnitureTicker(TickingFurniture ticker) {
+        this.pendingAsyncTickingFurniture.add(ticker);
     }
 
     @Override
     public void delayedInit() {
-        if (this.syncTickTask == null || this.syncTickTask.cancelled())
-            this.syncTickTask = CraftEngine.instance().scheduler().sync().runRepeating(this::syncTick, 1, 1);
+        if (!VersionHelper.isFolia) {
+            if (this.syncTickTask == null || this.syncTickTask.cancelled())
+                this.syncTickTask = CraftEngine.instance().scheduler().platform().runRepeating(this::syncTick, 1, 1);
+        }
         if (this.asyncTickTask == null || this.asyncTickTask.cancelled())
-            this.asyncTickTask = CraftEngine.instance().scheduler().sync().runAsyncRepeating(this::asyncTick, 1, 1);
+            this.asyncTickTask = CraftEngine.instance().scheduler().platform().runRepeating(() -> {
+                CraftEngine.instance().scheduler().async().execute(this::asyncTick);
+            }, 1, 1);
     }
 
     @Override
@@ -165,35 +175,12 @@ public abstract class AbstractFurnitureManager implements FurnitureManager {
 
     protected abstract FurnitureHitBoxConfig<?> defaultHitBox();
 
-    public class FurnitureParser extends IdSectionConfigParser {
+    private final class FurnitureParser extends IdSectionConfigParser {
         public static final String[] CONFIG_SECTION_NAME = new String[] { "furniture" };
-        private final List<PendingConfigSection> pendingConfigSections = new ArrayList<>();
-
-        public void addPendingConfigSection(PendingConfigSection section) {
-            this.pendingConfigSections.add(section);
-        }
-
-        @Override
-        public void preProcess() {
-            for (PendingConfigSection section : this.pendingConfigSections) {
-                ResourceConfigUtils.runCatching(
-                        section.path(),
-                        section.node(),
-                        () -> parseSection(section.pack(), section.path(), section.node(), section.id(), section.config()),
-                        () -> GsonHelper.get().toJson(section.config())
-                );
-            }
-            this.pendingConfigSections.clear();
-        }
 
         @Override
         public String[] sectionId() {
             return CONFIG_SECTION_NAME;
-        }
-
-        @Override
-        public int loadingSequence() {
-            return LoadingSequence.FURNITURE;
         }
 
         @Override
@@ -202,73 +189,125 @@ public abstract class AbstractFurnitureManager implements FurnitureManager {
         }
 
         @Override
-        public void parseSection(Pack pack, Path path, String node, Key id, Map<String, Object> section) {
-            if (AbstractFurnitureManager.this.byId.containsKey(id)) {
-                throw new LocalizedResourceConfigException("warning.config.furniture.duplicate");
+        public LoadingStage loadingStage() {
+            return LoadingStages.FURNITURE;
+        }
+
+        @Override
+        public boolean async() {
+            return Config.multiThreadedConfigLoad();
+        }
+
+        @Override
+        public List<LoadingStage> dependencies() {
+            return List.of(LoadingStages.ITEM);
+        }
+
+        private static final String[] VARIANT = new String[] {"variant", "variants", "placement"};
+        private static final String[] LOOT_SPAWN_OFFSET = new String[] {"loot_spawn_offset", "loot-spawn-offset"};
+        private static final String[] BLUEPRINT = new String[] {"blueprint", "better-model", "model-engine"};
+        private static final String[] ENTITY_CULLING = new String[] {"entity_culling", "entity-culling"};
+        private static final String[] EVENT = new String[] {"events", "event"};
+        private static final String[] LOOT = new String[] {"loots", "loot"};
+        private static final String[] BEHAVIORS = new String[] {"behaviors", "behavior"};
+        private static final String[] VIEW_DISTANCE = new String[] {"view_distance", "view-distance"};
+        private static final String[] AABB_EXPANSION = new String[] {"aabb_expansion", "aabb-expansion"};
+        private static final String[] RAY_TRACING = new String[] {"ray_tracing", "ray-tracing"};
+
+        @Override
+        public void parseSection(@NotNull Pack pack, @NotNull Path path, @NotNull Key id, @NotNull ConfigSection section) {
+            // 获取家具设置 （可异常）
+            FurnitureSettings settings = FurnitureSettings.of().itemId(id);
+            try {
+                FurnitureSettings.applyModifiers(settings, section.getSection("settings"));
+            } catch (KnownResourceException e) {
+                error(e, path);
             }
 
-            Map<String, Object> variantsMap = ResourceConfigUtils.getAsMap(ResourceConfigUtils.requireNonNullOrThrow(ResourceConfigUtils.get(section, "variants", "placement", "variant"), "warning.config.furniture.missing_variants"), "variants");
-            if (variantsMap.isEmpty()) {
-                throw new LocalizedResourceConfigException("warning.config.furniture.missing_variants");
-            }
-
+            // 读取变体配置
+            ConfigSection variantsSection = section.getNonNullSection(VARIANT);
             Map<String, FurnitureVariant> variants = new LinkedHashMap<>();
-            for (Map.Entry<String, Object> e0 : variantsMap.entrySet()) {
-                String variantName = e0.getKey();
-                Map<String, Object> variantArguments = ResourceConfigUtils.getAsMap(e0.getValue(), variantName);
-                Optional<Vector3f> optionalLootSpawnOffset = Optional.ofNullable(variantArguments.get("loot-spawn-offset")).map(it -> ResourceConfigUtils.getAsVector3f(it, "loot-spawn-offset"));
-                List<FurnitureElementConfig<?>> elements = ResourceConfigUtils.parseConfigAsList(variantArguments.get("elements"), FurnitureElementConfigs::fromMap);
+
+            for (String variant : variantsSection.keySet()) {
+                ConfigSection variantSection = variantsSection.getNonNullSection(variant);
+
+                // 掉落物偏移
+                Vector3f lootSpawnOffset = variantSection.getVector3f(LOOT_SPAWN_OFFSET, ConfigConstants.ZERO_VECTOR3);
 
                 // 外部模型
-                Optional<ExternalModel> externalModel;
-                if (variantArguments.containsKey("model-engine")) {
-                    externalModel = Optional.of(plugin.compatibilityManager().createModel("ModelEngine", variantArguments.get("model-engine").toString()));
-                } else if (variantArguments.containsKey("better-model")) {
-                    externalModel = Optional.of(plugin.compatibilityManager().createModel("BetterModel", variantArguments.get("better-model").toString()));
-                } else {
-                    externalModel = Optional.empty();
-                }
+                String blueprint = variantSection.getString(BLUEPRINT);
+                Supplier<ExternalModel> externalModel = Optional.ofNullable(blueprint)
+                        .map(it -> (Supplier<ExternalModel>) () -> AbstractFurnitureManager.this.plugin.compatibilityManager().createModel(it))
+                        .orElse(null);
 
-                // 碰撞箱配置
-                List<FurnitureHitBoxConfig<?>> hitboxes = ResourceConfigUtils.parseConfigAsList(variantArguments.get("hitboxes"), FurnitureHitBoxes::fromMap);
-                if (hitboxes.isEmpty() && externalModel.isEmpty()) {
+                // 元素与碰撞箱
+                List<FurnitureElementConfig<? extends FurnitureElement>> elements = variantSection.getList("elements", v -> FurnitureElementConfigs.fromConfig(v.getAsSection()));
+                ConfigValue hitboxValue = variantSection.getValue("hitboxes");
+                List<FurnitureHitBoxConfig<? extends FurnitureHitBox>> hitboxes;
+                if (hitboxValue != null) {
+                    hitboxes = variantSection.getList("hitboxes", v -> FurnitureHitBoxConfigs.fromConfig(v.getAsSection()));
+                } else {
                     hitboxes = List.of(defaultHitBox());
                 }
 
-                variants.put(variantName, new FurnitureVariant(
-                    variantName,
-                    parseCullingData(section.get("entity-culling")),
-                    elements.toArray(new FurnitureElementConfig[0]),
-                    hitboxes.toArray(new FurnitureHitBoxConfig[0]),
-                    externalModel,
-                    optionalLootSpawnOffset.orElse(new Vector3f(0f, 0f,0f))
+                variants.put(variant, new FurnitureVariant(
+                        variant,
+                        parseCullingData(section.getValue(ENTITY_CULLING)),
+                        elements,
+                        hitboxes,
+                        externalModel,
+                        lootSpawnOffset
                 ));
             }
 
-            CustomFurniture furniture = CustomFurniture.builder()
-                    .id(id)
-                    .settings(FurnitureSettings.fromMap(MiscUtils.castToMap(section.get("settings"), true)))
-                    .variants(variants)
-                    .events(CommonFunctions.parseEvents(ResourceConfigUtils.get(section, "events", "event")))
-                    .lootTable(LootTable.fromMap(MiscUtils.castToMap(section.get("loot"), true)))
-                    .build();
-            ((CustomFurnitureImpl) furniture).setBehavior(FurnitureBehaviors.fromMap(furniture, ResourceConfigUtils.getAsMapOrNull(ResourceConfigUtils.get(section, "behaviors", "behavior"), "behavior")));
+            // 解析事件 （可异常）
+            Map<EventTrigger, List<Function<Context>>> events = new EnumMap<>(EventTrigger.class);
+            try {
+                CommonFunctions.parseEvents(section.getValue(EVENT), (t, f) -> events.computeIfAbsent(t, k -> new ArrayList<>()).add(f));
+            } catch (KnownResourceException e) {
+                error(e, path);
+            }
 
+            // 解析战利品表 （可异常）
+            Loot loot = null;
+            try {
+                loot = section.getValue(LOOT, ConfigValue::getAsLoot);
+            } catch (KnownResourceException e) {
+                error(e, path);
+            }
+
+            FurnitureDefinition furniture = FurnitureDefinition.builder()
+                    .id(id)
+                    .settings(settings)
+                    .variants(variants)
+                    .events(events)
+                    .loot(loot)
+                    .build();
+
+            // 家具行为
+            ConfigValue value = section.getValue(BEHAVIORS);
+            if (value != null) {
+                List<FurnitureBehaviorTemplate> furnitureBehaviorTemplates = value.getAsList(v -> FurnitureBehaviors.fromConfig(furniture, v.getAsSection()));
+                ((FurnitureDefinitionImpl) furniture).setBehaviors(furnitureBehaviorTemplates);
+            }
             AbstractFurnitureManager.this.byId.put(id, furniture);
         }
 
-        private CullingData parseCullingData(Object arguments) {
-            if (arguments instanceof Boolean b && !b)
-                return null;
-            if (!(arguments instanceof Map))
-                return new CullingData(null, Config.entityCullingViewDistance(), 0.25, true);
-            Map<String, Object> argumentsMap = ResourceConfigUtils.getAsMap(arguments, "entity-culling");
-            return new CullingData(
-                    ResourceConfigUtils.getOrDefault(argumentsMap.get("aabb"), it -> ResourceConfigUtils.getAsAABB(it, "aabb"), null),
-                    ResourceConfigUtils.getAsInt(argumentsMap.getOrDefault("view-distance", Config.entityCullingViewDistance()), "view-distance"),
-                    ResourceConfigUtils.getAsDouble(argumentsMap.getOrDefault("aabb-expansion", 0.25), "aabb-expansion"),
-                    ResourceConfigUtils.getAsBoolean(argumentsMap.getOrDefault("ray-tracing", true), "ray-tracing")
-            );
+        private CullingData parseCullingData(@Nullable ConfigValue value) {
+            if (value != null) {
+                if (value.is(Boolean.class) && !value.getAsBoolean()) {
+                    return null;
+                } else if (value.is(Map.class)) {
+                    ConfigSection section = value.getAsSection();
+                    return new CullingData(
+                            section.getAABB("aabb"),
+                            section.getInt(VIEW_DISTANCE, Config.entityCullingViewDistance()),
+                            section.getDouble(AABB_EXPANSION, 0.25),
+                            section.getBoolean(RAY_TRACING, true)
+                    );
+                }
+            }
+            return new CullingData(null, Config.entityCullingViewDistance(), 0.25, true);
         }
     }
 }

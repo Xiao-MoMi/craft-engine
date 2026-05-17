@@ -5,7 +5,7 @@ import com.google.common.collect.ImmutableSortedMap;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import it.unimi.dsi.fastutil.objects.Reference2ObjectArrayMap;
-import net.momirealms.craftengine.core.block.properties.Property;
+import net.momirealms.craftengine.core.block.property.Property;
 import net.momirealms.craftengine.core.registry.Holder;
 import net.momirealms.craftengine.core.util.Pair;
 import net.momirealms.sparrow.nbt.CompoundTag;
@@ -23,9 +23,9 @@ import java.util.stream.Stream;
 public final class BlockStateVariantProvider {
     private final ImmutableSortedMap<String, Property<?>> properties;
     private final ImmutableList<ImmutableBlockState> states;
-    private final Holder<CustomBlock> owner;
+    private final Holder<BlockDefinition> owner;
 
-    public BlockStateVariantProvider(Holder.Reference<CustomBlock> owner, Factory<Holder.Reference<CustomBlock>, ImmutableBlockState> factory, Map<String, Property<?>> propertiesMap) {
+    public BlockStateVariantProvider(Holder.Reference<BlockDefinition> owner, Factory<Holder.Reference<BlockDefinition>, ImmutableBlockState> factory, Map<String, Property<?>> propertiesMap) {
         this.owner = owner;
         this.properties = ImmutableSortedMap.copyOf(propertiesMap);
 
@@ -50,7 +50,7 @@ public final class BlockStateVariantProvider {
             for (Pair<Property<?>, Comparable<?>> entry : entries) {
                 reference2ObjectArrayMap.put(entry.left(), entry.right());
             }
-            ImmutableBlockState state = factory.create(owner, reference2ObjectArrayMap);
+            ImmutableBlockState state = factory.create(owner, this, reference2ObjectArrayMap);
             map.put(reference2ObjectArrayMap, state);
             list.add(state);
         });
@@ -83,7 +83,7 @@ public final class BlockStateVariantProvider {
     }
 
     public interface Factory<O, S> {
-        S create(O owner, Reference2ObjectArrayMap<Property<?>, Comparable<?>> propertyMap);
+        S create(O owner, BlockStateVariantProvider variantProvider, Reference2ObjectArrayMap<Property<?>, Comparable<?>> propertyMap);
     }
 
     @NotNull
@@ -99,7 +99,7 @@ public final class BlockStateVariantProvider {
         return this.states;
     }
 
-    public Holder<CustomBlock> owner() {
+    public Holder<BlockDefinition> owner() {
         return this.owner;
     }
 
@@ -111,5 +111,9 @@ public final class BlockStateVariantProvider {
     @Nullable
     public Property<?> getProperty(String name) {
         return this.properties.get(name);
+    }
+
+    public boolean hasProperty(String name) {
+        return this.properties.containsKey(name);
     }
 }

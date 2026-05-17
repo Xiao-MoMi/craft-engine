@@ -1,8 +1,7 @@
 package net.momirealms.craftengine.core.plugin.config.template.argument;
 
-import net.momirealms.craftengine.core.plugin.locale.LocalizedResourceConfigException;
+import net.momirealms.craftengine.core.plugin.config.ConfigSection;
 import net.momirealms.craftengine.core.plugin.locale.TranslationManager;
-import net.momirealms.craftengine.core.util.ResourceConfigUtils;
 
 import java.util.Locale;
 import java.util.Map;
@@ -24,21 +23,17 @@ public final class ToLowerCaseTemplateArgument implements TemplateArgument {
     }
 
     @Override
-    public Object get(Map<String, TemplateArgument> arguments) {
+    public Object get(String node, Map<String, TemplateArgument> arguments) {
         return this.result;
     }
 
     private static class Factory implements TemplateArgumentFactory<ToLowerCaseTemplateArgument> {
 
         @Override
-        public ToLowerCaseTemplateArgument create(Map<String, Object> arguments) {
-            String text = ResourceConfigUtils.requireNonEmptyStringOrThrow(arguments.get("value"), "warning.config.template.argument.to_lower_case.missing_value");
-            String localeName = arguments.containsKey("locale") ? arguments.get("locale").toString() : null;
-            Locale locale = localeName != null ? TranslationManager.parseLocale(localeName) : Locale.ROOT;
-            if (locale == null) {
-                throw new LocalizedResourceConfigException("warning.config.template.argument.to_lower_case.invalid_locale", localeName);
-            }
-            return new ToLowerCaseTemplateArgument(text.toLowerCase(locale));
+        public ToLowerCaseTemplateArgument create(ConfigSection section) {
+            return new ToLowerCaseTemplateArgument(
+                    section.getNonNullString("value").toLowerCase(section.getValue("locale", o -> TranslationManager.parseLocale(o.toString()), Locale.ROOT))
+            );
         }
     }
 }

@@ -4,7 +4,7 @@ import net.momirealms.craftengine.core.plugin.context.function.Function;
 import net.momirealms.craftengine.core.plugin.context.function.FunctionFactory;
 import net.momirealms.craftengine.core.util.Key;
 
-public class CommonFunctionType<T extends Function<Context>> extends FunctionType<Context, T> {
+public final class CommonFunctionType<T extends Function<Context>> extends FunctionType<Context, T> {
 
     public CommonFunctionType(Key id, FunctionFactory<Context, T> factory) {
         super(id, factory);

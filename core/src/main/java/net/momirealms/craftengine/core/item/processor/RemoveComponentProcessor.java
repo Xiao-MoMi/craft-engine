@@ -2,9 +2,9 @@ package net.momirealms.craftengine.core.item.processor;
 
 import net.momirealms.craftengine.core.item.Item;
 import net.momirealms.craftengine.core.item.ItemBuildContext;
-import net.momirealms.craftengine.core.item.ItemProcessorFactory;
-import net.momirealms.craftengine.core.item.NetworkItemHandler;
-import net.momirealms.craftengine.core.util.MiscUtils;
+import net.momirealms.craftengine.core.item.network.NetworkItemHandler;
+import net.momirealms.craftengine.core.plugin.config.ConfigValue;
+import net.momirealms.craftengine.core.util.Key;
 import net.momirealms.sparrow.nbt.CompoundTag;
 import net.momirealms.sparrow.nbt.Tag;
 
@@ -13,30 +13,30 @@ import java.util.List;
 
 public final class RemoveComponentProcessor implements ItemProcessor {
     public static final ItemProcessorFactory<RemoveComponentProcessor> FACTORY = new Factory();
-    private final List<String> arguments;
+    private final List<Key> arguments;
 
-    public RemoveComponentProcessor(List<String> arguments) {
+    public RemoveComponentProcessor(List<Key> arguments) {
         this.arguments = arguments;
     }
 
-    public List<String> components() {
+    public List<Key> components() {
         return Collections.unmodifiableList(this.arguments);
     }
 
     @Override
-    public <I> Item<I> apply(Item<I> item, ItemBuildContext context) {
-        for (String argument : this.arguments) {
+    public Item apply(Item item, ItemBuildContext context) {
+        for (Key argument : this.arguments) {
             item.removeComponent(argument);
         }
         return item;
     }
 
     @Override
-    public <I> Item<I> prepareNetworkItem(Item<I> item, ItemBuildContext context, CompoundTag networkData) {
-        for (String component : this.arguments) {
-            Tag previous = item.getSparrowNBTComponent(component);
+    public Item prepareNetworkItem(Item item, ItemBuildContext context, CompoundTag networkData) {
+        for (Key component : this.arguments) {
+            Tag previous = item.getComponentAsSparrowTag(component);
             if (previous != null) {
-                networkData.put(component, NetworkItemHandler.pack(NetworkItemHandler.Operation.ADD, previous));
+                networkData.put(component.asString(), NetworkItemHandler.pack(NetworkItemHandler.Operation.ADD, previous));
             }
         }
         return item;
@@ -45,9 +45,8 @@ public final class RemoveComponentProcessor implements ItemProcessor {
     private static class Factory implements ItemProcessorFactory<RemoveComponentProcessor> {
 
         @Override
-        public RemoveComponentProcessor create(Object arg) {
-            List<String> data = MiscUtils.getAsStringList(arg);
-            return new RemoveComponentProcessor(data);
+        public RemoveComponentProcessor create(ConfigValue value) {
+            return new RemoveComponentProcessor(value.getAsList(ConfigValue::getAsIdentifier));
         }
     }
 }

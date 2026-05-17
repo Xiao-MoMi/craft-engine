@@ -1,7 +1,7 @@
 items:
   default:globe:
     data:
-      item-name: <!i><lang:item.default.globe>
+      item_name: <!i><lang:item.default.globe>
     model: minecraft:item/custom/globe
     behavior:
       type: furniture_item
@@ -12,14 +12,14 @@ items:
       furniture:
         settings:
           item: default:globe
-          hit-times: 3
+          hit_times: 3
           sounds:
             break: minecraft:block.copper.break
             place: minecraft:block.copper.place
             hit: minecraft:block.copper.hit
         variants:
           ground:
-            loot-spawn-offset: 0,0.25,0
+            loot_spawn_offset: 0,0.25,0
             elements:
               - type: item
                 item: default:globe_earth
@@ -32,18 +32,18 @@ items:
                 type: shulker
                 peek: 50
                 scale: 0.8
-                blocks-building: true
+                blocks_building: true
                 interactive: true
-                interaction-entity: true
+                interaction_entity: true
         loot:
           template: default:loot_table/furniture
           arguments:
             item: default:globe
   default:globe_earth:
     data:
-      item-name: <!i><lang:item.default.globe>
+      item_name: <!i><lang:item.default.globe>
     model: minecraft:item/custom/globe_earth
   default:globe_base:
     data:
-      item-name: <!i><lang:item.default.globe>
+      item_name: <!i><lang:item.default.globe>
     model: minecraft:item/custom/globe_base

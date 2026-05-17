@@ -4,26 +4,24 @@ import com.google.gson.JsonObject;
 import net.momirealms.craftengine.core.item.recipe.input.BrewingInput;
 import net.momirealms.craftengine.core.item.recipe.input.RecipeInput;
 import net.momirealms.craftengine.core.item.recipe.result.CustomRecipeResult;
-import net.momirealms.craftengine.core.plugin.locale.LocalizedResourceConfigException;
+import net.momirealms.craftengine.core.plugin.config.ConfigConstants;
+import net.momirealms.craftengine.core.plugin.config.ConfigSection;
 import net.momirealms.craftengine.core.util.Key;
-import net.momirealms.craftengine.core.util.MiscUtils;
-import net.momirealms.craftengine.core.util.ResourceConfigUtils;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 
-public class CustomBrewingRecipe<T> extends AbstractedFixedResultRecipe<T> {
+public final class CustomBrewingRecipe extends AbstractFixedResultRecipe {
     public static final Serializer<?> SERIALIZER = new Serializer<>();
-    private final Ingredient<T> container;
-    private final Ingredient<T> ingredient;
+    private final Ingredient container;
+    private final Ingredient ingredient;
 
     public CustomBrewingRecipe(@NotNull Key id,
-                               @NotNull Ingredient<T> container,
-                               @NotNull Ingredient<T> ingredient,
-                               @NotNull CustomRecipeResult<T> result,
-                               boolean showNotification) {
+                               boolean showNotification,
+                               @NotNull Ingredient ingredient,
+                               @NotNull CustomRecipeResult result,
+                               @NotNull Ingredient container) {
         super(id, showNotification, result);
         this.container = container;
         this.ingredient = ingredient;
@@ -33,16 +31,24 @@ public class CustomBrewingRecipe<T> extends AbstractedFixedResultRecipe<T> {
     @SuppressWarnings("unchecked")
     @Override
     public boolean matches(RecipeInput input) {
-        BrewingInput<T> brewingInput = (BrewingInput<T>) input;
+        BrewingInput<Object> brewingInput = (BrewingInput<Object>) input;
         return this.container.test(brewingInput.container()) && this.ingredient.test(brewingInput.ingredient());
     }
 
     @Override
-    public List<Ingredient<T>> ingredientsInUse() {
-        List<Ingredient<T>> ingredients = new ArrayList<>();
+    public List<Ingredient> ingredientsInUse() {
+        List<Ingredient> ingredients = new ArrayList<>();
         ingredients.add(this.container);
         ingredients.add(this.ingredient);
         return ingredients;
+    }
+
+    @SuppressWarnings("unchecked")
+    @Override
+    public void takeInput(@NotNull RecipeInput input, int ignore) {
+        BrewingInput<Object> brewingInput = (BrewingInput<Object>) input;
+        takeIngredient(this.container, brewingInput.container().item(), ignore);
+        takeIngredient(this.ingredient, brewingInput.ingredient().item(), ignore);
     }
 
     @Override
@@ -56,38 +62,31 @@ public class CustomBrewingRecipe<T> extends AbstractedFixedResultRecipe<T> {
     }
 
     @NotNull
-    public Ingredient<T> container() {
+    public Ingredient container() {
         return this.container;
     }
 
     @NotNull
-    public Ingredient<T> ingredient() {
+    public Ingredient ingredient() {
         return this.ingredient;
     }
 
     @SuppressWarnings({"DuplicatedCode"})
-    public static class Serializer<A> extends AbstractRecipeSerializer<A, CustomBrewingRecipe<A>> {
+    public static class Serializer<A> extends AbstractRecipeSerializer<CustomBrewingRecipe> {
 
         @Override
-        public CustomBrewingRecipe<A> readMap(Key id, Map<String, Object> arguments) {
-            List<String> container = MiscUtils.getAsStringList(arguments.get("container"));
-            if (container.isEmpty()) {
-                throw new LocalizedResourceConfigException("warning.config.recipe.brewing.missing_container");
-            }
-            List<String> ingredient = MiscUtils.getAsStringList(arguments.get("ingredient"));
-            if (ingredient.isEmpty()) {
-                throw new LocalizedResourceConfigException("warning.config.recipe.brewing.missing_ingredient");
-            }
-            return new CustomBrewingRecipe<>(id,
-                    ResourceConfigUtils.requireNonNullOrThrow(toIngredient(container), "warning.config.recipe.brewing.missing_container"),
-                    ResourceConfigUtils.requireNonNullOrThrow(toIngredient(ingredient), "warning.config.recipe.brewing.missing_ingredient"),
-                    parseResult(arguments),
-                    showNotification(arguments)
+        public CustomBrewingRecipe readConfig(Key id, ConfigSection section) {
+            return new CustomBrewingRecipe(
+                    id,
+                    section.getBoolean(SHOW_NOTIFICATIONS, true),
+                    section.getNonNullValue(INGREDIENTS, ConfigConstants.ARGUMENT_LIST, super::parseIngredient),
+                    super.parseResult(section.getNonNullValue("result", ConfigConstants.ARGUMENT_SECTION)),
+                    section.getNonNullValue("container", ConfigConstants.ARGUMENT_LIST, super::parseIngredient)
             );
         }
 
         @Override
-        public CustomBrewingRecipe<A> readJson(Key id, JsonObject json) {
+        public CustomBrewingRecipe readJson(Key id, JsonObject json) {
             throw new UnsupportedOperationException();
         }
     }

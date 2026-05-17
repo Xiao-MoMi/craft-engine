@@ -1,7 +1,7 @@
 package net.momirealms.craftengine.bukkit.plugin.command.feature;
 
 import net.kyori.adventure.text.Component;
-import net.momirealms.craftengine.bukkit.api.BukkitAdaptors;
+import net.momirealms.craftengine.bukkit.api.BukkitAdaptor;
 import net.momirealms.craftengine.bukkit.plugin.command.BukkitCommandFeature;
 import net.momirealms.craftengine.bukkit.plugin.user.BukkitServerPlayer;
 import net.momirealms.craftengine.core.plugin.CraftEngine;
@@ -9,12 +9,12 @@ import net.momirealms.craftengine.core.plugin.command.CraftEngineCommandManager;
 import net.momirealms.craftengine.core.plugin.command.FlagKeys;
 import net.momirealms.craftengine.core.plugin.locale.MessageConstants;
 import org.bukkit.command.CommandSender;
-import org.bukkit.entity.Player;
 import org.incendo.cloud.Command;
-import org.incendo.cloud.bukkit.parser.PlayerParser;
+import org.incendo.cloud.bukkit.data.SinglePlayerSelector;
+import org.incendo.cloud.bukkit.parser.selector.SinglePlayerSelectorParser;
 import org.incendo.cloud.parser.standard.DoubleParser;
 
-public class SetDisplayEntityViewDistanceScaleCommand extends BukkitCommandFeature<CommandSender> {
+public final class SetDisplayEntityViewDistanceScaleCommand extends BukkitCommandFeature<CommandSender> {
 
     public SetDisplayEntityViewDistanceScaleCommand(CraftEngineCommandManager<CommandSender> commandManager, CraftEngine plugin) {
         super(commandManager, plugin);
@@ -24,15 +24,15 @@ public class SetDisplayEntityViewDistanceScaleCommand extends BukkitCommandFeatu
     public Command.Builder<? extends CommandSender> assembleCommand(org.incendo.cloud.CommandManager<CommandSender> manager, Command.Builder<CommandSender> builder) {
         return builder
                 .flag(FlagKeys.SILENT_FLAG)
-                .required("player", PlayerParser.playerParser())
+                .required("player", SinglePlayerSelectorParser.singlePlayerSelectorParser())
                 .required("scale", DoubleParser.doubleParser(0.125, 8))
                 .handler(context -> {
-                    Player player = context.get("player");
                     double scale = context.get("scale");
-                    BukkitServerPlayer serverPlayer = BukkitAdaptors.adapt(player);
+                    SinglePlayerSelector playerSelector = context.get("player");
+                    BukkitServerPlayer serverPlayer = BukkitAdaptor.adapt(playerSelector.single());
                     if (serverPlayer == null) return;
                     serverPlayer.setDisplayEntityViewDistanceScale(scale);
-                    handleFeedback(context, MessageConstants.COMMAND_DISPLAY_ENTITY_VIEW_DISTANCE_SCALE_SET_SUCCESS, Component.text(scale), Component.text(player.getName()));
+                    handleFeedback(context, MessageConstants.COMMAND_DISPLAY_ENTITY_VIEW_DISTANCE_SCALE_SET_SUCCESS, Component.text(scale), Component.text(serverPlayer.name()));
                 });
     }
 

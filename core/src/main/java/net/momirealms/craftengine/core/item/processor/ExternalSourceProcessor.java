@@ -2,22 +2,25 @@ package net.momirealms.craftengine.core.item.processor;
 
 import net.momirealms.craftengine.core.item.Item;
 import net.momirealms.craftengine.core.item.ItemBuildContext;
-import net.momirealms.craftengine.core.item.ItemProcessorFactory;
 import net.momirealms.craftengine.core.plugin.CraftEngine;
 import net.momirealms.craftengine.core.plugin.compatibility.ItemSource;
+import net.momirealms.craftengine.core.plugin.config.ConfigSection;
+import net.momirealms.craftengine.core.plugin.config.ConfigValue;
 import net.momirealms.craftengine.core.util.LazyReference;
-import net.momirealms.craftengine.core.util.ResourceConfigUtils;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.*;
+import java.util.LinkedHashSet;
+import java.util.Locale;
+import java.util.Set;
+import java.util.StringJoiner;
 
 public final class ExternalSourceProcessor implements ItemProcessor {
     public static final ItemProcessorFactory<ExternalSourceProcessor> FACTORY = new Factory();
     private static final ThreadLocal<Set<Dependency>> BUILD_STACK = ThreadLocal.withInitial(LinkedHashSet::new);
     private final String id;
-    private final LazyReference<ItemSource<?>> provider;
+    private final LazyReference<ItemSource> provider;
 
-    public ExternalSourceProcessor(String id, LazyReference<ItemSource<?>> provider) {
+    public ExternalSourceProcessor(String id, LazyReference<ItemSource> provider) {
         this.id = id;
         this.provider = provider;
     }
@@ -26,10 +29,9 @@ public final class ExternalSourceProcessor implements ItemProcessor {
         return id;
     }
 
-    @SuppressWarnings("unchecked")
     @Override
-    public <I> Item<I> apply(Item<I> item, ItemBuildContext context) {
-        ItemSource<I> provider = (ItemSource<I>) this.provider.get();
+    public Item apply(Item item, ItemBuildContext context) {
+        ItemSource provider = this.provider.get();
         if (provider == null) return item;
 
         Dependency dependency = new Dependency(provider.plugin(), this.id);
@@ -47,13 +49,12 @@ public final class ExternalSourceProcessor implements ItemProcessor {
 
         buildStack.add(dependency);
         try {
-            I another = provider.build(this.id, context);
+            Item another = provider.build(this.id, context);
             if (another == null) {
                 CraftEngine.instance().logger().warn("'" + this.id + "' could not be found in " + provider.plugin());
                 return item;
             }
-            Item<I> anotherWrapped = (Item<I>) CraftEngine.instance().itemManager().wrap(another);
-            item.merge(anotherWrapped);
+            item.merge(another);
             return item;
         } catch (Throwable e) {
             CraftEngine.instance().logger().warn("Failed to build item '" + this.id + "' from plugin '" + provider.plugin() + "'", e);
@@ -65,14 +66,15 @@ public final class ExternalSourceProcessor implements ItemProcessor {
     }
 
     private static class Factory implements ItemProcessorFactory<ExternalSourceProcessor> {
+        private static final String[] PLUGIN = new String[]{"plugin", "source"};
 
         @Override
-        public ExternalSourceProcessor create(Object arg) {
-            Map<String, Object> data = ResourceConfigUtils.getAsMap(arg, "external");
-            String plugin = ResourceConfigUtils.requireNonEmptyStringOrThrow(ResourceConfigUtils.get(data, "plugin", "source"), "warning.config.item.data.external.missing_source");
-            String id = ResourceConfigUtils.requireNonEmptyStringOrThrow(data.get("id"), "warning.config.item.data.external.missing_id");
+        public ExternalSourceProcessor create(ConfigValue value) {
+            ConfigSection section = value.getAsSection();
+            String plugin = section.getNonNullString(PLUGIN);
+            String id = section.getNonNullString("id");
             return new ExternalSourceProcessor(id, LazyReference.lazyReference(() -> {
-                ItemSource<?> itemSource = CraftEngine.instance().compatibilityManager().getItemSource(plugin.toLowerCase(Locale.ENGLISH));
+                ItemSource itemSource = CraftEngine.instance().compatibilityManager().getItemSource(plugin.toLowerCase(Locale.ENGLISH));
                 if (itemSource == null) {
                     CraftEngine.instance().logger().warn("Item source '" + plugin + "' not found for item '" + id + "'");
                 }

@@ -1,8 +1,8 @@
 package net.momirealms.craftengine.core.pack.conflict.resolution;
 
-import java.util.Map;
+import net.momirealms.craftengine.core.plugin.config.ConfigSection;
 
 public interface ResolutionFactory<T extends Resolution> {
 
-    T create(Map<String, Object> arguments);
+    T create(ConfigSection section);
 }

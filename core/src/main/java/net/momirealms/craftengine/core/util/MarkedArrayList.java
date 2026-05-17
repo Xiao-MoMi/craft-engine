@@ -5,8 +5,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.ArrayList;
 import java.util.Collection;
 
-public class MarkedArrayList<T> extends ArrayList<T> {
-
+public final class MarkedArrayList<T> extends ArrayList<T> {
     public MarkedArrayList() {
     }
 

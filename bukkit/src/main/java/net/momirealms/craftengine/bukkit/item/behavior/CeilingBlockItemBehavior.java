@@ -1,9 +1,13 @@
 package net.momirealms.craftengine.bukkit.item.behavior;
 
+import net.momirealms.craftengine.bukkit.block.BukkitBlockManager;
 import net.momirealms.craftengine.core.entity.player.InteractionResult;
 import net.momirealms.craftengine.core.item.behavior.ItemBehaviorFactory;
 import net.momirealms.craftengine.core.pack.Pack;
-import net.momirealms.craftengine.core.plugin.locale.LocalizedResourceConfigException;
+import net.momirealms.craftengine.core.pack.PendingConfigSection;
+import net.momirealms.craftengine.core.plugin.config.ConfigConstants;
+import net.momirealms.craftengine.core.plugin.config.ConfigSection;
+import net.momirealms.craftengine.core.plugin.config.ConfigValue;
 import net.momirealms.craftengine.core.util.Direction;
 import net.momirealms.craftengine.core.util.Key;
 import net.momirealms.craftengine.core.world.context.BlockPlaceContext;
@@ -34,16 +38,13 @@ public final class CeilingBlockItemBehavior extends BlockItemBehavior {
 
     private static class Factory implements ItemBehaviorFactory<CeilingBlockItemBehavior> {
         @Override
-        public CeilingBlockItemBehavior create(Pack pack, Path path, String node, Key key, Map<String, Object> arguments) {
-            Object id = arguments.get("block");
-            if (id == null) {
-                throw new LocalizedResourceConfigException("warning.config.item.behavior.ceiling_block.missing_block", new IllegalArgumentException("Missing required parameter 'block' for ceiling_block_item behavior"));
-            }
-            if (id instanceof Map<?, ?> map) {
-                addPendingSection(pack, path, node, key, map);
+        public CeilingBlockItemBehavior create(Pack pack, Path path, Key key, ConfigSection section) {
+            ConfigValue blockValue = section.getNonNullValue("block", ConfigConstants.ARGUMENT_SECTION);
+            if (blockValue.is(Map.class)) {
+                BukkitBlockManager.instance().blockParser().addPendingConfigSection(new PendingConfigSection(pack, path, key, blockValue.getAsSection()));
                 return new CeilingBlockItemBehavior(key);
             } else {
-                return new CeilingBlockItemBehavior(Key.of(id.toString()));
+                return new CeilingBlockItemBehavior(blockValue.getAsIdentifier());
             }
         }
     }

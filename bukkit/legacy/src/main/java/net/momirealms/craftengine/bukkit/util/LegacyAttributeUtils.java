@@ -15,6 +15,10 @@ public final class LegacyAttributeUtils {
         Objects.requireNonNull(entity.getAttribute(Attribute.GENERIC_MAX_HEALTH)).setBaseValue(0.01);
     }
 
+    public static double getMaxHealth(Player player) {
+        return Objects.requireNonNull(player.getAttribute(Attribute.GENERIC_MAX_HEALTH)).getValue();
+    }
+
     public static double getLuck(Player player) {
         return Optional.ofNullable(player.getAttribute(Attribute.GENERIC_LUCK)).map(AttributeInstance::getValue).orElse(1d);
     }

@@ -2,16 +2,16 @@ package net.momirealms.craftengine.core.pack.host.impl;
 
 import net.momirealms.craftengine.core.pack.host.ResourcePackHostFactory;
 import net.momirealms.craftengine.core.plugin.CraftEngine;
+import net.momirealms.craftengine.core.plugin.config.ConfigSection;
 import net.momirealms.craftengine.core.plugin.dependency.Dependencies;
 
 import java.util.List;
-import java.util.Map;
 
 public final class S3HostFactory implements ResourcePackHostFactory<S3Host> {
     public static final ResourcePackHostFactory<S3Host> INSTANCE = new S3HostFactory();
 
     @Override
-    public S3Host create(Map<String, Object> arguments) {
+    public S3Host create(ConfigSection section) {
         CraftEngine.instance().dependencyManager().loadDependencies(
                 List.of(
                         Dependencies.NETTY_HTTP2,
@@ -47,6 +47,6 @@ public final class S3HostFactory implements ResourcePackHostFactory<S3Host> {
                         Dependencies.AMAZON_AWSSDK_THIRD_PARTY_JACKSON_CORE
                 )
         );
-        return S3Host.FACTORY.create(arguments);
+        return S3Host.FACTORY.create(section);
     }
 }

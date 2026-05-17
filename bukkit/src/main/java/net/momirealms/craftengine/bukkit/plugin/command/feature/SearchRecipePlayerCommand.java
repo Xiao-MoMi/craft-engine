@@ -1,5 +1,6 @@
 package net.momirealms.craftengine.bukkit.plugin.command.feature;
 
+import net.momirealms.craftengine.bukkit.api.BukkitAdaptor;
 import net.momirealms.craftengine.bukkit.plugin.command.BukkitCommandFeature;
 import net.momirealms.craftengine.bukkit.plugin.user.BukkitServerPlayer;
 import net.momirealms.craftengine.core.entity.player.InteractionHand;
@@ -17,7 +18,7 @@ import org.incendo.cloud.CommandManager;
 
 import java.util.List;
 
-public class SearchRecipePlayerCommand extends BukkitCommandFeature<CommandSender> {
+public final class SearchRecipePlayerCommand extends BukkitCommandFeature<CommandSender> {
 
     public SearchRecipePlayerCommand(CraftEngineCommandManager<CommandSender> commandManager, CraftEngine plugin) {
         super(commandManager, plugin);
@@ -29,15 +30,15 @@ public class SearchRecipePlayerCommand extends BukkitCommandFeature<CommandSende
                 .senderType(Player.class)
                 .handler(context -> {
                     Player player = context.sender();
-                    BukkitServerPlayer serverPlayer = plugin().adapt(player);
+                    BukkitServerPlayer serverPlayer = BukkitAdaptor.adapt(player);
                     if (serverPlayer == null) return;
-                    Item<?> item = serverPlayer.getItemInHand(InteractionHand.MAIN_HAND);
+                    Item item = serverPlayer.getItemInHand(InteractionHand.MAIN_HAND);
                     if (ItemUtils.isEmpty(item)) {
                         handleFeedback(context, MessageConstants.COMMAND_SEARCH_RECIPE_NO_ITEM);
                         return;
                     }
                     Key itemId = item.id();
-                    List<Recipe<Object>> inRecipes = plugin().recipeManager().recipeByResult(itemId);
+                    List<Recipe> inRecipes = plugin().recipeManager().recipeByResult(itemId);
                     if (!inRecipes.isEmpty()) {
                         plugin().itemBrowserManager().openRecipePage(serverPlayer, null, inRecipes, 0, 0, false);
                     } else {

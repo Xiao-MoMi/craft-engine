@@ -1,8 +1,9 @@
 package net.momirealms.craftengine.bukkit.world;
 
-import net.momirealms.craftengine.bukkit.api.BukkitAdaptors;
-import net.momirealms.craftengine.bukkit.nms.FastNMS;
+import net.momirealms.craftengine.bukkit.api.BukkitAdaptor;
+import net.momirealms.craftengine.bukkit.plugin.user.BukkitServerPlayer;
 import net.momirealms.craftengine.bukkit.util.*;
+import net.momirealms.craftengine.bukkit.world.chunk.BukkitChunkAccess;
 import net.momirealms.craftengine.core.block.BlockStateWrapper;
 import net.momirealms.craftengine.core.entity.player.Player;
 import net.momirealms.craftengine.core.item.Item;
@@ -11,8 +12,17 @@ import net.momirealms.craftengine.core.sound.SoundSource;
 import net.momirealms.craftengine.core.util.Key;
 import net.momirealms.craftengine.core.util.VersionHelper;
 import net.momirealms.craftengine.core.world.*;
+import net.momirealms.craftengine.core.world.chunk.Chunk;
 import net.momirealms.craftengine.core.world.particle.ParticleData;
 import net.momirealms.craftengine.core.world.particle.ParticleType;
+import net.momirealms.craftengine.proxy.bukkit.craftbukkit.CraftWorldProxy;
+import net.momirealms.craftengine.proxy.minecraft.core.BlockPosProxy;
+import net.momirealms.craftengine.proxy.minecraft.server.level.*;
+import net.momirealms.craftengine.proxy.minecraft.world.item.ItemStackProxy;
+import net.momirealms.craftengine.proxy.minecraft.world.level.BlockGetterProxy;
+import net.momirealms.craftengine.proxy.minecraft.world.level.LevelAccessorProxy;
+import net.momirealms.craftengine.proxy.minecraft.world.level.LevelReaderProxy;
+import net.momirealms.craftengine.proxy.minecraft.world.level.LevelWriterProxy;
 import org.bukkit.Location;
 import org.bukkit.Particle;
 import org.bukkit.SoundCategory;
@@ -29,25 +39,39 @@ import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
 
-public class BukkitWorld implements World {
-    private final WeakReference<org.bukkit.World> world;
+public final class BukkitWorld implements World {
+    private final WeakReference<org.bukkit.World> bukkitWorld;
+    private final WeakReference<Object> minecraftWorld;
     private final UUID uuid;
+    private final String worldName;
+    private final Path worldFolder;
     private CEWorld ceWorld;
     private WorldHeight worldHeight;
 
-    public BukkitWorld(@NotNull org.bukkit.World world) {
-        this.world = new WeakReference<>(world);
-        this.uuid = world.getUID();
+    public BukkitWorld(@NotNull org.bukkit.World bukkitWorld) {
+        this.bukkitWorld = new WeakReference<>(bukkitWorld);
+        this.minecraftWorld = new WeakReference<>(CraftWorldProxy.INSTANCE.getWorld(bukkitWorld));
+        this.uuid = bukkitWorld.getUID();
+        this.worldName = bukkitWorld.getName();
+        this.worldFolder = bukkitWorld.getWorldFolder().toPath(); // 低版本没有直接获取path
     }
 
     @Override
     public org.bukkit.World platformWorld() {
-        return this.world.get();
+        return this.bukkitWorld.get();
     }
 
     @Override
-    public Object serverWorld() {
-        return FastNMS.INSTANCE.field$CraftWorld$ServerLevel(platformWorld());
+    public Object minecraftWorld() {
+        return this.minecraftWorld.get();
+    }
+
+    @Override
+    public CEWorld storageWorld() {
+        if (this.ceWorld == null) {
+            this.ceWorld = BukkitWorldManager.instance().getWorld(uuid());
+        }
+        return this.ceWorld;
     }
 
     @Override
@@ -60,8 +84,21 @@ public class BukkitWorld implements World {
     }
 
     @Override
+    public Chunk getChunkIfLoaded(int x, int z) {
+        Object chunkSource = ServerLevelProxy.INSTANCE.getChunkSource(this.minecraftWorld());
+        Object levelChunk;
+        if (VersionHelper.isOrAbove1_21) {
+            levelChunk = ServerChunkCacheProxy.INSTANCE.getChunkAtIfLoadedImmediately(chunkSource, x, z);
+        } else {
+            levelChunk = ServerChunkCacheProxy.INSTANCE.getChunkAtIfLoadedMainThread(chunkSource, x, z);
+        }
+        if (levelChunk == null) return null;
+        return new BukkitChunkAccess(levelChunk);
+    }
+
+    @Override
     public BlockStateWrapper getBlockState(int x, int y, int z) {
-        Object blockState = FastNMS.INSTANCE.method$BlockGetter$getBlockState(this.serverWorld(), LocationUtils.toBlockPos(x, y, z));
+        Object blockState = BlockGetterProxy.INSTANCE.getBlockState(this.minecraftWorld(), LocationUtils.toBlockPos(x, y, z));
         return BlockStateUtils.toBlockStateWrapper(blockState);
     }
 
@@ -72,27 +109,27 @@ public class BukkitWorld implements World {
 
     @Override
     public String name() {
-        return platformWorld().getName();
+        return this.worldName;
     }
 
     @Override
     public Path directory() {
-        return platformWorld().getWorldFolder().toPath();
+        return this.worldFolder;
     }
 
     @Override
     public UUID uuid() {
-        return platformWorld().getUID();
+        return this.uuid;
     }
 
     @Override
-    public void dropItemNaturally(Position location, Item<?> item) {
-        ItemStack itemStack = (ItemStack) item.getItem();
+    public void dropItemNaturally(Position location, Item item) {
+        ItemStack itemStack = ItemStackProxy.INSTANCE.getBukkitStack(item.minecraftItem());
         if (ItemStackUtils.isEmpty(itemStack)) return;
-        if (VersionHelper.isOrAbove1_21_2()) {
-            platformWorld().dropItemNaturally(new Location(null, location.x(), location.y(), location.z()), (ItemStack) item.getItem());
+        if (VersionHelper.isOrAbove1_21_2) {
+            platformWorld().dropItemNaturally(new Location(null, location.x(), location.y(), location.z()), itemStack);
         } else {
-            platformWorld().dropItemNaturally(new Location(null, location.x() - 0.5, location.y() - 0.5, location.z() - 0.5), (ItemStack) item.getItem());
+            platformWorld().dropItemNaturally(new Location(null, location.x() - 0.5, location.y() - 0.5, location.z() - 0.5), itemStack);
         }
     }
 
@@ -130,40 +167,35 @@ public class BukkitWorld implements World {
 
     @Override
     public void setBlockState(int x, int y, int z, BlockStateWrapper blockState, int flags) {
-        Object worldServer = serverWorld();
-        Object blockPos = FastNMS.INSTANCE.constructor$BlockPos(x, y, z);
-        FastNMS.INSTANCE.method$LevelWriter$setBlock(worldServer, blockPos, blockState.literalObject(), flags);
+        Object worldServer = this.minecraftWorld();
+        Object blockPos = BlockPosProxy.INSTANCE.newInstance(x, y, z);
+        LevelWriterProxy.INSTANCE.setBlock(worldServer, blockPos, blockState.minecraftState(), flags);
     }
 
     @Override
     public void levelEvent(int id, BlockPos pos, int data) {
-        FastNMS.INSTANCE.method$LevelAccessor$levelEvent(serverWorld(), id, LocationUtils.toBlockPos(pos), data);
-    }
-
-    @Override
-    public CEWorld storageWorld() {
-        if (this.ceWorld == null) {
-            this.ceWorld = BukkitWorldManager.instance().getWorld(uuid());
-        }
-        return this.ceWorld;
+        LevelAccessorProxy.INSTANCE.levelEvent(this.minecraftWorld(), id, LocationUtils.toBlockPos(pos), data);
     }
 
     @Override
     public Key getNoiseBiome(int x, int y, int z) {
-        return KeyUtils.resourceLocationToKey(FastNMS.INSTANCE.method$LevelReader$getNoiseBiome(serverWorld(), x >> 2, y >> 2, z >> 2));
+        return KeyUtils.identifierToKey(LevelReaderProxy.INSTANCE.getNoiseBiome(this.minecraftWorld(), x >> 2, y >> 2, z >> 2));
     }
 
     @Override
     public List<Player> getTrackedBy(ChunkPos pos) {
-        Object serverLevel = serverWorld();
-        Object chunkSource = FastNMS.INSTANCE.method$ServerLevel$getChunkSource(serverLevel);
-        Object chunkHolder = FastNMS.INSTANCE.method$ServerChunkCache$getVisibleChunkIfPresent(chunkSource, pos.longKey);
+        Object serverLevel = this.minecraftWorld();
+        Object chunkSource = ServerLevelProxy.INSTANCE.getChunkSource(serverLevel);
+        Object chunkMap = ServerChunkCacheProxy.INSTANCE.getChunkMap(chunkSource);
+        Object chunkHolder = ChunkMapProxy.INSTANCE.getVisibleChunkIfPresent(chunkMap, pos.longKey);
         if (chunkHolder == null) return Collections.emptyList();
-        List<Object> players = FastNMS.INSTANCE.method$ChunkHolder$getPlayers(chunkHolder);
+        List<Object> players = ChunkHolderProxy.INSTANCE.getPlayers(chunkHolder, false);
         if (players.isEmpty()) return Collections.emptyList();
         List<Player> tracked = new ArrayList<>(players.size());
         for (Object player : players) {
-            tracked.add(BukkitAdaptors.adapt(FastNMS.INSTANCE.method$ServerPlayer$getBukkitEntity(player)));
+            BukkitServerPlayer serverPlayer = BukkitAdaptor.adapt(ServerPlayerProxy.INSTANCE.getBukkitEntity(player));
+            if (serverPlayer == null) continue;
+            tracked.add(serverPlayer);
         }
         return tracked;
     }

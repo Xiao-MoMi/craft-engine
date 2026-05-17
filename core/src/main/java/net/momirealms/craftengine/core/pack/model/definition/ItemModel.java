@@ -1,16 +1,17 @@
 package net.momirealms.craftengine.core.pack.model.definition;
 
 import com.google.gson.JsonObject;
-import net.momirealms.craftengine.core.pack.model.generation.ModelGeneration;
+import net.momirealms.craftengine.core.pack.model.generation.ModelGenerationHolder;
 import net.momirealms.craftengine.core.pack.revision.Revision;
 import net.momirealms.craftengine.core.util.MinecraftVersion;
 
-import java.util.List;
-import java.util.function.Function;
+import java.util.function.Consumer;
 
-public interface ItemModel extends Function<MinecraftVersion, JsonObject> {
+public interface ItemModel {
 
-    List<ModelGeneration> modelsToGenerate();
+    void gatherRevisions(Consumer<Revision> consumer);
 
-    List<Revision> revisions();
+    void prepareModelGeneration(Consumer<ModelGenerationHolder> consumer);
+
+    JsonObject toJson(MinecraftVersion min, MinecraftVersion max);
 }

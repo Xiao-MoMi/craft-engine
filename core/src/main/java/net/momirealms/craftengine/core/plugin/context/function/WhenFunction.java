@@ -1,23 +1,22 @@
 package net.momirealms.craftengine.core.plugin.context.function;
 
+import net.momirealms.craftengine.core.plugin.config.ConfigSection;
 import net.momirealms.craftengine.core.plugin.context.Condition;
 import net.momirealms.craftengine.core.plugin.context.Context;
 import net.momirealms.craftengine.core.plugin.context.text.TextProvider;
 import net.momirealms.craftengine.core.plugin.context.text.TextProviders;
-import net.momirealms.craftengine.core.util.MiscUtils;
 import net.momirealms.craftengine.core.util.Pair;
-import net.momirealms.craftengine.core.util.ResourceConfigUtils;
 
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-public class WhenFunction<CTX extends Context> extends AbstractConditionalFunction<CTX> {
+public final class WhenFunction<CTX extends Context> extends AbstractConditionalFunction<CTX> {
     private final TextProvider source;
     private final Map<String, Function<CTX>> whenMap;
     private final Function<CTX> fallback;
 
-    public WhenFunction(List<Condition<CTX>> predicates, TextProvider source, Map<String, Function<CTX>> whenMap, Function<CTX> fallback) {
+    private WhenFunction(List<Condition<CTX>> predicates, TextProvider source, Map<String, Function<CTX>> whenMap, Function<CTX> fallback) {
         super(predicates);
         this.whenMap = whenMap;
         this.source = source;
@@ -31,31 +30,37 @@ public class WhenFunction<CTX extends Context> extends AbstractConditionalFuncti
         function.run(ctx);
     }
 
-    public static <CTX extends Context> FunctionFactory<CTX, WhenFunction<CTX>> factory(java.util.function.Function<Map<String, Object>, Function<CTX>> f1, java.util.function.Function<Map<String, Object>, Condition<CTX>> f2) {
+    public static <CTX extends Context> FunctionFactory<CTX, WhenFunction<CTX>> factory(java.util.function.Function<ConfigSection, Function<CTX>> f1, java.util.function.Function<ConfigSection, Condition<CTX>> f2) {
         return new Factory<>(f1, f2);
     }
 
     private static class Factory<CTX extends Context> extends AbstractFunctionalFactory<CTX, WhenFunction<CTX>> {
+        private static final String[] CASES = new String[]{"cases", "case"};
 
-        public Factory(java.util.function.Function<Map<String, Object>, Function<CTX>> functionFactory, java.util.function.Function<Map<String, Object>, Condition<CTX>> conditionFactory) {
+        public Factory(java.util.function.Function<ConfigSection, Function<CTX>> functionFactory, java.util.function.Function<ConfigSection, Condition<CTX>> conditionFactory) {
             super(functionFactory, conditionFactory);
         }
 
         @Override
-        public WhenFunction<CTX> create(Map<String, Object> arguments) {
-            TextProvider source = TextProviders.fromString(ResourceConfigUtils.requireNonEmptyStringOrThrow(arguments.get("source"), "warning.config.function.when.missing_source"));
-            List<Pair<List<String>, Function<CTX>>> list = ResourceConfigUtils.parseConfigAsList(arguments.get("cases"), map -> {
-                List<String> when = MiscUtils.getAsStringList(map.get("when"));
-                List<Function<CTX>> functions = getFunctions(map);
+        public WhenFunction<CTX> create(ConfigSection section) {
+            TextProvider source = TextProviders.fromString(section.getNonNullString("source"));
+            List<Pair<List<String>, Function<CTX>>> pairs = section.getSectionList(CASES, s -> {
+                List<String> when = s.getStringList("when");
+                List<Function<CTX>> functions = getFunctions(s);
                 return Pair.of(when, Function.allOf(functions));
             });
             Map<String, Function<CTX>> whenMap = new HashMap<>();
-            for (Pair<List<String>, Function<CTX>> pair : list) {
+            for (Pair<List<String>, Function<CTX>> pair : pairs) {
                 for (String when : pair.left()) {
                     whenMap.put(when, pair.right());
                 }
             }
-            return new WhenFunction<>(getPredicates(arguments), source, whenMap, Function.allOf(parseFunctions(arguments.get("fallback"))));
+            return new WhenFunction<>(
+                    getPredicates(section),
+                    source,
+                    whenMap,
+                    Function.allOf(section.getSectionList("fallback", super.functionFactory))
+            );
         }
     }
 }

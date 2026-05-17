@@ -2,26 +2,27 @@ package net.momirealms.craftengine.core.plugin.config.template.argument;
 
 import com.ezylang.evalex.Expression;
 import com.ezylang.evalex.data.EvaluationValue;
+import net.momirealms.craftengine.core.plugin.config.ConfigSection;
 import net.momirealms.craftengine.core.plugin.config.template.ArgumentString;
 
-import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
 import java.util.function.Function;
 
+// TODO 存在设计缺陷
 public final class ExpressionTemplateArgument implements TemplateArgument {
     public static final TemplateArgumentFactory<ExpressionTemplateArgument> FACTORY = new Factory();
     private final ArgumentString expression;
     private final ValueType valueType;
 
-    private ExpressionTemplateArgument(String expression, ValueType valueType) {
-        this.expression = ArgumentString.preParse(expression);
+    private ExpressionTemplateArgument(String node, String expression, ValueType valueType) {
+        this.expression = ArgumentString.preParse(node, expression);
         this.valueType = valueType;
     }
 
     @Override
-    public Object get(Map<String, TemplateArgument> arguments) {
-        String expression = Optional.ofNullable(this.expression.get(arguments)).map(String::valueOf).orElse(null);
+    public Object get(String node, Map<String, TemplateArgument> arguments) {
+        String expression = Optional.ofNullable(this.expression.get(node, arguments)).map(String::valueOf).orElse(null);
         if (expression == null) return null;
         try {
             return this.valueType.formatter().apply(new Expression(expression).evaluate());
@@ -51,12 +52,14 @@ public final class ExpressionTemplateArgument implements TemplateArgument {
     }
 
     private static class Factory implements TemplateArgumentFactory<ExpressionTemplateArgument> {
+        private static final String[] VALUE_TYPE = new String[] {"value_type", "value-type"};
 
         @Override
-        public ExpressionTemplateArgument create(Map<String, Object> arguments) {
+        public ExpressionTemplateArgument create(ConfigSection section) {
             return new ExpressionTemplateArgument(
-                    arguments.getOrDefault("expression", "").toString(),
-                    ValueType.valueOf(arguments.getOrDefault("value-type", "double").toString().toUpperCase(Locale.ROOT))
+                    section.assemblePath("expression"),
+                    section.getNonEmptyString("expression"),
+                    section.getEnum(VALUE_TYPE, ValueType.class, ValueType.DOUBLE)
             );
         }
     }

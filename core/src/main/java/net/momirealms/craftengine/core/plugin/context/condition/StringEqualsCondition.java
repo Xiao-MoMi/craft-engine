@@ -1,18 +1,16 @@
 package net.momirealms.craftengine.core.plugin.context.condition;
 
+import net.momirealms.craftengine.core.plugin.config.ConfigSection;
 import net.momirealms.craftengine.core.plugin.context.Condition;
 import net.momirealms.craftengine.core.plugin.context.Context;
 import net.momirealms.craftengine.core.plugin.context.text.TextProvider;
 import net.momirealms.craftengine.core.plugin.context.text.TextProviders;
-import net.momirealms.craftengine.core.util.ResourceConfigUtils;
-
-import java.util.Map;
 
 public final class StringEqualsCondition<CTX extends Context> implements Condition<CTX> {
     private final TextProvider value1;
     private final TextProvider value2;
 
-    public StringEqualsCondition(TextProvider value1, TextProvider value2) {
+    private StringEqualsCondition(TextProvider value1, TextProvider value2) {
         this.value1 = value1;
         this.value2 = value2;
     }
@@ -29,10 +27,11 @@ public final class StringEqualsCondition<CTX extends Context> implements Conditi
     private static class Factory<CTX extends Context> implements ConditionFactory<CTX, StringEqualsCondition<CTX>> {
 
         @Override
-        public StringEqualsCondition<CTX> create(Map<String, Object> arguments) {
-            String value1 = ResourceConfigUtils.requireNonEmptyStringOrThrow(arguments.get("value1"), "warning.config.condition.string_equals.missing_value1");
-            String value2 = ResourceConfigUtils.requireNonEmptyStringOrThrow(arguments.get("value2"), "warning.config.condition.string_equals.missing_value2");
-            return new StringEqualsCondition<>(TextProviders.fromString(value1), TextProviders.fromString(value2));
+        public StringEqualsCondition<CTX> create(ConfigSection arguments) {
+            return new StringEqualsCondition<>(
+                    TextProviders.fromString(arguments.getNonNullString("value1")),
+                    TextProviders.fromString(arguments.getNonNullString("value2"))
+            );
         }
     }
 }

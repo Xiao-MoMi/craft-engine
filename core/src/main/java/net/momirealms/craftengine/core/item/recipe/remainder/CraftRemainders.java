@@ -1,12 +1,13 @@
 package net.momirealms.craftengine.core.item.recipe.remainder;
 
-import net.momirealms.craftengine.core.plugin.locale.LocalizedResourceConfigException;
+import net.momirealms.craftengine.core.plugin.config.ConfigConstants;
+import net.momirealms.craftengine.core.plugin.config.ConfigSection;
+import net.momirealms.craftengine.core.plugin.config.ConfigValue;
+import net.momirealms.craftengine.core.plugin.config.KnownResourceException;
 import net.momirealms.craftengine.core.registry.BuiltInRegistries;
 import net.momirealms.craftengine.core.registry.Registries;
 import net.momirealms.craftengine.core.registry.WritableRegistry;
 import net.momirealms.craftengine.core.util.Key;
-import net.momirealms.craftengine.core.util.MiscUtils;
-import net.momirealms.craftengine.core.util.ResourceConfigUtils;
 import net.momirealms.craftengine.core.util.ResourceKey;
 
 import java.util.List;
@@ -26,26 +27,24 @@ public final class CraftRemainders {
         return type;
     }
 
-    public static CraftRemainder fromMap(Map<String, Object> map) {
-        String type = ResourceConfigUtils.requireNonEmptyStringOrThrow(map.get("type"), "warning.config.item.settings.craft_remainder.missing_type");
-        Key key = Key.withDefaultNamespace(type, Key.DEFAULT_NAMESPACE);
+    public static CraftRemainder fromConfig(ConfigSection section) {
+        String type = section.getNonEmptyString("type");
+        Key key = Key.ce(type);
         CraftRemainderType<?> craftRemainderType = BuiltInRegistries.CRAFT_REMAINDER_TYPE.getValue(key);
         if (craftRemainderType == null) {
-            throw new LocalizedResourceConfigException("warning.config.item.settings.craft_remainder.invalid_type", type);
+            throw new KnownResourceException("resource.item.settings.craft_remainder.unknown_type", section.assemblePath("type"), key.asString());
         }
-        return craftRemainderType.factory().create(map);
+        return craftRemainderType.factory().create(section);
     }
 
-    public static CraftRemainder fromObject(Object obj) {
-        if (obj instanceof Map<?,?> map) {
-            return fromMap(MiscUtils.castToMap(map, false));
-        } else if (obj instanceof List<?> list) {
-            List<CraftRemainder> remainderList = ResourceConfigUtils.parseConfigAsList(list, map -> fromMap(MiscUtils.castToMap(map, false)));
-            return new CompositeCraftRemainder(remainderList.toArray(new CraftRemainder[0]));
-        } else if (obj != null) {
-            return new FixedCraftRemainder(Key.of(obj.toString()));
+    public static CraftRemainder fromConfig(ConfigValue value) {
+        if (value.is(Map.class)) {
+            return CraftRemainders.fromConfig(value.getAsSection());
+        } else if (value.is(List.class)) {
+            List<CraftRemainder> list = value.getAsList(CraftRemainders::fromConfig);
+            return new CompositeCraftRemainder(list.toArray(new CraftRemainder[0]));
         } else {
-            return null;
+            return new FixedCraftRemainder(value.getAsIdentifier(), ConfigConstants.CONSTANT_ONE);
         }
     }
 }

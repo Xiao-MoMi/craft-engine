@@ -4,18 +4,20 @@ import com.google.gson.JsonObject;
 import net.momirealms.craftengine.core.pack.revision.Revision;
 import net.momirealms.craftengine.core.util.GsonHelper;
 import net.momirealms.craftengine.core.util.MinecraftVersion;
+import org.jetbrains.annotations.NotNull;
 
+import java.util.ArrayList;
 import java.util.List;
 
 public final class ModernItemModel {
-    private final ItemModel itemModel;
+    private final ItemModel model;
     private final boolean oversizedInGui;
     private final boolean handAnimationOnSwap;
     private final float swapAnimationScale;
 
-    public ModernItemModel(ItemModel itemModel, boolean handAnimationOnSwap, boolean oversizedInGui, float swapAnimationScale) {
+    public ModernItemModel(@NotNull ItemModel model, boolean handAnimationOnSwap, boolean oversizedInGui, float swapAnimationScale) {
         this.handAnimationOnSwap = handAnimationOnSwap;
-        this.itemModel = itemModel;
+        this.model = model;
         this.oversizedInGui = oversizedInGui;
         this.swapAnimationScale = swapAnimationScale;
     }
@@ -30,31 +32,41 @@ public final class ModernItemModel {
         );
     }
 
+    @NotNull
     public JsonObject toJson(MinecraftVersion version) {
+        return toJson(version, version);
+    }
+
+    @NotNull
+    public JsonObject toJson(MinecraftVersion min, MinecraftVersion max) {
         JsonObject json = new JsonObject();
-        if (this.oversizedInGui && version.isAtOrAbove(MinecraftVersion.V1_21_6)) {
+        if (this.oversizedInGui) { // 1.21.6
             json.addProperty("oversized_in_gui", true);
         }
         if (!this.handAnimationOnSwap) {
             json.addProperty("hand_animation_on_swap", false);
         }
-        if (this.swapAnimationScale != 1.0f && version.isAtOrAbove(MinecraftVersion.V1_21_11)) {
+        if (this.swapAnimationScale != 1.0f) { // 1.21.11
             json.addProperty("swap_animation_scale", this.swapAnimationScale);
         }
-        json.add("model", this.itemModel.apply(version));
+        json.add("model", this.model.toJson(min, max));
         return json;
     }
 
+    @NotNull
     public List<Revision> revisions() {
-        return this.itemModel.revisions().stream().distinct().toList();
+        List<Revision> revisions = new ArrayList<>(4);
+        this.model.gatherRevisions(revisions::add);
+        return revisions.stream().distinct().toList();
+    }
+
+    @NotNull
+    public ItemModel model() {
+        return this.model;
     }
 
     public boolean handAnimationOnSwap() {
         return this.handAnimationOnSwap;
-    }
-
-    public ItemModel itemModel() {
-        return this.itemModel;
     }
 
     public boolean oversizedInGui() {

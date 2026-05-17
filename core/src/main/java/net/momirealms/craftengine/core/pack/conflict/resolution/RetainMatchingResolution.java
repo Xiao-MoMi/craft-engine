@@ -3,13 +3,12 @@ package net.momirealms.craftengine.core.pack.conflict.resolution;
 import net.momirealms.craftengine.core.pack.conflict.PathContext;
 import net.momirealms.craftengine.core.pack.conflict.matcher.PathMatchers;
 import net.momirealms.craftengine.core.plugin.CraftEngine;
+import net.momirealms.craftengine.core.plugin.config.ConfigSection;
 import net.momirealms.craftengine.core.plugin.context.Condition;
-import net.momirealms.craftengine.core.util.MiscUtils;
 
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.StandardCopyOption;
-import java.util.Map;
 
 public record RetainMatchingResolution(Condition<PathContext> matcher) implements Resolution {
     public static final ResolutionFactory<RetainMatchingResolution> FACTORY = new Factory();
@@ -28,9 +27,8 @@ public record RetainMatchingResolution(Condition<PathContext> matcher) implement
     private static class Factory implements ResolutionFactory<RetainMatchingResolution> {
 
         @Override
-        public RetainMatchingResolution create(Map<String, Object> arguments) {
-            Map<String, Object> term = MiscUtils.castToMap(arguments.get("term"), false);
-            return new RetainMatchingResolution(PathMatchers.fromMap(term));
+        public RetainMatchingResolution create(ConfigSection section) {
+            return new RetainMatchingResolution(PathMatchers.fromConfig(section.getNonNullSection("term")));
         }
     }
 }

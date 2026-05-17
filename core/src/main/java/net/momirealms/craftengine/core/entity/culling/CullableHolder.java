@@ -4,7 +4,7 @@ import net.momirealms.craftengine.core.entity.player.Player;
 
 public final class CullableHolder {
     public Cullable cullable;
-    public boolean isShown;
+    public volatile boolean isShown;
 
     public CullableHolder(Cullable cullable) {
         this.cullable = cullable;

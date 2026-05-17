@@ -10,7 +10,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Optional;
 
-public class ImageExpansion extends PlaceholderExpansion {
+public final class ImageExpansion extends PlaceholderExpansion {
     private final BukkitCraftEngine plugin;
 
     public ImageExpansion(BukkitCraftEngine plugin) {

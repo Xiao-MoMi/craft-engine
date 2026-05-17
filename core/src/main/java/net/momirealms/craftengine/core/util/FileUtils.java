@@ -1,7 +1,7 @@
 package net.momirealms.craftengine.core.util;
 
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
-import net.momirealms.craftengine.core.pack.ResourceLocation;
+import net.momirealms.craftengine.core.pack.Identifier;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
@@ -13,8 +13,7 @@ import java.util.List;
 import java.util.function.Predicate;
 import java.util.stream.Stream;
 
-public class FileUtils {
-
+public final class FileUtils {
     private FileUtils() {}
 
     public static boolean isAbsolute(final String path) {
@@ -98,7 +97,7 @@ public class FileUtils {
         try (Stream<Path> paths = Files.list(assetsFolder)) {
             folders = new ObjectArrayList<>(paths
                     .filter(Files::isDirectory)
-                    .filter(path -> ResourceLocation.isValidNamespace(path.getFileName().toString()))
+                    .filter(path -> Identifier.isValidNamespace(path.getFileName().toString()))
                     .toList());
         }
         return folders;
@@ -116,6 +115,25 @@ public class FileUtils {
             }
         });
         return files;
+    }
+
+    public static void deleteEmptyParentDirectories(Path dir, Path stopPath) {
+        try {
+            if (Files.isDirectory(dir) && isDirectoryEmpty(dir)) {
+                Files.delete(dir);
+                Path parent = dir.getParent();
+                if (parent != null && !parent.equals(stopPath)) {
+                    deleteEmptyParentDirectories(parent, stopPath);
+                }
+            }
+        } catch (IOException ignored) {
+        }
+    }
+
+    private static boolean isDirectoryEmpty(Path dir) throws IOException {
+        try (DirectoryStream<Path> dirStream = Files.newDirectoryStream(dir)) {
+            return !dirStream.iterator().hasNext();
+        }
     }
 
     public static boolean isJsonFile(Path filePath) {

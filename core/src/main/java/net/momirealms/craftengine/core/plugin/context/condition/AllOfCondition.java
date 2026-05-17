@@ -1,22 +1,27 @@
 package net.momirealms.craftengine.core.plugin.context.condition;
 
+import net.momirealms.craftengine.core.plugin.config.ConfigSection;
 import net.momirealms.craftengine.core.plugin.context.Condition;
 import net.momirealms.craftengine.core.plugin.context.Context;
-import net.momirealms.craftengine.core.plugin.locale.LocalizedResourceConfigException;
 import net.momirealms.craftengine.core.util.MiscUtils;
-import net.momirealms.craftengine.core.util.ResourceConfigUtils;
 
-import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 import java.util.function.Function;
 import java.util.function.Predicate;
 
 public final class AllOfCondition<CTX extends Context> implements Condition<CTX> {
     private final Predicate<CTX> condition;
 
-    public AllOfCondition(List<? extends Condition<CTX>> conditions) {
+    private AllOfCondition(List<? extends Condition<CTX>> conditions) {
         this.condition = MiscUtils.allOf(conditions);
+    }
+
+    private AllOfCondition(Predicate<CTX> condition) {
+        this.condition = condition;
+    }
+
+    public static AllOfCondition<Context> allOf(List<? extends Condition<Context>> conditions) {
+        return new AllOfCondition<>(conditions);
     }
 
     @Override
@@ -24,29 +29,23 @@ public final class AllOfCondition<CTX extends Context> implements Condition<CTX>
         return this.condition.test(ctx);
     }
 
-    public static <CTX extends Context> ConditionFactory<CTX, AllOfCondition<CTX>> factory(Function<Map<String, Object>, Condition<CTX>> factory) {
+    public static <CTX extends Context> ConditionFactory<CTX, AllOfCondition<CTX>> factory(Function<ConfigSection, Condition<CTX>> factory) {
         return new Factory<>(factory);
     }
 
-    private record Factory<CTX extends Context>(Function<Map<String, Object>, Condition<CTX>> factory) implements ConditionFactory<CTX, AllOfCondition<CTX>> {
+    private record Factory<CTX extends Context>(Function<ConfigSection, Condition<CTX>> factory) implements ConditionFactory<CTX, AllOfCondition<CTX>> {
+        private static final String[] TERMS = new String[]{"terms", "term"};
 
-        @SuppressWarnings("unchecked")
         @Override
-        public AllOfCondition<CTX> create(Map<String, Object> arguments) {
-            Object termsArg = ResourceConfigUtils.requireNonNullOrThrow(
-                    ResourceConfigUtils.get(arguments, "terms", "term"),
-                    "warning.config.condition.all_of.missing_terms"
-            );
-            if (termsArg instanceof Map<?, ?> map) {
-                return new AllOfCondition<>(List.of(factory.apply(MiscUtils.castToMap(map, false))));
-            } else if (termsArg instanceof List<?> list) {
-                List<Condition<CTX>> conditions = new ArrayList<>();
-                for (Map<String, Object> term : (List<Map<String, Object>>) list) {
-                    conditions.add(factory.apply(term));
-                }
-                return new AllOfCondition<>(conditions);
+        public AllOfCondition<CTX> create(ConfigSection section) {
+            List<Condition<CTX>> conditions = section.getSectionList(TERMS, this.factory);
+            if (conditions.isEmpty()) {
+                return new AllOfCondition<>((ctx) -> true);
+            } else if (conditions.size() == 1) {
+                Condition<CTX> first = conditions.getFirst();
+                return new AllOfCondition<>(first);
             } else {
-                throw new LocalizedResourceConfigException("warning.config.condition.all_of.invalid_terms_type", termsArg.getClass().getSimpleName());
+                return new AllOfCondition<>(conditions);
             }
         }
     }

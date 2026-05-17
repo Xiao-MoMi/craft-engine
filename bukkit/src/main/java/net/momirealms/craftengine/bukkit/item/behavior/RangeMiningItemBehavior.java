@@ -6,17 +6,16 @@ import net.momirealms.craftengine.core.entity.player.Player;
 import net.momirealms.craftengine.core.item.behavior.ItemBehavior;
 import net.momirealms.craftengine.core.item.behavior.ItemBehaviorFactory;
 import net.momirealms.craftengine.core.pack.Pack;
+import net.momirealms.craftengine.core.plugin.config.ConfigSection;
+import net.momirealms.craftengine.core.plugin.config.ConfigValue;
 import net.momirealms.craftengine.core.util.Direction;
 import net.momirealms.craftengine.core.util.Key;
-import net.momirealms.craftengine.core.util.MiscUtils;
 import net.momirealms.craftengine.core.world.BlockPos;
 import net.momirealms.craftengine.core.world.Vec3i;
 import net.momirealms.craftengine.core.world.World;
 
 import java.nio.file.Path;
 import java.util.List;
-import java.util.Map;
-import java.util.Objects;
 
 public final class RangeMiningItemBehavior extends ItemBehavior {
     public static final ItemBehaviorFactory<RangeMiningItemBehavior> FACTORY = new Factory();
@@ -33,12 +32,12 @@ public final class RangeMiningItemBehavior extends ItemBehavior {
     }
 
     @Override
-    public void breakBlock(World world, Player player, BlockPos pos) {
+    public void onBreakBlock(World world, Player player, BlockPos pos) {
         BukkitServerPlayer serverPlayer = (BukkitServerPlayer) player;
         if (serverPlayer.isRangeMining()) return;
 
         BlockStateWrapper blockState = world.getBlockState(pos);
-        float destroyProgress = player.getDestroyProgress(blockState.literalObject(), pos);
+        float destroyProgress = player.getDestroyProgress(blockState.minecraftState(), pos);
 
         // 获取水平朝向 (North, South, East, West)
         Direction facing = player.getDirection();
@@ -65,7 +64,7 @@ public final class RangeMiningItemBehavior extends ItemBehavior {
                 BlockStateWrapper targetBlockState = world.getBlockState(targetPos);
 
                 if (targetBlockState != null && !targetBlockState.isAir()) {
-                    float targetProgress = player.getDestroyProgress(targetBlockState.literalObject(), targetPos);
+                    float targetProgress = player.getDestroyProgress(targetBlockState.minecraftState(), targetPos);
                     // 只有当目标方块比原方块更“脆”或硬度相当时才挖掘
                     if (targetProgress >= destroyProgress) {
                         player.breakBlock(targetX, targetY, targetZ);
@@ -131,18 +130,8 @@ public final class RangeMiningItemBehavior extends ItemBehavior {
 
     private static class Factory implements ItemBehaviorFactory<RangeMiningItemBehavior> {
         @Override
-        public RangeMiningItemBehavior create(Pack pack, Path path, String node, Key key, Map<String, Object> arguments) {
-            List<String> poses = MiscUtils.getAsStringList(arguments.get("range"));
-            List<Vec3i> range = poses.stream().map(it -> {
-                String[] split = it.split(",", 3);
-                if (split.length != 3) return null;
-                try {
-                    return new Vec3i(Integer.parseInt(split[0]), Integer.parseInt(split[1]), Integer.parseInt(split[2]));
-                } catch (NumberFormatException e) {
-                    return null;
-                }
-            }).filter(Objects::nonNull).toList();
-            return new RangeMiningItemBehavior(range);
+        public RangeMiningItemBehavior create(Pack pack, Path path, Key key, ConfigSection section) {
+            return new RangeMiningItemBehavior(section.getList("range", ConfigValue::getAsVector3i));
         }
     }
 }

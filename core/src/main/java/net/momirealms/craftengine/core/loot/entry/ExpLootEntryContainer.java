@@ -1,19 +1,17 @@
 package net.momirealms.craftengine.core.loot.entry;
 
 import net.momirealms.craftengine.core.loot.LootContext;
+import net.momirealms.craftengine.core.plugin.config.ConfigSection;
 import net.momirealms.craftengine.core.plugin.context.CommonConditions;
 import net.momirealms.craftengine.core.plugin.context.Condition;
 import net.momirealms.craftengine.core.plugin.context.number.NumberProvider;
-import net.momirealms.craftengine.core.plugin.context.number.NumberProviders;
 import net.momirealms.craftengine.core.plugin.context.parameter.DirectContextParameters;
-import net.momirealms.craftengine.core.util.ResourceConfigUtils;
 
 import java.util.List;
-import java.util.Map;
 import java.util.function.Consumer;
 
-public final class ExpLootEntryContainer<T> extends AbstractLootEntryContainer<T> {
-    public static final LootEntryContainerFactory<?> FACTORY = new Factory<>();
+public final class ExpLootEntryContainer extends AbstractLootEntryContainer {
+    public static final LootEntryContainerFactory<ExpLootEntryContainer> FACTORY = new Factory();
     private final NumberProvider value;
 
     private ExpLootEntryContainer(NumberProvider value, List<Condition<LootContext>> conditions) {
@@ -22,7 +20,7 @@ public final class ExpLootEntryContainer<T> extends AbstractLootEntryContainer<T
     }
 
     @Override
-    public boolean expand(LootContext context, Consumer<LootEntry<T>> choiceConsumer) {
+    public boolean expand(LootContext context, Consumer<LootEntry> choiceConsumer) {
         if (super.test(context)) {
             context.getOptionalParameter(DirectContextParameters.POSITION)
                     .ifPresent(it -> it.world().dropExp(it, value.getInt(context)));
@@ -32,13 +30,15 @@ public final class ExpLootEntryContainer<T> extends AbstractLootEntryContainer<T
         }
     }
 
-    private static class Factory<A> implements LootEntryContainerFactory<A> {
+    private static class Factory implements LootEntryContainerFactory<ExpLootEntryContainer> {
+        private static final String[] COUNT = new String[] {"count", "amount", "exp"};
 
         @Override
-        public LootEntryContainer<A> create(Map<String, Object> arguments) {
-            Object value = ResourceConfigUtils.requireNonNullOrThrow(arguments.get("count"), "warning.config.loot_table.entry.exp.missing_count");
-            List<Condition<LootContext>> conditions = ResourceConfigUtils.parseConfigAsList(arguments.get("conditions"), CommonConditions::fromMap);
-            return new ExpLootEntryContainer<>(NumberProviders.fromObject(value), conditions);
+        public ExpLootEntryContainer create(ConfigSection section) {
+            return new ExpLootEntryContainer(
+                    section.getNonNullNumber(COUNT),
+                    section.getList("conditions", CommonConditions::fromConfig)
+            );
         }
     }
 }

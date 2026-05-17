@@ -3,11 +3,13 @@ package net.momirealms.craftengine.core.sound;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import net.momirealms.craftengine.core.util.Key;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 import java.util.function.Supplier;
 
-public record SoundEvent(Key id, boolean replace, String subTitle, List<Sound> sounds) implements Supplier<JsonObject> {
+public record SoundEvent(@NotNull Key id, boolean replace, @Nullable String subTitle, List<Sound> sounds) implements Supplier<JsonObject> {
 
     @Override
     public JsonObject get() {

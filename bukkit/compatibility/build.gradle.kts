@@ -1,3 +1,7 @@
+import net.momirealms.nbt
+import net.momirealms.netty
+import net.momirealms.paperServer
+
 repositories {
     mavenCentral()
     maven("https://repo.papermc.io/repository/maven-public/")
@@ -15,24 +19,27 @@ repositories {
 }
 
 dependencies {
+    paperServer(project)
+    nbt(project)
+    netty(project)
+
     compileOnly(project(":core"))
     compileOnly(project(":bukkit"))
+    compileOnly(project(":bukkit:proxy"))
     compileOnly(project(":bukkit:compatibility:legacy"))
-    compileOnly("net.momirealms:sparrow-nbt:${rootProject.properties["sparrow_nbt_version"]}")
+
+    // Reflection
+    compileOnly("net.momirealms:sparrow-reflection:${rootProject.properties["sparrow_reflection_version"]}")
     // NMS
     compileOnly("net.momirealms:craft-engine-nms-helper:${rootProject.properties["nms_helper_version"]}")
-    // Platform
-    compileOnly("io.papermc.paper:paper-api:${rootProject.properties["paper_version"]}-R0.1-SNAPSHOT")
-    // Netty
-    compileOnly("io.netty:netty-all:${rootProject.properties["netty_version"]}")
     // Placeholder
     compileOnly("me.clip:placeholderapi:${rootProject.properties["placeholder_api_version"]}")
     // SlimeWorld
     compileOnly("com.infernalsuite.asp:api:4.2.0-SNAPSHOT")
     // ModelEngine
-    compileOnly("com.ticxo.modelengine:ModelEngine:R4.0.8")
+    compileOnly("com.ticxo.modelengine:ModelEngine:R4.0.9")
     // BetterModel
-    compileOnly("io.github.toxicity188:bettermodel:1.15.2")
+    compileOnly("io.github.toxicity188:bettermodel-bukkit-api:2.0.1")
     compileOnly("com.mojang:authlib:${rootProject.properties["authlib_version"]}")
     // LuckPerms
     compileOnly("net.luckperms:api:5.4")
@@ -40,7 +47,7 @@ dependencies {
     compileOnly("com.viaversion:viaversion-api:5.5.1")
     compileOnly("com.viaversion:viaversion-bukkit:5.5.1")
     // Skript
-    compileOnly("com.github.SkriptLang:Skript:2.11.0")
+    compileOnly("com.github.SkriptLang:Skript:2.15.0")
     // FAWE
     compileOnly(platform("com.intellectualsites.bom:bom-newest:1.52"))
     compileOnly("com.fastasyncworldedit:FastAsyncWorldEdit-Core")
@@ -61,19 +68,4 @@ dependencies {
     compileOnly("cn.gtemc:itembridge:${rootProject.properties["itembridge_version"]}")
     // LevelerBridge
     compileOnly("cn.gtemc:levelerbridge:${rootProject.properties["levelerbridge_version"]}")
-}
-
-java {
-    sourceCompatibility = JavaVersion.VERSION_21
-    targetCompatibility = JavaVersion.VERSION_21
-    toolchain {
-        languageVersion = JavaLanguageVersion.of(21)
-    }
-    withSourcesJar()
-}
-
-tasks.withType<JavaCompile> {
-    options.encoding = "UTF-8"
-    options.release.set(21)
-    dependsOn(tasks.clean)
 }

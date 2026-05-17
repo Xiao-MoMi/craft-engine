@@ -1,24 +1,23 @@
 templates#settings:
   default:settings/solid_1x1x1:
-    is-suffocating: true
+    is_suffocating: true
     replaceable: false
-    is-view-blocking: true
-    is-redstone-conductor: true
-    can-occlude: true
+    is_view_blocking: true
+    is_redstone_conductor: true
+    can_occlude: true
   default:settings/transparent_1x1x1:
-    is-suffocating: false
+    is_suffocating: false
     replaceable: false
-    is-view-blocking: false
-    is-redstone-conductor: false
-    can-occlude: false
+    is_view_blocking: false
+    is_redstone_conductor: false
+    can_occlude: false
   default:settings/sapling:
     burnable: false
     template:
       - default:hardness/none
       - default:sound/grass
     overrides:
-      push-reaction: destroy
-      is-randomly-ticking: true
+      push_reaction: destroy
       tags:
         - minecraft:mineable/axe
         - minecraft:saplings
@@ -32,7 +31,7 @@ templates#settings:
     overrides:
       hardness: 0.2
       resistance: 0.2
-      push-reaction: destroy
+      push_reaction: destroy
       instrument: harp
       tags:
         - minecraft:mineable/hoe
@@ -68,9 +67,9 @@ templates#settings:
       hardness: 3.0
       resistance: 3.0
       instrument: basedrum
-      map-color: 11
+      map_color: 11
       tags: ["minecraft:mineable/pickaxe"]
-      correct-tools::template: default:pickaxe_power/level_${break_power}
+      correct_tools::template: default:pickaxe_power/level_${break_power}
   default:settings/deepslate_ore:
     template:
       - default:sound/deepslate
@@ -80,9 +79,9 @@ templates#settings:
       hardness: 4.5
       resistance: 3.0
       instrument: basedrum
-      map-color: 59
+      map_color: 59
       tags: ["minecraft:mineable/pickaxe"]
-      correct-tools::template: default:pickaxe_power/level_${break_power}
+      correct_tools::template: default:pickaxe_power/level_${break_power}
 
 templates#hardness:
   default:hardness/none:
@@ -122,36 +121,36 @@ templates#hardness:
 templates#burn_data:
   default:burn_data/leaves:
     burnable: true
-    burn-chance: 30
-    fire-spread-chance: 60
+    burn_chance: 30
+    fire_spread_chance: 60
   default:burn_data/wood:
     burnable: true
-    burn-chance: 5
-    fire-spread-chance: 5
+    burn_chance: 5
+    fire_spread_chance: 5
   default:burn_data/planks:
     burnable: true
-    burn-chance: 5
-    fire-spread-chance: 20
+    burn_chance: 5
+    fire_spread_chance: 20
   default:burn_data/wool:
     burnable: true
-    burn-chance: 30
-    fire-spread-chance: 60
+    burn_chance: 30
+    fire_spread_chance: 60
   default:burn_data/vine:
     burnable: true
-    burn-chance: 15
-    fire-spread-chance: 100
+    burn_chance: 15
+    fire_spread_chance: 100
   default:burn_data/carpet:
     burnable: true
-    burn-chance: 60
-    fire-spread-chance: 20
+    burn_chance: 60
+    fire_spread_chance: 20
   default:burn_data/coal:
     burnable: true
-    burn-chance: 5
-    fire-spread-chance: 5
+    burn_chance: 5
+    fire_spread_chance: 5
   default:burn_data/grass:
     burnable: true
-    burn-chance: 60
-    fire-spread-chance: 100
+    burn_chance: 60
+    fire_spread_chance: 100
 
 templates#sounds:
   default:sound/block_template:

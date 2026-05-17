@@ -6,7 +6,7 @@ import com.google.gson.JsonObject;
 import java.util.ArrayList;
 import java.util.List;
 
-class AtlasFixer {
+final class AtlasFixer {
     private final List<Entry> entries;
 
     public AtlasFixer() {

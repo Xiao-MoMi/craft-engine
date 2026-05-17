@@ -2,6 +2,7 @@ package net.momirealms.craftengine.core.pack.model.definition.select;
 
 import com.google.gson.JsonObject;
 import net.momirealms.craftengine.core.pack.model.legacy.LegacyModelPredicate;
+import net.momirealms.craftengine.core.plugin.config.ConfigSection;
 import net.momirealms.craftengine.core.util.Key;
 import net.momirealms.craftengine.core.util.MiscUtils;
 
@@ -30,8 +31,8 @@ public final class TrimMaterialSelectProperty implements SelectProperty, LegacyM
     private TrimMaterialSelectProperty() {}
 
     @Override
-    public void accept(JsonObject jsonObject) {
-        jsonObject.addProperty("property", "trim_material");
+    public void writeProperty(JsonObject model) {
+        model.addProperty("property", "trim_material");
     }
 
     @Override
@@ -50,7 +51,7 @@ public final class TrimMaterialSelectProperty implements SelectProperty, LegacyM
 
     private static class Factory implements SelectPropertyFactory<TrimMaterialSelectProperty> {
         @Override
-        public TrimMaterialSelectProperty create(Map<String, Object> arguments) {
+        public TrimMaterialSelectProperty create(ConfigSection section) {
             return INSTANCE;
         }
     }

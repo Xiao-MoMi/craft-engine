@@ -1,9 +1,7 @@
 package net.momirealms.craftengine.core.pack.model.definition.condition;
 
 import com.google.gson.JsonObject;
-import net.momirealms.craftengine.core.util.ResourceConfigUtils;
-
-import java.util.Map;
+import net.momirealms.craftengine.core.plugin.config.ConfigSection;
 
 public final class KeyBindDownConditionProperty implements ConditionProperty {
     public static final ConditionPropertyFactory<KeyBindDownConditionProperty> FACTORY = new Factory();
@@ -19,24 +17,22 @@ public final class KeyBindDownConditionProperty implements ConditionProperty {
     }
 
     @Override
-    public void accept(JsonObject jsonObject) {
-        jsonObject.addProperty("property", "keybind_down");
-        jsonObject.addProperty("keybind", this.keybind);
+    public void writeProperty(JsonObject model) {
+        model.addProperty("property", "keybind_down");
+        model.addProperty("keybind", this.keybind);
     }
 
     private static class Factory implements ConditionPropertyFactory<KeyBindDownConditionProperty> {
         @Override
-        public KeyBindDownConditionProperty create(Map<String, Object> arguments) {
-            String keybindObj = ResourceConfigUtils.requireNonEmptyStringOrThrow(arguments.get("keybind"), "warning.config.item.model.condition.keybind.missing_keybind");
-            return new KeyBindDownConditionProperty(keybindObj);
+        public KeyBindDownConditionProperty create(ConfigSection section) {
+            return new KeyBindDownConditionProperty(section.getNonNullString("keybind"));
         }
     }
 
     private static class Reader implements ConditionPropertyReader<KeyBindDownConditionProperty> {
         @Override
         public KeyBindDownConditionProperty read(JsonObject json) {
-            String keybind = json.get("keybind").getAsString();
-            return new KeyBindDownConditionProperty(keybind);
+            return new KeyBindDownConditionProperty(json.get("keybind").getAsString());
         }
     }
 }

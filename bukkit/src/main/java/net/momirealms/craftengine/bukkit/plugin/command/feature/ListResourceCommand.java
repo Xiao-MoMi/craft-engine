@@ -16,7 +16,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
-public class ListResourceCommand extends BukkitCommandFeature<CommandSender> {
+public final class ListResourceCommand extends BukkitCommandFeature<CommandSender> {
 
     public ListResourceCommand(CraftEngineCommandManager<CommandSender> commandManager, CraftEngine plugin) {
         super(commandManager, plugin);

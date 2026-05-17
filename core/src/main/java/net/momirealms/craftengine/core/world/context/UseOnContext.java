@@ -17,17 +17,17 @@ public class UseOnContext {
     private final InteractionHand hand;
     private final BlockHitResult hitResult;
     private final World level;
-    private final Item<?> itemStack;
+    private final Item itemStack;
 
     public UseOnContext(Player player, InteractionHand hand, BlockHitResult hit) {
         this(player.world(), player, hand, player.getItemInHand(hand), hit);
     }
 
-    public UseOnContext(Player player, InteractionHand hand, Item<?> stack, BlockHitResult hit) {
+    public UseOnContext(Player player, InteractionHand hand, Item stack, BlockHitResult hit) {
         this(player.world(), player, hand, stack, hit);
     }
 
-    public UseOnContext(@NotNull World world, @Nullable Player player, InteractionHand hand, @NotNull Item<?> stack, BlockHitResult hit) {
+    public UseOnContext(@NotNull World world, @Nullable Player player, InteractionHand hand, @NotNull Item stack, BlockHitResult hit) {
         this.player = player;
         this.hand = hand;
         this.hitResult = hit;
@@ -61,7 +61,7 @@ public class UseOnContext {
     }
 
     @NotNull
-    public Item<?> getItem() {
+    public Item getItem() {
         return this.itemStack;
     }
 

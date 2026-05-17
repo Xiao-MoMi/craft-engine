@@ -2,7 +2,7 @@ package net.momirealms.craftengine.core.world.particle;
 
 import net.momirealms.craftengine.core.util.Color;
 
-public class DustTransitionData implements ParticleData {
+public final class DustTransitionData implements ParticleData {
     private final Color from;
     private final Color to;
     private final float size;

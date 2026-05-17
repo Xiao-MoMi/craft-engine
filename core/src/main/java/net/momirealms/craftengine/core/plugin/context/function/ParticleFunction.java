@@ -1,5 +1,6 @@
 package net.momirealms.craftengine.core.plugin.context.function;
 
+import net.momirealms.craftengine.core.plugin.config.ConfigSection;
 import net.momirealms.craftengine.core.plugin.context.Condition;
 import net.momirealms.craftengine.core.plugin.context.Context;
 import net.momirealms.craftengine.core.plugin.context.parameter.DirectContextParameters;
@@ -10,13 +11,13 @@ import net.momirealms.craftengine.core.world.WorldPosition;
 import net.momirealms.craftengine.core.world.particle.ParticleConfig;
 
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 
-public class ParticleFunction<CTX extends Context> extends AbstractConditionalFunction<CTX> {
+public final class ParticleFunction<CTX extends Context> extends AbstractConditionalFunction<CTX> {
     private final ParticleConfig config;
 
-    public ParticleFunction(List<Condition<CTX>> predicates, ParticleConfig config) {
+    private ParticleFunction(List<Condition<CTX>> predicates,
+                             ParticleConfig config) {
         super(predicates);
         this.config = config;
     }
@@ -31,19 +32,22 @@ public class ParticleFunction<CTX extends Context> extends AbstractConditionalFu
         }
     }
 
-    public static <CTX extends Context> FunctionFactory<CTX, ParticleFunction<CTX>> factory(java.util.function.Function<Map<String, Object>, Condition<CTX>> factory) {
+    public static <CTX extends Context> FunctionFactory<CTX, ParticleFunction<CTX>> factory(java.util.function.Function<ConfigSection, Condition<CTX>> factory) {
         return new Factory<>(factory);
     }
 
     private static class Factory<CTX extends Context> extends AbstractFactory<CTX, ParticleFunction<CTX>> {
 
-        public Factory(java.util.function.Function<Map<String, Object>, Condition<CTX>> factory) {
+        public Factory(java.util.function.Function<ConfigSection, Condition<CTX>> factory) {
             super(factory);
         }
 
         @Override
-        public ParticleFunction<CTX> create(Map<String, Object> arguments) {
-            return new ParticleFunction<>(getPredicates(arguments), ParticleConfig.fromMap$function(arguments));
+        public ParticleFunction<CTX> create(ConfigSection arguments) {
+            return new ParticleFunction<>(
+                    getPredicates(arguments),
+                    ParticleConfig.fromConfig$function(arguments)
+            );
         }
     }
 }

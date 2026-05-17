@@ -3,15 +3,13 @@ package net.momirealms.craftengine.core.item.updater;
 import net.momirealms.craftengine.core.item.updater.impl.ApplyDataOperation;
 import net.momirealms.craftengine.core.item.updater.impl.ResetOperation;
 import net.momirealms.craftengine.core.item.updater.impl.TransmuteOperation;
-import net.momirealms.craftengine.core.plugin.locale.LocalizedResourceConfigException;
+import net.momirealms.craftengine.core.plugin.config.ConfigSection;
+import net.momirealms.craftengine.core.plugin.config.KnownResourceException;
 import net.momirealms.craftengine.core.registry.BuiltInRegistries;
 import net.momirealms.craftengine.core.registry.Registries;
 import net.momirealms.craftengine.core.registry.WritableRegistry;
 import net.momirealms.craftengine.core.util.Key;
-import net.momirealms.craftengine.core.util.ResourceConfigUtils;
 import net.momirealms.craftengine.core.util.ResourceKey;
-
-import java.util.Map;
 
 public final class ItemUpdaters {
     public static final ItemUpdaterType<ApplyDataOperation> APPLY_DATA = register(Key.ce("apply_data"), ApplyDataOperation.FACTORY);
@@ -27,13 +25,13 @@ public final class ItemUpdaters {
         return type;
     }
 
-    public static ItemUpdater fromMap(Key item, Map<String, Object> map) {
-        String type = ResourceConfigUtils.requireNonEmptyStringOrThrow(map.get("type"), "warning.config.item.updater.missing_type");
+    public static ItemUpdater fromConfig(Key item, ConfigSection section) {
+        String type = section.getNonEmptyString("type");
         Key key = Key.ce(type);
         ItemUpdaterType<? extends ItemUpdater> updaterType = BuiltInRegistries.ITEM_UPDATER_TYPE.getValue(key);
         if (updaterType == null) {
-            throw new LocalizedResourceConfigException("warning.config.item.updater.invalid_type", type);
+            throw new KnownResourceException("resource.item.updater.unknown_type", section.assemblePath("type"), key.asString());
         }
-        return updaterType.factory().create(item, map);
+        return updaterType.factory().create(item, section);
     }
 }

@@ -9,11 +9,7 @@ import java.util.List;
 import java.util.Map;
 
 public class PlayerOptionalContext extends AbstractChainParameterContext implements PlayerContext {
-    /**
-     * Use {@link #empty()} instead
-     */
-    @Deprecated(forRemoval = true)
-    public static final PlayerOptionalContext EMPTY = new PlayerOptionalContext(null, ContextHolder.empty());
+    public static final PlayerOptionalContext EMPTY = new PlayerOptionalContext(null, ContextHolder.emptyImmutable());
 
     protected final Player player;
 
@@ -44,11 +40,21 @@ public class PlayerOptionalContext extends AbstractChainParameterContext impleme
     @NotNull
     public static PlayerOptionalContext of(@Nullable Player player) {
         if (player == null) return empty();
-        return new PlayerOptionalContext(player, new ContextHolder(Map.of(DirectContextParameters.PLAYER, () -> player)));
+        return new PlayerOptionalContext(player, ContextHolder.mutable(Map.of(DirectContextParameters.PLAYER, () -> player)));
+    }
+
+    @NotNull
+    public static PlayerOptionalContext ofImmutable(@Nullable Player player) {
+        if (player == null) return emptyImmutable();
+        return new PlayerOptionalContext(player, ContextHolder.mutable(Map.of(DirectContextParameters.PLAYER, () -> player)));
     }
 
     @NotNull
     public static PlayerOptionalContext empty() {
+        return EMPTY;
+    }
+
+    public static PlayerOptionalContext emptyImmutable() {
         return new PlayerOptionalContext(null, ContextHolder.empty());
     }
 

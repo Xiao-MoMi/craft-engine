@@ -1,7 +1,7 @@
 items:
   default:safe_block:
     data:
-      item-name: <!i><lang:item.default.safe_block>
+      item_name: <!i><lang:item.default.safe_block>
     model: minecraft:block/custom/safe_block
     behavior:
       type: block_item
@@ -11,11 +11,11 @@ items:
         settings:
           hardness: 5
           resistance: 1200
-          is-suffocating: true
-          is-redstone-conductor: true
-          push-reaction: block
+          is_suffocating: true
+          is_redstone_conductor: true
+          push_reaction: block
           instrument: basedrum
-          map-color: 6
+          map_color: 6
           tags:
             - minecraft:mineable/pickaxe
           sounds:
@@ -31,8 +31,8 @@ items:
           sounds:
             open: minecraft:block.iron_trapdoor.open
             close: minecraft:block.iron_trapdoor.close
-          allow-input: true
-          allow-output: false
+          allow_input: true
+          allow_output: false
         states:
           properties:
             facing:
@@ -43,7 +43,7 @@ items:
               default: false
           appearances:
             east:
-              auto-state: note_block
+              auto_state: note_block
               model:
                 path: minecraft:block/custom/safe_block
                 y: 90
@@ -55,7 +55,7 @@ items:
                     top: minecraft:block/custom/safe_block_top
                     bottom: minecraft:block/custom/safe_block_bottom
             east_open:
-              auto-state: note_block
+              auto_state: note_block
               model:
                 path: minecraft:block/custom/safe_block_open
                 y: 90
@@ -67,30 +67,30 @@ items:
                     top: minecraft:block/custom/safe_block_top
                     bottom: minecraft:block/custom/safe_block_bottom
             north:
-              auto-state: note_block
+              auto_state: note_block
               model:
                 path: minecraft:block/custom/safe_block
             north_open:
-              auto-state: note_block
+              auto_state: note_block
               model:
                 path: minecraft:block/custom/safe_block_open
             south:
-              auto-state: note_block
+              auto_state: note_block
               model:
                 path: minecraft:block/custom/safe_block
                 y: 180
             south_open:
-              auto-state: note_block
+              auto_state: note_block
               model:
                 path: minecraft:block/custom/safe_block_open
                 y: 180
             west:
-              auto-state: note_block
+              auto_state: note_block
               model:
                 path: minecraft:block/custom/safe_block
                 y: 270
             west_open:
-              auto-state: note_block
+              auto_state: note_block
               model:
                 path: minecraft:block/custom/safe_block_open
                 y: 270

@@ -5,9 +5,9 @@ import net.momirealms.craftengine.core.item.Item;
 public abstract class AbstractCustomProjectile implements CustomProjectile {
     protected final ProjectileMeta meta;
     protected final Projectile projectile;
-    protected final Item<?> item;
+    protected final Item item;
 
-    protected AbstractCustomProjectile(ProjectileMeta meta, Projectile projectile, Item<?> item) {
+    protected AbstractCustomProjectile(ProjectileMeta meta, Projectile projectile, Item item) {
         this.meta = meta;
         this.projectile = projectile;
         this.item = item;
@@ -24,7 +24,7 @@ public abstract class AbstractCustomProjectile implements CustomProjectile {
     }
 
     @Override
-    public Item<?> item() {
+    public Item item() {
         return item;
     }
 }

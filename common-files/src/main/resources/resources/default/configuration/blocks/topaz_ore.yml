@@ -1,26 +1,27 @@
 items:
   default:topaz_ore:
     data:
-      item-name: <!i><lang:item.default.topaz_ore>
+      item_name: <!i><lang:item.default.topaz_ore>
     model: minecraft:block/custom/topaz_ore
     behavior:
       type: block_item
       block: default:topaz_ore
   default:deepslate_topaz_ore:
     data:
-      item-name: <!i><lang:item.default.deepslate_topaz_ore>
+      item_name: <!i><lang:item.default.deepslate_topaz_ore>
     model: minecraft:block/custom/deepslate_topaz_ore
     behavior:
       type: block_item
       block: default:deepslate_topaz_ore
   default:topaz:
     settings:
-      anvil-repair-item:
+      dye_color: 255,140,0
+      anvil_repair_item:
         - target:
             - '#default:topaz_tools'
           percent: 0.25
     data:
-      item-name: <!i><#FF8C00><lang:item.default.topaz>
+      item_name: <!i><#FF8C00><lang:item.default.topaz>
     texture: minecraft:item/custom/topaz
 blocks:
   default:topaz_ore:
@@ -40,7 +41,7 @@ blocks:
       arguments:
         break_power: 2
     state:
-      auto-state: solid
+      auto_state: solid
       model:
         template: default:model/simplified_cube_all
         arguments:
@@ -62,7 +63,7 @@ blocks:
       arguments:
         break_power: 2
     state:
-      auto-state: solid
+      auto_state: solid
       model:
         template: default:model/simplified_cube_all
         arguments:
@@ -108,9 +109,9 @@ recipes:
     result:
       id: default:topaz
       count: 1
-placed-features:
+placed_features:
   default:topaz_ore:
-    environment:
+    dimension_type:
       - minecraft:overworld
     feature:
       type: minecraft:ore

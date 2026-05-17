@@ -1,7 +1,7 @@
 package net.momirealms.craftengine.bukkit.compatibility.papi;
 
 import me.clip.placeholderapi.expansion.PlaceholderExpansion;
-import net.momirealms.craftengine.bukkit.plugin.BukkitCraftEngine;
+import net.momirealms.craftengine.bukkit.api.BukkitAdaptor;
 import net.momirealms.craftengine.bukkit.plugin.user.BukkitServerPlayer;
 import net.momirealms.craftengine.core.entity.player.InteractionHand;
 import net.momirealms.craftengine.core.item.Item;
@@ -11,7 +11,7 @@ import org.bukkit.entity.Player;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class CheckItemExpansion extends PlaceholderExpansion {
+public final class CheckItemExpansion extends PlaceholderExpansion {
     private final CraftEngine plugin;
 
     public CheckItemExpansion(CraftEngine plugin) {
@@ -52,7 +52,7 @@ public class CheckItemExpansion extends PlaceholderExpansion {
     @Override
     public @Nullable String onPlaceholderRequest(Player bukkitPlayer, @NotNull String params) {
         if (bukkitPlayer == null) return null;
-        BukkitServerPlayer player = BukkitCraftEngine.instance().adapt(bukkitPlayer);
+        BukkitServerPlayer player = BukkitAdaptor.adapt(bukkitPlayer);
         if (player == null) return null;
         int index = params.indexOf('_');
         String action = index > 0 ? params.substring(0, index) : params;
@@ -71,12 +71,12 @@ public class CheckItemExpansion extends PlaceholderExpansion {
                 yield String.valueOf(getItemCount(player, param) >= requiredAmount);
             }
             case "id" -> {
-                Item<?> item = getItem(player, param);
+                Item item = getItem(player, param);
                 if (item == null) yield null;
                 yield item.id().asString();
             }
             case "iscustom" -> {
-                Item<?> item = getItem(player, param);
+                Item item = getItem(player, param);
                 if (item == null) yield null;
                 yield String.valueOf(item.isCustomItem());
             }
@@ -85,7 +85,7 @@ public class CheckItemExpansion extends PlaceholderExpansion {
     }
 
     @Nullable
-    private Item<?> getItem(BukkitServerPlayer player, String[] param) {
+    private Item getItem(BukkitServerPlayer player, String[] param) {
         if (param.length < 1 || param[0] == null || param[0].isEmpty()) {
             return player.getItemInHand(InteractionHand.MAIN_HAND);
         }

@@ -3,9 +3,8 @@ package net.momirealms.craftengine.core.pack.model.definition.condition;
 import com.google.gson.JsonObject;
 import net.momirealms.craftengine.core.item.ItemKeys;
 import net.momirealms.craftengine.core.pack.model.legacy.LegacyModelPredicate;
+import net.momirealms.craftengine.core.plugin.config.ConfigSection;
 import net.momirealms.craftengine.core.util.Key;
-
-import java.util.Map;
 
 public final class BrokenConditionProperty implements ConditionProperty, LegacyModelPredicate<Boolean> {
     public static final ConditionPropertyFactory<BrokenConditionProperty> FACTORY = new Factory();
@@ -15,8 +14,8 @@ public final class BrokenConditionProperty implements ConditionProperty, LegacyM
     private BrokenConditionProperty() {}
 
     @Override
-    public void accept(JsonObject jsonObject) {
-        jsonObject.addProperty("property", "broken");
+    public void writeProperty(JsonObject model) {
+        model.addProperty("property", "broken");
     }
 
     @Override
@@ -32,7 +31,7 @@ public final class BrokenConditionProperty implements ConditionProperty, LegacyM
 
     private static class Factory implements ConditionPropertyFactory<BrokenConditionProperty> {
         @Override
-        public BrokenConditionProperty create(Map<String, Object> arguments) {
+        public BrokenConditionProperty create(ConfigSection section) {
             return INSTANCE;
         }
     }

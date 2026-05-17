@@ -29,6 +29,10 @@ public final class ProtocolVersion {
     public static final ProtocolVersion V1_21_9 = new ProtocolVersion(773, "1.21.9");
     public static final ProtocolVersion V1_21_10 = new ProtocolVersion(773, "1.21.10");
     public static final ProtocolVersion V1_21_11 = new ProtocolVersion(774, "1.21.11");
+    public static final ProtocolVersion V26_1 = new ProtocolVersion(775, "26.1");
+    public static final ProtocolVersion V26_1_1 = new ProtocolVersion(775, "26.1.1");
+    public static final ProtocolVersion V26_1_2 = new ProtocolVersion(775, "26.1.2");
+    public static final ProtocolVersion V26_2 = new ProtocolVersion(776, "26.2");
 
     private final int id;
     private final String name;

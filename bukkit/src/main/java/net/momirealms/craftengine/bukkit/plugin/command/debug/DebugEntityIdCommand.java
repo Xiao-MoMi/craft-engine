@@ -1,0 +1,53 @@
+package net.momirealms.craftengine.bukkit.plugin.command.debug;
+
+import net.kyori.adventure.text.Component;
+import net.momirealms.craftengine.bukkit.plugin.command.BukkitCommandFeature;
+import net.momirealms.craftengine.core.plugin.CraftEngine;
+import net.momirealms.craftengine.core.plugin.command.CraftEngineCommandManager;
+import net.momirealms.craftengine.core.util.VersionHelper;
+import net.momirealms.craftengine.proxy.bukkit.craftbukkit.CraftWorldProxy;
+import net.momirealms.craftengine.proxy.minecraft.server.level.ServerLevelProxy;
+import net.momirealms.craftengine.proxy.minecraft.world.level.LevelProxy;
+import net.momirealms.craftengine.proxy.paper.chunk.system.entity.EntityLookupProxy;
+import org.bukkit.World;
+import org.bukkit.command.CommandSender;
+import org.incendo.cloud.Command;
+import org.incendo.cloud.CommandManager;
+import org.incendo.cloud.bukkit.parser.WorldParser;
+import org.incendo.cloud.parser.standard.IntegerParser;
+
+public final class DebugEntityIdCommand extends BukkitCommandFeature<CommandSender> {
+
+    public DebugEntityIdCommand(CraftEngineCommandManager<CommandSender> commandManager, CraftEngine plugin) {
+        super(commandManager, plugin);
+    }
+
+    @Override
+    public Command.Builder<? extends CommandSender> assembleCommand(CommandManager<CommandSender> manager, Command.Builder<CommandSender> builder) {
+        return builder
+                .required("world", WorldParser.worldParser())
+                .required("entityId", IntegerParser.integerParser())
+                .handler(context -> {
+                    World world = context.get("world");
+                    int entityId = context.get("entityId");
+                    Object level = CraftWorldProxy.INSTANCE.getWorld(world);
+                    Object entityLookup;
+                    if (VersionHelper.isOrAbove1_21) {
+                        entityLookup = LevelProxy.INSTANCE.moonrise$getEntityLookup(level);
+                    } else {
+                        entityLookup = ServerLevelProxy.INSTANCE.getEntityLookup(level);
+                    }
+                    Object entity = EntityLookupProxy.INSTANCE.get(entityLookup, entityId);
+                    if (entity == null) {
+                        handleFeedback(context, Component.translatable().key("argument.entity.notfound.entity"));
+                        return;
+                    }
+                    context.sender().sendMessage(entity.toString());
+                });
+    }
+
+    @Override
+    public String getFeatureID() {
+        return "debug_entity_id";
+    }
+}

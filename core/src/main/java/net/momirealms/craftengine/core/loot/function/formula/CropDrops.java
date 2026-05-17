@@ -1,14 +1,12 @@
 package net.momirealms.craftengine.core.loot.function.formula;
 
-import net.momirealms.craftengine.core.util.ResourceConfigUtils;
+import net.momirealms.craftengine.core.plugin.config.ConfigSection;
 import net.momirealms.craftengine.core.util.random.RandomUtils;
-
-import java.util.Map;
 
 public final class CropDrops implements Formula {
     public static final FormulaFactory<CropDrops> FACTORY = new Factory();
-    private final int extra;
-    private final float probability;
+    public final int extra;
+    public final float probability;
 
     private CropDrops(int extra, float probability) {
         this.extra = extra;
@@ -26,12 +24,14 @@ public final class CropDrops implements Formula {
     }
 
     private static class Factory implements FormulaFactory<CropDrops> {
+        private static final String[] PROBABILITY = new String[] {"probability", "chance"};
 
         @Override
-        public CropDrops create(Map<String, Object> arguments) {
-            int extra = ResourceConfigUtils.getAsInt(arguments.getOrDefault("extra", 1), "extra");
-            float probability = ResourceConfigUtils.getAsFloat(arguments.getOrDefault("probability", 0.5f), "probability");
-            return new CropDrops(extra, probability);
+        public CropDrops create(ConfigSection section) {
+            return new CropDrops(
+                    section.getInt("extra", 1),
+                    section.getFloat(PROBABILITY, 0.5f)
+            );
         }
     }
 }

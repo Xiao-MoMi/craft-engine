@@ -1,7 +1,7 @@
 items:
   default:copper_coil:
     data:
-      item-name: <!i><lang:item.default.copper_coil>
+      item_name: <!i><lang:item.default.copper_coil>
     model: minecraft:block/custom/copper_coil
     behavior:
       type: block_item
@@ -15,13 +15,13 @@ items:
             hardness: 3.0
             resistance: 4.5
             replaceable: false
-            is-redstone-conductor: true
-            is-suffocating: true
+            is_redstone_conductor: true
+            is_suffocating: true
             instrument: basedrum
-            map-color: 15
+            map_color: 15
             tags:
               - minecraft:mineable/pickaxe
-            correct-tools:
+            correct_tools:
               template: default:pickaxe_power/level_1
         behavior:
           type: lamp_block
@@ -32,7 +32,7 @@ items:
               default: false
           appearances:
             off:
-              auto-state: cactus
+              auto_state: cactus
               model:
                 path: minecraft:block/custom/copper_coil
                 generation:
@@ -43,7 +43,7 @@ items:
                     top: minecraft:block/custom/copper_coil
                     side: minecraft:block/custom/copper_coil_side
             on:
-              auto-state: cactus
+              auto_state: cactus
               model:
                 path: minecraft:block/custom/copper_coil_on
                 generation:

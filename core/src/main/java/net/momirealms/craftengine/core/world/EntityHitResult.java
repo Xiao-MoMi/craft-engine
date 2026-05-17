@@ -3,7 +3,7 @@ package net.momirealms.craftengine.core.world;
 import net.momirealms.craftengine.core.util.Direction;
 import net.momirealms.craftengine.core.util.MiscUtils;
 
-public class EntityHitResult {
+public final class EntityHitResult {
     private final Direction direction;
     private final Vec3d position;
     private final BlockPos blockPos;

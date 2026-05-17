@@ -1,8 +1,8 @@
 package net.momirealms.craftengine.core.pack.model.definition.rangedisptach;
 
-import java.util.Map;
+import net.momirealms.craftengine.core.plugin.config.ConfigSection;
 
 public interface RangeDispatchPropertyFactory<T extends RangeDispatchProperty> {
 
-    T create(Map<String, Object> arguments);
+    T create(ConfigSection section);
 }

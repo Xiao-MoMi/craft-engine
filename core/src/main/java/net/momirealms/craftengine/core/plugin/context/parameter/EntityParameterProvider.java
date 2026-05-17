@@ -11,7 +11,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.function.Function;
 
-public class EntityParameterProvider implements ChainParameterProvider<Entity> {
+public final class EntityParameterProvider implements ChainParameterProvider<Entity> {
     private static final Map<ContextKey<?>, Function<Entity, Object>> CONTEXT_FUNCTIONS = new HashMap<>();
     static {
         CONTEXT_FUNCTIONS.put(DirectContextParameters.X, Entity::x);

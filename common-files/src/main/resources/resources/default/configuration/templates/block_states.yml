@@ -7,7 +7,7 @@ templates:
         default: y
     appearances:
       axisY:
-        auto-state: solid
+        auto_state: solid
         model:
           path: ${model_vertical_path}
           generation:
@@ -16,7 +16,7 @@ templates:
               end: ${texture_top_path}
               side: ${texture_side_path}
       axisX:
-        auto-state: solid
+        auto_state: solid
         model:
           x: 90
           y: 90
@@ -27,7 +27,7 @@ templates:
               end: ${texture_top_path}
               side: ${texture_side_path}
       axisZ:
-        auto-state: solid
+        auto_state: solid
         model:
           x: 90
           path: ${model_horizontal_path}
@@ -54,10 +54,11 @@ templates:
       distance:
         type: int
         default: 7
-        range: 1~7
+        min: 1
+        max: 7
     appearances:
       default:
-        auto-state: ${auto_state}
+        auto_state: ${auto_state}
         model:
           path: ${model_path}
           generation:
@@ -65,7 +66,7 @@ templates:
             textures:
               all: ${texture_path}
       waterlogged:
-        auto-state: waterlogged_${auto_state}
+        auto_state: waterlogged_${auto_state}
         model:
           path: ${model_path}
     variants:
@@ -76,10 +77,7 @@ templates:
         settings:
           resistance: 1200.0
           burnable: false
-          fluid-state: water
-      distance=7,persistent=false:
-        settings:
-          is-randomly-ticking: true
+          fluid_state: water
   # any leaves block
   default:block_state/leaves:
     template: default:block_state/__leaves__
@@ -88,8 +86,8 @@ templates:
       leaves_base_model:
         type: condition
         condition: ${tintable:-false}
-        on-true: leaves
-        on-false: cube_all
+        on_true: leaves
+        on_false: cube_all
   # tintable leaves block
   default:block_state/tintable_leaves:
     template: default:block_state/__leaves__
@@ -322,95 +320,95 @@ templates:
         settings:
           resistance: 1200.0
           burnable: false
-          fluid-state: water
+          fluid_state: water
       facing=east,half=bottom,open=true,waterlogged=true:
         appearance: facing=east,half=bottom,open=true,waterlogged=true
         settings:
           resistance: 1200.0
           burnable: false
-          fluid-state: water
+          fluid_state: water
       facing=east,half=top,open=false,waterlogged=true:
         appearance: facing=east,half=top,open=false,waterlogged=true
         settings:
           resistance: 1200.0
           burnable: false
-          fluid-state: water
+          fluid_state: water
       facing=east,half=top,open=true,waterlogged=true:
         appearance: facing=east,half=top,open=true,waterlogged=true
         settings:
           resistance: 1200.0
           burnable: false
-          fluid-state: water
+          fluid_state: water
       facing=north,half=bottom,open=false,waterlogged=true:
         appearance: facing=north,half=bottom,open=false,waterlogged=true
         settings:
           resistance: 1200.0
           burnable: false
-          fluid-state: water
+          fluid_state: water
       facing=north,half=bottom,open=true,waterlogged=true:
         appearance: facing=north,half=bottom,open=true,waterlogged=true
         settings:
           resistance: 1200.0
           burnable: false
-          fluid-state: water
+          fluid_state: water
       facing=north,half=top,open=false,waterlogged=true:
         appearance: facing=north,half=top,open=false,waterlogged=true
         settings:
           resistance: 1200.0
           burnable: false
-          fluid-state: water
+          fluid_state: water
       facing=north,half=top,open=true,waterlogged=true:
         appearance: facing=north,half=top,open=true,waterlogged=true
         settings:
           resistance: 1200.0
           burnable: false
-          fluid-state: water
+          fluid_state: water
       facing=south,half=bottom,open=false,waterlogged=true:
         appearance: facing=south,half=bottom,open=false,waterlogged=true
         settings:
           resistance: 1200.0
           burnable: false
-          fluid-state: water
+          fluid_state: water
       facing=south,half=bottom,open=true,waterlogged=true:
         appearance: facing=south,half=bottom,open=true,waterlogged=true
         settings:
           resistance: 1200.0
           burnable: false
-          fluid-state: water
+          fluid_state: water
       facing=south,half=top,open=false,waterlogged=true:
         appearance: facing=south,half=top,open=false,waterlogged=true
         settings:
           resistance: 1200.0
           burnable: false
-          fluid-state: water
+          fluid_state: water
       facing=south,half=top,open=true,waterlogged=true:
         appearance: facing=south,half=top,open=true,waterlogged=true
         settings:
           resistance: 1200.0
           burnable: false
-          fluid-state: water
+          fluid_state: water
       facing=west,half=bottom,open=false,waterlogged=true:
         appearance: facing=west,half=bottom,open=false,waterlogged=true
         settings:
           resistance: 1200.0
           burnable: false
-          fluid-state: water
+          fluid_state: water
       facing=west,half=bottom,open=true,waterlogged=true:
         appearance: facing=west,half=bottom,open=true,waterlogged=true
         settings:
           resistance: 1200.0
           burnable: false
-          fluid-state: water
+          fluid_state: water
       facing=west,half=top,open=false,waterlogged=true:
         appearance: facing=west,half=top,open=false,waterlogged=true
         settings:
           resistance: 1200.0
           burnable: false
-          fluid-state: water
+          fluid_state: water
       facing=west,half=top,open=true,waterlogged=true:
         appearance: facing=west,half=top,open=true,waterlogged=true
         settings:
-          fluid-state: water
+          fluid_state: water
   # door block
   default:block_state/door:
     properties:
@@ -877,19 +875,19 @@ templates:
         settings:
           resistance: 1200.0
           burnable: false
-          fluid-state: water
+          fluid_state: water
       type=bottom,waterlogged=true:
         appearance: type=bottom,waterlogged=true
         settings:
           resistance: 1200.0
           burnable: false
-          fluid-state: water
+          fluid_state: water
       type=double,waterlogged=true:
         appearance: type=double,waterlogged=true
         settings:
           resistance: 1200.0
           burnable: false
-          fluid-state: water
+          fluid_state: water
   # stairs block
   default:block_state/stairs:
     properties:
@@ -1401,7 +1399,7 @@ templates:
         settings:
           resistance: 1200.0
           burnable: false
-          fluid-state: water
+          fluid_state: water
       facing=east,half=bottom,shape=inner_left,waterlogged=false:
         appearance: facing=east,half=bottom,shape=inner_left,waterlogged=false
       facing=east,half=bottom,shape=inner_right,waterlogged=false:
@@ -1599,166 +1597,166 @@ templates:
     appearances:
       face=floor,facing=east,powered=true:
         state: ${base_block}[face=floor,facing=east,powered=true]
-        entity-renderer:
+        entity_renderer:
           item: ${pressed_item}
           rotation: 0,90,0
           scale: 1.0005
           translation: 0,0.00023,0
       face=floor,facing=west,powered=true:
         state: ${base_block}[face=floor,facing=west,powered=true]
-        entity-renderer:
+        entity_renderer:
           item: ${pressed_item}
           rotation: 0,-90,0
           scale: 1.0005
           translation: 0,0.00023,0
       face=floor,facing=east,powered=false:
         state: ${base_block}[face=floor,facing=east,powered=false]
-        entity-renderer:
+        entity_renderer:
           item: ${not_pressed_item}
           rotation: 0,90,0
           scale: 1.0005
           translation: 0,0.00023,0
       face=floor,facing=west,powered=false:
         state: ${base_block}[face=floor,facing=west,powered=false]
-        entity-renderer:
+        entity_renderer:
           item: ${not_pressed_item}
           rotation: 0,-90,0
           scale: 1.0005
           translation: 0,0.00023,0
       face=floor,facing=south,powered=true:
         state: ${base_block}[face=floor,facing=south,powered=true]
-        entity-renderer:
+        entity_renderer:
           item: ${pressed_item}
           scale: 1.0005
           translation: 0,0.00023,0
       face=floor,facing=north,powered=true:
         state: ${base_block}[face=floor,facing=north,powered=true]
-        entity-renderer:
+        entity_renderer:
           item: ${pressed_item}
           rotation: 0,180,0
           scale: 1.0005
           translation: 0,0.00023,0
       face=floor,facing=south,powered=false:
         state: ${base_block}[face=floor,facing=south,powered=false]
-        entity-renderer:
+        entity_renderer:
           item: ${not_pressed_item}
           scale: 1.0005
           translation: 0,0.00023,0
       face=floor,facing=north,powered=false:
         state: ${base_block}[face=floor,facing=north,powered=false]
-        entity-renderer:
+        entity_renderer:
           item: ${not_pressed_item}
           rotation: 0,180,0
           scale: 1.0005
           translation: 0,0.00023,0
       face=wall,facing=north,powered=true:
         state: ${base_block}[face=wall,facing=north,powered=true]
-        entity-renderer:
+        entity_renderer:
           item: ${pressed_item}
           rotation: -90,0,0
           scale: 1.0005
           translation: 0,0,-0.00023
       face=wall,facing=south,powered=true:
         state: ${base_block}[face=wall,facing=south,powered=true]
-        entity-renderer:
+        entity_renderer:
           item: ${pressed_item}
           rotation: 90,0,180
           scale: 1.0005
           translation: 0,0,0.00023
       face=wall,facing=north,powered=false:
         state: ${base_block}[face=wall,facing=north,powered=false]
-        entity-renderer:
+        entity_renderer:
           item: ${not_pressed_item}
           rotation: -90,0,0
           scale: 1.0005
           translation: 0,0,-0.00023
       face=wall,facing=south,powered=false:
         state: ${base_block}[face=wall,facing=south,powered=false]
-        entity-renderer:
+        entity_renderer:
           item: ${not_pressed_item}
           rotation: 90,0,180
           scale: 1.0005
           translation: 0,0,0.00023
       face=wall,facing=west,powered=true:
         state: ${base_block}[face=wall,facing=west,powered=true]
-        entity-renderer:
+        entity_renderer:
           item: ${pressed_item}
           rotation: 0,90,90
           scale: 1.0005
           translation: -0.00023,0,0
       face=wall,facing=east,powered=true:
         state: ${base_block}[face=wall,facing=east,powered=true]
-        entity-renderer:
+        entity_renderer:
           item: ${pressed_item}
           rotation: 0,270,-90
           scale: 1.0005
           translation: 0.00023,0,0
       face=wall,facing=west,powered=false:
         state: ${base_block}[face=wall,facing=west,powered=false]
-        entity-renderer:
+        entity_renderer:
           item: ${not_pressed_item}
           rotation: 0,90,90
           scale: 1.0005
           translation: -0.00023,0,0
       face=wall,facing=east,powered=false:
         state: ${base_block}[face=wall,facing=east,powered=false]
-        entity-renderer:
+        entity_renderer:
           item: ${not_pressed_item}
           rotation: 0,270,-90
           scale: 1.0005
           translation: 0.00023,0,0
       face=ceiling,facing=north,powered=true:
         state: ${base_block}[face=ceiling,facing=north,powered=true]
-        entity-renderer:
+        entity_renderer:
           item: ${pressed_item}
           rotation: 0,180,180
           scale: 1.0005
           translation: 0,-0.00023,0
       face=ceiling,facing=south,powered=true:
         state: ${base_block}[face=ceiling,facing=south,powered=true]
-        entity-renderer:
+        entity_renderer:
           item: ${pressed_item}
           rotation: 0,0,180
           scale: 1.0005
           translation: 0,-0.00023,0
       face=ceiling,facing=north,powered=false:
         state: ${base_block}[face=ceiling,facing=north,powered=false]
-        entity-renderer:
+        entity_renderer:
           item: ${not_pressed_item}
           rotation: 0,180,180
           scale: 1.0005
           translation: 0,-0.00023,0
       face=ceiling,facing=south,powered=false:
         state: ${base_block}[face=ceiling,facing=south,powered=false]
-        entity-renderer:
+        entity_renderer:
           item: ${not_pressed_item}
           rotation: 0,0,180
           scale: 1.0005
           translation: 0,-0.00023,0
       face=ceiling,facing=west,powered=true:
         state: ${base_block}[face=ceiling,facing=west,powered=true]
-        entity-renderer:
+        entity_renderer:
           item: ${pressed_item}
           rotation: 0,90,180
           scale: 1.0005
           translation: 0,-0.00023,0
       face=ceiling,facing=east,powered=true:
         state: ${base_block}[face=ceiling,facing=east,powered=true]
-        entity-renderer:
+        entity_renderer:
           item: ${pressed_item}
           rotation: -90,-90,-90
           scale: 1.0005
           translation: 0,-0.00023,0
       face=ceiling,facing=west,powered=false:
         state: ${base_block}[face=ceiling,facing=west,powered=false]
-        entity-renderer:
+        entity_renderer:
           item: ${not_pressed_item}
           rotation: 0,90,180
           scale: 1.0005
           translation: 0,-0.00023,0
       face=ceiling,facing=east,powered=false:
         state: ${base_block}[face=ceiling,facing=east,powered=false]
-        entity-renderer:
+        entity_renderer:
           item: ${not_pressed_item}
           rotation: -90,-90,-90
           scale: 1.0005
@@ -1832,14 +1830,14 @@ templates:
     appearances:
       east=false,north=false,south=false,waterlogged=false,west=false:
         state: ${base_block}[east=false,north=false,south=false,waterlogged=false,west=false]
-        entity-renderer:
+        entity_renderer:
           - item: ${fence_post_item}
             rotation: 180
             scale: 1.0003
             translation: 0,0.0001,0
       east=true,north=false,south=false,waterlogged=false,west=false:
         state: ${base_block}[east=true,north=false,south=false,waterlogged=false,west=false]
-        entity-renderer:
+        entity_renderer:
           - item: ${fence_post_item}
             rotation: 180
             scale: 1.0003
@@ -1848,7 +1846,7 @@ templates:
             rotation: 270
       east=false,north=true,south=false,waterlogged=false,west=false:
         state: ${base_block}[east=false,north=true,south=false,waterlogged=false,west=false]
-        entity-renderer:
+        entity_renderer:
           - item: ${fence_post_item}
             rotation: 180
             scale: 1.0003
@@ -1857,7 +1855,7 @@ templates:
             rotation: 180
       east=false,north=false,south=true,waterlogged=false,west=false:
         state: ${base_block}[east=false,north=false,south=true,waterlogged=false,west=false]
-        entity-renderer:
+        entity_renderer:
           - item: ${fence_post_item}
             rotation: 180
             scale: 1.0003
@@ -1866,7 +1864,7 @@ templates:
             rotation: 0
       east=false,north=false,south=false,waterlogged=false,west=true:
         state: ${base_block}[east=false,north=false,south=false,waterlogged=false,west=true]
-        entity-renderer:
+        entity_renderer:
           - item: ${fence_post_item}
             rotation: 180
             scale: 1.0003
@@ -1875,7 +1873,7 @@ templates:
             rotation: 90
       east=true,north=true,south=false,waterlogged=false,west=false:
         state: ${base_block}[east=true,north=true,south=false,waterlogged=false,west=false]
-        entity-renderer:
+        entity_renderer:
           - item: ${fence_post_item}
             rotation: 180
             scale: 1.0003
@@ -1886,7 +1884,7 @@ templates:
             rotation: 270
       east=true,north=false,south=true,waterlogged=false,west=false:
         state: ${base_block}[east=true,north=false,south=true,waterlogged=false,west=false]
-        entity-renderer:
+        entity_renderer:
           - item: ${fence_post_item}
             rotation: 180
             scale: 1.0003
@@ -1897,7 +1895,7 @@ templates:
             rotation: 270
       east=true,north=false,south=false,waterlogged=false,west=true:
         state: ${base_block}[east=true,north=false,south=false,waterlogged=false,west=true]
-        entity-renderer:
+        entity_renderer:
           - item: ${fence_post_item}
             rotation: 180
             scale: 1.0003
@@ -1908,7 +1906,7 @@ templates:
             rotation: 270
       east=false,north=true,south=true,waterlogged=false,west=false:
         state: ${base_block}[east=false,north=true,south=true,waterlogged=false,west=false]
-        entity-renderer:
+        entity_renderer:
           - item: ${fence_post_item}
             rotation: 180
             scale: 1.0003
@@ -1919,7 +1917,7 @@ templates:
             rotation: 180
       east=false,north=true,south=false,waterlogged=false,west=true:
         state: ${base_block}[east=false,north=true,south=false,waterlogged=false,west=true]
-        entity-renderer:
+        entity_renderer:
           - item: ${fence_post_item}
             rotation: 180
             scale: 1.0003
@@ -1930,7 +1928,7 @@ templates:
             rotation: 180
       east=false,north=false,south=true,waterlogged=false,west=true:
         state: ${base_block}[east=false,north=false,south=true,waterlogged=false,west=true]
-        entity-renderer:
+        entity_renderer:
           - item: ${fence_post_item}
             rotation: 180
             scale: 1.0003
@@ -1941,7 +1939,7 @@ templates:
             rotation: 90
       east=true,north=true,south=true,waterlogged=false,west=false:
         state: ${base_block}[east=true,north=true,south=true,waterlogged=false,west=false]
-        entity-renderer:
+        entity_renderer:
           - item: ${fence_post_item}
             rotation: 180
             scale: 1.0003
@@ -1954,7 +1952,7 @@ templates:
             rotation: 270
       east=true,north=true,south=false,waterlogged=false,west=true:
         state: ${base_block}[east=true,north=true,south=false,waterlogged=false,west=true]
-        entity-renderer:
+        entity_renderer:
           - item: ${fence_post_item}
             rotation: 180
             scale: 1.0003
@@ -1967,7 +1965,7 @@ templates:
             rotation: 270
       east=true,north=false,south=true,waterlogged=false,west=true:
         state: ${base_block}[east=true,north=false,south=true,waterlogged=false,west=true]
-        entity-renderer:
+        entity_renderer:
           - item: ${fence_post_item}
             rotation: 180
             scale: 1.0003
@@ -1980,7 +1978,7 @@ templates:
             rotation: 270
       east=false,north=true,south=true,waterlogged=false,west=true:
         state: ${base_block}[east=false,north=true,south=true,waterlogged=false,west=true]
-        entity-renderer:
+        entity_renderer:
           - item: ${fence_post_item}
             rotation: 180
             scale: 1.0003
@@ -1993,7 +1991,7 @@ templates:
             rotation: 180
       east=true,north=true,south=true,waterlogged=false,west=true:
         state: ${base_block}[east=true,north=true,south=true,waterlogged=false,west=true]
-        entity-renderer:
+        entity_renderer:
           - item: ${fence_post_item}
             rotation: 180
             scale: 1.0003
@@ -2008,14 +2006,14 @@ templates:
             rotation: 270
       east=false,north=false,south=false,waterlogged=true,west=false:
         state: ${base_block}[east=false,north=false,south=false,waterlogged=true,west=false]
-        entity-renderer:
+        entity_renderer:
           - item: ${fence_post_item}
             rotation: 180
             scale: 1.0003
             translation: 0,0.0001,0
       east=true,north=false,south=false,waterlogged=true,west=false:
         state: ${base_block}[east=true,north=false,south=false,waterlogged=true,west=false]
-        entity-renderer:
+        entity_renderer:
           - item: ${fence_post_item}
             rotation: 180
             scale: 1.0003
@@ -2024,7 +2022,7 @@ templates:
             rotation: 270
       east=false,north=true,south=false,waterlogged=true,west=false:
         state: ${base_block}[east=false,north=true,south=false,waterlogged=true,west=false]
-        entity-renderer:
+        entity_renderer:
           - item: ${fence_post_item}
             rotation: 180
             scale: 1.0003
@@ -2033,7 +2031,7 @@ templates:
             rotation: 180
       east=false,north=false,south=true,waterlogged=true,west=false:
         state: ${base_block}[east=false,north=false,south=true,waterlogged=true,west=false]
-        entity-renderer:
+        entity_renderer:
           - item: ${fence_post_item}
             rotation: 180
             scale: 1.0003
@@ -2042,7 +2040,7 @@ templates:
             rotation: 0
       east=false,north=false,south=false,waterlogged=true,west=true:
         state: ${base_block}[east=false,north=false,south=false,waterlogged=true,west=true]
-        entity-renderer:
+        entity_renderer:
           - item: ${fence_post_item}
             rotation: 180
             scale: 1.0003
@@ -2051,7 +2049,7 @@ templates:
             rotation: 90
       east=true,north=true,south=false,waterlogged=true,west=false:
         state: ${base_block}[east=true,north=true,south=false,waterlogged=true,west=false]
-        entity-renderer:
+        entity_renderer:
           - item: ${fence_post_item}
             rotation: 180
             scale: 1.0003
@@ -2062,7 +2060,7 @@ templates:
             rotation: 270
       east=true,north=false,south=true,waterlogged=true,west=false:
         state: ${base_block}[east=true,north=false,south=true,waterlogged=true,west=false]
-        entity-renderer:
+        entity_renderer:
           - item: ${fence_post_item}
             rotation: 180
             scale: 1.0003
@@ -2073,7 +2071,7 @@ templates:
             rotation: 270
       east=true,north=false,south=false,waterlogged=true,west=true:
         state: ${base_block}[east=true,north=false,south=false,waterlogged=true,west=true]
-        entity-renderer:
+        entity_renderer:
           - item: ${fence_post_item}
             rotation: 180
             scale: 1.0003
@@ -2084,7 +2082,7 @@ templates:
             rotation: 270
       east=false,north=true,south=true,waterlogged=true,west=false:
         state: ${base_block}[east=false,north=true,south=true,waterlogged=true,west=false]
-        entity-renderer:
+        entity_renderer:
           - item: ${fence_post_item}
             rotation: 180
             scale: 1.0003
@@ -2095,7 +2093,7 @@ templates:
             rotation: 180
       east=false,north=true,south=false,waterlogged=true,west=true:
         state: ${base_block}[east=false,north=true,south=false,waterlogged=true,west=true]
-        entity-renderer:
+        entity_renderer:
           - item: ${fence_post_item}
             rotation: 180
             scale: 1.0003
@@ -2106,7 +2104,7 @@ templates:
             rotation: 180
       east=false,north=false,south=true,waterlogged=true,west=true:
         state: ${base_block}[east=false,north=false,south=true,waterlogged=true,west=true]
-        entity-renderer:
+        entity_renderer:
           - item: ${fence_post_item}
             rotation: 180
             scale: 1.0003
@@ -2117,7 +2115,7 @@ templates:
             rotation: 90
       east=true,north=true,south=true,waterlogged=true,west=false:
         state: ${base_block}[east=true,north=true,south=true,waterlogged=true,west=false]
-        entity-renderer:
+        entity_renderer:
           - item: ${fence_post_item}
             rotation: 180
             scale: 1.0003
@@ -2130,7 +2128,7 @@ templates:
             rotation: 270
       east=true,north=true,south=false,waterlogged=true,west=true:
         state: ${base_block}[east=true,north=true,south=false,waterlogged=true,west=true]
-        entity-renderer:
+        entity_renderer:
           - item: ${fence_post_item}
             rotation: 180
             scale: 1.0003
@@ -2143,7 +2141,7 @@ templates:
             rotation: 270
       east=true,north=false,south=true,waterlogged=true,west=true:
         state: ${base_block}[east=true,north=false,south=true,waterlogged=true,west=true]
-        entity-renderer:
+        entity_renderer:
           - item: ${fence_post_item}
             rotation: 180
             scale: 1.0003
@@ -2156,7 +2154,7 @@ templates:
             rotation: 270
       east=false,north=true,south=true,waterlogged=true,west=true:
         state: ${base_block}[east=false,north=true,south=true,waterlogged=true,west=true]
-        entity-renderer:
+        entity_renderer:
           - item: ${fence_post_item}
             rotation: 180
             scale: 1.0003
@@ -2169,7 +2167,7 @@ templates:
             rotation: 180
       east=true,north=true,south=true,waterlogged=true,west=true:
         state: ${base_block}[east=true,north=true,south=true,waterlogged=true,west=true]
-        entity-renderer:
+        entity_renderer:
           - item: ${fence_post_item}
             rotation: 180
             scale: 1.0003
@@ -2187,7 +2185,7 @@ templates:
         settings:
           resistance: 1200.0
           burnable: false
-          fluid-state: water
+          fluid_state: water
       east=false,north=false,south=false,waterlogged=false,west=false:
         appearance: east=false,north=false,south=false,waterlogged=false,west=false
       east=true,north=false,south=false,waterlogged=false,west=false:

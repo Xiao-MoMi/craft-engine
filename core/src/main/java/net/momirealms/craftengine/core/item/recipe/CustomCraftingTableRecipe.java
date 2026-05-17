@@ -1,28 +1,29 @@
 package net.momirealms.craftengine.core.item.recipe;
 
 import net.momirealms.craftengine.core.item.recipe.result.CustomRecipeResult;
-import net.momirealms.craftengine.core.plugin.context.Condition;
 import net.momirealms.craftengine.core.plugin.context.Context;
 import net.momirealms.craftengine.core.plugin.context.function.Function;
 import net.momirealms.craftengine.core.util.Key;
 import org.jetbrains.annotations.Nullable;
 
-public abstract class CustomCraftingTableRecipe<T> extends AbstractGroupedRecipe<T>
-        implements ConditionalRecipe<T>, VisualResultRecipe<T>, FunctionalRecipe<T> {
+import java.util.function.Predicate;
+
+public abstract class CustomCraftingTableRecipe extends AbstractGroupedRecipe
+        implements ConditionalRecipe, VisualResultRecipe, FunctionalRecipe {
     protected final CraftingRecipeCategory category;
-    private final CustomRecipeResult<T> visualResult;
+    private final CustomRecipeResult visualResult;
     private final Function<Context>[] craftingFunctions;
-    private final Condition<Context> craftingCondition;
+    private final Predicate<Context> craftingCondition;
     private final boolean alwaysRebuildResult;
 
     protected CustomCraftingTableRecipe(Key id,
                                         boolean showNotification,
-                                        CustomRecipeResult<T> result,
-                                        @Nullable CustomRecipeResult<T> visualResult,
+                                        CustomRecipeResult result,
+                                        @Nullable CustomRecipeResult visualResult,
                                         String group,
                                         CraftingRecipeCategory category,
                                         Function<Context>[] craftingFunctions,
-                                        Condition<Context> craftingCondition,
+                                        Predicate<Context> craftingCondition,
                                         boolean alwaysRebuildResult) {
         super(id, showNotification, result, group);
         this.category = category == null ? CraftingRecipeCategory.MISC : category;
@@ -57,7 +58,7 @@ public abstract class CustomCraftingTableRecipe<T> extends AbstractGroupedRecipe
     }
 
     @Override
-    public CustomRecipeResult<T> visualResult() {
+    public CustomRecipeResult visualResult() {
         return this.visualResult;
     }
 

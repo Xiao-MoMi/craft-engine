@@ -1,4 +1,5 @@
 {
+	"credit": "Made with Blockbench",
 	"textures": {
 		"0": "item/custom/sofa",
 		"particle": "item/custom/sofa"
@@ -8,12 +9,12 @@
 			"from": [-0.025, 2.975, -0.025],
 			"to": [16.025, 9.025, 16.025],
 			"faces": {
-				"north": {"uv": [4, 11.5, 8, 13], "texture": "#0"},
-				"east": {"uv": [8, 11.5, 4, 13], "texture": "#0"},
-				"south": {"uv": [4, 11.5, 8, 13], "texture": "#0"},
-				"west": {"uv": [4, 11.5, 8, 13], "texture": "#0"},
-				"up": {"uv": [4, 4, 0, 0], "texture": "#0"},
-				"down": {"uv": [4, 12, 0, 16], "texture": "#0"}
+				"north": {"uv": [4, 11.5, 8, 13], "texture": "#0", "tintindex": 0},
+				"east": {"uv": [8, 11.5, 4, 13], "texture": "#0", "tintindex": 0},
+				"south": {"uv": [4, 11.5, 8, 13], "texture": "#0", "tintindex": 0},
+				"west": {"uv": [4, 11.5, 8, 13], "texture": "#0", "tintindex": 0},
+				"up": {"uv": [4, 4, 0, 0], "texture": "#0", "tintindex": 0},
+				"down": {"uv": [4, 12, 0, 16], "texture": "#0", "tintindex": 0}
 			}
 		},
 		{
@@ -100,5 +101,13 @@
 			"translation": [0, 0, -16],
 			"scale": [2, 2, 2]
 		}
-	}
+	},
+	"groups": [
+		{
+			"name": "group",
+			"origin": [0, 0, 0],
+			"color": 0,
+			"children": [0, 1, 2, 3, 4]
+		}
+	]
 }

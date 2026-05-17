@@ -1,15 +1,19 @@
 package net.momirealms.craftengine.core.pack.model.definition.tint;
 
 import com.google.gson.JsonObject;
-import net.momirealms.craftengine.core.plugin.locale.LocalizedResourceConfigException;
+import com.mojang.datafixers.util.Either;
+import net.momirealms.craftengine.core.plugin.config.ConfigSection;
+import net.momirealms.craftengine.core.plugin.config.ConfigValue;
+import net.momirealms.craftengine.core.plugin.config.KnownResourceException;
 import net.momirealms.craftengine.core.registry.BuiltInRegistries;
 import net.momirealms.craftengine.core.registry.Registries;
 import net.momirealms.craftengine.core.registry.WritableRegistry;
 import net.momirealms.craftengine.core.util.Key;
-import net.momirealms.craftengine.core.util.ResourceConfigUtils;
+import net.momirealms.craftengine.core.util.MiscUtils;
 import net.momirealms.craftengine.core.util.ResourceKey;
 
-import java.util.Map;
+import java.util.ArrayList;
+import java.util.List;
 
 public final class Tints {
     public static final TintType<ConstantTint> CONSTANT = register(Key.of("constant"), ConstantTint.FACTORY, ConstantTint.READER);
@@ -30,14 +34,44 @@ public final class Tints {
         return type;
     }
 
-    public static Tint fromMap(Map<String, Object> map) {
-        String type = ResourceConfigUtils.requireNonEmptyStringOrThrow(map.get("type"), "warning.config.item.model.tint.missing_type");
+    public static Tint fromConfig(ConfigValue value) {
+        return fromConfig(value.getAsSection());
+    }
+
+    public static Tint fromConfig(ConfigSection section) {
+        String type = section.getNonNullString("type");
         Key key = Key.withDefaultNamespace(type, "minecraft");
         TintType<? extends Tint> tintType = BuiltInRegistries.TINT_TYPE.getValue(key);
         if (tintType == null) {
-            throw new LocalizedResourceConfigException("warning.config.item.model.tint.invalid_type", type);
+            throw new KnownResourceException("resource.item.model_definition.tint.unknown_type", section.assemblePath("type"), key.asString());
         }
-        return tintType.factory().create(map);
+        return tintType.factory().create(section);
+    }
+
+    public static Either<Integer, List<Float>> getTintValue(ConfigValue value) {
+        if (value.is(Number.class)) {
+            return Either.left(value.getAsInt());
+        } else if (value.is(List.class)) {
+            List<String> colorList = value.getAsStringList();
+            boolean hasDot = false;
+            for (String color : colorList) {
+                if (color.contains(".")) {
+                    hasDot = true;
+                    break;
+                }
+            }
+            List<Float> fList = new ArrayList<>();
+            for (String color : colorList) {
+                if (hasDot) {
+                    fList.add(MiscUtils.clamp(Float.parseFloat(color), 0f, 1f));
+                } else {
+                    fList.add(MiscUtils.clamp(Float.parseFloat(color) / 255f, 0f, 1f));
+                }
+            }
+            return Either.right(fList);
+        } else {
+            return Either.left(value.getAsColor().color());
+        }
     }
 
     public static Tint fromJson(JsonObject json) {

@@ -5,7 +5,7 @@ import net.momirealms.craftengine.core.util.UniqueKey;
 import java.util.*;
 import java.util.function.Predicate;
 
-public class Ingredient<T> implements Predicate<UniqueIdItem<T>>, StackedContents.IngredientInfo<UniqueKey> {
+public final class Ingredient implements Predicate<UniqueIdItem>, StackedContents.IngredientInfo<UniqueIdItem> {
     private final List<IngredientElement> elements;
     // 自定义物品与原版物品混合的列表
     private final List<UniqueKey> items;
@@ -23,17 +23,21 @@ public class Ingredient<T> implements Predicate<UniqueIdItem<T>>, StackedContent
         this.count = count;
     }
 
-    public static <T> boolean isInstance(Optional<Ingredient<T>> optionalIngredient, UniqueIdItem<T> stack) {
+    public int count() {
+        return count;
+    }
+
+    public static boolean isInstance(Optional<Ingredient> optionalIngredient, UniqueIdItem stack) {
         return optionalIngredient.map((ingredient) -> ingredient.test(stack))
                 .orElseGet(stack::isEmpty);
     }
 
-    public static <T> Ingredient<T> of(List<IngredientElement> elements, Set<UniqueKey> items, Set<UniqueKey> minecraftItems, boolean hasCustomItem, int count) {
-        return new Ingredient<>(elements, new ArrayList<>(items), new ArrayList<>(minecraftItems), hasCustomItem, count);
+    public static Ingredient of(List<IngredientElement> elements, Set<UniqueKey> items, Set<UniqueKey> minecraftItems, boolean hasCustomItem, int count) {
+        return new Ingredient(elements, new ArrayList<>(items), new ArrayList<>(minecraftItems), hasCustomItem, count);
     }
 
     @Override
-    public boolean test(UniqueIdItem<T> uniqueIdItem) {
+    public boolean test(UniqueIdItem uniqueIdItem) {
         for (UniqueKey item : this.items()) {
             if (uniqueIdItem.is(item)) {
                 if (this.count == 1) {
@@ -76,8 +80,11 @@ public class Ingredient<T> implements Predicate<UniqueIdItem<T>>, StackedContent
     }
 
     @Override
-    public boolean acceptsItem(UniqueKey entry) {
-        return this.items.contains(entry);
+    public boolean acceptsItem(UniqueIdItem entry) {
+        if (!this.items.contains(entry.id())) {
+            return false;
+        }
+        return this.count <= 1 || entry.item().count() >= this.count;
     }
 }
 

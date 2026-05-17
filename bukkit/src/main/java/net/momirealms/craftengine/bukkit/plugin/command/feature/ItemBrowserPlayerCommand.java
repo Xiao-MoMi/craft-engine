@@ -1,5 +1,6 @@
 package net.momirealms.craftengine.bukkit.plugin.command.feature;
 
+import net.momirealms.craftengine.bukkit.api.BukkitAdaptor;
 import net.momirealms.craftengine.bukkit.plugin.command.BukkitCommandFeature;
 import net.momirealms.craftengine.bukkit.plugin.user.BukkitServerPlayer;
 import net.momirealms.craftengine.core.plugin.CraftEngine;
@@ -8,7 +9,7 @@ import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 import org.incendo.cloud.Command;
 
-public class ItemBrowserPlayerCommand extends BukkitCommandFeature<CommandSender> {
+public final class ItemBrowserPlayerCommand extends BukkitCommandFeature<CommandSender> {
 
     public ItemBrowserPlayerCommand(CraftEngineCommandManager<CommandSender> commandManager, CraftEngine plugin) {
         super(commandManager, plugin);
@@ -20,7 +21,7 @@ public class ItemBrowserPlayerCommand extends BukkitCommandFeature<CommandSender
                 .senderType(Player.class)
                 .handler(context -> {
                     Player player = context.sender();
-                    BukkitServerPlayer serverPlayer = plugin().adapt(player);
+                    BukkitServerPlayer serverPlayer = BukkitAdaptor.adapt(player);
                     if (serverPlayer == null) return;
                     plugin().itemBrowserManager().open(serverPlayer);
                 });

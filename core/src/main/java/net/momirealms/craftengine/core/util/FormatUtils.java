@@ -1,7 +1,6 @@
 package net.momirealms.craftengine.core.util;
 
-public class FormatUtils {
-
+public final class FormatUtils {
     private FormatUtils() {}
 
     public static String miniMessageFont(String raw, String font) {

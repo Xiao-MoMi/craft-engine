@@ -3,12 +3,12 @@ items:
     material: carrot
     texture: minecraft:item/custom/magma_fruit
     data:
-      item-name: <!i><white><lang:item.default.magma_fruit>
+      item_name: <!i><white><lang:item.default.magma_fruit>
       $$>=1.20.5:
         food:
           nutrition: 3
           saturation: 0.5
-          can-always-eat: true
+          can_always_eat: true
     settings:
       invulnerable:
         - lava
@@ -24,12 +24,12 @@ items:
           - type: damage
             target: self
             amount: 1.0
-            damage-type: lava
+            damage_type: lava
           - type: potion_effect
             duration: 200
             amplifier: 0
             particles: true
-            potion-effect: minecraft:fire_resistance
+            potion_effect: minecraft:fire_resistance
     behavior:
       type: liquid_collision_block_item
       block: default:magma_plant
@@ -41,40 +41,40 @@ blocks:
         - default:sound/grass
       overrides:
         item: default:magma_fruit
-        push-reaction: destroy
-        map-color: 24
-        is-randomly-ticking: true
+        push_reaction: destroy
+        map_color: 24
     behavior:
       - type: crop_block
-        grow-speed: 0.25
-        light-requirement: 0
-        is-bone-meal-target: true
-        bone-meal-age-bonus:
+        grow_speed: 0.25
+        light_requirement: 0
+        is_bone_meal_target: true
+        bone_meal_age_bonus:
           type: uniform
           min: 1
           max: 2
       - type: on_liquid_block
         stackable: false
-        liquid-type:
+        liquid_type:
           - lava
     states:
       properties:
         age:
           type: int
           default: 0
-          range: 0~3
+          min: 0
+          max: 3
       appearances:
         age=0:
-          auto-state: lower_tripwire
+          auto_state: lower_tripwire
           model: minecraft:block/custom/magma_plant_stage_0
         age=1:
-          auto-state: higher_tripwire
+          auto_state: higher_tripwire
           model: minecraft:block/custom/magma_plant_stage_1
         age=2:
-          auto-state: sugar_cane
+          auto_state: sugar_cane
           model: minecraft:block/custom/magma_plant_stage_2
         age=3:
-          auto-state: sugar_cane
+          auto_state: sugar_cane
           models:
             - path: minecraft:block/custom/magma_plant_stage_3
               weight: 1
@@ -96,8 +96,6 @@ blocks:
           appearance: age=2
         age=3:
           appearance: age=3
-          settings:
-            is-randomly-ticking: false
     loot:
       template: default:loot_table/crop
       arguments:
@@ -116,9 +114,9 @@ blocks:
             z: <arg:block.block_z> + 0.5
             particle: minecraft:lava
             count: 10
-            offset-x: 0.05
-            offset-y: 0.02
-            offset-z: 0.05
+            offset_x: 0.05
+            offset_y: 0.02
+            offset_z: 0.05
             speed: 0.08
           - type: play_sound
             sound: minecraft:entity.firework_rocket.blast
@@ -142,73 +140,141 @@ blocks:
             x: <arg:block.block_x>
             y: <arg:block.block_y>
             z: <arg:block.block_z>
-            block-state: default:magma_plant[age=0]
+            block_state: default:magma_plant[age=0]
           - type: swing_hand
           - type: damage
             target: self
             amount: 1.0
-            damage-type: on_fire
+            damage_type: on_fire
           - type: update_interaction_tick
-placed-features:
-  default:reed:
-    environment:
+placed_features:
+  default:magma_plant:
+    dimension_type:
       - minecraft:the_nether
     feature:
-      type: 'minecraft:random_patch'
-      config:
-        feature:
+      $$>=26.1:
+        type: 'minecraft:simple_block'
+        config:
+          to_place:
+            type: 'minecraft:rule_based_state_provider'
+            rules:
+              - if_true:
+                  type: 'minecraft:all_of'
+                  predicates:
+                    - type: 'minecraft:replaceable'
+                    - type: 'minecraft:matching_fluids'
+                      fluids: 'minecraft:empty'
+                    - type: 'minecraft:matching_fluids'
+                      offset:
+                        - 0
+                        - -1
+                        - 0
+                      fluids: '#minecraft:lava'
+                then:
+                  type: 'minecraft:weighted_state_provider'
+                  entries:
+                    - weight: 7
+                      data:
+                        Name: 'default:magma_plant'
+                        Properties:
+                          age: '0'
+                    - weight: 5
+                      data:
+                        Name: 'default:magma_plant'
+                        Properties:
+                          age: '1'
+                    - weight: 2
+                      data:
+                        Name: 'default:magma_plant'
+                        Properties:
+                          age: '2'
+                    - weight: 1
+                      data:
+                        Name: 'default:magma_plant'
+                        Properties:
+                          age: '3'
+      $$fallback:
+        type: 'minecraft:random_patch'
+        config:
           feature:
-            type: 'minecraft:simple_block'
-            config:
-              to_place:
-                type: 'minecraft:weighted_state_provider'
-                entries:
-                  - weight: 7
-                    data:
-                      Name: 'default:magma_plant'
-                      Properties:
-                        age: 0
-                  - weight: 5
-                    data:
-                      Name: 'default:magma_plant'
-                      Properties:
-                        age: 1
-                  - weight: 2
-                    data:
-                      Name: 'default:magma_plant'
-                      Properties:
-                        age: 2
-                  - weight: 1
-                    data:
-                      Name: 'default:magma_plant'
-                      Properties:
-                        age: 3
-          placement:
-            - type: 'minecraft:block_predicate_filter'
-              predicate:
-                type: 'minecraft:all_of'
-                predicates:
-                  - type: 'minecraft:replaceable'
-                  - type: 'minecraft:matching_fluids'
-                    fluids: 'minecraft:empty'
-                  - type: 'minecraft:matching_fluids'
-                    fluids: '#minecraft:lava'
-                    offset:
-                      - 0
-                      - -1
-                      - 0
-        tries: 32
-        xz_spread: 7
-        y_spread: 1
+            feature:
+              type: 'minecraft:simple_block'
+              config:
+                to_place:
+                  type: 'minecraft:weighted_state_provider'
+                  entries:
+                    - weight: 7
+                      data:
+                        Name: 'default:magma_plant'
+                        Properties:
+                          age: 0
+                    - weight: 5
+                      data:
+                        Name: 'default:magma_plant'
+                        Properties:
+                          age: 1
+                    - weight: 2
+                      data:
+                        Name: 'default:magma_plant'
+                        Properties:
+                          age: 2
+                    - weight: 1
+                      data:
+                        Name: 'default:magma_plant'
+                        Properties:
+                          age: 3
+            placement:
+              - type: 'minecraft:block_predicate_filter'
+                predicate:
+                  type: 'minecraft:all_of'
+                  predicates:
+                    - type: 'minecraft:replaceable'
+                    - type: 'minecraft:matching_fluids'
+                      fluids: 'minecraft:empty'
+                    - type: 'minecraft:matching_fluids'
+                      fluids: '#minecraft:lava'
+                      offset:
+                        - 0
+                        - -1
+                        - 0
+          tries: 32
+          xz_spread: 7
+          y_spread: 1
     placement:
-      - type: 'minecraft:in_square'
-      - type: 'minecraft:random_offset'
-        xz_spread: 5
-        y_spread: 1
-      - type: 'minecraft:height_range'
-        height:
-          type: 'minecraft:uniform'
-          min_inclusive:
-            absolute: 10
-          max_inclusive:
-            absolute: 100
+      $$>=26.1:
+        - type: 'minecraft:in_square'
+        - type: 'minecraft:random_offset'
+          xz_spread: 5
+          y_spread: 1
+        - type: 'minecraft:height_range'
+          height:
+            type: 'minecraft:uniform'
+            min_inclusive:
+              absolute: 10
+            max_inclusive:
+              absolute: 100
+        - type: 'minecraft:count'
+          count: 32
+        - type: 'minecraft:random_offset'
+          xz_spread:
+            type: 'minecraft:trapezoid'
+            max: 7
+            min: -7
+            plateau: 0
+          y_spread:
+            type: 'minecraft:trapezoid'
+            max: 1
+            min: -1
+            plateau: 0
+      $$fallback:
+        - type: 'minecraft:in_square'
+        - type: 'minecraft:random_offset'
+          xz_spread: 5
+          y_spread: 1
+        - type: 'minecraft:height_range'
+          height:
+            type: 'minecraft:uniform'
+            min_inclusive:
+              absolute: 10
+            max_inclusive:
+              absolute: 100

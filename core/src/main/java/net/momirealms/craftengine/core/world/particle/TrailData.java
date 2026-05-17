@@ -3,7 +3,7 @@ package net.momirealms.craftengine.core.world.particle;
 import net.momirealms.craftengine.core.plugin.context.number.NumberProvider;
 import net.momirealms.craftengine.core.util.Color;
 
-public class TrailData implements ParticleData {
+public final class TrailData implements ParticleData {
     private final NumberProvider targetX;
     private final NumberProvider targetY;
     private final NumberProvider targetZ;

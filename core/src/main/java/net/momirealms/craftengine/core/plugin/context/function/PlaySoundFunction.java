@@ -1,26 +1,23 @@
 package net.momirealms.craftengine.core.plugin.context.function;
 
 import net.momirealms.craftengine.core.entity.player.Player;
+import net.momirealms.craftengine.core.plugin.config.ConfigConstants;
+import net.momirealms.craftengine.core.plugin.config.ConfigSection;
 import net.momirealms.craftengine.core.plugin.context.Condition;
 import net.momirealms.craftengine.core.plugin.context.Context;
 import net.momirealms.craftengine.core.plugin.context.number.NumberProvider;
-import net.momirealms.craftengine.core.plugin.context.number.NumberProviders;
 import net.momirealms.craftengine.core.plugin.context.parameter.DirectContextParameters;
 import net.momirealms.craftengine.core.plugin.context.selector.PlayerSelector;
-import net.momirealms.craftengine.core.plugin.context.selector.PlayerSelectors;
 import net.momirealms.craftengine.core.sound.SoundSource;
 import net.momirealms.craftengine.core.util.Key;
-import net.momirealms.craftengine.core.util.ResourceConfigUtils;
 import net.momirealms.craftengine.core.world.Vec3d;
 import net.momirealms.craftengine.core.world.World;
 import net.momirealms.craftengine.core.world.WorldPosition;
 
 import java.util.List;
-import java.util.Locale;
-import java.util.Map;
 import java.util.Optional;
 
-public class PlaySoundFunction<CTX extends Context> extends AbstractConditionalFunction<CTX> {
+public final class PlaySoundFunction<CTX extends Context> extends AbstractConditionalFunction<CTX> {
     private final Key soundEvent;
     private final NumberProvider x;
     private final NumberProvider y;
@@ -30,9 +27,15 @@ public class PlaySoundFunction<CTX extends Context> extends AbstractConditionalF
     private final SoundSource source;
     private final PlayerSelector<CTX> selector;
 
-    public PlaySoundFunction(
-            List<Condition<CTX>> predicates, NumberProvider x, NumberProvider y, NumberProvider z, NumberProvider volume, NumberProvider pitch, SoundSource source, PlayerSelector<CTX> selector, Key soundEvent
-    ) {
+    private PlaySoundFunction(List<Condition<CTX>> predicates,
+                              PlayerSelector<CTX> selector,
+                              NumberProvider x,
+                              NumberProvider y,
+                              NumberProvider z,
+                              NumberProvider volume,
+                              NumberProvider pitch,
+                              SoundSource source,
+                              Key soundEvent) {
         super(predicates);
         this.soundEvent = soundEvent;
         this.x = x;
@@ -60,27 +63,29 @@ public class PlaySoundFunction<CTX extends Context> extends AbstractConditionalF
         }
     }
 
-    public static <CTX extends Context> FunctionFactory<CTX, PlaySoundFunction<CTX>> factory(java.util.function.Function<Map<String, Object>, Condition<CTX>> factory) {
+    public static <CTX extends Context> FunctionFactory<CTX, PlaySoundFunction<CTX>> factory(java.util.function.Function<ConfigSection, Condition<CTX>> factory) {
         return new Factory<>(factory);
     }
 
     private static class Factory<CTX extends Context> extends AbstractFactory<CTX, PlaySoundFunction<CTX>> {
 
-        public Factory(java.util.function.Function<Map<String, Object>, Condition<CTX>> factory) {
+        public Factory(java.util.function.Function<ConfigSection, Condition<CTX>> factory) {
             super(factory);
         }
 
         @Override
-        public PlaySoundFunction<CTX> create(Map<String, Object> arguments) {
-            Key soundEvent = Key.of(ResourceConfigUtils.requireNonEmptyStringOrThrow(arguments.get("sound"), "warning.config.function.play_sound.missing_sound"));
-            NumberProvider x = NumberProviders.fromObject(arguments.getOrDefault("x", "<arg:position.x>"));
-            NumberProvider y = NumberProviders.fromObject(arguments.getOrDefault("y", "<arg:position.y>"));
-            NumberProvider z = NumberProviders.fromObject(arguments.getOrDefault("z", "<arg:position.z>"));
-            NumberProvider volume = NumberProviders.fromObject(arguments.getOrDefault("volume", 1));
-            NumberProvider pitch = NumberProviders.fromObject(arguments.getOrDefault("pitch", 1));
-            SoundSource source = Optional.ofNullable(arguments.get("source")).map(String::valueOf).map(it -> SoundSource.valueOf(it.toUpperCase(Locale.ENGLISH))).orElse(SoundSource.MASTER);
-            PlayerSelector<CTX> selector = PlayerSelectors.fromObject(arguments.get("target"), conditionFactory());
-            return new PlaySoundFunction<>(getPredicates(arguments), x, y, z, volume, pitch, source, selector, soundEvent);
+        public PlaySoundFunction<CTX> create(ConfigSection section) {
+            return new PlaySoundFunction<>(
+                    getPredicates(section),
+                    getPlayerSelector(section),
+                    section.getNumber("x", ConfigConstants.POSITION_X),
+                    section.getNumber("y", ConfigConstants.POSITION_Y),
+                    section.getNumber("z", ConfigConstants.POSITION_Z),
+                    section.getNumber("volume", ConfigConstants.CONSTANT_ONE),
+                    section.getNumber("pitch", ConfigConstants.CONSTANT_ONE),
+                    section.getEnum("source", SoundSource.class, SoundSource.MASTER),
+                    section.getNonNullIdentifier("sound")
+            );
         }
     }
 }

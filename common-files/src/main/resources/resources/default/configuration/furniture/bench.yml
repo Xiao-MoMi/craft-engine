@@ -1,7 +1,7 @@
 items:
   default:bench:
     data:
-      item-name: <!i><lang:item.default.bench>
+      item_name: <!i><lang:item.default.bench>
     model: minecraft:item/custom/bench
     behavior:
       type: furniture_item
@@ -14,30 +14,30 @@ items:
           - template: default:rotatable_furniture_4
         settings:
           item: default:bench
-          hit-times: 3
+          hit_times: 3
           sounds:
             break: minecraft:block.bamboo_wood.break
             place: minecraft:block.bamboo_wood.place
             hit: minecraft:block.bamboo_wood.hit
         variants:
           ground:
-            loot-spawn-offset: 0.5,0.5,0
+            loot_spawn_offset: 0.5,0.5,0
             elements:
               - item: default:bench
-                display-transform: none
+                display_transform: none
                 billboard: fixed
                 position: 0.5,0,0
                 translation: 0,0.5,0
-                shadow-radius: 1
-                shadow-strength: 0.2
+                shadow_radius: 1
+                shadow_strength: 0.2
             hitboxes:
               - position: 0,0,0
                 type: shulker
                 direction: east
                 peek: 100
-                blocks-building: true
+                blocks_building: true
                 interactive: true
-                interaction-entity: true
+                interaction_entity: true
                 seats:
                   - 0,0,-0.1 0
                   - 1,0,-0.1 0

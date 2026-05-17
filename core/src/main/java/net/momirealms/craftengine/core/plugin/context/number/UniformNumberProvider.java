@@ -1,10 +1,8 @@
 package net.momirealms.craftengine.core.plugin.context.number;
 
-import net.momirealms.craftengine.core.util.ResourceConfigUtils;
+import net.momirealms.craftengine.core.plugin.config.ConfigSection;
 import net.momirealms.craftengine.core.util.random.RandomSource;
 import net.momirealms.craftengine.core.util.random.RandomUtils;
-
-import java.util.Map;
 
 public record UniformNumberProvider(NumberProvider min, NumberProvider max) implements NumberProvider {
     public static final NumberProviderFactory<UniformNumberProvider> FACTORY = new Factory();
@@ -27,10 +25,11 @@ public record UniformNumberProvider(NumberProvider min, NumberProvider max) impl
     private static class Factory implements NumberProviderFactory<UniformNumberProvider> {
 
         @Override
-        public UniformNumberProvider create(Map<String, Object> arguments) {
-            Object min = ResourceConfigUtils.requireNonNullOrThrow(arguments.get("min"), "warning.config.number.uniform.missing_min");
-            Object max = ResourceConfigUtils.requireNonNullOrThrow(arguments.get("max"), "warning.config.number.uniform.missing_max");
-            return new UniformNumberProvider(NumberProviders.fromObject(min), NumberProviders.fromObject(max));
+        public UniformNumberProvider create(ConfigSection section) {
+            return new UniformNumberProvider(
+                    section.getNonNullNumber("min"),
+                    section.getNonNullNumber("max")
+            );
         }
     }
 }

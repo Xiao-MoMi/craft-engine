@@ -1,20 +1,21 @@
 package net.momirealms.craftengine.core.item.recipe;
 
 import net.momirealms.craftengine.core.item.Item;
+import net.momirealms.craftengine.core.plugin.CraftEngine;
 import net.momirealms.craftengine.core.util.UniqueKey;
 import org.jetbrains.annotations.NotNull;
 
-public class UniqueIdItem<T> {
-    private final Item<T> rawItem;
+public final class UniqueIdItem {
+    private final Item rawItem;
     private final UniqueKey uniqueId;
 
-    private UniqueIdItem(@NotNull Item<T> rawItem) {
+    private UniqueIdItem(@NotNull Item rawItem) {
         this.rawItem = rawItem;
-        this.uniqueId = rawItem.recipeIngredientId();
+        this.uniqueId = CraftEngine.instance().itemManager().getIngredientKey(rawItem);
     }
 
-    public static <T> UniqueIdItem<T> of(Item<T> rawItem) {
-        return new UniqueIdItem<>(rawItem);
+    public static UniqueIdItem of(Item rawItem) {
+        return new UniqueIdItem(rawItem);
     }
 
     @NotNull
@@ -23,7 +24,7 @@ public class UniqueIdItem<T> {
     }
 
     @NotNull
-    public Item<T> item() {
+    public Item item() {
         return this.rawItem;
     }
 
@@ -37,6 +38,6 @@ public class UniqueIdItem<T> {
 
     @Override
     public String toString() {
-        return "UniqueIdItem[" + "uniqueId=" + this.uniqueId + ", item=" + this.rawItem.getItem() + ']';
+        return "UniqueIdItem[" + "uniqueId=" + this.uniqueId + ", item=" + this.rawItem.minecraftItem() + ']';
     }
 }

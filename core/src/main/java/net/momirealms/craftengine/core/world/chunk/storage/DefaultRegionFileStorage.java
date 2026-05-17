@@ -8,6 +8,7 @@ import net.momirealms.craftengine.core.util.FileUtils;
 import net.momirealms.craftengine.core.world.CEWorld;
 import net.momirealms.craftengine.core.world.ChunkPos;
 import net.momirealms.craftengine.core.world.chunk.CEChunk;
+import net.momirealms.craftengine.core.world.chunk.Chunk;
 import net.momirealms.craftengine.core.world.chunk.serialization.DefaultChunkSerializer;
 import net.momirealms.sparrow.nbt.CompoundTag;
 import net.momirealms.sparrow.nbt.NBT;
@@ -20,85 +21,85 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
-public final class DefaultRegionFileStorage implements WorldDataStorage {
+public class DefaultRegionFileStorage implements WorldDataStorage {
     private final Path folder;
 
     public static final String REGION_FILE_SUFFIX = ".mca";
     public static final String REGION_FILE_PREFIX = "r.";
-    public static final int MAX_NON_EXISTING_CACHE = 1024 * 64;
+    public static final int MAX_NON_EXISTING_CACHE = 4096;
 
     public final Long2ObjectLinkedOpenHashMap<RegionFile> regionCache = new Long2ObjectLinkedOpenHashMap<>();
     private final LongLinkedOpenHashSet nonExistingRegionFiles = new LongLinkedOpenHashSet();
+    private final ChunkFactory chunkFactory;
 
-    public DefaultRegionFileStorage(Path directory) {
+    public DefaultRegionFileStorage(Path directory, ChunkFactory chunkFactory) {
         this.folder = directory;
+        this.chunkFactory = chunkFactory;
     }
 
-    @SuppressWarnings("BooleanMethodIsAlwaysInverted")
-    private synchronized boolean doesRegionFilePossiblyExist(long position) {
-        if (this.nonExistingRegionFiles.contains(position)) {
-            this.nonExistingRegionFiles.addAndMoveToFirst(position);
-            return false;
+    private boolean doesRegionFilePossiblyExist(long position) {
+        synchronized (this.nonExistingRegionFiles) {
+            if (this.nonExistingRegionFiles.contains(position)) {
+                this.nonExistingRegionFiles.addAndMoveToFirst(position);
+                return false;
+            }
+            return true;
         }
-        return true;
     }
 
-    private synchronized void createRegionFile(long position) {
-        this.nonExistingRegionFiles.remove(position);
+    private void createRegionFile(long position) {
+        synchronized (this.nonExistingRegionFiles) {
+            this.nonExistingRegionFiles.remove(position);
+        }
     }
 
-    private synchronized void markNonExisting(long position) {
-        if (this.nonExistingRegionFiles.addAndMoveToFirst(position)) {
-            while (this.nonExistingRegionFiles.size() >= MAX_NON_EXISTING_CACHE) {
-                this.nonExistingRegionFiles.removeLastLong();
+    private void markNonExisting(long position) {
+        synchronized (this.nonExistingRegionFiles) {
+            if (this.nonExistingRegionFiles.addAndMoveToFirst(position)) {
+                while (this.nonExistingRegionFiles.size() >= MAX_NON_EXISTING_CACHE) {
+                    this.nonExistingRegionFiles.removeLastLong();
+                }
             }
         }
     }
 
-    public synchronized boolean doesRegionFileNotExistNoIO(ChunkPos pos) {
+    public boolean doesRegionFileNotExistNoIO(ChunkPos pos) {
         long key = ChunkPos.asLong(pos.regionX(), pos.regionZ());
         return !this.doesRegionFilePossiblyExist(key);
     }
 
-    public synchronized RegionFile getRegionFileIfLoaded(ChunkPos pos) {
+    public final synchronized RegionFile getRegionFileIfLoaded(ChunkPos pos) {
         return this.regionCache.getAndMoveToFirst(ChunkPos.asLong(pos.regionX(), pos.regionZ()));
     }
 
-    public synchronized boolean chunkExists(ChunkPos pos) throws IOException {
-        RegionFile regionfile = getRegionFile(pos, true, false);
+    public boolean chunkExists(ChunkPos pos) throws IOException {
+        RegionFile regionfile = getRegionFile(pos, true);
         return regionfile != null && regionfile.hasChunk(pos);
     }
 
-    public synchronized RegionFile getRegionFile(ChunkPos pos, boolean existingOnly, boolean lock) throws IOException {
-        long chunkPosLongKey = ChunkPos.asLong(pos.regionX(), pos.regionZ());
-        RegionFile regionfile = this.regionCache.getAndMoveToFirst(chunkPosLongKey);
-        if (regionfile != null) {
-            if (lock) {
-                regionfile.fileLock.lock();
-            }
-            return regionfile;
+    public synchronized RegionFile getRegionFile(ChunkPos pos, boolean existingOnly) throws IOException {
+        long key = ChunkPos.asLong(pos.regionX(), pos.regionZ());
+        RegionFile ret = this.regionCache.getAndMoveToFirst(key);
+        if (ret != null) {
+            return ret;
+        } else if (existingOnly && !this.doesRegionFilePossiblyExist(key)) {
+            return null;
         } else {
-            if (existingOnly && !this.doesRegionFilePossiblyExist(chunkPosLongKey)) {
-                return null;
-            }
             if (this.regionCache.size() >= 256) {
                 this.regionCache.removeLast().close();
             }
+
             Path path = this.folder.resolve(REGION_FILE_PREFIX + pos.regionX() + "." + pos.regionZ() + REGION_FILE_SUFFIX);
             if (existingOnly && !Files.exists(path)) {
-                this.markNonExisting(chunkPosLongKey);
+                this.markNonExisting(key);
                 return null;
             } else {
-                this.createRegionFile(chunkPosLongKey);
+                this.createRegionFile(key);
+                FileUtils.createDirectoriesSafe(this.folder);
+                ret = new RegionFile(path, this.folder, CompressionMethod.fromId(Config.compressionMethod()));
+                this.regionCache.putAndMoveToFirst(key, ret);
+                return ret;
             }
-            FileUtils.createDirectoriesSafe(this.folder);
-            RegionFile newRegionFile = new RegionFile(path, this.folder, CompressionMethod.fromId(Config.compressionMethod()));
-
-            this.regionCache.putAndMoveToFirst(chunkPosLongKey, newRegionFile);
-            if (lock) {
-                newRegionFile.fileLock.lock();
-            }
-            return newRegionFile;
         }
     }
 
@@ -122,40 +123,46 @@ public final class DefaultRegionFileStorage implements WorldDataStorage {
 
     @Override
     public CEChunk readNewChunkAt(CEWorld world, ChunkPos pos) throws IOException {
-        RegionFile regionFile = this.getRegionFile(pos, false, true);
-        try {
-            if (regionFile.doesChunkExist(pos)) {
+        RegionFile regionFile = this.getRegionFile(pos, false);
+        synchronized (regionFile) {
+            if (regionFile.hasChunk(pos)) {
                 regionFile.clear(pos);
             }
-            return new CEChunk(world, pos);
-        } finally {
-            regionFile.fileLock.unlock();
+            return this.chunkFactory.create(world, pos);
         }
     }
 
     @Override
-    public @NotNull CEChunk readChunkAt(@NotNull CEWorld world, @NotNull ChunkPos pos) throws IOException {
-        RegionFile regionFile = this.getRegionFile(pos, false, true);
-        try {
-            DataInputStream dataInputStream = regionFile.getChunkDataInputStream(pos);
-            CompoundTag tag;
-            try {
+    public @NotNull CEChunk readChunkAt(@NotNull CEWorld world, @NotNull ChunkPos pos, @Nullable Chunk chunkAccess) throws IOException {
+        RegionFile regionFile = this.getRegionFile(pos, true);
+        if (regionFile == null) {
+            return this.chunkFactory.create(world, pos);
+        }
+
+        synchronized (regionFile) {
+            try (DataInputStream dataInputStream = regionFile.getChunkDataInputStream(pos)) {
                 if (dataInputStream == null) {
-                    return new CEChunk(world, pos);
+                    return this.chunkFactory.create(world, pos);
                 }
-                tag = NBT.readCompound(dataInputStream, false);
-            } catch (Throwable t1) {
-                try {
-                    dataInputStream.close();
-                } catch (Throwable t2) {
-                    t1.addSuppressed(t2);
-                }
-                throw t1;
+                CompoundTag tag = NBT.readCompound(dataInputStream, false);
+                return DefaultChunkSerializer.deserialize(this.chunkFactory, world, pos, tag);
             }
-            dataInputStream.close();
-            return DefaultChunkSerializer.deserialize(world, pos, tag);
-        } finally {
-            regionFile.fileLock.unlock();
+        }
+    }
+
+    @Override
+    public CompoundTag readChunkTagAt(@NotNull ChunkPos pos) throws IOException {
+        RegionFile regionFile = this.getRegionFile(pos, true);
+        if (regionFile == null) {
+            return null;
+        }
+        synchronized (regionFile) {
+            try (DataInputStream dataInputStream = regionFile.getChunkDataInputStream(pos)) {
+                if (dataInputStream == null) {
+                    return null;
+                }
+                return NBT.readCompound(dataInputStream, false);
+            }
         }
     }
 
@@ -170,42 +177,38 @@ public final class DefaultRegionFileStorage implements WorldDataStorage {
         this.writeChunkTagAt(pos, null);
     }
 
+    @Override
     public void writeChunkTagAt(@NotNull ChunkPos pos, @Nullable CompoundTag nbt) throws IOException {
-        RegionFile regionFile = this.getRegionFile(pos, nbt == null, true);
-        try {
+        RegionFile regionFile = this.getRegionFile(pos, nbt == null);
+        if (regionFile == null) return;
+
+        synchronized (regionFile) {
             if (nbt == null) {
                 regionFile.clear(pos);
             } else {
-                DataOutputStream dataOutputStream = regionFile.getChunkDataOutputStream(pos);
-                try {
+                try (DataOutputStream dataOutputStream = regionFile.getChunkDataOutputStream(pos)) {
                     NBT.writeCompound(nbt, dataOutputStream, false);
-                } catch (Throwable t1) {
-                    if (dataOutputStream != null) {
-                        try {
-                            dataOutputStream.close();
-                        } catch (Throwable t2) {
-                            t1.addSuppressed(t2);
-                        }
-                    }
-                    throw t1;
                 }
-                dataOutputStream.close();
             }
-        } finally {
-            regionFile.fileLock.unlock();
         }
     }
 
     @Override
     public synchronized void flush() throws IOException {
+        ExceptionCollector<IOException> collector = new ExceptionCollector<>(IOException.class);
         for (RegionFile regionFile : this.regionCache.values()) {
-            regionFile.flush();
+            try {
+                regionFile.flush();
+            } catch (IOException e) {
+                collector.add(e);
+            }
         }
+        collector.throwIfPresent();
     }
 
     @Override
     public synchronized void close() throws IOException {
-        ExceptionCollector<IOException> collector = new ExceptionCollector<>();
+        ExceptionCollector<IOException> collector = new ExceptionCollector<>(IOException.class);
         for (RegionFile regionfile : this.regionCache.values()) {
             try {
                 regionfile.close();

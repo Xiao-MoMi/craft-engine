@@ -1,12 +1,13 @@
 package net.momirealms.craftengine.core.plugin.context.condition;
 
+import net.momirealms.craftengine.core.plugin.config.ConfigSection;
 import net.momirealms.craftengine.core.plugin.context.Condition;
 import net.momirealms.craftengine.core.plugin.context.Context;
 
-import java.util.Map;
-
 public final class AlwaysFalseCondition<CTX extends Context> implements Condition<CTX> {
     public static final AlwaysFalseCondition<Context> INSTANCE = new AlwaysFalseCondition<>();
+
+    private AlwaysFalseCondition() {}
 
     public static <CTX extends Context> ConditionFactory<CTX, AlwaysFalseCondition<CTX>> factory() {
         return new Factory<>();
@@ -16,7 +17,7 @@ public final class AlwaysFalseCondition<CTX extends Context> implements Conditio
 
         @SuppressWarnings("unchecked")
         @Override
-        public AlwaysFalseCondition<CTX> create(Map<String, Object> arguments) {
+        public AlwaysFalseCondition<CTX> create(ConfigSection arguments) {
             return (AlwaysFalseCondition<CTX>) INSTANCE;
         }
     }

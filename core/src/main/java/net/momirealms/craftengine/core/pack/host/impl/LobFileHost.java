@@ -4,18 +4,16 @@ import com.google.gson.annotations.SerializedName;
 import com.google.gson.reflect.TypeToken;
 import net.momirealms.craftengine.core.pack.host.*;
 import net.momirealms.craftengine.core.plugin.CraftEngine;
-import net.momirealms.craftengine.core.plugin.locale.LocalizedException;
+import net.momirealms.craftengine.core.plugin.config.ConfigSection;
 import net.momirealms.craftengine.core.plugin.locale.TranslationManager;
+import net.momirealms.craftengine.core.plugin.network.NetWorkUser;
 import net.momirealms.craftengine.core.util.GsonHelper;
-import net.momirealms.craftengine.core.util.MiscUtils;
-import net.momirealms.craftengine.core.util.ResourceConfigUtils;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.net.ProxySelector;
 import java.net.URI;
-import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.nio.charset.StandardCharsets;
@@ -31,16 +29,14 @@ import java.util.concurrent.CompletableFuture;
 public final class LobFileHost implements ResourcePackHost {
     public static final ResourcePackHostFactory<LobFileHost> FACTORY = new Factory();
     private final String apiKey;
-    private final ProxySelector proxy;
     private AccountInfo accountInfo;
 
-    private String url;
-    private String sha1;
-    private UUID uuid;
+    private String cachedUrl;
+    private String cachedSha1;
 
-    public LobFileHost(String apiKey, ProxySelector proxy) {
+    public LobFileHost(String apiKey) {
         this.apiKey = apiKey;
-        this.proxy = proxy;
+
         this.readCacheFromDisk();
     }
 
@@ -54,226 +50,189 @@ public final class LobFileHost implements ResourcePackHost {
         return ResourcePackHosts.LOBFILE;
     }
 
-    public void readCacheFromDisk() {
-        Path cachePath = CraftEngine.instance().dataFolderPath().resolve("cache").resolve("lobfile.json");
-        if (!Files.exists(cachePath) || !Files.isRegularFile(cachePath)) return;
-        try (InputStream is = Files.newInputStream(cachePath)) {
-            Map<String, String> cache = GsonHelper.get().fromJson(
-                    new InputStreamReader(is, StandardCharsets.UTF_8),
-                    new TypeToken<Map<String, String>>(){}.getType()
-            );
-            this.url = cache.get("url");
-            this.sha1 = cache.get("sha1");
-            String uuidString = cache.get("uuid");
-            if (uuidString != null && !uuidString.isEmpty()) {
-                this.uuid = UUID.fromString(uuidString);
-            }
-            CraftEngine.instance().logger().info(TranslationManager.instance().translateLog("info.host.cache.load", "LobFile"));
-        } catch (Exception e) {
-            CraftEngine.instance().logger().warn(
-                    "[LobFile] Failed to read cache file: " + e.getMessage());
-        }
-    }
-
-    public void saveCacheToDisk() {
-        Map<String, String> cache = new HashMap<>();
-        cache.put("url", this.url);
-        cache.put("sha1", this.sha1);
-        cache.put("uuid", this.uuid != null ? this.uuid.toString() : "");
-        Path cachePath = CraftEngine.instance().dataFolderPath().resolve("cache").resolve("lobfile.json");
-        try {
-            Files.createDirectories(cachePath.getParent());
-            Files.writeString(
-                    cachePath,
-                    GsonHelper.get().toJson(cache),
-                    StandardOpenOption.CREATE,
-                    StandardOpenOption.TRUNCATE_EXISTING
-            );
-        } catch (IOException e) {
-            CraftEngine.instance().logger().warn(
-                    "[LobFile] Failed to save cache: " + e.getMessage());
-        }
-    }
-
-    public String getSpaceUsageText() {
-        if (this.accountInfo == null) return "Usage data not available";
-        return String.format("Storage: %d/%d MB (%.1f%% used)",
-                this.accountInfo.account.usage.spaceUsed / 1_000_000,
-                this.accountInfo.account.limits.spaceQuota / 1_000_000,
-                (this.accountInfo.account.usage.spaceUsed * 100.0) / this.accountInfo.account.limits.spaceQuota
-        );
-    }
-
+    @SuppressWarnings("DuplicatedCode")
     @Override
-    public CompletableFuture<List<ResourcePackDownloadData>> requestResourcePackDownloadLink(UUID player) {
-        if (url == null) return CompletableFuture.completedFuture(Collections.emptyList());
-        return CompletableFuture.completedFuture(List.of(ResourcePackDownloadData.of(this.url, this.uuid, this.sha1)));
+    public CompletableFuture<List<ResourcePackDownloadData>> requestResourcePackDownloadLink(NetWorkUser user) {
+        if (this.cachedUrl == null || this.cachedSha1 == null) {
+            return CompletableFuture.completedFuture(Collections.emptyList());
+        }
+        UUID uuid = UUID.nameUUIDFromBytes(this.cachedSha1.getBytes(StandardCharsets.UTF_8));
+        return CompletableFuture.completedFuture(List.of(new ResourcePackDownloadData(this.cachedUrl, uuid, this.cachedSha1)));
     }
 
     @Override
     public CompletableFuture<Void> upload(Path resourcePackPath) {
         CompletableFuture<Void> future = new CompletableFuture<>();
-        long totalStartTime = System.currentTimeMillis();
+
         CraftEngine.instance().scheduler().executeAsync(() -> {
             try {
                 Map<String, String> hashes = calculateHashes(resourcePackPath);
                 String sha1Hash = hashes.get("SHA-1");
                 String sha256Hash = hashes.get("SHA-256");
 
-                try (HttpClient client = HttpClient.newBuilder().proxy(this.proxy).build()) {
-                    String boundary = UUID.randomUUID().toString();
+                String boundary = "LobFileBoundary" + System.currentTimeMillis();
 
-                    HttpRequest request = HttpRequest.newBuilder()
-                            .uri(URI.create("https://lobfile.com/api/v3/upload.php"))
-                            .header("X-API-Key", this.apiKey)
-                            .header("Content-Type", "multipart/form-data; boundary=" + boundary)
-                            .POST(buildMultipartBody(resourcePackPath, sha256Hash, boundary))
-                            .build();
+                HttpRequest request = HttpRequest.newBuilder()
+                        .uri(URI.create("https://lobfile.com/api/v3/upload.php"))
+                        .header("X-API-Key", this.apiKey)
+                        .header("Content-Type", "multipart/form-data; boundary=" + boundary)
+                        .POST(buildMultipartBody(resourcePackPath, sha256Hash, boundary))
+                        .build();
 
-                    long uploadStart = System.currentTimeMillis();
-                    CraftEngine.instance().logger().info("[LobFile] Starting file upload...");
+                HttpClientManager.get().sendAsync(request, HttpResponse.BodyHandlers.ofString())
+                        .thenAccept(response -> handleUploadResponse(response, sha1Hash, future))
+                        .exceptionally(ex -> {
+                            future.completeExceptionally(ex);
+                            return null;
+                        });
 
-                    client.sendAsync(request, HttpResponse.BodyHandlers.ofString())
-                            .thenAccept(response -> {
-                                long uploadTime = System.currentTimeMillis() - uploadStart;
-                                CraftEngine.instance().logger().info(
-                                        "[LobFile] Upload request completed in " + uploadTime + "ms");
-
-                                handleUploadResponse(response, future, sha1Hash);
-                            })
-                            .exceptionally(ex -> {
-                                long totalTime = System.currentTimeMillis() - totalStartTime;
-                                CraftEngine.instance().logger().severe(
-                                        "[LobFile] Upload failed after " + totalTime + "ms", ex);
-                                future.completeExceptionally(ex);
-                                return null;
-                            });
-                }
-            } catch (IOException | NoSuchAlgorithmException e) {
-                long totalTime = System.currentTimeMillis() - totalStartTime;
-                CraftEngine.instance().logger().severe(
-                        "[LobFile] Upload preparation failed after " + totalTime + "ms", e);
+            } catch (Exception e) {
                 future.completeExceptionally(e);
             }
         });
+
         return future;
     }
 
-    public CompletableFuture<AccountInfo> fetchAccountInfo() {
-        try (HttpClient client = HttpClient.newBuilder().proxy(this.proxy).build()) {
-            HttpRequest request = HttpRequest.newBuilder()
-                    .uri(URI.create("https://lobfile.com/api/v3/rest/get-account-info"))
-                    .header("X-API-Key", this.apiKey)
-                    .GET()
-                    .build();
-
-            return client.sendAsync(request, HttpResponse.BodyHandlers.ofString())
-                    .thenApply(response -> {
-                        if (response.statusCode() == 200) {
-                            AccountInfo info = GsonHelper.get().fromJson(response.body(), AccountInfo.class);
-                            if (info.success) {
-                                this.accountInfo = info;
-                                return info;
-                            }
-                        }
-                        throw new RuntimeException("Failed to fetch account info: " + response.statusCode());
-                    });
+    private void handleUploadResponse(HttpResponse<String> response, String localSha1, CompletableFuture<Void> future) {
+        if (response.statusCode() != 200) {
+            fail(future, "Upload HTTP " + response.statusCode(), response.body());
+            return;
         }
-    }
 
-    @SuppressWarnings("all")
-    private Map<String, String> calculateHashes(Path path) throws IOException, NoSuchAlgorithmException {
-        Map<String, String> hashes = new HashMap<>();
-        MessageDigest sha1Digest = MessageDigest.getInstance("SHA-1");
-        MessageDigest sha256Digest = MessageDigest.getInstance("SHA-256");
-
-        try (InputStream is = Files.newInputStream(path);
-             DigestInputStream dis = new DigestInputStream(is, sha1Digest);
-             DigestInputStream dis2 = new DigestInputStream(dis, sha256Digest)) {
-
-            while (dis2.read() != -1) ;
-
-            hashes.put("SHA-1", bytesToHex(sha1Digest.digest()));
-            hashes.put("SHA-256", bytesToHex(sha256Digest.digest()));
-        }
-        return hashes;
-    }
-
-    private HttpRequest.BodyPublisher buildMultipartBody(Path filePath, String sha256Hash, String boundary) throws IOException {
-        List<byte[]> parts = new ArrayList<>();
-        String filePartHeader = "--" + boundary + "\r\n" +
-                "Content-Disposition: form-data; name=\"file\"; filename=\"" + filePath.getFileName() + "\"\r\n" +
-                "Content-Type: application/octet-stream\r\n\r\n";
-        parts.add(filePartHeader.getBytes(StandardCharsets.UTF_8));
-
-        parts.add(Files.readAllBytes(filePath));
-        parts.add("\r\n".getBytes(StandardCharsets.UTF_8));
-
-        String sha256Part = "--" + boundary + "\r\n" +
-                "Content-Disposition: form-data; name=\"sha_256\"\r\n\r\n" +
-                sha256Hash + "\r\n";
-        parts.add(sha256Part.getBytes(StandardCharsets.UTF_8));
-
-        String endBoundary = "--" + boundary + "--\r\n";
-        parts.add(endBoundary.getBytes(StandardCharsets.UTF_8));
-
-        return HttpRequest.BodyPublishers.ofByteArrays(parts);
-    }
-
-    private void handleUploadResponse(
-            HttpResponse<String> response,
-            CompletableFuture<Void> future,
-            String localSha1
-    ) {
         try {
-            if (response.statusCode() == 200) {
-                Map<String, Object> json = GsonHelper.parseJsonToMap(response.body());
-                if (Boolean.TRUE.equals(json.get("success"))) {
-                    this.url = (String) json.get("url");
-                    this.sha1 = localSha1;
-                    this.uuid = UUID.randomUUID();
-                    saveCacheToDisk();
-                    CraftEngine.instance().logger().info("[LobFile] Upload success! Resource pack URL: " + this.url);
-                    fetchAccountInfo()
-                            .thenAccept(info -> {
-                                CraftEngine.instance().logger().info("[LobFile] Account usage updated: " + getSpaceUsageText());
-                                future.complete(null);
-                            })
-                            .exceptionally(ex -> {
-                                CraftEngine.instance().logger().warn("[LobFile] Usage check failed (upload still succeeded): ", ex);
-                                future.complete(null);
-                                return null;
-                            });
-                } else {
-                    future.completeExceptionally(new RuntimeException((String) json.get("error")));
-                }
+            Map<String, Object> json = GsonHelper.parseJsonToMap(response.body());
+            if (Boolean.TRUE.equals(json.get("success"))) {
+                this.cachedUrl = (String) json.get("url");
+                this.cachedSha1 = localSha1;
+                saveCacheToDisk();
+
+                fetchAccountInfo().whenComplete((info, t) -> {
+                    if (info != null) {
+                        Optional.ofNullable(getSpaceUsageText()).ifPresent(text -> {
+                            CraftEngine.instance().logger().info(text);
+                        });
+                    }
+                    future.complete(null);
+                });
             } else {
-                future.completeExceptionally(new RuntimeException("Upload failed: " + response.statusCode()));
+                fail(future, "API returned error", (String) json.get("error"));
             }
         } catch (Exception e) {
             future.completeExceptionally(e);
         }
     }
 
-    private String bytesToHex(byte[] bytes) {
-        StringBuilder sb = new StringBuilder();
-        for (byte b : bytes) {
-            sb.append(String.format("%02x", b));
+    public CompletableFuture<AccountInfo> fetchAccountInfo() {
+        HttpRequest request = HttpRequest.newBuilder()
+                .uri(URI.create("https://lobfile.com/api/v3/rest/get-account-info"))
+                .header("X-API-Key", this.apiKey)
+                .GET()
+                .build();
+
+        return HttpClientManager.get().sendAsync(request, HttpResponse.BodyHandlers.ofString())
+                .thenApply(response -> {
+                    if (response.statusCode() == 200) {
+                        AccountInfo info = GsonHelper.get().fromJson(response.body(), AccountInfo.class);
+                        if (info.success()) {
+                            this.accountInfo = info;
+                            return info;
+                        }
+                    }
+                    return null;
+                });
+    }
+
+    private Map<String, String> calculateHashes(Path path) throws IOException, NoSuchAlgorithmException {
+        MessageDigest sha1 = MessageDigest.getInstance("SHA-1");
+        MessageDigest sha256 = MessageDigest.getInstance("SHA-256");
+
+        try (InputStream is = Files.newInputStream(path);
+             DigestInputStream dis1 = new DigestInputStream(is, sha1);
+             DigestInputStream dis2 = new DigestInputStream(dis1, sha256)) {
+            byte[] buffer = new byte[8192];
+            while (dis2.read(buffer) != -1);
         }
-        return sb.toString();
+
+        Map<String, String> hashes = new HashMap<>();
+        hashes.put("SHA-1", HexFormat.of().formatHex(sha1.digest()));
+        hashes.put("SHA-256", HexFormat.of().formatHex(sha256.digest()));
+        return hashes;
+    }
+
+    private HttpRequest.BodyPublisher buildMultipartBody(Path filePath, String sha256Hash, String boundary) throws IOException {
+        byte[] fileBytes = Files.readAllBytes(filePath);
+        String fileName = filePath.getFileName().toString();
+
+        StringBuilder sb = new StringBuilder();
+        // File Part
+        sb.append("--").append(boundary).append("\r\n");
+        sb.append("Content-Disposition: form-data; name=\"file\"; filename=\"").append(fileName).append("\"\r\n");
+        sb.append("Content-Type: application/octet-stream\r\n\r\n");
+        byte[] part1 = sb.toString().getBytes(StandardCharsets.UTF_8);
+
+        // SHA-256 Part
+        sb.setLength(0);
+        sb.append("\r\n--").append(boundary).append("\r\n");
+        sb.append("Content-Disposition: form-data; name=\"sha_256\"\r\n\r\n");
+        sb.append(sha256Hash).append("\r\n");
+        sb.append("--").append(boundary).append("--\r\n");
+        byte[] part2 = sb.toString().getBytes(StandardCharsets.UTF_8);
+
+        return HttpRequest.BodyPublishers.ofByteArrays(List.of(part1, fileBytes, part2));
+    }
+
+    @Nullable
+    public String getSpaceUsageText() {
+        if (this.accountInfo == null) return null;
+        return TranslationManager.instance().plainTranslation(
+                "host.lobfile.storage_usage",
+                String.valueOf(this.accountInfo.account().usage().spaceUsed() / 1_000_000),
+                String.valueOf(this.accountInfo.account().limits().spaceQuota() / 1_000_000),
+                String.valueOf(this.accountInfo.account().usage().slotsUsed()),
+                String.valueOf(this.accountInfo.account().limits().slotsQuota())
+        );
+    }
+
+    private void fail(CompletableFuture<?> future, String reason, String body) {
+        String msg = "LobFileHost Error: " + reason + (body != null ? " | Body: " + body : "");
+        future.completeExceptionally(new RuntimeException(msg));
+    }
+
+    private void readCacheFromDisk() {
+        Path cachePath = CraftEngine.instance().dataFolderPath().resolve("cache").resolve("lobfile.json");
+        if (!Files.exists(cachePath)) return;
+        try (InputStreamReader isr = new InputStreamReader(Files.newInputStream(cachePath), StandardCharsets.UTF_8)) {
+            Map<String, String> cache = GsonHelper.get().fromJson(isr, new TypeToken<Map<String, String>>(){}.getType());
+            this.cachedUrl = cache.get("url");
+            this.cachedSha1 = cache.get("sha1");
+        } catch (Exception e) {
+            CraftEngine.instance().logger().warn("Failed to load Lobfile cache", e);
+        }
+    }
+
+    private void saveCacheToDisk() {
+        Path cachePath = CraftEngine.instance().dataFolderPath().resolve("cache").resolve("lobfile.json");
+        try {
+            Files.createDirectories(cachePath.getParent());
+            Map<String, String> cache = new HashMap<>();
+            cache.put("url", this.cachedUrl != null ? this.cachedUrl : "");
+            cache.put("sha1", this.cachedSha1 != null ? this.cachedSha1 : "");
+            Files.writeString(cachePath, GsonHelper.get().toJson(cache), StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING);
+        } catch (IOException e) {
+            CraftEngine.instance().logger().warn("Failed to persist Lobfile cache", e);
+        }
     }
 
     private static class Factory implements ResourcePackHostFactory<LobFileHost> {
+        private static final String[] USE_ENVIRONMENT_VARIABLES = new String[] {"use_environment_variables", "use-environment-variables"};
+        private static final String[] API_KEY = new String[] {"api_key", "api-key"};
 
         @Override
-        public LobFileHost create(Map<String, Object> arguments) {
-            boolean useEnv = ResourceConfigUtils.getAsBoolean(arguments.getOrDefault("use-environment-variables", false), "use-environment-variables");
-            String apiKey = useEnv ? System.getenv("CE_LOBFILE_API_KEY") : Optional.ofNullable(arguments.get("api-key")).map(String::valueOf).orElse(null);
-            if (apiKey == null || apiKey.isEmpty()) {
-                throw new LocalizedException("warning.config.host.lobfile.missing_api_key");
-            }
-            ProxySelector proxy = getProxySelector(MiscUtils.castToMap(arguments.get("proxy"), true));
-            return new LobFileHost(apiKey, proxy);
+        public LobFileHost create(ConfigSection section) {
+            boolean useEnv = section.getBoolean(USE_ENVIRONMENT_VARIABLES);
+            String apiKey = useEnv ? getNonNullEnvironmentVariable(section, "CE_LOBFILE_API_KEY") : section.getNonEmptyString(API_KEY);
+            return new LobFileHost(apiKey);
         }
     }
 

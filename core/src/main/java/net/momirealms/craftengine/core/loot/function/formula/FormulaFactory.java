@@ -1,8 +1,8 @@
 package net.momirealms.craftengine.core.loot.function.formula;
 
-import java.util.Map;
+import net.momirealms.craftengine.core.plugin.config.ConfigSection;
 
 public interface FormulaFactory<T extends Formula> {
 
-    T create(Map<String, Object> arguments);
+    T create(ConfigSection section);
 }

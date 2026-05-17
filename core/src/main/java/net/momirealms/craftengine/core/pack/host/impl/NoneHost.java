@@ -1,11 +1,11 @@
 package net.momirealms.craftengine.core.pack.host.impl;
 
 import net.momirealms.craftengine.core.pack.host.*;
+import net.momirealms.craftengine.core.plugin.config.ConfigSection;
+import net.momirealms.craftengine.core.plugin.network.NetWorkUser;
 
 import java.nio.file.Path;
 import java.util.List;
-import java.util.Map;
-import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 
 public final class NoneHost implements ResourcePackHost {
@@ -15,7 +15,7 @@ public final class NoneHost implements ResourcePackHost {
     private NoneHost() {}
 
     @Override
-    public CompletableFuture<List<ResourcePackDownloadData>> requestResourcePackDownloadLink(UUID player) {
+    public CompletableFuture<List<ResourcePackDownloadData>> requestResourcePackDownloadLink(NetWorkUser user) {
         return CompletableFuture.completedFuture(List.of());
     }
 
@@ -37,7 +37,7 @@ public final class NoneHost implements ResourcePackHost {
     private static class Factory implements ResourcePackHostFactory<NoneHost> {
 
         @Override
-        public NoneHost create(Map<String, Object> arguments) {
+        public NoneHost create(ConfigSection section) {
             return INSTANCE;
         }
     }

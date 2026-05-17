@@ -12,7 +12,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.function.Function;
 
-public class PlayerParameterProvider implements ChainParameterProvider<Player> {
+public final class PlayerParameterProvider implements ChainParameterProvider<Player> {
     private static final Map<ContextKey<?>, Function<Player, Object>> CONTEXT_FUNCTIONS = new HashMap<>();
     static {
         CONTEXT_FUNCTIONS.put(DirectContextParameters.X, Entity::x);

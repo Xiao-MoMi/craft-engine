@@ -13,7 +13,8 @@ public final class TimeUtils {
             'd', 86400000L,
             'h', 3600000L,
             'm', 60000L,
-            's', 1000L
+            's', 1000L,
+            't', 50L
     ));
 
     private static final Pattern TIME_PATTERN = Pattern.compile("(\\d+)([dhmsDwHMSW])", Pattern.CASE_INSENSITIVE);

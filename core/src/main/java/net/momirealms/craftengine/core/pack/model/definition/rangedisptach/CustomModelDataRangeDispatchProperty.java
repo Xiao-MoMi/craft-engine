@@ -2,10 +2,8 @@ package net.momirealms.craftengine.core.pack.model.definition.rangedisptach;
 
 import com.google.gson.JsonObject;
 import net.momirealms.craftengine.core.pack.model.legacy.LegacyModelPredicate;
+import net.momirealms.craftengine.core.plugin.config.ConfigSection;
 import net.momirealms.craftengine.core.util.Key;
-import net.momirealms.craftengine.core.util.ResourceConfigUtils;
-
-import java.util.Map;
 
 public final class CustomModelDataRangeDispatchProperty implements RangeDispatchProperty, LegacyModelPredicate<Number> {
     public static final RangeDispatchPropertyFactory<CustomModelDataRangeDispatchProperty> FACTORY = new Factory();
@@ -21,9 +19,9 @@ public final class CustomModelDataRangeDispatchProperty implements RangeDispatch
     }
 
     @Override
-    public void accept(JsonObject jsonObject) {
-        jsonObject.addProperty("property", "custom_model_data");
-        jsonObject.addProperty("index", this.index);
+    public void writeProperty(JsonObject model) {
+        model.addProperty("property", "custom_model_data");
+        model.addProperty("index", this.index);
     }
 
     @Override
@@ -38,17 +36,15 @@ public final class CustomModelDataRangeDispatchProperty implements RangeDispatch
 
     private static class Factory implements RangeDispatchPropertyFactory<CustomModelDataRangeDispatchProperty> {
         @Override
-        public CustomModelDataRangeDispatchProperty create(Map<String, Object> arguments) {
-            int index = ResourceConfigUtils.getAsInt(arguments.getOrDefault("index", 0), "index");
-            return new CustomModelDataRangeDispatchProperty(index);
+        public CustomModelDataRangeDispatchProperty create(ConfigSection section) {
+            return new CustomModelDataRangeDispatchProperty(section.getInt("index"));
         }
     }
 
     private static class Reader implements RangeDispatchPropertyReader<CustomModelDataRangeDispatchProperty> {
         @Override
         public CustomModelDataRangeDispatchProperty read(JsonObject json) {
-            int index = json.has("index") ? json.get("index").getAsInt() : 0;
-            return new CustomModelDataRangeDispatchProperty(index);
+            return new CustomModelDataRangeDispatchProperty(json.has("index") ? json.get("index").getAsInt() : 0);
         }
     }
 }

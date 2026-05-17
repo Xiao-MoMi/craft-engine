@@ -9,7 +9,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.function.Function;
 
-public class FurnitureParameterProvider implements ChainParameterProvider<Furniture> {
+public final class FurnitureParameterProvider implements ChainParameterProvider<Furniture> {
     private static final Map<ContextKey<?>, Function<Furniture, Object>> CONTEXT_FUNCTIONS = new HashMap<>();
     static {
         CONTEXT_FUNCTIONS.put(DirectContextParameters.ID, f -> f.config().id());

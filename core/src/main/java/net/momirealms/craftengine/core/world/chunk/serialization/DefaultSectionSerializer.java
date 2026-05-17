@@ -1,9 +1,9 @@
 package net.momirealms.craftengine.core.world.chunk.serialization;
 
-import net.momirealms.craftengine.core.block.CustomBlock;
-import net.momirealms.craftengine.core.block.EmptyBlock;
+import net.momirealms.craftengine.core.block.BlockDefinition;
+import net.momirealms.craftengine.core.block.EmptyBlockDefinition;
 import net.momirealms.craftengine.core.block.ImmutableBlockState;
-import net.momirealms.craftengine.core.block.InactiveCustomBlock;
+import net.momirealms.craftengine.core.block.InactiveBlockDefinition;
 import net.momirealms.craftengine.core.plugin.config.Config;
 import net.momirealms.craftengine.core.registry.BuiltInRegistries;
 import net.momirealms.craftengine.core.registry.Holder;
@@ -26,7 +26,6 @@ import java.util.Optional;
 import java.util.stream.LongStream;
 
 public final class DefaultSectionSerializer {
-
     private DefaultSectionSerializer() {}
 
     @Nullable
@@ -34,7 +33,7 @@ public final class DefaultSectionSerializer {
         ReadableContainer.Serialized<ImmutableBlockState> serialized = section.statesContainer().serialize(null, PalettedContainer.PaletteProvider.CUSTOM_BLOCK_STATE);
         ListTag palettes = new ListTag();
         List<ImmutableBlockState> states = serialized.paletteEntries();
-        if (states.size() == 1 && states.getFirst() == EmptyBlock.STATE) {
+        if (states.size() == 1 && states.getFirst() == EmptyBlockDefinition.STATE) {
             return null;
         }
         CompoundTag sectionNbt = new CompoundTag();
@@ -67,7 +66,7 @@ public final class DefaultSectionSerializer {
                 if (converted == null) {
                     key = Key.of(id);
                 } else if (converted.isEmpty()) {
-                    paletteEntries.add(EmptyBlock.STATE);
+                    paletteEntries.add(EmptyBlockDefinition.STATE);
                     continue;
                 } else {
                     key = Key.of(converted);
@@ -75,9 +74,9 @@ public final class DefaultSectionSerializer {
             } else {
                 key = Key.of(id);
             }
-            Holder<CustomBlock> owner = BuiltInRegistries.BLOCK.get(key).orElseGet(() -> {
-                Holder.Reference<CustomBlock> holder = ((WritableRegistry<CustomBlock>) BuiltInRegistries.BLOCK).registerForHolder(ResourceKey.create(BuiltInRegistries.BLOCK.key().location(), key));
-                InactiveCustomBlock inactiveBlock = new InactiveCustomBlock(holder);
+            Holder<BlockDefinition> owner = BuiltInRegistries.BLOCK.get(key).orElseGet(() -> {
+                Holder.Reference<BlockDefinition> holder = ((WritableRegistry<BlockDefinition>) BuiltInRegistries.BLOCK).registerForHolder(ResourceKey.create(BuiltInRegistries.BLOCK.key().location(), key));
+                InactiveBlockDefinition inactiveBlock = new InactiveBlockDefinition(holder);
                 holder.bindValue(inactiveBlock);
                 return holder;
             });

@@ -1,6 +1,6 @@
 package net.momirealms.craftengine.core.world;
 
-public class ChunkPos {
+public final class ChunkPos {
     public static final long INVALID_CHUNK_POS = asLong(1875066, 1875066);
     public final int x;
     public final int z;

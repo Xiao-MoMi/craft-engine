@@ -8,5 +8,5 @@ public interface CustomProjectile {
 
     Projectile projectile();
 
-    Item<?> item();
+    Item item();
 }

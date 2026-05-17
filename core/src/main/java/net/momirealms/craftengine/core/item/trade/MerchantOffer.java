@@ -5,10 +5,10 @@ import net.momirealms.craftengine.core.item.Item;
 import java.util.Optional;
 import java.util.function.Function;
 
-public class MerchantOffer<I> {
-    private Item<I> cost1;
-    private Optional<Item<I>> cost2;
-    private Item<I> result;
+public final class MerchantOffer {
+    private Item cost1;
+    private Optional<Item> cost2;
+    private Item result;
     private final int uses;
     private final int maxUses;
     private final int specialPrice;
@@ -17,9 +17,9 @@ public class MerchantOffer<I> {
     private final int demand;
     private final boolean outOfStock;
 
-    public MerchantOffer(Item<I> cost1,
-                         Optional<Item<I>> cost2,
-                         Item<I> result,
+    public MerchantOffer(Item cost1,
+                         Optional<Item> cost2,
+                         Item result,
                          boolean outOfStock,
                          int uses,
                          int maxUses,
@@ -39,49 +39,49 @@ public class MerchantOffer<I> {
         this.demand = demand;
     }
 
-    public void applyClientboundData(Function<Item<I>, Item<I>> function) {
+    public void applyClientboundData(Function<Item, Item> function) {
         this.cost1 = function.apply(this.cost1);
         this.cost2 = this.cost2.map(function);
         this.result = function.apply(this.result);
     }
 
-    public Item<I> cost1() {
-        return cost1;
+    public Item cost1() {
+        return this.cost1;
     }
 
-    public Optional<Item<I>> cost2() {
-        return cost2;
+    public Optional<Item> cost2() {
+        return this.cost2;
     }
 
-    public Item<I> result() {
-        return result;
+    public Item result() {
+        return this.result;
     }
 
     public int uses() {
-        return uses;
+        return this.uses;
     }
 
     public int maxUses() {
-        return maxUses;
+        return this.maxUses;
     }
 
     public int specialPrice() {
-        return specialPrice;
+        return this.specialPrice;
     }
 
     public int xp() {
-        return xp;
+        return this.xp;
     }
 
     public float priceMultiplier() {
-        return priceMultiplier;
+        return this.priceMultiplier;
     }
 
     public int demand() {
-        return demand;
+        return this.demand;
     }
 
     public boolean outOfStock() {
-        return outOfStock;
+        return this.outOfStock;
     }
 }

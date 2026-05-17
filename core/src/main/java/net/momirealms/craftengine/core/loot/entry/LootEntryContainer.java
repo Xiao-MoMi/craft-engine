@@ -4,23 +4,23 @@ import net.momirealms.craftengine.core.loot.LootContext;
 
 import java.util.function.Consumer;
 
-public interface LootEntryContainer<T> {
+public interface LootEntryContainer {
 
-    static <T> LootEntryContainer<T> alwaysFalse() {
+    static LootEntryContainer alwaysFalse() {
         return (context, choiceConsumer) -> false;
     }
 
-    static <T> LootEntryContainer<T> alwaysTrue() {
+    static LootEntryContainer alwaysTrue() {
         return (context, choiceConsumer) -> true;
     }
 
-    boolean expand(LootContext context, Consumer<LootEntry<T>> choiceConsumer);
+    boolean expand(LootContext context, Consumer<LootEntry> choiceConsumer);
 
-    default LootEntryContainer<T> and(LootEntryContainer<T> other) {
+    default LootEntryContainer and(LootEntryContainer other) {
         return (context, lootChoiceExpander) -> this.expand(context, lootChoiceExpander) && other.expand(context, lootChoiceExpander);
     }
 
-    default LootEntryContainer<T> or(LootEntryContainer<T> other) {
+    default LootEntryContainer or(LootEntryContainer other) {
         return (context, lootChoiceExpander) -> this.expand(context, lootChoiceExpander) || other.expand(context, lootChoiceExpander);
     }
 }

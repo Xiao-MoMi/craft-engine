@@ -1,12 +1,14 @@
 items:
   default:cap:
     material: leather_helmet
+    settings:
+      dyeable: true
     $$<=1.21.1:
-      client-bound-material: leather_horse_armor
+      client_bound_material: leather_horse_armor
     data:
-      item-name: <!i><white><lang:item.default.cap>
+      item_name: <!i><white><lang:item.default.cap>
       unbreakable: true
-      remove-components:
+      remove_components:
         - attribute_modifiers
       $$>=1.21.2:
         equippable:

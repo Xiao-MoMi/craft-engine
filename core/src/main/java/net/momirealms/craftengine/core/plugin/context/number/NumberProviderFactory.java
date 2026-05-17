@@ -1,8 +1,8 @@
 package net.momirealms.craftengine.core.plugin.context.number;
 
-import java.util.Map;
+import net.momirealms.craftengine.core.plugin.config.ConfigSection;
 
 public interface NumberProviderFactory<T extends NumberProvider> {
 
-    T create(Map<String, Object> args);
+    T create(ConfigSection args);
 }

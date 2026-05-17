@@ -12,17 +12,23 @@ import net.momirealms.craftengine.bukkit.block.BukkitBlockManager;
 import net.momirealms.craftengine.core.block.ImmutableBlockState;
 import net.momirealms.craftengine.core.block.parser.BlockStateParser;
 import net.momirealms.craftengine.core.util.Key;
-import net.momirealms.craftengine.core.util.ReflectionUtils;
+import net.momirealms.sparrow.reflection.clazz.SparrowClass;
+import net.momirealms.sparrow.reflection.field.SField;
+import net.momirealms.sparrow.reflection.field.SparrowField;
+import net.momirealms.sparrow.reflection.field.matcher.FieldMatcher;
 import org.bukkit.Material;
+import org.jetbrains.annotations.Nullable;
 
-import java.lang.reflect.Field;
 import java.util.Locale;
+import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Stream;
 
 public final class WorldEditBlockRegister {
-    private static final Field field$BlockType$blockMaterial = ReflectionUtils.getDeclaredField(BlockType.class, "blockMaterial");
+    @Nullable
+    private static final SField field$BlockType$blockMaterial = Optional.ofNullable(SparrowClass.of(BlockType.class).getDeclaredSparrowField(FieldMatcher.named("blockMaterial"))).map(SparrowField::mh).orElse(null);
     private static boolean init = false;
+    private WorldEditBlockRegister() {}
 
     public static void init(boolean isFAWE) {
         if (init) {
@@ -48,7 +54,7 @@ public final class WorldEditBlockRegister {
     }
 
     @SuppressWarnings("deprecation")
-    public static void register(Key id) throws ReflectiveOperationException {
+    public static void register(Key id) {
         String string = id.asString();
         BlockType blockType = new BlockType(string, blockState -> blockState);
         field$BlockType$blockMaterial.set(blockType, LazyReference.from(() -> new BukkitBlockRegistry.BukkitBlockMaterial(null, Material.STONE)));
@@ -107,7 +113,7 @@ public final class WorldEditBlockRegister {
             if (state == null) return null;
 
             try {
-                String id = state.customBlockState().literalObject().toString();
+                String id = state.customBlockState().minecraftState().toString();
                 int first = id.indexOf('{');
                 int last = id.indexOf('}');
                 if (first != -1 && last != -1 && last > first) {

@@ -1,7 +1,7 @@
 items:
   default:amethyst_torch:
     data:
-      item-name: <!i><lang:item.default.amethyst_torch>
+      item_name: <!i><lang:item.default.amethyst_torch>
     texture: minecraft:block/custom/amethyst_torch
     behavior:
       - type: wall_block_item
@@ -12,7 +12,7 @@ items:
         block: default:amethyst_wall_torch
   default:amethyst_standing_torch:
     data:
-      item-name: <!i><lang:item.default.amethyst_torch>
+      item_name: <!i><lang:item.default.amethyst_torch>
     model:
       type: minecraft:model
       path: minecraft:block/custom/amethyst_torch
@@ -22,7 +22,7 @@ items:
           torch: minecraft:block/custom/amethyst_torch
   default:amethyst_wall_torch:
     data:
-      item-name: <!i><lang:item.default.amethyst_torch>
+      item_name: <!i><lang:item.default.amethyst_torch>
     model:
       type: minecraft:model
       path: minecraft:block/custom/amethyst_wall_torch
@@ -41,24 +41,24 @@ blocks:
         - default:sound/wood
         - default:hardness/none
       overrides:
-        push-reaction: destroy
+        push_reaction: destroy
         replaceable: false
-        map-color: 24
+        map_color: 24
         luminance: 15
         item: default:amethyst_torch
     state:
       state: redstone_torch[lit=false]
-      entity-renderer:
+      entity_renderer:
         item: default:amethyst_standing_torch
         scale: 1.01
     behavior:
       - type: sturdy_base_block
         direction: down
-        support-types:
+        support_types:
           - center
       - type: liquid_flowable_block
       - type: simple_particle_block
-        tick-interval: 10
+        tick_interval: 10
         particles:
           - particle: smoke
             x: 0.5
@@ -79,9 +79,9 @@ blocks:
         - default:sound/wood
         - default:hardness/none
       overrides:
-        push-reaction: destroy
+        push_reaction: destroy
         replaceable: false
-        map-color: 24
+        map_color: 24
         luminance: 15
         item: default:amethyst_torch
     behavior:
@@ -105,27 +105,27 @@ blocks:
       appearances:
         north:
           state: redstone_wall_torch[facing=north,lit=false]
-          entity-renderer:
+          entity_renderer:
             item: default:amethyst_wall_torch
             scale: 1.04
             yaw: 90
             translation: -0.02,0.01,0
         east:
           state: redstone_wall_torch[facing=east,lit=false]
-          entity-renderer:
+          entity_renderer:
             item: default:amethyst_wall_torch
             scale: 1.04
             yaw: 180
             translation: -0.02,0.01,0
         west:
           state: redstone_wall_torch[facing=west,lit=false]
-          entity-renderer:
+          entity_renderer:
             item: default:amethyst_wall_torch
             scale: 1.04
             translation: -0.02,0.01,0
         south:
           state: redstone_wall_torch[facing=south,lit=false]
-          entity-renderer:
+          entity_renderer:
             item: default:amethyst_wall_torch
             scale: 1.04
             yaw: -90

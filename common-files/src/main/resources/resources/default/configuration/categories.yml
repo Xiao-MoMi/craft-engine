@@ -1,27 +1,3 @@
-# The term "translation" here specifically refers to localization on the server-side.
-# This means that the content you write will not be directly included in the client-side resource pack.
-# The server will translate the keys you set and then send the already-localized text to the client.
-# https://xiao-momi.github.io/craft-engine-wiki/configuration/i18n
-translations:
-  en_us:
-    category.default.name: Default Assets
-    category.default.lore: Contains the default configuration of CraftEngine
-    category.palm_tree: Palm Tree
-    category.topaz: Topaz
-    category.misc: Misc
-  zh_cn:
-    category.default.name: 默认资产
-    category.default.lore: 包含了CraftEngine的默认配置
-    category.palm_tree: 棕榈树
-    category.topaz: 黄玉
-    category.misc: 杂项
-  fr_fr:
-    category.default.name: Ressources par Défaut
-    category.default.lore: Contient la configuration par défaut de CraftEngine
-    category.palm_tree: Palmier
-    category.topaz: Topaze
-    category.misc: Divers
-
 # https://xiao-momi.github.io/craft-engine-wiki/configuration/category
 categories:
   default:default:
@@ -112,3 +88,7 @@ categories:
       - default:magma_fruit
       - default:globe
       - default:drill
+      - default:showcase
+      - default:togglable_light_block
+      - default:drawer_block
+      - default:candelabrum

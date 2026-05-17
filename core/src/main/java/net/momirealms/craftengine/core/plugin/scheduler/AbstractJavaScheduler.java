@@ -10,7 +10,7 @@ import java.util.function.Consumer;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
-public abstract class AbstractJavaScheduler<T> implements SchedulerAdapter<T> {
+public abstract class AbstractJavaScheduler implements SchedulerAdapter {
     private static final int PARALLELISM = 16;
 
     private final Plugin plugin;
@@ -59,7 +59,7 @@ public abstract class AbstractJavaScheduler<T> implements SchedulerAdapter<T> {
         this.scheduler.shutdown();
         try {
             if (!this.scheduler.awaitTermination(1, TimeUnit.MINUTES)) {
-                this.plugin.logger().severe("Timed out waiting for the CraftEngine scheduler to terminate");
+                this.plugin.logger().error("Timed out waiting for the CraftEngine scheduler to terminate");
                 reportRunningTasks(thread -> thread.getName().equals("craft-engine-scheduler"));
             }
         } catch (InterruptedException e) {
@@ -72,7 +72,7 @@ public abstract class AbstractJavaScheduler<T> implements SchedulerAdapter<T> {
         this.worker.shutdown();
         try {
             if (!this.worker.awaitTermination(1, TimeUnit.MINUTES)) {
-                this.plugin.logger().severe("Timed out waiting for the CraftEngine worker thread pool to terminate");
+                this.plugin.logger().error("Timed out waiting for the CraftEngine worker thread pool to terminate");
                 reportRunningTasks(thread -> thread.getName().startsWith("craft-engine-worker-"));
             }
         } catch (InterruptedException e) {

@@ -9,12 +9,12 @@ import java.util.*;
 import java.util.function.Predicate;
 
 public enum AutoStateGroup {
-    NON_TINTABLE_LEAVES(List.of("no_tint_leaves", "leaves_no_tint", "non_tintable_leaves"),
+    NON_TINTABLE_LEAVES(List.of("non_tintable_leaves", "no_tint_leaves", "leaves_no_tint"),
             Set.of(BlockKeys.AZALEA_LEAVES, BlockKeys.FLOWERING_AZALEA_LEAVES, BlockKeys.CHERRY_LEAVES, BlockKeys.PALE_OAK_LEAVES, BlockKeys.SPRUCE_LEAVES, BlockKeys.BIRCH_LEAVES),
             (w) -> !(boolean) w.getProperty("waterlogged")
     ),
     WATERLOGGED_NON_TINTABLE_LEAVES(
-            List.of("waterlogged_no_tint_leaves", "waterlogged_leaves_no_tint", "waterlogged_non_tintable_leaves"),
+            List.of("waterlogged_non_tintable_leaves", "waterlogged_no_tint_leaves", "waterlogged_leaves_no_tint"),
             Set.of(BlockKeys.AZALEA_LEAVES, BlockKeys.FLOWERING_AZALEA_LEAVES, BlockKeys.CHERRY_LEAVES, BlockKeys.PALE_OAK_LEAVES, BlockKeys.SPRUCE_LEAVES, BlockKeys.BIRCH_LEAVES),
             (w) -> w.getProperty("waterlogged")
     ),
@@ -112,11 +112,11 @@ public enum AutoStateGroup {
     }
 
     public Set<Key> blocks() {
-        return blocks;
+        return this.blocks;
     }
 
     public String id() {
-        return id.getFirst();
+        return this.id.getFirst();
     }
 
     public List<String> ids() {

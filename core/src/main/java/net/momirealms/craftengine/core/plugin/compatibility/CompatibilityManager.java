@@ -1,10 +1,14 @@
 package net.momirealms.craftengine.core.plugin.compatibility;
 
+import com.google.gson.JsonElement;
 import net.kyori.adventure.text.minimessage.tag.resolver.TagResolver;
+import net.momirealms.craftengine.core.block.ImmutableBlockState;
 import net.momirealms.craftengine.core.entity.furniture.ExternalModel;
 import net.momirealms.craftengine.core.entity.player.Player;
 import net.momirealms.craftengine.core.plugin.context.Context;
 import net.momirealms.craftengine.core.plugin.network.NetWorkUser;
+
+import java.util.function.BiConsumer;
 
 public interface CompatibilityManager {
 
@@ -16,9 +20,7 @@ public interface CompatibilityManager {
 
     void registerTagResolverProvider(TagResolverProvider provider);
 
-    ExternalModel createModel(String plugin, String id);
-
-    int interactionToBaseEntity(int id);
+    ExternalModel createModel(String id);
 
     boolean hasPlaceholderAPI();
 
@@ -32,17 +34,29 @@ public interface CompatibilityManager {
 
     int getViaVersionProtocolVersion(NetWorkUser user);
 
-    void executeMMSkill(String skill, float power, Player player);
-
     TagResolver[] createExternalTagResolvers(Context context);
 
     boolean isBedrockPlayer(Player player);
 
-    ItemSource<?> getItemSource(String id);
+    ModelProvider getModelProvider(String id);
 
-    void registerItemSource(ItemSource<?> itemSource);
+    void registerModelProvider(ModelProvider provider);
+
+    ItemSource getItemSource(String id);
+
+    void registerItemSource(ItemSource itemSource);
 
     LevelerProvider getLevelerProvider(String id);
 
     void registerLevelerProvider(LevelerProvider provider);
+
+    EntityProvider getEntityProvider(String id);
+
+    void registerEntityProvider(EntityProvider provider);
+
+    boolean hasPermission(NetWorkUser user, String permission);
+
+    int remapEntityId(int entityId);
+
+    void blueMapBlockColors(ImmutableBlockState state, BiConsumer<String, JsonElement> callback);
 }

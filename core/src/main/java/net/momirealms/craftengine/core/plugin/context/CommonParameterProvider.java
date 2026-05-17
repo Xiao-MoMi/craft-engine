@@ -9,7 +9,7 @@ import java.util.Optional;
 import java.util.function.Function;
 
 //TODO 需要为random指定id
-public class CommonParameterProvider implements AdditionalParameterProvider {
+public final class CommonParameterProvider implements AdditionalParameterProvider {
     private double lastRandom = -1;
 
     private static final Map<ContextKey<?>, Function<CommonParameterProvider, Object>> CONTEXT_FUNCTIONS = new HashMap<>();

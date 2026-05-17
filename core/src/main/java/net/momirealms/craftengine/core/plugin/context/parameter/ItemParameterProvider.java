@@ -9,8 +9,8 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.function.Function;
 
-public class ItemParameterProvider implements ChainParameterProvider<Item<?>> {
-    private static final Map<ContextKey<?>, Function<Item<?>, Object>> CONTEXT_FUNCTIONS = new HashMap<>();
+public final class ItemParameterProvider implements ChainParameterProvider<Item> {
+    private static final Map<ContextKey<?>, Function<Item, Object>> CONTEXT_FUNCTIONS = new HashMap<>();
     static {
         CONTEXT_FUNCTIONS.put(DirectContextParameters.ID, Item::id);
         CONTEXT_FUNCTIONS.put(DirectContextParameters.CUSTOM_MODEL_DATA, i -> i.customModelData().orElse(null));
@@ -21,7 +21,7 @@ public class ItemParameterProvider implements ChainParameterProvider<Item<?>> {
 
     @SuppressWarnings("unchecked")
     @Override
-    public <T> Optional<T> getOptionalParameter(ContextKey<T> parameter, Item<?> world) {
+    public <T> Optional<T> getOptionalParameter(ContextKey<T> parameter, Item world) {
         return (Optional<T>) Optional.ofNullable(CONTEXT_FUNCTIONS.get(parameter)).map(f -> f.apply(world));
     }
 }

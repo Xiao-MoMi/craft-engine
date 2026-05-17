@@ -1,14 +1,14 @@
 items:
   default:gunpowder_block:
     data:
-      item-name: <!i><lang:item.default.gunpowder_block>
+      item_name: <!i><lang:item.default.gunpowder_block>
     model: minecraft:block/custom/gunpowder_block
     behavior:
       type: block_item
       block:
         behaviors:
           - type: concrete_powder_block
-            solid-block: default:solid_gunpowder_block
+            solid_block: default:solid_gunpowder_block
           - type: falling_block
         loot:
           template: default:loot_table/self
@@ -20,9 +20,9 @@ items:
             hardness: 0.5
             resistance: 0.5
             instrument: snare
-            map-color: 45
+            map_color: 45
         state:
-          auto-state: solid
+          auto_state: solid
           model:
             path: minecraft:block/custom/gunpowder_block
             generation:
@@ -31,7 +31,7 @@ items:
                 all: minecraft:block/custom/gunpowder_block
   default:solid_gunpowder_block:
     data:
-      item-name: <!i><lang:item.default.solid_gunpowder_block>
+      item_name: <!i><lang:item.default.solid_gunpowder_block>
     model:
       type: minecraft:model
       path: minecraft:item/custom/solid_gunpowder_block
@@ -50,11 +50,11 @@ items:
             hardness: 1.8
             resistance: 1.8
             instrument: basedrum
-            map-color: 45
-            correct-tools:
+            map_color: 45
+            correct_tools:
               template: default:pickaxe_power/level_1
         state:
-          auto-state: solid
+          auto_state: solid
           model:
             path: minecraft:block/custom/solid_gunpowder_block
             generation:

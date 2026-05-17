@@ -1,0 +1,71 @@
+items:
+  default:drawer_block:
+    data:
+      item_name: <!i><lang:item.default.drawer_block>
+    model: minecraft:block/custom/drawer_block
+    behavior:
+      type: block_item
+      block:
+        loot:
+          template: default:loot_table/self
+        settings:
+          template:
+            - default:sound/wood
+            - default:hardness/wood
+          overrides:
+            instrument: bass
+            tags: ["minecraft:mineable/axe"]
+        behavior:
+          type: drawer_block
+          item_position: 0,0,-0.52
+          text_position: 0,-0.4,-0.52
+          item_scale: 0.6,0.6,0.6
+          text_scale: 0.5,0.5,0.5
+          max_stacks: 20
+          sounds:
+            put: minecraft:block.decorated_pot.insert
+            take: minecraft:block.decorated_pot.insert_fail
+        states:
+          properties:
+            facing:
+              type: 4-direction
+              default: north
+          appearances:
+            east:
+              auto_state: note_block
+              model:
+                path: minecraft:block/custom/drawer_block
+                y: 90
+                generation:
+                  parent: minecraft:block/cube_all
+                  textures:
+                    down: minecraft:block/custom/drawer_block_bottom
+                    up: minecraft:block/custom/drawer_block_top
+                    north: minecraft:block/custom/drawer_block_front
+                    east: minecraft:block/custom/drawer_block_side_left
+                    south: minecraft:block/custom/drawer_block_back
+                    west: minecraft:block/custom/drawer_block_side_right
+                    particle: minecraft:block/custom/drawer_block_front
+            north:
+              auto_state: note_block
+              model:
+                path: minecraft:block/custom/drawer_block
+            south:
+              auto_state: note_block
+              model:
+                path: minecraft:block/custom/drawer_block
+                y: 180
+            west:
+              auto_state: note_block
+              model:
+                path: minecraft:block/custom/drawer_block
+                y: 270
+          variants:
+            facing=east:
+              appearance: east
+            facing=north:
+              appearance: north
+            facing=south:
+              appearance: south
+            facing=west:
+              appearance: west

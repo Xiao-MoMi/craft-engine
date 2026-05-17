@@ -1,0 +1,129 @@
+# Toutes les configurations ci-dessous utilisent un système de localisation implémenté basé sur le pack de ressources côté client.
+# https://xiao-momi.github.io/craft-engine-wiki/configuration/lang
+lang#items:
+  fr_fr:
+    item.default.chinese_lantern: Lanterne Chinoise
+    item.default.fairy_flower: Fleur Fée
+    item.default.reed: Roseau
+    item.default.flame_cane: Canne de Flamme
+    item.default.ender_pearl_flower_seeds: Graines de Fleur de Perle du Néant
+    item.default.bench: Banc
+    item.default.table_lamp: Lampe de Table
+    item.default.wooden_chair: Chaise en Bois
+    item.default.topaz_rod: Canne à Topaze
+    item.default.topaz_bow: Arc en Topaze
+    item.default.topaz_crossbow: Arbalète en Topaze
+    item.default.topaz_pickaxe: Pioche en Topaze
+    item.default.topaz_axe: Hache en Topaze
+    item.default.topaz_hoe: Houe en Topaze
+    item.default.topaz_shovel: Pelle en Topaze
+    item.default.topaz_sword: Épée en Topaze
+    item.default.topaz_helmet: Casque en Topaze
+    item.default.topaz_chestplate: Plastron en Topaze
+    item.default.topaz_leggings: Jambières en Topaze
+    item.default.topaz_boots: Bottes en Topaze
+    item.default.topaz_trident: Trident en Topaze
+    item.default.topaz_ore: Minerai de Topaze
+    item.default.deepslate_topaz_ore: Minerai de Topaze en Schiste Sombre
+    item.default.topaz: Topaze
+    item.default.palm_log: Bois de Palmier
+    item.default.stripped_palm_log: Bois de Palmier Écorcé
+    item.default.palm_wood: Bois de Palmier
+    item.default.stripped_palm_wood: Bois de Palmier Écorcé
+    item.default.palm_planks: Planches de Palmier
+    item.default.palm_sapling: Pousse de Palmier
+    item.default.palm_leaves: Feuilles de Palmier
+    item.default.palm_trapdoor: Trappe en Palmier
+    item.default.palm_door: Porte en Palmier
+    item.default.palm_fence_gate: Portail de Barrière en Palmier
+    item.default.palm_slab: Dalle en Palmier
+    item.default.palm_stairs: Escalier en Palmier
+    item.default.palm_pressure_plate: Plaque de Pression en Palmier
+    item.default.palm_button: Bouton en Palmier
+    item.default.palm_fence: Barrière en Palmier
+    item.default.netherite_anvil: Enclume en Netherite
+    item.default.gunpowder_block: Bloc de Poudre à Canon
+    item.default.solid_gunpowder_block: Bloc de Poudre à Canon Solide
+    item.default.copper_coil: Bobine de Cuivre
+    item.default.flame_elytra: Élytres de Flamme
+    item.default.pebble: Caillou
+    item.default.cap: Casquette
+    item.default.flower_basket: Panier de Fleurs
+    item.default.chessboard_block: Bloc Damier
+    item.default.safe_block: Coffre-Fort
+    item.default.sofa: Canapé
+    item.default.amethyst_torch: Torche en Améthyste
+    item.default.hami_melon_slice: Tranche de Melon de Hami
+    item.default.hami_melon: Melon de Hami
+    item.default.hami_melon_seeds: Graines de Melon de Hami
+    item.default.magma_fruit: Fruit de Magma
+    item.default.globe: Globe
+    item.default.drill: La perceuse
+    item.default.togglable_light_block: Bloc de lumière réglable
+    item.default.showcase: Vitrine
+    item.default.drawer_block: Bloc de tiroir
+    item.default.candelabrum: Candélabre
+# Fournir des traductions pour les blocs est particulièrement efficace pour les plugins qui récupèrent les clés de traduction des blocs côté serveur.
+lang#blocks:
+  fr_fr:
+    block_name:default:chinese_lantern: Lanterne Chinoise
+    block_name:default:netherite_anvil: Enclume en Netherite
+    block_name:default:topaz_ore: Minerai de Topaze
+    block_name:default:deepslate_topaz_ore: Minerai de Topaze en Schiste Sombre
+    block_name:default:palm_log: Bois de Palmier
+    block_name:default:stripped_palm_log: Bois de Palmier Écorcé
+    block_name:default:palm_wood: Bois de Palmier
+    block_name:default:stripped_palm_wood: Bois de Palmier Écorcé
+    block_name:default:palm_planks: Planches de Palmier
+    block_name:default:palm_sapling: Pousse de Palmier
+    block_name:default:palm_leaves: Feuilles de Palmier
+    block_name:default:palm_trapdoor: Trappe en Palmier
+    block_name:default:palm_door: Porte en Palmier
+    block_name:default:palm_fence_gate: Portail de Barrière en Palmier
+    block_name:default:palm_slab: Dalle en Palmier
+    block_name:default:palm_stairs: Escalier en Palmier
+    block_name:default:palm_button: Bouton en Palmier
+    block_name:default:palm_fence: Barrière en Palmier
+    block_name:default:fairy_flower: Fleur Fée
+    block_name:default:reed: Roseau
+    block_name:default:flame_cane: Canne de Flamme
+    block_name:default:ender_pearl_flower: Fleur de Perle du Néant
+    block_name:default:gunpowder_block: Bloc de Poudre à Canon
+    block_name:default:solid_gunpowder_block: Bloc de Poudre à Canon Solide
+    block_name:default:copper_coil: Bobine de Cuivre
+    block_name:default:chessboard_block: Bloc Damier
+    block_name:default:safe_block: Coffre-Fort
+    block_name:default:sleeper_sofa: Canapé
+    block_name:default:sofa: Canapé
+    block_name:default:amethyst_torch: Torche en Améthyste
+    block_name:default:amethyst_wall_torch: Torche en Améthyste
+    block_name:default:hami_melon: Melon de Hami
+    block_name:default:hami_melon_stem: Tige de Melon de Hami
+    block_name:default:attached_hami_melon_stem: Tige de Melon de Hami
+    block_name:default:magma_plant: Plante de Magma
+    block_name:default:togglable_light_block: Bloc de lumière réglable
+    block_name:default:drawer_block: Bloc de tiroir
+# Les traductions pour les meubles sont généralement conçues pour l'API.
+# Si vous utilisez un plugin qui prend en charge l'affichage des noms de meubles, vous devrez très probablement configurer les traductions pour les meubles.
+lang#furniture:
+  fr_fr:
+    furniture.default.bench: Banc
+    furniture.default.flower_basket: Panier de fleurs
+    furniture.default.globe: Globe
+    furniture.default.wooden_chair: Chaise en bois
+    furniture.default.showcase: Vitrine
+    furniture.default.candelabrum: Candélabre
+# Le terme "translation" fait ici spécifiquement référence à la localisation côté serveur.
+# Cela signifie que le contenu que vous écrivez ne sera pas directement inclus dans le pack de ressources côté client.
+# Le serveur traduira les clés que vous définissez, puis enverra le texte déjà localisé au client.
+# https://xiao-momi.github.io/craft-engine-wiki/configuration/i18n
+translations#categories:
+  fr_fr:
+    category.default.name: Ressources par Défaut
+    category.default.lore: Contient la configuration par défaut de CraftEngine
+    category.palm_tree: Palmier
+    category.topaz: Topaze
+    category.misc: Divers
+translations#emoji:
+  fr_fr:
+    emoji.tip: Utilisez <yellow>'<arg:0>'</yellow> pour envoyer l'emoji '<arg:1>'

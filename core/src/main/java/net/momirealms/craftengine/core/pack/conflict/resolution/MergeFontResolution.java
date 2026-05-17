@@ -5,10 +5,10 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import net.momirealms.craftengine.core.pack.conflict.PathContext;
 import net.momirealms.craftengine.core.plugin.CraftEngine;
+import net.momirealms.craftengine.core.plugin.config.ConfigSection;
 import net.momirealms.craftengine.core.util.GsonHelper;
 
 import java.util.HashSet;
-import java.util.Map;
 
 public final class MergeFontResolution implements Resolution {
     public static final ResolutionFactory<MergeFontResolution> FACTORY = new Factory();
@@ -19,8 +19,8 @@ public final class MergeFontResolution implements Resolution {
     @Override
     public void run(PathContext existing, PathContext conflict) {
         try {
-            JsonObject j1 = GsonHelper.readJsonFile(existing.path()).getAsJsonObject();
-            JsonObject j2 = GsonHelper.readJsonFile(conflict.path()).getAsJsonObject();
+            JsonObject j1 = GsonHelper.readJsonFromFile(existing.path()).getAsJsonObject();
+            JsonObject j2 = GsonHelper.readJsonFromFile(conflict.path()).getAsJsonObject();
             JsonObject j3 = new JsonObject();
             JsonArray ja1 = j1.getAsJsonArray("providers");
             JsonArray ja2 = j2.getAsJsonArray("providers");
@@ -39,14 +39,14 @@ public final class MergeFontResolution implements Resolution {
             j3.add("providers", ja3);
             GsonHelper.writeJsonFile(j3, existing.path());
         } catch (Exception e) {
-            CraftEngine.instance().logger().severe("Failed to merge font when resolving file conflicts", e);
+            CraftEngine.instance().logger().error("Failed to merge font when resolving file conflicts", e);
         }
     }
 
     private static class Factory implements ResolutionFactory<MergeFontResolution> {
 
         @Override
-        public MergeFontResolution create(Map<String, Object> arguments) {
+        public MergeFontResolution create(ConfigSection section) {
             return INSTANCE;
         }
     }

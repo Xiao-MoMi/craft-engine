@@ -1,64 +1,65 @@
 package net.momirealms.craftengine.bukkit.block.behavior;
 
 import net.momirealms.antigrieflib.Flag;
-import net.momirealms.craftengine.bukkit.block.entity.BukkitBlockEntityTypes;
-import net.momirealms.craftengine.bukkit.block.entity.SimpleStorageBlockEntity;
-import net.momirealms.craftengine.bukkit.nms.FastNMS;
+import net.momirealms.craftengine.bukkit.block.entity.SimpleStorageBlockEntityController;
 import net.momirealms.craftengine.bukkit.plugin.BukkitCraftEngine;
 import net.momirealms.craftengine.bukkit.plugin.gui.BukkitInventory;
 import net.momirealms.craftengine.bukkit.util.BlockStateUtils;
 import net.momirealms.craftengine.bukkit.util.LocationUtils;
 import net.momirealms.craftengine.bukkit.world.BukkitWorldManager;
-import net.momirealms.craftengine.core.block.CustomBlock;
+import net.momirealms.craftengine.core.block.BlockDefinition;
 import net.momirealms.craftengine.core.block.ImmutableBlockState;
 import net.momirealms.craftengine.core.block.behavior.BlockBehaviorFactory;
-import net.momirealms.craftengine.core.block.behavior.EntityBlockBehavior;
+import net.momirealms.craftengine.core.block.behavior.EntityBlock;
+import net.momirealms.craftengine.core.block.behavior.WorldlyContainerHolder;
 import net.momirealms.craftengine.core.block.entity.BlockEntity;
-import net.momirealms.craftengine.core.block.entity.BlockEntityType;
-import net.momirealms.craftengine.core.block.properties.Property;
+import net.momirealms.craftengine.core.block.entity.BlockEntityController;
+import net.momirealms.craftengine.core.block.property.Property;
 import net.momirealms.craftengine.core.entity.player.InteractionResult;
+import net.momirealms.craftengine.core.plugin.config.ConfigSection;
+import net.momirealms.craftengine.core.plugin.config.ConfigValue;
 import net.momirealms.craftengine.core.plugin.context.PlayerOptionalContext;
 import net.momirealms.craftengine.core.sound.SoundData;
 import net.momirealms.craftengine.core.util.AdventureHelper;
 import net.momirealms.craftengine.core.util.MiscUtils;
-import net.momirealms.craftengine.core.util.ResourceConfigUtils;
 import net.momirealms.craftengine.core.world.BlockPos;
 import net.momirealms.craftengine.core.world.CEWorld;
 import net.momirealms.craftengine.core.world.context.UseOnContext;
+import net.momirealms.craftengine.proxy.bukkit.craftbukkit.inventory.CraftInventoryProxy;
+import net.momirealms.craftengine.proxy.minecraft.world.level.LevelProxy;
 import org.bukkit.Location;
 import org.bukkit.World;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Map;
-import java.util.Optional;
-import java.util.concurrent.Callable;
-
-public class SimpleStorageBlockBehavior extends BukkitBlockBehavior implements EntityBlockBehavior {
+public final class SimpleStorageBlockBehavior extends BukkitBlockBehavior implements EntityBlock, WorldlyContainerHolder {
     public static final BlockBehaviorFactory<SimpleStorageBlockBehavior> FACTORY = new Factory();
-    private final String containerTitle;
-    private final int rows;
-    private final SoundData openSound;
-    private final SoundData closeSound;
-    private final boolean hasAnalogOutputSignal;
-    private final boolean canPlaceItem;
-    private final boolean canTakeItem;
+    public final String containerTitle;
+    public final int rows;
+    public final SoundData openSound;
+    public final SoundData closeSound;
+    public final boolean hasAnalogOutputSignal;
+    public final boolean canPlaceItem;
+    public final boolean canTakeItem;
     @Nullable
-    private final Property<Boolean> openProperty;
+    public final Property<Boolean> openProperty;
+    private int controllerId;
+    public final String customDataKey;
 
-    public SimpleStorageBlockBehavior(CustomBlock customBlock,
-                                      String containerTitle,
-                                      int rows,
-                                      SoundData openSound,
-                                      SoundData closeSound,
-                                      boolean hasAnalogOutputSignal,
-                                      boolean canPlaceItem,
-                                      boolean canTakeItem,
-                                      @Nullable Property<Boolean> openProperty) {
-        super(customBlock);
+    private SimpleStorageBlockBehavior(BlockDefinition blockDefinition,
+                                       String containerTitle,
+                                       int rows,
+                                       SoundData openSound,
+                                       SoundData closeSound,
+                                       boolean hasAnalogOutputSignal,
+                                       boolean canPlaceItem,
+                                       boolean canTakeItem,
+                                       @Nullable Property<Boolean> openProperty,
+                                       String customDataKey
+    ) {
+        super(blockDefinition);
         this.containerTitle = containerTitle;
         this.rows = rows;
         this.openSound = openSound;
@@ -67,6 +68,17 @@ public class SimpleStorageBlockBehavior extends BukkitBlockBehavior implements E
         this.canPlaceItem = canPlaceItem;
         this.canTakeItem = canTakeItem;
         this.openProperty = openProperty;
+        this.customDataKey = customDataKey;
+    }
+
+    @Override
+    public BlockEntityController createBlockEntityController(BlockEntity blockEntity) {
+        return new SimpleStorageBlockEntityController(blockEntity, this);
+    }
+
+    @Override
+    public void initControllerId(int id) {
+        this.controllerId = id;
     }
 
     @Override
@@ -84,76 +96,34 @@ public class SimpleStorageBlockBehavior extends BukkitBlockBehavior implements E
             return InteractionResult.SUCCESS_AND_CANCEL;
         }
         BlockEntity blockEntity = world.getBlockEntityAtIfLoaded(blockPos);
-        if (!(blockEntity instanceof SimpleStorageBlockEntity entity) || entity.inventory() == null) {
-            return InteractionResult.SUCCESS_AND_CANCEL;
-        }
-        entity.onPlayerOpen(player);
-        bukkitPlayer.openInventory(entity.inventory());
-        new BukkitInventory(entity.inventory()).open(player, AdventureHelper.miniMessage().deserialize(this.containerTitle, PlayerOptionalContext.of(player).tagResolvers()));
+        if (blockEntity == null) return InteractionResult.FAIL;
+        blockEntity.controller.let(SimpleStorageBlockEntityController.class, this.controllerId, c -> {
+            c.onPlayerOpen(player);
+            new BukkitInventory(c.inventory()).open(player, AdventureHelper.miniMessage().deserialize(this.containerTitle, PlayerOptionalContext.of(player).tagResolvers()));
+        });
         return InteractionResult.SUCCESS_AND_CANCEL;
     }
 
-    // 1.21.5+
     @Override
-    public void affectNeighborsAfterRemoval(Object thisBlock, Object[] args, Callable<Object> superMethod) {
+    public void affectNeighborsAfterRemoval(Object thisBlock, Object[] args) {
         Object level = args[1];
         Object pos = args[2];
         Object blockState = args[0];
-        FastNMS.INSTANCE.method$Level$updateNeighbourForOutputSignal(level, pos, BlockStateUtils.getBlockOwner(blockState));
+        LevelProxy.INSTANCE.updateNeighbourForOutputSignal(level, pos, BlockStateUtils.getBlockOwner(blockState));
     }
 
     @Override
-    public void tick(Object thisBlock, Object[] args, Callable<Object> superMethod) throws Exception {
+    public void tick(Object thisBlock, Object[] args) {
         Object world = args[1];
         Object blockPos = args[2];
         BlockPos pos = LocationUtils.fromBlockPos(blockPos);
-        World bukkitWorld = FastNMS.INSTANCE.method$Level$getCraftWorld(world);
+        World bukkitWorld = LevelProxy.INSTANCE.getWorld(world);
         CEWorld ceWorld = BukkitWorldManager.instance().getWorld(bukkitWorld.getUID());
         BlockEntity blockEntity = ceWorld.getBlockEntityAtIfLoaded(pos);
-        if (blockEntity instanceof SimpleStorageBlockEntity entity) {
-            entity.checkOpeners(world, blockPos, args[0]);
-        }
-    }
-
-    @Override
-    public <T extends BlockEntity> BlockEntityType<T> blockEntityType(ImmutableBlockState state) {
-        return EntityBlockBehavior.blockEntityTypeHelper(BukkitBlockEntityTypes.SIMPLE_STORAGE);
-    }
-
-    @Override
-    public BlockEntity createBlockEntity(BlockPos pos, ImmutableBlockState state) {
-        return new SimpleStorageBlockEntity(pos, state);
-    }
-
-    @NotNull
-    public String containerTitle() {
-        return this.containerTitle;
-    }
-
-    @Nullable
-    public SoundData closeSound() {
-        return this.closeSound;
-    }
-
-    @Nullable
-    public SoundData openSound() {
-        return this.openSound;
-    }
-
-    public int rows() {
-        return this.rows;
-    }
-
-    public boolean canPlaceItem() {
-        return this.canPlaceItem;
-    }
-
-    public boolean canTakeItem() {
-        return this.canTakeItem;
-    }
-
-    public @Nullable Property<Boolean> openProperty() {
-        return openProperty;
+        if (blockEntity == null) return;
+        blockEntity.controller.let(SimpleStorageBlockEntityController.class, this.controllerId, c -> {
+            c.checkOpeners(world, blockPos, args[0]);
+        });
     }
 
     @Override
@@ -162,11 +132,12 @@ public class SimpleStorageBlockBehavior extends BukkitBlockBehavior implements E
         Object world = args[1];
         Object blockPos = args[2];
         BlockPos pos = LocationUtils.fromBlockPos(blockPos);
-        World bukkitWorld = FastNMS.INSTANCE.method$Level$getCraftWorld(world);
+        World bukkitWorld = LevelProxy.INSTANCE.getWorld(world);
         CEWorld ceWorld = BukkitWorldManager.instance().getWorld(bukkitWorld.getUID());
         BlockEntity blockEntity = ceWorld.getBlockEntityAtIfLoaded(pos);
-        if (blockEntity instanceof SimpleStorageBlockEntity entity) {
-            Inventory inventory = entity.inventory();
+        if (blockEntity == null) return 0;
+        return blockEntity.controller.let(SimpleStorageBlockEntityController.class, this.controllerId, c -> {
+            Inventory inventory = c.inventory();
             if (inventory != null) {
                 float signal = 0.0F;
                 for (int i = 0; i < inventory.getSize(); i++) {
@@ -178,8 +149,8 @@ public class SimpleStorageBlockBehavior extends BukkitBlockBehavior implements E
                 signal /= (float) inventory.getSize();
                 return MiscUtils.lerpDiscrete(signal, 0, 15);
             }
-        }
-        return 0;
+            return 0;
+        });
     }
 
     @Override
@@ -189,34 +160,43 @@ public class SimpleStorageBlockBehavior extends BukkitBlockBehavior implements E
 
     @Override
     public Object getContainer(Object thisBlock, Object[] args) {
-        CEWorld ceWorld = BukkitWorldManager.instance().getWorld(FastNMS.INSTANCE.method$Level$getCraftWorld(args[1]));
+        CEWorld ceWorld = BukkitWorldManager.instance().getWorld(LevelProxy.INSTANCE.getWorld(args[1]));
         BlockPos blockPos = LocationUtils.fromBlockPos(args[2]);
         BlockEntity blockEntity = ceWorld.getBlockEntityAtIfLoaded(blockPos);
-        if (blockEntity instanceof SimpleStorageBlockEntity entity) {
-            return FastNMS.INSTANCE.method$CraftInventory$getInventory(entity.inventory());
-        }
-        return null;
+        if (blockEntity == null) return null;
+        return blockEntity.controller.let(SimpleStorageBlockEntityController.class, this.controllerId, c -> {
+            return CraftInventoryProxy.INSTANCE.getInventory(c.inventory());
+        });
     }
 
     private static class Factory implements BlockBehaviorFactory<SimpleStorageBlockBehavior> {
+        private static final String[] HAS_SIGNAL = new String[]{"has_signal", "has-signal"};
+        private static final String[] ALLOW_INPUT = new String[]{"allow_input", "allow-input"};
+        private static final String[] ALLOW_OUTPUT = new String[]{"allow_output", "allow-output"};
+        private static final String[] DATA_KEY = new String[] {"data_key", "data-key"};
 
-        @SuppressWarnings("unchecked")
+
         @Override
-        public SimpleStorageBlockBehavior create(CustomBlock block, Map<String, Object> arguments) {
-            String title = arguments.getOrDefault("title", "").toString();
-            int rows = MiscUtils.clamp(ResourceConfigUtils.getAsInt(arguments.getOrDefault("rows", 1), "rows"), 1, 6);
-            Map<String, Object> sounds = (Map<String, Object>) arguments.get("sounds");
-            boolean hasAnalogOutputSignal = ResourceConfigUtils.getAsBoolean(arguments.getOrDefault("has-signal", true), "has-signal");
+        public SimpleStorageBlockBehavior create(BlockDefinition block, ConfigSection section) {
+            ConfigSection soundSection = section.getSection("sounds");
             SoundData openSound = null;
             SoundData closeSound = null;
-            if (sounds != null) {
-                openSound = Optional.ofNullable(sounds.get("open")).map(obj -> SoundData.create(obj, SoundData.SoundValue.FIXED_0_5, SoundData.SoundValue.ranged(0.9f, 1f))).orElse(null);
-                closeSound = Optional.ofNullable(sounds.get("close")).map(obj -> SoundData.create(obj, SoundData.SoundValue.FIXED_0_5, SoundData.SoundValue.ranged(0.9f, 1f))).orElse(null);
+            if (soundSection != null) {
+                openSound = soundSection.getValue("open", v -> SoundData.fromConfig(v, SoundData.SoundValue.FIXED_0_5, SoundData.SoundValue.RANGED_0_9_1));
+                closeSound = soundSection.getValue("close", v -> SoundData.fromConfig(v, SoundData.SoundValue.FIXED_0_5, SoundData.SoundValue.RANGED_0_9_1));
             }
-            boolean canPlaceItem = ResourceConfigUtils.getAsBoolean(arguments.getOrDefault("allow-input", true), "allow-input");
-            boolean canTakeItem = ResourceConfigUtils.getAsBoolean(arguments.getOrDefault("allow-output", true), "allow-output");
-            Property<Boolean> property = (Property<Boolean>) block.getProperty("open");
-            return new SimpleStorageBlockBehavior(block, title, rows, openSound, closeSound, hasAnalogOutputSignal, canPlaceItem, canTakeItem, property);
+            return new SimpleStorageBlockBehavior(
+                    block,
+                    section.getString("title", "<lang:container.chest>"),
+                    section.getInt("rows", 1),
+                    openSound,
+                    closeSound,
+                    section.getBoolean(HAS_SIGNAL, true),
+                    section.getBoolean(ALLOW_INPUT, true),
+                    section.getBoolean(ALLOW_OUTPUT, true),
+                    BlockBehaviorFactory.getOptionalProperty(block, "open", Boolean.class),
+                    section.getValue(DATA_KEY, ConfigValue::getAsNonEmptyString, "craftengine:simple_storage")
+            );
         }
     }
 }

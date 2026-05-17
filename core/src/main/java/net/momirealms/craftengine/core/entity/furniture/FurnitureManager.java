@@ -22,11 +22,11 @@ public interface FurnitureManager extends Manageable {
 
     Collection<Suggestion> cachedSuggestions();
 
-    Furniture place(WorldPosition position, CustomFurniture furniture, FurnitureDataAccessor extraData, boolean playSound);
+    Furniture place(WorldPosition position, FurnitureDefinition furniture, FurniturePersistentData extraData, boolean playSound);
 
-    Optional<CustomFurniture> furnitureById(Key id);
+    Optional<FurnitureDefinition> furnitureById(Key id);
 
-    Map<Key, CustomFurniture> loadedFurniture();
+    Map<Key, FurnitureDefinition> loadedFurniture();
 
     boolean isFurnitureMetaEntity(int entityId);
 
@@ -34,7 +34,7 @@ public interface FurnitureManager extends Manageable {
     Furniture loadedFurnitureByMetaEntityId(int entityId);
 
     @Nullable
-    Furniture loadedFurnitureByVirtualEntityId(int entityId);
+    Furniture loadedFurnitureByInteractableEntityId(int entityId);
 
     @Nullable
     Furniture loadedFurnitureByColliderEntityId(int entityId);

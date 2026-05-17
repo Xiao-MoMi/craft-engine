@@ -1,32 +1,31 @@
 package net.momirealms.craftengine.bukkit.block.behavior;
 
-import net.momirealms.craftengine.bukkit.nms.FastNMS;
 import net.momirealms.craftengine.bukkit.util.BlockStateUtils;
 import net.momirealms.craftengine.bukkit.util.LocationUtils;
-import net.momirealms.craftengine.core.block.CustomBlock;
+import net.momirealms.craftengine.core.block.BlockDefinition;
 import net.momirealms.craftengine.core.block.ImmutableBlockState;
 import net.momirealms.craftengine.core.block.behavior.BlockBehaviorFactory;
-import net.momirealms.craftengine.core.block.behavior.CanBeReplacedBlockBehavior;
-import net.momirealms.craftengine.core.block.properties.IntegerProperty;
-import net.momirealms.craftengine.core.block.properties.Property;
+import net.momirealms.craftengine.core.block.property.IntegerProperty;
 import net.momirealms.craftengine.core.item.Item;
-import net.momirealms.craftengine.core.plugin.locale.LocalizedResourceConfigException;
+import net.momirealms.craftengine.core.plugin.config.ConfigSection;
+import net.momirealms.craftengine.core.plugin.config.ConfigValue;
 import net.momirealms.craftengine.core.util.ItemUtils;
 import net.momirealms.craftengine.core.util.Key;
-import net.momirealms.craftengine.core.util.MiscUtils;
-import net.momirealms.craftengine.core.util.ResourceConfigUtils;
 import net.momirealms.craftengine.core.world.context.BlockPlaceContext;
+import net.momirealms.craftengine.proxy.minecraft.world.level.BlockGetterProxy;
 
 import java.util.List;
-import java.util.Map;
 
-public class StackableBlockBehavior extends BukkitBlockBehavior implements CanBeReplacedBlockBehavior {
+public final class StackableBlockBehavior extends BukkitBlockBehavior {
     public static final BlockBehaviorFactory<StackableBlockBehavior> FACTORY = new Factory();
-    private final IntegerProperty amountProperty;
-    private final List<Key> items;
-    private final String propertyName;
+    public final IntegerProperty amountProperty;
+    public final List<Key> items;
+    public final String propertyName;
 
-    public StackableBlockBehavior(CustomBlock block, IntegerProperty amountProperty, List<Key> items, String propertyName) {
+    private StackableBlockBehavior(BlockDefinition block,
+                                   IntegerProperty amountProperty,
+                                   List<Key> items,
+                                   String propertyName) {
         super(block);
         this.amountProperty = amountProperty;
         this.items = items;
@@ -35,52 +34,46 @@ public class StackableBlockBehavior extends BukkitBlockBehavior implements CanBe
 
     @Override
     public boolean canBeReplaced(BlockPlaceContext context, ImmutableBlockState state) {
+        // 如果不是一家人，肯定走父类的替换逻辑
         if (super.canBeReplaced(context, state)) {
             return true;
         }
         if (context.isSecondaryUseActive()) {
             return false;
         }
-        Item<?> item = context.getItem();
+        Item item = context.getItem();
         if (ItemUtils.isEmpty(item)) {
             return false;
         }
         if (!this.items.contains(item.id())) {
             return false;
         }
-        Property<?> property = state.owner().value().getProperty(this.propertyName);
-        if (property == null || property.valueClass() != Integer.class) {
-            return false;
-        }
-        return (Integer) state.get(property) < this.amountProperty.max;
+        return state.get(this.amountProperty) < this.amountProperty.max;
     }
 
     @Override
     public ImmutableBlockState updateStateForPlacement(BlockPlaceContext context, ImmutableBlockState state) {
-        Object world = context.getLevel().serverWorld();
+        Object world = context.getLevel().minecraftWorld();
         Object pos = LocationUtils.toBlockPos(context.getClickedPos());
-        ImmutableBlockState blockState = BlockStateUtils.getOptionalCustomBlockState(FastNMS.INSTANCE.method$BlockGetter$getBlockState(world, pos)).orElse(null);
+        ImmutableBlockState blockState = BlockStateUtils.getOptionalCustomBlockState(BlockGetterProxy.INSTANCE.getBlockState(world, pos)).orElse(null);
         if (blockState == null) {
             return state;
         }
-        Property<?> property = blockState.owner().value().getProperty(this.propertyName);
-        if (property == null || property.valueClass() != Integer.class) {
-            return state;
-        }
-        return blockState.cycle(property);
+        return blockState.cycle(this.amountProperty);
     }
 
     private static class Factory implements BlockBehaviorFactory<StackableBlockBehavior> {
+        private static final String[] ITEMS = new String[] {"items", "item"};
 
         @Override
-        public StackableBlockBehavior create(CustomBlock block, Map<String, Object> arguments) {
-            String propertyName = String.valueOf(arguments.getOrDefault("property", "amount"));
-            IntegerProperty amount = (IntegerProperty) ResourceConfigUtils.requireNonNullOrThrow(block.getProperty(propertyName), () -> {
-                throw new LocalizedResourceConfigException("warning.config.block.behavior.stackable.missing_property", propertyName);
-            });
-            Object itemsObj = ResourceConfigUtils.requireNonNullOrThrow(arguments.get("items"), "warning.config.block.behavior.stackable.missing_items");
-            List<Key> items = MiscUtils.getAsStringList(itemsObj).stream().map(Key::of).toList();
-            return new StackableBlockBehavior(block, amount, items, propertyName);
+        public StackableBlockBehavior create(BlockDefinition block, ConfigSection section) {
+            String propertyName = section.getString("property", "amount");
+            return new StackableBlockBehavior(
+                    block,
+                    (IntegerProperty) BlockBehaviorFactory.getProperty(section.path(), block, propertyName, Integer.class),
+                    section.getList(ITEMS, ConfigValue::getAsIdentifier),
+                    propertyName
+            );
         }
     }
 }

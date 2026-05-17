@@ -4,18 +4,20 @@ import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.TranslatableComponent;
 
 public interface MessageConstants {
-    TranslatableComponent.Builder COMMAND_RELOAD_FAILURE_IS_LOADING = Component.translatable().key("command.reload.failure.is_reloading");
+    TranslatableComponent.Builder COMMAND_RELOAD_TOO_FAST = Component.translatable().key("command.reload.too_fast");
     TranslatableComponent.Builder COMMAND_RELOAD_CONFIG_SUCCESS = Component.translatable().key("command.reload.config.success");
+    TranslatableComponent.Builder COMMAND_RELOAD_CONFIG_ISSUES = Component.translatable().key("command.reload.config.issues");
     TranslatableComponent.Builder COMMAND_RELOAD_CONFIG_FAILURE = Component.translatable().key("command.reload.config.failure");
     TranslatableComponent.Builder COMMAND_RELOAD_PACK_SUCCESS = Component.translatable().key("command.reload.pack.success");
     TranslatableComponent.Builder COMMAND_RELOAD_PACK_FAILURE = Component.translatable().key("command.reload.pack.failure");
-    TranslatableComponent.Builder COMMAND_RELOAD_ALL_SUCCESS = Component.translatable().key("command.reload.all.success");
-    TranslatableComponent.Builder COMMAND_RELOAD_ALL_FAILURE = Component.translatable().key("command.reload.all.failure");
     TranslatableComponent.Builder COMMAND_ITEM_GET_SUCCESS = Component.translatable().key("command.item.get.success");
     TranslatableComponent.Builder COMMAND_ITEM_GET_FAILURE_NOT_EXIST = Component.translatable().key("command.item.get.failure.not_exist");
     TranslatableComponent.Builder COMMAND_ITEM_GIVE_SUCCESS_SINGLE = Component.translatable().key("command.item.give.success.single");
     TranslatableComponent.Builder COMMAND_ITEM_GIVE_SUCCESS_MULTIPLE = Component.translatable().key("command.item.give.success.multiple");
     TranslatableComponent.Builder COMMAND_ITEM_GIVE_FAILURE_NOT_EXIST = Component.translatable().key("command.item.give.failure.not_exist");
+    TranslatableComponent.Builder COMMAND_ITEM_SET_CUSTOM_MODEL_DATA = Component.translatable().key("command.item.set_custom_model_data");
+    TranslatableComponent.Builder COMMAND_ITEM_SET_ITEM_MODEL = Component.translatable().key("command.item.set_item_model");
+    TranslatableComponent.Builder COMMAND_ITEM_REMOVE_ITEM_COMPONENT = Component.translatable().key("command.item.remove_item_component");
     TranslatableComponent.Builder COMMAND_SEARCH_RECIPE_NOT_FOUND = Component.translatable().key("command.search_recipe.not_found");
     TranslatableComponent.Builder COMMAND_SEARCH_RECIPE_NO_ITEM = Component.translatable().key("command.search_recipe.no_item");
     TranslatableComponent.Builder COMMAND_SEARCH_USAGE_NOT_FOUND = Component.translatable().key("command.search_usage.not_found");
@@ -48,4 +50,9 @@ public interface MessageConstants {
     TranslatableComponent.Builder COMMAND_DISPLAY_ENTITY_VIEW_DISTANCE_SCALE_SET_SUCCESS = Component.translatable().key("command.display_entity_view_distance_scale.set.success");
     TranslatableComponent.Builder COMMAND_ENTITY_CULLING_DISTANCE_SCALE_SET_SUCCESS = Component.translatable().key("command.entity_culling_distance_scale.set.success");
     TranslatableComponent.Builder COMMAND_TOGGLE_ENTITY_CULLING_SUCCESS = Component.translatable().key("command.entity_culling.toggle.success");
+    TranslatableComponent.Builder COMMAND_PLACE_FEATURE_FAILED = Component.translatable().key("command.place_feature.failed");
+    TranslatableComponent.Builder COMMAND_PLACE_FEATURE_SUCCESS = Component.translatable().key("command.place_feature.success");
+    TranslatableComponent.Builder COMMAND_PLACE_FEATURE_INVALID = Component.translatable().key("command.place_feature.invalid");
+    TranslatableComponent.Builder COMMAND_CHUNK_NOT_LOADED = Component.translatable().key("command.chunk.not_loaded");
+    TranslatableComponent.Builder COMMAND_PLAYER_ITEMLESS =  Component.translatable().key("command.player.itemless");
 }

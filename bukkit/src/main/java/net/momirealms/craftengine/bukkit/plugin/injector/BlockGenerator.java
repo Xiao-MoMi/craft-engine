@@ -1,6 +1,5 @@
 package net.momirealms.craftengine.bukkit.plugin.injector;
 
-import com.google.common.collect.ImmutableList;
 import net.bytebuddy.ByteBuddy;
 import net.bytebuddy.ClassFileVersion;
 import net.bytebuddy.description.modifier.Visibility;
@@ -14,46 +13,53 @@ import net.bytebuddy.implementation.bind.annotation.SuperCall;
 import net.bytebuddy.implementation.bind.annotation.This;
 import net.bytebuddy.matcher.ElementMatchers;
 import net.momirealms.craftengine.bukkit.block.BukkitBlockShape;
-import net.momirealms.craftengine.bukkit.nms.FastNMS;
-import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.CoreReflections;
-import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.MBlocks;
-import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.MRegistries;
+import net.momirealms.craftengine.bukkit.block.behavior.EmptyBlockBehavior;
 import net.momirealms.craftengine.bukkit.util.KeyUtils;
 import net.momirealms.craftengine.bukkit.util.NoteBlockChainUpdateUtils;
 import net.momirealms.craftengine.core.block.BlockShape;
 import net.momirealms.craftengine.core.block.DelegatingBlock;
-import net.momirealms.craftengine.core.block.behavior.BlockBehavior;
-import net.momirealms.craftengine.core.block.behavior.EmptyBlockBehavior;
-import net.momirealms.craftengine.core.block.behavior.FallOnBlockBehavior;
+import net.momirealms.craftengine.core.block.behavior.*;
 import net.momirealms.craftengine.core.plugin.CraftEngine;
 import net.momirealms.craftengine.core.plugin.config.Config;
 import net.momirealms.craftengine.core.util.Key;
 import net.momirealms.craftengine.core.util.ObjectHolder;
 import net.momirealms.craftengine.core.util.VersionHelper;
+import net.momirealms.craftengine.proxy.minecraft.core.DirectionProxy;
+import net.momirealms.craftengine.proxy.minecraft.core.registries.RegistriesProxy;
+import net.momirealms.craftengine.proxy.minecraft.resources.ResourceKeyProxy;
+import net.momirealms.craftengine.proxy.minecraft.server.level.ServerChunkCacheProxy;
+import net.momirealms.craftengine.proxy.minecraft.server.level.ServerLevelProxy;
+import net.momirealms.craftengine.proxy.minecraft.world.WorldlyContainerHolderProxy;
+import net.momirealms.craftengine.proxy.minecraft.world.item.ItemStackProxy;
+import net.momirealms.craftengine.proxy.minecraft.world.level.block.*;
+import net.momirealms.craftengine.proxy.minecraft.world.level.block.state.BlockBehaviourProxy;
+import net.momirealms.craftengine.proxy.minecraft.world.level.block.state.StateDefinitionProxy;
+import net.momirealms.sparrow.reflection.clazz.SparrowClass;
+import net.momirealms.sparrow.reflection.constructor.SConstructor1;
+import net.momirealms.sparrow.reflection.constructor.matcher.ConstructorMatcher;
+import net.momirealms.sparrow.reflection.field.SBooleanField;
+import net.momirealms.sparrow.reflection.field.SField;
+import net.momirealms.sparrow.reflection.field.matcher.FieldMatcher;
 
-import java.lang.invoke.MethodHandle;
-import java.lang.invoke.MethodHandles;
-import java.lang.invoke.MethodType;
-import java.lang.reflect.Field;
+import java.util.Optional;
 import java.util.concurrent.Callable;
-import java.util.function.Function;
 
 public final class BlockGenerator {
     private static final BukkitBlockShape STONE_SHAPE =
-            new BukkitBlockShape(MBlocks.STONE$defaultState, MBlocks.STONE$defaultState);
-    private static MethodHandle constructor$CraftEngineBlock;
-    private static Field field$CraftEngineBlock$behavior;
-    private static Field field$CraftEngineBlock$shape;
-    private static Field field$CraftEngineBlock$isNoteBlock;
-    private static Field field$CraftEngineBlock$isTripwire;
+            new BukkitBlockShape(BlocksProxy.STONE$defaultState, BlocksProxy.STONE$defaultState);
+    private static SConstructor1 constructor$CraftEngineBlock;
+    private static SField field$CraftEngineBlock$behavior;
+    private static SField field$CraftEngineBlock$shape;
+    private static SBooleanField field$CraftEngineBlock$isNoteBlock;
+    private static SBooleanField field$CraftEngineBlock$isTripwire;
 
-    public static void init() throws ReflectiveOperationException {
+    public static void init() {
         ByteBuddy byteBuddy = new ByteBuddy(ClassFileVersion.JAVA_V17);
         // CraftEngine Blocks
         String packageWithName = BlockGenerator.class.getName();
         String generatedClassName = packageWithName.substring(0, packageWithName.lastIndexOf('.')) + ".CraftEngineBlock";
         DynamicType.Builder<?> builder = byteBuddy
-                .subclass(CoreReflections.clazz$Block, ConstructorStrategy.Default.IMITATE_SUPER_CLASS_OPENING)
+                .subclass(BlockProxy.CLASS, ConstructorStrategy.Default.IMITATE_SUPER_CLASS_OPENING)
                 .name(generatedClassName)
                 .defineField("behaviorHolder", ObjectHolder.class, Visibility.PUBLIC)
                 .defineField("shapeHolder", ObjectHolder.class, Visibility.PUBLIC)
@@ -61,10 +67,10 @@ public final class BlockGenerator {
                 .defineField("isClientSideTripwire", boolean.class, Visibility.PUBLIC)
                 // should always implement this interface
                 .implement(DelegatingBlock.class)
-                .implement(CoreReflections.clazz$Fallable)
-                .implement(CoreReflections.clazz$BonemealableBlock)
-                .implement(CoreReflections.clazz$SimpleWaterloggedBlock)
-                .implement(CoreReflections.clazz$WorldlyContainerHolder)
+                .implement(FallableProxy.CLASS)
+                .implement(BonemealableBlockProxy.CLASS)
+                .implement(SimpleWaterloggedBlockProxy.CLASS)
+                .implement(WorldlyContainerHolderProxy.CLASS)
                 // internal interfaces
                 .method(ElementMatchers.named("behaviorDelegate"))
                 .intercept(FieldAccessor.ofField("behaviorHolder"))
@@ -75,185 +81,187 @@ public final class BlockGenerator {
                 .method(ElementMatchers.named("isTripwire"))
                 .intercept(FieldAccessor.ofField("isClientSideTripwire"))
                 // getShape
-                .method(ElementMatchers.is(CoreReflections.method$BlockBehaviour$getShape))
+                .method(ElementMatchers.is(BlockReflections.method$BlockBehaviour$getShape))
                 .intercept(MethodDelegation.to(GetShapeInterceptor.INSTANCE))
                 // getCollisionShape
-                .method(ElementMatchers.is(CoreReflections.method$BlockBehaviour$getCollisionShape))
+                .method(ElementMatchers.is(BlockReflections.method$BlockBehaviour$getCollisionShape))
                 .intercept(MethodDelegation.to(GetCollisionShapeInterceptor.INSTANCE))
                 // getSupportShape
-                .method(ElementMatchers.is(CoreReflections.method$BlockBehaviour$getBlockSupportShape))
+                .method(ElementMatchers.is(BlockReflections.method$BlockBehaviour$getBlockSupportShape))
                 .intercept(MethodDelegation.to(GetSupportShapeInterceptor.INSTANCE))
                 // isPathFindable
-                .method(ElementMatchers.is(CoreReflections.method$BlockBehaviour$isPathFindable))
+                .method(ElementMatchers.is(BlockReflections.method$BlockBehaviour$isPathfindable))
                 .intercept(MethodDelegation.to(IsPathFindableInterceptor.INSTANCE))
                 // mirror
-                .method(ElementMatchers.is(CoreReflections.method$BlockBehaviour$mirror))
+                .method(ElementMatchers.is(BlockReflections.method$BlockBehaviour$mirror))
                 .intercept(MethodDelegation.to(MirrorInterceptor.INSTANCE))
                 // rotate
-                .method(ElementMatchers.is(CoreReflections.method$BlockBehaviour$rotate))
+                .method(ElementMatchers.is(BlockReflections.method$BlockBehaviour$rotate))
                 .intercept(MethodDelegation.to(RotateInterceptor.INSTANCE))
                 // hasAnalogOutputSignal
-                .method(ElementMatchers.is(CoreReflections.method$BlockBehaviour$hasAnalogOutputSignal))
+                .method(ElementMatchers.is(BlockReflections.method$BlockBehaviour$hasAnalogOutputSignal))
                 .intercept(MethodDelegation.to(HasAnalogOutputSignalInterceptor.INSTANCE))
                 // getAnalogOutputSignal
-                .method(ElementMatchers.is(CoreReflections.method$BlockBehaviour$getAnalogOutputSignal))
+                .method(ElementMatchers.is(BlockReflections.method$BlockBehaviour$getAnalogOutputSignal))
                 .intercept(MethodDelegation.to(GetAnalogOutputSignalInterceptor.INSTANCE))
                 // tick
-                .method(ElementMatchers.is(CoreReflections.method$BlockBehaviour$tick))
+                .method(ElementMatchers.is(BlockReflections.method$BlockBehaviour$tick))
                 .intercept(MethodDelegation.to(TickInterceptor.INSTANCE))
                 // isValidBoneMealTarget
-                .method(ElementMatchers.is(CoreReflections.method$BonemealableBlock$isValidBonemealTarget))
+                .method(ElementMatchers.is(BlockReflections.method$BonemealableBlock$isValidBonemealTarget))
                 .intercept(MethodDelegation.to(IsValidBoneMealTargetInterceptor.INSTANCE))
                 // getContainer
-                .method(ElementMatchers.is(CoreReflections.method$WorldlyContainerHolder$getContainer))
+                .method(ElementMatchers.is(BlockReflections.method$WorldlyContainerHolder$getContainer))
                 .intercept(MethodDelegation.to(GetContainerInterceptor.INSTANCE))
                 // isBoneMealSuccess
-                .method(ElementMatchers.is(CoreReflections.method$BonemealableBlock$isBonemealSuccess))
+                .method(ElementMatchers.is(BlockReflections.method$BonemealableBlock$isBonemealSuccess))
                 .intercept(MethodDelegation.to(IsBoneMealSuccessInterceptor.INSTANCE))
                 // performBoneMeal
-                .method(ElementMatchers.is(CoreReflections.method$BonemealableBlock$performBonemeal))
+                .method(ElementMatchers.is(BlockReflections.method$BonemealableBlock$performBonemeal))
                 .intercept(MethodDelegation.to(PerformBoneMealInterceptor.INSTANCE))
                 // random tick
-                .method(ElementMatchers.is(CoreReflections.method$BlockBehaviour$randomTick))
+                .method(ElementMatchers.is(BlockReflections.method$BlockBehaviour$randomTick))
                 .intercept(MethodDelegation.to(RandomTickInterceptor.INSTANCE))
                 // onPlace
-                .method(ElementMatchers.is(CoreReflections.method$BlockBehaviour$onPlace))
+                .method(ElementMatchers.is(BlockReflections.method$BlockBehaviour$onPlace))
                 .intercept(MethodDelegation.to(OnPlaceInterceptor.INSTANCE))
                 // onBrokenAfterFall
-                .method(ElementMatchers.is(CoreReflections.method$Fallable$onBrokenAfterFall))
+                .method(ElementMatchers.is(BlockReflections.method$Fallable$onBrokenAfterFall))
                 .intercept(MethodDelegation.to(OnBrokenAfterFallInterceptor.INSTANCE))
                 // onLand
-                .method(ElementMatchers.is(CoreReflections.method$Fallable$onLand))
+                .method(ElementMatchers.is(BlockReflections.method$Fallable$onLand))
                 .intercept(MethodDelegation.to(OnLandInterceptor.INSTANCE))
                 // canSurvive
-                .method(ElementMatchers.is(CoreReflections.method$BlockBehaviour$canSurvive)
-                )
+                .method(ElementMatchers.is(BlockReflections.method$BlockBehaviour$canSurvive))
                 .intercept(MethodDelegation.to(CanSurviveInterceptor.INSTANCE))
                 // updateShape
-                .method(ElementMatchers.is(CoreReflections.method$BlockBehaviour$updateShape))
+                .method(ElementMatchers.is(BlockReflections.method$BlockBehaviour$updateShape))
                 .intercept(MethodDelegation.to(UpdateShapeInterceptor.INSTANCE))
                 // neighborChanged
-                .method(ElementMatchers.is(CoreReflections.method$BlockBehaviour$neighborChanged))
+                .method(ElementMatchers.is(BlockReflections.method$BlockBehaviour$neighborChanged))
                 .intercept(MethodDelegation.to(NeighborChangedInterceptor.INSTANCE))
                 // pickupBlock
-                .method(ElementMatchers.is(CoreReflections.method$SimpleWaterloggedBlock$pickupBlock))
+                .method(ElementMatchers.is(BlockReflections.method$SimpleWaterloggedBlock$pickupBlock))
                 .intercept(MethodDelegation.to(PickUpBlockInterceptor.INSTANCE))
+                // getPickupSound
+                .method(ElementMatchers.is(BlockReflections.method$SimpleWaterloggedBlock$getPickupSound))
+                .intercept(MethodDelegation.to(GetPickUpSoundInterceptor.INSTANCE))
                 // placeLiquid
-                .method(ElementMatchers.is(CoreReflections.method$SimpleWaterloggedBlock$placeLiquid))
+                .method(ElementMatchers.is(BlockReflections.method$SimpleWaterloggedBlock$placeLiquid))
                 .intercept(MethodDelegation.to(PlaceLiquidInterceptor.INSTANCE))
                 // canPlaceLiquid
-                .method(ElementMatchers.is(CoreReflections.method$SimpleWaterloggedBlock$canPlaceLiquid))
+                .method(ElementMatchers.is(BlockReflections.method$SimpleWaterloggedBlock$canPlaceLiquid))
                 .intercept(MethodDelegation.to(CanPlaceLiquidInterceptor.INSTANCE))
                 // entityInside
-                .method(ElementMatchers.is(CoreReflections.method$BlockBehaviour$entityInside))
+                .method(ElementMatchers.is(BlockReflections.method$BlockBehaviour$entityInside))
                 .intercept(MethodDelegation.to(EntityInsideInterceptor.INSTANCE))
                 // getSignal
-                .method(ElementMatchers.is(CoreReflections.method$BlockBehaviour$getSignal))
+                .method(ElementMatchers.is(BlockReflections.method$BlockBehaviour$getSignal))
                 .intercept(MethodDelegation.to(GetSignalInterceptor.INSTANCE))
                 // getDirectSignal
-                .method(ElementMatchers.is(CoreReflections.method$BlockBehaviour$getDirectSignal))
+                .method(ElementMatchers.is(BlockReflections.method$BlockBehaviour$getDirectSignal))
                 .intercept(MethodDelegation.to(GetDirectSignalInterceptor.INSTANCE))
                 // isSignalSource
-                .method(ElementMatchers.is(CoreReflections.method$BlockBehaviour$isSignalSource))
+                .method(ElementMatchers.is(BlockReflections.method$BlockBehaviour$isSignalSource))
                 .intercept(MethodDelegation.to(IsSignalSourceInterceptor.INSTANCE))
                 // playerWillDestroy
-                .method(ElementMatchers.is(CoreReflections.method$Block$playerWillDestroy))
+                .method(ElementMatchers.is(BlockReflections.method$Block$playerWillDestroy))
                 .intercept(MethodDelegation.to(PlayerWillDestroyInterceptor.INSTANCE))
                 // spawnAfterBreak
-                .method(ElementMatchers.is(CoreReflections.method$BlockBehaviour$spawnAfterBreak))
+                .method(ElementMatchers.is(BlockReflections.method$BlockBehaviour$spawnAfterBreak))
                 .intercept(MethodDelegation.to(SpawnAfterBreakInterceptor.INSTANCE))
                 // fallOn
-                .method(ElementMatchers.is(CoreReflections.method$Block$fallOn))
+                .method(ElementMatchers.is(BlockReflections.method$Block$fallOn))
                 .intercept(MethodDelegation.to(FallOnInterceptor.INSTANCE))
                 // updateEntityMovementAfterFallOn
-                .method(ElementMatchers.is(CoreReflections.method$Block$updateEntityMovementAfterFallOn))
+                .method(ElementMatchers.is(BlockReflections.method$Block$updateEntityMovementAfterFallOn))
                 .intercept(MethodDelegation.to(UpdateEntityMovementAfterFallOnInterceptor.INSTANCE))
                 // stepOn
-                .method(ElementMatchers.is(CoreReflections.method$Block$stepOn))
+                .method(ElementMatchers.is(BlockReflections.method$Block$stepOn))
                 .intercept(MethodDelegation.to(StepOnInterceptor.INSTANCE))
                 // onProjectileHit
-                .method(ElementMatchers.is(CoreReflections.method$BlockBehaviour$onProjectileHit))
+                .method(ElementMatchers.is(BlockReflections.method$BlockBehaviour$onProjectileHit))
                 .intercept(MethodDelegation.to(OnProjectileHitInterceptor.INSTANCE))
                 // setPlaceBy
-                .method(ElementMatchers.is(CoreReflections.method$Block$setPlacedBy))
+                .method(ElementMatchers.is(BlockReflections.method$Block$setPlacedBy))
                 .intercept(MethodDelegation.to(SetPlaceByInterceptor.INSTANCE))
+                // affectNeighborsAfterRemoval
+                .method(ElementMatchers.is(BlockReflections.method$BlockBehaviour$affectNeighborsAfterRemoval))
+                .intercept(MethodDelegation.to(AffectNeighborsAfterRemovalInterceptor.INSTANCE))
+                // attack
+                .method(ElementMatchers.is(BlockReflections.method$BlockBehaviour$attack))
+                .intercept(MethodDelegation.to(AttackInterceptor.INSTANCE))
+                // triggerEvent
+                .method(ElementMatchers.is(BlockReflections.method$BlockBehaviour$triggerEvent))
+                .intercept(MethodDelegation.to(TriggerEventInterceptor.INSTANCE))
+                // handlePrecipitation
+                .method(ElementMatchers.is(BlockReflections.method$Block$handlePrecipitation))
+                .intercept(MethodDelegation.to(HandlePrecipitationInterceptor.INSTANCE))
                 ;
-        // 1.21.5+
-        if (CoreReflections.method$BlockBehaviour$affectNeighborsAfterRemoval != null) {
-            builder = builder.method(ElementMatchers.is(CoreReflections.method$BlockBehaviour$affectNeighborsAfterRemoval))
-                    .intercept(MethodDelegation.to(AffectNeighborsAfterRemovalInterceptor.INSTANCE));
-        }
-        // 1.20-1.21.4
-        if (CoreReflections.method$BlockBehaviour$onRemove != null) {
-            builder = builder.method(ElementMatchers.is(CoreReflections.method$BlockBehaviour$onRemove))
-                    .intercept(MethodDelegation.to(OnRemoveInterceptor.INSTANCE));
-        }
         // 1.21+
-        if (CoreReflections.method$BlockBehaviour$onExplosionHit != null) {
-            builder = builder.method(ElementMatchers.is(CoreReflections.method$BlockBehaviour$onExplosionHit))
+        if (BlockReflections.method$BlockBehaviour$onExplosionHit != null) {
+            builder = builder.method(ElementMatchers.is(BlockReflections.method$BlockBehaviour$onExplosionHit))
                     .intercept(MethodDelegation.to(OnExplosionHitInterceptor.INSTANCE));
         }
-        Class<?> clazz$CraftEngineBlock = builder.make().load(BlockGenerator.class.getClassLoader()).getLoaded();
-        constructor$CraftEngineBlock = MethodHandles.publicLookup().in(clazz$CraftEngineBlock)
-                .findConstructor(clazz$CraftEngineBlock, MethodType.methodType(void.class, CoreReflections.clazz$BlockBehaviour$Properties))
-                .asType(MethodType.methodType(CoreReflections.clazz$Block, CoreReflections.clazz$BlockBehaviour$Properties));
-        field$CraftEngineBlock$behavior = clazz$CraftEngineBlock.getField("behaviorHolder");
-        field$CraftEngineBlock$shape = clazz$CraftEngineBlock.getField("shapeHolder");
-        field$CraftEngineBlock$isNoteBlock = clazz$CraftEngineBlock.getField("isClientSideNoteBlock");
-        field$CraftEngineBlock$isTripwire = clazz$CraftEngineBlock.getField("isClientSideTripwire");
+        SparrowClass<?> clazz$CraftEngineBlock = SparrowClass.of(builder.make().load(BlockGenerator.class.getClassLoader()).getLoaded());
+        constructor$CraftEngineBlock = clazz$CraftEngineBlock.getSparrowConstructor(ConstructorMatcher.takeArguments(BlockBehaviourProxy.PropertiesProxy.CLASS)).asm$1();
+        field$CraftEngineBlock$behavior = clazz$CraftEngineBlock.getSparrowField(FieldMatcher.named("behaviorHolder")).asm();
+        field$CraftEngineBlock$shape = clazz$CraftEngineBlock.getSparrowField(FieldMatcher.named("shapeHolder")).asm();
+        field$CraftEngineBlock$isNoteBlock = clazz$CraftEngineBlock.getSparrowField(FieldMatcher.named("isClientSideNoteBlock")).asm$boolean();
+        field$CraftEngineBlock$isTripwire = clazz$CraftEngineBlock.getSparrowField(FieldMatcher.named("isClientSideTripwire")).asm$boolean();
     }
 
-    public static Field field$CraftEngineBlock$isNoteBlock() {
+    public static SBooleanField field$CraftEngineBlock$isNoteBlock() {
         return field$CraftEngineBlock$isNoteBlock;
     }
 
-    public static Field field$CraftEngineBlock$isTripwire() {
+    public static SBooleanField field$CraftEngineBlock$isTripwire() {
         return field$CraftEngineBlock$isTripwire;
     }
 
-    public static DelegatingBlock generateBlock(Key blockId) throws Throwable {
+    public static DelegatingBlock generateBlock(Key blockId) {
         ObjectHolder<BlockBehavior> behaviorHolder = new ObjectHolder<>(EmptyBlockBehavior.INSTANCE);
         ObjectHolder<BlockShape> shapeHolder = new ObjectHolder<>(STONE_SHAPE);
-        Object newBlockInstance = constructor$CraftEngineBlock.invoke(createEmptyBlockProperties(blockId));
+        Object newBlockInstance = constructor$CraftEngineBlock.newInstance(createEmptyBlockProperties(blockId));
         field$CraftEngineBlock$behavior.set(newBlockInstance, behaviorHolder);
         field$CraftEngineBlock$shape.set(newBlockInstance, shapeHolder);
-        Object stateDefinitionBuilder = CoreReflections.constructor$StateDefinition$Builder.newInstance(newBlockInstance);
-        Object stateDefinition = CoreReflections.method$StateDefinition$Builder$create.invoke(stateDefinitionBuilder,
-                (Function<Object, Object>) FastNMS.INSTANCE::method$Block$defaultState, BlockStateGenerator.instance$StateDefinition$Factory);
-        CoreReflections.field$Block$StateDefinition.set(newBlockInstance, stateDefinition);
-        CoreReflections.field$Block$defaultBlockState.set(newBlockInstance, ((ImmutableList<?>) CoreReflections.field$StateDefinition$states.get(stateDefinition)).getFirst());
+        Object stateDefinitionBuilder = StateDefinitionProxy.BuilderProxy.INSTANCE.newInstance(newBlockInstance);
+        Object stateDefinition = StateDefinitionProxy.BuilderProxy.INSTANCE.create(stateDefinitionBuilder,
+                BlockProxy.INSTANCE::getDefaultBlockState, BlockStateGenerator.instance$StateDefinition$Factory);
+        BlockProxy.INSTANCE.setStateDefinition(newBlockInstance, stateDefinition);
+        BlockProxy.INSTANCE.setDefaultBlockState(newBlockInstance, StateDefinitionProxy.INSTANCE.getStates(stateDefinition).getFirst());
         return (DelegatingBlock) newBlockInstance;
     }
 
-    private static Object createEmptyBlockProperties(Key id) throws ReflectiveOperationException {
-        Object blockProperties = CoreReflections.method$BlockBehaviour$Properties$of.invoke(null);
-        Object resourceLocation = KeyUtils.toResourceLocation(id);
-        Object resourceKey = FastNMS.INSTANCE.method$ResourceKey$create(MRegistries.BLOCK, resourceLocation);
-        if (CoreReflections.field$BlockBehaviour$Properties$id != null) {
-            CoreReflections.field$BlockBehaviour$Properties$id.set(blockProperties, resourceKey);
+    private static Object createEmptyBlockProperties(Key id) {
+        Object blockProperties = BlockBehaviourProxy.PropertiesProxy.INSTANCE.of();
+        Object identifier = KeyUtils.toIdentifier(id);
+        Object resourceKey = ResourceKeyProxy.INSTANCE.create(RegistriesProxy.BLOCK, identifier);
+        if (VersionHelper.isOrAbove1_21_2) {
+            BlockBehaviourProxy.PropertiesProxy.INSTANCE.setId(blockProperties, resourceKey);
         }
         return blockProperties;
     }
 
     public static class UpdateShapeInterceptor {
         public static final UpdateShapeInterceptor INSTANCE = new UpdateShapeInterceptor();
-        public static final int levelIndex = VersionHelper.isOrAbove1_21_2() ? 1 : 3;
-        public static final int directionIndex = VersionHelper.isOrAbove1_21_2() ? 4 : 1;
-        public static final int posIndex = VersionHelper.isOrAbove1_21_2() ? 3 : 4;
+        public static final int levelIndex = VersionHelper.isOrAbove1_21_2 ? 1 : 3;
+        public static final int directionIndex = VersionHelper.isOrAbove1_21_2 ? 4 : 1;
+        public static final int posIndex = VersionHelper.isOrAbove1_21_2 ? 3 : 4;
 
         @SuppressWarnings("deprecation")
         @RuntimeType
-        public Object intercept(@This Object thisObj, @AllArguments Object[] args, @SuperCall Callable<Object> superMethod) {
-            ObjectHolder<BlockBehavior> holder = ((DelegatingBlock) thisObj).behaviorDelegate();
-            DelegatingBlock indicator = (DelegatingBlock) thisObj;
+        public Object intercept(@This Object thisBlock, @AllArguments Object[] args) {
+            ObjectHolder<BlockBehavior> holder = ((DelegatingBlock) thisBlock).behaviorDelegate();
+            DelegatingBlock indicator = (DelegatingBlock) thisBlock;
             // todo better chain updater
-            if (indicator.isNoteBlock() && CoreReflections.clazz$ServerLevel.isInstance(args[levelIndex])) {
+            if (indicator.isNoteBlock() && ServerLevelProxy.CLASS.isInstance(args[levelIndex])) {
                 startNoteBlockChain(args);
             }
             try {
-                return holder.value().updateShape(thisObj, args, superMethod);
+                return holder.value().updateShape(thisBlock, args);
             } catch (Exception e) {
-                CraftEngine.instance().logger().severe("Failed to run updateShape", e);
+                CraftEngine.instance().logger().error("Failed to run updateShape", e);
                 return args[0];
             }
         }
@@ -263,14 +271,14 @@ public final class BlockGenerator {
             Object serverLevel = args[levelIndex];
             Object blockPos = args[posIndex];
             // Y axis
-            if (direction == CoreReflections.instance$Direction$DOWN) {
-                Object chunkSource = FastNMS.INSTANCE.method$ServerLevel$getChunkSource(serverLevel);
-                FastNMS.INSTANCE.method$ServerChunkCache$blockChanged(chunkSource, blockPos);
-                NoteBlockChainUpdateUtils.noteBlockChainUpdate(serverLevel, chunkSource, CoreReflections.instance$Direction$UP, blockPos, Config.maxNoteBlockChainUpdate());
-            } else if (direction == CoreReflections.instance$Direction$UP) {
-                Object chunkSource = FastNMS.INSTANCE.method$ServerLevel$getChunkSource(serverLevel);
-                FastNMS.INSTANCE.method$ServerChunkCache$blockChanged(chunkSource, blockPos);
-                NoteBlockChainUpdateUtils.noteBlockChainUpdate(serverLevel, chunkSource, CoreReflections.instance$Direction$DOWN, blockPos, Config.maxNoteBlockChainUpdate());
+            if (direction == DirectionProxy.DOWN) {
+                Object chunkSource = ServerLevelProxy.INSTANCE.getChunkSource(serverLevel);
+                ServerChunkCacheProxy.INSTANCE.blockChanged(chunkSource, blockPos);
+                NoteBlockChainUpdateUtils.noteBlockChainUpdate(serverLevel, chunkSource, DirectionProxy.UP, blockPos, Config.maxNoteBlockChainUpdate());
+            } else if (direction == DirectionProxy.UP) {
+                Object chunkSource = ServerLevelProxy.INSTANCE.getChunkSource(serverLevel);
+                ServerChunkCacheProxy.INSTANCE.blockChanged(chunkSource, blockPos);
+                NoteBlockChainUpdateUtils.noteBlockChainUpdate(serverLevel, chunkSource, DirectionProxy.DOWN, blockPos, Config.maxNoteBlockChainUpdate());
             }
         }
     }
@@ -279,12 +287,12 @@ public final class BlockGenerator {
         public static final GetShapeInterceptor INSTANCE = new GetShapeInterceptor();
 
         @RuntimeType
-        public Object intercept(@This Object thisObj, @AllArguments Object[] args, @SuperCall Callable<Object> superMethod) throws Exception {
-            ObjectHolder<BlockShape> holder = ((DelegatingBlock) thisObj).shapeDelegate();
+        public Object intercept(@This Object thisBlock, @AllArguments Object[] args, @SuperCall Callable<Object> superMethod) throws Exception {
+            ObjectHolder<BlockShape> holder = ((DelegatingBlock) thisBlock).shapeDelegate();
             try {
-                return holder.value().getShape(thisObj, args);
+                return holder.value().getShape(thisBlock, args);
             } catch (Exception e) {
-                CraftEngine.instance().logger().severe("Failed to run getShape", e);
+                CraftEngine.instance().logger().error("Failed to run getShape", e);
                 return superMethod.call();
             }
         }
@@ -294,12 +302,12 @@ public final class BlockGenerator {
         public static final GetCollisionShapeInterceptor INSTANCE = new GetCollisionShapeInterceptor();
 
         @RuntimeType
-        public Object intercept(@This Object thisObj, @AllArguments Object[] args, @SuperCall Callable<Object> superMethod) throws Exception {
-            ObjectHolder<BlockShape> holder = ((DelegatingBlock) thisObj).shapeDelegate();
+        public Object intercept(@This Object thisBlock, @AllArguments Object[] args, @SuperCall Callable<Object> superMethod) throws Exception {
+            ObjectHolder<BlockShape> holder = ((DelegatingBlock) thisBlock).shapeDelegate();
             try {
-                return holder.value().getCollisionShape(thisObj, args);
-            } catch (Exception e) {
-                CraftEngine.instance().logger().severe("Failed to run getCollisionShape", e);
+                return holder.value().getCollisionShape(thisBlock, args);
+            } catch (Throwable t) {
+                CraftEngine.instance().logger().error("Failed to run getCollisionShape", t);
                 return superMethod.call();
             }
         }
@@ -309,12 +317,12 @@ public final class BlockGenerator {
         public static final GetSupportShapeInterceptor INSTANCE = new GetSupportShapeInterceptor();
 
         @RuntimeType
-        public Object intercept(@This Object thisObj, @AllArguments Object[] args, @SuperCall Callable<Object> superMethod) throws Exception {
-            ObjectHolder<BlockShape> holder = ((DelegatingBlock) thisObj).shapeDelegate();
+        public Object intercept(@This Object thisBlock, @AllArguments Object[] args, @SuperCall Callable<Object> superMethod) throws Exception {
+            ObjectHolder<BlockShape> holder = ((DelegatingBlock) thisBlock).shapeDelegate();
             try {
-                return holder.value().getSupportShape(thisObj, args);
-            } catch (Exception e) {
-                CraftEngine.instance().logger().severe("Failed to run getSupportShape", e);
+                return holder.value().getSupportShape(thisBlock, args);
+            } catch (Throwable t) {
+                CraftEngine.instance().logger().error("Failed to run getSupportShape", t);
                 return superMethod.call();
             }
         }
@@ -324,13 +332,13 @@ public final class BlockGenerator {
         public static final IsPathFindableInterceptor INSTANCE = new IsPathFindableInterceptor();
 
         @RuntimeType
-        public Object intercept(@This Object thisObj, @AllArguments Object[] args, @SuperCall Callable<Object> superMethod) throws Exception {
-            ObjectHolder<BlockBehavior> holder = ((DelegatingBlock) thisObj).behaviorDelegate();
+        public Object intercept(@This Object thisBlock, @AllArguments Object[] args) {
+            ObjectHolder<BlockBehavior> holder = ((DelegatingBlock) thisBlock).behaviorDelegate();
             try {
-                return holder.value().isPathFindable(thisObj, args, superMethod);
-            } catch (Exception e) {
-                CraftEngine.instance().logger().severe("Failed to run isPathFindable", e);
-                return superMethod.call();
+                return holder.value().isPathFindable(thisBlock, args);
+            } catch (Throwable t) {
+                CraftEngine.instance().logger().error("Failed to run isPathFindable", t);
+                return false;
             }
         }
     }
@@ -339,13 +347,13 @@ public final class BlockGenerator {
         public static final MirrorInterceptor INSTANCE = new MirrorInterceptor();
 
         @RuntimeType
-        public Object intercept(@This Object thisObj, @AllArguments Object[] args, @SuperCall Callable<Object> superMethod) throws Exception {
-            ObjectHolder<BlockBehavior> holder = ((DelegatingBlock) thisObj).behaviorDelegate();
+        public Object intercept(@This Object thisBlock, @AllArguments Object[] args) {
+            ObjectHolder<BlockBehavior> holder = ((DelegatingBlock) thisBlock).behaviorDelegate();
             try {
-                return holder.value().mirror(thisObj, args, superMethod);
-            } catch (Exception e) {
-                CraftEngine.instance().logger().severe("Failed to run mirror", e);
-                return superMethod.call();
+                return holder.value().mirror(thisBlock, args);
+            } catch (Throwable t) {
+                CraftEngine.instance().logger().error("Failed to run mirror", t);
+                return args[0];
             }
         }
     }
@@ -354,13 +362,13 @@ public final class BlockGenerator {
         public static final RotateInterceptor INSTANCE = new RotateInterceptor();
 
         @RuntimeType
-        public Object intercept(@This Object thisObj, @AllArguments Object[] args, @SuperCall Callable<Object> superMethod) throws Exception {
-            ObjectHolder<BlockBehavior> holder = ((DelegatingBlock) thisObj).behaviorDelegate();
+        public Object intercept(@This Object thisBlock, @AllArguments Object[] args) {
+            ObjectHolder<BlockBehavior> holder = ((DelegatingBlock) thisBlock).behaviorDelegate();
             try {
-                return holder.value().rotate(thisObj, args, superMethod);
-            } catch (Exception e) {
-                CraftEngine.instance().logger().severe("Failed to run rotate", e);
-                return superMethod.call();
+                return holder.value().rotate(thisBlock, args);
+            } catch (Throwable t) {
+                CraftEngine.instance().logger().error("Failed to run rotate", t);
+                return args[0];
             }
         }
     }
@@ -369,12 +377,12 @@ public final class BlockGenerator {
         public static final RandomTickInterceptor INSTANCE = new RandomTickInterceptor();
 
         @RuntimeType
-        public void intercept(@This Object thisObj, @AllArguments Object[] args, @SuperCall Callable<Object> superMethod) {
-            ObjectHolder<BlockBehavior> holder = ((DelegatingBlock) thisObj).behaviorDelegate();
+        public void intercept(@This Object thisBlock, @AllArguments Object[] args) {
+            ObjectHolder<BlockBehavior> holder = ((DelegatingBlock) thisBlock).behaviorDelegate();
             try {
-                holder.value().randomTick(thisObj, args, superMethod);
-            } catch (Exception e) {
-                CraftEngine.instance().logger().severe("Failed to run randomTick", e);
+                holder.value().randomTick(thisBlock, args);
+            } catch (Throwable t) {
+                CraftEngine.instance().logger().error("Failed to run randomTick", t);
             }
         }
     }
@@ -383,12 +391,12 @@ public final class BlockGenerator {
         public static final TickInterceptor INSTANCE = new TickInterceptor();
 
         @RuntimeType
-        public void intercept(@This Object thisObj, @AllArguments Object[] args, @SuperCall Callable<Object> superMethod) {
-            ObjectHolder<BlockBehavior> holder = ((DelegatingBlock) thisObj).behaviorDelegate();
+        public void intercept(@This Object thisBlock, @AllArguments Object[] args) {
+            ObjectHolder<BlockBehavior> holder = ((DelegatingBlock) thisBlock).behaviorDelegate();
             try {
-                holder.value().tick(thisObj, args, superMethod);
-            } catch (Exception e) {
-                CraftEngine.instance().logger().severe("Failed to run tick", e);
+                holder.value().tick(thisBlock, args);
+            } catch (Throwable t) {
+                CraftEngine.instance().logger().error("Failed to run tick", t);
             }
         }
     }
@@ -397,12 +405,12 @@ public final class BlockGenerator {
         public static final OnPlaceInterceptor INSTANCE = new OnPlaceInterceptor();
 
         @RuntimeType
-        public void intercept(@This Object thisObj, @AllArguments Object[] args, @SuperCall Callable<Object> superMethod) {
-            ObjectHolder<BlockBehavior> holder = ((DelegatingBlock) thisObj).behaviorDelegate();
+        public void intercept(@This Object thisBlock, @AllArguments Object[] args) {
+            ObjectHolder<BlockBehavior> holder = ((DelegatingBlock) thisBlock).behaviorDelegate();
             try {
-                holder.value().onPlace(thisObj, args, superMethod);
-            } catch (Exception e) {
-                CraftEngine.instance().logger().severe("Failed to run onPlace", e);
+                holder.value().onPlace(thisBlock, args);
+            } catch (Throwable t) {
+                CraftEngine.instance().logger().error("Failed to run onPlace", t);
             }
         }
     }
@@ -411,12 +419,14 @@ public final class BlockGenerator {
         public static final OnLandInterceptor INSTANCE = new OnLandInterceptor();
 
         @RuntimeType
-        public void intercept(@This Object thisObj, @AllArguments Object[] args) {
-            ObjectHolder<BlockBehavior> holder = ((DelegatingBlock) thisObj).behaviorDelegate();
-            try {
-                holder.value().onLand(thisObj, args);
-            } catch (Exception e) {
-                CraftEngine.instance().logger().severe("Failed to run onLand", e);
+        public void intercept(@This Object thisBlock, @AllArguments Object[] args) {
+            ObjectHolder<BlockBehavior> holder = ((DelegatingBlock) thisBlock).behaviorDelegate();
+            if (holder.value() instanceof FallableBlock fallable) {
+                try {
+                    fallable.onLand(thisBlock, args);
+                } catch (Throwable t) {
+                    CraftEngine.instance().logger().error("Failed to run onLand", t);
+                }
             }
         }
     }
@@ -425,12 +435,14 @@ public final class BlockGenerator {
         public static final OnBrokenAfterFallInterceptor INSTANCE = new OnBrokenAfterFallInterceptor();
 
         @RuntimeType
-        public void intercept(@This Object thisObj, @AllArguments Object[] args) {
-            ObjectHolder<BlockBehavior> holder = ((DelegatingBlock) thisObj).behaviorDelegate();
-            try {
-                holder.value().onBrokenAfterFall(thisObj, args);
-            } catch (Exception e) {
-                CraftEngine.instance().logger().severe("Failed to run onBrokenAfterFall", e);
+        public void intercept(@This Object thisBlock, @AllArguments Object[] args) {
+            ObjectHolder<BlockBehavior> holder = ((DelegatingBlock) thisBlock).behaviorDelegate();
+            if (holder.value() instanceof FallableBlock fallable) {
+                try {
+                    fallable.onBrokenAfterFall(thisBlock, args);
+                } catch (Throwable t) {
+                    CraftEngine.instance().logger().error("Failed to run onBrokenAfterFall", t);
+                }
             }
         }
     }
@@ -439,14 +451,14 @@ public final class BlockGenerator {
         public static final CanSurviveInterceptor INSTANCE = new CanSurviveInterceptor();
 
         @RuntimeType
-        public boolean intercept(@This Object thisObj, @AllArguments Object[] args, @SuperCall Callable<Object> superMethod) {
-            ObjectHolder<BlockBehavior> holder = ((DelegatingBlock) thisObj).behaviorDelegate();
+        public boolean intercept(@This Object thisBlock, @AllArguments Object[] args) {
+            ObjectHolder<BlockBehavior> holder = ((DelegatingBlock) thisBlock).behaviorDelegate();
             try {
-                return holder.value().canSurvive(thisObj, args, superMethod);
-            } catch (Exception e) {
-                CraftEngine.instance().logger().severe("Failed to run canSurvive", e);
-                return true;
+                return holder.value().canSurvive(thisBlock, args);
+            } catch (Throwable t) {
+                CraftEngine.instance().logger().error("Failed to run canSurvive", t);
             }
+            return true;
         }
     }
 
@@ -454,14 +466,16 @@ public final class BlockGenerator {
         public static final IsBoneMealSuccessInterceptor INSTANCE = new IsBoneMealSuccessInterceptor();
 
         @RuntimeType
-        public boolean intercept(@This Object thisObj, @AllArguments Object[] args) {
-            ObjectHolder<BlockBehavior> holder = ((DelegatingBlock) thisObj).behaviorDelegate();
-            try {
-                return holder.value().isBoneMealSuccess(thisObj, args);
-            } catch (Exception e) {
-                CraftEngine.instance().logger().severe("Failed to run isBoneMealSuccess", e);
-                return true;
+        public boolean intercept(@This Object thisBlock, @AllArguments Object[] args) {
+            ObjectHolder<BlockBehavior> holder = ((DelegatingBlock) thisBlock).behaviorDelegate();
+            if (holder.value() instanceof BonemealableBlock bonemealableBlock) {
+                try {
+                    return bonemealableBlock.isBonemealSuccess(thisBlock, args);
+                } catch (Throwable t) {
+                    CraftEngine.instance().logger().error("Failed to run isBoneMealSuccess", t);
+                }
             }
+            return false;
         }
     }
 
@@ -469,14 +483,16 @@ public final class BlockGenerator {
         public static final IsValidBoneMealTargetInterceptor INSTANCE = new IsValidBoneMealTargetInterceptor();
 
         @RuntimeType
-        public boolean intercept(@This Object thisObj, @AllArguments Object[] args) {
-            ObjectHolder<BlockBehavior> holder = ((DelegatingBlock) thisObj).behaviorDelegate();
-            try {
-                return holder.value().isValidBoneMealTarget(thisObj, args);
-            } catch (Exception e) {
-                CraftEngine.instance().logger().severe("Failed to run isValidBoneMealTarget", e);
-                return true;
+        public boolean intercept(@This Object thisBlock, @AllArguments Object[] args) {
+            ObjectHolder<BlockBehavior> holder = ((DelegatingBlock) thisBlock).behaviorDelegate();
+            if (holder.value() instanceof BonemealableBlock bonemealableBlock) {
+                try {
+                    return bonemealableBlock.isValidBonemealTarget(thisBlock, args);
+                } catch (Throwable t) {
+                    CraftEngine.instance().logger().error("Failed to run isValidBoneMealTarget", t);
+                }
             }
+            return false;
         }
     }
 
@@ -484,14 +500,16 @@ public final class BlockGenerator {
         public static final GetContainerInterceptor INSTANCE = new GetContainerInterceptor();
 
         @RuntimeType
-        public Object intercept(@This Object thisObj, @AllArguments Object[] args) {
-            ObjectHolder<BlockBehavior> holder = ((DelegatingBlock) thisObj).behaviorDelegate();
-            try {
-                return holder.value().getContainer(thisObj, args);
-            } catch (Exception e) {
-                CraftEngine.instance().logger().severe("Failed to run getContainer", e);
-                return null;
+        public Object intercept(@This Object thisBlock, @AllArguments Object[] args) {
+            ObjectHolder<BlockBehavior> holder = ((DelegatingBlock) thisBlock).behaviorDelegate();
+            if (holder.value() instanceof WorldlyContainerHolder containerHolder) {
+                try {
+                    return containerHolder.getContainer(thisBlock, args);
+                } catch (Throwable t) {
+                    CraftEngine.instance().logger().error("Failed to run getContainer", t);
+                }
             }
+            return null;
         }
     }
 
@@ -499,14 +517,14 @@ public final class BlockGenerator {
         public static final HasAnalogOutputSignalInterceptor INSTANCE = new HasAnalogOutputSignalInterceptor();
 
         @RuntimeType
-        public boolean intercept(@This Object thisObj, @AllArguments Object[] args) {
-            ObjectHolder<BlockBehavior> holder = ((DelegatingBlock) thisObj).behaviorDelegate();
+        public boolean intercept(@This Object thisBlock, @AllArguments Object[] args) {
+            ObjectHolder<BlockBehavior> holder = ((DelegatingBlock) thisBlock).behaviorDelegate();
             try {
-                return holder.value().hasAnalogOutputSignal(thisObj, args);
-            } catch (Exception e) {
-                CraftEngine.instance().logger().severe("Failed to run hasAnalogOutputSignal", e);
-                return false;
+                return holder.value().hasAnalogOutputSignal(thisBlock, args);
+            } catch (Throwable e) {
+                CraftEngine.instance().logger().error("Failed to run hasAnalogOutputSignal", e);
             }
+            return false;
         }
     }
 
@@ -514,14 +532,14 @@ public final class BlockGenerator {
         public static final GetAnalogOutputSignalInterceptor INSTANCE = new GetAnalogOutputSignalInterceptor();
 
         @RuntimeType
-        public int intercept(@This Object thisObj, @AllArguments Object[] args) {
-            ObjectHolder<BlockBehavior> holder = ((DelegatingBlock) thisObj).behaviorDelegate();
+        public int intercept(@This Object thisBlock, @AllArguments Object[] args) {
+            ObjectHolder<BlockBehavior> holder = ((DelegatingBlock) thisBlock).behaviorDelegate();
             try {
-                return holder.value().getAnalogOutputSignal(thisObj, args);
-            } catch (Exception e) {
-                CraftEngine.instance().logger().severe("Failed to run getAnalogOutputSignal", e);
-                return 0;
+                return holder.value().getAnalogOutputSignal(thisBlock, args);
+            } catch (Throwable t) {
+                CraftEngine.instance().logger().error("Failed to run getAnalogOutputSignal", t);
             }
+            return 0;
         }
     }
 
@@ -529,12 +547,14 @@ public final class BlockGenerator {
         public static final PerformBoneMealInterceptor INSTANCE = new PerformBoneMealInterceptor();
 
         @RuntimeType
-        public void intercept(@This Object thisObj, @AllArguments Object[] args) {
-            ObjectHolder<BlockBehavior> holder = ((DelegatingBlock) thisObj).behaviorDelegate();
-            try {
-                holder.value().performBoneMeal(thisObj, args);
-            } catch (Exception e) {
-                CraftEngine.instance().logger().severe("Failed to run performBoneMeal", e);
+        public void intercept(@This Object thisBlock, @AllArguments Object[] args) {
+            ObjectHolder<BlockBehavior> holder = ((DelegatingBlock) thisBlock).behaviorDelegate();
+            if (holder.value() instanceof BonemealableBlock bonemealableBlock) {
+                try {
+                    bonemealableBlock.performBonemeal(thisBlock, args);
+                } catch (Throwable t) {
+                    CraftEngine.instance().logger().error("Failed to run performBoneMeal", t);
+                }
             }
         }
     }
@@ -543,12 +563,12 @@ public final class BlockGenerator {
         public static final NeighborChangedInterceptor INSTANCE = new NeighborChangedInterceptor();
 
         @RuntimeType
-        public void intercept(@This Object thisObj, @AllArguments Object[] args, @SuperCall Callable<Object> superMethod) {
-            ObjectHolder<BlockBehavior> holder = ((DelegatingBlock) thisObj).behaviorDelegate();
+        public void intercept(@This Object thisBlock, @AllArguments Object[] args) {
+            ObjectHolder<BlockBehavior> holder = ((DelegatingBlock) thisBlock).behaviorDelegate();
             try {
-                holder.value().neighborChanged(thisObj, args, superMethod);
-            } catch (Exception e) {
-                CraftEngine.instance().logger().severe("Failed to run neighborChanged", e);
+                holder.value().neighborChanged(thisBlock, args);
+            } catch (Throwable t) {
+                CraftEngine.instance().logger().error("Failed to run neighborChanged", t);
             }
         }
     }
@@ -557,13 +577,15 @@ public final class BlockGenerator {
         public static final OnExplosionHitInterceptor INSTANCE = new OnExplosionHitInterceptor();
 
         @RuntimeType
-        public void intercept(@This Object thisObj, @AllArguments Object[] args, @SuperCall Callable<Object> superMethod) {
-            ObjectHolder<BlockBehavior> holder = ((DelegatingBlock) thisObj).behaviorDelegate();
+        public void intercept(@This Object thisBlock, @AllArguments Object[] args, @SuperCall Callable<Object> superMethod) {
+            ObjectHolder<BlockBehavior> holder = ((DelegatingBlock) thisBlock).behaviorDelegate();
             try {
-                holder.value().onExplosionHit(thisObj, args, () -> null);
+                BlockBehavior value = holder.value();
+                value.preExplosionHit(thisBlock, args);
                 superMethod.call();
-            } catch (Exception e) {
-                CraftEngine.instance().logger().severe("Failed to run onExplosionHit", e);
+                value.postExplosionHit(thisBlock, args);
+            } catch (Throwable t) {
+                CraftEngine.instance().logger().error("Failed to run onExplosionHit", t);
             }
         }
     }
@@ -572,14 +594,35 @@ public final class BlockGenerator {
         public static final PickUpBlockInterceptor INSTANCE = new PickUpBlockInterceptor();
 
         @RuntimeType
-        public Object intercept(@This Object thisObj, @AllArguments Object[] args, @SuperCall Callable<Object> superMethod) {
-            ObjectHolder<BlockBehavior> holder = ((DelegatingBlock) thisObj).behaviorDelegate();
+        public Object intercept(@This Object thisBlock, @AllArguments Object[] args) {
+            ObjectHolder<BlockBehavior> holder = ((DelegatingBlock) thisBlock).behaviorDelegate();
             try {
-                return holder.value().pickupBlock(thisObj, args, () -> CoreReflections.instance$ItemStack$EMPTY);
-            } catch (Exception e) {
-                CraftEngine.instance().logger().severe("Failed to run pickupBlock", e);
-                return CoreReflections.instance$ItemStack$EMPTY;
+                if (holder.value() instanceof BucketPickup bucketPickup) {
+                    Object item = bucketPickup.pickupBlock(thisBlock, args);
+                    if (item != null) return item;
+                }
+            } catch (Throwable t) {
+                CraftEngine.instance().logger().error("Failed to run pickupBlock", t);
             }
+            return ItemStackProxy.EMPTY;
+        }
+    }
+
+    public static class GetPickUpSoundInterceptor {
+        public static final GetPickUpSoundInterceptor INSTANCE = new GetPickUpSoundInterceptor();
+
+        @RuntimeType
+        public Object intercept(@This Object thisBlock, @AllArguments Object[] args) {
+            ObjectHolder<BlockBehavior> holder = ((DelegatingBlock) thisBlock).behaviorDelegate();
+            try {
+                if (holder.value() instanceof BucketPickup bucketPickup) {
+                    Object sound = bucketPickup.getPickupSound(thisBlock, args);
+                    if (sound != null) return sound;
+                }
+            } catch (Throwable t) {
+                CraftEngine.instance().logger().error("Failed to run getPickupSound", t);
+            }
+            return Optional.empty();
         }
     }
 
@@ -587,14 +630,16 @@ public final class BlockGenerator {
         public static final PlaceLiquidInterceptor INSTANCE = new PlaceLiquidInterceptor();
 
         @RuntimeType
-        public boolean intercept(@This Object thisObj, @AllArguments Object[] args, @SuperCall Callable<Object> superMethod) throws Exception {
-            ObjectHolder<BlockBehavior> holder = ((DelegatingBlock) thisObj).behaviorDelegate();
-            try {
-                return holder.value().placeLiquid(thisObj, args, superMethod);
-            } catch (Exception e) {
-                CraftEngine.instance().logger().severe("Failed to run placeLiquid", e);
-                return false;
+        public boolean intercept(@This Object thisBlock, @AllArguments Object[] args) {
+            ObjectHolder<BlockBehavior> holder = ((DelegatingBlock) thisBlock).behaviorDelegate();
+            if (holder.value() instanceof LiquidBlockContainer liquidBlockContainer) {
+                try {
+                    return liquidBlockContainer.placeLiquid(thisBlock, args);
+                } catch (Throwable t) {
+                    CraftEngine.instance().logger().error("Failed to run placeLiquid", t);
+                }
             }
+            return false;
         }
     }
 
@@ -602,14 +647,16 @@ public final class BlockGenerator {
         public static final CanPlaceLiquidInterceptor INSTANCE = new CanPlaceLiquidInterceptor();
 
         @RuntimeType
-        public boolean intercept(@This Object thisObj, @AllArguments Object[] args, @SuperCall Callable<Object> superMethod) {
-            ObjectHolder<BlockBehavior> holder = ((DelegatingBlock) thisObj).behaviorDelegate();
-            try {
-                return holder.value().canPlaceLiquid(thisObj, args, superMethod);
-            } catch (Exception e) {
-                CraftEngine.instance().logger().severe("Failed to run canPlaceLiquid", e);
-                return false;
+        public boolean intercept(@This Object thisBlock, @AllArguments Object[] args) {
+            ObjectHolder<BlockBehavior> holder = ((DelegatingBlock) thisBlock).behaviorDelegate();
+            if (holder.value() instanceof LiquidBlockContainer liquidBlockContainer) {
+                try {
+                    return liquidBlockContainer.canPlaceLiquid(thisBlock, args);
+                } catch (Throwable t) {
+                    CraftEngine.instance().logger().error("Failed to run canPlaceLiquid", t);
+                }
             }
+            return false;
         }
     }
 
@@ -617,14 +664,14 @@ public final class BlockGenerator {
         public static final GetDirectSignalInterceptor INSTANCE = new GetDirectSignalInterceptor();
 
         @RuntimeType
-        public int intercept(@This Object thisObj, @AllArguments Object[] args, @SuperCall Callable<Object> superMethod) {
-            ObjectHolder<BlockBehavior> holder = ((DelegatingBlock) thisObj).behaviorDelegate();
+        public int intercept(@This Object thisBlock, @AllArguments Object[] args) {
+            ObjectHolder<BlockBehavior> holder = ((DelegatingBlock) thisBlock).behaviorDelegate();
             try {
-                return holder.value().getDirectSignal(thisObj, args, superMethod);
-            } catch (Exception e) {
-                CraftEngine.instance().logger().severe("Failed to run getDirectSignal", e);
-                return 0;
+                return holder.value().getDirectSignal(thisBlock, args);
+            } catch (Throwable t) {
+                CraftEngine.instance().logger().error("Failed to run getDirectSignal", t);
             }
+            return 0;
         }
     }
 
@@ -632,14 +679,14 @@ public final class BlockGenerator {
         public static final GetSignalInterceptor INSTANCE = new GetSignalInterceptor();
 
         @RuntimeType
-        public int intercept(@This Object thisObj, @AllArguments Object[] args, @SuperCall Callable<Object> superMethod) {
-            ObjectHolder<BlockBehavior> holder = ((DelegatingBlock) thisObj).behaviorDelegate();
+        public int intercept(@This Object thisBlock, @AllArguments Object[] args) {
+            ObjectHolder<BlockBehavior> holder = ((DelegatingBlock) thisBlock).behaviorDelegate();
             try {
-                return holder.value().getSignal(thisObj, args, superMethod);
-            } catch (Exception e) {
-                CraftEngine.instance().logger().severe("Failed to run getSignal", e);
-                return 0;
+                return holder.value().getSignal(thisBlock, args);
+            } catch (Throwable t) {
+                CraftEngine.instance().logger().error("Failed to run getSignal", t);
             }
+            return 0;
         }
     }
 
@@ -647,14 +694,14 @@ public final class BlockGenerator {
         public static final IsSignalSourceInterceptor INSTANCE = new IsSignalSourceInterceptor();
 
         @RuntimeType
-        public boolean intercept(@This Object thisObj, @AllArguments Object[] args, @SuperCall Callable<Object> superMethod) {
-            ObjectHolder<BlockBehavior> holder = ((DelegatingBlock) thisObj).behaviorDelegate();
+        public boolean intercept(@This Object thisBlock, @AllArguments Object[] args) {
+            ObjectHolder<BlockBehavior> holder = ((DelegatingBlock) thisBlock).behaviorDelegate();
             try {
-                return holder.value().isSignalSource(thisObj, args, superMethod);
-            } catch (Exception e) {
-                CraftEngine.instance().logger().severe("Failed to run isSignalSource", e);
-                return false;
+                return holder.value().isSignalSource(thisBlock, args);
+            } catch (Throwable t) {
+                CraftEngine.instance().logger().error("Failed to run isSignalSource", t);
             }
+            return false;
         }
     }
 
@@ -662,26 +709,12 @@ public final class BlockGenerator {
         public static final AffectNeighborsAfterRemovalInterceptor INSTANCE = new AffectNeighborsAfterRemovalInterceptor();
 
         @RuntimeType
-        public void intercept(@This Object thisObj, @AllArguments Object[] args, @SuperCall Callable<Object> superMethod) {
-            ObjectHolder<BlockBehavior> holder = ((DelegatingBlock) thisObj).behaviorDelegate();
+        public void intercept(@This Object thisBlock, @AllArguments Object[] args) {
+            ObjectHolder<BlockBehavior> holder = ((DelegatingBlock) thisBlock).behaviorDelegate();
             try {
-                holder.value().affectNeighborsAfterRemoval(thisObj, args, superMethod);
-            } catch (Exception e) {
-                CraftEngine.instance().logger().severe("Failed to run affectNeighborsAfterRemoval", e);
-            }
-        }
-    }
-
-    public static class OnRemoveInterceptor {
-        public static final OnRemoveInterceptor INSTANCE = new OnRemoveInterceptor();
-
-        @RuntimeType
-        public void intercept(@This Object thisObj, @AllArguments Object[] args, @SuperCall Callable<Object> superMethod) {
-            ObjectHolder<BlockBehavior> holder = ((DelegatingBlock) thisObj).behaviorDelegate();
-            try {
-                holder.value().onRemove(thisObj, args, superMethod);
-            } catch (Exception e) {
-                CraftEngine.instance().logger().severe("Failed to run onRemove", e);
+                holder.value().affectNeighborsAfterRemoval(thisBlock, args);
+            } catch (Throwable t) {
+                CraftEngine.instance().logger().error("Failed to run affectNeighborsAfterRemoval", t);
             }
         }
     }
@@ -690,12 +723,12 @@ public final class BlockGenerator {
         public static final EntityInsideInterceptor INSTANCE = new EntityInsideInterceptor();
 
         @RuntimeType
-        public void intercept(@This Object thisObj, @AllArguments Object[] args, @SuperCall Callable<Object> superMethod) {
-            ObjectHolder<BlockBehavior> holder = ((DelegatingBlock) thisObj).behaviorDelegate();
+        public void intercept(@This Object thisBlock, @AllArguments Object[] args) {
+            ObjectHolder<BlockBehavior> holder = ((DelegatingBlock) thisBlock).behaviorDelegate();
             try {
-                holder.value().entityInside(thisObj, args, superMethod);
-            } catch (Exception e) {
-                CraftEngine.instance().logger().severe("Failed to run entityInside", e);
+                holder.value().entityInside(thisBlock, args);
+            } catch (Throwable t) {
+                CraftEngine.instance().logger().error("Failed to run entityInside", t);
             }
         }
     }
@@ -704,14 +737,16 @@ public final class BlockGenerator {
         public static final PlayerWillDestroyInterceptor INSTANCE = new PlayerWillDestroyInterceptor();
 
         @RuntimeType
-        public Object intercept(@This Object thisObj, @AllArguments Object[] args, @SuperCall Callable<Object> superMethod) throws Exception {
-            ObjectHolder<BlockBehavior> holder = ((DelegatingBlock) thisObj).behaviorDelegate();
+        public Object intercept(@This Object thisBlock, @AllArguments Object[] args, @SuperCall Callable<Object> superMethod) throws Exception {
+            ObjectHolder<BlockBehavior> holder = ((DelegatingBlock) thisBlock).behaviorDelegate();
             try {
-                return holder.value().playerWillDestroy(thisObj, args, superMethod);
-            } catch (Exception e) {
-                CraftEngine.instance().logger().severe("Failed to run playerWillDestroy", e);
-                return superMethod.call();
+                Object afterState = holder.value().playerWillDestroy(thisBlock, args);
+                superMethod.call();
+                return afterState;
+            } catch (Throwable t) {
+                CraftEngine.instance().logger().error("Failed to run playerWillDestroy", t);
             }
+            return superMethod.call();
         }
     }
 
@@ -719,12 +754,12 @@ public final class BlockGenerator {
         public static final SpawnAfterBreakInterceptor INSTANCE = new SpawnAfterBreakInterceptor();
 
         @RuntimeType
-        public void intercept(@This Object thisObj, @AllArguments Object[] args, @SuperCall Callable<Object> superMethod) {
-            ObjectHolder<BlockBehavior> holder = ((DelegatingBlock) thisObj).behaviorDelegate();
+        public void intercept(@This Object thisBlock, @AllArguments Object[] args) {
+            ObjectHolder<BlockBehavior> holder = ((DelegatingBlock) thisBlock).behaviorDelegate();
             try {
-                holder.value().spawnAfterBreak(thisObj, args, superMethod);
-            } catch (Exception e) {
-                CraftEngine.instance().logger().severe("Failed to run spawnAfterBreak", e);
+                holder.value().spawnAfterBreak(thisBlock, args);
+            } catch (Throwable t) {
+                CraftEngine.instance().logger().error("Failed to run spawnAfterBreak", t);
             }
         }
     }
@@ -733,12 +768,12 @@ public final class BlockGenerator {
         public static final StepOnInterceptor INSTANCE = new StepOnInterceptor();
 
         @RuntimeType
-        public void intercept(@This Object thisObj, @AllArguments Object[] args, @SuperCall Callable<Object> superMethod) {
-            ObjectHolder<BlockBehavior> holder = ((DelegatingBlock) thisObj).behaviorDelegate();
+        public void intercept(@This Object thisBlock, @AllArguments Object[] args) {
+            ObjectHolder<BlockBehavior> holder = ((DelegatingBlock) thisBlock).behaviorDelegate();
             try {
-                holder.value().stepOn(thisObj, args, superMethod);
-            } catch (Exception e) {
-                CraftEngine.instance().logger().severe("Failed to run stepOn", e);
+                holder.value().stepOn(thisBlock, args);
+            } catch (Throwable t) {
+                CraftEngine.instance().logger().error("Failed to run stepOn", t);
             }
         }
     }
@@ -747,16 +782,12 @@ public final class BlockGenerator {
         public static final FallOnInterceptor INSTANCE = new FallOnInterceptor();
 
         @RuntimeType
-        public void intercept(@This Object thisObj, @AllArguments Object[] args, @SuperCall Callable<Object> superMethod) {
-            ObjectHolder<BlockBehavior> holder = ((DelegatingBlock) thisObj).behaviorDelegate();
+        public void intercept(@This Object thisBlock, @AllArguments Object[] args) {
+            ObjectHolder<BlockBehavior> holder = ((DelegatingBlock) thisBlock).behaviorDelegate();
             try {
-                if (holder.value() instanceof FallOnBlockBehavior behavior) {
-                    behavior.fallOn(thisObj, args, superMethod);
-                } else {
-                    superMethod.call();
-                }
-            } catch (Exception e) {
-                CraftEngine.instance().logger().severe("Failed to run fallOn", e);
+                holder.value().fallOn(thisBlock, args);
+            } catch (Throwable t) {
+                CraftEngine.instance().logger().error("Failed to run fallOn", t);
             }
         }
     }
@@ -765,16 +796,12 @@ public final class BlockGenerator {
         public static final UpdateEntityMovementAfterFallOnInterceptor INSTANCE = new UpdateEntityMovementAfterFallOnInterceptor();
 
         @RuntimeType
-        public void intercept(@This Object thisObj, @AllArguments Object[] args, @SuperCall Callable<Object> superMethod) {
-            ObjectHolder<BlockBehavior> holder = ((DelegatingBlock) thisObj).behaviorDelegate();
+        public void intercept(@This Object thisBlock, @AllArguments Object[] args) {
+            ObjectHolder<BlockBehavior> holder = ((DelegatingBlock) thisBlock).behaviorDelegate();
             try {
-                if (holder.value() instanceof FallOnBlockBehavior behavior) {
-                    behavior.updateEntityMovementAfterFallOn(thisObj, args, superMethod);
-                } else {
-                    superMethod.call();
-                }
-            } catch (Exception e) {
-                CraftEngine.instance().logger().severe("Failed to run updateEntityMovementAfterFallOn", e);
+                holder.value().updateEntityMovementAfterFallOn(thisBlock, args);
+            } catch (Throwable t) {
+                CraftEngine.instance().logger().error("Failed to run updateEntityMovementAfterFallOn", t);
             }
         }
     }
@@ -783,12 +810,12 @@ public final class BlockGenerator {
         public static final OnProjectileHitInterceptor INSTANCE = new OnProjectileHitInterceptor();
 
         @RuntimeType
-        public void intercept(@This Object thisObj, @AllArguments Object[] args, @SuperCall Callable<Object> superMethod) {
-            ObjectHolder<BlockBehavior> holder = ((DelegatingBlock) thisObj).behaviorDelegate();
+        public void intercept(@This Object thisBlock, @AllArguments Object[] args) {
+            ObjectHolder<BlockBehavior> holder = ((DelegatingBlock) thisBlock).behaviorDelegate();
             try {
-                holder.value().onProjectileHit(thisObj, args, superMethod);
-            } catch (Exception e) {
-                CraftEngine.instance().logger().severe("Failed to run onProjectileHit", e);
+                holder.value().onProjectileHit(thisBlock, args);
+            } catch (Throwable t) {
+                CraftEngine.instance().logger().error("Failed to run onProjectileHit", t);
             }
         }
     }
@@ -797,12 +824,55 @@ public final class BlockGenerator {
         public static final SetPlaceByInterceptor INSTANCE = new SetPlaceByInterceptor();
 
         @RuntimeType
-        public void intercept(@This Object thisObj, @AllArguments Object[] args, @SuperCall Callable<Object> superMethod) {
-            ObjectHolder<BlockBehavior> holder = ((DelegatingBlock) thisObj).behaviorDelegate();
+        public void intercept(@This Object thisBlock, @AllArguments Object[] args) {
+            ObjectHolder<BlockBehavior> holder = ((DelegatingBlock) thisBlock).behaviorDelegate();
             try {
-                holder.value().placeMultiState(thisObj, args, superMethod);
-            } catch (Exception e) {
-                CraftEngine.instance().logger().severe("Failed to run setPlaceBy", e);
+                holder.value().placeMultiState(thisBlock, args);
+            } catch (Throwable t) {
+                CraftEngine.instance().logger().error("Failed to run setPlaceBy", t);
+            }
+        }
+    }
+
+    public static class AttackInterceptor {
+        public static final AttackInterceptor INSTANCE = new AttackInterceptor();
+
+        @RuntimeType
+        public void intercept(@This Object thisBlock, @AllArguments Object[] args) {
+            ObjectHolder<BlockBehavior> holder = ((DelegatingBlock) thisBlock).behaviorDelegate();
+            try {
+                holder.value().attack(thisBlock, args);
+            } catch (Throwable t) {
+                CraftEngine.instance().logger().error("Failed to run attack", t);
+            }
+        }
+    }
+
+    public static class TriggerEventInterceptor {
+        public static final TriggerEventInterceptor INSTANCE = new TriggerEventInterceptor();
+
+        @RuntimeType
+        public boolean intercept(@This Object thisBlock, @AllArguments Object[] args) {
+            ObjectHolder<BlockBehavior> holder = ((DelegatingBlock) thisBlock).behaviorDelegate();
+            try {
+                return holder.value().triggerEvent(thisBlock, args);
+            } catch (Throwable t) {
+                CraftEngine.instance().logger().error("Failed to run triggerEvent", t);
+            }
+            return false;
+        }
+    }
+
+    public static class HandlePrecipitationInterceptor {
+        public static final HandlePrecipitationInterceptor INSTANCE = new HandlePrecipitationInterceptor();
+
+        @RuntimeType
+        public void intercept(@This Object thisBlock, @AllArguments Object[] args) {
+            ObjectHolder<BlockBehavior> holder = ((DelegatingBlock) thisBlock).behaviorDelegate();
+            try {
+                holder.value().handlePrecipitation(thisBlock, args);
+            } catch (Throwable t) {
+                CraftEngine.instance().logger().error("Failed to run handlePrecipitation", t);
             }
         }
     }

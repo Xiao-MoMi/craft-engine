@@ -11,7 +11,6 @@ import java.util.Objects;
 import java.util.Optional;
 
 public final class MaterialUtils {
-
     public static Material MACE;
 
     static {

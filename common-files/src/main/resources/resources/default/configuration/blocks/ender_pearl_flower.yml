@@ -1,7 +1,7 @@
 items:
   default:ender_pearl_flower_seeds:
     data:
-      item-name: <!i><lang:item.default.ender_pearl_flower_seeds>
+      item_name: <!i><lang:item.default.ender_pearl_flower_seeds>
     texture: minecraft:item/custom/ender_pearl_flower_seeds
     behavior:
       type: block_item
@@ -14,19 +14,18 @@ blocks:
         - default:sound/grass
       overrides:
         item: default:ender_pearl_flower_seeds
-        push-reaction: destroy
-        map-color: 24
-        is-randomly-ticking: true
+        push_reaction: destroy
+        map_color: 24
     behaviors:
       - type: liquid_flowable_block
       - type: bush_block
-        bottom-blocks:
+        bottom_blocks:
           - minecraft:end_stone
       - type: crop_block
-        grow-speed: 0.25
-        light-requirement: 0
-        is-bone-meal-target: true
-        bone-meal-age-bonus: 1
+        grow_speed: 0.25
+        light_requirement: 0
+        is_bone_meal_target: true
+        bone_meal_age_bonus: 1
     loot:
       template: default:loot_table/seed_crop
       arguments:
@@ -46,9 +45,9 @@ blocks:
             z: <arg:block.block_z> + 0.5
             particle: minecraft:end_rod
             count: 15
-            offset-x: 0.05
-            offset-y: 0.05
-            offset-z: 0.05
+            offset_x: 0.05
+            offset_y: 0.05
+            offset_z: 0.05
             speed: 0.1
           - type: play_sound
             sound: minecraft:entity.enderman.teleport
@@ -71,7 +70,7 @@ blocks:
             x: <arg:block.block_x>
             y: <arg:block.block_y>
             z: <arg:block.block_z>
-            block-state: default:ender_pearl_flower[age=0]
+            block_state: default:ender_pearl_flower[age=0]
           - type: set_count
             add: true
             count: -1
@@ -82,10 +81,11 @@ blocks:
         age:
           type: int
           default: 0
-          range: 0~2
+          min: 0
+          max: 2
       appearances:
         stage_0:
-          auto-state: lower_tripwire
+          auto_state: lower_tripwire
           models:
             - path: minecraft:block/custom/ender_pearl_flower_stage_0
               generation:
@@ -93,7 +93,7 @@ blocks:
                 textures:
                   cross: minecraft:block/custom/ender_pearl_flower_stage_0
         stage_1:
-          auto-state: higher_tripwire
+          auto_state: higher_tripwire
           models:
             - path: minecraft:block/custom/ender_pearl_flower_stage_1
               generation:
@@ -101,7 +101,7 @@ blocks:
                 textures:
                   cross: minecraft:block/custom/ender_pearl_flower_stage_1
         stage_2:
-          auto-state: sugar_cane
+          auto_state: sugar_cane
           models:
             - path: minecraft:block/custom/ender_pearl_flower_stage_2
               generation:
@@ -115,7 +115,7 @@ blocks:
           appearance: stage_1
         age=2:
           appearance: stage_2
-vanilla-loots:
+vanilla_loots:
   default:ender_pearl_flower_seeds_from_endermite:
     type: entity
     target: minecraft:endermite
@@ -134,59 +134,120 @@ vanilla-loots:
           entries:
             - type: item
               item: default:ender_pearl_flower_seeds
-placed-features:
+placed_features:
   default:ender_pearl_flower:
-    environment:
+    dimension_type:
       - minecraft:the_end
     feature:
-      type: 'minecraft:random_patch'
-      config:
-        feature:
+      $$>=26.1:
+        type: 'minecraft:simple_block'
+        config:
+          to_place:
+            type: 'minecraft:rule_based_state_provider'
+            rules:
+              - if_true:
+                  type: 'minecraft:all_of'
+                  predicates:
+                    - type: 'minecraft:matching_blocks'
+                      blocks: 'minecraft:air'
+                    - type: 'minecraft:matching_blocks'
+                      blocks: 'minecraft:end_stone'
+                      offset:
+                        - 0
+                        - -1
+                        - 0
+                then:
+                  type: 'minecraft:weighted_state_provider'
+                  entries:
+                    - weight: 4
+                      data:
+                        Name: 'default:ender_pearl_flower'
+                        Properties:
+                          age: '0'
+                    - weight: 2
+                      data:
+                        Name: 'default:ender_pearl_flower'
+                        Properties:
+                          age: '1'
+                    - weight: 1
+                      data:
+                        Name: 'default:ender_pearl_flower'
+                        Properties:
+                          age: '2'
+      $$fallback:
+        type: 'minecraft:random_patch'
+        config:
           feature:
-            type: 'minecraft:simple_block'
-            config:
-              to_place:
-                type: 'minecraft:weighted_state_provider'
-                entries:
-                  - weight: 4
-                    data:
-                      Name: 'default:ender_pearl_flower'
-                      Properties:
-                        age: '0'
-                  - weight: 2
-                    data:
-                      Name: 'default:ender_pearl_flower'
-                      Properties:
-                        age: '1'
-                  - weight: 1
-                    data:
-                      Name: 'default:ender_pearl_flower'
-                      Properties:
-                        age: '2'
-          placement:
-            - type: 'minecraft:block_predicate_filter'
-              predicate:
-                type: 'minecraft:all_of'
-                predicates:
-                  - type: 'minecraft:matching_blocks'
-                    blocks: 'minecraft:air'
-                  - type: 'minecraft:matching_blocks'
-                    blocks: 'minecraft:end_stone'
-                    offset:
-                      - 0
-                      - -1
-                      - 0
-        tries: 96
-        xz_spread: 7
-        y_spread: 3
+            feature:
+              type: 'minecraft:simple_block'
+              config:
+                to_place:
+                  type: 'minecraft:weighted_state_provider'
+                  entries:
+                    - weight: 4
+                      data:
+                        Name: 'default:ender_pearl_flower'
+                        Properties:
+                          age: '0'
+                    - weight: 2
+                      data:
+                        Name: 'default:ender_pearl_flower'
+                        Properties:
+                          age: '1'
+                    - weight: 1
+                      data:
+                        Name: 'default:ender_pearl_flower'
+                        Properties:
+                          age: '2'
+            placement:
+              - type: 'minecraft:block_predicate_filter'
+                predicate:
+                  type: 'minecraft:all_of'
+                  predicates:
+                    - type: 'minecraft:matching_blocks'
+                      blocks: 'minecraft:air'
+                    - type: 'minecraft:matching_blocks'
+                      blocks: 'minecraft:end_stone'
+                      offset:
+                        - 0
+                        - -1
+                        - 0
+          tries: 96
+          xz_spread: 7
+          y_spread: 3
     placement:
-      - type: 'minecraft:in_square'
-      - type: 'minecraft:rarity_filter'
-        chance: 24
-      - type: 'minecraft:height_range'
-        height:
-          type: 'minecraft:uniform'
-          min_inclusive:
-            absolute: 50
-          max_inclusive:
-            absolute: 70
+      $$>=26.1:
+        - type: 'minecraft:in_square'
+        - type: 'minecraft:rarity_filter'
+          chance: 24
+        - type: 'minecraft:height_range'
+          height:
+            type: 'minecraft:uniform'
+            min_inclusive:
+              absolute: 50
+            max_inclusive:
+              absolute: 70
+        - type: 'minecraft:count'
+          count: 96
+        - type: 'minecraft:random_offset'
+          xz_spread:
+            type: 'minecraft:trapezoid'
+            max: 7
+            min: -7
+            plateau: 0
+          y_spread:
+            type: 'minecraft:trapezoid'
+            max: 3
+            min: -3
+            plateau: 0
+      $$fallback:
+        - type: 'minecraft:in_square'
+        - type: 'minecraft:rarity_filter'
+          chance: 24
+        - type: 'minecraft:height_range'
+          height:
+            type: 'minecraft:uniform'
+            min_inclusive:
+              absolute: 50
+            max_inclusive:
+              absolute: 70

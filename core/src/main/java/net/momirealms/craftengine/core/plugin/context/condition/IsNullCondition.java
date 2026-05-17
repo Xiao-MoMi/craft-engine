@@ -1,17 +1,16 @@
 package net.momirealms.craftengine.core.plugin.context.condition;
 
+import net.momirealms.craftengine.core.plugin.config.ConfigSection;
 import net.momirealms.craftengine.core.plugin.context.Condition;
 import net.momirealms.craftengine.core.plugin.context.Context;
 import net.momirealms.craftengine.core.plugin.context.ContextKey;
-import net.momirealms.craftengine.core.util.ResourceConfigUtils;
 
-import java.util.Map;
 import java.util.Optional;
 
 public final class IsNullCondition<CTX extends Context> implements Condition<CTX> {
     private final ContextKey<?> key;
 
-    public IsNullCondition(ContextKey<?> key) {
+    private IsNullCondition(ContextKey<?> key) {
         this.key = key;
     }
 
@@ -26,11 +25,11 @@ public final class IsNullCondition<CTX extends Context> implements Condition<CTX
     }
 
     private static class Factory<CTX extends Context> implements ConditionFactory<CTX, IsNullCondition<CTX>> {
+        private static final String[] ARGUMENT = new String[] {"argument", "arg"};
 
         @Override
-        public IsNullCondition<CTX> create(Map<String, Object> arguments) {
-            String argument = ResourceConfigUtils.requireNonEmptyStringOrThrow(arguments.get("argument"), "warning.config.condition.is_null.missing_argument");
-            return new IsNullCondition<>(ContextKey.chain(argument));
+        public IsNullCondition<CTX> create(ConfigSection section) {
+            return new IsNullCondition<>(ContextKey.chain(section.getNonNullString(ARGUMENT)));
         }
     }
 }

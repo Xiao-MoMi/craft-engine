@@ -7,7 +7,7 @@ import java.util.List;
 import java.util.function.Function;
 import java.util.function.Predicate;
 
-public class ArrayPalette<T> implements Palette<T> {
+public final class ArrayPalette<T> implements Palette<T> {
     private final IndexedIterable<T> idList;
     private final T[] array;
     private final PaletteResizeListener<T> listener;
@@ -43,7 +43,7 @@ public class ArrayPalette<T> implements Palette<T> {
     @Override
     public void readPacket(FriendlyByteBuf buf) {
         this.size = buf.readVarInt();
-        for(int i = 0; i < this.size; ++i) {
+        for (int i = 0; i < this.size; ++i) {
             this.array[i] = this.idList.getOrThrow(buf.readVarInt());
         }
     }

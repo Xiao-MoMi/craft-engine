@@ -11,7 +11,11 @@ import java.util.Map;
 
 public interface BlockStateWrapper extends Comparable<BlockStateWrapper> {
 
-    Object literalObject();
+    Object minecraftState();
+
+    default Object platformState() {
+        return minecraftState();
+    }
 
     int registryId();
 

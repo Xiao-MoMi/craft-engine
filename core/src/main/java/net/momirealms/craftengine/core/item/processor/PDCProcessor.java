@@ -1,15 +1,13 @@
 package net.momirealms.craftengine.core.item.processor;
 
-import net.momirealms.craftengine.core.item.DataComponentKeys;
 import net.momirealms.craftengine.core.item.Item;
 import net.momirealms.craftengine.core.item.ItemBuildContext;
-import net.momirealms.craftengine.core.item.ItemProcessorFactory;
+import net.momirealms.craftengine.core.item.component.DataComponentKeys;
 import net.momirealms.craftengine.core.plugin.CraftEngine;
-import net.momirealms.craftengine.core.util.ResourceConfigUtils;
+import net.momirealms.craftengine.core.plugin.config.ConfigValue;
 import net.momirealms.craftengine.core.util.VersionHelper;
 import net.momirealms.sparrow.nbt.CompoundTag;
 
-import java.util.Map;
 import java.util.Optional;
 
 public final class PDCProcessor implements ItemProcessor {
@@ -22,11 +20,11 @@ public final class PDCProcessor implements ItemProcessor {
     }
 
     @Override
-    public <I> Item<I> apply(Item<I> item, ItemBuildContext context) {
-        if (VersionHelper.isOrAbove1_20_5()) {
-            CompoundTag customData = (CompoundTag) Optional.ofNullable(item.getSparrowNBTComponent(DataComponentKeys.CUSTOM_DATA)).orElseGet(CompoundTag::new);
+    public Item apply(Item item, ItemBuildContext context) {
+        if (VersionHelper.isOrAbove1_20_5) {
+            CompoundTag customData = (CompoundTag) Optional.ofNullable(item.getComponentAsSparrowTag(DataComponentKeys.CUSTOM_DATA)).orElseGet(CompoundTag::new);
             customData.put(BUKKIT_PDC, this.data);
-            item.setNBTComponent(DataComponentKeys.CUSTOM_DATA, customData);
+            item.setSparrowTagComponent(DataComponentKeys.CUSTOM_DATA, customData);
         } else {
             item.setTag(this.data, BUKKIT_PDC);
         }
@@ -36,10 +34,8 @@ public final class PDCProcessor implements ItemProcessor {
     private static class Factory implements ItemProcessorFactory<PDCProcessor> {
 
         @Override
-        public PDCProcessor create(Object arg) {
-            Map<String, Object> data = ResourceConfigUtils.getAsMap(arg, "pdc");
-            CompoundTag tag = (CompoundTag) CraftEngine.instance().platform().javaToSparrowNBT(data);
-            return new PDCProcessor(tag);
+        public PDCProcessor create(ConfigValue value) {
+            return new PDCProcessor((CompoundTag) CraftEngine.instance().platform().javaToSparrowNBT(value.getAsMap()));
         }
     }
 }

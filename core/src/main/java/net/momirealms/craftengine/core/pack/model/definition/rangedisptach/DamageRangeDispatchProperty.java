@@ -2,10 +2,8 @@ package net.momirealms.craftengine.core.pack.model.definition.rangedisptach;
 
 import com.google.gson.JsonObject;
 import net.momirealms.craftengine.core.pack.model.legacy.LegacyModelPredicate;
+import net.momirealms.craftengine.core.plugin.config.ConfigSection;
 import net.momirealms.craftengine.core.util.Key;
-import net.momirealms.craftengine.core.util.ResourceConfigUtils;
-
-import java.util.Map;
 
 public final class DamageRangeDispatchProperty implements RangeDispatchProperty, LegacyModelPredicate<Number> {
     public static final RangeDispatchPropertyFactory<DamageRangeDispatchProperty> FACTORY = new Factory();
@@ -21,10 +19,10 @@ public final class DamageRangeDispatchProperty implements RangeDispatchProperty,
     }
 
     @Override
-    public void accept(JsonObject jsonObject) {
-        jsonObject.addProperty("property", "damage");
+    public void writeProperty(JsonObject model) {
+        model.addProperty("property", "damage");
         if (!normalize) {
-            jsonObject.addProperty("normalize", false);
+            model.addProperty("normalize", false);
         }
     }
 
@@ -42,17 +40,15 @@ public final class DamageRangeDispatchProperty implements RangeDispatchProperty,
 
     private static class Factory implements RangeDispatchPropertyFactory<DamageRangeDispatchProperty> {
         @Override
-        public DamageRangeDispatchProperty create(Map<String, Object> arguments) {
-            boolean normalize = ResourceConfigUtils.getAsBoolean(arguments.getOrDefault("normalize", true), "normalize");
-            return new DamageRangeDispatchProperty(normalize);
+        public DamageRangeDispatchProperty create(ConfigSection section) {
+            return new DamageRangeDispatchProperty(section.getBoolean("normalize", true));
         }
     }
 
     private static class Reader implements RangeDispatchPropertyReader<DamageRangeDispatchProperty> {
         @Override
         public DamageRangeDispatchProperty read(JsonObject json) {
-            boolean normalize = !json.has("normalize") || json.get("normalize").getAsBoolean();
-            return new DamageRangeDispatchProperty(normalize);
+            return new DamageRangeDispatchProperty(!json.has("normalize") || json.get("normalize").getAsBoolean());
         }
     }
 }

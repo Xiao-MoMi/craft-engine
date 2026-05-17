@@ -1,28 +1,28 @@
 package net.momirealms.craftengine.bukkit.util;
 
-import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.CoreReflections;
 import net.momirealms.craftengine.core.block.BlockSounds;
 import net.momirealms.craftengine.core.sound.SoundSource;
 import net.momirealms.craftengine.core.util.Key;
+import net.momirealms.craftengine.proxy.minecraft.sounds.SoundEventProxy;
+import net.momirealms.craftengine.proxy.minecraft.world.level.block.SoundTypeProxy;
 import org.bukkit.SoundCategory;
 
 public final class SoundUtils {
-
     private SoundUtils() {}
 
-    public static Object toSoundType(BlockSounds sounds) throws ReflectiveOperationException {
-        return CoreReflections.constructor$SoundType.newInstance(
+    public static Object toNMSSoundType(BlockSounds sounds) {
+        return SoundTypeProxy.INSTANCE.newInstance(
             1f, 1f,
-                getOrRegisterSoundEvent(sounds.breakSound().id()),
-                getOrRegisterSoundEvent(sounds.stepSound().id()),
-                getOrRegisterSoundEvent(sounds.placeSound().id()),
-                getOrRegisterSoundEvent(sounds.hitSound().id()),
-                getOrRegisterSoundEvent(sounds.fallSound().id())
+                createSoundEvent(sounds.breakSound().id()),
+                createSoundEvent(sounds.stepSound().id()),
+                createSoundEvent(sounds.placeSound().id()),
+                createSoundEvent(sounds.hitSound().id()),
+                createSoundEvent(sounds.fallSound().id())
         );
     }
 
-    public static Object getOrRegisterSoundEvent(Key key) throws ReflectiveOperationException {
-        return CoreReflections.method$SoundEvent$createVariableRangeEvent.invoke(null, KeyUtils.toResourceLocation(key));
+    public static Object createSoundEvent(Key key) {
+        return SoundEventProxy.INSTANCE.createVariableRangeEvent(KeyUtils.toIdentifier(key));
     }
 
     public static SoundCategory toBukkit(SoundSource source) {

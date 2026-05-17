@@ -4,18 +4,16 @@ import com.ezylang.evalex.EvaluationException;
 import com.ezylang.evalex.Expression;
 import com.ezylang.evalex.parser.ParseException;
 import net.momirealms.craftengine.core.plugin.CraftEngine;
+import net.momirealms.craftengine.core.plugin.config.ConfigSection;
 import net.momirealms.craftengine.core.plugin.context.Condition;
 import net.momirealms.craftengine.core.plugin.context.Context;
 import net.momirealms.craftengine.core.plugin.context.text.TextProvider;
 import net.momirealms.craftengine.core.plugin.context.text.TextProviders;
-import net.momirealms.craftengine.core.util.ResourceConfigUtils;
-
-import java.util.Map;
 
 public final class ExpressionCondition<CTX extends Context> implements Condition<CTX> {
     private final TextProvider expression;
 
-    public ExpressionCondition(TextProvider expression) {
+    private ExpressionCondition(TextProvider expression) {
         this.expression = expression;
     }
 
@@ -36,11 +34,11 @@ public final class ExpressionCondition<CTX extends Context> implements Condition
     }
 
     private static class Factory<CTX extends Context> implements ConditionFactory<CTX, ExpressionCondition<CTX>> {
+        private static final String[] EXPR = new String[] {"expression", "expr"};
 
         @Override
-        public ExpressionCondition<CTX> create(Map<String, Object> arguments) {
-            String value = ResourceConfigUtils.requireNonEmptyStringOrThrow(arguments.get("expression"), "warning.config.condition.expression.missing_expression");
-            return new ExpressionCondition<>(TextProviders.fromString(value));
+        public ExpressionCondition<CTX> create(ConfigSection section) {
+            return new ExpressionCondition<>(TextProviders.fromString(section.getNonNullString(EXPR)));
         }
     }
 }

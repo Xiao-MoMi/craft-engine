@@ -3,8 +3,7 @@ package net.momirealms.craftengine.core.util;
 import java.lang.reflect.Array;
 import java.util.*;
 
-public class ArrayUtils {
-
+public final class ArrayUtils {
     private ArrayUtils() {}
 
     public static <T> T[] subArray(T[] array, int index) {
@@ -83,6 +82,13 @@ public class ArrayUtils {
     @SuppressWarnings("unchecked")
     public static <T> T[] appendElementToArrayHead(T[] array, T element) {
         T[] newArray = (T[]) new Object[array.length + 1];
+        System.arraycopy(array, 0, newArray, 1, array.length);
+        newArray[0] = element;
+        return newArray;
+    }
+
+    public static int[] appendIntToArrayHead(int[] array, int element) {
+        int[] newArray = new int[array.length + 1];
         System.arraycopy(array, 0, newArray, 1, array.length);
         newArray[0] = element;
         return newArray;

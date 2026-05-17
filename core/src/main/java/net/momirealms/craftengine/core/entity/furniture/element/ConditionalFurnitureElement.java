@@ -13,7 +13,7 @@ import java.util.function.Predicate;
 public interface ConditionalFurnitureElement extends FurnitureElement {
 
     @NotNull
-    Predicate<PlayerContext> viewCondition();
+    Predicate<PlayerContext> condition();
 
     @NotNull
     Furniture furniture();
@@ -25,7 +25,7 @@ public interface ConditionalFurnitureElement extends FurnitureElement {
         if (hasCondition()) {
             PlayerOptionalContext context = PlayerOptionalContext.of(player, ContextHolder.builder()
                     .withParameter(DirectContextParameters.FURNITURE, furniture()));
-            if (viewCondition().test(context)) {
+            if (condition().test(context)) {
                 showInternal(player);
             }
         } else {

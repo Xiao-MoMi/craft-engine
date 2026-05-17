@@ -4,6 +4,7 @@ import net.momirealms.craftengine.core.world.WorldPosition;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 import java.util.function.BiConsumer;
 import java.util.function.Function;
 
@@ -30,6 +31,10 @@ public enum FurnitureDebugStickState {
     FurnitureDebugStickState(Function<Furniture, String> formatter, DebugStickHandler handler) {
         this.formatter = formatter;
         this.handler = handler;
+    }
+
+    public String propertyName() {
+        return name().toLowerCase(Locale.ROOT);
     }
 
     public DebugStickHandler handler() {

@@ -6,8 +6,7 @@ import net.momirealms.craftengine.core.world.SectionPos;
 
 import java.util.*;
 
-public class SectionPosUtils {
-
+public final class SectionPosUtils {
     private SectionPosUtils() {}
 
     public static Map<Long, BitSet> nearbySectionsMap(Set<SectionPos> sections, int minLightSection, int maxLightSection) {

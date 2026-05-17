@@ -1,7 +1,9 @@
 package net.momirealms.craftengine.core.plugin.classpath;
 
+import net.momirealms.craftengine.core.util.ReflectionUtils;
 import org.jetbrains.annotations.NotNull;
 
+import java.lang.invoke.MethodHandles;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.net.URL;
@@ -13,8 +15,8 @@ public abstract class URLClassLoaderAccess {
     public static URLClassLoaderAccess create(URLClassLoader classLoader) {
         if (Reflection.isSupported()) {
             return new Reflection(classLoader);
-        } else if (Unsafe.isSupported()) {
-            return new Unsafe(classLoader);
+        } else if (Lookup.isSupported()) {
+            return new Lookup(classLoader);
         } else {
             return Noop.INSTANCE;
         }
@@ -68,30 +70,28 @@ public abstract class URLClassLoaderAccess {
         }
     }
 
-    private static class Unsafe extends URLClassLoaderAccess {
-        private static final sun.misc.Unsafe UNSAFE;
+    private static class Lookup extends URLClassLoaderAccess {
+        private static final MethodHandles.Lookup LOOKUP;
 
         static {
-            sun.misc.Unsafe unsafe;
+            MethodHandles.Lookup lookup;
             try {
-                Field unsafeField = sun.misc.Unsafe.class.getDeclaredField("theUnsafe");
-                unsafeField.setAccessible(true);
-                unsafe = (sun.misc.Unsafe) unsafeField.get(null);
+                lookup = ReflectionUtils.LOOKUP;
             } catch (Throwable t) {
-                unsafe = null;
+                lookup = null;
             }
-            UNSAFE = unsafe;
+            LOOKUP = lookup;
         }
 
         private static boolean isSupported() {
-            return UNSAFE != null;
+            return LOOKUP != null;
         }
 
         private final Collection<URL> unopenedURLs;
         private final Collection<URL> pathURLs;
 
         @SuppressWarnings("unchecked")
-        Unsafe(URLClassLoader classLoader) {
+        Lookup(URLClassLoader classLoader) {
             super(classLoader);
 
             Collection<URL> unopenedURLs;
@@ -109,11 +109,9 @@ public abstract class URLClassLoaderAccess {
             this.pathURLs = pathURLs;
         }
 
-        private static Object fetchField(final Class<?> clazz, final Object object, final String name) throws NoSuchFieldException {
+        private static Object fetchField(final Class<?> clazz, final Object object, final String name) throws Throwable {
             Field field = clazz.getDeclaredField(name);
-            @SuppressWarnings("deprecation") // java18
-            long offset = UNSAFE.objectFieldOffset(field);
-            return UNSAFE.getObject(object, offset);
+            return LOOKUP.unreflectGetter(field).invoke(object);
         }
 
         @Override

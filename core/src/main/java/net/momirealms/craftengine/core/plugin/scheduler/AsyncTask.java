@@ -2,7 +2,7 @@ package net.momirealms.craftengine.core.plugin.scheduler;
 
 import java.util.concurrent.ScheduledFuture;
 
-public class AsyncTask implements SchedulerTask {
+public final class AsyncTask implements SchedulerTask {
     private final ScheduledFuture<?> future;
 
     public AsyncTask(ScheduledFuture<?> future) {

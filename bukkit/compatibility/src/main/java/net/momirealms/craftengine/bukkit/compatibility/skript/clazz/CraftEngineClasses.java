@@ -10,12 +10,14 @@ import net.momirealms.craftengine.core.block.ImmutableBlockState;
 import net.momirealms.craftengine.core.block.UnsafeBlockStateMatcher;
 import net.momirealms.craftengine.core.block.parser.BlockStateParser;
 import org.jetbrains.annotations.Nullable;
+import org.skriptlang.skript.addon.SkriptAddon;
 
 import java.io.StreamCorruptedException;
 
-public class CraftEngineClasses {
+public final class CraftEngineClasses {
+    private CraftEngineClasses() {}
 
-    public static void register() {
+    public static void register(SkriptAddon addon) {
         Classes.registerClass(new ClassInfo<>(ImmutableBlockState.class, "customblockstate")
                 .user("custom block state")
                 .name("Custom Block State")

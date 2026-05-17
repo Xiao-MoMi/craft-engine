@@ -1,8 +1,8 @@
 package net.momirealms.craftengine.core.block;
 
+import net.momirealms.craftengine.core.plugin.config.ConfigSection;
 import net.momirealms.craftengine.core.sound.SoundData;
-
-import java.util.Map;
+import net.momirealms.craftengine.core.util.Key;
 
 public final class BlockSounds {
     /*
@@ -14,6 +14,7 @@ public final class BlockSounds {
     Land 0.3 1
     Destroy 1 1
      */
+    public static final SoundData EMPTY_SOUND = new SoundData(Key.of("minecraft:intentionally_empty"), SoundData.SoundValue.FIXED_1, SoundData.SoundValue.FIXED_1);
     public static final BlockSounds EMPTY = new BlockSounds(SoundData.EMPTY, SoundData.EMPTY, SoundData.EMPTY, SoundData.EMPTY, SoundData.EMPTY);
 
     private final SoundData breakSound;
@@ -30,14 +31,14 @@ public final class BlockSounds {
         this.fallSound = fallSound;
     }
 
-    public static BlockSounds fromMap(Map<String, Object> map) {
-        if (map == null) return EMPTY;
+    public static BlockSounds fromConfig(ConfigSection section) {
+        if (section == null) return EMPTY;
         return new BlockSounds(
-                SoundData.create(map.getOrDefault("break", "minecraft:intentionally_empty"), SoundData.SoundValue.FIXED_1, SoundData.SoundValue.FIXED_0_8),
-                SoundData.create(map.getOrDefault("step", "minecraft:intentionally_empty"), SoundData.SoundValue.FIXED_0_15, SoundData.SoundValue.FIXED_1),
-                SoundData.create(map.getOrDefault("place", "minecraft:intentionally_empty"), SoundData.SoundValue.FIXED_1, SoundData.SoundValue.FIXED_0_8),
-                SoundData.create(map.getOrDefault("hit", "minecraft:intentionally_empty"), SoundData.SoundValue.FIXED_0_5, SoundData.SoundValue.FIXED_0_5),
-                SoundData.create(map.getOrDefault("fall", "minecraft:intentionally_empty"), SoundData.SoundValue.FIXED_0_5, SoundData.SoundValue.FIXED_0_75)
+                section.getValue("break", v -> SoundData.fromConfig(v, SoundData.SoundValue.FIXED_1, SoundData.SoundValue.FIXED_0_8), EMPTY_SOUND),
+                section.getValue("step", v -> SoundData.fromConfig(v, SoundData.SoundValue.FIXED_0_15, SoundData.SoundValue.FIXED_1), EMPTY_SOUND),
+                section.getValue("place", v -> SoundData.fromConfig(v, SoundData.SoundValue.FIXED_1, SoundData.SoundValue.FIXED_0_8), EMPTY_SOUND),
+                section.getValue("hit", v -> SoundData.fromConfig(v, SoundData.SoundValue.FIXED_0_5, SoundData.SoundValue.FIXED_0_5), EMPTY_SOUND),
+                section.getValue("fall", v -> SoundData.fromConfig(v, SoundData.SoundValue.FIXED_0_5, SoundData.SoundValue.FIXED_0_75), EMPTY_SOUND)
         );
     }
 

@@ -1,51 +1,75 @@
 package net.momirealms.craftengine.core.block.entity;
 
 import net.momirealms.craftengine.core.block.ImmutableBlockState;
-import net.momirealms.craftengine.core.block.entity.render.DynamicBlockEntityRenderer;
+import net.momirealms.craftengine.core.block.behavior.EntityBlock;
+import net.momirealms.craftengine.core.block.entity.render.BlockEntityRenderer;
+import net.momirealms.craftengine.core.block.entity.render.ConstantBlockEntityRenderer;
+import net.momirealms.craftengine.core.block.entity.render.element.BlockEntityElement;
+import net.momirealms.craftengine.core.entity.player.Player;
 import net.momirealms.craftengine.core.world.BlockPos;
 import net.momirealms.craftengine.core.world.CEWorld;
 import net.momirealms.craftengine.core.world.ChunkPos;
 import net.momirealms.craftengine.core.world.SectionPos;
+import net.momirealms.craftengine.core.world.chunk.CEChunk;
 import net.momirealms.sparrow.nbt.CompoundTag;
-import org.jetbrains.annotations.Nullable;
 
-public abstract class BlockEntity {
-    protected final BlockPos pos;
-    protected ImmutableBlockState blockState;
-    protected BlockEntityType<? extends BlockEntity> type;
+import java.util.ArrayList;
+import java.util.List;
+
+public final class BlockEntity {
+    public final BlockPos pos;
+    private final BlockEntityRenderer renderer;
+    public ImmutableBlockState blockState;
     public CEWorld world;
-    protected boolean valid;
-    @Nullable
-    protected DynamicBlockEntityRenderer blockEntityRenderer;
+    public BlockEntityController controller;
+    private boolean valid;
 
-    protected BlockEntity(BlockEntityType<? extends BlockEntity> type, BlockPos pos, ImmutableBlockState blockState) {
+    public BlockEntity(BlockPos pos, ImmutableBlockState blockState) {
         this.pos = pos;
         this.blockState = blockState;
-        this.type = type;
+        this.controller = ((EntityBlock) blockState.behavior()).createBlockEntityController(this);
+        if (this.controller.hasElement()) {
+            List<BlockEntityElement> elements = new ArrayList<>(4);
+            this.controller.gatherElements(elements::add);
+            this.renderer = new BlockEntityRenderer(elements.toArray(new BlockEntityElement[0]));
+        } else {
+            this.renderer = null;
+        }
+    }
+
+    private BlockEntity(BlockPos pos, ImmutableBlockState blockState, CompoundTag tag) {
+        this.pos = pos;
+        this.blockState = blockState;
+        this.controller = new InactiveBlockEntityController(this, tag);
+        this.renderer = null;
+        this.valid = true;
+    }
+
+    public static BlockEntity inactive(BlockPos pos, ImmutableBlockState blockState, CompoundTag tag) {
+        return new BlockEntity(pos, blockState, tag);
     }
 
     public CompoundTag saveAsTag() {
         CompoundTag tag = new CompoundTag();
-        this.saveId(tag);
-        this.savePos(tag);
         this.saveCustomData(tag);
+        this.savePos(tag);
         return tag;
     }
 
-    private void saveId(CompoundTag tag) {
-        tag.putString("id", this.type.id().asString());
-    }
-
     public void setBlockState(ImmutableBlockState blockState) {
+        boolean changed = this.blockState != blockState;
+        if (changed) {
+            this.controller.preBlockStateChange(blockState);
+        }
         this.blockState = blockState;
     }
 
     public ImmutableBlockState blockState() {
-        return blockState;
+        return this.blockState;
     }
 
     public CEWorld world() {
-        return world;
+        return this.world;
     }
 
     public void setWorld(CEWorld world) {
@@ -53,7 +77,7 @@ public abstract class BlockEntity {
     }
 
     public boolean isValid() {
-        return valid;
+        return this.valid;
     }
 
     public void setValid(boolean valid) {
@@ -66,25 +90,20 @@ public abstract class BlockEntity {
         tag.putInt("z", this.pos.z());
     }
 
-    protected void saveCustomData(CompoundTag tag) {
+    public void saveCustomData(CompoundTag tag) {
+        this.controller.saveCustomData(tag);
     }
 
     public void loadCustomData(CompoundTag tag) {
+        this.controller.loadCustomData(tag);
     }
 
     public void preRemove() {
+        this.controller.onRemove();
     }
 
     public static BlockPos readPos(CompoundTag tag) {
         return new BlockPos(tag.getInt("x"), tag.getInt("y"), tag.getInt("z"));
-    }
-
-    public BlockEntityType<? extends BlockEntity> type() {
-        return this.type;
-    }
-
-    public @Nullable DynamicBlockEntityRenderer blockEntityRenderer() {
-        return blockEntityRenderer;
     }
 
     public static BlockPos readPosAndVerify(CompoundTag tag, ChunkPos chunkPos) {
@@ -105,11 +124,22 @@ public abstract class BlockEntity {
     }
 
     public boolean isValidBlockState(ImmutableBlockState blockState) {
-        return this.type == blockState.blockEntityType();
+        return blockState.owner() == this.blockState.owner();
     }
 
-    public interface Factory<T extends BlockEntity> {
+    public BlockEntityRenderer renderer() {
+        return this.renderer;
+    }
 
-        T create(BlockPos pos, ImmutableBlockState state);
+    public void updateConstantRenderers() {
+        CEChunk ceChunk = this.world.getChunkAtIfLoaded(this.pos);
+        if (ceChunk != null) {
+            ConstantBlockEntityRenderer renderer = ceChunk.getConstantBlockEntityRenderer(this.pos);
+            if (renderer != null) {
+                for (Player player : ceChunk.getTrackedBy()) {
+                    renderer.update(player);
+                }
+            }
+        }
     }
 }

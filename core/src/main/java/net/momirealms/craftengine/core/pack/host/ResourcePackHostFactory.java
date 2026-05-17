@@ -1,33 +1,17 @@
 package net.momirealms.craftengine.core.pack.host;
 
-import net.momirealms.craftengine.core.plugin.locale.LocalizedException;
-import net.momirealms.craftengine.core.util.ResourceConfigUtils;
-
-import java.net.InetSocketAddress;
-import java.net.ProxySelector;
-import java.util.Map;
+import net.momirealms.craftengine.core.plugin.config.ConfigSection;
+import net.momirealms.craftengine.core.plugin.config.KnownResourceException;
 
 public interface ResourcePackHostFactory<T extends ResourcePackHost> {
 
-    T create(Map<String, Object> arguments);
+    T create(ConfigSection section);
 
-    default ProxySelector getProxySelector(Map<String, Object> proxySetting) {
-        if (proxySetting == null) {
-            return ProxySelector.of(null);
+    default String getNonNullEnvironmentVariable(ConfigSection section, String name) {
+        String value = System.getenv(name);
+        if (value == null || value.isEmpty()) {
+            throw new KnownResourceException("host.missing_environment_variable", section.path(), name);
         }
-        Object hostObj = proxySetting.get("host");
-        if (hostObj == null) {
-            throw new LocalizedException("warning.config.host.proxy.missing_host", new NullPointerException("'host' should not be null for proxy setting"));
-        }
-        String proxyHost = hostObj.toString();
-        Object portObj = proxySetting.get("port");
-        if (portObj == null) {
-            throw new LocalizedException("warning.config.host.proxy.missing_port", new NullPointerException("'port' should not be null for proxy setting"));
-        }
-        int proxyPort = ResourceConfigUtils.getAsInt(portObj, "port");
-        if (proxyHost == null || proxyHost.isEmpty() || proxyPort <= 0 || proxyPort > 65535) {
-            throw new LocalizedException("warning.config.host.proxy.invalid", proxyHost + ":" + proxyPort);
-        }
-        return ProxySelector.of(new InetSocketAddress(proxyHost, proxyPort));
+        return value;
     }
 }

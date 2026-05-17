@@ -1,7 +1,11 @@
 package net.momirealms.craftengine.core.item.processor;
 
 import com.google.common.collect.ImmutableMap;
-import net.momirealms.craftengine.core.item.*;
+import net.momirealms.craftengine.core.item.Item;
+import net.momirealms.craftengine.core.item.ItemBuildContext;
+import net.momirealms.craftengine.core.item.component.DataComponentKeys;
+import net.momirealms.craftengine.core.item.network.NetworkItemHandler;
+import net.momirealms.craftengine.core.plugin.config.ConfigValue;
 import net.momirealms.craftengine.core.util.Key;
 import net.momirealms.craftengine.core.util.MiscUtils;
 import net.momirealms.craftengine.core.util.VersionHelper;
@@ -55,9 +59,9 @@ public final class HideTooltipProcessor implements ItemProcessor {
 
     public HideTooltipProcessor(List<Key> components) {
         this.components = components;
-        if (VersionHelper.isOrAbove1_21_5()) {
+        if (VersionHelper.isOrAbove1_21_5) {
             this.applier = new ModernApplier(components);
-        } else if (VersionHelper.isOrAbove1_20_5()) {
+        } else if (VersionHelper.isOrAbove1_20_5) {
             if (components.isEmpty()) {
                 this.applier = new DummyApplier();
             } else if (components.size() == 1) {
@@ -90,23 +94,23 @@ public final class HideTooltipProcessor implements ItemProcessor {
     }
 
     @Override
-    public <I> Item<I> apply(Item<I> item, ItemBuildContext context) {
+    public Item apply(Item item, ItemBuildContext context) {
         this.applier.apply(item);
         return item;
     }
 
     @Override
-    public <I> Item<I> prepareNetworkItem(Item<I> item, ItemBuildContext context, CompoundTag networkData) {
-        if (VersionHelper.isOrAbove1_21_5()) {
-            Tag previous = item.getSparrowNBTComponent(DataComponentKeys.TOOLTIP_DISPLAY);
+    public Item prepareNetworkItem(Item item, ItemBuildContext context, CompoundTag networkData) {
+        if (VersionHelper.isOrAbove1_21_5) {
+            Tag previous = item.getComponentAsSparrowTag(DataComponentKeys.TOOLTIP_DISPLAY);
             if (previous != null) {
                 networkData.put(DataComponentKeys.TOOLTIP_DISPLAY.asString(), NetworkItemHandler.pack(NetworkItemHandler.Operation.ADD, previous));
             } else {
                 networkData.put(DataComponentKeys.TOOLTIP_DISPLAY.asString(), NetworkItemHandler.pack(NetworkItemHandler.Operation.REMOVE));
             }
-        } else if (VersionHelper.isOrAbove1_20_5()) {
+        } else if (VersionHelper.isOrAbove1_20_5) {
             for (Key component : this.components) {
-                Tag previous = item.getSparrowNBTComponent(component);
+                Tag previous = item.getComponentAsSparrowTag(component);
                 if (previous != null) {
                     networkData.put(component.asString(), NetworkItemHandler.pack(NetworkItemHandler.Operation.ADD, previous));
                 } else {
@@ -114,7 +118,7 @@ public final class HideTooltipProcessor implements ItemProcessor {
                 }
             }
         } else {
-            Tag previous = item.getTag("HideFlags");
+            Tag previous = item.getSparrowTag("HideFlags");
             if (previous != null) {
                 networkData.put("HideFlags", NetworkItemHandler.pack(NetworkItemHandler.Operation.ADD, previous));
             } else {
@@ -126,13 +130,13 @@ public final class HideTooltipProcessor implements ItemProcessor {
 
     public interface Applier {
 
-        <I> void apply(Item<I> item);
+        void apply(Item item);
     }
 
     public static class DummyApplier implements Applier {
 
         @Override
-        public <I> void apply(Item<I> item) {
+        public void apply(Item item) {
         }
     }
 
@@ -144,11 +148,11 @@ public final class HideTooltipProcessor implements ItemProcessor {
         }
 
         @Override
-        public <I> void apply(Item<I> item) {
-            Tag previous = item.getSparrowNBTComponent(this.component);
+        public void apply(Item item) {
+            Tag previous = item.getComponentAsSparrowTag(this.component);
             if (previous instanceof CompoundTag compoundTag) {
                 compoundTag.putBoolean("show_in_tooltip", false);
-                item.setNBTComponent(this.component, compoundTag);
+                item.setSparrowTagComponent(this.component, compoundTag);
             }
         }
     }
@@ -156,7 +160,7 @@ public final class HideTooltipProcessor implements ItemProcessor {
     public record CompoundApplier(List<Applier> appliers) implements Applier {
 
         @Override
-        public <I> void apply(Item<I> item) {
+        public void apply(Item item) {
             for (Applier applier : appliers) {
                 applier.apply(item);
             }
@@ -182,8 +186,8 @@ public final class HideTooltipProcessor implements ItemProcessor {
         }
 
         @Override
-        public <I> void apply(Item<I> item) {
-            Integer previousFlags = (Integer) item.getJavaTag("HideFlags");
+        public void apply(Item item) {
+            Integer previousFlags = (Integer) item.getTagAsJava("HideFlags");
             if (previousFlags != null) {
                 item.setTag(this.legacyValue | previousFlags, "HideFlags");
             } else {
@@ -204,11 +208,12 @@ public final class HideTooltipProcessor implements ItemProcessor {
         }
 
         @Override
-        public <I> void apply(Item<I> item) {
-            Map<String, Object> data = MiscUtils.castToMap(item.getJavaComponent(DataComponentKeys.TOOLTIP_DISPLAY), true);
-            if (data == null) {
+        public void apply(Item item) {
+            Object tooltipDisplayJava = item.getComponentAsJava(DataComponentKeys.TOOLTIP_DISPLAY);
+            if (tooltipDisplayJava == null) {
                 item.setJavaComponent(DataComponentKeys.TOOLTIP_DISPLAY, Map.of("hidden_components", this.components));
             } else {
+                Map<String, Object> data = MiscUtils.castToMap(tooltipDisplayJava);
                 if (data.get("hidden_components") instanceof List<?> list) {
                     List<String> hiddenComponents = list.stream().map(Object::toString).toList();
                     List<String> mergedComponents = Stream.concat(
@@ -230,9 +235,8 @@ public final class HideTooltipProcessor implements ItemProcessor {
     private static class Factory implements ItemProcessorFactory<HideTooltipProcessor> {
 
         @Override
-        public HideTooltipProcessor create(Object arg) {
-            List<Key> components = MiscUtils.getAsStringList(arg).stream().map(it -> it.replace("-", "_")).map(Key::of).toList();
-            return new HideTooltipProcessor(components);
+        public HideTooltipProcessor create(ConfigValue value) {
+            return new HideTooltipProcessor(value.getAsList(ConfigValue::getAsIdentifier));
         }
     }
 }

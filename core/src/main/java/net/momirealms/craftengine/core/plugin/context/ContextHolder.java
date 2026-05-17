@@ -11,29 +11,40 @@ import java.util.NoSuchElementException;
 import java.util.Optional;
 import java.util.function.Supplier;
 
-public class ContextHolder {
-    /**
-     * Use {@link #empty()} instead
-     */
-    @Deprecated(forRemoval = true, since = "0.0.63")
-    public static final ContextHolder EMPTY = ContextHolder.builder().immutable(true).build();
+public final class ContextHolder {
+    public static final ContextHolder IMMUTABLE_EMPTY_HOLDER = ContextHolder.builder().immutable(true).build();
 
-    protected final Map<ContextKey<?>, Supplier<Object>> params;
+    private final Map<ContextKey<?>, Supplier<Object>> params;
     private final boolean immutable;
 
-    public ContextHolder(Map<ContextKey<?>, Supplier<Object>> params, boolean immutable) {
-        this.params = immutable ? ImmutableMap.copyOf(params) : new HashMap<>(params);
+    private ContextHolder(Map<ContextKey<?>, Supplier<Object>> params, boolean immutable) {
+        this.params = params;
         this.immutable = immutable;
     }
 
-    public ContextHolder(Map<ContextKey<?>, Supplier<Object>> params) {
-        this.params = new HashMap<>(params);
-        this.immutable = true;
+    public static ContextHolder trustedImmutable(Map<ContextKey<?>, Supplier<Object>> params) {
+        return new ContextHolder(params, true);
+    }
+
+    public static ContextHolder trustedMutable(Map<ContextKey<?>, Supplier<Object>> params) {
+        return new ContextHolder(params, false);
+    }
+
+    public static ContextHolder immutable(Map<ContextKey<?>, Supplier<Object>> params) {
+        return new ContextHolder(ImmutableMap.copyOf(params), true);
+    }
+
+    public static ContextHolder mutable(Map<ContextKey<?>, Supplier<Object>> params) {
+        return new ContextHolder(new HashMap<>(params), false);
     }
 
     @NotNull
     public static ContextHolder empty() {
         return ContextHolder.builder().build();
+    }
+
+    public static ContextHolder emptyImmutable() {
+        return IMMUTABLE_EMPTY_HOLDER;
     }
 
     public boolean immutable() {
@@ -155,7 +166,11 @@ public class ContextHolder {
         }
 
         public ContextHolder build() {
-            return new ContextHolder(this.params, this.immutable);
+            if (this.immutable) {
+                return ContextHolder.immutable(this.params);
+            } else {
+                return new ContextHolder(this.params, false);
+            }
         }
     }
 

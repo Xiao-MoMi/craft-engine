@@ -1,239 +1,403 @@
 package net.momirealms.craftengine.bukkit.plugin.network.id;
 
-import net.momirealms.craftengine.bukkit.plugin.network.PacketIds;
-import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.NetworkReflections;
 import net.momirealms.craftengine.core.plugin.network.ConnectionState;
 import net.momirealms.craftengine.core.plugin.network.PacketFlow;
+import net.momirealms.craftengine.proxy.minecraft.network.protocol.common.*;
+import net.momirealms.craftengine.proxy.minecraft.network.protocol.configuration.ClientboundFinishConfigurationPacketProxy;
+import net.momirealms.craftengine.proxy.minecraft.network.protocol.configuration.ClientboundRegistryDataPacketProxy;
+import net.momirealms.craftengine.proxy.minecraft.network.protocol.configuration.ServerboundFinishConfigurationPacketProxy;
+import net.momirealms.craftengine.proxy.minecraft.network.protocol.game.*;
+import net.momirealms.craftengine.proxy.minecraft.network.protocol.handshake.ClientIntentionPacketProxy;
+import net.momirealms.craftengine.proxy.minecraft.network.protocol.login.ClientboundLoginFinishedPacketProxy;
+import net.momirealms.craftengine.proxy.minecraft.network.protocol.login.ServerboundHelloPacketProxy;
+import net.momirealms.craftengine.proxy.minecraft.network.protocol.login.ServerboundLoginAcknowledgedPacketProxy;
+import net.momirealms.craftengine.proxy.minecraft.network.protocol.status.ClientboundStatusResponsePacketProxy;
 
-public class PacketIds1_20 implements PacketIds {
+final class PacketIds1_20 implements PacketIds {
+
+    PacketIds1_20() {}
 
     @Override
     public int clientboundBlockUpdatePacket() {
-        return PacketIdHelper.byClazz(NetworkReflections.clazz$ClientboundBlockUpdatePacket, PacketFlow.CLIENTBOUND, ConnectionState.PLAY);
+        return PacketIdHelper.byClazz(ClientboundBlockUpdatePacketProxy.CLASS, ConnectionState.PLAY, PacketFlow.CLIENTBOUND);
     }
 
     @Override
     public int clientboundSectionBlocksUpdatePacket() {
-        return PacketIdHelper.byClazz(NetworkReflections.clazz$ClientboundSectionBlocksUpdatePacket, PacketFlow.CLIENTBOUND, ConnectionState.PLAY);
+        return PacketIdHelper.byClazz(ClientboundSectionBlocksUpdatePacketProxy.CLASS, ConnectionState.PLAY, PacketFlow.CLIENTBOUND);
     }
 
     @Override
     public int clientboundLevelParticlesPacket() {
-        return PacketIdHelper.byClazz(NetworkReflections.clazz$ClientboundLevelParticlesPacket, PacketFlow.CLIENTBOUND, ConnectionState.PLAY);
+        return PacketIdHelper.byClazz(ClientboundLevelParticlesPacketProxy.CLASS, ConnectionState.PLAY, PacketFlow.CLIENTBOUND);
     }
 
     @Override
     public int clientboundLevelEventPacket() {
-        return PacketIdHelper.byClazz(NetworkReflections.clazz$ClientboundLevelEventPacket, PacketFlow.CLIENTBOUND, ConnectionState.PLAY);
+        return PacketIdHelper.byClazz(ClientboundLevelEventPacketProxy.CLASS, ConnectionState.PLAY, PacketFlow.CLIENTBOUND);
     }
 
     @Override
     public int clientboundAddEntityPacket() {
-        return PacketIdHelper.byClazz(NetworkReflections.clazz$ClientboundAddEntityPacket, PacketFlow.CLIENTBOUND, ConnectionState.PLAY);
+        return PacketIdHelper.byClazz(ClientboundAddEntityPacketProxy.CLASS, ConnectionState.PLAY, PacketFlow.CLIENTBOUND);
     }
 
     @Override
     public int clientboundOpenScreenPacket() {
-        return PacketIdHelper.byClazz(NetworkReflections.clazz$ClientboundOpenScreenPacket, PacketFlow.CLIENTBOUND, ConnectionState.PLAY);
+        return PacketIdHelper.byClazz(ClientboundOpenScreenPacketProxy.CLASS, ConnectionState.PLAY, PacketFlow.CLIENTBOUND);
     }
 
     @Override
     public int clientboundSoundPacket() {
-        return PacketIdHelper.byClazz(NetworkReflections.clazz$ClientboundSoundPacket, PacketFlow.CLIENTBOUND, ConnectionState.PLAY);
+        return PacketIdHelper.byClazz(ClientboundSoundPacketProxy.CLASS, ConnectionState.PLAY, PacketFlow.CLIENTBOUND);
     }
 
     @Override
     public int clientboundRemoveEntitiesPacket() {
-        return PacketIdHelper.byClazz(NetworkReflections.clazz$ClientboundRemoveEntitiesPacket, PacketFlow.CLIENTBOUND, ConnectionState.PLAY);
+        return PacketIdHelper.byClazz(ClientboundRemoveEntitiesPacketProxy.CLASS, ConnectionState.PLAY, PacketFlow.CLIENTBOUND);
     }
 
     @Override
     public int clientboundSetEntityDataPacket() {
-        return PacketIdHelper.byClazz(NetworkReflections.clazz$ClientboundSetEntityDataPacket, PacketFlow.CLIENTBOUND, ConnectionState.PLAY);
+        return PacketIdHelper.byClazz(ClientboundSetEntityDataPacketProxy.CLASS, ConnectionState.PLAY, PacketFlow.CLIENTBOUND);
     }
 
     @Override
     public int clientboundSetTitleTextPacket() {
-        return PacketIdHelper.byClazz(NetworkReflections.clazz$ClientboundSetTitleTextPacket, PacketFlow.CLIENTBOUND, ConnectionState.PLAY);
+        return PacketIdHelper.byClazz(ClientboundSetTitleTextPacketProxy.CLASS, ConnectionState.PLAY, PacketFlow.CLIENTBOUND);
     }
 
     @Override
     public int clientboundSetSubtitleTextPacket() {
-        return PacketIdHelper.byClazz(NetworkReflections.clazz$ClientboundSetSubtitleTextPacket, PacketFlow.CLIENTBOUND, ConnectionState.PLAY);
+        return PacketIdHelper.byClazz(ClientboundSetSubtitleTextPacketProxy.CLASS, ConnectionState.PLAY, PacketFlow.CLIENTBOUND);
     }
 
     @Override
     public int clientboundSetActionBarTextPacket() {
-        return PacketIdHelper.byClazz(NetworkReflections.clazz$ClientboundSetActionBarTextPacket, PacketFlow.CLIENTBOUND, ConnectionState.PLAY);
+        return PacketIdHelper.byClazz(ClientboundSetActionBarTextPacketProxy.CLASS, ConnectionState.PLAY, PacketFlow.CLIENTBOUND);
     }
 
     @Override
     public int clientboundBossEventPacket() {
-        return PacketIdHelper.byClazz(NetworkReflections.clazz$ClientboundBossEventPacket, PacketFlow.CLIENTBOUND, ConnectionState.PLAY);
+        return PacketIdHelper.byClazz(ClientboundBossEventPacketProxy.CLASS, ConnectionState.PLAY, PacketFlow.CLIENTBOUND);
     }
 
     @Override
     public int clientboundSystemChatPacket() {
-        return PacketIdHelper.byClazz(NetworkReflections.clazz$ClientboundSystemChatPacket, PacketFlow.CLIENTBOUND, ConnectionState.PLAY);
+        return PacketIdHelper.byClazz(ClientboundSystemChatPacketProxy.CLASS, ConnectionState.PLAY, PacketFlow.CLIENTBOUND);
     }
 
     @Override
     public int clientboundTabListPacket() {
-        return PacketIdHelper.byClazz(NetworkReflections.clazz$ClientboundTabListPacket, PacketFlow.CLIENTBOUND, ConnectionState.PLAY);
+        return PacketIdHelper.byClazz(ClientboundTabListPacketProxy.CLASS, ConnectionState.PLAY, PacketFlow.CLIENTBOUND);
     }
 
     @Override
     public int clientboundSetPlayerTeamPacket() {
-        return PacketIdHelper.byClazz(NetworkReflections.clazz$ClientboundSetPlayerTeamPacket, PacketFlow.CLIENTBOUND, ConnectionState.PLAY);
+        return PacketIdHelper.byClazz(ClientboundSetPlayerTeamPacketProxy.CLASS, ConnectionState.PLAY, PacketFlow.CLIENTBOUND);
     }
 
     @Override
     public int clientboundSetObjectivePacket() {
-        return PacketIdHelper.byClazz(NetworkReflections.clazz$ClientboundSetObjectivePacket, PacketFlow.CLIENTBOUND, ConnectionState.PLAY);
+        return PacketIdHelper.byClazz(ClientboundSetObjectivePacketProxy.CLASS, ConnectionState.PLAY, PacketFlow.CLIENTBOUND);
     }
 
     @Override
     public int clientboundLevelChunkWithLightPacket() {
-        return PacketIdHelper.byClazz(NetworkReflections.clazz$ClientboundLevelChunkWithLightPacket, PacketFlow.CLIENTBOUND, ConnectionState.PLAY);
+        return PacketIdHelper.byClazz(ClientboundLevelChunkWithLightPacketProxy.CLASS, ConnectionState.PLAY, PacketFlow.CLIENTBOUND);
     }
 
     @Override
     public int clientboundPlayerInfoUpdatePacket() {
-        return PacketIdHelper.byClazz(NetworkReflections.clazz$ClientboundPlayerInfoUpdatePacket, PacketFlow.CLIENTBOUND, ConnectionState.PLAY);
+        return PacketIdHelper.byClazz(ClientboundPlayerInfoUpdatePacketProxy.CLASS, ConnectionState.PLAY, PacketFlow.CLIENTBOUND);
     }
 
     @Override
     public int clientboundSetScorePacket() {
-        return PacketIdHelper.byClazz(NetworkReflections.clazz$ClientboundSetScorePacket, PacketFlow.CLIENTBOUND, ConnectionState.PLAY);
+        return PacketIdHelper.byClazz(ClientboundSetScorePacketProxy.CLASS, ConnectionState.PLAY, PacketFlow.CLIENTBOUND);
     }
 
     @Override
     public int clientboundContainerSetContentPacket() {
-        return PacketIdHelper.byClazz(NetworkReflections.clazz$ClientboundContainerSetContentPacket, PacketFlow.CLIENTBOUND, ConnectionState.PLAY);
+        return PacketIdHelper.byClazz(ClientboundContainerSetContentPacketProxy.CLASS, ConnectionState.PLAY, PacketFlow.CLIENTBOUND);
     }
 
     @Override
     public int clientboundContainerSetSlotPacket() {
-        return PacketIdHelper.byClazz(NetworkReflections.clazz$ClientboundContainerSetSlotPacket, PacketFlow.CLIENTBOUND, ConnectionState.PLAY);
+        return PacketIdHelper.byClazz(ClientboundContainerSetSlotPacketProxy.CLASS, ConnectionState.PLAY, PacketFlow.CLIENTBOUND);
     }
 
     @Override
     public int clientboundSetCursorItemPacket() {
-        return PacketIdHelper.byClazz(NetworkReflections.clazz$ClientboundSetCursorItemPacket, PacketFlow.CLIENTBOUND, ConnectionState.PLAY);
+        return PacketIdHelper.byClazz(ClientboundSetCursorItemPacketProxy.CLASS, ConnectionState.PLAY, PacketFlow.CLIENTBOUND);
     }
 
     @Override
     public int clientboundSetEquipmentPacket() {
-        return PacketIdHelper.byClazz(NetworkReflections.clazz$ClientboundSetEquipmentPacket, PacketFlow.CLIENTBOUND, ConnectionState.PLAY);
+        return PacketIdHelper.byClazz(ClientboundSetEquipmentPacketProxy.CLASS, ConnectionState.PLAY, PacketFlow.CLIENTBOUND);
     }
 
     @Override
     public int clientboundSetPlayerInventoryPacket() {
-        return PacketIdHelper.byClazz(NetworkReflections.clazz$ClientboundSetPlayerInventoryPacket, PacketFlow.CLIENTBOUND, ConnectionState.PLAY);
+        return PacketIdHelper.byClazz(ClientboundSetPlayerInventoryPacketProxy.CLASS, ConnectionState.PLAY, PacketFlow.CLIENTBOUND);
     }
 
     @Override
     public int clientboundRecipeBookAddPacket() {
-        return PacketIdHelper.byClazz(NetworkReflections.clazz$ClientboundRecipeBookAddPacket, PacketFlow.CLIENTBOUND, ConnectionState.PLAY);
+        return PacketIdHelper.byClazz(ClientboundRecipeBookAddPacketProxy.CLASS, ConnectionState.PLAY, PacketFlow.CLIENTBOUND);
     }
 
     @Override
     public int clientboundPlaceGhostRecipePacket() {
-        return PacketIdHelper.byClazz(NetworkReflections.clazz$ClientboundPlaceGhostRecipePacket, PacketFlow.CLIENTBOUND, ConnectionState.PLAY);
+        return PacketIdHelper.byClazz(ClientboundPlaceGhostRecipePacketProxy.CLASS, ConnectionState.PLAY, PacketFlow.CLIENTBOUND);
     }
 
     @Override
     public int clientboundUpdateRecipesPacket() {
-        return PacketIdHelper.byClazz(NetworkReflections.clazz$ClientboundUpdateRecipesPacket, PacketFlow.CLIENTBOUND, ConnectionState.PLAY);
+        return PacketIdHelper.byClazz(ClientboundUpdateRecipesPacketProxy.CLASS, ConnectionState.PLAY, PacketFlow.CLIENTBOUND);
     }
 
     @Override
     public int clientboundUpdateAdvancementsPacket() {
-        return PacketIdHelper.byClazz(NetworkReflections.clazz$ClientboundUpdateAdvancementsPacket, PacketFlow.CLIENTBOUND, ConnectionState.PLAY);
+        return PacketIdHelper.byClazz(ClientboundUpdateAdvancementsPacketProxy.CLASS, ConnectionState.PLAY, PacketFlow.CLIENTBOUND);
     }
 
     @Override
     public int clientboundForgetLevelChunkPacket() {
-        return PacketIdHelper.byClazz(NetworkReflections.clazz$ClientboundForgetLevelChunkPacket, PacketFlow.CLIENTBOUND, ConnectionState.PLAY);
+        return PacketIdHelper.byClazz(ClientboundForgetLevelChunkPacketProxy.CLASS, ConnectionState.PLAY, PacketFlow.CLIENTBOUND);
     }
 
     @Override
     public int clientboundBlockEventPacket() {
-        return PacketIdHelper.byClazz(NetworkReflections.clazz$ClientboundBlockEventPacket, PacketFlow.CLIENTBOUND, ConnectionState.PLAY);
+        return PacketIdHelper.byClazz(ClientboundBlockEventPacketProxy.CLASS, ConnectionState.PLAY, PacketFlow.CLIENTBOUND);
     }
 
     @Override
     public int clientBoundMerchantOffersPacket() {
-        return PacketIdHelper.byClazz(NetworkReflections.clazz$ClientboundMerchantOffersPacket, PacketFlow.CLIENTBOUND, ConnectionState.PLAY);
+        return PacketIdHelper.byClazz(ClientboundMerchantOffersPacketProxy.CLASS, ConnectionState.PLAY, PacketFlow.CLIENTBOUND);
     }
 
     @Override
     public int clientboundBlockEntityDataPacket() {
-        return PacketIdHelper.byClazz(NetworkReflections.clazz$ClientboundBlockEntityDataPacket, PacketFlow.CLIENTBOUND, ConnectionState.PLAY);
+        return PacketIdHelper.byClazz(ClientboundBlockEntityDataPacketProxy.CLASS, ConnectionState.PLAY, PacketFlow.CLIENTBOUND);
     }
 
     @Override
     public int serverboundContainerClickPacket() {
-        return PacketIdHelper.byClazz(NetworkReflections.clazz$ServerboundContainerClickPacket, PacketFlow.SERVERBOUND, ConnectionState.PLAY);
+        return PacketIdHelper.byClazz(ServerboundContainerClickPacketProxy.CLASS, ConnectionState.PLAY, PacketFlow.SERVERBOUND);
     }
 
     @Override
     public int serverboundSetCreativeModeSlotPacket() {
-        return PacketIdHelper.byClazz(NetworkReflections.clazz$ServerboundSetCreativeModeSlotPacket, PacketFlow.SERVERBOUND, ConnectionState.PLAY);
+        return PacketIdHelper.byClazz(ServerboundSetCreativeModeSlotPacketProxy.CLASS, ConnectionState.PLAY, PacketFlow.SERVERBOUND);
     }
 
     @Override
     public int serverboundInteractPacket() {
-        return PacketIdHelper.byClazz(NetworkReflections.clazz$ServerboundInteractPacket, PacketFlow.SERVERBOUND, ConnectionState.PLAY);
+        return PacketIdHelper.byClazz(ServerboundInteractPacketProxy.CLASS, ConnectionState.PLAY, PacketFlow.SERVERBOUND);
     }
 
     @Override
-    public int serverboundCustomPayloadPacket() {
-        return PacketIdHelper.byClazz(NetworkReflections.clazz$ServerboundCustomPayloadPacket, PacketFlow.SERVERBOUND, ConnectionState.PLAY);
+    public int serverboundCustomPayloadPacket$play() {
+        return PacketIdHelper.byClazz(ServerboundCustomPayloadPacketProxy.CLASS, ConnectionState.PLAY, PacketFlow.SERVERBOUND);
+    }
+
+    @Override
+    public int serverboundCustomPayloadPacket$configuration() {
+        return PacketIdHelper.byClazz(ServerboundCustomPayloadPacketProxy.CLASS, ConnectionState.CONFIGURATION, PacketFlow.SERVERBOUND);
     }
 
     @Override
     public int clientboundPlayerChatPacket() {
-        return PacketIdHelper.byClazz(NetworkReflections.clazz$ClientboundPlayerChatPacket, PacketFlow.CLIENTBOUND, ConnectionState.PLAY);
+        return PacketIdHelper.byClazz(ClientboundPlayerChatPacketProxy.CLASS, ConnectionState.PLAY, PacketFlow.CLIENTBOUND);
     }
 
     @Override
     public int clientIntentionPacket() {
-        return PacketIdHelper.byClazz(NetworkReflections.clazz$ClientIntentionPacket, PacketFlow.SERVERBOUND, ConnectionState.HANDSHAKING);
+        return PacketIdHelper.byClazz(ClientIntentionPacketProxy.CLASS, ConnectionState.HANDSHAKING, PacketFlow.SERVERBOUND);
     }
 
     @Override
     public int clientboundStatusResponsePacket() {
-        return PacketIdHelper.byClazz(NetworkReflections.clazz$ClientboundStatusResponsePacket, PacketFlow.CLIENTBOUND, ConnectionState.STATUS);
+        return PacketIdHelper.byClazz(ClientboundStatusResponsePacketProxy.CLASS, ConnectionState.STATUS, PacketFlow.CLIENTBOUND);
     }
 
     @Override
     public int serverboundFinishConfigurationPacket() {
-        return PacketIdHelper.byClazz(NetworkReflections.clazz$ServerboundFinishConfigurationPacket, PacketFlow.SERVERBOUND, ConnectionState.CONFIGURATION);
+        return PacketIdHelper.byClazz(ServerboundFinishConfigurationPacketProxy.CLASS, ConnectionState.CONFIGURATION, PacketFlow.SERVERBOUND);
     }
 
     @Override
     public int clientboundLoginPacket() {
-        return PacketIdHelper.byClazz(NetworkReflections.clazz$ClientboundLoginPacket, PacketFlow.CLIENTBOUND, ConnectionState.PLAY);
+        return PacketIdHelper.byClazz(ClientboundLoginPacketProxy.CLASS, ConnectionState.PLAY, PacketFlow.CLIENTBOUND);
     }
 
     @Override
     public int clientboundLoginFinishedPacket() {
-        return PacketIdHelper.byClazz(NetworkReflections.clazz$ClientboundLoginFinishedPacket, PacketFlow.CLIENTBOUND, ConnectionState.LOGIN);
+        return PacketIdHelper.byClazz(ClientboundLoginFinishedPacketProxy.CLASS, ConnectionState.LOGIN, PacketFlow.CLIENTBOUND);
     }
 
     @Override
     public int serverboundLoginAcknowledgedPacket() {
-        return PacketIdHelper.byClazz(NetworkReflections.clazz$ServerboundLoginAcknowledgedPacket, PacketFlow.SERVERBOUND, ConnectionState.LOGIN);
+        return PacketIdHelper.byClazz(ServerboundLoginAcknowledgedPacketProxy.CLASS, ConnectionState.LOGIN, PacketFlow.SERVERBOUND);
     }
 
     @Override
     public int clientboundStartConfigurationPacket() {
-        return PacketIdHelper.byClazz(NetworkReflections.clazz$ClientboundStartConfigurationPacket, PacketFlow.CLIENTBOUND, ConnectionState.PLAY);
+        return PacketIdHelper.byClazz(ClientboundStartConfigurationPacketProxy.CLASS, ConnectionState.PLAY, PacketFlow.CLIENTBOUND);
     }
 
     @Override
     public int serverboundConfigurationAcknowledgedPacket() {
-        return PacketIdHelper.byClazz(NetworkReflections.clazz$ServerboundConfigurationAcknowledgedPacket, PacketFlow.SERVERBOUND, ConnectionState.PLAY);
+        return PacketIdHelper.byClazz(ClientboundStartConfigurationPacketProxy.CLASS, ConnectionState.PLAY, PacketFlow.SERVERBOUND);
+    }
+
+    @Override
+    public int clientboundCustomPayloadPacket$play() {
+        return PacketIdHelper.byClazz(ClientboundCustomPayloadPacketProxy.CLASS, ConnectionState.PLAY, PacketFlow.CLIENTBOUND);
+    }
+
+    @Override
+    public int clientboundCustomPayloadPacket$configuration() {
+        return PacketIdHelper.byClazz(ClientboundCustomPayloadPacketProxy.CLASS, ConnectionState.CONFIGURATION, PacketFlow.CLIENTBOUND);
+    }
+
+    @Override
+    public int serverboundAttackPacket() {
+        return -1;
+    }
+
+    @Override
+    public int clientboundCustomChatCompletionsPacket() {
+        return PacketIdHelper.byClazz(ClientboundCustomChatCompletionsPacketProxy.CLASS, ConnectionState.PLAY, PacketFlow.CLIENTBOUND);
+    }
+
+    @Override
+    public int clientboundFinishConfigurationPacket() {
+        return PacketIdHelper.byClazz(ClientboundFinishConfigurationPacketProxy.CLASS, ConnectionState.CONFIGURATION, PacketFlow.CLIENTBOUND);
+    }
+
+    @Override
+    public int serverboundChatSessionUpdatePacket() {
+        return PacketIdHelper.byClazz(ServerboundChatSessionUpdatePacketProxy.CLASS, ConnectionState.PLAY, PacketFlow.SERVERBOUND);
+    }
+
+    @Override
+    public int clientboundServerDataPacket() {
+        return PacketIdHelper.byClazz(ClientboundServerDataPacketProxy.CLASS, ConnectionState.PLAY, PacketFlow.CLIENTBOUND);
+    }
+
+    @Override
+    public int serverboundHelloPacket() {
+        return PacketIdHelper.byClazz(ServerboundHelloPacketProxy.CLASS, ConnectionState.LOGIN, PacketFlow.SERVERBOUND);
+    }
+
+    @Override
+    public int serverboundSwingPacket() {
+        return PacketIdHelper.byClazz(ServerboundSwingPacketProxy.CLASS, ConnectionState.PLAY, PacketFlow.SERVERBOUND);
+    }
+
+    @Override
+    public int serverboundPlayerActionPacket() {
+        return PacketIdHelper.byClazz(ServerboundPlayerActionPacketProxy.CLASS, ConnectionState.PLAY, PacketFlow.SERVERBOUND);
+    }
+
+    @Override
+    public int serverboundUseItemOnPacket() {
+        return PacketIdHelper.byClazz(ServerboundUseItemOnPacketProxy.CLASS, ConnectionState.PLAY, PacketFlow.SERVERBOUND);
+    }
+
+    @Override
+    public int serverboundPickItemFromBlockPacket() {
+        return -1;
+    }
+
+    @Override
+    public int serverboundPickItemFromEntityPacket() {
+        return -1;
+    }
+
+    @Override
+    public int clientboundUpdateTagsPacket$play() {
+        return PacketIdHelper.byClazz(ClientboundUpdateTagsPacketProxy.CLASS, ConnectionState.PLAY, PacketFlow.CLIENTBOUND);
+    }
+
+    public int clientboundupdatetagspacket$configuration() {
+        return PacketIdHelper.byClazz(ClientboundUpdateTagsPacketProxy.CLASS, ConnectionState.CONFIGURATION, PacketFlow.CLIENTBOUND);
+    }
+
+    @Override
+    public int clientboundEntityEventPacket() {
+        return PacketIdHelper.byClazz(ClientboundEntityEventPacketProxy.CLASS, ConnectionState.PLAY, PacketFlow.CLIENTBOUND);
+    }
+
+    @Override
+    public int serverboundResourcePackPacket$play() {
+        return PacketIdHelper.byClazz(ServerboundResourcePackPacketProxy.CLASS, ConnectionState.PLAY, PacketFlow.SERVERBOUND);
+    }
+
+    @Override
+    public int serverboundResourcePackPacket$configuration() {
+        return PacketIdHelper.byClazz(ServerboundResourcePackPacketProxy.CLASS, ConnectionState.CONFIGURATION, PacketFlow.SERVERBOUND);
+    }
+
+    @Override
+    public int serverboundRenameItemPacket() {
+        return PacketIdHelper.byClazz(ServerboundRenameItemPacketProxy.CLASS, ConnectionState.PLAY, PacketFlow.SERVERBOUND);
+    }
+
+    @Override
+    public int serverboundSignUpdatePacket() {
+        return PacketIdHelper.byClazz(ServerboundSignUpdatePacketProxy.CLASS, ConnectionState.PLAY, PacketFlow.SERVERBOUND);
+    }
+
+    @Override
+    public int serverboundEditBookPacket() {
+        return PacketIdHelper.byClazz(ServerboundEditBookPacketProxy.CLASS, ConnectionState.PLAY, PacketFlow.SERVERBOUND);
+    }
+
+    @Override
+    public int clientboundEntityPositionSyncPacket() {
+        return -1;
+    }
+
+    @Override
+    public int clientboundMoveEntityPacket$PosRot() {
+        return PacketIdHelper.byClazz(ClientboundMoveEntityPacketProxy.PosRotProxy.CLASS, ConnectionState.PLAY, PacketFlow.CLIENTBOUND);
+    }
+
+    @Override
+    public int clientboundMoveEntityPacket$Pos() {
+        return PacketIdHelper.byClazz(ClientboundMoveEntityPacketProxy.PosProxy.CLASS, ConnectionState.PLAY, PacketFlow.CLIENTBOUND);
+    }
+
+    @Override
+    public int clientboundRespawnPacket() {
+        return PacketIdHelper.byClazz(ClientboundRespawnPacketProxy.CLASS, ConnectionState.PLAY, PacketFlow.CLIENTBOUND);
+    }
+
+    @Override
+    public int serverboundClientInformationPacket$play() {
+        return PacketIdHelper.byClazz(ServerboundClientInformationPacketProxy.CLASS, ConnectionState.PLAY, PacketFlow.SERVERBOUND);
+    }
+
+    @Override
+    public int serverboundClientInformationPacket$configuration() {
+        return PacketIdHelper.byClazz(ServerboundClientInformationPacketProxy.CLASS, ConnectionState.CONFIGURATION, PacketFlow.SERVERBOUND);
+    }
+
+    @Override
+    public int clientboundRegistryDataPacket() {
+        return PacketIdHelper.byClazz(ClientboundRegistryDataPacketProxy.CLASS, ConnectionState.CONFIGURATION, PacketFlow.SERVERBOUND);
+    }
+
+    @Override
+    public int clientboundShowDialogPacket$play() {
+        return -1;
+    }
+
+    @Override
+    public int clientboundShowDialogPacket$configuration() {
+        return -1;
     }
 }

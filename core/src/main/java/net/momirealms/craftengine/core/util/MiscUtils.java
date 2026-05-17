@@ -7,8 +7,9 @@ import java.util.*;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Predicate;
+import java.util.function.Supplier;
 
-public class MiscUtils {
+public final class MiscUtils {
     private MiscUtils() {
     }
 
@@ -34,6 +35,10 @@ public class MiscUtils {
     public static int lerpDiscrete(float delta, int start, int end) {
         int i = end - start;
         return start + floor(delta * (float) (i - 1)) + (delta > 0.0F ? 1 : 0);
+    }
+
+    public static double lerpDiscrete(double delta, double start, double end) {
+        return start + delta * (end - start);
     }
 
     public static int murmurHash3Mixer(int value) {
@@ -299,55 +304,11 @@ public class MiscUtils {
     }
 
     @SuppressWarnings("unchecked")
-    public static Map<String, Object> castToMap(Object obj, boolean allowNull) {
-        if (allowNull && obj == null) {
-            return null;
-        }
+    public static Map<String, Object> castToMap(Object obj) {
         if (obj instanceof Map<?, ?> map) {
             return (Map<String, Object>) map;
         }
         throw new IllegalArgumentException("Expected Map, got: " + (obj == null ? null : obj.getClass().getSimpleName()));
-    }
-
-    @SuppressWarnings("unchecked")
-    public static List<Map<String, Object>> getAsMapList(Object obj) {
-        if (obj == null) return List.of();
-        if (obj instanceof List<?> list) {
-            return (List<Map<String, Object>>) list;
-        } else if (obj instanceof Map<?, ?>) {
-            return List.of((Map<String, Object>) obj);
-        }
-        throw new IllegalArgumentException("Expected MapList/Map, got: " + obj.getClass().getSimpleName());
-    }
-
-    public static List<String> getAsStringList(Object o) {
-        List<String> list = new ArrayList<>();
-        if (o instanceof List<?>) {
-            for (Object object : (List<?>) o) {
-                list.add(object.toString());
-            }
-        } else if (o instanceof String) {
-            list.add((String) o);
-        } else {
-            if (o != null) {
-                list.add(o.toString());
-            }
-        }
-        return list;
-    }
-
-    public static String[] getAsStringArray(Object o) {
-        if (o instanceof List<?> list) {
-            String[] array = new String[list.size()];
-            for (int i = 0; i < array.length; i++) {
-                array[i] = list.get(i).toString();
-            }
-            return array;
-        } else if (o != null) {
-            return new String[]{o.toString()};
-        } else {
-            return new String[0];
-        }
     }
 
     @SuppressWarnings("unchecked")
@@ -359,40 +320,10 @@ public class MiscUtils {
             if (clazz.isInstance(list.getFirst())) {
                 return (List<T>) list;
             }
-        }
-        if (clazz.isInstance(o)) {
+        } else if (clazz.isInstance(o)) {
             return List.of((T) o);
         }
         return List.of();
-    }
-
-    @SuppressWarnings("unchecked")
-    public static void deepMergeMaps(Map<String, Object> baseMap, Map<String, Object> mapToMerge) {
-        for (Map.Entry<String, Object> entry : mapToMerge.entrySet()) {
-            String key = entry.getKey();
-            if (key.length() > 2 && key.charAt(0) == '$' && key.charAt(1) == '$') {
-                Object value = entry.getValue();
-                baseMap.put(key.substring(1), value);
-            } else {
-                Object value = entry.getValue();
-                if (baseMap.containsKey(key)) {
-                    Object existingValue = baseMap.get(key);
-                    if (existingValue instanceof Map && value instanceof Map) {
-                        Map<String, Object> existingMap = (Map<String, Object>) existingValue;
-                        Map<String, Object> newMap = (Map<String, Object>) value;
-                        deepMergeMaps(existingMap, newMap);
-                    } else if (existingValue instanceof List && value instanceof List) {
-                        List<Object> existingList = (List<Object>) existingValue;
-                        List<Object> newList = (List<Object>) value;
-                        existingList.addAll(newList);
-                    } else {
-                        baseMap.put(key, value);
-                    }
-                } else {
-                    baseMap.put(key, value);
-                }
-            }
-        }
     }
 
     public static <T> T requireNonNullIf(T o, boolean condition) {
@@ -418,5 +349,13 @@ public class MiscUtils {
 
     public static int growByHalf(int value, int minValue) {
         return (int) Math.max(Math.min((long) value + (value >> 1), 2147483639L), minValue);
+    }
+
+    public static float toRadians(float degree) {
+        return degree * DEG_TO_RAD;
+    }
+
+    public static <T> T get(Supplier<T> supplier) {
+        return supplier.get();
     }
 }

@@ -1,14 +1,17 @@
 package net.momirealms.craftengine.core.plugin.context.condition;
 
+import net.momirealms.craftengine.core.plugin.config.ConfigSection;
 import net.momirealms.craftengine.core.plugin.context.Condition;
 import net.momirealms.craftengine.core.plugin.context.Context;
 import net.momirealms.craftengine.core.plugin.context.parameter.DirectContextParameters;
 import net.momirealms.craftengine.core.util.random.RandomUtils;
 
-import java.util.Map;
 import java.util.Optional;
 
 public final class SurvivesExplosionCondition<CTX extends Context> implements Condition<CTX> {
+    public static final SurvivesExplosionCondition<Context> INSTANCE = new SurvivesExplosionCondition<>();
+
+    private SurvivesExplosionCondition() {}
 
     @Override
     public boolean test(CTX ctx) {
@@ -26,9 +29,10 @@ public final class SurvivesExplosionCondition<CTX extends Context> implements Co
 
     private static class Factory<CTX extends Context> implements ConditionFactory<CTX, SurvivesExplosionCondition<CTX>> {
 
+        @SuppressWarnings("unchecked")
         @Override
-        public SurvivesExplosionCondition<CTX> create(Map<String, Object> arguments) {
-            return new SurvivesExplosionCondition<>();
+        public SurvivesExplosionCondition<CTX> create(ConfigSection arguments) {
+            return (SurvivesExplosionCondition<CTX>) INSTANCE;
         }
     }
 }

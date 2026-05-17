@@ -4,7 +4,7 @@ import net.kyori.adventure.text.Component;
 import net.momirealms.craftengine.core.util.Key;
 import org.jetbrains.annotations.Nullable;
 
-public class AttributeModifier {
+public final class AttributeModifier {
     private final String type;
     private final Slot slot;
     private final Key id;
@@ -23,27 +23,27 @@ public class AttributeModifier {
     }
 
     public double amount() {
-        return amount;
+        return this.amount;
     }
 
     public @Nullable Display display() {
-        return display;
+        return this.display;
     }
 
     public Key id() {
-        return id;
+        return this.id;
     }
 
     public Operation operation() {
-        return operation;
+        return this.operation;
     }
 
     public Slot slot() {
-        return slot;
+        return this.slot;
     }
 
     public String type() {
-        return type;
+        return this.type;
     }
 
     public enum Slot {
@@ -56,7 +56,8 @@ public class AttributeModifier {
         CHEST,
         LEGS,
         FEET,
-        BODY
+        BODY,
+        SADDLE
     }
 
     public enum Operation {

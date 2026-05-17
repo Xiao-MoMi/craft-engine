@@ -1,15 +1,14 @@
 package net.momirealms.craftengine.core.plugin.context;
 
+import net.momirealms.craftengine.core.plugin.config.ConfigSection;
+import net.momirealms.craftengine.core.plugin.config.ConfigValue;
+import net.momirealms.craftengine.core.plugin.config.KnownResourceException;
 import net.momirealms.craftengine.core.plugin.context.condition.*;
-import net.momirealms.craftengine.core.plugin.locale.LocalizedResourceConfigException;
 import net.momirealms.craftengine.core.registry.BuiltInRegistries;
 import net.momirealms.craftengine.core.registry.Registries;
 import net.momirealms.craftengine.core.registry.WritableRegistry;
 import net.momirealms.craftengine.core.util.Key;
-import net.momirealms.craftengine.core.util.ResourceConfigUtils;
 import net.momirealms.craftengine.core.util.ResourceKey;
-
-import java.util.Map;
 
 public final class CommonConditions {
     public static final CommonConditionType<HasPlayerCondition<Context>> HAS_PLAYER = register(Key.ce("has_player"), HasPlayerCondition.factory());
@@ -20,10 +19,10 @@ public final class CommonConditions {
     public static final CommonConditionType<MatchBlockPropertyCondition<Context>> MATCH_BLOCK_PROPERTY = register(Key.ce("match_block_property"), MatchBlockPropertyCondition.factory());
     public static final CommonConditionType<TableBonusCondition<Context>> TABLE_BONUS = register(Key.ce("table_bonus"), TableBonusCondition.factory());
     public static final CommonConditionType<SurvivesExplosionCondition<Context>> SURVIVES_EXPLOSION = register(Key.ce("survives_explosion"), SurvivesExplosionCondition.factory());
-    public static final CommonConditionType<AnyOfCondition<Context>> ANY_OF = register(Key.ce("any_of"), AnyOfCondition.factory(CommonConditions::fromMap));
-    public static final CommonConditionType<AllOfCondition<Context>> ALL_OF = register(Key.ce("all_of"), AllOfCondition.factory(CommonConditions::fromMap));
+    public static final CommonConditionType<AnyOfCondition<Context>> ANY_OF = register(Key.ce("any_of"), AnyOfCondition.factory(CommonConditions::fromConfig));
+    public static final CommonConditionType<AllOfCondition<Context>> ALL_OF = register(Key.ce("all_of"), AllOfCondition.factory(CommonConditions::fromConfig));
     public static final CommonConditionType<EnchantmentCondition<Context>> ENCHANTMENT = register(Key.ce("enchantment"), EnchantmentCondition.factory());
-    public static final CommonConditionType<InvertedCondition<Context>> INVERTED = register(Key.ce("inverted"), InvertedCondition.factory(CommonConditions::fromMap));
+    public static final CommonConditionType<InvertedCondition<Context>> INVERTED = register(Key.ce("inverted"), InvertedCondition.factory(CommonConditions::fromConfig));
     public static final CommonConditionType<FallingBlockCondition<Context>> FALLING_BLOCK = register(Key.ce("falling_block"), FallingBlockCondition.factory());
     public static final CommonConditionType<RandomCondition<Context>> RANDOM = register(Key.ce("random"), RandomCondition.factory());
     public static final CommonConditionType<DistanceCondition<Context>> DISTANCE = register(Key.ce("distance"), DistanceCondition.factory());
@@ -49,18 +48,22 @@ public final class CommonConditions {
         return type;
     }
 
+    public static <CTX extends Context> Condition<CTX> fromConfig(ConfigValue value) {
+        return fromConfig(value.getAsSection());
+    }
+
     @SuppressWarnings("unchecked")
-    public static <CTX extends Context> Condition<CTX> fromMap(Map<String, Object> map) {
-        String type = ResourceConfigUtils.requireNonEmptyStringOrThrow(map.get("type"), "warning.config.event.condition.missing_type");
+    public static <CTX extends Context> Condition<CTX> fromConfig(ConfigSection section) {
+        String type = section.getNonEmptyString("type");
         boolean inverted = type.charAt(0) == '!';
         if (inverted) {
             type = type.substring(1);
         }
-        Key key = Key.withDefaultNamespace(type, Key.DEFAULT_NAMESPACE);
+        Key key = Key.ce(type);
         CommonConditionType<? extends Condition<Context>> conditionType = BuiltInRegistries.COMMON_CONDITION_TYPE.getValue(key);
         if (conditionType == null) {
-            throw new LocalizedResourceConfigException("warning.config.event.condition.invalid_type", type);
+            throw new KnownResourceException("condition.unknown_type", section.assemblePath("type"), type);
         }
-        return inverted ? new InvertedCondition<>((Condition<CTX>) conditionType.factory().create(map)) : (Condition<CTX>) conditionType.factory().create(map);
+        return inverted ? InvertedCondition.inverted((Condition<CTX>) conditionType.factory().create(section)) : (Condition<CTX>) conditionType.factory().create(section);
     }
 }

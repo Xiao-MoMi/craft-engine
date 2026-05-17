@@ -1,0 +1,129 @@
+# 以下所有配置均采用基于客户端资源包实现的本地化系统
+# https://ce.gtemc.cn/zh-Hans/configuration/lang
+lang#items:
+  zh_cn:
+    item.default.chinese_lantern: 灯笼
+    item.default.fairy_flower: 仙灵花
+    item.default.reed: 芦苇
+    item.default.flame_cane: 烈焰甘蔗
+    item.default.ender_pearl_flower_seeds: 末影珍珠花种子
+    item.default.bench: 长椅
+    item.default.table_lamp: 台灯
+    item.default.wooden_chair: 木椅
+    item.default.topaz_rod: 黄玉钓竿
+    item.default.topaz_bow: 黄玉弓
+    item.default.topaz_crossbow: 黄玉弩
+    item.default.topaz_pickaxe: 黄玉镐
+    item.default.topaz_axe: 黄玉斧
+    item.default.topaz_hoe: 黄玉锄
+    item.default.topaz_shovel: 黄玉锹
+    item.default.topaz_sword: 黄玉剑
+    item.default.topaz_helmet: 黄玉头盔
+    item.default.topaz_chestplate: 黄玉胸甲
+    item.default.topaz_leggings: 黄玉护腿
+    item.default.topaz_boots: 黄玉靴子
+    item.default.topaz_trident: 黄玉三叉戟
+    item.default.topaz_ore: 黄玉矿石
+    item.default.deepslate_topaz_ore: 深层黄玉矿石
+    item.default.topaz: 黄玉
+    item.default.palm_log: 棕榈原木
+    item.default.stripped_palm_log: 去皮棕榈原木
+    item.default.palm_wood: 棕榈木
+    item.default.stripped_palm_wood: 去皮棕榈木
+    item.default.palm_planks: 棕榈木板
+    item.default.palm_sapling: 棕榈树苗
+    item.default.palm_leaves: 棕榈树叶
+    item.default.palm_trapdoor: 棕榈木活板门
+    item.default.palm_door: 棕榈木门
+    item.default.palm_fence_gate: 棕榈木栅栏门
+    item.default.palm_slab: 棕榈木台阶
+    item.default.palm_stairs: 棕榈木楼梯
+    item.default.palm_pressure_plate: 棕榈木压力板
+    item.default.palm_button: 棕榈木按钮
+    item.default.palm_fence: 棕榈木栅栏
+    item.default.netherite_anvil: 下界合金砧
+    item.default.gunpowder_block: 火药粉末
+    item.default.solid_gunpowder_block: 凝固火药块
+    item.default.copper_coil: 铜线圈
+    item.default.flame_elytra: 烈焰鞘翅
+    item.default.pebble: 石子
+    item.default.cap: 鸭舌帽
+    item.default.flower_basket: 花篮
+    item.default.chessboard_block: 棋盘方块
+    item.default.safe_block: 保险柜
+    item.default.sofa: 沙发
+    item.default.amethyst_torch: 紫水晶火把
+    item.default.hami_melon_slice: 哈密瓜片
+    item.default.hami_melon: 哈密瓜
+    item.default.hami_melon_seeds: 哈密瓜种子
+    item.default.magma_fruit: 岩浆果实
+    item.default.globe: 地球仪
+    item.default.drill: 钻头
+    item.default.togglable_light_block: 可调节光源方块
+    item.default.showcase: 物品展示柜
+    item.default.drawer_block: 抽屉方块
+    item.default.candelabrum: 烛台
+# 为方块提供翻译，对于那些需要获取服务端方块本地化键名的插件来说尤其有效
+lang#blocks:
+  zh_cn:
+    block_name:default:chinese_lantern: 灯笼
+    block_name:default:netherite_anvil: 下界合金砧
+    block_name:default:topaz_ore: 黄玉矿石
+    block_name:default:deepslate_topaz_ore: 深层黄玉矿石
+    block_name:default:palm_log: 棕榈原木
+    block_name:default:stripped_palm_log: 去皮棕榈原木
+    block_name:default:palm_wood: 棕榈木
+    block_name:default:stripped_palm_wood: 去皮棕榈木
+    block_name:default:palm_planks: 棕榈木板
+    block_name:default:palm_sapling: 棕榈树苗
+    block_name:default:palm_leaves: 棕榈树叶
+    block_name:default:palm_trapdoor: 棕榈木活板门
+    block_name:default:palm_door: 棕榈木门
+    block_name:default:palm_fence_gate: 棕榈木栅栏门
+    block_name:default:palm_slab: 棕榈木台阶
+    block_name:default:palm_stairs: 棕榈木楼梯
+    block_name:default:palm_button: 棕榈木按钮
+    block_name:default:palm_fence: 棕榈木栅栏
+    block_name:default:fairy_flower: 仙灵花
+    block_name:default:reed: 芦苇
+    block_name:default:flame_cane: 烈焰甘蔗
+    block_name:default:ender_pearl_flower: 末影珍珠花
+    block_name:default:gunpowder_block: 火药粉末
+    block_name:default:solid_gunpowder_block: 凝固火药块
+    block_name:default:copper_coil: 铜线圈
+    block_name:default:chessboard_block: 棋盘方块
+    block_name:default:safe_block: 保险柜
+    block_name:default:sleeper_sofa: 沙发
+    block_name:default:sofa: 沙发
+    block_name:default:amethyst_torch: 紫水晶火把
+    block_name:default:amethyst_wall_torch: 紫水晶火把
+    block_name:default:hami_melon: 哈密瓜
+    block_name:default:hami_melon_stem: 哈密瓜茎
+    block_name:default:attached_hami_melon_stem: 哈密瓜茎
+    block_name:default:magma_plant: 岩浆植物
+    block_name:default:togglable_light_block: 可调节光源方块
+    block_name:default:drawer_block: 抽屉方块
+# 家具相关的翻译通常是为 API 设计的
+# 如果你使用的插件支持显示家具名称，那么你很可能需要配置这些家具的翻译
+lang#furniture:
+  zh_cn:
+    furniture.default.bench: 长椅
+    furniture.default.flower_basket: 花篮
+    furniture.default.globe: 地球仪
+    furniture.default.wooden_chair: 木椅
+    furniture.default.showcase: 物品展示柜
+    furniture.default.candelabrum: 烛台
+# 此处的 "translation" 特指服务端的本地化
+# 这意味着您编写的内容不会直接包含在客户端资源包中
+# 服务端会对您设置的键名进行翻译，然后将已本地化的文本发送给客户端
+# https://ce.gtemc.cn/zh-Hans/configuration/i18n
+translations#categories:
+  zh_cn:
+    category.default.name: 默认资产
+    category.default.lore: 包含了CraftEngine的默认配置
+    category.palm_tree: 棕榈树
+    category.topaz: 黄玉
+    category.misc: 杂项
+translations#emoji:
+  zh_cn:
+    emoji.tip: 使用<yellow>'<arg:0>'</yellow>来发送表情'<arg:1>'

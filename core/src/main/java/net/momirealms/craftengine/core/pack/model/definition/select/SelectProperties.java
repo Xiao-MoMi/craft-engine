@@ -1,15 +1,13 @@
 package net.momirealms.craftengine.core.pack.model.definition.select;
 
 import com.google.gson.JsonObject;
-import net.momirealms.craftengine.core.plugin.locale.LocalizedResourceConfigException;
+import net.momirealms.craftengine.core.plugin.config.ConfigSection;
+import net.momirealms.craftengine.core.plugin.config.KnownResourceException;
 import net.momirealms.craftengine.core.registry.BuiltInRegistries;
 import net.momirealms.craftengine.core.registry.Registries;
 import net.momirealms.craftengine.core.registry.WritableRegistry;
 import net.momirealms.craftengine.core.util.Key;
-import net.momirealms.craftengine.core.util.ResourceConfigUtils;
 import net.momirealms.craftengine.core.util.ResourceKey;
-
-import java.util.Map;
 
 public final class SelectProperties {
     public static final SelectPropertyType<BlockStateSelectProperty> BLOCK_STATE = register(Key.of("block_state"), BlockStateSelectProperty.FACTORY, BlockStateSelectProperty.READER);
@@ -32,14 +30,14 @@ public final class SelectProperties {
         return type;
     }
 
-    public static SelectProperty fromMap(Map<String, Object> map) {
-        String type = ResourceConfigUtils.requireNonEmptyStringOrThrow(map.get("property"), "warning.config.item.model.select.missing_property");
-        Key key = Key.withDefaultNamespace(type, "minecraft");
-        SelectPropertyType<? extends SelectProperty> selectPropertyType = BuiltInRegistries.SELECT_PROPERTY_TYPE.getValue(key);
+    public static SelectProperty fromConfig(ConfigSection section) {
+        String typeName = section.getNonEmptyString("property");
+        Key type = Key.minecraft(typeName);
+        SelectPropertyType<? extends SelectProperty> selectPropertyType = BuiltInRegistries.SELECT_PROPERTY_TYPE.getValue(type);
         if (selectPropertyType == null) {
-            throw new LocalizedResourceConfigException("warning.config.item.model.select.invalid_property", type);
+            throw new KnownResourceException("resource.item.model_definition.select.unknown_type", section.assemblePath("property"), type.asString());
         }
-        return selectPropertyType.factory().create(map);
+        return selectPropertyType.factory().create(section);
     }
 
     public static SelectProperty fromJson(JsonObject json) {

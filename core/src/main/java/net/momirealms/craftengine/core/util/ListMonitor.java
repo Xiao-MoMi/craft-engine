@@ -8,166 +8,167 @@ import java.util.List;
 import java.util.ListIterator;
 import java.util.function.Consumer;
 
-public class ListMonitor<T> implements List<T> {
-
+public final class ListMonitor<T> implements List<T> {
     private final List<T> list;
-    private final Consumer<T> addConsumer;
-    private final Consumer<Object> removeConsumer;
-    public ListMonitor(List<T> list, Consumer<T> addConsumer, Consumer<Object> removeConsumer) {
+    private final Consumer<T> addListener;
+    private final Consumer<Object> removeListener;
+
+    public ListMonitor(List<T> list, Consumer<T> addListener, Consumer<Object> removeListener) {
         this.list = list;
-        this.addConsumer = addConsumer;
-        this.removeConsumer = removeConsumer;
+        this.addListener = addListener;
+        this.removeListener = removeListener;
         for (T key : list) {
-            this.addConsumer.accept(key);
+            this.addListener.accept(key);
         }
     }
 
     public List<T> list() {
-        return list;
+        return this.list;
     }
 
     public Consumer<T> addConsumer() {
-        return addConsumer;
+        return this.addListener;
     }
 
     public Consumer<Object> removeConsumer() {
-        return removeConsumer;
+        return this.removeListener;
     }
 
     @Override
     public synchronized boolean add(T t) {
-        addConsumer.accept(t);
-        return list.add(t);
+        this.addListener.accept(t);
+        return this.list.add(t);
     }
 
     @Override
     public synchronized boolean addAll(@NotNull Collection<? extends T> c) {
         for (T element : c) {
-            addConsumer.accept(element);
+            this.addListener.accept(element);
         }
-        return list.addAll(c);
+        return this.list.addAll(c);
     }
 
     @Override
     public synchronized boolean addAll(int index, @NotNull Collection<? extends T> c) {
+        boolean b = this.list.addAll(index, c);
         for (T element : c) {
-            addConsumer.accept(element);
+            this.addListener.accept(element);
         }
-        return list.addAll(index, c);
+        return b;
     }
 
     @Override
     public synchronized void add(int index, T element) {
-        addConsumer.accept(element);
-        list.add(index, element);
+        this.list.add(index, element);
+        this.addListener.accept(element);
     }
 
     @Override
     public synchronized boolean remove(Object o) {
-        removeConsumer.accept(o);
-        return list.remove(o);
+        this.removeListener.accept(o);
+        return this.list.remove(o);
     }
 
     @Override
     public synchronized boolean removeAll(@NotNull Collection<?> collection) {
         for (Object o : collection) {
-            removeConsumer.accept(o);
+            this.removeListener.accept(o);
         }
-        return list.removeAll(collection);
+        return this.list.removeAll(collection);
     }
 
     @Override
     public synchronized void clear() {
-        for (T element : list) {
-            removeConsumer.accept(element);
+        for (T element : this.list) {
+            this.removeListener.accept(element);
         }
-        list.clear();
+        this.list.clear();
     }
 
     @Override
     public synchronized int size() {
-        return list.size();
+        return this.list.size();
     }
 
     @Override
     public synchronized boolean isEmpty() {
-        return list.isEmpty();
+        return this.list.isEmpty();
     }
 
     @Override
     public synchronized boolean contains(Object o) {
-        return list.contains(o);
+        return this.list.contains(o);
     }
 
     @NotNull
     @Override
     public synchronized Iterator<T> iterator() {
-        return list.iterator();
+        return this.list.iterator();
     }
 
     @NotNull
     @Override
-    public synchronized Object[] toArray() {
-        return list.toArray();
+    public synchronized Object @NotNull [] toArray() {
+        return this.list.toArray();
     }
 
     @NotNull
     @Override
-    public synchronized <E> E[] toArray(@NotNull E[] a) {
-        return list.toArray(a);
+    public synchronized <E> E @NotNull [] toArray(@NotNull E @NotNull [] a) {
+        return this.list.toArray(a);
     }
 
     @NotNull
     @Override
     public synchronized List<T> subList(int fromIndex, int toIndex) {
-        return list.subList(fromIndex, toIndex);
+        return this.list.subList(fromIndex, toIndex);
     }
 
     @SuppressWarnings("all")
     @Override
     public synchronized boolean containsAll(@NotNull Collection<?> c) {
-        return list.containsAll(c);
+        return this.list.containsAll(c);
     }
 
     @Override
     public synchronized boolean retainAll(@NotNull Collection<?> c) {
-        return list.retainAll(c);
+        return this.list.retainAll(c);
     }
 
     @Override
     public synchronized T get(int index) {
-        return list.get(index);
+        return this.list.get(index);
     }
 
     @Override
     public synchronized T set(int index, T element) {
-        return list.set(index, element);
+        return this.list.set(index, element);
     }
 
     @Override
     public synchronized T remove(int index) {
-        return list.remove(index);
+        return this.list.remove(index);
     }
 
     @Override
     public synchronized int indexOf(Object o) {
-        return list.indexOf(o);
+        return this.list.indexOf(o);
     }
 
     @Override
     public synchronized int lastIndexOf(Object o) {
-        return list.lastIndexOf(o);
+        return this.list.lastIndexOf(o);
     }
 
     @NotNull
     @Override
     public synchronized ListIterator<T> listIterator() {
-        return list.listIterator();
+        return this.list.listIterator();
     }
 
     @NotNull
     @Override
     public synchronized ListIterator<T> listIterator(int index) {
-        return list.listIterator(index);
+        return this.list.listIterator(index);
     }
 }

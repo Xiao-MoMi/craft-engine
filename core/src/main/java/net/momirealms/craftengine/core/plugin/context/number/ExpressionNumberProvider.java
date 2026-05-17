@@ -4,15 +4,17 @@ import com.ezylang.evalex.EvaluationException;
 import com.ezylang.evalex.Expression;
 import com.ezylang.evalex.parser.ParseException;
 import net.kyori.adventure.text.Component;
+import net.momirealms.craftengine.core.plugin.config.ConfigSection;
 import net.momirealms.craftengine.core.plugin.context.Context;
 import net.momirealms.craftengine.core.util.AdventureHelper;
-import net.momirealms.craftengine.core.util.ResourceConfigUtils;
 import net.momirealms.craftengine.core.util.random.RandomSource;
-
-import java.util.Map;
 
 public record ExpressionNumberProvider(String expression) implements NumberProvider {
     public static final NumberProviderFactory<ExpressionNumberProvider> FACTORY = new Factory();
+
+    public static ExpressionNumberProvider expression(String expression) {
+        return new ExpressionNumberProvider(expression);
+    }
 
     @Override
     public float getFloat(Context context) {
@@ -61,9 +63,8 @@ public record ExpressionNumberProvider(String expression) implements NumberProvi
     private static class Factory implements NumberProviderFactory<ExpressionNumberProvider> {
 
         @Override
-        public ExpressionNumberProvider create(Map<String, Object> arguments) {
-            String value = ResourceConfigUtils.requireNonEmptyStringOrThrow(arguments.get("expression"), "warning.config.number.expression.missing_expression");
-            return new ExpressionNumberProvider(value);
+        public ExpressionNumberProvider create(ConfigSection section) {
+            return new ExpressionNumberProvider(section.getNonNullString("expression"));
         }
     }
 }

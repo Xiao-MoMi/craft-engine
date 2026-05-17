@@ -9,21 +9,24 @@ import net.momirealms.craftengine.core.world.Vec3d;
 import net.momirealms.craftengine.core.world.chunk.client.ClientChunk;
 import net.momirealms.craftengine.core.world.collision.AABB;
 
-import java.util.Arrays;
-
 public final class EntityCulling {
+    private static final int MASK_X_POS = (1 << 0) | (1 << 2) | (1 << 4) | (1 << 6) | (1 << 10);
+    private static final int MASK_X_NEG = (1 << 1) | (1 << 3) | (1 << 5) | (1 << 7) | (1 << 11);
+    private static final int MASK_Y_POS = (1 << 0) | (1 << 1) | (1 << 2) | (1 << 3) | (1 << 12);
+    private static final int MASK_Y_NEG = (1 << 4) | (1 << 5) | (1 << 6) | (1 << 7) | (1 << 13);
+    private static final int MASK_Z_POS = (1 << 0) | (1 << 1) | (1 << 4) | (1 << 5) | (1 << 8);
+    private static final int MASK_Z_NEG = (1 << 2) | (1 << 3) | (1 << 6) | (1 << 7) | (1 << 9);
     public static final int MAX_SAMPLES = 14;
     private final Player player;
-    private final boolean[] dotSelectors = new boolean[MAX_SAMPLES];
     private final MutableVec3d[] targetPoints = new MutableVec3d[MAX_SAMPLES];
-    private final int[] lastHitBlock = new int[3];
-    private boolean canCheckLastHitBlock = false;
-    private int hitBlockCount = 0;
+    private final MutableVec3d direction = new MutableVec3d(0,0,0);
     private int lastVisitChunkX = Integer.MAX_VALUE;
     private int lastVisitChunkZ = Integer.MAX_VALUE;
     private ClientChunk lastVisitChunk = null;
     private int currentTokens = Config.entityCullingRateLimitingBucketSize();
     private double distanceScale = 1d;
+    public int[] lastHitBlock = new int[3];
+    public boolean canCheckLastHitBlock = false;
 
     public EntityCulling(Player player) {
         this.player = player;
@@ -54,8 +57,6 @@ public final class EntityCulling {
 
     public boolean isVisible(CullingData cullable, Vec3d cameraPos, boolean rayTracing) {
         // 情空标志位
-        this.canCheckLastHitBlock = false;
-        this.hitBlockCount = 0;
         AABB aabb = cullable.aabb;
         double aabbExpansion = cullable.aabbExpansion;
 
@@ -101,42 +102,35 @@ public final class EntityCulling {
         }
 
         // 清空之前的缓存
-        Arrays.fill(this.dotSelectors, false);
-        if (relX == Relative.POSITIVE) {
-            this.dotSelectors[0] = this.dotSelectors[2] = this.dotSelectors[4] = this.dotSelectors[6] = this.dotSelectors[10] = true;
-        } else if (relX == Relative.NEGATIVE) {
-            this.dotSelectors[1] = this.dotSelectors[3] = this.dotSelectors[5] = this.dotSelectors[7] = this.dotSelectors[11] = true;
-        }
-        if (relY == Relative.POSITIVE) {
-            this.dotSelectors[0] = this.dotSelectors[1] = this.dotSelectors[2] = this.dotSelectors[3] = this.dotSelectors[12] = true;
-        } else if (relY == Relative.NEGATIVE) {
-            this.dotSelectors[4] = this.dotSelectors[5] = this.dotSelectors[6] = this.dotSelectors[7] = this.dotSelectors[13] = true;
-        }
-        if (relZ == Relative.POSITIVE) {
-            this.dotSelectors[0] = this.dotSelectors[1] = this.dotSelectors[4] = this.dotSelectors[5] = this.dotSelectors[8] = true;
-        } else if (relZ == Relative.NEGATIVE) {
-            this.dotSelectors[2] = this.dotSelectors[3] = this.dotSelectors[6] = this.dotSelectors[7] = this.dotSelectors[9] = true;
-        }
+        int dotMask = 0;
+        this.canCheckLastHitBlock = false;
+        if (relX == Relative.POSITIVE)      dotMask |= MASK_X_POS;
+        else if (relX == Relative.NEGATIVE) dotMask |= MASK_X_NEG;
+        if (relY == Relative.POSITIVE)      dotMask |= MASK_Y_POS;
+        else if (relY == Relative.NEGATIVE) dotMask |= MASK_Y_NEG;
+        if (relZ == Relative.POSITIVE)      dotMask |= MASK_Z_POS;
+        else if (relZ == Relative.NEGATIVE) dotMask |= MASK_Z_NEG;
 
         int size = 0;
-        if (this.dotSelectors[0]) targetPoints[size++].set(minX, minY, minZ);
-        if (this.dotSelectors[1]) targetPoints[size++].set(maxX, minY, minZ);
-        if (this.dotSelectors[2]) targetPoints[size++].set(minX, minY, maxZ);
-        if (this.dotSelectors[3]) targetPoints[size++].set(maxX, minY, maxZ);
-        if (this.dotSelectors[4]) targetPoints[size++].set(minX, maxY, minZ);
-        if (this.dotSelectors[5]) targetPoints[size++].set(maxX, maxY, minZ);
-        if (this.dotSelectors[6]) targetPoints[size++].set(minX, maxY, maxZ);
-        if (this.dotSelectors[7]) targetPoints[size++].set(maxX, maxY, maxZ);
-        // 面中心点
-        double averageX = (minX + maxX) / 2.0;
-        double averageY = (minY + maxY) / 2.0;
-        double averageZ = (minZ + maxZ) / 2.0;
-        if (this.dotSelectors[8]) targetPoints[size++].set(averageX, averageY, minZ);
-        if (this.dotSelectors[9]) targetPoints[size++].set(averageX, averageY, maxZ);
-        if (this.dotSelectors[10]) targetPoints[size++].set(minX, averageY, averageZ);
-        if (this.dotSelectors[11]) targetPoints[size++].set(maxX, averageY, averageZ);
-        if (this.dotSelectors[12]) targetPoints[size++].set(averageX, minY, averageZ);
-        if (this.dotSelectors[13]) targetPoints[size++].set(averageX, maxY, averageZ);
+        if ((dotMask & (1 << 0)) != 0)  targetPoints[size++].set(minX, minY, minZ);
+        if ((dotMask & (1 << 1)) != 0)  targetPoints[size++].set(maxX, minY, minZ);
+        if ((dotMask & (1 << 2)) != 0)  targetPoints[size++].set(minX, minY, maxZ);
+        if ((dotMask & (1 << 3)) != 0)  targetPoints[size++].set(maxX, minY, maxZ);
+        if ((dotMask & (1 << 4)) != 0)  targetPoints[size++].set(minX, maxY, minZ);
+        if ((dotMask & (1 << 5)) != 0)  targetPoints[size++].set(maxX, maxY, minZ);
+        if ((dotMask & (1 << 6)) != 0)  targetPoints[size++].set(minX, maxY, maxZ);
+        if ((dotMask & (1 << 7)) != 0)  targetPoints[size++].set(maxX, maxY, maxZ);
+
+        double avgX = (minX + maxX) * 0.5;
+        double avgY = (minY + maxY) * 0.5;
+        double avgZ = (minZ + maxZ) * 0.5;
+
+        if ((dotMask & (1 << 8)) != 0)  targetPoints[size++].set(avgX, avgY, minZ);
+        if ((dotMask & (1 << 9)) != 0)  targetPoints[size++].set(avgX, avgY, maxZ);
+        if ((dotMask & (1 << 10)) != 0) targetPoints[size++].set(minX, avgY, avgZ);
+        if ((dotMask & (1 << 11)) != 0) targetPoints[size++].set(maxX, avgY, avgZ);
+        if ((dotMask & (1 << 12)) != 0) targetPoints[size++].set(avgX, minY, avgZ);
+        if ((dotMask & (1 << 13)) != 0) targetPoints[size++].set(avgX, maxY, avgZ);
 
 //        if (Config.debugEntityCulling()) {
 //            for (int i = 0; i < size; i++) {
@@ -144,6 +138,7 @@ public final class EntityCulling {
 //                this.player.playParticle(Key.of("flame"), targetPoint.x, targetPoint.y, targetPoint.z);
 //            }
 //        }
+
         return isVisible(cameraPos, this.targetPoints, size);
     }
 
@@ -151,19 +146,21 @@ public final class EntityCulling {
      * 检测射线与轴对齐边界框(AABB)是否相交
      * 使用slab方法进行射线-AABB相交检测
      */
-    private boolean rayIntersection(int x, int y, int z, Vec3d rayOrigin, MutableVec3d rayDirection) {
+    private boolean rayIntersection(int x, int y, int z, MutableVec3d rayOrigin, MutableVec3d rayDirection) {
         // 计算射线方向的倒数，避免除法运算
         // 这对于处理射线方向分量为0的情况很重要
-        MutableVec3d inverseRayDirection = new MutableVec3d(1, 1, 1).divide(rayDirection);
+        double invDirX = 1.0 / rayDirection.x;
+        double invDirY = 1.0 / rayDirection.y;
+        double invDirZ = 1.0 / rayDirection.z;
 
         // 计算射线与边界框各对面（slab）的相交参数
         // 对于每个轴，计算射线进入和退出该轴对应两个平面的时间
-        double tMinX = (x - rayOrigin.x) * inverseRayDirection.x;
-        double tMaxX = (x + 1 - rayOrigin.x) * inverseRayDirection.x;
-        double tMinY = (y - rayOrigin.y) * inverseRayDirection.y;
-        double tMaxY = (y + 1 - rayOrigin.y) * inverseRayDirection.y;
-        double tMinZ = (z - rayOrigin.z) * inverseRayDirection.z;
-        double tMaxZ = (z + 1 - rayOrigin.z) * inverseRayDirection.z;
+        double tMinX = (x - rayOrigin.x) * invDirX;
+        double tMaxX = (x + 1 - rayOrigin.x) * invDirX;
+        double tMinY = (y - rayOrigin.y) * invDirY;
+        double tMaxY = (y + 1 - rayOrigin.y) * invDirY;
+        double tMinZ = (z - rayOrigin.z) * invDirZ;
+        double tMaxZ = (z + 1 - rayOrigin.z) * invDirZ;
 
         // 计算射线进入边界框的最大时间（最近进入点）
         // 需要取各轴进入时间的最大值，因为射线必须进入所有轴的范围内
@@ -203,13 +200,15 @@ public final class EntityCulling {
             MutableVec3d currentTarget = targets[targetIndex];
 
             // 计算起点到目标的相对向量（世界坐标差）
-            double deltaX = start.x - currentTarget.x;
-            double deltaY = start.y - currentTarget.y;
-            double deltaZ = start.z - currentTarget.z;
+            double deltaX = currentTarget.x - start.x;
+            double deltaY = currentTarget.y - start.y;
+            double deltaZ = currentTarget.z - start.z;
 
             // 检查之前命中的方块，大概率还是命中
             if (this.canCheckLastHitBlock) {
-                if (rayIntersection(this.lastHitBlock[0], this.lastHitBlock[1], this.lastHitBlock[2], start, new MutableVec3d(deltaX, deltaY, deltaZ).normalize())) {
+                double length = Math.sqrt(deltaX * deltaX + deltaY * deltaY + deltaZ * deltaZ);
+                this.direction.set(deltaX / length, deltaY / length, deltaZ / length);
+                if (rayIntersection(this.lastHitBlock[0], this.lastHitBlock[1], this.lastHitBlock[2], currentTarget, this.direction)) {
                     continue;
                 }
             }
@@ -318,9 +317,9 @@ public final class EntityCulling {
 
             // 检查当前方块是否遮挡视线
             if (isOccluding(currentBlockX, currentBlockY, currentBlockZ)) {
-                this.lastHitBlock[this.hitBlockCount * 3] = currentBlockX;
-                this.lastHitBlock[this.hitBlockCount * 3 + 1] = currentBlockY;
-                this.lastHitBlock[this.hitBlockCount * 3 + 2] = currentBlockZ;
+                this.lastHitBlock[0] = currentBlockX;
+                this.lastHitBlock[1] = currentBlockY;
+                this.lastHitBlock[2] = currentBlockZ;
                 return false; // 视线被遮挡，立即返回
             }
 

@@ -6,10 +6,10 @@ import com.google.gson.JsonObject;
 import net.momirealms.craftengine.core.pack.conflict.PathContext;
 import net.momirealms.craftengine.core.pack.model.legacy.LegacyOverridesModel;
 import net.momirealms.craftengine.core.plugin.CraftEngine;
+import net.momirealms.craftengine.core.plugin.config.ConfigSection;
 import net.momirealms.craftengine.core.util.GsonHelper;
 
 import java.io.IOException;
-import java.util.Map;
 import java.util.TreeSet;
 
 public final class MergeLegacyModelResolution implements Resolution {
@@ -21,8 +21,8 @@ public final class MergeLegacyModelResolution implements Resolution {
     @Override
     public void run(PathContext existing, PathContext conflict) {
         try {
-            JsonObject j1 = GsonHelper.readJsonFile(existing.path()).getAsJsonObject();
-            JsonObject j2 = GsonHelper.readJsonFile(conflict.path()).getAsJsonObject();
+            JsonObject j1 = GsonHelper.readJsonFromFile(existing.path()).getAsJsonObject();
+            JsonObject j2 = GsonHelper.readJsonFromFile(conflict.path()).getAsJsonObject();
 
             if (!isJsonArray(j2.get("overrides"))) {
                 return;
@@ -55,7 +55,7 @@ public final class MergeLegacyModelResolution implements Resolution {
             j2.add("overrides", newOverrides);
             GsonHelper.writeJsonFile(j2, existing.path());
         } catch (IOException e) {
-            CraftEngine.instance().logger().severe("Failed to merge json when resolving file conflicts", e);
+            CraftEngine.instance().logger().error("Failed to merge json when resolving file conflicts", e);
         }
     }
 
@@ -66,7 +66,7 @@ public final class MergeLegacyModelResolution implements Resolution {
     private static class Factory implements ResolutionFactory<MergeLegacyModelResolution> {
 
         @Override
-        public MergeLegacyModelResolution create(Map<String, Object> arguments) {
+        public MergeLegacyModelResolution create(ConfigSection section) {
             return INSTANCE;
         }
     }

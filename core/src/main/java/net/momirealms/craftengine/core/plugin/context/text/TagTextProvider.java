@@ -5,7 +5,7 @@ import net.momirealms.craftengine.core.plugin.context.Context;
 import net.momirealms.craftengine.core.util.AdventureHelper;
 import net.momirealms.craftengine.core.util.Key;
 
-public class TagTextProvider implements TextProvider {
+public final class TagTextProvider implements TextProvider {
     private final String text;
 
     public TagTextProvider(String text) {

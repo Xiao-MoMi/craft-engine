@@ -2,7 +2,7 @@ package net.momirealms.craftengine.core.pack.allocator;
 
 import net.momirealms.craftengine.core.block.BlockStateWrapper;
 
-public class BlockStateCandidate {
+public final class BlockStateCandidate {
     private final BlockStateWrapper blockState;
     private boolean used = false;
 
@@ -15,10 +15,10 @@ public class BlockStateCandidate {
     }
 
     public boolean isUsed() {
-        return used;
+        return this.used;
     }
 
     public BlockStateWrapper blockState() {
-        return blockState;
+        return this.blockState;
     }
 }

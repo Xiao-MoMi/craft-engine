@@ -1,8 +1,8 @@
 package net.momirealms.craftengine.core.block.parser;
 
-import net.momirealms.craftengine.core.block.CustomBlock;
+import net.momirealms.craftengine.core.block.BlockDefinition;
 import net.momirealms.craftengine.core.block.ImmutableBlockState;
-import net.momirealms.craftengine.core.block.properties.Property;
+import net.momirealms.craftengine.core.block.property.Property;
 import net.momirealms.craftengine.core.registry.BuiltInRegistries;
 import net.momirealms.craftengine.core.registry.Holder;
 import net.momirealms.craftengine.core.util.Key;
@@ -25,7 +25,7 @@ public final class BlockStateParser {
 
     private String input;
     private int replaceCursor;
-    private Holder<CustomBlock> block;
+    private Holder<BlockDefinition> block;
     private Collection<Property<?>> properties;
     private Property<?> property;
 
@@ -128,7 +128,7 @@ public final class BlockStateParser {
             input = reader.readString();
             if (property.possibleValues().stream().noneMatch
                     (value -> value.toString().equalsIgnoreCase(input))
-            ){
+            ) {
                 suggestValue();
                 return;
             }
@@ -152,6 +152,7 @@ public final class BlockStateParser {
         suggestPropertyName();
 
     }
+
     private void suggestPropertyName() {
         if (!reader.getRemaining().isEmpty()) return;
         String front = readPrefix();
@@ -193,11 +194,11 @@ public final class BlockStateParser {
             reader.skip();
             blockIdString = blockIdString + ":" + reader.readUnquotedString();
         }
-        Optional<Holder.Reference<CustomBlock>> optional = BuiltInRegistries.BLOCK.get(Key.from(blockIdString));
+        Optional<Holder.Reference<BlockDefinition>> optional = BuiltInRegistries.BLOCK.get(Key.from(blockIdString));
         if (optional.isEmpty()) {
             return null;
         }
-        Holder<CustomBlock> holder = optional.get();
+        Holder<BlockDefinition> holder = optional.get();
         ImmutableBlockState defaultState = holder.value().defaultState();
         if (reader.canRead() && reader.peek() == '[') {
             reader.skip();

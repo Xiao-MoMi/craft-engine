@@ -3,8 +3,7 @@ package net.momirealms.craftengine.bukkit.compatibility.model.bettermodel;
 import net.momirealms.craftengine.core.entity.AbstractEntity;
 import net.momirealms.craftengine.core.entity.furniture.AbstractExternalModel;
 
-public class BetterModelModel extends AbstractExternalModel {
-
+public final class BetterModelModel extends AbstractExternalModel {
     public BetterModelModel(String id) {
         super(id);
     }

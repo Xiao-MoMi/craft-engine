@@ -10,7 +10,7 @@ import java.util.ArrayList;
 import java.util.BitSet;
 import java.util.List;
 
-public class StackedContents<T> {
+public final class StackedContents<T> {
     public final Reference2IntOpenHashMap<T> amounts = new Reference2IntOpenHashMap<>();
 
     public void add(T input, int count) {

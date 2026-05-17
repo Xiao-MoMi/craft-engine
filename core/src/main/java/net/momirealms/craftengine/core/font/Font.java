@@ -7,7 +7,7 @@ import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
-public class Font {
+public final class Font {
     private final Key key;
     private final Map<Integer, BitmapImage> idToCodepoint = new LinkedHashMap<>();
 
@@ -28,7 +28,7 @@ public class Font {
         return this.idToCodepoint.get(codepoint);
     }
 
-    public void addBitmapImage(int codepoint, BitmapImage image) {
+    public synchronized void addBitmapImage(int codepoint, BitmapImage image) {
         this.idToCodepoint.put(codepoint, image);
     }
 
@@ -45,11 +45,11 @@ public class Font {
         if (this == object) return true;
         if (object == null || getClass() != object.getClass()) return false;
         Font font = (Font) object;
-        return key.equals(font.key);
+        return this.key.equals(font.key);
     }
 
     @Override
     public int hashCode() {
-        return key.hashCode();
+        return this.key.hashCode();
     }
 }

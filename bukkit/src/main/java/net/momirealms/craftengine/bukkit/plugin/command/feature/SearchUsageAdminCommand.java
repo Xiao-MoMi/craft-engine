@@ -1,5 +1,6 @@
 package net.momirealms.craftengine.bukkit.plugin.command.feature;
 
+import net.momirealms.craftengine.bukkit.api.BukkitAdaptor;
 import net.momirealms.craftengine.bukkit.plugin.command.BukkitCommandFeature;
 import net.momirealms.craftengine.bukkit.plugin.user.BukkitServerPlayer;
 import net.momirealms.craftengine.core.item.recipe.Recipe;
@@ -24,7 +25,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
-public class SearchUsageAdminCommand extends BukkitCommandFeature<CommandSender> {
+public final class SearchUsageAdminCommand extends BukkitCommandFeature<CommandSender> {
 
     public SearchUsageAdminCommand(CraftEngineCommandManager<CommandSender> commandManager, CraftEngine plugin) {
         super(commandManager, plugin);
@@ -33,7 +34,7 @@ public class SearchUsageAdminCommand extends BukkitCommandFeature<CommandSender>
     @Override
     public Command.Builder<? extends CommandSender> assembleCommand(CommandManager<CommandSender> manager, Command.Builder<CommandSender> builder) {
         return builder
-                .required("player", MultiplePlayerSelectorParser.multiplePlayerSelectorParser(true))
+                .required("player", MultiplePlayerSelectorParser.multiplePlayerSelectorParser(false))
                 .required("id", NamespacedKeyParser.namespacedKeyComponent().suggestionProvider(new SuggestionProvider<>() {
                     @Override
                     public @NonNull CompletableFuture<? extends @NonNull Iterable<? extends @NonNull Suggestion>> suggestionsFuture(@NonNull CommandContext<Object> context, @NonNull CommandInput input) {
@@ -45,10 +46,10 @@ public class SearchUsageAdminCommand extends BukkitCommandFeature<CommandSender>
                     Collection<Player> players = selector.values();
                     NamespacedKey namespacedKey = context.get("id");
                     for (Player player : players) {
-                        BukkitServerPlayer serverPlayer = plugin().adapt(player);
+                        BukkitServerPlayer serverPlayer = BukkitAdaptor.adapt(player);
                         if (serverPlayer == null) continue;
                         Key itemId = Key.of(namespacedKey.namespace(), namespacedKey.value());
-                        List<Recipe<Object>> inRecipes = plugin().recipeManager().recipeByIngredient(itemId);
+                        List<Recipe> inRecipes = plugin().recipeManager().recipeByIngredient(itemId);
                         if (!inRecipes.isEmpty()) {
                             plugin().itemBrowserManager().openRecipePage(serverPlayer, null, inRecipes, 0, 0, false);
                         }

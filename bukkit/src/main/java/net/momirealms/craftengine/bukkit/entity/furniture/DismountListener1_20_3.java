@@ -8,7 +8,7 @@ import org.bukkit.event.entity.EntityDismountEvent;
 
 import java.util.function.BiConsumer;
 
-public class DismountListener1_20_3 implements Listener {
+public final class DismountListener1_20_3 implements Listener {
     private final BiConsumer<Player, Entity> consumer;
 
     public DismountListener1_20_3(final BiConsumer<Player, Entity> consumer) {

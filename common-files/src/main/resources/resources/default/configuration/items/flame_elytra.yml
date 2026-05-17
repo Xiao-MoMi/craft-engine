@@ -3,12 +3,16 @@ items:
     default:flame_elytra:
       material: elytra
       settings:
-        equippable:
+        equipment:
           slot: chest
-          asset-id: flame
-          wings: flame_elytra
+          asset-id: default:flame
       data:
-        item-name: <!i><#FF8C00><lang:item.default.flame_elytra>
+        item_name: <!i><#FF8C00><lang:item.default.flame_elytra>
       textures:
         - minecraft:item/custom/flame_elytra
         - minecraft:item/custom/flame_elytra_broken
+equipments:
+  $$>=1.21.2#flame_elytra:
+    default:flame:
+      type: component
+      wings: minecraft:entity/equipment/wings/flame

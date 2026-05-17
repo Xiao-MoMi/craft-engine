@@ -3,31 +3,31 @@ package net.momirealms.craftengine.core.item.recipe.input;
 import net.momirealms.craftengine.core.item.recipe.UniqueIdItem;
 import org.jetbrains.annotations.NotNull;
 
-public final class SmithingInput<T> implements RecipeInput {
-    private final UniqueIdItem<T> base;
-    private final UniqueIdItem<T> template;
-    private final UniqueIdItem<T> addition;
+public final class SmithingInput implements RecipeInput {
+    private final UniqueIdItem base;
+    private final UniqueIdItem template;
+    private final UniqueIdItem addition;
 
-    public SmithingInput(@NotNull UniqueIdItem<T> base,
-                         @NotNull UniqueIdItem<T> template,
-                         @NotNull UniqueIdItem<T> addition) {
+    public SmithingInput(@NotNull UniqueIdItem base,
+                         @NotNull UniqueIdItem template,
+                         @NotNull UniqueIdItem addition) {
         this.base = base;
         this.template = template;
         this.addition = addition;
     }
 
     @NotNull
-    public UniqueIdItem<T> base() {
-        return base;
+    public UniqueIdItem base() {
+        return this.base;
     }
 
     @NotNull
-    public UniqueIdItem<T> template() {
-        return template;
+    public UniqueIdItem template() {
+        return this.template;
     }
 
     @NotNull
-    public UniqueIdItem<T> addition() {
-        return addition;
+    public UniqueIdItem addition() {
+        return this.addition;
     }
 }

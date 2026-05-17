@@ -1,6 +1,6 @@
 package net.momirealms.craftengine.core.util;
 
-public class SegmentedAngle {
+public final class SegmentedAngle {
     private final int segments;
     private final float degreeToAngle;
     private final float angleToDegree;

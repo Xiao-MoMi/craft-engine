@@ -2,9 +2,9 @@ package net.momirealms.craftengine.core.world;
 
 public interface WorldAccessor extends BlockAccessor, WorldHeightAccessor {
 
-    Object serverWorld();
+    Object minecraftWorld();
 
-    default Object literalObject() {
-        return serverWorld();
+    default Object generatingWorld() {
+        return null;
     }
 }

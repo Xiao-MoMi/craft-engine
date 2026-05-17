@@ -6,6 +6,7 @@ import net.momirealms.craftengine.core.font.BitmapImage;
 import net.momirealms.craftengine.core.font.Image;
 import net.momirealms.craftengine.core.font.OffsetFont;
 import net.momirealms.craftengine.core.plugin.CraftEngine;
+import net.momirealms.craftengine.core.plugin.network.mod.ModPackets;
 import net.momirealms.craftengine.core.plugin.text.component.ComponentProvider;
 import net.momirealms.craftengine.core.util.CharacterUtils;
 import net.momirealms.craftengine.core.util.Key;
@@ -19,6 +20,7 @@ public abstract class AbstractNetworkManager implements NetworkManager {
 
     public AbstractNetworkManager(CraftEngine plugin) {
         this.plugin = plugin;
+        ModPackets.init();
     }
 
     @Override

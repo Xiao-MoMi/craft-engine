@@ -2,40 +2,39 @@ package net.momirealms.craftengine.core.loot.function;
 
 import net.momirealms.craftengine.core.item.Item;
 import net.momirealms.craftengine.core.loot.LootContext;
+import net.momirealms.craftengine.core.plugin.config.ConfigSection;
+import net.momirealms.craftengine.core.plugin.config.ConfigValue;
 import net.momirealms.craftengine.core.plugin.context.CommonConditions;
 import net.momirealms.craftengine.core.plugin.context.Condition;
 import net.momirealms.craftengine.core.plugin.context.number.NumberProvider;
-import net.momirealms.craftengine.core.plugin.context.number.NumberProviders;
-import net.momirealms.craftengine.core.util.ResourceConfigUtils;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
-import java.util.Map;
 
-public final class LimitCountFunction<T> extends AbstractLootConditionalFunction<T> {
-    public static final LootFunctionFactory<?> FACTORY = new Factory<>();
+public final class LimitCountFunction extends AbstractLootConditionalFunction {
+    public static final LootFunctionFactory<LimitCountFunction> FACTORY = new Factory();
     @Nullable
-    private final NumberProvider min;
+    public final NumberProvider min;
     @Nullable
-    private final NumberProvider max;
+    public final NumberProvider max;
 
-    public LimitCountFunction(List<Condition<LootContext>> predicates, @Nullable NumberProvider min, @Nullable NumberProvider max) {
+    private LimitCountFunction(List<Condition<LootContext>> predicates, @Nullable NumberProvider min, @Nullable NumberProvider max) {
         super(predicates);
         this.min = min;
         this.max = max;
     }
 
     @Override
-    protected Item<T> applyInternal(Item<T> item, LootContext context) {
+    protected Item applyInternal(Item item, LootContext context) {
         int amount = item.count();
-        if (min != null) {
-            int minAmount = min.getInt(context);
+        if (this.min != null) {
+            int minAmount = this.min.getInt(context);
             if (amount < minAmount) {
                 item.count(minAmount);
             }
         }
-        if (max != null) {
-            int maxAmount = max.getInt(context);
+        if (this.max != null) {
+            int maxAmount = this.max.getInt(context);
             if (amount > maxAmount) {
                 item.count(maxAmount);
             }
@@ -43,14 +42,15 @@ public final class LimitCountFunction<T> extends AbstractLootConditionalFunction
         return item;
     }
 
-    private static class Factory<A> implements LootFunctionFactory<A> {
+    private static class Factory implements LootFunctionFactory<LimitCountFunction> {
 
         @Override
-        public LootFunction<A> create(Map<String, Object> arguments) {
-            Object min = arguments.get("min");
-            Object max = arguments.get("max");
-            List<Condition<LootContext>> conditions = ResourceConfigUtils.parseConfigAsList(arguments.get("conditions"), CommonConditions::fromMap);
-            return new LimitCountFunction<>(conditions, min == null ? null : NumberProviders.fromObject(min), max == null ? null : NumberProviders.fromObject(max));
+        public LimitCountFunction create(ConfigSection section) {
+            return new LimitCountFunction(
+                    section.getList("conditions", CommonConditions::fromConfig),
+                    section.getValue("min", ConfigValue::getAsNumber),
+                    section.getValue("max", ConfigValue::getAsNumber)
+            );
         }
     }
 }

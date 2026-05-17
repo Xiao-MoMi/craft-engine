@@ -2,7 +2,7 @@ package net.momirealms.craftengine.core.world;
 
 import net.momirealms.craftengine.core.util.MiscUtils;
 
-public class MutableVec3d implements Position {
+public final class MutableVec3d implements Position {
     public double x;
     public double y;
     public double z;

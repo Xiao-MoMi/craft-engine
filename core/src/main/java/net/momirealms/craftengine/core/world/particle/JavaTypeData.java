@@ -1,6 +1,6 @@
 package net.momirealms.craftengine.core.world.particle;
 
-public class JavaTypeData implements ParticleData {
+public final class JavaTypeData implements ParticleData {
     private final Object data;
 
     public JavaTypeData(Object data) {

@@ -2,41 +2,43 @@ package net.momirealms.craftengine.core.loot.function;
 
 import net.momirealms.craftengine.core.item.Item;
 import net.momirealms.craftengine.core.loot.LootContext;
+import net.momirealms.craftengine.core.plugin.config.ConfigSection;
 import net.momirealms.craftengine.core.plugin.context.CommonConditions;
 import net.momirealms.craftengine.core.plugin.context.Condition;
 import net.momirealms.craftengine.core.plugin.context.number.NumberProvider;
-import net.momirealms.craftengine.core.plugin.context.number.NumberProviders;
-import net.momirealms.craftengine.core.util.ResourceConfigUtils;
 
 import java.util.List;
-import java.util.Map;
 
-public final class SetCountFunction<T> extends AbstractLootConditionalFunction<T> {
-    public static final LootFunctionFactory<?> FACTORY = new Factory<>();
-    private final NumberProvider value;
-    private final boolean add;
+public final class SetCountFunction extends AbstractLootConditionalFunction {
+    public static final LootFunctionFactory<SetCountFunction> FACTORY = new Factory();
+    public final NumberProvider value;
+    public final boolean add;
 
-    public SetCountFunction(List<Condition<LootContext>> conditions, NumberProvider value, boolean add) {
+    private SetCountFunction(List<Condition<LootContext>> conditions,
+                             NumberProvider value,
+                             boolean add) {
         super(conditions);
         this.value = value;
         this.add = add;
     }
 
     @Override
-    protected Item<T> applyInternal(Item<T> item, LootContext context) {
+    protected Item applyInternal(Item item, LootContext context) {
         int amount = this.add ? item.count() : 0;
         item.count(amount + this.value.getInt(context));
         return item;
     }
 
-    private static class Factory<A> implements LootFunctionFactory<A> {
+    private static class Factory implements LootFunctionFactory<SetCountFunction> {
+        private static final String[] COUNT = new String[] {"count", "amount"};
 
         @Override
-        public LootFunction<A> create(Map<String, Object> arguments) {
-            Object value = ResourceConfigUtils.requireNonNullOrThrow(arguments.get("count"), "warning.config.loot_table.function.set_count.missing_count");
-            boolean add = ResourceConfigUtils.getAsBoolean(arguments.getOrDefault("add", false), "add");
-            List<Condition<LootContext>> conditions = ResourceConfigUtils.parseConfigAsList(arguments.get("conditions"), CommonConditions::fromMap);
-            return new SetCountFunction<>(conditions, NumberProviders.fromObject(value), add);
+        public SetCountFunction create(ConfigSection section) {
+            return new SetCountFunction(
+                    section.getList("conditions", CommonConditions::fromConfig),
+                    section.getNonNullNumber(COUNT),
+                    section.getBoolean("add")
+            );
         }
     }
 }

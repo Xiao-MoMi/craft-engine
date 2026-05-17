@@ -6,7 +6,7 @@ categories:
     conditions:
       - type: permission
         permission: craftengine.admin
-    all-items: true
+    all_items: true
 images:
   internal:item_browser:
     height: 140
@@ -71,9 +71,9 @@ images:
 templates:
   internal:icon/2d:
     material: arrow
-    custom-model-data: ${model_data}
+    custom_model_data: ${model_data}
     data:
-      item-name: ${name}
+      item_name: ${name}
       lore: ${lore}
     model:
       template: internal:model/simplified_generated
@@ -128,30 +128,30 @@ items:
       lore: null
   internal:next_recipe_0:
     material: arrow
-    custom-model-data: 1000
+    custom_model_data: 1000
     data:
-      item-name: <!i><#FAFAD2><l10n:internal.next_recipe>
+      item_name: <!i><#FAFAD2><l10n:internal.next_recipe>
       lore:
         - <!i><#F5F5F5><arg:current_page>/<arg:max_page>
   internal:next_recipe_1:
     material: arrow
-    custom-model-data: 1001
+    custom_model_data: 1001
     data:
-      item-name: <!i><#808080><l10n:internal.next_recipe>
+      item_name: <!i><#808080><l10n:internal.next_recipe>
       lore:
         - <!i><#696969><arg:current_page>/<arg:max_page>
   internal:previous_recipe_0:
     material: arrow
-    custom-model-data: 1002
+    custom_model_data: 1002
     data:
-      item-name: <!i><#FAFAD2><l10n:internal.previous_recipe>
+      item_name: <!i><#FAFAD2><l10n:internal.previous_recipe>
       lore:
         - <!i><#F5F5F5><arg:current_page>/<arg:max_page>
   internal:previous_recipe_1:
     material: arrow
-    custom-model-data: 1003
+    custom_model_data: 1003
     data:
-      item-name: <!i><#808080><l10n:internal.previous_recipe>
+      item_name: <!i><#808080><l10n:internal.previous_recipe>
       lore:
         - <!i><#696969><arg:current_page>/<arg:max_page>
   internal:get_item:

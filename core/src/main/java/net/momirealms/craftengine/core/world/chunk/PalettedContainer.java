@@ -3,7 +3,7 @@ package net.momirealms.craftengine.core.world.chunk;
 import it.unimi.dsi.fastutil.ints.Int2IntOpenHashMap;
 import it.unimi.dsi.fastutil.ints.IntArraySet;
 import it.unimi.dsi.fastutil.ints.IntSet;
-import net.momirealms.craftengine.core.block.EmptyBlock;
+import net.momirealms.craftengine.core.block.EmptyBlockDefinition;
 import net.momirealms.craftengine.core.plugin.CraftEngine;
 import net.momirealms.craftengine.core.util.FriendlyByteBuf;
 import net.momirealms.craftengine.core.util.IndexedIterable;
@@ -22,10 +22,10 @@ import java.util.function.IntUnaryOperator;
 import java.util.function.Predicate;
 import java.util.stream.LongStream;
 
-public class PalettedContainer<T> implements PaletteResizeListener<T>, ReadableContainer<T> {
-    private static final BiConsumer<FriendlyByteBuf, long[]> RAW_DATA_WRITER = VersionHelper.isOrAbove1_21_5() ?
+public final class PalettedContainer<T> implements PaletteResizeListener<T>, ReadableContainer<T> {
+    private static final BiConsumer<FriendlyByteBuf, long[]> RAW_DATA_WRITER = VersionHelper.isOrAbove1_21_5 ?
             (FriendlyByteBuf::writeFixedSizeLongArray) : (FriendlyByteBuf::writeLongArray);
-    private static final BiConsumer<FriendlyByteBuf, long[]> RAW_DATA_READER = VersionHelper.isOrAbove1_21_5() ?
+    private static final BiConsumer<FriendlyByteBuf, long[]> RAW_DATA_READER = VersionHelper.isOrAbove1_21_5 ?
             (FriendlyByteBuf::readFixedSizeLongArray) : (FriendlyByteBuf::readLongArray);
     private final PaletteResizeListener<T> dummyListener = (newSize, added) -> 0;
     private final IndexedIterable<T> idList;
@@ -69,7 +69,7 @@ public class PalettedContainer<T> implements PaletteResizeListener<T>, ReadableC
     public boolean isEmpty() {
         Data<T> data = this.data;
         if (data.palette instanceof SingularPalette<T> singularPalette) {
-            return singularPalette.get(0) == EmptyBlock.STATE;
+            return singularPalette.get(0) == EmptyBlockDefinition.STATE;
         }
         return false;
     }
@@ -103,7 +103,11 @@ public class PalettedContainer<T> implements PaletteResizeListener<T>, ReadableC
 
     private Data<T> getCompatibleData(@Nullable Data<T> previousData, int bits) {
         DataProvider<T> dataProvider = this.paletteProvider.createDataProvider(this.idList, bits);
-        return previousData != null && dataProvider.equals(previousData.configuration()) ? previousData : dataProvider.createData(this.idList, this, this.paletteProvider.getContainerSize());
+        if (previousData != null && dataProvider.equals(previousData.configuration())) {
+            return previousData;
+        } else {
+            return dataProvider.createData(this.idList, this, this.paletteProvider.getContainerSize());
+        }
     }
 
     private Data<T> getCompatibleData(@Nullable Data<T> previousData, IndexedIterable<T> idList, int bits) {

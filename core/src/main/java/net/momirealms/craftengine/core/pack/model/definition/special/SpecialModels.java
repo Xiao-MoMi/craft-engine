@@ -1,15 +1,13 @@
 package net.momirealms.craftengine.core.pack.model.definition.special;
 
 import com.google.gson.JsonObject;
-import net.momirealms.craftengine.core.plugin.locale.LocalizedResourceConfigException;
+import net.momirealms.craftengine.core.plugin.config.ConfigSection;
+import net.momirealms.craftengine.core.plugin.config.KnownResourceException;
 import net.momirealms.craftengine.core.registry.BuiltInRegistries;
 import net.momirealms.craftengine.core.registry.Registries;
 import net.momirealms.craftengine.core.registry.WritableRegistry;
 import net.momirealms.craftengine.core.util.Key;
-import net.momirealms.craftengine.core.util.ResourceConfigUtils;
 import net.momirealms.craftengine.core.util.ResourceKey;
-
-import java.util.Map;
 
 public final class SpecialModels {
     public static final SpecialModelType<BannerSpecialModel> BANNER = register(Key.of("banner"), BannerSpecialModel.FACTORY, BannerSpecialModel.READER);
@@ -25,6 +23,9 @@ public final class SpecialModels {
     public static final SpecialModelType<SignSpecialModel> STANDING_SIGN = register(Key.of("standing_sign"), SignSpecialModel.FACTORY, SignSpecialModel.READER);
     public static final SpecialModelType<SignSpecialModel> HANGING_SIGN = register(Key.of("hanging_sign"), SignSpecialModel.FACTORY, SignSpecialModel.READER);
     public static final SpecialModelType<SimpleSpecialModel> TRIDENT = register(Key.of("trident"), SimpleSpecialModel.FACTORY, SimpleSpecialModel.READER);
+    public static final SpecialModelType<SimpleSpecialModel> BELL = register(Key.of("bell"), SimpleSpecialModel.FACTORY, SimpleSpecialModel.READER);
+    public static final SpecialModelType<BookSpecialModel> BOOK = register(Key.of("book"), BookSpecialModel.FACTORY, BookSpecialModel.READER);
+    public static final SpecialModelType<EndCubeSpecialModel> END_CUBE = register(Key.of("end_cube"), EndCubeSpecialModel.FACTORY, EndCubeSpecialModel.READER);
 
     private SpecialModels() {}
 
@@ -35,19 +36,19 @@ public final class SpecialModels {
         return type;
     }
 
-    public static SpecialModel fromMap(Map<String, Object> map) {
-        String type = ResourceConfigUtils.requireNonEmptyStringOrThrow(map.get("type"), "warning.config.item.model.special.missing_type");
-        Key key = Key.withDefaultNamespace(type, "minecraft");
-        SpecialModelType<? extends SpecialModel> specialModelType = BuiltInRegistries.SPECIAL_MODEL_TYPE.getValue(key);
+    public static SpecialModel fromConfig(ConfigSection section) {
+        String typeName = section.getNonEmptyString("type");
+        Key type = Key.minecraft(typeName);
+        SpecialModelType<? extends SpecialModel> specialModelType = BuiltInRegistries.SPECIAL_MODEL_TYPE.getValue(type);
         if (specialModelType == null) {
-            throw new LocalizedResourceConfigException("warning.config.item.model.special.invalid_type", type);
+            throw new KnownResourceException("resource.item.model_definition.special.unknown_type", section.assemblePath("property"), type.asString());
         }
-        return specialModelType.factory().create(map);
+        return specialModelType.factory().create(section);
     }
 
     public static SpecialModel fromJson(JsonObject json) {
         String type = json.get("type").getAsString();
-        Key key = Key.withDefaultNamespace(type, "minecraft");
+        Key key = Key.minecraft(type);
         SpecialModelType<? extends SpecialModel> specialModelType = BuiltInRegistries.SPECIAL_MODEL_TYPE.getValue(key);
         if (specialModelType == null) {
             throw new IllegalArgumentException("Invalid special model type: " + key);

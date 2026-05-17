@@ -5,7 +5,7 @@ import java.util.List;
 
 public final class VanillaLoot {
     private final Type type;
-    private final List<LootTable<?>> lootTables;
+    private final List<Loot> lootTables;
     private boolean override;
 
     public VanillaLoot(Type type) {
@@ -14,7 +14,7 @@ public final class VanillaLoot {
         this.lootTables = new ArrayList<>();
     }
 
-    public void addLootTable(LootTable<?> table) {
+    public void addLootTable(Loot table) {
         this.lootTables.add(table);
     }
 
@@ -22,7 +22,7 @@ public final class VanillaLoot {
         return type;
     }
 
-    public List<LootTable<?>> lootTables() {
+    public List<Loot> loots() {
         return lootTables;
     }
 

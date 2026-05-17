@@ -1,17 +1,17 @@
 package net.momirealms.craftengine.core.plugin.context.function;
 
 import net.momirealms.craftengine.core.entity.player.Player;
+import net.momirealms.craftengine.core.plugin.config.ConfigSection;
 import net.momirealms.craftengine.core.plugin.context.Condition;
 import net.momirealms.craftengine.core.plugin.context.Context;
 import net.momirealms.craftengine.core.plugin.context.parameter.DirectContextParameters;
 
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 
-public class UpdateInteractionFunction<CTX extends Context> extends AbstractConditionalFunction<CTX> {
+public final class UpdateInteractionFunction<CTX extends Context> extends AbstractConditionalFunction<CTX> {
 
-    public UpdateInteractionFunction(List<Condition<CTX>> predicates) {
+    private UpdateInteractionFunction(List<Condition<CTX>> predicates) {
         super(predicates);
     }
 
@@ -21,19 +21,19 @@ public class UpdateInteractionFunction<CTX extends Context> extends AbstractCond
         cancellable.ifPresent(value -> value.updateLastSuccessfulInteractionTick(value.gameTicks()));
     }
 
-    public static <CTX extends Context> FunctionFactory<CTX, UpdateInteractionFunction<CTX>> factory(java.util.function.Function<Map<String, Object>, Condition<CTX>> factory) {
+    public static <CTX extends Context> FunctionFactory<CTX, UpdateInteractionFunction<CTX>> factory(java.util.function.Function<ConfigSection, Condition<CTX>> factory) {
         return new Factory<>(factory);
     }
 
     private static class Factory<CTX extends Context> extends AbstractFactory<CTX, UpdateInteractionFunction<CTX>> {
 
-        public Factory(java.util.function.Function<Map<String, Object>, Condition<CTX>> factory) {
+        public Factory(java.util.function.Function<ConfigSection, Condition<CTX>> factory) {
             super(factory);
         }
 
         @Override
-        public UpdateInteractionFunction<CTX> create(Map<String, Object> arguments) {
-            return new UpdateInteractionFunction<>(getPredicates(arguments));
+        public UpdateInteractionFunction<CTX> create(ConfigSection section) {
+            return new UpdateInteractionFunction<>(getPredicates(section));
         }
     }
 }

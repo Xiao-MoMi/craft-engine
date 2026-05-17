@@ -9,7 +9,7 @@ import java.util.Arrays;
 import java.util.Iterator;
 import java.util.function.Function;
 
-public class Int2ObjectBiMap<K> implements IndexedIterable<K> {
+public final class Int2ObjectBiMap<K> implements IndexedIterable<K> {
     private static final Object EMPTY = null;
     private static final float LOAD_FACTOR = 0.8F;
     private K[] values;
@@ -101,7 +101,7 @@ public class Int2ObjectBiMap<K> implements IndexedIterable<K> {
     }
 
     private int nextId() {
-        while(this.nextId < this.idToValues.length && this.idToValues[this.nextId] != null) {
+        while (this.nextId < this.idToValues.length && this.idToValues[this.nextId] != null) {
             ++this.nextId;
         }
 
@@ -113,7 +113,7 @@ public class Int2ObjectBiMap<K> implements IndexedIterable<K> {
         int[] is = this.ids;
         Int2ObjectBiMap<K> int2ObjectBiMap = new Int2ObjectBiMap<>(newSize);
 
-        for(int i = 0; i < objects.length; ++i) {
+        for (int i = 0; i < objects.length; ++i) {
             if (objects[i] != null) {
                 int2ObjectBiMap.put(objects[i], is[i]);
             }
@@ -182,7 +182,7 @@ public class Int2ObjectBiMap<K> implements IndexedIterable<K> {
             }
         }
 
-        for(i = 0; i < size; ++i) {
+        for (i = 0; i < size; ++i) {
             if (this.values[i] == EMPTY) {
                 return i;
             }

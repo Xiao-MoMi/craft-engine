@@ -1,208 +1,430 @@
 package net.momirealms.craftengine.core.block.behavior;
 
-import net.momirealms.craftengine.core.block.CustomBlock;
+import net.momirealms.craftengine.core.block.BlockDefinition;
 import net.momirealms.craftengine.core.block.ImmutableBlockState;
 import net.momirealms.craftengine.core.entity.player.InteractionResult;
 import net.momirealms.craftengine.core.entity.player.Player;
-import net.momirealms.craftengine.core.item.CustomItem;
 import net.momirealms.craftengine.core.item.Item;
-import net.momirealms.craftengine.core.item.behavior.BlockBoundItemBehavior;
-import net.momirealms.craftengine.core.item.behavior.ItemBehavior;
+import net.momirealms.craftengine.core.item.ItemDefinition;
+import net.momirealms.craftengine.core.item.behavior.BlockItem;
 import net.momirealms.craftengine.core.plugin.CraftEngine;
 import net.momirealms.craftengine.core.util.Key;
+import net.momirealms.craftengine.core.util.MutableBoolean;
 import net.momirealms.craftengine.core.world.BlockPos;
 import net.momirealms.craftengine.core.world.World;
 import net.momirealms.craftengine.core.world.WorldAccessor;
 import net.momirealms.craftengine.core.world.context.BlockPlaceContext;
 import net.momirealms.craftengine.core.world.context.UseOnContext;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Optional;
-import java.util.concurrent.Callable;
+import java.util.function.Consumer;
 
 public abstract class BlockBehavior {
-    protected final CustomBlock customBlock;
+    protected final BlockDefinition blockDefinition;
 
-    public BlockBehavior(CustomBlock customBlock) {
-        this.customBlock = customBlock;
+    public BlockBehavior(BlockDefinition blockDefinition) {
+        this.blockDefinition = blockDefinition;
     }
 
-    public CustomBlock block() {
-        return this.customBlock;
+    public BlockDefinition block() {
+        return this.blockDefinition;
     }
 
     @SuppressWarnings("unchecked")
-    public <T> Optional<T> getAs(Class<T> tClass) {
+    public <T> void let(Class<T> tClass, Consumer<T> consumer) {
         if (tClass.isInstance(this)) {
-            return Optional.of((T) this);
+            consumer.accept((T) this);
         }
-        return Optional.empty();
     }
 
-    @Nullable
-    public EntityBlockBehavior getEntityBehavior() {
-        if (this instanceof EntityBlockBehavior behavior) {
-            return behavior;
+    @SuppressWarnings("unchecked")
+    public <T> @Nullable T getFirst(Class<T> tClass) {
+        if (tClass.isInstance(this)) {
+            return (T) this;
         }
         return null;
     }
 
-    // BlockState state, Rotation rotation
-    public Object rotate(Object thisBlock, Object[] args, Callable<Object> superMethod) throws Exception {
-        return superMethod.call();
-    }
-
-    // BlockState state, Mirror mirror
-    public Object mirror(Object thisBlock, Object[] args, Callable<Object> superMethod) throws Exception {
-        return superMethod.call();
-    }
-
-    // 1.20.1-1.21.1 BlockState state, Direction direction, BlockState neighborState, LevelAccessor world, BlockPos pos, BlockPos neighborPos
-    // 1.21.2+ BlockState state, LevelReader level, ScheduledTickAccess scheduledTickAccess, BlockPos pos, Direction direction, BlockPos neighborPos, BlockState neighborState, RandomSource random
-    public Object updateShape(Object thisBlock, Object[] args, Callable<Object> superMethod) throws Exception {
+    /**
+     * <code>args[0]</code>: BlockState (state)<br>
+     * <code>args[1]</code>: Rotation (rotation)<br>
+     * <p>
+     * Returns: BlockState
+     */
+    public Object rotate(Object thisBlock, Object[] args) {
         return args[0];
     }
 
-    // BlockState state, Level level, BlockPos pos, Block neighborBlock, @Nullable Orientation orientation, boolean movedByPiston
-    public void neighborChanged(Object thisBlock, Object[] args, Callable<Object> superMethod) throws Exception {
-        superMethod.call();
+    /**
+     * <code>args[0]</code>: BlockState (state)<br>
+     * <code>args[1]</code>: Mirror (mirror)<br>
+     * <p>
+     * Returns: BlockState
+     */
+    public Object mirror(Object thisBlock, Object[] args) {
+        return args[0];
     }
 
-    // BlockState state, ServerLevel level, BlockPos pos, RandomSource random
-    public void tick(Object thisBlock, Object[] args, Callable<Object> superMethod) throws Exception {
-        superMethod.call();
+    /**
+     * --- 1.20.1 - 1.21.1 ---<br>
+     * <code>args[0]</code>: BlockState (state)<br>
+     * <code>args[1]</code>: Direction (direction)<br>
+     * <code>args[2]</code>: BlockState (neighborState)<br>
+     * <code>args[3]</code>: LevelAccessor (world)<br>
+     * <code>args[4]</code>: BlockPos (pos)<br>
+     * <code>args[5]</code>: BlockPos (neighborPos)<br>
+     * <p>
+     * --- 1.21.2+ ---<br>
+     * <code>args[0]</code>: BlockState (state)<br>
+     * <code>args[1]</code>: LevelReader (level)<br>
+     * <code>args[2]</code>: ScheduledTickAccess (ticks)<br>
+     * <code>args[3]</code>: BlockPos (pos)<br>
+     * <code>args[4]</code>: Direction (direction)<br>
+     * <code>args[5]</code>: BlockPos (neighborPos)<br>
+     * <code>args[6]</code>: BlockState (neighborState)<br>
+     * <code>args[7]</code>: RandomSource (random)<br>
+     * <p>
+     * Returns: BlockState
+     */
+    public Object updateShape(Object thisBlock, Object[] args) {
+        return args[0];
     }
 
-    // BlockState state, ServerLevel level, BlockPos pos, RandomSource random
-    public void randomTick(Object thisBlock, Object[] args, Callable<Object> superMethod) throws Exception {
-        superMethod.call();
+    /**
+     * --- 1.20.1 - 1.21.1 ---<br>
+     * <code>args[0]</code>: BlockState (state)<br>
+     * <code>args[1]</code>: Level (level)<br>
+     * <code>args[2]</code>: BlockPos (pos)<br>
+     * <code>args[3]</code>: Block (neighborBlock)<br>
+     * <code>args[4]</code>: BlockPos (neighborPos)<br>
+     * <code>args[5]</code>: boolean (movedByPiston)<br>
+     * <p>
+     * --- 1.21.2+ ---<br>
+     * <code>args[0]</code>: BlockState (state)<br>
+     * <code>args[1]</code>: Level (level)<br>
+     * <code>args[2]</code>: BlockPos (pos)<br>
+     * <code>args[3]</code>: Block (neighborBlock)<br>
+     * <code>args[4]</code>: Orientation (orientation) @Nullable<br>
+     * <code>args[5]</code>: boolean (movedByPiston)<br>
+     * <p>
+     * Returns: void
+     */
+    public void neighborChanged(Object thisBlock, Object[] args) {
     }
 
-    // 1.20-1.20.4 BlockState state, Level world, BlockPos pos, BlockState oldState, boolean notify, UseOnContext context
-    // 1.20.5+ BlockState state, Level level, BlockPos pos, BlockState oldState, boolean movedByPiston
-    public void onPlace(Object thisBlock, Object[] args, Callable<Object> superMethod) throws Exception {
-        superMethod.call();
+    /**
+     * <code>args[0]</code>: BlockState (state)<br>
+     * <code>args[1]</code>: ServerLevel (level)<br>
+     * <code>args[2]</code>: BlockPos (pos)<br>
+     * <code>args[3]</code>: RandomSource (random)<br>
+     * <p>
+     * Returns: void
+     */
+    public void tick(Object thisBlock, Object[] args) {
     }
 
-    // BlockState state, LevelReader world, BlockPos pos
-    public boolean canSurvive(Object thisBlock, Object[] args, Callable<Object> superMethod) throws Exception {
-        return (boolean) superMethod.call();
+    /**
+     * <code>args[0]</code>: BlockState (state)<br>
+     * <code>args[1]</code>: ServerLevel (level)<br>
+     * <code>args[2]</code>: BlockPos (pos)<br>
+     * <code>args[3]</code>: RandomSource (random)<br>
+     * <p>
+     * Returns: void
+     */
+    public void randomTick(Object thisBlock, Object[] args) {
     }
 
-    // 1.20-1.20.4 BlockState state, BlockGetter world, BlockPos pos, PathComputationType type
-    // 1.20.5+ BlockState state, PathComputationType pathComputationType
-    public boolean isPathFindable(Object thisBlock, Object[] args, Callable<Object> superMethod) throws Exception {
-        return (boolean) superMethod.call();
+    /**
+     * --- 1.20 - 1.20.4 ---<br>
+     * <code>args[0]</code>: BlockState (state)<br>
+     * <code>args[1]</code>: Level (world)<br>
+     * <code>args[2]</code>: BlockPos (pos)<br>
+     * <code>args[3]</code>: BlockState (oldState)<br>
+     * <code>args[4]</code>: boolean (notify)<br>
+     * <code>args[5]</code>: UseOnContext (context)<br>
+     * <p>
+     * --- 1.20.5+ ---<br>
+     * <code>args[0]</code>: BlockState (state)<br>
+     * <code>args[1]</code>: Level (level)<br>
+     * <code>args[2]</code>: BlockPos (pos)<br>
+     * <code>args[3]</code>: BlockState (oldState)<br>
+     * <code>args[4]</code>: boolean (movedByPiston)<br>
+     * <p>
+     * Returns: void
+     */
+    public void onPlace(Object thisBlock, Object[] args) {
     }
 
-    // Level level, BlockPos pos, FallingBlockEntity fallingBlock
-    public void onBrokenAfterFall(Object thisBlock, Object[] args) throws Exception {
+    /**
+     * <code>args[0]</code>: BlockState (state)<br>
+     * <code>args[1]</code>: LevelReader (world)<br>
+     * <code>args[2]</code>: BlockPos (pos)<br>
+     * <p>
+     * Returns: boolean
+     */
+    public boolean canSurvive(Object thisBlock, Object[] args) {
+        return true;
     }
 
-    // Level level, BlockPos pos, BlockState state, BlockState replaceableState, FallingBlockEntity fallingBlock
-    public void onLand(Object thisBlock, Object[] args) throws Exception {
-    }
+    /**
+     * --- 1.20 - 1.20.4 ---<br>
+     * <code>args[0]</code>: BlockState (state)<br>
+     * <code>args[1]</code>: BlockGetter (world)<br>
+     * <code>args[2]</code>: BlockPos (pos)<br>
+     * <code>args[3]</code>: PathComputationType (type)<br>
+     * <p>
+     * --- 1.20.5+ ---<br>
+     * <code>args[0]</code>: BlockState (state)<br>
+     * <code>args[1]</code>: PathComputationType (pathComputationType)<br>
+     * <p>
+     * Returns: boolean
+     */
+    public abstract boolean isPathFindable(Object thisBlock, Object[] args);
 
-    // LevelReader level, BlockPos pos, BlockState state
-    public boolean isValidBoneMealTarget(Object thisBlock, Object[] args) throws Exception {
+    /**
+     * <code>args[0]</code>: BlockState (state)<br>
+     * <p>
+     * Returns: boolean
+     */
+    public boolean hasAnalogOutputSignal(Object thisBlock, Object[] args) {
         return false;
     }
 
-    // BlockState state
-    public boolean hasAnalogOutputSignal(Object thisBlock, Object[] args) throws Exception {
-        return false;
-    }
-
-    // BlockState state, Level level, BlockPos pos
-    public int getAnalogOutputSignal(Object thisBlock, Object[] args) throws Exception {
+    /**
+     * <code>args[0]</code>: BlockState (state)<br>
+     * <code>args[1]</code>: Level (level)<br>
+     * <code>args[2]</code>: BlockPos (pos)<br>
+     * <p>
+     * Returns: int
+     */
+    public int getAnalogOutputSignal(Object thisBlock, Object[] args) {
         return 0;
     }
 
-    // BlockState state, LevelAccessor level, BlockPos pos
-    public Object getContainer(Object thisBlock, Object[] args) throws Exception {
-        return null;
+    /**
+     * --- 1.21+ ---<br>
+     * <code>args[0]</code>: BlockState (state)<br>
+     * <code>args[1]</code>: ServerLevel (level)<br>
+     * <code>args[2]</code>: BlockPos (pos)<br>
+     * <code>args[3]</code>: Explosion (explosion)<br>
+     * <code>args[4]</code>: BiConsumer&lt;ItemStack, BlockPos&gt; (dropConsumer)<br>
+     * <p>
+     * Returns: void
+     */
+    public void preExplosionHit(Object thisBlock, Object[] args) {
     }
 
-    // Level level, RandomSource random, BlockPos pos, BlockState state
-    public boolean isBoneMealSuccess(Object thisBlock, Object[] args) throws Exception {
-        return false;
+    /**
+     * --- 1.21+ ---<br>
+     * <code>args[0]</code>: BlockState (state)<br>
+     * <code>args[1]</code>: ServerLevel (level)<br>
+     * <code>args[2]</code>: BlockPos (pos)<br>
+     * <code>args[3]</code>: Explosion (explosion)<br>
+     * <code>args[4]</code>: BiConsumer&lt;ItemStack, BlockPos&gt; (dropConsumer)<br>
+     * <p>
+     * Returns: void
+     */
+    public void postExplosionHit(Object thisBlock, Object[] args) {
     }
 
-    // ServerLevel level, RandomSource random, BlockPos pos, BlockState state
-    public void performBoneMeal(Object thisBlock, Object[] args) throws Exception {
+    /**
+     * --- 1.20 - 1.21.4 ---<br>
+     * <code>args[0]</code>: BlockState (state)<br>
+     * <code>args[1]</code>: Level (level)<br>
+     * <code>args[2]</code>: BlockPos (pos)<br>
+     * <code>args[3]</code>: Entity (entity)<br>
+     * <p>
+     * --- 1.21.5+ ---<br>
+     * <code>args[0]</code>: BlockState (state)<br>
+     * <code>args[1]</code>: Level (level)<br>
+     * <code>args[2]</code>: BlockPos (pos)<br>
+     * <code>args[3]</code>: Entity (entity)<br>
+     * <code>args[4]</code>: InsideBlockEffectApplier (effectApplier)<br>
+     * <p>
+     * --- 1.21.10+ ---<br>
+     * <code>args[0]</code>: BlockState (state)<br>
+     * <code>args[1]</code>: Level (level)<br>
+     * <code>args[2]</code>: BlockPos (pos)<br>
+     * <code>args[3]</code>: Entity (entity)<br>
+     * <code>args[4]</code>: InsideBlockEffectApplier (effectApplier)<br>
+     * <code>args[5]</code>: boolean (isPrecise)<br>
+     * <p>
+     * Returns: void
+     */
+    public void entityInside(Object thisBlock, Object[] args) {
     }
 
-    // 1.21+ BlockState state, ServerLevel level, BlockPos pos, Explosion explosion, BiConsumer<ItemStack, BlockPos> dropConsumer
-    public void onExplosionHit(Object thisBlock, Object[] args, Callable<Object> superMethod) throws Exception {
+    /**
+     * --- 1.20 - 1.21.4 ---<br>
+     * <code>args[0]</code>: BlockState (state)<br>
+     * <code>args[1]</code>: Level (level)<br>
+     * <code>args[2]</code>: BlockPos (pos)<br>
+     * <code>args[3]</code>: BlockState (newState)<br>
+     * <code>args[4]</code>: boolean (movedByPiston)<br>
+     * <p>
+     * --- 1.21.5+ ---<br>
+     * <code>args[0]</code>: BlockState (state)<br>
+     * <code>args[1]</code>: ServerLevel (level)<br>
+     * <code>args[2]</code>: BlockPos (pos)<br>
+     * <code>args[3]</code>: boolean (movedByPiston)<br>
+     * <p>
+     * Returns: void
+     */
+    public void affectNeighborsAfterRemoval(Object thisBlock, Object[] args) {
     }
 
-    // LevelAccessor level, BlockPos pos, BlockState state, FluidState fluidState
-    public boolean placeLiquid(Object thisObj, Object[] args, Callable<Object> superMethod) {
-        return false;
-    }
-
-    // 1.20.1 BlockGetter world, BlockPos pos, BlockState state, Fluid fluid
-    // 1.20.2+ LivingEntity owner, BlockGetter level, BlockPos pos, BlockState state, Fluid fluid
-    public boolean canPlaceLiquid(Object thisObj, Object[] args, Callable<Object> superMethod) {
-        return false;
-    }
-
-    // 1.20.1 LivingEntity owner, LevelAccessor level, BlockPos pos, BlockState state
-    // 1.20.2+ LevelAccessor world, BlockPos pos, BlockState state
-    public Object pickupBlock(Object thisObj, Object[] args, Callable<Object> superMethod) throws Exception {
-        return superMethod.call();
-    }
-
-    // 1.20-1.21.4 BlockState state, Level level, BlockPos pos, Entity entity
-    // 1.21.5+ BlockState state, Level level, BlockPos pos, Entity entity, InsideBlockEffectApplier effectApplier
-    // 1.21.10+ BlockState state, Level level, BlockPos pos, Entity entity, InsideBlockEffectApplier effectApplier, boolean flag
-    public void entityInside(Object thisBlock, Object[] args, Callable<Object> superMethod) throws Exception {
-    }
-
-    // 1.21.5+ BlockState state, ServerLevel level, BlockPos pos, boolean movedByPiston
-    public void affectNeighborsAfterRemoval(Object thisBlock, Object[] args, Callable<Object> superMethod) throws Exception {
-    }
-
-    // 1.20~1.21.4 BlockState state, Level level, BlockPos pos, BlockState newState, boolean movedByPiston
-    @ApiStatus.Obsolete
-    public void onRemove(Object thisBlock, Object[] args, Callable<Object> superMethod) throws Exception {
-    }
-
-    // BlockState blockState, BlockGetter blockAccess, BlockPos pos, Direction side
-    public int getSignal(Object thisBlock, Object[] args, Callable<Object> superMethod) {
+    /**
+     * <code>args[0]</code>: BlockState (state)<br>
+     * <code>args[1]</code>: BlockGetter (level)<br>
+     * <code>args[2]</code>: BlockPos (pos)<br>
+     * <code>args[3]</code>: Direction (direction)<br>
+     * <p>
+     * Returns: int
+     */
+    public int getSignal(Object thisBlock, Object[] args) {
         return 0;
     }
 
-    // BlockState blockState, BlockGetter blockAccess, BlockPos pos, Direction side
-    public int getDirectSignal(Object thisBlock, Object[] args, Callable<Object> superMethod) {
+    /**
+     * <code>args[0]</code>: BlockState (state)<br>
+     * <code>args[1]</code>: BlockGetter (level)<br>
+     * <code>args[2]</code>: BlockPos (pos)<br>
+     * <code>args[3]</code>: Direction (direction)<br>
+     * <p>
+     * Returns: int
+     */
+    public int getDirectSignal(Object thisBlock, Object[] args) {
         return 0;
     }
 
-    // BlockState blockState
-    public boolean isSignalSource(Object thisBlock, Object[] args, Callable<Object> superMethod) {
+    /**
+     * <code>args[0]</code>: BlockState (state)<br>
+     * <p>
+     * Returns: boolean
+     */
+    public boolean isSignalSource(Object thisBlock, Object[] args) {
         return false;
     }
 
-    // Level level, BlockPos pos, BlockState state, Player player
-    public Object playerWillDestroy(Object thisBlock, Object[] args, Callable<Object> superMethod) throws Exception {
-        return superMethod.call();
+    /**
+     * <code>args[0]</code>: Level (level)<br>
+     * <code>args[1]</code>: BlockPos (pos)<br>
+     * <code>args[2]</code>: BlockState (state)<br>
+     * <code>args[3]</code>: Player (player)<br>
+     * <p>
+     * Returns: BlockState
+     */
+    public Object playerWillDestroy(Object thisBlock, Object[] args) {
+        return args[2];
     }
 
-    // BlockState state, ServerLevel level, BlockPos pos, ItemStack stack, boolean dropExperience
-    public void spawnAfterBreak(Object thisBlock, Object[] args, Callable<Object> superMethod) throws Exception {
+    /**
+     * <code>args[0]</code>: BlockState (state)<br>
+     * <code>args[1]</code>: ServerLevel (level)<br>
+     * <code>args[2]</code>: BlockPos (pos)<br>
+     * <code>args[3]</code>: ItemStack (stack)<br>
+     * <code>args[4]</code>: boolean (dropExperience)<br>
+     * <p>
+     * Returns: void
+     */
+    public void spawnAfterBreak(Object thisBlock, Object[] args) {
     }
 
-    // Level level, BlockPos pos, BlockState state, Entity entity
-    public void stepOn(Object thisBlock, Object[] args, Callable<Object> superMethod) throws Exception {
+    /**
+     * <code>args[0]</code>: Level (level)<br>
+     * <code>args[1]</code>: BlockPos (pos)<br>
+     * <code>args[2]</code>: BlockState (state)<br>
+     * <code>args[3]</code>: Entity (entity)<br>
+     * <p>
+     * Returns: void
+     */
+    public void stepOn(Object thisBlock, Object[] args) {
     }
 
-    // Level level, BlockState state, BlockHitResult hit, Projectile projectile
-    public void onProjectileHit(Object thisBlock, Object[] args, Callable<Object> superMethod) throws Exception {
+    /**
+     * <code>args[0]</code>: Level (level)<br>
+     * <code>args[1]</code>: BlockState (state)<br>
+     * <code>args[2]</code>: BlockHitResult (hit)<br>
+     * <code>args[3]</code>: Projectile (projectile)<br>
+     * <p>
+     * Returns: void
+     */
+    public void onProjectileHit(Object thisBlock, Object[] args) {
     }
 
-    // Level/WorldGenLevel level, BlockPos pos, BlockState state, LivingEntity placer, ItemStack itemStack
-    public void placeMultiState(Object thisBlock, Object[] args, Callable<Object> superMethod) throws Exception {
+    /**
+     * <code>args[0]</code>: Level / WorldGenLevel (level)<br>
+     * <code>args[1]</code>: BlockPos (pos)<br>
+     * <code>args[2]</code>: BlockState (state)<br>
+     * <code>args[3]</code>: LivingEntity (placer)<br>
+     * <code>args[4]</code>: ItemStack (itemStack)<br>
+     * <p>
+     * Returns: void
+     */
+    public void placeMultiState(Object thisBlock, Object[] args) {
+    }
+
+    /**
+     * --- 1.20.1 - 1.21.4 ---<br>
+     * <code>args[0]</code>: Level (world)<br>
+     * <code>args[1]</code>: BlockState (state)<br>
+     * <code>args[2]</code>: BlockPos (pos)<br>
+     * <code>args[3]</code>: Entity (entity)<br>
+     * <code>args[4]</code>: float (fallDistance)<br>
+     * <p>
+     * --- 1.21.5+ ---<br>
+     * <code>args[0]</code>: Level (level)<br>
+     * <code>args[1]</code>: BlockState (state)<br>
+     * <code>args[2]</code>: BlockPos (pos)<br>
+     * <code>args[3]</code>: Entity (entity)<br>
+     * <code>args[4]</code>: double (fallDistance)<br>
+     * <p>
+     * Returns: void
+     */
+    public abstract void fallOn(Object thisBlock, Object[] args);
+
+    /**
+     * <code>args[0]</code>: BlockGetter (level)<br>
+     * <code>args[1]</code>: Entity (entity)<br>
+     * <p>
+     * Returns: void
+     */
+    public abstract void updateEntityMovementAfterFallOn(Object thisBlock, Object[] args);
+
+    /**
+     * <code>args[0]</code>: BlockState (state)<br>
+     * <code>args[1]</code>: Level (level)<br>
+     * <code>args[2]</code>: BlockPos (pos)<br>
+     * <code>args[3]</code>: int (type)<br>
+     * <code>args[4]</code>: int (data)<br>
+     * <p>
+     * Returns: boolean
+     */
+    public boolean triggerEvent(Object thisBlock, Object[] args) {
+        return false;
+    }
+
+    /**
+     * <code>args[0]</code>: BlockState (state)<br>
+     * <code>args[1]</code>: Level (level)<br>
+     * <code>args[2]</code>: BlockPos (pos)<br>
+     * <code>args[3]</code>: Player (player)<br>
+     * <p>
+     * Returns: void
+     */
+    public void attack(Object thisBlock, Object[] args) {
+    }
+
+    /**
+     * <code>args[0]</code>: BlockState (state)<br>
+     * <code>args[1]</code>: Level (level)<br>
+     * <code>args[2]</code>: BlockPos (pos)<br>
+     * <code>args[3]</code>: Biome.Precipitation (precipitation)<br>
+     * <p>
+     * Returns: void
+     */
+    public void handlePrecipitation(Object thisBlock, Object[] args) {
     }
 
     public boolean canPlaceMultiState(WorldAccessor accessor, BlockPos pos, ImmutableBlockState state) {
@@ -213,7 +435,7 @@ public abstract class BlockBehavior {
         return false;
     }
 
-    public Item<?> itemToPickup(World world, BlockPos pos, ImmutableBlockState state, Player player) {
+    public Item itemToPickup(World world, BlockPos pos, ImmutableBlockState state, Player player) {
         return null;
     }
 
@@ -222,18 +444,21 @@ public abstract class BlockBehavior {
     }
 
     public boolean canBeReplaced(BlockPlaceContext context, ImmutableBlockState state) {
+        // 如果物品和方块是一家人，那么不应该被替换
         Key clickedBlockId = state.owner().value().id();
-        Item<?> item = context.getItem();
-        Optional<CustomItem<Object>> customItem = CraftEngine.instance().itemManager().getCustomItem(item.id());
+        Item item = context.getItem();
+        Optional<ItemDefinition> customItem = CraftEngine.instance().itemManager().getItemDefinition(item.id());
         if (customItem.isEmpty()) return state.settings().replaceable();
-        CustomItem<Object> custom = customItem.get();
-        for (ItemBehavior behavior : custom.behaviors()) {
-            if (behavior instanceof BlockBoundItemBehavior blockItemBehavior) {
-                Key blockId = blockItemBehavior.block();
-                if (blockId.equals(clickedBlockId)) {
-                    return false;
-                }
+        ItemDefinition custom = customItem.get();
+        MutableBoolean canPlace = new MutableBoolean(true);
+        custom.behavior().let(BlockItem.class, b -> {
+            Key blockId = b.block();
+            if (blockId.equals(clickedBlockId)) {
+                canPlace.set(false);
             }
+        });
+        if (!canPlace.booleanValue()) {
+            return false;
         }
         return state.settings().replaceable();
     }

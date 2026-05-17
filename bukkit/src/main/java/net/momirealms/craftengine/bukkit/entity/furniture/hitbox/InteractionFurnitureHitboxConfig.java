@@ -1,12 +1,14 @@
 package net.momirealms.craftengine.bukkit.entity.furniture.hitbox;
 
 import net.momirealms.craftengine.bukkit.entity.data.BaseEntityData;
-import net.momirealms.craftengine.bukkit.entity.data.InteractionEntityData;
+import net.momirealms.craftengine.bukkit.entity.data.InteractionData;
 import net.momirealms.craftengine.core.entity.furniture.Furniture;
 import net.momirealms.craftengine.core.entity.furniture.hitbox.AbstractFurnitureHitBoxConfig;
 import net.momirealms.craftengine.core.entity.furniture.hitbox.FurnitureHitBoxConfigFactory;
 import net.momirealms.craftengine.core.entity.seat.SeatConfig;
-import net.momirealms.craftengine.core.util.ResourceConfigUtils;
+import net.momirealms.craftengine.core.plugin.config.ConfigConstants;
+import net.momirealms.craftengine.core.plugin.config.ConfigSection;
+import net.momirealms.craftengine.core.plugin.config.ConfigValue;
 import net.momirealms.craftengine.core.world.Vec3d;
 import net.momirealms.craftengine.core.world.WorldPosition;
 import net.momirealms.craftengine.core.world.collision.AABB;
@@ -14,17 +16,15 @@ import org.joml.Vector3f;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 import java.util.function.Consumer;
 
 public final class InteractionFurnitureHitboxConfig extends AbstractFurnitureHitBoxConfig<InteractionFurnitureHitbox> {
-    public static final Factory FACTORY = new Factory();
+    public static final FurnitureHitBoxConfigFactory<InteractionFurnitureHitbox> FACTORY = new Factory();
     public static final InteractionFurnitureHitboxConfig DEFAULT = new InteractionFurnitureHitboxConfig();
-
-    private final Vector3f size;
-    private final boolean responsive;
-    private final boolean invisible;
-    private final List<Object> cachedValues = new ArrayList<>(4);
+    public final Vector3f size;
+    public final boolean responsive;
+    public final boolean invisible;
+    public final List<Object> cachedValues = new ArrayList<>(4);
 
     private InteractionFurnitureHitboxConfig(SeatConfig[] seats,
                                             Vector3f position,
@@ -38,11 +38,11 @@ public final class InteractionFurnitureHitboxConfig extends AbstractFurnitureHit
         this.size = size;
         this.responsive = interactive;
         this.invisible = invisible;
-        InteractionEntityData.Height.addEntityDataIfNotDefaultValue(size.y, cachedValues);
-        InteractionEntityData.Width.addEntityDataIfNotDefaultValue(size.x, cachedValues);
-        InteractionEntityData.Responsive.addEntityDataIfNotDefaultValue(interactive, cachedValues);
+        InteractionData.Height.addEntityDataIfNotDefaultValue(size.y, this.cachedValues);
+        InteractionData.Width.addEntityDataIfNotDefaultValue(size.x, this.cachedValues);
+        InteractionData.Response.addEntityDataIfNotDefaultValue(interactive, this.cachedValues);
         if (invisible) {
-            BaseEntityData.SharedFlags.addEntityDataIfNotDefaultValue((byte) 0x20, cachedValues);
+            BaseEntityData.SharedFlags.addEntityDataIfNotDefaultValue((byte) 0x20, this.cachedValues);
         }
     }
 
@@ -54,26 +54,26 @@ public final class InteractionFurnitureHitboxConfig extends AbstractFurnitureHit
     }
 
     public Vector3f size() {
-        return size;
+        return this.size;
     }
 
     public boolean responsive() {
-        return responsive;
+        return this.responsive;
     }
 
     public boolean invisible() {
-        return invisible;
+        return this.invisible;
     }
 
     public List<Object> cachedValues() {
-        return cachedValues;
+        return this.cachedValues;
     }
 
     @Override
     public void prepareBoundingBox(WorldPosition targetPos, Consumer<AABB> aabbConsumer, boolean ignoreBlocksBuilding) {
         if (this.blocksBuilding || ignoreBlocksBuilding) {
             Vec3d relativePosition = Furniture.getRelativePosition(targetPos, this.position);
-            aabbConsumer.accept(AABB.makeBoundingBox(relativePosition, size.x, size.y));
+            aabbConsumer.accept(AABB.makeBoundingBox(relativePosition, this.size.x, this.size.y));
         }
     }
 
@@ -82,31 +82,44 @@ public final class InteractionFurnitureHitboxConfig extends AbstractFurnitureHit
         return new InteractionFurnitureHitbox(furniture, this);
     }
 
-    public static class Factory implements FurnitureHitBoxConfigFactory<InteractionFurnitureHitbox> {
+    private static class Factory implements FurnitureHitBoxConfigFactory<InteractionFurnitureHitbox> {
+        private static final String[] CAN_USE_ITEM_ON = new String[] {"can_use_item_on", "can-use-item-on"};
+        private static final String[] BLOCKS_BUILDING = new String[] {"blocks_building", "blocks-building"};
+        private static final String[] CAN_BE_HIT_BY_PROJECTILE = new String[] {"can_be_hit_by_projectile", "can-be-hit-by-projectile"};
 
         @Override
-        public InteractionFurnitureHitboxConfig create(Map<String, Object> arguments) {
-            Vector3f position = ResourceConfigUtils.getAsVector3f(arguments.getOrDefault("position", 0), "position");
+        public InteractionFurnitureHitboxConfig create(ConfigSection section) {
             float width;
             float height;
-            if (arguments.containsKey("scale")) {
-                String[] split = arguments.get("scale").toString().split(",");
-                width = Float.parseFloat(split[0]);
-                height = Float.parseFloat(split[1]);
+            ConfigValue optionalScale = section.getValue("scale");
+            if (optionalScale != null) {
+                String scaleString = optionalScale.getAsString();
+                String[] splitScale = scaleString.split(",");
+                if (splitScale.length == 1) {
+                    width = optionalScale.getAsFloat();
+                    height = optionalScale.getAsFloat();
+                } else if (splitScale.length == 2) {
+                    ConfigValue[] split = optionalScale.splitValuesRestrict(",", 2);
+                    width = split[0].getAsFloat();
+                    height = split[1].getAsFloat();
+                } else {
+                    ConfigValue[] split = optionalScale.splitValues(",");
+                    width = split[0].getAsFloat();
+                    height = split[1].getAsFloat();
+                }
             } else {
-                width = ResourceConfigUtils.getAsFloat(arguments.getOrDefault("width", 1), "width");
-                height = ResourceConfigUtils.getAsFloat(arguments.getOrDefault("height", 1), "height");
+                width = section.getFloat("width", 1f);
+                height = section.getFloat("height", 1f);
             }
-            boolean canUseOn = ResourceConfigUtils.getAsBoolean(arguments.getOrDefault("can-use-item-on", false), "can-use-item-on");
-            boolean interactive = ResourceConfigUtils.getAsBoolean(arguments.getOrDefault("interactive", true), "interactive");
-            boolean canBeHitByProjectile = ResourceConfigUtils.getAsBoolean(arguments.getOrDefault("can-be-hit-by-projectile", false), "can-be-hit-by-projectile");
-            boolean blocksBuilding = ResourceConfigUtils.getAsBoolean(arguments.getOrDefault("blocks-building", true), "blocks-building");
-            boolean invisible = ResourceConfigUtils.getAsBoolean(arguments.getOrDefault("invisible", false), "invisible");
             return new InteractionFurnitureHitboxConfig(
-                    SeatConfig.fromObj(arguments.get("seats")),
-                    position, canUseOn, blocksBuilding, canBeHitByProjectile, invisible,
+                    section.getList("seats", SeatConfig::fromConfig).toArray(new SeatConfig[0]),
+                    section.getVector3f("position", ConfigConstants.ZERO_VECTOR3),
+                    section.getBoolean(CAN_USE_ITEM_ON, true),
+                    section.getBoolean(BLOCKS_BUILDING, true),
+                    section.getBoolean(CAN_BE_HIT_BY_PROJECTILE, true),
+                    section.getBoolean("invisible"),
                     new Vector3f(width, height, width),
-                    interactive
+                    section.getBoolean("interactive", true)
             );
         }
     }

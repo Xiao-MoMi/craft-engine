@@ -1,25 +1,22 @@
 package net.momirealms.craftengine.core.plugin.context.function;
 
-import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import net.momirealms.craftengine.core.block.BlockStateWrapper;
-import net.momirealms.craftengine.core.block.UpdateOption;
+import net.momirealms.craftengine.core.block.UpdateFlags;
+import net.momirealms.craftengine.core.plugin.config.ConfigConstants;
+import net.momirealms.craftengine.core.plugin.config.ConfigSection;
 import net.momirealms.craftengine.core.plugin.context.Condition;
 import net.momirealms.craftengine.core.plugin.context.Context;
 import net.momirealms.craftengine.core.plugin.context.number.NumberProvider;
 import net.momirealms.craftengine.core.plugin.context.number.NumberProviders;
 import net.momirealms.craftengine.core.plugin.context.parameter.DirectContextParameters;
 import net.momirealms.craftengine.core.util.MiscUtils;
-import net.momirealms.craftengine.core.util.ResourceConfigUtils;
 import net.momirealms.craftengine.core.world.World;
 import net.momirealms.craftengine.core.world.WorldPosition;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.List;
-import java.util.Locale;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 
-public class CycleBlockPropertyFunction<CTX extends Context> extends AbstractConditionalFunction<CTX> {
+public final class CycleBlockPropertyFunction<CTX extends Context> extends AbstractConditionalFunction<CTX> {
     private final String property;
     @Nullable
     private final Map<String, String> rules;
@@ -30,16 +27,14 @@ public class CycleBlockPropertyFunction<CTX extends Context> extends AbstractCon
     private final NumberProvider z;
     private final NumberProvider updateFlags;
 
-    public CycleBlockPropertyFunction(
-            List<Condition<CTX>> predicates,
-            String property,
-            @Nullable Map<String, String> rules,
-            @Nullable NumberProvider inverse,
-            NumberProvider x,
-            NumberProvider y,
-            NumberProvider z,
-            NumberProvider updateFlags
-    ) {
+    private CycleBlockPropertyFunction(List<Condition<CTX>> predicates,
+                                       String property,
+                                       @Nullable Map<String, String> rules,
+                                       @Nullable NumberProvider inverse,
+                                       NumberProvider x,
+                                       NumberProvider y,
+                                       NumberProvider z,
+                                       NumberProvider updateFlags) {
         super(predicates);
         this.property = property;
         this.rules = rules;
@@ -78,32 +73,37 @@ public class CycleBlockPropertyFunction<CTX extends Context> extends AbstractCon
         return wrapper.withProperty(this.property, mapValue);
     }
 
-    public static <CTX extends Context> FunctionFactory<CTX, CycleBlockPropertyFunction<CTX>> factory(java.util.function.Function<Map<String, Object>, Condition<CTX>> factory) {
+    public static <CTX extends Context> FunctionFactory<CTX, CycleBlockPropertyFunction<CTX>> factory(java.util.function.Function<ConfigSection, Condition<CTX>> factory) {
         return new Factory<>(factory);
     }
 
     private static class Factory<CTX extends Context> extends AbstractFactory<CTX, CycleBlockPropertyFunction<CTX>> {
+        private static final String[] UPDATE_FLAGS = new String[]{"update_flags", "update-flags"};
 
-        public Factory(java.util.function.Function<Map<String, Object>, Condition<CTX>> factory) {
+        public Factory(java.util.function.Function<ConfigSection, Condition<CTX>> factory) {
             super(factory);
         }
 
         @Override
-        public CycleBlockPropertyFunction<CTX> create(Map<String, Object> arguments) {
-            String property = ResourceConfigUtils.requireNonEmptyStringOrThrow(arguments.get("property"), "warning.config.function.cycle_block_property.missing_property");
-            Map<String, String> rules;
-            if (arguments.containsKey("rules")) {
-                rules = new Object2ObjectOpenHashMap<>();
-                MiscUtils.castToMap(arguments.get("rules"), false).forEach((k, v) -> rules.put(k, v.toString()));
-            } else rules = null;
-            return new CycleBlockPropertyFunction<>(getPredicates(arguments),
-                    property,
+        public CycleBlockPropertyFunction<CTX> create(ConfigSection section) {
+            ConfigSection rulesSection = section.getSection("rules");
+            Map<String, String> rules = null;
+            if (rulesSection != null) {
+                rules = new HashMap<>();
+                for (String key : rulesSection.keySet()) {
+                    rules.put(key, rulesSection.getNonEmptyString(key));
+                }
+            }
+            return new CycleBlockPropertyFunction<>(
+                    getPredicates(section),
+                    section.getNonNullString("property"),
                     rules,
-                    NumberProviders.fromObject(arguments.getOrDefault("inverse", "<arg:player.is_sneaking>")),
-                    NumberProviders.fromObject(arguments.getOrDefault("x", "<arg:position.x>")),
-                    NumberProviders.fromObject(arguments.getOrDefault("y", "<arg:position.y>")),
-                    NumberProviders.fromObject(arguments.getOrDefault("z", "<arg:position.z>")),
-                    Optional.ofNullable(arguments.get("update-flags")).map(NumberProviders::fromObject).orElse(NumberProviders.direct(UpdateOption.UPDATE_ALL.flags())));
+                    section.getNumber("inverse", ConfigConstants.IS_SNEAKING),
+                    section.getNumber("x", ConfigConstants.POSITION_X),
+                    section.getNumber("y", ConfigConstants.POSITION_Y),
+                    section.getNumber("z", ConfigConstants.POSITION_Z),
+                    section.getNumber(UPDATE_FLAGS, NumberProviders.direct(UpdateFlags.UPDATE_ALL))
+            );
         }
     }
 }

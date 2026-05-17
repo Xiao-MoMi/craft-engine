@@ -1,598 +1,281 @@
-# 别动这个
-lang-version: "${lang_version}"
-
-exception.invalid_syntax: "<red>无效语法. 正确语法: <white><arg:0></white></red>"
-exception.invalid_argument: "<red>无效参数. 原因: <white><arg:0></white></red>"
-exception.invalid_sender: "<red><arg:0> 不允许执行该命令. 执行者必须是 <arg:1></red>"
-exception.unexpected: "<red>执行该命令时发生内部错误</red>"
-exception.no_permission: "<red>抱歉, 您没有权限执行该命令</red>"
-exception.no_such_command: "未知命令"
-argument.entity.notfound.player: "<red>找不到玩家 '<arg:0>'</red>"
-argument.entity.notfound.entity: "<red>找不到实体 '<arg:0>'</red>"
-argument.parse.failure.time: "<red>'<arg:0>' 不是有效的时间格式</red>"
-argument.parse.failure.material: "<red>'<arg:0>' 不是有效的材料</red>"
-argument.parse.failure.enchantment: "<red>'<arg:0>' 不是有效的魔咒</red>"
-argument.parse.failure.offlineplayer: "<red>输入的玩家 '<arg:0>' 已离线</red>"
-argument.parse.failure.player: "<red>找不到输入的玩家 '<arg:0>'</red>"
-argument.parse.failure.world: "<red>'<arg:0>' 不是有效的 Minecraft 世界名称</red>"
-argument.parse.failure.location.invalid_format: "<red>'<arg:0>' 不是有效的位置格式.必须格式为 '<arg:1> <arg:2> <arg:3>'</red>"
-argument.parse.failure.location.mixed_local_absolute: "<red>不能混用相对和绝对坐标.坐标要么全部使用 '^',要么全部不用</red>"
-argument.parse.failure.namespacedkey.namespace: "<red>无效的命名空间 '<arg:0>'.必须为 [a-z0-9._-]</red>"
-argument.parse.failure.namespacedkey.key: "<red>无效的键 '<arg:0>'.必须为 [a-z0-9/._-]</red>"
-argument.parse.failure.namespacedkey.need_namespace: "<red>无效的输入 '<arg:0>', 需要显式指定命名空间</red>"
-argument.parse.failure.boolean: "<red>无法解析布尔值 '<arg:0>'</red>"
-argument.parse.failure.number: "<red>'<arg:0>' 不是从 <arg:1> 到 <arg:2> 范围内的有效数字</red>"
-argument.parse.failure.char: "<red>'<arg:0>' 不是有效的字符</red>"
-argument.parse.failure.string: "<red>'<arg:0>' 不是类型为 <arg:1> 的有效字符串</red>"
-argument.parse.failure.uuid: "<red>'<arg:0>' 不是有效的 UUID</red>"
-argument.parse.failure.enum: "<red>'<arg:0>' 不是以下任何一种情况之一: <arg:1></red>"
-argument.parse.failure.regex: "<red>'<arg:0>' 不匹配 '<arg:1>'</red>"
-argument.parse.failure.flag.unknown: "<red>未知标志 '<arg:0>'</red>"
-argument.parse.failure.flag.duplicate_flag: "<red>重复的标志 '<arg:0>'</red>"
-argument.parse.failure.flag.no_flag_started: "<red>没有开始标志. 不知道如何处理 '<arg:0>'</red>"
-argument.parse.failure.flag.missing_argument: "<red>缺少 '<arg:0>' 参数</red>"
-argument.parse.failure.flag.no_permission: "<red>您没有权限使用 '<arg:0>'</red>"
-argument.parse.failure.color: "<red>'<arg:0>' 不是有效的颜色</red>"
-argument.parse.failure.duration: "<red>'<arg:0>' 不是有效的持续时间格式</red>"
-argument.parse.failure.aggregate.missing: "<red>缺少组件 '<arg:0>'</red>"
-argument.parse.failure.aggregate.failure: "<red>无效的组件 '<arg:0>': <arg:1></red>"
-argument.parse.failure.either: "<red>无法从 '<arg:0>' 解析 <arg:1> 或 <arg:2></red>"
-argument.parse.failure.namedtextcolor: "<red>'<arg:0>' 不是颜色代码</red>"
-info.pack.load: "已加载包: <arg:0>. 默认命名空间: <arg:1>"
-info.resource.load: "加载 <arg:0> 耗时 <arg:1>ms (<arg:2>)"
-info.resource_pack.generate.start: "正在开始生成资源包..."
-info.resource_pack.generate.finish: "生成资源包耗时 <arg:0>ms"
-info.resource_pack.validate.start: "正在验证资源包... (进度: <arg:0>/<arg:1> | 资源包格式: <arg:2>~<arg:3> | 叠加资源包: <arg:4>)"
-info.resource_pack.validate.finish: "验证资源包耗时 <arg:0>ms"
-info.resource_pack.optimize.json: "> 正在优化json文件..."
-info.resource_pack.optimize.texture: "> 正在优化贴图文件..."
-info.resource_pack.optimize.result: "□ 优化前/优化后/比例: <arg:0>/<arg:1>/<arg:2>%"
-info.resource_pack.optimize.finish: "优化资源包耗时 <arg:0>ms"
-info.resource_pack.create.start: "正在创建资源包压缩文件..."
-info.resource_pack.create.finish: "创建资源包文件耗时 <arg:0>ms"
-info.resource_pack.upload: "资源包上传完成"
-info.host.self.netty_server: "Netty HTTP 服务已在端口 <arg:0> 开启"
-info.host.cache.load: "[<arg:0>] 已加载缓存的资源包元数据"
-info.compatibility: "[兼容性] 已挂钩 <arg:0>"
-info.update.available: "新版本 <arg:0> 已可供下载: <arg:1>"
-info.update.latest: "插件已是最新版本"
-command.reload.config.success: "<white>重新加载配置完成. 耗时 <green><arg:0></green> 毫秒</white> <gray>(异步: <arg:1>ms | 同步: <arg:2>ms)</gray>"
-command.reload.config.failure: "<red>重新加载配置失败, 请检查控制台日志</red>"
-command.reload.pack.success: "<white>资源包重新加载完成. 耗时 <green><arg:0></green> 毫秒</white>"
-command.reload.pack.failure: "<red>重新加载资源包失败, 请检查控制台日志</red>"
-command.reload.all.success: "<white>全部重新加载完成. 耗时 <green><arg:0></green> 毫秒</white> <gray>(异步: <arg:1>ms | 同步: <arg:2>ms | 资源包: <arg:3>ms)</gray>"
-command.reload.all.failure: "<red>重新加载失败, 请检查控制台日志</red>"
-command.item.get.success: "<white>获得<arg:0>个<arg:1></white>"
-command.item.get.failure.not_exist: "<red>未知的物品“<arg:0>”</red>"
-command.item.give.success.single: "<white>已将<arg:0>个<arg:1>给予<arg:2></white>"
-command.item.give.success.multiple: "<white>已将<arg:0>个<arg:1>给予<arg:2>名玩家</white>"
-command.item.give.failure.not_exist: "<red>未知的物品“<arg:0>”</red>"
-command.item.clear.failed.single: "<red>未能从玩家<arg:0>找到任何物品</red>"
-command.item.clear.failed.multiple: "<red>未能从<arg:0>名玩家找到任何物品</red>"
-command.item.clear.success.single: "<white>已移除玩家<arg:1>的<arg:0>个物品</white>"
-command.item.clear.success.multiple: "<white>已移除<arg:1>名玩家的<arg:0>个物品</white>"
-command.item.clear.test.single: "<white>已在玩家<arg:1>身上找到<arg:0>个匹配的物品</white>"
-command.item.clear.test.multiple: "<white>已在<arg:1>名玩家身上找到<arg:0>个匹配的物品</white>"
-command.search_recipe.not_found: "<red>找不到此物品的配方</red>"
-command.search_usage.not_found: "<red>找不到此物品的用途</red>"
-command.search_recipe.no_item: "<red>请手持物品后再执行此命令</red>"
-command.search_usage.no_item: "<red>请手持物品后再执行此命令</red>"
-command.totem_animation.failure.not_totem: "<red>'<arg:0>' 不是 totem_of_undying 类型</red>"
-command.totem_animation.success.single: "<white>已将图腾动画<arg:0>播放给<arg:1></white>"
-command.totem_animation.success.multiple: "<white>已将图腾动画<arg:0>播放给<arg:1>名玩家</white>"
-command.resource.enable.success: "<white>已启用 <arg:0>. 执行 <click:run_command:/ce reload all><u>/ce reload all</u></click> 以应用更改</white>"
-command.resource.enable.failure.unknown: "<red>未知资源 <arg:0></red>"
-command.resource.disable.success: "<white>已禁用 <arg:0>. 执行 <click:run_command:/ce reload all><u>/ce reload all</u></click> 以应用更改</white>"
-command.resource.disable.failure.unknown: "<red>未知资源 <arg:0></red>"
-command.resource.list: "<white>启用的资源(<arg:0>): <green><arg:1></green><newline>禁用的资源(<arg:2>): <red><arg:3></red></white>"
-command.resource.create.success: "<white>已创建资源 <arg:0></white>"
-command.resource.create.failure.unknown: "<red>创建资源 <arg:0> 失败, 错误信息: <arg:1></red>"
-command.resource.create.failure.invalid_namespace: "<red>创建资源 <arg:0> 失败, 命名空间 <arg:1> 不合法</red>"
-command.resource.create.failure.exists: "<red>资源 <arg:0> 已存在</red>"
-command.upload.failure.not_supported: "<red>当前托管模式 '<arg:0>' 不支持上传资源包</red>"
-command.upload.on_progress: "<white>已开始上传进程. 检查控制台以获取详细信息</white>"
-command.send_resource_pack.success.single: "<white>发送资源包给 <arg:0></white>"
-command.send_resource_pack.success.multiple: "<white>发送资源包给 <arg:0> 个玩家</white>"
-command.locale.set.failure: "<red>区域设置格式无效: <arg:0></red>"
-command.locale.set.success: "<white>已为 <arg:1> 更新选定区域设置为 <arg:0></white>"
-command.locale.unset.success: "<white>已清除 <arg:0> 的选定区域设置</white>"
-command.display_entity_view_distance_scale.set.success: "<white>已为 <arg:1> 的展示实体可见距离百分比设置为 <arg:0></white>"
-command.entity_culling_distance_scale.set.success: "<white>已为 <arg:1> 的实体剔除距离百分比设置为 <arg:0></white>"
-command.entity_culling.toggle.success: "<white>已为 <arg:1> 的实体剔除状态设置为 <arg:0></white>"
-warning.network.resource_pack.unverified_uuid: "<yellow>玩家 <arg:0> 使用未经服务器验证的 UUID (<arg:1>) 尝试请求获取资源包</yellow>"
-warning.config.pack.duplicated_files: "<red>发现重复文件 请通过 config.yml 的 'resource-pack.duplicated-files-handler' 部分解决</red>"
-warning.config.yaml.duplicated_key: "<red>在文件 <arg:0> 发现问题 - 在第<arg:2>行发现重复的键 '<arg:1>', 这可能会导致一些意料之外的问题</red>"
-warning.config.yaml.inconsistent_value_type: "<red>在文件 <arg:0> 发现问题 - 在第<arg:2>行发现重复且值类型不同的键 '<arg:1>', 这可能会导致一些意料之外的问题</red>"
-warning.config.type.int: "<yellow>在文件 <arg:0> 发现问题 - 无法加载 '<arg:1>': 无法将 '<arg:2>' 转换为整数类型 (选项 '<arg:3>')</yellow>"
-warning.config.type.boolean: "<yellow>在文件 <arg:0> 发现问题 - 无法加载 '<arg:1>': 无法将 '<arg:2>' 转换为布尔类型 (选项 '<arg:3>')</yellow>"
-warning.config.type.long: "<yellow>在文件 <arg:0> 发现问题 - 无法加载 '<arg:1>': 无法将 '<arg:2>' 转换为长整型类型 (选项 '<arg:3>')</yellow>"
-warning.config.type.float: "<yellow>在文件 <arg:0> 发现问题 - 无法加载 '<arg:1>': 无法将 '<arg:2>' 转换为浮点数类型 (选项 '<arg:3>')</yellow>"
-warning.config.type.double: "<yellow>在文件 <arg:0> 发现问题 - 无法加载 '<arg:1>': 无法将 '<arg:2>' 转换为双精度类型 (选项 '<arg:3>')</yellow>"
-warning.config.type.quaternionf: "<yellow>在文件 <arg:0> 发现问题 - 无法加载 '<arg:1>': 无法将 '<arg:2>' 转换为四元数类型 (选项 '<arg:3>')</yellow>"
-warning.config.type.vector3f: "<yellow>在文件 <arg:0> 发现问题 - 无法加载 '<arg:1>': 无法将 '<arg:2>' 转换为三维向量类型 (选项 '<arg:3>')</yellow>"
-warning.config.type.vec3d: "<yellow>在文件 <arg:0> 发现问题 - 无法加载 '<arg:1>': 无法将 '<arg:2>' 转换为双精度浮点数三维向量类型 (选项 '<arg:3>')</yellow>"
-warning.config.type.map: "<yellow>在文件 <arg:0> 发现问题 - 无法加载 '<arg:1>': 无法将 '<arg:2>' 转换为映射类型 (选项 '<arg:3>')</yellow>"
-warning.config.type.aabb: "<yellow>在文件 <arg:0> 发现问题 - 无法加载 '<arg:1>': 无法将 '<arg:2>' 转换为轴对齐包围盒类型 (选项 '<arg:3>')</yellow>"
-warning.config.type.snbt.invalid_syntax: "<yellow>在文件 <arg:0> 发现问题 - 无法加载 '<arg:1>': 无效的 SNBT 语法 '<arg:2>'</yellow>"
-warning.config.type.snbt.invalid_syntax.parse_error: "<yellow><arg:0>，位于第<arg:1>个字符：<arg:2></yellow>"
-warning.config.type.snbt.invalid_syntax.here: "<yellow><--[此处]</yellow>"
-warning.config.type.snbt.parser.expected_string_uuid: "<yellow>应为表示有效UUID的字符串</yellow>"
-warning.config.type.snbt.parser.expected_number_or_boolean: "<yellow>应为数字或布尔型</yellow>"
-warning.config.type.snbt.parser.trailing: "<yellow>多余的尾随数据</yellow>"
-warning.config.type.snbt.parser.expected.compound: "<yellow>应为复合标签</yellow>"
-warning.config.type.snbt.parser.number_parse_failure: "<yellow>解析数字失败：<arg:0></yellow>"
-warning.config.type.snbt.parser.expected_hex_escape: "<yellow>字符字面量长度应为<arg:0></yellow>"
-warning.config.type.snbt.parser.invalid_codepoint: "<yellow>无效的Unicode字符码位：<arg:0></yellow>"
-warning.config.type.snbt.parser.no_such_operation: "<yellow>不存在的操作: <arg:0></yellow>"
-warning.config.type.snbt.parser.expected_integer_type: "<yellow>应为整数</yellow>"
-warning.config.type.snbt.parser.expected_float_type: "<yellow>应为浮点数</yellow>"
-warning.config.type.snbt.parser.expected_non_negative_number: "<yellow>应为非负数</yellow>"
-warning.config.type.snbt.parser.invalid_character_name: "<yellow>无效的Unicode字符名称</yellow>"
-warning.config.type.snbt.parser.invalid_array_element_type: "<yellow>无效的数组元素类型</yellow>"
-warning.config.type.snbt.parser.invalid_unquoted_start: "<yellow>无引号字符串不能以数字0-9、+或-开头</yellow>"
-warning.config.type.snbt.parser.expected_unquoted_string: "<yellow>应为有效的无引号字符串</yellow>"
-warning.config.type.snbt.parser.invalid_string_contents: "<yellow>无效的字符串内容</yellow>"
-warning.config.type.snbt.parser.expected_binary_numeral: "<yellow>应为二进制数</yellow>"
-warning.config.type.snbt.parser.underscore_not_allowed: "<yellow>数字的开头和结尾不允许使用下划线字符</yellow>"
-warning.config.type.snbt.parser.expected_decimal_numeral: "<yellow>应为十进制数</yellow>"
-warning.config.type.snbt.parser.expected_hex_numeral: "<yellow>应为十六进制数</yellow>"
-warning.config.type.snbt.parser.empty_key: "<yellow>键不能为空</yellow>"
-warning.config.type.snbt.parser.leading_zero_not_allowed: "<yellow>十进制数不能以0开头</yellow>"
-warning.config.type.snbt.parser.infinity_not_allowed: "<yellow>不允许使用非有限数的数值</yellow>"
-warning.config.type.snbt.parser.incorrect: "<yellow>应为字面量<arg:0></yellow>"
-warning.config.number.missing_type: "<yellow>在文件 <arg:0> 发现问题 - 配置项 '<arg:1>' 缺少数字类型所需的 'type' 参数</yellow>"
-warning.config.number.invalid_type: "<yellow>在文件 <arg:0> 发现问题 - 配置项 '<arg:1>' 使用了无效的数字类型 '<arg:2>'</yellow>"
-warning.config.number.missing_argument: "<yellow>在文件 <arg:0> 发现问题 - 配置项 '<arg:1>' 缺少数字参数</yellow>"
-warning.config.number.invalid_format: "<yellow>在文件 <arg:0> 发现问题 - 配置项 '<arg:1>' 使用了无效的数字格式 '<arg:2>'</yellow>"
-warning.config.number.fixed.missing_value: "<yellow>在文件 <arg:0> 发现问题 - 配置项 '<arg:1>' 缺少 'constant' 数字类型所需的 'value' 参数</yellow>"
-warning.config.number.fixed.invalid_value: "<yellow>在文件 <arg:0> 发现问题 - 配置项 '<arg:1>' 使用了无效的常量值参数 '<arg:2>'</yellow>"
-warning.config.number.expression.missing_expression: "<yellow>在文件 <arg:0> 发现问题 - 配置项 '<arg:1>' 缺少 'expression' 数字类型所需的 'expression' 参数</yellow>"
-warning.config.number.uniform.missing_min: "<yellow>在文件 <arg:0> 发现问题 - 配置项 '<arg:1>' 缺少 'uniform' 数字类型所需的 'min' 参数</yellow>"
-warning.config.number.uniform.missing_max: "<yellow>在文件 <arg:0> 发现问题 - 配置项 '<arg:1>' 缺少 'uniform' 数字类型所需的 'max' 参数</yellow>"
-warning.config.number.gaussian.missing_min: "<yellow>在文件 <arg:0> 发现问题 - 配置项 '<arg:1>' 缺少 'gaussian' 数字类型所需的 'min' 参数</yellow>"
-warning.config.number.gaussian.missing_max: "<yellow>在文件 <arg:0> 发现问题 - 配置项 '<arg:1>' 缺少 'gaussian' 数字类型所需的 'max' 参数</yellow>"
-warning.config.number.binomial.missing_extra: "<yellow>在文件 <arg:0> 发现问题 - 配置项 '<arg:1>' 缺少 'binomial' 数字类型所需的 'extra' 参数</yellow>"
-warning.config.number.binomial.missing_probability: "<yellow>在文件 <arg:0> 发现问题 - 配置项 '<arg:1>' 缺少 'binomial' 数字类型所需的 'probability' 参数</yellow>"
-warning.config.number.log_normal.missing_min: "<yellow>在文件 <arg:0> 发现问题 - 配置项 '<arg:1>' 缺少 'log_normal' 数字类型所需的 'min' 参数</yellow>"
-warning.config.number.log_normal.missing_max: "<yellow>在文件 <arg:0> 发现问题 - 配置项 '<arg:1>' 缺少 'log_normal' 数字类型所需的 'max' 参数</yellow>"
-warning.config.number.skew_normal.missing_min: "<yellow>在文件 <arg:0> 发现问题 - 配置项 '<arg:1>' 缺少 'skew_normal' 数字类型所需的 'min' 参数</yellow>"
-warning.config.number.skew_normal.missing_max: "<yellow>在文件 <arg:0> 发现问题 - 配置项 '<arg:1>' 缺少 'skew_normal' 数字类型所需的 'max' 参数</yellow>"
-warning.config.number.triangle.missing_min: "<yellow>在文件 <arg:0> 发现问题 - 配置项 '<arg:1>' 缺少 'triangle' 数字类型所需的 'min' 参数</yellow>"
-warning.config.number.triangle.missing_max: "<yellow>在文件 <arg:0> 发现问题 - 配置项 '<arg:1>' 缺少 'triangle' 数字类型所需的 'max' 参数</yellow>"
-warning.config.number.exponential.missing_lambda: "<yellow>在文件 <arg:0> 发现问题 - The config '<arg:1>' 缺少 'exponential' 数字类型所需的 'lambda' 参数</yellow>"
-warning.config.condition.all_of.missing_terms: "<yellow>在文件 <arg:0> 发现问题 - 配置项 '<arg:1>' 缺少 'all_of' 条件所需的 'terms' 参数</yellow>"
-warning.config.condition.all_of.invalid_terms_type: "<yellow>在文件 <arg:0> 发现问题 - 配置项 '<arg:1>' 的 'all_of' 条件配置错误, 'terms' 应为映射列表, 当前类型: '<arg:2>'</yellow>"
-warning.config.condition.any_of.missing_terms: "<yellow>在文件 <arg:0> 发现问题 - 配置项 '<arg:1>' 缺少 'any_of' 条件所需的 'terms' 参数</yellow>"
-warning.config.condition.any_of.invalid_terms_type: "<yellow>在文件 <arg:0> 发现问题 - 配置项 '<arg:1>' 的 'any_of' 条件配置错误, 'terms' 应为映射列表, 当前类型: '<arg:2>'</yellow>"
-warning.config.condition.inverted.missing_term: "<yellow>在文件 <arg:0> 发现问题 - 配置项 '<arg:1>' 缺少 'inverted' 条件所需的 'term' 参数</yellow>"
-warning.config.condition.inverted.invalid_term_type: "<yellow>在文件 <arg:0> 发现问题 - 配置项 '<arg:1>' 的 'inverted' 条件配置错误, 'term' 应为配置节点, 当前类型: '<arg:2>'</yellow>"
-warning.config.condition.enchantment.missing_predicate: "<yellow>在文件 <arg:0> 发现问题 - 配置项 '<arg:1>' 缺少 'enchantment' 条件所需的 'predicate' 参数</yellow>"
-warning.config.condition.enchantment.invalid_predicate: "<yellow>在文件 <arg:0> 发现问题 - 配置项 '<arg:1>' 使用了无效的附魔 'predicate' 参数 '<arg:2>'</yellow>"
-warning.config.condition.match_block_property.missing_properties: "<yellow>在文件 <arg:0> 发现问题 - 配置项 '<arg:1>' 缺少 'match_block_property' 条件所需的 'properties' 参数</yellow>"
-warning.config.condition.match_block.missing_id: "<yellow>在文件 <arg:0> 发现问题 - 配置项 '<arg:1>' 缺少 'match_block' 条件所需的 'id' 参数</yellow>"
-warning.config.condition.match_entity.missing_id: "<yellow>在文件 <arg:0> 发现问题 - 配置项 '<arg:1>' 缺少 'match_entity' 条件所需的 'id' 参数</yellow>"
-warning.config.condition.match_item.missing_id: "<yellow>在文件 <arg:0> 发现问题 - 配置项 '<arg:1>' 缺少 'match_item' 条件所需的 'id' 参数</yellow>"
-warning.config.condition.table_bonus.missing_enchantment: "<yellow>在文件 <arg:0> 发现问题 - 配置项 '<arg:1>' 缺少 'table_bonus' 条件所需的 'enchantment' 参数</yellow>"
-warning.config.condition.table_bonus.missing_chances: "<yellow>在文件 <arg:0> 发现问题 - 配置项 '<arg:1>' 缺少 'table_bonus' 条件所需的 'chances' 参数</yellow>"
-warning.config.condition.permission.missing_permission: "<yellow>在文件 <arg:0> 发现问题 - 配置项 '<arg:1>' 缺少 'permission' 条件必需的 'permission' 参数</yellow>"
-warning.config.condition.string_equals.missing_value1: "<yellow>在文件 <arg:0> 发现问题 - 配置项 '<arg:1>' 缺少 'string_equals' 条件必需的 'value1' 参数</yellow>"
-warning.config.condition.string_equals.missing_value2: "<yellow>在文件 <arg:0> 发现问题 - 配置项 '<arg:1>' 缺少 'string_equals' 条件必需的 'value2' 参数</yellow>"
-warning.config.condition.string_contains.missing_value1: "<yellow>在文件 <arg:0> 发现问题 - 配置项 '<arg:1>' 缺少 'string_contains' 条件必需的 'value1' 参数</yellow>"
-warning.config.condition.string_contains.missing_value2: "<yellow>在文件 <arg:0> 发现问题 - 配置项 '<arg:1>' 缺少 'string_contains' 条件必需的 'value2' 参数</yellow>"
-warning.config.condition.string_regex.missing_value: "<yellow>在文件 <arg:0> 发现问题 - 配置项 '<arg:1>' 缺少 'string_regex' 条件必需的 'value' 参数</yellow>"
-warning.config.condition.string_regex.missing_regex: "<yellow>在文件 <arg:0> 发现问题 - 配置项 '<arg:1>' 缺少 'string_regex' 条件必需的 'regex' 参数</yellow>"
-warning.config.condition.expression.missing_expression: "<yellow>在文件 <arg:0> 发现问题 - 配置项 '<arg:1>' 缺少 'expression' 条件必需的 'expression' 参数</yellow>"
-warning.config.condition.is_null.missing_argument: "<yellow>在文件 <arg:0> 发现问题 - 配置项 '<arg:1>' 缺少 'is_null' 条件的必需的 'argument' 参数</yellow>"
-warning.config.condition.hand.missing_hand: "<yellow>在文件 <arg:0> 发现问题 - 配置项 '<arg:1>' 缺少 'hand' 条件必需的 'hand' 参数</yellow>"
-warning.config.condition.hand.invalid_hand: "<yellow>在文件 <arg:0> 发现问题 - 配置项 '<arg:1>' 使用了无效的 'hand' 参数 '<arg:2>' ('hand' 条件). 允许的手部类型: [<arg:3>]</yellow>"
-warning.config.condition.on_cooldown.missing_id: "<yellow>在文件 <arg:0> 发现问题 - 配置项 '<arg:1>' 缺少 'on_cooldown' 条件必需的 'id' 参数</yellow>"
-warning.config.condition.inventory_has_item.missing_id: "<yellow>在文件 <arg:0> 发现问题 - 配置项 '<arg:1>' 缺少 'inventory_has_item' 条件必需的 'id' 参数</yellow>"
-warning.config.structure.not_section: "<yellow>在文件 <arg:0> 发现问题 - 配置项 '<arg:1>' 应为配置段落 但实际类型为 '<arg:2>'</yellow>"
-warning.config.image.duplicate: "<yellow>在文件 <arg:0> 发现问题 - 重复的图片配置 '<arg:1>' 请检查其他文件中是否存在相同配置</yellow>"
-warning.config.image.missing_height: "<yellow>在文件 <arg:0> 发现问题 - 图片 '<arg:1>' 缺少必需的 'height' 参数</yellow>"
-warning.config.image.height_ascent_conflict: "<yellow>在文件 <arg:0> 发现问题 - 图片 '<arg:1>' 违反位图规则: 'height' 参数 '<arg:2>' 必须不小于 'ascent' 参数 '<arg:3>'</yellow>"
-warning.config.image.missing_file: "<yellow>在文件 <arg:0> 发现问题 - 图片 '<arg:1>' 缺少必需的 'file' 参数</yellow>"
-warning.config.image.invalid_file_chars: "<yellow>在文件 <arg:0> 发现问题 - 图片 '<arg:1>' 的 'file' 参数 '<arg:2>' 包含非法字符 请参考 https://zh.minecraft.wiki/w/%E5%91%BD%E5%90%8D%E7%A9%BA%E9%97%B4ID#%E5%90%88%E6%B3%95%E5%AD%97%E7%AC%A6</yellow>"
-warning.config.image.invalid_font_chars: "<yellow>在文件 <arg:0> 发现问题 - 图片 '<arg:1>' 的 'font' 参数 '<arg:2>' 包含非法字符 请参考 https://zh.minecraft.wiki/w/%E5%91%BD%E5%90%8D%E7%A9%BA%E9%97%B4ID#%E5%90%88%E6%B3%95%E5%AD%97%E7%AC%A6</yellow>"
-warning.config.image.invalid_grid_size: "<yellow>在文件 <arg:0> 发现问题 - 图片 '<arg:1>' 使用了无效的网格尺寸 '<arg:2>'. 正确的格式 '3,5'</yellow>"
-warning.config.image.missing_char: "<yellow>在文件 <arg:0> 发现问题 - 图片 '<arg:1>' 缺少必需的 'char' 参数</yellow>"
-warning.config.image.codepoint.conflict: "<yellow>在文件 <arg:0> 发现问题 - 图片 '<arg:1>' 在字体 <arg:2> 中使用的字符 '<arg:3>(<arg:4>)' 已被其他图片 '<arg:5>' 占用</yellow>"
-warning.config.image.codepoint.exhausted: "<yellow>在文件 <arg:0> 发现问题 - 无法为图片 '<arg:1>' 分配码位, 字体 '<arg:2>' 的可用码位已耗尽</yellow>"
-warning.config.image.invalid_codepoint_grid: "<yellow>在文件 <arg:0> 发现问题 - 图片 '<arg:1>' 的 'chars' 码位网格无效</yellow>"
-warning.config.image.invalid_char: "<yellow>在文件 <arg:0> 发现问题 - 图片 '<arg:1>' 的 'char' 参数包含组合字符可能导致图片分裂</yellow>"
-warning.config.image.invalid_hex_value: "<yellow>在文件 <arg:0> 发现问题 - 图片 '<arg:1>' 使用的 Unicode 字符 '<arg:2>' 不是有效的十六进制值</yellow>"
-warning.config.image.invalid_unicode_string: "<yellow>在文件 <arg:0> 发现问题 - 图片 '<arg:1>' 使用的 Unicode 字符串 '<arg:2>' 格式不正确</yellow>"
-warning.config.recipe.duplicate: "<yellow>在文件 <arg:0> 发现问题 - 重复的配方 '<arg:1>' 请检查其他文件中是否存在相同配置</yellow>"
-warning.config.recipe.missing_type: "<yellow>在文件 <arg:0> 发现问题 - 配方 '<arg:1>' 缺少必需的 'type' 参数</yellow>"
-warning.config.recipe.invalid_type: "<yellow>在文件 <arg:0> 发现问题 - 配方 '<arg:1>' 使用了无效的配方类型 '<arg:2>'</yellow>"
-warning.config.recipe.invalid_ingredient: "<yellow>在文件 <arg:0> 发现问题 - 配方 '<arg:1>' 使用了无效的原料 '<arg:2>'</yellow>"
-warning.config.recipe.invalid_result: "<yellow>在文件 <arg:0> 发现问题 - 配方 '<arg:1>' 使用了无效的结果 '<arg:2>'</yellow>"
-warning.config.recipe.missing_ingredient: "<yellow>在文件 <arg:0> 发现问题 - 烧炼配方 '<arg:1>' 缺少必需的 'ingredient' 参数</yellow>"
-warning.config.recipe.missing_result: "<yellow>在文件 <arg:0> 发现问题 - 配方 '<arg:1>' 缺少必需的 'result' 参数</yellow>"
-warning.config.recipe.result.missing_id: "<yellow>在文件 <arg:0> 发现问题 - 配方 '<arg:1>' 的结果缺少必需的 'id' 参数</yellow>"
-warning.config.recipe.crafting.invalid_category: "<yellow>在文件 <arg:0> 发现问题 - 合成配方 '<arg:1>' 使用了无效的分类 '<arg:2>' 允许的分类: [<arg:3>]</yellow>"
-warning.config.recipe.cooking.invalid_category: "<yellow>在文件 <arg:0> 发现问题 - 烧炼配方 '<arg:1>' 使用了无效的分类 '<arg:2>' 允许的分类: [<arg:3>]</yellow>"
-warning.config.recipe.shaped.missing_pattern: "<yellow>在文件 <arg:0> 发现问题 - 有序合成配方 '<arg:1>' 缺少必需的 'pattern' 参数</yellow>"
-warning.config.recipe.shaped.invalid_pattern: "<yellow>在文件 <arg:0> 发现问题 - 有序合成配方 '<arg:1>' 使用了无效的图案 '<arg:2>'</yellow>"
-warning.config.recipe.shaped.invalid_symbol: "<yellow>在文件 <arg:0> 发现问题 - 有序合成配方 '<arg:1>' 在图案中使用了无效符号 '<arg:2>'</yellow>"
-warning.config.recipe.smithing_transform.post_processor.missing_type: "<yellow>在文件 <arg:0> 发现问题 - 锻造升级配方 '<arg:1>' 的后处理器缺少必需的 'type' 参数</yellow>"
-warning.config.recipe.smithing_transform.post_processor.invalid_type: "<yellow>在文件 <arg:0> 发现问题 - 锻造升级配方 '<arg:1>' 使用了无效的后处理器类型 '<arg:2>'</yellow>"
-warning.config.recipe.smithing_transform.post_processor.keep_component.missing_components: "<yellow>在文件 <arg:0> 发现问题 - 锻造升级配方 '<arg:1>' 的 'keep_components' 后处理器缺少必需的 'components' 参数</yellow>"
-warning.config.recipe.smithing_transform.post_processor.keep_component.missing_tags: "<yellow>在文件 <arg:0> 发现问题 - 锻造升级配方 '<arg:1>' 的 'keep_tags' 后处理器缺少必需的 'tags' 参数</yellow>"
-warning.config.recipe.smithing_transform.post_processor.keep_custom_data.missing_paths: "<yellow>在文件 <arg:0> 发现问题 - 锻造升级配方 '<arg:1>' 的 'keep_custom_data' 后处理器缺少必需的 'paths' 参数</yellow>"
-warning.config.recipe.smithing_transform.missing_base: "<yellow>在文件 <arg:0> 发现问题 - 锻造升级配方 '<arg:1>' 缺少必需的 'base' 参数</yellow>"
-warning.config.recipe.smithing_trim.missing_base: "<yellow>在文件 <arg:0> 发现问题 - 锻造纹饰配方 '<arg:1>' 缺少必需的 'base' 参数</yellow>"
-warning.config.recipe.smithing_trim.missing_template_type: "<yellow>在文件 <arg:0> 发现问题 - 锻造纹饰配方 '<arg:1>' 缺少必需的 'template-type' 参数</yellow>"
-warning.config.recipe.smithing_trim.missing_addition: "<yellow>在文件 <arg:0> 发现问题 - 锻造纹饰配方 '<arg:1>' 缺少必需的 'addition' 参数</yellow>"
-warning.config.recipe.smithing_trim.missing_pattern: "<yellow>在文件 <arg:0> 发现问题 - 锻造纹饰配方 '<arg:1>' 缺少必需的 'pattern' 参数</yellow>"
-warning.config.recipe.brewing.missing_container: "<yellow>在文件 <arg:0> 发现问题 - 酿造配方 '<arg:1>' 缺少必需的 'container' 参数</yellow>"
-warning.config.recipe.brewing.missing_ingredient: "<yellow>在文件 <arg:0> 发现问题 - 酿造配方 '<arg:1>' 缺少必需的 'ingredient' 参数</yellow>"
-warning.config.recipe.result.post_processor.missing_type: "<yellow>在文件 <arg:0> 发现问题 - 配方 '<arg:1>' 缺少结果后处理器必需的 'type' 参数</yellow>"
-warning.config.recipe.result.post_processor.invalid_type: "<yellow>在文件 <arg:0> 发现问题 - 配方 '<arg:1>' 使用了无效结果后处理器类型 '<arg:2>'</yellow>"
-warning.config.translation.unknown_locale: "<yellow>在文件 <arg:0> 发现问题 - 未知的语言环境 '<arg:1>'</yellow>"
-warning.config.template.duplicate: "<yellow>在文件 <arg:0> 发现问题 - 重复的模板 '<arg:1>' 请检查其他文件中是否存在相同配置</yellow>"
-warning.config.template.invalid: "<yellow>在文件 <arg:0> 发现问题 - 配置项 '<arg:1>' 使用了无效的模板 '<arg:2>'</yellow>"
-warning.config.template.argument.self_increase_int.invalid_range: "<yellow>在文件 <arg:0> 发现问题 - 模板 '<arg:1>' 在 'self_increase_int' 参数中使用了一个起始值 '<arg:2>' 大于终止值 '<arg:3>'</yellow>"
-warning.config.template.argument.to_upper_case.invalid_locale: "<yellow>在文件 <arg:0> 发现问题 - 模板 '<arg:1>' 在 'to_upper_case' 参数中使用了无效的区域设置 '<arg:2>'</yellow>"
-warning.config.template.argument.to_upper_case.missing_value: "<yellow>在文件 <arg:0> 发现问题 - 模板 '<arg:1>' 缺少 'to_upper_case' 参数所需的 'value' 参数</yellow>"
-warning.config.template.argument.to_lower_case.invalid_locale: "<yellow>在文件 <arg:0> 发现问题 - 模板 '<arg:1>' 在 'to_lower_case' 参数中使用了无效的区域设置 '<arg:2>'</yellow>"
-warning.config.template.argument.to_lower_case.missing_value: "<yellow>在文件 <arg:0> 发现问题 - 模板 '<arg:1>' 缺少 'to_lower_case' 参数所需的 'value' 参数</yellow>"
-warning.config.template.argument.list.invalid_type: "<yellow>在文件 <arg:0> 发现问题 - 模板 '<arg:1>' 的 'list' 参数需要列表类型 但输入参数类型为 '<arg:2>'</yellow>"
-warning.config.template.argument.missing_value: "<yellow>在文件 <arg:0> 发现问题 - 配置项 '<arg:1>' 缺少了 '<arg:2>' 必要的模板参数值. 请使用 arguments 选项进行配置或为此参数设定默认值</yellow>"
-warning.config.vanilla_loot.missing_type: "<yellow>在文件 <arg:0> 发现问题 - 原版战利品 '<arg:1>' 缺少必需的 'type' 参数</yellow>"
-warning.config.vanilla_loot.invalid_type: "<yellow>在文件 <arg:0> 发现问题 - 原版战利品 '<arg:1>' 使用了无效类型 '<arg:2>' 允许的类型: [<arg:3>]</yellow>"
-warning.config.vanilla_loot.block.invalid_target: "<yellow>在文件 <arg:0> 发现问题 - 原版战利品 '<arg:1>' 中存在无效的方块目标 '<arg:2>'</yellow>"
-warning.config.sound.duplicate: "<yellow>在文件 <arg:0> 发现问题 - 重复的音效 '<arg:1>' 请检查其他文件中是否存在相同配置</yellow>"
-warning.config.sound.missing_sounds: "<yellow>在文件 <arg:0> 发现问题 - 音效 '<arg:1>' 缺少必需的 'sounds' 参数</yellow>"
-warning.config.sound.missing_name: "<yellow>在文件 <arg:0> 发现问题 - 音效 '<arg:1>' 缺少必需的 'name' 参数</yellow>"
-warning.config.jukebox_song.duplicate: "<yellow>在文件 <arg:0> 发现问题 - 重复的唱片机歌曲 '<arg:1>' 请检查其他文件中是否存在相同配置</yellow>"
-warning.config.jukebox_song.missing_sound: "<yellow>在文件 <arg:0> 发现问题 - 唱片机歌曲 '<arg:1>' 缺少必需的 'sound' 参数</yellow>"
-warning.config.furniture.duplicate: "<yellow>在文件 <arg:0> 发现问题 - 重复的家具 '<arg:1>' 请检查其他文件中是否存在相同配置</yellow>"
-warning.config.furniture.missing_variants: "<yellow>在文件 <arg:0> 发现问题 - 家具 '<arg:1>' 缺少必需的 'variants' 参数</yellow>"
-warning.config.furniture.element.invalid_type: "<yellow>在文件 <arg:0> 发现问题 - 家具 '<arg:1>' 使用了无效的元素类型 '<arg:2>'</yellow>"
-warning.config.furniture.element.item_display.missing_item: "<yellow>在文件 <arg:0> 发现问题 - 家具 '<arg:1>' 的 'item_display' 元素缺少必需的 'item' 参数</yellow>"
-warning.config.furniture.element.text_display.missing_text: "<yellow>在文件 <arg:0> 发现问题 - 家具 '<arg:1>' 的 'text_display' 元素缺少必需的 'text' 参数</yellow>"
-warning.config.furniture.element.item.missing_item: "<yellow>在文件 <arg:0> 发现问题 - 家具 '<arg:1>' 的 'item' 元素缺少必需的 'item' 参数</yellow>"
-warning.config.furniture.element.armor_stand.missing_item: "<yellow>在文件 <arg:0> 发现问题 - 家具 '<arg:1>' 的 'armor_stand' 元素缺少必需的 'item' 参数</yellow>"
-warning.config.furniture.settings.unknown: "<yellow>在文件 <arg:0> 发现问题 - 家具 '<arg:1>' 使用了未知的设置类型 '<arg:2>'</yellow>"
-warning.config.furniture.hitbox.invalid_type: "<yellow>在文件 <arg:0> 发现问题 - 家具 '<arg:1>' 使用了无效的碰撞箱类型 '<arg:2>'</yellow>"
-warning.config.furniture.hitbox.custom.invalid_entity: "<yellow>在文件 <arg:0> 发现问题 - 家具 '<arg:1>' 的自定义碰撞箱使用了无效的实体类型 '<arg:2>'</yellow>"
-warning.config.furniture.behavior.missing_type: "<yellow>在文件 <arg:0> 发现问题 - 家具 '<arg:1>' 的行为配置缺少必需的 'type' 参数</yellow>"
-warning.config.furniture.behavior.invalid_type: "<yellow>在文件 <arg:0> 发现问题 - 家具 '<arg:1>' 使用了无效的行为类型 '<arg:2>'</yellow>"
-warning.config.item.duplicate: "<yellow>在文件 <arg:0> 发现问题 - 重复的物品 '<arg:1>' 请检查其他文件中是否存在相同配置</yellow>"
-warning.config.item.settings.unknown: "<yellow>在文件 <arg:0> 发现问题 - 物品 '<arg:1>' 使用了未知的设置类型 '<arg:2>'</yellow>"
-warning.config.item.settings.invulnerable.invalid_damage_source: "<yellow>在文件 <arg:0> 发现问题 - 物品 '<arg:1>' 物品使用了未知的伤害来源类型 '<arg:2>' 允许的来源: [<arg:3>]</yellow>"
-warning.config.item.settings.equipment.missing_asset_id: "<yellow>在文件 <arg:0> 发现问题 - 物品 '<arg:1>' 缺少 'equipment' 设置所需的 'asset-id' 参数</yellow>"
-warning.config.item.settings.equipment.invalid_asset_id: "<yellow>在文件 <arg:0> 发现问题 - 物品 '<arg:1>' 为 'equipment' 设置配置了无效的 'asset-id'. 这可能是因为你没有创建装备配置或是错误地拼写了 asset-id</yellow>"
-warning.config.item.settings.projectile.missing_item: "<yellow>在文件 <arg:0> 发现问题 - 物品 '<arg:1>' 缺少 'projectile' 设置所需的 'item' 参数</yellow>"
-warning.config.item.settings.craft_remainder.missing_type: "<yellow>在文件 <arg:0> 发现问题 - 物品 '<arg:1>' 缺少 'craft-remainder' 所需的 'type' 参数</yellow>"
-warning.config.item.settings.craft_remainder.invalid_type: "<yellow>在文件 <arg:0> 发现问题 - 物品 '<arg:1>' 使用了无效的合成剩余物品类型 '<arg:2>'</yellow>"
-warning.config.item.settings.craft_remainder.fixed.missing_item: "<yellow>在文件 <arg:0> 发现问题 - 物品 '<arg:1>' 的固定 'craft-remainder' 缺少所需的 'item' 参数</yellow>"
-warning.config.item.settings.craft_remainder.recipe_based.missing_terms: "<yellow>在文件 <arg:0> 发现问题 - 物品 '<arg:1>' 缺少基于配方的 'craft-remainder' 所需的 'terms' 参数</yellow>"
-warning.config.item.data.attribute_modifiers.missing_type: "<yellow>在文件 <arg:0> 发现问题 - 物品 '<arg:1>' 缺少 'attribute-modifiers' 数据所需的 'type' 参数</yellow>"
-warning.config.item.data.attribute_modifiers.missing_amount: "<yellow>在文件 <arg:0> 发现问题 - 物品 '<arg:1>' 缺少 'attribute-modifiers' 数据所需的 'amount' 参数</yellow>"
-warning.config.item.data.attribute_modifiers.missing_operation: "<yellow>在文件 <arg:0> 发现问题 - 物品 '<arg:1>' 缺少 'attribute-modifiers' 数据所需的 'operation' 参数</yellow>"
-warning.config.item.data.attribute_modifiers.display.missing_type: "<yellow>在文件 <arg:0> 发现问题 - 物品 '<arg:1>' 缺少 'attribute-modifiers' 显示数据所需的 'type' 参数</yellow>"
-warning.config.item.data.attribute_modifiers.display.missing_value: "<yellow>在文件 <arg:0> 发现问题 - 物品 '<arg:1>' 缺少 'attribute-modifiers' 显示数据所需的 'value' 参数</yellow>"
-warning.config.item.data.external.missing_source: "<yellow>在文件 <arg:0> 发现问题 - 物品 '<arg:1>' 缺少 'external' 数据所需的 'source' 参数</yellow>"
-warning.config.item.data.external.missing_id: "<yellow>在文件 <arg:0> 发现问题 - 物品 '<arg:1>' 缺少 'external' 数据所需的 'id' 参数</yellow>"
-warning.config.item.data.external.invalid_source: "<yellow>在文件 <arg:0> 发现问题 - 物品 '<arg:1>' 在 'external' 数据中使用了无效的物品来源 '<arg:2>'</yellow>"
-warning.config.item.missing_material: "<yellow>在文件 <arg:0> 发现问题 - 物品 '<arg:1>' 缺少必需的 'material' 参数</yellow>"
-warning.config.item.invalid_material: "<yellow>在文件 <arg:0> 发现问题 - 物品 '<arg:1>' 使用了无效的材料类型 '<arg:2>'</yellow>"
-warning.config.item.bad_custom_model_data: "<yellow>在文件 <arg:0> 发现问题 - 物品 '<arg:1>' 使用的自定义模型数据 '<arg:2>' 数值过大 建议使用小于 16,777,216 的值</yellow>"
-warning.config.item.item_model.conflict: "<yellow>在文件 <arg:0> 发现问题 - 物品 '<arg:1>' 使用了无效的 'item-model' 选项. 这个 item-model 已经存在对应的原版物品</yellow>"
-warning.config.item.custom_model_data.conflict: "<yellow>在文件 <arg:0> 发现问题 - 物品 '<arg:1>' 使用的自定义模型数据 '<arg:2>' 已被物品 '<arg:3>' 占用</yellow>"
-warning.config.item.custom_model_data.exhausted: "<yellow>在文件 <arg:0> 发现问题 - 无法为物品 '<arg:1>' 分配自定义模型数据, 材质 '<arg:2>' 的自定义模型数据已耗尽</yellow>"
-warning.config.item.invalid_component: "<yellow>在文件 <arg:0> 发现问题 - 物品 '<arg:1>' 使用了未知的数据组件 '<arg:2>'</yellow>"
-warning.config.item.missing_model_id: "<yellow>在文件 <arg:0> 发现问题 - 物品 '<arg:1>' 缺少必需的 'custom-model-data' 或 'item-model' 参数</yellow>"
-warning.config.item.missing_model: "<yellow>在文件 <arg:0> 发现问题 - 物品 '<arg:1>' 缺少支持 1.21.4+ 资源包必需的 'model' 配置项</yellow>"
-warning.config.item.behavior.missing_type: "<yellow>在文件 <arg:0> 发现问题 - 物品 '<arg:1>' 的行为配置缺少必需的 'type' 参数</yellow>"
-warning.config.item.behavior.invalid_type: "<yellow>在文件 <arg:0> 发现问题 - 物品 '<arg:1>' 使用了无效的行为类型 '<arg:2>'</yellow>"
-warning.config.item.behavior.block.missing_block: "<yellow>在文件 <arg:0> 发现问题 - 物品 '<arg:1>' 的 'block_item' 行为缺少必需的 'block' 参数</yellow>"
-warning.config.item.behavior.wall_block.missing_block: "<yellow>在文件 <arg:0> 发现问题 - 物品 '<arg:1>' 缺少 'wall_block_item' 行为所需的 'block' 参数</yellow>"
-warning.config.item.behavior.ceiling_block.missing_block: "<yellow>在文件 <arg:0> 发现问题 - 物品 '<arg:1>' 缺少 'ceiling_block_item' 行为所需的 'block' 参数</yellow>"
-warning.config.item.behavior.ground_block.missing_block: "<yellow>在文件 <arg:0> 发现问题 - 物品 '<arg:1>' 缺少 'ground_block_item' 行为所需的 'block' 参数</yellow>"
-warning.config.item.behavior.furniture.missing_furniture: "<yellow>在文件 <arg:0> 发现问题 - 物品 '<arg:1>' 的 'furniture_item' 行为缺少必需的 'furniture' 参数</yellow>"
-warning.config.item.behavior.liquid_collision.missing_block: "<yellow>在文件 <arg:0> 发现问题 - 物品 '<arg:1>' 的 'liquid_collision_block_item' 行为缺少必需的 'block' 参数</yellow>"
-warning.config.item.behavior.double_high.missing_block: "<yellow>在文件 <arg:0> 发现问题 - 物品 '<arg:1>' 的 'double_high_block_item' 行为缺少必需的 'block' 参数</yellow>"
-warning.config.item.behavior.multi_high.missing_block: "<yellow>在文件 <arg:0> 发现问题 - 物品 '<arg:1>' 的 'multi_high_block_item' 行为缺少必需的 'block' 参数</yellow>"
-warning.config.item.legacy_model.missing_path: "<yellow>在文件 <arg:0> 发现问题 - 物品 '<arg:1>' 的旧版模型(legacy-model)缺少必需的 'path' 参数</yellow>"
-warning.config.item.legacy_model.overrides.missing_path: "<yellow>在文件 <arg:0> 发现问题 - 物品 '<arg:1>' 的旧版模型覆写规则(overrides)缺少必需的 'path' 参数</yellow>"
-warning.config.item.legacy_model.overrides.missing_predicate: "<yellow>在文件 <arg:0> 发现问题 - 物品 '<arg:1>' 的旧版模型覆写规则(overrides)缺少必需的 'predicate' 参数</yellow>"
-warning.config.item.legacy_model.cannot_convert: "<yellow>在文件 <arg:0> 发现问题 - 无法将物品 '<arg:1>' 自动转换为旧版格式, 请手动为此物品创建 'legacy-model' 配置项</yellow>"
-warning.config.item.simplified_model.invalid_model: "<yellow>在文件 <arg:0> 中发现配置问题 - 物品 '<arg:1>' 包含的参数数量不匹配. 预期模型数量为 '<arg:2>', 但实际数量为 '<arg:3>'</yellow>"
-warning.config.item.simplified_model.invalid_texture: "<yellow>在文件 <arg:0> 中发现配置问题 - 物品 '<arg:1>' 包含的参数数量不匹配. 预期纹理数量为 '<arg:2>', 但实际数量为 '<arg:3>'</yellow>"
-warning.config.item.model.invalid_type: "<yellow>在文件 <arg:0> 发现问题 - 物品 '<arg:1>' 使用了无效的模型类型 '<arg:2>'</yellow>"
-warning.config.item.model.tint.missing_type: "<yellow>在文件 <arg:0> 发现问题 - 物品 '<arg:1>' 的染色配置缺少必需的 'type' 参数</yellow>"
-warning.config.item.model.tint.invalid_type: "<yellow>在文件 <arg:0> 发现问题 - 物品 '<arg:1>' 使用了无效的染色类型 '<arg:2>'</yellow>"
-warning.config.item.model.tint.constant.missing_value: "<yellow>在文件 <arg:0> 发现问题 - 物品 '<arg:1>' 的固定染色配置缺少必需的 'value' 参数</yellow>"
-warning.config.item.model.tint.grass.invalid_temp: "<yellow>在文件 <arg:0> 发现问题 - 物品 '<arg:1>' 的草地染色使用了无效的温度值 '<arg:2>' 有效范围应为 0 至 1</yellow>"
-warning.config.item.model.tint.grass.invalid_downfall: "<yellow>在文件 <arg:0> 发现问题 - 物品 '<arg:1>' 的草地染色使用了无效的降水值 '<arg:2>' 有效范围应为 0 至 1</yellow>"
-warning.config.item.model.tint.invalid_value: "<yellow>在文件 <arg:0> 发现问题 - 物品 '<arg:1>' 使用了无效的染色值 '<arg:2>'</yellow>"
-warning.config.item.model.base.missing_path: "<yellow>在文件 <arg:0> 发现问题 - 物品 '<arg:1>' 的 'minecraft:model' 模型缺少必需的 'path' 参数</yellow>"
-warning.config.item.model.base.invalid_path: "<yellow>在文件 <arg:0> 发现问题 - 物品 '<arg:1>' 的 'minecraft:model' 模型路径 '<arg:2>' 包含非法字符 请参考 https://zh.minecraft.wiki/w/%E5%91%BD%E5%90%8D%E7%A9%BA%E9%97%B4ID#%E5%90%88%E6%B3%95%E5%AD%97%E7%AC%A6</yellow>"
-warning.config.item.model.condition.missing_property: "<yellow>在文件 <arg:0> 发现问题 - 物品 '<arg:1>' 的 'minecraft:condition' 模型缺少必需的 'property' 参数</yellow>"
-warning.config.item.model.condition.invalid_property: "<yellow>在文件 <arg:0> 发现问题 - 物品 '<arg:1>' 的 'minecraft:condition' 模型使用了无效属性 '<arg:2>'</yellow>"
-warning.config.item.model.condition.missing_on_true: "<yellow>在文件 <arg:0> 发现问题 - 物品 '<arg:1>' 的 'minecraft:condition' 模型缺少必需的 'on-true' 参数</yellow>"
-warning.config.item.model.condition.missing_on_false: "<yellow>在文件 <arg:0> 发现问题 - 物品 '<arg:1>' 的 'minecraft:condition' 模型缺少必需的 'on-false' 参数</yellow>"
-warning.config.item.model.condition.keybind.missing_keybind: "<yellow>在文件 <arg:0> 发现问题 - 物品 '<arg:1>' 的 'minecraft:keybind_down' 属性缺少必需的 'keybind' 参数</yellow>"
-warning.config.item.model.condition.has_component.missing_component: "<yellow>在文件 <arg:0> 发现问题 - 物品 '<arg:1>' 的 'minecraft:has_component' 属性缺少必需的 'component' 参数</yellow>"
-warning.config.item.model.condition.component.missing_predicate: "<yellow>在文件 <arg:0> 发现问题 - 物品 '<arg:1>' 的 'minecraft:component' 属性缺少必需的 'predicate' 参数</yellow>"
-warning.config.item.model.condition.component.missing_value: "<yellow>在文件 <arg:0> 发现问题 - 物品 '<arg:1>' 的 'minecraft:component' 属性缺少必需的 'value' 参数/yellow>"
-warning.config.item.model.composite.missing_models: "<yellow>在文件 <arg:0> 发现问题 - 物品 '<arg:1>' 的 'minecraft:composite' 模型缺少必需的 'models' 参数</yellow>"
-warning.config.item.model.range_dispatch.missing_property: "<yellow>在文件 <arg:0> 发现问题 - 物品 '<arg:1>' 的 'minecraft:range_dispatch' 模型缺少必需的 'property' 参数</yellow>"
-warning.config.item.model.range_dispatch.invalid_property: "<yellow>在文件 <arg:0> 发现问题 - 物品 '<arg:1>' 的 'minecraft:range_dispatch' 模型使用了无效属性 '<arg:2>'</yellow>"
-warning.config.item.model.range_dispatch.missing_entries: "<yellow>在文件 <arg:0> 发现问题 - 物品 '<arg:1>' 的 'minecraft:composite' 模型缺少必需的 'entries' 参数</yellow>"
-warning.config.item.model.range_dispatch.entry.missing_model: "<yellow>在文件 <arg:0> 发现问题 - 物品 '<arg:1>' 的 'minecraft:composite' 模型的某个条目缺少必需的 'model' 参数</yellow>"
-warning.config.item.model.range_dispatch.compass.missing_target: "<yellow>在文件 <arg:0> 发现问题 - 物品 '<arg:1>' 的 'minecraft:compass' 属性缺少必需的 'target' 参数</yellow>"
-warning.config.item.model.range_dispatch.time.missing_source: "<yellow>在文件 <arg:0> 发现问题 - 物品 '<arg:1>' 的 'minecraft:time' 属性缺少必需的 'source' 参数</yellow>"
-warning.config.item.model.select.missing_property: "<yellow>在文件 <arg:0> 发现问题 - 物品 '<arg:1>' 的 'minecraft:select' 模型缺少必需的 'property' 参数</yellow>"
-warning.config.item.model.select.invalid_property: "<yellow>在文件 <arg:0> 发现问题 - 物品 '<arg:1>' 的 'minecraft:select' 模型使用了无效属性 '<arg:2>'</yellow>"
-warning.config.item.model.select.missing_cases: "<yellow>在文件 <arg:0> 发现问题 - 物品 '<arg:1>' 的 'minecraft:select' 模型缺少必需的 'cases' 参数</yellow>"
-warning.config.item.model.select.case.missing_when: "<yellow>在文件 <arg:0> 发现问题 - 物品 '<arg:1>' 的 'minecraft:select' 模型的某个 case 缺少必需的 'when' 参数</yellow>"
-warning.config.item.model.select.case.missing_model: "<yellow>在文件 <arg:0> 发现问题 - 物品 '<arg:1>' 的 'minecraft:select' 模型的某个 case 缺少必需的 'model' 参数</yellow>"
-warning.config.item.model.select.block_state.missing_property: "<yellow>在文件 <arg:0> 发现问题 - 物品 '<arg:1>' 的 'minecraft:block_state' 属性缺少必需的 'block-state-property' 参数</yellow>"
-warning.config.item.model.select.local_time.missing_pattern: "<yellow>在文件 <arg:0> 发现问题 - 物品 '<arg:1>' 的 'minecraft:local_time' 属性缺少必需的 'pattern' 参数</yellow>"
-warning.config.item.model.select.component.missing_component: "<yellow>在文件 <arg:0> 发现问题 - 物品 '<arg:1>' 的 'minecraft:component' 属性缺少必需的 'component' 参数</yellow>"
-warning.config.item.model.special.missing_type: "<yellow>在文件 <arg:0> 发现问题 - 物品 '<arg:1>' 的 'minecraft:special' 模型缺少必需的 'type' 参数</yellow>"
-warning.config.item.model.special.missing_path: "<yellow>在文件 <arg:0> 发现问题 - 物品 '<arg:1>' 的 'minecraft:special' 模型缺少必需的模型 'path' 参数</yellow>"
-warning.config.item.model.special.invalid_path: "<yellow>在文件 <arg:0> 发现问题 - 物品 '<arg:1>' 的 'minecraft:special' 模型路径 '<arg:2>' 包含非法字符 请参考 https://zh.minecraft.wiki/w/%E5%91%BD%E5%90%8D%E7%A9%BA%E9%97%B4ID#%E5%90%88%E6%B3%95%E5%AD%97%E7%AC%A6</yellow>"
-warning.config.item.model.special.invalid_type: "<yellow>在文件 <arg:0> 发现问题 - 物品 '<arg:1>' 的 'minecraft:special' 模型使用了无效类型 '<arg:2>'</yellow>"
-warning.config.item.model.special.banner.missing_color: "<yellow>在文件 <arg:0> 发现问题 - 物品 '<arg:1>' 的 'minecraft:banner' 特殊模型缺少必需的 'color' 参数</yellow>"
-warning.config.item.model.special.bed.missing_texture: "<yellow>在文件 <arg:0> 发现问题 - 物品 '<arg:1>' 的 'minecraft:bed' 特殊模型缺少必需的 'texture' 参数</yellow>"
-warning.config.item.model.special.sign.missing_wood_type: "<yellow>在文件 <arg:0> 发现问题 - 物品 '<arg:1>' 的 'minecraft:hanging_sign'/'minecraft:standing_sign' 特殊模型缺少必需的 'wood-type' 参数</yellow>"
-warning.config.item.model.special.sign.missing_texture: "<yellow>在文件 <arg:0> 发现问题 - 物品 '<arg:1>' 的 'minecraft:hanging_sign'/'minecraft:standing_sign' 特殊模型缺少必需的 'texture' 参数</yellow>"
-warning.config.item.model.special.chest.missing_texture: "<yellow>在文件 <arg:0> 发现问题 - 物品 '<arg:1>' 的 'minecraft:chest' 特殊模型缺少必需的 'texture' 参数</yellow>"
-warning.config.item.model.special.chest.invalid_openness: "<yellow>在文件 <arg:0> 发现问题 - 物品 '<arg:1>' 的 'minecraft:chest' 特殊模型使用了无效的 'openness' 值 '<arg:2>' 有效范围应为 0~1</yellow>"
-warning.config.item.model.special.shulker_box.missing_texture: "<yellow>在文件 <arg:0> 发现问题 - 物品 '<arg:1>' 的 'minecraft:shulker_box' 特殊模型缺少必需的 'texture' 参数</yellow>"
-warning.config.item.model.special.shulker_box.invalid_openness: "<yellow>在文件 <arg:0> 发现问题 - 物品 '<arg:1>' 的 'minecraft:shulker_box' 特殊模型使用了无效的 'openness' 值 '<arg:2>' 有效范围应为 0~1</yellow>"
-warning.config.item.model.special.head.missing_kind: "<yellow>在文件 <arg:0> 发现问题 - 物品 '<arg:1>' 的 'minecraft:head' 特殊模型缺少必需的 'kind' 参数</yellow>"
-warning.config.item.model.special.copper_golem_statue.missing_pose: "<yellow>在文件 <arg:0> 发现问题 - 物品 '<arg:1>' 的 'minecraft:copper_golem_statue' 特殊模型缺少必需的 'pose' 参数</yellow>"
-warning.config.item.model.special.copper_golem_statue.missing_texture: "<yellow>在文件 <arg:0> 发现问题 - 物品 '<arg:1>' 的 'minecraft:copper_golem_statue' 特殊模型缺少必需的 'texture' 参数</yellow>"
-warning.config.item.updater.missing_type: "<yellow>在文件 <arg:0> 发现问题 - 物品 '<arg:1>' 缺少物品更新器必需的参数 'type'</yellow>"
-warning.config.item.updater.invalid_type: "<yellow>在文件 <arg:0> 发现问题 - 物品 '<arg:1>' 在物品更新器中使用了无效的 'type' 参数值 '<arg:2>'</yellow>"
-warning.config.item.updater.transmute.missing_material: "<yellow>在文件 <arg:0> 发现问题 - 物品 '<arg:1>' 缺少物品转换更新所需的 'material' 参数</yellow>"
-warning.config.block_state_mapping.invalid_state: "<yellow>在文件 <arg:0> 发现问题 - 配置项 '<arg:1>' 使用了无效的方块状态 '<arg:2>'</yellow>"
-warning.config.block_state_mapping.conflict: "<yellow>在文件 <arg:0> 发现问题 - 配置项 '<arg:1>' 无法将方块状态 <arg:2> 映射到方块状态 <arg:3>, 因为该状态已被映射到 <arg:4></yellow>"
-warning.config.block.duplicate: "<yellow>在文件 <arg:0> 发现问题 - 重复的方块 '<arg:1>' 请检查其他文件中是否存在相同配置</yellow>"
-warning.config.block.missing_state: "<yellow>在文件 <arg:0> 发现问题 - 方块 '<arg:1>' 缺少必需的 'state' 参数</yellow>"
-warning.config.block.state.property.missing_type: "<yellow>在文件 <arg:0> 发现问题 - 方块 '<arg:1>' 的属性 '<arg:2>' 缺少必需的 'type' 参数</yellow>"
-warning.config.block.state.property.invalid_type: "<yellow>在文件 <arg:0> 发现问题 - 方块 '<arg:1>' 的属性 '<arg:3>' 使用了无效的类型参数 '<arg:2>'</yellow>"
-warning.config.block.state.property.integer.invalid_range: "<yellow>在文件 <arg:0> 发现问题 - 方块 '<arg:1>' 的整数属性 '<arg:3>' 使用了无效的范围参数 '<arg:2>' 正确语法: 1~2</yellow>"
-warning.config.block.state.property.invalid_format: "<yellow>在文件 <arg:0> 发现问题 - 方块 '<arg:1>' 使用了无效的方块状态属性格式 '<arg:2>'</yellow>"
-warning.config.block.state.missing_state: "<yellow>在文件 <arg:0> 发现问题 - 方块 '<arg:1>' 的 'state' 缺少必需的 'state' 参数</yellow>"
-warning.config.block.state.missing_properties: "<yellow>在文件 <arg:0> 发现问题 - 方块 '<arg:1>' 的 'states' 缺少必需的 'properties' 段落</yellow>"
-warning.config.block.state.missing_appearances: "<yellow>在文件 <arg:0> 发现问题 - 方块 '<arg:1>' 的 'states' 缺少必需的 'appearances' 段落</yellow>"
-warning.config.block.state.entity_renderer.invalid_type: "<yellow>在文件 <arg:0> 发现问题 - 方块 '<arg:1>' 使用了无效的实体渲染器类型 '<arg:2>'</yellow>"
-warning.config.block.state.entity_renderer.item_display.missing_item: "<yellow>在文件 <arg:0> 发现问题 - 方块 '<arg:1>' 缺少 'item_display' 实体渲染器所需的 'item' 参数</yellow>"
-warning.config.block.state.entity_renderer.text_display.missing_text: "<yellow>在文件 <arg:0> 发现问题 - 方块 '<arg:1>' 缺少 'text_display' 实体渲染器所需的 'text' 参数</yellow>"
-warning.config.block.state.entity_renderer.better_model.missing_model: "<yellow>在文件 <arg:0> 发现问题 - 方块 '<arg:1>' 缺少 'better_model' 实体渲染器所需的 'model' 参数</yellow>"
-warning.config.block.state.entity_renderer.model_engine.missing_model: "<yellow>在文件 <arg:0> 发现问题 - 方块 '<arg:1>' 缺少 'model_engine' 实体渲染器所需的 'model' 参数</yellow>"
-warning.config.block.state.entity_renderer.armor_stand.missing_item: "<yellow>在文件 <arg:0> 发现问题 - 方块 '<arg:1>' 缺少 'armor_stand' 实体渲染器所需的 'item' 参数</yellow>"
-warning.config.block.state.entity_renderer.item.missing_item: "<yellow>在文件 <arg:0> 发现问题 - 方块 '<arg:1>' 缺少 'item' 实体渲染器所需的 'item' 参数</yellow>"
-warning.config.block.state.variant.invalid_appearance: "<yellow>在文件 <arg:0> 发现问题 - 方块 '<arg:1>' 的变体 '<arg:2>' 使用了不存在的 appearance '<arg:3>'</yellow>"
-warning.config.block.state.invalid_vanilla: "<yellow>在文件 <arg:0> 发现问题 - 方块 '<arg:1>' 使用了无效的原版方块状态 '<arg:2>'</yellow>"
-warning.config.block.state.invalid_auto_state: "<yellow>在文件 <arg:0> 发现问题 - 方块 '<arg:1>' 使用了无效的自动状态 '<arg:2>'. 允许的值: [<arg:3>]</yellow>"
-warning.config.block.state.auto_state.exhausted: "<yellow>在文件 <arg:0> 发现问题 - 视觉状态组 '<arg:2>' 已达到其最大容量 '<arg:3>' 个槽位, 无法为方块 '<arg:1>' 分配状态</yellow>"
-warning.config.block.state.unavailable_vanilla: "<yellow>在文件 <arg:0> 发现问题 - 方块 '<arg:1>' 使用了不可用的原版方块状态 '<arg:2>' 请在 block-state-mappings 中释放该状态</yellow>"
-warning.config.block.state.invalid_vanilla_id: "<yellow>在文件 <arg:0> 发现问题 - 方块 '<arg:1>' 使用的原版方块状态 '<arg:2>' 超出可用槽位范围 '0~<arg:3>'</yellow>"
-warning.config.block.state.invalid_id: "<yellow>在文件 <arg:0> 发现问题 - 方块 '<arg:1>' 使用的真实方块状态 '<arg:2>' 超出可用槽位范围 '0~<arg:3>' 如果槽位已用尽 请在 config.yml 中添加更多服务端侧方块或选择任意可用的id</yellow>"
-warning.config.block.state.id.conflict: "<yellow>在文件 <arg:0> 发现问题 - 方块 '<arg:1>' 无法为 '<arg:2>' 绑定真实方块状态 '<arg:4>' 因该状态已被 '<arg:3>' 占用</yellow>"
-warning.config.block.state.id.exhausted: "<yellow>在文件 <arg:0> 发现问题 - 无法为方块 '<arg:1>' 分配足够的真实方块状态. 如果当前槽位已用尽, 请在 'config.yml' 中添加更多服务端方块并重启服务器或使用指令'/ce debug clean-cache'释放未使用的方块状态</yellow>"
-warning.config.block.state.model.missing_path: "<yellow>在文件 <arg:0> 发现问题 - 方块 '<arg:1>' 的 'model' 缺少必需的 'path' 选项</yellow>"
-warning.config.block.state.model.invalid_path: "<yellow>在文件 <arg:0> 发现问题 - 方块 '<arg:1>' 的 'path' 参数 '<arg:2>' 包含非法字符 请参考 https://zh.minecraft.wiki/w/%E5%91%BD%E5%90%8D%E7%A9%BA%E9%97%B4ID#%E5%90%88%E6%B3%95%E5%AD%97%E7%AC%A6</yellow>"
-warning.config.block.state.model.conflict: "<yellow>在文件 <arg:0> 发现问题 - 方块 '<arg:1>' 正尝试将模型 '<arg:2>' 绑定到方块状态 '<arg:3>' 上, 但是此状态已绑定了另一个模型 '<arg:4>'</yellow>"
-warning.config.block.settings.unknown: "<yellow>在文件 <arg:0> 发现问题 - 方块 '<arg:1>' 使用了未知的设置类型 '<arg:2>'</yellow>"
-warning.config.block.behavior.missing_type: "<yellow>在文件 <arg:0> 发现问题 - 方块 '<arg:1>' 的行为配置缺少必需的 'type' 参数</yellow>"
-warning.config.block.behavior.invalid_type: "<yellow>在文件 <arg:0> 发现问题 - 方块 '<arg:1>' 使用了无效的行为类型 '<arg:2>'</yellow>"
-warning.config.block.behavior.concrete.missing_solid: "<yellow>在文件 <arg:0> 发现问题 - 方块 '<arg:1>' 的 'concrete_block' 行为缺少必需的 'solid-block' 选项</yellow>"
-warning.config.block.behavior.crop.missing_age: "<yellow>在文件 <arg:0> 发现问题 - 方块 '<arg:1>' 的 'crop_block' 行为缺少必需的 'age' 属性</yellow>"
-warning.config.block.behavior.vertical_crop.missing_age: "<yellow>在文件 <arg:0> 发现问题 - 方块 '<arg:1>' 的 'vertical_crop_block' 行为缺少必需的 'age' 属性</yellow>"
-warning.config.block.behavior.leaves.missing_persistent: "<yellow>在文件 <arg:0> 发现问题 - 方块 '<arg:1>' 的 'leaves_block' 行为缺少必需的 'persistent' 属性</yellow>"
-warning.config.block.behavior.leaves.missing_distance: "<yellow>在文件 <arg:0> 发现问题 - 方块 '<arg:1>' 的 'leaves_block' 行为缺少必需的 'distance' 属性</yellow>"
-warning.config.block.behavior.lamp.missing_lit: "<yellow>在文件 <arg:0> 发现问题 - 方块 '<arg:1>' 的 'lamp_block' 行为缺少必需的 'lit' 属性</yellow>"
-warning.config.block.behavior.toggleable_lamp.missing_lit: "<yellow>在文件 <arg:0> 发现问题 - 方块 '<arg:1>' 的 'toggleable_lamp_block' 行为缺少必需的 'lit' 属性</yellow>"
-warning.config.block.behavior.toggleable_lamp.missing_powered: "<yellow>在文件 <arg:0> 发现问题 - 方块 '<arg:1>' 的 'toggleable_lamp_block' 行为缺少必需的 'powered' 属性</yellow>"
-warning.config.block.behavior.sapling.missing_stage: "<yellow>在文件 <arg:0> 发现问题 - 方块 '<arg:1>' 的 'sapling_block' 行为缺少必需的 'stage' 属性</yellow>"
-warning.config.block.behavior.sapling.missing_feature: "<yellow>在文件 <arg:0> 发现问题 - 方块 '<arg:1>' 的 'sapling_block' 行为缺少必需的 'feature' 参数</yellow>"
-warning.config.block.behavior.strippable.missing_stripped: "<yellow>在文件 <arg:0> 发现问题 - 方块 '<arg:1>' 的 'strippable_block' 行为缺少必需的 'stripped' 参数</yellow>"
-warning.config.block.behavior.door.missing_half: "<yellow>在文件 <arg:0> 发现问题 - 方块 '<arg:1>' 的 'door_block' 行为缺少必需的 'half' 属性</yellow>"
-warning.config.block.behavior.door.missing_facing: "<yellow>在文件 <arg:0> 发现问题 - 方块 '<arg:1>' 的 'door_block' 行为缺少必需的 'facing' 属性</yellow>"
-warning.config.block.behavior.door.missing_hinge: "<yellow>在文件 <arg:0> 发现问题 - 方块 '<arg:1>' 的 'door_block' 行为缺少必需的 'hinge' 属性</yellow>"
-warning.config.block.behavior.door.missing_open: "<yellow>在文件 <arg:0> 发现问题 - 方块 '<arg:1>' 的 'door_block' 行为缺少必需的 'open' 属性</yellow>"
-warning.config.block.behavior.door.missing_powered: "<yellow>在文件 <arg:0> 发现问题 - 方块 '<arg:1>' 的 'door_block' 行为缺少必需的 'powered' 属性</yellow>"
-warning.config.block.behavior.trapdoor.missing_half: "<yellow>在文件 <arg:0> 发现问题 - 方块 '<arg:1>' 的 'trapdoor_block' 行为缺少必需的 'half' 属性</yellow>"
-warning.config.block.behavior.trapdoor.missing_facing: "<yellow>在文件 <arg:0> 发现问题 - 方块 '<arg:1>' 的 'trapdoor_block' 行为缺少必需的 'facing' 属性</yellow>"
-warning.config.block.behavior.trapdoor.missing_open: "<yellow>在文件 <arg:0> 发现问题 - 方块 '<arg:1>' 的 'trapdoor_block' 行为缺少必需的 'open' 属性</yellow>"
-warning.config.block.behavior.trapdoor.missing_powered: "<yellow>在文件 <arg:0> 发现问题 - 方块 '<arg:1>' 的 'trapdoor_block' 行为缺少必需的 'powered' 属性</yellow>"
-warning.config.block.behavior.stackable.missing_property: "<yellow>在文件 <arg:0> 发现问题 - 方块 '<arg:1>' 的 'stackable_block' 行为缺少必需的 '<arg:2>' 属性</yellow>"
-warning.config.block.behavior.stackable.missing_items: "<yellow>在文件 <arg:0> 发现问题 - 方块 '<arg:1>' 的 'stackable_block' 行为缺少必需的 'items' 参数</yellow>"
-warning.config.block.behavior.fence_gate.missing_facing: "<yellow>在文件 <arg:0> 发现问题 - 方块 '<arg:1>' 的 'fence_gate_block' 行为缺少必需的 'facing' 属性</yellow>"
-warning.config.block.behavior.fence_gate.missing_in_wall: "<yellow>在文件 <arg:0> 发现问题 - 方块 '<arg:1>' 的 'fence_gate_block' 行为缺少必需的 'in_wall' 属性</yellow>"
-warning.config.block.behavior.fence_gate.missing_open: "<yellow>在文件 <arg:0> 发现问题 - 方块 '<arg:1>' 的 'fence_gate_block' 行为缺少必需的 'open' 属性</yellow>"
-warning.config.block.behavior.fence_gate.missing_powered: "<yellow>在文件 <arg:0> 发现问题 - 方块 '<arg:1>' 的 'fence_gate_block' 行为缺少必需的 'powered' 属性</yellow>"
-warning.config.block.behavior.slab.missing_type: "<yellow>在文件 <arg:0> 发现问题 - 方块 '<arg:1>' 的 'slab_block' 行为缺少必需的 'type' 属性</yellow>"
-warning.config.block.behavior.stairs.missing_facing: "<yellow>在文件 <arg:0> 发现问题 - 方块 '<arg:1>' 的 'stairs_block' 行为缺少必需的 'facing' 属性</yellow>"
-warning.config.block.behavior.stairs.missing_half: "<yellow>在文件 <arg:0> 发现问题 - 方块 '<arg:1>' 的 'stairs_block' 行为缺少必需的 'half' 属性</yellow>"
-warning.config.block.behavior.stairs.missing_shape: "<yellow>在文件 <arg:0> 发现问题 - 方块 '<arg:1>' 的 'stairs_block' 行为缺少必需的 'shape' 属性</yellow>"
-warning.config.block.behavior.sofa.missing_facing: "<yellow>在文件 <arg:0> 发现问题 - 方块 '<arg:1>' 的 'sofa_block' 行为缺少必需的 'facing' 属性</yellow>"
-warning.config.block.behavior.sofa.missing_shape: "<yellow>在文件 <arg:0> 发现问题 - 方块 '<arg:1>' 的 'sofa_block' 行为缺少必需的 'shape' 属性</yellow>"
-warning.config.block.behavior.pressure_plate.missing_powered: "<yellow>在文件 <arg:0> 发现问题 - 方块 '<arg:1>' 的 'pressure_plate_block' 行为缺少必需的 'powered' 属性</yellow>"
-warning.config.block.behavior.grass.missing_feature: "<yellow>在文件 <arg:0> 发现问题 - 方块 '<arg:1>' 的 'grass_block' 行为缺少必需的 'feature' 参数</yellow>"
-warning.config.block.behavior.double_high.missing_half: "<yellow>在文件 <arg:0> 发现问题 - 方块 '<arg:1>' 的 'double_block' 行为缺少必需的 'half' 属性</yellow>"
-warning.config.block.behavior.change_over_time.missing_next_block: "<yellow>在文件 <arg:0> 发现问题 - 方块 '<arg:1>' 的 'change_over_time_block' 行为缺少必需的 'next-block' 参数</yellow>"
-warning.config.block.behavior.directional_attached.missing_facing: "<yellow>在文件 <arg:0> 发现问题 - 方块 '<arg:1>' 的 'directional_attached_block' 行为缺少必需的 'facing' 属性</yellow>"
-warning.config.block.behavior.wall_torch_particle.missing_facing: "<yellow>在文件 <arg:0> 发现问题 - 配置项 '<arg:1>' 的 'wall_torch_particle_block' 行为缺少必需的 'facing' 属性</yellow>"
-warning.config.block.behavior.fence.missing_north: "<yellow>在文件 <arg:0> 发现问题 - 方块 '<arg:1>' 的 'fence_block' 行为缺少必需的 'north' 属性</yellow>"
-warning.config.block.behavior.fence.missing_east: "<yellow>在文件 <arg:0> 发现问题 - 方块 '<arg:1>' 的 'fence_block' 行为缺少必需的 'east' 属性</yellow>"
-warning.config.block.behavior.fence.missing_south: "<yellow>在文件 <arg:0> 发现问题 - 方块 '<arg:1>' 的 'fence_block' 行为缺少必需的 'south' 属性</yellow>"
-warning.config.block.behavior.fence.missing_west: "<yellow>在文件 <arg:0> 发现问题 - 方块 '<arg:1>' 的 'fence_block' 行为缺少必需的 'west' 属性</yellow>"
-warning.config.block.behavior.face_attached_horizontal_directional.missing_face: "<yellow>在文件 <arg:0> 发现问题 - 方块 '<arg:1>' 的 'face_attached_horizontal_directional_block' 行为缺少必需的 'face' 属性</yellow>"
-warning.config.block.behavior.face_attached_horizontal_directional.missing_facing: "<yellow>在文件 <arg:0> 发现问题 - 方块 '<arg:1>' 的 'face_attached_horizontal_directional_block' 行为缺少必需的 'facing' 属性</yellow>"
-warning.config.block.behavior.button.missing_powered: "<yellow>在文件 <arg:0> 发现问题 - 方块 '<arg:1>' 的 'button_block' 行为缺少必需的 'powered' 属性</yellow>"
-warning.config.block.behavior.stem.missing_age: "<yellow>在文件 <arg:0> 发现问题 - 方块 '<arg:1>' 的 'stem_block' 行为缺少必需的 'age' 属性</yellow>"
-warning.config.block.behavior.stem.missing_fruit: "<yellow>在文件 <arg:0> 发现问题 - 方块 '<arg:1>' 的 'stem_block' 行为缺少必需的 'fruit' 选项</yellow>"
-warning.config.block.behavior.stem.missing_attached_stem: "<yellow>在文件 <arg:0> 发现问题 - 方块 '<arg:1>' 的 'stem_block' 行为缺少必需的 'attached_stem' 选项</yellow>"
-warning.config.block.behavior.attached_stem.missing_facing: "<yellow>在文件 <arg:0> 发现问题 - 方块 '<arg:1>' 的 'attached_stem_block' 行为缺少必需的 'facing' 属性</yellow>"
-warning.config.block.behavior.attached_stem.missing_fruit: "<yellow>在文件 <arg:0> 发现问题 - 方块 '<arg:1>' 的 'attached_stem_block' 行为缺少必需的 'fruit' 选项</yellow>"
-warning.config.block.behavior.attached_stem.missing_stem: "<yellow>在文件 <arg:0> 发现问题 - 方块 '<arg:1>' 的 'attached_stem_block' 行为缺少必需的 'stem' 选项</yellow>"
-warning.config.block.behavior.chime.missing_sounds_projectile_hit: "<yellow>在文件 <arg:0> 发现问题 - 方块 '<arg:1>' 的 'chime_block' 行为缺少必需的 'sounds.projectile-hit' 选项</yellow>"
-warning.config.block.behavior.surface_spreading.missing_base_block: "<yellow>在文件 <arg:0> 发现问题 - 方块 '<arg:1>' 的 'surface_spreading_block' 行为缺少必需的 'base-block' 选项</yellow>"
-warning.config.block.behavior.snowy.missing_snowy: "<yellow>在文件 <arg:0> 发现问题 - 方块 '<arg:1>' 的 'snowy_block' 行为缺少必需的 'snowy' 属性</yellow>"
-warning.config.block.behavior.hangable.missing_hanging: "<yellow>在文件 <arg:0> 发现问题 - 方块 '<arg:1>' 的 'hangable_block' 行为缺少必需的 'hanging' 属性</yellow>"
-warning.config.block.behavior.multi_high.missing_property_name: "<yellow>在文件 <arg:0> 发现问题 - 方块 '<arg:1>' 的 'multi_high_block' 行为缺少必需的 'property' 选项</yellow>"
-warning.config.block.behavior.multi_high.missing_property: "<yellow>在文件 <arg:0> 发现问题 - 方块 '<arg:1>' 的 'multi_high_block' 行为缺少必需的 '<arg:2>' 属性</yellow>"
-warning.config.block.behavior.spreading.missing_target_block: "<yellow>在文件 <arg:0> 发现问题 - 方块 '<arg:1>' 的 'spreading_block' 行为缺少必需的 'target-block' 选项</yellow>"
-warning.config.block.behavior.item_frame.missing_facing: "<yellow>在文件 <arg:0> 发现问题 - 配置项 '<arg:1>' 的 'item_frame_block' 行为缺少必需的 'facing' 属性</yellow>"
-warning.config.model.generation.missing_parent: "<yellow>在文件 <arg:0> 发现问题 - 配置项 '<arg:1>' 的 'generation' 段落缺少必需的 'parent' 参数</yellow>"
-warning.config.model.generation.conflict: "<yellow>在文件 <arg:0> 发现问题 - 无法为 '<arg:1>' 生成模型 存在多个配置尝试使用相同路径 '<arg:2>' 生成不同的 JSON 模型</yellow>"
-warning.config.model.generation.invalid_display_position: "<yellow>在文件 <arg:0> 发现问题 - 配置项 '<arg:1>' 在 'generation.display' 区域使用了无效的 display 位置类型 '<arg:2>'. 可用展示类型: [<arg:3>]</yellow>"
-warning.config.model.generation.invalid_gui_light: "<yellow>在文件 <arg:0> 发现问题 - 配置项 '<arg:1>' 在 'generation' 区域使用了无效的GUI光照 '<arg:2>'. 可用GUI光照: [<arg:3>]</yellow>"
-warning.config.model.generation.texture.invalid: "<yellow>在文件 <arg:0> 发现问题 - 配置项 '<arg:1>' 的纹理 '<arg:2>' 路径 '<arg:3>' 包含非法字符 请参考 https://zh.minecraft.wiki/w/%E5%91%BD%E5%90%8D%E7%A9%BA%E9%97%B4ID#%E5%90%88%E6%B3%95%E5%AD%97%E7%AC%A6</yellow>"
-warning.config.model.generation.parent.invalid: "<yellow>在文件 <arg:0> 发现问题 - 配置项 '<arg:1>' 的父级参数 '<arg:2>' 包含非法字符 请参考 https://zh.minecraft.wiki/w/%E5%91%BD%E5%90%8D%E7%A9%BA%E9%97%B4ID#%E5%90%88%E6%B3%95%E5%AD%97%E7%AC%A6</yellow>"
-warning.config.emoji.missing_keywords: "<yellow>在文件 <arg:0> 发现问题 - 表情 '<arg:1>' 缺少必需的 'keywords' 参数</yellow>"
-warning.config.emoji.duplicate: "<yellow>在文件 <arg:0> 发现问题 - 重复的表情 '<arg:1>' 请检查其他文件中是否存在相同配置</yellow>"
-warning.config.emoji.invalid_image: "<yellow>在文件 <arg:0> 发现问题 - 表情 '<arg:1>' 的 'image' 参数 '<arg:2>' 无效</yellow>"
-warning.config.advancement.duplicate: "<yellow>在文件 <arg:0> 发现问题 - 重复的进度 '<arg:1>' 请检查其他文件中是否存在相同配置</yellow>"
-warning.config.loot_table.missing_pools: "<yellow>在文件 <arg:0> 发现问题 - '<arg:1>' 的战利品表配置错误 缺少必需的 'pools' 参数</yellow>"
-warning.config.loot_table.invalid_pools_type: "<yellow>在文件 <arg:0> 发现问题 - '<arg:1>' 的战利品表配置错误 'pools' 应为字符串/映射列表 当前类型: '<arg:2>'</yellow>"
-warning.config.loot_table.function.missing_type: "<yellow>在文件 <arg:0> 发现问题 - '<arg:1>' 的战利品表配置错误 某个函数缺少必需的 'type' 参数</yellow>"
-warning.config.loot_table.function.invalid_type: "<yellow>在文件 <arg:0> 发现问题 - '<arg:1>' 的战利品表配置错误 某个函数使用了无效的函数类型 '<arg:2>'</yellow>"
-warning.config.loot_table.function.apply_bonus.missing_enchantment: "<yellow>在文件 <arg:0> 发现问题 - '<arg:1>' 的战利品表配置错误 'apply_bonus' 函数缺少必需的 'enchantment' 参数</yellow>"
-warning.config.loot_table.function.apply_bonus.missing_formula: "<yellow>在文件 <arg:0> 发现问题 - '<arg:1>' 的战利品表配置错误 'apply_bonus' 函数缺少必需的 'formula' 参数</yellow>"
-warning.config.loot_table.function.drop_exp.missing_count: "<yellow>在文件 <arg:0> 发现问题 - '<arg:1>' 的战利品表配置错误 'drop_exp' 函数缺少必需的 'count' 参数</yellow>"
-warning.config.loot_table.function.set_count.missing_count: "<yellow>在文件 <arg:0> 发现问题 - '<arg:1>' 的战利品表配置错误 'set_count' 函数缺少必需的 'count' 参数</yellow>"
-warning.config.loot_table.function.apply_data.missing_data: "<yellow>在文件 <arg:0> 发现问题 - '<arg:1>' 的战利品表配置错误 'apply_data' 函数缺少必需的 'data' 参数</yellow>"
-warning.config.loot_table.entry.missing_type: "<yellow>在文件 <arg:0> 发现问题 - '<arg:1>' 的战利品表配置错误 某个条目缺少必需的 'type' 参数</yellow>"
-warning.config.loot_table.entry.invalid_type: "<yellow>在文件 <arg:0> 发现问题 - '<arg:1>' 的战利品表配置错误 某个条目使用了无效的条目类型 '<arg:2>'</yellow>"
-warning.config.loot_table.entry.exp.missing_count: "<yellow>在文件 <arg:0> 发现问题 - '<arg:1>' 的战利品表配置错误 'exp' 条目缺少必需的 'count' 参数</yellow>"
-warning.config.loot_table.entry.item.missing_item: "<yellow>在文件 <arg:0> 发现问题 - '<arg:1>' 的战利品表配置错误 'item' 条目缺少必需的 'item' 参数</yellow>"
-warning.config.host.missing_type: "<yellow>在 config.yml 的 'resource-pack.delivery.hosting' 处发现问题 - 缺少必需的 'type' 参数</yellow>"
-warning.config.host.invalid_type: "<yellow>在 config.yml 的 'resource-pack.delivery.hosting' 处发现问题 - 无效的托管类型 '<arg:0>' 请参考 https://ce.gtemc.cn/zh-Hans/getting_start/set_up_host</yellow>"
-warning.config.host.external.missing_url: "<yellow>在 config.yml 的 'resource-pack.delivery.hosting' 处发现问题 - 外部托管缺少必需的 'url' 参数</yellow>"
-warning.config.host.alist.missing_api_url: "<yellow>在 config.yml 的 'resource-pack.delivery.hosting' 处发现问题 - Alist 托管缺少必需的 'api-url' 参数</yellow>"
-warning.config.host.alist.missing_username: "<yellow>在 config.yml 的 'resource-pack.delivery.hosting' 处发现问题 - Alist 托管缺少必需的 'username' 参数或环境变量 'CE_ALIST_USERNAME'</yellow>"
-warning.config.host.alist.missing_password: "<yellow>在 config.yml 的 'resource-pack.delivery.hosting' 处发现问题 - Alist 托管缺少必需的 'password' 参数或环境变量 'CE_ALIST_PASSWORD'</yellow>"
-warning.config.host.alist.missing_upload_path: "<yellow>在 config.yml 的 'resource-pack.delivery.hosting' 处发现问题 - Alist 托管缺少必需的 'upload-path' 参数</yellow>"
-warning.config.host.dropbox.missing_app_key: "<yellow>在 config.yml 的 'resource-pack.delivery.hosting' 处发现问题 - Dropbox 托管缺少必需的 'app-key' 参数或环境变量 'CE_DROPBOX_APP_KEY'</yellow>"
-warning.config.host.dropbox.missing_app_secret: "<yellow>在 config.yml 的 'resource-pack.delivery.hosting' 处发现问题 - Dropbox 托管缺少必需的 'app-secret' 参数或环境变量 'CE_DROPBOX_APP_SECRET'</yellow>"
-warning.config.host.dropbox.missing_refresh_token: "<yellow>在 config.yml 的 'resource-pack.delivery.hosting' 处发现问题 - Dropbox 托管缺少必需的 'refresh-token' 参数或环境变量 'CE_DROPBOX_REFRESH_TOKEN'</yellow>"
-warning.config.host.dropbox.missing_upload_path: "<yellow>在 config.yml 的 'resource-pack.delivery.hosting' 处发现问题 - Dropbox 托管缺少必需的 'upload-path' 参数</yellow>"
-warning.config.host.lobfile.missing_api_key: "<yellow>在 config.yml 的 'resource-pack.delivery.hosting' 处发现问题 - Lobfile 托管缺少必需的 'api-key' 参数</yellow>"
-warning.config.host.onedrive.missing_client_id: "<yellow>在 config.yml 的 'resource-pack.delivery.hosting' 处发现问题 - OneDrive 托管缺少必需的 'client-id' 参数或环境变量 'CE_ONEDRIVE_CLIENT_ID'</yellow>"
-warning.config.host.onedrive.missing_client_secret: "<yellow>在 config.yml 的 'resource-pack.delivery.hosting' 处发现问题 - OneDrive 托管缺少必需的 'client-secret' 参数或环境变量 'CE_ONEDRIVE_CLIENT_SECRET'</yellow>"
-warning.config.host.onedrive.missing_refresh_token: "<yellow>在 config.yml 的 'resource-pack.delivery.hosting' 处发现问题 - OneDrive 托管缺少必需的 'refresh-token' 参数或环境变量 'CE_ONEDRIVE_REFRESH_TOKEN'</yellow>"
-warning.config.host.onedrive.missing_upload_path: "<yellow>在 config.yml 的 'resource-pack.delivery.hosting' 处发现问题 - OneDrive 托管缺少必需的 'upload-path' 参数</yellow>"
-warning.config.host.s3.missing_endpoint: "<yellow>在 config.yml 的 'resource-pack.delivery.hosting' 处发现问题 - S3 托管缺少必需的 'endpoint' 参数</yellow>"
-warning.config.host.s3.missing_protocol: "<yellow>在 config.yml 的 'resource-pack.delivery.hosting' 处发现问题 - S3 托管缺少必需的 'protocol' 参数</yellow>"
-warning.config.host.s3.missing_bucket: "<yellow>在 config.yml 的 'resource-pack.delivery.hosting' 处发现问题 - S3 托管缺少必需的 'bucket' 参数</yellow>"
-warning.config.host.s3.missing_region: "<yellow>在 config.yml 的 'resource-pack.delivery.hosting' 处发现问题 - S3 托管缺少必需的 'region' 参数</yellow>"
-warning.config.host.s3.missing_access_key: "<yellow>在 config.yml 的 'resource-pack.delivery.hosting' 处发现问题 - S3 托管缺少必需的 'access-key-id' 参数或环境变量 'CE_S3_ACCESS_KEY_ID'</yellow>"
-warning.config.host.s3.missing_secret: "<yellow>在 config.yml 的 'resource-pack.delivery.hosting' 处发现问题 - S3 托管缺少必需的 'access-key-secret' 参数或环境变量 'CE_S3_ACCESS_KEY_SECRET'</yellow>"
-warning.config.host.s3.missing_upload_path: "<yellow>在 config.yml 的 'resource-pack.delivery.hosting' 处发现问题 - S3 托管缺少必需的 'upload-path' 参数</yellow>"
-warning.config.host.s3.missing_cdn_domain: "<yellow>在 config.yml 的 'resource-pack.delivery.hosting' 处发现问题 - S3 托管缺少必需的 'cdn.domain' 参数</yellow>"
-warning.config.host.s3.missing_cdn_protocol: "<yellow>在 config.yml 的 'resource-pack.delivery.hosting' 处发现问题 - S3 托管缺少必需的 'cdn.protocol' 参数</yellow>"
-warning.config.host.self.missing_ip: "<yellow>在 config.yml 的 'resource-pack.delivery.hosting' 处发现问题 - 自托管托管缺少必需的 'ip' 参数</yellow>"
-warning.config.host.self.invalid_port: "<yellow>在 config.yml 的 'resource-pack.delivery.hosting' 处发现问题 - 自托管托管的端口 '<arg:0>' 无效</yellow>"
-warning.config.host.self.invalid_url: "<yellow>在 config.yml 的 'resource-pack.delivery.hosting' 处发现问题 - 自托管托管的 URL '<arg:0>' 无效</yellow>"
-warning.config.host.gitlab.missing_url: "<yellow>在 config.yml 的 'resource-pack.delivery.hosting' 处发现问题 - GitLab 托管缺少必需的 'gitlab-url' 参数</yellow>"
-warning.config.host.gitlab.missing_token: "<yellow>在 config.yml 的 'resource-pack.delivery.hosting' 处发现问题 - GitLab 托管缺少必需的 'access-token' 参数</yellow>"
-warning.config.host.gitlab.missing_project: "<yellow>在 config.yml 的 'resource-pack.delivery.hosting' 处发现问题 - GitLab 托管缺少必需的 'project-id' 参数</yellow>"
-warning.config.host.proxy.missing_host: "<yellow>在 config.yml 的 'resource-pack.delivery.hosting' 处发现问题 - 代理配置缺少必需的 'host' 参数</yellow>"
-warning.config.host.proxy.missing_port: "<yellow>在 config.yml 的 'resource-pack.delivery.hosting' 处发现问题 - 代理配置缺少必需的 'port' 参数</yellow>"
-warning.config.host.proxy.missing_scheme: "<yellow>在 config.yml 的 'resource-pack.delivery.hosting' 处发现问题 - 代理配置缺少必需的 'scheme' 参数</yellow>"
-warning.config.host.proxy.invalid: "<yellow>在 config.yml 的 'resource-pack.delivery.hosting' 处发现问题 - 无效的代理配置 '<arg:0>'</yellow>"
-warning.config.conflict_matcher.missing_type: "<yellow>在 config.yml 的 'resource-pack.duplicated-files-handler' 处发现问题 - 文件冲突处理器的某个匹配器缺少必需的 'type' 参数</yellow>"
-warning.config.conflict_matcher.invalid_type: "<yellow>在 config.yml 的 'resource-pack.duplicated-files-handler' 处发现问题 - 文件冲突处理器的某个匹配器使用了无效类型 '<arg:0>'</yellow>"
-warning.config.conflict_matcher.exact.missing_path: "<yellow>在 config.yml 的 'resource-pack.duplicated-files-handler' 处发现问题 - 精确路径匹配器缺少必需的 'path' 参数</yellow>"
-warning.config.conflict_matcher.contains.missing_path: "<yellow>在 config.yml 的 'resource-pack.duplicated-files-handler' 处发现问题 - 路径包含匹配器缺少必需的 'path' 参数</yellow>"
-warning.config.conflict_matcher.filename.missing_name: "<yellow>在 config.yml 的 'resource-pack.duplicated-files-handler' 处发现问题 - 文件名匹配器缺少必需的 'path' 参数</yellow>"
-warning.config.conflict_matcher.pattern.missing_pattern: "<yellow>在 config.yml 的 'resource-pack.duplicated-files-handler' 处发现问题 - 正则表达式匹配器缺少必需的 'pattern' 参数</yellow>"
-warning.config.conflict_matcher.parent_prefix.missing_prefix: "<yellow>在 config.yml 的 'resource-pack.duplicated-files-handler' 处发现问题 - 父路径前缀匹配器缺少必需的 'prefix' 参数</yellow>"
-warning.config.conflict_matcher.parent_suffix.missing_suffix: "<yellow>在 config.yml 的 'resource-pack.duplicated-files-handler' 处发现问题 - 父路径后缀匹配器缺少必需的 'suffix' 参数</yellow>"
-warning.config.conflict_matcher.inverted.missing_term: "<yellow>在 config.yml 的 'resource-pack.duplicated-files-handler' 处发现问题 - 反向匹配器缺少必需的 'term' 参数</yellow>"
-warning.config.conflict_matcher.all_of.missing_terms: "<yellow>在 config.yml 的 'resource-pack.duplicated-files-handler' 处发现问题 - 全匹配器缺少必需的 'terms' 参数</yellow>"
-warning.config.conflict_matcher.any_of.missing_terms: "<yellow>在 config.yml 的 'resource-pack.duplicated-files-handler' 处发现问题 - 任一匹配器缺少必需的 'terms' 参数</yellow>"
-warning.config.conflict_resolution.missing_type: "<yellow>在 config.yml 的 'resource-pack.duplicated-files-handler' 处发现问题 - 文件冲突处理器的某个解决方案缺少必需的 'type' 参数</yellow>"
-warning.config.conflict_resolution.invalid_type: "<yellow>在 config.yml 的 'resource-pack.duplicated-files-handler' 处发现问题 - 文件冲突处理器的某个解决方案使用了无效类型 '<arg:0>'</yellow>"
-warning.config.event.missing_trigger: "<yellow>在文件 <arg:0> 发现问题 - 配置项 '<arg:1>' 缺少事件触发器必需的 'on' 参数</yellow>"
-warning.config.event.invalid_trigger: "<yellow>在文件 <arg:0> 发现问题 - 配置项 '<arg:1>' 使用了无效的事件触发器 '<arg:2>'</yellow>"
-warning.config.event.condition.missing_type: "<yellow>在文件 <arg:0> - 配置项 '<arg:1>' 的事件条件缺少 'type' 参数</yellow>"
-warning.config.event.condition.invalid_type: "<yellow>在文件 <arg:0> - 配置项 '<arg:1>' 使用了无效的事件条件类型 '<arg:2>'</yellow>"
-warning.config.function.missing_type: "<yellow>在文件 <arg:0> 发现问题 - 配置项 '<arg:1>' 缺少函数必需的 'type' 参数</yellow>"
-warning.config.function.invalid_type: "<yellow>在文件 <arg:0> 发现问题 - 配置项 '<arg:1>' 使用了无效的函数类型 '<arg:2>'</yellow>"
-warning.config.function.command.missing_command: "<yellow>在文件 <arg:0> 发现问题 - 配置项 '<arg:1>' 缺少 'command' 函数必需的 'command' 参数</yellow>"
-warning.config.function.actionbar.missing_actionbar: "<yellow>在文件 <arg:0> 发现问题 - 配置项 '<arg:1>' 缺少 'actionbar' 函数必需的 'actionbar' 参数</yellow>"
-warning.config.function.message.missing_message: "<yellow>在文件 <arg:0> 发现问题 - 配置项 '<arg:1>' 缺少 'message' 函数必需的 'message' 参数</yellow>"
-warning.config.function.open_window.missing_gui_type: "<yellow>在文件 <arg:0> 发现问题 - 配置项 '<arg:1>' 缺少 'open_window' 函数必需的 'gui-type' 参数</yellow>"
-warning.config.function.open_window.invalid_gui_type: "<yellow>在文件 <arg:0> 发现问题 - 配置项 '<arg:1>' 为 'open_window' 函数使用了无效的 GUI 类型 <arg:2>. 允许的类型: [<arg:3>]</yellow>"
-warning.config.function.run.missing_functions: "<yellow>在文件 <arg:0> 发现问题 - 配置项 '<arg:1>' 缺少 'run' 函数必需的 'functions' 参数</yellow>"
-warning.config.function.place_block.missing_block_state: "<yellow>在文件 <arg:0> 发现问题 - 配置项 '<arg:1>' 缺少 'place_block' 函数必需的 'block-state' 参数</yellow>"
-warning.config.function.set_food.missing_food: "<yellow>在文件 <arg:0> 发现问题 - 配置项 '<arg:1>' 缺少 'set_food' 函数必需的 'food' 参数</yellow>"
-warning.config.function.set_saturation.missing_saturation: "<yellow>在文件 <arg:0> 发现问题 - 配置项 '<arg:1>' 缺少 'set_saturation' 函数必需的 'saturation' 参数</yellow>"
-warning.config.function.play_sound.missing_sound: "<yellow>在文件 <arg:0> 发现问题 - 配置项 '<arg:1>' 缺少 'play_sound' 函数必需的 'sound' 参数</yellow>"
-warning.config.function.particle.missing_particle: "<yellow>在文件 <arg:0> 发现问题 - 配置项 '<arg:1>' 缺少 'particle' 函数必需的 'particle' 参数</yellow>"
-warning.config.function.particle.missing_color: "<yellow>在文件 <arg:0> 发现问题 - 配置项 '<arg:1>' 缺少 'particle' 函数必需的 'color' 参数</yellow>"
-warning.config.function.particle.missing_from: "<yellow>在文件 <arg:0> 发现问题 - 配置项 '<arg:1>' 缺少 'particle' 函数必需的 'from' 参数</yellow>"
-warning.config.function.particle.missing_to: "<yellow>在文件 <arg:0> 发现问题 - 配置项 '<arg:1>' 缺少 'particle' 函数必需的 'to' 参数</yellow>"
-warning.config.function.particle.missing_item: "<yellow>在文件 <arg:0> 发现问题 - 配置项 '<arg:1>' 缺少 'particle' 函数必需的 'item' 参数</yellow>"
-warning.config.function.particle.missing_block_state: "<yellow>在文件 <arg:0> 发现问题 - 配置项 '<arg:1>' 缺少 'particle' 函数必需的 'block-state' 参数</yellow>"
-warning.config.function.leveler_exp.missing_count: "<yellow>在文件 <arg:0> 发现问题 - 配置项 '<arg:1>' 缺少 'leveler_exp' 函数必需的 'count' 参数</yellow>"
-warning.config.function.leveler_exp.missing_leveler: "<yellow>在文件 <arg:0> 发现问题 - 配置项 '<arg:1>' 缺少 'leveler_exp' 函数必需的 'leveler' 参数</yellow>"
-warning.config.function.leveler_exp.missing_plugin: "<yellow>在文件 <arg:0> 发现问题 - 配置项 '<arg:1>' 缺少 'leveler_exp' 函数必需的 'plugin' 参数</yellow>"
-warning.config.function.remove_potion_effect.missing_potion_effect: "<yellow>在文件 <arg:0> 发现问题 - 配置项 '<arg:1>' 缺少 'remove_potion_effect' 函数必需的 'potion-effect' 参数</yellow>"
-warning.config.function.potion_effect.missing_potion_effect: "<yellow>在文件 <arg:0> 发现问题 - 配置项 '<arg:1>' 缺少 'potion_effect' 函数必需的 'potion-effect' 参数</yellow>"
-warning.config.function.set_cooldown.missing_time: "<yellow>在文件 <arg:0> 发现问题 - 配置项 '<arg:1>' 缺少 'set_cooldown' 函数必需的 'time' 参数</yellow>"
-warning.config.function.set_cooldown.missing_id: "<yellow>在文件 <arg:0> 发现问题 - 配置项 '<arg:1>' 缺少 'set_cooldown' 函数必需的 'id' 参数</yellow>"
-warning.config.function.remove_cooldown.missing_id: "<yellow>在文件 <arg:0> 发现问题 - 配置项 '<arg:1>' 缺少 'remove_cooldown' 函数必需的 'id' 参数</yellow>"
-warning.config.function.mythic_mobs_skill.missing_skill: "<yellow>在文件 <arg:0> 发现问题 - 配置项 '<arg:1>' 缺少 'mythic_mobs_skill' 函数必需的 'skill' 参数</yellow>"
-warning.config.function.spawn_furniture.missing_furniture_id: "<yellow>在文件 <arg:0> 发现问题 - 配置项 '<arg:1>' 缺少 'spawn_furniture' 函数必需的 'furniture-id' 参数</yellow>"
-warning.config.function.replace_furniture.missing_furniture_id: "<yellow>在文件 <arg:0> 发现问题 - 配置项 '<arg:1>' 缺少 'replace_furniture' 函数必需的 'furniture-id' 参数</yellow>"
-warning.config.function.teleport.missing_x: "<yellow>在文件 <arg:0> 发现问题 - 配置项 '<arg:1>' 缺少 'teleport' 函数所需的 'x' 参数</yellow>"
-warning.config.function.teleport.missing_y: "<yellow>在文件 <arg:0> 发现问题 - 配置项 '<arg:1>' 缺少 'teleport' 函数所需的 'y' 参数</yellow>"
-warning.config.function.teleport.missing_z: "<yellow>在文件 <arg:0> 发现问题 - 配置项 '<arg:1>' 缺少 'teleport' 函数所需的 'z' 参数</yellow>"
-warning.config.function.set_variable.missing_name: "<yellow>在文件 <arg:0> 发现问题 - 配置项 '<arg:1>' 缺少 'set_variable' 函数所需的 'name' 参数</yellow>"
-warning.config.function.set_variable.missing_value: "<yellow>在文件 <arg:0> 发现问题 - 配置项 '<arg:1>' 缺少 'set_variable' 函数所需的 'number' 或 'text' 参数</yellow>"
-warning.config.function.toast.missing_toast: "<yellow>在文件 <arg:0> 发现问题 - 配置项 '<arg:1>' 缺少 'toast' 函数所需的 'toast' 参数</yellow>"
-warning.config.function.toast.missing_icon: "<yellow>在文件 <arg:0> 发现问题 - 配置项 '<arg:1>' 缺少 'toast' 函数所需的 'icon' 参数</yellow>"
-warning.config.function.toast.invalid_advancement_type: "<yellow>在文件 <arg:0> 发现问题 - 配置项 '<arg:1>' 为 'toast' 函数使用了无效的进度类型 '<arg:2>'. 允许的类型: [<arg:3>]</yellow>"
-warning.config.function.merchant_trade.missing_offers: "<yellow>在文件 <arg:0> 发现问题 - 配置项 '<arg:1>' 缺少 'merchant_trade' 函数所需的 'offers' 参数</yellow>"
-warning.config.function.merchant_trade.offer.missing_cost_1: "<yellow>在文件 <arg:0> 发现问题 - 配置项 '<arg:1>' 缺少'merchant_trade' 函数所需的 'cost-1' 参数</yellow>"
-warning.config.function.merchant_trade.offer.missing_result: "<yellow>在文件 <arg:0> 发现问题 - 配置项 '<arg:1>' 缺少'merchant_trade' 函数所需的 'result' 参数</yellow>"
-warning.config.function.when.missing_source: "<yellow>在文件 <arg:0> 发现问题 - 配置项 '<arg:1>' 缺少 'when' 函数所需的 'source' 参数</yellow>"
-warning.config.function.if_else.missing_rules: "<yellow>在文件 <arg:0> 发现问题 - 配置项 '<arg:1>' 缺少 'if_else' 函数所需的 'rules' 参数</yellow>"
-warning.config.function.update_block_property.missing_properties: "<yellow>在文件 <arg:0> 发现问题 - 配置项 '<arg:1>' 缺少 'update_block_property' 函数所需的 'properties' 参数</yellow>"
-warning.config.function.transform_block.missing_block: "<yellow>在文件 <arg:0> 发现问题 - 配置项 '<arg:1>' 缺少 'transform_block' 函数所需的 'block' 参数</yellow>"
-warning.config.function.cycle_block_property.missing_property: "<yellow>在文件 <arg:0> 发现问题 - 配置项 '<arg:1>' 缺少 'cycle_block_property' 函数所需的 'property' 参数</yellow>"
-warning.config.function.set_exp.missing_count: "<yellow>在文件 <arg:0> 发现问题 - 配置项 '<arg:1>' 缺少 'set_exp' 函数所需的 'count' 参数</yellow>"
-warning.config.function.set_level.missing_count: "<yellow>在文件 <arg:0> 发现问题 - 配置项 '<arg:1>' 缺少 'set_level' 函数所需的 'count' 参数</yellow>"
-warning.config.function.play_totem_animation.missing_item: "<yellow>在文件 <arg:0> 发现问题 - 配置项 '<arg:1>' 缺少 'play_totem_animation' 函数所需的 'item' 参数</yellow>"
-warning.config.function.clear_item.missing_id: "<yellow>在文件 <arg:0> 发现问题 - 配置项 '<arg:1>' 缺少 'clear_item' 函数所需的 'id' 参数</yellow>"
-warning.config.selector.missing_type: "<yellow>在文件 <arg:0> 发现问题 - 配置项 '<arg:1>' 缺少选择器必需的 'type' 参数</yellow>"
-warning.config.selector.invalid_type: "<yellow>在文件 <arg:0> 发现问题 - 配置项 '<arg:1>' 使用了无效的选择器类型 '<arg:2>'</yellow>"
-warning.config.selector.invalid_target: "<yellow>在文件 <arg:0> 发现问题 - 配置项 '<arg:1>' 使用了无效的选择器目标 '<arg:2>'</yellow>"
-warning.config.resource_pack.item_model.already_exist: "<yellow>无法为 '<arg:0>' 生成物品模型, 因为文件 '<arg:1>' 已存在</yellow>"
-warning.config.resource_pack.model.generation.already_exist: "<yellow>无法生成模型, 因为模型文件 '<arg:0>' 已存在</yellow>"
-warning.config.resource_pack.generation.malformatted_json: "<yellow>JSON 文件 '<arg:0>' 格式错误</yellow>"
-warning.config.resource_pack.generation.missing_font_texture: "<yellow>字体 '<arg:0>' 缺少必要纹理: '<arg:1>'</yellow>"
-warning.config.resource_pack.generation.missing_model_texture: "<yellow>模型 '<arg:0>' 缺少纹理 '<arg:1>'</yellow>"
-warning.config.resource_pack.generation.missing_atlas_texture: "<yellow>纹理图集 '<arg:0>' 缺少纹理 '<arg:1>'</yellow>"
-warning.config.resource_pack.generation.missing_item_model: "<yellow>物品 '<arg:0>' 缺少模型文件: '<arg:1>'</yellow>"
-warning.config.resource_pack.generation.missing_block_model: "<yellow>方块状态 '<arg:0>' 缺少模型文件: '<arg:1>'</yellow>"
-warning.config.resource_pack.generation.missing_parent_model: "<yellow>模型 '<arg:0>' 找不到父级模型文件: '<arg:1>'</yellow>"
-warning.config.resource_pack.generation.missing_equipment_texture: "<yellow>装备 '<arg:0>' 缺少纹理 '<arg:1>'</yellow>"
-warning.config.resource_pack.generation.missing_sound: "<yellow>声音事件 '<arg:0>' 缺少 ogg 文件 '<arg:1>'</yellow>"
-warning.config.resource_pack.generation.texture_not_in_atlas: "<yellow>纹理 '<arg:0>' 不在纹理图集内. 你需要将纹理路径或文件夹前缀添加到纹理图集内, 或者启用 config.yml 中的 'fix-atlas' 选项</yellow>"
-warning.config.resource_pack.generation.multiple_atlases: "<yellow>模型 '<arg:0>' 使用了多个纹理图集, 预期应来自 '<arg:1>', 但同时检测到 '<arg:2>'. 请确保模型使用的所有纹理均来自同一纹理图集以修复此问题</yellow>"
-warning.config.resource_pack.generation.duplicated_sprite: "<yellow>无法加载模型 '<arg:0>'. 纹理图集 '<arg:2>' 中的精灵图 '<arg:1>' 与纹理图集 '<arg:3>' 中的定义重复</yellow>"
-warning.config.resource_pack.generation.bad_atlas: "<yellow>无法加载模型 '<arg:0>'. 精灵图 '<arg:1>' 应来自纹理图集 '<arg:2>', 但实际上来自纹理图集 '<arg:3>'</yellow>"
-warning.config.resource_pack.invalid_overlay_format: "<yellow>在 config.yml 的 'resource-pack.overlay-format' 处发现问题 - 无效的叠加资源包格式 '<arg:0>'. 叠加资源包格式必须包含占位符 '{version}'</yellow>"
-warning.config.equipment.duplicate: "<yellow>在文件 <arg:0> 发现问题 - 重复的装备配置 '<arg:1>'. 请检查其他文件中是否存在相同配置</yellow>"
-warning.config.equipment.missing_type: "<yellow>在文件 <arg:0> 发现问题 - 装备 '<arg:1>' 缺少必需的 'type' 参数</yellow>"
-warning.config.equipment.invalid_type: "<yellow>在文件 <arg:0> 发现问题 - 装备 '<arg:1>' 使用了无效的 'type' 参数</yellow>"
-warning.config.equipment.invalid_sacrificed_armor: "<yellow>在 config.yml 的 'equipment.sacrificed-vanilla-armor' 处发现问题 - 无效的原版盔甲类型 '<arg:0>'</yellow>"
-warning.config.placed_feature.invalid_feature: "<yellow>在文件 <arg:0> 发现问题 - 已放置的地物 '<arg:1>' 包含无效的已配置的地物. 原因: <arg:2></yellow>"
-warning.config.placed_feature.missing_feature: "<yellow>在文件 <arg:0> 发现问题 - 已放置的地物 '<arg:1>' 缺少必需的 'feature' 参数</yellow>"
-warning.config.placed_feature.invalid_placement: "<yellow>在文件 <arg:0> 发现问题 - 已放置的地物 '<arg:1>' 包含无效的已配置的地物. 内容: <arg:2>. 原因: <arg:3></yellow>"
-warning.config.placed_feature.missing_placement: "<yellow>在文件 <arg:0> 发现问题 - 已放置的地物 '<arg:1>' 缺少必需的 'placement' 参数</yellow>"
-warning.config.configured_feature.invalid_feature: "<yellow>在文件 <arg:0> 发现问题 - 已配置的地物 '<arg:1>' 无效. 原因: <arg:2></yellow>"
+exception.invalid_syntax: <red>语法错误。正确语法：<white><arg:0></white></red>
+exception.invalid_argument: <red>参数无效。原因：<white><arg:0></white></red>
+exception.invalid_sender: <red><arg:0>不允许执行此命令。执行者必须是<arg:1></red>
+exception.unexpected: <red>执行此命令时发生内部错误</red>
+exception.no_permission: <red>抱歉，你没有权限执行此命令</red>
+exception.no_such_command: <red>未知的命令</red>
+argument.entity.notfound.player: <red>未找到玩家</red>
+argument.entity.notfound.entity: <red>未找到实体</red>
+argument.parse.failure.time: <red>“<arg:0>”不是有效的时间格式</red>
+argument.parse.failure.material: <red>“<arg:0>”不是有效的材料名称</red>
+argument.parse.failure.enchantment: <red>“<arg:0>”不是有效的魔咒</red>
+argument.parse.failure.offlineplayer: <red>输入的玩家“<arg:0>”已离线</red>
+argument.parse.failure.player: <red>找不到输入的玩家“<arg:0>”</red>
+argument.parse.failure.world: <red>“<arg:0>”不是有效的Minecraft世界</red>
+argument.parse.failure.location.invalid_format: <red>“<arg:0>”不是有效的位置格式。所需格式为“<arg:1> <arg:2> <arg:3>”</red>
+argument.parse.failure.location.mixed_local_absolute: <red>不能混用相对和绝对坐标。（要么所有坐标都使用“^”，要么都不使用）</red>
+argument.parse.failure.namespacedkey.namespace: <red>命名空间“<arg:0>”无效。必须由[a-z0-9._-]组成</red>
+argument.parse.failure.namespacedkey.key: <red>命名空间ID“<arg:0>”无效。必须由[a-z0-9._-]组成</red>
+argument.parse.failure.namespacedkey.need_namespace: <red>输入“<arg:0>”无效，需要显式命名空间</red>
+argument.parse.failure.boolean: <red>无法从“<arg:0>”解析布尔值</red>
+argument.parse.failure.number: <red>“<arg:0>”不在<arg:1>到<arg:2>的范围内</red>
+argument.parse.failure.char: <red>“<arg:0>”不是有效字符</red>
+argument.parse.failure.string: <red>“<arg:0>”不是<arg:1>类型的有效字符串</red>
+argument.parse.failure.uuid: <red>“<arg:0>”不是有效的UUID</red>
+argument.parse.failure.enum: <red>“<arg:0>”不是以下选项之一：<arg:1></red>
+argument.parse.failure.regex: <red>“<arg:0>”与“<arg:1>”不匹配</red>
+argument.parse.failure.flag.unknown: <red>未知的“<arg:0>”标志</red>
+argument.parse.failure.flag.duplicate_flag: <red>重复的“<arg:0>”标志</red>
+argument.parse.failure.flag.no_flag_started: <red>无法识别的短标志组合“<arg:0>”</red>
+argument.parse.failure.flag.missing_argument: <red>缺少“<arg:0>”参数</red>
+argument.parse.failure.flag.no_permission: <red>你没有权限使用“<arg:0>”标志</red>
+argument.parse.failure.color: <red>“<arg:0>”不是有效的颜色</red>
+argument.parse.failure.duration: <red>“<arg:0>”不是时间长度格式</red>
+argument.parse.failure.aggregate.missing: <red>缺少“<arg:0>”组件</red>
+argument.parse.failure.aggregate.failure: <red>无效的“<arg:0>”组件：<arg:1></red>
+argument.parse.failure.either: <red>无法从“<arg:0>”解析出<arg:1>或<arg:2></red>
+argument.parse.failure.namedtextcolor: <red>“<arg:0>”不是命名的文本颜色</red>
+command.reload.too_fast: <red>你重新加载插件的速度太快了，上一次的重新加载还没有完成</red>
+command.reload.config.failure: <red>无法重新加载配置。请检查控制台日志</red>
+command.reload.config.success: <dark_gray>» </dark_gray><gradient:#F4A460:#FFD700><b>CraftEngine</b></gradient> <gray>•</gray> <white>配置文件已重新加载完成</white><gray>（<hover:show_text:'<gray>异步/同步'><color:#FFD700><arg:1></color>/<color:#F4A460><arg:2></color></hover>毫秒）</gray>
+command.reload.config.issues: <#FF5555>⚠ 发现<bold><arg:0></bold>个问题。<gray><italic>（请检查控制台以获取详细信息）</#FF5555>
+command.reload.pack.failure: <red>无法生成资源包。请检查控制台日志</red>
+command.reload.pack.success: <dark_gray>» </dark_gray><gradient:#F4A460:#FFD700><b>CraftEngine</b></gradient> <gray>•</gray> <white>资源包生成完成</white><gray>（<hover:show_text:"<gray>异步处理"><color:#FFD700><arg:0></color>毫秒</hover>）</gray>
+command.item.get.success: <white>获得<arg:0>个<arg:1></white>
+command.item.get.failure.not_exist: <red>未知的物品“<arg:0>”</red>
+command.item.give.success.single: <white>已将<arg:0>个<arg:1>给予<arg:2></white>
+command.item.give.success.multiple: <white>已将<arg:0>个<arg:1>给予<arg:2>名玩家</white>
+command.item.give.failure.not_exist: <red>未知的物品“<arg:0>”</red>
+command.item.clear.failed.single: <red>未能从玩家<arg:0>找到任何物品</red>
+command.item.clear.failed.multiple: <red>未能从<arg:0>名玩家找到任何物品</red>
+command.item.clear.success.single: <white>已移除玩家<arg:1>的<arg:0>个物品</white>
+command.item.clear.success.multiple: <white>已移除<arg:1>名玩家的<arg:0>个物品</white>
+command.item.clear.test.single: <white>已在玩家<arg:1>身上找到<arg:0>个匹配的物品</white>
+command.item.clear.test.multiple: <white>已在<arg:1>名玩家身上找到<arg:0>个匹配的物品</white>
+command.item.set_custom_model_data: <white>已将自定义模型数据设置为“<arg:0>”</white>
+command.item.set_item_model: <white>已将物品模型设置为“<arg:0>”</white>
+command.item.remove_item_component: <white>已将物品的“<arg:0>”组件移除</white>
+command.search_recipe.not_found: <red>找不到此物品的配方</red>
+command.search_usage.not_found: <red>找不到此物品的用途</red>
+command.search_recipe.no_item: <red>请手持物品后再执行此命令</red>
+command.search_usage.no_item: <red>请手持物品后再执行此命令</red>
+command.totem_animation.failure.not_totem: <red>“<arg:0>”不是不死图腾或者找不到该物品</red>
+command.totem_animation.success.single: <white>已将图腾动画<arg:0>播放给<arg:1></white>
+command.totem_animation.success.multiple: <white>已将图腾动画<arg:0>播放给<arg:1>名玩家</white>
+command.resource.enable.success: <white>已启用资源<arg:0>。运行<click:run_command:/ce reload all><u>/ce reload all</u></click>以应用更改</white>
+command.resource.enable.failure.unknown: <red>未知的资源 “<arg:0>”</red>
+command.resource.disable.success: <white>已禁用资源<arg:0>。运行<click:run_command:/ce reload all><u>/ce reload all</u></click>以应用更改</white>
+command.resource.disable.failure.unknown: <red>未知的资源 “<arg:0>”</red>
+command.resource.list: <white>已启用的资源（<arg:0>）：<green><arg:1></green><newline>已禁用的资源（<arg:2>）：<red><arg:3></red></white>
+command.resource.create.success: <white>已创建名为“<arg:0>”的空资源</white>
+command.resource.create.failure.unknown: <red>无法创建名为“<arg:0>”的资源，错误消息：<arg:1></red>
+command.resource.create.failure.invalid_namespace: <red>无法创建名为“<arg:0>”的资源，命名空间“<arg:1>”中包含无效字符</red>
+command.resource.create.failure.exists: <red>名为“<arg:0>”的资源已经存在</red>
+command.upload.failure.not_supported: <red>当前的托管方式“<arg:0>”不支持上传资源包</red>
+command.upload.on_progress: <white>已开始上传，请检查控制台以获取更多信息</white>
+command.send_resource_pack.success.single: <white>已将资源包发送给<arg:0></white>
+command.send_resource_pack.success.multiple: <white>已将资源包发送给<arg:0>名玩家</white>
+command.locale.set.failure: <red>无效的区域设置格式：<arg:0></red>
+command.locale.set.success: <white>已将<arg:1>选定的区域设置设为<arg:0></white>
+command.locale.unset.success: <white>重置了<arg:0>的区域设置</white>
+command.display_entity_view_distance_scale.set.success: <white>已将<arg:1>的展示实体可见距离百分比设为<arg:0></white>
+command.entity_culling_distance_scale.set.success: <white>已将<arg:1>的实体剔除距离百分比设为<arg:0></white>
+command.entity_culling.toggle.success: <white>已将<arg:1>的实体剔除状态设为<arg:0></white>
+command.place_feature.failed: <red>放置地物失败</red>
+command.place_feature.success: <white>已在<arg:1>, <arg:2>, <arg:3>处放置“<arg:0>”</white>
+command.place_feature.invalid: <red>没有类型为“<arg:0>”的地物</red>
+command.chunk.not_loaded: <red>该位置尚未被加载</red>
+command.player.itemless: <red><arg:0>未手持任何物品</red>
+snbt.invalid_syntax.parse_error: <arg:0>，位于第<arg:1>个字符：<arg:2>
+snbt.invalid_syntax.here: <--[此处]
+snbt.parser.expected_string_uuid: 应为表示有效UUID的字符串
+snbt.parser.expected_number_or_boolean: 应为数字或布尔型
+snbt.parser.trailing: 多余的尾随数据
+snbt.parser.expected.compound: 应为复合标签
+snbt.parser.number_parse_failure: 解析数字失败：<arg:0>
+snbt.parser.expected_hex_escape: 字符字面量长度应为<arg:0>
+snbt.parser.invalid_codepoint: 无效的Unicode字符码位：<arg:0>
+snbt.parser.no_such_operation: 不存在的操作：<arg:0>
+snbt.parser.expected_integer_type: 应为整数
+snbt.parser.expected_float_type: 应为浮点数
+snbt.parser.expected_non_negative_number: 应为非负数
+snbt.parser.invalid_character_name: 无效的Unicode字符名称
+snbt.parser.invalid_array_element_type: 无效的数组元素类型
+snbt.parser.invalid_unquoted_start: 无引号字符串不能以数字0-9、+或-开头
+snbt.parser.expected_unquoted_string: 应为有效的无引号字符串
+snbt.parser.invalid_string_contents: 无效的字符串内容
+snbt.parser.expected_binary_numeral: 应为二进制数
+snbt.parser.underscore_not_allowed: 数字的开头和结尾不允许使用下划线字符
+snbt.parser.expected_decimal_numeral: 应为十进制数
+snbt.parser.expected_hex_numeral: 应为十六进制数
+snbt.parser.empty_key: 键不能为空
+snbt.parser.leading_zero_not_allowed: 十进制数不能以0开头
+snbt.parser.infinity_not_allowed: 不允许使用非有限数的数值
+snbt.parser.incorrect: 应为字面量<arg:0>
+yaml.duplicated_key: 在文件“<arg:0>”中的第“<arg:2>”行发现发现重复的键“<arg:1>”
+yaml.inconsistent_value_type: 在文件“<arg:0>”中的第“<arg:2>”行发现发现重复的键“<arg:1>”且值类型不同
+plugin.compatibility: '[兼容性] 已挂钩 <arg:0>'
+number.unknown_type: 未知的数字类型“<arg:0>”
+number.fixed.invalid_expression: 无效的表达式“<arg:0>”。https://ezylang.github.io/EvalEx/references/references.html
+number.greater_than: “<arg:0>”应大于“<arg:1>”
+number.no_greater_than: “<arg:0>”不应大于“<arg:1>”
+number.less_than: “<arg:0>”应小于“<arg:1>”
+number.no_less_than: “<arg:0>”不应小于“<arg:1>”
+condition.unknown_type: 未知的条件类型“<arg:0>”
+condition.enchantment.invalid_format: 无效的谓词格式“<arg:0>”。（例如：minecraft:sharpness>=4）
+function.unknown_type: 未知的函数类型“<arg:0>”
+player_selector.unknown_type: 未知的玩家选择器类型“<arg:0>”
+loot.entry.unknown_type: 未知的战利品条目类型“<arg:0>”
+loot.function.unknown_type: 未知的战利品函数类型“<arg:0>”
+loot.function.formula.unknown_type: 未知的公式类型“<arg:0>”
+host.unknown_type: 未知的资源包托管类型“<arg:0>”
+host.missing_environment_variable: 缺少环境变量“<arg:0>”
+host.get_url_failed: 获取玩家<arg:0>的资源包下载链接失败
+host.handle_response_failed: 处理玩家<arg:0>的资源包响应失败
+host.upload_started: 正在上传资源包…
+host.upload_finished: 资源包上传成功，耗时<arg:0>毫秒
+host.upload_failed: 资源包上传失败
+host.lobfile.storage_usage: 账号使用情况：<arg:0>/<arg:1> MB | <arg:2>/<arg:3> 个文件
+host.self.http_server_started: Netty HTTP服务器已在<arg:0>端口启动
+config.errors_detected: 在config.yml中发现错误 - <arg:0>
+update.available: 新版本<arg:0>已发布：<arg:1>
+update.is_latest: 你正在使用最新版本
+resource_pack.invalid_overlay_format: 无效的叠加资源包格式“<arg:0>”。叠加资源包格式必须包含占位符“{version}”
+resource_pack.generation_started: 正在生成资源包…
+resource_pack.generation_finished: 资源包生成完成，耗时<arg:0>毫秒
+resource_pack.validation_started: 正在验证资源包…（进度：<arg:0>/<arg:1> | 资源包格式：<arg:2>~<arg:3> | 叠加资源包：<arg:4>）
+resource_pack.validation_finished: 资源包验证完成，耗时<arg:0>毫秒
+resource_pack.json_optimization_started: '> 正在优化json文件…'
+resource_pack.texture_optimization_started: '> 正在优化纹理文件…'
+resource_pack.optimization_result: '> □ 优化前/优化后/比率：<arg:0>/<arg:1>/<arg:2>'
+resource_pack.optimization_finished: 资源包优化完成，耗时<arg:0>毫秒
+resource_pack.compression_started: 正在压缩资源包…（如果启用了混淆功能，此过程可能会比较慢）
+resource_pack.compression_finished: 资源包压缩完成，耗时<arg:0>毫秒
+resource_pack.duplicated_files: 发现重复文件。请通过config.yml文件中的“resource-pack.duplicated-files-handler”部分进行处理
+resource_pack.malformatted_json: Json文件“<arg:0>”的格式不正确
+resource_pack.not_a_json_object: Json文件“<arg:0>”不是一个json对象
+resource_pack.conflict_resolution.unknown_type: 未知的文件冲突解决方案类型“<arg:0>”
+resource_pack.model_generation.conflict: 无法生成模型，因为模型文件“<arg:0>”已存在
+resource_pack.item_model.conflict: 无法生成物品模型映射“<arg:0>”，因为文件“<arg:1>”已存在
+resource_pack.missing_font_texture: 字体“<arg:0>”缺少纹理“<arg:1>”
+resource_pack.missing_model_texture: 模型“<arg:0>”缺少纹理“<arg:1>”
+resource_pack.missing_equipment_texture: 装备“<arg:0>”缺少纹理“<arg:1>”
+resource_pack.missing_atlas_texture: 图集“<arg:0>”缺少纹理“<arg:1>”
+resource_pack.missing_item_model: 物品“<arg:0>”缺少模型文件“<arg:1>”
+resource_pack.missing_block_model: 方块状态“<arg:0>”缺少模型文件“<arg:1>”
+resource_pack.missing_parent_model: 模型“<arg:0>”找不到父模型“<arg:1>”
+resource_pack.missing_sound: 声音事件“<arg:0>”缺少ogg文件“<arg:1>”
+resource_pack.texture_not_in_atlas: 纹理“<arg:0>”未在图集中定义。你需要将纹理路径添加到图集，或在config.yml中启用“fix-atlas”选项
+resource_pack.multiple_atlases: 模型“<arg:0>”使用了多个图集：预期为“<arg:1>”，但发现“<arg:2>”。请确保所有模型纹理来自同一图集
+resource_pack.duplicated_sprite: 无法加载模型“<arg:0>”。图集“<arg:2>”中的精灵图“<arg:1>”重复，它已在图集“<arg:3>”中定义
+resource_pack.bad_atlas: 加载模型“<arg:0>”失败。精灵图“<arg:1>”应来自图集“<arg:2>”，但实际来自图集“<arg:3>”
+resource.argument.type.section: 配置部分
+resource.argument.type.boolean: 布尔值
+resource.argument.type.int: 整数
+resource.argument.type.long: 长整数
+resource.argument.type.float: 单精度浮点数
+resource.argument.type.double: 双精度浮点数
+resource.argument.type.string: 字符串
+resource.argument.type.enum: '[<arg:0>]之一'
+resource.argument.type.vec3: 三维向量
+resource.argument.type.quaternion: 四元数 https://quaternions.online/
+resource.argument.type.aabb: 轴对齐包围盒
+resource.argument.type.snbt: SNBT https://zh.minecraft.wiki/w/SNBT%E6%A0%BC%E5%BC%8F
+resource.argument.type.identifier: 命名空间ID https://zh.minecraft.wiki/w/%E5%91%BD%E5%90%8D%E7%A9%BA%E9%97%B4ID
+resource.argument.type.list: 列表
+resource.argument.type.color: 颜色
+resource.argument.type.number: 数值 https://ce.gtemc.cn/zh-Hans/reference/number_format
+resource.argument.type.item_model_definition: 物品模型映射
+resource.argument.type.json: Json
+resource.argument.type.any: 任意类型
+resource.argument.type.blockstate: 方块状态
+resource.argument.parser.section: 预期为配置部分，但发现了“<arg:0>”
+resource.argument.parser.boolean: 无法将“<arg:0>”解析为布尔值。（允许的值：true/false、yes/no、on/off）
+resource.argument.parser.int: 无法将“<arg:0>”解析为整数。（允许包含“_”的数字，例如1_0000）
+resource.argument.parser.long: 无法将“<arg:0>”解析为长整数。（例如：21_4748_3648）
+resource.argument.parser.float: 无法将“<arg:0>”解析为十进制数。（例如：3.14或1_0000.5）
+resource.argument.parser.double: 无法将“<arg:0>”解析为高精度十进制数。（例如：0.0000001）
+resource.argument.parser.enum: 无效的常量“<arg:0>”。（必须是以下之一：[<arg:1>]）
+resource.argument.parser.vec3: 无法将“<arg:0>”解析为向量。（预期格式为'x,y,z'，例如1.5,22,0）
+resource.argument.parser.quaternion: 无法将“<arg:0>”解析为四元数。（预期格式为'x,y,z,w'，例如0,0,0,1）
+resource.argument.parser.snbt: 无效的SNBT格式“<arg:0>”。详细信息：<arg:1>。指南：https://zh.minecraft.wiki/w/SNBT%E6%A0%BC%E5%BC%8F
+resource.argument.parser.aabb: 无法将“<arg:0>”解析为轴对齐包围盒。（预期为两个点的格式“x1,y1,z1,x2,y2,z2”，例如0,0,0,1,1,1）
+resource.argument.parser.blockstate: 无法将“<arg:0>”解析为方块状态。（例如：minecraft:wheat[age=3]）
+resource.argument.parser.identifier: 无法将“<arg:0>”解析为命名空间ID。指南：https://zh.minecraft.wiki/w/%E5%91%BD%E5%90%8D%E7%A9%BA%E9%97%B4ID
+resource.argument.parser.list: 预期为列表，但发现了“<arg:0>”
+resource.argument.parser.nonempty_list: 预期为非空列表
+resource.argument.parser.fixed_size_list: 预期为包含“<arg:0>”个元素的列表
+resource.argument.parser.nonempty_string: 预期为非空字符串
+resource.argument.parser.split: 预期拆分为“<arg:0>”个部分，但实际得到“<arg:1>”个部分
+resource.argument.parser.number: 预期为数字，但发现了“<arg:0>”
+resource.argument.parser.uuid: 无法将“<arg:0>”解析为UUID
+resource.config_loaded: 已加载<arg:0>，耗时<arg:1>毫秒（<arg:2>）
+resource.pack_loaded: 已加载的包：<arg:0>。默认命名空间：<arg:1>
+resource.errors_detected: 在文件“<arg:0>”中发现<arg:1>个问题：
+resource.errors_detail: '[<arg:0>] <arg:1> - <arg:2>'
+resource.unknown_error: 未知错误类型
+resource.duplicated_id: 另一个文件（“<arg:0>”）包含一个具有相同ID的部分
+resource.missing_argument: 缺少必要的参数“<arg:0>”。预期参数为：“<arg:1>”
+resource.placed_feature.invalid_placement: 无效的放置修饰器。输入：“<arg:0>”。原因：“<arg:1>”
+resource.configured_feature.invalid_feature: 无效的已配置的地物。输入：“<arg:0>”。原因：“<arg:1>”
+resource.mapping.conflict: 无法将方块状态“<arg:0>”映射到方块状态“<arg:1>”，因为该状态已被映射到“<arg:2>”
+resource.lang.unknown_locale: 未知语言环境“<arg:0>”。（例如：en、zh_cn）
+resource.image.invalid_grid_size: 无效的网格大小“<arg:0>”。（例如：3,4）
+resource.image.empty_chars: 选项“chars”不能为空
+resource.image.invalid_chars_grid: 第<arg:0>行中的字符数与预期的<arg:1>个不符
+resource.image.codepoint_conflict: 字体“<arg:2>”中的字符“<arg:0>（<arg:1>）”已被另一张图片“<arg:3>”占用
+resource.image.codepoint_exhausted: 字体“<arg:0>”的码位已用尽
+resource.image.height_ascent_conflict: 字高“<arg:0>”不应小于字距“<arg:1>”
+resource.emoji.invalid_image_format: 无效的图像格式“<arg:0>”
+resource.emoji.unknown_image: 未知的图像“<arg:0>”
+resource.equipment.unknown_type: 未知的装备类型“<arg:0>”
+resource.equipment.unknown_layer_type: 未知的预设模型类型“<arg:0>”
+resource.equipment.invalid_sacrificed_armor: 无效的原版盔甲类型“<arg:0>”
+resource.furniture.element.unknown_type: 未知的家具元素类型“<arg:0>”
+resource.furniture.element.tint_source.unknown_type: 未知的家具染色源类型“<arg:0>”
+resource.furniture.hitbox.unknown_type: 未知的家具判定箱类型“<arg:0>”
+resource.furniture.behavior.unknown_type: 未知的家具行为类型“<arg:0>”
+resource.furniture.hitbox.custom.invalid_entity_type: 无效的实体类型“<arg:0>”
+resource.template.unknown_argument_type: 未知的模板参数类型“<arg:0>”
+resource.template.invalid_template: 无效的模板“<arg:0>”
+resource.template.missing_argument: 缺少模板参数：“<arg:0>”。请通过“arguments”选项提供此参数，或为其设置默认值
+resource.block.behavior.missing_property: 该行为需要定义方块状态属性“<arg:0>”。https://ce.gtemc.cn/zh-Hans/configuration/block/states/properties
+resource.block.behavior.property_type_mismatch: 预期属性类型为“<arg:0>”，但实际为“<arg:1>”
+resource.block.behavior.unknown_type: 位置的方块行为类型“<arg:0>”
+resource.block.state.property.unknown_type: 未知的属性类型“<arg:0>”
+resource.block.state.real_state_conflict: 无法将“<arg:0>”绑定到实际方块状态“<arg:1>”，因为该状态已被方块“<arg:2>”占用
+resource.block.state.real_state_exhausted: 无法分配足够的服务端方块状态。请考虑在config.yml中增加服务端侧方块的数量
+resource.block.state.visual_state_exhausted: 视觉状态组“<arg:0>”已达到“<arg:1>”个槽位的最大容量，无法为“<arg:2>”分配状态
+resource.block.state.unreleased_state: 无法使用此格式分配方块状态，因为状态“<arg:0>”在方块状态映射中尚未被释放
+resource.block.state.entity_renderer.unknown_type: 未知的方块实体渲染器类型“<arg:0>”
+resource.block.state.invalid_variant_nbt: 无效的部分方块状态nbt“<arg:0>”
+resource.block.state.undefined_appearance: 未定义的方块状态外观“<arg:0>”
+resource.block.state.model_conflict: 无法将模型“<arg:0>”绑定到方块状态“<arg:1>”，因为该状态已绑定到模型“<arg:2>”
+resource.block.entity_renderer.tint_source.unknown_type: 未知的方块实体渲染器染色源“<arg:0>”
+resource.item.model_definition.unknown_type: 未知的物品模型映射类型“<arg:0>”
+resource.item.model_definition.condition.unknown_type: 未知的布尔条件型谓词类型“<arg:0>”
+resource.item.model_definition.range_dispatch.unknown_type: 未知的值调配型数值属性类型“<arg:0>”
+resource.item.model_definition.select.unknown_type: 未知的枚举条件型枚举属性类型“<arg:0>”
+resource.item.model_definition.special.unknown_type: 未知的特殊模型类型“<arg:0>”
+resource.item.model_definition.tint.unknown_type: 未知的着色类型“<arg:0>”
+resource.item.model_definition.downgrade_failure: 无法将1.21.4及以上版本的物品模型映射转换为旧版格式。请手动为该物品配置“legacy_model”：https://ce.gtemc.cn/zh-Hans/configuration/item/models#%E6%97%A7%E7%89%88%E6%A8%A1%E5%9E%8B
+resource.item.settings.craft_remainder.unknown_type: 未知的合成剩余物品类型“<arg:0>”
+resource.item.settings.equippable: 该字段应置于“data”部分之下
+resource.item.settings.equipment.invalid_asset_id: 未找到id为“<arg:0>”的装备。如需帮助，请参阅指南：https://ce.gtemc.cn/zh-Hans/configuration/equipment
+resource.item.behavior.unknown_type: 未知的物品行为类型“<arg:0>”
+resource.item.updater.unknown_type: 未知的物品更新器类型“<arg:0>”
+resource.item.custom_model_data_exhausted: 材料“<arg:0>”的自定义模型数据已用尽
+resource.item.custom_model_data_conflict: 自定义模型数据“<arg:0>”已被物品“<arg:1>”占用
+resource.item.missing_model_id: 缺少“custom_model_data”或“item_model”，导致自定义模型无法正常工作
+resource.item.occupied_vanilla_item_model: 物品模型“<arg:0>”已被原版物品占用
+resource.item.invalid_material: 无效的物品类型“<arg:0>”
+resource.model.generation.conflict: 无法为“<arg:0>”生成模型，因为有两个或多个配置试图使用相同的路径生成不同的json模型
+resource.recipe.transform_processor.unknown_type: 未知的锻造配方后处理器类型“<arg:0>”
+resource.recipe.ingredient.invalid_tag: 物品标签“<arg:0>”不包含任何物品
+resource.recipe.ingredient.item_not_exist: 原料物品“<arg:0>”不存在
+resource.recipe.result.item_not_exist: 结果物品“<arg:0>”不存在
+resource.recipe.shaped.invalid_pattern: 无效的合成图案“<arg:0>”
+resource.recipe.shaped.invalid_symbol: 无效的合成图案符号“<arg:0>”
+resource.recipe.post_processor.unknown_type: 未知的配方结果后处理器类型“<arg:0>”
+resource.recipe.unknown_type: 未知的配方类型“<arg:0>”
+resource.vanilla_loot.block.invalid_target: 无效的方块目标“<arg:0>”

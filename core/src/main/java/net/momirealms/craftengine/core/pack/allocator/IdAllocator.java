@@ -15,14 +15,21 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionException;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.function.Predicate;
 
-public class IdAllocator {
+public final class IdAllocator {
     private final Path cacheFilePath;
-    private final BiMap<String, Integer> forcedIdMap = HashBiMap.create(128);
     private final BitSet occupiedIdSet = new BitSet();
     private final Map<String, CompletableFuture<Integer>> pendingAllocations = new LinkedHashMap<>();
     private final Map<String, Integer> cachedIdMap = new LinkedHashMap<>();
+    private final List<CompletableFuture<?>> combinedFutures = new ArrayList<>();
+
+    private final BiMap<String, Integer> forcedIdMap = HashBiMap.create(128);
+    private final ReentrantReadWriteLock lock = new ReentrantReadWriteLock();
+    private final ReentrantReadWriteLock.ReadLock readLock = lock.readLock();
+    private final ReentrantReadWriteLock.WriteLock writeLock = lock.writeLock();
 
     private long lastModified;
 
@@ -48,6 +55,15 @@ public class IdAllocator {
         this.occupiedIdSet.clear();
         this.forcedIdMap.clear();
         this.pendingAllocations.clear();
+        this.combinedFutures.clear();
+    }
+
+    public List<CompletableFuture<?>> combinedFutures() {
+        return combinedFutures;
+    }
+
+    public synchronized void addCombinedFuture(@NotNull CompletableFuture<?> future) {
+        this.combinedFutures.add(future);
     }
 
     /**
@@ -117,32 +133,47 @@ public class IdAllocator {
      * @return 分配结果的Future
      */
     public CompletableFuture<Integer> assignFixedId(String name, int id) {
-        // 检查ID是否被其他名称占用
-        String existingOwner = this.forcedIdMap.inverse().get(id);
-        if (existingOwner != null && !existingOwner.equals(name)) {
-            return CompletableFuture.failedFuture(new IdConflictException(existingOwner, id));
-        }
+        try {
+            this.writeLock.lock();
+            // 检查ID是否被其他名称占用
+            String existingOwner = this.forcedIdMap.inverse().get(id);
+            if (existingOwner != null && !existingOwner.equals(name)) {
+                return CompletableFuture.failedFuture(new CompletionException(new IdConflictException(existingOwner, id)));
+            }
 
-        this.forcedIdMap.put(name, id);
-        this.cachedIdMap.remove(name); // 清除可能的缓存
-        this.occupiedIdSet.set(id);
-        return CompletableFuture.completedFuture(id);
+            this.forcedIdMap.put(name, id);
+            this.cachedIdMap.remove(name); // 清除可能的缓存
+            this.occupiedIdSet.set(id);
+            return CompletableFuture.completedFuture(id);
+        } finally {
+            this.writeLock.unlock();
+        }
     }
 
     public boolean isForced(String name) {
-        return this.forcedIdMap.containsKey(name);
+        try {
+            this.readLock.lock();
+            return this.forcedIdMap.containsKey(name);
+        } finally {
+            this.readLock.unlock();
+        }
     }
 
     public List<Pair<String, Integer>> getFixedIdsBetween(int minId, int maxId) {
-        BiMap<Integer, String> inverse = this.forcedIdMap.inverse();
-        List<Pair<String, Integer>> result = new ArrayList<>();
-        for (int i = minId; i <= maxId; i++) {
-            String s = inverse.get(i);
-            if (s != null) {
-                result.add(Pair.of(s, i));
+        try {
+            this.readLock.lock();
+            BiMap<Integer, String> inverse = this.forcedIdMap.inverse();
+            List<Pair<String, Integer>> result = new ArrayList<>();
+            for (int i = minId; i <= maxId; i++) {
+                String s = inverse.get(i);
+                if (s != null) {
+                    result.add(Pair.of(s, i));
+                }
             }
+            return result;
+        } finally {
+            this.readLock.unlock();
         }
-        return result;
     }
 
     /**
@@ -150,7 +181,11 @@ public class IdAllocator {
      * @param name 名称
      * @return 分配结果的Future
      */
-    public CompletableFuture<Integer> requestAutoId(String name) {
+    public synchronized CompletableFuture<Integer> requestAutoId(String name) {
+        CompletableFuture<Integer> previousFuture = this.pendingAllocations.get(name);
+        if (previousFuture != null) {
+            return previousFuture;
+        }
         CompletableFuture<Integer> future = new CompletableFuture<>();
         this.pendingAllocations.put(name, future);
         return future;
@@ -182,26 +217,6 @@ public class IdAllocator {
         return idsToRemove;
     }
 
-    /**
-     * 获取指定名称的ID
-     * @param name 名称
-     * @return ID，如果不存在返回null
-     */
-    public Integer getId(String name) {
-        Integer forcedId = this.forcedIdMap.get(name);
-        return forcedId != null ? forcedId : this.cachedIdMap.get(name);
-    }
-
-    /**
-     * 获取所有已分配的ID映射（不可修改）
-     */
-    public Map<String, Integer> getAllAllocatedIds() {
-        Map<String, Integer> result = new HashMap<>();
-        result.putAll(this.forcedIdMap);
-        result.putAll(this.cachedIdMap);
-        return Collections.unmodifiableMap(result);
-    }
-
     @NotNull
     public Map<String, Integer> cachedIdMap() {
         return Collections.unmodifiableMap(this.cachedIdMap);
@@ -229,7 +244,7 @@ public class IdAllocator {
         if (lastTime != this.lastModified) {
             this.lastModified = lastTime;
             this.cachedIdMap.clear();
-            JsonElement element = GsonHelper.readJsonFile(this.cacheFilePath);
+            JsonElement element = GsonHelper.readJsonFromFile(this.cacheFilePath);
             if (element instanceof JsonObject jsonObject) {
                 for (Map.Entry<String, JsonElement> entry : jsonObject.entrySet()) {
                     if (entry.getValue() instanceof JsonPrimitive primitive) {

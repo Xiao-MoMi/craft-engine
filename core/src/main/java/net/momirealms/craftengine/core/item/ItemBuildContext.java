@@ -11,12 +11,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Map;
 
 public class ItemBuildContext extends PlayerOptionalContext {
-
-    /**
-     * Use {@link #empty()} instead
-     */
-    @Deprecated(since = "0.0.63", forRemoval = true)
-    public static final ItemBuildContext EMPTY = new ItemBuildContext(null, ContextHolder.empty());
+    public static final ItemBuildContext EMPTY = new ItemBuildContext(null, ContextHolder.emptyImmutable());
     public static final TagResolver[] EMPTY_RESOLVERS = empty().tagResolvers();
 
     public ItemBuildContext(@Nullable Player player, @NotNull ContextHolder contexts) {
@@ -42,6 +37,6 @@ public class ItemBuildContext extends PlayerOptionalContext {
     @NotNull
     public static ItemBuildContext of(@Nullable Player player) {
         if (player == null) return new ItemBuildContext(null, ContextHolder.empty());
-        return new ItemBuildContext(player, new ContextHolder(Map.of(DirectContextParameters.PLAYER, () -> player)));
+        return new ItemBuildContext(player, ContextHolder.mutable(Map.of(DirectContextParameters.PLAYER, () -> player)));
     }
 }

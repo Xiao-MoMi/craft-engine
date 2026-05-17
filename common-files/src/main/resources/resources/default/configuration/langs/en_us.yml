@@ -1,0 +1,129 @@
+# All the configurations below use a localization system implemented based on the client-side resource pack.
+# https://xiao-momi.github.io/craft-engine-wiki/configuration/lang
+lang#items:
+  en_us:
+    item.default.chinese_lantern: Chinese Lantern
+    item.default.fairy_flower: Fairy Flower
+    item.default.reed: Reed
+    item.default.flame_cane: Flame Cane
+    item.default.ender_pearl_flower_seeds: Ender Pearl Flower Seeds
+    item.default.bench: Bench
+    item.default.table_lamp: Table Lamp
+    item.default.wooden_chair: Wooden Chair
+    item.default.topaz_rod: Topaz Rod
+    item.default.topaz_bow: Topaz Bow
+    item.default.topaz_crossbow: Topaz Crossbow
+    item.default.topaz_pickaxe: Topaz Pickaxe
+    item.default.topaz_axe: Topaz Axe
+    item.default.topaz_hoe: Topaz Hoe
+    item.default.topaz_shovel: Topaz Shovel
+    item.default.topaz_sword: Topaz Sword
+    item.default.topaz_helmet: Topaz Helmet
+    item.default.topaz_chestplate: Topaz Chestplate
+    item.default.topaz_leggings: Topaz Leggings
+    item.default.topaz_boots: Topaz Boots
+    item.default.topaz_trident: Topaz Trident
+    item.default.topaz_ore: Topaz Ore
+    item.default.deepslate_topaz_ore: Deepslate Topaz Ore
+    item.default.topaz: Topaz
+    item.default.palm_log: Palm Log
+    item.default.stripped_palm_log: Stripped Palm Log
+    item.default.palm_wood: Palm Wood
+    item.default.stripped_palm_wood: Stripped Palm Wood
+    item.default.palm_planks: Palm Planks
+    item.default.palm_sapling: Palm Sapling
+    item.default.palm_leaves: Palm Leaves
+    item.default.palm_trapdoor: Palm Trapdoor
+    item.default.palm_door: Palm Door
+    item.default.palm_fence_gate: Palm Fence Gate
+    item.default.palm_slab: Palm Slab
+    item.default.palm_stairs: Palm Stairs
+    item.default.palm_pressure_plate: Palm Pressure Plate
+    item.default.palm_button: Palm Button
+    item.default.palm_fence: Palm Fence
+    item.default.netherite_anvil: Netherite Anvil
+    item.default.gunpowder_block: GunPowder Block
+    item.default.solid_gunpowder_block: Solid GunPowder Block
+    item.default.copper_coil: Copper Coil
+    item.default.flame_elytra: Flame Elytra
+    item.default.pebble: Pebble
+    item.default.cap: Cap
+    item.default.flower_basket: Flower Basket
+    item.default.chessboard_block: Chessboard Block
+    item.default.safe_block: Safe Block
+    item.default.sofa: Sofa
+    item.default.amethyst_torch: Amethyst Torch
+    item.default.hami_melon_slice: Hami Melon Slice
+    item.default.hami_melon: Hami Melon
+    item.default.hami_melon_seeds: Hami Melon Seeds
+    item.default.magma_fruit: Magma Fruit
+    item.default.globe: Globe
+    item.default.drill: Drill
+    item.default.togglable_light_block: Togglable Light Block
+    item.default.showcase: Showcase
+    item.default.drawer_block: Drawer Block
+    item.default.candelabrum: Candelabrum
+# Providing translations for blocks is particularly effective for plugins that retrieve server-side block translation keys.
+lang#blocks:
+  en_us:
+    block_name:default:chinese_lantern: Chinese Lantern
+    block_name:default:netherite_anvil: Netherite Anvil
+    block_name:default:topaz_ore: Topaz Ore
+    block_name:default:deepslate_topaz_ore: Deepslate Topaz Ore
+    block_name:default:palm_log: Palm Log
+    block_name:default:stripped_palm_log: Stripped Palm Log
+    block_name:default:palm_wood: Palm Wood
+    block_name:default:stripped_palm_wood: Stripped Palm Wood
+    block_name:default:palm_planks: Palm Planks
+    block_name:default:palm_sapling: Palm Sapling
+    block_name:default:palm_leaves: Palm Leaves
+    block_name:default:palm_trapdoor: Palm Trapdoor
+    block_name:default:palm_door: Palm Door
+    block_name:default:palm_fence_gate: Palm Fence Gate
+    block_name:default:palm_slab: Palm Slab
+    block_name:default:palm_stairs: Palm Stairs
+    block_name:default:palm_button: Palm Button
+    block_name:default:palm_fence: Palm Fence
+    block_name:default:fairy_flower: Fairy Flower
+    block_name:default:reed: Reed
+    block_name:default:flame_cane: Flame Cane
+    block_name:default:ender_pearl_flower: Ender Pearl Flower
+    block_name:default:gunpowder_block: GunPowder Block
+    block_name:default:solid_gunpowder_block: Solid GunPowder Block
+    block_name:default:copper_coil: Copper Coil
+    block_name:default:chessboard_block: Chessboard Block
+    block_name:default:safe_block: Safe Block
+    block_name:default:sleeper_sofa: Sofa
+    block_name:default:sofa: Sofa
+    block_name:default:amethyst_torch: Amethyst Torch
+    block_name:default:amethyst_wall_torch: Amethyst Torch
+    block_name:default:hami_melon: Hami Melon
+    block_name:default:hami_melon_stem: Hami Melon Stem
+    block_name:default:attached_hami_melon_stem: Hami Melon Stem
+    block_name:default:magma_plant: Magma Plant
+    block_name:default:togglable_light_block: Togglable Light Block
+    block_name:default:drawer_block: Drawer Block
+# Translations for furniture are typically designed for the API.
+# If you are using a plugin that supports displaying furniture names, you will most likely need to configure the translations for the furniture.
+lang#furniture:
+  en_us:
+    furniture.default.bench: Bench
+    furniture.default.flower_basket: Flower Basket
+    furniture.default.globe: Globe
+    furniture.default.wooden_chair: Wooden Chair
+    furniture.default.showcase: Showcase
+    furniture.default.candelabrum: Candelabrum
+# The term "translation" here specifically refers to localization on the server-side.
+# This means that the content you write will not be directly included in the client-side resource pack.
+# The server will translate the keys you set and then send the already-localized text to the client.
+# https://xiao-momi.github.io/craft-engine-wiki/configuration/i18n
+translations#categories:
+  en_us:
+    category.default.name: Default Assets
+    category.default.lore: Contains the default configuration of CraftEngine
+    category.palm_tree: Palm Tree
+    category.topaz: Topaz
+    category.misc: Misc
+translations#emoji:
+  en_us:
+    emoji.tip: Use <yellow>'<arg:0>'</yellow> to send the '<arg:1>' emoji

@@ -1,6 +1,6 @@
 package net.momirealms.craftengine.core.plugin.context.parameter;
 
-import net.momirealms.craftengine.core.block.CustomBlock;
+import net.momirealms.craftengine.core.block.BlockDefinition;
 import net.momirealms.craftengine.core.block.ImmutableBlockState;
 import net.momirealms.craftengine.core.entity.Entity;
 import net.momirealms.craftengine.core.entity.furniture.Furniture;
@@ -25,8 +25,8 @@ public final class DirectContextParameters {
     public static final ContextKey<Double> RANDOM = ContextKey.direct("random");
     public static final ContextKey<Double> LAST_RANDOM = ContextKey.direct("last_random");
     public static final ContextKey<World> WORLD = ContextKey.direct("world");
-    public static final ContextKey<Item<?>> FURNITURE_ITEM = ContextKey.direct("furniture_item");
-    public static final ContextKey<Item<?>> ITEM_IN_HAND = ContextKey.direct("item_in_hand");
+    public static final ContextKey<Item> FURNITURE_ITEM = ContextKey.direct("furniture_item");
+    public static final ContextKey<Item> ITEM_IN_HAND = ContextKey.direct("item_in_hand");
     public static final ContextKey<Boolean> FALLING_BLOCK = ContextKey.direct("falling_block");
     public static final ContextKey<Float> EXPLOSION_RADIUS = ContextKey.direct("explosion_radius");
     public static final ContextKey<Player> PLAYER = ContextKey.direct("player");
@@ -46,10 +46,10 @@ public final class DirectContextParameters {
     public static final ContextKey<Integer> FOOD = ContextKey.direct("food");
     public static final ContextKey<Float> SATURATION = ContextKey.direct("saturation");
     public static final ContextKey<UUID> UUID = ContextKey.direct("uuid");
-    public static final ContextKey<Item<?>> MAIN_HAND_ITEM = ContextKey.direct("main_hand_item");
-    public static final ContextKey<Item<?>> OFF_HAND_ITEM = ContextKey.direct("off_hand_item");
-    public static final ContextKey<Item<?>> ITEM = ContextKey.direct("item");
-    public static final ContextKey<CustomBlock> CUSTOM_BLOCK = ContextKey.direct("custom_block");
+    public static final ContextKey<Item> MAIN_HAND_ITEM = ContextKey.direct("main_hand_item");
+    public static final ContextKey<Item> OFF_HAND_ITEM = ContextKey.direct("off_hand_item");
+    public static final ContextKey<Item> ITEM = ContextKey.direct("item");
+    public static final ContextKey<BlockDefinition> CUSTOM_BLOCK = ContextKey.direct("custom_block");
     public static final ContextKey<ExistingBlock> BLOCK = ContextKey.direct("block");
     public static final ContextKey<Long> TIME = ContextKey.direct("time");
     public static final ContextKey<Key> ID = ContextKey.direct("id");
@@ -69,4 +69,5 @@ public final class DirectContextParameters {
     public static final ContextKey<Integer> COUNT = ContextKey.direct("count");
     public static final ContextKey<Integer> HIT_TIMES = ContextKey.direct("hit_times");
     public static final ContextKey<GameEdition> GAME_EDITION = ContextKey.direct("game_edition");
+    public static final ContextKey<Double> MOB_LEVEL = ContextKey.direct("mob_level");
 }

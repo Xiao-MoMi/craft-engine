@@ -1,16 +1,15 @@
 package net.momirealms.craftengine.core.plugin.context.function;
 
 import net.momirealms.craftengine.core.block.BlockStateWrapper;
-import net.momirealms.craftengine.core.block.UpdateOption;
 import net.momirealms.craftengine.core.plugin.CraftEngine;
+import net.momirealms.craftengine.core.plugin.config.ConfigConstants;
+import net.momirealms.craftengine.core.plugin.config.ConfigSection;
 import net.momirealms.craftengine.core.plugin.context.Condition;
 import net.momirealms.craftengine.core.plugin.context.Context;
 import net.momirealms.craftengine.core.plugin.context.number.NumberProvider;
-import net.momirealms.craftengine.core.plugin.context.number.NumberProviders;
 import net.momirealms.craftengine.core.plugin.context.parameter.DirectContextParameters;
 import net.momirealms.craftengine.core.util.LazyReference;
 import net.momirealms.craftengine.core.util.MiscUtils;
-import net.momirealms.craftengine.core.util.ResourceConfigUtils;
 import net.momirealms.craftengine.core.world.World;
 import net.momirealms.craftengine.core.world.WorldPosition;
 import net.momirealms.sparrow.nbt.CompoundTag;
@@ -21,7 +20,7 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
 
-public class TransformBlockFunction<CTX extends Context> extends AbstractConditionalFunction<CTX> {
+public final class TransformBlockFunction<CTX extends Context> extends AbstractConditionalFunction<CTX> {
     private final LazyReference<BlockStateWrapper> lazyBlockState;
     private final CompoundTag properties;
     private final NumberProvider x;
@@ -29,7 +28,13 @@ public class TransformBlockFunction<CTX extends Context> extends AbstractConditi
     private final NumberProvider z;
     private final NumberProvider updateFlags;
 
-    public TransformBlockFunction(List<Condition<CTX>> predicates, CompoundTag properties, NumberProvider x, NumberProvider y, NumberProvider z, NumberProvider updateFlags, LazyReference<BlockStateWrapper> lazyBlockState) {
+    private TransformBlockFunction(List<Condition<CTX>> predicates,
+                                   CompoundTag properties,
+                                   NumberProvider x,
+                                   NumberProvider y,
+                                   NumberProvider z,
+                                   NumberProvider updateFlags,
+                                   LazyReference<BlockStateWrapper> lazyBlockState) {
         super(predicates);
         this.properties = properties;
         this.x = x;
@@ -62,28 +67,35 @@ public class TransformBlockFunction<CTX extends Context> extends AbstractConditi
         }
     }
 
-    public static <CTX extends Context> FunctionFactory<CTX, TransformBlockFunction<CTX>> factory(java.util.function.Function<Map<String, Object>, Condition<CTX>> factory) {
+    public static <CTX extends Context> FunctionFactory<CTX, TransformBlockFunction<CTX>> factory(java.util.function.Function<ConfigSection, Condition<CTX>> factory) {
         return new Factory<>(factory);
     }
 
     private static class Factory<CTX extends Context> extends AbstractFactory<CTX, TransformBlockFunction<CTX>> {
+        private static final String[] UPDATE_FLAGS = new String[] {"update_flags", "update-flags"};
 
-        public Factory(java.util.function.Function<Map<String, Object>, Condition<CTX>> factory) {
+        public Factory(java.util.function.Function<ConfigSection, Condition<CTX>> factory) {
             super(factory);
         }
 
         @Override
-        public TransformBlockFunction<CTX> create(Map<String, Object> arguments) {
-            String block = ResourceConfigUtils.requireNonEmptyStringOrThrow(arguments.get("block"), "warning.config.function.transform_block.missing_block");
+        public TransformBlockFunction<CTX> create(ConfigSection section) {
+            String block = section.getNonNullString("block");
             CompoundTag properties = new CompoundTag();
-            Map<String, Object> propertiesMap = MiscUtils.castToMap(arguments.get("properties"), true);
-            if (propertiesMap != null) {
-                for (Map.Entry<String, Object> entry : propertiesMap.entrySet()) {
-                    properties.putString(entry.getKey(), String.valueOf(entry.getValue()));
+            ConfigSection propertiesSection = section.getSection("properties");
+            if (propertiesSection != null) {
+                for (String key : propertiesSection.keySet()) {
+                    properties.putString(key, propertiesSection.getNonEmptyString(key));
                 }
             }
             return new TransformBlockFunction<>(
-                    getPredicates(arguments), properties, NumberProviders.fromObject(arguments.getOrDefault("x", "<arg:position.x>")), NumberProviders.fromObject(arguments.getOrDefault("y", "<arg:position.y>")), NumberProviders.fromObject(arguments.getOrDefault("z", "<arg:position.z>")), Optional.ofNullable(arguments.get("update-flags")).map(NumberProviders::fromObject).orElse(NumberProviders.direct(UpdateOption.UPDATE_ALL.flags())), LazyReference.lazyReference(() -> CraftEngine.instance().blockManager().createBlockState(block))
+                    getPredicates(section),
+                    properties,
+                    section.getNumber("x", ConfigConstants.POSITION_X),
+                    section.getNumber("y", ConfigConstants.POSITION_Y),
+                    section.getNumber("z", ConfigConstants.POSITION_Z),
+                    section.getNumber(UPDATE_FLAGS, ConfigConstants.UPDATE_ALL),
+                    LazyReference.lazyReference(() -> CraftEngine.instance().blockManager().createBlockState(block))
             );
         }
     }

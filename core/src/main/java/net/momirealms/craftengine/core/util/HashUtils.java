@@ -8,7 +8,9 @@ import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.HexFormat;
 
-public class HashUtils {
+public final class HashUtils {
+    private HashUtils() {}
+
     public static String calculateLocalFileSha1(Path filePath) {
         try (InputStream is = Files.newInputStream(filePath)) {
             MessageDigest md = MessageDigest.getInstance("SHA-1");

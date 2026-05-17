@@ -1,24 +1,25 @@
 package net.momirealms.craftengine.core.plugin.context.function;
 
 import net.momirealms.craftengine.core.entity.player.Player;
+import net.momirealms.craftengine.core.plugin.config.ConfigSection;
 import net.momirealms.craftengine.core.plugin.context.Condition;
 import net.momirealms.craftengine.core.plugin.context.Context;
 import net.momirealms.craftengine.core.plugin.context.CooldownData;
 import net.momirealms.craftengine.core.plugin.context.parameter.DirectContextParameters;
 import net.momirealms.craftengine.core.plugin.context.selector.PlayerSelector;
-import net.momirealms.craftengine.core.plugin.context.selector.PlayerSelectors;
-import net.momirealms.craftengine.core.util.ResourceConfigUtils;
 
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 
-public class RemoveCooldownFunction<CTX extends Context> extends AbstractConditionalFunction<CTX> {
+public final class RemoveCooldownFunction<CTX extends Context> extends AbstractConditionalFunction<CTX> {
     private final PlayerSelector<CTX> selector;
     private final String id;
     private final boolean all;
 
-    public RemoveCooldownFunction(List<Condition<CTX>> predicates, boolean all, PlayerSelector<CTX> selector, String id) {
+    private RemoveCooldownFunction(List<Condition<CTX>> predicates,
+                                   PlayerSelector<CTX> selector,
+                                   String id,
+                                   boolean all) {
         super(predicates);
         this.selector = selector;
         this.id = id;
@@ -43,24 +44,32 @@ public class RemoveCooldownFunction<CTX extends Context> extends AbstractConditi
         }
     }
 
-    public static <CTX extends Context> FunctionFactory<CTX, RemoveCooldownFunction<CTX>> factory(java.util.function.Function<Map<String, Object>, Condition<CTX>> factory) {
+    public static <CTX extends Context> FunctionFactory<CTX, RemoveCooldownFunction<CTX>> factory(java.util.function.Function<ConfigSection, Condition<CTX>> factory) {
         return new Factory<>(factory);
     }
 
     private static class Factory<CTX extends Context> extends AbstractFactory<CTX, RemoveCooldownFunction<CTX>> {
 
-        public Factory(java.util.function.Function<Map<String, Object>, Condition<CTX>> factory) {
+        public Factory(java.util.function.Function<ConfigSection, Condition<CTX>> factory) {
             super(factory);
         }
 
         @Override
-        public RemoveCooldownFunction<CTX> create(Map<String, Object> arguments) {
-            boolean all = ResourceConfigUtils.getAsBoolean(arguments.getOrDefault("all", false), "all");
-            if (all) {
-                return new RemoveCooldownFunction<>(getPredicates(arguments), true, PlayerSelectors.fromObject(arguments.get("target"), conditionFactory()), null);
+        public RemoveCooldownFunction<CTX> create(ConfigSection section) {
+            if (section.getBoolean("all")) {
+                return new RemoveCooldownFunction<>(
+                        getPredicates(section),
+                        getPlayerSelector(section),
+                        null,
+                        true
+                );
             } else {
-                String id = ResourceConfigUtils.requireNonEmptyStringOrThrow(arguments.get("id"), "warning.config.function.remove_cooldown.missing_id");
-                return new RemoveCooldownFunction<>(getPredicates(arguments), false, PlayerSelectors.fromObject(arguments.get("target"), conditionFactory()), id);
+                return new RemoveCooldownFunction<>(
+                        getPredicates(section),
+                        getPlayerSelector(section),
+                        section.getNonNullString("id"),
+                        false
+                );
             }
         }
     }

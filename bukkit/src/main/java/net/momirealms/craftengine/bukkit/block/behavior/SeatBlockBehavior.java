@@ -1,47 +1,45 @@
 package net.momirealms.craftengine.bukkit.block.behavior;
 
-import net.momirealms.craftengine.bukkit.block.entity.BukkitBlockEntityTypes;
-import net.momirealms.craftengine.bukkit.block.entity.SeatBlockEntity;
+import net.momirealms.craftengine.bukkit.block.entity.SeatBlockEntityController;
+import net.momirealms.craftengine.bukkit.plugin.BukkitCraftEngine;
 import net.momirealms.craftengine.bukkit.plugin.user.BukkitServerPlayer;
-import net.momirealms.craftengine.core.block.CustomBlock;
+import net.momirealms.craftengine.core.block.BlockDefinition;
 import net.momirealms.craftengine.core.block.ImmutableBlockState;
 import net.momirealms.craftengine.core.block.behavior.BlockBehaviorFactory;
-import net.momirealms.craftengine.core.block.behavior.EntityBlockBehavior;
+import net.momirealms.craftengine.core.block.behavior.EntityBlock;
 import net.momirealms.craftengine.core.block.entity.BlockEntity;
-import net.momirealms.craftengine.core.block.entity.BlockEntityType;
-import net.momirealms.craftengine.core.block.properties.Property;
+import net.momirealms.craftengine.core.block.entity.BlockEntityController;
+import net.momirealms.craftengine.core.block.property.Property;
 import net.momirealms.craftengine.core.entity.player.InteractionResult;
 import net.momirealms.craftengine.core.entity.seat.SeatConfig;
-import net.momirealms.craftengine.core.util.HorizontalDirection;
+import net.momirealms.craftengine.core.plugin.config.ConfigSection;
+import net.momirealms.craftengine.core.util.Direction;
 import net.momirealms.craftengine.core.world.BlockPos;
 import net.momirealms.craftengine.core.world.CEWorld;
 import net.momirealms.craftengine.core.world.context.UseOnContext;
 
-import java.util.Map;
-
-public class SeatBlockBehavior extends BukkitBlockBehavior implements EntityBlockBehavior {
+public final class SeatBlockBehavior extends BukkitBlockBehavior implements EntityBlock {
     public static final BlockBehaviorFactory<SeatBlockBehavior> FACTORY = new Factory();
-    private final Property<HorizontalDirection> directionProperty;
-    private final SeatConfig[] seats;
+    public final Property<Direction> directionProperty;
+    public final SeatConfig[] seats;
+    private int controllerId;
 
-    public SeatBlockBehavior(CustomBlock customBlock, Property<HorizontalDirection> directionProperty, SeatConfig[] seats) {
-        super(customBlock);
+    private SeatBlockBehavior(BlockDefinition blockDefinition,
+                              Property<Direction> directionProperty,
+                              SeatConfig[] seats) {
+        super(blockDefinition);
         this.seats = seats;
         this.directionProperty = directionProperty;
     }
 
     @Override
-    public BlockEntity createBlockEntity(BlockPos pos, ImmutableBlockState state) {
-        return new SeatBlockEntity(pos, state, this.seats);
+    public void initControllerId(int id) {
+        this.controllerId = id;
     }
 
     @Override
-    public <T extends BlockEntity> BlockEntityType<T> blockEntityType(ImmutableBlockState state) {
-        return EntityBlockBehavior.blockEntityTypeHelper(BukkitBlockEntityTypes.SEAT);
-    }
-
-    public Property<HorizontalDirection> directionProperty() {
-        return this.directionProperty;
+    public BlockEntityController createBlockEntityController(BlockEntity blockEntity) {
+        return new SeatBlockEntityController(blockEntity, this);
     }
 
     @Override
@@ -53,28 +51,27 @@ public class SeatBlockBehavior extends BukkitBlockBehavior implements EntityBloc
         BlockPos pos = context.getClickedPos();
         CEWorld world = context.getLevel().storageWorld();
         BlockEntity blockEntity = world.getBlockEntityAtIfLoaded(pos);
-        if (!(blockEntity instanceof SeatBlockEntity seatBlockEntity)) {
-            return InteractionResult.PASS;
-        }
-        player.swingHand(context.getHand());
-        if (seatBlockEntity.spawnSeat(player)) {
-            return InteractionResult.SUCCESS_AND_CANCEL;
-        } else {
-            return InteractionResult.PASS;
-        }
+        if (blockEntity == null) return InteractionResult.PASS;
+        player.updateLastSuccessfulInteractionTick(player.gameTicks());
+        BukkitCraftEngine.instance().scheduler().platform().runDelayed(() -> {
+            blockEntity.controller.let(SeatBlockEntityController.class, this.controllerId, c -> {
+                if (c.spawnSeat(player)) {
+                    player.swingHand(context.getHand());
+                }
+            });
+        }, null, player.platformPlayer());
+        return InteractionResult.SUCCESS_AND_CANCEL;
     }
 
     private static class Factory implements BlockBehaviorFactory<SeatBlockBehavior> {
 
-        @SuppressWarnings("unchecked")
         @Override
-        public SeatBlockBehavior create(CustomBlock block, Map<String, Object> arguments) {
-            Property<HorizontalDirection> directionProperty = null;
-            Property<?> facing = block.getProperty("facing");
-            if (facing != null && facing.valueClass() == HorizontalDirection.class) {
-                directionProperty = (Property<HorizontalDirection>) facing;
-            }
-            return new SeatBlockBehavior(block, directionProperty, SeatConfig.fromObj(arguments.get("seats")));
+        public SeatBlockBehavior create(BlockDefinition block, ConfigSection section) {
+            return new SeatBlockBehavior(
+                    block,
+                    BlockBehaviorFactory.getOptionalProperty(block, "facing", Direction.class),
+                    section.getList("seats", SeatConfig::fromConfig).toArray(new SeatConfig[0])
+            );
         }
     }
 }

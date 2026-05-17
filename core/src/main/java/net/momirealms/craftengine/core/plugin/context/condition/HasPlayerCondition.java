@@ -1,14 +1,14 @@
 package net.momirealms.craftengine.core.plugin.context.condition;
 
+import net.momirealms.craftengine.core.plugin.config.ConfigSection;
 import net.momirealms.craftengine.core.plugin.context.Condition;
 import net.momirealms.craftengine.core.plugin.context.Context;
 import net.momirealms.craftengine.core.plugin.context.PlayerOptionalContext;
 
-import java.util.Map;
-
 public final class HasPlayerCondition<CTX extends Context> implements Condition<CTX> {
+    public static final HasPlayerCondition<Context> INSTANCE = new HasPlayerCondition<>();
 
-    public HasPlayerCondition() {
+    private HasPlayerCondition() {
     }
 
     @Override
@@ -25,9 +25,10 @@ public final class HasPlayerCondition<CTX extends Context> implements Condition<
 
     private static class Factory<CTX extends Context> implements ConditionFactory<CTX, HasPlayerCondition<CTX>> {
 
+        @SuppressWarnings("unchecked")
         @Override
-        public HasPlayerCondition<CTX> create(Map<String, Object> arguments) {
-            return new HasPlayerCondition<>();
+        public HasPlayerCondition<CTX> create(ConfigSection arguments) {
+            return (HasPlayerCondition<CTX>) INSTANCE;
         }
     }
 }

@@ -1,7 +1,7 @@
 items:
   default:netherite_anvil:
     data:
-      item-name: <!i><lang:item.default.netherite_anvil>
+      item_name: <!i><lang:item.default.netherite_anvil>
     model: minecraft:block/custom/netherite_anvil
     behavior:
       type: block_item
@@ -10,8 +10,8 @@ items:
           template: default:loot_table/self
         behavior:
           type: falling_block
-          hurt-amount: 4
-          max-hurt: 80
+          hurt_amount: 4
+          max_hurt: 80
           sounds:
             land: minecraft:block.anvil.land
             destroy: minecraft:block.anvil.destroy
@@ -19,7 +19,7 @@ items:
           - on: right_click
             functions:
               - type: open_window
-                gui-type: anvil
+                gui_type: anvil
               - type: cancel_event
             conditions:
               - type: expression
@@ -31,11 +31,11 @@ items:
             place: minecraft:block.anvil.place
             hit: minecraft:block.anvil.hit
             fall: minecraft:block.anvil.fall
-          map-color: 29
+          map_color: 29
           hardness: 10.0
           resistance: 1200
-          push-reaction: block
-          correct-tools:
+          push_reaction: block
+          correct_tools:
             template: default:pickaxe_power/level_4
           tags: ["minecraft:mineable/pickaxe"]
         states:
@@ -73,7 +73,7 @@ recipes:
     type: shaped
     pattern:
       - ' B '
-      - BAB
+      - 'BAB'
       - ' B '
     ingredients:
       A: minecraft:anvil

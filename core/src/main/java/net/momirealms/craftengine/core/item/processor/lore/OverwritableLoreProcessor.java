@@ -1,10 +1,11 @@
 package net.momirealms.craftengine.core.item.processor.lore;
 
-import net.momirealms.craftengine.core.item.DataComponentKeys;
 import net.momirealms.craftengine.core.item.Item;
 import net.momirealms.craftengine.core.item.ItemBuildContext;
-import net.momirealms.craftengine.core.item.ItemProcessorFactory;
+import net.momirealms.craftengine.core.item.component.DataComponentKeys;
+import net.momirealms.craftengine.core.item.processor.ItemProcessorFactory;
 import net.momirealms.craftengine.core.item.processor.SimpleNetworkItemProcessor;
+import net.momirealms.craftengine.core.plugin.config.ConfigValue;
 import net.momirealms.craftengine.core.util.Key;
 import net.momirealms.craftengine.core.util.VersionHelper;
 import net.momirealms.sparrow.nbt.CompoundTag;
@@ -18,7 +19,7 @@ public final class OverwritableLoreProcessor implements SimpleNetworkItemProcess
     }
 
     @Override
-    public <I> Item<I> apply(Item<I> item, ItemBuildContext context) {
+    public Item apply(Item item, ItemBuildContext context) {
         if (VersionHelper.COMPONENT_RELEASE) {
             if (item.hasNonDefaultComponent(DataComponentKeys.LORE)) {
                 return item;
@@ -32,22 +33,22 @@ public final class OverwritableLoreProcessor implements SimpleNetworkItemProcess
     }
 
     @Override
-    public <I> Key componentType(Item<I> item, ItemBuildContext context) {
+    public Key componentType(Item item, ItemBuildContext context) {
         return DataComponentKeys.LORE;
     }
 
     @Override
-    public <I> Object[] nbtPath(Item<I> item, ItemBuildContext context) {
-        return new Object[]{"display", "Lore"};
+    public Object[] nbtPath(Item item, ItemBuildContext context) {
+        return LoreProcessor.NBT_PATH;
     }
 
     @Override
-    public <I> String nbtPathString(Item<I> item, ItemBuildContext context) {
+    public String nbtPathString(Item item, ItemBuildContext context) {
         return "display.Lore";
     }
 
     @Override
-    public <I> Item<I> prepareNetworkItem(Item<I> item, ItemBuildContext context, CompoundTag networkData) {
+    public Item prepareNetworkItem(Item item, ItemBuildContext context, CompoundTag networkData) {
         if (VersionHelper.COMPONENT_RELEASE) {
             if (item.hasNonDefaultComponent(DataComponentKeys.LORE)) {
                 return item;
@@ -62,9 +63,8 @@ public final class OverwritableLoreProcessor implements SimpleNetworkItemProcess
 
     private static class Factory implements ItemProcessorFactory<OverwritableLoreProcessor> {
         @Override
-        public OverwritableLoreProcessor create(Object arg) {
-            LoreProcessor lore = LoreProcessor.createLoreModifier(arg);
-            return new OverwritableLoreProcessor(lore);
+        public OverwritableLoreProcessor create(ConfigValue value) {
+            return new OverwritableLoreProcessor(LoreProcessor.createLoreModifier(value));
         }
     }
 }

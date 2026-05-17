@@ -20,7 +20,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.concurrent.CompletableFuture;
 
-public class EnableResourceCommand extends BukkitCommandFeature<CommandSender> {
+public final class EnableResourceCommand extends BukkitCommandFeature<CommandSender> {
 
     public EnableResourceCommand(CraftEngineCommandManager<CommandSender> commandManager, CraftEngine plugin) {
         super(commandManager, plugin);

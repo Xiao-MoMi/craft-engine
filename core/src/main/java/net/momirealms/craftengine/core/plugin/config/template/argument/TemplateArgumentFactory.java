@@ -1,8 +1,8 @@
 package net.momirealms.craftengine.core.plugin.config.template.argument;
 
-import java.util.Map;
+import net.momirealms.craftengine.core.plugin.config.ConfigSection;
 
 public interface TemplateArgumentFactory<T extends TemplateArgument> {
 
-    T create(Map<String, Object> arguments);
+    T create(ConfigSection section);
 }

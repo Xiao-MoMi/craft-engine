@@ -7,8 +7,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collector;
 import java.util.stream.Stream;
 
-public class CompletableFutures {
-
+public final class CompletableFutures {
     private CompletableFutures() {}
 
     public static <T extends CompletableFuture<?>> Collector<T, ImmutableList.Builder<T>, CompletableFuture<Void>> collector() {

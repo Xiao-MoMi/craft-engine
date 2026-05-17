@@ -2,33 +2,38 @@ package net.momirealms.craftengine.bukkit.sound;
 
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
-import net.momirealms.craftengine.bukkit.nms.FastNMS;
-import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.CoreReflections;
-import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.MBuiltInRegistries;
-import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.MRegistries;
 import net.momirealms.craftengine.bukkit.util.ComponentUtils;
 import net.momirealms.craftengine.bukkit.util.KeyUtils;
+import net.momirealms.craftengine.bukkit.util.RegistryUtils;
 import net.momirealms.craftengine.core.plugin.CraftEngine;
 import net.momirealms.craftengine.core.sound.AbstractSoundManager;
 import net.momirealms.craftengine.core.sound.JukeboxSong;
 import net.momirealms.craftengine.core.util.AdventureHelper;
 import net.momirealms.craftengine.core.util.GsonHelper;
 import net.momirealms.craftengine.core.util.Key;
-import net.momirealms.craftengine.core.util.VersionHelper;
+import net.momirealms.craftengine.proxy.minecraft.core.HolderProxy;
+import net.momirealms.craftengine.proxy.minecraft.core.MappedRegistryProxy;
+import net.momirealms.craftengine.proxy.minecraft.core.RegistryProxy;
+import net.momirealms.craftengine.proxy.minecraft.core.registries.BuiltInRegistriesProxy;
+import net.momirealms.craftengine.proxy.minecraft.core.registries.RegistriesProxy;
+import net.momirealms.craftengine.proxy.minecraft.sounds.SoundEventProxy;
+import net.momirealms.craftengine.proxy.minecraft.world.item.JukeboxSongProxy;
 
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
 
-public class BukkitSoundManager extends AbstractSoundManager {
+public final class BukkitSoundManager extends AbstractSoundManager {
 
     public BukkitSoundManager(CraftEngine plugin) {
         super(plugin);
-        for (Object soundEvent : (Iterable<?>) MBuiltInRegistries.SOUND_EVENT) {
-            Object resourceLocation = FastNMS.INSTANCE.field$SoundEvent$location(soundEvent);
-            VANILLA_SOUND_EVENTS.add(KeyUtils.resourceLocationToKey(resourceLocation));
+        // 加载全部原版声音
+        for (Object soundEvent : (Iterable<?>) BuiltInRegistriesProxy.SOUND_EVENT) {
+            Object identifier = SoundEventProxy.INSTANCE.getLocation(soundEvent);
+            VANILLA_SOUND_EVENTS.add(KeyUtils.identifierToKey(identifier));
         }
+        // 刚开服的时候立刻注册上一次关服时候的音乐，否则可能会导致一些物品插件加载物品爆炸
         this.registerSongs(this.loadLastRegisteredSongs());
     }
 
@@ -42,7 +47,7 @@ public class BukkitSoundManager extends AbstractSoundManager {
         if (songs == null || songs.isEmpty()) return;
         Path persistSongPath = this.plugin.dataFolderPath()
                 .resolve("cache")
-                .resolve("jukebox-songs.json");
+                .resolve("jukebox_songs.json");
         try {
             Files.createDirectories(persistSongPath.getParent());
             JsonObject cache = new JsonObject();
@@ -65,11 +70,11 @@ public class BukkitSoundManager extends AbstractSoundManager {
     private Map<Key, JukeboxSong> loadLastRegisteredSongs() {
         Path persistSongPath = this.plugin.dataFolderPath()
                 .resolve("cache")
-                .resolve("jukebox-songs.json");
+                .resolve("jukebox_songs.json");
         if (Files.exists(persistSongPath) && Files.isRegularFile(persistSongPath)) {
             try {
                 Map<Key, JukeboxSong> songs = new HashMap<>();
-                JsonObject cache = GsonHelper.readJsonFile(persistSongPath).getAsJsonObject();
+                JsonObject cache = GsonHelper.readJsonFromFile(persistSongPath).getAsJsonObject();
                 for (Map.Entry<String, JsonElement> songEntry : cache.entrySet()) {
                     Key id = Key.of(songEntry.getKey());
                     if (songEntry.getValue() instanceof JsonObject jo) {
@@ -90,69 +95,70 @@ public class BukkitSoundManager extends AbstractSoundManager {
         return Map.of();
     }
 
+    // todo 注册声音到服务端，客户端并不认可，需要在网络层面进行转义为普通声音
+    // 但是整个过程非常复杂，因为物品组件可能会损坏，也需要对含有声音的物品进行映射
     @Override
     protected void registerSounds(Collection<Key> sounds) {
-        if (sounds.isEmpty()) return;
-        Object registry = MBuiltInRegistries.SOUND_EVENT;
-        try {
-            CoreReflections.field$MappedRegistry$frozen.set(registry, false);
-            for (Key soundEventId : sounds) {
-                Object resourceLocation = KeyUtils.toResourceLocation(soundEventId);
-                // 检查之前有没有注册过了
-                Object soundEvent = FastNMS.INSTANCE.method$Registry$getValue(registry, resourceLocation);
-                // 只有没注册才注册，否则会报错
-                if (soundEvent == null) {
-                    soundEvent = VersionHelper.isOrAbove1_21_2() ?
-                            CoreReflections.constructor$SoundEvent.newInstance(resourceLocation, Optional.of(0)) :
-                            CoreReflections.constructor$SoundEvent.newInstance(resourceLocation, 0, false);
-                    Object holder = CoreReflections.method$Registry$registerForHolder.invoke(null, registry, resourceLocation, soundEvent);
-                    CoreReflections.method$Holder$Reference$bindValue.invoke(holder, soundEvent);
-                    CoreReflections.field$Holder$Reference$tags.set(holder, Set.of());
-                    int id = FastNMS.INSTANCE.method$Registry$getId(registry, soundEvent);
-                    super.customSoundsInRegistry.put(id, soundEventId);
-                }
-            }
-        } catch (Exception e) {
-            this.plugin.logger().warn("Failed to register jukebox songs.", e);
-        } finally {
-            try {
-                CoreReflections.field$MappedRegistry$frozen.set(registry, true);
-            } catch (ReflectiveOperationException ignored) {}
-        }
+//        if (sounds.isEmpty()) return;
+//        Object registry = BuiltInRegistriesProxy.SOUND_EVENT;
+//        try {
+//            MappedRegistryProxy.INSTANCE.setFrozen(registry, false);
+//            for (Key soundEventId : sounds) {
+//                Object identifier = KeyUtils.toIdentifier(soundEventId);
+//                // 检查之前有没有注册过了
+//                Object soundEvent = RegistryUtils.getRegistryValue(registry, identifier);
+//                // 只有没注册才注册，否则会报错
+//                if (soundEvent == null) {
+//                    soundEvent = SoundEventProxy.INSTANCE.create(identifier, Optional.of(0f));
+//                    Object holder = RegistryProxy.INSTANCE.registerForHolder$1(registry, identifier, soundEvent);
+//                    HolderProxy.ReferenceProxy.INSTANCE.bindValue(holder, soundEvent);
+//                    HolderProxy.ReferenceProxy.INSTANCE.setTags(holder, Set.of());
+//                    int id = RegistryProxy.INSTANCE.getId(registry, soundEvent);
+//                    super.customSoundsInRegistry.put(id, soundEventId);
+//                }
+//            }
+//        } catch (Exception e) {
+//            this.plugin.logger().warn("Failed to register jukebox songs.", e);
+//        } finally {
+//            MappedRegistryProxy.INSTANCE.setFrozen(registry, true);
+//        }
     }
 
     @Override
     protected void registerSongs(Map<Key, JukeboxSong> songs) {
         if (songs.isEmpty()) return;
-        Object registry = FastNMS.INSTANCE.method$RegistryAccess$lookupOrThrow(FastNMS.INSTANCE.registryAccess(), MRegistries.JUKEBOX_SONG);
+        Object registry = RegistryUtils.lookupOrThrow(RegistriesProxy.JUKEBOX_SONG);
         try {
             // 获取 JUKEBOX_SONG 注册表
-            CoreReflections.field$MappedRegistry$frozen.set(registry, false);
+            MappedRegistryProxy.INSTANCE.setFrozen(registry, false);
             for (Map.Entry<Key, JukeboxSong> entry : songs.entrySet()) {
                 Key id = entry.getKey();
                 JukeboxSong jukeboxSong = entry.getValue();
-                Object resourceLocation = KeyUtils.toResourceLocation(id);
-                Object soundId = KeyUtils.toResourceLocation(jukeboxSong.sound());
+                Object identifier = KeyUtils.toIdentifier(id);
+                Object soundId = KeyUtils.toIdentifier(jukeboxSong.sound());
                 // 检查之前有没有注册过了
-                Object song = FastNMS.INSTANCE.method$Registry$getValue(registry, resourceLocation);
+                Object song = RegistryUtils.getRegistryValue(registry, identifier);
+
+                Object soundEvent = SoundEventProxy.INSTANCE.create(soundId, Optional.of(jukeboxSong.range()));
+                Object soundHolder = HolderProxy.INSTANCE.direct(soundEvent);
+
                 // 只有没注册才注册，否则会报错
                 if (song == null) {
-                    Object soundEvent = VersionHelper.isOrAbove1_21_2() ?
-                            CoreReflections.constructor$SoundEvent.newInstance(soundId, Optional.of(jukeboxSong.range())) :
-                            CoreReflections.constructor$SoundEvent.newInstance(soundId, jukeboxSong.range(), false);
-                    Object soundHolder = CoreReflections.method$Holder$direct.invoke(null, soundEvent);
-                    song = CoreReflections.constructor$JukeboxSong.newInstance(soundHolder, ComponentUtils.adventureToMinecraft(jukeboxSong.description()), jukeboxSong.lengthInSeconds(), jukeboxSong.comparatorOutput());
-                    Object holder = CoreReflections.method$Registry$registerForHolder.invoke(null, registry, resourceLocation, song);
-                    CoreReflections.method$Holder$Reference$bindValue.invoke(holder, song);
-                    CoreReflections.field$Holder$Reference$tags.set(holder, Set.of());
+                    song = JukeboxSongProxy.INSTANCE.newInstance(soundHolder, ComponentUtils.adventureToMinecraft(jukeboxSong.description()), jukeboxSong.lengthInSeconds(), jukeboxSong.comparatorOutput());
+                    Object holder = RegistryProxy.INSTANCE.registerForHolder$1(registry, identifier, song);
+                    HolderProxy.ReferenceProxy.INSTANCE.bindValue(holder, song);
+                    HolderProxy.ReferenceProxy.INSTANCE.setTags(holder, Set.of());
+                } else {
+                    JukeboxSongProxy.INSTANCE.setLengthInSeconds(song, jukeboxSong.lengthInSeconds());
+                    JukeboxSongProxy.INSTANCE.setDescription(song, ComponentUtils.adventureToMinecraft(jukeboxSong.description()));
+                    JukeboxSongProxy.INSTANCE.setSoundEvent(song, soundHolder);
+                    JukeboxSongProxy.INSTANCE.setComparatorOutput(song, jukeboxSong.comparatorOutput());
                 }
             }
-        } catch (Exception e) {
+        } catch (Throwable e) {
             this.plugin.logger().warn("Failed to register jukebox songs.", e);
         } finally {
-            try {
-                CoreReflections.field$MappedRegistry$frozen.set(registry, true);
-            } catch (ReflectiveOperationException ignored) {}
+            MappedRegistryProxy.INSTANCE.setFrozen(registry, true);
         }
     }
 }

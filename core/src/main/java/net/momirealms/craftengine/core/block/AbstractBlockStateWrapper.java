@@ -10,7 +10,7 @@ public abstract class AbstractBlockStateWrapper implements BlockStateWrapper {
     }
 
     @Override
-    public Object literalObject() {
+    public Object minecraftState() {
         return this.blockState;
     }
 

@@ -25,7 +25,7 @@ public interface ItemBrowserManager extends Manageable {
 
     void open(Player player);
 
-    void openRecipePage(Player player, Gui parentGui, List<Recipe<Object>> recipes, int index, int depth, boolean canOpenNoRecipePage);
+    void openRecipePage(Player player, Gui parentGui, List<Recipe> recipes, int index, int depth, boolean canOpenNoRecipePage);
 
     void openNoRecipePage(Player player, Key result, Gui parentGui, int depth);
 

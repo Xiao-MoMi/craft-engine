@@ -9,7 +9,7 @@ import java.util.List;
 import java.util.function.Function;
 import java.util.function.Predicate;
 
-public class BiMapPalette<T> implements Palette<T> {
+public final class BiMapPalette<T> implements Palette<T> {
     private final IndexedIterable<T> idList;
     private final Int2ObjectBiMap<T> map;
     private final PaletteResizeListener<T> listener;

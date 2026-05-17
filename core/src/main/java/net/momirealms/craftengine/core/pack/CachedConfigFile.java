@@ -2,7 +2,7 @@ package net.momirealms.craftengine.core.pack;
 
 import java.util.Map;
 
-public class CachedConfigFile {
+public final class CachedConfigFile {
     private final Map<String, Object> config;
     private final long lastModified;
     private final long size;

@@ -22,7 +22,7 @@ import java.io.IOException;
 import java.lang.ref.WeakReference;
 import java.util.Objects;
 
-public class BukkitSeat<O extends SeatOwner> implements Seat<O> {
+public final class BukkitSeat<O extends SeatOwner> implements Seat<O> {
     private final O owner;
     private final SeatConfig seatConfig;
     private WeakReference<Entity> entity;
@@ -100,7 +100,7 @@ public class BukkitSeat<O extends SeatOwner> implements Seat<O> {
         Location location = this.calculateSeatLocation(sourceLocation);
 
         CompoundTag extraData = new CompoundTag();
-        this.owner.saveCustomData(extraData);
+        this.owner.saveSeatEntityData(extraData);
         byte[] data;
         try {
             data = NBT.toBytes(extraData);
@@ -110,9 +110,9 @@ public class BukkitSeat<O extends SeatOwner> implements Seat<O> {
 
         // 生成座椅实体
         Entity seatEntity = this.limitPlayerRotation() ?
-                EntityUtils.spawnEntity(player.getWorld(), VersionHelper.isOrAbove1_20_2() ? location.subtract(0,0.9875,0) : location.subtract(0,0.990625,0), EntityType.ARMOR_STAND, entity -> {
+                EntityUtils.spawnEntity(player.getWorld(), VersionHelper.isOrAbove1_20_2 ? location.subtract(0,0.9875,0) : location.subtract(0,0.990625,0), EntityType.ARMOR_STAND, entity -> {
                     ArmorStand armorStand = (ArmorStand) entity;
-                    if (VersionHelper.isOrAbove1_21_3()) {
+                    if (VersionHelper.isOrAbove1_21_3) {
                         Objects.requireNonNull(armorStand.getAttribute(Attribute.MAX_HEALTH)).setBaseValue(0.01);
                     } else {
                         LegacyAttributeUtils.setMaxHealth(armorStand);
@@ -129,7 +129,7 @@ public class BukkitSeat<O extends SeatOwner> implements Seat<O> {
                     armorStand.getPersistentDataContainer().set(BukkitSeatManager.SEAT_KEY, PersistentDataType.BOOLEAN, true);
                     armorStand.getPersistentDataContainer().set(BukkitSeatManager.SEAT_EXTRA_DATA_KEY, PersistentDataType.BYTE_ARRAY, data);
                 }) :
-                EntityUtils.spawnEntity(player.getWorld(), VersionHelper.isOrAbove1_20_2() ? location : location.subtract(0,0.25,0), EntityType.ITEM_DISPLAY, entity -> {
+                EntityUtils.spawnEntity(player.getWorld(), VersionHelper.isOrAbove1_20_2 ? location : location.subtract(0,0.25,0), EntityType.ITEM_DISPLAY, entity -> {
                     ItemDisplay itemDisplay = (ItemDisplay) entity;
                     itemDisplay.setPersistent(false);
                     itemDisplay.getPersistentDataContainer().set(BukkitSeatManager.SEAT_KEY, PersistentDataType.BOOLEAN, true);

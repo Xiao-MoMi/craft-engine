@@ -1,17 +1,19 @@
 package net.momirealms.craftengine.core.plugin.config;
 
 import net.momirealms.craftengine.core.pack.CachedConfigSection;
-import org.jetbrains.annotations.NotNull;
+import net.momirealms.craftengine.core.plugin.config.lifecycle.LoadingStage;
 
-public interface ConfigParser extends Comparable<ConfigParser> {
+import java.util.List;
+import java.util.function.Consumer;
+
+public interface ConfigParser {
 
     String[] sectionId();
 
-    int loadingSequence();
+    LoadingStage loadingStage();
 
-    @Override
-    default int compareTo(@NotNull ConfigParser another) {
-        return Integer.compare(loadingSequence(), another.loadingSequence());
+    default List<LoadingStage> dependencies() {
+        return List.of();
     }
 
     default void postProcess() {
@@ -24,7 +26,9 @@ public interface ConfigParser extends Comparable<ConfigParser> {
 
     void loadAll();
 
-    void clear();
+    void clearConfigs();
+
+    void setErrorHandler(Consumer<ResourceException> errorHandler);
 
     default int count() {
         return -1;
@@ -32,5 +36,9 @@ public interface ConfigParser extends Comparable<ConfigParser> {
 
     default boolean silentIfNotExists() {
         return true;
+    }
+
+    default boolean async() {
+        return false;
     }
 }

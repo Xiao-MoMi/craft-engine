@@ -6,15 +6,18 @@ import net.momirealms.craftengine.core.attribute.AttributeModifier;
 import net.momirealms.craftengine.core.entity.EquipmentSlot;
 import net.momirealms.craftengine.core.entity.player.Player;
 import net.momirealms.craftengine.core.item.behavior.ItemBehavior;
-import net.momirealms.craftengine.core.item.data.Enchantment;
-import net.momirealms.craftengine.core.item.data.FireworkExplosion;
-import net.momirealms.craftengine.core.item.data.JukeboxPlayable;
-import net.momirealms.craftengine.core.item.data.Trim;
+import net.momirealms.craftengine.core.item.component.value.Enchantment;
+import net.momirealms.craftengine.core.item.component.value.FireworkExplosion;
+import net.momirealms.craftengine.core.item.component.value.JukeboxPlayable;
+import net.momirealms.craftengine.core.item.component.value.Trim;
+import net.momirealms.craftengine.core.item.customdata.CustomDataSerializer;
+import net.momirealms.craftengine.core.item.customdata.CustomDataSerializers;
 import net.momirealms.craftengine.core.item.processor.ItemProcessor;
-import net.momirealms.craftengine.core.item.setting.EquipmentData;
+import net.momirealms.craftengine.core.item.setting.value.EquipmentData;
+import net.momirealms.craftengine.core.plugin.CraftEngine;
 import net.momirealms.craftengine.core.util.Color;
 import net.momirealms.craftengine.core.util.Key;
-import net.momirealms.craftengine.core.util.UniqueKey;
+import net.momirealms.sparrow.nbt.CompoundTag;
 import net.momirealms.sparrow.nbt.Tag;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -27,18 +30,34 @@ import java.util.Optional;
  * Interface representing an item.
  * This interface provides methods for managing item properties such as custom model data,
  * damage, display name, lore, enchantments, and tags.
- *
- * @param <I> the type of the item implementation
  */
-public interface Item<I> {
+public interface Item {
+
+    static Item empty() {
+        return CraftEngine.instance().itemManager().emptyItem();
+    }
+
+    static Item fromNBT(final CompoundTag tag) {
+        return CraftEngine.instance().itemManager().fromNBT(tag);
+    }
+
+    static Item fromBytes(final byte[] bytes) {
+        return CraftEngine.instance().itemManager().fromBytes(bytes);
+    }
+
+    Object minecraftItem();
+
+    default Object platformItem() {
+        return minecraftItem();
+    }
 
     ItemType type();
 
     boolean isEmpty();
 
-    Optional<CustomItem<I>> getCustomItem();
+    Optional<ItemDefinition> getDefinition();
 
-    Optional<List<ItemBehavior>> getItemBehavior();
+    Optional<ItemBehavior> getBehavior();
 
     boolean isCustomItem();
 
@@ -50,53 +69,49 @@ public interface Item<I> {
     @NotNull
     Key vanillaId();
 
-    @Nullable
-    UniqueKey recipeIngredientId();
-
     Optional<Key> customId();
 
-    Item<I> customId(Key id);
+    Item customId(Key id);
 
     int count();
 
-    Item<I> count(int amount);
+    Item count(int amount);
 
-    Item<I> trim(Trim trim);
+    Item trim(Trim trim);
 
     Optional<Trim> trim();
 
-    Item<I> customModelData(Integer data);
+    Item customModelData(Integer data);
 
     Optional<Integer> customModelData();
 
-    Item<I> damage(Integer data);
+    Item damage(Integer data);
 
     Optional<Integer> damage();
 
-    Item<I> repairCost(Integer data);
+    Item repairCost(Integer data);
 
     Optional<Integer> repairCost();
 
-    Item<I> maxDamage(Integer data);
+    Item maxDamage(Integer data);
 
     int maxDamage();
 
-    Item<I> blockState(Map<String, String> state);
+    Item blockState(Map<String, String> state);
 
     Optional<Map<String, String>> blockState();
 
-    // todo 考虑部分版本的show in tooltip保留
-    Item<I> dyedColor(Color data);
+    Item dyedColor(Color data);
 
     Optional<Color> dyedColor();
 
-    Item<I> fireworkExplosion(FireworkExplosion explosion);
+    Item fireworkExplosion(FireworkExplosion explosion);
 
     Optional<FireworkExplosion> fireworkExplosion();
 
-    Item<I> customNameJson(String displayName);
+    Item customNameJson(String displayName);
 
-    Item<I> customNameComponent(Component displayName);
+    Item customNameComponent(Component displayName);
 
     Optional<String> customNameJson();
 
@@ -110,45 +125,49 @@ public interface Item<I> {
         return customNameComponent().or(this::itemNameComponent);
     }
 
-    Item<I> itemNameJson(String itemName);
+    Item itemNameJson(String itemName);
 
-    Item<I> itemNameComponent(Component itemName);
+    Item itemNameComponent(Component itemName);
 
     Optional<String> itemNameJson();
 
     Optional<Component> itemNameComponent();
 
-    Item<I> itemModel(String itemModel);
+    Item itemModel(String itemModel);
 
     Optional<String> itemModel();
 
-    Item<I> tooltipStyle(String tooltipStyle);
+    Item useRemainder(Item item, int count);
+
+    Optional<Item> useRemainder();
+
+    Item tooltipStyle(String tooltipStyle);
 
     Optional<String> tooltipStyle();
 
-    Item<I> loreJson(List<String> lore);
+    Item loreJson(List<String> lore);
 
-    Item<I> loreComponent(List<Component> lore);
+    Item loreComponent(List<Component> lore);
 
     Optional<List<String>> loreJson();
 
     Optional<List<Component>> loreComponent();
 
-    Item<I> attributeModifiers(List<AttributeModifier> modifiers);
+    Item attributeModifiers(List<AttributeModifier> modifiers);
 
     Optional<JukeboxPlayable> jukeboxSong();
 
-    Item<I> jukeboxSong(JukeboxPlayable song);
+    Item jukeboxSong(JukeboxPlayable song);
 
     Optional<EquipmentData> equippable();
 
-    Item<I> equippable(EquipmentData equipmentData);
+    Item equippable(EquipmentData equipmentData);
 
-    Item<I> unbreakable(boolean unbreakable);
+    Item unbreakable(boolean unbreakable);
 
     boolean unbreakable();
 
-    Item<I> skull(String data);
+    Item skull(String data);
 
     Optional<Enchantment> getEnchantment(Key enchantmentId);
 
@@ -156,19 +175,56 @@ public interface Item<I> {
 
     Optional<List<Enchantment>> storedEnchantments();
 
-    Item<I> setEnchantments(List<Enchantment> enchantments);
+    Item setEnchantments(List<Enchantment> enchantments);
 
-    Item<I> setStoredEnchantments(List<Enchantment> enchantments);
+    Item setStoredEnchantments(List<Enchantment> enchantments);
 
-    Item<I> itemFlags(List<String> flags);
+    Optional<Boolean> glint();
 
-    Object getJavaTag(Object... path);
+    Item glint(boolean value);
 
-    Tag getTag(Object... path);
+    Item itemFlags(List<String> flags);
 
-    Object getExactTag(Object... path);
+    Tag getSparrowTag(Object... path);
 
-    Item<I> setTag(Object value, Object... path);
+    Object getMinecraftTag(Object... path);
+
+    JsonElement getTagAsJson(Object... path);
+
+    Object getTagAsJava(Object... path);
+
+    Item setTag(Object value, Object... path);
+
+    Item setSparrowTag(Tag value, Object... path);
+
+    Item setJavaTag(Object value, Object... path);
+
+    Item setMinecraftTag(Object value, Object... path);
+
+    Item setJsonTag(JsonElement value, Object... path);
+
+    @SuppressWarnings({"rawtypes", "unchecked"})
+    default void setCustomData(Object value, Object... path) {
+        CustomDataSerializer serializer = CustomDataSerializers.getSerializer(value.getClass());
+        if (serializer == null) {
+            throw new IllegalArgumentException("Custom data serializer not supported: " + value.getClass());
+        }
+        Tag tag = serializer.serialize(value);
+        setSparrowTag(tag, path);
+    }
+
+    @Nullable
+    default <T> T getCustomData(Class<T> clazz, Object... path) {
+        CustomDataSerializer<T> serializer = CustomDataSerializers.getSerializer(clazz);
+        if (serializer == null) {
+            throw new IllegalArgumentException("Custom data serializer not supported: " + clazz);
+        }
+        Tag sparrowTag = getSparrowTag(path);
+        if (sparrowTag == null) {
+            return null;
+        }
+        return serializer.deserialize(sparrowTag);
+    }
 
     boolean hasTag(Object... path);
 
@@ -180,63 +236,69 @@ public interface Item<I> {
 
     void removeComponent(Object type);
 
-    void setExactComponent(Object type, Object value);
-
     Object getExactComponent(Object type);
 
-    Object getJavaComponent(Object type);
+    Object getComponentAsJava(Object type);
 
-    JsonElement getJsonComponent(Object type);
+    JsonElement getComponentAsJson(Object type);
 
-    Tag getSparrowNBTComponent(Object type);
+    Tag getComponentAsSparrowTag(Object type);
 
-    Object getNBTComponent(Object type);
+    Object getComponentAsMinecraftTag(Object type);
 
     void setComponent(Object type, Object value);
+
+    void setExactComponent(Object type, Object value);
 
     void setJavaComponent(Object type, Object value);
 
     void setJsonComponent(Object type, JsonElement value);
 
-    void setNBTComponent(Object type, Tag value);
+    void setSparrowTagComponent(Object type, Tag value);
+
+    void setMinecraftTagComponent(Object type, Object value);
 
     void resetComponent(Object type);
 
-    I getItem();
-
     int maxStackSize();
 
-    Item<I> maxStackSize(int amount);
+    Item maxStackSize(int amount);
 
-    Item<I> copyWithCount(int count);
+    Item copy();
+
+    Item copyWithCount(int count);
 
     boolean hasItemTag(Key itemTag);
 
-    Object getLiteralObject();
+    Item mergeCopy(Item another);
 
-    Item<I> mergeCopy(Item<?> another);
+    Item transmuteCopy(Key another, int count);
 
-    Item<I> transmuteCopy(Key another, int count);
-
-    Item<I> unsafeTransmuteCopy(Object another, int count);
+    Item unsafeTransmuteCopy(Object another, int count);
 
     void shrink(int amount);
 
-    void hurtAndBreak(int amount, @Nullable Player player, @Nullable EquipmentSlot slot);
+    void grow(int amount);
 
-    default Item<I> transmuteCopy(Key another) {
+    void hurtAndBreak(int amount, @NotNull Player player, @Nullable EquipmentSlot slot);
+
+    default Item transmuteCopy(Key another) {
         return transmuteCopy(another, this.count());
     }
 
-    void merge(Item<I> another);
+    void merge(Item another);
 
-    default Item<I> apply(ItemProcessor modifier, ItemBuildContext context) {
+    default Item apply(ItemProcessor modifier, ItemBuildContext context) {
         return modifier.apply(this, context);
     }
 
-    byte[] toByteArray();
+    byte[] toBytes();
 
-    default Item<I> applyDyedColors(List<Color> colors) {
+    CompoundTag toNBT();
+
+    boolean isSimilar(Item another);
+
+    default Item applyDyedColors(List<Color> colors) {
         int totalRed = 0;
         int totalGreen = 0;
         int totalBlue = 0;

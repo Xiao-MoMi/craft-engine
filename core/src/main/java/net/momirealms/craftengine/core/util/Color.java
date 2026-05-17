@@ -4,7 +4,7 @@ import org.joml.Vector3f;
 
 import java.util.Arrays;
 
-public class Color {
+public final class Color {
     private static final int BIT_MASK = 0xff;
     private static final byte DEFAULT_ALPHA = (byte) 255;
     private final int color;
@@ -37,6 +37,7 @@ public class Color {
         return new Color(decimal);
     }
 
+    @SuppressWarnings("PointlessBitwiseExpression")
     public static Color fromVector3f(Vector3f vec) {
         return new Color(0 << 24 /*不可省略*/ | MiscUtils.floor(vec.x) << 16 | MiscUtils.floor(vec.y) << 8 | MiscUtils.floor(vec.z));
     }

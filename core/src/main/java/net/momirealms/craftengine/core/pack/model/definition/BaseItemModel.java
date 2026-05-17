@@ -3,36 +3,53 @@ package net.momirealms.craftengine.core.pack.model.definition;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
-import net.momirealms.craftengine.core.pack.ResourceLocation;
 import net.momirealms.craftengine.core.pack.model.definition.tint.Tint;
 import net.momirealms.craftengine.core.pack.model.definition.tint.Tints;
 import net.momirealms.craftengine.core.pack.model.generation.ModelGeneration;
+import net.momirealms.craftengine.core.pack.model.generation.ModelGenerationHolder;
 import net.momirealms.craftengine.core.pack.revision.Revision;
-import net.momirealms.craftengine.core.plugin.locale.LocalizedResourceConfigException;
+import net.momirealms.craftengine.core.plugin.config.ConfigSection;
 import net.momirealms.craftengine.core.util.Key;
 import net.momirealms.craftengine.core.util.MinecraftVersion;
-import net.momirealms.craftengine.core.util.MiscUtils;
-import net.momirealms.craftengine.core.util.ResourceConfigUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
-import java.util.Map;
+import java.util.function.Consumer;
 
 public final class BaseItemModel implements ItemModel {
     public static final ItemModelFactory<BaseItemModel> FACTORY = new Factory();
     public static final ItemModelReader<BaseItemModel> READER = new Reader();
-    private final String path;
+    private final Key path;
     private final List<Tint> tints;
     private final ModelGeneration modelGeneration;
+    private final Transformation transformation;
 
-    public BaseItemModel(@NotNull String path,
-                         @NotNull List<Tint> tints,
-                         @Nullable ModelGeneration modelGeneration) {
+    public BaseItemModel(@NotNull Key path,
+                         @Nullable List<Tint> tints,
+                         @Nullable ModelGeneration modelGeneration,
+                         @Nullable Transformation transformation) {
         this.path = path;
         this.tints = tints;
         this.modelGeneration = modelGeneration;
+        this.transformation = transformation;
+    }
+
+    public BaseItemModel(@NotNull Key path) {
+        this(path, List.of(), null, null);
+    }
+
+    public BaseItemModel(@NotNull Key path,
+                         @NotNull List<Tint> tints) {
+        this(path, tints, null, null);
+    }
+
+    public BaseItemModel(@NotNull Key path,
+                         @NotNull List<Tint> tints,
+                         @Nullable ModelGeneration modelGeneration) {
+        this(path, tints, modelGeneration, null);
     }
 
     @Nullable
@@ -40,68 +57,67 @@ public final class BaseItemModel implements ItemModel {
         return this.modelGeneration;
     }
 
-    @NotNull
+    @Nullable
     public List<Tint> tints() {
         return this.tints;
     }
 
-    public String path() {
+    @NotNull
+    public Key path() {
         return this.path;
     }
 
+    @Nullable
+    public Transformation transformation() {
+        return this.transformation;
+    }
+
     @Override
-    public JsonObject apply(MinecraftVersion version) {
+    public JsonObject toJson(MinecraftVersion min, MinecraftVersion max) {
         JsonObject json = new JsonObject();
         json.addProperty("type", "model");
-        json.addProperty("model", this.path);
-        if (!this.tints.isEmpty()) {
+        json.addProperty("model", this.path.asMinimalString());
+        if (this.tints != null && !this.tints.isEmpty()) {
             JsonArray array = new JsonArray();
             for (Tint tint : this.tints) {
                 array.add(tint.get());
             }
             json.add("tints", array);
         }
+        if (this.transformation != null && max.isAtOrAbove(MinecraftVersion.V26_1)) {
+            json.add("transformation", this.transformation.toJson());
+        }
         return json;
     }
 
     @Override
-    public List<ModelGeneration> modelsToGenerate() {
-        if (this.modelGeneration == null) {
-            return List.of();
-        } else {
-            return List.of(this.modelGeneration);
+    public void prepareModelGeneration(Consumer<ModelGenerationHolder> consumer) {
+        if (this.modelGeneration != null) {
+            consumer.accept(new ModelGenerationHolder(this.path, this.modelGeneration));
         }
     }
 
     @Override
-    public List<Revision> revisions() {
-        return List.of();
+    public void gatherRevisions(Consumer<Revision> consumer) {
     }
 
     private static class Factory implements ItemModelFactory<BaseItemModel> {
+        private static final String[] PATH = new String[] {"path", "model"};
 
-        @SuppressWarnings("unchecked")
         @Override
-        public BaseItemModel create(Map<String, Object> arguments) {
-            String modelPath = ResourceConfigUtils.requireNonEmptyStringOrThrow(arguments.get("path"), "warning.config.item.model.base.missing_path");
-            if (!ResourceLocation.isValid(modelPath)) {
-                throw new LocalizedResourceConfigException("warning.config.item.model.base.invalid_path", modelPath);
-            }
-            Map<String, Object> generation = MiscUtils.castToMap(arguments.get("generation"), true);
+        public BaseItemModel create(ConfigSection section) {
+            Key modelPath = section.getNonNullIdentifier(PATH);
+            ConfigSection generation = section.getSection("generation");
             ModelGeneration modelGeneration = null;
             if (generation != null) {
-                modelGeneration = ModelGeneration.of(Key.of(modelPath), generation);
+                modelGeneration = ModelGeneration.of(generation);
             }
-            if (arguments.containsKey("tints")) {
-                List<Tint> tints = new ArrayList<>();
-                List<Map<String, Object>> tintList = (List<Map<String, Object>>) arguments.get("tints");
-                for (Map<String, Object> tint : tintList) {
-                    tints.add(Tints.fromMap(tint));
-                }
-                return new BaseItemModel(modelPath, tints, modelGeneration);
-            } else {
-                return new BaseItemModel(modelPath, List.of(), modelGeneration);
-            }
+            return new BaseItemModel(
+                    modelPath,
+                    section.getList("tints", Tints::fromConfig),
+                    modelGeneration,
+                    section.getValue("transformation", Transformation::fromConfig)
+            );
         }
     }
 
@@ -110,9 +126,10 @@ public final class BaseItemModel implements ItemModel {
         @Override
         public BaseItemModel read(JsonObject json) {
             String model = json.get("model").getAsString();
+            List<Tint> tints;
             if (json.has("tints")) {
                 JsonArray array = json.getAsJsonArray("tints");
-                List<Tint> tints = new ArrayList<>(array.size());
+                tints = new ArrayList<>(array.size());
                 for (JsonElement element : array) {
                     if (element instanceof JsonObject jo) {
                         tints.add(Tints.fromJson(jo));
@@ -120,10 +137,15 @@ public final class BaseItemModel implements ItemModel {
                         throw new IllegalArgumentException("tint is expected to be a json object");
                     }
                 }
-                return new BaseItemModel(model, tints, null);
             } else {
-                return new BaseItemModel(model, List.of(), null);
+                tints = Collections.emptyList();
             }
+            return new BaseItemModel(
+                    Key.of(model),
+                    tints,
+                    null,
+                    json.has("transformation") ? Transformation.fromJson(json.get("transformation")) : null
+            );
         }
     }
 }

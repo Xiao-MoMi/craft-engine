@@ -1,9 +1,8 @@
 package net.momirealms.craftengine.core.pack.model.definition.rangedisptach;
 
 import com.google.gson.JsonObject;
+import net.momirealms.craftengine.core.plugin.config.ConfigSection;
 import net.momirealms.craftengine.core.util.Key;
-
-import java.util.Map;
 
 public final class SimpleRangeDispatchProperty implements RangeDispatchProperty {
     public static final RangeDispatchPropertyFactory<SimpleRangeDispatchProperty> FACTORY = new Factory();
@@ -19,23 +18,21 @@ public final class SimpleRangeDispatchProperty implements RangeDispatchProperty 
     }
 
     @Override
-    public void accept(JsonObject jsonObject) {
-        jsonObject.addProperty("property", this.type.asMinimalString());
+    public void writeProperty(JsonObject model) {
+        model.addProperty("property", this.type.asMinimalString());
     }
 
     private static class Factory implements RangeDispatchPropertyFactory<SimpleRangeDispatchProperty> {
         @Override
-        public SimpleRangeDispatchProperty create(Map<String, Object> arguments) {
-            Key type = Key.of(arguments.get("property").toString());
-            return new SimpleRangeDispatchProperty(type);
+        public SimpleRangeDispatchProperty create(ConfigSection section) {
+            return new SimpleRangeDispatchProperty(section.getNonNullIdentifier("property"));
         }
     }
 
     private static class Reader implements RangeDispatchPropertyReader<SimpleRangeDispatchProperty> {
         @Override
         public SimpleRangeDispatchProperty read(JsonObject json) {
-            Key type = Key.of(json.get("property").getAsString());
-            return new SimpleRangeDispatchProperty(type);
+            return new SimpleRangeDispatchProperty(Key.of(json.get("property").getAsString()));
         }
     }
 }

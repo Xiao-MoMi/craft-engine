@@ -1,12 +1,13 @@
 package net.momirealms.craftengine.bukkit.entity.furniture.hitbox;
 
-import net.momirealms.craftengine.bukkit.entity.data.HappyGhastData;
+import net.momirealms.craftengine.bukkit.entity.data.animal.happyghast.HappyGhastData;
 import net.momirealms.craftengine.core.entity.furniture.Furniture;
 import net.momirealms.craftengine.core.entity.furniture.hitbox.AbstractFurnitureHitBoxConfig;
 import net.momirealms.craftengine.core.entity.furniture.hitbox.FurnitureHitBoxConfig;
 import net.momirealms.craftengine.core.entity.furniture.hitbox.FurnitureHitBoxConfigFactory;
 import net.momirealms.craftengine.core.entity.seat.SeatConfig;
-import net.momirealms.craftengine.core.util.ResourceConfigUtils;
+import net.momirealms.craftengine.core.plugin.config.ConfigConstants;
+import net.momirealms.craftengine.core.plugin.config.ConfigSection;
 import net.momirealms.craftengine.core.world.Vec3d;
 import net.momirealms.craftengine.core.world.WorldPosition;
 import net.momirealms.craftengine.core.world.collision.AABB;
@@ -14,14 +15,13 @@ import org.joml.Vector3f;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 import java.util.function.Consumer;
 
 public final class HappyGhastFurnitureHitboxConfig extends AbstractFurnitureHitBoxConfig<HappyGhastFurnitureHitbox> {
-    public static final Factory FACTORY = new Factory();
-    private final double scale;
-    private final boolean hardCollision;
-    private final List<Object> cachedValues = new ArrayList<>(3);
+    public static final FurnitureHitBoxConfigFactory<HappyGhastFurnitureHitbox> FACTORY = new Factory();
+    public final double scale;
+    public final boolean hardCollision;
+    public final List<Object> cachedValues = new ArrayList<>(3);
 
     private HappyGhastFurnitureHitboxConfig(SeatConfig[] seats,
                                            Vector3f position,
@@ -39,15 +39,15 @@ public final class HappyGhastFurnitureHitboxConfig extends AbstractFurnitureHitB
     }
 
     public double scale() {
-        return scale;
+        return this.scale;
     }
 
     public boolean hardCollision() {
-        return hardCollision;
+        return this.hardCollision;
     }
 
     public List<Object> cachedValues() {
-        return cachedValues;
+        return this.cachedValues;
     }
 
     @Override
@@ -63,20 +63,22 @@ public final class HappyGhastFurnitureHitboxConfig extends AbstractFurnitureHitB
         }
     }
 
-    public static class Factory implements FurnitureHitBoxConfigFactory<HappyGhastFurnitureHitbox> {
+    private static class Factory implements FurnitureHitBoxConfigFactory<HappyGhastFurnitureHitbox> {
+        private static final String[] CAN_USE_ITEM_ON = new String[] {"can_use_item_on", "can-use-item-on"};
+        private static final String[] BLOCKS_BUILDING = new String[] {"blocks_building", "blocks-building"};
+        private static final String[] CAN_BE_HIT_BY_PROJECTILE = new String[] {"can_be_hit_by_projectile", "can-be-hit-by-projectile"};
+        private static final String[] HARD_COLLISION = new String[] {"hard_collision", "hard-collision"};
 
         @Override
-        public FurnitureHitBoxConfig<HappyGhastFurnitureHitbox> create(Map<String, Object> arguments) {
-            Vector3f position = ResourceConfigUtils.getAsVector3f(arguments.getOrDefault("position", 0), "position");
-            boolean canUseItemOn = ResourceConfigUtils.getAsBoolean(arguments.getOrDefault("can-use-item-on", true), "can-use-item-on");
-            boolean blocksBuilding = ResourceConfigUtils.getAsBoolean(arguments.getOrDefault("blocks-building", true), "blocks-building");
-            boolean canBeHitByProjectile = ResourceConfigUtils.getAsBoolean(arguments.getOrDefault("can-be-hit-by-projectile", true), "can-be-hit-by-projectile");
-            double scale = ResourceConfigUtils.getAsDouble(arguments.getOrDefault("scale", 1), "scale");
-            boolean hardCollision = ResourceConfigUtils.getAsBoolean(arguments.getOrDefault("hard-collision", true), "hard-collision");
+        public FurnitureHitBoxConfig<HappyGhastFurnitureHitbox> create(ConfigSection section) {
             return new HappyGhastFurnitureHitboxConfig(
-                    SeatConfig.fromObj(arguments.get("seats")),
-                    position, canUseItemOn, blocksBuilding, canBeHitByProjectile,
-                    scale, hardCollision
+                    section.getList("seats", SeatConfig::fromConfig).toArray(new SeatConfig[0]),
+                    section.getVector3f("position", ConfigConstants.ZERO_VECTOR3),
+                    section.getBoolean(CAN_USE_ITEM_ON, true),
+                    section.getBoolean(BLOCKS_BUILDING, true),
+                    section.getBoolean(CAN_BE_HIT_BY_PROJECTILE, true),
+                    section.getDouble("scale", 1d),
+                    section.getBoolean(HARD_COLLISION, true)
             );
         }
     }

@@ -6,7 +6,7 @@ public final class ItemUtils {
     private ItemUtils() {
     }
 
-    public static boolean isEmpty(Item<?> item) {
+    public static boolean isEmpty(Item item) {
         return item == null || item.isEmpty();
     }
 }

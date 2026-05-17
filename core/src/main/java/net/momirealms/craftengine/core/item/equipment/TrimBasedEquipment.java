@@ -1,16 +1,15 @@
 package net.momirealms.craftengine.core.item.equipment;
 
-import net.momirealms.craftengine.core.item.DataComponentKeys;
+import net.momirealms.craftengine.core.item.component.DataComponentKeys;
 import net.momirealms.craftengine.core.item.processor.HideTooltipProcessor;
 import net.momirealms.craftengine.core.item.processor.ItemProcessor;
 import net.momirealms.craftengine.core.item.processor.TrimProcessor;
 import net.momirealms.craftengine.core.pack.AbstractPackManager;
+import net.momirealms.craftengine.core.plugin.config.ConfigSection;
 import net.momirealms.craftengine.core.util.Key;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
-import java.util.Map;
-import java.util.Optional;
 
 public final class TrimBasedEquipment extends AbstractEquipment {
     public static final EquipmentFactory<TrimBasedEquipment> FACTORY = new Factory();
@@ -42,11 +41,13 @@ public final class TrimBasedEquipment extends AbstractEquipment {
     }
 
     private static class Factory implements EquipmentFactory<TrimBasedEquipment> {
+        private static final String[] HUMANOID = new String[] {"humanoid", "layer0"};
+        private static final String[] HUMANOID_LEGGINGS = new String[] {"humanoid_leggings", "humanoid-leggings", "layer1"};
 
         @Override
-        public TrimBasedEquipment create(Key id, Map<String, Object> args) {
-            Key humanoidId = Optional.ofNullable((String) args.get("humanoid")).map(Key::of).orElse(null);
-            Key humanoidLeggingsId = Optional.ofNullable((String) args.get("humanoid-leggings")).map(Key::of).orElse(null);
+        public TrimBasedEquipment create(Key id, ConfigSection section) {
+            Key humanoidId = section.getIdentifier(HUMANOID);
+            Key humanoidLeggingsId = section.getIdentifier(HUMANOID_LEGGINGS);
             return new TrimBasedEquipment(id, humanoidId, humanoidLeggingsId);
         }
     }

@@ -1,7 +1,8 @@
 package net.momirealms.craftengine.core.plugin.config.template;
 
+import net.momirealms.craftengine.core.plugin.config.ConfigValue;
+import net.momirealms.craftengine.core.plugin.config.KnownResourceException;
 import net.momirealms.craftengine.core.plugin.config.template.argument.TemplateArgument;
-import net.momirealms.craftengine.core.plugin.locale.LocalizedResourceConfigException;
 import net.momirealms.craftengine.core.util.TagParser;
 
 import java.util.ArrayList;
@@ -11,7 +12,7 @@ import java.util.Map;
 public interface ArgumentString {
     String rawValue();
 
-    Object get(Map<String, TemplateArgument> arguments);
+    Object get(String node, Map<String, TemplateArgument> arguments);
 
     final class Literal implements ArgumentString {
         private final String value;
@@ -30,7 +31,7 @@ public interface ArgumentString {
         }
 
         @Override
-        public Object get(Map<String, TemplateArgument> arguments) {
+        public Object get(String node, Map<String, TemplateArgument> arguments) {
             return this.value;
         }
 
@@ -57,7 +58,7 @@ public interface ArgumentString {
         private final Object defaultValue;
         private final boolean hasDefaultValue;
 
-        public Placeholder(String placeholderContent) {
+        public Placeholder(String node, String placeholderContent) {
             this.rawText = "${" + placeholderContent + "}";
             int separatorIndex = placeholderContent.indexOf(":-");
             if (separatorIndex == -1) {
@@ -67,39 +68,37 @@ public interface ArgumentString {
             } else {
                 this.placeholder = placeholderContent.substring(0, separatorIndex);
                 String defaultValueString = placeholderContent.substring(separatorIndex + 2);
-                Object parsed;
                 try {
-                    parsed = TagParser.parseObjectFully(defaultValueString);
-                } catch (Exception e) {
-                    throw new LocalizedResourceConfigException("warning.config.type.snbt.invalid_syntax", e.getMessage());
+                    Object parsed = TagParser.parseObjectFully(defaultValueString);
+                    if (parsed == null) {
+                        this.defaultValue = null;
+                    } else {
+                        this.defaultValue = ((TemplateManagerImpl) TemplateManager.INSTANCE).preprocessUnknownValue(ConfigValue.of(node, parsed));
+                    }
+                    this.hasDefaultValue = true;
+                } catch (Throwable e) {
+                    throw new KnownResourceException("resource.argument.parser.snbt", node, defaultValueString, e.getMessage());
                 }
-                try {
-                    this.defaultValue = ((TemplateManagerImpl) TemplateManager.INSTANCE).preprocessUnknownValue(parsed);
-                } catch (LocalizedResourceConfigException e) {
-                    e.appendTailArgument(this.placeholder);
-                    throw e;
-                }
-                this.hasDefaultValue = true;
             }
         }
 
-        public static Placeholder placeholder(String placeholder) {
-            return new Placeholder(placeholder);
+        public static Placeholder placeholder(String node, String placeholder) {
+            return new Placeholder(node, placeholder);
         }
 
         @Override
-        public Object get(Map<String, TemplateArgument> arguments) {
+        public Object get(String node, Map<String, TemplateArgument> arguments) {
             TemplateArgument replacement = arguments.get(this.placeholder);
             if (replacement != null) {
-                return replacement.get(arguments);
+                return replacement.get(node, arguments);
             }
             if (this.hasDefaultValue) {
                 if (this.defaultValue == null) {
                     return null;
                 }
-                return ((TemplateManagerImpl) TemplateManager.INSTANCE).processUnknownValue(this.defaultValue, arguments);
+                return ((TemplateManagerImpl) TemplateManager.INSTANCE).processUnknownValue(node, this.defaultValue, arguments);
             }
-            throw new LocalizedResourceConfigException("warning.config.template.argument.missing_value", this.rawText);
+            throw new KnownResourceException("resource.template.missing_argument", node, this.rawText);
         }
 
         @Override
@@ -136,9 +135,9 @@ public interface ArgumentString {
         }
 
         @Override
-        public Object get(Map<String, TemplateArgument> arguments) {
-            Object arg1 = this.arg1.get(arguments);
-            Object arg2 = this.arg2.get(arguments);
+        public Object get(String node, Map<String, TemplateArgument> arguments) {
+            Object arg1 = this.arg1.get(node, arguments);
+            Object arg2 = this.arg2.get(node, arguments);
             if (arg1 == null && arg2 == null) return null;
             if (arg1 == null) return String.valueOf(arg2);
             if (arg2 == null) return String.valueOf(arg1);
@@ -181,10 +180,10 @@ public interface ArgumentString {
         }
 
         @Override
-        public Object get(Map<String, TemplateArgument> arguments) {
-            Object arg1 = this.arg1.get(arguments);
-            Object arg2 = this.arg2.get(arguments);
-            Object arg3 = this.arg3.get(arguments);
+        public Object get(String node, Map<String, TemplateArgument> arguments) {
+            Object arg1 = this.arg1.get(node, arguments);
+            Object arg2 = this.arg2.get(node, arguments);
+            Object arg3 = this.arg3.get(node, arguments);
             StringBuilder builder = new StringBuilder();
             if (arg1 != null) {
                 builder.append(arg1);
@@ -230,11 +229,11 @@ public interface ArgumentString {
         }
 
         @Override
-        public Object get(Map<String, TemplateArgument> arguments) {
+        public Object get(String node, Map<String, TemplateArgument> arguments) {
             StringBuilder result = new StringBuilder();
             boolean hasValue = false;
             for (ArgumentString part : this.parts) {
-                Object arg = part.get(arguments);
+                Object arg = part.get(node, arguments);
                 if (arg != null) {
                     result.append(arg);
                     hasValue = true;
@@ -266,7 +265,7 @@ public interface ArgumentString {
         }
     }
 
-    static ArgumentString preParse(String input) {
+    static ArgumentString preParse(String node, String input) {
         if (input == null || input.isEmpty()) {
             return Literal.literal("");
         }
@@ -315,7 +314,7 @@ public interface ArgumentString {
                     } else if (innerChar == '}') {
                         depth--;
                         if (depth == 0) { // 找到匹配的闭合括号
-                            arguments.add(Placeholder.placeholder(keyBuilder.toString()));
+                            arguments.add(Placeholder.placeholder(node, keyBuilder.toString()));
                             i = j + 1;
                             foundMatch = true;
                             break;

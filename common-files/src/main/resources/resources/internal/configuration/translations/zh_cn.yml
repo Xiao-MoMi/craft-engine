@@ -1,0 +1,15 @@
+translations:
+  zh_cn:
+    internal.next_page: 下一页
+    internal.previous_page: 上一页
+    internal.return: 返回上一级
+    internal.exit: 退出
+    internal.next_recipe: 下一个配方
+    internal.previous_recipe: 上一个配方
+    internal.get_item: 获取物品
+    internal.get_item.0: 左键单击取一个
+    internal.get_item.1: 右键单击取一组
+    internal.cooking_info: 配方信息
+    internal.cooking_info.0: '时间: <arg:0>刻'
+    internal.cooking_info.1: '经验: <arg:0>'
+    category.internal.all: 全部物品

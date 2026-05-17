@@ -2,10 +2,7 @@ package net.momirealms.craftengine.bukkit.entity.projectile;
 
 import com.destroystokyo.paper.event.entity.EntityAddToWorldEvent;
 import com.destroystokyo.paper.event.entity.EntityRemoveFromWorldEvent;
-import net.momirealms.craftengine.bukkit.nms.FastNMS;
 import net.momirealms.craftengine.bukkit.plugin.BukkitCraftEngine;
-import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.CoreReflections;
-import net.momirealms.craftengine.bukkit.plugin.scheduler.impl.FoliaTask;
 import net.momirealms.craftengine.bukkit.util.ParticleUtils;
 import net.momirealms.craftengine.core.entity.projectile.ProjectileManager;
 import net.momirealms.craftengine.core.entity.projectile.ProjectileMeta;
@@ -13,6 +10,11 @@ import net.momirealms.craftengine.core.item.Item;
 import net.momirealms.craftengine.core.plugin.scheduler.SchedulerTask;
 import net.momirealms.craftengine.core.util.ItemUtils;
 import net.momirealms.craftengine.core.util.VersionHelper;
+import net.momirealms.craftengine.proxy.bukkit.craftbukkit.entity.CraftEntityProxy;
+import net.momirealms.craftengine.proxy.minecraft.server.level.ChunkMapProxy;
+import net.momirealms.craftengine.proxy.minecraft.server.level.ServerEntityProxy;
+import net.momirealms.craftengine.proxy.minecraft.world.entity.EntityProxy;
+import net.momirealms.craftengine.proxy.minecraft.world.entity.projectile.AbstractArrowProxy;
 import org.bukkit.Bukkit;
 import org.bukkit.World;
 import org.bukkit.enchantments.Enchantment;
@@ -34,7 +36,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 
-public class BukkitProjectileManager implements Listener, ProjectileManager {
+public final class BukkitProjectileManager implements Listener, ProjectileManager {
     private static BukkitProjectileManager instance;
     private final BukkitCraftEngine plugin;
     // 会被netty线程访问
@@ -48,22 +50,11 @@ public class BukkitProjectileManager implements Listener, ProjectileManager {
     @Override
     public void delayedInit() {
         Bukkit.getPluginManager().registerEvents(this, this.plugin.javaPlugin());
-        if (VersionHelper.isFolia()) {
-            for (World world : Bukkit.getWorlds()) {
-                List<Entity> entities = world.getEntities();
-                for (Entity entity : entities) {
-                    if (entity instanceof Projectile projectile) {
-                        projectile.getScheduler().run(this.plugin.javaPlugin(), (t) -> handleProjectileLoad(projectile), () -> {});
-                    }
-                }
-            }
-        } else {
-            for (World world : Bukkit.getWorlds()) {
-                List<Entity> entities = world.getEntities();
-                for (Entity entity : entities) {
-                    if (entity instanceof Projectile projectile) {
-                        handleProjectileLoad(projectile);
-                    }
+        for (World world : Bukkit.getWorlds()) {
+            List<Entity> entities = world.getEntities();
+            for (Entity entity : entities) {
+                if (entity instanceof Projectile projectile) {
+                    this.plugin.scheduler().platform().run(() -> handleProjectileLoad(projectile), null, projectile);
                 }
             }
         }
@@ -111,6 +102,7 @@ public class BukkitProjectileManager implements Listener, ProjectileManager {
     }
 
     private void handleProjectileLoad(Projectile projectile) {
+        if (!projectile.isValid()) return;
         ItemStack projectileItem;
         if (projectile instanceof ThrowableProjectile throwableProjectile) {
             projectileItem = throwableProjectile.getItem();
@@ -119,9 +111,9 @@ public class BukkitProjectileManager implements Listener, ProjectileManager {
         } else {
             return;
         }
-        Item<ItemStack> wrapped = this.plugin.itemManager().wrap(projectileItem);
+        Item wrapped = this.plugin.itemManager().wrap(projectileItem);
         if (ItemUtils.isEmpty(wrapped)) return;
-        wrapped.getCustomItem().ifPresent(it -> {
+        wrapped.getDefinition().ifPresent(it -> {
             ProjectileMeta meta = it.settings().projectileMeta();
             if (meta != null) {
                 BukkitCustomProjectile customProjectile = new BukkitCustomProjectile(meta, projectile, wrapped);
@@ -141,11 +133,7 @@ public class BukkitProjectileManager implements Listener, ProjectileManager {
         public ProjectileInjectTask(Projectile projectile, boolean checkInGround) {
             this.projectile = projectile;
             this.checkInGround = checkInGround;
-            if (VersionHelper.isFolia()) {
-                this.task = new FoliaTask(projectile.getScheduler().runAtFixedRate(plugin.javaPlugin(), (t) -> this.run(), () -> {}, 1, 1));
-            } else {
-                this.task = plugin.scheduler().sync().runRepeating(this, 1, 1);
-            }
+            this.task = plugin.scheduler().platform().runRepeating(this, null, 1, 1, projectile);
         }
 
         @Override
@@ -155,25 +143,30 @@ public class BukkitProjectileManager implements Listener, ProjectileManager {
                 return;
             }
 
-            Object nmsEntity = FastNMS.INSTANCE.method$CraftEntity$getHandle(this.projectile);
+            Object nmsEntity = CraftEntityProxy.INSTANCE.getEntity(this.projectile);
             // 获取server entity
             if (this.cachedServerEntity == null) {
-                Object trackedEntity = FastNMS.INSTANCE.field$Entity$trackedEntity(nmsEntity);
+                Object trackedEntity = EntityProxy.INSTANCE.getTrackedEntity(nmsEntity);
                 if (trackedEntity == null) return;
-                Object serverEntity = FastNMS.INSTANCE.field$ChunkMap$TrackedEntity$serverEntity(trackedEntity);
+                Object serverEntity = ChunkMapProxy.TrackedEntityProxy.INSTANCE.getServerEntity(trackedEntity);
                 if (serverEntity == null) return;
                 this.cachedServerEntity = serverEntity;
             }
 
-            if (!CoreReflections.clazz$AbstractArrow.isInstance(nmsEntity)) {
+            if (!AbstractArrowProxy.CLASS.isInstance(nmsEntity)) {
                 updateProjectileUpdateInterval(1);
             } else if (!this.checkInGround) {
                 updateProjectileUpdateInterval(1);
-                if (FastNMS.INSTANCE.field$Entity$wasTouchingWater(nmsEntity)) {
+                if (EntityProxy.INSTANCE.isWasTouchingWater(nmsEntity)) {
                     this.projectile.getWorld().spawnParticle(ParticleUtils.BUBBLE, this.projectile.getLocation(), 3, 0.1, 0.1, 0.1, 0);
                 }
             } else {
-                boolean inGround = FastNMS.INSTANCE.method$AbstractArrow$isInGround(nmsEntity);
+                boolean inGround;
+                if (VersionHelper.isOrAbove1_21_2) {
+                    inGround = AbstractArrowProxy.INSTANCE.isInGround$0(nmsEntity);
+                } else {
+                    inGround = AbstractArrowProxy.INSTANCE.isInGround$1(nmsEntity);
+                }
                 if (canSpawnParticle(nmsEntity, inGround)) {
                     this.projectile.getWorld().spawnParticle(ParticleUtils.BUBBLE, this.projectile.getLocation(), 3, 0.1, 0.1, 0.1, 0);
                 }
@@ -187,17 +180,13 @@ public class BukkitProjectileManager implements Listener, ProjectileManager {
 
         private void updateProjectileUpdateInterval(int updateInterval) {
             if (this.lastInjectedInterval == updateInterval) return;
-            try {
-                CoreReflections.methodHandle$ServerEntity$updateIntervalSetter.invokeExact(this.cachedServerEntity, updateInterval);
-                this.lastInjectedInterval = updateInterval;
-            } catch (Throwable e) {
-                BukkitProjectileManager.this.plugin.logger().warn("Failed to update server entity update interval for " + this.projectile.getType().getKey() + "[" + this.projectile.getUniqueId() + "]", e);
-            }
+            ServerEntityProxy.INSTANCE.setUpdateInterval(this.cachedServerEntity, updateInterval);
+            this.lastInjectedInterval = updateInterval;
         }
 
         private static boolean canSpawnParticle(Object nmsEntity, boolean inGround) {
-            if (!FastNMS.INSTANCE.field$Entity$wasTouchingWater(nmsEntity)) return false;
-            if (CoreReflections.clazz$AbstractArrow.isInstance(nmsEntity)) {
+            if (!EntityProxy.INSTANCE.isWasTouchingWater(nmsEntity)) return false;
+            if (AbstractArrowProxy.CLASS.isInstance(nmsEntity)) {
                 return !inGround;
             }
             return true;

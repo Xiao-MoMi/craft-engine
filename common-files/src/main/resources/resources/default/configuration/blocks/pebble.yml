@@ -1,7 +1,7 @@
 items:
   default:pebble:
     data:
-      item-name: <!i><lang:item.default.pebble>
+      item_name: <!i><lang:item.default.pebble>
     texture: minecraft:item/custom/pebble
     behavior:
       - type: block_item
@@ -11,13 +11,13 @@ items:
               - default:sound/stone
               - default:hardness/none
             overrides:
-              map-color: 11
-              push-reaction: destroy
+              map_color: 11
+              push_reaction: destroy
           behaviors:
             - type: liquid_flowable_block
             - type: sturdy_base_block
               direction: down
-              support-types:
+              support_types:
                 - full
             - type: stackable_block
               property: pebble
@@ -49,11 +49,12 @@ items:
             properties:
               pebble:
                 type: int
-                range: 1~3
+                min: 1
+                max: 3
                 default: 1
             appearances:
               one:
-                auto-state: lower_tripwire
+                auto_state: lower_tripwire
                 models:
                   - path: minecraft:block/custom/pebble_1
                     weight: 1
@@ -67,7 +68,7 @@ items:
                     weight: 1
                     y: 270
               two:
-                auto-state: lower_tripwire
+                auto_state: lower_tripwire
                 models:
                   - path: minecraft:block/custom/pebble_2
                     weight: 1
@@ -81,7 +82,7 @@ items:
                     weight: 1
                     y: 270
               three:
-                auto-state: higher_tripwire
+                auto_state: higher_tripwire
                 models:
                   - path: minecraft:block/custom/pebble_3
                     weight: 1

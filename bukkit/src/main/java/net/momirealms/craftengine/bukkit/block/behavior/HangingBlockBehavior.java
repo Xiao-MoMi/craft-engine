@@ -1,39 +1,70 @@
 package net.momirealms.craftengine.bukkit.block.behavior;
 
-import net.momirealms.craftengine.bukkit.nms.FastNMS;
+import net.momirealms.craftengine.bukkit.util.BlockStateUtils;
 import net.momirealms.craftengine.bukkit.util.LocationUtils;
-import net.momirealms.craftengine.core.block.CustomBlock;
+import net.momirealms.craftengine.core.block.BlockDefinition;
+import net.momirealms.craftengine.core.block.ImmutableBlockState;
 import net.momirealms.craftengine.core.block.behavior.BlockBehaviorFactory;
-import net.momirealms.craftengine.core.util.ResourceConfigUtils;
-import net.momirealms.craftengine.core.util.Tuple;
+import net.momirealms.craftengine.core.plugin.config.ConfigSection;
+import net.momirealms.craftengine.core.util.LazyReference;
+import net.momirealms.craftengine.proxy.minecraft.world.level.BlockGetterProxy;
 
 import java.util.List;
-import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 
-public class HangingBlockBehavior extends BushBlockBehavior {
+public final class HangingBlockBehavior extends BushBlockBehavior {
     public static final BlockBehaviorFactory<HangingBlockBehavior> FACTORY = new Factory();
 
-    public HangingBlockBehavior(CustomBlock block, int delay, boolean blacklist, boolean stackable, List<Object> tagsCanSurviveOn, Set<Object> blocksCansSurviveOn, Set<String> customBlocksCansSurviveOn) {
-        super(block, delay, blacklist, stackable, -1, tagsCanSurviveOn, blocksCansSurviveOn, customBlocksCansSurviveOn);
+    private HangingBlockBehavior(BlockDefinition block,
+                                 int delay,
+                                 boolean blacklist,
+                                 boolean stackable,
+                                 int maxHeight,
+                                 List<Object> tagsCanSurviveOn,
+                                 LazyReference<Set<Object>> blockStatesCanSurviveOn) {
+        super(block, delay, blacklist, stackable, maxHeight, tagsCanSurviveOn, blockStatesCanSurviveOn);
     }
 
     @Override
-    protected boolean canSurvive(Object thisBlock, Object state, Object world, Object blockPos) throws ReflectiveOperationException {
+    protected boolean canSurvive(Object thisBlock, Object state, Object level, Object blockPos) {
         Object belowPos = LocationUtils.above(blockPos);
-        Object belowState = FastNMS.INSTANCE.method$BlockGetter$getBlockState(world, belowPos);
-        return mayPlaceOn(belowState, world, belowPos);
+        Object belowState = BlockGetterProxy.INSTANCE.getBlockState(level, belowPos);
+        return mayPlaceOn(belowState, level, belowPos);
+    }
+
+    protected boolean mayStackOn(Object world, Object abovePos) {
+        int count = 1;
+        Object cursorPos = LocationUtils.below(abovePos);
+
+        while (count < this.maxHeight) {
+            Object aboveState = BlockGetterProxy.INSTANCE.getBlockState(world, cursorPos);
+            Optional<ImmutableBlockState> belowCustomState = BlockStateUtils.getOptionalCustomBlockState(aboveState);
+            if (belowCustomState.isPresent() && belowCustomState.get().owner().value() == super.blockDefinition) {
+                count++;
+                cursorPos = LocationUtils.above(cursorPos);
+            } else {
+                break;
+            }
+        }
+        return count < this.maxHeight;
     }
 
     private static class Factory implements BlockBehaviorFactory<HangingBlockBehavior> {
+        private static final String[] MAX_HEIGHT = new String[] {"max_height", "max-height"};
 
         @Override
-        public HangingBlockBehavior create(CustomBlock block, Map<String, Object> arguments) {
-            Tuple<List<Object>, Set<Object>, Set<String>> tuple = readTagsAndState(arguments, true);
-            boolean stackable = ResourceConfigUtils.getAsBoolean(arguments.getOrDefault("stackable", false), "stackable");
-            int delay = ResourceConfigUtils.getAsInt(arguments.getOrDefault("delay", 0), "delay");
-            boolean blacklistMode = ResourceConfigUtils.getAsBoolean(arguments.getOrDefault("blacklist", false), "blacklist");
-            return new HangingBlockBehavior(block, delay, blacklistMode, stackable, tuple.left(), tuple.mid(), tuple.right());
+        public HangingBlockBehavior create(BlockDefinition block, ConfigSection section) {
+            TagsAndState tagsAndState = readTagsAndState(section, "above");
+            return new HangingBlockBehavior(
+                    block,
+                    section.getInt("delay", 0),
+                    section.getBoolean("blacklist"),
+                    section.getBoolean("stackable"),
+                    section.getInt(MAX_HEIGHT),
+                    tagsAndState.tags(),
+                    tagsAndState.blockStates()
+            );
         }
     }
 }

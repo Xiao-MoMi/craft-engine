@@ -1,6 +1,6 @@
 package net.momirealms.craftengine.core.pack;
 
-public class CachedAssetFile {
+public final class CachedAssetFile {
     private final byte[] data;
     private final long lastModified;
     private final long size;

@@ -2,7 +2,7 @@ package net.momirealms.craftengine.core.util;
 
 import com.google.common.base.Preconditions;
 
-public class MapColor {
+public final class MapColor {
     private static final MapColor[] COLORS = new MapColor[64];
     public static final MapColor CLEAR = new MapColor(0, 0);
     public static final MapColor PALE_GREEN = new MapColor(1, 8368696);

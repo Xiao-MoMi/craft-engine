@@ -1,6 +1,6 @@
 package net.momirealms.craftengine.core.plugin.config.template.argument;
 
-import net.momirealms.craftengine.core.util.ResourceConfigUtils;
+import net.momirealms.craftengine.core.plugin.config.ConfigSection;
 
 import java.util.Map;
 
@@ -21,22 +21,23 @@ public final class WhenTemplateArgument implements TemplateArgument {
     }
 
     @Override
-    public Object get(Map<String, TemplateArgument> arguments) {
-        return this.result.get(arguments);
+    public Object get(String node, Map<String, TemplateArgument> arguments) {
+        return this.result.get(node, arguments);
     }
 
-    private static class Factory implements TemplateArgumentFactory<WhenTemplateArgument> {
+    private static class Factory extends NestedTemplateArgumentFactory<WhenTemplateArgument> {
 
         @Override
-        public WhenTemplateArgument create(Map<String, Object> arguments) {
-            String source = ResourceConfigUtils.getAsStringOrNull(arguments.get("source"));
-            TemplateArgument fallback = TemplateArguments.fromObject(arguments.get("fallback"));
+        public WhenTemplateArgument create(ConfigSection section) {
+            String source = section.getString("source");
             if (source == null) {
-                return new WhenTemplateArgument(fallback);
+                return new WhenTemplateArgument(TemplateArguments.fromConfig(section.getValue("fallback")));
             }
-            Map<String, Object> whenMap = ResourceConfigUtils.getAsMap(arguments.get("when"), "when");
-            TemplateArgument value = whenMap.containsKey(source) ? TemplateArguments.fromObject(whenMap.get(source)) : fallback;
-            return new WhenTemplateArgument(value);
+            ConfigSection whenSection = section.getNonNullSection("when");
+            if (whenSection.containsKey(source)) {
+                return new WhenTemplateArgument(TemplateArguments.fromConfig(whenSection.getValue(source)));
+            }
+            return new WhenTemplateArgument(TemplateArguments.fromConfig(section.getValue("fallback")));
         }
     }
 }

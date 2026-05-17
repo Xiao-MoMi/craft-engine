@@ -4,6 +4,7 @@ import net.momirealms.craftengine.core.util.Key;
 
 public final class Attributes {
     private Attributes() {}
+
     // latest version
     public static final Key ARMOR = Key.from("armor");
     public static final Key ARMOR_TOUGHNESS = Key.from("armor_toughness");

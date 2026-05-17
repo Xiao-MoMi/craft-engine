@@ -9,7 +9,6 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Map;
 
 public final class CraftEngineImages {
-
     private CraftEngineImages() {}
 
     /**

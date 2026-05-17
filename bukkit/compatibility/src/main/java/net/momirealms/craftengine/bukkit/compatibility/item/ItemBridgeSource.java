@@ -3,18 +3,20 @@ package net.momirealms.craftengine.bukkit.compatibility.item;
 import cn.gtemc.itembridge.api.Provider;
 import cn.gtemc.itembridge.api.context.BuildContext;
 import cn.gtemc.itembridge.api.context.ContextKey;
+import net.momirealms.craftengine.bukkit.item.BukkitItemManager;
+import net.momirealms.craftengine.bukkit.util.ItemStackUtils;
+import net.momirealms.craftengine.core.item.Item;
 import net.momirealms.craftengine.core.item.ItemBuildContext;
 import net.momirealms.craftengine.core.plugin.compatibility.ItemSource;
 import net.momirealms.craftengine.core.plugin.context.ContextHolder;
 import net.momirealms.craftengine.core.util.VersionHelper;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.Map;
 import java.util.function.Supplier;
 
-public class ItemBridgeSource implements ItemSource<ItemStack> {
+public final class ItemBridgeSource implements ItemSource {
     private final Provider<ItemStack, Player> provider;
 
     public ItemBridgeSource(Provider<ItemStack, Player> provider) {
@@ -26,15 +28,18 @@ public class ItemBridgeSource implements ItemSource<ItemStack> {
         return this.provider.plugin();
     }
 
-    @Nullable
     @Override
-    public ItemStack build(String id, ItemBuildContext context) {
+    public Item build(String id, ItemBuildContext context) {
         net.momirealms.craftengine.core.entity.player.Player player = context.player();
         Player bukkitPlayer = null;
         if (player != null) {
             bukkitPlayer = (Player) player.platformPlayer();
         }
-        return this.provider.buildOrNull(id, bukkitPlayer, adapt(context));
+        ItemStack itemStack = this.provider.buildOrNull(id, bukkitPlayer, adapt(context));
+        if (itemStack == null) {
+            return null;
+        }
+        return BukkitItemManager.instance().wrap(itemStack);
     }
 
     private static BuildContext adapt(ItemBuildContext context) {
@@ -62,7 +67,7 @@ public class ItemBridgeSource implements ItemSource<ItemStack> {
     }
 
     @Override
-    public String id(ItemStack item) {
-        return this.provider.idOrNull(item);
+    public String id(Item item) {
+        return this.provider.idOrNull(ItemStackUtils.getBukkitStack(item));
     }
 }

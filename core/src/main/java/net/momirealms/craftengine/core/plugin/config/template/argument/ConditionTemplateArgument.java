@@ -1,6 +1,6 @@
 package net.momirealms.craftengine.core.plugin.config.template.argument;
 
-import net.momirealms.craftengine.core.util.ResourceConfigUtils;
+import net.momirealms.craftengine.core.plugin.config.ConfigSection;
 
 import java.util.Map;
 
@@ -21,17 +21,19 @@ public final class ConditionTemplateArgument implements TemplateArgument {
     }
 
     @Override
-    public Object get(Map<String, TemplateArgument> arguments) {
-        return this.result.get(arguments);
+    public Object get(String node, Map<String, TemplateArgument> arguments) {
+        return this.result.get(node, arguments);
     }
 
-    private static class Factory implements TemplateArgumentFactory<ConditionTemplateArgument> {
+    private static class Factory extends NestedTemplateArgumentFactory<ConditionTemplateArgument> {
+        private static final String[] ON_TRUE = new String[]{"on_true", "on-true"};
+        private static final String[] ON_FALSE = new String[]{"on_false", "on-false"};
 
         @Override
-        public ConditionTemplateArgument create(Map<String, Object> arguments) {
-            TemplateArgument onTrue = TemplateArguments.fromObject(ResourceConfigUtils.get(arguments, "on-true", "on_true"));
-            TemplateArgument onFalse = TemplateArguments.fromObject(ResourceConfigUtils.get(arguments, "on-false", "on_false"));
-            return new ConditionTemplateArgument(ResourceConfigUtils.getAsBoolean(arguments.get("condition"), "condition") ? onTrue : onFalse);
+        public ConditionTemplateArgument create(ConfigSection section) {
+            TemplateArgument onTrue = TemplateArguments.fromConfig(section.getValue(ON_TRUE));
+            TemplateArgument onFalse = TemplateArguments.fromConfig(section.getValue(ON_FALSE));
+            return new ConditionTemplateArgument(section.getBoolean("condition") ? onTrue : onFalse);
         }
     }
 }

@@ -17,50 +17,39 @@ import java.util.function.BiFunction;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
 
-public final class LootPool<T> {
-    private final List<LootEntryContainer<T>> entryContainers;
+public final class LootPool {
+    private final List<LootEntryContainer> entryContainers;
     private final Predicate<LootContext> compositeCondition;
-    private final List<LootFunction<T>> functions;
-    private final BiFunction<Item<T>, LootContext, Item<T>> compositeFunction;
+    private final BiFunction<Item, LootContext, Item> compositeFunction;
     private final NumberProvider rolls;
     private final NumberProvider bonusRolls;
 
-    public LootPool(List<LootEntryContainer<T>> entryContainers,
+    public LootPool(List<LootEntryContainer> entryContainers,
                     List<Condition<LootContext>> conditions,
-                    List<LootFunction<T>> functions,
+                    List<LootFunction> functions,
                     NumberProvider rolls,
                     NumberProvider bonusRolls) {
         this.entryContainers = entryContainers;
-        this.functions = functions;
         this.rolls = rolls;
         this.bonusRolls = bonusRolls;
         this.compositeCondition = MiscUtils.allOf(conditions);
         this.compositeFunction = LootFunctions.compose(functions);
     }
 
-    public void addRandomItems(Consumer<Item<T>> lootConsumer, LootContext context) {
+    public void addRandomItems(Consumer<Item> lootConsumer, LootContext context) {
         if (this.compositeCondition.test(context)) {
-            Consumer<Item<T>> consumer = LootFunction.decorate(this.compositeFunction, lootConsumer, context);
+            Consumer<Item> consumer = LootFunction.decorate(this.compositeFunction, lootConsumer, context);
             int i = this.rolls.getInt(context) + MiscUtils.floor(this.bonusRolls.getFloat(context) * context.luck());
             for (int j = 0; j < i; ++j) {
-                this.addRandomItem(createFunctionApplier(consumer, context), context);
+                this.addRandomItem(consumer, context);
             }
         }
     }
 
-    private Consumer<Item<T>> createFunctionApplier(Consumer<Item<T>> lootConsumer, LootContext context) {
-        return (item -> {
-            for (LootFunction<T> function : this.functions) {
-                function.apply(item, context);
-            }
-            lootConsumer.accept(item);
-        });
-    }
-
-    private void addRandomItem(Consumer<Item<T>> lootConsumer, LootContext context) {
-        List<LootEntry<T>> list = Lists.newArrayList();
+    private void addRandomItem(Consumer<Item> lootConsumer, LootContext context) {
+        List<LootEntry> list = Lists.newArrayList();
         MutableInt mutableInt = new MutableInt(0);
-        for (LootEntryContainer<T> lootPoolEntryContainer : this.entryContainers) {
+        for (LootEntryContainer lootPoolEntryContainer : this.entryContainers) {
             lootPoolEntryContainer.expand(context, (choice) -> {
                 int i = choice.getWeight(context.luck());
                 if (i > 0) {
@@ -75,7 +64,7 @@ public final class LootPool<T> {
                 list.getFirst().createItem(lootConsumer, context);
             } else {
                 int j = RandomUtils.generateRandomInt(0, mutableInt.intValue());
-                for (LootEntry<T> loot : list) {
+                for (LootEntry loot : list) {
                     j -= loot.getWeight(context.luck());
                     if (j < 0) {
                         loot.createItem(lootConsumer, context);

@@ -14,18 +14,18 @@ public interface GuiElement {
     GuiElement EMPTY = GuiElement.constant(null, (e, c) -> c.cancel());
 
     @Nullable
-    Item<?> item();
+    Item item();
 
     void handleClick(Click click);
 
     default void onTimer() {
     }
 
-    static GuiElement dynamic(Function<DynamicGuiItemElement, Item<?>> itemSupplier, BiConsumer<DynamicGuiItemElement, Click> action) {
+    static GuiElement dynamic(Function<DynamicGuiItemElement, Item> itemSupplier, BiConsumer<DynamicGuiItemElement, Click> action) {
         return new DynamicGuiItemElement(itemSupplier, action);
     }
 
-    static GuiElement paged(Function<PagedGuiElement, Item<?>> itemSupplier, boolean nextOrPrevious) {
+    static GuiElement paged(Function<PagedGuiElement, Item> itemSupplier, boolean nextOrPrevious) {
         return new PagedGuiElement(itemSupplier, nextOrPrevious);
     }
 
@@ -33,11 +33,11 @@ public interface GuiElement {
         return new PageOrderedGuiElement(order);
     }
 
-    static GuiElement constant(Item<?> item, BiConsumer<ConstantGuiElement, Click> action) {
+    static GuiElement constant(Item item, BiConsumer<ConstantGuiElement, Click> action) {
         return new ConstantGuiElement(item, action);
     }
 
-    static GuiElement recipeIngredient(List<Item<?>> ingredients, BiConsumer<RecipeIngredientGuiElement, Click> action) {
+    static GuiElement recipeIngredient(List<Item> ingredients, BiConsumer<RecipeIngredientGuiElement, Click> action) {
         return new RecipeIngredientGuiElement(ingredients, action);
     }
 
@@ -59,17 +59,17 @@ public interface GuiElement {
 
     class RecipeIngredientGuiElement extends AbstractGuiElement {
         private int ingredientIndex;
-        private final List<Item<?>> ingredients;
+        private final List<Item> ingredients;
         private final BiConsumer<RecipeIngredientGuiElement, Click> action;
 
-        public RecipeIngredientGuiElement(List<Item<?>> ingredients, BiConsumer<RecipeIngredientGuiElement, Click> action) {
+        public RecipeIngredientGuiElement(List<Item> ingredients, BiConsumer<RecipeIngredientGuiElement, Click> action) {
             this.ingredients = ingredients;
             this.ingredientIndex = 0;
             this.action = action;
         }
 
         @Override
-        public @NotNull Item<?> item() {
+        public @NotNull Item item() {
             return this.ingredients.get(this.ingredientIndex);
         }
 
@@ -97,15 +97,15 @@ public interface GuiElement {
 
     class ConstantGuiElement extends AbstractGuiElement {
         private final BiConsumer<ConstantGuiElement, Click> action;
-        private final Item<?> item;
+        private final Item item;
 
-        public ConstantGuiElement(Item<?> item, BiConsumer<ConstantGuiElement, Click> action) {
+        public ConstantGuiElement(Item item, BiConsumer<ConstantGuiElement, Click> action) {
             this.item = item;
             this.action = action;
         }
 
         @Override
-        public Item<?> item() {
+        public Item item() {
             return item;
         }
 
@@ -128,7 +128,7 @@ public interface GuiElement {
         }
 
         @Override
-        public Item<?> item() {
+        public Item item() {
             ItemWithAction item = gui().itemAt(this.index);
             if (item == null) return null;
             return item.item();
@@ -145,16 +145,16 @@ public interface GuiElement {
     }
 
     class PagedGuiElement extends AbstractGuiElement {
-        private final Function<PagedGuiElement, Item<?>> itemSupplier;
+        private final Function<PagedGuiElement, Item> itemSupplier;
         private final boolean nextOrPrevious;
 
-        public PagedGuiElement(Function<PagedGuiElement, Item<?>> itemSupplier, boolean nextOrPrevious) {
+        public PagedGuiElement(Function<PagedGuiElement, Item> itemSupplier, boolean nextOrPrevious) {
             this.itemSupplier = itemSupplier;
             this.nextOrPrevious = nextOrPrevious;
         }
 
         @Override
-        public Item<?> item() {
+        public Item item() {
             return itemSupplier.apply(this);
         }
 
@@ -188,15 +188,15 @@ public interface GuiElement {
 
     class DynamicGuiItemElement extends AbstractGuiElement {
         private final BiConsumer<DynamicGuiItemElement, Click> action;
-        private final Function<DynamicGuiItemElement, Item<?>> itemSupplier;
+        private final Function<DynamicGuiItemElement, Item> itemSupplier;
 
-        public DynamicGuiItemElement(Function<DynamicGuiItemElement, Item<?>> itemSupplier, BiConsumer<DynamicGuiItemElement, Click> action) {
+        public DynamicGuiItemElement(Function<DynamicGuiItemElement, Item> itemSupplier, BiConsumer<DynamicGuiItemElement, Click> action) {
             this.itemSupplier = itemSupplier;
             this.action = action;
         }
 
         @Override
-        public Item<?> item() {
+        public Item item() {
             return itemSupplier.apply(this);
         }
 

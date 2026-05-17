@@ -1,9 +1,7 @@
 package net.momirealms.craftengine.core.pack.model.definition.rangedisptach;
 
 import com.google.gson.JsonObject;
-import net.momirealms.craftengine.core.util.ResourceConfigUtils;
-
-import java.util.Map;
+import net.momirealms.craftengine.core.plugin.config.ConfigSection;
 
 public final class CompassRangeDispatchProperty implements RangeDispatchProperty {
     public static final RangeDispatchPropertyFactory<CompassRangeDispatchProperty> FACTORY = new Factory();
@@ -25,29 +23,31 @@ public final class CompassRangeDispatchProperty implements RangeDispatchProperty
     }
 
     @Override
-    public void accept(JsonObject jsonObject) {
-        jsonObject.addProperty("property", "compass");
-        jsonObject.addProperty("target", this.target);
+    public void writeProperty(JsonObject model) {
+        model.addProperty("property", "compass");
+        model.addProperty("target", this.target);
         if (!this.wobble) {
-            jsonObject.addProperty("wobble", false);
+            model.addProperty("wobble", false);
         }
     }
 
     private static class Factory implements RangeDispatchPropertyFactory<CompassRangeDispatchProperty> {
         @Override
-        public CompassRangeDispatchProperty create(Map<String, Object> arguments) {
-            String targetObj = ResourceConfigUtils.requireNonEmptyStringOrThrow(arguments.get("target"), "warning.config.item.model.range_dispatch.compass.missing_target");
-            boolean wobble = ResourceConfigUtils.getAsBoolean(arguments.getOrDefault("wobble", true), "wobble");
-            return new CompassRangeDispatchProperty(targetObj, wobble);
+        public CompassRangeDispatchProperty create(ConfigSection section) {
+            return new CompassRangeDispatchProperty(
+                    section.getNonNullString("target"),
+                    section.getBoolean("wobble", true)
+            );
         }
     }
 
     private static class Reader implements RangeDispatchPropertyReader<CompassRangeDispatchProperty> {
         @Override
         public CompassRangeDispatchProperty read(JsonObject json) {
-            String target = json.get("target").getAsString();
-            boolean wobble = !json.has("wobble") || json.get("wobble").getAsBoolean();
-            return new CompassRangeDispatchProperty(target, wobble);
+            return new CompassRangeDispatchProperty(
+                    json.get("target").getAsString(),
+                    !json.has("wobble") || json.get("wobble").getAsBoolean()
+            );
         }
     }
 }

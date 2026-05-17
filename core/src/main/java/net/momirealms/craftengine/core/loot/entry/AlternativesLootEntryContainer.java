@@ -1,28 +1,27 @@
 package net.momirealms.craftengine.core.loot.entry;
 
 import net.momirealms.craftengine.core.loot.LootContext;
+import net.momirealms.craftengine.core.plugin.config.ConfigSection;
 import net.momirealms.craftengine.core.plugin.context.CommonConditions;
 import net.momirealms.craftengine.core.plugin.context.Condition;
-import net.momirealms.craftengine.core.util.ResourceConfigUtils;
 
 import java.util.List;
-import java.util.Map;
 
-public final class AlternativesLootEntryContainer<T> extends AbstractCompositeLootEntryContainer<T> {
-    public static final LootEntryContainerFactory<?> FACTORY = new Factory<>();
+public final class AlternativesLootEntryContainer extends AbstractCompositeLootEntryContainer {
+    public static final LootEntryContainerFactory<AlternativesLootEntryContainer> FACTORY = new Factory();
 
-    private AlternativesLootEntryContainer(List<Condition<LootContext>> conditions, List<LootEntryContainer<T>> children) {
+    private AlternativesLootEntryContainer(List<Condition<LootContext>> conditions, List<LootEntryContainer> children) {
         super(conditions, children);
     }
 
     @Override
-    protected LootEntryContainer<T> compose(List<? extends LootEntryContainer<T>> children) {
+    protected LootEntryContainer compose(List<? extends LootEntryContainer> children) {
         return switch (children.size()) {
             case 0 -> LootEntryContainer.alwaysFalse();
             case 1 -> children.get(0);
             case 2 -> children.get(0).or(children.get(1));
             default -> (context, choiceConsumer) -> {
-                for (LootEntryContainer<T> child : children) {
+                for (LootEntryContainer child : children) {
                     if (child.expand(context, choiceConsumer)) {
                         return true;
                     }
@@ -32,13 +31,14 @@ public final class AlternativesLootEntryContainer<T> extends AbstractCompositeLo
         };
     }
 
-    private static class Factory<A> implements LootEntryContainerFactory<A> {
+    private static class Factory implements LootEntryContainerFactory<AlternativesLootEntryContainer> {
 
         @Override
-        public LootEntryContainer<A> create(Map<String, Object> arguments) {
-            List<LootEntryContainer<A>> containers = ResourceConfigUtils.parseConfigAsList(ResourceConfigUtils.get(arguments, "children", "terms", "branches"), LootEntryContainers::fromMap);
-            List<Condition<LootContext>> conditions = ResourceConfigUtils.parseConfigAsList(arguments.get("conditions"), CommonConditions::fromMap);
-            return new AlternativesLootEntryContainer<>(conditions, containers);
+        public AlternativesLootEntryContainer create(ConfigSection section) {
+            return new AlternativesLootEntryContainer(
+                    section.getList("conditions", CommonConditions::fromConfig),
+                    section.getList("children", LootEntryContainers::fromConfig)
+            );
         }
     }
 }

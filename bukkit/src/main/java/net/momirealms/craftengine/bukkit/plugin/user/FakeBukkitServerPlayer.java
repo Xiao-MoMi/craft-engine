@@ -7,7 +7,7 @@ import net.momirealms.craftengine.bukkit.plugin.BukkitCraftEngine;
 import net.momirealms.craftengine.core.util.GameEdition;
 import org.jetbrains.annotations.Nullable;
 
-public class FakeBukkitServerPlayer extends BukkitServerPlayer {
+public final class FakeBukkitServerPlayer extends BukkitServerPlayer {
 
     public FakeBukkitServerPlayer(BukkitCraftEngine plugin) {
         super(plugin, null);

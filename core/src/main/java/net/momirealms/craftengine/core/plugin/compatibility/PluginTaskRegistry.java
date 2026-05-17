@@ -73,14 +73,14 @@ public final class PluginTaskRegistry {
     }
 
     public void executeTasks() {
-        try {
-            Node current = head.next;
-            while (current != tail) {
+        Node current = head.next;
+        while (current != tail) {
+            try {
                 current.task.task().run();
-                current = current.next;
+            } catch (Throwable ignored) {
+                // 不要管其他插件的异常，应该他们自己处理
             }
-        } catch (Throwable ignored) {
-            // 不要管其他插件的异常，应该他们自己处理
+            current = current.next;
         }
     }
 

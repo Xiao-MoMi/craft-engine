@@ -62,19 +62,34 @@ public final class Overlay {
     }
 
     public PackVersion minVersion() {
-        return minVersion;
+        return this.minVersion;
     }
 
     public PackVersion maxVersion() {
-        return maxVersion;
+        return this.maxVersion;
     }
 
     public String directory() {
-        return directory;
+        return this.directory;
     }
 
     public boolean test(MinecraftVersion version) {
         return version.packFormat().isAtOrAbove(this.minVersion) && version.packFormat().isAtOrBelow(this.maxVersion);
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (!(o instanceof Overlay overlay)) return false;
+        return this.minVersion.equals(overlay.minVersion) && this.maxVersion.equals(overlay.maxVersion) && this.directory.equals(overlay.directory);
+    }
+
+    @Override
+    public int hashCode() {
+        int hash = 7;
+        hash = 29 * hash + this.minVersion.hashCode();
+        hash = 31 * hash + this.maxVersion.hashCode();
+        hash = 37 * hash + this.directory.hashCode();
+        return hash;
     }
 
     private static Pair<PackVersion, PackVersion> getSupportedVersions(JsonObject pack) {

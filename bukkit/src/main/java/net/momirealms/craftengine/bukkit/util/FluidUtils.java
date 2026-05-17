@@ -4,7 +4,6 @@ import net.momirealms.craftengine.core.world.FluidCollisionRule;
 import org.bukkit.FluidCollisionMode;
 
 public final class FluidUtils {
-
     private FluidUtils() {}
 
     public static FluidCollisionMode toCollisionRule(FluidCollisionRule rule) {

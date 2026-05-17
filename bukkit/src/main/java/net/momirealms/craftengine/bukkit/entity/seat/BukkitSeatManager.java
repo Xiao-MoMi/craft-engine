@@ -28,7 +28,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
 
-public class BukkitSeatManager implements SeatManager, Listener {
+public final class BukkitSeatManager implements SeatManager, Listener {
     private static BukkitSeatManager instance;
     public static final NamespacedKey SEAT_KEY = KeyUtils.toNamespacedKey(SeatManager.SEAT_KEY);
     public static final NamespacedKey SEAT_EXTRA_DATA_KEY = KeyUtils.toNamespacedKey(SeatManager.SEAT_EXTRA_DATA_KEY);
@@ -37,7 +37,7 @@ public class BukkitSeatManager implements SeatManager, Listener {
 
     public BukkitSeatManager(BukkitCraftEngine plugin) {
         this.plugin = plugin;
-        this.dismountListener = VersionHelper.isOrAbove1_20_3() ? new DismountListener1_20_3(this::handleDismount) : new DismountListener1_20(this::handleDismount);
+        this.dismountListener = VersionHelper.isOrAbove1_20_3 ? new DismountListener1_20_3(this::handleDismount) : new DismountListener1_20(this::handleDismount);
         instance = this;
     }
 
@@ -105,11 +105,11 @@ public class BukkitSeatManager implements SeatManager, Listener {
         }
     }
 
-    protected boolean isSeatEntityType(Entity entity) {
+    private boolean isSeatEntityType(Entity entity) {
         return (entity instanceof ArmorStand || entity instanceof ItemDisplay);
     }
 
-    protected void tryLeavingSeat(@NotNull Player player, @NotNull Entity seat) {
+    private void tryLeavingSeat(@NotNull Player player, @NotNull Entity seat) {
         boolean isSeat = seat.getPersistentDataContainer().has(SEAT_KEY);
         if (!isSeat) return;
         Location location = seat.getLocation();

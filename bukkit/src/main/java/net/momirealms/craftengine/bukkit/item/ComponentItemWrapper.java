@@ -4,72 +4,70 @@ import com.google.gson.JsonElement;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.DataResult;
 import com.mojang.serialization.DynamicOps;
-import net.momirealms.craftengine.bukkit.nms.FastNMS;
-import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.CoreReflections;
-import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.MBuiltInRegistries;
-import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.MRegistryOps;
-import net.momirealms.craftengine.bukkit.util.EquipmentSlotUtils;
-import net.momirealms.craftengine.bukkit.util.ItemStackUtils;
 import net.momirealms.craftengine.bukkit.util.KeyUtils;
-import net.momirealms.craftengine.core.entity.EquipmentSlot;
-import net.momirealms.craftengine.core.entity.player.Player;
+import net.momirealms.craftengine.bukkit.util.RegistryOps;
+import net.momirealms.craftengine.bukkit.util.RegistryUtils;
 import net.momirealms.craftengine.core.item.ItemType;
 import net.momirealms.craftengine.core.item.ItemWrapper;
-import net.momirealms.craftengine.core.util.Key;
 import net.momirealms.craftengine.core.util.VersionHelper;
-import net.momirealms.craftengine.core.util.random.RandomUtils;
+import net.momirealms.craftengine.proxy.minecraft.core.component.DataComponentGetterProxy;
+import net.momirealms.craftengine.proxy.minecraft.core.component.DataComponentMapProxy;
+import net.momirealms.craftengine.proxy.minecraft.core.component.DataComponentTypeProxy;
+import net.momirealms.craftengine.proxy.minecraft.core.registries.BuiltInRegistriesProxy;
+import net.momirealms.craftengine.proxy.minecraft.nbt.TagProxy;
+import net.momirealms.craftengine.proxy.minecraft.world.item.ItemProxy;
+import net.momirealms.craftengine.proxy.minecraft.world.item.ItemStackProxy;
 import net.momirealms.sparrow.nbt.Tag;
-import org.bukkit.enchantments.Enchantment;
 import org.bukkit.inventory.ItemStack;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.Objects;
 import java.util.Optional;
 
-public class ComponentItemWrapper implements ItemWrapper<ItemStack> {
-    private final ItemStack item;
-    private final Object handle;
-    private ItemType itemType;
+public final class ComponentItemWrapper extends BukkitItemWrapper {
 
-    public ComponentItemWrapper(final Object handle) {
-        this.handle = handle;
-        this.item = FastNMS.INSTANCE.method$CraftItemStack$asCraftMirror(handle);
+    public ComponentItemWrapper(Object itemStack) {
+        super(itemStack);
     }
 
-    public ComponentItemWrapper(final ItemStack item) {
-        this.item = ItemStackUtils.ensureCraftItemStack(item);
-        this.handle = FastNMS.INSTANCE.field$CraftItemStack$handle(this.item);
+    public ComponentItemWrapper(ItemStack itemStack) {
+        super(itemStack);
     }
 
-    public ComponentItemWrapper(final ItemStack item, int count) {
-        this.item = ItemStackUtils.ensureCraftItemStack(item);
-        this.item.setAmount(count);
-        this.handle = FastNMS.INSTANCE.field$CraftItemStack$handle(this.item);
+    public ItemType createItemType() {
+        return new ComponentItemType(ItemStackProxy.INSTANCE.getItem(this.minecraftItem()));
     }
 
-    public ItemType itemType() {
-        if (this.itemType == null) {
-            this.itemType = new ComponentItemType(FastNMS.INSTANCE.method$ItemStack$getItem(this.getLiteralObject()));
-        }
-        return this.itemType;
+    @Override
+    public ItemWrapper copy() {
+        return new ComponentItemWrapper(ItemStackProxy.INSTANCE.copy(this.itemStack));
+    }
+
+    @Override
+    public ItemWrapper copyWithCount(int count) {
+        return new ComponentItemWrapper(ItemStackProxy.INSTANCE.copyWithCount(this.itemStack, count));
     }
 
     public void removeComponent(Object type) {
-        FastNMS.INSTANCE.method$ItemStack$removeComponent(this.getLiteralObject(), ensureDataComponentType(type));
+        ItemStackProxy.INSTANCE.remove(this.minecraftItem(), ensureDataComponentType(type));
     }
 
     public void resetComponent(Object type) {
-        Object item = FastNMS.INSTANCE.method$ItemStack$getItem(this.getLiteralObject());
-        Object componentMap = FastNMS.INSTANCE.method$Item$components(item);
+        Object item = ItemStackProxy.INSTANCE.getItem(this.minecraftItem());
+        Object componentMap = ItemProxy.INSTANCE.components(item);
         Object componentType = ensureDataComponentType(type);
-        Object defaultComponent = FastNMS.INSTANCE.method$DataComponentMap$get(componentMap, componentType);
-        FastNMS.INSTANCE.method$ItemStack$setComponent(this.getLiteralObject(), componentType, defaultComponent);
+        Object defaultComponent;
+        if (VersionHelper.isOrAbove1_21_5) {
+            defaultComponent = DataComponentGetterProxy.INSTANCE.get(componentMap, componentType);
+        } else {
+            defaultComponent = DataComponentMapProxy.INSTANCE.get(componentMap, componentType);
+        }
+        ItemStackProxy.INSTANCE.set(this.minecraftItem(), componentType, defaultComponent);
     }
 
     public void setComponent(Object type, final Object value) {
         if (value instanceof JsonElement jsonElement) {
             setJsonComponent(type, jsonElement);
-        } else if (CoreReflections.clazz$Tag.isInstance(value)) {
+        } else if (TagProxy.CLASS.isInstance(value)) {
             setNBTComponent(type, value);
         } else if (value instanceof Tag tag) {
             setSparrowNBTComponent(type, tag);
@@ -79,167 +77,102 @@ public class ComponentItemWrapper implements ItemWrapper<ItemStack> {
     }
 
     public Object getExactComponent(Object type) {
-        return FastNMS.INSTANCE.method$ItemStack$getComponent(getLiteralObject(), ensureDataComponentType(type));
+        return ItemStackProxy.INSTANCE.get(minecraftItem(), ensureDataComponentType(type));
     }
 
     @SuppressWarnings("unchecked")
-    public <T> Optional<T> getJavaComponent(Object type) {
-        return (Optional<T>) getComponentInternal(type, MRegistryOps.JAVA);
+    public <T> Optional<T> getComponentAsJava(Object type) {
+        return (Optional<T>) getComponentInternal(type, RegistryOps.JAVA);
     }
 
-    public Optional<JsonElement> getJsonComponent(Object type) {
-        return getComponentInternal(type, MRegistryOps.JSON);
+    public Optional<JsonElement> getComponentAsJson(Object type) {
+        return getComponentInternal(type, RegistryOps.JSON);
     }
 
-    public Optional<Object> getNBTComponent(Object type) {
-        return getComponentInternal(type, MRegistryOps.NBT);
+    public Optional<Object> getComponentAsMinecraftTag(Object type) {
+        return getComponentInternal(type, RegistryOps.NBT);
     }
 
-    public Optional<Tag> getSparrowNBTComponent(Object type) {
-        return getComponentInternal(type, MRegistryOps.SPARROW_NBT).map(Tag::copy);
+    public Optional<Tag> getComponentAsSparrowTag(Object type) {
+        return getComponentInternal(type, RegistryOps.SPARROW_NBT).map(Tag::copy);
     }
 
-    @SuppressWarnings({"rawtypes", "unchecked"})
     private <T> Optional<T> getComponentInternal(Object type, DynamicOps<T> ops) {
         Object componentType = ensureDataComponentType(type);
-        Codec codec = FastNMS.INSTANCE.method$DataComponentType$codec(componentType);
+        Codec<T> codec = DataComponentTypeProxy.INSTANCE.codecOrThrow(componentType);
         try {
-            Object componentData = FastNMS.INSTANCE.method$ItemStack$getComponent(getLiteralObject(), componentType);
+            T componentData = ItemStackProxy.INSTANCE.get(minecraftItem(), componentType);
             if (componentData == null) return Optional.empty();
-            DataResult<Object> result = codec.encodeStart(ops, componentData);
-            return (Optional<T>) result.result();
+            DataResult<T> result = codec.encodeStart(ops, componentData);
+            return result.result();
         } catch (Throwable t) {
             throw new RuntimeException("Cannot read component " + type.toString(), t);
         }
     }
 
     public boolean hasComponent(Object type) {
-        return FastNMS.INSTANCE.method$ItemStack$hasComponent(getLiteralObject(), ensureDataComponentType(type));
+        return ItemStackProxy.INSTANCE.has(minecraftItem(), ensureDataComponentType(type));
     }
 
     public boolean hasNonDefaultComponent(Object type) {
-        if (VersionHelper.isOrAbove1_21_4()) {
-            return FastNMS.INSTANCE.method$ItemStack$hasNonDefaultComponent(getLiteralObject(), ensureDataComponentType(type));
+        if (VersionHelper.isOrAbove1_21_4) {
+            return ItemStackProxy.INSTANCE.hasNonDefault(minecraftItem(), ensureDataComponentType(type));
         } else {
-            Object item = FastNMS.INSTANCE.method$ItemStack$getItem(this.getLiteralObject());
-            Object componentMap = FastNMS.INSTANCE.method$Item$components(item);
+            Object item = ItemStackProxy.INSTANCE.getItem(this.minecraftItem());
+            Object componentMap = ItemProxy.INSTANCE.components(item);
             Object componentType = ensureDataComponentType(type);
-            Object defaultComponent = FastNMS.INSTANCE.method$DataComponentMap$get(componentMap, componentType);
+            Object defaultComponent;
+            if (VersionHelper.isOrAbove1_21_5) {
+                defaultComponent = DataComponentGetterProxy.INSTANCE.get(componentMap, componentType);
+            } else {
+                defaultComponent = DataComponentMapProxy.INSTANCE.get(componentMap, componentType);
+            }
             return !Objects.equals(defaultComponent, getExactComponent(componentType));
         }
     }
 
     public void setExactComponent(Object type, final Object value) {
-        FastNMS.INSTANCE.method$ItemStack$setComponent(this.getLiteralObject(), ensureDataComponentType(type), value);
+        ItemStackProxy.INSTANCE.set(this.minecraftItem(), ensureDataComponentType(type), value);
     }
 
     public void setJavaComponent(Object type, Object value) {
-        setComponentInternal(type, MRegistryOps.JAVA, value);
+        setComponentInternal(type, RegistryOps.JAVA, value);
     }
 
     public void setJsonComponent(Object type, JsonElement value) {
-        setComponentInternal(type, MRegistryOps.JSON, value);
+        setComponentInternal(type, RegistryOps.JSON, value);
     }
 
     public void setNBTComponent(Object type, Object value) {
-        setComponentInternal(type, MRegistryOps.NBT, value);
+        setComponentInternal(type, RegistryOps.NBT, value);
     }
 
     public void setSparrowNBTComponent(Object type, Tag value) {
-        setComponentInternal(type, MRegistryOps.SPARROW_NBT, value);
+        setComponentInternal(type, RegistryOps.SPARROW_NBT, value);
     }
 
-    @SuppressWarnings({"rawtypes", "unchecked"})
-    private void setComponentInternal(Object type, DynamicOps ops, Object value) {
+    private <T> void setComponentInternal(Object type, DynamicOps<T> ops, T value) {
         if (value == null) return;
         Object componentType = ensureDataComponentType(type);
         if (componentType == null) {
             return;
         }
-        Codec codec = FastNMS.INSTANCE.method$DataComponentType$codec(componentType);
+        Codec<T> codec = DataComponentTypeProxy.INSTANCE.codecOrThrow(componentType);
         try {
-            DataResult<Object> result = codec.parse(ops, value);
+            DataResult<T> result = codec.parse(ops, value);
             if (result.isError()) {
                 throw new IllegalArgumentException(result.toString());
             }
-            result.result().ifPresent(it -> FastNMS.INSTANCE.method$ItemStack$setComponent(this.getLiteralObject(), componentType, it));
+            result.result().ifPresent(it -> ItemStackProxy.INSTANCE.set(this.minecraftItem(), componentType, it));
         } catch (Throwable t) {
             throw new RuntimeException("Cannot parse component " + type.toString(), t);
         }
     }
 
     private Object ensureDataComponentType(Object type) {
-        if (!CoreReflections.clazz$DataComponentType.isInstance(type)) {
-            Key key = Key.of(type.toString());
-            return FastNMS.INSTANCE.method$Registry$getValue(MBuiltInRegistries.DATA_COMPONENT_TYPE, KeyUtils.toResourceLocation(key));
+        if (!DataComponentTypeProxy.CLASS.isInstance(type)) {
+            return RegistryUtils.getRegistryValue(BuiltInRegistriesProxy.DATA_COMPONENT_TYPE, KeyUtils.toIdentifier(type.toString()));
         }
         return type;
-    }
-
-    @Override
-    public ItemWrapper<ItemStack> copyWithCount(int count) {
-        ItemStack copied = this.item.clone();
-        copied.setAmount(count);
-        return new ComponentItemWrapper(copied);
-    }
-
-    @Override
-    public ItemStack getItem() {
-        return this.item;
-    }
-
-    @Override
-    public Object getLiteralObject() {
-        return this.handle;
-    }
-
-    @Override
-    public int count() {
-        return this.item.getAmount();
-    }
-
-    @Override
-    public void count(int amount) {
-        this.item.setAmount(Math.max(amount, 0));
-    }
-
-    @Override
-    public void shrink(int amount) {
-        count(count() - amount);
-    }
-
-    @Override
-    public void hurtAndBreak(int amount, @Nullable Player player, @Nullable EquipmentSlot slot) {
-        if (player == null) {
-            if (this.hurt(amount)) {
-                this.shrink(1);
-                this.setJavaComponent(DataComponentTypes.DAMAGE, 0);
-            }
-            return;
-        }
-        FastNMS.INSTANCE.method$ItemStack$hurtAndBreak(
-                this.handle,
-                amount,
-                player.serverPlayer(),
-                slot != null ? EquipmentSlotUtils.toNMSEquipmentSlot(slot) : null
-        );
-    }
-
-    private boolean hurt(int amount) {
-        if (!this.hasComponent(DataComponentTypes.MAX_DAMAGE) || this.hasComponent(DataComponentTypes.UNBREAKABLE) || !this.hasComponent(DataComponentTypes.DAMAGE)) return false;
-        if (amount > 0) {
-            int level = this.item.getEnchantmentLevel(Enchantment.UNBREAKING);
-            int ignoredDamage = 0;
-            for (int i = 0; level > 0 && i < amount; ++i) {
-                if (RandomUtils.generateRandomInt(0, level + 1) > 0) ++ignoredDamage;
-            }
-            amount -= ignoredDamage;
-            if (amount <= 0) return false;
-        }
-        Optional<Integer> optionalDamage = this.getJavaComponent(DataComponentTypes.DAMAGE);
-        int damage = optionalDamage.orElse(0) + amount;
-        this.setJavaComponent(DataComponentTypes.DAMAGE, damage);
-        Optional<Integer> optionalMaxDamage = this.getJavaComponent(DataComponentTypes.MAX_DAMAGE);
-        return damage >= optionalMaxDamage.orElseGet(() -> (int) this.item.getType().getMaxDurability());
     }
 }

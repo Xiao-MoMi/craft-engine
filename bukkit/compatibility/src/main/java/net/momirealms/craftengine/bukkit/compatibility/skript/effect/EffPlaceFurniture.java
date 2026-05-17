@@ -1,6 +1,5 @@
 package net.momirealms.craftengine.bukkit.compatibility.skript.effect;
 
-import ch.njol.skript.Skript;
 import ch.njol.skript.lang.Effect;
 import ch.njol.skript.lang.Expression;
 import ch.njol.skript.lang.SkriptParser;
@@ -11,11 +10,17 @@ import net.momirealms.craftengine.core.util.Key;
 import org.bukkit.Location;
 import org.bukkit.event.Event;
 import org.jetbrains.annotations.Nullable;
+import org.skriptlang.skript.addon.SkriptAddon;
+import org.skriptlang.skript.registration.SyntaxInfo;
+import org.skriptlang.skript.registration.SyntaxRegistry;
 
-public class EffPlaceFurniture extends Effect {
+public final class EffPlaceFurniture extends Effect {
 
-    public static void register() {
-        Skript.registerEffect(EffPlaceFurniture.class, "place [(custom|ce|craft-engine)] furniture[s] %strings% [at] [%directions% %locations%]");
+    public static void register(SkriptAddon addon) {
+        SyntaxInfo<EffPlaceFurniture> syntaxInfo = SyntaxInfo.builder(EffPlaceFurniture.class)
+                .addPattern("place [(custom|ce|craft-engine)] furniture[s] %strings% [at] [%directions% %locations%]")
+                .build();
+        addon.registry(SyntaxRegistry.class).register(SyntaxRegistry.EFFECT, syntaxInfo);
     }
 
     private Expression<String> furniture;
@@ -23,10 +28,10 @@ public class EffPlaceFurniture extends Effect {
 
     @Override
     protected void execute(Event e) {
-        String[] os = furniture.getArray(e);
-        for (Location l : locations.getArray(e)) {
-            for (String o : os) {
-                CraftEngineFurniture.place(l, Key.of(o));
+        String[] ids = furniture.getArray(e);
+        for (Location location : locations.getArray(e)) {
+            for (String id : ids) {
+                CraftEngineFurniture.place(location, Key.of(id));
             }
         }
     }

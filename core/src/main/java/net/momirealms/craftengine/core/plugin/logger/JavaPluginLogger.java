@@ -3,7 +3,7 @@ package net.momirealms.craftengine.core.plugin.logger;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-public class JavaPluginLogger implements PluginLogger {
+public final class JavaPluginLogger implements PluginLogger {
     private final Logger logger;
 
     public JavaPluginLogger(Logger logger) {
@@ -26,12 +26,12 @@ public class JavaPluginLogger implements PluginLogger {
     }
 
     @Override
-    public void severe(String s) {
+    public void error(String s) {
         this.logger.severe(s);
     }
 
     @Override
-    public void severe(String s, Throwable t) {
+    public void error(String s, Throwable t) {
         this.logger.log(Level.SEVERE, s, t);
     }
 }

@@ -11,7 +11,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
-public class CooldownData {
+public final class CooldownData {
     public static final Key COOLDOWN_KEY = Key.ce("cooldown");
     private final Map<String, Long> cooldownMap = Collections.synchronizedMap(new HashMap<>());
 

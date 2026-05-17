@@ -2,23 +2,21 @@ package net.momirealms.craftengine.core.plugin.context.function;
 
 import net.momirealms.craftengine.core.entity.player.Player;
 import net.momirealms.craftengine.core.plugin.CraftEngine;
+import net.momirealms.craftengine.core.plugin.config.ConfigConstants;
+import net.momirealms.craftengine.core.plugin.config.ConfigSection;
 import net.momirealms.craftengine.core.plugin.context.*;
 import net.momirealms.craftengine.core.plugin.context.number.NumberProvider;
-import net.momirealms.craftengine.core.plugin.context.number.NumberProviders;
 import net.momirealms.craftengine.core.plugin.context.parameter.DirectContextParameters;
 import net.momirealms.craftengine.core.plugin.context.selector.PlayerSelector;
-import net.momirealms.craftengine.core.plugin.context.selector.PlayerSelectors;
 import net.momirealms.craftengine.core.plugin.context.text.TextProvider;
 import net.momirealms.craftengine.core.plugin.context.text.TextProviders;
-import net.momirealms.craftengine.core.util.ResourceConfigUtils;
 import net.momirealms.craftengine.core.world.WorldPosition;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 
-public class TeleportFunction<CTX extends Context> extends AbstractConditionalFunction<CTX> {
+public final class TeleportFunction<CTX extends Context> extends AbstractConditionalFunction<CTX> {
     private final PlayerSelector<CTX> selector;
     @Nullable
     private final TextProvider world;
@@ -28,8 +26,14 @@ public class TeleportFunction<CTX extends Context> extends AbstractConditionalFu
     private final NumberProvider pitch;
     private final NumberProvider yaw;
 
-    public TeleportFunction(List<Condition<CTX>> predicates, @Nullable PlayerSelector<CTX> selector, @Nullable TextProvider world,
-                            NumberProvider x, NumberProvider y, NumberProvider z, NumberProvider pitch, NumberProvider yaw) {
+    private TeleportFunction(List<Condition<CTX>> predicates,
+                             @Nullable PlayerSelector<CTX> selector,
+                             @Nullable TextProvider world,
+                             NumberProvider x,
+                             NumberProvider y,
+                             NumberProvider z,
+                             NumberProvider pitch,
+                             NumberProvider yaw) {
         super(predicates);
         this.selector = selector;
         this.world = world;
@@ -67,28 +71,27 @@ public class TeleportFunction<CTX extends Context> extends AbstractConditionalFu
         }
     }
 
-    public static <CTX extends Context> FunctionFactory<CTX, TeleportFunction<CTX>> factory(java.util.function.Function<Map<String, Object>, Condition<CTX>> factory) {
+    public static <CTX extends Context> FunctionFactory<CTX, TeleportFunction<CTX>> factory(java.util.function.Function<ConfigSection, Condition<CTX>> factory) {
         return new Factory<>(factory);
     }
 
     private static class Factory<CTX extends Context> extends AbstractFactory<CTX, TeleportFunction<CTX>> {
 
-        public Factory(java.util.function.Function<Map<String, Object>, Condition<CTX>> factory) {
+        public Factory(java.util.function.Function<ConfigSection, Condition<CTX>> factory) {
             super(factory);
         }
 
         @Override
-        public TeleportFunction<CTX> create(Map<String, Object> arguments) {
-            TextProvider world = Optional.ofNullable(arguments.get("world")).map(String::valueOf).map(TextProviders::fromString).orElse(null);
-            NumberProvider x = NumberProviders.fromObject(ResourceConfigUtils.requireNonNullOrThrow(arguments.get("x"), "warning.config.function.teleport.missing_x"));
-            NumberProvider y = NumberProviders.fromObject(ResourceConfigUtils.requireNonNullOrThrow(arguments.get("y"), "warning.config.function.teleport.missing_y"));
-            NumberProvider z = NumberProviders.fromObject(ResourceConfigUtils.requireNonNullOrThrow(arguments.get("z"), "warning.config.function.teleport.missing_z"));
-            NumberProvider yaw = NumberProviders.fromObject(arguments.getOrDefault("yaw", 0));
-            NumberProvider pitch = NumberProviders.fromObject(arguments.getOrDefault("pitch", 0));
+        public TeleportFunction<CTX> create(ConfigSection section) {
             return new TeleportFunction<>(
-                    getPredicates(arguments),
-                    PlayerSelectors.fromObject(arguments.get("target"), conditionFactory()),
-                    world, x, y, z, pitch, yaw
+                    getPredicates(section),
+                    getPlayerSelector(section),
+                    section.getValue("world", v -> TextProviders.fromString(v.getAsString())),
+                    section.getNonNullNumber("x"),
+                    section.getNonNullNumber("y"),
+                    section.getNonNullNumber("z"),
+                    section.getNumber("pitch", ConfigConstants.POSITION_PITCH),
+                    section.getNumber("yaw", ConfigConstants.POSITION_YAW)
             );
         }
     }

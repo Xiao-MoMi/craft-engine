@@ -14,9 +14,9 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.UUID;
 
 public interface FontManager extends Manageable {
     Key DEFAULT_FONT = Key.of("minecraft:default");
@@ -26,19 +26,19 @@ public interface FontManager extends Manageable {
     String BYPASS_COMMAND = "craftengine.filter.bypass.command";
     String BYPASS_ANVIL = "craftengine.filter.bypass.anvil";
 
-    default EmojiComponentProcessResult replaceComponentEmoji(@NotNull Component text, @Nullable Player player) {
-        return replaceComponentEmoji(text, player, Config.maxEmojisPerParse());
+    default EmojiComponentProcessResult replaceComponentEmoji(@NotNull Component text, @Nullable Player player, @Nullable EmojiUseCase useCase) {
+        return replaceComponentEmoji(text, player, Config.maxEmojisPerParse(), useCase);
     }
 
-    default EmojiComponentProcessResult replaceComponentEmoji(@NotNull Component text, @Nullable Player player, int maxTimes) {
-        return replaceComponentEmoji(text, player, AdventureHelper.plainTextContent(text), maxTimes);
+    default EmojiComponentProcessResult replaceComponentEmoji(@NotNull Component text, @Nullable Player player, int maxTimes, @Nullable EmojiUseCase useCase) {
+        return replaceComponentEmoji(text, player, AdventureHelper.plainTextContent(text), maxTimes, useCase);
     }
 
-    default EmojiComponentProcessResult replaceComponentEmoji(@NotNull Component text, @Nullable Player player, String raw) {
-        return replaceComponentEmoji(text, player, raw, Config.maxEmojisPerParse());
+    default EmojiComponentProcessResult replaceComponentEmoji(@NotNull Component text, @Nullable Player player, String raw, @Nullable EmojiUseCase useCase) {
+        return replaceComponentEmoji(text, player, raw, Config.maxEmojisPerParse(), useCase);
     }
 
-    EmojiComponentProcessResult replaceComponentEmoji(@NotNull Component text, @Nullable Player player, @NotNull String raw, int maxTimes);
+    EmojiComponentProcessResult replaceComponentEmoji(@NotNull Component text, @Nullable Player player, @NotNull String raw, int maxTimes, @Nullable EmojiUseCase useCase);
 
     OffsetFont offsetFont();
 
@@ -46,17 +46,17 @@ public interface FontManager extends Manageable {
 
     ConfigParser[] parsers();
 
-    default EmojiTextProcessResult replaceMiniMessageEmoji(@NotNull String miniMessage, @Nullable Player player) {
-        return replaceMiniMessageEmoji(miniMessage, player, Config.maxEmojisPerParse());
+    default EmojiTextProcessResult replaceMiniMessageEmoji(@NotNull String miniMessage, @Nullable Player player, @Nullable EmojiUseCase useCase) {
+        return replaceMiniMessageEmoji(miniMessage, player, Config.maxEmojisPerParse(), useCase);
     }
 
-    EmojiTextProcessResult replaceMiniMessageEmoji(@NotNull String miniMessage, @Nullable Player player, int maxTimes);
+    EmojiTextProcessResult replaceMiniMessageEmoji(@NotNull String miniMessage, @Nullable Player player, int maxTimes, @Nullable EmojiUseCase useCase);
 
-    default EmojiTextProcessResult replaceJsonEmoji(@NotNull String json, @Nullable Player player) {
-        return replaceJsonEmoji(json, player, Config.maxEmojisPerParse());
+    default EmojiTextProcessResult replaceJsonEmoji(@NotNull String json, @Nullable Player player, @Nullable EmojiUseCase useCase) {
+        return replaceJsonEmoji(json, player, Config.maxEmojisPerParse(), useCase);
     }
 
-    EmojiTextProcessResult replaceJsonEmoji(@NotNull String jsonText, @Nullable Player player, int maxTimes);
+    EmojiTextProcessResult replaceJsonEmoji(@NotNull String jsonText, @Nullable Player player, int maxTimes, @Nullable EmojiUseCase useCase);
 
     boolean isDefaultFontInUse();
 
@@ -110,7 +110,13 @@ public interface FontManager extends Manageable {
         return createOffsets(offset, (raw, font) -> raw);
     }
 
-    void refreshEmojiSuggestions(UUID uuid);
+    void refreshEmojiSuggestions(@NotNull Player player);
+
+    List<String> getEmojiSuggestions(@NotNull Player player);
+
+    void addEmojiSuggestions(@Nullable Player player);
+
+    void removeEmojiSuggestions(@Nullable Player player);
 
     @Deprecated
     default Map<String, ComponentProvider> matchTags(String text) {

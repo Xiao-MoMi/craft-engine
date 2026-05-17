@@ -3,9 +3,8 @@ package net.momirealms.craftengine.core.pack.model.definition.condition;
 import com.google.gson.JsonObject;
 import net.momirealms.craftengine.core.item.ItemKeys;
 import net.momirealms.craftengine.core.pack.model.legacy.LegacyModelPredicate;
+import net.momirealms.craftengine.core.plugin.config.ConfigSection;
 import net.momirealms.craftengine.core.util.Key;
-
-import java.util.Map;
 
 public final class RodCastConditionProperty implements ConditionProperty, LegacyModelPredicate<Boolean> {
     public static final ConditionPropertyFactory<RodCastConditionProperty> FACTORY = new Factory();
@@ -15,8 +14,8 @@ public final class RodCastConditionProperty implements ConditionProperty, Legacy
     private RodCastConditionProperty() {}
 
     @Override
-    public void accept(JsonObject jsonObject) {
-        jsonObject.addProperty("property", "fishing_rod/cast");
+    public void writeProperty(JsonObject model) {
+        model.addProperty("property", "fishing_rod/cast");
     }
 
     @Override
@@ -32,7 +31,7 @@ public final class RodCastConditionProperty implements ConditionProperty, Legacy
 
     private static class Factory implements ConditionPropertyFactory<RodCastConditionProperty> {
         @Override
-        public RodCastConditionProperty create(Map<String, Object> arguments) {
+        public RodCastConditionProperty create(ConfigSection section) {
             return INSTANCE;
         }
     }

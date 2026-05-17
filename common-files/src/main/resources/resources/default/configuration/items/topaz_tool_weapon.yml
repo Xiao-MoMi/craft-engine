@@ -5,8 +5,8 @@ items:
       tags:
         - default:topaz_tools
     data:
-      item-name: <!i><#FF8C00><lang:item.default.topaz_rod>
-      tooltip-style: minecraft:topaz
+      item_name: <!i><#FF8C00><lang:item.default.topaz_rod>
+      tooltip_style: minecraft:topaz
     textures:
       - minecraft:item/custom/topaz_rod
       - minecraft:item/custom/topaz_rod_cast
@@ -16,8 +16,8 @@ items:
       tags:
         - default:topaz_tools
     data:
-      item-name: <!i><#FF8C00><lang:item.default.topaz_bow>
-      tooltip-style: minecraft:topaz
+      item_name: <!i><#FF8C00><lang:item.default.topaz_bow>
+      tooltip_style: minecraft:topaz
     textures:
       - minecraft:item/custom/topaz_bow
       - minecraft:item/custom/topaz_bow_pulling_0
@@ -29,8 +29,8 @@ items:
       tags:
         - default:topaz_tools
     data:
-      item-name: <!i><#FF8C00><lang:item.default.topaz_crossbow>
-      tooltip-style: minecraft:topaz
+      item_name: <!i><#FF8C00><lang:item.default.topaz_crossbow>
+      tooltip_style: minecraft:topaz
     textures:
       - minecraft:item/custom/topaz_crossbow
       - minecraft:item/custom/topaz_crossbow_pulling_0
@@ -44,9 +44,9 @@ items:
       tags:
         - default:topaz_tools
     data:
-      item-name: <!i><#FF8C00><lang:item.default.topaz_pickaxe>
-      tooltip-style: minecraft:topaz
-      max-damage: 64
+      item_name: <!i><#FF8C00><lang:item.default.topaz_pickaxe>
+      tooltip_style: minecraft:topaz
+      max_damage: 64
     texture: minecraft:item/custom/topaz_pickaxe
   default:topaz_axe:
     material: golden_axe
@@ -54,9 +54,9 @@ items:
       tags:
         - default:topaz_tools
     data:
-      item-name: <!i><#FF8C00><lang:item.default.topaz_axe>
-      tooltip-style: minecraft:topaz
-      max-damage: 64
+      item_name: <!i><#FF8C00><lang:item.default.topaz_axe>
+      tooltip_style: minecraft:topaz
+      max_damage: 64
     texture: minecraft:item/custom/topaz_axe
   default:topaz_hoe:
     material: golden_hoe
@@ -64,27 +64,27 @@ items:
       tags:
         - default:topaz_tools
     data:
-      item-name: <!i><#FF8C00><lang:item.default.topaz_hoe>
-      tooltip-style: minecraft:topaz
-      max-damage: 64
+      item_name: <!i><#FF8C00><lang:item.default.topaz_hoe>
+      tooltip_style: minecraft:topaz
+      max_damage: 64
     texture: minecraft:item/custom/topaz_hoe
   default:topaz_shovel:
     material: golden_shovel
     settings:
       tags: ["default:topaz_tools"]
     data:
-      item-name: <!i><#FF8C00><lang:item.default.topaz_shovel>
-      tooltip-style: minecraft:topaz
-      max-damage: 64
+      item_name: <!i><#FF8C00><lang:item.default.topaz_shovel>
+      tooltip_style: minecraft:topaz
+      max_damage: 64
     texture: minecraft:item/custom/topaz_shovel
   default:topaz_sword:
     material: golden_sword
     settings:
       tags: ["default:topaz_tools"]
     data:
-      item-name: <!i><#FF8C00><lang:item.default.topaz_sword>
-      tooltip-style: minecraft:topaz
-      max-damage: 64
+      item_name: <!i><#FF8C00><lang:item.default.topaz_sword>
+      tooltip_style: minecraft:topaz
+      max_damage: 64
     texture: minecraft:item/custom/topaz_sword
   $$>=1.21.4#topaz_trident:
     default:topaz_trident:
@@ -94,14 +94,14 @@ items:
           item: default:topaz_trident
           translation: 0,0,0
           rotation: 1,1,1,1
-          display-transform: NONE
+          display_transform: NONE
           scale: 0.5
         tags:
           - default:topaz_tools
       data:
-        item-name: <!i><#FF8C00><lang:item.default.topaz_trident>
-        tooltip-style: minecraft:topaz
-        max-damage: 300
+        item_name: <!i><#FF8C00><lang:item.default.topaz_trident>
+        tooltip_style: minecraft:topaz
+        max_damage: 300
       model:
         type: minecraft:select
         property: minecraft:display_context
@@ -121,13 +121,13 @@ items:
         fallback:
           type: minecraft:condition
           property: minecraft:using_item
-          on-true:
+          on_true:
             type: minecraft:model
             path: minecraft:item/custom/topaz_trident_throwing
-          on-false:
+          on_false:
             type: minecraft:model
             path: minecraft:item/custom/topaz_trident_in_hand
-      legacy-model:
+      legacy_model:
         path: minecraft:item/custom/topaz_trident_in_hand
         overrides:
           - path: minecraft:item/custom/topaz_trident_throwing
@@ -136,15 +136,15 @@ items:
   $$1.20.1~1.21.3#topaz_trident:
     default:topaz_trident:
       material: trident
-      client-bound-material:
+      client_bound_material:
         $$1.20.1~1.21.1: bow
         $$1.21.2~1.21.3: honey_bottle
       data:
-        item-name: <!i><#FF8C00><lang:item.default.topaz_trident>
+        item_name: <!i><#FF8C00><lang:item.default.topaz_trident>
         components:
           minecraft:max_damage: 300
       $$>=1.21.2:
-        client-bound-data:
+        client_bound_data:
           components:
             minecraft:consumable:
               consume_seconds: 128000
@@ -154,17 +154,17 @@ items:
           item: default:topaz_trident
           translation: 0,0,0
           rotation: 1,1,1,1
-          display-transform: NONE
+          display_transform: NONE
           scale: 0.5
         tags:
           - default:topaz_tools
       model:
         type: minecraft:condition
         property: minecraft:using_item
-        on-true:
+        on_true:
           type: minecraft:model
           path: minecraft:item/custom/topaz_trident_throwing
-        on-false:
+        on_false:
           type: minecraft:model
           path: minecraft:item/custom/topaz_trident_in_hand
 recipes:
@@ -237,7 +237,7 @@ recipes:
     type: smithing_transform
     base: minecraft:bow
     addition: default:topaz
-    template-type: default:topaz
+    template_type: default:topaz
     result:
       id: default:topaz_bow
       count: 1
@@ -245,7 +245,7 @@ recipes:
     type: smithing_transform
     base: minecraft:crossbow
     addition: default:topaz
-    template-type: default:topaz
+    template_type: default:topaz
     result:
       id: default:topaz_crossbow
       count: 1
@@ -253,7 +253,7 @@ recipes:
     type: smithing_transform
     base: minecraft:fishing_rod
     addition: default:topaz
-    template-type: default:topaz
+    template_type: default:topaz
     result:
       id: default:topaz_rod
       count: 1
@@ -261,7 +261,7 @@ recipes:
     type: smithing_transform
     base: minecraft:trident
     addition: default:topaz
-    template-type: default:topaz
+    template_type: default:topaz
     result:
       id: default:topaz_trident
       count: 1

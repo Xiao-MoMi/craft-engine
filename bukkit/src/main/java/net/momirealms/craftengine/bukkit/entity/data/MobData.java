@@ -1,9 +1,11 @@
 package net.momirealms.craftengine.bukkit.entity.data;
 
-public class MobData<T> extends LivingEntityData<T> {
-    public static final MobData<Byte> MobFlags = new MobData<>(MobData.class, EntityDataValue.Serializers$BYTE, (byte) 0);
+import net.momirealms.craftengine.proxy.minecraft.network.syncher.EntityDataSerializersProxy;
 
-    public MobData(Class<?> clazz, Object serializer, T defaultValue) {
+public class MobData<T> extends LivingEntityData<T> {
+    public static final MobData<Byte> MobFlags = new MobData<>(MobData.class, EntityDataSerializersProxy.BYTE, (byte) 0);
+
+    protected MobData(Class<?> clazz, Object serializer, T defaultValue) {
         super(clazz, serializer, defaultValue);
     }
 }

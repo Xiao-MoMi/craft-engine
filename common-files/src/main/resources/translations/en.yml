@@ -1,598 +1,281 @@
-# Don't change this
-lang-version: "${lang_version}"
-
-exception.invalid_syntax: "<red>Invalid syntax. Correct syntax: <white><arg:0></white></red>"
-exception.invalid_argument: "<red>Invalid argument. Reason: <white><arg:0></white></red>"
-exception.invalid_sender: "<red><arg:0> is not allowed to execute that command. Must be of type <arg:1></red>"
-exception.unexpected: "<red>An internal error occurred while attempting to perform this command</red>"
-exception.no_permission: "<red>I'm sorry, but you do not have permission to perform this command</red>"
-exception.no_such_command: "Unknown command."
-argument.entity.notfound.player: "<red>No player was found</red>"
-argument.entity.notfound.entity: "<red>No entity was found</red>"
-argument.parse.failure.time: "<red>'<arg:0>' is not a valid time format</red>"
-argument.parse.failure.material: "<red>'<arg:0>' is not a valid material name</red>"
-argument.parse.failure.enchantment: "<red>'<arg:0>' is not a valid enchantment</red>"
-argument.parse.failure.offlineplayer: "<red>No player found for input '<arg:0>'</red>"
-argument.parse.failure.player: "<red>No player found for input '<arg:0>'</red>"
-argument.parse.failure.world: "<red>'<arg:0>' is not a valid Minecraft world</red>"
-argument.parse.failure.location.invalid_format: "<red>'<arg:0>' is not a valid location. Required format is '<arg:1> <arg:2> <arg:3></red>"
-argument.parse.failure.location.mixed_local_absolute: "<red>Cannot mix local and absolute coordinates. (either all coordinates use '^' or none do)</red>"
-argument.parse.failure.namespacedkey.namespace: "<red>Invalid namespace '<arg:0>'. Must be [a-z0-9._-]</red>"
-argument.parse.failure.namespacedkey.key: "<red>Invalid key '<arg:0>'. Must be [a-z0-9/._-]</red>"
-argument.parse.failure.namespacedkey.need_namespace: "<red>Invalid input '<arg:0>', requires an explicit namespace</red>"
-argument.parse.failure.boolean: "<red>Could not parse boolean from '<arg:0>'</red>"
-argument.parse.failure.number: "<red>'<arg:0>' is not a valid number in the range <arg:1> to <arg:2></red>"
-argument.parse.failure.char: "<red>'<arg:0>' is not a valid character</red>"
-argument.parse.failure.string: "<red>'<arg:0>' is not a valid string of type <arg:1></red>"
-argument.parse.failure.uuid: "<red>'<arg:0>' is not a valid UUID</red>"
-argument.parse.failure.enum: "<red>'<arg:0>' is not one of the following: <arg:1></red>"
-argument.parse.failure.regex: "<red>'<arg:0>' does not match '<arg:1>'</red>"
-argument.parse.failure.flag.unknown: "<red>Unknown flag '<arg:0>'</red>"
-argument.parse.failure.flag.duplicate_flag: "<red>Duplicate flag '<arg:0>'</red>"
-argument.parse.failure.flag.no_flag_started: "<red>No flag started. Don't know what to do with '<arg:0>'</red>"
-argument.parse.failure.flag.missing_argument: "<red>Missing argument for '<arg:0>'</red>"
-argument.parse.failure.flag.no_permission: "<red>You don't have permission to use '<arg:0>'</red>"
-argument.parse.failure.color: "<red>'<arg:0>' is not a valid color</red>"
-argument.parse.failure.duration: "<red>'<arg:0>' is not a duration format</red>"
-argument.parse.failure.aggregate.missing: "<red>Missing component '<arg:0>'</red>"
-argument.parse.failure.aggregate.failure: "<red>Invalid component '<arg:0>': <arg:1></red>"
-argument.parse.failure.either: "<red>Could not resolve <arg:1> or <arg:2> from '<arg:0>'</red>"
-argument.parse.failure.namedtextcolor: "<red>'<arg:0>' is not a named text color</red>"
-info.pack.load: "Loaded pack: <arg:0>. Default namespace: <arg:1>"
-info.resource.load: "Loaded <arg:0> in <arg:1>ms (<arg:2>)"
-info.resource_pack.generate.start: "Generating resource pack..."
-info.resource_pack.generate.finish: "Generated resource pack in <arg:0>ms"
-info.resource_pack.validate.start: "Validating resource pack... (Progress: <arg:0>/<arg:1> | Pack Format: <arg:2>~<arg:3> | Overlays: <arg:4>)"
-info.resource_pack.validate.finish: "Validated resource pack in <arg:0>ms"
-info.resource_pack.optimize.json: "> Optimizing json files..."
-info.resource_pack.optimize.texture: "> Optimizing textures..."
-info.resource_pack.optimize.result: "□ Before/After/Ratio: <arg:0>/<arg:1>/<arg:2>%"
-info.resource_pack.optimize.finish: "Optimized resource pack in <arg:0>ms"
-info.resource_pack.create.start: "Creating the resource pack zip..."
-info.resource_pack.create.finish: "Created resource pack zip in <arg:0>ms"
-info.resource_pack.upload: "Completed uploading resource pack"
-info.host.self.netty_server: "Netty HTTP server started on port: <arg:0>"
-info.host.cache.load: "[<arg:0>] Loaded cached resource pack metadata"
-info.compatibility: "[Compatibility] <arg:0> hooked"
-info.update.available: "New version <arg:0> is available: <arg:1>"
-info.update.latest: "You're running the latest version"
-command.reload.config.success: "<white>Configs reloaded in <green><arg:0></green> ms.</white> <gray>(Async: <arg:1>ms | Sync: <arg:2>ms)</gray>"
-command.reload.config.failure: "<red>Config reload failed. Check console logs.</red>"
-command.reload.pack.success: "<white>Resource pack reloaded in <green><arg:0></green> ms.</white>"
-command.reload.pack.failure: "<red>Resource pack reload failed. Check console logs.</red>"
-command.reload.all.success: "<white>Reload completed in <green><arg:0></green> ms.</white> <gray>(Async: <arg:1>ms | Sync: <arg:2>ms | Pack: <arg:3>ms)</gray>"
-command.reload.all.failure: "<red>Reload failed. Check console logs.</red>"
-command.item.get.success: "<white>Got <arg:0> <arg:1></white>"
-command.item.get.failure.not_exist: "<red>Unknown item '<arg:0>'</red>"
-command.item.give.success.single: "<white>Gave <arg:0> <arg:1> to <arg:2>"
-command.item.give.success.multiple: "<white>Gave <arg:0> <arg:1> to <arg:2> players</white>"
-command.item.give.failure.not_exist: "<red>Unknown item '<arg:0>'</red>"
-command.item.clear.failed.single: "<red>No items were found on player <arg:0></red>"
-command.item.clear.failed.multiple: "<red>No items were found on <arg:0> players</red>"
-command.item.clear.success.single: "<white>Removed <arg:0> item(s) from player <arg:1></white>"
-command.item.clear.success.multiple: "<white>Removed <arg:0> item(s) from <arg:1> players</white>"
-command.item.clear.test.single: "<white>Found <arg:0> matching item(s) on player <arg:1></white>"
-command.item.clear.test.multiple: "<white>Found <arg:0> matching item(s) on <arg:1> players</white>"
-command.search_recipe.not_found: "<red>No recipe found for this item</red>"
-command.search_usage.not_found: "<red>No usage found for this item</red>"
-command.search_recipe.no_item: "<red>Please hold an item before running this command</red>"
-command.search_usage.no_item: "<red>Please hold an item before running this command</red>"
-command.totem_animation.failure.not_totem: "<red>Item '<arg:0>' is not minecraft:totem_of_undying</red>"
-command.totem_animation.success.single: "<white>Played totem animation <arg:0> to <arg:1></white>"
-command.totem_animation.success.multiple: "<white>Played totem animation <arg:0> to <arg:1> players</white>"
-command.resource.enable.success: "<white>Enabled resource <arg:0>. Run <click:run_command:/ce reload all><u>/ce reload all</u></click> to apply changes</white>"
-command.resource.enable.failure.unknown: "<red>Unknown resource <arg:0></red>"
-command.resource.disable.success: "<white>Disabled resource <arg:0>. Run <click:run_command:/ce reload all><u>/ce reload all</u></click> to apply changes</white>"
-command.resource.disable.failure.unknown: "<red>Unknown resource <arg:0></red>"
-command.resource.list: "<white>Enabled resources(<arg:0>): <green><arg:1></green><newline>Disabled resources(<arg:2>): <red><arg:3></red></white>"
-command.resource.create.success: "<white>Created resource <arg:0>.</white>"
-command.resource.create.failure.unknown: "<red>Failed to create resource <arg:0>, Error: <arg:1></red>"
-command.resource.create.failure.invalid_namespace: "<red>Failed to create resource <arg:0>, The namespace <arg:1> is invalid.</red>"
-command.resource.create.failure.exists: "<red>Resource <arg:0> already exists.</red>"
-command.upload.failure.not_supported: "<red>Current hosting method '<arg:0>' doesn't support uploading resource packs.</red>"
-command.upload.on_progress: "<white>Started uploading progress. Check the console for more information.</white>"
-command.send_resource_pack.success.single: "<white>Sent resource pack to <arg:0>.</white>"
-command.send_resource_pack.success.multiple: "<white>Send resource packs to <arg:0> players.</white>"
-command.locale.set.failure: "<red>Invalid locale format: <arg:0></red>"
-command.locale.set.success: "<white>Selected locale has been set to <arg:0> for <arg:1></white>"
-command.locale.unset.success: "<white>Cleared selected locale for <arg:0></white>"
-command.display_entity_view_distance_scale.set.success: "<white>Display entity view distance scale updated to <arg:0> for <arg:1></white>"
-command.entity_culling_distance_scale.set.success: "<white>Entity culling distance scale updated to <arg:0> for <arg:1></white>"
-command.entity_culling.toggle.success: "<white>Entity culling status updated to <arg:0> for <arg:1></white>"
-warning.network.resource_pack.unverified_uuid: "<yellow>Player <arg:0> is attempting to request a resource pack using a UUID (<arg:1>) that is not authenticated by the server.</yellow>"
-warning.config.pack.duplicated_files: "<red>Duplicated files Found. Please resolve them through config.yml 'resource-pack.duplicated-files-handler' section.</red>"
-warning.config.yaml.duplicated_key: "<red>Issue found in file <arg:0> - Found duplicated key '<arg:1>' at line <arg:2>, this might cause unexpected results.</red>"
-warning.config.yaml.inconsistent_value_type: "<red>Issue found in file <arg:0> - Found duplicated key '<arg:1>' at line <arg:2> with different value types, this might cause unexpected results.</red>"
-warning.config.type.int: "<yellow>Issue found in file <arg:0> - Failed to load '<arg:1>': Cannot cast '<arg:2>' to integer type for option '<arg:3>'.</yellow>"
-warning.config.type.boolean: "<yellow>Issue found in file <arg:0> - Failed to load '<arg:1>': Cannot cast '<arg:2>' to boolean type for option '<arg:3>'.</yellow>"
-warning.config.type.long: "<yellow>Issue found in file <arg:0> - Failed to load '<arg:1>': Cannot cast '<arg:2>' to long type for option '<arg:3>'.</yellow>"
-warning.config.type.float: "<yellow>Issue found in file <arg:0> - Failed to load '<arg:1>': Cannot cast '<arg:2>' to float type for option '<arg:3>'.</yellow>"
-warning.config.type.double: "<yellow>Issue found in file <arg:0> - Failed to load '<arg:1>': Cannot cast '<arg:2>' to double type for option '<arg:3>'.</yellow>"
-warning.config.type.quaternionf: "<yellow>Issue found in file <arg:0> - Failed to load '<arg:1>': Cannot cast '<arg:2>' to Quaternionf type for option '<arg:3>'.</yellow>"
-warning.config.type.vector3f: "<yellow>Issue found in file <arg:0> - Failed to load '<arg:1>': Cannot cast '<arg:2>' to Vector3f type for option '<arg:3>'.</yellow>"
-warning.config.type.vec3d: "<yellow>Issue found in file <arg:0> - Failed to load '<arg:1>': Cannot cast '<arg:2>' to Vec3d type for option '<arg:3>'.</yellow>"
-warning.config.type.map: "<yellow>Issue found in file <arg:0> - Failed to load '<arg:1>': Cannot cast '<arg:2>' to Map type for option '<arg:3>'.</yellow>"
-warning.config.type.aabb: "<yellow>Issue found in file <arg:0> - Failed to load '<arg:1>': Cannot cast '<arg:2>' to AABB type for option '<arg:3>'.</yellow>"
-warning.config.type.snbt.invalid_syntax: "<yellow>Issue found in file <arg:0> - Failed to load '<arg:1>': Invalid snbt syntax '<arg:2>'.</yellow>"
-warning.config.type.snbt.invalid_syntax.parse_error: "<yellow><arg:0> at position <arg:1>: <arg:2></yellow>"
-warning.config.type.snbt.invalid_syntax.here: "<yellow><--[HERE]</yellow>"
-warning.config.type.snbt.parser.expected_string_uuid: "<yellow>Expected a string representing a valid UUID</yellow>"
-warning.config.type.snbt.parser.expected_number_or_boolean: "<yellow>Expected a number or a boolean</yellow>"
-warning.config.type.snbt.parser.trailing: "<yellow>Unexpected trailing data</yellow>"
-warning.config.type.snbt.parser.expected.compound: "<yellow>Expected compound tag</yellow>"
-warning.config.type.snbt.parser.number_parse_failure: "<yellow>Failed to parse number: <arg:0></yellow>"
-warning.config.type.snbt.parser.expected_hex_escape: "<yellow>Expected a character literal of length <arg:0></yellow>"
-warning.config.type.snbt.parser.invalid_codepoint: "<yellow>Invalid Unicode character value: <arg:0></yellow>"
-warning.config.type.snbt.parser.no_such_operation: "<yellow>No such operation: <arg:0></yellow>"
-warning.config.type.snbt.parser.expected_integer_type: "<yellow>Expected an integer number</yellow>"
-warning.config.type.snbt.parser.expected_float_type: "<yellow>Expected a floating point number</yellow>"
-warning.config.type.snbt.parser.expected_non_negative_number: "<yellow>Expected a non-negative number</yellow>"
-warning.config.type.snbt.parser.invalid_character_name: "<yellow>Invalid Unicode character name</yellow>"
-warning.config.type.snbt.parser.invalid_array_element_type: "<yellow>Invalid array element type</yellow>"
-warning.config.type.snbt.parser.invalid_unquoted_start: "<yellow>Unquoted strings can't start with digits 0-9, + or -</yellow>"
-warning.config.type.snbt.parser.expected_unquoted_string: "<yellow>Expected a valid unquoted string</yellow>"
-warning.config.type.snbt.parser.invalid_string_contents: "<yellow>Invalid string contents</yellow>"
-warning.config.type.snbt.parser.expected_binary_numeral: "<yellow>Expected a binary number</yellow>"
-warning.config.type.snbt.parser.underscore_not_allowed: "<yellow>Underscore is not allowed in binary numerals</yellow>"
-warning.config.type.snbt.parser.expected_decimal_numeral: "<yellow>Expected a decimal number</yellow>"
-warning.config.type.snbt.parser.expected_hex_numeral: "<yellow>Expected a hexadecimal number</yellow>"
-warning.config.type.snbt.parser.empty_key: "<yellow>Key cannot be empty</yellow>"
-warning.config.type.snbt.parser.leading_zero_not_allowed: "<yellow>Decimal numbers can't start with 0</yellow>"
-warning.config.type.snbt.parser.infinity_not_allowed: "<yellow>Non-finite numbers are not allowed</yellow>"
-warning.config.type.snbt.parser.incorrect: "<yellow>Expected literal <arg:0></yellow>"
-warning.config.number.missing_type: "<yellow>Issue found in file <arg:0> - The config '<arg:1>' is missing the required 'type' argument for number argument.</yellow>"
-warning.config.number.invalid_type: "<yellow>Issue found in file <arg:0> - The config '<arg:1>' is using an invalid number argument type '<arg:2>'.</yellow>"
-warning.config.number.missing_argument: "<yellow>Issue found in file <arg:0> - The config '<arg:1>' is missing the argument for 'number'.</yellow>"
-warning.config.number.invalid_format: "<yellow>Issue found in file <arg:0> - The config '<arg:1>' is using an invalid number format '<arg:2>'.</yellow>"
-warning.config.number.fixed.missing_value: "<yellow>Issue found in file <arg:0> - The config '<arg:1>' is missing the required 'value' argument for 'constant' number.</yellow>"
-warning.config.number.fixed.invalid_value: "<yellow>Issue found in file <arg:0> - The config '<arg:1>' is using the invalid 'value' argument '<arg:2>' for 'constant' number.</yellow>"
-warning.config.number.expression.missing_expression: "<yellow>Issue found in file <arg:0> - The config '<arg:1>' is missing the required 'expression' argument for 'expression' number.</yellow>"
-warning.config.number.uniform.missing_min: "<yellow>Issue found in file <arg:0> - The config '<arg:1>' is missing the required 'min' argument for 'uniform' number.</yellow>"
-warning.config.number.uniform.missing_max: "<yellow>Issue found in file <arg:0> - The config '<arg:1>' is missing the required 'max' argument for 'uniform' number.</yellow>"
-warning.config.number.gaussian.missing_min: "<yellow>Issue found in file <arg:0> - The config '<arg:1>' is missing the required 'min' argument for 'gaussian' number.</yellow>"
-warning.config.number.gaussian.missing_max: "<yellow>Issue found in file <arg:0> - The config '<arg:1>' is missing the required 'max' argument for 'gaussian' number.</yellow>"
-warning.config.number.binomial.missing_extra: "<yellow>Issue found in file <arg:0> - The config '<arg:1>' is missing the required 'extra' argument for 'binomial' number.</yellow>"
-warning.config.number.binomial.missing_probability: "<yellow>Issue found in file <arg:0> - The config '<arg:1>' is missing the required 'probability' argument for 'binomial' number.</yellow>"
-warning.config.number.log_normal.missing_min: "<yellow>Issue found in file <arg:0> - The config '<arg:1>' is missing the required 'min' argument for 'log_normal' number.</yellow>"
-warning.config.number.log_normal.missing_max: "<yellow>Issue found in file <arg:0> - The config '<arg:1>' is missing the required 'max' argument for 'log_normal' number.</yellow>"
-warning.config.number.skew_normal.missing_min: "<yellow>Issue found in file <arg:0> - The config '<arg:1>' is missing the required 'min' argument for 'skew_normal' number.</yellow>"
-warning.config.number.skew_normal.missing_max: "<yellow>Issue found in file <arg:0> - The config '<arg:1>' is missing the required 'max' argument for 'skew_normal' number.</yellow>"
-warning.config.number.triangle.missing_min: "<yellow>Issue found in file <arg:0> - The config '<arg:1>' is missing the required 'min' argument for 'triangle' number.</yellow>"
-warning.config.number.triangle.missing_max: "<yellow>Issue found in file <arg:0> - The config '<arg:1>' is missing the required 'max' argument for 'triangle' number.</yellow>"
-warning.config.number.exponential.missing_lambda: "<yellow>Issue found in file <arg:0> - The config '<arg:1>' is missing the required 'lambda' argument for 'exponential' number.</yellow>"
-warning.config.condition.all_of.missing_terms: "<yellow>Issue found in file <arg:0> - The config '<arg:1>' is missing the required 'terms' argument for 'all_of' condition.</yellow>"
-warning.config.condition.all_of.invalid_terms_type: "<yellow>Issue found in file <arg:0> - The config '<arg:1>' has a misconfigured 'all_of' condition, 'terms' should be a map list, current type: '<arg:2>'.</yellow>"
-warning.config.condition.any_of.missing_terms: "<yellow>Issue found in file <arg:0> - The config '<arg:1>' is missing the required 'terms' argument for 'any_of' condition.</yellow>"
-warning.config.condition.any_of.invalid_terms_type: "<yellow>Issue found in file <arg:0> - The config '<arg:1>' has a misconfigured 'any_of' condition, 'terms' should be a map list, current type: '<arg:2>'.</yellow>"
-warning.config.condition.inverted.missing_term: "<yellow>Issue found in file <arg:0> - The config '<arg:1>' is missing the required 'term' argument for 'inverted' condition.</yellow>"
-warning.config.condition.inverted.invalid_term_type: "<yellow>Issue found in file <arg:0> - The config '<arg:1>' has a misconfigured 'inverted' condition, 'term' should be a config section, current type: '<arg:2>'.</yellow>"
-warning.config.condition.enchantment.missing_predicate: "<yellow>Issue found in file <arg:0> - The config '<arg:1>' is missing the required 'predicate' argument for 'enchantment' condition.</yellow>"
-warning.config.condition.enchantment.invalid_predicate: "<yellow>Issue found in file <arg:0> - The config '<arg:1>' is using an invalid enchantment 'predicate' argument '<arg:2>'.</yellow>"
-warning.config.condition.match_block_property.missing_properties: "<yellow>Issue found in file <arg:0> - The config '<arg:1>' is missing the required 'properties' argument for 'match_block_property' condition.</yellow>"
-warning.config.condition.match_block.missing_id: "<yellow>Issue found in file <arg:0> - The config '<arg:1>' is missing the required 'id' argument for 'match_block' condition.</yellow>"
-warning.config.condition.match_entity.missing_id: "<yellow>Issue found in file <arg:0> - The config '<arg:1>' is missing the required 'id' argument for 'match_entity' condition.</yellow>"
-warning.config.condition.match_item.missing_id: "<yellow>Issue found in file <arg:0> - The config '<arg:1>' is missing the required 'id' argument for 'match_item' condition.</yellow>"
-warning.config.condition.table_bonus.missing_enchantment: "<yellow>Issue found in file <arg:0> - The config '<arg:1>' is missing the required 'enchantment' argument for 'table_bonus' condition.</yellow>"
-warning.config.condition.table_bonus.missing_chances: "<yellow>Issue found in file <arg:0> - The config '<arg:1>' is missing the required 'chances' argument for 'table_bonus' condition.</yellow>"
-warning.config.condition.permission.missing_permission: "<yellow>Issue found in file <arg:0> - The config '<arg:1>' is missing the required 'permission' argument for 'permission' condition.</yellow>"
-warning.config.condition.string_equals.missing_value1: "<yellow>Issue found in file <arg:0> - The config '<arg:1>' is missing the required 'value1' argument for 'string_equals' condition.</yellow>"
-warning.config.condition.string_equals.missing_value2: "<yellow>Issue found in file <arg:0> - The config '<arg:1>' is missing the required 'value2' argument for 'string_equals' condition.</yellow>"
-warning.config.condition.string_contains.missing_value1: "<yellow>Issue found in file <arg:0> - The config '<arg:1>' is missing the required 'value1' argument for 'string_contains' condition.</yellow>"
-warning.config.condition.string_contains.missing_value2: "<yellow>Issue found in file <arg:0> - The config '<arg:1>' is missing the required 'value2' argument for 'string_contains' condition.</yellow>"
-warning.config.condition.string_regex.missing_value: "<yellow>Issue found in file <arg:0> - The config '<arg:1>' is missing the required 'value' argument for 'string_regex' condition.</yellow>"
-warning.config.condition.string_regex.missing_regex: "<yellow>Issue found in file <arg:0> - The config '<arg:1>' is missing the required 'regex' argument for 'string_regex' condition.</yellow>"
-warning.config.condition.expression.missing_expression: "<yellow>Issue found in file <arg:0> - The config '<arg:1>' is missing the required 'expression' argument for 'expression' condition.</yellow>"
-warning.config.condition.is_null.missing_argument: "<yellow>Issue found in file <arg:0> - The config '<arg:1>' is missing the required 'argument' argument for 'is_null' condition.</yellow>"
-warning.config.condition.hand.missing_hand: "<yellow>Issue found in file <arg:0> - The config '<arg:1>' is missing the required 'hand' argument for 'hand' condition.</yellow>"
-warning.config.condition.hand.invalid_hand: "<yellow>Issue found in file <arg:0> - The config '<arg:1>' is using an invalid 'hand' argument '<arg:2>' for 'hand' condition. Allowed hand types: [<arg:3>]</yellow>"
-warning.config.condition.on_cooldown.missing_id: "<yellow>Issue found in file <arg:0> - The config '<arg:1>' is missing the required 'id' argument for 'on_cooldown' condition.</yellow>"
-warning.config.condition.inventory_has_item.missing_id: "<yellow>Issue found in file <arg:0> - The config '<arg:1>' is missing the required 'id' argument for 'inventory_has_item' condition.</yellow>"
-warning.config.structure.not_section: "<yellow>Issue found in file <arg:0> - The config '<arg:1>' is expected to be a config section while it's actually a(n) '<arg:2>'.</yellow>"
-warning.config.image.duplicate: "<yellow>Issue found in file <arg:0> - Duplicated image '<arg:1>'. Please check if there is the same configuration in other files.</yellow>"
-warning.config.image.missing_height: "<yellow>Issue found in file <arg:0> - The image '<arg:1>' is missing the required 'height' argument.</yellow>"
-warning.config.image.height_ascent_conflict: "<yellow>Issue found in file <arg:0> - The image '<arg:1>' violates the bitmap image rule: 'height' argument '<arg:2>' should be no lower than 'ascent' argument '<arg:3>'.</yellow>"
-warning.config.image.missing_file: "<yellow>Issue found in file <arg:0> - The image '<arg:1>' is missing the required 'file' argument.</yellow>"
-warning.config.image.invalid_file_chars: "<yellow>Issue found in file <arg:0> - The image '<arg:1>' has a 'file' argument '<arg:2>' that contains illegal characters. Please read https://minecraft.wiki/w/Resource_location#Legal_characters.</yellow>"
-warning.config.image.invalid_font_chars: "<yellow>Issue found in file <arg:0> - The image '<arg:1>' has a 'font' argument '<arg:2>' that contains illegal characters. Please read https://minecraft.wiki/w/Resource_location#Legal_characters.</yellow>"
-warning.config.image.invalid_grid_size: "<yellow>Issue found in file <arg:0> - The image '<arg:1>' is using an incorrect grid size format '<arg:2>'. Correct example: '3,5'</yellow>"
-warning.config.image.missing_char: "<yellow>Issue found in file <arg:0> - The image '<arg:1>' is missing the required 'char' argument.</yellow>"
-warning.config.image.codepoint.conflict: "<yellow>Issue found in file <arg:0> - The image '<arg:1>' is using a character '<arg:3>(<arg:4>)' in font <arg:2> that has been used by another image '<arg:5>'.</yellow>"
-warning.config.image.codepoint.exhausted: "<yellow>Issue found in file <arg:0> - Cannot allocate codepoint for image '<arg:1>' as the codepoints have already been exhausted for font '<arg:2>'.</yellow>"
-warning.config.image.invalid_codepoint_grid: "<yellow>Issue found in file <arg:0> - Image '<arg:1>' has an invalid 'chars' codepoint grid.</yellow>"
-warning.config.image.invalid_char: "<yellow>Issue found in file <arg:0> - Image '<arg:1>' has a char parameter containing combining characters, which may result in image splitting.</yellow>"
-warning.config.image.invalid_hex_value: "<yellow>Issue found in file <arg:0> - The image '<arg:1>' is using a unicode character '<arg:2>' that is not a valid hexadecimal (radix 16) value.</yellow>"
-warning.config.image.invalid_unicode_string: "<yellow>Issue found in file <arg:0> - The image '<arg:1>' is using an incorrect unicode string '<arg:2>'.</yellow>"
-warning.config.recipe.duplicate: "<yellow>Issue found in file <arg:0> - Duplicated recipe '<arg:1>'. Please check if there is the same configuration in other files.</yellow>"
-warning.config.recipe.missing_type: "<yellow>Issue found in file <arg:0> - The recipe '<arg:1>' is missing the required 'type' argument.</yellow>"
-warning.config.recipe.invalid_type: "<yellow>Issue found in file <arg:0> - The recipe '<arg:1>' is using an invalid recipe type '<arg:2>'.</yellow>"
-warning.config.recipe.invalid_ingredient: "<yellow>Issue found in file <arg:0> - The recipe '<arg:1>' is using an invalid ingredient '<arg:2>'.</yellow>"
-warning.config.recipe.invalid_result: "<yellow>Issue found in file <arg:0> - The recipe '<arg:1>' is using an invalid result '<arg:2>'.</yellow>"
-warning.config.recipe.missing_ingredient: "<yellow>Issue found in file <arg:0> - The cooking recipe '<arg:1>' is missing the required 'ingredient' argument.</yellow>"
-warning.config.recipe.missing_result: "<yellow>Issue found in file <arg:0> - The recipe '<arg:1>' is missing the required 'result' argument.</yellow>"
-warning.config.recipe.result.missing_id: "<yellow>Issue found in file <arg:0> - The recipe '<arg:1>' is missing the required argument 'id' for recipe result.</yellow>"
-warning.config.recipe.crafting.invalid_category: "<yellow>Issue found in file <arg:0> - The crafting recipe '<arg:1>' is using an invalid category '<arg:2>'. Allowed categories: [<arg:3>].</yellow>"
-warning.config.recipe.cooking.invalid_category: "<yellow>Issue found in file <arg:0> - The cooking recipe '<arg:1>' is using an invalid category '<arg:2>'. Allowed categories: [<arg:3>].</yellow>"
-warning.config.recipe.shaped.missing_pattern: "<yellow>Issue found in file <arg:0> - The shaped recipe '<arg:1>' is missing the required argument 'pattern'.</yellow>"
-warning.config.recipe.shaped.invalid_pattern: "<yellow>Issue found in file <arg:0> - The shaped recipe '<arg:1>' is using an invalid pattern '<arg:2>'.</yellow>"
-warning.config.recipe.shaped.invalid_symbol: "<yellow>Issue found in file <arg:0> - The shaped recipe '<arg:1>' is using an invalid symbol '<arg:2>' in pattern.</yellow>"
-warning.config.recipe.smithing_transform.post_processor.missing_type: "<yellow>Issue found in file <arg:0> - The smithing transform recipe '<arg:1>' is missing the required argument 'type' for one of the post-processors.</yellow>"
-warning.config.recipe.smithing_transform.post_processor.invalid_type: "<yellow>Issue found in file <arg:0> - The smithing transform recipe '<arg:1>' is using an invalid post processor type '<arg:2>'.</yellow>"
-warning.config.recipe.smithing_transform.post_processor.keep_component.missing_components: "<yellow>Issue found in file <arg:0> - The smithing transform recipe '<arg:1>' is missing the required argument 'components' for post-processors 'keep_components'.</yellow>"
-warning.config.recipe.smithing_transform.post_processor.keep_component.missing_tags: "<yellow>Issue found in file <arg:0> - The smithing transform recipe '<arg:1>' is missing the required argument 'tags' for post-processors 'keep_tags'.</yellow>"
-warning.config.recipe.smithing_transform.post_processor.keep_custom_data.missing_paths: "<yellow>Issue found in file <arg:0> - The smithing transform recipe '<arg:1>' is missing the required argument 'paths' for post-processors 'keep_custom_data'.</yellow>"
-warning.config.recipe.smithing_transform.missing_base: "<yellow>Issue found in file <arg:0> - The smithing transform recipe '<arg:1>' is missing the required 'base' argument.</yellow>"
-warning.config.recipe.smithing_trim.missing_base: "<yellow>Issue found in file <arg:0> - The smithing trim recipe '<arg:1>' is missing the required 'base' argument.</yellow>"
-warning.config.recipe.smithing_trim.missing_template_type: "<yellow>Issue found in file <arg:0> - The smithing trim recipe '<arg:1>' is missing the required 'template-type' argument.</yellow>"
-warning.config.recipe.smithing_trim.missing_addition: "<yellow>Issue found in file <arg:0> - The smithing trim recipe '<arg:1>' is missing the required 'addition' argument.</yellow>"
-warning.config.recipe.smithing_trim.missing_pattern: "<yellow>Issue found in file <arg:0> - The smithing trim recipe '<arg:1>' is missing the required 'pattern' argument.</yellow>"
-warning.config.recipe.brewing.missing_container: "<yellow>Issue found in file <arg:0> - The brewing recipe '<arg:1>' is missing the required 'container' argument.</yellow>"
-warning.config.recipe.brewing.missing_ingredient: "<yellow>Issue found in file <arg:0> - The brewing recipe '<arg:1>' is missing the required 'ingredient' argument.</yellow>"
-warning.config.recipe.result.post_processor.missing_type: "<yellow>Issue found in file <arg:0> - The recipe '<arg:1>' is missing the required 'type' argument for result post processors.</yellow>"
-warning.config.recipe.result.post_processor.invalid_type: "<yellow>Issue found in file <arg:0> - The recipe '<arg:1>' is using an invalid result post processor type '<arg:2>'.</yellow>"
-warning.config.translation.unknown_locale: "<yellow>Issue found in file <arg:0> - Unknown locale '<arg:1>'.</yellow>"
-warning.config.template.duplicate: "<yellow>Issue found in file <arg:0> - Duplicated template '<arg:1>'. Please check if there is the same configuration in other files.</yellow>"
-warning.config.template.invalid: "<yellow>Issue found in file <arg:0> - The config '<arg:1>' is using an invalid template '<arg:2>'.</yellow>"
-warning.config.template.argument.self_increase_int.invalid_range: "<yellow>Issue found in file <arg:0> - The template '<arg:1>' is using a 'from' '<arg:2>' larger than 'to' '<arg:3>' in 'self_increase_int' argument.</yellow>"
-warning.config.template.argument.to_upper_case.invalid_locale: "<yellow>Issue found in file <arg:0> - The template '<arg:1>' is using an invalid locale '<arg:2>' in 'to_upper_case' argument.</yellow>"
-warning.config.template.argument.to_upper_case.missing_value: "<yellow>Issue found in file <arg:0> - The template '<arg:1>' is missing the required 'value' argument for 'to_upper_case' argument.</yellow>"
-warning.config.template.argument.to_lower_case.invalid_locale: "<yellow>Issue found in file <arg:0> - The template '<arg:1>' is using an invalid locale '<arg:2>' in 'to_lower_case' argument.</yellow>"
-warning.config.template.argument.to_lower_case.missing_value: "<yellow>Issue found in file <arg:0> - The template '<arg:1>' is missing the required 'value' argument for 'to_lower_case' argument.</yellow>"
-warning.config.template.argument.list.invalid_type: "<yellow>Issue found in file <arg:0> - The template '<arg:1>' is using a 'list' argument which expects a 'List' as argument while the input argument is a(n) '<arg:2>'.</yellow>"
-warning.config.template.argument.missing_value: "<yellow>Issue found in file <arg:0> - The config '<arg:1>' is missing the template argument for '<arg:2>'. Please use the arguments option to configure or set a default value for this parameter.</yellow>"
-warning.config.vanilla_loot.missing_type: "<yellow>Issue found in file <arg:0> - The vanilla loot '<arg:1>' is missing the required 'type' argument.</yellow>"
-warning.config.vanilla_loot.invalid_type: "<yellow>Issue found in file <arg:0> - The vanilla loot '<arg:1>' is using an invalid type '<arg:2>'. Allowed types: [<arg:3>].</yellow>"
-warning.config.vanilla_loot.block.invalid_target: "<yellow>Issue found in file <arg:0> - Invalid block target '<arg:2>' in vanilla loot '<arg:1>'.</yellow>"
-warning.config.sound.duplicate: "<yellow>Issue found in file <arg:0> - Duplicated sound '<arg:1>'. Please check if there is the same configuration in other files.</yellow>"
-warning.config.sound.missing_sounds: "<yellow>Issue found in file <arg:0> - The sound '<arg:1>' is missing the required 'sounds' argument.</yellow>"
-warning.config.sound.missing_name: "<yellow>Issue found in file <arg:0> - The sound '<arg:1>' is missing the required 'name' argument.</yellow>"
-warning.config.jukebox_song.duplicate: "<yellow>Issue found in file <arg:0> - Duplicated jukebox song '<arg:1>'. Please check if there is the same configuration in other files.</yellow>"
-warning.config.jukebox_song.missing_sound: "<yellow>Issue found in file <arg:0> - The jukebox song '<arg:1>' is missing the required 'sound' argument.</yellow>"
-warning.config.furniture.duplicate: "<yellow>Issue found in file <arg:0> - Duplicated furniture '<arg:1>'. Please check if there is the same configuration in other files.</yellow>"
-warning.config.furniture.missing_variants: "<yellow>Issue found in file <arg:0> - The furniture '<arg:1>' is missing the required 'variants' argument.</yellow>"
-warning.config.furniture.element.invalid_type: "<yellow>Issue found in file <arg:0> - The furniture '<arg:1>' is using an invalid element type '<arg:2>'.</yellow>"
-warning.config.furniture.element.item_display.missing_item: "<yellow>Issue found in file <arg:0> - The furniture '<arg:1>' is missing the required 'item' argument for 'item_display' element.</yellow>"
-warning.config.furniture.element.text_display.missing_text: "<yellow>Issue found in file <arg:0> - The furniture '<arg:1>' is missing the required 'text' argument for 'text_display' element.</yellow>"
-warning.config.furniture.element.item.missing_item: "<yellow>Issue found in file <arg:0> - The furniture '<arg:1>' is missing the required 'item' argument for 'item' element.</yellow>"
-warning.config.furniture.element.armor_stand.missing_item: "<yellow>Issue found in file <arg:0> - The furniture '<arg:1>' is missing the required 'item' argument for 'armor_stand' element.</yellow>"
-warning.config.furniture.settings.unknown: "<yellow>Issue found in file <arg:0> - The furniture '<arg:1>' is using an unknown setting type '<arg:2>'.</yellow>"
-warning.config.furniture.hitbox.invalid_type: "<yellow>Issue found in file <arg:0> - The furniture '<arg:1>' is using an invalid hitbox type '<arg:2>'.</yellow>"
-warning.config.furniture.hitbox.custom.invalid_entity: "<yellow>Issue found in file <arg:0> - The furniture '<arg:1>' is using a custom hitbox with invalid entity type '<arg:2>'.</yellow>"
-warning.config.furniture.behavior.missing_type: "<yellow>Issue found in file <arg:0> - The furniture '<arg:1>' is missing the required 'type' argument for behavior.</yellow>"
-warning.config.furniture.behavior.invalid_type: "<yellow>Issue found in file <arg:0> - The furniture '<arg:1>' is using an invalid behavior type '<arg:2>'.</yellow>"
-warning.config.item.duplicate: "<yellow>Issue found in file <arg:0> - Duplicated item '<arg:1>'. Please check if there is the same configuration in other files.</yellow>"
-warning.config.item.settings.unknown: "<yellow>Issue found in file <arg:0> - The item '<arg:1>' is using an unknown setting type '<arg:2>'.</yellow>"
-warning.config.item.settings.invulnerable.invalid_damage_source: "<yellow>Issue found in file <arg:0> - The item '<arg:1>' is using an unknown damage source '<arg:2>'. Allowed sources: [<arg:3>].</yellow>"
-warning.config.item.settings.equipment.missing_asset_id: "<yellow>Issue found in file <arg:0> - The item '<arg:1>' is missing the required 'asset-id' argument for 'equipment' settings.</yellow>"
-warning.config.item.settings.equipment.invalid_asset_id: "<yellow>Issue found in file <arg:0> - The item '<arg:1>' is using an invalid 'asset-id' argument for 'equipment' settings. This might be because you haven't created this equipment configuration or misspelled the asset-id.</yellow>"
-warning.config.item.settings.projectile.missing_item: "<yellow>Issue found in file <arg:0> - The item '<arg:1>' is missing the required 'item' argument for 'projectile' settings.</yellow>"
-warning.config.item.settings.craft_remainder.missing_type: "<yellow>Issue found in file <arg:0> - The item '<arg:1>' is missing the required 'type' argument for 'craft-remainder'.</yellow>"
-warning.config.item.settings.craft_remainder.invalid_type: "<yellow>Issue found in file <arg:0> - The item '<arg:1>' is using an invalid craft-remainder type '<arg:2>'.</yellow>"
-warning.config.item.settings.craft_remainder.fixed.missing_item: "<yellow>Issue found in file <arg:0> - The item '<arg:1>' is missing the required 'item' argument for fixed 'craft-remainder'.</yellow>"
-warning.config.item.settings.craft_remainder.recipe_based.missing_terms: "<yellow>Issue found in file <arg:0> - The item '<arg:1>' is missing the required 'terms' argument for recipe based 'craft-remainder'.</yellow>"
-warning.config.item.data.attribute_modifiers.missing_type: "<yellow>Issue found in file <arg:0> - The item '<arg:1>' is missing the required 'type' argument for 'attribute-modifiers' data.</yellow>"
-warning.config.item.data.attribute_modifiers.missing_amount: "<yellow>Issue found in file <arg:0> - The item '<arg:1>' is missing the required 'amount' argument for 'attribute-modifiers' data.</yellow>"
-warning.config.item.data.attribute_modifiers.missing_operation: "<yellow>Issue found in file <arg:0> - The item '<arg:1>' is missing the required 'operation' argument for 'attribute-modifiers' data.</yellow>"
-warning.config.item.data.attribute_modifiers.display.missing_type: "<yellow>Issue found in file <arg:0> - The item '<arg:1>' is missing the required 'type' argument for 'attribute-modifiers' display data.</yellow>"
-warning.config.item.data.attribute_modifiers.display.missing_value: "<yellow>Issue found in file <arg:0> - The item '<arg:1>' is missing the required 'value' argument for 'attribute-modifiers' display data.</yellow>"
-warning.config.item.data.external.missing_source: "<yellow>Issue found in file <arg:0> - The item '<arg:1>' is missing the required 'source' argument for 'external' data.</yellow>"
-warning.config.item.data.external.missing_id: "<yellow>Issue found in file <arg:0> - The item '<arg:1>' is missing the required 'id' argument for 'external' data.</yellow>"
-warning.config.item.data.external.invalid_source: "<yellow>Issue found in file <arg:0> - The item '<arg:1>' is using an invalid item source '<arg:2>' for 'external' data.</yellow>"
-warning.config.item.missing_material: "<yellow>Issue found in file <arg:0> - The item '<arg:1>' is missing the required 'material' argument.</yellow>"
-warning.config.item.invalid_material: "<yellow>Issue found in file <arg:0> - The item '<arg:1>' is using an invalid material type '<arg:2>'.</yellow>"
-warning.config.item.bad_custom_model_data: "<yellow>Issue found in file <arg:0> - The item '<arg:1>' is using a custom model data '<arg:2>' that is too large. It's recommended to use a value lower than 16,777,216.</yellow>"
-warning.config.item.item_model.conflict: "<yellow>Issue found in file <arg:0> - The item '<arg:1>' is using an invalid 'item-model' option because this item model has been occupied by a vanilla item.</yellow>"
-warning.config.item.custom_model_data.conflict: "<yellow>Issue found in file <arg:0> - The item '<arg:1>' is using a custom model data '<arg:2>' that has been occupied by item '<arg:3>'.</yellow>"
-warning.config.item.custom_model_data.exhausted: "<yellow>Issue found in file <arg:0> - Cannot allocate custom model data for item '<arg:1>' as the custom model data has already been exhausted for material '<arg:2>'.</yellow>"
-warning.config.item.invalid_component: "<yellow>Issue found in file <arg:0> - The item '<arg:1>' is using a non-existing component type '<arg:2>'.</yellow>"
-warning.config.item.missing_model_id: "<yellow>Issue found in file <arg:0> - The item '<arg:1>' is missing the required 'custom-model-data' or 'item-model' argument.</yellow>"
-warning.config.item.missing_model: "<yellow>Issue found in file <arg:0> - The item '<arg:1>' is missing the required 'model' section for 1.21.4+ resource pack support.</yellow>"
-warning.config.item.behavior.missing_type: "<yellow>Issue found in file <arg:0> - The item '<arg:1>' is missing the required 'type' argument for its item behavior.</yellow>"
-warning.config.item.behavior.invalid_type: "<yellow>Issue found in file <arg:0> - The item '<arg:1>' is using an invalid item behavior type '<arg:2>'.</yellow>"
-warning.config.item.behavior.block.missing_block: "<yellow>Issue found in file <arg:0> - The item '<arg:1>' is missing the required 'block' argument for 'block_item' behavior.</yellow>"
-warning.config.item.behavior.wall_block.missing_block: "<yellow>Issue found in file <arg:0> - The item '<arg:1>' is missing the required 'block' argument for 'wall_block_item' behavior.</yellow>"
-warning.config.item.behavior.ceiling_block.missing_block: "<yellow>Issue found in file <arg:0> - The item '<arg:1>' is missing the required 'block' argument for 'ceiling_block_item' behavior.</yellow>"
-warning.config.item.behavior.ground_block.missing_block: "<yellow>Issue found in file <arg:0> - The item '<arg:1>' is missing the required 'block' argument for 'ground_block_item' behavior.</yellow>"
-warning.config.item.behavior.furniture.missing_furniture: "<yellow>Issue found in file <arg:0> - The item '<arg:1>' is missing the required 'furniture' argument for 'furniture_item' behavior.</yellow>"
-warning.config.item.behavior.liquid_collision.missing_block: "<yellow>Issue found in file <arg:0> - The item '<arg:1>' is missing the required 'block' argument for 'liquid_collision_block_item' behavior.</yellow>"
-warning.config.item.behavior.double_high.missing_block: "<yellow>Issue found in file <arg:0> - The item '<arg:1>' is missing the required 'block' argument for 'double_high_block_item' behavior.</yellow>"
-warning.config.item.behavior.multi_high.missing_block: "<yellow>Issue found in file <arg:0> - The item '<arg:1>' is missing the required 'block' argument for 'multi_high_block_item' behavior.</yellow>"
-warning.config.item.legacy_model.missing_path: "<yellow>Issue found in file <arg:0> - The item '<arg:1>' is missing the require 'path' argument for legacy-model.</yellow>"
-warning.config.item.legacy_model.overrides.missing_path: "<yellow>Issue found in file <arg:0> - The item '<arg:1>' is missing the require 'path' argument for legacy-model overrides.</yellow>"
-warning.config.item.legacy_model.overrides.missing_predicate: "<yellow>Issue found in file <arg:0> - The item '<arg:1>' is missing the require 'predicate' argument for legacy-model overrides.</yellow>"
-warning.config.item.legacy_model.cannot_convert: "<yellow>Issue found in file <arg:0> - Cannot convert 1.21.4+ items to legacy format for item '<arg:1>'. Please manually create 'legacy-model' section for this item.</yellow>"
-warning.config.item.simplified_model.invalid_model: "<yellow>Issue found in file <arg:0> - The item '<arg:1>' contains a mismatched number of parameters. The expected number of models is '<arg:2>', but the actual number is '<arg:3>'.</yellow>"
-warning.config.item.simplified_model.invalid_texture: "<yellow>Issue found in file <arg:0> - The item '<arg:1>' contains a mismatched number of parameters. The expected number of textures is '<arg:2>', but the actual number is '<arg:3>'.</yellow>"
-warning.config.item.model.invalid_type: "<yellow>Issue found in file <arg:0> - The item '<arg:1>' is using an invalid model type '<arg:2>'.</yellow>"
-warning.config.item.model.tint.missing_type: "<yellow>Issue found in file <arg:0> - The item '<arg:1>' is missing the required 'type' argument for tint.</yellow>"
-warning.config.item.model.tint.invalid_type: "<yellow>Issue found in file <arg:0> - The item '<arg:1>' is using an invalid tint type '<arg:2>'.</yellow>"
-warning.config.item.model.tint.constant.missing_value: "<yellow>Issue found in file <arg:0> - The item '<arg:1>' is missing the required 'value' argument for constant tint.</yellow>"
-warning.config.item.model.tint.grass.invalid_temp: "<yellow>Issue found in file <arg:0> - The item '<arg:1>' is using an invalid temperature '<arg:2>' for grass tint, which is expected to be between 0 and 1.</yellow>"
-warning.config.item.model.tint.grass.invalid_downfall: "<yellow>Issue found in file <arg:0> - The item '<arg:1>' is using an invalid downfall '<arg:2>' for grass tint, which is expected to be between 0 and 1.</yellow>"
-warning.config.item.model.tint.invalid_value: "<yellow>Issue found in file <arg:0> - The item '<arg:1>' is using an invalid tint '<arg:2>'.</yellow>"
-warning.config.item.model.base.missing_path: "<yellow>Issue found in file <arg:0> - The item '<arg:1>' is missing the required 'path' argument for model 'minecraft:model'.</yellow>"
-warning.config.item.model.base.invalid_path: "<yellow>Issue found in file <arg:0> - The item '<arg:1>' has an invalid 'path' argument '<arg:2>' for model 'minecraft:model' which contains illegal characters. Please read https://minecraft.wiki/w/Resource_location#Legal_characters.</yellow>"
-warning.config.item.model.condition.missing_property: "<yellow>Issue found in file <arg:0> - The item '<arg:1>' is missing the required 'property' argument for model 'minecraft:condition'.</yellow>"
-warning.config.item.model.condition.invalid_property: "<yellow>Issue found in file <arg:0> - The item '<arg:1>' is using an invalid property '<arg:2>' for model 'minecraft:condition'.</yellow>"
-warning.config.item.model.condition.missing_on_true: "<yellow>Issue found in file <arg:0> - The item '<arg:1>' is missing the required 'on-true' argument for model 'minecraft:condition'.</yellow>"
-warning.config.item.model.condition.missing_on_false: "<yellow>Issue found in file <arg:0> - The item '<arg:1>' is missing the required 'on-false' argument for model 'minecraft:condition'.</yellow>"
-warning.config.item.model.condition.keybind.missing_keybind: "<yellow>Issue found in file <arg:0> - The item '<arg:1>' is missing the required 'keybind' argument for property 'minecraft:keybind_down'.</yellow>"
-warning.config.item.model.condition.has_component.missing_component: "<yellow>Issue found in file <arg:0> - The item '<arg:1>' is missing the required 'component' argument for property 'minecraft:has_component'.</yellow>"
-warning.config.item.model.condition.component.missing_predicate: "<yellow>Issue found in file <arg:0> - The item '<arg:1>' is missing the required 'predicate' argument for property 'minecraft:component'.</yellow>"
-warning.config.item.model.condition.component.missing_value: "<yellow>Issue found in file <arg:0> - The item '<arg:1>' is missing the required 'value' argument for property 'minecraft:component'.</yellow>"
-warning.config.item.model.composite.missing_models: "<yellow>Issue found in file <arg:0> - The item '<arg:1>' is missing the required 'models' argument for 'minecraft:composite' model.</yellow>"
-warning.config.item.model.range_dispatch.missing_property: "<yellow>Issue found in file <arg:0> - The item '<arg:1>' is missing the required 'property' argument for model 'minecraft:range_dispatch'.</yellow>"
-warning.config.item.model.range_dispatch.invalid_property: "<yellow>Issue found in file <arg:0> - The item '<arg:1>' is using an invalid property '<arg:2>' for model 'minecraft:range_dispatch'.</yellow>"
-warning.config.item.model.range_dispatch.missing_entries: "<yellow>Issue found in file <arg:0> - The item '<arg:1>' is missing the required 'entries' argument for model 'minecraft:composite'.</yellow>"
-warning.config.item.model.range_dispatch.entry.missing_model: "<yellow>Issue found in file <arg:0> - The item '<arg:1>' is missing the required 'model' argument for one of the entries in model 'minecraft:composite'.</yellow>"
-warning.config.item.model.range_dispatch.compass.missing_target: "<yellow>Issue found in file <arg:0> - The item '<arg:1>' is missing the required 'target' argument for property 'minecraft:compass'.</yellow>"
-warning.config.item.model.range_dispatch.time.missing_source: "<yellow>Issue found in file <arg:0> - The item '<arg:1>' is missing the required 'source' argument for property 'minecraft:time'.</yellow>"
-warning.config.item.model.select.missing_property: "<yellow>Issue found in file <arg:0> - The item '<arg:1>' is missing the required 'property' argument for model 'minecraft:select'.</yellow>"
-warning.config.item.model.select.invalid_property: "<yellow>Issue found in file <arg:0> - The item '<arg:1>' is using an invalid property '<arg:2>' for model 'minecraft:select'.</yellow>"
-warning.config.item.model.select.missing_cases: "<yellow>Issue found in file <arg:0> - The item '<arg:1>' is missing the required 'cases' argument for model 'minecraft:select'.</yellow>"
-warning.config.item.model.select.case.missing_when: "<yellow>Issue found in file <arg:0> - The item '<arg:1>' is missing the required 'when' argument for one of the cases in model 'minecraft:select'.</yellow>"
-warning.config.item.model.select.case.missing_model: "<yellow>Issue found in file <arg:0> - The item '<arg:1>' is missing the required 'model' argument for one of the cases in model 'minecraft:select'.</yellow>"
-warning.config.item.model.select.block_state.missing_property: "<yellow>Issue found in file <arg:0> - The item '<arg:1>' is missing the required 'block-state-property' argument for property 'minecraft:block_state'.</yellow>"
-warning.config.item.model.select.local_time.missing_pattern: "<yellow>Issue found in file <arg:0> - The item '<arg:1>' is missing the required 'pattern' argument for property 'minecraft:local_time'.</yellow>"
-warning.config.item.model.select.component.missing_component: "<yellow>Issue found in file <arg:0> - The item '<arg:1>' is missing the required 'component' argument for property 'minecraft:component'.</yellow>"
-warning.config.item.model.special.missing_type: "<yellow>Issue found in file <arg:0> - The item '<arg:1>' is missing the required 'type' argument for model 'minecraft:special'.</yellow>"
-warning.config.item.model.special.missing_path: "<yellow>Issue found in file <arg:0> - The item '<arg:1>' is missing the required 'path' argument for model 'minecraft:special'.</yellow>"
-warning.config.item.model.special.invalid_path: "<yellow>Issue found in file <arg:0> - The item '<arg:1>' has an invalid 'path' argument '<arg:2>' for model 'minecraft:special' which contains illegal characters. Please read https://minecraft.wiki/w/Resource_location#Legal_characters.</yellow>"
-warning.config.item.model.special.invalid_type: "<yellow>Issue found in file <arg:0> - The item '<arg:1>' is using an invalid type '<arg:2>' for model 'minecraft:special'.</yellow>"
-warning.config.item.model.special.banner.missing_color: "<yellow>Issue found in file <arg:0> - The item '<arg:1>' is missing the required 'color' argument for special model 'minecraft:banner'.</yellow>"
-warning.config.item.model.special.bed.missing_texture: "<yellow>Issue found in file <arg:0> - The item '<arg:1>' is missing the required 'texture' argument for special model 'minecraft:bed'.</yellow>"
-warning.config.item.model.special.sign.missing_wood_type: "<yellow>Issue found in file <arg:0> - The item '<arg:1>' is missing the required 'wood-type' argument for special model 'minecraft:hanging_sign'/'minecraft:standing_sign'.</yellow>"
-warning.config.item.model.special.sign.missing_texture: "<yellow>Issue found in file <arg:0> - The item '<arg:1>' is missing the required 'texture' argument for special model 'minecraft:hanging_sign'/'minecraft:standing_sign'.</yellow>"
-warning.config.item.model.special.chest.missing_texture: "<yellow>Issue found in file <arg:0> - The item '<arg:1>' is missing the required 'texture' argument for special model 'minecraft:chest'.</yellow>"
-warning.config.item.model.special.chest.invalid_openness: "<yellow>Issue found in file <arg:0> - The item '<arg:1>' is using an invalid 'openness' value '<arg:2>' for special model 'minecraft:chest'. Valid range '0~1.'</yellow>"
-warning.config.item.model.special.shulker_box.missing_texture: "<yellow>Issue found in file <arg:0> - The item '<arg:1>' is missing the required 'texture' argument for special model 'minecraft:shulker_box'.</yellow>"
-warning.config.item.model.special.shulker_box.invalid_openness: "<yellow>Issue found in file <arg:0> - The item '<arg:1>' is using an invalid 'openness' value '<arg:2>' for special model 'minecraft:shulker_box'. Valid range '0~1.'</yellow>"
-warning.config.item.model.special.head.missing_kind: "<yellow>Issue found in file <arg:0> - The item '<arg:1>' is missing the required 'kind' argument for special model 'minecraft:head'.</yellow>"
-warning.config.item.model.special.copper_golem_statue.missing_pose: "<yellow>Issue found in file <arg:0> - The item '<arg:1>' is missing the required 'pose' argument for special model 'minecraft:copper_golem_statue'.</yellow>"
-warning.config.item.model.special.copper_golem_statue.missing_texture: "<yellow>Issue found in file <arg:0> - The item '<arg:1>' is missing the required 'texture' argument for special model 'minecraft:copper_golem_statue'.</yellow>"
-warning.config.item.updater.missing_type: "<yellow>Issue found in file <arg:0> - The item '<arg:1>' is missing the required 'type' argument for item updater.</yellow>"
-warning.config.item.updater.invalid_type: "<yellow>Issue found in file <arg:0> - The item '<arg:1>' is using an invalid 'type' argument '<arg:2>' for item updater.</yellow>"
-warning.config.item.updater.transmute.missing_material: "<yellow>Issue found in file <arg:0> - The item '<arg:1>' is missing the required 'material' argument for 'transmute' item updater.</yellow>"
-warning.config.block_state_mapping.invalid_state: "<yellow>Issue found in file <arg:0> - The config '<arg:1>' is using an invalid block state '<arg:2>'.</yellow>"
-warning.config.block_state_mapping.conflict: "<yellow>Issue found in file <arg:0> - The config '<arg:1>' is unable to map block state <arg:2> to block state <arg:3> because the state has already been mapped to <arg:4>.</yellow>"
-warning.config.block.duplicate: "<yellow>Issue found in file <arg:0> - Duplicated block '<arg:1>'. Please check if there is the same configuration in other files.</yellow>"
-warning.config.block.missing_state: "<yellow>Issue found in file <arg:0> - The block '<arg:1>' is missing the required 'state' argument.</yellow>"
-warning.config.block.state.property.missing_type: "<yellow>Issue found in file <arg:0> - The block '<arg:1>' is missing the required 'type' argument for property '<arg:2>'.</yellow>"
-warning.config.block.state.property.invalid_type: "<yellow>Issue found in file <arg:0> - The block '<arg:1>' is using the invalid type argument '<arg:2>' for property '<arg:3>'.</yellow>"
-warning.config.block.state.property.integer.invalid_range: "<yellow>Issue found in file <arg:0> - The block '<arg:1>' is using the invalid 'range' argument '<arg:2>' for integer property '<arg:3>'. Correct syntax: 1~2.</yellow>"
-warning.config.block.state.property.invalid_format: "<yellow>Issue found in file <arg:0> - The block '<arg:1>' is using an invalid block state property format '<arg:2>'.</yellow>"
-warning.config.block.state.missing_state: "<yellow>Issue found in file <arg:0> - The block '<arg:1>' is missing the required 'state' argument for 'state'.</yellow>"
-warning.config.block.state.missing_properties: "<yellow>Issue found in file <arg:0> - The block '<arg:1>' is missing the required 'properties' section for 'states'.</yellow>"
-warning.config.block.state.missing_appearances: "<yellow>Issue found in file <arg:0> - The block '<arg:1>' is missing the required 'appearances' section for 'states'.</yellow>"
-warning.config.block.state.entity_renderer.invalid_type: "<yellow>Issue found in file <arg:0> - The block '<arg:1>' is using an invalid entity renderer type '<arg:2>'.</yellow>"
-warning.config.block.state.entity_renderer.item_display.missing_item: "<yellow>Issue found in file <arg:0> - The block '<arg:1>' is missing the required 'item' argument for 'item_display' entity renderer.</yellow>"
-warning.config.block.state.entity_renderer.text_display.missing_text: "<yellow>Issue found in file <arg:0> - The block '<arg:1>' is missing the required 'text' argument for 'text_display' entity renderer.</yellow>"
-warning.config.block.state.entity_renderer.better_model.missing_model: "<yellow>Issue found in file <arg:0> - The block '<arg:1>' is missing the required 'model' argument for 'better_model' entity renderer.</yellow>"
-warning.config.block.state.entity_renderer.model_engine.missing_model: "<yellow>Issue found in file <arg:0> - The block '<arg:1>' is missing the required 'model' argument for 'model_engine' entity renderer.</yellow>"
-warning.config.block.state.entity_renderer.armor_stand.missing_item: "<yellow>Issue found in file <arg:0> - The block '<arg:1>' is missing the required 'item' argument for 'armor_stand' entity renderer.</yellow>"
-warning.config.block.state.entity_renderer.item.missing_item: "<yellow>Issue found in file <arg:0> - The block '<arg:1>' is missing the required 'item' argument for 'item' entity renderer.</yellow>"
-warning.config.block.state.variant.invalid_appearance: "<yellow>Issue found in file <arg:0> - The block '<arg:1>' has an error that the variant '<arg:2>' is using a non-existing appearance '<arg:3>'.</yellow>"
-warning.config.block.state.invalid_vanilla: "<yellow>Issue found in file <arg:0> - The block '<arg:1>' is using an invalid vanilla block state '<arg:2>'.</yellow>"
-warning.config.block.state.invalid_auto_state: "<yellow>Issue found in file <arg:0> - The block '<arg:1>' is using an invalid auto-state '<arg:2>'. Allowed values: [<arg:3>].</yellow>"
-warning.config.block.state.auto_state.exhausted: "<yellow>Issue found in file <arg:0> - The visual state group '<arg:2>' has reached its maximum capacity of '<arg:3>' slots and cannot allocate a state for block '<arg:1>'.</yellow>"
-warning.config.block.state.unavailable_vanilla: "<yellow>Issue found in file <arg:0> - The block '<arg:1>' is using an unavailable vanilla block state '<arg:2>'. Please free that state in block-state-mappings.</yellow>"
-warning.config.block.state.invalid_vanilla_id: "<yellow>Issue found in file <arg:0> - The block '<arg:1>' is using a vanilla block state '<arg:2>' that exceeds the available slot range '0~<arg:3>'.</yellow>"
-warning.config.block.state.invalid_id: "<yellow>Issue found in file <arg:0> - The block state ID range (<arg:2>) used by block '<arg:1>' is outside the valid range of 0 to <arg:3>. Please add more server-side blocks in 'config.yml' or select any available id.</yellow>"
-warning.config.block.state.id.conflict: "<yellow>Issue found in file <arg:0> - The block '<arg:1>' failed to bind real block state '<arg:4>' for '<arg:2>' as the state has been occupied by '<arg:3>'.</yellow>"
-warning.config.block.state.id.exhausted: "<yellow>Issue found in file <arg:0> - Cannot allocate enough real block state for block '<arg:1>'. Please add more server-side blocks in 'config.yml' and restart server or run '/ce debug clean-cache' to release unused slots if the current slots are exhausted.</yellow>"
-warning.config.block.state.model.missing_path: "<yellow>Issue found in file <arg:0> - The block '<arg:1>' is missing the required 'path' option for 'model'.</yellow>"
-warning.config.block.state.model.invalid_path: "<yellow>Issue found in file <arg:0> - The block '<arg:1>' has a 'path' argument '<arg:2>' that contains illegal characters. Please read https://minecraft.wiki/w/Resource_location#Legal_characters.</yellow>"
-warning.config.block.state.model.conflict: "<yellow>Issue found in file <arg:0> - The block '<arg:1>' is trying to bind model '<arg:2>' to block state '<arg:3>' which has already been bound to model '<arg:4>'</yellow>"
-warning.config.block.settings.unknown: "<yellow>Issue found in file <arg:0> - The block '<arg:1>' is using an unknown setting type '<arg:2>'.</yellow>"
-warning.config.block.behavior.missing_type: "<yellow>Issue found in file <arg:0> - The block '<arg:1>' is missing the required 'type' argument for its block behavior.</yellow>"
-warning.config.block.behavior.invalid_type: "<yellow>Issue found in file <arg:0> - The block '<arg:1>' is using an invalid block behavior type '<arg:2>'.</yellow>"
-warning.config.block.behavior.concrete.missing_solid: "<yellow>Issue found in file <arg:0> - The block '<arg:1>' is missing the required 'solid-block' option for 'concrete_block' behavior.</yellow>"
-warning.config.block.behavior.crop.missing_age: "<yellow>Issue found in file <arg:0> - The block '<arg:1>' is missing the required 'age' property for 'crop_block' behavior.</yellow>"
-warning.config.block.behavior.vertical_crop.missing_age: "<yellow>Issue found in file <arg:0> - The block '<arg:1>' is missing the required 'age' property for 'vertical_crop_block' behavior.</yellow>"
-warning.config.block.behavior.leaves.missing_persistent: "<yellow>Issue found in file <arg:0> - The block '<arg:1>' is missing the required 'persistent' property for 'leaves_block' behavior.</yellow>"
-warning.config.block.behavior.leaves.missing_distance: "<yellow>Issue found in file <arg:0> - The block '<arg:1>' is missing the required 'distance' property for 'leaves_block' behavior.</yellow>"
-warning.config.block.behavior.lamp.missing_lit: "<yellow>Issue found in file <arg:0> - The block '<arg:1>' is missing the required 'lit' property for 'lamp_block' behavior.</yellow>"
-warning.config.block.behavior.toggleable_lamp.missing_lit: "<yellow>Issue found in file <arg:0> - The block '<arg:1>' is missing the required 'lit' property for 'toggleable_lamp_block' behavior.</yellow>"
-warning.config.block.behavior.toggleable_lamp.missing_powered: "<yellow>Issue found in file <arg:0> - The block '<arg:1>' is missing the required 'powered' property for 'toggleable_lamp_block' behavior.</yellow>"
-warning.config.block.behavior.sapling.missing_stage: "<yellow>Issue found in file <arg:0> - The block '<arg:1>' is missing the required 'stage' property for 'sapling_block' behavior.</yellow>"
-warning.config.block.behavior.sapling.missing_feature: "<yellow>Issue found in file <arg:0> - The block '<arg:1>' is missing the required 'feature' argument for 'sapling_block' behavior.</yellow>"
-warning.config.block.behavior.strippable.missing_stripped: "<yellow>Issue found in file <arg:0> - The block '<arg:1>' is missing the required 'stripped' argument for 'strippable_block' behavior.</yellow>"
-warning.config.block.behavior.door.missing_half: "<yellow>Issue found in file <arg:0> - The block '<arg:1>' is missing the required 'half' property for 'door_block' behavior.</yellow>"
-warning.config.block.behavior.door.missing_facing: "<yellow>Issue found in file <arg:0> - The block '<arg:1>' is missing the required 'facing' property for 'door_block' behavior.</yellow>"
-warning.config.block.behavior.door.missing_hinge: "<yellow>Issue found in file <arg:0> - The block '<arg:1>' is missing the required 'hinge' property for 'door_block' behavior.</yellow>"
-warning.config.block.behavior.door.missing_open: "<yellow>Issue found in file <arg:0> - The block '<arg:1>' is missing the required 'open' property for 'door_block' behavior.</yellow>"
-warning.config.block.behavior.door.missing_powered: "<yellow>Issue found in file <arg:0> - The block '<arg:1>' is missing the required 'powered' property for 'door_block' behavior.</yellow>"
-warning.config.block.behavior.trapdoor.missing_half: "<yellow>Issue found in file <arg:0> - The block '<arg:1>' is missing the required 'half' property for 'trapdoor_block' behavior.</yellow>"
-warning.config.block.behavior.trapdoor.missing_facing: "<yellow>Issue found in file <arg:0> - The block '<arg:1>' is missing the required 'facing' property for 'trapdoor_block' behavior.</yellow>"
-warning.config.block.behavior.trapdoor.missing_open: "<yellow>Issue found in file <arg:0> - The block '<arg:1>' is missing the required 'open' property for 'trapdoor_block' behavior.</yellow>"
-warning.config.block.behavior.trapdoor.missing_powered: "<yellow>Issue found in file <arg:0> - The block '<arg:1>' is missing the required 'powered' property for 'trapdoor_block' behavior.</yellow>"
-warning.config.block.behavior.stackable.missing_property: "<yellow>Issue found in file <arg:0> - The block '<arg:1>' is missing the required '<arg:2>' property for 'stackable_block' behavior.</yellow>"
-warning.config.block.behavior.stackable.missing_items: "<yellow>Issue found in file <arg:0> - The block '<arg:1>' is missing the required 'items' argument for 'stackable_block' behavior.</yellow>"
-warning.config.block.behavior.fence_gate.missing_facing: "<yellow>Issue found in file <arg:0> - The block '<arg:1>' is missing the required 'facing' property for 'fence_gate_block' behavior.</yellow>"
-warning.config.block.behavior.fence_gate.missing_in_wall: "<yellow>Issue found in file <arg:0> - The block '<arg:1>' is missing the required 'in_wall' property for 'fence_gate_block' behavior.</yellow>"
-warning.config.block.behavior.fence_gate.missing_open: "<yellow>Issue found in file <arg:0> - The block '<arg:1>' is missing the required 'powered' property for 'fence_gate_block' behavior.</yellow>"
-warning.config.block.behavior.fence_gate.missing_powered: "<yellow>Issue found in file <arg:0> - The block '<arg:1>' is missing the required 'open' property for 'fence_gate_block' behavior.</yellow>"
-warning.config.block.behavior.slab.missing_type: "<yellow>Issue found in file <arg:0> - The block '<arg:1>' is missing the required 'type' property for 'slab_block' behavior.</yellow>"
-warning.config.block.behavior.stairs.missing_facing: "<yellow>Issue found in file <arg:0> - The block '<arg:1>' is missing the required 'facing' property for 'stairs_block' behavior.</yellow>"
-warning.config.block.behavior.stairs.missing_half: "<yellow>Issue found in file <arg:0> - The block '<arg:1>' is missing the required 'half' property for 'stairs_block' behavior.</yellow>"
-warning.config.block.behavior.stairs.missing_shape: "<yellow>Issue found in file <arg:0> - The block '<arg:1>' is missing the required 'shape' property for 'stairs_block' behavior.</yellow>"
-warning.config.block.behavior.sofa.missing_facing: "<yellow>Issue found in file <arg:0> - The block '<arg:1>' is missing the required 'facing' property for 'sofa_block' behavior.</yellow>"
-warning.config.block.behavior.sofa.missing_shape: "<yellow>Issue found in file <arg:0> - The block '<arg:1>' is missing the required 'shape' property for 'sofa_block' behavior.</yellow>"
-warning.config.block.behavior.pressure_plate.missing_powered: "<yellow>Issue found in file <arg:0> - The block '<arg:1>' is missing the required 'powered' property for 'pressure_plate_block' behavior.</yellow>"
-warning.config.block.behavior.grass.missing_feature: "<yellow>Issue found in file <arg:0> - The block '<arg:1>' is missing the required 'feature' argument for 'grass_block' behavior.</yellow>"
-warning.config.block.behavior.double_high.missing_half: "<yellow>Issue found in file <arg:0> - The block '<arg:1>' is missing the required 'half' property for 'double_block' behavior.</yellow>"
-warning.config.block.behavior.change_over_time.missing_next_block: "<yellow>Issue found in file <arg:0> - The block '<arg:1>' is missing the required 'next_block' argument for 'change_over_time_block' behavior.</yellow>"
-warning.config.block.behavior.directional_attached.missing_facing: "<yellow>Issue found in file <arg:0> - The block '<arg:1>' is missing the required 'facing' property for 'directional_attached_block' behavior.</yellow>"
-warning.config.block.behavior.wall_torch_particle.missing_facing: "<yellow>Issue found in file <arg:0> - The block '<arg:1>' is missing the required 'facing' property for 'wall_torch_particle_block' behavior.</yellow>"
-warning.config.block.behavior.fence.missing_north: "<yellow>Issue found in file <arg:0> - The block '<arg:1>' is missing the required 'north' property for 'fence_block' behavior.</yellow>"
-warning.config.block.behavior.fence.missing_east: "<yellow>Issue found in file <arg:0> - The block '<arg:1>' is missing the required 'east' property for 'fence_block' behavior.</yellow>"
-warning.config.block.behavior.fence.missing_south: "<yellow>Issue found in file <arg:0> - The block '<arg:1>' is missing the required 'south' property for 'fence_block' behavior.</yellow>"
-warning.config.block.behavior.fence.missing_west: "<yellow>Issue found in file <arg:0> - The block '<arg:1>' is missing the required 'west' property for 'fence_block' behavior.</yellow>"
-warning.config.block.behavior.face_attached_horizontal_directional.missing_face: "<yellow>Issue found in file <arg:0> - The block '<arg:1>' is missing the required 'face' property for 'face_attached_horizontal_directional_block' behavior.</yellow>"
-warning.config.block.behavior.face_attached_horizontal_directional.missing_facing: "<yellow>Issue found in file <arg:0> - The block '<arg:1>' is missing the required 'facing' property for 'face_attached_horizontal_directional_block' behavior.</yellow>"
-warning.config.block.behavior.button.missing_powered: "<yellow>Issue found in file <arg:0> - The block '<arg:1>' is missing the required 'powered' property for 'button_block' behavior.</yellow>"
-warning.config.block.behavior.stem.missing_age: "<yellow>Issue found in file <arg:0> - The block '<arg:1>' is missing the required 'age' property for 'stem_block' behavior.</yellow>"
-warning.config.block.behavior.stem.missing_fruit: "<yellow>Issue found in file <arg:0> - The block '<arg:1>' is missing the required 'fruit' argument for 'stem_block' behavior.</yellow>"
-warning.config.block.behavior.stem.missing_attached_stem: "<yellow>Issue found in file <arg:0> - The block '<arg:1>' is missing the required 'attached_stem' argument for 'stem_block' behavior.</yellow>"
-warning.config.block.behavior.attached_stem.missing_facing: "<yellow>Issue found in file <arg:0> - The block '<arg:1>' is missing the required 'facing' property for 'attached_stem_block' behavior.</yellow>"
-warning.config.block.behavior.attached_stem.missing_fruit: "<yellow>Issue found in file <arg:0> - The block '<arg:1>' is missing the required 'fruit' argument for 'attached_stem_block' behavior.</yellow>"
-warning.config.block.behavior.attached_stem.missing_stem: "<yellow>Issue found in file <arg:0> - The block '<arg:1>' is missing the required 'stem' argument for 'attached_stem_block' behavior.</yellow>"
-warning.config.block.behavior.chime.missing_sounds_projectile_hit: "<yellow>Issue found in file <arg:0> - The block '<arg:1>' is missing the required 'sounds.projectile-hit' argument for 'chime_block' behavior.</yellow>"
-warning.config.block.behavior.surface_spreading.missing_base_block: "<yellow>Issue found in file <arg:0> - The block '<arg:1>' is missing the required 'base-block' argument for 'surface_spreading_block' behavior.</yellow>"
-warning.config.block.behavior.snowy.missing_snowy: "<yellow>Issue found in file <arg:0> - The block '<arg:1>' is missing the required 'snowy' property for 'snowy_block' behavior.</yellow>"
-warning.config.block.behavior.hangable.missing_hanging: "<yellow>Issue found in file <arg:0> - The block '<arg:1>' is missing the required 'hanging' property for 'hangable_block' behavior.</yellow>"
-warning.config.block.behavior.multi_high.missing_property_name: "<yellow>Issue found in file <arg:0> - The block '<arg:1>' is missing the required 'property' argument for 'multi_high_block' behavior.</yellow>"
-warning.config.block.behavior.multi_high.missing_property: "<yellow>Issue found in file <arg:0> - The block '<arg:1>' is missing the required '<arg:2>' property for 'multi_high_block' behavior.</yellow>"
-warning.config.block.behavior.spreading.missing_target_block: "<yellow>Issue found in file <arg:0> - The block '<arg:1>' is missing the required 'target-block' argument for 'spreading_block' behavior.</yellow>"
-warning.config.block.behavior.item_frame.missing_facing: "<yellow>Issue found in file <arg:0> - The block '<arg:1>' is missing the required 'facing' property for 'item_frame_block' behavior.</yellow>"
-warning.config.model.generation.missing_parent: "<yellow>Issue found in file <arg:0> - The config '<arg:1>' is missing the required 'parent' argument in 'generation' section.</yellow>"
-warning.config.model.generation.conflict: "<yellow>Issue found in file <arg:0> - Failed to generate model for '<arg:1>' as two or more configurations attempt to generate different json models with the same path: '<arg:2>'.</yellow>"
-warning.config.model.generation.invalid_display_position: "<yellow>Issue found in file <arg:0> - The config '<arg:1>' is using an invalid display position '<arg:2>' in 'generation.display' section. Allowed display positions: [<arg:3>]</yellow>"
-warning.config.model.generation.invalid_gui_light: "<yellow>Issue found in file <arg:0> - The config '<arg:1>' is using an invalid gui-light option '<arg:2>' in 'generation' section. Allowed gui light options: [<arg:3>]</yellow>"
-warning.config.model.generation.texture.invalid: "<yellow>Issue found in file <arg:0> - The config '<arg:1>' has a texture '<arg:2>' with path '<arg:3>' that contains illegal characters. Please read https://minecraft.wiki/w/Resource_location#Legal_characters.</yellow>"
-warning.config.model.generation.parent.invalid: "<yellow>Issue found in file <arg:0> - The config '<arg:1>' has a parent argument '<arg:2>' that contains illegal characters. Please read https://minecraft.wiki/w/Resource_location#Legal_characters.</yellow>"
-warning.config.emoji.missing_keywords: "<yellow>Issue found in file <arg:0> - The emoji '<arg:1>' is missing the required 'keywords' argument.</yellow>"
-warning.config.emoji.duplicate: "<yellow>Issue found in file <arg:0> - Duplicated emoji '<arg:1>'. Please check if there is the same configuration in other files.</yellow>"
-warning.config.emoji.invalid_image: "<yellow>Issue found in file <arg:0> - The emoji '<arg:1>' has an invalid 'image' argument '<arg:2>'.</yellow>"
-warning.config.advancement.duplicate: "<yellow>Issue found in file <arg:0> - Duplicated advancement '<arg:1>'. Please check if there is the same configuration in other files.</yellow>"
-warning.config.loot_table.missing_pools: "<yellow>Issue found in file <arg:0> - '<arg:1>' has a misconfigured loot table which is missing the required 'pools' argument.</yellow>"
-warning.config.loot_table.invalid_pools_type: "<yellow>Issue found in file <arg:0> - '<arg:1>' has a misconfigured loot table, 'pools' should be a string/map list, current type: '<arg:2>'.</yellow>"
-warning.config.loot_table.function.missing_type: "<yellow>Issue found in file <arg:0> - '<arg:1>' has a misconfigured loot table, one of the functions is missing the required 'type' argument.</yellow>"
-warning.config.loot_table.function.invalid_type: "<yellow>Issue found in file <arg:0> - '<arg:1>' has a misconfigured loot table, one of the functions is using an invalid function type '<arg:2>'.</yellow>"
-warning.config.loot_table.function.apply_bonus.missing_enchantment: "<yellow>Issue found in file <arg:0> - '<arg:1>' has a misconfigured loot table, function 'apply_bonus' is missing the required 'enchantment' argument.</yellow>"
-warning.config.loot_table.function.apply_bonus.missing_formula: "<yellow>Issue found in file <arg:0> - '<arg:1>' has a misconfigured loot table, function 'apply_bonus' is missing the required 'formula' argument.</yellow>"
-warning.config.loot_table.function.drop_exp.missing_count: "<yellow>Issue found in file <arg:0> - '<arg:1>' has a misconfigured loot table, function 'drop_exp' is missing the required 'count' argument.</yellow>"
-warning.config.loot_table.function.set_count.missing_count: "<yellow>Issue found in file <arg:0> - '<arg:1>' has a misconfigured loot table, function 'set_count' is missing the required 'count' argument.</yellow>"
-warning.config.loot_table.function.apply_data.missing_data: "<yellow>Issue found in file <arg:0> - '<arg:1>' has a misconfigured loot table, function 'apply_data' is missing the required 'data' argument.</yellow>"
-warning.config.loot_table.entry.missing_type: "<yellow>Issue found in file <arg:0> - '<arg:1>' has a misconfigured loot table, one of the entries is missing the required 'type' argument.</yellow>"
-warning.config.loot_table.entry.invalid_type: "<yellow>Issue found in file <arg:0> - '<arg:1>' has a misconfigured loot table, one of the entries is using an invalid entry type '<arg:2>'.</yellow>"
-warning.config.loot_table.entry.exp.missing_count: "<yellow>Issue found in file <arg:0> - '<arg:1>' has a misconfigured loot table, entry 'exp' is missing the required 'count' argument.</yellow>"
-warning.config.loot_table.entry.item.missing_item: "<yellow>Issue found in file <arg:0> - '<arg:1>' has a misconfigured loot table, entry 'item' is missing the required 'item' argument.</yellow>"
-warning.config.host.missing_type: "<yellow>Issue found in config.yml at 'resource-pack.delivery.hosting' - Missing required 'type' argument for host.</yellow>"
-warning.config.host.invalid_type: "<yellow>Issue found in config.yml at 'resource-pack.delivery.hosting' - Host type '<arg:0>' is invalid. Please read https://xiao-momi.github.io/craft-engine-wiki/getting_start/set_up_host.</yellow>"
-warning.config.host.external.missing_url: "<yellow>Issue found in config.yml at 'resource-pack.delivery.hosting' - Missing required 'url' argument for external host.</yellow>"
-warning.config.host.alist.missing_api_url: "<yellow>Issue found in config.yml at 'resource-pack.delivery.hosting' - Missing required 'api-url' argument for alist host.</yellow>"
-warning.config.host.alist.missing_username: "<yellow>Issue found in config.yml at 'resource-pack.delivery.hosting' - Missing required 'username' argument or environment variable 'CE_ALIST_USERNAME' for alist host.</yellow>"
-warning.config.host.alist.missing_password: "<yellow>Issue found in config.yml at 'resource-pack.delivery.hosting' - Missing required 'password' argument or environment variable 'CE_ALIST_PASSWORD' for alist host.</yellow>"
-warning.config.host.alist.missing_upload_path: "<yellow>Issue found in config.yml at 'resource-pack.delivery.hosting' - Missing required 'upload-path' argument for alist host.</yellow>"
-warning.config.host.dropbox.missing_app_key: "<yellow>Issue found in config.yml at 'resource-pack.delivery.hosting' - Missing required 'app-key' argument or environment variable 'CE_DROPBOX_APP_KEY' for dropbox host.</yellow>"
-warning.config.host.dropbox.missing_app_secret: "<yellow>Issue found in config.yml at 'resource-pack.delivery.hosting' - Missing required 'app-secret' argument or environment variable 'CE_DROPBOX_APP_SECRET' for dropbox host.</yellow>"
-warning.config.host.dropbox.missing_refresh_token: "<yellow>Issue found in config.yml at 'resource-pack.delivery.hosting' - Missing required 'refresh-token' argument or environment variable 'CE_DROPBOX_REFRESH_TOKEN' for dropbox host.</yellow>"
-warning.config.host.dropbox.missing_upload_path: "<yellow>Issue found in config.yml at 'resource-pack.delivery.hosting' - Missing required 'upload-path' argument for dropbox host.</yellow>"
-warning.config.host.lobfile.missing_api_key: "<yellow>Issue found in config.yml at 'resource-pack.delivery.hosting' - Missing required 'api-key' argument for lobfile host.</yellow>"
-warning.config.host.onedrive.missing_client_id: "<yellow>Issue found in config.yml at 'resource-pack.delivery.hosting' - Missing required 'client-id' argument or environment variable 'CE_ONEDRIVE_CLIENT_ID' for onedrive host.</yellow>"
-warning.config.host.onedrive.missing_client_secret: "<yellow>Issue found in config.yml at 'resource-pack.delivery.hosting' - Missing required 'client-secret' argument or environment variable 'CE_ONEDRIVE_CLIENT_SECRET' for onedrive host.</yellow>"
-warning.config.host.onedrive.missing_refresh_token: "<yellow>Issue found in config.yml at 'resource-pack.delivery.hosting' - Missing required 'refresh-token' argument or environment variable 'CE_ONEDRIVE_REFRESH_TOKEN' for onedrive host.</yellow>"
-warning.config.host.onedrive.missing_upload_path: "<yellow>Issue found in config.yml at 'resource-pack.delivery.hosting' - Missing required 'upload-path' argument for onedrive host.</yellow>"
-warning.config.host.s3.missing_endpoint: "<yellow>Issue found in config.yml at 'resource-pack.delivery.hosting' - Missing required 'endpoint' argument for s3 host.</yellow>"
-warning.config.host.s3.missing_protocol: "<yellow>Issue found in config.yml at 'resource-pack.delivery.hosting' - Missing required 'protocol' argument for s3 host.</yellow>"
-warning.config.host.s3.missing_bucket: "<yellow>Issue found in config.yml at 'resource-pack.delivery.hosting' - Missing required 'bucket' argument for s3 host.</yellow>"
-warning.config.host.s3.missing_region: "<yellow>Issue found in config.yml at 'resource-pack.delivery.hosting' - Missing required 'region' argument for s3 host.</yellow>"
-warning.config.host.s3.missing_access_key: "<yellow>Issue found in config.yml at 'resource-pack.delivery.hosting' - Missing required 'access-key-id' argument or environment variable 'CE_S3_ACCESS_KEY_ID' for s3 host.</yellow>"
-warning.config.host.s3.missing_secret: "<yellow>Issue found in config.yml at 'resource-pack.delivery.hosting' - Missing required 'access-key-secret' argument or environment variable 'CE_S3_ACCESS_KEY_SECRET' for s3 host.</yellow>"
-warning.config.host.s3.missing_upload_path: "<yellow>Issue found in config.yml at 'resource-pack.delivery.hosting' - Missing required 'upload-path' argument for s3 host.</yellow>"
-warning.config.host.s3.missing_cdn_domain: "<yellow>Issue found in config.yml at 'resource-pack.delivery.hosting' - Missing required 'cdn.domain' argument for s3 host.</yellow>"
-warning.config.host.s3.missing_cdn_protocol: "<yellow>Issue found in config.yml at 'resource-pack.delivery.hosting' - Missing required 'cdn.protocol' argument for s3 host.</yellow>"
-warning.config.host.self.missing_ip: "<yellow>Issue found in config.yml at 'resource-pack.delivery.hosting' - Missing required 'ip' argument for self host.</yellow>"
-warning.config.host.self.invalid_port: "<yellow>Issue found in config.yml at 'resource-pack.delivery.hosting' - Invalid port '<arg:0>' for self host.</yellow>"
-warning.config.host.self.invalid_url: "<yellow>Issue found in config.yml at 'resource-pack.delivery.hosting' - Invalid url '<arg:0>' for self host.</yellow>"
-warning.config.host.gitlab.missing_url: "<yellow>Issue found in config.yml at 'resource-pack.delivery.hosting' - Missing required 'gitlab-url' argument for gitlab host.</yellow>"
-warning.config.host.gitlab.missing_token: "<yellow>Issue found in config.yml at 'resource-pack.delivery.hosting' - Missing required 'access-token' argument for gitlab host.</yellow>"
-warning.config.host.gitlab.missing_project: "<yellow>Issue found in config.yml at 'resource-pack.delivery.hosting' - Missing required 'project-id' argument for gitlab host.</yellow>"
-warning.config.host.proxy.missing_host: "<yellow>Issue found in config.yml at 'resource-pack.delivery.hosting' - Missing required 'host' argument for proxy.</yellow>"
-warning.config.host.proxy.missing_port: "<yellow>Issue found in config.yml at 'resource-pack.delivery.hosting' - Missing required 'port' argument for proxy.</yellow>"
-warning.config.host.proxy.missing_scheme: "<yellow>Issue found in config.yml at 'resource-pack.delivery.hosting' - Missing required 'scheme' argument for proxy.</yellow>"
-warning.config.host.proxy.invalid: "<yellow>Issue found in config.yml at 'resource-pack.delivery.hosting' - Invalid proxy '<arg:0>'.</yellow>"
-warning.config.conflict_matcher.missing_type: "<yellow>Issue found in config.yml at 'resource-pack.duplicated-files-handler' - Missing required 'type' argument for one of the handlers.</yellow>"
-warning.config.conflict_matcher.invalid_type: "<yellow>Issue found in config.yml at 'resource-pack.duplicated-files-handler' - One of the terms is using the invalid type '<arg:0>'.</yellow>"
-warning.config.conflict_matcher.exact.missing_path: "<yellow>Issue found in config.yml at 'resource-pack.duplicated-files-handler' - Missing required 'path'  argument for 'exact' matcher.</yellow>"
-warning.config.conflict_matcher.contains.missing_path: "<yellow>Issue found in config.yml at 'resource-pack.duplicated-files-handler' - Missing required 'path' argument for 'contains' matcher.</yellow>"
-warning.config.conflict_matcher.filename.missing_name: "<yellow>Issue found in config.yml at 'resource-pack.duplicated-files-handler' - Missing required 'path' argument for 'filename' matcher.</yellow>"
-warning.config.conflict_matcher.pattern.missing_pattern: "<yellow>Issue found in config.yml at 'resource-pack.duplicated-files-handler' - Missing required 'pattern' argument for 'pattern' matcher.</yellow>"
-warning.config.conflict_matcher.parent_prefix.missing_prefix: "<yellow>Issue found in config.yml at 'resource-pack.duplicated-files-handler' - Missing required 'prefix' argument for 'parent_path_prefix' matcher.</yellow>"
-warning.config.conflict_matcher.parent_suffix.missing_suffix: "<yellow>Issue found in config.yml at 'resource-pack.duplicated-files-handler' - Missing required 'suffix' argument for 'parent_path_suffix' matcher.</yellow>"
-warning.config.conflict_matcher.inverted.missing_term: "<yellow>Issue found in config.yml at 'resource-pack.duplicated-files-handler' - Missing required 'term' argument for 'inverted' matcher.</yellow>"
-warning.config.conflict_matcher.all_of.missing_terms: "<yellow>Issue found in config.yml at 'resource-pack.duplicated-files-handler' - Missing required 'terms' argument for 'all_of' matcher.</yellow>"
-warning.config.conflict_matcher.any_of.missing_terms: "<yellow>Issue found in config.yml at 'resource-pack.duplicated-files-handler' - Missing required 'terms' argument for 'any_of' matcher.</yellow>"
-warning.config.conflict_resolution.missing_type: "<yellow>Issue found in config.yml at 'resource-pack.duplicated-files-handler' - Missing required 'type' argument for one of the resolutions.</yellow>"
-warning.config.conflict_resolution.invalid_type: "<yellow>Issue found in config.yml at 'resource-pack.duplicated-files-handler' - One of the resolutions is using the invalid type '<arg:0>'.</yellow>"
-warning.config.event.missing_trigger: "<yellow>Issue found in file <arg:0> - The config '<arg:1>' is missing the required 'on' argument for event triggers.</yellow>"
-warning.config.event.invalid_trigger: "<yellow>Issue found in file <arg:0> - The config '<arg:1>' is using an invalid event trigger '<arg:2>'.</yellow>"
-warning.config.event.condition.missing_type: "<yellow>Issue found in file <arg:0> - The config '<arg:1>' is missing the required 'type' argument for event condition.</yellow>"
-warning.config.event.condition.invalid_type: "<yellow>Issue found in file <arg:0> - The config '<arg:1>' is using an invalid 'type' argument '<arg:2>' for event condition.</yellow>"
-warning.config.function.missing_type: "<yellow>Issue found in file <arg:0> - The config '<arg:1>' is missing the required 'type' argument for function.</yellow>"
-warning.config.function.invalid_type: "<yellow>Issue found in file <arg:0> - The config '<arg:1>' is using an invalid function type '<arg:2>'.</yellow>"
-warning.config.function.command.missing_command: "<yellow>Issue found in file <arg:0> - The config '<arg:1>' is missing the required 'command' argument for 'command' function.</yellow>"
-warning.config.function.actionbar.missing_actionbar: "<yellow>Issue found in file <arg:0> - The config '<arg:1>' is missing the required 'actionbar' argument for 'actionbar' function.</yellow>"
-warning.config.function.message.missing_message: "<yellow>Issue found in file <arg:0> - The config '<arg:1>' is missing the required 'message' argument for 'message' function.</yellow>"
-warning.config.function.open_window.missing_gui_type: "<yellow>Issue found in file <arg:0> - The config '<arg:1>' is missing the required 'gui-type' argument for 'open_window' function.</yellow>"
-warning.config.function.open_window.invalid_gui_type: "<yellow>Issue found in file <arg:0> - The config '<arg:1>' is using an invalid gui type '<arg:2>' for 'open_window' function. Allowed types: [<arg:3>].</yellow>"
-warning.config.function.run.missing_functions: "<yellow>Issue found in file <arg:0> - The config '<arg:1>' is missing the required 'functions' argument for 'run' function.</yellow>"
-warning.config.function.place_block.missing_block_state: "<yellow>Issue found in file <arg:0> - The config '<arg:1>' is missing the required 'block-state' argument for 'place_block' function.</yellow>"
-warning.config.function.set_food.missing_food: "<yellow>Issue found in file <arg:0> - The config '<arg:1>' is missing the required 'food' argument for 'set_food' function.</yellow>"
-warning.config.function.set_saturation.missing_saturation: "<yellow>Issue found in file <arg:0> - The config '<arg:1>' is missing the required 'saturation' argument for 'set_saturation' function.</yellow>"
-warning.config.function.play_sound.missing_sound: "<yellow>Issue found in file <arg:0> - The config '<arg:1>' is missing the required 'sound' argument for 'play_sound' function.</yellow>"
-warning.config.function.particle.missing_particle: "<yellow>Issue found in file <arg:0> - The config '<arg:1>' is missing the required 'particle' argument for 'particle' function.</yellow>"
-warning.config.function.particle.missing_color: "<yellow>Issue found in file <arg:0> - The config '<arg:1>' is missing the required 'color' argument for 'particle' function.</yellow>"
-warning.config.function.particle.missing_from: "<yellow>Issue found in file <arg:0> - The config '<arg:1>' is missing the required 'from' argument for 'particle' function.</yellow>"
-warning.config.function.particle.missing_to: "<yellow>Issue found in file <arg:0> - The config '<arg:1>' is missing the required 'to' argument for 'particle' function.</yellow>"
-warning.config.function.particle.missing_item: "<yellow>Issue found in file <arg:0> - The config '<arg:1>' is missing the required 'item' argument for 'particle' function.</yellow>"
-warning.config.function.particle.missing_block_state: "<yellow>Issue found in file <arg:0> - The config '<arg:1>' is missing the required 'block-state' argument for 'particle' function.</yellow>"
-warning.config.function.leveler_exp.missing_count: "<yellow>Issue found in file <arg:0> - The config '<arg:1>' is missing the required 'count' argument for 'leveler_exp' function.</yellow>"
-warning.config.function.leveler_exp.missing_leveler: "<yellow>Issue found in file <arg:0> - The config '<arg:1>' is missing the required 'leveler' argument for 'leveler_exp' function.</yellow>"
-warning.config.function.leveler_exp.missing_plugin: "<yellow>Issue found in file <arg:0> - The config '<arg:1>' is missing the required 'plugin' argument for 'leveler_exp' function.</yellow>"
-warning.config.function.remove_potion_effect.missing_potion_effect: "<yellow>Issue found in file <arg:0> - The config '<arg:1>' is missing the required 'potion-effect' argument for 'remove_potion_effect' function.</yellow>"
-warning.config.function.potion_effect.missing_potion_effect: "<yellow>Issue found in file <arg:0> - The config '<arg:1>' is missing the required 'potion-effect' argument for 'potion_effect' function.</yellow>"
-warning.config.function.set_cooldown.missing_time: "<yellow>Issue found in file <arg:0> - The config '<arg:1>' is missing the required 'time' argument for 'set_cooldown' function.</yellow>"
-warning.config.function.set_cooldown.missing_id: "<yellow>Issue found in file <arg:0> - The config '<arg:1>' is missing the required 'id' argument for 'set_cooldown' function.</yellow>"
-warning.config.function.remove_cooldown.missing_id: "<yellow>Issue found in file <arg:0> - The config '<arg:1>' is missing the required 'id' argument for 'remove_cooldown' function.</yellow>"
-warning.config.function.mythic_mobs_skill.missing_skill: "<yellow>Issue found in file <arg:0> - The config '<arg:1>' is missing the required 'skill' argument for 'mythic_mobs_skill' function.</yellow>"
-warning.config.function.spawn_furniture.missing_furniture_id: "<yellow>Issue found in file <arg:0> - The config '<arg:1>' is missing the required 'furniture-id' argument for 'spawn_furniture' function.</yellow>"
-warning.config.function.replace_furniture.missing_furniture_id: "<yellow>Issue found in file <arg:0> - The config '<arg:1>' is missing the required 'furniture-id' argument for 'replace_furniture' function.</yellow>"
-warning.config.function.teleport.missing_x: "<yellow>Issue found in file <arg:0> - The config '<arg:1>' is missing the required 'x' argument for 'teleport' function.</yellow>"
-warning.config.function.teleport.missing_y: "<yellow>Issue found in file <arg:0> - The config '<arg:1>' is missing the required 'y' argument for 'teleport' function.</yellow>"
-warning.config.function.teleport.missing_z: "<yellow>Issue found in file <arg:0> - The config '<arg:1>' is missing the required 'z' argument for 'teleport' function.</yellow>"
-warning.config.function.set_variable.missing_name: "<yellow>Issue found in file <arg:0> - The config '<arg:1>' is missing the required 'name' argument for 'set_variable' function.</yellow>"
-warning.config.function.set_variable.missing_value: "<yellow>Issue found in file <arg:0> - The config '<arg:1>' is missing the required 'number' or 'text' argument for 'set_variable' function.</yellow>"
-warning.config.function.toast.missing_toast: "<yellow>Issue found in file <arg:0> - The config '<arg:1>' is missing the required 'toast' argument for 'toast' function.</yellow>"
-warning.config.function.toast.missing_icon: "<yellow>Issue found in file <arg:0> - The config '<arg:1>' is missing the required 'icon' argument for 'toast' function.</yellow>"
-warning.config.function.toast.invalid_advancement_type: "<yellow>Issue found in file <arg:0> - The config '<arg:1>' is using an invalid advancement type '<arg:2>' for 'toast' function. Allowed types: [<arg:3>].</yellow>"
-warning.config.function.merchant_trade.missing_offers: "<yellow>Issue found in file <arg:0> - The config '<arg:1>' is missing the required 'offers' argument for 'merchant_trade' function.</yellow>"
-warning.config.function.merchant_trade.offer.missing_cost_1: "<yellow>Issue found in file <arg:0> - The config '<arg:1>' is missing the required 'cost-1' argument for merchant trade offers.</yellow>"
-warning.config.function.merchant_trade.offer.missing_result: "<yellow>Issue found in file <arg:0> - The config '<arg:1>' is missing the required 'result' argument for merchant trade offers.</yellow>"
-warning.config.function.when.missing_source: "<yellow>Issue found in file <arg:0> - The config '<arg:1>' is missing the required 'source' argument for 'when' function.</yellow>"
-warning.config.function.if_else.missing_rules: "<yellow>Issue found in file <arg:0> - The config '<arg:1>' is missing the required 'rules' argument for 'if_else' function.</yellow>"
-warning.config.function.update_block_property.missing_properties: "<yellow>Issue found in file <arg:0> - The config '<arg:1>' is missing the required 'properties' argument for 'update_block_property' function.</yellow>"
-warning.config.function.transform_block.missing_block: "<yellow>Issue found in file <arg:0> - The config '<arg:1>' is missing the required 'block' argument for 'transform_block' function.</yellow>"
-warning.config.function.cycle_block_property.missing_property: "<yellow>Issue found in file <arg:0> - The config '<arg:1>' is missing the required 'property' argument for 'cycle_block_property' function.</yellow>"
-warning.config.function.set_exp.missing_count: "<yellow>Issue found in file <arg:0> - The config '<arg:1>' is missing the required 'count' argument for 'set_exp' function.</yellow>"
-warning.config.function.set_level.missing_count: "<yellow>Issue found in file <arg:0> - The config '<arg:1>' is missing the required 'count' argument for 'set_level' function.</yellow>"
-warning.config.function.play_totem_animation.missing_item: "<yellow>Issue found in file <arg:0> - The config '<arg:1>' is missing the required 'item' argument for 'play_totem_animation' function.</yellow>"
-warning.config.function.clear_item.missing_id: "<yellow>Issue found in file <arg:0> - The config '<arg:1>' is missing the required 'id' argument for 'clear_item' function.</yellow>"
-warning.config.selector.missing_type: "<yellow>Issue found in file <arg:0> - The config '<arg:1>' is missing the required 'type' argument for selector.</yellow>"
-warning.config.selector.invalid_type: "<yellow>Issue found in file <arg:0> - The config '<arg:1>' is using an invalid selector type '<arg:2>'.</yellow>"
-warning.config.selector.invalid_target: "<yellow>Issue found in file <arg:0> - The config '<arg:1>' is using an invalid selector target '<arg:2>'.</yellow>"
-warning.config.resource_pack.item_model.already_exist: "<yellow>Failed to generate item model for '<arg:0>' because the file '<arg:1>' already exists.</yellow>"
-warning.config.resource_pack.model.generation.already_exist: "<yellow>Failed to generate model because the model file '<arg:0>' already exists.</yellow>"
-warning.config.resource_pack.generation.malformatted_json: "<yellow>Json file '<arg:0>' is malformatted.</yellow>"
-warning.config.resource_pack.generation.missing_font_texture: "<yellow>Font '<arg:0>' is missing texture: '<arg:1>'</yellow>"
-warning.config.resource_pack.generation.missing_model_texture: "<yellow>Model '<arg:0>' is missing texture '<arg:1>'</yellow>"
-warning.config.resource_pack.generation.missing_atlas_texture: "<yellow>Atlas '<arg:0>' is missing texture '<arg:1>'</yellow>"
-warning.config.resource_pack.generation.missing_item_model: "<yellow>Item '<arg:0>' is missing model file '<arg:1>'</yellow>"
-warning.config.resource_pack.generation.missing_block_model: "<yellow>Block state '<arg:0>' is missing model file '<arg:1>'</yellow>"
-warning.config.resource_pack.generation.missing_parent_model: "<yellow>Model '<arg:0>' cannot find parent model '<arg:1>'</yellow>"
-warning.config.resource_pack.generation.missing_equipment_texture: "<yellow>Equipment '<arg:0>' is missing texture '<arg:1>'</yellow>"
-warning.config.resource_pack.generation.missing_sound: "<yellow>Sound event '<arg:0>' is missing ogg file '<arg:1>'</yellow>"
-warning.config.resource_pack.generation.texture_not_in_atlas: "<yellow>Texture '<arg:0>' is not defined in the atlas. You need to add the texture path to the atlas or enable 'fix-atlas' option in config.yml.</yellow>"
-warning.config.resource_pack.generation.multiple_atlases: "<yellow>Model '<arg:0>' uses multiple atlases: expected '<arg:1>', but found '<arg:2>'. Ensure all model textures come from the same atlas.</yellow>"
-warning.config.resource_pack.generation.duplicated_sprite: "<yellow>Unable to load model '<arg:0>'. Duplicated sprite '<arg:1>' from atlas '<arg:2>', already defined in atlas '<arg:3>'.</yellow>"
-warning.config.resource_pack.generation.bad_atlas: "<yellow>Failed to load model '<arg:0>'. Sprite '<arg:1>' should be from atlas '<arg:2>', but is actually from atlas '<arg:3>'.</yellow>"
-warning.config.resource_pack.invalid_overlay_format: "<yellow>Issue found in config.yml at 'resource-pack.overlay-format' - Invalid overlay format '<arg:0>'. Overlay format must contain the placeholder '{version}'.</yellow>"
-warning.config.equipment.duplicate: "<yellow>Issue found in file <arg:0> - Duplicated equipment '<arg:1>'. Please check if there is the same configuration in other files.</yellow>"
-warning.config.equipment.missing_type: "<yellow>Issue found in file <arg:0> - The equipment '<arg:1>' is missing the required 'type' argument.</yellow>"
-warning.config.equipment.invalid_type: "<yellow>Issue found in file <arg:0> - The equipment '<arg:1>' is using an invalid 'type' argument.</yellow>"
-warning.config.equipment.invalid_sacrificed_armor: "<yellow>Issue found in config.yml at 'equipment.sacrificed-vanilla-armor' - Invalid vanilla armor type '<arg:0>'.</yellow>"
-warning.config.placed_feature.invalid_feature: "<yellow>Issue found in file <arg:0> - The placed feature '<arg:1>' contains an invalid configured feature. Cause: <arg:2>.</yellow>"
-warning.config.placed_feature.missing_feature: "<yellow>Issue found in file <arg:0> - The placed feature '<arg:1>' is missing the required 'feature' argument.</yellow>"
-warning.config.placed_feature.invalid_placement: "<yellow>Issue found in file <arg:0> - The placed feature '<arg:1>' contains an invalid configured feature. Input: <arg:2>. Cause: <arg:3>.</yellow>"
-warning.config.placed_feature.missing_placement: "<yellow>Issue found in file <arg:0> - The placed feature '<arg:1>' is missing the required 'placement' argument.</yellow>"
-warning.config.configured_feature.invalid_feature: "<yellow>Issue found in file <arg:0> - The configured feature '<arg:1>' is invalid. Cause: <arg:2>.</yellow>"
+exception.invalid_syntax: '<red>Invalid syntax. Correct syntax: <white><arg:0></white></red>'
+exception.invalid_argument: '<red>Invalid argument. Reason: <white><arg:0></white></red>'
+exception.invalid_sender: <red><arg:0> is not allowed to execute that command. Must be of type <arg:1></red>
+exception.unexpected: <red>An internal error occurred while attempting to perform this command</red>
+exception.no_permission: <red>I'm sorry, but you do not have permission to perform this command</red>
+exception.no_such_command: <red>Unknown command.</red>
+argument.entity.notfound.player: <red>No player was found</red>
+argument.entity.notfound.entity: <red>No entity was found</red>
+argument.parse.failure.time: <red>'<arg:0>' is not a valid time format</red>
+argument.parse.failure.material: <red>'<arg:0>' is not a valid material name</red>
+argument.parse.failure.enchantment: <red>'<arg:0>' is not a valid enchantment</red>
+argument.parse.failure.offlineplayer: <red>No player found for input '<arg:0>'</red>
+argument.parse.failure.player: <red>No player found for input '<arg:0>'</red>
+argument.parse.failure.world: <red>'<arg:0>' is not a valid Minecraft world</red>
+argument.parse.failure.location.invalid_format: <red>'<arg:0>' is not a valid location. Required format is '<arg:1> <arg:2> <arg:3></red>
+argument.parse.failure.location.mixed_local_absolute: <red>Cannot mix local and absolute coordinates. (either all coordinates use '^' or none do)</red>
+argument.parse.failure.namespacedkey.namespace: <red>Invalid namespace '<arg:0>'. Must be [a-z0-9._-]</red>
+argument.parse.failure.namespacedkey.key: <red>Invalid key '<arg:0>'. Must be [a-z0-9/._-]</red>
+argument.parse.failure.namespacedkey.need_namespace: <red>Invalid input '<arg:0>', requires an explicit namespace</red>
+argument.parse.failure.boolean: <red>Could not parse boolean from '<arg:0>'</red>
+argument.parse.failure.number: <red>'<arg:0>' is not a valid number in the range <arg:1> to <arg:2></red>
+argument.parse.failure.char: <red>'<arg:0>' is not a valid character</red>
+argument.parse.failure.string: <red>'<arg:0>' is not a valid string of type <arg:1></red>
+argument.parse.failure.uuid: <red>'<arg:0>' is not a valid UUID</red>
+argument.parse.failure.enum: '<red>''<arg:0>'' is not one of the following: <arg:1></red>'
+argument.parse.failure.regex: <red>'<arg:0>' does not match '<arg:1>'</red>
+argument.parse.failure.flag.unknown: <red>Unknown flag '<arg:0>'</red>
+argument.parse.failure.flag.duplicate_flag: <red>Duplicate flag '<arg:0>'</red>
+argument.parse.failure.flag.no_flag_started: <red>No flag started. Don't know what to do with '<arg:0>'</red>
+argument.parse.failure.flag.missing_argument: <red>Missing argument for '<arg:0>'</red>
+argument.parse.failure.flag.no_permission: <red>You don't have permission to use '<arg:0>'</red>
+argument.parse.failure.color: <red>'<arg:0>' is not a valid color</red>
+argument.parse.failure.duration: <red>'<arg:0>' is not a duration format</red>
+argument.parse.failure.aggregate.missing: <red>Missing component '<arg:0>'</red>
+argument.parse.failure.aggregate.failure: '<red>Invalid component ''<arg:0>'': <arg:1></red>'
+argument.parse.failure.either: <red>Could not resolve <arg:1> or <arg:2> from '<arg:0>'</red>
+argument.parse.failure.namedtextcolor: <red>'<arg:0>' is not a named text color</red>
+command.reload.too_fast: <red>You are reloading the plugin too quickly; the previous reload has not yet completed
+command.reload.config.failure: <red>Failed to reload configs. Please check console logs
+command.reload.config.success: <dark_gray>» </dark_gray><gradient:#F4A460:#FFD700><b>CraftEngine</b></gradient> <gray>•</gray> <white>Configs reloaded <gray>(<hover:show_text:'<gray>Async/Sync'><color:#FFD700><arg:1></color>/<color:#F4A460><arg:2></color></hover> ms)</gray>
+command.reload.config.issues: '<#FF5555>⚠ <bold><arg:0></bold> issue(s) found. <gray><italic>(Check console for details)'
+command.reload.pack.failure: <red>Failed to generate the resource pack. Please check console logs
+command.reload.pack.success: '<dark_gray>» </dark_gray><gradient:#F4A460:#FFD700><b>CraftEngine</b></gradient> <gray>•</gray> <white>Resource pack generated <gray>(<hover:show_text:"<gray>Async Process"><color:#FFD700><arg:0></color> ms</hover>)</gray>'
+command.item.get.success: <white>Got <arg:0> <arg:1></white>
+command.item.get.failure.not_exist: <red>Unknown item '<arg:0>'</red>
+command.item.give.success.single: <white>Gave <arg:0> <arg:1> to <arg:2>
+command.item.give.success.multiple: <white>Gave <arg:0> <arg:1> to <arg:2> players</white>
+command.item.give.failure.not_exist: <red>Unknown item '<arg:0>'</red>
+command.item.clear.failed.single: <red>No items were found on player <arg:0></red>
+command.item.clear.failed.multiple: <red>No items were found on <arg:0> players</red>
+command.item.clear.success.single: <white>Removed <arg:0> item(s) from player <arg:1></white>
+command.item.clear.success.multiple: <white>Removed <arg:0> item(s) from <arg:1> players</white>
+command.item.clear.test.single: <white>Found <arg:0> matching item(s) on player <arg:1></white>
+command.item.clear.test.multiple: <white>Found <arg:0> matching item(s) on <arg:1> players</white>
+command.item.set_custom_model_data: <white>Set the CustomModelData to '<arg:0>'</white>
+command.item.set_item_model: <white>Set the ItemModel to '<arg:0>'</white>
+command.item.remove_item_component: <white>Removed item component '<arg:0>'</white>
+command.search_recipe.not_found: <red>No recipe found for this item</red>
+command.search_usage.not_found: <red>No usage found for this item</red>
+command.search_recipe.no_item: <red>Please hold an item before running this command</red>
+command.search_usage.no_item: <red>Please hold an item before running this command</red>
+command.totem_animation.failure.not_totem: <red>Item '<arg:0>' is not minecraft:totem_of_undying</red>
+command.totem_animation.success.single: <white>Played totem animation <arg:0> to <arg:1></white>
+command.totem_animation.success.multiple: <white>Played totem animation <arg:0> to <arg:1> players</white>
+command.resource.enable.success: <white>Enabled resource <arg:0>. Run <click:run_command:/ce reload all><u>/ce reload all</u></click> to apply changes</white>
+command.resource.enable.failure.unknown: <red>Unknown resource <arg:0></red>
+command.resource.disable.success: <white>Disabled resource <arg:0>. Run <click:run_command:/ce reload all><u>/ce reload all</u></click> to apply changes</white>
+command.resource.disable.failure.unknown: <red>Unknown resource <arg:0></red>
+command.resource.list: '<white>Enabled resources(<arg:0>): <green><arg:1></green><newline>Disabled resources(<arg:2>): <red><arg:3></red></white>'
+command.resource.create.success: <white>Created resource <arg:0>.</white>
+command.resource.create.failure.unknown: '<red>Failed to create resource <arg:0>, Error: <arg:1></red>'
+command.resource.create.failure.invalid_namespace: <red>Failed to create resource <arg:0>, The namespace <arg:1> is invalid.</red>
+command.resource.create.failure.exists: <red>Resource <arg:0> already exists.</red>
+command.upload.failure.not_supported: <red>Current hosting method '<arg:0>' doesn't support uploading resource packs.</red>
+command.upload.on_progress: <white>Started uploading progress. Check the console for more information.</white>
+command.send_resource_pack.success.single: <white>Sent resource pack to <arg:0>.</white>
+command.send_resource_pack.success.multiple: <white>Send resource packs to <arg:0> players.</white>
+command.locale.set.failure: '<red>Invalid locale format: <arg:0></red>'
+command.locale.set.success: <white>Selected locale has been set to <arg:0> for <arg:1></white>
+command.locale.unset.success: <white>Cleared selected locale for <arg:0></white>
+command.display_entity_view_distance_scale.set.success: <white>Display entity view distance scale updated to <arg:0> for <arg:1></white>
+command.entity_culling_distance_scale.set.success: <white>Entity culling distance scale updated to <arg:0> for <arg:1></white>
+command.entity_culling.toggle.success: <white>Entity culling status updated to <arg:0> for <arg:1></white>
+command.place_feature.failed: "<red>Failed to place feature</red>"
+command.place_feature.success: "<white>Placed \"<arg:0>\" at <arg:1>, <arg:2>, <arg:3></white>"
+command.place_feature.invalid: "<red>There is no feature with type \"<arg:0>\"</red>"
+command.chunk.not_loaded: "<red>That position is not loaded</red>"
+command.player.itemless: "<red><arg:0> is not holding any item</red>"
+snbt.invalid_syntax.parse_error: '<arg:0> at position <arg:1>: <arg:2>'
+snbt.invalid_syntax.here: <--[HERE]
+snbt.parser.expected_string_uuid: Expected a string representing a valid UUID
+snbt.parser.expected_number_or_boolean: Expected a number or a boolean
+snbt.parser.trailing: Unexpected trailing data
+snbt.parser.expected.compound: Expected compound tag
+snbt.parser.number_parse_failure: 'Failed to parse number: <arg:0>'
+snbt.parser.expected_hex_escape: Expected a character literal of length <arg:0>
+snbt.parser.invalid_codepoint: 'Invalid Unicode character value: <arg:0>'
+snbt.parser.no_such_operation: 'No such operation: <arg:0>'
+snbt.parser.expected_integer_type: Expected an integer number
+snbt.parser.expected_float_type: Expected a floating point number
+snbt.parser.expected_non_negative_number: Expected a non-negative number
+snbt.parser.invalid_character_name: Invalid Unicode character name
+snbt.parser.invalid_array_element_type: Invalid array element type
+snbt.parser.invalid_unquoted_start: Unquoted strings can't start with digits 0-9, + or -
+snbt.parser.expected_unquoted_string: Expected a valid unquoted string
+snbt.parser.invalid_string_contents: Invalid string contents
+snbt.parser.expected_binary_numeral: Expected a binary number
+snbt.parser.underscore_not_allowed: Underscore is not allowed in binary numerals
+snbt.parser.expected_decimal_numeral: Expected a decimal number
+snbt.parser.expected_hex_numeral: Expected a hexadecimal number
+snbt.parser.empty_key: Key cannot be empty
+snbt.parser.leading_zero_not_allowed: Decimal numbers can't start with 0
+snbt.parser.infinity_not_allowed: Non-finite numbers are not allowed
+snbt.parser.incorrect: Expected literal <arg:0>
+yaml.duplicated_key: "Found duplicated key '<arg:1>' at line <arg:2> in file <arg:0>"
+yaml.inconsistent_value_type: "Found duplicated key '<arg:1>' at line <arg:2> with different value types in file <arg:0>"
+plugin.compatibility: "[Compatibility] <arg:0> hooked"
+number.unknown_type: Unknown number type '<arg:0>'
+number.fixed.invalid_expression: Invalid expression '<arg:0>'. https://ezylang.github.io/EvalEx/references/references.html
+number.greater_than: '''<arg:0>'' should be greater than ''<arg:1>'''
+number.no_greater_than: '''<arg:0>'' should be no greater than ''<arg:1>'''
+number.less_than: '''<arg:0>'' should be less than ''<arg:1>'''
+number.no_less_than: '''<arg:0>'' should be no less than ''<arg:1>'''
+condition.unknown_type: Unknown condition type '<arg:0>'
+condition.enchantment.invalid_format: Invalid predicate format '<arg:0>'. (e.g., minecraft:sharpness>=4)
+function.unknown_type: Unknown function type '<arg:0>'
+player_selector.unknown_type: Unknown player selector type '<arg:0>'
+loot.entry.unknown_type: Unknown loot entry type '<arg:0>'
+loot.function.unknown_type: Unknown loot function type '<arg:0>'
+loot.function.formula.unknown_type: Unknown formula type '<arg:0>'
+host.unknown_type: Unknown resource pack host type '<arg:0>'
+host.missing_environment_variable: Missing environment variable '<arg:0>'
+host.get_url_failed: "Failed to retrieve resource pack download URL for player <arg:0>"
+host.handle_response_failed: "Failed to handle the resource pack response for player <arg:0>"
+host.upload_started: "Initiating resource pack upload..."
+host.upload_finished: "Successfully uploaded resource pack in <arg:0> ms"
+host.upload_failed: "Failed to upload resource pack"
+host.lobfile.storage_usage: "Account usage: <arg:0>/<arg:1> MB | <arg:2>/<arg:3> Files"
+host.self.http_server_started: "Netty HTTP server started on port: <arg:0>"
+config.errors_detected: Error found in config.yml - <arg:0>
+update.available: 'New version <arg:0> is available: <arg:1>'
+update.is_latest: You're running the latest version
+resource_pack.invalid_overlay_format: Invalid overlay format '<arg:0>'. Overlay format must contain the placeholder '{version}'
+resource_pack.generation_started: Generating resource pack...
+resource_pack.generation_finished: Generated resource pack in <arg:0>ms
+resource_pack.validation_started: 'Validating resource pack... (Progress: <arg:0>/<arg:1> | Pack Format: <arg:2>~<arg:3> | Overlays: <arg:4>)'
+resource_pack.validation_finished: Validated resource pack in <arg:0>ms
+resource_pack.json_optimization_started: '> Optimizing json files...'
+resource_pack.texture_optimization_started: '> Optimizing texture files...'
+resource_pack.optimization_result: '> □ Before/After/Ratio: <arg:0>/<arg:1>/<arg:2>'
+resource_pack.optimization_finished: Optimized resource pack in <arg:0>ms
+resource_pack.compression_started: Compressing resource pack...(This progress might be slow if you have obfuscation enabled)
+resource_pack.compression_finished: Compressed resource pack in <arg:0>ms
+resource_pack.duplicated_files: Duplicated files Found. Please resolve them through config.yml 'resource-pack.duplicated-files-handler' section
+resource_pack.malformatted_json: Json file '<arg:0>' is malformatted
+resource_pack.not_a_json_object: Json file '<arg:0>' is not a json object
+resource_pack.conflict_resolution.unknown_type: Unknown conflict resolution type '<arg:0>'
+resource_pack.model_generation.conflict: Failed to generate model because the model file '<arg:0>' already exists
+resource_pack.item_model.conflict: Failed to generate item model '<arg:0>' because the file '<arg:1>' already exists
+resource_pack.missing_font_texture: "Font '<arg:0>' is missing texture '<arg:1>'"
+resource_pack.missing_model_texture: "Model '<arg:0>' is missing texture '<arg:1>'"
+resource_pack.missing_equipment_texture: "Equipment '<arg:0>' is missing texture '<arg:1>'"
+resource_pack.missing_atlas_texture: "Atlas '<arg:0>' is missing texture '<arg:1>'"
+resource_pack.missing_item_model: "Item '<arg:0>' is missing model file '<arg:1>'"
+resource_pack.missing_block_model: "Block state '<arg:0>' is missing model file '<arg:1>'"
+resource_pack.missing_parent_model: "Model '<arg:0>' cannot find parent model '<arg:1>'"
+resource_pack.missing_sound: "Sound event '<arg:0>' is missing ogg file '<arg:1>'"
+resource_pack.texture_not_in_atlas: "Texture '<arg:0>' is not defined in the atlas. You need to add the texture path to the atlas or enable 'fix-atlas' option in config.yml"
+resource_pack.multiple_atlases: "Model '<arg:0>' uses multiple atlases: expected '<arg:1>', but found '<arg:2>'. Ensure all model textures come from the same atlas"
+resource_pack.duplicated_sprite: "Unable to load model '<arg:0>'. Duplicated sprite '<arg:1>' from atlas '<arg:2>', already defined in atlas '<arg:3>'"
+resource_pack.bad_atlas: "Failed to load model '<arg:0>'. Sprite '<arg:1>' should be from atlas '<arg:2>', but is actually from atlas '<arg:3>'"
+resource.argument.type.section: Configuration Section
+resource.argument.type.boolean: Boolean
+resource.argument.type.int: Integer
+resource.argument.type.long: Long
+resource.argument.type.float: Float
+resource.argument.type.double: Double
+resource.argument.type.string: String
+resource.argument.type.enum: One of [<arg:0>]
+resource.argument.type.vec3: Vector3
+resource.argument.type.quaternion: Quaternion https://quaternions.online/
+resource.argument.type.aabb: Axis-aligned Bounding Box
+resource.argument.type.snbt: SNBT https://minecraft.wiki/w/NBT_format#SNBT_format
+resource.argument.type.identifier: Identifier https://minecraft.wiki/w/Identifier
+resource.argument.type.list: List
+resource.argument.type.color: Color
+resource.argument.type.number: Number https://xiao-momi.github.io/craft-engine-wiki/reference/number_format
+resource.argument.type.item_model_definition: Item Model Definition
+resource.argument.type.json: Json
+resource.argument.type.any: Any
+resource.argument.type.blockstate: Block State
+resource.argument.parser.section: Expected a configuration section, found '<arg:0>'
+resource.argument.parser.boolean: 'Cannot parse ''<arg:0>'' as a boolean. (Allowed values: true/false, yes/no, on/off)'
+resource.argument.parser.int: Cannot parse '<arg:0>' as an integer. (Numbers with '_' are allowed, e.g., 1_000)
+resource.argument.parser.long: Cannot parse '<arg:0>' as a long integer. (e.g., 2_147_483_648)
+resource.argument.parser.float: Cannot parse '<arg:0>' as a decimal number. (e.g., 3.14 or 1_000.5)
+resource.argument.parser.double: Cannot parse '<arg:0>' as a high-precision decimal. (e.g., 0.0000001)
+resource.argument.parser.enum: 'Invalid constant ''<arg:0>''. (Must be one of: [<arg:1>])'
+resource.argument.parser.vec3: Cannot parse '<arg:0>' as a vector. (Expected format 'x,y,z', e.g., 1.5,22,0)
+resource.argument.parser.quaternion: Cannot parse '<arg:0>' as a quaternion. (Expected format 'x,y,z,w', e.g., 0,0,0,1)
+resource.argument.parser.snbt: 'Invalid SNBT format ''<arg:0>''. Details: <arg:1>. Guide: https://minecraft.wiki/w/NBT_format#SNBT_format'
+resource.argument.parser.aabb: Cannot parse '<arg:0>' as an AABB. (Expected two points format 'x1,y1,z1,x2,y2,z2', e.g., 0,0,0,1,1,1)
+resource.argument.parser.blockstate: Cannot parse '<arg:0>' as a blockstate. (e.g., minecraft:wheat[age=3])
+resource.argument.parser.identifier: 'Cannot parse ''<arg:0>'' as an identifier. Guide: https://minecraft.wiki/w/Identifier#Legal_characters'
+resource.argument.parser.list: Expected to be a list, found '<arg:0>'
+resource.argument.parser.nonempty_list: Expected to be a non-empty list
+resource.argument.parser.fixed_size_list: Expected to be a list with '<arg:0>' element(s)
+resource.argument.parser.nonempty_string: Expected to be a non-empty string
+resource.argument.parser.split: Expected split into '<arg:0>' parts, but got '<arg:1>'
+resource.argument.parser.number: Expected to be a number, found '<arg:0>'
+resource.argument.parser.uuid: Cannot parse '<arg:0>' as a uuid.
+resource.config_loaded: Loaded <arg:0> in <arg:1>ms (<arg:2>)
+resource.pack_loaded: 'Loaded pack: <arg:0>. Default namespace: <arg:1>'
+resource.errors_detected: 'Found <arg:1> issue(s) in file ''<arg:0>'':'
+resource.errors_detail: '[<arg:0>] <arg:1> - <arg:2>'
+resource.unknown_error: "Unknown error type"
+resource.duplicated_id: Another file ('<arg:0>') contains a section with the same ID
+resource.missing_argument: 'Required argument ''<arg:0>'' is missing. Expected: ''<arg:1>'''
+resource.placed_feature.invalid_placement: 'Invalid placement modifier. Input: ''<arg:0>''. Cause: ''<arg:1>'''
+resource.configured_feature.invalid_feature: 'Invalid configured feature. Input: ''<arg:0>''. Cause: ''<arg:1>'''
+resource.mapping.conflict: Unable to map block state '<arg:0>' to block state '<arg:1>' because the state has already been mapped to '<arg:2>'
+resource.lang.unknown_locale: Unknown locale '<arg:0>'. (e.g., en, zh_cn)
+resource.image.invalid_grid_size: Invalid grid size '<arg:0>'. (e.g., 3,4)
+resource.image.empty_chars: Option 'chars' cannot be empty
+resource.image.invalid_chars_grid: The number of characters in row <arg:0> does not match the expected <arg:1>
+resource.image.codepoint_conflict: Character '<arg:0>(<arg:1>)' in font '<arg:2>' has been occupied by another image '<arg:3>'
+resource.image.codepoint_exhausted: Codepoints have already been exhausted for font '<arg:0>'
+resource.image.height_ascent_conflict: height '<arg:0>' should be no lower than ascent '<arg:1>'
+resource.emoji.invalid_image_format: Invalid image format '<arg:0>'
+resource.emoji.unknown_image: Unknown image '<arg:0>'
+resource.equipment.unknown_type: Unknown equipment type '<arg:0>'
+resource.equipment.unknown_layer_type: Unknown equipment layer type '<arg:0>'
+resource.equipment.invalid_sacrificed_armor: Invalid vanilla armor type '<arg:0>'
+resource.furniture.element.unknown_type: Unknown furniture element type '<arg:0>'
+resource.furniture.element.tint_source.unknown_type: Unknown furniture tint source type '<arg:0>'
+resource.furniture.hitbox.unknown_type: Unknown furniture hitbox type '<arg:0>'
+resource.furniture.behavior.unknown_type: Unknown furniture behavior type '<arg:0>'
+resource.furniture.hitbox.custom.invalid_entity_type: Invalid entity type '<arg:0>'
+resource.template.unknown_argument_type: Unknown template argument type '<arg:0>'
+resource.template.invalid_template: Invalid template '<arg:0>'
+resource.template.missing_argument: 'Missing template argument: ''<arg:0>''. Please provide this argument using the ''arguments'' option or set a default value for it'
+resource.block.behavior.missing_property: Behavior requires the block state property '<arg:0>' to be defined. https://xiao-momi.github.io/craft-engine-wiki/configuration/block/states/properties
+resource.block.behavior.property_type_mismatch: Expected property typed '<arg:0>', but got '<arg:1>'
+resource.block.behavior.unknown_type: Unknown block behavior type '<arg:0>'
+resource.block.state.property.unknown_type: Unknown property type '<arg:0>'
+resource.block.state.real_state_conflict: Fail to bind '<arg:0>' to real block state '<arg:1>' as it has been occupied by block '<arg:2>'
+resource.block.state.real_state_exhausted: Cannot allocate enough real block states. Consider increase the number of server-side blocks in config.yml
+resource.block.state.visual_state_exhausted: The visual state group '<arg:0>' has reached its maximum capacity of '<arg:1>' slots and cannot allocate a state for '<arg:2>'
+resource.block.state.unreleased_state: You cannot assign a block state using this format because state '<arg:0>' has not been released in the block state mappings.
+resource.block.state.entity_renderer.unknown_type: Unknown block entity renderer type '<arg:0>'
+resource.block.state.invalid_variant_nbt: Invalid partial block state nbt '<arg:0>'
+resource.block.state.undefined_appearance: Undefined block state appearance '<arg:0>'
+resource.block.state.model_conflict: Failed to bind model '<arg:0>' to block state '<arg:1>' which has already been bound to model '<arg:2>'
+resource.block.entity_renderer.tint_source.unknown_type: Unknown block entity tint source type '<arg:0>'
+resource.item.model_definition.unknown_type: Unknown item model definition type '<arg:0>'
+resource.item.model_definition.condition.unknown_type: Unknown condition property type '<arg:0>'
+resource.item.model_definition.range_dispatch.unknown_type: Unknown range_dispatch property type '<arg:0>'
+resource.item.model_definition.select.unknown_type: Unknown select property type '<arg:0>'
+resource.item.model_definition.special.unknown_type: Unknown special model type '<arg:0>'
+resource.item.model_definition.tint.unknown_type: Unknown tint type '<arg:0>'
+resource.item.model_definition.downgrade_failure: 'Cannot convert 1.21.4+ item model definition to legacy format. Please manually configure ''legacy_model'' for this item: https://xiao-momi.github.io/craft-engine-wiki/configuration/item/models#legacy-model'
+resource.item.settings.craft_remainder.unknown_type: Unknown craft remainder type '<arg:0>'
+resource.item.settings.equippable: This field should be placed under the 'data' section
+resource.item.settings.equipment.invalid_asset_id: 'Equipment with id ''<arg:0>'' not found. For assistance, refer to the guide: https://xiao-momi.github.io/craft-engine-wiki/configuration/equipment'
+resource.item.behavior.unknown_type: Unknown item behavior type '<arg:0>'
+resource.item.updater.unknown_type: Unknown item updater type '<arg:0>'
+resource.item.custom_model_data_exhausted: CustomModelData has already been exhausted for material '<arg:0>'
+resource.item.custom_model_data_conflict: CustomModelData '<arg:0>' has been occupied by item '<arg:1>'
+resource.item.missing_model_id: Missing 'custom_model_data' or 'item_model' for custom model to function
+resource.item.occupied_vanilla_item_model: Item model '<arg:0>' has been occupied by a vanilla item
+resource.item.invalid_material: Invalid material type '<arg:0>'
+resource.model.generation.conflict: Failed to generate model for '<arg:0>' as two or more configurations attempt to generate different json models with the same path
+resource.recipe.transform_processor.unknown_type: Unknown smithing transform post processor type '<arg:0>'
+resource.recipe.ingredient.invalid_tag: Item tag '<arg:0>' doesn't contain any item
+resource.recipe.ingredient.item_not_exist: Ingredient item '<arg:0>' doesn't exist
+resource.recipe.result.item_not_exist: Result item '<arg:0>' doesn't exist
+resource.recipe.shaped.invalid_pattern: Invalid pattern '<arg:0>'
+resource.recipe.shaped.invalid_symbol: Invalid symbol '<arg:0>'
+resource.recipe.post_processor.unknown_type: Unknown recipe post processor type '<arg:0>'
+resource.recipe.unknown_type: Unknown recipe type '<arg:0>'
+resource.vanilla_loot.block.invalid_target: Invalid block target '<arg:0>'

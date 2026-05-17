@@ -2,13 +2,14 @@ package net.momirealms.craftengine.core.plugin;
 
 import net.momirealms.craftengine.core.advancement.AdvancementManager;
 import net.momirealms.craftengine.core.block.BlockManager;
+import net.momirealms.craftengine.core.entity.culling.EntityCullingManager;
 import net.momirealms.craftengine.core.entity.furniture.FurnitureManager;
 import net.momirealms.craftengine.core.entity.projectile.ProjectileManager;
 import net.momirealms.craftengine.core.entity.seat.SeatManager;
 import net.momirealms.craftengine.core.font.FontManager;
 import net.momirealms.craftengine.core.item.ItemManager;
 import net.momirealms.craftengine.core.item.recipe.RecipeManager;
-import net.momirealms.craftengine.core.loot.VanillaLootManager;
+import net.momirealms.craftengine.core.loot.LootManager;
 import net.momirealms.craftengine.core.pack.PackManager;
 import net.momirealms.craftengine.core.plugin.classpath.ClassPathAppender;
 import net.momirealms.craftengine.core.plugin.command.sender.SenderFactory;
@@ -17,7 +18,6 @@ import net.momirealms.craftengine.core.plugin.config.Config;
 import net.momirealms.craftengine.core.plugin.config.template.TemplateManager;
 import net.momirealms.craftengine.core.plugin.context.GlobalVariableManager;
 import net.momirealms.craftengine.core.plugin.dependency.DependencyManager;
-import net.momirealms.craftengine.core.entity.culling.EntityCullingManager;
 import net.momirealms.craftengine.core.plugin.gui.GuiManager;
 import net.momirealms.craftengine.core.plugin.gui.category.ItemBrowserManager;
 import net.momirealms.craftengine.core.plugin.locale.TranslationManager;
@@ -50,9 +50,13 @@ public interface Plugin {
 
     boolean isInitializing();
 
+    boolean isStopping();
+
+    boolean isDisabled();
+
     DependencyManager dependencyManager();
 
-    <W> SchedulerAdapter<W> scheduler();
+    SchedulerAdapter scheduler();
 
     void saveResource(String filePath);
 
@@ -60,7 +64,7 @@ public interface Plugin {
 
     String serverVersion();
 
-    <T> ItemManager<T> itemManager();
+    ItemManager itemManager();
 
     BlockManager blockManager();
 
@@ -80,7 +84,7 @@ public interface Plugin {
 
     PackManager packManager();
 
-    <T> RecipeManager<T> recipeManager();
+    RecipeManager recipeManager();
 
     <P extends Plugin, C> SenderFactory<P, C> senderFactory();
 
@@ -92,7 +96,7 @@ public interface Plugin {
 
     SoundManager soundManager();
 
-    VanillaLootManager vanillaLootManager();
+    LootManager lootManager();
 
     CompatibilityManager compatibilityManager();
 

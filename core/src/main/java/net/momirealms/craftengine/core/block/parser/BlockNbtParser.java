@@ -1,8 +1,8 @@
 package net.momirealms.craftengine.core.block.parser;
 
+import net.momirealms.craftengine.core.block.BlockDefinition;
 import net.momirealms.craftengine.core.block.BlockStateVariantProvider;
-import net.momirealms.craftengine.core.block.CustomBlock;
-import net.momirealms.craftengine.core.block.properties.Property;
+import net.momirealms.craftengine.core.block.property.Property;
 import net.momirealms.craftengine.core.util.StringReader;
 import net.momirealms.sparrow.nbt.CompoundTag;
 import org.jetbrains.annotations.NotNull;
@@ -43,7 +43,7 @@ public final class BlockNbtParser {
     }
 
     @Nullable
-    public static CompoundTag deserialize(@NotNull CustomBlock block, @NotNull String data) {
+    public static CompoundTag deserialize(@NotNull BlockDefinition block, @NotNull String data) {
         return deserialize(block::getProperty, data);
     }
 

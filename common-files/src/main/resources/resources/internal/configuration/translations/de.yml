@@ -1,0 +1,15 @@
+translations:
+  de:
+    internal.next_page: Nächste Seite
+    internal.previous_page: Vorherige Seite
+    internal.return: Zurück zur vorherigen Seite
+    internal.exit: Verlassen
+    internal.next_recipe: Nächstes Rezept
+    internal.previous_recipe: Vorheriges Rezept
+    internal.get_item: Gegenstand nehmen
+    internal.get_item.0: Linksklick, um eines zu nehmen
+    internal.get_item.1: Rechtsklick, um einen Stapel zu nehmen
+    internal.cooking_info: Rezeptinformationen
+    internal.cooking_info.0: 'Zeit: <arg:0> Ticks'
+    internal.cooking_info.1: 'Erfahrung: <arg:0>'
+    category.internal.all: Alle Gegenstand

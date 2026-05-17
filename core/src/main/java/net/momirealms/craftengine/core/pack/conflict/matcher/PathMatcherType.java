@@ -6,7 +6,7 @@ import net.momirealms.craftengine.core.plugin.context.ConditionType;
 import net.momirealms.craftengine.core.plugin.context.condition.ConditionFactory;
 import net.momirealms.craftengine.core.util.Key;
 
-public class PathMatcherType<T extends Condition<PathContext>> extends ConditionType<PathContext, T> {
+public final class PathMatcherType<T extends Condition<PathContext>> extends ConditionType<PathContext, T> {
 
     public PathMatcherType(Key id, ConditionFactory<PathContext, T> factory) {
         super(id, factory);

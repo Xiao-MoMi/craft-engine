@@ -12,7 +12,8 @@ public enum Debugger {
     RESOURCE_PACK(Config::debugResourcePack),
     ITEM(Config::debugItem),
     BLOCK(Config::debugBlock),
-    ENTITY_CULLING(Config::debugEntityCulling);
+    ENTITY_CULLING(Config::debugEntityCulling),
+    CHUNK(Config::debugChunk);
 
     private final Supplier<Boolean> condition;
 
@@ -39,6 +40,21 @@ public enum Debugger {
             } else {
                 if (s != null) {
                     CraftEngine.instance().logger().warn("[DEBUG] " + s);
+                }
+            }
+        }
+    }
+
+    public void warnWithStack(Supplier<String> message) {
+        if (this.condition.get()) {
+            String s = message.get();
+            if (s != null) {
+                CraftEngine.instance().logger().warn("[DEBUG] " + s);
+                if (Config.debugPrintStackTrace()) {
+                    StackTraceElement[] stackTrace = Thread.currentThread().getStackTrace();
+                    for (int i = 2; i < stackTrace.length; i++) {
+                        CraftEngine.instance().logger().warn("[DEBUG]   at " + stackTrace[i]);
+                    }
                 }
             }
         }

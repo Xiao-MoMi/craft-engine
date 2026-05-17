@@ -7,7 +7,7 @@ import java.util.List;
 import java.util.function.Function;
 import java.util.function.Predicate;
 
-public class IdListPalette<T> implements Palette<T> {
+public final class IdListPalette<T> implements Palette<T> {
     private final IndexedIterable<T> idList;
 
     public IdListPalette(IndexedIterable<T> idList) {

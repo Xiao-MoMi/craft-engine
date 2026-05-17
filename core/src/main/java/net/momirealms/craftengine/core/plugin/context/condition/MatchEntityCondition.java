@@ -1,20 +1,22 @@
 package net.momirealms.craftengine.core.plugin.context.condition;
 
 import net.momirealms.craftengine.core.entity.Entity;
+import net.momirealms.craftengine.core.plugin.config.ConfigSection;
 import net.momirealms.craftengine.core.plugin.context.Condition;
 import net.momirealms.craftengine.core.plugin.context.Context;
 import net.momirealms.craftengine.core.plugin.context.parameter.DirectContextParameters;
-import net.momirealms.craftengine.core.plugin.locale.LocalizedResourceConfigException;
 import net.momirealms.craftengine.core.util.MiscUtils;
-import net.momirealms.craftengine.core.util.ResourceConfigUtils;
 
-import java.util.*;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.Optional;
+import java.util.Set;
 
 public final class MatchEntityCondition<CTX extends Context> implements Condition<CTX> {
     private final Set<String> ids;
     private final boolean regexMatch;
 
-    public MatchEntityCondition(Collection<String> ids, boolean regexMatch) {
+    private MatchEntityCondition(Collection<String> ids, boolean regexMatch) {
         this.ids = new HashSet<>(ids);
         this.regexMatch = regexMatch;
     }
@@ -30,15 +32,14 @@ public final class MatchEntityCondition<CTX extends Context> implements Conditio
     }
 
     private static class Factory<CTX extends Context> implements ConditionFactory<CTX, MatchEntityCondition<CTX>> {
+        private static final String[] ID = new String[] {"id", "entity", "entities"};
 
         @Override
-        public MatchEntityCondition<CTX> create(Map<String, Object> arguments) {
-            List<String> ids = MiscUtils.getAsStringList(arguments.get("id"));
-            if (ids.isEmpty()) {
-                throw new LocalizedResourceConfigException("warning.config.condition.match_entity.missing_id");
-            }
-            boolean regex = ResourceConfigUtils.getAsBoolean(arguments.getOrDefault("regex", false), "regex");
-            return new MatchEntityCondition<>(ids, regex);
+        public MatchEntityCondition<CTX> create(ConfigSection section) {
+            return new MatchEntityCondition<>(
+                    section.getNonNullStringList(ID),
+                    section.getBoolean("regex")
+            );
         }
     }
 }

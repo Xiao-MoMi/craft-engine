@@ -2,9 +2,8 @@ package net.momirealms.craftengine.core.pack.model.definition.select;
 
 import com.google.gson.JsonObject;
 import net.momirealms.craftengine.core.pack.model.legacy.LegacyModelPredicate;
+import net.momirealms.craftengine.core.plugin.config.ConfigSection;
 import net.momirealms.craftengine.core.util.Key;
-
-import java.util.Map;
 
 public final class MainHandSelectProperty implements SelectProperty, LegacyModelPredicate<String> {
     public static final SelectPropertyFactory<MainHandSelectProperty> FACTORY = new Factory();
@@ -14,8 +13,8 @@ public final class MainHandSelectProperty implements SelectProperty, LegacyModel
     private MainHandSelectProperty() {}
 
     @Override
-    public void accept(JsonObject jsonObject) {
-        jsonObject.addProperty("property", "main_hand");
+    public void writeProperty(JsonObject model) {
+        model.addProperty("property", "main_hand");
     }
 
     @Override
@@ -31,7 +30,7 @@ public final class MainHandSelectProperty implements SelectProperty, LegacyModel
 
     private static class Factory implements SelectPropertyFactory<MainHandSelectProperty> {
         @Override
-        public MainHandSelectProperty create(Map<String, Object> arguments) {
+        public MainHandSelectProperty create(ConfigSection section) {
             return INSTANCE;
         }
     }

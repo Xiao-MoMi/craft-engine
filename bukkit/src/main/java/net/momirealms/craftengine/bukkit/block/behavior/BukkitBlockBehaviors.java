@@ -4,9 +4,10 @@ import net.momirealms.craftengine.core.block.behavior.BlockBehaviorType;
 import net.momirealms.craftengine.core.block.behavior.BlockBehaviors;
 import net.momirealms.craftengine.core.util.Key;
 
-public class BukkitBlockBehaviors extends BlockBehaviors {
+public final class BukkitBlockBehaviors extends BlockBehaviors {
     private BukkitBlockBehaviors() {}
 
+    public static final BlockBehaviorType<EmptyBlockBehavior> EMPTY = register(Key.ce("empty"), (block, args) -> EmptyBlockBehavior.INSTANCE);
     public static final BlockBehaviorType<BushBlockBehavior> BUSH_BLOCK = register(Key.ce("bush_block"), BushBlockBehavior.FACTORY);
     public static final BlockBehaviorType<HangingBlockBehavior> HANGING_BLOCK = register(Key.ce("hanging_block"), HangingBlockBehavior.FACTORY);
     public static final BlockBehaviorType<FallingBlockBehavior> FALLING_BLOCK = register(Key.ce("falling_block"), FallingBlockBehavior.FACTORY);
@@ -54,6 +55,12 @@ public class BukkitBlockBehaviors extends BlockBehaviors {
     public static final BlockBehaviorType<MultiHighBlockBehavior> MULTI_HIGH_BLOCK = register(Key.ce("multi_high_block"), MultiHighBlockBehavior.FACTORY);
     public static final BlockBehaviorType<SpreadingBlockBehavior> SPREADING_BLOCK = register(Key.ce("spreading_block"), SpreadingBlockBehavior.FACTORY);
     public static final BlockBehaviorType<ItemFrameBlockBehavior> ITEM_FRAME_BLOCK = register(Key.ce("item_frame_block"), ItemFrameBlockBehavior.FACTORY);
+    public static final BlockBehaviorType<DisplayItemBlockBehavior> DISPLAY_ITEM_BLOCK = register(Key.ce("display_item_block"), DisplayItemBlockBehavior.FACTORY);
+    public static final BlockBehaviorType<DrawerBlockBehavior> DRAWER_BLOCK = register(Key.ce("drawer_block"), DrawerBlockBehavior.FACTORY);
+    public static final BlockBehaviorType<TintSourceBlockBehavior> TINT_SOURCE_BLOCK = register(Key.ce("tint_source_block"), TintSourceBlockBehavior.FACTORY);
+    public static final BlockBehaviorType<VineCropHeadBlockBehavior> VINE_CROP_HEAD_BLOCK = register(Key.ce("vine_crop_head_block"), VineCropHeadBlockBehavior.FACTORY);
+    public static final BlockBehaviorType<VineCropBodyBlockBehavior> VINE_CROP_BODY_BLOCK = register(Key.ce("vine_crop_body_block"), VineCropBodyBlockBehavior.FACTORY);
+    public static final BlockBehaviorType<DecayBlockBehavior> DECAY_BLOCK = register(Key.ce("decay_block"), DecayBlockBehavior.FACTORY);
 
     public static void init() {
     }

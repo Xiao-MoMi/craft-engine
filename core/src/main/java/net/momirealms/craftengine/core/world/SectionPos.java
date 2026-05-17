@@ -1,7 +1,6 @@
 package net.momirealms.craftengine.core.world;
 
-public class SectionPos extends Vec3i {
-
+public final class SectionPos extends Vec3i {
     public SectionPos(int x, int y, int z) {
         super(x, y, z);
     }

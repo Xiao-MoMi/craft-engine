@@ -2,7 +2,7 @@ package net.momirealms.craftengine.core.world;
 
 import net.momirealms.craftengine.core.util.Direction;
 
-public class BlockHitResult extends HitResult {
+public final class BlockHitResult extends HitResult {
     private final Direction direction;
     private final BlockPos blockPos;
     private final boolean miss;

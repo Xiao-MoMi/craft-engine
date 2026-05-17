@@ -1,22 +1,22 @@
 package net.momirealms.craftengine.core.plugin.context.function;
 
 import net.momirealms.craftengine.core.item.Item;
+import net.momirealms.craftengine.core.plugin.config.ConfigSection;
 import net.momirealms.craftengine.core.plugin.context.Condition;
 import net.momirealms.craftengine.core.plugin.context.Context;
 import net.momirealms.craftengine.core.plugin.context.number.NumberProvider;
-import net.momirealms.craftengine.core.plugin.context.number.NumberProviders;
 import net.momirealms.craftengine.core.plugin.context.parameter.DirectContextParameters;
-import net.momirealms.craftengine.core.util.ResourceConfigUtils;
 
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 
-public class SetCountFunction<CTX extends Context> extends AbstractConditionalFunction<CTX> {
+public final class SetCountFunction<CTX extends Context> extends AbstractConditionalFunction<CTX> {
     private final NumberProvider count;
     private final boolean add;
 
-    public SetCountFunction(List<Condition<CTX>> predicates, boolean add, NumberProvider count) {
+    private SetCountFunction(List<Condition<CTX>> predicates,
+                             boolean add,
+                             NumberProvider count) {
         super(predicates);
         this.count = count;
         this.add = add;
@@ -24,9 +24,9 @@ public class SetCountFunction<CTX extends Context> extends AbstractConditionalFu
 
     @Override
     public void runInternal(CTX ctx) {
-        Optional<Item<?>> optionalItem = ctx.getOptionalParameter(DirectContextParameters.ITEM_IN_HAND);
+        Optional<Item> optionalItem = ctx.getOptionalParameter(DirectContextParameters.ITEM_IN_HAND);
         if (optionalItem.isPresent()) {
-            Item<?> item = optionalItem.get();
+            Item item = optionalItem.get();
             if (this.add) {
                 item.count(Math.min(item.count() + (this.count.getInt(ctx)), item.maxStackSize()));
             } else {
@@ -35,21 +35,24 @@ public class SetCountFunction<CTX extends Context> extends AbstractConditionalFu
         }
     }
 
-    public static <CTX extends Context> FunctionFactory<CTX, SetCountFunction<CTX>> factory(java.util.function.Function<Map<String, Object>, Condition<CTX>> factory) {
+    public static <CTX extends Context> FunctionFactory<CTX, SetCountFunction<CTX>> factory(java.util.function.Function<ConfigSection, Condition<CTX>> factory) {
         return new Factory<>(factory);
     }
 
     private static class Factory<CTX extends Context> extends AbstractFactory<CTX, SetCountFunction<CTX>> {
+        private static final String[] COUNT = new String[] {"count", "amount"};
 
-        public Factory(java.util.function.Function<Map<String, Object>, Condition<CTX>> factory) {
+        public Factory(java.util.function.Function<ConfigSection, Condition<CTX>> factory) {
             super(factory);
         }
 
         @Override
-        public SetCountFunction<CTX> create(Map<String, Object> arguments) {
-            Object value = ResourceConfigUtils.requireNonNullOrThrow(arguments.get("count"), "warning.config.function.set_count.missing_count");
-            boolean add = ResourceConfigUtils.getAsBoolean(arguments.getOrDefault("add", false), "add");
-            return new SetCountFunction<>(getPredicates(arguments), add, NumberProviders.fromObject(value));
+        public SetCountFunction<CTX> create(ConfigSection section) {
+            return new SetCountFunction<>(
+                    getPredicates(section),
+                    section.getBoolean("add"),
+                    section.getNonNullNumber(COUNT)
+            );
         }
     }
 }

@@ -2,7 +2,7 @@ package net.momirealms.craftengine.core.world;
 
 import java.util.Objects;
 
-public class WorldPosition implements Position {
+public final class WorldPosition implements Position {
     public final World world;
     public final double x;
     public final double y;
@@ -84,6 +84,10 @@ public class WorldPosition implements Position {
 
     public Vec3d toVec3d() {
         return new Vec3d(x, y, z);
+    }
+
+    public WorldPosition relative(Vec3d relative) {
+        return new WorldPosition(world, x + relative.x, y + relative.y, z + relative.z, xRot, yRot);
     }
 
     @Override

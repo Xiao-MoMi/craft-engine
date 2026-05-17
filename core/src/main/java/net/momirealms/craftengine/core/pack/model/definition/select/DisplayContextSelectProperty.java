@@ -5,11 +5,11 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonPrimitive;
 import net.momirealms.craftengine.core.pack.revision.Revision;
 import net.momirealms.craftengine.core.pack.revision.Revisions;
+import net.momirealms.craftengine.core.plugin.config.ConfigSection;
 import net.momirealms.craftengine.core.util.MinecraftVersion;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.List;
-import java.util.Map;
+import java.util.function.Consumer;
 
 public final class DisplayContextSelectProperty implements SelectProperty {
     public static final DisplayContextSelectProperty INSTANCE = new DisplayContextSelectProperty();
@@ -19,16 +19,15 @@ public final class DisplayContextSelectProperty implements SelectProperty {
     private DisplayContextSelectProperty() {}
 
     @Override
-    public void accept(JsonObject jsonObject) {
-        jsonObject.addProperty("property", "display_context");
+    public void writeProperty(JsonObject model) {
+        model.addProperty("property", "display_context");
     }
 
     @Override
-    public List<Revision> revisions(JsonElement element) {
+    public void gatherRevisions(JsonElement element, Consumer<Revision> consumer) {
         if (element instanceof JsonPrimitive primitive && primitive.isString() && primitive.getAsString().equals("on_shelf")) {
-            return List.of(Revisions.SINCE_1_21_9);
+            consumer.accept(Revisions.SINCE_1_21_9);
         }
-        return List.of();
     }
 
     @Override
@@ -43,7 +42,7 @@ public final class DisplayContextSelectProperty implements SelectProperty {
 
     private static class Factory implements SelectPropertyFactory<DisplayContextSelectProperty> {
         @Override
-        public DisplayContextSelectProperty create(Map<String, Object> arguments) {
+        public DisplayContextSelectProperty create(ConfigSection section) {
             return INSTANCE;
         }
     }

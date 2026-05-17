@@ -1,9 +1,9 @@
 package net.momirealms.craftengine.core.item.processor;
 
-import net.momirealms.craftengine.core.item.DataComponentKeys;
 import net.momirealms.craftengine.core.item.Item;
 import net.momirealms.craftengine.core.item.ItemBuildContext;
-import net.momirealms.craftengine.core.item.ItemProcessorFactory;
+import net.momirealms.craftengine.core.item.component.DataComponentKeys;
+import net.momirealms.craftengine.core.plugin.config.ConfigValue;
 import net.momirealms.craftengine.core.util.Key;
 
 public final class OverwritableItemModelProcessor implements SimpleNetworkItemProcessor {
@@ -19,22 +19,21 @@ public final class OverwritableItemModelProcessor implements SimpleNetworkItemPr
     }
 
     @Override
-    public <I> Item<I> apply(Item<I> item, ItemBuildContext context) {
+    public Item apply(Item item, ItemBuildContext context) {
         if (item.hasNonDefaultComponent(DataComponentKeys.ITEM_MODEL)) return item;
         return item.itemModel(this.data.asString());
     }
 
     @Override
-    public <I> Key componentType(Item<I> item, ItemBuildContext context) {
+    public Key componentType(Item item, ItemBuildContext context) {
         return DataComponentKeys.ITEM_MODEL;
     }
 
     private static class Factory implements ItemProcessorFactory<OverwritableItemModelProcessor> {
 
         @Override
-        public OverwritableItemModelProcessor create(Object arg) {
-            String id = arg.toString();
-            return new OverwritableItemModelProcessor(Key.of(id));
+        public OverwritableItemModelProcessor create(ConfigValue value) {
+            return new OverwritableItemModelProcessor(value.getAsIdentifier());
         }
     }
 }

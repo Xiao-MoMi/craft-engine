@@ -11,8 +11,8 @@ public final class CompositeCraftRemainder implements CraftRemainder {
     }
 
     @Override
-    public <T> Item<T> remainder(Key recipeId, Item<T> item) {
-        for (CraftRemainder remainder : remainders) {
+    public Item remainder(Key recipeId, Item item) {
+        for (CraftRemainder remainder : this.remainders) {
             item = remainder.remainder(recipeId, item);
         }
         return item;

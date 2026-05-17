@@ -11,6 +11,7 @@ resource-pack:
   # This option determines the location of the generated resource pack
   # You can use either an absolute path or a relative path here
   path: "./generated/resource_pack.zip"
+
   # The minimum client version supported by CraftEngine is 1.16. If you need to provide support for lower client versions, please modify the resource pack yourself.
   # Allowed values:
   # - 1.20.1, 1.21, 1.21.8, 26.1, etc.
@@ -19,26 +20,181 @@ resource-pack:
   supported-version:
     min: server
     max: latest
+
   # The description of your resource pack
   description: "<gray>CraftEngine ResourcePack</gray>"
-  # Remove 1.21.5+ tinted_leaves particles
-  remove-tinted-leaves-particle: true
   # Define the name of the overlay folders
   overlay-format: "ce_overlay_{version}"
-  # Should those images in minecraft:default font also work in minecraft:uniform
-  override-uniform-font: true
   # Generate assets for CraftEngine fabric mod
   # Note: fabric mod is used for clientside Axiom/WorldEdit mod
   generate-mod-assets: false
-  # Exclude the shaders when generating the resource pack
-  exclude-core-shaders: false
+
   # Merge other packs
   merge-external-folders:
     - "ModelEngine/resource pack"
   merge-external-zip-files:
     - "CustomNameplates/resourcepack.zip"
     - "BetterModel/build.zip"
-  exclude-file-extensions: ["md", "psd", "bbmodel", "db", "ini", "DS_Store"]
+  exclude-file-extensions: [ "md", "psd", "bbmodel", "db", "ini", "DS_Store", "zip", "gz", "tar", "jar" ]
+
+  # Remove 1.21.5+ tinted_leaves particles
+  remove-tinted-leaves-particle: true
+  # Should those images in minecraft:default font also work in minecraft:uniform
+  override-uniform-font: true
+  # Exclude the shaders when generating the resource pack
+  exclude-core-shaders: false
+
+  # Validate if there is any error in the resource pack, such as missing textures or models.
+  # If your resource pack is compliant with the standard, you can disable validation to improve the resource pack generation speed.
+  validation:
+    enable: true
+    # Fix textures that are not within the atlas. It is unreasonable to always rely on plugins to fix your mistakes.
+    # You should strive to make your resource pack more standardized after gaining some experience with resource packs.
+    fix-atlas: true
+    # Fixing model errors caused by #missing.
+    fix-missing-texture: true
+    # Automatically creating overlays to fix high-version model formats that need to function on lower client versions
+    fallback-models:
+      # The format of the textures map has been updated since 26.1
+      fix-textures-format: true
+      # The restriction of element rotation angle has been removed since 1.21.6 (remove multiples of 22.5 limit) & 1.21.11 (remove [-45, 45] limit)
+      # Once enabled, the plugin will replace it with the nearest value
+      fix-element-rotation-angle: true
+
+  # Optimize your resource pack by reducing its size without any quality loss.
+  optimization:
+    enable: false
+    # .png
+    texture:
+      enable: true
+      # Use Zopfli for PNG compression (very slow). More iterations = smaller files.
+      # In fact, setting the number of iterations between 4 and 8 is generally sufficient. Increasing it further rarely leads to significant optimization in size.
+      zopfli-iterations: 0 # 0 = disable
+      # If your image is special, for example, containing color pixels that need to be specifically recognized by a shader, the optimization might break it. You can add exclusions here.
+      exclude:
+        - assets/minecraft/textures/block/do_not_optimize
+    # .json / .mcmeta
+    json:
+      enable: true
+      exclude: []
+
+  # Enabling this option generates a resource pack that is compatible with other map plugins, such as BlueMap.
+  map-plugin-compatibility:
+    enable: false
+    path: "./generated/resource_pack_map.zip"
+
+  # [Premium Exclusive]
+  # Protect your resource pack from being cracked by others
+  protection:
+    # Create a copy without any protection applied. This copy is entirely created using the standard Java library
+    # and maintains good compatibility with other programs (such as bedrock resource pack converters).
+    unprotected-copy:
+      enable: false
+      path: "./generated/resource_pack_unprotected.zip"
+    # Prevent thieves from extracting your resource pack. These options will crash their software.
+    # Some of these options may impact your resource pack size.
+    crash-tools:
+      method-1: false
+      method-2: false # This will increase the resource pack size by 64KB
+      method-3: false # This will increase the resource pack size by 0.67MB
+      method-4: false
+      method-5: true # This will reduce the resource pack size, also it prevents some software from extracting it
+      method-6: false # This will increase the resource pack size by a certain percentage
+      method-7: false
+      method-8: false # This will increase the resource pack size by a certain percentage
+    # Create incorrect crc data
+    incorrect-crc: false
+    # Spoof huge files
+    fake-file-size: false
+    # Escape the JSON to make it human-unreadable
+    escape-json: false
+    # Create fake folders to hide original files
+    fake-directory: false
+    # Break the texture file to prevent thieves from opening it
+    break-texture: false
+    # Obfuscate your resource pack to prevent thieves from restoring its original structure
+    obfuscation:
+      enable: false
+      seed: 0 # 0 = random seed
+      # Whether to obfuscate the item model component
+      # This only takes effect when you enable the client-bound-model.
+      obfuscate-item-model: false
+      # Determines the length of obfuscated overlay directories
+      overlay:
+        length: 3~6 # 0 = disable
+      # Determines the number and length of obfuscated namespaces
+      namespace:
+        amount: 32  # 0 = disable
+        length: 2~6
+      # Determines the depth and length of the obfuscated path
+      path:
+        depth: 2~6
+        length: 1~4
+        anti-unzip: false
+      # Assemble multiple textures into one giant texture atlas to make it more difficult for thieves to directly extract the individual textures.
+      # A larger atlas will result in slower generation speed, but it will also lead to a smaller resource pack size.
+      atlas:
+        prefix: "atlas" # The prefix of the folder where the generated atlas will be located
+        images-per-canvas: 256 # -1 = disable
+      # Sometimes, some vanilla files that have been overwritten might be mistakenly obfuscated
+      # Please add the ignored textures/models/sounds here if that happens
+      bypass-textures:
+        - minecraft:block/farmland  # bypass a specified resource location
+        - "@vanilla_textures"       # bypass vanilla textures
+      bypass-models:
+        - custom:item/do_not_obfuscate
+        - "@vanilla_models"         # bypass vanilla models
+      bypass-sounds:
+        - "@vanilla_sounds"         # bypass vanilla sounds
+      bypass-item-models:
+        - "@vanilla_item_model"
+      bypass-equipments: []
+
+  # This section controls how to send the resource pack to players
+  delivery:
+    prompt: "<yellow>To fully experience our server,<newline>please accept our custom resource pack.</yellow>"
+
+    # Send the resource pack on joining the server
+    send-on-join: true
+    kick-if-declined: true
+    kick-if-failed-to-apply: false
+
+    # Whether a verified player UUID is required to download the resource pack
+    strict-player-uuid-validation: true
+
+    # Upload the resource pack automatically on generation
+    # When disabled, you must manually trigger uploads using the /ce upload command
+    auto-upload: true
+    # Resend the resource pack to players upon successful upload
+    resend-on-upload: true
+    # The file to upload
+    file-to-upload: "./generated/resource_pack.zip"
+
+    # If you are hosting the resource pack by yourself, replace `localhost` with your server ip otherwise it would only work on your local pc
+    # If using BungeeCord or Velocity, consider using a proxy-side plugin to handle resource pack delivery.
+    # Read this page for more host types and argument explanations: https://xiao-momi.github.io/craft-engine-wiki/getting_start/set_up_host
+    hosting:
+      - type: "self"
+        ip: "localhost"
+        port: 8163
+        protocol: "http"
+        deny-non-minecraft-request: true
+        one-time-token: true
+        strict-validation: false
+        rate-limiting:
+          max-bandwidth-per-second: 5_000_000
+          min-download-speed-per-player: 50_000
+          qps-per-ip: 5/60
+
+    # HTTP proxy settings for routing resource pack download requests. For most users, this option is unnecessary.
+    proxy:
+      enable: false
+      port: 7890
+      host: localhost
+      username: ""
+      password: ""
+      scheme: http
+
   # Provide the solution for when a file conflict is encountered
   # https://xiao-momi.github.io/craft-engine-wiki/reference/file_conflict
   duplicated-files-handler:
@@ -82,6 +238,12 @@ resource-pack:
       resolution:
         type: merge_atlas
     - term:
+        type: parent_path_suffix
+        suffix: "minecraft/lang"
+      resolution:
+        type: merge_json
+        deeply: false
+    - term:
         type: any_of
         terms:
           - type: exact
@@ -90,121 +252,6 @@ resource-pack:
             path: "assets/minecraft/font/uniform.json"
       resolution:
         type: merge_font
-  # Validate if there is any error in the resource pack, such as missing textures or models.
-  # If your resource pack is compliant with the standard, you can disable validation to improve the resource pack generation speed.
-  validation:
-    enable: true
-    # Fix textures that are not within the atlas. It is unreasonable to always rely on plugins to fix your mistakes.
-    # You should strive to make your resource pack more standardized after gaining some experience with resource packs.
-    fix-atlas: true
-    # Fixing model errors in the atlas caused by #missing.
-    fix-missing-texture: true
-  # Optimize your resource pack by reducing its size without any quality loss.
-  optimization:
-    enable: false
-    # .png
-    texture:
-      enable: true
-      # Use Zopfli for PNG compression (very slow). More iterations = smaller files.
-      # In fact, setting the number of iterations between 4 and 8 is generally sufficient. Increasing it further rarely leads to significant optimization in size.
-      zopfli-iterations: 0 # 0 = disable
-      # If your image is special, for example, containing color pixels that need to be specifically recognized by a shader, the optimization might break it. You can add exclusions here.
-      exclude:
-        - assets/minecraft/textures/block/do_not_optimize
-    # .json / .mcmeta
-    json:
-      enable: true
-      exclude: []
-  # [Premium Exclusive]
-  # Protect your resource pack from being cracked by others
-  protection:
-    # Create a copy without any protection applied. This copy is entirely created using the standard Java library
-    # and maintains good compatibility with other programs (such as bedrock resource pack converters).
-    unprotected-copy: false
-    # Prevent thieves from extracting your resource pack. These options will crash their software.
-    # Some of these options may impact your resource pack size.
-    crash-tools:
-      method-1: false
-      method-2: false # This will increase the resource pack size by 64KB
-      method-3: false # This will increase the resource pack size by 0.67MB
-      method-4: false
-      method-5: true # This will reduce the resource pack size, also it prevents some software from extracting it
-      method-6: false # This will increase the resource pack size by a certain percentage
-      method-7: false
-    # Create incorrect crc data
-    incorrect-crc: false
-    # Spoof huge files
-    fake-file-size: false
-    # Escape the JSON to make it human-unreadable
-    escape-json: false
-    # Create fake folders to hide original files
-    fake-directory: false
-    # Break the texture file to prevent thieves from opening it
-    break-texture: false
-    # Obfuscate your resource pack to prevent thieves from restoring its original structure
-    obfuscation:
-      enable: false
-      seed: 0 # 0 = random seed
-      # Determines the length of obfuscated overlay directories
-      overlay:
-        length: 4  # 0 = disable
-      # Determines the number and length of obfuscated namespaces
-      namespace:
-        amount: 32  # 0 = disable
-        length: 2
-      # Determines the depth and length of the obfuscated path
-      path:
-        depth: 4
-        length: 2
-        # Prevent straightforward unzip
-        anti-unzip: false
-      # Assemble multiple textures into one giant texture atlas to make it more difficult for thieves to directly extract the individual textures.
-      # A larger atlas will result in slower generation speed, but it will also lead to a smaller resource pack size.
-      atlas:
-        prefix: atlas # The prefix of the folder where the generated atlas will be located
-        images-per-canvas: 256 # -1 = disable
-      # Sometimes, some vanilla files that have been overwritten might be mistakenly obfuscated
-      # Please add the ignored textures/models/sounds here if that happens
-      bypass-textures:
-        - minecraft:block/farmland  # bypass a specified resource location
-        - "@vanilla_textures"       # bypass vanilla textures
-      bypass-models:
-        - custom:item/do_not_obfuscate
-        - "@vanilla_models"         # bypass vanilla models
-      bypass-sounds:
-        - "@vanilla_sounds"         # bypass vanilla sounds
-      bypass-equipments: []
-  # This section controls how to send the resource pack to players
-  delivery:
-    # Send the resource pack on joining the server
-    send-on-join: true
-    kick-if-declined: true
-    kick-if-failed-to-apply: false
-    prompt: "<yellow>To fully experience our server,<newline>please accept our custom resource pack.</yellow>"
-    # Whether a verified player UUID is required to download the resource pack
-    strict-player-uuid-validation: true
-    # Upload the resource pack automatically on generation
-    # When disabled, you must manually trigger uploads using the /ce upload command
-    auto-upload: true
-    # Resend the resource pack to players upon successful upload
-    resend-on-upload: true
-    # The file to upload
-    file-to-upload: "./generated/resource_pack.zip"
-    # If you are hosting the resource pack by yourself, replace `localhost` with your server ip otherwise it would only work on your local pc
-    # If using BungeeCord or Velocity, consider using a proxy-side plugin to handle resource pack delivery.
-    # Read this page for more host types and argument explanations: https://xiao-momi.github.io/craft-engine-wiki/getting_start/set_up_host
-    hosting:
-      - type: "self"
-        ip: "localhost"
-        port: 8163
-        protocol: "http"
-        deny-non-minecraft-request: true
-        one-time-token: true
-        strict-validation: false
-        rate-limiting:
-          max-bandwidth-per-second: 5_000_000
-          min-download-speed-per-player: 50_000
-          qps-per-ip: 5/60
 
 item:
   # [Premium Exclusive]
@@ -220,6 +267,7 @@ item:
   # You can override this global setting per item using the
   # client-bound-model option.
   client-bound-model: true
+
   # When enabled (recommended), this option adds both custom-model-data and an item-model
   # to optimize client-side rendering if your resource pack supports 1.21.1 or below.
   always-use-item-model: true
@@ -229,11 +277,14 @@ item:
   # Even if your resource pack only supports version 1.21.2+, also generate overrides for older versions.
   # This may be helpful for some Bedrock resource pack converters working based on this.
   always-generate-model-overrides: false
+
   # Since Minecraft renders lore text in italics by default, you can
   # optionally prefix any lore with <!i> to remove the italic formatting.
   non-italic-tag: false
+
   # The default material to use as base item if not specified
   default-material: nether_brick
+
   # Defines the trigger condition for the item updater.
   #
   # Warning: This operation is performance-intensive. Enable only if needed.
@@ -244,18 +295,22 @@ item:
     click-in-inventory: false # this option won't work for players in creative mode
     drop: false
     pick-up: false
+
   # Decide the starting value for automatic custom model data assignment.
   custom-model-data-starting-value:
     default: 10000
     overrides:
       paper: 20000
+
   # Toggle whether to display the names of dropped items by default and configure the display format. This setting can be overridden for individual items.
   default-drop-display:
     enable: false
     format: "<arg:count>x <name>"
+
+  # When updating the server version, update existing items.
   data-fixer-upper:
     enable: true
-    fallback-version: 3463 # https://minecraft.wiki/w/Data_version#Java_Edition
+    fallback-version: server # https://minecraft.wiki/w/Data_version#Java_Edition
 
 equipment:
   # The sacrificed-vanilla-armor argument determines which vanilla armor gets completely removed (loses all its trims)
@@ -272,6 +327,7 @@ block:
   # This decides the amount of real blocks on serverside. You should only consider increasing this value when your server state is insufficient.
   # It is recommended to increase it by 1000 each time. This option requires a restart to apply.
   serverside-blocks: 2000
+
   # Enables the sound system, which prevents the client from hearing some non-custom block sounds and improves the client experience.
   sound-system:
     enable: true
@@ -279,6 +335,10 @@ block:
     process-cancelled-events:
       step: true
       break: true
+    # If set to non-empty, the plugin will save an empty sound
+    # If set to empty, the plugin will set an empty sound list, but at the cost of some warning logs appearing on the client side
+    silent-sound-path: "internal/silence.ogg"
+
   # Adventure mode requires correct tools to break custom blocks.
   # Vanilla clients cannot recognize custom block IDs (e.g., craftengine:custom_100).
   #
@@ -293,15 +353,27 @@ block:
   simplify-adventure-break-check: false
   # Similar to the option above, but designed for block placement
   simplify-adventure-place-check: false
+
   # Defines the return value of Bukkit Block.getMaterial() for custom blocks
   # If another plugin causes incompatibility due to its reliance on this method, try changing this option to a different vanilla block.
   # A restart is required to apply the changes.
   deceive-bukkit-material:
     default: bricks
     # The numbers here represent the internal real IDs of the blocks. You can find them through command /ce debug real-state-usage
-    overrides:
-      0: bricks
-      1~8: bricks
+    # overrides:
+    #  1000: chest
+    #  0~999: bricks
+    overrides: {}
+
+  # Inject new enum constants into Bukkit Material class.
+  # A restart is required to apply the changes.
+  inject-bukkit-material: false
+
+  # Required for any block with custom light levels
+  light-system:
+    enable: true
+    # Processes light updates asynchronously to reduce main thread load
+    async: true
 
 furniture:
   # Hide technical entities used for storing furniture metadata.
@@ -309,11 +381,18 @@ furniture:
   # - These are INVISIBLE entities used internally for tracking furniture states
   # - Recommended to keep enabled for better performance
   hide-base-entity: true
+
   # Determines the type of collision entity associated with the hitbox.
   # - interaction (best performance)
   # - boat (better compatibility with some anti-cheat plugin)
   # Requires a restart to apply
   collision-entity-type: interaction
+
+  # Enabling this will slightly increase memory usage to build a client-side lighting view.
+  # If you are not using any furniture light features, you can turn off this option.
+  # Requires a restart to apply.
+  light-system:
+    enable: true
 
 emoji:
   # Contexts where emoji parsing is enabled
@@ -322,23 +401,29 @@ emoji:
     book: true
     anvil: true
     sign: true
+
   # Prevent lag or oversized packet when processing emoji-heavy content
   max-emojis-per-parse: 16
 
+loot:
+  # Add supported plugins to this list to allow customizing mob drops from certain plugins. For example, MythicMobs.
+  entity-sources: []
+
 image:
   # Prevents players from spamming the chat or other systems by sending raw characters.
-  # Bypass permission : craftengine.filter.bypass.[anvil/book/chat/command/sign]
   illegal-characters-filter:
     anvil: true
     book: true
     chat: true
     command: true
     sign: true
+
   # Decide the starting value for automatic codepoint assignment.
   codepoint-starting-value:
     default: 19968
     overrides:
       minecraft:default: 57344  # 57344 ~ 63743 (U+E000 ~ U+F8FF)
+
   # Defines Unicode characters used for <shift:xxx> positioning
   # - Must match the font defined in resource packs
   # - Warning: Do not modify these values unless you fully understand the underlying text rendering mechanics.
@@ -394,11 +479,13 @@ network:
   # Disables the chat reporting.
   # Requires a restart to apply.
   disable-chat-report: false
-  # Only consider modifying the options below if you need to optimize Netty performance.
+
+  # Only consider modifying the options below if you need to optimize Netty performance
   #
   # Disable network operations related to items.
   # ⚠️ This option will disable client-bound-data/material and the functionality of replacing tags in item name and lore.
   disable-item-operations: false
+
   # Allow <image> <shift> <global> tags in third-party plugins via packet manipulation
   # ⚠️ Disable unused handlers to reduce netty thread workload
   intercept-packets:
@@ -418,10 +505,28 @@ network:
     item: true
     advancement: true   # Toast
     player-chat: true
+    dialog: true
+
+  # Settings related to communication with CraftEngineMod
+  mod-channel:
+    enable: true
+    requires-permission: false
+
+  # Encrypt the raw component information before sending it to the client. This option requires a restart to apply.
+  item-crypto:
+    enable: true
+    # Encryption algorithm for item data
+    # ID        |  Encryption Speed | Consistency |
+    # xor       |      Instant         Absolute   |
+    # aes-gcm   |       Fast            Random    |
+    # chacha20  |       Fast            Random    |
+    algorithm: xor # xor/aes-gcm/chacha20
+    key: ""  # empty = random key
 
 recipe:
   # Master switch for custom recipes
   enable: true
+
   # Manage Minecraft's built-in recipe behavior
   disable-vanilla-recipes:
     # ⚠️ WARNING: When true, DISABLES ALL VANILLA RECIPES
@@ -430,8 +535,18 @@ recipe:
     # Selective recipe disabling (safer alternative to 'all: true')
     # Example: ["minecraft:wooden_sword", "minecraft:stone_hoe"]
     list: []
-  # You can use items from other plugins by adding the supported them here
+
+  # Add ingredient sources from other plugins. This feature slightly reduces the efficiency of the recipe system.
+  # Unless necessary, avoid adding all available item sources.
+  # https://xiao-momi.github.io/craft-engine-wiki/configuration/recipe#compatibility-with-other-plugins
   ingredient-sources: []
+
+  # Whether to automatically unlock the corresponding recipe when the player obtains its required ingredients.
+  # This option can be set individually for each recipe to override the global setting.
+  unlock-on-ingredient-obtained: true
+
+  # Inject furnace block entities to support custom condition. This option requires a restart to apply.
+  inject-block-entities: true
 
 gui:
   browser:
@@ -491,16 +606,23 @@ gui:
       brewing:
         title: "<white><shift:-11><image:internal:brewing_recipe>"
 
-light-system:
-  # Required for custom light-emitting blocks
-  enable: true
-  # Async light update
-  async-update: true
-
 chunk-system:
-  # With cache system, those frequently load/unload chunks would consume fewer resources on serialization
-  # Enabling this option will increase memory consumption to a certain extent
+  # Storage format for chunk data persistence
+  #
+  # mca: Minecraft Anvil format (Independent storage ensures that the custom block will not be corrupted when loaded in other scenarios)
+  # pdc: Persistent Data Container provided by Bukkit (Faster, but can only run on Bukkit and its downstream platforms)
+  # none: No persistent storage (In-memory only)
+  #
+  # The SlimeWorld will automatically use the Slime format for storage without requiring any configuration.
+  #
+  # To migrate world storage, first change the storage type in the configuration.
+  # Then run the command: /ce feature migrate-world-storage [world] [previous_type]
+  # Once the migration is complete, restart the server.
+  #
+  storage-type: mca
+  # Caches serialized chunk data to reduce I/O overhead for frequently loaded/unloaded chunks
   cache-system: true
+  # Compression algorithm for chunk data
   # 1 = NONE      |  Compression Speed | Decompress Speed | Compression Ratio | Memory Usage   |
   # 2 = DEFLATE   |     Medium-Slow           Medium          Moderate              Low        |
   # 3 = GZIP      |     Medium-Slow           Medium          Moderate              Low        |
@@ -509,44 +631,25 @@ chunk-system:
   compression-method: 4
   # Settings for injection
   injection:
-    # Requires a restart to apply.
-    # - section: Injects the LevelChunkSection (Use this if you have installed both FastAsyncWorldEdit and Axiom)
-    # - palette: Injects the PalettedContainer
-    target: palette
-    # Enables faster injection method
-    # Note: May not work with certain server forks that alter chunk class structure (In most cases it won't conflict)
-    use-fast-method: true
-  # Auto-convert custom blocks -> vanilla blocks when unloading chunks
-  #
-  # - When ENABLED (true):
-  #   - Prevents custom blocks becoming AIR if plugin is uninstalled
-  #   - Ensures world portability for vanilla environments
-  #
-  # - When DISABLED (false):
-  #   ⚠️ IRREVERSIBLE DATA LOSS WARNING:
-  #   - Custom blocks permanently turn to AIR without plugin
-  #   - Recommended for temporary/test worlds only
+    # Requires server restart to take effect
+    # - section: Injects the LevelChunkSection (Better compatibility with other plugins)
+    # - palette: Injects the PalettedContainer (Performance is a bit better than section, might create slight bugs when using FAWE and Axiom)
+    target: section
+  # On chunk unload: Convert custom blocks → vanilla blocks
+  # Prevents custom blocks from becoming AIR when plugin is removed
   restore-vanilla-blocks-on-chunk-unload: true
-  # Convert vanilla blocks -> custom blocks when loading chunks
-  #
-  # - Performance Mode (false):
-  #   ⚠️ REQUIRED CONDITIONS:
-  #     1. Must disable restore-vanilla-blocks-on-chunk-unload
-  #     2. Accept risk of custom block data loss on plugin removal
-  #
-  # - Compatibility Mode (true):
-  #   - Full state recovery with minor performance cost
+  # On chunk load: Convert vanilla blocks → custom blocks
+  # Full state recovery with minimal performance impact
   restore-custom-blocks-on-chunk-load: true
-  # When you edit a map locally using CraftEngine fabric mod, the custom block data is not immediately synchronized with the
-  # server's CraftEngine internal data. Enabling this option will synchronize the data when the chunk is loaded.
-  # (This option only slightly impacts performance, which has been fully optimized, so you don't need to worry too much.)
+  # Synchronizes custom block data edited via CraftEngine Fabric mod with server
+  # Resolves desynchronization between local edits and server-side state
   sync-custom-blocks-on-chunk-load: false
-  # This system processes any invalid block when a chunk is loaded.
+  # Invalid block remediation on chunk load
   process-invalid-blocks:
     enable: false
     remove: []
     convert: {}
-  # This system processes any invalid furniture when a chunk is loaded.
+  # Invalid furniture remediation on chunk load
   process-invalid-furniture:
     enable: false
     remove: []
@@ -554,34 +657,43 @@ chunk-system:
 
 # [Premium Exclusive]
 client-optimization:
-  # Requires a restart to fully apply.
+  # Requires server restart to fully apply
   entity-culling:
     enable: true
-    # Using server-side ray tracing algorithms to hide block entities/furniture and reduce client-side rendering pressure.
+    # Server-side ray tracing to cull block entities/furniture from client view
+    # Reduces client rendering load by hiding off-screen/non-visible elements
     ray-tracing: true
-    # Cull entities based on distance
-    view-distance: 64 # -1 = no limit
-    # Determining the number of threads to execute these raytrace operations
+    # Maximum entity render distance (in blocks)
+    # Entities beyond this distance will be hidden from client
+    # -1 = unlimited (disabled)
+    view-distance: 64
+    # Number of threads allocated for ray tracing operations
+    # Higher values may improve performance on multi-core systems
     threads: 1
-    # Limit the maximum number of entities with visibility changes per tick for one player
-    # This helps mitigate client-side performance impacts and server-side bandwidth spikes caused by a large number of entities appearing.
+    # Rate limiting for entity visibility updates
+    # Prevents client FPS drops and network spikes when many entities appear simultaneously
     rate-limiting:
       enable: true
+      # Maximum number of entities that can change visibility state per tick per player
+      # Larger values = more responsive but higher resource usage
       bucket-size: 1000
+      # Number of visibility changes replenished per tick
+      # Controls how quickly the bucket refills
       restore-per-tick: 25
 
 misc:
-  # Filter configuration phase player disconnection logs
+  # Suppresses connection logs during server configuration phase
   filter-configuration-phase-disconnect: false
-  # This option delays CraftEngine's config reading until after all plugins start.
-  # Don't disable this setting unless you need datapack-generated spawn chunks.
+  # Defers CraftEngine configuration loading until after all plugins have initialized
+  # ENABLED (true) : Recommended - Ensures plugin interoperability
+  # DISABLED (false): Only disable if you require datapack-generated spawn chunks
   delay-configuration-load: true
-  # The registry of packetevents is sometimes inaccurate. This option determines whether
-  # to enable injection to resolve certain issues with plugins that rely on packetevents.
-  # This option may become outdated at any time. If errors occur after enabling it, please report them promptly.
-  inject-packetevents: false
+  # Loading configuration files using multiple threads.
+  multi-threaded-configuration-load: true
+  # Forces PacketEvents registry injection to resolve plugin compatibility issues
+  # If errors occur after enabling, please report immediately
+  inject-packetevents: true
 
-# Enables or disables debug mode
 debug:
   common: false
   furniture: false
@@ -589,5 +701,7 @@ debug:
   resource-pack: false
   block: false
   entity-culling: false
+  chunk: false
   packet: false
   ignored-packets: []
+  print-stack-trace: false

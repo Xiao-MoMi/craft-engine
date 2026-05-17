@@ -1,13 +1,11 @@
 package net.momirealms.craftengine.bukkit.util;
 
 import io.papermc.paper.entity.Shearable;
-import net.momirealms.craftengine.bukkit.api.BukkitAdaptors;
+import net.momirealms.craftengine.bukkit.api.BukkitAdaptor;
 import net.momirealms.craftengine.bukkit.item.BukkitItemManager;
 import net.momirealms.craftengine.bukkit.item.behavior.BlockItemBehavior;
 import net.momirealms.craftengine.bukkit.item.behavior.FlintAndSteelItemBehavior;
 import net.momirealms.craftengine.bukkit.item.recipe.BukkitRecipeManager;
-import net.momirealms.craftengine.bukkit.nms.FastNMS;
-import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.CoreReflections;
 import net.momirealms.craftengine.bukkit.world.BukkitExistingBlock;
 import net.momirealms.craftengine.bukkit.world.BukkitWorld;
 import net.momirealms.craftengine.core.block.BlockKeys;
@@ -26,6 +24,13 @@ import net.momirealms.craftengine.core.util.*;
 import net.momirealms.craftengine.core.world.BlockHitResult;
 import net.momirealms.craftengine.core.world.BlockPos;
 import net.momirealms.craftengine.core.world.context.BlockPlaceContext;
+import net.momirealms.craftengine.proxy.minecraft.world.InteractionHandProxy;
+import net.momirealms.craftengine.proxy.minecraft.world.item.BlockItemProxy;
+import net.momirealms.craftengine.proxy.minecraft.world.item.ItemStackProxy;
+import net.momirealms.craftengine.proxy.minecraft.world.item.context.BlockPlaceContextProxy;
+import net.momirealms.craftengine.proxy.minecraft.world.level.block.BlockProxy;
+import net.momirealms.craftengine.proxy.minecraft.world.level.block.state.BlockBehaviourProxy;
+import net.momirealms.craftengine.proxy.minecraft.world.phys.BlockHitResultProxy;
 import org.bukkit.DyeColor;
 import org.bukkit.GameMode;
 import org.bukkit.Registry;
@@ -39,18 +44,20 @@ import org.bukkit.block.data.Directional;
 import org.bukkit.block.data.Levelled;
 import org.bukkit.block.data.Lightable;
 import org.bukkit.block.data.type.*;
-import org.bukkit.block.data.type.Observer;
 import org.bukkit.entity.*;
 import org.bukkit.inventory.EquipmentSlot;
 import org.bukkit.inventory.ItemStack;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.HashMap;
+import java.util.Locale;
+import java.util.Map;
+import java.util.Optional;
 
 public final class InteractUtils {
-    private static final Map<Key, QuadFunction<Player, Item<ItemStack>, BlockData, BlockHitResult, Boolean>> INTERACTIONS = new HashMap<>();
-    private static final Map<Key, QuadFunction<Player, Item<ItemStack>, BlockData, BlockHitResult, Boolean>> CAN_PLACE = new HashMap<>();
-    private static final Map<Key, TriFunction<Player, Entity, @Nullable Item<ItemStack>, Boolean>> ENTITY_INTERACTIONS = new HashMap<>();
+    private static final Map<Key, QuadFunction<Player, Item, BlockData, BlockHitResult, Boolean>> INTERACTIONS = new HashMap<>();
+    private static final Map<Key, QuadFunction<Player, Item, BlockData, BlockHitResult, Boolean>> CAN_PLACE = new HashMap<>();
+    private static final Map<Key, TriFunction<Player, Entity, @Nullable Item, Boolean>> ENTITY_INTERACTIONS = new HashMap<>();
 
     private static final Key NOTE_BLOCK_TOP_INSTRUMENTS = Key.of("minecraft:noteblock_top_instruments");
     private static final Key PARROT_POISONOUS_FOOD = Key.of("minecraft:parrot_poisonous_food");
@@ -79,22 +86,22 @@ public final class InteractUtils {
         registerInteraction(BlockKeys.BLAST_FURNACE, (player, item, blockState, result) -> true);
         registerInteraction(BlockKeys.CAMPFIRE, (player, item, blockState, result) -> {
             if (!Config.enableRecipeSystem()) return false;
-            return BukkitRecipeManager.instance().recipeByInput(RecipeType.CAMPFIRE_COOKING, new SingleItemInput<>(UniqueIdItem.of(item))) != null;
+            return BukkitRecipeManager.instance().recipeByInput(RecipeType.CAMPFIRE_COOKING, new SingleItemInput(UniqueIdItem.of(item))) != null;
         });
         registerInteraction(BlockKeys.SOUL_CAMPFIRE, (player, item, blockState, result) -> {
             if (!Config.enableRecipeSystem()) return false;
-            return BukkitRecipeManager.instance().recipeByInput(RecipeType.CAMPFIRE_COOKING, new SingleItemInput<>(UniqueIdItem.of(item))) != null;
+            return BukkitRecipeManager.instance().recipeByInput(RecipeType.CAMPFIRE_COOKING, new SingleItemInput(UniqueIdItem.of(item))) != null;
         });
         registerInteraction(BlockKeys.ANVIL, (player, item, blockState, result) -> true);
         registerInteraction(BlockKeys.CHIPPED_ANVIL, (player, item, blockState, result) -> true);
         registerInteraction(BlockKeys.DAMAGED_ANVIL, (player, item, blockState, result) -> true);
         registerInteraction(BlockKeys.COMPOSTER, (player, item, blockState, result) -> {
-            if (item.getItem().getType().isCompostable()) return true;
+            if (ItemStackUtils.getBukkitStack(item).getType().isCompostable()) return true;
             return blockState instanceof Levelled levelled && levelled.getLevel() == levelled.getMaximumLevel();
         });
         registerInteraction(BlockKeys.JUKEBOX, (player, item, blockState, result) -> {
             if (blockState instanceof Jukebox jukebox && jukebox.hasRecord()) return true;
-            return item.getItem().getType().isRecord();
+            return ItemStackUtils.getBukkitStack(item).getType().isRecord();
         });
         registerInteraction(BlockKeys.ENCHANTING_TABLE, (player, item, blockState, result) -> true);
         registerInteraction(BlockKeys.BREWING_STAND, (player, item, blockState, result) -> true);
@@ -196,7 +203,7 @@ public final class InteractUtils {
                         && redstoneWire.getFace(BlockFace.WEST).equals(RedstoneWire.Connection.NONE);
                 if (isCross || isDot) {
                     BlockPos blockPos = result.blockPos();
-                    BukkitWorld bukkitWorld = BukkitAdaptors.adapt(player.getWorld());
+                    BukkitWorld bukkitWorld = BukkitAdaptor.adapt(player.getWorld());
                     World world = bukkitWorld.platformWorld();
 
                     Direction[] directions = {Direction.EAST, Direction.WEST, Direction.SOUTH, Direction.NORTH};
@@ -236,31 +243,16 @@ public final class InteractUtils {
         registerInteraction(BlockKeys.CRAFTER, (player, item, blockState, result) -> true);
         registerInteraction(BlockKeys.HOPPER, (player, item, blockState, result) -> true);
         registerInteraction(BlockKeys.TNT, (player, item, blockState, result) -> {
-            Optional<List<ItemBehavior>> behaviors = item.getItemBehavior();
-            if (behaviors.isPresent()) {
-                for (ItemBehavior behavior : behaviors.get()) {
-                    if (behavior instanceof FlintAndSteelItemBehavior) return true;
-                }
-            }
-            return false;
+            Optional<ItemBehavior> behavior = item.getBehavior();
+            return behavior.filter(itemBehavior -> itemBehavior.getFirst(FlintAndSteelItemBehavior.class) != null).isPresent();
         });
         registerInteraction(BlockKeys.REDSTONE_ORE, (player, item, blockState, result) -> {
-            Optional<List<ItemBehavior>> behaviors = item.getItemBehavior();
-            if (behaviors.isPresent()) {
-                for (ItemBehavior behavior : behaviors.get()) {
-                    if (behavior instanceof BlockItemBehavior) return false;
-                }
-            }
-            return true;
+            Optional<ItemBehavior> behavior = item.getBehavior();
+            return behavior.map(itemBehavior -> itemBehavior.getFirst(BlockItemBehavior.class) == null).orElse(true);
         });
         registerInteraction(BlockKeys.DEEPSLATE_REDSTONE_ORE, (player, item, blockState, result) -> {
-            Optional<List<ItemBehavior>> behaviors = item.getItemBehavior();
-            if (behaviors.isPresent()) {
-                for (ItemBehavior behavior : behaviors.get()) {
-                    if (behavior instanceof BlockItemBehavior) return false;
-                }
-            }
-            return true;
+            Optional<ItemBehavior> behavior = item.getBehavior();
+            return behavior.map(itemBehavior -> itemBehavior.getFirst(BlockItemBehavior.class) == null).orElse(true);
         });
         // 管理员用品
         registerInteraction(BlockKeys.COMMAND_BLOCK, (player, item, blockState, result) -> player.isOp() && player.getGameMode() == GameMode.CREATIVE);
@@ -828,13 +820,8 @@ public final class InteractUtils {
         });
 
         registerEntityInteraction(EntityTypeKeys.CREEPER, (player, entity, item) -> {
-            Optional<List<ItemBehavior>> behaviors = item.getItemBehavior();
-            if (behaviors.isPresent()) {
-                for (ItemBehavior behavior : behaviors.get()) {
-                    if (behavior instanceof FlintAndSteelItemBehavior) return true;
-                }
-            }
-            return false;
+            Optional<ItemBehavior> behaviors = item.getBehavior();
+            return behaviors.filter(itemBehavior -> itemBehavior.getFirst(FlintAndSteelItemBehavior.class) != null).isPresent();
         });
         registerEntityInteraction(EntityTypeKeys.PIGLIN, (player, entity, item) -> {
             Key id = item.vanillaId();
@@ -960,28 +947,28 @@ public final class InteractUtils {
         registerEntityInteraction(EntityTypeKeys.INTERACTION, (player, entity, item) -> true);
     }
 
-    private static void registerInteraction(Key key, QuadFunction<org.bukkit.entity.Player, Item<ItemStack>, BlockData, BlockHitResult, Boolean> function) {
+    private static void registerInteraction(Key key, QuadFunction<org.bukkit.entity.Player, Item, BlockData, BlockHitResult, Boolean> function) {
         var previous = INTERACTIONS.put(key, function);
         if (previous != null) {
             CraftEngine.instance().logger().warn("Duplicated interaction check: " + key);
         }
     }
 
-    private static void registerCanPlace(Key key, QuadFunction<org.bukkit.entity.Player, Item<ItemStack>, BlockData, BlockHitResult, Boolean> function) {
+    private static void registerCanPlace(Key key, QuadFunction<org.bukkit.entity.Player, Item, BlockData, BlockHitResult, Boolean> function) {
         var previous = CAN_PLACE.put(key, function);
         if (previous != null) {
             CraftEngine.instance().logger().warn("Duplicated can place check: " + key);
         }
     }
 
-    private static void registerEntityInteraction(Key key, TriFunction<Player, Entity, Item<ItemStack>, Boolean> function) {
+    private static void registerEntityInteraction(Key key, TriFunction<Player, Entity, Item, Boolean> function) {
         var previous = ENTITY_INTERACTIONS.put(key, function);
         if (previous != null) {
             CraftEngine.instance().logger().warn("Duplicated entity interaction check: " + key);
         }
     }
 
-    public static boolean isInteractable(Player player, BlockData state, BlockHitResult hit, @Nullable Item<ItemStack> item) {
+    public static boolean isInteractable(Player player, BlockData state, BlockHitResult hit, @Nullable Item item) {
         Key blockType = BlockStateUtils.getBlockOwnerIdFromData(state);
         if (INTERACTIONS.containsKey(blockType)) {
             return INTERACTIONS.get(blockType).apply(player, item, state, hit);
@@ -990,8 +977,7 @@ public final class InteractUtils {
     }
 
     // 这个方法用于解决玩家使用仙人掌放在基于仙人掌的方块上，物品暂时消失的类似问题，但是无法彻底解决
-    // todo 需要通过创建代理Level来实现getBlockState的方法拦截，从而实现模拟客户端测的方块状态更新，这个过程可能也需要创建代理Chunk和代理Section
-    public static boolean canPlaceVisualBlock(Player player, BlockData state, BlockHitResult hit, @Nullable Item<ItemStack> item) {
+    public static boolean canPlaceVisualBlock(Player player, BlockData state, BlockHitResult hit, @Nullable Item item) {
         if (item == null) return false;
         Key blockType = BlockStateUtils.getBlockOwnerIdFromData(state);
         if (CAN_PLACE.containsKey(blockType)) {
@@ -1000,8 +986,8 @@ public final class InteractUtils {
         return false;
     }
 
-    public static boolean isEntityInteractable(Player player, Entity entity, @Nullable Item<ItemStack> item) {
-        TriFunction<Player, Entity, Item<ItemStack>, Boolean> func = ENTITY_INTERACTIONS.get(EntityUtils.getEntityType(entity));
+    public static boolean isEntityInteractable(Player player, Entity entity, @Nullable Item item) {
+        TriFunction<Player, Entity, Item, Boolean> func = ENTITY_INTERACTIONS.get(EntityUtils.getEntityType(entity));
         return func != null && func.apply(player, entity, item);
     }
 
@@ -1010,20 +996,20 @@ public final class InteractUtils {
     }
 
 
-    private static boolean isFood(Entity entity, Item<ItemStack> item) {
+    private static boolean isFood(Entity entity, Item item) {
         String entityType = EntityUtils.getEntityType(entity).value();
         return isFood(entityType + "_food", item);
     }
 
-    private static boolean isFood(String food, Item<ItemStack> item) {
+    private static boolean isFood(String food, Item item) {
         return item.hasItemTag(Key.of(food));
     }
 
-    private static boolean canBeFeed(Entity entity, Item<ItemStack> item) {
+    private static boolean canBeFeed(Entity entity, Item item) {
         return canBeFeed(entity, item, null);
     }
 
-    private static boolean canBeFeed(Entity entity, Item<ItemStack> item, String food) {
+    private static boolean canBeFeed(Entity entity, Item item, String food) {
         boolean isFood = food != null ? isFood(food, item) : isFood(entity, item);
         if (!isFood) return false;
         if (entity instanceof Tameable) {
@@ -1077,20 +1063,21 @@ public final class InteractUtils {
         return entity instanceof Steerable steerable && steerable.hasSaddle() && !player.isSneaking();
     }
 
-    private static boolean canBeSheared(Entity entity, Item<ItemStack> item) {
+    private static boolean canBeSheared(Entity entity, Item item) {
         Key id = item.vanillaId();
         return entity instanceof Shearable shearable && shearable.readyToBeSheared() && ItemKeys.SHEARS.equals(id);
     }
 
     public static boolean canPlaceBlock(BlockPlaceContext context) {
-        Object item = FastNMS.INSTANCE.method$ItemStack$getItem(context.getItem().getLiteralObject());
-        Object block = FastNMS.INSTANCE.method$BlockItem$getBlock(item);
-        Object stateToPlace = FastNMS.INSTANCE.method$Block$getStateForPlacement(block, toNMSBlockPlaceContext(context));
-        return FastNMS.INSTANCE.method$BlockStateBase$canSurvive(stateToPlace, context.getLevel().serverWorld(), LocationUtils.toBlockPos(context.getClickedPos()));
+        Object item = ItemStackProxy.INSTANCE.getItem(context.getItem().minecraftItem());
+        Object block = BlockItemProxy.INSTANCE.getBlock(item);
+        Object stateToPlace = BlockProxy.INSTANCE.getStateForPlacement(block, toNMSBlockPlaceContext(context));
+        if (stateToPlace == null) return false;
+        return BlockBehaviourProxy.BlockStateBaseProxy.INSTANCE.canSurvive(stateToPlace, context.getLevel().minecraftWorld(), LocationUtils.toBlockPos(context.getClickedPos()));
     }
 
-    private static Object toNMSHitResult(BlockHitResult result) {
-        return FastNMS.INSTANCE.constructor$BlockHitResult(
+    public static Object toNMSHitResult(BlockHitResult result) {
+        return BlockHitResultProxy.INSTANCE.newInstance(
                 LocationUtils.toVec(result.location()),
                 DirectionUtils.toNMSDirection(result.direction()),
                 LocationUtils.toBlockPos(result.blockPos()),
@@ -1098,12 +1085,12 @@ public final class InteractUtils {
         );
     }
 
-    private static Object toNMSBlockPlaceContext(BlockPlaceContext context) {
-        return FastNMS.INSTANCE.constructor$BlockPlaceContext(
-                context.getLevel().serverWorld(),
+    public static Object toNMSBlockPlaceContext(BlockPlaceContext context) {
+        return BlockPlaceContextProxy.INSTANCE.newInstance(
+                context.getLevel().minecraftWorld(),
                 Optional.ofNullable(context.getPlayer()).map(net.momirealms.craftengine.core.entity.player.Player::serverPlayer).orElse(null),
-                context.getHand() == InteractionHand.MAIN_HAND ? CoreReflections.instance$InteractionHand$MAIN_HAND : CoreReflections.instance$InteractionHand$OFF_HAND,
-                context.getItem().getLiteralObject(),
+                context.getHand() == InteractionHand.MAIN_HAND ? InteractionHandProxy.MAIN_HAND : InteractionHandProxy.OFF_HAND,
+                context.getItem().minecraftItem(),
                 toNMSHitResult(context.getHitResult())
         );
     }

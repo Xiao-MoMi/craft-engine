@@ -8,7 +8,7 @@ import java.util.List;
 import java.util.function.Function;
 import java.util.function.Predicate;
 
-public class SingularPalette<T> implements Palette<T> {
+public final class SingularPalette<T> implements Palette<T> {
     private final IndexedIterable<T> idList;
     @Nullable
     private T entry;

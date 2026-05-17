@@ -7,7 +7,7 @@ import org.apache.logging.log4j.core.Logger;
 import org.apache.logging.log4j.core.filter.AbstractFilter;
 import org.apache.logging.log4j.message.Message;
 
-public class LogFilter extends AbstractFilter implements Log4JFilter {
+public final class LogFilter extends AbstractFilter implements Log4JFilter {
 
     private static Result validateMessage(Message message) {
         if (message == null) {

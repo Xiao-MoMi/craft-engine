@@ -1,5 +1,8 @@
 package net.momirealms.craftengine.bukkit.plugin.injector;
 
+import com.github.benmanes.caffeine.cache.Cache;
+import com.github.benmanes.caffeine.cache.Caffeine;
+import com.github.benmanes.caffeine.cache.Scheduler;
 import com.google.common.collect.ImmutableMap;
 import com.mojang.serialization.MapCodec;
 import it.unimi.dsi.fastutil.objects.Reference2ObjectArrayMap;
@@ -11,98 +14,120 @@ import net.bytebuddy.dynamic.scaffold.subclass.ConstructorStrategy;
 import net.bytebuddy.implementation.FieldAccessor;
 import net.bytebuddy.implementation.MethodDelegation;
 import net.bytebuddy.implementation.bind.annotation.AllArguments;
+import net.bytebuddy.implementation.bind.annotation.Argument;
 import net.bytebuddy.implementation.bind.annotation.RuntimeType;
 import net.bytebuddy.implementation.bind.annotation.This;
 import net.bytebuddy.matcher.ElementMatchers;
-import net.momirealms.craftengine.bukkit.api.BukkitAdaptors;
+import net.momirealms.craftengine.bukkit.api.BukkitAdaptor;
 import net.momirealms.craftengine.bukkit.item.BukkitItemManager;
-import net.momirealms.craftengine.bukkit.nms.FastNMS;
-import net.momirealms.craftengine.bukkit.plugin.BukkitCraftEngine;
-import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.CoreReflections;
-import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.MBlockStateProperties;
-import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.MLootContextParams;
+import net.momirealms.craftengine.bukkit.loot.DatapackLootTable;
 import net.momirealms.craftengine.bukkit.plugin.user.BukkitServerPlayer;
-import net.momirealms.craftengine.core.block.BlockSettings;
+import net.momirealms.craftengine.bukkit.util.ItemStackUtils;
 import net.momirealms.craftengine.core.block.DelegatingBlockState;
 import net.momirealms.craftengine.core.block.ImmutableBlockState;
-import net.momirealms.craftengine.core.block.properties.Property;
+import net.momirealms.craftengine.core.block.property.Property;
+import net.momirealms.craftengine.core.block.setting.BlockSettings;
 import net.momirealms.craftengine.core.item.Item;
+import net.momirealms.craftengine.core.loot.Loot;
+import net.momirealms.craftengine.core.loot.LootTableReference;
 import net.momirealms.craftengine.core.plugin.context.ContextHolder;
 import net.momirealms.craftengine.core.plugin.context.parameter.DirectContextParameters;
-import net.momirealms.craftengine.core.util.ReflectionUtils;
+import net.momirealms.craftengine.core.util.Pair;
 import net.momirealms.craftengine.core.util.VersionHelper;
 import net.momirealms.craftengine.core.world.World;
 import net.momirealms.craftengine.core.world.WorldPosition;
-import org.bukkit.inventory.ItemStack;
+import net.momirealms.craftengine.proxy.minecraft.server.level.ServerPlayerProxy;
+import net.momirealms.craftengine.proxy.minecraft.world.entity.player.PlayerProxy;
+import net.momirealms.craftengine.proxy.minecraft.world.item.ItemStackProxy;
+import net.momirealms.craftengine.proxy.minecraft.world.level.LevelProxy;
+import net.momirealms.craftengine.proxy.minecraft.world.level.block.BlockProxy;
+import net.momirealms.craftengine.proxy.minecraft.world.level.block.state.BlockStateProxy;
+import net.momirealms.craftengine.proxy.minecraft.world.level.block.state.StateDefinitionProxy;
+import net.momirealms.craftengine.proxy.minecraft.world.level.block.state.properties.PropertyProxy;
+import net.momirealms.craftengine.proxy.minecraft.world.level.storage.loot.LootParamsProxy;
+import net.momirealms.craftengine.proxy.minecraft.world.level.storage.loot.parameters.LootContextParamSetsProxy;
+import net.momirealms.craftengine.proxy.minecraft.world.level.storage.loot.parameters.LootContextParamsProxy;
+import net.momirealms.craftengine.proxy.minecraft.world.phys.Vec3Proxy;
+import net.momirealms.sparrow.reflection.clazz.SparrowClass;
+import net.momirealms.sparrow.reflection.constructor.SConstructor3;
+import net.momirealms.sparrow.reflection.constructor.matcher.ConstructorMatcher;
 
-import java.lang.invoke.MethodHandle;
-import java.lang.invoke.MethodHandles;
-import java.lang.invoke.MethodType;
+import java.time.Duration;
+import java.util.Collection;
 import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 public final class BlockStateGenerator {
-    private static MethodHandle constructor$CraftEngineBlockState;
+    private static SConstructor3 constructor$CraftEngineBlockState;
     public static Object instance$StateDefinition$Factory;
+    private static final Cache<Pair<Property<?>, Object>, Boolean> COMPATIBLE_PROPERTIES = Caffeine.newBuilder()
+            .scheduler(Scheduler.systemScheduler())
+            .expireAfterAccess(Duration.ofMinutes(10))
+            .build();
 
-    public static void init() throws ReflectiveOperationException {
+    public static void init() {
         ByteBuddy byteBuddy = new ByteBuddy(ClassFileVersion.JAVA_V17);
         String packageWithName = BlockStateGenerator.class.getName();
         String generatedStateClassName = packageWithName.substring(0, packageWithName.lastIndexOf('.')) + ".CraftEngineBlockState";
         DynamicType.Builder<?> stateBuilder = byteBuddy
-                .subclass(CoreReflections.clazz$BlockState, ConstructorStrategy.Default.IMITATE_SUPER_CLASS_OPENING)
+                .subclass(BlockStateProxy.CLASS, ConstructorStrategy.Default.IMITATE_SUPER_CLASS_OPENING)
                 .name(generatedStateClassName)
                 .defineField("immutableBlockState", ImmutableBlockState.class, Visibility.PUBLIC)
+                .defineField("blockOwner", Object.class, Visibility.PUBLIC)
                 .implement(DelegatingBlockState.class)
                 .method(ElementMatchers.named("blockState"))
                 .intercept(FieldAccessor.ofField("immutableBlockState"))
                 .method(ElementMatchers.named("setBlockState"))
                 .intercept(FieldAccessor.ofField("immutableBlockState"))
-                .method(ElementMatchers.is(CoreReflections.method$BlockStateBase$getDrops))
+                .method(ElementMatchers.named("blockOwner"))
+                .intercept(FieldAccessor.ofField("blockOwner"))
+                .method(ElementMatchers.named("setBlockOwner"))
+                .intercept(FieldAccessor.ofField("blockOwner"))
+                .method(ElementMatchers.is(BlockReflections.method$BlockStateBase$getDrops))
                 .intercept(MethodDelegation.to(GetDropsInterceptor.INSTANCE))
-                .method(ElementMatchers.is(CoreReflections.method$StateHolder$hasProperty))
+                .method(ElementMatchers.is(BlockReflections.method$StateHolder$hasProperty))
                 .intercept(MethodDelegation.to(HasPropertyInterceptor.INSTANCE))
-                .method(ElementMatchers.is(CoreReflections.method$StateHolder$getValue))
+                .method(ElementMatchers.is(BlockReflections.method$StateHolder$getValue))
                 .intercept(MethodDelegation.to(GetPropertyValueInterceptor.INSTANCE))
-                .method(ElementMatchers.is(CoreReflections.method$StateHolder$setValue))
+                .method(ElementMatchers.is(BlockReflections.method$StateHolder$setValue))
                 .intercept(MethodDelegation.to(SetPropertyValueInterceptor.INSTANCE))
-                .method(ElementMatchers.is(CoreReflections.method$BlockStateBase$isBlock))
+                .method(ElementMatchers.is(BlockReflections.method$BlockStateBase$is))
                 .intercept(MethodDelegation.to(IsBlockInterceptor.INSTANCE));
-        Class<?> clazz$CraftEngineBlock = stateBuilder.make().load(BlockStateGenerator.class.getClassLoader()).getLoaded();
-        constructor$CraftEngineBlockState = VersionHelper.isOrAbove1_20_5() ?
-                MethodHandles.publicLookup().in(clazz$CraftEngineBlock)
-                        .findConstructor(clazz$CraftEngineBlock, MethodType.methodType(void.class, CoreReflections.clazz$Block, Reference2ObjectArrayMap.class, MapCodec.class))
-                        .asType(MethodType.methodType(CoreReflections.clazz$BlockState, CoreReflections.clazz$Block, Reference2ObjectArrayMap.class, MapCodec.class)) :
-                MethodHandles.publicLookup().in(clazz$CraftEngineBlock)
-                        .findConstructor(clazz$CraftEngineBlock, MethodType.methodType(void.class, CoreReflections.clazz$Block, ImmutableMap.class, MapCodec.class))
-                        .asType(MethodType.methodType(CoreReflections.clazz$BlockState, CoreReflections.clazz$Block, ImmutableMap.class, MapCodec.class));
+        SparrowClass<?> clazz$CraftEngineBlock = SparrowClass.of(stateBuilder.make().load(BlockStateGenerator.class.getClassLoader()).getLoaded());
+
+        constructor$CraftEngineBlockState = clazz$CraftEngineBlock.getSparrowConstructor(ConstructorMatcher.takeArguments(
+                BlockProxy.CLASS,
+                VersionHelper.isOrAbove26_1 ? PropertyProxy.CLASS.arrayType() : VersionHelper.isOrAbove1_20_5 ? Reference2ObjectArrayMap.class : ImmutableMap.class,
+                VersionHelper.isOrAbove26_1 ? Comparable.class.arrayType() : MapCodec.class
+        )).asm$3();
 
         String generatedFactoryClassName = packageWithName.substring(0, packageWithName.lastIndexOf('.')) + ".CraftEngineStateFactory";
         DynamicType.Builder<?> factoryBuilder = byteBuddy
                 .subclass(Object.class, ConstructorStrategy.Default.IMITATE_SUPER_CLASS_OPENING)
                 .name(generatedFactoryClassName)
-                .implement(CoreReflections.clazz$StateDefinition$Factory)
+                .implement(StateDefinitionProxy.FactoryProxy.CLASS)
                 .method(ElementMatchers.named("create"))
                 .intercept(MethodDelegation.to(CreateStateInterceptor.INSTANCE));
 
-        Class<?> clazz$Factory = factoryBuilder.make().load(BlockStateGenerator.class.getClassLoader()).getLoaded();
-        instance$StateDefinition$Factory = ReflectionUtils.getTheOnlyConstructor(clazz$Factory).newInstance();
+        SparrowClass<?> clazz$Factory = SparrowClass.of(factoryBuilder.make().load(BlockStateGenerator.class.getClassLoader()).getLoaded());
+        instance$StateDefinition$Factory = clazz$Factory.getSparrowConstructor(ConstructorMatcher.any()).asm$0().newInstance();
     }
 
     public static class GetDropsInterceptor {
         public static final GetDropsInterceptor INSTANCE = new GetDropsInterceptor();
 
         @RuntimeType
-        public Object intercept(@This Object thisObj, @AllArguments Object[] args) {
+        public Object intercept(@This Object thisObj, @Argument(value = 0) Object builder) {
             ImmutableBlockState state = ((DelegatingBlockState) thisObj).blockState();
             if (state == null) return List.of();
-            Object builder = args[0];
-            Object vec3 = FastNMS.INSTANCE.method$LootParams$Builder$getOptionalParameter(builder, MLootContextParams.ORIGIN);
+            Object vec3 = LootParamsProxy.BuilderProxy.INSTANCE.getOptionalParameter(builder, LootContextParamsProxy.ORIGIN);
             if (vec3 == null) return List.of();
 
-            Object tool = FastNMS.INSTANCE.method$LootParams$Builder$getOptionalParameter(builder, MLootContextParams.TOOL);
-            Item<ItemStack> item = BukkitItemManager.instance().wrap(tool == null ? null : FastNMS.INSTANCE.method$CraftItemStack$asCraftMirror(tool));
-            Object optionalPlayer = FastNMS.INSTANCE.method$LootParams$Builder$getOptionalParameter(builder, MLootContextParams.THIS_ENTITY);
-            if (!CoreReflections.clazz$Player.isInstance(optionalPlayer)) {
+            Object tool = LootParamsProxy.BuilderProxy.INSTANCE.getOptionalParameter(builder, LootContextParamsProxy.TOOL);
+            Item item = BukkitItemManager.instance().wrap(tool == null ? null : ItemStackUtils.getBukkitStack(tool));
+            Object optionalPlayer = LootParamsProxy.BuilderProxy.INSTANCE.getOptionalParameter(builder, LootContextParamsProxy.THIS_ENTITY);
+            if (!PlayerProxy.CLASS.isInstance(optionalPlayer)) {
                 optionalPlayer = null;
             }
 
@@ -111,77 +136,221 @@ public final class BlockStateGenerator {
             if (optionalPlayer != null && settings.requireCorrectTool()) {
                 if (item.isEmpty()) return List.of();
                 if (!settings.isCorrectTool(item.id()) &&
-                        (!settings.respectToolComponent() || !FastNMS.INSTANCE.method$ItemStack$isCorrectToolForDrops(tool, state.customBlockState().literalObject()))) {
+                        (!settings.respectToolComponent() || !ItemStackProxy.INSTANCE.isCorrectToolForDrops(tool, state.customBlockState().minecraftState()))) {
                     return List.of();
                 }
             }
 
-            Object serverLevel = FastNMS.INSTANCE.method$LootParams$Builder$getLevel(builder);
-            World world = BukkitAdaptors.adapt(FastNMS.INSTANCE.method$Level$getCraftWorld(serverLevel));
+            // 数据包 LootTable.
+            Loot loot = state.owner().value().loot();
+            if (loot instanceof LootTableReference lootTableReference /* 不可能是 DatapackLootTable. */) {
+                Loot underlying = lootTableReference.delegate.get();
+                if (underlying instanceof DatapackLootTable datapackLootTable) {
+                    LootParamsProxy.BuilderProxy.INSTANCE.withParameter(builder, LootContextParamsProxy.BLOCK_STATE, state);
+                    Object lootParams = LootParamsProxy.BuilderProxy.INSTANCE.create(builder, LootContextParamSetsProxy.BLOCK);
+                    return datapackLootTable.getRandomItemsByLootParams(lootParams);
+                }
+            }
+
+            // 自定义 LootTable.
+            Object serverLevel = LootParamsProxy.BuilderProxy.INSTANCE.getLevel(builder);
+            World world = BukkitAdaptor.adapt(LevelProxy.INSTANCE.getWorld(serverLevel));
             ContextHolder.Builder lootBuilder = new ContextHolder.Builder()
-                    .withParameter(DirectContextParameters.POSITION, new WorldPosition(world, FastNMS.INSTANCE.field$Vec3$x(vec3), FastNMS.INSTANCE.field$Vec3$y(vec3), FastNMS.INSTANCE.field$Vec3$z(vec3)));
+                    .withParameter(DirectContextParameters.POSITION, new WorldPosition(world, Vec3Proxy.INSTANCE.getX(vec3), Vec3Proxy.INSTANCE.getY(vec3), Vec3Proxy.INSTANCE.getZ(vec3)));
             if (!item.isEmpty()) {
                 lootBuilder.withParameter(DirectContextParameters.ITEM_IN_HAND, item);
             }
-            BukkitServerPlayer player = optionalPlayer != null ? BukkitCraftEngine.instance().adapt(FastNMS.INSTANCE.method$ServerPlayer$getBukkitEntity(optionalPlayer)) : null;
+            BukkitServerPlayer player = optionalPlayer != null ? BukkitAdaptor.adapt(ServerPlayerProxy.INSTANCE.getBukkitEntity(optionalPlayer)) : null;
             if (player != null) {
                 lootBuilder.withParameter(DirectContextParameters.PLAYER, player);
             }
-            Float radius = (Float) FastNMS.INSTANCE.method$LootParams$Builder$getOptionalParameter(builder, MLootContextParams.EXPLOSION_RADIUS);
+            Float radius = LootParamsProxy.BuilderProxy.INSTANCE.getOptionalParameter(builder, LootContextParamsProxy.EXPLOSION_RADIUS);
             if (radius != null) {
                 lootBuilder.withParameter(DirectContextParameters.EXPLOSION_RADIUS, radius);
             }
-            return state.getDrops(lootBuilder, world, player).stream().map(Item::getLiteralObject).toList();
+            return state.getDrops(lootBuilder, world, player).stream().map(Item::minecraftItem).toList();
         }
     }
 
     public static class HasPropertyInterceptor {
         public static final HasPropertyInterceptor INSTANCE = new HasPropertyInterceptor();
 
-        @SuppressWarnings("unchecked")
+        @SuppressWarnings("DuplicatedCode")
         @RuntimeType
-        public boolean intercept(@This Object thisObj, @AllArguments Object[] args) {
-            Object property = args[0];
-            if (property != MBlockStateProperties.WATERLOGGED) return false;
+        public boolean intercept(@This Object thisObj, @Argument(value = 0) Object mcProperty) {
             DelegatingBlockState customState = (DelegatingBlockState) thisObj;
             ImmutableBlockState state = customState.blockState();
             if (state == null) return false;
-            Property<Boolean> waterloggedProperty = (Property<Boolean>) state.owner().value().getProperty("waterlogged");
-            return waterloggedProperty != null;
+            String name = PropertyProxy.INSTANCE.getName(mcProperty);
+            Property<?> ceProperty = state.owner().value().getProperty(name);
+            if (ceProperty == null) return false;
+            Class<?> mcPropertyClass = PropertyProxy.INSTANCE.getValueClass(mcProperty);
+            Class<?> cePropertyClass = ceProperty.valueClass();
+            if (cePropertyClass == mcPropertyClass) {
+                Pair<Property<?>, Object> propertyPair = Pair.of(ceProperty, mcProperty);
+                return Boolean.TRUE.equals(COMPATIBLE_PROPERTIES.get(propertyPair,
+                        k -> {
+                            if (VersionHelper.isOrAbove1_21_2) {
+                                return PropertyProxy.INSTANCE.getPossibleValues(mcProperty).equals(ceProperty.possibleValues());
+                            } else {
+                                Collection<?> possibleMCValues = PropertyProxy.INSTANCE.getPossibleValues(mcProperty);
+                                List<?> possibleCEValues = ceProperty.possibleValues();
+                                if (possibleMCValues.size() != possibleCEValues.size()) return false;
+                                Set<String> possibleMCValueSet = possibleMCValues.stream().map(String::valueOf).collect(Collectors.toSet());
+                                Set<String> possibleCEValueSet = possibleCEValues.stream().map(String::valueOf).collect(Collectors.toSet());
+                                return possibleMCValueSet.equals(possibleCEValueSet);
+                            }
+                        }));
+            } else if (mcPropertyClass.isEnum() && cePropertyClass.isEnum()) {
+                Pair<Property<?>, Object> propertyPair = Pair.of(ceProperty, mcProperty);
+                return Boolean.TRUE.equals(COMPATIBLE_PROPERTIES.get(propertyPair,
+                        k -> {
+                            Collection<?> possibleMCValues = PropertyProxy.INSTANCE.getPossibleValues(mcProperty);
+                            List<?> possibleCEValues = ceProperty.possibleValues();
+                            if (possibleMCValues.size() != possibleCEValues.size()) return false;
+                            if (VersionHelper.isOrAbove1_21_2) {
+                                List<?> possibleMCValueList = (List<?>) possibleMCValues;
+                                for (int i = 0; i < possibleMCValues.size(); i++) {
+                                    if (!possibleMCValueList.get(i).toString().equals(possibleCEValues.get(i).toString())) {
+                                        return false;
+                                    }
+                                }
+                            } else {
+                                Set<String> possibleMCValueSet = possibleMCValues.stream().map(String::valueOf).collect(Collectors.toSet());
+                                Set<String> possibleCEValueSet = possibleCEValues.stream().map(String::valueOf).collect(Collectors.toSet());
+                                return possibleMCValueSet.equals(possibleCEValueSet);
+                            }
+                            return true;
+                        }));
+            }
+            return false;
         }
     }
 
     public static class GetPropertyValueInterceptor {
         public static final GetPropertyValueInterceptor INSTANCE = new GetPropertyValueInterceptor();
 
-        @SuppressWarnings("unchecked")
+        @SuppressWarnings({"unchecked", "DuplicatedCode", "rawtypes"})
         @RuntimeType
-        public Object intercept(@This Object thisObj, @AllArguments Object[] args) {
-            Object property = args[0];
-            if (property != MBlockStateProperties.WATERLOGGED) return null;
+        public Object intercept(@This Object thisObj, @Argument(value = 0) Object mcProperty) {
             DelegatingBlockState customState = (DelegatingBlockState) thisObj;
             ImmutableBlockState state = customState.blockState();
             if (state == null) return null;
-            Property<Boolean> waterloggedProperty = (Property<Boolean>) state.owner().value().getProperty("waterlogged");
-            if (waterloggedProperty == null) return null;
-            return state.get(waterloggedProperty);
+            String name = PropertyProxy.INSTANCE.getName(mcProperty);
+            Property<?> ceProperty = state.owner().value().getProperty(name);
+            if (ceProperty == null) return null;
+            Class<?> mcPropertyClass = PropertyProxy.INSTANCE.getValueClass(mcProperty);
+            Class<?> cePropertyClass = ceProperty.valueClass();
+            if (cePropertyClass == mcPropertyClass) {
+                Pair<Property<?>, Object> propertyPair = Pair.of(ceProperty, mcProperty);
+                if (Boolean.TRUE.equals(COMPATIBLE_PROPERTIES.get(propertyPair,
+                        k -> {
+                            if (VersionHelper.isOrAbove1_21_2) {
+                                return PropertyProxy.INSTANCE.getPossibleValues(mcProperty).equals(ceProperty.possibleValues());
+                            } else {
+                                Collection<?> possibleMCValues = PropertyProxy.INSTANCE.getPossibleValues(mcProperty);
+                                List<?> possibleCEValues = ceProperty.possibleValues();
+                                if (possibleMCValues.size() != possibleCEValues.size()) return false;
+                                Set<String> possibleMCValueSet = possibleMCValues.stream().map(String::valueOf).collect(Collectors.toSet());
+                                Set<String> possibleCEValueSet = possibleCEValues.stream().map(String::valueOf).collect(Collectors.toSet());
+                                return possibleMCValueSet.equals(possibleCEValueSet);
+                            }
+                        }))) {
+                    return state.get(ceProperty);
+                }
+            } else if (mcPropertyClass.isEnum() && cePropertyClass.isEnum()) {
+                Pair<Property<?>, Object> propertyPair = Pair.of(ceProperty, mcProperty);
+                if (Boolean.TRUE.equals(COMPATIBLE_PROPERTIES.get(propertyPair,
+                        k -> {
+                            Collection<?> possibleMCValues = PropertyProxy.INSTANCE.getPossibleValues(mcProperty);
+                            List<?> possibleCEValues = ceProperty.possibleValues();
+                            if (possibleMCValues.size() != possibleCEValues.size()) return false;
+                            if (VersionHelper.isOrAbove1_21_2) {
+                                List<?> possibleMCValueList = (List<?>) possibleMCValues;
+                                for (int i = 0; i < possibleMCValues.size(); i++) {
+                                    if (!possibleMCValueList.get(i).toString().equals(possibleCEValues.get(i).toString())) {
+                                        return false;
+                                    }
+                                }
+                            } else {
+                                Set<String> possibleMCValueSet = possibleMCValues.stream().map(String::valueOf).collect(Collectors.toSet());
+                                Set<String> possibleCEValueSet = possibleCEValues.stream().map(String::valueOf).collect(Collectors.toSet());
+                                return possibleMCValueSet.equals(possibleCEValueSet);
+                            }
+                            return true;
+                        }))) {
+                    Class<Enum> mcEnumClass = (Class<Enum>) mcPropertyClass;
+                    return Enum.valueOf(mcEnumClass, ((Enum<?>) state.get(ceProperty)).name());
+                }
+            }
+            return null;
         }
     }
 
     public static class SetPropertyValueInterceptor {
         public static final SetPropertyValueInterceptor INSTANCE = new SetPropertyValueInterceptor();
 
-        @SuppressWarnings("unchecked")
+        @SuppressWarnings({"unchecked", "DuplicatedCode", "rawtypes"})
         @RuntimeType
-        public Object intercept(@This Object thisObj, @AllArguments Object[] args) {
-            Object property = args[0];
-            if (property != MBlockStateProperties.WATERLOGGED) return thisObj;
+        public Object intercept(@This Object thisObj, @Argument(value = 0) Object mcProperty, @Argument(value = 1) Object mcValue) {
             DelegatingBlockState customState = (DelegatingBlockState) thisObj;
             ImmutableBlockState state = customState.blockState();
             if (state == null) return thisObj;
-            Property<Boolean> waterloggedProperty = (Property<Boolean>) state.owner().value().getProperty("waterlogged");
-            if (waterloggedProperty == null) return thisObj;
-            return state.with(waterloggedProperty, (boolean) args[1]).customBlockState().literalObject();
+            String name = PropertyProxy.INSTANCE.getName(mcProperty);
+            Property<?> ceProperty = state.owner().value().getProperty(name);
+            if (ceProperty == null) return thisObj;
+            Class<?> mcPropertyClass = PropertyProxy.INSTANCE.getValueClass(mcProperty);
+            Class<?> cePropertyClass = ceProperty.valueClass();
+            Object valueToSet = null;
+            if (cePropertyClass == mcPropertyClass) {
+                Pair<Property<?>, Object> propertyPair = Pair.of(ceProperty, mcProperty);
+                if (Boolean.TRUE.equals(COMPATIBLE_PROPERTIES.get(propertyPair,
+                        k -> {
+                            if (VersionHelper.isOrAbove1_21_2) {
+                                return PropertyProxy.INSTANCE.getPossibleValues(mcProperty).equals(ceProperty.possibleValues());
+                            } else {
+                                Collection<?> possibleMCValues = PropertyProxy.INSTANCE.getPossibleValues(mcProperty);
+                                List<?> possibleCEValues = ceProperty.possibleValues();
+                                if (possibleMCValues.size() != possibleCEValues.size()) return false;
+                                Set<String> possibleMCValueSet = possibleMCValues.stream().map(String::valueOf).collect(Collectors.toSet());
+                                Set<String> possibleCEValueSet = possibleCEValues.stream().map(String::valueOf).collect(Collectors.toSet());
+                                return possibleMCValueSet.equals(possibleCEValueSet);
+                            }
+                        }))) {
+                    valueToSet = mcValue;
+                }
+            } else if (mcPropertyClass.isEnum() && cePropertyClass.isEnum()) {
+                Pair<Property<?>, Object> propertyPair = Pair.of(ceProperty, mcProperty);
+                if (Boolean.TRUE.equals(COMPATIBLE_PROPERTIES.get(propertyPair,
+                        k -> {
+                            Collection<?> possibleMCValues = PropertyProxy.INSTANCE.getPossibleValues(mcProperty);
+                            List<?> possibleCEValues = ceProperty.possibleValues();
+                            if (possibleMCValues.size() != possibleCEValues.size()) return false;
+                            if (VersionHelper.isOrAbove1_21_2) {
+                                List<?> possibleMCValueList = (List<?>) possibleMCValues;
+                                for (int i = 0; i < possibleMCValues.size(); i++) {
+                                    if (!possibleMCValueList.get(i).toString().equals(possibleCEValues.get(i).toString())) {
+                                        return false;
+                                    }
+                                }
+                            } else {
+                                Set<String> possibleMCValueSet = possibleMCValues.stream().map(String::valueOf).collect(Collectors.toSet());
+                                Set<String> possibleCEValueSet = possibleCEValues.stream().map(String::valueOf).collect(Collectors.toSet());
+                                return possibleMCValueSet.equals(possibleCEValueSet);
+                            }
+                            return true;
+                        }))) {
+                    valueToSet = Enum.valueOf((Class<Enum>) cePropertyClass, ((Enum<?>) mcValue).name());
+                }
+            }
+            if (valueToSet != null) {
+                try {
+                    return ImmutableBlockState.with(state, ceProperty, valueToSet).customBlockState().minecraftState();
+                } catch (IllegalArgumentException e) {
+                    return thisObj;
+                }
+            }
+            return thisObj;
         }
     }
 
@@ -189,14 +358,14 @@ public final class BlockStateGenerator {
         public static final IsBlockInterceptor INSTANCE = new IsBlockInterceptor();
 
         @RuntimeType
-        public boolean intercept(@This Object thisObj, @AllArguments Object[] args) {
+        public boolean intercept(@This Object thisObj, @Argument(value = 0) Object block) {
             DelegatingBlockState customState = (DelegatingBlockState) thisObj;
-            ImmutableBlockState thisState = customState.blockState();
-            if (thisState == null) return false;
-            if (FastNMS.INSTANCE.method$Block$defaultState(args[0]) instanceof DelegatingBlockState holder) {
-                ImmutableBlockState holderState = holder.blockState();
-                if (holderState == null) return false;
-                return holderState.owner().equals(thisState.owner());
+            Object thisBlock = customState.blockOwner();
+            if (thisBlock == null) return false;
+            if (BlockProxy.INSTANCE.getDefaultBlockState(block) instanceof DelegatingBlockState holder) {
+                Object holderBlock = holder.blockOwner();
+                if (holderBlock == null) return false;
+                return thisBlock == holderBlock;
             }
             return false;
         }
@@ -206,8 +375,8 @@ public final class BlockStateGenerator {
         public static final CreateStateInterceptor INSTANCE = new CreateStateInterceptor();
 
         @RuntimeType
-        public Object intercept(@AllArguments Object[] args) throws Throwable {
-            return constructor$CraftEngineBlockState.invoke(args[0], args[1], args[2]);
+        public Object intercept(@AllArguments Object[] args) {
+            return constructor$CraftEngineBlockState.newInstance(args[0], args[1], args[2]);
         }
     }
 }

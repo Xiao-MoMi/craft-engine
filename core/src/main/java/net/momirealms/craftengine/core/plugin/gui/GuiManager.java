@@ -15,5 +15,5 @@ public interface GuiManager extends Manageable {
 
     Inventory createInventory(Gui gui, int size);
 
-    void openMerchant(Player player, Component title, List<MerchantOffer<?>> offers);
+    void openMerchant(Player player, Component title, List<MerchantOffer> offers);
 }

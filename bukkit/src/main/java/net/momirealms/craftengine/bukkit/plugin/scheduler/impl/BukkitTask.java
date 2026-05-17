@@ -2,7 +2,7 @@ package net.momirealms.craftengine.bukkit.plugin.scheduler.impl;
 
 import net.momirealms.craftengine.core.plugin.scheduler.SchedulerTask;
 
-public class BukkitTask implements SchedulerTask {
+public final class BukkitTask implements SchedulerTask {
     private final org.bukkit.scheduler.BukkitTask bukkitTask;
 
     public BukkitTask(org.bukkit.scheduler.BukkitTask bukkitTask) {

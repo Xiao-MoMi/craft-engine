@@ -34,32 +34,32 @@ public class Category implements Comparable<Category> {
     }
 
     public Key id() {
-        return id;
+        return this.id;
     }
 
     public String displayName() {
-        return displayName;
+        return this.displayName;
     }
 
     public Key icon() {
-        return icon;
+        return this.icon;
     }
 
     public boolean hidden() {
-        return hidden;
+        return this.hidden;
     }
 
     @NotNull
     public Predicate<Context> condition() {
-        return condition;
+        return this.condition;
     }
 
     public List<String> displayLore() {
-        return displayLore;
+        return this.displayLore;
     }
 
     public List<String> members() {
-        return members;
+        return this.members;
     }
 
     public void merge(Category other) {

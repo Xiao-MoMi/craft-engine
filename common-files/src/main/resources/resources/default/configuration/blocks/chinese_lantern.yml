@@ -1,7 +1,7 @@
 items:
   default:chinese_lantern:
     data:
-      item-name: <!i><lang:item.default.chinese_lantern>
+      item_name: <!i><lang:item.default.chinese_lantern>
     model: minecraft:block/custom/chinese_lantern
     behavior:
       type: block_item
@@ -15,12 +15,12 @@ items:
             - default:sound/wood
             - default:settings/solid_1x1x1
           overrides:
-            push-reaction: normal
+            push_reaction: normal
             instrument: harp
             luminance: 15
-            map-color: 36
+            map_color: 36
         state:
-          auto-state: solid
+          auto_state: solid
           model:
             path: minecraft:block/custom/chinese_lantern
             generation:

@@ -1,25 +1,37 @@
 items:
   default:sleeper_sofa:
+    $$<=1.21.3:
+      material: leather_horse_armor
+      client_bound_data:
+        overwritable_dyed_color: 130,168,51
+      data:
+        remove_components:
+          - attribute_modifiers
     data:
-      item-name: <!i><lang:item.default.sofa>
-    model: minecraft:item/custom/sleeper_sofa
+      item_name: <!i><lang:item.default.sofa>
+    settings:
+      dyeable: true
+    model:
+      type: minecraft:model
+      path: minecraft:item/custom/sleeper_sofa
+      tints:
+        - type: minecraft:dye
+          value: 130,168,51
     behavior:
       type: block_item
       block:
-        loot:
-          template: default:loot_table/self
         settings:
           hardness: 0.5
           resistance: 0.5
-          map-color: 27
-          burn-chance: 5
-          fire-spread-chance: 20
+          map_color: 27
+          burn_chance: 5
+          fire_spread_chance: 20
           burnable: true
-          is-suffocating: false
-          is-redstone-conductor: false
-          push-reaction: block
+          is_suffocating: false
+          is_redstone_conductor: false
+          push_reaction: block
           instrument: bass
-          support-shape: cobweb
+          support_shape: cobweb
           sounds:
             break: minecraft:block.wood.break
             fall: minecraft:block.wood.fall
@@ -30,42 +42,64 @@ items:
             - minecraft:mineable/axe
         behaviors:
           - type: bouncing_block
-            bounce-height: 0.66
-            sync-player-position: false
+            bounce_height: 0.66
+            sync_player_position: false
           - type: seat_block
             seats:
               - 0,0,0
+          - type: tint_source_block
+            drop_item: true
         state:
           state: white_bed[facing=west,occupied=false,part=foot]
-          entity-renderer:
+          entity_renderer:
             item: default:sleeper_sofa
+            tint_source: minecraft:dyed_color
   default:sofa_inner:
-    model: minecraft:item/custom/sofa_inner
+    $$<=1.21.3:
+      material: leather_horse_armor
+      client_bound_data:
+        overwritable_dyed_color: 130,168,51
+    model:
+      type: minecraft:model
+      path: minecraft:item/custom/sofa_inner
+      tints:
+        - type: minecraft:dye
+          value: 130,168,51
   default:sofa:
+    $$<=1.21.3:
+      material: leather_horse_armor
+      client_bound_data:
+        overwritable_dyed_color: 130,168,51
+      data:
+        remove_components:
+          - attribute_modifiers
     data:
-      item-name: <!i><lang:item.default.sofa>
+      item_name: <!i><lang:item.default.sofa>
+    settings:
+      dyeable: true
     model:
       type: minecraft:model
       path: minecraft:item/custom/sofa
+      tints:
+        - type: minecraft:dye
+          value: 130,168,51
     behavior:
       type: block_item
       block:
         events:
           - template: default:rotatable_block
-        loot:
-          template: default:loot_table/self
         settings:
           hardness: 0.5
           resistance: 0.5
-          map-color: 27
-          burn-chance: 5
-          fire-spread-chance: 20
+          map_color: 27
+          burn_chance: 5
+          fire_spread_chance: 20
           burnable: true
-          is-suffocating: false
-          is-redstone-conductor: false
-          push-reaction: block
+          is_suffocating: false
+          is_redstone_conductor: false
+          push_reaction: block
           instrument: bass
-          support-shape: cobweb
+          support_shape: cobweb
           sounds:
             break: minecraft:block.wood.break
             fall: minecraft:block.wood.fall
@@ -77,10 +111,12 @@ items:
         behaviors:
           - type: sofa_block
           - type: bouncing_block
-            bounce-height: 0.66
+            bounce_height: 0.66
           - type: seat_block
             seats:
               - 0,0,0 0
+          - type: tint_source_block
+            drop_item: true
         states:
           properties:
             facing:
@@ -90,61 +126,73 @@ items:
           appearances:
             facing=east,shape=straight:
               state: barrier
-              entity-renderer:
+              entity_renderer:
                 item: default:sofa
                 rotation: 90
+                tint_source: minecraft:dyed_color
             facing=north,shape=straight:
               state: barrier
-              entity-renderer:
+              entity_renderer:
                 item: default:sofa
+                tint_source: minecraft:dyed_color
             facing=south,shape=straight:
               state: barrier
-              entity-renderer:
+              entity_renderer:
                 item: default:sofa
                 rotation: 180
+                tint_source: minecraft:dyed_color
             facing=west,shape=straight:
               state: barrier
-              entity-renderer:
+              entity_renderer:
                 item: default:sofa
                 rotation: 270
+                tint_source: minecraft:dyed_color
             facing=east,shape=inner_left:
               state: barrier
-              entity-renderer:
+              entity_renderer:
                 item: default:sofa_inner
+                tint_source: minecraft:dyed_color
             facing=north,shape=inner_left:
               state: barrier
-              entity-renderer:
+              entity_renderer:
                 item: default:sofa_inner
                 rotation: 270
+                tint_source: minecraft:dyed_color
             facing=south,shape=inner_left:
               state: barrier
-              entity-renderer:
+              entity_renderer:
                 item: default:sofa_inner
                 rotation: 90
+                tint_source: minecraft:dyed_color
             facing=west,shape=inner_left:
               state: barrier
-              entity-renderer:
+              entity_renderer:
                 item: default:sofa_inner
                 rotation: 180
+                tint_source: minecraft:dyed_color
             facing=east,shape=inner_right:
               state: barrier
-              entity-renderer:
+              entity_renderer:
                 item: default:sofa_inner
                 rotation: 90
+                tint_source: minecraft:dyed_color
             facing=north,shape=inner_right:
               state: barrier
-              entity-renderer:
+              entity_renderer:
                 item: default:sofa_inner
+                tint_source: minecraft:dyed_color
             facing=south,shape=inner_right:
               state: barrier
-              entity-renderer:
+              entity_renderer:
                 item: default:sofa_inner
                 rotation: 180
+                tint_source: minecraft:dyed_color
             facing=west,shape=inner_right:
               state: barrier
-              entity-renderer:
+              entity_renderer:
                 item: default:sofa_inner
                 rotation: 270
+                tint_source: minecraft:dyed_color
           variants:
             facing=east,shape=inner_left:
               appearance: facing=east,shape=inner_left

@@ -2,7 +2,7 @@ package net.momirealms.craftengine.core.block.entity.tick;
 
 import net.momirealms.craftengine.core.world.BlockPos;
 
-public class ReplaceableTickingBlockEntity implements TickingBlockEntity {
+public final class ReplaceableTickingBlockEntity implements TickingBlockEntity {
     private TickingBlockEntity target;
 
     public ReplaceableTickingBlockEntity(TickingBlockEntity target) {
@@ -10,7 +10,7 @@ public class ReplaceableTickingBlockEntity implements TickingBlockEntity {
     }
 
     public TickingBlockEntity target() {
-        return target;
+        return this.target;
     }
 
     public void setTicker(TickingBlockEntity target) {

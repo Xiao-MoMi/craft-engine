@@ -6,14 +6,14 @@ import net.momirealms.craftengine.core.attribute.AttributeModifier;
 import net.momirealms.craftengine.core.entity.EquipmentSlot;
 import net.momirealms.craftengine.core.entity.player.Player;
 import net.momirealms.craftengine.core.item.behavior.ItemBehavior;
-import net.momirealms.craftengine.core.item.data.Enchantment;
-import net.momirealms.craftengine.core.item.data.FireworkExplosion;
-import net.momirealms.craftengine.core.item.data.JukeboxPlayable;
-import net.momirealms.craftengine.core.item.data.Trim;
-import net.momirealms.craftengine.core.item.setting.EquipmentData;
+import net.momirealms.craftengine.core.item.component.value.Enchantment;
+import net.momirealms.craftengine.core.item.component.value.FireworkExplosion;
+import net.momirealms.craftengine.core.item.component.value.JukeboxPlayable;
+import net.momirealms.craftengine.core.item.component.value.Trim;
+import net.momirealms.craftengine.core.item.setting.value.EquipmentData;
 import net.momirealms.craftengine.core.util.Color;
 import net.momirealms.craftengine.core.util.Key;
-import net.momirealms.craftengine.core.util.UniqueKey;
+import net.momirealms.sparrow.nbt.CompoundTag;
 import net.momirealms.sparrow.nbt.Tag;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -22,14 +22,16 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
-public class AbstractItem<W extends ItemWrapper<I>, I> implements Item<I> {
-    private final ItemFactory<W, I> factory;
-    private final W item;
+public abstract class AbstractItem<W extends ItemWrapper> implements Item {
+    protected final ItemFactory<W> factory;
+    protected final W item;
 
-    AbstractItem(ItemFactory<W, I> factory, W item) {
+    protected AbstractItem(ItemFactory<W> factory, W item) {
         this.factory = factory;
         this.item = item;
     }
+
+    protected abstract AbstractItem<W> withSameFactory(W item);
 
     @Override
     public boolean isEmpty() {
@@ -42,7 +44,7 @@ public class AbstractItem<W extends ItemWrapper<I>, I> implements Item<I> {
     }
 
     @Override
-    public Item<I> itemModel(String data) {
+    public Item itemModel(String data) {
         this.factory.itemModel(this.item, data);
         return this;
     }
@@ -53,12 +55,23 @@ public class AbstractItem<W extends ItemWrapper<I>, I> implements Item<I> {
     }
 
     @Override
+    public Item useRemainder(Item item, int count) {
+        this.factory.useRemainder(this.item, item, count);
+        return this;
+    }
+
+    @Override
+    public Optional<Item> useRemainder() {
+        return this.factory.useRemainder(this.item).map(this::withSameFactory);
+    }
+
+    @Override
     public Optional<JukeboxPlayable> jukeboxSong() {
         return this.factory.jukeboxSong(this.item);
     }
 
     @Override
-    public Item<I> jukeboxSong(JukeboxPlayable data) {
+    public Item jukeboxSong(JukeboxPlayable data) {
         this.factory.jukeboxSong(this.item, data);
         return this;
     }
@@ -69,13 +82,13 @@ public class AbstractItem<W extends ItemWrapper<I>, I> implements Item<I> {
     }
 
     @Override
-    public Item<I> equippable(EquipmentData data) {
+    public Item equippable(EquipmentData data) {
         this.factory.equippable(this.item, data);
         return this;
     }
 
     @Override
-    public Item<I> tooltipStyle(String data) {
+    public Item tooltipStyle(String data) {
         this.factory.tooltipStyle(this.item, data);
         return this;
     }
@@ -86,7 +99,7 @@ public class AbstractItem<W extends ItemWrapper<I>, I> implements Item<I> {
     }
 
     @Override
-    public Item<I> damage(Integer data) {
+    public Item damage(Integer data) {
         this.factory.damage(this.item, data);
         return this;
     }
@@ -97,7 +110,7 @@ public class AbstractItem<W extends ItemWrapper<I>, I> implements Item<I> {
     }
 
     @Override
-    public Item<I> repairCost(Integer data) {
+    public Item repairCost(Integer data) {
         this.factory.repairCost(this.item, data);
         return this;
     }
@@ -108,7 +121,7 @@ public class AbstractItem<W extends ItemWrapper<I>, I> implements Item<I> {
     }
 
     @Override
-    public Item<I> maxDamage(Integer data) {
+    public Item maxDamage(Integer data) {
         this.factory.maxDamage(this.item, data);
         return this;
     }
@@ -119,7 +132,7 @@ public class AbstractItem<W extends ItemWrapper<I>, I> implements Item<I> {
     }
 
     @Override
-    public Item<I> blockState(Map<String, String> state) {
+    public Item blockState(Map<String, String> state) {
         this.factory.blockState(this.item, state);
         return this;
     }
@@ -130,7 +143,7 @@ public class AbstractItem<W extends ItemWrapper<I>, I> implements Item<I> {
     }
 
     @Override
-    public Item<I> dyedColor(Color data) {
+    public Item dyedColor(Color data) {
         this.factory.dyedColor(this.item, data);
         return this;
     }
@@ -141,7 +154,7 @@ public class AbstractItem<W extends ItemWrapper<I>, I> implements Item<I> {
     }
 
     @Override
-    public Item<I> fireworkExplosion(FireworkExplosion explosion) {
+    public Item fireworkExplosion(FireworkExplosion explosion) {
         this.factory.fireworkExplosion(this.item, explosion);
         return this;
     }
@@ -151,20 +164,20 @@ public class AbstractItem<W extends ItemWrapper<I>, I> implements Item<I> {
         return this.factory.fireworkExplosion(this.item);
     }
 
-    @SuppressWarnings("unchecked")
     @Override
-    public Optional<CustomItem<I>> getCustomItem() {
-        return ((ItemManager<I>) factory.plugin.itemManager()).getCustomItem(id());
+    public Optional<ItemDefinition> getDefinition() {
+        return factory.plugin.itemManager().getItemDefinition(id());
     }
 
     @Override
-    public Optional<List<ItemBehavior>> getItemBehavior() {
+    public Optional<ItemBehavior> getBehavior() {
         return factory.plugin.itemManager().getItemBehavior(id());
     }
 
     @Override
     public boolean isCustomItem() {
-        return factory.plugin.itemManager().getCustomItem(id()).isPresent();
+        Optional<ItemDefinition> itemDefinition = this.factory.plugin.itemManager().getItemDefinition(id());
+        return itemDefinition.filter(definition -> !definition.isVanillaItem()).isPresent();
     }
 
     @Override
@@ -183,17 +196,12 @@ public class AbstractItem<W extends ItemWrapper<I>, I> implements Item<I> {
     }
 
     @Override
-    public @Nullable UniqueKey recipeIngredientId() {
-        return this.factory.recipeIngredientID(this.item);
-    }
-
-    @Override
     public Optional<Key> customId() {
         return this.factory.customId(this.item);
     }
 
     @Override
-    public Item<I> customId(Key data) {
+    public Item customId(Key data) {
         this.factory.customId(this.item, data);
         return this;
     }
@@ -204,13 +212,13 @@ public class AbstractItem<W extends ItemWrapper<I>, I> implements Item<I> {
     }
 
     @Override
-    public Item<I> count(int amount) {
+    public Item count(int amount) {
         this.item.count(amount);
         return this;
     }
 
     @Override
-    public Item<I> trim(Trim trim) {
+    public Item trim(Trim trim) {
         this.factory.trim(this.item, trim);
         return this;
     }
@@ -221,7 +229,7 @@ public class AbstractItem<W extends ItemWrapper<I>, I> implements Item<I> {
     }
 
     @Override
-    public Item<I> customModelData(Integer data) {
+    public Item customModelData(Integer data) {
         this.factory.customModelData(this.item, data);
         return this;
     }
@@ -237,7 +245,7 @@ public class AbstractItem<W extends ItemWrapper<I>, I> implements Item<I> {
     }
 
     @Override
-    public Item<I> customNameJson(String displayName) {
+    public Item customNameJson(String displayName) {
         this.factory.customNameJson(this.item, displayName);
         return this;
     }
@@ -248,13 +256,13 @@ public class AbstractItem<W extends ItemWrapper<I>, I> implements Item<I> {
     }
 
     @Override
-    public Item<I> customNameComponent(Component displayName) {
+    public Item customNameComponent(Component displayName) {
         this.factory.customNameComponent(this.item, displayName);
         return this;
     }
 
     @Override
-    public Item<I> loreJson(List<String> lore) {
+    public Item loreJson(List<String> lore) {
         this.factory.loreJson(this.item, lore);
         return this;
     }
@@ -265,7 +273,7 @@ public class AbstractItem<W extends ItemWrapper<I>, I> implements Item<I> {
     }
 
     @Override
-    public Item<I> loreComponent(List<Component> lore) {
+    public Item loreComponent(List<Component> lore) {
         this.factory.loreComponent(this.item, lore);
         return this;
     }
@@ -276,13 +284,13 @@ public class AbstractItem<W extends ItemWrapper<I>, I> implements Item<I> {
     }
 
     @Override
-    public Item<I> attributeModifiers(List<AttributeModifier> modifiers) {
+    public Item attributeModifiers(List<AttributeModifier> modifiers) {
         this.factory.attributeModifiers(this.item, modifiers);
         return this;
     }
 
     @Override
-    public Item<I> unbreakable(boolean unbreakable) {
+    public Item unbreakable(boolean unbreakable) {
         this.factory.unbreakable(this.item, unbreakable);
         return this;
     }
@@ -293,7 +301,7 @@ public class AbstractItem<W extends ItemWrapper<I>, I> implements Item<I> {
     }
 
     @Override
-    public Item<I> itemNameJson(String itemName) {
+    public Item itemNameJson(String itemName) {
         this.factory.itemNameJson(this.item, itemName);
         return this;
     }
@@ -304,7 +312,7 @@ public class AbstractItem<W extends ItemWrapper<I>, I> implements Item<I> {
     }
 
     @Override
-    public Item<I> itemNameComponent(Component itemName) {
+    public Item itemNameComponent(Component itemName) {
         this.factory.itemNameComponent(this.item, itemName);
         return this;
     }
@@ -315,7 +323,7 @@ public class AbstractItem<W extends ItemWrapper<I>, I> implements Item<I> {
     }
 
     @Override
-    public Item<I> skull(String data) {
+    public Item skull(String data) {
         this.factory.skull(this.item, data);
         return this;
     }
@@ -336,14 +344,25 @@ public class AbstractItem<W extends ItemWrapper<I>, I> implements Item<I> {
     }
 
     @Override
-    public Item<I> setEnchantments(List<Enchantment> enchantments) {
+    public Item setEnchantments(List<Enchantment> enchantments) {
         this.factory.enchantments(this.item, enchantments);
         return this;
     }
 
     @Override
-    public Item<I> setStoredEnchantments(List<Enchantment> enchantments) {
+    public Item setStoredEnchantments(List<Enchantment> enchantments) {
         this.factory.storedEnchantments(this.item, enchantments);
+        return this;
+    }
+
+    @Override
+    public Optional<Boolean> glint() {
+        return this.factory.glint(this.item);
+    }
+
+    @Override
+    public Item glint(boolean value) {
+        this.factory.glint(this.item, value);
         return this;
     }
 
@@ -353,35 +372,14 @@ public class AbstractItem<W extends ItemWrapper<I>, I> implements Item<I> {
     }
 
     @Override
-    public Item<I> maxStackSize(int amount) {
+    public Item maxStackSize(int amount) {
         this.factory.maxStackSize(this.item, amount);
         return this;
     }
 
     @Override
-    public Item<I> itemFlags(List<String> flags) {
+    public Item itemFlags(List<String> flags) {
         this.factory.itemFlags(this.item, flags);
-        return this;
-    }
-
-    @Override
-    public Object getJavaTag(Object... path) {
-        return this.factory.getJavaTag(this.item, path);
-    }
-
-    @Override
-    public Tag getTag(Object... path) {
-        return this.factory.getTag(this.item, path);
-    }
-
-    @Override
-    public Object getExactTag(Object... path) {
-        return this.factory.getExactTag(this.item, path);
-    }
-
-    @Override
-    public Item<I> setTag(Object value, Object... path) {
-        this.factory.setTag(this.item, value, path);
         return this;
     }
 
@@ -393,6 +391,57 @@ public class AbstractItem<W extends ItemWrapper<I>, I> implements Item<I> {
     @Override
     public boolean removeTag(Object... path) {
         return this.factory.removeTag(this.item, path);
+    }
+
+
+    @Override
+    public Object getTagAsJava(Object... path) {
+        return this.factory.getTagAsJava(this.item, path);
+    }
+
+    @Override
+    public Object getMinecraftTag(Object... path) {
+        return this.factory.getMinecraftTag(this.item, path);
+    }
+
+    @Override
+    public Tag getSparrowTag(Object... path) {
+        return this.factory.getSparrowTag(this.item, path);
+    }
+
+    @Override
+    public JsonElement getTagAsJson(Object... path) {
+        return this.factory.getTagAsJson(this.item, path);
+    }
+
+    @Override
+    public Item setTag(Object value, Object... path) {
+        this.factory.setTag(this.item, value, path);
+        return this;
+    }
+
+    @Override
+    public Item setMinecraftTag(Object value, Object... path) {
+        this.factory.setMinecraftTag(this.item, value, path);
+        return this;
+    }
+
+    @Override
+    public Item setJsonTag(JsonElement value, Object... path) {
+        this.factory.setJsonTag(this.item, value, path);
+        return this;
+    }
+
+    @Override
+    public Item setJavaTag(Object value, Object... path) {
+        this.factory.setJavaTag(this.item, value, path);
+        return this;
+    }
+
+    @Override
+    public Item setSparrowTag(Tag value, Object... path) {
+        this.factory.setSparrowTag(this.item, value, path);
+        return this;
     }
 
     @Override
@@ -421,23 +470,23 @@ public class AbstractItem<W extends ItemWrapper<I>, I> implements Item<I> {
     }
 
     @Override
-    public Object getJavaComponent(Object type) {
-        return this.factory.getJavaComponent(this.item, type);
+    public Object getComponentAsJava(Object type) {
+        return this.factory.getComponentAsJava(this.item, type);
     }
 
     @Override
-    public JsonElement getJsonComponent(Object type) {
-        return this.factory.getJsonComponent(this.item, type);
+    public JsonElement getComponentAsJson(Object type) {
+        return this.factory.getComponentAsJson(this.item, type);
     }
 
     @Override
-    public Tag getSparrowNBTComponent(Object type) {
-        return this.factory.getSparrowNBTComponent(this.item, type);
+    public Tag getComponentAsSparrowTag(Object type) {
+        return this.factory.getComponentAsSparrowTag(this.item, type);
     }
 
     @Override
-    public Object getNBTComponent(Object type) {
-        return this.factory.getNBTComponent(this.item, type);
+    public Object getComponentAsMinecraftTag(Object type) {
+        return this.factory.getComponentAsMinecraftTag(this.item, type);
     }
 
     @Override
@@ -456,8 +505,13 @@ public class AbstractItem<W extends ItemWrapper<I>, I> implements Item<I> {
     }
 
     @Override
-    public void setNBTComponent(Object type, Tag value) {
-        this.factory.setNBTComponent(this.item, type, value);
+    public void setSparrowTagComponent(Object type, Tag value) {
+        this.factory.setSparrowTagComponent(this.item, type, value);
+    }
+
+    @Override
+    public void setMinecraftTagComponent(Object type, Object value) {
+        this.factory.setMinecraftTagComponent(this.item, type, value);
     }
 
     @Override
@@ -465,15 +519,16 @@ public class AbstractItem<W extends ItemWrapper<I>, I> implements Item<I> {
         this.factory.resetComponent(this.item, type);
     }
 
+    @SuppressWarnings({"unchecked"})
     @Override
-    public I getItem() {
-        return this.factory.getItem(this.item);
+    public AbstractItem<W> copy() {
+        return withSameFactory((W) this.item.copy());
     }
 
     @SuppressWarnings({"unchecked"})
     @Override
-    public AbstractItem<W, I> copyWithCount(int count) {
-        return new AbstractItem<>(this.factory, (W) this.item.copyWithCount(count));
+    public AbstractItem<W> copyWithCount(int count) {
+        return withSameFactory((W) this.item.copyWithCount(count));
     }
 
     @Override
@@ -482,35 +537,51 @@ public class AbstractItem<W extends ItemWrapper<I>, I> implements Item<I> {
     }
 
     @Override
-    public Object getLiteralObject() {
-        return this.item.getLiteralObject();
+    public Object minecraftItem() {
+        return this.item.minecraftItem();
+    }
+
+    @Override
+    public Object platformItem() {
+        return this.item.platformItem();
     }
 
     @SuppressWarnings({"unchecked", "rawtypes"})
     @Override
-    public AbstractItem<W, I> mergeCopy(Item<?> another) {
-        return new AbstractItem<>(this.factory, this.factory.mergeCopy(this.item, (W) ((AbstractItem) another).item));
+    public AbstractItem<W> mergeCopy(Item another) {
+        return withSameFactory(this.factory.mergeCopy(this.item, (W) ((AbstractItem) another).item));
     }
 
     @Override
-    public AbstractItem<W, I> transmuteCopy(Key another, int count) {
-        return new AbstractItem<>(this.factory, this.factory.transmuteCopy(this.item, another, count));
+    public AbstractItem<W> transmuteCopy(Key another, int count) {
+        return withSameFactory(this.factory.transmuteCopy(this.item, another, count));
     }
 
     @Override
-    public Item<I> unsafeTransmuteCopy(Object another, int count) {
-        return new AbstractItem<>(this.factory, this.factory.unsafeTransmuteCopy(this.item, another, count));
+    public Item unsafeTransmuteCopy(Object another, int count) {
+        return withSameFactory(this.factory.unsafeTransmuteCopy(this.item, another, count));
     }
 
     @SuppressWarnings({"unchecked", "rawtypes"})
     @Override
-    public void merge(Item<I> another) {
+    public void merge(Item another) {
         this.factory.merge(this.item, (W) ((AbstractItem) another).item);
     }
 
     @Override
-    public byte[] toByteArray() {
+    public byte[] toBytes() {
         return this.factory.toByteArray(this.item);
+    }
+
+    @Override
+    public CompoundTag toNBT() {
+        return this.factory.toNBT(this.item);
+    }
+
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    @Override
+    public boolean isSimilar(Item another) {
+        return this.factory.isSimilar(this.item, (W) ((AbstractItem) another).item);
     }
 
     @Override
@@ -519,7 +590,17 @@ public class AbstractItem<W extends ItemWrapper<I>, I> implements Item<I> {
     }
 
     @Override
-    public void hurtAndBreak(int amount, @Nullable Player player, @Nullable EquipmentSlot slot) {
+    public void grow(int amount) {
+        this.item.grow(amount);
+    }
+
+    @Override
+    public void hurtAndBreak(int amount, @NotNull Player player, @Nullable EquipmentSlot slot) {
         this.item.hurtAndBreak(amount, player, slot);
+    }
+
+    @Override
+    public String toString() {
+        return getClass().getSimpleName() + "{minecraftItem=" + minecraftItem() + "}";
     }
 }

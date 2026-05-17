@@ -1,16 +1,17 @@
 package net.momirealms.craftengine.bukkit.util;
 
-import net.momirealms.craftengine.bukkit.api.BukkitAdaptors;
-import net.momirealms.craftengine.bukkit.nms.FastNMS;
+import net.momirealms.craftengine.bukkit.api.BukkitAdaptor;
 import net.momirealms.craftengine.core.world.BlockPos;
 import net.momirealms.craftengine.core.world.Vec3d;
 import net.momirealms.craftengine.core.world.WorldPosition;
+import net.momirealms.craftengine.proxy.minecraft.core.BlockPosProxy;
+import net.momirealms.craftengine.proxy.minecraft.core.Vec3iProxy;
+import net.momirealms.craftengine.proxy.minecraft.world.phys.Vec3Proxy;
 import org.bukkit.Location;
 import org.bukkit.World;
 import org.jetbrains.annotations.NotNull;
 
 public final class LocationUtils {
-
     private LocationUtils() {}
 
     public static Location toLocation(WorldPosition position) {
@@ -18,11 +19,11 @@ public final class LocationUtils {
     }
 
     public static WorldPosition toWorldPosition(Location location) {
-        return new WorldPosition(BukkitAdaptors.adapt(location.getWorld()), location.getX(), location.getY(), location.getZ(), location.getPitch(), location.getYaw());
+        return new WorldPosition(BukkitAdaptor.adapt(location.getWorld()), location.getX(), location.getY(), location.getZ(), location.getPitch(), location.getYaw());
     }
 
     public static Object toVec(Vec3d vec) {
-        return FastNMS.INSTANCE.constructor$Vec3(vec.x, vec.y, vec.z);
+        return Vec3Proxy.INSTANCE.newInstance(vec.x, vec.y, vec.z);
     }
 
     public static Vec3d toVec3d(Location loc) {
@@ -31,9 +32,9 @@ public final class LocationUtils {
 
     public static Vec3d fromVec(Object vec) {
         return new Vec3d(
-            FastNMS.INSTANCE.field$Vec3$x(vec),
-            FastNMS.INSTANCE.field$Vec3$y(vec),
-            FastNMS.INSTANCE.field$Vec3$z(vec)
+                Vec3Proxy.INSTANCE.getX(vec),
+                Vec3Proxy.INSTANCE.getY(vec),
+                Vec3Proxy.INSTANCE.getZ(vec)
         );
     }
 
@@ -42,23 +43,23 @@ public final class LocationUtils {
     }
 
     public static Object above(Object blockPos) {
-        return toBlockPos(FastNMS.INSTANCE.field$Vec3i$x(blockPos), FastNMS.INSTANCE.field$Vec3i$y(blockPos) + 1, FastNMS.INSTANCE.field$Vec3i$z(blockPos));
+        return toBlockPos(Vec3iProxy.INSTANCE.getX(blockPos), Vec3iProxy.INSTANCE.getY(blockPos) + 1, Vec3iProxy.INSTANCE.getZ(blockPos));
     }
 
     public static Object above(Object blockPos, int y) {
-        return toBlockPos(FastNMS.INSTANCE.field$Vec3i$x(blockPos), FastNMS.INSTANCE.field$Vec3i$y(blockPos) + y, FastNMS.INSTANCE.field$Vec3i$z(blockPos));
+        return toBlockPos(Vec3iProxy.INSTANCE.getX(blockPos), Vec3iProxy.INSTANCE.getY(blockPos) + y, Vec3iProxy.INSTANCE.getZ(blockPos));
     }
 
     public static Object below(Object blockPos) {
-        return toBlockPos(FastNMS.INSTANCE.field$Vec3i$x(blockPos), FastNMS.INSTANCE.field$Vec3i$y(blockPos) - 1, FastNMS.INSTANCE.field$Vec3i$z(blockPos));
+        return toBlockPos(Vec3iProxy.INSTANCE.getX(blockPos), Vec3iProxy.INSTANCE.getY(blockPos) - 1, Vec3iProxy.INSTANCE.getZ(blockPos));
     }
 
     public static Object below(Object blockPos, int y) {
-        return toBlockPos(FastNMS.INSTANCE.field$Vec3i$x(blockPos), FastNMS.INSTANCE.field$Vec3i$y(blockPos) - y, FastNMS.INSTANCE.field$Vec3i$z(blockPos));
+        return toBlockPos(Vec3iProxy.INSTANCE.getX(blockPos), Vec3iProxy.INSTANCE.getY(blockPos) - y, Vec3iProxy.INSTANCE.getZ(blockPos));
     }
 
     public static Object toBlockPos(int x, int y, int z) {
-        return FastNMS.INSTANCE.constructor$BlockPos(x, y, z);
+        return BlockPosProxy.INSTANCE.newInstance(x, y, z);
     }
 
     public static BlockPos toBlockPos(Location pos) {
@@ -67,9 +68,9 @@ public final class LocationUtils {
 
     public static BlockPos fromBlockPos(Object pos) {
         return new BlockPos(
-                FastNMS.INSTANCE.field$Vec3i$x(pos),
-                FastNMS.INSTANCE.field$Vec3i$y(pos),
-                FastNMS.INSTANCE.field$Vec3i$z(pos)
+                Vec3iProxy.INSTANCE.getX(pos),
+                Vec3iProxy.INSTANCE.getY(pos),
+                Vec3iProxy.INSTANCE.getZ(pos)
         );
     }
 

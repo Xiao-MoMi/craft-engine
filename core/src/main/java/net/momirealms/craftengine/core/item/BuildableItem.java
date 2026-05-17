@@ -2,42 +2,19 @@ package net.momirealms.craftengine.core.item;
 
 import net.momirealms.craftengine.core.entity.player.Player;
 import net.momirealms.craftengine.core.util.Key;
+import org.jetbrains.annotations.Nullable;
 
-public interface BuildableItem<I> {
+public interface BuildableItem {
 
     Key id();
 
-    Item<I> buildItem(ItemBuildContext context, int count);
+    Item buildItem(ItemBuildContext context, int count);
 
-    boolean isEmpty();
-
-    default Item<I> buildItem(Player player) {
+    default Item buildItem(@Nullable Player player) {
         return buildItem(ItemBuildContext.of(player));
     }
 
-    default Item<I> buildItem(ItemBuildContext context) {
+    default Item buildItem(ItemBuildContext context) {
         return buildItem(context, 1);
-    }
-
-    I buildItemStack(ItemBuildContext context, int count);
-
-    default I buildItemStack(ItemBuildContext context) {
-        return buildItemStack(context, 1);
-    }
-
-    default I buildItemStack() {
-        return buildItemStack(ItemBuildContext.empty(), 1);
-    }
-
-    default I buildItemStack(int count) {
-        return buildItemStack(ItemBuildContext.empty(), count);
-    }
-
-    default I buildItemStack(Player player) {
-        return this.buildItemStack(ItemBuildContext.of(player), 1);
-    }
-
-    default I buildItemStack(Player player, int count) {
-        return this.buildItemStack(ItemBuildContext.of(player), count);
     }
 }

@@ -1,13 +1,11 @@
 package net.momirealms.craftengine.bukkit.compatibility.skript.event;
 
-import ch.njol.skript.Skript;
 import ch.njol.skript.doc.Description;
 import ch.njol.skript.doc.Name;
 import ch.njol.skript.doc.Since;
 import ch.njol.skript.lang.Literal;
 import ch.njol.skript.lang.SkriptEvent;
 import ch.njol.skript.lang.SkriptParser;
-import ch.njol.skript.registrations.EventValues;
 import net.momirealms.craftengine.bukkit.api.event.CustomBlockBreakEvent;
 import net.momirealms.craftengine.bukkit.api.event.CustomBlockPlaceEvent;
 import net.momirealms.craftengine.bukkit.util.BlockStateUtils;
@@ -20,6 +18,11 @@ import org.bukkit.block.Block;
 import org.bukkit.entity.Player;
 import org.bukkit.event.Event;
 import org.jetbrains.annotations.Nullable;
+import org.skriptlang.skript.addon.SkriptAddon;
+import org.skriptlang.skript.bukkit.lang.eventvalue.EventValue;
+import org.skriptlang.skript.bukkit.lang.eventvalue.EventValueRegistry;
+import org.skriptlang.skript.bukkit.registration.BukkitSyntaxInfos;
+import org.skriptlang.skript.registration.SyntaxRegistry;
 
 import java.util.Arrays;
 
@@ -27,22 +30,34 @@ import java.util.Arrays;
 @Name("On Custom Block Place And Break")
 @Description({"Fires when a Custom block gets place and broken"})
 @Since("1.0")
-public class EvtCustomBlock extends SkriptEvent {
+public final class EvtCustomBlock extends SkriptEvent {
 
-    public static void register() {
-        Skript.registerEvent("Break Custom Block", EvtCustomBlock.class, CustomBlockBreakEvent.class, "(break[ing]|1¦min(e|ing)) of (custom|ce|craft-engine) block[s] [[of] %-unsafeblockstatematchers%]")
-                .description("Called when a custom block is broken by a player. If you use 'on mine', only events where the broken block dropped something will call the trigger.");
-        EventValues.registerEventValue(CustomBlockBreakEvent.class, Location.class, CustomBlockBreakEvent::location, EventValues.TIME_NOW);
-        EventValues.registerEventValue(CustomBlockBreakEvent.class, Player.class, CustomBlockBreakEvent::getPlayer, EventValues.TIME_NOW);
-        EventValues.registerEventValue(CustomBlockBreakEvent.class, Block.class, CustomBlockBreakEvent::bukkitBlock, EventValues.TIME_NOW);
-        EventValues.registerEventValue(CustomBlockBreakEvent.class, World.class, event -> event.location().getWorld(), EventValues.TIME_NOW);
+    public static void register(SkriptAddon addon) {
+        SyntaxRegistry syntaxRegistry = addon.registry(SyntaxRegistry.class);
+        EventValueRegistry valueRegistry = addon.registry(EventValueRegistry.class);
 
-        Skript.registerEvent("Place Custom Block", EvtCustomBlock.class, CustomBlockPlaceEvent.class, "(plac(e|ing)|build[ing]) of (custom|ce|craft-engine) block[s] [[of] %-unsafeblockstatematchers%]")
-                .description("Called when a player places a custom block.");
-        EventValues.registerEventValue(CustomBlockPlaceEvent.class, Location.class, CustomBlockPlaceEvent::location, EventValues.TIME_NOW);
-        EventValues.registerEventValue(CustomBlockPlaceEvent.class, Player.class, CustomBlockPlaceEvent::player, EventValues.TIME_NOW);
-        EventValues.registerEventValue(CustomBlockPlaceEvent.class, Block.class, CustomBlockPlaceEvent::bukkitBlock, EventValues.TIME_NOW);
-        EventValues.registerEventValue(CustomBlockPlaceEvent.class, World.class, event -> event.location().getWorld(), EventValues.TIME_NOW);
+        BukkitSyntaxInfos.Event<EvtCustomBlock> breakEvent = BukkitSyntaxInfos.Event.builder(EvtCustomBlock.class, "Break Custom Block")
+                .addPattern("(break[ing]|1¦min(e|ing)) of (custom|ce|craft-engine) block[s] [[of] %-unsafeblockstatematchers%]")
+                .addDescription("Called when a custom block is broken by a player. If you use 'on mine', only events where the broken block dropped something will call the trigger.")
+                .addEvent(CustomBlockBreakEvent.class)
+                .build();
+        syntaxRegistry.register(BukkitSyntaxInfos.Event.KEY, breakEvent);
+
+        valueRegistry.register(EventValue.builder(CustomBlockBreakEvent.class, Location.class).getter(CustomBlockBreakEvent::location).time(EventValue.Time.NOW).build());
+        valueRegistry.register(EventValue.builder(CustomBlockBreakEvent.class, Player.class).getter(CustomBlockBreakEvent::getPlayer).time(EventValue.Time.NOW).build());
+        valueRegistry.register(EventValue.builder(CustomBlockBreakEvent.class, Block.class).getter(CustomBlockBreakEvent::bukkitBlock).time(EventValue.Time.NOW).build());
+        valueRegistry.register(EventValue.builder(CustomBlockBreakEvent.class, World.class).getter(e -> e.location().getWorld()).time(EventValue.Time.NOW).build());
+
+        BukkitSyntaxInfos.Event<EvtCustomBlock> placeEvent = BukkitSyntaxInfos.Event.builder(EvtCustomBlock.class, "Place Custom Block")
+                .addPattern("(plac(e|ing)|build[ing]) of (custom|ce|craft-engine) block[s] [[of] %-unsafeblockstatematchers%]")
+                .addDescription("Called when a player places a custom block.")
+                .addEvent(CustomBlockPlaceEvent.class)
+                .build();
+        syntaxRegistry.register(BukkitSyntaxInfos.Event.KEY, placeEvent);
+        valueRegistry.register(EventValue.builder(CustomBlockPlaceEvent.class, Location.class).getter(CustomBlockPlaceEvent::location).time(EventValue.Time.NOW).build());
+        valueRegistry.register(EventValue.builder(CustomBlockPlaceEvent.class, Player.class).getter(CustomBlockPlaceEvent::player).time(EventValue.Time.NOW).build());
+        valueRegistry.register(EventValue.builder(CustomBlockPlaceEvent.class, Block.class).getter(CustomBlockPlaceEvent::bukkitBlock).time(EventValue.Time.NOW).build());
+        valueRegistry.register(EventValue.builder(CustomBlockPlaceEvent.class, World.class).getter(e -> e.location().getWorld()).time(EventValue.Time.NOW).build());
     }
 
     @Nullable

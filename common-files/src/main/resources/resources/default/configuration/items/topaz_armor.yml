@@ -2,14 +2,14 @@ templates:
   default:armor/topaz:
     material: chainmail_${part}
     data:
-      item-name: <!i><#FF8C00><lang:item.default.topaz_${part}>
-      tooltip-style: minecraft:topaz
+      item_name: <!i><#FF8C00><lang:item.default.topaz_${part}>
+      tooltip_style: minecraft:topaz
     settings:
       tags:
         - default:topaz_tools
         - minecraft:trimmable_armor
       equipment:
-        asset-id: default:topaz
+        asset_id: default:topaz
         $$>=1.21.2:
           slot: ${slot}
     model:
@@ -50,12 +50,12 @@ equipments:
     default:topaz:
       type: component
       humanoid: minecraft:entity/equipment/humanoid/topaz
-      humanoid-leggings: minecraft:entity/equipment/humanoid_leggings/topaz
+      humanoid_leggings: minecraft:entity/equipment/humanoid_leggings/topaz
   $$<1.21.2:
     default:topaz:
       type: trim
       humanoid: minecraft:entity/equipment/humanoid/topaz
-      humanoid-leggings: minecraft:entity/equipment/humanoid_leggings/topaz
+      humanoid_leggings: minecraft:entity/equipment/humanoid_leggings/topaz
 recipes:
   default:topaz_helmet:
     type: shaped

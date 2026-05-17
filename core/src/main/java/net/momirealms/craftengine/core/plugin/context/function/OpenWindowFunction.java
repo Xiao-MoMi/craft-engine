@@ -2,28 +2,25 @@ package net.momirealms.craftengine.core.plugin.context.function;
 
 import net.momirealms.craftengine.core.entity.player.Player;
 import net.momirealms.craftengine.core.plugin.CraftEngine;
+import net.momirealms.craftengine.core.plugin.config.ConfigSection;
 import net.momirealms.craftengine.core.plugin.context.*;
 import net.momirealms.craftengine.core.plugin.context.parameter.DirectContextParameters;
 import net.momirealms.craftengine.core.plugin.context.selector.PlayerSelector;
-import net.momirealms.craftengine.core.plugin.context.selector.PlayerSelectors;
 import net.momirealms.craftengine.core.plugin.gui.GuiType;
-import net.momirealms.craftengine.core.plugin.locale.LocalizedResourceConfigException;
 import net.momirealms.craftengine.core.util.AdventureHelper;
-import net.momirealms.craftengine.core.util.EnumUtils;
-import net.momirealms.craftengine.core.util.ResourceConfigUtils;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
-import java.util.Locale;
-import java.util.Map;
-import java.util.Optional;
 
-public class OpenWindowFunction<CTX extends Context> extends AbstractConditionalFunction<CTX> {
+public final class OpenWindowFunction<CTX extends Context> extends AbstractConditionalFunction<CTX> {
     private final PlayerSelector<CTX> selector;
     private final GuiType guiType;
     private final String optionalTitle;
 
-    public OpenWindowFunction(List<Condition<CTX>> predicates, @Nullable PlayerSelector<CTX> selector, GuiType guiType, String optionalTitle) {
+    private OpenWindowFunction(List<Condition<CTX>> predicates,
+                               @Nullable PlayerSelector<CTX> selector,
+                               GuiType guiType,
+                               String optionalTitle) {
         super(predicates);
         this.selector = selector;
         this.guiType = guiType;
@@ -50,26 +47,26 @@ public class OpenWindowFunction<CTX extends Context> extends AbstractConditional
         }
     }
 
-    public static <CTX extends Context> FunctionFactory<CTX, OpenWindowFunction<CTX>> factory(java.util.function.Function<Map<String, Object>, Condition<CTX>> factory) {
+    public static <CTX extends Context> FunctionFactory<CTX, OpenWindowFunction<CTX>> factory(java.util.function.Function<ConfigSection, Condition<CTX>> factory) {
         return new Factory<>(factory);
     }
 
     private static class Factory<CTX extends Context> extends AbstractFactory<CTX, OpenWindowFunction<CTX>> {
+        private static final String[] GUI_TYPE = new String[] {"gui_type", "gui-type"};
 
-        public Factory(java.util.function.Function<Map<String, Object>, Condition<CTX>> factory) {
+        public Factory(java.util.function.Function<ConfigSection, Condition<CTX>> factory) {
             super(factory);
         }
 
         @Override
-        public OpenWindowFunction<CTX> create(Map<String, Object> arguments) {
-            String title = Optional.ofNullable(arguments.get("title")).map(String::valueOf).orElse(null);
-            String rawType = ResourceConfigUtils.requireNonEmptyStringOrThrow(arguments.get("gui-type"), "warning.config.function.open_window.missing_gui_type");
-            try {
-                GuiType type = GuiType.valueOf(rawType.toUpperCase(Locale.ENGLISH));
-                return new OpenWindowFunction<>(getPredicates(arguments), PlayerSelectors.fromObject(arguments.get("target"), conditionFactory()), type, title == null ? null : AdventureHelper.legacyToMiniMessage(title));
-            } catch (IllegalArgumentException e) {
-                throw new LocalizedResourceConfigException("warning.config.function.open_window.invalid_gui_type", e, rawType, EnumUtils.toString(GuiType.values()));
-            }
+        public OpenWindowFunction<CTX> create(ConfigSection section) {
+            String title = section.getString("title");
+            return new OpenWindowFunction<>(
+                    getPredicates(section),
+                    getPlayerSelector(section),
+                    section.getNonNullEnum(GUI_TYPE, GuiType.class),
+                    title == null ? null : AdventureHelper.legacyToMiniMessage(title)
+            );
         }
     }
 }

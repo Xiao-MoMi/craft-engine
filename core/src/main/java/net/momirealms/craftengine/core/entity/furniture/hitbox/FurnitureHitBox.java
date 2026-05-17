@@ -25,7 +25,7 @@ public interface FurnitureHitBox extends SeatOwner {
 
     FurnitureHitBoxConfig<?> config();
 
-    void collectVirtualEntityId(Consumer<Integer> collector);
+    void collectInteractableEntityId(Consumer<Integer> collector);
 
     default Optional<EntityHitResult> clip(Vec3d min, Vec3d max) {
         for (FurnitureHitboxPart value : parts()) {

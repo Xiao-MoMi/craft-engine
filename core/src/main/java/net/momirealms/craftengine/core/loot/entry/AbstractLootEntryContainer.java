@@ -7,7 +7,7 @@ import net.momirealms.craftengine.core.util.MiscUtils;
 import java.util.List;
 import java.util.function.Predicate;
 
-public abstract class AbstractLootEntryContainer<T> implements LootEntryContainer<T>, Predicate<LootContext> {
+public abstract class AbstractLootEntryContainer implements LootEntryContainer, Predicate<LootContext> {
     protected final List<Condition<LootContext>> conditions;
     private final Predicate<LootContext> compositeCondition;
 

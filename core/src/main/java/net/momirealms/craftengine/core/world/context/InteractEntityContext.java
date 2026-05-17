@@ -9,12 +9,12 @@ import net.momirealms.craftengine.core.world.EntityHitResult;
 import net.momirealms.craftengine.core.world.Vec3d;
 import net.momirealms.craftengine.core.world.World;
 
-public class InteractEntityContext {
+public final class InteractEntityContext {
     private final Player player;
     private final InteractionHand hand;
     private final EntityHitResult hitResult;
     private final World level;
-    private final Item<?> itemStack;
+    private final Item itemStack;
 
     public InteractEntityContext(Player player, InteractionHand hand, EntityHitResult hitResult) {
         this.player = player;
@@ -40,7 +40,7 @@ public class InteractEntityContext {
         return this.level;
     }
 
-    public Item<?> getItem() {
+    public Item getItem() {
         return this.itemStack;
     }
 

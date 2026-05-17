@@ -3,7 +3,7 @@ package net.momirealms.craftengine.core.plugin.context.text;
 import net.momirealms.craftengine.core.plugin.context.Context;
 import net.momirealms.craftengine.core.util.Key;
 
-public class PlainTextProvider implements TextProvider {
+public final class PlainTextProvider implements TextProvider {
     private final String text;
 
     public PlainTextProvider(String text) {

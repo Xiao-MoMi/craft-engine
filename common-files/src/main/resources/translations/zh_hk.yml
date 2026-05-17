@@ -1,0 +1,281 @@
+exception.invalid_syntax: <red>語法錯誤。正確語法：<white><arg:0></white></red>
+exception.invalid_argument: <red>引數無效。原因：<white><arg:0></white></red>
+exception.invalid_sender: <red><arg:0> 不允許執行此命令。執行者必須是 <arg:1></red>
+exception.unexpected: <red>執行此命令時發生內部錯誤</red>
+exception.no_permission: <red>抱歉，你沒有權限執行此命令</red>
+exception.no_such_command: <red>未知的命令</red>
+argument.entity.notfound.player: <red>未找到玩家</red>
+argument.entity.notfound.entity: <red>未找到實體</red>
+argument.parse.failure.time: <red>「<arg:0>」不是有效的時間格式</red>
+argument.parse.failure.material: <red>「<arg:0>」不是有效的材料名稱</red>
+argument.parse.failure.enchantment: <red>「<arg:0>」不是有效的附魔</red>
+argument.parse.failure.offlineplayer: <red>輸入的玩家「<arg:0>」已離線</red>
+argument.parse.failure.player: <red>找不到輸入的玩家「<arg:0>」</red>
+argument.parse.failure.world: <red>「<arg:0>」不是有效的 Minecraft 世界</red>
+argument.parse.failure.location.invalid_format: <red>「<arg:0>」不是有效的位置格式。所需格式為「<arg:1> <arg:2> <arg:3>」</red>
+argument.parse.failure.location.mixed_local_absolute: <red>不能混用相對和絕對座標。（要麼所有座標都使用「^」，要麼都不使用）</red>
+argument.parse.failure.namespacedkey.namespace: <red>命名空間「<arg:0>」無效。必須由 [a-z0-9._-] 組成</red>
+argument.parse.failure.namespacedkey.key: <red>命名空間ID「<arg:0>」無效。必須由 [a-z0-9._-] 組成</red>
+argument.parse.failure.namespacedkey.need_namespace: <red>輸入「<arg:0>」無效，需要顯式命名空間</red>
+argument.parse.failure.boolean: <red>無法從「<arg:0>」解析布爾值</red>
+argument.parse.failure.number: <red>「<arg:0>」不在 <arg:1> 到 <arg:2> 的範圍內</red>
+argument.parse.failure.char: <red>「<arg:0>」不是有效字符</red>
+argument.parse.failure.string: <red>「<arg:0>」不是 <arg:1> 類型的有效字串</red>
+argument.parse.failure.uuid: <red>「<arg:0>」不是有效的 UUID</red>
+argument.parse.failure.enum: <red>「<arg:0>」不是以下選項之一：<arg:1></red>
+argument.parse.failure.regex: <red>「<arg:0>」與「<arg:1>」不匹配</red>
+argument.parse.failure.flag.unknown: <red>未知的「<arg:0>」標誌</red>
+argument.parse.failure.flag.duplicate_flag: <red>重複的「<arg:0>」標誌</red>
+argument.parse.failure.flag.no_flag_started: <red>無法識別的短標誌組合「<arg:0>」</red>
+argument.parse.failure.flag.missing_argument: <red>缺少「<arg:0>」引數</red>
+argument.parse.failure.flag.no_permission: <red>你沒有權限使用「<arg:0>」標誌</red>
+argument.parse.failure.color: <red>「<arg:0>」不是有效的顏色</red>
+argument.parse.failure.duration: <red>「<arg:0>」不是時間長度格式</red>
+argument.parse.failure.aggregate.missing: <red>缺少「<arg:0>」元件</red>
+argument.parse.failure.aggregate.failure: <red>無效的「<arg:0>」元件：<arg:1></red>
+argument.parse.failure.either: <red>無法從「<arg:0>」解析出 <arg:1> 或 <arg:2></red>
+argument.parse.failure.namedtextcolor: <red>「<arg:0>」不是命名的文本顏色</red>
+command.reload.too_fast: <red>你重新載入插件的速度太快了，上一次的重新載入還沒有完成</red>
+command.reload.config.failure: <red>無法重新載入配置。請檢查控制台日誌</red>
+command.reload.config.success: <dark_gray>» </dark_gray><gradient:#F4A460:#FFD700><b>CraftEngine</b></gradient> <gray>•</gray> <white>配置檔案已重新載入完成</white><gray>（<hover:show_text:'<gray>異步/同步'><color:#FFD700><arg:1></color>/<color:#F4A460><arg:2></color></hover> 毫秒）</gray>
+command.reload.config.issues: <#FF5555>⚠ 發現 <bold><arg:0></bold> 個問題。<gray><italic>（請檢查控制台以獲取詳細資訊）</#FF5555>
+command.reload.pack.failure: <red>無法生成資源包。請檢查控制台日誌</red>
+command.reload.pack.success: <dark_gray>» </dark_gray><gradient:#F4A460:#FFD700><b>CraftEngine</b></gradient> <gray>•</gray> <white>資源包生成完成</white><gray>（<hover:show_text:"<gray>異步處理"><color:#FFD700><arg:0></color> 毫秒</hover>）</gray>
+command.item.get.success: <white>獲得 <arg:0> 個 <arg:1></white>
+command.item.get.failure.not_exist: <red>未知物品「<arg:0>」</red>
+command.item.give.success.single: <white>已將 <arg:0> 個 <arg:1> 給予 <arg:2></white>
+command.item.give.success.multiple: <white>已將 <arg:0> 個 <arg:1> 給予 <arg:2> 個玩家</white>
+command.item.give.failure.not_exist: <red>未知物品「<arg:0>」</red>
+command.item.clear.failed.single: <red>玩家 <arg:0> 身上並無任何物品</red>
+command.item.clear.failed.multiple: <red><arg:0> 個玩家身上並無任何物品</red>
+command.item.clear.success.single: <white>已刪除玩家 <arg:1> 的 <arg:0> 個物品</white>
+command.item.clear.success.multiple: <white>已刪除 <arg:1> 個玩家的 <arg:0> 個物品</white>
+command.item.clear.test.single: <white>已從玩家 <arg:1> 身上發現 <arg:0> 個相關物品</white>
+command.item.clear.test.multiple: <white>已從 <arg:1> 個玩家身上發現 <arg:0> 個相關物品</white>
+command.item.set_custom_model_data: <white>已將自訂模型數據設定為「<arg:0>」</white>
+command.item.set_item_model: <white>已將物品模型設定為「<arg:0>」</white>
+command.item.remove_item_component: <white>已將物品的「<arg:0>」元件移除</white>
+command.search_recipe.not_found: <red>找不到此物品的配方</red>
+command.search_usage.not_found: <red>找不到此物品的用途</red>
+command.search_recipe.no_item: <red>請手持物品後再執行此命令</red>
+command.search_usage.no_item: <red>請手持物品後再執行此命令</red>
+command.totem_animation.failure.not_totem: <red>「<arg:0>」不是不死圖騰或者找不到該物品</red>
+command.totem_animation.success.single: <white>已將圖騰動畫 <arg:0> 播放給 <arg:1></white>
+command.totem_animation.success.multiple: <white>已將圖騰動畫 <arg:0> 播放給 <arg:1> 個玩家</white>
+command.resource.enable.success: <white>已啟用資源 <arg:0>。執行 <click:run_command:/ce reload all><u>/ce reload all</u></click> 以應用更改</white>
+command.resource.enable.failure.unknown: <red>未知的資源「<arg:0>」</red>
+command.resource.disable.success: <white>已停用資源 <arg:0>。執行 <click:run_command:/ce reload all><u>/ce reload all</u></click> 以應用更改</white>
+command.resource.disable.failure.unknown: <red>未知的資源「<arg:0>」</red>
+command.resource.list: <white>已啟用的資源（<arg:0>）：<green><arg:1></green><newline>已停用的資源（<arg:2>）：<red><arg:3></red></white>
+command.resource.create.success: <white>已建立名為「<arg:0>」的空資源</white>
+command.resource.create.failure.unknown: <red>無法建立名為「<arg:0>」的資源，錯誤訊息：<arg:1></red>
+command.resource.create.failure.invalid_namespace: <red>無法建立名為「<arg:0>」的資源，命名空間「<arg:1>」中包含無效字符</red>
+command.resource.create.failure.exists: <red>名為「<arg:0>」的資源已經存在</red>
+command.upload.failure.not_supported: <red>當前的託管方式「<arg:0>」不支援上傳資源包</red>
+command.upload.on_progress: <white>已開始上傳，請檢查控制台以獲取更多資訊</white>
+command.send_resource_pack.success.single: <white>已將資源包傳送給 <arg:0></white>
+command.send_resource_pack.success.multiple: <white>已將資源包傳送給 <arg:0> 個玩家</white>
+command.locale.set.failure: <red>無效的區域設定格式：<arg:0></red>
+command.locale.set.success: <white>已將 <arg:1> 選定的區域設定設為 <arg:0></white>
+command.locale.unset.success: <white>重置了 <arg:0> 的區域設定</white>
+command.display_entity_view_distance_scale.set.success: <white>已將 <arg:1> 的展示實體可見距離百分比設為 <arg:0></white>
+command.entity_culling_distance_scale.set.success: <white>已將 <arg:1> 的實體剔除距離百分比設為 <arg:0></white>
+command.entity_culling.toggle.success: <white>已將 <arg:1> 的實體剔除狀態設為 <arg:0></white>
+command.place_feature.failed: <red>放置地物失敗</red>
+command.place_feature.success: <white>已在 <arg:1>, <arg:2>, <arg:3> 處放置「<arg:0>」</white>
+command.place_feature.invalid: <red>沒有類型為「<arg:0>」的地物</red>
+command.chunk.not_loaded: <red>該位置尚未被載入</red>
+command.player.itemless: <red><arg:0> 未手持任何物品</red>
+snbt.invalid_syntax.parse_error: <arg:0>，位於第 <arg:1> 個字符：<arg:2>
+snbt.invalid_syntax.here: <--[此處]
+snbt.parser.expected_string_uuid: 應為表示有效 UUID 字串
+snbt.parser.expected_number_or_boolean: 應為數字或布爾值
+snbt.parser.trailing: 多餘尾隨數據
+snbt.parser.expected.compound: 應為複合標籤
+snbt.parser.number_parse_failure: 無法解析數字：<arg:0>
+snbt.parser.expected_hex_escape: 字元字面變量長度應為 <arg:0>
+snbt.parser.invalid_codepoint: 無效 Unicode 字元碼：<arg:0>
+snbt.parser.no_such_operation: 不存在的操作：<arg:0>
+snbt.parser.expected_integer_type: 應為整數
+snbt.parser.expected_float_type: 應為浮點數
+snbt.parser.expected_non_negative_number: 應為非負數
+snbt.parser.invalid_character_name: 無效 Unicode 字元名稱
+snbt.parser.invalid_array_element_type: 無效陣列元素類型
+snbt.parser.invalid_unquoted_start: 無引號字串不應以數字 0-9、+ 或 - 開頭
+snbt.parser.expected_unquoted_string: 應為有效無引號字串
+snbt.parser.invalid_string_contents: 無效字串內容
+snbt.parser.expected_binary_numeral: 應為二進位數
+snbt.parser.underscore_not_allowed: 數字的開頭和結尾不得使用下劃線字元
+snbt.parser.expected_decimal_numeral: 應為十進位數
+snbt.parser.expected_hex_numeral: 應為十六進位數
+snbt.parser.empty_key: 鍵值不應為空
+snbt.parser.leading_zero_not_allowed: 十進位數字不應以 0 開頭
+snbt.parser.infinity_not_allowed: 不允許使用非有限數之數值
+snbt.parser.incorrect: 應為字面變量 <arg:0>
+yaml.duplicated_key: 在檔案「<arg:0>」中的第「<arg:2>」行發現發現重複的鍵「<arg:1>」
+yaml.inconsistent_value_type: 在檔案「<arg:0>」中的第「<arg:2>」行發現發現重複的鍵「<arg:1>」且值類型不同
+plugin.compatibility: '[相容性] 已掛鈎 <arg:0>'
+number.unknown_type: 未知的數字類型「<arg:0>」
+number.fixed.invalid_expression: 無效的表達式「<arg:0>」。https://ezylang.github.io/EvalEx/references/references.html
+number.greater_than: "「<arg:0>」應大於「<arg:1>」"
+number.no_greater_than: "「<arg:0>」不應大於「<arg:1>」"
+number.less_than: "「<arg:0>」應小於「<arg:1>」"
+number.no_less_than: "「<arg:0>」不應小於「<arg:1>」"
+condition.unknown_type: 未知的條件類型「<arg:0>」
+condition.enchantment.invalid_format: 無效的謂詞格式「<arg:0>」。（例如：minecraft:sharpness>=4）
+function.unknown_type: 未知的函數類型「<arg:0>」
+player_selector.unknown_type: 未知的玩家選擇器類型「<arg:0>」
+loot.entry.unknown_type: 未知的戰利品條目類型「<arg:0>」
+loot.function.unknown_type: 未知的戰利品函數類型「<arg:0>」
+loot.function.formula.unknown_type: 未知的公式類型「<arg:0>」
+host.unknown_type: 未知的資源包託管類型「<arg:0>」
+host.missing_environment_variable: 缺少環境變量「<arg:0>」
+host.get_url_failed: 獲取玩家 <arg:0> 的資源包下載連結失敗
+host.handle_response_failed: 處理玩家 <arg:0> 的資源包響應失敗
+host.upload_started: 正在上傳資源包...
+host.upload_finished: 資源包上傳成功，耗時 <arg:0> 毫秒
+host.upload_failed: 資源包上傳失敗
+host.lobfile.storage_usage: 賬號使用情況：<arg:0>/<arg:1> MB | <arg:2>/<arg:3> 個檔案
+host.self.http_server_started: Netty HTTP伺服器已在 <arg:0> 埠啟動
+config.errors_detected: 在 config.yml 中發現錯誤 - <arg:0>
+update.available: 新版本 <arg:0> 已發布：<arg:1>
+update.is_latest: 你正在使用最新版本
+resource_pack.invalid_overlay_format: 無效的疊加資源包格式「<arg:0>」。疊加資源包格式必須包含佔位符「{version}」
+resource_pack.generation_started: 正在生成資源包...
+resource_pack.generation_finished: 資源包生成完成，耗時 <arg:0> 毫秒
+resource_pack.validation_started: 正在驗證資源包...（進度：<arg:0>/<arg:1> | 資源包格式：<arg:2>~<arg:3> | 疊加資源包：<arg:4>）
+resource_pack.validation_finished: 資源包驗證完成，耗時 <arg:0> 毫秒
+resource_pack.json_optimization_started: '> 正在最佳化 json 檔案...'
+resource_pack.texture_optimization_started: '> 正在最佳化紋理檔案...'
+resource_pack.optimization_result: '> □ 最佳化前/最佳化後/比率：<arg:0>/<arg:1>/<arg:2>'
+resource_pack.optimization_finished: 資源包最佳化完成，耗時 <arg:0> 毫秒
+resource_pack.compression_started: 正在壓縮資源包...（如果啟用了混淆功能，此過程可能會比較慢）
+resource_pack.compression_finished: 資源包壓縮完成，耗時 <arg:0> 毫秒
+resource_pack.duplicated_files: 發現重複檔案。請通過 config.yml 檔案中的「resource-pack.duplicated-files-handler」部分進行處理
+resource_pack.malformatted_json: Json 檔案「<arg:0>」的格式不正確
+resource_pack.not_a_json_object: Json 檔案「<arg:0>」不是一個 json 物件
+resource_pack.conflict_resolution.unknown_type: 未知的檔案衝突解決方案類型「<arg:0>」
+resource_pack.model_generation.conflict: 無法生成模型，因為模型檔案「<arg:0>」已存在
+resource_pack.item_model.conflict: 無法生成物品模型映射「<arg:0>」，因為檔案「<arg:1>」已存在
+resource_pack.missing_font_texture: 字型「<arg:0>」缺少紋理「<arg:1>」
+resource_pack.missing_model_texture: 模型「<arg:0>」缺少紋理「<arg:1>」
+resource_pack.missing_equipment_texture: 裝備「<arg:0>」缺少紋理「<arg:1>」
+resource_pack.missing_atlas_texture: 圖集「<arg:0>」缺少紋理「<arg:1>」
+resource_pack.missing_item_model: 物品「<arg:0>」缺少模型檔案「<arg:1>」
+resource_pack.missing_block_model: 方塊狀態「<arg:0>」缺少模型檔案「<arg:1>」
+resource_pack.missing_parent_model: 模型「<arg:0>」找不到父模型「<arg:1>」
+resource_pack.missing_sound: 聲音事件「<arg:0>」缺少ogg檔案「<arg:1>」
+resource_pack.texture_not_in_atlas: 紋理「<arg:0>」未在圖集中定義。你需要將紋理路徑加入到圖集，或在 config.yml 中啟用「fix-atlas」選項
+resource_pack.multiple_atlases: 模型「<arg:0>」使用了多個圖集：預期為「<arg:1>」，但發現「<arg:2>」。請確保所有模型紋理來自同一圖集
+resource_pack.duplicated_sprite: 無法載入模型「<arg:0>」。圖集「<arg:2>」中的精靈圖「<arg:1>」重複，它已在圖集「<arg:3>」中定義
+resource_pack.bad_atlas: 載入模型「<arg:0>」失敗。精靈圖「<arg:1>」應來自圖集「<arg:2>」，但實際來自圖集「<arg:3>」
+resource.argument.type.section: 配置部分
+resource.argument.type.boolean: 布爾值
+resource.argument.type.int: 整數
+resource.argument.type.long: 長整數
+resource.argument.type.float: 單精度浮點數
+resource.argument.type.double: 雙精度浮點數
+resource.argument.type.string: 字串
+resource.argument.type.enum: '[<arg:0>] 之一'
+resource.argument.type.vec3: 三維向量
+resource.argument.type.quaternion: 四元數 https://quaternions.online/
+resource.argument.type.aabb: 軸對齊包圍盒
+resource.argument.type.snbt: SNBT https://zh.minecraft.wiki/w/SNBT%E6%A0%BC%E5%BC%8F
+resource.argument.type.identifier: 命名空間ID https://zh.minecraft.wiki/w/%E5%91%BD%E5%90%8D%E7%A9%BA%E9%97%B4ID
+resource.argument.type.list: 列表
+resource.argument.type.color: 顏色
+resource.argument.type.number: 數值 https://ce.gtemc.cn/zh-Hans/reference/number_format
+resource.argument.type.item_model_definition: 物品模型映射
+resource.argument.type.json: Json
+resource.argument.type.any: 任意類型
+resource.argument.type.blockstate: 方塊狀態
+resource.argument.parser.section: 預期為配置部分，但發現了「<arg:0>」
+resource.argument.parser.boolean: 無法將「<arg:0>」解析為布爾值。（允許的值：true/false、yes/no、on/off）
+resource.argument.parser.int: 無法將「<arg:0>」解析為整數。（允許包含「_」的數字，例如 1_0000）
+resource.argument.parser.long: 無法將「<arg:0>」解析為長整數。（例如：21_4748_3648）
+resource.argument.parser.float: 無法將「<arg:0>」解析為十進制數。（例如：3.14 或 1_0000.5）
+resource.argument.parser.double: 無法將「<arg:0>」解析為高精度十進制數。（例如：0.0000001）
+resource.argument.parser.enum: 無效的常量「<arg:0>」。（必須是以下之一：[<arg:1>]）
+resource.argument.parser.vec3: 無法將「<arg:0>」解析為向量。（預期格式為「x,y,z」，例如 1.5,22,0）
+resource.argument.parser.quaternion: 無法將「<arg:0>」解析為四元數。（預期格式為「x,y,z,w」，例如 0,0,0,1）
+resource.argument.parser.snbt: 無效的 SNBT 格式「<arg:0>」。詳細資訊：<arg:1>。指南：https://zh.minecraft.wiki/w/SNBT%E6%A0%BC%E5%BC%8F
+resource.argument.parser.aabb: 無法將「<arg:0>」解析為軸對齊包圍盒。（預期為兩個點的格式「x1,y1,z1,x2,y2,z2」，例如 0,0,0,1,1,1）
+resource.argument.parser.blockstate: 無法將「<arg:0>」解析為方塊狀態。（例如：minecraft:wheat[age=3]）
+resource.argument.parser.identifier: 無法將「<arg:0>」解析為命名空間ID。指南：https://zh.minecraft.wiki/w/%E5%91%BD%E5%90%8D%E7%A9%BA%E9%97%B4ID
+resource.argument.parser.list: 預期為列表，但發現了「<arg:0>」
+resource.argument.parser.nonempty_list: 預期為非空列表
+resource.argument.parser.fixed_size_list: 預期為包含「<arg:0>」個元素的列表
+resource.argument.parser.nonempty_string: 預期為非空字串
+resource.argument.parser.split: 預期拆分為「<arg:0>」個部分，但實際得到「<arg:1>」個部分
+resource.argument.parser.number: 預期為數字，但發現了「<arg:0>」
+resource.argument.parser.uuid: 無法將「<arg:0>」解析為 UUID
+resource.config_loaded: 已載入 <arg:0>，耗時 <arg:1> 毫秒（<arg:2>）
+resource.pack_loaded: 已載入的包：<arg:0>。預設命名空間：<arg:1>
+resource.errors_detected: 在檔案「<arg:0>」中發現 <arg:1> 個問題：
+resource.errors_detail: '[<arg:0>] <arg:1> - <arg:2>'
+resource.unknown_error: 未知錯誤類型
+resource.duplicated_id: 另一個檔案（「<arg:0>」）包含一個具有相同 ID 的部分
+resource.missing_argument: 缺少必要的引數「<arg:0>」。預期引數為：「<arg:1>」
+resource.placed_feature.invalid_placement: 無效的放置修飾器。輸入：「<arg:0>」。原因：「<arg:1>」
+resource.configured_feature.invalid_feature: 無效的已配置的地物。輸入：「<arg:0>」。原因：「<arg:1>」
+resource.mapping.conflict: 無法將方塊狀態「<arg:0>」映射到方塊狀態「<arg:1>」，因為該狀態已被映射到「<arg:2>」
+resource.lang.unknown_locale: 未知語言環境「<arg:0>」。（例如：en、zh_cn）
+resource.image.invalid_grid_size: 無效的網格大小「<arg:0>」。（例如：3,4）
+resource.image.empty_chars: 選項「chars」不能為空
+resource.image.invalid_chars_grid: 第 <arg:0> 行中的字符數與預期的 <arg:1> 個不符
+resource.image.codepoint_conflict: 字型「<arg:2>」中的字符「<arg:0>（<arg:1>）」已被另一張圖片「<arg:3>」佔用
+resource.image.codepoint_exhausted: 字型「<arg:0>」的碼位已用盡
+resource.image.height_ascent_conflict: 字高「<arg:0>」不應小於字距「<arg:1>」
+resource.emoji.invalid_image_format: 無效的圖像格式「<arg:0>」
+resource.emoji.unknown_image: 未知的圖像「<arg:0>」
+resource.equipment.unknown_type: 未知的裝備類型「<arg:0>」
+resource.equipment.unknown_layer_type: 未知的預設模型類型「<arg:0>」
+resource.equipment.invalid_sacrificed_armor: 無效的原版盔甲類型「<arg:0>」
+resource.furniture.element.unknown_type: 未知的傢俱元素類型「<arg:0>」
+resource.furniture.element.tint_source.unknown_type: 未知的傢俱染色源類型「<arg:0>」
+resource.furniture.hitbox.unknown_type: 未知的傢俱判定箱類型「<arg:0>」
+resource.furniture.behavior.unknown_type: 未知的傢俱行為類型「<arg:0>」
+resource.furniture.hitbox.custom.invalid_entity_type: 無效的實體類型「<arg:0>」
+resource.template.unknown_argument_type: 未知的模板引數類型「<arg:0>」
+resource.template.invalid_template: 無效的模板「<arg:0>」
+resource.template.missing_argument: 缺少模板引數：「<arg:0>」。請通過「arguments」選項提供此引數，或為其設定預設值
+resource.block.behavior.missing_property: 該行為需要定義方塊狀態屬性「<arg:0>」。https://ce.gtemc.cn/zh-Hans/configuration/block/states/properties
+resource.block.behavior.property_type_mismatch: 預期屬性類型為「<arg:0>」，但實際為「<arg:1>」
+resource.block.behavior.unknown_type: 位置的方塊行為類型「<arg:0>」
+resource.block.state.property.unknown_type: 未知的屬性類型「<arg:0>」
+resource.block.state.real_state_conflict: 無法將「<arg:0>」綁定到實際方塊狀態「<arg:1>」，因為該狀態已被方塊「<arg:2>」佔用
+resource.block.state.real_state_exhausted: 無法分配足夠的伺服端方塊狀態。請考慮在 config.yml 中增加伺服端側方塊的數量
+resource.block.state.visual_state_exhausted: 視覺狀態組「<arg:0>」已達到「<arg:1>」個槽位的最大容量，無法為「<arg:2>」分配狀態
+resource.block.state.unreleased_state: 無法使用此格式分配方塊狀態，因為狀態「<arg:0>」在方塊狀態映射中尚未被釋放
+resource.block.state.entity_renderer.unknown_type: 未知的方塊實體渲染器類型「<arg:0>」
+resource.block.state.invalid_variant_nbt: 無效的部分方塊狀態 nbt「<arg:0>」
+resource.block.state.undefined_appearance: 未定義的方塊狀態外觀「<arg:0>」
+resource.block.state.model_conflict: 無法將模型「<arg:0>」綁定到方塊狀態「<arg:1>」，因為該狀態已綁定到模型「<arg:2>」
+resource.block.entity_renderer.tint_source.unknown_type: 未知的方塊實體渲染器染色源「<arg:0>」
+resource.item.model_definition.unknown_type: 未知的物品模型映射類型「<arg:0>」
+resource.item.model_definition.condition.unknown_type: 未知的布爾條件型謂詞類型「<arg:0>」
+resource.item.model_definition.range_dispatch.unknown_type: 未知的值調配型數值屬性類型「<arg:0>」
+resource.item.model_definition.select.unknown_type: 未知的枚舉條件型枚舉屬性類型「<arg:0>」
+resource.item.model_definition.special.unknown_type: 未知的特殊模型類型「<arg:0>」
+resource.item.model_definition.tint.unknown_type: 未知的着色類型「<arg:0>」
+resource.item.model_definition.downgrade_failure: 無法將 1.21.4 及以上版本的物品模型映射轉換為舊版格式。請手動為該物品配置「legacy_model」：https://ce.gtemc.cn/zh-Hans/configuration/item/models#%E6%97%A7%E7%89%88%E6%A8%A1%E5%9E%8B
+resource.item.settings.craft_remainder.unknown_type: 未知的合成剩餘物品類型「<arg:0>」
+resource.item.settings.equippable: 該字段應置於「data」部分之下
+resource.item.settings.equipment.invalid_asset_id: 未找到 id 為「<arg:0>」的裝備。如需幫助，請參閲指南：https://ce.gtemc.cn/zh-Hans/configuration/equipment
+resource.item.behavior.unknown_type: 未知的物品行為類型「<arg:0>」
+resource.item.updater.unknown_type: 未知的物品更新器類型「<arg:0>」
+resource.item.custom_model_data_exhausted: 材料「<arg:0>」的自定義模型數據已用盡
+resource.item.custom_model_data_conflict: 自定義模型數據「<arg:0>」已被物品「<arg:1>」佔用
+resource.item.missing_model_id: 缺少「custom_model_data」或「item_model」，導致自定義模型無法正常工作
+resource.item.occupied_vanilla_item_model: 物品模型「<arg:0>」已被原版物品佔用
+resource.item.invalid_material: 無效的物品類型「<arg:0>」
+resource.model.generation.conflict: 無法為「<arg:0>」生成模型，因為有兩個或多個配置試圖使用相同的路徑生成不同的 json 模型
+resource.recipe.transform_processor.unknown_type: 未知的鍛造配方後處理器類型「<arg:0>」
+resource.recipe.ingredient.invalid_tag: 物品標籤「<arg:0>」不包含任何物品
+resource.recipe.ingredient.item_not_exist: 原料物品「<arg:0>」不存在
+resource.recipe.result.item_not_exist: 結果物品「<arg:0>」不存在
+resource.recipe.shaped.invalid_pattern: 無效的合成圖案「<arg:0>」
+resource.recipe.shaped.invalid_symbol: 無效的合成圖案符號「<arg:0>」
+resource.recipe.post_processor.unknown_type: 未知的配方結果後處理器類型「<arg:0>」
+resource.recipe.unknown_type: 未知的配方類型「<arg:0>」
+resource.vanilla_loot.block.invalid_target: 無效的方塊目標「<arg:0>」

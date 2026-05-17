@@ -1,8 +1,8 @@
 package net.momirealms.craftengine.core.pack.model.definition.condition;
 
-import java.util.Map;
+import net.momirealms.craftengine.core.plugin.config.ConfigSection;
 
 public interface ConditionPropertyFactory<T extends ConditionProperty> {
 
-    T create(Map<String, Object> arguments);
+    T create(ConfigSection section);
 }

@@ -9,25 +9,25 @@ import java.util.Map;
 
 public final class PacketIdHelper {
     // 1.20.5-latest
-    private static final Map<ConnectionState, Map<PacketFlow, Map<String, Integer>>> byName = VersionHelper.isOrAbove1_20_5() ? FastNMS.INSTANCE.gamePacketIdsByName() : Map.of();
+    private static final Map<ConnectionState, Map<PacketFlow, Map<String, Integer>>> byName = VersionHelper.isOrAbove1_20_5 ? FastNMS.INSTANCE.gamePacketIdsByName() : Map.of();
     // 1.20-1.20.4
-    private static final Map<ConnectionState, Map<PacketFlow, Map<Class<?>, Integer>>> byClazz = VersionHelper.isOrAbove1_20_5() ? Map.of() : FastNMS.INSTANCE.gamePacketIdsByClazz();
+    private static final Map<ConnectionState, Map<PacketFlow, Map<Class<?>, Integer>>> byClazz = VersionHelper.isOrAbove1_20_5 ? Map.of() : FastNMS.INSTANCE.gamePacketIdsByClazz();
 
     private PacketIdHelper() {}
 
     public static int count(PacketFlow direction, ConnectionState state) {
-        if (VersionHelper.isOrAbove1_20_5()) {
+        if (VersionHelper.isOrAbove1_20_5) {
             return byName.getOrDefault(state, Map.of()).getOrDefault(direction, Map.of()).size();
         } else {
             return byClazz.getOrDefault(state, Map.of()).getOrDefault(direction, Map.of()).size();
         }
     }
 
-    public static int byName(String packetName, PacketFlow direction, ConnectionState state) {
+    public static int byName(String packetName, ConnectionState state, PacketFlow direction) {
         return byName.getOrDefault(state, Map.of()).getOrDefault(direction, Map.of()).getOrDefault(packetName, -1);
     }
 
-    public static int byClazz(Class<?> clazz, PacketFlow direction, ConnectionState state) {
+    public static int byClazz(Class<?> clazz, ConnectionState state, PacketFlow direction) {
         if (clazz == null) {
             return -1;
         }

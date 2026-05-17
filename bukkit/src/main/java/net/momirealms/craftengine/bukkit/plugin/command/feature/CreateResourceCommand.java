@@ -2,28 +2,27 @@ package net.momirealms.craftengine.bukkit.plugin.command.feature;
 
 import net.kyori.adventure.text.Component;
 import net.momirealms.craftengine.bukkit.plugin.command.BukkitCommandFeature;
-import net.momirealms.craftengine.core.pack.ResourceLocation;
+import net.momirealms.craftengine.core.pack.Identifier;
 import net.momirealms.craftengine.core.plugin.CraftEngine;
 import net.momirealms.craftengine.core.plugin.command.CraftEngineCommandManager;
-import net.momirealms.craftengine.core.plugin.config.StringKeyConstructor;
 import net.momirealms.craftengine.core.plugin.locale.MessageConstants;
 import net.momirealms.craftengine.core.util.FileUtils;
 import org.bukkit.command.CommandSender;
 import org.incendo.cloud.Command;
 import org.incendo.cloud.CommandManager;
 import org.incendo.cloud.parser.standard.StringParser;
-import org.yaml.snakeyaml.DumperOptions;
-import org.yaml.snakeyaml.LoaderOptions;
-import org.yaml.snakeyaml.Yaml;
-import org.yaml.snakeyaml.representer.Representer;
+import org.snakeyaml.engine.v2.api.Dump;
+import org.snakeyaml.engine.v2.api.DumpSettings;
+import org.snakeyaml.engine.v2.common.FlowStyle;
+import org.snakeyaml.engine.v2.common.ScalarStyle;
 
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.Map;
 
-public class CreateResourceCommand extends BukkitCommandFeature<CommandSender> {
+public final class CreateResourceCommand extends BukkitCommandFeature<CommandSender> {
 
     public CreateResourceCommand(CraftEngineCommandManager<CommandSender> commandManager, CraftEngine plugin) {
         super(commandManager, plugin);
@@ -49,7 +48,7 @@ public class CreateResourceCommand extends BukkitCommandFeature<CommandSender> {
                     Path resourcepackPath = packPath.resolve("resourcepack");
                     Path packMetaPath = packPath.resolve("pack.yml");
                     String namespace = context.getOrDefault("namespace", packFolder);
-                    if (!ResourceLocation.isValidNamespace(namespace)) {
+                    if (!Identifier.isValidNamespace(namespace)) {
                         handleFeedback(context, MessageConstants.COMMAND_RESOURCE_CREATE_FAILURE_INVALID_NAMESPACE, Component.text(packFolder), Component.text(namespace));
                         return;
                     }
@@ -69,21 +68,23 @@ public class CreateResourceCommand extends BukkitCommandFeature<CommandSender> {
                         FileUtils.createDirectoriesSafe(texturesPath.resolve("gui").resolve("sprites").resolve("tooltip"));
                         FileUtils.createDirectoriesSafe(texturesPath.resolve("item"));
                         FileUtils.createDirectoriesSafe(namespacePath.resolve("sounds"));
-                        DumperOptions options = new DumperOptions();
-                        options.setDefaultFlowStyle(DumperOptions.FlowStyle.BLOCK);
-                        options.setPrettyFlow(true);
-                        options.setIndent(2);
-                        options.setSplitLines(false);
-                        options.setDefaultScalarStyle(DumperOptions.ScalarStyle.PLAIN);
-                        Yaml yaml = new Yaml(new StringKeyConstructor(packMetaPath, new LoaderOptions()), new Representer(options), options);
-                        Map<String, Object> data = new HashMap<>();
+
+                        DumpSettings dumpSettings = DumpSettings.builder()
+                                .setDefaultFlowStyle(FlowStyle.BLOCK)
+                                .setDefaultScalarStyle(ScalarStyle.PLAIN)
+                                .setSplitLines(false)
+                                .setIndent(2)
+                                .setIndicatorIndent(2)
+                                .build();
+                        Map<String, Object> data = new LinkedHashMap<>();
                         data.put("author", author);
                         data.put("description", description);
                         data.put("version", "1.0");
                         data.put("namespace", namespace);
                         data.put("enable", true);
-                        String dump = yaml.dump(data);
-                        Files.writeString(packMetaPath, dump);
+                        Dump dump = new Dump(dumpSettings);
+                        String yamlOutput = dump.dumpToString(data);
+                        Files.writeString(packMetaPath, yamlOutput);
                     } catch (IOException e) {
                         handleFeedback(context, MessageConstants.COMMAND_RESOURCE_CREATE_FAILURE_UNKNOWN, Component.text(packFolder), Component.text(e.getMessage()));
                         return;

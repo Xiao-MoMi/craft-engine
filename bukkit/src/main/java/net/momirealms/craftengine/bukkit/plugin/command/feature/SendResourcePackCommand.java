@@ -1,6 +1,7 @@
 package net.momirealms.craftengine.bukkit.plugin.command.feature;
 
 import net.kyori.adventure.text.Component;
+import net.momirealms.craftengine.bukkit.api.BukkitAdaptor;
 import net.momirealms.craftengine.bukkit.plugin.BukkitCraftEngine;
 import net.momirealms.craftengine.bukkit.plugin.command.BukkitCommandFeature;
 import net.momirealms.craftengine.bukkit.plugin.user.BukkitServerPlayer;
@@ -17,7 +18,7 @@ import org.incendo.cloud.bukkit.parser.selector.MultiplePlayerSelectorParser;
 
 import java.util.Collection;
 
-public class SendResourcePackCommand extends BukkitCommandFeature<CommandSender> {
+public final class SendResourcePackCommand extends BukkitCommandFeature<CommandSender> {
 
     public SendResourcePackCommand(CraftEngineCommandManager<CommandSender> commandManager, CraftEngine plugin) {
         super(commandManager, plugin);
@@ -27,12 +28,12 @@ public class SendResourcePackCommand extends BukkitCommandFeature<CommandSender>
     public Command.Builder<? extends CommandSender> assembleCommand(CommandManager<CommandSender> manager, Command.Builder<CommandSender> builder) {
         return builder
                 .flag(FlagKeys.SILENT_FLAG)
-                .required("player", MultiplePlayerSelectorParser.multiplePlayerSelectorParser(true))
+                .required("player", MultiplePlayerSelectorParser.multiplePlayerSelectorParser(false))
                 .handler(context -> {
                     MultiplePlayerSelector selector = context.get("player");
                     Collection<Player> players = selector.values();
                     for (Player player : players) {
-                        BukkitServerPlayer bukkitServerPlayer = plugin().adapt(player);
+                        BukkitServerPlayer bukkitServerPlayer = BukkitAdaptor.adapt(player);
                         if (bukkitServerPlayer == null) continue;
                         BukkitCraftEngine.instance().packManager().sendResourcePack(bukkitServerPlayer);
                     }

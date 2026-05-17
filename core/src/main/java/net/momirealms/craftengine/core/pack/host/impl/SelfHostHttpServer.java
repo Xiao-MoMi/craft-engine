@@ -71,6 +71,7 @@ public final class SelfHostHttpServer {
     private boolean denyNonMinecraft = true;
     private boolean useToken;
     private boolean strictValidation = false;
+    private boolean enabled = false;
 
     private long globalUploadRateLimit = 0;
     private long minDownloadSpeed = 50_000;
@@ -125,11 +126,7 @@ public final class SelfHostHttpServer {
                 this.trafficShapingHandler.setWriteChannelLimit(initSize);
             }
         }
-        if (port <= 0 || port > 65535) {
-            throw new IllegalArgumentException("Invalid port: " + port);
-        }
-
-        if (this.port == port && serverChannel != null) return;
+        if (this.port == port && this.serverChannel != null && this.enabled) return;
         disable();
 
         this.port = port;
@@ -144,12 +141,12 @@ public final class SelfHostHttpServer {
     }
 
     private void initializeServer() {
-        bossGroup = new NioEventLoopGroup(1);
-        workerGroup = new NioEventLoopGroup();
-        virtualTrafficExecutor = Executors.newScheduledThreadPool(1, Thread.ofVirtual().factory());
-        long initSize = globalUploadRateLimit <= 0 ? 0 : Math.max(minDownloadSpeed, globalUploadRateLimit);
-        trafficShapingHandler = new GlobalChannelTrafficShapingHandler(
-                virtualTrafficExecutor,
+        this.bossGroup = new NioEventLoopGroup(1);
+        this.workerGroup = new NioEventLoopGroup();
+        this.virtualTrafficExecutor = Executors.newScheduledThreadPool(1, Thread.ofVirtual().factory());
+        long initSize = this.globalUploadRateLimit <= 0 ? 0 : Math.max(this.minDownloadSpeed, this.globalUploadRateLimit);
+        this.trafficShapingHandler = new GlobalChannelTrafficShapingHandler(
+                this.virtualTrafficExecutor,
                 initSize,
                 0, // 全局读取不限
                 initSize, // 默认单通道和总体一致
@@ -158,13 +155,13 @@ public final class SelfHostHttpServer {
                 10_000 // maxTime (ms)
         );
         ServerBootstrap b = new ServerBootstrap();
-        b.group(bossGroup, workerGroup)
+        b.group(this.bossGroup, this.workerGroup)
                 .channel(NioServerSocketChannel.class)
                 .childHandler(new ChannelInitializer<SocketChannel>() {
                     @Override
                     protected void initChannel(SocketChannel ch) {
                         ChannelPipeline pipeline = ch.pipeline();
-                        pipeline.addLast("trafficShaping", trafficShapingHandler);
+                        pipeline.addLast("trafficShaping", SelfHostHttpServer.this.trafficShapingHandler);
                         pipeline.addLast(new HttpServerCodec());
                         pipeline.addLast(new ChunkedWriteHandler());
                         pipeline.addLast(new HttpObjectAggregator(1048576));
@@ -172,8 +169,9 @@ public final class SelfHostHttpServer {
                     }
                 });
         try {
-            serverChannel = b.bind(port).sync().channel();
-            CraftEngine.instance().logger().info(TranslationManager.instance().translateLog("info.host.self.netty_server", String.valueOf(port)));
+            this.serverChannel = b.bind(this.port).sync().channel();
+            CraftEngine.instance().logger().info(TranslationManager.instance().plainTranslation("host.self.http_server_started", String.valueOf(this.port)));
+            this.enabled = true;
         } catch (InterruptedException e) {
             CraftEngine.instance().logger().warn("Failed to start Netty server", e);
             Thread.currentThread().interrupt();
@@ -187,23 +185,23 @@ public final class SelfHostHttpServer {
         public void channelInactive(ChannelHandlerContext ctx) throws Exception {
             super.channelInactive(ctx);
             // 有人走了，其他人的速度上限提高
-            if (activeDownloadChannels.contains(ctx.channel())) {
-                activeDownloadChannels.remove(ctx.channel());
+            if (SelfHostHttpServer.this.activeDownloadChannels.contains(ctx.channel())) {
+                SelfHostHttpServer.this.activeDownloadChannels.remove(ctx.channel());
                 rebalanceBandwidth();
             }
         }
 
         @Override
         protected void channelRead0(ChannelHandlerContext ctx, FullHttpRequest request) {
-            totalRequests.incrementAndGet();
+            SelfHostHttpServer.this.totalRequests.incrementAndGet();
 
             try {
                 String clientIp = ((InetSocketAddress) ctx.channel().remoteAddress())
                         .getAddress().getHostAddress();
 
                 if (!checkIpRateLimit(clientIp)) {
-                    sendError(ctx, HttpResponseStatus.TOO_MANY_REQUESTS, "Rate limit exceeded");
-                    blockedRequests.incrementAndGet();
+                    sendError(ctx, HttpResponseStatus.TOO_MANY_REQUESTS, "Forbidden");
+                    SelfHostHttpServer.this.blockedRequests.incrementAndGet();
                     return;
                 }
 
@@ -225,46 +223,46 @@ public final class SelfHostHttpServer {
 
         private void handleDownload(ChannelHandlerContext ctx, FullHttpRequest request, QueryStringDecoder queryDecoder) {
             // 使用一次性token
-            if (useToken) {
+            if (SelfHostHttpServer.this.useToken) {
                 String token = queryDecoder.parameters().getOrDefault("token", Collections.emptyList()).stream().findFirst().orElse(null);
-                String clientUUID = strictValidation ? request.headers().get("X-Minecraft-UUID") : null;
+                String clientUUID = SelfHostHttpServer.this.strictValidation ? request.headers().get("X-Minecraft-UUID") : null;
                 if (!validateToken(token, clientUUID)) {
-                    sendError(ctx, HttpResponseStatus.FORBIDDEN, "Invalid token");
-                    blockedRequests.incrementAndGet();
+                    sendError(ctx, HttpResponseStatus.FORBIDDEN, "Forbidden");
+                    SelfHostHttpServer.this.blockedRequests.incrementAndGet();
                     return;
                 }
             }
 
             // 不是Minecraft客户端
-            if (denyNonMinecraft) {
+            if (SelfHostHttpServer.this.denyNonMinecraft) {
                 String userAgent = request.headers().get(HttpHeaderNames.USER_AGENT);
                 boolean nonMinecraftClient = userAgent == null || !userAgent.startsWith("Minecraft Java/");
-                if (strictValidation && !nonMinecraftClient) {
+                if (SelfHostHttpServer.this.strictValidation && !nonMinecraftClient) {
                     String clientVersion = request.headers().get("X-Minecraft-Version");
                     nonMinecraftClient = !Objects.equals(clientVersion, userAgent.substring("Minecraft Java/".length()));
                 }
                 if (nonMinecraftClient) {
-                    sendError(ctx, HttpResponseStatus.FORBIDDEN, "Invalid client");
-                    blockedRequests.incrementAndGet();
+                    sendError(ctx, HttpResponseStatus.FORBIDDEN, "Forbidden");
+                    SelfHostHttpServer.this.blockedRequests.incrementAndGet();
                     return;
                 }
             }
 
             // 没有资源包
-            if (resourcePackBytes == null) {
-                sendError(ctx, HttpResponseStatus.NOT_FOUND, "Resource pack missing");
-                blockedRequests.incrementAndGet();
+            if (SelfHostHttpServer.this.resourcePackBytes == null) {
+                sendError(ctx, HttpResponseStatus.NOT_FOUND, "Pack Not Found");
+                SelfHostHttpServer.this.blockedRequests.incrementAndGet();
                 return;
             }
 
             // 新人来了，所有人的速度上限降低
-            if (!activeDownloadChannels.contains(ctx.channel())) {
-                activeDownloadChannels.add(ctx.channel());
+            if (!SelfHostHttpServer.this.activeDownloadChannels.contains(ctx.channel())) {
+                SelfHostHttpServer.this.activeDownloadChannels.add(ctx.channel());
                 rebalanceBandwidth();
             }
 
             // 告诉客户端资源包大小
-            long fileLength = resourcePackBytes.length;
+            long fileLength = SelfHostHttpServer.this.resourcePackBytes.length;
             HttpResponse response = new DefaultHttpResponse(HttpVersion.HTTP_1_1, HttpResponseStatus.OK);
             HttpUtil.setContentLength(response, fileLength);
             response.headers().set(HttpHeaderNames.CONTENT_TYPE, "application/zip");
@@ -275,7 +273,7 @@ public final class SelfHostHttpServer {
             ctx.write(response);
 
             // 发送分段资源包
-            ChunkedStream chunkedStream = new ChunkedStream(new ByteArrayInputStream(resourcePackBytes), 8192);
+            ChunkedStream chunkedStream = new ChunkedStream(new ByteArrayInputStream(SelfHostHttpServer.this.resourcePackBytes), 8192);
             HttpChunkedInput httpChunkedInput = new HttpChunkedInput(chunkedStream);
             ChannelFuture sendFileFuture = ctx.writeAndFlush(httpChunkedInput);
             if (!keepAlive) {
@@ -286,8 +284,8 @@ public final class SelfHostHttpServer {
             // 注意：如果是 Keep-Alive，连接不会断，但下载结束了。
             // 为了精确控制，可以在这里监听 operationComplete
             sendFileFuture.addListener((ChannelFutureListener) future -> {
-                if (activeDownloadChannels.contains(ctx.channel())) {
-                    activeDownloadChannels.remove(ctx.channel());
+                if (SelfHostHttpServer.this.activeDownloadChannels.contains(ctx.channel())) {
+                    SelfHostHttpServer.this.activeDownloadChannels.remove(ctx.channel());
                     rebalanceBandwidth();
                 }
             });
@@ -295,9 +293,9 @@ public final class SelfHostHttpServer {
 
         private void handleMetrics(ChannelHandlerContext ctx) {
             String metrics = "# TYPE total_requests counter\n"
-                    + "total_requests " + totalRequests.get() + "\n"
+                    + "total_requests " + SelfHostHttpServer.this.totalRequests.get() + "\n"
                     + "# TYPE blocked_requests counter\n"
-                    + "blocked_requests " + blockedRequests.get();
+                    + "blocked_requests " + SelfHostHttpServer.this.blockedRequests.get();
 
             FullHttpResponse response = new DefaultFullHttpResponse(
                     HttpVersion.HTTP_1_1,
@@ -312,18 +310,18 @@ public final class SelfHostHttpServer {
         }
 
         private boolean checkIpRateLimit(String clientIp) {
-            if (limitPerIp == null) return true;
-            Bucket rateLimiter = ipRateLimiters.get(clientIp, k -> Bucket.builder().addLimit(limitPerIp).build());
+            if (SelfHostHttpServer.this.limitPerIp == null) return true;
+            Bucket rateLimiter = SelfHostHttpServer.this.ipRateLimiters.get(clientIp, k -> Bucket.builder().addLimit(SelfHostHttpServer.this.limitPerIp).build());
             assert rateLimiter != null;
             return rateLimiter.tryConsume(1);
         }
 
         private boolean validateToken(String token, String clientUUID) {
             if (token == null || token.length() != 36) return false;
-            String valid = oneTimePackUrls.getIfPresent(token);
-            boolean isValid = strictValidation ? Objects.equals(valid, clientUUID) : valid != null;
+            String valid = SelfHostHttpServer.this.oneTimePackUrls.getIfPresent(token);
+            boolean isValid = SelfHostHttpServer.this.strictValidation ? Objects.equals(valid, clientUUID) : valid != null;
             if (isValid) {
-                oneTimePackUrls.invalidate(token);
+                SelfHostHttpServer.this.oneTimePackUrls.invalidate(token);
                 return true;
             }
             return false;
@@ -345,25 +343,25 @@ public final class SelfHostHttpServer {
     }
 
     private synchronized void rebalanceBandwidth() {
-        if (globalUploadRateLimit == 0) {
-            trafficShapingHandler.setWriteChannelLimit(0);
+        if (this.globalUploadRateLimit == 0) {
+            this.trafficShapingHandler.setWriteChannelLimit(0);
             return;
         }
 
-        int activeCount = activeDownloadChannels.size();
+        int activeCount = this.activeDownloadChannels.size();
         if (activeCount == 0) {
-            trafficShapingHandler.setWriteChannelLimit(globalUploadRateLimit);
+            this.trafficShapingHandler.setWriteChannelLimit(this.globalUploadRateLimit);
             return;
         }
 
         // 计算平均带宽：全局总量 / 当前人数
-        long fairRate = globalUploadRateLimit / activeCount;
+        long fairRate = this.globalUploadRateLimit / activeCount;
 
         // 确保不低于最小保障速率（可选，防止除法导致过小）
         fairRate = Math.max(fairRate, this.minDownloadSpeed);
 
         // 更新 Handler 配置
-        trafficShapingHandler.setWriteChannelLimit(fairRate);
+        this.trafficShapingHandler.setWriteChannelLimit(fairRate);
     }
 
     @Nullable
@@ -375,31 +373,32 @@ public final class SelfHostHttpServer {
         }
 
         String token = UUID.randomUUID().toString();
-        oneTimePackUrls.put(token, strictValidation ? user.toString().replace("-", "") : "");
+        this.oneTimePackUrls.put(token, this.strictValidation ? user.toString().replace("-", "") : "");
         return new ResourcePackDownloadData(
                 url() + "download?token=" + URLEncoder.encode(token, StandardCharsets.UTF_8),
-                packUUID,
-                packHash
+                this.packUUID,
+                this.packHash
         );
     }
 
     public void disable() {
+        this.enabled = false;
         // 释放流量整形资源
-        if (trafficShapingHandler != null) {
-            trafficShapingHandler.release();
-            trafficShapingHandler = null;
+        if (this.trafficShapingHandler != null) {
+            this.trafficShapingHandler.release();
+            this.trafficShapingHandler = null;
         }
         // 关闭专用线程池
-        if (virtualTrafficExecutor != null) {
-            virtualTrafficExecutor.shutdown();
-            virtualTrafficExecutor = null;
+        if (this.virtualTrafficExecutor != null) {
+            this.virtualTrafficExecutor.shutdown();
+            this.virtualTrafficExecutor = null;
         }
-        activeDownloadChannels.close();
-        if (serverChannel != null) {
-            serverChannel.close().awaitUninterruptibly();
-            bossGroup.shutdownGracefully();
-            workerGroup.shutdownGracefully();
-            serverChannel = null;
+        this.activeDownloadChannels.close();
+        if (this.serverChannel != null) {
+            this.serverChannel.close().awaitUninterruptibly();
+            this.bossGroup.shutdownGracefully();
+            this.workerGroup.shutdownGracefully();
+            this.serverChannel = null;
         }
     }
 
@@ -412,7 +411,7 @@ public final class SelfHostHttpServer {
                 this.resourcePackBytes = null;
             }
         } catch (IOException e) {
-            CraftEngine.instance().logger().severe("Failed to load resource pack", e);
+            CraftEngine.instance().logger().error("Failed to load resource pack", e);
         }
     }
 
@@ -429,7 +428,7 @@ public final class SelfHostHttpServer {
             this.packHash = hexString.toString();
             this.packUUID = UUID.nameUUIDFromBytes(this.packHash.getBytes(StandardCharsets.UTF_8));
         } catch (NoSuchAlgorithmException e) {
-            CraftEngine.instance().logger().severe("SHA-1 algorithm not available", e);
+            CraftEngine.instance().logger().error("SHA-1 algorithm not available", e);
         }
     }
 }

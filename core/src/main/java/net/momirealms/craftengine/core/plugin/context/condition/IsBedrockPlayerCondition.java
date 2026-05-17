@@ -1,15 +1,16 @@
 package net.momirealms.craftengine.core.plugin.context.condition;
 
 import net.momirealms.craftengine.core.entity.player.Player;
+import net.momirealms.craftengine.core.plugin.config.ConfigSection;
 import net.momirealms.craftengine.core.plugin.context.Condition;
 import net.momirealms.craftengine.core.plugin.context.Context;
 import net.momirealms.craftengine.core.plugin.context.parameter.DirectContextParameters;
 import net.momirealms.craftengine.core.util.GameEdition;
 
-import java.util.Map;
-
 public final class IsBedrockPlayerCondition<CTX extends Context> implements Condition<CTX> {
     public static final IsBedrockPlayerCondition<Context> INSTANCE = new IsBedrockPlayerCondition<>();
+
+    private IsBedrockPlayerCondition() {}
 
     @Override
     public boolean test(CTX ctx) {
@@ -27,7 +28,7 @@ public final class IsBedrockPlayerCondition<CTX extends Context> implements Cond
 
         @SuppressWarnings("unchecked")
         @Override
-        public IsBedrockPlayerCondition<CTX> create(Map<String, Object> arguments) {
+        public IsBedrockPlayerCondition<CTX> create(ConfigSection arguments) {
             return (IsBedrockPlayerCondition<CTX>) INSTANCE;
         }
     }

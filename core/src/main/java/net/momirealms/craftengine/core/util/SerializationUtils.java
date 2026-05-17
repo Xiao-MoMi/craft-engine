@@ -5,8 +5,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
 
-public class SerializationUtils {
-
+public final class SerializationUtils {
     private SerializationUtils() {}
 
     static class ClassLoaderAwareObjectInputStream extends ObjectInputStream {

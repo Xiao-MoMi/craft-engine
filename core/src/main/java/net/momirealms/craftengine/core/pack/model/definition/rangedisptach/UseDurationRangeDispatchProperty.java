@@ -3,10 +3,8 @@ package net.momirealms.craftengine.core.pack.model.definition.rangedisptach;
 import com.google.gson.JsonObject;
 import net.momirealms.craftengine.core.item.ItemKeys;
 import net.momirealms.craftengine.core.pack.model.legacy.LegacyModelPredicate;
+import net.momirealms.craftengine.core.plugin.config.ConfigSection;
 import net.momirealms.craftengine.core.util.Key;
-import net.momirealms.craftengine.core.util.ResourceConfigUtils;
-
-import java.util.Map;
 
 public final class UseDurationRangeDispatchProperty implements RangeDispatchProperty, LegacyModelPredicate<Number> {
     public static final RangeDispatchPropertyFactory<UseDurationRangeDispatchProperty> FACTORY = new Factory();
@@ -22,10 +20,10 @@ public final class UseDurationRangeDispatchProperty implements RangeDispatchProp
     }
 
     @Override
-    public void accept(JsonObject jsonObject) {
-        jsonObject.addProperty("property", "use_duration");
+    public void writeProperty(JsonObject model) {
+        model.addProperty("property", "use_duration");
         if (this.remaining) {
-            jsonObject.addProperty("remaining", true);
+            model.addProperty("remaining", true);
         }
     }
 
@@ -42,17 +40,15 @@ public final class UseDurationRangeDispatchProperty implements RangeDispatchProp
 
     private static class Factory implements RangeDispatchPropertyFactory<UseDurationRangeDispatchProperty> {
         @Override
-        public UseDurationRangeDispatchProperty create(Map<String, Object> arguments) {
-            boolean remaining = ResourceConfigUtils.getAsBoolean(arguments.getOrDefault("remaining", false), "remaining");
-            return new UseDurationRangeDispatchProperty(remaining);
+        public UseDurationRangeDispatchProperty create(ConfigSection section) {
+            return new UseDurationRangeDispatchProperty(section.getBoolean("remaining"));
         }
     }
 
     private static class Reader implements RangeDispatchPropertyReader<UseDurationRangeDispatchProperty> {
         @Override
         public UseDurationRangeDispatchProperty read(JsonObject json) {
-            boolean remaining = json.has("remaining") && json.get("remaining").getAsBoolean();
-            return new UseDurationRangeDispatchProperty(remaining);
+            return new UseDurationRangeDispatchProperty(json.has("remaining") && json.get("remaining").getAsBoolean());
         }
     }
 }

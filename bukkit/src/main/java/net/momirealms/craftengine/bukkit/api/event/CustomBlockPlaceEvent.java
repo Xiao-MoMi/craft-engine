@@ -1,6 +1,6 @@
 package net.momirealms.craftengine.bukkit.api.event;
 
-import net.momirealms.craftengine.core.block.CustomBlock;
+import net.momirealms.craftengine.core.block.BlockDefinition;
 import net.momirealms.craftengine.core.block.ImmutableBlockState;
 import net.momirealms.craftengine.core.entity.player.InteractionHand;
 import net.momirealms.craftengine.core.plugin.context.ContextHolder;
@@ -15,7 +15,7 @@ import org.jetbrains.annotations.NotNull;
 
 public final class CustomBlockPlaceEvent extends PlayerEvent implements Cancellable {
     private static final HandlerList HANDLER_LIST = new HandlerList();
-    private final CustomBlock customBlock;
+    private final BlockDefinition blockDefinition;
     private final ImmutableBlockState state;
     private final Location location;
     private final InteractionHand hand;
@@ -31,7 +31,7 @@ public final class CustomBlockPlaceEvent extends PlayerEvent implements Cancella
                                  @NotNull InteractionHand hand,
                                  @NotNull ContextHolder.Builder contextBuilder) {
         super(player);
-        this.customBlock = state.owner().value();
+        this.blockDefinition = state.owner().value();
         this.state = state;
         this.location = location;
         this.hand = hand;
@@ -55,8 +55,8 @@ public final class CustomBlockPlaceEvent extends PlayerEvent implements Cancella
     }
 
     @NotNull
-    public CustomBlock customBlock() {
-        return this.customBlock;
+    public BlockDefinition customBlock() {
+        return this.blockDefinition;
     }
 
     @NotNull

@@ -1,8 +1,7 @@
 package net.momirealms.craftengine.core.loot.function.formula;
 
+import net.momirealms.craftengine.core.plugin.config.ConfigSection;
 import net.momirealms.craftengine.core.util.random.RandomUtils;
-
-import java.util.Map;
 
 public final class OreDrops implements Formula {
     public static final FormulaFactory<OreDrops> FACTORY = new Factory();
@@ -26,7 +25,7 @@ public final class OreDrops implements Formula {
     private static class Factory implements FormulaFactory<OreDrops> {
 
         @Override
-        public OreDrops create(Map<String, Object> arguments) {
+        public OreDrops create(ConfigSection section) {
             return INSTANCE;
         }
     }

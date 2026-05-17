@@ -14,7 +14,7 @@ public interface PackManager extends Manageable {
 
     ConfigParser parser();
 
-    void loadResources(Predicate<ConfigParser> predicate);
+    int loadResources(Predicate<ConfigParser> predicate);
 
     void initCachedAssets();
 

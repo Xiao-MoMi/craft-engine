@@ -10,24 +10,33 @@ import net.momirealms.craftengine.core.item.processor.ComponentsProcessor;
 import net.momirealms.craftengine.core.item.processor.TagsProcessor;
 import net.momirealms.craftengine.core.item.trade.MerchantOffer;
 import net.momirealms.craftengine.core.plugin.CraftEngine;
+import net.momirealms.craftengine.core.plugin.config.ConfigConstants;
+import net.momirealms.craftengine.core.plugin.config.ConfigSection;
+import net.momirealms.craftengine.core.plugin.config.ConfigValue;
 import net.momirealms.craftengine.core.plugin.context.*;
+import net.momirealms.craftengine.core.plugin.context.number.NumberProvider;
 import net.momirealms.craftengine.core.plugin.context.parameter.DirectContextParameters;
 import net.momirealms.craftengine.core.plugin.context.selector.PlayerSelector;
-import net.momirealms.craftengine.core.plugin.context.selector.PlayerSelectors;
-import net.momirealms.craftengine.core.util.*;
+import net.momirealms.craftengine.core.util.AdventureHelper;
+import net.momirealms.craftengine.core.util.Key;
+import net.momirealms.craftengine.core.util.VersionHelper;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.function.BiFunction;
 
-public class MerchantTradeFunction<CTX extends Context> extends AbstractConditionalFunction<CTX> {
+public final class MerchantTradeFunction<CTX extends Context> extends AbstractConditionalFunction<CTX> {
     private final String title;
     private final PlayerSelector<CTX> selector;
-    private final java.util.function.Function<Player, List<MerchantOffer<?>>> offers;
+    private final BiFunction<Player, Context, List<MerchantOffer>> offers;
 
-    public MerchantTradeFunction(List<Condition<CTX>> predicates, @Nullable PlayerSelector<CTX> selector, String title, java.util.function.Function<Player, List<MerchantOffer<?>>> offers) {
+    private MerchantTradeFunction(List<Condition<CTX>> predicates,
+                                  @Nullable PlayerSelector<CTX> selector,
+                                  String title,
+                                  BiFunction<Player, Context, List<MerchantOffer>> offers) {
         super(predicates);
         this.title = title;
         this.selector = selector;
@@ -38,84 +47,108 @@ public class MerchantTradeFunction<CTX extends Context> extends AbstractConditio
     public void runInternal(CTX ctx) {
         if (this.selector == null) {
             ctx.getOptionalParameter(DirectContextParameters.PLAYER).ifPresent(it -> {
-                CraftEngine.instance().guiManager().openMerchant(it, this.title == null ? null : AdventureHelper.miniMessage().deserialize(this.title, ctx.tagResolvers()), this.offers.apply(it));
+                CraftEngine.instance().guiManager().openMerchant(it, this.title == null ? null : AdventureHelper.miniMessage().deserialize(this.title, ctx.tagResolvers()), this.offers.apply(it, ctx));
             });
         } else {
             for (Player viewer : this.selector.get(ctx)) {
                 RelationalContext relationalContext = ViewerContext.of(ctx, PlayerOptionalContext.of(viewer));
-                CraftEngine.instance().guiManager().openMerchant(viewer, this.title == null ? null : AdventureHelper.miniMessage().deserialize(this.title, relationalContext.tagResolvers()), this.offers.apply(viewer));
+                CraftEngine.instance().guiManager().openMerchant(viewer, this.title == null ? null : AdventureHelper.miniMessage().deserialize(this.title, relationalContext.tagResolvers()), this.offers.apply(viewer, relationalContext));
             }
         }
     }
 
-    public static <CTX extends Context> FunctionFactory<CTX, MerchantTradeFunction<CTX>> factory(java.util.function.Function<Map<String, Object>, Condition<CTX>> factory) {
+    public static <CTX extends Context> FunctionFactory<CTX, MerchantTradeFunction<CTX>> factory(java.util.function.Function<ConfigSection, Condition<CTX>> factory) {
         return new Factory<>(factory);
     }
 
     private static class Factory<CTX extends Context> extends AbstractFactory<CTX, MerchantTradeFunction<CTX>> {
+        private static final String[] OFFERS = new String[] {"offers", "offer"};
+        private static final String[] COST_1 = new String[] {"cost_1", "cost-1"};
+        private static final String[] COST_2 = new String[] {"cost_2", "cost-2"};
+        private static final String[] EXP = new String[] {"exp", "experience"};
 
-        public Factory(java.util.function.Function<Map<String, Object>, Condition<CTX>> factory) {
+        public Factory(java.util.function.Function<ConfigSection, Condition<CTX>> factory) {
             super(factory);
         }
 
         @SuppressWarnings({"unchecked", "rawtypes"})
         @Override
-        public MerchantTradeFunction<CTX> create(Map<String, Object> arguments) {
-            String title = ResourceConfigUtils.getAsStringOrNull(arguments.get("title"));
-            List<TempOffer> merchantOffers = ResourceConfigUtils.parseConfigAsList(ResourceConfigUtils.requireNonNullOrThrow(arguments.get("offers"), "warning.config.function.merchant_trade.missing_offers"), map -> {
-                Object cost1 = ResourceConfigUtils.requireNonNullOrThrow(map.get("cost-1"), "warning.config.function.merchant_trade.offer.missing_cost_1");
-                Object cost2 = map.get("cost-2");
-                Object result = ResourceConfigUtils.requireNonNullOrThrow(map.get("result"), "warning.config.function.merchant_trade.offer.missing_result");
-                int exp = ResourceConfigUtils.getAsInt(map.get("experience"), "experience");
+        public MerchantTradeFunction<CTX> create(ConfigSection section) {
+            List<TempOffer> merchantOffers = section.getSectionList(OFFERS, s -> {
+                TempItem cost1 = s.getNonNullValue(COST_1, ConfigConstants.ARGUMENT_SECTION, this::parseTempItem);
+                TempItem cost2 = s.getValue(COST_2, this::parseTempItem);
+                TempItem result = s.getNonNullValue("result", ConfigConstants.ARGUMENT_SECTION, this::parseTempItem);
+                NumberProvider exp = s.getNumber(EXP, ConfigConstants.CONSTANT_ZERO);
                 return new TempOffer(cost1, cost2, result, exp);
             });
-            return new MerchantTradeFunction<>(getPredicates(arguments), PlayerSelectors.fromObject(arguments.get("target"), conditionFactory()), title,
-                    (player) -> {
-                        List<MerchantOffer<?>> offers = new ArrayList<>(merchantOffers.size());
+
+            return new MerchantTradeFunction<>(
+                    getPredicates(section),
+                    getPlayerSelector(section),
+                    section.getString("title"),
+                    (player, context) -> {
+                        List<MerchantOffer> offers = new ArrayList<>(merchantOffers.size());
                         for (TempOffer offer : merchantOffers) {
-                            Item cost1 = parseIngredient(offer.cost1, player);
-                            Optional cost2 = Optional.ofNullable(parseIngredient(offer.cost2, player));
-                            Item result = parseIngredient(offer.result, player);
-                            offers.add(new MerchantOffer<>(cost1, cost2, result, false, 0, Integer.MAX_VALUE, offer.exp, 0, 0, 0));
+                            Item cost1 = offer.cost1.build(player, context);
+                            Optional cost2 = Optional.ofNullable(offer.cost2).map(it -> it.build(player, context));
+                            Item result = offer.result.build(player, context);
+                            offers.add(new MerchantOffer(cost1, cost2, result, false, 0, Integer.MAX_VALUE, offer.exp.getInt(context), 0, 0, 0));
                         }
                         return offers;
                     });
         }
 
-        public record TempOffer(Object cost1, Object cost2, Object result, int exp) {
-        }
+        private static final String[] ITEM = new String[] {"item", "id"};
+        private static final String[] COUNT = new String[] {"count", "amount"};
+        private static final String[] COMPONENT = new String[] {"components", "component"};
+        private static final String[] NBT = new String[] {"nbt", "tags"};
 
-        private Item<?> parseIngredient(Object arguments, Player player) {
-            if (arguments == null) return null;
-            if (arguments instanceof Map<?,?> map) {
-                Map<String, Object> args = MiscUtils.castToMap(map, false);
-                String itemName = args.getOrDefault("item", "minecraft:stone").toString();
-                Item<Object> item = createSafeItem(itemName, player);
-                if (args.containsKey("count")) {
-                    item.count(ResourceConfigUtils.getAsInt(args.get("count"), "count"));
+        private TempItem parseTempItem(ConfigValue value) {
+            if (value.is(Map.class)) {
+                ConfigSection section = value.getAsSection();
+                Key itemId = section.getNonNullIdentifier(ITEM);
+                NumberProvider count = section.getNumber(COUNT, ConfigConstants.CONSTANT_ONE);
+                ComponentsProcessor componentsProcessor = null;
+                TagsProcessor tagsProcessor = null;
+                if (VersionHelper.COMPONENT_RELEASE) {
+                    ConfigSection components = section.getSection(COMPONENT);
+                    if (components != null) {
+                        componentsProcessor = new ComponentsProcessor(components);
+                    }
+                } else {
+                    ConfigSection nbt = section.getSection(NBT);
+                    if (nbt != null) {
+                        tagsProcessor = new TagsProcessor(nbt);
+                    }
                 }
-                if (VersionHelper.isOrAbove1_20_5() && args.containsKey("components")) {
-                    item = new ComponentsProcessor(MiscUtils.castToMap(args.get("components"), false)).apply(item, ItemBuildContext.empty());
-                }
-                if (!VersionHelper.isOrAbove1_20_5() && args.containsKey("nbt")) {
-                    item = new TagsProcessor(MiscUtils.castToMap(args.get("nbt"), false)).apply(item, ItemBuildContext.empty());
-                }
-                return item;
+                return new TempItem(itemId, count, componentsProcessor, tagsProcessor);
             } else {
-                String itemName = arguments.toString();
-                return createSafeItem(itemName, player);
+                return new TempItem(value.getAsIdentifier(), ConfigConstants.CONSTANT_ONE, null, null);
             }
         }
 
-        private Item<Object> createSafeItem(String itemName, Player player) {
-            Key itemId = Key.of(itemName);
-            Item<Object> item = CraftEngine.instance().itemManager().createWrappedItem(itemId, player);
-            if (item == null) {
-                item = CraftEngine.instance().itemManager().createWrappedItem(ItemKeys.STONE, player);
-                assert item != null;
-                item.itemNameComponent(Component.text(itemName).color(NamedTextColor.RED));
+        public record TempOffer(TempItem cost1, TempItem cost2, TempItem result, NumberProvider exp) {
+        }
+
+        public record TempItem(Key id, NumberProvider count, ComponentsProcessor components, TagsProcessor nbt) {
+
+            public Item build(Player player, Context context) {
+                Item item = CraftEngine.instance().itemManager().createWrappedItem(this.id, player);
+                if (item == null) {
+                    item = CraftEngine.instance().itemManager().createWrappedItem(ItemKeys.STONE, player);
+                    assert item != null;
+                    item.itemNameComponent(Component.text(this.id.asString()).color(NamedTextColor.RED));
+                } else {
+                    if (this.components != null) {
+                        this.components.apply(item, ItemBuildContext.empty());
+                    }
+                    if (this.nbt != null) {
+                        this.nbt.apply(item, ItemBuildContext.empty());
+                    }
+                }
+                item.count(this.count.getInt(context));
+                return item;
             }
-            return item;
         }
     }
 }

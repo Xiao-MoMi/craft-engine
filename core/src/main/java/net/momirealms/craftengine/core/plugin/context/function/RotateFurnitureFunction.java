@@ -1,24 +1,26 @@
 package net.momirealms.craftengine.core.plugin.context.function;
 
 import net.momirealms.craftengine.core.entity.furniture.Furniture;
+import net.momirealms.craftengine.core.plugin.config.ConfigConstants;
+import net.momirealms.craftengine.core.plugin.config.ConfigSection;
 import net.momirealms.craftengine.core.plugin.context.CommonFunctions;
 import net.momirealms.craftengine.core.plugin.context.Condition;
 import net.momirealms.craftengine.core.plugin.context.Context;
 import net.momirealms.craftengine.core.plugin.context.number.NumberProvider;
-import net.momirealms.craftengine.core.plugin.context.number.NumberProviders;
 import net.momirealms.craftengine.core.plugin.context.parameter.DirectContextParameters;
-import net.momirealms.craftengine.core.util.ResourceConfigUtils;
 import net.momirealms.craftengine.core.world.WorldPosition;
 
 import java.util.List;
-import java.util.Map;
 
-public class RotateFurnitureFunction<CTX extends Context> extends AbstractConditionalFunction<CTX> {
+public final class RotateFurnitureFunction<CTX extends Context> extends AbstractConditionalFunction<CTX> {
     private final NumberProvider degree;
     private final List<Function<Context>> successFunctions;
     private final List<Function<Context>> failureFunctions;
 
-    public RotateFurnitureFunction(List<Condition<CTX>> predicates, NumberProvider degree, List<Function<Context>> successFunctions, List<Function<Context>> failureFunctions) {
+    private RotateFurnitureFunction(List<Condition<CTX>> predicates,
+                                    NumberProvider degree,
+                                    List<Function<Context>> successFunctions,
+                                    List<Function<Context>> failureFunctions) {
         super(predicates);
         this.degree = degree;
         this.successFunctions = successFunctions;
@@ -51,22 +53,26 @@ public class RotateFurnitureFunction<CTX extends Context> extends AbstractCondit
         return this.degree;
     }
 
-    public static <CTX extends Context> FunctionFactory<CTX, RotateFurnitureFunction<CTX>> factory(java.util.function.Function<Map<String, Object>, Condition<CTX>> factory) {
+    public static <CTX extends Context> FunctionFactory<CTX, RotateFurnitureFunction<CTX>> factory(java.util.function.Function<ConfigSection, Condition<CTX>> factory) {
         return new Factory<>(factory);
     }
 
     private static class Factory<CTX extends Context> extends AbstractFactory<CTX, RotateFurnitureFunction<CTX>> {
+        private static final String[] ON_SUCCESS = new String[] {"on_success", "on-success"};
+        private static final String[] ON_FAILURE = new String[] {"on_failure", "on-failure"};
 
-        public Factory(java.util.function.Function<Map<String, Object>, Condition<CTX>> factory) {
+        public Factory(java.util.function.Function<ConfigSection, Condition<CTX>> factory) {
             super(factory);
         }
 
         @Override
-        public RotateFurnitureFunction<CTX> create(Map<String, Object> arguments) {
-            NumberProvider degree = NumberProviders.fromObject(arguments.getOrDefault("degree", 90));
-            List<Function<Context>> onSuccess = ResourceConfigUtils.parseConfigAsList(arguments.get("on-success"), CommonFunctions::fromMap);
-            List<Function<Context>> onFailure = ResourceConfigUtils.parseConfigAsList(arguments.get("on-failure"), CommonFunctions::fromMap);
-            return new RotateFurnitureFunction<>(getPredicates(arguments), degree, onSuccess, onFailure);
+        public RotateFurnitureFunction<CTX> create(ConfigSection section) {
+            return new RotateFurnitureFunction<>(
+                    getPredicates(section),
+                    section.getNumber("degree", ConfigConstants.CONSTANT_NINETY),
+                    section.getSectionList(ON_SUCCESS, CommonFunctions::fromConfig),
+                    section.getSectionList(ON_FAILURE, CommonFunctions::fromConfig)
+            );
         }
     }
 }

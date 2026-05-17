@@ -11,7 +11,7 @@ public class BukkitItemEntity extends BukkitEntity implements ItemEntity {
     }
 
     @Override
-    public net.momirealms.craftengine.core.item.Item<?> getItem() {
+    public net.momirealms.craftengine.core.item.Item getItem() {
         return BukkitItemManager.instance().wrap(((Item) platformEntity()).getItemStack());
     }
 }

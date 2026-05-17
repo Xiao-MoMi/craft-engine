@@ -1,171 +1,120 @@
 package net.momirealms.craftengine.core.pack.model.simplified;
 
-import net.momirealms.craftengine.core.plugin.locale.LocalizedResourceConfigException;
+import com.google.gson.JsonPrimitive;
+import com.mojang.datafixers.util.Either;
+import net.momirealms.craftengine.core.pack.model.definition.*;
+import net.momirealms.craftengine.core.pack.model.definition.condition.UsingItemConditionProperty;
+import net.momirealms.craftengine.core.pack.model.definition.rangedisptach.CrossBowPullingRangeDispatchProperty;
+import net.momirealms.craftengine.core.pack.model.definition.select.ChargeTypeSelectProperty;
+import net.momirealms.craftengine.core.pack.model.generation.ModelGeneration;
+import net.momirealms.craftengine.core.plugin.config.ConfigValue;
 import net.momirealms.craftengine.core.util.Key;
-import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 public final class CrossbowModelReader implements SimplifiedModelReader {
     public static final CrossbowModelReader INSTANCE = new CrossbowModelReader();
+    private static final Key CROSSBOW = Key.of("item/crossbow");
+    private static final Key CROSSBOW_PULLING_0 = Key.of("item/crossbow_pulling_0");
+    private static final Key CROSSBOW_PULLING_1 = Key.of("item/crossbow_pulling_1");
+    private static final Key CROSSBOW_PULLING_2 = Key.of("item/crossbow_pulling_2");
+    private static final Key CROSSBOW_ARROW = Key.of("item/crossbow_arrow");
+    private static final Key CROSSBOW_FIREWORK = Key.of("item/crossbow_firework");
 
     private CrossbowModelReader() {}
 
     @Override
-    public @NotNull Map<String, Object> convert(List<String> textures, List<String> optionalModelPaths, Key id) {
-        if (textures.size() != 6) {
-            throw new LocalizedResourceConfigException("warning.config.item.simplified_model.invalid_texture", "6", String.valueOf(textures.size()));
-        }
-        boolean autoModel = optionalModelPaths.isEmpty();
-        if (!autoModel && optionalModelPaths.size() != 6) {
-            throw new LocalizedResourceConfigException("warning.config.item.simplified_model.invalid_model", "6", String.valueOf(optionalModelPaths.size()));
-        }
-        return Map.of(
-                "type", "condition",
-                "property", "using_item",
-                "on-false", Map.of(
-                        "type", "select",
-                        "property", "charge_type",
-                        "cases", List.of(
-                                Map.of(
-                                        "when", "arrow",
-                                        "model", Map.of(
-                                                "type", "model",
-                                                "path", autoModel ? id.namespace() + ":item/" + id.value() + "_arrow" : optionalModelPaths.get(4),
-                                                "generation", Map.of(
-                                                        "parent", "item/crossbow_arrow",
-                                                        "textures", Map.of(
-                                                                "layer0", textures.get(4)
-                                                        )
-                                                )
-                                        )
+    public ItemModel read(ConfigValue textureValue, Optional<ConfigValue> optionalModelValue, Key id) {
+        List<Key> textures = textureValue.getAsFixedSizeList(6, ConfigValue::getAsAssetPath);
+        List<Key> models = optionalModelValue.map(it -> it.getAsFixedSizeList(6, ConfigValue::getAsAssetPath)).orElse(null);
+        boolean autoModel = models == null;
+        return new ConditionItemModel(
+                UsingItemConditionProperty.INSTANCE,
+                new RangeDispatchItemModel(
+                        CrossBowPullingRangeDispatchProperty.INSTANCE,
+                        1f,
+                        Map.of(
+                                0.58f, new BaseItemModel(
+                                        autoModel ? Key.of(id.namespace(), "item/" + id.value() + "_pulling_1") : models.get(2),
+                                        List.of(),
+                                        ModelGeneration.builder()
+                                                .parentModelPath(CROSSBOW_PULLING_1)
+                                                .texturesOverride(Map.of("layer0", textures.get(2).asMinimalString()))
+                                                .build()
                                 ),
-                                Map.of(
-                                        "when", "rocket",
-                                        "model", Map.of(
-                                                "type", "model",
-                                                "path", autoModel ? id.namespace() + ":item/" + id.value() + "_firework" : optionalModelPaths.get(5),
-                                                "generation", Map.of(
-                                                        "parent", "item/crossbow_firework",
-                                                        "textures", Map.of(
-                                                                "layer0", textures.get(5)
-                                                        )
-                                                )
-                                        )
+                                1.0f, new BaseItemModel(
+                                        autoModel ? Key.of(id.namespace(), "item/" + id.value() + "_pulling_2") : models.get(3),
+                                        List.of(),
+                                        ModelGeneration.builder()
+                                                .parentModelPath(CROSSBOW_PULLING_2)
+                                                .texturesOverride(Map.of("layer0", textures.get(3).asMinimalString()))
+                                                .build()
                                 )
                         ),
-                        "fallback", Map.of(
-                                "type", "model",
-                                "path", autoModel ? id.namespace() + ":item/" + id.value() : optionalModelPaths.get(0),
-                                "generation", Map.of(
-                                        "parent", "item/crossbow",
-                                        "textures", Map.of(
-                                                "layer0", textures.get(0)
-                                        )
-                                )
+                        new BaseItemModel(
+                                autoModel ? Key.of(id.namespace(), "item/" + id.value() + "_pulling_0") : models.get(1),
+                                List.of(),
+                                ModelGeneration.builder()
+                                        .parentModelPath(CROSSBOW_PULLING_0)
+                                        .texturesOverride(Map.of("layer0", textures.get(1).asMinimalString()))
+                                        .build()
                         )
                 ),
-                "on-true", Map.of(
-                        "type", "range_dispatch",
-                        "property", "crossbow/pull",
-                        "entries", List.of(
-                                Map.of(
-                                        "model", Map.of(
-                                                "type", "model",
-                                                "path", autoModel ? id.namespace() + ":item/" + id.value() + "_pulling_1" : optionalModelPaths.get(2),
-                                                "generation", Map.of(
-                                                        "parent", "item/crossbow_pulling_1",
-                                                        "textures", Map.of(
-                                                                "layer0", textures.get(2)
-                                                        )
-                                                )
-                                        ),
-                                        "threshold", 0.58
+                new SelectItemModel(
+                        ChargeTypeSelectProperty.INSTANCE,
+                        Map.of(
+                                Either.left(new JsonPrimitive("arrow")), new BaseItemModel(
+                                        autoModel ? Key.of(id.namespace(), "item/" + id.value() + "_arrow") : models.get(4),
+                                        List.of(),
+                                        ModelGeneration.builder()
+                                                .parentModelPath(CROSSBOW_ARROW)
+                                                .texturesOverride(Map.of("layer0", textures.get(4).asMinimalString()))
+                                                .build()
                                 ),
-                                Map.of(
-                                        "model", Map.of(
-                                                "type", "model",
-                                                "path", autoModel ? id.namespace() + ":item/" + id.value() + "_pulling_2" : optionalModelPaths.get(3),
-                                                "generation", Map.of(
-                                                        "parent", "item/crossbow_pulling_2",
-                                                        "textures", Map.of(
-                                                                "layer0", textures.get(3)
-                                                        )
-                                                )
-                                        ),
-                                        "threshold", 1.0
+                                Either.left(new JsonPrimitive("rocket")), new BaseItemModel(
+                                        autoModel ? Key.of(id.namespace(), "item/" + id.value() + "_firework") : models.get(5),
+                                        List.of(),
+                                        ModelGeneration.builder()
+                                                .parentModelPath(CROSSBOW_FIREWORK)
+                                                .texturesOverride(Map.of("layer0", textures.get(5).asMinimalString()))
+                                                .build()
                                 )
                         ),
-                        "fallback", Map.of(
-                                "type", "model",
-                                "path", autoModel ? id.namespace() + ":item/" + id.value() + "_pulling_0" : optionalModelPaths.get(1),
-                                "generation", Map.of(
-                                        "parent", "item/crossbow_pulling_0",
-                                        "textures", Map.of(
-                                                "layer0", textures.get(1)
-                                        )
-                                )
+                        new BaseItemModel(
+                                autoModel ? Key.of(id.namespace(), "item/" + id.value()) : models.get(0),
+                                List.of(),
+                                ModelGeneration.builder()
+                                        .parentModelPath(CROSSBOW)
+                                        .texturesOverride(Map.of("layer0", textures.get(0).asMinimalString()))
+                                        .build()
                         )
                 )
         );
     }
 
     @Override
-    public @NotNull Map<String, Object> convert(List<String> models) {
-        if (models.size() != 6) {
-            throw new LocalizedResourceConfigException("warning.config.item.simplified_model.invalid_model", "6", String.valueOf(models.size()));
-        }
-        return Map.of(
-                "type", "condition",
-                "property", "using_item",
-                "on-false", Map.of(
-                        "type", "select",
-                        "property", "charge_type",
-                        "cases", List.of(
-                                Map.of(
-                                        "when", "arrow",
-                                        "model", Map.of(
-                                                "type", "model",
-                                                "path", models.get(4)
-                                        )
-                                ),
-                                Map.of(
-                                        "when", "rocket",
-                                        "model", Map.of(
-                                                "type", "model",
-                                                "path", models.get(5)
-                                        )
-                                )
+    public ItemModel read(ConfigValue modelValue) {
+        List<Key> models = modelValue.getAsFixedSizeList(6, ConfigValue::getAsAssetPath);
+        return new ConditionItemModel(
+                UsingItemConditionProperty.INSTANCE,
+                new RangeDispatchItemModel(
+                        CrossBowPullingRangeDispatchProperty.INSTANCE,
+                        1f,
+                        Map.of(
+                                0.58f, new BaseItemModel(models.get(2)),
+                                1.0f, new BaseItemModel(models.get(3))
                         ),
-                        "fallback", Map.of(
-                                "type", "model",
-                                "path", models.get(0)
-                        )
+                        new BaseItemModel(models.get(1))
                 ),
-                "on-true", Map.of(
-                        "type", "range_dispatch",
-                        "property", "crossbow/pull",
-                        "entries", List.of(
-                                Map.of(
-                                        "model", Map.of(
-                                                "type", "model",
-                                                "path", models.get(2)
-                                        ),
-                                        "threshold", 0.58
-                                ),
-                                Map.of(
-                                        "model", Map.of(
-                                                "type", "model",
-                                                "path", models.get(3)
-                                        ),
-                                        "threshold", 1.0
-                                )
+                new SelectItemModel(
+                        ChargeTypeSelectProperty.INSTANCE,
+                        Map.of(
+                                Either.left(new JsonPrimitive("arrow")), new BaseItemModel(models.get(4)),
+                                Either.left(new JsonPrimitive("rocket")), new BaseItemModel(models.get(5))
                         ),
-                        "fallback", Map.of(
-                                "type", "model",
-                                "path", models.get(1)
-                        )
+                        new BaseItemModel(models.get(0))
                 )
         );
     }

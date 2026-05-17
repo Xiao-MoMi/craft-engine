@@ -1,6 +1,6 @@
 package net.momirealms.craftengine.core.util;
 
-public class ObjectHolder<T> {
+public final class ObjectHolder<T> {
     private T value;
 
     public ObjectHolder(T value) {

@@ -5,9 +5,9 @@ import net.momirealms.craftengine.core.loot.LootContext;
 
 import java.util.function.Consumer;
 
-public interface LootEntry<T> {
+public interface LootEntry {
 
     int getWeight(float luck);
 
-    void createItem(Consumer<Item<T>> lootConsumer, LootContext context);
+    void createItem(Consumer<Item> lootConsumer, LootContext context);
 }

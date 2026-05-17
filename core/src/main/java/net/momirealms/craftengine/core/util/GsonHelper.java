@@ -9,7 +9,6 @@ import java.io.IOException;
 import java.io.Reader;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.List;
 import java.util.Map;
 
 public final class GsonHelper {
@@ -33,9 +32,19 @@ public final class GsonHelper {
         }
     }
 
-    public static JsonElement readJsonFile(Path path) throws IOException, JsonParseException {
+    public static JsonElement readJsonFromFile(Path path) throws IOException, JsonParseException {
         try (BufferedReader reader = Files.newBufferedReader(path)) {
             return JsonParser.parseReader(reader);
+        }
+    }
+
+    public static JsonObject readJsonObjectFromFile(Path path) throws IOException, JsonParseException {
+        try (BufferedReader reader = Files.newBufferedReader(path)) {
+            JsonElement element = JsonParser.parseReader(reader);
+            if (element instanceof JsonObject jsonObject) {
+                return jsonObject;
+            }
+            return null;
         }
     }
 
@@ -117,18 +126,6 @@ public final class GsonHelper {
                 json,
                 new TypeToken<Map<String, Object>>() {}.getType()
         );
-    }
-
-    public static JsonElement combine(List<? extends JsonElement> jo) {
-        if (jo.size() == 1) {
-            return jo.getFirst();
-        } else {
-            JsonArray ja = new JsonArray();
-            for (JsonElement je : jo) {
-                ja.add(je);
-            }
-            return ja;
-        }
     }
 
     public static float getAsFloat(JsonElement json, float defaultValue) {

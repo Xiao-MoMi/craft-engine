@@ -9,7 +9,7 @@ import java.nio.file.Path;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-public class PackCacheData {
+public final class PackCacheData {
     private final Set<Path> externalZips;
     private final Set<Path> externalFolders;
 

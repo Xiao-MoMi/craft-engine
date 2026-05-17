@@ -1,24 +1,24 @@
 package net.momirealms.craftengine.core.plugin.context.function;
 
 import net.momirealms.craftengine.core.entity.player.Player;
+import net.momirealms.craftengine.core.plugin.config.ConfigSection;
 import net.momirealms.craftengine.core.plugin.context.*;
 import net.momirealms.craftengine.core.plugin.context.number.NumberProvider;
-import net.momirealms.craftengine.core.plugin.context.number.NumberProviders;
 import net.momirealms.craftengine.core.plugin.context.parameter.DirectContextParameters;
 import net.momirealms.craftengine.core.plugin.context.selector.PlayerSelector;
-import net.momirealms.craftengine.core.plugin.context.selector.PlayerSelectors;
-import net.momirealms.craftengine.core.util.ResourceConfigUtils;
 
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 
-public class SetSaturationFunction<CTX extends Context> extends AbstractConditionalFunction<CTX> {
+public final class SetSaturationFunction<CTX extends Context> extends AbstractConditionalFunction<CTX> {
     private final PlayerSelector<CTX> selector;
     private final NumberProvider count;
     private final boolean add;
 
-    public SetSaturationFunction(List<Condition<CTX>> predicates, boolean add, PlayerSelector<CTX> selector, NumberProvider count) {
+    private SetSaturationFunction(List<Condition<CTX>> predicates,
+                                  PlayerSelector<CTX> selector,
+                                  boolean add,
+                                  NumberProvider count) {
         super(predicates);
         this.count = count;
         this.add = add;
@@ -38,21 +38,23 @@ public class SetSaturationFunction<CTX extends Context> extends AbstractConditio
         }
     }
 
-    public static <CTX extends Context> FunctionFactory<CTX, SetSaturationFunction<CTX>> factory(java.util.function.Function<Map<String, Object>, Condition<CTX>> factory) {
+    public static <CTX extends Context> FunctionFactory<CTX, SetSaturationFunction<CTX>> factory(java.util.function.Function<ConfigSection, Condition<CTX>> factory) {
         return new Factory<>(factory);
     }
 
     private static class Factory<CTX extends Context> extends AbstractFactory<CTX, SetSaturationFunction<CTX>> {
 
-        public Factory(java.util.function.Function<Map<String, Object>, Condition<CTX>> factory) {
+        public Factory(java.util.function.Function<ConfigSection, Condition<CTX>> factory) {
             super(factory);
         }
 
         @Override
-        public SetSaturationFunction<CTX> create(Map<String, Object> arguments) {
-            Object value = ResourceConfigUtils.requireNonNullOrThrow(arguments.get("saturation"), "warning.config.function.set_saturation.missing_saturation");
-            boolean add = ResourceConfigUtils.getAsBoolean(arguments.getOrDefault("add", false), "add");
-            return new SetSaturationFunction<>(getPredicates(arguments), add, PlayerSelectors.fromObject(arguments.get("target"), conditionFactory()), NumberProviders.fromObject(value));
+        public SetSaturationFunction<CTX> create(ConfigSection section) {
+            return new SetSaturationFunction<>(
+                    getPredicates(section),
+                    getPlayerSelector(section), section.getBoolean("add"),
+                    section.getNonNullNumber("saturation")
+            );
         }
     }
 }

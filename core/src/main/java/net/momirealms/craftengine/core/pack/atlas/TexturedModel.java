@@ -7,7 +7,7 @@ import net.momirealms.craftengine.core.util.Key;
 import java.util.HashMap;
 import java.util.Map;
 
-public class TexturedModel {
+public final class TexturedModel {
     public static final TexturedModel EMPTY = new TexturedModel(Key.of("minecraft:missingno"), Map.of());
     public static final TexturedModel BUILTIN = new TexturedModel(Key.of("minecraft:builtin"), Map.of());
     public final Key path;
@@ -23,9 +23,10 @@ public class TexturedModel {
             JsonObject textures = json.get("textures").getAsJsonObject();
             Map<String, Key> map = new HashMap<>(Math.max(textures.size() * 2, 4));
             for (Map.Entry<String, JsonElement> entry : textures.entrySet()) {
-                String value = entry.getValue().getAsString();
-                if (value.isEmpty() || value.charAt(0) == '#') continue;
-                map.put(entry.getKey(), Key.of(value));
+                JsonElement value = entry.getValue();
+                String sprite = value.isJsonPrimitive() ? value.getAsString() : value.getAsJsonObject().get("sprite").getAsString();
+                if (sprite.isEmpty() || sprite.charAt(0) == '#') continue;
+                map.put(entry.getKey(), Key.of(sprite));
             }
             return map;
         } else {

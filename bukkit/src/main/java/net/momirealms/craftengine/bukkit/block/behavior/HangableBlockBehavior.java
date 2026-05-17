@@ -1,48 +1,53 @@
 package net.momirealms.craftengine.bukkit.block.behavior;
 
-import net.momirealms.craftengine.bukkit.nms.FastNMS;
-import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.CoreReflections;
-import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.MBlocks;
-import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.MFluids;
 import net.momirealms.craftengine.bukkit.util.BlockStateUtils;
 import net.momirealms.craftengine.bukkit.util.LocationUtils;
-import net.momirealms.craftengine.core.block.CustomBlock;
+import net.momirealms.craftengine.core.block.BlockDefinition;
 import net.momirealms.craftengine.core.block.ImmutableBlockState;
 import net.momirealms.craftengine.core.block.behavior.BlockBehaviorFactory;
-import net.momirealms.craftengine.core.block.behavior.IsPathFindableBlockBehavior;
-import net.momirealms.craftengine.core.block.properties.BooleanProperty;
+import net.momirealms.craftengine.core.block.behavior.PathFindingBlock;
+import net.momirealms.craftengine.core.block.property.BooleanProperty;
+import net.momirealms.craftengine.core.block.property.Property;
+import net.momirealms.craftengine.core.plugin.config.ConfigSection;
 import net.momirealms.craftengine.core.util.Direction;
-import net.momirealms.craftengine.core.util.ResourceConfigUtils;
 import net.momirealms.craftengine.core.world.context.BlockPlaceContext;
+import net.momirealms.craftengine.proxy.minecraft.core.BlockPosProxy;
+import net.momirealms.craftengine.proxy.minecraft.core.DirectionProxy;
+import net.momirealms.craftengine.proxy.minecraft.world.level.BlockGetterProxy;
+import net.momirealms.craftengine.proxy.minecraft.world.level.LevelAccessorProxy;
+import net.momirealms.craftengine.proxy.minecraft.world.level.block.BlockProxy;
+import net.momirealms.craftengine.proxy.minecraft.world.level.block.BlocksProxy;
+import net.momirealms.craftengine.proxy.minecraft.world.level.block.state.BlockBehaviourProxy;
+import net.momirealms.craftengine.proxy.minecraft.world.level.material.FluidStateProxy;
+import net.momirealms.craftengine.proxy.minecraft.world.level.material.FluidsProxy;
 
-import java.util.Map;
-import java.util.concurrent.Callable;
-
-public class HangableBlockBehavior extends BukkitBlockBehavior implements IsPathFindableBlockBehavior {
+public final class HangableBlockBehavior extends BukkitBlockBehavior implements PathFindingBlock {
     public static final BlockBehaviorFactory<HangableBlockBehavior> FACTORY = new Factory();
-    private final BooleanProperty hangingProperty;
+    public final Property<Boolean> hangingProperty;
+    public final Property<Boolean> waterloggedProperty;
 
-    public HangableBlockBehavior(CustomBlock customBlock, BooleanProperty hangingProperty) {
-        super(customBlock);
+    private HangableBlockBehavior(BlockDefinition blockDefinition, Property<Boolean> hangingProperty, Property<Boolean> waterloggedProperty) {
+        super(blockDefinition);
         this.hangingProperty = hangingProperty;
+        this.waterloggedProperty = waterloggedProperty;
     }
 
     @Override
     public ImmutableBlockState updateStateForPlacement(BlockPlaceContext context, ImmutableBlockState state) {
-        Object world = context.getLevel().serverWorld();
+        Object world = context.getLevel().minecraftWorld();
         Object blockPos = LocationUtils.toBlockPos(context.getClickedPos());
-        Object fluidType = FastNMS.INSTANCE.method$FluidState$getType(FastNMS.INSTANCE.method$BlockGetter$getFluidState(world, blockPos));
+        Object fluidType = FluidStateProxy.INSTANCE.getType(BlockGetterProxy.INSTANCE.getFluidState(world, blockPos));
         for (Direction direction : context.getNearestLookingDirections()) {
             if (direction.axis() != Direction.Axis.Y) continue;
             ImmutableBlockState blockState = state.with(this.hangingProperty, direction == Direction.UP);
-            if (!FastNMS.INSTANCE.method$BlockStateBase$canSurvive(blockState.customBlockState().literalObject(), world, blockPos)) continue;
-            return super.waterloggedProperty != null ? blockState.with(super.waterloggedProperty, fluidType == MFluids.WATER) : blockState;
+            if (!BlockBehaviourProxy.BlockStateBaseProxy.INSTANCE.canSurvive(blockState.customBlockState().minecraftState(), world, blockPos)) continue;
+            return this.waterloggedProperty != null ? blockState.with(this.waterloggedProperty, fluidType == FluidsProxy.WATER) : blockState;
         }
         return state;
     }
 
     @Override
-    public boolean canSurvive(Object thisBlock, Object[] args, Callable<Object> superMethod) throws Exception {
+    public boolean canSurvive(Object thisBlock, Object[] args) {
         Object state = args[0];
         Object world = args[1];
         Object blockPos = args[2];
@@ -51,35 +56,38 @@ public class HangableBlockBehavior extends BukkitBlockBehavior implements IsPath
         BooleanProperty hangingProperty = (BooleanProperty) blockState.owner().value().getProperty("hanging");
         if (hangingProperty == null) return false;
         Boolean hanging = blockState.get(hangingProperty);
-        Object relativePos = FastNMS.INSTANCE.method$BlockPos$relative(blockPos, hanging ? CoreReflections.instance$Direction$UP : CoreReflections.instance$Direction$DOWN);
-        return FastNMS.INSTANCE.method$Block$canSupportCenter(world, relativePos, hanging ? CoreReflections.instance$Direction$DOWN : CoreReflections.instance$Direction$UP);
+        Object relativePos = BlockPosProxy.INSTANCE.relative(blockPos, hanging ? DirectionProxy.UP : DirectionProxy.DOWN);
+        return BlockProxy.INSTANCE.canSupportCenter(world, relativePos, hanging ? DirectionProxy.DOWN : DirectionProxy.UP);
     }
 
     @Override
-    public Object updateShape(Object thisBlock, Object[] args, Callable<Object> superMethod) throws Exception {
+    public Object updateShape(Object thisBlock, Object[] args) {
         ImmutableBlockState state = BlockStateUtils.getOptionalCustomBlockState(args[0]).orElse(null);
-        if (state == null) return MBlocks.AIR$defaultState;
-        if (super.waterloggedProperty != null && state.get(super.waterloggedProperty)) {
-            FastNMS.INSTANCE.method$ScheduledTickAccess$scheduleFluidTick(args[updateShape$level], args[updateShape$blockPos], MFluids.WATER, 5);
+        if (state == null) return BlocksProxy.AIR$defaultState;
+        if (this.waterloggedProperty != null && state.get(this.waterloggedProperty)) {
+            LevelAccessorProxy.INSTANCE.scheduleTick$1(args[updateShape$level], args[updateShape$blockPos], FluidsProxy.WATER, 5);
         }
-        if ((state.get(this.hangingProperty) ? CoreReflections.instance$Direction$UP : CoreReflections.instance$Direction$DOWN) == args[updateShape$direction]
-                && !FastNMS.INSTANCE.method$BlockStateBase$canSurvive(args[0], args[updateShape$level], args[updateShape$blockPos])) {
-            return MBlocks.AIR$defaultState;
+        if ((state.get(this.hangingProperty) ? DirectionProxy.UP : DirectionProxy.DOWN) == args[updateShape$direction]
+                && !BlockBehaviourProxy.BlockStateBaseProxy.INSTANCE.canSurvive(args[0], args[updateShape$level], args[updateShape$blockPos])) {
+            return BlocksProxy.AIR$defaultState;
         }
-        return superMethod.call();
+        return super.updateShape(thisBlock, args);
     }
 
     @Override
-    public boolean isPathFindable(Object thisBlock, Object[] args, Callable<Object> superMethod) {
+    public boolean isPathFindable(Object thisBlock, Object[] args) {
         return false;
     }
 
     private static class Factory implements BlockBehaviorFactory<HangableBlockBehavior> {
 
         @Override
-        public HangableBlockBehavior create(CustomBlock block, Map<String, Object> arguments) {
-            BooleanProperty hanging = (BooleanProperty) ResourceConfigUtils.requireNonNullOrThrow(block.getProperty("hanging"), "warning.config.block.behavior.hangable.missing_hanging");
-            return new HangableBlockBehavior(block, hanging);
+        public HangableBlockBehavior create(BlockDefinition block, ConfigSection section) {
+            return new HangableBlockBehavior(
+                    block,
+                    BlockBehaviorFactory.getProperty(section.path(), block, "hanging", Boolean.class),
+                    BlockBehaviorFactory.getOptionalProperty(block, "waterlogged", Boolean.class)
+            );
         }
     }
 }

@@ -2,12 +2,31 @@ package net.momirealms.craftengine.core.util;
 
 import org.jetbrains.annotations.NotNull;
 
-public record Key(String namespace, String value) {
-    public static final String DEFAULT_NAMESPACE = "craftengine";
-    public static final String MINECRAFT_NAMESPACE = "minecraft";
+import java.util.function.UnaryOperator;
 
-    public static Key withDefaultNamespace(String value) {
-        return new Key(DEFAULT_NAMESPACE, value);
+public final class Key {
+    public static final String CRAFTENGINE_NAMESPACE = "craftengine";
+    public static final String MINECRAFT_NAMESPACE = "minecraft";
+    public final String namespace;
+    public final String value;
+
+    public Key(String namespace, String value) {
+        this.namespace = namespace;
+        this.value = value;
+    }
+
+    @NotNull
+    public String namespace() {
+        return this.namespace;
+    }
+
+    @NotNull
+    public String value() {
+        return this.value;
+    }
+
+    public static Key withCraftEngineNamespace(String value) {
+        return new Key(CRAFTENGINE_NAMESPACE, value);
     }
 
     public static Key of(String namespace, String value) {
@@ -26,8 +45,12 @@ public record Key(String namespace, String value) {
         return of(decompose(namespacedId, MINECRAFT_NAMESPACE));
     }
 
+    public static Key minecraft(String namespacedId) {
+        return of(decompose(namespacedId, MINECRAFT_NAMESPACE));
+    }
+
     public static Key ce(String namespacedId) {
-        return of(decompose(namespacedId, DEFAULT_NAMESPACE));
+        return of(decompose(namespacedId, CRAFTENGINE_NAMESPACE));
     }
 
     public static Key from(String namespacedId) {
@@ -40,6 +63,14 @@ public record Key(String namespace, String value) {
 
     public String[] decompose() {
         return new String[] { this.namespace, this.value };
+    }
+
+    public Key transform(UnaryOperator<String> transformer) {
+        return new Key(transformer.apply(this.namespace), transformer.apply(this.value));
+    }
+
+    public boolean contains(String key) {
+        return this.value.contains(key) || this.namespace.contains(key);
     }
 
     @Override

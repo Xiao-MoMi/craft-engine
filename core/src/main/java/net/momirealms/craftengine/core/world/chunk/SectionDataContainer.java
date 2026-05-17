@@ -3,8 +3,7 @@ package net.momirealms.craftengine.core.world.chunk;
 import net.momirealms.craftengine.core.block.ImmutableBlockState;
 import org.jetbrains.annotations.Nullable;
 
-public class SectionDataContainer {
-
+public final class SectionDataContainer {
     private final ImmutableBlockState[] states;
 
     public SectionDataContainer() {

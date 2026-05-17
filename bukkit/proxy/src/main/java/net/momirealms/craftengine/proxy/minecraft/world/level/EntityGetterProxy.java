@@ -1,0 +1,35 @@
+package net.momirealms.craftengine.proxy.minecraft.world.level;
+
+import net.momirealms.craftengine.proxy.minecraft.world.entity.EntityProxy;
+import net.momirealms.craftengine.proxy.minecraft.world.phys.AABBProxy;
+import net.momirealms.sparrow.reflection.clazz.SparrowClass;
+import net.momirealms.sparrow.reflection.proxy.ASMProxyFactory;
+import net.momirealms.sparrow.reflection.proxy.annotation.MethodInvoker;
+import net.momirealms.sparrow.reflection.proxy.annotation.ReflectionProxy;
+import net.momirealms.sparrow.reflection.proxy.annotation.Type;
+
+import java.util.List;
+import java.util.function.Predicate;
+
+@ReflectionProxy(name = "net.minecraft.world.level.EntityGetter")
+public interface EntityGetterProxy {
+    EntityGetterProxy INSTANCE = ASMProxyFactory.create(EntityGetterProxy.class);
+    Class<?> CLASS = SparrowClass.find("net.minecraft.world.level.EntityGetter");
+
+    @MethodInvoker(name = "getEntitiesOfClass")
+    List<Object> getEntitiesOfClass(Object target,
+                                    Class<?> entityClass,
+                                    @Type(clazz = AABBProxy.class) Object area,
+                                    Predicate<Object> filter);
+
+    @MethodInvoker(name = "getEntities")
+    List<Object> getEntities(Object target,
+                             @Type(clazz = EntityProxy.class) Object except,
+                             @Type(clazz = AABBProxy.class) Object aabb);
+
+    @MethodInvoker(name = "getEntities")
+    List<Object> getEntities(Object target,
+                             @Type(clazz = EntityProxy.class) Object except,
+                             @Type(clazz = AABBProxy.class) Object aabb,
+                             Predicate<Object> filter);
+}

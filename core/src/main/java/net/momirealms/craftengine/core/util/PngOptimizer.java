@@ -15,7 +15,7 @@ import java.util.List;
 import java.util.zip.Deflater;
 import java.util.zip.DeflaterOutputStream;
 
-public class PngOptimizer {
+public final class PngOptimizer {
     private static final byte[] PNG_SIGNATURE = new byte[] { (byte) 0x89, 'P', 'N', 'G', '\r', '\n', 0x1A, '\n' };
     private static final byte[] IDAT = "IDAT".getBytes(StandardCharsets.UTF_8);
     private static final byte[] IEND = "IEND".getBytes(StandardCharsets.UTF_8);

@@ -13,7 +13,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Optional;
 
-public class NameplateTag implements TagResolver {
+public final class NameplateTag implements TagResolver {
     private final net.momirealms.craftengine.core.plugin.context.Context context;
 
     public NameplateTag(net.momirealms.craftengine.core.plugin.context.Context context) {

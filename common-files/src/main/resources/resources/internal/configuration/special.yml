@@ -1,0 +1,54 @@
+items:
+  # When placing tripwires, the client predicts their block states.
+  # By specifying the state type, we can prevent certain visual issues during placement.
+  minecraft:string:
+    client_bound_data:
+      $$>=1.20.5:
+        components:
+          minecraft:block_state:
+            attached: 'false'
+            disarmed: 'false'
+            east: 'true'
+            north: 'true'
+            powered: 'true'
+            south: 'true'
+            west: 'true'
+      $$fallback:
+        nbt:
+          BlockStateTag:
+            attached: 'false'
+            disarmed: 'false'
+            east: 'true'
+            north: 'true'
+            powered: 'true'
+            south: 'true'
+            west: 'true'
+  # The reason is the same as above
+  minecraft:note_block:
+    client_bound_data:
+      $$>=1.20.5:
+        components:
+          minecraft:block_state:
+            instrument: harp
+            powered: 'false'
+            note: '0'
+      $$fallback:
+        nbt:
+          BlockStateTag:
+            instrument: harp
+            powered: 'false'
+            note: '0'
+  # By setting process_written_book_tags for the vanilla item, it can properly handle tags such as <image> & <l10n> within books.
+  minecraft:written_book:
+    client_bound_data:
+      process_written_book_tags: {}
+
+blocks:
+  # For the client to determine if a beacon can activate, it needs the beacon_base_blocks tag to render the beam.
+  # This allows custom blocks (like note blocks) to work as beacon bases.
+  # However, whether the beacon actually grants potion effects depends on the block's real tag (server-side check).
+  minecraft:note_block:
+    settings:
+      client_bound_tags:
+        - minecraft:beacon_base_blocks
+        - minecraft:mineable/axe

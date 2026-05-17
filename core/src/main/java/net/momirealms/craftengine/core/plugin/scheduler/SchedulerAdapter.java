@@ -4,22 +4,14 @@ import java.util.concurrent.Executor;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 
-public interface SchedulerAdapter<W> {
+public interface SchedulerAdapter {
 
     Executor async();
 
-    RegionExecutor<W> sync();
+    PlatformExecutor platform();
 
     default void executeAsync(Runnable task) {
         async().execute(task);
-    }
-
-    default void executeSync(Runnable task, W world, int x, int z) {
-        sync().run(task, world, x, z);
-    }
-
-    default void executeSync(Runnable task) {
-        sync().run(task, null, 0, 0);
     }
 
     SchedulerTask asyncLater(Runnable task, long delay, TimeUnit unit);

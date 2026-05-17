@@ -1,5 +1,8 @@
 package net.momirealms.craftengine.core.plugin.config.template.argument;
 
+import net.momirealms.craftengine.core.plugin.config.ConfigSection;
+import net.momirealms.craftengine.core.plugin.config.ConfigValue;
+import net.momirealms.craftengine.core.plugin.config.KnownResourceException;
 import net.momirealms.craftengine.core.registry.BuiltInRegistries;
 import net.momirealms.craftengine.core.registry.Registries;
 import net.momirealms.craftengine.core.registry.WritableRegistry;
@@ -31,27 +34,30 @@ public final class TemplateArguments {
         return type;
     }
 
-    @SuppressWarnings("unchecked")
-    public static TemplateArgument fromObject(Object object) {
-        return switch (object) {
-            case null -> NullTemplateArgument.INSTANCE;
-            case List<?> list -> ListTemplateArgument.list((List<Object>) list);
-            case Map<?, ?> map -> fromMap((Map<String, Object>) map);
-            default -> ObjectTemplateArgument.object(object);
-        };
+    public static TemplateArgument fromConfig(ConfigValue value) {
+        if (value == null) {
+            return NullTemplateArgument.INSTANCE;
+        }
+        if (value.is(List.class)) {
+            return ListTemplateArgument.list(value.getAsList());
+        } else if (value.is(Map.class)) {
+            return TemplateArguments.fromConfig(value.getAsSection());
+        } else {
+            return ObjectTemplateArgument.object(value.value());
+        }
     }
 
-    public static TemplateArgument fromMap(Map<String, Object> map) {
-        Object type = map.get("type");
-        if (!(type instanceof String type0) || map.containsKey("__skip_template_argument__")) {
-            return MapTemplateArgument.map(map);
+    public static TemplateArgument fromConfig(ConfigSection section) {
+        Object type = section.get("type");
+        if (!(type instanceof String type0) || section.containsKey("__skip_template_argument__")) {
+            return MapTemplateArgument.map(section.values());
         } else {
-            Key key = Key.withDefaultNamespace(type0, Key.DEFAULT_NAMESPACE);
+            Key key = Key.ce(type0);
             TemplateArgumentType<? extends TemplateArgument> argumentType = BuiltInRegistries.TEMPLATE_ARGUMENT_TYPE.getValue(key);
             if (argumentType == null) {
-                throw new IllegalArgumentException("Unknown argument type: " + type);
+                throw new KnownResourceException("resource.template.unknown_argument_type", section.assemblePath("type"), key.asString());
             }
-            return argumentType.factory().create(map);
+            return argumentType.factory().create(section);
         }
     }
 }

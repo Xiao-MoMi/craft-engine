@@ -25,4 +25,8 @@ public interface CommandFeature<C> {
     CommandConfig<C> commandConfig();
 
     Plugin plugin();
+
+    default boolean isAvailable() {
+        return true;
+    }
 }

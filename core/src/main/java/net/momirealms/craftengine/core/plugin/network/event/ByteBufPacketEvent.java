@@ -3,7 +3,7 @@ package net.momirealms.craftengine.core.plugin.network.event;
 import net.momirealms.craftengine.core.util.Cancellable;
 import net.momirealms.craftengine.core.util.FriendlyByteBuf;
 
-public class ByteBufPacketEvent implements Cancellable {
+public final class ByteBufPacketEvent implements Cancellable {
     private boolean cancelled;
     private final FriendlyByteBuf buf;
     private boolean changed;

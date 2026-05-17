@@ -6,11 +6,19 @@ import net.momirealms.craftengine.core.block.ImmutableBlockState;
 import org.bukkit.block.Block;
 import org.bukkit.block.data.BlockData;
 import org.jetbrains.annotations.Nullable;
+import org.skriptlang.skript.addon.SkriptAddon;
+import org.skriptlang.skript.registration.DefaultSyntaxInfos;
+import org.skriptlang.skript.registration.SyntaxRegistry;
 
-public class ExprBlockCustomBlockState extends SimplePropertyExpression<Object, ImmutableBlockState> {
+public final class ExprBlockCustomBlockState extends SimplePropertyExpression<Object, ImmutableBlockState> {
 
-    public static void register() {
-        register(ExprBlockCustomBlockState.class, ImmutableBlockState.class, "(custom|ce|craft-engine) block[ ]state", "blocks/blockdata");
+    public static void register(SkriptAddon addon) {
+        DefaultSyntaxInfos.Expression<ExprBlockCustomBlockState, ImmutableBlockState> expression = infoBuilder(
+                ExprBlockCustomBlockState.class, ImmutableBlockState.class,
+                "(custom|ce|craft-engine) block[ ]state", "blocks/blockdata",
+                false
+        ).build();
+        addon.registry(SyntaxRegistry.class).register(SyntaxRegistry.EXPRESSION, expression);
     }
 
     @Override

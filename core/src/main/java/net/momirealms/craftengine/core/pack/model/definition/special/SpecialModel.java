@@ -4,10 +4,12 @@ import com.google.gson.JsonObject;
 import net.momirealms.craftengine.core.pack.revision.Revision;
 import net.momirealms.craftengine.core.util.MinecraftVersion;
 
-import java.util.List;
-import java.util.function.Function;
+import java.util.function.Consumer;
 
-public interface SpecialModel extends Function<MinecraftVersion, JsonObject> {
+public interface SpecialModel {
 
-    List<Revision> revisions();
+    default void collectRevision(Consumer<Revision> consumer) {
+    }
+
+    JsonObject toJson(MinecraftVersion min, MinecraftVersion max);
 }

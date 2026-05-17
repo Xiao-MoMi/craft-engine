@@ -1,11 +1,9 @@
 package net.momirealms.craftengine.core.pack.model.definition.select;
 
 import com.google.gson.JsonObject;
-import net.momirealms.craftengine.core.util.ResourceConfigUtils;
+import net.momirealms.craftengine.core.plugin.config.ConfigSection;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-
-import java.util.Map;
 
 public final class LocalTimeSelectProperty implements SelectProperty {
     public static final SelectPropertyFactory<LocalTimeSelectProperty> FACTORY = new Factory();
@@ -35,34 +33,38 @@ public final class LocalTimeSelectProperty implements SelectProperty {
     }
 
     @Override
-    public void accept(JsonObject jsonObject) {
-        jsonObject.addProperty("property", "local_time");
-        jsonObject.addProperty("pattern", this.pattern);
+    public void writeProperty(JsonObject model) {
+        model.addProperty("property", "local_time");
+        model.addProperty("pattern", this.pattern);
         if (this.locale != null) {
-            jsonObject.addProperty("locale", this.locale);
+            model.addProperty("locale", this.locale);
         }
         if (this.timeZone != null) {
-            jsonObject.addProperty("time_zone", this.timeZone);
+            model.addProperty("time_zone", this.timeZone);
         }
     }
 
     private static class Factory implements SelectPropertyFactory<LocalTimeSelectProperty> {
+        private static final String[] TIME_ZONE = new String[] {"time-zone", "time_zone"};
+
         @Override
-        public LocalTimeSelectProperty create(Map<String, Object> arguments) {
-            String pattern = ResourceConfigUtils.requireNonEmptyStringOrThrow(arguments.get("pattern"), "warning.config.item.model.select.local_time.missing_pattern");
-            String locale = (String) arguments.get("locale");
-            String timeZone = (String) arguments.get("time-zone");
-            return new LocalTimeSelectProperty(pattern, locale, timeZone);
+        public LocalTimeSelectProperty create(ConfigSection section) {
+            return new LocalTimeSelectProperty(
+                    section.getNonNullString("pattern"),
+                    section.getString("locale"),
+                    section.getString(TIME_ZONE)
+            );
         }
     }
 
     private static class Reader implements SelectPropertyReader<LocalTimeSelectProperty> {
         @Override
         public LocalTimeSelectProperty read(JsonObject json) {
-            String pattern = json.get("pattern").getAsString();
-            String locale = json.has("locale") ? json.get("locale").getAsString() : null;
-            String timeZone = json.has("time_zone") ? json.get("time_zone").getAsString() : null;
-            return new LocalTimeSelectProperty(pattern, locale, timeZone);
+            return new LocalTimeSelectProperty(
+                    json.get("pattern").getAsString(),
+                    json.has("locale") ? json.get("locale").getAsString() : null,
+                    json.has("time_zone") ? json.get("time_zone").getAsString() : null
+            );
         }
     }
 }

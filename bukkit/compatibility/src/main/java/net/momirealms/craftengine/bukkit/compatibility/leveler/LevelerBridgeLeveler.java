@@ -3,7 +3,7 @@ package net.momirealms.craftengine.bukkit.compatibility.leveler;
 import net.momirealms.craftengine.core.entity.player.Player;
 import net.momirealms.craftengine.core.plugin.compatibility.LevelerProvider;
 
-public class LevelerBridgeLeveler implements LevelerProvider {
+public final class LevelerBridgeLeveler implements LevelerProvider {
     private final cn.gtemc.levelerbridge.api.LevelerProvider<org.bukkit.entity.Player> provider;
 
     public LevelerBridgeLeveler(cn.gtemc.levelerbridge.api.LevelerProvider<org.bukkit.entity.Player> provider) {

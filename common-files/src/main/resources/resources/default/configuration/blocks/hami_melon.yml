@@ -3,12 +3,12 @@ items:
     material: melon_slice
     texture: minecraft:item/custom/hami_melon_slice
     data:
-      item-name: <!i><lang:item.default.hami_melon_slice>
+      item_name: <!i><lang:item.default.hami_melon_slice>
       $$>=1.20.5:
         food:
           nutrition: 2
           saturation: 1.0
-          can-always-eat: false
+          can_always_eat: false
     $$<=1.20.4:
       settings:
         food:
@@ -16,14 +16,14 @@ items:
           saturation: 1.0
   default:hami_melon:
     data:
-      item-name: <!i><lang:item.default.hami_melon>
+      item_name: <!i><lang:item.default.hami_melon>
     model: minecraft:block/custom/hami_melon
     behavior:
       type: block_item
       block: default:hami_melon
   default:hami_melon_seeds:
     data:
-      item-name: <!i><lang:item.default.hami_melon_seeds>
+      item_name: <!i><lang:item.default.hami_melon_seeds>
     texture: minecraft:item/custom/hami_melon_seeds
     behavior:
       type: block_item
@@ -59,16 +59,16 @@ blocks:
         - default:sound/wood
         - default:hardness/melon
       overrides:
-        map-color: 19
-        push-reaction: DESTROY
-        is-suffocating: true
-        is-redstone-conductor: true
+        map_color: 19
+        push_reaction: DESTROY
+        is_suffocating: true
+        is_redstone_conductor: true
         tags:
           - minecraft:enderman_holdable
           - minecraft:mineable/axe
           - minecraft:sword_efficient
     state:
-      auto-state: solid
+      auto_state: solid
       model:
         template: default:model/cube
         arguments:
@@ -86,12 +86,11 @@ blocks:
         - default:sound/stem_crop
         - default:hardness/none
       overrides:
-        map-color: 7
-        push-reaction: DESTROY
-        is-suffocating: false
-        is-redstone-conductor: false
+        map_color: 7
+        push_reaction: DESTROY
+        is_suffocating: false
+        is_redstone_conductor: false
         item: default:hami_melon_seeds
-        is-randomly-ticking: true
         tags:
           - minecraft:bee_growables
           - minecraft:crops
@@ -100,16 +99,20 @@ blocks:
       - type: liquid_flowable_block
       - type: stem_block
         fruit: default:hami_melon
-        attached-stem: default:attached_hami_melon_stem
+        attached_stem: default:attached_hami_melon_stem
+        fruit_bottom_blocks:
+          - minecraft:farmland
+          - minecraft:dirt
       - type: bush_block
-        bottom-blocks:
+        bottom_blocks:
           - minecraft:farmland
     states:
       properties:
         age:
           type: int
           default: 0
-          range: 0~7
+          min: 0
+          max: 7
       appearances:
         age=0:
           state: pumpkin_stem[age=0]
@@ -150,12 +153,11 @@ blocks:
         - default:sound/stem_crop
         - default:hardness/none
       overrides:
-        map-color: 7
-        push-reaction: DESTROY
-        is-suffocating: false
-        is-redstone-conductor: false
+        map_color: 7
+        push_reaction: DESTROY
+        is_suffocating: false
+        is_redstone_conductor: false
         item: default:hami_melon_seeds
-        is-randomly-ticking: true
         tags:
           - minecraft:maintains_farmland
     behaviors:
@@ -165,7 +167,7 @@ blocks:
         stem: default:hami_melon_stem
       - type: bush_block
         blacklist: false
-        bottom-blocks:
+        bottom_blocks:
           - minecraft:farmland
     states:
       properties:
@@ -209,40 +211,82 @@ recipes:
     result:
       id: default:hami_melon_seeds
       count: 1
-placed-features:
+placed_features:
   default:hami_melon:
-    environment:
+    dimension_type:
       - minecraft:overworld
     feature:
-      type: 'minecraft:random_patch'
-      config:
-        feature:
+      $$>=26.1:
+        type: 'minecraft:simple_block'
+        config:
+          to_place:
+            type: 'minecraft:rule_based_state_provider'
+            rules:
+              - if_true:
+                  type: 'minecraft:all_of'
+                  predicates:
+                    - type: 'minecraft:matching_blocks'
+                      blocks: 'minecraft:air'
+                    - type: 'minecraft:matching_blocks'
+                      offset:
+                        - 0
+                        - -1
+                        - 0
+                      blocks: 'minecraft:grass_block'
+                then:
+                  type: 'minecraft:simple_state_provider'
+                  state:
+                    Name: 'default:hami_melon'
+      $$fallback:
+        type: 'minecraft:random_patch'
+        config:
           feature:
-            type: 'minecraft:simple_block'
-            config:
-              to_place:
-                type: 'craftengine:simple_state_provider'
-                state:
-                  Name: 'default:hami_melon'
-          placement:
-            - type: 'minecraft:block_predicate_filter'
-              predicate:
-                type: 'minecraft:all_of'
-                predicates:
-                  - type: 'minecraft:matching_blocks'
-                    blocks: "minecraft:air"
-                  - type: 'minecraft:matching_blocks'
-                    blocks: 'minecraft:grass_block'
-                    offset:
-                      - 0
-                      - -1
-                      - 0
-        tries: 75
-        xz_spread: 7
-        y_spread: 3
+            feature:
+              type: 'minecraft:simple_block'
+              config:
+                to_place:
+                  type: 'craftengine:simple_state_provider'
+                  state:
+                    Name: 'default:hami_melon'
+            placement:
+              - type: 'minecraft:block_predicate_filter'
+                predicate:
+                  type: 'minecraft:all_of'
+                  predicates:
+                    - type: 'minecraft:matching_blocks'
+                      blocks: "minecraft:air"
+                    - type: 'minecraft:matching_blocks'
+                      blocks: 'minecraft:grass_block'
+                      offset:
+                        - 0
+                        - -1
+                        - 0
+          tries: 75
+          xz_spread: 7
+          y_spread: 3
     placement:
-      - type: 'minecraft:rarity_filter'
-        chance: 300
-      - type: 'minecraft:in_square'
-      - type: 'minecraft:heightmap'
-        heightmap: MOTION_BLOCKING
+      $$>=26.1:
+        - type: 'minecraft:rarity_filter'
+          chance: 300
+        - type: 'minecraft:in_square'
+        - type: 'minecraft:heightmap'
+          heightmap: MOTION_BLOCKING
+        - type: 'minecraft:count'
+          count: 75
+        - type: 'minecraft:random_offset'
+          xz_spread:
+            type: 'minecraft:trapezoid'
+            max: 7
+            min: -7
+            plateau: 0
+          y_spread:
+            type: 'minecraft:trapezoid'
+            max: 3
+            min: -3
+            plateau: 0
+      $$fallback:
+        - type: 'minecraft:rarity_filter'
+          chance: 300
+        - type: 'minecraft:in_square'
+        - type: 'minecraft:heightmap'
+          heightmap: MOTION_BLOCKING

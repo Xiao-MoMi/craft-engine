@@ -3,23 +3,35 @@ package net.momirealms.craftengine.core.pack.model.definition;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
-import net.momirealms.craftengine.core.pack.model.generation.ModelGeneration;
+import net.momirealms.craftengine.core.pack.model.generation.ModelGenerationHolder;
 import net.momirealms.craftengine.core.pack.revision.Revision;
-import net.momirealms.craftengine.core.plugin.locale.LocalizedResourceConfigException;
+import net.momirealms.craftengine.core.plugin.config.ConfigSection;
 import net.momirealms.craftengine.core.util.MinecraftVersion;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
+import java.util.function.Consumer;
 
 public final class CompositeItemModel implements ItemModel {
     public static final ItemModelFactory<CompositeItemModel> FACTORY = new Factory();
     public static final ItemModelReader<CompositeItemModel> READER = new Reader();
     private final List<ItemModel> models;
+    private final Transformation transformation;
 
-    public CompositeItemModel(List<ItemModel> models) {
+    public CompositeItemModel(@NotNull List<ItemModel> models, @Nullable Transformation transformation) {
         this.models = models;
+        this.transformation = transformation;
+    }
+
+    public CompositeItemModel(@NotNull List<ItemModel> models) {
+        this(models, null);
+    }
+
+    @Nullable
+    public Transformation transformation() {
+        return this.transformation;
     }
 
     @NotNull
@@ -28,56 +40,42 @@ public final class CompositeItemModel implements ItemModel {
     }
 
     @Override
-    public JsonObject apply(MinecraftVersion version) {
+    public JsonObject toJson(MinecraftVersion min, MinecraftVersion max) {
         JsonObject json = new JsonObject();
         json.addProperty("type", "composite");
         JsonArray array = new JsonArray();
         for (ItemModel model : this.models) {
-            array.add(model.apply(version));
+            array.add(model.toJson(min, max));
         }
         json.add("models", array);
+        if (this.transformation != null && max.isAtOrAbove(MinecraftVersion.V26_1)) {
+            json.add("transformation", this.transformation.toJson());
+        }
         return json;
     }
 
     @Override
-    public List<Revision> revisions() {
-        List<Revision> versions = new ArrayList<>();
+    public void gatherRevisions(Consumer<Revision> consumer) {
         for (ItemModel model : this.models) {
-            versions.addAll(model.revisions());
+            model.gatherRevisions(consumer);
         }
-        return versions;
     }
 
     @Override
-    public List<ModelGeneration> modelsToGenerate() {
-        List<ModelGeneration> models = new ArrayList<>(4);
+    public void prepareModelGeneration(Consumer<ModelGenerationHolder> consumer) {
         for (ItemModel model : this.models) {
-            models.addAll(model.modelsToGenerate());
+            model.prepareModelGeneration(consumer);
         }
-        return models;
     }
 
     private static class Factory implements ItemModelFactory<CompositeItemModel> {
 
-        @SuppressWarnings("unchecked")
         @Override
-        public CompositeItemModel create(Map<String, Object> arguments) {
-            Object m = arguments.get("models");
-            if (m instanceof List<?> list) {
-                List<Object> models = (List<Object>) list;
-                if (models.isEmpty()) {
-                    throw new LocalizedResourceConfigException("warning.config.item.model.composite.missing_models");
-                }
-                List<ItemModel> modelList = new ArrayList<>();
-                for (Object model : models) {
-                    modelList.add(ItemModels.fromObj(model));
-                }
-                return new CompositeItemModel(modelList);
-            } else if (m != null) {
-                return new CompositeItemModel(List.of(ItemModels.fromObj(m)));
-            } else {
-                throw new LocalizedResourceConfigException("warning.config.item.model.composite.missing_models");
-            }
+        public CompositeItemModel create(ConfigSection section) {
+            return new CompositeItemModel(
+                    section.getList("models", ItemModels::fromConfig),
+                    section.getValue("transformation", Transformation::fromConfig)
+            );
         }
     }
 
@@ -91,13 +89,15 @@ public final class CompositeItemModel implements ItemModel {
             }
             List<ItemModel> modelList = new ArrayList<>();
             for (JsonElement model : models) {
-                if (model instanceof JsonObject jo) {
-                    modelList.add(ItemModels.fromJson(jo));
-                } else {
+                if (!(model instanceof JsonObject jo)) {
                     throw new IllegalArgumentException("model is expected to be a JsonObject");
                 }
+                modelList.add(ItemModels.fromJson(jo));
             }
-            return new CompositeItemModel(modelList);
+            return new CompositeItemModel(
+                    modelList,
+                    json.has("transformation") ? Transformation.fromJson(json.get("transformation")) : null
+            );
         }
     }
 }

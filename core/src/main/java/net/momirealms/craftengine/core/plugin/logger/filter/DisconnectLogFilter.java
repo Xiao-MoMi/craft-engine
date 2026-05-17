@@ -8,7 +8,7 @@ import org.apache.logging.log4j.core.filter.AbstractFilter;
 import org.apache.logging.log4j.core.impl.MutableLogEvent;
 
 @Plugin(name = "DisconnectLogFilter", category = Node.CATEGORY, elementType = Filter.ELEMENT_TYPE)
-public class DisconnectLogFilter extends AbstractFilter {
+public final class DisconnectLogFilter extends AbstractFilter {
     private static final String TARGET_LOGGER = "net.minecraft.server.network.ServerConfigurationPacketListenerImpl";
     private static final String TARGET_MESSAGE_PATTERN = "{} lost connection: {}";
     private static DisconnectLogFilter instance;

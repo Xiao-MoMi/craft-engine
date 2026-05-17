@@ -22,7 +22,7 @@ public interface PluginLogger {
 
     void warn(String s, Throwable t);
 
-    void severe(String s);
+    void error(String s);
 
-    void severe(String s, Throwable t);
+    void error(String s, Throwable t);
 }

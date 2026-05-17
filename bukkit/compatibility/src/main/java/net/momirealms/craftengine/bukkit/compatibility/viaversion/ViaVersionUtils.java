@@ -8,14 +8,15 @@ import net.momirealms.craftengine.core.plugin.network.NetWorkUser;
 import net.momirealms.craftengine.core.plugin.network.ProtocolVersion;
 import net.momirealms.craftengine.core.util.ReflectionUtils;
 import net.momirealms.craftengine.core.util.VersionHelper;
+import net.momirealms.sparrow.reflection.clazz.SparrowClass;
+import net.momirealms.sparrow.reflection.field.SField;
+import net.momirealms.sparrow.reflection.field.matcher.FieldMatcher;
 import org.jetbrains.annotations.Nullable;
 
-import java.lang.reflect.Field;
-import java.util.Objects;
 import java.util.UUID;
 
 public final class ViaVersionUtils {
-    private static Field CONNECTION_FIELD;
+    private static SField CONNECTION_FIELD;
     private static final boolean hasBukkitEncodeHandlerClazz = ReflectionUtils.classExists("com.viaversion.viaversion.bukkit.handlers.BukkitEncodeHandler");
 
     private ViaVersionUtils() {}
@@ -45,12 +46,8 @@ public final class ViaVersionUtils {
             return bukkitEncodeHandler.connection();
         }
         if (CONNECTION_FIELD == null) {
-            CONNECTION_FIELD = Objects.requireNonNull(ReflectionUtils.getDeclaredField(handler.getClass(), "connection"));
+            CONNECTION_FIELD = SparrowClass.of(handler.getClass()).getDeclaredSparrowField(FieldMatcher.named("connection")).mh();
         }
-        try {
-            return (UserConnection) CONNECTION_FIELD.get(handler);
-        } catch (IllegalAccessException e) {
-            return null;
-        }
+        return (UserConnection) CONNECTION_FIELD.get(handler);
     }
 }

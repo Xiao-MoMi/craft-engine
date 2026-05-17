@@ -3,9 +3,11 @@ package net.momirealms.craftengine.bukkit.util;
 import io.netty.buffer.Unpooled;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
 import it.unimi.dsi.fastutil.ints.IntList;
-import net.momirealms.craftengine.bukkit.nms.FastNMS;
 import net.momirealms.craftengine.core.util.FriendlyByteBuf;
+import net.momirealms.craftengine.core.util.Key;
 import net.momirealms.craftengine.core.util.MarkedHashMap;
+import net.momirealms.craftengine.proxy.minecraft.network.protocol.common.ClientboundUpdateTagsPacketProxy;
+import net.momirealms.craftengine.proxy.minecraft.tags.TagNetworkSerializationProxy;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -13,10 +15,9 @@ import java.util.List;
 import java.util.Map;
 
 public final class TagUtils {
-
     private TagUtils() {}
 
-    public record TagEntry(int id, List<String> tags) {
+    public record TagEntry(int id, List<Key> tags) {
     }
 
     /**
@@ -52,37 +53,37 @@ public final class TagUtils {
                 continue;
             }
             FriendlyByteBuf deserializeBuf = new FriendlyByteBuf(Unpooled.buffer());
-            FastNMS.INSTANCE.method$TagNetworkSerialization$NetworkPayload$write(payload.getValue(), deserializeBuf);
-            Map<String, IntList> originalTags = deserializeBuf.readMap(
-                    FriendlyByteBuf::readUtf,
+            TagNetworkSerializationProxy.NetworkPayloadProxy.INSTANCE.write(payload.getValue(), PacketUtils.ensureNMSFriendlyByteBuf(deserializeBuf));
+            Map<Key, IntList> originalTags = deserializeBuf.readMap(
+                    FriendlyByteBuf::readKey,
                     FriendlyByteBuf::readIntIdList
             );
-            Map<Integer, List<String>> reversedTags = new HashMap<>();
-            for (Map.Entry<String, IntList> tagEntry : originalTags.entrySet()) {
+            Map<Integer, List<Key>> reversedTags = new HashMap<>();
+            for (Map.Entry<Key, IntList> tagEntry : originalTags.entrySet()) {
                 for (int id : tagEntry.getValue()) {
                     reversedTags.computeIfAbsent(id, k -> new ArrayList<>()).add(tagEntry.getKey());
                 }
             }
             for (TagEntry tagEntry : overrides) {
                 reversedTags.remove(tagEntry.id);
-                for (String tag : tagEntry.tags) {
+                for (Key tag : tagEntry.tags) {
                     reversedTags.computeIfAbsent(tagEntry.id, k -> new ArrayList<>()).add(tag);
                 }
             }
-            Map<String, IntList> processedTags = new HashMap<>();
-            for (Map.Entry<Integer, List<String>> tagEntry : reversedTags.entrySet()) {
-                for (String tag : tagEntry.getValue()) {
+            Map<Key, IntList> processedTags = new HashMap<>();
+            for (Map.Entry<Integer, List<Key>> tagEntry : reversedTags.entrySet()) {
+                for (Key tag : tagEntry.getValue()) {
                     processedTags.computeIfAbsent(tag, k -> new IntArrayList()).addLast(tagEntry.getKey());
                 }
             }
             FriendlyByteBuf serializeBuf = new FriendlyByteBuf(Unpooled.buffer());
             serializeBuf.writeMap(processedTags,
-                    FriendlyByteBuf::writeUtf,
+                    FriendlyByteBuf::writeKey,
                     FriendlyByteBuf::writeIntIdList
             );
-            Object mergedPayload = FastNMS.INSTANCE.method$TagNetworkSerialization$NetworkPayload$read(serializeBuf);
+            Object mergedPayload = TagNetworkSerializationProxy.NetworkPayloadProxy.INSTANCE.read(PacketUtils.ensureNMSFriendlyByteBuf(serializeBuf));
             modified.put(payload.getKey(), mergedPayload);
         }
-        return FastNMS.INSTANCE.constructor$ClientboundUpdateTagsPacket(modified);
+        return ClientboundUpdateTagsPacketProxy.INSTANCE.newInstance(modified);
     }
 }

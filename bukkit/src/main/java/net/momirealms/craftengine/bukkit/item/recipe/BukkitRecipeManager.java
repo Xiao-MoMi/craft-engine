@@ -9,10 +9,8 @@ import net.momirealms.craftengine.bukkit.item.BukkitItemManager;
 import net.momirealms.craftengine.bukkit.nms.FastNMS;
 import net.momirealms.craftengine.bukkit.plugin.BukkitCraftEngine;
 import net.momirealms.craftengine.bukkit.plugin.injector.RecipeInjector;
-import net.momirealms.craftengine.bukkit.plugin.reflection.ReflectionInitException;
-import net.momirealms.craftengine.bukkit.plugin.reflection.bukkit.CraftBukkitReflections;
-import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.CoreReflections;
-import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.MRegistries;
+import net.momirealms.craftengine.bukkit.plugin.user.BukkitServerPlayer;
+import net.momirealms.craftengine.bukkit.util.ItemStackUtils;
 import net.momirealms.craftengine.bukkit.util.KeyUtils;
 import net.momirealms.craftengine.core.item.BuildableItem;
 import net.momirealms.craftengine.core.item.Item;
@@ -22,135 +20,74 @@ import net.momirealms.craftengine.core.item.recipe.*;
 import net.momirealms.craftengine.core.plugin.config.Config;
 import net.momirealms.craftengine.core.registry.BuiltInRegistries;
 import net.momirealms.craftengine.core.util.*;
+import net.momirealms.craftengine.proxy.bukkit.craftbukkit.CraftServerProxy;
+import net.momirealms.craftengine.proxy.minecraft.resources.FileToIdConverterProxy;
+import net.momirealms.craftengine.proxy.minecraft.server.MinecraftServerProxy;
+import net.momirealms.craftengine.proxy.minecraft.server.PlayerAdvancementsProxy;
+import net.momirealms.craftengine.proxy.minecraft.server.level.ServerPlayerProxy;
+import net.momirealms.craftengine.proxy.minecraft.server.packs.PackTypeProxy;
+import net.momirealms.craftengine.proxy.minecraft.server.packs.repository.PackProxy;
+import net.momirealms.craftengine.proxy.minecraft.server.packs.repository.PackRepositoryProxy;
+import net.momirealms.craftengine.proxy.minecraft.server.packs.resources.MultiPackResourceManagerProxy;
+import net.momirealms.craftengine.proxy.minecraft.server.packs.resources.ResourceProxy;
+import net.momirealms.craftengine.proxy.minecraft.server.players.PlayerListProxy;
+import net.momirealms.craftengine.proxy.minecraft.world.item.crafting.FireworkStarFadeRecipeProxy;
+import net.momirealms.craftengine.proxy.minecraft.world.item.crafting.RecipeHolderProxy;
+import net.momirealms.craftengine.proxy.minecraft.world.item.crafting.RecipeManagerProxy;
+import net.momirealms.craftengine.proxy.minecraft.world.item.crafting.RecipeTypeProxy;
+import net.momirealms.craftengine.proxy.minecraft.world.level.block.entity.AbstractFurnaceBlockEntityProxy;
+import net.momirealms.craftengine.proxy.minecraft.world.level.block.entity.BlastFurnaceBlockEntityProxy;
+import net.momirealms.craftengine.proxy.minecraft.world.level.block.entity.FurnaceBlockEntityProxy;
+import net.momirealms.craftengine.proxy.minecraft.world.level.block.entity.SmokerBlockEntityProxy;
 import org.bukkit.Bukkit;
 import org.bukkit.NamespacedKey;
 import org.bukkit.event.HandlerList;
-import org.bukkit.inventory.ItemStack;
+import org.bukkit.potion.PotionBrewer;
 
 import java.io.Reader;
 import java.util.*;
-import java.util.function.BiFunction;
-import java.util.function.Consumer;
 import java.util.function.Function;
 
-// todo 在folia上替换recipe map使其线程安全
-public class BukkitRecipeManager extends AbstractRecipeManager<ItemStack> {
+public final class BukkitRecipeManager extends AbstractRecipeManager {
     private static BukkitRecipeManager instance;
+    public static final NamespacedKey FURNACE_LAST_USER = new NamespacedKey("craftengine", "furnace_last_user");
 
-    private static final Consumer<Key> MINECRAFT_RECIPE_REMOVER = VersionHelper.isOrAbove1_21_2() ?
-            (id -> {
-                Object resourceKey = toRecipeResourceKey(id);
-                FastNMS.INSTANCE.method$RecipeMap$removeRecipe(FastNMS.INSTANCE.field$RecipeManager$recipes(minecraftRecipeManager()), resourceKey);
-            }) :
-            (id -> {
-                Object resourceLocation = KeyUtils.toResourceLocation(id);
-                FastNMS.INSTANCE.method$RecipeManager$removeRecipe(minecraftRecipeManager(), resourceLocation);
-            });
-    private static final BiFunction<Key, Object, Object> MINECRAFT_RECIPE_ADDER =
-            VersionHelper.isOrAbove1_21_2() ?
-            (id, recipe) -> {
-                Object resourceKey = toRecipeResourceKey(id);
-                Object recipeHolder = FastNMS.INSTANCE.constructor$RecipeHolder(resourceKey, recipe);
-                FastNMS.INSTANCE.method$RecipeManager$addRecipe(minecraftRecipeManager(), recipeHolder);
-                return recipeHolder;
-            } :
-            VersionHelper.isOrAbove1_20_2() ?
-            (id, recipe) -> {
-                Object resourceLocation = KeyUtils.toResourceLocation(id);
-                Object recipeHolder = FastNMS.INSTANCE.constructor$RecipeHolder(resourceLocation, recipe);
-                FastNMS.INSTANCE.method$RecipeManager$addRecipe(minecraftRecipeManager(), recipeHolder);
-                return recipeHolder;
-            } :
-            (id, recipe) -> {
-                FastNMS.INSTANCE.method$RecipeManager$addRecipe(minecraftRecipeManager(), recipe);
-                return recipe;
-            };
-
-    private static final Map<Key, Function<Recipe<ItemStack>, Object>> ADD_RECIPE_FOR_MINECRAFT_RECIPE_HOLDER = Map.of(
-            RecipeSerializers.SHAPED, recipe -> {
-                CustomShapedRecipe<ItemStack> shapedRecipe = (CustomShapedRecipe<ItemStack>) recipe;
-                Object mcRecipe = FastNMS.INSTANCE.createShapedRecipe(shapedRecipe);
-                return MINECRAFT_RECIPE_ADDER.apply(recipe.id(), mcRecipe);
-            },
-            RecipeSerializers.SHAPELESS, recipe -> {
-                CustomShapelessRecipe<ItemStack> shapelessRecipe = (CustomShapelessRecipe<ItemStack>) recipe;
-                Object mcRecipe = FastNMS.INSTANCE.createShapelessRecipe(shapelessRecipe);
-                return MINECRAFT_RECIPE_ADDER.apply(recipe.id(), mcRecipe);
-            },
-            RecipeSerializers.SMELTING, recipe -> {
-                CustomSmeltingRecipe<ItemStack> smeltingRecipe = (CustomSmeltingRecipe<ItemStack>) recipe;
-                Object mcRecipe = FastNMS.INSTANCE.createSmeltingRecipe(smeltingRecipe);
-                return MINECRAFT_RECIPE_ADDER.apply(recipe.id(), mcRecipe);
-            },
-            RecipeSerializers.BLASTING, recipe -> {
-                CustomBlastingRecipe<ItemStack> blastingRecipe = (CustomBlastingRecipe<ItemStack>) recipe;
-                Object mcRecipe = FastNMS.INSTANCE.createBlastingRecipe(blastingRecipe);
-                return MINECRAFT_RECIPE_ADDER.apply(recipe.id(), mcRecipe);
-            },
-            RecipeSerializers.SMOKING, recipe -> {
-                CustomSmokingRecipe<ItemStack> smokingRecipe = (CustomSmokingRecipe<ItemStack>) recipe;
-                Object mcRecipe = FastNMS.INSTANCE.createSmokingRecipe(smokingRecipe);
-                return MINECRAFT_RECIPE_ADDER.apply(recipe.id(), mcRecipe);
-            },
-            RecipeSerializers.CAMPFIRE_COOKING, recipe -> {
-                CustomCampfireRecipe<ItemStack> campfireRecipe = (CustomCampfireRecipe<ItemStack>) recipe;
-                Object mcRecipe = FastNMS.INSTANCE.createCampfireRecipe(campfireRecipe);
-                return MINECRAFT_RECIPE_ADDER.apply(recipe.id(), mcRecipe);
-            },
-            RecipeSerializers.STONECUTTING, recipe -> {
-                Object mcRecipe = FastNMS.INSTANCE.createStonecuttingRecipe((CustomStoneCuttingRecipe<ItemStack>) recipe);
-                return MINECRAFT_RECIPE_ADDER.apply(recipe.id(), mcRecipe);
-            },
-            RecipeSerializers.SMITHING_TRIM, recipe -> {
-                Object mcRecipe = FastNMS.INSTANCE.createSmithingTrimRecipe((CustomSmithingTrimRecipe<ItemStack>) recipe);
-                return MINECRAFT_RECIPE_ADDER.apply(recipe.id(), mcRecipe);
-            },
-            RecipeSerializers.SMITHING_TRANSFORM, recipe -> {
-                Object mcRecipe = FastNMS.INSTANCE.createSmithingTransformRecipe((CustomSmithingTransformRecipe<ItemStack>) recipe);
-                return MINECRAFT_RECIPE_ADDER.apply(recipe.id(), mcRecipe);
-            }
+    public static final Map<Key, Function<Recipe, Object>> RECIPE_GENERATOR = Map.of(
+            RecipeSerializers.SHAPED, recipe -> FastNMS.INSTANCE.createShapedRecipe((CustomShapedRecipe) recipe),
+            RecipeSerializers.SHAPELESS, recipe -> FastNMS.INSTANCE.createShapelessRecipe((CustomShapelessRecipe) recipe),
+            RecipeSerializers.SMELTING, recipe -> FastNMS.INSTANCE.createSmeltingRecipe((CustomSmeltingRecipe) recipe),
+            RecipeSerializers.BLASTING, recipe -> FastNMS.INSTANCE.createBlastingRecipe((CustomBlastingRecipe) recipe),
+            RecipeSerializers.SMOKING, recipe -> FastNMS.INSTANCE.createSmokingRecipe((CustomSmokingRecipe) recipe),
+            RecipeSerializers.CAMPFIRE_COOKING, recipe -> FastNMS.INSTANCE.createCampfireRecipe((CustomCampfireRecipe) recipe),
+            RecipeSerializers.STONECUTTING, recipe -> FastNMS.INSTANCE.createStonecuttingRecipe((CustomStoneCuttingRecipe) recipe),
+            RecipeSerializers.SMITHING_TRIM, recipe -> FastNMS.INSTANCE.createSmithingTrimRecipe((CustomSmithingTrimRecipe) recipe),
+            RecipeSerializers.SMITHING_TRANSFORM, recipe -> FastNMS.INSTANCE.createSmithingTransformRecipe((CustomSmithingTransformRecipe) recipe),
+            RecipeSerializers.DYE, recipe -> FastNMS.INSTANCE.createDyeRecipe((CustomDyeRecipe) recipe)
     );
 
     // nms 模块需要使用此方法
-    public static List<Object> getIngredientLooks(List<UniqueKey> holders) {
+    public static List<Object> getIngredientLooks(Ingredient ingredient) {
         List<Object> itemStacks = new ArrayList<>();
-        for (UniqueKey holder : holders) {
-            Optional<? extends BuildableItem<ItemStack>> buildableItem = BukkitItemManager.instance().getBuildableItem(holder.key());
+        for (UniqueKey holder : ingredient.items()) {
+            Optional<? extends BuildableItem> buildableItem = BukkitItemManager.instance().getBuildableItem(holder.key());
             if (buildableItem.isPresent()) {
-                ItemStack itemStack = buildableItem.get().buildItemStack(ItemBuildContext.empty(), 1);
-                Object nmsStack = FastNMS.INSTANCE.method$CraftItemStack$asNMSCopy(itemStack);
-                itemStacks.add(nmsStack);
+                itemStacks.add(buildableItem.get().buildItem(ItemBuildContext.empty(), ingredient.count()).minecraftItem());
             } else {
-                Item<ItemStack> barrier = BukkitItemManager.instance().createWrappedItem(ItemKeys.BARRIER, null);
+                Item barrier = BukkitItemManager.instance().createWrappedItem(ItemKeys.BARRIER, null);
                 assert barrier != null;
                 barrier.customNameJson(AdventureHelper.componentToJson(Component.text(holder.key().asString()).color(NamedTextColor.RED)));
-                itemStacks.add(barrier.getLiteralObject());
+                itemStacks.add(barrier.minecraftItem());
             }
         }
         return itemStacks;
     }
 
-    public static Object toRecipeResourceKey(Key id) {
-        return FastNMS.INSTANCE.method$ResourceKey$create(MRegistries.RECIPE, KeyUtils.toResourceLocation(id));
-    }
-
-    /*
-     * 注册全过程：
-     *
-     * 0.准备阶段偷取flag以减少注册的性能开销
-     * 1.先读取用户配置自定义配方
-     * 2.延迟加载中为自定义配方生成转换为nms配方的任务
-     * 3.读取全部的数据包配方并转换为自定义配方，对必要的含有tag配方添加先移除后注册nms配方的任务
-     * 4.主线程完成剩余任务
-     * 5.归还flag
-     */
     private final BukkitCraftEngine plugin;
     private final RecipeEventListener recipeEventListener;
     private final CrafterEventListener crafterEventListener;
-    // 欺骗服务端使其以为自己处于启动阶段
-    private Object stolenFeatureFlagSet;
     // 需要在主线程卸载的配方
-    private final List<Pair<Key, Boolean>> recipesToUnregister = new ArrayList<>();
+    private final List<Key> nativeRecipesToUnregister = new ArrayList<>();
+    private final List<Key> brewingRecipesToUnregister = new ArrayList<>();
     // 已经被替换过的数据包配方
     private final Set<Key> replacedDatapackRecipes = new HashSet<>();
     // 换成的数据包配方
@@ -158,14 +95,27 @@ public class BukkitRecipeManager extends AbstractRecipeManager<ItemStack> {
     private Object lastRecipeManager = null;
 
     public BukkitRecipeManager(BukkitCraftEngine plugin) {
+        super(createRecipeRegistry(), plugin);
         instance = this;
         this.plugin = plugin;
         this.recipeEventListener = new RecipeEventListener(plugin, this, plugin.itemManager());
-        this.crafterEventListener = VersionHelper.isOrAbove1_21() ? new CrafterEventListener(plugin, this, plugin.itemManager()) : null;
+        this.crafterEventListener = VersionHelper.isOrAbove1_21 ? new CrafterEventListener(plugin, this, plugin.itemManager()) : null;
+    }
+
+    public static RecipeRegistry createRecipeRegistry() {
+        if (VersionHelper.isOrAbove1_21_2) {
+            return new RecipeRegistry1_21_2();
+        } else if (VersionHelper.isOrAbove1_20_5) {
+            return new RecipeRegistry1_20_5();
+        } else if (VersionHelper.isOrAbove1_20_2) {
+            return new RecipeRegistry1_20_2();
+        } else {
+            return new RecipeRegistry1_20();
+        }
     }
 
     public static Object minecraftRecipeManager() {
-        return FastNMS.INSTANCE.method$MinecraftServer$getRecipeManager(FastNMS.INSTANCE.method$MinecraftServer$getServer());
+        return MinecraftServerProxy.INSTANCE.getRecipeManager(MinecraftServerProxy.INSTANCE.getServer());
     }
 
     public static BukkitRecipeManager instance() {
@@ -183,27 +133,21 @@ public class BukkitRecipeManager extends AbstractRecipeManager<ItemStack> {
     @Override
     public void load() {
         if (!Config.enableRecipeSystem()) return;
-        if (VersionHelper.isOrAbove1_21_2()) {
-            try {
-                this.stolenFeatureFlagSet = CoreReflections.methodHandle$RecipeManager$featureflagsetGetter.invokeExact(minecraftRecipeManager());
-                CoreReflections.methodHandle$RecipeManager$featureflagsetSetter.invokeExact(minecraftRecipeManager(), (Object) null);
-            } catch (Throwable e) {
-                this.plugin.logger().warn("Failed to steal feature flag set", e);
-            }
-        }
     }
 
     @Override
     public void unload() {
         if (!Config.enableRecipeSystem()) return;
         // 安排卸载任务，这些任务会在load后执行。如果没有load说明服务器已经关闭了，那就不需要管卸载了。
-        if (!Bukkit.isStopping()) {
-            for (Map.Entry<Key, Recipe<ItemStack>> entry : this.byId.entrySet()) {
-                Key id = entry.getKey();
+        if (!this.plugin.isStopping()) {
+            for (Recipe recipe : this.nativeRecipes) {
+                Key id = recipe.id();
                 // 不要卸载数据包配方，只记录自定义的配方
                 if (isDataPackRecipe(id)) continue;
-                boolean isBrewingRecipe = entry.getValue() instanceof CustomBrewingRecipe<ItemStack>;
-                this.recipesToUnregister.add(Pair.of(id, isBrewingRecipe));
+                this.nativeRecipesToUnregister.add(id);
+            }
+            for (Recipe recipe : this.brewingRecipes) {
+                this.brewingRecipesToUnregister.add(recipe.id());
             }
         }
         super.unload();
@@ -212,7 +156,132 @@ public class BukkitRecipeManager extends AbstractRecipeManager<ItemStack> {
     @Override
     public void delayedLoad() {
         if (!Config.enableRecipeSystem()) return;
-        this.loadDataPackRecipes();
+
+        // 准备注册
+        super.recipeRegistry.prepareRegistration();
+
+        // 先注销之前注册的配方
+        if (!this.nativeRecipesToUnregister.isEmpty()) {
+            for (Key recipeId : this.nativeRecipesToUnregister) {
+                super.recipeRegistry.unregister(recipeId);
+            }
+            this.nativeRecipesToUnregister.clear();
+        }
+
+        // 注册配方
+        ExceptionCollector<Exception> collector = new ExceptionCollector<>(Exception.class);
+        for (Recipe recipe : super.nativeRecipes) {
+            Key id = recipe.id();
+            if (isDataPackRecipe(id)) {
+                // 如果这个数据包配方已经被换成了注入配方，那么是否需要重新注册取决于其是否含有tag，且tag里有自定义物品
+                if (!this.replacedDatapackRecipes.add(id)) {
+                    outer: {
+                        for (Ingredient ingredient : recipe.ingredientsInUse()) {
+                            if (ingredient.hasCustomItem()) {
+                                break outer;
+                            }
+                        }
+                        // 没有自定义物品，且被注入过了，那么就不需要移除后重新注册
+                        continue;
+                    }
+                }
+                super.recipeRegistry.unregister(id);
+            }
+            try {
+                super.recipeRegistry.register(id, RECIPE_GENERATOR.get(recipe.serializerType()).apply(recipe));
+            } catch (Exception e) {
+                collector.add(e);
+            }
+        }
+
+        // 重新注入特殊配方
+        super.recipeRegistry.unregister(RecipeInjector.REPAIR_ITEM);
+        super.recipeRegistry.register(RecipeInjector.REPAIR_ITEM, RecipeInjector.REPAIR_ITEM_RECIPE);
+
+        // 在低版本是特殊配方，高版本不是
+        if (!VersionHelper.isOrAbove26_1) {
+            super.recipeRegistry.unregister(RecipeInjector.ARMOR_DYE);
+            super.recipeRegistry.unregister(RecipeInjector.FIREWORK_STAR_FADE);
+            super.recipeRegistry.register(RecipeInjector.ARMOR_DYE, RecipeInjector.ARMOR_DYE_RECIPE);
+            super.recipeRegistry.register(RecipeInjector.FIREWORK_STAR_FADE, RecipeInjector.FIREWORK_STAR_FADE_RECIPE);
+        } else {
+            Key recipeId = Key.of("firework_star_fade");
+            Object fireworkStarFadeRecipe = super.recipeRegistry.get(recipeId);
+            if (fireworkStarFadeRecipe != null) {
+                fireworkStarFadeRecipe = RecipeHolderProxy.INSTANCE.getValue(fireworkStarFadeRecipe);
+                super.recipeRegistry.unregister(recipeId);
+                try {
+                    super.recipeRegistry.register(recipeId, RecipeInjector.FIREWORK_STAR_FADE_RECIPE_CONSTRUCTOR.newInstance(
+                        FireworkStarFadeRecipeProxy.INSTANCE.getTarget(fireworkStarFadeRecipe),
+                        FireworkStarFadeRecipeProxy.INSTANCE.getDye(fireworkStarFadeRecipe),
+                        FireworkStarFadeRecipeProxy.INSTANCE.getResult(fireworkStarFadeRecipe)
+                    ));
+                } catch (ReflectiveOperationException e) {
+                    this.plugin.logger().warn("Failed to construct FireworkStarFadeRecipe", e);
+                }
+            }
+        }
+
+        // 完成注册
+        super.recipeRegistry.finalizeRegistration();
+
+        // 刷新配方
+        if (VersionHelper.isOrAbove1_21_2) {
+            Object manager = minecraftRecipeManager();
+            RecipeManagerProxy.INSTANCE.finalizeRecipeLoading(manager, RecipeManagerProxy.INSTANCE.getEnabledFlags(manager));
+        }
+        // 1.21.6以下直接发包
+        if (!VersionHelper.isOrAbove1_21_6 || VersionHelper.isFolia) {
+            PlayerListProxy.INSTANCE.reloadRecipeData(CraftServerProxy.INSTANCE.getPlayerList(Bukkit.getServer()));
+        }
+
+        Optional.ofNullable(collector.result()).ifPresent(t -> {
+            this.plugin.logger().warn("Failed to load recipes", t);
+        });
+    }
+
+    @Override
+    public void runDelayedSyncTasks() {
+        if (!Config.enableRecipeSystem()) return;
+
+        // 处理酿造配方
+        if (VersionHelper.isOrAbove1_20_2) {
+            PotionBrewer potionBrewer = Bukkit.getPotionBrewer();
+            if (!this.brewingRecipesToUnregister.isEmpty()) {
+                for (Key potion : this.brewingRecipesToUnregister) {
+                    potionBrewer.removePotionMix(KeyUtils.toNamespacedKey(potion));
+                }
+                this.brewingRecipesToUnregister.clear();
+            }
+            if (!super.brewingRecipes.isEmpty()) {
+                for (CustomBrewingRecipe recipe : super.brewingRecipes) {
+                    PotionMix potionMix = new PotionMix(KeyUtils.toNamespacedKey(recipe.id()),
+                            ItemStackUtils.getBukkitStack(recipe.result(ItemBuildContext.empty())),
+                            PotionMix.createPredicateChoice(container -> {
+                                Item wrapped = this.plugin.itemManager().wrap(container);
+                                return recipe.container().test(UniqueIdItem.of(wrapped));
+                            }),
+                            PotionMix.createPredicateChoice(ingredient -> {
+                                Item wrapped = this.plugin.itemManager().wrap(ingredient);
+                                return recipe.ingredient().test(UniqueIdItem.of(wrapped));
+                            })
+                    );
+                    potionBrewer.addPotionMix(potionMix);
+                }
+            }
+        }
+
+        // 重载资源
+        if (VersionHelper.isOrAbove1_21_6 && !VersionHelper.isFolia) {
+            for (BukkitServerPlayer player : this.plugin.networkManager().onlineUsers()) {
+                Object serverPlayer = player.serverPlayer();
+                Object advancements = ServerPlayerProxy.INSTANCE.getAdvancements(serverPlayer);
+                if (advancements != null) {
+                    PlayerAdvancementsProxy.INSTANCE.save(advancements);
+                }
+            }
+            PlayerListProxy.INSTANCE.reloadResources(CraftServerProxy.INSTANCE.getPlayerList(Bukkit.getServer()));
+        }
     }
 
     @Override
@@ -222,53 +291,7 @@ public class BukkitRecipeManager extends AbstractRecipeManager<ItemStack> {
     }
 
     @Override
-    protected void unregisterPlatformRecipeMainThread(Key key, boolean isBrewingRecipe) {
-        if (isBrewingRecipe) {
-            Bukkit.getPotionBrewer().removePotionMix(new NamespacedKey(key.namespace(), key.value()));
-        } else {
-            MINECRAFT_RECIPE_REMOVER.accept(key);
-        }
-    }
-
-    @Override
-    protected void registerPlatformRecipeMainThread(Recipe<ItemStack> recipe) {
-        Key id = recipe.id();
-        if (recipe instanceof CustomBrewingRecipe<ItemStack> brewingRecipe) {
-            if (!VersionHelper.isOrAbove1_20_2()) return;
-            PotionMix potionMix = new PotionMix(new NamespacedKey(id.namespace(), id.value()),
-                    brewingRecipe.result(ItemBuildContext.empty()),
-                    PotionMix.createPredicateChoice(container -> {
-                        Item<ItemStack> wrapped = this.plugin.itemManager().wrap(container);
-                        return brewingRecipe.container().test(UniqueIdItem.of(wrapped));
-                    }),
-                    PotionMix.createPredicateChoice(ingredient -> {
-                        Item<ItemStack> wrapped = this.plugin.itemManager().wrap(ingredient);
-                        return brewingRecipe.ingredient().test(UniqueIdItem.of(wrapped));
-                    })
-            );
-            Bukkit.getPotionBrewer().addPotionMix(potionMix);
-        } else {
-            // 如果是数据包配方
-            if (isDataPackRecipe(id)) {
-                // 如果这个数据包配方已经被换成了注入配方，那么是否需要重新注册取决于其是否含有tag，且tag里有自定义物品
-                if (!this.replacedDatapackRecipes.add(id)) {
-                    outer: {
-                        for (Ingredient<ItemStack> ingredient : recipe.ingredientsInUse()) {
-                            if (ingredient.hasCustomItem()) {
-                                break outer;
-                            }
-                        }
-                        // 没有自定义物品，且被注入过了，那么就不需要移除后重新注册
-                        return;
-                    }
-                }
-                MINECRAFT_RECIPE_REMOVER.accept(id);
-            }
-            ADD_RECIPE_FOR_MINECRAFT_RECIPE_HOLDER.get(recipe.serializerType()).apply(recipe);
-        }
-    }
-
-    private void loadDataPackRecipes() {
+    public void loadDataPackRecipes() {
         Object currentRecipeManager = minecraftRecipeManager();
         if (currentRecipeManager != this.lastRecipeManager) {
             this.lastRecipeManager = currentRecipeManager;
@@ -281,53 +304,50 @@ public class BukkitRecipeManager extends AbstractRecipeManager<ItemStack> {
         }
 
         if (Config.disableAllVanillaRecipes()) {
-            this.recipesToUnregister.addAll(this.lastDatapackRecipes.keySet().stream().map(it -> Pair.of(it, false)).toList());
+            this.nativeRecipesToUnregister.addAll(this.lastDatapackRecipes.keySet());
             return;
         }
 
-        boolean hasDisabledAny = !Config.disabledVanillaRecipes().isEmpty();
+        Set<Key> disabledRecipes = Config.disabledVanillaRecipes();
+        boolean hasDisabledAny = !disabledRecipes.isEmpty();
+
         for (Map.Entry<Key, JsonObject> entry : this.lastDatapackRecipes.entrySet()) {
             Key id = entry.getKey();
-            if (hasDisabledAny && Config.disabledVanillaRecipes().contains(entry.getKey())) {
-                this.recipesToUnregister.add(Pair.of(id, false));
+            if (hasDisabledAny && disabledRecipes.contains(entry.getKey())) {
+                this.nativeRecipesToUnregister.add(id);
                 continue;
             }
-
             JsonObject jsonObject = entry.getValue();
-            Key serializerType = Key.of(jsonObject.get("type").getAsString());
-            @SuppressWarnings("unchecked")
-            RecipeSerializer<ItemStack, ? extends Recipe<ItemStack>> serializer = (RecipeSerializer<ItemStack, ? extends Recipe<ItemStack>>) BuiltInRegistries.RECIPE_SERIALIZER.getValue(serializerType);
-            if (serializer == null) {
-                continue;
-            }
-
             try {
-                Recipe<ItemStack> recipe = serializer.readJson(id, jsonObject);
+                Key serializerType = Key.of(jsonObject.get("type").getAsString());
+                RecipeSerializer<? extends Recipe> serializer = BuiltInRegistries.RECIPE_SERIALIZER.getValue(serializerType);
+                if (serializer == null) {
+                    continue;
+                }
+                Recipe recipe = serializer.readJson(id, jsonObject);
                 markAsDataPackRecipe(id);
-                registerInternalRecipe(id, recipe);
-            } catch (Exception e) {
+                registerRecipeInternal(recipe, false);
+            } catch (Throwable e) {
                 this.plugin.logger().warn("Failed to load data pack recipe " + id + ". Json: " + jsonObject, e);
             }
         }
     }
 
-    @SuppressWarnings("unchecked")
-    private Map<Key, JsonObject> scanResources() throws Throwable {
-        Object fileToIdConverter = CoreReflections.methodHandle$FileToIdConverter$json.invokeExact((String) (VersionHelper.isOrAbove1_21() ? "recipe" : "recipes"));
-        Object minecraftServer = FastNMS.INSTANCE.method$MinecraftServer$getServer();
-        Object packRepository = CoreReflections.methodHandle$MinecraftServer$getPackRepository.invokeExact(minecraftServer);
-        List<Object> selected = (List<Object>) CoreReflections.methodHandle$PackRepository$selectedGetter.invokeExact(packRepository);
+    private Map<Key, JsonObject> scanResources() {
+        Object fileToIdConverter = FileToIdConverterProxy.INSTANCE.json(VersionHelper.isOrAbove1_21 ? "recipe" : "recipes");
+        Object minecraftServer = MinecraftServerProxy.INSTANCE.getServer();
+        Object packRepository = MinecraftServerProxy.INSTANCE.getPackRepository(minecraftServer);
+        List<Object> selected = PackRepositoryProxy.INSTANCE.getSelected(packRepository);
         List<Object> packResources = new ArrayList<>();
         for (Object pack : selected) {
-            packResources.add(CoreReflections.methodHandle$Pack$open.invokeExact(pack));
+            packResources.add(PackProxy.INSTANCE.open(pack));
         }
         Map<Key, JsonObject> recipes = new HashMap<>();
-
-        try (AutoCloseable resourceManager = (AutoCloseable) CoreReflections.methodHandle$MultiPackResourceManagerConstructor.invokeExact(CoreReflections.instance$PackType$SERVER_DATA, packResources)) {
-            Map<Object, Object> scannedResources = (Map<Object, Object>) CoreReflections.methodHandle$FileToIdConverter$listMatchingResources.invokeExact(fileToIdConverter, resourceManager);
+        try (AutoCloseable resourceManager = (AutoCloseable) MultiPackResourceManagerProxy.INSTANCE.newInstance(PackTypeProxy.SERVER_DATA, packResources)) {
+            Map<Object, Object> scannedResources = FileToIdConverterProxy.INSTANCE.listMatchingResources(fileToIdConverter, resourceManager);
             for (Map.Entry<Object, Object> entry : scannedResources.entrySet()) {
-                Key id = extractKeyFromResourceLocation(entry.getKey().toString());
-                try (Reader reader = (Reader) CoreReflections.methodHandle$Resource$openAsReader.invokeExact(entry.getValue())) {
+                Key id = extractKeyFromIdentifier(entry.getKey().toString());
+                try (Reader reader = ResourceProxy.INSTANCE.openAsReader(entry.getValue())) {
                     JsonObject jsonObject = JsonParser.parseReader(reader).getAsJsonObject();
                     recipes.put(id, jsonObject);
                 }
@@ -338,7 +358,7 @@ public class BukkitRecipeManager extends AbstractRecipeManager<ItemStack> {
         return recipes;
     }
 
-    private Key extractKeyFromResourceLocation(String input) {
+    private Key extractKeyFromIdentifier(String input) {
         int prefixEndIndex = input.indexOf(':');
         String prefix = input.substring(0, prefixEndIndex);
         int lastSlashIndex = input.lastIndexOf('/');
@@ -347,57 +367,17 @@ public class BukkitRecipeManager extends AbstractRecipeManager<ItemStack> {
         return Key.of(prefix, fileName);
     }
 
-    @Override
-    public void runDelayedSyncTasks() {
-        if (!Config.enableRecipeSystem()) return;
-
-        // 卸载掉需要卸载的配方（禁用的原版配方+注册的自定义配方）
-        for (Pair<Key, Boolean> pair : this.recipesToUnregister) {
-            unregisterPlatformRecipeMainThread(pair.left(), pair.right());
+    public static void injectFurnaceBlockEntity(Object blockEntity) {
+        Object recipeType = null;
+        if (SmokerBlockEntityProxy.CLASS.isInstance(blockEntity)) {
+            recipeType = RecipeTypeProxy.SMOKING;
+        } else if (BlastFurnaceBlockEntityProxy.CLASS.isInstance(blockEntity)) {
+            recipeType = RecipeTypeProxy.BLASTING;
+        } else if (FurnaceBlockEntityProxy.CLASS.isInstance(blockEntity)) {
+            recipeType = RecipeTypeProxy.SMELTING;
         }
-
-        this.recipesToUnregister.clear();
-
-        // 注册新的配方
-        for (Recipe<ItemStack> recipe : this.byId.values()) {
-            try {
-                registerPlatformRecipeMainThread(recipe);
-            } catch (Exception e) {
-                this.plugin.logger().warn("Failed to register recipe " + recipe.id().toString(), e);
-            }
-        }
-
-        // 重新注入特殊配方
-        try {
-            Key dyeRecipeId = Key.from("armor_dye");
-            MINECRAFT_RECIPE_REMOVER.accept(dyeRecipeId);
-            MINECRAFT_RECIPE_ADDER.apply(dyeRecipeId, RecipeInjector.createCustomDyeRecipe(dyeRecipeId));
-            Key repairRecipeId = Key.from("repair_item");
-            MINECRAFT_RECIPE_REMOVER.accept(repairRecipeId);
-            MINECRAFT_RECIPE_ADDER.apply(repairRecipeId, RecipeInjector.createRepairItemRecipe(repairRecipeId));
-            Key fireworkStarFadeRecipeId = Key.from("firework_star_fade");
-            MINECRAFT_RECIPE_REMOVER.accept(fireworkStarFadeRecipeId);
-            MINECRAFT_RECIPE_ADDER.apply(fireworkStarFadeRecipeId, RecipeInjector.createFireworkStarFadeRecipe(fireworkStarFadeRecipeId));
-        } catch (ReflectiveOperationException e) {
-            throw new ReflectionInitException("Failed to inject special recipes", e);
-        }
-
-        try {
-            // give flags back on 1.21.2+
-            if (VersionHelper.isOrAbove1_21_2() && this.stolenFeatureFlagSet != null) {
-                CoreReflections.methodHandle$RecipeManager$featureflagsetSetter.invokeExact(minecraftRecipeManager(), (Object) this.stolenFeatureFlagSet);
-                this.stolenFeatureFlagSet = null;
-            }
-
-            // refresh recipes
-            if (VersionHelper.isOrAbove1_21_2()) {
-                CoreReflections.methodHandle$RecipeManager$finalizeRecipeLoading.invokeExact(minecraftRecipeManager());
-            }
-
-            // send to players
-            CoreReflections.methodHandle$DedicatedPlayerList$reloadRecipes.invokeExact(CraftBukkitReflections.methodHandle$CraftServer$playerListGetter.invokeExact(Bukkit.getServer()));
-        } catch (Throwable e) {
-            this.plugin.logger().warn("Failed to run delayed recipe tasks", e);
+        if (recipeType != null) {
+            AbstractFurnaceBlockEntityProxy.INSTANCE.setQuickCheck(blockEntity, FastNMS.INSTANCE.createInjectedFurnaceCachedCheck(recipeType, blockEntity));
         }
     }
 }

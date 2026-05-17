@@ -11,13 +11,13 @@ import org.jetbrains.annotations.Nullable;
 
 public class BlockPlaceContext extends UseOnContext {
     private final BlockPos relativePos;
-    protected boolean replaceClicked;
+    private boolean replaceClicked;
 
     public BlockPlaceContext(UseOnContext context) {
         this(context.getLevel(), context.getPlayer(), context.getHand(), context.getItem(), context.getHitResult());
     }
 
-    public BlockPlaceContext(World world, @Nullable Player player, InteractionHand hand, Item<?> stack, BlockHitResult hit) {
+    public BlockPlaceContext(World world, @Nullable Player player, InteractionHand hand, Item stack, BlockHitResult hit) {
         super(world, player, hand, stack, hit);
         this.relativePos = hit.blockPos().relative(hit.direction());
         this.replaceClicked = true;
@@ -45,12 +45,29 @@ public class BlockPlaceContext extends UseOnContext {
         return this.replaceClicked;
     }
 
+    public Direction getVerticalLookingDirection() {
+        Player player = this.getPlayer();
+        if (player != null) {
+            return player.xRot() > 0 ? Direction.UP : Direction.DOWN;
+        }
+        return Direction.UP;
+    }
+
     public Direction getNearestLookingDirection() {
-        return Direction.orderedByNearest(this.getPlayer())[0];
+        Player player = this.getPlayer();
+        if (player == null) {
+            return Direction.NORTH;
+        }
+        return Direction.orderedByNearest(player)[0];
     }
 
     public Direction[] getNearestLookingDirections() {
-        Direction[] directions = Direction.orderedByNearest(this.getPlayer());
+        Player player = this.getPlayer();
+        if (player == null) {
+            return new Direction[] { Direction.NORTH };
+        }
+
+        Direction[] directions = Direction.orderedByNearest(player);
         if (!this.replaceClicked) {
             Direction clickedFace = this.getClickedFace();
             int i = 0;

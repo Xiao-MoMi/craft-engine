@@ -120,13 +120,13 @@ templates#models#2d:
   default:model/elytra:
     type: minecraft:condition
     property: minecraft:broken
-    on-false:
+    on_false:
       path: ${model}
       generation:
         parent: minecraft:item/generated
         textures:
           layer0: ${texture}
-    on-true:
+    on_true:
       path: ${broken_model}
       generation:
         parent: minecraft:item/generated
@@ -268,10 +268,10 @@ templates#models#shield:
   default:model/shield_3d:
     type: minecraft:condition
     property: minecraft:using_item
-    on-false:
+    on_false:
       type: minecraft:model
       path: ${model}
-    on-true:
+    on_true:
       type: minecraft:model
       path: ${block_model}
 
@@ -284,10 +284,10 @@ templates#models#fishing_rod:
   default:model/fishing_rod_3d:
     type: minecraft:condition
     property: minecraft:fishing_rod/cast
-    on-false:
+    on_false:
       type: minecraft:model
       path: ${model}
-    on-true:
+    on_true:
       type: minecraft:model
       path: ${cast_model}
   # template: default:model/fishing_rod_2d
@@ -299,14 +299,14 @@ templates#models#fishing_rod:
   default:model/fishing_rod_2d:
     type: minecraft:condition
     property: minecraft:fishing_rod/cast
-    on-false:
+    on_false:
       type: minecraft:model
       path: ${model}
       generation:
         parent: minecraft:item/fishing_rod
         textures:
           layer0: ${texture}
-    on-true:
+    on_true:
       type: minecraft:model
       path: ${cast_model}
       generation:
@@ -336,10 +336,10 @@ templates#models#bow:
   default:model/bow_3d:
     type: minecraft:condition
     property: minecraft:using_item
-    on-false:
+    on_false:
       type: minecraft:model
       path: ${model}
-    on-true:
+    on_true:
       type: minecraft:range_dispatch
       property: minecraft:use_duration
       scale: 0.05
@@ -368,14 +368,14 @@ templates#models#bow:
   default:model/bow_2d:
     type: minecraft:condition
     property: minecraft:using_item
-    on-false:
+    on_false:
       type: minecraft:model
       path: ${model}
       generation:
         parent: minecraft:item/bow
         textures:
           layer0: ${texture}
-    on-true:
+    on_true:
       type: minecraft:range_dispatch
       property: minecraft:use_duration
       scale: 0.05
@@ -434,7 +434,7 @@ templates#models#crossbow:
   default:model/crossbow_3d:
     type: minecraft:condition
     property: minecraft:using_item
-    on-false:
+    on_false:
       type: minecraft:select
       property: minecraft:charge_type
       cases:
@@ -449,7 +449,7 @@ templates#models#crossbow:
       fallback:
         type: minecraft:model
         path: ${model}
-    on-true:
+    on_true:
       type: minecraft:range_dispatch
       property: minecraft:crossbow/pull
       entries:
@@ -481,7 +481,7 @@ templates#models#crossbow:
   default:model/crossbow_2d:
     type: minecraft:condition
     property: minecraft:using_item
-    on-false:
+    on_false:
       type: minecraft:select
       property: minecraft:charge_type
       cases:
@@ -508,7 +508,7 @@ templates#models#crossbow:
           parent: minecraft:item/crossbow
           textures:
             layer0: ${texture}
-    on-true:
+    on_true:
       type: minecraft:range_dispatch
       property: minecraft:crossbow/pull
       entries:

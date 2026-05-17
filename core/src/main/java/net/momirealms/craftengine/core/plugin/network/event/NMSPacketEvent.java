@@ -3,7 +3,7 @@ package net.momirealms.craftengine.core.plugin.network.event;
 import net.momirealms.craftengine.core.util.Cancellable;
 import org.jetbrains.annotations.NotNull;
 
-public class NMSPacketEvent implements Cancellable {
+public final class NMSPacketEvent implements Cancellable {
     private final Object packet;
     private boolean cancelled;
     private Object newPacket = null;

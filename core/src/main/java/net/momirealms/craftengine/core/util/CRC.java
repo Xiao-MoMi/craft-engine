@@ -1,6 +1,6 @@
 package net.momirealms.craftengine.core.util;
 
-class CRC {
+final class CRC {
     private static final int[] crcTable = new int[256];
     private int crc = 0xffffffff;
 

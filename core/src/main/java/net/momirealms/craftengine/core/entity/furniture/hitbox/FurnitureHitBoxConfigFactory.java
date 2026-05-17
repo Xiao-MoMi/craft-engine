@@ -1,8 +1,8 @@
 package net.momirealms.craftengine.core.entity.furniture.hitbox;
 
-import java.util.Map;
+import net.momirealms.craftengine.core.plugin.config.ConfigSection;
 
 public interface FurnitureHitBoxConfigFactory<H extends FurnitureHitBox> {
 
-    FurnitureHitBoxConfig<H> create(Map<String, Object> arguments);
+    FurnitureHitBoxConfig<H> create(ConfigSection section);
 }

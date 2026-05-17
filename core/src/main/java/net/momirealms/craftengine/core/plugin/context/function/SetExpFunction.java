@@ -1,24 +1,24 @@
 package net.momirealms.craftengine.core.plugin.context.function;
 
 import net.momirealms.craftengine.core.entity.player.Player;
+import net.momirealms.craftengine.core.plugin.config.ConfigSection;
 import net.momirealms.craftengine.core.plugin.context.Condition;
 import net.momirealms.craftengine.core.plugin.context.Context;
 import net.momirealms.craftengine.core.plugin.context.number.NumberProvider;
-import net.momirealms.craftengine.core.plugin.context.number.NumberProviders;
 import net.momirealms.craftengine.core.plugin.context.selector.PlayerSelector;
-import net.momirealms.craftengine.core.plugin.context.selector.PlayerSelectors;
-import net.momirealms.craftengine.core.util.ResourceConfigUtils;
 
 import java.util.List;
-import java.util.Map;
 import java.util.function.BiConsumer;
 
-public class SetExpFunction<CTX extends Context> extends AbstractConditionalFunction<CTX> {
+public final class SetExpFunction<CTX extends Context> extends AbstractConditionalFunction<CTX> {
     private final PlayerSelector<CTX> selector;
     private final NumberProvider count;
     private final BiConsumer<Player, Integer> operation;
 
-    public SetExpFunction(List<Condition<CTX>> predicates, PlayerSelector<CTX> selector, NumberProvider count, BiConsumer<Player, Integer> operation) {
+    private SetExpFunction(List<Condition<CTX>> predicates,
+                           PlayerSelector<CTX> selector,
+                           NumberProvider count,
+                           BiConsumer<Player, Integer> operation) {
         super(predicates);
         this.selector = selector;
         this.count = count;
@@ -32,7 +32,7 @@ public class SetExpFunction<CTX extends Context> extends AbstractConditionalFunc
         }
     }
 
-    public static <CTX extends Context> FunctionFactory<CTX, SetExpFunction<CTX>> factory(java.util.function.Function<Map<String, Object>, Condition<CTX>> factory) {
+    public static <CTX extends Context> FunctionFactory<CTX, SetExpFunction<CTX>> factory(java.util.function.Function<ConfigSection, Condition<CTX>> factory) {
         return new Factory<>(factory);
     }
 
@@ -43,17 +43,20 @@ public class SetExpFunction<CTX extends Context> extends AbstractConditionalFunc
                 player.setExperiencePoints(experience);
             }
         };
+        private static final String[] EXP = new String[] {"exp", "count", "value"};
 
-        public Factory(java.util.function.Function<Map<String, Object>, Condition<CTX>> factory) {
+        public Factory(java.util.function.Function<ConfigSection, Condition<CTX>> factory) {
             super(factory);
         }
 
         @Override
-        public SetExpFunction<CTX> create(Map<String, Object> arguments) {
-            PlayerSelector<CTX> selector = PlayerSelectors.fromObject(arguments.getOrDefault("target", "self"), conditionFactory());
-            Object value = ResourceConfigUtils.requireNonNullOrThrow(arguments.get("count"), "warning.config.function.set_exp.missing_count");
-            boolean add = ResourceConfigUtils.getAsBoolean(arguments.getOrDefault("add", false), "add");
-            return new SetExpFunction<>(getPredicates(arguments), selector, NumberProviders.fromObject(value), add ? ADD_POINTS : SET_POINTS);
+        public SetExpFunction<CTX> create(ConfigSection section) {
+            return new SetExpFunction<>(
+                    getPredicates(section),
+                    getPlayerSelector(section),
+                    section.getNonNullNumber(EXP),
+                    section.getBoolean("add") ? ADD_POINTS : SET_POINTS
+            );
         }
     }
 }

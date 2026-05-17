@@ -1,9 +1,7 @@
 package net.momirealms.craftengine.core.pack.model.definition.condition;
 
 import com.google.gson.JsonObject;
-import net.momirealms.craftengine.core.util.ResourceConfigUtils;
-
-import java.util.Map;
+import net.momirealms.craftengine.core.plugin.config.ConfigSection;
 
 public final class CustomModelDataConditionProperty implements ConditionProperty {
     public static final ConditionPropertyFactory<CustomModelDataConditionProperty> FACTORY = new Factory();
@@ -19,25 +17,24 @@ public final class CustomModelDataConditionProperty implements ConditionProperty
     }
 
     @Override
-    public void accept(JsonObject jsonObject) {
-        jsonObject.addProperty("property", "custom_model_data");
-        if (this.index != 0)
-            jsonObject.addProperty("index", this.index);
+    public void writeProperty(JsonObject model) {
+        model.addProperty("property", "custom_model_data");
+        if (this.index != 0) {
+            model.addProperty("index", this.index);
+        }
     }
 
     private static class Factory implements ConditionPropertyFactory<CustomModelDataConditionProperty> {
         @Override
-        public CustomModelDataConditionProperty create(Map<String, Object> arguments) {
-            int index = ResourceConfigUtils.getAsInt(arguments.getOrDefault("index", 0), "index");
-            return new CustomModelDataConditionProperty(index);
+        public CustomModelDataConditionProperty create(ConfigSection section) {
+            return new CustomModelDataConditionProperty(section.getInt("index"));
         }
     }
 
     private static class Reader implements ConditionPropertyReader<CustomModelDataConditionProperty> {
         @Override
         public CustomModelDataConditionProperty read(JsonObject json) {
-            int index = json.has("index") ? json.get("index").getAsInt() : 0;
-            return new CustomModelDataConditionProperty(index);
+            return new CustomModelDataConditionProperty(json.has("index") ? json.get("index").getAsInt() : 0);
         }
     }
 }

@@ -3,9 +3,8 @@ package net.momirealms.craftengine.core.pack.model.definition.select;
 import com.google.gson.JsonObject;
 import net.momirealms.craftengine.core.item.ItemKeys;
 import net.momirealms.craftengine.core.pack.model.legacy.LegacyModelPredicate;
+import net.momirealms.craftengine.core.plugin.config.ConfigSection;
 import net.momirealms.craftengine.core.util.Key;
-
-import java.util.Map;
 
 public final class ChargeTypeSelectProperty implements SelectProperty, LegacyModelPredicate<String> {
     public static final SelectPropertyFactory<ChargeTypeSelectProperty> FACTORY = new Factory();
@@ -15,8 +14,8 @@ public final class ChargeTypeSelectProperty implements SelectProperty, LegacyMod
     private ChargeTypeSelectProperty() {}
 
     @Override
-    public void accept(JsonObject jsonObject) {
-        jsonObject.addProperty("property", "charge_type");
+    public void writeProperty(JsonObject model) {
+        model.addProperty("property", "charge_type");
     }
 
     @Override
@@ -33,7 +32,7 @@ public final class ChargeTypeSelectProperty implements SelectProperty, LegacyMod
 
     private static class Factory implements SelectPropertyFactory<ChargeTypeSelectProperty> {
         @Override
-        public ChargeTypeSelectProperty create(Map<String, Object> arguments) {
+        public ChargeTypeSelectProperty create(ConfigSection section) {
             return INSTANCE;
         }
     }

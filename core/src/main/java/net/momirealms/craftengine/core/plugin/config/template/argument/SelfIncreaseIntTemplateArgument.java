@@ -1,7 +1,6 @@
 package net.momirealms.craftengine.core.plugin.config.template.argument;
 
-import net.momirealms.craftengine.core.plugin.locale.LocalizedResourceConfigException;
-import net.momirealms.craftengine.core.util.ResourceConfigUtils;
+import net.momirealms.craftengine.core.plugin.config.ConfigSection;
 
 import java.util.Map;
 
@@ -24,7 +23,7 @@ public final class SelfIncreaseIntTemplateArgument implements TemplateArgument {
     }
 
     @Override
-    public String get(Map<String, TemplateArgument> arguments) {
+    public String get(String node, Map<String, TemplateArgument> arguments) {
         String value = String.valueOf(this.current);
         this.callCount++;
         if (this.stepInterval <= 0 || this.callCount % this.stepInterval == 0) {
@@ -62,15 +61,16 @@ public final class SelfIncreaseIntTemplateArgument implements TemplateArgument {
     }
 
     private static class Factory implements TemplateArgumentFactory<SelfIncreaseIntTemplateArgument> {
+        private static final String[] STEP_INTERVAL = new String[]{"step_interval", "step-interval"};
 
         @Override
-        public SelfIncreaseIntTemplateArgument create(Map<String, Object> arguments) {
-            int from = ResourceConfigUtils.getAsInt(arguments.get("from"), "from");
-            int to = ResourceConfigUtils.getAsInt(arguments.get("to"), "to");
-            int step = ResourceConfigUtils.getAsInt(arguments.getOrDefault("step", 1), "step");
-            int stepInterval = ResourceConfigUtils.getAsInt(arguments.getOrDefault("step-interval", 1), "step-interval");
-            if (from > to) throw new LocalizedResourceConfigException("warning.config.template.argument.self_increase_int.invalid_range", String.valueOf(from), String.valueOf(to));
-            return new SelfIncreaseIntTemplateArgument(from, to, step, stepInterval);
+        public SelfIncreaseIntTemplateArgument create(ConfigSection section) {
+            return new SelfIncreaseIntTemplateArgument(
+                    section.getNonNullInt("from"),
+                    section.getNonNullInt("to"),
+                    section.getInt("step", 1),
+                    section.getInt(STEP_INTERVAL, 1)
+            );
         }
     }
 }

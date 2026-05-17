@@ -1,5 +1,5 @@
 author: XiaoMoMi & jhqwqmc
 version: 0.0.1
-description: Remove Shulker Head for Some Versions
+description: Remove Shulker Head for 1.20~1.21.1
 namespace: minecraft
-enable: false
+enable: true

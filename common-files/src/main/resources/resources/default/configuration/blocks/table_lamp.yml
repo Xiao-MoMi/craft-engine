@@ -1,7 +1,7 @@
 items:
   default:table_lamp:
     data:
-      item-name: <!i><lang:item.default.table_lamp>
+      item_name: <!i><lang:item.default.table_lamp>
     model: minecraft:item/custom/table_lamp
     behavior:
       type: block_item
@@ -15,15 +15,15 @@ items:
             hardness: 0.5
             resistance: 1
             replaceable: false
-            is-redstone-conductor: false
-            is-suffocating: false
-            support-shape: cobweb
+            is_redstone_conductor: false
+            is_suffocating: false
+            support_shape: cobweb
         behaviors:
           - type: toggleable_lamp_block
-            can-toggle-with-hand: true
+            can_toggle_with_hand: true
           - type: sturdy_base_block
             direction: down
-            support-types:
+            support_types:
               - full
               - center
         states:
@@ -37,40 +37,40 @@ items:
           appearances:
             east_off:
               state: barrier
-              entity-renderer:
+              entity_renderer:
                 item: default:table_lamp
             north_off:
               state: barrier
-              entity-renderer:
+              entity_renderer:
                 item: default:table_lamp
                 yaw: -90
             south_off:
               state: barrier
-              entity-renderer:
+              entity_renderer:
                 item: default:table_lamp
                 yaw: 90
             west_off:
               state: barrier
-              entity-renderer:
+              entity_renderer:
                 item: default:table_lamp
                 yaw: 180
             east_on:
               state: barrier
-              entity-renderer:
+              entity_renderer:
                 item: default:table_lamp_on
             north_on:
               state: barrier
-              entity-renderer:
+              entity_renderer:
                 item: default:table_lamp_on
                 yaw: -90
             south_on:
               state: barrier
-              entity-renderer:
+              entity_renderer:
                 item: default:table_lamp_on
                 yaw: 90
             west_on:
               state: barrier
-              entity-renderer:
+              entity_renderer:
                 item: default:table_lamp_on
                 yaw: 180
           variants:
@@ -100,7 +100,7 @@ items:
                 luminance: 15
   default:table_lamp_on:
     data:
-      item-name: <!i><lang:item.default.table_lamp>
+      item_name: <!i><lang:item.default.table_lamp>
     model:
       type: minecraft:model
       path: minecraft:item/custom/table_lamp_on

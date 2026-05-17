@@ -1,8 +1,8 @@
 package net.momirealms.craftengine.core.item.recipe.remainder;
 
-import java.util.Map;
+import net.momirealms.craftengine.core.plugin.config.ConfigSection;
 
 public interface CraftRemainderFactory<T extends CraftRemainder> {
 
-    T create(Map<String, Object> args);
+    T create(ConfigSection section);
 }

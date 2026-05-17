@@ -6,20 +6,20 @@ import net.momirealms.craftengine.core.plugin.context.Condition;
 import java.util.List;
 import java.util.function.Consumer;
 
-public abstract class AbstractCompositeLootEntryContainer<T> extends AbstractLootEntryContainer<T> {
-    protected final List<LootEntryContainer<T>> children;
-    private final LootEntryContainer<T> composedChildren;
+public abstract class AbstractCompositeLootEntryContainer extends AbstractLootEntryContainer {
+    protected final List<LootEntryContainer> children;
+    private final LootEntryContainer composedChildren;
 
-    protected AbstractCompositeLootEntryContainer(List<Condition<LootContext>> conditions, List<LootEntryContainer<T>> children) {
+    protected AbstractCompositeLootEntryContainer(List<Condition<LootContext>> conditions, List<LootEntryContainer> children) {
         super(conditions);
         this.children = children;
         this.composedChildren = compose(children);
     }
 
-    protected abstract LootEntryContainer<T> compose(List<? extends LootEntryContainer<T>> children);
+    protected abstract LootEntryContainer compose(List<? extends LootEntryContainer> children);
 
     @Override
-    public final boolean expand(LootContext context, Consumer<LootEntry<T>> choiceConsumer) {
+    public final boolean expand(LootContext context, Consumer<LootEntry> choiceConsumer) {
         return this.test(context) && this.composedChildren.expand(context, choiceConsumer);
     }
 }

@@ -1,13 +1,12 @@
 package net.momirealms.craftengine.bukkit.compatibility.skript.expression;
 
-import ch.njol.skript.Skript;
 import ch.njol.skript.aliases.ItemType;
 import ch.njol.skript.classes.Changer;
 import ch.njol.skript.doc.Description;
 import ch.njol.skript.doc.Name;
 import ch.njol.skript.doc.Since;
+import ch.njol.skript.expressions.base.PropertyExpression;
 import ch.njol.skript.lang.Expression;
-import ch.njol.skript.lang.ExpressionType;
 import ch.njol.skript.lang.SkriptParser;
 import ch.njol.skript.lang.util.SimpleExpression;
 import ch.njol.skript.util.slot.Slot;
@@ -17,19 +16,24 @@ import net.momirealms.craftengine.core.util.Key;
 import org.bukkit.event.Event;
 import org.bukkit.inventory.ItemStack;
 import org.jetbrains.annotations.Nullable;
+import org.skriptlang.skript.addon.SkriptAddon;
+import org.skriptlang.skript.registration.DefaultSyntaxInfos;
+import org.skriptlang.skript.registration.SyntaxRegistry;
 
 import java.util.Optional;
 
 @Name("CraftEngine Item ID")
 @Description({"Get CraftEngine item id."})
 @Since("1.0")
-public class ExprItemCustomItemID extends SimpleExpression<String> {
+public final class ExprItemCustomItemID extends SimpleExpression<String> {
 
-    public static void register() {
-        Skript.registerExpression(ExprItemCustomItemID.class, String.class, ExpressionType.PROPERTY,
-                "(custom|ce|craft-engine) item [namespace] id of %itemstack/itemtype/slot%",
-                "%itemstack/itemtype/slot%'[s] (custom|ce|craft-engine) item [namespace] id"
-        );
+    public static void register(SkriptAddon addon) {
+        DefaultSyntaxInfos.Expression<ExprItemCustomItemID, String> expression = DefaultSyntaxInfos.Expression.builder(ExprItemCustomItemID.class, String.class)
+                .priority(PropertyExpression.DEFAULT_PRIORITY)
+                .addPattern("(custom|ce|craft-engine) item [namespace] id of %itemstack/itemtype/slot%")
+                .addPattern("%itemstack/itemtype/slot%'[s] (custom|ce|craft-engine) item [namespace] id")
+                .build();
+        addon.registry(SyntaxRegistry.class).register(SyntaxRegistry.EXPRESSION, expression);
     }
 
     private Expression<?> itemStackExpr;
@@ -44,23 +48,20 @@ public class ExprItemCustomItemID extends SimpleExpression<String> {
     protected String[] get(Event event) {
         Object single = itemStackExpr.getSingle(event);
 
-        String result = null;
-        if (single instanceof ItemStack itemStack) {
-            result =  Optional.of(itemStack).map(this::getCraftEngineItemId).orElse(null);
+        ItemStack itemStack = null;
+        if (single instanceof ItemStack stack) {
+            itemStack = stack;
         } else if (single instanceof ItemType itemType) {
-            result = Optional.ofNullable(itemType.getTypes().getFirst().getStack()).map(this::getCraftEngineItemId).orElse(null);
+            itemStack = itemType.getTypes().getFirst().getStack();
         } else if (single instanceof Slot slot) {
-            result = Optional.ofNullable(slot.getItem()).map(this::getCraftEngineItemId).orElse(null);
+            itemStack = slot.getItem();
         }
 
-        return new String[] {result};
-    }
-
-
-    private String getCraftEngineItemId(ItemStack itemStack) {
-        return Optional.ofNullable(CraftEngineItems.getCustomItemId(itemStack))
+        return Optional.ofNullable(itemStack)
+                .map(CraftEngineItems::getCustomItemId)
                 .map(Key::asString)
-                .orElse(null);
+                .map(it -> new String[]{it})
+                .orElse(null); // 不能返回带有空值的数组
     }
 
     @Override

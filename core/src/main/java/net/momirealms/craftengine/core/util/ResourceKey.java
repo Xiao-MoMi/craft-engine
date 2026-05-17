@@ -4,7 +4,7 @@ import com.google.common.collect.MapMaker;
 
 import java.util.Map;
 
-public class ResourceKey<T> {
+public final class ResourceKey<T> {
     private static final Map<Internal, ResourceKey<?>> VALUES = (new MapMaker()).weakValues().makeMap();
     private final Key registry;
     private final Key location;

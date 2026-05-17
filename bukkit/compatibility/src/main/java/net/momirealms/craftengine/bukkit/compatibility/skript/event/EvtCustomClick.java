@@ -9,7 +9,6 @@ import ch.njol.skript.doc.Since;
 import ch.njol.skript.lang.Literal;
 import ch.njol.skript.lang.SkriptEvent;
 import ch.njol.skript.lang.SkriptParser;
-import ch.njol.skript.registrations.EventValues;
 import net.momirealms.craftengine.bukkit.api.event.CustomBlockInteractEvent;
 import net.momirealms.craftengine.bukkit.api.event.FurnitureInteractEvent;
 import net.momirealms.craftengine.core.block.ImmutableBlockState;
@@ -23,34 +22,45 @@ import org.bukkit.entity.Player;
 import org.bukkit.event.Event;
 import org.bukkit.inventory.EquipmentSlot;
 import org.jetbrains.annotations.Nullable;
+import org.skriptlang.skript.addon.SkriptAddon;
+import org.skriptlang.skript.bukkit.lang.eventvalue.EventValue;
+import org.skriptlang.skript.bukkit.lang.eventvalue.EventValueRegistry;
+import org.skriptlang.skript.bukkit.registration.BukkitSyntaxInfos;
+import org.skriptlang.skript.registration.SyntaxRegistry;
 
 import java.util.function.Predicate;
 
 @Name("On Click on Custom Block and Furniture")
 @Description({"Fires when click on custom block and furniture"})
 @Since("1.0")
-public class EvtCustomClick extends SkriptEvent {
+public final class EvtCustomClick extends SkriptEvent {
 
     private final static int RIGHT = 1, LEFT = 2, ANY = RIGHT | LEFT;
-    public final static ClickEventTracker interactTracker = new ClickEventTracker(Skript.getInstance());
+    public final static ClickEventTracker INTERACT_TRACKER = new ClickEventTracker(Skript.getInstance());
 
     @SuppressWarnings("unchecked")
-    public static void register() {
-        Skript.registerEvent("Interact Custom Block Furniture", EvtCustomClick.class, new Class[]{CustomBlockInteractEvent.class, FurnitureInteractEvent.class},
-                        "[(" + RIGHT + ":right|" + LEFT + ":left)(| |-)][mouse(| |-)]click[ing] of (ce|craft-engine) [on %-unsafeblockstatematchers/strings%] [(with|using|holding) %-itemtype%]",
-                        "[(" + RIGHT + ":right|" + LEFT + ":left)(| |-)][mouse(| |-)]click[ing] of (ce|craft-engine) (with|using|holding) %itemtype% on %unsafeblockstatematchers/strings%");
+    public static void register(SkriptAddon addon) {
+        SyntaxRegistry syntaxRegistry = addon.registry(SyntaxRegistry.class);
+        EventValueRegistry valueRegistry = addon.registry(EventValueRegistry.class);
 
-        EventValues.registerEventValue(CustomBlockInteractEvent.class, Location.class, CustomBlockInteractEvent::location, EventValues.TIME_NOW);
-        EventValues.registerEventValue(CustomBlockInteractEvent.class, Player.class, CustomBlockInteractEvent::player, EventValues.TIME_NOW);
-        EventValues.registerEventValue(CustomBlockInteractEvent.class, Block.class, CustomBlockInteractEvent::bukkitBlock, EventValues.TIME_NOW);
-        EventValues.registerEventValue(CustomBlockInteractEvent.class, Entity.class, event -> null, EventValues.TIME_NOW);
-        EventValues.registerEventValue(CustomBlockInteractEvent.class, World.class, event -> event.location().getWorld(), EventValues.TIME_NOW);
+        BukkitSyntaxInfos.Event<EvtCustomClick> clickEvent = BukkitSyntaxInfos.Event.builder(EvtCustomClick.class, "Interact Custom Block Furniture")
+                .addPattern("[(" + RIGHT + ":right|" + LEFT + ":left)(| |-)][mouse(| |-)]click[ing] of (ce|craft-engine) [on %-unsafeblockstatematchers/strings%] [(with|using|holding) %-itemtype%]")
+                .addPattern("[(" + RIGHT + ":right|" + LEFT + ":left)(| |-)][mouse(| |-)]click[ing] of (ce|craft-engine) (with|using|holding) %itemtype% on %unsafeblockstatematchers/strings%")
+                .addEvents(new Class[]{CustomBlockInteractEvent.class, FurnitureInteractEvent.class})
+                .build();
+        syntaxRegistry.register(BukkitSyntaxInfos.Event.KEY, clickEvent);
 
-        EventValues.registerEventValue(FurnitureInteractEvent.class, Location.class, FurnitureInteractEvent::location, EventValues.TIME_NOW);
-        EventValues.registerEventValue(FurnitureInteractEvent.class, Player.class, FurnitureInteractEvent::player, EventValues.TIME_NOW);
-        EventValues.registerEventValue(CustomBlockInteractEvent.class, Block.class, event -> null, EventValues.TIME_NOW);
-        EventValues.registerEventValue(FurnitureInteractEvent.class, Entity.class, event -> event.furniture().bukkitEntity(), EventValues.TIME_NOW);
-        EventValues.registerEventValue(FurnitureInteractEvent.class, World.class, event -> event.location().getWorld(), EventValues.TIME_NOW);
+        valueRegistry.register(EventValue.builder(CustomBlockInteractEvent.class, Location.class).getter(CustomBlockInteractEvent::location).time(EventValue.Time.NOW).build());
+        valueRegistry.register(EventValue.builder(CustomBlockInteractEvent.class, Player.class).getter(CustomBlockInteractEvent::player).time(EventValue.Time.NOW).build());
+        valueRegistry.register(EventValue.builder(CustomBlockInteractEvent.class, Block.class).getter(CustomBlockInteractEvent::bukkitBlock).time(EventValue.Time.NOW).build());
+        valueRegistry.register(EventValue.builder(CustomBlockInteractEvent.class, Entity.class).getter(e -> null).time(EventValue.Time.NOW).build());
+        valueRegistry.register(EventValue.builder(CustomBlockInteractEvent.class, World.class).getter(e -> e.location().getWorld()).time(EventValue.Time.NOW).build());
+
+        valueRegistry.register(EventValue.builder(FurnitureInteractEvent.class, Location.class).getter(FurnitureInteractEvent::location).time(EventValue.Time.NOW).build());
+        valueRegistry.register(EventValue.builder(FurnitureInteractEvent.class, Player.class).getter(FurnitureInteractEvent::player).time(EventValue.Time.NOW).build());
+        valueRegistry.register(EventValue.builder(FurnitureInteractEvent.class, Block.class).getter(e -> null).time(EventValue.Time.NOW).build());
+        valueRegistry.register(EventValue.builder(FurnitureInteractEvent.class, Entity.class).getter(e -> e.furniture().bukkitEntity()).time(EventValue.Time.NOW).build());
+        valueRegistry.register(EventValue.builder(FurnitureInteractEvent.class, World.class).getter(e -> e.location().getWorld()).time(EventValue.Time.NOW).build());
     }
 
     private @Nullable Literal<?> type;
@@ -75,7 +85,7 @@ public class EvtCustomClick extends SkriptEvent {
             if ((this.click & click) == 0)
                 return false;
             EquipmentSlot hand = interactEvent.hand() == InteractionHand.MAIN_HAND ? EquipmentSlot.HAND : EquipmentSlot.OFF_HAND;
-            if (!interactTracker.checkEvent(interactEvent.getPlayer(), interactEvent, hand)) {
+            if (!INTERACT_TRACKER.checkEvent(interactEvent.getPlayer(), interactEvent, hand)) {
                 return false;
             }
             block = interactEvent.blockState();
@@ -91,10 +101,9 @@ public class EvtCustomClick extends SkriptEvent {
         Predicate<ItemType> checker = itemType -> {
             if (event instanceof CustomBlockInteractEvent event1) {
                 return itemType.isOfType(event1.item());
-            } else if (event instanceof FurnitureInteractEvent event1) {
-                return itemType.isOfType(event1.player().getInventory().getItem(event1.hand() == InteractionHand.MAIN_HAND ? EquipmentSlot.HAND : EquipmentSlot.OFF_HAND));
             } else {
-                return false;
+                FurnitureInteractEvent interactEvent = (FurnitureInteractEvent) event;
+                return itemType.isOfType(interactEvent.player().getInventory().getItem(interactEvent.hand() == InteractionHand.MAIN_HAND ? EquipmentSlot.HAND : EquipmentSlot.OFF_HAND));
             }
         };
 

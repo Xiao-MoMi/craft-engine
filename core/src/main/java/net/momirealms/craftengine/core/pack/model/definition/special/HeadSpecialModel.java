@@ -1,13 +1,10 @@
 package net.momirealms.craftengine.core.pack.model.definition.special;
 
 import com.google.gson.JsonObject;
-import net.momirealms.craftengine.core.pack.revision.Revision;
+import net.momirealms.craftengine.core.plugin.config.ConfigSection;
 import net.momirealms.craftengine.core.util.MinecraftVersion;
-import net.momirealms.craftengine.core.util.ResourceConfigUtils;
-
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public final class HeadSpecialModel implements SpecialModel {
     public static final SpecialModelFactory<HeadSpecialModel> FACTORY = new Factory();
@@ -16,16 +13,18 @@ public final class HeadSpecialModel implements SpecialModel {
     private final String texture;
     private final float animation;
 
-    public HeadSpecialModel(String kind, String texture, float animation) {
+    public HeadSpecialModel(@NotNull String kind, @Nullable String texture, float animation) {
         this.kind = kind;
         this.texture = texture;
         this.animation = animation;
     }
 
+    @NotNull
     public String kind() {
         return this.kind;
     }
 
+    @Nullable
     public String texture() {
         return this.texture;
     }
@@ -35,41 +34,44 @@ public final class HeadSpecialModel implements SpecialModel {
     }
 
     @Override
-    public List<Revision> revisions() {
-        return List.of();
-    }
-
-    @Override
-    public JsonObject apply(MinecraftVersion version) {
-        JsonObject json = new JsonObject();
-        json.addProperty("type", "head");
-        json.addProperty("kind", this.kind);
-        if (this.texture != null) {
-            json.addProperty("texture", this.texture);
+    public JsonObject toJson(MinecraftVersion min, MinecraftVersion max) {
+        if (min.isAtOrAbove(MinecraftVersion.V1_21_6) && this.kind.equals("player") && this.texture != null) {
+            JsonObject json = new JsonObject();
+            json.addProperty("type", "player_head");
+            return json;
+        } else {
+            JsonObject json = new JsonObject();
+            json.addProperty("type", "head");
+            json.addProperty("kind", this.kind);
+            if (this.texture != null) {
+                json.addProperty("texture", this.texture);
+            }
+            if (this.animation != 0) {
+                json.addProperty("animation", this.animation);
+            }
+            return json;
         }
-        if (this.animation != 0) {
-            json.addProperty("animation", this.animation);
-        }
-        return json;
     }
 
     private static class Factory implements SpecialModelFactory<HeadSpecialModel> {
         @Override
-        public HeadSpecialModel create(Map<String, Object> arguments) {
-            String kind = ResourceConfigUtils.requireNonEmptyStringOrThrow(arguments.get("kind"), "warning.config.item.model.special.head.missing_kind");
-            String texture = Optional.ofNullable(arguments.get("texture")).map(String::valueOf).orElse(null);
-            float animation = ResourceConfigUtils.getAsFloat(arguments.getOrDefault("animation", 0), "animation");
-            return new HeadSpecialModel(kind, texture, animation);
+        public HeadSpecialModel create(ConfigSection section) {
+            return new HeadSpecialModel(
+                    section.getNonNullString("kind"),
+                    section.getValue("texture", v -> v.getAsAssetPath().asMinimalString()),
+                    section.getFloat("animation")
+            );
         }
     }
 
     private static class Reader implements SpecialModelReader<HeadSpecialModel> {
         @Override
         public HeadSpecialModel read(JsonObject json) {
-            String kind = json.get("kind").getAsString();
-            String texture = json.has("texture") ? json.get("texture").getAsString() : null;
-            float animation = json.has("animation") ? json.get("animation").getAsFloat() : 0f;
-            return new HeadSpecialModel(kind, texture, animation);
+            return new HeadSpecialModel(
+                    json.get("kind").getAsString(),
+                    json.has("texture") ? json.get("texture").getAsString() : null,
+                    json.has("animation") ? json.get("animation").getAsFloat() : 0f
+            );
         }
     }
 }

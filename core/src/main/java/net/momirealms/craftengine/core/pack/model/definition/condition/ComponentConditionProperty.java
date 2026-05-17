@@ -2,10 +2,9 @@ package net.momirealms.craftengine.core.pack.model.definition.condition;
 
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
+import net.momirealms.craftengine.core.plugin.config.ConfigConstants;
+import net.momirealms.craftengine.core.plugin.config.ConfigSection;
 import net.momirealms.craftengine.core.util.GsonHelper;
-import net.momirealms.craftengine.core.util.ResourceConfigUtils;
-
-import java.util.Map;
 
 public final class ComponentConditionProperty implements ConditionProperty {
     public static final ConditionPropertyFactory<ComponentConditionProperty> FACTORY = new Factory();
@@ -27,27 +26,26 @@ public final class ComponentConditionProperty implements ConditionProperty {
     }
 
     @Override
-    public void accept(JsonObject jsonObject) {
-        jsonObject.addProperty("property", "component");
-        jsonObject.addProperty("predicate", this.predicate);
-        jsonObject.add("value", this.value);
+    public void writeProperty(JsonObject model) {
+        model.addProperty("property", "component");
+        model.addProperty("predicate", this.predicate);
+        model.add("value", this.value);
     }
 
     private static class Factory implements ConditionPropertyFactory<ComponentConditionProperty> {
         @Override
-        public ComponentConditionProperty create(Map<String, Object> arguments) {
-            String predicate = ResourceConfigUtils.requireNonEmptyStringOrThrow(arguments.get("predicate"), "warning.config.item.model.condition.component.missing_predicate");
-            JsonElement jsonElement = GsonHelper.get().toJsonTree(ResourceConfigUtils.requireNonNullOrThrow(arguments.get("value"), "warning.config.item.model.condition.component.missing_value"));
-            return new ComponentConditionProperty(predicate, jsonElement);
+        public ComponentConditionProperty create(ConfigSection section) {
+            return new ComponentConditionProperty(
+                    section.getNonNullString("predicate"),
+                    section.getNonNullValue("value", ConfigConstants.ARGUMENT_ANY, it -> GsonHelper.get().toJsonTree(it))
+            );
         }
     }
 
     private static class Reader implements ConditionPropertyReader<ComponentConditionProperty> {
         @Override
         public ComponentConditionProperty read(JsonObject json) {
-            String predicate = json.get("predicate").getAsString();
-            JsonElement value = json.get("value");
-            return new ComponentConditionProperty(predicate, value);
+            return new ComponentConditionProperty(json.get("predicate").getAsString(), json.get("value"));
         }
     }
 }

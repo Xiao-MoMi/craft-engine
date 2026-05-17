@@ -1,10 +1,8 @@
 package net.momirealms.craftengine.core.plugin.context.number;
 
-import net.momirealms.craftengine.core.util.ResourceConfigUtils;
+import net.momirealms.craftengine.core.plugin.config.ConfigSection;
+import net.momirealms.craftengine.core.plugin.config.KnownResourceException;
 import net.momirealms.craftengine.core.util.random.RandomSource;
-import org.jetbrains.annotations.NotNull;
-
-import java.util.Map;
 
 /**
  * 三角形分布提供器
@@ -18,15 +16,6 @@ public record TriangleNumberProvider(
 ) implements NumberProvider {
 
     public static final NumberProviderFactory<TriangleNumberProvider> FACTORY = new Factory();
-
-    public TriangleNumberProvider {
-        if (min >= max) {
-            throw new IllegalArgumentException("min must be less than max");
-        }
-        if (mode < min || mode > max) {
-            throw new IllegalArgumentException("mode must be between min and max");
-        }
-    }
 
     @Override
     public int getInt(RandomSource random) {
@@ -56,27 +45,30 @@ public record TriangleNumberProvider(
     }
 
     private static class Factory implements NumberProviderFactory<TriangleNumberProvider> {
+
         @Override
-        public TriangleNumberProvider create(Map<String, Object> arguments) {
-            double min = ResourceConfigUtils.getAsDouble(
-                ResourceConfigUtils.requireNonNullOrThrow(arguments.get("min"), 
-                "warning.config.number.triangle.missing_min"), "min");
-            
-            double max = ResourceConfigUtils.getAsDouble(
-                ResourceConfigUtils.requireNonNullOrThrow(arguments.get("max"), 
-                "warning.config.number.triangle.missing_max"), "max");
+        public TriangleNumberProvider create(ConfigSection section) {
+            double min = section.getNonNullDouble("min");
+            double max = section.getNonNullDouble("max");
             
             // 默认众数在正中间（等腰三角形）
             double defaultMode = (min + max) / 2.0;
-            double mode = ResourceConfigUtils.getAsDouble(
-                arguments.getOrDefault("mode", defaultMode), "mode");
-            
+            double mode = section.getDouble("mode", defaultMode);
+
+            this.validateParameters(section.path(), min, max, mode);
             return new TriangleNumberProvider(min, max, mode);
         }
-    }
 
-    @Override
-    public @NotNull String toString() {
-        return String.format("TriangleNumberProvider{min=%.2f, max=%.2f, mode=%.2f}", this.min, this.max, this.mode);
+        private void validateParameters(String path, double min, double max, double mode) {
+            if (min >= max) {
+                throw new KnownResourceException("number.less_than", path, "min", "max");
+            }
+            if (mode < min) {
+                throw new KnownResourceException("number.greater_than", path, "mode", "min");
+            }
+            if (mode > max) {
+                throw new KnownResourceException("number.less_than", path, "mode", "max");
+            }
+        }
     }
 }

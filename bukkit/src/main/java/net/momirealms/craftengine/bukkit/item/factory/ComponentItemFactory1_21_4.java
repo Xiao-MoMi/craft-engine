@@ -16,7 +16,7 @@ public class ComponentItemFactory1_21_4 extends ComponentItemFactory1_21_2 {
 
     @Override
     protected Optional<Integer> customModelData(ComponentItemWrapper item) {
-        Optional<Object> optional = item.getJavaComponent(DataComponentTypes.CUSTOM_MODEL_DATA);
+        Optional<Object> optional = item.getComponentAsJava(DataComponentTypes.CUSTOM_MODEL_DATA);
         if (optional.isEmpty()) return Optional.empty();
         @SuppressWarnings("unchecked")
         Map<String, Object> data = (Map<String, Object>) optional.get();

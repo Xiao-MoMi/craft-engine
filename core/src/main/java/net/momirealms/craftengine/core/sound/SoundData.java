@@ -1,55 +1,56 @@
 package net.momirealms.craftengine.core.sound;
 
+import net.momirealms.craftengine.core.plugin.config.ConfigSection;
+import net.momirealms.craftengine.core.plugin.config.ConfigValue;
 import net.momirealms.craftengine.core.util.Key;
-import net.momirealms.craftengine.core.util.MiscUtils;
 import net.momirealms.craftengine.core.util.random.RandomUtils;
 
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Optional;
 import java.util.function.Supplier;
 
 public record SoundData(Key id, SoundValue volume, SoundValue pitch) {
     public static final SoundData EMPTY = new SoundData(Key.of("minecraft:intentionally_empty"), SoundData.SoundValue.FIXED_1, SoundData.SoundValue.FIXED_1);
 
-    public static SoundData create(Object obj, SoundValue volume, SoundValue pitch) {
-        if (obj instanceof String key) {
-            return new SoundData(Key.of(key), volume, pitch);
-        } else if (obj instanceof Map<?,?> map) {
-            Map<String, Object> data = MiscUtils.castToMap(map, false);
-            Key id = Key.of((String) data.get("id"));
-            SoundValue volumeValue = Optional.ofNullable(SoundValue.of(map.get("volume"))).orElse(volume);
-            SoundValue pitchValue = Optional.ofNullable(SoundValue.of(map.get("pitch"))).orElse(volume);
-            return new SoundData(id, volumeValue, pitchValue);
-        } else {
-            throw new IllegalArgumentException("Illegal object type for sound data: " + obj.getClass());
-        }
-    }
-
     public static SoundData of(Key id, SoundValue volume, SoundValue pitch) {
         return new SoundData(id, volume, pitch);
     }
 
+    public static SoundData fromConfig(ConfigValue value, SoundData.SoundValue volume, SoundData.SoundValue pitch) {
+        Key soundId;
+        if (value.is(Map.class)) {
+            ConfigSection section = value.getAsSection();
+            soundId = section.getAssetPath("id");
+            volume = section.getValue("volume", SoundValue::fromConfig, volume);
+            pitch = section.getValue("pitch", SoundValue::fromConfig, pitch);
+        } else {
+            soundId = value.getAsAssetPath();
+        }
+        return new SoundData(soundId, volume, pitch);
+    }
+
     public interface SoundValue extends Supplier<Float> {
-        Map<Float, SoundValue> FIXED = new HashMap<>();
+        Map<Float, SoundValue> FIXED = Collections.synchronizedMap(new HashMap<>());
         SoundValue FIXED_1 = new Fixed(1f);
         SoundValue FIXED_0_8 = new Fixed(0.8f);
         SoundValue FIXED_0_75 = new Fixed(0.75f);
         SoundValue FIXED_0_15 = new Fixed(0.15f);
         SoundValue FIXED_0_5 = new Fixed(0.5f);
-        SoundValue FIXED_0_3 = new Fixed(0.3f);
+        SoundValue RANGED_0_9_1 = new Ranged(0.9f, 1f);
 
-        static SoundValue of(Object obj) {
-            if (obj instanceof Number number) {
-                return SoundValue.fixed(number.floatValue());
+        static SoundValue fromConfig(ConfigValue config) {
+            if (config.is(Number.class)) {
+                return fixed(config.getAsFloat());
             } else {
-                String volumeString = obj.toString();
-                if (volumeString.contains("~")) {
-                    String[] split = volumeString.split("~");
-                    return SoundValue.ranged(Float.parseFloat(split[0]), Float.parseFloat(split[1]));
+                String stringFormat = config.getAsString();
+                if (stringFormat.contains("~")) {
+                    ConfigValue[] split = config.splitValuesRestrict("~", 2);
+                    return ranged(split[0].getAsFloat(), split[1].getAsFloat());
+                } else {
+                    return fixed(config.getAsFloat());
                 }
             }
-            return null;
         }
 
         static SoundValue fixed(float value) {

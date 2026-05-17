@@ -20,7 +20,7 @@ public interface Click {
 
     Player clicker();
 
-    void setItemOnCursor(Item<?> item);
+    void setItemOnCursor(Item item);
 
-    Item<?> itemOnCursor();
+    Item itemOnCursor();
 }

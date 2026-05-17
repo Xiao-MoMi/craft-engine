@@ -89,9 +89,9 @@ public final class OverlayCombination {
         @Override
         public @NotNull String toString() {
             return "OverlaySegment{" +
-                    "min=" + min +
-                    ", max=" + max +
-                    ", overlays=" + overlays +
+                    "min=" + this.min +
+                    ", max=" + this.max +
+                    ", overlays=" + this.overlays +
                     '}';
         }
     }
@@ -101,8 +101,8 @@ public final class OverlayCombination {
         @Override
         public @NotNull String toString() {
             return "Event{" +
-                    "overlay=" + overlay +
-                    ", operation=" + operation +
+                    "overlay=" + this.overlay +
+                    ", operation=" + this.operation +
                     '}';
         }
     }
@@ -112,8 +112,8 @@ public final class OverlayCombination {
         @Override
         public @NotNull String toString() {
             return "VersionBasedEvent{" +
-                    "version=" + version +
-                    ", events=" + events +
+                    "version=" + this.version +
+                    ", events=" + this.events +
                     '}';
         }
     }

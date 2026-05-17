@@ -6,18 +6,17 @@ import net.momirealms.craftengine.core.pack.revision.Revision;
 import net.momirealms.craftengine.core.util.MinecraftVersion;
 
 import javax.annotation.Nullable;
-import java.util.Collections;
-import java.util.List;
 import java.util.function.Consumer;
 
-public interface SelectProperty extends Consumer<JsonObject> {
+public interface SelectProperty {
 
-    default List<Revision> revisions(JsonElement element) {
-        return Collections.emptyList();
+    default void gatherRevisions(JsonElement element, Consumer<Revision> consumer) {
     }
 
     @Nullable
     default JsonElement remap(JsonElement element, MinecraftVersion version) {
         return element;
     }
+
+    void writeProperty(JsonObject model);
 }

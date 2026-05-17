@@ -1,21 +1,22 @@
 package net.momirealms.craftengine.bukkit.entity.data;
 
-import net.momirealms.craftengine.bukkit.nms.FastNMS;
 import net.momirealms.craftengine.core.entity.data.ClassTreeIdRegistry;
 import net.momirealms.craftengine.core.entity.data.EntityData;
+import net.momirealms.craftengine.proxy.minecraft.network.syncher.EntityDataAccessorProxy;
+import net.momirealms.craftengine.proxy.minecraft.network.syncher.SynchedEntityDataProxy;
 
 public class BukkitEntityData<T> implements EntityData<T> {
     public static final ClassTreeIdRegistry ID_REGISTRY = new ClassTreeIdRegistry();
-    private final int id;
-    private final Object serializer;
-    private final T defaultValue;
-    private final Object entityDataAccessor;
+    public final int id;
+    public final Object serializer;
+    public final T defaultValue;
+    public final Object entityDataAccessor;
 
-    public BukkitEntityData(Class<?> clazz, Object serializer, T defaultValue) {
+    protected BukkitEntityData(Class<?> clazz, Object serializer, T defaultValue) {
         this.id = ID_REGISTRY.define(clazz);
         this.serializer = serializer;
         this.defaultValue = defaultValue;
-        this.entityDataAccessor = FastNMS.INSTANCE.constructor$EntityDataAccessor(id, serializer);
+        this.entityDataAccessor = EntityDataAccessorProxy.INSTANCE.newInstance(id, serializer);
     }
 
     @Override
@@ -40,6 +41,16 @@ public class BukkitEntityData<T> implements EntityData<T> {
 
     @Override
     public Object create(Object entityDataAccessor, T value) {
-        return EntityDataValue.create(entityDataAccessor, value);
+        return SynchedEntityDataProxy.DataValueProxy.INSTANCE.create(entityDataAccessor, value);
+    }
+
+    @Override
+    public String toString() {
+        return this.getClass().getSimpleName() + "{" +
+                "id=" + id +
+                ", serializer=" + serializer +
+                ", defaultValue=" + defaultValue +
+                ", entityDataAccessor=" + entityDataAccessor +
+                '}';
     }
 }

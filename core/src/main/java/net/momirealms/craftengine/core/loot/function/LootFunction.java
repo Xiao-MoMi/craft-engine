@@ -6,9 +6,9 @@ import net.momirealms.craftengine.core.loot.LootContext;
 import java.util.function.BiFunction;
 import java.util.function.Consumer;
 
-public interface LootFunction<T> extends BiFunction<Item<T>, LootContext, Item<T>> {
+public interface LootFunction extends BiFunction<Item, LootContext, Item> {
 
-    static <T> Consumer<Item<T>> decorate(BiFunction<Item<T>, LootContext, Item<T>> itemApplier, Consumer<Item<T>> lootConsumer, LootContext context) {
+    static Consumer<Item> decorate(BiFunction<Item, LootContext, Item> itemApplier, Consumer<Item> lootConsumer, LootContext context) {
         return item -> lootConsumer.accept(itemApplier.apply(item, context));
     }
 }

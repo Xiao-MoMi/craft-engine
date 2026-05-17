@@ -10,7 +10,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.function.Function;
 
-public class PositionParameterProvider implements ChainParameterProvider<WorldPosition> {
+public final class PositionParameterProvider implements ChainParameterProvider<WorldPosition> {
     private static final Map<ContextKey<?>, Function<WorldPosition, Object>> CONTEXT_FUNCTIONS = new HashMap<>();
     static {
         CONTEXT_FUNCTIONS.put(DirectContextParameters.WORLD, WorldPosition::world);

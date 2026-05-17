@@ -1,6 +1,6 @@
 package net.momirealms.craftengine.core.util;
 
-public class MutableBoolean {
+public final class MutableBoolean {
     private boolean value;
 
     public MutableBoolean(boolean value) {

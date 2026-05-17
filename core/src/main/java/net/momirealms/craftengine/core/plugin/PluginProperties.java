@@ -6,7 +6,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
 
-public class PluginProperties {
+public final class PluginProperties {
     private final HashMap<String, String> propertyMap;
 
     private PluginProperties(HashMap<String, String> propertyMap) {

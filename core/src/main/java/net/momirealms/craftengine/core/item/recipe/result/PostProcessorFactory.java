@@ -1,8 +1,8 @@
 package net.momirealms.craftengine.core.item.recipe.result;
 
-import java.util.Map;
+import net.momirealms.craftengine.core.plugin.config.ConfigSection;
 
 public interface PostProcessorFactory<T extends PostProcessor> {
 
-    T create(Map<String, Object> args);
+    T create(ConfigSection section);
 }

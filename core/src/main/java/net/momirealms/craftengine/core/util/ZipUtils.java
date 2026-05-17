@@ -10,6 +10,7 @@ import java.nio.file.Path;
 import java.nio.file.SimpleFileVisitor;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.zip.ZipEntry;
+import java.util.zip.ZipInputStream;
 import java.util.zip.ZipOutputStream;
 
 public final class ZipUtils {
@@ -41,6 +42,30 @@ public final class ZipUtils {
                     return FileVisitResult.CONTINUE;
                 }
             });
+        }
+    }
+
+    public static void decompress(Path source, Path target) throws IOException {
+        try (ZipInputStream zis = new ZipInputStream(Files.newInputStream(source))) {
+            ZipEntry entry;
+            while ((entry = zis.getNextEntry()) != null) {
+                Path entryPath = target.resolve(entry.getName()).normalize();
+                if (!entryPath.startsWith(target)) {
+                    throw new IOException("Bad zip entry: " + entry.getName());
+                }
+                if (entry.isDirectory()) {
+                    Files.createDirectories(entryPath);
+                } else {
+                    Path parent = entryPath.getParent();
+                    if (parent != null && Files.notExists(parent)) {
+                        Files.createDirectories(parent);
+                    }
+                    if (Files.notExists(entryPath)) {
+                        Files.copy(zis, entryPath);
+                    }
+                }
+                zis.closeEntry();
+            }
         }
     }
 }

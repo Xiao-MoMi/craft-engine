@@ -1,0 +1,15 @@
+translations:
+  fr_fr:
+    internal.next_page: Page Suivante
+    internal.previous_page: Page Précédente
+    internal.return: Retour à la Page Précédente
+    internal.exit: Quitter
+    internal.next_recipe: Recette Suivante
+    internal.previous_recipe: Recette Précédente
+    internal.get_item: Obtenir l'Objet
+    internal.get_item.0: Clic Gauche pour en prendre un
+    internal.get_item.1: Clic Droit pour prendre une pile
+    internal.cooking_info: Informations sur la Recette
+    internal.cooking_info.0: 'Temps: <arg:0>ticks'
+    internal.cooking_info.1: 'Expérience: <arg:0>'
+    category.internal.all: Tous les objets

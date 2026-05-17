@@ -1,14 +1,14 @@
 package net.momirealms.craftengine.bukkit.plugin.command.feature;
 
 import net.kyori.adventure.text.Component;
-import net.momirealms.craftengine.bukkit.api.BukkitAdaptors;
+import net.momirealms.craftengine.bukkit.api.BukkitAdaptor;
 import net.momirealms.craftengine.bukkit.api.CraftEngineItems;
 import net.momirealms.craftengine.bukkit.item.BukkitItemManager;
 import net.momirealms.craftengine.bukkit.plugin.command.BukkitCommandFeature;
 import net.momirealms.craftengine.bukkit.plugin.user.BukkitServerPlayer;
 import net.momirealms.craftengine.bukkit.util.PlayerUtils;
-import net.momirealms.craftengine.core.item.CustomItem;
 import net.momirealms.craftengine.core.item.Item;
+import net.momirealms.craftengine.core.item.ItemDefinition;
 import net.momirealms.craftengine.core.plugin.CraftEngine;
 import net.momirealms.craftengine.core.plugin.command.CraftEngineCommandManager;
 import net.momirealms.craftengine.core.plugin.command.FlagKeys;
@@ -17,7 +17,6 @@ import net.momirealms.craftengine.core.util.Key;
 import org.bukkit.NamespacedKey;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
-import org.bukkit.inventory.ItemStack;
 import org.checkerframework.checker.nullness.qual.NonNull;
 import org.incendo.cloud.Command;
 import org.incendo.cloud.bukkit.parser.NamespacedKeyParser;
@@ -29,7 +28,7 @@ import org.incendo.cloud.suggestion.SuggestionProvider;
 
 import java.util.concurrent.CompletableFuture;
 
-public class GetItemCommand extends BukkitCommandFeature<CommandSender> {
+public final class GetItemCommand extends BukkitCommandFeature<CommandSender> {
 
     public GetItemCommand(CraftEngineCommandManager<CommandSender> commandManager, CraftEngine plugin) {
         super(commandManager, plugin);
@@ -49,23 +48,24 @@ public class GetItemCommand extends BukkitCommandFeature<CommandSender> {
                 .optional("amount", IntegerParser.integerParser(1, 9999))
                 .handler(context -> {
                     Player player = context.sender();
+                    BukkitServerPlayer serverPlayer = BukkitAdaptor.adapt(player);
+                    if (serverPlayer == null) return;
                     int amount = context.getOrDefault("amount", 1);
                     NamespacedKey namespacedKey = context.get("id");
                     Key itemId = Key.of(namespacedKey.namespace(), namespacedKey.value());
-                    CustomItem<ItemStack> customItem = CraftEngineItems.byId(itemId);
-                    if (customItem == null) {
-                        customItem = BukkitItemManager.instance().getCustomItemByPathOnly(itemId.value()).orElse(null);
-                        if (customItem == null) {
+                    ItemDefinition itemDefinition = CraftEngineItems.byId(itemId);
+                    if (itemDefinition == null) {
+                        itemDefinition = BukkitItemManager.instance().getItemDefinitionByPath(itemId.value()).orElse(null);
+                        if (itemDefinition == null) {
                             handleFeedback(context, MessageConstants.COMMAND_ITEM_GET_FAILURE_NOT_EXIST, Component.text(itemId.toString()));
                             return;
                         } else {
-                            itemId = customItem.id();
+                            itemId = itemDefinition.id();
                         }
                     }
-                    BukkitServerPlayer serverPlayer = BukkitAdaptors.adapt(player);
-                    Item<ItemStack> builtItem = customItem.buildItem(serverPlayer);
+                    Item builtItem = itemDefinition.buildItem(serverPlayer);
                     if (builtItem != null) {
-                        PlayerUtils.giveItem(serverPlayer, amount, builtItem);
+                        PlayerUtils.giveItem(serverPlayer, amount, builtItem, true);
                     }
                     handleFeedback(context, MessageConstants.COMMAND_ITEM_GET_SUCCESS, Component.text(amount), Component.text(itemId.toString()));
                 });

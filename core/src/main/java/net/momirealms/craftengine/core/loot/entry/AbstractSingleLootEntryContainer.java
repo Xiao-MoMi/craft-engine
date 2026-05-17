@@ -10,21 +10,21 @@ import java.util.List;
 import java.util.function.BiFunction;
 import java.util.function.Consumer;
 
-public abstract class AbstractSingleLootEntryContainer<T> extends AbstractLootEntryContainer<T> {
+public abstract class AbstractSingleLootEntryContainer extends AbstractLootEntryContainer {
     protected final int weight;
     protected final int quality;
-    protected final List<LootFunction<T>> functions;
-    protected final BiFunction<Item<T>, LootContext, Item<T>> compositeFunction;
-    private final EntryBase<T> entry = new EntryBase<T>() {
+    protected final List<LootFunction> functions;
+    protected final BiFunction<Item, LootContext, Item> compositeFunction;
+    private final EntryBase entry = new EntryBase() {
         @Override
-        public void createItem(Consumer<Item<T>> lootConsumer, LootContext context) {
+        public void createItem(Consumer<Item> lootConsumer, LootContext context) {
             AbstractSingleLootEntryContainer.this.createItem(
                     LootFunction.decorate(AbstractSingleLootEntryContainer.this.compositeFunction, lootConsumer, context), context
             );
         }
     };
 
-    protected AbstractSingleLootEntryContainer(List<Condition<LootContext>> conditions, List<LootFunction<T>> functions, int weight, int quality) {
+    protected AbstractSingleLootEntryContainer(List<Condition<LootContext>> conditions, List<LootFunction> functions, int weight, int quality) {
         super(conditions);
         this.weight = weight;
         this.quality = quality;
@@ -33,7 +33,7 @@ public abstract class AbstractSingleLootEntryContainer<T> extends AbstractLootEn
     }
 
     @Override
-    public boolean expand(LootContext context, Consumer<LootEntry<T>> choiceConsumer) {
+    public boolean expand(LootContext context, Consumer<LootEntry> choiceConsumer) {
         if (super.test(context)) {
             choiceConsumer.accept(this.entry);
             return true;
@@ -50,9 +50,9 @@ public abstract class AbstractSingleLootEntryContainer<T> extends AbstractLootEn
         return quality;
     }
 
-    protected abstract void createItem(Consumer<Item<T>> lootConsumer, LootContext context);
+    protected abstract void createItem(Consumer<Item> lootConsumer, LootContext context);
 
-    protected abstract class EntryBase<A> implements LootEntry<A> {
+    protected abstract class EntryBase implements LootEntry {
         // https://luckformula.emc.gs
         @Override
         public int getWeight(float luck) {

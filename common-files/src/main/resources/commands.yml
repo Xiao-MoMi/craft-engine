@@ -1,6 +1,4 @@
-#
-# Don't change this
-#
+# Do not modify this value
 config-version: "${config_version}"
 
 #
@@ -136,6 +134,13 @@ unset_locale:
   usage:
     - /ce feature locale unset
 
+clean_cache:
+  enable: true
+  permission: ce.command.clean_cache
+  usage:
+    - /craftengine clean-cache
+    - /ce clean-cache
+
 set_display_entity_view_distance_scale:
   enable: true
   permission: ce.command.admin.set_display_entity_view_distance_scale
@@ -153,6 +158,40 @@ toggle_entity_culling:
   permission: ce.command.admin.toggle_entity_culling
   usage:
     - /ce feature toggle-entity-culling
+
+place_feature:
+  enable: true
+  permission: ce.command.admin.place_feature
+  usage:
+    - /ce feature place-feature
+
+set_item_custom_model_data:
+  enable: true
+  permission: ce.command.admin.custom_model_data
+  usage:
+    - /craftengine item custom-model-data
+    - /ce item custom-model-data
+
+set_item_item_model:
+  enable: true
+  permission: ce.command.admin.item_model
+  usage:
+    - /craftengine item item-model
+    - /ce item item-model
+
+remove_item_component:
+  enable: true
+  permission: ce.command.admin.remove_component
+  usage:
+    - /craftengine item remove-component
+    - /ce item remove-component
+
+migrate_world_storage:
+  enable: true
+  permission: ce.command.admin.migrate_world_storage
+  usage:
+    - /craftengine feature migrate-world-storage
+    - /ce feature migrate-world-storage
 
 # Debug commands
 debug_set_block:
@@ -216,6 +255,7 @@ debug_item_data:
   usage:
     - /craftengine debug item-data
     - /ce debug item-data
+    - /ce item debug
 
 debug_target_block:
   enable: true
@@ -266,19 +306,19 @@ debug_save_default_resources:
     - /craftengine debug save-default-resources
     - /ce debug save-default-resources
 
-debug_clean_cache:
-  enable: true
-  permission: ce.command.debug.clean_cache
-  usage:
-    - /craftengine debug clean-cache
-    - /ce debug clean-cache
-
 debug_custom_model_data:
   enable: true
   permission: ce.command.debug.custom_model_data
   usage:
     - /craftengine debug custom-model-data
     - /ce debug custom-model-data
+
+debug_item_model:
+  enable: true
+  permission: ce.command.debug.item_model
+  usage:
+    - /craftengine debug item-model
+    - /ce debug item-model
 
 debug_image:
   enable: true

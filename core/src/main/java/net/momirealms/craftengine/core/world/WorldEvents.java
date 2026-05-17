@@ -1,6 +1,6 @@
 package net.momirealms.craftengine.core.world;
 
-public class WorldEvents {
+public final class WorldEvents {
     public static final int DISPENSER_DISPENSES = 1000;
     public static final int DISPENSER_FAILS_TO_DISPENSE = 1001;
     public static final int DISPENSER_SHOOTS = 1002;

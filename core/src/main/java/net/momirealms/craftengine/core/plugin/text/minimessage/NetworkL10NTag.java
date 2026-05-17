@@ -31,8 +31,8 @@ public final class NetworkL10NTag implements TagResolver {
         if (this.context instanceof PlayerOptionalContext playerOptionalContext && playerOptionalContext.isPlayerPresent()) {
             locale = playerOptionalContext.player().selectedLocale();
         }
-        String i18nKey = aq.popOr("No argument l10n key provided").toString();
-        String translation = TranslationManager.instance().miniMessageTranslation(i18nKey, locale);
+        String l10n = aq.popOr("No argument l10n key provided").toString();
+        String translation = TranslationManager.instance().miniMessageTranslation(l10n, locale);
         if (aq.hasNext()) {
             List<Component> arguments = new ArrayList<>();
             while (aq.hasNext()) {

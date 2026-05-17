@@ -3,10 +3,10 @@ package net.momirealms.craftengine.core.pack.model.definition.special;
 import com.google.gson.JsonObject;
 import net.momirealms.craftengine.core.pack.revision.Revision;
 import net.momirealms.craftengine.core.pack.revision.Revisions;
+import net.momirealms.craftengine.core.plugin.config.ConfigSection;
 import net.momirealms.craftengine.core.util.MinecraftVersion;
 
-import java.util.List;
-import java.util.Map;
+import java.util.function.Consumer;
 
 public final class PlayerHeadSpecialModel implements SpecialModel {
     public static final SpecialModelFactory<PlayerHeadSpecialModel> FACTORY = new Factory();
@@ -16,14 +16,14 @@ public final class PlayerHeadSpecialModel implements SpecialModel {
     private PlayerHeadSpecialModel() {}
 
     @Override
-    public List<Revision> revisions() {
-        return List.of(Revisions.SINCE_1_21_6);
+    public void collectRevision(Consumer<Revision> consumer) {
+        consumer.accept(Revisions.SINCE_1_21_6);
     }
 
     @Override
-    public JsonObject apply(MinecraftVersion version) {
+    public JsonObject toJson(MinecraftVersion min, MinecraftVersion max) {
         JsonObject json = new JsonObject();
-        if (version.isAtOrAbove(MinecraftVersion.V1_21_6)) {
+        if (min.isAtOrAbove(MinecraftVersion.V1_21_6)) {
             json.addProperty("type", "player_head");
         } else {
             json.addProperty("type", "head");
@@ -34,7 +34,7 @@ public final class PlayerHeadSpecialModel implements SpecialModel {
 
     private static class Factory implements SpecialModelFactory<PlayerHeadSpecialModel> {
         @Override
-        public PlayerHeadSpecialModel create(Map<String, Object> arguments) {
+        public PlayerHeadSpecialModel create(ConfigSection section) {
             return INSTANCE;
         }
     }

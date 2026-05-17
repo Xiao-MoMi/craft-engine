@@ -26,4 +26,8 @@ public final class ModelEngineUtils {
         }
         return entityId;
     }
+
+    public static boolean hasModel(String id) {
+        return ModelEngineAPI.getBlueprint(id) != null;
+    }
 }

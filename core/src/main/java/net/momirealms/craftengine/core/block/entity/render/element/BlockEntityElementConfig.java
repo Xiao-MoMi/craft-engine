@@ -1,17 +1,17 @@
 package net.momirealms.craftengine.core.block.entity.render.element;
 
 import net.momirealms.craftengine.core.world.BlockPos;
-import net.momirealms.craftengine.core.world.World;
+import net.momirealms.craftengine.core.world.chunk.CEChunk;
 
-public interface BlockEntityElementConfig<E extends BlockEntityElement> {
+public interface BlockEntityElementConfig<E extends ConstantBlockEntityElement> {
 
-    E create(World world, BlockPos pos);
+    E create(CEChunk chunk, BlockPos pos);
 
-    default E create(World world, BlockPos pos, E previous) {
+    default E create(CEChunk chunk, BlockPos pos, E previous) {
         return null;
     }
 
-    default E createExact(World world, BlockPos pos, E previous) {
+    default E createExact(CEChunk chunk, BlockPos pos, E previous) {
         return null;
     }
 

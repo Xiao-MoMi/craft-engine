@@ -1,13 +1,13 @@
 items:
   default:palm_log:
     settings:
-      fuel-time: 300
+      fuel_time: 300
       tags:
         - default:palm_logs
         - minecraft:logs
         - minecraft:logs_that_burn
     data:
-      item-name: <!i><lang:item.default.palm_log>
+      item_name: <!i><lang:item.default.palm_log>
     model: minecraft:block/custom/palm_log
     behavior:
       type: block_item
@@ -28,13 +28,13 @@ items:
             model_horizontal_path: minecraft:block/custom/palm_log_horizontal
   default:stripped_palm_log:
     settings:
-      fuel-time: 300
+      fuel_time: 300
       tags:
         - default:palm_logs
         - minecraft:logs
         - minecraft:logs_that_burn
     data:
-      item-name: <!i><lang:item.default.stripped_palm_log>
+      item_name: <!i><lang:item.default.stripped_palm_log>
     model: minecraft:block/custom/stripped_palm_log
     behavior:
       type: block_item
@@ -52,13 +52,13 @@ items:
             model_horizontal_path: minecraft:block/custom/stripped_palm_log_horizontal
   default:palm_wood:
     settings:
-      fuel-time: 300
+      fuel_time: 300
       tags:
         - default:palm_logs
         - minecraft:logs
         - minecraft:logs_that_burn
     data:
-      item-name: <!i><lang:item.default.palm_wood>
+      item_name: <!i><lang:item.default.palm_wood>
     model: minecraft:block/custom/palm_wood
     behavior:
       type: block_item
@@ -79,13 +79,13 @@ items:
             model_horizontal_path: minecraft:block/custom/palm_wood_horizontal
   default:stripped_palm_wood:
     settings:
-      fuel-time: 300
+      fuel_time: 300
       tags:
         - default:palm_logs
         - minecraft:logs
         - minecraft:logs_that_burn
     data:
-      item-name: <!i><lang:item.default.stripped_palm_wood>
+      item_name: <!i><lang:item.default.stripped_palm_wood>
     model: minecraft:block/custom/stripped_palm_wood
     behavior:
       type: block_item
@@ -103,12 +103,12 @@ items:
             model_horizontal_path: minecraft:block/custom/stripped_palm_wood_horizontal
   default:palm_planks:
     settings:
-      fuel-time: 300
+      fuel_time: 300
       tags:
         - minecraft:planks
         - minecraft:wooden_tool_materials
     data:
-      item-name: <!i><lang:item.default.palm_planks>
+      item_name: <!i><lang:item.default.palm_planks>
     model: minecraft:block/custom/palm_planks
     behavior:
       type: block_item
@@ -122,12 +122,12 @@ items:
             template: default:model/simplified_cube_all
             arguments:
               path: minecraft:block/custom/palm_planks
-          auto-state: solid
+          auto_state: solid
   default:palm_sapling:
     settings:
-      fuel-time: 100
+      fuel_time: 100
     data:
-      item-name: <!i><lang:item.default.palm_sapling>
+      item_name: <!i><lang:item.default.palm_sapling>
     texture: minecraft:block/custom/palm_sapling
     behavior:
       type: block_item
@@ -137,24 +137,27 @@ items:
         behaviors:
           - type: liquid_flowable_block
           - type: bush_block
-            bottom-block-tags:
-              - minecraft:dirt
+            bottom_blocks:
               - minecraft:farmland
+            bottom_block_tags:
+              - minecraft:dirt
               - minecraft:sand
+              - minecraft:supports_vegetation
           - type: sapling_block
             feature: default:palm_tree
-            bone-meal-success-chance: 0.45
+            bone_meal_success_chance: 0.45
         loot:
           template: default:loot_table/self
         states:
           properties:
             stage:
               type: int
-              default-value: 0
-              range: 0~1
+              default_value: 0
+              min: 0
+              max: 1
           appearances:
             default:
-              auto-state: sapling
+              auto_state: sapling
               model:
                 path: minecraft:block/custom/palm_sapling
                 generation:
@@ -164,8 +167,9 @@ items:
   default:palm_leaves:
     material: oak_leaves
     data:
-      item-name: <!i><lang:item.default.palm_leaves>
-      block-state: default:palm_leaves[persistent=true,waterlogged=false,distance=7]
+      item_name: <!i><lang:item.default.palm_leaves>
+    client_bound_data:
+      block_state: default:palm_leaves[persistent=true,waterlogged=false,distance=7]
     model:
       type: minecraft:model
       path: minecraft:item/custom/palm_leaves
@@ -193,17 +197,17 @@ items:
             texture_path: minecraft:block/custom/palm_leaves
   default:palm_trapdoor:
     data:
-      item-name: <!i><lang:item.default.palm_trapdoor>
+      item_name: <!i><lang:item.default.palm_trapdoor>
     settings:
-      fuel-time: 300
+      fuel_time: 300
     model: minecraft:block/custom/palm_trapdoor_bottom
     behavior:
       type: block_item
       block:
         behavior:
           type: trapdoor_block
-          can-open-with-hand: true
-          can-open-by-wind-charge: true
+          can_open_with_hand: true
+          can_open_by_wind_charge: true
           sounds:
             open: minecraft:block.wooden_trapdoor.open
             close: minecraft:block.wooden_trapdoor.close
@@ -213,7 +217,7 @@ items:
           template:
             - default:sound/wood
           overrides:
-            map-color: 2
+            map_color: 2
             instrument: bass
             hardness: 3.0
             resistance: 3.0
@@ -242,17 +246,17 @@ items:
                 texture: minecraft:block/custom/palm_trapdoor
   default:palm_door:
     data:
-      item-name: <!i><lang:item.default.palm_door>
+      item_name: <!i><lang:item.default.palm_door>
     settings:
-      fuel-time: 200
+      fuel_time: 200
     texture: minecraft:item/custom/palm_door
     behavior:
       type: double_high_block_item
       block:
         behavior:
           type: door_block
-          can-open-with-hand: true
-          can-open-by-wind-charge: true
+          can_open_with_hand: true
+          can_open_by_wind_charge: true
           sounds:
             open: minecraft:block.wooden_door.open
             close: minecraft:block.wooden_door.close
@@ -262,8 +266,8 @@ items:
           template:
             - default:sound/wood
           overrides:
-            push-reaction: destroy
-            map-color: 2
+            push_reaction: destroy
+            map_color: 2
             instrument: bass
             hardness: 3.0
             resistance: 3.0
@@ -312,17 +316,17 @@ items:
               textures: *textures
   default:palm_fence_gate:
     data:
-      item-name: <!i><lang:item.default.palm_fence_gate>
+      item_name: <!i><lang:item.default.palm_fence_gate>
     settings:
-      fuel-time: 300
+      fuel_time: 300
     model: minecraft:block/custom/palm_fence_gate
     behavior:
       type: block_item
       block:
         behaviors:
           type: fence_gate_block
-          can-open-with-hand: true
-          can-open-by-wind-charge: true
+          can_open_with_hand: true
+          can_open_by_wind_charge: true
           sounds:
             open: minecraft:block.fence_gate.open
             close: minecraft:block.fence_gate.close
@@ -333,7 +337,7 @@ items:
             - default:sound/wood
             - default:hardness/planks
           overrides:
-            map-color: 2
+            map_color: 2
             instrument: bass
             burnable: true
             tags:
@@ -363,9 +367,9 @@ items:
               textures: *textures
   default:palm_slab:
     data:
-      item-name: <!i><lang:item.default.palm_slab>
+      item_name: <!i><lang:item.default.palm_slab>
     settings:
-      fuel-time: 150
+      fuel_time: 150
     model: minecraft:block/custom/palm_slab
     behavior:
       type: block_item
@@ -380,7 +384,7 @@ items:
             - default:burn_data/planks
             - default:hardness/planks
           overrides:
-            map-color: 2
+            map_color: 2
             instrument: bass
             tags:
               - minecraft:wooden_slabs
@@ -405,9 +409,9 @@ items:
   default:palm_stairs:
     model: minecraft:block/custom/palm_stairs
     data:
-      item-name: <!i><lang:item.default.palm_stairs>
+      item_name: <!i><lang:item.default.palm_stairs>
     settings:
-      fuel-time: 300
+      fuel_time: 300
     behavior:
       type: block_item
       block:
@@ -419,7 +423,7 @@ items:
             - default:hardness/planks
             - default:burn_data/planks
           overrides:
-            map-color: 2
+            map_color: 2
             instrument: bass
             tags:
               - minecraft:mineable/axe
@@ -449,9 +453,9 @@ items:
   default:palm_pressure_plate:
     model: minecraft:block/custom/palm_pressure_plate
     data:
-      item-name: <!i><lang:item.default.palm_pressure_plate>
+      item_name: <!i><lang:item.default.palm_pressure_plate>
     settings:
-      fuel-time: 300
+      fuel_time: 300
     behavior:
       type: block_item
       block:
@@ -463,8 +467,8 @@ items:
             - default:hardness/planks
           overrides:
             burnable: true
-            push-reaction: destroy
-            map-color: 2
+            push_reaction: destroy
+            map_color: 2
             instrument: bass
             tags:
               - minecraft:mineable/axe
@@ -474,7 +478,7 @@ items:
         behaviors:
           type: pressure_plate_block
           sensitivity: all
-          pressed-time: 20
+          pressed_time: 20
           sounds:
             on: minecraft:block.wooden_pressure_plate.click_on
             off: minecraft:block.wooden_pressure_plate.click_off
@@ -497,7 +501,7 @@ items:
 items#fence:
   default:palm_fence:
     data:
-      item-name: <!i><lang:item.default.palm_fence>
+      item_name: <!i><lang:item.default.palm_fence>
     model:
       type: minecraft:model
       path: minecraft:item/custom/palm_fence_inventory
@@ -510,7 +514,7 @@ items#fence:
       block: default:palm_fence
   default:palm_fence_post:
     data:
-      item-name: <!i><lang:item.default.palm_fence>
+      item_name: <!i><lang:item.default.palm_fence>
     model:
       type: minecraft:model
       path: minecraft:block/custom/palm_fence_post
@@ -520,7 +524,7 @@ items#fence:
           texture: minecraft:block/custom/palm_planks
   default:palm_fence_side:
     data:
-      item-name: <!i><lang:item.default.palm_fence>
+      item_name: <!i><lang:item.default.palm_fence>
     model:
       type: minecraft:model
       path: minecraft:block/custom/palm_fence_side
@@ -537,22 +541,22 @@ blocks#fence:
         - default:hardness/planks
         - default:sound/wood
       overrides:
-        burn-chance: 5
-        fire-spread-chance: 20
+        burn_chance: 5
+        fire_spread_chance: 20
         burnable: true
-        is-suffocating: false
-        is-redstone-conductor: false
-        push-reaction: NORMAL
+        is_suffocating: false
+        is_redstone_conductor: false
+        push_reaction: NORMAL
         instrument: BASS
-        map-color: 2
+        map_color: 2
         tags:
           - minecraft:fences
           - minecraft:mineable/axe
           - minecraft:wooden_fences
     behavior:
       type: fence_block
-      connectable-block-tag: minecraft:wooden_fences
-      can-leash: true
+      connectable_block_tag: minecraft:wooden_fences
+      can_leash: true
     states:
       template: default:block_state/fence
       arguments:
@@ -570,15 +574,15 @@ items#button:
         textures:
           texture: minecraft:block/custom/palm_planks
     data:
-      item-name: <!i><lang:item.default.palm_button>
+      item_name: <!i><lang:item.default.palm_button>
     settings:
-      fuel-time: 100
+      fuel_time: 100
     behavior:
       type: block_item
       block: default:palm_button
   default:palm_button_pressed:
     data:
-      item-name: <!i><lang:item.default.palm_button>
+      item_name: <!i><lang:item.default.palm_button>
     model:
       type: minecraft:model
       path: minecraft:block/custom/palm_button_pressed
@@ -588,7 +592,7 @@ items#button:
           texture: minecraft:block/custom/palm_planks
   default:palm_button_not_pressed:
     data:
-      item-name: <!i><lang:item.default.palm_button>
+      item_name: <!i><lang:item.default.palm_button>
     model:
       type: minecraft:model
       path: minecraft:block/custom/palm_button_not_pressed
@@ -606,8 +610,8 @@ blocks#button:
         - default:hardness/button
       overrides:
         burnable: true
-        push-reaction: destroy
-        map-color: 2
+        push_reaction: destroy
+        map_color: 2
         instrument: harp
         tags:
           - minecraft:buttons
@@ -617,8 +621,8 @@ blocks#button:
       - type: liquid_flowable_block
       - type: face_attached_horizontal_directional_block
       - type: button_block
-        ticks-to-stay-pressed: 30
-        can-be-activated-by-arrows: true
+        ticks_to_stay_pressed: 30
+        can_be_activated_by_arrows: true
         sounds:
           on: minecraft:block.wooden_button.click_on
           off: minecraft:block.wooden_button.click_off
@@ -644,6 +648,8 @@ recipes:
       wood_type: default:stripped_palm
   default:palm_trapdoor:
     type: shaped
+    category: redstone
+    group: wooden_trapdoor
     pattern:
       - AAA
       - AAA
@@ -654,6 +660,8 @@ recipes:
       count: 2
   default:palm_door:
     type: shaped
+    category: redstone
+    group: wooden_door
     pattern:
       - AA
       - AA
@@ -665,6 +673,8 @@ recipes:
       count: 3
   default:palm_fence_gate:
     type: shaped
+    category: redstone
+    group: wooden_fence_gate
     pattern:
       - ABA
       - ABA
@@ -676,6 +686,8 @@ recipes:
       count: 1
   default:palm_slab:
     type: shaped
+    category: building
+    group: wooden_slab
     pattern:
       - AAA
     ingredients:
@@ -685,6 +697,8 @@ recipes:
       count: 6
   default:palm_pressure_plate:
     type: shaped
+    category: redstone
+    group: wooden_pressure_plate
     pattern:
       - AA
     ingredients:
@@ -695,6 +709,8 @@ recipes:
   $$>=1.20.3#palm_stairs:
     default:palm_stairs:
       type: shaped
+      category: building
+      group: wooden_stairs
       pattern:
         - "A  "
         - "AA "
@@ -706,6 +722,8 @@ recipes:
         count: 4
   default:palm_button:
     type: shapeless
+    category: redstone
+    group: wooden_button
     ingredients:
       - default:palm_planks
     result:
@@ -713,6 +731,8 @@ recipes:
       count: 1
   default:palm_fence:
     type: shaped
+    category: misc
+    group: wooden_fence
     pattern:
       - ABA
       - ABA
@@ -722,7 +742,7 @@ recipes:
     result:
       id: default:palm_fence
       count: 3
-configured-feature:
+configured_feature:
   default:palm_tree:
     type: 'minecraft:tree'
     config:
@@ -767,11 +787,11 @@ configured-feature:
         hanging_leaves_chance: 0.8
         hanging_leaves_extension_chance: 0.4
       decorators: []
-placed-features:
+placed_features:
   default:palm_tree:
     biome:
       - minecraft:beach
-    environment:
+    dimension_type:
       - minecraft:overworld
     feature: default:palm_tree
     placement:

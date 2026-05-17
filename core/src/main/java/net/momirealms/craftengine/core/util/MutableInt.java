@@ -1,6 +1,6 @@
 package net.momirealms.craftengine.core.util;
 
-public class MutableInt {
+public final class MutableInt {
     private int value;
 
     public MutableInt(int value) {

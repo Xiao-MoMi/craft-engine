@@ -6,9 +6,7 @@ import java.util.function.Consumer;
 
 public interface FurnitureElement {
 
-    int[] virtualEntityIds();
-
-    void collectVirtualEntityId(Consumer<Integer> collector);
+    void gatherInteractableEntityId(Consumer<Integer> collector);
 
     void show(Player player);
 

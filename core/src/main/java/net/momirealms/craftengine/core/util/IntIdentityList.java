@@ -1,12 +1,11 @@
 package net.momirealms.craftengine.core.util;
 
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.Iterator;
 import java.util.NoSuchElementException;
 
-public class IntIdentityList implements IndexedIterable<Integer> {
+public final class IntIdentityList implements IndexedIterable<Integer> {
     private final int size;
 
     public IntIdentityList(int size) {
@@ -19,7 +18,7 @@ public class IntIdentityList implements IndexedIterable<Integer> {
     }
 
     @Override
-    public @Nullable Integer get(int index) {
+    public @NotNull Integer get(int index) {
         return index;
     }
 
