@@ -75,13 +75,17 @@ public final class DefaultSectionSerializer {
             } else {
                 key = Key.of(id);
             }
-            Holder<BlockDefinition> owner = BuiltInRegistries.BLOCK.get(key).orElseGet(() -> {
-                Holder.Reference<BlockDefinition> holder = ((WritableRegistry<BlockDefinition>) BuiltInRegistries.BLOCK).registerForHolder(ResourceKey.create(BuiltInRegistries.BLOCK.key().location(), key));
-                InactiveBlockDefinition inactiveBlock = new InactiveBlockDefinition(holder);
-                holder.bindValue(inactiveBlock);
+            Holder<BlockDefinition> owner = BuiltInRegistries.BLOCK.get(key).orElse(null);
+            if (owner == null) {
+                Holder.Reference<BlockDefinition> tempHolder = Holder.Reference.create(
+                        BuiltInRegistries.BLOCK,
+                        ResourceKey.create(BuiltInRegistries.BLOCK.key().location(), key)
+                );
+                InactiveBlockDefinition inactiveBlock = new InactiveBlockDefinition(tempHolder);
+                tempHolder.bindValue(inactiveBlock);
                 inactiveBlock.setBehavior(CraftEngine.instance().blockManager().getEmptyBlockBehavior());
-                return holder;
-            });
+                owner = tempHolder;
+            }
             ImmutableBlockState state = owner.value().getBlockState(data);
             paletteEntries.add(state);
         }
