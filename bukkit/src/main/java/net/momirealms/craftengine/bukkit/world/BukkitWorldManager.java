@@ -494,7 +494,14 @@ public final class BukkitWorldManager implements WorldManager, Listener {
         ChunkPos pos = new ChunkPos(chunk.getX(), chunk.getZ());
         CEChunk ceChunk = world.getChunkAtIfLoaded(chunk.getX(), chunk.getZ());
         if (ceChunk != null) {
-            if (ceChunk.isUnsaved()) {
+            if (!ceChunk.isEmpty() && Config.restoreVanillaBlocks()) {
+                try {
+                    world.worldDataStorage().writeChunkAt(pos, ceChunk);
+                } catch (IOException e) {
+                    this.plugin.logger().warn("Failed to write chunk tag at " + chunk.getX() + " " + chunk.getZ(), e);
+                }
+            }
+            else if (ceChunk.isUnsaved()) {
                 try {
                     world.worldDataStorage().writeChunkAt(pos, ceChunk);
                     ceChunk.setUnsaved(false);
