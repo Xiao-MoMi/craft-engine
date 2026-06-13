@@ -1,6 +1,5 @@
 package net.momirealms.craftengine.core.plugin;
 
-import com.google.gson.JsonObject;
 import net.momirealms.craftengine.core.advancement.AdvancementManager;
 import net.momirealms.craftengine.core.block.AbstractBlockManager;
 import net.momirealms.craftengine.core.block.BlockManager;
@@ -47,26 +46,16 @@ import net.momirealms.craftengine.core.plugin.proxy.ProxyMessageManager;
 import net.momirealms.craftengine.core.plugin.scheduler.SchedulerAdapter;
 import net.momirealms.craftengine.core.plugin.text.component.NBTDataComponentConverter;
 import net.momirealms.craftengine.core.sound.SoundManager;
-import net.momirealms.craftengine.core.util.CompletableFutures;
-import net.momirealms.craftengine.core.util.GsonHelper;
-import net.momirealms.craftengine.core.util.Timestamp;
-import net.momirealms.craftengine.core.util.VersionHelper;
+import net.momirealms.craftengine.core.util.*;
 import net.momirealms.craftengine.core.world.WorldManager;
 import net.momirealms.craftengine.core.world.score.TeamManager;
 import net.momirealms.craftengine.core.world.score.TeamManagerImpl;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.core.Logger;
 import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.Nullable;
 
-import java.io.BufferedReader;
-import java.io.InputStreamReader;
-import java.net.HttpURLConnection;
-import java.net.URI;
-import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Locale;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
 import java.util.function.Consumer;
@@ -410,7 +399,7 @@ public abstract class CraftEngine implements Plugin {
             this.reloadEventDispatcher.accept(this);
             // 检查更新
             if (Config.checkUpdate()) {
-                this.scheduler.executeAsync(this::checkUpdates);
+                this.scheduler.executeAsync(() -> UpdateCheckUtils.checkUpdates(this, this.buildByBit, this.polymart));
             }
 
             // 用于兼容那些注册群系比较晚的插件，点名批评某R开头的季节插件
@@ -421,80 +410,6 @@ public abstract class CraftEngine implements Plugin {
                 }
             });
         });
-    }
-
-    private void checkUpdates() {
-        boolean downloadFromPolymart = this.polymart.equals("1");
-        boolean downloadFromBBB = this.buildByBit.equals("true");
-        String link;
-        if (VersionHelper.PREMIUM) {
-            if (downloadFromPolymart) {
-                link = "https://polymart.org/product/7624/";
-            } else if (downloadFromBBB) {
-                link = "https://builtbybit.com/resources/82674/";
-            } else {
-                if (Locale.getDefault() == Locale.SIMPLIFIED_CHINESE) {
-                    link = "QQ群[1039968907]";
-                } else {
-                    return;
-                }
-            }
-        } else {
-            link = "https://modrinth.com/plugin/craftengine/";
-        }
-        try {
-            String lv = getLatestVersion();
-            if (lv == null) return;
-            if (compareVer(lv, pluginVersion())) {
-                this.logger.warn(TranslationManager.instance().plainTranslation("update.available", lv, link));
-            } else {
-                this.logger.info(TranslationManager.instance().plainTranslation("update.is_latest"));
-            }
-        } catch (Exception ignored) {
-        }
-    }
-
-    private boolean compareVer(String v1, String v2) {
-        String[] parts1 = v1.split("\\.");
-        String[] parts2 = v2.split("\\.");
-        int maxLength = Math.max(parts1.length, parts2.length);
-        for (int i = 0; i < maxLength; i++) {
-            int num1 = i < parts1.length ? Integer.parseInt(parts1[i]) : 0;
-            int num2 = i < parts2.length ? Integer.parseInt(parts2[i]) : 0;
-            if (num1 != num2) {
-                return num1 > num2;
-            }
-        }
-        return false;
-    }
-
-    @Nullable
-    private static String getLatestVersion() throws Exception {
-        String apiUrl = "https://api.spiget.org/v2/resources/128871/versions/latest";
-        URL url = new URI(apiUrl).toURL();
-        // 创建HTTP连接
-        HttpURLConnection connection = (HttpURLConnection) url.openConnection();
-        connection.setRequestMethod("GET");
-        connection.setRequestProperty("User-Agent", "Mozilla/5.0");
-        connection.setConnectTimeout(5000);
-        connection.setReadTimeout(5000);
-        // 获取响应代码
-        int responseCode = connection.getResponseCode();
-        if (responseCode == HttpURLConnection.HTTP_OK) {
-            // 读取响应内容
-            BufferedReader in = new BufferedReader(new InputStreamReader(connection.getInputStream()));
-            StringBuilder response = new StringBuilder();
-            String inputLine;
-            while ((inputLine = in.readLine()) != null) {
-                response.append(inputLine);
-            }
-            in.close();
-            JsonObject jsonResponse = GsonHelper.get().fromJson(response.toString(), JsonObject.class);
-            if (jsonResponse.has("name")) {
-                return jsonResponse.get("name").getAsString();
-            }
-        }
-        return null;
     }
 
     protected void onPluginDisable() {
