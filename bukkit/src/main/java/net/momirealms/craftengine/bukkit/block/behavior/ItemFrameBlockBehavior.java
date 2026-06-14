@@ -8,7 +8,6 @@ import net.momirealms.craftengine.bukkit.nms.FastNMS;
 import net.momirealms.craftengine.bukkit.plugin.BukkitCraftEngine;
 import net.momirealms.craftengine.bukkit.plugin.reflection.minecraft.CoreReflections;
 import net.momirealms.craftengine.bukkit.util.BlockStateUtils;
-import net.momirealms.craftengine.bukkit.util.DirectionUtils;
 import net.momirealms.craftengine.bukkit.util.LocationUtils;
 import net.momirealms.craftengine.bukkit.world.BukkitWorld;
 import net.momirealms.craftengine.core.block.CustomBlock;
@@ -81,20 +80,17 @@ public class ItemFrameBlockBehavior extends BukkitBlockBehavior implements Entit
     }
 
     @Override
-    public int getSignal(Object thisBlock, Object[] args, Callable<Object> superMethod) {
-        return getSignal(args[0], args[1], args[2], args[3]);
+    public boolean hasAnalogOutputSignal(Object thisBlock, Object[] args) {
+        return true;
     }
 
     @Override
-    public int getDirectSignal(Object thisBlock, Object[] args, Callable<Object> superMethod) {
-        return getSignal(args[0], args[1], args[2], args[3]);
-    }
-
-    private static int getSignal(Object blockState, Object blockAccess, Object pos, Object side) {
-        if (!CoreReflections.clazz$Level.isInstance(blockAccess)) {
+    public int getAnalogOutputSignal(Object thisBlock, Object[] args) {
+        Object level = args[1];
+        if (!CoreReflections.clazz$Level.isInstance(level)) {
             return 0;
         }
-        ImmutableBlockState state = BlockStateUtils.getOptionalCustomBlockState(blockState).orElse(null);
+        ImmutableBlockState state = BlockStateUtils.getOptionalCustomBlockState(args[0]).orElse(null);
         if (state == null) {
             return 0;
         }
@@ -102,11 +98,8 @@ public class ItemFrameBlockBehavior extends BukkitBlockBehavior implements Entit
         if (blockBehavior == null) {
             return 0;
         }
-        if (state.get(blockBehavior.directionProperty) != DirectionUtils.fromNMSDirection(side)) {
-            return 0;
-        }
-        BukkitWorld world = BukkitAdaptors.adapt(FastNMS.INSTANCE.method$Level$getCraftWorld(blockAccess));
-        BlockEntity blockEntity = world.storageWorld().getBlockEntityAtIfLoaded(LocationUtils.fromBlockPos(pos));
+        BukkitWorld world = BukkitAdaptors.adapt(FastNMS.INSTANCE.method$Level$getCraftWorld(level));
+        BlockEntity blockEntity = world.storageWorld().getBlockEntityAtIfLoaded(LocationUtils.fromBlockPos(args[2]));
         if (!(blockEntity instanceof ItemFrameBlockEntity itemFrame && itemFrame.isValid())) {
             return 0;
         }
@@ -117,8 +110,13 @@ public class ItemFrameBlockBehavior extends BukkitBlockBehavior implements Entit
     }
 
     @Override
-    public boolean isSignalSource(Object thisBlock, Object[] args, Callable<Object> superMethod) {
-        return true;
+    public void affectNeighborsAfterRemoval(Object thisBlock, Object[] args, Callable<Object> superMethod) {
+        FastNMS.INSTANCE.method$Level$updateNeighbourForOutputSignal(args[1], args[2], BlockStateUtils.getBlockOwner(args[0]));
+    }
+
+    @Override
+    public void onRemove(Object thisBlock, Object[] args, Callable<Object> superMethod) {
+        FastNMS.INSTANCE.method$Level$updateNeighbourForOutputSignal(args[1], args[2], BlockStateUtils.getBlockOwner(args[0]));
     }
 
     @Override
