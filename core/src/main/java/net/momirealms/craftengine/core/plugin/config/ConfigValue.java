@@ -16,6 +16,7 @@ import net.momirealms.craftengine.core.util.*;
 import net.momirealms.craftengine.core.world.Vec3i;
 import net.momirealms.craftengine.core.world.collision.AABB;
 import net.momirealms.sparrow.nbt.Tag;
+import org.jetbrains.annotations.NotNull;
 import org.joml.Quaternionf;
 import org.joml.Vector3f;
 
@@ -25,8 +26,8 @@ import java.util.function.Function;
 
 public final class ConfigValue {
     private static final Map<Class<?>, Function<ConfigValue, ?>> SERIALIZERS = new HashMap<>();
-    private final String path;
-    private final Object value;
+    private final @NotNull String path;
+    private final @NotNull Object value;
 
     static {
         registerSerializer(ConfigSection.class, ConfigValue::getAsSection);
@@ -55,8 +56,12 @@ public final class ConfigValue {
         SERIALIZERS.put(clazz, serializer);
     }
 
-    ConfigValue(String path, Object value) {
+    @SuppressWarnings("ConstantValue")
+    ConfigValue(@NotNull String path, @NotNull Object value) {
         this.path = path;
+        if (value == null) { // 可能列表的元素是 null
+            throw new KnownResourceException("config.value_is_null", path);
+        }
         this.value = value;
     }
 
@@ -68,7 +73,7 @@ public final class ConfigValue {
         return this.value;
     }
 
-    public static ConfigValue of(String path, Object value) {
+    public static ConfigValue of(@NotNull String path, @NotNull Object value) {
         return new ConfigValue(path, value);
     }
 

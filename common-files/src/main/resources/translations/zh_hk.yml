@@ -138,6 +138,7 @@ host.upload_failed: 資源包上傳失敗
 host.lobfile.storage_usage: 賬號使用情況：<arg:0>/<arg:1> MB | <arg:2>/<arg:3> 個檔案
 host.self.http_server_started: Netty HTTP伺服器已在 <arg:0> 埠啟動
 config.errors_detected: 在 config.yml 中發現錯誤 - <arg:0>
+config.value_is_null: 值不能為空
 update.available: 新版本 <arg:0> 已發布：<arg:1>
 update.is_latest: 你正在使用最新版本
 mod.clientbound.no_permission: 玩家 <arg:0> 沒有 <arg:1> 權限接收 <arg:2> 包，如需授予權限請安裝 LuckPerms 插件並直接賦予即可

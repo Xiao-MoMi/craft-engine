@@ -144,6 +144,7 @@ host.upload_failed: "Failed to upload resource pack"
 host.lobfile.storage_usage: "Account usage: <arg:0>/<arg:1> MB | <arg:2>/<arg:3> Files"
 host.self.http_server_started: "Netty HTTP server started on port: <arg:0>"
 config.errors_detected: Error found in config.yml - <arg:0>
+config.value_is_null: The value must not be null
 update.available: 'New version <arg:0> is available: <arg:1>'
 update.is_latest: You're running the latest version
 mod.clientbound.no_permission: Player <arg:0> does not have permission <arg:1> to receive packet <arg:2>, to grant this permission please install the LuckPerms plugin and assign it directly

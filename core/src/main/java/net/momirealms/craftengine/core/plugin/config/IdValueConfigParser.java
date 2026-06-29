@@ -34,6 +34,7 @@ public abstract class IdValueConfigParser extends IdConfigParser {
             ConfigSection config = cachedMajorSection.config();
             for (String key : config.keySet()) {
                 ConfigValue value = config.getValue(key);
+                if (value == null) continue; // fixme 评估这种做法是否合适，但是直接把 null 传递下去必然会创建一个 ConfigValue 中的 value 是 null 的对象
                 if (cachedMajorSection.hasArguments() && key.contains("$")) {
                     key = ArgumentString.preParse(config.path(), key).get(config.path(), cachedMajorSection.arguments).toString();
                 }
