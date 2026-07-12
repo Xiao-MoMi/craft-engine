@@ -43,7 +43,8 @@ public interface VanillaRecipeReader {
 
     @NotNull DatapackRecipeResult stoneCuttingResult(JsonObject json);
 
-    List<String> singleIngredient(JsonElement json);
+    //缺少对26.2的JSON值的null处理
+    List<String> singleIngredient(@Nullable JsonElement json);
 
     boolean showNotification(JsonObject json);
 }

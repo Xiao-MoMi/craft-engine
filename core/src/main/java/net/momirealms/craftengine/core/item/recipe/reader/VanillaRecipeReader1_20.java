@@ -131,6 +131,10 @@ public class VanillaRecipeReader1_20 implements VanillaRecipeReader {
 
     @Override
     public List<String> singleIngredient(JsonElement json) {
+        // MC 26.2的适配（针对issue745）
+        if (json == null || json.isJsonNull()) {
+            return List.of();
+        }
         List<String> ingredients = new ArrayList<>();
         if (json.isJsonObject()) {
             JsonObject argument = json.getAsJsonObject();

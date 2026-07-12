@@ -13,6 +13,10 @@ public class VanillaRecipeReader1_21_2 extends VanillaRecipeReader1_20_5 {
 
     @Override
     public List<String> singleIngredient(JsonElement json) {
+        // MC 26.2的适配（针对issue745）
+        if (json == null || json.isJsonNull()) {
+            return List.of();
+        }
         if (json.isJsonPrimitive()) {
             return List.of(json.getAsString());
         } else {
