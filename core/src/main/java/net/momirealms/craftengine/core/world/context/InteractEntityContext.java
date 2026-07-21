@@ -1,5 +1,6 @@
 package net.momirealms.craftengine.core.world.context;
 
+import net.momirealms.craftengine.core.entity.Entity;
 import net.momirealms.craftengine.core.entity.player.InteractionHand;
 import net.momirealms.craftengine.core.entity.player.Player;
 import net.momirealms.craftengine.core.item.Item;
@@ -8,6 +9,7 @@ import net.momirealms.craftengine.core.world.BlockPos;
 import net.momirealms.craftengine.core.world.EntityHitResult;
 import net.momirealms.craftengine.core.world.Vec3d;
 import net.momirealms.craftengine.core.world.World;
+import org.jetbrains.annotations.Nullable;
 
 public final class InteractEntityContext {
     private final Player player;
@@ -15,13 +17,20 @@ public final class InteractEntityContext {
     private final EntityHitResult hitResult;
     private final World level;
     private final Item itemStack;
+    @Nullable
+    private final Entity target;
 
     public InteractEntityContext(Player player, InteractionHand hand, EntityHitResult hitResult) {
+        this(player, hand, hitResult, null);
+    }
+
+    public InteractEntityContext(Player player, InteractionHand hand, EntityHitResult hitResult, @Nullable Entity target) {
         this.player = player;
         this.hand = hand;
         this.hitResult = hitResult;
         this.level = player.world();
         this.itemStack = player.getItemInHand(hand);
+        this.target = target;
     }
 
     public Player getPlayer() {
@@ -42,6 +51,11 @@ public final class InteractEntityContext {
 
     public Item getItem() {
         return this.itemStack;
+    }
+
+    @Nullable
+    public Entity getTarget() {
+        return this.target;
     }
 
     public BlockPos getClickedPos() {

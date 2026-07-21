@@ -29,7 +29,12 @@ public final class CustomNameplateHatSettings implements Listener {
     public static final CustomItemSettingType<Double> HAT_HEIGHT = CustomItemSettingType.simple();
 
     public void register() {
-        ItemSettingsModifiers.register(Key.ce("hat_height"), value -> settings -> settings.addCustomData(HAT_HEIGHT, value.getAsDouble()));
+        ItemSettingsModifiers.register(Key.ce("hat_height"), value -> {
+            double height = value.getAsDouble();
+            return settings -> {
+                settings.addCustomData(HAT_HEIGHT, height);
+            };
+        });
         Bukkit.getPluginManager().registerEvents(this, BukkitCraftEngine.instance().javaPlugin());
     }
 

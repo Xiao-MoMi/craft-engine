@@ -5,6 +5,7 @@ import net.momirealms.craftengine.core.entity.player.InteractionResult;
 import net.momirealms.craftengine.core.entity.player.Player;
 import net.momirealms.craftengine.core.world.BlockPos;
 import net.momirealms.craftengine.core.world.World;
+import net.momirealms.craftengine.core.world.context.InteractEntityContext;
 import net.momirealms.craftengine.core.world.context.UseOnContext;
 import org.jetbrains.annotations.Nullable;
 
@@ -40,6 +41,15 @@ public final class DualItemBehavior extends ItemBehavior {
             return result;
         }
         return this.second.useOnBlock(context);
+    }
+
+    @Override
+    public InteractionResult useOnEntity(InteractEntityContext context) {
+        InteractionResult result = this.first.useOnEntity(context);
+        if (result != InteractionResult.PASS) {
+            return result;
+        }
+        return this.second.useOnEntity(context);
     }
 
     @Override

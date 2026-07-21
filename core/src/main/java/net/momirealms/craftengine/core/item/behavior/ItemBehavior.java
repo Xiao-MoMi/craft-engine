@@ -5,6 +5,7 @@ import net.momirealms.craftengine.core.entity.player.InteractionResult;
 import net.momirealms.craftengine.core.entity.player.Player;
 import net.momirealms.craftengine.core.world.BlockPos;
 import net.momirealms.craftengine.core.world.World;
+import net.momirealms.craftengine.core.world.context.InteractEntityContext;
 import net.momirealms.craftengine.core.world.context.UseOnContext;
 import org.jetbrains.annotations.Nullable;
 
@@ -13,6 +14,10 @@ import java.util.function.Consumer;
 public abstract class ItemBehavior {
 
     public InteractionResult useOnBlock(UseOnContext context) {
+        return InteractionResult.PASS;
+    }
+
+    public InteractionResult useOnEntity(InteractEntityContext context) {
         return InteractionResult.PASS;
     }
 

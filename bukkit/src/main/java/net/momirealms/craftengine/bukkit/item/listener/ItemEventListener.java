@@ -43,8 +43,10 @@ import net.momirealms.craftengine.core.util.*;
 import net.momirealms.craftengine.core.util.random.RandomUtils;
 import net.momirealms.craftengine.core.world.BlockHitResult;
 import net.momirealms.craftengine.core.world.BlockPos;
+import net.momirealms.craftengine.core.world.EntityHitResult;
 import net.momirealms.craftengine.core.world.Vec3d;
 import net.momirealms.craftengine.core.world.context.BlockPlaceContext;
+import net.momirealms.craftengine.core.world.context.InteractEntityContext;
 import net.momirealms.craftengine.core.world.context.UseOnContext;
 import net.momirealms.craftengine.proxy.minecraft.network.protocol.game.ClientboundContainerSetDataPacketProxy;
 import net.momirealms.craftengine.proxy.minecraft.network.protocol.game.ServerboundUseItemOnPacketProxy;
@@ -123,15 +125,43 @@ public final class ItemEventListener implements Listener {
         if (InteractUtils.isEntityInteractable(player, entity, itemInHand)) return;
 
         Cancellable cancellable = Cancellable.of(event::isCancelled, event::setCancelled);
+        BukkitEntity bukkitEntity = new BukkitEntity(entity);
         PlayerOptionalContext context = PlayerOptionalContext.of(serverPlayer, ContextHolder.builder()
                 .withOptionalParameter(DirectContextParameters.ITEM_IN_HAND, itemInHand.isEmpty() ? null : itemInHand)
                 .withParameter(DirectContextParameters.HAND, hand)
                 .withParameter(DirectContextParameters.EVENT, cancellable)
-                .withParameter(DirectContextParameters.ENTITY, new BukkitEntity(entity))
+                .withParameter(DirectContextParameters.ENTITY, bukkitEntity)
                 .withParameter(DirectContextParameters.POSITION, LocationUtils.toWorldPosition(event.getRightClicked().getLocation()))
         );
         ItemDefinition itemDefinition = optionalCustomItem.get();
         itemDefinition.execute(context, EventTrigger.RIGHT_CLICK);
+        if (event.isCancelled()) return;
+
+        Optional<ItemBehavior> optionalItemBehavior = itemInHand.getBehavior();
+        if (optionalItemBehavior.isEmpty()) return;
+
+        Location entityLocation = entity.getLocation();
+        Vec3d hitLocation;
+        if (event instanceof PlayerInteractAtEntityEvent atEvent) {
+            org.bukkit.util.Vector clicked = atEvent.getClickedPosition();
+            hitLocation = new Vec3d(entityLocation.getX() + clicked.getX(), entityLocation.getY() + clicked.getY(), entityLocation.getZ() + clicked.getZ());
+        } else {
+            hitLocation = new Vec3d(entityLocation.getX(), entityLocation.getY() + entity.getHeight() / 2, entityLocation.getZ());
+        }
+        Location eyeLocation = player.getEyeLocation();
+        Direction direction = Direction.getApproximateNearest(
+                eyeLocation.getX() - hitLocation.x,
+                eyeLocation.getY() - hitLocation.y,
+                eyeLocation.getZ() - hitLocation.z
+        );
+        InteractEntityContext interactEntityContext = new InteractEntityContext(serverPlayer, hand, new EntityHitResult(direction, hitLocation), bukkitEntity);
+        InteractionResult useResult = optionalItemBehavior.get().useOnEntity(interactEntityContext);
+        if (useResult.success()) {
+            serverPlayer.updateLastSuccessfulInteractionTick(serverPlayer.gameTicks());
+        }
+        if (useResult == InteractionResult.SUCCESS_AND_CANCEL) {
+            event.setCancelled(true);
+        }
     }
 
     @EventHandler(ignoreCancelled = true, priority = EventPriority.HIGHEST)
