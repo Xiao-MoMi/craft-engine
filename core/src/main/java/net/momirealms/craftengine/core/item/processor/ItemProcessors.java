@@ -1,5 +1,6 @@
 package net.momirealms.craftengine.core.item.processor;
 
+import net.momirealms.craftengine.core.item.component.DataComponentKeys;
 import net.momirealms.craftengine.core.item.processor.lore.*;
 import net.momirealms.craftengine.core.plugin.config.ConfigSection;
 import net.momirealms.craftengine.core.plugin.config.ConfigValue;
@@ -89,8 +90,11 @@ public final class ItemProcessors {
                             callback.accept(factory.create(value));
                         }
                     } else if (VersionHelper.COMPONENT_RELEASE) {
-                        // 找不到对应的 data 类型时，将其视为组件类型处理
-                        callback.accept(ComponentsProcessor.createSingle(Key.of(key), value));
+                        // 找不到对应的 data 类型时，若键是已知的组件类型，则按组件处理
+                        Key componentKey = Key.of(key);
+                        if (DataComponentKeys.contains(componentKey)) {
+                            callback.accept(ComponentsProcessor.createSingle(componentKey, value));
+                        }
                     }
                 });
             }
