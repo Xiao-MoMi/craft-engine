@@ -20,7 +20,7 @@ public class PagedGuiImpl extends AbstractGui implements PagedGui {
             }
         }
         this.elementsPerPage = i;
-        this.maxPages = Math.max(1, (itemsWithFunction.size() - 1) / i + 1);
+        this.maxPages = i == 0 ? 1 : Math.max(1, (itemsWithFunction.size() - 1) / i + 1);
         this.currentPage = 1;
     }
 
