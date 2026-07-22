@@ -9,7 +9,6 @@ import net.momirealms.craftengine.core.registry.Registries;
 import net.momirealms.craftengine.core.registry.WritableRegistry;
 import net.momirealms.craftengine.core.util.*;
 
-import java.util.Optional;
 import java.util.function.Consumer;
 
 public final class ItemProcessors {
@@ -83,12 +82,16 @@ public final class ItemProcessors {
                 if (value == null) continue;
                 String key = StringUtils.normalizeSettingsType(type);
                 errorCollector.runCatching(() -> {
-                    Optional.ofNullable(BuiltInRegistries.ITEM_PROCESSOR_TYPE.getValue(Key.ce(key))).ifPresent(processorType -> {
+                    ItemProcessorType<?> processorType = BuiltInRegistries.ITEM_PROCESSOR_TYPE.getValue(Key.ce(key));
+                    if (processorType != null) {
                         ItemProcessorFactory<? extends ItemProcessor> factory = processorType.factory();
                         if (factory != null) {
                             callback.accept(factory.create(value));
                         }
-                    });
+                    } else if (VersionHelper.COMPONENT_RELEASE) {
+                        // 找不到对应的 data 类型时，将其视为组件类型处理
+                        callback.accept(ComponentsProcessor.createSingle(Key.of(key), value));
+                    }
                 });
             }
         }

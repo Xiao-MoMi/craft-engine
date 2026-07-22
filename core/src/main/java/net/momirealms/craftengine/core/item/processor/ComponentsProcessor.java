@@ -86,6 +86,14 @@ public final class ComponentsProcessor implements ItemProcessor {
     public record DynamicComponentProvider(Key type, Function<ItemBuildContext, Tag> function) {
     }
 
+    public static ComponentsProcessor createSingle(Key type, ConfigValue value) {
+        DynamicComponentProvider provider = getProvider(type, value);
+        if (DataComponentKeys.CUSTOM_DATA.equals(type)) {
+            return new ComponentsProcessor(provider, List.of());
+        }
+        return new ComponentsProcessor(null, List.of(provider));
+    }
+
     // todo 未来需要支持普通yaml格式使用 <>，最好先重构textprovider与Item
     private static DynamicComponentProvider getProvider(Key key, ConfigValue value) {
         if (value.is(String.class)) {
