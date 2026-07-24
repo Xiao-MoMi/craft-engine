@@ -81,8 +81,8 @@ public final class ArmorStandBlockEntityElement extends AbstractConstantBlockEnt
         player.sendPacket(ClientboundSetEquipmentPacketProxy.INSTANCE.newInstance(this.entityId, List.of(
                 Pair.of(EquipmentSlotProxy.HEAD, this.config.item(player, this.tintSource).minecraftItem())
         )), false);
-        if (this.cachedDespawnPacket != null) {
-            player.sendPacket(this.cachedDespawnPacket, false);
+        if (this.cachedScalePacket != null) {
+            player.sendPacket(this.cachedScalePacket, false);
         }
         if (this.cachedTeamPacket != null) {
             player.sendPacket(this.cachedTeamPacket, false);
