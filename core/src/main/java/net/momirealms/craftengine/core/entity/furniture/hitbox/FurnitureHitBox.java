@@ -11,9 +11,9 @@ import java.util.List;
 import java.util.Optional;
 import java.util.function.Consumer;
 
-public interface FurnitureHitBox extends SeatOwner {
+public interface FurnitureHitBox {
 
-    Seat<FurnitureHitBox>[] seats();
+    Seat<SeatOwner>[] seats();
 
     List<Collider> colliders();
 

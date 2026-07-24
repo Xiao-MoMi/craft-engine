@@ -8,14 +8,15 @@ import net.momirealms.craftengine.core.entity.furniture.hitbox.FurnitureHitBox;
 import net.momirealms.craftengine.core.entity.furniture.hitbox.FurnitureHitBoxConfig;
 import net.momirealms.craftengine.core.entity.seat.Seat;
 import net.momirealms.craftengine.core.entity.seat.SeatConfig;
+import net.momirealms.craftengine.core.entity.seat.SeatOwner;
 import net.momirealms.craftengine.core.world.Position;
 import net.momirealms.craftengine.core.world.World;
 import net.momirealms.craftengine.core.world.collision.AABB;
 import net.momirealms.sparrow.nbt.CompoundTag;
 
-public abstract class AbstractFurnitureHitBox implements FurnitureHitBox {
+public abstract class AbstractFurnitureHitBox implements FurnitureHitBox, SeatOwner {
     protected final Furniture furniture;
-    protected Seat<FurnitureHitBox>[] seats;
+    protected Seat<SeatOwner>[] seats;
 
     public AbstractFurnitureHitBox(Furniture furniture, FurnitureHitBoxConfig<?> config) {
         this.furniture = furniture;
@@ -23,9 +24,9 @@ public abstract class AbstractFurnitureHitBox implements FurnitureHitBox {
     }
 
     @SuppressWarnings("unchecked")
-    private Seat<FurnitureHitBox>[] createSeats(FurnitureHitBoxConfig<?> config) {
+    private Seat<SeatOwner>[] createSeats(FurnitureHitBoxConfig<?> config) {
         SeatConfig[] seatConfigs = config.seats();
-        Seat<FurnitureHitBox>[] seats = new Seat[seatConfigs.length];
+        Seat<SeatOwner>[] seats = new Seat[seatConfigs.length];
         for (int i = 0; i < seatConfigs.length; i++) {
             seats[i] = new BukkitSeat<>(this, seatConfigs[i]);
         }
@@ -40,7 +41,7 @@ public abstract class AbstractFurnitureHitBox implements FurnitureHitBox {
     }
 
     @Override
-    public Seat<FurnitureHitBox>[] seats() {
+    public Seat<SeatOwner>[] seats() {
         return this.seats;
     }
 

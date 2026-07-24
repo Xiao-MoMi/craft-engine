@@ -17,6 +17,7 @@ import net.momirealms.craftengine.core.entity.furniture.hitbox.FurnitureHitBoxCo
 import net.momirealms.craftengine.core.entity.furniture.hitbox.FurnitureHitboxPart;
 import net.momirealms.craftengine.core.entity.player.Player;
 import net.momirealms.craftengine.core.entity.seat.Seat;
+import net.momirealms.craftengine.core.entity.seat.SeatOwner;
 import net.momirealms.craftengine.core.item.Item;
 import net.momirealms.craftengine.core.plugin.CraftEngine;
 import net.momirealms.craftengine.core.plugin.config.Config;
@@ -302,7 +303,7 @@ public abstract class Furniture implements Cullable, ChainParameterSource {
         List<FurnitureHitBox> hitboxes = new ObjectArrayList<>(furnitureHitBoxConfigs.size());
 
         // 辅助map，用于排除重复的座椅
-        LazyReference<Map<Vector3f, Seat<FurnitureHitBox>>> seatMap = LazyReference.lazyReference(HashMap::new);
+        LazyReference<Map<Vector3f, Seat<SeatOwner>>> seatMap = LazyReference.lazyReference(HashMap::new);
         for (FurnitureHitBoxConfig<?> furnitureHitBoxConfig : furnitureHitBoxConfigs) {
             FurnitureHitBox hitbox = furnitureHitBoxConfig.create(this);
             hitboxes.add(hitbox);
@@ -313,9 +314,9 @@ public abstract class Furniture implements Cullable, ChainParameterSource {
             for (FurnitureHitboxPart part : hitbox.parts()) {
                 hitboxMap.put(part.entityId(), hitbox);
             }
-            Seat<FurnitureHitBox>[] seats = hitbox.seats();
+            Seat<SeatOwner>[] seats = hitbox.seats();
             for (int index = 0; index < seats.length; index++) {
-                Map<Vector3f, Seat<FurnitureHitBox>> tempMap = seatMap.get();
+                Map<Vector3f, Seat<SeatOwner>> tempMap = seatMap.get();
                 Vector3f seatPos = seats[index].config().position();
                 if (tempMap.containsKey(seatPos)) {
                     seats[index] = tempMap.get(seatPos);

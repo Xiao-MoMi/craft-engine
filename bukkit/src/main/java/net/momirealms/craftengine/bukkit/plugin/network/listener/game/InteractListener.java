@@ -15,6 +15,7 @@ import net.momirealms.craftengine.core.entity.furniture.hitbox.FurnitureHitboxPa
 import net.momirealms.craftengine.core.entity.player.InteractionHand;
 import net.momirealms.craftengine.core.entity.player.InteractionResult;
 import net.momirealms.craftengine.core.entity.seat.Seat;
+import net.momirealms.craftengine.core.entity.seat.SeatOwner;
 import net.momirealms.craftengine.core.item.Item;
 import net.momirealms.craftengine.core.item.ItemDefinition;
 import net.momirealms.craftengine.core.item.behavior.FurnitureItem;
@@ -299,7 +300,7 @@ public final class InteractListener {
                 }
             } else {
                 if (!usingSecondaryAction) {
-                    for (Seat<FurnitureHitBox> seat : hitBox.seats()) {
+                    for (Seat<SeatOwner> seat : hitBox.seats()) {
                         if (!seat.isOccupied()) {
                             if (seat.spawnSeat(serverPlayer, furniture.position())) {
                                 if (!part.interactive()) {

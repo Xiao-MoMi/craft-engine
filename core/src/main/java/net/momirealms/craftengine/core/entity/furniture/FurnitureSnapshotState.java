@@ -5,6 +5,7 @@ import net.momirealms.craftengine.core.entity.furniture.element.FurnitureElement
 import net.momirealms.craftengine.core.entity.furniture.hitbox.FurnitureHitBox;
 import net.momirealms.craftengine.core.entity.player.Player;
 import net.momirealms.craftengine.core.entity.seat.Seat;
+import net.momirealms.craftengine.core.entity.seat.SeatOwner;
 import net.momirealms.craftengine.core.util.CustomDataType;
 import net.momirealms.craftengine.core.world.World;
 
@@ -95,7 +96,7 @@ public abstract class FurnitureSnapshotState {
 
     public void destroySeats() {
         for (FurnitureHitBox hitbox : this.hitboxes) {
-            for (Seat<FurnitureHitBox> seat : hitbox.seats()) {
+            for (Seat<SeatOwner> seat : hitbox.seats()) {
                 seat.destroy();
             }
         }
