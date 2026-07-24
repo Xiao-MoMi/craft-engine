@@ -2,7 +2,10 @@ package net.momirealms.craftengine.core.world;
 
 import net.momirealms.craftengine.core.entity.player.Player;
 import net.momirealms.craftengine.core.item.Item;
+import net.momirealms.craftengine.core.plugin.context.ChainParameterSource;
 import net.momirealms.craftengine.core.plugin.context.Context;
+import net.momirealms.craftengine.core.plugin.context.ContextKey;
+import net.momirealms.craftengine.core.plugin.context.parameter.WorldParameterProvider;
 import net.momirealms.craftengine.core.sound.SoundData;
 import net.momirealms.craftengine.core.sound.SoundSource;
 import net.momirealms.craftengine.core.util.Key;
@@ -14,9 +17,15 @@ import org.jetbrains.annotations.NotNull;
 import javax.annotation.Nullable;
 import java.nio.file.Path;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
-public interface World extends WorldAccessor {
+public interface World extends WorldAccessor, ChainParameterSource {
+
+    @Override
+    default <T> Optional<T> getParameter(ContextKey<T> key) {
+        return WorldParameterProvider.INSTANCE.getOptionalParameter(key, this);
+    }
 
     default CEWorld ceWorld() {
         return this.storageWorld();

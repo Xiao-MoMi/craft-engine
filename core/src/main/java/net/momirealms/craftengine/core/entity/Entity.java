@@ -2,15 +2,19 @@ package net.momirealms.craftengine.core.entity;
 
 import net.momirealms.craftengine.core.entity.data.EntityData;
 import net.momirealms.craftengine.core.entity.player.Player;
+import net.momirealms.craftengine.core.plugin.context.ChainParameterSource;
+import net.momirealms.craftengine.core.plugin.context.ContextKey;
+import net.momirealms.craftengine.core.plugin.context.parameter.EntityParameterProvider;
 import net.momirealms.craftengine.core.util.Direction;
 import net.momirealms.craftengine.core.util.Key;
 import net.momirealms.craftengine.core.world.World;
 import net.momirealms.craftengine.core.world.WorldPosition;
 
+import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 
-public interface Entity {
+public interface Entity extends ChainParameterSource {
     Key type();
 
     boolean isValid();
@@ -60,4 +64,9 @@ public interface Entity {
     WorldPosition eyePosition();
 
     void teleport(WorldPosition worldPosition);
+
+    @Override
+    default <T> Optional<T> getParameter(ContextKey<T> key) {
+        return EntityParameterProvider.INSTANCE.getOptionalParameter(key, this);
+    }
 }

@@ -9,7 +9,9 @@ import net.momirealms.craftengine.core.entity.culling.Cullable;
 import net.momirealms.craftengine.core.entity.culling.CullableHolder;
 import net.momirealms.craftengine.core.entity.furniture.behavior.FurnitureLightData;
 import net.momirealms.craftengine.core.item.Item;
+import net.momirealms.craftengine.core.plugin.context.ContextKey;
 import net.momirealms.craftengine.core.plugin.context.CooldownData;
+import net.momirealms.craftengine.core.plugin.context.parameter.PlayerParameterProvider;
 import net.momirealms.craftengine.core.plugin.network.NetWorkUser;
 import net.momirealms.craftengine.core.sound.SoundData;
 import net.momirealms.craftengine.core.sound.SoundSource;
@@ -25,10 +27,16 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Collection;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Optional;
 import java.util.function.Predicate;
 
 public interface Player extends NetWorkUser, LivingEntity {
     Key TYPE = Key.of("minecraft:player");
+
+    @Override
+    default <T> Optional<T> getParameter(ContextKey<T> key) {
+        return PlayerParameterProvider.INSTANCE.getOptionalParameter(key, this);
+    }
 
     boolean isSecondaryUseActive();
 

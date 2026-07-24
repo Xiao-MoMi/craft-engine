@@ -10,6 +10,7 @@ import java.util.Optional;
 import java.util.function.Function;
 
 public final class BlockParameterProvider implements ChainParameterProvider<ExistingBlock> {
+    public static final BlockParameterProvider INSTANCE = new BlockParameterProvider();
     private static final Map<ContextKey<?>, Function<ExistingBlock, Object>> CONTEXT_FUNCTIONS = new HashMap<>();
     static {
         CONTEXT_FUNCTIONS.put(DirectContextParameters.X, ExistingBlock::x);

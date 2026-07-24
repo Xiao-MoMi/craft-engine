@@ -12,6 +12,7 @@ import java.util.Optional;
 import java.util.function.Function;
 
 public final class EntityParameterProvider implements ChainParameterProvider<Entity> {
+    public static final EntityParameterProvider INSTANCE = new EntityParameterProvider();
     private static final Map<ContextKey<?>, Function<Entity, Object>> CONTEXT_FUNCTIONS = new HashMap<>();
     static {
         CONTEXT_FUNCTIONS.put(DirectContextParameters.X, Entity::x);

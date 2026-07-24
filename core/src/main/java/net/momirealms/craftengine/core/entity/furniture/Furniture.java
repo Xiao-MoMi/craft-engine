@@ -20,7 +20,10 @@ import net.momirealms.craftengine.core.entity.seat.Seat;
 import net.momirealms.craftengine.core.item.Item;
 import net.momirealms.craftengine.core.plugin.CraftEngine;
 import net.momirealms.craftengine.core.plugin.config.Config;
+import net.momirealms.craftengine.core.plugin.context.ChainParameterSource;
+import net.momirealms.craftengine.core.plugin.context.ContextKey;
 import net.momirealms.craftengine.core.plugin.context.PlayerOptionalContext;
+import net.momirealms.craftengine.core.plugin.context.parameter.FurnitureParameterProvider;
 import net.momirealms.craftengine.core.util.CustomDataType;
 import net.momirealms.craftengine.core.util.Key;
 import net.momirealms.craftengine.core.util.LazyReference;
@@ -39,7 +42,7 @@ import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Supplier;
 
-public abstract class Furniture implements Cullable {
+public abstract class Furniture implements Cullable, ChainParameterSource {
     public final FurnitureDefinition config;
     /** Accessor for persistent furniture data */
     public final FurniturePersistentData persistentData;
@@ -60,6 +63,11 @@ public abstract class Furniture implements Cullable {
     protected int[] colliderEntityIds;
     private boolean hasExternalModel;
     protected volatile boolean unsaved;
+
+    @Override
+    public <T> Optional<T> getParameter(ContextKey<T> key) {
+        return FurnitureParameterProvider.INSTANCE.getOptionalParameter(key, this);
+    }
 
     protected Furniture(Entity metaDataEntity, FurniturePersistentData data, FurnitureDefinition config) {
         this.config = config;

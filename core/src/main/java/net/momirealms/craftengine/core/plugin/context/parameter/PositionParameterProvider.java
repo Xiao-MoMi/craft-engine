@@ -11,6 +11,7 @@ import java.util.Optional;
 import java.util.function.Function;
 
 public final class PositionParameterProvider implements ChainParameterProvider<WorldPosition> {
+    public static final PositionParameterProvider INSTANCE = new PositionParameterProvider();
     private static final Map<ContextKey<?>, Function<WorldPosition, Object>> CONTEXT_FUNCTIONS = new HashMap<>();
     static {
         CONTEXT_FUNCTIONS.put(DirectContextParameters.WORLD, WorldPosition::world);

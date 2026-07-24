@@ -10,6 +10,7 @@ import java.util.Optional;
 import java.util.function.Function;
 
 public final class ItemParameterProvider implements ChainParameterProvider<Item> {
+    public static final ItemParameterProvider INSTANCE = new ItemParameterProvider();
     private static final Map<ContextKey<?>, Function<Item, Object>> CONTEXT_FUNCTIONS = new HashMap<>();
     static {
         CONTEXT_FUNCTIONS.put(DirectContextParameters.ID, Item::id);
