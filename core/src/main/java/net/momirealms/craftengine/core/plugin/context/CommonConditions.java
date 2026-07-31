@@ -42,6 +42,7 @@ public final class CommonConditions {
     public static final CommonConditionType<OpenWaterCondition<Context>> OPEN_WATER = register(Key.ce("open_water"), OpenWaterCondition.factory());
     public static final CommonConditionType<BiomeCondition<Context>> IN_BIOME = register(Key.ce("biome"), BiomeCondition.factory());
     public static final CommonConditionType<WorldCondition<Context>> IN_WORLD = register(Key.ce("world"), WorldCondition.factory());
+    public static final CommonConditionType<IsExplosionCondition<Context>> IS_EXPLOSION = register(Key.ce("is_explosion"), IsExplosionCondition.factory());
 
     private CommonConditions() {}
 
