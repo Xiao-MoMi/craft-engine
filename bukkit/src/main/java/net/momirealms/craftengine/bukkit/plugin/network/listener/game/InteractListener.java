@@ -190,7 +190,7 @@ public final class InteractListener {
             Player platformPlayer = serverPlayer.platformPlayer();
             if (platformPlayer == null) return;
             // 检测能否交互碰撞箱
-            Location eyeLocation = serverPlayer.getEyeLocation();
+            Location eyeLocation = serverPlayer.getEyeLocation(false);
             Vector direction = eyeLocation.getDirection();
             Location endLocation = eyeLocation.clone();
             endLocation.add(direction.multiply(serverPlayer.getCachedInteractionRange()));
