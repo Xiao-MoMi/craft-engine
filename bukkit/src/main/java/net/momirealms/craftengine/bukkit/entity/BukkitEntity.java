@@ -164,22 +164,33 @@ public class BukkitEntity implements net.momirealms.craftengine.core.entity.Enti
     }
 
     public Vec3d getEyePos() {
+        return getEyePos(true);
+    }
+
+    public Vec3d getEyePos(boolean includeVehicle) {
         Object entity = minecraftEntity();
-        Object vehicle = EntityProxy.INSTANCE.getVehicle(entity);
-        if (vehicle != null) {
-            Vec3d mountPos = EntityUtils.getPassengerRidingPosition(vehicle, entity);
-            return new Vec3d(mountPos.x, mountPos.y + EntityProxy.INSTANCE.getEyeHeight(entity), mountPos.z);
-        } else {
-            return new Vec3d(EntityProxy.INSTANCE.getXo(entity), EntityProxy.INSTANCE.getEyeY(entity), EntityProxy.INSTANCE.getZo(entity));
+        if (includeVehicle) {
+            Object vehicle = EntityProxy.INSTANCE.getVehicle(entity);
+            if (vehicle != null) {
+                Vec3d mountPos = EntityUtils.getPassengerRidingPosition(vehicle, entity);
+                return new Vec3d(mountPos.x, mountPos.y + EntityProxy.INSTANCE.getEyeHeight(entity), mountPos.z);
+            }
         }
+        return new Vec3d(EntityProxy.INSTANCE.getXo(entity), EntityProxy.INSTANCE.getEyeY(entity), EntityProxy.INSTANCE.getZo(entity));
     }
 
     public Location getEyeLocation() {
+        return getEyeLocation(true);
+    }
+
+    public Location getEyeLocation(boolean includeVehicle) {
         Object entity = minecraftEntity();
-        Object vehicle = EntityProxy.INSTANCE.getVehicle(entity);
-        if (vehicle != null) {
-            Vec3d mountPos = EntityUtils.getPassengerRidingPosition(vehicle, entity);
-            return new Location(platformEntity().getWorld(), mountPos.x, mountPos.y + EntityProxy.INSTANCE.getEyeHeight(entity), mountPos.z, EntityProxy.INSTANCE.getYRot(entity), EntityProxy.INSTANCE.getXRot(entity));
+        if (includeVehicle) {
+            Object vehicle = EntityProxy.INSTANCE.getVehicle(entity);
+            if (vehicle != null) {
+                Vec3d mountPos = EntityUtils.getPassengerRidingPosition(vehicle, entity);
+                return new Location(platformEntity().getWorld(), mountPos.x, mountPos.y + EntityProxy.INSTANCE.getEyeHeight(entity), mountPos.z, EntityProxy.INSTANCE.getYRot(entity), EntityProxy.INSTANCE.getXRot(entity));
+            }
         }
         return new Location(platformEntity().getWorld(), EntityProxy.INSTANCE.getXo(entity), EntityProxy.INSTANCE.getEyeY(entity), EntityProxy.INSTANCE.getZo(entity), EntityProxy.INSTANCE.getYRot(entity), EntityProxy.INSTANCE.getXRot(entity));
     }
