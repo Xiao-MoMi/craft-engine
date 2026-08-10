@@ -66,7 +66,7 @@ public final class AdventureHelper {
         }
         this.legacyComponentSerializer = LegacyComponentSerializer.builder().build();
         this.gsonComponentSerializer = gsonBuilder.build();
-        this.nbtComponentSerializer = NBTComponentSerializer.builder()
+        NBTComponentSerializer nbtSerializer = NBTComponentSerializer.builder()
                 .editOptions((b) -> {
                     if (!VersionHelper.isOrAbove1_21_5) {
                         b.value(NBTSerializerOptions.MODERN_EVENT_TYPE, false);
@@ -79,6 +79,7 @@ public final class AdventureHelper {
                     }
                     b.value(NBTSerializerOptions.SERIALIZE_COMPONENT_TYPE, false);
                 }).build();
+        this.nbtComponentSerializer = new CustomClickEventNBTSerializer(nbtSerializer);
     }
 
     private static class SingletonHolder {
