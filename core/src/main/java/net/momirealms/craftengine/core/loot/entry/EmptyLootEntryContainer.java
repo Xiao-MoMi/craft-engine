@@ -14,7 +14,7 @@ public final class EmptyLootEntryContainer extends AbstractSingleLootEntryContai
     public static final LootEntryContainerFactory<EmptyLootEntryContainer> FACTORY = new Factory();
 
     private EmptyLootEntryContainer(List<Condition<LootContext>> conditions, int weight, int quality) {
-        super(conditions, null, weight, quality);
+        super(conditions, List.of(), weight, quality);
     }
 
     @Override
