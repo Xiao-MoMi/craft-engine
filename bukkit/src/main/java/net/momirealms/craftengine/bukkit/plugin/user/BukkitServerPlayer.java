@@ -31,6 +31,7 @@ import net.momirealms.craftengine.core.attribute.damage.DamageVisibility;
 import net.momirealms.craftengine.core.block.BlockStateWrapper;
 import net.momirealms.craftengine.core.block.ImmutableBlockState;
 import net.momirealms.craftengine.core.block.entity.render.ConstantBlockEntityRenderer;
+import net.momirealms.craftengine.core.block.entity.render.DynamicBlockEntityRenderer;
 import net.momirealms.craftengine.core.block.entity.render.display.DestroyStageDisplayEntity;
 import net.momirealms.craftengine.core.block.entity.render.display.DestroyStageDisplayEntitySetting;
 import net.momirealms.craftengine.core.block.entity.render.display.DestroyStageDisplayRecorder;
@@ -217,6 +218,7 @@ public class BukkitServerPlayer extends BukkitLivingEntity implements Player {
     private Locale clientLocale;
     // 跟踪到的方块实体渲染器
     private Map<BlockPos, CullableHolder> trackedBlockEntityRenderers;
+    private Map<BlockPos, CullableHolder> trackedDynamicBlockEntityRenderers;
     private Map<Integer, CullableHolder> trackedEntities;
     private Vec3d firstPersonCameraVec3;
     private Vec3d thirdPersonCameraVec3;
@@ -310,6 +312,7 @@ public class BukkitServerPlayer extends BukkitLivingEntity implements Player {
         this.capturedAttackStrengthTick = Integer.MIN_VALUE;
         this.capturedAttackStrength = 0.0F;
         this.trackedBlockEntityRenderers = new ConcurrentHashMap<>(64);
+        this.trackedDynamicBlockEntityRenderers = new ConcurrentHashMap<>(64);
         this.trackedEntities = new ConcurrentHashMap<>(64);
         this.trackedChunks = ConcurrentChainedLong2ReferenceHashTable.createWithCapacity(128, 0.5f);
         this.entityTypeView = new ConcurrentHashMap<>(128);
@@ -799,11 +802,17 @@ public class BukkitServerPlayer extends BukkitLivingEntity implements Player {
             for (CullableHolder cullableObject : this.trackedBlockEntityRenderers.values()) {
                 cullEntity(useRayTracing, cullableObject);
             }
+            for (CullableHolder cullableObject : this.trackedDynamicBlockEntityRenderers.values()) {
+                cullEntity(useRayTracing, cullableObject);
+            }
             for (CullableHolder cullableObject : this.trackedEntities.values()) {
                 cullEntity(useRayTracing, cullableObject);
             }
         } else {
             for (CullableHolder cullableObject : this.trackedBlockEntityRenderers.values()) {
+                cullableObject.setShown(this, true);
+            }
+            for (CullableHolder cullableObject : this.trackedDynamicBlockEntityRenderers.values()) {
                 cullableObject.setShown(this, true);
             }
             for (CullableHolder cullableObject : this.trackedEntities.values()) {
@@ -1796,6 +1805,39 @@ public class BukkitServerPlayer extends BukkitLivingEntity implements Player {
     @Override
     public void clearTrackedBlockEntities() {
         this.trackedBlockEntityRenderers.clear();
+        this.trackedDynamicBlockEntityRenderers.clear();
+    }
+
+    @Override
+    public void addTrackedDynamicBlockEntities(Map<BlockPos, DynamicBlockEntityRenderer> renderers) {
+        for (Map.Entry<BlockPos, DynamicBlockEntityRenderer> entry : renderers.entrySet()) {
+            this.trackedDynamicBlockEntityRenderers.put(entry.getKey(), new CullableHolder(entry.getValue()));
+        }
+    }
+
+    @Override
+    public void addTrackedDynamicBlockEntity(BlockPos blockPos, DynamicBlockEntityRenderer renderer) {
+        this.trackedDynamicBlockEntityRenderers.put(blockPos, new CullableHolder(renderer));
+    }
+
+    @Override
+    public CullableHolder getTrackedDynamicBlockEntity(BlockPos blockPos) {
+        return this.trackedDynamicBlockEntityRenderers.get(blockPos);
+    }
+
+    @Override
+    public void removeTrackedDynamicBlockEntities(Collection<BlockPos> renders) {
+        for (BlockPos render : renders) {
+            this.removeTrackedDynamicBlockEntity(render);
+        }
+    }
+
+    @Override
+    public void removeTrackedDynamicBlockEntity(BlockPos pos) {
+        CullableHolder remove = this.trackedDynamicBlockEntityRenderers.remove(pos);
+        if (remove != null && remove.isShown) {
+            remove.cullable.hide(this);
+        }
     }
 
     @Override

@@ -5,11 +5,13 @@ import net.kyori.adventure.text.Component;
 import net.momirealms.craftengine.core.advancement.AdvancementType;
 import net.momirealms.craftengine.core.attribute.damage.DamageVisibility;
 import net.momirealms.craftengine.core.block.entity.render.ConstantBlockEntityRenderer;
+import net.momirealms.craftengine.core.block.entity.render.DynamicBlockEntityRenderer;
 import net.momirealms.craftengine.core.entity.LivingEntity;
 import net.momirealms.craftengine.core.entity.culling.Cullable;
 import net.momirealms.craftengine.core.entity.culling.CullableHolder;
 import net.momirealms.craftengine.core.entity.furniture.behavior.FurnitureLightData;
 import net.momirealms.craftengine.core.item.Item;
+import net.momirealms.craftengine.core.plugin.config.Config;
 import net.momirealms.craftengine.core.plugin.context.ContextKey;
 import net.momirealms.craftengine.core.plugin.context.CooldownData;
 import net.momirealms.craftengine.core.plugin.context.parameter.PlayerParameterProvider;
@@ -248,6 +250,24 @@ public interface Player extends NetWorkUser, LivingEntity {
     void removeTrackedBlockEntities(BlockPos pos);
 
     void clearTrackedBlockEntities();
+
+    void addTrackedDynamicBlockEntities(Map<BlockPos, DynamicBlockEntityRenderer> renderers);
+
+    void addTrackedDynamicBlockEntity(BlockPos blockPos, DynamicBlockEntityRenderer renderer);
+
+    CullableHolder getTrackedDynamicBlockEntity(BlockPos blockPos);
+
+    void removeTrackedDynamicBlockEntities(Collection<BlockPos> renders);
+
+    void removeTrackedDynamicBlockEntity(BlockPos pos);
+
+    default boolean isDynamicBlockEntityVisible(BlockPos pos) {
+        if (!Config.enableEntityCulling()) {
+            return true;
+        }
+        CullableHolder holder = this.getTrackedDynamicBlockEntity(pos);
+        return holder != null && holder.isShown;
+    }
 
     int clearOrCountMatchingInventoryItems(Predicate<Item> predicate, int count);
 

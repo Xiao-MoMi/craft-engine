@@ -3,7 +3,7 @@ package net.momirealms.craftengine.core.entity.culling;
 import net.momirealms.craftengine.core.entity.player.Player;
 
 public final class CullableHolder {
-    public Cullable cullable;
+    public volatile Cullable cullable;
     public volatile boolean isShown;
 
     public CullableHolder(Cullable cullable) {

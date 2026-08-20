@@ -149,7 +149,9 @@ public final class ItemFrameBlockEntityController extends BlockEntityController 
         if (chunk == null) return;
         this.updateMetadata();
         for (Player player : chunk.getTrackedBy()) {
-            this.element.update(player);
+            if (player.isDynamicBlockEntityVisible(super.blockEntity.pos)) {
+                this.element.update(player);
+            }
         }
     }
 
