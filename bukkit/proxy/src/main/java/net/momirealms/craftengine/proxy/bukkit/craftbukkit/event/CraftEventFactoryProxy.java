@@ -2,6 +2,7 @@ package net.momirealms.craftengine.proxy.bukkit.craftbukkit.event;
 
 import net.momirealms.craftengine.proxy.minecraft.core.BlockPosProxy;
 import net.momirealms.craftengine.proxy.minecraft.server.level.ServerPlayerProxy;
+import net.momirealms.craftengine.proxy.minecraft.world.entity.EntityProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.inventory.AbstractContainerMenuProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.level.LevelAccessorProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.level.LevelProxy;
@@ -43,6 +44,13 @@ public interface CraftEventFactoryProxy {
             @Type(clazz = BlockPosProxy.class) Object pos,
             @Type(clazz = BlockStateProxy.class) Object state,
             int flags
+    );
+
+    @MethodInvoker(name = "callEntityChangeBlockEvent", isStatic = true)
+    boolean callEntityChangeBlockEvent(
+            @Type(clazz = EntityProxy.class) Object entity,
+            @Type(clazz = BlockPosProxy.class) Object pos,
+            @Type(clazz = BlockStateProxy.class) Object state
     );
 
     @MethodInvoker(name = "callRedstoneChange", isStatic = true, activeIf = "min_version=1.21.9 && has_patch=paper")
