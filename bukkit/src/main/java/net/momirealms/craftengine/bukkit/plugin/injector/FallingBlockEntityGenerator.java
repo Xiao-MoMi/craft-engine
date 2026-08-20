@@ -2,13 +2,17 @@ package net.momirealms.craftengine.bukkit.plugin.injector;
 
 import net.bytebuddy.ByteBuddy;
 import net.bytebuddy.ClassFileVersion;
+import net.bytebuddy.description.modifier.Visibility;
 import net.bytebuddy.dynamic.scaffold.subclass.ConstructorStrategy;
+import net.bytebuddy.implementation.FieldAccessor;
 import net.bytebuddy.implementation.MethodDelegation;
 import net.bytebuddy.implementation.bind.annotation.RuntimeType;
 import net.bytebuddy.implementation.bind.annotation.SuperCall;
 import net.bytebuddy.implementation.bind.annotation.This;
 import net.bytebuddy.matcher.ElementMatchers;
 import net.momirealms.craftengine.bukkit.api.BukkitAdaptor;
+import net.momirealms.craftengine.bukkit.block.behavior.LiquidSolidifiableBlock;
+import net.momirealms.craftengine.bukkit.block.LiquidSolidification;
 import net.momirealms.craftengine.bukkit.util.BlockStateUtils;
 import net.momirealms.craftengine.core.block.ImmutableBlockState;
 import net.momirealms.craftengine.core.block.property.BooleanProperty;
@@ -23,6 +27,7 @@ import net.momirealms.craftengine.proxy.bukkit.craftbukkit.event.CraftEventFacto
 import net.momirealms.craftengine.proxy.minecraft.core.Vec3iProxy;
 import net.momirealms.craftengine.proxy.minecraft.server.level.ServerLevelProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.entity.EntityProxy;
+import net.momirealms.craftengine.proxy.minecraft.world.entity.MoverTypeProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.entity.item.FallingBlockEntityProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.entity.item.ItemEntityProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.level.ItemLikeProxy;
@@ -33,6 +38,7 @@ import net.momirealms.craftengine.proxy.minecraft.world.level.block.state.BlockS
 import net.momirealms.craftengine.proxy.minecraft.world.level.block.state.StateHolderProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.level.block.state.properties.BlockStatePropertiesProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.level.material.FluidStateProxy;
+import net.momirealms.craftengine.proxy.minecraft.world.phys.Vec3Proxy;
 import net.momirealms.sparrow.reflection.clazz.SparrowClass;
 import net.momirealms.sparrow.reflection.constructor.SConstructor5;
 import net.momirealms.sparrow.reflection.constructor.matcher.ConstructorMatcher;
@@ -53,6 +59,16 @@ public final class FallingBlockEntityGenerator {
                             : MethodMatcher.takeArguments(ItemLikeProxy.CLASS))
                     .and(MethodMatcher.returnType(ItemEntityProxy.CLASS)))
     );
+    public static final Method method$Entity$move = requireNonNull(
+            SparrowClass.of(EntityProxy.CLASS).getDeclaredMethod(MethodMatcher.named("move")
+                    .and(MethodMatcher.takeArguments(MoverTypeProxy.CLASS, Vec3Proxy.CLASS))
+                    .and(MethodMatcher.returnType(void.class)))
+    );
+    public static final Method method$FallingBlockEntity$tick = requireNonNull(
+            SparrowClass.of(FallingBlockEntityProxy.CLASS).getDeclaredMethod(MethodMatcher.named("tick")
+                    .and(MethodMatcher.takeArguments(new Class<?>[0]))
+                    .and(MethodMatcher.returnType(void.class)))
+    );
 
     private FallingBlockEntityGenerator() {
     }
@@ -63,8 +79,19 @@ public final class FallingBlockEntityGenerator {
         Class<?> clazz$CraftEngineFallingBlockEntity = new ByteBuddy(ClassFileVersion.JAVA_V21)
                 .subclass(FallingBlockEntityProxy.CLASS, ConstructorStrategy.Default.IMITATE_SUPER_CLASS_OPENING)
                 .name(generatedClassName)
+                .defineField("liquidSolidifier", LiquidSolidifiableBlock.class, Visibility.PRIVATE)
+                .defineField("ticking", boolean.class, Visibility.PRIVATE)
+                .implement(InjectedFallingBlockEntity.class)
+                .method(ElementMatchers.named("liquidSolidifier"))
+                .intercept(FieldAccessor.ofField("liquidSolidifier"))
+                .method(ElementMatchers.named("ticking"))
+                .intercept(FieldAccessor.ofField("ticking"))
                 .method(ElementMatchers.is(method$Entity$spawnAtLocation))
                 .intercept(MethodDelegation.to(SpawnAtLocationInterceptor.class))
+                .method(ElementMatchers.is(method$Entity$move))
+                .intercept(MethodDelegation.to(MoveInterceptor.class))
+                .method(ElementMatchers.is(method$FallingBlockEntity$tick))
+                .intercept(MethodDelegation.to(TickInterceptor.class))
                 .make()
                 .load(FallingBlockEntityGenerator.class.getClassLoader())
                 .getLoaded();
@@ -92,6 +119,10 @@ public final class FallingBlockEntityGenerator {
                 Vec3iProxy.INSTANCE.getZ(pos) + 0.5,
                 finalBlockState
         );
+        ImmutableBlockState customBlockState = BlockStateUtils.getOptionalCustomBlockState(finalBlockState).orElse(null);
+        if (customBlockState != null) {
+            ((InjectedFallingBlockEntity) fallingBlockEntity).liquidSolidifier(customBlockState.behavior().getFirst(LiquidSolidifiableBlock.class));
+        }
 
         Object fluidState = BlockBehaviourProxy.BlockStateBaseProxy.INSTANCE.getFluidState(blockState);
         Object legacyFluidState = FluidStateProxy.INSTANCE.createLegacyBlock(fluidState);
@@ -152,6 +183,66 @@ public final class FallingBlockEntityGenerator {
                 world.dropItemNaturally(position, item);
             }
             return null;
+        }
+    }
+
+    public static final class MoveInterceptor {
+
+        private MoveInterceptor() {
+        }
+
+        @RuntimeType
+        public static void intercept(@This Object fallingBlockEntity,
+                                     @SuperCall Callable<Object> superMethod) throws Exception {
+            InjectedFallingBlockEntity injected = (InjectedFallingBlockEntity) fallingBlockEntity;
+            LiquidSolidifiableBlock solidifiable = injected.liquidSolidifier();
+            if (!injected.ticking() || solidifiable == null) {
+                superMethod.call();
+                return;
+            }
+
+            Object from = EntityProxy.INSTANCE.getPosition(fallingBlockEntity);
+            superMethod.call();
+            if (LiquidSolidification.solidifyFallingBlock(fallingBlockEntity, from, solidifiable)) {
+                throw TickConsumed.INSTANCE;
+            }
+        }
+    }
+
+    public static final class TickInterceptor {
+
+        private TickInterceptor() {
+        }
+
+        @RuntimeType
+        public static void intercept(@This Object fallingBlockEntity,
+                                     @SuperCall Callable<Object> superMethod) throws Exception {
+            InjectedFallingBlockEntity injected = (InjectedFallingBlockEntity) fallingBlockEntity;
+            injected.ticking(true);
+            try {
+                superMethod.call();
+            } catch (TickConsumed ignored) {
+            } finally {
+                injected.ticking(false);
+            }
+        }
+    }
+
+    public interface InjectedFallingBlockEntity {
+        LiquidSolidifiableBlock liquidSolidifier();
+
+        void liquidSolidifier(LiquidSolidifiableBlock solidifiable);
+
+        boolean ticking();
+
+        void ticking(boolean ticking);
+    }
+
+    private static final class TickConsumed extends RuntimeException {
+        private static final TickConsumed INSTANCE = new TickConsumed();
+
+        private TickConsumed() {
+            super(null, null, false, false);
         }
     }
 }
