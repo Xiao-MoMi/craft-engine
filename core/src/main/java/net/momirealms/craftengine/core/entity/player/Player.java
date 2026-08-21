@@ -207,6 +207,8 @@ public interface Player extends NetWorkUser, LivingEntity {
 
     void setEntityCullingDistanceScale(double value);
 
+    double entityCullingDistanceScale();
+
     void setDisplayEntityViewDistanceScale(double value);
 
     double displayEntityViewDistance();
@@ -256,6 +258,15 @@ public interface Player extends NetWorkUser, LivingEntity {
     void addTrackedDynamicBlockEntity(BlockPos blockPos, DynamicBlockEntityRenderer renderer);
 
     CullableHolder getTrackedDynamicBlockEntity(BlockPos blockPos);
+
+    default boolean setDynamicBlockEntityForceVisible(BlockPos pos, boolean forceVisible) {
+        CullableHolder holder = this.getTrackedDynamicBlockEntity(pos);
+        if (holder == null) {
+            return false;
+        }
+        holder.setForceVisible(this, forceVisible);
+        return true;
+    }
 
     void removeTrackedDynamicBlockEntities(Collection<BlockPos> renders);
 

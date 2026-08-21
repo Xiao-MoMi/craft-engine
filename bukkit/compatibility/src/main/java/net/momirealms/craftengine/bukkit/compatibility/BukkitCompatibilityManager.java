@@ -133,6 +133,13 @@ public final class BukkitCompatibilityManager implements CompatibilityManager {
     }
 
     @Override
+    public List<ItemSource> itemSources() {
+        return this.itemSources.values().stream()
+                .sorted(Comparator.comparing(ItemSource::plugin))
+                .toList();
+    }
+
+    @Override
     public void registerItemSource(ItemSource itemSource) {
         this.itemSources.put(itemSource.plugin(), itemSource);
     }

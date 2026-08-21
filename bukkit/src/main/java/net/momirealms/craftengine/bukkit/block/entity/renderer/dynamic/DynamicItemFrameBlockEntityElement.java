@@ -75,6 +75,11 @@ public final class DynamicItemFrameBlockEntityElement implements BlockEntityElem
         }
     }
 
+    @Override
+    public boolean initialForceVisible(@NotNull Player player) {
+        return player.hasPermission("item_frame_block.force_visible");
+    }
+
     private void updateMapItem(Player player) {
         if (player.isFakePlayer()) return;
         Object mapId = this.controller.mapId();

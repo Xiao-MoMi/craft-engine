@@ -5,6 +5,8 @@ import net.momirealms.craftengine.bukkit.api.BukkitAdaptor;
 import net.momirealms.craftengine.bukkit.plugin.user.BukkitServerPlayer;
 import net.momirealms.craftengine.core.plugin.CraftEngine;
 import net.momirealms.craftengine.core.plugin.context.CooldownData;
+import net.momirealms.craftengine.core.util.CharacterUtils;
+import net.momirealms.craftengine.core.util.StringUtils;
 import org.bukkit.entity.Player;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -44,12 +46,24 @@ public final class CraftEngineExpansion extends PlaceholderExpansion {
     @Override
     public @Nullable String onPlaceholderRequest(Player bukkitPlayer, @NotNull String params) {
         BukkitServerPlayer player = bukkitPlayer != null ? BukkitAdaptor.adapt(bukkitPlayer) : null;
-        String[] split = params.split("_", 2);
-        if (split.length == 2) {
-            return switch (split[0]) {
-                case "cd", "cooldown" -> Optional.ofNullable(getCooldown(player, split[1])).orElse("0");
-                default -> null;
-            };
+        if (player != null) {
+            switch (params) {
+                case "entity-culling-enabled" -> {
+                    return String.valueOf(player.enableEntityCulling());
+                }
+                case "entity-culling-distance-scale" -> {
+                    return String.valueOf(player.entityCullingDistanceScale());
+                }
+                default -> {
+                    String[] split = StringUtils.split(params, '_', 2);
+                    if (split.length == 2) {
+                        return switch (split[0]) {
+                            case "cd", "cooldown" -> Optional.ofNullable(getCooldown(player, split[1])).orElse("0");
+                            default -> null;
+                        };
+                    }
+                }
+            }
         }
         return null;
     }
