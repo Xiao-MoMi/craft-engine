@@ -320,6 +320,13 @@ debug_item_component:
     - /craftengine debug item-component
     - /ce debug item-component
 
+debug_item_sources:
+  enable: true
+  permission: ce.command.debug.item_sources
+  usage:
+    - /craftengine debug item-sources
+    - /ce debug item-sources
+
 debug_target_block:
   enable: true
   permission: ce.command.debug.target_block
