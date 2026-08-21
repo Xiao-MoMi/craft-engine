@@ -4,7 +4,7 @@ import net.momirealms.craftengine.bukkit.api.BukkitAdaptor;
 import net.momirealms.craftengine.bukkit.block.BukkitBlockManager;
 import net.momirealms.craftengine.bukkit.entity.BukkitEntity;
 import net.momirealms.craftengine.bukkit.entity.data.BaseEntityData;
-import net.momirealms.craftengine.bukkit.nms.FastNMS;
+import net.momirealms.craftengine.bukkit.plugin.injector.FallingBlockEntityGenerator;
 import net.momirealms.craftengine.bukkit.util.BlockStateUtils;
 import net.momirealms.craftengine.bukkit.util.LocationUtils;
 import net.momirealms.craftengine.core.block.BlockDefinition;
@@ -81,7 +81,7 @@ public final class FallingBlockBehavior extends BukkitBlockBehavior implements B
             return;
         }
         Object blockState = args[0];
-        Object fallingBlockEntity = FastNMS.INSTANCE.createInjectedFallingBlockEntity(world, blockPos, blockState);
+        Object fallingBlockEntity = FallingBlockEntityGenerator.fall(world, blockPos, blockState);
         if (this.hurtAmount > 0 && this.maxHurt > 0) {
             FallingBlockEntityProxy.INSTANCE.setHurtsEntities(fallingBlockEntity, this.hurtAmount, this.maxHurt);
         }

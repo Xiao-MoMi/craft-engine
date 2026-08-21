@@ -4,8 +4,18 @@ import cn.gtemc.reflection.ImplLookupGetter;
 import net.bytebuddy.ByteBuddy;
 import net.bytebuddy.agent.ByteBuddyAgent;
 import net.bytebuddy.dynamic.loading.ClassLoadingStrategy;
+import net.momirealms.craftengine.bukkit.api.BukkitAdaptor;
+import net.momirealms.craftengine.bukkit.item.BukkitItemManager;
 import net.momirealms.craftengine.bukkit.plugin.BukkitCraftEngine;
+import net.momirealms.craftengine.bukkit.util.ItemStackUtils;
 import net.momirealms.craftengine.bukkit.world.BukkitWorldManager;
+import net.momirealms.craftengine.proxy.minecraft.core.component.DataComponentExactPredicateProxy;
+import net.momirealms.craftengine.proxy.minecraft.nbt.CompoundTagProxy;
+import net.momirealms.craftengine.proxy.minecraft.world.item.ItemStackProxy;
+import net.momirealms.craftengine.proxy.minecraft.world.item.trading.ItemCostProxy;
+import net.momirealms.craftengine.proxy.minecraft.world.item.trading.MerchantOfferProxy;
+import net.momirealms.sparrow.reflection.SReflection;
+import net.momirealms.sparrow.reflection.clazz.SparrowClass;
 import net.momirealms.craftengine.core.plugin.config.Config;
 import net.momirealms.craftengine.core.util.ReflectionUtils;
 import net.momirealms.craftengine.core.util.VersionHelper;
@@ -14,12 +24,15 @@ import org.bukkit.Bukkit;
 import java.lang.instrument.Instrumentation;
 import java.util.Map;
 import java.util.function.BiConsumer;
+import java.util.function.BiPredicate;
 import java.util.function.Consumer;
+import java.util.function.Predicate;
 
 public final class RuntimePatcher {
     private static Instrumentation instrumentation;
     private static Class<?> injectedBridge;
     private static volatile boolean equipmentChangeHookInstalled;
+    private static volatile boolean merchantItemMatchHookInstalled;
 
     private RuntimePatcher() {}
 
@@ -49,7 +62,7 @@ public final class RuntimePatcher {
                 plugin.logger().info("Patching the server...");
                 ChunkLoadWarmupAgent.install(instrumentation());
             } catch (Throwable t) {
-                plugin.logger().warn("Failed to hook chunk data read, chunk data will be read synchronously on chunk load", t);
+                plugin.logger().warn("Failed to hook chunk data read, chunk data will be read synchronously on chunk load");
             }
         }
     }
@@ -98,6 +111,51 @@ public final class RuntimePatcher {
                 plugin.logger().warn("Failed to hook vanilla equipment changes; equipment changes cannot be tracked on this server", t);
             }
         }
+    }
+
+    public static void installMerchantItemMatchHook(BukkitCraftEngine plugin) {
+        if (merchantItemMatchHookInstalled) return;
+        synchronized (RuntimePatcher.class) {
+            if (merchantItemMatchHookInstalled) return;
+            try {
+                boolean modern = VersionHelper.isOrAbove1_20_5;
+                Class<?> targetClass = modern ? ItemCostProxy.CLASS : MerchantOfferProxy.CLASS;
+                Class<?> bridge = injectBridge();
+                String legacyMethodName;
+                if (modern) {
+                    bridge.getField("MERCHANT_ITEM_MATCH").set(null, (BiPredicate<Object, Object>) RuntimePatcher::matchesModernMerchantCost);
+                    legacyMethodName = null;
+                } else {
+                    bridge.getField("MERCHANT_OFFER_MATCH").set(null, (Predicate<Object[]>) RuntimePatcher::matchesLegacyMerchantOffer);
+                    legacyMethodName = SReflection.getRemapper().remapMethodName(targetClass, "satisfiedBy", ItemStackProxy.CLASS, ItemStackProxy.CLASS);
+                }
+                if (!MerchantItemMatchAgent.install(instrumentation(), targetClass, ItemStackProxy.CLASS, legacyMethodName)) {
+                    bridge.getField(modern ? "MERCHANT_ITEM_MATCH" : "MERCHANT_OFFER_MATCH").set(null, null);
+                    plugin.logger().warn("Could not find vanilla's merchant item matching method; custom items can still be used in unconstrained vanilla trades");
+                    return;
+                }
+                merchantItemMatchHookInstalled = true;
+            } catch (Throwable t) {
+                plugin.logger().warn("Failed to hook vanilla merchant item matching; custom items can still be used in unconstrained vanilla trades", t);
+            }
+        }
+    }
+
+    private static boolean matchesModernMerchantCost(Object requirement, Object offeredStack) {
+        if (ItemStackUtils.wrap(offeredStack).customId().isEmpty()) return true;
+        Object components = ItemCostProxy.INSTANCE.getComponents(requirement);
+        return !DataComponentExactPredicateProxy.INSTANCE.alwaysMatches(components);
+    }
+
+    private static boolean matchesLegacyMerchantCost(Object requirement, Object offeredStack) {
+        if (ItemStackUtils.wrap(offeredStack).customId().isEmpty()) return true;
+        Object tag = ItemStackProxy.INSTANCE.getTag(requirement);
+        return tag != null && !CompoundTagProxy.INSTANCE.getTags(tag).isEmpty();
+    }
+
+    private static boolean matchesLegacyMerchantOffer(Object[] args) {
+        Object offer = args[0];
+        return matchesLegacyMerchantCost(MerchantOfferProxy.INSTANCE.getCostA(offer), args[1]) && matchesLegacyMerchantCost(MerchantOfferProxy.INSTANCE.getCostB(offer), args[2]);
     }
 
     private static boolean requiresEquipmentChangeHook() {

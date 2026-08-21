@@ -99,7 +99,7 @@ public final class DebugTargetBlockCommand extends BukkitCommandFeature<CommandS
                             boolean valid = blockEntity.isValid();
                             sender.sendMessage(Component.text("block entity:"));
                             sender.sendMessage(Component.text("  isValid: " + valid));
-                            BlockEntityRenderer renderer = blockEntity.renderer();
+                            BlockEntityRenderer renderer = blockEntity.dynamicRenderer();
                             if (renderer != null) {
                                 BlockEntityElement[] elements = renderer.elements();
                                 if (elements.length > 0) {

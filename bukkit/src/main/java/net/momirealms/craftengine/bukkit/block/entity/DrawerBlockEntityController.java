@@ -127,7 +127,9 @@ public sealed abstract class DrawerBlockEntityController extends BlockEntityCont
         CEChunk chunk = super.blockEntity.world.getChunkAtIfLoaded(super.blockEntity.pos.x >> 4, super.blockEntity.pos.z >> 4);
         if (chunk == null) return;
         for (Player trackedPlayer : chunk.getTrackedBy()) {
-            consumer.accept(this.element, trackedPlayer);
+            if (trackedPlayer.isDynamicBlockEntityVisible(super.blockEntity.pos)) {
+                consumer.accept(this.element, trackedPlayer);
+            }
         }
     }
 

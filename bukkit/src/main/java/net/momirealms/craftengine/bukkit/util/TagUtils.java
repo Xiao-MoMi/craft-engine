@@ -30,6 +30,32 @@ public final class TagUtils {
     public record TagEntry(int id, Collection<Key> tags) {
     }
 
+    public static Map<Key, IntList> mergeTagOverrides(Map<Key, IntList> originalTags, Collection<TagEntry> overrides) {
+        Map<Integer, List<Key>> reversedTags = new HashMap<>();
+        for (Map.Entry<Key, IntList> tagEntry : originalTags.entrySet()) {
+            for (int id : tagEntry.getValue()) {
+                reversedTags.computeIfAbsent(id, k -> new ArrayList<>()).add(tagEntry.getKey());
+            }
+        }
+        for (TagEntry tagEntry : overrides) {
+            reversedTags.remove(tagEntry.id);
+            for (Key tag : tagEntry.tags) {
+                reversedTags.computeIfAbsent(tagEntry.id, k -> new ArrayList<>()).add(tag);
+            }
+        }
+        Map<Key, IntList> processedTags = new HashMap<>();
+        // Named holder sets must still resolve on the client when a tag has no members.
+        for (Key tag : originalTags.keySet()) {
+            processedTags.put(tag, new IntArrayList());
+        }
+        for (Map.Entry<Integer, List<Key>> tagEntry : reversedTags.entrySet()) {
+            for (Key tag : tagEntry.getValue()) {
+                processedTags.computeIfAbsent(tag, k -> new IntArrayList()).addLast(tagEntry.getKey());
+            }
+        }
+        return processedTags;
+    }
+
     // 方块标签的嵌套关系：子标签 -> 直接引用它的父标签集合
     private static volatile Map<Key, Set<Key>> blockTagParents;
 
@@ -166,24 +192,7 @@ public final class TagUtils {
                     FriendlyByteBuf::readKey,
                     FriendlyByteBuf::readIntIdList
             );
-            Map<Integer, List<Key>> reversedTags = new HashMap<>();
-            for (Map.Entry<Key, IntList> tagEntry : originalTags.entrySet()) {
-                for (int id : tagEntry.getValue()) {
-                    reversedTags.computeIfAbsent(id, k -> new ArrayList<>()).add(tagEntry.getKey());
-                }
-            }
-            for (TagEntry tagEntry : overrides) {
-                reversedTags.remove(tagEntry.id);
-                for (Key tag : tagEntry.tags) {
-                    reversedTags.computeIfAbsent(tagEntry.id, k -> new ArrayList<>()).add(tag);
-                }
-            }
-            Map<Key, IntList> processedTags = new HashMap<>();
-            for (Map.Entry<Integer, List<Key>> tagEntry : reversedTags.entrySet()) {
-                for (Key tag : tagEntry.getValue()) {
-                    processedTags.computeIfAbsent(tag, k -> new IntArrayList()).addLast(tagEntry.getKey());
-                }
-            }
+            Map<Key, IntList> processedTags = mergeTagOverrides(originalTags, overrides);
             FriendlyByteBuf serializeBuf = new FriendlyByteBuf(Unpooled.buffer());
             serializeBuf.writeMap(processedTags,
                     FriendlyByteBuf::writeKey,

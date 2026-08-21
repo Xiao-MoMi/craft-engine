@@ -2,8 +2,8 @@ package net.momirealms.craftengine.core.block.entity;
 
 import net.momirealms.craftengine.core.block.ImmutableBlockState;
 import net.momirealms.craftengine.core.block.behavior.EntityBlock;
-import net.momirealms.craftengine.core.block.entity.render.BlockEntityRenderer;
 import net.momirealms.craftengine.core.block.entity.render.ConstantBlockEntityRenderer;
+import net.momirealms.craftengine.core.block.entity.render.DynamicBlockEntityRenderer;
 import net.momirealms.craftengine.core.block.entity.render.element.BlockEntityElement;
 import net.momirealms.craftengine.core.entity.player.Player;
 import net.momirealms.craftengine.core.world.BlockPos;
@@ -18,7 +18,7 @@ import java.util.List;
 
 public final class BlockEntity {
     public final BlockPos pos;
-    private final BlockEntityRenderer renderer;
+    public final DynamicBlockEntityRenderer renderer;
     public ImmutableBlockState blockState;
     public CEWorld world;
     public BlockEntityController controller;
@@ -31,7 +31,7 @@ public final class BlockEntity {
         if (this.controller.hasElement()) {
             List<BlockEntityElement> elements = new ArrayList<>(4);
             this.controller.gatherElements(elements::add);
-            this.renderer = new BlockEntityRenderer(elements.toArray(new BlockEntityElement[0]));
+            this.renderer = new DynamicBlockEntityRenderer(elements.toArray(new BlockEntityElement[0]));
         } else {
             this.renderer = null;
         }
@@ -47,6 +47,23 @@ public final class BlockEntity {
 
     public static BlockEntity inactive(BlockPos pos, ImmutableBlockState blockState, CompoundTag tag) {
         return new BlockEntity(pos, blockState, tag);
+    }
+
+    public static BlockPos readPos(CompoundTag tag) {
+        return new BlockPos(tag.getInt("x"), tag.getInt("y"), tag.getInt("z"));
+    }
+
+    public static BlockPos readPosAndVerify(CompoundTag tag, ChunkPos chunkPos) {
+        int x = tag.getInt("x", 0);
+        int y = tag.getInt("y", 0);
+        int z = tag.getInt("z", 0);
+        int sectionX = SectionPos.blockToSectionCoord(x);
+        int sectionZ = SectionPos.blockToSectionCoord(z);
+        if (sectionX != chunkPos.x || sectionZ != chunkPos.z) {
+            x = chunkPos.x * 16 + SectionPos.sectionRelative(x);
+            z = chunkPos.z * 16 + SectionPos.sectionRelative(z);
+        }
+        return new BlockPos(x, y, z);
     }
 
     public CompoundTag saveAsTag() {
@@ -102,23 +119,6 @@ public final class BlockEntity {
         this.controller.onRemove();
     }
 
-    public static BlockPos readPos(CompoundTag tag) {
-        return new BlockPos(tag.getInt("x"), tag.getInt("y"), tag.getInt("z"));
-    }
-
-    public static BlockPos readPosAndVerify(CompoundTag tag, ChunkPos chunkPos) {
-        int x = tag.getInt("x", 0);
-        int y = tag.getInt("y", 0);
-        int z = tag.getInt("z", 0);
-        int sectionX = SectionPos.blockToSectionCoord(x);
-        int sectionZ = SectionPos.blockToSectionCoord(z);
-        if (sectionX != chunkPos.x || sectionZ != chunkPos.z) {
-            x = chunkPos.x * 16 + SectionPos.sectionRelative(x);
-            z = chunkPos.z * 16 + SectionPos.sectionRelative(z);
-        }
-        return new BlockPos(x, y, z);
-    }
-
     public BlockPos pos() {
         return this.pos;
     }
@@ -127,7 +127,7 @@ public final class BlockEntity {
         return blockState.owner() == this.blockState.owner();
     }
 
-    public BlockEntityRenderer renderer() {
+    public DynamicBlockEntityRenderer dynamicRenderer() {
         return this.renderer;
     }
 

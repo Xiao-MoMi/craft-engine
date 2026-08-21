@@ -542,4 +542,28 @@ public final class CompositeBlockBehavior extends BukkitBlockBehavior implements
         }
         return false;
     }
+
+    @Override
+    public boolean canSolidifyWith(Object fluidState) {
+        for (BlockBehavior behavior : this.behaviors) {
+            if (behavior instanceof LiquidSolidifiableBlock block && block.canSolidifyWith(fluidState)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    @Nullable
+    @Override
+    public ImmutableBlockState solidifiedState(ImmutableBlockState sourceState) {
+        for (BlockBehavior behavior : this.behaviors) {
+            if (behavior instanceof LiquidSolidifiableBlock block) {
+                ImmutableBlockState state = block.solidifiedState(sourceState);
+                if (state != null) {
+                    return state;
+                }
+            }
+        }
+        return null;
+    }
 }

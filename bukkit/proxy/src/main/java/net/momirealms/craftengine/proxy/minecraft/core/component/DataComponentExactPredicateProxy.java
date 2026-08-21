@@ -11,4 +11,7 @@ public interface DataComponentExactPredicateProxy {
 
     @MethodInvoker(name = "allOf", isStatic = true)
     Object allOf(@Type(clazz = DataComponentMapProxy.class) Object map);
+
+    @MethodInvoker(name = "alwaysMatches")
+    boolean alwaysMatches(Object target);
 }

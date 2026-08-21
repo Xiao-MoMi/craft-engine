@@ -458,4 +458,24 @@ public final class DualBlockBehavior extends BukkitBlockBehavior implements Comb
     public boolean canUseOnBlockIfSecondaryUseActive(UseOnContext context, ImmutableBlockState state) {
         return this.first.canUseOnBlockIfSecondaryUseActive(context, state) ||  this.second.canUseOnBlockIfSecondaryUseActive(context, state);
     }
+
+    @Override
+    public boolean canSolidifyWith(Object fluidState) {
+        if (this.first instanceof LiquidSolidifiableBlock block && block.canSolidifyWith(fluidState)) return true;
+        if (this.second instanceof LiquidSolidifiableBlock block && block.canSolidifyWith(fluidState)) return true;
+        return false;
+    }
+
+    @Override
+    public @Nullable ImmutableBlockState solidifiedState(ImmutableBlockState sourceState) {
+        ImmutableBlockState state = null;
+        if (this.first instanceof LiquidSolidifiableBlock block) {
+            state = block.solidifiedState(sourceState);
+            if (state != null) return state;
+        }
+        if (this.second instanceof LiquidSolidifiableBlock block) {
+            state = block.solidifiedState(sourceState);
+        }
+        return state;
+    }
 }

@@ -342,13 +342,14 @@ public class ComponentItemFactory1_20_5 extends BukkitItemFactory<ComponentItemW
         if (json == null) {
             item.resetComponent(DataComponentTypes.CUSTOM_NAME);
         } else {
-            item.setJsonComponent(DataComponentTypes.CUSTOM_NAME, json);
+            item.setJavaComponent(DataComponentTypes.CUSTOM_NAME, GsonHelper.get().toJson(json));
         }
     }
 
     @Override
     protected Optional<JsonElement> customNameJson(ComponentItemWrapper item) {
-        return item.getComponentAsJson(DataComponentTypes.CUSTOM_NAME);
+        Optional<String> name = item.getComponentAsJava(DataComponentTypes.CUSTOM_NAME);
+        return name.map(json -> GsonHelper.get().fromJson(json, JsonElement.class));
     }
 
     @Override
@@ -356,13 +357,14 @@ public class ComponentItemFactory1_20_5 extends BukkitItemFactory<ComponentItemW
         if (json == null) {
             item.resetComponent(DataComponentTypes.ITEM_NAME);
         } else {
-            item.setJsonComponent(DataComponentTypes.ITEM_NAME, json);
+            item.setJavaComponent(DataComponentTypes.ITEM_NAME, GsonHelper.get().toJson(json));
         }
     }
 
     @Override
     protected Optional<JsonElement> itemNameJson(ComponentItemWrapper item) {
-        return item.getComponentAsJson(DataComponentTypes.ITEM_NAME);
+        Optional<String> name = item.getComponentAsJava(DataComponentTypes.ITEM_NAME);
+        return name.map(json -> GsonHelper.get().fromJson(json, JsonElement.class));
     }
 
     @Override
