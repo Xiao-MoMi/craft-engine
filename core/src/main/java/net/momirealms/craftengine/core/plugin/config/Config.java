@@ -493,7 +493,7 @@ public final class Config {
         this.resource_pack$protection$obfuscation$item_model$enable = config.getBoolean("resource-pack.protection.obfuscation.item-model.enable", false) && this.resource_pack$protection$obfuscation$enable;
         this.resource_pack$protection$obfuscation$item_model$use_cache = config.getBoolean("resource-pack.protection.obfuscation.item-model.use-cache", true);
         this.resource_pack$protection$obfuscation$path$block_source = config.getString("resource-pack.protection.obfuscation.path.block-source", "obf_block");
-        this.resource_pack$protection$obfuscation$path$item_source = config.getString("resource-pack.protection.obfuscation.path.block-source", "obf_item");
+        this.resource_pack$protection$obfuscation$path$item_source = config.getString("resource-pack.protection.obfuscation.path.item-source", "obf_item");
         this.resource_pack$protection$obfuscation$atlas$images_per_canvas = Math.max(0, config.getInt("resource-pack.protection.obfuscation.atlas.images-per-canvas", 256));
         this.resource_pack$protection$obfuscation$atlas$prefix = config.getString("resource-pack.protection.obfuscation.atlas.prefix", "atlas");
         this.resource_pack$protection$obfuscation$bypass_textures = config.getStringList("resource-pack.protection.obfuscation.bypass-textures");
