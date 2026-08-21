@@ -7,6 +7,10 @@ import org.jetbrains.annotations.NotNull;
 @ApiStatus.Experimental
 public interface BlockEntityElement {
 
+    default boolean initialForceVisible(@NotNull Player player) {
+        return false;
+    }
+
     default void show(@NotNull Player player) {}
 
     default void hide(@NotNull Player player) {}

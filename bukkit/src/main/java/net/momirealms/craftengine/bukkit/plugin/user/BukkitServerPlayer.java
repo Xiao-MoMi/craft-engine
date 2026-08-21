@@ -822,38 +822,42 @@ public class BukkitServerPlayer extends BukkitLivingEntity implements Player {
     }
 
     private void cullEntity(boolean useRayTracing, CullableHolder cullableObject) {
+        if (cullableObject.forceVisible) {
+            cullableObject.setShown(this, true);
+            return;
+        }
         CullingData cullingData = cullableObject.cullable.cullingData();
-        if (cullingData != null) {
-            boolean firstPersonVisible = this.culling.isVisible(cullingData, this.firstPersonCameraVec3, useRayTracing);
-            // 之前可见
-            if (cullableObject.isShown) {
-                // 第一人称可见时结果已与第三人称无关
-                if (!firstPersonVisible && !this.culling.isVisible(cullingData, this.thirdPersonCameraVec3, useRayTracing)) {
-                    cullableObject.setShown(this, false);
-                }
+        if (cullingData == null) {
+            cullableObject.setShown(this, true);
+            return;
+        }
+        boolean firstPersonVisible = this.culling.isVisible(cullingData, this.firstPersonCameraVec3, useRayTracing);
+        // 之前可见
+        if (cullableObject.isShown) {
+            // 第一人称可见时结果已与第三人称无关
+            if (!firstPersonVisible && !this.culling.isVisible(cullingData, this.thirdPersonCameraVec3, useRayTracing)) {
+                cullableObject.setShown(this, false);
             }
-            // 之前不可见
-            else {
-                // 但是第一人称可见了
-                if (firstPersonVisible) {
-                    // 下次再说
-                    if (Config.enableEntityCullingRateLimiting() && !this.culling.takeToken()) {
-                        return;
-                    }
-                    cullableObject.setShown(this, true);
+        }
+        // 之前不可见
+        else {
+            // 但是第一人称可见了
+            if (firstPersonVisible) {
+                // 下次再说
+                if (Config.enableEntityCullingRateLimiting() && !this.culling.takeToken()) {
                     return;
                 }
-                if (this.culling.isVisible(cullingData, this.thirdPersonCameraVec3, useRayTracing)) {
-                    // 下次再说
-                    if (Config.enableEntityCullingRateLimiting() && !this.culling.takeToken()) {
-                        return;
-                    }
-                    cullableObject.setShown(this, true);
-                }
-                // 仍然不可见
+                cullableObject.setShown(this, true);
+                return;
             }
-        } else {
-            cullableObject.setShown(this, true);
+            if (this.culling.isVisible(cullingData, this.thirdPersonCameraVec3, useRayTracing)) {
+                // 下次再说
+                if (Config.enableEntityCullingRateLimiting() && !this.culling.takeToken()) {
+                    return;
+                }
+                cullableObject.setShown(this, true);
+            }
+            // 仍然不可见
         }
     }
 
@@ -1811,13 +1815,17 @@ public class BukkitServerPlayer extends BukkitLivingEntity implements Player {
     @Override
     public void addTrackedDynamicBlockEntities(Map<BlockPos, DynamicBlockEntityRenderer> renderers) {
         for (Map.Entry<BlockPos, DynamicBlockEntityRenderer> entry : renderers.entrySet()) {
-            this.trackedDynamicBlockEntityRenderers.put(entry.getKey(), new CullableHolder(entry.getValue()));
+            this.addTrackedDynamicBlockEntity(entry.getKey(), entry.getValue());
         }
     }
 
     @Override
     public void addTrackedDynamicBlockEntity(BlockPos blockPos, DynamicBlockEntityRenderer renderer) {
-        this.trackedDynamicBlockEntityRenderers.put(blockPos, new CullableHolder(renderer));
+        CullableHolder holder = new CullableHolder(renderer, renderer.initialForceVisible(this));
+        this.trackedDynamicBlockEntityRenderers.put(blockPos, holder);
+        if (holder.forceVisible) {
+            holder.setShown(this, true);
+        }
     }
 
     @Override

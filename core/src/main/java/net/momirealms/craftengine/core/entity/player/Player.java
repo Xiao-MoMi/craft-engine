@@ -257,6 +257,15 @@ public interface Player extends NetWorkUser, LivingEntity {
 
     CullableHolder getTrackedDynamicBlockEntity(BlockPos blockPos);
 
+    default boolean setDynamicBlockEntityForceVisible(BlockPos pos, boolean forceVisible) {
+        CullableHolder holder = this.getTrackedDynamicBlockEntity(pos);
+        if (holder == null) {
+            return false;
+        }
+        holder.setForceVisible(this, forceVisible);
+        return true;
+    }
+
     void removeTrackedDynamicBlockEntities(Collection<BlockPos> renders);
 
     void removeTrackedDynamicBlockEntity(BlockPos pos);

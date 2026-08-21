@@ -62,7 +62,7 @@ public final class RuntimePatcher {
                 plugin.logger().info("Patching the server...");
                 ChunkLoadWarmupAgent.install(instrumentation());
             } catch (Throwable t) {
-                plugin.logger().warn("Failed to hook chunk data read, chunk data will be read synchronously on chunk load", t);
+                plugin.logger().warn("Failed to hook chunk data read, chunk data will be read synchronously on chunk load");
             }
         }
     }

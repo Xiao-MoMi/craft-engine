@@ -619,6 +619,7 @@ public class CEChunk {
                                 renderer.show(player);
                             }
                             holder.cullable = renderer;
+                            holder.setForceVisible(player, renderer.initialForceVisible(player));
                         } else {
                             player.addTrackedDynamicBlockEntity(blockEntity.pos(), renderer);
                         }
