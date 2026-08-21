@@ -207,6 +207,8 @@ public interface Player extends NetWorkUser, LivingEntity {
 
     void setEntityCullingDistanceScale(double value);
 
+    double entityCullingDistanceScale();
+
     void setDisplayEntityViewDistanceScale(double value);
 
     double displayEntityViewDistance();

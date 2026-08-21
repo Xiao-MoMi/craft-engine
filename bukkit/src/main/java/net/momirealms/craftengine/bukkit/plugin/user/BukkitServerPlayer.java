@@ -1694,6 +1694,11 @@ public class BukkitServerPlayer extends BukkitLivingEntity implements Player {
     }
 
     @Override
+    public double entityCullingDistanceScale() {
+        return this.culling.distanceScale();
+    }
+
+    @Override
     public void setDisplayEntityViewDistanceScale(double value) {
         value = Math.clamp(value, 0.125, 8);
         this.displayEntityViewDistance = value;
