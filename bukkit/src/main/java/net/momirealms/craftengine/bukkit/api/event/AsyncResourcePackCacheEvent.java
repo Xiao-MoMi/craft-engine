@@ -58,7 +58,7 @@ public final class AsyncResourcePackCacheEvent extends Event {
      * @throws IllegalArgumentException if the provided path is neither a .zip file nor a directory.
      */
     public void registerExternalResourcePack(@NotNull final Path path) {
-        if (Files.isRegularFile(path) && path.getFileName().endsWith(".zip")) {
+        if (Files.isRegularFile(path) && path.getFileName().toString().endsWith(".zip")) {
             this.cacheData.externalZips().add(path);
         } else if (Files.isDirectory(path)) {
             this.cacheData.externalFolders().add(path);
