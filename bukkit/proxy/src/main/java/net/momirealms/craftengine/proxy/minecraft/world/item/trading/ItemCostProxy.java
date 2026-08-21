@@ -2,6 +2,7 @@ package net.momirealms.craftengine.proxy.minecraft.world.item.trading;
 
 import net.momirealms.craftengine.proxy.minecraft.core.HolderProxy;
 import net.momirealms.craftengine.proxy.minecraft.core.component.DataComponentExactPredicateProxy;
+import net.momirealms.sparrow.reflection.clazz.SparrowClass;
 import net.momirealms.sparrow.reflection.proxy.ASMProxyFactory;
 import net.momirealms.sparrow.reflection.proxy.annotation.*;
 
@@ -10,12 +11,16 @@ public interface ItemCostProxy {
     ItemCostProxy INSTANCE = ASMProxyFactory.create(ItemCostProxy.class);
     Object STREAM_CODEC = INSTANCE != null ? INSTANCE.getStreamCodec() : null;
     Object OPTIONAL_STREAM_CODEC = INSTANCE != null ? INSTANCE.getOptionalStreamCodec() : null;
+    Class<?> CLASS = SparrowClass.find("net.minecraft.world.item.trading.ItemCost");
 
     @ConstructorInvoker
     Object newInstance(@Type(clazz = HolderProxy.class) Object item, int count, @Type(clazz = DataComponentExactPredicateProxy.class) Object components);
 
     @FieldGetter(name = "itemStack")
     Object getItemStack(Object target);
+
+    @FieldGetter(name = "components")
+    Object getComponents(Object target);
 
     @FieldSetter(name = "itemStack")
     void setItemStack(Object target, Object itemStack);

@@ -1,5 +1,6 @@
 package net.momirealms.craftengine.bukkit.plugin;
 
+import io.papermc.paper.event.player.PlayerTradeEvent;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import net.momirealms.antigrieflib.AntiGriefCompatibility;
 import net.momirealms.antigrieflib.AntiGriefLib;
@@ -226,6 +227,8 @@ public final class BukkitCraftEngine extends CraftEngine {
         super.attributeManager = new BukkitAttributeManager(this);
         // 初始化实体管理器
         super.entityManager = new BukkitEntityManager(this);
+        // 阻止无物品谓词的原版商人交易接受 CE 物品
+        RuntimePatcher.installMerchantItemMatchHook(this);
         // 重定义 LivingEntity
         RuntimePatcher.installEquipmentChangeHook(this);
         // 注册默认的parser
