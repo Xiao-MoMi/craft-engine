@@ -674,7 +674,6 @@ public abstract class CraftEngine implements Plugin {
                 Dependencies.TEXT_SERIALIZER_COMMONS, Dependencies.TEXT_SERIALIZER_LEGACY, Dependencies.TEXT_SERIALIZER_GSON, Dependencies.TEXT_SERIALIZER_GSON_LEGACY, Dependencies.TEXT_SERIALIZER_JSON,
                 Dependencies.AHO_CORASICK,
                 Dependencies.LZ4,
-                Dependencies.EVALEX,
                 Dependencies.NETTY_HTTP,
                 Dependencies.JIMFS,
                 Dependencies.BUCKET_4_J

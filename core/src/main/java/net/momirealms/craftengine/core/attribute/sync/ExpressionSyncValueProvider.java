@@ -1,24 +1,35 @@
 package net.momirealms.craftengine.core.attribute.sync;
 
-import com.ezylang.evalex.EvaluationException;
-import com.ezylang.evalex.Expression;
-import com.ezylang.evalex.parser.ParseException;
 import net.momirealms.craftengine.core.plugin.CraftEngine;
+import net.momirealms.sparrow.expr.CompiledExpression;
+import net.momirealms.sparrow.expr.ExpressionCompiler;
+import net.momirealms.sparrow.expr.binding.ParameterBinding;
 
-public record ExpressionSyncValueProvider(Expression expression) implements SyncValueProvider {
-    public static final SyncValueProviderFactory<ExpressionSyncValueProvider> FACTORY = args -> new ExpressionSyncValueProvider(new Expression(args.getNonNullString("expression")));
-    public static final ExpressionSyncValueProvider DEFAULT = new ExpressionSyncValueProvider(new Expression("value"));
+public final class ExpressionSyncValueProvider implements SyncValueProvider {
+    private static final ExpressionCompiler<SyncContext> COMPILER = new ExpressionCompiler<>(name -> switch (name) {
+        case "value" -> ParameterBinding.number(SyncContext::value);
+        case "base" -> ParameterBinding.number(SyncContext::base);
+        default -> throw new IllegalArgumentException("Unknown expression parameter: " + name);
+    });
+    public static final SyncValueProviderFactory<ExpressionSyncValueProvider> FACTORY =
+            args -> new ExpressionSyncValueProvider(args.getNonNullString("expression"));
+    public static final ExpressionSyncValueProvider DEFAULT = new ExpressionSyncValueProvider("value");
+    private final CompiledExpression<SyncContext> expression;
+
+    public ExpressionSyncValueProvider(String expression) {
+        this.expression = COMPILER.compile(expression);
+    }
 
     @Override
     public double resolve(double value, double base) {
         try {
-            return this.expression.copy()
-                    .with("value", value)
-                    .with("base", base)
-                    .evaluate().getNumberValue().doubleValue();
-        } catch (EvaluationException | ParseException e) {
+            return this.expression.evaluate(new SyncContext(value, base));
+        } catch (RuntimeException e) {
             CraftEngine.instance().logger().warn("Failed to evaluate sync value expression: " + e.getMessage());
             return 0;
         }
+    }
+
+    private record SyncContext(double value, double base) {
     }
 }

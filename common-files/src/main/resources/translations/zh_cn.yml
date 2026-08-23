@@ -141,7 +141,7 @@ attribute.operation.invalid_expression: 属性运算中存在无效的表达式�
 attribute.derived.unknown_attribute: 派生表达式“<arg:1>”中引用了未知的属性“<arg:0>”
 attribute.derived.unknown_type: 未知的派生值类型“<arg:0>”
 number.unknown_type: 未知的数字类型“<arg:0>”
-number.fixed.invalid_expression: 无效的表达式“<arg:0>”。https://ezylang.github.io/EvalEx/references/references.html
+number.fixed.invalid_expression: 无效的表达式“<arg:0>”。
 number.greater_than: “<arg:0>”应大于“<arg:1>”
 number.no_greater_than: “<arg:0>”不应大于“<arg:1>”
 number.less_than: “<arg:0>”应小于“<arg:1>”

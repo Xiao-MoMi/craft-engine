@@ -5,13 +5,15 @@ import net.momirealms.craftengine.core.plugin.config.ConfigKeys;
 import net.momirealms.craftengine.core.plugin.config.ConfigSection;
 import net.momirealms.craftengine.core.plugin.context.Condition;
 import net.momirealms.craftengine.core.plugin.context.Context;
-import net.momirealms.craftengine.core.plugin.context.number.PrecompiledExpression;
+import net.momirealms.craftengine.core.plugin.context.expression.ContextExpression;
 
 public final class ExpressionCondition<CTX extends Context> implements Condition<CTX> {
-    private final PrecompiledExpression expression;
+    private final String source;
+    private final ContextExpression<Context> expression;
 
     private ExpressionCondition(String expression) {
-        this.expression = new PrecompiledExpression(expression);
+        this.source = expression;
+        this.expression = ContextExpression.compile(expression);
     }
 
     public static <CTX extends Context> ConditionFactory<CTX, ExpressionCondition<CTX>> factory() {
@@ -21,9 +23,9 @@ public final class ExpressionCondition<CTX extends Context> implements Condition
     @Override
     public boolean test(CTX ctx) {
         try {
-            return this.expression.evaluate(ctx).getBooleanValue();
+            return this.expression.test(ctx);
         } catch (Throwable t) {
-            CraftEngine.instance().logger().warn("Error evaluating expression: " + this.expression.raw(), t);
+            CraftEngine.instance().logger().warn("Error evaluating expression: " + this.source, t);
             return false;
         }
     }

@@ -120,7 +120,7 @@ yaml.duplicated_key: "파일 <arg:0>의 <arg:2>번째 줄에서 중복된 키 '<
 yaml.inconsistent_value_type: "파일 <arg:0>의 <arg:2>번째 줄에서 값 타입이 다른 중복 키 '<arg:1>' 발견"
 plugin.compatibility: "[호환성] <arg:0>와 연결됨"
 number.unknown_type: "알 수 없는 숫자 타입 '<arg:0>'"
-number.fixed.invalid_expression: "잘못된 수식 '<arg:0>'. https://ezylang.github.io/EvalEx/references/references.html"
+number.fixed.invalid_expression: "잘못된 수식 '<arg:0>'."
 number.greater_than: "'<arg:0>'는 '<arg:1>'보다 커야 합니다."
 number.no_greater_than: "'<arg:0>'는 '<arg:1>'보다 크지 않아야 합니다."
 number.less_than: "'<arg:0>'는 '<arg:1>'보다 작아야 합니다."

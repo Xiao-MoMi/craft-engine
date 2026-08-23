@@ -1,11 +1,9 @@
 package net.momirealms.craftengine.core.plugin.context.number;
 
-import com.ezylang.evalex.EvaluationException;
-import com.ezylang.evalex.Expression;
-import com.ezylang.evalex.parser.ParseException;
 import net.momirealms.craftengine.core.plugin.config.ConfigSection;
 import net.momirealms.craftengine.core.plugin.config.KnownResourceException;
 import net.momirealms.craftengine.core.plugin.context.Context;
+import net.momirealms.craftengine.core.plugin.context.expression.Expressions;
 
 public record ConstantNumberProvider(double value) implements NumberProvider {
     public static final NumberProviderFactory<ConstantNumberProvider> FACTORY = new Factory();
@@ -38,10 +36,9 @@ public record ConstantNumberProvider(double value) implements NumberProvider {
                 double value = Double.parseDouble(plainOrExpression);
                 return new ConstantNumberProvider(value);
             } catch (NumberFormatException e) {
-                Expression expression = new Expression(plainOrExpression);
                 try {
-                    return new ConstantNumberProvider(expression.evaluate().getNumberValue().doubleValue());
-                } catch (ParseException | EvaluationException ex) {
+                    return new ConstantNumberProvider(Expressions.evaluate(plainOrExpression));
+                } catch (RuntimeException ex) {
                     throw new KnownResourceException("number.fixed.invalid_expression", section.assemblePath("value"), plainOrExpression);
                 }
             }

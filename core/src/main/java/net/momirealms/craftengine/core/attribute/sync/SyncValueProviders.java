@@ -1,6 +1,5 @@
 package net.momirealms.craftengine.core.attribute.sync;
 
-import com.ezylang.evalex.Expression;
 import net.momirealms.craftengine.core.plugin.config.ConfigSection;
 import net.momirealms.craftengine.core.plugin.config.ConfigValue;
 import net.momirealms.craftengine.core.plugin.config.KnownResourceException;
@@ -30,7 +29,7 @@ public final class SyncValueProviders {
         if (value.is(Map.class)) {
             return fromConfig(value.getAsSection());
         }
-        return new ExpressionSyncValueProvider(new Expression(value.getAsString()));
+        return new ExpressionSyncValueProvider(value.getAsString());
     }
 
     public static SyncValueProvider fromConfig(ConfigSection section) {

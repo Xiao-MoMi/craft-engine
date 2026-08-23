@@ -1,17 +1,20 @@
 package net.momirealms.craftengine.core.attribute;
 
-import com.ezylang.evalex.EvaluationException;
-import com.ezylang.evalex.Expression;
-import com.ezylang.evalex.parser.ParseException;
 import net.momirealms.craftengine.core.plugin.CraftEngine;
 import net.momirealms.craftengine.core.plugin.config.KnownResourceException;
 import net.momirealms.craftengine.core.util.Key;
+import net.momirealms.sparrow.expr.CompiledExpression;
+import net.momirealms.sparrow.expr.ExpressionCompiler;
+import net.momirealms.sparrow.expr.binding.ParameterBinding;
 
 public interface AttributeOperation {
 
     Key id();
 
     double apply(double phaseBase, double current, double amount);
+
+    record OperationContext(double base, double current, double amount) {
+    }
 
     static AttributeOperation of(Key id, ApplyFunction function) {
         return new AttributeOperation() {
@@ -33,22 +36,21 @@ public interface AttributeOperation {
     }
 
     static AttributeOperation expression(Key id, String rawExpression) {
-        Expression template = new Expression(rawExpression);
+        final CompiledExpression<OperationContext> compiled;
         try {
-            template.copy().with("base", 0d).with("current", 0d).with("amount", 0d).evaluate();
-        } catch (EvaluationException | ParseException e) {
+            compiled = new ExpressionCompiler<>(name -> switch (name) {
+                case "base" -> ParameterBinding.number(OperationContext::base);
+                case "current" -> ParameterBinding.number(OperationContext::current);
+                case "amount" -> ParameterBinding.number(OperationContext::amount);
+                default -> throw new IllegalArgumentException("Unknown expression parameter: " + name);
+            }).compile(rawExpression);
+        } catch (RuntimeException e) {
             throw new KnownResourceException("attribute.operation.invalid_expression", id.asString(), rawExpression);
-        } catch (ArithmeticException ignored) {
-            // 零值探针触发的数学域错误（如除零）不代表表达式非法
         }
         return of(id, (base, current, amount) -> {
             try {
-                return template.copy()
-                        .with("base", base)
-                        .with("current", current)
-                        .with("amount", amount)
-                        .evaluate().getNumberValue().doubleValue();
-            } catch (EvaluationException | ParseException | ArithmeticException e) {
+                return compiled.evaluate(new OperationContext(base, current, amount));
+            } catch (RuntimeException e) {
                 CraftEngine.instance().logger().warn("Failed to evaluate attribute operation '" + id.asString() + "': " + rawExpression + " (" + e.getMessage() + ")");
                 return current;
             }

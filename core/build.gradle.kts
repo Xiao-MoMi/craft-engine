@@ -19,6 +19,7 @@ dependencies {
     cloud(project)
     compression(project)
     adventure(project)
+    implementation("net.momirealms:sparrow-expr:${rootProject.properties["sparrow_expression_version"]}")
     // S3
     implementation("net.momirealms:craft-engine-s3:0.22")
     // Util
@@ -26,6 +27,15 @@ dependencies {
     // Reflection
     compileOnly("net.momirealms:sparrow-reflection:${rootProject.properties["sparrow_reflection_version"]}")
     compileOnly(files("${rootProject.rootDir}/libs/jni-internal-lookup-1.9.jar"))
+    common(project, JavaPlugin.TEST_IMPLEMENTATION_CONFIGURATION_NAME)
+    adventure(project, JavaPlugin.TEST_IMPLEMENTATION_CONFIGURATION_NAME)
+    testImplementation(platform("org.junit:junit-bom:6.1.3"))
+    testImplementation("org.junit.jupiter:junit-jupiter")
+    testRuntimeOnly("org.junit.platform:junit-platform-launcher")
+}
+
+tasks.test {
+    useJUnitPlatform()
 }
 
 tasks.shadowJar {

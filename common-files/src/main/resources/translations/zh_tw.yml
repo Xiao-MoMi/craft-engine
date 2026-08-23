@@ -120,7 +120,7 @@ yaml.duplicated_key: 在檔案 '<arg:0>' 中的第 '<arg:2>' 行發現發現重�
 yaml.inconsistent_value_type: 在檔案 '<arg:0>' 中的第 '<arg:2>' 行發現發現重複的鍵 '<arg:1>' 且值類型不同
 plugin.compatibility: '[相容性] 已掛鉤 <arg:0>'
 number.unknown_type: 未知的數字類型 '<arg:0>'
-number.fixed.invalid_expression: 無效的表示式 '<arg:0>'。https://ezylang.github.io/EvalEx/references/references.html
+number.fixed.invalid_expression: 無效的表示式 '<arg:0>'。
 number.greater_than: "'<arg:0>' 應大於 '<arg:1>'"
 number.no_greater_than: "'<arg:0>' 不應大於 '<arg:1>'"
 number.less_than: "'<arg:0>' 應小於 '<arg:1>'"

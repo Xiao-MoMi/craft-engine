@@ -237,12 +237,6 @@ public final class Dependencies {
             )
             .build();
 
-    public static final Dependency EVALEX = Dependency.of("evalex", "com{}ezylang", "EvalEx")
-            .relocations(
-                    Relocation.of("evalex", "com{}ezylang{}evalex")
-            )
-            .build();
-
     public static final Dependency GRAALJS_POLYGLOT = Dependency.of("graaljs-polyglot", "org.graalvm.polyglot", "polyglot")
             .versionKey("graaljs")
             .build();
