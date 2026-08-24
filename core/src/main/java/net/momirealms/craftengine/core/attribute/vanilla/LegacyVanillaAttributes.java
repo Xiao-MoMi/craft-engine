@@ -2,8 +2,9 @@ package net.momirealms.craftengine.core.attribute.vanilla;
 
 import net.momirealms.craftengine.core.util.Key;
 
-public final class VanillaAttributes1_21 {
-    private VanillaAttributes1_21() {}
+// 1.21.2-
+public final class LegacyVanillaAttributes {
+    private LegacyVanillaAttributes() {}
 
     public static final Key ARMOR = Key.from("generic.armor");
     public static final Key ARMOR_TOUGHNESS = Key.from("generic.armor_toughness");
