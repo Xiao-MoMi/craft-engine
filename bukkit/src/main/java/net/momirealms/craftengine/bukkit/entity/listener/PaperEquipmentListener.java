@@ -8,6 +8,7 @@ import net.momirealms.craftengine.bukkit.util.EquipmentSlotUtils;
 import net.momirealms.craftengine.bukkit.util.ItemStackUtils;
 import net.momirealms.craftengine.core.attribute.equipment.EquipmentSetSlot;
 import net.momirealms.craftengine.core.entity.LivingEntityHolder;
+import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.inventory.EquipmentSlot;
 
@@ -34,6 +35,9 @@ public final class PaperEquipmentListener extends AbstractListener {
                     ItemStackUtils.wrap(entry.getValue().newItem())
             );
         }
-        holder.applyEquipmentChanges(replacements);
+        boolean setPiecesChanged = holder.applyEquipmentChangesAndReportSetChange(replacements);
+        if (setPiecesChanged && event.getEntity() instanceof Player player) {
+            player.updateInventory();
+        }
     }
 }

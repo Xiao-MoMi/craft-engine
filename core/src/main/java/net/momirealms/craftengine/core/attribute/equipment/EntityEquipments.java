@@ -60,14 +60,22 @@ public final class EntityEquipments {
     }
 
     public void updateSets(boolean runTransitionActions) {
-        if (!this.dirty) return;
+        updateSetsAndReportChange(runTransitionActions);
+    }
+
+    public boolean updateSetsAndReportChange() {
+        return updateSetsAndReportChange(true);
+    }
+
+    public boolean updateSetsAndReportChange(boolean runTransitionActions) {
+        if (!this.dirty) return false;
         this.dirty = false;
         Map<Key, Integer> raw = computeRawActiveSets();
         Map<Key, Integer> previous = this.activeSets;
         if (raw.equals(previous)) {
             this.activeSets = raw;
             synchronizePotionEffects();
-            return;
+            return false;
         }
         this.activeSets = raw;
         Set<Key> names = new HashSet<>(previous.keySet());
@@ -80,6 +88,11 @@ public final class EntityEquipments {
                     .ifPresent(set -> applySetChange(set, oldPieces, newPieces, runTransitionActions));
         }
         synchronizePotionEffects();
+        return true;
+    }
+
+    public int countSetPieces(Key set) {
+        return this.activeSets.getOrDefault(set, 0);
     }
 
     private void applySetChange(EquipmentSet set, int oldPieces, int newPieces, boolean runTransitionActions) {

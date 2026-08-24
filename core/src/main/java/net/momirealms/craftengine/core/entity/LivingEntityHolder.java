@@ -95,6 +95,10 @@ public final class LivingEntityHolder {
     }
 
     public void applyEquipmentChanges(Map<EquipmentSetSlot, ? extends Item> changes) {
+        applyEquipmentChangesAndReportSetChange(changes);
+    }
+
+    public boolean applyEquipmentChangesAndReportSetChange(Map<EquipmentSetSlot, ? extends Item> changes) {
         for (EquipmentSetSlot slot : changes.keySet()) {
             this.equipments.remove(slot);
         }
@@ -104,7 +108,7 @@ public final class LivingEntityHolder {
                 this.equipments.add(entry.getKey(), item);
             }
         }
-        this.equipments.updateSets();
+        return this.equipments.updateSetsAndReportChange();
     }
 
     public long currentTick() {
