@@ -405,7 +405,10 @@ public final class ModernNetworkItemHandler implements NetworkItemHandler {
         Object itemLore = item.getExactComponent(DataComponentTypes.LORE);
         if (itemLore == null) return false;
         List<Object> lines = ItemLoreProxy.INSTANCE.getStyleLines(itemLore);
-        if (lines.isEmpty()) return false;
+        if (lines == null) {
+            lines = ItemLoreProxy.INSTANCE.getLines(itemLore);
+        }
+        if (lines == null || lines.isEmpty()) return false;
 
         boolean has = false;
         for (Object line : lines) {
