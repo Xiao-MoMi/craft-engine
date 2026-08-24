@@ -64,7 +64,8 @@ public abstract class AbstractFontManager implements FontManager {
 
     @Override
     public void load() {
-        this.offsetFont = Optional.ofNullable(plugin.config().settings().getSection("image.offset-characters"))
+        this.offsetFont = Optional.ofNullable(YamlUtils.reader(plugin.config().settings()).getSection("image.offset-characters"))
+                .map(YamlUtils::reader)
                 .filter(section -> section.getBoolean("enable", true))
                 .map(section -> {
                     Key font = Key.of(section.getString("font", "minecraft:default"));

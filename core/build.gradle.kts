@@ -20,6 +20,7 @@ dependencies {
     compression(project)
     adventure(project)
     implementation("net.momirealms:sparrow-expr:${rootProject.properties["sparrow_expression_version"]}")
+    implementation("net.momirealms:sparrow-yaml:${rootProject.properties["sparrow_yaml_version"]}")
     // S3
     implementation("net.momirealms:craft-engine-s3:0.22")
     // Util

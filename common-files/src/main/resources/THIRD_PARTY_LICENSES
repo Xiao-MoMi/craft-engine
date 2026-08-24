@@ -1969,9 +1969,9 @@ comes from the X.org project and is under the following licenses:
 
 
 ----------------------------------------------------------------
-Library Name   : boosted-yaml
-Project URL    : https://github.com/dejvokep/boosted-yaml
-License        : Apache License 2.0
+Library Name   : sparrow-yaml
+Project URL    : https://github.com/Xiao-MoMi/sparrow-yaml
+License        : GNU General Public License v3.0; bundled SnakeYAML Engine: Apache License 2.0
 
                                  Apache License
                            Version 2.0, January 2004

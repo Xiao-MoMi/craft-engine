@@ -1,12 +1,5 @@
 package net.momirealms.craftengine.core.plugin.command;
 
-import dev.dejvokep.boostedyaml.YamlDocument;
-import dev.dejvokep.boostedyaml.block.implementation.Section;
-import dev.dejvokep.boostedyaml.dvs.versioning.BasicVersioning;
-import dev.dejvokep.boostedyaml.settings.dumper.DumperSettings;
-import dev.dejvokep.boostedyaml.settings.general.GeneralSettings;
-import dev.dejvokep.boostedyaml.settings.loader.LoaderSettings;
-import dev.dejvokep.boostedyaml.settings.updater.UpdaterSettings;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.ComponentLike;
 import net.kyori.adventure.text.TranslatableComponent;
@@ -17,6 +10,10 @@ import net.momirealms.craftengine.core.plugin.locale.CraftEngineCaptionFormatter
 import net.momirealms.craftengine.core.plugin.locale.CraftEngineCaptionProvider;
 import net.momirealms.craftengine.core.util.ArrayUtils;
 import net.momirealms.craftengine.core.util.TriConsumer;
+import net.momirealms.craftengine.core.util.YamlUtils;
+import net.momirealms.sparrow.yaml.YamlDocument;
+import net.momirealms.sparrow.yaml.node.SectionNode;
+import net.momirealms.sparrow.yaml.upgrade.YamlUpgradePipeline;
 import org.checkerframework.checker.nullness.qual.Nullable;
 import org.incendo.cloud.Command;
 import org.incendo.cloud.caption.Caption;
@@ -88,12 +85,13 @@ public abstract class AbstractCommandManager<C> implements CraftEngineCommandMan
 
     @Override
     public CommandConfig<C> getCommandConfig(YamlDocument document, String featureID) {
-        Section section = document.getSection(featureID);
+        SectionNode section = YamlUtils.reader(document).getSection(featureID);
         if (section == null) return null;
+        YamlUtils.Reader config = YamlUtils.reader(section);
         return new CommandConfig.Builder<C>()
-                .permission(section.getString("permission"))
-                .usages(section.getStringList("usage"))
-                .enable(section.getBoolean("enable", false))
+                .permission(config.getString("permission"))
+                .usages(config.getStringList("usage"))
+                .enable(config.getBoolean("enable", false))
                 .build();
     }
 
@@ -128,15 +126,10 @@ public abstract class AbstractCommandManager<C> implements CraftEngineCommandMan
     @Override
     public void registerDefaultFeatures() {
         YamlDocument document = Config.instance().loadYamlConfig(commandsFile,
-                GeneralSettings.DEFAULT,
-                LoaderSettings
+                YamlUpgradePipeline
                     .builder()
-                    .setAutoUpdate(true)
-                    .build(),
-                DumperSettings.DEFAULT,
-                UpdaterSettings
-                    .builder()
-                    .setVersioning(new BasicVersioning("config-version"))
+                    .updateComments(true)
+                    .deleteRemovedNodes(true)
                     .build()
         );
         try {

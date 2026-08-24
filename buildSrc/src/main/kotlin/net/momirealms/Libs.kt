@@ -22,7 +22,7 @@ fun DependencyHandlerScope.nbt(project: Project, configuration: String = JavaPlu
 
 fun DependencyHandlerScope.common(project: Project, configuration: String = JavaPlugin.COMPILE_ONLY_CONFIGURATION_NAME) {
     fun v(key: String) = project.rootProject.property(key).toString()
-    configuration(project.files("${project.rootProject.rootDir}/libs/boosted-yaml-${v("boosted_yaml_version")}.jar"))
+    configuration("net.momirealms:sparrow-yaml:${v("sparrow_yaml_version")}")
     configuration("com.google.guava:guava:${v("guava_version")}")
     configuration("com.google.code.gson:gson:${v("gson_version")}")
     configuration("it.unimi.dsi:fastutil:${v("fastutil_version")}")

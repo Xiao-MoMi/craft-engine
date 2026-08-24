@@ -12,7 +12,10 @@ import net.momirealms.craftengine.core.util.ResourceKey;
 import java.util.Map;
 
 public final class SyncValueProviders {
-    public static final SyncValueProviderType<ExpressionSyncValueProvider> EXPRESSION = register(Key.ce("expression"), ExpressionSyncValueProvider.FACTORY);
+    public static final SyncValueProviderType<SyncValueProvider> EXPRESSION = register(Key.ce("expression"), args -> fromExpression(
+            args.assemblePath("expression"),
+            args.getNonNullString("expression")
+    ));
     public static final SyncValueProviderType<DeltaSyncValueProvider> DELTA = register(Key.ce("delta"), DeltaSyncValueProvider.FACTORY);
     public static final SyncValueProviderType<RatioSyncValueProvider> RATIO = register(Key.ce("ratio"), RatioSyncValueProvider.FACTORY);
 
@@ -29,7 +32,7 @@ public final class SyncValueProviders {
         if (value.is(Map.class)) {
             return fromConfig(value.getAsSection());
         }
-        return new ExpressionSyncValueProvider(value.path(), value.getAsString());
+        return fromExpression(value.path(), value.getAsString());
     }
 
     public static SyncValueProvider fromConfig(ConfigSection section) {
@@ -40,5 +43,12 @@ public final class SyncValueProviders {
             throw new KnownResourceException("attribute.sync_value_provider.unknown_type", section.assemblePath("type"), type);
         }
         return providerType.factory().create(section);
+    }
+
+    private static SyncValueProvider fromExpression(String node, String expression) {
+        if (expression.equals("value")) {
+            return ValueSyncValueProvider.INSTANCE;
+        }
+        return new ExpressionSyncValueProvider(node, expression);
     }
 }

@@ -1,6 +1,6 @@
 package net.momirealms.craftengine.core.plugin.command;
 
-import dev.dejvokep.boostedyaml.YamlDocument;
+import net.momirealms.sparrow.yaml.YamlDocument;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.TranslatableComponent;
 import net.kyori.adventure.util.Index;

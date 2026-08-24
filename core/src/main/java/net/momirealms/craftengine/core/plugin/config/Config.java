@@ -2,16 +2,6 @@ package net.momirealms.craftengine.core.plugin.config;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
-import dev.dejvokep.boostedyaml.YamlDocument;
-import dev.dejvokep.boostedyaml.block.implementation.Section;
-import dev.dejvokep.boostedyaml.dvs.versioning.BasicVersioning;
-import dev.dejvokep.boostedyaml.libs.org.snakeyaml.engine.v2.common.ScalarStyle;
-import dev.dejvokep.boostedyaml.libs.org.snakeyaml.engine.v2.nodes.Tag;
-import dev.dejvokep.boostedyaml.settings.dumper.DumperSettings;
-import dev.dejvokep.boostedyaml.settings.general.GeneralSettings;
-import dev.dejvokep.boostedyaml.settings.loader.LoaderSettings;
-import dev.dejvokep.boostedyaml.settings.updater.UpdaterSettings;
-import dev.dejvokep.boostedyaml.utils.format.NodeRole;
 import net.kyori.adventure.text.Component;
 import net.momirealms.craftengine.core.attribute.damage.DamageIndicator;
 import net.momirealms.craftengine.core.attribute.damage.DamageIndicators;
@@ -34,6 +24,10 @@ import net.momirealms.craftengine.core.plugin.logger.filter.DisconnectLogFilter;
 import net.momirealms.craftengine.core.util.*;
 import net.momirealms.craftengine.core.world.chunk.storage.CompressionMethod;
 import net.momirealms.craftengine.core.world.chunk.storage.StorageType;
+import net.momirealms.sparrow.yaml.SparrowYaml;
+import net.momirealms.sparrow.yaml.YamlDocument;
+import net.momirealms.sparrow.yaml.node.SectionNode;
+import net.momirealms.sparrow.yaml.upgrade.YamlUpgradePipeline;
 
 import java.io.*;
 import java.nio.file.Files;
@@ -49,6 +43,7 @@ public final class Config {
     private final CraftEngine plugin;
     private final Path configFilePath;
     private final String configVersion;
+    private final SparrowYaml yaml;
     private YamlDocument config;
     private long lastModified;
     private long size;
@@ -310,6 +305,7 @@ public final class Config {
         this.plugin = plugin;
         this.configVersion = PluginProperties.getValue("config");
         this.configFilePath = this.plugin.dataFolderPath().resolve("config.yml");
+        this.yaml = SparrowYaml.builder().build();
         instance = this;
     }
 
@@ -325,8 +321,8 @@ public final class Config {
             if (lastModified != this.lastModified || size != this.size || this.config == null) {
                 byte[] configFileBytes = Files.readAllBytes(this.configFilePath);
                 try (InputStream inputStream = new ByteArrayInputStream(configFileBytes)) {
-                    this.config = YamlDocument.create(inputStream);
-                    String configVersion = this.config.getString("config-version");
+                    this.config = this.yaml.load(inputStream);
+                    String configVersion = YamlUtils.reader(this.config).getString("config-version");
                     if (!configVersion.equals(this.configVersion)) {
                         this.updateConfigVersion(configFileBytes);
                     }
@@ -349,52 +345,44 @@ public final class Config {
     }
 
     private void updateConfigVersion(byte[] bytes) throws IOException {
-        try (InputStream inputStream = new ByteArrayInputStream(bytes)) {
-            this.config = YamlDocument.create(inputStream, this.plugin.resourceStream("config.yml"), GeneralSettings.builder()
-                            .setRouteSeparator('.')
-                            .setUseDefaults(false)
-                            .build(),
-                    LoaderSettings
-                            .builder()
-                            .setAutoUpdate(true)
-                            .build(),
-                    DumperSettings.builder()
-                            .setEscapeUnprintable(false)
-                            .setScalarFormatter((tag, value, role, def) -> {
-                                if (role == NodeRole.KEY) {
-                                    return ScalarStyle.PLAIN;
-                                } else {
-                                    return tag == Tag.STR ? ScalarStyle.DOUBLE_QUOTED : ScalarStyle.PLAIN;
-                                }
-                            })
-                            .build(),
-                    UpdaterSettings
-                            .builder()
-                            .setVersioning(new BasicVersioning("config-version"))
-                            .addIgnoredRoute(PluginProperties.getValue("config"), "resource-pack.delivery.hosting", '.')
-                            .addIgnoredRoute(PluginProperties.getValue("config"), "chunk-system.process-invalid-blocks.convert", '.')
-                            .addIgnoredRoute(PluginProperties.getValue("config"), "chunk-system.process-invalid-furniture.convert", '.')
-                            .addIgnoredRoute(PluginProperties.getValue("config"), "item.custom-model-data-starting-value.overrides", '.')
-                            .addIgnoredRoute(PluginProperties.getValue("config"), "item.break-power", '.')
-                            .addIgnoredRoute(PluginProperties.getValue("config"), "damage-indicator.schemes", '.')
-                            .addIgnoredRoute(PluginProperties.getValue("config"), "block.deceive-bukkit-material.overrides", '.')
-                            .build());
+        try (InputStream inputStream = new ByteArrayInputStream(bytes);
+             InputStream defaultInputStream = this.plugin.resourceStream("config.yml")) {
+            if (defaultInputStream == null) {
+                throw new IOException("Embedded config.yml not found");
+            }
+            YamlUpgradePipeline pipeline = YamlUpgradePipeline.builder()
+                    .updateComments(true)
+                    .deleteRemovedNodes(true)
+                    .build();
+            this.config = pipeline.upgrade(
+                    this.yaml.load(inputStream),
+                    this.yaml.load(defaultInputStream),
+                    List.of(
+                            YamlUtils.route("resource-pack.delivery.hosting"),
+                            YamlUtils.route("chunk-system.process-invalid-blocks.convert"),
+                            YamlUtils.route("chunk-system.process-invalid-furniture.convert"),
+                            YamlUtils.route("item.custom-model-data-starting-value.overrides"),
+                            YamlUtils.route("item.break-power"),
+                            YamlUtils.route("damage-indicator.schemes"),
+                            YamlUtils.route("block.deceive-bukkit-material.overrides")
+                    )
+            );
         }
         try {
-            this.config.save(new File(plugin.dataFolderFile(), "config.yml"));
+            this.config.save(this.plugin.dataFolderPath().resolve("config.yml"));
         } catch (IOException e) {
             this.plugin.logger().warn("Could not save config.yml", e);
         }
     }
 
     public void loadForcedLocale() {
-        YamlDocument config = settings();
+        YamlUtils.Reader config = YamlUtils.reader(settings());
         this.forcedLocale = TranslationManager.parseLocale(config.getString("forced-locale", ""));
     }
 
     @SuppressWarnings("DuplicatedCode")
     public void loadFullSettings() {
-        YamlDocument config = settings();
+        YamlUtils.Reader config = YamlUtils.reader(settings());
         this.forcedLocale = TranslationManager.parseLocale(config.getString("forced-locale", ""));
         this.misc$delayConfigurationLoad = config.getBoolean("misc.delay-configuration-load", true);
         this.misc$multi_threaded_configuration_load = config.getBoolean("misc.multi-threaded-configuration-load", true);
@@ -571,8 +559,7 @@ public final class Config {
         this.chunk_system$async_read = config.getBoolean("chunk-system.async-read", true);
 
         if (this.firstTime) {
-            this.chunk_system$injection$target = config.getString("chunk-system.injection.target", "palette").equalsIgnoreCase("palette")
-                    || (VersionHelper.hasLeafPatch && !VersionHelper.isOrAbove1_21_11);
+            this.chunk_system$injection$target = config.getString("chunk-system.injection.target", "palette").equalsIgnoreCase("palette") || (VersionHelper.hasLeafPatch && !VersionHelper.isOrAbove1_21_11);
         }
 
         this.chunk_system$process_invalid_furniture$enable = config.getBoolean("chunk-system.process-invalid-furniture.enable", false);
@@ -581,9 +568,9 @@ public final class Config {
             furnitureBuilder.put(furniture, "");
         }
         if (config.contains("chunk-system.process-invalid-furniture.convert")) {
-            Section section = config.getSection("chunk-system.process-invalid-furniture.convert");
+            SectionNode section = config.getSection("chunk-system.process-invalid-furniture.convert");
             if (section != null) {
-                for (Map.Entry<String, Object> entry : section.getStringRouteMappedValues(false).entrySet()) {
+                for (Map.Entry<String, Object> entry : section.getValues().entrySet()) {
                     furnitureBuilder.put(entry.getKey(), entry.getValue().toString());
                 }
             }
@@ -596,9 +583,9 @@ public final class Config {
             blockBuilder.put(furniture, "");
         }
         if (config.contains("chunk-system.process-invalid-blocks.convert")) {
-            Section section = config.getSection("chunk-system.process-invalid-blocks.convert");
+            SectionNode section = config.getSection("chunk-system.process-invalid-blocks.convert");
             if (section != null) {
-                for (Map.Entry<String, Object> entry : section.getStringRouteMappedValues(false).entrySet()) {
+                for (Map.Entry<String, Object> entry : section.getValues().entrySet()) {
                     blockBuilder.put(entry.getKey(), entry.getValue().toString());
                 }
             }
@@ -670,10 +657,10 @@ public final class Config {
         } else {
             this.item$data_fixer_upper$fallback_version = Integer.parseInt(fallbackVersion);
         }
-        Section customModelDataOverridesSection = config.getSection("item.custom-model-data-starting-value.overrides");
+        SectionNode customModelDataOverridesSection = config.getSection("item.custom-model-data-starting-value.overrides");
         if (customModelDataOverridesSection != null) {
             Map<Key, Integer> customModelDataOverrides = new HashMap<>();
-            for (Map.Entry<String, Object> entry : customModelDataOverridesSection.getStringRouteMappedValues(false).entrySet()) {
+            for (Map.Entry<String, Object> entry : customModelDataOverridesSection.getValues().entrySet()) {
                 if (entry.getValue() instanceof String s) {
                     customModelDataOverrides.put(Key.of(entry.getKey()), Integer.parseInt(s));
                 } else if (entry.getValue() instanceof Integer i) {
@@ -684,10 +671,10 @@ public final class Config {
         } else {
             this.item$custom_model_data_starting_value$overrides = Map.of();
         }
-        Section breakPowerSection = config.getSection("item.break-power");
+        SectionNode breakPowerSection = config.getSection("item.break-power");
         if (breakPowerSection != null) {
             Map<Key, Integer> breakPowerOverrides = new HashMap<>();
-            for (Map.Entry<String, Object> entry : breakPowerSection.getStringRouteMappedValues(false).entrySet()) {
+            for (Map.Entry<String, Object> entry : breakPowerSection.getValues().entrySet()) {
                 if (entry.getValue() instanceof String s) {
                     breakPowerOverrides.put(Key.of(entry.getKey()), Integer.parseInt(s));
                 } else if (entry.getValue() instanceof Integer i) {
@@ -714,9 +701,9 @@ public final class Config {
         if (this.firstTime) {
             this.block$deceive_bukkit_material$default = Key.of(config.getString("block.deceive-bukkit-material.default", "bricks"));
             this.block$deceive_bukkit_material$overrides = new HashMap<>();
-            Section overridesSection = config.getSection("block.deceive-bukkit-material.overrides");
+            SectionNode overridesSection = config.getSection("block.deceive-bukkit-material.overrides");
             if (overridesSection != null) {
-                for (Map.Entry<String, Object> entry : overridesSection.getStringRouteMappedValues(false).entrySet()) {
+                for (Map.Entry<String, Object> entry : overridesSection.getValues().entrySet()) {
                     String key = entry.getKey();
                     Key value = Key.of(String.valueOf(entry.getValue()));
                     if (key.contains("~")) {
@@ -771,10 +758,10 @@ public final class Config {
         this.image$illegal_characters_filter$sign = config.getBoolean("image.illegal-characters-filter.sign", true);
 
         this.image$codepoint_starting_value$default = config.getInt("image.codepoint-starting-value.default", 0);
-        Section codepointOverridesSection = config.getSection("image.codepoint-starting-value.overrides");
+        SectionNode codepointOverridesSection = config.getSection("image.codepoint-starting-value.overrides");
         if (codepointOverridesSection != null) {
             Map<Key, Integer> codepointOverrides = new HashMap<>();
-            for (Map.Entry<String, Object> entry : codepointOverridesSection.getStringRouteMappedValues(false).entrySet()) {
+            for (Map.Entry<String, Object> entry : codepointOverridesSection.getValues().entrySet()) {
                 if (entry.getValue() instanceof String s) {
                     codepointOverrides.put(Key.of(entry.getKey()), Integer.parseInt(s));
                 } else if (entry.getValue() instanceof Integer i) {
@@ -1786,7 +1773,7 @@ public final class Config {
     }
 
     private List<DamageIndicator> parseDamageIndicatorSchemes(YamlDocument config) {
-        List<Map<?, ?>> list = config.getMapList("damage-indicator.schemes");
+        List<Map<?, ?>> list = YamlUtils.reader(config).getMapList("damage-indicator.schemes");
         if (list == null) return List.of();
         List<DamageIndicator> schemes = new ArrayList<>(list.size());
         int index = 0;
@@ -1801,9 +1788,14 @@ public final class Config {
         return List.copyOf(schemes);
     }
 
-    public YamlDocument loadYamlConfig(String filePath, GeneralSettings generalSettings, LoaderSettings loaderSettings, DumperSettings dumperSettings, UpdaterSettings updaterSettings) {
-        try (InputStream inputStream = new FileInputStream(resolveConfig(filePath).toFile())) {
-            return YamlDocument.create(inputStream, this.plugin.resourceStream(filePath), generalSettings, loaderSettings, dumperSettings, updaterSettings);
+    public YamlDocument loadYamlConfig(String filePath, YamlUpgradePipeline pipeline) {
+        try (InputStream inputStream = new FileInputStream(resolveConfig(filePath).toFile());
+             InputStream defaultInputStream = this.plugin.resourceStream(filePath)) {
+            YamlDocument document = this.yaml.load(inputStream);
+            if (defaultInputStream == null) {
+                return document;
+            }
+            return pipeline.upgrade(document, this.yaml.load(defaultInputStream));
         } catch (IOException e) {
             this.plugin.logger().error("Failed to load config " + filePath, e);
             return null;
@@ -1812,7 +1804,7 @@ public final class Config {
 
     public YamlDocument loadYamlData(Path file) {
         try (InputStream inputStream = Files.newInputStream(file)) {
-            return YamlDocument.create(inputStream);
+            return this.yaml.load(inputStream);
         } catch (IOException e) {
             this.plugin.logger().error("Failed to load config " + file, e);
             return null;

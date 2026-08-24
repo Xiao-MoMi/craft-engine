@@ -16,10 +16,10 @@ import net.momirealms.craftengine.core.attribute.modifier.ItemAttributeModifier;
 import net.momirealms.craftengine.core.attribute.modifier.ItemAttributeModifierStore;
 import net.momirealms.craftengine.core.attribute.modifier.ItemAttributeModifiersProvider;
 import net.momirealms.craftengine.core.attribute.modifier.SlotAttributeModifierConfig;
-import net.momirealms.craftengine.core.attribute.sync.ExpressionSyncValueProvider;
 import net.momirealms.craftengine.core.attribute.sync.SyncTarget;
 import net.momirealms.craftengine.core.attribute.sync.SyncValueProvider;
 import net.momirealms.craftengine.core.attribute.sync.SyncValueProviders;
+import net.momirealms.craftengine.core.attribute.sync.ValueSyncValueProvider;
 import net.momirealms.craftengine.core.attribute.vanilla.VanillaAttributeModifier.Operation;
 import net.momirealms.craftengine.core.entity.Entity;
 import net.momirealms.craftengine.core.entity.EntityDefinition;
@@ -381,7 +381,7 @@ public abstract class AbstractAttributeManager implements AttributeManager {
             List<SyncTarget> sync = section.getSectionList("sync", v -> new SyncTarget(
                     v.getNonNullKey("target"),
                     v.getNonNullEnum("operation", Operation.class),
-                    v.<SyncValueProvider>getValue("value", SyncValueProviders::fromConfig, () -> ExpressionSyncValueProvider.DEFAULT)
+                    v.<SyncValueProvider>getValue("value", SyncValueProviders::fromConfig, () -> ValueSyncValueProvider.INSTANCE)
             ));
             ValueFormatter formatter = section.getValue("format", ValueFormatters::fromConfig);
             Set<Key> applicableEntityTypes = parseApplicableEntityTypes(section);

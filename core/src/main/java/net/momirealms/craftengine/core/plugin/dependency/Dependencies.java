@@ -84,12 +84,6 @@ public final class Dependencies {
             )
             .build();
 
-    public static final Dependency BOOSTED_YAML = Dependency.of("boosted-yaml", "dev{}dejvokep", "boosted-yaml")
-            .relocations(
-                    Relocation.of("boostedyaml", "dev{}dejvokep{}boostedyaml")
-            )
-            .build();
-
     public static final Dependency BSTATS_BASE = Dependency.of("bstats-base", "org{}bstats", "bstats-base")
             .relocations(
                     Relocation.of("bstats", "org{}bstats")
