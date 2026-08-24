@@ -47,8 +47,8 @@ public final class AttributeExpansion extends PlaceholderExpansion {
         return true;
     }
 
-    // %ceattr_<mode>_<属性id>%，mode ∈ base / value / formatted
-    // value 与 formatted 支持 +weapon 后缀：额外合并主手武器的 weapon 作用域贡献
+    // %ceattr_<mode>_<属性id>%，mode ∈ base / value
+    // value 支持 +weapon 后缀：额外合并主手武器的 weapon 作用域贡献
     // 例：%ceattr_value+weapon_example:crit_chance%
     @Override
     public @Nullable String onPlaceholderRequest(Player bukkitPlayer, @NotNull String params) {
@@ -68,7 +68,6 @@ public final class AttributeExpansion extends PlaceholderExpansion {
         return switch (mode) {
             case "base" -> withWeapon ? null : String.valueOf(attribute.baseValueSource().resolve(player));
             case "value" -> String.valueOf(effectiveValue(manager, player, attribute, withWeapon));
-            case "formatted" -> attribute.format(effectiveValue(manager, player, attribute, withWeapon));
             default -> null;
         };
     }

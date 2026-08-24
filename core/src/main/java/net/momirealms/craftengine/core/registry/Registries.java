@@ -6,8 +6,6 @@ import net.momirealms.craftengine.core.attribute.damage.DamageIndicator;
 import net.momirealms.craftengine.core.attribute.damage.DamageIndicatorType;
 import net.momirealms.craftengine.core.attribute.derived.DerivedValue;
 import net.momirealms.craftengine.core.attribute.derived.DerivedValueType;
-import net.momirealms.craftengine.core.attribute.format.ValueFormatter;
-import net.momirealms.craftengine.core.attribute.format.ValueFormatterType;
 import net.momirealms.craftengine.core.attribute.formula.DamageFormula;
 import net.momirealms.craftengine.core.attribute.formula.DamageFormulaType;
 import net.momirealms.craftengine.core.attribute.sync.SyncValueProvider;
@@ -125,7 +123,6 @@ public final class Registries {
     public static final ResourceKey<Registry<DerivedValueType<? extends DerivedValue>>> DERIVED_VALUE_TYPE = ResourceKey.create(ROOT_REGISTRY, Key.withCraftEngineNamespace("derived_value_type"));
     public static final ResourceKey<Registry<SyncValueProviderType<? extends SyncValueProvider>>> SYNC_VALUE_PROVIDER_TYPE = ResourceKey.create(ROOT_REGISTRY, Key.withCraftEngineNamespace("sync_value_provider_type"));
     public static final ResourceKey<Registry<ValueTransformerType<? extends ValueTransformer>>> VALUE_TRANSFORMER_TYPE = ResourceKey.create(ROOT_REGISTRY, Key.withCraftEngineNamespace("value_transformer_type"));
-    public static final ResourceKey<Registry<ValueFormatterType<? extends ValueFormatter>>> VALUE_FORMATTER_TYPE = ResourceKey.create(ROOT_REGISTRY, Key.withCraftEngineNamespace("value_formatter_type"));
     public static final ResourceKey<Registry<TemplateArgumentType<? extends TemplateArgument>>> TEMPLATE_ARGUMENT_TYPE = ResourceKey.create(ROOT_REGISTRY, Key.withCraftEngineNamespace("template_argument_type"));
     public static final ResourceKey<Registry<ItemModelType<? extends ItemModel>>> ITEM_MODEL_TYPE = ResourceKey.create(ROOT_REGISTRY, Key.withCraftEngineNamespace("item_model_type"));
     public static final ResourceKey<Registry<TintType<? extends Tint>>> TINT_TYPE = ResourceKey.create(ROOT_REGISTRY, Key.withCraftEngineNamespace("tint_type"));

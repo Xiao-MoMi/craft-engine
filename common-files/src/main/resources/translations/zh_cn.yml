@@ -133,7 +133,6 @@ damage_indicator.unknown_type: 未知的伤害数字显示类型“<arg:0>”
 attribute.base_value_source.unknown_type: 未知的属性基础值来源类型“<arg:0>”
 attribute.sync_value_provider.unknown_type: 未知的同步数值提供器类型“<arg:0>”
 attribute.value_transformer.unknown_type: 未知的数值转换器类型“<arg:0>”
-attribute.value_formatter.unknown_type: 未知的数值格式化器类型“<arg:0>”
 attribute.formula.unknown_variable: 伤害公式“<arg:1>”中存在未知的变量“<arg:0>”
 attribute.formula.unknown_attribute: 伤害公式“<arg:1>”中存在未知的属性“<arg:0>”
 attribute.unknown_operation: 未知的属性运算“<arg:0>”

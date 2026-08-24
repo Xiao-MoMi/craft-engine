@@ -6,8 +6,6 @@ import net.momirealms.craftengine.core.attribute.base.ConstantBaseValueSource;
 import net.momirealms.craftengine.core.attribute.damage.DamageEvent;
 import net.momirealms.craftengine.core.attribute.derived.DerivedValue;
 import net.momirealms.craftengine.core.attribute.derived.DerivedValues;
-import net.momirealms.craftengine.core.attribute.format.ValueFormatter;
-import net.momirealms.craftengine.core.attribute.format.ValueFormatters;
 import net.momirealms.craftengine.core.attribute.formula.CauseToFormula;
 import net.momirealms.craftengine.core.attribute.formula.DamageFormula;
 import net.momirealms.craftengine.core.attribute.formula.DamageFormulas;
@@ -383,11 +381,10 @@ public abstract class AbstractAttributeManager implements AttributeManager {
                     v.getNonNullEnum("operation", Operation.class),
                     v.<SyncValueProvider>getValue("value", SyncValueProviders::fromConfig, () -> ValueSyncValueProvider.INSTANCE)
             ));
-            ValueFormatter formatter = section.getValue("format", ValueFormatters::fromConfig);
             Set<Key> applicableEntityTypes = parseApplicableEntityTypes(section);
             List<AttributeOperation> operations = parseOperations(section);
             DerivedValue derived = section.getValue("derived", DerivedValues::fromConfig);
-            Attribute attribute = new Attribute(id, baseValueSource, constraint, operations, applicableEntityTypes, sync, formatter, derived);
+            Attribute attribute = new Attribute(id, baseValueSource, constraint, operations, applicableEntityTypes, sync, derived);
             AbstractAttributeManager.this.configAttributes.put(id, attribute);
         }
     }
