@@ -416,8 +416,7 @@ entity:
   # This comes with additional per-tick processing costs to maintain potion effects and attributes.
   tracking:
     enable: true
-    # whitelist tracks only listed IDs; blacklist tracks every ID except those listed.
-    # IDs come from id-sources when available, otherwise the vanilla entity type is used.
+    # whitelist tracks only listed entity types; blacklist tracks every entity except those listed.
     mode: whitelist
     list:
       - minecraft:player

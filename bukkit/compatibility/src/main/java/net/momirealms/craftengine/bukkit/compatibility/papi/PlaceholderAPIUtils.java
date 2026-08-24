@@ -21,6 +21,7 @@ public final class PlaceholderAPIUtils {
         new ShiftExpansion(plugin).register();
         new CheckItemExpansion(plugin).register();
         new CraftEngineExpansion(plugin).register();
+        new ExpressionExpansion().register();
         new ScriptPlaceholderExpansion(plugin).register();
         new AttributeExpansion(plugin).register();
     }
