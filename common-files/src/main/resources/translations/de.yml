@@ -127,6 +127,10 @@ yaml.inconsistent_value_type: "Doppelter Key '<arg:1>' in Zeile <arg:2> mit unte
 plugin.compatibility: "[Kompatibilität] <arg:0> hooked"
 number.unknown_type: Unbekannter Zahlentyp '<arg:0>'
 number.fixed.invalid_expression: Ungültiger Ausdruck '<arg:0>'.
+resource.expression.invalid: 'Ungültiger Ausdruck „<arg:0>“. Details: <arg:1>'
+resource.expression.invalid_syntax: 'Ungültiger Ausdruck „<arg:0>“ nahe Zeichen <arg:1> (Token „<arg:2>“).'
+resource.expression.invalid_function_argument: 'Ungültiger Ausdruck „<arg:0>“ im Funktionsargument <arg:3>, nahe Zeichen <arg:1> (Token „<arg:2>“).'
+resource.expression.unknown_parameter: 'Unbekannter Parameter „<arg:0>“ im Ausdruck „<arg:1>“.'
 number.greater_than: "'<arg:0>' sollte größer sein als '<arg:1>'"
 number.no_greater_than: "'<arg:0>' sollte nicht größer sein als '<arg:1>'"
 number.less_than: "'<arg:0>' sollte kleiner sein als '<arg:1>'"

@@ -8,9 +8,9 @@ import net.momirealms.craftengine.core.loot.Loot;
 import net.momirealms.craftengine.core.loot.LootTable;
 import net.momirealms.craftengine.core.pack.Identifier;
 import net.momirealms.craftengine.core.plugin.CraftEngine;
+import net.momirealms.craftengine.core.plugin.context.expression.Expressions;
 import net.momirealms.craftengine.core.plugin.context.number.NumberProvider;
 import net.momirealms.craftengine.core.plugin.context.number.NumberProviders;
-import net.momirealms.craftengine.core.plugin.context.expression.Expressions;
 import net.momirealms.craftengine.core.plugin.context.text.TextProvider;
 import net.momirealms.craftengine.core.plugin.context.text.TextProviders;
 import net.momirealms.craftengine.core.util.*;
@@ -125,7 +125,9 @@ public final class ConfigValue {
                     return Integer.parseInt(s.replace("_", ""));
                 } catch (NumberFormatException e) {
                     try {
-                        return (int) Expressions.evaluate(s);
+                        return (int) Expressions.evaluate(this.path, s);
+                    } catch (KnownResourceException ex) {
+                        throw ex;
                     } catch (Throwable ex) {
                         throw new KnownResourceException(ConfigConstants.PARSE_INT_FAILED, this.path, s);
                     }
@@ -163,7 +165,9 @@ public final class ConfigValue {
                     return Float.parseFloat(s.replace("_", ""));
                 } catch (NumberFormatException e) {
                     try {
-                        return (float) Expressions.evaluate(s);
+                        return (float) Expressions.evaluate(this.path, s);
+                    } catch (KnownResourceException ex) {
+                        throw ex;
                     } catch (Throwable ex) {
                         throw new KnownResourceException(ConfigConstants.PARSE_FLOAT_FAILED, this.path, s);
                     }
@@ -201,7 +205,9 @@ public final class ConfigValue {
                     return Double.parseDouble(s.replace("_", ""));
                 } catch (NumberFormatException e) {
                     try {
-                        return Expressions.evaluate(s);
+                        return Expressions.evaluate(this.path, s);
+                    } catch (KnownResourceException ex) {
+                        throw ex;
                     } catch (Throwable ex) {
                         throw new KnownResourceException(ConfigConstants.PARSE_DOUBLE_FAILED, this.path, s);
                     }
@@ -239,7 +245,9 @@ public final class ConfigValue {
                     return Long.parseLong(s.replace("_", ""));
                 } catch (NumberFormatException e) {
                     try {
-                        return (long) Expressions.evaluate(s);
+                        return (long) Expressions.evaluate(this.path, s);
+                    } catch (KnownResourceException ex) {
+                        throw ex;
                     } catch (Throwable ex) {
                         throw new KnownResourceException(ConfigConstants.PARSE_LONG_FAILED, this.path, s);
                     }

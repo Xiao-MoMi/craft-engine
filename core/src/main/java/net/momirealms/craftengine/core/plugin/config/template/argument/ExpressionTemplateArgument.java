@@ -2,6 +2,7 @@ package net.momirealms.craftengine.core.plugin.config.template.argument;
 
 import net.momirealms.craftengine.core.plugin.config.ConfigKeys;
 import net.momirealms.craftengine.core.plugin.config.ConfigSection;
+import net.momirealms.craftengine.core.plugin.config.KnownResourceException;
 import net.momirealms.craftengine.core.plugin.config.template.ArgumentString;
 import net.momirealms.craftengine.core.plugin.context.expression.Expressions;
 
@@ -12,10 +13,12 @@ import java.util.function.DoubleFunction;
 // TODO 存在设计缺陷
 public final class ExpressionTemplateArgument implements TemplateArgument {
     public static final TemplateArgumentFactory<ExpressionTemplateArgument> FACTORY = new Factory();
+    private final String node;
     private final ArgumentString expression;
     private final ValueType valueType;
 
     private ExpressionTemplateArgument(String node, String expression, ValueType valueType) {
+        this.node = node;
         this.expression = ArgumentString.preParse(node, expression);
         this.valueType = valueType;
     }
@@ -25,7 +28,9 @@ public final class ExpressionTemplateArgument implements TemplateArgument {
         String expression = Optional.ofNullable(this.expression.get(node, arguments)).map(String::valueOf).orElse(null);
         if (expression == null) return null;
         try {
-            return this.valueType.format(Expressions.evaluate(expression));
+            return this.valueType.format(Expressions.evaluate(this.node, expression));
+        } catch (KnownResourceException e) {
+            throw e;
         } catch (Exception e) {
             throw new RuntimeException("Failed to process expression argument: " + this.expression, e);
         }

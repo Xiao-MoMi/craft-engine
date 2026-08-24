@@ -37,7 +37,12 @@ public record ConstantNumberProvider(double value) implements NumberProvider {
                 return new ConstantNumberProvider(value);
             } catch (NumberFormatException e) {
                 try {
-                    return new ConstantNumberProvider(Expressions.evaluate(plainOrExpression));
+                    return new ConstantNumberProvider(Expressions.evaluate(
+                            section.assemblePath("value"),
+                            plainOrExpression
+                    ));
+                } catch (KnownResourceException ex) {
+                    throw ex;
                 } catch (RuntimeException ex) {
                     throw new KnownResourceException("number.fixed.invalid_expression", section.assemblePath("value"), plainOrExpression);
                 }

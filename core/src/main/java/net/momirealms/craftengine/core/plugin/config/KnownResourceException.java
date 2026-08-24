@@ -16,6 +16,13 @@ public final class KnownResourceException extends ResourceException {
         this.translationKey = translationKey;
     }
 
+    public KnownResourceException(String translationKey, String node, Throwable cause, String... arguments) {
+        super(cause);
+        this.node = node;
+        this.arguments = arguments;
+        this.translationKey = translationKey;
+    }
+
     public KnownResourceException(Path filePath, String translationKey, String node, String... arguments) {
         this.node = node;
         this.filePath = filePath;

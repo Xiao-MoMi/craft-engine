@@ -1,7 +1,7 @@
 package net.momirealms.craftengine.proxy.minecraft.world.item.component;
 
 import net.momirealms.sparrow.reflection.proxy.ASMProxyFactory;
-import net.momirealms.sparrow.reflection.proxy.annotation.FieldGetter;
+import net.momirealms.sparrow.reflection.proxy.annotation.MethodInvoker;
 import net.momirealms.sparrow.reflection.proxy.annotation.ReflectionProxy;
 
 import java.util.List;
@@ -10,9 +10,9 @@ import java.util.List;
 public interface ItemLoreProxy {
     ItemLoreProxy INSTANCE = ASMProxyFactory.create(ItemLoreProxy.class);
 
-    @FieldGetter(name = "styledLines")
+    @MethodInvoker(name = "styledLines")
     List<Object> getStyleLines(Object target);
 
-    @FieldGetter(name = "lines")
+    @MethodInvoker(name = "lines")
     List<Object> getLines(Object target);
 }

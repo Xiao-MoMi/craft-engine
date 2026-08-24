@@ -29,7 +29,7 @@ public final class SyncValueProviders {
         if (value.is(Map.class)) {
             return fromConfig(value.getAsSection());
         }
-        return new ExpressionSyncValueProvider(value.getAsString());
+        return new ExpressionSyncValueProvider(value.path(), value.getAsString());
     }
 
     public static SyncValueProvider fromConfig(ConfigSection section) {

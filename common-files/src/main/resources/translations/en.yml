@@ -150,6 +150,10 @@ attribute.derived.unknown_attribute: Unknown attribute '<arg:0>' in derived expr
 attribute.derived.unknown_type: Unknown derived value type '<arg:0>'
 number.unknown_type: Unknown number type '<arg:0>'
 number.fixed.invalid_expression: Invalid expression '<arg:0>'.
+resource.expression.invalid: 'Invalid expression "<arg:0>". Details: <arg:1>'
+resource.expression.invalid_syntax: 'Invalid expression "<arg:0>" near character <arg:1> (token "<arg:2>").'
+resource.expression.invalid_function_argument: 'Invalid expression "<arg:0>" in function argument <arg:3>, near character <arg:1> (token "<arg:2>").'
+resource.expression.unknown_parameter: 'Unknown parameter "<arg:0>" in expression "<arg:1>".'
 number.greater_than: '''<arg:0>'' should be greater than ''<arg:1>'''
 number.no_greater_than: '''<arg:0>'' should be no greater than ''<arg:1>'''
 number.less_than: '''<arg:0>'' should be less than ''<arg:1>'''

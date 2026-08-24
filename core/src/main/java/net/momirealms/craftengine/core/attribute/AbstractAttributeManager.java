@@ -458,7 +458,10 @@ public abstract class AbstractAttributeManager implements AttributeManager {
         @Override
         protected void parseSection(@NotNull Pack pack, @NotNull Path path, @NotNull Key id, @NotNull ConfigSection section) {
             String expression = section.getNonNullString("expression");
-            AbstractAttributeManager.this.configOperations.put(id, AttributeOperation.expression(id, expression));
+            AbstractAttributeManager.this.configOperations.put(
+                    id,
+                    AttributeOperation.expression(id, section.assemblePath("expression"), expression)
+            );
         }
     }
 }

@@ -27,7 +27,7 @@ public final class ValueTransformers {
         if (value.is(Map.class)) {
             return fromConfig(value.getAsSection());
         }
-        return new ExpressionValueTransformer(value.getAsString());
+        return new ExpressionValueTransformer(value.path(), value.getAsString());
     }
 
     public static ValueTransformer fromConfig(ConfigSection section) {

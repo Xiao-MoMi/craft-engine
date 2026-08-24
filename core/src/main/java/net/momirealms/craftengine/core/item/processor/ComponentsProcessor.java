@@ -10,8 +10,7 @@ import net.momirealms.craftengine.core.plugin.config.ConfigConstants;
 import net.momirealms.craftengine.core.plugin.config.ConfigSection;
 import net.momirealms.craftengine.core.plugin.config.ConfigValue;
 import net.momirealms.craftengine.core.plugin.config.KnownResourceException;
-import net.momirealms.craftengine.core.plugin.context.text.TextProvider;
-import net.momirealms.craftengine.core.plugin.context.text.TextProviders;
+import net.momirealms.craftengine.core.plugin.context.text.StringTemplate;
 import net.momirealms.craftengine.core.util.GsonHelper;
 import net.momirealms.craftengine.core.util.Key;
 import net.momirealms.craftengine.core.util.TagParser;
@@ -93,30 +92,29 @@ public final class ComponentsProcessor implements ItemProcessor {
         return new ComponentsProcessor(null, List.of(provider));
     }
 
-    // todo 未来需要支持普通yaml格式使用 <>，最好先重构textprovider与Item
     private static DynamicComponentProvider getProvider(Key key, ConfigValue value) {
         if (value.is(String.class)) {
             String stringValue = value.getAsString();
             if (stringValue.startsWith("(json) ")) {
-                // todo 需要未来先 tokenized 后再判断，而不是使用 < > 作为依据
-                if (stringValue.contains("<") && stringValue.contains(">")) {
-                    TextProvider provider = TextProviders.fromString(stringValue.substring("(json) ".length()));
+                String json = stringValue.substring("(json) ".length());
+                StringTemplate template = StringTemplate.of(json);
+                if (template.hasTags()) {
                     return new DynamicComponentProvider(key, c -> {
-                        JsonElement element = GsonHelper.get().fromJson(provider.get(c), JsonElement.class);
+                        JsonElement element = GsonHelper.get().fromJson(template.render(c), JsonElement.class);
                         return CraftEngine.instance().platform().jsonToSparrowNBT(element);
                     });
                 } else {
-                    JsonElement element = GsonHelper.get().fromJson(stringValue.substring("(json) ".length()), JsonElement.class);
+                    JsonElement element = GsonHelper.get().fromJson(json, JsonElement.class);
                     Tag tag = CraftEngine.instance().platform().jsonToSparrowNBT(element);
                     return new DynamicComponentProvider(key, c -> tag);
                 }
             } else if (stringValue.startsWith("(snbt) ")) {
                 String snbt = stringValue.substring("(snbt) ".length());
-                if (stringValue.contains("<") && stringValue.contains(">")) {
-                    TextProvider provider = TextProviders.fromString(snbt);
+                StringTemplate template = StringTemplate.of(snbt);
+                if (template.hasTags()) {
                     return new DynamicComponentProvider(key, c -> {
                         try {
-                            return TagParser.parseTagFully(provider.get(c));
+                            return TagParser.parseTagFully(template.render(c));
                         } catch (Exception e) {
                             throw new KnownResourceException(ConfigConstants.PARSE_SNBT_FAILED, value.path(), snbt, e.getMessage());
                         }

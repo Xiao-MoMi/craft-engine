@@ -2,6 +2,7 @@ package net.momirealms.craftengine.core.attribute.derived;
 
 import net.momirealms.craftengine.core.attribute.Attribute;
 import net.momirealms.craftengine.core.plugin.config.KnownResourceException;
+import net.momirealms.craftengine.core.plugin.context.expression.Expressions;
 import net.momirealms.craftengine.core.util.Key;
 import net.momirealms.sparrow.expr.CompiledExpression;
 import net.momirealms.sparrow.expr.ExpressionCompiler;
@@ -27,12 +28,15 @@ public final class ExpressionDerivedValue implements DerivedValue {
 
     public static ExpressionDerivedValue compile(String path, String rawExpression) {
         List<VariableRef> variables = new ArrayList<>();
-        CompiledExpression<Function<Attribute, Double>> expression =
-                new ExpressionCompiler<Function<Attribute, Double>>(name -> {
+        CompiledExpression<Function<Attribute, Double>> expression = Expressions.precompile(
+                path,
+                rawExpression,
+                () -> new ExpressionCompiler<Function<Attribute, Double>>(name -> {
                     VariableRef variable = new VariableRef(Key.of(name.replaceFirst("_", ":")));
                     variables.add(variable);
                     return ParameterBinding.number(resolver -> resolver.apply(variable.attribute));
-                }).compile(rawExpression);
+                }).compile(rawExpression)
+        );
         return new ExpressionDerivedValue(path, rawExpression, expression, variables);
     }
 

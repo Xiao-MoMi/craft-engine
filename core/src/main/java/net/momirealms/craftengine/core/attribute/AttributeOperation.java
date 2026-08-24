@@ -1,7 +1,7 @@
 package net.momirealms.craftengine.core.attribute;
 
 import net.momirealms.craftengine.core.plugin.CraftEngine;
-import net.momirealms.craftengine.core.plugin.config.KnownResourceException;
+import net.momirealms.craftengine.core.plugin.context.expression.Expressions;
 import net.momirealms.craftengine.core.util.Key;
 import net.momirealms.sparrow.expr.CompiledExpression;
 import net.momirealms.sparrow.expr.ExpressionCompiler;
@@ -35,18 +35,17 @@ public interface AttributeOperation {
         };
     }
 
-    static AttributeOperation expression(Key id, String rawExpression) {
-        final CompiledExpression<OperationContext> compiled;
-        try {
-            compiled = new ExpressionCompiler<>(name -> switch (name) {
-                case "base" -> ParameterBinding.number(OperationContext::base);
-                case "current" -> ParameterBinding.number(OperationContext::current);
-                case "amount" -> ParameterBinding.number(OperationContext::amount);
-                default -> throw new IllegalArgumentException("Unknown expression parameter: " + name);
-            }).compile(rawExpression);
-        } catch (RuntimeException e) {
-            throw new KnownResourceException("attribute.operation.invalid_expression", id.asString(), rawExpression);
-        }
+    static AttributeOperation expression(Key id, String node, String rawExpression) {
+        CompiledExpression<OperationContext> compiled = Expressions.precompile(
+                node,
+                rawExpression,
+                () -> new ExpressionCompiler<>(name -> switch (name) {
+                    case "base" -> ParameterBinding.number(OperationContext::base);
+                    case "current" -> ParameterBinding.number(OperationContext::current);
+                    case "amount" -> ParameterBinding.number(OperationContext::amount);
+                    default -> throw Expressions.unknownParameter(name);
+                }).compile(rawExpression)
+        );
         return of(id, (base, current, amount) -> {
             try {
                 return compiled.evaluate(new OperationContext(base, current, amount));

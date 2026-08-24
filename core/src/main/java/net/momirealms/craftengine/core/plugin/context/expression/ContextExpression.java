@@ -5,12 +5,14 @@ import net.momirealms.craftengine.core.plugin.context.text.StringTag;
 import net.momirealms.craftengine.core.plugin.context.text.StringTags;
 import net.momirealms.sparrow.expr.CompiledExpression;
 import net.momirealms.sparrow.expr.ExpressionCompiler;
+import net.momirealms.sparrow.expr.ExpressionParseException;
 import net.momirealms.sparrow.expr.binding.ParameterBinding;
 import net.momirealms.sparrow.message.internal.parser.Token;
 import net.momirealms.sparrow.message.internal.parser.TokenParser;
 import net.momirealms.sparrow.message.internal.parser.TokenType;
 import net.momirealms.sparrow.message.internal.parser.node.TagPart;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -28,14 +30,28 @@ public final class ContextExpression<C> {
         return compile(source, Function.identity(), name -> null);
     }
 
-    @SuppressWarnings("UnstableApiUsage")
+    public static ContextExpression<Context> precompile(String node, String source) {
+        return precompile(node, source, Function.identity(), name -> null);
+    }
+
     public static <C> ContextExpression<C> compile(
+            String source,
+            Function<C, Context> contextMapper,
+            Function<String, ToDoubleFunction<C>> variableBinder
+    ) {
+        return compile(null, source, contextMapper, variableBinder);
+    }
+
+    @SuppressWarnings("UnstableApiUsage")
+    private static <C> ContextExpression<C> compile(
+            String node,
             String source,
             Function<C, Context> contextMapper,
             Function<String, ToDoubleFunction<C>> variableBinder
     ) {
         StringBuilder substituted = new StringBuilder(source.length());
         Map<String, Snippet> snippets = new HashMap<>(2);
+        List<Replacement> replacements = new ArrayList<>(2);
         for (Token token : TokenParser.tokenize(source, true)) {
             TokenType type = token.type();
             if ((type == TokenType.OPEN_TAG || type == TokenType.OPEN_CLOSE_TAG) && !token.childTokens().isEmpty()) {
@@ -51,35 +67,93 @@ public final class ContextExpression<C> {
                     }
                     String variable = "__context_tag_" + snippets.size();
                     snippets.put(variable, new Snippet(tag.precompile(args), args));
+                    int generatedStart = substituted.length();
                     substituted.append(variable);
+                    replacements.add(new Replacement(
+                            generatedStart,
+                            substituted.length(),
+                            token.startIndex(),
+                            token.endIndex()
+                    ));
                     continue;
                 }
             }
             substituted.append(source, token.startIndex(), token.endIndex());
         }
-        CompiledExpression<C> expression = new ExpressionCompiler<>(name -> {
-            Snippet snippet = snippets.get(name);
-            if (snippet != null) {
-                return ParameterBinding.auto(
-                        context -> number(snippet.resolve(contextMapper.apply(context))),
-                        context -> string(snippet.resolve(contextMapper.apply(context)))
-                );
+        final CompiledExpression<C> expression;
+        try {
+            expression = new ExpressionCompiler<C>(name -> {
+                Snippet snippet = snippets.get(name);
+                if (snippet != null) {
+                    return ParameterBinding.auto(
+                            context -> number(snippet.resolve(contextMapper.apply(context))),
+                            context -> string(snippet.resolve(contextMapper.apply(context)))
+                    );
+                }
+                ToDoubleFunction<C> variable = variableBinder.apply(name);
+                if (variable == null) {
+                    throw Expressions.unknownParameter(name);
+                }
+                return ParameterBinding.number(variable::applyAsDouble);
+            }).compile(substituted.toString());
+        } catch (ExpressionParseException e) {
+            if (node == null) {
+                throw e;
             }
-            ToDoubleFunction<C> variable = variableBinder.apply(name);
-            if (variable == null) {
-                throw new IllegalArgumentException("Unknown expression parameter: " + name);
-            }
-            return ParameterBinding.number(variable::applyAsDouble);
-        }).compile(substituted.toString());
+            throw Expressions.invalidSyntax(
+                    node,
+                    source,
+                    remapPosition(e.startPosition(), replacements),
+                    remapPosition(e.endPosition(), replacements),
+                    remapToken(e, source, replacements),
+                    e.argumentIndex(),
+                    e
+            );
+        }
         return new ContextExpression<>(expression);
     }
 
-    public double evaluate(C context) {
-        return this.expression.evaluate(context);
+    public static <C> ContextExpression<C> precompile(
+            String node,
+            String source,
+            Function<C, Context> contextMapper,
+            Function<String, ToDoubleFunction<C>> variableBinder
+    ) {
+        return Expressions.precompile(
+                node,
+                source,
+                () -> compile(node, source, contextMapper, variableBinder)
+        );
     }
 
-    public boolean test(C context) {
-        return this.expression.test(context);
+    private static int remapPosition(int position, List<Replacement> replacements) {
+        int delta = 0;
+        for (Replacement replacement : replacements) {
+            if (position < replacement.generatedStart) {
+                break;
+            }
+            if (position <= replacement.generatedEnd) {
+                return position == replacement.generatedEnd
+                        ? replacement.sourceEnd
+                        : replacement.sourceStart;
+            }
+            delta += replacement.sourceLength() - replacement.generatedLength();
+        }
+        return position + delta;
+    }
+
+    private static String remapToken(
+            ExpressionParseException exception,
+            String source,
+            List<Replacement> replacements
+    ) {
+        for (Replacement replacement : replacements) {
+            if (exception.startPosition() < replacement.generatedEnd
+                    && exception.endPosition() > replacement.generatedStart) {
+                return source.substring(replacement.sourceStart, replacement.sourceEnd);
+            }
+        }
+        return exception.token();
     }
 
     private static double number(Object value) {
@@ -104,10 +178,33 @@ public final class ContextExpression<C> {
         return value == null ? null : value.toString();
     }
 
+    public double evaluate(C context) {
+        return this.expression.evaluate(context);
+    }
+
+    public boolean isConstant() {
+        return this.expression.isConstant();
+    }
+
+    public boolean test(C context) {
+        return this.expression.test(context);
+    }
+
     private record Snippet(StringTag tag, String[] args) {
 
         private Object resolve(Context context) {
             return this.tag.resolve(this.args, context);
+        }
+    }
+
+    private record Replacement(int generatedStart, int generatedEnd, int sourceStart, int sourceEnd) {
+
+        private int generatedLength() {
+            return this.generatedEnd - this.generatedStart;
+        }
+
+        private int sourceLength() {
+            return this.sourceEnd - this.sourceStart;
         }
     }
 }
