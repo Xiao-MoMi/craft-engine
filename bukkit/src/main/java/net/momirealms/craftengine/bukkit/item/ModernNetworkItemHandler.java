@@ -370,7 +370,7 @@ public final class ModernNetworkItemHandler implements NetworkItemHandler {
     public static boolean processModernItemName(Item item, Supplier<CompoundTag> tag, Context context) {
         Object itemName = item.getExactComponent(DataComponentTypes.ITEM_NAME);
         if (itemName == null) return false;
-        if (!ComponentUtils.hasNetworkTag(itemName, false)) {
+        if (!ComponentUtils.hasNetworkTag(itemName)) {
             return false;
         }
         Tag nameTag = item.getComponentAsSparrowTag(DataComponentTypes.ITEM_NAME);
@@ -387,7 +387,7 @@ public final class ModernNetworkItemHandler implements NetworkItemHandler {
     public static boolean processModernCustomName(Item item, Supplier<CompoundTag> tag, Context context) {
         Object customName = item.getExactComponent(DataComponentTypes.CUSTOM_NAME);
         if (customName == null) return false;
-        if (!ComponentUtils.hasNetworkTag(customName, false)) {
+        if (!ComponentUtils.hasNetworkTag(customName)) {
             return false;
         }
         Tag nameTag = item.getComponentAsSparrowTag(DataComponentTypes.CUSTOM_NAME);
@@ -412,7 +412,7 @@ public final class ModernNetworkItemHandler implements NetworkItemHandler {
 
         boolean has = false;
         for (Object line : lines) {
-            if (ComponentUtils.hasNetworkTag(line, false)) {
+            if (ComponentUtils.hasNetworkTag(line)) {
                 has = true;
                 break;
             }

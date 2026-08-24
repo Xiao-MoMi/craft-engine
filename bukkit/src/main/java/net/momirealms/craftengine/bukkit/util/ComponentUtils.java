@@ -17,6 +17,9 @@ import net.momirealms.craftengine.core.util.AdventureHelper;
 import net.momirealms.craftengine.core.util.GsonHelper;
 import net.momirealms.craftengine.core.util.VersionHelper;
 import net.momirealms.craftengine.proxy.adventure.text.serializer.gson.GsonComponentSerializerProxy;
+import net.momirealms.craftengine.proxy.adventure.text.TextComponentProxy;
+import net.momirealms.craftengine.proxy.adventure.text.TranslatableComponentProxy;
+import net.momirealms.craftengine.proxy.adventure.text.TranslationArgumentProxy;
 import net.momirealms.craftengine.proxy.minecraft.nbt.CompoundTagProxy;
 import net.momirealms.craftengine.proxy.minecraft.nbt.IntTagProxy;
 import net.momirealms.craftengine.proxy.minecraft.nbt.StringTagProxy;
@@ -27,6 +30,7 @@ import net.momirealms.craftengine.proxy.minecraft.network.chat.MutableComponentP
 import net.momirealms.craftengine.proxy.minecraft.network.chat.contents.PlainTextContentsProxy;
 import net.momirealms.craftengine.proxy.minecraft.network.chat.contents.TranslatableContentsProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.item.ItemStackProxy;
+import net.momirealms.craftengine.proxy.paper.adventure.AdventureComponentProxy;
 import net.momirealms.sparrow.nbt.CompoundTag;
 import net.momirealms.sparrow.nbt.Tag;
 import net.momirealms.sparrow.nbt.adventure.NBTDataComponentValue;
@@ -98,9 +102,16 @@ public final class ComponentUtils {
         return GsonComponentSerializerProxy.GSON.fromJson(json, net.momirealms.craftengine.proxy.adventure.text.ComponentProxy.CLASS);
     }
 
-    public static boolean hasNetworkTag(Object component, boolean checkHoverEvent) {
+    public static boolean hasNetworkTag(Object component) {
         if (!MutableComponentProxy.CLASS.isInstance(component)) {
-            return false;
+            if (!VersionHelper.hasPaperPatch || !AdventureComponentProxy.CLASS.isInstance(component)) {
+                return false;
+            }
+            Object adventureComponent = AdventureComponentProxy.INSTANCE.adventureComponent(component);
+            if (!net.momirealms.craftengine.proxy.adventure.text.ComponentProxy.CLASS.isInstance(adventureComponent)) {
+                return false;
+            }
+            return hasPaperAdventureNetworkTag(adventureComponent);
         }
 
         Object contents = MutableComponentProxy.INSTANCE.getContents(component);
@@ -113,15 +124,11 @@ public final class ComponentUtils {
             Object[] args = TranslatableContentsProxy.INSTANCE.getArgs(contents);
             for (Object arg : args) {
                 if (ComponentProxy.CLASS.isInstance(arg)) {
-                    if (hasNetworkTag(arg, checkHoverEvent)) {
+                    if (hasNetworkTag(arg)) {
                         return true;
                     }
                 }
             }
-        }
-
-        if (checkHoverEvent) {
-            // todo 完成hoverevent
         }
 
         List<Object> children = MutableComponentProxy.INSTANCE.getSiblings(component);
@@ -130,7 +137,37 @@ public final class ComponentUtils {
         }
 
         for (Object child : children) {
-            if (hasNetworkTag(child, checkHoverEvent)) {
+            if (hasNetworkTag(child)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private static boolean hasPaperAdventureNetworkTag(Object component) {
+        if (TextComponentProxy.CLASS.isInstance(component)) {
+            String text = TextComponentProxy.INSTANCE.content(component);
+            if (BukkitNetworkManager.instance().hasNetworkTag(text)) {
+                return true;
+            }
+        } else if (TranslatableComponentProxy.CLASS.isInstance(component)) {
+            for (Object argument : TranslatableComponentProxy.INSTANCE.arguments(component)) {
+                Object value = net.momirealms.craftengine.proxy.adventure.text.ComponentProxy.CLASS.isInstance(argument)
+                        ? argument
+                        : TranslationArgumentProxy.INSTANCE.value(argument);
+                if (net.momirealms.craftengine.proxy.adventure.text.ComponentProxy.CLASS.isInstance(value) && hasPaperAdventureNetworkTag(value)) {
+                    return true;
+                }
+            }
+        }
+
+        List<Object> children = net.momirealms.craftengine.proxy.adventure.text.ComponentProxy.INSTANCE.children(component);
+        if (children.isEmpty()) {
+            return false;
+        }
+
+        for (Object child : children) {
+            if (hasPaperAdventureNetworkTag(child)) {
                 return true;
             }
         }
