@@ -2,6 +2,7 @@ package net.momirealms.craftengine.bukkit.entity;
 
 import it.unimi.dsi.fastutil.objects.Object2ObjectArrayMap;
 import net.momirealms.craftengine.bukkit.entity.listener.BukkitEntityListener;
+import net.momirealms.craftengine.bukkit.entity.listener.EquipmentSetClientSlotUpdater;
 import net.momirealms.craftengine.bukkit.entity.listener.PaperEntityListener;
 import net.momirealms.craftengine.bukkit.item.BukkitItem;
 import net.momirealms.craftengine.bukkit.plugin.BukkitCraftEngine;
@@ -20,6 +21,7 @@ import net.momirealms.craftengine.proxy.minecraft.world.entity.EntityProxy;
 import org.bukkit.Bukkit;
 import org.bukkit.Tag;
 import org.bukkit.entity.EntityType;
+import org.bukkit.entity.Player;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -66,7 +68,10 @@ public final class BukkitEntityManager extends AbstractEntityManager {
                     ItemStackUtils.wrap(entry.getValue())
             );
         }
-        holder.applyEquipmentChanges(replacements);
+        boolean setPiecesChanged = holder.applyEquipmentChangesAndReportSetChange(replacements);
+        if (setPiecesChanged && EntityProxy.INSTANCE.getBukkitEntity(minecraftEntity) instanceof Player player) {
+            EquipmentSetClientSlotUpdater.updateAfterEquipmentChange(player);
+        }
     }
 
     @Override

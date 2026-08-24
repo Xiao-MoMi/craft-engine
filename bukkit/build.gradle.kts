@@ -38,6 +38,9 @@ dependencies {
     compileOnly("net.momirealms:craft-engine-nms-helper:${rootProject.properties["nms_helper_version"]}")
     // BStats
     compileOnly("org.bstats:bstats-bukkit:${rootProject.properties["bstats_version"]}")
+    testImplementation(platform("org.junit:junit-bom:6.1.3"))
+    testImplementation("org.junit.jupiter:junit-jupiter")
+    testRuntimeOnly("org.junit.platform:junit-platform-launcher")
 }
 
 artifacts {
@@ -54,6 +57,9 @@ tasks {
         options.compilerArgs.addAll(
             listOf("-Xmaxerrs", "1000")
         )
+    }
+    test {
+        useJUnitPlatform()
     }
 }
 

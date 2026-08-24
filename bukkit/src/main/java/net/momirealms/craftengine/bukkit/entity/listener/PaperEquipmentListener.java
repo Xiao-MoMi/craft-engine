@@ -37,7 +37,7 @@ public final class PaperEquipmentListener extends AbstractListener {
         }
         boolean setPiecesChanged = holder.applyEquipmentChangesAndReportSetChange(replacements);
         if (setPiecesChanged && event.getEntity() instanceof Player player) {
-            player.updateInventory();
+            EquipmentSetClientSlotUpdater.updateAfterEquipmentChange(player);
         }
     }
 }
