@@ -4,6 +4,7 @@ import net.momirealms.craftengine.bukkit.item.BukkitItemDefinition;
 import net.momirealms.craftengine.bukkit.item.BukkitItemManager;
 import net.momirealms.craftengine.bukkit.util.ItemStackUtils;
 import net.momirealms.craftengine.core.item.ItemDefinition;
+import net.momirealms.craftengine.core.item.processor.ObfuscatedItemModelProcessor;
 import net.momirealms.craftengine.core.util.Key;
 import org.bukkit.inventory.ItemStack;
 import org.jetbrains.annotations.NotNull;
@@ -86,5 +87,19 @@ public final class CraftEngineItems {
     public static Key getCustomItemId(@NotNull ItemStack itemStack) {
         if (ItemStackUtils.isEmpty(itemStack)) return null;
         return BukkitItemManager.instance().wrap(itemStack).customId().orElse(null);
+    }
+
+    /**
+     * Gets the item model key the client will actually see for a given key, accounting for resource
+     * pack item model obfuscation.
+     * <p>
+     *
+     * @param itemModel the item model key as registered
+     * @return the obfuscated key, or {@code itemModel} unchanged when obfuscation is off or the key
+     *         was never obfuscated
+     */
+    @NotNull
+    public static Key clientItemModel(@NotNull Key itemModel) {
+        return ObfuscatedItemModelProcessor.getMappings().getOrDefault(itemModel, itemModel);
     }
 }

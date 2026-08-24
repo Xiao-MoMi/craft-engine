@@ -133,8 +133,7 @@ public abstract class AbstractPackManager implements PackManager {
     }
 
     private final CraftEngine plugin;
-    private final Consumer<PackCacheData> cacheEventDispatcher;
-    private final BiConsumer<Path, Path> generationEventDispatcher;
+    private final PackEventDispatcher eventDispatcher;
     private final Map<String, Pack> loadedPacks = new LinkedHashMap<>();
     private final Map<String, ConfigParser> sectionParsers = new HashMap<>();
     public final JsonObject vanillaBlockAtlas;
@@ -147,10 +146,9 @@ public abstract class AbstractPackManager implements PackManager {
     private final ConfigFactoryParser bundleParser = new ConfigFactoryParser();
     private final AtlasConfigParser atlasConfigParser = new AtlasConfigParser();
 
-    public AbstractPackManager(CraftEngine plugin, Consumer<PackCacheData> cacheEventDispatcher, BiConsumer<Path, Path> generationEventDispatcher) {
+    public AbstractPackManager(CraftEngine plugin, PackEventDispatcher eventDispatcher) {
         this.plugin = plugin;
-        this.cacheEventDispatcher = cacheEventDispatcher;
-        this.generationEventDispatcher = generationEventDispatcher;
+        this.eventDispatcher = eventDispatcher;
         this.zipGenerator = (p1, p2) -> {
             try {
                 ZipUtils.compress(p1, p2);
@@ -366,7 +364,7 @@ public abstract class AbstractPackManager implements PackManager {
     public void initCachedAssets() {
         try {
             PackCacheData cacheData = new PackCacheData(this.plugin);
-            this.cacheEventDispatcher.accept(cacheData);
+            this.eventDispatcher.onCache(cacheData);
             this.updateCachedAssets(cacheData, null);
         } catch (Exception e) {
             this.plugin.logger().warn("Failed to update cached assets", e);
@@ -642,7 +640,7 @@ public abstract class AbstractPackManager implements PackManager {
                     return;
                 }
                 this.plugin.logger().info(TranslationManager.instance().plainTranslation("resource.config_loaded",
-                       parser.loadingStage().name(), String.format("%.2f", ((t2 - t1) / 1_000_000.0)), String.valueOf(count)));
+                        parser.loadingStage().name(), String.format("%.2f", ((t2 - t1) / 1_000_000.0)), String.valueOf(count)));
             });
         }
         pyramid.execute().join();
@@ -693,7 +691,10 @@ public abstract class AbstractPackManager implements PackManager {
 
         // Create cache data
         PackCacheData cacheData = new PackCacheData(this.plugin);
-        this.cacheEventDispatcher.accept(cacheData);
+        this.eventDispatcher.onCache(cacheData);
+
+        PackInjection injection = new PackInjection(this.plugin.itemManager(), Config.packMinVersion(), Config.packMaxVersion());
+        this.eventDispatcher.onInject(injection);
 
         // get the target location
         try (FileSystem fs = Jimfs.newFileSystem(Configuration.forCurrentPlatform())) {
@@ -725,6 +726,7 @@ public abstract class AbstractPackManager implements PackManager {
             this.generateModernItemModels1_21_4(generatedPackPath, revisions::add);
             this.generateLegacyItemOverrides(generatedPackPath);
             this.generateModernItemOverrides(generatedPackPath, revisions::add);
+            this.writeInjectedAssets(generatedPackPath, injection, revisions::add);
             this.generateOverrideSounds(generatedPackPath);
             this.generateCustomSounds(generatedPackPath);
             this.generateClientLang(generatedPackPath);
@@ -819,7 +821,7 @@ public abstract class AbstractPackManager implements PackManager {
                 this.plugin.logger().error("Error creating resource pack", e);
             }
             this.plugin.logger().info(TranslationManager.instance().plainTranslation("resource_pack.compression_finished", String.valueOf(timestamp.deltaMillis())));
-            this.generationEventDispatcher.accept(generatedPackPath, finalPath);
+            this.eventDispatcher.onGenerate(generatedPackPath, finalPath);
             if (Config.autoUpload() && resourcePackHost().canUpload()) {
                 uploadResourcePack();
             }
@@ -3067,10 +3069,93 @@ public abstract class AbstractPackManager implements PackManager {
         for (Map.Entry<String, JsonElement> pair : sorted.entrySet()) {
             sortedJson.add(pair.getKey(), pair.getValue());
         }
-        writeJsonSafely(sortedJson, soundPath);
+        this.writeJsonSafely(sortedJson, soundPath);
     }
 
     // 生成 json 模型文件
+    private void writeInjectedAssets(Path generatedPackPath, PackInjection injection, Consumer<Revision> callback) {
+        if (injection.isEmpty()) return;
+
+        for (Map.Entry<Key, byte[]> entry : injection.textures().entrySet()) {
+            this.writeInjectedTexture(generatedPackPath, entry.getKey(), entry.getValue());
+        }
+
+        for (Map.Entry<Key, ModelGeneration> entry : injection.models().entrySet()) {
+            Key key = entry.getKey();
+            Path modelPath = generatedPackPath
+                    .resolve("assets")
+                    .resolve(key.namespace())
+                    .resolve("models")
+                    .resolve(key.value() + ".json");
+            if (Files.exists(modelPath)) {
+                this.plugin.logger().warn(TranslationManager.instance().plainTranslation("resource_pack.model_generation.conflict", modelPath.toAbsolutePath().toString()));
+                continue;
+            }
+            ModelGeneration model = entry.getValue();
+            this.writeJsonSafely(model.get(), modelPath);
+            model.rawTextures().forEach((path, png) -> this.writeInjectedTexture(generatedPackPath, path, png));
+        }
+
+        if (Config.packMaxVersion().isBelow(MinecraftVersion.V1_21_4)) {
+            if (!injection.itemDefinitions().isEmpty()) {
+                this.plugin.logger().warn("Skipped " + injection.itemDefinitions().size() + " injected item definitions because the max pack version is below 1.21.4");
+            }
+            return;
+        }
+
+        boolean obfuscateItemModel = Config.obfuscateItemModel();
+        for (Map.Entry<Key, ModernItemModel> entry : injection.itemDefinitions().entrySet()) {
+            Key key = entry.getKey();
+            Path itemPath = generatedPackPath
+                    .resolve("assets")
+                    .resolve(key.namespace())
+                    .resolve("items")
+                    .resolve(key.value() + ".json");
+            if (Files.exists(itemPath)) {
+                this.plugin.logger().warn(TranslationManager.instance().plainTranslation("resource_pack.item_model.conflict", key.asString(), itemPath.toAbsolutePath().toString()));
+                continue;
+            }
+
+            ModernItemModel modernItemModel = entry.getValue();
+            this.writeJsonSafely(modernItemModel.toJson(Config.packMinVersion()), itemPath);
+
+            if (obfuscateItemModel && injection.canObfuscate(key)) {
+                ObfuscatedItemModelProcessor.CAN_OBF.add(key);
+            }
+
+            for (Revision revision : modernItemModel.revisions()) {
+                if (revision.matches(Config.packMinVersion(), Config.packMaxVersion())) {
+                    Path overlayItemPath = generatedPackPath
+                            .resolve(Config.createOverlayFolderName(revision.versionString()))
+                            .resolve("assets")
+                            .resolve(key.namespace())
+                            .resolve("items")
+                            .resolve(key.value() + ".json");
+                    this.writeJsonSafely(modernItemModel.toJson(revision.minVersion(), revision.maxVersion()), overlayItemPath);
+                    callback.accept(revision);
+                }
+            }
+        }
+    }
+
+    private void writeInjectedTexture(Path generatedPackPath, Key key, byte[] png) {
+        Path texturePath = generatedPackPath
+                .resolve("assets")
+                .resolve(key.namespace())
+                .resolve("textures")
+                .resolve(key.value() + ".png");
+        if (Files.exists(texturePath)) {
+            this.plugin.logger().warn(TranslationManager.instance().plainTranslation("resource_pack.texture_generation.conflict", texturePath.toAbsolutePath().toString()));
+            return;
+        }
+        try {
+            Files.createDirectories(texturePath.getParent());
+            Files.write(texturePath, png);
+        } catch (IOException e) {
+            this.plugin.logger().warn("Failed to generate injected texture " + texturePath.toAbsolutePath(), e);
+        }
+    }
+
     private void generateModels(Path generatedPackPath, ModelGenerator generator) {
         for (Map.Entry<Key, ModelGeneration> entry : generator.modelsToGenerate().entrySet()) {
             Path modelPath = generatedPackPath
