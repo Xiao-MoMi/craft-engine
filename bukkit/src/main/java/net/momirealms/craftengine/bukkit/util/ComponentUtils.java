@@ -13,6 +13,7 @@ import net.momirealms.craftengine.bukkit.item.BukkitItemManager;
 import net.momirealms.craftengine.bukkit.plugin.network.BukkitNetworkManager;
 import net.momirealms.craftengine.bukkit.plugin.user.BukkitServerPlayer;
 import net.momirealms.craftengine.core.item.Item;
+import net.momirealms.craftengine.core.plugin.text.component.NBTDataComponentPatch;
 import net.momirealms.craftengine.core.util.AdventureHelper;
 import net.momirealms.craftengine.core.util.GsonHelper;
 import net.momirealms.craftengine.core.util.VersionHelper;
@@ -35,7 +36,6 @@ import net.momirealms.sparrow.nbt.CompoundTag;
 import net.momirealms.sparrow.nbt.Tag;
 import net.momirealms.sparrow.nbt.adventure.NBTDataComponentValue;
 
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -175,7 +175,6 @@ public final class ComponentUtils {
     }
 
     // 把 hover show_item 中的服务端物品重映射为客户端应显示的物品
-    @SuppressWarnings("PatternValidation")
     public static HoverEvent.ShowItem replaceShowItem(HoverEvent.ShowItem showItem, BukkitServerPlayer player) {
         Object nmsItemStack;
         if (VersionHelper.COMPONENT_RELEASE) {
@@ -184,12 +183,8 @@ public final class ComponentUtils {
             itemTag.putString("id", showItem.item().asMinimalString());
             Map<net.kyori.adventure.key.Key, DataComponentValue> components = showItem.dataComponents();
             if (!components.isEmpty()) {
-                CompoundTag componentsTag = new CompoundTag();
                 Map<net.kyori.adventure.key.Key, NBTDataComponentValue> componentsMap = showItem.dataComponentsAs(NBTDataComponentValue.class);
-                for (Map.Entry<net.kyori.adventure.key.Key, NBTDataComponentValue> entry : componentsMap.entrySet()) {
-                    componentsTag.put(entry.getKey().asMinimalString(), entry.getValue().tag());
-                }
-                itemTag.put("components", componentsTag);
+                itemTag.put("components", NBTDataComponentPatch.encode(componentsMap));
             }
             DataResult<Object> nmsItemStackResult = ItemStackProxy.INSTANCE.getCodec().parse(RegistryOps.SPARROW_NBT, itemTag);
             Optional<Object> result = nmsItemStackResult.result();
@@ -232,10 +227,7 @@ public final class ComponentUtils {
             CompoundTag itemTag = (CompoundTag) result.get();
             CompoundTag componentsTag = itemTag.getCompound("components");
             if (componentsTag != null) {
-                Map<net.kyori.adventure.key.Key, NBTDataComponentValue> componentsMap = new HashMap<>();
-                for (Map.Entry<String, Tag> entry : componentsTag.entrySet()) {
-                    componentsMap.put(net.kyori.adventure.key.Key.key(entry.getKey()), NBTDataComponentValue.of(entry.getValue()));
-                }
+                Map<net.kyori.adventure.key.Key, NBTDataComponentValue> componentsMap = NBTDataComponentPatch.decode(componentsTag);
                 return HoverEvent.ShowItem.showItem(id, count, componentsMap);
             } else {
                 return HoverEvent.ShowItem.showItem(id, count);
