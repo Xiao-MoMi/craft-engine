@@ -235,6 +235,8 @@ public abstract class AbstractPackManager implements PackManager {
         SIMPLIFIED_MODEL_READERS.put(ItemKeys.CROSSBOW, CrossbowItemModelReader.INSTANCE);
         SIMPLIFIED_MODEL_READERS.put(ItemKeys.FIREWORK_STAR, GeneratedItemModelReader.FIREWORK_STAR);
         SIMPLIFIED_MODEL_READERS.put(ItemKeys.MACE, GeneratedItemModelReader.HANDHELD_MACE);
+        SIMPLIFIED_MODEL_READERS.put(ItemKeys.WARPED_FUNGUS_ON_A_STICK, GeneratedItemModelReader.HANDHELD_ROD);
+        SIMPLIFIED_MODEL_READERS.put(ItemKeys.CARROT_ON_A_STICK, GeneratedItemModelReader.HANDHELD_ROD);
         for (Key spear : ItemKeys.SPEARS) {
             SIMPLIFIED_MODEL_READERS.put(spear, SpearItemModelReader.INSTANCE);
         }

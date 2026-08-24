@@ -118,6 +118,8 @@ public final class ItemKeys {
     public static final Key GOLDEN_SPEAR = Key.of("minecraft:golden_spear");
     public static final Key DIAMOND_SPEAR = Key.of("minecraft:diamond_spear");
     public static final Key NETHERITE_SPEAR = Key.of("minecraft:netherite_spear");
+    public static final Key CARROT_ON_A_STICK = Key.of("minecraft:carrot_on_a_stick");
+    public static final Key WARPED_FUNGUS_ON_A_STICK = Key.of("minecraft:warped_fungus_on_a_stick");
 
     public static final Key[] AXES = new Key[] {WOODEN_AXE, COPPER_AXE, STONE_AXE, IRON_AXE, GOLDEN_AXE, DIAMOND_AXE, NETHERITE_AXE};
     public static final Key[] SPEARS = new Key[] {WOODEN_SPEAR, COPPER_SPEAR, STONE_SPEAR, IRON_SPEAR, GOLDEN_SPEAR, DIAMOND_SPEAR, NETHERITE_SPEAR};
