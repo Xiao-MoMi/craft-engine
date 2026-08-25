@@ -147,6 +147,51 @@ placed_features:
           max: 0
           min: 0
           plateau: 0
+      - type: 'minecraft:block_predicate_filter'
+        predicate:
+          type: 'minecraft:all_of'
+          predicates:
+            - type: 'minecraft:matching_blocks'
+              blocks: 'minecraft:air'
+            - type: 'minecraft:would_survive'
+              state:
+                Name: 'default:flame_cane'
+                Properties:
+                  age: '0'
+            - type: 'minecraft:any_of'
+              predicates:
+                - type: 'minecraft:matching_fluids'
+                  fluids:
+                    - 'minecraft:lava'
+                    - 'minecraft:flowing_lava'
+                  offset:
+                    - 1
+                    - -1
+                    - 0
+                - type: 'minecraft:matching_fluids'
+                  fluids:
+                    - 'minecraft:lava'
+                    - 'minecraft:flowing_lava'
+                  offset:
+                    - -1
+                    - -1
+                    - 0
+                - type: 'minecraft:matching_fluids'
+                  fluids:
+                    - 'minecraft:lava'
+                    - 'minecraft:flowing_lava'
+                  offset:
+                    - 0
+                    - -1
+                    - 1
+                - type: 'minecraft:matching_fluids'
+                  fluids:
+                    - 'minecraft:lava'
+                    - 'minecraft:flowing_lava'
+                  offset:
+                    - 0
+                    - -1
+                    - -1
   default:hami_melon:
     dimension_type:
       - minecraft:overworld
