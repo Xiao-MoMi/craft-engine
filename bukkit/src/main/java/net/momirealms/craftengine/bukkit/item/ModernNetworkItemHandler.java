@@ -20,6 +20,8 @@ import net.momirealms.craftengine.core.plugin.context.NetworkTextReplaceContext;
 import net.momirealms.craftengine.core.plugin.text.component.ComponentProvider;
 import net.momirealms.craftengine.core.util.AdventureHelper;
 import net.momirealms.craftengine.core.util.VersionHelper;
+import net.momirealms.craftengine.proxy.minecraft.core.component.DataComponentMapProxy;
+import net.momirealms.craftengine.proxy.minecraft.core.component.PatchedDataComponentMapProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.item.ItemStackProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.item.ItemStackTemplateProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.item.component.BundleContentsProxy;
@@ -31,10 +33,7 @@ import net.momirealms.sparrow.nbt.StringTag;
 import net.momirealms.sparrow.nbt.Tag;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 import java.util.function.Supplier;
 
 @SuppressWarnings("DuplicatedCode")
@@ -309,10 +308,34 @@ public final class ModernNetworkItemHandler implements NetworkItemHandler {
             forceReturn = true;
         }
         Object clientItem = ItemStackProxy.INSTANCE.getItem(wrapped.minecraftItem());
-        if (NetworkItemComponentRebaser.rebase(wrapped.minecraftItem(), this.itemManager.originalVanillaItemComponents(clientItem))) {
+        if (rebase(wrapped.minecraftItem(), this.itemManager.originalVanillaItemComponents(clientItem))) {
             forceReturn = true;
         }
         return forceReturn ? Optional.of(wrapped) : Optional.empty();
+    }
+
+    static boolean rebase(Object itemStack, @Nullable Object originalPrototype) {
+        if (originalPrototype == null) {
+            return false;
+        }
+
+        Object effectiveComponents = ItemStackProxy.INSTANCE.getComponents(itemStack);
+        Object rebasedComponents = PatchedDataComponentMapProxy.INSTANCE.newInstance(originalPrototype);
+        PatchedDataComponentMapProxy.INSTANCE.setAll(rebasedComponents, effectiveComponents);
+
+        Set<Object> effectiveTypes = DataComponentMapProxy.INSTANCE.keySet(effectiveComponents);
+        for (Object type : DataComponentMapProxy.INSTANCE.keySet(originalPrototype)) {
+            if (requiresExplicitRemoval(effectiveTypes, type)) {
+                PatchedDataComponentMapProxy.INSTANCE.remove(rebasedComponents, type);
+            }
+        }
+
+        ItemStackProxy.INSTANCE.setComponents(itemStack, rebasedComponents);
+        return true;
+    }
+
+    static boolean requiresExplicitRemoval(Set<Object> effectiveTypes, Object originalType) {
+        return !effectiveTypes.contains(originalType);
     }
 
     public static boolean processLegacyLore(Item item, Supplier<CompoundTag> tag, Context context) {
