@@ -75,7 +75,7 @@ command.resource.create.success: <white>Ressource <arg:0> erstellt.</white>
 command.resource.create.failure.unknown: '<red>Fehler beim Erstellen der Ressource <arg:0>, Fehler: <arg:1></red>'
 command.resource.create.failure.invalid_namespace: <red>Fehler beim Erstellen der Ressource <arg:0>, der Namespace <arg:1> ist ungültig.</red>
 command.resource.create.failure.exists: <red>Ressource <arg:0> existiert bereits.</red>
-command.resource.save_default.success: <white>Standard-Assets aus '<arg:0>' erfolgreich gespeichert</white><newline><gray><i>Klicke <green><u><b><click:run_command:'/ce reload all'><hover:show_text:'Plugin neu laden'>HIER</hover></click></b></u></green>, um die Änderungen anzuwenden</i></gray>
+command.resource.save_default.success: <white>Standard-Assets aus '<arg:0>' erfolgreich gespeichert</white>
 command.resource.save_default.failure: <red>Ein unbekannter Fehler ist beim Speichern der Standard-Assets aufgetreten. Bitte prüfe die Konsole</red>
 command.upload.failure.not_supported: <red>Die aktuelle Hosting-Methode '<arg:0>' unterstützt das Hochladen von Resource Packs nicht.</red>
 command.upload.on_progress: <white>Upload gestartet. Prüfe die Konsole für weitere Informationen.</white>

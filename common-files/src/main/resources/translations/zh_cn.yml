@@ -75,7 +75,7 @@ command.resource.create.success: <white>已创建名为“<arg:0>”的空资源
 command.resource.create.failure.unknown: <red>无法创建名为“<arg:0>”的资源，错误消息：<arg:1></red>
 command.resource.create.failure.invalid_namespace: <red>无法创建名为“<arg:0>”的资源，命名空间“<arg:1>”中包含无效字符</red>
 command.resource.create.failure.exists: <red>名为“<arg:0>”的资源已经存在</red>
-command.resource.save_default.success: <white>已成功将默认资源保存到“<arg:0>”</white><newline><i><gray>点击<green><u><b><click:run_command:'/ce reload all'><hover:show_text:'重新加载插件'>这里</hover></click></b></u></green>应用更改</gray></i>
+command.resource.save_default.success: <white>已成功将默认资源保存到“<arg:0>”</white>
 command.resource.save_default.failure: <red>保存默认资产的时候发生了未知的错误，请查看控制台
 command.resource.search.parser.not_found: <red>没有类型为“<arg:0>”的资源</red>
 command.resource.search.resource.not_found: <red>没有ID为“<arg:0>”的资源</red>

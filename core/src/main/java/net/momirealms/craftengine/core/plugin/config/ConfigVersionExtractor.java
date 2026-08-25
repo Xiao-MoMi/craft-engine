@@ -14,7 +14,7 @@ final class ConfigVersionExtractor implements VersionExtractor {
 
     private ConfigVersionExtractor() {
     }
-    
+
     @Override
     public String extractVersion(YamlDocument document) {
         if (document.contains(VERSION_ROUTE)) {

@@ -83,7 +83,7 @@ command.resource.create.success: <white>Created resource <arg:0>.</white>
 command.resource.create.failure.unknown: '<red>Failed to create resource <arg:0>, Error: <arg:1></red>'
 command.resource.create.failure.invalid_namespace: <red>Failed to create resource <arg:0>, The namespace <arg:1> is invalid.</red>
 command.resource.create.failure.exists: <red>Resource <arg:0> already exists.</red>
-command.resource.save_default.success: <white>Successfully saved default assets from '<arg:0>'</white><newline><gray><i>Click <green><u><b><click:run_command:'/ce reload all'><hover:show_text:'Reload the plugin'>HERE</hover></click></b></u></green> to apply the changes</i></gray>
+command.resource.save_default.success: <white>Successfully saved default assets from '<arg:0>'</white>
 command.resource.save_default.failure: <red>An unknown error occurred while saving the default assets. Please check the console
 command.resource.search.parser.not_found: <red>Cannot found config type '<arg:0>'</red>
 command.resource.search.resource.not_found: <red>Cannot found any resource with id '<arg:0>'</red>
