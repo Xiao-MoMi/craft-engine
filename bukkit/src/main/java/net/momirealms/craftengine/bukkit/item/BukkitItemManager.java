@@ -60,6 +60,7 @@ import java.nio.file.Path;
 import java.time.Duration;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 
 @SuppressWarnings("unchecked")
 public final class BukkitItemManager extends AbstractItemManager {
@@ -79,7 +80,7 @@ public final class BukkitItemManager extends AbstractItemManager {
     private final Object bedrockItemHolder;
     private final BukkitItem emptyItem;
     private final Cache<ByteArrayKey, BukkitItem> deserializedItemCache;
-    private final Map<Object, Object> originalVanillaItemComponents = new IdentityHashMap<>();
+    private final Map<Object, Object> originalVanillaItemComponents = new ConcurrentHashMap<>();
     private Set<Key> lastRegisteredPatterns = Set.of();
     private boolean hasExternalRecipeSource = false;
     private ItemSource[] recipeIngredientSources = null;
@@ -259,12 +260,6 @@ public final class BukkitItemManager extends AbstractItemManager {
         this.applyVanillaItemDataOverrides();
     }
 
-    public void reapplyVanillaItemDataOverrides() {
-        if (!VersionHelper.isOrAbove1_20_5) return;
-        this.originalVanillaItemComponents.clear();
-        this.applyVanillaItemDataOverrides();
-    }
-
     private void applyVanillaItemDataOverrides() {
         for (Map.Entry<Key, List<ItemProcessor>> entry : this.vanillaItemDataOverrides.entrySet()) {
             Key id = entry.getKey();
@@ -290,7 +285,7 @@ public final class BukkitItemManager extends AbstractItemManager {
     }
 
     private void restoreVanillaItemComponents() {
-        if (!VersionHelper.isOrAbove1_20_5 || this.originalVanillaItemComponents.isEmpty()) return;
+        if (!VersionHelper.isOrAbove1_20_5) return;
         Iterator<Map.Entry<Object, Object>> iterator = this.originalVanillaItemComponents.entrySet().iterator();
         while (iterator.hasNext()) {
             Map.Entry<Object, Object> entry = iterator.next();
@@ -310,6 +305,11 @@ public final class BukkitItemManager extends AbstractItemManager {
         } else {
             ItemProxy.INSTANCE.setComponents(item, components);
         }
+    }
+
+    @Nullable
+    Object originalVanillaItemComponents(Object item) {
+        return this.originalVanillaItemComponents.get(item);
     }
 
     @Override

@@ -308,6 +308,10 @@ public final class ModernNetworkItemHandler implements NetworkItemHandler {
             wrapped.setSparrowTagComponent(DataComponentTypes.CUSTOM_DATA, customData);
             forceReturn = true;
         }
+        Object clientItem = ItemStackProxy.INSTANCE.getItem(wrapped.minecraftItem());
+        if (NetworkItemComponentRebaser.rebase(wrapped.minecraftItem(), this.itemManager.originalVanillaItemComponents(clientItem))) {
+            forceReturn = true;
+        }
         return forceReturn ? Optional.of(wrapped) : Optional.empty();
     }
 

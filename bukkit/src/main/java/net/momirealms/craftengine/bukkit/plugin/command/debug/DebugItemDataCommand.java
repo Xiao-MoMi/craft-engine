@@ -20,6 +20,7 @@ import net.momirealms.craftengine.core.plugin.command.CraftEngineCommandManager;
 import net.momirealms.craftengine.core.plugin.command.FlagKeys;
 import net.momirealms.craftengine.core.util.AdventureHelper;
 import net.momirealms.craftengine.core.util.VersionHelper;
+import net.momirealms.craftengine.proxy.minecraft.core.component.PatchedDataComponentMapProxy;
 import net.momirealms.craftengine.proxy.minecraft.nbt.CompoundTagProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.item.ItemStackProxy;
 import net.momirealms.sparrow.nbt.CompoundTag;
@@ -36,6 +37,7 @@ import java.util.Map;
 import static net.momirealms.craftengine.core.item.network.NetworkItemHandler.NETWORK_ITEM_TAG;
 
 public final class DebugItemDataCommand extends BukkitCommandFeature<CommandSender> {
+    private static final String FULL_FLAG = "full";
     private static final TextColor COLOR_TEXT = TextColor.color(0xF5F5F5);
 
     public DebugItemDataCommand(CraftEngineCommandManager<CommandSender> commandManager, CraftEngine plugin) {
@@ -47,6 +49,7 @@ public final class DebugItemDataCommand extends BukkitCommandFeature<CommandSend
         return builder
                 .senderType(Player.class)
                 .flag(FlagKeys.CLIENT_SIDE_FLAG)
+                .flag(manager.flagBuilder(FULL_FLAG).build())
                 .handler(context -> {
                     BukkitServerPlayer serverPlayer = BukkitAdaptor.adapt(context.sender());
                     if (serverPlayer == null) return;
@@ -74,7 +77,8 @@ public final class DebugItemDataCommand extends BukkitCommandFeature<CommandSend
                         }
                     }
 
-                    Map<String, Object> readableMap = toMap(itemInHand);
+                    boolean full = context.flags().hasFlag(FULL_FLAG);
+                    Map<String, Object> readableMap = toMap(itemInHand, full);
                     List<Component> readableComponents = mapToComponentList(readableMap);
 
                     Component finalMessage = Component.join(JoinConfiguration.separator(Component.newline()), readableComponents);
@@ -88,15 +92,29 @@ public final class DebugItemDataCommand extends BukkitCommandFeature<CommandSend
     }
 
     @SuppressWarnings("unchecked")
-    private static Map<String, Object> toMap(Item item) {
+    private static Map<String, Object> toMap(Item item, boolean full) {
         if (VersionHelper.COMPONENT_RELEASE) {
-            return (Map<String, Object>) ItemStackProxy.INSTANCE.getCodec().encodeStart(RegistryOps.JAVA, item.minecraftItem())
+            Object minecraftItem = item.minecraftItem();
+            if (full) {
+                minecraftItem = withFullComponentPatch(minecraftItem);
+            }
+            return (Map<String, Object>) ItemStackProxy.INSTANCE.getCodec().encodeStart(RegistryOps.JAVA, minecraftItem)
                     .resultOrPartial(error -> CraftEngine.instance().logger().error("Error while saving item: " + error))
                     .orElse(null);
         } else {
             Object nmsTag = ItemStackProxy.INSTANCE.save(item.minecraftItem(), CompoundTagProxy.INSTANCE.newInstance());
             return (Map<String, Object>) RegistryOps.NBT.convertTo(RegistryOps.JAVA, nmsTag);
         }
+    }
+
+    private static Object withFullComponentPatch(Object minecraftItem) {
+        // ItemStack's codec normally serializes only the changes from the item's prototype.
+        // Rebasing the effective components onto an empty prototype makes that patch complete.
+        Object itemCopy = ItemStackProxy.INSTANCE.copy(minecraftItem);
+        Object fullComponents = PatchedDataComponentMapProxy.INSTANCE.newInstance(ItemStackProxy.INSTANCE.getComponents(ItemStackProxy.EMPTY));
+        PatchedDataComponentMapProxy.INSTANCE.setAll(fullComponents, ItemStackProxy.INSTANCE.getComponents(itemCopy));
+        ItemStackProxy.INSTANCE.setComponents(itemCopy, fullComponents);
+        return itemCopy;
     }
 
     private List<Component> mapToComponentList(Map<String, Object> readableDataMap) {
