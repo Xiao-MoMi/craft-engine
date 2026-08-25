@@ -9,12 +9,10 @@ import org.jetbrains.annotations.NotNull;
 
 public class EntityDamageContext extends AbstractChainParameterContext {
     private final DamageEvent event;
-    private final double originalDamage;
 
     public EntityDamageContext(DamageEvent event, @NotNull ContextHolder contexts) {
         super(contexts);
         this.event = event;
-        this.originalDamage = event.damage();
     }
 
     @NotNull
@@ -36,14 +34,11 @@ public class EntityDamageContext extends AbstractChainParameterContext {
         contexts.withParameter(DirectContextParameters.IS_SWEEP, event.isSweepAttack());
         contexts.withParameter(DirectContextParameters.IS_ATTACK_READY, event.isAttackReady());
         contexts.withParameter(DirectContextParameters.ATTACK_STRENGTH, event.attackStrength());
+        contexts.withParameter(DirectContextParameters.SHOOT_FORCE, event.shootForce());
         return new EntityDamageContext(event, contexts.build());
     }
 
     public DamageEvent event() {
         return this.event;
-    }
-
-    public double originalDamage() {
-        return this.originalDamage;
     }
 }

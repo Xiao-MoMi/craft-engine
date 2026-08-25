@@ -29,6 +29,7 @@ import net.momirealms.craftengine.proxy.minecraft.world.entity.EntityProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.entity.projectile.AbstractArrowProxy;
 import org.bukkit.event.entity.EntityDamageEvent;
 import org.bukkit.metadata.MetadataValue;
+import org.bukkit.persistence.PersistentDataType;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.LinkedHashMap;
@@ -46,6 +47,7 @@ public final class BukkitDamageEvent implements DamageEvent {
     private final EntityDamageContext context;
     private final Item activeWeapon;
     private final float attackStrength;
+    private final float shootForce;
     private Map<String, Double> damageParts;
     @Nullable
     private List<SlotAttributeModifierConfig> activeWeaponModifiers;
@@ -64,6 +66,7 @@ public final class BukkitDamageEvent implements DamageEvent {
         }
         this.attackerAttributes = this.causingEntityAttributes();
         this.attackStrength = this.resolveAttackStrength();
+        this.shootForce = this.resolveShootForce();
         Item weapon = this.resolveActiveWeapon();
         this.activeWeapon = weapon == null || weapon.isEmpty() ? null : weapon;
         this.context = EntityDamageContext.of(this,
@@ -115,6 +118,11 @@ public final class BukkitDamageEvent implements DamageEvent {
     }
 
     @Override
+    public float shootForce() {
+        return this.shootForce;
+    }
+
+    @Override
     public void recordDamagePart(String id, double amount) {
         this.damageParts().put(id, amount);
         this.context.contexts().withParameter(ContextKey.direct("damage_" + id), amount);
@@ -140,21 +148,31 @@ public final class BukkitDamageEvent implements DamageEvent {
         return player.capturedAttackStrength();
     }
 
-    @SuppressWarnings("deprecation")
+    private float resolveShootForce() {
+        BukkitEntity directEntity = this.source.directEntity();
+        if (directEntity == null) return 1.0F;
+        Float force = directEntity.platformEntity().getPersistentDataContainer().get(
+                AttributeEventListener.PROJECTILE_SHOOT_FORCE,
+                PersistentDataType.FLOAT
+        );
+        if (force == null || !Float.isFinite(force)) return 1.0F;
+        return Math.clamp(force, 0.0F, 1.0F);
+    }
+
     public AttributeGetter causingEntityAttributes() {
+        BukkitEntity directEntity = this.source.directEntity();
+        if (directEntity != null) {
+            EntityAttributesSnapshot snapshot = directEntity.getCustomData(EntityAttributesSnapshot.PROJECTILE_DATA_KEY);
+            if (snapshot != null) {
+                return snapshot;
+            }
+        }
         BukkitEntity entity = this.source.causingEntity();
         if (entity == null) {
             return EmptyAttributeHolder.INSTANCE;
         }
         LivingEntityHolder holder = BukkitEntityManager.instance().getEntityHolder(entity.uuid());
         AttributeGetter attributes = holder == null ? null : holder.attributes();
-        if (attributes == null) {
-            List<MetadataValue> attribute = entity.platformEntity().getMetadata(AttributeManager.META_KEY);
-            if (!attribute.isEmpty()) {
-                MetadataValue first = attribute.getFirst();
-                attributes = (AttributeGetter) first.value();
-            }
-        }
         return attributes == null ? new NotTrackedHolder(entity) : attributes;
     }
 
@@ -203,11 +221,7 @@ public final class BukkitDamageEvent implements DamageEvent {
                     return ItemStackUtils.wrap(weaponStack);
                 }
             } else {
-                @SuppressWarnings("deprecation")
-                List<MetadataValue> metadata = EntityProxy.INSTANCE.getBukkitEntity(direct).getMetadata(AttributeEventListener.PROJECTILE_WEAPON);
-                if (!metadata.isEmpty()) {
-                    return ItemStackUtils.wrap(metadata.getFirst());
-                }
+                // TODO 暂不支持
             }
         }
         return null;

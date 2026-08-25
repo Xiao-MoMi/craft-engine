@@ -42,6 +42,7 @@ public class ExpressionDamageFormula implements DamageFormula {
             case "is_critical" -> event -> event.source().isCritical() ? 1D : 0D;
             case "is_sweep" -> event -> event.isSweepAttack() ? 1D : 0D;
             case "attack_strength" -> DamageEvent::attackStrength;
+            case "shoot_force" -> DamageEvent::shootForce;
             case "is_attack_ready" -> event -> event.isAttackReady() ? 1D : 0D;
             default -> null;
         };

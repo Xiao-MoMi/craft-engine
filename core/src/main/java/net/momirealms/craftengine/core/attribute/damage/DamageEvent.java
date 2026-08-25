@@ -30,6 +30,10 @@ public interface DamageEvent {
         return 1.0F;
     }
 
+    default float shootForce() {
+        return 1.0F;
+    }
+
     default boolean isAttackReady() {
         return attackStrength() > 0.9F;
     }

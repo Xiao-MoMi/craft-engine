@@ -82,6 +82,7 @@ public final class DirectContextParameters {
     public static final ContextKey<Boolean> IS_SWEEP = ContextKey.direct("is_sweep");
     public static final ContextKey<Boolean> IS_ATTACK_READY = ContextKey.direct("is_attack_ready");
     public static final ContextKey<Float> ATTACK_STRENGTH = ContextKey.direct("attack_strength");
+    public static final ContextKey<Float> SHOOT_FORCE = ContextKey.direct("shoot_force");
     public static final ContextKey<Entity> CAUSING_ENTITY = ContextKey.direct("causing_entity");
     public static final ContextKey<Double> HEALTH = ContextKey.direct("health");
 }
