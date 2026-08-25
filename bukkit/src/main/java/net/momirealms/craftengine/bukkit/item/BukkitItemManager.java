@@ -23,7 +23,7 @@ import net.momirealms.craftengine.core.entity.player.Player;
 import net.momirealms.craftengine.core.item.*;
 import net.momirealms.craftengine.core.item.component.DataComponentKeys;
 import net.momirealms.craftengine.core.item.network.NetworkItemHandler;
-import net.momirealms.craftengine.core.item.processor.ComponentsProcessor;
+import net.momirealms.craftengine.core.item.processor.ItemProcessor;
 import net.momirealms.craftengine.core.item.processor.ObfuscatedItemModelProcessor;
 import net.momirealms.craftengine.core.item.recipe.DatapackRecipeResult;
 import net.momirealms.craftengine.core.item.recipe.IngredientUnlockable;
@@ -234,7 +234,7 @@ public final class BukkitItemManager extends AbstractItemManager {
 
     @Override
     public void runDelayedSyncTasks() {
-        this.reloadVanillaItemComponentOverrides();
+        this.reloadVanillaItemDataOverrides();
         if (this.featureFlag$preventBreak()) {
             this.preventBreakListener.register(this.plugin.javaPlugin());
         } else {
@@ -253,14 +253,20 @@ public final class BukkitItemManager extends AbstractItemManager {
         if (this.paperItemEventListener != null) HandlerList.unregisterAll(this.paperItemEventListener);
     }
 
-    private void reloadVanillaItemComponentOverrides() {
+    public void reloadVanillaItemDataOverrides() {
         if (!VersionHelper.isOrAbove1_20_5) return;
         this.restoreVanillaItemComponents();
-        this.applyVanillaItemComponentOverrides();
+        this.applyVanillaItemDataOverrides();
     }
 
-    private void applyVanillaItemComponentOverrides() {
-        for (Map.Entry<Key, ComponentsProcessor> entry : this.vanillaItemComponentOverrides.entrySet()) {
+    public void reapplyVanillaItemDataOverrides() {
+        if (!VersionHelper.isOrAbove1_20_5) return;
+        this.originalVanillaItemComponents.clear();
+        this.applyVanillaItemDataOverrides();
+    }
+
+    private void applyVanillaItemDataOverrides() {
+        for (Map.Entry<Key, List<ItemProcessor>> entry : this.vanillaItemDataOverrides.entrySet()) {
             Key id = entry.getKey();
             Object item = RegistryUtils.getRegistryValue(BuiltInRegistriesProxy.ITEM, KeyUtils.toIdentifier(id));
             if (item == null || item == ItemsProxy.AIR) continue;
@@ -270,12 +276,15 @@ public final class BukkitItemManager extends AbstractItemManager {
                 BukkitItem wrapped = this.wrap(itemStack);
                 ItemBuildContext context = ItemBuildContext.empty();
                 context.setItem(wrapped);
-                entry.getValue().apply(wrapped, context);
-                Object overriddenComponents = ItemStackProxy.INSTANCE.getComponents(itemStack);
+                Item processed = wrapped;
+                for (ItemProcessor processor : entry.getValue()) {
+                    processed = processor.apply(processed, context);
+                }
+                Object overriddenComponents = ItemStackProxy.INSTANCE.getComponents(processed.minecraftItem());
                 this.originalVanillaItemComponents.putIfAbsent(item, originalComponents);
                 this.setVanillaItemComponents(item, overriddenComponents);
             } catch (Throwable throwable) {
-                this.plugin.logger().warn("Failed to override the default components of vanilla item '" + id.asString() + "'", throwable);
+                this.plugin.logger().warn("Failed to apply override_data to vanilla item '" + id.asString() + "'", throwable);
             }
         }
     }

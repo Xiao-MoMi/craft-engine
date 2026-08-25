@@ -65,7 +65,7 @@ public abstract class AbstractItemManager extends AbstractModelGenerator impleme
     protected final Map<Key, TreeMap<Integer, ModernItemModel>> modernOverrides = new ConcurrentHashMap<>();
     protected final Map<Key, Equipment> equipments = new ConcurrentHashMap<>();
     protected final Map<Key, ItemDefinition> dyeableItems = new ConcurrentHashMap<>();
-    protected final Map<Key, ComponentsProcessor> vanillaItemComponentOverrides = new ConcurrentHashMap<>();
+    protected final Map<Key, List<ItemProcessor>> vanillaItemDataOverrides = new ConcurrentHashMap<>();
     // 指令补全
     protected final List<Suggestion> cachedCustomItemSuggestions = new ObjectArrayList<>();
     protected final List<Suggestion> cachedTotemSuggestions = new ObjectArrayList<>();
@@ -119,7 +119,7 @@ public abstract class AbstractItemManager extends AbstractModelGenerator impleme
         this.ingredientSubstitutes.clear();
         this.orderedItemIds.clear();
         this.dyeableItems.clear();
-        this.vanillaItemComponentOverrides.clear();
+        this.vanillaItemDataOverrides.clear();
     }
 
     private void clearFeatureFlags() {
@@ -389,7 +389,7 @@ public abstract class AbstractItemManager extends AbstractModelGenerator impleme
             if (!this.tempCategories.isEmpty()) {
                 this.tempCategories.clear();
             }
-            AbstractItemManager.this.vanillaItemComponentOverrides.clear();
+            AbstractItemManager.this.vanillaItemDataOverrides.clear();
             ObfuscatedItemModelProcessor.CAN_OBF.clear();
         }
 
@@ -505,7 +505,7 @@ public abstract class AbstractItemManager extends AbstractModelGenerator impleme
         private static final String[] SWAP_ANIMATION_SCALE = ConfigKeys.of("swap_animation_scale");
         private static final String[] CATEGORIES = ConfigKeys.of("category|categor(y|ies)");
         private static final String[] SKIP_OBFUSCATION = ConfigKeys.of("skip_obfuscation");
-        private static final String[] OVERRIDE_COMPONENTS = ConfigKeys.of("override_components");
+        private static final String[] OVERRIDE_DATA = ConfigKeys.of("override_data");
 
         @Override
         public void parseSection(@NotNull Pack pack, @NotNull Path path, @NotNull Key id, @NotNull ConfigSection section) {
@@ -514,9 +514,13 @@ public abstract class AbstractItemManager extends AbstractModelGenerator impleme
             // 判断是不是原版物品
             boolean isVanillaItem = isVanillaItem(id);
             if (isVanillaItem && VersionHelper.COMPONENT_RELEASE) {
-                ConfigSection components = section.getSection(OVERRIDE_COMPONENTS);
-                if (components != null) {
-                    AbstractItemManager.this.vanillaItemComponentOverrides.put(id, new ComponentsProcessor(components));
+                ConfigSection overrideData = section.getSection(OVERRIDE_DATA);
+                if (overrideData != null) {
+                    List<ItemProcessor> processors = new ArrayList<>();
+                    ItemProcessors.collectProcessors(overrideData, processors::add);
+                    if (!processors.isEmpty()) {
+                        AbstractItemManager.this.vanillaItemDataOverrides.put(id, List.copyOf(processors));
+                    }
                 }
             }
             // 读取服务端侧材质
