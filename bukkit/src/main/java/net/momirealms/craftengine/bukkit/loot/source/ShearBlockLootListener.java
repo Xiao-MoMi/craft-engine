@@ -30,7 +30,7 @@ public final class ShearBlockLootListener implements Listener {
     @EventHandler(priority = EventPriority.HIGH, ignoreCancelled = true)
     public void onShearBlock(PlayerShearBlockEvent event) {
         Key blockType = BlockStateUtils.getBlockOwner(event.getBlock());
-        List<LootSource> sources = LootSources.SHEAR_BLOCK.getSources(blockType);
+        List<LootSource> sources = LootSources.BLOCK_SHEAR.getSources(blockType);
         if (sources.isEmpty()) return;
         Player player = event.getPlayer();
         InteractionHand hand = event.getHand() == EquipmentSlot.HAND ? InteractionHand.MAIN_HAND : InteractionHand.OFF_HAND;

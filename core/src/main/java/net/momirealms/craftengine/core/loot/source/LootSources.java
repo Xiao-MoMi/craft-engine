@@ -20,7 +20,12 @@ public final class LootSources {
     public static final LootSourceType<TargetedLootSource> ARCHAEOLOGY = register(Key.ce("archaeology"), TARGETED_FACTORY);
     public static final LootSourceType<TargetedLootSource> ENTITY_DROP = register(Key.ce("entity_drop"), TARGETED_FACTORY);
     public static final LootSourceType<TargetedLootSource> HARVEST = register(Key.ce("harvest"), TARGETED_FACTORY);
-    public static final LootSourceType<TargetedLootSource> SHEAR_BLOCK = register(Key.ce("shear_block"), TARGETED_FACTORY);
+    public static final LootSourceType<TargetedLootSource> BLOCK_SHEAR = register(Key.ce("block_shear"), TARGETED_FACTORY);
+    /**
+     * @deprecated Use {@link #BLOCK_SHEAR} instead.
+     */
+    @Deprecated
+    public static final LootSourceType<TargetedLootSource> SHEAR_BLOCK = BLOCK_SHEAR;
     public static final LootSourceType<TargetedLootSource> ENTITY_SHEAR = register(Key.ce("entity_shear"), TARGETED_FACTORY);
     public static final LootSourceType<TargetedLootSource> VAULT = register(Key.ce("vault"), TARGETED_FACTORY);
     public static final LootSourceType<TargetedLootSource> ADVANCEMENT = register(Key.ce("advancement"), TARGETED_FACTORY);
@@ -36,10 +41,11 @@ public final class LootSources {
 
     public static LootSource fromConfig(Key id, ConfigSection section) {
         String type = section.getNonEmptyString("type");
-        // 旧版 vanilla-loots 的类型别名
+        // 兼容旧版类型别名（包括 vanilla-loots）
         type = switch (type) {
             case "block" -> "block_break";
             case "entity" -> "entity_death";
+            case "shear_block" -> "block_shear";
             default -> type;
         };
         Key key = Key.ce(type);

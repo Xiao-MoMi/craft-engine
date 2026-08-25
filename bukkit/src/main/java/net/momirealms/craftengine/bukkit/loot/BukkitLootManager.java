@@ -90,7 +90,7 @@ public final class BukkitLootManager extends AbstractLootManager {
         this.registerSourceListener(LootSources.BLOCK_BREAK, BlockBreakLootListener::new);
         if (VersionHelper.hasPaperPatch) {
             this.registerSourceListener(LootSources.BLOCK_BREAK, PaperBlockBreakLootListener::new);
-            this.registerSourceListener(LootSources.SHEAR_BLOCK, ShearBlockLootListener::new);
+            this.registerSourceListener(LootSources.BLOCK_SHEAR, ShearBlockLootListener::new);
             this.registerSourceListener(LootSources.VAULT, VaultLootListener::new);
             this.registerSourceListener(LootSources.ENTITY_SHEAR, () -> new EntityShearLootListener(this.plugin.entityManager()));
         }
