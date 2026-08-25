@@ -77,6 +77,7 @@ public final class DirectContextParameters {
     public static final ContextKey<Key> FIRE_TICKS = ContextKey.direct("fire_ticks");
     public static final ContextKey<Double> ORIGINAL_DAMAGE = ContextKey.direct("original_damage");
     public static final ContextKey<Double> DAMAGE = ContextKey.direct("damage");
+    public static final ContextKey<Double> FINAL_DAMAGE = ContextKey.direct("final_damage");
     public static final ContextKey<Boolean> IS_CRITICAL = ContextKey.direct("is_critical");
     public static final ContextKey<Boolean> IS_SWEEP = ContextKey.direct("is_sweep");
     public static final ContextKey<Boolean> IS_ATTACK_READY = ContextKey.direct("is_attack_ready");

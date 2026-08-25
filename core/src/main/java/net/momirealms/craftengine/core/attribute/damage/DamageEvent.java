@@ -14,6 +14,10 @@ public interface DamageEvent {
 
     double damage();
 
+    default double finalDamage() {
+        return damage();
+    }
+
     void setDamage(double damage);
 
     DamageSource source();
@@ -33,6 +37,8 @@ public interface DamageEvent {
     double getAttributeValue(AttributeSide side, Attribute attribute);
 
     void recordDamagePart(String id, double amount);
+
+    void initFinalDamage();
 
     Map<String, Double> damageParts();
 

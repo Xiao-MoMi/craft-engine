@@ -1,6 +1,7 @@
 package net.momirealms.craftengine.core.attribute.damage;
 
 import net.momirealms.craftengine.core.entity.Entity;
+import net.momirealms.craftengine.core.entity.player.Player;
 import net.momirealms.craftengine.core.plugin.context.AbstractChainParameterContext;
 import net.momirealms.craftengine.core.plugin.context.ContextHolder;
 import net.momirealms.craftengine.core.plugin.context.parameter.DirectContextParameters;
@@ -21,9 +22,16 @@ public class EntityDamageContext extends AbstractChainParameterContext {
         Entity entity = event.source().causingEntity();
         if (entity != null) {
             contexts.withParameter(DirectContextParameters.CAUSING_ENTITY, entity);
+            if (entity instanceof Player player) {
+                contexts.withParameter(DirectContextParameters.PLAYER, player);
+            }
         }
-        contexts.withParameter(DirectContextParameters.ENTITY, event.victim());
-        contexts.withParameter(DirectContextParameters.ORIGINAL_DAMAGE, event.damage());
+        Entity victim = event.victim();
+        contexts.withParameter(DirectContextParameters.ENTITY, victim);
+        contexts.withParameter(DirectContextParameters.POSITION, victim.position());
+        double baseDamage = event.damage();
+        contexts.withParameter(DirectContextParameters.ORIGINAL_DAMAGE, baseDamage);
+        contexts.withParameter(DirectContextParameters.DAMAGE, baseDamage);
         contexts.withParameter(DirectContextParameters.IS_CRITICAL, event.source().isCritical());
         contexts.withParameter(DirectContextParameters.IS_SWEEP, event.isSweepAttack());
         contexts.withParameter(DirectContextParameters.IS_ATTACK_READY, event.isAttackReady());

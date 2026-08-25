@@ -4,12 +4,14 @@ import net.momirealms.craftengine.core.attribute.base.BaseValueSource;
 import net.momirealms.craftengine.core.attribute.base.BaseValueSources;
 import net.momirealms.craftengine.core.attribute.base.ConstantBaseValueSource;
 import net.momirealms.craftengine.core.attribute.damage.DamageEvent;
+import net.momirealms.craftengine.core.attribute.damage.DamageRule;
+import net.momirealms.craftengine.core.attribute.damage.DamageRuleTable;
+import net.momirealms.craftengine.core.attribute.damage.effect.DamageEffect;
+import net.momirealms.craftengine.core.attribute.damage.effect.DamageEffects;
 import net.momirealms.craftengine.core.attribute.derived.DerivedValue;
 import net.momirealms.craftengine.core.attribute.derived.DerivedValues;
-import net.momirealms.craftengine.core.attribute.formula.CauseToFormula;
 import net.momirealms.craftengine.core.attribute.formula.DamageFormula;
 import net.momirealms.craftengine.core.attribute.formula.DamageFormulas;
-import net.momirealms.craftengine.core.attribute.formula.VictimToFormula;
 import net.momirealms.craftengine.core.attribute.modifier.ItemAttributeModifier;
 import net.momirealms.craftengine.core.attribute.modifier.ItemAttributeModifierStore;
 import net.momirealms.craftengine.core.attribute.modifier.ItemAttributeModifiersProvider;
@@ -53,7 +55,7 @@ public abstract class AbstractAttributeManager implements AttributeManager {
     protected final Map<Key, RegisteredProvider> itemModifiersProviders = new LinkedHashMap<>();
     private final OperationParser operationParser = new OperationParser();
     private final AttributeParser attributeParser = new AttributeParser();
-    private final DamageFormulaParser damageFormulaParser = new DamageFormulaParser();
+    private final DamageRuleParser damageRuleParser = new DamageRuleParser();
     private final EquipmentSetParser equipmentSetParser = new EquipmentSetParser();
     // 按优先级升序的快照，遍历时零排序开销
     protected volatile List<ItemAttributeModifiersProvider> sortedItemModifiersProviders = List.of();
@@ -62,7 +64,7 @@ public abstract class AbstractAttributeManager implements AttributeManager {
     // 按实体类型分桶的受限属性
     protected List<Attribute> globalAttributes = List.of();
     protected Map<Key, List<Attribute>> attributesByEntityType = Map.of();
-    private CauseToFormula causeToFormula;
+    private DamageRuleTable damageRules;
 
     protected AbstractAttributeManager(CraftEngine plugin) {
         this.plugin = plugin;
@@ -91,6 +93,7 @@ public abstract class AbstractAttributeManager implements AttributeManager {
         this.configAttributes.clear();
         this.configOperations.clear();
         this.equipmentSets.clear();
+        this.damageRules = null;
     }
 
     @Override
@@ -175,28 +178,31 @@ public abstract class AbstractAttributeManager implements AttributeManager {
 
     @Override
     public ConfigParser[] parsers() {
-        return new ConfigParser[]{this.attributeParser, this.operationParser, this.damageFormulaParser, this.equipmentSetParser};
+        return new ConfigParser[]{this.attributeParser, this.operationParser, this.damageRuleParser, this.equipmentSetParser};
     }
 
     @Override
-    public DamageFormula findFormula(DamageEvent event) {
-        if (this.causeToFormula == null) return null;
-        return this.causeToFormula.getFormula(event);
+    public DamageRule findDamageRule(DamageEvent event) {
+        if (this.damageRules == null) return null;
+        return this.damageRules.find(event);
     }
 
     @Override
     public void processDamageEvent(DamageEvent event) {
-        DamageFormula formula = findFormula(event);
-        if (formula == null) {
+        DamageRule rule = findDamageRule(event);
+        if (rule == null) {
             return;
         }
-        double newDamage = formula.getValue(event);
-        if (event.damage() != newDamage) {
-            if (newDamage < 0) {
-                event.setDamage(0);
-                return;
+        DamageFormula formula = rule.formula();
+        if (formula != null) {
+            double newDamage = formula.getValue(event);
+            if (event.damage() != newDamage) {
+                event.setDamage(Math.max(0, newDamage));
             }
-            event.setDamage(newDamage);
+        }
+        event.initFinalDamage();
+        for (DamageEffect effect : rule.effects()) {
+            effect.apply(event);
         }
     }
 
@@ -246,8 +252,36 @@ public abstract class AbstractAttributeManager implements AttributeManager {
     private record ModifierMergeKey(Key attribute, Key id) {
     }
 
-    private final class DamageFormulaParser extends SectionConfigParser {
+    private static final class MutableDamageRule {
+        @Nullable
+        private DamageFormula formula;
+        private List<DamageEffect> effects = List.of();
+        private boolean hasEffects;
+
+        private void merge(@Nullable DamageFormula formula, List<DamageEffect> effects, boolean hasEffects) {
+            if (formula != null) {
+                this.formula = formula;
+            }
+            if (hasEffects) {
+                this.effects = effects;
+                this.hasEffects = true;
+            }
+        }
+
+        private DamageRule build(@Nullable DamageRule fallback) {
+            DamageFormula resolvedFormula = this.formula != null
+                    ? this.formula
+                    : fallback == null ? null : fallback.formula();
+            List<DamageEffect> resolvedEffects = this.hasEffects
+                    ? this.effects
+                    : fallback == null ? List.of() : fallback.effects();
+            return new DamageRule(resolvedFormula, resolvedEffects);
+        }
+    }
+
+    private final class DamageRuleParser extends SectionConfigParser {
         public static final String[] CONFIG_SECTION_NAME = ConfigKeys.of("damage_rule(s)");
+        private static final String[] EFFECTS = ConfigKeys.of("effect(s)", "post_effect(s)");
 
         @Override
         public Key type() {
@@ -256,35 +290,48 @@ public abstract class AbstractAttributeManager implements AttributeManager {
 
         @Override
         protected void parseSection(Pack pack, Path path, ConfigSection section) {
-            Map<Key, VictimToFormula> causeToFormulas = new HashMap<>();
+            Map<Key, DamageRuleTable.RulesByVictim> rulesByCause = new HashMap<>();
             for (String damageSourceType : section.keySet()) {
                 Key source = Key.of(damageSourceType);
                 List<ConfigSection> sections = section.getList(damageSourceType, ConfigValue::getAsSection);
-                Map<Key, DamageFormula> formulas = new HashMap<>();
-                DamageFormula defaultFormula = null;
+                Map<Key, MutableDamageRule> rulesByVictim = new HashMap<>();
+                MutableDamageRule defaultRule = null;
                 for (int i = sections.size() - 1; i >= 0; i--) {
                     ConfigSection configSection = sections.get(i);
                     List<String> targets = configSection.getStringList("target");
-                    DamageFormula formula = configSection.getNonNullValue("formula", ConfigConstants.ARGUMENT_STRING, DamageFormulas::fromConfig);
+                    DamageFormula formula = configSection.getValue("formula", DamageFormulas::fromConfig);
+                    boolean hasEffects = configSection.containsKey(EFFECTS);
+                    List<DamageEffect> ruleEffects = configSection.getList(EFFECTS, DamageEffects::fromConfig);
+                    if (formula == null && !hasEffects) {
+                        configSection.getNonNullValue("formula", ConfigConstants.ARGUMENT_STRING, DamageFormulas::fromConfig);
+                    }
                     if (!targets.isEmpty()) {
                         for (String target : targets) {
                             if (target.isEmpty()) continue;
                             if (target.charAt(0) == '#') {
                                 for (Key entity : AbstractAttributeManager.this.plugin.entityManager().entityIdsByTag(Key.of(target.substring(1)))) {
-                                    formulas.put(entity, formula);
+                                    rulesByVictim.computeIfAbsent(entity, ignored -> new MutableDamageRule())
+                                            .merge(formula, ruleEffects, hasEffects);
                                 }
                             } else {
-                                formulas.put(Key.of(target), formula);
+                                Key entity = Key.of(target);
+                                rulesByVictim.computeIfAbsent(entity, ignored -> new MutableDamageRule())
+                                        .merge(formula, ruleEffects, hasEffects);
                             }
                         }
                     } else {
-                        defaultFormula = formula;
+                        if (defaultRule == null) {
+                            defaultRule = new MutableDamageRule();
+                        }
+                        defaultRule.merge(formula, ruleEffects, hasEffects);
                     }
                 }
-                VictimToFormula victimToFormula = new VictimToFormula(defaultFormula, formulas);
-                causeToFormulas.put(source, victimToFormula);
+                DamageRule resolvedDefaultRule = defaultRule == null ? null : defaultRule.build(null);
+                Map<Key, DamageRule> resolvedRulesByVictim = new HashMap<>(rulesByVictim.size());
+                rulesByVictim.forEach((victim, rule) -> resolvedRulesByVictim.put(victim, rule.build(resolvedDefaultRule)));
+                rulesByCause.put(source, new DamageRuleTable.RulesByVictim(resolvedDefaultRule, resolvedRulesByVictim));
             }
-            AbstractAttributeManager.this.causeToFormula = new CauseToFormula(causeToFormulas);
+            AbstractAttributeManager.this.damageRules = new DamageRuleTable(rulesByCause);
         }
 
         @Override

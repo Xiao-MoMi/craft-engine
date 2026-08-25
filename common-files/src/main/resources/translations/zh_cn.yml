@@ -129,6 +129,8 @@ yaml.duplicated_key: 在文件“<arg:0>”中的第“<arg:2>”行发现发现
 yaml.inconsistent_value_type: 在文件“<arg:0>”中的第“<arg:2>”行发现发现重复的键“<arg:1>”且值类型不同
 plugin.compatibility: '[兼容性] 已挂钩 <arg:0>'
 attribute.damage_formula.unknown_type: 未知的伤害公式类型“<arg:0>”
+attribute.damage_effect.unknown_type: 未知的伤害后置效果类型“<arg:0>”
+attribute.damage_effect.unknown_target: 未知的伤害后置效果目标“<arg:0>”
 damage_indicator.unknown_type: 未知的伤害数字显示类型“<arg:0>”
 attribute.base_value_source.unknown_type: 未知的属性基础值来源类型“<arg:0>”
 attribute.sync_value_provider.unknown_type: 未知的同步数值提供器类型“<arg:0>”

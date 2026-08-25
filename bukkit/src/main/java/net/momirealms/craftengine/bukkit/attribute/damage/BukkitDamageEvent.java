@@ -21,6 +21,7 @@ import net.momirealms.craftengine.core.item.setting.value.AttributeModifiers;
 import net.momirealms.craftengine.core.plugin.context.ContextHolder;
 import net.momirealms.craftengine.core.plugin.context.ContextKey;
 import net.momirealms.craftengine.core.plugin.context.parameter.DirectContextParameters;
+import net.momirealms.craftengine.core.util.Cancellable;
 import net.momirealms.craftengine.core.util.Key;
 import net.momirealms.craftengine.core.util.VersionHelper;
 import net.momirealms.craftengine.proxy.bukkit.craftbukkit.damage.CraftDamageSourceProxy;
@@ -66,7 +67,9 @@ public final class BukkitDamageEvent implements DamageEvent {
         Item weapon = this.resolveActiveWeapon();
         this.activeWeapon = weapon == null || weapon.isEmpty() ? null : weapon;
         this.context = EntityDamageContext.of(this,
-                ContextHolder.builder().withOptionalParameter(DirectContextParameters.ITEM, this.activeWeapon)
+                ContextHolder.builder()
+                        .withOptionalParameter(DirectContextParameters.ITEM, this.activeWeapon)
+                        .withParameter(DirectContextParameters.EVENT, Cancellable.of(event::isCancelled, event::setCancelled))
         );
     }
 
@@ -81,8 +84,14 @@ public final class BukkitDamageEvent implements DamageEvent {
     }
 
     @Override
+    public double finalDamage() {
+        return this.event.getFinalDamage();
+    }
+
+    @Override
     public void setDamage(double damage) {
         this.event.setDamage(damage);
+        this.context.contexts().withParameter(DirectContextParameters.DAMAGE, damage);
     }
 
     @Override
@@ -111,8 +120,9 @@ public final class BukkitDamageEvent implements DamageEvent {
         this.context.contexts().withParameter(ContextKey.direct("damage_" + id), amount);
     }
 
+    @Override
     public void initFinalDamage() {
-        this.context.contexts().withParameter(DirectContextParameters.DAMAGE, this.event.getFinalDamage());
+        this.context.contexts().withParameter(DirectContextParameters.FINAL_DAMAGE, this.finalDamage());
     }
 
     @Override

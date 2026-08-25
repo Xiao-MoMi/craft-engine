@@ -600,7 +600,7 @@ damage-indicator:
   schemes:
     - type: text
       # Displayed text in MiniMessage format. <arg:damage> is replaced with the final damage value
-      text: "<white><expr:#.#:'<arg:damage>'></white>"
+      text: "<white><expr:#.#:'<arg:final_damage>'></white>"
       # The indicator spawns near the first intersection of the attacker's view ray with the victim's bounding cylinder
       # (radius = distance from the bounding box bottom center to a bottom corner: sqrt(width² + depth²) / 2)
       position:

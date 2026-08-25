@@ -12,11 +12,16 @@ import org.bukkit.entity.LivingEntity;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 public final class MythicMobsHelper {
     private MythicMobsHelper() {}
 
     public static void executeSkill(String skill, float power, Player player) {
+        executeSkill(skill, power, Map.of(), player);
+    }
+
+    public static void executeSkill(String skill, float power, Map<String, String> parameters, Player player) {
         org.bukkit.entity.Player casterPlayer = (org.bukkit.entity.Player) player.platformPlayer();
         Location location = casterPlayer.getLocation();
         LivingEntity target = MythicUtil.getTargetedEntity(casterPlayer);
@@ -26,7 +31,16 @@ public final class MythicMobsHelper {
             targets.add(target);
             locations = List.of(target.getLocation());
         }
-        MythicBukkit.inst().getAPIHelper().castSkill(casterPlayer, skill, casterPlayer, location, targets, locations, power);
+        MythicBukkit.inst().getAPIHelper().castSkill(
+                casterPlayer,
+                skill,
+                casterPlayer,
+                location,
+                targets,
+                locations,
+                power,
+                metadata -> metadata.getParameters().putAll(parameters)
+        );
     }
 
     public static void summonMob(String mobId, WorldPosition worldPosition, double level) {

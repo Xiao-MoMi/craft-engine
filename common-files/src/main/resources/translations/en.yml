@@ -137,6 +137,8 @@ yaml.duplicated_key: "Found duplicated key '<arg:1>' at line <arg:2> in file <ar
 yaml.inconsistent_value_type: "Found duplicated key '<arg:1>' at line <arg:2> with different value types in file <arg:0>"
 plugin.compatibility: "[Compatibility] <arg:0> hooked"
 attribute.damage_formula.unknown_type: Unknown damage formula type '<arg:0>'
+attribute.damage_effect.unknown_type: Unknown post-damage effect type '<arg:0>'
+attribute.damage_effect.unknown_target: Unknown post-damage effect target '<arg:0>'
 damage_indicator.unknown_type: Unknown damage indicator type '<arg:0>'
 attribute.base_value_source.unknown_type: Unknown base value source type '<arg:0>'
 attribute.sync_value_provider.unknown_type: Unknown sync value provider type '<arg:0>'
