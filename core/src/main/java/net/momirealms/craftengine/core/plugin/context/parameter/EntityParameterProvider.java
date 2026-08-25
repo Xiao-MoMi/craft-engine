@@ -29,6 +29,7 @@ public final class EntityParameterProvider implements ChainParameterProvider<Ent
         CONTEXT_FUNCTIONS.put(DirectContextParameters.UUID, Entity::uuid);
         CONTEXT_FUNCTIONS.put(DirectContextParameters.WORLD, Entity::world);
         CONTEXT_FUNCTIONS.put(DirectContextParameters.FIRE_TICKS, Entity::fireTicks);
+        CONTEXT_FUNCTIONS.put(DirectContextParameters.SPEED, Entity::speed);
         CONTEXT_FUNCTIONS.put(DirectContextParameters.HEALTH, e -> {
             if (e instanceof LivingEntity living) {
                 return living.health();

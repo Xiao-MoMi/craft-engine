@@ -84,5 +84,7 @@ public final class DirectContextParameters {
     public static final ContextKey<Float> ATTACK_STRENGTH = ContextKey.direct("attack_strength");
     public static final ContextKey<Float> SHOOT_FORCE = ContextKey.direct("shoot_force");
     public static final ContextKey<Entity> CAUSING_ENTITY = ContextKey.direct("causing_entity");
+    public static final ContextKey<Entity> DIRECT_ENTITY = ContextKey.direct("direct_entity");
+    public static final ContextKey<Double> SPEED = ContextKey.direct("speed");
     public static final ContextKey<Double> HEALTH = ContextKey.direct("health");
 }

@@ -86,5 +86,13 @@ public interface Entity extends ChainParameterSource {
 
     Vec3d getEyePos();
 
+    default Vec3d velocity() {
+        return Vec3d.ZERO;
+    }
+
+    default double speed() {
+        return velocity().length();
+    }
+
     int fireTicks();
 }

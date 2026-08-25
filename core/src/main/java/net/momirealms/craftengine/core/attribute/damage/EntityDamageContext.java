@@ -24,6 +24,10 @@ public class EntityDamageContext extends AbstractChainParameterContext {
                 contexts.withParameter(DirectContextParameters.PLAYER, player);
             }
         }
+        Entity directEntity = event.source().directEntity();
+        if (directEntity != null) {
+            contexts.withParameter(DirectContextParameters.DIRECT_ENTITY, directEntity);
+        }
         Entity victim = event.victim();
         contexts.withParameter(DirectContextParameters.ENTITY, victim);
         contexts.withParameter(DirectContextParameters.POSITION, victim.position());
