@@ -4,7 +4,9 @@ description: Default Feature Populator for CraftEngine
 namespace: default
 enable: false
 subpacks:
-  $$>=26.1:
+  $$>=26.3:
+    26_3: true
+  $$26.1~26.2:
     26_1: true
   $$fallback:
     fallback: true

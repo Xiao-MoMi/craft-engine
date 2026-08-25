@@ -129,11 +129,11 @@ public final class YamlUtils {
 
         @Nullable
         public Object get(String path, @Nullable Object defaultValue) {
-            return this.node.getOrDefault(Object.class, defaultValue, route(path).routeKeys());
+            return this.node.getOrDefault(defaultValue, Object.class, route(path));
         }
 
         private <T> T get(Class<T> type, T defaultValue, String path) {
-            return this.node.getOrDefault(type, defaultValue, route(path).routeKeys());
+            return this.node.getOrDefault(defaultValue, type, route(path));
         }
     }
 }

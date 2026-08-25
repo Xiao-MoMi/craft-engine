@@ -369,6 +369,13 @@ debug_entity_id:
     - /craftengine debug entity-id
     - /ce debug entity-id
 
+debug_dimension:
+  enable: true
+  permission: ce.command.debug.dimension
+  usage:
+    - /craftengine debug dimension
+    - /ce debug dimension
+
 debug_custom_model_data:
   enable: true
   permission: ce.command.debug.custom_model_data

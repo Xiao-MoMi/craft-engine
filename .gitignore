@@ -33,3 +33,4 @@ build/
 /runPaper/
 /runFolia/
 /buildSrc/.kotlin/
+/target
