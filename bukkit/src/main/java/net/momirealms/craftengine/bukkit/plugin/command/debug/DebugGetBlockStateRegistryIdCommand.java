@@ -30,8 +30,8 @@ public final class DebugGetBlockStateRegistryIdCommand extends BukkitCommandFeat
                     int id = BlockStateUtils.blockDataToId(blockData);
                     Sender sender = plugin().senderFactory().wrap(context.sender());
                     sender.sendMessage(Component.text(id)
-                            .hoverEvent(Component.text("Copy", NamedTextColor.YELLOW))
-                            .clickEvent(ClickEvent.suggestCommand(String.valueOf(id))));
+                            .hoverEvent(Component.translatable("chat.copy.click", NamedTextColor.WHITE))
+                            .clickEvent(ClickEvent.copyToClipboard(String.valueOf(id))));
                 });
     }
 

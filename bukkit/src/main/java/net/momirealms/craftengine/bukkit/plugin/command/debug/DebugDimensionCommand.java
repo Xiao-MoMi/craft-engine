@@ -48,7 +48,7 @@ public final class DebugDimensionCommand extends BukkitCommandFeature<CommandSen
     private static Component value(String label, String value) {
         return Component.text(label + ": ", NamedTextColor.GRAY)
                 .append(Component.text(value, NamedTextColor.GOLD)
-                        .hoverEvent(HoverEvent.showText(Component.text("Copy", NamedTextColor.YELLOW)))
+                        .hoverEvent(HoverEvent.showText(Component.translatable("chat.copy.click", NamedTextColor.WHITE)))
                         .clickEvent(ClickEvent.copyToClipboard(value)));
     }
 

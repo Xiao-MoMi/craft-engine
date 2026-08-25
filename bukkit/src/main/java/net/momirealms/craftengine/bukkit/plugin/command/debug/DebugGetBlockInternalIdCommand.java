@@ -45,8 +45,8 @@ public final class DebugGetBlockInternalIdCommand extends BukkitCommandFeature<C
                     String id = BlockStateUtils.getBlockOwnerIdFromState(state.customBlockState().minecraftState()).toString();
                     Sender sender = plugin().senderFactory().wrap(context.sender());
                     sender.sendMessage(Component.text(id)
-                            .hoverEvent(Component.text("Copy", NamedTextColor.YELLOW))
-                            .clickEvent(ClickEvent.suggestCommand(id)));
+                            .hoverEvent(Component.translatable("chat.copy.click", NamedTextColor.WHITE))
+                            .clickEvent(ClickEvent.copyToClipboard(id)));
                 });
     }
 

@@ -148,8 +148,8 @@ public final class DebugItemDataCommand extends BukkitCommandFeature<CommandSend
                         String strValue = String.valueOf(value);
                         readableList.add(Component.text("  ".repeat(loopTimes + 1) + "- ", COLOR_TEXT)
                                 .append(Component.text(strValue, COLOR_TEXT)
-                                        .hoverEvent(HoverEvent.showText(Component.text("Copy", NamedTextColor.YELLOW)))
-                                        .clickEvent(ClickEvent.suggestCommand(strValue)))
+                                        .hoverEvent(HoverEvent.showText(Component.translatable("chat.copy.click", NamedTextColor.WHITE)))
+                                        .clickEvent(ClickEvent.copyToClipboard(strValue)))
                         );
                     }
                 }
@@ -182,8 +182,8 @@ public final class DebugItemDataCommand extends BukkitCommandFeature<CommandSend
                         .append(gradientKey.hoverEvent(HoverEvent.showText(Component.text(nbt.getClass().getSimpleName(), NamedTextColor.YELLOW))))
                         .append(Component.text(": ", COLOR_TEXT))
                         .append(Component.text(value, COLOR_TEXT)
-                                .hoverEvent(HoverEvent.showText(Component.text("Copy", NamedTextColor.YELLOW)))
-                                .clickEvent(ClickEvent.suggestCommand(value)))
+                                .hoverEvent(HoverEvent.showText(Component.translatable("chat.copy.click", NamedTextColor.WHITE)))
+                                .clickEvent(ClickEvent.copyToClipboard(value)))
                 );
             }
             if (isMapList) {

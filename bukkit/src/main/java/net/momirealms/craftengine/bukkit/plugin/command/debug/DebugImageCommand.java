@@ -96,18 +96,18 @@ public final class DebugImageCommand extends BukkitCommandFeature<CommandSender>
                 Component.text(" "),
                 Component.text("[MiniMessage]")
                         .color(TextColor.color(255,192,203))
-                        .hoverEvent(Component.text("Copy", NamedTextColor.YELLOW))
-                        .clickEvent(ClickEvent.suggestCommand(FormatUtils.miniMessageFont(raw, font))),
+                        .hoverEvent(Component.translatable("chat.copy.click", NamedTextColor.WHITE))
+                        .clickEvent(ClickEvent.copyToClipboard(FormatUtils.miniMessageFont(raw, font))),
                 Component.text(" "),
                 Component.text("[MineDown]")
                         .color(TextColor.color(123,104,238))
-                        .hoverEvent(Component.text("Copy", NamedTextColor.YELLOW))
-                        .clickEvent(ClickEvent.suggestCommand(FormatUtils.mineDownFont(raw, font))),
+                        .hoverEvent(Component.translatable("chat.copy.click", NamedTextColor.WHITE))
+                        .clickEvent(ClickEvent.copyToClipboard(FormatUtils.mineDownFont(raw, font))),
                 Component.text(" "),
                 Component.text("[RAW]")
                         .color(TextColor.color(119,136,153))
-                        .hoverEvent(Component.text("Copy", NamedTextColor.YELLOW))
-                        .clickEvent(ClickEvent.suggestCommand("{\"text\":\"" + raw + "\",\"font\":\"" + font + "\"}"))
+                        .hoverEvent(Component.translatable("chat.copy.click", NamedTextColor.WHITE))
+                        .clickEvent(ClickEvent.copyToClipboard("{\"text\":\"" + raw + "\",\"font\":\"" + font + "\"}"))
         ));
     }
 }

@@ -75,8 +75,8 @@ public final class DebugCustomModelDataCommand extends BukkitCommandFeature<Comm
         Item clientBoundItem = plugin().itemManager().s2c(itemStack, player).orElse(itemStack);
         int customModelData = clientBoundItem.customModelData().orElse(0);
         Component message = Component.text(customModelData)
-                .hoverEvent(Component.text("Copy", NamedTextColor.YELLOW))
-                .clickEvent(ClickEvent.suggestCommand(String.valueOf(customModelData)));
+                .hoverEvent(Component.translatable("chat.copy.click", NamedTextColor.WHITE))
+                .clickEvent(ClickEvent.copyToClipboard(String.valueOf(customModelData)));
         plugin().senderFactory().wrap(context.sender()).sendMessage(message);
     }
 

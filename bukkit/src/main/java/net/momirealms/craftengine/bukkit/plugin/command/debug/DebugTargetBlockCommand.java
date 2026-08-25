@@ -64,8 +64,8 @@ public final class DebugTargetBlockCommand extends BukkitCommandFeature<CommandS
                     Object blockState = BlockStateUtils.blockDataToBlockState(blockData);
                     Sender sender = plugin().senderFactory().wrap(context.sender());
                     sender.sendMessage(Component.text("minecraft state: " + bData)
-                            .hoverEvent(Component.text("Copy", NamedTextColor.YELLOW))
-                            .clickEvent(ClickEvent.suggestCommand(bData)));
+                            .hoverEvent(Component.translatable("chat.copy.click", NamedTextColor.WHITE))
+                            .clickEvent(ClickEvent.copyToClipboard(bData)));
                     Object blockOwner = BlockBehaviourProxy.BlockStateBaseProxy.INSTANCE.getBlock(blockState);
                     Object identifier = RegistryProxy.INSTANCE.getKey(BuiltInRegistriesProxy.BLOCK, blockOwner);
                     Object holder = Objects.requireNonNull(RegistryUtils.getHolder(BuiltInRegistriesProxy.BLOCK, ResourceKeyProxy.INSTANCE.create(RegistriesProxy.BLOCK, identifier)));
@@ -73,14 +73,14 @@ public final class DebugTargetBlockCommand extends BukkitCommandFeature<CommandS
                     if (immutableBlockState != null) {
                         String bState = immutableBlockState.toString();
                         sender.sendMessage(Component.text("craftengine state: " + bState)
-                                .hoverEvent(Component.text("Copy", NamedTextColor.YELLOW))
-                                .clickEvent(ClickEvent.suggestCommand(bState)));
+                                .hoverEvent(Component.translatable("chat.copy.click", NamedTextColor.WHITE))
+                                .clickEvent(ClickEvent.copyToClipboard(bState)));
                         sender.sendMessage(Component.text("visual state: " + immutableBlockState.visualBlockState().getAsString())
-                                .hoverEvent(Component.text("Copy", NamedTextColor.YELLOW))
-                                .clickEvent(ClickEvent.suggestCommand(immutableBlockState.visualBlockState().getAsString())));
+                                .hoverEvent(Component.translatable("chat.copy.click", NamedTextColor.WHITE))
+                                .clickEvent(ClickEvent.copyToClipboard(immutableBlockState.visualBlockState().getAsString())));
                         sender.sendMessage(Component.text("name: ").append(Component.translatable(BlockStateUtils.getDescriptionId(blockState))
-                                .hoverEvent(Component.text("Copy", NamedTextColor.YELLOW))
-                                .clickEvent(ClickEvent.suggestCommand(BlockStateUtils.getDescriptionId(blockState)))));
+                                .hoverEvent(Component.translatable("chat.copy.click", NamedTextColor.WHITE))
+                                .clickEvent(ClickEvent.copyToClipboard(BlockStateUtils.getDescriptionId(blockState)))));
                         List<BlockBehavior> behaviors = new ArrayList<>();
                         immutableBlockState.behavior().let(BlockBehavior.class, behaviors::add);
                         if (!behaviors.isEmpty()) {
@@ -88,8 +88,8 @@ public final class DebugTargetBlockCommand extends BukkitCommandFeature<CommandS
                             for (BlockBehavior behavior : behaviors) {
                                 String name = behavior.getClass().getSimpleName();
                                 sender.sendMessage(Component.text("  - " + name)
-                                        .hoverEvent(Component.text("Copy", NamedTextColor.YELLOW))
-                                        .clickEvent(ClickEvent.suggestCommand(name)));
+                                        .hoverEvent(Component.translatable("chat.copy.click", NamedTextColor.WHITE))
+                                        .clickEvent(ClickEvent.copyToClipboard(name)));
                             }
                         }
                         CEWorld world = BukkitAdaptor.adapt(block.getWorld()).storageWorld();
@@ -107,8 +107,8 @@ public final class DebugTargetBlockCommand extends BukkitCommandFeature<CommandS
                                     for (BlockEntityElement element : elements) {
                                         String name = element.getClass().getSimpleName();
                                         sender.sendMessage(Component.text("    - " + name)
-                                                .hoverEvent(Component.text("Copy", NamedTextColor.YELLOW))
-                                                .clickEvent(ClickEvent.suggestCommand(name)));
+                                                .hoverEvent(Component.translatable("chat.copy.click", NamedTextColor.WHITE))
+                                                .clickEvent(ClickEvent.copyToClipboard(name)));
                                     }
                                 }
                             }
@@ -120,8 +120,8 @@ public final class DebugTargetBlockCommand extends BukkitCommandFeature<CommandS
                                     for (BlockEntityController controller : controllers) {
                                         String name = controller.getClass().getSimpleName();
                                         sender.sendMessage(Component.text("    - " + name)
-                                                .hoverEvent(Component.text("Copy", NamedTextColor.YELLOW))
-                                                .clickEvent(ClickEvent.suggestCommand(name)));
+                                                .hoverEvent(Component.translatable("chat.copy.click", NamedTextColor.WHITE))
+                                                .clickEvent(ClickEvent.copyToClipboard(name)));
                                     }
                                 }
                             }
@@ -134,8 +134,8 @@ public final class DebugTargetBlockCommand extends BukkitCommandFeature<CommandS
                             for (Object tag : tags) {
                                 String stringTag = TagKeyProxy.INSTANCE.getLocation(tag).toString();
                                 sender.sendMessage(Component.text(" - " + stringTag)
-                                        .hoverEvent(Component.text("Copy", NamedTextColor.YELLOW))
-                                        .clickEvent(ClickEvent.suggestCommand(stringTag)));
+                                        .hoverEvent(Component.translatable("chat.copy.click", NamedTextColor.WHITE))
+                                        .clickEvent(ClickEvent.copyToClipboard(stringTag)));
                             }
                         }
                         CEWorld world = BukkitAdaptor.adapt(block.getWorld()).storageWorld();

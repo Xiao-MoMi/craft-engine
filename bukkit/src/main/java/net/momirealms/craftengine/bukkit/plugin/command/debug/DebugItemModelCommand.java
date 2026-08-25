@@ -77,8 +77,8 @@ public final class DebugItemModelCommand extends BukkitCommandFeature<CommandSen
         Item clientBoundItem = plugin().itemManager().s2c(itemStack, player).orElse(itemStack);
         String itemModel = clientBoundItem.itemModel().orElse("null");
         TextComponent finalMessage = Component.text(itemModel)
-                .hoverEvent(Component.text("Copy", NamedTextColor.YELLOW))
-                .clickEvent(ClickEvent.suggestCommand(itemModel));
+                .hoverEvent(Component.translatable("chat.copy.click", NamedTextColor.WHITE))
+                .clickEvent(ClickEvent.copyToClipboard(itemModel));
         plugin().senderFactory().wrap(context.sender()).sendMessage(finalMessage);
     }
 
