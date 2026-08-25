@@ -1,6 +1,6 @@
 package net.momirealms.craftengine.core.plugin.context.condition;
 
-import net.momirealms.craftengine.core.entity.player.Player;
+import net.momirealms.craftengine.core.entity.Entity;
 import net.momirealms.craftengine.core.plugin.config.ConfigConstants;
 import net.momirealms.craftengine.core.plugin.config.ConfigSection;
 import net.momirealms.craftengine.core.plugin.context.Condition;
@@ -12,7 +12,6 @@ import net.momirealms.craftengine.core.world.WorldPosition;
 
 import java.util.Optional;
 
-// TODO It's designed for players for the moment, better using entities
 public final class DistanceCondition<CTX extends Context> implements Condition<CTX> {
     private final NumberProvider min;
     private final NumberProvider max;
@@ -26,8 +25,8 @@ public final class DistanceCondition<CTX extends Context> implements Condition<C
     public boolean test(CTX ctx) {
         float min = this.min.getFloat(ctx);
         float max = this.max.getFloat(ctx);
-        Optional<Player> optionalPlayer = ctx.getOptionalParameter(DirectContextParameters.PLAYER);
-        if (optionalPlayer.isEmpty()) {
+        Optional<Entity> optionalEntity = ctx.getOptionalParameter(DirectContextParameters.ENTITY);
+        if (optionalEntity.isEmpty()) {
             return false;
         }
         Optional<WorldPosition> optionalPosition = ctx.getOptionalParameter(DirectContextParameters.POSITION);
@@ -36,14 +35,14 @@ public final class DistanceCondition<CTX extends Context> implements Condition<C
         }
 
         WorldPosition location = optionalPosition.get();
-        Player player = optionalPlayer.get();
-        if (!player.world().uuid().equals(location.world().uuid())) {
+        Entity entity = optionalEntity.get();
+        if (!entity.world().uuid().equals(location.world().uuid())) {
             return false;
         }
 
-        double dx = location.x() - player.x();
-        double dy = location.y() - player.y();
-        double dz = location.z() - player.z();
+        double dx = location.x() - entity.x();
+        double dy = location.y() - entity.y();
+        double dz = location.z() - entity.z();
         double distanceSquared = dx * dx + dy * dy + dz * dz;
         double minSquared = min * min;
         double maxSquared = max * max;

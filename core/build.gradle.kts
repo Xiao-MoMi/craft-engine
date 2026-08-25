@@ -30,6 +30,7 @@ dependencies {
     compileOnly(files("${rootProject.rootDir}/libs/jni-internal-lookup-1.9.jar"))
     common(project, JavaPlugin.TEST_IMPLEMENTATION_CONFIGURATION_NAME)
     adventure(project, JavaPlugin.TEST_IMPLEMENTATION_CONFIGURATION_NAME)
+    netty(project, JavaPlugin.TEST_RUNTIME_ONLY_CONFIGURATION_NAME)
     testImplementation(platform("org.junit:junit-bom:6.1.3"))
     testImplementation("org.junit.jupiter:junit-jupiter")
     testRuntimeOnly("org.junit.platform:junit-platform-launcher")

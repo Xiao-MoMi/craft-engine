@@ -41,7 +41,8 @@ public final class VaultLootListener implements Listener {
         BukkitServerPlayer serverPlayer = null;
         if (player != null) {
             serverPlayer = BukkitAdaptor.adapt(player);
-            builder.withOptionalParameter(DirectContextParameters.PLAYER, serverPlayer);
+            builder.withParameter(DirectContextParameters.PLAYER, serverPlayer);
+            builder.withParameter(DirectContextParameters.ENTITY, serverPlayer);
         }
         float luck = serverPlayer != null ? (float) serverPlayer.luck() : 1f;
         LootOutcome outcome = LootManager.eval(sources, new LootContext(world, serverPlayer, luck, builder.build()));

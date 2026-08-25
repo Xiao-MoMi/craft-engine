@@ -1,5 +1,6 @@
 package net.momirealms.craftengine.core.plugin.context.function;
 
+import net.momirealms.craftengine.core.entity.LivingEntity;
 import net.momirealms.craftengine.core.entity.player.Player;
 import net.momirealms.craftengine.core.plugin.config.ConfigKeys;
 import net.momirealms.craftengine.core.plugin.config.ConfigSection;
@@ -29,10 +30,13 @@ public final class RemovePotionEffectFunction<CTX extends Context> extends Abstr
     @Override
     public void runInternal(CTX ctx) {
         if (this.selector == null) {
-            ctx.getOptionalParameter(DirectContextParameters.PLAYER).ifPresent(it -> {
-                if (this.all) it.clearPotionEffects();
-                else it.removePotionEffect(this.potionEffectType);
-            });
+            ctx.getOptionalParameter(DirectContextParameters.ENTITY)
+                    .filter(LivingEntity.class::isInstance)
+                    .map(LivingEntity.class::cast)
+                    .ifPresent(it -> {
+                        if (this.all) it.clearPotionEffects();
+                        else it.removePotionEffect(this.potionEffectType);
+                    });
         } else {
             for (Player target : this.selector.get(ctx)) {
                 if (this.all) target.clearPotionEffects();

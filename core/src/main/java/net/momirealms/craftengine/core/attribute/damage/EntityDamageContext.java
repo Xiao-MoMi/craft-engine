@@ -19,17 +19,17 @@ public class EntityDamageContext extends AbstractChainParameterContext {
     public static EntityDamageContext of(DamageEvent event, @NotNull ContextHolder.Builder contexts) {
         Entity entity = event.source().causingEntity();
         if (entity != null) {
-            contexts.withParameter(DirectContextParameters.CAUSING_ENTITY, entity);
+            contexts.withParameter(DirectContextParameters.ENTITY, entity);
             if (entity instanceof Player player) {
                 contexts.withParameter(DirectContextParameters.PLAYER, player);
             }
         }
-        Entity directEntity = event.source().directEntity();
-        if (directEntity != null) {
-            contexts.withParameter(DirectContextParameters.DIRECT_ENTITY, directEntity);
-        }
+//        Entity directEntity = event.source().directEntity();
+//        if (directEntity != null) {
+//            contexts.withParameter(DirectContextParameters.DIRECT_ENTITY, directEntity);
+//        }
         Entity victim = event.victim();
-        contexts.withParameter(DirectContextParameters.ENTITY, victim);
+        contexts.withParameter(DirectContextParameters.THIS_ENTITY, victim);
         contexts.withParameter(DirectContextParameters.POSITION, victim.position());
         double baseDamage = event.damage();
         contexts.withParameter(DirectContextParameters.ORIGINAL_DAMAGE, baseDamage);

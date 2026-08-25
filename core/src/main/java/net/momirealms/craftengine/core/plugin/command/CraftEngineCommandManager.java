@@ -1,10 +1,10 @@
 package net.momirealms.craftengine.core.plugin.command;
 
-import net.momirealms.sparrow.yaml.YamlDocument;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.TranslatableComponent;
 import net.kyori.adventure.util.Index;
 import net.momirealms.craftengine.core.util.TriConsumer;
+import net.momirealms.sparrow.yaml.YamlDocument;
 import org.incendo.cloud.Command;
 import org.jetbrains.annotations.NotNull;
 

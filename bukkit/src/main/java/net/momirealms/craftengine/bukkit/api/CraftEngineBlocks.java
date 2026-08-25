@@ -210,7 +210,7 @@ public final class CraftEngineBlocks {
             BukkitServerPlayer serverPlayer = null;
             if (player != null) {
                 serverPlayer = BukkitAdaptor.adapt(player);
-                builder.withOptionalParameter(DirectContextParameters.PLAYER, serverPlayer);
+                builder.withParameter(DirectContextParameters.PLAYER, serverPlayer);
             }
             for (Item item : state.getDrops(builder, world, serverPlayer)) {
                 world.dropItemNaturally(position, item);

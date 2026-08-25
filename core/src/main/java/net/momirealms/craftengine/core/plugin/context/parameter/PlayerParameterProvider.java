@@ -30,6 +30,10 @@ public final class PlayerParameterProvider implements ChainParameterProvider<Pla
         CONTEXT_FUNCTIONS.put(DirectContextParameters.NAME, Player::name);
         CONTEXT_FUNCTIONS.put(DirectContextParameters.UUID, Player::uuid);
         CONTEXT_FUNCTIONS.put(DirectContextParameters.WORLD, Entity::world);
+        CONTEXT_FUNCTIONS.put(DirectContextParameters.FIRE_TICKS, Entity::fireTicks);
+        CONTEXT_FUNCTIONS.put(DirectContextParameters.SPEED, Entity::speed);
+        CONTEXT_FUNCTIONS.put(DirectContextParameters.HEALTH, Player::health);
+        CONTEXT_FUNCTIONS.put(DirectContextParameters.MAX_HEALTH, Player::maxHealth);
         CONTEXT_FUNCTIONS.put(DirectContextParameters.IS_SNEAKING, Player::isSneaking);
         CONTEXT_FUNCTIONS.put(DirectContextParameters.IS_SWIMMING, Player::isSwimming);
         CONTEXT_FUNCTIONS.put(DirectContextParameters.IS_CLIMBING, Player::isClimbing);
@@ -44,6 +48,10 @@ public final class PlayerParameterProvider implements ChainParameterProvider<Pla
     @SuppressWarnings("unchecked")
     @Override
     public <T> Optional<T> getOptionalParameter(ContextKey<T> parameter, Player player) {
-        return (Optional<T>) Optional.ofNullable(CONTEXT_FUNCTIONS.get(parameter)).map(f -> f.apply(player));
+        Function<Player, Object> function = CONTEXT_FUNCTIONS.get(parameter);
+        if (function != null) {
+            return Optional.ofNullable((T) function.apply(player));
+        }
+        return Optional.empty();
     }
 }

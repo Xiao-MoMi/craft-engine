@@ -31,7 +31,7 @@ public final class PiglinBarterLootListener implements Listener {
         ContextHolder holder = ContextHolder.builder()
                 .withParameter(DirectContextParameters.WORLD, world)
                 .withParameter(DirectContextParameters.POSITION, LocationUtils.toWorldPosition(location))
-                .withParameter(DirectContextParameters.ENTITY, BukkitAdaptor.adapt(event.getEntity()))
+                .withParameter(DirectContextParameters.THIS_ENTITY, BukkitAdaptor.adapt(event.getEntity()))
                 .withParameter(DirectContextParameters.ITEM, BukkitItemManager.instance().wrap(event.getInput()))
                 .build();
         LootOutcome outcome = LootManager.eval(sources, new LootContext(world, null, 1f, holder));

@@ -3,6 +3,7 @@ package net.momirealms.craftengine.core.plugin.context.parameter;
 import net.momirealms.craftengine.core.entity.Entity;
 import net.momirealms.craftengine.core.entity.LivingEntity;
 import net.momirealms.craftengine.core.entity.item.ItemEntity;
+import net.momirealms.craftengine.core.entity.player.Player;
 import net.momirealms.craftengine.core.plugin.context.ChainParameterProvider;
 import net.momirealms.craftengine.core.plugin.context.ContextKey;
 import net.momirealms.craftengine.core.util.MiscUtils;
@@ -16,6 +17,12 @@ public final class EntityParameterProvider implements ChainParameterProvider<Ent
     public static final EntityParameterProvider INSTANCE = new EntityParameterProvider();
     private static final Map<ContextKey<?>, Function<Entity, Object>> CONTEXT_FUNCTIONS = new HashMap<>();
     static {
+        CONTEXT_FUNCTIONS.put(DirectContextParameters.PLAYER, e -> {
+            if (e instanceof Player player) {
+                return player;
+            }
+            return null;
+        });
         CONTEXT_FUNCTIONS.put(DirectContextParameters.X, Entity::x);
         CONTEXT_FUNCTIONS.put(DirectContextParameters.Y, Entity::y);
         CONTEXT_FUNCTIONS.put(DirectContextParameters.Z, Entity::z);

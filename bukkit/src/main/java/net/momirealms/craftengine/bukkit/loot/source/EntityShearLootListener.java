@@ -45,9 +45,10 @@ public final class EntityShearLootListener implements Listener {
         World world = BukkitAdaptor.adapt(event.getEntity().getWorld());
         ContextHolder holder = ContextHolder.builder()
                 .withParameter(DirectContextParameters.PLAYER, serverPlayer)
+                .withParameter(DirectContextParameters.ENTITY, serverPlayer)
                 .withParameter(DirectContextParameters.WORLD, world)
                 .withParameter(DirectContextParameters.POSITION, LocationUtils.toWorldPosition(event.getEntity().getLocation()))
-                .withParameter(DirectContextParameters.ENTITY, bukkitEntity)
+                .withParameter(DirectContextParameters.THIS_ENTITY, bukkitEntity)
                 .withOptionalParameter(DirectContextParameters.ITEM_IN_HAND, serverPlayer.getItemInHand(hand))
                 .build();
         LootOutcome outcome = LootManager.eval(sources, new LootContext(world, serverPlayer, (float) serverPlayer.luck(), holder));

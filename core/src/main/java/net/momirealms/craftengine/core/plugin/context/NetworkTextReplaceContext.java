@@ -10,7 +10,9 @@ public final class NetworkTextReplaceContext extends PlayerOptionalContext imple
 
     public NetworkTextReplaceContext(Player player) {
         super(player, ContextHolder.trustedMutable(MiscUtils.init(new Object2ObjectOpenHashMap<>(4), (m) -> {
-            m.put(DirectContextParameters.PLAYER, () -> player);
+            ContextHolder.SimpleSupplier<Object> supplier = ContextHolder.SimpleSupplier.of(player);
+            m.put(DirectContextParameters.PLAYER, supplier);
+            m.put(DirectContextParameters.ENTITY, supplier);
         })));
     }
 

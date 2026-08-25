@@ -48,7 +48,7 @@ public final class TeleportFunction<CTX extends Context> extends AbstractConditi
     @Override
     public void runInternal(CTX ctx) {
         if (this.selector == null) {
-            ctx.getOptionalParameter(DirectContextParameters.PLAYER).ifPresent(it -> it.teleport(new WorldPosition(
+            ctx.getOptionalParameter(DirectContextParameters.ENTITY).ifPresent(it -> it.teleport(new WorldPosition(
                     Optional.ofNullable(this.world).map(w -> w.get(ctx)).map(w -> CraftEngine.instance().platform().getWorld(w)).orElse(it.world()),
                     this.x.getDouble(ctx),
                     this.y.getDouble(ctx),

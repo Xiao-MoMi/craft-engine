@@ -58,8 +58,8 @@ public final class BlockBreakLootListener implements Listener {
         ContextHolder holder = ContextHolder.builder()
                 .withParameter(DirectContextParameters.BLOCK, bukkitExistingBlock)
                 .withParameter(DirectContextParameters.POSITION, position)
-                .withParameter(DirectContextParameters.PLAYER, serverPlayer)
                 .withParameter(DirectContextParameters.ENTITY, serverPlayer)
+                .withParameter(DirectContextParameters.PLAYER, serverPlayer)
                 .withOptionalParameter(DirectContextParameters.ITEM_IN_HAND, ItemUtils.isEmpty(itemInHand) ? null : itemInHand)
                 .build();
         LootContext lootContext = new LootContext(world, serverPlayer, (float) serverPlayer.luck(), holder);

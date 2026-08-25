@@ -32,6 +32,7 @@ public final class DirectContextParameters {
     public static final ContextKey<Float> EXPLOSION_RADIUS = ContextKey.direct("explosion_radius");
     public static final ContextKey<Player> PLAYER = ContextKey.direct("player");
     public static final ContextKey<Entity> ENTITY = ContextKey.direct("entity");
+    public static final ContextKey<Entity> THIS_ENTITY = ContextKey.direct("this_entity");
     public static final ContextKey<ImmutableBlockState> CUSTOM_BLOCK_STATE = ContextKey.direct("custom_block_state");
     public static final ContextKey<Position> COORDINATE = ContextKey.direct("coordinate");
     public static final ContextKey<WorldPosition> POSITION = ContextKey.direct("position");
@@ -74,7 +75,7 @@ public final class DirectContextParameters {
     public static final ContextKey<Double> MOB_LEVEL = ContextKey.direct("mob_level");
     public static final ContextKey<Boolean> OPEN_WATER = ContextKey.direct("open_water");
     public static final ContextKey<Key> BIOME = ContextKey.direct("biome");
-    public static final ContextKey<Key> FIRE_TICKS = ContextKey.direct("fire_ticks");
+    public static final ContextKey<Integer> FIRE_TICKS = ContextKey.direct("fire_ticks");
     public static final ContextKey<Double> ORIGINAL_DAMAGE = ContextKey.direct("original_damage");
     public static final ContextKey<Double> DAMAGE = ContextKey.direct("damage");
     public static final ContextKey<Double> FINAL_DAMAGE = ContextKey.direct("final_damage");
@@ -83,8 +84,6 @@ public final class DirectContextParameters {
     public static final ContextKey<Boolean> IS_ATTACK_READY = ContextKey.direct("is_attack_ready");
     public static final ContextKey<Float> ATTACK_STRENGTH = ContextKey.direct("attack_strength");
     public static final ContextKey<Float> SHOOT_FORCE = ContextKey.direct("shoot_force");
-    public static final ContextKey<Entity> CAUSING_ENTITY = ContextKey.direct("causing_entity");
-    public static final ContextKey<Entity> DIRECT_ENTITY = ContextKey.direct("direct_entity");
     public static final ContextKey<Double> SPEED = ContextKey.direct("speed");
     public static final ContextKey<Double> HEALTH = ContextKey.direct("health");
     public static final ContextKey<Double> MAX_HEALTH = ContextKey.direct("max_health");

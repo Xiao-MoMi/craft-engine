@@ -17,7 +17,6 @@ import net.momirealms.craftengine.core.world.World;
 import net.momirealms.craftengine.core.world.WorldPosition;
 
 import java.util.List;
-import java.util.Optional;
 
 public final class RemoveFurnitureFunction<CTX extends Context> extends AbstractConditionalFunction<CTX> {
     private final boolean dropLoot;
@@ -47,11 +46,11 @@ public final class RemoveFurnitureFunction<CTX extends Context> extends Abstract
                     .withParameter(DirectContextParameters.POSITION, position)
                     .withParameter(DirectContextParameters.FURNITURE, furniture)
                     .withOptionalParameter(DirectContextParameters.FURNITURE_ITEM, furniture.persistentData.item().orElse(null));
-            Optional<Player> optionalPlayer = ctx.getOptionalParameter(DirectContextParameters.PLAYER);
-            Player player = optionalPlayer.orElse(null);
+            Player player = ctx.getOptionalParameter(DirectContextParameters.PLAYER).orElse(null);
             if (player != null) {
                 Item itemInHand = player.getItemInHand(InteractionHand.MAIN_HAND);
                 builder.withParameter(DirectContextParameters.PLAYER, player)
+                        .withParameter(DirectContextParameters.ENTITY, player)
                         .withOptionalParameter(DirectContextParameters.ITEM_IN_HAND, itemInHand.isEmpty() ? null : itemInHand);
             }
             List<Item> items = loot.getRandomItems(builder.build(), world, player);

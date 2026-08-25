@@ -18,8 +18,6 @@ import net.momirealms.craftengine.core.plugin.network.protocol.dialog.Dialog;
 import net.momirealms.craftengine.core.plugin.network.protocol.dialog.DialogTypes;
 import net.momirealms.craftengine.core.plugin.text.component.ComponentProvider;
 import net.momirealms.craftengine.core.util.*;
-import net.momirealms.craftengine.proxy.minecraft.world.level.block.BlocksProxy;
-import net.momirealms.craftengine.proxy.minecraft.world.level.block.state.BlockStateProxy;
 import net.momirealms.sparrow.nbt.CompoundTag;
 import net.momirealms.sparrow.nbt.ListTag;
 import net.momirealms.sparrow.nbt.StringTag;

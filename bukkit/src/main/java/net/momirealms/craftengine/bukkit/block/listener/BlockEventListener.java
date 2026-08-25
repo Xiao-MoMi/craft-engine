@@ -156,7 +156,6 @@ public final class BlockEventListener implements Listener {
                         PlayerOptionalContext.of(serverPlayer, ContextHolder.builder()
                             .withParameter(DirectContextParameters.BLOCK, new BukkitExistingBlock(block))
                             .withParameter(DirectContextParameters.POSITION, position)
-                            .withParameter(DirectContextParameters.PLAYER, serverPlayer)
                             .withParameter(DirectContextParameters.EVENT, cancellable)
                             .withOptionalParameter(DirectContextParameters.ITEM_IN_HAND, itemInHand.isEmpty() ? null : itemInHand)
                         ), EventTrigger.BREAK

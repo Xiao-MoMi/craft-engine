@@ -23,7 +23,6 @@ import org.incendo.cloud.exception.handling.ExceptionContext;
 import org.incendo.cloud.minecraft.extras.MinecraftExceptionHandler;
 import org.jetbrains.annotations.NotNull;
 
-import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;

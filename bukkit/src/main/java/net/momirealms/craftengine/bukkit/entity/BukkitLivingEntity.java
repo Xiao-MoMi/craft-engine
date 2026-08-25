@@ -88,11 +88,11 @@ public class BukkitLivingEntity extends BukkitEntity implements net.momirealms.c
     }
 
     @Override
-    public void damage(double amount, Key damageType, @Nullable net.momirealms.craftengine.core.entity.Entity causeEntity) {
+    public void damage(double amount, Key damageType, @Nullable net.momirealms.craftengine.core.entity.Entity causingEntity) {
         @SuppressWarnings("deprecation")
         DamageType type = Registry.DAMAGE_TYPE.get(KeyUtils.toNamespacedKey(damageType));
         DamageSource source = DamageSource.builder(type != null ? type : DamageType.GENERIC)
-                .withCausingEntity(causeEntity != null ? (Entity) causeEntity.platformEntity() : this.platformEntity())
+                .withCausingEntity(causingEntity != null ? (Entity) causingEntity.platformEntity() : this.platformEntity())
                 .withDirectEntity(this.platformEntity())
                 .withDamageLocation(this.platformEntity().getLocation())
                 .build();

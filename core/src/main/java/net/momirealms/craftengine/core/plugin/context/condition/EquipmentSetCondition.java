@@ -1,6 +1,5 @@
 package net.momirealms.craftengine.core.plugin.context.condition;
 
-import net.momirealms.craftengine.core.entity.Entity;
 import net.momirealms.craftengine.core.entity.LivingEntity;
 import net.momirealms.craftengine.core.entity.LivingEntityHolder;
 import net.momirealms.craftengine.core.plugin.CraftEngine;
@@ -12,8 +11,6 @@ import net.momirealms.craftengine.core.plugin.context.Condition;
 import net.momirealms.craftengine.core.plugin.context.Context;
 import net.momirealms.craftengine.core.plugin.context.parameter.DirectContextParameters;
 import net.momirealms.craftengine.core.util.Key;
-
-import java.util.Optional;
 
 public final class EquipmentSetCondition<CTX extends Context> implements Condition<CTX> {
     private final Key set;
@@ -41,11 +38,10 @@ public final class EquipmentSetCondition<CTX extends Context> implements Conditi
     }
 
     private static LivingEntity resolveLivingEntity(Context ctx) {
-        Optional<Entity> entity = ctx.getOptionalParameter(DirectContextParameters.ENTITY);
-        if (entity.isPresent() && entity.get() instanceof LivingEntity livingEntity) {
-            return livingEntity;
-        }
-        return ctx.getOptionalParameter(DirectContextParameters.PLAYER).orElse(null);
+        return ctx.getOptionalParameter(DirectContextParameters.ENTITY)
+                .filter(LivingEntity.class::isInstance)
+                .map(LivingEntity.class::cast)
+                .orElse(null);
     }
 
     public static <CTX extends Context> ConditionFactory<CTX, EquipmentSetCondition<CTX>> factory() {

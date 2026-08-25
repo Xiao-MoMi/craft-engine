@@ -5,8 +5,6 @@ import net.momirealms.craftengine.core.plugin.context.parameter.DirectContextPar
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Map;
-
 public class PlayerOptionalContext extends AbstractChainParameterContext implements PlayerContext {
     public static final PlayerOptionalContext EMPTY = new PlayerOptionalContext(null, ContextHolder.emptyImmutable());
 
@@ -24,30 +22,40 @@ public class PlayerOptionalContext extends AbstractChainParameterContext impleme
     }
 
     @NotNull
-    public static PlayerOptionalContext of(@Nullable Player player, @NotNull ContextHolder.Builder contexts) {
-        if (player != null) contexts.withParameter(DirectContextParameters.PLAYER, player);
-        return new PlayerOptionalContext(player, contexts.build());
+    public static PlayerOptionalContext of(@Nullable Player player, @NotNull ContextHolder.Builder builder) {
+        if (player != null) {
+            builder.withParameter(DirectContextParameters.PLAYER, player);
+            builder.withParameter(DirectContextParameters.ENTITY, player);
+        }
+        return new PlayerOptionalContext(player, builder.build());
     }
 
     @NotNull
     public static PlayerOptionalContext of(@Nullable Player player) {
         if (player == null) return empty();
-        return new PlayerOptionalContext(player, ContextHolder.mutable(Map.of(DirectContextParameters.PLAYER, () -> player)));
+        return new PlayerOptionalContext(player, ContextHolder.builder()
+                .withParameter(DirectContextParameters.PLAYER, player)
+                .withParameter(DirectContextParameters.ENTITY, player)
+                .build());
     }
 
     @NotNull
     public static PlayerOptionalContext ofImmutable(@Nullable Player player) {
         if (player == null) return emptyImmutable();
-        return new PlayerOptionalContext(player, ContextHolder.mutable(Map.of(DirectContextParameters.PLAYER, () -> player)));
+        return new PlayerOptionalContext(player, ContextHolder.builder()
+                .withParameter(DirectContextParameters.PLAYER, player)
+                .withParameter(DirectContextParameters.ENTITY, player)
+                .immutable(true)
+                .build());
     }
 
     @NotNull
     public static PlayerOptionalContext empty() {
-        return EMPTY;
+        return new PlayerOptionalContext(null, ContextHolder.empty());
     }
 
     public static PlayerOptionalContext emptyImmutable() {
-        return new PlayerOptionalContext(null, ContextHolder.empty());
+        return EMPTY;
     }
 
     @Override

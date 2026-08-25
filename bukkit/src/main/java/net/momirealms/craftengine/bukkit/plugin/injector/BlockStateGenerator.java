@@ -23,6 +23,7 @@ import net.momirealms.craftengine.bukkit.item.BukkitItemManager;
 import net.momirealms.craftengine.bukkit.loot.DatapackLootTable;
 import net.momirealms.craftengine.bukkit.plugin.user.BukkitServerPlayer;
 import net.momirealms.craftengine.bukkit.util.BlockStateUtils;
+import net.momirealms.craftengine.bukkit.util.EntityUtils;
 import net.momirealms.craftengine.bukkit.util.ItemStackUtils;
 import net.momirealms.craftengine.core.block.DelegatingBlockState;
 import net.momirealms.craftengine.core.block.ImmutableBlockState;
@@ -125,13 +126,11 @@ public final class BlockStateGenerator {
 
             Object tool = LootParamsProxy.BuilderProxy.INSTANCE.getOptionalParameter(builder, LootContextParamsProxy.TOOL);
             Item item = BukkitItemManager.instance().wrap(tool == null ? null : ItemStackUtils.getBukkitStack(tool));
-            Object optionalPlayer = LootParamsProxy.BuilderProxy.INSTANCE.getOptionalParameter(builder, LootContextParamsProxy.THIS_ENTITY);
-            if (!PlayerProxy.CLASS.isInstance(optionalPlayer)) {
-                optionalPlayer = null;
-            }
+            Object optionalEntity = LootParamsProxy.BuilderProxy.INSTANCE.getOptionalParameter(builder, LootContextParamsProxy.THIS_ENTITY);
+            Object optionalPlayer = PlayerProxy.CLASS.isInstance(optionalEntity) ? optionalEntity : null;
 
             // do not drop if it's not the correct tool
-            if (optionalPlayer != null && !BlockStateUtils.isCorrectTool(state, item)) {
+            if (optionalEntity != null && !BlockStateUtils.isCorrectTool(state, item)) {
                 return List.of();
             }
 
@@ -157,6 +156,9 @@ public final class BlockStateGenerator {
             BukkitServerPlayer player = optionalPlayer != null ? BukkitAdaptor.adapt(ServerPlayerProxy.INSTANCE.getBukkitEntity(optionalPlayer)) : null;
             if (player != null) {
                 lootBuilder.withParameter(DirectContextParameters.PLAYER, player);
+            }
+            if (optionalEntity != null) {
+                lootBuilder.withParameter(DirectContextParameters.ENTITY, EntityUtils.adaptNMS(optionalEntity));
             }
             Float radius = LootParamsProxy.BuilderProxy.INSTANCE.getOptionalParameter(builder, LootContextParamsProxy.EXPLOSION_RADIUS);
             if (radius != null) {

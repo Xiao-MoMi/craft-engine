@@ -43,7 +43,8 @@ public final class ContainerLootListener implements Listener {
             BukkitEntity adaptedEntity = BukkitAdaptor.adapt(event.getEntity());
             builder.withParameter(DirectContextParameters.ENTITY, adaptedEntity);
             if (adaptedEntity instanceof Player cePlayer) {
-                builder.withParameter(DirectContextParameters.PLAYER, cePlayer);
+                builder.withParameter(DirectContextParameters.ENTITY, cePlayer)
+                        .withParameter(DirectContextParameters.PLAYER, cePlayer);
                 player = cePlayer;
             }
         }
