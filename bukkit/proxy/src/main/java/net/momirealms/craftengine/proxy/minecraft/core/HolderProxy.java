@@ -1,5 +1,6 @@
 package net.momirealms.craftengine.proxy.minecraft.core;
 
+import net.momirealms.craftengine.proxy.minecraft.core.component.DataComponentMapProxy;
 import net.momirealms.craftengine.proxy.minecraft.resources.IdentifierProxy;
 import net.momirealms.craftengine.proxy.minecraft.resources.ResourceKeyProxy;
 import net.momirealms.sparrow.reflection.clazz.SparrowClass;
@@ -49,6 +50,9 @@ public interface HolderProxy {
 
         @MethodInvoker(name = "bindValue")
         void bindValue(Object target, Object value);
+
+        @MethodInvoker(name = "bindComponents", activeIf = "min_version=26.1")
+        void bindComponents(Object target, @Type(clazz = DataComponentMapProxy.class) Object components);
 
         @FieldGetter(name = "key")
         Object getKey(Object target);

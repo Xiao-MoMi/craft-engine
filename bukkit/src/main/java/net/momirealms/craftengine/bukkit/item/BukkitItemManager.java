@@ -23,6 +23,7 @@ import net.momirealms.craftengine.core.entity.player.Player;
 import net.momirealms.craftengine.core.item.*;
 import net.momirealms.craftengine.core.item.component.DataComponentKeys;
 import net.momirealms.craftengine.core.item.network.NetworkItemHandler;
+import net.momirealms.craftengine.core.item.processor.ComponentsProcessor;
 import net.momirealms.craftengine.core.item.processor.ObfuscatedItemModelProcessor;
 import net.momirealms.craftengine.core.item.recipe.DatapackRecipeResult;
 import net.momirealms.craftengine.core.item.recipe.IngredientUnlockable;
@@ -41,6 +42,7 @@ import net.momirealms.craftengine.proxy.minecraft.network.chat.ComponentProxy;
 import net.momirealms.craftengine.proxy.minecraft.resources.ResourceKeyProxy;
 import net.momirealms.craftengine.proxy.minecraft.tags.TagKeyProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.item.ItemStackProxy;
+import net.momirealms.craftengine.proxy.minecraft.world.item.ItemProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.item.ItemsProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.item.ProjectileWeaponItemProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.item.equipment.trim.*;
@@ -77,6 +79,7 @@ public final class BukkitItemManager extends AbstractItemManager {
     private final Object bedrockItemHolder;
     private final BukkitItem emptyItem;
     private final Cache<ByteArrayKey, BukkitItem> deserializedItemCache;
+    private final Map<Object, Object> originalVanillaItemComponents = new IdentityHashMap<>();
     private Set<Key> lastRegisteredPatterns = Set.of();
     private boolean hasExternalRecipeSource = false;
     private ItemSource[] recipeIngredientSources = null;
@@ -231,6 +234,7 @@ public final class BukkitItemManager extends AbstractItemManager {
 
     @Override
     public void runDelayedSyncTasks() {
+        this.reloadVanillaItemComponentOverrides();
         if (this.featureFlag$preventBreak()) {
             this.preventBreakListener.register(this.plugin.javaPlugin());
         } else {
@@ -240,12 +244,63 @@ public final class BukkitItemManager extends AbstractItemManager {
 
     @Override
     public void disable() {
+        this.restoreVanillaItemComponents();
         this.unload();
         HandlerList.unregisterAll(this.itemEventListener);
         HandlerList.unregisterAll(this.armorEventListener);
         this.preventBreakListener.unregister();
         if (this.slotChangeListener != null) HandlerList.unregisterAll(this.slotChangeListener);
         if (this.paperItemEventListener != null) HandlerList.unregisterAll(this.paperItemEventListener);
+    }
+
+    private void reloadVanillaItemComponentOverrides() {
+        if (!VersionHelper.isOrAbove1_20_5) return;
+        this.restoreVanillaItemComponents();
+        this.applyVanillaItemComponentOverrides();
+    }
+
+    private void applyVanillaItemComponentOverrides() {
+        for (Map.Entry<Key, ComponentsProcessor> entry : this.vanillaItemComponentOverrides.entrySet()) {
+            Key id = entry.getKey();
+            Object item = RegistryUtils.getRegistryValue(BuiltInRegistriesProxy.ITEM, KeyUtils.toIdentifier(id));
+            if (item == null || item == ItemsProxy.AIR) continue;
+            try {
+                Object originalComponents = ItemProxy.INSTANCE.components(item);
+                Object itemStack = ItemStackProxy.INSTANCE.newInstance(item, 1);
+                BukkitItem wrapped = this.wrap(itemStack);
+                ItemBuildContext context = ItemBuildContext.empty();
+                context.setItem(wrapped);
+                entry.getValue().apply(wrapped, context);
+                Object overriddenComponents = ItemStackProxy.INSTANCE.getComponents(itemStack);
+                this.originalVanillaItemComponents.putIfAbsent(item, originalComponents);
+                this.setVanillaItemComponents(item, overriddenComponents);
+            } catch (Throwable throwable) {
+                this.plugin.logger().warn("Failed to override the default components of vanilla item '" + id.asString() + "'", throwable);
+            }
+        }
+    }
+
+    private void restoreVanillaItemComponents() {
+        if (!VersionHelper.isOrAbove1_20_5 || this.originalVanillaItemComponents.isEmpty()) return;
+        Iterator<Map.Entry<Object, Object>> iterator = this.originalVanillaItemComponents.entrySet().iterator();
+        while (iterator.hasNext()) {
+            Map.Entry<Object, Object> entry = iterator.next();
+            try {
+                this.setVanillaItemComponents(entry.getKey(), entry.getValue());
+                iterator.remove();
+            } catch (Throwable throwable) {
+                this.plugin.logger().warn("Failed to restore the default components of a vanilla item", throwable);
+            }
+        }
+    }
+
+    private void setVanillaItemComponents(Object item, Object components) {
+        if (VersionHelper.isOrAbove26_1) {
+            Object holder = ItemProxy.INSTANCE.getBuiltInRegistryHolder(item);
+            HolderProxy.ReferenceProxy.INSTANCE.bindComponents(holder, components);
+        } else {
+            ItemProxy.INSTANCE.setComponents(item, components);
+        }
     }
 
     @Override
