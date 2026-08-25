@@ -26,6 +26,7 @@ replay_pid*
 build/
 .gradle/
 .idea/
+.codex*/
 
 !/libs/*.jar
 !/gradle/wrapper/*.jar
