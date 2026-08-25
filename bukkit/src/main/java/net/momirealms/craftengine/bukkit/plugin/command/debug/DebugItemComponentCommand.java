@@ -1,10 +1,6 @@
 package net.momirealms.craftengine.bukkit.plugin.command.debug;
 
 import com.google.gson.JsonElement;
-import net.kyori.adventure.text.Component;
-import net.kyori.adventure.text.event.ClickEvent;
-import net.kyori.adventure.text.event.HoverEvent;
-import net.kyori.adventure.text.format.NamedTextColor;
 import net.momirealms.craftengine.bukkit.api.BukkitAdaptor;
 import net.momirealms.craftengine.bukkit.plugin.command.BukkitCommandFeature;
 import net.momirealms.craftengine.bukkit.plugin.user.BukkitServerPlayer;
@@ -14,7 +10,6 @@ import net.momirealms.craftengine.core.entity.player.InteractionHand;
 import net.momirealms.craftengine.core.item.Item;
 import net.momirealms.craftengine.core.plugin.CraftEngine;
 import net.momirealms.craftengine.core.plugin.command.CraftEngineCommandManager;
-import net.momirealms.craftengine.core.plugin.locale.MessageConstants;
 import net.momirealms.craftengine.core.util.GsonHelper;
 import net.momirealms.craftengine.core.util.VersionHelper;
 import net.momirealms.craftengine.proxy.minecraft.core.RegistryProxy;
@@ -66,7 +61,7 @@ public final class DebugItemComponentCommand extends BukkitCommandFeature<Comman
 
                     Item itemInHand = serverPlayer.getItemInHand(InteractionHand.MAIN_HAND);
                     if (itemInHand.isEmpty()) {
-                        handleFeedback(context, MessageConstants.COMMAND_PLAYER_ITEMLESS, Component.text(serverPlayer.name()));
+                        sendError(context, "The main hand is empty");
                         return;
                     }
 
@@ -92,16 +87,16 @@ public final class DebugItemComponentCommand extends BukkitCommandFeature<Comman
                     }
 
                     String value = format.prefix + serialized;
-                    Component message = Component.text(componentKey + " (" + format.name() + "): ", NamedTextColor.GRAY)
-                            .append(Component.text(value, NamedTextColor.GOLD)
-                                    .hoverEvent(HoverEvent.showText(Component.translatable("chat.copy.click", NamedTextColor.WHITE)))
-                                    .clickEvent(ClickEvent.copyToClipboard(value)));
-                    plugin().senderFactory().wrap(context.sender()).sendMessage(message);
+                    var sender = plugin().senderFactory().wrap(context.sender());
+                    sender.sendMessage(DebugCommandOutput.title("Item Component"));
+                    sender.sendMessage(DebugCommandOutput.value("Component", componentKey));
+                    sender.sendMessage(DebugCommandOutput.value("Format", format.name()));
+                    sender.sendMessage(DebugCommandOutput.value("Value", DebugCommandOutput.copyable(serialized, value)));
                 });
     }
 
     private void sendError(CommandContext<? extends CommandSender> context, String message) {
-        plugin().senderFactory().wrap(context.sender()).sendMessage(Component.text(message, NamedTextColor.RED));
+        plugin().senderFactory().wrap(context.sender()).sendMessage(DebugCommandOutput.error(message));
     }
 
     @Override

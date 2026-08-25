@@ -1,5 +1,5 @@
 # Do not modify this value
-config-version: '${config_version}'
+___version___: '${config_version}'
 # Enables or disables metrics collection via BStats
 metrics: true
 # Enables automatic update checks

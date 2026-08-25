@@ -1,8 +1,5 @@
 package net.momirealms.craftengine.bukkit.plugin.command.debug;
 
-import net.kyori.adventure.text.Component;
-import net.kyori.adventure.text.event.ClickEvent;
-import net.kyori.adventure.text.format.NamedTextColor;
 import net.momirealms.craftengine.bukkit.plugin.command.BukkitCommandFeature;
 import net.momirealms.craftengine.bukkit.util.BlockStateUtils;
 import net.momirealms.craftengine.core.plugin.CraftEngine;
@@ -29,9 +26,9 @@ public final class DebugGetBlockStateRegistryIdCommand extends BukkitCommandFeat
                     BlockData blockData = Bukkit.createBlockData(state);
                     int id = BlockStateUtils.blockDataToId(blockData);
                     Sender sender = plugin().senderFactory().wrap(context.sender());
-                    sender.sendMessage(Component.text(id)
-                            .hoverEvent(Component.translatable("chat.copy.click", NamedTextColor.WHITE))
-                            .clickEvent(ClickEvent.copyToClipboard(String.valueOf(id))));
+                    sender.sendMessage(DebugCommandOutput.title("Block State Registry ID"));
+                    sender.sendMessage(DebugCommandOutput.value("State", blockData.getAsString()));
+                    sender.sendMessage(DebugCommandOutput.value("Registry ID", id));
                 });
     }
 

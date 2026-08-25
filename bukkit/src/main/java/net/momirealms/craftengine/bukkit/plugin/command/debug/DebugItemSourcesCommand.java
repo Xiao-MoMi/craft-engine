@@ -1,7 +1,5 @@
 package net.momirealms.craftengine.bukkit.plugin.command.debug;
 
-import net.kyori.adventure.text.Component;
-import net.kyori.adventure.text.format.NamedTextColor;
 import net.momirealms.craftengine.bukkit.plugin.command.BukkitCommandFeature;
 import net.momirealms.craftengine.core.plugin.CraftEngine;
 import net.momirealms.craftengine.core.plugin.command.CraftEngineCommandManager;
@@ -23,14 +21,15 @@ public final class DebugItemSourcesCommand extends BukkitCommandFeature<CommandS
         return builder.handler(context -> {
             Sender sender = plugin().senderFactory().wrap(context.sender());
             List<ItemSource> itemSources = plugin().compatibilityManager().itemSources();
-            sender.sendMessage(Component.text("Effective item sources (" + itemSources.size() + "):").color(NamedTextColor.GRAY));
+            sender.sendMessage(DebugCommandOutput.title("Item Sources"));
+            sender.sendMessage(DebugCommandOutput.value("Count", itemSources.size()));
+            sender.sendMessage(DebugCommandOutput.section("Effective order"));
             if (itemSources.isEmpty()) {
-                sender.sendMessage(Component.text("- none").color(NamedTextColor.DARK_GRAY));
+                sender.sendMessage(DebugCommandOutput.empty(2));
                 return;
             }
             for (ItemSource itemSource : itemSources) {
-                sender.sendMessage(Component.text("- ").color(NamedTextColor.DARK_GRAY)
-                        .append(Component.text(itemSource.plugin()).color(NamedTextColor.AQUA)));
+                sender.sendMessage(DebugCommandOutput.listItem(2, itemSource.plugin()));
             }
         });
     }

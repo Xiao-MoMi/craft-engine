@@ -27,6 +27,7 @@ import net.momirealms.craftengine.core.world.chunk.storage.StorageType;
 import net.momirealms.sparrow.yaml.SparrowYaml;
 import net.momirealms.sparrow.yaml.YamlDocument;
 import net.momirealms.sparrow.yaml.node.SectionNode;
+import net.momirealms.sparrow.yaml.upgrade.YamlUpgradeBuilder;
 import net.momirealms.sparrow.yaml.upgrade.YamlUpgradePipeline;
 
 import java.io.*;
@@ -310,7 +311,6 @@ public final class Config {
     }
 
     public boolean updateConfigCache() {
-        // 文件不存在，则保存
         if (!Files.exists(this.configFilePath)) {
             this.plugin.saveResource("config.yml");
         }
@@ -318,19 +318,21 @@ public final class Config {
             BasicFileAttributes attributes = Files.readAttributes(this.configFilePath, BasicFileAttributes.class);
             long lastModified = attributes.lastModifiedTime().toMillis();
             long size = attributes.size();
-            if (lastModified != this.lastModified || size != this.size || this.config == null) {
-                byte[] configFileBytes = Files.readAllBytes(this.configFilePath);
-                try (InputStream inputStream = new ByteArrayInputStream(configFileBytes)) {
-                    this.config = this.yaml.load(inputStream);
-                    String configVersion = YamlUtils.reader(this.config).getString("config-version");
-                    if (!configVersion.equals(this.configVersion)) {
-                        this.updateConfigVersion(configFileBytes);
-                    }
-                }
-                this.lastModified = lastModified;
-                this.size = size;
-                return true;
+            if (lastModified == this.lastModified && size == this.size && this.config != null) {
+                return false;
             }
+
+            YamlDocument loadedConfig;
+            try (InputStream inputStream = Files.newInputStream(this.configFilePath)) {
+                loadedConfig = this.yaml.load(inputStream);
+            }
+            if (!this.configVersion.equals(ConfigVersionExtractor.INSTANCE.extractVersion(loadedConfig))) {
+                loadedConfig = this.updateConfigVersion(loadedConfig);
+            }
+
+            this.config = loadedConfig;
+            this.updateConfigFileAttributes();
+            return true;
         } catch (IOException e) {
             this.plugin.logger().error("Failed to update config.yml", e);
         }
@@ -344,18 +346,18 @@ public final class Config {
         }
     }
 
-    private void updateConfigVersion(byte[] bytes) throws IOException {
-        try (InputStream inputStream = new ByteArrayInputStream(bytes);
-             InputStream defaultInputStream = this.plugin.resourceStream("config.yml")) {
+    private YamlDocument updateConfigVersion(YamlDocument loadedConfig) throws IOException {
+        YamlDocument upgradedConfig;
+        try (InputStream defaultInputStream = this.plugin.resourceStream("config.yml")) {
             if (defaultInputStream == null) {
                 throw new IOException("Embedded config.yml not found");
             }
-            YamlUpgradePipeline pipeline = YamlUpgradePipeline.builder()
+            YamlUpgradePipeline pipeline = yamlUpgradeBuilder()
                     .updateComments(true)
                     .deleteRemovedNodes(true)
                     .build();
-            this.config = pipeline.upgrade(
-                    this.yaml.load(inputStream),
+            upgradedConfig = pipeline.upgrade(
+                    loadedConfig,
                     this.yaml.load(defaultInputStream),
                     List.of(
                             YamlUtils.route("resource-pack.delivery.hosting"),
@@ -369,10 +371,21 @@ public final class Config {
             );
         }
         try {
-            this.config.save(this.plugin.dataFolderPath().resolve("config.yml"));
+            upgradedConfig.save(this.configFilePath);
         } catch (IOException e) {
             this.plugin.logger().warn("Could not save config.yml", e);
         }
+        return upgradedConfig;
+    }
+
+    public static YamlUpgradeBuilder yamlUpgradeBuilder() {
+        return YamlUpgradePipeline.builder().versionExtractor(ConfigVersionExtractor.INSTANCE);
+    }
+
+    private void updateConfigFileAttributes() throws IOException {
+        BasicFileAttributes attributes = Files.readAttributes(this.configFilePath, BasicFileAttributes.class);
+        this.lastModified = attributes.lastModifiedTime().toMillis();
+        this.size = attributes.size();
     }
 
     public void loadForcedLocale() {

@@ -3,8 +3,6 @@ package net.momirealms.craftengine.bukkit.plugin.command.debug;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.TextComponent;
 import net.kyori.adventure.text.event.ClickEvent;
-import net.kyori.adventure.text.format.NamedTextColor;
-import net.kyori.adventure.text.format.TextColor;
 import net.momirealms.craftengine.bukkit.plugin.command.BukkitCommandFeature;
 import net.momirealms.craftengine.bukkit.util.KeyUtils;
 import net.momirealms.craftengine.core.font.BitmapImage;
@@ -12,6 +10,7 @@ import net.momirealms.craftengine.core.font.Image;
 import net.momirealms.craftengine.core.font.ReferenceImage;
 import net.momirealms.craftengine.core.plugin.CraftEngine;
 import net.momirealms.craftengine.core.plugin.command.CraftEngineCommandManager;
+import net.momirealms.craftengine.core.plugin.command.sender.Sender;
 import net.momirealms.craftengine.core.util.FormatUtils;
 import net.momirealms.craftengine.core.util.Key;
 import org.bukkit.command.CommandSender;
@@ -47,40 +46,32 @@ public final class DebugImageCommand extends BukkitCommandFeature<CommandSender>
                 .optional("column", IntegerParser.integerParser(0))
                 .handler(context -> {
                     Key imageId = KeyUtils.namespacedKeyToKey(context.get("id"));
-                    plugin().fontManager().imageById(imageId).ifPresent(image -> {
-                        if (image instanceof ReferenceImage referenceImage) {
-                            int row = referenceImage.row();
-                            int column = referenceImage.col();
-                            Image ref = referenceImage.image();
-                            if (ref instanceof BitmapImage bitmapImage) {
-                                String string = referenceImage.image().id().asString() + ((row != 0 || column != 0) ? ":" + row + ":" + column : "");
-                                Component component = Component.empty().children(
-                                        List.of(
-                                                Component.text(string)
-                                                        .hoverEvent(image.componentAt(row, column).color(NamedTextColor.WHITE))
-                                                        .clickEvent(ClickEvent.suggestCommand(string)),
-                                                getHelperInfo(bitmapImage, row, column)
-                                        )
-                                );
-                                plugin().senderFactory().wrap(context.sender()).sendMessage(component);
-                            }
-                        } else if (image instanceof BitmapImage bitmapImage) {
-                            int row = context.getOrDefault("row", 0);
-                            int column = context.getOrDefault("column", 0);
-                            String string = bitmapImage.isValidCoordinate(row, column)
-                                    ? imageId.asString() + ((row != 0 || column != 0) ? ":" + row + ":" + column : "") // 自动最小化
-                                    : imageId.asString() + ":" + (row = 0) + ":" + (column = 0); // 因为是无效的所以说要强调告诉获取的是00
-                            Component component = Component.empty().children(
-                                    List.of(
-                                            Component.text(string)
-                                                    .hoverEvent(image.componentAt(row, column).color(NamedTextColor.WHITE))
-                                                    .clickEvent(ClickEvent.suggestCommand(string)),
-                                            getHelperInfo(bitmapImage, row, column)
-                                    )
-                            );
-                            plugin().senderFactory().wrap(context.sender()).sendMessage(component);
+                    Sender sender = plugin().senderFactory().wrap(context.sender());
+                    Image image = plugin().fontManager().imageById(imageId).orElse(null);
+                    if (image == null) {
+                        sender.sendMessage(DebugCommandOutput.error("Unknown image '" + imageId + "'"));
+                        return;
+                    }
+                    if (image instanceof ReferenceImage referenceImage) {
+                        int row = referenceImage.row();
+                        int column = referenceImage.col();
+                        Image referenced = referenceImage.image();
+                        if (referenced instanceof BitmapImage bitmapImage) {
+                            String value = referenced.id().asString() + ((row != 0 || column != 0) ? ":" + row + ":" + column : "");
+                            sendResult(sender, image, bitmapImage, value, row, column);
+                        } else {
+                            sender.sendMessage(DebugCommandOutput.error("Referenced image is not a bitmap"));
                         }
-                    });
+                    } else if (image instanceof BitmapImage bitmapImage) {
+                        int row = context.getOrDefault("row", 0);
+                        int column = context.getOrDefault("column", 0);
+                        String value = bitmapImage.isValidCoordinate(row, column)
+                                ? imageId.asString() + ((row != 0 || column != 0) ? ":" + row + ":" + column : "") // 自动最小化
+                                : imageId.asString() + ":" + (row = 0) + ":" + (column = 0); // 因为是无效的所以说要强调告诉获取的是00
+                        sendResult(sender, image, bitmapImage, value, row, column);
+                    } else {
+                        sender.sendMessage(DebugCommandOutput.error("Image type is not supported by this command"));
+                    }
                 });
     }
 
@@ -89,25 +80,27 @@ public final class DebugImageCommand extends BukkitCommandFeature<CommandSender>
         return "debug_image";
     }
 
+    private static void sendResult(Sender sender, Image image, BitmapImage bitmapImage, String value, int row, int column) {
+        Component imageValue = Component.text(value, DebugCommandOutput.accentColor())
+                .hoverEvent(image.componentAt(row, column).color(DebugCommandOutput.textColor()))
+                .clickEvent(ClickEvent.suggestCommand(value));
+        sender.sendMessage(DebugCommandOutput.title("Bitmap Image"));
+        sender.sendMessage(DebugCommandOutput.value("Image", imageValue));
+        sender.sendMessage(DebugCommandOutput.value("Coordinates", row + ", " + column));
+        sender.sendMessage(DebugCommandOutput.section("Copy as"));
+        sender.sendMessage(getHelperInfo(bitmapImage, row, column));
+    }
+
     private static TextComponent getHelperInfo(BitmapImage image, int row, int column) {
         String raw = new String(Character.toChars(image.codepointAt(row, column)));
         String font = image.font().toString();
         return Component.empty().children(List.of(
-                Component.text(" "),
-                Component.text("[MiniMessage]")
-                        .color(TextColor.color(255,192,203))
-                        .hoverEvent(Component.translatable("chat.copy.click", NamedTextColor.WHITE))
-                        .clickEvent(ClickEvent.copyToClipboard(FormatUtils.miniMessageFont(raw, font))),
-                Component.text(" "),
-                Component.text("[MineDown]")
-                        .color(TextColor.color(123,104,238))
-                        .hoverEvent(Component.translatable("chat.copy.click", NamedTextColor.WHITE))
-                        .clickEvent(ClickEvent.copyToClipboard(FormatUtils.mineDownFont(raw, font))),
-                Component.text(" "),
-                Component.text("[RAW]")
-                        .color(TextColor.color(119,136,153))
-                        .hoverEvent(Component.translatable("chat.copy.click", NamedTextColor.WHITE))
-                        .clickEvent(ClickEvent.copyToClipboard("{\"text\":\"" + raw + "\",\"font\":\"" + font + "\"}"))
+                Component.text("    "),
+                DebugCommandOutput.copyable("[MiniMessage]", FormatUtils.miniMessageFont(raw, font)),
+                Component.text("  "),
+                DebugCommandOutput.copyable("[MineDown]", FormatUtils.mineDownFont(raw, font)),
+                Component.text("  "),
+                DebugCommandOutput.copyable("[RAW]", "{\"text\":\"" + raw + "\",\"font\":\"" + font + "\"}")
         ));
     }
 }

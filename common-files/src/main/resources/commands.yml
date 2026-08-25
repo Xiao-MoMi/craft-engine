@@ -1,5 +1,5 @@
 # Do not modify this value
-config-version: "${config_version}"
+___version___: "${config_version}"
 
 #
 # For safety reasons, editing this file requires a restart to apply

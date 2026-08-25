@@ -1,7 +1,5 @@
 package net.momirealms.craftengine.bukkit.plugin.command.debug;
 
-import net.kyori.adventure.text.Component;
-import net.kyori.adventure.text.format.NamedTextColor;
 import net.momirealms.craftengine.bukkit.api.BukkitAdaptor;
 import net.momirealms.craftengine.bukkit.plugin.command.BukkitCommandFeature;
 import net.momirealms.craftengine.bukkit.plugin.user.BukkitServerPlayer;
@@ -32,16 +30,13 @@ public final class DebugExpressionCommand extends BukkitCommandFeature<CommandSe
                     PlayerOptionalContext ctx = PlayerOptionalContext.of(serverPlayer);
                     String resolved = TextProviders.fromString(context.<String>get("expression")).get(ctx).replace("\\<", "<"); // 与 ExpressionCondition 保持一致
                     Sender ceSender = plugin().senderFactory().wrap(sender);
+                    ceSender.sendMessage(DebugCommandOutput.title("Expression"));
+                    ceSender.sendMessage(DebugCommandOutput.value("Resolved input", resolved));
                     try {
                         double value = Expressions.evaluate(resolved);
-                        ceSender.sendMessage(Component.text("Expression: ", NamedTextColor.GRAY)
-                                .append(Component.text(resolved, NamedTextColor.WHITE)));
-                        ceSender.sendMessage(Component.text("Result: ", NamedTextColor.GRAY)
-                                .append(Component.text(Double.toString(value), NamedTextColor.GREEN)));
+                        ceSender.sendMessage(DebugCommandOutput.value("Result", Double.toString(value)));
                     } catch (RuntimeException e) {
-                        ceSender.sendMessage(Component.text("Invalid expression: ", NamedTextColor.RED)
-                                .append(Component.text(resolved, NamedTextColor.WHITE)));
-                        ceSender.sendMessage(Component.text(e.getMessage(), NamedTextColor.RED));
+                        ceSender.sendMessage(DebugCommandOutput.error("Invalid expression: " + String.valueOf(e.getMessage())));
                     }
                 });
     }

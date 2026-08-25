@@ -38,6 +38,8 @@ import static net.momirealms.craftengine.core.item.network.NetworkItemHandler.NE
 
 public final class DebugItemDataCommand extends BukkitCommandFeature<CommandSender> {
     private static final String FULL_FLAG = "full";
+    private static final String FORCE_CHAT_FLAG = "chat";
+    private static final int MAX_CHAT_LINES = 10;
     private static final TextColor COLOR_TEXT = TextColor.color(0xF5F5F5);
 
     public DebugItemDataCommand(CraftEngineCommandManager<CommandSender> commandManager, CraftEngine plugin) {
@@ -50,6 +52,7 @@ public final class DebugItemDataCommand extends BukkitCommandFeature<CommandSend
                 .senderType(Player.class)
                 .flag(FlagKeys.CLIENT_SIDE_FLAG)
                 .flag(manager.flagBuilder(FULL_FLAG).build())
+                .flag(manager.flagBuilder(FORCE_CHAT_FLAG).build())
                 .handler(context -> {
                     BukkitServerPlayer serverPlayer = BukkitAdaptor.adapt(context.sender());
                     if (serverPlayer == null) return;
@@ -78,11 +81,21 @@ public final class DebugItemDataCommand extends BukkitCommandFeature<CommandSend
                     }
 
                     boolean full = context.flags().hasFlag(FULL_FLAG);
+                    boolean forceChat = context.flags().hasFlag(FORCE_CHAT_FLAG);
                     Map<String, Object> readableMap = toMap(itemInHand, full);
-                    List<Component> readableComponents = mapToComponentList(readableMap);
-
-                    Component finalMessage = Component.join(JoinConfiguration.separator(Component.newline()), readableComponents);
-                    plugin().senderFactory().wrap(context.sender()).sendMessage(finalMessage);
+                    List<Component> readableComponents = mapToComponentList(readableMap, true);
+                    Component finalMessage;
+                    if (!forceChat && readableComponents.size() > MAX_CHAT_LINES) {
+                        Component hover = joinLines(mapToComponentList(readableMap, false));
+                        Component summary = Component.text("[" + readableComponents.size() + " lines]", NamedTextColor.YELLOW)
+                                .hoverEvent(HoverEvent.showText(hover));
+                        finalMessage = DebugCommandOutput.value("Data", summary);
+                    } else {
+                        finalMessage = joinLines(readableComponents);
+                    }
+                    var sender = plugin().senderFactory().wrap(context.sender());
+                    sender.sendMessage(DebugCommandOutput.title("Item Data"));
+                    sender.sendMessage(finalMessage);
                 });
     }
 
@@ -117,14 +130,14 @@ public final class DebugItemDataCommand extends BukkitCommandFeature<CommandSend
         return itemCopy;
     }
 
-    private List<Component> mapToComponentList(Map<String, Object> readableDataMap) {
+    private List<Component> mapToComponentList(Map<String, Object> readableDataMap, boolean copyable) {
         List<Component> list = new ArrayList<>();
-        mapToComponentList(readableDataMap, list, 0, false);
+        mapToComponentList(readableDataMap, list, 0, false, copyable);
         return list;
     }
 
     @SuppressWarnings("unchecked")
-    static void mapToComponentList(Map<String, Object> map, List<Component> readableList, int loopTimes, boolean isMapList) {
+    static void mapToComponentList(Map<String, Object> map, List<Component> readableList, int loopTimes, boolean isMapList, boolean copyable) {
         boolean first = true;
         for (Map.Entry<String, Object> entry : map.entrySet()) {
             Object nbt = entry.getValue();
@@ -143,13 +156,11 @@ public final class DebugItemDataCommand extends BukkitCommandFeature<CommandSend
 
                 for (Object value : list) {
                     if (value instanceof Map<?,?> innerDataMap) {
-                        mapToComponentList((Map<String, Object>) innerDataMap, readableList, loopTimes + 2, true);
+                        mapToComponentList((Map<String, Object>) innerDataMap, readableList, loopTimes + 2, true, copyable);
                     } else {
                         String strValue = String.valueOf(value);
                         readableList.add(Component.text("  ".repeat(loopTimes + 1) + "- ", COLOR_TEXT)
-                                .append(Component.text(strValue, COLOR_TEXT)
-                                        .hoverEvent(HoverEvent.showText(Component.translatable("chat.copy.click", NamedTextColor.WHITE)))
-                                        .clickEvent(ClickEvent.copyToClipboard(strValue)))
+                                .append(valueComponent(strValue, copyable))
                         );
                     }
                 }
@@ -158,7 +169,7 @@ public final class DebugItemDataCommand extends BukkitCommandFeature<CommandSend
                         .append(gradientKey.hoverEvent(HoverEvent.showText(Component.text("Map", NamedTextColor.YELLOW))))
                         .append(Component.text(":", COLOR_TEXT))
                 );
-                mapToComponentList((Map<String, Object>) innerMap, readableList, loopTimes + 1, false);
+                mapToComponentList((Map<String, Object>) innerMap, readableList, loopTimes + 1, false, copyable);
             } else {
                 String value;
                 if (nbt.getClass().isArray()) {
@@ -181,14 +192,26 @@ public final class DebugItemDataCommand extends BukkitCommandFeature<CommandSend
                 readableList.add(prefix
                         .append(gradientKey.hoverEvent(HoverEvent.showText(Component.text(nbt.getClass().getSimpleName(), NamedTextColor.YELLOW))))
                         .append(Component.text(": ", COLOR_TEXT))
-                        .append(Component.text(value, COLOR_TEXT)
-                                .hoverEvent(HoverEvent.showText(Component.translatable("chat.copy.click", NamedTextColor.WHITE)))
-                                .clickEvent(ClickEvent.copyToClipboard(value)))
+                        .append(valueComponent(value, copyable))
                 );
             }
             if (isMapList) {
                 first = false;
             }
         }
+    }
+
+    private static Component valueComponent(String value, boolean copyable) {
+        Component component = Component.text(value, COLOR_TEXT);
+        if (!copyable) {
+            return component;
+        }
+        return component
+                .hoverEvent(HoverEvent.showText(Component.translatable("chat.copy.click", NamedTextColor.WHITE)))
+                .clickEvent(ClickEvent.copyToClipboard(value));
+    }
+
+    private static Component joinLines(List<Component> lines) {
+        return Component.join(JoinConfiguration.separator(Component.newline()), lines);
     }
 }

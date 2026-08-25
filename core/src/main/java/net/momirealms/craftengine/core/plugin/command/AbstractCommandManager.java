@@ -13,7 +13,6 @@ import net.momirealms.craftengine.core.util.TriConsumer;
 import net.momirealms.craftengine.core.util.YamlUtils;
 import net.momirealms.sparrow.yaml.YamlDocument;
 import net.momirealms.sparrow.yaml.node.SectionNode;
-import net.momirealms.sparrow.yaml.upgrade.YamlUpgradePipeline;
 import org.checkerframework.checker.nullness.qual.Nullable;
 import org.incendo.cloud.Command;
 import org.incendo.cloud.caption.Caption;
@@ -126,8 +125,7 @@ public abstract class AbstractCommandManager<C> implements CraftEngineCommandMan
     @Override
     public void registerDefaultFeatures() {
         YamlDocument document = Config.instance().loadYamlConfig(commandsFile,
-                YamlUpgradePipeline
-                    .builder()
+                Config.yamlUpgradeBuilder()
                     .updateComments(true)
                     .deleteRemovedNodes(true)
                     .build()

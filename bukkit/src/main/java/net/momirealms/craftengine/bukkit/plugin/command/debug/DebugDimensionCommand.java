@@ -1,9 +1,5 @@
 package net.momirealms.craftengine.bukkit.plugin.command.debug;
 
-import net.kyori.adventure.text.Component;
-import net.kyori.adventure.text.event.ClickEvent;
-import net.kyori.adventure.text.event.HoverEvent;
-import net.kyori.adventure.text.format.NamedTextColor;
 import net.momirealms.craftengine.bukkit.api.BukkitAdaptor;
 import net.momirealms.craftengine.bukkit.plugin.command.BukkitCommandFeature;
 import net.momirealms.craftengine.bukkit.util.KeyUtils;
@@ -39,17 +35,11 @@ public final class DebugDimensionCommand extends BukkitCommandFeature<CommandSen
                             : "<unregistered>";
 
                     Sender sender = plugin().senderFactory().wrap(player);
-                    sender.sendMessage(value("Bukkit world", world.name()));
-                    sender.sendMessage(value("Dimension", dimension.asString()));
-                    sender.sendMessage(value("Dimension type", dimensionType));
+                    sender.sendMessage(DebugCommandOutput.title("Dimension"));
+                    sender.sendMessage(DebugCommandOutput.value("Bukkit world", world.name()));
+                    sender.sendMessage(DebugCommandOutput.value("Dimension", dimension.asString()));
+                    sender.sendMessage(DebugCommandOutput.value("Dimension type", dimensionType));
                 });
-    }
-
-    private static Component value(String label, String value) {
-        return Component.text(label + ": ", NamedTextColor.GRAY)
-                .append(Component.text(value, NamedTextColor.GOLD)
-                        .hoverEvent(HoverEvent.showText(Component.translatable("chat.copy.click", NamedTextColor.WHITE)))
-                        .clickEvent(ClickEvent.copyToClipboard(value)));
     }
 
     @Override

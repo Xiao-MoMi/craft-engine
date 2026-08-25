@@ -1,6 +1,5 @@
 package net.momirealms.craftengine.bukkit.plugin.command.debug;
 
-import net.kyori.adventure.text.Component;
 import net.momirealms.craftengine.bukkit.plugin.command.BukkitCommandFeature;
 import net.momirealms.craftengine.bukkit.util.LevelUtils;
 import net.momirealms.craftengine.core.plugin.CraftEngine;
@@ -31,11 +30,17 @@ public final class DebugEntityIdCommand extends BukkitCommandFeature<CommandSend
                     Object level = CraftWorldProxy.INSTANCE.getWorld(world);
                     Object entityLookup = LevelUtils.getEntityLookup(level);
                     Object entity = EntityLookupProxy.INSTANCE.get(entityLookup, entityId);
+                    var sender = plugin().senderFactory().wrap(context.sender());
                     if (entity == null) {
-                        handleFeedback(context, Component.translatable().key("argument.entity.notfound.entity"));
+                        sender.sendMessage(DebugCommandOutput.error("Entity was not found"));
+                        sender.sendMessage(DebugCommandOutput.value("World", world.getName()));
+                        sender.sendMessage(DebugCommandOutput.value("Entity ID", entityId));
                         return;
                     }
-                    context.sender().sendMessage(entity.toString());
+                    sender.sendMessage(DebugCommandOutput.title("Entity Lookup"));
+                    sender.sendMessage(DebugCommandOutput.value("World", world.getName()));
+                    sender.sendMessage(DebugCommandOutput.value("Entity ID", entityId));
+                    sender.sendMessage(DebugCommandOutput.value("Entity", entity.toString()));
                 });
     }
 
