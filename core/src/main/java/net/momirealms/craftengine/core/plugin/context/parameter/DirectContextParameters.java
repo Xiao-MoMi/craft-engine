@@ -87,4 +87,5 @@ public final class DirectContextParameters {
     public static final ContextKey<Entity> DIRECT_ENTITY = ContextKey.direct("direct_entity");
     public static final ContextKey<Double> SPEED = ContextKey.direct("speed");
     public static final ContextKey<Double> HEALTH = ContextKey.direct("health");
+    public static final ContextKey<Double> MAX_HEALTH = ContextKey.direct("max_health");
 }

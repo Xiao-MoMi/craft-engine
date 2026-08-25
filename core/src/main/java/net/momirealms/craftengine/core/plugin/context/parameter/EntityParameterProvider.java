@@ -36,6 +36,12 @@ public final class EntityParameterProvider implements ChainParameterProvider<Ent
             }
             return 0d;
         });
+        CONTEXT_FUNCTIONS.put(DirectContextParameters.MAX_HEALTH, e -> {
+            if (e instanceof LivingEntity living) {
+                return living.maxHealth();
+            }
+            return 0d;
+        });
         CONTEXT_FUNCTIONS.put(DirectContextParameters.ITEM, e -> {
             if (e instanceof ItemEntity itemEntity) {
                 return itemEntity.getItem();
