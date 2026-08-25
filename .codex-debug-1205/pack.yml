@@ -1,5 +1,0 @@
-author: Codex
-version: 1.0.0
-description: override_data diagnostic
-namespace: override_data_probe
-enable: true
