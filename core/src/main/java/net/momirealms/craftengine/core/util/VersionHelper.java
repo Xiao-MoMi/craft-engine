@@ -50,6 +50,7 @@ public final class VersionHelper {
     public static final boolean isOrAbove26_1_1;
     public static final boolean isOrAbove26_1_2;
     public static final boolean isOrAbove26_2;
+    public static final boolean isOrAbove26_3;
     private static final Class<?> UNOBFUSCATED_CLAZZ = Objects.requireNonNull(ReflectionUtils.getClazz(
             "net.minecraft.obfuscate.DontObfuscate", // 因为无混淆版本没有这个类所以说多写几个防止找不到了
             "net.minecraft.data.Main",
@@ -106,6 +107,7 @@ public final class VersionHelper {
             isOrAbove26_1_1 = version >= 260101;
             isOrAbove26_1_2 = version >= 260102;
             isOrAbove26_2 = version >= 260200;
+            isOrAbove26_3 = version >= 260300;
 
             majorVersion = major;
             minorVersion = minor;

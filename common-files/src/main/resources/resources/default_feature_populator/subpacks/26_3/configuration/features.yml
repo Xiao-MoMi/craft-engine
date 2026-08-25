@@ -23,18 +23,18 @@ placed_features:
               entries:
                 - weight: 4
                   data:
-                    Name: 'default:ender_pearl_flower'
-                    Properties:
+                    id: 'default:ender_pearl_flower'
+                    properties:
                       age: '0'
                 - weight: 2
                   data:
-                    Name: 'default:ender_pearl_flower'
-                    Properties:
+                    id: 'default:ender_pearl_flower'
+                    properties:
                       age: '1'
                 - weight: 1
                   data:
-                    Name: 'default:ender_pearl_flower'
-                    Properties:
+                    id: 'default:ender_pearl_flower'
+                    properties:
                       age: '2'
     placement:
       - type: 'minecraft:in_square'
@@ -88,7 +88,7 @@ placed_features:
             then:
               type: 'minecraft:simple_state_provider'
               state:
-                Name: 'default:fairy_flower'
+                id: 'default:fairy_flower'
     placement:
       - type: 'minecraft:rarity_filter'
         chance: 100
@@ -130,8 +130,8 @@ placed_features:
           provider:
             type: 'minecraft:simple_state_provider'
             state:
-              Name: 'default:flame_cane'
-              Properties:
+              id: 'default:flame_cane'
+              properties:
                 age: '0'
       prioritize_tip: false
     placement:
@@ -167,8 +167,8 @@ placed_features:
               blocks: 'minecraft:air'
             - type: 'minecraft:would_survive'
               state:
-                Name: 'default:flame_cane'
-                Properties:
+                id: 'default:flame_cane'
+                properties:
                   age: '0'
             - type: 'minecraft:any_of'
               predicates:
@@ -226,7 +226,7 @@ placed_features:
             then:
               type: 'minecraft:simple_state_provider'
               state:
-                Name: 'default:hami_melon'
+                id: 'default:hami_melon'
     placement:
       - type: 'minecraft:rarity_filter'
         chance: 300
@@ -276,23 +276,23 @@ placed_features:
               entries:
                 - weight: 7
                   data:
-                    Name: 'default:magma_plant'
-                    Properties:
+                    id: 'default:magma_plant'
+                    properties:
                       age: '0'
                 - weight: 5
                   data:
-                    Name: 'default:magma_plant'
-                    Properties:
+                    id: 'default:magma_plant'
+                    properties:
                       age: '1'
                 - weight: 2
                   data:
-                    Name: 'default:magma_plant'
-                    Properties:
+                    id: 'default:magma_plant'
+                    properties:
                       age: '2'
                 - weight: 1
                   data:
-                    Name: 'default:magma_plant'
-                    Properties:
+                    id: 'default:magma_plant'
+                    properties:
                       age: '3'
     placement:
       - type: 'minecraft:in_square'
@@ -382,7 +382,7 @@ placed_features:
             then:
               type: 'minecraft:simple_state_provider'
               state:
-                Name: 'default:reed'
+                id: 'default:reed'
     placement:
       - type: 'minecraft:rarity_filter'
         chance: 48
@@ -417,12 +417,12 @@ placed_features:
       size: 10
       targets:
         - state:
-            Name: default:topaz_ore
+            id: default:topaz_ore
           target:
             predicate_type: minecraft:tag_match
             tag: minecraft:stone_ore_replaceables
         - state:
-            Name: default:deepslate_topaz_ore
+            id: default:deepslate_topaz_ore
           target:
             predicate_type: minecraft:tag_match
             tag: minecraft:deepslate_ore_replaceables

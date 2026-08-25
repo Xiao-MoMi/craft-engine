@@ -9,6 +9,7 @@ public final class BlockKeys {
     // 特殊
     public static final Key AIR = Key.of("minecraft:air");
   
+    public static final Key STONE = Key.of("minecraft:stone");
     public static final Key SUGAR_CANE = Key.of("minecraft:sugar_cane");
     public static final Key NOTE_BLOCK = Key.of("minecraft:note_block");
     public static final Key TRIPWIRE = Key.of("minecraft:tripwire");

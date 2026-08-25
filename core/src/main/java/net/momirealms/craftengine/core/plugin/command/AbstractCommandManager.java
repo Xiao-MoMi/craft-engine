@@ -133,7 +133,7 @@ public abstract class AbstractCommandManager<C> implements CraftEngineCommandMan
                     .build()
         );
         try {
-            document.save(new File(plugin.dataFolderFile(), "commands.yml"));
+            document.save(this.plugin.dataFolderPath().resolve("commands.yml"));
         } catch (IOException e) {
             throw new RuntimeException(e);
         }

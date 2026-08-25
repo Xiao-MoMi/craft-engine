@@ -982,6 +982,9 @@ public final class BukkitWorldManager implements WorldManager, Listener {
         }
     }
 
+    private static final String BLOCK_ID = VersionHelper.isOrAbove26_3 ? "id" : "Name";
+    private static final String BLOCK_PROPERTIES = VersionHelper.isOrAbove26_3 ? "properties" : "Properties";
+
     //简单地处理一下，将feature转换
     @SuppressWarnings({"DuplicatedCode"})
     private Map<String, Object> processFeatureSection(ConfigSection section) {
@@ -993,7 +996,7 @@ public final class BukkitWorldManager implements WorldManager, Listener {
             result.put(key.replace('-', '_'), processFeatureValue(value));
         }
         // 处理方块状态
-        Object rawName = result.get("Name");
+        Object rawName = result.get(BLOCK_ID);
         if (rawName instanceof String blockName) {
             Optional<BlockDefinition> customBlock = this.plugin.blockManager().blockById(Key.of(blockName));
             // 如果是自定义方块名
@@ -1001,7 +1004,7 @@ public final class BukkitWorldManager implements WorldManager, Listener {
                 BlockDefinition block = customBlock.get();
                 ImmutableBlockState blockState = block.defaultState();
                 // 移除 properties 否则无法解析
-                Object properties = result.remove("Properties");
+                Object properties = result.remove(BLOCK_PROPERTIES);
                 if (properties instanceof Map<?,?> propertiesMap && !propertiesMap.isEmpty()) {
                     for (Map.Entry<?, ?> entry : propertiesMap.entrySet()) {
                         String propertyValue = entry.getValue().toString();
@@ -1014,7 +1017,7 @@ public final class BukkitWorldManager implements WorldManager, Listener {
                         }
                     }
                 }
-                result.put("Name", BlockStateUtils.getBlockOwnerIdFromState(blockState.customBlockState().minecraftState()).asString());
+                result.put(BLOCK_ID, BlockStateUtils.getBlockOwnerIdFromState(blockState.customBlockState().minecraftState()).asString());
             }
         }
         // 处理 block predicate 等功能
