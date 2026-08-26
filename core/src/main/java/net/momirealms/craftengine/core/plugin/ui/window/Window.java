@@ -4,9 +4,6 @@ import net.momirealms.craftengine.core.entity.player.Player;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * 表示一名玩家正在查看的 UI Window.
- */
 public interface Window {
 
     /**
