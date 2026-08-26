@@ -9,8 +9,76 @@ import java.util.function.BiFunction;
 import java.util.function.Function;
 
 public final class Signals {
+    private static final long MIN_MILLIS_PERIOD = 50L;
+    private static final WeakPeriodCache<TickingSignal> millisClocks = new WeakPeriodCache<>();
+
+    private static volatile TickingSignal ticking;
+    private static volatile Delayer tickDelayer = Delayer.platformTicks();
+    private static volatile Delayer millisDelayer = Delayer.asyncMillis();
 
     private Signals() {
+    }
+
+    @NotNull
+    static Delayer tickDelayer() {
+        return tickDelayer;
+    }
+
+    @NotNull
+    static Delayer millisDelayer() {
+        return millisDelayer;
+    }
+
+    /**
+     * 服务器 tick 源. 第一个订阅者到来时启动, 最后一个离开时停表.
+     * <p>每 tick 发送一次失效, 值为有订阅者期间累计经过的 tick 数, 跨停表保持单调递增.
+     *
+     * @return tick 源
+     */
+    @NotNull
+    public static Signal<Long> ticking() {
+        TickingSignal current = ticking;
+        if (current != null) return current;
+        synchronized (Signals.class) {
+            if (ticking == null) {
+                ticking = new TickingSignal(TickingSignal.platformTicker());
+            }
+            return ticking;
+        }
+    }
+
+    /**
+     * 按周期降频的 tick 源, 每 {@code periodTicks} 个 tick 失效一次, 值为已经过去的周期数.
+     * <p>相同周期共享同一个派生节点.
+     *
+     * @param periodTicks 正数 tick 周期
+     * @return 降频后的 tick 源
+     * @throws IllegalArgumentException {@code periodTicks} 小于等于 0
+     */
+    @NotNull
+    public static Signal<Long> everyTicks(long periodTicks) {
+        if (periodTicks <= 0) {
+            throw new IllegalArgumentException("periodTicks must be positive: " + periodTicks);
+        }
+        if (periodTicks == 1L) return ticking();
+        return ((TickingSignal) ticking()).every(periodTicks);
+    }
+
+    /**
+     * 毫秒时钟, 每 {@code periodMillis} 毫秒失效一次, 跨停表保持单调递增.
+     * <p>任务由 CraftEngine 的异步调度器驱动, 相同周期弱共享同一实例. 第一个订阅者到来时启动,
+     * 最后一个离开时取消.
+     *
+     * @param periodMillis 周期毫秒数, 不小于 50
+     * @return 毫秒时钟
+     * @throws IllegalArgumentException 周期小于 50 毫秒
+     */
+    @NotNull
+    public static Signal<Long> everyMillis(long periodMillis) {
+        if (periodMillis < MIN_MILLIS_PERIOD) {
+            throw new IllegalArgumentException("periodMillis must be at least " + MIN_MILLIS_PERIOD + ": " + periodMillis);
+        }
+        return millisClocks.get(periodMillis, period -> new TickingSignal(TickingSignal.asyncMillisTicker(period)));
     }
 
     /**

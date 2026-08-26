@@ -20,13 +20,17 @@ abstract sealed class AbstractSignal<T> implements Signal<T> permits
         MapDistinctSignal,
         CombinedSignal,
         SwitchingSignal,
-        MergingSignal
+        MergingSignal,
+        AsyncSignalImpl,
+        TickingSignal,
+        PacedSignal
 {
     private static final BiPredicate<Object, Object> DEFAULT_SAME_VALUE = Objects::equals;
 
     private final CopyOnWriteArrayList<Entry> entries = new CopyOnWriteArrayList<>();
     private final ReferenceQueue<Runnable> deadNodes = new ReferenceQueue<>();
     private final Object activationLock = new Object();
+    private volatile boolean retired;
     // 只拦截同线程重入. 并发派发允许重叠, 跨线程反馈环由公开契约禁止.
     @Nullable private Thread dispatchingThread;
 
@@ -79,6 +83,10 @@ abstract sealed class AbstractSignal<T> implements Signal<T> permits
         Entry entry = new Entry(node);
         node.bindEntry(entry);
         synchronized (this.activationLock) {
+            if (this.retired) {
+                entry.close();
+                return node;
+            }
             this.entries.add(entry);
             if (this.entries.size() == 1) {
                 try {
@@ -126,7 +134,7 @@ abstract sealed class AbstractSignal<T> implements Signal<T> permits
     }
 
     protected final void notifyDirty() {
-        if (this.entries.isEmpty()) return;
+        if (this.retired || this.entries.isEmpty()) return;
         if (this.dispatchingThread == Thread.currentThread()) {
             throw new IllegalStateException("Reentrant invalidation: a listener invalidated this signal while it was still dispatching");
         }
@@ -177,8 +185,64 @@ abstract sealed class AbstractSignal<T> implements Signal<T> permits
         return new MapDistinctSignal<>(this, mapper, sameValue);
     }
 
+    @Override
+    @NotNull
+    public Signal<T> debounce(long ticks) {
+        if (ticks <= 0) {
+            throw new IllegalArgumentException("ticks must be positive: " + ticks);
+        }
+        return new DebounceSignal<>(this, ticks, Signals.tickDelayer());
+    }
+
+    @Override
+    @NotNull
+    public Signal<T> debounceMillis(long millis) {
+        if (millis <= 0) {
+            throw new IllegalArgumentException("millis must be positive: " + millis);
+        }
+        return new DebounceSignal<>(this, millis, Signals.millisDelayer());
+    }
+
+    @Override
+    @NotNull
+    public Signal<T> throttle(long ticks) {
+        if (ticks <= 0) {
+            throw new IllegalArgumentException("ticks must be positive: " + ticks);
+        }
+        return new ThrottleSignal<>(this, ticks, Signals.tickDelayer());
+    }
+
+    @Override
+    @NotNull
+    public Signal<T> throttleMillis(long millis) {
+        if (millis <= 0) {
+            throw new IllegalArgumentException("millis must be positive: " + millis);
+        }
+        return new ThrottleSignal<>(this, millis, Signals.millisDelayer());
+    }
+
     final int entryCount() {
         return this.entries.size();
+    }
+
+    final boolean isRetired() {
+        return this.retired;
+    }
+
+    // 终止来源并关闭全部订阅, 后续注册直接得到已经关闭的凭证.
+    final void retire() {
+        synchronized (this.activationLock) {
+            if (this.retired) return;
+            this.retired = true;
+        }
+        for (Entry entry : this.entries) {
+            entry.markClosed();
+        }
+        try {
+            this.sweepClosed();
+        } catch (RuntimeException exception) {
+            CraftEngine.instance().logger().error("Failed to close a signal subscription", exception);
+        }
     }
 
     static BiPredicate<Object, Object> defaultSameValue() {
