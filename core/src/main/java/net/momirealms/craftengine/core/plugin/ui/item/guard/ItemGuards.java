@@ -5,8 +5,6 @@ import net.momirealms.craftengine.core.plugin.ui.item.click.ItemClick;
 import net.momirealms.craftengine.core.plugin.ui.item.click.ItemInteraction;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Objects;
-
 public final class ItemGuards {
 
     private ItemGuards() {
@@ -15,24 +13,24 @@ public final class ItemGuards {
     /**
      * 创建要求玩家拥有指定权限的守卫.
      *
+     * @param <C> 交互类型
      * @param permission 权限节点
      * @return 权限守卫
      */
     @NotNull
-    public static ItemGuard<ItemInteraction> permission(@NotNull String permission) {
-        Objects.requireNonNull(permission, "permission");
+    public static <C extends ItemInteraction> ItemGuard<C> permission(@NotNull String permission) {
         return (ignoredItem, interaction) -> interaction.player().hasPermission(permission);
     }
 
     /**
      * 创建要求玩家处于指定游戏模式的守卫.
      *
+     * @param <C> 交互类型
      * @param gameMode 游戏模式
      * @return 游戏模式守卫
      */
     @NotNull
-    public static ItemGuard<ItemInteraction> gameMode(@NotNull GameMode gameMode) {
-        Objects.requireNonNull(gameMode, "gameMode");
+    public static <C extends ItemInteraction> ItemGuard<C> gameMode(@NotNull GameMode gameMode) {
         return (ignoredItem, interaction) -> interaction.player().gameMode() == gameMode;
     }
 

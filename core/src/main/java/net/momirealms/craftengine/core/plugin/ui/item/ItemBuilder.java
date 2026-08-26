@@ -13,10 +13,10 @@ import net.momirealms.craftengine.core.plugin.ui.item.provider.RenderContext;
 import net.momirealms.craftengine.core.plugin.ui.state.Signal;
 import net.momirealms.craftengine.core.util.ThrowableUtils;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.BiConsumer;
@@ -27,16 +27,16 @@ public final class ItemBuilder {
     // 显示与刷新
     private DisplaySourceFactory source = new DisplaySourceFactory.ProviderFactory(ItemProvider.EMPTY, ItemProvider.EMPTY);
     private boolean sourceConfigured;
-    private final List<Function<? super Player, ? extends Signal<?>>> dependencies = new ArrayList<>();
+    private final List<Function<Player, Signal<?>>> dependencies = new ArrayList<>();
     private boolean updateOnClick;
     // 交互守卫
-    private final List<ConfiguredItem.GuardEntry<ItemClick>> clickGuards = new ArrayList<>();
-    private final List<ConfiguredItem.GuardEntry<ItemDrag>> dragGuards = new ArrayList<>();
-    private final List<ConfiguredItem.GuardEntry<BundleSelectClick>> bundleSelectGuards = new ArrayList<>();
+    @Nullable private ItemGuard<ItemClick> clickGuard;
+    @Nullable private ItemGuard<ItemDrag> dragGuard;
+    @Nullable private ItemGuard<BundleSelectClick> bundleSelectGuard;
     // 交互处理器
-    private BiConsumer<Item, ItemClick> clickHandler = (ignoredItem, ignoredClick) -> {};
-    private BiConsumer<Item, ItemDrag> dragHandler = (ignoredItem, ignoredDrag) -> {};
-    private BiConsumer<Item, BundleSelectClick> bundleHandler = (ignoredItem, ignoredSelect) -> {};
+    @Nullable private BiConsumer<Item, ItemClick> clickHandler;
+    @Nullable private BiConsumer<Item, ItemDrag> dragHandler;
+    @Nullable private BiConsumer<Item, BundleSelectClick> bundleHandler;
     // 构建收尾
     private Consumer<ObservableItem> modifier = ignoredItem -> {};
 
@@ -53,7 +53,7 @@ public final class ItemBuilder {
      * @return 此 Builder
      * @throws IllegalStateException 当显示来源已经配置时
      */
-    public ItemBuilder setItemProvider(@NotNull Function<? super RenderContext, ? extends net.momirealms.craftengine.core.item.Item> renderer) {
+    public ItemBuilder setItemProvider(@NotNull Function<RenderContext, net.momirealms.craftengine.core.item.Item> renderer) {
         return this.setAsyncItemProvider(ItemProvider.sync(renderer));
     }
 
@@ -76,7 +76,7 @@ public final class ItemBuilder {
      * @throws IllegalStateException 当显示来源已经配置时
      */
     public ItemBuilder setAsyncItemProvider(@NotNull ItemProvider itemProvider) {
-        this.setSource(new DisplaySourceFactory.ProviderFactory(Objects.requireNonNull(itemProvider, "itemProvider"), ItemProvider.EMPTY));
+        this.setSource(new DisplaySourceFactory.ProviderFactory(itemProvider, ItemProvider.EMPTY));
         return this;
     }
 
@@ -104,10 +104,7 @@ public final class ItemBuilder {
      * @throws IllegalStateException 当显示来源已经配置时
      */
     public ItemBuilder setAsyncItemProvider(@NotNull ItemProvider itemProvider, @NotNull ImmediateItemProvider placeholder) {
-        this.setSource(new DisplaySourceFactory.ProviderFactory(
-                Objects.requireNonNull(itemProvider, "itemProvider"),
-                Objects.requireNonNull(placeholder, "placeholder")
-        ));
+        this.setSource(new DisplaySourceFactory.ProviderFactory(itemProvider, placeholder));
         return this;
     }
 
@@ -146,10 +143,7 @@ public final class ItemBuilder {
      * @throws IllegalStateException 当显示来源已经配置时
      */
     public ItemBuilder setLazyItemProvider(@NotNull ImmediateItemProvider placeholder, @NotNull LazyItemProvider lazyProvider) {
-        this.setSource(new DisplaySourceFactory.LazyFactory(
-                Objects.requireNonNull(placeholder, "placeholder"),
-                Objects.requireNonNull(lazyProvider, "lazyProvider")
-        ));
+        this.setSource(new DisplaySourceFactory.LazyFactory(placeholder, lazyProvider));
         return this;
     }
 
@@ -161,7 +155,7 @@ public final class ItemBuilder {
      */
     public ItemBuilder dependsOn(@NotNull Signal<?>... signals) {
         for (int index = 0; index < signals.length; index++) {
-            Signal<?> signal = Objects.requireNonNull(signals[index], "signal");
+            Signal<?> signal = signals[index];
             this.dependencies.add(ignoredViewer -> signal);
         }
         return this;
@@ -183,8 +177,10 @@ public final class ItemBuilder {
      * @param guard 点击守卫
      * @return 此 Builder
      */
-    public ItemBuilder addClickGuard(@NotNull ItemGuard<? super ItemClick> guard) {
-        return this.addClickGuard(guard, (ignoredItem, ignoredClick) -> {});
+    public ItemBuilder addClickGuard(@NotNull ItemGuard<ItemClick> guard) {
+        ItemGuard<ItemClick> current = this.clickGuard;
+        this.clickGuard = current == null ? guard : current.and(guard);
+        return this;
     }
 
     /**
@@ -194,8 +190,7 @@ public final class ItemBuilder {
      * @param onRejected 此守卫拒绝时执行的回调
      * @return 此 Builder
      */
-    public ItemBuilder addClickGuard(@NotNull ItemGuard<? super ItemClick> guard, @NotNull Consumer<? super ItemClick> onRejected) {
-        Objects.requireNonNull(onRejected, "onRejected");
+    public ItemBuilder addClickGuard(@NotNull ItemGuard<ItemClick> guard, @NotNull Consumer<ItemClick> onRejected) {
         return this.addClickGuard(guard, (ignoredItem, click) -> onRejected.accept(click));
     }
 
@@ -207,13 +202,13 @@ public final class ItemBuilder {
      * @return 此 Builder
      */
     public ItemBuilder addClickGuard(
-            @NotNull ItemGuard<? super ItemClick> guard,
-            @NotNull BiConsumer<? super Item, ? super ItemClick> onRejected
+            @NotNull ItemGuard<ItemClick> guard,
+            @NotNull BiConsumer<Item, ItemClick> onRejected
     ) {
-        this.clickGuards.add(new ConfiguredItem.GuardEntry<>(
-                Objects.requireNonNull(guard, "guard"),
-                Objects.requireNonNull(onRejected, "onRejected")
-        ));
+        ItemGuard<ItemClick> current = this.clickGuard;
+        this.clickGuard = current == null
+                ? guard.onRejected(onRejected)
+                : current.and(guard, onRejected);
         return this;
     }
 
@@ -223,8 +218,7 @@ public final class ItemBuilder {
      * @param clickHandler 点击处理器
      * @return 此 Builder
      */
-    public ItemBuilder addClickHandler(@NotNull Consumer<? super ItemClick> clickHandler) {
-        Objects.requireNonNull(clickHandler, "clickHandler");
+    public ItemBuilder addClickHandler(@NotNull Consumer<ItemClick> clickHandler) {
         return this.addClickHandler((ignoredItem, click) -> clickHandler.accept(click));
     }
 
@@ -234,8 +228,9 @@ public final class ItemBuilder {
      * @param clickHandler 点击处理器
      * @return 此 Builder
      */
-    public ItemBuilder addClickHandler(@NotNull BiConsumer<? super Item, ? super ItemClick> clickHandler) {
-        this.clickHandler = this.clickHandler.andThen(clickHandler);
+    public ItemBuilder addClickHandler(@NotNull BiConsumer<Item, ItemClick> clickHandler) {
+        BiConsumer<Item, ItemClick> current = this.clickHandler;
+        this.clickHandler = current == null ? clickHandler : current.andThen(clickHandler);
         return this;
     }
 
@@ -245,8 +240,10 @@ public final class ItemBuilder {
      * @param guard 拖拽守卫
      * @return 此 Builder
      */
-    public ItemBuilder addDragGuard(@NotNull ItemGuard<? super ItemDrag> guard) {
-        return this.addDragGuard(guard, (ignoredItem, ignoredDrag) -> {});
+    public ItemBuilder addDragGuard(@NotNull ItemGuard<ItemDrag> guard) {
+        ItemGuard<ItemDrag> current = this.dragGuard;
+        this.dragGuard = current == null ? guard : current.and(guard);
+        return this;
     }
 
     /**
@@ -256,8 +253,7 @@ public final class ItemBuilder {
      * @param onRejected 此守卫拒绝时执行的回调
      * @return 此 Builder
      */
-    public ItemBuilder addDragGuard(@NotNull ItemGuard<? super ItemDrag> guard, @NotNull Consumer<? super ItemDrag> onRejected) {
-        Objects.requireNonNull(onRejected, "onRejected");
+    public ItemBuilder addDragGuard(@NotNull ItemGuard<ItemDrag> guard, @NotNull Consumer<ItemDrag> onRejected) {
         return this.addDragGuard(guard, (ignoredItem, drag) -> onRejected.accept(drag));
     }
 
@@ -269,13 +265,13 @@ public final class ItemBuilder {
      * @return 此 Builder
      */
     public ItemBuilder addDragGuard(
-            @NotNull ItemGuard<? super ItemDrag> guard,
-            @NotNull BiConsumer<? super Item, ? super ItemDrag> onRejected
+            @NotNull ItemGuard<ItemDrag> guard,
+            @NotNull BiConsumer<Item, ItemDrag> onRejected
     ) {
-        this.dragGuards.add(new ConfiguredItem.GuardEntry<>(
-                Objects.requireNonNull(guard, "guard"),
-                Objects.requireNonNull(onRejected, "onRejected")
-        ));
+        ItemGuard<ItemDrag> current = this.dragGuard;
+        this.dragGuard = current == null
+                ? guard.onRejected(onRejected)
+                : current.and(guard, onRejected);
         return this;
     }
 
@@ -285,8 +281,7 @@ public final class ItemBuilder {
      * @param dragHandler 拖拽处理器
      * @return 此 Builder
      */
-    public ItemBuilder addDragHandler(@NotNull Consumer<? super ItemDrag> dragHandler) {
-        Objects.requireNonNull(dragHandler, "dragHandler");
+    public ItemBuilder addDragHandler(@NotNull Consumer<ItemDrag> dragHandler) {
         return this.addDragHandler((ignoredItem, drag) -> dragHandler.accept(drag));
     }
 
@@ -296,8 +291,9 @@ public final class ItemBuilder {
      * @param dragHandler 拖拽处理器
      * @return 此 Builder
      */
-    public ItemBuilder addDragHandler(@NotNull BiConsumer<? super Item, ? super ItemDrag> dragHandler) {
-        this.dragHandler = this.dragHandler.andThen(dragHandler);
+    public ItemBuilder addDragHandler(@NotNull BiConsumer<Item, ItemDrag> dragHandler) {
+        BiConsumer<Item, ItemDrag> current = this.dragHandler;
+        this.dragHandler = current == null ? dragHandler : current.andThen(dragHandler);
         return this;
     }
 
@@ -307,8 +303,10 @@ public final class ItemBuilder {
      * @param guard Bundle 选择守卫
      * @return 此 Builder
      */
-    public ItemBuilder addBundleSelectGuard(@NotNull ItemGuard<? super BundleSelectClick> guard) {
-        return this.addBundleSelectGuard(guard, (ignoredItem, ignoredSelect) -> {});
+    public ItemBuilder addBundleSelectGuard(@NotNull ItemGuard<BundleSelectClick> guard) {
+        ItemGuard<BundleSelectClick> current = this.bundleSelectGuard;
+        this.bundleSelectGuard = current == null ? guard : current.and(guard);
+        return this;
     }
 
     /**
@@ -319,10 +317,9 @@ public final class ItemBuilder {
      * @return 此 Builder
      */
     public ItemBuilder addBundleSelectGuard(
-            @NotNull ItemGuard<? super BundleSelectClick> guard,
-            @NotNull Consumer<? super BundleSelectClick> onRejected
+            @NotNull ItemGuard<BundleSelectClick> guard,
+            @NotNull Consumer<BundleSelectClick> onRejected
     ) {
-        Objects.requireNonNull(onRejected, "onRejected");
         return this.addBundleSelectGuard(guard, (ignoredItem, select) -> onRejected.accept(select));
     }
 
@@ -334,13 +331,13 @@ public final class ItemBuilder {
      * @return 此 Builder
      */
     public ItemBuilder addBundleSelectGuard(
-            @NotNull ItemGuard<? super BundleSelectClick> guard,
-            @NotNull BiConsumer<? super Item, ? super BundleSelectClick> onRejected
+            @NotNull ItemGuard<BundleSelectClick> guard,
+            @NotNull BiConsumer<Item, BundleSelectClick> onRejected
     ) {
-        this.bundleSelectGuards.add(new ConfiguredItem.GuardEntry<>(
-                Objects.requireNonNull(guard, "guard"),
-                Objects.requireNonNull(onRejected, "onRejected")
-        ));
+        ItemGuard<BundleSelectClick> current = this.bundleSelectGuard;
+        this.bundleSelectGuard = current == null
+                ? guard.onRejected(onRejected)
+                : current.and(guard, onRejected);
         return this;
     }
 
@@ -350,8 +347,7 @@ public final class ItemBuilder {
      * @param selectHandler Bundle 选择处理器
      * @return 此 Builder
      */
-    public ItemBuilder addBundleSelectHandler(@NotNull Consumer<? super BundleSelectClick> selectHandler) {
-        Objects.requireNonNull(selectHandler, "selectHandler");
+    public ItemBuilder addBundleSelectHandler(@NotNull Consumer<BundleSelectClick> selectHandler) {
         return this.addBundleSelectHandler((ignoredItem, select) -> selectHandler.accept(select));
     }
 
@@ -361,8 +357,9 @@ public final class ItemBuilder {
      * @param selectHandler Bundle 选择处理器
      * @return 此 Builder
      */
-    public ItemBuilder addBundleSelectHandler(@NotNull BiConsumer<? super Item, ? super BundleSelectClick> selectHandler) {
-        this.bundleHandler = this.bundleHandler.andThen(selectHandler);
+    public ItemBuilder addBundleSelectHandler(@NotNull BiConsumer<Item, BundleSelectClick> selectHandler) {
+        BiConsumer<Item, BundleSelectClick> current = this.bundleHandler;
+        this.bundleHandler = current == null ? selectHandler : current.andThen(selectHandler);
         return this;
     }
 
@@ -387,9 +384,9 @@ public final class ItemBuilder {
         ObservableItem item = new ConfiguredItem(
                 this.source,
                 this.dependencies,
-                this.clickGuards,
-                this.dragGuards,
-                this.bundleSelectGuards,
+                this.clickGuard,
+                this.dragGuard,
+                this.bundleSelectGuard,
                 this.clickHandler,
                 this.dragHandler,
                 this.bundleHandler,
@@ -409,20 +406,23 @@ public final class ItemBuilder {
 
     sealed interface DisplaySourceFactory permits DisplaySourceFactory.ProviderFactory, DisplaySourceFactory.LazyFactory {
 
-        DisplaySource create(Runnable invalidator);
+        @NotNull
+        DisplaySource create(@NotNull Runnable invalidator);
 
-        record ProviderFactory(ItemProvider provider, ImmediateItemProvider placeholder) implements DisplaySourceFactory {
+        record ProviderFactory(@NotNull ItemProvider provider, @NotNull ImmediateItemProvider placeholder) implements DisplaySourceFactory {
 
             @Override
-            public DisplaySource create(Runnable invalidator) {
+            @NotNull
+            public DisplaySource create(@NotNull Runnable invalidator) {
                 return new DisplaySource.FixedDisplaySource(this.provider, this.placeholder);
             }
         }
 
-        record LazyFactory(ImmediateItemProvider placeholder, LazyItemProvider lazyProvider) implements DisplaySourceFactory {
+        record LazyFactory(@NotNull ImmediateItemProvider placeholder, @NotNull LazyItemProvider lazyProvider) implements DisplaySourceFactory {
 
             @Override
-            public DisplaySource create(Runnable invalidator) {
+            @NotNull
+            public DisplaySource create(@NotNull Runnable invalidator) {
                 return new DisplaySource.LazyDisplaySource(this.placeholder, this.lazyProvider, invalidator);
             }
         }
@@ -430,40 +430,39 @@ public final class ItemBuilder {
 
     sealed interface DisplaySource permits DisplaySource.FixedDisplaySource, DisplaySource.LazyDisplaySource {
 
+        @NotNull
         ItemProvider provider();
 
+        @NotNull
         ImmediateItemProvider placeholder();
 
         default void onAttached() {
         }
 
         record FixedDisplaySource(@NotNull ItemProvider provider, @NotNull ImmediateItemProvider placeholder) implements DisplaySource {
-
-            public FixedDisplaySource {
-                Objects.requireNonNull(provider, "provider");
-                Objects.requireNonNull(placeholder, "placeholder");
-            }
         }
 
         final class LazyDisplaySource implements DisplaySource {
-            private final ImmediateItemProvider placeholder;
-            private final AtomicReference<LazyItemProvider> pendingProvider;
-            private final Runnable invalidator;
-            private volatile ItemProvider currentProvider;
+            private final @NotNull ImmediateItemProvider placeholder;
+            private final @NotNull AtomicReference<LazyItemProvider> pendingProvider;
+            private final @NotNull Runnable invalidator;
+            private volatile @NotNull ItemProvider currentProvider;
 
-            LazyDisplaySource(ImmediateItemProvider placeholder, LazyItemProvider lazyProvider, Runnable invalidator) {
-                this.placeholder = Objects.requireNonNull(placeholder, "placeholder");
+            LazyDisplaySource(@NotNull ImmediateItemProvider placeholder, @NotNull LazyItemProvider lazyProvider, @NotNull Runnable invalidator) {
+                this.placeholder = placeholder;
                 this.currentProvider = placeholder;
-                this.pendingProvider = new AtomicReference<>(Objects.requireNonNull(lazyProvider, "lazyProvider"));
-                this.invalidator = Objects.requireNonNull(invalidator, "invalidator");
+                this.pendingProvider = new AtomicReference<>(lazyProvider);
+                this.invalidator = invalidator;
             }
 
             @Override
+            @NotNull
             public ItemProvider provider() {
                 return this.currentProvider;
             }
 
             @Override
+            @NotNull
             public ImmediateItemProvider placeholder() {
                 return this.placeholder;
             }
@@ -476,7 +475,7 @@ public final class ItemBuilder {
 
                 CompletableFuture<? extends ItemProvider> stage;
                 try {
-                    stage = Objects.requireNonNull(lazyProvider.resolve(), "lazyProvider result");
+                    stage = lazyProvider.resolve();
                 } catch (Throwable throwable) {
                     CraftEngine.instance().logger().error("Failed to resolve lazy item provider", throwable);
                     return;
@@ -487,11 +486,6 @@ public final class ItemBuilder {
                         CraftEngine.instance().logger().error("Failed to resolve lazy item provider", ThrowableUtils.unwrapCompletion(throwable));
                         return;
                     }
-                    if (provider == null) {
-                        CraftEngine.instance().logger().error("Failed to resolve lazy item provider", new NullPointerException("resolved provider"));
-                        return;
-                    }
-
                     // 先发布 Provider, 失效观察者随后能够立即读到新值.
                     this.currentProvider = provider;
                     try {
