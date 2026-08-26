@@ -9,10 +9,12 @@ import org.jetbrains.annotations.Nullable;
 import java.util.function.Consumer;
 
 public final class RenderContext {
-    private final Player player;
-    private final Window window;
-    private final Kind kind;
-    private final int windowSlot;
+    /** 本次渲染所属的 Window. */
+    public final Window window;
+    /** 本次渲染的目标类型. */
+    public final Kind kind;
+    /** 最终 Window 槽位, 光标与非槽位内容固定为 {@code -1}. */
+    public final int windowSlot;
     @Nullable
     private final Consumer<Object> memo;
 
@@ -56,29 +58,16 @@ public final class RenderContext {
         this.kind = kind;
         this.windowSlot = windowSlot;
         this.memo = memo;
-        this.player = window.viewer();
     }
 
+    /**
+     * 返回当前 Window 的查看者.
+     *
+     * @return 查看者
+     */
     @NotNull
     public Player player() {
-        return this.player;
-    }
-    @NotNull
-    public Window window() {
-        return this.window;
-    }
-
-    @NotNull
-    public Kind kind() {
-        return this.kind;
-    }
-
-    public int windowSlot() {
-        return this.windowSlot;
-    }
-
-    public boolean isCursor() {
-        return this.kind == Kind.CURSOR;
+        return this.window.viewer();
     }
 
     /**
