@@ -32,7 +32,7 @@ public interface Function<CTX extends Context> {
     }
 
     static void execute(Context context, List<Function<Context>> functions) {
-        for (int i =0; i < functions.size(); i++) {
+        for (int i = 0; i < functions.size(); i++) {
             Function<Context> function = functions.get(i);
             function.run(context);
         }

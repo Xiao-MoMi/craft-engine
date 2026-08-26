@@ -11,6 +11,7 @@ public final class CraftEngineTags {
             L10NTag.INSTANCE,
             ExpressionTag.INSTANCE,
             GlobalVariableTag.INSTANCE,
+            VariableTag.INSTANCE,
             RandomTag.INSTANCE,
             NamedArgumentTag.INSTANCE,
             ViewerNamedArgumentTag.INSTANCE,

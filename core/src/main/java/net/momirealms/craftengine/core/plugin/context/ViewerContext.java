@@ -56,16 +56,16 @@ public class ViewerContext implements RelationalContext {
 
     @Override
     public void setVariable(String key, Object value) {
-        this.viewer.setVariable(key, value);
+        this.owner.setVariable(key, value);
     }
 
     @Override
     public Object getVariable(String key) {
-        return this.viewer.getVariable(key);
+        return this.owner.getVariable(key);
     }
 
     @Override
     public Map<String, Object> variables() {
-        return this.viewer.variables();
+        return this.owner.variables();
     }
 }

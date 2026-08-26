@@ -17,6 +17,7 @@ public final class StringTags {
         register(ViewerPlaceholderTag.INSTANCE);
         register(RelationalPlaceholderTag.INSTANCE);
         register(GlobalVariableTag.INSTANCE);
+        register(VariableTag.INSTANCE);
         register(RandomTag.INSTANCE);
         register(ExpressionTag.INSTANCE);
         register(AttributeValueTag.ATTACKER);
