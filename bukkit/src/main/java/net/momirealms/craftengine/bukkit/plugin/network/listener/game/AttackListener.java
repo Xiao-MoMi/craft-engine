@@ -162,7 +162,7 @@ public final class AttackListener implements ByteBufferPacketListener {
                 return;
 
             // 执行函数
-            List<Function<Context>> functions = config.eventFunctions(EventTrigger.BREAK);
+            List<Function<Context>> functions = config.eventFunctions(EventTrigger.FURNITURE_BREAK);
             if (!functions.isEmpty()) {
                 Function.execute(PlayerOptionalContext.of(serverPlayer, ContextHolder.builder()
                         .withParameter(DirectContextParameters.PLAYER, serverPlayer)

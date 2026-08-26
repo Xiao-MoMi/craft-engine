@@ -88,6 +88,7 @@ import net.momirealms.craftengine.core.plugin.context.CommonConditionType;
 import net.momirealms.craftengine.core.plugin.context.CommonFunctionType;
 import net.momirealms.craftengine.core.plugin.context.Condition;
 import net.momirealms.craftengine.core.plugin.context.Context;
+import net.momirealms.craftengine.core.plugin.context.EventTrigger;
 import net.momirealms.craftengine.core.plugin.context.function.Function;
 import net.momirealms.craftengine.core.plugin.context.number.NumberProvider;
 import net.momirealms.craftengine.core.plugin.context.number.NumberProviderType;
@@ -141,6 +142,7 @@ public final class Registries {
     public static final ResourceKey<Registry<ResourcePackHostType<? extends ResourcePackHost>>> RESOURCE_PACK_HOST_TYPE = ResourceKey.create(ROOT_REGISTRY, Key.withCraftEngineNamespace("resource_pack_host_type"));
     public static final ResourceKey<Registry<CommonFunctionType<? extends Function<Context>>>> COMMON_FUNCTION_TYPE = ResourceKey.create(ROOT_REGISTRY, Key.withCraftEngineNamespace("common_function_type"));
     public static final ResourceKey<Registry<CommonConditionType<? extends Condition<Context>>>> COMMON_CONDITION_TYPE = ResourceKey.create(ROOT_REGISTRY, Key.withCraftEngineNamespace("common_condition_type"));
+    public static final ResourceKey<Registry<EventTrigger>> EVENT_TRIGGER = ResourceKey.create(ROOT_REGISTRY, Key.withCraftEngineNamespace("event_trigger"));
     public static final ResourceKey<Registry<PlayerSelectorType<? extends Context>>> PLAYER_SELECTOR_TYPE = ResourceKey.create(ROOT_REGISTRY, Key.withCraftEngineNamespace("player_selector_type"));
     public static final ResourceKey<Registry<EquipmentType<? extends Equipment>>> EQUIPMENT_TYPE = ResourceKey.create(ROOT_REGISTRY, Key.withCraftEngineNamespace("equipment_type"));
     public static final ResourceKey<Registry<SlotDisplay.Type<? extends SlotDisplay>>> SLOT_DISPLAY_TYPE = ResourceKey.create(ROOT_REGISTRY, Key.withCraftEngineNamespace("slot_display_type"));

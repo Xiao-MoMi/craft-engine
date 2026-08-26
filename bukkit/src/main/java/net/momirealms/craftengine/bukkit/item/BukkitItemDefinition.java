@@ -21,7 +21,7 @@ import org.bukkit.inventory.ItemStack;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
-import java.util.EnumMap;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -104,7 +104,7 @@ public final class BukkitItemDefinition extends AbstractItemDefinition {
         private final Object item;
         private Key clientBoundItemKey;
         private final Object clientBoundItem;
-        private final Map<EventTrigger, List<Function<Context>>> events = new EnumMap<>(EventTrigger.class);
+        private final Map<EventTrigger, List<Function<Context>>> events = new HashMap<>();
         private ItemBehavior behavior;
         private final List<ItemProcessor> processors = new ArrayList<>(4);
         private final List<ItemProcessor> clientBoundProcessors = new ArrayList<>(4);

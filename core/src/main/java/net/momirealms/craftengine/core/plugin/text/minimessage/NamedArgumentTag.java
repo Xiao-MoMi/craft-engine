@@ -26,7 +26,11 @@ public class NamedArgumentTag extends StaticTagResolver implements StringTag {
         if (!(ctx.target() instanceof net.momirealms.craftengine.core.plugin.context.Context context)) {
             return null;
         }
-        ContextKey<?> key = ContextKey.chain(arguments.popOr("No argument key provided").toString());
+        String keyString = arguments.popOr("No argument key provided").toString();
+        if (isAttributeNamespacePrefix(keyString) && arguments.hasNext()) {
+            keyString += ":" + arguments.pop();
+        }
+        ContextKey<?> key = ContextKey.chain(keyString);
         Object value = parameter(context, key).orElse(null);
         if (value == null) {
             value = arguments.popOr("No default value provided").toString();
@@ -49,9 +53,12 @@ public class NamedArgumentTag extends StaticTagResolver implements StringTag {
     @Override
     public StringTag precompile(String[] args) {
         // bind the parameter key and precompile the default value once
-        final ContextKey<?> key = ContextKey.chain(StringTag.requireArg(args, 0, "No argument key provided"));
+        final ParameterArgument parameter = parameterArgument(args);
+        final ContextKey<?> key = ContextKey.chain(parameter.key());
         final net.momirealms.craftengine.core.plugin.context.text.StringTemplate defaultTemplate =
-                args.length > 1 ? net.momirealms.craftengine.core.plugin.context.text.StringTemplate.of(args[1]) : null;
+                args.length > parameter.consumedArguments()
+                        ? net.momirealms.craftengine.core.plugin.context.text.StringTemplate.of(args[parameter.consumedArguments()])
+                        : null;
         return (boundArgs, context) -> {
             Object value = parameter(context, key).orElse(null);
             if (value == null) {
@@ -71,12 +78,33 @@ public class NamedArgumentTag extends StaticTagResolver implements StringTag {
     }
 
     protected Object resolveValue(String[] args, net.momirealms.craftengine.core.plugin.context.Context context) {
-        String key = StringTag.requireArg(args, 0, "No argument key provided");
-        Object value = parameter(context, ContextKey.chain(key)).orElse(null);
+        ParameterArgument parameter = parameterArgument(args);
+        Object value = parameter(context, ContextKey.chain(parameter.key())).orElse(null);
         if (value == null) {
-            value = StringTag.requireArg(args, 1, "No default value provided");
+            value = StringTag.requireArg(args, parameter.consumedArguments(), "No default value provided");
         }
         return value;
+    }
+
+    private static ParameterArgument parameterArgument(String[] args) {
+        String key = StringTag.requireArg(args, 0, "No argument key provided");
+        if (isAttributeNamespacePrefix(key) && args.length > 1) {
+            return new ParameterArgument(key + ":" + args[1], 2);
+        }
+        return new ParameterArgument(key, 1);
+    }
+
+    private static boolean isAttributeNamespacePrefix(String key) {
+        int namespaceSeparator = key.lastIndexOf('.');
+        if (namespaceSeparator < 0 || key.indexOf(':', namespaceSeparator + 1) >= 0) {
+            return false;
+        }
+        int attributeSeparator = key.lastIndexOf('.', namespaceSeparator - 1);
+        return attributeSeparator >= 0
+                && key.regionMatches(attributeSeparator + 1, "attr.", 0, 5);
+    }
+
+    private record ParameterArgument(String key, int consumedArguments) {
     }
 
     protected Optional<?> parameter(net.momirealms.craftengine.core.plugin.context.Context context, ContextKey<?> key) {

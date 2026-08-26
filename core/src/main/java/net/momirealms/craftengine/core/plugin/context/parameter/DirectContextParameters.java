@@ -9,6 +9,7 @@ import net.momirealms.craftengine.core.entity.player.GameMode;
 import net.momirealms.craftengine.core.entity.player.InteractionHand;
 import net.momirealms.craftengine.core.entity.player.Player;
 import net.momirealms.craftengine.core.item.Item;
+import net.momirealms.craftengine.core.plugin.context.ChainParameterSource;
 import net.momirealms.craftengine.core.plugin.context.ContextKey;
 import net.momirealms.craftengine.core.plugin.context.NamedRandoms;
 import net.momirealms.craftengine.core.util.Cancellable;
@@ -87,4 +88,5 @@ public final class DirectContextParameters {
     public static final ContextKey<Double> SPEED = ContextKey.direct("speed");
     public static final ContextKey<Double> HEALTH = ContextKey.direct("health");
     public static final ContextKey<Double> MAX_HEALTH = ContextKey.direct("max_health");
+    public static final ContextKey<ChainParameterSource> ATTR = ContextKey.direct("attr");
 }

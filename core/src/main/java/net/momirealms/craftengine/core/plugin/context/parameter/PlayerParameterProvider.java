@@ -34,6 +34,7 @@ public final class PlayerParameterProvider implements ChainParameterProvider<Pla
         CONTEXT_FUNCTIONS.put(DirectContextParameters.SPEED, Entity::speed);
         CONTEXT_FUNCTIONS.put(DirectContextParameters.HEALTH, Player::health);
         CONTEXT_FUNCTIONS.put(DirectContextParameters.MAX_HEALTH, Player::maxHealth);
+        CONTEXT_FUNCTIONS.put(DirectContextParameters.ATTR, EntityAttributeParameterSource::new);
         CONTEXT_FUNCTIONS.put(DirectContextParameters.IS_SNEAKING, Player::isSneaking);
         CONTEXT_FUNCTIONS.put(DirectContextParameters.IS_SWIMMING, Player::isSwimming);
         CONTEXT_FUNCTIONS.put(DirectContextParameters.IS_CLIMBING, Player::isClimbing);

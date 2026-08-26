@@ -688,6 +688,23 @@ public final class ItemEventListener implements Listener {
         }
     }
 
+    @EventHandler(priority = EventPriority.MONITOR)
+    public void onItemBreak(PlayerItemBreakEvent event) {
+        Item brokenItem = this.itemManager.wrap(event.getBrokenItem());
+        Optional<ItemDefinition> optionalCustomItem = brokenItem.getDefinition();
+        if (optionalCustomItem.isEmpty()) return;
+
+        List<Function<Context>> functions = optionalCustomItem.get().eventFunctions(EventTrigger.ITEM_BREAK);
+        if (functions.isEmpty()) return;
+
+        BukkitServerPlayer serverPlayer = BukkitAdaptor.adapt(event.getPlayer());
+        if (serverPlayer == null) return;
+        Function.execute(PlayerOptionalContext.of(serverPlayer, ContextHolder.builder(
+                DirectContextParameters.PLAYER, serverPlayer,
+                DirectContextParameters.ITEM, brokenItem
+        ).build()), functions);
+    }
+
     @EventHandler(ignoreCancelled = true, priority = EventPriority.LOW)
     public void onFoodLevelChange(FoodLevelChangeEvent event) {
         if (VersionHelper.isOrAbove1_20_5) return;

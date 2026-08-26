@@ -88,6 +88,7 @@ import net.momirealms.craftengine.core.plugin.context.CommonConditionType;
 import net.momirealms.craftengine.core.plugin.context.CommonFunctionType;
 import net.momirealms.craftengine.core.plugin.context.Condition;
 import net.momirealms.craftengine.core.plugin.context.Context;
+import net.momirealms.craftengine.core.plugin.context.EventTrigger;
 import net.momirealms.craftengine.core.plugin.context.function.Function;
 import net.momirealms.craftengine.core.plugin.context.number.NumberProvider;
 import net.momirealms.craftengine.core.plugin.context.number.NumberProviderType;
@@ -139,6 +140,7 @@ public final class BuiltInRegistries {
     public static final Registry<ResourcePackHostType<? extends ResourcePackHost>> RESOURCE_PACK_HOST_TYPE = createConstantBoundRegistry(Registries.RESOURCE_PACK_HOST_TYPE, 16);
     public static final Registry<CommonFunctionType<? extends Function<Context>>> COMMON_FUNCTION_TYPE = createConstantBoundRegistry(Registries.COMMON_FUNCTION_TYPE, 128);
     public static final Registry<CommonConditionType<? extends Condition<Context>>> COMMON_CONDITION_TYPE = createConstantBoundRegistry(Registries.COMMON_CONDITION_TYPE, 128);
+    public static final Registry<EventTrigger> EVENT_TRIGGER = createConstantBoundRegistry(Registries.EVENT_TRIGGER, 32);
     public static final Registry<EquipmentType<? extends Equipment>> EQUIPMENT_TYPE = createConstantBoundRegistry(Registries.EQUIPMENT_TYPE, 8);
     public static final Registry<SlotDisplay.Type<? extends SlotDisplay>> SLOT_DISPLAY_TYPE = createConstantBoundRegistry(Registries.SLOT_DISPLAY_TYPE, 16);
     public static final Registry<RecipeDisplay.Type<? extends RecipeDisplay>> RECIPE_DISPLAY_TYPE = createConstantBoundRegistry(Registries.RECIPE_DISPLAY_TYPE, 16);

@@ -154,7 +154,7 @@ public final class BlockEventListener implements Listener {
             Optional<ItemDefinition> optionalCustomItem = itemInHand.getDefinition();
             if (optionalCustomItem.isPresent()) {
                 ItemDefinition itemDefinition = optionalCustomItem.get();
-                List<Function<Context>> functions = itemDefinition.eventFunctions(EventTrigger.BREAK);
+                List<Function<Context>> functions = itemDefinition.eventFunctions(EventTrigger.BLOCK_BREAK);
                 if (!functions.isEmpty()) {
                     Cancellable cancellable = Cancellable.of(event::isCancelled, event::setCancelled);
                     Function.execute(PlayerOptionalContext.of(serverPlayer, ContextHolder.builder()
@@ -213,7 +213,7 @@ public final class BlockEventListener implements Listener {
                     // 同步选项
                     event.setDropItems(customBreakEvent.dropItems());
 
-                    List<Function<Context>> functions = state.owner().value().eventFunctions(EventTrigger.BREAK);
+                    List<Function<Context>> functions = state.owner().value().eventFunctions(EventTrigger.BLOCK_BREAK);
                     if (!functions.isEmpty()) {
                         // execute functions
                         Cancellable cancellable = Cancellable.of(event::isCancelled, event::setCancelled);

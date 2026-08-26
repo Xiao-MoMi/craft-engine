@@ -49,6 +49,12 @@ public final class EntityParameterProvider implements ChainParameterProvider<Ent
             }
             return 0d;
         });
+        CONTEXT_FUNCTIONS.put(DirectContextParameters.ATTR, e -> {
+            if (e instanceof LivingEntity living) {
+                return new EntityAttributeParameterSource(living);
+            }
+            return null;
+        });
         CONTEXT_FUNCTIONS.put(DirectContextParameters.ITEM, e -> {
             if (e instanceof ItemEntity itemEntity) {
                 return itemEntity.getItem();
