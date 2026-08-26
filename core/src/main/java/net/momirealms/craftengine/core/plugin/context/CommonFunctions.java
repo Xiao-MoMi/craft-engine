@@ -142,7 +142,7 @@ public final class CommonFunctions {
         /*
 
         events:
-          - on: block_break:
+          - on: block_break
             functions:
               - type: a
               - type: b
