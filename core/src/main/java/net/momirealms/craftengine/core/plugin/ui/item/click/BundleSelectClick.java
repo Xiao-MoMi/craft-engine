@@ -12,10 +12,5 @@ import org.jetbrains.annotations.NotNull;
  * @param windowSlot Bundle 所在的 Window 槽位
  * @param bundleSlot Bundle 内槽位, {@code -1} 表示没有选中槽位
  */
-public record BundleSelectClick(
-        @NotNull Player player,
-        @NotNull Window window,
-        int windowSlot,
-        int bundleSlot
-) implements ItemInteraction {
+public record BundleSelectClick(@NotNull Player player, @NotNull Window window, int windowSlot, int bundleSlot) implements ItemInteraction {
 }

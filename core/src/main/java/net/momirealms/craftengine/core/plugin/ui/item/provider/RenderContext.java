@@ -25,11 +25,23 @@ public final class RenderContext {
         this(window, Kind.WINDOW_SLOT, windowSlot, memo);
     }
 
+    /**
+     * 创建用于渲染 Window 光标内容的上下文.
+     *
+     * @param window 所属 Window
+     * @return 光标渲染上下文
+     */
     @NotNull
     public static RenderContext cursor(@NotNull Window window) {
         return new RenderContext(window, Kind.CURSOR, -1, null);
     }
 
+    /**
+     * 创建用于渲染非槽位内容的上下文, 例如商人交易列表.
+     *
+     * @param window 所属 Window
+     * @return 非槽位渲染上下文
+     */
     @NotNull
     public static RenderContext offSlot(@NotNull Window window) {
         return new RenderContext(window, Kind.OFF_SLOT, -1, null);

@@ -1,6 +1,6 @@
 package net.momirealms.craftengine.core.plugin.ui.interaction;
 
-public enum UiClickType {
+public enum UIClickType {
     LEFT,
     SHIFT_LEFT,
     RIGHT,

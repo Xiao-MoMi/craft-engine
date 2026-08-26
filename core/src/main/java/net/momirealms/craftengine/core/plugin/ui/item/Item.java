@@ -3,7 +3,7 @@ package net.momirealms.craftengine.core.plugin.ui.item;
 import net.momirealms.craftengine.core.plugin.ui.Observer;
 import net.momirealms.craftengine.core.plugin.ui.item.click.BundleSelectClick;
 import net.momirealms.craftengine.core.plugin.ui.item.click.ItemClick;
-import net.momirealms.craftengine.core.plugin.ui.item.click.ItemDragClick;
+import net.momirealms.craftengine.core.plugin.ui.item.click.ItemDrag;
 import net.momirealms.craftengine.core.plugin.ui.item.provider.ImmediateItemProvider;
 import net.momirealms.craftengine.core.plugin.ui.item.provider.ItemProvider;
 import net.momirealms.craftengine.core.plugin.ui.window.Window;
@@ -65,7 +65,7 @@ public interface Item {
      *
      * @param drag 拖拽上下文
      */
-    default void handleDrag(@NotNull ItemDragClick drag) {
+    default void handleDrag(@NotNull ItemDrag drag) {
     }
 
     /**

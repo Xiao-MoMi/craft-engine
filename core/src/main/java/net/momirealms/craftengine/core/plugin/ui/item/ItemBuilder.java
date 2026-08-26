@@ -4,7 +4,7 @@ import net.momirealms.craftengine.core.entity.player.Player;
 import net.momirealms.craftengine.core.plugin.CraftEngine;
 import net.momirealms.craftengine.core.plugin.ui.item.click.BundleSelectClick;
 import net.momirealms.craftengine.core.plugin.ui.item.click.ItemClick;
-import net.momirealms.craftengine.core.plugin.ui.item.click.ItemDragClick;
+import net.momirealms.craftengine.core.plugin.ui.item.click.ItemDrag;
 import net.momirealms.craftengine.core.plugin.ui.item.guard.ItemGuard;
 import net.momirealms.craftengine.core.plugin.ui.item.provider.ImmediateItemProvider;
 import net.momirealms.craftengine.core.plugin.ui.item.provider.ItemProvider;
@@ -31,11 +31,11 @@ public final class ItemBuilder {
     private boolean updateOnClick;
     // 交互守卫
     private final List<ConfiguredItem.GuardEntry<ItemClick>> clickGuards = new ArrayList<>();
-    private final List<ConfiguredItem.GuardEntry<ItemDragClick>> dragGuards = new ArrayList<>();
+    private final List<ConfiguredItem.GuardEntry<ItemDrag>> dragGuards = new ArrayList<>();
     private final List<ConfiguredItem.GuardEntry<BundleSelectClick>> bundleSelectGuards = new ArrayList<>();
     // 交互处理器
     private BiConsumer<Item, ItemClick> clickHandler = (ignoredItem, ignoredClick) -> {};
-    private BiConsumer<Item, ItemDragClick> dragHandler = (ignoredItem, ignoredDrag) -> {};
+    private BiConsumer<Item, ItemDrag> dragHandler = (ignoredItem, ignoredDrag) -> {};
     private BiConsumer<Item, BundleSelectClick> bundleHandler = (ignoredItem, ignoredSelect) -> {};
     // 构建收尾
     private Consumer<ObservableItem> modifier = ignoredItem -> {};
@@ -245,7 +245,7 @@ public final class ItemBuilder {
      * @param guard 拖拽守卫
      * @return 此 Builder
      */
-    public ItemBuilder addDragGuard(@NotNull ItemGuard<? super ItemDragClick> guard) {
+    public ItemBuilder addDragGuard(@NotNull ItemGuard<? super ItemDrag> guard) {
         return this.addDragGuard(guard, (ignoredItem, ignoredDrag) -> {});
     }
 
@@ -256,7 +256,7 @@ public final class ItemBuilder {
      * @param onRejected 此守卫拒绝时执行的回调
      * @return 此 Builder
      */
-    public ItemBuilder addDragGuard(@NotNull ItemGuard<? super ItemDragClick> guard, @NotNull Consumer<? super ItemDragClick> onRejected) {
+    public ItemBuilder addDragGuard(@NotNull ItemGuard<? super ItemDrag> guard, @NotNull Consumer<? super ItemDrag> onRejected) {
         Objects.requireNonNull(onRejected, "onRejected");
         return this.addDragGuard(guard, (ignoredItem, drag) -> onRejected.accept(drag));
     }
@@ -269,8 +269,8 @@ public final class ItemBuilder {
      * @return 此 Builder
      */
     public ItemBuilder addDragGuard(
-            @NotNull ItemGuard<? super ItemDragClick> guard,
-            @NotNull BiConsumer<? super Item, ? super ItemDragClick> onRejected
+            @NotNull ItemGuard<? super ItemDrag> guard,
+            @NotNull BiConsumer<? super Item, ? super ItemDrag> onRejected
     ) {
         this.dragGuards.add(new ConfiguredItem.GuardEntry<>(
                 Objects.requireNonNull(guard, "guard"),
@@ -285,7 +285,7 @@ public final class ItemBuilder {
      * @param dragHandler 拖拽处理器
      * @return 此 Builder
      */
-    public ItemBuilder addDragHandler(@NotNull Consumer<? super ItemDragClick> dragHandler) {
+    public ItemBuilder addDragHandler(@NotNull Consumer<? super ItemDrag> dragHandler) {
         Objects.requireNonNull(dragHandler, "dragHandler");
         return this.addDragHandler((ignoredItem, drag) -> dragHandler.accept(drag));
     }
@@ -296,7 +296,7 @@ public final class ItemBuilder {
      * @param dragHandler 拖拽处理器
      * @return 此 Builder
      */
-    public ItemBuilder addDragHandler(@NotNull BiConsumer<? super Item, ? super ItemDragClick> dragHandler) {
+    public ItemBuilder addDragHandler(@NotNull BiConsumer<? super Item, ? super ItemDrag> dragHandler) {
         this.dragHandler = this.dragHandler.andThen(dragHandler);
         return this;
     }

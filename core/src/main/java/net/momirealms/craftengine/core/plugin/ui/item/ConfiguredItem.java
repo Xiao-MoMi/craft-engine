@@ -5,7 +5,7 @@ import net.momirealms.craftengine.core.plugin.ui.ObservableDispatcher;
 import net.momirealms.craftengine.core.plugin.ui.Observer;
 import net.momirealms.craftengine.core.plugin.ui.item.click.BundleSelectClick;
 import net.momirealms.craftengine.core.plugin.ui.item.click.ItemClick;
-import net.momirealms.craftengine.core.plugin.ui.item.click.ItemDragClick;
+import net.momirealms.craftengine.core.plugin.ui.item.click.ItemDrag;
 import net.momirealms.craftengine.core.plugin.ui.item.click.ItemInteraction;
 import net.momirealms.craftengine.core.plugin.ui.item.guard.ItemGuard;
 import net.momirealms.craftengine.core.plugin.ui.item.provider.ImmediateItemProvider;
@@ -25,11 +25,11 @@ final class ConfiguredItem implements ObservableItem {
     private final ObservableDispatcher<Item> observers = new ObservableDispatcher<>();
 
     private final List<GuardEntry<ItemClick>> clickGuards;
-    private final List<GuardEntry<ItemDragClick>> dragGuards;
+    private final List<GuardEntry<ItemDrag>> dragGuards;
     private final List<GuardEntry<BundleSelectClick>> bundleSelectGuards;
 
     private final BiConsumer<? super Item, ? super ItemClick> clickHandler;
-    private final BiConsumer<? super Item, ? super ItemDragClick> dragHandler;
+    private final BiConsumer<? super Item, ? super ItemDrag> dragHandler;
     private final BiConsumer<? super Item, ? super BundleSelectClick> bundleHandler;
     private final boolean updateOnClick;
 
@@ -37,10 +37,10 @@ final class ConfiguredItem implements ObservableItem {
             @NotNull ItemBuilder.DisplaySourceFactory source,
             @NotNull List<? extends Function<? super Player, ? extends Signal<?>>> dependencies,
             @NotNull List<? extends GuardEntry<ItemClick>> clickGuards,
-            @NotNull List<? extends GuardEntry<ItemDragClick>> dragGuards,
+            @NotNull List<? extends GuardEntry<ItemDrag>> dragGuards,
             @NotNull List<? extends GuardEntry<BundleSelectClick>> bundleSelectGuards,
             @NotNull BiConsumer<? super Item, ? super ItemClick> clickHandler,
-            @NotNull BiConsumer<? super Item, ? super ItemDragClick> dragHandler,
+            @NotNull BiConsumer<? super Item, ? super ItemDrag> dragHandler,
             @NotNull BiConsumer<? super Item, ? super BundleSelectClick> bundleHandler,
             boolean updateOnClick
     ) {
@@ -77,7 +77,7 @@ final class ConfiguredItem implements ObservableItem {
     }
 
     @Override
-    public void handleDrag(@NotNull ItemDragClick drag) {
+    public void handleDrag(@NotNull ItemDrag drag) {
         if (!this.passes(this.dragGuards, drag)) return;
         this.dragHandler.accept(this, drag);
     }
