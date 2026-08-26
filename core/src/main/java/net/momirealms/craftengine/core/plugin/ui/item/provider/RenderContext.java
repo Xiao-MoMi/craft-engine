@@ -9,14 +9,10 @@ import org.jetbrains.annotations.Nullable;
 import java.util.function.Consumer;
 
 public final class RenderContext {
-    /** 本次渲染所属的 Window. */
     public final Window window;
-    /** 本次渲染的目标类型. */
     public final Kind kind;
-    /** 最终 Window 槽位, 光标与非槽位内容固定为 {@code -1}. */
     public final int windowSlot;
-    @Nullable
-    private final Consumer<Object> memo;
+    @Nullable private final Consumer<Object> memo;
 
     public RenderContext(@NotNull Window window, int windowSlot) {
         this(window, Kind.WINDOW_SLOT, windowSlot, null);

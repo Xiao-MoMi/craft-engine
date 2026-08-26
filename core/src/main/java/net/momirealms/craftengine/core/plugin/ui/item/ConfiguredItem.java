@@ -19,7 +19,8 @@ import java.util.function.BiConsumer;
 import java.util.function.Function;
 
 final class ConfiguredItem implements ObservableItem {
-    private final ItemBuilder.DisplaySource displaySource;
+    private final ItemProvider itemProvider;
+    private final ImmediateItemProvider placeholder;
     private final List<Function<Player, Signal<?>>> dependencies;
     private final ObservableDispatcher<Item> observers = new ObservableDispatcher<>();
 
@@ -33,7 +34,8 @@ final class ConfiguredItem implements ObservableItem {
     private final boolean updateOnClick;
 
     ConfiguredItem(
-            @NotNull ItemBuilder.DisplaySourceFactory source,
+            @NotNull ItemProvider itemProvider,
+            @NotNull ImmediateItemProvider placeholder,
             @NotNull List<Function<Player, Signal<?>>> dependencies,
             @Nullable ItemGuard<ItemClick> clickGuard,
             @Nullable ItemGuard<ItemDrag> dragGuard,
@@ -43,7 +45,8 @@ final class ConfiguredItem implements ObservableItem {
             @Nullable BiConsumer<Item, BundleSelectClick> bundleHandler,
             boolean updateOnClick
     ) {
-        this.displaySource = source.create(this::notifyWindows);
+        this.itemProvider = itemProvider;
+        this.placeholder = placeholder;
         this.dependencies = List.copyOf(dependencies);
         this.clickGuard = clickGuard;
         this.dragGuard = dragGuard;
@@ -57,13 +60,13 @@ final class ConfiguredItem implements ObservableItem {
     @Override
     @NotNull
     public ItemProvider getItemProvider() {
-        return this.displaySource.provider();
+        return this.itemProvider;
     }
 
     @Override
     @NotNull
     public ImmediateItemProvider getPlaceholder() {
-        return this.displaySource.placeholder();
+        return this.placeholder;
     }
 
     @Override
@@ -96,11 +99,10 @@ final class ConfiguredItem implements ObservableItem {
     @Override
     public ItemAttachment attach(@NotNull Window window, @NotNull Observer<? super Item> observer) {
         ItemAttachment.Tracking attachment = ItemAttachment.tracking(this, observer);
-        // 先建立失效订阅, 同步完成的 lazy 来源随后发布时不会漏掉通知.
+        // 观察者与依赖必须同时建立, 中途失败时撤销整次挂载.
         try {
             attachment.track(this.observers.subscribe(observer));
             attachment.subscribeDependencies(this.dependencies, window.viewer());
-            this.displaySource.onAttached();
             return attachment;
         } catch (RuntimeException | Error throwable) {
             try {
