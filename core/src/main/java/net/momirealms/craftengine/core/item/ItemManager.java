@@ -107,6 +107,10 @@ public interface ItemManager extends Manageable, ModelGenerator {
 
     Set<Key> getVanillaItemTags(Key item);
 
+    Optional<ModernItemModel> getModernItemModel(@NotNull Key itemModel);
+
+    Optional<ModernItemModel> getModernItemModel(@NotNull Key itemModel, int customModelData);
+
     @ApiStatus.Internal
     Map<Key, TreeSet<LegacyOverridesModel>> legacyItemOverrides();
 

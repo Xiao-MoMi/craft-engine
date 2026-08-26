@@ -3,12 +3,16 @@ package net.momirealms.craftengine.bukkit.pack;
 import net.momirealms.craftengine.bukkit.api.BukkitAdaptor;
 import net.momirealms.craftengine.bukkit.api.event.AsyncResourcePackCacheEvent;
 import net.momirealms.craftengine.bukkit.api.event.AsyncResourcePackGenerateEvent;
+import net.momirealms.craftengine.bukkit.api.event.AsyncResourcePackInjectEvent;
 import net.momirealms.craftengine.bukkit.plugin.BukkitCraftEngine;
 import net.momirealms.craftengine.bukkit.plugin.command.feature.ReloadCommand;
 import net.momirealms.craftengine.bukkit.util.EventUtils;
 import net.momirealms.craftengine.bukkit.util.ResourcePackUtils;
 import net.momirealms.craftengine.core.entity.player.Player;
 import net.momirealms.craftengine.core.pack.AbstractPackManager;
+import net.momirealms.craftengine.core.pack.PackCacheData;
+import net.momirealms.craftengine.core.pack.PackEventDispatcher;
+import net.momirealms.craftengine.core.pack.PackInjection;
 import net.momirealms.craftengine.core.pack.host.ResourcePackDownloadData;
 import net.momirealms.craftengine.core.pack.obfuscation.ObfA;
 import net.momirealms.craftengine.core.plugin.config.Config;
@@ -21,8 +25,10 @@ import org.bukkit.event.EventPriority;
 import org.bukkit.event.HandlerList;
 import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerJoinEvent;
+import org.jetbrains.annotations.NotNull;
 
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
@@ -31,17 +37,22 @@ public final class BukkitPackManager extends AbstractPackManager implements List
     private final BukkitCraftEngine plugin;
 
     public BukkitPackManager(BukkitCraftEngine plugin) {
-        super(
-                plugin,
-                (cd) -> {
-                    AsyncResourcePackCacheEvent cacheEvent = new AsyncResourcePackCacheEvent(cd);
-                    EventUtils.fireAndForget(cacheEvent);
-                },
-                (rf, zp) -> {
-                    AsyncResourcePackGenerateEvent endEvent = new AsyncResourcePackGenerateEvent(rf, zp);
-                    EventUtils.fireAndForget(endEvent);
-                }
-        );
+        super(plugin, new PackEventDispatcher() {
+            @Override
+            public void onCache(@NotNull PackCacheData cacheData) {
+                EventUtils.fireAndForget(new AsyncResourcePackCacheEvent(cacheData));
+            }
+
+            @Override
+            public void onInject(@NotNull PackInjection injection) {
+                EventUtils.fireAndForget(new AsyncResourcePackInjectEvent(injection));
+            }
+
+            @Override
+            public void onGenerate(@NotNull Path packFolder, @NotNull Path zipFile) {
+                EventUtils.fireAndForget(new AsyncResourcePackGenerateEvent(packFolder, zipFile));
+            }
+        });
         this.plugin = plugin;
     }
 

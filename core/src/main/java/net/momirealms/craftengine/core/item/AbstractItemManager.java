@@ -214,6 +214,25 @@ public abstract class AbstractItemManager extends AbstractModelGenerator impleme
     }
 
     @Override
+    public Optional<ModernItemModel> getModernItemModel(@NotNull Key itemModel) {
+        ModernItemModel model = this.modernItemModels1_21_4.get(itemModel);
+        if (model == null) model = AbstractPackManager.PRESET_ITEMS.get(itemModel);
+        return Optional.ofNullable(model);
+    }
+
+    @Override
+    public Optional<ModernItemModel> getModernItemModel(@NotNull Key itemModel, int customModelData) {
+        if (customModelData != 0) {
+            TreeMap<Integer, ModernItemModel> overrides = this.modernOverrides.get(itemModel);
+            if (overrides != null) {
+                ModernItemModel model = overrides.get(customModelData);
+                if (model != null) return Optional.of(model);
+            }
+        }
+        return getModernItemModel(itemModel);
+    }
+
+    @Override
     public Map<Key, ModernItemModel> modernItemModels1_21_4() {
         return Collections.unmodifiableMap(this.modernItemModels1_21_4);
     }
