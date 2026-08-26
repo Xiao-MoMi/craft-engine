@@ -60,10 +60,10 @@ public final class DropExperienceBlockBehavior extends BukkitBlockBehavior {
 
     private void tryDropExperience(World world, BlockPos pos, Item item) {
         Vec3d dropPos = Vec3d.atCenterOf(pos);
-        ContextHolder holder = ContextHolder.builder()
-                .withParameter(DirectContextParameters.POSITION, new WorldPosition(world, dropPos))
-                .withParameter(DirectContextParameters.ITEM_IN_HAND, item)
-                .build();
+        ContextHolder holder = ContextHolder.builder(
+                DirectContextParameters.POSITION, new WorldPosition(world, dropPos),
+                DirectContextParameters.ITEM_IN_HAND, item
+        ).build();
         LootContext context = new LootContext(world, null, 1.0f, holder);
         if (!this.condition.test(context)) {
             return;

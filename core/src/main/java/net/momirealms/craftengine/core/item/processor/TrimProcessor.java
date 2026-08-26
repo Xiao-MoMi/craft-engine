@@ -30,8 +30,8 @@ public final class TrimProcessor implements SimpleNetworkItemProcessor {
     }
 
     @Override
-    public Item apply(Item item, ItemBuildContext context) {
-        return item.trim(new Trim(this.pattern, this.material));
+    public void apply(ItemBuildContext context) {
+        context.item().trim(new Trim(this.pattern, this.material));
     }
 
     @Override

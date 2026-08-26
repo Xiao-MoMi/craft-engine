@@ -21,7 +21,6 @@ public final class FurnitureAttemptPlaceEvent extends PlayerEvent implements Can
     private final FurnitureVariant variant;
     private final Block clickedBlock;
     private final InteractionHand hand;
-    private final ContextHolder.Builder contextBuilder;
 
     @ApiStatus.Internal
     public FurnitureAttemptPlaceEvent(@NotNull Player player,
@@ -29,20 +28,13 @@ public final class FurnitureAttemptPlaceEvent extends PlayerEvent implements Can
                                       @NotNull FurnitureVariant variant,
                                       @NotNull Location location,
                                       @NotNull InteractionHand hand,
-                                      @NotNull Block clickedBlock,
-                                      @NotNull ContextHolder.Builder contextBuilder) {
+                                      @NotNull Block clickedBlock) {
         super(player);
         this.furniture = furniture;
         this.location = location;
         this.variant = variant;
         this.clickedBlock = clickedBlock;
         this.hand = hand;
-        this.contextBuilder = contextBuilder;
-    }
-
-    @NotNull
-    public ContextHolder.Builder contextBuilder() {
-        return this.contextBuilder;
     }
 
     @NotNull

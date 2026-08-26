@@ -102,12 +102,13 @@ public final class AttributeModifiersProcessor implements SimpleNetworkItemProce
     }
 
     @Override
-    public Item apply(Item item, ItemBuildContext context) {
+    public void apply(ItemBuildContext context) {
+        Item item = context.item();
         List<VanillaAttributeModifier> results = new ArrayList<>(this.modifiers.size());
         for (PreModifier modifier : this.modifiers) {
             results.add(modifier.toAttributeModifier(item, context));
         }
-        return item.attributeModifiers(results);
+        item.attributeModifiers(results);
     }
 
     @Override

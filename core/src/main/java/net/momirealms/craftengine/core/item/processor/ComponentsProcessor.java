@@ -4,6 +4,7 @@ import com.google.gson.JsonElement;
 import net.momirealms.craftengine.core.item.Item;
 import net.momirealms.craftengine.core.item.ItemBuildContext;
 import net.momirealms.craftengine.core.item.component.DataComponentKeys;
+import net.momirealms.craftengine.core.item.network.NetworkItemBuildContext;
 import net.momirealms.craftengine.core.item.network.NetworkItemHandler;
 import net.momirealms.craftengine.core.plugin.CraftEngine;
 import net.momirealms.craftengine.core.plugin.config.ConfigConstants;
@@ -50,7 +51,8 @@ public final class ComponentsProcessor implements ItemProcessor {
     }
 
     @Override
-    public Item apply(Item item, ItemBuildContext context) {
+    public void apply(ItemBuildContext context) {
+        Item item = context.item();
         for (DynamicComponentProvider argument : arguments) {
             item.setSparrowTagComponent(argument.type, argument.function.apply(context));
         }
@@ -65,11 +67,11 @@ public final class ComponentsProcessor implements ItemProcessor {
                 item.setComponent(DataComponentKeys.CUSTOM_DATA, this.customData.function.apply(context));
             }
         }
-        return item;
     }
 
     @Override
-    public void prepareNetworkItem(Item item, ItemBuildContext context, CompoundTag networkData) {
+    public void prepareNetworkItem(NetworkItemBuildContext context, CompoundTag networkData) {
+        Item item = context.item();
         for (DynamicComponentProvider argument : this.arguments) {
             String componentType = argument.type.asString();
             Tag previous = item.getComponentAsSparrowTag(componentType);

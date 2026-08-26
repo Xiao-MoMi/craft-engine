@@ -1,5 +1,6 @@
 package net.momirealms.craftengine.core.plugin.context;
 
+import java.util.Map;
 import java.util.Optional;
 
 public class ViewerContext implements RelationalContext {
@@ -51,5 +52,20 @@ public class ViewerContext implements RelationalContext {
     @Override
     public <T> T getParameterOrThrow(ContextKey<T> parameter) {
         return this.owner.getParameterOrThrow(parameter);
+    }
+
+    @Override
+    public void setVariable(String key, Object value) {
+        this.viewer.setVariable(key, value);
+    }
+
+    @Override
+    public Object getVariable(String key) {
+        return this.viewer.getVariable(key);
+    }
+
+    @Override
+    public Map<String, Object> variables() {
+        return this.viewer.variables();
     }
 }

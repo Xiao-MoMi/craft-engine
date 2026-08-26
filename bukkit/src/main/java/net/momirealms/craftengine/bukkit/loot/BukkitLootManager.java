@@ -149,13 +149,11 @@ public final class BukkitLootManager extends AbstractLootManager {
     public Object createMinecraftLootParamsBuilder(LootContext context) {
         ContextHolder contexts = context.contexts();
         Object lootParamsBuilder = LootParamsProxy.BuilderProxy.INSTANCE.newInstance(context.world().minecraftWorld());
-        for (Map.Entry<ContextKey<?>, Supplier<Object>> entry : contexts.params().entrySet()) {
-            MinecraftLootParamMapper mapper = MINECRAFT_LOOT_PARAM_MAPPERS.get(entry.getKey());
-            if (mapper == null) continue;
-            Object value = entry.getValue().get();
-            if (value == null) continue;
+        contexts.params().forEach((key, value) -> {
+            MinecraftLootParamMapper mapper = MINECRAFT_LOOT_PARAM_MAPPERS.get(key);
+            if (mapper == null || value == null) return;
             mapper.accept(lootParamsBuilder, value, contexts);
-        }
+        });
         LootParamsProxy.BuilderProxy.INSTANCE.withLuck(lootParamsBuilder, context.luck());
         return lootParamsBuilder;
     }

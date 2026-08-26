@@ -50,7 +50,8 @@ public interface ItemDefinition extends BuildableItem {
         return settings().tags().contains(tag);
     }
 
-    void execute(Context context, EventTrigger trigger);
+    @NotNull
+    List<Function<Context>> eventFunctions(EventTrigger trigger);
 
     @NotNull
     ItemBehavior behavior();

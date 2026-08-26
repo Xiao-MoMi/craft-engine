@@ -13,7 +13,6 @@ import net.momirealms.craftengine.core.util.VersionHelper;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 
-import java.util.Map;
 import java.util.function.Supplier;
 
 public final class ItemBridgeSource implements ItemSource {
@@ -49,16 +48,13 @@ public final class ItemBridgeSource implements ItemSource {
             return BuildContext.empty();
         }
         BuildContext.Builder builder = BuildContext.builder();
-        for (Map.Entry<net.momirealms.craftengine.core.plugin.context.ContextKey<?>, Supplier<Object>> entry : contexts.params().entrySet()) {
-            Object value = entry.getValue().get();
-            if (value == null) {
-                continue;
-            }
+        contexts.params().forEach((key, value) -> {
+            if (value == null) return;
             Class<?> type = value.getClass(); // fixme 这个获取办法并不正确，net.momirealms.craftengine.core.plugin.context.ContextKey 应该在创建的时候记录是什么类型
             @SuppressWarnings("unchecked")
-            ContextKey<Object> contextKey = (ContextKey<Object>) ContextKey.of(type, entry.getKey().node());
-            with(builder, contextKey, entry.getValue());
-        }
+            ContextKey<Object> contextKey = (ContextKey<Object>) ContextKey.of(type, key.node());
+            with(builder, contextKey, () -> value);
+        });
         return builder.build();
     }
 

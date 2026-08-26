@@ -7,7 +7,6 @@ import org.jetbrains.annotations.Nullable;
 
 public class PlayerOptionalContext extends AbstractChainParameterContext implements PlayerContext {
     public static final PlayerOptionalContext EMPTY = new PlayerOptionalContext(null, ContextHolder.emptyImmutable());
-
     protected final Player player;
 
     public PlayerOptionalContext(@Nullable Player player,
@@ -25,7 +24,6 @@ public class PlayerOptionalContext extends AbstractChainParameterContext impleme
     public static PlayerOptionalContext of(@Nullable Player player, @NotNull ContextHolder.Builder builder) {
         if (player != null) {
             builder.withParameter(DirectContextParameters.PLAYER, player);
-            builder.withParameter(DirectContextParameters.ENTITY, player);
         }
         return new PlayerOptionalContext(player, builder.build());
     }
@@ -33,20 +31,7 @@ public class PlayerOptionalContext extends AbstractChainParameterContext impleme
     @NotNull
     public static PlayerOptionalContext of(@Nullable Player player) {
         if (player == null) return empty();
-        return new PlayerOptionalContext(player, ContextHolder.builder()
-                .withParameter(DirectContextParameters.PLAYER, player)
-                .withParameter(DirectContextParameters.ENTITY, player)
-                .build());
-    }
-
-    @NotNull
-    public static PlayerOptionalContext ofImmutable(@Nullable Player player) {
-        if (player == null) return emptyImmutable();
-        return new PlayerOptionalContext(player, ContextHolder.builder()
-                .withParameter(DirectContextParameters.PLAYER, player)
-                .withParameter(DirectContextParameters.ENTITY, player)
-                .immutable(true)
-                .build());
+        return new PlayerOptionalContext(player, ContextHolder.builder(DirectContextParameters.PLAYER, player).build());
     }
 
     @NotNull

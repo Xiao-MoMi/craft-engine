@@ -16,25 +16,17 @@ public final class FurniturePlaceEvent extends PlayerEvent implements Cancellabl
     private final Location location;
     private final BukkitFurniture furniture;
     private final InteractionHand hand;
-    private final ContextHolder.Builder contextBuilder;
     private boolean cancelled;
 
     @ApiStatus.Internal
     public FurniturePlaceEvent(@NotNull Player player,
                                @NotNull BukkitFurniture furniture,
                                @NotNull Location location,
-                               @NotNull InteractionHand hand,
-                               @NotNull ContextHolder.Builder contextBuilder) {
+                               @NotNull InteractionHand hand) {
         super(player);
         this.location = location;
         this.furniture = furniture;
         this.hand = hand;
-        this.contextBuilder = contextBuilder;
-    }
-
-    @NotNull
-    public ContextHolder.Builder contextBuilder() {
-        return this.contextBuilder;
     }
 
     @NotNull

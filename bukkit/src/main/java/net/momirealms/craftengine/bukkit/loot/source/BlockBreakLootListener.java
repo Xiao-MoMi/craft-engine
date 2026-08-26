@@ -55,14 +55,12 @@ public final class BlockBreakLootListener implements Listener {
         if (serverPlayer == null) return;
         BukkitExistingBlock bukkitExistingBlock = new BukkitExistingBlock(block);
         Item itemInHand = serverPlayer.getItemInHand(InteractionHand.MAIN_HAND);
-        ContextHolder holder = ContextHolder.builder()
-                .withParameter(DirectContextParameters.BLOCK, bukkitExistingBlock)
-                .withParameter(DirectContextParameters.POSITION, position)
-                .withParameter(DirectContextParameters.ENTITY, serverPlayer)
-                .withParameter(DirectContextParameters.PLAYER, serverPlayer)
-                .withOptionalParameter(DirectContextParameters.ITEM_IN_HAND, ItemUtils.isEmpty(itemInHand) ? null : itemInHand)
-                .build();
-        LootContext lootContext = new LootContext(world, serverPlayer, (float) serverPlayer.luck(), holder);
+        LootContext lootContext = new LootContext(world, serverPlayer, (float) serverPlayer.luck(), ContextHolder.builder(
+                DirectContextParameters.PLAYER, serverPlayer,
+                DirectContextParameters.ITEM_IN_HAND, itemInHand,
+                DirectContextParameters.BLOCK, bukkitExistingBlock,
+                DirectContextParameters.POSITION, position
+        ).build());
         LootOutcome outcome = LootManager.eval(sources, lootContext);
         if (!outcome.matched()) return;
         if (outcome.overwriteItems()) {
@@ -110,11 +108,12 @@ public final class BlockBreakLootListener implements Listener {
             List<LootSource> sources = LootSources.BLOCK_BREAK.getSources(blockType);
             if (sources.isEmpty()) continue;
             WorldPosition position = new WorldPosition(world, block.getX() + 0.5, block.getY() + 0.5, block.getZ() + 0.5);
-            ContextHolder holder = ContextHolder.builder()
-                    .withParameter(DirectContextParameters.BLOCK, new BukkitExistingBlock(block))
-                    .withParameter(DirectContextParameters.POSITION, position)
+            ContextHolder holder = ContextHolder.builder(
+                            DirectContextParameters.BLOCK, new BukkitExistingBlock(block),
+                            DirectContextParameters.POSITION, position,
+                            DirectContextParameters.EXPLOSION_RADIUS, radius
+                    )
                     .withOptionalParameter(DirectContextParameters.ENTITY, ceEntity)
-                    .withParameter(DirectContextParameters.EXPLOSION_RADIUS, radius)
                     .build();
             LootContext lootContext = new LootContext(world, null, 1f, holder);
             LootOutcome outcome = LootManager.eval(sources, lootContext);

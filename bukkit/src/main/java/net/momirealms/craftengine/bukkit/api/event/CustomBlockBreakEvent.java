@@ -20,16 +20,14 @@ public final class CustomBlockBreakEvent extends PlayerEvent implements Cancella
     private final Block bukkitBlock;
     private final BukkitServerPlayer player;
     private boolean cancelled;
-    private boolean dropItems = true;
-    private final ContextHolder.Builder contextBuilder;
+    private boolean dropItems;
 
     @ApiStatus.Internal
     public CustomBlockBreakEvent(@NotNull BukkitServerPlayer player,
                                  @NotNull Location location,
                                  @NotNull Block bukkitBlock,
                                  @NotNull ImmutableBlockState state,
-                                 boolean dropItems,
-                                 @NotNull ContextHolder.Builder contextBuilder) {
+                                 boolean dropItems) {
         super(player.platformPlayer());
         this.blockDefinition = state.owner().value();
         this.state = state;
@@ -37,12 +35,6 @@ public final class CustomBlockBreakEvent extends PlayerEvent implements Cancella
         this.location = location;
         this.player = player;
         this.dropItems = dropItems;
-        this.contextBuilder = contextBuilder;
-    }
-
-    @NotNull
-    public ContextHolder.Builder contextBuilder() {
-        return this.contextBuilder;
     }
 
     public BukkitServerPlayer player() {

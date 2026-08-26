@@ -37,9 +37,10 @@ public final class ObfuscatedItemModelProcessor implements SimpleNetworkItemProc
     }
 
     @Override
-    public Item apply(Item item, ItemBuildContext context) {
-        if (item.hasNonDefaultComponent(DataComponentKeys.ITEM_MODEL)) return item;
+    public void apply(ItemBuildContext context) {
+        Item item = context.item();
+        if (item.hasNonDefaultComponent(DataComponentKeys.ITEM_MODEL)) return;
         Key model = mappings.getOrDefault(this.data, this.data);
-        return item.itemModel(model.asString());
+        item.itemModel(model.asString());
     }
 }

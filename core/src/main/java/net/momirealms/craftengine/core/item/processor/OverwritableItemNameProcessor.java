@@ -16,17 +16,18 @@ public final class OverwritableItemNameProcessor implements SimpleNetworkItemPro
     }
 
     @Override
-    public Item apply(Item item, ItemBuildContext context) {
+    public void apply(ItemBuildContext context) {
+        Item item = context.item();
         if (VersionHelper.COMPONENT_RELEASE) {
             if (item.hasNonDefaultComponent(DataComponentKeys.ITEM_NAME)) {
-                return item;
+                return;
             }
         } else {
             if (item.hasTag("display", "Name")) {
-                return item;
+                return;
             }
         }
-        return this.modifier.apply(item, context);
+        this.modifier.apply(context);
     }
 
     @Override

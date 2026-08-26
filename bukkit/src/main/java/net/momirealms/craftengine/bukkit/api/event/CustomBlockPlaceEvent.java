@@ -21,27 +21,19 @@ public final class CustomBlockPlaceEvent extends PlayerEvent implements Cancella
     private final InteractionHand hand;
     private final Block bukkitBlock;
     private boolean cancelled;
-    private final ContextHolder.Builder contextBuilder;
 
     @ApiStatus.Internal
     public CustomBlockPlaceEvent(@NotNull Player player,
                                  @NotNull Location location,
                                  @NotNull ImmutableBlockState state,
                                  @NotNull Block bukkitBlock,
-                                 @NotNull InteractionHand hand,
-                                 @NotNull ContextHolder.Builder contextBuilder) {
+                                 @NotNull InteractionHand hand) {
         super(player);
         this.blockDefinition = state.owner().value();
         this.state = state;
         this.location = location;
         this.hand = hand;
         this.bukkitBlock = bukkitBlock;
-        this.contextBuilder = contextBuilder;
-    }
-
-    @NotNull
-    public ContextHolder.Builder contextBuilder() {
-        return contextBuilder;
     }
 
     @NotNull

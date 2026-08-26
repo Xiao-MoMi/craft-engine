@@ -31,8 +31,10 @@ public interface ConditionalFurnitureElement extends FurnitureElement {
     @Override
     default void show(Player player) {
         if (hasCondition()) {
-            PlayerOptionalContext context = PlayerOptionalContext.of(player, ContextHolder.builder()
-                    .withParameter(DirectContextParameters.FURNITURE, furniture()));
+            PlayerOptionalContext context = PlayerOptionalContext.of(player, ContextHolder.builder(
+                    DirectContextParameters.PLAYER, player,
+                    DirectContextParameters.FURNITURE, furniture()
+            ).build());
             if (condition().test(context)) {
                 showInternal(player);
             }

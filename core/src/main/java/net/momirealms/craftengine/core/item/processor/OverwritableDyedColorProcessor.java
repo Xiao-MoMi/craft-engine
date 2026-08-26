@@ -23,10 +23,11 @@ public final class OverwritableDyedColorProcessor implements SimpleNetworkItemPr
     }
 
     @Override
-    public Item apply(Item item, ItemBuildContext context) {
+    public void apply(ItemBuildContext context) {
+        Item item = context.item();
         Optional<Color> previous = item.dyedColor();
-        if (previous.isPresent()) return item;
-        return item.dyedColor(this.color);
+        if (previous.isPresent()) return;
+        item.dyedColor(this.color);
     }
 
     @Override

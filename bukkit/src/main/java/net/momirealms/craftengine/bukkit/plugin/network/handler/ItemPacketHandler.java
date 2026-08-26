@@ -82,9 +82,11 @@ public final class ItemPacketHandler implements EntityPacketHandler {
                     } else {
                         hoverComponent = Component.translatable(ItemStackUtils.getDescriptionId(itemStack));
                     }
-                    PlayerOptionalContext context = NetworkTextReplaceContext.of(user, ContextHolder.builder()
-                            .withParameter(DirectContextParameters.COUNT, itemStack.getAmount())
-                            .withParameter(DirectContextParameters.HOVER_COMPONENT, hoverComponent));
+                    NetworkTextReplaceContext context = NetworkTextReplaceContext.of(user, ContextHolder.builder(
+                            DirectContextParameters.PLAYER, user,
+                            DirectContextParameters.COUNT, itemStack.getAmount(),
+                            DirectContextParameters.HOVER_COMPONENT, hoverComponent
+                    ).build());
                     // 展示名称为空，则显示其hover name
                     if (showName.isEmpty()) {
                         nameToShow = hoverComponent;

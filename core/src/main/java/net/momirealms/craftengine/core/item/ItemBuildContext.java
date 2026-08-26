@@ -15,6 +15,11 @@ public class ItemBuildContext extends PlayerOptionalContext {
         super(player, contexts);
     }
 
+    public ItemBuildContext(@Nullable Player player, @NotNull Item item, @NotNull ContextHolder contexts) {
+        super(player, contexts);
+        this.item = item;
+    }
+
     public void setItem(@NotNull Item item) {
         this.item = item;
         this.contexts.withParameter(DirectContextParameters.ITEM, item);
@@ -30,17 +35,21 @@ public class ItemBuildContext extends PlayerOptionalContext {
     }
 
     @NotNull
+    public static ItemBuildContext of(@Nullable Player player, @NotNull ContextHolder.Builder builder) {
+        if (player != null) {
+            builder.withParameter(DirectContextParameters.PLAYER, player);
+        }
+        return new ItemBuildContext(player, builder.build());
+    }
+
+    @NotNull
     public static ItemBuildContext of(@Nullable Player player, @NotNull ContextHolder contexts) {
         return new ItemBuildContext(player, contexts);
     }
 
     @NotNull
-    public static ItemBuildContext of(@Nullable Player player, @NotNull ContextHolder.Builder builder) {
-        if (player != null) {
-            builder.withParameter(DirectContextParameters.PLAYER, player);
-            builder.withParameter(DirectContextParameters.ENTITY, player);
-        }
-        return new ItemBuildContext(player, builder.build());
+    public static ItemBuildContext of(@Nullable Player player, @NotNull Item item, @NotNull ContextHolder contexts) {
+        return new ItemBuildContext(player, item, contexts);
     }
 
     @NotNull
@@ -48,9 +57,6 @@ public class ItemBuildContext extends PlayerOptionalContext {
         if (player == null) {
             return new ItemBuildContext(null, ContextHolder.empty());
         }
-        return new ItemBuildContext(player, ContextHolder.builder()
-                .withParameter(DirectContextParameters.PLAYER, player)
-                .withParameter(DirectContextParameters.ENTITY, player)
-                .build());
+        return new ItemBuildContext(player, ContextHolder.builder(DirectContextParameters.PLAYER, player).build());
     }
 }

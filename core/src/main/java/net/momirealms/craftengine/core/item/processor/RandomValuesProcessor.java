@@ -20,8 +20,9 @@ public final class RandomValuesProcessor implements ItemProcessor {
     }
 
     @Override
-    public Item apply(Item item, ItemBuildContext context) {
+    public void apply(ItemBuildContext context) {
         Map<String, Double> rolled = null;
+        Item item = context.item();
         NamedRandoms existingRandoms = item.getCustomData(NamedRandoms.class, TAG_PATH);
         Map<String, Double> existing = existingRandoms == null ? Map.of() : existingRandoms.values;
         for (Map.Entry<String, NumberProvider> entry : this.values.entrySet()) {
@@ -32,7 +33,6 @@ public final class RandomValuesProcessor implements ItemProcessor {
         if (rolled != null) {
             item.setCustomData(new NamedRandoms(rolled), TAG_PATH);
         }
-        return item;
     }
 
     private static class Factory implements ItemProcessorFactory<RandomValuesProcessor> {

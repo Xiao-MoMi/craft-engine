@@ -9,6 +9,7 @@ import net.momirealms.craftengine.core.plugin.config.ConfigKeys;
 import net.momirealms.craftengine.core.plugin.config.ConfigSection;
 import net.momirealms.craftengine.core.plugin.context.CommonConditions;
 import net.momirealms.craftengine.core.plugin.context.Condition;
+import net.momirealms.craftengine.core.plugin.context.parameter.DirectContextParameters;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -24,12 +25,12 @@ public final class ApplyDataFunction extends AbstractLootConditionalFunction {
 
     @Override
     protected Item applyInternal(Item item, LootContext context) {
-        ItemBuildContext ctx = ItemBuildContext.of(context.player(), context.contexts());
-        ctx.setItem(item);
+        ItemBuildContext ctx = ItemBuildContext.of(context.player(), item, context.contexts().copy()
+                .withParameter(DirectContextParameters.ITEM, item));
         for (ItemProcessor modifier : this.modifiers) {
-            item = modifier.apply(item, ctx);
+            modifier.apply(ctx);
         }
-        return item;
+        return ctx.item();
     }
 
     private static class Factory implements LootFunctionFactory<ApplyDataFunction> {

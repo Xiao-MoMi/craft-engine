@@ -1,27 +1,34 @@
 package net.momirealms.craftengine.core.plugin.context;
 
-import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import net.momirealms.craftengine.core.entity.player.Player;
 import net.momirealms.craftengine.core.plugin.context.parameter.DirectContextParameters;
-import net.momirealms.craftengine.core.util.MiscUtils;
 import org.jetbrains.annotations.NotNull;
 
 public final class NetworkTextReplaceContext extends PlayerOptionalContext implements PlayerContext {
 
-    public NetworkTextReplaceContext(Player player) {
-        super(player, ContextHolder.trustedMutable(MiscUtils.init(new Object2ObjectOpenHashMap<>(4), (m) -> {
-            ContextHolder.SimpleSupplier<Object> supplier = ContextHolder.SimpleSupplier.of(player);
-            m.put(DirectContextParameters.PLAYER, supplier);
-            m.put(DirectContextParameters.ENTITY, supplier);
-        })));
+    public NetworkTextReplaceContext(@NotNull Player player) {
+        super(player, ContextHolder.builder(DirectContextParameters.PLAYER, player).build());
+    }
+
+    public NetworkTextReplaceContext(@NotNull Player player, @NotNull ContextHolder contexts) {
+        super(player, contexts);
     }
 
     public static @NotNull NetworkTextReplaceContext of(Player player) {
         return new NetworkTextReplaceContext(player);
     }
 
+    public static @NotNull NetworkTextReplaceContext of(Player player, @NotNull ContextHolder contexts) {
+        return new NetworkTextReplaceContext(player, contexts);
+    }
+
     @Override
     public Player player() {
         return super.player;
+    }
+
+    @Override
+    public boolean isPlayerPresent() {
+        return true;
     }
 }

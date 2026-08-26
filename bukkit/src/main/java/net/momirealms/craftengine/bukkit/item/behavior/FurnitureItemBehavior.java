@@ -25,9 +25,11 @@ import net.momirealms.craftengine.core.plugin.config.ConfigConstants;
 import net.momirealms.craftengine.core.plugin.config.ConfigKeys;
 import net.momirealms.craftengine.core.plugin.config.ConfigSection;
 import net.momirealms.craftengine.core.plugin.config.ConfigValue;
+import net.momirealms.craftengine.core.plugin.context.Context;
 import net.momirealms.craftengine.core.plugin.context.ContextHolder;
 import net.momirealms.craftengine.core.plugin.context.EventTrigger;
 import net.momirealms.craftengine.core.plugin.context.PlayerOptionalContext;
+import net.momirealms.craftengine.core.plugin.context.function.Function;
 import net.momirealms.craftengine.core.plugin.context.parameter.DirectContextParameters;
 import net.momirealms.craftengine.core.util.*;
 import net.momirealms.craftengine.core.world.Vec3d;
@@ -195,10 +197,9 @@ public class FurnitureItemBehavior extends ItemBehavior implements FurnitureItem
         if (!BukkitCraftEngine.instance().antiGriefProvider().test(bukkitPlayer, Flag.PLACE, furnitureLocation)) {
             return InteractionResult.FAIL;
         }
-        ContextHolder.Builder contextBuilder = ContextHolder.builder();
         // 触发尝试放置的事件
         if (player != null) {
-            FurnitureAttemptPlaceEvent attemptPlaceEvent = new FurnitureAttemptPlaceEvent(bukkitPlayer, furnitureDefinition, variant, furnitureLocation, context.getHand(), world.getBlockAt(context.getClickedPos().x(), context.getClickedPos().y(), context.getClickedPos().z()), contextBuilder);
+            FurnitureAttemptPlaceEvent attemptPlaceEvent = new FurnitureAttemptPlaceEvent(bukkitPlayer, furnitureDefinition, variant, furnitureLocation, context.getHand(), world.getBlockAt(context.getClickedPos().x(), context.getClickedPos().y(), context.getClickedPos().z()));
             if (EventUtils.fireAndCheckCancel(attemptPlaceEvent)) {
                 return InteractionResult.FAIL;
             }
@@ -213,27 +214,33 @@ public class FurnitureItemBehavior extends ItemBehavior implements FurnitureItem
         BukkitFurniture bukkitFurniture = BukkitFurnitureManager.instance().place(furnitureLocation, furnitureDefinition, dataAccessor, false, player);
         // 触发放置事件
         if (player != null) {
-            FurniturePlaceEvent placeEvent = new FurniturePlaceEvent(bukkitPlayer, bukkitFurniture, furnitureLocation, context.getHand(), contextBuilder);
+            FurniturePlaceEvent placeEvent = new FurniturePlaceEvent(bukkitPlayer, bukkitFurniture, furnitureLocation, context.getHand());
             if (EventUtils.fireAndCheckCancel(placeEvent)) {
                 bukkitFurniture.destroy();
                 return InteractionResult.FAIL;
             }
         }
         // 触发ce事件
-        Cancellable dummy = Cancellable.dummy();
-        PlayerOptionalContext functionContext = PlayerOptionalContext.of(player,
-                contextBuilder
-                .withParameter(DirectContextParameters.FURNITURE, bukkitFurniture)
-                .withParameter(DirectContextParameters.POSITION, LocationUtils.toWorldPosition(furnitureLocation))
-                .withParameter(DirectContextParameters.EVENT, dummy)
-                .withParameter(DirectContextParameters.HAND, context.getHand())
-                .withParameter(DirectContextParameters.ITEM_IN_HAND, item)
-        );
-        furnitureDefinition.execute(functionContext, EventTrigger.PLACE);
-        if (dummy.isCancelled()) {
-            bukkitFurniture.destroy();
-            return InteractionResult.SUCCESS_AND_CANCEL;
+        List<Function<Context>> functions = furnitureDefinition.eventFunctions(EventTrigger.PLACE);
+        if (!functions.isEmpty()) {
+            Cancellable dummy = Cancellable.dummy();
+            Function.execute(PlayerOptionalContext.of(player,
+                    ContextHolder.builder()
+                            .withOptionalParameter(DirectContextParameters.PLAYER, player)
+                            .withParameter(DirectContextParameters.ITEM_IN_HAND, item)
+                            .withParameter(DirectContextParameters.FURNITURE, bukkitFurniture)
+                            .withParameter(DirectContextParameters.POSITION, LocationUtils.toWorldPosition(furnitureLocation))
+                            .withParameter(DirectContextParameters.EVENT, dummy)
+                            .withParameter(DirectContextParameters.HAND, context.getHand())
+                            .build()
+            ), functions);
+            if (dummy.isCancelled()) {
+                bukkitFurniture.destroy();
+                return InteractionResult.SUCCESS_AND_CANCEL;
+            }
         }
+
+
 
         // 让家具加载物品
         bukkitFurniture.controller.loadCustomDataFromItem(item);

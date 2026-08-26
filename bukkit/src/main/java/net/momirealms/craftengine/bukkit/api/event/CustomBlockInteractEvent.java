@@ -28,7 +28,6 @@ public final class CustomBlockInteractEvent extends PlayerEvent implements Cance
     private final Action action;
     private final BlockFace clickedFace;
     private final ItemStack item;
-    private final ContextHolder.Builder contextBuilder;
 
     @ApiStatus.Internal
     public CustomBlockInteractEvent(@NotNull Player player,
@@ -39,8 +38,7 @@ public final class CustomBlockInteractEvent extends PlayerEvent implements Cance
                                     @NotNull BlockFace clickedFace,
                                     @NotNull InteractionHand hand,
                                     @NotNull Action action,
-                                    @Nullable ItemStack item,
-                                    @NotNull ContextHolder.Builder contextBuilder) {
+                                    @Nullable ItemStack item) {
         super(player);
         this.blockDefinition = state.owner().value();
         this.bukkitBlock = bukkitBlock;
@@ -51,12 +49,6 @@ public final class CustomBlockInteractEvent extends PlayerEvent implements Cance
         this.action = action;
         this.clickedFace = clickedFace;
         this.item = item;
-        this.contextBuilder = contextBuilder;
-    }
-
-    @NotNull
-    public ContextHolder.Builder contextBuilder() {
-        return this.contextBuilder;
     }
 
     @NotNull

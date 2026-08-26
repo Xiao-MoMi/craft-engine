@@ -119,8 +119,7 @@ public sealed interface LoreProcessor extends SimpleNetworkItemProcessor
     non-sealed class EmptyLoreProcessor implements LoreProcessor {
 
         @Override
-        public Item apply(Item item, ItemBuildContext context) {
-            return item;
+        public void apply(ItemBuildContext context) {
         }
 
         @Override
@@ -137,9 +136,8 @@ public sealed interface LoreProcessor extends SimpleNetworkItemProcessor
         }
 
         @Override
-        public Item apply(Item item, ItemBuildContext context) {
-            item.loreComponent(this.modification.parseAsList(context));
-            return item;
+        public void apply(ItemBuildContext context) {
+            context.item().loreComponent(this.modification.parseAsList(context));
         }
 
         @Override
@@ -158,9 +156,8 @@ public sealed interface LoreProcessor extends SimpleNetworkItemProcessor
         }
 
         @Override
-        public Item apply(Item item, ItemBuildContext context) {
-            item.loreComponent(this.modification2.apply(this.modification1.apply(Stream.empty(), context), context).toList());
-            return item;
+        public void apply(ItemBuildContext context) {
+            context.item().loreComponent(this.modification2.apply(this.modification1.apply(Stream.empty(), context), context).toList());
         }
 
         @Override
@@ -177,9 +174,8 @@ public sealed interface LoreProcessor extends SimpleNetworkItemProcessor
         }
 
         @Override
-        public Item apply(Item item, ItemBuildContext context) {
-            item.loreComponent(Arrays.stream(this.modifications).reduce(Stream.<Component>empty(), (stream, modification) -> modification.apply(stream, context), Stream::concat).toList());
-            return item;
+        public void apply(ItemBuildContext context) {
+            context.item().loreComponent(Arrays.stream(this.modifications).reduce(Stream.<Component>empty(), (stream, modification) -> modification.apply(stream, context), Stream::concat).toList());
         }
 
         @Override

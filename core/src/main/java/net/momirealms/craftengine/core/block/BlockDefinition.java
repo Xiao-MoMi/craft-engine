@@ -4,6 +4,7 @@ import net.momirealms.craftengine.core.block.property.Property;
 import net.momirealms.craftengine.core.loot.Loot;
 import net.momirealms.craftengine.core.plugin.context.Context;
 import net.momirealms.craftengine.core.plugin.context.EventTrigger;
+import net.momirealms.craftengine.core.plugin.context.function.Function;
 import net.momirealms.craftengine.core.util.Key;
 import net.momirealms.craftengine.core.world.context.BlockPlaceContext;
 import net.momirealms.sparrow.nbt.CompoundTag;
@@ -26,7 +27,7 @@ public interface BlockDefinition {
         return "block." + id.namespace() + "." + id.value();
     }
 
-    void execute(Context context, EventTrigger trigger);
+    List<Function<Context>> eventFunctions(EventTrigger trigger);
 
     @NotNull
     BlockStateVariantProvider variantProvider();

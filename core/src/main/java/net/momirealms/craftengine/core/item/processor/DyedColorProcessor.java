@@ -21,8 +21,8 @@ public final class DyedColorProcessor implements SimpleNetworkItemProcessor {
     }
 
     @Override
-    public Item apply(Item item, ItemBuildContext context) {
-        return item.dyedColor(this.color);
+    public void apply(ItemBuildContext context) {
+        context.item().dyedColor(this.color);
     }
 
     @Override

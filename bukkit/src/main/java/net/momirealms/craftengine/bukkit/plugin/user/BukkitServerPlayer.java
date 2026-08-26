@@ -51,6 +51,8 @@ import net.momirealms.craftengine.core.pack.host.ResourcePackDownloadData;
 import net.momirealms.craftengine.core.plugin.CraftEngine;
 import net.momirealms.craftengine.core.plugin.config.Config;
 import net.momirealms.craftengine.core.plugin.context.CooldownData;
+import net.momirealms.craftengine.core.plugin.context.PlayerContext;
+import net.momirealms.craftengine.core.plugin.context.PlayerOptionalContext;
 import net.momirealms.craftengine.core.plugin.locale.TranslationManager;
 import net.momirealms.craftengine.core.plugin.network.ConnectionState;
 import net.momirealms.craftengine.core.plugin.network.EntityPacketHandler;
@@ -258,6 +260,8 @@ public class BukkitServerPlayer extends BukkitLivingEntity implements Player {
     // 是否正在模拟客户端可能缺失的交互逻辑
     // 比如客户端觉得音符盒可以交互，但实际上不可，导致副手的交互包并未发出，最终导致副手的物品逻辑不执行
     private boolean isSimulatingInteraction;
+    // 常驻context
+    private final PlayerOptionalContext constantContext;
 
     public BukkitServerPlayer(BukkitCraftEngine plugin, @Nullable Channel channel) {
         super((WeakReference<Object>) null);
@@ -273,6 +277,7 @@ public class BukkitServerPlayer extends BukkitLivingEntity implements Player {
             }
         }
         this.culling = new EntityCulling(this);
+        this.constantContext = PlayerOptionalContext.of(this);
     }
 
     public void setPlayer(org.bukkit.entity.Player player) {
@@ -2029,5 +2034,10 @@ public class BukkitServerPlayer extends BukkitLivingEntity implements Player {
     public BukkitItem getItemBySlot(int slot) {
         PlayerInventory inventory = platformPlayer().getInventory();
         return BukkitItemManager.instance().wrap(inventory.getItem(slot));
+    }
+
+    @Override
+    public PlayerContext constantContext() {
+        return this.constantContext;
     }
 }

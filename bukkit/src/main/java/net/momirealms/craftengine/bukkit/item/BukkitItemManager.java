@@ -31,6 +31,8 @@ import net.momirealms.craftengine.core.pack.AbstractPackManager;
 import net.momirealms.craftengine.core.plugin.compatibility.ItemSource;
 import net.momirealms.craftengine.core.plugin.config.Config;
 import net.momirealms.craftengine.core.plugin.config.KnownResourceException;
+import net.momirealms.craftengine.core.plugin.context.ContextHolder;
+import net.momirealms.craftengine.core.plugin.context.parameter.DirectContextParameters;
 import net.momirealms.craftengine.core.plugin.network.mod.protocol.ClientboundCreativeModeTabItemsPacket;
 import net.momirealms.craftengine.core.util.*;
 import net.momirealms.craftengine.proxy.minecraft.core.HolderProxy;
@@ -269,13 +271,13 @@ public final class BukkitItemManager extends AbstractItemManager {
                 Object originalComponents = ItemProxy.INSTANCE.components(item);
                 Object itemStack = ItemStackProxy.INSTANCE.newInstance(item, 1);
                 BukkitItem wrapped = this.wrap(itemStack);
-                ItemBuildContext context = ItemBuildContext.empty();
-                context.setItem(wrapped);
-                Item processed = wrapped;
+                ItemBuildContext context = ItemBuildContext.of(null, wrapped, ContextHolder.builder()
+                        .withParameter(DirectContextParameters.ITEM, wrapped)
+                        .build());
                 for (ItemProcessor processor : entry.getValue()) {
-                    processed = processor.apply(processed, context);
+                    processor.apply(context);
                 }
-                Object overriddenComponents = ItemStackProxy.INSTANCE.getComponents(processed.minecraftItem());
+                Object overriddenComponents = ItemStackProxy.INSTANCE.getComponents(context.item().minecraftItem());
                 this.originalVanillaItemComponents.putIfAbsent(item, originalComponents);
                 this.setVanillaItemComponents(item, overriddenComponents);
             } catch (Throwable throwable) {

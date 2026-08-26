@@ -46,10 +46,8 @@ public abstract class AbstractBlockDefinition implements BlockDefinition {
     }
 
     @Override
-    public void execute(Context context, EventTrigger trigger) {
-        for (Function<Context> function : Optional.ofNullable(this.events.get(trigger)).orElse(Collections.emptyList())) {
-            function.run(context);
-        }
+    public List<Function<Context>> eventFunctions(EventTrigger trigger) {
+        return this.events.getOrDefault(trigger, Collections.emptyList());
     }
 
     @NotNull

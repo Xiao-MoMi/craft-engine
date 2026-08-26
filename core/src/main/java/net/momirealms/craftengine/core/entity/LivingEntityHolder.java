@@ -49,8 +49,7 @@ public final class LivingEntityHolder {
     public LivingEntityHolder(LivingEntity entity, @Nullable EntityTickScheduler tickScheduler) {
         this.entity = entity;
         this.tickScheduler = tickScheduler;
-        this.context = new LivingEntityContext(entity, ContextHolder.builder()
-                .withParameter(DirectContextParameters.ENTITY, entity)
+        this.context = new LivingEntityContext(entity, ContextHolder.builder(DirectContextParameters.ENTITY, entity)
                 .withOptionalParameter(DirectContextParameters.PLAYER, entity instanceof Player player ? player : null)
                 .immutable(true)
                 .build());

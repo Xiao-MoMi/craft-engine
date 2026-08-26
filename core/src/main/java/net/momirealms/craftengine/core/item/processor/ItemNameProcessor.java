@@ -24,9 +24,8 @@ public final class ItemNameProcessor implements SimpleNetworkItemProcessor {
     }
 
     @Override
-    public Item apply(Item item, ItemBuildContext context) {
-        item.itemNameComponent(this.line.parse(context));
-        return item;
+    public void apply(ItemBuildContext context) {
+        context.item().itemNameComponent(this.line.parse(context));
     }
 
     @Override

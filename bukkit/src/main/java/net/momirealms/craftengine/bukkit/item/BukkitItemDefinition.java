@@ -46,9 +46,9 @@ public final class BukkitItemDefinition extends AbstractItemDefinition {
         Item wrapped = BukkitItemManager.instance().wrap(item);
         context.setItem(wrapped);
         for (ItemProcessor modifier : processors()) {
-            wrapped = modifier.apply(wrapped, context);
+            modifier.apply(context);
         }
-        return (BukkitItem) wrapped;
+        return (BukkitItem) context.item();
     }
 
     @Override

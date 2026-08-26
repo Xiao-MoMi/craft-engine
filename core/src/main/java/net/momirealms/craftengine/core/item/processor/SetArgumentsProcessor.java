@@ -1,6 +1,5 @@
 package net.momirealms.craftengine.core.item.processor;
 
-import net.momirealms.craftengine.core.item.Item;
 import net.momirealms.craftengine.core.item.ItemBuildContext;
 import net.momirealms.craftengine.core.plugin.config.ConfigSection;
 import net.momirealms.craftengine.core.plugin.config.ConfigValue;
@@ -24,13 +23,12 @@ public final class SetArgumentsProcessor implements ItemProcessor {
     }
 
     @Override
-    public Item apply(Item item, ItemBuildContext context) {
+    public void apply(ItemBuildContext context) {
         Map<String, String> processed = new HashMap<>();
         for (Map.Entry<String, TextProvider> entry : this.arguments.entrySet()) {
             processed.put(entry.getKey(), entry.getValue().get(context));
         }
-        item.setJavaTag(processed, ARGUMENTS_TAG);
-        return item;
+        context.item().setJavaTag(processed, ARGUMENTS_TAG);
     }
 
     private static class Factory implements ItemProcessorFactory<SetArgumentsProcessor> {

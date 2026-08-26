@@ -18,9 +18,8 @@ public final class JukeboxSongProcessor implements ItemProcessor {
     }
 
     @Override
-    public Item apply(Item item, ItemBuildContext context) {
-        item.jukeboxSong(this.song);
-        return item;
+    public void apply(ItemBuildContext context) {
+        context.item().jukeboxSong(this.song);
     }
 
     private static class Factory implements ItemProcessorFactory<JukeboxSongProcessor> {

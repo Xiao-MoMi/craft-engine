@@ -34,9 +34,10 @@ public final class VaultLootListener implements Listener {
         if (sources.isEmpty()) return;
         Block block = event.getBlock();
         World world = BukkitAdaptor.adapt(block.getWorld());
-        ContextHolder.Builder builder = ContextHolder.builder()
-                .withParameter(DirectContextParameters.WORLD, world)
-                .withParameter(DirectContextParameters.POSITION, LocationUtils.toWorldPosition(block.getLocation()));
+        ContextHolder.Builder builder = ContextHolder.builder(
+                DirectContextParameters.WORLD, world,
+                DirectContextParameters.POSITION, LocationUtils.toWorldPosition(block.getLocation())
+        );
         Player player = event.getPlayer();
         BukkitServerPlayer serverPlayer = null;
         if (player != null) {

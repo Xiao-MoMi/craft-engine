@@ -277,7 +277,7 @@ public final class ModernNetworkItemHandler implements NetworkItemHandler {
         // 准备阶段
         CompoundTag tag = new CompoundTag();
         for (ItemProcessor modifier : customItem.clientBoundProcessors()) {
-            modifier.prepareNetworkItem(original, context, tag);
+            modifier.prepareNetworkItem(context, tag);
         }
         // 如果拦截物品的描述名称等
         if (Config.interceptItem()) {
@@ -296,8 +296,9 @@ public final class ModernNetworkItemHandler implements NetworkItemHandler {
         }
         // 应用阶段
         for (ItemProcessor modifier : customItem.clientBoundProcessors()) {
-            wrapped = modifier.apply(wrapped, context);
+            modifier.apply(context);
         }
+        wrapped = context.item();
         // 如果tag不空，则需要返回
         if (!tag.isEmpty()) {
             CompoundTag customData = Optional.ofNullable(wrapped.getComponentAsSparrowTag(DataComponentTypes.CUSTOM_DATA))

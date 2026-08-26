@@ -20,9 +20,8 @@ public final class UnbreakableProcessor implements SimpleNetworkItemProcessor {
     }
 
     @Override
-    public Item apply(Item item, ItemBuildContext context) {
-        item.unbreakable(this.argument);
-        return item;
+    public void apply(ItemBuildContext context) {
+        context.item().unbreakable(this.argument);
     }
 
     @Override

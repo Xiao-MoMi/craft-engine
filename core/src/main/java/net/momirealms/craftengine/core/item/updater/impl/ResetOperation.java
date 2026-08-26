@@ -15,7 +15,6 @@ import net.momirealms.craftengine.core.util.VersionHelper;
 
 import java.util.List;
 
-// todo 完善 custom data 保留机制
 public final class ResetOperation implements ItemUpdater {
     public static final ItemUpdaterFactory<ResetOperation> FACTORY = new Factory();
     private final LazyReference<ItemDefinition> item;
@@ -29,7 +28,8 @@ public final class ResetOperation implements ItemUpdater {
     }
 
     @Override
-    public Item update(Item item, ItemBuildContext context) {
+    public void update(ItemBuildContext context) {
+        Item item = context.item();
         Item newItem = this.item.get().buildItem(context);
         if (VersionHelper.COMPONENT_RELEASE) {
             for (Key component : this.componentsToKeep) {
@@ -44,7 +44,7 @@ public final class ResetOperation implements ItemUpdater {
                 }
             }
         }
-        return newItem;
+        context.setItem(newItem);
     }
 
     private static class Factory implements ItemUpdaterFactory<ResetOperation> {

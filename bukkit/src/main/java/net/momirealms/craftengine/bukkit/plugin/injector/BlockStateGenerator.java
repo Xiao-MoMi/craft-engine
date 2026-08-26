@@ -98,7 +98,7 @@ public final class BlockStateGenerator {
 
         constructor$CraftEngineBlockState = clazz$CraftEngineBlock.getSparrowConstructor(ConstructorMatcher.takeArguments(
                 BlockProxy.CLASS,
-                VersionHelper.isOrAbove26_1 ? PropertyProxy.CLASS.arrayType() : VersionHelper.isOrAbove1_20_5 ? Reference2ObjectArrayMap.class : ImmutableMap.class,
+                VersionHelper.isOrAbove26_1 ? PropertyProxy.CLASS.arrayType() : (VersionHelper.isOrAbove1_20_5 ? Reference2ObjectArrayMap.class : ImmutableMap.class),
                 VersionHelper.isOrAbove26_1 ? Comparable.class.arrayType() : MapCodec.class
         )).asm$3();
 
@@ -148,8 +148,9 @@ public final class BlockStateGenerator {
             // 自定义 LootTable.
             Object serverLevel = LootParamsProxy.BuilderProxy.INSTANCE.getLevel(builder);
             World world = BukkitAdaptor.adapt(LevelProxy.INSTANCE.getWorld(serverLevel));
-            ContextHolder.Builder lootBuilder = new ContextHolder.Builder()
-                    .withParameter(DirectContextParameters.POSITION, new WorldPosition(world, Vec3Proxy.INSTANCE.getX(vec3), Vec3Proxy.INSTANCE.getY(vec3), Vec3Proxy.INSTANCE.getZ(vec3)));
+            ContextHolder.Builder lootBuilder = ContextHolder.builder()
+                    .withParameter(DirectContextParameters.POSITION, new WorldPosition(world, Vec3Proxy.INSTANCE.getX(vec3), Vec3Proxy.INSTANCE.getY(vec3), Vec3Proxy.INSTANCE.getZ(vec3)))
+                    .withParameter(DirectContextParameters.CUSTOM_BLOCK_STATE, state);
             if (!item.isEmpty()) {
                 lootBuilder.withParameter(DirectContextParameters.ITEM_IN_HAND, item);
             }
@@ -164,7 +165,7 @@ public final class BlockStateGenerator {
             if (radius != null) {
                 lootBuilder.withParameter(DirectContextParameters.EXPLOSION_RADIUS, radius);
             }
-            return state.getDrops(lootBuilder, world, player).stream().map(Item::minecraftItem).toList();
+            return state.getDrops(lootBuilder.build(), world, player).stream().map(Item::minecraftItem).toList();
         }
     }
 

@@ -23,7 +23,6 @@ public final class CustomBlockAttemptPlaceEvent extends PlayerEvent implements C
     private final BlockFace clickedFace;
     private final Block clickedBlock;
     private final InteractionHand hand;
-    private final ContextHolder.Builder contextBuilder;
 
     @ApiStatus.Internal
     public CustomBlockAttemptPlaceEvent(@NotNull Player player,
@@ -31,8 +30,7 @@ public final class CustomBlockAttemptPlaceEvent extends PlayerEvent implements C
                                         @NotNull ImmutableBlockState state,
                                         @NotNull BlockFace clickedFace,
                                         @NotNull Block clickedBlock,
-                                        @NotNull InteractionHand hand,
-                                        @NotNull ContextHolder.Builder contextBuilder) {
+                                        @NotNull InteractionHand hand) {
         super(player);
         this.blockDefinition = state.owner().value();
         this.state = state;
@@ -40,12 +38,6 @@ public final class CustomBlockAttemptPlaceEvent extends PlayerEvent implements C
         this.clickedFace = clickedFace;
         this.clickedBlock = clickedBlock;
         this.hand = hand;
-        this.contextBuilder = contextBuilder;
-    }
-
-    @NotNull
-    public ContextHolder.Builder contextBuilder() {
-        return this.contextBuilder;
     }
 
     @NotNull

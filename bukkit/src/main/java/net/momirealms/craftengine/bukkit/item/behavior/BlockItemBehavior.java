@@ -27,9 +27,11 @@ import net.momirealms.craftengine.core.plugin.config.Config;
 import net.momirealms.craftengine.core.plugin.config.ConfigConstants;
 import net.momirealms.craftengine.core.plugin.config.ConfigSection;
 import net.momirealms.craftengine.core.plugin.config.ConfigValue;
+import net.momirealms.craftengine.core.plugin.context.Context;
 import net.momirealms.craftengine.core.plugin.context.ContextHolder;
 import net.momirealms.craftengine.core.plugin.context.EventTrigger;
 import net.momirealms.craftengine.core.plugin.context.PlayerOptionalContext;
+import net.momirealms.craftengine.core.plugin.context.function.Function;
 import net.momirealms.craftengine.core.plugin.context.parameter.DirectContextParameters;
 import net.momirealms.craftengine.core.util.Cancellable;
 import net.momirealms.craftengine.core.util.Direction;
@@ -119,8 +121,6 @@ public class BlockItemBehavior extends ItemBehavior implements BlockItem {
 //            return InteractionResult.FAIL;
 //        }
 
-        ContextHolder.Builder contextBuilder = ContextHolder.builder();
-
         if (player != null) {
 
             if (player.isAdventureMode()) {
@@ -141,7 +141,7 @@ public class BlockItemBehavior extends ItemBehavior implements BlockItem {
 
             // trigger event
             CustomBlockAttemptPlaceEvent attemptPlaceEvent = new CustomBlockAttemptPlaceEvent(bukkitPlayer, placeLocation.clone(), blockStateToPlace,
-                    DirectionUtils.toBlockFace(context.getClickedFace()), bukkitBlock, context.getHand(), contextBuilder);
+                    DirectionUtils.toBlockFace(context.getClickedFace()), bukkitBlock, context.getHand());
             if (EventUtils.fireAndCheckCancel(attemptPlaceEvent)) {
                 return InteractionResult.FAIL;
             }
@@ -166,7 +166,7 @@ public class BlockItemBehavior extends ItemBehavior implements BlockItem {
             }
 
             // call custom event
-            CustomBlockPlaceEvent customPlaceEvent = new CustomBlockPlaceEvent(bukkitPlayer, placeLocation.clone(), blockStateToPlace, world.getBlockAt(placeLocation), context.getHand(), contextBuilder);
+            CustomBlockPlaceEvent customPlaceEvent = new CustomBlockPlaceEvent(bukkitPlayer, placeLocation.clone(), blockStateToPlace, world.getBlockAt(placeLocation), context.getHand());
             if (EventUtils.fireAndCheckCancel(customPlaceEvent)) {
                 // revert changes
                 for (BlockState state : revertStates) {
@@ -177,21 +177,26 @@ public class BlockItemBehavior extends ItemBehavior implements BlockItem {
         }
 
         WorldPosition position = new WorldPosition(context.getLevel(), pos.x() + 0.5, pos.y() + 0.5, pos.z() + 0.5);
-        Cancellable dummy = Cancellable.dummy();
-        PlayerOptionalContext functionContext = PlayerOptionalContext.of(player,
-                contextBuilder
-                .withParameter(DirectContextParameters.BLOCK, new BukkitExistingBlock(bukkitBlock))
-                .withParameter(DirectContextParameters.POSITION, position)
-                .withParameter(DirectContextParameters.EVENT, dummy)
-                .withParameter(DirectContextParameters.HAND, context.getHand())
-                .withParameter(DirectContextParameters.ITEM_IN_HAND, context.getItem())
-        );
-        block.execute(functionContext, EventTrigger.PLACE);
-        if (dummy.isCancelled()) {
-            for (BlockState state : revertStates) {
-                state.update(true, false);
+
+        List<Function<Context>> functions = block.eventFunctions(EventTrigger.PLACE);
+        if (!functions.isEmpty()) {
+            Cancellable dummy = Cancellable.dummy();
+            Function.execute(PlayerOptionalContext.of(player,
+                    ContextHolder.builder()
+                            .withOptionalParameter(DirectContextParameters.PLAYER, player)
+                            .withParameter(DirectContextParameters.BLOCK, new BukkitExistingBlock(bukkitBlock))
+                            .withParameter(DirectContextParameters.POSITION, position)
+                            .withParameter(DirectContextParameters.EVENT, dummy)
+                            .withParameter(DirectContextParameters.HAND, context.getHand())
+                            .withParameter(DirectContextParameters.ITEM_IN_HAND, context.getItem())
+                            .build()
+            ), functions);
+            if (dummy.isCancelled()) {
+                for (BlockState state : revertStates) {
+                    state.update(true, false);
+                }
+                return InteractionResult.FAIL;
             }
-            return InteractionResult.FAIL;
         }
 
         // 放置多元素

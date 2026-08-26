@@ -43,10 +43,8 @@ class FurnitureDefinitionImpl implements FurnitureDefinition {
     }
 
     @Override
-    public void execute(Context context, EventTrigger trigger) {
-        for (Function<Context> function : Optional.ofNullable(this.events.get(trigger)).orElse(Collections.emptyList())) {
-            function.run(context);
-        }
+    public @NotNull List<Function<Context>> eventFunctions(EventTrigger trigger) {
+        return this.events.getOrDefault(trigger, Collections.emptyList());
     }
 
     @Override

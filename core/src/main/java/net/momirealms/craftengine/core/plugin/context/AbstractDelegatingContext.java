@@ -2,6 +2,7 @@ package net.momirealms.craftengine.core.plugin.context;
 
 import net.momirealms.craftengine.core.util.random.RandomSource;
 
+import java.util.Map;
 import java.util.Optional;
 
 public abstract class AbstractDelegatingContext implements Context {
@@ -24,5 +25,20 @@ public abstract class AbstractDelegatingContext implements Context {
     @Override
     public ContextHolder contexts() {
         return this.delegate.contexts();
+    }
+
+    @Override
+    public void setVariable(String key, Object value) {
+        this.delegate.setVariable(key, value);
+    }
+
+    @Override
+    public Object getVariable(String key) {
+        return this.delegate.getVariable(key);
+    }
+
+    @Override
+    public Map<String, Object> variables() {
+        return this.delegate.variables();
     }
 }

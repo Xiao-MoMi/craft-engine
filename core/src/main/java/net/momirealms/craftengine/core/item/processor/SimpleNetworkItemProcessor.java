@@ -2,6 +2,7 @@ package net.momirealms.craftengine.core.item.processor;
 
 import net.momirealms.craftengine.core.item.Item;
 import net.momirealms.craftengine.core.item.ItemBuildContext;
+import net.momirealms.craftengine.core.item.network.NetworkItemBuildContext;
 import net.momirealms.craftengine.core.item.network.NetworkItemHandler;
 import net.momirealms.craftengine.core.util.Key;
 import net.momirealms.craftengine.core.util.VersionHelper;
@@ -14,7 +15,8 @@ import java.util.StringJoiner;
 public interface SimpleNetworkItemProcessor extends ItemProcessor {
 
     @Override
-    default void prepareNetworkItem(Item item, ItemBuildContext context, CompoundTag networkData) {
+    default void prepareNetworkItem(NetworkItemBuildContext context, CompoundTag networkData) {
+        Item item = context.item();
         if (VersionHelper.COMPONENT_RELEASE) {
             Key componentType= componentType(item, context);
             if (componentType != null) {

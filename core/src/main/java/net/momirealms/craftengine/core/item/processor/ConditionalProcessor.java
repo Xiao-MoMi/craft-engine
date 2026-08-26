@@ -2,6 +2,7 @@ package net.momirealms.craftengine.core.item.processor;
 
 import net.momirealms.craftengine.core.item.Item;
 import net.momirealms.craftengine.core.item.ItemBuildContext;
+import net.momirealms.craftengine.core.item.network.NetworkItemBuildContext;
 import net.momirealms.craftengine.core.plugin.config.ConfigKeys;
 import net.momirealms.craftengine.core.plugin.config.ConfigSection;
 import net.momirealms.craftengine.core.plugin.config.ConfigValue;
@@ -26,20 +27,24 @@ public final class ConditionalProcessor implements ItemProcessor {
     }
 
     @Override
-    public Item apply(Item item, ItemBuildContext context) {
+    public void apply(ItemBuildContext context) {
+        Item item = context.item();
         if (this.condition.test(context)) {
             for (ItemProcessor m : this.modifiers) {
-                item = item.apply(m, context);
+                Item applied = item.apply(m, context);
+                if (applied != item) {
+                    context.setItem(applied);
+                    item = applied;
+                }
             }
         }
-        return item;
     }
 
     @Override
-    public void prepareNetworkItem(Item item, ItemBuildContext context, CompoundTag networkData) {
+    public void prepareNetworkItem(NetworkItemBuildContext context, CompoundTag networkData) {
         if (this.condition.test(context)) {
             for (ItemProcessor m : this.modifiers) {
-                m.prepareNetworkItem(item, context, networkData);
+                m.prepareNetworkItem(context, networkData);
             }
         }
     }

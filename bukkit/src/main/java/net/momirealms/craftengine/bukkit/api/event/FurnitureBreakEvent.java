@@ -13,22 +13,14 @@ import org.jetbrains.annotations.NotNull;
 public final class FurnitureBreakEvent extends PlayerEvent implements Cancellable {
     private static final HandlerList HANDLER_LIST = new HandlerList();
     private final BukkitFurniture furniture;
-    private final ContextHolder.Builder contextBuilder;
     private boolean cancelled;
     private boolean dropItems = true;
 
     @ApiStatus.Internal
     public FurnitureBreakEvent(@NotNull Player player,
-                               @NotNull BukkitFurniture furniture,
-                               @NotNull ContextHolder.Builder contextBuilder) {
+                               @NotNull BukkitFurniture furniture) {
         super(player);
         this.furniture = furniture;
-        this.contextBuilder = contextBuilder;
-    }
-
-    @NotNull
-    public ContextHolder.Builder contextBuilder() {
-        return this.contextBuilder;
     }
 
     @NotNull

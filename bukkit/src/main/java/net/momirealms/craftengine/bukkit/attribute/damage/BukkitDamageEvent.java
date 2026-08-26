@@ -16,6 +16,7 @@ import net.momirealms.craftengine.core.entity.Entity;
 import net.momirealms.craftengine.core.entity.LivingEntity;
 import net.momirealms.craftengine.core.entity.LivingEntityHolder;
 import net.momirealms.craftengine.core.entity.player.InteractionHand;
+import net.momirealms.craftengine.core.entity.player.Player;
 import net.momirealms.craftengine.core.item.Item;
 import net.momirealms.craftengine.core.item.setting.value.AttributeModifiers;
 import net.momirealms.craftengine.core.plugin.context.ContextHolder;
@@ -67,11 +68,26 @@ public final class BukkitDamageEvent implements DamageEvent {
         this.shootForce = this.resolveShootForce();
         Item weapon = this.resolveActiveWeapon();
         this.activeWeapon = weapon == null || weapon.isEmpty() ? null : weapon;
-        this.context = EntityDamageContext.of(this,
-                ContextHolder.builder()
-                        .withOptionalParameter(DirectContextParameters.ITEM, this.activeWeapon)
-                        .withParameter(DirectContextParameters.EVENT, Cancellable.of(event::isCancelled, event::setCancelled))
-        );
+        ContextHolder.Builder contextBuilder = ContextHolder.builder()
+                .withOptionalParameter(DirectContextParameters.ITEM, this.activeWeapon)
+                .withParameter(DirectContextParameters.EVENT, Cancellable.of(event::isCancelled, event::setCancelled))
+                .withParameter(DirectContextParameters.THIS_ENTITY, this.victim)
+                .withParameter(DirectContextParameters.POSITION, this.victim.position())
+                .withParameter(DirectContextParameters.ORIGINAL_DAMAGE, this.damage())
+                .withParameter(DirectContextParameters.DAMAGE, this.damage())
+                .withParameter(DirectContextParameters.IS_CRITICAL, this.source.isCritical())
+                .withParameter(DirectContextParameters.IS_SWEEP, this.isSweepAttack())
+                .withParameter(DirectContextParameters.IS_ATTACK_READY, this.isAttackReady())
+                .withParameter(DirectContextParameters.ATTACK_STRENGTH, this.attackStrength)
+                .withParameter(DirectContextParameters.SHOOT_FORCE, this.shootForce);
+        Entity causingEntity = this.source.causingEntity();
+        if (causingEntity != null) {
+            contextBuilder.withParameter(DirectContextParameters.ENTITY, causingEntity);
+            if (causingEntity instanceof Player player) {
+                contextBuilder.withParameter(DirectContextParameters.PLAYER, player);
+            }
+        }
+        this.context = EntityDamageContext.of(this, contextBuilder.build());
     }
 
     @Override

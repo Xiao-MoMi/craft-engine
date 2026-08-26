@@ -143,12 +143,12 @@ public final class MerchantTradeFunction<CTX extends Context> extends AbstractCo
                     if (this.components != null) {
                         ItemBuildContext empty = ItemBuildContext.empty();
                         empty.setItem(item);
-                        this.components.apply(item, empty);
+                        this.components.apply(empty);
                     }
                     if (this.nbt != null) {
                         ItemBuildContext empty = ItemBuildContext.empty();
                         empty.setItem(item);
-                        this.nbt.apply(item, empty);
+                        this.nbt.apply(empty);
                     }
                 }
                 item.count(this.count.getInt(context));

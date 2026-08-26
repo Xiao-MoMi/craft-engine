@@ -34,7 +34,8 @@ public final class WrittenBookContentProcessor implements SimpleNetworkItemProce
     }
 
     @Override
-    public Item apply(Item item, ItemBuildContext context) {
+    public void apply(ItemBuildContext context) {
+        Item item = context.item();
         CompoundTag bookTag = new CompoundTag();
         bookTag.put("title", this.title.toTag(context));
         bookTag.putString("author", this.author);
@@ -46,7 +47,6 @@ public final class WrittenBookContentProcessor implements SimpleNetworkItemProce
         }
         bookTag.put("pages", pagesTag);
         item.setSparrowTagComponent(DataComponentKeys.WRITTEN_BOOK_CONTENT, bookTag);
-        return item;
     }
 
     @Override

@@ -31,7 +31,8 @@ public final class ProfileProcessor implements SimpleNetworkItemProcessor {
     }
 
     @Override
-    public Item apply(Item item, ItemBuildContext context) {
+    public void apply(ItemBuildContext context) {
+        Item item = context.item();
         if (this.profileName != null) {
             String resultString = this.profileName.get(context);
             if (VersionHelper.isOrAbove1_20_5) {
@@ -44,7 +45,6 @@ public final class ProfileProcessor implements SimpleNetworkItemProcessor {
         } else if (VersionHelper.isOrAbove1_20_5 && this.texture != null) {
             item.setJavaComponent(DataComponentKeys.PROFILE, Map.of("texture", this.texture.asString()));
         }
-        return item;
     }
 
     private static class Factory implements ItemProcessorFactory<ProfileProcessor> {

@@ -3,6 +3,7 @@ package net.momirealms.craftengine.core.item.processor;
 import net.momirealms.craftengine.core.item.Item;
 import net.momirealms.craftengine.core.item.ItemBuildContext;
 import net.momirealms.craftengine.core.item.component.DataComponentKeys;
+import net.momirealms.craftengine.core.item.network.NetworkItemBuildContext;
 import net.momirealms.craftengine.core.item.network.NetworkItemHandler;
 import net.momirealms.craftengine.core.plugin.CraftEngine;
 import net.momirealms.craftengine.core.plugin.context.ContextKey;
@@ -22,8 +23,9 @@ public final class WrittenBookTagsProcessor implements ItemProcessor {
     private static final ContextKey<Boolean> HAS_NETWORK_TAG = ContextKey.direct("has_network_tag");
 
     @Override
-    public Item apply(Item item, ItemBuildContext context) {
-        if (!context.getOptionalParameter(HAS_NETWORK_TAG).orElse(false)) return item;
+    public void apply(ItemBuildContext context) {
+        Item item = context.item();
+        if (!context.getOptionalParameter(HAS_NETWORK_TAG).orElse(false)) return;
         if (VersionHelper.COMPONENT_RELEASE) {
             CompoundTag writtenBookTag = (CompoundTag) item.getComponentAsSparrowTag(DataComponentKeys.WRITTEN_BOOK_CONTENT);
             if (writtenBookTag != null) {
@@ -52,11 +54,11 @@ public final class WrittenBookTagsProcessor implements ItemProcessor {
                 item.setSparrowTag(pagesTag, "pages");
             }
         }
-        return item;
     }
 
     @Override
-    public void prepareNetworkItem(Item item, ItemBuildContext context, CompoundTag networkData) {
+    public void prepareNetworkItem(NetworkItemBuildContext context, CompoundTag networkData) {
+        Item item = context.item();
         if (VersionHelper.COMPONENT_RELEASE) {
             CompoundTag writtenBookTag = (CompoundTag) item.getComponentAsSparrowTag(DataComponentKeys.WRITTEN_BOOK_CONTENT);
             if (writtenBookTag != null) {

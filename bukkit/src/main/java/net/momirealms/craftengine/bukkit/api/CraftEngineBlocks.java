@@ -4,6 +4,7 @@ import net.momirealms.craftengine.bukkit.block.BukkitBlockManager;
 import net.momirealms.craftengine.bukkit.plugin.user.BukkitServerPlayer;
 import net.momirealms.craftengine.bukkit.util.BlockStateUtils;
 import net.momirealms.craftengine.bukkit.util.LocationUtils;
+import net.momirealms.craftengine.bukkit.world.BukkitExistingBlock;
 import net.momirealms.craftengine.core.block.BlockDefinition;
 import net.momirealms.craftengine.core.block.ImmutableBlockState;
 import net.momirealms.craftengine.core.block.UpdateFlags;
@@ -205,14 +206,23 @@ public final class CraftEngineBlocks {
         Location location = block.getLocation();
         WorldPosition position = new WorldPosition(world, location.getBlockX() + 0.5, location.getBlockY() + 0.5, location.getBlockZ() + 0.5);
         if (dropLoot) {
-            ContextHolder.Builder builder = new ContextHolder.Builder()
-                    .withParameter(DirectContextParameters.POSITION, position);
-            BukkitServerPlayer serverPlayer = null;
-            if (player != null) {
-                serverPlayer = BukkitAdaptor.adapt(player);
-                builder.withParameter(DirectContextParameters.PLAYER, serverPlayer);
+            ContextHolder.Builder builder;
+            BukkitServerPlayer serverPlayer = player == null ? null : BukkitAdaptor.adapt(player);
+            if (serverPlayer != null) {
+                builder = ContextHolder.builder(
+                        DirectContextParameters.CUSTOM_BLOCK_STATE, state,
+                        DirectContextParameters.PLAYER, serverPlayer,
+                        DirectContextParameters.POSITION, position,
+                        DirectContextParameters.BLOCK, new BukkitExistingBlock(block)
+                );
+            } else {
+                builder = ContextHolder.builder(
+                        DirectContextParameters.CUSTOM_BLOCK_STATE, state,
+                        DirectContextParameters.POSITION, position,
+                        DirectContextParameters.BLOCK, new BukkitExistingBlock(block)
+                );
             }
-            for (Item item : state.getDrops(builder, world, serverPlayer)) {
+            for (Item item : state.getDrops(builder.build(), world, serverPlayer)) {
                 world.dropItemNaturally(position, item);
             }
         }

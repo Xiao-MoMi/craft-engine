@@ -40,11 +40,11 @@ public final class EntityDropLootListener implements Listener {
         Location location = event.getItemDrop().getLocation();
         World world = BukkitAdaptor.adapt(location.getWorld());
         WorldPosition worldPosition = LocationUtils.toWorldPosition(location);
-        ContextHolder holder = ContextHolder.builder()
-                .withParameter(DirectContextParameters.WORLD, world)
-                .withParameter(DirectContextParameters.POSITION, worldPosition)
-                .withParameter(DirectContextParameters.ENTITY, bukkitEntity)
-                .build();
+        ContextHolder holder = ContextHolder.builder(
+                DirectContextParameters.WORLD, world,
+                DirectContextParameters.POSITION, worldPosition,
+                DirectContextParameters.ENTITY, bukkitEntity
+        ).build();
         LootOutcome outcome = LootManager.eval(sources, new LootContext(world, null, 1f, holder));
         if (!outcome.matched()) return;
         List<Item> items = outcome.items();
