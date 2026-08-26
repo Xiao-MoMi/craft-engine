@@ -6,7 +6,7 @@ import org.jetbrains.annotations.NotNull;
 final class ItemWrapper implements ImmediateItemProvider {
     private final Item template;
 
-    ItemWrapper(Item template) {
+    ItemWrapper(@NotNull Item template) {
         this.template = template.copy();
     }
 

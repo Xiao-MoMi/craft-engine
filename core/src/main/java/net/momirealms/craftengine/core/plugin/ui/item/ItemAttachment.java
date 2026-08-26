@@ -52,7 +52,7 @@ public interface ItemAttachment extends AutoCloseable {
         }
 
         void subscribeDependencies(
-                @NotNull List<? extends Function<? super Player, ? extends Signal<?>>> dependencies,
+                @NotNull List<Function<Player, Signal<?>>> dependencies,
                 @NotNull Player viewer
         ) {
             for (int index = 0; index < dependencies.size(); index++) {

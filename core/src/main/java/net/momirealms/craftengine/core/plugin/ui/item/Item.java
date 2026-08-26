@@ -9,8 +9,6 @@ import net.momirealms.craftengine.core.plugin.ui.item.provider.ItemProvider;
 import net.momirealms.craftengine.core.plugin.ui.window.Window;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Objects;
-
 public interface Item {
     Item EMPTY = new EmptyItem();
 
@@ -84,8 +82,6 @@ public interface Item {
      * @return 本次显示关系
      */
     default ItemAttachment attach(@NotNull Window window, @NotNull Observer<? super Item> observer) {
-        Objects.requireNonNull(window, "window");
-        Objects.requireNonNull(observer, "observer");
         return ItemAttachment.PASSIVE;
     }
 }

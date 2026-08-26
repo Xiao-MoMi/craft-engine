@@ -3,7 +3,6 @@ package net.momirealms.craftengine.core.plugin.ui.item.provider;
 import net.momirealms.craftengine.core.item.Item;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Function;
 
@@ -19,7 +18,7 @@ public interface ItemProvider {
      * @return 本次渲染结果的 Future
      */
     @NotNull
-    CompletableFuture<? extends Item> provide(@NotNull RenderContext context);
+    CompletableFuture<Item> provide(@NotNull RenderContext context);
 
     /**
      * 创建在渲染调用线程立即执行的 Provider.
@@ -28,8 +27,7 @@ public interface ItemProvider {
      * @return 同步 Provider
      */
     @NotNull
-    static ImmediateItemProvider sync(@NotNull Function<? super RenderContext, ? extends Item> renderer) {
-        Objects.requireNonNull(renderer, "renderer");
+    static ImmediateItemProvider sync(@NotNull Function<RenderContext, Item> renderer) {
         return renderer::apply;
     }
 
@@ -41,6 +39,6 @@ public interface ItemProvider {
      */
     @NotNull
     static ImmediateItemProvider constant(@NotNull Item template) {
-        return new ItemWrapper(Objects.requireNonNull(template, "template"));
+        return new ItemWrapper(template);
     }
 }

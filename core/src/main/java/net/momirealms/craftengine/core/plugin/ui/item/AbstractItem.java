@@ -10,7 +10,6 @@ import net.momirealms.craftengine.core.plugin.ui.state.Signal;
 import net.momirealms.craftengine.core.plugin.ui.window.Window;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.function.Function;
@@ -19,7 +18,7 @@ public abstract class AbstractItem implements ObservableItem {
     private final ItemProvider itemProvider;
     private final ImmediateItemProvider placeholder;
     private final ObservableDispatcher<Item> observers = new ObservableDispatcher<>();
-    private final CopyOnWriteArrayList<Function<? super Player, ? extends Signal<?>>> dependencies = new CopyOnWriteArrayList<>();
+    private final CopyOnWriteArrayList<Function<Player, Signal<?>>> dependencies = new CopyOnWriteArrayList<>();
 
     protected AbstractItem() {
         this.itemProvider = this::render;
@@ -33,7 +32,7 @@ public abstract class AbstractItem implements ObservableItem {
      */
     protected final void dependsOn(@NotNull Signal<?>... signals) {
         for (int index = 0; index < signals.length; index++) {
-            Signal<?> signal = Objects.requireNonNull(signals[index], "signal");
+            Signal<?> signal = signals[index];
             this.dependencies.add(ignoredViewer -> signal);
         }
     }
@@ -45,7 +44,7 @@ public abstract class AbstractItem implements ObservableItem {
      * @return 本次显示结果
      */
     @NotNull
-    protected abstract CompletableFuture<? extends net.momirealms.craftengine.core.item.Item> render(@NotNull RenderContext context);
+    protected abstract CompletableFuture<net.momirealms.craftengine.core.item.Item> render(@NotNull RenderContext context);
 
     /**
      * 返回首次渲染成功前使用的占位物品.
@@ -72,8 +71,6 @@ public abstract class AbstractItem implements ObservableItem {
 
     @Override
     public ItemAttachment attach(@NotNull Window window, @NotNull Observer<? super Item> observer) {
-        Objects.requireNonNull(window, "window");
-        Objects.requireNonNull(observer, "observer");
         ItemAttachment.Tracking attachment = ItemAttachment.tracking(this, observer);
         // 观察者与依赖必须同时建立, 中途失败时撤销整次挂载.
         try {

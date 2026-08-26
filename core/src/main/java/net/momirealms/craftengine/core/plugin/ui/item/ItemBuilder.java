@@ -473,7 +473,7 @@ public final class ItemBuilder {
                 LazyItemProvider lazyProvider = this.pendingProvider.getAndSet(null);
                 if (lazyProvider == null) return;
 
-                CompletableFuture<? extends ItemProvider> stage;
+                CompletableFuture<ItemProvider> stage;
                 try {
                     stage = lazyProvider.resolve();
                 } catch (Throwable throwable) {
