@@ -6,6 +6,8 @@ import net.momirealms.craftengine.core.plugin.ui.Observer;
 import net.momirealms.craftengine.core.plugin.ui.item.provider.ImmediateItemProvider;
 import net.momirealms.craftengine.core.plugin.ui.item.provider.ItemProvider;
 import net.momirealms.craftengine.core.plugin.ui.item.provider.RenderContext;
+import net.momirealms.craftengine.core.plugin.ui.state.KeyedSignal;
+import net.momirealms.craftengine.core.plugin.ui.state.PlayerKeyedSignal;
 import net.momirealms.craftengine.core.plugin.ui.state.Signal;
 import net.momirealms.craftengine.core.plugin.ui.window.Window;
 import org.jetbrains.annotations.NotNull;
@@ -35,6 +37,26 @@ public abstract class AbstractItem implements ObservableItem {
             Signal<?> signal = signals[index];
             this.dependencies.add(ignoredViewer -> signal);
         }
+    }
+
+    /**
+     * 声明按查看者 UUID 取值的渲染依赖, 只应在子类构造器中调用.
+     *
+     * @param signal 玩家分区数据源
+     */
+    protected final void dependsOn(@NotNull PlayerKeyedSignal<?> signal) {
+        this.dependencies.add(signal::at);
+    }
+
+    /**
+     * 声明通过查看者计算分区 key 的渲染依赖, 只应在子类构造器中调用.
+     *
+     * @param <K> 分区 key 类型
+     * @param signal 分区数据源
+     * @param keyOf 从查看者取得分区 key 的函数
+     */
+    protected final <K> void dependsOn(@NotNull KeyedSignal<K, ?> signal, @NotNull Function<Player, K> keyOf) {
+        this.dependencies.add(viewer -> signal.at(keyOf.apply(viewer)));
     }
 
     /**

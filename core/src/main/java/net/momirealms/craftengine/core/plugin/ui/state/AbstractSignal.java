@@ -22,8 +22,12 @@ abstract sealed class AbstractSignal<T> implements Signal<T> permits
         SwitchingSignal,
         MergingSignal,
         AsyncSignalImpl,
+        KeyedSignalImpl.SyncPartition,
+        PartitionHandle,
         TickingSignal,
-        PacedSignal
+        PacedSignal,
+        CollectionSignal,
+        AbstractKeyedSignal.Keys
 {
     private static final BiPredicate<Object, Object> DEFAULT_SAME_VALUE = Objects::equals;
 

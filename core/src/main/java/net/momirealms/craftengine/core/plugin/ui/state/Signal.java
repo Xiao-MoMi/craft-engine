@@ -9,7 +9,7 @@ import java.util.function.BiPredicate;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
-public sealed interface Signal<T> permits MutableSignal, AsyncSignal, AbstractSignal {
+public sealed interface Signal<T> permits MutableSignal, AsyncSignal, AbstractSignal, ListSignal, SetSignal, MapSignal {
 
     /**
      * 读取当前值.

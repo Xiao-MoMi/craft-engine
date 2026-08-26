@@ -123,6 +123,20 @@ public final class Signals {
     }
 
     /**
+     * 按 key 在同一个分区数据源之间切换, 只持有和订阅当前分区的稳定句柄.
+     *
+     * @param <K> 分区 key 类型
+     * @param <T> 值类型
+     * @param source 分区数据源
+     * @param key 当前选择的分区 key
+     * @return 切换后的 Signal
+     */
+    @NotNull
+    public static <K, T> Signal<T> switching(@NotNull KeyedSignal<K, T> source, @NotNull Signal<K> key) {
+        return new SwitchingSignal<>(source::at, AbstractSignal.require(key));
+    }
+
+    /**
      * 按 key 在若干 Signal 之间切换, 只读取和订阅当前选中的来源.
      *
      * @param <K> key 类型

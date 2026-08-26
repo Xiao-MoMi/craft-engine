@@ -7,7 +7,7 @@ import java.util.function.BiPredicate;
 import java.util.function.Function;
 import java.util.function.UnaryOperator;
 
-public sealed interface MutableSignal<T> extends Signal<T> permits MutableSignalImpl, LensSignal {
+public sealed interface MutableSignal<T> extends Signal<T> permits MutableSignalImpl, MutablePartitionHandle, LensSignal {
 
     /**
      * 写入新值, 与旧值相同时静默跳过.

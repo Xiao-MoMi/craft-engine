@@ -8,7 +8,10 @@ import net.momirealms.craftengine.core.plugin.ui.item.guard.ItemGuard;
 import net.momirealms.craftengine.core.plugin.ui.item.provider.ImmediateItemProvider;
 import net.momirealms.craftengine.core.plugin.ui.item.provider.ItemProvider;
 import net.momirealms.craftengine.core.plugin.ui.item.provider.RenderContext;
+import net.momirealms.craftengine.core.plugin.ui.state.KeyedSignal;
+import net.momirealms.craftengine.core.plugin.ui.state.PlayerKeyedSignal;
 import net.momirealms.craftengine.core.plugin.ui.state.Signal;
+import net.momirealms.craftengine.core.plugin.ui.state.Signals;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -104,6 +107,17 @@ public final class ItemBuilder {
     }
 
     /**
+     * 让 Item 在显示期间每隔固定 tick 重新渲染一次.
+     *
+     * @param periodTicks 正数 tick 周期
+     * @return 此 Builder
+     * @throws IllegalArgumentException 当周期不是正数时
+     */
+    public ItemBuilder updatePeriodically(int periodTicks) {
+        return this.dependsOn(Signals.everyTicks(periodTicks));
+    }
+
+    /**
      * 声明渲染读取的 Signal, 任一 Signal 失效时重新渲染 Item.
      *
      * @param signals 渲染依赖
@@ -114,6 +128,30 @@ public final class ItemBuilder {
             Signal<?> signal = signals[index];
             this.dependencies.add(ignoredViewer -> signal);
         }
+        return this;
+    }
+
+    /**
+     * 声明按查看者 UUID 取值的渲染依赖.
+     *
+     * @param signal 玩家分区数据源
+     * @return 此 Builder
+     */
+    public ItemBuilder dependsOn(@NotNull PlayerKeyedSignal<?> signal) {
+        this.dependencies.add(signal::at);
+        return this;
+    }
+
+    /**
+     * 声明通过查看者计算分区 key 的渲染依赖.
+     *
+     * @param <K> 分区 key 类型
+     * @param signal 分区数据源
+     * @param keyOf 从查看者取得分区 key 的函数
+     * @return 此 Builder
+     */
+    public <K> ItemBuilder dependsOn(@NotNull KeyedSignal<K, ?> signal, @NotNull Function<Player, K> keyOf) {
+        this.dependencies.add(viewer -> signal.at(keyOf.apply(viewer)));
         return this;
     }
 
