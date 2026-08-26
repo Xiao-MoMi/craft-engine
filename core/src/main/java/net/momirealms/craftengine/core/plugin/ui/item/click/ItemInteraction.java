@@ -5,7 +5,7 @@ import net.momirealms.craftengine.core.plugin.ui.window.Window;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public interface ItemInteraction {
+public sealed interface ItemInteraction permits ItemClick, ItemDrag, BundleSelectClick {
 
     /**
      * 返回发起交互的玩家.
