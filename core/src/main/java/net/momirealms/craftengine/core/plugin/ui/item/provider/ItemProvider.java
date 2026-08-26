@@ -1,6 +1,7 @@
 package net.momirealms.craftengine.core.plugin.ui.item.provider;
 
 import net.momirealms.craftengine.core.item.Item;
+import net.momirealms.craftengine.core.plugin.CraftEngine;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.concurrent.CompletableFuture;
@@ -29,6 +30,20 @@ public interface ItemProvider {
     @NotNull
     static ImmediateItemProvider sync(@NotNull Function<RenderContext, Item> renderer) {
         return renderer::apply;
+    }
+
+    /**
+     * 创建在 CraftEngine 异步调度器上计算物品的 Provider.
+     *
+     * @param renderer 同步渲染函数
+     * @return 异步 Provider
+     */
+    @NotNull
+    static ItemProvider async(@NotNull Function<RenderContext, Item> renderer) {
+        return context -> CompletableFuture.supplyAsync(
+                () -> renderer.apply(context),
+                CraftEngine.instance().scheduler().async()
+        );
     }
 
     /**
