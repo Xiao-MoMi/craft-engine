@@ -5,6 +5,8 @@ import net.momirealms.craftengine.core.plugin.ui.item.click.ItemClick;
 import net.momirealms.craftengine.core.plugin.ui.item.click.ItemInteraction;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.concurrent.TimeUnit;
+
 public final class ItemGuards {
 
     private ItemGuards() {
@@ -43,6 +45,6 @@ public final class ItemGuards {
      */
     @NotNull
     public static ItemGuard<ItemClick> throttle(long intervalMillis) {
-        return new ThrottleGuard(intervalMillis, System::currentTimeMillis);
+        return new ThrottleGuard(TimeUnit.MILLISECONDS.toNanos(intervalMillis), System::nanoTime);
     }
 }
