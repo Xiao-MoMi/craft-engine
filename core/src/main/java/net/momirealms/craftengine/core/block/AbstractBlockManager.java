@@ -607,7 +607,16 @@ public abstract class AbstractBlockManager extends AbstractModelGenerator implem
                 Map<String, ConfigSection> appearanceConfigs;
                 Map<String, CompletableFuture<BlockStateWrapper>> futureVisualStates = new HashMap<>();
                 if (properties.isEmpty()) {
-                    appearanceConfigs = Map.of("", stateSection);
+                    // 兼容无属性方块用 appearances 包裹单一外观
+                    ConfigSection appearancesSection = stateSection.getSection(APPEARANCE);
+                    if (appearancesSection != null && !appearancesSection.keySet().isEmpty()) {
+                        if (appearancesSection.keySet().size() > 1) {
+                            error(new KnownResourceException(path, "resource.block.state.appearance_without_properties", appearancesSection.path()));
+                        }
+                        appearanceConfigs = Map.of("", appearancesSection.getNonNullSection(appearancesSection.keySet().iterator().next()));
+                    } else {
+                        appearanceConfigs = Map.of("", stateSection);
+                    }
                 } else {
                     appearanceConfigs = new LinkedHashMap<>(4);
                     ConfigSection appearanceSection = stateSection.getNonNullSection(APPEARANCE);

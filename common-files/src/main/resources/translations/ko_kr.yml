@@ -261,6 +261,7 @@ resource.block.state.unreleased_state: "이 형식으로 블록 상태를 할당
 resource.block.state.entity_renderer.unknown_type: "알 수 없는 블록 엔티티 렌더러 타입 '<arg:0>'"
 resource.block.state.invalid_variant_nbt: "잘못된 부분 블록 상태 NBT '<arg:0>'"
 resource.block.state.undefined_appearance: "정의되지 않은 블록 상태 외형 '<arg:0>'"
+resource.block.state.appearance_without_properties: 여러 'appearances'를 구분하려면 'properties'가 필요하며, 첫 번째 외형만 사용됩니다
 resource.block.state.model_conflict: "모델 '<arg:0>'을(를) 블록 상태 '<arg:1>'에 바인딩할 수 없습니다. 이미 모델 '<arg:2>'에 바인딩됨"
 resource.block.entity_renderer.tint_source.unknown_type: "알 수 없는 블록 엔티티 색상 소스 타입 '<arg:0>'"
 resource.item.model_definition.unknown_type: "알 수 없는 아이템 모델 정의 타입 '<arg:0>'"

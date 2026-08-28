@@ -298,6 +298,7 @@ resource.block.state.unreleased_state: You cannot assign a block state using thi
 resource.block.state.entity_renderer.unknown_type: Unknown block entity renderer type '<arg:0>'
 resource.block.state.invalid_variant_nbt: Invalid partial block state nbt '<arg:0>'
 resource.block.state.undefined_appearance: Undefined block state appearance '<arg:0>'
+resource.block.state.appearance_without_properties: Multiple 'appearances' require 'properties' to distinguish block states, only the first appearance is used
 resource.block.state.model_conflict: Failed to bind model '<arg:0>' to block state '<arg:1>' which has already been bound to model '<arg:2>'
 resource.block.state.invalid_rotation: Invalid rotation '<arg:1>' on <arg:0>-axis, which is expected to be in increments of 90 degrees
 resource.block.entity_renderer.tint_source.unknown_type: Unknown block entity tint source type '<arg:0>'

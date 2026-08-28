@@ -294,6 +294,7 @@ resource.block.state.unreleased_state: No puedes asignar un estado de bloque usa
 resource.block.state.entity_renderer.unknown_type: Tipo de renderizador de entidad de bloque desconocido '<arg:0>'
 resource.block.state.invalid_variant_nbt: NBT de estado de bloque parcial no válido '<arg:0>'
 resource.block.state.undefined_appearance: Apariencia de estado de bloque no definida '<arg:0>'
+resource.block.state.appearance_without_properties: Múltiples entradas de 'appearances' requieren 'properties' para distinguir los estados de bloque, solo se usará la primera apariencia
 resource.block.state.model_conflict: Error al vincular el modelo '<arg:0>' al estado de bloque '<arg:1>' el cual ya ha sido vinculado al modelo '<arg:2>'
 resource.block.state.invalid_rotation: Rotación no válida '<arg:1>' en el eje <arg:0>, la cual se espera que sea en incrementos de 90 grados
 resource.block.entity_renderer.tint_source.unknown_type: Tipo de fuente de tinte de entidad de bloque desconocido '<arg:0>'

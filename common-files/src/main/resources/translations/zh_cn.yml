@@ -290,6 +290,7 @@ resource.block.state.unreleased_state: 无法使用此格式分配方块状态�
 resource.block.state.entity_renderer.unknown_type: 未知的方块实体渲染器类型“<arg:0>”
 resource.block.state.invalid_variant_nbt: 无效的部分方块状态nbt“<arg:0>”
 resource.block.state.undefined_appearance: 未定义的方块状态外观“<arg:0>”
+resource.block.state.appearance_without_properties: 多个“appearances”需要“properties”来区分方块状态，将只使用第一个外观
 resource.block.state.model_conflict: 无法将模型“<arg:0>”绑定到方块状态“<arg:1>”，因为该状态已绑定到模型“<arg:2>”
 resource.block.state.invalid_rotation: 无效的<arg:0>轴旋转度数“<arg:1>”，预期为90的倍数
 resource.block.entity_renderer.tint_source.unknown_type: 未知的方块实体渲染器染色源“<arg:0>”

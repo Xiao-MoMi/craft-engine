@@ -262,6 +262,7 @@ resource.block.state.unreleased_state: 無法使用此格式分配方塊狀態�
 resource.block.state.entity_renderer.unknown_type: 未知的方塊實體渲染器類型 '<arg:0>'
 resource.block.state.invalid_variant_nbt: 無效的部分方塊狀態 nbt '<arg:0>'
 resource.block.state.undefined_appearance: 未定義的方塊狀態外觀 '<arg:0>'
+resource.block.state.appearance_without_properties: 多個「appearances」需要「properties」來區分方塊狀態，將只使用第一個外觀
 resource.block.state.model_conflict: 無法將模型 '<arg:0>' 繫結到方塊狀態 '<arg:1>'，因為該狀態已繫結到模型 '<arg:2>'
 resource.block.state.invalid_rotation: 無效的<arg:0>軸旋轉度數 '<arg:1>'，預期為90的倍數
 resource.block.entity_renderer.tint_source.unknown_type: 未知的方塊實體渲染器染色源 '<arg:0>'
