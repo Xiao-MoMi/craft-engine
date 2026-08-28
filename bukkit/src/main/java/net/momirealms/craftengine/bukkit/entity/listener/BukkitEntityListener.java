@@ -9,6 +9,7 @@ import net.momirealms.craftengine.core.entity.EntityTypeKeys;
 import net.momirealms.craftengine.core.entity.LivingEntityHolder;
 import net.momirealms.craftengine.core.entity.effect.PotionEffectSnapshot;
 import net.momirealms.craftengine.core.plugin.config.Config;
+import net.momirealms.craftengine.core.util.VersionHelper;
 import net.momirealms.craftengine.proxy.bukkit.event.entity.EntityEventProxy;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
@@ -36,6 +37,9 @@ public final class BukkitEntityListener extends AbstractListener {
 
     @EventHandler(priority = EventPriority.HIGH)
     public void onPlayerRespawn(PlayerRespawnEvent event) {
+        if (VersionHelper.hasFoliaPatch) {
+            return;
+        }
         BukkitServerPlayer player = BukkitAdaptor.adapt(event.getPlayer());
         if (player != null && Config.shouldTrackEntity(EntityTypeKeys.PLAYER)) {
             this.manager.trackLivingEntity(player);
