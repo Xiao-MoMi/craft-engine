@@ -27,7 +27,7 @@ public interface ItemManager extends Manageable, ModelGenerator {
 
     Map<Key, Equipment> equipments();
 
-    Collection<Key> vanillaItems();
+    List<Key> vanillaItems();
 
     @Deprecated
     @Nullable
@@ -51,6 +51,8 @@ public interface ItemManager extends Manageable, ModelGenerator {
     Map<Key, ItemDefinition> loadedItems();
 
     List<Key> orderedItemIds();
+
+    List<Key> allItemIds();
 
     Optional<Equipment> getEquipment(Key key);
 

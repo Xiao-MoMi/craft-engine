@@ -87,7 +87,7 @@ public abstract class AbstractItemDefinition implements ItemDefinition {
 
     @Override
     public boolean isVanillaItem() {
-        return isVanillaItem;
+        return this.isVanillaItem;
     }
 
     @Override

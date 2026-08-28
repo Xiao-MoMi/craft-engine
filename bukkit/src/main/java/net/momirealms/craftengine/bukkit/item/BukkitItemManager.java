@@ -556,9 +556,13 @@ public final class BukkitItemManager extends AbstractItemManager {
     }
 
     private void registerAllVanillaItems() {
+        VANILLA_ITEMS.clear();
+        VANILLA_ITEM_TO_TAGS.clear();
+        VANILLA_TAG_TO_ITEMS.clear();
         for (Object item : (Iterable<?>) BuiltInRegistriesProxy.ITEM) {
             Object identifier = RegistryProxy.INSTANCE.getKey(BuiltInRegistriesProxy.ITEM, item);
             Key itemKey = KeyUtils.identifierToKey(identifier);
+            VANILLA_ITEMS.add(itemKey);
 
             UniqueKey uniqueKey = UniqueKey.create(itemKey);
             Object mcHolder = Objects.requireNonNull(RegistryUtils.getHolder(BuiltInRegistriesProxy.ITEM, ResourceKeyProxy.INSTANCE.create(RegistriesProxy.ITEM, identifier)));

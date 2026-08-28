@@ -152,6 +152,8 @@ number.no_greater_than: “<arg:0>”不应大于“<arg:1>”
 number.less_than: “<arg:0>”应小于“<arg:1>”
 number.no_less_than: “<arg:0>”不应小于“<arg:1>”
 condition.unknown_type: 未知的条件类型“<arg:0>”
+category.source.unknown_type: 未知的分类源类型“<arg:0>”
+category.source.invalid_regex: 无效的分类源正则表达式“<arg:0>”
 condition.enchantment.invalid_format: 无效的谓词格式“<arg:0>”。（例如：minecraft:sharpness>=4）
 function.unknown_type: 未知的函数类型“<arg:0>”
 player_selector.unknown_type: 未知的玩家选择器类型“<arg:0>”

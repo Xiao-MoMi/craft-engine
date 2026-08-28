@@ -52,6 +52,7 @@ import java.util.function.Supplier;
 public abstract class AbstractItemManager extends AbstractModelGenerator implements ItemManager {
     private static final EventTriggerResolver EVENT_TRIGGER_RESOLVER = EventTriggerResolver.withAlias("break", EventTrigger.ITEM_BREAK);
     protected static final Map<Key, ItemBehavior> VANILLA_ITEM_EXTRA_BEHAVIORS = new HashMap<>();
+    protected static final List<Key> VANILLA_ITEMS = new ObjectArrayList<>(1024);
     protected static final Map<Key, Set<Key>> VANILLA_ITEM_TO_TAGS = new HashMap<>(1024);
     protected static final Map<Key, List<UniqueKey>> VANILLA_TAG_TO_ITEMS = new HashMap<>();
     // 解析器
@@ -75,6 +76,8 @@ public abstract class AbstractItemManager extends AbstractModelGenerator impleme
     protected final Map<Key, List<UniqueKey>> ingredientSubstitutes = new HashMap<>();
     // 有序物品id
     protected final List<Key> orderedItemIds = new ObjectArrayList<>();
+    // 原版物品 + 自定义物品
+    protected final List<Key> allItemIds = new ObjectArrayList<>();
     // 其他设置
     protected boolean featureFlag$keepOnDeathChance = false;
     protected boolean featureFlag$destroyOnDeathChance = false;
@@ -120,6 +123,7 @@ public abstract class AbstractItemManager extends AbstractModelGenerator impleme
         this.modernItemModels1_21_2.clear();
         this.ingredientSubstitutes.clear();
         this.orderedItemIds.clear();
+        this.allItemIds.clear();
         this.dyeableItems.clear();
         this.vanillaItemDataOverrides.clear();
     }
@@ -216,6 +220,11 @@ public abstract class AbstractItemManager extends AbstractModelGenerator impleme
     }
 
     @Override
+    public List<Key> allItemIds() {
+        return Collections.unmodifiableList(this.allItemIds);
+    }
+
+    @Override
     public Map<Key, ModernItemModel> modernItemModels1_21_4() {
         return Collections.unmodifiableMap(this.modernItemModels1_21_4);
     }
@@ -226,8 +235,8 @@ public abstract class AbstractItemManager extends AbstractModelGenerator impleme
     }
 
     @Override
-    public Collection<Key> vanillaItems() {
-        return Collections.unmodifiableCollection(VANILLA_ITEM_TO_TAGS.keySet());
+    public List<Key> vanillaItems() {
+        return Collections.unmodifiableList(VANILLA_ITEMS);
     }
 
     @Override
@@ -418,6 +427,9 @@ public abstract class AbstractItemManager extends AbstractModelGenerator impleme
             }
             this.futures.clear();
 
+            AbstractItemManager.this.allItemIds.clear();
+            AbstractItemManager.this.allItemIds.addAll(VANILLA_ITEMS);
+
             // 获取有序的物品id
             int size = this.pendingConfigSections.size();
             Object[] pendingElements = this.pendingConfigSections.elements();
@@ -436,6 +448,7 @@ public abstract class AbstractItemManager extends AbstractModelGenerator impleme
                         AbstractItemManager.this.plugin.itemBrowserManager().addExternalCategoryMember(id, categories);
                     }
                     if (itemDefinition.isVanillaItem()) continue;
+                    AbstractItemManager.this.allItemIds.add(id);
                     // cache command suggestions
                     Suggestion suggestion = Suggestion.suggestion(id.asString());
                     AbstractItemManager.this.cachedCustomItemSuggestions.add(suggestion);

@@ -160,6 +160,8 @@ number.no_greater_than: '''<arg:0>'' should be no greater than ''<arg:1>'''
 number.less_than: '''<arg:0>'' should be less than ''<arg:1>'''
 number.no_less_than: '''<arg:0>'' should be no less than ''<arg:1>'''
 condition.unknown_type: Unknown condition type '<arg:0>'
+category.source.unknown_type: Unknown category source type '<arg:0>'
+category.source.invalid_regex: Invalid category source regex '<arg:0>'
 condition.enchantment.invalid_format: Invalid predicate format '<arg:0>'. (e.g., minecraft:sharpness>=4)
 function.unknown_type: Unknown function type '<arg:0>'
 player_selector.unknown_type: Unknown player selector type '<arg:0>'

@@ -93,6 +93,8 @@ import net.momirealms.craftengine.core.plugin.context.function.Function;
 import net.momirealms.craftengine.core.plugin.context.number.NumberProvider;
 import net.momirealms.craftengine.core.plugin.context.number.NumberProviderType;
 import net.momirealms.craftengine.core.plugin.context.selector.PlayerSelectorType;
+import net.momirealms.craftengine.core.plugin.gui.category.source.CategorySource;
+import net.momirealms.craftengine.core.plugin.gui.category.source.CategorySourceType;
 import net.momirealms.craftengine.core.plugin.network.mod.ClientCustomPacket;
 import net.momirealms.craftengine.core.plugin.network.mod.ClientCustomPacketType;
 import net.momirealms.craftengine.core.plugin.network.mod.ServerCustomPacket;
@@ -156,6 +158,7 @@ public final class Registries {
     public static final ResourceKey<Registry<CraftRemainderType<? extends CraftRemainder>>> CRAFT_REMAINDER_TYPE = ResourceKey.create(ROOT_REGISTRY, Key.withCraftEngineNamespace("craft_remainder_type"));
     public static final ResourceKey<Registry<FurnitureElementConfigType<? extends FurnitureElement>>> FURNITURE_ELEMENT_TYPE = ResourceKey.create(ROOT_REGISTRY, Key.withCraftEngineNamespace("furniture_element_type"));
     public static final ResourceKey<Registry<FurnitureTintSourceType<? extends FurnitureTintSource>>> FURNITURE_TINT_SOURCE_TYPE = ResourceKey.create(ROOT_REGISTRY, Key.withCraftEngineNamespace("furniture_tint_source_type"));
+    public static final ResourceKey<Registry<CategorySourceType<? extends CategorySource>>> CATEGORY_SOURCE_TYPE = ResourceKey.create(ROOT_REGISTRY, Key.withCraftEngineNamespace("category_source_type"));
     public static final ResourceKey<Registry<FurnitureHitboxConfigType<? extends FurnitureHitBox>>> FURNITURE_HITBOX_TYPE = ResourceKey.create(ROOT_REGISTRY, Key.withCraftEngineNamespace("furniture_hitbox_type"));
     public static final ResourceKey<Registry<FurnitureBehaviorType<? extends FurnitureBehaviorTemplate>>> FURNITURE_BEHAVIOR_TYPE = ResourceKey.create(ROOT_REGISTRY, Key.withCraftEngineNamespace("furniture_behavior_type"));
     public static final ResourceKey<Registry<FurnitureSettingsModifierType<? extends FurnitureSettingsModifier>>> FURNITURE_SETTINGS_TYPE = ResourceKey.create(ROOT_REGISTRY, Key.withCraftEngineNamespace("furniture_settings_type"));

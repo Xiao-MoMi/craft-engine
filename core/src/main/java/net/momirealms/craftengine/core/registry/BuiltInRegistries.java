@@ -93,6 +93,8 @@ import net.momirealms.craftengine.core.plugin.context.function.Function;
 import net.momirealms.craftengine.core.plugin.context.number.NumberProvider;
 import net.momirealms.craftengine.core.plugin.context.number.NumberProviderType;
 import net.momirealms.craftengine.core.plugin.context.selector.PlayerSelectorType;
+import net.momirealms.craftengine.core.plugin.gui.category.source.CategorySource;
+import net.momirealms.craftengine.core.plugin.gui.category.source.CategorySourceType;
 import net.momirealms.craftengine.core.plugin.network.mod.ClientCustomPacket;
 import net.momirealms.craftengine.core.plugin.network.mod.ClientCustomPacketType;
 import net.momirealms.craftengine.core.plugin.network.mod.ServerCustomPacket;
@@ -153,6 +155,7 @@ public final class BuiltInRegistries {
     public static final Registry<CraftRemainderType<? extends CraftRemainder>> CRAFT_REMAINDER_TYPE = createConstantBoundRegistry(Registries.CRAFT_REMAINDER_TYPE, 16);
     public static final Registry<FurnitureElementConfigType<? extends FurnitureElement>> FURNITURE_ELEMENT_TYPE = createConstantBoundRegistry(Registries.FURNITURE_ELEMENT_TYPE, 16);
     public static final Registry<FurnitureTintSourceType<? extends FurnitureTintSource>> FURNITURE_TINT_SOURCE_TYPE = createConstantBoundRegistry(Registries.FURNITURE_TINT_SOURCE_TYPE, 16);
+    public static final Registry<CategorySourceType<? extends CategorySource>> CATEGORY_SOURCE_TYPE = createConstantBoundRegistry(Registries.CATEGORY_SOURCE_TYPE, 8);
     public static final Registry<FurnitureHitboxConfigType<? extends FurnitureHitBox>> FURNITURE_HITBOX_TYPE = createConstantBoundRegistry(Registries.FURNITURE_HITBOX_TYPE, 16);
     public static final Registry<FurnitureBehaviorType<? extends FurnitureBehaviorTemplate>> FURNITURE_BEHAVIOR_TYPE = createConstantBoundRegistry(Registries.FURNITURE_BEHAVIOR_TYPE, 32);
     public static final Registry<FurnitureSettingsModifierType<? extends FurnitureSettingsModifier>> FURNITURE_SETTINGS_TYPE = createConstantBoundRegistry(Registries.FURNITURE_SETTINGS_TYPE, 16);
