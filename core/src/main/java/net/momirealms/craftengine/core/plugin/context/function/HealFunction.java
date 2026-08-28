@@ -1,6 +1,5 @@
 package net.momirealms.craftengine.core.plugin.context.function;
 
-import net.momirealms.craftengine.core.entity.LivingEntity;
 import net.momirealms.craftengine.core.plugin.config.ConfigConstants;
 import net.momirealms.craftengine.core.plugin.config.ConfigKeys;
 import net.momirealms.craftengine.core.plugin.config.ConfigSection;
@@ -29,10 +28,8 @@ public final class HealFunction<CTX extends Context> extends AbstractConditional
         if (this.selector != null) {
             this.selector.get(ctx).forEach(p -> p.heal(this.amount.getDouble(ctx)));
         } else {
-            ctx.getOptionalParameter(DirectContextParameters.ENTITY)
-                    .filter(LivingEntity.class::isInstance)
-                    .map(LivingEntity.class::cast)
-                    .ifPresent(it -> it.heal(this.amount.getDouble(ctx)));
+            DirectContextParameters.getOptionalLivingEntity(ctx)
+                    .ifPresent(entity -> entity.heal(this.amount.getDouble(ctx)));
         }
     }
 

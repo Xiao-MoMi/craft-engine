@@ -31,9 +31,7 @@ public final class EquipmentCondition<CTX extends Context> implements Condition<
 
     @Override
     public boolean test(CTX ctx) {
-        Optional<LivingEntity> optionalEntity = ctx.getOptionalParameter(DirectContextParameters.ENTITY)
-                .filter(LivingEntity.class::isInstance)
-                .map(LivingEntity.class::cast);
+        Optional<LivingEntity> optionalEntity = DirectContextParameters.getOptionalLivingEntity(ctx);
         if (optionalEntity.isEmpty()) {
             return false;
         }

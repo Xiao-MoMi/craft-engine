@@ -34,7 +34,7 @@ public interface ConfigParser {
     void setErrorHandler(Consumer<ResourceException> errorHandler);
 
     default int count() {
-        return -1;
+        return 0;
     }
 
     default boolean silentIfNotExists() {

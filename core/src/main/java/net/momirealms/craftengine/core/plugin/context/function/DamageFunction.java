@@ -1,6 +1,5 @@
 package net.momirealms.craftengine.core.plugin.context.function;
 
-import net.momirealms.craftengine.core.entity.LivingEntity;
 import net.momirealms.craftengine.core.plugin.config.ConfigConstants;
 import net.momirealms.craftengine.core.plugin.config.ConfigKeys;
 import net.momirealms.craftengine.core.plugin.config.ConfigSection;
@@ -34,10 +33,8 @@ public final class DamageFunction<CTX extends Context> extends AbstractCondition
         if (this.selector != null) {
             this.selector.get(ctx).forEach(p -> p.damage(this.amount.getDouble(ctx), this.damageType, null));
         } else {
-            ctx.getOptionalParameter(DirectContextParameters.ENTITY)
-                    .filter(LivingEntity.class::isInstance)
-                    .map(LivingEntity.class::cast)
-                    .ifPresent(it -> it.damage(this.amount.getDouble(ctx), this.damageType, null));
+            DirectContextParameters.getOptionalLivingEntity(ctx)
+                    .ifPresent(entity -> entity.damage(this.amount.getDouble(ctx), this.damageType, null));
         }
     }
 

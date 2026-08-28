@@ -640,7 +640,7 @@ public abstract class AbstractPackManager implements PackManager {
                 parser.postProcess();
                 long t2 = System.nanoTime();
                 int count = parser.count();
-                if (parser.silentIfNotExists() && count == 0) {
+                if (parser.silentIfNotExists() && count <= 0) {
                     return;
                 }
                 this.plugin.logger().info(TranslationManager.instance().plainTranslation("resource.config_loaded",

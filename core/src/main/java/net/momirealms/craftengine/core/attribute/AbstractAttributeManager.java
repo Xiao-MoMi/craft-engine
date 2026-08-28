@@ -271,10 +271,10 @@ public abstract class AbstractAttributeManager implements AttributeManager {
         private DamageRule build(@Nullable DamageRule fallback) {
             DamageFormula resolvedFormula = this.formula != null
                     ? this.formula
-                    : fallback == null ? null : fallback.formula();
+                    : (fallback == null ? null : fallback.formula());
             List<DamageEffect> resolvedEffects = this.hasEffects
                     ? this.effects
-                    : fallback == null ? List.of() : fallback.effects();
+                    : (fallback == null ? List.of() : fallback.effects());
             return new DamageRule(resolvedFormula, resolvedEffects);
         }
     }

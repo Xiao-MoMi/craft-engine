@@ -1,6 +1,5 @@
 package net.momirealms.craftengine.core.plugin.context.function;
 
-import net.momirealms.craftengine.core.entity.LivingEntity;
 import net.momirealms.craftengine.core.entity.player.Player;
 import net.momirealms.craftengine.core.plugin.config.ConfigConstants;
 import net.momirealms.craftengine.core.plugin.config.ConfigKeys;
@@ -43,10 +42,8 @@ public final class PotionEffectFunction<CTX extends Context> extends AbstractCon
     @Override
     public void runInternal(CTX ctx) {
         if (this.selector == null) {
-            ctx.getOptionalParameter(DirectContextParameters.ENTITY)
-                    .filter(LivingEntity.class::isInstance)
-                    .map(LivingEntity.class::cast)
-                    .ifPresent(it -> it.addPotionEffect(this.potionEffectType, this.duration.getInt(ctx), this.amplifier.getInt(ctx), this.ambient, this.particles, this.showIcon));
+            DirectContextParameters.getOptionalLivingEntity(ctx)
+                    .ifPresent(entity -> entity.addPotionEffect(this.potionEffectType, this.duration.getInt(ctx), this.amplifier.getInt(ctx), this.ambient, this.particles, this.showIcon));
         } else {
             for (Player target : this.selector.get(ctx)) {
                 RelationalContext relationalContext = ViewerContext.of(ctx, PlayerOptionalContext.of(target));

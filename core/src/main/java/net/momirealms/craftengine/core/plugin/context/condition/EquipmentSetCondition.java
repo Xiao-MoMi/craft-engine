@@ -25,7 +25,7 @@ public final class EquipmentSetCondition<CTX extends Context> implements Conditi
 
     @Override
     public boolean test(CTX ctx) {
-        LivingEntity entity = resolveLivingEntity(ctx);
+        LivingEntity entity = DirectContextParameters.getOptionalLivingEntity(ctx).orElse(null);
         if (entity == null) {
             return false;
         }
@@ -35,13 +35,6 @@ public final class EquipmentSetCondition<CTX extends Context> implements Conditi
 
     boolean matches(int pieces) {
         return pieces >= this.min && pieces <= this.max;
-    }
-
-    private static LivingEntity resolveLivingEntity(Context ctx) {
-        return ctx.getOptionalParameter(DirectContextParameters.ENTITY)
-                .filter(LivingEntity.class::isInstance)
-                .map(LivingEntity.class::cast)
-                .orElse(null);
     }
 
     public static <CTX extends Context> ConditionFactory<CTX, EquipmentSetCondition<CTX>> factory() {

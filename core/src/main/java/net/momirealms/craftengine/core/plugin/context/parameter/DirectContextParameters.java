@@ -4,12 +4,14 @@ import net.kyori.adventure.text.Component;
 import net.momirealms.craftengine.core.block.BlockDefinition;
 import net.momirealms.craftengine.core.block.ImmutableBlockState;
 import net.momirealms.craftengine.core.entity.Entity;
+import net.momirealms.craftengine.core.entity.LivingEntity;
 import net.momirealms.craftengine.core.entity.furniture.Furniture;
 import net.momirealms.craftengine.core.entity.player.GameMode;
 import net.momirealms.craftengine.core.entity.player.InteractionHand;
 import net.momirealms.craftengine.core.entity.player.Player;
 import net.momirealms.craftengine.core.item.Item;
 import net.momirealms.craftengine.core.plugin.context.ChainParameterSource;
+import net.momirealms.craftengine.core.plugin.context.Context;
 import net.momirealms.craftengine.core.plugin.context.ContextKey;
 import net.momirealms.craftengine.core.plugin.context.NamedRandoms;
 import net.momirealms.craftengine.core.util.Cancellable;
@@ -20,6 +22,7 @@ import net.momirealms.craftengine.core.world.Position;
 import net.momirealms.craftengine.core.world.World;
 import net.momirealms.craftengine.core.world.WorldPosition;
 
+import java.util.Optional;
 import java.util.UUID;
 
 public final class DirectContextParameters {
@@ -89,4 +92,14 @@ public final class DirectContextParameters {
     public static final ContextKey<Double> HEALTH = ContextKey.direct("health");
     public static final ContextKey<Double> MAX_HEALTH = ContextKey.direct("max_health");
     public static final ContextKey<ChainParameterSource> ATTR = ContextKey.direct("attr");
+
+    public static Optional<LivingEntity> getOptionalLivingEntity(Context ctx) {
+        Optional<Player> optionalPlayer = ctx.getOptionalParameter(PLAYER);
+        if (optionalPlayer.isPresent()) {
+            return Optional.of(optionalPlayer.get());
+        }
+        return ctx.getOptionalParameter(ENTITY)
+                .filter(LivingEntity.class::isInstance)
+                .map(LivingEntity.class::cast);
+    }
 }
