@@ -7,7 +7,7 @@ import xyz.jpenilla.runtask.service.DownloadsAPIService
 
 plugins {
     id("de.eldoria.plugin-yml.paper") version "0.7.1"
-    id("xyz.jpenilla.run-paper") version "3.0.2"
+    id("xyz.jpenilla.run-paper") version "3.1.0"
 }
 
 repositories {
