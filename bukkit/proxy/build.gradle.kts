@@ -16,7 +16,7 @@ dependencies {
     paperServer(project)
     common(project)
     netty(project)
-    implementation("net.momirealms:sparrow-reflection:${rootProject.properties["sparrow_reflection_version"]}")
+    implementation(libs.sparrow.reflection)
 }
 
 tasks.shadowJar {
@@ -33,9 +33,7 @@ artifacts {
 publishing {
     publications {
         create<MavenPublication>("bukkitProxy") {
-            groupId = "net.momirealms"
             artifactId = "craft-engine-bukkit-proxy"
-            version = rootProject.properties["project_version"].toString()
             from(components["shadow"])
             artifact(tasks["sourcesJar"])
             publication.applyCommonPom(this, "CraftEngine Bukkit Proxy")

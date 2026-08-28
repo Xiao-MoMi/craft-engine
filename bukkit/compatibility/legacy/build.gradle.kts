@@ -1,5 +1,6 @@
 import net.momirealms.nbt
 import net.momirealms.paperServer
+import net.momirealms.versionOf
 
 repositories {
     mavenCentral()
@@ -12,6 +13,6 @@ dependencies {
     paperServer(project)
     compileOnly(project(":core"))
     compileOnly(project(":bukkit"))
-    compileOnly(files("libs/flow-nbt-2.0.2.jar"))
+    compileOnly(files("libs/flow-nbt-${versionOf("flow-nbt")}.jar"))
     compileOnly(files("libs/awsm-api.jar"))
 }

@@ -4,8 +4,7 @@ plugins {
     `maven-publish`
 }
 
-val projectVersion = project.rootProject.property("project_version").toString()
-val isSnapshot = projectVersion.endsWith("-SNAPSHOT")
+val isSnapshot = project.version.toString().endsWith("-SNAPSHOT")
 
 publishing {
     repositories {

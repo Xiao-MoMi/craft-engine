@@ -1,7 +1,8 @@
 import net.momirealms.paperServer
+import net.momirealms.versionOf
 
 plugins {
-    id("de.eldoria.plugin-yml.bukkit") version "0.7.1"
+    alias(libs.plugins.bukkit.yml)
 }
 
 repositories {
@@ -26,20 +27,20 @@ dependencies {
     implementation(project(":common-files"))
 
     // leafpile
-    implementation(files("${rootProject.rootDir}/libs/leafpile-${rootProject.properties["leafpile_version"]}.jar"))
+    implementation(files("${rootProject.rootDir}/libs/leafpile-${versionOf("leafpile")}.jar"))
 
-    implementation("net.momirealms:sparrow-minimessage:${rootProject.properties["sparrow_minimessage_version"]}")
-    implementation("net.momirealms:sparrow-util:${rootProject.properties["sparrow_util_version"]}")
-    implementation("net.momirealms:craft-engine-nms-helper:${rootProject.properties["nms_helper_version"]}")
-    implementation("cn.gtemc:itembridge:${rootProject.properties["itembridge_version"]}")
-    implementation("cn.gtemc:levelerbridge:${rootProject.properties["levelerbridge_version"]}")
-    implementation(files("${rootProject.rootDir}/libs/jni-internal-lookup-1.9.jar"))
+    implementation(libs.sparrow.minimessage)
+    implementation(libs.sparrow.util)
+    implementation(libs.nms.helper)
+    implementation(libs.itembridge)
+    implementation(libs.levelerbridge)
+    implementation(files("${rootProject.rootDir}/libs/jni-internal-lookup-${versionOf("jni-internal-lookup")}.jar"))
 }
 
 bukkit {
     load = net.minecrell.pluginyml.bukkit.BukkitPluginDescription.PluginLoadOrder.STARTUP
     main = "net.momirealms.craftengine.bukkit.plugin.BukkitCraftEnginePlugin"
-    version = rootProject.properties["project_version"] as String
+    version = project.version.toString()
     name = "CraftEngine"
     apiVersion = "1.20"
     authors = listOf("XiaoMoMi")
@@ -56,7 +57,7 @@ tasks {
     shadowJar {
         relocation.applyCommon(this)
         from(project(":bukkit:proxy").tasks.shadowJar.flatMap { it.archiveFile })
-        archiveFileName = "${rootProject.name}-bukkit-plugin-${rootProject.properties["project_version"]}.jar"
+        archiveFileName = "${rootProject.name}-bukkit-plugin-${project.version}.jar"
         destinationDirectory.set(file("$rootDir/target"))
     }
 }
