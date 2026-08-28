@@ -545,12 +545,23 @@ public class BukkitServerPlayer extends BukkitLivingEntity implements Player {
 
     @Override
     public void playSound(Key sound, SoundSource source, float volume, float pitch) {
-        platformPlayer().playSound(platformPlayer(), sound.toString(), SoundUtils.toBukkit(source), volume, pitch);
+        sendSoundPacket(x(), y(), z(), sound, source, volume, pitch);
     }
 
     @Override
     public void playSound(Position pos, Key sound, SoundSource source, float volume, float pitch) {
-        platformPlayer().playSound(new Location(null, pos.x(), pos.y(), pos.z()), sound.toString(), SoundUtils.toBukkit(source), volume, pitch);
+        sendSoundPacket(pos.x(), pos.y(), pos.z(), sound, source, volume, pitch);
+    }
+
+    private void sendSoundPacket(double x, double y, double z, Key sound, SoundSource source, float volume, float pitch) {
+        Object packet = ClientboundSoundPacketProxy.INSTANCE.newInstance(
+                SoundUtils.getOrCreateSoundHolder(sound),
+                SoundUtils.toNMS(source),
+                x, y, z,
+                volume, pitch,
+                RandomUtils.generateRandomLong()
+        );
+        sendPacket(packet, false);
     }
 
     @Override
