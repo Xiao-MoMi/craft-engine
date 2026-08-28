@@ -15,7 +15,7 @@ public final class AllItemsCategorySource implements CategorySource {
     }
 
     static AllItemsCategorySource fromConfig(ConfigSection section) {
-        return new AllItemsCategorySource(section.getBoolean(IGNORE_VANILLA));
+        return new AllItemsCategorySource(section.getBoolean(IGNORE_VANILLA, true));
     }
 
     @Override
