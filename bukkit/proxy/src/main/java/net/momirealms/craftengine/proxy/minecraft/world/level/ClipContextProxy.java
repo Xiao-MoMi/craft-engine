@@ -24,6 +24,7 @@ public interface ClipContextProxy {
     @ReflectionProxy(name = "net.minecraft.world.level.ClipContext$Block")
     interface BlockProxy {
         BlockProxy INSTANCE = ASMProxyFactory.create(BlockProxy.class);
+        Enum<?> COLLIDER = INSTANCE.values()[0];
         Enum<?> OUTLINE = INSTANCE.values()[1];
 
         @MethodInvoker(name = "values", isStatic = true)

@@ -313,6 +313,13 @@ debug_item_data:
     - /craftengine item debug
     - /ce item debug
 
+debug_item_component:
+  enable: true
+  permission: ce.command.debug.item_component
+  usage:
+    - /craftengine debug item-component
+    - /ce debug item-component
+
 debug_target_block:
   enable: true
   permission: ce.command.debug.target_block

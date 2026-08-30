@@ -31,6 +31,7 @@ import net.momirealms.craftengine.core.attribute.damage.DamageVisibility;
 import net.momirealms.craftengine.core.block.BlockStateWrapper;
 import net.momirealms.craftengine.core.block.ImmutableBlockState;
 import net.momirealms.craftengine.core.block.entity.render.ConstantBlockEntityRenderer;
+import net.momirealms.craftengine.core.block.entity.render.DynamicBlockEntityRenderer;
 import net.momirealms.craftengine.core.block.entity.render.display.DestroyStageDisplayEntity;
 import net.momirealms.craftengine.core.block.entity.render.display.DestroyStageDisplayEntitySetting;
 import net.momirealms.craftengine.core.block.entity.render.display.DestroyStageDisplayRecorder;
@@ -217,6 +218,7 @@ public class BukkitServerPlayer extends BukkitLivingEntity implements Player {
     private Locale clientLocale;
     // 跟踪到的方块实体渲染器
     private Map<BlockPos, CullableHolder> trackedBlockEntityRenderers;
+    private Map<BlockPos, CullableHolder> trackedDynamicBlockEntityRenderers;
     private Map<Integer, CullableHolder> trackedEntities;
     private Vec3d firstPersonCameraVec3;
     private Vec3d thirdPersonCameraVec3;
@@ -310,6 +312,7 @@ public class BukkitServerPlayer extends BukkitLivingEntity implements Player {
         this.capturedAttackStrengthTick = Integer.MIN_VALUE;
         this.capturedAttackStrength = 0.0F;
         this.trackedBlockEntityRenderers = new ConcurrentHashMap<>(64);
+        this.trackedDynamicBlockEntityRenderers = new ConcurrentHashMap<>(64);
         this.trackedEntities = new ConcurrentHashMap<>(64);
         this.trackedChunks = ConcurrentChainedLong2ReferenceHashTable.createWithCapacity(128, 0.5f);
         this.entityTypeView = new ConcurrentHashMap<>(128);
@@ -799,11 +802,17 @@ public class BukkitServerPlayer extends BukkitLivingEntity implements Player {
             for (CullableHolder cullableObject : this.trackedBlockEntityRenderers.values()) {
                 cullEntity(useRayTracing, cullableObject);
             }
+            for (CullableHolder cullableObject : this.trackedDynamicBlockEntityRenderers.values()) {
+                cullEntity(useRayTracing, cullableObject);
+            }
             for (CullableHolder cullableObject : this.trackedEntities.values()) {
                 cullEntity(useRayTracing, cullableObject);
             }
         } else {
             for (CullableHolder cullableObject : this.trackedBlockEntityRenderers.values()) {
+                cullableObject.setShown(this, true);
+            }
+            for (CullableHolder cullableObject : this.trackedDynamicBlockEntityRenderers.values()) {
                 cullableObject.setShown(this, true);
             }
             for (CullableHolder cullableObject : this.trackedEntities.values()) {
@@ -813,38 +822,42 @@ public class BukkitServerPlayer extends BukkitLivingEntity implements Player {
     }
 
     private void cullEntity(boolean useRayTracing, CullableHolder cullableObject) {
+        if (cullableObject.forceVisible) {
+            cullableObject.setShown(this, true);
+            return;
+        }
         CullingData cullingData = cullableObject.cullable.cullingData();
-        if (cullingData != null) {
-            boolean firstPersonVisible = this.culling.isVisible(cullingData, this.firstPersonCameraVec3, useRayTracing);
-            // 之前可见
-            if (cullableObject.isShown) {
-                // 第一人称可见时结果已与第三人称无关
-                if (!firstPersonVisible && !this.culling.isVisible(cullingData, this.thirdPersonCameraVec3, useRayTracing)) {
-                    cullableObject.setShown(this, false);
-                }
+        if (cullingData == null) {
+            cullableObject.setShown(this, true);
+            return;
+        }
+        boolean firstPersonVisible = this.culling.isVisible(cullingData, this.firstPersonCameraVec3, useRayTracing);
+        // 之前可见
+        if (cullableObject.isShown) {
+            // 第一人称可见时结果已与第三人称无关
+            if (!firstPersonVisible && !this.culling.isVisible(cullingData, this.thirdPersonCameraVec3, useRayTracing)) {
+                cullableObject.setShown(this, false);
             }
-            // 之前不可见
-            else {
-                // 但是第一人称可见了
-                if (firstPersonVisible) {
-                    // 下次再说
-                    if (Config.enableEntityCullingRateLimiting() && !this.culling.takeToken()) {
-                        return;
-                    }
-                    cullableObject.setShown(this, true);
+        }
+        // 之前不可见
+        else {
+            // 但是第一人称可见了
+            if (firstPersonVisible) {
+                // 下次再说
+                if (Config.enableEntityCullingRateLimiting() && !this.culling.takeToken()) {
                     return;
                 }
-                if (this.culling.isVisible(cullingData, this.thirdPersonCameraVec3, useRayTracing)) {
-                    // 下次再说
-                    if (Config.enableEntityCullingRateLimiting() && !this.culling.takeToken()) {
-                        return;
-                    }
-                    cullableObject.setShown(this, true);
-                }
-                // 仍然不可见
+                cullableObject.setShown(this, true);
+                return;
             }
-        } else {
-            cullableObject.setShown(this, true);
+            if (this.culling.isVisible(cullingData, this.thirdPersonCameraVec3, useRayTracing)) {
+                // 下次再说
+                if (Config.enableEntityCullingRateLimiting() && !this.culling.takeToken()) {
+                    return;
+                }
+                cullableObject.setShown(this, true);
+            }
+            // 仍然不可见
         }
     }
 
@@ -1681,6 +1694,11 @@ public class BukkitServerPlayer extends BukkitLivingEntity implements Player {
     }
 
     @Override
+    public double entityCullingDistanceScale() {
+        return this.culling.distanceScale();
+    }
+
+    @Override
     public void setDisplayEntityViewDistanceScale(double value) {
         value = Math.clamp(value, 0.125, 8);
         this.displayEntityViewDistance = value;
@@ -1796,6 +1814,43 @@ public class BukkitServerPlayer extends BukkitLivingEntity implements Player {
     @Override
     public void clearTrackedBlockEntities() {
         this.trackedBlockEntityRenderers.clear();
+        this.trackedDynamicBlockEntityRenderers.clear();
+    }
+
+    @Override
+    public void addTrackedDynamicBlockEntities(Map<BlockPos, DynamicBlockEntityRenderer> renderers) {
+        for (Map.Entry<BlockPos, DynamicBlockEntityRenderer> entry : renderers.entrySet()) {
+            this.addTrackedDynamicBlockEntity(entry.getKey(), entry.getValue());
+        }
+    }
+
+    @Override
+    public void addTrackedDynamicBlockEntity(BlockPos blockPos, DynamicBlockEntityRenderer renderer) {
+        CullableHolder holder = new CullableHolder(renderer, renderer.initialForceVisible(this));
+        this.trackedDynamicBlockEntityRenderers.put(blockPos, holder);
+        if (holder.forceVisible) {
+            holder.setShown(this, true);
+        }
+    }
+
+    @Override
+    public CullableHolder getTrackedDynamicBlockEntity(BlockPos blockPos) {
+        return this.trackedDynamicBlockEntityRenderers.get(blockPos);
+    }
+
+    @Override
+    public void removeTrackedDynamicBlockEntities(Collection<BlockPos> renders) {
+        for (BlockPos render : renders) {
+            this.removeTrackedDynamicBlockEntity(render);
+        }
+    }
+
+    @Override
+    public void removeTrackedDynamicBlockEntity(BlockPos pos) {
+        CullableHolder remove = this.trackedDynamicBlockEntityRenderers.remove(pos);
+        if (remove != null && remove.isShown) {
+            remove.cullable.hide(this);
+        }
     }
 
     @Override
