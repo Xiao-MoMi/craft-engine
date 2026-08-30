@@ -14,7 +14,10 @@ import net.momirealms.sparrow.nbt.Tag;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
 
 public abstract class AbstractBlockDefinition implements BlockDefinition {
     protected final Key id;

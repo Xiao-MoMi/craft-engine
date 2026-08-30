@@ -5,7 +5,8 @@ import com.mojang.datafixers.util.Pair;
 import it.unimi.dsi.fastutil.ints.IntList;
 import net.momirealms.craftengine.bukkit.util.EntityUtils;
 import net.momirealms.craftengine.core.entity.furniture.Furniture;
-import net.momirealms.craftengine.core.entity.furniture.element.tint.FurnitureTintSource;
+import net.momirealms.craftengine.core.entity.furniture.data.FurnitureDataResolver;
+import net.momirealms.craftengine.core.entity.furniture.data.ItemPatch;
 import net.momirealms.craftengine.core.entity.player.Player;
 import net.momirealms.craftengine.core.util.VersionHelper;
 import net.momirealms.craftengine.core.world.WorldPosition;
@@ -28,7 +29,7 @@ public final class ArmorStandFurnitureElement extends AbstractConditionalFurnitu
     public final ArmorStandFurnitureElementConfig config;
     public final Furniture furniture;
     public final WorldPosition position;
-    public final FurnitureTintSource tintSource;
+    public final FurnitureDataResolver<ItemPatch> itemPatch;
     public final Object cachedSpawnPacket;
     public final Object cachedDespawnPacket;
     public final Object cachedScalePacket;
@@ -50,7 +51,7 @@ public final class ArmorStandFurnitureElement extends AbstractConditionalFurnitu
         super(config.predicate, config.hasCondition);
         this.config = config;
         this.furniture = furniture;
-        this.tintSource = config.createTintSource(furniture);
+        this.itemPatch = config.createItemPatch(furniture);
         this.entityId = entityId;
         this.position = pos;
         this.cachedSpawnPacket = ClientboundAddEntityPacketProxy.INSTANCE.newInstance(
@@ -80,7 +81,7 @@ public final class ArmorStandFurnitureElement extends AbstractConditionalFurnitu
     public void showInternal(Player player) {
         player.sendPackets(List.of(this.cachedSpawnPacket, ClientboundSetEntityDataPacketProxy.INSTANCE.newInstance(this.entityId, this.config.metadata.apply(player))), false);
         player.sendPacket(ClientboundSetEquipmentPacketProxy.INSTANCE.newInstance(this.entityId, List.of(
-                Pair.of(EquipmentSlotProxy.HEAD, this.config.item(player, this.tintSource).minecraftItem())
+                Pair.of(EquipmentSlotProxy.HEAD, this.config.item(player, this.itemPatch).minecraftItem())
         )), false);
         if (this.cachedScalePacket != null) {
             player.sendPacket(this.cachedScalePacket, false);
@@ -99,11 +100,11 @@ public final class ArmorStandFurnitureElement extends AbstractConditionalFurnitu
     public void update(Player player) {
         if (this.cachedUpdatePosPacket != null) {
             player.sendPackets(List.of(this.cachedUpdatePosPacket, ClientboundSetEquipmentPacketProxy.INSTANCE.newInstance(this.entityId, List.of(
-                    Pair.of(EquipmentSlotProxy.HEAD, this.config.item(player, this.tintSource).minecraftItem())
+                    Pair.of(EquipmentSlotProxy.HEAD, this.config.item(player, this.itemPatch).minecraftItem())
             ))), false);
         } else {
             player.sendPacket(ClientboundSetEquipmentPacketProxy.INSTANCE.newInstance(this.entityId, List.of(
-                    Pair.of(EquipmentSlotProxy.HEAD, this.config.item(player, this.tintSource).minecraftItem())
+                    Pair.of(EquipmentSlotProxy.HEAD, this.config.item(player, this.itemPatch).minecraftItem())
             )), false);
         }
     }

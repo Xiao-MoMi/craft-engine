@@ -2,7 +2,6 @@ package net.momirealms.craftengine.bukkit.api.event;
 
 import net.momirealms.craftengine.bukkit.entity.furniture.BukkitFurniture;
 import net.momirealms.craftengine.core.entity.furniture.hitbox.FurnitureHitBox;
-import net.momirealms.craftengine.core.plugin.context.ContextHolder;
 import org.bukkit.Location;
 import org.bukkit.entity.Player;
 import org.bukkit.event.Cancellable;

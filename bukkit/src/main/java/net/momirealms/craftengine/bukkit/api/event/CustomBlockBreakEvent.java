@@ -3,7 +3,6 @@ package net.momirealms.craftengine.bukkit.api.event;
 import net.momirealms.craftengine.bukkit.plugin.user.BukkitServerPlayer;
 import net.momirealms.craftengine.core.block.BlockDefinition;
 import net.momirealms.craftengine.core.block.ImmutableBlockState;
-import net.momirealms.craftengine.core.plugin.context.ContextHolder;
 import org.bukkit.Location;
 import org.bukkit.block.Block;
 import org.bukkit.event.Cancellable;

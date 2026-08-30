@@ -7,7 +7,10 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.Collections;
+import java.util.Map;
+import java.util.NoSuchElementException;
+import java.util.Optional;
 
 public final class ContextHolder {
     public static final ContextHolder IMMUTABLE_EMPTY_HOLDER = ContextHolder.builder().immutable(true).build();

@@ -24,7 +24,6 @@ import net.momirealms.craftengine.core.plugin.config.Config;
 import net.momirealms.craftengine.core.plugin.context.ChainParameterSource;
 import net.momirealms.craftengine.core.plugin.context.ContextKey;
 import net.momirealms.craftengine.core.plugin.context.PlayerContext;
-import net.momirealms.craftengine.core.plugin.context.PlayerOptionalContext;
 import net.momirealms.craftengine.core.plugin.context.parameter.FurnitureParameterProvider;
 import net.momirealms.craftengine.core.util.CustomDataType;
 import net.momirealms.craftengine.core.util.Key;
@@ -76,9 +75,9 @@ public abstract class Furniture implements Cullable, ChainParameterSource {
         this.persistentData = data;
         this.metaDataEntity = metaDataEntity;
         this.metaDataEntityId = metaDataEntity.entityId();
+        this.sourceItem = data.item().orElse(null);
         this.controller = FurnitureController.createController(this);
         this.setVariantInternal(config.getVariant(data));
-        this.sourceItem = data.item().orElse(null);
     }
 
     public WorldPosition position() {

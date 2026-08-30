@@ -250,7 +250,7 @@ resource.equipment.unknown_layer_type: Unbekannter Layer-Typ für Equipment '<ar
 resource.equipment.invalid_sacrificed_armor: Ungültiger Vanilla-Rüstungstyp '<arg:0>'
 resource.equipment_set.invalid_slot_name: Ungültiger Equipment-Set-Slot-Name '<arg:0>'
 resource.furniture.element.unknown_type: Unbekannter Möbel-Elementtyp '<arg:0>'
-resource.furniture.element.tint_source.unknown_type: Unbekannter Tint-Source-Typ für Möbel '<arg:0>'
+resource.furniture.data_source.unknown_type: Unbekannter Möbel-Datenquellentyp '<arg:0>'
 resource.furniture.hitbox.unknown_type: Unbekannter Hitbox-Typ für Möbel '<arg:0>'
 resource.furniture.behavior.unknown_type: Unbekannter Behavior-Typ für Möbel '<arg:0>'
 resource.furniture.hitbox.custom.invalid_entity_type: Ungültiger Entity-Typ '<arg:0>'

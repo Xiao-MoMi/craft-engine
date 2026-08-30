@@ -3,12 +3,9 @@ package net.momirealms.craftengine.bukkit.entity.furniture.element;
 import net.momirealms.craftengine.bukkit.entity.data.BaseEntityData;
 import net.momirealms.craftengine.bukkit.entity.data.decoration.ArmorStandData;
 import net.momirealms.craftengine.core.entity.furniture.Furniture;
+import net.momirealms.craftengine.core.entity.furniture.data.*;
 import net.momirealms.craftengine.core.entity.furniture.element.FurnitureElementConfig;
 import net.momirealms.craftengine.core.entity.furniture.element.FurnitureElementConfigFactory;
-import net.momirealms.craftengine.core.entity.furniture.element.tint.DefaultFurnitureTintSourceConfig;
-import net.momirealms.craftengine.core.entity.furniture.element.tint.FurnitureTintSource;
-import net.momirealms.craftengine.core.entity.furniture.element.tint.FurnitureTintSourceConfig;
-import net.momirealms.craftengine.core.entity.furniture.element.tint.FurnitureTintSources;
 import net.momirealms.craftengine.core.entity.player.Player;
 import net.momirealms.craftengine.core.item.Item;
 import net.momirealms.craftengine.core.item.ItemKeys;
@@ -38,7 +35,7 @@ public final class ArmorStandFurnitureElementConfig implements FurnitureElementC
     public final Function<Player, List<Object>> metadata;
     public final Key itemId;
     public final float scale;
-    public final FurnitureTintSourceConfig<? extends FurnitureTintSource> tint;
+    public final FurnitureDataSourceConfig<ItemPatch> itemPatchSource;
     public final Vector3f position;
     public final float xRot;
     public final float yRot;
@@ -52,7 +49,7 @@ public final class ArmorStandFurnitureElementConfig implements FurnitureElementC
                                              Vector3f position,
                                              float xRot,
                                              float yRot,
-                                             FurnitureTintSourceConfig<? extends FurnitureTintSource> tint,
+                                             FurnitureDataSourceConfig<ItemPatch> itemPatchSource,
                                              boolean small,
                                              LegacyChatFormatter glowColor,
                                              Predicate<PlayerContext> predicate,
@@ -60,7 +57,7 @@ public final class ArmorStandFurnitureElementConfig implements FurnitureElementC
         this.position = position;
         this.xRot = xRot;
         this.yRot = yRot;
-        this.tint = tint;
+        this.itemPatchSource = itemPatchSource;
         this.small = small;
         this.scale = scale;
         this.itemId = itemId;
@@ -81,16 +78,19 @@ public final class ArmorStandFurnitureElementConfig implements FurnitureElementC
         };
     }
 
-    public Item item(Player player, FurnitureTintSource tintSource) {
+    public Item item(Player player, FurnitureDataResolver<ItemPatch> itemPatch) {
         Item wrappedItem = Item.byId(this.itemId, player);
-        if (tintSource != null && wrappedItem != null) {
-            tintSource.applyTint(wrappedItem);
+        if (itemPatch != null && wrappedItem != null) {
+            ItemPatch patch = itemPatch.resolve();
+            if (patch != null) {
+                patch.applyTo(wrappedItem);
+            }
         }
         return Optional.ofNullable(wrappedItem).orElseGet(() -> Item.byId(ItemKeys.BARRIER));
     }
 
-    public FurnitureTintSource createTintSource(@NotNull Furniture furniture) {
-        return this.tint == null ? null : this.tint.create(furniture);
+    public FurnitureDataResolver<ItemPatch> createItemPatch(@NotNull Furniture furniture) {
+        return this.itemPatchSource == null ? null : this.itemPatchSource.bind(furniture);
     }
 
     @Override
@@ -127,7 +127,7 @@ public final class ArmorStandFurnitureElementConfig implements FurnitureElementC
     private static class Factory implements FurnitureElementConfigFactory<ArmorStandFurnitureElement> {
         private static final String[] APPLY_DYED_COLOR = ConfigKeys.of("apply_dyed_color");
         private static final String[] GLOW_COLOR = ConfigKeys.of("glow_color");
-        private static final String[] TINT_SOURCE = ConfigKeys.of("tint_source");
+        private static final String[] TINT_SOURCE = ConfigKeys.of("tint_source(s)|copy_data");
 
         @Override
         public ArmorStandFurnitureElementConfig create(ConfigSection section) {
@@ -140,8 +140,8 @@ public final class ArmorStandFurnitureElementConfig implements FurnitureElementC
                     section.getFloat("pitch", 0f),
                     section.getFloat("yaw", 0f),
                     legacyTintSource ?
-                            DefaultFurnitureTintSourceConfig.create(List.of(DataComponentKeys.DYED_COLOR, DataComponentKeys.FIREWORK_EXPLOSION)) :
-                            section.getValue(TINT_SOURCE, FurnitureTintSources::fromConfig),
+                            SourceItemComponentsDataSourceConfig.create(List.of(DataComponentKeys.DYED_COLOR, DataComponentKeys.FIREWORK_EXPLOSION)) :
+                            section.getValue(TINT_SOURCE, SourceItemComponentsDataSourceConfig::fromConfig),
                     section.getBoolean("small"),
                     section.getEnum(GLOW_COLOR, LegacyChatFormatter.class),
                     MiscUtils.allOf(conditions),

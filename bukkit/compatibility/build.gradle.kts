@@ -1,8 +1,4 @@
-import net.momirealms.adventure
-import net.momirealms.nbt
-import net.momirealms.netty
-import net.momirealms.paperServer
-import net.momirealms.versionOf
+import net.momirealms.*
 
 repositories {
     mavenCentral()
@@ -15,7 +11,7 @@ repositories {
     maven("https://mvn.lumine.io/repository/maven-public/") // model engine mythic mobs
     maven("https://repo.viaversion.com") // via
     maven("https://repo.skriptlang.org/releases/") // skript
-    maven("https://maven.citizensnpcs.co/repo/") // denizen
+//    maven("https://maven.citizensnpcs.co/repo/") // denizen
     maven("https://jitpack.io")
     maven("https://repo.codemc.io/repository/maven-public/") // quickshop
     maven("https://repo.opencollab.dev/main/") // geyser
@@ -55,7 +51,8 @@ dependencies {
     // Skript
     compileOnly(libs.compat.skript)
     // Denizen
-    compileOnly(libs.compat.denizen)
+//    compileOnly(libs.compat.denizen)
+    compileOnly(files("${rootProject.rootDir}/libs/denizen-${versionOf("denizen")}.jar"))
     // FAWE
     compileOnly(platform(libs.compat.fawe.bom))
     compileOnly(libs.compat.fawe.core)
@@ -82,4 +79,18 @@ dependencies {
     compileOnly(libs.levelerbridge)
     // CoreProtect
     compileOnly(libs.compat.coreprotect)
+
+    testImplementation(project(":core"))
+    testImplementation(project(":bukkit"))
+    testImplementation(libs.compat.bettermodel)
+    nbt(project, JavaPlugin.TEST_IMPLEMENTATION_CONFIGURATION_NAME)
+    common(project, JavaPlugin.TEST_IMPLEMENTATION_CONFIGURATION_NAME)
+    adventure(project, JavaPlugin.TEST_IMPLEMENTATION_CONFIGURATION_NAME)
+    testImplementation(platform(libs.junit.bom))
+    testImplementation(libs.junit.jupiter)
+    testRuntimeOnly(libs.junit.platform.launcher)
+}
+
+tasks.test {
+    useJUnitPlatform()
 }

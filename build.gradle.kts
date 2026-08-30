@@ -1,7 +1,5 @@
 import net.momirealms.PublishExtension
 import net.momirealms.RelocationExtension
-import org.gradle.api.artifacts.VersionCatalogsExtension
-import org.gradle.language.jvm.tasks.ProcessResources
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 

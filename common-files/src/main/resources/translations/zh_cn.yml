@@ -272,7 +272,7 @@ resource.equipment.unknown_layer_type: 未知的预设模型类型“<arg:0>”
 resource.equipment.invalid_sacrificed_armor: 无效的原版盔甲类型“<arg:0>”
 resource.equipment_set.invalid_slot_name: 无效的套装槽位名称“<arg:0>”
 resource.furniture.element.unknown_type: 未知的家具元素类型“<arg:0>”
-resource.furniture.element.tint_source.unknown_type: 未知的家具染色源类型“<arg:0>”
+resource.furniture.data_source.unknown_type: 未知的家具数据源类型“<arg:0>”
 resource.furniture.hitbox.unknown_type: 未知的家具判定箱类型“<arg:0>”
 resource.furniture.behavior.unknown_type: 未知的家具行为类型“<arg:0>”
 resource.furniture.hitbox.custom.invalid_entity_type: 无效的实体类型“<arg:0>”

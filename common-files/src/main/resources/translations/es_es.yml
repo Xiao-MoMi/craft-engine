@@ -276,7 +276,7 @@ resource.equipment.unknown_layer_type: Tipo de capa de equipamiento desconocido 
 resource.equipment.invalid_sacrificed_armor: Tipo de armadura vanilla no válido '<arg:0>'
 resource.equipment_set.invalid_slot_name: Nombre de casilla del conjunto de equipamiento no válido '<arg:0>'
 resource.furniture.element.unknown_type: Tipo de elemento de mueble desconocido '<arg:0>'
-resource.furniture.element.tint_source.unknown_type: Tipo de fuente de tinte de mueble desconocido '<arg:0>'
+resource.furniture.data_source.unknown_type: Tipo de fuente de datos de mueble desconocido '<arg:0>'
 resource.furniture.hitbox.unknown_type: Tipo de caja de colisión (hitbox) de mueble desconocido '<arg:0>'
 resource.furniture.behavior.unknown_type: Tipo de comportamiento de mueble desconocido '<arg:0>'
 resource.furniture.hitbox.custom.invalid_entity_type: Tipo de entidad no válido '<arg:0>'

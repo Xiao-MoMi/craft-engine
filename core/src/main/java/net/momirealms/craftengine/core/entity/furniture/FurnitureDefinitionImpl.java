@@ -15,7 +15,6 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 
 class FurnitureDefinitionImpl implements FurnitureDefinition {
     private final Key id;

@@ -7,12 +7,7 @@ import net.momirealms.craftengine.core.plugin.context.ContextKey;
 import net.momirealms.craftengine.core.plugin.context.NamedRandoms;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.AbstractMap;
-import java.util.HashMap;
-import java.util.LinkedHashMap;
-import java.util.Map;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
 import java.util.function.Function;
 
 public final class ItemParameterProvider implements ChainParameterProvider<Item> {
