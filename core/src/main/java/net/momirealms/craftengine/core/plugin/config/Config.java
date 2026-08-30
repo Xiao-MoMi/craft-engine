@@ -585,8 +585,8 @@ public final class Config {
         if (config.contains("chunk-system.process-invalid-furniture.convert")) {
             SectionNode section = config.getSection("chunk-system.process-invalid-furniture.convert");
             if (section != null) {
-                for (Map.Entry<Object, Object> entry : section.getValues().entrySet()) {
-                    furnitureBuilder.put(entry.getKey().toString(), entry.getValue().toString());
+                for (Map.Entry<String, Object> entry : section.getValues().entrySet()) {
+                    furnitureBuilder.put(entry.getKey(), entry.getValue().toString());
                 }
             }
         }
@@ -600,8 +600,8 @@ public final class Config {
         if (config.contains("chunk-system.process-invalid-blocks.convert")) {
             SectionNode section = config.getSection("chunk-system.process-invalid-blocks.convert");
             if (section != null) {
-                for (Map.Entry<Object, Object> entry : section.getValues().entrySet()) {
-                    blockBuilder.put(entry.getKey().toString(), entry.getValue().toString());
+                for (Map.Entry<String, Object> entry : section.getValues().entrySet()) {
+                    blockBuilder.put(entry.getKey(), entry.getValue().toString());
                 }
             }
         }
@@ -675,11 +675,11 @@ public final class Config {
         SectionNode customModelDataOverridesSection = config.getSection("item.custom-model-data-starting-value.overrides");
         if (customModelDataOverridesSection != null) {
             Map<Key, Integer> customModelDataOverrides = new HashMap<>();
-            for (Map.Entry<Object, Object> entry : customModelDataOverridesSection.getValues().entrySet()) {
+            for (Map.Entry<String, Object> entry : customModelDataOverridesSection.getValues().entrySet()) {
                 if (entry.getValue() instanceof String s) {
-                    customModelDataOverrides.put(Key.of(entry.getKey().toString()), Integer.parseInt(s));
+                    customModelDataOverrides.put(Key.of(entry.getKey()), Integer.parseInt(s));
                 } else if (entry.getValue() instanceof Integer i) {
-                    customModelDataOverrides.put(Key.of(entry.getKey().toString()), i);
+                    customModelDataOverrides.put(Key.of(entry.getKey()), i);
                 }
             }
             this.item$custom_model_data_starting_value$overrides = customModelDataOverrides;
@@ -689,11 +689,11 @@ public final class Config {
         SectionNode breakPowerSection = config.getSection("item.break-power");
         if (breakPowerSection != null) {
             Map<Key, Integer> breakPowerOverrides = new HashMap<>();
-            for (Map.Entry<Object, Object> entry : breakPowerSection.getValues().entrySet()) {
+            for (Map.Entry<String, Object> entry : breakPowerSection.getValues().entrySet()) {
                 if (entry.getValue() instanceof String s) {
-                    breakPowerOverrides.put(Key.of(entry.getKey().toString()), Integer.parseInt(s));
+                    breakPowerOverrides.put(Key.of(entry.getKey()), Integer.parseInt(s));
                 } else if (entry.getValue() instanceof Integer i) {
-                    breakPowerOverrides.put(Key.of(entry.getKey().toString()), i);
+                    breakPowerOverrides.put(Key.of(entry.getKey()), i);
                 }
             }
             this.item$break_power = breakPowerOverrides;
@@ -718,8 +718,8 @@ public final class Config {
             this.block$deceive_bukkit_material$overrides = new HashMap<>();
             SectionNode overridesSection = config.getSection("block.deceive-bukkit-material.overrides");
             if (overridesSection != null) {
-                for (Map.Entry<Object, Object> entry : overridesSection.getValues().entrySet()) {
-                    String key = entry.getKey().toString();
+                for (Map.Entry<String, Object> entry : overridesSection.getValues().entrySet()) {
+                    String key = entry.getKey();
                     Key value = Key.of(String.valueOf(entry.getValue()));
                     if (key.contains("~")) {
                         int min = Integer.parseInt(key.split("~")[0]);
@@ -776,11 +776,11 @@ public final class Config {
         SectionNode codepointOverridesSection = config.getSection("image.codepoint-starting-value.overrides");
         if (codepointOverridesSection != null) {
             Map<Key, Integer> codepointOverrides = new HashMap<>();
-            for (Map.Entry<Object, Object> entry : codepointOverridesSection.getValues().entrySet()) {
+            for (Map.Entry<String, Object> entry : codepointOverridesSection.getValues().entrySet()) {
                 if (entry.getValue() instanceof String s) {
-                    codepointOverrides.put(Key.of(entry.getKey().toString()), Integer.parseInt(s));
+                    codepointOverrides.put(Key.of(entry.getKey()), Integer.parseInt(s));
                 } else if (entry.getValue() instanceof Integer i) {
-                    codepointOverrides.put(Key.of(entry.getKey().toString()), i);
+                    codepointOverrides.put(Key.of(entry.getKey()), i);
                 }
             }
             this.image$codepoint_starting_value$overrides = codepointOverrides;
