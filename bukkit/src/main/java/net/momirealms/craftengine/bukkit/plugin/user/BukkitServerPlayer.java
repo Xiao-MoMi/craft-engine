@@ -769,7 +769,7 @@ public class BukkitServerPlayer extends BukkitLivingEntity implements Player {
                         this.tickBlockDestroy(serverPlayer);
                     } else {
                         // 连续挥手且没被重置
-                        if (++this.awfulBreakFixer >= 4) {
+                        if (++this.awfulBreakFixer >= 4 && !isAdventureMode()) {
                             this.awfulBreakFixer = 0;
                             Object hitResult = rayTrace(serverPlayer, getCachedInteractionRange());
                             if (!BlockHitResultProxy.INSTANCE.isMiss(hitResult)) {
