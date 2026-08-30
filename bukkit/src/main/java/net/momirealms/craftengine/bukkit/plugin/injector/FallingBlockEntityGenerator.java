@@ -11,8 +11,8 @@ import net.bytebuddy.implementation.bind.annotation.SuperCall;
 import net.bytebuddy.implementation.bind.annotation.This;
 import net.bytebuddy.matcher.ElementMatchers;
 import net.momirealms.craftengine.bukkit.api.BukkitAdaptor;
-import net.momirealms.craftengine.bukkit.block.behavior.LiquidSolidifiableBlock;
 import net.momirealms.craftengine.bukkit.block.LiquidSolidification;
+import net.momirealms.craftengine.bukkit.block.behavior.LiquidSolidifiableBlock;
 import net.momirealms.craftengine.bukkit.util.BlockStateUtils;
 import net.momirealms.craftengine.core.block.ImmutableBlockState;
 import net.momirealms.craftengine.core.block.property.BooleanProperty;
@@ -168,6 +168,7 @@ public final class FallingBlockEntityGenerator {
                 return superMethod.call();
             }
 
+            ImmutableBlockState state = optionalCustomState.get();
             Object level = EntityProxy.INSTANCE.getLevel(fallingBlockEntity);
             World world = BukkitAdaptor.adapt(LevelProxy.INSTANCE.getWorld(level));
             WorldPosition position = new WorldPosition(
@@ -176,10 +177,11 @@ public final class FallingBlockEntityGenerator {
                     EntityProxy.INSTANCE.getYo(fallingBlockEntity),
                     EntityProxy.INSTANCE.getZo(fallingBlockEntity)
             );
-            ContextHolder.Builder context = ContextHolder.builder()
-                    .withParameter(DirectContextParameters.FALLING_BLOCK, true)
-                    .withParameter(DirectContextParameters.POSITION, position);
-            for (Item item : optionalCustomState.get().getDrops(context, world, null)) {
+            for (Item item : state.getDrops(ContextHolder.builder(
+                    DirectContextParameters.CUSTOM_BLOCK_STATE, state,
+                    DirectContextParameters.FALLING_BLOCK, true,
+                    DirectContextParameters.POSITION, position
+            ).build(), world, null)) {
                 world.dropItemNaturally(position, item);
             }
             return null;

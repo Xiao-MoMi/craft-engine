@@ -1,7 +1,4 @@
-import net.momirealms.adventure
-import net.momirealms.nbt
-import net.momirealms.netty
-import net.momirealms.paperServer
+import net.momirealms.*
 
 repositories {
     mavenCentral()
@@ -14,7 +11,7 @@ repositories {
     maven("https://mvn.lumine.io/repository/maven-public/") // model engine mythic mobs
     maven("https://repo.viaversion.com") // via
     maven("https://repo.skriptlang.org/releases/") // skript
-    maven("https://maven.citizensnpcs.co/repo/") // denizen
+//    maven("https://maven.citizensnpcs.co/repo/") // denizen
     maven("https://jitpack.io")
     maven("https://repo.codemc.io/repository/maven-public/") // quickshop
     maven("https://repo.opencollab.dev/main/") // geyser
@@ -31,54 +28,69 @@ dependencies {
     compileOnly(project(":bukkit"))
     compileOnly(project(":bukkit:proxy"))
     compileOnly(project(":bukkit:compatibility:legacy"))
-    compileOnly(files("${rootProject.rootDir}/libs/leafpile-${rootProject.properties["leafpile_version"]}.jar"))
+    compileOnly(files("${rootProject.rootDir}/libs/leafpile-${versionOf("leafpile")}.jar"))
 
     // Reflection
-    compileOnly("net.momirealms:sparrow-reflection:${rootProject.properties["sparrow_reflection_version"]}")
+    compileOnly(libs.sparrow.reflection)
     // NMS
-    compileOnly("net.momirealms:craft-engine-nms-helper:${rootProject.properties["nms_helper_version"]}")
+    compileOnly(libs.nms.helper)
     // Placeholder
-    compileOnly("me.clip:placeholderapi:${rootProject.properties["placeholder_api_version"]}")
+    compileOnly(libs.placeholder.api)
     // SlimeWorld
-    compileOnly("com.infernalsuite.asp:api:4.2.0-SNAPSHOT")
+    compileOnly(libs.compat.asp)
     // ModelEngine
-    compileOnly("com.ticxo.modelengine:ModelEngine:R4.0.9")
+    compileOnly(libs.compat.modelengine)
     // BetterModel
-    compileOnly("io.github.toxicity188:bettermodel-bukkit-api:3.3.0")
-    compileOnly("com.mojang:authlib:${rootProject.properties["authlib_version"]}")
+    compileOnly(libs.compat.bettermodel)
+    compileOnly(libs.authlib)
     // LuckPerms
-    compileOnly("net.luckperms:api:5.4")
+    compileOnly(libs.compat.luckperms)
     // viaversion
-    compileOnly("com.viaversion:viaversion-api:5.5.1")
-    compileOnly("com.viaversion:viaversion-bukkit:5.5.1")
+    compileOnly(libs.compat.viaversion.api)
+    compileOnly(libs.compat.viaversion.bukkit)
     // Skript
-    compileOnly("com.github.SkriptLang:Skript:2.16.1")
+    compileOnly(libs.compat.skript)
     // Denizen
-    compileOnly("com.denizenscript:denizen:1.3.3-SNAPSHOT")
+//    compileOnly(libs.compat.denizen)
+    compileOnly(files("${rootProject.rootDir}/libs/denizen-${versionOf("denizen")}.jar"))
     // FAWE
-    compileOnly(platform("com.intellectualsites.bom:bom-newest:1.52"))
-    compileOnly("com.fastasyncworldedit:FastAsyncWorldEdit-Core")
-    compileOnly("com.fastasyncworldedit:FastAsyncWorldEdit-Bukkit") { isTransitive = false }
+    compileOnly(platform(libs.compat.fawe.bom))
+    compileOnly(libs.compat.fawe.core)
+    compileOnly(libs.compat.fawe.bukkit) { isTransitive = false }
     // MythicMobs
-    compileOnly("io.lumine:Mythic-Dist:5.9.0")
+    compileOnly(libs.compat.mythicmobs)
     // CustomNameplates
-    compileOnly("net.momirealms:custom-nameplates:3.0.33")
+    compileOnly(libs.compat.custom.nameplates)
     // Axiom
-    compileOnly(files("${rootProject.rootDir}/libs/AxiomPaperPlugin-5.0.4.jar"))
+    compileOnly(files("${rootProject.rootDir}/libs/AxiomPaperPlugin-${versionOf("axiom")}.jar"))
     // WorldGuard
-    compileOnly(files("${rootProject.rootDir}/libs/worldguard-bukkit-7.0.14-dist.jar"))
+    compileOnly(files("${rootProject.rootDir}/libs/worldguard-bukkit-${versionOf("worldguard")}-dist.jar"))
     // QuickShop
-    compileOnly("com.ghostchu:quickshop-api:6.2.0.10")
+    compileOnly(libs.compat.quickshop)
     // Geyser
-    compileOnly("org.geysermc.geyser:api:2.9.0-SNAPSHOT")
+    compileOnly(libs.compat.geyser)
     // Floodgate
-    compileOnly("org.geysermc.floodgate:api:2.2.4-SNAPSHOT")
+    compileOnly(libs.compat.floodgate)
     // Vault
-    compileOnly("com.github.MilkBowl:VaultAPI:1.7.1")
+    compileOnly(libs.compat.vault)
     // ItemBridge
-    compileOnly("cn.gtemc:itembridge:${rootProject.properties["itembridge_version"]}")
+    compileOnly(libs.itembridge)
     // LevelerBridge
-    compileOnly("cn.gtemc:levelerbridge:${rootProject.properties["levelerbridge_version"]}")
+    compileOnly(libs.levelerbridge)
     // CoreProtect
-    compileOnly("net.coreprotect:coreprotect:24.0")
+    compileOnly(libs.compat.coreprotect)
+
+    testImplementation(project(":core"))
+    testImplementation(project(":bukkit"))
+    testImplementation(libs.compat.bettermodel)
+    nbt(project, JavaPlugin.TEST_IMPLEMENTATION_CONFIGURATION_NAME)
+    common(project, JavaPlugin.TEST_IMPLEMENTATION_CONFIGURATION_NAME)
+    adventure(project, JavaPlugin.TEST_IMPLEMENTATION_CONFIGURATION_NAME)
+    testImplementation(platform(libs.junit.bom))
+    testImplementation(libs.junit.jupiter)
+    testRuntimeOnly(libs.junit.platform.launcher)
+}
+
+tasks.test {
+    useJUnitPlatform()
 }

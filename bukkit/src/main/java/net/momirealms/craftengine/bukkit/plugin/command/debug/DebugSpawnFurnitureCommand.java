@@ -59,6 +59,10 @@ public final class DebugSpawnFurnitureCommand extends BukkitCommandFeature<Comma
                     BukkitFurnitureManager furnitureManager = BukkitFurnitureManager.instance();
                     Optional<FurnitureDefinition> optionalCustomFurniture = furnitureManager.furnitureById(id);
                     if (optionalCustomFurniture.isEmpty()) {
+                        if (!context.flags().hasFlag("silent")) {
+                            plugin().senderFactory().wrap(context.sender()).sendMessage(
+                                    DebugCommandOutput.error("Unknown furniture '" + id + "'"));
+                        }
                         return;
                     }
                     Location location = context.get("location");
@@ -66,7 +70,18 @@ public final class DebugSpawnFurnitureCommand extends BukkitCommandFeature<Comma
                     String variant = (String) context.optional("variant").orElse(furnitureDefinition.anyVariantName());
                     boolean playSound = context.flags().hasFlag("silent");
                     CraftEngineFurniture.place(location, furnitureDefinition, variant, playSound);
+                    if (!context.flags().hasFlag("silent")) {
+                        var sender = plugin().senderFactory().wrap(context.sender());
+                        sender.sendMessage(DebugCommandOutput.success("Spawned debug furniture"));
+                        sender.sendMessage(DebugCommandOutput.value("Furniture", id));
+                        sender.sendMessage(DebugCommandOutput.value("Variant", variant));
+                        sender.sendMessage(DebugCommandOutput.value("Location", formatLocation(location)));
+                    }
                 });
+    }
+
+    private static String formatLocation(Location location) {
+        return location.getWorld().getName() + " @ " + location.getBlockX() + ", " + location.getBlockY() + ", " + location.getBlockZ();
     }
 
     @Override

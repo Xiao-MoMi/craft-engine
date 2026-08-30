@@ -2,7 +2,6 @@ package net.momirealms.craftengine.core.plugin.context.condition;
 
 import net.momirealms.craftengine.core.entity.EquipmentSlot;
 import net.momirealms.craftengine.core.entity.LivingEntity;
-import net.momirealms.craftengine.core.entity.player.Player;
 import net.momirealms.craftengine.core.item.Item;
 import net.momirealms.craftengine.core.plugin.config.ConfigKeys;
 import net.momirealms.craftengine.core.plugin.config.ConfigSection;
@@ -32,11 +31,11 @@ public final class EquipmentCondition<CTX extends Context> implements Condition<
 
     @Override
     public boolean test(CTX ctx) {
-        Optional<Player> player = ctx.getOptionalParameter(DirectContextParameters.PLAYER);
-        if (player.isEmpty()) {
+        Optional<LivingEntity> optionalEntity = DirectContextParameters.getOptionalLivingEntity(ctx);
+        if (optionalEntity.isEmpty()) {
             return false;
         }
-        LivingEntity entity = player.get();
+        LivingEntity entity = optionalEntity.get();
         Item item = entity.getItemByEquipmentSlot(this.slot);
         if (!this.ids.isEmpty() && MiscUtils.matchRegex(item.id().asString(), this.ids, this.regexMatch)) {
             return true;

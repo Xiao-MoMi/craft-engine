@@ -1,11 +1,12 @@
 package net.momirealms.craftengine.bukkit.plugin.command.feature;
 
-import dev.dejvokep.boostedyaml.YamlDocument;
 import net.kyori.adventure.text.Component;
 import net.momirealms.craftengine.bukkit.plugin.command.BukkitCommandFeature;
 import net.momirealms.craftengine.core.plugin.CraftEngine;
 import net.momirealms.craftengine.core.plugin.command.CraftEngineCommandManager;
 import net.momirealms.craftengine.core.plugin.locale.MessageConstants;
+import net.momirealms.sparrow.yaml.YamlDocument;
+import net.momirealms.sparrow.yaml.route.Route;
 import org.bukkit.command.CommandSender;
 import org.checkerframework.checker.nullness.qual.NonNull;
 import org.incendo.cloud.Command;
@@ -53,7 +54,7 @@ public final class EnableResourceCommand extends BukkitCommandFeature<CommandSen
                         }
                     }
                     YamlDocument document = plugin().config().loadYamlData(packMetaPath);
-                    document.set("enable", true);
+                    document.set(Route.from("enable"), true);
                     try {
                         document.save(packMetaPath.toFile());
                     } catch (IOException e) {

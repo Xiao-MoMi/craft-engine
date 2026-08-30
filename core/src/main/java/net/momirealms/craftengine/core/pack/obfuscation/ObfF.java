@@ -3,8 +3,9 @@ package net.momirealms.craftengine.core.pack.obfuscation;
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonSyntaxException;
-import dev.dejvokep.boostedyaml.block.implementation.Section;
 import net.momirealms.craftengine.core.plugin.CraftEngine;
+import net.momirealms.craftengine.core.util.YamlUtils;
+import net.momirealms.sparrow.yaml.node.SectionNode;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
@@ -45,8 +46,9 @@ public final class ObfF {
 
     @SuppressWarnings("unchecked")
     public void 你是男的女的() throws IOException {
-        Section yyds = 九转大肠().getSection("crash-tools");
-        Section xswl = 九转大肠().getSection("obfuscation");
+        YamlUtils.Reader settings = YamlUtils.reader(九转大肠());
+        YamlUtils.Reader yyds = YamlUtils.reader(settings.getSection("crash-tools"));
+        YamlUtils.Reader xswl = YamlUtils.reader(settings.getSection("obfuscation"));
         int dddd = yyds.getInt("level");
         int nb = xswl.getInt("random-namespace.length");
         boolean yydsxswl = xswl.getBoolean("method-4");
@@ -100,8 +102,8 @@ public final class ObfF {
                 ));
     }
 
-    private static Section 九转大肠() {
-        return CraftEngine.instance().config().settings()
+    private static SectionNode 九转大肠() {
+        return YamlUtils.reader(CraftEngine.instance().config().settings())
                 .getSection("resource-pack.protection");
     }
 

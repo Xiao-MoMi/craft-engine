@@ -14,12 +14,40 @@ import java.io.IOException;
 import java.util.concurrent.TimeUnit;
 
 public final class CachedStorage<T extends WorldDataStorage> implements WorldDataStorage {
+    private static final int LOAD_LOCK_STRIPES = 256;
+
     private final T storage;
     private final ExpiringLong2ObjectCache<CEChunk> chunkCache;
+    private final Object[] loadLocks;
 
     public CachedStorage(T storage) {
         this.storage = storage;
         this.chunkCache = new ExpiringLong2ObjectCache<>(30, TimeUnit.SECONDS, 4096);
+        this.loadLocks = new Object[LOAD_LOCK_STRIPES];
+        for (int i = 0; i < LOAD_LOCK_STRIPES; i++) {
+            this.loadLocks[i] = new Object();
+        }
+    }
+
+    private Object loadLock(long key) {
+        return this.loadLocks[Long.hashCode(key) & (LOAD_LOCK_STRIPES - 1)];
+    }
+
+    private @NotNull CEChunk loadChunkAt(@NotNull CEWorld world, @NotNull ChunkPos pos, @Nullable Chunk chunkAccess) throws IOException {
+        long key = pos.longKey;
+        CEChunk chunk = this.chunkCache.getIfPresent(key);
+        if (chunk != null) {
+            return chunk;
+        }
+        synchronized (this.loadLock(key)) {
+            chunk = this.chunkCache.getIfPresent(key);
+            if (chunk != null) {
+                return chunk;
+            }
+            chunk = this.storage.readChunkAt(world, pos, chunkAccess);
+            this.chunkCache.put(key, chunk);
+            return chunk;
+        }
     }
 
     @Override
@@ -39,20 +67,12 @@ public final class CachedStorage<T extends WorldDataStorage> implements WorldDat
 
     @Override
     public @NotNull CEChunk readChunkAt(@NotNull CEWorld world, @NotNull ChunkPos pos, @Nullable Chunk chunkAccess) throws IOException {
-        CEChunk chunk = this.chunkCache.getIfPresent(pos.longKey);
-        if (chunk != null) {
-            return chunk;
-        }
-        chunk = this.storage.readChunkAt(world, pos, chunkAccess);
-        this.chunkCache.put(pos.longKey, chunk);
-        return chunk;
+        return this.loadChunkAt(world, pos, chunkAccess);
     }
 
     @Override
     public void preloadChunkAt(@NotNull CEWorld world, @NotNull ChunkPos pos, @Nullable Chunk chunkAccess) throws IOException {
-        if (this.chunkCache.getIfPresent(pos.longKey) == null) {
-            this.chunkCache.put(pos.longKey, this.storage.readChunkAt(world, pos, chunkAccess));
-        }
+        this.loadChunkAt(world, pos, chunkAccess);
     }
 
     @Override

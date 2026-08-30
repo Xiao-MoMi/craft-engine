@@ -47,8 +47,10 @@ public final class RangeMiningItemBehavior extends ItemBehavior {
         if (serverPlayer.isRangeMining()) return;
 
         BlockStateWrapper blockState = world.getBlockState(pos);
-        if (!this.condition.test(PlayerOptionalContext.of(player, ContextHolder.builder()
-                .withParameter(DirectContextParameters.BLOCK, world.getBlock(pos))))) {
+        if (!this.condition.test(PlayerOptionalContext.of(player, ContextHolder.builder(
+                DirectContextParameters.PLAYER, player,
+                DirectContextParameters.BLOCK, world.getBlock(pos)
+        ).build()))) {
             return;
         }
 

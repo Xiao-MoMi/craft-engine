@@ -1,6 +1,5 @@
 package net.momirealms.craftengine.core.item.updater.impl;
 
-import net.momirealms.craftengine.core.item.Item;
 import net.momirealms.craftengine.core.item.ItemBuildContext;
 import net.momirealms.craftengine.core.item.processor.ItemProcessor;
 import net.momirealms.craftengine.core.item.processor.ItemProcessors;
@@ -21,13 +20,12 @@ public final class ApplyDataOperation implements ItemUpdater {
     }
 
     @Override
-    public Item update(Item item, ItemBuildContext context) {
+    public void update(ItemBuildContext context) {
         if (this.modifiers != null) {
             for (ItemProcessor modifier : this.modifiers) {
-                modifier.apply(item, context);
+                modifier.apply(context);
             }
         }
-        return item;
     }
 
     private static class Factory implements ItemUpdaterFactory<ApplyDataOperation> {

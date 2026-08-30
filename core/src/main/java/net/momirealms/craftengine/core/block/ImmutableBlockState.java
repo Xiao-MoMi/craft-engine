@@ -11,7 +11,6 @@ import net.momirealms.craftengine.core.entity.player.Player;
 import net.momirealms.craftengine.core.item.Item;
 import net.momirealms.craftengine.core.loot.Loot;
 import net.momirealms.craftengine.core.plugin.context.ContextHolder;
-import net.momirealms.craftengine.core.plugin.context.parameter.DirectContextParameters;
 import net.momirealms.craftengine.core.registry.Holder;
 import net.momirealms.craftengine.core.util.MiscUtils;
 import net.momirealms.craftengine.core.world.World;
@@ -151,12 +150,12 @@ public final class ImmutableBlockState {
         this.tag = tag;
     }
 
-    public List<Item> getDrops(@NotNull ContextHolder.Builder builder, @NotNull World world, @Nullable Player player) {
+    public List<Item> getDrops(@NotNull ContextHolder holder, @NotNull World world, @Nullable Player player) {
         BlockDefinition block = this.owner.value();
         if (block == null) return List.of();
         Loot lootTable = block.loot();
         if (lootTable == null) return List.of();
-        return lootTable.getRandomItems(builder.withParameter(DirectContextParameters.CUSTOM_BLOCK_STATE, this).build(), world, player);
+        return lootTable.getRandomItems(holder, world, player);
     }
 
     public Holder<BlockDefinition> owner() {

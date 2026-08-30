@@ -29,10 +29,7 @@ import net.momirealms.craftengine.core.plugin.CraftEngine;
 import net.momirealms.craftengine.core.plugin.config.*;
 import net.momirealms.craftengine.core.plugin.config.lifecycle.LoadingStage;
 import net.momirealms.craftengine.core.plugin.config.lifecycle.LoadingStages;
-import net.momirealms.craftengine.core.plugin.context.CommonFunctions;
-import net.momirealms.craftengine.core.plugin.context.Context;
-import net.momirealms.craftengine.core.plugin.context.EventTrigger;
-import net.momirealms.craftengine.core.plugin.context.NamedRandoms;
+import net.momirealms.craftengine.core.plugin.context.*;
 import net.momirealms.craftengine.core.plugin.context.number.ConstantNumberProvider;
 import net.momirealms.craftengine.core.util.*;
 import org.incendo.cloud.suggestion.Suggestion;
@@ -49,7 +46,9 @@ import java.util.function.Predicate;
 import java.util.function.Supplier;
 
 public abstract class AbstractItemManager extends AbstractModelGenerator implements ItemManager {
+    private static final EventTriggerResolver EVENT_TRIGGER_RESOLVER = EventTriggerResolver.withAlias("break", EventTrigger.ITEM_BREAK);
     protected static final Map<Key, ItemBehavior> VANILLA_ITEM_EXTRA_BEHAVIORS = new HashMap<>();
+    protected static final List<Key> VANILLA_ITEMS = new ObjectArrayList<>(1024);
     protected static final Map<Key, Set<Key>> VANILLA_ITEM_TO_TAGS = new HashMap<>(1024);
     protected static final Map<Key, List<UniqueKey>> VANILLA_TAG_TO_ITEMS = new HashMap<>();
     // 解析器
@@ -65,6 +64,7 @@ public abstract class AbstractItemManager extends AbstractModelGenerator impleme
     protected final Map<Key, TreeMap<Integer, ModernItemModel>> modernOverrides = new ConcurrentHashMap<>();
     protected final Map<Key, Equipment> equipments = new ConcurrentHashMap<>();
     protected final Map<Key, ItemDefinition> dyeableItems = new ConcurrentHashMap<>();
+    protected final Map<Key, List<ItemProcessor>> vanillaItemDataOverrides = new ConcurrentHashMap<>();
     // 指令补全
     protected final List<Suggestion> cachedCustomItemSuggestions = new ObjectArrayList<>();
     protected final List<Suggestion> cachedTotemSuggestions = new ObjectArrayList<>();
@@ -72,6 +72,8 @@ public abstract class AbstractItemManager extends AbstractModelGenerator impleme
     protected final Map<Key, List<UniqueKey>> ingredientSubstitutes = new HashMap<>();
     // 有序物品id
     protected final List<Key> orderedItemIds = new ObjectArrayList<>();
+    // 原版物品 + 自定义物品
+    protected final List<Key> allItemIds = new ObjectArrayList<>();
     // 其他设置
     protected boolean featureFlag$keepOnDeathChance = false;
     protected boolean featureFlag$destroyOnDeathChance = false;
@@ -117,7 +119,9 @@ public abstract class AbstractItemManager extends AbstractModelGenerator impleme
         this.modernItemModels1_21_2.clear();
         this.ingredientSubstitutes.clear();
         this.orderedItemIds.clear();
+        this.allItemIds.clear();
         this.dyeableItems.clear();
+        this.vanillaItemDataOverrides.clear();
     }
 
     private void clearFeatureFlags() {
@@ -212,6 +216,11 @@ public abstract class AbstractItemManager extends AbstractModelGenerator impleme
     }
 
     @Override
+    public List<Key> allItemIds() {
+        return Collections.unmodifiableList(this.allItemIds);
+    }
+
+    @Override
     public Map<Key, ModernItemModel> modernItemModels1_21_4() {
         return Collections.unmodifiableMap(this.modernItemModels1_21_4);
     }
@@ -222,8 +231,8 @@ public abstract class AbstractItemManager extends AbstractModelGenerator impleme
     }
 
     @Override
-    public Collection<Key> vanillaItems() {
-        return Collections.unmodifiableCollection(VANILLA_ITEM_TO_TAGS.keySet());
+    public List<Key> vanillaItems() {
+        return Collections.unmodifiableList(VANILLA_ITEMS);
     }
 
     @Override
@@ -387,6 +396,7 @@ public abstract class AbstractItemManager extends AbstractModelGenerator impleme
             if (!this.tempCategories.isEmpty()) {
                 this.tempCategories.clear();
             }
+            AbstractItemManager.this.vanillaItemDataOverrides.clear();
             ObfuscatedItemModelProcessor.CAN_OBF.clear();
         }
 
@@ -413,6 +423,9 @@ public abstract class AbstractItemManager extends AbstractModelGenerator impleme
             }
             this.futures.clear();
 
+            AbstractItemManager.this.allItemIds.clear();
+            AbstractItemManager.this.allItemIds.addAll(VANILLA_ITEMS);
+
             // 获取有序的物品id
             int size = this.pendingConfigSections.size();
             Object[] pendingElements = this.pendingConfigSections.elements();
@@ -431,6 +444,7 @@ public abstract class AbstractItemManager extends AbstractModelGenerator impleme
                         AbstractItemManager.this.plugin.itemBrowserManager().addExternalCategoryMember(id, categories);
                     }
                     if (itemDefinition.isVanillaItem()) continue;
+                    AbstractItemManager.this.allItemIds.add(id);
                     // cache command suggestions
                     Suggestion suggestion = Suggestion.suggestion(id.asString());
                     AbstractItemManager.this.cachedCustomItemSuggestions.add(suggestion);
@@ -502,6 +516,7 @@ public abstract class AbstractItemManager extends AbstractModelGenerator impleme
         private static final String[] SWAP_ANIMATION_SCALE = ConfigKeys.of("swap_animation_scale");
         private static final String[] CATEGORIES = ConfigKeys.of("category|categor(y|ies)");
         private static final String[] SKIP_OBFUSCATION = ConfigKeys.of("skip_obfuscation");
+        private static final String[] OVERRIDE_DATA = ConfigKeys.of("override_data");
 
         @Override
         public void parseSection(@NotNull Pack pack, @NotNull Path path, @NotNull Key id, @NotNull ConfigSection section) {
@@ -509,6 +524,16 @@ public abstract class AbstractItemManager extends AbstractModelGenerator impleme
             UniqueKey uniqueId = UniqueKey.create(id);
             // 判断是不是原版物品
             boolean isVanillaItem = isVanillaItem(id);
+            if (isVanillaItem && VersionHelper.COMPONENT_RELEASE) {
+                ConfigSection overrideData = section.getSection(OVERRIDE_DATA);
+                if (overrideData != null) {
+                    List<ItemProcessor> processors = new ArrayList<>();
+                    ItemProcessors.collectProcessors(overrideData, processors::add);
+                    if (!processors.isEmpty()) {
+                        AbstractItemManager.this.vanillaItemDataOverrides.put(id, List.copyOf(processors));
+                    }
+                }
+            }
             // 读取服务端侧材质
             Key material = isVanillaItem ? id : section.getValue("material", ConfigValue::getAsIdentifier, Config.defaultMaterial());
             // 读取客户端侧材质
@@ -655,9 +680,12 @@ public abstract class AbstractItemManager extends AbstractModelGenerator impleme
                     itemBuilder.dataProcessor(new IdProcessor(id));
 
                 // 事件
-                Map<EventTrigger, List<net.momirealms.craftengine.core.plugin.context.function.Function<Context>>> events = new EnumMap<>(EventTrigger.class);
+                Map<EventTrigger, List<net.momirealms.craftengine.core.plugin.context.function.Function<Context>>> events = new HashMap<>();
                 try {
-                    CommonFunctions.parseEvents(section.getValue(EVENTS), (t, f) -> events.computeIfAbsent(t, k -> new ArrayList<>(4)).add(f));
+                    CommonFunctions.parseEvents(
+                            section.getValue(EVENTS),
+                            EVENT_TRIGGER_RESOLVER,
+                            (t, f) -> events.computeIfAbsent(t, k -> new ArrayList<>(4)).add(f));
                 } catch (KnownResourceException e) {
                     error(e, path);
                 }

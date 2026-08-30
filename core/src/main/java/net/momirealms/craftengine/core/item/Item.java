@@ -332,7 +332,8 @@ public interface Item extends ChainParameterSource {
     void merge(Item another);
 
     default Item apply(ItemProcessor modifier, ItemBuildContext context) {
-        return modifier.apply(this, context);
+        modifier.apply(context);
+        return context.item();
     }
 
     byte[] toBytes();

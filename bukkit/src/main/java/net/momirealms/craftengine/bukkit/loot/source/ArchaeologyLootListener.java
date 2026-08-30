@@ -65,6 +65,7 @@ public final class ArchaeologyLootListener implements Listener {
         if (serverPlayer == null) return;
 
         ContextHolder holder = ContextHolder.builder()
+                .withParameter(DirectContextParameters.ENTITY, serverPlayer)
                 .withParameter(DirectContextParameters.PLAYER, serverPlayer)
                 .withParameter(DirectContextParameters.WORLD, world)
                 .withParameter(DirectContextParameters.POSITION, LocationUtils.toWorldPosition(block.getLocation()))

@@ -3,9 +3,9 @@ package net.momirealms.craftengine.bukkit.loot.source;
 import net.momirealms.craftengine.bukkit.api.BukkitAdaptor;
 import net.momirealms.craftengine.bukkit.entity.BukkitEntity;
 import net.momirealms.craftengine.bukkit.loot.BukkitLootContextParameters;
-import net.momirealms.craftengine.bukkit.plugin.user.BukkitServerPlayer;
 import net.momirealms.craftengine.core.entity.EntityManager;
 import net.momirealms.craftengine.core.entity.player.InteractionHand;
+import net.momirealms.craftengine.core.entity.player.Player;
 import net.momirealms.craftengine.core.item.Item;
 import net.momirealms.craftengine.core.loot.LootContext;
 import net.momirealms.craftengine.core.loot.LootManager;
@@ -19,7 +19,6 @@ import net.momirealms.craftengine.core.world.WorldPosition;
 import net.momirealms.craftengine.proxy.minecraft.world.entity.LivingEntityProxy;
 import org.bukkit.Location;
 import org.bukkit.entity.Entity;
-import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
@@ -44,22 +43,25 @@ public final class EntityDeathLootListener implements Listener {
         net.momirealms.craftengine.core.world.World world = BukkitAdaptor.adapt(entity.getWorld());
         WorldPosition position = new WorldPosition(world, location.getX(), location.getY(), location.getZ());
         ContextHolder.Builder builder = ContextHolder.builder()
-                .withParameter(DirectContextParameters.ENTITY, bukkitEntity)
+                .withParameter(DirectContextParameters.THIS_ENTITY, bukkitEntity)
                 .withParameter(DirectContextParameters.POSITION, position)
                 // 实体死亡必有致死伤害源, die() 已将其写入 lastDamageSource
                 .withOptionalParameter(BukkitLootContextParameters.DAMAGE_SOURCE, LivingEntityProxy.INSTANCE.getLastDamageSource(bukkitEntity.minecraftEntity()));
-        BukkitServerPlayer optionalPlayer = null;
+        Player causingPlayer = null;
         float luck = 1.0f;
-        if (event.getDamageSource().getCausingEntity() instanceof Player player) {
-            optionalPlayer = BukkitAdaptor.adapt(player);
-            builder.withOptionalParameter(DirectContextParameters.PLAYER, optionalPlayer);
-            if (optionalPlayer != null) {
-                luck = (float) optionalPlayer.luck();
-                Item itemInHand = optionalPlayer.getItemInHand(InteractionHand.MAIN_HAND);
-                builder.withOptionalParameter(DirectContextParameters.ITEM_IN_HAND, ItemUtils.isEmpty(itemInHand) ? null : itemInHand);
+        Entity causingBukkitEntity = event.getDamageSource().getCausingEntity();
+        if (causingBukkitEntity != null) {
+            BukkitEntity adapted = BukkitAdaptor.adapt(causingBukkitEntity);
+            builder.withParameter(DirectContextParameters.ENTITY, adapted);
+            if (adapted instanceof Player player) {
+                causingPlayer = player;
+                luck = (float) causingPlayer.luck();
+                Item itemInHand = causingPlayer.getItemInHand(InteractionHand.MAIN_HAND);
+                builder.withParameter(DirectContextParameters.PLAYER, player)
+                        .withOptionalParameter(DirectContextParameters.ITEM_IN_HAND, ItemUtils.isEmpty(itemInHand) ? null : itemInHand);
             }
         }
-        LootContext lootContext = new LootContext(world, optionalPlayer, luck, builder.build());
+        LootContext lootContext = new LootContext(world, causingPlayer, luck, builder.build());
         LootOutcome outcome = LootManager.eval(sources, lootContext);
         if (!outcome.matched()) return;
         if (outcome.overwriteItems()) {

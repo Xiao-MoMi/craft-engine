@@ -75,7 +75,7 @@ command.resource.create.success: <white>已创建名为“<arg:0>”的空资源
 command.resource.create.failure.unknown: <red>无法创建名为“<arg:0>”的资源，错误消息：<arg:1></red>
 command.resource.create.failure.invalid_namespace: <red>无法创建名为“<arg:0>”的资源，命名空间“<arg:1>”中包含无效字符</red>
 command.resource.create.failure.exists: <red>名为“<arg:0>”的资源已经存在</red>
-command.resource.save_default.success: <white>已成功将默认资源保存到“<arg:0>”</white><newline><i><gray>点击<green><u><b><click:run_command:'/ce reload all'><hover:show_text:'重新加载插件'>这里</hover></click></b></u></green>应用更改</gray></i>
+command.resource.save_default.success: <white>已成功将默认资源保存到“<arg:0>”</white>
 command.resource.save_default.failure: <red>保存默认资产的时候发生了未知的错误，请查看控制台
 command.resource.search.parser.not_found: <red>没有类型为“<arg:0>”的资源</red>
 command.resource.search.resource.not_found: <red>没有ID为“<arg:0>”的资源</red>
@@ -129,11 +129,12 @@ yaml.duplicated_key: 在文件“<arg:0>”中的第“<arg:2>”行发现发现
 yaml.inconsistent_value_type: 在文件“<arg:0>”中的第“<arg:2>”行发现发现重复的键“<arg:1>”且值类型不同
 plugin.compatibility: '[兼容性] 已挂钩 <arg:0>'
 attribute.damage_formula.unknown_type: 未知的伤害公式类型“<arg:0>”
+attribute.damage_effect.unknown_type: 未知的伤害后置效果类型“<arg:0>”
+attribute.damage_effect.unknown_target: 未知的伤害后置效果目标“<arg:0>”
 damage_indicator.unknown_type: 未知的伤害数字显示类型“<arg:0>”
 attribute.base_value_source.unknown_type: 未知的属性基础值来源类型“<arg:0>”
 attribute.sync_value_provider.unknown_type: 未知的同步数值提供器类型“<arg:0>”
 attribute.value_transformer.unknown_type: 未知的数值转换器类型“<arg:0>”
-attribute.value_formatter.unknown_type: 未知的数值格式化器类型“<arg:0>”
 attribute.formula.unknown_variable: 伤害公式“<arg:1>”中存在未知的变量“<arg:0>”
 attribute.formula.unknown_attribute: 伤害公式“<arg:1>”中存在未知的属性“<arg:0>”
 attribute.unknown_operation: 未知的属性运算“<arg:0>”
@@ -141,12 +142,18 @@ attribute.operation.invalid_expression: 属性运算中存在无效的表达式�
 attribute.derived.unknown_attribute: 派生表达式“<arg:1>”中引用了未知的属性“<arg:0>”
 attribute.derived.unknown_type: 未知的派生值类型“<arg:0>”
 number.unknown_type: 未知的数字类型“<arg:0>”
-number.fixed.invalid_expression: 无效的表达式“<arg:0>”。https://ezylang.github.io/EvalEx/references/references.html
+number.fixed.invalid_expression: 无效的表达式“<arg:0>”。
+resource.expression.invalid: '无效的表达式“<arg:0>”。详细信息：<arg:1>'
+resource.expression.invalid_syntax: '表达式“<arg:0>”无效，错误位于第<arg:1>个字符附近（标记“<arg:2>”）。'
+resource.expression.invalid_function_argument: '表达式“<arg:0>”无效，错误位于函数的第<arg:3>个参数、第<arg:1>个字符附近（标记“<arg:2>”）。'
+resource.expression.unknown_parameter: '表达式“<arg:1>”中存在未知参数“<arg:0>”。'
 number.greater_than: “<arg:0>”应大于“<arg:1>”
 number.no_greater_than: “<arg:0>”不应大于“<arg:1>”
 number.less_than: “<arg:0>”应小于“<arg:1>”
 number.no_less_than: “<arg:0>”不应小于“<arg:1>”
 condition.unknown_type: 未知的条件类型“<arg:0>”
+category.source.unknown_type: 未知的分类源类型“<arg:0>”
+category.source.invalid_regex: 无效的分类源正则表达式“<arg:0>”
 condition.enchantment.invalid_format: 无效的谓词格式“<arg:0>”。（例如：minecraft:sharpness>=4）
 function.unknown_type: 未知的函数类型“<arg:0>”
 player_selector.unknown_type: 未知的玩家选择器类型“<arg:0>”
@@ -265,7 +272,7 @@ resource.equipment.unknown_layer_type: 未知的预设模型类型“<arg:0>”
 resource.equipment.invalid_sacrificed_armor: 无效的原版盔甲类型“<arg:0>”
 resource.equipment_set.invalid_slot_name: 无效的套装槽位名称“<arg:0>”
 resource.furniture.element.unknown_type: 未知的家具元素类型“<arg:0>”
-resource.furniture.element.tint_source.unknown_type: 未知的家具染色源类型“<arg:0>”
+resource.furniture.data_source.unknown_type: 未知的家具数据源类型“<arg:0>”
 resource.furniture.hitbox.unknown_type: 未知的家具判定箱类型“<arg:0>”
 resource.furniture.behavior.unknown_type: 未知的家具行为类型“<arg:0>”
 resource.furniture.hitbox.custom.invalid_entity_type: 无效的实体类型“<arg:0>”
@@ -283,6 +290,7 @@ resource.block.state.unreleased_state: 无法使用此格式分配方块状态�
 resource.block.state.entity_renderer.unknown_type: 未知的方块实体渲染器类型“<arg:0>”
 resource.block.state.invalid_variant_nbt: 无效的部分方块状态nbt“<arg:0>”
 resource.block.state.undefined_appearance: 未定义的方块状态外观“<arg:0>”
+resource.block.state.appearance_without_properties: 多个“appearances”需要“properties”来区分方块状态，将只使用第一个外观
 resource.block.state.model_conflict: 无法将模型“<arg:0>”绑定到方块状态“<arg:1>”，因为该状态已绑定到模型“<arg:2>”
 resource.block.state.invalid_rotation: 无效的<arg:0>轴旋转度数“<arg:1>”，预期为90的倍数
 resource.block.entity_renderer.tint_source.unknown_type: 未知的方块实体渲染器染色源“<arg:0>”

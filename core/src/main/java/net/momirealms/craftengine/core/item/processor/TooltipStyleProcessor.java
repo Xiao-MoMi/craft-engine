@@ -19,9 +19,8 @@ public final class TooltipStyleProcessor implements SimpleNetworkItemProcessor {
     }
 
     @Override
-    public Item apply(Item item, ItemBuildContext context) {
-        item.tooltipStyle(argument.toString());
-        return item;
+    public void apply(ItemBuildContext context) {
+        context.item().tooltipStyle(argument.toString());
     }
 
     @Override

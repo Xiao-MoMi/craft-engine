@@ -36,6 +36,7 @@ public interface ContextKey<T> {
 
         @Override
         public boolean equals(Object object) {
+            if (this == object) return true;
             if (!(object instanceof ContextKey<?> another)) return false;
             return this.node.equals(another.node());
         }
@@ -68,6 +69,7 @@ public interface ContextKey<T> {
 
         @Override
         public boolean equals(Object object) {
+            if (this == object) return true;
             if (!(object instanceof ContextKey<?> another)) return false;
             return this.node.equals(another.node());
         }

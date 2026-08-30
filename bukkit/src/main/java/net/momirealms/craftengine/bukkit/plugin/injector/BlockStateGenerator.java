@@ -23,6 +23,7 @@ import net.momirealms.craftengine.bukkit.item.BukkitItemManager;
 import net.momirealms.craftengine.bukkit.loot.DatapackLootTable;
 import net.momirealms.craftengine.bukkit.plugin.user.BukkitServerPlayer;
 import net.momirealms.craftengine.bukkit.util.BlockStateUtils;
+import net.momirealms.craftengine.bukkit.util.EntityUtils;
 import net.momirealms.craftengine.bukkit.util.ItemStackUtils;
 import net.momirealms.craftengine.core.block.DelegatingBlockState;
 import net.momirealms.craftengine.core.block.ImmutableBlockState;
@@ -97,7 +98,7 @@ public final class BlockStateGenerator {
 
         constructor$CraftEngineBlockState = clazz$CraftEngineBlock.getSparrowConstructor(ConstructorMatcher.takeArguments(
                 BlockProxy.CLASS,
-                VersionHelper.isOrAbove26_1 ? PropertyProxy.CLASS.arrayType() : VersionHelper.isOrAbove1_20_5 ? Reference2ObjectArrayMap.class : ImmutableMap.class,
+                VersionHelper.isOrAbove26_1 ? PropertyProxy.CLASS.arrayType() : (VersionHelper.isOrAbove1_20_5 ? Reference2ObjectArrayMap.class : ImmutableMap.class),
                 VersionHelper.isOrAbove26_1 ? Comparable.class.arrayType() : MapCodec.class
         )).asm$3();
 
@@ -125,13 +126,11 @@ public final class BlockStateGenerator {
 
             Object tool = LootParamsProxy.BuilderProxy.INSTANCE.getOptionalParameter(builder, LootContextParamsProxy.TOOL);
             Item item = BukkitItemManager.instance().wrap(tool == null ? null : ItemStackUtils.getBukkitStack(tool));
-            Object optionalPlayer = LootParamsProxy.BuilderProxy.INSTANCE.getOptionalParameter(builder, LootContextParamsProxy.THIS_ENTITY);
-            if (!PlayerProxy.CLASS.isInstance(optionalPlayer)) {
-                optionalPlayer = null;
-            }
+            Object optionalEntity = LootParamsProxy.BuilderProxy.INSTANCE.getOptionalParameter(builder, LootContextParamsProxy.THIS_ENTITY);
+            Object optionalPlayer = PlayerProxy.CLASS.isInstance(optionalEntity) ? optionalEntity : null;
 
             // do not drop if it's not the correct tool
-            if (optionalPlayer != null && !BlockStateUtils.isCorrectTool(state, item)) {
+            if (optionalEntity != null && !BlockStateUtils.isCorrectTool(state, item)) {
                 return List.of();
             }
 
@@ -149,8 +148,9 @@ public final class BlockStateGenerator {
             // 自定义 LootTable.
             Object serverLevel = LootParamsProxy.BuilderProxy.INSTANCE.getLevel(builder);
             World world = BukkitAdaptor.adapt(LevelProxy.INSTANCE.getWorld(serverLevel));
-            ContextHolder.Builder lootBuilder = new ContextHolder.Builder()
-                    .withParameter(DirectContextParameters.POSITION, new WorldPosition(world, Vec3Proxy.INSTANCE.getX(vec3), Vec3Proxy.INSTANCE.getY(vec3), Vec3Proxy.INSTANCE.getZ(vec3)));
+            ContextHolder.Builder lootBuilder = ContextHolder.builder()
+                    .withParameter(DirectContextParameters.POSITION, new WorldPosition(world, Vec3Proxy.INSTANCE.getX(vec3), Vec3Proxy.INSTANCE.getY(vec3), Vec3Proxy.INSTANCE.getZ(vec3)))
+                    .withParameter(DirectContextParameters.CUSTOM_BLOCK_STATE, state);
             if (!item.isEmpty()) {
                 lootBuilder.withParameter(DirectContextParameters.ITEM_IN_HAND, item);
             }
@@ -158,11 +158,14 @@ public final class BlockStateGenerator {
             if (player != null) {
                 lootBuilder.withParameter(DirectContextParameters.PLAYER, player);
             }
+            if (optionalEntity != null) {
+                lootBuilder.withParameter(DirectContextParameters.ENTITY, EntityUtils.adaptNMS(optionalEntity));
+            }
             Float radius = LootParamsProxy.BuilderProxy.INSTANCE.getOptionalParameter(builder, LootContextParamsProxy.EXPLOSION_RADIUS);
             if (radius != null) {
                 lootBuilder.withParameter(DirectContextParameters.EXPLOSION_RADIUS, radius);
             }
-            return state.getDrops(lootBuilder, world, player).stream().map(Item::minecraftItem).toList();
+            return state.getDrops(lootBuilder.build(), world, player).stream().map(Item::minecraftItem).toList();
         }
     }
 

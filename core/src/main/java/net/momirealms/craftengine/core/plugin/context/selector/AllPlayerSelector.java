@@ -55,8 +55,11 @@ public final class AllPlayerSelector<CTX extends Context> implements PlayerSelec
         } else {
             List<Player> players = new ArrayList<>();
             for (Player player : CraftEngine.instance().networkManager().onlineUsers()) {
-                PlayerOptionalContext newContext = PlayerOptionalContext.of(player, ContextHolder.builder()
+                PlayerOptionalContext newContext = PlayerOptionalContext.of(player, ContextHolder.builder(
+                                DirectContextParameters.PLAYER, player
+                        )
                         .withOptionalParameter(DirectContextParameters.POSITION, context.getOptionalParameter(DirectContextParameters.POSITION).orElse(null))
+                        .build()
                 );
                 if (!this.predicate.test((CTX) newContext)) {
                     continue;

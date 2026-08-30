@@ -17,8 +17,6 @@ import java.util.Optional;
 
 public interface FurnitureDefinition {
 
-    void execute(Context context, EventTrigger trigger);
-
     Key id();
 
     FurnitureSettings settings();
@@ -46,6 +44,9 @@ public interface FurnitureDefinition {
 
     @NotNull
     List<FurnitureBehaviorTemplate> behaviors();
+
+    @NotNull
+    List<Function<Context>> eventFunctions(EventTrigger trigger);
 
     @NotNull
     default FurnitureVariant getVariant(FurniturePersistentData accessor) {

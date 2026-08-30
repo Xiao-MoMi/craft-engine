@@ -218,10 +218,10 @@ public final class CropBlockBehavior extends BukkitBlockBehavior implements Bone
         int z = Vec3iProxy.INSTANCE.getZ(pos);
         int before = this.getAge(customState);
         int after = before + this.boneMealBonus.getInt(
-                SimpleContext.of(ContextHolder.builder()
-                        .withParameter(DirectContextParameters.CUSTOM_BLOCK_STATE, customState)
-                        .withParameter(DirectContextParameters.POSITION, new WorldPosition(BukkitAdaptor.adapt(world), Vec3d.atCenterOf(new Vec3i(x, y, z))))
-                        .build())
+                SimpleContext.of(ContextHolder.builder(
+                        DirectContextParameters.CUSTOM_BLOCK_STATE, customState,
+                        DirectContextParameters.POSITION, new WorldPosition(BukkitAdaptor.adapt(world), Vec3d.atCenterOf(new Vec3i(x, y, z)))
+                ).build())
         );
         int maxAge = this.ageProperty.max;
         if (after > maxAge) {

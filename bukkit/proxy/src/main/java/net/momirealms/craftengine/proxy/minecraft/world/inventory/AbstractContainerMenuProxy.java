@@ -31,6 +31,9 @@ public interface AbstractContainerMenuProxy {
     @MethodInvoker(name = "broadcastChanges")
     void broadcastChanges(Object target);
 
+    @MethodInvoker(name = "incrementStateId")
+    int incrementStateId(Object target);
+
     @MethodInvoker(name = "getSlot")
     Object getSlot(Object target, int slotIndex);
 

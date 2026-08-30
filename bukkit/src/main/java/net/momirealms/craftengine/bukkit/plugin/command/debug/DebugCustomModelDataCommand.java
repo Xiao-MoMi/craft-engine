@@ -1,8 +1,5 @@
 package net.momirealms.craftengine.bukkit.plugin.command.debug;
 
-import net.kyori.adventure.text.Component;
-import net.kyori.adventure.text.event.ClickEvent;
-import net.kyori.adventure.text.format.NamedTextColor;
 import net.momirealms.craftengine.bukkit.api.BukkitAdaptor;
 import net.momirealms.craftengine.bukkit.api.CraftEngineItems;
 import net.momirealms.craftengine.bukkit.plugin.command.BukkitCommandFeature;
@@ -55,11 +52,15 @@ public final class DebugCustomModelDataCommand extends BukkitCommandFeature<Comm
     private void handleCommand(CommandContext<CommandSender> context) {
         NamespacedKey namespacedKey = context.getOrDefault("id", null);
         @Nullable BukkitServerPlayer player = context.sender() instanceof Player p ? BukkitAdaptor.adapt(p) : null;
+        var sender = plugin().senderFactory().wrap(context.sender());
 
         if (namespacedKey != null) {
             Key itemId = KeyUtils.namespacedKeyToKey(namespacedKey);
             ItemDefinition itemDefinition = CraftEngineItems.byId(itemId);
-            if (itemDefinition == null) return;
+            if (itemDefinition == null) {
+                sender.sendMessage(DebugCommandOutput.error("Unknown custom item '" + itemId + "'"));
+                return;
+            }
             Item item = itemDefinition.buildItem(player);
             sendMessage(context, item, player);
             return;
@@ -67,17 +68,22 @@ public final class DebugCustomModelDataCommand extends BukkitCommandFeature<Comm
 
         if (player != null) {
             Item item = player.getItemInHand(InteractionHand.MAIN_HAND).copyWithCount(1);
+            if (item.isEmpty()) {
+                sender.sendMessage(DebugCommandOutput.error("The main hand is empty"));
+                return;
+            }
             sendMessage(context, item, player);
+        } else {
+            sender.sendMessage(DebugCommandOutput.error("An item ID is required from the console"));
         }
     }
 
     private void sendMessage(CommandContext<CommandSender> context, Item itemStack, BukkitServerPlayer player) {
         Item clientBoundItem = plugin().itemManager().s2c(itemStack, player).orElse(itemStack);
         int customModelData = clientBoundItem.customModelData().orElse(0);
-        Component message = Component.text(customModelData)
-                .hoverEvent(Component.text("Copy", NamedTextColor.YELLOW))
-                .clickEvent(ClickEvent.suggestCommand(String.valueOf(customModelData)));
-        plugin().senderFactory().wrap(context.sender()).sendMessage(message);
+        var sender = plugin().senderFactory().wrap(context.sender());
+        sender.sendMessage(DebugCommandOutput.title("Custom Model Data"));
+        sender.sendMessage(DebugCommandOutput.value("Value", customModelData));
     }
 
 }

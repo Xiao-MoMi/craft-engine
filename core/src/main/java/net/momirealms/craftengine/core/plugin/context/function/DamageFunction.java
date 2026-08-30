@@ -33,7 +33,8 @@ public final class DamageFunction<CTX extends Context> extends AbstractCondition
         if (this.selector != null) {
             this.selector.get(ctx).forEach(p -> p.damage(this.amount.getDouble(ctx), this.damageType, null));
         } else {
-            ctx.getOptionalParameter(DirectContextParameters.PLAYER).ifPresent(it -> it.damage(this.amount.getDouble(ctx), this.damageType, null));
+            DirectContextParameters.getOptionalLivingEntity(ctx)
+                    .ifPresent(entity -> entity.damage(this.amount.getDouble(ctx), this.damageType, null));
         }
     }
 

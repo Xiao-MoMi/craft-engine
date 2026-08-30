@@ -10,6 +10,7 @@ import net.momirealms.craftengine.core.block.ImmutableBlockState;
 import net.momirealms.craftengine.core.pack.allocator.IdAllocator;
 import net.momirealms.craftengine.core.plugin.CraftEngine;
 import net.momirealms.craftengine.core.plugin.command.CraftEngineCommandManager;
+import net.momirealms.craftengine.core.plugin.command.sender.Sender;
 import net.momirealms.craftengine.core.plugin.config.Config;
 import org.bukkit.command.CommandSender;
 import org.incendo.cloud.Command;
@@ -30,7 +31,10 @@ public final class DebugRealStateUsageCommand extends BukkitCommandFeature<Comma
         return builder
                 .handler(context -> {
                     BukkitBlockManager blockManager = plugin().blockManager();
-                    plugin().senderFactory().wrap(context.sender()).sendMessage(Component.text("Serverside block state usage:"));
+                    Sender sender = plugin().senderFactory().wrap(context.sender());
+                    sender.sendMessage(DebugCommandOutput.title("Server-side State Usage"));
+                    sender.sendMessage(DebugCommandOutput.value("Capacity", Config.serverSideBlocks()));
+                    sender.sendMessage(DebugCommandOutput.stateLegend());
                     List<Component> batch = new ArrayList<>(100);
                     IdAllocator idAllocator = blockManager.internalIdAllocator();
                     Map<String, Integer> cachedIds = idAllocator.cachedIdMap();
@@ -63,14 +67,12 @@ public final class DebugRealStateUsageCommand extends BukkitCommandFeature<Comma
                             }
                         }
                         if (batch.size() == 100) {
-                            plugin().senderFactory().wrap(context.sender())
-                                    .sendMessage(Component.text("").children(batch));
+                            sender.sendMessage(Component.text("  ").children(batch));
                             batch.clear();
                         }
                     }
                     if (!batch.isEmpty()) {
-                        plugin().senderFactory().wrap(context.sender())
-                                .sendMessage(Component.text("").children(batch));
+                        sender.sendMessage(Component.text("  ").children(batch));
                         batch.clear();
                     }
                 });

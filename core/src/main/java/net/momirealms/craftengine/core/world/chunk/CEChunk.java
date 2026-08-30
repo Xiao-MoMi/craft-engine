@@ -19,7 +19,7 @@ import net.momirealms.craftengine.core.entity.culling.CullingData;
 import net.momirealms.craftengine.core.entity.player.Player;
 import net.momirealms.craftengine.core.plugin.CraftEngine;
 import net.momirealms.craftengine.core.plugin.config.Config;
-import net.momirealms.craftengine.core.plugin.context.PlayerOptionalContext;
+import net.momirealms.craftengine.core.plugin.context.PlayerContext;
 import net.momirealms.craftengine.core.plugin.logger.Debugger;
 import net.momirealms.craftengine.core.world.*;
 import net.momirealms.craftengine.core.world.chunk.serialization.DefaultBlockEntityRendererSerializer;
@@ -28,7 +28,10 @@ import net.momirealms.sparrow.nbt.ListTag;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 public class CEChunk {
@@ -178,7 +181,7 @@ public class CEChunk {
 
     private static void updateBlockEntityVisibility(Player player, ConstantBlockEntityElement before, ConstantBlockEntityElement after) {
         if (before.hasCondition() || after.hasCondition()) {
-            PlayerOptionalContext context = PlayerOptionalContext.ofImmutable(player);
+            PlayerContext context = player.constantContext();
             boolean previousCanSee = before.canSee(context);
             boolean afterCanSee = after.canSee(context);
             if (previousCanSee && afterCanSee) {

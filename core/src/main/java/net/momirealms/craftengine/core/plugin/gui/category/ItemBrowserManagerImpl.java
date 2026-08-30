@@ -4,29 +4,28 @@ import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
 import net.kyori.adventure.text.format.TextDecoration;
 import net.momirealms.craftengine.core.entity.player.Player;
-import net.momirealms.craftengine.core.item.AbstractItemManager;
 import net.momirealms.craftengine.core.item.Item;
 import net.momirealms.craftengine.core.item.ItemBuildContext;
 import net.momirealms.craftengine.core.item.ItemKeys;
 import net.momirealms.craftengine.core.item.recipe.*;
 import net.momirealms.craftengine.core.pack.Pack;
 import net.momirealms.craftengine.core.plugin.CraftEngine;
-import net.momirealms.craftengine.core.plugin.config.ConfigKeys;
-import net.momirealms.craftengine.core.plugin.config.ConfigParser;
-import net.momirealms.craftengine.core.plugin.config.ConfigSection;
-import net.momirealms.craftengine.core.plugin.config.IdSectionConfigParser;
+import net.momirealms.craftengine.core.plugin.config.*;
 import net.momirealms.craftengine.core.plugin.config.lifecycle.LoadingStage;
 import net.momirealms.craftengine.core.plugin.config.lifecycle.LoadingStages;
 import net.momirealms.craftengine.core.plugin.context.*;
+import net.momirealms.craftengine.core.plugin.context.parameter.DirectContextParameters;
 import net.momirealms.craftengine.core.plugin.gui.*;
 import net.momirealms.craftengine.core.plugin.gui.Ingredient;
+import net.momirealms.craftengine.core.plugin.gui.category.source.CategorySource;
+import net.momirealms.craftengine.core.plugin.gui.category.source.CategorySourceContext;
+import net.momirealms.craftengine.core.plugin.gui.category.source.CategorySources;
 import net.momirealms.craftengine.core.util.*;
 import org.jetbrains.annotations.NotNull;
 
 import java.nio.file.Path;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.stream.Collectors;
 
 @SuppressWarnings("DuplicatedCode")
 public final class ItemBrowserManagerImpl implements ItemBrowserManager {
@@ -136,13 +135,11 @@ public final class ItemBrowserManagerImpl implements ItemBrowserManager {
         @Override
         public void parseSection(@NotNull Pack pack, @NotNull Path path, @NotNull Key id, @NotNull ConfigSection section) {
             String name = section.getString("name", id.asString());
-            List<String> members;
-            if (section.getBoolean(ALL_ITEMS)) {
-                AbstractItemManager itemManager = (AbstractItemManager) ItemBrowserManagerImpl.this.plugin.itemManager();
-                members = itemManager.orderedItemIds().stream().filter(it -> !itemManager.isVanillaItem(it)).map(Key::asString).collect(Collectors.toList());
-            } else {
-                members = section.getStringList("list");
-            }
+            ConfigValue sourceValue = section.getValue("source");
+            CategorySource source = sourceValue != null
+                    ? CategorySources.fromConfig(sourceValue)
+                    : CategorySources.fromConfig(legacySource(section));
+            List<String> members = source.resolve(CategorySourceContext.of(pack, ItemBrowserManagerImpl.this.plugin.itemManager()));
             Key icon = section.getIdentifier("icon", ItemKeys.STONE);
             int priority = section.getInt("priority");
             List<String> lore = section.getStringList("lore");
@@ -150,6 +147,17 @@ public final class ItemBrowserManagerImpl implements ItemBrowserManager {
             List<Condition<Context>> conditionList = section.getSectionList(ConfigKeys.of("condition(s)"), CommonConditions::fromConfig);
             Category category = new Category(id, name, lore, icon, new ArrayList<>(members), priority, hidden, MiscUtils.allOf(conditionList));
             ItemBrowserManagerImpl.this.byId.put(id, category);
+        }
+
+        private ConfigSection legacySource(ConfigSection section) {
+            Map<String, Object> source = new LinkedHashMap<>();
+            if (section.getBoolean(ALL_ITEMS)) {
+                source.put("type", "all_items");
+            } else {
+                source.put("type", "list");
+                source.put("list", section.getStringList("list"));
+            }
+            return ConfigSection.of(section.assemblePath("source"), source);
         }
     }
 
@@ -166,20 +174,22 @@ public final class ItemBrowserManagerImpl implements ItemBrowserManager {
         .addIngredient('>', GuiElement.paged((element) -> {
                     Key next = element.gui().hasNextPage() ? Constants.BROWSER_NEXT_PAGE_AVAILABLE : Constants.BROWSER_NEXT_PAGE_BLOCK;
                     return this.plugin.itemManager().getItemDefinition(next)
-                            .map(it -> it.buildItem(ItemBuildContext.of(player, ContextHolder.builder()
-                                    .withParameter(GuiParameters.CURRENT_PAGE, String.valueOf(element.gui().currentPage()))
-                                    .withParameter(GuiParameters.MAX_PAGE, String.valueOf(element.gui().maxPages()))
-                            )))
+                            .map(it -> it.buildItem(ItemBuildContext.of(player, ContextHolder.builder(
+                                    DirectContextParameters.PLAYER, player,
+                                    GuiParameters.CURRENT_PAGE, String.valueOf(element.gui().currentPage()),
+                                    GuiParameters.MAX_PAGE, String.valueOf(element.gui().maxPages())
+                            ).build())))
                             .orElseThrow(() -> new GuiElementMissingException(next));
                 }, true)
         )
         .addIngredient('<', GuiElement.paged((element) -> {
                     Key previous = element.gui().hasPreviousPage() ? Constants.BROWSER_PREVIOUS_PAGE_AVAILABLE : Constants.BROWSER_PREVIOUS_PAGE_BLOCK;
                     return this.plugin.itemManager().getItemDefinition(previous)
-                            .map(it -> it.buildItem(ItemBuildContext.of(player, ContextHolder.builder()
-                                    .withParameter(GuiParameters.CURRENT_PAGE, String.valueOf(element.gui().currentPage()))
-                                    .withParameter(GuiParameters.MAX_PAGE, String.valueOf(element.gui().maxPages()))
-                            )))
+                            .map(it -> it.buildItem(ItemBuildContext.of(player, ContextHolder.builder(
+                                    DirectContextParameters.PLAYER, player,
+                                    GuiParameters.CURRENT_PAGE, String.valueOf(element.gui().currentPage()),
+                                    GuiParameters.MAX_PAGE, String.valueOf(element.gui().maxPages())
+                            ).build())))
                             .orElseThrow(() -> new GuiElementMissingException(previous));
                 }, false)
         );
@@ -242,20 +252,22 @@ public final class ItemBrowserManagerImpl implements ItemBrowserManager {
         .addIngredient('>', GuiElement.paged((element) -> {
                     Key next = element.gui().hasNextPage() ? Constants.CATEGORY_NEXT_PAGE_AVAILABLE : Constants.CATEGORY_NEXT_PAGE_BLOCK;
                     return this.plugin.itemManager().getItemDefinition(next)
-                            .map(it -> it.buildItem(ItemBuildContext.of(player, ContextHolder.builder()
-                                    .withParameter(GuiParameters.CURRENT_PAGE, String.valueOf(element.gui().currentPage()))
-                                    .withParameter(GuiParameters.MAX_PAGE, String.valueOf(element.gui().maxPages()))
-                            )))
+                            .map(it -> it.buildItem(ItemBuildContext.of(player, ContextHolder.builder(
+                                    DirectContextParameters.PLAYER, player,
+                                    GuiParameters.CURRENT_PAGE, String.valueOf(element.gui().currentPage()),
+                                    GuiParameters.MAX_PAGE, String.valueOf(element.gui().maxPages())
+                            ).build())))
                             .orElseThrow(() -> new GuiElementMissingException(next));
                 }, true)
         )
         .addIngredient('<', GuiElement.paged((element) -> {
                     Key previous = element.gui().hasPreviousPage() ? Constants.CATEGORY_PREVIOUS_PAGE_AVAILABLE : Constants.CATEGORY_PREVIOUS_PAGE_BLOCK;
                     return this.plugin.itemManager().getItemDefinition(previous)
-                            .map(it -> it.buildItem(ItemBuildContext.of(player, ContextHolder.builder()
-                                    .withParameter(GuiParameters.CURRENT_PAGE, String.valueOf(element.gui().currentPage()))
-                                    .withParameter(GuiParameters.MAX_PAGE, String.valueOf(element.gui().maxPages()))
-                            )))
+                            .map(it -> it.buildItem(ItemBuildContext.of(player, ContextHolder.builder(
+                                    DirectContextParameters.PLAYER, player,
+                                    GuiParameters.CURRENT_PAGE, String.valueOf(element.gui().currentPage()),
+                                    GuiParameters.MAX_PAGE, String.valueOf(element.gui().maxPages())
+                            ).build())))
                             .orElseThrow(() -> new GuiElementMissingException(previous));
                 }, false)
         );
@@ -532,10 +544,11 @@ public final class ItemBrowserManagerImpl implements ItemBrowserManager {
         )
         .addIngredient('>', GuiElement.constant(this.plugin.itemManager()
                 .getItemDefinition(next)
-                .map(it -> it.buildItem(ItemBuildContext.of(player, ContextHolder.builder()
-                        .withParameter(GuiParameters.CURRENT_PAGE, String.valueOf(index + 1))
-                        .withParameter(GuiParameters.MAX_PAGE, String.valueOf(recipes.size()))
-                )))
+                .map(it -> it.buildItem(ItemBuildContext.of(player, ContextHolder.builder(
+                        DirectContextParameters.PLAYER, player,
+                        GuiParameters.CURRENT_PAGE, String.valueOf(index + 1),
+                        GuiParameters.MAX_PAGE, String.valueOf(recipes.size())
+                ).build())))
                 .orElseThrow(() -> new GuiElementMissingException(next)), (e, c) -> {
             c.cancel();
             if (index + 1 < recipes.size()) {
@@ -545,10 +558,11 @@ public final class ItemBrowserManagerImpl implements ItemBrowserManager {
         }))
         .addIngredient('<', GuiElement.constant(this.plugin.itemManager()
                 .getItemDefinition(previous)
-                .map(it -> it.buildItem(ItemBuildContext.of(player, ContextHolder.builder()
-                        .withParameter(GuiParameters.CURRENT_PAGE, String.valueOf(index + 1))
-                        .withParameter(GuiParameters.MAX_PAGE, String.valueOf(recipes.size()))
-                )))
+                .map(it -> it.buildItem(ItemBuildContext.of(player, ContextHolder.builder(
+                        DirectContextParameters.PLAYER, player,
+                        GuiParameters.CURRENT_PAGE, String.valueOf(index + 1),
+                        GuiParameters.MAX_PAGE, String.valueOf(recipes.size())
+                ).build())))
                 .orElseThrow(() -> new GuiElementMissingException(previous)), (e, c) -> {
             c.cancel();
             if (index > 0) {
@@ -685,10 +699,11 @@ public final class ItemBrowserManagerImpl implements ItemBrowserManager {
         )
         .addIngredient('>', GuiElement.constant(this.plugin.itemManager()
                 .getItemDefinition(next)
-                .map(it -> it.buildItem(ItemBuildContext.of(player, ContextHolder.builder()
-                        .withParameter(GuiParameters.CURRENT_PAGE, String.valueOf(index + 1))
-                        .withParameter(GuiParameters.MAX_PAGE, String.valueOf(recipes.size()))
-                )))
+                .map(it -> it.buildItem(ItemBuildContext.of(player, ContextHolder.builder(
+                        DirectContextParameters.PLAYER, player,
+                        GuiParameters.CURRENT_PAGE, String.valueOf(index + 1),
+                        GuiParameters.MAX_PAGE, String.valueOf(recipes.size())
+                ).build())))
                 .orElseThrow(() -> new GuiElementMissingException(next)), (e, c) -> {
             c.cancel();
             if (index + 1 < recipes.size()) {
@@ -698,10 +713,11 @@ public final class ItemBrowserManagerImpl implements ItemBrowserManager {
         }))
         .addIngredient('<', GuiElement.constant(this.plugin.itemManager()
                 .getItemDefinition(previous)
-                .map(it -> it.buildItem(ItemBuildContext.of(player, ContextHolder.builder()
-                        .withParameter(GuiParameters.CURRENT_PAGE, String.valueOf(index + 1))
-                        .withParameter(GuiParameters.MAX_PAGE, String.valueOf(recipes.size()))
-                )))
+                .map(it -> it.buildItem(ItemBuildContext.of(player, ContextHolder.builder(
+                        DirectContextParameters.PLAYER, player,
+                        GuiParameters.CURRENT_PAGE, String.valueOf(index + 1),
+                        GuiParameters.MAX_PAGE, String.valueOf(recipes.size())
+                ).build())))
                 .orElseThrow(() -> new GuiElementMissingException(previous)), (e, c) -> {
             c.cancel();
             if (index > 0) {
@@ -917,10 +933,11 @@ public final class ItemBrowserManagerImpl implements ItemBrowserManager {
         )
         .addIngredient('>', GuiElement.constant(this.plugin.itemManager()
                 .getItemDefinition(next)
-                .map(it -> it.buildItem(ItemBuildContext.of(player, ContextHolder.builder()
-                        .withParameter(GuiParameters.CURRENT_PAGE, String.valueOf(index + 1))
-                        .withParameter(GuiParameters.MAX_PAGE, String.valueOf(recipes.size()))
-                )))
+                .map(it -> it.buildItem(ItemBuildContext.of(player, ContextHolder.builder(
+                        DirectContextParameters.PLAYER, player,
+                        GuiParameters.CURRENT_PAGE, String.valueOf(index + 1),
+                        GuiParameters.MAX_PAGE, String.valueOf(recipes.size())
+                ).build())))
                 .orElseThrow(() -> new GuiElementMissingException(next)), (e, c) -> {
             c.cancel();
             if (index + 1 < recipes.size()) {
@@ -930,10 +947,11 @@ public final class ItemBrowserManagerImpl implements ItemBrowserManager {
         }))
         .addIngredient('<', GuiElement.constant(this.plugin.itemManager()
                 .getItemDefinition(previous)
-                .map(it -> it.buildItem(ItemBuildContext.of(player, ContextHolder.builder()
-                        .withParameter(GuiParameters.CURRENT_PAGE, String.valueOf(index + 1))
-                        .withParameter(GuiParameters.MAX_PAGE, String.valueOf(recipes.size()))
-                )))
+                .map(it -> it.buildItem(ItemBuildContext.of(player, ContextHolder.builder(
+                        DirectContextParameters.PLAYER, player,
+                        GuiParameters.CURRENT_PAGE, String.valueOf(index + 1),
+                        GuiParameters.MAX_PAGE, String.valueOf(recipes.size())
+                ).build())))
                 .orElseThrow(() -> new GuiElementMissingException(previous)), (e, c) -> {
             c.cancel();
             if (index > 0) {
@@ -1000,10 +1018,11 @@ public final class ItemBrowserManagerImpl implements ItemBrowserManager {
             }
         }))
         .addIngredient('?', GuiElement.constant(this.plugin.itemManager().getItemDefinition(Constants.RECIPE_COOKING_INFO)
-                .map(it -> it.buildItem(ItemBuildContext.of(player, ContextHolder.builder()
-                        .withParameter(GuiParameters.COOKING_TIME, String.valueOf(recipe.cookingTime()))
-                        .withParameter(GuiParameters.COOKING_EXPERIENCE, String.valueOf(recipe.experience()))
-                )))
+                .map(it -> it.buildItem(ItemBuildContext.of(player, ContextHolder.builder(
+                        DirectContextParameters.PLAYER, player,
+                        GuiParameters.COOKING_TIME, String.valueOf(recipe.cookingTime()),
+                        GuiParameters.COOKING_EXPERIENCE, String.valueOf(recipe.experience())
+                ).build())))
                 .orElseThrow(() -> new GuiElementMissingException(Constants.RECIPE_COOKING_INFO)), (e, c) -> c.cancel()))
         .addIngredient('^', player.hasPermission(GET_ITEM_PERMISSION) ? GuiElement.constant(Item.byId(Constants.RECIPE_GET_ITEM, player), (e, c) -> {
             c.cancel();
@@ -1056,10 +1075,11 @@ public final class ItemBrowserManagerImpl implements ItemBrowserManager {
         )
         .addIngredient('>', GuiElement.constant(this.plugin.itemManager()
                 .getItemDefinition(next)
-                .map(it -> it.buildItem(ItemBuildContext.of(player, ContextHolder.builder()
-                        .withParameter(GuiParameters.CURRENT_PAGE, String.valueOf(index + 1))
-                        .withParameter(GuiParameters.MAX_PAGE, String.valueOf(recipes.size()))
-                )))
+                .map(it -> it.buildItem(ItemBuildContext.of(player, ContextHolder.builder(
+                        DirectContextParameters.PLAYER, player,
+                        GuiParameters.CURRENT_PAGE, String.valueOf(index + 1),
+                        GuiParameters.MAX_PAGE, String.valueOf(recipes.size())
+                ).build())))
                 .orElseThrow(() -> new GuiElementMissingException(next)), (e, c) -> {
             c.cancel();
             if (index + 1 < recipes.size()) {
@@ -1069,10 +1089,11 @@ public final class ItemBrowserManagerImpl implements ItemBrowserManager {
         }))
         .addIngredient('<', GuiElement.constant(this.plugin.itemManager()
                 .getItemDefinition(previous)
-                .map(it -> it.buildItem(ItemBuildContext.of(player, ContextHolder.builder()
-                        .withParameter(GuiParameters.CURRENT_PAGE, String.valueOf(index + 1))
-                        .withParameter(GuiParameters.MAX_PAGE, String.valueOf(recipes.size()))
-                )))
+                .map(it -> it.buildItem(ItemBuildContext.of(player, ContextHolder.builder(
+                        DirectContextParameters.PLAYER, player,
+                        GuiParameters.CURRENT_PAGE, String.valueOf(index + 1),
+                        GuiParameters.MAX_PAGE, String.valueOf(recipes.size())
+                ).build())))
                 .orElseThrow(() -> new GuiElementMissingException(previous)), (e, c) -> {
             c.cancel();
             if (index > 0) {
@@ -1169,10 +1190,11 @@ public final class ItemBrowserManagerImpl implements ItemBrowserManager {
         )
         .addIngredient('>', GuiElement.constant(this.plugin.itemManager()
                 .getItemDefinition(next)
-                .map(it -> it.buildItem(ItemBuildContext.of(player, ContextHolder.builder()
-                        .withParameter(GuiParameters.CURRENT_PAGE, String.valueOf(index + 1))
-                        .withParameter(GuiParameters.MAX_PAGE, String.valueOf(recipes.size()))
-                )))
+                .map(it -> it.buildItem(ItemBuildContext.of(player, ContextHolder.builder(
+                        DirectContextParameters.PLAYER, player,
+                        GuiParameters.CURRENT_PAGE, String.valueOf(index + 1),
+                        GuiParameters.MAX_PAGE, String.valueOf(recipes.size())
+                ).build())))
                 .orElseThrow(() -> new GuiElementMissingException(next)), (e, c) -> {
             c.cancel();
             if (index + 1 < recipes.size()) {
@@ -1182,10 +1204,11 @@ public final class ItemBrowserManagerImpl implements ItemBrowserManager {
         }))
         .addIngredient('<', GuiElement.constant(this.plugin.itemManager()
                 .getItemDefinition(previous)
-                .map(it -> it.buildItem(ItemBuildContext.of(player, ContextHolder.builder()
-                        .withParameter(GuiParameters.CURRENT_PAGE, String.valueOf(index + 1))
-                        .withParameter(GuiParameters.MAX_PAGE, String.valueOf(recipes.size()))
-                )))
+                .map(it -> it.buildItem(ItemBuildContext.of(player, ContextHolder.builder(
+                        DirectContextParameters.PLAYER, player,
+                        GuiParameters.CURRENT_PAGE, String.valueOf(index + 1),
+                        GuiParameters.MAX_PAGE, String.valueOf(recipes.size())
+                ).build())))
                 .orElseThrow(() -> new GuiElementMissingException(previous)), (e, c) -> {
             c.cancel();
             if (index > 0) {

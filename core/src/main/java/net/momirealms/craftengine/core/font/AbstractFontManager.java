@@ -12,6 +12,7 @@ import net.momirealms.craftengine.core.plugin.config.lifecycle.LoadingStage;
 import net.momirealms.craftengine.core.plugin.config.lifecycle.LoadingStages;
 import net.momirealms.craftengine.core.plugin.context.ContextHolder;
 import net.momirealms.craftengine.core.plugin.context.PlayerOptionalContext;
+import net.momirealms.craftengine.core.plugin.context.parameter.DirectContextParameters;
 import net.momirealms.craftengine.core.util.*;
 import org.ahocorasick.trie.Token;
 import org.ahocorasick.trie.Trie;
@@ -64,7 +65,8 @@ public abstract class AbstractFontManager implements FontManager {
 
     @Override
     public void load() {
-        this.offsetFont = Optional.ofNullable(plugin.config().settings().getSection("image.offset-characters"))
+        this.offsetFont = Optional.ofNullable(YamlUtils.reader(plugin.config().settings()).getSection("image.offset-characters"))
+                .map(YamlUtils::reader)
                 .filter(section -> section.getBoolean("enable", true))
                 .map(section -> {
                     Key font = Key.of(section.getString("font", "minecraft:default"));
@@ -177,9 +179,10 @@ public abstract class AbstractFontManager implements FontManager {
                 continue;
             Component content = AdventureHelper.deserialize(
                     emoji.content(useCase),
-                    PlayerOptionalContext.of(player, ContextHolder.builder()
+                    PlayerOptionalContext.of(player, ContextHolder.builder(EmojiParameters.KEYWORD, emoji.keywords().get(0))
                             .withOptionalParameter(EmojiParameters.EMOJI, emoji.emojiImage())
-                            .withParameter(EmojiParameters.KEYWORD, emoji.keywords().get(0))
+                            .withOptionalParameter(DirectContextParameters.PLAYER, player)
+                            .build()
                     )
             );
             replacements.put(fragment, AdventureHelper.componentToMiniMessage(content));
@@ -223,10 +226,10 @@ public abstract class AbstractFontManager implements FontManager {
                 continue;
             emojis.put(fragment, AdventureHelper.deserialize(
                     emoji.content(useCase),
-                    PlayerOptionalContext.of(player, ContextHolder.builder()
+                    PlayerOptionalContext.of(player, ContextHolder.builder(EmojiParameters.KEYWORD, emoji.keywords().getFirst())
                             .withOptionalParameter(EmojiParameters.EMOJI, emoji.emojiImage())
-                            .withParameter(EmojiParameters.KEYWORD, emoji.keywords().getFirst())
-                    ))
+                            .withOptionalParameter(DirectContextParameters.PLAYER, player)
+                            .build()))
             );
             if (emojis.size() >= maxTimes) break;
         }
@@ -255,9 +258,10 @@ public abstract class AbstractFontManager implements FontManager {
                 continue;
             emojis.put(fragment, AdventureHelper.deserialize(
                     emoji.content(useCase),
-                    PlayerOptionalContext.of(player, ContextHolder.builder()
+                    PlayerOptionalContext.of(player, ContextHolder.builder(EmojiParameters.KEYWORD, emoji.keywords().getFirst())
                             .withOptionalParameter(EmojiParameters.EMOJI, emoji.emojiImage())
-                            .withParameter(EmojiParameters.KEYWORD, emoji.keywords().getFirst())
+                            .withOptionalParameter(DirectContextParameters.PLAYER, player)
+                            .build()
                     )
             ));
             if (emojis.size() >= maxTimes) break;

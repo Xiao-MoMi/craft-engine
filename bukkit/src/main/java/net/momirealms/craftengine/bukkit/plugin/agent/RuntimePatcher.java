@@ -4,21 +4,18 @@ import cn.gtemc.reflection.ImplLookupGetter;
 import net.bytebuddy.ByteBuddy;
 import net.bytebuddy.agent.ByteBuddyAgent;
 import net.bytebuddy.dynamic.loading.ClassLoadingStrategy;
-import net.momirealms.craftengine.bukkit.api.BukkitAdaptor;
-import net.momirealms.craftengine.bukkit.item.BukkitItemManager;
 import net.momirealms.craftengine.bukkit.plugin.BukkitCraftEngine;
 import net.momirealms.craftengine.bukkit.util.ItemStackUtils;
 import net.momirealms.craftengine.bukkit.world.BukkitWorldManager;
+import net.momirealms.craftengine.core.plugin.config.Config;
+import net.momirealms.craftengine.core.util.ReflectionUtils;
+import net.momirealms.craftengine.core.util.VersionHelper;
 import net.momirealms.craftengine.proxy.minecraft.core.component.DataComponentExactPredicateProxy;
 import net.momirealms.craftengine.proxy.minecraft.nbt.CompoundTagProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.item.ItemStackProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.item.trading.ItemCostProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.item.trading.MerchantOfferProxy;
 import net.momirealms.sparrow.reflection.SReflection;
-import net.momirealms.sparrow.reflection.clazz.SparrowClass;
-import net.momirealms.craftengine.core.plugin.config.Config;
-import net.momirealms.craftengine.core.util.ReflectionUtils;
-import net.momirealms.craftengine.core.util.VersionHelper;
 import org.bukkit.Bukkit;
 
 import java.lang.instrument.Instrumentation;
@@ -62,7 +59,7 @@ public final class RuntimePatcher {
                 plugin.logger().info("Patching the server...");
                 ChunkLoadWarmupAgent.install(instrumentation());
             } catch (Throwable t) {
-                plugin.logger().warn("Failed to hook chunk data read, chunk data will be read synchronously on chunk load");
+                plugin.logger().warn("Failed to hook chunk data read, chunk data will be read synchronously on chunk load", t);
             }
         }
     }

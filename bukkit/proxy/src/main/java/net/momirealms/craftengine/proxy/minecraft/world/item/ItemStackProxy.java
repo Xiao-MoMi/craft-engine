@@ -5,6 +5,7 @@ import net.momirealms.craftengine.proxy.minecraft.core.RegistryProxy;
 import net.momirealms.craftengine.proxy.minecraft.core.component.DataComponentHolderProxy;
 import net.momirealms.craftengine.proxy.minecraft.core.component.DataComponentPatchProxy;
 import net.momirealms.craftengine.proxy.minecraft.core.component.DataComponentTypeProxy;
+import net.momirealms.craftengine.proxy.minecraft.core.component.PatchedDataComponentMapProxy;
 import net.momirealms.craftengine.proxy.minecraft.nbt.CompoundTagProxy;
 import net.momirealms.craftengine.proxy.minecraft.network.codec.StreamCodecProxy;
 import net.momirealms.craftengine.proxy.minecraft.tags.TagKeyProxy;
@@ -103,6 +104,9 @@ public interface ItemStackProxy extends DataComponentHolderProxy, ItemInstancePr
 
     @MethodInvoker(name = "getComponentsPatch", activeIf = "min_version=1.20.5")
     Object getComponentsPatch(Object target);
+
+    @FieldSetter(name = "components", activeIf = "min_version=1.20.5")
+    void setComponents(Object target, @Type(clazz = PatchedDataComponentMapProxy.class) Object components);
 
     @MethodInvoker(name = "transmuteCopy", activeIf = "min_version=1.20.5")
     Object transmuteCopy(Object target, @Type(clazz = ItemLikeProxy.class) Object item, int count);

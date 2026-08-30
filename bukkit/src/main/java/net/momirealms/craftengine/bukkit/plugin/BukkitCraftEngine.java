@@ -1,6 +1,5 @@
 package net.momirealms.craftengine.bukkit.plugin;
 
-import io.papermc.paper.event.player.PlayerTradeEvent;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import net.momirealms.antigrieflib.AntiGriefCompatibility;
 import net.momirealms.antigrieflib.AntiGriefLib;

@@ -1,6 +1,5 @@
 package net.momirealms.craftengine.core.item.processor;
 
-import net.momirealms.craftengine.core.item.Item;
 import net.momirealms.craftengine.core.item.ItemBuildContext;
 import net.momirealms.craftengine.core.plugin.config.ConfigValue;
 import net.momirealms.craftengine.core.util.Key;
@@ -19,9 +18,8 @@ public final class IdProcessor implements ItemProcessor {
     }
 
     @Override
-    public Item apply(Item item, ItemBuildContext context) {
-        item.customId(this.argument);
-        return item;
+    public void apply(ItemBuildContext context) {
+        context.item().customId(this.argument);
     }
 
     private static class Factory implements ItemProcessorFactory<IdProcessor> {

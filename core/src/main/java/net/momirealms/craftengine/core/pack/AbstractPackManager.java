@@ -235,6 +235,8 @@ public abstract class AbstractPackManager implements PackManager {
         SIMPLIFIED_MODEL_READERS.put(ItemKeys.CROSSBOW, CrossbowItemModelReader.INSTANCE);
         SIMPLIFIED_MODEL_READERS.put(ItemKeys.FIREWORK_STAR, GeneratedItemModelReader.FIREWORK_STAR);
         SIMPLIFIED_MODEL_READERS.put(ItemKeys.MACE, GeneratedItemModelReader.HANDHELD_MACE);
+        SIMPLIFIED_MODEL_READERS.put(ItemKeys.WARPED_FUNGUS_ON_A_STICK, GeneratedItemModelReader.HANDHELD_ROD);
+        SIMPLIFIED_MODEL_READERS.put(ItemKeys.CARROT_ON_A_STICK, GeneratedItemModelReader.HANDHELD_ROD);
         for (Key spear : ItemKeys.SPEARS) {
             SIMPLIFIED_MODEL_READERS.put(spear, SpearItemModelReader.INSTANCE);
         }
@@ -293,7 +295,7 @@ public abstract class AbstractPackManager implements PackManager {
     @Override
     public void load() {
         this.plugin.networkManager().setServerPortHost(null);
-        Object hostingObj = Config.instance().settings().get("resource-pack.delivery.hosting");
+        Object hostingObj = YamlUtils.reader(Config.instance().settings()).getValue("resource-pack.delivery.hosting");
         if (hostingObj == null) {
             this.resourcePackHost = NoneHost.INSTANCE;
             return;
@@ -638,7 +640,7 @@ public abstract class AbstractPackManager implements PackManager {
                 parser.postProcess();
                 long t2 = System.nanoTime();
                 int count = parser.count();
-                if (parser.silentIfNotExists() && count == 0) {
+                if (parser.silentIfNotExists() && count <= 0) {
                     return;
                 }
                 this.plugin.logger().info(TranslationManager.instance().plainTranslation("resource.config_loaded",

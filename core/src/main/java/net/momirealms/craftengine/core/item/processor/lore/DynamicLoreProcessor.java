@@ -30,13 +30,14 @@ public final class DynamicLoreProcessor implements SimpleNetworkItemProcessor {
     }
 
     @Override
-    public Item apply(Item item, ItemBuildContext context) {
+    public void apply(ItemBuildContext context) {
+        Item item = context.item();
         String displayContext = Optional.ofNullable(item.getTagAsJava(CONTEXT_TAG_KEY)).orElse(this.defaultModifier).toString();
         LoreProcessor lore = this.displayContexts.get(displayContext);
         if (lore == null) {
             lore = this.defaultModifier;
         }
-        return lore.apply(item, context);
+        lore.apply(context);
     }
 
     @Override

@@ -2,7 +2,6 @@ package net.momirealms.craftengine.core.attribute;
 
 import net.momirealms.craftengine.core.attribute.base.BaseValueSource;
 import net.momirealms.craftengine.core.attribute.derived.DerivedValue;
-import net.momirealms.craftengine.core.attribute.format.ValueFormatter;
 import net.momirealms.craftengine.core.attribute.sync.SyncTarget;
 import net.momirealms.craftengine.core.entity.Entity;
 import net.momirealms.craftengine.core.entity.LivingEntity;
@@ -28,11 +27,9 @@ public final class Attribute {
     public final Set<Key> applicableEntityTypes;
     public final List<SyncTarget> syncTargets;
     @Nullable
-    public final ValueFormatter formatter;
-    @Nullable
     public final DerivedValue derived;
 
-    public Attribute(Key id, BaseValueSource baseValueSource, ValueConstraint constraint, List<AttributeOperation> operations, @Nullable Set<Key> applicableEntityTypes, List<SyncTarget> syncTargets, @Nullable ValueFormatter formatter, @Nullable DerivedValue derived) {
+    public Attribute(Key id, BaseValueSource baseValueSource, ValueConstraint constraint, List<AttributeOperation> operations, @Nullable Set<Key> applicableEntityTypes, List<SyncTarget> syncTargets, @Nullable DerivedValue derived) {
         this.id = id;
         this.syncModifierId = Key.of(id.namespace(), SYNC_MODIFIER_PREFIX + id.value());
         this.baseValueSource = baseValueSource;
@@ -40,7 +37,6 @@ public final class Attribute {
         this.operations = operations;
         this.applicableEntityTypes = applicableEntityTypes;
         this.syncTargets = syncTargets;
-        this.formatter = formatter;
         this.derived = derived;
     }
 
@@ -85,11 +81,6 @@ public final class Attribute {
     }
 
     @Nullable
-    public ValueFormatter formatter() {
-        return this.formatter;
-    }
-
-    @Nullable
     public DerivedValue derived() {
         return this.derived;
     }
@@ -109,9 +100,5 @@ public final class Attribute {
                 DERIVATION_STACK.remove();
             }
         }
-    }
-
-    public String format(double value) {
-        return this.formatter == null ? String.valueOf(value) : this.formatter.format(value);
     }
 }

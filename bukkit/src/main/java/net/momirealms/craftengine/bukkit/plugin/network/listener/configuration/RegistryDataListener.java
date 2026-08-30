@@ -4,6 +4,7 @@ import net.momirealms.craftengine.bukkit.block.BukkitBlockManager;
 import net.momirealms.craftengine.bukkit.block.BukkitCustomBlockStateWrapper;
 import net.momirealms.craftengine.bukkit.item.BukkitItemManager;
 import net.momirealms.craftengine.bukkit.plugin.network.BukkitNetworkManager;
+import net.momirealms.craftengine.core.block.BlockKeys;
 import net.momirealms.craftengine.core.block.BlockStateWrapper;
 import net.momirealms.craftengine.core.entity.player.Player;
 import net.momirealms.craftengine.core.item.Item;
@@ -31,6 +32,8 @@ public final class RegistryDataListener implements ByteBufferPacketListener {
     public static final RegistryDataListener INSTANCE = VersionHelper.isOrAbove1_21 ? new RegistryDataListener() : null;
     private static final Key ENCHANTMENT = Key.of("enchantment");
     private static final Key DIALOG = Key.of("dialog");
+    private static final String BLOCK_ID = VersionHelper.isOrAbove26_3 ? "id" : "Name";
+    private static final String BLOCK_PROPERTIES = VersionHelper.isOrAbove26_3 ? "properties" : "Properties";
 
     @Override
     public void onPacketSend(NetWorkUser user, ByteBufPacketEvent event) {
@@ -92,26 +95,26 @@ public final class RegistryDataListener implements ByteBufferPacketListener {
     private static void replaceAll(CompoundTag tag) {
         for (String key : tag.keySet()) {
             Tag value = tag.get(key);
-            if ("Name".equals(key) && value instanceof StringTag s) {
+            if (BLOCK_ID.equals(key) && value instanceof StringTag s) {
                 Key id = Key.of(s.value());
                 if (Key.CRAFTENGINE_NAMESPACE.equals(id.namespace) && BukkitBlockManager.instance().createVanillaBlockState(id.asString()) instanceof BukkitCustomBlockStateWrapper state) {
                     BlockStateWrapper visual = state.visualBlockState();
                     if (visual == null) {
-                        visual = BukkitBlockManager.instance().createVanillaBlockState("minecraft:stone");
-                    }
-                    String newId = visual.ownerId().asString();
-                    tag.putString("Name", newId);
-                    Collection<String> propertyNames = visual.getPropertyNames();
-                    if (!propertyNames.isEmpty()) {
-                        CompoundTag properties = new CompoundTag();
-                        for (String property : propertyNames) {
-                            Object propertyValue = visual.getProperty(property);
-                            if (propertyValue == null) continue;
-                            properties.putString(property, String.valueOf(propertyValue));
+                        tag.putString(BLOCK_ID, BlockKeys.STONE.asString());
+                    } else {
+                        String newId = visual.ownerId().asString();
+                        tag.putString(BLOCK_ID, newId);
+                        Collection<String> propertyNames = visual.getPropertyNames();
+                        if (!propertyNames.isEmpty()) {
+                            CompoundTag properties = new CompoundTag();
+                            for (String property : propertyNames) {
+                                Object propertyValue = visual.getProperty(property);
+                                if (propertyValue == null) continue;
+                                properties.putString(property, String.valueOf(propertyValue));
+                            }
+                            tag.put(BLOCK_PROPERTIES, properties);
                         }
-                        tag.put("Properties", properties);
                     }
-                    Debugger.COMMON.debug(() -> "tag1=" + tag);
                 }
             } else if ("immune_blocks".equals(key) || "blocks".equals(key)) {
                 if (value instanceof StringTag s) {

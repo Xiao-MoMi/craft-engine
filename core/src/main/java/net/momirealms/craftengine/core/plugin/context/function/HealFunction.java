@@ -28,7 +28,8 @@ public final class HealFunction<CTX extends Context> extends AbstractConditional
         if (this.selector != null) {
             this.selector.get(ctx).forEach(p -> p.heal(this.amount.getDouble(ctx)));
         } else {
-            ctx.getOptionalParameter(DirectContextParameters.PLAYER).ifPresent(it -> it.heal(this.amount.getDouble(ctx)));
+            DirectContextParameters.getOptionalLivingEntity(ctx)
+                    .ifPresent(entity -> entity.heal(this.amount.getDouble(ctx)));
         }
     }
 

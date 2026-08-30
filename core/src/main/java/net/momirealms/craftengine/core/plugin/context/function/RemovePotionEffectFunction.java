@@ -29,9 +29,9 @@ public final class RemovePotionEffectFunction<CTX extends Context> extends Abstr
     @Override
     public void runInternal(CTX ctx) {
         if (this.selector == null) {
-            ctx.getOptionalParameter(DirectContextParameters.PLAYER).ifPresent(it -> {
-                if (this.all) it.clearPotionEffects();
-                else it.removePotionEffect(this.potionEffectType);
+            DirectContextParameters.getOptionalLivingEntity(ctx).ifPresent(entity -> {
+                if (this.all) entity.clearPotionEffects();
+                else entity.removePotionEffect(this.potionEffectType);
             });
         } else {
             for (Player target : this.selector.get(ctx)) {

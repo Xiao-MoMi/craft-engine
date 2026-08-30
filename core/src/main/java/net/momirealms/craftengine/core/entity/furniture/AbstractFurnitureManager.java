@@ -20,6 +20,7 @@ import net.momirealms.craftengine.core.plugin.config.lifecycle.LoadingStages;
 import net.momirealms.craftengine.core.plugin.context.CommonFunctions;
 import net.momirealms.craftengine.core.plugin.context.Context;
 import net.momirealms.craftengine.core.plugin.context.EventTrigger;
+import net.momirealms.craftengine.core.plugin.context.EventTriggerResolver;
 import net.momirealms.craftengine.core.plugin.context.function.Function;
 import net.momirealms.craftengine.core.plugin.scheduler.SchedulerTask;
 import net.momirealms.craftengine.core.util.Key;
@@ -37,6 +38,7 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.function.Supplier;
 
 public abstract class AbstractFurnitureManager implements FurnitureManager {
+    private static final EventTriggerResolver EVENT_TRIGGER_RESOLVER = EventTriggerResolver.withAlias("break", EventTrigger.FURNITURE_BREAK);
     protected final Map<Key, FurnitureDefinition> byId = new ConcurrentHashMap<>();
     protected final CraftEngine plugin;
     protected final IdSectionConfigParser furnitureParser;
@@ -264,9 +266,10 @@ public abstract class AbstractFurnitureManager implements FurnitureManager {
             }
 
             // 解析事件 （可异常）
-            Map<EventTrigger, List<Function<Context>>> events = new EnumMap<>(EventTrigger.class);
+            Map<EventTrigger, List<Function<Context>>> events = new HashMap<>();
             try {
-                CommonFunctions.parseEvents(section.getValue(EVENT), (t, f) -> events.computeIfAbsent(t, k -> new ArrayList<>()).add(f));
+                CommonFunctions.parseEvents(section.getValue(EVENT), EVENT_TRIGGER_RESOLVER,
+                        (t, f) -> events.computeIfAbsent(t, k -> new ArrayList<>()).add(f));
             } catch (KnownResourceException e) {
                 error(e, path);
             }

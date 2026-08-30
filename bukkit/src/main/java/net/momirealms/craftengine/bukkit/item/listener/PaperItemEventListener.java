@@ -17,6 +17,9 @@ import java.util.Set;
 
 public final class PaperItemEventListener implements Listener {
 
+    public PaperItemEventListener() {
+    }
+
     @EventHandler(ignoreCancelled = true)
     public void onReadyArrow(PlayerReadyArrowEvent event) {
         BukkitItem bowItem = BukkitAdaptor.adapt(event.getBow());

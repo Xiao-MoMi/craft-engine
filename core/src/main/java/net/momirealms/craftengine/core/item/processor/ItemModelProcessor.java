@@ -15,8 +15,8 @@ public final class ItemModelProcessor implements SimpleNetworkItemProcessor {
     }
 
     @Override
-    public Item apply(Item item, ItemBuildContext context) {
-        return item.itemModel(this.data.asString());
+    public void apply(ItemBuildContext context) {
+        context.item().itemModel(this.data.asString());
     }
 
     @Override

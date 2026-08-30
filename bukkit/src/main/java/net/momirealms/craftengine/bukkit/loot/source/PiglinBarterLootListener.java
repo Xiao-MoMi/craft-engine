@@ -28,12 +28,12 @@ public final class PiglinBarterLootListener implements Listener {
         if (sources.isEmpty()) return;
         Location location = event.getEntity().getLocation();
         World world = BukkitAdaptor.adapt(location.getWorld());
-        ContextHolder holder = ContextHolder.builder()
-                .withParameter(DirectContextParameters.WORLD, world)
-                .withParameter(DirectContextParameters.POSITION, LocationUtils.toWorldPosition(location))
-                .withParameter(DirectContextParameters.ENTITY, BukkitAdaptor.adapt(event.getEntity()))
-                .withParameter(DirectContextParameters.ITEM, BukkitItemManager.instance().wrap(event.getInput()))
-                .build();
+        ContextHolder holder = ContextHolder.builder(
+                DirectContextParameters.WORLD, world,
+                DirectContextParameters.POSITION, LocationUtils.toWorldPosition(location),
+                DirectContextParameters.THIS_ENTITY, BukkitAdaptor.adapt(event.getEntity()),
+                DirectContextParameters.ITEM, BukkitItemManager.instance().wrap(event.getInput())
+        ).build();
         LootOutcome outcome = LootManager.eval(sources, new LootContext(world, null, 1f, holder));
         if (!outcome.matched()) return;
         if (outcome.overwriteItems()) {

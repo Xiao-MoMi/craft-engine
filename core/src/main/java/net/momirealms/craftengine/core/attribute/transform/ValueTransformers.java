@@ -1,6 +1,5 @@
 package net.momirealms.craftengine.core.attribute.transform;
 
-import com.ezylang.evalex.Expression;
 import net.momirealms.craftengine.core.plugin.config.ConfigSection;
 import net.momirealms.craftengine.core.plugin.config.ConfigValue;
 import net.momirealms.craftengine.core.plugin.config.KnownResourceException;
@@ -28,7 +27,7 @@ public final class ValueTransformers {
         if (value.is(Map.class)) {
             return fromConfig(value.getAsSection());
         }
-        return new ExpressionValueTransformer(new Expression(value.getAsString()));
+        return new ExpressionValueTransformer(value.path(), value.getAsString());
     }
 
     public static ValueTransformer fromConfig(ConfigSection section) {

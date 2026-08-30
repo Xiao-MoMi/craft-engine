@@ -35,13 +35,12 @@ public final class FoodProcessor implements SimpleNetworkItemProcessor {
     }
 
     @Override
-    public Item apply(Item item, ItemBuildContext context) {
-        item.setJavaComponent(DataComponentKeys.FOOD, Map.of(
+    public void apply(ItemBuildContext context) {
+        context.item().setJavaComponent(DataComponentKeys.FOOD, Map.of(
                 "nutrition", this.nutrition,
                 "saturation", this.saturation,
                 "can_always_eat", this.canAlwaysEat
         ));
-        return item;
     }
 
     @Override

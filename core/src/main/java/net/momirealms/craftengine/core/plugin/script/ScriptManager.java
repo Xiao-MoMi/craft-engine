@@ -30,8 +30,7 @@ public interface ScriptManager extends Manageable {
 
     static Map<String, Object> flattenContext(Context context) {
         Map<String, Object> map = new HashMap<>();
-        context.contexts().params().forEach((key, supplier) -> {
-            Object value = supplier.get();
+        context.contexts().params().forEach((key, value) -> {
             if (value != null) map.put(key.node(), value);
         });
         map.put("ctx", context);

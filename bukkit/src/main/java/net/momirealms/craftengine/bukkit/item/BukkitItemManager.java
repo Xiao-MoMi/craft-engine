@@ -23,6 +23,7 @@ import net.momirealms.craftengine.core.entity.player.Player;
 import net.momirealms.craftengine.core.item.*;
 import net.momirealms.craftengine.core.item.component.DataComponentKeys;
 import net.momirealms.craftengine.core.item.network.NetworkItemHandler;
+import net.momirealms.craftengine.core.item.processor.ItemProcessor;
 import net.momirealms.craftengine.core.item.processor.ObfuscatedItemModelProcessor;
 import net.momirealms.craftengine.core.item.recipe.DatapackRecipeResult;
 import net.momirealms.craftengine.core.item.recipe.IngredientUnlockable;
@@ -30,6 +31,8 @@ import net.momirealms.craftengine.core.pack.AbstractPackManager;
 import net.momirealms.craftengine.core.plugin.compatibility.ItemSource;
 import net.momirealms.craftengine.core.plugin.config.Config;
 import net.momirealms.craftengine.core.plugin.config.KnownResourceException;
+import net.momirealms.craftengine.core.plugin.context.ContextHolder;
+import net.momirealms.craftengine.core.plugin.context.parameter.DirectContextParameters;
 import net.momirealms.craftengine.core.plugin.network.mod.protocol.ClientboundCreativeModeTabItemsPacket;
 import net.momirealms.craftengine.core.util.*;
 import net.momirealms.craftengine.proxy.minecraft.core.HolderProxy;
@@ -40,6 +43,7 @@ import net.momirealms.craftengine.proxy.minecraft.core.registries.RegistriesProx
 import net.momirealms.craftengine.proxy.minecraft.network.chat.ComponentProxy;
 import net.momirealms.craftengine.proxy.minecraft.resources.ResourceKeyProxy;
 import net.momirealms.craftengine.proxy.minecraft.tags.TagKeyProxy;
+import net.momirealms.craftengine.proxy.minecraft.world.item.ItemProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.item.ItemStackProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.item.ItemsProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.item.ProjectileWeaponItemProxy;
@@ -58,6 +62,7 @@ import java.nio.file.Path;
 import java.time.Duration;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 
 @SuppressWarnings("unchecked")
 public final class BukkitItemManager extends AbstractItemManager {
@@ -77,6 +82,7 @@ public final class BukkitItemManager extends AbstractItemManager {
     private final Object bedrockItemHolder;
     private final BukkitItem emptyItem;
     private final Cache<ByteArrayKey, BukkitItem> deserializedItemCache;
+    private final Map<Object, Object> originalVanillaItemComponents = new ConcurrentHashMap<>();
     private Set<Key> lastRegisteredPatterns = Set.of();
     private boolean hasExternalRecipeSource = false;
     private ItemSource[] recipeIngredientSources = null;
@@ -231,6 +237,7 @@ public final class BukkitItemManager extends AbstractItemManager {
 
     @Override
     public void runDelayedSyncTasks() {
+        this.reloadVanillaItemDataOverrides();
         if (this.featureFlag$preventBreak()) {
             this.preventBreakListener.register(this.plugin.javaPlugin());
         } else {
@@ -240,12 +247,71 @@ public final class BukkitItemManager extends AbstractItemManager {
 
     @Override
     public void disable() {
+        this.restoreVanillaItemComponents();
         this.unload();
         HandlerList.unregisterAll(this.itemEventListener);
         HandlerList.unregisterAll(this.armorEventListener);
         this.preventBreakListener.unregister();
         if (this.slotChangeListener != null) HandlerList.unregisterAll(this.slotChangeListener);
         if (this.paperItemEventListener != null) HandlerList.unregisterAll(this.paperItemEventListener);
+    }
+
+    public void reloadVanillaItemDataOverrides() {
+        if (!VersionHelper.isOrAbove1_20_5) return;
+        this.restoreVanillaItemComponents();
+        this.applyVanillaItemDataOverrides();
+    }
+
+    private void applyVanillaItemDataOverrides() {
+        for (Map.Entry<Key, List<ItemProcessor>> entry : this.vanillaItemDataOverrides.entrySet()) {
+            Key id = entry.getKey();
+            Object item = RegistryUtils.getRegistryValue(BuiltInRegistriesProxy.ITEM, KeyUtils.toIdentifier(id));
+            if (item == null || item == ItemsProxy.AIR) continue;
+            try {
+                Object originalComponents = ItemProxy.INSTANCE.components(item);
+                Object itemStack = ItemStackProxy.INSTANCE.newInstance(item, 1);
+                BukkitItem wrapped = this.wrap(itemStack);
+                ItemBuildContext context = ItemBuildContext.of(null, wrapped, ContextHolder.builder()
+                        .withParameter(DirectContextParameters.ITEM, wrapped)
+                        .build());
+                for (ItemProcessor processor : entry.getValue()) {
+                    processor.apply(context);
+                }
+                Object overriddenComponents = ItemStackProxy.INSTANCE.getComponents(context.item().minecraftItem());
+                this.originalVanillaItemComponents.putIfAbsent(item, originalComponents);
+                this.setVanillaItemComponents(item, overriddenComponents);
+            } catch (Throwable throwable) {
+                this.plugin.logger().warn("Failed to apply override_data to vanilla item '" + id.asString() + "'", throwable);
+            }
+        }
+    }
+
+    private void restoreVanillaItemComponents() {
+        if (!VersionHelper.isOrAbove1_20_5) return;
+        Iterator<Map.Entry<Object, Object>> iterator = this.originalVanillaItemComponents.entrySet().iterator();
+        while (iterator.hasNext()) {
+            Map.Entry<Object, Object> entry = iterator.next();
+            try {
+                this.setVanillaItemComponents(entry.getKey(), entry.getValue());
+                iterator.remove();
+            } catch (Throwable throwable) {
+                this.plugin.logger().warn("Failed to restore the default components of a vanilla item", throwable);
+            }
+        }
+    }
+
+    private void setVanillaItemComponents(Object item, Object components) {
+        if (VersionHelper.isOrAbove26_1) {
+            Object holder = ItemProxy.INSTANCE.getBuiltInRegistryHolder(item);
+            HolderProxy.ReferenceProxy.INSTANCE.bindComponents(holder, components);
+        } else {
+            ItemProxy.INSTANCE.setComponents(item, components);
+        }
+    }
+
+    @Nullable
+    Object originalVanillaItemComponents(Object item) {
+        return this.originalVanillaItemComponents.get(item);
     }
 
     @Override
@@ -490,9 +556,13 @@ public final class BukkitItemManager extends AbstractItemManager {
     }
 
     private void registerAllVanillaItems() {
+        VANILLA_ITEMS.clear();
+        VANILLA_ITEM_TO_TAGS.clear();
+        VANILLA_TAG_TO_ITEMS.clear();
         for (Object item : (Iterable<?>) BuiltInRegistriesProxy.ITEM) {
             Object identifier = RegistryProxy.INSTANCE.getKey(BuiltInRegistriesProxy.ITEM, item);
             Key itemKey = KeyUtils.identifierToKey(identifier);
+            VANILLA_ITEMS.add(itemKey);
 
             UniqueKey uniqueKey = UniqueKey.create(itemKey);
             Object mcHolder = Objects.requireNonNull(RegistryUtils.getHolder(BuiltInRegistriesProxy.ITEM, ResourceKeyProxy.INSTANCE.create(RegistriesProxy.ITEM, identifier)));

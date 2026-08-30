@@ -25,8 +25,8 @@ public final class BlockStateProcessor implements SimpleNetworkItemProcessor {
     }
 
     @Override
-    public Item apply(Item item, ItemBuildContext context) {
-        return item.blockState(this.wrapper.get());
+    public void apply(ItemBuildContext context) {
+        context.item().blockState(this.wrapper.get());
     }
 
     @Override

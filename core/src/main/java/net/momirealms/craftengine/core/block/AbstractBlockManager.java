@@ -35,6 +35,7 @@ import net.momirealms.craftengine.core.plugin.config.lifecycle.LoadingStages;
 import net.momirealms.craftengine.core.plugin.context.CommonFunctions;
 import net.momirealms.craftengine.core.plugin.context.Context;
 import net.momirealms.craftengine.core.plugin.context.EventTrigger;
+import net.momirealms.craftengine.core.plugin.context.EventTriggerResolver;
 import net.momirealms.craftengine.core.plugin.context.function.Function;
 import net.momirealms.craftengine.core.plugin.network.mod.ClientCustomPacket;
 import net.momirealms.craftengine.core.plugin.network.mod.protocol.ClientboundVisualBlockStatesPacket;
@@ -57,6 +58,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutionException;
 
 public abstract class AbstractBlockManager extends AbstractModelGenerator implements BlockManager {
+    private static final EventTriggerResolver EVENT_TRIGGER_RESOLVER = EventTriggerResolver.withAlias("break", EventTrigger.BLOCK_BREAK);
     private static final JsonElement EMPTY_VARIANT_MODEL = MiscUtils.init(new JsonObject(), o -> o.addProperty("model", "minecraft:block/empty"));
     private static final AABB DEFAULT_BLOCK_ENTITY_AABB = new AABB(-.5, -.5, -.5, .5, .5, .5);
     protected final IdSectionConfigParser blockParser = new BlockParser();
@@ -580,9 +582,12 @@ public abstract class AbstractBlockManager extends AbstractModelGenerator implem
                 }
 
                 // 解析事件 （可异常）
-                Map<EventTrigger, List<Function<Context>>> events = new EnumMap<>(EventTrigger.class);
+                Map<EventTrigger, List<Function<Context>>> events = new HashMap<>();
                 try {
-                    CommonFunctions.parseEvents(section.getValue(EVENTS), (t, f) -> events.computeIfAbsent(t, k -> new ArrayList<>(4)).add(f));
+                    CommonFunctions.parseEvents(
+                            section.getValue(EVENTS),
+                            EVENT_TRIGGER_RESOLVER,
+                            (t, f) -> events.computeIfAbsent(t, k -> new ArrayList<>(4)).add(f));
                 } catch (KnownResourceException e) {
                     error(e, path);
                 }
@@ -602,7 +607,16 @@ public abstract class AbstractBlockManager extends AbstractModelGenerator implem
                 Map<String, ConfigSection> appearanceConfigs;
                 Map<String, CompletableFuture<BlockStateWrapper>> futureVisualStates = new HashMap<>();
                 if (properties.isEmpty()) {
-                    appearanceConfigs = Map.of("", stateSection);
+                    // 兼容无属性方块用 appearances 包裹单一外观
+                    ConfigSection appearancesSection = stateSection.getSection(APPEARANCE);
+                    if (appearancesSection != null && !appearancesSection.keySet().isEmpty()) {
+                        if (appearancesSection.keySet().size() > 1) {
+                            error(new KnownResourceException(path, "resource.block.state.appearance_without_properties", appearancesSection.path()));
+                        }
+                        appearanceConfigs = Map.of("", appearancesSection.getNonNullSection(appearancesSection.keySet().iterator().next()));
+                    } else {
+                        appearanceConfigs = Map.of("", stateSection);
+                    }
                 } else {
                     appearanceConfigs = new LinkedHashMap<>(4);
                     ConfigSection appearanceSection = stateSection.getNonNullSection(APPEARANCE);

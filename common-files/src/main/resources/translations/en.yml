@@ -83,7 +83,7 @@ command.resource.create.success: <white>Created resource <arg:0>.</white>
 command.resource.create.failure.unknown: '<red>Failed to create resource <arg:0>, Error: <arg:1></red>'
 command.resource.create.failure.invalid_namespace: <red>Failed to create resource <arg:0>, The namespace <arg:1> is invalid.</red>
 command.resource.create.failure.exists: <red>Resource <arg:0> already exists.</red>
-command.resource.save_default.success: <white>Successfully saved default assets from '<arg:0>'</white><newline><gray><i>Click <green><u><b><click:run_command:'/ce reload all'><hover:show_text:'Reload the plugin'>HERE</hover></click></b></u></green> to apply the changes</i></gray>
+command.resource.save_default.success: <white>Successfully saved default assets from '<arg:0>'</white>
 command.resource.save_default.failure: <red>An unknown error occurred while saving the default assets. Please check the console
 command.resource.search.parser.not_found: <red>Cannot found config type '<arg:0>'</red>
 command.resource.search.resource.not_found: <red>Cannot found any resource with id '<arg:0>'</red>
@@ -137,11 +137,12 @@ yaml.duplicated_key: "Found duplicated key '<arg:1>' at line <arg:2> in file <ar
 yaml.inconsistent_value_type: "Found duplicated key '<arg:1>' at line <arg:2> with different value types in file <arg:0>"
 plugin.compatibility: "[Compatibility] <arg:0> hooked"
 attribute.damage_formula.unknown_type: Unknown damage formula type '<arg:0>'
+attribute.damage_effect.unknown_type: Unknown post-damage effect type '<arg:0>'
+attribute.damage_effect.unknown_target: Unknown post-damage effect target '<arg:0>'
 damage_indicator.unknown_type: Unknown damage indicator type '<arg:0>'
 attribute.base_value_source.unknown_type: Unknown base value source type '<arg:0>'
 attribute.sync_value_provider.unknown_type: Unknown sync value provider type '<arg:0>'
 attribute.value_transformer.unknown_type: Unknown value transformer type '<arg:0>'
-attribute.value_formatter.unknown_type: Unknown value formatter type '<arg:0>'
 attribute.formula.unknown_variable: Unknown variable '<arg:0>' in damage formula '<arg:1>'
 attribute.formula.unknown_attribute: Unknown attribute '<arg:0>' in damage formula '<arg:1>'
 attribute.unknown_operation: Unknown attribute operation '<arg:0>'
@@ -149,12 +150,18 @@ attribute.operation.invalid_expression: Invalid expression '<arg:0>' in attribut
 attribute.derived.unknown_attribute: Unknown attribute '<arg:0>' in derived expression '<arg:1>'
 attribute.derived.unknown_type: Unknown derived value type '<arg:0>'
 number.unknown_type: Unknown number type '<arg:0>'
-number.fixed.invalid_expression: Invalid expression '<arg:0>'. https://ezylang.github.io/EvalEx/references/references.html
+number.fixed.invalid_expression: Invalid expression '<arg:0>'.
+resource.expression.invalid: 'Invalid expression "<arg:0>". Details: <arg:1>'
+resource.expression.invalid_syntax: 'Invalid expression "<arg:0>" near character <arg:1> (token "<arg:2>").'
+resource.expression.invalid_function_argument: 'Invalid expression "<arg:0>" in function argument <arg:3>, near character <arg:1> (token "<arg:2>").'
+resource.expression.unknown_parameter: 'Unknown parameter "<arg:0>" in expression "<arg:1>".'
 number.greater_than: '''<arg:0>'' should be greater than ''<arg:1>'''
 number.no_greater_than: '''<arg:0>'' should be no greater than ''<arg:1>'''
 number.less_than: '''<arg:0>'' should be less than ''<arg:1>'''
 number.no_less_than: '''<arg:0>'' should be no less than ''<arg:1>'''
 condition.unknown_type: Unknown condition type '<arg:0>'
+category.source.unknown_type: Unknown category source type '<arg:0>'
+category.source.invalid_regex: Invalid category source regex '<arg:0>'
 condition.enchantment.invalid_format: Invalid predicate format '<arg:0>'. (e.g., minecraft:sharpness>=4)
 function.unknown_type: Unknown function type '<arg:0>'
 player_selector.unknown_type: Unknown player selector type '<arg:0>'
@@ -273,7 +280,7 @@ resource.equipment.unknown_layer_type: Unknown equipment layer type '<arg:0>'
 resource.equipment.invalid_sacrificed_armor: Invalid vanilla armor type '<arg:0>'
 resource.equipment_set.invalid_slot_name: Invalid equipment set slot name '<arg:0>'
 resource.furniture.element.unknown_type: Unknown furniture element type '<arg:0>'
-resource.furniture.element.tint_source.unknown_type: Unknown furniture tint source type '<arg:0>'
+resource.furniture.data_source.unknown_type: Unknown furniture data source type '<arg:0>'
 resource.furniture.hitbox.unknown_type: Unknown furniture hitbox type '<arg:0>'
 resource.furniture.behavior.unknown_type: Unknown furniture behavior type '<arg:0>'
 resource.furniture.hitbox.custom.invalid_entity_type: Invalid entity type '<arg:0>'
@@ -291,6 +298,7 @@ resource.block.state.unreleased_state: You cannot assign a block state using thi
 resource.block.state.entity_renderer.unknown_type: Unknown block entity renderer type '<arg:0>'
 resource.block.state.invalid_variant_nbt: Invalid partial block state nbt '<arg:0>'
 resource.block.state.undefined_appearance: Undefined block state appearance '<arg:0>'
+resource.block.state.appearance_without_properties: Multiple 'appearances' require 'properties' to distinguish block states, only the first appearance is used
 resource.block.state.model_conflict: Failed to bind model '<arg:0>' to block state '<arg:1>' which has already been bound to model '<arg:2>'
 resource.block.state.invalid_rotation: Invalid rotation '<arg:1>' on <arg:0>-axis, which is expected to be in increments of 90 degrees
 resource.block.entity_renderer.tint_source.unknown_type: Unknown block entity tint source type '<arg:0>'

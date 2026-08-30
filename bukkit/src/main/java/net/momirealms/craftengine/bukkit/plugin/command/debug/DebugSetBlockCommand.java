@@ -40,10 +40,24 @@ public final class DebugSetBlockCommand extends BukkitCommandFeature<CommandSend
                 .handler(context -> {
                     String data = context.get("id");
                     ImmutableBlockState state = BlockStateParser.deserialize(data);
-                    if (state == null) return;
+                    if (state == null) {
+                        plugin().senderFactory().wrap(context.sender()).sendMessage(
+                                DebugCommandOutput.error("Could not parse block state '" + data + "'"));
+                        return;
+                    }
                     Location location = context.get("location");
-                    CraftEngineBlocks.place(location, state, UpdateFlags.UPDATE_ALL, false);
+                    boolean placed = CraftEngineBlocks.place(location, state, UpdateFlags.UPDATE_ALL, false);
+                    var sender = plugin().senderFactory().wrap(context.sender());
+                    sender.sendMessage(placed
+                            ? DebugCommandOutput.success("Placed debug block")
+                            : DebugCommandOutput.error("Failed to place debug block"));
+                    sender.sendMessage(DebugCommandOutput.value("Location", formatLocation(location)));
+                    sender.sendMessage(DebugCommandOutput.value("State", state));
                 });
+    }
+
+    private static String formatLocation(Location location) {
+        return location.getWorld().getName() + " @ " + location.getBlockX() + ", " + location.getBlockY() + ", " + location.getBlockZ();
     }
 
     @Override

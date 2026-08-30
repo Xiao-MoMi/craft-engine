@@ -1,7 +1,5 @@
 package net.momirealms.craftengine.bukkit.plugin.command.debug;
 
-import net.kyori.adventure.text.Component;
-import net.kyori.adventure.text.format.NamedTextColor;
 import net.momirealms.craftengine.bukkit.plugin.command.BukkitCommandFeature;
 import net.momirealms.craftengine.core.plugin.CraftEngine;
 import net.momirealms.craftengine.core.plugin.command.CraftEngineCommandManager;
@@ -27,10 +25,12 @@ public final class DebugIsChunkPersistentLoadedCommand extends BukkitCommandFeat
                     Chunk chunk = player.getLocation().getChunk();
                     Sender sender = plugin().senderFactory().wrap(player);
                     if (VersionHelper.hasFoliaPatch) {
-                        sender.sendMessage(Component.text("This feature is not available on the Folia server.").color(NamedTextColor.RED));
+                        sender.sendMessage(DebugCommandOutput.error("Persistent chunk state is unavailable on Folia"));
                         return;
                     }
-                    sender.sendMessage(Component.text(chunk.isForceLoaded()));
+                    sender.sendMessage(DebugCommandOutput.title("Persistent Chunk"));
+                    sender.sendMessage(DebugCommandOutput.value("Chunk", chunk.getX() + ", " + chunk.getZ()));
+                    sender.sendMessage(DebugCommandOutput.status("Force loaded", chunk.isForceLoaded()));
                 });
     }
 

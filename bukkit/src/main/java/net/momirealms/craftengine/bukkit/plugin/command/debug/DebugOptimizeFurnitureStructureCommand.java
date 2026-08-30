@@ -1,7 +1,5 @@
 package net.momirealms.craftengine.bukkit.plugin.command.debug;
 
-import net.kyori.adventure.text.Component;
-import net.kyori.adventure.text.format.NamedTextColor;
 import net.momirealms.craftengine.bukkit.plugin.command.BukkitCommandFeature;
 import net.momirealms.craftengine.core.plugin.CraftEngine;
 import net.momirealms.craftengine.core.plugin.command.CraftEngineCommandManager;
@@ -70,15 +68,19 @@ public final class DebugOptimizeFurnitureStructureCommand extends BukkitCommandF
                     double offset = (double) context.optional("y-offset").orElse(0d);
                     Path filePath = world.getWorldFolder().toPath().resolve("generated").resolve(file.getNamespace()).resolve("structures").resolve(file.getKey() + ".nbt");
                     Sender sender = plugin().senderFactory().wrap(context.sender());
+                    sender.sendMessage(DebugCommandOutput.title("Optimize Furniture Structure"));
+                    sender.sendMessage(DebugCommandOutput.value("Structure", file));
+                    sender.sendMessage(DebugCommandOutput.value("Y offset", offset));
                     if (!Files.exists(filePath)) {
-                        sender.sendMessage(Component.text("File not found", NamedTextColor.RED));
+                        sender.sendMessage(DebugCommandOutput.error("Structure file not found"));
+                        sender.sendMessage(DebugCommandOutput.value("Path", filePath));
                         return;
                     }
                     try (InputStream is = Files.newInputStream(filePath)) {
                         CompoundTag structureTag = NBTUtils.readCompressed(is);
                         ListTag entitiesTag = structureTag.getList("entities");
                         if (entitiesTag == null) {
-                            sender.sendMessage(Component.text("Entities not found", NamedTextColor.RED));
+                            sender.sendMessage(DebugCommandOutput.error("Structure has no entity list"));
                             return;
                         }
                         int count = 0;
@@ -107,20 +109,21 @@ public final class DebugOptimizeFurnitureStructureCommand extends BukkitCommandF
                             toSave.add(entityTag);
                         }
                         if (count == 0) {
-                            sender.sendMessage(Component.text("Nothing changed", NamedTextColor.WHITE));
+                            sender.sendMessage(DebugCommandOutput.info("No furniture entities required changes"));
                         } else {
                             structureTag.put("entities", toSave);
                             try (OutputStream os = Files.newOutputStream(filePath)) {
                                 NBTUtils.writeCompressed(structureTag, os);
                             } catch (IOException e) {
-                                sender.sendMessage(Component.text("Internal error", NamedTextColor.RED));
+                                sender.sendMessage(DebugCommandOutput.error("Could not write the structure file; see console"));
                                 plugin().logger().error("Cannot write structure NBT file", e);
                                 return;
                             }
-                            sender.sendMessage(Component.text(count + " entities modified", NamedTextColor.WHITE));
+                            sender.sendMessage(DebugCommandOutput.success("Optimized furniture structure"));
+                            sender.sendMessage(DebugCommandOutput.value("Modified entities", count));
                         }
                     } catch (IOException e) {
-                        sender.sendMessage(Component.text("Internal error", NamedTextColor.RED));
+                        sender.sendMessage(DebugCommandOutput.error("Could not read the structure file; see console"));
                         plugin().logger().error("Cannot read structure NBT file", e);
                     }
                 });

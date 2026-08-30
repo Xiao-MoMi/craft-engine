@@ -6,6 +6,7 @@ import net.momirealms.craftengine.core.entity.furniture.setting.FurnitureSetting
 import net.momirealms.craftengine.core.loot.LootTable;
 import net.momirealms.craftengine.core.plugin.context.Context;
 import net.momirealms.craftengine.core.plugin.context.EventTrigger;
+import net.momirealms.craftengine.core.plugin.context.function.Function;
 import net.momirealms.craftengine.core.util.Key;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -20,7 +21,8 @@ public final class EmptyFurnitureDefinition implements FurnitureDefinition {
     private EmptyFurnitureDefinition() {}
 
     @Override
-    public void execute(Context context, EventTrigger trigger) {
+    public @NotNull List<Function<Context>> eventFunctions(EventTrigger trigger) {
+        return List.of();
     }
 
     @Override

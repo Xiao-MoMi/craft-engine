@@ -34,10 +34,10 @@ public final class PaperBlockBreakLootListener implements Listener {
         net.momirealms.craftengine.core.world.World world = BukkitAdaptor.adapt(location.getWorld());
         WorldPosition position = new WorldPosition(world, location.getBlockX() + 0.5, location.getBlockY() + 0.5, location.getBlockZ() + 0.5);
         BukkitExistingBlock bukkitExistingBlock = new BukkitExistingBlock(block);
-        ContextHolder holder = ContextHolder.builder()
-                .withParameter(DirectContextParameters.POSITION, position)
-                .withParameter(DirectContextParameters.BLOCK, bukkitExistingBlock)
-                .build();
+        ContextHolder holder = ContextHolder.builder(
+                DirectContextParameters.POSITION, position,
+                DirectContextParameters.BLOCK, bukkitExistingBlock
+        ).build();
         LootContext lootContext = new LootContext(world, null, 1.0f, holder);
         LootOutcome outcome = LootManager.eval(sources, lootContext);
         if (!outcome.matched()) return;

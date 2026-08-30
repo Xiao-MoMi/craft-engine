@@ -1,5 +1,5 @@
 # Do not modify this value
-config-version: '${config_version}'
+___version___: '${config_version}'
 # Enables or disables metrics collection via BStats
 metrics: true
 # Enables automatic update checks
@@ -416,8 +416,7 @@ entity:
   # This comes with additional per-tick processing costs to maintain potion effects and attributes.
   tracking:
     enable: true
-    # whitelist tracks only listed IDs; blacklist tracks every ID except those listed.
-    # IDs come from id-sources when available, otherwise the vanilla entity type is used.
+    # whitelist tracks only listed entity types; blacklist tracks every entity except those listed.
     mode: whitelist
     list:
       - minecraft:player
@@ -601,7 +600,7 @@ damage-indicator:
   schemes:
     - type: text
       # Displayed text in MiniMessage format. <arg:damage> is replaced with the final damage value
-      text: "<white><expr:#.#:'<arg:damage>'></white>"
+      text: "<white><expr:#.#:'<arg:final_damage>'></white>"
       # The indicator spawns near the first intersection of the attacker's view ray with the victim's bounding cylinder
       # (radius = distance from the bounding box bottom center to a bottom corner: sqrt(width² + depth²) / 2)
       position:

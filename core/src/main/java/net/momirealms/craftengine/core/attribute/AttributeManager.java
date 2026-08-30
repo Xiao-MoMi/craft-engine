@@ -1,7 +1,7 @@
 package net.momirealms.craftengine.core.attribute;
 
 import net.momirealms.craftengine.core.attribute.damage.DamageEvent;
-import net.momirealms.craftengine.core.attribute.formula.DamageFormula;
+import net.momirealms.craftengine.core.attribute.damage.DamageRule;
 import net.momirealms.craftengine.core.attribute.modifier.ItemAttributeModifiersProvider;
 import net.momirealms.craftengine.core.attribute.modifier.SlotAttributeModifierConfig;
 import net.momirealms.craftengine.core.entity.Entity;
@@ -45,7 +45,8 @@ public interface AttributeManager extends Manageable {
 
     Optional<EquipmentSet> equipmentSet(Key id);
 
-    DamageFormula findFormula(DamageEvent event);
+    @Nullable
+    DamageRule findDamageRule(DamageEvent event);
 
     ConfigParser[] parsers();
 

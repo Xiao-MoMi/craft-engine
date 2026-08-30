@@ -20,7 +20,8 @@ public final class PaintingVariantProcessor implements SimpleNetworkItemProcesso
     }
 
     @Override
-    public Item apply(Item item, ItemBuildContext context) {
+    public void apply(ItemBuildContext context) {
+        Item item = context.item();
         if (VersionHelper.isOrAbove1_21_5) {
             item.setJavaComponent(DataComponentKeys.PAINTING_VARIANT, this.id);
         } else if (VersionHelper.isOrAbove1_20_5) {
@@ -31,7 +32,6 @@ public final class PaintingVariantProcessor implements SimpleNetworkItemProcesso
         } else {
             item.setJavaTag(this.id, NBT_PATH);
         }
-        return item;
     }
 
     @Override

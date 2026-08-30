@@ -42,9 +42,8 @@ public final class PotionEffectFunction<CTX extends Context> extends AbstractCon
     @Override
     public void runInternal(CTX ctx) {
         if (this.selector == null) {
-            ctx.getOptionalParameter(DirectContextParameters.PLAYER).ifPresent(it -> {
-                it.addPotionEffect(this.potionEffectType, this.duration.getInt(ctx), this.amplifier.getInt(ctx), this.ambient, this.particles, this.showIcon);
-            });
+            DirectContextParameters.getOptionalLivingEntity(ctx)
+                    .ifPresent(entity -> entity.addPotionEffect(this.potionEffectType, this.duration.getInt(ctx), this.amplifier.getInt(ctx), this.ambient, this.particles, this.showIcon));
         } else {
             for (Player target : this.selector.get(ctx)) {
                 RelationalContext relationalContext = ViewerContext.of(ctx, PlayerOptionalContext.of(target));

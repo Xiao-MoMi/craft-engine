@@ -705,32 +705,97 @@ $$>=1.20.3:
 # Defines the tree's appearance using the same structure as Minecraft's vanilla tree feature.
 # Generate this configuration via a data pack editor (see: https://misode.github.io/worldgen/feature/) and export in YAML format.
 configured_feature:
-  default:palm_tree:
-    type: 'minecraft:tree'
-    config:
+  $$<26.3#default:palm_tree:
+    default:palm_tree:
+      type: 'minecraft:tree'
+      config:
+        ignore_vines: true
+        force_dirt: false
+        minimum_size:
+          type: 'minecraft:two_layers_feature_size'
+          min_clipped_height: 10
+          limit: 1
+          lower_size: 0
+          upper_size: 2
+        dirt_provider:
+          type: 'minecraft:simple_state_provider'
+          state:
+            Name: 'minecraft:sand'
+        trunk_provider:
+          type: 'minecraft:simple_state_provider'
+          state:
+            Name: 'default:palm_log'
+            Properties:
+              axis: 'y'
+        foliage_provider:
+          type: 'minecraft:simple_state_provider'
+          state:
+            Name: 'default:palm_leaves'
+            Properties:
+              distance: '7'
+              persistent: 'false'
+              waterlogged: 'false'
+        trunk_placer:
+          type: 'minecraft:straight_trunk_placer'
+          base_height: 6
+          height_rand_a: 5
+          height_rand_b: 0
+        foliage_placer:
+          type: 'minecraft:cherry_foliage_placer'
+          radius: 5
+          offset: 0
+          height: 4
+          wide_bottom_layer_hole_chance: 0.8
+          corner_hole_chance: 1
+          hanging_leaves_chance: 0.8
+          hanging_leaves_extension_chance: 0.4
+        decorators: []
+        $$>=26.2:
+          below_trunk_provider:
+            type: 'minecraft:rule_based_state_provider'
+            rules:
+              - if_true:
+                  type: 'minecraft:not'
+                  predicate:
+                    type: 'minecraft:matching_block_tag'
+                    tag: 'minecraft:cannot_replace_below_tree_trunk'
+                then:
+                  type: 'minecraft:simple_state_provider'
+                  state:
+                    Name: 'minecraft:dirt'
+  $$>=26.3#default:palm_tree:
+    default:palm_tree:
+      type: 'minecraft:tree'
       ignore_vines: true
-      force_dirt: false
       minimum_size:
         type: 'minecraft:two_layers_feature_size'
         min_clipped_height: 10
         limit: 1
         lower_size: 0
         upper_size: 2
-      dirt_provider:
-        type: 'minecraft:simple_state_provider'
-        state:
-          Name: 'minecraft:sand'
+      below_trunk_provider:
+        type: 'minecraft:rule_based_state_provider'
+        rules:
+          - if_true:
+              type: 'minecraft:not'
+              predicate:
+                type: 'minecraft:matching_block_tag'
+                tag: 'minecraft:cannot_replace_below_tree_trunk'
+            then:
+              type: 'minecraft:simple_state_provider'
+              state:
+                id: 'minecraft:dirt'
       trunk_provider:
         type: 'minecraft:simple_state_provider'
         state:
-          Name: 'default:palm_log'
-          Properties:
+          id: 'default:palm_log'
+          properties:
             axis: 'y'
       foliage_provider:
         type: 'minecraft:simple_state_provider'
         state:
-          Name: 'default:palm_leaves'
-          Properties:
+          id: 'default:palm_leaves'
+          properties:
             distance: '7'
             persistent: 'false'
             waterlogged: 'false'
@@ -749,16 +814,3 @@ configured_feature:
         hanging_leaves_chance: 0.8
         hanging_leaves_extension_chance: 0.4
       decorators: []
-      $$>=26.2:
-        below_trunk_provider:
-          type: 'minecraft:rule_based_state_provider'
-          rules:
-            - if_true:
-                type: 'minecraft:not'
-                predicate:
-                  type: 'minecraft:matching_block_tag'
-                  tag: 'minecraft:cannot_replace_below_tree_trunk'
-              then:
-                type: 'minecraft:simple_state_provider'
-                state:
-                  Name: 'minecraft:dirt'

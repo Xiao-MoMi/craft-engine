@@ -1,6 +1,5 @@
 package net.momirealms.craftengine.core.plugin.gui.category;
 
-import dev.dejvokep.boostedyaml.block.implementation.Section;
 import net.momirealms.craftengine.core.entity.player.Player;
 import net.momirealms.craftengine.core.item.recipe.Recipe;
 import net.momirealms.craftengine.core.plugin.Manageable;
@@ -8,6 +7,8 @@ import net.momirealms.craftengine.core.plugin.config.Config;
 import net.momirealms.craftengine.core.plugin.config.ConfigParser;
 import net.momirealms.craftengine.core.plugin.gui.Gui;
 import net.momirealms.craftengine.core.util.Key;
+import net.momirealms.craftengine.core.util.YamlUtils;
+import net.momirealms.sparrow.yaml.node.SectionNode;
 
 import java.util.List;
 import java.util.Optional;
@@ -72,7 +73,7 @@ public interface ItemBrowserManager extends Manageable {
         public static Key SOUND_CLICK_BUTTON;
 
         public static void load() {
-            Section section = Config.instance().settings().getSection("gui.browser");
+            SectionNode section = YamlUtils.reader(Config.instance().settings()).getSection("gui.browser");
             if (section == null) return;
             BROWSER_TITLE = getOrThrow(section, "main.title");
             BROWSER_NEXT_PAGE_AVAILABLE = Key.of(getOrThrow(section, "main.page-navigation.next.available"));
@@ -112,8 +113,8 @@ public interface ItemBrowserManager extends Manageable {
             SOUND_CLICK_BUTTON = Key.of(getOrThrow(section, "sounds.click-button"));
         }
 
-        private static String getOrThrow(Section section, String route) {
-            return requireNonNull(section.getString(route), "gui.browser." + route);
+        private static String getOrThrow(SectionNode section, String route) {
+            return requireNonNull(YamlUtils.reader(section).getString(route), "gui.browser." + route);
         }
     }
 }

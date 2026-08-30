@@ -1,11 +1,5 @@
 package net.momirealms.craftengine.bukkit.plugin.command.debug;
 
-import com.ezylang.evalex.EvaluationException;
-import com.ezylang.evalex.Expression;
-import com.ezylang.evalex.data.EvaluationValue;
-import com.ezylang.evalex.parser.ParseException;
-import net.kyori.adventure.text.Component;
-import net.kyori.adventure.text.format.NamedTextColor;
 import net.momirealms.craftengine.bukkit.api.BukkitAdaptor;
 import net.momirealms.craftengine.bukkit.plugin.command.BukkitCommandFeature;
 import net.momirealms.craftengine.bukkit.plugin.user.BukkitServerPlayer;
@@ -13,6 +7,7 @@ import net.momirealms.craftengine.core.plugin.CraftEngine;
 import net.momirealms.craftengine.core.plugin.command.CraftEngineCommandManager;
 import net.momirealms.craftengine.core.plugin.command.sender.Sender;
 import net.momirealms.craftengine.core.plugin.context.PlayerOptionalContext;
+import net.momirealms.craftengine.core.plugin.context.expression.Expressions;
 import net.momirealms.craftengine.core.plugin.context.text.TextProviders;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
@@ -35,16 +30,13 @@ public final class DebugExpressionCommand extends BukkitCommandFeature<CommandSe
                     PlayerOptionalContext ctx = PlayerOptionalContext.of(serverPlayer);
                     String resolved = TextProviders.fromString(context.<String>get("expression")).get(ctx).replace("\\<", "<"); // 与 ExpressionCondition 保持一致
                     Sender ceSender = plugin().senderFactory().wrap(sender);
+                    ceSender.sendMessage(DebugCommandOutput.title("Expression"));
+                    ceSender.sendMessage(DebugCommandOutput.value("Resolved input", resolved));
                     try {
-                        EvaluationValue value = new Expression(resolved).evaluate();
-                        ceSender.sendMessage(Component.text("Expression: ", NamedTextColor.GRAY)
-                                .append(Component.text(resolved, NamedTextColor.WHITE)));
-                        ceSender.sendMessage(Component.text("Result: ", NamedTextColor.GRAY)
-                                .append(Component.text(String.valueOf(value.getValue()), NamedTextColor.GREEN)));
-                    } catch (ParseException | EvaluationException e) {
-                        ceSender.sendMessage(Component.text("Invalid expression: ", NamedTextColor.RED)
-                                .append(Component.text(resolved, NamedTextColor.WHITE)));
-                        ceSender.sendMessage(Component.text(e.getMessage(), NamedTextColor.RED));
+                        double value = Expressions.evaluate(resolved);
+                        ceSender.sendMessage(DebugCommandOutput.value("Result", Double.toString(value)));
+                    } catch (RuntimeException e) {
+                        ceSender.sendMessage(DebugCommandOutput.error("Invalid expression: " + String.valueOf(e.getMessage())));
                     }
                 });
     }

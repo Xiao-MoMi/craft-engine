@@ -84,12 +84,6 @@ public final class Dependencies {
             )
             .build();
 
-    public static final Dependency BOOSTED_YAML = Dependency.of("boosted-yaml", "dev{}dejvokep", "boosted-yaml")
-            .relocations(
-                    Relocation.of("boostedyaml", "dev{}dejvokep{}boostedyaml")
-            )
-            .build();
-
     public static final Dependency BSTATS_BASE = Dependency.of("bstats-base", "org{}bstats", "bstats-base")
             .relocations(
                     Relocation.of("bstats", "org{}bstats")
@@ -234,12 +228,6 @@ public final class Dependencies {
     public static final Dependency LZ4 = Dependency.of("lz4", "at{}yawk{}lz4", "lz4-java")
             .relocations(
                     Relocation.of("jpountz", "net{}jpountz")
-            )
-            .build();
-
-    public static final Dependency EVALEX = Dependency.of("evalex", "com{}ezylang", "EvalEx")
-            .relocations(
-                    Relocation.of("evalex", "com{}ezylang{}evalex")
             )
             .build();
 

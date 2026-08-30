@@ -11,6 +11,7 @@ import net.momirealms.craftengine.core.pack.allocator.BlockStateCandidate;
 import net.momirealms.craftengine.core.pack.allocator.VisualBlockStateAllocator;
 import net.momirealms.craftengine.core.plugin.CraftEngine;
 import net.momirealms.craftengine.core.plugin.command.CraftEngineCommandManager;
+import net.momirealms.craftengine.core.plugin.command.sender.Sender;
 import net.momirealms.craftengine.core.util.Key;
 import org.bukkit.command.CommandSender;
 import org.checkerframework.checker.nullness.qual.NonNull;
@@ -52,11 +53,21 @@ public final class DebugAutoStateUsageCommand extends BukkitCommandFeature<Comma
                     String group = context.get("id");
                     BukkitBlockManager blockManager = plugin().blockManager();
                     AutoStateGroup stateGroup = AutoStateGroup.byId(group);
-                    if (stateGroup == null) return;
+                    Sender sender = plugin().senderFactory().wrap(context.sender());
+                    if (stateGroup == null) {
+                        sender.sendMessage(DebugCommandOutput.error("Unknown auto-state group '" + group + "'"));
+                        return;
+                    }
                     List<BlockStateCandidate> candidates = stateGroup.candidates();
-                    if (candidates.isEmpty()) return;
+                    if (candidates.isEmpty()) {
+                        sender.sendMessage(DebugCommandOutput.warning("Auto-state group '" + group + "' has no candidates"));
+                        return;
+                    }
                     int i = 0;
-                    plugin().senderFactory().wrap(context.sender()).sendMessage(Component.text(stateGroup.id() + ": "));
+                    sender.sendMessage(DebugCommandOutput.title("Auto State Usage"));
+                    sender.sendMessage(DebugCommandOutput.value("Group", stateGroup.id()));
+                    sender.sendMessage(DebugCommandOutput.value("Candidates", candidates.size()));
+                    sender.sendMessage(DebugCommandOutput.stateLegend());
                     VisualBlockStateAllocator allocator = blockManager.visualBlockStateAllocator();
                     Map<String, BlockStateWrapper> cachedStates = allocator.cachedBlockStates();
                     Map<BlockStateWrapper, String> reversed = new HashMap<>(cachedStates.size());
@@ -82,28 +93,26 @@ public final class DebugAutoStateUsageCommand extends BukkitCommandFeature<Comma
                             }
                         } else {
                             boolean forced = allocator.isForcedState(appearance);
-                            NamedTextColor namedTextColor = forced ? NamedTextColor.RED : NamedTextColor.YELLOW;
-                            Component hover = Component.text((forced ? "[Forced] " : "[Auto] ") + baseBlockId.value() + ":" + i).color(namedTextColor);
+                            NamedTextColor stateColor = forced ? NamedTextColor.RED : NamedTextColor.YELLOW;
+                            Component hover = Component.text((forced ? "[Forced] " : "[Auto] ") + baseBlockId.value() + ":" + i).color(stateColor);
                             List<Component> hoverChildren = new ArrayList<>();
                             hoverChildren.add(Component.newline());
-                            hoverChildren.add(Component.text(appearance.getAsString()).color(namedTextColor));
+                            hoverChildren.add(Component.text(appearance.getAsString()).color(stateColor));
                             for (int real : reals) {
                                 hoverChildren.add(Component.newline());
                                 hoverChildren.add(Component.text(blockManager.getImmutableBlockStateUnsafe(real).toString()).color(NamedTextColor.GRAY));
                             }
-                            text = text.color(namedTextColor).hoverEvent(HoverEvent.showText(hover.children(hoverChildren)));
+                            text = text.color(stateColor).hoverEvent(HoverEvent.showText(hover.children(hoverChildren)));
                         }
                         batch.add(text);
                         i++;
                         if (batch.size() == 100) {
-                            plugin().senderFactory().wrap(context.sender())
-                                    .sendMessage(Component.text("").children(batch));
+                            sender.sendMessage(Component.text("  ").children(batch));
                             batch.clear();
                         }
                     }
                     if (!batch.isEmpty()) {
-                        plugin().senderFactory().wrap(context.sender())
-                                .sendMessage(Component.text("").children(batch));
+                        sender.sendMessage(Component.text("  ").children(batch));
                         batch.clear();
                     }
                 });

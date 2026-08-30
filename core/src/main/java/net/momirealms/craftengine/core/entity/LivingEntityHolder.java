@@ -49,8 +49,7 @@ public final class LivingEntityHolder {
     public LivingEntityHolder(LivingEntity entity, @Nullable EntityTickScheduler tickScheduler) {
         this.entity = entity;
         this.tickScheduler = tickScheduler;
-        this.context = new LivingEntityContext(entity, ContextHolder.builder()
-                .withParameter(DirectContextParameters.ENTITY, entity)
+        this.context = new LivingEntityContext(entity, ContextHolder.builder(DirectContextParameters.ENTITY, entity)
                 .withOptionalParameter(DirectContextParameters.PLAYER, entity instanceof Player player ? player : null)
                 .immutable(true)
                 .build());
@@ -95,6 +94,10 @@ public final class LivingEntityHolder {
     }
 
     public void applyEquipmentChanges(Map<EquipmentSetSlot, ? extends Item> changes) {
+        applyEquipmentChangesAndReportSetChange(changes);
+    }
+
+    public boolean applyEquipmentChangesAndReportSetChange(Map<EquipmentSetSlot, ? extends Item> changes) {
         for (EquipmentSetSlot slot : changes.keySet()) {
             this.equipments.remove(slot);
         }
@@ -104,7 +107,7 @@ public final class LivingEntityHolder {
                 this.equipments.add(entry.getKey(), item);
             }
         }
-        this.equipments.updateSets();
+        return this.equipments.updateSetsAndReportChange();
     }
 
     public long currentTick() {

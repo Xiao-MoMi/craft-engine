@@ -7,15 +7,17 @@ import net.momirealms.craftengine.core.plugin.context.parameter.DirectContextPar
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Map;
-
-// TODO 设计的很差。未来最好重构
 public class ItemBuildContext extends PlayerOptionalContext {
     public static final ItemBuildContext EMPTY = new ItemBuildContext(null, ContextHolder.empty());
     protected Item item;
 
     public ItemBuildContext(@Nullable Player player, @NotNull ContextHolder contexts) {
         super(player, contexts);
+    }
+
+    public ItemBuildContext(@Nullable Player player, @NotNull Item item, @NotNull ContextHolder contexts) {
+        super(player, contexts);
+        this.item = item;
     }
 
     public void setItem(@NotNull Item item) {
@@ -33,19 +35,28 @@ public class ItemBuildContext extends PlayerOptionalContext {
     }
 
     @NotNull
+    public static ItemBuildContext of(@Nullable Player player, @NotNull ContextHolder.Builder builder) {
+        if (player != null) {
+            builder.withParameter(DirectContextParameters.PLAYER, player);
+        }
+        return new ItemBuildContext(player, builder.build());
+    }
+
+    @NotNull
     public static ItemBuildContext of(@Nullable Player player, @NotNull ContextHolder contexts) {
         return new ItemBuildContext(player, contexts);
     }
 
     @NotNull
-    public static ItemBuildContext of(@Nullable Player player, @NotNull ContextHolder.Builder builder) {
-        if (player != null) builder.withParameter(DirectContextParameters.PLAYER, player);
-        return new ItemBuildContext(player, builder.build());
+    public static ItemBuildContext of(@Nullable Player player, @NotNull Item item, @NotNull ContextHolder contexts) {
+        return new ItemBuildContext(player, item, contexts);
     }
 
     @NotNull
     public static ItemBuildContext of(@Nullable Player player) {
-        if (player == null) return new ItemBuildContext(null, ContextHolder.empty());
-        return new ItemBuildContext(player, ContextHolder.mutable(Map.of(DirectContextParameters.PLAYER, () -> player)));
+        if (player == null) {
+            return new ItemBuildContext(null, ContextHolder.empty());
+        }
+        return new ItemBuildContext(player, ContextHolder.builder(DirectContextParameters.PLAYER, player).build());
     }
 }

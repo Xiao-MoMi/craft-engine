@@ -17,9 +17,11 @@ import net.momirealms.craftengine.core.entity.player.InteractionHand;
 import net.momirealms.craftengine.core.item.ItemDefinition;
 import net.momirealms.craftengine.core.item.customdata.BlockDebugStickData;
 import net.momirealms.craftengine.core.plugin.config.Config;
+import net.momirealms.craftengine.core.plugin.context.Context;
 import net.momirealms.craftengine.core.plugin.context.ContextHolder;
 import net.momirealms.craftengine.core.plugin.context.EventTrigger;
 import net.momirealms.craftengine.core.plugin.context.PlayerOptionalContext;
+import net.momirealms.craftengine.core.plugin.context.function.Function;
 import net.momirealms.craftengine.core.plugin.context.parameter.DirectContextParameters;
 import net.momirealms.craftengine.core.sound.SoundData;
 import net.momirealms.craftengine.core.sound.SoundSource;
@@ -27,14 +29,19 @@ import net.momirealms.craftengine.core.util.Cancellable;
 import net.momirealms.craftengine.core.util.ItemUtils;
 import net.momirealms.craftengine.core.util.MiscUtils;
 import net.momirealms.craftengine.core.util.VersionHelper;
+import net.momirealms.craftengine.core.util.random.RandomUtils;
 import net.momirealms.craftengine.core.world.BlockPos;
+import net.momirealms.craftengine.core.world.Vec3d;
 import net.momirealms.craftengine.core.world.WorldPosition;
 import net.momirealms.craftengine.proxy.bukkit.craftbukkit.CraftWorldProxy;
 import net.momirealms.craftengine.proxy.minecraft.core.DirectionProxy;
+import net.momirealms.craftengine.proxy.minecraft.core.HolderProxy;
+import net.momirealms.craftengine.proxy.minecraft.network.protocol.game.ClientboundSoundPacketProxy;
 import net.momirealms.craftengine.proxy.minecraft.network.protocol.game.ClientboundSystemChatPacketProxy;
 import net.momirealms.craftengine.proxy.minecraft.server.level.ServerChunkCacheProxy;
 import net.momirealms.craftengine.proxy.minecraft.server.level.ServerLevelProxy;
 import net.momirealms.craftengine.proxy.minecraft.sounds.SoundEventProxy;
+import net.momirealms.craftengine.proxy.minecraft.sounds.SoundSourceProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.entity.player.AbilitiesProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.entity.player.PlayerProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.level.BlockGetterProxy;
@@ -60,6 +67,7 @@ import org.bukkit.inventory.EquipmentSlot;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
+import java.util.List;
 import java.util.Optional;
 
 import static net.momirealms.craftengine.core.block.UpdateFlags.UPDATE_CLIENTS;
@@ -151,18 +159,20 @@ public final class BlockEventListener implements Listener {
             Optional<ItemDefinition> optionalCustomItem = itemInHand.getDefinition();
             if (optionalCustomItem.isPresent()) {
                 ItemDefinition itemDefinition = optionalCustomItem.get();
-                Cancellable cancellable = Cancellable.of(event::isCancelled, event::setCancelled);
-                itemDefinition.execute(
-                        PlayerOptionalContext.of(serverPlayer, ContextHolder.builder()
+                List<Function<Context>> functions = itemDefinition.eventFunctions(EventTrigger.BLOCK_BREAK);
+                if (!functions.isEmpty()) {
+                    Cancellable cancellable = Cancellable.of(event::isCancelled, event::setCancelled);
+                    Function.execute(PlayerOptionalContext.of(serverPlayer, ContextHolder.builder()
+                            .withParameter(DirectContextParameters.PLAYER, serverPlayer)
                             .withParameter(DirectContextParameters.BLOCK, new BukkitExistingBlock(block))
                             .withParameter(DirectContextParameters.POSITION, position)
-                            .withParameter(DirectContextParameters.PLAYER, serverPlayer)
                             .withParameter(DirectContextParameters.EVENT, cancellable)
-                            .withOptionalParameter(DirectContextParameters.ITEM_IN_HAND, itemInHand.isEmpty() ? null : itemInHand)
-                        ), EventTrigger.BREAK
-                );
-                if (cancellable.isCancelled()) {
-                    return;
+                            .withParameter(DirectContextParameters.ITEM_IN_HAND, itemInHand)
+                            .build()
+                    ), functions);
+                    if (cancellable.isCancelled()) {
+                        return;
+                    }
                 }
                 itemDefinition.behavior().onBreakBlock(world, serverPlayer, blockPos);
             }
@@ -198,8 +208,7 @@ public final class BlockEventListener implements Listener {
                     }
 
                     // trigger api event
-                    ContextHolder.Builder contextBuilder = ContextHolder.builder();
-                    CustomBlockBreakEvent customBreakEvent = new CustomBlockBreakEvent(serverPlayer, location, block, state, event.isDropItems(), contextBuilder);
+                    CustomBlockBreakEvent customBreakEvent = new CustomBlockBreakEvent(serverPlayer, location, block, state, event.isDropItems());
                     boolean isCancelled = EventUtils.fireAndCheckCancel(customBreakEvent);
                     if (isCancelled) {
                         event.setCancelled(true);
@@ -209,18 +218,22 @@ public final class BlockEventListener implements Listener {
                     // 同步选项
                     event.setDropItems(customBreakEvent.dropItems());
 
-                    // execute functions
-                    Cancellable cancellable = Cancellable.of(event::isCancelled, event::setCancelled);
-                    PlayerOptionalContext context = PlayerOptionalContext.of(serverPlayer, contextBuilder
-                            .withParameter(DirectContextParameters.BLOCK, new BukkitExistingBlock(block))
-                            .withParameter(DirectContextParameters.CUSTOM_BLOCK_STATE, state)
-                            .withParameter(DirectContextParameters.EVENT, cancellable)
-                            .withParameter(DirectContextParameters.POSITION, position)
-                            .withOptionalParameter(DirectContextParameters.ITEM_IN_HAND, itemInHand.isEmpty() ? null : itemInHand)
-                    );
-                    state.owner().value().execute(context, EventTrigger.BREAK);
-                    if (cancellable.isCancelled()) {
-                        return;
+                    List<Function<Context>> functions = state.owner().value().eventFunctions(EventTrigger.BLOCK_BREAK);
+                    if (!functions.isEmpty()) {
+                        // execute functions
+                        Cancellable cancellable = Cancellable.of(event::isCancelled, event::setCancelled);
+                        Function.execute(PlayerOptionalContext.of(serverPlayer, ContextHolder.builder()
+                                .withParameter(DirectContextParameters.PLAYER, serverPlayer)
+                                .withParameter(DirectContextParameters.BLOCK, new BukkitExistingBlock(block))
+                                .withParameter(DirectContextParameters.CUSTOM_BLOCK_STATE, state)
+                                .withParameter(DirectContextParameters.EVENT, cancellable)
+                                .withParameter(DirectContextParameters.POSITION, position)
+                                .withParameter(DirectContextParameters.ITEM_IN_HAND, itemInHand)
+                                .build()
+                        ), functions);
+                        if (cancellable.isCancelled()) {
+                            return;
+                        }
                     }
 
                     // play sound
@@ -245,24 +258,27 @@ public final class BlockEventListener implements Listener {
         Entity entity = event.getEntity();
         if (!(entity instanceof Player player)) return;
         BlockPos pos = EntityUtils.getOnPos(player);
-        Block block = player.getWorld().getBlockAt(pos.x(), pos.y(), pos.z());
         Object blockState = BlockGetterProxy.INSTANCE.getBlockState(CraftWorldProxy.INSTANCE.getWorld(player.getWorld()), LocationUtils.toBlockPos(pos));
-        Optional<ImmutableBlockState> optionalCustomState = BlockStateUtils.getOptionalCustomBlockState(blockState);
-        if (optionalCustomState.isPresent()) {
-            Location location = player.getLocation();
-            ImmutableBlockState state = optionalCustomState.get();
-            Cancellable cancellable = Cancellable.of(event::isCancelled, event::setCancelled);
-            state.owner().value().execute(PlayerOptionalContext.of(BukkitAdaptor.adapt(player), ContextHolder.builder()
-                    .withParameter(DirectContextParameters.EVENT, cancellable)
-                    .withParameter(DirectContextParameters.POSITION, new WorldPosition(BukkitAdaptor.adapt(event.getWorld()), LocationUtils.toVec3d(location)))
-                    .withParameter(DirectContextParameters.BLOCK, new BukkitExistingBlock(block))
-                    .withParameter(DirectContextParameters.CUSTOM_BLOCK_STATE, state)
-            ), EventTrigger.STEP);
-            if (cancellable.isCancelled() && !Config.processCancelledStep()) {
-                return;
+        ImmutableBlockState state = BlockStateUtils.getNullableCustomBlockState(blockState);
+        if (state != null) {
+            BukkitServerPlayer serverPlayer = BukkitAdaptor.adapt(player);
+            if (serverPlayer == null) return;
+            List<Function<Context>> functions = state.owner().value().eventFunctions(EventTrigger.STEP);
+            if (!functions.isEmpty()) {
+                Cancellable cancellable = Cancellable.of(event::isCancelled, event::setCancelled);
+                Function.execute(PlayerOptionalContext.of(serverPlayer, ContextHolder.builder()
+                        .withParameter(DirectContextParameters.PLAYER, serverPlayer)
+                        .withParameter(DirectContextParameters.EVENT, cancellable)
+                        .withParameter(DirectContextParameters.POSITION, LocationUtils.toWorldPosition(player.getLocation()))
+                        .withParameter(DirectContextParameters.BLOCK, new BukkitExistingBlock(player.getWorld().getBlockAt(pos.x(), pos.y(), pos.z())))
+                        .withParameter(DirectContextParameters.CUSTOM_BLOCK_STATE, state)
+                        .build()
+                ), functions);
+                if (cancellable.isCancelled() && !Config.processCancelledStep()) {
+                    return;
+                }
             }
-            SoundData soundData = state.settings().sounds().stepSound();
-            player.playSound(location, soundData.id().toString(), SoundCategory.BLOCKS, soundData.volume().get(), soundData.pitch().get());
+            serverPlayer.playSound(new Vec3d(serverPlayer.x(), serverPlayer.y(), serverPlayer.z()), state.settings().sounds().stepSound(), SoundSource.BLOCK);
         } else if (Config.enableSoundSystem()) {
             if (event.isCancelled() && !Config.processCancelledStep()) {
                 return;
@@ -271,7 +287,16 @@ public final class BlockEventListener implements Listener {
             Object soundEvent = SoundTypeProxy.INSTANCE.getStepSound(soundType);
             Object soundId = SoundEventProxy.INSTANCE.getLocation(soundEvent);
             if (this.manager.isStepSoundMissing(soundId)) {
-                player.playSound(player.getLocation(), soundId.toString(), SoundCategory.BLOCKS, 0.15f, 1f);
+                BukkitServerPlayer serverPlayer = BukkitAdaptor.adapt(player);
+                if (serverPlayer == null) return;
+                Object packet = ClientboundSoundPacketProxy.INSTANCE.newInstance(
+                        HolderProxy.INSTANCE.direct(soundEvent),
+                        SoundSourceProxy.BLOCKS,
+                        serverPlayer.x(), serverPlayer.y(), serverPlayer.z(),
+                        0.15f, 1f,
+                        RandomUtils.generateRandomLong()
+                );
+                serverPlayer.sendPacket(packet, false);
             }
         }
     }

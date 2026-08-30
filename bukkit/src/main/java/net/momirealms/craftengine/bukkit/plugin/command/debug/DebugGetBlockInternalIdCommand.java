@@ -1,8 +1,5 @@
 package net.momirealms.craftengine.bukkit.plugin.command.debug;
 
-import net.kyori.adventure.text.Component;
-import net.kyori.adventure.text.event.ClickEvent;
-import net.kyori.adventure.text.format.NamedTextColor;
 import net.momirealms.craftengine.bukkit.plugin.command.BukkitCommandFeature;
 import net.momirealms.craftengine.bukkit.util.BlockStateUtils;
 import net.momirealms.craftengine.core.block.ImmutableBlockState;
@@ -41,12 +38,16 @@ public final class DebugGetBlockInternalIdCommand extends BukkitCommandFeature<C
                 .handler(context -> {
                     String data = context.get("id");
                     ImmutableBlockState state = BlockStateParser.deserialize(data);
-                    if (state == null) return;
+                    if (state == null) {
+                        plugin().senderFactory().wrap(context.sender()).sendMessage(
+                                DebugCommandOutput.error("Could not parse block state '" + data + "'"));
+                        return;
+                    }
                     String id = BlockStateUtils.getBlockOwnerIdFromState(state.customBlockState().minecraftState()).toString();
                     Sender sender = plugin().senderFactory().wrap(context.sender());
-                    sender.sendMessage(Component.text(id)
-                            .hoverEvent(Component.text("Copy", NamedTextColor.YELLOW))
-                            .clickEvent(ClickEvent.suggestCommand(id)));
+                    sender.sendMessage(DebugCommandOutput.title("Block Internal ID"));
+                    sender.sendMessage(DebugCommandOutput.value("CraftEngine state", state));
+                    sender.sendMessage(DebugCommandOutput.value("Internal ID", id));
                 });
     }
 

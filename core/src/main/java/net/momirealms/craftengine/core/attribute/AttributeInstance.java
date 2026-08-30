@@ -5,9 +5,9 @@ import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import net.momirealms.craftengine.core.attribute.base.BaseValueSource;
 import net.momirealms.craftengine.core.attribute.modifier.AttributeModifier;
 import net.momirealms.craftengine.core.attribute.sync.SyncTarget;
+import net.momirealms.craftengine.core.attribute.vanilla.LegacyVanillaAttributes;
 import net.momirealms.craftengine.core.attribute.vanilla.VanillaAttributeInstance;
 import net.momirealms.craftengine.core.attribute.vanilla.VanillaAttributes;
-import net.momirealms.craftengine.core.attribute.vanilla.VanillaAttributes1_21;
 import net.momirealms.craftengine.core.entity.LivingEntity;
 import net.momirealms.craftengine.core.entity.LivingEntityContext;
 import net.momirealms.craftengine.core.util.Key;
@@ -348,10 +348,10 @@ public class AttributeInstance {
     }
 
     private boolean isMaxHealth(Key id) {
-        if (VersionHelper.isOrAbove1_21) {
-            return VanillaAttributes1_21.MAX_HEALTH.equals(id);
-        } else {
+        if (VersionHelper.isOrAbove1_21_2) {
             return VanillaAttributes.MAX_HEALTH.equals(id);
+        } else {
+            return LegacyVanillaAttributes.MAX_HEALTH.equals(id);
         }
     }
 

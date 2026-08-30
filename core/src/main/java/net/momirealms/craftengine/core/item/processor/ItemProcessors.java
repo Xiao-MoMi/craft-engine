@@ -66,6 +66,8 @@ public final class ItemProcessors {
     public static final ItemProcessorType<PaintingVariantProcessor> PAINTING_VARIANT = register(Key.ce("painting_variant"), PaintingVariantProcessor.FACTORY);
     public static final ItemProcessorType<RandomValuesProcessor> RANDOM_VALUES = register(Key.ce("random_values"), RandomValuesProcessor.FACTORY);
     public static final ItemProcessorType<RandomValuesProcessor> RANDOMS = register(Key.ce("randoms"), RandomValuesProcessor.FACTORY);
+    public static final ItemProcessorType<FunctionProcessor> FUNCTION = register(Key.ce("function"), FunctionProcessor.FACTORY);
+    public static final ItemProcessorType<FunctionProcessor> FUNCTIONS = register(Key.ce("functions"), FunctionProcessor.FACTORY);
 
     public static <T extends ItemProcessor> ItemProcessorType<T> register(Key key, ItemProcessorFactory<T> factory) {
         ItemProcessorType<T> type = new ItemProcessorType<>(key, factory);

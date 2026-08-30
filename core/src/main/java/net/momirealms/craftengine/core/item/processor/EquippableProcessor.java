@@ -21,8 +21,8 @@ public final class EquippableProcessor implements SimpleNetworkItemProcessor {
     }
 
     @Override
-    public Item apply(Item item, ItemBuildContext context) {
-        return item.equippable(this.data);
+    public void apply(ItemBuildContext context) {
+        context.item().equippable(this.data);
     }
 
     @Override

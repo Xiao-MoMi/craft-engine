@@ -20,10 +20,12 @@ public final class ExternalSourceProcessor implements ItemProcessor {
     private static final ThreadLocal<Set<Dependency>> BUILD_STACK = ThreadLocal.withInitial(LinkedHashSet::new);
     private final String id;
     private final LazyReference<ItemSource> provider;
+    private final boolean replace;
 
-    public ExternalSourceProcessor(String id, LazyReference<ItemSource> provider) {
+    public ExternalSourceProcessor(String id, boolean replace, LazyReference<ItemSource> provider) {
         this.id = id;
         this.provider = provider;
+        this.replace = replace;
     }
 
     public String id() {
@@ -31,9 +33,9 @@ public final class ExternalSourceProcessor implements ItemProcessor {
     }
 
     @Override
-    public Item apply(Item item, ItemBuildContext context) {
+    public void apply(ItemBuildContext context) {
         ItemSource provider = this.provider.get();
-        if (provider == null) return item;
+        if (provider == null) return;
 
         Dependency dependency = new Dependency(provider.plugin(), this.id);
         Set<Dependency> buildStack = BUILD_STACK.get();
@@ -45,7 +47,7 @@ public final class ExternalSourceProcessor implements ItemProcessor {
             CraftEngine.instance().logger().warn(
                     "Failed to build '" + this.id + "' from plugin '" + provider.plugin() + "' due to dependency loop: " + dependencyChain
             );
-            return item;
+            return;
         }
 
         buildStack.add(dependency);
@@ -53,13 +55,15 @@ public final class ExternalSourceProcessor implements ItemProcessor {
             Item another = provider.build(this.id, context);
             if (another == null) {
                 CraftEngine.instance().logger().warn("'" + this.id + "' could not be found in " + provider.plugin());
-                return item;
+                return;
             }
-            item.merge(another);
-            return item;
+            if (this.replace) {
+                context.setItem(another);
+            } else {
+                context.item().merge(another);
+            }
         } catch (Throwable e) {
             CraftEngine.instance().logger().warn("Failed to build item '" + this.id + "' from plugin '" + provider.plugin() + "'", e);
-            return item;
         } finally {
             buildStack.remove(dependency);
             BUILD_STACK.remove();
@@ -74,7 +78,7 @@ public final class ExternalSourceProcessor implements ItemProcessor {
             ConfigSection section = value.getAsSection();
             String plugin = section.getNonNullString(PLUGIN);
             String id = section.getNonNullString("id");
-            return new ExternalSourceProcessor(id, LazyReference.untilNotNull(() -> {
+            return new ExternalSourceProcessor(id, section.getBoolean("replace"), LazyReference.untilNotNull(() -> {
                 ItemSource itemSource = CraftEngine.instance().compatibilityManager().getItemSource(plugin.toLowerCase(Locale.ENGLISH));
                 if (itemSource == null) {
                     CraftEngine.instance().logger().warn("Item source '" + plugin + "' not found for item '" + id + "'");

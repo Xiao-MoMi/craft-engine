@@ -218,7 +218,7 @@ public final class LegacyNetworkItemHandler implements NetworkItemHandler {
         NetworkItemBuildContext context = NetworkItemBuildContext.of(player, wrapped);
         // 准备阶段
         for (ItemProcessor modifier : customItem.clientBoundProcessors()) {
-            modifier.prepareNetworkItem(wrapped, context, tag);
+            modifier.prepareNetworkItem(context, tag);
         }
         // 如果拦截物品的描述名称等
         if (Config.interceptItem()) {
@@ -231,8 +231,9 @@ public final class LegacyNetworkItemHandler implements NetworkItemHandler {
         }
         // 应用阶段
         for (ItemProcessor modifier : customItem.clientBoundProcessors()) {
-            wrapped = modifier.apply(wrapped, context);
+            modifier.apply(context);
         }
+        wrapped = context.item();
         // 如果tag不空，则需要返回
         if (!tag.isEmpty()) {
             wrapped.setTag(ItemCrypto.encrypt(tag), NETWORK_ITEM_TAG);

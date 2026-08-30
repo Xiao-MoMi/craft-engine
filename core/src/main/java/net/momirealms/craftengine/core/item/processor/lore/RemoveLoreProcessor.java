@@ -25,10 +25,11 @@ public final class RemoveLoreProcessor implements SimpleNetworkItemProcessor {
     }
 
     @Override
-    public Item apply(Item item, ItemBuildContext context) {
+    public void apply(ItemBuildContext context) {
+        Item item = context.item();
         List<Component> originalLore = item.loreComponent().orElse(null);
         if (originalLore == null || originalLore.isEmpty()) {
-            return item;
+            return;
         }
 
         List<Component> finalLore = new ArrayList<>(originalLore.size());
@@ -44,10 +45,10 @@ public final class RemoveLoreProcessor implements SimpleNetworkItemProcessor {
         }
 
         if (!hasRemoved) {
-            return item;
+            return;
         }
 
-        return item.loreComponent(finalLore);
+        item.loreComponent(finalLore);
     }
 
     @Override

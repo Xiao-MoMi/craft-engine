@@ -2,80 +2,91 @@ package net.momirealms
 
 import org.gradle.api.Project
 import org.gradle.api.artifacts.ExternalModuleDependency
+import org.gradle.api.artifacts.VersionCatalog
+import org.gradle.api.artifacts.VersionCatalogsExtension
 import org.gradle.api.plugins.JavaPlugin
 import org.gradle.kotlin.dsl.DependencyHandlerScope
 import org.gradle.kotlin.dsl.exclude
+import org.gradle.kotlin.dsl.getByType
 
-/**
- * 获取依赖版本
- */
-fun Project.ver(key: String): String {
-    return rootProject.properties[key].toString()
+private val Project.libraries: VersionCatalog
+    get() = extensions.getByType<VersionCatalogsExtension>().named("libs")
+
+fun Project.versionOf(alias: String): String = libraries
+    .findVersion(alias)
+    .orElseThrow { IllegalArgumentException("Unknown version catalog alias: $alias") }
+    .requiredVersion
+
+private fun DependencyHandlerScope.addBundle(
+    project: Project,
+    alias: String,
+    configuration: String
+) {
+    add(
+        configuration,
+        project.libraries.findBundle(alias)
+            .orElseThrow { IllegalArgumentException("Unknown dependency bundle: $alias") }
+    )
 }
 
-fun DependencyHandlerScope.nbt(project: Project, configuration: String = JavaPlugin.COMPILE_ONLY_CONFIGURATION_NAME) {
-    configuration("net.momirealms:sparrow-nbt:${project.ver("sparrow_nbt_version")}")
-    configuration("net.momirealms:sparrow-nbt-adventure:${project.ver("sparrow_nbt_version")}")
-    configuration("net.momirealms:sparrow-nbt-codec:${project.ver("sparrow_nbt_version")}")
-    configuration("net.momirealms:sparrow-nbt-legacy-codec:${project.ver("sparrow_nbt_version")}")
+private fun DependencyHandlerScope.addLibrary(
+    project: Project,
+    alias: String,
+    configuration: String
+) = add(
+    configuration,
+    project.libraries.findLibrary(alias)
+        .orElseThrow { IllegalArgumentException("Unknown dependency alias: $alias") }
+)
+
+fun DependencyHandlerScope.nbt(
+    project: Project,
+    configuration: String = JavaPlugin.COMPILE_ONLY_CONFIGURATION_NAME
+) = addBundle(project, "nbt", configuration)
+
+fun DependencyHandlerScope.common(
+    project: Project,
+    configuration: String = JavaPlugin.COMPILE_ONLY_CONFIGURATION_NAME
+) {
+    addBundle(project, "common", configuration)
+    add(
+        configuration,
+        project.files("${project.rootProject.rootDir}/libs/leafpile-${project.versionOf("leafpile")}.jar")
+    )
 }
 
-fun DependencyHandlerScope.common(project: Project, configuration: String = JavaPlugin.COMPILE_ONLY_CONFIGURATION_NAME) {
-    fun v(key: String) = project.rootProject.property(key).toString()
-    configuration(project.files("${project.rootProject.rootDir}/libs/boosted-yaml-${v("boosted_yaml_version")}.jar"))
-    configuration("com.google.guava:guava:${v("guava_version")}")
-    configuration("com.google.code.gson:gson:${v("gson_version")}")
-    configuration("it.unimi.dsi:fastutil:${v("fastutil_version")}")
-    configuration("org.joml:joml:${v("joml_version")}")
-    configuration("org.snakeyaml:snakeyaml-engine:${v("snake_yaml_version")}")
-    configuration("org.slf4j:slf4j-api:${v("slf4j_version")}")
-    configuration("org.apache.logging.log4j:log4j-core:${v("log4j_version")}")
-    configuration("com.github.ben-manes.caffeine:caffeine:${v("caffeine_version")}")
-    configuration("commons-io:commons-io:${v("commons_io_version")}")
-    configuration("com.mojang:datafixerupper:${v("datafixerupper_version")}")
-    configuration("com.mojang:authlib:${v("authlib_version")}")
-    configuration(project.files("${project.rootProject.rootDir}/libs/leafpile-${v("leafpile_version")}.jar"))
-    configuration("org.ahocorasick:ahocorasick:${v("ahocorasick_version")}")
-    configuration("com.bucket4j:bucket4j_jdk17-core:${v("bucket4j_version")}")
-    configuration("com.ezylang:EvalEx:${v("evalex_version")}")
-    configuration("com.google.jimfs:jimfs:${v("jimfs_version")}")
-    configuration("org.graalvm.polyglot:polyglot:${v("graaljs_version")}")
-    configuration("org.openjdk.nashorn:nashorn-core:${v("nashorn_version")}")
-}
+fun DependencyHandlerScope.netty(
+    project: Project,
+    configuration: String = JavaPlugin.COMPILE_ONLY_CONFIGURATION_NAME
+) = addBundle(project, "netty", configuration)
 
-fun DependencyHandlerScope.netty(project: Project, configuration: String = JavaPlugin.COMPILE_ONLY_CONFIGURATION_NAME) {
-    configuration("io.netty:netty-all:${project.ver("netty_version")}")
-    configuration("io.netty:netty-codec-http:${project.ver("netty_version")}")
-}
+fun DependencyHandlerScope.compression(
+    project: Project,
+    configuration: String = JavaPlugin.COMPILE_ONLY_CONFIGURATION_NAME
+) = addBundle(project, "compression", configuration)
 
-fun DependencyHandlerScope.compression(project: Project, configuration: String = JavaPlugin.COMPILE_ONLY_CONFIGURATION_NAME) {
-    configuration("com.github.luben:zstd-jni:${project.ver("zstd_version")}")
-    configuration("at.yawk.lz4:lz4-java:${project.ver("lz4_version")}")
-}
+fun DependencyHandlerScope.cloud(
+    project: Project,
+    configuration: String = JavaPlugin.COMPILE_ONLY_CONFIGURATION_NAME
+) = addBundle(project, "cloud", configuration)
 
-fun DependencyHandlerScope.cloud(project: Project, configuration: String = JavaPlugin.COMPILE_ONLY_CONFIGURATION_NAME) {
-    configuration("com.mojang:brigadier:${project.ver("mojang_brigadier_version")}")
-    configuration("org.incendo:cloud-core:${project.ver("cloud_core_version")}")
-    configuration("org.incendo:cloud-minecraft-extras:${project.ver("cloud_platform_version")}")
-    configuration("org.incendo:cloud-paper:${project.ver("cloud_platform_version")}")
-}
+fun DependencyHandlerScope.paperServer(
+    project: Project,
+    configuration: String = JavaPlugin.COMPILE_ONLY_CONFIGURATION_NAME
+) = addLibrary(project, "paper-api", configuration)
 
-fun DependencyHandlerScope.paperServer(project: Project, configuration: String = JavaPlugin.COMPILE_ONLY_CONFIGURATION_NAME) {
-    configuration("io.papermc.paper:paper-api:${project.ver("paper_version")}")
-}
+fun DependencyHandlerScope.asm(
+    project: Project,
+    configuration: String = JavaPlugin.COMPILE_ONLY_CONFIGURATION_NAME
+) = addBundle(project, "asm", configuration)
 
-fun DependencyHandlerScope.asm(project: Project, configuration: String = JavaPlugin.COMPILE_ONLY_CONFIGURATION_NAME) {
-    configuration("org.ow2.asm:asm:${project.ver("asm_version")}")
-    configuration("net.bytebuddy:byte-buddy:${project.ver("byte_buddy_version")}")
-    configuration("net.bytebuddy:byte-buddy-agent:${project.ver("byte_buddy_version")}")
-}
-
-fun DependencyHandlerScope.adventure(project: Project, configuration: String = JavaPlugin.COMPILE_ONLY_CONFIGURATION_NAME) {
-    configuration("net.kyori:adventure-api:${project.ver("adventure_bundle_version")}")
-    configuration("net.kyori:adventure-text-serializer-json-legacy-impl:${project.ver("adventure_bundle_version")}")
-    configuration("net.kyori:adventure-text-serializer-legacy:${project.ver("adventure_bundle_version")}")
-    configuration("net.kyori:adventure-text-serializer-gson:${project.ver("adventure_bundle_version")}").apply {
+fun DependencyHandlerScope.adventure(
+    project: Project,
+    configuration: String = JavaPlugin.COMPILE_ONLY_CONFIGURATION_NAME
+) {
+    addBundle(project, "adventure", configuration)
+    addLibrary(project, "adventure-gson", configuration).apply {
         (this as? ExternalModuleDependency)?.exclude("com.google.code.gson", "gson")
     }
-    configuration("net.momirealms:sparrow-minimessage:${project.ver("sparrow_minimessage_version")}")
+    addLibrary(project, "sparrow-minimessage", configuration)
 }

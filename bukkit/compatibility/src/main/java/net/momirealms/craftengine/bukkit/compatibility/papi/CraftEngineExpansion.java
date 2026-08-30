@@ -5,7 +5,6 @@ import net.momirealms.craftengine.bukkit.api.BukkitAdaptor;
 import net.momirealms.craftengine.bukkit.plugin.user.BukkitServerPlayer;
 import net.momirealms.craftengine.core.plugin.CraftEngine;
 import net.momirealms.craftengine.core.plugin.context.CooldownData;
-import net.momirealms.craftengine.core.util.CharacterUtils;
 import net.momirealms.craftengine.core.util.StringUtils;
 import org.bukkit.entity.Player;
 import org.jetbrains.annotations.NotNull;

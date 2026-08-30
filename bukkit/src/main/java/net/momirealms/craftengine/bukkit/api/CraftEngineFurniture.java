@@ -380,10 +380,12 @@ public final class CraftEngineFurniture {
             ContextHolder.Builder builder = ContextHolder.builder()
                     .withParameter(DirectContextParameters.POSITION, position)
                     .withParameter(DirectContextParameters.FURNITURE, furniture)
+                    .withParameter(DirectContextParameters.THIS_ENTITY, furniture.metaDataEntity)
                     .withOptionalParameter(DirectContextParameters.FURNITURE_ITEM, furniture.sourceItem());
             if (player != null) {
                 Item itemInHand = player.getItemInHand(InteractionHand.MAIN_HAND);
                 builder.withParameter(DirectContextParameters.PLAYER, player)
+                        .withParameter(DirectContextParameters.ENTITY, player)
                         .withOptionalParameter(DirectContextParameters.ITEM_IN_HAND, itemInHand.isEmpty() ? null : itemInHand);
             }
             List<Item> items = loot.getRandomItems(builder.build(), world, player);

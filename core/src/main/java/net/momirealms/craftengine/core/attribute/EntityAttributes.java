@@ -3,6 +3,7 @@ package net.momirealms.craftengine.core.attribute;
 import com.google.common.collect.ImmutableMap;
 import net.momirealms.craftengine.core.entity.LivingEntityHolder;
 import net.momirealms.craftengine.core.util.Key;
+import net.momirealms.sparrow.nbt.CompoundTag;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.BitSet;
@@ -134,10 +135,10 @@ public final class EntityAttributes implements AttributeGetter {
     }
 
     public EntityAttributesSnapshot createSnapshot() {
-        ImmutableMap.Builder<Key, Double> builder = ImmutableMap.builder();
+        CompoundTag data = new CompoundTag();
         for (AttributeInstance instance : this.instances) {
-            builder.put(instance.attribute().id(), instance.getValue());
+            data.putDouble(instance.attribute().id().asString(), instance.getValue());
         }
-        return new EntityAttributesSnapshot(builder.build());
+        return new EntityAttributesSnapshot(data);
     }
 }

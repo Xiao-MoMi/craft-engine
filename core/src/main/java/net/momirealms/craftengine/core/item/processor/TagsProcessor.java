@@ -3,6 +3,7 @@ package net.momirealms.craftengine.core.item.processor;
 import net.momirealms.craftengine.core.item.Item;
 import net.momirealms.craftengine.core.item.ItemBuildContext;
 import net.momirealms.craftengine.core.item.component.DataComponentKeys;
+import net.momirealms.craftengine.core.item.network.NetworkItemBuildContext;
 import net.momirealms.craftengine.core.item.network.NetworkItemHandler;
 import net.momirealms.craftengine.core.plugin.config.ConfigSection;
 import net.momirealms.craftengine.core.plugin.config.ConfigValue;
@@ -57,18 +58,19 @@ public final class TagsProcessor implements ItemProcessor {
     }
 
     @Override
-    public Item apply(Item item, ItemBuildContext context) {
+    public void apply(ItemBuildContext context) {
+        Item item = context.item();
         for (Map.Entry<String, Object> entry : this.arguments.entrySet()) {
             String key = entry.getKey();
             Object value = entry.getValue();
             String[] split = key.split("\\.");
             item.setTag(value, (Object[]) split);
         }
-        return item;
     }
 
     @Override
-    public void prepareNetworkItem(Item item, ItemBuildContext context, CompoundTag networkData) {
+    public void prepareNetworkItem(NetworkItemBuildContext context, CompoundTag networkData) {
+        Item item = context.item();
         if (VersionHelper.isOrAbove1_20_5) {
             Tag previous = item.getComponentAsSparrowTag(DataComponentKeys.CUSTOM_DATA);
             if (previous != null) {

@@ -1,9 +1,10 @@
 package net.momirealms.craftengine.core.plugin.context.number;
 
-import net.momirealms.craftengine.core.plugin.config.ConfigConstants;
 import net.momirealms.craftengine.core.plugin.config.ConfigSection;
 import net.momirealms.craftengine.core.plugin.config.ConfigValue;
 import net.momirealms.craftengine.core.plugin.config.KnownResourceException;
+import net.momirealms.craftengine.core.plugin.context.Context;
+import net.momirealms.craftengine.core.plugin.context.expression.ContextExpression;
 import net.momirealms.craftengine.core.registry.BuiltInRegistries;
 import net.momirealms.craftengine.core.registry.Registries;
 import net.momirealms.craftengine.core.registry.WritableRegistry;
@@ -51,43 +52,78 @@ public final class NumberProviders {
     }
 
     public static NumberProvider fromConfig(ConfigValue value) {
-        switch (value.value()) {
-            case Number number -> {
-                return ConstantNumberProvider.constant(number.doubleValue());
-            }
-            case Boolean bool -> {
-                return ConstantNumberProvider.constant(bool ? 1 : 0);
-            }
-            case Map<?, ?> ignored -> {
-                return NumberProviders.fromConfig(value.getAsSection());
-            }
-            default -> {
-                String string = value.getAsString();
-                if (string.contains("~")) {
-                    String[] split = string.split("~", 2);
-                    double min;
-                    try {
-                        min = Double.parseDouble(split[0]);
-                    } catch (NumberFormatException e) {
-                        throw new KnownResourceException(ConfigConstants.PARSE_DOUBLE_FAILED, value.path(), split[0]);
-                    }
-                    double max;
-                    try {
-                        max = Double.parseDouble(split[1]);
-                    } catch (NumberFormatException e) {
-                        throw new KnownResourceException(ConfigConstants.PARSE_DOUBLE_FAILED, value.path(), split[1]);
-                    }
-                    return new UniformNumberProvider(ConstantNumberProvider.constant(min), ConstantNumberProvider.constant(max));
-                } else if (string.contains("<") && string.contains(">")) {
-                    return ExpressionNumberProvider.expression(string);
-                } else {
-                    try {
-                        return ConstantNumberProvider.constant(Double.parseDouble(string));
-                    } catch (NumberFormatException e) {
-                        throw new KnownResourceException(ConfigConstants.PARSE_DOUBLE_FAILED, value.path(), string);
-                    }
+        return switch (value.value()) {
+            case Number number -> ConstantNumberProvider.constant(number.doubleValue());
+            case Boolean bool -> ConstantNumberProvider.constant(bool ? 1 : 0);
+            case Map<?, ?> ignored -> NumberProviders.fromConfig(value.getAsSection());
+            default -> fromString(value);
+        };
+    }
+
+    private static NumberProvider fromString(ConfigValue value) {
+        String source = value.getAsString().trim();
+        int separator = findRangeSeparator(source);
+        if (separator >= 0) {
+            return new UniformNumberProvider(
+                    parseScalar(value.path(), source.substring(0, separator)),
+                    parseScalar(value.path(), source.substring(separator + 1))
+            );
+        }
+        return parseScalar(value.path(), source);
+    }
+
+    private static NumberProvider parseScalar(String path, String source) {
+        source = source.trim();
+        Double literal = tryParseLiteral(source);
+        if (literal != null) {
+            return ConstantNumberProvider.constant(literal);
+        }
+
+        ContextExpression<Context> expression = ContextExpression.precompile(path, source);
+        ExpressionNumberProvider provider = new ExpressionNumberProvider(expression);
+        return provider.isConstant()
+                ? ConstantNumberProvider.constant(provider.getDouble())
+                : provider;
+    }
+
+    private static int findRangeSeparator(String source) {
+        int separator = -1;
+        int parentheses = 0;
+        char quote = 0;
+        boolean escaped = false;
+        for (int i = 0; i < source.length(); i++) {
+            char current = source.charAt(i);
+            if (quote != 0) {
+                if (escaped) {
+                    escaped = false;
+                } else if (current == '\\') {
+                    escaped = true;
+                } else if (current == quote) {
+                    quote = 0;
                 }
+                continue;
             }
+            if (current == '\'' || current == '"') {
+                quote = current;
+            } else if (current == '(') {
+                parentheses++;
+            } else if (current == ')' && parentheses > 0) {
+                parentheses--;
+            } else if (current == '~' && parentheses == 0) {
+                if (separator >= 0) {
+                    return -1;
+                }
+                separator = i;
+            }
+        }
+        return separator;
+    }
+
+    private static Double tryParseLiteral(String source) {
+        try {
+            return Double.parseDouble(source.trim().replace("_", ""));
+        } catch (NumberFormatException ignored) {
+            return null;
         }
     }
 }

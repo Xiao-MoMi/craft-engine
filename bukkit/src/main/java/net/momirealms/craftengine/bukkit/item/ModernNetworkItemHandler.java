@@ -20,6 +20,8 @@ import net.momirealms.craftengine.core.plugin.context.NetworkTextReplaceContext;
 import net.momirealms.craftengine.core.plugin.text.component.ComponentProvider;
 import net.momirealms.craftengine.core.util.AdventureHelper;
 import net.momirealms.craftengine.core.util.VersionHelper;
+import net.momirealms.craftengine.proxy.minecraft.core.component.DataComponentMapProxy;
+import net.momirealms.craftengine.proxy.minecraft.core.component.PatchedDataComponentMapProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.item.ItemStackProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.item.ItemStackTemplateProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.item.component.BundleContentsProxy;
@@ -31,10 +33,7 @@ import net.momirealms.sparrow.nbt.StringTag;
 import net.momirealms.sparrow.nbt.Tag;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 import java.util.function.Supplier;
 
 @SuppressWarnings("DuplicatedCode")
@@ -278,7 +277,7 @@ public final class ModernNetworkItemHandler implements NetworkItemHandler {
         // 准备阶段
         CompoundTag tag = new CompoundTag();
         for (ItemProcessor modifier : customItem.clientBoundProcessors()) {
-            modifier.prepareNetworkItem(original, context, tag);
+            modifier.prepareNetworkItem(context, tag);
         }
         // 如果拦截物品的描述名称等
         if (Config.interceptItem()) {
@@ -297,8 +296,9 @@ public final class ModernNetworkItemHandler implements NetworkItemHandler {
         }
         // 应用阶段
         for (ItemProcessor modifier : customItem.clientBoundProcessors()) {
-            wrapped = modifier.apply(wrapped, context);
+            modifier.apply(context);
         }
+        wrapped = context.item();
         // 如果tag不空，则需要返回
         if (!tag.isEmpty()) {
             CompoundTag customData = Optional.ofNullable(wrapped.getComponentAsSparrowTag(DataComponentTypes.CUSTOM_DATA))
@@ -308,7 +308,35 @@ public final class ModernNetworkItemHandler implements NetworkItemHandler {
             wrapped.setSparrowTagComponent(DataComponentTypes.CUSTOM_DATA, customData);
             forceReturn = true;
         }
+        Object clientItem = ItemStackProxy.INSTANCE.getItem(wrapped.minecraftItem());
+        if (rebase(wrapped.minecraftItem(), this.itemManager.originalVanillaItemComponents(clientItem))) {
+            forceReturn = true;
+        }
         return forceReturn ? Optional.of(wrapped) : Optional.empty();
+    }
+
+    static boolean rebase(Object itemStack, @Nullable Object originalPrototype) {
+        if (originalPrototype == null) {
+            return false;
+        }
+
+        Object effectiveComponents = ItemStackProxy.INSTANCE.getComponents(itemStack);
+        Object rebasedComponents = PatchedDataComponentMapProxy.INSTANCE.newInstance(originalPrototype);
+        PatchedDataComponentMapProxy.INSTANCE.setAll(rebasedComponents, effectiveComponents);
+
+        Set<Object> effectiveTypes = DataComponentMapProxy.INSTANCE.keySet(effectiveComponents);
+        for (Object type : DataComponentMapProxy.INSTANCE.keySet(originalPrototype)) {
+            if (requiresExplicitRemoval(effectiveTypes, type)) {
+                PatchedDataComponentMapProxy.INSTANCE.remove(rebasedComponents, type);
+            }
+        }
+
+        ItemStackProxy.INSTANCE.setComponents(itemStack, rebasedComponents);
+        return true;
+    }
+
+    static boolean requiresExplicitRemoval(Set<Object> effectiveTypes, Object originalType) {
+        return !effectiveTypes.contains(originalType);
     }
 
     public static boolean processLegacyLore(Item item, Supplier<CompoundTag> tag, Context context) {
@@ -370,7 +398,7 @@ public final class ModernNetworkItemHandler implements NetworkItemHandler {
     public static boolean processModernItemName(Item item, Supplier<CompoundTag> tag, Context context) {
         Object itemName = item.getExactComponent(DataComponentTypes.ITEM_NAME);
         if (itemName == null) return false;
-        if (!ComponentUtils.hasNetworkTag(itemName, false)) {
+        if (!ComponentUtils.hasNetworkTag(itemName)) {
             return false;
         }
         Tag nameTag = item.getComponentAsSparrowTag(DataComponentTypes.ITEM_NAME);
@@ -387,7 +415,7 @@ public final class ModernNetworkItemHandler implements NetworkItemHandler {
     public static boolean processModernCustomName(Item item, Supplier<CompoundTag> tag, Context context) {
         Object customName = item.getExactComponent(DataComponentTypes.CUSTOM_NAME);
         if (customName == null) return false;
-        if (!ComponentUtils.hasNetworkTag(customName, false)) {
+        if (!ComponentUtils.hasNetworkTag(customName)) {
             return false;
         }
         Tag nameTag = item.getComponentAsSparrowTag(DataComponentTypes.CUSTOM_NAME);
@@ -405,11 +433,14 @@ public final class ModernNetworkItemHandler implements NetworkItemHandler {
         Object itemLore = item.getExactComponent(DataComponentTypes.LORE);
         if (itemLore == null) return false;
         List<Object> lines = ItemLoreProxy.INSTANCE.getStyleLines(itemLore);
-        if (lines.isEmpty()) return false;
+        if (lines == null) {
+            lines = ItemLoreProxy.INSTANCE.getLines(itemLore);
+        }
+        if (lines == null || lines.isEmpty()) return false;
 
         boolean has = false;
         for (Object line : lines) {
-            if (ComponentUtils.hasNetworkTag(line, false)) {
+            if (ComponentUtils.hasNetworkTag(line)) {
                 has = true;
                 break;
             }

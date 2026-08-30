@@ -15,9 +15,10 @@ public class NetworkItemBuildContext extends ItemBuildContext {
     }
 
     public static NetworkItemBuildContext of(Player player, Item item) {
-        return new NetworkItemBuildContext(player, item, ContextHolder.builder()
-                .withParameter(DirectContextParameters.PLAYER, player)
-                .withParameter(DirectContextParameters.ITEM, item)
-                .build());
+        return new NetworkItemBuildContext(player, item, ContextHolder.builder(
+                DirectContextParameters.PLAYER, player,
+                DirectContextParameters.ENTITY, player,
+                DirectContextParameters.ITEM, item
+        ).build());
     }
 }

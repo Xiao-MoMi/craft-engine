@@ -1,0 +1,335 @@
+exception.invalid_syntax: '<red>Sintaxis no válida. Sintaxis correcta: <white><arg:0></white></red>'
+exception.invalid_argument: '<red>Argumento no válido. Motivo: <white><arg:0></white></red>'
+exception.invalid_sender: <red><arg:0> no tiene permitido ejecutar ese comando. Debe ser de tipo <arg:1></red>
+exception.unexpected: <red>Ocurrió un error interno al intentar ejecutar este comando</red>
+exception.no_permission: <red>Lo sentimos, no tienes permiso para ejecutar este comando</red>
+exception.no_such_command: <red>Comando desconocido.</red>
+argument.entity.notfound.player: <red>No se encontró ningún jugador</red>
+argument.entity.notfound.entity: <red>No se encontró ninguna entidad</red>
+argument.parse.failure.time: <red>'<arg:0>' no es un formato de tiempo válido</red>
+argument.parse.failure.material: <red>'<arg:0>' no es un nombre de material válido</red>
+argument.parse.failure.enchantment: <red>'<arg:0>' no es un encantamiento válido</red>
+argument.parse.failure.offlineplayer: <red>No se encontró ningún jugador para la entrada '<arg:0>'</red>
+argument.parse.failure.player: <red>No se encontró ningún jugador para la entrada '<arg:0>'</red>
+argument.parse.failure.world: <red>'<arg:0>' no es un mundo de Minecraft válido</red>
+argument.parse.failure.location.invalid_format: <red>'<arg:0>' no es una ubicación válida. El formato requerido es '<arg:1> <arg:2> <arg:3>'</red>
+argument.parse.failure.location.mixed_local_absolute: <red>No se pueden mezclar coordenadas locales y absolutas. (o todas las coordenadas usan '^' o ninguna lo usa)</red>
+argument.parse.failure.namespacedkey.namespace: <red>Espacio de nombres no válido '<arg:0>'. Debe ser [a-z0-9._-]</red>
+argument.parse.failure.namespacedkey.key: <red>Clave no válida '<arg:0>'. Debe ser [a-z0-9/._-]</red>
+argument.parse.failure.namespacedkey.need_namespace: <red>Entrada no válida '<arg:0>', requiere un espacio de nombres explícito</red>
+argument.parse.failure.boolean: <red>No se pudo interpretar el valor booleano de '<arg:0>'</red>
+argument.parse.failure.number: <red>'<arg:0>' no es un número válido en el rango de <arg:1> a <arg:2></red>
+argument.parse.failure.char: <red>'<arg:0>' no es un carácter válido</red>
+argument.parse.failure.string: <red>'<arg:0>' no es una cadena válida de tipo <arg:1></red>
+argument.parse.failure.uuid: <red>'<arg:0>' no es un UUID válido</red>
+argument.parse.failure.enum: '<red>''<arg:0>'' no es uno de los siguientes: <arg:1></red>'
+argument.parse.failure.regex: <red>'<arg:0>' no coincide con '<arg:1>'</red>
+argument.parse.failure.flag.unknown: <red>Flag desconocido '<arg:0>'</red>
+argument.parse.failure.flag.duplicate_flag: <red>Flag duplicado '<arg:0>'</red>
+argument.parse.failure.flag.no_flag_started: <red>Ningún flag iniciado. No se sabe qué hacer con '<arg:0>'</red>
+argument.parse.failure.flag.missing_argument: <red>Falta argumento para '<arg:0>'</red>
+argument.parse.failure.flag.no_permission: <red>No tienes permiso para usar '<arg:0>'</red>
+argument.parse.failure.color: <red>'<arg:0>' no es un color válido</red>
+argument.parse.failure.duration: <red>'<arg:0>' no es un formato de duración</red>
+argument.parse.failure.aggregate.missing: <red>Falta el componente '<arg:0>'</red>
+argument.parse.failure.aggregate.failure: '<red>Componente no válido ''<arg:0>'': <arg:1></red>'
+argument.parse.failure.either: <red>No se pudo resolver <arg:1> o <arg:2> desde '<arg:0>'</red>
+argument.parse.failure.namedtextcolor: <red>'<arg:0>' no es un nombre de color de texto válido</red>
+command.reload.too_fast: <red>Estás recargando el plugin demasiado rápido; la recarga anterior aún no ha completado
+command.reload.config.failure: <red>Error al recargar las configuraciones. Por favor, revisa los registros de la consola
+command.reload.config.success: <dark_gray>» </dark_gray><gradient:#F4A460:#FFD700><b>CraftEngine</b></gradient> <gray>•</gray> <white>Configuraciones recargadas <gray>(<hover:show_text:'<gray>Async/Sync'><color:#FFD700><arg:1></color>/<color:#F4A460><arg:2></color></hover> ms)</gray>
+command.reload.config.issues: '<#FF5555>⚠ <bold><arg:0></bold> problema(s) encontrado(s). <gray><italic>(Revisa la consola para más detalles)'
+command.reload.pack.failure: <red>Error al generar el paquete de recursos. Por favor, revisa los registros de la consola
+command.reload.pack.success: '<dark_gray>» </dark_gray><gradient:#F4A460:#FFD700><b>CraftEngine</b></gradient> <gray>•</gray> <white>Paquete de recursos generado <gray>(<hover:show_text:"<gray>Proceso Asíncrono"><color:#FFD700><arg:0></color> ms</hover>)</gray>'
+command.item.get.success: <white>Has recibido <arg:0> <arg:1></white>
+command.item.get.failure.not_exist: <red>Objeto desconocido '<arg:0>'</red>
+command.item.give.success.single: <white>Se dio <arg:0> <arg:1> a <arg:2>
+command.item.give.success.multiple: <white>Se dio <arg:0> <arg:1> a <arg:2> jugadores</white>
+command.item.give.failure.not_exist: <red>Objeto desconocido '<arg:0>'</red>
+command.item.clear.failed.single: <red>No se encontraron objetos en el jugador <arg:0></red>
+command.item.clear.failed.multiple: <red>No se encontraron objetos en <arg:0> jugadores</red>
+command.item.clear.success.single: <white>Se removieron <arg:0> objeto(s) del jugador <arg:1></white>
+command.item.clear.success.multiple: <white>Se removieron <arg:0> objeto(s) de <arg:1> jugadores</white>
+command.item.clear.test.single: <white>Se encontraron <arg:0> objeto(s) coincidentes en el jugador <arg:1></white>
+command.item.clear.test.multiple: <white>Se encontraron <arg:0> objeto(s) coincidentes en <arg:1> jugadores</white>
+command.item.set_custom_model_data: <white>Se estableció el CustomModelData a '<arg:0>'</white>
+command.item.set_item_model: <white>Se estableció el ItemModel a '<arg:0>'</white>
+command.item.remove_item_component: <white>Se eliminó el componente de objeto '<arg:0>'</white>
+command.item.browser.missing_element: <red>No se puede abrir el navegador de objetos debido a que falta el elemento de GUI '<arg:0>'</red><gray><i><newline>Si no sabes qué causó este error, por favor haz clic <red><b><u><click:run_command:'/ce resource save-default /internal'><hover:show_text:'Liberar recursos internos del plugin'>AQUÍ</hover></click></u></b></red> para liberar los recursos internos del plugin</i></gray>
+command.search_recipe.not_found: <red>No se encontró ninguna receta para este objeto</red>
+command.search_usage.not_found: <red>No se encontró ningún uso para este objeto</red>
+command.search_recipe.no_item: <red>Por favor, ten un objeto en la mano antes de ejecutar este comando</red>
+command.search_usage.no_item: <red>Por favor, ten un objeto en la mano antes de ejecutar este comando</red>
+command.totem_animation.failure.not_totem: <red>El objeto '<arg:0>' no es minecraft:totem_of_undying</red>
+command.totem_animation.success.single: <white>Se reprodujo la animación del tótem <arg:0> a <arg:1></white>
+command.totem_animation.success.multiple: <white>Se reprodujo la animación del tótem <arg:0> a <arg:1> jugadores</white>
+command.enchant.success.single: <white>Se aplicó <arg:0> a <arg:1></white>
+command.enchant.success.multiple: <white>Se aplicó <arg:0> a <arg:1> entidades</white>
+command.enchant.failure.not_exist: <red>Encantamiento desconocido '<arg:0>'</red>
+command.enchant.failure.level: <red>El nivel <arg:0> supera el nivel máximo de <arg:1></red>
+command.enchant.failure.incompatible: <red>El encantamiento no se puede aplicar a <arg:0></red>
+command.enchant.failure.itemless: <red><arg:0> no tiene ningún objeto en la casilla seleccionada</red>
+command.enchant.failure.entity: <red><arg:0> no es una entidad viviente</red>
+command.enchant.failure.no_target: <red>No se pudo aplicar ningún encantamiento</red>
+command.toast.failure.item_not_exist: <red>El objeto '<arg:0>' no existe</red>
+command.toast.success.single: <white>Se envió una notificación emergente (toast) <arg:0> a <arg:1></white>
+command.toast.success.multiple: <white>Se envió una notificación emergente (toast) <arg:0> a <arg:1> jugadores</white>
+command.resource.enable.success: <white>Se habilitó el recurso <arg:0>. Ejecuta <click:run_command:/ce reload all><u>/ce reload all</u></click> para aplicar los cambios</white>
+command.resource.enable.failure.unknown: <red>Recurso desconocido <arg:0></red>
+command.resource.disable.success: <white>Se deshabilitó el recurso <arg:0>. Ejecuta <click:run_command:/ce reload all><u>/ce reload all</u></click> para aplicar los cambios</white>
+command.resource.disable.failure.unknown: <red>Recurso desconocido <arg:0></red>
+command.resource.list: '<white>Recursos habilitados(<arg:0>): <green><arg:1></green><newline>Recursos deshabilitados(<arg:2>): <red><arg:3></red></white>'
+command.resource.create.success: <white>Se creó el recurso <arg:0>.</white>
+command.resource.create.failure.unknown: '<red>Error al crear el recurso <arg:0>, Error: <arg:1></red>'
+command.resource.create.failure.invalid_namespace: <red>Error al crear el recurso <arg:0>, El espacio de nombres <arg:1> no es válido.</red>
+command.resource.create.failure.exists: <red>El recurso <arg:0> ya existe.</red>
+command.resource.save_default.success: <white>Se guardaron con éxito los elementos predeterminados desde '<arg:0>'</white><newline><gray><i>Haz clic <green><u><b><click:run_command:'/ce reload all'><hover:show_text:'Recargar el plugin'>AQUÍ</hover></click></b></u></green> para aplicar los cambios</i></gray>
+command.resource.save_default.failure: <red>Ocurrió un error desconocido al guardar los elementos predeterminados. Por favor, revisa la consola
+command.resource.search.parser.not_found: <red>No se encontró el tipo de configuración '<arg:0>'</red>
+command.resource.search.resource.not_found: <red>No se encontró ningún recurso con el id '<arg:0>'</red>
+command.resource.search.success: <white>La ruta de '<arg:0>' es <arg:1></white>
+command.upload.failure.not_supported: <red>El método de alojamiento actual '<arg:0>' no admite la carga de paquetes de recursos.</red>
+command.upload.on_progress: <white>Proceso de carga iniciado. Consulta la consola para más información.</white>
+command.send_resource_pack.success.single: <white>Se envió el paquete de recursos a <arg:0>.</white>
+command.send_resource_pack.success.multiple: <white>Se enviaron paquetes de recursos a <arg:0> jugadores</white>
+command.locale.set.failure: '<red>Formato de idioma no válido: <arg:0></red>'
+command.locale.set.success: <white>El idioma seleccionado se ha establecido en <arg:0> para <arg:1></white>
+command.locale.unset.success: <white>Se borró el idioma seleccionado para <arg:0></white>
+command.display_entity_view_distance_scale.set.success: <white>Se actualizó la escala de distancia de visión de entidad de visualización a <arg:0> para <arg:1></white>
+command.entity_culling_distance_scale.set.success: <white>Se actualizó la escala de distancia de ocultación de entidades a <arg:0> para <arg:1></white>
+command.entity_culling.toggle.success: <white>Se actualizó el estado de ocultación de entidades a <arg:0> para <arg:1></white>
+command.damage_visibility.set.success: <white>Se actualizó la visibilidad del indicador de daño a <arg:0> para <arg:1></white>
+command.place_feature.failed: "<red>Error al colocar la característica (feature)</red>"
+command.place_feature.success: "<white>Se colocó \"<arg:0>\" en <arg:1>, <arg:2>, <arg:3></white>"
+command.place_feature.invalid: "<red>No existe ninguna característica (feature) con el tipo \"<arg:0>\"</red>"
+command.chunk.not_loaded: "<red>Esa posición no está cargada</red>"
+command.player.itemless: "<red><arg:0> no tiene ningún objeto en la mano</red>"
+command.world_settings.get.success: "<white>El ajuste del mundo <arg:0> está actualmente establecido en: <arg:1>"
+command.world_settings.set.success: "<white>El ajuste del mundo <arg:0> ahora está establecido en: <arg:1>"
+command.world_settings.failure: "<red>No se puede encontrar el ajuste del mundo <arg:0>"
+snbt.invalid_syntax.parse_error: '<arg:0> en la posición <arg:1>: <arg:2>'
+snbt.invalid_syntax.here: <--[AQUÍ]
+snbt.parser.expected_string_uuid: Se esperaba una cadena que represente un UUID válido
+snbt.parser.expected_number_or_boolean: Se esperaba un número o un booleano
+snbt.parser.trailing: Datos adicionales no esperados al final
+snbt.parser.expected.compound: Se esperaba una etiqueta compuesta (compound tag)
+snbt.parser.number_parse_failure: 'Error al interpretar el número: <arg:0>'
+snbt.parser.expected_hex_escape: Se esperaba un carácter literal de longitud <arg:0>
+snbt.parser.invalid_codepoint: 'Valor de carácter Unicode no válido: <arg:0>'
+snbt.parser.no_such_operation: 'No existe tal operación: <arg:0>'
+snbt.parser.expected_integer_type: Se esperaba un número entero
+snbt.parser.expected_float_type: Se esperaba un número de punto flotante
+snbt.parser.expected_non_negative_number: Se esperaba un número no negativo
+snbt.parser.invalid_character_name: Nombre de carácter Unicode no válido
+snbt.parser.invalid_array_element_type: Tipo de elemento de arreglo no válido
+snbt.parser.invalid_unquoted_start: Las cadenas sin comillas no pueden comenzar con los dígitos 0-9, + o -
+snbt.parser.expected_unquoted_string: Se esperaba una cadena sin comillas válida
+snbt.parser.invalid_string_contents: Contenido de la cadena no válido
+snbt.parser.expected_binary_numeral: Se esperaba un número binario
+snbt.parser.underscore_not_allowed: El guion bajo no está permitido en números binarios
+snbt.parser.expected_decimal_numeral: Se esperaba un número decimal
+snbt.parser.expected_hex_numeral: Se esperaba un número hexadecimal
+snbt.parser.empty_key: La clave no puede estar vacía
+snbt.parser.leading_zero_not_allowed: Los números decimales no pueden comenzar con 0
+snbt.parser.infinity_not_allowed: No se permiten números no finitos
+snbt.parser.incorrect: Se esperaba el literal <arg:0>
+yaml.duplicated_key: "Se encontró una clave duplicada '<arg:1>' en la línea <arg:2> del archivo <arg:0>"
+yaml.inconsistent_value_type: "Se encontró una clave duplicada '<arg:1>' en la línea <arg:2> con diferentes tipos de valores en el archivo <arg:0>"
+plugin.compatibility: "[Compatibilidad] <arg:0> vinculado"
+attribute.damage_formula.unknown_type: Tipo de fórmula de daño desconocido '<arg:0>'
+damage_indicator.unknown_type: Tipo de indicador de daño desconocido '<arg:0>'
+attribute.base_value_source.unknown_type: Tipo de fuente de valor base desconocido '<arg:0>'
+attribute.sync_value_provider.unknown_type: Tipo de proveedor de valor de sincronización desconocido '<arg:0>'
+attribute.value_transformer.unknown_type: Tipo de transformador de valor desconocido '<arg:0>'
+attribute.formula.unknown_variable: Variable desconocida '<arg:0>' en la fórmula de daño '<arg:1>'
+attribute.formula.unknown_attribute: Atributo desconocido '<arg:0>' en la fórmula de daño '<arg:1>'
+attribute.unknown_operation: Operación de atributo desconocida '<arg:0>'
+attribute.operation.invalid_expression: Expresión no válida '<arg:0>' en la operación de atributo
+attribute.derived.unknown_attribute: Atributo desconocido '<arg:0>' en la expresión derivada '<arg:1>'
+attribute.derived.unknown_type: Tipo de valor derivado desconocido '<arg:0>'
+number.unknown_type: Tipo de número desconocido '<arg:0>'
+number.fixed.invalid_expression: Expresión no válida '<arg:0>'.
+resource.expression.invalid: 'Expresión no válida "<arg:0>". Detalles: <arg:1>'
+resource.expression.invalid_syntax: 'Expresión no válida "<arg:0>" cerca del carácter <arg:1> (token "<arg:2>").'
+resource.expression.invalid_function_argument: 'Expresión no válida "<arg:0>" en el argumento de función <arg:3>, cerca del carácter <arg:1> (token "<arg:2>").'
+resource.expression.unknown_parameter: 'Parámetro desconocido "<arg:0>" en la expresión "<arg:1>".'
+number.greater_than: '''<arg:0>'' debe ser mayor que ''<arg:1>'''
+number.no_greater_than: '''<arg:0>'' no debe ser mayor que ''<arg:1>'''
+number.less_than: '''<arg:0>'' debe ser menor que ''<arg:1>'''
+number.no_less_than: '''<arg:0>'' no debe ser menor que ''<arg:1>'''
+condition.unknown_type: Tipo de condición desconocido '<arg:0>'
+condition.enchantment.invalid_format: Formato de predicado no válido '<arg:0>'. (ej., minecraft:sharpness>=4)
+function.unknown_type: Tipo de función desconocido '<arg:0>'
+player_selector.unknown_type: Tipo de selector de jugador desconocido '<arg:0>'
+loot.entry.unknown_type: Tipo de entrada de botín desconocido '<arg:0>'
+loot.function.unknown_type: Tipo de función de botín desconocido '<arg:0>'
+loot.function.formula.unknown_type: Tipo de fórmula desconocido '<arg:0>'
+loot.source.unknown_type: Tipo de fuente de botín desconocido '<arg:0>'
+loot.source.unknown_overwrite_mode: Modo de sobrescritura de fuente de botín desconocido '<arg:0>'
+loot.source.target_not_allowed: El tipo de fuente de botín '<arg:0>' no admite 'target'
+loot.source.invalid_target: Objetivo de fuente de botín no válido '<arg:0>'
+host.unknown_type: Tipo de host de paquete de recursos desconocido '<arg:0>'
+host.missing_environment_variable: Falta la variable de entorno '<arg:0>'
+host.get_url_failed: "Error al obtener la URL de descarga del paquete de recursos para el jugador <arg:0>"
+host.handle_response_failed: "Error al procesar la respuesta del paquete de recursos para el jugador <arg:0>"
+host.upload_started: "Iniciando la carga del paquete de recursos..."
+host.upload_finished: "Paquete de recursos cargado con éxito en <arg:0> ms"
+host.upload_failed: "Error al cargar el paquete de recursos"
+host.lobfile.storage_usage: "Uso de la cuenta: <arg:0>/<arg:1> MB | <arg:2>/<arg:3> Archivos"
+host.self.http_server_started: "Servidor HTTP Netty iniciado en el puerto: <arg:0>"
+config.errors_detected: Error encontrado en config.yml - <arg:0>
+update.available: 'La nueva versión <arg:0> está disponible: <arg:1>'
+update.is_latest: Estás ejecutando la versión más reciente
+mod.clientbound.no_permission: El jugador <arg:0> no tiene el permiso <arg:1> para recibir el paquete <arg:2>, para otorgar este permiso instala el plugin LuckPerms y asíagnalo directamente
+mod.serverbound.no_permission: El jugador <arg:0> no tiene el permiso <arg:1> para enviar el paquete <arg:2>, para otorgar este permiso instala el plugin LuckPerms y asíagnalo directamente
+resource_pack.invalid_overlay_format: Formato de superposición no válido '<arg:0>'. El formato debe contener el marcador de posición '{version}'
+resource_pack.generation_started: Generando paquete de recursos...
+resource_pack.generation_finished: Paquete de recursos generado en <arg:0>ms
+resource_pack.validation_started: 'Validando paquete de recursos... (Progreso: <arg:0>/<arg:1> | Formato de Pack: <arg:2>~<arg:3> | Superposiciones: <arg:4>)'
+resource_pack.validation_finished: Paquete de recursos validado en <arg:0>ms
+resource_pack.json_optimization_started: '> Optimizando archivos json...'
+resource_pack.texture_optimization_started: '> Optimizando archivos de textura...'
+resource_pack.optimization_result: '> □ Antes/Después/Proporción: <arg:0>/<arg:1>/<arg:2>'
+resource_pack.optimization_finished: Paquete de recursos optimizado en <arg:0>ms
+resource_pack.compression_started: Comprimiendo paquete de recursos...(Este proceso puede ser lento si tienes habilitada la ofuscación)
+resource_pack.compression_finished: Paquete de recursos comprimido en <arg:0>ms
+resource_pack.duplicated_files: Se encontraron archivos duplicados. Por favor, resuélvelos mediante la sección 'resource-pack.duplicated-files-handler' de config.yml
+resource_pack.malformatted_json: El archivo Json '<arg:0>' tiene un formato incorrecto
+resource_pack.not_a_json_object: El archivo Json '<arg:0>' no es un objeto json
+resource_pack.conflict_resolution.unknown_type: Tipo de resolución de conflictos desconocido '<arg:0>'
+resource_pack.model_generation.conflict: Error al generar el modelo porque el archivo de modelo '<arg:0>' ya existe
+resource_pack.texture_generation.conflict: Error al generar la textura porque el archivo de textura '<arg:0>' ya existe
+resource_pack.item_model.conflict: Error al generar el modelo de objeto '<arg:0>' porque el archivo '<arg:1>' ya existe
+resource_pack.missing_font_texture: "A la fuente '<arg:0>' le falta la textura '<arg:1>'"
+resource_pack.missing_model_texture: "Al modelo '<arg:0>' le falta la textura '<arg:1>'"
+resource_pack.missing_equipment_texture: "Al equipamiento '<arg:0>' le falta la textura '<arg:1>'"
+resource_pack.missing_atlas_texture: "Al atlas '<arg:0>' le falta la textura '<arg:1>'"
+resource_pack.missing_item_model: "Al objeto '<arg:0>' le falta el archivo de modelo '<arg:1>'"
+resource_pack.missing_block_model: "Al estado de bloque '<arg:0>' le falta el archivo de modelo '<arg:1>'"
+resource_pack.missing_parent_model: "El modelo '<arg:0>' no puede encontrar el modelo padre '<arg:1>'"
+resource_pack.missing_sound: "Al evento de sonido '<arg:0>' le falta el archivo ogg '<arg:1>'"
+resource_pack.texture_not_in_atlas: "La textura '<arg:0>' no está definida en el atlas. Necesitas añadir la ruta de la textura al atlas o habilitar la opción 'fix-atlas' en config.yml"
+resource_pack.multiple_atlases: "El modelo '<arg:0>' utiliza múltiples atlas: se esperaba '<arg:1>', pero se encontró '<arg:2>'. Asegúrate de que todas las texturas del modelo provengan del mismo atlas"
+resource_pack.duplicated_sprite: "No se puede cargar el modelo '<arg:0>'. Sprite duplicado '<arg:1>' del atlas '<arg:2>', ya definido en el atlas '<arg:3>'"
+resource_pack.bad_atlas: "Error al cargar el modelo '<arg:0>'. El sprite '<arg:1>' debería ser del atlas '<arg:2>', pero en realidad es del atlas '<arg:3>'"
+resource.argument.type.section: Sección de Configuración
+resource.argument.type.boolean: Booleano
+resource.argument.type.int: Entero
+resource.argument.type.long: Entero Largo (Long)
+resource.argument.type.float: Flotante
+resource.argument.type.double: Doble precisión (Double)
+resource.argument.type.string: Cadena de texto (String)
+resource.argument.type.enum: Uno de [<arg:0>]
+resource.argument.type.vec3: Vector3
+resource.argument.type.quaternion: Cuaternión https://quaternions.online/
+resource.argument.type.aabb: Caja de Delimitación Alineada con los Ejes (AABB)
+resource.argument.type.snbt: SNBT https://minecraft.wiki/w/NBT_format#SNBT_format
+resource.argument.type.identifier: Identificador https://minecraft.wiki/w/Identifier
+resource.argument.type.list: Lista
+resource.argument.type.color: Color
+resource.argument.type.number: Número https://xiao-momi.github.io/craft-engine-wiki/reference/number_format
+resource.argument.type.item_model_definition: Definición de Modelo de Objeto
+resource.argument.type.json: Json
+resource.argument.type.any: Cualquier tipo
+resource.argument.type.blockstate: Estado de Bloque
+resource.argument.parser.section: Se esperaba una sección de configuración, se encontró '<arg:0>'
+resource.argument.parser.boolean: 'No se puede interpretar ''<arg:0>'' como booleano. (Valores permitidos: true/false, yes/no, on/off)'
+resource.argument.parser.int: No se puede interpretar '<arg:0>' como un número entero. (Se permiten números con '_', ej., 1_000)
+resource.argument.parser.long: No se puede interpretar '<arg:0>' como un entero largo. (ej., 2_147_483_648)
+resource.argument.parser.float: No se puede interpretar '<arg:0>' como un número decimal. (ej., 3.14 o 1_000.5)
+resource.argument.parser.double: No se puede interpretar '<arg:0>' como un decimal de alta precisión. (ej., 0.0000001)
+resource.argument.parser.enum: 'Constante no válida ''<arg:0>''. (Debe ser una de: [<arg:1>])'
+resource.argument.parser.vec3: No se puede interpretar '<arg:0>' como un vector. (Formato esperado 'x,y,z', ej., 1.5,22,0)
+resource.argument.parser.quaternion: No se puede interpretar '<arg:0>' como un cuaternión. (Formato esperado 'x,y,z,w', ej., 0,0,0,1)
+resource.argument.parser.snbt: 'Formato SNBT no válido ''<arg:0>''. Detalles: <arg:1>. Guía: https://minecraft.wiki/w/NBT_format#SNBT_format'
+resource.argument.parser.aabb: No se puede interpretar '<arg:0>' como un AABB. (Formato de dos puntos esperado 'x1,y1,z1,x2,y2,z2', ej., 0,0,0,1,1,1)
+resource.argument.parser.blockstate: No se puede interpretar '<arg:0>' como un estado de bloque. (ej., minecraft:wheat[age=3])
+resource.argument.parser.identifier: 'No se puede interpretar ''<arg:0>'' como un identificador. Guía: https://minecraft.wiki/w/Identifier#Legal_characters'
+resource.argument.parser.list: Se esperaba que fuera una lista, se encontró '<arg:0>'
+resource.argument.parser.nonempty_list: Se esperaba una lista no vacía
+resource.argument.parser.fixed_size_list: Se esperaba una lista con '<arg:0>' elemento(s)
+resource.argument.parser.nonempty_string: Se esperaba una cadena de texto no vacía
+resource.argument.parser.split: Se esperaba división en '<arg:0>' partes, pero se obtuvieron '<arg:1>'
+resource.argument.parser.number: Se esperaba que fuera un número, se encontró '<arg:0>'
+resource.argument.parser.uuid: No se puede interpretar '<arg:0>' como un UUID.
+resource.config_loaded: Se cargó <arg:0> en <arg:1>ms (<arg:2>)
+resource.pack_loaded: 'Paquete cargado: <arg:0>. Espacio de nombres predeterminado: <arg:1>'
+resource.errors_detected: 'Se encontraron <arg:1> problema(s) en el archivo ''<arg:0>'':'
+resource.errors_detail: '[<arg:0>] <arg:1> - <arg:2>'
+resource.unknown_error: "Tipo de error desconocido"
+resource.duplicated_id: Otro archivo ('<arg:0>') contiene una sección con el mismo ID
+resource.missing_argument: 'Falta el argumento requerido ''<arg:0>''. Se esperaba: ''<arg:1>'''
+resource.placed_feature.invalid_placement: 'Modificador de ubicación no válido. Entrada: ''<arg:0>''. Causa: ''<arg:1>'''
+resource.configured_feature.invalid_feature: 'Característica configurada no válida. Entrada: ''<arg:0>''. Causa: ''<arg:1>'''
+resource.mapping.conflict: No se puede mapear el estado de bloque '<arg:0>' al estado de bloque '<arg:1>' porque el estado ya ha sido mapeado a '<arg:2>'
+resource.lang.unknown_locale: Idioma desconocido '<arg:0>'. (ej., en, zh_cn)
+resource.image.invalid_grid_size: Tamaño de cuadrícula no válido '<arg:0>'. (ej., 3,4)
+resource.image.empty_chars: La opción 'chars' no puede estar vacía
+resource.image.invalid_chars_grid: El número de caracteres en la fila <arg:0> no coincide con el esperado <arg:1>
+resource.image.codepoint_conflict: El carácter '<arg:0>(<arg:1>)' en la fuente '<arg:2>' ha sido ocupado por otra imagen '<arg:3>'
+resource.image.codepoint_exhausted: Los puntos de código (codepoints) se han agotado para la fuente '<arg:0>'
+resource.image.height_ascent_conflict: La altura ('height') '<arg:0>' no debe ser menor que la elevación ('ascent') '<arg:1>'
+resource.emoji.invalid_image_format: Formato de imagen no válido '<arg:0>'
+resource.emoji.unknown_image: Imagen desconocida '<arg:0>'
+resource.equipment.unknown_type: Tipo de equipamiento desconocido '<arg:0>'
+resource.equipment.unknown_layer_type: Tipo de capa de equipamiento desconocido '<arg:0>'
+resource.equipment.invalid_sacrificed_armor: Tipo de armadura vanilla no válido '<arg:0>'
+resource.equipment_set.invalid_slot_name: Nombre de casilla del conjunto de equipamiento no válido '<arg:0>'
+resource.furniture.element.unknown_type: Tipo de elemento de mueble desconocido '<arg:0>'
+resource.furniture.data_source.unknown_type: Tipo de fuente de datos de mueble desconocido '<arg:0>'
+resource.furniture.hitbox.unknown_type: Tipo de caja de colisión (hitbox) de mueble desconocido '<arg:0>'
+resource.furniture.behavior.unknown_type: Tipo de comportamiento de mueble desconocido '<arg:0>'
+resource.furniture.hitbox.custom.invalid_entity_type: Tipo de entidad no válido '<arg:0>'
+resource.template.unknown_argument_type: Tipo de argumento de plantilla desconocido '<arg:0>'
+resource.template.invalid_template: Plantilla no válida '<arg:0>'
+resource.template.missing_argument: 'Falta argumento de plantilla: ''<arg:0>''. Por favor, proporciona este argumento usando la opción ''arguments'' o establece un valor predeterminado para él'
+resource.block.behavior.missing_property: El comportamiento requiere que se defina la propiedad de estado de bloque '<arg:0>'. https://xiao-momi.github.io/craft-engine-wiki/configuration/block/states/properties
+resource.block.behavior.property_type_mismatch: Se esperaba una propiedad de tipo '<arg:0>', pero se obtuvo '<arg:1>'
+resource.block.behavior.unknown_type: Tipo de comportamiento de bloque desconocido '<arg:0>'
+resource.block.state.property.unknown_type: Tipo de propiedad desconocido '<arg:0>'
+resource.block.state.real_state_conflict: Error al vincular '<arg:0>' al estado de bloque real '<arg:1>' ya que ha sido ocupado por el bloque '<arg:2>'
+resource.block.state.real_state_exhausted: No se pueden asignar suficientes estados de bloque reales. Considera aumentar el número de bloques en el lado del servidor en config.yml
+resource.block.state.visual_state_exhausted: El grupo de estado visual '<arg:0>' ha alcanzado su capacidad máxima de '<arg:1>' ranuras y no puede asignar un estado para '<arg:2>'
+resource.block.state.unreleased_state: No puedes asignar un estado de bloque usando este formato porque el estado '<arg:0>' no ha sido liberado en las asignaciones de estado de bloque.
+resource.block.state.entity_renderer.unknown_type: Tipo de renderizador de entidad de bloque desconocido '<arg:0>'
+resource.block.state.invalid_variant_nbt: NBT de estado de bloque parcial no válido '<arg:0>'
+resource.block.state.undefined_appearance: Apariencia de estado de bloque no definida '<arg:0>'
+resource.block.state.appearance_without_properties: Múltiples entradas de 'appearances' requieren 'properties' para distinguir los estados de bloque, solo se usará la primera apariencia
+resource.block.state.model_conflict: Error al vincular el modelo '<arg:0>' al estado de bloque '<arg:1>' el cual ya ha sido vinculado al modelo '<arg:2>'
+resource.block.state.invalid_rotation: Rotación no válida '<arg:1>' en el eje <arg:0>, la cual se espera que sea en incrementos de 90 grados
+resource.block.entity_renderer.tint_source.unknown_type: Tipo de fuente de tinte de entidad de bloque desconocido '<arg:0>'
+resource.item.model_definition.unknown_type: Tipo de definición de modelo de objeto desconocido '<arg:0>'
+resource.item.model_definition.condition.unknown_type: Tipo de propiedad de condición desconocido '<arg:0>'
+resource.item.model_definition.range_dispatch.unknown_type: Tipo de propiedad range_dispatch desconocido '<arg:0>'
+resource.item.model_definition.select.unknown_type: Tipo de propiedad select desconocido '<arg:0>'
+resource.item.model_definition.special.unknown_type: Tipo de modelo especial desconocido '<arg:0>'
+resource.item.model_definition.tint.unknown_type: Tipo de tinte desconocido '<arg:0>'
+resource.item.model_definition.downgrade_failure: 'No se puede convertir la definición de modelo de objeto 1.21.4+ al formato heredado (legacy). Por favor, configura manualmente ''legacy_model'' para este objeto: https://xiao-momi.github.io/craft-engine-wiki/configuration/item/models#legacy-model'
+resource.item.settings.craft_remainder.unknown_type: Tipo de residuo de fabricación (craft remainder) desconocido '<arg:0>'
+resource.item.settings.equippable: Este campo debe colocarse bajo la sección 'data'
+resource.item.settings.equipment.invalid_asset_id: 'Equipamiento con id ''<arg:0>'' no encontrado. Para obtener asistencia, consulta la guía: https://xiao-momi.github.io/craft-engine-wiki/configuration/equipment'
+resource.item.behavior.unknown_type: Tipo de comportamiento de objeto desconocido '<arg:0>'
+resource.item.updater.unknown_type: Tipo de actualizador de objeto desconocido '<arg:0>'
+resource.item.custom_model_data_exhausted: El CustomModelData ya se ha agotado para el material '<arg:0>'
+resource.item.custom_model_data_conflict: El CustomModelData '<arg:0>' ha sido ocupado por el objeto '<arg:1>'
+resource.item.missing_model_id: Falta 'custom_model_data' o 'item_model' para que el modelo personalizado funcione
+resource.item.occupied_vanilla_item_model: El modelo de objeto '<arg:0>' ha sido ocupado por un objeto vanilla
+resource.item.invalid_material: Tipo de material no válido '<arg:0>'
+resource.item.unknown_data_component_type: Tipo de componente de datos desconocido '<arg:0>'
+resource.item.data_component_predicate.unknown_type: Tipo de predicado de componente de datos desconocido '<arg:0>'
+resource.model.generation.conflict: Error al generar el modelo para '<arg:0>' ya que dos o más configuraciones intentan generar diferentes modelos json con la misma ruta
+resource.texture.generation.conflict: Error al generar la textura para '<arg:0>' ya que dos o más configuraciones intentan generar diferentes texturas con la misma ruta
+resource.model.bbmodel.invalid_file: Error al leer o interpretar el archivo bbmodel '<arg:0>'
+resource.model.bbmodel.invalid_name: El nombre de archivo bbmodel '<arg:0>' no es una ruta de recurso válida, por favor renómbralo usando solo letras minúsculas, dígitos, '_', '-', '.', '/'
+resource.recipe.transform_processor.unknown_type: Tipo de posprocesador de transformación de herrería desconocido '<arg:0>'
+resource.recipe.ingredient.invalid_tag: La etiqueta de objeto '<arg:0>' no contiene ningún objeto
+resource.recipe.ingredient.item_not_exist: El objeto ingrediente '<arg:0>' no existe
+resource.recipe.result.item_not_exist: El objeto resultado '<arg:0>' no existe
+resource.recipe.shaped.invalid_pattern: Patrón no válido '<arg:0>'
+resource.recipe.shaped.invalid_symbol: Símbolo no válido '<arg:0>'
+resource.recipe.shaped_transform.ambigious_source: "Se encontraron 2 o más materiales marcados como origen en la receta de transformación con forma: '<arg:0>', '<arg:1>'"
+resource.recipe.shaped_transform.source_not_found: "No se pudo encontrar un material marcado como origen en la receta"
+resource.recipe.shapeless_transform.ambigious_source: "Se encontraron 2 o más materiales marcados como origen en la receta de transformación sin forma: '<arg:0>'"
+resource.recipe.shapeless_transform.source_not_found: "No se pudo encontrar un material marcado como origen en la receta"
+resource.recipe.post_processor.unknown_type: Tipo de posprocesador de receta desconocido '<arg:0>'
+resource.recipe.unknown_type: Tipo de receta desconocido '<arg:0>'

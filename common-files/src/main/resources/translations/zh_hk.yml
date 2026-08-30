@@ -120,7 +120,11 @@ yaml.duplicated_key: 在檔案「<arg:0>」中的第「<arg:2>」行發現發現
 yaml.inconsistent_value_type: 在檔案「<arg:0>」中的第「<arg:2>」行發現發現重複的鍵「<arg:1>」且值類型不同
 plugin.compatibility: '[相容性] 已掛鈎 <arg:0>'
 number.unknown_type: 未知的數字類型「<arg:0>」
-number.fixed.invalid_expression: 無效的表達式「<arg:0>」。https://ezylang.github.io/EvalEx/references/references.html
+number.fixed.invalid_expression: 無效的表達式「<arg:0>」。
+resource.expression.invalid: '無效的表達式「<arg:0>」。詳細資訊：<arg:1>'
+resource.expression.invalid_syntax: '表達式「<arg:0>」無效，錯誤位於第<arg:1>個字元附近（標記「<arg:2>」）。'
+resource.expression.invalid_function_argument: '表達式「<arg:0>」無效，錯誤位於函數的第<arg:3>個參數、第<arg:1>個字元附近（標記「<arg:2>」）。'
+resource.expression.unknown_parameter: '表達式「<arg:1>」中存在未知參數「<arg:0>」。'
 number.greater_than: "「<arg:0>」應大於「<arg:1>」"
 number.no_greater_than: "「<arg:0>」不應大於「<arg:1>」"
 number.less_than: "「<arg:0>」應小於「<arg:1>」"
@@ -240,7 +244,7 @@ resource.equipment.unknown_layer_type: 未知的預設模型類型「<arg:0>」
 resource.equipment.invalid_sacrificed_armor: 無效的原版盔甲類型「<arg:0>」
 resource.equipment_set.invalid_slot_name: 無效的套裝欄位名稱「<arg:0>」
 resource.furniture.element.unknown_type: 未知的傢俱元素類型「<arg:0>」
-resource.furniture.element.tint_source.unknown_type: 未知的傢俱染色源類型「<arg:0>」
+resource.furniture.data_source.unknown_type: 未知的傢俱資料來源類型「<arg:0>」
 resource.furniture.hitbox.unknown_type: 未知的傢俱判定箱類型「<arg:0>」
 resource.furniture.behavior.unknown_type: 未知的傢俱行為類型「<arg:0>」
 resource.furniture.hitbox.custom.invalid_entity_type: 無效的實體類型「<arg:0>」
@@ -258,6 +262,7 @@ resource.block.state.unreleased_state: 無法使用此格式分配方塊狀態�
 resource.block.state.entity_renderer.unknown_type: 未知的方塊實體渲染器類型「<arg:0>」
 resource.block.state.invalid_variant_nbt: 無效的部分方塊狀態 nbt「<arg:0>」
 resource.block.state.undefined_appearance: 未定義的方塊狀態外觀「<arg:0>」
+resource.block.state.appearance_without_properties: 多個「appearances」需要「properties」來區分方塊狀態，將只使用第一個外觀
 resource.block.state.model_conflict: 無法將模型「<arg:0>」綁定到方塊狀態「<arg:1>」，因為該狀態已綁定到模型「<arg:2>」
 resource.block.state.invalid_rotation: 無效的<arg:0>軸旋轉度數「<arg:1>」，預期為90的倍數
 resource.block.entity_renderer.tint_source.unknown_type: 未知的方塊實體渲染器染色源「<arg:0>」

@@ -4,6 +4,7 @@ import com.google.gson.*;
 import net.momirealms.craftengine.bukkit.plugin.command.BukkitCommandFeature;
 import net.momirealms.craftengine.core.plugin.CraftEngine;
 import net.momirealms.craftengine.core.plugin.command.CraftEngineCommandManager;
+import net.momirealms.craftengine.core.plugin.command.sender.Sender;
 import net.momirealms.craftengine.core.util.FileUtils;
 import net.momirealms.craftengine.core.util.GsonHelper;
 import org.bukkit.command.CommandSender;
@@ -34,19 +35,23 @@ public final class DebugGenerateInternalAssetsCommand extends BukkitCommandFeatu
                     // 这里指向的完整的minecraft原版资源包文件夹路径
                     String pathName = context.get("path");
                     Path resourcePackPath = this.plugin().dataFolderPath().resolve(pathName.replace('\\', '/'));
+                    Sender sender = plugin().senderFactory().wrap(context.sender());
                     if (!Files.exists(resourcePackPath)) {
-                        context.sender().sendMessage("Could not find path: " + resourcePackPath);
+                        sender.sendMessage(DebugCommandOutput.error("Resource-pack path does not exist"));
+                        sender.sendMessage(DebugCommandOutput.value("Path", resourcePackPath));
                         return;
                     }
                     Path assetsPath = resourcePackPath.resolve("assets");
                     Path internalPath = resourcePackPath.resolve("internal");
                     if (!Files.exists(assetsPath)) {
-                        context.sender().sendMessage("Could not find path: " + assetsPath);
+                        sender.sendMessage(DebugCommandOutput.error("Assets path does not exist"));
+                        sender.sendMessage(DebugCommandOutput.value("Path", assetsPath));
                         return;
                     }
                     Path minecraftNamespacePath = assetsPath.resolve("minecraft");
                     if (!Files.exists(minecraftNamespacePath)) {
-                        context.sender().sendMessage("Could not find path: " + minecraftNamespacePath);
+                        sender.sendMessage(DebugCommandOutput.error("Minecraft namespace path does not exist"));
+                        sender.sendMessage(DebugCommandOutput.value("Path", minecraftNamespacePath));
                         return;
                     }
 
@@ -143,7 +148,8 @@ public final class DebugGenerateInternalAssetsCommand extends BukkitCommandFeatu
                         plugin().logger().warn("Failed to collect lang", e);
                     }
 
-                    context.sender().sendMessage("Done");
+                    sender.sendMessage(DebugCommandOutput.success("Generated internal assets"));
+                    sender.sendMessage(DebugCommandOutput.value("Output", internalPath));
                 });
     }
 

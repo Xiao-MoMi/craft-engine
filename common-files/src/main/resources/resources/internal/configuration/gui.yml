@@ -6,7 +6,8 @@ categories:
     conditions:
       - type: permission
         permission: craftengine.admin
-    all_items: true
+    source:
+      type: all_items
 images:
   internal:item_browser:
     height: 140

@@ -1,6 +1,5 @@
 package net.momirealms.craftengine.bukkit.plugin.command.debug;
 
-import net.kyori.adventure.text.Component;
 import net.momirealms.craftengine.bukkit.plugin.command.BukkitCommandFeature;
 import net.momirealms.craftengine.bukkit.plugin.injector.WorldStorageInjector;
 import net.momirealms.craftengine.bukkit.util.LevelUtils;
@@ -30,8 +29,10 @@ public final class DebugIsSectionInjectedCommand extends BukkitCommandFeature<Co
                     Object[] sections = ChunkAccessProxy.INSTANCE.getSections(levelChunk);
                     int i = 0;
                     Sender sender = plugin().senderFactory().wrap(player);
+                    sender.sendMessage(DebugCommandOutput.title("Injected Chunk Sections"));
+                    sender.sendMessage(DebugCommandOutput.value("Chunk", chunk.getX() + ", " + chunk.getZ()));
                     for (Object section : sections) {
-                        sender.sendMessage(Component.text("Section #" + i + ": " + WorldStorageInjector.isSectionInjected(section)));
+                        sender.sendMessage(DebugCommandOutput.status("Section #" + i, WorldStorageInjector.isSectionInjected(section)));
                         i++;
                     }
                 });

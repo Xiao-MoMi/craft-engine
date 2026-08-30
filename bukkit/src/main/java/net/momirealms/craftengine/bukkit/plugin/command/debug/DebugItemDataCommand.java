@@ -20,6 +20,7 @@ import net.momirealms.craftengine.core.plugin.command.CraftEngineCommandManager;
 import net.momirealms.craftengine.core.plugin.command.FlagKeys;
 import net.momirealms.craftengine.core.util.AdventureHelper;
 import net.momirealms.craftengine.core.util.VersionHelper;
+import net.momirealms.craftengine.proxy.minecraft.core.component.PatchedDataComponentMapProxy;
 import net.momirealms.craftengine.proxy.minecraft.nbt.CompoundTagProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.item.ItemStackProxy;
 import net.momirealms.sparrow.nbt.CompoundTag;
@@ -36,6 +37,9 @@ import java.util.Map;
 import static net.momirealms.craftengine.core.item.network.NetworkItemHandler.NETWORK_ITEM_TAG;
 
 public final class DebugItemDataCommand extends BukkitCommandFeature<CommandSender> {
+    private static final String FULL_FLAG = "full";
+    private static final String FORCE_CHAT_FLAG = "chat";
+    private static final int MAX_CHAT_LINES = 10;
     private static final TextColor COLOR_TEXT = TextColor.color(0xF5F5F5);
 
     public DebugItemDataCommand(CraftEngineCommandManager<CommandSender> commandManager, CraftEngine plugin) {
@@ -47,6 +51,8 @@ public final class DebugItemDataCommand extends BukkitCommandFeature<CommandSend
         return builder
                 .senderType(Player.class)
                 .flag(FlagKeys.CLIENT_SIDE_FLAG)
+                .flag(manager.flagBuilder(FULL_FLAG).build())
+                .flag(manager.flagBuilder(FORCE_CHAT_FLAG).build())
                 .handler(context -> {
                     BukkitServerPlayer serverPlayer = BukkitAdaptor.adapt(context.sender());
                     if (serverPlayer == null) return;
@@ -74,11 +80,22 @@ public final class DebugItemDataCommand extends BukkitCommandFeature<CommandSend
                         }
                     }
 
-                    Map<String, Object> readableMap = toMap(itemInHand);
-                    List<Component> readableComponents = mapToComponentList(readableMap);
-
-                    Component finalMessage = Component.join(JoinConfiguration.separator(Component.newline()), readableComponents);
-                    plugin().senderFactory().wrap(context.sender()).sendMessage(finalMessage);
+                    boolean full = context.flags().hasFlag(FULL_FLAG);
+                    boolean forceChat = context.flags().hasFlag(FORCE_CHAT_FLAG);
+                    Map<String, Object> readableMap = toMap(itemInHand, full);
+                    List<Component> readableComponents = mapToComponentList(readableMap, true);
+                    Component finalMessage;
+                    if (!forceChat && readableComponents.size() > MAX_CHAT_LINES) {
+                        Component hover = joinLines(mapToComponentList(readableMap, false));
+                        Component summary = Component.text("[" + readableComponents.size() + " lines]", NamedTextColor.YELLOW)
+                                .hoverEvent(HoverEvent.showText(hover));
+                        finalMessage = DebugCommandOutput.value("Data", summary);
+                    } else {
+                        finalMessage = joinLines(readableComponents);
+                    }
+                    var sender = plugin().senderFactory().wrap(context.sender());
+                    sender.sendMessage(DebugCommandOutput.title("Item Data"));
+                    sender.sendMessage(finalMessage);
                 });
     }
 
@@ -88,9 +105,13 @@ public final class DebugItemDataCommand extends BukkitCommandFeature<CommandSend
     }
 
     @SuppressWarnings("unchecked")
-    private static Map<String, Object> toMap(Item item) {
+    private static Map<String, Object> toMap(Item item, boolean full) {
         if (VersionHelper.COMPONENT_RELEASE) {
-            return (Map<String, Object>) ItemStackProxy.INSTANCE.getCodec().encodeStart(RegistryOps.JAVA, item.minecraftItem())
+            Object minecraftItem = item.minecraftItem();
+            if (full) {
+                minecraftItem = withFullComponentPatch(minecraftItem);
+            }
+            return (Map<String, Object>) ItemStackProxy.INSTANCE.getCodec().encodeStart(RegistryOps.JAVA, minecraftItem)
                     .resultOrPartial(error -> CraftEngine.instance().logger().error("Error while saving item: " + error))
                     .orElse(null);
         } else {
@@ -99,14 +120,24 @@ public final class DebugItemDataCommand extends BukkitCommandFeature<CommandSend
         }
     }
 
-    private List<Component> mapToComponentList(Map<String, Object> readableDataMap) {
+    private static Object withFullComponentPatch(Object minecraftItem) {
+        // ItemStack's codec normally serializes only the changes from the item's prototype.
+        // Rebasing the effective components onto an empty prototype makes that patch complete.
+        Object itemCopy = ItemStackProxy.INSTANCE.copy(minecraftItem);
+        Object fullComponents = PatchedDataComponentMapProxy.INSTANCE.newInstance(ItemStackProxy.INSTANCE.getComponents(ItemStackProxy.EMPTY));
+        PatchedDataComponentMapProxy.INSTANCE.setAll(fullComponents, ItemStackProxy.INSTANCE.getComponents(itemCopy));
+        ItemStackProxy.INSTANCE.setComponents(itemCopy, fullComponents);
+        return itemCopy;
+    }
+
+    private List<Component> mapToComponentList(Map<String, Object> readableDataMap, boolean copyable) {
         List<Component> list = new ArrayList<>();
-        mapToComponentList(readableDataMap, list, 0, false);
+        mapToComponentList(readableDataMap, list, 0, false, copyable);
         return list;
     }
 
     @SuppressWarnings("unchecked")
-    static void mapToComponentList(Map<String, Object> map, List<Component> readableList, int loopTimes, boolean isMapList) {
+    static void mapToComponentList(Map<String, Object> map, List<Component> readableList, int loopTimes, boolean isMapList, boolean copyable) {
         boolean first = true;
         for (Map.Entry<String, Object> entry : map.entrySet()) {
             Object nbt = entry.getValue();
@@ -125,13 +156,11 @@ public final class DebugItemDataCommand extends BukkitCommandFeature<CommandSend
 
                 for (Object value : list) {
                     if (value instanceof Map<?,?> innerDataMap) {
-                        mapToComponentList((Map<String, Object>) innerDataMap, readableList, loopTimes + 2, true);
+                        mapToComponentList((Map<String, Object>) innerDataMap, readableList, loopTimes + 2, true, copyable);
                     } else {
                         String strValue = String.valueOf(value);
                         readableList.add(Component.text("  ".repeat(loopTimes + 1) + "- ", COLOR_TEXT)
-                                .append(Component.text(strValue, COLOR_TEXT)
-                                        .hoverEvent(HoverEvent.showText(Component.text("Copy", NamedTextColor.YELLOW)))
-                                        .clickEvent(ClickEvent.suggestCommand(strValue)))
+                                .append(valueComponent(strValue, copyable))
                         );
                     }
                 }
@@ -140,7 +169,7 @@ public final class DebugItemDataCommand extends BukkitCommandFeature<CommandSend
                         .append(gradientKey.hoverEvent(HoverEvent.showText(Component.text("Map", NamedTextColor.YELLOW))))
                         .append(Component.text(":", COLOR_TEXT))
                 );
-                mapToComponentList((Map<String, Object>) innerMap, readableList, loopTimes + 1, false);
+                mapToComponentList((Map<String, Object>) innerMap, readableList, loopTimes + 1, false, copyable);
             } else {
                 String value;
                 if (nbt.getClass().isArray()) {
@@ -163,14 +192,26 @@ public final class DebugItemDataCommand extends BukkitCommandFeature<CommandSend
                 readableList.add(prefix
                         .append(gradientKey.hoverEvent(HoverEvent.showText(Component.text(nbt.getClass().getSimpleName(), NamedTextColor.YELLOW))))
                         .append(Component.text(": ", COLOR_TEXT))
-                        .append(Component.text(value, COLOR_TEXT)
-                                .hoverEvent(HoverEvent.showText(Component.text("Copy", NamedTextColor.YELLOW)))
-                                .clickEvent(ClickEvent.suggestCommand(value)))
+                        .append(valueComponent(value, copyable))
                 );
             }
             if (isMapList) {
                 first = false;
             }
         }
+    }
+
+    private static Component valueComponent(String value, boolean copyable) {
+        Component component = Component.text(value, COLOR_TEXT);
+        if (!copyable) {
+            return component;
+        }
+        return component
+                .hoverEvent(HoverEvent.showText(Component.translatable("chat.copy.click", NamedTextColor.WHITE)))
+                .clickEvent(ClickEvent.copyToClipboard(value));
+    }
+
+    private static Component joinLines(List<Component> lines) {
+        return Component.join(JoinConfiguration.separator(Component.newline()), lines);
     }
 }

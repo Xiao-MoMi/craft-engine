@@ -33,7 +33,7 @@ blocks:
         crop_seed: default:ender_pearl_flower_seeds
         ripe_age: 2
     events:
-      - on: break
+      - on: block_break
         conditions:
           - type: match_block_property
             properties:

@@ -90,7 +90,7 @@ public final class BukkitLootManager extends AbstractLootManager {
         this.registerSourceListener(LootSources.BLOCK_BREAK, BlockBreakLootListener::new);
         if (VersionHelper.hasPaperPatch) {
             this.registerSourceListener(LootSources.BLOCK_BREAK, PaperBlockBreakLootListener::new);
-            this.registerSourceListener(LootSources.SHEAR_BLOCK, ShearBlockLootListener::new);
+            this.registerSourceListener(LootSources.BLOCK_SHEAR, ShearBlockLootListener::new);
             this.registerSourceListener(LootSources.VAULT, VaultLootListener::new);
             this.registerSourceListener(LootSources.ENTITY_SHEAR, () -> new EntityShearLootListener(this.plugin.entityManager()));
         }
@@ -149,13 +149,11 @@ public final class BukkitLootManager extends AbstractLootManager {
     public Object createMinecraftLootParamsBuilder(LootContext context) {
         ContextHolder contexts = context.contexts();
         Object lootParamsBuilder = LootParamsProxy.BuilderProxy.INSTANCE.newInstance(context.world().minecraftWorld());
-        for (Map.Entry<ContextKey<?>, Supplier<Object>> entry : contexts.params().entrySet()) {
-            MinecraftLootParamMapper mapper = MINECRAFT_LOOT_PARAM_MAPPERS.get(entry.getKey());
-            if (mapper == null) continue;
-            Object value = entry.getValue().get();
-            if (value == null) continue;
+        contexts.params().forEach((key, value) -> {
+            MinecraftLootParamMapper mapper = MINECRAFT_LOOT_PARAM_MAPPERS.get(key);
+            if (mapper == null || value == null) return;
             mapper.accept(lootParamsBuilder, value, contexts);
-        }
+        });
         LootParamsProxy.BuilderProxy.INSTANCE.withLuck(lootParamsBuilder, context.luck());
         return lootParamsBuilder;
     }

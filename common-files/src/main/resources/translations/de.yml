@@ -75,7 +75,7 @@ command.resource.create.success: <white>Ressource <arg:0> erstellt.</white>
 command.resource.create.failure.unknown: '<red>Fehler beim Erstellen der Ressource <arg:0>, Fehler: <arg:1></red>'
 command.resource.create.failure.invalid_namespace: <red>Fehler beim Erstellen der Ressource <arg:0>, der Namespace <arg:1> ist ungültig.</red>
 command.resource.create.failure.exists: <red>Ressource <arg:0> existiert bereits.</red>
-command.resource.save_default.success: <white>Standard-Assets aus '<arg:0>' erfolgreich gespeichert</white><newline><gray><i>Klicke <green><u><b><click:run_command:'/ce reload all'><hover:show_text:'Plugin neu laden'>HIER</hover></click></b></u></green>, um die Änderungen anzuwenden</i></gray>
+command.resource.save_default.success: <white>Standard-Assets aus '<arg:0>' erfolgreich gespeichert</white>
 command.resource.save_default.failure: <red>Ein unbekannter Fehler ist beim Speichern der Standard-Assets aufgetreten. Bitte prüfe die Konsole</red>
 command.upload.failure.not_supported: <red>Die aktuelle Hosting-Methode '<arg:0>' unterstützt das Hochladen von Resource Packs nicht.</red>
 command.upload.on_progress: <white>Upload gestartet. Prüfe die Konsole für weitere Informationen.</white>
@@ -126,7 +126,11 @@ yaml.duplicated_key: "Doppelter Key '<arg:1>' in Zeile <arg:2> in Datei <arg:0> 
 yaml.inconsistent_value_type: "Doppelter Key '<arg:1>' in Zeile <arg:2> mit unterschiedlichen Value-Typen in Datei <arg:0> gefunden"
 plugin.compatibility: "[Kompatibilität] <arg:0> hooked"
 number.unknown_type: Unbekannter Zahlentyp '<arg:0>'
-number.fixed.invalid_expression: Ungültiger Ausdruck '<arg:0>'. https://ezylang.github.io/EvalEx/references/references.html
+number.fixed.invalid_expression: Ungültiger Ausdruck '<arg:0>'.
+resource.expression.invalid: 'Ungültiger Ausdruck „<arg:0>“. Details: <arg:1>'
+resource.expression.invalid_syntax: 'Ungültiger Ausdruck „<arg:0>“ nahe Zeichen <arg:1> (Token „<arg:2>“).'
+resource.expression.invalid_function_argument: 'Ungültiger Ausdruck „<arg:0>“ im Funktionsargument <arg:3>, nahe Zeichen <arg:1> (Token „<arg:2>“).'
+resource.expression.unknown_parameter: 'Unbekannter Parameter „<arg:0>“ im Ausdruck „<arg:1>“.'
 number.greater_than: "'<arg:0>' sollte größer sein als '<arg:1>'"
 number.no_greater_than: "'<arg:0>' sollte nicht größer sein als '<arg:1>'"
 number.less_than: "'<arg:0>' sollte kleiner sein als '<arg:1>'"
@@ -246,7 +250,7 @@ resource.equipment.unknown_layer_type: Unbekannter Layer-Typ für Equipment '<ar
 resource.equipment.invalid_sacrificed_armor: Ungültiger Vanilla-Rüstungstyp '<arg:0>'
 resource.equipment_set.invalid_slot_name: Ungültiger Equipment-Set-Slot-Name '<arg:0>'
 resource.furniture.element.unknown_type: Unbekannter Möbel-Elementtyp '<arg:0>'
-resource.furniture.element.tint_source.unknown_type: Unbekannter Tint-Source-Typ für Möbel '<arg:0>'
+resource.furniture.data_source.unknown_type: Unbekannter Möbel-Datenquellentyp '<arg:0>'
 resource.furniture.hitbox.unknown_type: Unbekannter Hitbox-Typ für Möbel '<arg:0>'
 resource.furniture.behavior.unknown_type: Unbekannter Behavior-Typ für Möbel '<arg:0>'
 resource.furniture.hitbox.custom.invalid_entity_type: Ungültiger Entity-Typ '<arg:0>'
@@ -264,6 +268,7 @@ resource.block.state.unreleased_state: Du kannst diesen Block State nicht in die
 resource.block.state.entity_renderer.unknown_type: Unbekannter Block-Entity-Renderer-Typ '<arg:0>'
 resource.block.state.invalid_variant_nbt: Ungültiger partieller Block-State-NBT '<arg:0>'
 resource.block.state.undefined_appearance: Undefiniertes Block-State-Erscheinungsbild '<arg:0>'
+resource.block.state.appearance_without_properties: Mehrere 'appearances'-Einträge benötigen 'properties' zur Unterscheidung der Blockzustände, nur das erste Erscheinungsbild wird verwendet
 resource.block.state.model_conflict: Bindung von Modell '<arg:0>' an Block State '<arg:1>' fehlgeschlagen, der bereits mit Modell '<arg:2>' verknüpft ist
 resource.block.entity_renderer.tint_source.unknown_type: Unbekannter Tint-Source-Typ für Block-Entity-Renderer '<arg:0>'
 resource.item.model_definition.unknown_type: Unbekannter Item-Modell-Definitionstyp '<arg:0>'

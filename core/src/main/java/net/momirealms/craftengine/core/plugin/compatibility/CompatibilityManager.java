@@ -11,6 +11,7 @@ import net.momirealms.craftengine.core.world.WorldPosition;
 import net.momirealms.sparrow.message.tag.resolver.TagResolver;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.List;
 import java.util.function.BiConsumer;
 
 public interface CompatibilityManager {
@@ -48,6 +49,8 @@ public interface CompatibilityManager {
     void registerModelProvider(ModelProvider provider);
 
     ItemSource getItemSource(String id);
+
+    List<ItemSource> itemSources();
 
     void registerItemSource(ItemSource itemSource);
 

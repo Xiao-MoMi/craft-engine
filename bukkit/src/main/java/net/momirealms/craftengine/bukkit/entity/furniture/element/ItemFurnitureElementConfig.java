@@ -2,12 +2,9 @@ package net.momirealms.craftengine.bukkit.entity.furniture.element;
 
 import net.momirealms.craftengine.bukkit.entity.data.item.ItemEntityData;
 import net.momirealms.craftengine.core.entity.furniture.Furniture;
+import net.momirealms.craftengine.core.entity.furniture.data.*;
 import net.momirealms.craftengine.core.entity.furniture.element.FurnitureElementConfig;
 import net.momirealms.craftengine.core.entity.furniture.element.FurnitureElementConfigFactory;
-import net.momirealms.craftengine.core.entity.furniture.element.tint.DefaultFurnitureTintSourceConfig;
-import net.momirealms.craftengine.core.entity.furniture.element.tint.FurnitureTintSource;
-import net.momirealms.craftengine.core.entity.furniture.element.tint.FurnitureTintSourceConfig;
-import net.momirealms.craftengine.core.entity.furniture.element.tint.FurnitureTintSources;
 import net.momirealms.craftengine.core.entity.player.Player;
 import net.momirealms.craftengine.core.item.Item;
 import net.momirealms.craftengine.core.item.ItemKeys;
@@ -33,27 +30,30 @@ import java.util.function.Predicate;
 
 public final class ItemFurnitureElementConfig implements FurnitureElementConfig<ItemFurnitureElement> {
     public static final FurnitureElementConfigFactory<ItemFurnitureElement> FACTORY = new Factory();
-    public final BiFunction<Player, FurnitureTintSource, List<Object>> metadata;
+    public final BiFunction<Player, FurnitureDataResolver<ItemPatch>, List<Object>> metadata;
     public final Key itemId;
-    public final FurnitureTintSourceConfig<? extends FurnitureTintSource> tint;
+    public final FurnitureDataSourceConfig<ItemPatch> itemPatchSource;
     public final Vector3f position;
     public final Predicate<PlayerContext> predicate;
     public final boolean hasCondition;
 
     private ItemFurnitureElementConfig(Key itemId,
                                       Vector3f position,
-                                       FurnitureTintSourceConfig<? extends FurnitureTintSource> tint,
+                                      FurnitureDataSourceConfig<ItemPatch> itemPatchSource,
                                       Predicate<PlayerContext> predicate,
                                       boolean hasCondition) {
         this.position = position;
-        this.tint = tint;
+        this.itemPatchSource = itemPatchSource;
         this.itemId = itemId;
         this.hasCondition = hasCondition;
         this.predicate = predicate;
-        BiFunction<Player, FurnitureTintSource, Item> itemFunction = (player, tintSource) -> {
+        BiFunction<Player, FurnitureDataResolver<ItemPatch>, Item> itemFunction = (player, itemPatch) -> {
             Item wrappedItem = Item.byId(itemId, player);
-            if (tintSource != null && wrappedItem != null) {
-                tintSource.applyTint(wrappedItem);
+            if (itemPatch != null && wrappedItem != null) {
+                ItemPatch patch = itemPatch.resolve();
+                if (patch != null) {
+                    patch.applyTo(wrappedItem);
+                }
             }
             return Optional.ofNullable(wrappedItem).orElseGet(() -> Item.byId(ItemKeys.BARRIER));
         };
@@ -95,13 +95,13 @@ public final class ItemFurnitureElementConfig implements FurnitureElementConfig<
         return Furniture.getRelativePosition(furniturePos, this.position);
     }
 
-    public FurnitureTintSource createTintSource(@NotNull Furniture furniture) {
-        return this.tint == null ? null : this.tint.create(furniture);
+    public FurnitureDataResolver<ItemPatch> createItemPatch(@NotNull Furniture furniture) {
+        return this.itemPatchSource == null ? null : this.itemPatchSource.bind(furniture);
     }
 
     private static class Factory implements FurnitureElementConfigFactory<ItemFurnitureElement> {
         private static final String[] APPLY_DYED_COLOR = ConfigKeys.of("apply_dyed_color");
-        private static final String[] TINT_SOURCE = ConfigKeys.of("tint_source");
+        private static final String[] TINT_SOURCE = ConfigKeys.of("tint_source(s)|copy_data");
 
         @Override
         public ItemFurnitureElementConfig create(ConfigSection section) {
@@ -111,8 +111,8 @@ public final class ItemFurnitureElementConfig implements FurnitureElementConfig<
                     section.getNonNullIdentifier("item"),
                     section.getVector3f("position", ConfigConstants.ZERO_VECTOR3),
                     legacyTintSource ?
-                            DefaultFurnitureTintSourceConfig.create(List.of(DataComponentKeys.DYED_COLOR, DataComponentKeys.FIREWORK_EXPLOSION)) :
-                            section.getValue(TINT_SOURCE, FurnitureTintSources::fromConfig),
+                            SourceItemComponentsDataSourceConfig.create(List.of(DataComponentKeys.DYED_COLOR, DataComponentKeys.FIREWORK_EXPLOSION)) :
+                            section.getValue(TINT_SOURCE, SourceItemComponentsDataSourceConfig::fromConfig),
                     MiscUtils.allOf(conditions),
                     !conditions.isEmpty()
             );
