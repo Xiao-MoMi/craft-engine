@@ -250,6 +250,7 @@ public final class BukkitRecipeManager extends AbstractRecipeManager {
         });
     }
 
+    @SuppressWarnings("deprecation")
     @Override
     public void runDelayedSyncTasks() {
         if (!Config.enableRecipeSystem()) return;
