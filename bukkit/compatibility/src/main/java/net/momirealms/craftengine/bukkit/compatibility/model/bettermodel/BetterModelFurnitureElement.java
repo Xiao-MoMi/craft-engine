@@ -5,6 +5,7 @@ import kr.toxicity.model.api.bukkit.platform.BukkitAdapter;
 import kr.toxicity.model.api.data.renderer.ModelRenderer;
 import kr.toxicity.model.api.tracker.DummyTracker;
 import kr.toxicity.model.api.tracker.TrackerModifier;
+import kr.toxicity.model.api.profile.ModelProfile;
 import net.momirealms.craftengine.bukkit.entity.furniture.element.AbstractConditionalFurnitureElement;
 import net.momirealms.craftengine.core.entity.furniture.Furniture;
 import net.momirealms.craftengine.core.entity.player.Player;
@@ -21,6 +22,7 @@ public final class BetterModelFurnitureElement extends AbstractConditionalFurnit
     public final BetterModelFurnitureElementConfig config;
     public final Location location;
     private DummyTracker dummyTracker;
+    private volatile ModelProfile dynamicProfile;
 
     BetterModelFurnitureElement(Furniture furniture, BetterModelFurnitureElementConfig config) {
         super(config.predicate, config.hasCondition);
@@ -35,12 +37,27 @@ public final class BetterModelFurnitureElement extends AbstractConditionalFurnit
     private DummyTracker createDummyTracker() {
         ModelRenderer modelRenderer = BetterModel.model(this.config.model).orElse(null);
         if (modelRenderer == null) return null;
-        return modelRenderer.create(
-                BukkitAdapter.adapt(this.location),
-                TrackerModifier.builder()
-                        .sightTrace(this.config.sightTrace)
-                        .build()
-        );
+        TrackerModifier modifier = TrackerModifier.builder()
+                .sightTrace(this.config.sightTrace)
+                .build();
+        return dynamicProfile == null
+                ? modelRenderer.create(BukkitAdapter.adapt(this.location), modifier)
+                : modelRenderer.create(BukkitAdapter.adapt(this.location), dynamicProfile, modifier);
+    }
+
+    /**
+     * Replaces the profile used by this CE-owned tracker. CraftEngine remains
+     * responsible for showing, hiding, activating and deactivating the tracker.
+     */
+    public synchronized void setProfile(ModelProfile profile) {
+        this.dynamicProfile = profile;
+        if (this.dummyTracker != null) {
+            this.dummyTracker.close();
+            this.dummyTracker = createDummyTracker();
+            if (this.dummyTracker != null) {
+                this.furniture.getTrackedBy().forEach(this::show);
+            }
+        }
     }
 
     @Override
