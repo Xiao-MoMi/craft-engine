@@ -151,7 +151,13 @@ public final class BukkitBlockManager extends AbstractBlockManager {
 
     @Override
     public void registerBlockStatePacketListener() {
-        this.plugin.networkManager().registerBlockStatePacketListeners(this.blockStateMappings, this::isViewBlockingBlock); // 重置方块映射表
+        // viewBlockingBlocks 必须和 blockStateMappings 一样takeSnapshot再交给监听器:
+        // 重载是异步的, 期间netty线程仍在发包。映射表本来就是拷贝进监听器的, 所以重载中途的
+        // 中间状态对数据包不可见; 但遮挡谓词原本是 this::isViewBlockingBlock, 直接读共享数组。
+        // 遮挡结果会被烘焙进 ClientChunk 且此后不会重算, 因此重载窗口内发出的区块会永久记住
+        // 那一瞬间的值。改为快照后两者在 delayedLoad() 时一起原子切换。
+        boolean[] viewBlockingSnapshot = this.viewBlockingBlocks.clone();
+        this.plugin.networkManager().registerBlockStatePacketListeners(this.blockStateMappings, id -> viewBlockingSnapshot[id]); // 重置方块映射表
     }
 
     @Override

@@ -82,7 +82,7 @@ import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Consumer;
-import java.util.function.Predicate;
+import java.util.function.IntPredicate;
 
 public final class BukkitNetworkManager extends AbstractNetworkManager implements Listener {
     public static final PacketIds PACKET_IDS = VersionHelper.isOrAbove1_20_5 ? PacketIds1_20_5.INSTANCE : PacketIds1_20.INSTANCE;
@@ -367,7 +367,7 @@ public final class BukkitNetworkManager extends AbstractNetworkManager implement
         BotListProxy.INSTANCE.setBots(botList, monitor);
     }
 
-    public void registerBlockStatePacketListeners(int[] blockStateMappings, Predicate<Integer> occlusionPredicate) {
+    public void registerBlockStatePacketListeners(int[] blockStateMappings, IntPredicate occlusionPredicate) {
         int stoneId = BlockStateUtils.blockStateToId(BlocksProxy.STONE$defaultState);
         int vanillaBlocks = BlockStateUtils.vanillaBlockStateCount();
         int[] newMappings = new int[blockStateMappings.length];

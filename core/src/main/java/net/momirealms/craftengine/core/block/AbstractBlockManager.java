@@ -161,6 +161,10 @@ public abstract class AbstractBlockManager extends AbstractModelGenerator implem
         Arrays.fill(this.blockStateMappings, -1);
         Arrays.fill(this.immutableBlockStates, EmptyBlockDefinition.STATE);
         Arrays.fill(this.autoVisualBlockStateCandidates, null);
+        // 只清空自定义部分: 原版部分由 findViewBlockingVanillaBlocks() 在 init() 里填充一次, 重载时不会重建,
+        // 整体清空会永久抹掉原版方块的遮挡数据。自定义部分则必须清空, 否则重载后被删除的自定义方块
+        // 会把上一份配置的 block_raytrace 结果一直留在数组里(重启后是 false, 重载后却不是)。
+        Arrays.fill(this.viewBlockingBlocks, this.vanillaBlockStateCount, this.viewBlockingBlocks.length, false);
         for (AutoStateGroup autoStateGroup : AutoStateGroup.values()) {
             autoStateGroup.reset();
         }

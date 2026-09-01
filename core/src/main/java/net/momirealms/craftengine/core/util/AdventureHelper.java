@@ -34,6 +34,7 @@ import java.util.stream.Collectors;
 public final class AdventureHelper {
     public static final String EMPTY_COMPONENT = componentToJson(Component.empty());
     private static final Cache<String, Pattern> PATTERN_CACHE = Caffeine.newBuilder()
+            .maximumSize(4096)
             .expireAfterAccess(10, TimeUnit.MINUTES)
             .build();
     private final MiniMessage miniMessageForSerialize;
@@ -399,15 +400,13 @@ public final class AdventureHelper {
     public static Component replaceText(Component text, Map<String, ComponentProvider> replacements, Context context) {
         int size = replacements.size();
         if (size == 0) return text;
-        final Pattern pattern;
-        if (size == 1) {
-            pattern = Pattern.compile(Pattern.quote(replacements.keySet().iterator().next()));
-        } else {
-            String patternString = replacements.keySet().stream()
-                    .map(Pattern::quote)
-                    .collect(Collectors.joining("|"));
-            pattern = Objects.requireNonNull(PATTERN_CACHE.get(patternString, Pattern::compile));
-        }
+        // 单个标签是最常见的情况(物品名/每一行lore), 同样必须走缓存, 否则每个物品的每一行都要重新编译正则
+        String patternString = size == 1
+                ? Pattern.quote(replacements.keySet().iterator().next())
+                : replacements.keySet().stream()
+                        .map(Pattern::quote)
+                        .collect(Collectors.joining("|"));
+        Pattern pattern = Objects.requireNonNull(PATTERN_CACHE.get(patternString, Pattern::compile));
         return replaceText(text, pattern, result ->
                 Optional.ofNullable(replacements.get(result.group())).orElseThrow(() -> new IllegalStateException("Could not find tag '" + result.group() + "'")).apply(context)
         );

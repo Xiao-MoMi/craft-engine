@@ -7,6 +7,7 @@ import net.momirealms.craftengine.core.block.EmptyBlockDefinition;
 import net.momirealms.craftengine.core.plugin.CraftEngine;
 import net.momirealms.craftengine.core.util.FriendlyByteBuf;
 import net.momirealms.craftengine.core.util.IndexedIterable;
+import net.momirealms.craftengine.core.util.IntIdentityList;
 import net.momirealms.craftengine.core.util.MiscUtils;
 import net.momirealms.craftengine.core.util.VersionHelper;
 import org.jetbrains.annotations.Nullable;
@@ -132,6 +133,47 @@ public final class PalettedContainer<T> implements PaletteResizeListener<T>, Rea
     public T get(int index) {
         Data<T> data = this.data;
         return data.palette.get(data.storage.get(index));
+    }
+
+    /**
+     * 免装箱读取, <b>仅可用于 {@code PalettedContainer<Integer>}</b>(方块状态id/生物群系id容器).
+     * 在 {@code PalettedContainer<ImmutableBlockState>} 上调用会抛出 ClassCastException.
+     * <p>
+     * 全局调色盘(IdListPalette)搭配 IntIdentityList 时 raw id 就是元素本身, 可以直接返回存储值,
+     * 省掉 IntIdentityList#get 的装箱; 其余调色盘持有的 Integer 已经存在, 只是拆箱, 不产生新对象.
+     *
+     * @throws ClassCastException 当 T 不是 Integer 时
+     */
+    public int getInt(int index) {
+        Data<T> data = this.data;
+        int id = data.storage.get(index);
+        Palette<T> palette = data.palette;
+        if (isIdentityIdListPalette(palette)) {
+            return id;
+        }
+        return (Integer) palette.get(id);
+    }
+
+    /**
+     * {@link #getInt} 的写入侧对应物, 同样<b>仅可用于 {@code PalettedContainer<Integer>}</b>.
+     * 语义与 {@code set(int, Integer.valueOf(value))} 完全一致, 包括 IdListPalette#index
+     * 把 {@link IndexedIterable#ABSENT_RAW_ID} 归一为 0 的行为.
+     *
+     * @throws ClassCastException 当 T 不是 Integer 时
+     */
+    @SuppressWarnings("unchecked")
+    public void setInt(int index, int value) {
+        Data<T> data = this.data;
+        Palette<T> palette = data.palette;
+        if (isIdentityIdListPalette(palette)) {
+            data.storage.set(index, value == IndexedIterable.ABSENT_RAW_ID ? 0 : value);
+            return;
+        }
+        this.set(index, (T) Integer.valueOf(value));
+    }
+
+    private static <T> boolean isIdentityIdListPalette(Palette<T> palette) {
+        return palette instanceof IdListPalette<T> idListPalette && idListPalette.idList() instanceof IntIdentityList;
     }
 
     public T getAndSet(int index, T state) {

@@ -30,7 +30,8 @@ import net.momirealms.craftengine.core.world.chunk.packet.MCSection;
 import net.momirealms.sparrow.nbt.Tag;
 
 import java.util.Arrays;
-import java.util.function.Predicate;
+import java.util.function.Function;
+import java.util.function.IntPredicate;
 
 public final class LevelChunkWithLightListener implements ByteBufferPacketListener {
     private static BiomeRemapper biomeRemapper = BiomeRemapper.DUMMY;
@@ -39,9 +40,9 @@ public final class LevelChunkWithLightListener implements ByteBufferPacketListen
     private final IntIdentityList biomeList;
     private final IntIdentityList blockList;
     private final boolean needsDowngrade;
-    private final Predicate<Integer> occlusionPredicate;
+    private final IntPredicate occlusionPredicate;
 
-    public LevelChunkWithLightListener(int[] blockStateMapper, int[] modBlockStateMapper, int blockRegistrySize, int biomeRegistrySize, Predicate<Integer> occlusionPredicate) {
+    public LevelChunkWithLightListener(int[] blockStateMapper, int[] modBlockStateMapper, int blockRegistrySize, int biomeRegistrySize, IntPredicate occlusionPredicate) {
         this.blockStateMapper = blockStateMapper;
         this.modBlockStateMapper = modBlockStateMapper;
         this.biomeList = new IntIdentityList(biomeRegistrySize);
@@ -118,6 +119,9 @@ public final class LevelChunkWithLightListener implements ByteBufferPacketListen
         // 创建客户侧光照世界, 只在家具中存在 GlowingFurnitureBehavior 行为时创建.
         LightSection[] lightSections = Config.enableFurnitureLightSystem() ? new LightSection[count] : null;
 
+        // 捕获 remapper 的lambda对每个section都会新建一个, 这里提到循环外只建一次
+        final Function<Integer, Integer> remapFunction = s -> remapper[s];
+
         for (int i = 0; i < count; i++) {
             MCSection mcSection = new MCSection(user.clientBlockList(), this.blockList, this.biomeList);
             mcSection.readPacket(chunkDataByteBuf);
@@ -134,10 +138,10 @@ public final class LevelChunkWithLightListener implements ByteBufferPacketListen
             Palette<Integer> palette = container.data().palette();
             if (palette.canRemap()) {
 
-                // 重定向方块
-                if (palette.remapAndCheck(s -> remapper[s])) {
-                    hasChangedAnyBlock = true;
-                }
+                // 注意: 遮挡与光照必须在重定向之前计算, 因为它们查的是服务端状态id.
+                // viewBlockingBlocks[] 按服务端id填充, block_raytrace 设置只存在于自定义方块的索引上;
+                // 用重定向后的外观id去查会静默丢掉该设置。
+                // 全局调色盘分支以及 BlockUpdateListener / SectionBlocksUpdateListener 都是这个顺序。
 
                 // 处理客户端侧哪些方块有阻挡
                 if (occludingSections != null) {
@@ -163,7 +167,7 @@ public final class LevelChunkWithLightListener implements ByteBufferPacketListen
                             PackedOcclusionStorage storage = new PackedOcclusionStorage(false);
                             occludingSections[i] = new OccludingSection(storage);
                             for (int j = 0; j < 4096; j++) {
-                                int state = container.get(j);
+                                int state = container.getInt(j);
                                 storage.set(j, this.occlusionPredicate.test(state));
                             }
                         }
@@ -201,20 +205,26 @@ public final class LevelChunkWithLightListener implements ByteBufferPacketListen
                         }
 
                         // 如果全实心, 则使用优化存储
+                        // 这里原本是 continue, 但重定向现在排在光照之后, continue 会把它整个跳过,
+                        // 导致该section的自定义方块id原样发给客户端。改成 else 保持原语义且不跳过重定向。
                         if (hasSolid && !hasReplaceable) {
                             lightSections[i] = new LightSection(UniformLightStorage.SOLID);
-                            sections[i] = mcSection;
-                            continue;
                         }
-
                         // 需要一个个遍历处理
-                        PackedLightStorage storage = new PackedLightStorage();
-                        lightSections[i] = new LightSection(storage);
-                        for (int j = 0; j < 4096; j++) {
-                            int state = container.get(j);
-                            storage.set(j, getLightBlockType(state));
+                        else {
+                            PackedLightStorage storage = new PackedLightStorage();
+                            lightSections[i] = new LightSection(storage);
+                            for (int j = 0; j < 4096; j++) {
+                                int state = container.getInt(j);
+                                storage.set(j, getLightBlockType(state));
+                            }
                         }
                     }
+                }
+
+                // 重定向方块 (必须在遮挡/光照计算之后)
+                if (palette.remapAndCheck(remapFunction)) {
+                    hasChangedAnyBlock = true;
                 }
             } else {
                 hasGlobalPalette = true;
@@ -232,12 +242,12 @@ public final class LevelChunkWithLightListener implements ByteBufferPacketListen
                 }
 
                 for (int j = 0; j < 4096; j++) {
-                    int state = container.get(j);
+                    int state = container.getInt(j);
 
                     // 重定向方块
                     int newState = remapper[state];
                     if (newState != state) {
-                        container.set(j, newState);
+                        container.setInt(j, newState);
                         hasChangedAnyBlock = true;
                     }
 
