@@ -797,12 +797,15 @@ public class BukkitServerPlayer extends BukkitLivingEntity implements Player {
                 }
             }
 
-            float rotX = EntityProxy.INSTANCE.getXRot(serverPlayer);
-            float rotY = EntityProxy.INSTANCE.getYRot(serverPlayer);
-            float y = -MiscUtils.sin(MiscUtils.toRadians(rotY));
-            float xz = MiscUtils.cos(MiscUtils.toRadians(rotY));
-            float x = -xz * MiscUtils.sin(MiscUtils.toRadians(rotX));
-            float z = xz * MiscUtils.cos(MiscUtils.toRadians(rotX));
+            // xRot 是 pitch, yRot 是 yaw。视线向量的垂直分量来自 pitch, 水平方向来自 yaw,
+            // 和原版 Entity#calculateViewVector 一致。这里用 pitch/yaw 命名而不是 rotX/rotY,
+            // 因为之前两者正好用反了。
+            float pitch = EntityProxy.INSTANCE.getXRot(serverPlayer);
+            float yaw = EntityProxy.INSTANCE.getYRot(serverPlayer);
+            float y = -MiscUtils.sin(MiscUtils.toRadians(pitch));
+            float xz = MiscUtils.cos(MiscUtils.toRadians(pitch));
+            float x = -xz * MiscUtils.sin(MiscUtils.toRadians(yaw));
+            float z = xz * MiscUtils.cos(MiscUtils.toRadians(yaw));
             this.thirdPersonCameraVec3 = this.eyeLocation.subtract(x * distance, y * distance, z * distance);
         }
     }
