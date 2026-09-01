@@ -120,7 +120,8 @@ public final class LevelChunkWithLightListener implements ByteBufferPacketListen
 
         for (int i = 0; i < count; i++) {
             MCSection mcSection = new MCSection(user.clientBlockList(), this.blockList, this.biomeList);
-            mcSection.readPacket(chunkDataByteBuf);
+            // 打包数据延迟解码: 重定向只碰调色盘, 遮挡/光照先看调色盘, 写回时没被解码过就原样拷字节
+            mcSection.readPacket(chunkDataByteBuf, true);
 
             PalettedContainer<Integer> container = mcSection.blockStateContainer();
             // 重定向生物群系

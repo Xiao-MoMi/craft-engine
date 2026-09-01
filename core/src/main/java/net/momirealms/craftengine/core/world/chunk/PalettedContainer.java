@@ -1,5 +1,6 @@
 package net.momirealms.craftengine.core.world.chunk;
 
+import io.netty.handler.codec.DecoderException;
 import it.unimi.dsi.fastutil.ints.Int2IntOpenHashMap;
 import it.unimi.dsi.fastutil.ints.IntArraySet;
 import it.unimi.dsi.fastutil.ints.IntSet;
@@ -89,11 +90,44 @@ public final class PalettedContainer<T> implements PaletteResizeListener<T>, Rea
     }
 
     public void readPacket(FriendlyByteBuf buf) {
+        readPacket(buf, false);
+    }
+
+    /**
+     * @param deferStorage 只解析调色盘, 打包数据先跳过, 等真的要按下标访问时再解码。
+     *                     调用方必须保证 buf 底层的字节在本容器写回之前一直有效。
+     */
+    public void readPacket(FriendlyByteBuf buf, boolean deferStorage) {
         int i = buf.readByte();
-        Data<T> data = this.getCompatibleData(this.data, i);
-        data.palette.readPacket(buf);
-        RAW_DATA_READER.accept(buf, data.storage.getData());
-        this.data = data;
+        DataProvider<T> provider = this.paletteProvider.createDataProvider(this.idList, i);
+        int bits = provider.bits();
+        // bits 为 0 时是 EmptyPaletteStorage, 本来就没有打包字节, 走原路径即可
+        if (!deferStorage || bits == 0) {
+            Data<T> data = this.getCompatibleData(this.data, i);
+            data.palette.readPacket(buf);
+            RAW_DATA_READER.accept(buf, data.storage.getData());
+            this.data = data;
+            return;
+        }
+        // 这里刻意不走 createData: 它会立刻分配打包数组, 而我们正是要避免这次分配
+        Palette<T> palette = provider.factory().create(bits, this.idList, this, List.of());
+        palette.readPacket(buf);
+        int size = this.paletteProvider.getContainerSize();
+        int start = buf.readerIndex();
+        skipRawData(buf, bits, size);
+        int length = buf.readerIndex() - start;
+        this.data = new Data<>(provider, new DeferredPaletteStorage(buf, start, length, bits, size), palette);
+    }
+
+    private static void skipRawData(FriendlyByteBuf buf, int elementBits, int size) {
+        int expected = DeferredPaletteStorage.longCount(elementBits, size);
+        if (!VersionHelper.isOrAbove1_21_5) {
+            int declared = buf.readVarInt();
+            if (declared != expected) {
+                throw new DecoderException("Packed array length mismatch: " + declared + " != " + expected);
+            }
+        }
+        buf.skipBytes(expected * 8);
     }
 
     @Override
@@ -329,6 +363,11 @@ public final class PalettedContainer<T> implements PaletteResizeListener<T>, Rea
         public void writePacket(FriendlyByteBuf buf) {
             buf.writeByte(this.storage.getElementBits());
             this.palette.writePacket(buf);
+            // 从没被解码过就原样拷回去, 省掉一次解码和一次编码
+            if (this.storage instanceof DeferredPaletteStorage deferred && !deferred.isMaterialized()) {
+                deferred.writeRawTo(buf);
+                return;
+            }
             RAW_DATA_WRITER.accept(buf, this.storage.getData());
         }
     }
