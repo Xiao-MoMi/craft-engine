@@ -2,6 +2,7 @@ package net.momirealms.craftengine.bukkit.entity.furniture;
 
 import net.momirealms.craftengine.bukkit.api.BukkitAdaptor;
 import net.momirealms.craftengine.bukkit.api.CraftEngineFurniture;
+import net.momirealms.craftengine.bukkit.entity.furniture.behavior.GlowingFurnitureBehaviorTemplate;
 import net.momirealms.craftengine.bukkit.entity.furniture.hitbox.InteractionFurnitureHitboxConfig;
 import net.momirealms.craftengine.bukkit.entity.furniture.listener.FurnitureEventListener;
 import net.momirealms.craftengine.bukkit.entity.furniture.listener.PaperFurnitureEventListener;
@@ -173,6 +174,13 @@ public final class BukkitFurnitureManager extends AbstractFurnitureManager {
         HandlerList.unregisterAll(this.furnitureEventListener);
         if (this.paperFurnitureEventListener != null) HandlerList.unregisterAll(this.paperFurnitureEventListener);
         unload();
+    }
+
+    @Override
+    public void unload() {
+        super.unload();
+        // 配置重新解析时会重新标记, 见 GlowingFurnitureBehaviorTemplate.Factory#create
+        GlowingFurnitureBehaviorTemplate.resetUsage();
     }
 
     @Override

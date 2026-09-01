@@ -40,6 +40,23 @@ public final class GlowingFurnitureBehaviorTemplate extends FurnitureBehaviorTem
     public static final int WATER_BLOCK_STATE_ID;
     public static final Map<UUID, FurnitureLightData> LIGHT_DATA = new ConcurrentHashMap<>();
 
+    // 当前加载的配置里是否真的有家具声明了 glowing_furniture。
+    // 光照世界的构建成本很高(每个section最多4096次循环 + PackedLightStorage), 没有发光家具时全是浪费。
+    // 由配置解析设置, 由 BukkitFurnitureManager.unload() 清空。
+    private static volatile boolean inUse = false;
+
+    public static boolean inUse() {
+        return inUse;
+    }
+
+    public static void markInUse() {
+        inUse = true;
+    }
+
+    public static void resetUsage() {
+        inUse = false;
+    }
+
     static {
         LIGHT_BLOCK_STATES[0] = BlockStateUtils.blockDataToBlockState(Bukkit.createBlockData("minecraft:air"));
         WATERLOGGED_LIGHT_BLOCK_STATES[0] = BlockStateUtils.blockDataToBlockState(Bukkit.createBlockData("minecraft:water"));
@@ -228,6 +245,7 @@ public final class GlowingFurnitureBehaviorTemplate extends FurnitureBehaviorTem
             if (!Config.enableFurnitureLightSystem()) {
                 throw new IllegalStateException("'furniture.light-system.enable' is not enabled in config.yml");
             }
+            markInUse();
 
             ConfigSection variantsSection = section.getSection("variants");
             Map<String, List<LightConfig>> lightDataByVariant;

@@ -29,7 +29,7 @@ public final class SectionBlocksUpdateListener implements ByteBufferPacketListen
         this.modBlockStateMapper = modBlockStateMapper;
         this.occlusionPredicate = occlusionPredicate;
         this.cullingRayTracing = Config.entityCullingRayTracing();
-        this.glowingFurniture = Config.enableFurnitureLightSystem();
+        this.glowingFurniture = Config.enableFurnitureLightSystem() && GlowingFurnitureBehaviorTemplate.inUse();
         this.handleClientChunk = this.cullingRayTracing || this.glowingFurniture;
     }
 
@@ -69,21 +69,24 @@ public final class SectionBlocksUpdateListener implements ByteBufferPacketListen
                 }
                 if (this.glowingFurniture) {
                     lightSection = trackedChunk.lightSectionById(sectionPos.y);
-                    if (lightSection != null) {
-                        for (int i = 0; i < blocks; i++) {
-                            BlockPos pos = SectionPos.unpackSectionRelativePos(positions[i]);
-                            int beforeState = beforeStates[i];
+                    // 只有 setBlockType 需要 lightSection; 下面的发光方块替换只依赖 beforeState 和玩家的
+                    // FurnitureLightData。原本整个循环都在 lightSection != null 里面, 于是当客户侧光照世界
+                    // 缺失时, 单个方块更新(BlockUpdateListener)会替换而整段更新不会 —— 两者必须一致。
+                    for (int i = 0; i < blocks; i++) {
+                        BlockPos pos = SectionPos.unpackSectionRelativePos(positions[i]);
+                        int beforeState = beforeStates[i];
+                        if (lightSection != null) {
                             lightSection.setBlockType(pos.x, pos.y, pos.z, getLightBlockType(beforeState));
-                            if (beforeState == GlowingFurnitureBehaviorTemplate.AIR_BLOCK_STATE_ID) {
-                                int lightPower = ((BukkitServerPlayer) user).furnitureLightData().getLightPower(new BlockPos(sectionPos.x * 16 + pos.x, sectionPos.y * 16 + pos.y, sectionPos.z * 16 + pos.z));
-                                if (lightPower != 0) {
-                                    afterStates[i] = BlockStateUtils.blockStateToId(GlowingFurnitureBehaviorTemplate.LIGHT_BLOCK_STATES[lightPower]);
-                                }
-                            } else if (beforeState == GlowingFurnitureBehaviorTemplate.WATER_BLOCK_STATE_ID) {
-                                int lightPower = ((BukkitServerPlayer) user).furnitureLightData().getLightPower(new BlockPos(sectionPos.x * 16 + pos.x, sectionPos.y * 16 + pos.y, sectionPos.z * 16 + pos.z));
-                                if (lightPower != 0) {
-                                    afterStates[i] = BlockStateUtils.blockStateToId(GlowingFurnitureBehaviorTemplate.WATERLOGGED_LIGHT_BLOCK_STATES[lightPower]);
-                                }
+                        }
+                        if (beforeState == GlowingFurnitureBehaviorTemplate.AIR_BLOCK_STATE_ID) {
+                            int lightPower = ((BukkitServerPlayer) user).furnitureLightData().getLightPower(new BlockPos(sectionPos.x * 16 + pos.x, sectionPos.y * 16 + pos.y, sectionPos.z * 16 + pos.z));
+                            if (lightPower != 0) {
+                                afterStates[i] = BlockStateUtils.blockStateToId(GlowingFurnitureBehaviorTemplate.LIGHT_BLOCK_STATES[lightPower]);
+                            }
+                        } else if (beforeState == GlowingFurnitureBehaviorTemplate.WATER_BLOCK_STATE_ID) {
+                            int lightPower = ((BukkitServerPlayer) user).furnitureLightData().getLightPower(new BlockPos(sectionPos.x * 16 + pos.x, sectionPos.y * 16 + pos.y, sectionPos.z * 16 + pos.z));
+                            if (lightPower != 0) {
+                                afterStates[i] = BlockStateUtils.blockStateToId(GlowingFurnitureBehaviorTemplate.WATERLOGGED_LIGHT_BLOCK_STATES[lightPower]);
                             }
                         }
                     }

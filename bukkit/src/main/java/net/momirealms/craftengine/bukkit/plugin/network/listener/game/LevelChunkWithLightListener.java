@@ -40,6 +40,10 @@ public final class LevelChunkWithLightListener implements ByteBufferPacketListen
     private final IntIdentityList blockList;
     private final boolean needsDowngrade;
     private final Predicate<Integer> occlusionPredicate;
+    // 和兄弟监听器一样在构造时取快照。重载是异步的, 而光照结果会被烘焙进 ClientChunk 且此后不会重算,
+    // 所以这里必须是快照: 监听器在配置解析完成后才重新注册, 重载窗口内发出的区块仍用旧值。
+    private final boolean furnitureLightInUse;
+    private final boolean cullingRayTracing;
 
     public LevelChunkWithLightListener(int[] blockStateMapper, int[] modBlockStateMapper, int blockRegistrySize, int biomeRegistrySize, Predicate<Integer> occlusionPredicate) {
         this.blockStateMapper = blockStateMapper;
@@ -48,6 +52,9 @@ public final class LevelChunkWithLightListener implements ByteBufferPacketListen
         this.blockList = new IntIdentityList(blockRegistrySize);
         this.needsDowngrade = MiscUtils.ceilLog2(BlockStateUtils.vanillaBlockStateCount()) != MiscUtils.ceilLog2(blockRegistrySize);
         this.occlusionPredicate = occlusionPredicate;
+        this.furnitureLightInUse = Config.enableFurnitureLightSystem() && GlowingFurnitureBehaviorTemplate.inUse();
+        // 兄弟监听器(BlockUpdateListener/SectionBlocksUpdateListener)一直是构造时取快照, 这里之前是每个包实时读取
+        this.cullingRayTracing = Config.entityCullingRayTracing();
     }
 
     @Override
@@ -114,9 +121,9 @@ public final class LevelChunkWithLightListener implements ByteBufferPacketListen
         boolean hasGlobalPalette = false;
 
         // 创建客户端侧遮挡世界, 只在开启光线追踪情况下创建.
-        OccludingSection[] occludingSections = Config.entityCullingRayTracing() ? new OccludingSection[count] : null;
+        OccludingSection[] occludingSections = this.cullingRayTracing ? new OccludingSection[count] : null;
         // 创建客户侧光照世界, 只在家具中存在 GlowingFurnitureBehavior 行为时创建.
-        LightSection[] lightSections = Config.enableFurnitureLightSystem() ? new LightSection[count] : null;
+        LightSection[] lightSections = this.furnitureLightInUse ? new LightSection[count] : null;
 
         for (int i = 0; i < count; i++) {
             MCSection mcSection = new MCSection(user.clientBlockList(), this.blockList, this.biomeList);

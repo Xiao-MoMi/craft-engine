@@ -27,7 +27,7 @@ public final class BlockUpdateListener implements ByteBufferPacketListener {
         this.modBlockStateMapper = modBlockStateMapper;
         this.occlusionPredicate = occlusionPredicate;
         this.cullingRayTracing = Config.entityCullingRayTracing();
-        this.glowingFurniture = Config.enableFurnitureLightSystem();
+        this.glowingFurniture = Config.enableFurnitureLightSystem() && GlowingFurnitureBehaviorTemplate.inUse();
         this.handleClientChunk = this.cullingRayTracing || this.glowingFurniture;
     }
 
