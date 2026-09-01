@@ -535,10 +535,17 @@ network:
   item-crypto:
     enable: true
     # Encryption algorithm for item data
-    # ID        |  Encryption Speed | Consistency |
-    # xor       |      Instant         Absolute   |
-    # aes-gcm   |       Fast            Random    |
-    # chacha20  |       Fast            Random    |
+    # ID        |  Encryption Speed |   Strength   |
+    # xor       |      Instant           Weak      |
+    # aes-gcm   |       Fast           Authenticated |
+    # chacha20  |       Fast           Authenticated |
+    # All three are deterministic: the same input always produces the same output. That is
+    # required, because on 1.21.5+ the client sends a hash of the item it sees and the server
+    # re-derives that item to compare - a non-deterministic ciphertext makes every container
+    # click look like a desync, which shows up as ghost items in inventories.
+    # aes-gcm and chacha20 derive their nonce from the plaintext (synthetic IV), so identical
+    # hidden data produces an identical blob. This is inherent to deterministic encryption and
+    # is what xor already did.
     algorithm: xor # xor/aes-gcm/chacha20
     key: ""  # empty = random key
 
