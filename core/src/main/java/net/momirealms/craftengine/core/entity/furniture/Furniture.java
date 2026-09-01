@@ -748,10 +748,9 @@ public abstract class Furniture implements Cullable, ChainParameterSource {
     }
 
     public boolean canInteract(Player player) {
-        WorldPosition position = position();
-        if (!player.canInteractPoint(new Vec3d(position.x, position.y, position.z), 16d)) {
-            return false;
-        }
-        return true;
+        // 必须连世界一起判断: 家具是按实体id全局查找的(loadedFurnitureByInteractableEntityId),
+        // 而实体id来自客户端。只比坐标的话, 玩家在另一个世界里对着相同坐标就能操作这件家具,
+        // 多世界服务器的坐标重叠是很常见的。
+        return player.canInteractPoint(position(), 16d);
     }
 }

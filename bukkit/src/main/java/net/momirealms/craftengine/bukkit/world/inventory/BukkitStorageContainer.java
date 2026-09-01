@@ -119,7 +119,7 @@ public class BukkitStorageContainer implements BukkitContainer {
     @Override
     public boolean stillValid(Player player) {
         if (this.owner instanceof WorldlyContainerHolder holder) {
-            return player.canInteractPoint(holder.pos().toVec3d(), player.getCachedInteractionRange());
+            return player.canInteractPoint(holder.pos(), player.getCachedInteractionRange());
         }
         return true;
     }

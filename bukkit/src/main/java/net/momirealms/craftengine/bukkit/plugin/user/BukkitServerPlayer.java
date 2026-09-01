@@ -893,7 +893,8 @@ public class BukkitServerPlayer extends BukkitLivingEntity implements Player {
         }
         if (holder instanceof WorldlyContainerHolder itemStorage) {
             WorldPosition pos = itemStorage.pos();
-            if (!canInteractPoint(pos.toVec3d(), 4d)) {
+            // 同样要带世界: 否则玩家传送到另一个世界的相近坐标后, 容器会一直开着
+            if (!canInteractPoint(pos, 4d)) {
                 ServerPlayerProxy.INSTANCE.closeContainer(serverPlayer);
             }
         }

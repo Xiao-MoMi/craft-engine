@@ -1,5 +1,6 @@
 package net.momirealms.craftengine.core.entity.player;
 
+import net.momirealms.craftengine.core.world.WorldPosition;
 import com.google.common.cache.Cache;
 import net.kyori.adventure.text.Component;
 import net.momirealms.craftengine.core.advancement.AdvancementType;
@@ -306,6 +307,26 @@ public interface Player extends NetWorkUser, LivingEntity {
     Cache<Object, Boolean> receivedMapData();
 
     boolean canInteractPoint(Vec3d vec3d, double range);
+
+    /**
+     * 带世界判断的版本。只比较坐标是不够的: 目标可能在另一个世界里, 而多世界服务器的坐标经常重叠。
+     * 调用方手上已经有 {@link WorldPosition} 时应该用这个。
+     */
+    default boolean canInteractPoint(WorldPosition position, double range) {
+        // 这个检查跑在netty线程上。Bukkit实现里 world() 要经过一个WeakReference, 玩家断开后会抛NPE
+        // 而不是返回null。isOnline() 是null安全的, 拿它做前置判断能挡掉几乎所有这种情况 —— 但它不是
+        // 原子的, 两次调用之间引用仍可能被清掉。剩下的那个极窄窗口交给数据包处理器外层的try/catch,
+        // 结果是记一条警告并原样放行, 和这条路径上任何其他异常一样。
+        if (position == null || !isOnline()) {
+            return false;
+        }
+        World world = world();
+        // Entity#world() 没有@NotNull约定, 所以还是判一下
+        if (world == null || !world.isSameWorld(position.world)) {
+            return false;
+        }
+        return canInteractPoint(position.toVec3d(), range);
+    }
 
     @Override
     default boolean isValid() {

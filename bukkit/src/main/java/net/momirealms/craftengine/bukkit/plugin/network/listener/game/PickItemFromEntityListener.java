@@ -4,7 +4,6 @@ import net.momirealms.craftengine.bukkit.entity.furniture.BukkitFurniture;
 import net.momirealms.craftengine.bukkit.entity.furniture.BukkitFurnitureManager;
 import net.momirealms.craftengine.bukkit.plugin.BukkitCraftEngine;
 import net.momirealms.craftengine.bukkit.plugin.user.BukkitServerPlayer;
-import net.momirealms.craftengine.bukkit.util.LocationUtils;
 import net.momirealms.craftengine.core.entity.furniture.hitbox.FurnitureHitBox;
 import net.momirealms.craftengine.core.item.Item;
 import net.momirealms.craftengine.core.plugin.network.NetWorkUser;
@@ -35,7 +34,9 @@ public final class PickItemFromEntityListener implements ByteBufferPacketListene
             return;
         }
         Location location = furniture.location();
-        if (!player.canInteractPoint(LocationUtils.toVec3d(location), 16)) {
+        // 和 AttackListener / InteractListener 走同一个检查, 它带世界判断:
+        // 家具是按客户端给的实体id全局查找的, 只比坐标就能跨世界操作
+        if (!furniture.canInteract(player)) {
             return;
         }
         BukkitCraftEngine.instance().scheduler().platform().run(

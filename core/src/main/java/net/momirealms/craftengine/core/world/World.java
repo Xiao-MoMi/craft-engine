@@ -59,6 +59,16 @@ public interface World extends WorldAccessor, ChainParameterSource {
 
     UUID uuid();
 
+    /**
+     * 同一个世界吗。适配器通常会返回同一个包装实例, 但不要依赖那个前提, 所以退回比较 UUID。
+     */
+    default boolean isSameWorld(World other) {
+        if (this == other) return true;
+        if (other == null) return false;
+        UUID uuid = uuid();
+        return uuid != null && uuid.equals(other.uuid());
+    }
+
     void dropItemNaturally(Position location, Item item);
 
     void dropExp(Position location, int amount);
