@@ -17,6 +17,8 @@ import io.netty.channel.socket.nio.NioServerSocketChannel;
 import io.netty.handler.codec.http.*;
 import io.netty.handler.stream.ChunkedStream;
 import io.netty.handler.stream.ChunkedWriteHandler;
+import io.netty.handler.timeout.IdleStateEvent;
+import io.netty.handler.timeout.IdleStateHandler;
 import io.netty.handler.traffic.GlobalChannelTrafficShapingHandler;
 import io.netty.util.CharsetUtil;
 import io.netty.util.concurrent.GlobalEventExecutor;
@@ -43,10 +45,23 @@ import java.util.Objects;
 import java.util.UUID;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 
 public final class SelfHostHttpServer {
+    // 传输过程中彻底停住(既不读也不写)多久就关掉。这里用 allIdle 而不是读超时是有意的:
+    // 请求发完之后客户端在整个下载期间都不会再发东西, 读超时会把正常的大包下载掐断,
+    // 而 allIdle 期间服务端一直在写, 不算空闲。
+    private static final int IDLE_TIMEOUT_SECONDS = 30;
+    // 从连接建立到完整请求解析出来的硬性上限。allIdle 单独是不够的: 它被任何一个入站字节重置,
+    // 所以每29秒滴一个字节的连接永远不会空闲 —— 这正是经典 Slowloris 的做法。请求阶段单独限时,
+    // 之后不再有任何计时器约束传输, 200MB的资源包照常下载。
+    // 对应 nginx 的 client_header_timeout / Apache 的 mod_reqtimeout。
+    private static final int REQUEST_TIMEOUT_SECONDS = 15;
+    // 聚合后请求体的上限。请求行和头部不归它管, 那是 HttpServerCodec 的 4096/8192。
+    // 这些接口都不读请求体, 所以这个值只是给畸形请求留的余量。
+    private static final int MAX_HTTP_CONTENT_LENGTH = 16 * 1024;
     private static SelfHostHttpServer instance;
     private final Cache<String, String> oneTimePackUrls = Caffeine.newBuilder()
             .maximumSize(1024)
@@ -175,10 +190,12 @@ public final class SelfHostHttpServer {
                 10_000 // maxTime (ms)
         );
         CraftEngine.instance().networkManager().setServerPortHost(pipeline -> {
+            pipeline.addLast(new IdleStateHandler(0, 0, IDLE_TIMEOUT_SECONDS));
             pipeline.addLast("trafficShaping", SelfHostHttpServer.this.trafficShapingHandler);
             pipeline.addLast(new HttpServerCodec());
             pipeline.addLast(new ChunkedWriteHandler());
-            pipeline.addLast(new HttpObjectAggregator(1048576));
+            pipeline.addLast(new HttpObjectAggregator(MAX_HTTP_CONTENT_LENGTH));
+            pipeline.addLast(new RequestDeadlineHandler());
             pipeline.addLast(new RequestHandler());
         });
     }
@@ -204,10 +221,12 @@ public final class SelfHostHttpServer {
                     @Override
                     protected void initChannel(SocketChannel ch) {
                         ChannelPipeline pipeline = ch.pipeline();
+                        pipeline.addLast(new IdleStateHandler(0, 0, IDLE_TIMEOUT_SECONDS));
                         pipeline.addLast("trafficShaping", SelfHostHttpServer.this.trafficShapingHandler);
                         pipeline.addLast(new HttpServerCodec());
                         pipeline.addLast(new ChunkedWriteHandler());
-                        pipeline.addLast(new HttpObjectAggregator(1048576));
+                        pipeline.addLast(new HttpObjectAggregator(MAX_HTTP_CONTENT_LENGTH));
+                        pipeline.addLast(new RequestDeadlineHandler());
                         pipeline.addLast(new RequestHandler());
                     }
                 });
@@ -218,6 +237,48 @@ public final class SelfHostHttpServer {
         } catch (InterruptedException e) {
             CraftEngine.instance().logger().warn("Failed to start Netty server", e);
             Thread.currentThread().interrupt();
+        }
+    }
+
+    /**
+     * 给请求阶段一个硬性期限。连上就开始计时, 完整请求解析出来就取消。
+     * <p>
+     * 之所以不能只靠 IdleStateHandler: 它的 allIdle 会被任何入站字节重置, 于是慢速滴字节的连接
+     * 永远不算空闲。这里的期限和滴多慢无关。取消之后传输阶段完全不受计时器约束。
+     * <p>
+     * 超大请求被聚合器拒掉(413)时不会产生 FullHttpRequest, 所以期限保持有效, 那条连接也会被关掉。
+     * <p>
+     * 每条pipeline一个实例, 状态不跨连接共享, 所以不能标 @Sharable。
+     */
+    private static final class RequestDeadlineHandler extends ChannelInboundHandlerAdapter {
+        private ScheduledFuture<?> deadline;
+
+        @Override
+        public void handlerAdded(ChannelHandlerContext ctx) {
+            // 用 handlerAdded 而不是 channelActive: server-port 模式下这套pipeline是装到
+            // 一条已经激活的连接上的, channelActive 不会再触发。
+            this.deadline = ctx.executor().schedule(() -> { ctx.close(); }, REQUEST_TIMEOUT_SECONDS, TimeUnit.SECONDS);
+        }
+
+        @Override
+        public void channelRead(ChannelHandlerContext ctx, Object msg) {
+            if (msg instanceof FullHttpRequest) {
+                cancel();
+            }
+            ctx.fireChannelRead(msg);
+        }
+
+        @Override
+        public void handlerRemoved(ChannelHandlerContext ctx) {
+            cancel();
+        }
+
+        private void cancel() {
+            ScheduledFuture<?> current = this.deadline;
+            if (current != null) {
+                this.deadline = null;
+                current.cancel(false);
+            }
         }
     }
 
@@ -416,6 +477,17 @@ public final class SelfHostHttpServer {
                     Unpooled.copiedBuffer(message, CharsetUtil.UTF_8)
             );
             ctx.writeAndFlush(response).addListener(ChannelFutureListener.CLOSE);
+        }
+
+        @Override
+        public void userEventTriggered(ChannelHandlerContext ctx, Object evt) {
+            if (evt instanceof IdleStateEvent) {
+                // 既不读也不写了。要么是请求发了一半就不动了, 要么是下载已经停住,
+                // 无论哪种, 这条连接都只是在占着socket和聚合器缓冲。
+                ctx.close();
+                return;
+            }
+            ctx.fireUserEventTriggered(evt);
         }
 
         @Override
