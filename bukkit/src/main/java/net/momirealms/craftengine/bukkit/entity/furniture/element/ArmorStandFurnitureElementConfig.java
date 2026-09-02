@@ -141,7 +141,7 @@ public final class ArmorStandFurnitureElementConfig implements FurnitureElementC
                     section.getFloat("yaw", 0f),
                     legacyTintSource ?
                             SourceItemComponentsDataSourceConfig.create(List.of(DataComponentKeys.DYED_COLOR, DataComponentKeys.FIREWORK_EXPLOSION)) :
-                            section.getValue(TINT_SOURCE, SourceItemComponentsDataSourceConfig::fromConfig),
+                            section.getValue(TINT_SOURCE, SourceItemComponentsDataSourceConfig::fromConfig, SourceItemComponentsDataSourceConfig.DEFAULT),
                     section.getBoolean("small"),
                     section.getEnum(GLOW_COLOR, LegacyChatFormatter.class),
                     MiscUtils.allOf(conditions),

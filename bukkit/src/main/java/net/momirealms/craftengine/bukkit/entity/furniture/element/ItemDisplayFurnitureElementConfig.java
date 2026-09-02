@@ -194,7 +194,7 @@ public final class ItemDisplayFurnitureElementConfig implements FurnitureElement
                     section.getFloat(SHADOW_STRENGTH, 1f),
                     legacyTintSource ?
                             SourceItemComponentsDataSourceConfig.create(List.of(DataComponentKeys.DYED_COLOR, DataComponentKeys.FIREWORK_EXPLOSION)) :
-                            section.getValue(TINT_SOURCE, SourceItemComponentsDataSourceConfig::fromConfig),
+                            section.getValue(TINT_SOURCE, SourceItemComponentsDataSourceConfig::fromConfig, SourceItemComponentsDataSourceConfig.DEFAULT),
                     section.getValue(GLOW_COLOR, ConfigValue::getAsColor),
                     brightness != null ? brightness.getInt(BLOCK_LIGHT, -1) : -1,
                     brightness != null ? brightness.getInt(SKY_LIGHT, -1) : -1,

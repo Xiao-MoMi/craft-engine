@@ -112,7 +112,7 @@ public final class ItemFurnitureElementConfig implements FurnitureElementConfig<
                     section.getVector3f("position", ConfigConstants.ZERO_VECTOR3),
                     legacyTintSource ?
                             SourceItemComponentsDataSourceConfig.create(List.of(DataComponentKeys.DYED_COLOR, DataComponentKeys.FIREWORK_EXPLOSION)) :
-                            section.getValue(TINT_SOURCE, SourceItemComponentsDataSourceConfig::fromConfig),
+                            section.getValue(TINT_SOURCE, SourceItemComponentsDataSourceConfig::fromConfig, SourceItemComponentsDataSourceConfig.DEFAULT),
                     MiscUtils.allOf(conditions),
                     !conditions.isEmpty()
             );
