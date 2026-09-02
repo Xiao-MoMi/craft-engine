@@ -60,6 +60,9 @@ resource-pack:
       # The restriction of element rotation angle has been removed since 1.21.6 (remove multiples of 22.5 limit) & 1.21.11 (remove [-45, 45] limit)
       # Once enabled, the plugin will replace it with the nearest value
       fix-element-rotation-angle: true
+    # Model UV coordinates use a normalized 16x16 coordinate space, regardless of texture resolution.
+    # Enable this to directly clamp out-of-bounds UVs to [0, 16].
+    fix-model-uv-out-of-bounds: false
 
   # Optimize your resource pack by reducing its size without any quality loss.
   optimization:

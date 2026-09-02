@@ -198,6 +198,7 @@ resource_pack.texture_generation.conflict: 无法生成贴图,因为贴图文件
 resource_pack.item_model.conflict: 无法生成物品模型映射“<arg:0>”，因为文件“<arg:1>”已存在
 resource_pack.missing_font_texture: 字体“<arg:0>”缺少纹理“<arg:1>”
 resource_pack.missing_model_texture: 模型“<arg:0>”缺少纹理“<arg:1>”
+resource_pack.model_uv_out_of_bounds: 模型“<arg:0>”的第<arg:1>个元素在“<arg:2>”面使用了越界UV <arg:3>，纹理为“<arg:4>”。超出[0, 16]的UV可能导致26.1及以上客户端无法烘焙该模型
 resource_pack.missing_equipment_texture: 装备“<arg:0>”缺少纹理“<arg:1>”
 resource_pack.missing_atlas_texture: 图集“<arg:0>”缺少纹理“<arg:1>”
 resource_pack.missing_item_model: 物品“<arg:0>”缺少模型文件“<arg:1>”

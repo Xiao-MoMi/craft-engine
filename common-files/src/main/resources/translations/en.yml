@@ -206,6 +206,7 @@ resource_pack.texture_generation.conflict: Failed to generate texture because th
 resource_pack.item_model.conflict: Failed to generate item model '<arg:0>' because the file '<arg:1>' already exists
 resource_pack.missing_font_texture: "Font '<arg:0>' is missing texture '<arg:1>'"
 resource_pack.missing_model_texture: "Model '<arg:0>' is missing texture '<arg:1>'"
+resource_pack.model_uv_out_of_bounds: "Model '<arg:0>' element <arg:1> face '<arg:2>' uses out-of-bounds UV <arg:3> with texture '<arg:4>'. UV values outside [0, 16] can prevent 26.1+ clients from baking the model"
 resource_pack.missing_equipment_texture: "Equipment '<arg:0>' is missing texture '<arg:1>'"
 resource_pack.missing_atlas_texture: "Atlas '<arg:0>' is missing texture '<arg:1>'"
 resource_pack.missing_item_model: "Item '<arg:0>' is missing model file '<arg:1>'"

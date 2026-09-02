@@ -53,6 +53,7 @@ paper {
     authors = listOf("XiaoMoMi")
     contributors = listOf("https://github.com/Xiao-MoMi/craft-engine/graphs/contributors")
     foliaSupported = true
+//    hasOpenClassloader = true
     serverDependencies {
         // WorldEdit
         register("WorldEdit") {
