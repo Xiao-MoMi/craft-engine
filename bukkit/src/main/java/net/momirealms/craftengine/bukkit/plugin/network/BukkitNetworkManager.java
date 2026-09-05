@@ -43,6 +43,7 @@ import net.momirealms.craftengine.core.plugin.network.listener.ByteBufferPacketL
 import net.momirealms.craftengine.core.plugin.network.listener.ByteBufferPacketListenerHolder;
 import net.momirealms.craftengine.core.plugin.network.listener.NMSPacketListener;
 import net.momirealms.craftengine.core.plugin.network.mod.protocol.ClientboundCreativeModeTabItemsPacket;
+import net.momirealms.craftengine.core.plugin.ui.state.PlayerSignalRegistry;
 import net.momirealms.craftengine.core.util.*;
 import net.momirealms.craftengine.core.world.score.TeamManagerImpl;
 import net.momirealms.craftengine.proxy.bukkit.craftbukkit.entity.CraftEntityProxy;
@@ -555,6 +556,7 @@ public final class BukkitNetworkManager extends AbstractNetworkManager implement
     @EventHandler(priority = EventPriority.LOWEST)
     public void onPlayerQuit(PlayerQuitEvent event) {
         Player player = event.getPlayer();
+        PlayerSignalRegistry.evict(player.getUniqueId());
         BukkitServerPlayer serverPlayer = this.onlineUsers.remove(player.getUniqueId());
         if (serverPlayer != null) {
             serverPlayer.clearDestroyStageDisplay();
