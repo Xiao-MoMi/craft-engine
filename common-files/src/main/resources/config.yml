@@ -721,8 +721,8 @@ chunk-system:
   # Settings for injection
   injection:
     # Requires server restart to take effect
-    # - section: Injects the LevelChunkSection (Better compatibility with other plugins)
-    # - palette: Injects the PalettedContainer (Performance is a bit better than section, might create slight bugs when using FAWE and Axiom)
+    # - section: Injects the LevelChunkSection
+    # - palette: Injects the PalettedContainer
     target: section
   # On chunk unload: Convert custom blocks → vanilla blocks
   # Prevents custom blocks from becoming AIR when plugin is removed

@@ -31,6 +31,7 @@ dependencies {
     common(project, JavaPlugin.TEST_IMPLEMENTATION_CONFIGURATION_NAME)
     adventure(project, JavaPlugin.TEST_IMPLEMENTATION_CONFIGURATION_NAME)
     netty(project, JavaPlugin.TEST_RUNTIME_ONLY_CONFIGURATION_NAME)
+    compression(project, JavaPlugin.TEST_RUNTIME_ONLY_CONFIGURATION_NAME)
     testImplementation(platform(libs.junit.bom))
     testImplementation(libs.junit.jupiter)
     testRuntimeOnly(libs.junit.platform.launcher)
