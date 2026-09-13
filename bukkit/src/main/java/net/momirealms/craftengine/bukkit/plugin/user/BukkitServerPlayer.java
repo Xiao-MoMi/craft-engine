@@ -482,6 +482,16 @@ public class BukkitServerPlayer extends BukkitLivingEntity implements Player {
     }
 
     @Override
+    public boolean discoverRecipe(Key recipe) {
+        return platformPlayer().discoverRecipe(KeyUtils.toNamespacedKey(recipe));
+    }
+
+    @Override
+    public boolean hasDiscoveredRecipe(Key recipe) {
+        return platformPlayer().hasDiscoveredRecipe(KeyUtils.toNamespacedKey(recipe));
+    }
+
+    @Override
     public boolean canInstabuild() {
         Object abilities = PlayerProxy.INSTANCE.getAbilities(minecraftPlayer());
         return AbilitiesProxy.INSTANCE.isInstantBuild(abilities);

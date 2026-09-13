@@ -1371,7 +1371,7 @@ public final class RecipeEventListener implements Listener {
     // 切石机产出
     @EventHandler(ignoreCancelled = true, priority = EventPriority.HIGHEST)
     public void onStonecuttingFinish(InventoryClickEvent event) {
-        if (!Config.enableRecipeSystem() || !VersionHelper.PREMIUM) return;
+        if (!Config.enableRecipeSystem()) return;
         if (!(event.getInventory() instanceof StonecutterInventory inventory)) return;
         // 只关心结果槽
         if (event.getRawSlot() != 1) return;
@@ -1400,8 +1400,12 @@ public final class RecipeEventListener implements Listener {
         if (optionalRecipe.isEmpty() || !(optionalRecipe.get() instanceof CustomStoneCuttingRecipe ceRecipe)) {
             return;
         }
-        // 没有函数你凑什么热闹
-        if (!ceRecipe.hasFunctions()) {
+        boolean runFunctions = VersionHelper.PREMIUM && ceRecipe.hasFunctions();
+        if (!runFunctions && !ceRecipe.hasCondition()) {
+            return;
+        }
+        if (ceRecipe.hasCondition() && !ceRecipe.canUse(PlayerOptionalContext.of(serverPlayer))) {
+            event.setCancelled(true);
             return;
         }
 
@@ -1435,6 +1439,9 @@ public final class RecipeEventListener implements Listener {
                     break;
                 }
 
+                if (ceRecipe.hasCondition() && !ceRecipe.canUse(PlayerOptionalContext.of(serverPlayer))) {
+                    break;
+                }
                 Object takenItem = SlotProxy.INSTANCE.safeTake(resultSlot, 1, Integer.MAX_VALUE, mcPlayer);
                 if (ItemStackProxy.INSTANCE.isEmpty(takenItem)) {
                     break;
@@ -1443,9 +1450,11 @@ public final class RecipeEventListener implements Listener {
                 PlayerProxy.INSTANCE.drop(mcPlayer, takenItem, true);
 
                 // 有函数的情况下，执行函数
-                PlayerOptionalContext context = PlayerOptionalContext.of(serverPlayer);
-                for (Function<Context> function : ceRecipe.functions()) {
-                    function.run(context);
+                if (runFunctions) {
+                    PlayerOptionalContext context = PlayerOptionalContext.of(serverPlayer);
+                    for (Function<Context> function : ceRecipe.functions()) {
+                        function.run(context);
+                    }
                 }
             }
             return;
@@ -1462,6 +1471,9 @@ public final class RecipeEventListener implements Listener {
                     break;
                 }
 
+                if (ceRecipe.hasCondition() && !ceRecipe.canUse(PlayerOptionalContext.of(serverPlayer))) {
+                    break;
+                }
                 // 连续获取
                 Object itemMoved = AbstractContainerMenuProxy.INSTANCE.quickMoveStack(stonecutterMenu, mcPlayer, 1 /* result slot */);
                 if (ItemStackProxy.INSTANCE.isEmpty(itemMoved)) {
@@ -1469,9 +1481,11 @@ public final class RecipeEventListener implements Listener {
                 }
 
                 // 有函数的情况下，执行函数
-                PlayerOptionalContext context = PlayerOptionalContext.of(serverPlayer);
-                for (Function<Context> function : ceRecipe.functions()) {
-                    function.run(context);
+                if (runFunctions) {
+                    PlayerOptionalContext context = PlayerOptionalContext.of(serverPlayer);
+                    for (Function<Context> function : ceRecipe.functions()) {
+                        function.run(context);
+                    }
                 }
             }
             return;
@@ -1480,7 +1494,7 @@ public final class RecipeEventListener implements Listener {
         // 单次取出，其余操作（中键克隆、数字键交换等）都不会真正拿走产物
         boolean takeOnce = click == ClickType.LEFT || click == ClickType.RIGHT
                 || (click == ClickType.DROP && ItemStackUtils.isEmpty(event.getCursor()));
-        if (!takeOnce) {
+        if (!takeOnce || !runFunctions) {
             return;
         }
 

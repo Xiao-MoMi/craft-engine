@@ -125,6 +125,10 @@ public interface Player extends NetWorkUser, LivingEntity {
 
     boolean hasPermission(String permission);
 
+    boolean discoverRecipe(Key recipe);
+
+    boolean hasDiscoveredRecipe(Key recipe);
+
     boolean canInstabuild();
 
     default void playSound(Key sound) {
