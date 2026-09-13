@@ -282,6 +282,13 @@ debug_set_block:
     - /craftengine debug setblock
     - /ce debug setblock
 
+debug_fill_section:
+  enable: true
+  permission: ce.command.debug.fill_section
+  usage:
+    - /craftengine debug fill-section
+    - /ce debug fill-section
+
 debug_spawn_furniture:
   enable: true
   permission: ce.command.debug.spawn_furniture
