@@ -18,6 +18,7 @@ import net.momirealms.craftengine.core.world.ChunkPos;
 import net.momirealms.craftengine.core.world.WorldHeight;
 import net.momirealms.craftengine.core.world.chunk.CEChunk;
 import net.momirealms.craftengine.core.world.chunk.Palette;
+import net.momirealms.craftengine.core.world.chunk.PaletteStorage;
 import net.momirealms.craftengine.core.world.chunk.PalettedContainer;
 import net.momirealms.craftengine.core.world.chunk.client.ClientChunk;
 import net.momirealms.craftengine.core.world.chunk.client.light.LightSection;
@@ -30,7 +31,7 @@ import net.momirealms.craftengine.core.world.chunk.packet.MCSection;
 import net.momirealms.sparrow.nbt.Tag;
 
 import java.util.Arrays;
-import java.util.function.Predicate;
+import java.util.function.IntPredicate;
 
 public final class LevelChunkWithLightListener implements ByteBufferPacketListener {
     private static BiomeRemapper biomeRemapper = BiomeRemapper.DUMMY;
@@ -39,9 +40,9 @@ public final class LevelChunkWithLightListener implements ByteBufferPacketListen
     private final IntIdentityList biomeList;
     private final IntIdentityList blockList;
     private final boolean needsDowngrade;
-    private final Predicate<Integer> occlusionPredicate;
+    private final IntPredicate occlusionPredicate;
 
-    public LevelChunkWithLightListener(int[] blockStateMapper, int[] modBlockStateMapper, int blockRegistrySize, int biomeRegistrySize, Predicate<Integer> occlusionPredicate) {
+    public LevelChunkWithLightListener(int[] blockStateMapper, int[] modBlockStateMapper, int blockRegistrySize, int biomeRegistrySize, IntPredicate occlusionPredicate) {
         this.blockStateMapper = blockStateMapper;
         this.modBlockStateMapper = modBlockStateMapper;
         this.biomeList = new IntIdentityList(biomeRegistrySize);
@@ -135,7 +136,11 @@ public final class LevelChunkWithLightListener implements ByteBufferPacketListen
             if (palette.canRemap()) {
 
                 // 重定向方块
-                if (palette.remapAndCheck(s -> remapper[s])) {
+                if (palette.remapAndCheck(state -> {
+                    int mappedState = remapper[state];
+                    if (mappedState == state) return state;
+                    return mappedState;
+                })) {
                     hasChangedAnyBlock = true;
                 }
 
@@ -231,13 +236,15 @@ public final class LevelChunkWithLightListener implements ByteBufferPacketListen
                     lightSections[i] = new LightSection(lightStorage);
                 }
 
+                // 全局调色板使用 IntIdentityList, 存储值就是方块状态 ID
+                PaletteStorage blockStateStorage = container.data().storage();
                 for (int j = 0; j < 4096; j++) {
-                    int state = container.get(j);
+                    int state = blockStateStorage.get(j);
 
                     // 重定向方块
                     int newState = remapper[state];
                     if (newState != state) {
-                        container.set(j, newState);
+                        blockStateStorage.set(j, newState);
                         hasChangedAnyBlock = true;
                     }
 

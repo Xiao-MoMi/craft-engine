@@ -9,8 +9,8 @@ public final class MCSection {
     private short nonEmptyBlockCount;
     private short fluidCount;
     private final PalettedContainer<Integer> serverBlockStateContainer;
-    private final IndexedIterable<Integer> clientBlockStateList;
     private final PalettedContainer<Integer> biomeContainer;
+    private final IndexedIterable<Integer> clientBlockStateList;
 
     public MCSection(IndexedIterable<Integer> clientBlockStateList, IndexedIterable<Integer> serverBlockStateList, IndexedIterable<Integer> biomeList) {
         this.serverBlockStateContainer = new PalettedContainer<>(serverBlockStateList, 0, PalettedContainer.PaletteProvider.BLOCK_STATE);
