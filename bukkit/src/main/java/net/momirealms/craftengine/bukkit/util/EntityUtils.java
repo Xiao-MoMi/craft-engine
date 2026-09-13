@@ -267,7 +267,7 @@ public final class EntityUtils {
         if (VersionHelper.hasPaperPatch) {
             Set<Player> trackedPlayers = entity.getTrackedPlayers();
             for (Player player : trackedPlayers) {
-                T adapted = function.apply((Player) PlayerProxy.INSTANCE.getBukkitEntity(player));
+                T adapted = function.apply(player);
                 if (adapted != null) {
                     collector.accept(adapted);
                 }

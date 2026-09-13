@@ -17,7 +17,6 @@ import net.momirealms.craftengine.core.world.CEWorld;
 import net.momirealms.craftengine.core.world.ChunkPos;
 import net.momirealms.craftengine.core.world.WorldHeight;
 import net.momirealms.craftengine.core.world.chunk.CEChunk;
-import net.momirealms.craftengine.core.world.chunk.Palette;
 import net.momirealms.craftengine.core.world.chunk.PaletteStorage;
 import net.momirealms.craftengine.core.world.chunk.PalettedContainer;
 import net.momirealms.craftengine.core.world.chunk.client.ClientChunk;
@@ -27,6 +26,7 @@ import net.momirealms.craftengine.core.world.chunk.client.light.UniformLightStor
 import net.momirealms.craftengine.core.world.chunk.client.occlusion.OccludingSection;
 import net.momirealms.craftengine.core.world.chunk.client.occlusion.PackedOcclusionStorage;
 import net.momirealms.craftengine.core.world.chunk.client.occlusion.UniformOcclusionStorage;
+import net.momirealms.craftengine.core.world.chunk.packet.LocalPaletteSection;
 import net.momirealms.craftengine.core.world.chunk.packet.MCSection;
 import net.momirealms.sparrow.nbt.Tag;
 
@@ -110,6 +110,7 @@ public final class LevelChunkWithLightListener implements ByteBufferPacketListen
         WorldHeight worldHeight = clientSideWorld.worldHeight();
         int count = worldHeight.getSectionsCount();
         MCSection[] sections = new MCSection[count];
+        LocalPaletteSection[] localSections = new LocalPaletteSection[count];
 
         boolean hasChangedAnyBlock = false;
         boolean hasGlobalPalette = false;
@@ -120,41 +121,43 @@ public final class LevelChunkWithLightListener implements ByteBufferPacketListen
         LightSection[] lightSections = Config.enableFurnitureLightSystem() ? new LightSection[count] : null;
 
         for (int i = 0; i < count; i++) {
-            MCSection mcSection = new MCSection(user.clientBlockList(), this.blockList, this.biomeList);
-            mcSection.readPacket(chunkDataByteBuf);
+            LocalPaletteSection localSection = LocalPaletteSection.tryReadPacket(chunkDataByteBuf, this.biomeList);
+            MCSection mcSection = null;
+            if (localSection != null) {
+                localSections[i] = localSection;
+            } else {
+                mcSection = new MCSection(user.clientBlockList(), this.blockList, this.biomeList);
+                mcSection.readPacket(chunkDataByteBuf);
+                sections[i] = mcSection;
+            }
 
-            PalettedContainer<Integer> container = mcSection.blockStateContainer();
             // 重定向生物群系
             if (biomeRemapper != BiomeRemapper.DUMMY) {
                 ChunkPos chunkPos = new ChunkPos(chunkX, chunkZ);
-                if (biomeRemapper.remap(player, chunkPos, mcSection.biomeContainer())) {
+                PalettedContainer<Integer> biomes = localSection != null ? localSection.biomeContainer() : mcSection.biomeContainer();
+                if (biomeRemapper.remap(player, chunkPos, biomes)) {
                     hasChangedAnyBlock = true;
                 }
             }
 
-            Palette<Integer> palette = container.data().palette();
-            if (palette.canRemap()) {
+            if (localSection != null) {
 
                 // 重定向方块
-                if (palette.remapAndCheck(state -> {
-                    int mappedState = remapper[state];
-                    if (mappedState == state) return state;
-                    return mappedState;
-                })) {
+                if (localSection.remap(remapper)) {
                     hasChangedAnyBlock = true;
                 }
 
                 // 处理客户端侧哪些方块有阻挡
                 if (occludingSections != null) {
-                    int size = palette.getSize();
+                    int size = localSection.paletteSize();
                     // 单个元素的情况下，使用优化的存储方案
                     if (size == 1) {
-                        occludingSections[i] = new OccludingSection(UniformOcclusionStorage.fromTest(this.occlusionPredicate.test(palette.get(0))));
+                        occludingSections[i] = new OccludingSection(UniformOcclusionStorage.fromTest(this.occlusionPredicate.test(localSection.paletteState(0))));
                     } else {
                         boolean hasOcclusions = false;
                         boolean hasNoOcclusions = false;
                         for (int h = 0; h < size; h++) {
-                            if (this.occlusionPredicate.test(palette.get(h))) {
+                            if (this.occlusionPredicate.test(localSection.paletteState(h))) {
                                 hasOcclusions = true;
                             } else {
                                 hasNoOcclusions = true;
@@ -168,7 +171,7 @@ public final class LevelChunkWithLightListener implements ByteBufferPacketListen
                             PackedOcclusionStorage storage = new PackedOcclusionStorage(false);
                             occludingSections[i] = new OccludingSection(storage);
                             for (int j = 0; j < 4096; j++) {
-                                int state = container.get(j);
+                                int state = localSection.blockState(j);
                                 storage.set(j, this.occlusionPredicate.test(state));
                             }
                         }
@@ -181,10 +184,10 @@ public final class LevelChunkWithLightListener implements ByteBufferPacketListen
 
                 // 处理客户端侧光照方块
                 if (lightSections != null) {
-                    int size = palette.getSize();
+                    int size = localSection.paletteSize();
                     // 单个元素的情况下，使用优化的存储方案
                     if (size == 1) {
-                        int result = getLightBlockType(palette.get(0));
+                        int result = getLightBlockType(localSection.paletteState(0));
                         lightSections[i] = new LightSection(UniformLightStorage.fromLightPredicate(result));
                     }
                     // 多元素情况, 遍历检查
@@ -194,7 +197,7 @@ public final class LevelChunkWithLightListener implements ByteBufferPacketListen
 
                         // 遍历调色盘的元素
                         for (int h = 0; h < size; h++) {
-                            int result = getLightBlockType(palette.get(h));
+                            int result = getLightBlockType(localSection.paletteState(h));
                             if (result == 0) {
                                 hasSolid = true;
                             } else {
@@ -208,7 +211,6 @@ public final class LevelChunkWithLightListener implements ByteBufferPacketListen
                         // 如果全实心, 则使用优化存储
                         if (hasSolid && !hasReplaceable) {
                             lightSections[i] = new LightSection(UniformLightStorage.SOLID);
-                            sections[i] = mcSection;
                             continue;
                         }
 
@@ -216,7 +218,7 @@ public final class LevelChunkWithLightListener implements ByteBufferPacketListen
                         PackedLightStorage storage = new PackedLightStorage();
                         lightSections[i] = new LightSection(storage);
                         for (int j = 0; j < 4096; j++) {
-                            int state = container.get(j);
+                            int state = localSection.blockState(j);
                             storage.set(j, getLightBlockType(state));
                         }
                     }
@@ -237,7 +239,7 @@ public final class LevelChunkWithLightListener implements ByteBufferPacketListen
                 }
 
                 // 全局调色板使用 IntIdentityList, 存储值就是方块状态 ID
-                PaletteStorage blockStateStorage = container.data().storage();
+                PaletteStorage blockStateStorage = mcSection.blockStateContainer().data().storage();
                 for (int j = 0; j < 4096; j++) {
                     int state = blockStateStorage.get(j);
 
@@ -259,8 +261,6 @@ public final class LevelChunkWithLightListener implements ByteBufferPacketListen
                     }
                 }
             }
-
-            sections[i] = mcSection;
         }
 
         /*
@@ -339,7 +339,11 @@ public final class LevelChunkWithLightListener implements ByteBufferPacketListen
                 // 区块数据
                 int writtenHeightmapsLength = staging.writerIndex();
                 for (int i = 0; i < count; i++) {
-                    sections[i].writePacket(staging);
+                    if (localSections[i] != null) {
+                        localSections[i].writePacket(staging);
+                    } else {
+                        sections[i].writePacket(staging);
+                    }
                 }
                 // 其他数据
                 int newChunkDataLength = staging.writerIndex() - writtenHeightmapsLength;
