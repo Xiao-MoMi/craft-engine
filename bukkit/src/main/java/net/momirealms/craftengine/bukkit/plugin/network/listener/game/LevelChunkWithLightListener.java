@@ -27,7 +27,6 @@ import net.momirealms.craftengine.core.world.chunk.packet.GlobalPaletteSection;
 import net.momirealms.craftengine.core.world.chunk.packet.LocalPaletteSection;
 import net.momirealms.craftengine.core.world.chunk.packet.PacketSection;
 import net.momirealms.craftengine.core.world.chunk.packet.SingleValueSection;
-import net.momirealms.sparrow.nbt.Tag;
 
 import java.util.Arrays;
 import java.util.function.IntPredicate;
@@ -56,15 +55,12 @@ public final class LevelChunkWithLightListener implements ByteBufferPacketListen
         int chunkZ = buf.readInt();
         long chunkKey = ChunkPos.asLong(chunkX, chunkZ);
 
-        boolean named = !VersionHelper.isOrAbove1_20_2;
-
         int[] remapper = user.clientCustomBlockEnabled() ? this.modBlockStateMapper : this.blockStateMapper;
         IntIdentityList clientBlockList = user.clientBlockList();
         boolean needsBitWidthConversion = user.needsBlockStateBitWidthConversion();
 
         // 跳过高度图, 不做解析; 需要改写时原样拷贝原始字节
         int heightmapsStart = buf.readerIndex();
-        Tag heightmaps = null;
         if (VersionHelper.isOrAbove1_21_5) {
             int heightmapsCount = buf.readVarInt();
             for (int i = 0; i < heightmapsCount; i++) {
@@ -72,8 +68,7 @@ public final class LevelChunkWithLightListener implements ByteBufferPacketListen
                 buf.skipBytes(buf.readVarInt() * 8);
             }
         } else {
-            // 旧版无法跳过NBT, 只能解析
-            heightmaps = buf.readNbt(named);
+            buf.skipNbt(!VersionHelper.isOrAbove1_20_2);
         }
         int heightmapsLength = buf.readerIndex() - heightmapsStart;
 
@@ -95,6 +90,8 @@ public final class LevelChunkWithLightListener implements ByteBufferPacketListen
         // 创建客户侧光照世界, 只在家具中存在 GlowingFurnitureBehavior 行为时创建.
         LightSection[] lightSections = Config.enableFurnitureLightSystem() ? new LightSection[count] : null;
 
+        BiomeRemapper currentBiomeRemapper = biomeRemapper;
+        ChunkPos chunkPos = currentBiomeRemapper != BiomeRemapper.DUMMY ? new ChunkPos(chunkX, chunkZ) : null;
         SectionTracker tracker = null;
         for (int i = 0; i < count; i++) {
             PacketSection section = PacketSection.readPacket(chunkDataByteBuf, this.blockList, clientBlockList, this.biomeList);
@@ -105,10 +102,9 @@ public final class LevelChunkWithLightListener implements ByteBufferPacketListen
             }
 
             // 重定向生物群系
-            if (biomeRemapper != BiomeRemapper.DUMMY) {
-                ChunkPos chunkPos = new ChunkPos(chunkX, chunkZ);
+            if (chunkPos != null) {
                 PalettedContainer<Integer> biomes = section.biomeContainer();
-                if (biomeRemapper.remap(player, chunkPos, biomes)) {
+                if (currentBiomeRemapper.remap(player, chunkPos, biomes)) {
                     hasChanges = true;
                 }
             }
@@ -172,11 +168,7 @@ public final class LevelChunkWithLightListener implements ByteBufferPacketListen
             // 高度图
             FriendlyByteBuf staging = new FriendlyByteBuf(PooledByteBufAllocator.DEFAULT.buffer(heightmapsLength + chunkDataBufferSize + 16 + tailLength));
             try {
-                if (VersionHelper.isOrAbove1_21_5) {
-                    staging.writeBytes(buf, heightmapsStart, heightmapsLength);
-                } else {
-                    staging.writeNbt(heightmaps, named);
-                }
+                staging.writeBytes(buf, heightmapsStart, heightmapsLength);
                 // 区块数据
                 int writtenHeightmapsLength = staging.writerIndex();
                 for (int i = 0; i < count; i++) {

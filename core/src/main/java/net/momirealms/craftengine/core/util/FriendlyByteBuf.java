@@ -19,6 +19,7 @@ import net.momirealms.craftengine.core.world.GlobalPos;
 import net.momirealms.craftengine.core.world.Vec3d;
 import net.momirealms.sparrow.nbt.NBT;
 import net.momirealms.sparrow.nbt.Tag;
+import net.momirealms.sparrow.nbt.TagTypes;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -539,6 +540,18 @@ public class FriendlyByteBuf extends ByteBuf {
                 throw new EncoderException("Failed to read NBT compound: " + e.getMessage(), e);
             }
         }
+    }
+
+    public FriendlyByteBuf skipNbt(boolean named) {
+        int type = this.readUnsignedByte();
+        if (type == Tag.TAG_END_ID) return this;
+        if (named) this.skipBytes(this.readUnsignedShort());
+        try {
+            TagTypes.typeById(type).skip(new ByteBufInputStream(this));
+        } catch (IOException e) {
+            throw new DecoderException("Failed to skip NBT tag: " + e.getMessage(), e);
+        }
+        return this;
     }
 
     public String readUtf() {
