@@ -13,10 +13,9 @@ public final class LocalPaletteSection extends PacketSection {
 
     LocalPaletteSection(FriendlyByteBuf source, IntIdentityList biomeList, int headerLength, boolean hasArrayLength) {
         super(source, biomeList, headerLength, hasArrayLength);
-        int packetBits = source.readUnsignedByte();
-        this.bits = packetBits == 0 ? 0 : Math.max(4, packetBits);
-        this.elementsPerLong = this.bits == 0 ? 0 : 64 / this.bits;
-        int paletteSize = this.bits == 0 ? 1 : source.readVarInt();
+        this.bits = Math.max(4, source.readUnsignedByte());
+        this.elementsPerLong = 64 / this.bits;
+        int paletteSize = source.readVarInt();
         if (paletteSize < 1 || paletteSize > 1 << this.bits) {
             throw new DecoderException("Invalid local block palette size: " + paletteSize);
         }
@@ -47,7 +46,6 @@ public final class LocalPaletteSection extends PacketSection {
 
     @Override
     public int sourceBlockState(int index) {
-        if (this.bits == 0) return this.palette[0];
         int longIndex = index / this.elementsPerLong;
         int shift = (index - longIndex * this.elementsPerLong) * this.bits;
         long packed = this.source.getLong(this.packedStart + longIndex * Long.BYTES);
@@ -57,7 +55,7 @@ public final class LocalPaletteSection extends PacketSection {
     @Override
     protected void writeBlockStates(FriendlyByteBuf output) {
         output.writeByte(this.bits);
-        if (this.bits != 0) output.writeVarInt(this.palette.length);
+        output.writeVarInt(this.palette.length);
         for (int state : this.palette) {
             output.writeVarInt(this.blockStateMapper == null ? state : this.blockStateMapper[state]);
         }

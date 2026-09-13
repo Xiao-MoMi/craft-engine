@@ -11,7 +11,7 @@ import net.momirealms.craftengine.core.world.chunk.PalettedContainer;
  * A section view valid while its source packet buffer remains readable.
  * Block accessors return source IDs; remapping only affects serialization.
  */
-public abstract sealed class PacketSection permits LocalPaletteSection, GlobalPaletteSection {
+public abstract sealed class PacketSection permits SingleValueSection, LocalPaletteSection, GlobalPaletteSection {
     protected final FriendlyByteBuf source;
     protected final boolean hasArrayLength;
     protected int[] blockStateMapper;
@@ -38,10 +38,16 @@ public abstract sealed class PacketSection permits LocalPaletteSection, GlobalPa
     static PacketSection readPacket(FriendlyByteBuf source, IntIdentityList serverBlockList, IntIdentityList clientBlockList, IntIdentityList biomeList,
                                     boolean hasFluidCount, boolean hasArrayLength) {
         int headerLength = hasFluidCount ? 4 : 2;
-        PacketSection section = source.getUnsignedByte(source.readerIndex() + headerLength) <= 8
-                ? new LocalPaletteSection(source, biomeList, headerLength, hasArrayLength)
-                : new GlobalPaletteSection(source, biomeList, headerLength, hasArrayLength,
-                        MiscUtils.ceilLog2(serverBlockList.size()), MiscUtils.ceilLog2(clientBlockList.size()));
+        int bits = source.getUnsignedByte(source.readerIndex() + headerLength);
+        PacketSection section;
+        if (bits == 0) {
+            section = new SingleValueSection(source, biomeList, headerLength, hasArrayLength);
+        } else if (bits <= 8) {
+            section = new LocalPaletteSection(source, biomeList, headerLength, hasArrayLength);
+        } else {
+            section = new GlobalPaletteSection(source, biomeList, headerLength, hasArrayLength,
+                    MiscUtils.ceilLog2(serverBlockList.size()), MiscUtils.ceilLog2(clientBlockList.size()));
+        }
         section.readBiomes();
         return section;
     }

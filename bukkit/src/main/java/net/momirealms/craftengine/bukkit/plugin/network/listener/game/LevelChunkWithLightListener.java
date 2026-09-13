@@ -25,6 +25,7 @@ import net.momirealms.craftengine.core.world.chunk.client.occlusion.PackedOcclus
 import net.momirealms.craftengine.core.world.chunk.client.occlusion.UniformOcclusionStorage;
 import net.momirealms.craftengine.core.world.chunk.packet.LocalPaletteSection;
 import net.momirealms.craftengine.core.world.chunk.packet.PacketSection;
+import net.momirealms.craftengine.core.world.chunk.packet.SingleValueSection;
 import net.momirealms.sparrow.nbt.Tag;
 
 import java.util.Arrays;
@@ -109,7 +110,15 @@ public final class LevelChunkWithLightListener implements ByteBufferPacketListen
                 }
             }
 
-            if (section instanceof LocalPaletteSection localSection) {
+            if (section instanceof SingleValueSection singleSection) {
+                int state = singleSection.sourceBlockState(0);
+                if (occludingSections != null) {
+                    occludingSections[i] = new OccludingSection(UniformOcclusionStorage.fromTest(this.occlusionPredicate.test(state)));
+                }
+                if (lightSections != null) {
+                    lightSections[i] = new LightSection(UniformLightStorage.fromLightPredicate(getLightBlockType(state)));
+                }
+            } else if (section instanceof LocalPaletteSection localSection) {
 
                 // 处理客户端侧哪些方块有阻挡
                 if (occludingSections != null) {
