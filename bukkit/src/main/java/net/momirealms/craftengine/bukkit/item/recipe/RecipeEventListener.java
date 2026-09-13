@@ -1372,7 +1372,7 @@ public final class RecipeEventListener implements Listener {
     @EventHandler(ignoreCancelled = true, priority = EventPriority.HIGHEST)
     public void onStonecuttingFinish(InventoryClickEvent event) {
         if (!Config.enableRecipeSystem() || !VersionHelper.PREMIUM) return;
-        if (!(event.getView().getTopInventory() instanceof StonecutterInventory inventory)) return;
+        if (!(event.getInventory() instanceof StonecutterInventory inventory)) return;
         // 只关心结果槽
         if (event.getRawSlot() != 1) return;
         if (ItemStackUtils.isEmpty(inventory.getResult())) return;
