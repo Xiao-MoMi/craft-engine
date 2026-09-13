@@ -192,6 +192,7 @@ public class BukkitServerPlayer extends BukkitLivingEntity implements Player {
     private boolean enableClientCustomBlock = false;
     private int clientModProtocol = -1;
     private IntIdentityList blockList = new IntIdentityList(BlockStateUtils.vanillaBlockStateCount());
+    private boolean needsBlockStateBitWidthConversion = MiscUtils.ceilLog2(this.blockList.size()) != MiscUtils.ceilLog2(RegistryUtils.currentBlockRegistrySize());
     // cache if player can break blocks
     private boolean clientSideCanBreak = true;
     // 血量缩放：最近一次 UpdateAttributes 包内算出的客户端可见血量上限，-1 表示未知
@@ -1536,6 +1537,12 @@ public class BukkitServerPlayer extends BukkitLivingEntity implements Player {
     @Override
     public void setClientBlockList(IntIdentityList blockList) {
         this.blockList = blockList;
+        this.needsBlockStateBitWidthConversion = MiscUtils.ceilLog2(blockList.size()) != MiscUtils.ceilLog2(RegistryUtils.currentBlockRegistrySize());
+    }
+
+    @Override
+    public boolean needsBlockStateBitWidthConversion() {
+        return this.needsBlockStateBitWidthConversion;
     }
 
     @Override

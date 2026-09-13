@@ -283,7 +283,7 @@ debug_set_block:
     - /ce debug setblock
 
 debug_fill_section:
-  enable: true
+  enable: false
   permission: ce.command.debug.fill_section
   usage:
     - /craftengine debug fill-section

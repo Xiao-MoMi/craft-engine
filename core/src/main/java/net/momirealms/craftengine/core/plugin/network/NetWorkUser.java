@@ -110,10 +110,11 @@ public interface NetWorkUser {
 
     void removeTrackedChunk(long chunkPos);
 
-    @Nullable
     IntIdentityList clientBlockList();
 
     void setClientBlockList(IntIdentityList integers);
+
+    boolean needsBlockStateBitWidthConversion();
 
     ProtocolVersion protocolVersion();
 

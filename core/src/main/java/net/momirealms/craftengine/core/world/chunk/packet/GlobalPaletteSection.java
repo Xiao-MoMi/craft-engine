@@ -1,0 +1,85 @@
+package net.momirealms.craftengine.core.world.chunk.packet;
+
+import net.momirealms.craftengine.core.util.FriendlyByteBuf;
+import net.momirealms.craftengine.core.util.IntIdentityList;
+
+public final class GlobalPaletteSection extends PacketSection {
+    private final int bits;
+    private final int outputBits;
+    private final int elementsPerLong;
+    private final int mask;
+    private final int packedStart;
+    private final int packedLength;
+
+    GlobalPaletteSection(FriendlyByteBuf source, IntIdentityList biomeList, int headerLength, boolean hasArrayLength, int bits, int outputBits) {
+        super(source, biomeList, headerLength, hasArrayLength);
+        source.readByte();
+        this.bits = bits;
+        this.outputBits = outputBits;
+        this.elementsPerLong = 64 / bits;
+        this.mask = (1 << bits) - 1;
+        this.packedLength = this.readStorageLength(bits, 4096);
+        this.packedStart = source.readerIndex();
+        source.skipBytes(this.packedLength);
+    }
+
+    @Override
+    public int sourceBlockState(int index) {
+        int longIndex = index / this.elementsPerLong;
+        int shift = (index - longIndex * this.elementsPerLong) * this.bits;
+        return (int) (this.source.getLong(this.packedStart + longIndex * Long.BYTES) >>> shift) & this.mask;
+    }
+
+    @Override
+    protected boolean hasRemappedBlockStates(int[] mappings) {
+        int remaining = 4096;
+        int offset = this.packedStart;
+        while (remaining > 0) {
+            long packed = this.source.getLong(offset);
+            int entries = Math.min(remaining, this.elementsPerLong);
+            for (int i = 0; i < entries; i++) {
+                int state = (int) packed & this.mask;
+                if (state != mappings[state]) return true;
+                packed >>>= this.bits;
+            }
+            remaining -= entries;
+            offset += Long.BYTES;
+        }
+        return false;
+    }
+
+    @Override
+    protected void writeBlockStates(FriendlyByteBuf output) {
+        int outputElementsPerLong = 64 / this.outputBits;
+        int outputLongs = (4096 + outputElementsPerLong - 1) / outputElementsPerLong;
+        output.writeByte(this.outputBits);
+        if (this.hasArrayLength) output.writeVarInt(outputLongs);
+        if (this.blockStateMapper == null && this.outputBits == this.bits) {
+            output.writeBytes(this.source, this.packedStart, this.packedLength);
+            return;
+        }
+        long outputMask = (1L << this.outputBits) - 1;
+        long input = 0;
+        int inputRemaining = 0;
+        int inputOffset = this.packedStart;
+        int remaining = 4096;
+        while (remaining > 0) {
+            long packed = 0;
+            int entries = Math.min(remaining, outputElementsPerLong);
+            for (int i = 0; i < entries; i++) {
+                if (inputRemaining == 0) {
+                    input = this.source.getLong(inputOffset);
+                    inputOffset += Long.BYTES;
+                    inputRemaining = this.elementsPerLong;
+                }
+                int state = (int) input & this.mask;
+                int mapped = this.blockStateMapper == null ? state : this.blockStateMapper[state];
+                packed |= ((long) mapped & outputMask) << (i * this.outputBits);
+                input >>>= this.bits;
+                inputRemaining--;
+            }
+            output.writeLong(packed);
+            remaining -= entries;
+        }
+    }
+}
