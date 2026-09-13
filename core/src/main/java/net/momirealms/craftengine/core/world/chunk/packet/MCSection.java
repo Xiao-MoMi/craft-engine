@@ -10,7 +10,7 @@ public final class MCSection {
     private short fluidCount;
     private final PalettedContainer<Integer> serverBlockStateContainer;
     private final IndexedIterable<Integer> clientBlockStateList;
-    private PalettedContainer<Integer> biomeContainer;
+    private final PalettedContainer<Integer> biomeContainer;
 
     public MCSection(IndexedIterable<Integer> clientBlockStateList, IndexedIterable<Integer> serverBlockStateList, IndexedIterable<Integer> biomeList) {
         this.serverBlockStateContainer = new PalettedContainer<>(serverBlockStateList, 0, PalettedContainer.PaletteProvider.BLOCK_STATE);
@@ -22,9 +22,7 @@ public final class MCSection {
         this.nonEmptyBlockCount = buf.readShort();
         if (VersionHelper.isOrAbove26_1) this.fluidCount = buf.readShort();
         this.serverBlockStateContainer.readPacket(buf);
-        PalettedContainer<Integer> palettedContainer = this.biomeContainer.slice();
-        palettedContainer.readPacket(buf);
-        this.biomeContainer = palettedContainer;
+        this.biomeContainer.readPacket(buf);
     }
 
     public void writePacket(FriendlyByteBuf buf) {
