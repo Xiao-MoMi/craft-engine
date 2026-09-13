@@ -190,26 +190,26 @@ public final class LevelChunkWithLightListener implements ByteBufferPacketListen
             } else {
                 hasGlobalPalette = true;
 
-                PackedOcclusionStorage occlusionStorage = null;
-                if (occludingSections != null) {
-                    occlusionStorage = new PackedOcclusionStorage(false);
-                    occludingSections[i] = new OccludingSection(occlusionStorage);
-                }
-
-                PackedLightStorage lightStorage = null;
-                if (lightSections != null) {
-                    lightStorage = new PackedLightStorage();
-                    lightSections[i] = new LightSection(lightStorage);
-                }
-
-                if (occlusionStorage != null || lightStorage != null) {
-                    for (int j = 0; j < 4096; j++) {
+                if (occludingSections != null || lightSections != null) {
+                    int firstState = section.sourceBlockState(0);
+                    OccludingSection occlusionSection = null;
+                    if (occludingSections != null) {
+                        occlusionSection = new OccludingSection(UniformOcclusionStorage.fromTest(this.occlusionPredicate.test(firstState)));
+                        occludingSections[i] = occlusionSection;
+                    }
+                    LightSection lightSection = null;
+                    if (lightSections != null) {
+                        lightSection = new LightSection(UniformLightStorage.fromLightPredicate(getLightBlockType(firstState)));
+                        lightSections[i] = lightSection;
+                    }
+                    // Uniform storage expands only when a different block type is encountered.
+                    for (int j = 1; j < 4096; j++) {
                         int state = section.sourceBlockState(j);
-                        if (occlusionStorage != null) {
-                            occlusionStorage.set(j, this.occlusionPredicate.test(state));
+                        if (occlusionSection != null) {
+                            occlusionSection.setOccluding(j, this.occlusionPredicate.test(state));
                         }
-                        if (lightStorage != null) {
-                            lightStorage.set(j, getLightBlockType(state));
+                        if (lightSection != null) {
+                            lightSection.setBlockType(j, getLightBlockType(state));
                         }
                     }
                 }
