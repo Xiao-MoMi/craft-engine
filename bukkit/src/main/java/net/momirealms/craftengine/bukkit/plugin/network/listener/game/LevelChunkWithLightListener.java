@@ -23,6 +23,7 @@ import net.momirealms.craftengine.core.world.chunk.client.light.UniformLightStor
 import net.momirealms.craftengine.core.world.chunk.client.occlusion.OccludingSection;
 import net.momirealms.craftengine.core.world.chunk.client.occlusion.PackedOcclusionStorage;
 import net.momirealms.craftengine.core.world.chunk.client.occlusion.UniformOcclusionStorage;
+import net.momirealms.craftengine.core.world.chunk.packet.GlobalPaletteSection;
 import net.momirealms.craftengine.core.world.chunk.packet.LocalPaletteSection;
 import net.momirealms.craftengine.core.world.chunk.packet.PacketSection;
 import net.momirealms.craftengine.core.world.chunk.packet.SingleValueSection;
@@ -94,10 +95,12 @@ public final class LevelChunkWithLightListener implements ByteBufferPacketListen
         // 创建客户侧光照世界, 只在家具中存在 GlowingFurnitureBehavior 行为时创建.
         LightSection[] lightSections = Config.enableFurnitureLightSystem() ? new LightSection[count] : null;
 
+        SectionTracker tracker = null;
         for (int i = 0; i < count; i++) {
             PacketSection section = PacketSection.readPacket(chunkDataByteBuf, this.blockList, clientBlockList, this.biomeList);
             sections[i] = section;
-            if (section.remap(remapper)) {
+            boolean scanGlobal = section instanceof GlobalPaletteSection && (occludingSections != null || lightSections != null);
+            if (!scanGlobal && section.remap(remapper)) {
                 hasChanges = true;
             }
 
@@ -110,6 +113,8 @@ public final class LevelChunkWithLightListener implements ByteBufferPacketListen
                 }
             }
 
+            boolean scanOcclusion = false;
+            boolean scanLight = false;
             if (section instanceof SingleValueSection singleSection) {
                 int state = singleSection.sourceBlockState(0);
                 if (occludingSections != null) {
@@ -119,109 +124,45 @@ public final class LevelChunkWithLightListener implements ByteBufferPacketListen
                     lightSections[i] = new LightSection(UniformLightStorage.fromLightPredicate(getLightBlockType(state)));
                 }
             } else if (section instanceof LocalPaletteSection localSection) {
-
-                // 处理客户端侧哪些方块有阻挡
-                if (occludingSections != null) {
-                    int size = localSection.paletteSize();
-                    // 单个元素的情况下，使用优化的存储方案
-                    if (size == 1) {
-                        occludingSections[i] = new OccludingSection(UniformOcclusionStorage.fromTest(this.occlusionPredicate.test(localSection.sourcePaletteState(0))));
-                    } else {
-                        boolean hasOcclusions = false;
-                        boolean hasNoOcclusions = false;
-                        for (int h = 0; h < size; h++) {
-                            if (this.occlusionPredicate.test(localSection.sourcePaletteState(h))) {
-                                hasOcclusions = true;
-                            } else {
-                                hasNoOcclusions = true;
-                            }
-                            if (hasOcclusions && hasNoOcclusions) {
-                                break;
-                            }
+                if (occludingSections != null || lightSections != null) {
+                    int firstState = localSection.sourcePaletteState(0);
+                    boolean firstOcclusion = occludingSections != null && this.occlusionPredicate.test(firstState);
+                    int firstLight = lightSections != null ? getLightBlockType(firstState) : 0;
+                    for (int h = 1; h < localSection.paletteSize(); h++) {
+                        int state = localSection.sourcePaletteState(h);
+                        if (occludingSections != null && !scanOcclusion) {
+                            scanOcclusion = this.occlusionPredicate.test(state) != firstOcclusion;
                         }
-                        // 两种情况都有，那么需要一个个遍历处理视线遮挡数据
-                        if (hasOcclusions && hasNoOcclusions) {
-                            PackedOcclusionStorage storage = new PackedOcclusionStorage(false);
-                            occludingSections[i] = new OccludingSection(storage);
-                            for (int j = 0; j < 4096; j++) {
-                                int state = localSection.sourceBlockState(j);
-                                storage.set(j, this.occlusionPredicate.test(state));
-                            }
+                        if (lightSections != null && !scanLight) {
+                            scanLight = getLightBlockType(state) != firstLight;
                         }
-                        // 全遮蔽或全透视则使用优化存储方案
-                        else {
-                            occludingSections[i] = new OccludingSection(UniformOcclusionStorage.fromTest(hasOcclusions));
+                        if ((occludingSections == null || scanOcclusion) && (lightSections == null || scanLight)) {
+                            break;
                         }
                     }
-                }
-
-                // 处理客户端侧光照方块
-                if (lightSections != null) {
-                    int size = localSection.paletteSize();
-                    // 单个元素的情况下，使用优化的存储方案
-                    if (size == 1) {
-                        int result = getLightBlockType(localSection.sourcePaletteState(0));
-                        lightSections[i] = new LightSection(UniformLightStorage.fromLightPredicate(result));
+                    if (occludingSections != null && !scanOcclusion) {
+                        occludingSections[i] = new OccludingSection(UniformOcclusionStorage.fromTest(firstOcclusion));
                     }
-                    // 多元素情况, 遍历检查
-                    else {
-                        boolean hasReplaceable = false;
-                        boolean hasSolid = false;
-
-                        // 遍历调色盘的元素
-                        for (int h = 0; h < size; h++) {
-                            int result = getLightBlockType(localSection.sourcePaletteState(h));
-                            if (result == 0) {
-                                hasSolid = true;
-                            } else {
-                                hasReplaceable = true;
-                            }
-                            if (hasReplaceable && hasSolid) {
-                                break;
-                            }
-                        }
-
-                        // 如果全实心, 则使用优化存储
-                        if (hasSolid && !hasReplaceable) {
-                            lightSections[i] = new LightSection(UniformLightStorage.SOLID);
-                            continue;
-                        }
-
-                        // 需要一个个遍历处理
-                        PackedLightStorage storage = new PackedLightStorage();
-                        lightSections[i] = new LightSection(storage);
-                        for (int j = 0; j < 4096; j++) {
-                            int state = localSection.sourceBlockState(j);
-                            storage.set(j, getLightBlockType(state));
-                        }
+                    if (lightSections != null && !scanLight) {
+                        lightSections[i] = new LightSection(UniformLightStorage.fromLightPredicate(firstLight));
                     }
                 }
             } else {
                 hasGlobalPalette = true;
+                scanOcclusion = occludingSections != null;
+                scanLight = lightSections != null;
+            }
 
-                if (occludingSections != null || lightSections != null) {
-                    int firstState = section.sourceBlockState(0);
-                    OccludingSection occlusionSection = null;
-                    if (occludingSections != null) {
-                        occlusionSection = new OccludingSection(UniformOcclusionStorage.fromTest(this.occlusionPredicate.test(firstState)));
-                        occludingSections[i] = occlusionSection;
-                    }
-                    LightSection lightSection = null;
-                    if (lightSections != null) {
-                        lightSection = new LightSection(UniformLightStorage.fromLightPredicate(getLightBlockType(firstState)));
-                        lightSections[i] = lightSection;
-                    }
-                    // Uniform storage expands only when a different block type is encountered.
-                    for (int j = 1; j < 4096; j++) {
-                        int state = section.sourceBlockState(j);
-                        if (occlusionSection != null) {
-                            occlusionSection.setOccluding(j, this.occlusionPredicate.test(state));
-                        }
-                        if (lightSection != null) {
-                            lightSection.setBlockType(j, getLightBlockType(state));
-                        }
-                    }
+            if (scanOcclusion || scanLight) {
+                if (tracker == null) tracker = new SectionTracker(this.occlusionPredicate);
+                tracker.reset(scanOcclusion, scanLight, section.sourceBlockState(0));
+                if (section instanceof GlobalPaletteSection globalSection) {
+                    if (globalSection.remap(remapper, tracker)) hasChanges = true;
+                } else {
+                    section.forEachBlockState(tracker);
                 }
+                if (scanOcclusion) occludingSections[i] = tracker.buildOcclusionSection();
+                if (scanLight) lightSections[i] = tracker.buildLightSection();
             }
         }
 
@@ -271,6 +212,70 @@ public final class LevelChunkWithLightListener implements ByteBufferPacketListen
                 // 生成方块实体
                 ceChunk.spawnBlockEntities(player);
             }
+        }
+    }
+
+    private static final class SectionTracker implements PacketSection.BlockStateConsumer {
+        private final IntPredicate occlusionPredicate;
+        private boolean trackOcclusion;
+        private boolean trackLight;
+        private boolean firstOcclusion;
+        private int firstLight;
+        private PackedOcclusionStorage occlusionStorage;
+        private PackedLightStorage lightStorage;
+        private long occlusionWord;
+        private long lightWord;
+
+        private SectionTracker(IntPredicate occlusionPredicate) {
+            this.occlusionPredicate = occlusionPredicate;
+        }
+
+        private void reset(boolean trackOcclusion, boolean trackLight, int firstState) {
+            this.trackOcclusion = trackOcclusion;
+            this.trackLight = trackLight;
+            this.firstOcclusion = trackOcclusion && this.occlusionPredicate.test(firstState);
+            this.firstLight = trackLight ? getLightBlockType(firstState) : 0;
+            this.occlusionStorage = null;
+            this.lightStorage = null;
+            this.occlusionWord = 0;
+            this.lightWord = 0;
+        }
+
+        @Override
+        public void accept(int index, int state) {
+            // Each index is visited once, so accumulate full words instead of updating individual bits.
+            if (this.trackOcclusion) {
+                boolean occluding = this.occlusionPredicate.test(state);
+                if (this.occlusionStorage == null && occluding != this.firstOcclusion) {
+                    this.occlusionStorage = new PackedOcclusionStorage(this.firstOcclusion);
+                }
+                this.occlusionWord |= (occluding ? 1L : 0L) << (index & 63);
+                if ((index & 63) == 63) {
+                    if (this.occlusionStorage != null) this.occlusionStorage.setPackedWord(index >>> 6, this.occlusionWord);
+                    this.occlusionWord = 0;
+                }
+            }
+            if (this.trackLight) {
+                int type = getLightBlockType(state);
+                if (this.lightStorage == null && type != this.firstLight) {
+                    this.lightStorage = new PackedLightStorage(this.firstLight);
+                }
+                this.lightWord |= (long) type << ((index & 31) << 1);
+                if ((index & 31) == 31) {
+                    if (this.lightStorage != null) this.lightStorage.setPackedWord(index >>> 5, this.lightWord);
+                    this.lightWord = 0;
+                }
+            }
+        }
+
+        private OccludingSection buildOcclusionSection() {
+            return new OccludingSection(this.occlusionStorage != null
+                    ? this.occlusionStorage : UniformOcclusionStorage.fromTest(this.firstOcclusion));
+        }
+
+        private LightSection buildLightSection() {
+            return new LightSection(this.lightStorage != null
+                    ? this.lightStorage : UniformLightStorage.fromLightPredicate(this.firstLight));
         }
     }
 

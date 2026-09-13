@@ -2,6 +2,7 @@ package net.momirealms.craftengine.core.world.chunk.packet;
 
 import net.momirealms.craftengine.core.util.FriendlyByteBuf;
 import net.momirealms.craftengine.core.util.IntIdentityList;
+import org.jetbrains.annotations.Nullable;
 
 public final class GlobalPaletteSection extends PacketSection {
     private final int bits;
@@ -31,21 +32,42 @@ public final class GlobalPaletteSection extends PacketSection {
     }
 
     @Override
+    public void forEachBlockState(BlockStateConsumer consumer) {
+        this.scan(null, consumer);
+    }
+
+    // Check the output mapping while visiting source states in the same pass.
+    public boolean remap(int[] mappings, BlockStateConsumer consumer) {
+        boolean changed = this.scan(mappings, consumer);
+        this.blockStateMapper = changed ? mappings : null;
+        return changed;
+    }
+
+    @Override
     protected boolean hasRemappedBlockStates(int[] mappings) {
-        int remaining = 4096;
+        return this.scan(mappings, null);
+    }
+
+    private boolean scan(@Nullable int[] mappings, @Nullable BlockStateConsumer consumer) {
+        boolean changed = false;
+        int index = 0;
         int offset = this.packedStart;
-        while (remaining > 0) {
+        while (index < 4096) {
             long packed = this.source.getLong(offset);
-            int entries = Math.min(remaining, this.elementsPerLong);
-            for (int i = 0; i < entries; i++) {
+            int end = Math.min(4096, index + this.elementsPerLong);
+            while (index < end) {
                 int state = (int) packed & this.mask;
-                if (state != mappings[state]) return true;
+                if (!changed && mappings != null && state != mappings[state]) {
+                    if (consumer == null) return true;
+                    changed = true;
+                }
+                if (consumer != null) consumer.accept(index, state);
+                index++;
                 packed >>>= this.bits;
             }
-            remaining -= entries;
             offset += Long.BYTES;
         }
-        return false;
+        return changed;
     }
 
     @Override

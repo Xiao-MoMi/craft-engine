@@ -94,6 +94,14 @@ public abstract sealed class PacketSection permits SingleValueSection, LocalPale
 
     public abstract int sourceBlockState(int index);
 
+    // Visits all 4096 source states in packed index order without consuming the source buffer.
+    public abstract void forEachBlockState(BlockStateConsumer consumer);
+
+    @FunctionalInterface
+    public interface BlockStateConsumer {
+        void accept(int index, int state);
+    }
+
     protected abstract boolean hasRemappedBlockStates(int[] mappings);
 
     protected abstract void writeBlockStates(FriendlyByteBuf output);

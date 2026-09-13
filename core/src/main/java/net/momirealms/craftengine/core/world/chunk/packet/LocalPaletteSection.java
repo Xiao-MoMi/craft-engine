@@ -53,6 +53,22 @@ public final class LocalPaletteSection extends PacketSection {
     }
 
     @Override
+    public void forEachBlockState(BlockStateConsumer consumer) {
+        int mask = (1 << this.bits) - 1;
+        int index = 0;
+        int offset = this.packedStart;
+        while (index < 4096) {
+            long packed = this.source.getLong(offset);
+            int end = Math.min(4096, index + this.elementsPerLong);
+            while (index < end) {
+                consumer.accept(index++, this.palette[(int) packed & mask]);
+                packed >>>= this.bits;
+            }
+            offset += Long.BYTES;
+        }
+    }
+
+    @Override
     protected void writeBlockStates(FriendlyByteBuf output) {
         output.writeByte(this.bits);
         output.writeVarInt(this.palette.length);

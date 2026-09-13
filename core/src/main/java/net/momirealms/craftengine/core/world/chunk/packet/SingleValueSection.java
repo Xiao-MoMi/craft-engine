@@ -24,6 +24,13 @@ public final class SingleValueSection extends PacketSection {
     }
 
     @Override
+    public void forEachBlockState(BlockStateConsumer consumer) {
+        for (int i = 0; i < 4096; i++) {
+            consumer.accept(i, this.state);
+        }
+    }
+
+    @Override
     protected void writeBlockStates(FriendlyByteBuf output) {
         output.writeByte(0);
         output.writeVarInt(this.blockStateMapper == null ? this.state : this.blockStateMapper[this.state]);

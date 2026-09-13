@@ -34,4 +34,9 @@ public final class PackedOcclusionStorage implements ClientSectionOcclusionStora
             this.data[arrayIndex] &= ~(1L << bitIndex);
         }
     }
+
+    // Replaces the packed values of 64 consecutive blocks.
+    public void setPackedWord(int wordIndex, long value) {
+        this.data[wordIndex] = value;
+    }
 }
