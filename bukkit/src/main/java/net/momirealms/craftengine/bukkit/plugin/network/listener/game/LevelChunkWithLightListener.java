@@ -1,6 +1,6 @@
 package net.momirealms.craftengine.bukkit.plugin.network.listener.game;
 
-import io.netty.buffer.Unpooled;
+import io.netty.buffer.PooledByteBufAllocator;
 import net.momirealms.craftengine.bukkit.entity.furniture.behavior.GlowingFurnitureBehaviorTemplate;
 import net.momirealms.craftengine.bukkit.plugin.user.BukkitServerPlayer;
 import net.momirealms.craftengine.core.entity.player.Player;
@@ -220,7 +220,7 @@ public final class LevelChunkWithLightListener implements ByteBufferPacketListen
         if (hasChanges || (needsBitWidthConversion && hasGlobalPalette)) {
             int tailLength = buf.readableBytes();
             // 高度图
-            FriendlyByteBuf staging = new FriendlyByteBuf(Unpooled.buffer(heightmapsLength + chunkDataBufferSize + 16 + tailLength));
+            FriendlyByteBuf staging = new FriendlyByteBuf(PooledByteBufAllocator.DEFAULT.buffer(heightmapsLength + chunkDataBufferSize + 16 + tailLength));
             try {
                 if (VersionHelper.isOrAbove1_21_5) {
                     staging.writeBytes(buf, heightmapsStart, heightmapsLength);
