@@ -90,4 +90,17 @@ public interface LevelChunkSectionProxy {
     @FieldSetter(name = "fluidCount", activeIf = "min_version=26.1 || (has_patch=leaf && min_version=1.21.11)", optional = true)
     default void setFluidCount(Object target, short fluidCount) {
     }
+
+    @FieldGetter(name = "isRandomlyTickingBlocksStatus", activeIf = "has_patch=universespigot", optional = true)
+    default boolean isRandomlyTickingBlocksStatus(Object target) {
+        return false;
+    }
+
+    @FieldSetter(name = "isRandomlyTickingBlocksStatus", activeIf = "has_patch=universespigot", optional = true)
+    default void setIsRandomlyTickingBlocksStatus(Object target, boolean status) {
+    }
+
+    @FieldSetter(name = "hasOnlyAir", activeIf = "has_patch=universespigot", optional = true)
+    default void setHasOnlyAir(Object target, boolean hasOnlyAir) {
+    }
 }
