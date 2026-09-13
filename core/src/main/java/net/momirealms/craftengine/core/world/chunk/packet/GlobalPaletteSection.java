@@ -81,8 +81,12 @@ public final class GlobalPaletteSection extends PacketSection {
         int outputLongs = (4096 + outputElementsPerLong - 1) / outputElementsPerLong;
         output.writeByte(this.outputBits);
         if (this.hasArrayLength) output.writeVarInt(outputLongs);
-        if (this.blockStateMapper == null && this.outputBits == this.bits) {
-            output.writeBytes(this.source, this.packedStart, this.packedLength);
+        if (this.outputBits == this.bits) {
+            if (this.blockStateMapper == null) {
+                output.writeBytes(this.source, this.packedStart, this.packedLength);
+            } else {
+                this.writeMappedBlockStates(output);
+            }
             return;
         }
         long outputMask = (1L << this.outputBits) - 1;
@@ -106,6 +110,26 @@ public final class GlobalPaletteSection extends PacketSection {
                 inputRemaining--;
             }
             output.writeLong(packed);
+            remaining -= entries;
+        }
+    }
+
+    private void writeMappedBlockStates(FriendlyByteBuf output) {
+        int remaining = 4096;
+        int offset = this.packedStart;
+        while (remaining > 0) {
+            long packed = this.source.getLong(offset);
+            long input = packed;
+            int entries = Math.min(remaining, this.elementsPerLong);
+            for (int i = 0; i < entries; i++) {
+                int state = (int) input & this.mask;
+                int mapped = this.blockStateMapper[state];
+                // Unchanged IDs produce a zero delta, preserving their slots without a branch.
+                packed ^= ((long) (state ^ mapped) & this.mask) << (i * this.bits);
+                input >>>= this.bits;
+            }
+            output.writeLong(packed);
+            offset += Long.BYTES;
             remaining -= entries;
         }
     }
