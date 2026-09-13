@@ -14,13 +14,14 @@ import net.momirealms.craftengine.core.world.chunk.PalettedContainer;
 public abstract sealed class PacketSection permits SingleValueSection, LocalPaletteSection, GlobalPaletteSection {
     protected final FriendlyByteBuf source;
     protected final boolean hasArrayLength;
-    protected int[] blockStateMapper;
     private final int start;
     private final int headerLength;
     private final IntIdentityList biomeList;
+    protected int[] blockStateMapper;
     private int biomeStart;
     private int biomeLength;
     private PalettedContainer<Integer> biomeContainer;
+    private boolean biomesChanged;
 
     protected PacketSection(FriendlyByteBuf source, IntIdentityList biomeList, int headerLength, boolean hasArrayLength) {
         this.source = source;
@@ -77,6 +78,7 @@ public abstract sealed class PacketSection permits SingleValueSection, LocalPale
         this.biomeLength = this.source.readerIndex() - this.biomeStart;
     }
 
+    // Call markBiomesChanged() after modifying the returned container.
     public final PalettedContainer<Integer> biomeContainer() {
         if (this.biomeContainer == null) {
             this.biomeContainer = new PalettedContainer<>(this.biomeList, 0, PalettedContainer.PaletteProvider.BIOME);
@@ -85,7 +87,10 @@ public abstract sealed class PacketSection permits SingleValueSection, LocalPale
         return this.biomeContainer;
     }
 
-    // Replace the output mapping against the original IDs, without modifying the source packet.
+    public final void markBiomesChanged() {
+        this.biomesChanged = true;
+    }
+
     public final boolean remap(int[] mappings) {
         boolean changed = this.hasRemappedBlockStates(mappings);
         this.blockStateMapper = changed ? mappings : null;
@@ -94,25 +99,32 @@ public abstract sealed class PacketSection permits SingleValueSection, LocalPale
 
     public abstract int sourceBlockState(int index);
 
-    // Visits all 4096 source states in packed index order without consuming the source buffer.
     public abstract void forEachBlockState(BlockStateConsumer consumer);
-
-    @FunctionalInterface
-    public interface BlockStateConsumer {
-        void accept(int index, int state);
-    }
 
     protected abstract boolean hasRemappedBlockStates(int[] mappings);
 
     protected abstract void writeBlockStates(FriendlyByteBuf output);
 
+    protected boolean needsBlockStateRewrite() {
+        return this.blockStateMapper != null;
+    }
+
     public final void writePacket(FriendlyByteBuf output) {
+        if (!this.biomesChanged && !this.needsBlockStateRewrite()) {
+            output.writeBytes(this.source, this.start, this.biomeStart + this.biomeLength - this.start);
+            return;
+        }
         output.writeBytes(this.source, this.start, this.headerLength);
         this.writeBlockStates(output);
-        if (this.biomeContainer == null) {
+        if (!this.biomesChanged) {
             output.writeBytes(this.source, this.biomeStart, this.biomeLength);
         } else {
             this.biomeContainer.writePacket(output);
         }
+    }
+
+    @FunctionalInterface
+    public interface BlockStateConsumer {
+        void accept(int index, int state);
     }
 }

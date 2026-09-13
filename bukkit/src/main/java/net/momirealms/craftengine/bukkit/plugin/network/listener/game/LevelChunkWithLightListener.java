@@ -105,6 +105,7 @@ public final class LevelChunkWithLightListener implements ByteBufferPacketListen
             if (chunkPos != null) {
                 PalettedContainer<Integer> biomes = section.biomeContainer();
                 if (currentBiomeRemapper.remap(player, chunkPos, biomes)) {
+                    section.markBiomesChanged();
                     hasChanges = true;
                 }
             }

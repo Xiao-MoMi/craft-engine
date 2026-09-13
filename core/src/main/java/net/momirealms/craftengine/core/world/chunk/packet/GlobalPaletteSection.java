@@ -48,7 +48,7 @@ public final class GlobalPaletteSection extends PacketSection {
         return this.scan(mappings, null);
     }
 
-    private boolean scan(@Nullable int[] mappings, @Nullable BlockStateConsumer consumer) {
+    private boolean scan(int @Nullable [] mappings, @Nullable BlockStateConsumer consumer) {
         boolean changed = false;
         int index = 0;
         int offset = this.packedStart;
@@ -68,6 +68,11 @@ public final class GlobalPaletteSection extends PacketSection {
             offset += Long.BYTES;
         }
         return changed;
+    }
+
+    @Override
+    protected boolean needsBlockStateRewrite() {
+        return super.needsBlockStateRewrite() || this.outputBits != this.bits;
     }
 
     @Override
