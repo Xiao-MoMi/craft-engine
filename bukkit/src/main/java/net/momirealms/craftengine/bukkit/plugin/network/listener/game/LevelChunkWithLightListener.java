@@ -13,6 +13,7 @@ import net.momirealms.craftengine.core.util.IntIdentityList;
 import net.momirealms.craftengine.core.util.VersionHelper;
 import net.momirealms.craftengine.core.world.CEWorld;
 import net.momirealms.craftengine.core.world.ChunkPos;
+import net.momirealms.craftengine.core.world.SectionPos;
 import net.momirealms.craftengine.core.world.WorldHeight;
 import net.momirealms.craftengine.core.world.chunk.CEChunk;
 import net.momirealms.craftengine.core.world.chunk.PalettedContainer;
@@ -91,7 +92,6 @@ public final class LevelChunkWithLightListener implements ByteBufferPacketListen
         LightSection[] lightSections = Config.enableFurnitureLightSystem() ? new LightSection[count] : null;
 
         BiomeRemapper currentBiomeRemapper = biomeRemapper;
-        ChunkPos chunkPos = currentBiomeRemapper != BiomeRemapper.DUMMY ? new ChunkPos(chunkX, chunkZ) : null;
         SectionTracker tracker = null;
         for (int i = 0; i < count; i++) {
             PacketSection section = PacketSection.readPacket(chunkDataByteBuf, this.blockList, clientBlockList, this.biomeList);
@@ -102,9 +102,10 @@ public final class LevelChunkWithLightListener implements ByteBufferPacketListen
             }
 
             // 重定向生物群系
-            if (chunkPos != null) {
+            if (currentBiomeRemapper != BiomeRemapper.DUMMY) {
                 PalettedContainer<Integer> biomes = section.biomeContainer();
-                if (currentBiomeRemapper.remap(player, chunkPos, biomes)) {
+                SectionPos sectionPos = new SectionPos(chunkX, worldHeight.getSectionYFromSectionIndex(i), chunkZ);
+                if (currentBiomeRemapper.remap(player, sectionPos, biomes)) {
                     section.markBiomesChanged();
                     hasChanges = true;
                 }
@@ -236,7 +237,6 @@ public final class LevelChunkWithLightListener implements ByteBufferPacketListen
 
         @Override
         public void accept(int index, int state) {
-            // Each index is visited once, so accumulate full words instead of updating individual bits.
             if (this.trackOcclusion) {
                 boolean occluding = this.occlusionPredicate.test(state);
                 if (this.occlusionStorage == null && occluding != this.firstOcclusion) {
@@ -303,21 +303,21 @@ public final class LevelChunkWithLightListener implements ByteBufferPacketListen
     public interface BiomeRemapper {
         BiomeRemapper DUMMY = (player, pos, biomes) -> false;
 
-        boolean remap(Player player, ChunkPos pos, PalettedContainer<Integer> biomes);
+        boolean remap(Player player, SectionPos pos, PalettedContainer<Integer> biomes);
     }
 
     private record DualBiomeRemapper(BiomeRemapper first, BiomeRemapper second) implements BiomeRemapper {
 
         @Override
-        public boolean remap(Player player, ChunkPos pos, PalettedContainer<Integer> biomes) {
-            return this.first.remap(player, pos, biomes) || this.second.remap(player, pos, biomes);
+        public boolean remap(Player player, SectionPos pos, PalettedContainer<Integer> biomes) {
+            return this.first.remap(player, pos, biomes) | this.second.remap(player, pos, biomes);
         }
     }
 
     private record CompositeBiomeRemapper(BiomeRemapper[] remappers) implements BiomeRemapper {
 
         @Override
-        public boolean remap(Player player, ChunkPos pos, PalettedContainer<Integer> biomes) {
+        public boolean remap(Player player, SectionPos pos, PalettedContainer<Integer> biomes) {
             boolean anyChanged = false;
             for (BiomeRemapper remapper : this.remappers) {
                 if (remapper.remap(player, pos, biomes)) {

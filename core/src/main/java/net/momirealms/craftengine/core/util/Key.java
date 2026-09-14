@@ -69,6 +69,14 @@ public final class Key {
         return new Key(transformer.apply(this.namespace), transformer.apply(this.value));
     }
 
+    public boolean isMinecraftNamespace() {
+        return this.namespace.equals(MINECRAFT_NAMESPACE);
+    }
+
+    public boolean isCraftEngineNamespace() {
+        return this.namespace.equals(CRAFTENGINE_NAMESPACE);
+    }
+    
     public boolean contains(String key) {
         return this.value.contains(key) || this.namespace.contains(key);
     }
