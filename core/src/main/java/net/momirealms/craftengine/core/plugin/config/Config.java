@@ -277,6 +277,7 @@ public final class Config {
     private Key equipment$sacrificed_vanilla_armor$asset_id;
     private Key equipment$sacrificed_vanilla_armor$humanoid;
     private Key equipment$sacrificed_vanilla_armor$humanoid_leggings;
+    private boolean equipment$lod$enable;
 
     private boolean emoji$contexts$chat;
     private boolean emoji$contexts$book;
@@ -636,6 +637,9 @@ public final class Config {
         this.equipment$sacrificed_vanilla_armor$asset_id = Key.of(config.getString("equipment.sacrificed-vanilla-armor.asset-id", "minecraft:chainmail"));
         this.equipment$sacrificed_vanilla_armor$humanoid = Key.of(config.getString("equipment.sacrificed-vanilla-armor.humanoid", "minecraft:trims/entity/humanoid/chainmail"));
         this.equipment$sacrificed_vanilla_armor$humanoid_leggings = Key.of(config.getString("equipment.sacrificed-vanilla-armor.humanoid-leggings", "minecraft:trims/entity/humanoid_leggings/chainmail"));
+        if (this.firstTime) {
+            this.equipment$lod$enable = config.getBoolean("equipment.lod.enable", true);
+        }
 
         // item
         this.item$client_bound_model = config.getBoolean("item.client-bound-model", true) && VersionHelper.PREMIUM;
@@ -1603,6 +1607,10 @@ public final class Config {
 
     public static int itemDataFixerUpperFallbackVersion() {
         return instance.item$data_fixer_upper$fallback_version;
+    }
+
+    public static boolean enableEquipmentLod() {
+        return instance.equipment$lod$enable;
     }
 
     public static boolean enableEntityCulling() {

@@ -154,14 +154,16 @@ public final class AddEntityListener implements ByteBufferPacketListener {
                 user.entityViews().put(id, FurnitureCollisionPacketHandler.INSTANCE);
             }
         };
-        for (String name : new String[]{"player", "mannequin", "zombie", "zombie_villager", "husk", "drowned",
-                "skeleton", "stray", "wither_skeleton", "bogged", "parched", "piglin", "piglin_brute", "zombified_piglin",
-                "giant", "wolf", "horse", "donkey", "mule", "skeleton_horse", "zombie_horse", "llama",
-                "trader_llama", "pig", "strider", "camel", "camel_husk", "happy_ghast", "nautilus", "zombie_nautilus"}) {
-            Object type = RegistryUtils.getRegistryValue(BuiltInRegistriesProxy.ENTITY_TYPE, KeyUtils.toIdentifier(Key.MINECRAFT_NAMESPACE, name));
-            if (type == null) continue;
-            int id = RegistryProxy.INSTANCE.getId(BuiltInRegistriesProxy.ENTITY_TYPE, type);
-            this.handlers[id] = simpleAddEntityHandler(EquipmentEntityPacketHandler.INSTANCE);
+        if (Config.enableEquipmentLod()) {
+            for (String name : new String[]{"player", "mannequin", "zombie", "zombie_villager", "husk", "drowned",
+                    "skeleton", "stray", "wither_skeleton", "bogged", "parched", "piglin", "piglin_brute", "zombified_piglin",
+                    "giant", "wolf", "horse", "donkey", "mule", "skeleton_horse", "zombie_horse", "llama",
+                    "trader_llama", "pig", "strider", "camel", "camel_husk", "happy_ghast", "nautilus", "zombie_nautilus"}) {
+                Object type = RegistryUtils.getRegistryValue(BuiltInRegistriesProxy.ENTITY_TYPE, KeyUtils.toIdentifier(Key.MINECRAFT_NAMESPACE, name));
+                if (type == null) continue;
+                int id = RegistryProxy.INSTANCE.getId(BuiltInRegistriesProxy.ENTITY_TYPE, type);
+                this.handlers[id] = simpleAddEntityHandler(EquipmentEntityPacketHandler.INSTANCE);
+            }
         }
     }
 

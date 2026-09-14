@@ -294,7 +294,7 @@ public class BukkitServerPlayer extends BukkitLivingEntity implements Player {
         this.entityId = player.getEntityId();
         this.isNameVerified = true;
         this.initPlayStageFields();
-        this.equipmentLod = VersionHelper.isOrAbove1_21_2 ? new EquipmentLodTracker(this) : null;
+        this.equipmentLod = VersionHelper.isOrAbove1_21_2 && Config.enableEquipmentLod() ? new EquipmentLodTracker(this) : null;
         byte[] bytes = player.getPersistentDataContainer().get(KeyUtils.toNamespacedKey(CooldownData.COOLDOWN_KEY), PersistentDataType.BYTE_ARRAY);
         String locale = player.getPersistentDataContainer().get(KeyUtils.toNamespacedKey(SELECTED_LOCALE_KEY), PersistentDataType.STRING);
         Double scale = player.getPersistentDataContainer().get(KeyUtils.toNamespacedKey(ENTITY_CULLING_DISTANCE_SCALE), PersistentDataType.DOUBLE);
