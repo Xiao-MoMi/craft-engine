@@ -13,7 +13,6 @@ import net.momirealms.craftengine.core.plugin.CraftEngine;
 import net.momirealms.craftengine.core.plugin.config.Config;
 import net.momirealms.craftengine.core.plugin.context.NetworkTextReplaceContext;
 import net.momirealms.craftengine.core.plugin.network.EntityPacketHandler;
-import net.momirealms.craftengine.core.plugin.network.NetWorkUser;
 import net.momirealms.craftengine.core.plugin.network.event.ByteBufPacketEvent;
 import net.momirealms.craftengine.core.plugin.text.component.ComponentProvider;
 import net.momirealms.craftengine.core.util.AdventureHelper;
@@ -62,14 +61,14 @@ public final class MinecartPacketHandler implements EntityPacketHandler {
     }
 
     interface BlockStateHandler {
-        boolean handle(NetWorkUser user, Object packedItem, int entityDataId);
+        boolean handle(Player user, Object packedItem, int entityDataId);
     }
 
     static class BlockStateHandler_1_21_5 implements BlockStateHandler {
         protected static final BlockStateHandler INSTANCE = new BlockStateHandler_1_21_5();
 
         @Override
-        public boolean handle(NetWorkUser user, Object packedItem, int entityDataId) {
+        public boolean handle(Player user, Object packedItem, int entityDataId) {
             if (entityDataId != AbstractMinecartData.CustomDisplayBlockState.id()) return false;
             Optional<Object> blockState = EntityUtils.getEntityDataValue(packedItem, AbstractMinecartData.CustomDisplayBlockState);
             if (blockState.isEmpty()) return false;
@@ -85,7 +84,7 @@ public final class MinecartPacketHandler implements EntityPacketHandler {
         protected static final BlockStateHandler INSTANCE = new BlockStateHandler_1_20();
 
         @Override
-        public boolean handle(NetWorkUser user, Object packedItem, int entityDataId) {
+        public boolean handle(Player user, Object packedItem, int entityDataId) {
             if (entityDataId != AbstractMinecartData.DisplayBlockState.id()) return false;
             int stateId = EntityUtils.getEntityDataValue(packedItem, AbstractMinecartData.DisplayBlockState);
             int newStateId = BukkitNetworkManager.instance().remapBlockState(stateId, user.clientCustomBlockEnabled());

@@ -12,7 +12,8 @@ import java.util.Set;
 @ReflectionProxy(name = "net.minecraft.network.protocol.game.ClientboundTeleportEntityPacket")
 public interface ClientboundTeleportEntityPacketProxy extends PacketProxy {
     ClientboundTeleportEntityPacketProxy INSTANCE = ASMProxyFactory.create(ClientboundTeleportEntityPacketProxy.class);
-    UnsafeConstructor UNSAFE_CONSTRUCTOR = new UnsafeConstructor(SparrowClass.find("net.minecraft.network.protocol.game.ClientboundTeleportEntityPacket"));
+    Class<?> CLASS = SparrowClass.find("net.minecraft.network.protocol.game.ClientboundTeleportEntityPacket");
+    UnsafeConstructor UNSAFE_CONSTRUCTOR = new UnsafeConstructor(CLASS);
 
     @ConstructorInvoker(activeIf = "min_version=1.21.2")
     Object newInstance(int id, @Type(clazz = PositionMoveRotationProxy.class) Object change, Set<Object> relatives, boolean onGround);

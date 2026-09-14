@@ -9,7 +9,6 @@ import net.momirealms.craftengine.core.entity.player.Player;
 import net.momirealms.craftengine.core.plugin.CraftEngine;
 import net.momirealms.craftengine.core.plugin.config.Config;
 import net.momirealms.craftengine.core.plugin.context.NetworkTextReplaceContext;
-import net.momirealms.craftengine.core.plugin.network.EntityPacketHandler;
 import net.momirealms.craftengine.core.plugin.network.event.ByteBufPacketEvent;
 import net.momirealms.craftengine.core.plugin.text.component.ComponentProvider;
 import net.momirealms.craftengine.core.util.AdventureHelper;
@@ -21,7 +20,7 @@ import java.util.Map;
 import java.util.Optional;
 
 @SuppressWarnings("DuplicatedCode")
-public final class ArmorStandPacketHandler implements EntityPacketHandler {
+public final class ArmorStandPacketHandler extends EquipmentEntityPacketHandler {
     public static final ArmorStandPacketHandler INSTANCE = new ArmorStandPacketHandler();
 
     @Override

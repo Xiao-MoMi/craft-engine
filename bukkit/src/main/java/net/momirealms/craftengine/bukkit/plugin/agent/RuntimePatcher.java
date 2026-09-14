@@ -9,8 +9,8 @@ import net.momirealms.craftengine.bukkit.api.CraftEngineFurniture;
 import net.momirealms.craftengine.bukkit.entity.furniture.BukkitFurnitureManager;
 import net.momirealms.craftengine.bukkit.entity.projectile.BukkitProjectileManager;
 import net.momirealms.craftengine.bukkit.plugin.BukkitCraftEngine;
-import net.momirealms.craftengine.bukkit.util.ItemStackUtils;
 import net.momirealms.craftengine.bukkit.util.EntityUtils;
+import net.momirealms.craftengine.bukkit.util.ItemStackUtils;
 import net.momirealms.craftengine.bukkit.world.BukkitWorldManager;
 import net.momirealms.craftengine.core.plugin.config.Config;
 import net.momirealms.craftengine.core.util.ReflectionUtils;
@@ -25,11 +25,7 @@ import net.momirealms.craftengine.proxy.minecraft.world.item.trading.MerchantOff
 import net.momirealms.sparrow.reflection.SReflection;
 import net.momirealms.sparrow.reflection.clazz.SparrowClass;
 import org.bukkit.Bukkit;
-import org.bukkit.entity.Entity;
-import org.bukkit.entity.ItemDisplay;
-import org.bukkit.entity.LivingEntity;
-import org.bukkit.entity.Player;
-import org.bukkit.entity.Projectile;
+import org.bukkit.entity.*;
 
 import java.lang.instrument.Instrumentation;
 import java.lang.reflect.Field;

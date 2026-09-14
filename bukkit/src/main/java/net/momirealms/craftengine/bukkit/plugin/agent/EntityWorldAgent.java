@@ -9,12 +9,12 @@ import net.bytebuddy.matcher.ElementMatchers;
 import net.bytebuddy.utility.JavaModule;
 import org.jetbrains.annotations.NotNull;
 
-import java.lang.instrument.ClassFileTransformer;
-import java.lang.instrument.Instrumentation;
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
+import java.lang.instrument.ClassFileTransformer;
+import java.lang.instrument.Instrumentation;
 import java.lang.reflect.Field;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.BiConsumer;

@@ -24,6 +24,7 @@ import net.momirealms.craftengine.bukkit.pack.ResourcePackConfigurationTask;
 import net.momirealms.craftengine.bukkit.plugin.BukkitCraftEngine;
 import net.momirealms.craftengine.bukkit.plugin.gui.CraftEngineGUIHolder;
 import net.momirealms.craftengine.bukkit.plugin.network.BukkitNetworkManager;
+import net.momirealms.craftengine.bukkit.plugin.network.EquipmentLodTracker;
 import net.momirealms.craftengine.bukkit.plugin.network.handler.PlayerPacketHandler;
 import net.momirealms.craftengine.bukkit.util.*;
 import net.momirealms.craftengine.bukkit.world.BukkitContainer;
@@ -58,6 +59,7 @@ import net.momirealms.craftengine.core.plugin.context.PlayerOptionalContext;
 import net.momirealms.craftengine.core.plugin.locale.TranslationManager;
 import net.momirealms.craftengine.core.plugin.network.ConnectionState;
 import net.momirealms.craftengine.core.plugin.network.EntityPacketHandler;
+import net.momirealms.craftengine.core.plugin.network.PacketPosition;
 import net.momirealms.craftengine.core.plugin.network.ProtocolVersion;
 import net.momirealms.craftengine.core.plugin.network.codec.NetworkCodec;
 import net.momirealms.craftengine.core.plugin.network.mod.ClientCustomPacket;
@@ -215,6 +217,7 @@ public class BukkitServerPlayer extends BukkitLivingEntity implements Player {
     private ConcurrentChainedLong2ReferenceHashTable<ClientChunk> trackedChunks;
     // entity view
     private ConcurrentChainedInt2ObjectHashTable<EntityPacketHandler> entityTypeView;
+    private EquipmentLodTracker equipmentLod;
     // 通过指令或api设定的语言
     @Nullable
     private Locale selectedLocale;
@@ -291,6 +294,7 @@ public class BukkitServerPlayer extends BukkitLivingEntity implements Player {
         this.entityId = player.getEntityId();
         this.isNameVerified = true;
         this.initPlayStageFields();
+        this.equipmentLod = VersionHelper.isOrAbove1_21_2 ? new EquipmentLodTracker(this) : null;
         byte[] bytes = player.getPersistentDataContainer().get(KeyUtils.toNamespacedKey(CooldownData.COOLDOWN_KEY), PersistentDataType.BYTE_ARRAY);
         String locale = player.getPersistentDataContainer().get(KeyUtils.toNamespacedKey(SELECTED_LOCALE_KEY), PersistentDataType.STRING);
         Double scale = player.getPersistentDataContainer().get(KeyUtils.toNamespacedKey(ENTITY_CULLING_DISTANCE_SCALE), PersistentDataType.DOUBLE);
@@ -1596,8 +1600,22 @@ public class BukkitServerPlayer extends BukkitLivingEntity implements Player {
         return this.shouldProcessFinishConfiguration;
     }
 
+    public EquipmentLodTracker equipmentLod() {
+        return this.equipmentLod;
+    }
+
+    @Override
+    public void asyncTick() {
+        EquipmentLodTracker tracker = this.equipmentLod;
+        if (tracker != null && !Config.disableItemOperations()) {
+            Object position = EntityProxy.INSTANCE.getPosition(minecraftEntity());
+            tracker.asyncTick(new PacketPosition(Vec3Proxy.INSTANCE.getX(position), Vec3Proxy.INSTANCE.getY(position), Vec3Proxy.INSTANCE.getZ(position)));
+        }
+    }
+
     @Override
     public void clearEntityView() {
+        if (this.equipmentLod != null) this.equipmentLod.clear();
         this.entityTypeView.clear();
         // 玩家自身实体的包处理器不随视野清空（重生/切世界后仍需要血量 metadata 缩放等处理）
         this.entityTypeView.put(this.entityId, PlayerPacketHandler.INSTANCE);

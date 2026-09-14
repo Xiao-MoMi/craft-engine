@@ -444,7 +444,6 @@ public final class BukkitNetworkManager extends AbstractNetworkManager implement
             registerNMSPacketConsumer(NMSContainerSetContentListener.INSTANCE, ClientboundContainerSetContentPacketProxy.CLASS);
             registerNMSPacketConsumer(NMSContainerSetSlotListener.INSTANCE, ClientboundContainerSetSlotPacketProxy.CLASS);
             registerNMSPacketConsumer(NMSSetPlayerInventoryListener.INSTANCE, ClientboundSetPlayerInventoryPacketProxy.CLASS);
-            registerNMSPacketConsumer(NMSSetEquipmentListener.INSTANCE, ClientboundSetEquipmentPacketProxy.CLASS);
             if (VersionHelper.isOrAbove1_21_2) {
                 registerNMSPacketConsumer(NMSSetCursorItemListener.INSTANCE, ClientboundSetCursorItemPacketProxy.CLASS);
             }
@@ -453,10 +452,11 @@ public final class BukkitNetworkManager extends AbstractNetworkManager implement
             registerByteBufferPacketListener(ContainerSetSlotListener.INSTANCE, PACKET_IDS.clientboundContainerSetSlotPacket(), "ClientboundContainerSetSlotPacket", ConnectionState.PLAY, PacketFlow.CLIENTBOUND);
             registerByteBufferPacketListener(SetPlayerInventoryListener.INSTANCE, PACKET_IDS.clientboundSetPlayerInventoryPacket(), "ClientboundSetPlayerInventoryPacket", ConnectionState.PLAY, PacketFlow.CLIENTBOUND);
             registerByteBufferPacketListener(SetCursorItemListener.INSTANCE, PACKET_IDS.clientboundSetCursorItemPacket(), "ClientboundSetCursorItemPacket", ConnectionState.PLAY, PacketFlow.CLIENTBOUND);
-            registerByteBufferPacketListener(SetEquipmentListener.INSTANCE, PACKET_IDS.clientboundSetEquipmentPacket(), "ClientboundSetEquipmentPacket", ConnectionState.PLAY, PacketFlow.CLIENTBOUND);
         }
 
         // bytebuffer
+        registerByteBufferPacketListener(TeleportEntityListener.INSTANCE, PACKET_IDS.clientboundTeleportEntityPacket(), "ClientboundTeleportEntityPacket", ConnectionState.PLAY, PacketFlow.CLIENTBOUND);
+        registerByteBufferPacketListener(SetEquipmentListener.INSTANCE, PACKET_IDS.clientboundSetEquipmentPacket(), "ClientboundSetEquipmentPacket", ConnectionState.PLAY, PacketFlow.CLIENTBOUND);
         registerByteBufferPacketListener(PlayerInfoUpdateListener.INSTANCE, PACKET_IDS.clientboundPlayerInfoUpdatePacket(), "ClientboundPlayerInfoUpdatePacket", ConnectionState.PLAY, PacketFlow.CLIENTBOUND);
         registerByteBufferPacketListener(ClientInformationListener.INSTANCE, PACKET_IDS.serverboundClientInformationPacket$play(), "ServerboundClientInformationPacket", ConnectionState.PLAY, PacketFlow.SERVERBOUND);
         registerByteBufferPacketListener(ClientInformationListener.INSTANCE, PACKET_IDS.serverboundClientInformationPacket$configuration(), "ServerboundClientInformationPacket", ConnectionState.CONFIGURATION, PacketFlow.SERVERBOUND);

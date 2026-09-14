@@ -8,7 +8,6 @@ import net.momirealms.craftengine.core.entity.player.Player;
 import net.momirealms.craftengine.core.entity.projectile.ProjectileDisplay;
 import net.momirealms.craftengine.core.item.Item;
 import net.momirealms.craftengine.core.plugin.network.EntityPacketHandler;
-import net.momirealms.craftengine.core.plugin.network.NetWorkUser;
 import net.momirealms.craftengine.core.plugin.network.event.ByteBufPacketEvent;
 import net.momirealms.craftengine.core.util.FriendlyByteBuf;
 import net.momirealms.craftengine.core.util.MiscUtils;
@@ -45,7 +44,7 @@ public final class ProjectilePacketHandler implements EntityPacketHandler {
     }
 
     @Override
-    public void handleSyncEntityPosition(NetWorkUser user, ByteBufPacketEvent event, int entityId, FriendlyByteBuf buf) {
+    public void handleSyncEntityPosition(Player user, ByteBufPacketEvent event, int entityId, FriendlyByteBuf buf) {
         Vec3d position = buf.readVec3();
         Vec3d deltaMovement = buf.readVec3();
         float yRot = buf.readFloat();
@@ -63,7 +62,7 @@ public final class ProjectilePacketHandler implements EntityPacketHandler {
     }
 
     @Override
-    public void handleMoveAndRotate(NetWorkUser user, ByteBufPacketEvent event, int entityId, FriendlyByteBuf buf) {
+    public void handleMoveAndRotate(Player user, ByteBufPacketEvent event, int entityId, FriendlyByteBuf buf) {
         short xa = buf.readShort();
         short ya = buf.readShort();
         short za = buf.readShort();
@@ -82,7 +81,7 @@ public final class ProjectilePacketHandler implements EntityPacketHandler {
         buf.writeBoolean(onGround);
     }
 
-    public void convertAddCustomProjectilePacket(FriendlyByteBuf buf, ByteBufPacketEvent event, NetWorkUser user) {
+    public void convertAddCustomProjectilePacket(FriendlyByteBuf buf, ByteBufPacketEvent event, Player user) {
         UUID uuid = buf.readUUID();
         buf.readVarInt(); // type
         double x = buf.readDouble();

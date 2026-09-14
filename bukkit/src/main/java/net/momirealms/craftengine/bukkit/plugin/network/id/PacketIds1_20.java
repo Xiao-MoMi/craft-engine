@@ -417,4 +417,9 @@ public final class PacketIds1_20 implements PacketIds {
     public int clientboundSetHealthPacket() {
         return PacketIdHelper.byClazz(ClientboundSetHealthPacketProxy.CLASS, ConnectionState.PLAY, PacketFlow.CLIENTBOUND);
     }
+
+    @Override
+    public int clientboundTeleportEntityPacket() {
+        return PacketIdHelper.byClazz(ClientboundTeleportEntityPacketProxy.CLASS, ConnectionState.PLAY, PacketFlow.CLIENTBOUND);
+    }
 }

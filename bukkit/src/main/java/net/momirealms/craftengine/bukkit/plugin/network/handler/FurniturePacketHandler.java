@@ -15,7 +15,6 @@ import net.momirealms.craftengine.core.entity.furniture.element.TransformableFur
 import net.momirealms.craftengine.core.entity.player.Player;
 import net.momirealms.craftengine.core.plugin.config.Config;
 import net.momirealms.craftengine.core.plugin.network.EntityPacketHandler;
-import net.momirealms.craftengine.core.plugin.network.NetWorkUser;
 import net.momirealms.craftengine.core.plugin.network.event.ByteBufPacketEvent;
 import net.momirealms.craftengine.core.util.FriendlyByteBuf;
 
@@ -162,8 +161,7 @@ public final class FurniturePacketHandler implements EntityPacketHandler, Cullab
     }
 
     @Override
-    public boolean handleEntitiesRemove(NetWorkUser user, IntList entityIds) {
-        Player player = (Player) user;
+    public boolean handleEntitiesRemove(Player player, int entityId, IntList entityIds) {
         player.removeTrackedEntity(this.furniture.entityId());
         this.hideSnapshot(player);
         if (this.appliedSnapshot != null) {
@@ -174,12 +172,12 @@ public final class FurniturePacketHandler implements EntityPacketHandler, Cullab
     }
 
     @Override
-    public void handleSyncEntityPosition(NetWorkUser user, ByteBufPacketEvent event, int entityId, FriendlyByteBuf buf) {
+    public void handleSyncEntityPosition(Player user, ByteBufPacketEvent event, int entityId, FriendlyByteBuf buf) {
         event.setCancelled(true);
     }
 
     @Override
-    public void handleMove(NetWorkUser user, ByteBufPacketEvent event, int entityId, FriendlyByteBuf buf) {
+    public void handleMove(Player user, ByteBufPacketEvent event, int entityId, FriendlyByteBuf buf) {
         event.setCancelled(true);
     }
 }

@@ -63,6 +63,8 @@ public interface Player extends NetWorkUser, LivingEntity {
 
     void entityCullingTick();
 
+    void asyncTick();
+
     float getDestroyProgress(Object blockState, BlockPos pos);
 
     void setClientSideCanBreakBlock(boolean canBreak);

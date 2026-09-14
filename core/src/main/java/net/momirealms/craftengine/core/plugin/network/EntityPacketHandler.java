@@ -7,19 +7,29 @@ import net.momirealms.craftengine.core.util.FriendlyByteBuf;
 
 public interface EntityPacketHandler {
 
-    default boolean handleEntitiesRemove(NetWorkUser user, IntList entityIds) {
+    default void handleAddEntity(Player user, ByteBufPacketEvent event, int entityId, FriendlyByteBuf buf) {
+    }
+
+    default boolean handleEntitiesRemove(Player user, int entityId, IntList entityIds) {
         return false;
+    }
+
+    default boolean handleSetEquipment(Player user, ByteBufPacketEvent event, int entityId, FriendlyByteBuf buf) {
+        return false;
+    }
+
+    default void handleTeleportEntity(Player user, ByteBufPacketEvent event, int entityId, FriendlyByteBuf buf) {
     }
 
     default void handleSetEntityData(Player user, ByteBufPacketEvent event) {
     }
 
-    default void handleSyncEntityPosition(NetWorkUser user, ByteBufPacketEvent event, int entityId, FriendlyByteBuf buf) {
+    default void handleSyncEntityPosition(Player user, ByteBufPacketEvent event, int entityId, FriendlyByteBuf buf) {
     }
 
-    default void handleMoveAndRotate(NetWorkUser user, ByteBufPacketEvent event, int entityId, FriendlyByteBuf buf) {
+    default void handleMoveAndRotate(Player user, ByteBufPacketEvent event, int entityId, FriendlyByteBuf buf) {
     }
 
-    default void handleMove(NetWorkUser user, ByteBufPacketEvent event, int entityId, FriendlyByteBuf buf) {
+    default void handleMove(Player user, ByteBufPacketEvent event, int entityId, FriendlyByteBuf buf) {
     }
 }

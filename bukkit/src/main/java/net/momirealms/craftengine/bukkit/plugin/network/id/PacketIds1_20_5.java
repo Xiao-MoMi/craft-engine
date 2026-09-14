@@ -408,4 +408,9 @@ public final class PacketIds1_20_5 implements PacketIds {
     public int clientboundSetHealthPacket() {
         return PacketIdHelper.byName("minecraft:set_health", ConnectionState.PLAY, PacketFlow.CLIENTBOUND);
     }
+
+    @Override
+    public int clientboundTeleportEntityPacket() {
+        return PacketIdHelper.byName("minecraft:teleport_entity", ConnectionState.PLAY, PacketFlow.CLIENTBOUND);
+    }
 }

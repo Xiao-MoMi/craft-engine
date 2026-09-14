@@ -6,12 +6,11 @@ import net.momirealms.craftengine.core.plugin.network.NetWorkUser;
 import net.momirealms.craftengine.core.plugin.network.event.ByteBufPacketEvent;
 import net.momirealms.craftengine.core.plugin.network.listener.ByteBufferPacketListener;
 import net.momirealms.craftengine.core.util.FriendlyByteBuf;
-import net.momirealms.craftengine.core.util.VersionHelper;
 
-public final class EntityPositionSyncListener implements ByteBufferPacketListener {
-    public static final ByteBufferPacketListener INSTANCE = VersionHelper.isOrAbove1_21_2 ? new EntityPositionSyncListener() : null;
+public final class TeleportEntityListener implements ByteBufferPacketListener {
+    public static final TeleportEntityListener INSTANCE = new TeleportEntityListener();
 
-    private EntityPositionSyncListener() {}
+    private TeleportEntityListener() {}
 
     @Override
     public void onPacketSend(NetWorkUser user, ByteBufPacketEvent event) {
@@ -20,7 +19,7 @@ public final class EntityPositionSyncListener implements ByteBufferPacketListene
         int entityId = buf.readVarInt();
         EntityPacketHandler handler = player.entityViews().get(entityId);
         if (handler != null) {
-            handler.handleSyncEntityPosition(player, event, entityId, buf);
+            handler.handleTeleportEntity(player, event, entityId, buf);
         }
     }
 }

@@ -6,7 +6,6 @@ import net.momirealms.craftengine.bukkit.util.EntityUtils;
 import net.momirealms.craftengine.bukkit.util.PacketUtils;
 import net.momirealms.craftengine.core.entity.player.Player;
 import net.momirealms.craftengine.core.plugin.config.Config;
-import net.momirealms.craftengine.core.plugin.network.EntityPacketHandler;
 import net.momirealms.craftengine.core.plugin.network.event.ByteBufPacketEvent;
 import net.momirealms.craftengine.core.util.FriendlyByteBuf;
 import net.momirealms.craftengine.proxy.minecraft.network.syncher.SynchedEntityDataProxy;
@@ -16,7 +15,7 @@ import java.util.List;
 /**
  * 玩家自身实体的包处理器：血量 metadata 缩放（DATA_HEALTH_ID 仍在 SynchedEntityData 里）
  */
-public final class PlayerPacketHandler implements EntityPacketHandler {
+public final class PlayerPacketHandler extends EquipmentEntityPacketHandler {
     public static final PlayerPacketHandler INSTANCE = new PlayerPacketHandler();
 
     private PlayerPacketHandler() {}

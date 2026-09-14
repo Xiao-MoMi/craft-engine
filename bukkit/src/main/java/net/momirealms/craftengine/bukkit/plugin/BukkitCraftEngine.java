@@ -81,6 +81,7 @@ public final class BukkitCraftEngine extends CraftEngine {
     private final List<AntiGriefCompatibility> antiGriefProviders = new ArrayList<>(1);
     private final Path dataFolderPath;
     private SchedulerTask tickTask;
+    private SchedulerTask asyncTickTask;
     private boolean successfullyLoaded = false;
     private boolean successfullyEnabled = false;
     private AntiGriefLib antiGrief;
@@ -304,6 +305,7 @@ public final class BukkitCraftEngine extends CraftEngine {
         RuntimePatcher.clearEntityWorldCallbacks(this);
         super.onPluginDisable();
         if (this.tickTask != null) this.tickTask.cancel();
+        if (this.asyncTickTask != null) this.asyncTickTask.cancel();
         if (VersionHelper.hasPaperPatch && ServerUtils.isRunning()) {
             logger().error(" ");
             logger().error(" ");
@@ -321,6 +323,7 @@ public final class BukkitCraftEngine extends CraftEngine {
         if (Config.metrics()) {
             new Metrics(this.javaPlugin(), 24333);
         }
+        this.asyncTickTask = this.scheduler().platform().runAsyncRepeating(new AsyncTickTask(this), 1, 1);
         // tick task
         if (!VersionHelper.hasFoliaPatch) {
             this.tickTask = this.scheduler().platform().runRepeating(new MainTickTask(this), 1, 1);

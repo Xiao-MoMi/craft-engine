@@ -6,7 +6,9 @@ import net.momirealms.craftengine.bukkit.entity.projectile.BukkitProjectileManag
 import net.momirealms.craftengine.bukkit.plugin.network.BukkitNetworkManager;
 import net.momirealms.craftengine.bukkit.plugin.network.handler.*;
 import net.momirealms.craftengine.bukkit.plugin.user.BukkitServerPlayer;
+import net.momirealms.craftengine.bukkit.util.KeyUtils;
 import net.momirealms.craftengine.bukkit.util.RegistryUtils;
+import net.momirealms.craftengine.core.entity.player.Player;
 import net.momirealms.craftengine.core.entity.projectile.ProjectileDisplay;
 import net.momirealms.craftengine.core.plugin.config.Config;
 import net.momirealms.craftengine.core.plugin.network.EntityPacketHandler;
@@ -14,8 +16,11 @@ import net.momirealms.craftengine.core.plugin.network.NetWorkUser;
 import net.momirealms.craftengine.core.plugin.network.event.ByteBufPacketEvent;
 import net.momirealms.craftengine.core.plugin.network.listener.ByteBufferPacketListener;
 import net.momirealms.craftengine.core.util.FriendlyByteBuf;
+import net.momirealms.craftengine.core.util.Key;
 import net.momirealms.craftengine.core.util.VersionHelper;
 import net.momirealms.craftengine.core.world.Vec3d;
+import net.momirealms.craftengine.proxy.minecraft.core.RegistryProxy;
+import net.momirealms.craftengine.proxy.minecraft.core.registries.BuiltInRegistriesProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.entity.EntityTypesProxy;
 
 import java.util.Arrays;
@@ -149,12 +154,23 @@ public final class AddEntityListener implements ByteBufferPacketListener {
                 user.entityViews().put(id, FurnitureCollisionPacketHandler.INSTANCE);
             }
         };
+        for (String name : new String[]{"player", "mannequin", "zombie", "zombie_villager", "husk", "drowned",
+                "skeleton", "stray", "wither_skeleton", "bogged", "parched", "piglin", "piglin_brute", "zombified_piglin",
+                "giant", "wolf", "horse", "donkey", "mule", "skeleton_horse", "zombie_horse", "llama",
+                "trader_llama", "pig", "strider", "camel", "camel_husk", "happy_ghast", "nautilus", "zombie_nautilus"}) {
+            Object type = RegistryUtils.getRegistryValue(BuiltInRegistriesProxy.ENTITY_TYPE, KeyUtils.toIdentifier(Key.MINECRAFT_NAMESPACE, name));
+            if (type == null) continue;
+            int id = RegistryProxy.INSTANCE.getId(BuiltInRegistriesProxy.ENTITY_TYPE, type);
+            this.handlers[id] = simpleAddEntityHandler(EquipmentEntityPacketHandler.INSTANCE);
+        }
     }
 
     private static EntityTypeHandler simpleAddEntityHandler(EntityPacketHandler handler) {
         return (user, event) -> {
             FriendlyByteBuf buf = event.getBuffer();
-            user.entityViews().put(buf.readVarInt(), handler);
+            int entityId = buf.readVarInt();
+            user.entityViews().put(entityId, handler);
+            handler.handleAddEntity(user, event, entityId, buf);
         };
     }
 
@@ -183,23 +199,24 @@ public final class AddEntityListener implements ByteBufferPacketListener {
 
     public interface EntityTypeHandler {
 
-        void handle(NetWorkUser user, ByteBufPacketEvent event);
+        void handle(Player user, ByteBufPacketEvent event);
 
         class DoNothing implements EntityTypeHandler {
             public static final DoNothing INSTANCE = new DoNothing();
 
             @Override
-            public void handle(NetWorkUser user, ByteBufPacketEvent event) {
+            public void handle(Player user, ByteBufPacketEvent event) {
             }
         }
     }
 
     @Override
     public void onPacketSend(NetWorkUser user, ByteBufPacketEvent event) {
+        if (!(user instanceof Player player)) return;
         FriendlyByteBuf buf = event.getBuffer();
         buf.readVarInt();
         buf.readUUID();
         int type = buf.readVarInt();
-        this.handlers[type].handle(user, event);
+        this.handlers[type].handle(player, event);
     }
 }
