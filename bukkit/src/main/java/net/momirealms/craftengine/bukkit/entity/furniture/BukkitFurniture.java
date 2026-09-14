@@ -213,6 +213,33 @@ public final class BukkitFurniture extends Furniture {
         }
     }
 
+    public boolean isMoving() {
+        return this.isMoving.get();
+    }
+
+    // 外部传送已经完成；这里只同步派生状态，不再次传送元数据实体。
+    void synchronizePosition() {
+        ItemDisplay entity = this.metaEntity.get();
+        if (entity == null || !entity.isValid()) return;
+        Location actualLocation = entity.getLocation();
+        if (this.location.equals(actualLocation)) return;
+        if (!this.isMoving.compareAndSet(false, true)) return;
+        try {
+            List<Player> trackedBy = this.trackedBy();
+            BukkitFurnitureManager manager = BukkitFurnitureManager.instance();
+            manager.unregisterFurniture(this, false);
+            super.destroySeats();
+            this.location = actualLocation;
+            super.updatePlacement();
+            super.setVariantInternal(this.currentVariant());
+            manager.registerFurniture(this);
+            this.addCollidersToWorld();
+            this.publishClientSnapshot(trackedBy);
+        } finally {
+            this.isMoving.set(false);
+        }
+    }
+
     @Override
     public void refresh() {
         ItemDisplay itemDisplay = this.metaEntity.get();

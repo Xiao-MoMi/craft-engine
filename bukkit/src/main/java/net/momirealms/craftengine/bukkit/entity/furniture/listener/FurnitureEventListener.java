@@ -27,6 +27,7 @@ import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
+import org.bukkit.event.entity.EntityTeleportEvent;
 import org.bukkit.event.world.*;
 
 import java.util.List;
@@ -42,6 +43,13 @@ public final class FurnitureEventListener implements Listener {
     public FurnitureEventListener(final BukkitFurnitureManager manager, final BukkitWorldManager worldManager) {
         this.manager = manager;
         this.worldManager = worldManager;
+    }
+
+    @EventHandler(ignoreCancelled = true, priority = EventPriority.MONITOR)
+    public void onFurnitureTeleport(EntityTeleportEvent event) {
+        if (event.getTo() != null && event.getEntity() instanceof ItemDisplay display) {
+            this.manager.handleFurnitureTeleport(display);
+        }
     }
 
     @EventHandler(ignoreCancelled = true, priority = EventPriority.NORMAL)

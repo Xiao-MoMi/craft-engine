@@ -208,6 +208,26 @@ public final class BukkitFurnitureManager extends AbstractFurnitureManager {
         return this.byColliderEntityId.get(entityId);
     }
 
+    public void handleFurnitureTeleport(ItemDisplay entity) {
+        BukkitFurniture previous = this.byMetaEntityId.get(entity.getEntityId());
+        if (previous == null || previous.isMoving()) return;
+        // 跨世界传送可能先复制实体 NBT，再卸载旧实体；提前保存尚未写入 PDC 的行为数据
+        previous.saveIfDirty();
+        this.plugin.scheduler().platform().runDelayed(() -> {
+            if (!entity.isValid()) return;
+            // Spigot 没有 Paper 的单实体卸载/加载事件，需要在底层实体被替换后补做恢复。
+            if (this.byMetaEntityId.get(previous.entityId()) == previous && previous.metaDataEntity.minecraftEntity() != CraftEntityProxy.INSTANCE.getEntity(entity)) {
+                this.unloadFurniture(previous, false);
+            }
+            BukkitFurniture current = this.byMetaEntityId.get(entity.getEntityId());
+            if (current == null) {
+                this.restoreFurnitureFromEntity(entity);
+            } else {
+                current.synchronizePosition();
+            }
+        }, () -> {}, entity);
+    }
+
     /**
      * 结束一个已登记家具的运行时生命周期，不等同于玩家拆除家具。
      * Paper 单实体移除、区块/世界卸载、插件停用都会到达这里；先撤销映射实现去重。
@@ -218,33 +238,36 @@ public final class BukkitFurnitureManager extends AbstractFurnitureManager {
         int id = entity.getEntityId();
         BukkitFurniture furniture = this.byMetaEntityId.get(id);
         if (furniture != null) {
+            this.unloadFurniture(furniture, isStopping);
+        }
+    }
 
-            // 必须先撤销登记；下面销毁 Collider 会同步触发它自己的移除事件。
-            this.unregisterFurniture(furniture, isStopping);
+    private void unloadFurniture(BukkitFurniture furniture, boolean isStopping) {
+        // 必须先撤销登记；下面销毁 Collider 会同步触发它自己的移除事件。
+        this.unregisterFurniture(furniture, isStopping);
 
-            // Paper 普通区块卸载也会在 EntityLookup 状态切换栈内触发单实体移除事件，
-            // 不仅是「加载时意外卸载」。此时同一 section 不允许递归增删实体。
-            // 当前策略是跳过座椅销毁，不是安排稍后重试；排查残留时须区分这两种语义。
-            if (!isStopping) {
-                if (VersionHelper.hasPaperPatch) {
-                    Location location = entity.getLocation();
-                    Object entityLookup = LevelUtils.getEntityLookup(location.getWorld());
-                    Object slices = EntityLookupProxy.INSTANCE.getChunk(entityLookup, location.getBlockX() >> 4, location.getBlockZ() >> 4);
-                    boolean isPreventing = slices != null && ChunkEntitySlicesProxy.INSTANCE.isPreventingStatusUpdates(slices);
-                    if (!isPreventing) {
-                        furniture.destroySeats();
-                    }
-                } else {
+        // Paper 普通区块卸载也会在 EntityLookup 状态切换栈内触发单实体移除事件，
+        // 不仅是「加载时意外卸载」。此时同一 section 不允许递归增删实体。
+        // 当前策略是跳过座椅销毁，不是安排稍后重试；排查残留时须区分这两种语义。
+        if (!isStopping) {
+            if (VersionHelper.hasPaperPatch) {
+                Location location = furniture.location();
+                Object entityLookup = LevelUtils.getEntityLookup(location.getWorld());
+                Object slices = EntityLookupProxy.INSTANCE.getChunk(entityLookup, location.getBlockX() >> 4, location.getBlockZ() >> 4);
+                boolean isPreventing = slices != null && ChunkEntitySlicesProxy.INSTANCE.isPreventingStatusUpdates(slices);
+                if (!isPreventing) {
                     furniture.destroySeats();
                 }
+            } else {
+                furniture.destroySeats();
             }
+        }
 
-            // 触发行为卸载
-            try {
-                furniture.controller.onUnload();
-            } finally {
-                furniture.saveIfDirty();
-            }
+        // 触发行为卸载
+        try {
+            furniture.controller.onUnload();
+        } finally {
+            furniture.saveIfDirty();
         }
     }
 
