@@ -9,7 +9,10 @@ import com.denizenscript.denizencore.objects.ObjectTag;
 import com.denizenscript.denizencore.objects.core.ElementTag;
 import com.denizenscript.denizencore.objects.core.ListTag;
 import com.denizenscript.denizencore.scripts.ScriptEntryData;
+import net.momirealms.craftengine.bukkit.api.BukkitAdaptor;
 import net.momirealms.craftengine.bukkit.api.event.CustomBlockBreakEvent;
+import net.momirealms.craftengine.bukkit.world.BukkitWorld;
+import net.momirealms.craftengine.core.world.Vec3d;
 import org.bukkit.block.Block;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
@@ -63,8 +66,10 @@ public class PlayerBreaksCEBlockScriptEvent extends BukkitScriptEvent implements
         this.<PlayerBreaksCEBlockScriptEvent, ListTag>registerDetermination(null, ListTag.class, (evt, context, list) -> {
             evt.event.setDropItems(false);
             Block block = evt.event.bukkitBlock();
+            BukkitWorld world = BukkitAdaptor.adapt(block.getWorld());
+            Vec3d position = new Vec3d(block.getX() + 0.5, block.getY() + 0.5, block.getZ() + 0.5);
             for (ItemTag newItem : list.filter(ItemTag.class, context)) {
-                block.getWorld().dropItemNaturally(block.getLocation(), newItem.getItemStack());
+                world.dropItemNaturally(position, BukkitAdaptor.adapt(newItem.getItemStack()));
             }
         });
     }
