@@ -183,7 +183,11 @@ public final class BukkitProjectileManager implements Listener, ProjectileManage
         }
     }
 
-    void handleProjectileLoad(Projectile projectile, boolean launch) {
+    public void handleProjectileUnload(Projectile projectile) {
+        this.projectiles.remove(projectile.getEntityId());
+    }
+
+    public void handleProjectileLoad(Projectile projectile, boolean launch) {
         if (this.projectiles.containsKey(projectile.getEntityId())) return;
         ItemStack projectileItem = getItemFromProjectile(projectile, true);
         if (projectileItem == null) return;

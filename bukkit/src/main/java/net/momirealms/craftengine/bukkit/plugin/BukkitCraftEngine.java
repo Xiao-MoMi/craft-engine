@@ -230,6 +230,8 @@ public final class BukkitCraftEngine extends CraftEngine {
         RuntimePatcher.installMerchantItemMatchHook(this);
         // 重定义 LivingEntity
         RuntimePatcher.installEquipmentChangeHook(this);
+        // 为 Spigot 补上世界实体加入/移除回调；Paper 使用原生事件。
+        RuntimePatcher.installEntityWorldHook(this);
         // 注册默认的parser
         this.registerDefaultParsers();
         // 脚本事件订阅挂到 Bukkit 事件总线
@@ -299,6 +301,7 @@ public final class BukkitCraftEngine extends CraftEngine {
     @Override
     public void onPluginDisable() {
         if (super.isDisabled) return;
+        RuntimePatcher.clearEntityWorldCallbacks(this);
         super.onPluginDisable();
         if (this.tickTask != null) this.tickTask.cancel();
         if (VersionHelper.hasPaperPatch && ServerUtils.isRunning()) {

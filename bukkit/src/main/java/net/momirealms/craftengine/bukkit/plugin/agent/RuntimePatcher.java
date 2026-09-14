@@ -4,21 +4,37 @@ import cn.gtemc.reflection.ImplLookupGetter;
 import net.bytebuddy.ByteBuddy;
 import net.bytebuddy.agent.ByteBuddyAgent;
 import net.bytebuddy.dynamic.loading.ClassLoadingStrategy;
+import net.momirealms.craftengine.bukkit.api.BukkitAdaptor;
+import net.momirealms.craftengine.bukkit.api.CraftEngineFurniture;
+import net.momirealms.craftengine.bukkit.entity.furniture.BukkitFurnitureManager;
+import net.momirealms.craftengine.bukkit.entity.projectile.BukkitProjectileManager;
 import net.momirealms.craftengine.bukkit.plugin.BukkitCraftEngine;
 import net.momirealms.craftengine.bukkit.util.ItemStackUtils;
+import net.momirealms.craftengine.bukkit.util.EntityUtils;
 import net.momirealms.craftengine.bukkit.world.BukkitWorldManager;
 import net.momirealms.craftengine.core.plugin.config.Config;
 import net.momirealms.craftengine.core.util.ReflectionUtils;
 import net.momirealms.craftengine.core.util.VersionHelper;
 import net.momirealms.craftengine.proxy.minecraft.core.component.DataComponentExactPredicateProxy;
 import net.momirealms.craftengine.proxy.minecraft.nbt.CompoundTagProxy;
+import net.momirealms.craftengine.proxy.minecraft.server.level.ServerLevelProxy;
+import net.momirealms.craftengine.proxy.minecraft.world.entity.EntityProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.item.ItemStackProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.item.trading.ItemCostProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.item.trading.MerchantOfferProxy;
 import net.momirealms.sparrow.reflection.SReflection;
+import net.momirealms.sparrow.reflection.clazz.SparrowClass;
 import org.bukkit.Bukkit;
+import org.bukkit.entity.Entity;
+import org.bukkit.entity.ItemDisplay;
+import org.bukkit.entity.LivingEntity;
+import org.bukkit.entity.Player;
+import org.bukkit.entity.Projectile;
 
 import java.lang.instrument.Instrumentation;
+import java.lang.reflect.Field;
+import java.lang.reflect.Modifier;
+import java.util.Arrays;
 import java.util.Map;
 import java.util.function.BiConsumer;
 import java.util.function.BiPredicate;
@@ -29,6 +45,7 @@ public final class RuntimePatcher {
     private static Instrumentation instrumentation;
     private static Class<?> injectedBridge;
     private static volatile boolean equipmentChangeHookInstalled;
+    private static volatile boolean entityWorldHookInstalled;
     private static volatile boolean merchantItemMatchHookInstalled;
 
     private RuntimePatcher() {}
@@ -107,6 +124,78 @@ public final class RuntimePatcher {
             } catch (Throwable t) {
                 plugin.logger().warn("Failed to hook vanilla equipment changes; equipment changes cannot be tracked on this server", t);
             }
+        }
+    }
+
+    public static synchronized void installEntityWorldHook(BukkitCraftEngine plugin) {
+        if (VersionHelper.hasPaperPatch) return;
+        try {
+            Class<?> bridge = injectBridge();
+            if (!entityWorldHookInstalled) {
+                Class<?> callbacks = SparrowClass.find("net.minecraft.server.level.ServerLevel$EntityCallbacks");
+                Field worldField = Arrays.stream(callbacks.getDeclaredFields())
+                        .filter(field -> !Modifier.isStatic(field.getModifiers()) && field.getType() == ServerLevelProxy.CLASS)
+                        .findFirst().orElseThrow(() -> new IllegalStateException("Could not find the entity callback's world"));
+                String addMethod = SReflection.getRemapper().remapMethodName(callbacks, "onTrackingStart", EntityProxy.CLASS);
+                String removeMethod = SReflection.getRemapper().remapMethodName(callbacks, "onTrackingEnd", EntityProxy.CLASS);
+                if (!EntityWorldAgent.install(instrumentation(), callbacks, EntityProxy.CLASS, worldField, addMethod, removeMethod)) {
+                    plugin.logger().warn("Could not hook entity world tracking; Spigot entity add/remove callbacks are unavailable");
+                    return;
+                }
+                entityWorldHookInstalled = true;
+            }
+            bridge.getField("ENTITY_ADDED_TO_WORLD").set(null, (BiConsumer<Object, Object>) (world, entity) ->
+                    handleEntityWorldChange(plugin, entity, true));
+            bridge.getField("ENTITY_REMOVED_FROM_WORLD").set(null, (BiConsumer<Object, Object>) (world, entity) ->
+                    handleEntityWorldChange(plugin, entity, false));
+        } catch (Throwable t) {
+            plugin.logger().warn("Failed to hook entity world tracking; Spigot entity add/remove callbacks are unavailable", t);
+        }
+    }
+
+    private static void handleEntityWorldChange(BukkitCraftEngine plugin, Object entity, boolean added) {
+        try {
+            Entity bukkitEntity = EntityProxy.INSTANCE.getBukkitEntity(entity);
+            if (bukkitEntity instanceof LivingEntity livingEntity && !(livingEntity instanceof Player)) {
+                if (Config.enableEntityTracking()) {
+                    if (added) {
+                        if (Config.shouldTrackEntity(EntityUtils.getEntityType(livingEntity))) {
+                            plugin.entityManager().trackLivingEntity((net.momirealms.craftengine.core.entity.LivingEntity) BukkitAdaptor.adapt(livingEntity));
+                        }
+                    } else {
+                        plugin.entityManager().untrackLivingEntity(livingEntity.getUniqueId(), false);
+                    }
+                }
+            } else if (bukkitEntity instanceof ItemDisplay itemDisplay) {
+                if (added) {
+                    plugin.furnitureManager().handleFurnitureEntityAdded(itemDisplay);
+                } else if (EntityProxy.INSTANCE.isRemoved(entity)) {
+                    // 仅处理 /kill
+                    plugin.furnitureManager().unloadFurnitureFromEntity(itemDisplay, false);
+                }
+            } else if (bukkitEntity instanceof Projectile projectile) {
+                BukkitProjectileManager manager = (BukkitProjectileManager) plugin.projectileManager();
+                if (added) manager.handleProjectileLoad(projectile, false);
+                else manager.handleProjectileUnload(projectile);
+            } else if (added) {
+                if (BukkitFurnitureManager.COLLISION_ENTITY_CLASS.isInstance(bukkitEntity)) {
+                    plugin.furnitureManager().removeCopiedColliderEntity(bukkitEntity);
+                }
+            } else if (CraftEngineFurniture.isCollisionEntity(bukkitEntity)) {
+                plugin.furnitureManager().unregisterColliderEntity(bukkitEntity);
+            }
+        } catch (Throwable t) {
+            plugin.logger().warn("Failed to handle entity world change", t);
+        }
+    }
+
+    public static void clearEntityWorldCallbacks(BukkitCraftEngine plugin) {
+        if (injectedBridge == null || !entityWorldHookInstalled) return;
+        try {
+            injectedBridge.getField("ENTITY_ADDED_TO_WORLD").set(null, null);
+            injectedBridge.getField("ENTITY_REMOVED_FROM_WORLD").set(null, null);
+        } catch (ReflectiveOperationException e) {
+            plugin.logger().warn("Failed to clear entity world callbacks", e);
         }
     }
 

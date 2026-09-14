@@ -12,6 +12,9 @@ public final class AgentBridge {
     public static volatile Consumer<Object[]> CHUNK_DATA_WARMUP;
     /** 实体装备变化回调（entity, changed equipment map），由原版装备变化收集方法触发 */
     public static volatile BiConsumer<Object, Object> EQUIPMENT_CHANGE;
+    /** 世界实体追踪开始/结束回调（server level, entity），仅在 Spigot 织入。 */
+    public static volatile BiConsumer<Object, Object> ENTITY_ADDED_TO_WORLD;
+    public static volatile BiConsumer<Object, Object> ENTITY_REMOVED_FROM_WORLD;
     /** 商人交易物品匹配回调（requirement, offered stack），返回 false 时拒绝原版匹配 */
     public static volatile BiPredicate<Object, Object> MERCHANT_ITEM_MATCH;
     /** 旧版商人交易匹配回调（{offer, first stack, second stack}），返回 false 时拒绝原版匹配 */

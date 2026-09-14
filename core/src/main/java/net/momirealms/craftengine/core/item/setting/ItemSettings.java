@@ -40,6 +40,8 @@ public final class ItemSettings {
     @Nullable
     ItemEquipment equipment;
     @Nullable
+    EquipmentFallback equipmentFallback;
+    @Nullable
     Color dyeColor;
     @Nullable
     Color fireworkColor;
@@ -140,6 +142,7 @@ public final class ItemSettings {
         newSettings.breakPower = settings.breakPower;
         newSettings.tags = settings.tags;
         newSettings.equipment = settings.equipment;
+        newSettings.equipmentFallback = settings.equipmentFallback;
         newSettings.repairable = settings.repairable;
         newSettings.anvilRepairItems = settings.anvilRepairItems;
         newSettings.dragRepairItems = settings.dragRepairItems;
@@ -280,6 +283,16 @@ public final class ItemSettings {
     @Nullable
     public ItemEquipment equipment() {
         return this.equipment;
+    }
+
+    @Nullable
+    public EquipmentFallback equipmentFallback() {
+        return this.equipmentFallback;
+    }
+
+    public ItemSettings equipmentFallback(EquipmentFallback fallback) {
+        this.equipmentFallback = fallback;
+        return this;
     }
 
     @Nullable

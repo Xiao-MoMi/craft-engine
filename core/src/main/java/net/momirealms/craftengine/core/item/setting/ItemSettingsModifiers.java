@@ -156,6 +156,14 @@ public final class ItemSettingsModifiers {
             return settings -> settings.equipment(new ItemEquipment(clientBoundModel, null, optionalEquipment.get()));
         }
     }));
+    public static final ItemSettingsModifierType<ItemSettingsModifier> EQUIPMENT_LOD = register(Key.ce("equipment_lod"), (value -> {
+        ConfigSection section = value.getAsSection();
+        Key assetId = section.getNonNullAssetPath(ConfigKeys.of("asset_id"));
+        Equipment equipment = CraftEngine.instance().itemManager().getEquipment(assetId).orElseThrow(() -> new KnownResourceException("resource.item.settings.equipment.invalid_asset_id", value.assemblePath("asset_id"), assetId.asString()));
+        double distance = section.getValue("distance", it -> it.getAsDouble(0), 32d);
+        EquipmentFallback fallback = new EquipmentFallback(equipment, distance);
+        return settings -> settings.equipmentFallback(fallback);
+    }));
     public static final ItemSettingsModifierType<ItemSettingsModifier> CAN_PLACE = register(Key.ce("can_place"), (value -> {
         boolean bool = value.getAsBoolean();
         return settings -> settings.disableVanillaBehavior(!bool);

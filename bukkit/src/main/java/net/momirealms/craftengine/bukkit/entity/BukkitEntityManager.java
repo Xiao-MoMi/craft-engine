@@ -4,6 +4,7 @@ import it.unimi.dsi.fastutil.objects.Object2ObjectArrayMap;
 import net.momirealms.craftengine.bukkit.entity.listener.BukkitEntityListener;
 import net.momirealms.craftengine.bukkit.entity.listener.EquipmentSetClientSlotUpdater;
 import net.momirealms.craftengine.bukkit.entity.listener.PaperEntityListener;
+import net.momirealms.craftengine.bukkit.entity.listener.PaperEquipmentListener;
 import net.momirealms.craftengine.bukkit.item.BukkitItem;
 import net.momirealms.craftengine.bukkit.plugin.BukkitCraftEngine;
 import net.momirealms.craftengine.bukkit.plugin.listener.AbstractListener;
@@ -40,18 +41,8 @@ public final class BukkitEntityManager extends AbstractEntityManager {
         this.plugin = plugin;
         this.entityListener = new BukkitEntityListener(this);
         this.paperEntityListener = VersionHelper.hasPaperPatch ? new PaperEntityListener(this) : null;
-        this.paperEquipmentListener = createPaperEquipmentListener();
+        this.paperEquipmentListener = VersionHelper.hasPaperPatch && VersionHelper.isOrAbove1_21_4 ? new PaperEquipmentListener(this) : null;
         instance = this;
-    }
-
-    private AbstractListener createPaperEquipmentListener() {
-        if (!VersionHelper.hasPaperPatch || !VersionHelper.isOrAbove1_21_4) return null;
-        try {
-            Class<?> listenerClass = Class.forName("net.momirealms.craftengine.bukkit.entity.listener.PaperEquipmentListener");
-            return (AbstractListener) listenerClass.getConstructor(BukkitEntityManager.class).newInstance(this);
-        } catch (ReflectiveOperationException e) {
-            throw new IllegalStateException("Failed to initialize the Paper equipment listener", e);
-        }
     }
 
     public static BukkitEntityManager instance() {

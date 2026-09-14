@@ -116,9 +116,7 @@ public final class BukkitFurniture extends Furniture {
 
         List<Player> trackedBy = this.trackedBy();
         // 服务端实体仍在家具所属线程销毁和登记。
-        BukkitFurnitureManager.instance().unregisterFurniture(this, false);
-        super.destroySeats();
-        super.clearColliders();
+        BukkitFurnitureManager.instance().unregisterFurniture(this, true);
         super.setVariantInternal(variant);
         BukkitFurnitureManager.instance().registerFurniture(this);
         this.addCollidersToWorld();
@@ -166,9 +164,7 @@ public final class BukkitFurniture extends Furniture {
 
             // 先移除
             {
-                BukkitFurnitureManager.instance().unregisterFurniture(this, false);
-                super.destroySeats();
-                super.clearColliders();
+                BukkitFurnitureManager.instance().unregisterFurniture(this, true);
             }
 
             Location location = LocationUtils.toLocation(position);
@@ -227,8 +223,7 @@ public final class BukkitFurniture extends Furniture {
         try {
             List<Player> trackedBy = this.trackedBy();
             BukkitFurnitureManager manager = BukkitFurnitureManager.instance();
-            manager.unregisterFurniture(this, false);
-            super.destroySeats();
+            manager.unregisterFurniture(this, true);
             this.location = actualLocation;
             super.updatePlacement();
             super.setVariantInternal(this.currentVariant());

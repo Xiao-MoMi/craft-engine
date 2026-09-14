@@ -6,6 +6,7 @@ import net.momirealms.craftengine.bukkit.api.CraftEngineFurniture;
 import net.momirealms.craftengine.bukkit.entity.furniture.hitbox.InteractionFurnitureHitboxConfig;
 import net.momirealms.craftengine.bukkit.entity.furniture.listener.FurnitureEventListener;
 import net.momirealms.craftengine.bukkit.entity.furniture.listener.PaperFurnitureEventListener;
+import net.momirealms.craftengine.bukkit.entity.seat.BukkitSeat;
 import net.momirealms.craftengine.bukkit.nms.CollisionEntity;
 import net.momirealms.craftengine.bukkit.plugin.BukkitCraftEngine;
 import net.momirealms.craftengine.bukkit.util.EntityUtils;
@@ -15,10 +16,12 @@ import net.momirealms.craftengine.bukkit.util.LocationUtils;
 import net.momirealms.craftengine.core.entity.furniture.*;
 import net.momirealms.craftengine.core.entity.furniture.behavior.FurnitureController;
 import net.momirealms.craftengine.core.entity.furniture.element.FurnitureElement;
+import net.momirealms.craftengine.core.entity.furniture.hitbox.FurnitureHitBox;
 import net.momirealms.craftengine.core.entity.furniture.hitbox.FurnitureHitBoxConfig;
 import net.momirealms.craftengine.core.entity.furniture.tick.FurnitureTicker;
 import net.momirealms.craftengine.core.entity.furniture.tick.TickingFurnitureImpl;
 import net.momirealms.craftengine.core.entity.player.Player;
+import net.momirealms.craftengine.core.entity.seat.Seat;
 import net.momirealms.craftengine.core.plugin.config.Config;
 import net.momirealms.craftengine.core.plugin.logger.Debugger;
 import net.momirealms.craftengine.core.sound.SoundData;
@@ -243,25 +246,8 @@ public final class BukkitFurnitureManager extends AbstractFurnitureManager {
     }
 
     private void unloadFurniture(BukkitFurniture furniture, boolean isStopping) {
-        // 必须先撤销登记；下面销毁 Collider 会同步触发它自己的移除事件。
-        this.unregisterFurniture(furniture, isStopping);
-
-        // Paper 普通区块卸载也会在 EntityLookup 状态切换栈内触发单实体移除事件，
-        // 不仅是「加载时意外卸载」。此时同一 section 不允许递归增删实体。
-        // 当前策略是跳过座椅销毁，不是安排稍后重试；排查残留时须区分这两种语义。
-        if (!isStopping) {
-            if (VersionHelper.hasPaperPatch) {
-                Location location = furniture.location();
-                Object entityLookup = LevelUtils.getEntityLookup(location.getWorld());
-                Object slices = EntityLookupProxy.INSTANCE.getChunk(entityLookup, location.getBlockX() >> 4, location.getBlockZ() >> 4);
-                boolean isPreventing = slices != null && ChunkEntitySlicesProxy.INSTANCE.isPreventingStatusUpdates(slices);
-                if (!isPreventing) {
-                    furniture.destroySeats();
-                }
-            } else {
-                furniture.destroySeats();
-            }
-        }
+        // Spigot 卸载回调仍在 section 遍历中；只撤销登记，旧 Collider 交给区块加载入口清理。
+        this.unregisterFurniture(furniture, !isStopping);
 
         // 触发行为卸载
         try {
@@ -348,7 +334,7 @@ public final class BukkitFurnitureManager extends AbstractFurnitureManager {
     }
 
     /**
-     * Paper EntityAddToWorldEvent 的单实体补载入口，主要覆盖 WorldEdit/外部 NMS 生成。
+     * Paper 事件和 Spigot Agent 的单实体补载入口，主要覆盖 WorldEdit/外部 NMS 生成。
      * 此事件位于 ServerLevel.EntityCallbacks.onTrackingStart 内；追踪器已建立，生成包可能已发送，
      * 但 EntityLookup 的状态切换尚未退出。因此既需要补包，又可能需要推迟 Collider 入世界。
      * 普通区块恢复时它同样触发，各版本均通过 CE 阶段标记交给后面的批量入口处理。
@@ -515,8 +501,8 @@ public final class BukkitFurnitureManager extends AbstractFurnitureManager {
         }
     }
 
-    /** 撤销实体 ID 映射、停用元素，并在非停服时尝试移除 Collider；不调用行为 onUnload。 */
-    void unregisterFurniture(BukkitFurniture furniture, boolean isStopping) {
+    /** 撤销实体 ID 映射、停用元素，并按需移除碰撞实体和座椅；不调用行为 onUnload。 */
+    void unregisterFurniture(BukkitFurniture furniture, boolean removeSubEntities) {
         int entityId = furniture.entityId();
         // 移除entity id映射
         this.byMetaEntityId.remove(entityId);
@@ -527,10 +513,32 @@ public final class BukkitFurnitureManager extends AbstractFurnitureManager {
         List<Collider> colliders = furniture.colliders();
         for (int colliderIndex = 0, colliderCount = colliders.size(); colliderIndex < colliderCount; colliderIndex++) {
             Collider collisionEntity = colliders.get(colliderIndex);
-            if (!isStopping) {
-                tryRemoveCollider(collisionEntity);
+            if (removeSubEntities) {
+                Object entity = collisionEntity.handle();
+                if (EntityProxy.INSTANCE.isRemoved(entity)) continue;
+                if (VersionHelper.hasPaperPatch) {
+                    Object level = EntityProxy.INSTANCE.getLevel(entity);
+                    Object entityLookup = LevelUtils.getEntityLookup(level);
+                    if (!EntityLookupProxy.INSTANCE.canRemoveEntity(entityLookup, entity)) return;
+                }
+                collisionEntity.destroy();
             }
             this.byColliderEntityId.remove(collisionEntity.entityId());
+        }
+        if (removeSubEntities) {
+            for (FurnitureHitBox hitbox : furniture.hitboxes()) {
+                for (Seat<?> seat : hitbox.seats()) {
+                    Entity seatEntity = ((BukkitSeat<?>) seat).getSeatEntity();
+                    if (seatEntity == null || !seatEntity.isValid()) continue;
+                    if (VersionHelper.hasPaperPatch) {
+                        Object entity = CraftEntityProxy.INSTANCE.getEntity(seatEntity);
+                        Object level = EntityProxy.INSTANCE.getLevel(entity);
+                        Object entityLookup = LevelUtils.getEntityLookup(level);
+                        if (!EntityLookupProxy.INSTANCE.canRemoveEntity(entityLookup, entity)) continue;
+                    }
+                    seat.destroy();
+                }
+            }
         }
         List<FurnitureElement> elements = furniture.elements();
         for (int elementIndex = 0, elementCount = elements.size(); elementIndex < elementCount; elementIndex++) {
@@ -542,17 +550,10 @@ public final class BukkitFurnitureManager extends AbstractFurnitureManager {
     // 单实体/section 的状态切换期间 Paper 会拒绝移除。这里跳过，不创建重试任务。
     // 普通区块卸载随后还有批量清理；不要把它当作任意时机都保证成功的 destroy。
     private void tryRemoveCollider(Collider collider) {
-        if (VersionHelper.hasPaperPatch) {
-            Object entity = collider.handle();
-            Object level = EntityProxy.INSTANCE.getLevel(entity);
-            Object entityLookup = LevelUtils.getEntityLookup(level);
-            if (!EntityLookupProxy.INSTANCE.canRemoveEntity(entityLookup, entity)) return;
-        }
-        collider.destroy();
+
     }
 
     // 1.20.x 使用 io.papermc.paper 的 EntityLookup；本地 1.21.1+ 样本使用 Moonrise 同等机制。
-    // 判断的是当前调用栈内的递归修改限制，不是「区块是否已加载」。纯 Spigot 没有这套限制。
     private boolean shouldDeferEntityOperation(Chunk chunk) {
         if (!VersionHelper.hasPaperPatch) return false;
         Object world = CraftWorldProxy.INSTANCE.getWorld(chunk.getWorld());
