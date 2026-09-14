@@ -535,14 +535,9 @@ public abstract class CraftEngine implements Plugin {
             if (Config.checkUpdate()) {
                 this.scheduler.executeAsync(this::checkUpdates);
             }
-            // 用于兼容那些注册群系比较晚的插件，点名批评某R开头的季节插件
-            int biomeCount = this.platform.biomeCount();
             // 完成初始化
             this.isEnabling = false;
             this.scheduler.platform().runDelayed(() -> {
-                if (biomeCount != this.platform.biomeCount()) {
-                    ((AbstractBlockManager) this.blockManager).registerBlockStatePacketListener();
-                }
                 // 一定等其他插件全部完成加载后再发重载事件
                 this.callReloadEvent();
                 this.isFullyLoaded = true;
