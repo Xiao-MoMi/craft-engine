@@ -114,6 +114,10 @@ public interface NetWorkUser {
 
     void setClientBlockList(IntIdentityList integers);
 
+    IntIdentityList clientBiomeList();
+
+    void setClientBiomeList(IntIdentityList biomes);
+
     boolean needsBlockStateBitWidthConversion();
 
     ProtocolVersion protocolVersion();

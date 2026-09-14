@@ -192,6 +192,7 @@ public class BukkitServerPlayer extends BukkitLivingEntity implements Player {
     private boolean enableClientCustomBlock = false;
     private int clientModProtocol = -1;
     private IntIdentityList blockList = new IntIdentityList(BlockStateUtils.vanillaBlockStateCount());
+    private IntIdentityList biomeList;
     private boolean needsBlockStateBitWidthConversion = MiscUtils.ceilLog2(this.blockList.size()) != MiscUtils.ceilLog2(RegistryUtils.currentBlockRegistrySize());
     // cache if player can break blocks
     private boolean clientSideCanBreak = true;
@@ -1558,6 +1559,19 @@ public class BukkitServerPlayer extends BukkitLivingEntity implements Player {
     @Override
     public IntIdentityList clientBlockList() {
         return this.blockList;
+    }
+
+    @Override
+    public IntIdentityList clientBiomeList() {
+        if (this.biomeList == null) {
+            this.biomeList = new IntIdentityList(RegistryUtils.currentBiomeRegistrySize());
+        }
+        return this.biomeList;
+    }
+
+    @Override
+    public void setClientBiomeList(IntIdentityList biomes) {
+        this.biomeList = biomes;
     }
 
     @Override

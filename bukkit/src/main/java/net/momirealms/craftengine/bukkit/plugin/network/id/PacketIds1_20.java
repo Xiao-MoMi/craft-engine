@@ -395,7 +395,7 @@ public final class PacketIds1_20 implements PacketIds {
 
     @Override
     public int clientboundRegistryDataPacket() {
-        return PacketIdHelper.byClazz(ClientboundRegistryDataPacketProxy.CLASS, ConnectionState.CONFIGURATION, PacketFlow.SERVERBOUND);
+        return PacketIdHelper.byClazz(ClientboundRegistryDataPacketProxy.CLASS, ConnectionState.CONFIGURATION, PacketFlow.CLIENTBOUND);
     }
 
     @Override

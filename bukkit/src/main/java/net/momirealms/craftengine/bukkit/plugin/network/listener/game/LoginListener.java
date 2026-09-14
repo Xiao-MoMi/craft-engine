@@ -2,6 +2,7 @@ package net.momirealms.craftengine.bukkit.plugin.network.listener.game;
 
 import com.google.common.collect.Sets;
 import net.momirealms.craftengine.bukkit.api.BukkitAdaptor;
+import net.momirealms.craftengine.bukkit.plugin.network.listener.configuration.RegistryDataListener;
 import net.momirealms.craftengine.bukkit.plugin.user.BukkitServerPlayer;
 import net.momirealms.craftengine.bukkit.util.LevelUtils;
 import net.momirealms.craftengine.core.plugin.config.Config;
@@ -107,7 +108,7 @@ public final class LoginListener implements ByteBufferPacketListener {
             /*gameType*/ buf.readByte();
             /*previousGameType*/ buf.readByte();
             /*levels*/ buf.readCollection(Sets::newHashSetWithExpectedSize, FriendlyByteBuf::readKey);
-            /*registryHolder*/ buf.readNbt(true);
+            RegistryDataListener.readLegacyRegistries(user, buf, true);
             /*dimensionType*/ buf.readKey();
             Key dimension = buf.readKey();
             World world = LevelUtils.getWorld(dimension);

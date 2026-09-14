@@ -30,7 +30,6 @@ import net.momirealms.craftengine.bukkit.plugin.user.BukkitServerPlayer;
 import net.momirealms.craftengine.bukkit.plugin.user.FakeBukkitServerPlayer;
 import net.momirealms.craftengine.bukkit.util.BlockStateUtils;
 import net.momirealms.craftengine.bukkit.util.KeyUtils;
-import net.momirealms.craftengine.bukkit.util.RegistryUtils;
 import net.momirealms.craftengine.bukkit.util.TagUtils;
 import net.momirealms.craftengine.core.plugin.CraftEngine;
 import net.momirealms.craftengine.core.plugin.config.Config;
@@ -400,7 +399,6 @@ public final class BukkitNetworkManager extends AbstractNetworkManager implement
                 newMappings,
                 newMappingsMOD,
                 newMappings.length,
-                RegistryUtils.currentBiomeRegistrySize(),
                 occlusionPredicate
         ), PACKET_IDS.clientboundLevelChunkWithLightPacket(), "ClientboundLevelChunkWithLightPacket", ConnectionState.PLAY, PacketFlow.CLIENTBOUND);
         registerByteBufferPacketListener(new SectionBlocksUpdateListener(

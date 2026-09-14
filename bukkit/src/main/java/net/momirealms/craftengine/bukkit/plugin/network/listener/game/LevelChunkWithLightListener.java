@@ -36,14 +36,12 @@ public final class LevelChunkWithLightListener implements ByteBufferPacketListen
     private static BiomeRemapper biomeRemapper = BiomeRemapper.DUMMY;
     private final int[] blockStateMapper;
     private final int[] modBlockStateMapper;
-    private final IntIdentityList biomeList;
     private final IntIdentityList blockList;
     private final IntPredicate occlusionPredicate;
 
-    public LevelChunkWithLightListener(int[] blockStateMapper, int[] modBlockStateMapper, int blockRegistrySize, int biomeRegistrySize, IntPredicate occlusionPredicate) {
+    public LevelChunkWithLightListener(int[] blockStateMapper, int[] modBlockStateMapper, int blockRegistrySize, IntPredicate occlusionPredicate) {
         this.blockStateMapper = blockStateMapper;
         this.modBlockStateMapper = modBlockStateMapper;
-        this.biomeList = new IntIdentityList(biomeRegistrySize);
         this.blockList = new IntIdentityList(blockRegistrySize);
         this.occlusionPredicate = occlusionPredicate;
     }
@@ -58,6 +56,7 @@ public final class LevelChunkWithLightListener implements ByteBufferPacketListen
 
         int[] remapper = user.clientCustomBlockEnabled() ? this.modBlockStateMapper : this.blockStateMapper;
         IntIdentityList clientBlockList = user.clientBlockList();
+        IntIdentityList clientBiomeList = user.clientBiomeList();
         boolean needsBitWidthConversion = user.needsBlockStateBitWidthConversion();
 
         // 跳过高度图, 不做解析; 需要改写时原样拷贝原始字节
@@ -94,7 +93,7 @@ public final class LevelChunkWithLightListener implements ByteBufferPacketListen
         BiomeRemapper currentBiomeRemapper = biomeRemapper;
         SectionTracker tracker = null;
         for (int i = 0; i < count; i++) {
-            PacketSection section = PacketSection.readPacket(chunkDataByteBuf, this.blockList, clientBlockList, this.biomeList);
+            PacketSection section = PacketSection.readPacket(chunkDataByteBuf, this.blockList, clientBlockList, clientBiomeList);
             sections[i] = section;
             boolean scanGlobal = section instanceof GlobalPaletteSection && (occludingSections != null || lightSections != null);
             if (!scanGlobal && section.remap(remapper)) {
