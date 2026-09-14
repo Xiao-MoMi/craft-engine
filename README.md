@@ -76,8 +76,8 @@ repositories {
 ```
 ```kotlin
 dependencies {
-    compileOnly("net.momirealms:craft-engine-core:26.8")
-    compileOnly("net.momirealms:craft-engine-bukkit:26.8")
+    compileOnly("net.momirealms:craft-engine-core:26.9")
+    compileOnly("net.momirealms:craft-engine-bukkit:26.9")
 }
 ```
 
@@ -85,6 +85,6 @@ Some optional dependencies
 ```kotlin
 dependencies {
     // This dependency is used to access certain NMS code, which is not a stable API.
-    compileOnly("net.momirealms:craft-engine-bukkit-proxy:26.8")
+    compileOnly("net.momirealms:craft-engine-bukkit-proxy:26.9")
 }
 ```
