@@ -105,8 +105,8 @@ public final class BukkitItemManager extends AbstractItemManager {
         this.loadItemModelMappings();
         this.emptyItem = wrap(ItemStackProxy.EMPTY);
         this.deserializedItemCache = Caffeine.newBuilder()
-                .maximumSize(2048)
-                .expireAfterAccess(Duration.of(20, ChronoUnit.MINUTES))
+                .maximumSize(4096)
+                .expireAfterAccess(Duration.of(10, ChronoUnit.MINUTES))
                 .scheduler(Scheduler.systemScheduler())
                 .executor(this.plugin.scheduler().async())
                 .build();
