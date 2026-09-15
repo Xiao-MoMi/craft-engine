@@ -43,6 +43,7 @@ import net.momirealms.craftengine.core.plugin.network.listener.ByteBufferPacketL
 import net.momirealms.craftengine.core.plugin.network.listener.ByteBufferPacketListenerHolder;
 import net.momirealms.craftengine.core.plugin.network.listener.NMSPacketListener;
 import net.momirealms.craftengine.core.plugin.network.mod.protocol.ClientboundCreativeModeTabItemsPacket;
+import net.momirealms.craftengine.core.plugin.text.component.ComponentProvider;
 import net.momirealms.craftengine.core.util.*;
 import net.momirealms.craftengine.core.world.score.TeamManagerImpl;
 import net.momirealms.craftengine.proxy.bukkit.craftbukkit.entity.CraftEntityProxy;
@@ -66,6 +67,7 @@ import net.momirealms.craftengine.proxy.minecraft.tags.TagNetworkSerializationPr
 import net.momirealms.craftengine.proxy.minecraft.world.level.block.BlocksProxy;
 import net.momirealms.craftengine.proxy.netty.handler.codec.ByteToMessageDecoderProxy;
 import net.momirealms.craftengine.proxy.netty.handler.codec.MessageToByteEncoderProxy;
+import net.momirealms.sparrow.nbt.Tag;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
@@ -182,6 +184,11 @@ public final class BukkitNetworkManager extends AbstractNetworkManager implement
         }
         // register custom packets
         ClientboundFurnitureUpdatePacket.init();
+    }
+
+    @Override
+    public Map<String, ComponentProvider> matchNetworkTags(Tag nbt) {
+        return new NetworkTagVisitor().visit(nbt);
     }
 
     private boolean checkHasCompressionThreshold() {
