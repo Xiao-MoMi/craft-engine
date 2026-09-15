@@ -58,7 +58,7 @@ public final class EntityDeathLootListener implements Listener {
                 luck = (float) causingPlayer.luck();
                 Item itemInHand = causingPlayer.getItemInHand(InteractionHand.MAIN_HAND);
                 builder.withParameter(DirectContextParameters.PLAYER, player)
-                        .withOptionalParameter(DirectContextParameters.ITEM_IN_HAND, ItemUtils.isEmpty(itemInHand) ? null : itemInHand);
+                        .withOptionalParameter(DirectContextParameters.ITEM_IN_HAND, ItemUtils.emptyToNull(itemInHand));
             }
         }
         LootContext lootContext = new LootContext(world, causingPlayer, luck, builder.build());

@@ -227,7 +227,7 @@ public class FurnitureItemBehavior extends ItemBehavior implements FurnitureItem
             Function.execute(PlayerOptionalContext.of(player,
                     ContextHolder.builder()
                             .withOptionalParameter(DirectContextParameters.PLAYER, player)
-                            .withOptionalParameter(DirectContextParameters.ITEM_IN_HAND, ItemUtils.isEmpty(item) ? null : item)
+                            .withOptionalParameter(DirectContextParameters.ITEM_IN_HAND, ItemUtils.emptyToNull(item))
                             .withParameter(DirectContextParameters.FURNITURE, bukkitFurniture)
                             .withParameter(DirectContextParameters.POSITION, LocationUtils.toWorldPosition(furnitureLocation))
                             .withParameter(DirectContextParameters.EVENT, dummy)

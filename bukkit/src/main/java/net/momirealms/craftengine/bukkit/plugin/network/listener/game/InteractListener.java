@@ -241,7 +241,7 @@ public final class InteractListener {
                                 .withParameter(DirectContextParameters.PLAYER, serverPlayer)
                                 .withParameter(DirectContextParameters.EVENT, cancellable)
                                 .withParameter(DirectContextParameters.FURNITURE, furniture)
-                                .withOptionalParameter(DirectContextParameters.ITEM_IN_HAND, ItemUtils.isEmpty(itemInHand) ? null : itemInHand)
+                                .withOptionalParameter(DirectContextParameters.ITEM_IN_HAND, ItemUtils.emptyToNull(itemInHand))
                                 .withParameter(DirectContextParameters.HAND, hand)
                                 .withParameter(DirectContextParameters.POSITION, furniture.position())
                                 .build()

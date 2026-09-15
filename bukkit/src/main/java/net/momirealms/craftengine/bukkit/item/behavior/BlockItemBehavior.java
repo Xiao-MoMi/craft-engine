@@ -189,7 +189,7 @@ public class BlockItemBehavior extends ItemBehavior implements BlockItem {
                             .withParameter(DirectContextParameters.POSITION, position)
                             .withParameter(DirectContextParameters.EVENT, dummy)
                             .withParameter(DirectContextParameters.HAND, context.getHand())
-                            .withOptionalParameter(DirectContextParameters.ITEM_IN_HAND, ItemUtils.isEmpty(context.getItem()) ? null : context.getItem())
+                            .withOptionalParameter(DirectContextParameters.ITEM_IN_HAND, ItemUtils.emptyToNull(context.getItem()))
                             .build()
             ), functions);
             if (dummy.isCancelled()) {

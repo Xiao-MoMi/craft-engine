@@ -59,7 +59,7 @@ public final class FishingLootListener implements Listener {
                 .withParameter(DirectContextParameters.PLAYER, serverPlayer)
                 .withParameter(DirectContextParameters.WORLD, world)
                 .withParameter(DirectContextParameters.POSITION, LocationUtils.toWorldPosition(hookLocation))
-                .withOptionalParameter(DirectContextParameters.ITEM_IN_HAND, ItemUtils.isEmpty(itemInHand) ? null : itemInHand)
+                .withOptionalParameter(DirectContextParameters.ITEM_IN_HAND, ItemUtils.emptyToNull(itemInHand))
                 .withParameter(DirectContextParameters.OPEN_WATER, event.getHook().isInOpenWater())
                 .build();
         LootOutcome outcome = LootManager.eval(sources, new LootContext(world, serverPlayer, luck, holder));

@@ -134,7 +134,7 @@ public final class ItemEventListener implements Listener {
             Cancellable cancellable = Cancellable.of(event::isCancelled, event::setCancelled);
             Function.execute(PlayerOptionalContext.of(serverPlayer, ContextHolder.builder()
                     .withParameter(DirectContextParameters.PLAYER, serverPlayer)
-                    .withOptionalParameter(DirectContextParameters.ITEM_IN_HAND, ItemUtils.isEmpty(itemInHand) ? null : itemInHand)
+                    .withOptionalParameter(DirectContextParameters.ITEM_IN_HAND, ItemUtils.emptyToNull(itemInHand))
                     .withParameter(DirectContextParameters.HAND, hand)
                     .withParameter(DirectContextParameters.EVENT, cancellable)
                     .withParameter(DirectContextParameters.ENTITY, bukkitEntity)
@@ -247,7 +247,7 @@ public final class ItemEventListener implements Listener {
                         .withParameter(DirectContextParameters.EVENT, dummy)
                         .withParameter(DirectContextParameters.BLOCK, new BukkitExistingBlock(block))
                         .withParameter(DirectContextParameters.POSITION, LocationUtils.toWorldPosition(block.getLocation()))
-                        .withOptionalParameter(DirectContextParameters.ITEM_IN_HAND, ItemUtils.isEmpty(itemInHand) ? null : itemInHand)
+                        .withOptionalParameter(DirectContextParameters.ITEM_IN_HAND, ItemUtils.emptyToNull(itemInHand))
                         .build()
                 ), functions);
                 if (dummy.isCancelled()) {
@@ -420,7 +420,7 @@ public final class ItemEventListener implements Listener {
                                 .withParameter(DirectContextParameters.PLAYER, serverPlayer)
                                 .withParameter(DirectContextParameters.BLOCK, new BukkitExistingBlock(block))
                                 .withOptionalParameter(DirectContextParameters.CUSTOM_BLOCK_STATE, immutableBlockState)
-                                .withOptionalParameter(DirectContextParameters.ITEM_IN_HAND, ItemUtils.isEmpty(itemInHand) ? null : itemInHand)
+                                .withOptionalParameter(DirectContextParameters.ITEM_IN_HAND, ItemUtils.emptyToNull(itemInHand))
                                 .withParameter(DirectContextParameters.POSITION, LocationUtils.toWorldPosition(block.getLocation()))
                                 .withParameter(DirectContextParameters.HAND, hand)
                                 .withParameter(DirectContextParameters.EVENT, dummy)
@@ -521,7 +521,7 @@ public final class ItemEventListener implements Listener {
                         .withParameter(DirectContextParameters.PLAYER, serverPlayer)
                         .withParameter(DirectContextParameters.BLOCK, new BukkitExistingBlock(block))
                         .withOptionalParameter(DirectContextParameters.CUSTOM_BLOCK_STATE, immutableBlockState)
-                        .withOptionalParameter(DirectContextParameters.ITEM_IN_HAND, ItemUtils.isEmpty(itemInHand) ? null : itemInHand)
+                        .withOptionalParameter(DirectContextParameters.ITEM_IN_HAND, ItemUtils.emptyToNull(itemInHand))
                         .withParameter(DirectContextParameters.POSITION, LocationUtils.toWorldPosition(block.getLocation()))
                         .withParameter(DirectContextParameters.HAND, hand)
                         .withParameter(DirectContextParameters.EVENT, dummy)
@@ -772,7 +772,7 @@ public final class ItemEventListener implements Listener {
                 Cancellable cancellable = Cancellable.of(event::isCancelled, event::setCancelled);
                 Function.execute(PlayerOptionalContext.of(serverPlayer, ContextHolder.builder()
                         .withParameter(DirectContextParameters.PLAYER, serverPlayer)
-                        .withOptionalParameter(DirectContextParameters.ITEM_IN_HAND, ItemUtils.isEmpty(itemInHand) ? null : itemInHand)
+                        .withOptionalParameter(DirectContextParameters.ITEM_IN_HAND, ItemUtils.emptyToNull(itemInHand))
                         .withParameter(DirectContextParameters.EVENT, cancellable)
                         .withParameter(DirectContextParameters.ENTITY, new BukkitEntity(hitEntity))
                         .withParameter(DirectContextParameters.POSITION, LocationUtils.toWorldPosition(hitEntity.getLocation()))
@@ -1114,7 +1114,7 @@ public final class ItemEventListener implements Listener {
                         .withParameter(DirectContextParameters.EVENT, Cancellable.of(event::isCancelled, event::setCancelled))
                         .withParameter(DirectContextParameters.ENTITY, new BukkitEntity(shooter))
                         .withParameter(DirectContextParameters.POSITION, LocationUtils.toWorldPosition(shooter.getLocation()))
-                        .withOptionalParameter(DirectContextParameters.ITEM_IN_HAND, ItemUtils.isEmpty(bowItem) ? null : bowItem)
+                        .withOptionalParameter(DirectContextParameters.ITEM_IN_HAND, ItemUtils.emptyToNull(bowItem))
                         .build()
                 ), functions);
             }

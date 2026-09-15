@@ -152,7 +152,7 @@ public final class BlockStateGenerator {
             ContextHolder.Builder lootBuilder = ContextHolder.builder()
                     .withParameter(DirectContextParameters.POSITION, new WorldPosition(world, Vec3Proxy.INSTANCE.getX(vec3), Vec3Proxy.INSTANCE.getY(vec3), Vec3Proxy.INSTANCE.getZ(vec3)))
                     .withParameter(DirectContextParameters.CUSTOM_BLOCK_STATE, state);
-            lootBuilder.withOptionalParameter(DirectContextParameters.ITEM_IN_HAND, ItemUtils.isEmpty(item) ? null : item);
+            lootBuilder.withOptionalParameter(DirectContextParameters.ITEM_IN_HAND, ItemUtils.emptyToNull(item));
             BukkitServerPlayer player = optionalPlayer != null ? BukkitAdaptor.adapt(ServerPlayerProxy.INSTANCE.getBukkitEntity(optionalPlayer)) : null;
             if (player != null) {
                 lootBuilder.withParameter(DirectContextParameters.PLAYER, player);

@@ -70,7 +70,7 @@ public final class ArchaeologyLootListener implements Listener {
                 .withParameter(DirectContextParameters.PLAYER, serverPlayer)
                 .withParameter(DirectContextParameters.WORLD, world)
                 .withParameter(DirectContextParameters.POSITION, LocationUtils.toWorldPosition(block.getLocation()))
-                .withOptionalParameter(DirectContextParameters.ITEM_IN_HAND, ItemUtils.isEmpty(serverPlayer.getItemInHand(hand)) ? null : serverPlayer.getItemInHand(hand))
+                .withOptionalParameter(DirectContextParameters.ITEM_IN_HAND, ItemUtils.emptyToNull(serverPlayer.getItemInHand(hand)))
                 .build();
         LootOutcome outcome = LootManager.eval(sources, new LootContext(world, serverPlayer, (float) serverPlayer.luck(), holder));
         if (!outcome.matched()) return;

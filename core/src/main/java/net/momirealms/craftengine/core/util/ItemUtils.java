@@ -15,6 +15,12 @@ public final class ItemUtils {
         return item == null || item.isEmpty();
     }
 
+    public static Item emptyToNull(Item item) {
+        if (item == null) return null;
+        if (item.isEmpty()) return null;
+        return item;
+    }
+
     public static int breakPower(@NotNull Item item) {
         Optional<ItemDefinition> definition = item.getDefinition();
         if (definition.isPresent()) {
