@@ -452,7 +452,6 @@ public final class BukkitNetworkManager extends AbstractNetworkManager implement
             registerNMSPacketConsumer(NMSContainerSetContentListener.INSTANCE, ClientboundContainerSetContentPacketProxy.CLASS);
             registerNMSPacketConsumer(NMSContainerSetSlotListener.INSTANCE, ClientboundContainerSetSlotPacketProxy.CLASS);
             registerNMSPacketConsumer(NMSSetPlayerInventoryListener.INSTANCE, ClientboundSetPlayerInventoryPacketProxy.CLASS);
-            registerNMSPacketConsumer(NMSPlayerInfoUpdateListener.INSTANCE, ClientboundPlayerInfoUpdatePacketProxy.CLASS);
             if (VersionHelper.isOrAbove1_21_2) {
                 registerNMSPacketConsumer(NMSSetCursorItemListener.INSTANCE, ClientboundSetCursorItemPacketProxy.CLASS);
             }
@@ -461,10 +460,11 @@ public final class BukkitNetworkManager extends AbstractNetworkManager implement
             registerByteBufferPacketListener(ContainerSetSlotListener.INSTANCE, PACKET_IDS.clientboundContainerSetSlotPacket(), "ClientboundContainerSetSlotPacket", ConnectionState.PLAY, PacketFlow.CLIENTBOUND);
             registerByteBufferPacketListener(SetPlayerInventoryListener.INSTANCE, PACKET_IDS.clientboundSetPlayerInventoryPacket(), "ClientboundSetPlayerInventoryPacket", ConnectionState.PLAY, PacketFlow.CLIENTBOUND);
             registerByteBufferPacketListener(SetCursorItemListener.INSTANCE, PACKET_IDS.clientboundSetCursorItemPacket(), "ClientboundSetCursorItemPacket", ConnectionState.PLAY, PacketFlow.CLIENTBOUND);
-            registerByteBufferPacketListener(PlayerInfoUpdateListener.INSTANCE, PACKET_IDS.clientboundPlayerInfoUpdatePacket(), "ClientboundPlayerInfoUpdatePacket", ConnectionState.PLAY, PacketFlow.CLIENTBOUND);
         }
 
         // bytebuffer
+        registerByteBufferPacketListener(PlayerInfoUpdateListener.INSTANCE, PACKET_IDS.clientboundPlayerInfoUpdatePacket(), "ClientboundPlayerInfoUpdatePacket", ConnectionState.PLAY, PacketFlow.CLIENTBOUND);
+        registerByteBufferPacketListener(BossEventListener.INSTANCE, PACKET_IDS.clientboundBossEventPacket(), "ClientboundBossEventPacket", ConnectionState.PLAY, PacketFlow.CLIENTBOUND);
         registerByteBufferPacketListener(TeleportEntityListener.INSTANCE, PACKET_IDS.clientboundTeleportEntityPacket(), "ClientboundTeleportEntityPacket", ConnectionState.PLAY, PacketFlow.CLIENTBOUND);
         registerByteBufferPacketListener(SetEquipmentListener.INSTANCE, PACKET_IDS.clientboundSetEquipmentPacket(), "ClientboundSetEquipmentPacket", ConnectionState.PLAY, PacketFlow.CLIENTBOUND);
         registerByteBufferPacketListener(ClientInformationListener.INSTANCE, PACKET_IDS.serverboundClientInformationPacket$play(), "ServerboundClientInformationPacket", ConnectionState.PLAY, PacketFlow.SERVERBOUND);
@@ -516,7 +516,6 @@ public final class BukkitNetworkManager extends AbstractNetworkManager implement
         registerByteBufferPacketListener(TabListListener.INSTANCE, PACKET_IDS.clientboundTabListPacket(), "ClientboundTabListPacket", ConnectionState.PLAY, PacketFlow.CLIENTBOUND);
         registerByteBufferPacketListener(SetTitleTextListener.INSTANCE, PACKET_IDS.clientboundSetTitleTextPacket(), "ClientboundSetTitleTextPacket", ConnectionState.PLAY, PacketFlow.CLIENTBOUND);
         registerByteBufferPacketListener(SetSubtitleTextListener.INSTANCE, PACKET_IDS.clientboundSetSubtitleTextPacket(), "ClientboundSetSubtitleTextPacket", ConnectionState.PLAY, PacketFlow.CLIENTBOUND);
-        registerByteBufferPacketListener(BossEventListener.INSTANCE, PACKET_IDS.clientboundBossEventPacket(), "ClientboundBossEventPacket", ConnectionState.PLAY, PacketFlow.CLIENTBOUND);
         registerByteBufferPacketListener(SetPlayerTeamListener.INSTANCE, PACKET_IDS.clientboundSetPlayerTeamPacket(), "ClientboundSetPlayerTeamPacket", ConnectionState.PLAY, PacketFlow.CLIENTBOUND);
         registerByteBufferPacketListener(SetObjectiveListener.INSTANCE, PACKET_IDS.clientboundSetObjectivePacket(), "ClientboundSetObjectivePacket", ConnectionState.PLAY, PacketFlow.CLIENTBOUND);
         registerByteBufferPacketListener(PlayerChatListener.INSTANCE, PACKET_IDS.clientboundPlayerChatPacket(), "ClientboundPlayerChatPacket", ConnectionState.PLAY, PacketFlow.CLIENTBOUND);
