@@ -107,7 +107,9 @@ public abstract class AbstractNetworkManager implements NetworkManager {
     @Override
     public boolean hasNetworkTag(String text) {
         // 避免产生列表分配
-        if (!text.contains("<") || !text.contains(">")) return false;
+        if (!(text.contains("<") && text.contains(">"))) {
+            return false;
+        }
         List<Token> root = TokenParser.tokenize(text, true);
         for (final Token token : root) {
             switch (token.type()) {
