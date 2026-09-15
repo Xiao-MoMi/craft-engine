@@ -141,6 +141,6 @@ public interface ItemStackProxy extends DataComponentHolderProxy, ItemInstancePr
     @MethodInvoker(name = "isValidRepairItem", activeIf = "min_version=1.21.2")
     boolean isValidRepairItem(Object target, @Type(clazz = ItemStackProxy.class) Object repairItem);
 
-    @MethodInvoker(name = "hashItemAndComponents", activeIf = "min_version=1.20.5")
+    @MethodInvoker(name = "hashItemAndComponents", activeIf = "min_version=1.20.5", isStatic = true)
     int hashItemAndComponents(@Type(clazz = ItemStackProxy.class) Object target);
 }
