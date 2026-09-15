@@ -90,6 +90,11 @@ public final class HideTooltipProcessor implements ItemProcessor {
         }
     }
 
+    @Override
+    public boolean isConstant() {
+        return true;
+    }
+
     public List<Key> components() {
         return this.components;
     }

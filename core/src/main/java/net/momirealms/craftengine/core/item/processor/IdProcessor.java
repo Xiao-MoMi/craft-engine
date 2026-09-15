@@ -18,6 +18,11 @@ public final class IdProcessor implements ItemProcessor {
     }
 
     @Override
+    public boolean isConstant() {
+        return true;
+    }
+
+    @Override
     public void apply(ItemBuildContext context) {
         context.item().customId(this.argument);
     }

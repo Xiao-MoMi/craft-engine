@@ -26,6 +26,11 @@ public final class OverwritableItemModelProcessor implements SimpleNetworkItemPr
     }
 
     @Override
+    public boolean isConstant() {
+        return true;
+    }
+
+    @Override
     public Key componentType(Item item, ItemBuildContext context) {
         return DataComponentKeys.ITEM_MODEL;
     }

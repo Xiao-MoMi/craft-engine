@@ -47,6 +47,11 @@ public final class ProfileProcessor implements SimpleNetworkItemProcessor {
         }
     }
 
+    @Override
+    public boolean isConstant() {
+        return this.profileName == null || this.profileName.isConstant();
+    }
+
     private static class Factory implements ItemProcessorFactory<ProfileProcessor> {
 
         @Override

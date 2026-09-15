@@ -17,6 +17,11 @@ public final class UseRemainderProcessor implements ItemProcessor {
     }
 
     @Override
+    public boolean isConstant() {
+        return true;
+    }
+
+    @Override
     public void apply(ItemBuildContext context) {
         Item item = context.item();
         Item wrappedItem = Item.byId(data, context.player());

@@ -66,7 +66,8 @@ public sealed interface LoreProcessor extends SimpleNetworkItemProcessor
                     Arrays.stream(rawLore)
                             .map(AdventureHelper::legacyToMiniMessage)
                             .map(line -> Config.addNonItalicTag() && !line.startsWith("<!i>") ? FormattedLine.create("<!i>" + line) : FormattedLine.create(line))
-                            .toArray(FormattedLine[]::new), c -> true));
+                            .toArray(FormattedLine[]::new),
+                    LoreModification.ALWAYS_ADD));
         }
 
         List<LoreModificationHolder> modifications = getLoreModificationHolders(configValue);
@@ -96,8 +97,8 @@ public sealed interface LoreProcessor extends SimpleNetworkItemProcessor
                         Arrays.stream(contents)
                                 .map(AdventureHelper::legacyToMiniMessage)
                                 .map(line -> Config.addNonItalicTag() && !line.startsWith("<!i>") ? FormattedLine.create("<!i>" + line) : FormattedLine.create(line))
-                                .toArray(FormattedLine[]::new), MiscUtils.allOf(conditions)
-                        ),
+                                .toArray(FormattedLine[]::new),
+                        conditions.isEmpty() ? LoreModification.ALWAYS_ADD : MiscUtils.allOf(conditions)),
                         priority
                 ));
                 lastPriority.set(priority);
@@ -107,7 +108,7 @@ public sealed interface LoreProcessor extends SimpleNetworkItemProcessor
                                 LoreModification.Operation.APPEND,
                                 false,
                                 new FormattedLine[]{FormattedLine.create(v.getAsString())},
-                                (c) -> true
+                                LoreModification.ALWAYS_ADD
                         ),
                         lastPriority.intValue()
                 ));
@@ -125,6 +126,11 @@ public sealed interface LoreProcessor extends SimpleNetworkItemProcessor
         @Override
         public List<LoreModification> lore() {
             return List.of();
+        }
+
+        @Override
+        public boolean isConstant() {
+            return true;
         }
     }
 
@@ -144,6 +150,11 @@ public sealed interface LoreProcessor extends SimpleNetworkItemProcessor
         public List<LoreModification> lore() {
             return List.of(modification);
         }
+
+        @Override
+        public boolean isConstant() {
+            return this.modification.isConstant();
+        }
     }
 
     non-sealed class DoubleLoreProcessor implements LoreProcessor {
@@ -162,7 +173,12 @@ public sealed interface LoreProcessor extends SimpleNetworkItemProcessor
 
         @Override
         public List<LoreModification> lore() {
-            return List.of(modification1, modification2);
+            return List.of(this.modification1, this.modification2);
+        }
+
+        @Override
+        public boolean isConstant() {
+            return this.modification1.isConstant() && this.modification2.isConstant();
         }
     }
 
@@ -180,7 +196,17 @@ public sealed interface LoreProcessor extends SimpleNetworkItemProcessor
 
         @Override
         public List<LoreModification> lore() {
-            return Arrays.asList(modifications);
+            return Arrays.asList(this.modifications);
+        }
+
+        @Override
+        public boolean isConstant() {
+            for (LoreModification modification : this.modifications) {
+                if (!modification.isConstant()) {
+                    return false;
+                }
+            }
+            return true;
         }
     }
 }

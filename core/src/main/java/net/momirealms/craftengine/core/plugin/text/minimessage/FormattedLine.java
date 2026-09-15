@@ -7,6 +7,8 @@ public interface FormattedLine {
 
     Component parse(net.momirealms.craftengine.core.plugin.context.Context context);
 
+    boolean isConstant();
+
     static FormattedLine create(String line) {
         if (line.equals(AdventureHelper.customMiniMessage().stripTags(line))) {
             return new PreParsedLine(AdventureHelper.miniMessage().deserialize(line));
@@ -26,6 +28,11 @@ public interface FormattedLine {
         public Component parse(net.momirealms.craftengine.core.plugin.context.Context context) {
             return this.parsed;
         }
+
+        @Override
+        public boolean isConstant() {
+            return true;
+        }
     }
 
     class DynamicLine implements FormattedLine {
@@ -38,6 +45,11 @@ public interface FormattedLine {
         @Override
         public Component parse(net.momirealms.craftengine.core.plugin.context.Context context) {
             return AdventureHelper.deserialize(this.content, context);
+        }
+
+        @Override
+        public boolean isConstant() {
+            return false;
         }
     }
 }

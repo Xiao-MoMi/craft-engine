@@ -20,6 +20,11 @@ public final class UnbreakableProcessor implements SimpleNetworkItemProcessor {
     }
 
     @Override
+    public boolean isConstant() {
+        return true;
+    }
+
+    @Override
     public void apply(ItemBuildContext context) {
         context.item().unbreakable(this.argument);
     }

@@ -15,7 +15,6 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.function.BiConsumer;
 
-// todo 更好支持参数
 public final class TagsProcessor implements ItemProcessor {
     public static final ItemProcessorFactory<TagsProcessor> FACTORY = new Factory();
     private final Map<String, Object> arguments;
@@ -55,6 +54,11 @@ public final class TagsProcessor implements ItemProcessor {
                 }
             }
         }
+    }
+
+    @Override
+    public boolean isConstant() {
+        return true;
     }
 
     @Override

@@ -32,6 +32,11 @@ public final class EnchantmentsProcessor implements SimpleNetworkItemProcessor {
         return merge;
     }
 
+    @Override
+    public boolean isConstant() {
+        return true;
+    }
+
     public List<Enchantment> enchantments() {
         return enchantments;
     }

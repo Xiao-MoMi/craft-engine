@@ -4,7 +4,9 @@ import net.kyori.adventure.text.Component;
 import net.momirealms.craftengine.core.item.ItemBuildContext;
 import net.momirealms.craftengine.core.plugin.text.minimessage.FormattedLine;
 import net.momirealms.craftengine.core.util.AdventureHelper;
+import net.momirealms.craftengine.core.util.MiscUtils;
 import net.momirealms.craftengine.core.util.TriFunction;
+import org.checkerframework.checker.units.qual.A;
 
 import java.util.Arrays;
 import java.util.List;
@@ -12,6 +14,17 @@ import java.util.function.Predicate;
 import java.util.stream.Stream;
 
 public record LoreModification(Operation operation, boolean split, FormattedLine[] content, Predicate<ItemBuildContext> predicate) {
+    public static final Predicate<ItemBuildContext> ALWAYS_ADD = MiscUtils.anyOf();
+
+    public boolean isConstant() {
+        if (this.predicate != ALWAYS_ADD)
+            return false;
+        for (FormattedLine line : this.content) {
+            if (!line.isConstant())
+                return false;
+        }
+        return true;
+    }
 
     public Stream<Component> apply(Stream<Component> lore, ItemBuildContext context) {
         return this.operation.function.apply(lore, context, this);

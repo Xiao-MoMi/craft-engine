@@ -23,6 +23,11 @@ public final class OverwritableCustomModelDataProcessor implements SimpleNetwork
     }
 
     @Override
+    public boolean isConstant() {
+        return this.argument.isConstant();
+    }
+
+    @Override
     public Key componentType(Item item, ItemBuildContext context) {
         return DataComponentKeys.CUSTOM_MODEL_DATA;
     }

@@ -126,6 +126,16 @@ public final class AttributeModifiersProcessor implements SimpleNetworkItemProce
         return "AttributeModifiers";
     }
 
+    @Override
+    public boolean isConstant() {
+        for (PreModifier modifier : this.modifiers) {
+            if (!modifier.amount.isConstant()) {
+                return false;
+            }
+        }
+        return true;
+    }
+
     public record PreModifier(String type,
                               VanillaAttributeModifier.Slot slot,
                               Optional<Key> id,

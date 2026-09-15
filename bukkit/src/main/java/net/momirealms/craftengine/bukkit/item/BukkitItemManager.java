@@ -122,6 +122,11 @@ public final class BukkitItemManager extends AbstractItemManager {
                 player.sendCustomPackets(ClientboundCreativeModeTabItemsPacket.create(player));
             }
         }
+        for (ItemDefinition itemDefinition : this.itemDefinitionById.values()) {
+            if (itemDefinition instanceof BukkitItemDefinition bukkitItemDefinition) {
+                bukkitItemDefinition.initConstantItem();
+            }
+        }
     }
 
     @Override

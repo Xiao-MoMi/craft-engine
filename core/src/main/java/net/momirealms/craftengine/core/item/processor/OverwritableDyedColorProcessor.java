@@ -31,6 +31,11 @@ public final class OverwritableDyedColorProcessor implements SimpleNetworkItemPr
     }
 
     @Override
+    public boolean isConstant() {
+        return true;
+    }
+
+    @Override
     public Key componentType(Item item, ItemBuildContext context) {
         return DataComponentKeys.DYED_COLOR;
     }

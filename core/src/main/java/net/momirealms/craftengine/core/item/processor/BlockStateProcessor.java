@@ -30,6 +30,11 @@ public final class BlockStateProcessor implements SimpleNetworkItemProcessor {
     }
 
     @Override
+    public boolean isConstant() {
+        return true;
+    }
+
+    @Override
     public Object[] nbtPath(Item item, ItemBuildContext context) {
         return NBT_PATH;
     }

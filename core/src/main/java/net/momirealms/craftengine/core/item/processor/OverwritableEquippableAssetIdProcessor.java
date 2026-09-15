@@ -26,6 +26,11 @@ public final class OverwritableEquippableAssetIdProcessor implements SimpleNetwo
     }
 
     @Override
+    public boolean isConstant() {
+        return true;
+    }
+
+    @Override
     public void apply(ItemBuildContext context) {
         Item item = context.item();
         Optional<EquipmentData> optionalData = item.equippable();

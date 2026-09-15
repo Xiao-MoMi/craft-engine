@@ -8,4 +8,8 @@ public interface TextProvider {
     String get(Context context);
 
     Key type();
+
+    default boolean isConstant() {
+        return false;
+    }
 }
