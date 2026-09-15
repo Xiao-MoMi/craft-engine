@@ -544,9 +544,7 @@ network:
     container: true     # GUI
     team: true          # Team prefix, suffix and display name
     scoreboard: true
-    entity-name: false
-    armor-stand: true   # Legacy Holograms
-    text-display: true  # Modern Holograms
+    entity-data: true
     item: true
     advancement: true   # Toast
     player-chat: true

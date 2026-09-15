@@ -238,9 +238,7 @@ public final class Config {
     private boolean network$intercept_packets$container;
     private boolean network$intercept_packets$team;
     private boolean network$intercept_packets$scoreboard;
-    private boolean network$intercept_packets$entity_name;
-    private boolean network$intercept_packets$text_display;
-    private boolean network$intercept_packets$armor_stand;
+    private boolean network$intercept_packets$entity_data;
     private boolean network$intercept_packets$player_info;
     private boolean network$intercept_packets$set_score;
     private boolean network$intercept_packets$item;
@@ -789,9 +787,9 @@ public final class Config {
 
         if (this.firstTime) {
             this.network$disable_chat_report = config.getBoolean("network.disable-chat-report", false);
+            this.network$performance_mode = config.getBoolean("network.performance-mode", true);
         }
         this.network$disable_item_operations = config.getBoolean("network.disable-item-operations", false);
-        this.network$performance_mode = config.getBoolean("network.performance-mode", true);
         this.network$intercept_packets$system_chat = config.getBoolean("network.intercept-packets.system-chat", true);
         this.network$intercept_packets$tab_list = config.getBoolean("network.intercept-packets.tab-list", true);
         this.network$intercept_packets$actionbar = config.getBoolean("network.intercept-packets.actionbar", true);
@@ -800,9 +798,7 @@ public final class Config {
         this.network$intercept_packets$container = config.getBoolean("network.intercept-packets.container", true);
         this.network$intercept_packets$team = config.getBoolean("network.intercept-packets.team", true);
         this.network$intercept_packets$scoreboard = config.getBoolean("network.intercept-packets.scoreboard", true);
-        this.network$intercept_packets$entity_name = config.getBoolean("network.intercept-packets.entity-name", false);
-        this.network$intercept_packets$text_display = config.getBoolean("network.intercept-packets.text-display", true);
-        this.network$intercept_packets$armor_stand = config.getBoolean("network.intercept-packets.armor-stand", true);
+        this.network$intercept_packets$entity_data = config.getBoolean("network.intercept-packets.entity-data", true);
         this.network$intercept_packets$player_info = config.getBoolean("network.intercept-packets.player-info", true);
         this.network$intercept_packets$set_score = config.getBoolean("network.intercept-packets.set-score", true);
         this.network$intercept_packets$item = config.getBoolean("network.intercept-packets.item", true);
@@ -1375,20 +1371,12 @@ public final class Config {
         return instance.network$intercept_packets$team;
     }
 
-    public static boolean interceptEntityName() {
-        return instance.network$intercept_packets$entity_name;
+    public static boolean interceptEntityData() {
+        return instance.network$intercept_packets$entity_data;
     }
 
     public static boolean interceptScoreboard() {
         return instance.network$intercept_packets$scoreboard;
-    }
-
-    public static boolean interceptTextDisplay() {
-        return instance.network$intercept_packets$text_display;
-    }
-
-    public static boolean interceptArmorStand() {
-        return instance.network$intercept_packets$armor_stand;
     }
 
     public static boolean interceptPlayerInfo() {

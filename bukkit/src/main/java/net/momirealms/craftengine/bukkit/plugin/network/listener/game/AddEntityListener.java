@@ -33,37 +33,21 @@ public final class AddEntityListener implements ByteBufferPacketListener {
     private AddEntityListener() {
         this.handlers = new EntityTypeHandler[RegistryUtils.currentEntityTypeRegistrySize()];
         Arrays.fill(this.handlers, EntityTypeHandler.DoNothing.INSTANCE);
-        this.handlers[EntityTypesProxy.BLOCK_DISPLAY$registryId] = simpleAddEntityHandler(BlockDisplayPacketHandler.INSTANCE);
-        this.handlers[EntityTypesProxy.TEXT_DISPLAY$registryId] = simpleAddEntityHandler(TextDisplayPacketHandler.INSTANCE);
-        this.handlers[EntityTypesProxy.ARMOR_STAND$registryId] = simpleAddEntityHandler(ArmorStandPacketHandler.INSTANCE);
         this.handlers[EntityTypesProxy.ITEM$registryId] = simpleAddEntityHandler(ItemPacketHandler.INSTANCE);
-        this.handlers[EntityTypesProxy.ITEM_FRAME$registryId] = simpleAddEntityHandler(ItemFramePacketHandler.INSTANCE);
-        this.handlers[EntityTypesProxy.GLOW_ITEM_FRAME$registryId] = simpleAddEntityHandler(ItemFramePacketHandler.INSTANCE);
-        this.handlers[EntityTypesProxy.ENDERMAN$registryId] = simpleAddEntityHandler(EndermanPacketHandler.INSTANCE);
-        this.handlers[EntityTypesProxy.CHEST_MINECART$registryId] = simpleAddEntityHandler(MinecartPacketHandler.INSTANCE);
-        this.handlers[EntityTypesProxy.COMMAND_BLOCK_MINECART$registryId] = simpleAddEntityHandler(MinecartPacketHandler.INSTANCE);
-        this.handlers[EntityTypesProxy.FURNACE_MINECART$registryId] = simpleAddEntityHandler(MinecartPacketHandler.INSTANCE);
-        this.handlers[EntityTypesProxy.HOPPER_MINECART$registryId] = simpleAddEntityHandler(MinecartPacketHandler.INSTANCE);
-        this.handlers[EntityTypesProxy.MINECART$registryId] = simpleAddEntityHandler(MinecartPacketHandler.INSTANCE);
-        this.handlers[EntityTypesProxy.SPAWNER_MINECART$registryId] = simpleAddEntityHandler(MinecartPacketHandler.INSTANCE);
-        this.handlers[EntityTypesProxy.TNT_MINECART$registryId] = simpleAddEntityHandler(MinecartPacketHandler.INSTANCE);
-        this.handlers[EntityTypesProxy.FIREBALL$registryId] = createOptionalCustomProjectileEntityHandler(true);
-        this.handlers[EntityTypesProxy.EYE_OF_ENDER$registryId] = createOptionalCustomProjectileEntityHandler(true);
-        this.handlers[EntityTypesProxy.FIREWORK_ROCKET$registryId] = createOptionalCustomProjectileEntityHandler(true);
-        this.handlers[EntityTypesProxy.SMALL_FIREBALL$registryId] = createOptionalCustomProjectileEntityHandler(true);
-        this.handlers[EntityTypesProxy.EGG$registryId] = createOptionalCustomProjectileEntityHandler(true);
-        this.handlers[EntityTypesProxy.ENDER_PEARL$registryId] = createOptionalCustomProjectileEntityHandler(true);
-        this.handlers[EntityTypesProxy.EXPERIENCE_BOTTLE$registryId] = createOptionalCustomProjectileEntityHandler(true);
-        this.handlers[EntityTypesProxy.SNOWBALL$registryId] = createOptionalCustomProjectileEntityHandler(true);
-        this.handlers[EntityTypesProxy.POTION$registryId] = createOptionalCustomProjectileEntityHandler(true);
-        this.handlers[EntityTypesProxy.TRIDENT$registryId] = createOptionalCustomProjectileEntityHandler(false);
-        this.handlers[EntityTypesProxy.ARROW$registryId] = createOptionalCustomProjectileEntityHandler(false);
-        this.handlers[EntityTypesProxy.SPECTRAL_ARROW$registryId] = createOptionalCustomProjectileEntityHandler(false);
+        this.handlers[EntityTypesProxy.FIREBALL$registryId] = createOptionalCustomProjectileEntityHandler();
+        this.handlers[EntityTypesProxy.EYE_OF_ENDER$registryId] = createOptionalCustomProjectileEntityHandler();
+        this.handlers[EntityTypesProxy.FIREWORK_ROCKET$registryId] = createOptionalCustomProjectileEntityHandler();
+        this.handlers[EntityTypesProxy.SMALL_FIREBALL$registryId] = createOptionalCustomProjectileEntityHandler();
+        this.handlers[EntityTypesProxy.EGG$registryId] = createOptionalCustomProjectileEntityHandler();
+        this.handlers[EntityTypesProxy.ENDER_PEARL$registryId] = createOptionalCustomProjectileEntityHandler();
+        this.handlers[EntityTypesProxy.EXPERIENCE_BOTTLE$registryId] = createOptionalCustomProjectileEntityHandler();
+        this.handlers[EntityTypesProxy.SNOWBALL$registryId] = createOptionalCustomProjectileEntityHandler();
+        this.handlers[EntityTypesProxy.POTION$registryId] = createOptionalCustomProjectileEntityHandler();
+        this.handlers[EntityTypesProxy.TRIDENT$registryId] = createOptionalCustomProjectileEntityHandler();
+        this.handlers[EntityTypesProxy.ARROW$registryId] = createOptionalCustomProjectileEntityHandler();
+        this.handlers[EntityTypesProxy.SPECTRAL_ARROW$registryId] = createOptionalCustomProjectileEntityHandler();
         if (VersionHelper.isOrAbove1_21) {
-            this.handlers[EntityTypesProxy.WIND_CHARGE$registryId] = createOptionalCustomProjectileEntityHandler(false);
-        }
-        if (VersionHelper.isOrAbove1_20_3) {
-            this.handlers[EntityTypesProxy.TNT$registryId] = simpleAddEntityHandler(PrimedTNTPacketHandler.INSTANCE);
+            this.handlers[EntityTypesProxy.WIND_CHARGE$registryId] = createOptionalCustomProjectileEntityHandler();
         }
         if (VersionHelper.isOrAbove1_20_5) {
             this.handlers[EntityTypesProxy.OMINOUS_ITEM_SPAWNER$registryId] = simpleAddEntityHandler(ItemPacketHandler.INSTANCE);
@@ -128,8 +112,6 @@ public final class AddEntityListener implements ByteBufferPacketListener {
                 if (Config.hideBaseEntity() && !furniture.hasExternalModel()) {
                     event.setCancelled(true);
                 }
-            } else {
-                user.entityViews().putIfAbsent(id, ItemDisplayPacketHandler.INSTANCE);
             }
         };
         this.handlers[EntityTypesProxy.INTERACTION$registryId] = (user, event) -> {
@@ -155,7 +137,7 @@ public final class AddEntityListener implements ByteBufferPacketListener {
             }
         };
         if (Config.enableEquipmentLod()) {
-            for (String name : new String[]{"player", "mannequin", "zombie", "zombie_villager", "husk", "drowned",
+            for (String name : new String[]{"player", "armor_stand", "mannequin", "zombie", "zombie_villager", "husk", "drowned",
                     "skeleton", "stray", "wither_skeleton", "bogged", "parched", "piglin", "piglin_brute", "zombified_piglin",
                     "giant", "wolf", "horse", "donkey", "mule", "skeleton_horse", "zombie_horse", "llama",
                     "trader_llama", "pig", "strider", "camel", "camel_husk", "happy_ghast", "nautilus", "zombie_nautilus"}) {
@@ -176,24 +158,16 @@ public final class AddEntityListener implements ByteBufferPacketListener {
         };
     }
 
-    private static EntityTypeHandler createOptionalCustomProjectileEntityHandler(boolean fallback) {
+    private static EntityTypeHandler createOptionalCustomProjectileEntityHandler() {
         return (user, event) -> {
             FriendlyByteBuf buf = event.getBuffer();
             int id = buf.readVarInt();
-            BukkitProjectileManager.instance().projectileByEntityId(id).ifPresentOrElse(customProjectile -> {
+            BukkitProjectileManager.instance().projectileByEntityId(id).ifPresent(customProjectile -> {
                 ProjectileDisplay display = customProjectile.metadata().display();
                 if (display != null) {
                     ProjectilePacketHandler handler = new ProjectilePacketHandler(customProjectile, display, id);
                     handler.convertAddCustomProjectilePacket(buf, event, user);
                     user.entityViews().put(id, handler);
-                } else {
-                    if (fallback) {
-                        user.entityViews().put(id, CommonItemPacketHandler.INSTANCE);
-                    }
-                }
-            }, () -> {
-                if (fallback) {
-                    user.entityViews().put(id, CommonItemPacketHandler.INSTANCE);
                 }
             });
         };
