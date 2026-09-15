@@ -2,6 +2,7 @@ package net.momirealms.craftengine.bukkit.util;
 
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
+import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import net.momirealms.craftengine.core.item.Item;
 import net.momirealms.craftengine.core.plugin.network.event.NMSPacketEvent;
 import net.momirealms.craftengine.core.util.Key;
@@ -134,8 +135,8 @@ public final class PacketUtils {
         Object packet = event.optionalNewPacket();
         if (packet == null) packet = event.getPacket();
         if (ClientboundBundlePacketProxy.CLASS.isInstance(packet)) {
-            List<Object> newPackets = new ArrayList<>(4);
             Iterable<Object> packets = BundlePacketProxy.INSTANCE.getPackets(packet);
+            List<Object> newPackets = new ObjectArrayList<>(2);
             for (Object packetInBundle : packets) {
                 if (packetInBundle == oldPacket) {
                     newPackets.add(newPacket);
