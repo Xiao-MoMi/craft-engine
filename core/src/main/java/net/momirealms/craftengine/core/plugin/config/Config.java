@@ -255,7 +255,7 @@ public final class Config {
     private int network$mod_channel$creative_tab_max_items_per_packet = 10;
     private int network$mod_channel$visual_block_states_max_per_packet = 5000;
     private boolean network$item_crypto$enable;
-    private boolean network$optimize_item_codec;
+    private boolean network$performance_mode;
 
     private boolean item$client_bound_model;
     private boolean item$non_italic_tag;
@@ -791,7 +791,7 @@ public final class Config {
             this.network$disable_chat_report = config.getBoolean("network.disable-chat-report", false);
         }
         this.network$disable_item_operations = config.getBoolean("network.disable-item-operations", false);
-        this.network$optimize_item_codec = config.getBoolean("network.optimize-item-codec", true);
+        this.network$performance_mode = config.getBoolean("network.performance-mode", true);
         this.network$intercept_packets$system_chat = config.getBoolean("network.intercept-packets.system-chat", true);
         this.network$intercept_packets$tab_list = config.getBoolean("network.intercept-packets.tab-list", true);
         this.network$intercept_packets$actionbar = config.getBoolean("network.intercept-packets.actionbar", true);
@@ -1343,8 +1343,8 @@ public final class Config {
         return instance.network$disable_item_operations;
     }
 
-    public static boolean optimizeItemCodec() {
-        return instance.network$optimize_item_codec;
+    public static boolean nettyPerformanceMode() {
+        return instance.network$performance_mode;
     }
 
     public static boolean interceptSystemChat() {

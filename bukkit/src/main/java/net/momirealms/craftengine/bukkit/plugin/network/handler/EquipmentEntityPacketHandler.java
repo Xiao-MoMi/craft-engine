@@ -63,10 +63,4 @@ public class EquipmentEntityPacketHandler extends EquipmentPacketHandler {
         }
         tracker.position(entityId, position, relatives);
     }
-
-    @Override
-    protected Optional<Item> convertEquipment(BukkitServerPlayer player, int entityId, int slot, Item item) {
-        EquipmentLodTracker tracker = player.equipmentLod();
-        return tracker == null ? super.convertEquipment(player, entityId, slot, item) : tracker.equipment(entityId, slot, item);
-    }
 }

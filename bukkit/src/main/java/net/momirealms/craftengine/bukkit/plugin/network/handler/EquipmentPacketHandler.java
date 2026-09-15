@@ -1,8 +1,8 @@
 package net.momirealms.craftengine.bukkit.plugin.network.handler;
 
-import com.google.common.collect.Lists;
 import com.mojang.datafixers.util.Pair;
 import net.momirealms.craftengine.bukkit.item.BukkitItemManager;
+import net.momirealms.craftengine.bukkit.plugin.network.EquipmentLodTracker;
 import net.momirealms.craftengine.bukkit.plugin.user.BukkitServerPlayer;
 import net.momirealms.craftengine.bukkit.util.PacketUtils;
 import net.momirealms.craftengine.core.entity.player.Player;
@@ -13,20 +13,22 @@ import net.momirealms.craftengine.core.plugin.network.event.ByteBufPacketEvent;
 import net.momirealms.craftengine.core.util.FriendlyByteBuf;
 import net.momirealms.craftengine.proxy.minecraft.world.entity.EquipmentSlotProxy;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
 public class EquipmentPacketHandler implements EntityPacketHandler {
     public static final EquipmentPacketHandler INSTANCE = new EquipmentPacketHandler();
 
-    protected EquipmentPacketHandler() {}
+    protected EquipmentPacketHandler() {
+    }
 
     @Override
     public boolean handleSetEquipment(Player user, ByteBufPacketEvent event, int entityId, FriendlyByteBuf buf) {
         if (Config.disableItemOperations()) return true;
         if (!(user instanceof BukkitServerPlayer serverPlayer)) return true;
         boolean changed = false;
-        List<Pair<Object, Item>> slots = Lists.newArrayList();
+        List<Pair<Object, Item>> slots = new ArrayList<>(4);
         int slotMask;
         do {
             slotMask = buf.readByte();
@@ -57,7 +59,8 @@ public class EquipmentPacketHandler implements EntityPacketHandler {
         return true;
     }
 
-    protected Optional<Item> convertEquipment(BukkitServerPlayer player, int entityId, int slot, Item item) {
-        return BukkitItemManager.instance().s2c(item, player);
+    protected Optional<Item> convertEquipment(Player player, int entityId, int slot, Item item) {
+        EquipmentLodTracker tracker = ((BukkitServerPlayer) player).equipmentLod();
+        return tracker == null ? BukkitItemManager.instance().s2c(item, player) : tracker.equipment(entityId, slot, item);
     }
 }

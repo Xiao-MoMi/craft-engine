@@ -15,10 +15,10 @@ import java.util.List;
 /**
  * 玩家自身实体的包处理器：血量 metadata 缩放（DATA_HEALTH_ID 仍在 SynchedEntityData 里）
  */
-public final class PlayerPacketHandler extends EquipmentEntityPacketHandler {
-    public static final PlayerPacketHandler INSTANCE = new PlayerPacketHandler();
+public final class SelfPlayerPacketHandler extends EquipmentEntityPacketHandler {
+    public static final SelfPlayerPacketHandler INSTANCE = new SelfPlayerPacketHandler();
 
-    private PlayerPacketHandler() {}
+    private SelfPlayerPacketHandler() {}
 
     @Override
     public void handleSetEntityData(Player user, ByteBufPacketEvent event) {

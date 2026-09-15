@@ -526,10 +526,10 @@ network:
   # ⚠️ This option will disable client-bound-data/material and the functionality of replacing tags in item name and lore.
   disable-item-operations: false
 
-  # Apply targeted optimizations to reduce Netty codec overhead.
+  # Use the most optimized solution possible in every place to reduce Netty's CPU overhead and memory allocation.
   # If you encounter any problems or find that it is incompatible with the server core you are using, please let us know.
   # Requires a restart to apply.
-  optimize-item-codec: true
+  performance-mode: true
 
   # Allow <image> <shift> <global> tags in third-party plugins via packet manipulation
   # ⚠️ Disable unused handlers to reduce netty thread workload
