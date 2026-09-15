@@ -2051,7 +2051,7 @@ public class BukkitServerPlayer extends BukkitLivingEntity implements Player {
             // JoinWorldTask 必须排在资源包之后，否则客户端会先切换到游玩阶段。
             boolean removed = tasks.removeIf(JoinWorldTaskProxy.CLASS::isInstance);
             if (VersionHelper.isOrAbove1_20_3) {
-                // 一个批量任务连续发送整批资源包，全部加载成功后才允许推进配置队列。
+                // 一个批量任务连续发送整批资源包，全部收到允许的终态后才推进配置队列。
                 tasks.add(ResourcePackConfigurationTask.create(this, dataList));
             } else {
                 // 1.20.2 不支持按 UUID 区分多个资源包，保留原版的单包配置任务。

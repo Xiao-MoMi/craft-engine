@@ -21,13 +21,13 @@ import java.util.UUID;
 import java.util.function.Consumer;
 
 /**
- * 将一批资源包作为一个配置任务：start 连续发送所有下载请求，全部加载成功后才结束任务。
+ * 将一批资源包作为一个配置任务：start 连续发送所有下载请求，全部收到允许的终态后才结束任务。
  * 服务端的配置队列串行执行；若每个包各占一个任务，下一个包只能等上一个加载结束后才发送。
  * 使用运行时代理适配各版本的 NMS ConfigurationTask 接口。
  */
 public final class ResourcePackConfigurationTask implements InvocationHandler {
     private final List<ResourcePackDownloadData> packs;
-    // 按 UUID 等待 SUCCESSFULLY_LOADED，允许乱序响应，并避免重复响应重复结束任务。
+    // 按 UUID 等待成功或配置允许的拒绝/失败，允许乱序响应，避免重复结束任务。
     // 网络线程会读取待加载状态，平台线程会更新状态，因此状态访问统一加锁。
     private final Set<UUID> pending = new HashSet<>();
     // 失败后即使断线尚未完成，也不允许迟到的成功响应放行。
@@ -62,8 +62,8 @@ public final class ResourcePackConfigurationTask implements InvocationHandler {
         return !this.failed && this.pending.contains(id);
     }
 
-    // 仅首次收齐整批成功响应时返回 true；不能用 ACCEPTED、DOWNLOADED 或失败响应调用此方法。
-    public synchronized boolean markLoaded(UUID id) {
+    // 仅首次收齐整批允许的终态时返回 true；中间态和要求断线的失败不能调用此方法。
+    public synchronized boolean markCompleted(UUID id) {
         return !this.failed && this.pending.remove(id) && this.pending.isEmpty();
     }
 

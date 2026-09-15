@@ -56,15 +56,16 @@ public final class NMSResourcePackListener implements NMSPacketListener {
                     if (VersionHelper.hasPaperPatch && action != ResourcePackResponseAction.UNKNOWN) {
                         ConnectionProxy.INSTANCE.setResourcePackStatus(user.connection(), PlayerResourcePackStatusEvent.Status.valueOf(action.name()));
                     }
-                    // ACCEPTED 和 DOWNLOADED 都未完成加载，必须继续等待 SUCCESSFULLY_LOADED。
+                    // ACCEPTED 和 DOWNLOADED 都是中间态，必须继续等待终态。
                     if (action.intermediate()) return;
-                    // 原版终态还包含拒绝和失败；配置阶段要求整批成功，失败时断开连接而不放行。
-                    if (action != ResourcePackResponseAction.SUCCESSFULLY_LOADED) {
+                    // 拒绝和失败是否断开连接由配置决定；未知响应不放行。
+                    if (action == ResourcePackResponseAction.UNKNOWN || action.shouldDisconnect(Config.kickOnDeclined(), Config.kickOnFailedApply())) {
                         batch.fail();
                         user.kick(Component.translatable("multiplayer.requiredTexturePrompt.disconnect"));
                         return;
                     }
-                    if (batch.markLoaded(responsePackId)) {
+                    // 成功或配置允许的拒绝/失败都结束当前包的等待，整批结束后才放行。
+                    if (batch.markCompleted(responsePackId)) {
                         // finishCurrentTask 自带 startNextTask，只调用一次；队尾 JoinWorldTask 随后放行。
                         ServerConfigurationPacketListenerImplProxy.INSTANCE.finishCurrentTask(configurationListener, ServerResourcePackConfigurationTaskProxy.TYPE);
                     }
@@ -78,11 +79,7 @@ public final class NMSResourcePackListener implements NMSPacketListener {
         }
 
         // 非批量任务沿用原有踢出配置；客户端响应策略与资源包托管方式无关。
-        boolean disconnect = switch (action) {
-            case DECLINED, DISCARDED -> Config.kickOnDeclined();
-            case FAILED_DOWNLOAD, INVALID_URL -> Config.kickOnFailedApply();
-            default -> false;
-        };
+        boolean disconnect = action.shouldDisconnect(Config.kickOnDeclined(), Config.kickOnFailedApply());
         if (disconnect) {
             user.kick(Component.translatable("multiplayer.requiredTexturePrompt.disconnect"));
             return;
