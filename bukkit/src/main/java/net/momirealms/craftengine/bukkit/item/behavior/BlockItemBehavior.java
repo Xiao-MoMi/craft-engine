@@ -35,6 +35,7 @@ import net.momirealms.craftengine.core.plugin.context.function.Function;
 import net.momirealms.craftengine.core.plugin.context.parameter.DirectContextParameters;
 import net.momirealms.craftengine.core.util.Cancellable;
 import net.momirealms.craftengine.core.util.Direction;
+import net.momirealms.craftengine.core.util.ItemUtils;
 import net.momirealms.craftengine.core.util.Key;
 import net.momirealms.craftengine.core.util.VersionHelper;
 import net.momirealms.craftengine.core.world.BlockPos;
@@ -188,7 +189,7 @@ public class BlockItemBehavior extends ItemBehavior implements BlockItem {
                             .withParameter(DirectContextParameters.POSITION, position)
                             .withParameter(DirectContextParameters.EVENT, dummy)
                             .withParameter(DirectContextParameters.HAND, context.getHand())
-                            .withParameter(DirectContextParameters.ITEM_IN_HAND, context.getItem())
+                            .withOptionalParameter(DirectContextParameters.ITEM_IN_HAND, ItemUtils.isEmpty(context.getItem()) ? null : context.getItem())
                             .build()
             ), functions);
             if (dummy.isCancelled()) {

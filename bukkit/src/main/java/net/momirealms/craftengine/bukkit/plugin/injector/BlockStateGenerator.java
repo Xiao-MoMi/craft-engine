@@ -33,6 +33,7 @@ import net.momirealms.craftengine.core.loot.Loot;
 import net.momirealms.craftengine.core.loot.LootTableReference;
 import net.momirealms.craftengine.core.plugin.context.ContextHolder;
 import net.momirealms.craftengine.core.plugin.context.parameter.DirectContextParameters;
+import net.momirealms.craftengine.core.util.ItemUtils;
 import net.momirealms.craftengine.core.util.Pair;
 import net.momirealms.craftengine.core.util.VersionHelper;
 import net.momirealms.craftengine.core.world.World;
@@ -151,9 +152,7 @@ public final class BlockStateGenerator {
             ContextHolder.Builder lootBuilder = ContextHolder.builder()
                     .withParameter(DirectContextParameters.POSITION, new WorldPosition(world, Vec3Proxy.INSTANCE.getX(vec3), Vec3Proxy.INSTANCE.getY(vec3), Vec3Proxy.INSTANCE.getZ(vec3)))
                     .withParameter(DirectContextParameters.CUSTOM_BLOCK_STATE, state);
-            if (!item.isEmpty()) {
-                lootBuilder.withParameter(DirectContextParameters.ITEM_IN_HAND, item);
-            }
+            lootBuilder.withOptionalParameter(DirectContextParameters.ITEM_IN_HAND, ItemUtils.isEmpty(item) ? null : item);
             BukkitServerPlayer player = optionalPlayer != null ? BukkitAdaptor.adapt(ServerPlayerProxy.INSTANCE.getBukkitEntity(optionalPlayer)) : null;
             if (player != null) {
                 lootBuilder.withParameter(DirectContextParameters.PLAYER, player);

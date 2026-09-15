@@ -200,8 +200,7 @@ public final class AttributeModifiersProcessor implements SimpleNetworkItemProce
                         display = new PreModifier.PreDisplay(displayType, null);
                     }
                 }
-                return new PreModifier(nativeType.value(), slot, id,
-                        amount, operation, display);
+                return new PreModifier(nativeType.value(), slot, id, amount, operation, display);
             });
             return new AttributeModifiersProcessor(preModifiers);
         }

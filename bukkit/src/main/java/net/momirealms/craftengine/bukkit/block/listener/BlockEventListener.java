@@ -167,7 +167,7 @@ public final class BlockEventListener implements Listener {
                             .withParameter(DirectContextParameters.BLOCK, new BukkitExistingBlock(block))
                             .withParameter(DirectContextParameters.POSITION, position)
                             .withParameter(DirectContextParameters.EVENT, cancellable)
-                            .withParameter(DirectContextParameters.ITEM_IN_HAND, itemInHand)
+                            .withOptionalParameter(DirectContextParameters.ITEM_IN_HAND, ItemUtils.isEmpty(itemInHand) ? null : itemInHand)
                             .build()
                     ), functions);
                     if (cancellable.isCancelled()) {
@@ -228,7 +228,7 @@ public final class BlockEventListener implements Listener {
                                 .withParameter(DirectContextParameters.CUSTOM_BLOCK_STATE, state)
                                 .withParameter(DirectContextParameters.EVENT, cancellable)
                                 .withParameter(DirectContextParameters.POSITION, position)
-                                .withParameter(DirectContextParameters.ITEM_IN_HAND, itemInHand)
+                                .withOptionalParameter(DirectContextParameters.ITEM_IN_HAND, ItemUtils.isEmpty(itemInHand) ? null : itemInHand)
                                 .build()
                         ), functions);
                         if (cancellable.isCancelled()) {

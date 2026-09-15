@@ -32,6 +32,7 @@ import net.momirealms.craftengine.core.plugin.network.event.ByteBufPacketEvent;
 import net.momirealms.craftengine.core.plugin.network.listener.ByteBufferPacketListener;
 import net.momirealms.craftengine.core.util.Cancellable;
 import net.momirealms.craftengine.core.util.FriendlyByteBuf;
+import net.momirealms.craftengine.core.util.ItemUtils;
 import net.momirealms.craftengine.core.util.VersionHelper;
 import net.momirealms.craftengine.core.world.BlockHitResult;
 import net.momirealms.craftengine.core.world.BlockPos;
@@ -240,7 +241,7 @@ public final class InteractListener {
                                 .withParameter(DirectContextParameters.PLAYER, serverPlayer)
                                 .withParameter(DirectContextParameters.EVENT, cancellable)
                                 .withParameter(DirectContextParameters.FURNITURE, furniture)
-                                .withParameter(DirectContextParameters.ITEM_IN_HAND, itemInHand)
+                                .withOptionalParameter(DirectContextParameters.ITEM_IN_HAND, ItemUtils.isEmpty(itemInHand) ? null : itemInHand)
                                 .withParameter(DirectContextParameters.HAND, hand)
                                 .withParameter(DirectContextParameters.POSITION, furniture.position())
                                 .build()

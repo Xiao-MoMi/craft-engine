@@ -7,6 +7,7 @@ import java.util.Set;
 public final class DataComponentKeys {
     private DataComponentKeys() {}
 
+    public static final Key ATTACK_ANIMATION = Key.minecraft("attack_animation"); // 26.3
     public static final Key ATTRIBUTE_MODIFIERS = Key.minecraft("attribute_modifiers");
     public static final Key BANNER_PATTERN = Key.minecraft("banner_patterns");
     public static final Key BASE_COLOR = Key.minecraft("base_color");
@@ -49,6 +50,7 @@ public final class DataComponentKeys {
     public static final Key GLIDER = Key.minecraft("glider");
     public static final Key INSTRUMENT = Key.minecraft("instrument");
     public static final Key INTANGIBLE_PROJECTILE = Key.minecraft("intangible_projectile");
+    public static final Key INTERACT_ANIMATION = Key.minecraft("interact_animation");
     public static final Key ITEM_MODEL = Key.minecraft("item_model");
     public static final Key ITEM_NAME = Key.minecraft("item_name");
     public static final Key JUKEBOX_PLAYABLE = Key.minecraft("jukebox_playable");
@@ -56,7 +58,7 @@ public final class DataComponentKeys {
     public static final Key LOCK = Key.minecraft("lock");
     public static final Key LODESTONE_TRACKER = Key.minecraft("lodestone_tracker");
     public static final Key LORE = Key.minecraft("lore");
-    public static final Key MAP_COLOR = Key.minecraft("map_color");
+    public static final Key MAP_COLOR = Key.minecraft("map_color");  // deprecated 26.3
     public static final Key MAP_DECORATIONS = Key.minecraft("map_decorations");
     public static final Key MAP_ID = Key.minecraft("map_id");
     public static final Key MAX_DAMAGE = Key.minecraft("max_damage");
@@ -83,7 +85,7 @@ public final class DataComponentKeys {
     public static final Key STORED_ENCHANTMENTS = Key.minecraft("stored_enchantments");
     public static final Key SULFUR_CUBE_CONTENT = Key.minecraft("sulfur_cube_content");
     public static final Key SUSPICIOUS_STEW_EFFECTS = Key.minecraft("suspicious_stew_effects");
-    public static final Key SWING_ANIMATION = Key.minecraft("swing_animation");
+    public static final Key SWING_ANIMATION = Key.minecraft("swing_animation"); // deprecated 26.3
     public static final Key TOOL = Key.minecraft("tool");
     public static final Key TOOLTIP_DISPLAY = Key.minecraft("tooltip_display");
     public static final Key TOOLTIP_STYLE = Key.minecraft("tooltip_style");
@@ -99,6 +101,7 @@ public final class DataComponentKeys {
     public static final Key WRITTEN_BOOK_CONTENT = Key.minecraft("written_book_content");
 
     public static final Set<Key> VALUES = Set.of(
+            ATTACK_ANIMATION,
             ATTRIBUTE_MODIFIERS,
             BANNER_PATTERN,
             BASE_COLOR,
@@ -141,6 +144,7 @@ public final class DataComponentKeys {
             GLIDER,
             INSTRUMENT,
             INTANGIBLE_PROJECTILE,
+            INTERACT_ANIMATION,
             ITEM_MODEL,
             ITEM_NAME,
             JUKEBOX_PLAYABLE,

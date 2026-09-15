@@ -92,6 +92,7 @@ public final class DirectContextParameters {
     public static final ContextKey<Double> HEALTH = ContextKey.direct("health");
     public static final ContextKey<Double> MAX_HEALTH = ContextKey.direct("max_health");
     public static final ContextKey<ChainParameterSource> ATTR = ContextKey.direct("attr");
+    public static final ContextKey<Boolean> IS_EMPTY = ContextKey.direct("is_empty");
 
     public static Optional<LivingEntity> getOptionalLivingEntity(Context ctx) {
         Optional<Player> optionalPlayer = ctx.getOptionalParameter(PLAYER);

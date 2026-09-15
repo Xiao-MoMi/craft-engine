@@ -21,6 +21,7 @@ public final class ItemParameterProvider implements ChainParameterProvider<Item>
         CONTEXT_FUNCTIONS.put(DirectContextParameters.COUNT, Item::count);
         CONTEXT_FUNCTIONS.put(DirectContextParameters.IS_BLOCK_ITEM, Item::isBlockItem);
         CONTEXT_FUNCTIONS.put(DirectContextParameters.RANDOM, ItemParameterProvider::randomValues);
+        CONTEXT_FUNCTIONS.put(DirectContextParameters.IS_EMPTY, Item::isEmpty);
     }
 
     @SuppressWarnings("unchecked")
