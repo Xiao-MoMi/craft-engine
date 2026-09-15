@@ -1,5 +1,6 @@
 package net.momirealms.craftengine.bukkit.plugin.network.handler;
 
+import com.google.gson.JsonElement;
 import net.kyori.adventure.text.Component;
 import net.momirealms.craftengine.bukkit.entity.data.DisplayData;
 import net.momirealms.craftengine.bukkit.util.ComponentUtils;
@@ -38,10 +39,11 @@ public final class TextDisplayPacketHandler implements EntityPacketHandler {
             if (entityDataId != DisplayData.TextDisplayData.Text.id()) continue;
             Object textComponent = EntityUtils.getEntityDataValue(packedItem, DisplayData.TextDisplayData.Text);
             if (textComponent == ComponentProxy.INSTANCE.empty()) break;
-            String json = ComponentUtils.minecraftToJson(textComponent);
+            if (!ComponentUtils.hasNetworkTag(textComponent)) break;
+            JsonElement json = ComponentUtils.minecraftToJsonElement(textComponent);
             Map<String, ComponentProvider> tokens = CraftEngine.instance().networkManager().matchNetworkTags(json);
             if (tokens.isEmpty()) break;
-            Component component = AdventureHelper.replaceText(AdventureHelper.jsonToComponent(json), tokens, NetworkTextReplaceContext.of(user));
+            Component component = AdventureHelper.replaceText(AdventureHelper.jsonElementToComponent(json), tokens, NetworkTextReplaceContext.of(user));
             SynchedEntityDataProxy.DataValueProxy.INSTANCE.setValue(packedItem, ComponentUtils.adventureToMinecraft(component));
             isChanged = true;
             break;

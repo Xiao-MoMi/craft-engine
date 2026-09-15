@@ -51,6 +51,6 @@ public final class EnchantmentUtils {
         } else {
             nmsComponent = EnchantmentProxy.INSTANCE.getFullname$legacy(CraftEnchantmentProxy.INSTANCE.getHandle(enchantment), level);
         }
-        return AdventureHelper.jsonToComponent(ComponentUtils.minecraftToJson(nmsComponent));
+        return AdventureHelper.jsonElementToComponent(ComponentUtils.minecraftToJsonElement(nmsComponent));
     }
 }

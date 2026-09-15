@@ -1,5 +1,6 @@
 package net.momirealms.craftengine.bukkit.plugin.network.listener.game;
 
+import com.google.gson.JsonElement;
 import net.kyori.adventure.text.Component;
 import net.momirealms.craftengine.bukkit.entity.data.BaseEntityData;
 import net.momirealms.craftengine.bukkit.plugin.network.BukkitNetworkManager;
@@ -47,10 +48,11 @@ public final class SetEntityDataListener implements ByteBufferPacketListener {
                 Optional<Object> optionalTextComponent = EntityUtils.getEntityDataValue(packedItem, BaseEntityData.CustomName);
                 if (optionalTextComponent.isEmpty()) continue;
                 Object textComponent = optionalTextComponent.get();
-                String json = ComponentUtils.minecraftToJson(textComponent);
+                if (!ComponentUtils.hasNetworkTag(textComponent)) continue;
+                JsonElement json = ComponentUtils.minecraftToJsonElement(textComponent);
                 Map<String, ComponentProvider> tokens = BukkitNetworkManager.instance().matchNetworkTags(json);
                 if (tokens.isEmpty()) continue;
-                Component component = AdventureHelper.jsonToComponent(json);
+                Component component = AdventureHelper.jsonElementToComponent(json);
                 component = AdventureHelper.replaceText(component, tokens, NetworkTextReplaceContext.of(serverPlayer));
                 SynchedEntityDataProxy.DataValueProxy.INSTANCE.setValue(packedItem, Optional.of(ComponentUtils.adventureToMinecraft(component)));
                 isChanged = true;

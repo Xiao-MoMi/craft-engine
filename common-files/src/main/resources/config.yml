@@ -847,6 +847,12 @@ misc:
   # Enabling this option can mitigate the world leak issues caused by most plugins.
   fix-world-memory-leak: false
 
+cache:
+  # Maximum number of deserialized components kept in the cache, avoiding repeated JSON parsing of identical text.
+  # Higher values use more memory. 0 disables the cache.
+  # Requires a restart to apply.
+  json-to-component: 512
+
 debug:
   common: false
   furniture: false
