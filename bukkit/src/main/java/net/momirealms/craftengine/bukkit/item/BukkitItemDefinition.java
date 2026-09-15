@@ -55,6 +55,7 @@ public final class BukkitItemDefinition extends AbstractItemDefinition {
         if (this.constantItem == null) {
             return build0(context, count);
         } else {
+            // 常量路径不回写 context.setItem，调用方只能使用返回值
             return (BukkitItem) this.constantItem.copy().count(count);
         }
     }

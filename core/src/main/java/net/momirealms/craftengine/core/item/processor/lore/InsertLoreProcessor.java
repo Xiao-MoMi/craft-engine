@@ -9,7 +9,6 @@ import net.momirealms.craftengine.core.item.processor.SimpleNetworkItemProcessor
 import net.momirealms.craftengine.core.plugin.config.ConfigConstants;
 import net.momirealms.craftengine.core.plugin.config.ConfigSection;
 import net.momirealms.craftengine.core.plugin.config.ConfigValue;
-import net.momirealms.craftengine.core.plugin.text.minimessage.FormattedLine;
 import net.momirealms.craftengine.core.util.AdventureHelper;
 import net.momirealms.craftengine.core.util.Key;
 
@@ -41,6 +40,18 @@ public final class InsertLoreProcessor implements SimpleNetworkItemProcessor {
             }
         }
         return stream;
+    }
+
+    @Override
+    public boolean isConstant() {
+        if (this.lores != null) {
+            for (LoreModification modification : this.lores) {
+                if (!modification.isConstant()) {
+                    return false;
+                }
+            }
+        }
+        return this.fallback == null || this.fallback.isConstant();
     }
 
     @Override
