@@ -154,7 +154,15 @@ public final class ItemStackUtils {
             if (VersionHelper.hasPaperPatch && VersionHelper.MINECRAFT_VERSION != MinecraftVersion.V1_21_5) {
                 Object nmsTag = RegistryOps.SPARROW_NBT.convertTo(RegistryOps.NBT, itemTag);
                 Object converted = MCDataConverterProxy.INSTANCE.convertTag(MCTypeRegistryProxy.ITEM_STACK, nmsTag, dataVersion, currentVersion);
-                itemTag = RegistryOps.NBT.convertTo(RegistryOps.SPARROW_NBT, converted);
+                // 升级结果已经是原版 NBT，直接解析，避免再构造一棵 Sparrow NBT 树。
+                if (VersionHelper.COMPONENT_RELEASE) {
+                    return ItemStackProxy.INSTANCE.getCodec().parse(RegistryOps.NBT, converted)
+                            .resultOrPartial(error -> CraftEngine.instance().logger().error("Tried to load invalid item: '" + converted + "'. " + error))
+                            .orElse(null);
+                } else {
+                    // 旧版本也直接使用原版 NBT，避免转回 Sparrow 后又转成原版 NBT。
+                    return ItemStackProxy.INSTANCE.of(converted);
+                }
             } else {
                 Dynamic<Tag> input = new Dynamic<>(RegistryOps.SPARROW_NBT, itemTag);
                 itemTag = DataFixersProxy.INSTANCE.getDataFixer().update(ReferencesProxy.ITEM_STACK, input, dataVersion, currentVersion).getValue();
