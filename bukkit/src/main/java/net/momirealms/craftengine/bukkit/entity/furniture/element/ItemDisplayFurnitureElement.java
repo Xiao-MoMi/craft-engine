@@ -1,7 +1,9 @@
 package net.momirealms.craftengine.bukkit.entity.furniture.element;
 
 import it.unimi.dsi.fastutil.ints.IntArrayList;
+import net.momirealms.craftengine.bukkit.entity.data.DisplayData;
 import net.momirealms.craftengine.bukkit.util.EntityUtils;
+import net.momirealms.craftengine.core.entity.culling.ViewRangeCullable;
 import net.momirealms.craftengine.core.entity.furniture.Furniture;
 import net.momirealms.craftengine.core.entity.furniture.data.FurnitureDataResolver;
 import net.momirealms.craftengine.core.entity.furniture.data.ItemPatch;
@@ -17,11 +19,12 @@ import net.momirealms.craftengine.proxy.minecraft.world.entity.EntityTypesProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.phys.Vec3Proxy;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 import java.util.function.IntConsumer;
 
-public final class ItemDisplayFurnitureElement extends AbstractConditionalFurnitureElement implements TransformableFurnitureElement {
+public final class ItemDisplayFurnitureElement extends AbstractConditionalFurnitureElement implements TransformableFurnitureElement, ViewRangeCullable {
     public final ItemDisplayFurnitureElementConfig config;
     public final Furniture furniture;
     public final FurnitureDataResolver<ItemPatch> itemPatch;
@@ -60,6 +63,13 @@ public final class ItemDisplayFurnitureElement extends AbstractConditionalFurnit
                 this.cachedSpawnPacket,
                 ClientboundSetEntityDataPacketProxy.INSTANCE.newInstance(this.entityId, this.config.metadata.apply(player, this.itemPatch, false))
         )), false);
+    }
+
+    @Override
+    public void setCulled(Player player, boolean culled) {
+        List<Object> values = new ArrayList<>(1);
+        DisplayData.ViewRange.addEntityData(culled ? 0f : (float) (this.config.viewRange * player.displayEntityViewDistance()), values, true);
+        player.sendPacket(ClientboundSetEntityDataPacketProxy.INSTANCE.newInstance(this.entityId, values), false);
     }
 
     @Override

@@ -1,7 +1,9 @@
 package net.momirealms.craftengine.bukkit.entity.furniture.element;
 
 import it.unimi.dsi.fastutil.ints.IntArrayList;
+import net.momirealms.craftengine.bukkit.entity.data.DisplayData;
 import net.momirealms.craftengine.bukkit.util.EntityUtils;
+import net.momirealms.craftengine.core.entity.culling.ViewRangeCullable;
 import net.momirealms.craftengine.core.entity.furniture.Furniture;
 import net.momirealms.craftengine.core.entity.furniture.element.TransformableFurnitureElement;
 import net.momirealms.craftengine.core.entity.player.Player;
@@ -15,11 +17,12 @@ import net.momirealms.craftengine.proxy.minecraft.world.entity.EntityTypesProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.phys.Vec3Proxy;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 import java.util.function.IntConsumer;
 
-public final class BlockDisplayFurnitureElement extends AbstractConditionalFurnitureElement implements TransformableFurnitureElement {
+public final class BlockDisplayFurnitureElement extends AbstractConditionalFurnitureElement implements TransformableFurnitureElement, ViewRangeCullable {
     public final BlockDisplayFurnitureElementConfig config;
     public final Furniture furniture;
     public final WorldPosition position;
@@ -56,6 +59,13 @@ public final class BlockDisplayFurnitureElement extends AbstractConditionalFurni
                 this.cachedSpawnPacket,
                 ClientboundSetEntityDataPacketProxy.INSTANCE.newInstance(this.entityId, this.config.metadata.apply(player, null, false))
         )), false);
+    }
+
+    @Override
+    public void setCulled(Player player, boolean culled) {
+        List<Object> values = new ArrayList<>(1);
+        DisplayData.ViewRange.addEntityData(culled ? 0f : (float) (this.config.viewRange * player.displayEntityViewDistance()), values, true);
+        player.sendPacket(ClientboundSetEntityDataPacketProxy.INSTANCE.newInstance(this.entityId, values), false);
     }
 
     @Override

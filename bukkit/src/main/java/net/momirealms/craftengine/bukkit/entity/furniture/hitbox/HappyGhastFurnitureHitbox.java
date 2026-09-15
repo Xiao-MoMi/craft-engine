@@ -86,6 +86,21 @@ public final class HappyGhastFurnitureHitbox extends AbstractFurnitureHitBox {
     }
 
     @Override
+    public void showCulled(Player player) {
+        this.show(player);
+    }
+
+    @Override
+    public void cull(Player player) {
+        // The entity is spawned with SharedFlags 0x20 (invisible).
+    }
+
+    @Override
+    public void restore(Player player) {
+        // The invisible entity remains spawned while culled.
+    }
+
+    @Override
     public void hide(Player player) {
         player.sendPacket(this.despawnPacket, false);
     }

@@ -32,6 +32,9 @@ public final class ShulkerFurnitureHitbox extends AbstractFurnitureHitBox {
     public final ColliderConfig colliderConfig;
     private final Object spawnPacket;
     private final Object despawnPacket;
+    private final Object culledSpawnPacket;
+    private final Object interactionSpawnPacket;
+    private final Object interactionDespawnPacket;
     private final int[] entityIds;
 
     ShulkerFurnitureHitbox(Furniture furniture, ShulkerFurnitureHitboxConfig config) {
@@ -79,8 +82,15 @@ public final class ShulkerFurnitureHitbox extends AbstractFurnitureHitBox {
             packets.add(ClientboundUpdateAttributesPacketProxy.INSTANCE.newInstance$0(this.entityIds[1], Collections.singletonList(attributeIns)));
         }
         this.colliderConfig = config.spawner.create(entityIds, x, y, z, yaw, offset, packets, this.parts);
+
+        // The directional spawner appends one spawn/data pair per interaction entity.
+        int interactionCount = this.entityIds.length - 2;
+        int interactionStart = packets.size() - interactionCount * 2;
+        this.culledSpawnPacket = ClientboundBundlePacketProxy.INSTANCE.newInstance(List.copyOf(packets.subList(0, interactionStart)));
+        this.interactionSpawnPacket = interactionCount == 0 ? null : ClientboundBundlePacketProxy.INSTANCE.newInstance(List.copyOf(packets.subList(interactionStart, packets.size())));
+        this.interactionDespawnPacket = interactionCount == 0 ? null : ClientboundRemoveEntitiesPacketProxy.INSTANCE.newInstance(new IntArrayList(java.util.Arrays.copyOfRange(this.entityIds, 2, this.entityIds.length)));
         this.spawnPacket = ClientboundBundlePacketProxy.INSTANCE.newInstance(packets);
-        this.despawnPacket = ClientboundRemoveEntitiesPacketProxy.INSTANCE.newInstance(new IntArrayList(entityIds));
+        this.despawnPacket = ClientboundRemoveEntitiesPacketProxy.INSTANCE.newInstance(new IntArrayList(this.entityIds));
     }
 
     @Override
@@ -118,6 +128,25 @@ public final class ShulkerFurnitureHitbox extends AbstractFurnitureHitBox {
     @Override
     public void show(Player player) {
         player.sendPacket(this.spawnPacket, false);
+    }
+
+    @Override
+    public void showCulled(Player player) {
+        player.sendPacket(this.config.invisible ? this.spawnPacket : this.culledSpawnPacket, false);
+    }
+
+    @Override
+    public void cull(Player player) {
+        if (!this.config.invisible && this.interactionDespawnPacket != null) {
+            player.sendPacket(this.interactionDespawnPacket, false);
+        }
+    }
+
+    @Override
+    public void restore(Player player) {
+        if (!this.config.invisible && this.interactionSpawnPacket != null) {
+            player.sendPacket(this.interactionSpawnPacket, false);
+        }
     }
 
     @Override

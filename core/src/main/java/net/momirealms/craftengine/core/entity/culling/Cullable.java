@@ -9,6 +9,15 @@ public interface Cullable {
 
     void hide(Player player);
 
+    default boolean cull(Player player) {
+        this.hide(player);
+        return false;
+    }
+
+    default void restore(Player player) {
+        this.show(player);
+    }
+
     @Nullable
     CullingData cullingData();
 }

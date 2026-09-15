@@ -85,6 +85,21 @@ public final class InteractionFurnitureHitbox extends AbstractFurnitureHitBox {
     }
 
     @Override
+    public void showCulled(Player player) {
+        if (this.config.invisible) this.show(player);
+    }
+
+    @Override
+    public void cull(Player player) {
+        if (!this.config.invisible) this.hide(player);
+    }
+
+    @Override
+    public void restore(Player player) {
+        if (!this.config.invisible) this.show(player);
+    }
+
+    @Override
     public void hide(Player player) {
         player.sendPacket(this.despawnPacket, false);
     }

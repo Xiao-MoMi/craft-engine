@@ -39,6 +39,7 @@ public final class ShulkerFurnitureHitboxConfig extends AbstractFurnitureHitBoxC
     public final boolean interactionEntity;
     public final Direction direction;
     public final DirectionalShulkerSpawner spawner;
+    public final boolean invisible;
     public final List<Object> cachedShulkerValues = new ArrayList<>(6);
     public final AABBCreator aabbCreator;
 
@@ -57,6 +58,7 @@ public final class ShulkerFurnitureHitboxConfig extends AbstractFurnitureHitBoxC
         this.colliderProperties = ColliderProperties.of(true, blocksBuilding, canBeHitByProjectile);
         this.scale = scale;
         this.peek = peek;
+        this.invisible = invisible;
         this.interactive = interactive;
         this.interactionEntity = interactionEntity;
         this.direction = direction;

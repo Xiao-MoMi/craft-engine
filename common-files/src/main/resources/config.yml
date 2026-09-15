@@ -26,8 +26,10 @@ resource-pack:
       steps:
         - type: generate
         - type: validate
+      # - type: optimize
         - type: zip
           path: "./generated/resource_pack.zip"
+      #   protection: true  # requires premium version
         - type: upload
           pack: default
           path: "./generated/resource_pack.zip"
@@ -789,6 +791,12 @@ client-optimization:
     # Server-side ray tracing to cull block entities/furniture from client view
     # Reduces client rendering load by hiding off-screen/non-visible elements
     ray-tracing: true
+    # Cull supported display entities by setting their view range to 0 instead of removing them.
+    # Restores their view range when visible again; other entities are still removed.
+    update-display-view-range: true
+    # Keep hitbox entities with the invisible metadata flag while culled.
+    # Independent of update-display-view-range; untracking still removes these entities.
+    keep-invisible-hitboxes: true
     # Maximum entity render distance (in blocks)
     # Entities beyond this distance will be hidden from client
     # -1 = unlimited (disabled)

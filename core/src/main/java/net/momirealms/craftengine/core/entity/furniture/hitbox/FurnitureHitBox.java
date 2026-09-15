@@ -50,6 +50,16 @@ public interface FurnitureHitBox {
 
     void hide(Player player);
 
+    default void showCulled(Player player) {}
+
+    default void cull(Player player) {
+        this.hide(player);
+    }
+
+    default void restore(Player player) {
+        this.show(player);
+    }
+
     void collectInteractableEntityId(IntConsumer collector);
 
     default boolean canUseItemOn() {

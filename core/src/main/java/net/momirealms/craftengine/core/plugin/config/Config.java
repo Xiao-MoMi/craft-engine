@@ -289,6 +289,8 @@ public final class Config {
     private int client_optimization$entity_culling$view_distance;
     private int client_optimization$entity_culling$threads;
     private boolean client_optimization$entity_culling$ray_tracing;
+    private boolean client_optimization$entity_culling$update_display_view_range;
+    private boolean client_optimization$entity_culling$keep_invisible_hitboxes;
     private boolean client_optimization$entity_culling$rate_limiting$enable;
     private int client_optimization$entity_culling$rate_limiting$bucket_size;
     private int client_optimization$entity_culling$rate_limiting$restore_per_tick;
@@ -832,6 +834,8 @@ public final class Config {
         // client optimization
         if (this.firstTime) {
             this.client_optimization$entity_culling$enable = VersionHelper.PREMIUM && config.getBoolean("client-optimization.entity-culling.enable", false);
+            this.client_optimization$entity_culling$keep_invisible_hitboxes = config.getBoolean("client-optimization.entity-culling.keep-invisible-hitboxes", true);
+            this.client_optimization$entity_culling$update_display_view_range = config.getBoolean("client-optimization.entity-culling.update-display-view-range", true);
         }
         this.client_optimization$entity_culling$view_distance = config.getInt("client-optimization.entity-culling.view-distance", 64);
         this.client_optimization$entity_culling$threads = config.getInt("client-optimization.entity-culling.threads", 1);
@@ -1615,6 +1619,14 @@ public final class Config {
 
     public static boolean enableEntityCulling() {
         return instance.client_optimization$entity_culling$enable;
+    }
+
+    public static boolean entityCullingKeepInvisibleHitboxes() {
+        return instance.client_optimization$entity_culling$keep_invisible_hitboxes;
+    }
+
+    public static boolean entityCullingUpdateDisplayViewRange() {
+        return instance.client_optimization$entity_culling$update_display_view_range;
     }
 
     public static int entityCullingViewDistance() {

@@ -1885,8 +1885,8 @@ public class BukkitServerPlayer extends BukkitLivingEntity implements Player {
     public void removeTrackedBlockEntities(Collection<BlockPos> renders) {
         for (BlockPos render : renders) {
             CullableHolder remove = this.trackedBlockEntityRenderers.remove(render);
-            if (remove != null && remove.isShown) {
-                remove.cullable.hide(this);
+            if (remove != null) {
+                remove.remove(this);
             }
         }
     }
@@ -1894,8 +1894,8 @@ public class BukkitServerPlayer extends BukkitLivingEntity implements Player {
     @Override
     public void removeTrackedBlockEntities(BlockPos pos) {
         CullableHolder remove = this.trackedBlockEntityRenderers.remove(pos);
-        if (remove != null && remove.isShown) {
-            remove.cullable.hide(this);
+        if (remove != null) {
+            remove.remove(this);
         }
     }
 
@@ -1936,8 +1936,8 @@ public class BukkitServerPlayer extends BukkitLivingEntity implements Player {
     @Override
     public void removeTrackedDynamicBlockEntity(BlockPos pos) {
         CullableHolder remove = this.trackedDynamicBlockEntityRenderers.remove(pos);
-        if (remove != null && remove.isShown) {
-            remove.cullable.hide(this);
+        if (remove != null) {
+            remove.remove(this);
         }
     }
 
