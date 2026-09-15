@@ -35,7 +35,7 @@ public final class PlayerPacketHandler extends EquipmentEntityPacketHandler {
             Object packedItem = packedItems.get(i);
             if (SynchedEntityDataProxy.DataValueProxy.INSTANCE.getId(packedItem) != LivingEntityData.Health.id()) continue;
             float health = EntityUtils.getEntityDataValue(packedItem, LivingEntityData.Health);
-            float scaled = (float) Math.min(Math.max(health * visualMax / maxHealth, 0d), visualMax);
+            float scaled = (float) Math.clamp(health * visualMax / maxHealth, 0d, visualMax);
             SynchedEntityDataProxy.DataValueProxy.INSTANCE.setValue(packedItem, scaled);
             event.setChanged(true);
             buf.clear();
