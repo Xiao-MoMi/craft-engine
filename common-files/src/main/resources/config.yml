@@ -527,12 +527,16 @@ network:
   disable-item-operations: false
 
   # Use the most optimized solution possible in every place to reduce Netty's CPU overhead and memory allocation.
-  # If you encounter any problems or find that it is incompatible with the server core you are using, please let us know.
+  # If you encounter any problems or find that it is incompatible with the plugins you are using, please let us know.
   # Requires a restart to apply.
-  performance-mode: true
+  performance-mode:
+    # Handle item packets on the NMS stage instead of the bytebuf stage
+    item: true
+    # Handle entity data packets on the NMS stage instead of the bytebuf stage
+    entity: true
 
   # Allow <image> <shift> <global> tags in third-party plugins via packet manipulation
-  # ⚠️ Disable unused handlers to reduce netty thread workload
+  # ⚠️ Disable unused handlers to reduce Netty thread workload
   intercept-packets:
     system-chat: true
     tab-list: true      # Tab list header and footer

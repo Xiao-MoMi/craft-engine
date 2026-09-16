@@ -37,6 +37,7 @@ public final class ItemPacketHandler implements EntityPacketHandler {
 
     @Override
     public void handleSetEntityData(Player user, ByteBufPacketEvent event) {
+        if (Config.disableItemOperations()) return;
         FriendlyByteBuf buf = event.getBuffer();
         int id = buf.readVarInt();
         boolean changed = false;
@@ -48,16 +49,17 @@ public final class ItemPacketHandler implements EntityPacketHandler {
             int entityDataId = SynchedEntityDataProxy.DataValueProxy.INSTANCE.getId(packedItem);
             if (entityDataId == ItemEntityData.Item.id()) {
                 Object nmsItemStack = EntityUtils.getEntityDataValue(packedItem, ItemEntityData.Item);
-                // 已经被nms处理过，这里已经是客户端侧物品了
                 ItemStack itemStack = ItemStackUtils.getBukkitStack(nmsItemStack);
 
-//                // 转换为客户端侧物品
-//                Optional<ItemStack> optional = BukkitItemManager.instance().s2c(itemStack, user);
-//                if (optional.isPresent()) {
-//                    changed = true;
-//                    itemStack = optional.get();
-//                    SynchedEntityDataProxy.DataValueProxy.INSTANCE.setValue(packedItem, CraftItemStackProxy.INSTANCE.asNMSCopy(itemStack));
-//                }
+                // 性能模式下 nms 监听器已经转换过，这里已经是客户端侧物品
+                if (!Config.nettyPerformanceModeEntity()) {
+                    Optional<ItemStack> optional = BukkitItemManager.instance().s2c(itemStack, user);
+                    if (optional.isPresent()) {
+                        changed = true;
+                        itemStack = optional.get();
+                        SynchedEntityDataProxy.DataValueProxy.INSTANCE.setValue(packedItem, CraftItemStackProxy.INSTANCE.asNMSCopy(itemStack));
+                    }
+                }
 
                 // 处理 drop-display 物品设置
                 // 一定要处理经历过客户端侧组件修改的物品
@@ -75,7 +77,12 @@ public final class ItemPacketHandler implements EntityPacketHandler {
                 // 如果设定了自定义展示名
                 if (showName != null) {
                     Optional<Component> optionalHoverComponent = wrappedItem.hoverNameComponent();
-                    Component hoverComponent = optionalHoverComponent.orElseGet(() -> Component.translatable(ItemStackUtils.getDescriptionId(itemStack)));
+                    Component hoverComponent;
+                    if (optionalHoverComponent.isPresent()) {
+                        hoverComponent = optionalHoverComponent.get();
+                    } else {
+                        hoverComponent = Component.translatable(ItemStackUtils.getDescriptionId(itemStack));
+                    }
                     NetworkTextReplaceContext context = NetworkTextReplaceContext.of(user, ContextHolder.builder(
                             DirectContextParameters.PLAYER, user,
                             DirectContextParameters.COUNT, itemStack.getAmount(),

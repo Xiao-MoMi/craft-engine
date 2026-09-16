@@ -34,7 +34,7 @@ public final class AddEntityListener implements ByteBufferPacketListener {
         this.handlers = new EntityTypeHandler[RegistryUtils.currentEntityTypeRegistrySize()];
         Arrays.fill(this.handlers, EntityTypeHandler.DoNothing.INSTANCE);
         // 性能模式由 NMS 监听器统一替换，字节层只为下列实体类型解析数据
-        boolean byteBufEntityData = !Config.nettyPerformanceMode();
+        boolean byteBufEntityData = !Config.nettyPerformanceModeEntity();
         this.handlers[EntityTypesProxy.ITEM$registryId] = simpleAddEntityHandler(ItemPacketHandler.INSTANCE);
         this.handlers[EntityTypesProxy.FIREBALL$registryId] = createOptionalCustomProjectileEntityHandler(byteBufEntityData);
         this.handlers[EntityTypesProxy.EYE_OF_ENDER$registryId] = createOptionalCustomProjectileEntityHandler(byteBufEntityData);
@@ -70,7 +70,7 @@ public final class AddEntityListener implements ByteBufferPacketListener {
         if (byteBufEntityData) {
             for (int type : new int[]{
                     EntityTypesProxy.BLOCK_DISPLAY$registryId, EntityTypesProxy.TEXT_DISPLAY$registryId, EntityTypesProxy.ITEM_FRAME$registryId,
-                    EntityTypesProxy.GLOW_ITEM_FRAME$registryId, EntityTypesProxy.ENDERMAN$registryId}) {
+                    EntityTypesProxy.GLOW_ITEM_FRAME$registryId, EntityTypesProxy.ENDERMAN$registryId, EntityTypesProxy.ARMOR_STAND$registryId}) {
                 this.handlers[type] = simpleAddEntityHandler(EntityDataPacketHandler.INSTANCE);
             }
             if (VersionHelper.isOrAbove1_20_3) {
@@ -174,7 +174,8 @@ public final class AddEntityListener implements ByteBufferPacketListener {
                 Object type = RegistryUtils.getRegistryValue(BuiltInRegistriesProxy.ENTITY_TYPE, KeyUtils.toIdentifier(Key.MINECRAFT_NAMESPACE, name));
                 if (type == null) continue;
                 int id = RegistryProxy.INSTANCE.getId(BuiltInRegistriesProxy.ENTITY_TYPE, type);
-                this.handlers[id] = simpleAddEntityHandler(EquipmentEntityPacketHandler.INSTANCE);
+                EntityPacketHandler handler = byteBufEntityData && "armor_stand".equals(name) ? ArmorStandPacketHandler.INSTANCE : EquipmentEntityPacketHandler.INSTANCE;
+                this.handlers[id] = simpleAddEntityHandler(handler);
             }
         }
     }
@@ -198,6 +199,8 @@ public final class AddEntityListener implements ByteBufferPacketListener {
                     ProjectilePacketHandler handler = new ProjectilePacketHandler(customProjectile, display, id);
                     handler.convertAddCustomProjectilePacket(buf, event, user);
                     user.entityViews().put(id, handler);
+                } else if (genericEntityData) {
+                    user.entityViews().put(id, EntityDataPacketHandler.INSTANCE);
                 }
             }, () -> {
                 if (genericEntityData) {

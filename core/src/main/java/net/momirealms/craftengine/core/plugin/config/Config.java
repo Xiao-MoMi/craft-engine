@@ -253,7 +253,9 @@ public final class Config {
     private int network$mod_channel$creative_tab_max_items_per_packet = 10;
     private int network$mod_channel$visual_block_states_max_per_packet = 5000;
     private boolean network$item_crypto$enable;
-    private boolean network$performance_mode;
+    private boolean network$performance_mode$item;
+    private boolean network$performance_mode$entity;
+    private boolean network$performance_mode$text;
 
     private boolean item$client_bound_model;
     private boolean item$non_italic_tag;
@@ -787,7 +789,9 @@ public final class Config {
 
         if (this.firstTime) {
             this.network$disable_chat_report = config.getBoolean("network.disable-chat-report", false);
-            this.network$performance_mode = config.getBoolean("network.performance-mode", true);
+            this.network$performance_mode$item = config.getBoolean("network.performance-mode.item", true);
+            this.network$performance_mode$entity = config.getBoolean("network.performance-mode.entity", true);
+            this.network$performance_mode$text = config.getBoolean("network.performance-mode.text", true);
         }
         this.network$disable_item_operations = config.getBoolean("network.disable-item-operations", false);
         this.network$intercept_packets$system_chat = config.getBoolean("network.intercept-packets.system-chat", true);
@@ -1339,8 +1343,16 @@ public final class Config {
         return instance.network$disable_item_operations;
     }
 
-    public static boolean nettyPerformanceMode() {
-        return instance.network$performance_mode;
+    public static boolean nettyPerformanceModeItem() {
+        return instance.network$performance_mode$item;
+    }
+
+    public static boolean nettyPerformanceModeEntity() {
+        return instance.network$performance_mode$entity;
+    }
+
+    public static boolean nettyPerformanceModeText() {
+        return instance.network$performance_mode$text;
     }
 
     public static boolean interceptSystemChat() {
