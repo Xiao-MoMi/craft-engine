@@ -33,21 +33,49 @@ public final class AddEntityListener implements ByteBufferPacketListener {
     private AddEntityListener() {
         this.handlers = new EntityTypeHandler[RegistryUtils.currentEntityTypeRegistrySize()];
         Arrays.fill(this.handlers, EntityTypeHandler.DoNothing.INSTANCE);
+        // 性能模式由 NMS 监听器统一替换，字节层只为下列实体类型解析数据
+        boolean byteBufEntityData = !Config.nettyPerformanceMode();
         this.handlers[EntityTypesProxy.ITEM$registryId] = simpleAddEntityHandler(ItemPacketHandler.INSTANCE);
-        this.handlers[EntityTypesProxy.FIREBALL$registryId] = createOptionalCustomProjectileEntityHandler();
-        this.handlers[EntityTypesProxy.EYE_OF_ENDER$registryId] = createOptionalCustomProjectileEntityHandler();
-        this.handlers[EntityTypesProxy.FIREWORK_ROCKET$registryId] = createOptionalCustomProjectileEntityHandler();
-        this.handlers[EntityTypesProxy.SMALL_FIREBALL$registryId] = createOptionalCustomProjectileEntityHandler();
-        this.handlers[EntityTypesProxy.EGG$registryId] = createOptionalCustomProjectileEntityHandler();
-        this.handlers[EntityTypesProxy.ENDER_PEARL$registryId] = createOptionalCustomProjectileEntityHandler();
-        this.handlers[EntityTypesProxy.EXPERIENCE_BOTTLE$registryId] = createOptionalCustomProjectileEntityHandler();
-        this.handlers[EntityTypesProxy.SNOWBALL$registryId] = createOptionalCustomProjectileEntityHandler();
-        this.handlers[EntityTypesProxy.POTION$registryId] = createOptionalCustomProjectileEntityHandler();
-        this.handlers[EntityTypesProxy.TRIDENT$registryId] = createOptionalCustomProjectileEntityHandler();
-        this.handlers[EntityTypesProxy.ARROW$registryId] = createOptionalCustomProjectileEntityHandler();
-        this.handlers[EntityTypesProxy.SPECTRAL_ARROW$registryId] = createOptionalCustomProjectileEntityHandler();
+        this.handlers[EntityTypesProxy.FIREBALL$registryId] = createOptionalCustomProjectileEntityHandler(byteBufEntityData);
+        this.handlers[EntityTypesProxy.EYE_OF_ENDER$registryId] = createOptionalCustomProjectileEntityHandler(byteBufEntityData);
+        this.handlers[EntityTypesProxy.FIREWORK_ROCKET$registryId] = createOptionalCustomProjectileEntityHandler(byteBufEntityData);
+        this.handlers[EntityTypesProxy.SMALL_FIREBALL$registryId] = createOptionalCustomProjectileEntityHandler(byteBufEntityData);
+        this.handlers[EntityTypesProxy.EGG$registryId] = createOptionalCustomProjectileEntityHandler(byteBufEntityData);
+        this.handlers[EntityTypesProxy.ENDER_PEARL$registryId] = createOptionalCustomProjectileEntityHandler(byteBufEntityData);
+        this.handlers[EntityTypesProxy.EXPERIENCE_BOTTLE$registryId] = createOptionalCustomProjectileEntityHandler(byteBufEntityData);
+        this.handlers[EntityTypesProxy.SNOWBALL$registryId] = createOptionalCustomProjectileEntityHandler(byteBufEntityData);
+        this.handlers[EntityTypesProxy.POTION$registryId] = createOptionalCustomProjectileEntityHandler(byteBufEntityData);
+        this.handlers[EntityTypesProxy.TRIDENT$registryId] = createOptionalCustomProjectileEntityHandler(false);
+        this.handlers[EntityTypesProxy.ARROW$registryId] = createOptionalCustomProjectileEntityHandler(false);
+        this.handlers[EntityTypesProxy.SPECTRAL_ARROW$registryId] = createOptionalCustomProjectileEntityHandler(false);
         if (VersionHelper.isOrAbove1_21) {
-            this.handlers[EntityTypesProxy.WIND_CHARGE$registryId] = createOptionalCustomProjectileEntityHandler();
+            this.handlers[EntityTypesProxy.WIND_CHARGE$registryId] = createOptionalCustomProjectileEntityHandler(false);
+        }
+        int[] minecartTypes = {
+                EntityTypesProxy.CHEST_MINECART$registryId, EntityTypesProxy.COMMAND_BLOCK_MINECART$registryId, EntityTypesProxy.FURNACE_MINECART$registryId,
+                EntityTypesProxy.HOPPER_MINECART$registryId, EntityTypesProxy.MINECART$registryId, EntityTypesProxy.SPAWNER_MINECART$registryId,
+                EntityTypesProxy.TNT_MINECART$registryId};
+        if (VersionHelper.isOrAbove1_21_5) {
+            if (byteBufEntityData) {
+                for (int type : minecartTypes) {
+                    this.handlers[type] = simpleAddEntityHandler(EntityDataPacketHandler.INSTANCE);
+                }
+            }
+        } else {
+            // 旧版矿车的展示方块是 INT 数据，NMS 监听器也识别不出来，两种模式下都得在字节层处理
+            for (int type : minecartTypes) {
+                this.handlers[type] = simpleAddEntityHandler(MinecartPacketHandler.INSTANCE);
+            }
+        }
+        if (byteBufEntityData) {
+            for (int type : new int[]{
+                    EntityTypesProxy.BLOCK_DISPLAY$registryId, EntityTypesProxy.TEXT_DISPLAY$registryId, EntityTypesProxy.ITEM_FRAME$registryId,
+                    EntityTypesProxy.GLOW_ITEM_FRAME$registryId, EntityTypesProxy.ENDERMAN$registryId}) {
+                this.handlers[type] = simpleAddEntityHandler(EntityDataPacketHandler.INSTANCE);
+            }
+            if (VersionHelper.isOrAbove1_20_3) {
+                this.handlers[EntityTypesProxy.TNT$registryId] = simpleAddEntityHandler(EntityDataPacketHandler.INSTANCE);
+            }
         }
         if (VersionHelper.isOrAbove1_20_5) {
             this.handlers[EntityTypesProxy.OMINOUS_ITEM_SPAWNER$registryId] = simpleAddEntityHandler(ItemPacketHandler.INSTANCE);
@@ -112,6 +140,8 @@ public final class AddEntityListener implements ByteBufferPacketListener {
                 if (Config.hideBaseEntity() && !furniture.hasExternalModel()) {
                     event.setCancelled(true);
                 }
+            } else if (byteBufEntityData) {
+                user.entityViews().putIfAbsent(id, EntityDataPacketHandler.INSTANCE);
             }
         };
         this.handlers[EntityTypesProxy.INTERACTION$registryId] = (user, event) -> {
@@ -158,16 +188,20 @@ public final class AddEntityListener implements ByteBufferPacketListener {
         };
     }
 
-    private static EntityTypeHandler createOptionalCustomProjectileEntityHandler() {
+    private static EntityTypeHandler createOptionalCustomProjectileEntityHandler(boolean genericEntityData) {
         return (user, event) -> {
             FriendlyByteBuf buf = event.getBuffer();
             int id = buf.readVarInt();
-            BukkitProjectileManager.instance().projectileByEntityId(id).ifPresent(customProjectile -> {
+            BukkitProjectileManager.instance().projectileByEntityId(id).ifPresentOrElse(customProjectile -> {
                 ProjectileDisplay display = customProjectile.metadata().display();
                 if (display != null) {
                     ProjectilePacketHandler handler = new ProjectilePacketHandler(customProjectile, display, id);
                     handler.convertAddCustomProjectilePacket(buf, event, user);
                     user.entityViews().put(id, handler);
+                }
+            }, () -> {
+                if (genericEntityData) {
+                    user.entityViews().put(id, EntityDataPacketHandler.INSTANCE);
                 }
             });
         };
