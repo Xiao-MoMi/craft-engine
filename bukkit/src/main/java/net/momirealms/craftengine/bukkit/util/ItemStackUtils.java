@@ -1,5 +1,6 @@
 package net.momirealms.craftengine.bukkit.util;
 
+import com.github.benmanes.caffeine.cache.Cache;
 import com.mojang.serialization.Dynamic;
 import net.momirealms.craftengine.bukkit.api.BukkitAdaptor;
 import net.momirealms.craftengine.bukkit.item.BukkitItem;
@@ -36,6 +37,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 public final class ItemStackUtils {
+    private static final Cache<>
+
     private ItemStackUtils() {}
 
     @Contract("null -> true")
@@ -146,6 +149,10 @@ public final class ItemStackUtils {
         return (CompoundTag) saveMinecraftItemStackAsTag(ItemStackUtils.unwrap(ensureCraftItemStack(itemStack)));
     }
 
+    public static Object parseCachedMinecraftItem(Tag tag, int dataVersion) {
+
+    }
+
     @Nullable
     public static Object parseMinecraftItem(Tag tag, int dataVersion) {
         Tag itemTag = tag;
@@ -251,5 +258,36 @@ public final class ItemStackUtils {
         Object unwrap = unwrap(itemStack);
         Object item = ItemStackProxy.INSTANCE.getItem(unwrap);
         return ItemProxy.INSTANCE.getDescriptionId(item);
+    }
+
+    public static class VersionedItemTag {
+        public final Tag tag;
+        public final int dataVersion;
+
+        public VersionedItemTag(Tag tag, int dataVersion) {
+            this.tag = tag;
+            this.dataVersion = dataVersion;
+        }
+
+        public Tag tag() {
+            return this.tag;
+        }
+
+        public int dataVersion() {
+            return this.dataVersion;
+        }
+
+        @Override
+        public boolean equals(Object obj) {
+            if (obj instanceof VersionedItemTag versionedItemTag) {
+                return this.tag.equals(versionedItemTag.tag) && this.dataVersion == versionedItemTag.dataVersion;
+            }
+            return false;
+        }
+
+        @Override
+        public int hashCode() {
+            return this.tag.hashCode();
+        }
     }
 }

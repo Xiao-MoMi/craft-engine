@@ -5,6 +5,7 @@ import com.google.common.collect.Multimap;
 import com.google.common.jimfs.Configuration;
 import com.google.common.jimfs.Jimfs;
 import com.google.gson.*;
+import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import net.momirealms.craftengine.core.block.ImmutableBlockState;
 import net.momirealms.craftengine.core.entity.player.Player;
 import net.momirealms.craftengine.core.font.BitmapImage;
@@ -3733,9 +3734,9 @@ public abstract class AbstractPackManager implements PackManager {
     }
 
     private List<Pair<String, List<Path>>> updateCachedAssets(@NotNull PackCacheData cacheData, @Nullable FileSystem fs) throws IOException {
-        Map<String, List<Path>> conflictChecker = new HashMap<>(Math.max(128, this.cachedAssetFiles.size()), 0.6f);
+        Map<String, List<Path>> conflictChecker = new HashMap<>(Math.max(128, this.cachedAssetFiles.size()), 0.5f);
         Map<Path, CachedAssetFile> previousFiles = this.cachedAssetFiles;
-        this.cachedAssetFiles = new HashMap<>(Math.max(128, this.cachedAssetFiles.size()), 0.6f);
+        this.cachedAssetFiles = Config.cacheResourceFiles() ? new Object2ObjectOpenHashMap<>(Math.max(128, this.cachedAssetFiles.size()), 0.5f) : new Object2ObjectOpenHashMap<>();
 
         List<Path> folders = new ArrayList<>();
         folders.addAll(loadedPacks().stream()
@@ -3756,7 +3757,7 @@ public abstract class AbstractPackManager implements PackManager {
             }
         }
         for (Path zip : cacheData.externalZips()) {
-            processZipFile(zip, zip.getParent(), fs, conflictChecker, previousFiles);
+            processZipFile(zip, fs, conflictChecker, previousFiles);
         }
 
         List<Pair<String, List<Path>>> conflicts = new ArrayList<>();
@@ -3773,22 +3774,30 @@ public abstract class AbstractPackManager implements PackManager {
         if (Config.excludeFileExtensions().contains(FileUtils.getExtension(file))) {
             return;
         }
-        CachedAssetFile cachedAsset = previousFiles.get(file);
         long lastModified = attrs.lastModifiedTime().toMillis();
         long size = attrs.size();
-        if (cachedAsset != null && cachedAsset.lastModified() == lastModified && cachedAsset.size() == size) {
-            this.cachedAssetFiles.put(file, cachedAsset);
+        byte[] data;
+        if (Config.cacheResourceFiles()) {
+            CachedAssetFile cachedAsset = previousFiles.get(file);
+            if (cachedAsset != null && cachedAsset.lastModified() == lastModified && cachedAsset.size() == size) {
+                this.cachedAssetFiles.put(file, cachedAsset);
+                data = cachedAsset.data();
+            } else {
+                data = Files.readAllBytes(file);
+                this.cachedAssetFiles.put(file, new CachedAssetFile(data, lastModified, size));
+            }
         } else {
-            cachedAsset = new CachedAssetFile(Files.readAllBytes(file), lastModified, size);
-            this.cachedAssetFiles.put(file, cachedAsset);
+            data = Files.readAllBytes(file);
         }
         if (fs == null) return;
         Path relative = sourceFolder.relativize(file);
-        updateConflictChecker(fs, conflictChecker, file, file, relative, cachedAsset.data());
+        updateConflictChecker(fs, conflictChecker, file, file, relative, data);
     }
 
-    private void processZipFile(Path zipFile, Path sourceFolder, @Nullable FileSystem fs,
-                                Map<String, List<Path>> conflictChecker, Map<Path, CachedAssetFile> previousFiles) {
+    private void processZipFile(Path zipFile,
+                                @Nullable FileSystem fs,
+                                Map<String, List<Path>> conflictChecker,
+                                Map<Path, CachedAssetFile> previousFiles) {
         try (FileSystem zipFs = FileSystems.newFileSystem(zipFile)) {
             long zipLastModified = Files.getLastModifiedTime(zipFile).toMillis();
             long zipSize = Files.size(zipFile);
@@ -3804,17 +3813,22 @@ public abstract class AbstractPackManager implements PackManager {
                     }
                     Path entryPathInZip = zipRoot.relativize(entry);
                     Path sourcePath = Path.of(zipFile + "!" + entryPathInZip);
-                    CachedAssetFile cachedAsset = previousFiles.get(sourcePath);
-                    if (cachedAsset != null && cachedAsset.lastModified() == zipLastModified && cachedAsset.size() == zipSize) {
-                        cachedAssetFiles.put(sourcePath, cachedAsset);
+                    byte[] data;
+                    if (Config.cacheResourceFiles()) {
+                        CachedAssetFile cachedAsset = previousFiles.get(sourcePath);
+                        if (cachedAsset != null && cachedAsset.lastModified() == zipLastModified && cachedAsset.size() == zipSize) {
+                            cachedAssetFiles.put(sourcePath, cachedAsset);
+                            data = cachedAsset.data();
+                        } else {
+                            data = Files.readAllBytes(entry);
+                            cachedAssetFiles.put(sourcePath, new CachedAssetFile(data, zipLastModified, zipSize));
+                        }
                     } else {
-                        byte[] data = Files.readAllBytes(entry);
-                        cachedAsset = new CachedAssetFile(data, zipLastModified, zipSize);
-                        cachedAssetFiles.put(sourcePath, cachedAsset);
+                        data = Files.readAllBytes(entry);
                     }
                     if (fs != null) {
                         try {
-                            updateConflictChecker(fs, conflictChecker, entry, sourcePath, entryPathInZip, cachedAsset.data());
+                            updateConflictChecker(fs, conflictChecker, entry, sourcePath, entryPathInZip, data);
                         } catch (Exception e) {
                             AbstractPackManager.this.plugin.logger().warn("Failed to update conflict checker", e);
                         }
