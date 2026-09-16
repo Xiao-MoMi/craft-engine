@@ -105,10 +105,8 @@ public final class BukkitItemManager extends AbstractItemManager {
         this.loadItemModelMappings();
         this.emptyItem = wrap(ItemStackProxy.EMPTY);
         this.deserializedItemCache = Caffeine.newBuilder()
-                .maximumSize(4096)
-                .expireAfterAccess(Duration.of(10, ChronoUnit.MINUTES))
-                .scheduler(Scheduler.systemScheduler())
-                .executor(this.plugin.scheduler().async())
+                .maximumSize(8192)
+                .expireAfterAccess(Duration.of(30, ChronoUnit.MINUTES))
                 .build();
     }
 
@@ -517,7 +515,7 @@ public final class BukkitItemManager extends AbstractItemManager {
 
     @Override
     public Item fromNBT(CompoundTag tag) {
-        return wrap(ItemStackUtils.parseMinecraftItem(tag, VersionHelper.WORLD_VERSION));
+        return wrap(ItemStackUtils.parseCachedMinecraftItem(tag, VersionHelper.WORLD_VERSION));
     }
 
     @Deprecated

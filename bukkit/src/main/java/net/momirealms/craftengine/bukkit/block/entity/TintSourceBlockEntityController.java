@@ -53,7 +53,7 @@ public final class TintSourceBlockEntityController extends BlockEntityController
             this.sourceItem = Item.empty();
             return;
         }
-        this.sourceItem = ItemStackUtils.wrap(ItemStackUtils.parseMinecraftItem(itemTag, dataVersion));
+        this.sourceItem = ItemStackUtils.wrap(ItemStackUtils.parseCachedMinecraftItem(itemTag, dataVersion));
     }
 
     @Override

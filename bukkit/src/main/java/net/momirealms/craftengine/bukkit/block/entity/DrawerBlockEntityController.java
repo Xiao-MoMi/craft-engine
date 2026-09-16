@@ -460,7 +460,7 @@ public sealed abstract class DrawerBlockEntityController extends BlockEntityCont
             // 非法数据
             if (itemTag == null || count <= 0) return;
 
-            this.setTemplateItem(ItemStackUtils.wrap(ItemStackUtils.parseMinecraftItem(itemTag, dataVersion)));
+            this.setTemplateItem(ItemStackUtils.wrap(ItemStackUtils.parseCachedMinecraftItem(itemTag, dataVersion)));
             this.setItemCount(count);
 
             Item item = this.item();
@@ -715,7 +715,7 @@ public sealed abstract class DrawerBlockEntityController extends BlockEntityCont
                 return;
             }
 
-            Item itemTemplate = ItemStackUtils.wrap(ItemStackUtils.parseMinecraftItem(itemTag, dataVersion));
+            Item itemTemplate = ItemStackUtils.wrap(ItemStackUtils.parseCachedMinecraftItem(itemTag, dataVersion));
             int maxStackSize = itemTemplate.maxStackSize();
             int remaining = count;
 

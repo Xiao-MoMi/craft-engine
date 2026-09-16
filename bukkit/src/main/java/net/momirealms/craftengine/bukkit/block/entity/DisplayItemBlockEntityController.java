@@ -122,7 +122,7 @@ public class DisplayItemBlockEntityController extends BlockEntityController {
             return;
         }
         // 记录并刷新
-        this.displayItem = ItemStackUtils.wrap(ItemStackUtils.parseMinecraftItem(itemTag, dataVersion));
+        this.displayItem = ItemStackUtils.wrap(ItemStackUtils.parseCachedMinecraftItem(itemTag, dataVersion));
         this.element.refreshChangeDisplayItemPacket(this.displayItem.minecraftItem());
     }
 
