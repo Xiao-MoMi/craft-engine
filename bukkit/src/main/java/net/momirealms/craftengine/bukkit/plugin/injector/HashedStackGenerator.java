@@ -14,6 +14,7 @@ import net.momirealms.craftengine.bukkit.item.BukkitItemManager;
 import net.momirealms.craftengine.bukkit.util.ItemStackUtils;
 import net.momirealms.craftengine.core.entity.player.Player;
 import net.momirealms.craftengine.core.item.Item;
+import net.momirealms.craftengine.core.item.network.ItemPacketSource;
 import net.momirealms.craftengine.proxy.minecraft.network.HashedPatchMapProxy;
 import net.momirealms.craftengine.proxy.minecraft.network.HashedStackProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.item.ItemStackProxy;
@@ -81,7 +82,7 @@ public final class HashedStackGenerator {
                 return false;
             }
             if (!ItemStackProxy.INSTANCE.isEmpty(stack)) {
-                Optional<Item> optional = BukkitItemManager.instance().s2c(ItemStackUtils.wrap(ItemStackProxy.INSTANCE.copy(stack)), player);
+                Optional<Item> optional = BukkitItemManager.instance().s2c(ItemStackUtils.wrap(ItemStackProxy.INSTANCE.copy(stack)), player, ItemPacketSource.GENERIC);
                 if (optional.isPresent()) {
                     stack = optional.get().minecraftItem();
                 }

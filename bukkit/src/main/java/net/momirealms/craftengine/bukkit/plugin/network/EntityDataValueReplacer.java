@@ -8,6 +8,7 @@ import net.momirealms.craftengine.bukkit.util.ComponentUtils;
 import net.momirealms.craftengine.bukkit.util.ItemStackUtils;
 import net.momirealms.craftengine.core.entity.player.Player;
 import net.momirealms.craftengine.core.item.Item;
+import net.momirealms.craftengine.core.item.network.ItemPacketSource;
 import net.momirealms.craftengine.core.plugin.config.Config;
 import net.momirealms.craftengine.core.plugin.context.NetworkTextReplaceContext;
 import net.momirealms.craftengine.core.plugin.text.component.ComponentProvider;
@@ -38,7 +39,7 @@ public final class EntityDataValueReplacer {
     private static Object replaceItem(Player user, Object dataValue) {
         Item item = ItemStackUtils.wrap(SynchedEntityDataProxy.DataValueProxy.INSTANCE.getValue(dataValue));
         // 一定要先复制，一个包可能发给多个玩家
-        Optional<Item> converted = BukkitItemManager.instance().s2c(item.copy(), user);
+        Optional<Item> converted = BukkitItemManager.instance().s2c(item.copy(), user, ItemPacketSource.ENTITY_DATA);
         if (converted.isPresent()) {
             return SynchedEntityDataProxy.DataValueProxy.INSTANCE.newInstance(
                     SynchedEntityDataProxy.DataValueProxy.INSTANCE.getId(dataValue),

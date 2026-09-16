@@ -4,6 +4,7 @@ import net.kyori.adventure.text.Component;
 import net.momirealms.craftengine.core.item.Item;
 import net.momirealms.craftengine.core.item.ItemBuildContext;
 import net.momirealms.craftengine.core.item.component.DataComponentKeys;
+import net.momirealms.craftengine.core.item.network.ItemPacketSource;
 import net.momirealms.craftengine.core.item.processor.ItemProcessorFactory;
 import net.momirealms.craftengine.core.item.processor.SimpleNetworkItemProcessor;
 import net.momirealms.craftengine.core.plugin.config.Config;
@@ -30,6 +31,11 @@ public sealed interface LoreProcessor extends SimpleNetworkItemProcessor
         permits LoreProcessor.EmptyLoreProcessor, LoreProcessor.CompositeLoreProcessor, LoreProcessor.DoubleLoreProcessor, LoreProcessor.SingleLoreProcessor {
     ItemProcessorFactory<LoreProcessor> FACTORY = new LoreFactory();
     Object[] NBT_PATH = new Object[]{"display", "Lore"};
+
+    @Override
+    default boolean shouldSkip(ItemPacketSource source) {
+        return source.canSkipLore;
+    }
 
     @Override
     @Nullable

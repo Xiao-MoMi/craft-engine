@@ -4,6 +4,7 @@ import net.momirealms.craftengine.bukkit.item.BukkitItemManager;
 import net.momirealms.craftengine.bukkit.plugin.user.BukkitServerPlayer;
 import net.momirealms.craftengine.bukkit.util.PacketUtils;
 import net.momirealms.craftengine.core.item.Item;
+import net.momirealms.craftengine.core.item.network.ItemPacketSource;
 import net.momirealms.craftengine.core.plugin.config.Config;
 import net.momirealms.craftengine.core.plugin.network.NetWorkUser;
 import net.momirealms.craftengine.core.plugin.network.event.ByteBufPacketEvent;
@@ -37,7 +38,7 @@ public final class UpdateRecipesListener {
             List<LegacyRecipeHolder> holders = buf.readCollection(ArrayList::new, byteBuf -> {
                 LegacyRecipeHolder holder = LegacyRecipeHolder.read(byteBuf, $ -> PacketUtils.readItem(buf));
                 holder.recipe().applyClientboundData(item -> {
-                    Optional<Item> remapped = itemManager.s2c(item, player);
+                    Optional<Item> remapped = itemManager.s2c(item, player, ItemPacketSource.RECIPE);
                     if (remapped.isEmpty()) {
                         return item;
                     }
@@ -74,7 +75,7 @@ public final class UpdateRecipesListener {
             List<SingleInputButtonDisplay> displays = buf.readCollection(ArrayList::new, b -> {
                 SingleInputButtonDisplay display = SingleInputButtonDisplay.read(b, $ -> PacketUtils.readItem(buf));
                 display.applyClientboundData(item -> {
-                    Optional<Item> remapped = itemManager.s2c(item, player);
+                    Optional<Item> remapped = itemManager.s2c(item, player, ItemPacketSource.RECIPE);
                     if (remapped.isEmpty()) {
                         return item;
                     }

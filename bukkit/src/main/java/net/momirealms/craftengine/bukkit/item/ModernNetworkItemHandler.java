@@ -9,6 +9,7 @@ import net.momirealms.craftengine.core.item.ItemDefinition;
 import net.momirealms.craftengine.core.item.component.DataComponentIds;
 import net.momirealms.craftengine.core.item.component.DataComponentKeys;
 import net.momirealms.craftengine.core.item.network.ItemModelMappings;
+import net.momirealms.craftengine.core.item.network.ItemPacketSource;
 import net.momirealms.craftengine.core.item.network.NetworkItemBuildContext;
 import net.momirealms.craftengine.core.item.network.NetworkItemHandler;
 import net.momirealms.craftengine.core.item.network.encrypt.ItemCrypto;
@@ -173,7 +174,7 @@ public final class ModernNetworkItemHandler implements NetworkItemHandler {
     }
 
     @Override
-    public Optional<Item> s2c(Item wrapped, @Nullable Player player) {
+    public Optional<Item> s2c(Item wrapped, @Nullable Player player, ItemPacketSource source) {
         boolean forceReturn = false;
 
         // 处理收纳袋
@@ -184,7 +185,7 @@ public final class ModernNetworkItemHandler implements NetworkItemHandler {
             if (VersionHelper.isOrAbove26_1) {
                 for (Object itemTemplate : BundleContentsProxy.INSTANCE.getItems(bundleContents)) {
                     Object previousItem = ItemStackTemplateProxy.INSTANCE.create(itemTemplate);
-                    Optional<Item> converted = this.itemManager.s2c(this.itemManager.wrap(previousItem), player);
+                    Optional<Item> converted = this.itemManager.s2c(this.itemManager.wrap(previousItem), player, source);
                     if (converted.isPresent()) {
                         newItems.add(ItemStackTemplateProxy.INSTANCE.fromNonEmptyStack(converted.get().minecraftItem()));
                         changed = true;
@@ -194,7 +195,7 @@ public final class ModernNetworkItemHandler implements NetworkItemHandler {
                 }
             } else {
                 for (Object previousItem : BundleContentsProxy.INSTANCE.getItems(bundleContents)) {
-                    Optional<Item> converted = this.itemManager.s2c(this.itemManager.wrap(previousItem).copy(), player);
+                    Optional<Item> converted = this.itemManager.s2c(this.itemManager.wrap(previousItem).copy(), player, source);
                     if (converted.isPresent()) {
                         newItems.add(converted.get().minecraftItem());
                         changed = true;
@@ -221,7 +222,7 @@ public final class ModernNetworkItemHandler implements NetworkItemHandler {
                     if (previousTemplate.isPresent()) {
                         Object itemTemplate = previousTemplate.get();
                         Object previousItem = ItemStackTemplateProxy.INSTANCE.create(itemTemplate);
-                        Optional<Item> converted = this.itemManager.s2c(this.itemManager.wrap(previousItem), player);
+                        Optional<Item> converted = this.itemManager.s2c(this.itemManager.wrap(previousItem), player, source);
                         if (converted.isPresent()) {
                             newItems.add(converted.get().minecraftItem());
                             changed = true;
@@ -234,7 +235,7 @@ public final class ModernNetworkItemHandler implements NetworkItemHandler {
                 }
             } else {
                 for (Object previousItem : ItemContainerContentsProxy.INSTANCE.getItems(containerContents)) {
-                    Optional<Item> itemStack = this.itemManager.s2c(this.itemManager.wrap(previousItem).copy(), player);
+                    Optional<Item> itemStack = this.itemManager.s2c(this.itemManager.wrap(previousItem).copy(), player, source);
                     if (itemStack.isPresent()) {
                         newItems.add(itemStack.get().minecraftItem());
                         changed = true;
@@ -278,25 +279,31 @@ public final class ModernNetworkItemHandler implements NetworkItemHandler {
         // 准备阶段
         CompoundTag tag = new CompoundTag();
         for (ItemProcessor modifier : customItem.clientBoundProcessors()) {
+            if (modifier.shouldSkip(source)) continue;
             modifier.prepareNetworkItem(context, tag);
         }
         // 如果拦截物品的描述名称等
         if (Config.interceptItem()) {
-            if (wrapped.hasComponent(DataComponentTypes.ITEM_NAME)) {
-                if (VersionHelper.isOrAbove1_21_5) processModernItemName(wrapped, () -> tag, context);
-                else processLegacyItemName(wrapped, () -> tag, context);
+            if (!source.canSkipName) {
+                if (wrapped.hasComponent(DataComponentTypes.ITEM_NAME)) {
+                    if (VersionHelper.isOrAbove1_21_5) processModernItemName(wrapped, () -> tag, context);
+                    else processLegacyItemName(wrapped, () -> tag, context);
+                }
+                if (wrapped.hasComponent(DataComponentTypes.CUSTOM_NAME)) {
+                    if (VersionHelper.isOrAbove1_21_5) processModernCustomName(wrapped, () -> tag, context);
+                    else processLegacyCustomName(wrapped, () -> tag, context);
+                }
             }
-            if (wrapped.hasComponent(DataComponentTypes.CUSTOM_NAME)) {
-                if (VersionHelper.isOrAbove1_21_5) processModernCustomName(wrapped, () -> tag, context);
-                else processLegacyCustomName(wrapped, () -> tag, context);
-            }
-            if (wrapped.hasComponent(DataComponentTypes.LORE)) {
-                if (VersionHelper.isOrAbove1_21_5) processModernLore(wrapped, () -> tag, context);
-                else processLegacyLore(wrapped, () -> tag, context);
+            if (!source.canSkipLore) {
+                if (wrapped.hasComponent(DataComponentTypes.LORE)) {
+                    if (VersionHelper.isOrAbove1_21_5) processModernLore(wrapped, () -> tag, context);
+                    else processLegacyLore(wrapped, () -> tag, context);
+                }
             }
         }
         // 应用阶段
         for (ItemProcessor modifier : customItem.clientBoundProcessors()) {
+            if (modifier.shouldSkip(source)) continue;
             modifier.apply(context);
         }
         wrapped = context.item();

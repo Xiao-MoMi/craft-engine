@@ -6,6 +6,7 @@ import net.momirealms.craftengine.bukkit.plugin.user.BukkitServerPlayer;
 import net.momirealms.craftengine.bukkit.util.ItemStackUtils;
 import net.momirealms.craftengine.bukkit.util.PacketUtils;
 import net.momirealms.craftengine.core.item.Item;
+import net.momirealms.craftengine.core.item.network.ItemPacketSource;
 import net.momirealms.craftengine.core.item.trade.MerchantOffer;
 import net.momirealms.craftengine.core.plugin.config.Config;
 import net.momirealms.craftengine.core.plugin.network.NetWorkUser;
@@ -57,7 +58,7 @@ public final class MerchantOffersListener {
             MutableBoolean changed = new MutableBoolean(false);
             for (MerchantOffer offer : merchantOffers) {
                 offer.applyClientboundData(item -> {
-                    Optional<Item> remapped = manager.s2c(item, serverPlayer);
+                    Optional<Item> remapped = manager.s2c(item, serverPlayer, ItemPacketSource.MERCHANT_OFFER);
                     if (remapped.isEmpty()) {
                         return item;
                     }
@@ -127,7 +128,7 @@ public final class MerchantOffersListener {
             MutableBoolean changed = new MutableBoolean(false);
             for (MerchantOffer offer : merchantOffers) {
                 offer.applyClientboundData(item -> {
-                    Optional<Item> remapped = manager.s2c(item, serverPlayer);
+                    Optional<Item> remapped = manager.s2c(item, serverPlayer, ItemPacketSource.MERCHANT_OFFER);
                     if (remapped.isEmpty()) {
                         return item;
                     }

@@ -5,6 +5,7 @@ import net.momirealms.craftengine.bukkit.plugin.user.BukkitServerPlayer;
 import net.momirealms.craftengine.bukkit.util.ItemStackUtils;
 import net.momirealms.craftengine.bukkit.util.RegistryOps;
 import net.momirealms.craftengine.core.item.Item;
+import net.momirealms.craftengine.core.item.network.ItemPacketSource;
 import net.momirealms.craftengine.core.plugin.CraftEngine;
 import net.momirealms.craftengine.core.plugin.config.Config;
 import net.momirealms.craftengine.core.plugin.network.NetWorkUser;
@@ -57,7 +58,7 @@ public final class BlockEntityDataListener implements ByteBufferPacketListener {
                         nmsStack = ItemStackProxy.INSTANCE.of(nmsTag);
                     }
                     Item item = ItemStackUtils.wrap(nmsStack);
-                    Optional<Item> optional = itemManager.s2c(item, (BukkitServerPlayer) user);
+                    Optional<Item> optional = itemManager.s2c(item, (BukkitServerPlayer) user, ItemPacketSource.BLOCK_ENTITY);
                     if (optional.isPresent()) {
                         changed = true;
                         items.add(new Pair<>(slot, optional.get()));

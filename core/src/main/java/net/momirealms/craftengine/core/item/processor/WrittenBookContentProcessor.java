@@ -4,6 +4,7 @@ import net.kyori.adventure.text.Component;
 import net.momirealms.craftengine.core.item.Item;
 import net.momirealms.craftengine.core.item.ItemBuildContext;
 import net.momirealms.craftengine.core.item.component.DataComponentKeys;
+import net.momirealms.craftengine.core.item.network.ItemPacketSource;
 import net.momirealms.craftengine.core.plugin.config.ConfigSection;
 import net.momirealms.craftengine.core.plugin.config.ConfigValue;
 import net.momirealms.craftengine.core.plugin.context.text.TextProvider;
@@ -33,6 +34,11 @@ public final class WrittenBookContentProcessor implements SimpleNetworkItemProce
         this.generation = generation;
         this.resolved = resolved;
         this.pages = pages;
+    }
+
+    @Override
+    public boolean shouldSkip(ItemPacketSource source) {
+        return source.canSkipLore;
     }
 
     @Override

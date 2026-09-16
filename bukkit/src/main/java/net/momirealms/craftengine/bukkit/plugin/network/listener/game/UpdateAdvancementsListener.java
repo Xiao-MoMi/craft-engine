@@ -6,6 +6,7 @@ import net.momirealms.craftengine.bukkit.plugin.network.BukkitNetworkManager;
 import net.momirealms.craftengine.bukkit.plugin.user.BukkitServerPlayer;
 import net.momirealms.craftengine.bukkit.util.PacketUtils;
 import net.momirealms.craftengine.core.item.Item;
+import net.momirealms.craftengine.core.item.network.ItemPacketSource;
 import net.momirealms.craftengine.core.plugin.config.Config;
 import net.momirealms.craftengine.core.plugin.context.NetworkTextReplaceContext;
 import net.momirealms.craftengine.core.plugin.network.NetWorkUser;
@@ -35,7 +36,7 @@ public final class UpdateAdvancementsListener implements ByteBufferPacketListene
             AdvancementHolder holder = AdvancementHolder.read(byteBuf, $ -> VersionHelper.isOrAbove26_1 ? PacketUtils.readItemTemplate(buf) : PacketUtils.readItem(buf));
             if (!Config.disableItemOperations()) {
                 holder.applyClientboundData(item -> {
-                    Optional<Item> remapped = itemManager.s2c(item, player);
+                    Optional<Item> remapped = itemManager.s2c(item, player, ItemPacketSource.ADVANCEMENT);
                     if (remapped.isEmpty()) {
                         return item;
                     }

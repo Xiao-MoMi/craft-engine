@@ -7,6 +7,7 @@ import net.momirealms.craftengine.bukkit.util.ItemStackUtils;
 import net.momirealms.craftengine.core.entity.player.Player;
 import net.momirealms.craftengine.core.item.Item;
 import net.momirealms.craftengine.core.item.ItemDefinition;
+import net.momirealms.craftengine.core.item.network.ItemPacketSource;
 import net.momirealms.craftengine.core.item.network.NetworkItemBuildContext;
 import net.momirealms.craftengine.core.item.network.NetworkItemHandler;
 import net.momirealms.craftengine.core.item.network.encrypt.ItemCrypto;
@@ -127,7 +128,7 @@ public final class LegacyNetworkItemHandler implements NetworkItemHandler {
     }
 
     @Override
-    public Optional<Item> s2c(Item wrapped, @Nullable Player player) {
+    public Optional<Item> s2c(Item wrapped, @Nullable Player player, ItemPacketSource source) {
         boolean forceReturn = false;
 
         // 处理收纳袋
@@ -137,7 +138,7 @@ public final class LegacyNetworkItemHandler implements NetworkItemHandler {
             boolean changed = false;
             for (Object tag : (Iterable<?>) bundleContents) {
                 Object previousItem = ItemStackProxy.INSTANCE.of(tag);
-                Optional<ItemStack> itemStack = BukkitItemManager.instance().s2c(ItemStackUtils.getBukkitStack(previousItem), player);
+                Optional<ItemStack> itemStack = BukkitItemManager.instance().s2c(ItemStackUtils.getBukkitStack(previousItem), player, source);
                 if (itemStack.isPresent()) {
                     newItems.add(ItemStackUtils.unwrap(itemStack.get()));
                     changed = true;
@@ -164,7 +165,7 @@ public final class LegacyNetworkItemHandler implements NetworkItemHandler {
                 List<Pair<Byte, Object>> newItems = new ArrayList<>();
                 for (Object tag : (Iterable<?>) itemTags) {
                     Object previousItem = ItemStackProxy.INSTANCE.of(tag);
-                    Optional<ItemStack> itemStack = BukkitItemManager.instance().s2c(ItemStackUtils.getBukkitStack(previousItem), player);
+                    Optional<ItemStack> itemStack = BukkitItemManager.instance().s2c(ItemStackUtils.getBukkitStack(previousItem), player, source);
                     byte slot = ByteTagProxy.INSTANCE.value(CompoundTagProxy.INSTANCE.get(tag, "Slot"));
                     if (itemStack.isPresent()) {
                         newItems.add(Pair.of(slot, ItemStackUtils.unwrap(itemStack.get())));
@@ -218,19 +219,25 @@ public final class LegacyNetworkItemHandler implements NetworkItemHandler {
         NetworkItemBuildContext context = NetworkItemBuildContext.of(player, wrapped);
         // 准备阶段
         for (ItemProcessor modifier : customItem.clientBoundProcessors()) {
+            if (modifier.shouldSkip(source)) continue;
             modifier.prepareNetworkItem(context, tag);
         }
         // 如果拦截物品的描述名称等
         if (Config.interceptItem()) {
-            if (wrapped.hasTag(DISPLAY_NAME)) {
-                processCustomName(wrapped, tag::put, context);
+            if (!source.canSkipName) {
+                if (wrapped.hasTag(DISPLAY_NAME)) {
+                    processCustomName(wrapped, tag::put, context);
+                }
             }
-            if (wrapped.hasTag(DISPLAY_LORE)) {
-                processLore(wrapped, tag::put, context);
+            if (!source.canSkipLore) {
+                if (wrapped.hasTag(DISPLAY_LORE)) {
+                    processLore(wrapped, tag::put, context);
+                }
             }
         }
         // 应用阶段
         for (ItemProcessor modifier : customItem.clientBoundProcessors()) {
+            if (modifier.shouldSkip(source)) continue;
             modifier.apply(context);
         }
         wrapped = context.item();

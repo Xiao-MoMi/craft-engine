@@ -8,6 +8,7 @@ import net.momirealms.craftengine.bukkit.util.KeyUtils;
 import net.momirealms.craftengine.core.entity.player.InteractionHand;
 import net.momirealms.craftengine.core.item.Item;
 import net.momirealms.craftengine.core.item.ItemDefinition;
+import net.momirealms.craftengine.core.item.network.ItemPacketSource;
 import net.momirealms.craftengine.core.plugin.CraftEngine;
 import net.momirealms.craftengine.core.plugin.command.CraftEngineCommandManager;
 import net.momirealms.craftengine.core.util.Key;
@@ -79,7 +80,7 @@ public final class DebugCustomModelDataCommand extends BukkitCommandFeature<Comm
     }
 
     private void sendMessage(CommandContext<CommandSender> context, Item itemStack, BukkitServerPlayer player) {
-        Item clientBoundItem = plugin().itemManager().s2c(itemStack, player).orElse(itemStack);
+        Item clientBoundItem = plugin().itemManager().s2c(itemStack, player, ItemPacketSource.GENERIC).orElse(itemStack);
         int customModelData = clientBoundItem.customModelData().orElse(0);
         var sender = plugin().senderFactory().wrap(context.sender());
         sender.sendMessage(DebugCommandOutput.title("Custom Model Data"));

@@ -14,6 +14,7 @@ import net.momirealms.craftengine.bukkit.plugin.user.BukkitServerPlayer;
 import net.momirealms.craftengine.bukkit.util.RegistryOps;
 import net.momirealms.craftengine.core.entity.player.InteractionHand;
 import net.momirealms.craftengine.core.item.Item;
+import net.momirealms.craftengine.core.item.network.ItemPacketSource;
 import net.momirealms.craftengine.core.item.network.encrypt.ItemCrypto;
 import net.momirealms.craftengine.core.plugin.CraftEngine;
 import net.momirealms.craftengine.core.plugin.command.CraftEngineCommandManager;
@@ -62,7 +63,7 @@ public final class DebugItemDataCommand extends BukkitCommandFeature<CommandSend
                     }
                     boolean toClientSide = context.flags().hasFlag(FlagKeys.CLIENT_SIDE_FLAG);
                     if (toClientSide) {
-                        itemInHand = BukkitItemManager.instance().s2c(itemInHand, serverPlayer).orElse(itemInHand);
+                        itemInHand = BukkitItemManager.instance().s2c(itemInHand, serverPlayer, ItemPacketSource.GENERIC).orElse(itemInHand);
                         if (VersionHelper.COMPONENT_RELEASE) {
                             Tag customData = itemInHand.getComponentAsSparrowTag(DataComponentTypes.CUSTOM_DATA);
                             if (customData instanceof CompoundTag compoundTag) {

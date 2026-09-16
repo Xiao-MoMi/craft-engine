@@ -13,6 +13,7 @@ import net.momirealms.craftengine.bukkit.item.BukkitItemManager;
 import net.momirealms.craftengine.bukkit.plugin.network.BukkitNetworkManager;
 import net.momirealms.craftengine.bukkit.plugin.user.BukkitServerPlayer;
 import net.momirealms.craftengine.core.item.Item;
+import net.momirealms.craftengine.core.item.network.ItemPacketSource;
 import net.momirealms.craftengine.core.plugin.text.component.ComponentProvider;
 import net.momirealms.craftengine.core.plugin.text.component.NBTDataComponentPatch;
 import net.momirealms.craftengine.core.util.AdventureHelper;
@@ -226,7 +227,7 @@ public final class ComponentUtils {
 
         BukkitItemManager itemManager = BukkitItemManager.instance();
         Item wrap = itemManager.wrap(ItemStackUtils.getBukkitStack(nmsItemStack));
-        Optional<Item> remapped = itemManager.s2c(wrap, player);
+        Optional<Item> remapped = itemManager.s2c(wrap, player, ItemPacketSource.MESSAGE);
         if (remapped.isEmpty()) {
             return showItem;
         }
