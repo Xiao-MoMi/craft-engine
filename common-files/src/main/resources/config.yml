@@ -364,7 +364,7 @@ equipment:
   # If you do not need to use 3D armor, you can disable this option to reduce memory usage.
   # A restart is required to apply the changes.
   lod:
-    enable: true
+    enable: false
 
 block:
   # This decides the amount of real blocks on serverside. You should only consider increasing this value when your server state is insufficient.
