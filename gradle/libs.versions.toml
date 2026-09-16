@@ -3,7 +3,7 @@ shadow = "9.4.1"
 plugin-yml = "0.7.1"
 run-paper = "3.1.0"
 
-paper = "26.2.build.+"
+paper = "26.3.build.+"
 slf4j = "2.0.19"
 log4j = "2.26.1"
 gson = "2.14.0"
