@@ -229,28 +229,32 @@ public final class LegacyNetworkItemHandler implements NetworkItemHandler {
             tag = null;
         }
         BiConsumer<String, CompoundTag> callback = tag == null ? NOOP_PUT : tag::put;
+        boolean changed = false;
         // 如果拦截物品的描述名称等
         if (Config.interceptItem()) {
             if (!source.canSkipName) {
                 if (wrapped.hasTag(DISPLAY_NAME)) {
-                    processCustomName(wrapped, callback, context);
+                    changed |= processCustomName(wrapped, callback, context);
                 }
             }
             if (!source.canSkipLore) {
                 if (wrapped.hasTag(DISPLAY_LORE)) {
-                    processLore(wrapped, callback, context);
+                    changed |= processLore(wrapped, callback, context);
                 }
             }
         }
         // 应用阶段
         for (ItemProcessor modifier : customItem.clientBoundProcessors()) {
             if (modifier.shouldSkip(source)) continue;
+            changed = true;
             modifier.apply(context);
         }
         wrapped = context.item();
         // 如果tag不空，则需要返回
         if (tag != null && !tag.isEmpty()) {
             wrapped.setTag(ItemCrypto.encrypt(tag), NETWORK_ITEM_TAG);
+            forceReturn = true;
+        } else if (changed) {
             forceReturn = true;
         }
         return forceReturn ? Optional.of(wrapped) : Optional.empty();

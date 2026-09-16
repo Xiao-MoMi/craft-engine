@@ -292,33 +292,35 @@ public final class ModernNetworkItemHandler implements NetworkItemHandler {
             tag = null;
         }
         Supplier<CompoundTag> tagSupplier = tag == null ? null : () -> tag;
+        boolean changed = false;
         // 如果拦截物品的描述名称等
         if (Config.interceptItem()) {
             if (!source.canSkipName) {
                 if (wrapped.hasComponent(DataComponentTypes.ITEM_NAME)) {
-                    if (VersionHelper.isOrAbove1_21_5) processModernItemName(wrapped, tagSupplier, context);
-                    else processLegacyItemName(wrapped, tagSupplier, context);
+                    if (VersionHelper.isOrAbove1_21_5) changed |= processModernItemName(wrapped, tagSupplier, context);
+                    else changed |= processLegacyItemName(wrapped, tagSupplier, context);
                 }
                 if (wrapped.hasComponent(DataComponentTypes.CUSTOM_NAME)) {
-                    if (VersionHelper.isOrAbove1_21_5) processModernCustomName(wrapped, tagSupplier, context);
-                    else processLegacyCustomName(wrapped, tagSupplier, context);
+                    if (VersionHelper.isOrAbove1_21_5) changed |= processModernCustomName(wrapped, tagSupplier, context);
+                    else changed |= processLegacyCustomName(wrapped, tagSupplier, context);
                 }
             }
             if (!source.canSkipLore) {
                 if (wrapped.hasComponent(DataComponentTypes.LORE)) {
-                    if (VersionHelper.isOrAbove1_21_5) processModernLore(wrapped, tagSupplier, context);
-                    else processLegacyLore(wrapped, tagSupplier, context);
+                    if (VersionHelper.isOrAbove1_21_5) changed |= processModernLore(wrapped, tagSupplier, context);
+                    else changed |= processLegacyLore(wrapped, tagSupplier, context);
                 }
             }
         }
         // 应用阶段
         for (ItemProcessor modifier : customItem.clientBoundProcessors()) {
             if (modifier.shouldSkip(source)) continue;
+            changed = true;
             modifier.apply(context);
         }
         wrapped = context.item();
         if (VersionHelper.isOrAbove1_21_2 && Config.obfuscateItemModel()) {
-            processItemModel(wrapped, tagSupplier);
+            changed |= processItemModel(wrapped, tagSupplier);
         }
         // 如果tag不空，则需要返回
         if (tag != null && !tag.isEmpty()) {
@@ -328,6 +330,8 @@ public final class ModernNetworkItemHandler implements NetworkItemHandler {
             }
             customData.put(NETWORK_ITEM_TAG, ItemCrypto.encrypt(tag));
             wrapped.setSparrowTagComponent(DataComponentTypes.CUSTOM_DATA, customData);
+            forceReturn = true;
+        } else if (changed) {
             forceReturn = true;
         }
         Object clientItem = ItemStackProxy.INSTANCE.getItem(wrapped.minecraftItem());
