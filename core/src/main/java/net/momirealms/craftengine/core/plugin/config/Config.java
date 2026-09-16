@@ -790,7 +790,7 @@ public final class Config {
             this.network$performance_mode$text = config.getBoolean("network.performance-mode.text", true);
         }
 
-        this.network$minimize_item_packets = config.getBoolean("network.minimize-item-packets", true);
+        this.network$minimize_item_packets = config.getBoolean("network.minimize-item-packets", false);
         this.network$disable_item_operations = config.getBoolean("network.disable-item-operations", false);
         this.network$intercept_packets$system_chat = config.getBoolean("network.intercept-packets.system-chat", true);
         this.network$intercept_packets$tab_list = config.getBoolean("network.intercept-packets.tab-list", true);

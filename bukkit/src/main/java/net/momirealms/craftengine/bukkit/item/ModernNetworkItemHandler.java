@@ -260,7 +260,7 @@ public final class ModernNetworkItemHandler implements NetworkItemHandler {
             if (!Config.interceptItem()) {
                 return forceReturn ? Optional.of(wrapped) : Optional.empty();
             }
-            return new OtherItem(wrapped, forceReturn, source.requireNetworkTag).process(NetworkTextReplaceContext.of(player));
+            return new OtherItem(wrapped, forceReturn, source).process(NetworkTextReplaceContext.of(player));
         }
 
         BukkitItemDefinition customItem = (BukkitItemDefinition) optionalCustomItem.get();
@@ -276,7 +276,7 @@ public final class ModernNetworkItemHandler implements NetworkItemHandler {
             if (!Config.interceptItem()) {
                 return forceReturn ? Optional.of(wrapped) : Optional.empty();
             }
-            return new OtherItem(wrapped, forceReturn, source.requireNetworkTag).process(NetworkTextReplaceContext.of(player));
+            return new OtherItem(wrapped, forceReturn, source).process(NetworkTextReplaceContext.of(player));
         }
         // 创建context
         NetworkItemBuildContext context = NetworkItemBuildContext.of(player, original);
@@ -295,17 +295,33 @@ public final class ModernNetworkItemHandler implements NetworkItemHandler {
         boolean changed = false;
         // 如果拦截物品的描述名称等
         if (Config.interceptItem()) {
-            if (!source.canSkipName) {
-                if (wrapped.hasComponent(DataComponentTypes.ITEM_NAME)) {
+            if (source.canSkipName) {
+                if (Config.minimizeItems()) {
+                    if (wrapped.hasNonDefaultComponent(DataComponentTypes.ITEM_NAME)) {
+                        wrapped.resetComponent(DataComponentTypes.ITEM_NAME);
+                        changed = true;
+                    }
+                    if (wrapped.hasNonDefaultComponent(DataComponentTypes.CUSTOM_NAME)) {
+                        wrapped.resetComponent(DataComponentTypes.CUSTOM_NAME);
+                        changed = true;
+                    }
+                }
+            } else {
+                if (wrapped.hasNonDefaultComponent(DataComponentTypes.ITEM_NAME)) {
                     if (VersionHelper.isOrAbove1_21_5) changed |= processModernItemName(wrapped, tagSupplier, context);
                     else changed |= processLegacyItemName(wrapped, tagSupplier, context);
                 }
-                if (wrapped.hasComponent(DataComponentTypes.CUSTOM_NAME)) {
+                if (wrapped.hasNonDefaultComponent(DataComponentTypes.CUSTOM_NAME)) {
                     if (VersionHelper.isOrAbove1_21_5) changed |= processModernCustomName(wrapped, tagSupplier, context);
                     else changed |= processLegacyCustomName(wrapped, tagSupplier, context);
                 }
             }
-            if (!source.canSkipLore) {
+            if (source.canSkipLore) {
+                if (Config.minimizeItems() && wrapped.hasComponent(DataComponentTypes.LORE)) {
+                    wrapped.resetComponent(DataComponentTypes.LORE);
+                    changed = true;
+                }
+            } else {
                 if (wrapped.hasComponent(DataComponentTypes.LORE)) {
                     if (VersionHelper.isOrAbove1_21_5) changed |= processModernLore(wrapped, tagSupplier, context);
                     else changed |= processLegacyLore(wrapped, tagSupplier, context);
@@ -536,37 +552,58 @@ public final class ModernNetworkItemHandler implements NetworkItemHandler {
     static class OtherItem {
         private final Item item;
         private final boolean forceReturn;
-        private final boolean inContainer;
+        private final ItemPacketSource source;
         private boolean globalChanged = false;
         private CompoundTag tag;
 
-        public OtherItem(Item item, boolean forceReturn, boolean inContainer) {
+        public OtherItem(Item item, boolean forceReturn, ItemPacketSource source) {
             this.item = item;
             this.forceReturn = forceReturn;
-            this.inContainer = inContainer;
+            this.source = source;
         }
 
         public Optional<Item> process(Context context) {
-            if (Config.interceptItem()) {
-                Supplier<CompoundTag> tagSupplier = this.inContainer ? this::getOrCreateTag : null;
+            Supplier<CompoundTag> tagSupplier = this.source.requireNetworkTag ? this::getOrCreateTag : null;
+            if (this.source.canSkipLore) {
+                if (Config.minimizeItems() && this.item.hasComponent(DataComponentTypes.LORE)) {
+                    this.item.resetComponent(DataComponentTypes.LORE);
+                    this.globalChanged = true;
+                }
+            } else {
                 if (VersionHelper.isOrAbove1_21_5) {
                     if (processModernLore(this.item, tagSupplier, context))
                         this.globalChanged = true;
+                } else {
+                    if (processLegacyLore(this.item, tagSupplier, context))
+                        this.globalChanged = true;
+                }
+            }
+            if (this.source.canSkipName) {
+                if (Config.minimizeItems()) {
+                    if (this.item.hasComponent(DataComponentTypes.ITEM_NAME)) {
+                        this.item.resetComponent(DataComponentTypes.ITEM_NAME);
+                        this.globalChanged = true;
+                    }
+                    if (this.item.hasComponent(DataComponentTypes.CUSTOM_NAME)) {
+                        this.item.resetComponent(DataComponentTypes.CUSTOM_NAME);
+                        this.globalChanged = true;
+                    }
+                }
+            } else {
+                if (VersionHelper.isOrAbove1_21_5) {
                     if (processModernCustomName(this.item, tagSupplier, context))
                         this.globalChanged = true;
                     if (processModernItemName(this.item, tagSupplier, context))
                         this.globalChanged = true;
                 } else {
-                    if (processLegacyLore(this.item, tagSupplier, context))
-                        this.globalChanged = true;
                     if (processLegacyCustomName(this.item, tagSupplier, context))
                         this.globalChanged = true;
                     if (processLegacyItemName(this.item, tagSupplier, context))
                         this.globalChanged = true;
                 }
-                if (VersionHelper.isOrAbove1_21_2 && Config.obfuscateItemModel() && processItemModel(this.item, tagSupplier)) {
-                    this.globalChanged = true;
-                }
+            }
+            if (VersionHelper.isOrAbove1_21_2 && Config.obfuscateItemModel() && processItemModel(this.item, tagSupplier)) {
+                this.globalChanged = true;
             }
 
             if (this.globalChanged) {
