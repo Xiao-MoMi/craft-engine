@@ -18,6 +18,7 @@ import net.momirealms.craftengine.core.plugin.context.Context;
 import net.momirealms.craftengine.core.plugin.context.ContextHolder;
 import net.momirealms.craftengine.core.plugin.context.number.NumberProvider;
 import net.momirealms.craftengine.core.plugin.context.parameter.DirectContextParameters;
+import net.momirealms.craftengine.core.util.ItemUtils;
 import net.momirealms.craftengine.core.util.MiscUtils;
 import net.momirealms.craftengine.core.world.BlockPos;
 import net.momirealms.craftengine.core.world.Vec3d;
@@ -61,9 +62,8 @@ public final class DropExperienceBlockBehavior extends BukkitBlockBehavior {
     private void tryDropExperience(World world, BlockPos pos, Item item) {
         Vec3d dropPos = Vec3d.atCenterOf(pos);
         ContextHolder holder = ContextHolder.builder(
-                DirectContextParameters.POSITION, new WorldPosition(world, dropPos),
-                DirectContextParameters.ITEM_IN_HAND, item
-        ).build();
+                DirectContextParameters.POSITION, new WorldPosition(world, dropPos)
+        ).withOptionalParameter(DirectContextParameters.ITEM_IN_HAND, ItemUtils.emptyToNull(item)).build();
         LootContext context = new LootContext(world, null, 1.0f, holder);
         if (!this.condition.test(context)) {
             return;

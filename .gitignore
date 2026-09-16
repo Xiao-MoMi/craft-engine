@@ -33,5 +33,6 @@ build/
 .vscode/settings.json
 /runPaper/
 /runFolia/
+/server/
 /buildSrc/.kotlin/
 /target

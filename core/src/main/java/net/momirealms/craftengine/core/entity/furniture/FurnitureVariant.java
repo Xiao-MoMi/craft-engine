@@ -17,5 +17,13 @@ public record FurnitureVariant(@NotNull String name,
                                @NotNull List<FurnitureElementConfig<? extends FurnitureElement>> elementConfigs,
                                @NotNull List<FurnitureHitBoxConfig<? extends FurnitureHitBox>> hitBoxConfigs,
                                @Nullable Supplier<ExternalModel> externalModel,
-                               @NotNull Vector3f dropOffset) {
+                               @NotNull Vector3f dropOffset,
+                               @NotNull ColliderMergePlan colliderMergePlan) {
+
+    public FurnitureVariant(String name, CullingData cullingData,
+                            List<FurnitureElementConfig<? extends FurnitureElement>> elementConfigs,
+                            List<FurnitureHitBoxConfig<? extends FurnitureHitBox>> hitBoxConfigs,
+                            Supplier<ExternalModel> externalModel, Vector3f dropOffset) {
+        this(name, cullingData, List.copyOf(elementConfigs), List.copyOf(hitBoxConfigs), externalModel, dropOffset, ColliderMergePlan.compile(hitBoxConfigs));
+    }
 }

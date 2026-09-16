@@ -3,9 +3,13 @@ package net.momirealms.craftengine.bukkit.entity.furniture.element;
 import net.momirealms.craftengine.bukkit.entity.data.BaseEntityData;
 import net.momirealms.craftengine.bukkit.entity.data.decoration.ArmorStandData;
 import net.momirealms.craftengine.core.entity.furniture.Furniture;
-import net.momirealms.craftengine.core.entity.furniture.data.*;
-import net.momirealms.craftengine.core.entity.furniture.element.FurnitureElementConfig;
+import net.momirealms.craftengine.core.entity.furniture.data.FurnitureDataResolver;
+import net.momirealms.craftengine.core.entity.furniture.data.FurnitureDataSourceConfig;
+import net.momirealms.craftengine.core.entity.furniture.data.ItemPatch;
+import net.momirealms.craftengine.core.entity.furniture.data.SourceItemComponentsDataSourceConfig;
+import net.momirealms.craftengine.core.entity.furniture.element.ConditionalFurnitureElement;
 import net.momirealms.craftengine.core.entity.furniture.element.FurnitureElementConfigFactory;
+import net.momirealms.craftengine.core.entity.furniture.element.TransformableFurnitureElementConfig;
 import net.momirealms.craftengine.core.entity.player.Player;
 import net.momirealms.craftengine.core.item.Item;
 import net.momirealms.craftengine.core.item.ItemKeys;
@@ -19,7 +23,6 @@ import net.momirealms.craftengine.core.plugin.context.PlayerContext;
 import net.momirealms.craftengine.core.util.Key;
 import net.momirealms.craftengine.core.util.LegacyChatFormatter;
 import net.momirealms.craftengine.core.util.MiscUtils;
-import net.momirealms.craftengine.core.world.Vec3d;
 import net.momirealms.craftengine.core.world.WorldPosition;
 import org.jetbrains.annotations.NotNull;
 import org.joml.Vector3f;
@@ -30,7 +33,7 @@ import java.util.Optional;
 import java.util.function.Function;
 import java.util.function.Predicate;
 
-public final class ArmorStandFurnitureElementConfig implements FurnitureElementConfig<ArmorStandFurnitureElement> {
+public final class ArmorStandFurnitureElementConfig implements TransformableFurnitureElementConfig<ArmorStandFurnitureElement> {
     public static final FurnitureElementConfigFactory<ArmorStandFurnitureElement> FACTORY = new Factory();
     public final Function<Player, List<Object>> metadata;
     public final Key itemId;
@@ -42,7 +45,6 @@ public final class ArmorStandFurnitureElementConfig implements FurnitureElementC
     public final boolean small;
     public final LegacyChatFormatter glowColor;
     public final Predicate<PlayerContext> predicate;
-    public final boolean hasCondition;
 
     private ArmorStandFurnitureElementConfig(Key itemId,
                                              float scale,
@@ -52,8 +54,7 @@ public final class ArmorStandFurnitureElementConfig implements FurnitureElementC
                                              FurnitureDataSourceConfig<ItemPatch> itemPatchSource,
                                              boolean small,
                                              LegacyChatFormatter glowColor,
-                                             Predicate<PlayerContext> predicate,
-                                             boolean hasCondition) {
+                                             Predicate<PlayerContext> predicate) {
         this.position = position;
         this.xRot = xRot;
         this.yRot = yRot;
@@ -63,7 +64,6 @@ public final class ArmorStandFurnitureElementConfig implements FurnitureElementC
         this.itemId = itemId;
         this.glowColor = glowColor;
         this.predicate = predicate;
-        this.hasCondition = hasCondition;
         this.metadata = (player) -> {
             List<Object> dataValues = new ArrayList<>(2);
             if (glowColor != null) {
@@ -94,23 +94,13 @@ public final class ArmorStandFurnitureElementConfig implements FurnitureElementC
     }
 
     @Override
-    public ArmorStandFurnitureElement create(@NotNull Furniture furniture) {
-        return new ArmorStandFurnitureElement(furniture, this, getPos(furniture));
+    public @NotNull ArmorStandFurnitureElement create(@NotNull Furniture furniture, @NotNull WorldPosition pos) {
+        return new ArmorStandFurnitureElement(furniture, this, pos);
     }
 
     @Override
-    public ArmorStandFurnitureElement create(@NotNull Furniture furniture, @NotNull ArmorStandFurnitureElement previous) {
-        WorldPosition pos = getPos(furniture);
-        return new ArmorStandFurnitureElement(furniture, this, pos, previous.entityId, !pos.equals(previous.position));
-    }
-
-    @Override
-    public ArmorStandFurnitureElement createExact(@NotNull Furniture furniture, @NotNull ArmorStandFurnitureElement previous) {
-        WorldPosition pos = getPos(furniture);
-        if (!pos.equals(previous.position)) {
-            return null;
-        }
-        return new ArmorStandFurnitureElement(furniture, this, pos, previous.entityId, false);
+    public @NotNull ArmorStandFurnitureElement transform(@NotNull Furniture furniture, @NotNull ArmorStandFurnitureElement previous, @NotNull WorldPosition pos) {
+        return new ArmorStandFurnitureElement(furniture, this, pos, previous.entityId);
     }
 
     @Override
@@ -118,10 +108,9 @@ public final class ArmorStandFurnitureElementConfig implements FurnitureElementC
         return ArmorStandFurnitureElement.class;
     }
 
-    public WorldPosition getPos(Furniture furniture) {
-        WorldPosition furniturePos = furniture.position();
-        Vec3d position = Furniture.getRelativePosition(furniturePos, this.position);
-        return new WorldPosition(furniturePos.world, position.x, position.y, position.z, furniturePos.xRot + xRot, furniturePos.yRot + yRot);
+    @Override
+    public @NotNull WorldPosition getPos(@NotNull Furniture furniture) {
+        return furniture.placement().elementPosition(this.position, this.xRot, this.yRot);
     }
 
     private static class Factory implements FurnitureElementConfigFactory<ArmorStandFurnitureElement> {
@@ -141,11 +130,10 @@ public final class ArmorStandFurnitureElementConfig implements FurnitureElementC
                     section.getFloat("yaw", 0f),
                     legacyTintSource ?
                             SourceItemComponentsDataSourceConfig.create(List.of(DataComponentKeys.DYED_COLOR, DataComponentKeys.FIREWORK_EXPLOSION)) :
-                            section.getValue(TINT_SOURCE, SourceItemComponentsDataSourceConfig::fromConfig),
+                            section.getValue(TINT_SOURCE, SourceItemComponentsDataSourceConfig::fromConfig, SourceItemComponentsDataSourceConfig.DEFAULT),
                     section.getBoolean("small"),
                     section.getEnum(GLOW_COLOR, LegacyChatFormatter.class),
-                    MiscUtils.allOf(conditions),
-                    !conditions.isEmpty()
+                    conditions.isEmpty() ? ConditionalFurnitureElement.ALWAYS_VISIBLE : MiscUtils.allOf(conditions)
             );
         }
     }

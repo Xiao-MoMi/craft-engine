@@ -79,6 +79,8 @@ import net.momirealms.craftengine.core.pack.model.definition.special.SpecialMode
 import net.momirealms.craftengine.core.pack.model.definition.special.SpecialModelType;
 import net.momirealms.craftengine.core.pack.model.definition.tint.Tint;
 import net.momirealms.craftengine.core.pack.model.definition.tint.TintType;
+import net.momirealms.craftengine.core.pack.workflow.PackWorkflow;
+import net.momirealms.craftengine.core.pack.workflow.PackWorkflowType;
 import net.momirealms.craftengine.core.plugin.config.ConfigParser;
 import net.momirealms.craftengine.core.plugin.config.template.argument.TemplateArgument;
 import net.momirealms.craftengine.core.plugin.config.template.argument.TemplateArgumentType;
@@ -101,6 +103,8 @@ import net.momirealms.craftengine.core.plugin.network.protocol.dialog.input.Dial
 import net.momirealms.craftengine.core.plugin.network.protocol.recipe.legacy.LegacyRecipe;
 import net.momirealms.craftengine.core.plugin.network.protocol.recipe.modern.display.RecipeDisplay;
 import net.momirealms.craftengine.core.plugin.network.protocol.recipe.modern.display.slot.SlotDisplay;
+import net.momirealms.craftengine.core.plugin.storage.Storage;
+import net.momirealms.craftengine.core.plugin.storage.StorageType;
 import net.momirealms.craftengine.core.util.Key;
 import net.momirealms.craftengine.core.util.ResourceKey;
 
@@ -136,6 +140,8 @@ public final class Registries {
     public static final ResourceKey<Registry<ResolutionType<? extends Resolution>>> RESOLUTION_TYPE = ResourceKey.create(ROOT_REGISTRY, Key.withCraftEngineNamespace("resolution_type"));
     public static final ResourceKey<Registry<ItemTransformDataProcessor.Type<? extends ItemTransformDataProcessor>>> TRANSFORM_PROCESSOR_TYPE = ResourceKey.create(ROOT_REGISTRY, Key.withCraftEngineNamespace("transform_processor_type"));
     public static final ResourceKey<Registry<ResourcePackHostType<? extends ResourcePackHost>>> RESOURCE_PACK_HOST_TYPE = ResourceKey.create(ROOT_REGISTRY, Key.withCraftEngineNamespace("resource_pack_host_type"));
+    public static final ResourceKey<Registry<StorageType<? extends Storage>>> STORAGE_TYPE = ResourceKey.create(ROOT_REGISTRY, Key.withCraftEngineNamespace("storage_type"));
+    public static final ResourceKey<Registry<PackWorkflowType<? extends PackWorkflow>>> PACK_WORKFLOW_TYPE = ResourceKey.create(ROOT_REGISTRY, Key.withCraftEngineNamespace("pack_workflow_type"));
     public static final ResourceKey<Registry<CommonFunctionType<? extends Function<Context>>>> COMMON_FUNCTION_TYPE = ResourceKey.create(ROOT_REGISTRY, Key.withCraftEngineNamespace("common_function_type"));
     public static final ResourceKey<Registry<CommonConditionType<? extends Condition<Context>>>> COMMON_CONDITION_TYPE = ResourceKey.create(ROOT_REGISTRY, Key.withCraftEngineNamespace("common_condition_type"));
     public static final ResourceKey<Registry<EventTrigger>> EVENT_TRIGGER = ResourceKey.create(ROOT_REGISTRY, Key.withCraftEngineNamespace("event_trigger"));

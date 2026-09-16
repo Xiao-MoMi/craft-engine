@@ -32,6 +32,7 @@ import net.momirealms.craftengine.core.plugin.network.event.ByteBufPacketEvent;
 import net.momirealms.craftengine.core.plugin.network.listener.ByteBufferPacketListener;
 import net.momirealms.craftengine.core.util.Cancellable;
 import net.momirealms.craftengine.core.util.FriendlyByteBuf;
+import net.momirealms.craftengine.core.util.ItemUtils;
 import net.momirealms.craftengine.core.util.VersionHelper;
 import net.momirealms.craftengine.core.world.BlockHitResult;
 import net.momirealms.craftengine.core.world.BlockPos;
@@ -179,13 +180,7 @@ public final class InteractListener {
             // 先检查碰撞箱部分是否存在
             FurnitureHitBox hitBox = furniture.hitboxByEntityId(entityId);
             if (hitBox == null) return;
-            FurnitureHitboxPart part = null;
-            for (FurnitureHitboxPart p : hitBox.parts()) {
-                if (p.entityId() == entityId) {
-                    part = p;
-                    break;
-                }
-            }
+            FurnitureHitboxPart part = hitBox.findPart(entityId);
             if (part == null) {
                 return;
             }
@@ -246,7 +241,7 @@ public final class InteractListener {
                                 .withParameter(DirectContextParameters.PLAYER, serverPlayer)
                                 .withParameter(DirectContextParameters.EVENT, cancellable)
                                 .withParameter(DirectContextParameters.FURNITURE, furniture)
-                                .withParameter(DirectContextParameters.ITEM_IN_HAND, itemInHand)
+                                .withOptionalParameter(DirectContextParameters.ITEM_IN_HAND, ItemUtils.emptyToNull(itemInHand))
                                 .withParameter(DirectContextParameters.HAND, hand)
                                 .withParameter(DirectContextParameters.POSITION, furniture.position())
                                 .build()

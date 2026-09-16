@@ -8,7 +8,10 @@ public final class TextProviders {
 
     public static TextProvider fromString(String string) {
         if (string.contains("<") && string.contains(">")) {
-            return TagTextProvider.of(string);
+            StringTemplate template = StringTemplate.of(string);
+            if (template.hasTags()) {
+                return new TagTextProvider(template);
+            }
         }
         return PlainTextProvider.of(string);
     }

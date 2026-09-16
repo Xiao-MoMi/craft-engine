@@ -38,6 +38,9 @@ public final class PickItemFromEntityListener implements ByteBufferPacketListene
         if (!player.canInteractPoint(LocationUtils.toVec3d(location), 16)) {
             return;
         }
+        if (!player.world().uuid().equals(location.getWorld().getUID())) {
+            return;
+        }
         BukkitCraftEngine.instance().scheduler().platform().run(
                 () -> handlePickItemFromEntityOnMainThread((BukkitServerPlayer) user, furniture, furniture.hitboxByEntityId(entityId)),
                location

@@ -28,6 +28,11 @@ public final class TooltipStyleProcessor implements SimpleNetworkItemProcessor {
         return DataComponentKeys.TOOLTIP_STYLE;
     }
 
+    @Override
+    public boolean isConstant() {
+        return true;
+    }
+
     private static class Factory implements ItemProcessorFactory<TooltipStyleProcessor> {
 
         @Override

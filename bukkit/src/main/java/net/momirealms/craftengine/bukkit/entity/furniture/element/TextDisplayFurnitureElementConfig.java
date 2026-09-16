@@ -5,8 +5,9 @@ import net.momirealms.craftengine.bukkit.util.ComponentUtils;
 import net.momirealms.craftengine.core.entity.display.Billboard;
 import net.momirealms.craftengine.core.entity.display.TextDisplayAlignment;
 import net.momirealms.craftengine.core.entity.furniture.Furniture;
-import net.momirealms.craftengine.core.entity.furniture.element.FurnitureElementConfig;
+import net.momirealms.craftengine.core.entity.furniture.element.ConditionalFurnitureElement;
 import net.momirealms.craftengine.core.entity.furniture.element.FurnitureElementConfigFactory;
+import net.momirealms.craftengine.core.entity.furniture.element.TransformableFurnitureElementConfig;
 import net.momirealms.craftengine.core.plugin.config.ConfigConstants;
 import net.momirealms.craftengine.core.plugin.config.ConfigKeys;
 import net.momirealms.craftengine.core.plugin.config.ConfigSection;
@@ -18,7 +19,6 @@ import net.momirealms.craftengine.core.plugin.context.PlayerContext;
 import net.momirealms.craftengine.core.util.AdventureHelper;
 import net.momirealms.craftengine.core.util.Color;
 import net.momirealms.craftengine.core.util.MiscUtils;
-import net.momirealms.craftengine.core.world.Vec3d;
 import net.momirealms.craftengine.core.world.WorldPosition;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -29,7 +29,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Predicate;
 
-public final class TextDisplayFurnitureElementConfig implements FurnitureElementConfig<TextDisplayFurnitureElement> {
+public final class TextDisplayFurnitureElementConfig implements TransformableFurnitureElementConfig<TextDisplayFurnitureElement> {
     public static final FurnitureElementConfigFactory<TextDisplayFurnitureElement> FACTORY = new Factory();
     public final FurnitureMetadataProvider metadata;
     public final String text;
@@ -54,7 +54,6 @@ public final class TextDisplayFurnitureElementConfig implements FurnitureElement
     public final boolean useDefaultBackgroundColor;
     public final TextDisplayAlignment alignment;
     public final Predicate<PlayerContext> predicate;
-    public final boolean hasCondition;
 
     private TextDisplayFurnitureElementConfig(String text,
                                              Vector3f scale,
@@ -77,8 +76,7 @@ public final class TextDisplayFurnitureElementConfig implements FurnitureElement
                                              boolean isSeeThrough,
                                              boolean useDefaultBackgroundColor,
                                              TextDisplayAlignment alignment,
-                                             Predicate<PlayerContext> predicate,
-                                             boolean hasCondition) {
+                                             Predicate<PlayerContext> predicate) {
         this.text = text;
         this.scale = scale;
         this.position = position;
@@ -100,56 +98,56 @@ public final class TextDisplayFurnitureElementConfig implements FurnitureElement
         this.useDefaultBackgroundColor = useDefaultBackgroundColor;
         this.alignment = alignment;
         this.isSeeThrough = isSeeThrough;
-        this.hasCondition = hasCondition;
         this.predicate = predicate;
+        Object[] spawnMetadata = createStaticMetadata(false);
+        Object[] updateMetadata = createStaticMetadata(true);
         this.metadata = (player, tintSource, force) -> {
-            List<Object> dataValues = new ArrayList<>();
-            if (glowColor != null) {
-                DisplayData.TextDisplayData.SharedFlags.addEntityData((byte) 0x40, dataValues);
-                DisplayData.TextDisplayData.GlowColorOverride.addEntityData(glowColor.color(), dataValues);
-            } else {
-                DisplayData.TextDisplayData.SharedFlags.addEntityData((byte) 0x0, dataValues, force);
-                DisplayData.TextDisplayData.GlowColorOverride.addEntityData(-1, dataValues, force);
+            Object[] staticMetadata = force ? updateMetadata : spawnMetadata;
+            List<Object> dataValues = new ArrayList<>(staticMetadata.length + 2);
+            for (Object value : staticMetadata) {
+                dataValues.add(value);
             }
-            DisplayData.TextDisplayData.Scale.addEntityData(this.scale, dataValues, force);
-            DisplayData.TextDisplayData.LeftRotation.addEntityData(this.rotation, dataValues, force);
-            DisplayData.TextDisplayData.BillboardConstraints.addEntityData(this.billboard.id(), dataValues, force);
-            DisplayData.TextDisplayData.Translation.addEntityData(this.translation, dataValues, force);
-            DisplayData.TextDisplayData.ShadowRadius.addEntityData(this.shadowRadius, dataValues, force);
-            DisplayData.TextDisplayData.ShadowStrength.addEntityData(this.shadowStrength, dataValues, force);
             DisplayData.TextDisplayData.Text.addEntityData(ComponentUtils.adventureToMinecraft(AdventureHelper.deserialize(this.text, NetworkTextReplaceContext.of(player))), dataValues);
-            DisplayData.TextDisplayData.LineWidth.addEntityData(this.lineWidth, dataValues, force);
-            DisplayData.TextDisplayData.BackgroundColor.addEntityData(this.backgroundColor, dataValues, force);
-            DisplayData.TextDisplayData.TextOpacity.addEntityData(this.opacity, dataValues, force);
-            DisplayData.TextDisplayData.Flags.addEntityData(DisplayData.TextDisplayData.encodeFlags(this.hasShadow, this.isSeeThrough, this.useDefaultBackgroundColor, this.alignment), dataValues, force);
-            if (this.blockLight != -1 && this.skyLight != -1) {
-                DisplayData.TextDisplayData.BrightnessOverride.addEntityData(this.blockLight << 4 | this.skyLight << 20, dataValues);
-            } else {
-                DisplayData.TextDisplayData.BrightnessOverride.addEntityData(-1, dataValues, force);
-            }
             DisplayData.TextDisplayData.ViewRange.addEntityData((float) (this.viewRange * player.displayEntityViewDistance()), dataValues, force);
             return dataValues;
         };
     }
 
-    @Override
-    public TextDisplayFurnitureElement create(@NotNull Furniture furniture) {
-        return new TextDisplayFurnitureElement(furniture, this, getPos(furniture));
-    }
-
-    @Override
-    public TextDisplayFurnitureElement create(@NotNull Furniture furniture, @NotNull TextDisplayFurnitureElement previous) {
-        WorldPosition pos = getPos(furniture);
-        return new TextDisplayFurnitureElement(furniture, this, pos, previous.entityId, !pos.equals(previous.position));
-    }
-
-    @Override
-    public TextDisplayFurnitureElement createExact(@NotNull Furniture furniture, @NotNull TextDisplayFurnitureElement previous) {
-        WorldPosition pos = getPos(furniture);
-        if (!pos.equals(previous.position)) {
-            return null;
+    private Object[] createStaticMetadata(boolean force) {
+        List<Object> dataValues = new ArrayList<>();
+        if (glowColor != null) {
+            DisplayData.TextDisplayData.SharedFlags.addEntityData((byte) 0x40, dataValues);
+            DisplayData.TextDisplayData.GlowColorOverride.addEntityData(glowColor.color(), dataValues);
+        } else {
+            DisplayData.TextDisplayData.SharedFlags.addEntityData((byte) 0x0, dataValues, force);
+            DisplayData.TextDisplayData.GlowColorOverride.addEntityData(-1, dataValues, force);
         }
-        return new TextDisplayFurnitureElement(furniture, this, pos, previous.entityId, false);
+        DisplayData.TextDisplayData.Scale.addEntityData(this.scale, dataValues, force);
+        DisplayData.TextDisplayData.LeftRotation.addEntityData(this.rotation, dataValues, force);
+        DisplayData.TextDisplayData.BillboardConstraints.addEntityData(this.billboard.id(), dataValues, force);
+        DisplayData.TextDisplayData.Translation.addEntityData(this.translation, dataValues, force);
+        DisplayData.TextDisplayData.ShadowRadius.addEntityData(this.shadowRadius, dataValues, force);
+        DisplayData.TextDisplayData.ShadowStrength.addEntityData(this.shadowStrength, dataValues, force);
+        DisplayData.TextDisplayData.LineWidth.addEntityData(this.lineWidth, dataValues, force);
+        DisplayData.TextDisplayData.BackgroundColor.addEntityData(this.backgroundColor, dataValues, force);
+        DisplayData.TextDisplayData.TextOpacity.addEntityData(this.opacity, dataValues, force);
+        DisplayData.TextDisplayData.Flags.addEntityData(DisplayData.TextDisplayData.encodeFlags(this.hasShadow, this.isSeeThrough, this.useDefaultBackgroundColor, this.alignment), dataValues, force);
+        if (this.blockLight != -1 && this.skyLight != -1) {
+            DisplayData.TextDisplayData.BrightnessOverride.addEntityData(this.blockLight << 4 | this.skyLight << 20, dataValues);
+        } else {
+            DisplayData.TextDisplayData.BrightnessOverride.addEntityData(-1, dataValues, force);
+        }
+        return dataValues.toArray();
+    }
+
+    @Override
+    public @NotNull TextDisplayFurnitureElement create(@NotNull Furniture furniture, @NotNull WorldPosition pos) {
+        return new TextDisplayFurnitureElement(furniture, this, pos);
+    }
+
+    @Override
+    public @NotNull TextDisplayFurnitureElement transform(@NotNull Furniture furniture, @NotNull TextDisplayFurnitureElement previous, @NotNull WorldPosition pos) {
+        return new TextDisplayFurnitureElement(furniture, this, pos, previous.entityId);
     }
 
     @Override
@@ -157,10 +155,9 @@ public final class TextDisplayFurnitureElementConfig implements FurnitureElement
         return TextDisplayFurnitureElement.class;
     }
 
-    public WorldPosition getPos(Furniture furniture) {
-        WorldPosition furniturePos = furniture.position();
-        Vec3d position = Furniture.getRelativePosition(furniturePos, this.position);
-        return new WorldPosition(furniturePos.world, position.x, position.y, position.z, furniturePos.xRot + xRot, furniturePos.yRot + yRot);
+    @Override
+    public @NotNull WorldPosition getPos(@NotNull Furniture furniture) {
+        return furniture.placement().elementPosition(this.position, this.xRot, this.yRot);
     }
 
     private static class Factory implements FurnitureElementConfigFactory<TextDisplayFurnitureElement> {
@@ -203,8 +200,7 @@ public final class TextDisplayFurnitureElementConfig implements FurnitureElement
                     section.getBoolean(IS_SEE_THROUGH),
                     section.getBoolean(USE_DEFAULT_BACKGROUND_COLOR),
                     section.getEnum("alignment", TextDisplayAlignment.class, TextDisplayAlignment.CENTER),
-                    MiscUtils.allOf(conditions),
-                    !conditions.isEmpty()
+                    conditions.isEmpty() ? ConditionalFurnitureElement.ALWAYS_VISIBLE : MiscUtils.allOf(conditions)
             );
         }
     }

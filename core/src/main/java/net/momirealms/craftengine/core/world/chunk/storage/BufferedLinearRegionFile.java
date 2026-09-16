@@ -221,18 +221,23 @@ public final class BufferedLinearRegionFile implements AutoCloseable {
     }
 
     private void syncToMasterFile() throws IOException {
-        // prevent multiple syncs at the same time
-        if (!SYNCED_HANDLE.compareAndSet(this, false, true)) {
-            return;
-        }
-
+        // The dirty flag alone cannot distinguish an in-flight sync from a completed one.
+        // Share the master lock with close, including the check of that flag.
+        this.masterFileParser.masterFileLock.writeLock().lock();
         try {
-            this.masterFileParser.writeMainFileBucketed(this.masterFilePath);
-        } catch (Throwable e) {
-            // set back
-            SYNCED_HANDLE.setVolatile(this, false);
+            if (this.isClosedRaw() || !SYNCED_HANDLE.compareAndSet(this, false, true)) {
+                return;
+            }
 
-            throw new IOException("Failed to sync to master file!", e);
+            try {
+                this.masterFileParser.writeMainFileBucketed(this.masterFilePath);
+            } catch (Throwable e) {
+                SYNCED_HANDLE.setVolatile(this, false);
+
+                throw new IOException("Failed to sync to master file!", e);
+            }
+        } finally {
+            this.masterFileParser.masterFileLock.writeLock().unlock();
         }
     }
 
@@ -349,15 +354,21 @@ public final class BufferedLinearRegionFile implements AutoCloseable {
     }
 
     private void closeInternal() throws IOException {
-        this.syncIfNeeded();
-
-        this.regionObjectLock.writeLock().lock();
+        // Match the sync/load lock order: master first, then swap. Wait for in-flight
+        // syncs and exclude writes until the final sync and swap deletion both finish.
+        this.masterFileParser.masterFileLock.writeLock().lock();
         try {
-            this.markClosed();
+            this.regionObjectLock.writeLock().lock();
+            try {
+                this.syncToMasterFile();
+                this.markClosed();
 
-            this.swapFileChannel.close();
+                this.swapFileChannel.close();
+            } finally {
+                this.regionObjectLock.writeLock().unlock();
+            }
         } finally {
-            this.regionObjectLock.writeLock().unlock();
+            this.masterFileParser.masterFileLock.writeLock().unlock();
         }
     }
 
@@ -504,21 +515,19 @@ public final class BufferedLinearRegionFile implements AutoCloseable {
 
         this.regionObjectLock.writeLock().lock();
         try {
+            if (this.isClosedRaw()) {
+                throw new IOException("Already closed!");
+            }
             final Sector sector = this.sectors[index];
 
             sector.store(committed, this.swapFileChannel);
             if (!skipSync) {
                 this.markBucketDirty(index);
+                this.markAsToSync();
             }
         } finally {
             this.regionObjectLock.writeLock().unlock();
         }
-
-        if (skipSync) {
-            return;
-        }
-
-        this.markAsToSync();
     }
 
     private @Nullable ByteBuffer readChunkDataRaw(int index) throws IOException {
@@ -549,15 +558,17 @@ public final class BufferedLinearRegionFile implements AutoCloseable {
 
         this.regionObjectLock.writeLock().lock();
         try {
+            if (this.isClosedRaw()) {
+                throw new IOException("Already closed!");
+            }
             final Sector sector = this.sectors[index];
 
             sector.clear();
             this.markBucketDirty(index);
+            this.markAsToSync();
         } finally {
             this.regionObjectLock.writeLock().unlock();
         }
-
-        this.markAsToSync();
     }
 
     private void markAsToSync() {
@@ -828,10 +839,6 @@ public final class BufferedLinearRegionFile implements AutoCloseable {
             final Path tmpFilePath = Path.of(mainFile + ".tmp");
             final long[] syncedBucketEpochs = new long[BUCKET_COUNT];
             final long[] newPositionTable = new long[BUCKET_COUNT];
-
-            // note: there is no necessity to hold the write lock for this stuff
-            // as the truly write operations only happen on replacing the master file (see the file move call below this hunk)
-            // and we had CAS flags to prevent multiple synchronization happening at the same time
 
             // Open old file to copy non-dirty buckets
             long[] oldPositionTable = null;

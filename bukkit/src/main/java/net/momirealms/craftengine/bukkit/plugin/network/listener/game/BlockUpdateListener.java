@@ -12,17 +12,17 @@ import net.momirealms.craftengine.core.world.BlockPos;
 import net.momirealms.craftengine.core.world.ChunkPos;
 import net.momirealms.craftengine.core.world.chunk.client.ClientChunk;
 
-import java.util.function.Predicate;
+import java.util.function.IntPredicate;
 
 public final class BlockUpdateListener implements ByteBufferPacketListener {
     private final int[] blockStateMapper;
     private final int[] modBlockStateMapper;
-    private final Predicate<Integer> occlusionPredicate;
+    private final IntPredicate occlusionPredicate;
     private final boolean cullingRayTracing;
     private final boolean glowingFurniture;
     private final boolean handleClientChunk;
 
-    public BlockUpdateListener(int[] blockStateMapper, int[] modBlockStateMapper, Predicate<Integer> occlusionPredicate) {
+    public BlockUpdateListener(int[] blockStateMapper, int[] modBlockStateMapper, IntPredicate occlusionPredicate) {
         this.blockStateMapper = blockStateMapper;
         this.modBlockStateMapper = modBlockStateMapper;
         this.occlusionPredicate = occlusionPredicate;

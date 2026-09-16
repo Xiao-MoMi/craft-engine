@@ -1,38 +1,35 @@
 package net.momirealms.craftengine.core.pack.host.impl;
 
-import io.github.bucket4j.Bandwidth;
 import net.momirealms.craftengine.core.pack.host.*;
 import net.momirealms.craftengine.core.plugin.CraftEngine;
-import net.momirealms.craftengine.core.plugin.config.*;
+import net.momirealms.craftengine.core.plugin.config.ConfigSection;
+import net.momirealms.craftengine.core.plugin.config.ConfigValue;
 import net.momirealms.craftengine.core.plugin.network.NetWorkUser;
-import net.momirealms.craftengine.core.util.Pair;
 
 import java.io.IOException;
-import java.io.StringReader;
-import java.net.Inet6Address;
-import java.net.InetAddress;
-import java.net.URI;
-import java.net.UnknownHostException;
-import java.net.http.HttpRequest;
-import java.net.http.HttpResponse;
+import java.nio.file.Files;
 import java.nio.file.Path;
-import java.time.Duration;
+import java.nio.file.StandardCopyOption;
 import java.util.List;
-import java.util.Locale;
-import java.util.Properties;
 import java.util.concurrent.CompletableFuture;
 
 public final class SelfHost implements ResourcePackHost {
     public static final ResourcePackHostFactory<SelfHost> FACTORY = new Factory();
-    private static final SelfHost INSTANCE = new SelfHost();
+    private final String id;
+    private final Path storagePath;
 
-    private SelfHost() {
-        SelfHostHttpServer.instance().readResourcePack(Config.fileToUpload());
+    SelfHost(String id, Path storagePath) {
+        this.id = id;
+        this.storagePath = storagePath.toAbsolutePath().normalize();
+    }
+
+    public Path storagePath() {
+        return this.storagePath;
     }
 
     @Override
     public CompletableFuture<List<ResourcePackDownloadData>> requestResourcePackDownloadLink(NetWorkUser user) {
-        ResourcePackDownloadData data = SelfHostHttpServer.instance().generateOneTimeUrl(user);
+        ResourcePackDownloadData data = SelfHostHttpServer.instance().generateOneTimeUrl(user, this.id);
         if (data == null) return CompletableFuture.completedFuture(List.of());
         return CompletableFuture.completedFuture(List.of(data));
     }
@@ -42,13 +39,29 @@ public final class SelfHost implements ResourcePackHost {
         CompletableFuture<Void> future = new CompletableFuture<>();
         CraftEngine.instance().scheduler().executeAsync(() -> {
             try {
-                SelfHostHttpServer.instance().readResourcePack(resourcePackPath);
+                storeResourcePack(resourcePackPath);
                 future.complete(null);
             } catch (Exception e) {
                 future.completeExceptionally(e);
             }
         });
         return future;
+    }
+
+    synchronized void storeResourcePack(Path source) throws IOException {
+        Path stored = source.toAbsolutePath().normalize();
+        if (!stored.equals(this.storagePath)) {
+            Files.createDirectories(this.storagePath.getParent());
+            Path temporary = Files.createTempFile(this.storagePath.getParent(), ".pack-", ".zip");
+            try {
+                Files.copy(stored, temporary, StandardCopyOption.REPLACE_EXISTING);
+                Files.move(temporary, this.storagePath, StandardCopyOption.REPLACE_EXISTING);
+            } finally {
+                Files.deleteIfExists(temporary);
+            }
+            stored = this.storagePath;
+        }
+        SelfHostHttpServer.instance().readResourcePack(this.id, stored);
     }
 
     @Override
@@ -62,138 +75,11 @@ public final class SelfHost implements ResourcePackHost {
     }
 
     private static class Factory implements ResourcePackHostFactory<SelfHost> {
-        private static final String[] ONE_TIME_TOKEN = ConfigKeys.of("one_time_token");
-        private static final String[] DENY_NON_MINECRAFT_REQUEST = ConfigKeys.of("deny_non_minecraft_request");
-        private static final String[] STRICT_VALIDATION = ConfigKeys.of("strict_validation");
-        private static final String[] RATE_LIMITING = ConfigKeys.of("rate_limiting");
-        private static final String[] QPS_PER_IP = ConfigKeys.of("qps_per_ip");
-        private static final String[] MAX_BANDWIDTH_PER_SECOND = ConfigKeys.of("max_bandwidth_per_second");
-        private static final String[] MIN_DOWNLOAD_SPEED_PER_PLAYER = ConfigKeys.of("min_download_speed_per_player");
-        private static final String[] FORWARD_SECRET = ConfigKeys.of("forward_secret");
-
         @Override
-        public SelfHost create(ConfigSection section) {
-            SelfHostHttpServer selfHostHttpServer = SelfHostHttpServer.instance();
-
-            // url 拼接
-            boolean autoIp = false;
-            String ip = section.getNonEmptyString("ip");
-            if ("auto".equalsIgnoreCase(ip)) {
-                ip = getIp();
-                autoIp = true;
-            }
-
-            int port;
-            boolean useServerPort = false;
-            if ("auto".equals(section.getString("port"))) {
-                port = -1;
-                useServerPort = true;
-            } else {
-                port = section.getInt("port", 8163);
-                if (port <= 0) {
-                    throw new KnownResourceException("number.greater_than", section.assemblePath("port"), "port", "0");
-                } else if (port > 65535) {
-                    throw new KnownResourceException("number.less_than", section.assemblePath("port"), "port", "65536");
-                }
-            }
-            String url = section.getString("url", "");
-            if (!url.isEmpty()) {
-                if (!url.startsWith("http://") && !url.startsWith("https://")) {
-                    url = "http://" + url;
-                }
-                if (!url.endsWith("/")) url  += "/";
-            }
-
-            // 其他参数
-            boolean oneTimeToken = section.getBoolean(ONE_TIME_TOKEN, true);
-            String protocol = section.getString("protocol", "http");
-            boolean denyNonMinecraftRequest = section.getBoolean(DENY_NON_MINECRAFT_REQUEST, true);
-            boolean strictValidation = section.getBoolean(STRICT_VALIDATION);
-
-            // 流量控制
-            Bandwidth limit = null;
-            ConfigSection rateLimitingSection = section.getSection(RATE_LIMITING);
-            long maxBandwidthUsage = 0L;
-            long minDownloadSpeed = 50_000L;
-            if (rateLimitingSection != null) {
-                ConfigValue qpsValue = rateLimitingSection.getValue(QPS_PER_IP);
-                if (qpsValue != null) {
-                    ConfigValue[] splitValues = qpsValue.splitValuesRestrict("/", 2);
-                    int maxRequests = splitValues[0].getAsInt();
-                    int resetInterval = splitValues[1].getAsInt();
-                    limit = Bandwidth.builder()
-                            .capacity(maxRequests)
-                            .refillGreedy(maxRequests, Duration.ofSeconds(resetInterval))
-                            .build();
-                }
-                maxBandwidthUsage = section.getLong(MAX_BANDWIDTH_PER_SECOND, 0);
-                minDownloadSpeed = section.getLong(MIN_DOWNLOAD_SPEED_PER_PLAYER, 50_000);
-            }
-
-            String forwardSecret = section.getString(FORWARD_SECRET);
-
-            // 更新单例
-            selfHostHttpServer.updateProperties(
-                    ip, port, url, denyNonMinecraftRequest,
-                    protocol, limit, oneTimeToken,
-                    maxBandwidthUsage, minDownloadSpeed, strictValidation,
-                    useServerPort, autoIp, forwardSecret
-            );
-            return INSTANCE;
-        }
-
-        private static final URI CLOUDFLARE = URI.create("https://www.cloudflare.com/cdn-cgi/trace");
-        private static final URI CLOUDFLARE_CN = URI.create("https://www.cloudflare-cn.com/cdn-cgi/trace");
-        private static final String LOCALHOST = "localhost";
-        private static String IP_CACHE = null;
-
-        private static String getIp() {
-            if (IP_CACHE == null || LOCALHOST.equals(IP_CACHE)) {
-                boolean inChina = Locale.getDefault() == Locale.SIMPLIFIED_CHINESE;
-                IP_CACHE = fetchIp(inChina ? CLOUDFLARE_CN : CLOUDFLARE);
-                if (LOCALHOST.equals(IP_CACHE)) {
-                    IP_CACHE = fetchIp(inChina ? CLOUDFLARE : CLOUDFLARE_CN);
-                }
-            }
-            return IP_CACHE;
-        }
-        
-        private static String fetchIp(URI uri) {
-            HttpRequest request = HttpRequest.newBuilder(uri).GET().build();
-            HttpResponse<String> response;
-            try {
-                response = HttpClientManager.get().send(request, HttpResponse.BodyHandlers.ofString());
-            } catch (IOException | InterruptedException e) {
-                CraftEngine.instance().logger().warn("Failed to automatically obtain an IP address. Uri: " + uri, e);
-                return LOCALHOST;
-            }
-            Properties props = new Properties();
-            try {
-                props.load(new StringReader(response.body()));
-            } catch (IOException e) {
-                CraftEngine.instance().logger().warn("Failed to automatically obtain an IP address. Uri: " + uri + " Body: " + response.body(), e);
-                return LOCALHOST;
-            }
-            if (!props.containsKey("ip")) {
-                CraftEngine.instance().logger().warn("Failed to automatically obtain an IP address. Uri: " + uri + " Body: " + response.body());
-                return LOCALHOST;
-            }
-            try {
-                Pair<String, String> ip = verifyIp(props.getProperty("ip"));
-                return ip.left();
-            } catch (UnknownHostException e) {
-                CraftEngine.instance().logger().warn("Failed to automatically obtain an IP address. Invalid IP address. Uri: " + uri + " Body: " + response.body());
-                return LOCALHOST;
-            }
-        }
-
-        private static Pair<String, String> verifyIp(String ip) throws UnknownHostException {
-            InetAddress address = InetAddress.getByName(ip);
-            String verifiedIp = address.getHostAddress();
-            if (address instanceof Inet6Address) {
-                return Pair.of("[" + verifiedIp + "]", verifiedIp);
-            }
-            return Pair.of(verifiedIp, verifiedIp);
+        public SelfHost create(String id, ConfigSection section) {
+            String file = section.getValue("storage_path", ConfigValue::getAsNonEmptyString, "./cache/hosted/" + id + "/resource_pack.zip");
+            Path path = CraftEngine.instance().dataFolderPath().resolve(file);
+            return new SelfHost(id, path);
         }
     }
 }

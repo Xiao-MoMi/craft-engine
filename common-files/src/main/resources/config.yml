@@ -7,10 +7,63 @@ update-checker: true
 # Forces a specific locale (e.g., zh_cn)
 forced-locale: ''
 
+# Data storage, used by features such as resource pack preferences. Restart to change the backend.
+# Only the selected database's dependencies are downloaded.
+# https://xiao-momi.github.io/craft-engine-wiki/getting_start/database
+storage:
+  # json, sqlite, h2, mysql, mariadb, postgresql, mongodb
+  type: sqlite
+  # Required JDBC URL. Relative paths start at the server working directory.
+  # SQLite needs no credentials and uses one connection.
+  url: 'jdbc:sqlite:./plugins/CraftEngine/data.db'
+
 resource-pack:
-  # This option determines the location of the generated resource pack
-  # You can use either an absolute path or a relative path here
-  path: "./generated/resource_pack.zip"
+  # Run a workflow explicitly with /ce workflow <name>, or set its trigger below.
+  # https://xiao-momi.github.io/craft-engine-wiki/getting_start/workflows
+  workflows:
+    default:
+      trigger: reload_pack
+      steps:
+        - type: generate
+        - type: validate
+      # - type: optimize
+        - type: zip
+          path: "./generated/resource_pack.zip"
+      #   protection: true  # requires premium version
+        - type: upload
+          pack: default
+          path: "./generated/resource_pack.zip"
+        - type: send_pack
+          pack: default
+
+  # Keys are pack IDs. Selected packs are sent in configuration order.
+  # Player overrides take precedence over default.
+  # https://xiao-momi.github.io/craft-engine-wiki/getting_start/set_up_host
+  packs:
+    default:
+      default: true
+      type: self
+      # Destination ZIP file for uploads. Relative paths start at plugins/CraftEngine.
+      # Defaults to ./cache/hosted/<id>/resource_pack.zip when omitted.
+      storage_path: "./cache/hosted/default/resource_pack.zip"
+
+  # Players apply with /pack preset <name>. Reload presets with /ce reload.
+  # Players need ce.resourcepack.preset.<name>
+  presets:
+    default: [default]
+
+  # https://xiao-momi.github.io/craft-engine-wiki/getting_start/set_up_host/self
+  self-host:
+    ip: "auto"
+    port: "auto"
+    protocol: "http"
+    deny_non_minecraft_request: true
+    one_time_token: true
+    strict_validation: false
+    rate_limiting:
+      max_bandwidth_per_second: 5_000_000
+      min_download_speed_per_player: 50_000
+      qps_per_ip: 10/60
 
   # The minimum client version supported by CraftEngine is 1.16. If you need to provide support for lower client versions, please modify the resource pack yourself.
   # Allowed values:
@@ -45,9 +98,8 @@ resource-pack:
   exclude-core-shaders: false
 
   # Validate if there is any error in the resource pack, such as missing textures or models.
-  # If your resource pack is compliant with the standard, you can disable validation to improve the resource pack generation speed.
+  # Add a validate step to the workflow to run validation.
   validation:
-    enable: true
     # Fix textures that are not within the atlas. It is unreasonable to always rely on plugins to fix your mistakes.
     # You should strive to make your resource pack more standardized after gaining some experience with resource packs.
     fix-atlas: true
@@ -60,10 +112,13 @@ resource-pack:
       # The restriction of element rotation angle has been removed since 1.21.6 (remove multiples of 22.5 limit) & 1.21.11 (remove [-45, 45] limit)
       # Once enabled, the plugin will replace it with the nearest value
       fix-element-rotation-angle: true
+    # Model UV coordinates use a normalized 16x16 coordinate space, regardless of texture resolution.
+    # Enable this to directly clamp out-of-bounds UVs to [0, 16].
+    fix-model-uv-out-of-bounds: false
 
   # Optimize your resource pack by reducing its size without any quality loss.
+  # Add an optimize step to the workflow to run optimization.
   optimization:
-    enable: false
     # .png
     texture:
       enable: true
@@ -78,19 +133,10 @@ resource-pack:
       enable: true
       exclude: []
 
-  # Enabling this option generates a resource pack that is compatible with other map plugins, such as BlueMap.
-  map-plugin-compatibility:
-    enable: false
-    path: "./generated/resource_pack_map.zip"
-
   # [Premium Exclusive]
   # Protect your resource pack from being cracked by others
+  # These settings apply only to workflow ZIP steps with protection: true.
   protection:
-    # Create a copy without any protection applied. This copy is entirely created using the standard Java library
-    # and maintains good compatibility with other programs (such as bedrock resource pack converters).
-    unprotected-copy:
-      enable: false
-      path: "./generated/resource_pack_unprotected.zip"
     # Prevent thieves from extracting your resource pack. These options will crash their software.
     # Some of these options may impact your resource pack size.
     crash-tools:
@@ -116,8 +162,8 @@ resource-pack:
     obfuscation:
       enable: false
       seed: 0 # 0 = random seed
-      # Whether to obfuscate the item model component
-      # This only takes effect when you enable the client-bound-model.
+      # Obfuscate all item model definitions in the resource pack, except bypass-item-models.
+      # Item model components are mapped when sent to clients; server-side values stay unchanged.
       item-model:
         enable: false
         # Prioritize using cached obfuscation results when generating the resource pack,
@@ -166,29 +212,6 @@ resource-pack:
 
     # Whether a verified player UUID is required to download the resource pack
     strict-player-uuid-validation: true
-
-    # Upload the resource pack automatically on generation
-    # When disabled, you must manually trigger uploads using the /ce upload command
-    auto-upload: true
-    # Resend the resource pack to players upon successful upload
-    resend-on-upload: true
-    # The file to upload
-    file-to-upload: "./generated/resource_pack.zip"
-
-    # If you're using BungeeCord or Velocity, consider using a proxy-side plugin to handle resource pack delivery.
-    # Read this page for more host types and argument explanations: https://xiao-momi.github.io/craft-engine-wiki/getting_start/set_up_host
-    hosting:
-      - type: "self"
-        ip: "auto"
-        port: "auto"
-        protocol: "http"
-        deny_non_minecraft_request: true
-        one_time_token: true
-        strict_validation: false
-        rate_limiting:
-          max_bandwidth_per_second: 5_000_000
-          min_download_speed_per_player: 50_000
-          qps_per_ip: 5/60
 
     # HTTP proxy settings for routing resource pack download requests. For most users, this option is unnecessary.
     proxy:
@@ -333,10 +356,17 @@ equipment:
     asset-id: minecraft:chainmail
     humanoid: minecraft:trims/entity/humanoid/chainmail
     humanoid-leggings: minecraft:trims/entity/humanoid_leggings/chainmail
+  # This option is specifically designed for 3D armor models generated by the
+  # CraftEngine Toolbox(https://cech.gtemc.cn/#armor) to switch armor based on distance.
+  # Since this modifies packet items, please ensure that disable-item-operations is not set to true.
+  # If you do not need to use 3D armor, you can disable this option to reduce memory usage.
+  # A restart is required to apply the changes.
+  lod:
+    enable: true
 
 block:
   # This decides the amount of real blocks on serverside. You should only consider increasing this value when your server state is insufficient.
-  # It is recommended to increase it by 1000 each time. This option requires a restart to apply.
+  # It is recommended to increase it by 1000 each time. A restart is required to apply the changes.
   serverside-blocks: 2000
 
   # Enables the sound system, which prevents the client from hearing some non-custom block sounds and improves the client experience.
@@ -496,13 +526,17 @@ network:
   # ⚠️ This option will disable client-bound-data/material and the functionality of replacing tags in item name and lore.
   disable-item-operations: false
 
-  # Apply targeted optimizations to reduce Netty codec overhead.
-  # If you encounter any problems or find that it is incompatible with the server core you are using, please let us know.
+  # Use the most optimized solution possible in every place to reduce Netty's CPU overhead and memory allocation.
+  # If you encounter any problems or find that it is incompatible with the plugins you are using, please let us know.
   # Requires a restart to apply.
-  optimize-item-codec: true
+  performance-mode:
+    # Handle item packets on the NMS stage instead of the bytebuf stage
+    item: true
+    # Handle entity data packets on the NMS stage instead of the bytebuf stage
+    entity: true
 
   # Allow <image> <shift> <global> tags in third-party plugins via packet manipulation
-  # ⚠️ Disable unused handlers to reduce netty thread workload
+  # ⚠️ Disable unused handlers to reduce Netty thread workload
   intercept-packets:
     system-chat: true
     tab-list: true      # Tab list header and footer
@@ -514,9 +548,7 @@ network:
     container: true     # GUI
     team: true          # Team prefix, suffix and display name
     scoreboard: true
-    entity-name: false
-    armor-stand: true   # Legacy Holograms
-    text-display: true  # Modern Holograms
+    entity-data: true
     item: true
     advancement: true   # Toast
     player-chat: true
@@ -718,8 +750,11 @@ chunk-system:
   # Settings for injection
   injection:
     # Requires server restart to take effect
-    # - section: Injects the LevelChunkSection (Better compatibility with other plugins)
-    # - palette: Injects the PalettedContainer (Performance is a bit better than section, might create slight bugs when using FAWE and Axiom)
+    # If one of the options is incompatible with your server, switch to another option.
+    # The typical symptom of this issue is the loss of block physics.
+    # This behavior is entirely dependent on how the server implementation in use modifies the default chunk logic
+    # - section: Injects the LevelChunkSection
+    # - palette: Injects the PalettedContainer
     target: section
   # On chunk unload: Convert custom blocks → vanilla blocks
   # Prevents custom blocks from becoming AIR when plugin is removed
@@ -758,6 +793,12 @@ client-optimization:
     # Server-side ray tracing to cull block entities/furniture from client view
     # Reduces client rendering load by hiding off-screen/non-visible elements
     ray-tracing: true
+    # Cull supported display entities by setting their view range to 0 instead of removing them.
+    # Restores their view range when visible again; other entities are still removed.
+    update-display-view-range: true
+    # Keep hitbox entities with the invisible metadata flag while culled.
+    # Independent of update-display-view-range; untracking still removes these entities.
+    keep-invisible-hitboxes: true
     # Maximum entity render distance (in blocks)
     # Entities beyond this distance will be hidden from client
     # -1 = unlimited (disabled)
@@ -807,6 +848,12 @@ misc:
   # There are many plugins that can cause world leaks, eventually leading to a large number of chunks being leaked.
   # Enabling this option can mitigate the world leak issues caused by most plugins.
   fix-world-memory-leak: false
+
+cache:
+  # Maximum number of deserialized components kept in the cache, avoiding repeated JSON parsing of identical text.
+  # Higher values use more memory. 0 disables the cache.
+  # Requires a restart to apply.
+  json-to-component: 512
 
 debug:
   common: false

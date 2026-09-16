@@ -245,6 +245,7 @@ block_state_mappings:
   #### Vines ####
   # Unless you tweak the vine's block tag, the client will always think it's climbable.
   # Since vines look identical at different growth stages, we can repurpose those extra states to make custom blocks like ropes.
+  # The client thinks that the cave vines at age 25 cannot grow, so they cannot be interacted with using shears.
   weeping_vines[age=1]: weeping_vines[age=0]
   weeping_vines[age=2]: weeping_vines[age=0]
   weeping_vines[age=3]: weeping_vines[age=0]
@@ -319,7 +320,7 @@ block_state_mappings:
   cave_vines[age=22,berries=false]: cave_vines[age=0,berries=false]
   cave_vines[age=23,berries=false]: cave_vines[age=0,berries=false]
   cave_vines[age=24,berries=false]: cave_vines[age=0,berries=false]
-  cave_vines[age=25,berries=false]: cave_vines[age=0,berries=false]
+#  cave_vines[age=25,berries=false]: cave_vines[age=0,berries=false]
   cave_vines[age=1,berries=true]: cave_vines[age=0,berries=true]
   cave_vines[age=2,berries=true]: cave_vines[age=0,berries=true]
   cave_vines[age=3,berries=true]: cave_vines[age=0,berries=true]
@@ -344,7 +345,7 @@ block_state_mappings:
   cave_vines[age=22,berries=true]: cave_vines[age=0,berries=true]
   cave_vines[age=23,berries=true]: cave_vines[age=0,berries=true]
   cave_vines[age=24,berries=true]: cave_vines[age=0,berries=true]
-  cave_vines[age=25,berries=true]: cave_vines[age=0,berries=true]
+#  cave_vines[age=25,berries=true]: cave_vines[age=0,berries=true]
 
   #### SugarCane ####
   # Sugar cane looks exactly the same no matter its growth stage. Plus, it's got this perfect hitbox that makes it awesome for taller plants

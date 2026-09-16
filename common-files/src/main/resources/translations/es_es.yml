@@ -1,3 +1,27 @@
+command.pack_preference.unchanged: '<red>Tu preferencia para el paquete <arg:0> no ha cambiado</red>'
+command.pack_preset.unchanged: '<red>Tus preferencias ya coinciden con el preajuste <arg:0></red>'
+command.admin_pack_preference.unchanged.single: '<red>La preferencia del paquete <arg:1> para <arg:0> no ha cambiado</red>'
+command.admin_pack_preference.unchanged.multiple: '<red>Las preferencias del paquete <arg:1> no han cambiado para <arg:0> jugadores</red>'
+command.admin_pack_preset.unchanged.single: '<red>Las preferencias de <arg:0> ya coinciden con el preajuste <arg:1></red>'
+command.admin_pack_preset.unchanged.multiple: '<red>Las preferencias de <arg:0> jugadores ya coinciden con el preajuste <arg:1></red>'
+command.pack_preference.enabled: '<white>Paquete de recursos <arg:0> activado</white>'
+command.pack_preference.disabled: '<white>Paquete de recursos <arg:0> desactivado</white>'
+command.pack_preference.reset: '<white>Se ha restaurado la preferencia predeterminada del paquete <arg:0></white>'
+command.admin_pack_preference.enabled.single: '<white>Paquete de recursos <arg:1> activado para <arg:0></white>'
+command.admin_pack_preference.enabled.multiple: '<white>Paquete de recursos <arg:1> activado para <arg:0> jugadores</white>'
+command.admin_pack_preference.disabled.single: '<white>Paquete de recursos <arg:1> desactivado para <arg:0></white>'
+command.admin_pack_preference.disabled.multiple: '<white>Paquete de recursos <arg:1> desactivado para <arg:0> jugadores</white>'
+command.admin_pack_preference.reset.single: '<white>Se ha restaurado la preferencia predeterminada del paquete <arg:1> para <arg:0></white>'
+command.admin_pack_preference.reset.multiple: '<white>Preferencia predeterminada del paquete <arg:1> restaurada para <arg:0> jugadores</white>'
+command.admin_pack_preference.failure.single: '<red>No se pudo actualizar la preferencia del paquete <arg:1> para <arg:0>. Revisa la consola</red>'
+command.admin_pack_preference.failure.multiple: '<red>Preferencias del paquete <arg:1> actualizadas para <arg:0> jugadores; fallo para <arg:2> jugadores. Revisa la consola</red>'
+command.admin_pack_preset.success.single: '<white>Se ha aplicado el preajuste <arg:1> a <arg:0></white>'
+command.admin_pack_preset.success.multiple: '<white>Preajuste <arg:1> aplicado a <arg:0> jugadores</white>'
+command.admin_pack_preset.failure.single: '<red>No se pudo aplicar el preajuste <arg:1> a <arg:0>. Revisa la consola</red>'
+command.admin_pack_preset.failure.multiple: '<red>Preajuste <arg:1> aplicado a <arg:0> jugadores; fallo para <arg:2> jugadores. Revisa la consola</red>'
+command.pack_preset.unknown: '<red>Preajuste de paquetes de recursos desconocido: <arg:0></red>'
+command.pack_preset.no_permission: '<red>No tienes permiso para usar el preajuste de paquetes de recursos <arg:0></red>'
+command.pack_preset.success: '<white>Se ha aplicado el preajuste de paquetes de recursos <arg:0></white>'
 exception.invalid_syntax: '<red>Sintaxis no válida. Sintaxis correcta: <white><arg:0></white></red>'
 exception.invalid_argument: '<red>Argumento no válido. Motivo: <white><arg:0></white></red>'
 exception.invalid_sender: <red><arg:0> no tiene permitido ejecutar ese comando. Debe ser de tipo <arg:1></red>
@@ -35,7 +59,6 @@ argument.parse.failure.aggregate.missing: <red>Falta el componente '<arg:0>'</re
 argument.parse.failure.aggregate.failure: '<red>Componente no válido ''<arg:0>'': <arg:1></red>'
 argument.parse.failure.either: <red>No se pudo resolver <arg:1> o <arg:2> desde '<arg:0>'</red>
 argument.parse.failure.namedtextcolor: <red>'<arg:0>' no es un nombre de color de texto válido</red>
-command.reload.too_fast: <red>Estás recargando el plugin demasiado rápido; la recarga anterior aún no ha completado
 command.reload.config.failure: <red>Error al recargar las configuraciones. Por favor, revisa los registros de la consola
 command.reload.config.success: <dark_gray>» </dark_gray><gradient:#F4A460:#FFD700><b>CraftEngine</b></gradient> <gray>•</gray> <white>Configuraciones recargadas <gray>(<hover:show_text:'<gray>Async/Sync'><color:#FFD700><arg:1></color>/<color:#F4A460><arg:2></color></hover> ms)</gray>
 command.reload.config.issues: '<#FF5555>⚠ <bold><arg:0></bold> problema(s) encontrado(s). <gray><italic>(Revisa la consola para más detalles)'
@@ -52,9 +75,11 @@ command.item.clear.success.single: <white>Se removieron <arg:0> objeto(s) del ju
 command.item.clear.success.multiple: <white>Se removieron <arg:0> objeto(s) de <arg:1> jugadores</white>
 command.item.clear.test.single: <white>Se encontraron <arg:0> objeto(s) coincidentes en el jugador <arg:1></white>
 command.item.clear.test.multiple: <white>Se encontraron <arg:0> objeto(s) coincidentes en <arg:1> jugadores</white>
-command.item.set_custom_model_data: <white>Se estableció el CustomModelData a '<arg:0>'</white>
-command.item.set_item_model: <white>Se estableció el ItemModel a '<arg:0>'</white>
-command.item.remove_item_component: <white>Se eliminó el componente de objeto '<arg:0>'</white>
+command.item.component.add: <white>Se estableció el componente de objeto '<arg:0>'</white>
+command.item.component.remove: <white>Se eliminó el componente de objeto '<arg:0>'</white>
+command.item.component.reset: <white>Se restableció el componente de objeto '<arg:0>' a su valor predeterminado</white>
+command.item.component.unknown: <red>Componente de objeto desconocido '<arg:0>'</red>
+command.item.component.invalid_value: '<red>Valor SNBT no válido para el componente de objeto ''<arg:0>'': <arg:1></red>'
 command.item.browser.missing_element: <red>No se puede abrir el navegador de objetos debido a que falta el elemento de GUI '<arg:0>'</red><gray><i><newline>Si no sabes qué causó este error, por favor haz clic <red><b><u><click:run_command:'/ce resource save-default /internal'><hover:show_text:'Liberar recursos internos del plugin'>AQUÍ</hover></click></u></b></red> para liberar los recursos internos del plugin</i></gray>
 command.search_recipe.not_found: <red>No se encontró ninguna receta para este objeto</red>
 command.search_usage.not_found: <red>No se encontró ningún uso para este objeto</red>
@@ -88,8 +113,6 @@ command.resource.save_default.failure: <red>Ocurrió un error desconocido al gua
 command.resource.search.parser.not_found: <red>No se encontró el tipo de configuración '<arg:0>'</red>
 command.resource.search.resource.not_found: <red>No se encontró ningún recurso con el id '<arg:0>'</red>
 command.resource.search.success: <white>La ruta de '<arg:0>' es <arg:1></white>
-command.upload.failure.not_supported: <red>El método de alojamiento actual '<arg:0>' no admite la carga de paquetes de recursos.</red>
-command.upload.on_progress: <white>Proceso de carga iniciado. Consulta la consola para más información.</white>
 command.send_resource_pack.success.single: <white>Se envió el paquete de recursos a <arg:0>.</white>
 command.send_resource_pack.success.multiple: <white>Se enviaron paquetes de recursos a <arg:0> jugadores</white>
 command.locale.set.failure: '<red>Formato de idioma no válido: <arg:0></red>'
@@ -141,10 +164,7 @@ damage_indicator.unknown_type: Tipo de indicador de daño desconocido '<arg:0>'
 attribute.base_value_source.unknown_type: Tipo de fuente de valor base desconocido '<arg:0>'
 attribute.sync_value_provider.unknown_type: Tipo de proveedor de valor de sincronización desconocido '<arg:0>'
 attribute.value_transformer.unknown_type: Tipo de transformador de valor desconocido '<arg:0>'
-attribute.formula.unknown_variable: Variable desconocida '<arg:0>' en la fórmula de daño '<arg:1>'
-attribute.formula.unknown_attribute: Atributo desconocido '<arg:0>' en la fórmula de daño '<arg:1>'
 attribute.unknown_operation: Operación de atributo desconocida '<arg:0>'
-attribute.operation.invalid_expression: Expresión no válida '<arg:0>' en la operación de atributo
 attribute.derived.unknown_attribute: Atributo desconocido '<arg:0>' en la expresión derivada '<arg:1>'
 attribute.derived.unknown_type: Tipo de valor derivado desconocido '<arg:0>'
 number.unknown_type: Tipo de número desconocido '<arg:0>'
@@ -171,10 +191,6 @@ loot.source.invalid_target: Objetivo de fuente de botín no válido '<arg:0>'
 host.unknown_type: Tipo de host de paquete de recursos desconocido '<arg:0>'
 host.missing_environment_variable: Falta la variable de entorno '<arg:0>'
 host.get_url_failed: "Error al obtener la URL de descarga del paquete de recursos para el jugador <arg:0>"
-host.handle_response_failed: "Error al procesar la respuesta del paquete de recursos para el jugador <arg:0>"
-host.upload_started: "Iniciando la carga del paquete de recursos..."
-host.upload_finished: "Paquete de recursos cargado con éxito en <arg:0> ms"
-host.upload_failed: "Error al cargar el paquete de recursos"
 host.lobfile.storage_usage: "Uso de la cuenta: <arg:0>/<arg:1> MB | <arg:2>/<arg:3> Archivos"
 host.self.http_server_started: "Servidor HTTP Netty iniciado en el puerto: <arg:0>"
 config.errors_detected: Error encontrado en config.yml - <arg:0>
@@ -186,13 +202,9 @@ resource_pack.invalid_overlay_format: Formato de superposición no válido '<arg
 resource_pack.generation_started: Generando paquete de recursos...
 resource_pack.generation_finished: Paquete de recursos generado en <arg:0>ms
 resource_pack.validation_started: 'Validando paquete de recursos... (Progreso: <arg:0>/<arg:1> | Formato de Pack: <arg:2>~<arg:3> | Superposiciones: <arg:4>)'
-resource_pack.validation_finished: Paquete de recursos validado en <arg:0>ms
 resource_pack.json_optimization_started: '> Optimizando archivos json...'
 resource_pack.texture_optimization_started: '> Optimizando archivos de textura...'
 resource_pack.optimization_result: '> □ Antes/Después/Proporción: <arg:0>/<arg:1>/<arg:2>'
-resource_pack.optimization_finished: Paquete de recursos optimizado en <arg:0>ms
-resource_pack.compression_started: Comprimiendo paquete de recursos...(Este proceso puede ser lento si tienes habilitada la ofuscación)
-resource_pack.compression_finished: Paquete de recursos comprimido en <arg:0>ms
 resource_pack.duplicated_files: Se encontraron archivos duplicados. Por favor, resuélvelos mediante la sección 'resource-pack.duplicated-files-handler' de config.yml
 resource_pack.malformatted_json: El archivo Json '<arg:0>' tiene un formato incorrecto
 resource_pack.not_a_json_object: El archivo Json '<arg:0>' no es un objeto json
@@ -203,7 +215,6 @@ resource_pack.item_model.conflict: Error al generar el modelo de objeto '<arg:0>
 resource_pack.missing_font_texture: "A la fuente '<arg:0>' le falta la textura '<arg:1>'"
 resource_pack.missing_model_texture: "Al modelo '<arg:0>' le falta la textura '<arg:1>'"
 resource_pack.missing_equipment_texture: "Al equipamiento '<arg:0>' le falta la textura '<arg:1>'"
-resource_pack.missing_atlas_texture: "Al atlas '<arg:0>' le falta la textura '<arg:1>'"
 resource_pack.missing_item_model: "Al objeto '<arg:0>' le falta el archivo de modelo '<arg:1>'"
 resource_pack.missing_block_model: "Al estado de bloque '<arg:0>' le falta el archivo de modelo '<arg:1>'"
 resource_pack.missing_parent_model: "El modelo '<arg:0>' no puede encontrar el modelo padre '<arg:1>'"
@@ -211,7 +222,6 @@ resource_pack.missing_sound: "Al evento de sonido '<arg:0>' le falta el archivo 
 resource_pack.texture_not_in_atlas: "La textura '<arg:0>' no está definida en el atlas. Necesitas añadir la ruta de la textura al atlas o habilitar la opción 'fix-atlas' en config.yml"
 resource_pack.multiple_atlases: "El modelo '<arg:0>' utiliza múltiples atlas: se esperaba '<arg:1>', pero se encontró '<arg:2>'. Asegúrate de que todas las texturas del modelo provengan del mismo atlas"
 resource_pack.duplicated_sprite: "No se puede cargar el modelo '<arg:0>'. Sprite duplicado '<arg:1>' del atlas '<arg:2>', ya definido en el atlas '<arg:3>'"
-resource_pack.bad_atlas: "Error al cargar el modelo '<arg:0>'. El sprite '<arg:1>' debería ser del atlas '<arg:2>', pero en realidad es del atlas '<arg:3>'"
 resource.argument.type.section: Sección de Configuración
 resource.argument.type.boolean: Booleano
 resource.argument.type.int: Entero
@@ -229,7 +239,6 @@ resource.argument.type.list: Lista
 resource.argument.type.color: Color
 resource.argument.type.number: Número https://xiao-momi.github.io/craft-engine-wiki/reference/number_format
 resource.argument.type.item_model_definition: Definición de Modelo de Objeto
-resource.argument.type.json: Json
 resource.argument.type.any: Cualquier tipo
 resource.argument.type.blockstate: Estado de Bloque
 resource.argument.parser.section: Se esperaba una sección de configuración, se encontró '<arg:0>'
@@ -245,12 +254,10 @@ resource.argument.parser.snbt: 'Formato SNBT no válido ''<arg:0>''. Detalles: <
 resource.argument.parser.aabb: No se puede interpretar '<arg:0>' como un AABB. (Formato de dos puntos esperado 'x1,y1,z1,x2,y2,z2', ej., 0,0,0,1,1,1)
 resource.argument.parser.blockstate: No se puede interpretar '<arg:0>' como un estado de bloque. (ej., minecraft:wheat[age=3])
 resource.argument.parser.identifier: 'No se puede interpretar ''<arg:0>'' como un identificador. Guía: https://minecraft.wiki/w/Identifier#Legal_characters'
-resource.argument.parser.list: Se esperaba que fuera una lista, se encontró '<arg:0>'
 resource.argument.parser.nonempty_list: Se esperaba una lista no vacía
 resource.argument.parser.fixed_size_list: Se esperaba una lista con '<arg:0>' elemento(s)
 resource.argument.parser.nonempty_string: Se esperaba una cadena de texto no vacía
 resource.argument.parser.split: Se esperaba división en '<arg:0>' partes, pero se obtuvieron '<arg:1>'
-resource.argument.parser.number: Se esperaba que fuera un número, se encontró '<arg:0>'
 resource.argument.parser.uuid: No se puede interpretar '<arg:0>' como un UUID.
 resource.config_loaded: Se cargó <arg:0> en <arg:1>ms (<arg:2>)
 resource.pack_loaded: 'Paquete cargado: <arg:0>. Espacio de nombres predeterminado: <arg:1>'
@@ -272,11 +279,9 @@ resource.image.height_ascent_conflict: La altura ('height') '<arg:0>' no debe se
 resource.emoji.invalid_image_format: Formato de imagen no válido '<arg:0>'
 resource.emoji.unknown_image: Imagen desconocida '<arg:0>'
 resource.equipment.unknown_type: Tipo de equipamiento desconocido '<arg:0>'
-resource.equipment.unknown_layer_type: Tipo de capa de equipamiento desconocido '<arg:0>'
 resource.equipment.invalid_sacrificed_armor: Tipo de armadura vanilla no válido '<arg:0>'
 resource.equipment_set.invalid_slot_name: Nombre de casilla del conjunto de equipamiento no válido '<arg:0>'
 resource.furniture.element.unknown_type: Tipo de elemento de mueble desconocido '<arg:0>'
-resource.furniture.data_source.unknown_type: Tipo de fuente de datos de mueble desconocido '<arg:0>'
 resource.furniture.hitbox.unknown_type: Tipo de caja de colisión (hitbox) de mueble desconocido '<arg:0>'
 resource.furniture.behavior.unknown_type: Tipo de comportamiento de mueble desconocido '<arg:0>'
 resource.furniture.hitbox.custom.invalid_entity_type: Tipo de entidad no válido '<arg:0>'
@@ -333,3 +338,27 @@ resource.recipe.shapeless_transform.ambigious_source: "Se encontraron 2 o más m
 resource.recipe.shapeless_transform.source_not_found: "No se pudo encontrar un material marcado como origen en la receta"
 resource.recipe.post_processor.unknown_type: Tipo de posprocesador de receta desconocido '<arg:0>'
 resource.recipe.unknown_type: Tipo de receta desconocido '<arg:0>'
+workflow.unknown_type: 'Tipo de flujo de trabajo de paquetes de recursos desconocido ''<arg:0>'''
+storage.unknown_type: 'Tipo de almacenamiento desconocido ''<arg:0>'''
+storage.invalid_path: 'Ruta de almacenamiento no válida'
+command.workflow.started: '<white>Ejecutando el flujo de trabajo de paquetes de recursos <arg:0></white>'
+command.pack_preference.no_permission: '<red>No tienes permiso para cambiar las preferencias del paquete de recursos <arg:0></red>'
+command.workflow.success: '<white>Flujo de trabajo de paquetes de recursos <arg:0> completado (<arg:1> ms)</white>'
+command.workflow.failure: '<red>No se pudo ejecutar el flujo de trabajo de paquetes de recursos <arg:0>. Consulta la consola</red>'
+command.workflow.unknown: '<red>Flujo de trabajo de paquetes de recursos desconocido: <arg:0></red>'
+attribute.damage_effect.unknown_type: 'Tipo de efecto posterior al daño desconocido ''<arg:0>'''
+attribute.damage_effect.unknown_target: 'Objetivo de efecto posterior al daño desconocido ''<arg:0>'''
+category.source.unknown_type: 'Tipo de fuente de categoría desconocido ''<arg:0>'''
+category.source.invalid_regex: 'Expresión regular de fuente de categoría no válida ''<arg:0>'''
+resource_pack.model_uv_out_of_bounds: 'El modelo ''<arg:0>'', elemento <arg:1>, cara ''<arg:2>'' usa UV <arg:3> fuera de rango con la textura ''<arg:4>''. Los valores UV fuera de [0, 16] pueden impedir que los clientes 26.1+ procesen el modelo'
+resource_pack.bad_sprite: 'El bloque ''<arg:0>'' usa el sprite ''<arg:1>'', que debería estar en el atlas ''<arg:2>'' pero solo está definido en el atlas ''<arg:3>'''
+host.upload_started: "Iniciando la carga del paquete de recursos..."
+host.upload_finished: "Paquete de recursos cargado con éxito en <arg:0> ms"
+resource_pack.validation_finished: Paquete de recursos validado en <arg:0>ms
+resource_pack.optimization_finished: Paquete de recursos optimizado en <arg:0>ms
+resource_pack.compression_started: Comprimiendo paquete de recursos...(Este proceso puede ser lento si tienes habilitada la ofuscación)
+resource_pack.compression_finished: Paquete de recursos comprimido en <arg:0>ms
+resource_pack.packsquash_started: 'Ejecutando PackSquash con la configuración <arg:0>...'
+resource_pack.packsquash_finished: 'PackSquash ha terminado en <arg:0>ms'
+resource_pack.zip_loaded: 'ZIP del paquete de recursos <arg:0> cargado en <arg:1>ms'
+resource_pack.export_finished: 'Paquete de recursos exportado a <arg:0> en <arg:1>ms'

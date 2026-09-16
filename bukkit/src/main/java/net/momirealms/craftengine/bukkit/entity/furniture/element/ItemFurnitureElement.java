@@ -6,9 +6,10 @@ import net.momirealms.craftengine.bukkit.util.PacketUtils;
 import net.momirealms.craftengine.core.entity.furniture.Furniture;
 import net.momirealms.craftengine.core.entity.furniture.data.FurnitureDataResolver;
 import net.momirealms.craftengine.core.entity.furniture.data.ItemPatch;
+import net.momirealms.craftengine.core.entity.furniture.element.TransformableFurnitureElement;
 import net.momirealms.craftengine.core.entity.player.Player;
 import net.momirealms.craftengine.core.util.MiscUtils;
-import net.momirealms.craftengine.core.world.Vec3d;
+import net.momirealms.craftengine.core.world.WorldPosition;
 import net.momirealms.craftengine.proxy.minecraft.network.protocol.game.ClientboundAddEntityPacketProxy;
 import net.momirealms.craftengine.proxy.minecraft.network.protocol.game.ClientboundRemoveEntitiesPacketProxy;
 import net.momirealms.craftengine.proxy.minecraft.network.protocol.game.ClientboundSetEntityDataPacketProxy;
@@ -18,27 +19,26 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 import java.util.UUID;
-import java.util.function.Consumer;
+import java.util.function.IntConsumer;
 
-public final class ItemFurnitureElement extends AbstractConditionalFurnitureElement {
+public final class ItemFurnitureElement extends AbstractConditionalFurnitureElement implements TransformableFurnitureElement {
     public final ItemFurnitureElementConfig config;
     public final Furniture furniture;
     public final FurnitureDataResolver<ItemPatch> itemPatch;
-    public final Vec3d position;
+    public final WorldPosition position;
     public final int entityId1;
     public final int entityId2;
     public final Object despawnPacket;
     public final Object cachedSpawnPacket1;
     public final Object cachedSpawnPacket2;
     public final Object cachedRidePacket;
-    public final Object cachedUpdatePosPacket;
 
-    ItemFurnitureElement(Furniture furniture, ItemFurnitureElementConfig config, Vec3d pos) {
-        this(furniture, config, pos, EntityUtils.ENTITY_COUNTER.incrementAndGet(), EntityUtils.ENTITY_COUNTER.incrementAndGet(), false);
+    ItemFurnitureElement(Furniture furniture, ItemFurnitureElementConfig config, WorldPosition pos) {
+        this(furniture, config, pos, EntityUtils.ENTITY_COUNTER.incrementAndGet(), EntityUtils.ENTITY_COUNTER.incrementAndGet());
     }
 
-    ItemFurnitureElement(Furniture furniture, ItemFurnitureElementConfig config, Vec3d pos, int entityId1, int entityId2, boolean positionChanged) {
-        super(config.predicate, config.hasCondition);
+    ItemFurnitureElement(Furniture furniture, ItemFurnitureElementConfig config, WorldPosition pos, int entityId1, int entityId2) {
+        super(config.predicate);
         this.furniture = furniture;
         this.itemPatch = config.createItemPatch(furniture);
         this.config = config;
@@ -60,7 +60,6 @@ public final class ItemFurnitureElement extends AbstractConditionalFurnitureElem
                     a.add(entityId2);
                 }
         ));
-        this.cachedUpdatePosPacket = positionChanged ? EntityUtils.createUpdatePosPacket(this.entityId1, position.x, position.y, position.z, 0, 0, false) : null;
     }
 
     @Override
@@ -85,19 +84,30 @@ public final class ItemFurnitureElement extends AbstractConditionalFurnitureElem
 
     @Override
     public void update(Player player) {
-        if (this.cachedUpdatePosPacket != null) {
-            player.sendPackets(List.of(this.cachedUpdatePosPacket, ClientboundSetEntityDataPacketProxy.INSTANCE.newInstance(this.entityId2, this.config.metadata.apply(player, this.itemPatch))), false);
-        } else {
-            player.sendPacket(ClientboundSetEntityDataPacketProxy.INSTANCE.newInstance(this.entityId2, this.config.metadata.apply(player, this.itemPatch)), false);
+        player.sendPacket(ClientboundSetEntityDataPacketProxy.INSTANCE.newInstance(this.entityId2, this.config.metadata.apply(player, this.itemPatch)), false);
+    }
+
+    @Override
+    public void gatherInteractableEntityId(IntConsumer collector) {
+    }
+
+
+    @Override
+    public int entityId() {
+        return this.entityId1;
+    }
+
+    @Override
+    public void update(Player player, TransformableFurnitureElement previous) {
+        // 按玩家实际已显示的位置比较，允许跳过中间变体快照。
+        if (!this.position.equals(previous.position())) {
+            player.sendPacket(EntityUtils.createUpdatePosPacket(this.entityId1, this.position.x, this.position.y, this.position.z, 0, 0, false), false);
         }
+        this.update(player);
     }
 
     @Override
-    public void gatherInteractableEntityId(Consumer<Integer> collector) {
-    }
-
-    @Override
-    public boolean supportsTransform() {
-        return true;
+    public @NotNull WorldPosition position() {
+        return this.position;
     }
 }

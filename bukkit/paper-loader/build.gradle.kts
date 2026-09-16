@@ -53,6 +53,7 @@ paper {
     authors = listOf("XiaoMoMi")
     contributors = listOf("https://github.com/Xiao-MoMi/craft-engine/graphs/contributors")
     foliaSupported = true
+//    hasOpenClassloader = true
     serverDependencies {
         // WorldEdit
         register("WorldEdit") {
@@ -199,7 +200,8 @@ tasks {
 
 listOf(
     "26.1.2",
-    "26.2"
+    "26.2",
+    "26.3"
 ).forEach {
     registerPaperTask(it, javaVersion = 25)
 }

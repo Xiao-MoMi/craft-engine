@@ -13,12 +13,12 @@ reload:
     - /craftengine reload
     - /ce reload
 
-upload:
+pack_workflow:
   enable: true
-  permission: ce.command.admin.upload
+  permission: ce.command.admin.pack_workflow
   usage:
-    - /craftengine upload
-    - /ce upload
+  - /craftengine workflow
+  - /ce workflow
 
 send_resource_pack:
   enable: true
@@ -60,6 +60,32 @@ item_browser_admin:
   usage:
     - /craftengine item browser
     - /ce item browser
+
+pack_preference_admin:
+  enable: true
+  permission: ce.command.admin.pack_preference
+  usage:
+    - /craftengine feature pack-preference
+    - /ce feature pack-preference
+
+pack_preset_admin:
+  enable: true
+  permission: ce.command.admin.pack_preset
+  usage:
+    - /craftengine feature pack-preset
+    - /ce feature pack-preset
+
+pack_preference_player:
+  enable: true
+  permission: ce.command.player.pack_preference
+  usage:
+    - /pack
+
+pack_preset_player:
+  enable: true
+  permission: ce.command.player.pack_preset
+  usage:
+    - /pack preset
 
 search_usage_player:
   enable: true
@@ -206,26 +232,26 @@ place_feature:
     - /craftengine feature place-feature
     - /ce feature place-feature
 
-set_item_custom_model_data:
+item_component_add:
   enable: true
-  permission: ce.command.admin.custom_model_data
+  permission: ce.command.admin.item.component.add
   usage:
-    - /craftengine item custom-model-data
-    - /ce item custom-model-data
+    - /craftengine item component add
+    - /ce item component add
 
-set_item_item_model:
+item_component_remove:
   enable: true
-  permission: ce.command.admin.item_model
+  permission: ce.command.admin.item.component.remove
   usage:
-    - /craftengine item item-model
-    - /ce item item-model
+    - /craftengine item component remove
+    - /ce item component remove
 
-remove_item_component:
+item_component_reset:
   enable: true
-  permission: ce.command.admin.remove_component
+  permission: ce.command.admin.item.component.reset
   usage:
-    - /craftengine item remove-component
-    - /ce item remove-component
+    - /craftengine item component reset
+    - /ce item component reset
 
 migrate_world_storage:
   enable: true
@@ -255,6 +281,13 @@ debug_set_block:
   usage:
     - /craftengine debug setblock
     - /ce debug setblock
+
+debug_fill_section:
+  enable: false
+  permission: ce.command.debug.fill_section
+  usage:
+    - /craftengine debug fill-section
+    - /ce debug fill-section
 
 debug_spawn_furniture:
   enable: true
@@ -354,6 +387,13 @@ debug_clear_cooldown:
   usage:
     - /craftengine debug clear-cooldown
     - /ce debug clear-cooldown
+
+debug_pack_states:
+  enable: true
+  permission: ce.command.debug.pack_states
+  usage:
+    - /craftengine debug pack-states
+    - /ce debug pack-states
 
 debug_expression:
   enable: true

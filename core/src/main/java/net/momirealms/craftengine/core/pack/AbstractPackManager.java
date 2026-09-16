@@ -14,13 +14,16 @@ import net.momirealms.craftengine.core.item.equipment.ComponentBasedEquipment;
 import net.momirealms.craftengine.core.item.equipment.Equipment;
 import net.momirealms.craftengine.core.item.equipment.EquipmentLayerType;
 import net.momirealms.craftengine.core.item.equipment.TrimBasedEquipment;
-import net.momirealms.craftengine.core.item.processor.ObfuscatedItemModelProcessor;
 import net.momirealms.craftengine.core.pack.atlas.*;
 import net.momirealms.craftengine.core.pack.conflict.PathContext;
 import net.momirealms.craftengine.core.pack.conflict.resolution.ConditionalResolution;
+import net.momirealms.craftengine.core.pack.host.ResourcePackDownloadData;
 import net.momirealms.craftengine.core.pack.host.ResourcePackHost;
+import net.momirealms.craftengine.core.pack.host.ResourcePackHostGroup;
 import net.momirealms.craftengine.core.pack.host.ResourcePackHosts;
 import net.momirealms.craftengine.core.pack.host.impl.NoneHost;
+import net.momirealms.craftengine.core.pack.host.impl.SelfHost;
+import net.momirealms.craftengine.core.pack.host.impl.SelfHostHttpServer;
 import net.momirealms.craftengine.core.pack.mcmeta.Overlay;
 import net.momirealms.craftengine.core.pack.mcmeta.Overlays;
 import net.momirealms.craftengine.core.pack.mcmeta.PackVersion;
@@ -35,6 +38,10 @@ import net.momirealms.craftengine.core.pack.model.legacy.LegacyOverridesModel;
 import net.momirealms.craftengine.core.pack.model.simplified.item.*;
 import net.momirealms.craftengine.core.pack.revision.Revision;
 import net.momirealms.craftengine.core.pack.revision.Revisions;
+import net.momirealms.craftengine.core.pack.validation.ModelUvBoundsValidator;
+import net.momirealms.craftengine.core.pack.workflow.PackWorkflowContext;
+import net.momirealms.craftengine.core.pack.workflow.PackWorkflowSequence;
+import net.momirealms.craftengine.core.pack.workflow.PackWorkflowValidation;
 import net.momirealms.craftengine.core.plugin.CraftEngine;
 import net.momirealms.craftengine.core.plugin.config.*;
 import net.momirealms.craftengine.core.plugin.config.lifecycle.LoadingPyramid;
@@ -47,6 +54,7 @@ import net.momirealms.craftengine.core.plugin.config.yaml.StringKeyConstructor;
 import net.momirealms.craftengine.core.plugin.locale.ClientLangData;
 import net.momirealms.craftengine.core.plugin.locale.TranslationManager;
 import net.momirealms.craftengine.core.plugin.logger.Debugger;
+import net.momirealms.craftengine.core.plugin.network.NetWorkUser;
 import net.momirealms.craftengine.core.registry.BuiltInRegistries;
 import net.momirealms.craftengine.core.registry.Registries;
 import net.momirealms.craftengine.core.registry.WritableRegistry;
@@ -133,31 +141,27 @@ public abstract class AbstractPackManager implements PackManager {
     }
 
     private final CraftEngine plugin;
-    private final Consumer<PackCacheData> cacheEventDispatcher;
-    private final BiConsumer<Path, Path> generationEventDispatcher;
     private final Map<String, Pack> loadedPacks = new LinkedHashMap<>();
     private final Map<String, ConfigParser> sectionParsers = new HashMap<>();
     public final JsonObject vanillaBlockAtlas;
     public final JsonObject vanillaItemAtlas;
     private Map<Path, CachedConfigFile> cachedConfigFiles = Collections.emptyMap();
     private Map<Path, CachedAssetFile> cachedAssetFiles = Collections.emptyMap();
-    protected BiConsumer<Path, Path> zipGenerator;
-    protected ResourcePackHost resourcePackHost;
+    protected ZipGenerator zipGenerator;
+    protected volatile ResourcePackHost resourcePackHost = NoneHost.INSTANCE;
+    private volatile Map<String, ResourcePackHost> resourcePackHosts = Map.of();
+    private volatile Map<String, Boolean> defaultPacks = Map.of();
+    private volatile Map<String, PackWorkflowSequence> workflows = Map.of();
+    private volatile Map<String, PackPreset> packPresets = Map.of();
+    private final Map<NetWorkUser, Set<String>> selectedPacks = Collections.synchronizedMap(new WeakHashMap<>());
+    private final Map<NetWorkUser, Map<String, Boolean>> packPreferences = Collections.synchronizedMap(new WeakHashMap<>());
     private final SkipOptimizationParser skipOptimizationParser = new SkipOptimizationParser();
     private final ConfigFactoryParser bundleParser = new ConfigFactoryParser();
     private final AtlasConfigParser atlasConfigParser = new AtlasConfigParser();
 
-    public AbstractPackManager(CraftEngine plugin, Consumer<PackCacheData> cacheEventDispatcher, BiConsumer<Path, Path> generationEventDispatcher) {
+    public AbstractPackManager(CraftEngine plugin) {
         this.plugin = plugin;
-        this.cacheEventDispatcher = cacheEventDispatcher;
-        this.generationEventDispatcher = generationEventDispatcher;
-        this.zipGenerator = (p1, p2) -> {
-            try {
-                ZipUtils.compress(p1, p2);
-            } catch (IOException e) {
-                throw new RuntimeException("Failed to compress resource pack.", e);
-            }
-        };
+        this.zipGenerator = request -> ZipUtils.compress(request.source(), request.output());
         Path resourcesFolder = this.plugin.dataFolderPath().resolve("resources");
         try {
             if (Files.notExists(resourcesFolder)) {
@@ -179,6 +183,10 @@ public abstract class AbstractPackManager implements PackManager {
             throw new RuntimeException("Failed to read internal/atlases/items.json", e);
         }
     }
+
+    protected abstract void dispatchCacheEvent(PackCacheData cacheData);
+
+    protected abstract void dispatchGenerationEvent(Path resourceFolder, Path zipPath);
 
     private void initInternalData() {
         loadInternalData("legacy_internal/models/item/_all.json", ((key, jsonObject) -> {
@@ -288,33 +296,10 @@ public abstract class AbstractPackManager implements PackManager {
     }
 
     @Override
-    public Path resourcePackPath() {
-        return Config.resourcePackPath();
-    }
-
-    @Override
-    public void load() {
-        this.plugin.networkManager().setServerPortHost(null);
-        Object hostingObj = YamlUtils.reader(Config.instance().settings()).getValue("resource-pack.delivery.hosting");
-        if (hostingObj == null) {
-            this.resourcePackHost = NoneHost.INSTANCE;
-            return;
-        }
-        ConfigValue configValue = ConfigValue.of("resource-pack.delivery.hosting", hostingObj);
-        try {
-            List<ResourcePackHost> hosts = configValue.getAsList(v -> ResourcePackHosts.fromConfig(v.getAsSection()));
-            if (hosts.isEmpty()) {
-                this.resourcePackHost = NoneHost.INSTANCE;
-            } else {
-                this.resourcePackHost = hosts.getFirst();
-            }
-        } catch (KnownResourceException e) {
-            this.plugin.logger().warn(TranslationManager.instance().plainTranslation("config.errors_detected", e.getLocalizedMessage()));
-            this.resourcePackHost = NoneHost.INSTANCE;
-        } catch (Throwable e) {
-            this.plugin.logger().warn("Failed to load resource-pack.delivery.hosting", e);
-            this.resourcePackHost = NoneHost.INSTANCE;
-        }
+    public synchronized void load() {
+        this.loadHosts();
+        this.loadWorkflows();
+        this.loadPackPresets();
     }
 
     @Override
@@ -323,20 +308,112 @@ public abstract class AbstractPackManager implements PackManager {
     }
 
     @Override
-    public void uploadResourcePack() {
-        Timestamp timestamp = new Timestamp();
-        this.plugin.logger().info(TranslationManager.instance().plainTranslation("host.upload_started"));
-        resourcePackHost().upload(Config.fileToUpload()).whenComplete((d, e) -> {
-            if (e != null) {
-                this.plugin.logger().warn(TranslationManager.instance().plainTranslation("host.upload_failed"), e);
-                return;
-            }
-            this.plugin.logger().info(TranslationManager.instance().plainTranslation("host.upload_finished", String.valueOf(timestamp.deltaMillis())));
-            if (!Config.sendPackOnUpload()) return;
-            for (Player player : this.plugin.networkManager().onlineUsers()) {
-                sendResourcePack(player);
-            }
+    public Map<String, ResourcePackHost> resourcePackHosts() {
+        return this.resourcePackHosts;
+    }
+
+    @Override
+    public Map<String, Boolean> packPreferences(NetWorkUser user) {
+        return this.packPreferences.get(user);
+    }
+
+    protected void prepareResourcePackList(NetWorkUser user, List<String> packs) {}
+
+    @Override
+    public CompletableFuture<List<ResourcePackDownloadData>> prepareResourcePacks(NetWorkUser user) {
+        UUID playerId = user.uuid();
+        if (playerId == null) return CompletableFuture.completedFuture(List.of());
+        Map<String, ResourcePackHost> hosts = this.resourcePackHosts;
+        Map<String, Boolean> defaults = this.defaultPacks;
+        ResourcePackHost group = this.resourcePackHost;
+        return this.plugin.storageManager().submit(storage -> storage.loadPackPreferences(playerId)).thenApplyAsync(states -> {
+            this.packPreferences.put(user, Map.copyOf(states));
+            List<String> selected = new ArrayList<>(defaults.entrySet().stream()
+                    .filter(entry -> states.getOrDefault(entry.getKey(), entry.getValue()))
+                    .map(Map.Entry::getKey).toList());
+            prepareResourcePackList(user, selected);
+            // Plugins may change membership; configured order and known IDs remain authoritative.
+            return hosts.keySet().stream().filter(selected::contains).toList();
+        }, this.plugin.scheduler().async()).thenCompose(selected -> {
+            // Keep the selection even when a pack has not been generated or uploaded yet.
+            this.selectedPacks.put(user, Set.copyOf(selected));
+            if (!(group instanceof ResourcePackHostGroup hostGroup)) return CompletableFuture.completedFuture(List.of());
+            return hostGroup.requestResourcePackDownloadLink(user, selected.stream().map(hosts::get).toList());
         });
+    }
+
+    @Override
+    public CompletableFuture<Boolean> setPackPreference(UUID player, String pack, @NotNull Tristate enabled) {
+        return setPackPreferences(player, Collections.singletonMap(pack, enabled));
+    }
+
+    @Override
+    public Map<String, PackPreset> packPresets() {
+        return this.packPresets;
+    }
+
+    @Override
+    public CompletableFuture<Boolean> applyPackPreset(UUID player, String name) {
+        Map<String, PackPreset> presets = this.packPresets;
+        PackPreset preset = presets.get(name);
+        if (preset == null) throw new IllegalArgumentException("Unknown resource pack preset: " + name);
+        Set<String> managedPacks = new HashSet<>(this.resourcePackHosts.keySet());
+        presets.values().forEach(value -> managedPacks.addAll(value.packs()));
+        return setPackPreferences(player, preset.preferences(managedPacks));
+    }
+
+    @Override
+    public CompletableFuture<Boolean> setPackPreferences(UUID player, Map<String, Tristate> updates) {
+        if (updates.isEmpty()) return CompletableFuture.completedFuture(false);
+        // 在提交异步任务前生成存储快照；UNDEFINED 在存储层通过移除覆盖来恢复默认值。
+        Map<String, Boolean> snapshot = new HashMap<>(updates.size());
+        updates.forEach((pack, state) -> snapshot.put(pack, switch (state) {
+            case TRUE -> true;
+            case FALSE -> false;
+            case UNDEFINED -> null;
+        }));
+        Map<String, Boolean> defaults = this.defaultPacks;
+        return this.plugin.storageManager().submit(storage -> {
+            Map<String, Boolean> previous = storage.loadPackPreferences(player);
+            // 比较保存的三态偏好，而非最终是否启用；默认启用与显式启用仍是不同偏好。
+            boolean preferencesChanged = snapshot.entrySet().stream()
+                    .anyMatch(entry -> !Objects.equals(previous.get(entry.getKey()), entry.getValue()));
+            if (!preferencesChanged) return new PackPreferenceUpdate(Map.copyOf(previous), false, false);
+            // 整批持久化后再更新缓存、重发，不能逐个调用单包接口导致多次加载。
+            storage.setPackPreferences(player, snapshot);
+            Map<String, Boolean> states = Map.copyOf(storage.loadPackPreferences(player));
+            boolean changed = defaults.entrySet().stream().anyMatch(entry ->
+                    !Objects.equals(previous.getOrDefault(entry.getKey(), entry.getValue()),
+                            states.getOrDefault(entry.getKey(), entry.getValue())));
+            return new PackPreferenceUpdate(states, true, changed);
+        }).thenCompose(result -> {
+            Player online = this.plugin.networkManager().getOnlineUser(player);
+            if (online == null) return CompletableFuture.completedFuture(result.preferencesChanged());
+            this.packPreferences.put(online, result.states());
+            // 本服实际选择未变化（包括只修改未托管的包）时，仅保存数据。
+            if (!result.selectionChanged()) return CompletableFuture.completedFuture(result.preferencesChanged());
+            return sendResourcePackAsync(online).thenApply(ignored -> result.preferencesChanged());
+        });
+    }
+
+    private record PackPreferenceUpdate(Map<String, Boolean> states, boolean preferencesChanged, boolean selectionChanged) {}
+
+    @Override
+    public CompletableFuture<Void> sendPackToUsers(String pack) {
+        if (!this.resourcePackHosts.containsKey(pack)) throw new IllegalArgumentException("Unknown resource pack: " + pack);
+        List<CompletableFuture<Void>> sends = new ArrayList<>();
+        for (Player player : this.plugin.networkManager().onlineUsers()) {
+            if (this.selectedPacks.getOrDefault(player, Set.of()).contains(pack)) sends.add(sendResourcePackAsync(player));
+        }
+        return CompletableFuture.allOf(sends.toArray(CompletableFuture[]::new));
+    }
+
+    @Override
+    public void disable() {
+        this.selectedPacks.clear();
+        this.packPreferences.clear();
+        SelfHostHttpServer.instance().disable();
+        SelfHostHttpServer.instance().clearPacks();
     }
 
     @Override
@@ -348,6 +425,7 @@ public abstract class AbstractPackManager implements PackManager {
     public void unload() {
         this.skipOptimizationParser.clearCache();
         this.loadedPacks.clear();
+        this.workflows = Map.of();
     }
 
     @Override
@@ -368,7 +446,7 @@ public abstract class AbstractPackManager implements PackManager {
     public void initCachedAssets() {
         try {
             PackCacheData cacheData = new PackCacheData(this.plugin);
-            this.cacheEventDispatcher.accept(cacheData);
+            this.dispatchCacheEvent(cacheData);
             this.updateCachedAssets(cacheData, null);
         } catch (Exception e) {
             this.plugin.logger().warn("Failed to update cached assets", e);
@@ -685,20 +763,16 @@ public abstract class AbstractPackManager implements PackManager {
         }
     }
 
-    @Override
-    public void generateResourcePack() {
+    private GeneratedPack generatePackAssets(PackGenerationOptions options) throws IOException {
         this.plugin.logger().info(TranslationManager.instance().plainTranslation("resource_pack.generation_started"));
         Timestamp timestamp = new Timestamp();
-        if (!Config.obfuscateItemModelUseCache()) {
-            ObfuscatedItemModelProcessor.resetMappings();
-        }
-
         // Create cache data
         PackCacheData cacheData = new PackCacheData(this.plugin);
-        this.cacheEventDispatcher.accept(cacheData);
+        this.dispatchCacheEvent(cacheData);
 
         // get the target location
-        try (FileSystem fs = Jimfs.newFileSystem(Configuration.forCurrentPlatform())) {
+        FileSystem fs = Jimfs.newFileSystem(Configuration.forCurrentPlatform());
+        try {
             // firstly merge existing folders
             Path generatedPackPath = fs.getPath("resource_pack");
             List<Pair<String, List<Path>>> duplicated = this.updateCachedAssets(cacheData, fs);
@@ -734,9 +808,8 @@ public abstract class AbstractPackManager implements PackManager {
             this.generateParticle(generatedPackPath);
             this.generateAtlases(generatedPackPath);
 
-            // 有地图兼容的情况下，先生成一半
-            boolean mapCompatibility = Config.enableMapPluginCompatibility();
-            if (mapCompatibility) {
+            // Maps use CraftEngine block IDs instead of sacrificed vanilla block states.
+            if (options.mapCompatibility()) {
                 this.generateBlockOverrides(generatedPackPath, false, true);
             } else {
                 this.generateBlockOverrides(generatedPackPath, true, Config.generateModAssets());
@@ -763,74 +836,240 @@ public abstract class AbstractPackManager implements PackManager {
                 this.removeAllShaders(generatedPackPath);
             }
 
-            // 如果开启地图兼容，先校验一遍 mcmeta
-            if (mapCompatibility) {
-                this.validatePackMetadata(packMcMeta, overlays);
-                this.writeJsonSafely(packMcMeta, generatedPackPath.resolve("pack.mcmeta"));
-                try {
-                    ZipUtils.compress(generatedPackPath, Config.mapPluginCompatibilityPath());
-                } catch (IOException e) {
-                    this.plugin.logger().error("Error creating map plugin resource pack", e);
-                }
-                this.deleteMapCompatibilityAssets(generatedPackPath);
-                // 再生成覆写原版的overrides
-                this.generateBlockOverrides(generatedPackPath, true, false);
-                if (!Config.generateModAssets()) {
-                    this.deleteModAssets(generatedPackPath);
-                }
-            }
-
-            this.plugin.logger().info(TranslationManager.instance().plainTranslation("resource_pack.generation_finished", String.valueOf(timestamp.deltaMillis())));
-
-            // 校验资源包
-            if (Config.validateResourcePack()) {
-                this.validateResourcePack(generatedPackPath, overlays);
-                this.plugin.logger().info(TranslationManager.instance().plainTranslation("resource_pack.validation_finished", String.valueOf(timestamp.deltaMillis())));
-            }
-
-            // 验证完成后，应该重新校验pack.mcmeta并写入
-            this.validatePackMetadata(packMcMeta, overlays);
+            this.validatePackMetadata(packMcMeta, overlays, options.description());
             this.writeJsonSafely(packMcMeta, generatedPackPath.resolve("pack.mcmeta"));
-
-            // 优化资源包
-            if (Config.optimizeResourcePack()) {
-                this.optimizeResourcePack(generatedPackPath);
-                this.plugin.logger().info(TranslationManager.instance().plainTranslation("resource_pack.optimization_finished", String.valueOf(timestamp.deltaMillis())));
-            }
-
-            if (Config.enablePackSquash()) {
-
-            }
-
-            this.plugin.logger().info(TranslationManager.instance().plainTranslation("resource_pack.compression_started"));
-            Path finalPath = resourcePackPath();
-            Files.createDirectories(finalPath.getParent());
-
-            // 生成无保护资源包
-            if (VersionHelper.PREMIUM && Config.createUnprotectedCopy()) {
-                try {
-                    ZipUtils.compress(generatedPackPath, Config.unprotectedCopyPath());
-                } catch (IOException e) {
-                    this.plugin.logger().error("Error creating unprotected resource pack", e);
-                }
-            }
-            // 生成资源包
-            try {
-                this.zipGenerator.accept(generatedPackPath, finalPath);
-            } catch (Exception e) {
-                this.plugin.logger().error("Error creating resource pack", e);
-            }
-            this.plugin.logger().info(TranslationManager.instance().plainTranslation("resource_pack.compression_finished", String.valueOf(timestamp.deltaMillis())));
-            this.generationEventDispatcher.accept(generatedPackPath, finalPath);
-            if (Config.autoUpload() && resourcePackHost().canUpload()) {
-                uploadResourcePack();
-            }
-        } catch (IOException e) {
-            this.plugin.logger().error("Error generating resource pack", e);
+            this.plugin.logger().info(TranslationManager.instance().plainTranslation("resource_pack.generation_finished", String.valueOf(timestamp.deltaMillis())));
+            return new GeneratedPack(fs, generatedPackPath, packMcMeta, overlays, options);
+        } catch (IOException | RuntimeException | Error e) {
+            fs.close();
+            throw e;
         }
     }
 
-    private void validatePackMetadata(JsonObject rawMeta, Overlays packOverlays) {
+    private void validateGeneratedPack(GeneratedPack pack, boolean obfuscation) {
+        Timestamp timestamp = new Timestamp();
+        this.validateResourcePack(pack.path(), pack.overlays(), obfuscation);
+        if (pack.options() != null) {
+            this.validatePackMetadata(pack.metadata(), pack.overlays(), pack.options().description());
+            this.writeJsonSafely(pack.metadata(), pack.path().resolve("pack.mcmeta"));
+        }
+        this.plugin.logger().info(TranslationManager.instance().plainTranslation("resource_pack.validation_finished", String.valueOf(timestamp.deltaMillis())));
+    }
+
+    private Path resolveWorkflowPath(String path) {
+        return this.plugin.dataFolderPath().resolve(path).toAbsolutePath().normalize();
+    }
+
+    private void writePack(GeneratedPack pack, Path output, ZipGenerator writer, boolean protection) throws IOException {
+        this.plugin.logger().info(TranslationManager.instance().plainTranslation("resource_pack.compression_started"));
+        // 包含混淆、ZIP 写入和最终文件替换的耗时，仅在成功后输出完成提示。
+        Timestamp timestamp = new Timestamp();
+        Files.createDirectories(output.toAbsolutePath().getParent());
+        // Upload only a complete result, keeping a previous successful file intact if writing fails.
+        Path temporary = Files.createTempFile(output.toAbsolutePath().getParent(), ".pack-", ".zip");
+        try {
+            writer.generate(new PackZipRequest(pack.path(), temporary, protection));
+            if (Files.size(temporary) == 0) throw new IOException("No resource pack was written: " + output);
+            Files.move(temporary, output, StandardCopyOption.REPLACE_EXISTING);
+        } finally {
+            Files.deleteIfExists(temporary);
+        }
+        this.plugin.logger().info(TranslationManager.instance().plainTranslation("resource_pack.compression_finished", String.valueOf(timestamp.deltaMillis())));
+    }
+
+    protected void loadHosts() {
+        Object hostingObj = YamlUtils.reader(Config.instance().settings()).getValue("resource-pack.packs");
+        try {
+            ConfigSection packs = ConfigSection.of("resource-pack.packs", hostingObj == null ? Map.of() : hostingObj);
+            Map<String, ResourcePackHost> hosts = new LinkedHashMap<>();
+            Map<String, Boolean> defaults = new LinkedHashMap<>();
+            Map<String, Path> selfHostedPacks = new LinkedHashMap<>();
+            // 与工作流一样使用配置键作为 ID，并保留配置顺序作为资源包发送顺序。
+            for (String id : packs.keySet()) {
+                if (!id.matches("[A-Za-z0-9_-]{1,64}")) {
+                    throw new IllegalArgumentException("Invalid resource pack host id: " + id);
+                }
+                ConfigSection section = packs.getNonNullSection(id);
+                hosts.put(id, ResourcePackHosts.fromConfig(id, section));
+                defaults.put(id, section.getBoolean("default", true));
+                if (hosts.get(id) instanceof SelfHost selfHost) {
+                    selfHostedPacks.put(id, selfHost.storagePath());
+                }
+            }
+            if (!selfHostedPacks.isEmpty()) {
+                Object serverConfig = YamlUtils.reader(Config.instance().settings()).getValue("resource-pack.self-host");
+                SelfHostHttpServer.instance().load(ConfigSection.of("resource-pack.self-host", serverConfig == null ? Map.of() : serverConfig), selfHostedPacks);
+            } else {
+                SelfHostHttpServer.instance().disable();
+                SelfHostHttpServer.instance().clearPacks();
+            }
+            this.resourcePackHosts = Collections.unmodifiableMap(hosts);
+            this.defaultPacks = Collections.unmodifiableMap(defaults);
+            this.resourcePackHost = hosts.isEmpty() ? NoneHost.INSTANCE : new ResourcePackHostGroup(hosts.values());
+        } catch (KnownResourceException e) {
+            this.plugin.logger().warn(TranslationManager.instance().plainTranslation("config.errors_detected", e.getLocalizedMessage()));
+        } catch (Throwable e) {
+            this.plugin.logger().warn("Failed to load resource pack hosts", e);
+        }
+    }
+
+    private void loadPackPresets() {
+        Map<String, PackPreset> presets = new LinkedHashMap<>();
+        try {
+            Object value = YamlUtils.reader(Config.instance().settings()).getValue("resource-pack.presets");
+            ConfigSection section = ConfigSection.of("resource-pack.presets", value == null ? Map.of() : value);
+            for (String name : section.keySet()) {
+                try {
+                    presets.put(name, PackPreset.fromConfig(name, Objects.requireNonNull(section.getValue(name))));
+                } catch (KnownResourceException e) {
+                    this.plugin.logger().warn(TranslationManager.instance().plainTranslation("config.errors_detected", e.getLocalizedMessage()));
+                } catch (Exception e) {
+                    this.plugin.logger().warn("Failed to load resource pack preset: " + name, e);
+                }
+            }
+        } catch (KnownResourceException e) {
+            this.plugin.logger().warn(TranslationManager.instance().plainTranslation("config.errors_detected", e.getLocalizedMessage()));
+        }
+        this.packPresets = Collections.unmodifiableMap(presets);
+    }
+
+    private void loadWorkflows() {
+        Object value = YamlUtils.reader(Config.instance().settings()).getValue("resource-pack.workflows");
+        ConfigSection section = ConfigSection.of("resource-pack.workflows", value == null ? Map.of() : value);
+        Map<String, PackWorkflowSequence> workflows = new LinkedHashMap<>();
+        for (String name : section.keySet()) {
+            try {
+                PackWorkflowValidation validation = new PackWorkflowValidation(this.plugin.dataFolderPath(), this.resourcePackHosts);
+                workflows.put(name, PackWorkflowSequence.fromConfig(name, Objects.requireNonNull(section.getValue(name)), validation));
+            } catch (KnownResourceException e) {
+                this.plugin.logger().warn(TranslationManager.instance().plainTranslation("config.errors_detected", e.getLocalizedMessage()));
+            } catch (Exception e) {
+                this.plugin.logger().warn("Failed to load resource pack workflow: " + name, e);
+            }
+        }
+        this.workflows = Collections.unmodifiableMap(workflows);
+    }
+
+    @Override
+    public Collection<String> workflowNames() {
+        return List.copyOf(this.workflows.keySet());
+    }
+
+    @Override
+    public void triggerWorkflows(String event) throws Exception {
+        try (var operation = this.plugin.resourceOperations().acquire()) {
+            for (PackWorkflowSequence workflow : this.workflows.values()) {
+                if (workflow.triggers().contains(event)) {
+                    executeWorkflow(workflow);
+                }
+            }
+        }
+    }
+
+    @Override
+    public void runWorkflow(String name) throws Exception {
+        try (var operation = this.plugin.resourceOperations().acquire()) {
+            PackWorkflowSequence sequence = this.workflows.get(name);
+            if (sequence == null) throw new IllegalArgumentException("Unknown resource pack workflow: " + name);
+            executeWorkflow(sequence);
+        }
+    }
+
+    private void executeWorkflow(PackWorkflowSequence sequence) throws Exception {
+        try (WorkflowRun run = new WorkflowRun(this.zipGenerator, sequence.protection())) {
+            sequence.execute(run);
+        }
+    }
+
+    private final class WorkflowRun implements PackWorkflowContext, AutoCloseable {
+        private GeneratedPack pack;
+        private final ZipGenerator generator;
+        private final boolean protection;
+
+        private WorkflowRun(ZipGenerator generator, boolean protection) {
+            this.generator = generator;
+            this.protection = protection;
+        }
+
+        @Override
+        public CraftEngine plugin() {
+            return plugin;
+        }
+
+        @Override
+        public Path resolvePath(String path) {
+            return resolveWorkflowPath(path);
+        }
+
+        @Override
+        public Path generatedPackPath() {
+            if (this.pack == null) throw new IllegalStateException("No resource pack has been generated");
+            return this.pack.path();
+        }
+
+        @Override
+        public void generate(PackGenerationOptions options) throws IOException {
+            this.pack = generatePackAssets(options);
+        }
+
+        @Override
+        public void loadZip(String path) throws IOException {
+            Timestamp timestamp = new Timestamp();
+            GeneratedPack loaded = GeneratedPack.loadZip(resolveWorkflowPath(path));
+            // 成功读取新包后再替换，避免加载失败时丢失原有工作流资源。
+            GeneratedPack previous = this.pack;
+            this.pack = loaded;
+            if (previous != null) previous.close();
+            plugin.logger().info(TranslationManager.instance().plainTranslation("resource_pack.zip_loaded", path, String.valueOf(timestamp.deltaMillis())));
+        }
+
+        @Override
+        public void validatePack() {
+            validateGeneratedPack(this.pack, this.protection);
+        }
+
+        @Override
+        public void export(String path) throws IOException {
+            Timestamp timestamp = new Timestamp();
+            this.pack.export(resolveWorkflowPath(path));
+            plugin.logger().info(TranslationManager.instance().plainTranslation("resource_pack.export_finished", path, String.valueOf(timestamp.deltaMillis())));
+        }
+
+        @Override
+        public void optimize() {
+            optimizeResourcePack(this.pack.path());
+        }
+
+        @Override
+        public void zip(String path, boolean protection) throws IOException {
+            Path output = resolveWorkflowPath(path);
+            writePack(this.pack, output, this.generator, protection && VersionHelper.PREMIUM);
+            dispatchGenerationEvent(this.pack.path(), output);
+        }
+
+        @Override
+        public void upload(String pack, String path) throws IOException {
+            Path source = resolveWorkflowPath(path);
+            if (!Files.isRegularFile(source)) throw new IOException("Resource pack does not exist: " + source);
+            plugin.logger().info(TranslationManager.instance().plainTranslation("host.upload_started"));
+            Timestamp timestamp = new Timestamp();
+            // 托管上传是异步操作，等待完成后再统计耗时，失败时不输出成功提示。
+            resourcePackHosts.get(pack).upload(source).join();
+            plugin.logger().info(TranslationManager.instance().plainTranslation("host.upload_finished", String.valueOf(timestamp.deltaMillis())));
+        }
+
+        @Override
+        public void sendPack(String pack) {
+            sendPackToUsers(pack).join();
+        }
+
+        @Override
+        public void close() throws IOException {
+            if (this.pack != null) this.pack.close();
+        }
+    }
+
+    private void validatePackMetadata(JsonObject rawMeta, Overlays packOverlays, String description) {
         // 获取设定的最大和最小值
         PackVersion minVersion = Config.packMinVersion().packFormat();
         PackVersion maxVersion = Config.packMaxVersion().packFormat();
@@ -839,8 +1078,8 @@ public abstract class AbstractPackManager implements PackManager {
         {
             JsonObject packJson = new JsonObject();
             rawMeta.add("pack", packJson);
-            JsonElement description = AdventureHelper.componentToJsonElement(AdventureHelper.miniMessage().deserialize(AdventureHelper.legacyToMiniMessage(Config.packDescription())));
-            packJson.add("description", description);
+            JsonElement descriptionJson = AdventureHelper.componentToJsonElement(AdventureHelper.miniMessage().deserialize(AdventureHelper.legacyToMiniMessage(description)));
+            packJson.add("description", descriptionJson);
             // 需要旧版本兼容性
             // https://minecraft.wiki/w/Java_Edition_25w31a
             if (minVersion.isBelow(PackVersion.PACK_FORMAT_CHANGE_VERSION)) {
@@ -957,6 +1196,7 @@ public abstract class AbstractPackManager implements PackManager {
 
     @SuppressWarnings("DuplicatedCode")
     private void optimizeResourcePack(Path path) {
+        Timestamp timestamp = new Timestamp();
         // 收集全部overlay
         Path[] rootPaths;
         try {
@@ -1211,6 +1451,7 @@ public abstract class AbstractPackManager implements PackManager {
             double compressionRatio = ((double) optimizedSize / originalSize) * 100;
             this.plugin.logger().info(TranslationManager.instance().plainTranslation("resource_pack.optimization_result", formatSize(originalSize), formatSize(optimizedSize), String.format("%.2f", compressionRatio)));
         }
+        this.plugin.logger().info(TranslationManager.instance().plainTranslation("resource_pack.optimization_finished", String.valueOf(timestamp.deltaMillis())));
     }
 
     private static final int BAR_LENGTH = 30;
@@ -1261,7 +1502,7 @@ public abstract class AbstractPackManager implements PackManager {
         }
     }
 
-    private void validateResourcePack(Path path, Overlays packOverlays) {
+    private void validateResourcePack(Path path, Overlays packOverlays, boolean obfuscation) {
         List<OverlayCombination.Segment> segments = new ArrayList<>();
         // 完全小于1.21.11或完全大于1.21.11
         if (Config.packMaxVersion().isBelow(MinecraftVersion.V1_21_11) || Config.packMinVersion().isAtOrAbove(MinecraftVersion.V1_21_11)) {
@@ -1306,7 +1547,7 @@ public abstract class AbstractPackManager implements PackManager {
             hasNonOverlaySupport = segments.getFirst().min() <= MinecraftVersion.V1_20_1.packFormat().major();
         }
 
-        boolean fixAtlasOnValidation = Config.fixTextureAtlas() && !Config.enableObfuscation();
+        boolean fixAtlasOnValidation = Config.fixTextureAtlas() && !obfuscation;
         Set<Revision> revisions = new TreeSet<>();
         for (int i = 0, size = segments.size(); i < size; i++) {
             OverlayCombination.Segment segment = segments.get(i);
@@ -1336,7 +1577,9 @@ public abstract class AbstractPackManager implements PackManager {
                     revisions,
                     segment.min() >= MinecraftVersion.V1_21_6.packFormat().major(),
                     segment.max() >= MinecraftVersion.V1_21_11.packFormat().major(),
-                    segment.min() >= MinecraftVersion.V26_1.packFormat().major()
+                    segment.min() >= MinecraftVersion.V26_1.packFormat().major(),
+                    segment.max() >= MinecraftVersion.V26_1.packFormat().major(),
+                    obfuscation
             );
             if (fixAtlasOnValidation) {
                 // 有修复物品
@@ -1357,7 +1600,6 @@ public abstract class AbstractPackManager implements PackManager {
         for (Revision revision : revisions) {
             packOverlays.addOverlay(revision.createOverlay());
         }
-
         // 尝试修复atlas
         if (fixAtlasOnValidation) {
             // 物品
@@ -1419,8 +1661,12 @@ public abstract class AbstractPackManager implements PackManager {
             Set<Revision> revisions,
             boolean v1_21_6, // no 22.5 angle limit
             boolean v1_21_11, // item atlas + no -45~45 angle limit
-            boolean v26_1  // texture format update
+            boolean v26_1,  // texture format update
+            boolean checkModelUvOutOfBounds,
+            boolean obfuscation
     ) {
+        boolean fixModelUvOutOfBounds = v26_1 && Config.fixModelUvOutOfBounds();
+
         Multimap<Key, Key> glyphToFonts = HashMultimap.create(128, 32); // 图片到字体的映射
         Multimap<Key, Key> modelToItemDefinitions = HashMultimap.create(128, 4); // 模型到物品的映射
         Multimap<Key, String> modelToBlockStates = HashMultimap.create(128, 32); // 模型到方块的映射
@@ -1661,7 +1907,7 @@ public abstract class AbstractPackManager implements PackManager {
                 TexturedModel texturedModel = getTexturedModel(modelPath, TexturedModel.getParent(modelJson), TexturedModel.getTextures(modelJson), rootPaths, modelsCache);
                 blockModels.put(modelPath, texturedModel);
                 if (checkedModels.add(modelJsonPath)) {
-                    validateModel(resourcePackPath, modelJson, modelJsonPath, modelStringPath, texturedModel, revisions, flags);
+                    validateModel(resourcePackPath, modelJson, modelJsonPath, modelStringPath, texturedModel, revisions, flags, checkModelUvOutOfBounds, fixModelUvOutOfBounds);
                 }
                 continue;
             }
@@ -1686,7 +1932,7 @@ public abstract class AbstractPackManager implements PackManager {
                 TexturedModel texturedModel = getTexturedModel(modelPath, TexturedModel.getParent(modelJson), TexturedModel.getTextures(modelJson), rootPaths, modelsCache);
                 itemModels.put(modelPath, texturedModel);
                 if (checkedModels.add(modelJsonPath)) {
-                    validateModel(resourcePackPath, modelJson, modelJsonPath, modelStringPath, texturedModel, revisions, flags);
+                    validateModel(resourcePackPath, modelJson, modelJsonPath, modelStringPath, texturedModel, revisions, flags, checkModelUvOutOfBounds, fixModelUvOutOfBounds);
                 }
                 continue;
             }
@@ -1698,7 +1944,7 @@ public abstract class AbstractPackManager implements PackManager {
 
         ValidationResult result = null;
 
-        if (!Config.enableObfuscation()) {
+        if (!obfuscation) {
 
             if (v1_21_11) {
 
@@ -2086,13 +2332,37 @@ public abstract class AbstractPackManager implements PackManager {
                                String modelStringPath,
                                TexturedModel texturedModel,
                                Set<Revision> revisions,
-                               ModelFixFlags flags) {
+                               ModelFixFlags flags,
+                               boolean checkModelUvOutOfBounds,
+                               boolean fixModelUvOutOfBounds) {
         boolean changed = false;
         boolean illegalRotation225 = false;
         boolean illegalRotation45 = false;
         boolean illegalNewRotationFormat = false;
         boolean illegalTextures = false;
 
+        List<ModelUvBoundsValidator.Problem> uvProblems = List.of();
+        if (checkModelUvOutOfBounds) {
+            uvProblems = ModelUvBoundsValidator.validate(modelJson, texturedModel.textures);
+        }
+        if (!uvProblems.isEmpty()) {
+            if (fixModelUvOutOfBounds) {
+                if (ModelUvBoundsValidator.fix(modelJson, uvProblems) > 0) {
+                    changed = true;
+                }
+            } else {
+                for (ModelUvBoundsValidator.Problem problem : uvProblems) {
+                    this.plugin.logger().warn(TranslationManager.instance().plainTranslation(
+                            "resource_pack.model_uv_out_of_bounds",
+                            texturedModel.path.asString(),
+                            String.valueOf(problem.elementIndex() + 1),
+                            problem.face(),
+                            problem.uv(),
+                            problem.texture()
+                    ));
+                }
+            }
+        }
         if (flags.fixTexturesFormat && modelJson.get("textures") instanceof JsonObject textures) {
             for (Map.Entry<String, JsonElement> textureEntry : textures.entrySet()) {
                 if (textureEntry.getValue() instanceof JsonObject texture && texture.has("sprite")) {
@@ -3174,32 +3444,6 @@ public abstract class AbstractPackManager implements PackManager {
         }
     }
 
-    private void deleteMapCompatibilityAssets(Path generatedPackPath) {
-        Path assetPath = generatedPackPath.resolve("assets");
-        Path blueMapblockColorsFile = assetPath.resolve(Key.CRAFTENGINE_NAMESPACE).resolve("blockColors.json");
-        if (Files.exists(blueMapblockColorsFile)) {
-            try {
-                Files.delete(blueMapblockColorsFile);
-            } catch (IOException ignored) {
-            }
-        }
-    }
-
-    private void deleteModAssets(Path generatedPackPath) {
-        Path assetPath = generatedPackPath.resolve("assets");
-        Path blockStatePath = assetPath.resolve(Key.CRAFTENGINE_NAMESPACE).resolve("blockstates");
-        for (Map.Entry<Integer, JsonElement> entry : this.plugin.blockManager().modBlockStates().entrySet()) {
-            Path overridedBlockPath = blockStatePath.resolve("custom_" + entry.getKey() + ".json");
-            if (Files.exists(overridedBlockPath)) {
-                try {
-                    Files.delete(overridedBlockPath);
-                } catch (IOException ignored) {
-                }
-            }
-        }
-        FileUtils.deleteEmptyParentDirectories(blockStatePath, assetPath);
-    }
-
     private void generateModernItemModels1_21_2(Path generatedPackPath) {
         if (Config.packMaxVersion().isBelow(MinecraftVersion.V1_21_2)) return;
         if (Config.packMinVersion().isAtOrAbove(MinecraftVersion.V1_21_4)) return;
@@ -3725,7 +3969,6 @@ public abstract class AbstractPackManager implements PackManager {
 
         @Override
         protected void parseSection(Pack pack, Path path, ConfigSection section) {
-            if (!Config.optimizeResourcePack()) return;
             List<String> textures = section.getStringList("texture");
             if (!textures.isEmpty()) {
                 for (String texture : textures) {

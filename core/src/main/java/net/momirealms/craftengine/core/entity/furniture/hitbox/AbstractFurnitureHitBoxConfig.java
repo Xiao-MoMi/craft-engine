@@ -4,11 +4,11 @@ import net.momirealms.craftengine.core.entity.seat.SeatConfig;
 import org.joml.Vector3f;
 
 public abstract class AbstractFurnitureHitBoxConfig<H extends FurnitureHitBox> implements FurnitureHitBoxConfig<H> {
-    protected final SeatConfig[] seats;
-    protected final Vector3f position;
-    protected final boolean canUseItemOn;
-    protected final boolean blocksBuilding;
-    protected final boolean canBeHitByProjectile;
+    public final SeatConfig[] seats;
+    public final Vector3f position;
+    public final boolean canUseItemOn;
+    public final boolean blocksBuilding;
+    public final boolean canBeHitByProjectile;
 
     public AbstractFurnitureHitBoxConfig(SeatConfig[] seats,
                                          Vector3f position,

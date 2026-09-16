@@ -161,4 +161,6 @@ public interface PacketIds {
     int clientboundUpdateAttributesPacket();
 
     int clientboundSetHealthPacket();
+
+    int clientboundTeleportEntityPacket();
 }

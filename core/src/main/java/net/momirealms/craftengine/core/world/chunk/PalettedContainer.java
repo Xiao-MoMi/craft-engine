@@ -79,6 +79,9 @@ public final class PalettedContainer<T> implements PaletteResizeListener<T>, Rea
         if (!(palette instanceof IdListPalette<T> idListPalette)) {
             return this;
         }
+        if (this.data.storage.getElementBits() == MiscUtils.ceilLog2(idList.size())) {
+            return this;
+        }
         Data<T> newData = getCompatibleData(this.data, idList, 128);
         newData.importFrom(idListPalette, this.data.storage);
         return new PalettedContainer<>(idList, PaletteProvider.BLOCK_STATE, newData);

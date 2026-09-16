@@ -1,9 +1,6 @@
 package net.momirealms.craftengine.bukkit.plugin.network.listener.configuration;
 
 import net.kyori.adventure.text.Component;
-import net.momirealms.craftengine.bukkit.util.ResourcePackUtils;
-import net.momirealms.craftengine.core.pack.host.ResourcePackDownloadData;
-import net.momirealms.craftengine.core.pack.host.ResourcePackHost;
 import net.momirealms.craftengine.core.plugin.CraftEngine;
 import net.momirealms.craftengine.core.plugin.config.Config;
 import net.momirealms.craftengine.core.plugin.locale.TranslationManager;
@@ -15,7 +12,6 @@ import net.momirealms.craftengine.proxy.minecraft.network.ConnectionProxy;
 import net.momirealms.craftengine.proxy.minecraft.server.network.ServerCommonPacketListenerImplProxy;
 import net.momirealms.craftengine.proxy.minecraft.server.network.ServerConfigurationPacketListenerImplProxy;
 import net.momirealms.craftengine.proxy.minecraft.server.network.config.JoinWorldTaskProxy;
-import net.momirealms.craftengine.proxy.minecraft.server.network.config.ServerResourcePackConfigurationTaskProxy;
 
 import java.util.Queue;
 
@@ -56,46 +52,41 @@ public final class NMSFinishConfigurationListener implements NMSPacketListener {
             }
         }
 
-        // 取消 ClientboundFinishConfigurationPacket，让客户端发呆，并结束掉当前的进入世界任务
+        // 暂扣配置结束包，让客户端停留在配置阶段等待资源包。
+        // 当前 JoinWorldTask 已从队列移入 currentTask，必须先结束它，才能插入资源包任务。
         event.setCancelled(true);
         try {
             ServerConfigurationPacketListenerImplProxy.INSTANCE.finishCurrentTask(packetListener, JoinWorldTaskProxy.TYPE);
         } catch (Throwable e) {
             CraftEngine.instance().logger().warn("Failed to finish current task for " + user.name(), e);
+            // 当前任务未成功释放时不能继续入队，否则 startNextTask 会因任务仍在运行而失败。
+            user.kick(Component.translatable("multiplayer.requiredTexturePrompt.disconnect"));
+            return;
         }
 
         if (VersionHelper.isOrAbove1_20_5) {
-            // 1.20.5+开始会检查是否结束需要重新设置回去，不然不会发keepAlive包
+            // 1.20.5+ 在 send 终止包时会先标记 closed，即使随后被我们取消也已生效。
+            // 恢复配置阶段的保活，否则会停止正常 keepAlive，并在等待关闭超时后踢出玩家。
             ServerCommonPacketListenerImplProxy.INSTANCE.setClosed(packetListener, false);
         }
 
-        // 请求资源包
-        ResourcePackHost host = CraftEngine.instance().packManager().resourcePackHost();
-        host.requestResourcePackDownloadLink(user).whenComplete((dataList, t) -> {
+        // 链接可能异步生成；回到平台线程并确认监听器未切换后再修改配置队列。
+        CraftEngine.instance().packManager().prepareResourcePacks(user).whenComplete((dataList, t) -> CraftEngine.instance().scheduler().platform().run(() -> {
+            if (ConnectionProxy.INSTANCE.getPacketListener(user.connection()) != packetListener) return;
             Queue<Object> tasks = ServerConfigurationPacketListenerImplProxy.INSTANCE.getConfigurationTasks(packetListener);
             if (t != null) {
                 CraftEngine.instance().logger().warn(TranslationManager.instance().plainTranslation("host.get_url_failed", user.name()), t);
-                returnToWorld(tasks, packetListener);
+                user.kick(Component.translatable("multiplayer.requiredTexturePrompt.disconnect"));
                 return;
             }
             if (dataList.isEmpty()) {
                 returnToWorld(tasks, packetListener);
                 return;
             }
-            // 向配置阶段连接的任务重加入资源包的任务
-            if (VersionHelper.isOrAbove1_20_3) {
-                for (ResourcePackDownloadData data : dataList) {
-                    tasks.add(ServerResourcePackConfigurationTaskProxy.INSTANCE.newInstance(ResourcePackUtils.createServerResourcePackInfo(data.uuid(), data.url(), data.sha1())));
-                    user.addResourcePackUUID(data.uuid());
-                }
-            } else { // 1.20.2 只支持一个服务器资源包
-                ResourcePackDownloadData data = dataList.getFirst();
-                tasks.add(ServerResourcePackConfigurationTaskProxy.INSTANCE.newInstance(ResourcePackUtils.createServerResourcePackInfo(data.uuid(), data.url(), data.sha1())));
-                user.addResourcePackUUID(data.uuid());
-            }
+            user.addResourcePackTasks(dataList);
             // 最后再加入一个 JoinWorldTask 并开始资源包任务
             returnToWorld(tasks, packetListener);
-        });
+        }));
     }
 
 }

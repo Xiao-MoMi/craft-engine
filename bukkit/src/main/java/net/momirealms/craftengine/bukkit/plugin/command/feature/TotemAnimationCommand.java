@@ -92,7 +92,7 @@ public final class TotemAnimationCommand extends BukkitCommandFeature<CommandSen
                                 handleFeedback(context, MessageConstants.COMMAND_TOTEM_NOT_TOTEM, Component.text(key.asString()));
                                 return;
                             }
-                        } else if (!buildableItem.get().buildItem(ItemBuildContext.EMPTY).vanillaId().equals(ItemKeys.TOTEM_OF_UNDYING)) {
+                        } else if (!buildableItem.get().buildItem(ItemBuildContext.empty()).vanillaId().equals(ItemKeys.TOTEM_OF_UNDYING)) {
                             handleFeedback(context, MessageConstants.COMMAND_TOTEM_NOT_TOTEM, Component.text(key.asString()));
                             return;
                         }

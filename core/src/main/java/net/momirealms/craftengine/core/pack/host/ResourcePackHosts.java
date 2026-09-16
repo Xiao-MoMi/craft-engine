@@ -14,6 +14,7 @@ public final class ResourcePackHosts {
     public static final ResourcePackHostType<SelfHost> SELF = register(Key.ce("self"), SelfHost.FACTORY);
     public static final ResourcePackHostType<ExternalHost> EXTERNAL = register(Key.ce("external"), ExternalHost.FACTORY);
     public static final ResourcePackHostType<LobFileHost> LOBFILE = register(Key.ce("lobfile"), LobFileHost.FACTORY);
+    public static final ResourcePackHostType<MCPacksHost> MCPACKS = register(Key.ce("mcpacks"), MCPacksHost.FACTORY);
     public static final ResourcePackHostType<S3Host> S3 = register(Key.ce("s3"), S3HostFactory.INSTANCE);
     public static final ResourcePackHostType<OpenListHost> OPENLIST = register(Key.ce("openlist"), OpenListHost.FACTORY);
     public static final ResourcePackHostType<OpenListHost> ALIST = register(Key.ce("alist"), OpenListHost.FACTORY);
@@ -31,13 +32,13 @@ public final class ResourcePackHosts {
         return type;
     }
 
-    public static ResourcePackHost fromConfig(ConfigSection section) {
+    public static ResourcePackHost fromConfig(String id, ConfigSection section) {
         String type = section.getNonEmptyString("type");
         Key key = Key.ce(type);
         ResourcePackHostType<? extends ResourcePackHost> hostType = BuiltInRegistries.RESOURCE_PACK_HOST_TYPE.getValue(key);
         if (hostType == null) {
             throw new KnownResourceException("host.unknown_type", section.assemblePath("type"), key.asString());
         }
-        return hostType.factory().create(section);
+        return hostType.factory().create(id, section);
     }
 }

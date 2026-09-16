@@ -14,6 +14,7 @@ import net.momirealms.craftengine.core.loot.source.LootSource;
 import net.momirealms.craftengine.core.loot.source.LootSources;
 import net.momirealms.craftengine.core.plugin.context.ContextHolder;
 import net.momirealms.craftengine.core.plugin.context.parameter.DirectContextParameters;
+import net.momirealms.craftengine.core.util.ItemUtils;
 import net.momirealms.craftengine.core.world.World;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
@@ -49,7 +50,7 @@ public final class EntityShearLootListener implements Listener {
                 .withParameter(DirectContextParameters.WORLD, world)
                 .withParameter(DirectContextParameters.POSITION, LocationUtils.toWorldPosition(event.getEntity().getLocation()))
                 .withParameter(DirectContextParameters.THIS_ENTITY, bukkitEntity)
-                .withOptionalParameter(DirectContextParameters.ITEM_IN_HAND, serverPlayer.getItemInHand(hand))
+                .withOptionalParameter(DirectContextParameters.ITEM_IN_HAND, ItemUtils.emptyToNull(serverPlayer.getItemInHand(hand)))
                 .build();
         LootOutcome outcome = LootManager.eval(sources, new LootContext(world, serverPlayer, (float) serverPlayer.luck(), holder));
         if (!outcome.matched()) return;

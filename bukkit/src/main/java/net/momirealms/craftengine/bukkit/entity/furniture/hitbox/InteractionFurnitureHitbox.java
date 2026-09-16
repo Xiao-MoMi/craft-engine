@@ -2,7 +2,7 @@ package net.momirealms.craftengine.bukkit.entity.furniture.hitbox;
 
 import it.unimi.dsi.fastutil.ints.IntArrayList;
 import net.momirealms.craftengine.bukkit.util.EntityUtils;
-import net.momirealms.craftengine.core.entity.furniture.Collider;
+import net.momirealms.craftengine.core.entity.furniture.ColliderConfig;
 import net.momirealms.craftengine.core.entity.furniture.Furniture;
 import net.momirealms.craftengine.core.entity.furniture.hitbox.FurnitureHitboxPart;
 import net.momirealms.craftengine.core.entity.player.Player;
@@ -19,44 +19,54 @@ import net.momirealms.craftengine.proxy.minecraft.world.phys.Vec3Proxy;
 
 import java.util.List;
 import java.util.UUID;
-import java.util.function.Consumer;
+import java.util.function.IntConsumer;
 
 public final class InteractionFurnitureHitbox extends AbstractFurnitureHitBox {
     private final InteractionFurnitureHitboxConfig config;
-    private final Collider collider;
+    public final ColliderConfig colliderConfig;
     private final Object spawnPacket;
     private final Object despawnPacket;
-    private final FurnitureHitboxPart part;
+    public final FurnitureHitboxPart part;
     private final int entityId;
 
     InteractionFurnitureHitbox(Furniture furniture, InteractionFurnitureHitboxConfig config) {
         super(furniture, config);
         this.config = config;
         WorldPosition position = furniture.position();
-        Vec3d pos = Furniture.getRelativePosition(position, config.position());
-        AABB aabb = AABB.makeBoundingBox(pos, config.size().x, config.size().y);
-        this.collider = createCollider(furniture.world(), position, aabb, false, config.blocksBuilding(), config.canBeHitByProjectile());
+        Vec3d pos = furniture.getRelativePosition(config.position);
+        AABB aabb = AABB.makeBoundingBox(pos, config.size.x, config.size.y);
+        this.colliderConfig = new ColliderConfig(aabb, config.colliderProperties);
         int interactionId = EntityUtils.ENTITY_COUNTER.incrementAndGet();
         this.spawnPacket = ClientboundBundlePacketProxy.INSTANCE.newInstance(List.of(
                 ClientboundAddEntityPacketProxy.INSTANCE.newInstance(
                         interactionId, UUID.randomUUID(), pos.x, pos.y, pos.z, 0, position.yRot,
                         EntityTypesProxy.INTERACTION, 0, Vec3Proxy.ZERO, 0
                 ),
-                ClientboundSetEntityDataPacketProxy.INSTANCE.newInstance(interactionId, config.cachedValues())
+                ClientboundSetEntityDataPacketProxy.INSTANCE.newInstance(interactionId, config.cachedValues)
         ));
-        this.part = new FurnitureHitboxPart(interactionId, aabb, pos, config.responsive());
+        this.part = new FurnitureHitboxPart(interactionId, aabb, pos, config.responsive);
         this.despawnPacket = ClientboundRemoveEntitiesPacketProxy.INSTANCE.newInstance(MiscUtils.init(new IntArrayList(), l -> l.add(interactionId)));
         this.entityId = interactionId;
     }
     
     @Override
-    public List<Collider> colliders() {
-        return List.of(this.collider);
+    public int colliderConfigCount() {
+        return 1;
     }
 
     @Override
-    public List<FurnitureHitboxPart> parts() {
-        return List.of(this.part);
+    public ColliderConfig colliderConfig(int index) {
+        return this.colliderConfig;
+    }
+
+    @Override
+    public int partCount() {
+        return 1;
+    }
+
+    @Override
+    public FurnitureHitboxPart part(int index) {
+        return this.part;
     }
 
     @Override
@@ -65,13 +75,28 @@ public final class InteractionFurnitureHitbox extends AbstractFurnitureHitBox {
     }
 
     @Override
-    public void collectInteractableEntityId(Consumer<Integer> collector) {
+    public void collectInteractableEntityId(IntConsumer collector) {
         collector.accept(this.entityId);
     }
 
     @Override
     public void show(Player player) {
         player.sendPacket(this.spawnPacket, false);
+    }
+
+    @Override
+    public void showCulled(Player player) {
+        if (this.config.invisible) this.show(player);
+    }
+
+    @Override
+    public void cull(Player player) {
+        if (!this.config.invisible) this.hide(player);
+    }
+
+    @Override
+    public void restore(Player player) {
+        if (!this.config.invisible) this.show(player);
     }
 
     @Override

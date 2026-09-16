@@ -30,6 +30,16 @@ public interface PalettedContainerProxy {
                @Type(clazz = ChunkPacketInfoProxy.class) Object chunkPacketInfo,
                int chunkSectionIndex);
 
+    @MethodInvoker(name = "leaf$getDataAcquire", activeIf = "has_patch=leaf && min_version=26.2", optional = true)
+    default Object leaf$getDataAcquire(Object target) {
+        return null;
+    }
+
+    @MethodInvoker(name = "leaf$getFromData", activeIf = "has_patch=leaf && min_version=26.2", optional = true)
+    default Object leaf$getFromData(Object target, @Type(clazz = PalettedContainerProxy.DataProxy.class) Object data, int index) {
+        return null;
+    }
+
     @ReflectionProxy(name = "net.minecraft.world.level.chunk.PalettedContainer$Data")
     interface DataProxy {
         DataProxy INSTANCE = ASMProxyFactory.create(DataProxy.class);

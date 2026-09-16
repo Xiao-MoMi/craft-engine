@@ -1,8 +1,10 @@
 package net.momirealms.craftengine.proxy.minecraft.server.level;
 
+import net.momirealms.craftengine.proxy.minecraft.commands.arguments.EntityAnchorArgumentProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.entity.player.PlayerProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.inventory.AbstractContainerMenuProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.item.ItemStackProxy;
+import net.momirealms.craftengine.proxy.minecraft.world.phys.Vec3Proxy;
 import net.momirealms.sparrow.reflection.clazz.SparrowClass;
 import net.momirealms.sparrow.reflection.proxy.ASMProxyFactory;
 import net.momirealms.sparrow.reflection.proxy.annotation.*;
@@ -16,6 +18,9 @@ import java.util.function.Consumer;
 public interface ServerPlayerProxy extends PlayerProxy {
     ServerPlayerProxy INSTANCE = ASMProxyFactory.create(ServerPlayerProxy.class);
     Class<?> CLASS = SparrowClass.find("net.minecraft.server.level.ServerPlayer");
+
+    @MethodInvoker(name = "lookAt")
+    void lookAt(Object target, @Type(clazz = EntityAnchorArgumentProxy.AnchorProxy.class) Object anchor, @Type(clazz = Vec3Proxy.class) Object position);
 
     @FieldGetter(name = "chunkLoader", activeIf = "has_patch=paper")
     Object getChunkLoader(Object target);

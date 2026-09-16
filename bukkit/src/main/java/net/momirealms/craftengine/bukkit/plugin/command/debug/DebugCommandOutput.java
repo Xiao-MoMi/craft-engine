@@ -55,8 +55,12 @@ public final class DebugCommandOutput {
     }
 
     public static Component value(int depth, String label, Component value) {
+        return value(depth, Component.text(label, MUTED), value);
+    }
+
+    public static Component value(int depth, Component label, Component value) {
         return Component.text("  ".repeat(Math.max(0, depth)), TRACK)
-                .append(Component.text(label, MUTED))
+                .append(label)
                 .append(Component.text(": ", TRACK))
                 .append(value);
     }

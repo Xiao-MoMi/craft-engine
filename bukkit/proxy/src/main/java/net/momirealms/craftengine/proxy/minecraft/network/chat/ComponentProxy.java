@@ -28,6 +28,9 @@ public interface ComponentProxy {
     interface SerializerProxy {
         SerializerProxy INSTANCE = ASMProxyFactory.create(SerializerProxy.class);
 
+        @MethodInvoker(name = "toJsonTree", isStatic = true, activeIf = "max_version=1.20.4")
+        JsonElement toJsonTree(@Type(clazz = ComponentProxy.class) Object text);
+
         @MethodInvoker(name = "fromJson", isStatic = true, activeIf = "min_version=1.20.5 && max_version=1.21.5")
         Object fromJson(@Nullable JsonElement json, @Type(clazz = HolderLookupProxy.ProviderProxy.class) Object registries);
 

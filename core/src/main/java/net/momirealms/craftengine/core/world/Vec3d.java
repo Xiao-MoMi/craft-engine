@@ -93,9 +93,10 @@ public final class Vec3d implements Position {
 
     @Override
     public int hashCode() {
-        int result = Double.hashCode(x);
-        result = 31 * result + Double.hashCode(y);
-        result = 31 * result + Double.hashCode(z);
+        // equals treats positive and negative zero as equal.
+        int result = Double.hashCode(x == 0 ? 0 : x);
+        result = 31 * result + Double.hashCode(y == 0 ? 0 : y);
+        result = 31 * result + Double.hashCode(z == 0 ? 0 : z);
         return result;
     }
 

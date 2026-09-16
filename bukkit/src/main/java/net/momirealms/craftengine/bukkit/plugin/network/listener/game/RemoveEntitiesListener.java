@@ -1,6 +1,7 @@
 package net.momirealms.craftengine.bukkit.plugin.network.listener.game;
 
 import it.unimi.dsi.fastutil.ints.IntList;
+import net.momirealms.craftengine.core.entity.player.Player;
 import net.momirealms.craftengine.core.plugin.network.EntityPacketHandler;
 import net.momirealms.craftengine.core.plugin.network.NetWorkUser;
 import net.momirealms.craftengine.core.plugin.network.event.ByteBufPacketEvent;
@@ -14,13 +15,14 @@ public final class RemoveEntitiesListener implements ByteBufferPacketListener {
 
     @Override
     public void onPacketSend(NetWorkUser user, ByteBufPacketEvent event) {
+        if (!(user instanceof Player player)) return;
         FriendlyByteBuf buf = event.getBuffer();
         boolean changed = false;
         IntList intList = buf.readIntIdList();
         for (int i = 0, size = intList.size(); i < size; i++) {
             int entityId = intList.getInt(i);
-            EntityPacketHandler handler = user.entityPacketHandlers().remove(entityId);
-            if (handler != null && handler.handleEntitiesRemove(user, intList)) {
+            EntityPacketHandler handler = player.entityViews().remove(entityId);
+            if (handler != null && handler.handleEntitiesRemove(player, entityId, intList)) {
                 changed = true;
             }
         }

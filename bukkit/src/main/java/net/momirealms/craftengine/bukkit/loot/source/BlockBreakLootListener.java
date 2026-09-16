@@ -15,6 +15,7 @@ import net.momirealms.craftengine.core.loot.source.LootSource;
 import net.momirealms.craftengine.core.loot.source.LootSources;
 import net.momirealms.craftengine.core.plugin.context.ContextHolder;
 import net.momirealms.craftengine.core.plugin.context.parameter.DirectContextParameters;
+import net.momirealms.craftengine.core.util.ItemUtils;
 import net.momirealms.craftengine.core.util.Key;
 import net.momirealms.craftengine.core.util.VersionHelper;
 import net.momirealms.craftengine.core.world.World;
@@ -56,10 +57,9 @@ public final class BlockBreakLootListener implements Listener {
         Item itemInHand = serverPlayer.getItemInHand(InteractionHand.MAIN_HAND);
         LootContext lootContext = new LootContext(world, serverPlayer, (float) serverPlayer.luck(), ContextHolder.builder(
                 DirectContextParameters.PLAYER, serverPlayer,
-                DirectContextParameters.ITEM_IN_HAND, itemInHand,
                 DirectContextParameters.BLOCK, bukkitExistingBlock,
                 DirectContextParameters.POSITION, position
-        ).build());
+        ).withOptionalParameter(DirectContextParameters.ITEM_IN_HAND, ItemUtils.emptyToNull(itemInHand)).build());
         LootOutcome outcome = LootManager.eval(sources, lootContext);
         if (!outcome.matched()) return;
         if (outcome.overwriteItems()) {

@@ -23,6 +23,14 @@ public final class SetArgumentsProcessor implements ItemProcessor {
     }
 
     @Override
+    public boolean isConstant() {
+        for (TextProvider provider : this.arguments.values()) {
+            if (!provider.isConstant()) return false;
+        }
+        return true;
+    }
+
+    @Override
     public void apply(ItemBuildContext context) {
         Map<String, String> processed = new HashMap<>();
         for (Map.Entry<String, TextProvider> entry : this.arguments.entrySet()) {

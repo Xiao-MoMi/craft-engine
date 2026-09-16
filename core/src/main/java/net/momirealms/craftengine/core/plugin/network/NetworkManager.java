@@ -61,9 +61,7 @@ public interface NetworkManager extends Manageable {
 
     Map<String, ComponentProvider> matchNetworkTags(JsonElement json);
 
-    default Map<String, ComponentProvider> matchNetworkTags(Tag nbt) {
-        return matchNetworkTags(new StringValueOnlyTagVisitor().visit(nbt));
-    }
+    Map<String, ComponentProvider> matchNetworkTags(Tag nbt);
 
     default IllegalCharacterProcessResult processIllegalCharacters(String raw) {
         return processIllegalCharacters(raw, '*');

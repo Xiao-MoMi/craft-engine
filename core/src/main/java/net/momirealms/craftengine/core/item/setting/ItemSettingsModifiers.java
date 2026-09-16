@@ -156,6 +156,10 @@ public final class ItemSettingsModifiers {
             return settings -> settings.equipment(new ItemEquipment(clientBoundModel, null, optionalEquipment.get()));
         }
     }));
+    public static final ItemSettingsModifierType<ItemSettingsModifier> EQUIPMENT_LOD = register(Key.ce("equipment_lod"), (value -> {
+        EquipmentFallback fallback = EquipmentFallback.fromConfig(value.getAsSection());
+        return settings -> settings.equipmentFallback(fallback);
+    }));
     public static final ItemSettingsModifierType<ItemSettingsModifier> CAN_PLACE = register(Key.ce("can_place"), (value -> {
         boolean bool = value.getAsBoolean();
         return settings -> settings.disableVanillaBehavior(!bool);

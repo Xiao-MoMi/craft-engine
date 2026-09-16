@@ -8,6 +8,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class ItemBuildContext extends PlayerOptionalContext {
+    @Deprecated(forRemoval = true, since = "26.9")
     public static final ItemBuildContext EMPTY = new ItemBuildContext(null, ContextHolder.empty());
     protected Item item;
 

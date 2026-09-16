@@ -397,7 +397,6 @@ public abstract class AbstractItemManager extends AbstractModelGenerator impleme
                 this.tempCategories.clear();
             }
             AbstractItemManager.this.vanillaItemDataOverrides.clear();
-            ObfuscatedItemModelProcessor.CAN_OBF.clear();
         }
 
         @Override
@@ -515,7 +514,6 @@ public abstract class AbstractItemManager extends AbstractModelGenerator impleme
         private static final String[] HAND_ANIMATION_ON_SWAP = ConfigKeys.of("hand_animation_on_swap");
         private static final String[] SWAP_ANIMATION_SCALE = ConfigKeys.of("swap_animation_scale");
         private static final String[] CATEGORIES = ConfigKeys.of("category|categor(y|ies)");
-        private static final String[] SKIP_OBFUSCATION = ConfigKeys.of("skip_obfuscation");
         private static final String[] OVERRIDE_DATA = ConfigKeys.of("override_data");
 
         @Override
@@ -649,12 +647,7 @@ public abstract class AbstractItemManager extends AbstractModelGenerator impleme
                 }
                 if (itemModel != null && (hasModelSection || forceItemModel)) {
                     if (clientBoundModel) {
-                        if (Config.obfuscateItemModel() && !section.getBoolean(SKIP_OBFUSCATION, false)) {
-                            itemBuilder.clientBoundProcessor(new ObfuscatedItemModelProcessor(itemModel));
-                            ObfuscatedItemModelProcessor.CAN_OBF.add(itemModel);
-                        } else {
-                            itemBuilder.clientBoundProcessor(new OverwritableItemModelProcessor(itemModel));
-                        }
+                        itemBuilder.clientBoundProcessor(new OverwritableItemModelProcessor(itemModel));
                     }
                     else itemBuilder.dataProcessor(new ItemModelProcessor(itemModel));
                 }

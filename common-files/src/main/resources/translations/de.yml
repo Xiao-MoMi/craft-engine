@@ -1,3 +1,27 @@
+command.pack_preference.unchanged: '<red>Deine Einstellung für Ressourcenpaket <arg:0> ist unverändert</red>'
+command.pack_preset.unchanged: '<red>Deine Ressourcenpaket-Einstellungen entsprechen bereits der Voreinstellung <arg:0></red>'
+command.admin_pack_preference.unchanged.single: '<red>Die Einstellung für Ressourcenpaket <arg:1> für <arg:0> ist unverändert</red>'
+command.admin_pack_preference.unchanged.multiple: '<red>Die Einstellungen für Ressourcenpaket <arg:1> sind bei <arg:0> Spielern unverändert</red>'
+command.admin_pack_preset.unchanged.single: '<red>Die Ressourcenpaket-Einstellungen von <arg:0> entsprechen bereits der Voreinstellung <arg:1></red>'
+command.admin_pack_preset.unchanged.multiple: '<red>Die Ressourcenpaket-Einstellungen von <arg:0> Spielern entsprechen bereits der Voreinstellung <arg:1></red>'
+command.pack_preference.enabled: '<white>Ressourcenpaket <arg:0> aktiviert</white>'
+command.pack_preference.disabled: '<white>Ressourcenpaket <arg:0> deaktiviert</white>'
+command.pack_preference.reset: '<white>Standardeinstellung für Ressourcenpaket <arg:0> wiederhergestellt</white>'
+command.admin_pack_preference.enabled.single: '<white>Ressourcenpaket <arg:1> für <arg:0> aktiviert</white>'
+command.admin_pack_preference.enabled.multiple: '<white>Ressourcenpaket <arg:1> für <arg:0> Spieler aktiviert</white>'
+command.admin_pack_preference.disabled.single: '<white>Ressourcenpaket <arg:1> für <arg:0> deaktiviert</white>'
+command.admin_pack_preference.disabled.multiple: '<white>Ressourcenpaket <arg:1> für <arg:0> Spieler deaktiviert</white>'
+command.admin_pack_preference.reset.single: '<white>Standardeinstellung für Ressourcenpaket <arg:1> für <arg:0> wiederhergestellt</white>'
+command.admin_pack_preference.reset.multiple: '<white>Standardeinstellung für Ressourcenpaket <arg:1> für <arg:0> Spieler wiederhergestellt</white>'
+command.admin_pack_preference.failure.single: '<red>Die Einstellung für Ressourcenpaket <arg:1> für <arg:0> konnte nicht aktualisiert werden. Prüfe die Konsole</red>'
+command.admin_pack_preference.failure.multiple: '<red>Einstellungen für Ressourcenpaket <arg:1> für <arg:0> Spieler aktualisiert; bei <arg:2> Spielern fehlgeschlagen. Prüfe die Konsole</red>'
+command.admin_pack_preset.success.single: '<white>Ressourcenpaket-Voreinstellung <arg:1> auf <arg:0> angewendet</white>'
+command.admin_pack_preset.success.multiple: '<white>Ressourcenpaket-Voreinstellung <arg:1> auf <arg:0> Spieler angewendet</white>'
+command.admin_pack_preset.failure.single: '<red>Ressourcenpaket-Voreinstellung <arg:1> konnte nicht auf <arg:0> angewendet werden. Prüfe die Konsole</red>'
+command.admin_pack_preset.failure.multiple: '<red>Ressourcenpaket-Voreinstellung <arg:1> auf <arg:0> Spieler angewendet; bei <arg:2> Spielern fehlgeschlagen. Prüfe die Konsole</red>'
+command.pack_preset.unknown: '<red>Unbekannte Ressourcenpaket-Voreinstellung: <arg:0></red>'
+command.pack_preset.no_permission: '<red>Du hast keine Berechtigung, die Ressourcenpaket-Voreinstellung <arg:0> zu verwenden</red>'
+command.pack_preset.success: '<white>Ressourcenpaket-Voreinstellung <arg:0> angewendet</white>'
 exception.invalid_syntax: '<red>Ungültige Syntax. Korrekte Syntax: <white><arg:0></white></red>'
 exception.invalid_argument: '<red>Ungültiges Argument. Grund: <white><arg:0></white></red>'
 exception.invalid_sender: <red><arg:0> darf diesen Befehl nicht ausführen. Muss vom Typ <arg:1> sein</red>
@@ -35,7 +59,6 @@ argument.parse.failure.aggregate.missing: <red>Fehlende Komponente '<arg:0>'</re
 argument.parse.failure.aggregate.failure: "<red>Ungültige Komponente '<arg:0>': <arg:1></red>"
 argument.parse.failure.either: <red>Konnte <arg:1> oder <arg:2> nicht aus '<arg:0>' auflösen</red>
 argument.parse.failure.namedtextcolor: <red>'<arg:0>' ist keine benannte Textfarbe</red>
-command.reload.too_fast: <red>Du lädst das Plugin zu schnell neu; der vorherige Reload ist noch nicht abgeschlossen</red>
 command.reload.config.failure: <red>Configs konnten nicht neu geladen werden. Bitte prüfe die Konsolen-Logs</red>
 command.reload.config.success: <dark_gray>» </dark_gray><gradient:#F4A460:#FFD700><b>CraftEngine</b></gradient> <gray>•</gray> <white>Configs neu geladen <gray>(<hover:show_text:'<gray>Async/Sync'><color:#FFD700><arg:1></color>/<color:#F4A460><arg:2></color></hover> ms)</gray></white>
 command.reload.config.issues: <#FF5555>⚠ <bold><arg:0></bold> Problem(e) gefunden. <gray><italic>(Details in der Konsole prüfen)</italic></gray>
@@ -52,9 +75,11 @@ command.item.clear.success.single: <white><arg:0> Item(s) von Spieler <arg:1> en
 command.item.clear.success.multiple: <white><arg:0> Item(s) von <arg:1> Spielern entfernt</white>
 command.item.clear.test.single: <white><arg:0> passendes Item auf Spieler <arg:1> gefunden</white>
 command.item.clear.test.multiple: <white><arg:0> passendes Item auf <arg:1> Spielern gefunden</white>
-command.item.set_custom_model_data: <white>CustomModelData auf '<arg:0>' gesetzt</white>
-command.item.set_item_model: <white>ItemModel auf '<arg:0>' gesetzt</white>
-command.item.remove_item_component: <white>Item-Komponente '<arg:0>' entfernt</white>
+command.item.component.add: <white>Item-Komponente '<arg:0>' gesetzt</white>
+command.item.component.remove: <white>Item-Komponente '<arg:0>' entfernt</white>
+command.item.component.reset: <white>Item-Komponente '<arg:0>' auf den Standardwert zurückgesetzt</white>
+command.item.component.unknown: <red>Unbekannte Item-Komponente '<arg:0>'</red>
+command.item.component.invalid_value: '<red>Ungültiger SNBT-Wert für Item-Komponente ''<arg:0>'': <arg:1></red>'
 command.item.browser.missing_element: <red>Item-Browser kann aufgrund eines fehlenden GUI-Elements '<arg:0>' nicht geöffnet werden</red><gray><i><newline>Falls du nicht weißt, was diesen Fehler verursacht hat, klicke bitte <red><b><u><click:run_command:'/ce resource save-default /internal'><hover:show_text:'Plugin-interne Assets freigeben'>HIER</hover></click></u></b></red>, um die internen Assets des Plugins freizugeben</i></gray>
 command.search_recipe.not_found: <red>Kein Rezept für dieses Item gefunden</red>
 command.search_usage.not_found: <red>Keine Verwendung für dieses Item gefunden</red>
@@ -77,8 +102,6 @@ command.resource.create.failure.invalid_namespace: <red>Fehler beim Erstellen de
 command.resource.create.failure.exists: <red>Ressource <arg:0> existiert bereits.</red>
 command.resource.save_default.success: <white>Standard-Assets aus '<arg:0>' erfolgreich gespeichert</white>
 command.resource.save_default.failure: <red>Ein unbekannter Fehler ist beim Speichern der Standard-Assets aufgetreten. Bitte prüfe die Konsole</red>
-command.upload.failure.not_supported: <red>Die aktuelle Hosting-Methode '<arg:0>' unterstützt das Hochladen von Resource Packs nicht.</red>
-command.upload.on_progress: <white>Upload gestartet. Prüfe die Konsole für weitere Informationen.</white>
 command.send_resource_pack.success.single: <white>Resource Pack an <arg:0> gesendet.</white>
 command.send_resource_pack.success.multiple: <white>Resource Packs an <arg:0> Spieler gesendet</white>
 command.locale.set.failure: '<red>Ungültiges Locale-Format: <arg:0></red>'
@@ -145,10 +168,6 @@ loot.function.formula.unknown_type: Unbekannter Formula-Typ '<arg:0>'
 host.unknown_type: Unbekannter Resource-Pack-Host-Typ '<arg:0>'
 host.missing_environment_variable: Fehlende Umgebungsvariable '<arg:0>'
 host.get_url_failed: "Fehler beim Abrufen der Download-URL für das Resource Pack für Spieler <arg:0>"
-host.handle_response_failed: "Fehler bei der Verarbeitung der Resource-Pack-Antwort für Spieler <arg:0>"
-host.upload_started: "Initialisiere Upload des Resource Packs..."
-host.upload_finished: "Resource Pack erfolgreich hochgeladen in <arg:0> ms"
-host.upload_failed: "Fehler beim Hochladen des Resource Packs"
 host.lobfile.storage_usage: "Speichernutzung: <arg:0>/<arg:1> MB | <arg:2>/<arg:3> Dateien"
 host.self.http_server_started: "Netty HTTP-Server gestartet auf Port: <arg:0>"
 config.errors_detected: Fehler in config.yml gefunden - <arg:0>
@@ -160,13 +179,9 @@ resource_pack.invalid_overlay_format: Ungültiges Overlay-Format '<arg:0>'. Over
 resource_pack.generation_started: Generiere Resource Pack...
 resource_pack.generation_finished: Resource Pack in <arg:0>ms generiert
 resource_pack.validation_started: 'Validiere Resource Pack... (Fortschritt: <arg:0>/<arg:1> | Pack Format: <arg:2>~<arg:3> | Overlays: <arg:4>)'
-resource_pack.validation_finished: Resource Pack in <arg:0>ms validiert
 resource_pack.json_optimization_started: '> Optimiere JSON-Dateien...'
 resource_pack.texture_optimization_started: '> Optimiere Textur-Dateien...'
 resource_pack.optimization_result: '> □ Vor/Nach/Verhältnis: <arg:0>/<arg:1>/<arg:2>'
-resource_pack.optimization_finished: Resource Pack in <arg:0>ms optimiert
-resource_pack.compression_started: Komprimiere Resource Pack...(Dieser Vorgang kann länger dauern, falls Obfuscation aktiviert ist)
-resource_pack.compression_finished: Resource Pack in <arg:0>ms komprimiert
 resource_pack.duplicated_files: Doppelte Dateien gefunden. Bitte löse diese über die 'resource-pack.duplicated-files-handler' Sektion in der config.yml
 resource_pack.malformatted_json: JSON-Datei '<arg:0>' ist fehlerhaft formatiert
 resource_pack.not_a_json_object: JSON-Datei '<arg:0>' ist kein JSON-Objekt
@@ -177,7 +192,6 @@ resource_pack.item_model.conflict: Item-Modell '<arg:0>' konnte nicht generiert 
 resource_pack.missing_font_texture: "Font '<arg:0>' fehlt die Textur '<arg:1>'"
 resource_pack.missing_model_texture: "Modell '<arg:0>' fehlt die Textur '<arg:1>'"
 resource_pack.missing_equipment_texture: "Equipment '<arg:0>' fehlt die Textur '<arg:1>'"
-resource_pack.missing_atlas_texture: "Atlas '<arg:0>' fehlt die Textur '<arg:1>'"
 resource_pack.missing_item_model: "Item '<arg:0>' fehlt die Modelldatei '<arg:1>'"
 resource_pack.missing_block_model: "Block State '<arg:0>' fehlt die Modelldatei '<arg:1>'"
 resource_pack.missing_parent_model: "Modell '<arg:0>' kann das Parent-Modell '<arg:1>' nicht finden"
@@ -185,7 +199,6 @@ resource_pack.missing_sound: "Sound Event '<arg:0>' fehlt die OGG-Datei '<arg:1>
 resource_pack.texture_not_in_atlas: "Textur '<arg:0>' ist nicht im Atlas definiert. Du musst den Texturpfad zum Atlas hinzufügen oder die Option 'fix-atlas' in der config.yml aktivieren"
 resource_pack.multiple_atlases: "Modell '<arg:0>' verwendet mehrere Atlanten: erwartet '<arg:1>', aber gefunden '<arg:2>'. Stelle sicher, dass alle Modelltexturen vom selben Atlas stammen"
 resource_pack.duplicated_sprite: "Modell '<arg:0>' kann nicht geladen werden. Doppeltes Sprite '<arg:1>' aus Atlas '<arg:2>', bereits definiert in Atlas '<arg:3>'"
-resource_pack.bad_atlas: "Modell '<arg:0>' konnte nicht geladen werden. Sprite '<arg:1>' sollte vom Atlas '<arg:2>' stammen, kommt aber tatsächlich vom Atlas '<arg:3>'"
 resource.argument.type.section: Konfigurations-Sektion
 resource.argument.type.boolean: Boolean
 resource.argument.type.int: Integer
@@ -203,7 +216,6 @@ resource.argument.type.list: Liste
 resource.argument.type.color: Farbe
 resource.argument.type.number: Zahl https://xiao-momi.github.io/craft-engine-wiki/reference/number_format
 resource.argument.type.item_model_definition: Item-Modell-Definition
-resource.argument.type.json: JSON
 resource.argument.type.any: Beliebig
 resource.argument.type.blockstate: Block State
 resource.argument.parser.section: Konfigurations-Sektion erwartet, gefunden '<arg:0>'
@@ -219,12 +231,10 @@ resource.argument.parser.snbt: 'Ungültiges SNBT-Format ''<arg:0>''. Details: <a
 resource.argument.parser.aabb: Kann '<arg:0>' nicht als AABB parsen. (Erwartetes Format für zwei Punkte 'x1,y1,z1,x2,y2,z2', z.B. 0,0,0,1,1,1)
 resource.argument.parser.blockstate: Kann '<arg:0>' nicht als Block State parsen. (z.B. minecraft:wheat[age=3])
 resource.argument.parser.identifier: 'Kann ''<arg:0>'' nicht als Identifier parsen. Guide: https://minecraft.wiki/w/Identifier#Legal_characters'
-resource.argument.parser.list: Liste erwartet, gefunden '<arg:0>'
 resource.argument.parser.nonempty_list: Nicht-leere Liste erwartet
 resource.argument.parser.fixed_size_list: Liste mit '<arg:0>' Element(en) erwartet
 resource.argument.parser.nonempty_string: Nicht-leerer String erwartet
 resource.argument.parser.split: Aufteilung in '<arg:0>' Teile erwartet, aber '<arg:1>' erhalten
-resource.argument.parser.number: Zahl erwartet, gefunden '<arg:0>'
 resource.argument.parser.uuid: Kann '<arg:0>' nicht als UUID parsen.
 resource.config_loaded: <arg:0> geladen in <arg:1>ms (<arg:2>)
 resource.pack_loaded: 'Pack geladen: <arg:0>. Default Namespace: <arg:1>'
@@ -246,11 +256,9 @@ resource.image.height_ascent_conflict: Höhe '<arg:0>' sollte nicht niedriger al
 resource.emoji.invalid_image_format: Ungültiges Bildformat '<arg:0>'
 resource.emoji.unknown_image: Unbekanntes Bild '<arg:0>'
 resource.equipment.unknown_type: Unbekannter Equipment-Typ '<arg:0>'
-resource.equipment.unknown_layer_type: Unbekannter Layer-Typ für Equipment '<arg:0>'
 resource.equipment.invalid_sacrificed_armor: Ungültiger Vanilla-Rüstungstyp '<arg:0>'
 resource.equipment_set.invalid_slot_name: Ungültiger Equipment-Set-Slot-Name '<arg:0>'
 resource.furniture.element.unknown_type: Unbekannter Möbel-Elementtyp '<arg:0>'
-resource.furniture.data_source.unknown_type: Unbekannter Möbel-Datenquellentyp '<arg:0>'
 resource.furniture.hitbox.unknown_type: Unbekannter Hitbox-Typ für Möbel '<arg:0>'
 resource.furniture.behavior.unknown_type: Unbekannter Behavior-Typ für Möbel '<arg:0>'
 resource.furniture.hitbox.custom.invalid_entity_type: Ungültiger Entity-Typ '<arg:0>'
@@ -300,3 +308,57 @@ resource.recipe.shaped.invalid_pattern: Ungültiges Pattern '<arg:0>'
 resource.recipe.shaped.invalid_symbol: Ungültiges Symbol '<arg:0>'
 resource.recipe.post_processor.unknown_type: Unbekannter Recipe-Post-Processor-Typ '<arg:0>'
 resource.recipe.unknown_type: Unbekannter Recipe-Typ '<arg:0>'
+workflow.unknown_type: 'Unbekannter Ressourcenpaket-Workflow-Typ ''<arg:0>'''
+storage.unknown_type: 'Unbekannter Speichertyp ''<arg:0>'''
+storage.invalid_path: 'Ungültiger Speicherpfad'
+command.workflow.started: '<white>Ressourcenpaket-Workflow <arg:0> wird ausgeführt</white>'
+command.pack_preference.no_permission: '<red>Du hast keine Berechtigung, die Einstellungen für das Ressourcenpaket <arg:0> zu ändern</red>'
+command.workflow.success: '<white>Ressourcenpaket-Workflow <arg:0> abgeschlossen (<arg:1> ms)</white>'
+command.workflow.failure: '<red>Ressourcenpaket-Workflow <arg:0> konnte nicht ausgeführt werden. Siehe Konsole</red>'
+command.workflow.unknown: '<red>Unbekannter Ressourcenpaket-Workflow: <arg:0></red>'
+command.enchant.success.single: '<white><arg:0> auf <arg:1> angewendet</white>'
+command.enchant.success.multiple: '<white><arg:0> auf <arg:1> Wesen angewendet</white>'
+command.enchant.failure.not_exist: '<red>Unbekannte Verzauberung ''<arg:0>''</red>'
+command.enchant.failure.level: '<red>Stufe <arg:0> überschreitet die Höchststufe <arg:1></red>'
+command.enchant.failure.incompatible: '<red>Die Verzauberung kann nicht auf <arg:0> angewendet werden</red>'
+command.enchant.failure.itemless: '<red><arg:0> hält keinen Gegenstand im ausgewählten Slot</red>'
+command.enchant.failure.entity: '<red><arg:0> ist kein Lebewesen</red>'
+command.enchant.failure.no_target: '<red>Es konnten keine Verzauberungen angewendet werden</red>'
+command.resource.search.parser.not_found: '<red>Konfigurationstyp ''<arg:0>'' nicht gefunden</red>'
+command.resource.search.resource.not_found: '<red>Keine Ressource mit der ID ''<arg:0>'' gefunden</red>'
+command.resource.search.success: '<white>Der Pfad von ''<arg:0>'' ist <arg:1></white>'
+attribute.damage_formula.unknown_type: 'Unbekannter Schadensformeltyp ''<arg:0>'''
+attribute.damage_effect.unknown_type: 'Unbekannter Effekttyp nach Schaden ''<arg:0>'''
+attribute.damage_effect.unknown_target: 'Unbekanntes Ziel für Effekt nach Schaden ''<arg:0>'''
+damage_indicator.unknown_type: 'Unbekannter Schadensanzeigetyp ''<arg:0>'''
+attribute.base_value_source.unknown_type: 'Unbekannter Basiswertquellentyp ''<arg:0>'''
+attribute.sync_value_provider.unknown_type: 'Unbekannter Synchronisierungswertanbietertyp ''<arg:0>'''
+attribute.value_transformer.unknown_type: 'Unbekannter Wertumwandlertyp ''<arg:0>'''
+attribute.unknown_operation: 'Unbekannte Attributoperation ''<arg:0>'''
+attribute.derived.unknown_attribute: 'Unbekanntes Attribut ''<arg:0>'' im abgeleiteten Ausdruck ''<arg:1>'''
+attribute.derived.unknown_type: 'Unbekannter Typ für abgeleiteten Wert ''<arg:0>'''
+category.source.unknown_type: 'Unbekannter Kategoriequellentyp ''<arg:0>'''
+category.source.invalid_regex: 'Ungültiger regulärer Ausdruck für Kategoriequelle ''<arg:0>'''
+loot.source.unknown_type: 'Unbekannter Beutequellentyp ''<arg:0>'''
+loot.source.unknown_overwrite_mode: 'Unbekannter Überschreibmodus für Beutequelle ''<arg:0>'''
+loot.source.target_not_allowed: 'Beutequellentyp ''<arg:0>'' unterstützt ''target'' nicht'
+loot.source.invalid_target: 'Ungültiges Beutequellenziel ''<arg:0>'''
+resource_pack.model_uv_out_of_bounds: 'Modell ''<arg:0>'', Element <arg:1>, Seite ''<arg:2>'' verwendet UV <arg:3> außerhalb des gültigen Bereichs mit Textur ''<arg:4>''. UV-Werte außerhalb von [0, 16] können die Modellverarbeitung auf Clients ab 26.1 verhindern'
+resource.block.state.invalid_rotation: 'Ungültige Drehung ''<arg:1>'' auf der <arg:0>-Achse; erwartet wird ein Vielfaches von 90 Grad'
+resource.item.unknown_data_component_type: 'Unbekannter Datenkomponententyp ''<arg:0>'''
+resource.item.data_component_predicate.unknown_type: 'Unbekannter Datenkomponenten-Prädikattyp ''<arg:0>'''
+resource.recipe.shaped_transform.ambigious_source: 'Mindestens zwei als Quelle markierte Zutaten im geformten Umwandlungsrezept gefunden: ''<arg:0>'', ''<arg:1>'''
+resource.recipe.shaped_transform.source_not_found: 'Keine als Quelle markierte Zutat im Rezept gefunden'
+resource.recipe.shapeless_transform.ambigious_source: 'Mindestens zwei als Quelle markierte Zutaten im formlosen Umwandlungsrezept gefunden: ''<arg:0>'''
+resource.recipe.shapeless_transform.source_not_found: 'Keine als Quelle markierte Zutat im Rezept gefunden'
+resource_pack.bad_sprite: 'Block ''<arg:0>'' verwendet Sprite ''<arg:1>'', das im Atlas ''<arg:2>'' sein sollte, aber nur im Atlas ''<arg:3>'' definiert ist'
+host.upload_started: "Initialisiere Upload des Resource Packs..."
+host.upload_finished: "Resource Pack erfolgreich hochgeladen in <arg:0> ms"
+resource_pack.validation_finished: Resource Pack in <arg:0>ms validiert
+resource_pack.optimization_finished: Resource Pack in <arg:0>ms optimiert
+resource_pack.compression_started: Komprimiere Resource Pack...(Dieser Vorgang kann länger dauern, falls Obfuscation aktiviert ist)
+resource_pack.compression_finished: Resource Pack in <arg:0>ms komprimiert
+resource_pack.packsquash_started: 'PackSquash wird mit Konfiguration <arg:0> ausgeführt...'
+resource_pack.packsquash_finished: 'PackSquash in <arg:0>ms abgeschlossen'
+resource_pack.zip_loaded: 'Ressourcenpaket-ZIP <arg:0> in <arg:1>ms geladen'
+resource_pack.export_finished: 'Ressourcenpaket in <arg:1>ms nach <arg:0> exportiert'

@@ -38,7 +38,7 @@ items:
                 height: 1.2
                 interactive: true
                 seats:
-                  - 0,0,-0.1 0
+                  - 0,0,-0.1 0 true
         loot:
           template: default:loot_table/furniture
           arguments:

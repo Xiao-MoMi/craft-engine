@@ -1,5 +1,6 @@
 package net.momirealms.craftengine.core.item.processor;
 
+import net.kyori.adventure.text.Component;
 import net.momirealms.craftengine.core.attribute.vanilla.LegacyVanillaAttributes;
 import net.momirealms.craftengine.core.attribute.vanilla.VanillaAttributeModifier;
 import net.momirealms.craftengine.core.attribute.vanilla.VanillaAttributes;
@@ -9,7 +10,7 @@ import net.momirealms.craftengine.core.item.component.DataComponentKeys;
 import net.momirealms.craftengine.core.plugin.config.ConfigSection;
 import net.momirealms.craftengine.core.plugin.config.ConfigValue;
 import net.momirealms.craftengine.core.plugin.context.number.NumberProvider;
-import net.momirealms.craftengine.core.util.AdventureHelper;
+import net.momirealms.craftengine.core.plugin.text.minimessage.FormattedLine;
 import net.momirealms.craftengine.core.util.Key;
 import net.momirealms.craftengine.core.util.VersionHelper;
 import org.jetbrains.annotations.Nullable;
@@ -126,6 +127,16 @@ public final class AttributeModifiersProcessor implements SimpleNetworkItemProce
         return "AttributeModifiers";
     }
 
+    @Override
+    public boolean isConstant() {
+        for (PreModifier modifier : this.modifiers) {
+            if (!modifier.isConstant()) {
+                return false;
+            }
+        }
+        return true;
+    }
+
     public record PreModifier(String type,
                               VanillaAttributeModifier.Slot slot,
                               Optional<Key> id,
@@ -147,10 +158,23 @@ public final class AttributeModifiersProcessor implements SimpleNetworkItemProce
                     this.amount.getDouble(context), this.operation, this.display == null ? null : this.display.toDisplay(context));
         }
 
-        public record PreDisplay(VanillaAttributeModifier.Display.Type type, String value) {
+        public boolean isConstant() {
+            return this.id.isPresent()
+                    && this.amount.isConstant()
+                    && (this.display == null || this.display.isConstant());
+        }
+
+        public record PreDisplay(VanillaAttributeModifier.Display.Type type, @Nullable FormattedLine value) {
+
+            public boolean isConstant() {
+                return value == null || value.isConstant();
+            }
 
             public VanillaAttributeModifier.Display toDisplay(ItemBuildContext context) {
-                return new VanillaAttributeModifier.Display(type, AdventureHelper.deserialize(value, context));
+                if (value == null) {
+                    return new VanillaAttributeModifier.Display(type, Component.empty());
+                }
+                return new VanillaAttributeModifier.Display(type, value.parse(context));
             }
         }
     }
@@ -171,13 +195,12 @@ public final class AttributeModifiersProcessor implements SimpleNetworkItemProce
                     ConfigSection displaySection = section.getNonNullSection("display");
                     VanillaAttributeModifier.Display.Type displayType = displaySection.getNonNullEnum("type", VanillaAttributeModifier.Display.Type.class);
                     if (displayType == VanillaAttributeModifier.Display.Type.OVERRIDE) {
-                        display = new PreModifier.PreDisplay(displayType, displaySection.getNonNullString("value"));
+                        display = new PreModifier.PreDisplay(displayType, FormattedLine.create(displaySection.getNonNullString("value")));
                     } else {
                         display = new PreModifier.PreDisplay(displayType, null);
                     }
                 }
-                return new PreModifier(nativeType.value(), slot, id,
-                        amount, operation, display);
+                return new PreModifier(nativeType.value(), slot, id, amount, operation, display);
             });
             return new AttributeModifiersProcessor(preModifiers);
         }

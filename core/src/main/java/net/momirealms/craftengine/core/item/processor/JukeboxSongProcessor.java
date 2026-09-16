@@ -21,6 +21,11 @@ public final class JukeboxSongProcessor implements ItemProcessor {
         context.item().jukeboxSong(this.song);
     }
 
+    @Override
+    public boolean isConstant() {
+        return true;
+    }
+
     private static class Factory implements ItemProcessorFactory<JukeboxSongProcessor> {
 
         @Override

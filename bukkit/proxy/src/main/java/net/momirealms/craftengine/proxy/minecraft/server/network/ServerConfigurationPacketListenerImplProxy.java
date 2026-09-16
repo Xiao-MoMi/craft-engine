@@ -24,6 +24,9 @@ public interface ServerConfigurationPacketListenerImplProxy {
     @FieldGetter(name = "configurationTasks")
     Queue<Object> getConfigurationTasks(Object target);
 
+    @FieldGetter(name = "currentTask")
+    Object getCurrentTask(Object target);
+
     @MethodInvoker(name = "returnToWorld")
     void returnToWorld(Object target);
 }

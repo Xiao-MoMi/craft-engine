@@ -43,6 +43,18 @@ public final class InsertLoreProcessor implements SimpleNetworkItemProcessor {
     }
 
     @Override
+    public boolean isConstant() {
+        if (this.lores != null) {
+            for (LoreModification modification : this.lores) {
+                if (!modification.isConstant()) {
+                    return false;
+                }
+            }
+        }
+        return this.fallback == null || this.fallback.isConstant();
+    }
+
+    @Override
     public void apply(ItemBuildContext context) {
         List<Component> loreToInsert = getLore(context).toList();
         if (loreToInsert.isEmpty()) {

@@ -9,16 +9,17 @@ import net.momirealms.craftengine.core.plugin.config.ConfigSection;
 import net.momirealms.craftengine.core.plugin.network.NetWorkUser;
 import net.momirealms.craftengine.core.util.GsonHelper;
 import net.momirealms.craftengine.core.util.HashUtils;
+import net.momirealms.craftengine.core.util.Key;
 import net.momirealms.craftengine.core.util.Pair;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.net.URI;
 import java.net.URLEncoder;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
+import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -27,6 +28,7 @@ import java.security.MessageDigest;
 import java.time.Duration;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.Flow;
 
 public final class OpenListHost implements ResourcePackHost {
     public static final ResourcePackHostFactory<OpenListHost> FACTORY = new Factory();
@@ -37,14 +39,13 @@ public final class OpenListHost implements ResourcePackHost {
     private final String otpCode;
     private final Duration jwtTokenExpiration;
     private final String uploadPath;
-    private final boolean disableUpload;
     private final boolean isAlist;
     private final Path cacheFilePath;
     private Pair<String, Date> jwtToken;
     private String cachedSha1;
 
     private OpenListHost(String apiUrl, String userName, String password, String filePassword, String otpCode,
-                        Duration jwtTokenExpiration, String uploadPath, boolean disableUpload, boolean isAlist, Path cacheFilePath) {
+                        Duration jwtTokenExpiration, String uploadPath, boolean isAlist, Path cacheFilePath) {
         this.apiUrl = apiUrl;
         this.userName = userName;
         this.password = password;
@@ -52,7 +53,6 @@ public final class OpenListHost implements ResourcePackHost {
         this.otpCode = otpCode;
         this.jwtTokenExpiration = jwtTokenExpiration;
         this.uploadPath = uploadPath;
-        this.disableUpload = disableUpload;
         this.isAlist = isAlist;
         this.cacheFilePath = cacheFilePath;
 
@@ -81,14 +81,14 @@ public final class OpenListHost implements ResourcePackHost {
                     return;
                 }
 
-                HttpRequest request = HttpRequest.newBuilder()
+                HttpRequest request = HttpClientManager.requestBuilder()
                         .uri(URI.create(this.apiUrl + "/api/fs/get"))
                         .header("Authorization", token)
                         .header("Content-Type", "application/json")
                         .POST(getRequestResourcePackDownloadLinkPost())
                         .build();
 
-                HttpClientManager.get().sendAsync(request, HttpResponse.BodyHandlers.ofString())
+                HttpClientManager.sendAsync(request, HttpResponse.BodyHandlers.ofString())
                         .thenAccept(response -> handleResourcePackDownloadLinkResponse(response, future))
                         .exceptionally(ex -> {
                             future.completeExceptionally(ex);
@@ -142,16 +142,10 @@ public final class OpenListHost implements ResourcePackHost {
 
     @Override
     public CompletableFuture<Void> upload(Path resourcePackPath) {
-        if (this.disableUpload) {
-            this.cachedSha1 = "";
-            saveCacheToDisk();
-            return CompletableFuture.completedFuture(null);
-        }
-
         CompletableFuture<Void> future = new CompletableFuture<>();
         CraftEngine.instance().scheduler().executeAsync(() -> {
             try {
-                HttpRequest request = HttpRequest.newBuilder()
+                HttpRequest request = HttpClientManager.requestBuilder()
                         .uri(URI.create(this.apiUrl + "/api/fs/put"))
                         .header("Authorization", getOrRefreshJwtToken())
                         .header("File-Path", URLEncoder.encode(this.uploadPath, StandardCharsets.UTF_8).replace("/", "%2F"))
@@ -161,7 +155,7 @@ public final class OpenListHost implements ResourcePackHost {
                         .PUT(HttpRequest.BodyPublishers.ofFile(resourcePackPath))
                         .build();
 
-                HttpClientManager.get().sendAsync(request, HttpResponse.BodyHandlers.ofString())
+                HttpClientManager.sendAsync(request, HttpResponse.BodyHandlers.ofString())
                         .thenAccept(resp -> {
                             if (resp.statusCode() == 200) {
                                 this.cachedSha1 = HashUtils.sha1(resourcePackPath);
@@ -182,18 +176,31 @@ public final class OpenListHost implements ResourcePackHost {
     }
 
     private String fetchRemoteSha1(String url) throws Exception {
-        HttpRequest request = HttpRequest.newBuilder().uri(URI.create(url)).GET().build();
-        HttpResponse<InputStream> response = HttpClientManager.get().send(request, HttpResponse.BodyHandlers.ofInputStream());
+        HttpRequest request = HttpClientManager.requestBuilder().uri(URI.create(url)).GET().build();
+        MessageDigest digest = MessageDigest.getInstance("SHA-1");
+        // Keep hashing inside the HTTP response future so the deadline also covers the body.
+        return HttpClientManager.send(request, info -> HttpResponse.BodySubscribers.fromSubscriber(
+                new Flow.Subscriber<List<ByteBuffer>>() {
+                    private Flow.Subscription subscription;
 
-        try (InputStream is = response.body()) {
-            MessageDigest md = MessageDigest.getInstance("SHA-1");
-            byte[] buffer = new byte[8192];
-            int len;
-            while ((len = is.read(buffer)) != -1) {
-                md.update(buffer, 0, len);
-            }
-            return HexFormat.of().formatHex(md.digest());
-        }
+                    @Override
+                    public void onSubscribe(Flow.Subscription subscription) {
+                        this.subscription = subscription;
+                        subscription.request(1);
+                    }
+
+                    @Override
+                    public void onNext(List<ByteBuffer> buffers) {
+                        buffers.forEach(digest::update);
+                        this.subscription.request(1);
+                    }
+
+                    @Override
+                    public void onError(Throwable error) {}
+
+                    @Override
+                    public void onComplete() {}
+                }, ignored -> HexFormat.of().formatHex(digest.digest()))).body();
     }
 
     private boolean isResponseSuccess(JsonObject json) {
@@ -201,7 +208,8 @@ public final class OpenListHost implements ResourcePackHost {
     }
 
     private boolean shouldUpdateCache() {
-        return (this.cachedSha1 == null || this.cachedSha1.isEmpty()) && this.disableUpload;
+        // 未执行上传步骤时，也允许直接使用托管端已有的资源包。
+        return this.cachedSha1 == null || this.cachedSha1.isEmpty();
     }
 
     private void fail(CompletableFuture<?> future, String reason, String body) {
@@ -215,13 +223,13 @@ public final class OpenListHost implements ResourcePackHost {
             return this.jwtToken.left();
         }
 
-        HttpRequest request = HttpRequest.newBuilder()
+        HttpRequest request = HttpClientManager.requestBuilder()
                 .uri(URI.create(this.apiUrl + "/api/auth/login"))
                 .header("Content-Type", "application/json")
                 .POST(getLoginPost())
                 .build();
 
-        HttpResponse<String> response = HttpClientManager.get().send(request, HttpResponse.BodyHandlers.ofString());
+        HttpResponse<String> response = HttpClientManager.send(request, HttpResponse.BodyHandlers.ofString());
 
         if (response.statusCode() != 200) {
             throw new IllegalStateException("Authentication failed (HTTP " + response.statusCode() + "): " + response.body());
@@ -279,14 +287,13 @@ public final class OpenListHost implements ResourcePackHost {
         private static final String[] API_URL = ConfigKeys.of("api_url");
         private static final String[] JWT_TOKEN_EXPIRATION = ConfigKeys.of("jwt_token_expiration");
         private static final String[] UPLOAD_PATH = ConfigKeys.of("upload_path");
-        private static final String[] DISABLE_UPLOAD = ConfigKeys.of("disable_upload");
         private static final String[] OPT_CODE = ConfigKeys.of("otp_code");
         private static final String[] CACHE_FILE_NAME = ConfigKeys.of("cache_file_name");
 
         @Override
-        public OpenListHost create(ConfigSection section) {
+        public OpenListHost create(String id, ConfigSection section) {
             boolean useEnv = section.getBoolean(USE_ENVIRONMENT_VARIABLES);
-            boolean isAlist = "alist".equals(section.get("type")); // 简单的判断是否为 alist 以便兼容旧版本环境变量及缓存读取
+            boolean isAlist = Key.ce(section.getNonEmptyString("type")).equals(ResourcePackHosts.ALIST.id());
             String apiUrl = section.getNonEmptyString(API_URL);
             String userName = useEnv ? getNonNullEnvironmentVariable(section, isAlist ? "CE_ALIST_USERNAME" : "CE_OPENLIST_USERNAME") : section.getNonEmptyString("username");
             String password = useEnv ? getNonNullEnvironmentVariable(section, isAlist ? "CE_ALIST_PASSWORD" : "CE_OPENLIST_PASSWORD") : section.getNonEmptyString("password");
@@ -294,10 +301,9 @@ public final class OpenListHost implements ResourcePackHost {
             String otpCode = section.getString(OPT_CODE, "");
             Duration jwtTokenExpiration = Duration.ofHours(section.getInt(JWT_TOKEN_EXPIRATION, 48));
             String uploadPath = section.getNonEmptyString(UPLOAD_PATH);
-            boolean disableUpload = section.getBoolean(DISABLE_UPLOAD);
             Path cacheFilePath = CraftEngine.instance().dataFolderPath().resolve("cache")
-                    .resolve(section.getValue(CACHE_FILE_NAME, it -> it.getAsNonEmptyString().replace("/", "_"), isAlist ? "alist.json" : "openlist.json"));
-            return new OpenListHost(apiUrl, userName, password, filePassword, otpCode, jwtTokenExpiration, uploadPath, disableUpload, isAlist, cacheFilePath);
+                    .resolve(section.getValue(CACHE_FILE_NAME, it -> it.getAsNonEmptyString().replace("/", "_"), (isAlist ? "alist_" : "openlist_") + id + ".json"));
+            return new OpenListHost(apiUrl, userName, password, filePassword, otpCode, jwtTokenExpiration, uploadPath, isAlist, cacheFilePath);
         }
     }
 }

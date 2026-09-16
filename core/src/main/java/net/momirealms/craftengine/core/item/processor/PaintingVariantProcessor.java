@@ -35,6 +35,11 @@ public final class PaintingVariantProcessor implements SimpleNetworkItemProcesso
     }
 
     @Override
+    public boolean isConstant() {
+        return true;
+    }
+
+    @Override
     public Key componentType(Item item, ItemBuildContext context) {
         return VersionHelper.isOrAbove1_21_5 ? DataComponentKeys.PAINTING_VARIANT : DataComponentKeys.ENTITY_DATA;
     }

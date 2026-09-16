@@ -6,6 +6,8 @@ import net.momirealms.craftengine.core.item.ItemBuildContext;
 import net.momirealms.craftengine.core.item.component.DataComponentKeys;
 import net.momirealms.craftengine.core.plugin.config.ConfigSection;
 import net.momirealms.craftengine.core.plugin.config.ConfigValue;
+import net.momirealms.craftengine.core.plugin.context.text.TextProvider;
+import net.momirealms.craftengine.core.plugin.context.text.TextProviders;
 import net.momirealms.craftengine.core.plugin.text.minimessage.FormattedLine;
 import net.momirealms.craftengine.core.util.AdventureHelper;
 import net.momirealms.craftengine.core.util.Key;
@@ -20,12 +22,12 @@ import java.util.Map;
 public final class WrittenBookContentProcessor implements SimpleNetworkItemProcessor {
     public static final ItemProcessorFactory<WrittenBookContentProcessor> FACTORY = new Factory();
     private final FilterableText title;
-    private final String author;
+    private final TextProvider author;
     private final int generation;
     private final boolean resolved;
     private final List<FilterableComponent> pages;
 
-    public WrittenBookContentProcessor(FilterableText title, String author, int generation, boolean resolved, List<FilterableComponent> pages) {
+    public WrittenBookContentProcessor(FilterableText title, TextProvider author, int generation, boolean resolved, List<FilterableComponent> pages) {
         this.title = title;
         this.author = author;
         this.generation = generation;
@@ -34,11 +36,41 @@ public final class WrittenBookContentProcessor implements SimpleNetworkItemProce
     }
 
     @Override
+    public boolean isConstant() {
+        if (!this.author.isConstant()) {
+            return false;
+        }
+        if (!this.title.raw.isConstant()) {
+            return false;
+        }
+        if (this.title.filtered != null && !this.title.filtered.isConstant()) {
+            return false;
+        }
+        for (FilterableComponent component : this.pages) {
+            List<FormattedLine> raw = component.raw;
+            for (FormattedLine line : raw) {
+                if (!line.isConstant()) {
+                    return false;
+                }
+            }
+            List<FormattedLine> filtered = component.filtered;
+            if (filtered != null) {
+                for (FormattedLine line : filtered) {
+                    if (!line.isConstant()) {
+                        return false;
+                    }
+                }
+            }
+        }
+        return true;
+    }
+
+    @Override
     public void apply(ItemBuildContext context) {
         Item item = context.item();
         CompoundTag bookTag = new CompoundTag();
         bookTag.put("title", this.title.toTag(context));
-        bookTag.putString("author", this.author);
+        bookTag.putString("author", this.author.get(context));
         bookTag.putInt("generation", this.generation);
         bookTag.putBoolean("resolved", this.resolved);
         ListTag pagesTag = new ListTag();
@@ -138,7 +170,7 @@ public final class WrittenBookContentProcessor implements SimpleNetworkItemProce
             if (pagesValue != null) {
                 pagesValue.forEach(v -> pages.add(FilterableComponent.fromConfig(v)));
             }
-            return new WrittenBookContentProcessor(title, author, generation, resolved, pages);
+            return new WrittenBookContentProcessor(title, TextProviders.fromString(author), generation, resolved, pages);
         }
     }
 }

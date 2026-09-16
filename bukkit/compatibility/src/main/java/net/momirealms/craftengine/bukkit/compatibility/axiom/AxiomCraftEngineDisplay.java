@@ -39,7 +39,7 @@ public final class AxiomCraftEngineDisplay {
     private void registerItem(ItemDefinition definition) {
         Item item;
         try {
-            item = definition.buildItem(ItemBuildContext.EMPTY);
+            item = definition.buildItem(ItemBuildContext.empty());
         } catch (Throwable t) {
             return;
         }

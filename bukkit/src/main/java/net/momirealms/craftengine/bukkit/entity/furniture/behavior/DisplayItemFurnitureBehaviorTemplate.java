@@ -28,7 +28,6 @@ import net.momirealms.craftengine.core.sound.SoundSource;
 import net.momirealms.craftengine.core.util.ItemUtils;
 import net.momirealms.craftengine.core.util.MiscUtils;
 import net.momirealms.craftengine.core.util.VersionHelper;
-import net.momirealms.craftengine.core.world.Vec3d;
 import net.momirealms.craftengine.core.world.WorldPosition;
 import net.momirealms.craftengine.core.world.context.InteractEntityContext;
 import net.momirealms.craftengine.proxy.minecraft.network.protocol.game.ClientboundAddEntityPacketProxy;
@@ -46,6 +45,7 @@ import org.joml.Vector3f;
 
 import java.util.*;
 import java.util.function.Consumer;
+import java.util.function.IntConsumer;
 
 public final class DisplayItemFurnitureBehaviorTemplate extends FurnitureBehaviorTemplate {
     public static final FurnitureBehaviorFactory<DisplayItemFurnitureBehaviorTemplate> FACTORY = new Factory();
@@ -241,9 +241,8 @@ public final class DisplayItemFurnitureBehaviorTemplate extends FurnitureBehavio
         public DisplayItemElement(Furniture furniture, DisplayItemFurnitureController furnitureHandler, Vector3f relative) {
             this.furniture = furniture;
             this.furnitureHandler = furnitureHandler;
-            WorldPosition furniturePos = furniture.position();
-            Vec3d position = Furniture.getRelativePosition(furniturePos, relative);
-            this.position = new WorldPosition(furniturePos.world, position.x, position.y, position.z, furniturePos.xRot, furniturePos.yRot);
+            WorldPosition position = furniture.placement().elementPosition(relative, 0, 0);
+            this.position = position;
             this.vehicleId = EntityUtils.ENTITY_COUNTER.incrementAndGet();
             this.passengerId = EntityUtils.ENTITY_COUNTER.incrementAndGet();
             this.spawnVehiclePacket = ClientboundAddEntityPacketProxy.INSTANCE.newInstance(
@@ -266,7 +265,7 @@ public final class DisplayItemFurnitureBehaviorTemplate extends FurnitureBehavio
         }
 
         @Override
-        public void gatherInteractableEntityId(Consumer<Integer> collector) {
+        public void gatherInteractableEntityId(IntConsumer collector) {
         }
 
         @Override

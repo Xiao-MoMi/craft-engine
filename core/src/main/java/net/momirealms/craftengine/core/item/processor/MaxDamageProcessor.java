@@ -25,6 +25,11 @@ public final class MaxDamageProcessor implements SimpleNetworkItemProcessor {
         return DataComponentKeys.MAX_DAMAGE;
     }
 
+    @Override
+    public boolean isConstant() {
+        return this.argument.isConstant();
+    }
+
     private static class Factory implements ItemProcessorFactory<MaxDamageProcessor> {
 
         @Override

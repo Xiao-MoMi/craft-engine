@@ -1,3 +1,27 @@
+command.pack_preference.unchanged: '<red>리소스팩 <arg:0>의 설정이 변경되지 않았습니다</red>'
+command.pack_preset.unchanged: '<red>리소스팩 설정이 이미 프리셋 <arg:0>과 일치합니다</red>'
+command.admin_pack_preference.unchanged.single: '<red><arg:0>의 리소스팩 <arg:1> 설정이 변경되지 않았습니다</red>'
+command.admin_pack_preference.unchanged.multiple: '<red><arg:0>명의 리소스팩 <arg:1> 설정이 변경되지 않았습니다</red>'
+command.admin_pack_preset.unchanged.single: '<red><arg:0>의 리소스팩 설정이 이미 프리셋 <arg:1>과 일치합니다</red>'
+command.admin_pack_preset.unchanged.multiple: '<red><arg:0>명의 리소스팩 설정이 이미 프리셋 <arg:1>과 일치합니다</red>'
+command.pack_preference.enabled: '<white>리소스팩 <arg:0>을 활성화했습니다</white>'
+command.pack_preference.disabled: '<white>리소스팩 <arg:0>을 비활성화했습니다</white>'
+command.pack_preference.reset: '<white>리소스팩 <arg:0>의 설정을 기본값으로 복원했습니다</white>'
+command.admin_pack_preference.enabled.single: '<white><arg:0>의 리소스팩 <arg:1>을 활성화했습니다</white>'
+command.admin_pack_preference.enabled.multiple: '<white><arg:0>명의 리소스팩 <arg:1>을 활성화했습니다</white>'
+command.admin_pack_preference.disabled.single: '<white><arg:0>의 리소스팩 <arg:1>을 비활성화했습니다</white>'
+command.admin_pack_preference.disabled.multiple: '<white><arg:0>명의 리소스팩 <arg:1>을 비활성화했습니다</white>'
+command.admin_pack_preference.reset.single: '<white><arg:0>의 리소스팩 <arg:1> 설정을 기본값으로 복원했습니다</white>'
+command.admin_pack_preference.reset.multiple: '<white><arg:0>명의 리소스팩 <arg:1> 설정을 기본값으로 복원했습니다</white>'
+command.admin_pack_preference.failure.single: '<red><arg:0>의 리소스팩 <arg:1> 설정을 변경하지 못했습니다. 콘솔을 확인하세요</red>'
+command.admin_pack_preference.failure.multiple: '<red><arg:0>명의 리소스팩 <arg:1> 설정을 변경했으며 <arg:2>명은 실패했습니다. 콘솔을 확인하세요</red>'
+command.admin_pack_preset.success.single: '<white><arg:0>에게 리소스팩 프리셋 <arg:1>을 적용했습니다</white>'
+command.admin_pack_preset.success.multiple: '<white><arg:0>명에게 리소스팩 프리셋 <arg:1>을 적용했습니다</white>'
+command.admin_pack_preset.failure.single: '<red><arg:0>에게 리소스팩 프리셋 <arg:1>을 적용하지 못했습니다. 콘솔을 확인하세요</red>'
+command.admin_pack_preset.failure.multiple: '<red><arg:0>명에게 리소스팩 프리셋 <arg:1>을 적용했으며 <arg:2>명은 실패했습니다. 콘솔을 확인하세요</red>'
+command.pack_preset.unknown: '<red>알 수 없는 리소스팩 프리셋: <arg:0></red>'
+command.pack_preset.no_permission: '<red>리소스팩 프리셋 <arg:0>을 사용할 권한이 없습니다</red>'
+command.pack_preset.success: '<white>리소스팩 프리셋 <arg:0>을 적용했습니다</white>'
 exception.invalid_syntax: '<red>잘못된 구문입니다. 올바른 구문: <white><arg:0></white></red>'
 exception.invalid_argument: '<red>잘못된 인수입니다. 이유: <white><arg:0></white></red>'
 exception.invalid_sender: <red><arg:0>은 이 명령어를 실행할 수 없습니다. <arg:1> 타입이어야 합니다.</red>'
@@ -35,7 +59,6 @@ argument.parse.failure.aggregate.missing: '<red>구성 요소 ''<arg:0>''이 누
 argument.parse.failure.aggregate.failure: '<red>잘못된 구성 요소 ''<arg:0>'': <arg:1></red>'
 argument.parse.failure.either: '<red>''<arg:0>''에서 <arg:1> 또는 <arg:2>를 해결할 수 없습니다.</red>'
 argument.parse.failure.namedtextcolor: '<red>''<arg:0>''은 이름이 지정된 텍스트 색상이 아닙니다.</red>'
-command.reload.too_fast: '<red>플러그인을 너무 빨리 리로드하고 있습니다. 이전 리로드가 아직 완료되지 않았습니다.</red>'
 command.reload.config.failure: '<red>설정 파일을 다시 불러오는 데 실패했습니다. 콘솔 로그를 확인하세요.</red>'
 command.reload.config.success: '<dark_gray>» </dark_gray><gradient:#F4A460:#FFD700><b>CraftEngine</b></gradient> <gray>•</gray> <white>설정 파일이 다시 불러와졌습니다 <gray>(<hover:show_text:''<gray>비동기/동기''><color:#FFD700><arg:1></color>/<color:#F4A460><arg:2></color></hover> ms)</gray>'
 command.reload.config.issues: '<#FF5555>⚠ <bold><arg:0></bold>개의 문제 발견 <gray><italic>(자세한 내용은 콘솔 확인)</italic></gray>'
@@ -52,9 +75,11 @@ command.item.clear.success.single: '<white><arg:1>로부터 <arg:0>개의 아이
 command.item.clear.success.multiple: '<white><arg:1>명으로부터 <arg:0>개의 아이템을 제거했습니다.</white>'
 command.item.clear.test.single: '<white><arg:1>에게 <arg:0>개의 일치하는 아이템이 있습니다.</white>'
 command.item.clear.test.multiple: '<white><arg:1>명에게 <arg:0>개의 일치하는 아이템이 있습니다.</white>'
-command.item.set_custom_model_data: '<white>CustomModelData를 ''<arg:0>''로 설정했습니다.</white>'
-command.item.set_item_model: '<white>ItemModel을 ''<arg:0>''로 설정했습니다.</white>'
-command.item.remove_item_component: '<white>아이템 구성 요소 ''<arg:0>''을(를) 제거했습니다.</white>'
+command.item.component.add: '<white>아이템 구성 요소 ''<arg:0>''을(를) 설정했습니다.</white>'
+command.item.component.remove: '<white>아이템 구성 요소 ''<arg:0>''을(를) 제거했습니다.</white>'
+command.item.component.reset: '<white>아이템 구성 요소 ''<arg:0>''을(를) 기본값으로 초기화했습니다.</white>'
+command.item.component.unknown: '<red>알 수 없는 아이템 구성 요소 ''<arg:0>''입니다.</red>'
+command.item.component.invalid_value: '<red>아이템 구성 요소 ''<arg:0>''의 SNBT 값이 올바르지 않습니다: <arg:1></red>'
 command.search_recipe.not_found: '<red>이 아이템에 대한 레시피를 찾을 수 없습니다.</red>'
 command.search_usage.not_found: '<red>이 아이템의 사용법을 찾을 수 없습니다.</red>'
 command.search_recipe.no_item: '<red>명령어를 실행하기 전에 아이템을 들고 있어야 합니다.</red>'
@@ -74,8 +99,6 @@ command.resource.create.success: '<white>리소스 <arg:0>가 생성되었습니
 command.resource.create.failure.unknown: '<red>리소스 <arg:0> 생성 실패, 오류: <arg:1></red>'
 command.resource.create.failure.invalid_namespace: '<red>리소스 <arg:0> 생성 실패, 네임스페이스 <arg:1>이(가) 유효하지 않습니다.</red>'
 command.resource.create.failure.exists: '<red>리소스 <arg:0>가 이미 존재합니다.</red>'
-command.upload.failure.not_supported: '<red>현재 호스팅 방식 ''<arg:0>''은 리소스 팩 업로드를 지원하지 않습니다.</red>'
-command.upload.on_progress: '<white>업로드를 시작했습니다. 자세한 내용은 콘솔을 확인하세요.</white>'
 command.send_resource_pack.success.single: '<white><arg:0>에게 리소스 팩을 전송했습니다.</white>'
 command.send_resource_pack.success.multiple: '<white><arg:0>명에게 리소스 팩을 전송했습니다.</white>'
 command.locale.set.failure: '<red>잘못된 로케일 형식: <arg:0></red>'
@@ -139,10 +162,6 @@ loot.function.formula.unknown_type: "알 수 없는 수식 타입 '<arg:0>'"
 host.unknown_type: "알 수 없는 리소스 팩 호스트 타입 '<arg:0>'"
 host.missing_environment_variable: "환경 변수 '<arg:0>'이(가) 누락되었습니다."
 host.get_url_failed: "플레이어 <arg:0>의 리소스 팩 다운로드 URL을 가져오는 데 실패했습니다."
-host.handle_response_failed: "플레이어 <arg:0>의 리소스 팩 응답 처리 실패"
-host.upload_started: "리소스 팩 업로드를 시작합니다..."
-host.upload_finished: "리소스 팩 업로드 완료 (<arg:0> ms)"
-host.upload_failed: "리소스 팩 업로드 실패"
 host.lobfile.storage_usage: "계정 사용량: <arg:0>/<arg:1> MB | <arg:2>/<arg:3> 파일"
 host.self.http_server_started: "Netty HTTP 서버가 포트 <arg:0>에서 시작되었습니다."
 config.errors_detected: "config.yml에서 오류 발견 - <arg:0>"
@@ -152,13 +171,9 @@ resource_pack.invalid_overlay_format: "잘못된 오버레이 형식 '<arg:0>'. 
 resource_pack.generation_started: "리소스 팩 생성 중..."
 resource_pack.generation_finished: "리소스 팩 생성 완료 (<arg:0>ms)"
 resource_pack.validation_started: "리소스 팩 검증 중... (진행: <arg:0>/<arg:1> | Pack Format: <arg:2>~<arg:3> | 오버레이: <arg:4>)"
-resource_pack.validation_finished: "리소스 팩 검증 완료 (<arg:0>ms)"
 resource_pack.json_optimization_started: "> JSON 파일 최적화 중..."
 resource_pack.texture_optimization_started: "> 텍스처 파일 최적화 중..."
 resource_pack.optimization_result: "> □ 이전/이후/비율: <arg:0>/<arg:1>/<arg:2>"
-resource_pack.optimization_finished: "리소스 팩 최적화 완료 (<arg:0>ms)"
-resource_pack.compression_started: "리소스 팩 압축 중...(난독화 사용 시 진행이 느릴 수 있음)"
-resource_pack.compression_finished: "리소스 팩 압축 완료 (<arg:0>ms)"
 resource_pack.duplicated_files: "중복 파일 발견. config.yml의 'resource-pack.duplicated-files-handler' 섹션에서 해결하세요."
 resource_pack.malformatted_json: "JSON 파일 '<arg:0>' 형식이 잘못되었습니다."
 resource_pack.not_a_json_object: "JSON 파일 '<arg:0>'이(가) JSON 객체가 아닙니다."
@@ -169,7 +184,6 @@ resource_pack.item_model.conflict: "아이템 모델 '<arg:0>' 생성 실패: �
 resource_pack.missing_font_texture: "폰트 '<arg:0>'에 텍스처 '<arg:1>'이(가) 없습니다"
 resource_pack.missing_model_texture: "모델 '<arg:0>'에 텍스처 '<arg:1>'이(가) 없습니다"
 resource_pack.missing_equipment_texture: "장비 '<arg:0>'에 텍스처 '<arg:1>'이(가) 없습니다"
-resource_pack.missing_atlas_texture: "아틀라스 '<arg:0>'에 텍스처 '<arg:1>'이(가) 없습니다"
 resource_pack.missing_item_model: "아이템 '<arg:0>'에 모델 파일 '<arg:1>'이(가) 없습니다"
 resource_pack.missing_block_model: "블록 상태 '<arg:0>'에 모델 파일 '<arg:1>'이(가) 없습니다"
 resource_pack.missing_parent_model: "모델 '<arg:0>'가 부모 모델 '<arg:1>'을(를) 찾을 수 없습니다"
@@ -177,7 +191,6 @@ resource_pack.missing_sound: "사운드 이벤트 '<arg:0>'에 ogg 파일 '<arg:
 resource_pack.texture_not_in_atlas: "텍스처 '<arg:0>'이(가) 아틀라스에 정의되지 않았습니다. 아틀라스에 텍스처 경로를 추가하거나 config.yml에서 'fix-atlas' 옵션을 활성화하세요"
 resource_pack.multiple_atlases: "모델 '<arg:0>'가 여러 아틀라스를 사용합니다: 기대값 '<arg:1>', 발견 '<arg:2>'. 모든 모델 텍스처가 동일 아틀라스에서 나오는지 확인하세요"
 resource_pack.duplicated_sprite: "모델 '<arg:0>' 로드 실패. 아틀라스 '<arg:2>'의 스프라이트 '<arg:1>'이(가) 이미 아틀라스 '<arg:3>'에 정의됨"
-resource_pack.bad_atlas: "모델 '<arg:0>' 로드 실패. 스프라이트 '<arg:1>'은 아틀라스 '<arg:2>'에서 나와야 하지만 실제로는 아틀라스 '<arg:3>'에서 나옴"
 resource.argument.type.section: "설정 섹션"
 resource.argument.type.boolean: "불리언"
 resource.argument.type.int: "정수"
@@ -195,7 +208,6 @@ resource.argument.type.list: "리스트"
 resource.argument.type.color: "색상"
 resource.argument.type.number: "숫자 https://xiao-momi.github.io/craft-engine-wiki/reference/number_format"
 resource.argument.type.item_model_definition: "아이템 모델 정의"
-resource.argument.type.json: "JSON"
 resource.argument.type.any: "임의"
 resource.argument.type.blockstate: "블록 상태"
 
@@ -212,12 +224,10 @@ resource.argument.parser.snbt: "잘못된 SNBT 형식 '<arg:0>'. 상세: <arg:1>
 resource.argument.parser.aabb: "'<arg:0>'을(를) AABB로 파싱할 수 없습니다. (형식: 'x1,y1,z1,x2,y2,z2', 예: 0,0,0,1,1,1)"
 resource.argument.parser.blockstate: "'<arg:0>'을(를) 블록 상태로 파싱할 수 없습니다. (예: minecraft:wheat[age=3])"
 resource.argument.parser.identifier: "'<arg:0>'을(를) 식별자로 파싱할 수 없습니다. 가이드: https://minecraft.wiki/w/Identifier#Legal_characters"
-resource.argument.parser.list: "리스트여야 하지만 '<arg:0>'이(가) 발견됨"
 resource.argument.parser.nonempty_list: "비어 있지 않은 리스트가 필요합니다"
 resource.argument.parser.fixed_size_list: "'<arg:0>'개의 요소를 가진 리스트가 필요합니다"
 resource.argument.parser.nonempty_string: "비어 있지 않은 문자열이 필요합니다"
 resource.argument.parser.split: "'<arg:0>'개의 부분으로 나뉘어야 하지만, '<arg:1>'개 발견됨"
-resource.argument.parser.number: "숫자가 필요하지만 '<arg:0>'이(가) 발견됨"
 resource.argument.parser.uuid: "'<arg:0>'을(를) UUID로 파싱할 수 없습니다"
 resource.config_loaded: "<arg:0>을(를) <arg:1>ms에 로드했습니다 (<arg:2>)"
 resource.pack_loaded: "리소스 팩 로드됨: <arg:0>. 기본 네임스페이스: <arg:1>"
@@ -239,11 +249,9 @@ resource.image.height_ascent_conflict: "높이 '<arg:0>'가 어센트 '<arg:1>'�
 resource.emoji.invalid_image_format: "잘못된 이미지 형식 '<arg:0>'"
 resource.emoji.unknown_image: "알 수 없는 이미지 '<arg:0>'"
 resource.equipment.unknown_type: "알 수 없는 장비 타입 '<arg:0>'"
-resource.equipment.unknown_layer_type: "알 수 없는 장비 레이어 타입 '<arg:0>'"
 resource.equipment.invalid_sacrificed_armor: "잘못된 기본 갑옷 타입 '<arg:0>'"
 resource.equipment_set.invalid_slot_name: "잘못된 장비 세트 슬롯 이름 '<arg:0>'"
 resource.furniture.element.unknown_type: "알 수 없는 가구 요소 타입 '<arg:0>'"
-resource.furniture.data_source.unknown_type: "알 수 없는 가구 데이터 소스 타입 '<arg:0>'"
 resource.furniture.hitbox.unknown_type: "알 수 없는 가구 히트박스 타입 '<arg:0>'"
 resource.furniture.behavior.unknown_type: "알 수 없는 가구 동작 타입 '<arg:0>'"
 resource.furniture.hitbox.custom.invalid_entity_type: "잘못된 엔티티 타입 '<arg:0>'"
@@ -293,3 +301,65 @@ resource.recipe.shaped.invalid_pattern: "잘못된 패턴 '<arg:0>'"
 resource.recipe.shaped.invalid_symbol: "잘못된 기호 '<arg:0>'"
 resource.recipe.post_processor.unknown_type: "알 수 없는 레시피 후처리기 타입 '<arg:0>'"
 resource.recipe.unknown_type: "알 수 없는 레시피 타입 '<arg:0>'"
+workflow.unknown_type: '알 수 없는 리소스 팩 워크플로 유형 ''<arg:0>'''
+storage.unknown_type: '알 수 없는 저장소 유형 ''<arg:0>'''
+storage.invalid_path: '잘못된 저장소 경로'
+command.workflow.started: '<white>리소스 팩 워크플로 <arg:0> 실행 중</white>'
+command.pack_preference.no_permission: '<red>리소스 팩 <arg:0>의 설정을 변경할 권한이 없습니다</red>'
+command.workflow.success: '<white>리소스 팩 워크플로 <arg:0> 완료 (<arg:1> ms)</white>'
+command.workflow.failure: '<red>리소스 팩 워크플로 <arg:0> 실행 실패. 콘솔을 확인하세요</red>'
+command.workflow.unknown: '<red>알 수 없는 리소스 팩 워크플로: <arg:0></red>'
+command.item.browser.missing_element: '<red>GUI 요소 ''<arg:0>''이(가) 없어 아이템 탐색기를 열 수 없습니다</red><gray><i><newline><click:run_command:''/ce resource save-default /internal''><underlined>내부 리소스를 복원하려면 여기를 클릭하세요</underlined></click></i></gray>'
+command.enchant.success.single: '<white><arg:1>에게 <arg:0> 부여함</white>'
+command.enchant.success.multiple: '<white>개체 <arg:1>개에 <arg:0> 부여함</white>'
+command.enchant.failure.not_exist: '<red>알 수 없는 마법 부여 ''<arg:0>''</red>'
+command.enchant.failure.level: '<red><arg:0> 레벨이 최대 레벨 <arg:1>을 초과합니다</red>'
+command.enchant.failure.incompatible: '<red><arg:0>에 해당 마법을 부여할 수 없습니다</red>'
+command.enchant.failure.itemless: '<red><arg:0>의 선택한 슬롯에 아이템이 없습니다</red>'
+command.enchant.failure.entity: '<red><arg:0>은(는) 생명체가 아닙니다</red>'
+command.enchant.failure.no_target: '<red>마법을 부여할 수 없습니다</red>'
+command.resource.save_default.success: '<white>''<arg:0>''의 기본 리소스를 저장했습니다</white>'
+command.resource.save_default.failure: '<red>기본 리소스를 저장하는 중 알 수 없는 오류가 발생했습니다. 콘솔을 확인하세요</red>'
+command.resource.search.parser.not_found: '<red>설정 유형 ''<arg:0>''을(를) 찾을 수 없습니다</red>'
+command.resource.search.resource.not_found: '<red>ID가 ''<arg:0>''인 리소스를 찾을 수 없습니다</red>'
+command.resource.search.success: '<white>''<arg:0>''의 경로는 <arg:1>입니다</white>'
+command.world_settings.get.success: '<white>세계 설정 <arg:0>의 현재 값: <arg:1></white>'
+command.world_settings.set.success: '<white>세계 설정 <arg:0>의 값을 <arg:1>(으)로 설정했습니다</white>'
+command.world_settings.failure: '<red>세계 설정 <arg:0>을(를) 찾을 수 없습니다</red>'
+attribute.damage_formula.unknown_type: '알 수 없는 피해 공식 유형 ''<arg:0>'''
+attribute.damage_effect.unknown_type: '알 수 없는 피해 후 효과 유형 ''<arg:0>'''
+attribute.damage_effect.unknown_target: '알 수 없는 피해 후 효과 대상 ''<arg:0>'''
+damage_indicator.unknown_type: '알 수 없는 피해 표시 유형 ''<arg:0>'''
+attribute.base_value_source.unknown_type: '알 수 없는 기본값 소스 유형 ''<arg:0>'''
+attribute.sync_value_provider.unknown_type: '알 수 없는 동기화 값 공급자 유형 ''<arg:0>'''
+attribute.value_transformer.unknown_type: '알 수 없는 값 변환기 유형 ''<arg:0>'''
+attribute.unknown_operation: '알 수 없는 속성 연산 ''<arg:0>'''
+attribute.derived.unknown_attribute: '파생 표현식 ''<arg:1>''에 알 수 없는 속성 ''<arg:0>''이(가) 있습니다'
+attribute.derived.unknown_type: '알 수 없는 파생 값 유형 ''<arg:0>'''
+category.source.unknown_type: '알 수 없는 카테고리 소스 유형 ''<arg:0>'''
+category.source.invalid_regex: '잘못된 카테고리 소스 정규식 ''<arg:0>'''
+loot.source.unknown_type: '알 수 없는 전리품 소스 유형 ''<arg:0>'''
+loot.source.unknown_overwrite_mode: '알 수 없는 전리품 소스 덮어쓰기 모드 ''<arg:0>'''
+loot.source.target_not_allowed: '전리품 소스 유형 ''<arg:0>''은(는) ''target''을 지원하지 않습니다'
+loot.source.invalid_target: '잘못된 전리품 소스 대상 ''<arg:0>'''
+mod.clientbound.no_permission: '플레이어 <arg:0>에게 패킷 <arg:2>을(를) 받을 권한 <arg:1>이(가) 없습니다. LuckPerms를 설치하고 해당 권한을 직접 부여하세요'
+mod.serverbound.no_permission: '플레이어 <arg:0>에게 패킷 <arg:2>을(를) 보낼 권한 <arg:1>이(가) 없습니다. LuckPerms를 설치하고 해당 권한을 직접 부여하세요'
+resource_pack.model_uv_out_of_bounds: '모델 ''<arg:0>''의 요소 <arg:1>, 면 ''<arg:2>''이(가) 텍스처 ''<arg:4>''에 범위를 벗어난 UV <arg:3>을(를) 사용합니다. [0, 16] 범위를 벗어난 UV 값은 26.1 이상 클라이언트에서 모델 베이킹을 방해할 수 있습니다'
+resource.block.state.invalid_rotation: '<arg:0>축의 회전 ''<arg:1>''이(가) 잘못되었습니다. 90도의 배수여야 합니다'
+resource.item.unknown_data_component_type: '알 수 없는 데이터 구성 요소 유형 ''<arg:0>'''
+resource.item.data_component_predicate.unknown_type: '알 수 없는 데이터 구성 요소 조건자 유형 ''<arg:0>'''
+resource.recipe.shaped_transform.ambigious_source: '정형 변환 제작법에서 소스로 표시된 재료가 둘 이상 발견되었습니다: ''<arg:0>'', ''<arg:1>'''
+resource.recipe.shaped_transform.source_not_found: '제작법에서 소스로 표시된 재료를 찾을 수 없습니다'
+resource.recipe.shapeless_transform.ambigious_source: '비정형 변환 제작법에서 소스로 표시된 재료가 둘 이상 발견되었습니다: ''<arg:0>'''
+resource.recipe.shapeless_transform.source_not_found: '제작법에서 소스로 표시된 재료를 찾을 수 없습니다'
+resource_pack.bad_sprite: '블록 ''<arg:0>''이(가) 사용하는 스프라이트 ''<arg:1>''은(는) 아틀라스 ''<arg:2>''에 있어야 하지만 아틀라스 ''<arg:3>''에만 정의되어 있습니다'
+host.upload_started: "리소스 팩 업로드를 시작합니다..."
+host.upload_finished: "리소스 팩 업로드 완료 (<arg:0> ms)"
+resource_pack.validation_finished: "리소스 팩 검증 완료 (<arg:0>ms)"
+resource_pack.optimization_finished: "리소스 팩 최적화 완료 (<arg:0>ms)"
+resource_pack.compression_started: "리소스 팩 압축 중...(난독화 사용 시 진행이 느릴 수 있음)"
+resource_pack.compression_finished: "리소스 팩 압축 완료 (<arg:0>ms)"
+resource_pack.packsquash_started: '설정 <arg:0>(으)로 PackSquash 실행 중...'
+resource_pack.packsquash_finished: 'PackSquash 완료, 소요 시간: <arg:0>ms'
+resource_pack.zip_loaded: '리소스 팩 ZIP <arg:0> 로드 완료, 소요 시간: <arg:1>ms'
+resource_pack.export_finished: '리소스 팩을 <arg:0>(으)로 내보냈습니다. 소요 시간: <arg:1>ms'

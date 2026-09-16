@@ -78,6 +78,31 @@ public interface ClientboundPlayerInfoUpdatePacketProxy extends PacketProxy {
 
         @FieldGetter(name = "profileId")
         UUID getProfileId(Object target);
+
+        @FieldGetter(name = "profile")
+        @Nullable GameProfile getProfile(Object target);
+
+        @FieldGetter(name = "listed")
+        boolean isListed(Object target);
+
+        @FieldGetter(name = "latency")
+        int getLatency(Object target);
+
+        @FieldGetter(name = "gameMode")
+        Object getGameMode(Object target);
+
+        @FieldGetter(name = "chatSession")
+        Object getChatSession(Object target);
+
+        @FieldGetter(name = "showHat", activeIf = "min_version=1.21.4")
+        default boolean isShowHat(Object target) {
+            return false;
+        }
+
+        @FieldGetter(name = "listOrder", activeIf = "min_version=1.21.2")
+        default int getListOrder(Object target) {
+            return 0;
+        }
     }
 
     @ReflectionProxy(name = "net.minecraft.network.protocol.game.ClientboundPlayerInfoUpdatePacket$Action")

@@ -2,9 +2,13 @@ package net.momirealms.craftengine.bukkit.entity.furniture.element;
 
 import net.momirealms.craftengine.bukkit.entity.data.item.ItemEntityData;
 import net.momirealms.craftengine.core.entity.furniture.Furniture;
-import net.momirealms.craftengine.core.entity.furniture.data.*;
-import net.momirealms.craftengine.core.entity.furniture.element.FurnitureElementConfig;
+import net.momirealms.craftengine.core.entity.furniture.data.FurnitureDataResolver;
+import net.momirealms.craftengine.core.entity.furniture.data.FurnitureDataSourceConfig;
+import net.momirealms.craftengine.core.entity.furniture.data.ItemPatch;
+import net.momirealms.craftengine.core.entity.furniture.data.SourceItemComponentsDataSourceConfig;
+import net.momirealms.craftengine.core.entity.furniture.element.ConditionalFurnitureElement;
 import net.momirealms.craftengine.core.entity.furniture.element.FurnitureElementConfigFactory;
+import net.momirealms.craftengine.core.entity.furniture.element.TransformableFurnitureElementConfig;
 import net.momirealms.craftengine.core.entity.player.Player;
 import net.momirealms.craftengine.core.item.Item;
 import net.momirealms.craftengine.core.item.ItemKeys;
@@ -17,7 +21,6 @@ import net.momirealms.craftengine.core.plugin.context.Condition;
 import net.momirealms.craftengine.core.plugin.context.PlayerContext;
 import net.momirealms.craftengine.core.util.Key;
 import net.momirealms.craftengine.core.util.MiscUtils;
-import net.momirealms.craftengine.core.world.Vec3d;
 import net.momirealms.craftengine.core.world.WorldPosition;
 import org.jetbrains.annotations.NotNull;
 import org.joml.Vector3f;
@@ -28,24 +31,21 @@ import java.util.Optional;
 import java.util.function.BiFunction;
 import java.util.function.Predicate;
 
-public final class ItemFurnitureElementConfig implements FurnitureElementConfig<ItemFurnitureElement> {
+public final class ItemFurnitureElementConfig implements TransformableFurnitureElementConfig<ItemFurnitureElement> {
     public static final FurnitureElementConfigFactory<ItemFurnitureElement> FACTORY = new Factory();
     public final BiFunction<Player, FurnitureDataResolver<ItemPatch>, List<Object>> metadata;
     public final Key itemId;
     public final FurnitureDataSourceConfig<ItemPatch> itemPatchSource;
     public final Vector3f position;
     public final Predicate<PlayerContext> predicate;
-    public final boolean hasCondition;
 
     private ItemFurnitureElementConfig(Key itemId,
                                       Vector3f position,
                                       FurnitureDataSourceConfig<ItemPatch> itemPatchSource,
-                                      Predicate<PlayerContext> predicate,
-                                      boolean hasCondition) {
+                                      Predicate<PlayerContext> predicate) {
         this.position = position;
         this.itemPatchSource = itemPatchSource;
         this.itemId = itemId;
-        this.hasCondition = hasCondition;
         this.predicate = predicate;
         BiFunction<Player, FurnitureDataResolver<ItemPatch>, Item> itemFunction = (player, itemPatch) -> {
             Item wrappedItem = Item.byId(itemId, player);
@@ -66,23 +66,13 @@ public final class ItemFurnitureElementConfig implements FurnitureElementConfig<
     }
 
     @Override
-    public ItemFurnitureElement create(@NotNull Furniture furniture) {
-        return new ItemFurnitureElement(furniture, this, getPos(furniture));
+    public @NotNull ItemFurnitureElement create(@NotNull Furniture furniture, @NotNull WorldPosition pos) {
+        return new ItemFurnitureElement(furniture, this, pos);
     }
 
     @Override
-    public ItemFurnitureElement create(@NotNull Furniture furniture, @NotNull ItemFurnitureElement previous) {
-        Vec3d pos = getPos(furniture);
-        return new ItemFurnitureElement(furniture, this, pos, previous.entityId1, previous.entityId2, !pos.equals(previous.position));
-    }
-
-    @Override
-    public ItemFurnitureElement createExact(@NotNull Furniture furniture, @NotNull ItemFurnitureElement previous) {
-        Vec3d pos = getPos(furniture);
-        if (!pos.equals(previous.position)) {
-            return null;
-        }
-        return new ItemFurnitureElement(furniture, this, pos, previous.entityId1, previous.entityId2, false);
+    public @NotNull ItemFurnitureElement transform(@NotNull Furniture furniture, @NotNull ItemFurnitureElement previous, @NotNull WorldPosition pos) {
+        return new ItemFurnitureElement(furniture, this, pos, previous.entityId1, previous.entityId2);
     }
 
     @Override
@@ -90,9 +80,10 @@ public final class ItemFurnitureElementConfig implements FurnitureElementConfig<
         return ItemFurnitureElement.class;
     }
 
-    public Vec3d getPos(Furniture furniture) {
-        WorldPosition furniturePos = furniture.position();
-        return Furniture.getRelativePosition(furniturePos, this.position);
+    @Override
+    public @NotNull WorldPosition getPos(@NotNull Furniture furniture) {
+        // Item packets use fixed zero rotation, independent of the furniture's facing.
+        return furniture.placement().position(this.position, 0, 0);
     }
 
     public FurnitureDataResolver<ItemPatch> createItemPatch(@NotNull Furniture furniture) {
@@ -112,9 +103,8 @@ public final class ItemFurnitureElementConfig implements FurnitureElementConfig<
                     section.getVector3f("position", ConfigConstants.ZERO_VECTOR3),
                     legacyTintSource ?
                             SourceItemComponentsDataSourceConfig.create(List.of(DataComponentKeys.DYED_COLOR, DataComponentKeys.FIREWORK_EXPLOSION)) :
-                            section.getValue(TINT_SOURCE, SourceItemComponentsDataSourceConfig::fromConfig),
-                    MiscUtils.allOf(conditions),
-                    !conditions.isEmpty()
+                            section.getValue(TINT_SOURCE, SourceItemComponentsDataSourceConfig::fromConfig, SourceItemComponentsDataSourceConfig.DEFAULT),
+                    conditions.isEmpty() ? ConditionalFurnitureElement.ALWAYS_VISIBLE : MiscUtils.allOf(conditions)
             );
         }
     }

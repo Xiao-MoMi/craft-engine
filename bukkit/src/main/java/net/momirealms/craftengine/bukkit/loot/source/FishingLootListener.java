@@ -15,6 +15,7 @@ import net.momirealms.craftengine.core.loot.source.LootSource;
 import net.momirealms.craftengine.core.loot.source.LootSources;
 import net.momirealms.craftengine.core.plugin.context.ContextHolder;
 import net.momirealms.craftengine.core.plugin.context.parameter.DirectContextParameters;
+import net.momirealms.craftengine.core.util.ItemUtils;
 import net.momirealms.craftengine.core.util.Key;
 import net.momirealms.craftengine.core.world.World;
 import org.bukkit.Location;
@@ -58,7 +59,7 @@ public final class FishingLootListener implements Listener {
                 .withParameter(DirectContextParameters.PLAYER, serverPlayer)
                 .withParameter(DirectContextParameters.WORLD, world)
                 .withParameter(DirectContextParameters.POSITION, LocationUtils.toWorldPosition(hookLocation))
-                .withParameter(DirectContextParameters.ITEM_IN_HAND, itemInHand)
+                .withOptionalParameter(DirectContextParameters.ITEM_IN_HAND, ItemUtils.emptyToNull(itemInHand))
                 .withParameter(DirectContextParameters.OPEN_WATER, event.getHook().isInOpenWater())
                 .build();
         LootOutcome outcome = LootManager.eval(sources, new LootContext(world, serverPlayer, luck, holder));

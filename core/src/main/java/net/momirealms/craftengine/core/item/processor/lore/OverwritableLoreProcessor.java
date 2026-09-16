@@ -35,6 +35,11 @@ public final class OverwritableLoreProcessor implements SimpleNetworkItemProcess
     }
 
     @Override
+    public boolean isConstant() {
+        return this.loreProcessor.isConstant();
+    }
+
+    @Override
     public Key componentType(Item item, ItemBuildContext context) {
         return DataComponentKeys.LORE;
     }

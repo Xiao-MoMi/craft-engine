@@ -1,5 +1,6 @@
 package net.momirealms.craftengine.bukkit.util;
 
+import net.momirealms.craftengine.bukkit.plugin.BukkitCraftEngine;
 import net.momirealms.craftengine.core.util.VersionHelper;
 import net.momirealms.craftengine.core.world.ChunkPos;
 import net.momirealms.craftengine.proxy.bukkit.craftbukkit.CraftWorldProxy;
@@ -12,9 +13,11 @@ import net.momirealms.craftengine.proxy.minecraft.world.level.chunk.ChunkSourceP
 import net.momirealms.craftengine.proxy.minecraft.world.level.lighting.LightEngineProxy;
 import org.bukkit.World;
 
+import java.util.ArrayList;
 import java.util.BitSet;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.CompletableFuture;
 
 public final class LightUtils {
     private LightUtils() {}
@@ -30,6 +33,32 @@ public final class LightUtils {
     }
 
     public static void updateChunkLight(World world, Map<Long, BitSet> sectionPosSet) {
+        if (VersionHelper.hasPaperPatch) {
+            sendChunkLight(world, sectionPosSet);
+        } else {
+            updateChunkLight$spigot(world, sectionPosSet);
+        }
+    }
+
+    public static void updateChunkLight$spigot(World world, Map<Long, BitSet> sectionPosSet) {
+        Object serverLevel = CraftWorldProxy.INSTANCE.getWorld(world);
+        Object chunkSource = ServerLevelProxy.INSTANCE.getChunkSource(serverLevel);
+        Object chunkMap = ServerChunkCacheProxy.INSTANCE.getChunkMap(chunkSource);
+        Object lightEngine = ChunkSourceProxy.INSTANCE.getLightEngine(chunkSource);
+        List<CompletableFuture<?>> pending = new ArrayList<>(sectionPosSet.size());
+        for (long chunkKey : sectionPosSet.keySet()) {
+            if (ChunkMapProxy.INSTANCE.getVisibleChunkIfPresent(chunkMap, chunkKey) == null) continue;
+            pending.add(ThreadedLevelLightEngineProxy.INSTANCE.waitForPendingTasks(lightEngine, (int) chunkKey, (int) (chunkKey >> 32)));
+        }
+        CompletableFuture.allOf(pending.toArray(CompletableFuture[]::new))
+                .thenRunAsync(() -> sendChunkLight(world, sectionPosSet), BukkitCraftEngine.instance().scheduler().platform())
+                .exceptionally(error -> {
+                    BukkitCraftEngine.instance().logger().warn("Failed to send Spigot block light updates", error);
+                    return null;
+                });
+    }
+
+    private static void sendChunkLight(World world, Map<Long, BitSet> sectionPosSet) {
         Object serverLevel = CraftWorldProxy.INSTANCE.getWorld(world);
         Object chunkSource = ServerLevelProxy.INSTANCE.getChunkSource(serverLevel);
         Object chunkMap = ServerChunkCacheProxy.INSTANCE.getChunkMap(chunkSource);

@@ -31,6 +31,7 @@ public final class CommonConditions {
     public static final CommonConditionType<RandomCondition<Context>> RANDOM = register(Key.ce("random"), RandomCondition.factory());
     public static final CommonConditionType<DistanceCondition<Context>> DISTANCE = register(Key.ce("distance"), DistanceCondition.factory());
     public static final CommonConditionType<PermissionCondition<Context>> PERMISSION = register(Key.ce("permission"), PermissionCondition.factory());
+    public static final CommonConditionType<HasDiscoveredRecipeCondition<Context>> HAS_DISCOVERED_RECIPE = register(Key.ce("has_discovered_recipe"), HasDiscoveredRecipeCondition.factory());
     public static final CommonConditionType<StringEqualsCondition<Context>> EQUALS = register(Key.ce("equals"), StringEqualsCondition.factory());
     public static final CommonConditionType<StringRegexCondition<Context>> REGEX = register(Key.ce("regex"), StringRegexCondition.factory());
     public static final CommonConditionType<StringEqualsCondition<Context>> STRING_EQUALS = register(Key.ce("string_equals"), StringEqualsCondition.factory());

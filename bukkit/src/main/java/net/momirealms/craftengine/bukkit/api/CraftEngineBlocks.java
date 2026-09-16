@@ -75,7 +75,23 @@ public final class CraftEngineBlocks {
     public static boolean place(@NotNull Location location,
                                 @NotNull ImmutableBlockState block,
                                 boolean playSound) {
-        return place(location, block, UpdateFlags.UPDATE_ALL, playSound);
+        return place(location, block, UpdateFlags.UPDATE_ALL, playSound, false);
+    }
+
+    /**
+     * Places a custom block state at a certain location
+     *
+     * @param location location
+     * @param block block state to place
+     * @param playSound whether to play place sounds
+     * @param checkCanSurvive whether to check if the block can survive at the location
+     * @return success or not
+     */
+    public static boolean place(@NotNull Location location,
+                                @NotNull ImmutableBlockState block,
+                                boolean playSound,
+                                boolean checkCanSurvive) {
+        return place(location, block, UpdateFlags.UPDATE_ALL, playSound, checkCanSurvive);
     }
 
     /**
@@ -89,9 +105,25 @@ public final class CraftEngineBlocks {
     public static boolean place(@NotNull Location location,
                                 @NotNull Key blockId,
                                 boolean playSound) {
+        return place(location, blockId, playSound, false);
+    }
+
+    /**
+     * Place a custom block
+     *
+     * @param location location
+     * @param blockId block owner id
+     * @param playSound whether to play place sounds
+     * @param checkCanSurvive whether to check if the block can survive at the location
+     * @return success or not
+     */
+    public static boolean place(@NotNull Location location,
+                                @NotNull Key blockId,
+                                boolean playSound,
+                                boolean checkCanSurvive) {
         BlockDefinition block = byId(blockId);
         if (block == null) return false;
-        return place(location, block.defaultState(), UpdateFlags.UPDATE_ALL, playSound);
+        return place(location, block.defaultState(), UpdateFlags.UPDATE_ALL, playSound, checkCanSurvive);
     }
 
     /**
@@ -107,9 +139,27 @@ public final class CraftEngineBlocks {
                                 @NotNull Key blockId,
                                 @NotNull CompoundTag properties,
                                 boolean playSound) {
+        return place(location, blockId, properties, playSound, false);
+    }
+
+    /**
+     * Place a custom block with given properties
+     *
+     * @param location location
+     * @param blockId block owner id
+     * @param properties properties
+     * @param playSound whether to play place sounds
+     * @param checkCanSurvive whether to check if the block can survive at the location
+     * @return success or not
+     */
+    public static boolean place(@NotNull Location location,
+                                @NotNull Key blockId,
+                                @NotNull CompoundTag properties,
+                                boolean playSound,
+                                boolean checkCanSurvive) {
         BlockDefinition block = byId(blockId);
         if (block == null) return false;
-        return place(location, block.getBlockState(properties), UpdateFlags.UPDATE_ALL, playSound);
+        return place(location, block.getBlockState(properties), UpdateFlags.UPDATE_ALL, playSound, checkCanSurvive);
     }
 
     /**
@@ -127,9 +177,29 @@ public final class CraftEngineBlocks {
                                 @NotNull CompoundTag properties,
                                 int flags,
                                 boolean playSound) {
+        return place(location, blockId, properties, flags, playSound, false);
+    }
+
+    /**
+     * Place a custom block with given properties
+     *
+     * @param location location
+     * @param blockId block owner id
+     * @param properties properties
+     * @param flags update flags {@link UpdateFlags}
+     * @param playSound whether to play place sounds
+     * @param checkCanSurvive whether to check if the block can survive at the location
+     * @return success or not
+     */
+    public static boolean place(@NotNull Location location,
+                                @NotNull Key blockId,
+                                @NotNull CompoundTag properties,
+                                int flags,
+                                boolean playSound,
+                                boolean checkCanSurvive) {
         BlockDefinition block = byId(blockId);
         if (block == null) return false;
-        return place(location, block.getBlockState(properties), flags, playSound);
+        return place(location, block.getBlockState(properties), flags, playSound, checkCanSurvive);
     }
 
     /**
@@ -145,12 +215,32 @@ public final class CraftEngineBlocks {
                                 @NotNull ImmutableBlockState block,
                                 int flags,
                                 boolean playSound) {
-        boolean success;
+        return place(location, block, flags, playSound, false);
+    }
+
+    /**
+     * Places a custom block state at a certain location
+     *
+     * @param location location
+     * @param block block state to place
+     * @param flags update flags {@link UpdateFlags}
+     * @param playSound whether to play place sounds
+     * @param checkCanSurvive whether to check if the block can survive at the location
+     * @return success or not
+     */
+    public static boolean place(@NotNull Location location,
+                                @NotNull ImmutableBlockState block,
+                                int flags,
+                                boolean playSound,
+                                boolean checkCanSurvive) {
         Object worldServer = CraftWorldProxy.INSTANCE.getWorld(location.getWorld());
         Object blockPos = BlockPosProxy.INSTANCE.newInstance(location.getBlockX(), location.getBlockY(), location.getBlockZ());
         Object blockState = block.customBlockState().minecraftState();
+        if (checkCanSurvive && !BlockBehaviourProxy.BlockStateBaseProxy.INSTANCE.canSurvive(blockState, worldServer, blockPos)) {
+            return false;
+        }
         Object oldBlockState = BlockGetterProxy.INSTANCE.getBlockState(worldServer, blockPos);
-        success = LevelWriterProxy.INSTANCE.setBlock(worldServer, blockPos, blockState, flags);
+        boolean success = LevelWriterProxy.INSTANCE.setBlock(worldServer, blockPos, blockState, flags);
         if (success) {
             BlockBehaviourProxy.BlockStateBaseProxy.INSTANCE.onPlace(blockState, worldServer, blockPos, oldBlockState, false);
             if (playSound) {

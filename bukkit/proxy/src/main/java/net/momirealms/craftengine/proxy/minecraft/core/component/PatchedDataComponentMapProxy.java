@@ -13,6 +13,10 @@ public interface PatchedDataComponentMapProxy {
     @ConstructorInvoker
     Object newInstance(@Type(clazz = DataComponentMapProxy.class) Object prototype);
 
+    @MethodInvoker(name = "fromPatch", isStatic = true)
+    Object fromPatch(@Type(clazz = DataComponentMapProxy.class) Object prototype,
+                     @Type(clazz = DataComponentPatchProxy.class) Object patch);
+
     @MethodInvoker(name = "setAll")
     void setAll(Object target, @Type(clazz = DataComponentMapProxy.class) Object components);
 

@@ -24,6 +24,11 @@ public final class ItemNameProcessor implements SimpleNetworkItemProcessor {
     }
 
     @Override
+    public boolean isConstant() {
+        return this.line.isConstant();
+    }
+
+    @Override
     public void apply(ItemBuildContext context) {
         context.item().itemNameComponent(this.line.parse(context));
     }

@@ -331,6 +331,8 @@ public final class BukkitWorldManager implements WorldManager, Listener {
 
     public void handleWorldLoad(BukkitWorld world) {
         CEWorld ceWorld = world.storageWorld();
+        // 已有区块的启动/世界加载补扫描：下面主动标记 CE 实体阶段完成，
+        // 不代表这里等待了 Bukkit 实体磁盘加载。家具单实体补载用此标记与批量恢复分工。
         for (Chunk chunk : world.bukkitWorld().getLoadedChunks()) {
             if (VersionHelper.hasFoliaPatch) {
                 this.plugin.scheduler().platform().run(() -> {
@@ -380,12 +382,6 @@ public final class BukkitWorldManager implements WorldManager, Listener {
         }
         BukkitWorld injectedWorld = FastNMS.INSTANCE.createInjectedWorld(world);
         CraftWorldProxy.INSTANCE.setWorldBorder(world, injectedWorld);
-        if (VersionHelper.hasPaperPatch) {
-            injectWorldGeneration(injectedWorld);
-            if (!VersionHelper.hasFoliaPatch) {
-                injectWorldCallback(injectedWorld.minecraftWorld());
-            }
-        }
         return injectedWorld;
     }
 
@@ -403,6 +399,14 @@ public final class BukkitWorldManager implements WorldManager, Listener {
             }
         }
         ((WorldHolder) injectedWorld).setStorageWorld(ceWorld);
+        // Generation workers can call back as soon as the generator is installed.
+        // Both regular and Slime worlds must have their storage ready before that.
+        if (previous == null && VersionHelper.hasPaperPatch) {
+            injectWorldGeneration(injectedWorld);
+            if (!VersionHelper.hasFoliaPatch) {
+                injectWorldCallback(injectedWorld.minecraftWorld());
+            }
+        }
     }
 
     public CEWorld createStorageWorld(BukkitWorld injectedWorld) {
@@ -491,7 +495,8 @@ public final class BukkitWorldManager implements WorldManager, Listener {
         }
     }
 
-    // 用于从实体tick列表中移除家具实体以降低遍历开销
+    // 非 Folia Paper 的运行时追踪/tick 优化，不是另一套家具加载事件入口。
+    // 注入实现仍转发 onTrackingStart/onTrackingEnd；家具恢复由两个家具监听器负责。
     private void injectWorldCallback(Object serverLevel) {
         Object entityLookup = LevelUtils.getEntityLookup(serverLevel);
         Object worldCallback = EntityLookupProxy.INSTANCE.getWorldCallback(entityLookup);

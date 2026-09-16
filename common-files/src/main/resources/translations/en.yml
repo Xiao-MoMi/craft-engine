@@ -1,3 +1,36 @@
+command.pack_preference.unchanged: '<red>Your preference for resource pack <arg:0> is unchanged</red>'
+command.pack_preset.unchanged: '<red>Your resource pack preferences already match preset <arg:0></red>'
+command.admin_pack_preference.unchanged.single: '<red>The preference for resource pack <arg:1> for <arg:0> is unchanged</red>'
+command.admin_pack_preference.unchanged.multiple: '<red>Preferences for resource pack <arg:1> are unchanged for <arg:0> players</red>'
+command.admin_pack_preset.unchanged.single: '<red>Resource pack preferences for <arg:0> already match preset <arg:1></red>'
+command.admin_pack_preset.unchanged.multiple: '<red>Resource pack preferences already match preset <arg:1> for <arg:0> players</red>'
+command.pack_preference.enabled: '<white>Enabled resource pack <arg:0></white>'
+command.pack_preference.disabled: '<white>Disabled resource pack <arg:0></white>'
+command.pack_preference.reset: '<white>Restored the default preference for resource pack <arg:0></white>'
+command.admin_pack_preference.enabled.single: '<white>Enabled resource pack <arg:1> for <arg:0></white>'
+command.admin_pack_preference.enabled.multiple: '<white>Enabled resource pack <arg:1> for <arg:0> players</white>'
+command.admin_pack_preference.disabled.single: '<white>Disabled resource pack <arg:1> for <arg:0></white>'
+command.admin_pack_preference.disabled.multiple: '<white>Disabled resource pack <arg:1> for <arg:0> players</white>'
+command.admin_pack_preference.reset.single: '<white>Restored the default preference for resource pack <arg:1> for <arg:0></white>'
+command.admin_pack_preference.reset.multiple: '<white>Restored the default preference for resource pack <arg:1> for <arg:0> players</white>'
+command.admin_pack_preference.failure.single: '<red>Could not update the preference for resource pack <arg:1> for <arg:0>. Check the console</red>'
+command.admin_pack_preference.failure.multiple: '<red>Updated preferences for resource pack <arg:1> for <arg:0> players; failed for <arg:2> players. Check the console</red>'
+command.admin_pack_preset.success.single: '<white>Applied resource pack preset <arg:1> to <arg:0></white>'
+command.admin_pack_preset.success.multiple: '<white>Applied resource pack preset <arg:1> to <arg:0> players</white>'
+command.admin_pack_preset.failure.single: '<red>Could not apply resource pack preset <arg:1> to <arg:0>. Check the console</red>'
+command.admin_pack_preset.failure.multiple: '<red>Applied resource pack preset <arg:1> to <arg:0> players; failed for <arg:2> players. Check the console</red>'
+command.pack_preset.unknown: '<red>Unknown resource pack preset: <arg:0></red>'
+command.pack_preset.no_permission: '<red>You do not have permission to use resource pack preset <arg:0></red>'
+command.pack_preset.success: '<white>Applied resource pack preset <arg:0></white>'
+workflow.unknown_type: Unknown resource pack workflow type '<arg:0>'
+storage.unknown_type: Unknown storage type '<arg:0>'
+storage.invalid_path: 'Invalid storage path'
+command.workflow.started: '<dark_gray>» </dark_gray><gradient:#F4A460:#FFD700><b>CraftEngine</b></gradient> <gray>•</gray> <white>Running resource pack workflow <color:#FFD700><arg:0></color>…</white>'
+command.pack_preference.no_permission: '<red>You do not have permission to manage preferences for resource pack <arg:0></red>'
+command.workflow.success: '<dark_gray>» </dark_gray><gradient:#F4A460:#FFD700><b>CraftEngine</b></gradient> <gray>•</gray> <white>Resource pack workflow <color:#FFD700><arg:0></color> completed</white> <gray>(<hover:show_text:"<gray>Async Process"><color:#FFD700><arg:1></color> ms</hover>)</gray>'
+command.workflow.failure: '<red>Failed to run resource pack workflow <arg:0>. Please check console logs</red>'
+command.workflow.unknown: '<red>Unknown resource pack workflow: <arg:0></red>'
+command.resource.busy: '<red>A reload or resource pack workflow is already running. Please wait for it to finish.</red>'
 exception.invalid_syntax: '<red>Invalid syntax. Correct syntax: <white><arg:0></white></red>'
 exception.invalid_argument: '<red>Invalid argument. Reason: <white><arg:0></white></red>'
 exception.invalid_sender: <red><arg:0> is not allowed to execute that command. Must be of type <arg:1></red>
@@ -35,7 +68,6 @@ argument.parse.failure.aggregate.missing: <red>Missing component '<arg:0>'</red>
 argument.parse.failure.aggregate.failure: '<red>Invalid component ''<arg:0>'': <arg:1></red>'
 argument.parse.failure.either: <red>Could not resolve <arg:1> or <arg:2> from '<arg:0>'</red>
 argument.parse.failure.namedtextcolor: <red>'<arg:0>' is not a named text color</red>
-command.reload.too_fast: <red>You are reloading the plugin too quickly; the previous reload has not yet completed
 command.reload.config.failure: <red>Failed to reload configs. Please check console logs
 command.reload.config.success: <dark_gray>» </dark_gray><gradient:#F4A460:#FFD700><b>CraftEngine</b></gradient> <gray>•</gray> <white>Configs reloaded <gray>(<hover:show_text:'<gray>Async/Sync'><color:#FFD700><arg:1></color>/<color:#F4A460><arg:2></color></hover> ms)</gray>
 command.reload.config.issues: '<#FF5555>⚠ <bold><arg:0></bold> issue(s) found. <gray><italic>(Check console for details)'
@@ -52,9 +84,11 @@ command.item.clear.success.single: <white>Removed <arg:0> item(s) from player <a
 command.item.clear.success.multiple: <white>Removed <arg:0> item(s) from <arg:1> players</white>
 command.item.clear.test.single: <white>Found <arg:0> matching item(s) on player <arg:1></white>
 command.item.clear.test.multiple: <white>Found <arg:0> matching item(s) on <arg:1> players</white>
-command.item.set_custom_model_data: <white>Set the CustomModelData to '<arg:0>'</white>
-command.item.set_item_model: <white>Set the ItemModel to '<arg:0>'</white>
-command.item.remove_item_component: <white>Removed item component '<arg:0>'</white>
+command.item.component.add: <white>Set item component '<arg:0>'</white>
+command.item.component.remove: <white>Removed item component '<arg:0>'</white>
+command.item.component.reset: <white>Reset item component '<arg:0>' to its default value</white>
+command.item.component.unknown: <red>Unknown item component '<arg:0>'</red>
+command.item.component.invalid_value: '<red>Invalid SNBT value for item component ''<arg:0>'': <arg:1></red>'
 command.item.browser.missing_element: <red>Cannot open item browser due to missing gui element '<arg:0>'</red><gray><i><newline>If you don't know what you did that caused this error, please click <red><b><u><click:run_command:'/ce resource save-default /internal'><hover:show_text:'Release plugin internal assets'>HERE</hover></click></u></b></red> to release the plugin's internal assets</i></gray>
 command.search_recipe.not_found: <red>No recipe found for this item</red>
 command.search_usage.not_found: <red>No usage found for this item</red>
@@ -88,8 +122,6 @@ command.resource.save_default.failure: <red>An unknown error occurred while savi
 command.resource.search.parser.not_found: <red>Cannot found config type '<arg:0>'</red>
 command.resource.search.resource.not_found: <red>Cannot found any resource with id '<arg:0>'</red>
 command.resource.search.success: <white>The path of '<arg:0>' is <arg:1></white>
-command.upload.failure.not_supported: <red>Current hosting method '<arg:0>' doesn't support uploading resource packs.</red>
-command.upload.on_progress: <white>Started uploading progress. Check the console for more information.</white>
 command.send_resource_pack.success.single: <white>Sent resource pack to <arg:0>.</white>
 command.send_resource_pack.success.multiple: <white>Send resource packs to <arg:0> players</white>
 command.locale.set.failure: '<red>Invalid locale format: <arg:0></red>'
@@ -143,10 +175,7 @@ damage_indicator.unknown_type: Unknown damage indicator type '<arg:0>'
 attribute.base_value_source.unknown_type: Unknown base value source type '<arg:0>'
 attribute.sync_value_provider.unknown_type: Unknown sync value provider type '<arg:0>'
 attribute.value_transformer.unknown_type: Unknown value transformer type '<arg:0>'
-attribute.formula.unknown_variable: Unknown variable '<arg:0>' in damage formula '<arg:1>'
-attribute.formula.unknown_attribute: Unknown attribute '<arg:0>' in damage formula '<arg:1>'
 attribute.unknown_operation: Unknown attribute operation '<arg:0>'
-attribute.operation.invalid_expression: Invalid expression '<arg:0>' in attribute operation
 attribute.derived.unknown_attribute: Unknown attribute '<arg:0>' in derived expression '<arg:1>'
 attribute.derived.unknown_type: Unknown derived value type '<arg:0>'
 number.unknown_type: Unknown number type '<arg:0>'
@@ -175,10 +204,6 @@ loot.source.invalid_target: Invalid loot source target '<arg:0>'
 host.unknown_type: Unknown resource pack host type '<arg:0>'
 host.missing_environment_variable: Missing environment variable '<arg:0>'
 host.get_url_failed: "Failed to retrieve resource pack download URL for player <arg:0>"
-host.handle_response_failed: "Failed to handle the resource pack response for player <arg:0>"
-host.upload_started: "Initiating resource pack upload..."
-host.upload_finished: "Successfully uploaded resource pack in <arg:0> ms"
-host.upload_failed: "Failed to upload resource pack"
 host.lobfile.storage_usage: "Account usage: <arg:0>/<arg:1> MB | <arg:2>/<arg:3> Files"
 host.self.http_server_started: "Netty HTTP server started on port: <arg:0>"
 config.errors_detected: Error found in config.yml - <arg:0>
@@ -190,13 +215,9 @@ resource_pack.invalid_overlay_format: Invalid overlay format '<arg:0>'. Overlay 
 resource_pack.generation_started: Generating resource pack...
 resource_pack.generation_finished: Generated resource pack in <arg:0>ms
 resource_pack.validation_started: 'Validating resource pack... (Progress: <arg:0>/<arg:1> | Pack Format: <arg:2>~<arg:3> | Overlays: <arg:4>)'
-resource_pack.validation_finished: Validated resource pack in <arg:0>ms
 resource_pack.json_optimization_started: '> Optimizing json files...'
 resource_pack.texture_optimization_started: '> Optimizing texture files...'
 resource_pack.optimization_result: '> □ Before/After/Ratio: <arg:0>/<arg:1>/<arg:2>'
-resource_pack.optimization_finished: Optimized resource pack in <arg:0>ms
-resource_pack.compression_started: Compressing resource pack...(This progress might be slow if you have obfuscation enabled)
-resource_pack.compression_finished: Compressed resource pack in <arg:0>ms
 resource_pack.duplicated_files: Duplicated files Found. Please resolve them through config.yml 'resource-pack.duplicated-files-handler' section
 resource_pack.malformatted_json: Json file '<arg:0>' is malformatted
 resource_pack.not_a_json_object: Json file '<arg:0>' is not a json object
@@ -206,8 +227,8 @@ resource_pack.texture_generation.conflict: Failed to generate texture because th
 resource_pack.item_model.conflict: Failed to generate item model '<arg:0>' because the file '<arg:1>' already exists
 resource_pack.missing_font_texture: "Font '<arg:0>' is missing texture '<arg:1>'"
 resource_pack.missing_model_texture: "Model '<arg:0>' is missing texture '<arg:1>'"
+resource_pack.model_uv_out_of_bounds: "Model '<arg:0>' element <arg:1> face '<arg:2>' uses out-of-bounds UV <arg:3> with texture '<arg:4>'. UV values outside [0, 16] can prevent 26.1+ clients from baking the model"
 resource_pack.missing_equipment_texture: "Equipment '<arg:0>' is missing texture '<arg:1>'"
-resource_pack.missing_atlas_texture: "Atlas '<arg:0>' is missing texture '<arg:1>'"
 resource_pack.missing_item_model: "Item '<arg:0>' is missing model file '<arg:1>'"
 resource_pack.missing_block_model: "Block state '<arg:0>' is missing model file '<arg:1>'"
 resource_pack.missing_parent_model: "Model '<arg:0>' cannot find parent model '<arg:1>'"
@@ -215,7 +236,6 @@ resource_pack.missing_sound: "Sound event '<arg:0>' is missing ogg file '<arg:1>
 resource_pack.texture_not_in_atlas: "Texture '<arg:0>' is not defined in the atlas. You need to add the texture path to the atlas or enable 'fix-atlas' option in config.yml"
 resource_pack.multiple_atlases: "Model '<arg:0>' uses multiple atlases: expected '<arg:1>', but found '<arg:2>'. Ensure all model textures come from the same atlas"
 resource_pack.duplicated_sprite: "Unable to load model '<arg:0>'. Duplicated sprite '<arg:1>' from atlas '<arg:2>', already defined in atlas '<arg:3>'"
-resource_pack.bad_atlas: "Failed to load model '<arg:0>'. Sprite '<arg:1>' should be from atlas '<arg:2>', but is actually from atlas '<arg:3>'"
 resource.argument.type.section: Configuration Section
 resource.argument.type.boolean: Boolean
 resource.argument.type.int: Integer
@@ -233,7 +253,6 @@ resource.argument.type.list: List
 resource.argument.type.color: Color
 resource.argument.type.number: Number https://xiao-momi.github.io/craft-engine-wiki/reference/number_format
 resource.argument.type.item_model_definition: Item Model Definition
-resource.argument.type.json: Json
 resource.argument.type.any: Any
 resource.argument.type.blockstate: Block State
 resource.argument.parser.section: Expected a configuration section, found '<arg:0>'
@@ -249,12 +268,10 @@ resource.argument.parser.snbt: 'Invalid SNBT format ''<arg:0>''. Details: <arg:1
 resource.argument.parser.aabb: Cannot parse '<arg:0>' as an AABB. (Expected two points format 'x1,y1,z1,x2,y2,z2', e.g., 0,0,0,1,1,1)
 resource.argument.parser.blockstate: Cannot parse '<arg:0>' as a blockstate. (e.g., minecraft:wheat[age=3])
 resource.argument.parser.identifier: 'Cannot parse ''<arg:0>'' as an identifier. Guide: https://minecraft.wiki/w/Identifier#Legal_characters'
-resource.argument.parser.list: Expected to be a list, found '<arg:0>'
 resource.argument.parser.nonempty_list: Expected to be a non-empty list
 resource.argument.parser.fixed_size_list: Expected to be a list with '<arg:0>' element(s)
 resource.argument.parser.nonempty_string: Expected to be a non-empty string
 resource.argument.parser.split: Expected split into '<arg:0>' parts, but got '<arg:1>'
-resource.argument.parser.number: Expected to be a number, found '<arg:0>'
 resource.argument.parser.uuid: Cannot parse '<arg:0>' as a uuid.
 resource.config_loaded: Loaded <arg:0> in <arg:1>ms (<arg:2>)
 resource.pack_loaded: 'Loaded pack: <arg:0>. Default namespace: <arg:1>'
@@ -276,11 +293,9 @@ resource.image.height_ascent_conflict: height '<arg:0>' should be no lower than 
 resource.emoji.invalid_image_format: Invalid image format '<arg:0>'
 resource.emoji.unknown_image: Unknown image '<arg:0>'
 resource.equipment.unknown_type: Unknown equipment type '<arg:0>'
-resource.equipment.unknown_layer_type: Unknown equipment layer type '<arg:0>'
 resource.equipment.invalid_sacrificed_armor: Invalid vanilla armor type '<arg:0>'
 resource.equipment_set.invalid_slot_name: Invalid equipment set slot name '<arg:0>'
 resource.furniture.element.unknown_type: Unknown furniture element type '<arg:0>'
-resource.furniture.data_source.unknown_type: Unknown furniture data source type '<arg:0>'
 resource.furniture.hitbox.unknown_type: Unknown furniture hitbox type '<arg:0>'
 resource.furniture.behavior.unknown_type: Unknown furniture behavior type '<arg:0>'
 resource.furniture.hitbox.custom.invalid_entity_type: Invalid entity type '<arg:0>'
@@ -337,3 +352,14 @@ resource.recipe.shapeless_transform.ambigious_source: "Found 2 or more materials
 resource.recipe.shapeless_transform.source_not_found: "Unable to find a material marked as source in recipe"
 resource.recipe.post_processor.unknown_type: Unknown recipe post processor type '<arg:0>'
 resource.recipe.unknown_type: Unknown recipe type '<arg:0>'
+resource_pack.bad_sprite: 'Block ''<arg:0>'' uses sprite ''<arg:1>'', which should be in atlas ''<arg:2>'' but is only defined in atlas ''<arg:3>'''
+host.upload_started: "Initiating resource pack upload..."
+host.upload_finished: "Successfully uploaded resource pack in <arg:0> ms"
+resource_pack.validation_finished: Validated resource pack in <arg:0>ms
+resource_pack.optimization_finished: Optimized resource pack in <arg:0>ms
+resource_pack.compression_started: Compressing resource pack...(This progress might be slow if you have obfuscation enabled)
+resource_pack.compression_finished: Compressed resource pack in <arg:0>ms
+resource_pack.packsquash_started: 'Running PackSquash with configuration <arg:0>...'
+resource_pack.packsquash_finished: 'PackSquash completed in <arg:0>ms'
+resource_pack.zip_loaded: 'Loaded resource pack ZIP <arg:0> in <arg:1>ms'
+resource_pack.export_finished: 'Exported resource pack to <arg:0> in <arg:1>ms'

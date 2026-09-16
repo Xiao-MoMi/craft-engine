@@ -2,9 +2,9 @@ package net.momirealms.craftengine.bukkit.entity.furniture.hitbox;
 
 import net.momirealms.craftengine.bukkit.entity.data.InteractionData;
 import net.momirealms.craftengine.bukkit.entity.data.monster.ShulkerData;
-import net.momirealms.craftengine.bukkit.entity.furniture.BukkitCollider;
 import net.momirealms.craftengine.bukkit.util.DirectionUtils;
-import net.momirealms.craftengine.core.entity.furniture.Collider;
+import net.momirealms.craftengine.core.entity.furniture.ColliderConfig;
+import net.momirealms.craftengine.core.entity.furniture.ColliderProperties;
 import net.momirealms.craftengine.core.entity.furniture.Furniture;
 import net.momirealms.craftengine.core.entity.furniture.hitbox.AbstractFurnitureHitBoxConfig;
 import net.momirealms.craftengine.core.entity.furniture.hitbox.FurnitureHitBoxConfigFactory;
@@ -15,18 +15,14 @@ import net.momirealms.craftengine.core.plugin.config.ConfigKeys;
 import net.momirealms.craftengine.core.plugin.config.ConfigSection;
 import net.momirealms.craftengine.core.util.Direction;
 import net.momirealms.craftengine.core.util.MiscUtils;
-import net.momirealms.craftengine.core.util.QuaternionUtils;
 import net.momirealms.craftengine.core.world.Vec3d;
-import net.momirealms.craftengine.core.world.World;
 import net.momirealms.craftengine.core.world.WorldPosition;
 import net.momirealms.craftengine.core.world.collision.AABB;
 import net.momirealms.craftengine.proxy.minecraft.core.DirectionProxy;
 import net.momirealms.craftengine.proxy.minecraft.network.protocol.game.ClientboundAddEntityPacketProxy;
 import net.momirealms.craftengine.proxy.minecraft.network.protocol.game.ClientboundSetEntityDataPacketProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.entity.EntityTypesProxy;
-import net.momirealms.craftengine.proxy.minecraft.world.phys.AABBProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.phys.Vec3Proxy;
-import org.joml.Quaternionf;
 import org.joml.Vector3f;
 
 import java.util.ArrayList;
@@ -35,6 +31,7 @@ import java.util.UUID;
 import java.util.function.Consumer;
 
 public final class ShulkerFurnitureHitboxConfig extends AbstractFurnitureHitBoxConfig<ShulkerFurnitureHitbox> {
+    public final ColliderProperties colliderProperties;
     public static final FurnitureHitBoxConfigFactory<ShulkerFurnitureHitbox> FACTORY = new Factory();
     public final float scale;
     public final byte peek;
@@ -42,6 +39,7 @@ public final class ShulkerFurnitureHitboxConfig extends AbstractFurnitureHitBoxC
     public final boolean interactionEntity;
     public final Direction direction;
     public final DirectionalShulkerSpawner spawner;
+    public final boolean invisible;
     public final List<Object> cachedShulkerValues = new ArrayList<>(6);
     public final AABBCreator aabbCreator;
 
@@ -57,8 +55,10 @@ public final class ShulkerFurnitureHitboxConfig extends AbstractFurnitureHitBoxC
                                         boolean invisible,
                                         Direction direction) {
         super(seats, position, canUseItemOn, blocksBuilding, canBeHitByProjectile);
+        this.colliderProperties = ColliderProperties.of(true, blocksBuilding, canBeHitByProjectile);
         this.scale = scale;
         this.peek = peek;
+        this.invisible = invisible;
         this.interactive = interactive;
         this.interactionEntity = interactionEntity;
         this.direction = direction;
@@ -79,65 +79,71 @@ public final class ShulkerFurnitureHitboxConfig extends AbstractFurnitureHitBoxC
             InteractionData.Height.addEntityDataIfNotDefaultValue(shulkerHeight + 0.01f, cachedInteractionValues);
             InteractionData.Width.addEntityDataIfNotDefaultValue(scale + 0.005f, cachedInteractionValues);
             InteractionData.Response.addEntityDataIfNotDefaultValue(interactive, cachedInteractionValues);
-            this.spawner = (entityIds, world, x, y, z, yaw, offset, packets, collider, aabb) -> {
-                collider.accept(this.createCollider(Direction.UP, world, offset, x, y, z, entityIds[1], aabb));
+            List<Object> interactionValues = List.copyOf(cachedInteractionValues);
+            this.spawner = (entityIds, x, y, z, yaw, offset, packets, parts) -> {
+                ColliderConfig collider = this.createColliderConfig(Direction.UP, offset, x, y, z, entityIds[1], parts);
                 if (interactionEntity) {
-                    packets.accept(ClientboundAddEntityPacketProxy.INSTANCE.newInstance(
+                    packets.add(ClientboundAddEntityPacketProxy.INSTANCE.newInstance(
                             entityIds[2], UUID.randomUUID(), x + offset.x, y + offset.y - 0.005f, z - offset.z, 0, yaw,
                             EntityTypesProxy.INTERACTION, 0, Vec3Proxy.ZERO, 0
                     ));
-                    packets.accept(ClientboundSetEntityDataPacketProxy.INSTANCE.newInstance(entityIds[2], List.copyOf(cachedInteractionValues)));
+                    packets.add(ClientboundSetEntityDataPacketProxy.INSTANCE.newInstance(entityIds[2], interactionValues));
                     Vec3d vec3d = new Vec3d(x + offset.x, y + offset.y, z - offset.z);
-                    aabb.accept(new FurnitureHitboxPart(entityIds[2], AABB.makeBoundingBox(vec3d, scale, shulkerHeight), vec3d, interactive));
+                    parts[1] = new FurnitureHitboxPart(entityIds[2], AABB.makeBoundingBox(vec3d, scale, shulkerHeight), vec3d, interactive);
                 }
+                return collider;
             };
             this.aabbCreator = (x, y, z, yaw, offset) -> createAABB(Direction.UP, offset, x, y, z);
         } else if (direction == Direction.DOWN) {
             InteractionData.Height.addEntityDataIfNotDefaultValue(shulkerHeight + 0.01f, cachedInteractionValues);
             InteractionData.Width.addEntityDataIfNotDefaultValue(scale + 0.005f, cachedInteractionValues);
             InteractionData.Response.addEntityDataIfNotDefaultValue(interactive, cachedInteractionValues);
-            this.spawner = (entityIds, world, x, y, z, yaw, offset, packets, collider, aabb) -> {
-                collider.accept(this.createCollider(Direction.DOWN, world, offset, x, y, z, entityIds[1], aabb));
-                packets.accept(ClientboundSetEntityDataPacketProxy.INSTANCE.newInstance(entityIds[1], List.of(ShulkerData.AttachFace.createEntityDataIfNotDefaultValue(DirectionProxy.UP))));
+            List<Object> interactionValues = List.copyOf(cachedInteractionValues);
+            this.spawner = (entityIds, x, y, z, yaw, offset, packets, parts) -> {
+                ColliderConfig collider = this.createColliderConfig(Direction.DOWN, offset, x, y, z, entityIds[1], parts);
+                packets.add(ClientboundSetEntityDataPacketProxy.INSTANCE.newInstance(entityIds[1], List.of(ShulkerData.AttachFace.createEntityDataIfNotDefaultValue(DirectionProxy.UP))));
                 if (interactionEntity) {
-                    packets.accept(ClientboundAddEntityPacketProxy.INSTANCE.newInstance(
+                    packets.add(ClientboundAddEntityPacketProxy.INSTANCE.newInstance(
                             entityIds[2], UUID.randomUUID(), x + offset.x, y + offset.y - 0.005f - shulkerHeight + scale, z - offset.z, 0, yaw,
                             EntityTypesProxy.INTERACTION, 0, Vec3Proxy.ZERO, 0
                     ));
-                    packets.accept(ClientboundSetEntityDataPacketProxy.INSTANCE.newInstance(entityIds[2], List.copyOf(cachedInteractionValues)));
+                    packets.add(ClientboundSetEntityDataPacketProxy.INSTANCE.newInstance(entityIds[2], interactionValues));
                     Vec3d vec3d = new Vec3d(x + offset.x, y + offset.y - shulkerHeight + scale, z - offset.z);
-                    aabb.accept(new FurnitureHitboxPart(entityIds[2], AABB.makeBoundingBox(vec3d, scale, shulkerHeight), vec3d, interactive));
+                    parts[1] = new FurnitureHitboxPart(entityIds[2], AABB.makeBoundingBox(vec3d, scale, shulkerHeight), vec3d, interactive);
                 }
+                return collider;
             };
             this.aabbCreator = (x, y, z, yaw, offset) -> createAABB(Direction.DOWN, offset, x, y, z);
         } else {
             InteractionData.Height.addEntityDataIfNotDefaultValue(scale + 0.01f, cachedInteractionValues);
             InteractionData.Width.addEntityDataIfNotDefaultValue(scale + 0.005f, cachedInteractionValues);
             InteractionData.Response.addEntityDataIfNotDefaultValue(interactive, cachedInteractionValues);
-            this.spawner = (entityIds, world, x, y, z, yaw, offset, packets, collider, aabb) -> {
+            List<Object> interactionValues = List.copyOf(cachedInteractionValues);
+            this.spawner = (entityIds, x, y, z, yaw, offset, packets, parts) -> {
                 Direction shulkerAnchor = getOriginalDirection(direction, Direction.fromYaw(yaw));
                 Direction shulkerDirection = shulkerAnchor.opposite();
-                collider.accept(this.createCollider(shulkerDirection, world, offset, x, y, z, entityIds[1], aabb));
-                packets.accept(ClientboundSetEntityDataPacketProxy.INSTANCE.newInstance(entityIds[1], List.of(ShulkerData.AttachFace.createEntityDataIfNotDefaultValue(DirectionUtils.toNMSDirection(shulkerAnchor)))));
+                ColliderConfig collider = this.createColliderConfig(shulkerDirection, offset, x, y, z, entityIds[1], parts);
+                packets.add(ClientboundSetEntityDataPacketProxy.INSTANCE.newInstance(entityIds[1], List.of(ShulkerData.AttachFace.createEntityDataIfNotDefaultValue(DirectionUtils.toNMSDirection(shulkerAnchor)))));
                 if (interactionEntity) {
                     // first interaction
-                    packets.accept(ClientboundAddEntityPacketProxy.INSTANCE.newInstance(
+                    packets.add(ClientboundAddEntityPacketProxy.INSTANCE.newInstance(
                             entityIds[2], UUID.randomUUID(), x + offset.x, y + offset.y - 0.005f, z - offset.z, 0, yaw,
                             EntityTypesProxy.INTERACTION, 0, Vec3Proxy.ZERO, 0
                     ));
-                    packets.accept(ClientboundSetEntityDataPacketProxy.INSTANCE.newInstance(entityIds[2], List.copyOf(cachedInteractionValues)));
+                    packets.add(ClientboundSetEntityDataPacketProxy.INSTANCE.newInstance(entityIds[2], interactionValues));
                     // second interaction
                     double distance = shulkerHeight - scale;
-                    packets.accept(ClientboundAddEntityPacketProxy.INSTANCE.newInstance(
+                    packets.add(ClientboundAddEntityPacketProxy.INSTANCE.newInstance(
                             entityIds[3], UUID.randomUUID(), x + offset.x + shulkerDirection.stepX() * distance, y + offset.y - 0.005f, z - offset.z + shulkerDirection.stepZ() * distance, 0, yaw,
                             EntityTypesProxy.INTERACTION, 0, Vec3Proxy.ZERO, 0
                     ));
-                    packets.accept(ClientboundSetEntityDataPacketProxy.INSTANCE.newInstance(entityIds[3], List.copyOf(cachedInteractionValues)));
+                    packets.add(ClientboundSetEntityDataPacketProxy.INSTANCE.newInstance(entityIds[3], interactionValues));
                     Vec3d vec3d1 = new Vec3d(x + offset.x, y + offset.y, z - offset.z);
                     Vec3d vec3d2 = new Vec3d(x + offset.x + shulkerDirection.stepX() * distance, y + offset.y, z - offset.z + shulkerDirection.stepZ() * distance);
-                    aabb.accept(new FurnitureHitboxPart(entityIds[2], AABB.makeBoundingBox(vec3d1, scale, scale), vec3d1, interactive));
-                    aabb.accept(new FurnitureHitboxPart(entityIds[3], AABB.makeBoundingBox(vec3d2, scale, scale), vec3d2, interactive));
+                    parts[1] = new FurnitureHitboxPart(entityIds[2], AABB.makeBoundingBox(vec3d1, scale, scale), vec3d1, interactive);
+                    parts[2] = new FurnitureHitboxPart(entityIds[3], AABB.makeBoundingBox(vec3d2, scale, scale), vec3d2, interactive);
                 }
+                return collider;
             };
             this.aabbCreator = (x, y, z, yaw, offset) -> {
                 Direction shulkerAnchor = getOriginalDirection(direction, Direction.fromYaw(yaw));
@@ -152,10 +158,14 @@ public final class ShulkerFurnitureHitboxConfig extends AbstractFurnitureHitBoxC
     }
 
     @Override
+    public ColliderProperties colliderProperties() {
+        return this.colliderProperties;
+    }
+
+    @Override
     public void prepareBoundingBox(WorldPosition targetPos, Consumer<AABB> aabbConsumer, boolean ignoreBlocksBuilding) {
         if (this.blocksBuilding || ignoreBlocksBuilding) {
-            Quaternionf conjugated = QuaternionUtils.toQuaternionf(0f, (float) Math.toRadians(180 - targetPos.yRot()), 0f).conjugate();
-            Vector3f offset = conjugated.transform(new Vector3f(position()));
+            Vector3f offset = Furniture.rotateHitboxOffset(targetPos.yRot, this.position);
             aabbConsumer.accept(this.aabbCreator.create(targetPos.x, targetPos.y, targetPos.z, targetPos.yRot, offset));
         }
     }
@@ -202,27 +212,23 @@ public final class ShulkerFurnitureHitboxConfig extends AbstractFurnitureHitBoxC
     @FunctionalInterface
     public interface DirectionalShulkerSpawner {
 
-        void accept(int[] entityIds,
-                    World world,
+        ColliderConfig create(int[] entityIds,
                     double x,
                     double y,
                     double z,
                     float yaw,
                     Vector3f offset,
-                    Consumer<Object> packets,
-                    Consumer<Collider> collider,
-                    Consumer<FurnitureHitboxPart> aabb);
+                    List<Object> packets,
+                    FurnitureHitboxPart[] parts);
     }
 
-    public Collider createCollider(Direction direction, World world,
+    public ColliderConfig createColliderConfig(Direction direction,
                                    Vector3f offset, double x, double y, double z,
                                    int entityId,
-                                   Consumer<FurnitureHitboxPart> aabb) {
+                                   FurnitureHitboxPart[] parts) {
         AABB ceAABB = createAABB(direction, offset, x, y, z);
-        Object level = world.minecraftWorld();
-        Object nmsAABB = AABBProxy.INSTANCE.newInstance(ceAABB.minX, ceAABB.minY, ceAABB.minZ, ceAABB.maxX, ceAABB.maxY, ceAABB.maxZ);
-        aabb.accept(new FurnitureHitboxPart(entityId, ceAABB, new Vec3d(x, y, z), false));
-        return new BukkitCollider(level, nmsAABB, x, y, z, this.canBeHitByProjectile(), true, this.blocksBuilding());
+        parts[0] = new FurnitureHitboxPart(entityId, ceAABB, new Vec3d(x, y, z), false);
+        return new ColliderConfig(ceAABB, this.colliderProperties);
     }
 
     public AABB createAABB(Direction direction, Vector3f relativePos, double x, double y, double z) {

@@ -1,14 +1,18 @@
 package net.momirealms.craftengine.core.pack.host;
 
+import java.io.IOException;
 import java.net.Authenticator;
 import java.net.PasswordAuthentication;
 import java.net.ProxySelector;
 import java.net.http.HttpClient;
+import java.net.http.HttpRequest;
+import java.net.http.HttpResponse;
 import java.time.Duration;
 import java.util.Objects;
-import java.util.concurrent.Executors;
+import java.util.concurrent.*;
 
 public final class HttpClientManager {
+    private static final Duration REQUEST_TIMEOUT = Duration.ofMinutes(5);
     private static HttpClient client = null;
     private static String lastEnableProxy = null;
     private static String lastHost = null;
@@ -66,5 +70,36 @@ public final class HttpClientManager {
 
     public static HttpClient get() {
         return client;
+    }
+
+    public static HttpRequest.Builder requestBuilder() {
+        return HttpRequest.newBuilder().timeout(REQUEST_TIMEOUT);
+    }
+
+    public static <T> CompletableFuture<HttpResponse<T>> sendAsync(HttpRequest request, HttpResponse.BodyHandler<T> handler) {
+        CompletableFuture<HttpResponse<T>> response = get().sendAsync(request, handler);
+        // Time out a dependent future so cancellation can still abort the original HTTP exchange.
+        CompletableFuture<HttpResponse<T>> timed = response.copy()
+                .orTimeout(request.timeout().orElse(REQUEST_TIMEOUT).toMillis(), TimeUnit.MILLISECONDS);
+        CompletableFuture<HttpResponse<T>> result = timed.whenComplete((ignored, error) -> {
+            if (error instanceof TimeoutException) response.cancel(true);
+        });
+        result.whenComplete((ignored, error) -> {
+            if (error instanceof CancellationException) response.cancel(true);
+        });
+        return result;
+    }
+
+    public static <T> HttpResponse<T> send(HttpRequest request, HttpResponse.BodyHandler<T> handler) throws IOException, InterruptedException {
+        CompletableFuture<HttpResponse<T>> response = sendAsync(request, handler);
+        try {
+            return response.get();
+        } catch (InterruptedException e) {
+            response.cancel(true);
+            throw e;
+        } catch (ExecutionException e) {
+            if (e.getCause() instanceof IOException io) throw io;
+            throw new IOException("Resource pack HTTP request failed", e.getCause());
+        }
     }
 }

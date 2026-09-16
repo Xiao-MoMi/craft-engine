@@ -11,7 +11,7 @@ import net.momirealms.craftengine.bukkit.block.BukkitBlockManager;
 import net.momirealms.craftengine.bukkit.plugin.BukkitCraftEngine;
 import net.momirealms.craftengine.bukkit.plugin.command.feature.TotemAnimationCommand;
 import net.momirealms.craftengine.bukkit.plugin.injector.HashedStackGenerator;
-import net.momirealms.craftengine.bukkit.plugin.network.handler.PlayerPacketHandler;
+import net.momirealms.craftengine.bukkit.plugin.network.handler.SelfPlayerPacketHandler;
 import net.momirealms.craftengine.bukkit.plugin.network.id.PacketIdHelper;
 import net.momirealms.craftengine.bukkit.plugin.network.id.PacketIds1_20;
 import net.momirealms.craftengine.bukkit.plugin.network.id.PacketIds1_20_5;
@@ -25,11 +25,11 @@ import net.momirealms.craftengine.bukkit.plugin.network.listener.login.HelloList
 import net.momirealms.craftengine.bukkit.plugin.network.listener.login.LoginAcknowledgedListener;
 import net.momirealms.craftengine.bukkit.plugin.network.listener.login.LoginFinishedListener;
 import net.momirealms.craftengine.bukkit.plugin.network.listener.status.StatusResponseListener;
+import net.momirealms.craftengine.bukkit.plugin.network.packet.ClientboundFurnitureUpdatePacket;
 import net.momirealms.craftengine.bukkit.plugin.user.BukkitServerPlayer;
 import net.momirealms.craftengine.bukkit.plugin.user.FakeBukkitServerPlayer;
 import net.momirealms.craftengine.bukkit.util.BlockStateUtils;
 import net.momirealms.craftengine.bukkit.util.KeyUtils;
-import net.momirealms.craftengine.bukkit.util.RegistryUtils;
 import net.momirealms.craftengine.bukkit.util.TagUtils;
 import net.momirealms.craftengine.core.plugin.CraftEngine;
 import net.momirealms.craftengine.core.plugin.config.Config;
@@ -43,6 +43,7 @@ import net.momirealms.craftengine.core.plugin.network.listener.ByteBufferPacketL
 import net.momirealms.craftengine.core.plugin.network.listener.ByteBufferPacketListenerHolder;
 import net.momirealms.craftengine.core.plugin.network.listener.NMSPacketListener;
 import net.momirealms.craftengine.core.plugin.network.mod.protocol.ClientboundCreativeModeTabItemsPacket;
+import net.momirealms.craftengine.core.plugin.text.component.ComponentProvider;
 import net.momirealms.craftengine.core.util.*;
 import net.momirealms.craftengine.core.world.score.TeamManagerImpl;
 import net.momirealms.craftengine.proxy.bukkit.craftbukkit.entity.CraftEntityProxy;
@@ -66,6 +67,7 @@ import net.momirealms.craftengine.proxy.minecraft.tags.TagNetworkSerializationPr
 import net.momirealms.craftengine.proxy.minecraft.world.level.block.BlocksProxy;
 import net.momirealms.craftengine.proxy.netty.handler.codec.ByteToMessageDecoderProxy;
 import net.momirealms.craftengine.proxy.netty.handler.codec.MessageToByteEncoderProxy;
+import net.momirealms.sparrow.nbt.Tag;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
@@ -82,7 +84,7 @@ import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Consumer;
-import java.util.function.Predicate;
+import java.util.function.IntPredicate;
 
 public final class BukkitNetworkManager extends AbstractNetworkManager implements Listener {
     public static final PacketIds PACKET_IDS = VersionHelper.isOrAbove1_20_5 ? PacketIds1_20_5.INSTANCE : PacketIds1_20.INSTANCE;
@@ -180,6 +182,13 @@ public final class BukkitNetworkManager extends AbstractNetworkManager implement
         if (VersionHelper.hasLeavesPatch) {
             this.injectLeavesBotList();
         }
+        // register custom packets
+        ClientboundFurnitureUpdatePacket.init();
+    }
+
+    @Override
+    public Map<String, ComponentProvider> matchNetworkTags(Tag nbt) {
+        return new NetworkTagVisitor().visit(nbt);
     }
 
     private boolean checkHasCompressionThreshold() {
@@ -367,7 +376,7 @@ public final class BukkitNetworkManager extends AbstractNetworkManager implement
         BotListProxy.INSTANCE.setBots(botList, monitor);
     }
 
-    public void registerBlockStatePacketListeners(int[] blockStateMappings, Predicate<Integer> occlusionPredicate) {
+    public void registerBlockStatePacketListeners(int[] blockStateMappings, IntPredicate occlusionPredicate) {
         int stoneId = BlockStateUtils.blockStateToId(BlocksProxy.STONE$defaultState);
         int vanillaBlocks = BlockStateUtils.vanillaBlockStateCount();
         int[] newMappings = new int[blockStateMappings.length];
@@ -397,7 +406,6 @@ public final class BukkitNetworkManager extends AbstractNetworkManager implement
                 newMappings,
                 newMappingsMOD,
                 newMappings.length,
-                RegistryUtils.currentBiomeRegistrySize(),
                 occlusionPredicate
         ), PACKET_IDS.clientboundLevelChunkWithLightPacket(), "ClientboundLevelChunkWithLightPacket", ConnectionState.PLAY, PacketFlow.CLIENTBOUND);
         registerByteBufferPacketListener(new SectionBlocksUpdateListener(
@@ -439,11 +447,14 @@ public final class BukkitNetworkManager extends AbstractNetworkManager implement
         registerNMSPacketConsumer(NMSFinishConfigurationListener.INSTANCE, ClientboundFinishConfigurationPacketProxy.CLASS);
         registerNMSPacketConsumer(NMSResourcePackListener.INSTANCE, ServerboundResourcePackPacketProxy.CLASS);
 
-        if (Config.optimizeItemCodec()) {
+        if (Config.nettyPerformanceModeEntity()) {
+            registerNMSPacketConsumer(NMSSetEntityDataListener.INSTANCE, ClientboundSetEntityDataPacketProxy.CLASS);
+        }
+
+        if (Config.nettyPerformanceModeItem()) {
             registerNMSPacketConsumer(NMSContainerSetContentListener.INSTANCE, ClientboundContainerSetContentPacketProxy.CLASS);
             registerNMSPacketConsumer(NMSContainerSetSlotListener.INSTANCE, ClientboundContainerSetSlotPacketProxy.CLASS);
             registerNMSPacketConsumer(NMSSetPlayerInventoryListener.INSTANCE, ClientboundSetPlayerInventoryPacketProxy.CLASS);
-            registerNMSPacketConsumer(NMSSetEquipmentListener.INSTANCE, ClientboundSetEquipmentPacketProxy.CLASS);
             if (VersionHelper.isOrAbove1_21_2) {
                 registerNMSPacketConsumer(NMSSetCursorItemListener.INSTANCE, ClientboundSetCursorItemPacketProxy.CLASS);
             }
@@ -452,11 +463,18 @@ public final class BukkitNetworkManager extends AbstractNetworkManager implement
             registerByteBufferPacketListener(ContainerSetSlotListener.INSTANCE, PACKET_IDS.clientboundContainerSetSlotPacket(), "ClientboundContainerSetSlotPacket", ConnectionState.PLAY, PacketFlow.CLIENTBOUND);
             registerByteBufferPacketListener(SetPlayerInventoryListener.INSTANCE, PACKET_IDS.clientboundSetPlayerInventoryPacket(), "ClientboundSetPlayerInventoryPacket", ConnectionState.PLAY, PacketFlow.CLIENTBOUND);
             registerByteBufferPacketListener(SetCursorItemListener.INSTANCE, PACKET_IDS.clientboundSetCursorItemPacket(), "ClientboundSetCursorItemPacket", ConnectionState.PLAY, PacketFlow.CLIENTBOUND);
-            registerByteBufferPacketListener(SetEquipmentListener.INSTANCE, PACKET_IDS.clientboundSetEquipmentPacket(), "ClientboundSetEquipmentPacket", ConnectionState.PLAY, PacketFlow.CLIENTBOUND);
         }
 
         // bytebuffer
         registerByteBufferPacketListener(PlayerInfoUpdateListener.INSTANCE, PACKET_IDS.clientboundPlayerInfoUpdatePacket(), "ClientboundPlayerInfoUpdatePacket", ConnectionState.PLAY, PacketFlow.CLIENTBOUND);
+        registerByteBufferPacketListener(BossEventListener.INSTANCE, PACKET_IDS.clientboundBossEventPacket(), "ClientboundBossEventPacket", ConnectionState.PLAY, PacketFlow.CLIENTBOUND);
+        registerByteBufferPacketListener(TeleportEntityListener.INSTANCE, PACKET_IDS.clientboundTeleportEntityPacket(), "ClientboundTeleportEntityPacket", ConnectionState.PLAY, PacketFlow.CLIENTBOUND);
+        // 装备 LOD 需要字节层装备包做距离淘汰，未启用 LOD 时装备包也可以提前到 nms 阶段
+        if (Config.nettyPerformanceModeItem() && !(VersionHelper.isOrAbove1_21_2 && Config.enableEquipmentLod())) {
+            registerNMSPacketConsumer(NMSSetEquipmentListener.INSTANCE, ClientboundSetEquipmentPacketProxy.CLASS);
+        } else {
+            registerByteBufferPacketListener(SetEquipmentListener.INSTANCE, PACKET_IDS.clientboundSetEquipmentPacket(), "ClientboundSetEquipmentPacket", ConnectionState.PLAY, PacketFlow.CLIENTBOUND);
+        }
         registerByteBufferPacketListener(ClientInformationListener.INSTANCE, PACKET_IDS.serverboundClientInformationPacket$play(), "ServerboundClientInformationPacket", ConnectionState.PLAY, PacketFlow.SERVERBOUND);
         registerByteBufferPacketListener(ClientInformationListener.INSTANCE, PACKET_IDS.serverboundClientInformationPacket$configuration(), "ServerboundClientInformationPacket", ConnectionState.CONFIGURATION, PacketFlow.SERVERBOUND);
         registerByteBufferPacketListener(RespawnListener.INSTANCE, PACKET_IDS.clientboundRespawnPacket(), "ClientboundRespawnPacket", ConnectionState.PLAY, PacketFlow.CLIENTBOUND);
@@ -506,7 +524,6 @@ public final class BukkitNetworkManager extends AbstractNetworkManager implement
         registerByteBufferPacketListener(TabListListener.INSTANCE, PACKET_IDS.clientboundTabListPacket(), "ClientboundTabListPacket", ConnectionState.PLAY, PacketFlow.CLIENTBOUND);
         registerByteBufferPacketListener(SetTitleTextListener.INSTANCE, PACKET_IDS.clientboundSetTitleTextPacket(), "ClientboundSetTitleTextPacket", ConnectionState.PLAY, PacketFlow.CLIENTBOUND);
         registerByteBufferPacketListener(SetSubtitleTextListener.INSTANCE, PACKET_IDS.clientboundSetSubtitleTextPacket(), "ClientboundSetSubtitleTextPacket", ConnectionState.PLAY, PacketFlow.CLIENTBOUND);
-        registerByteBufferPacketListener(BossEventListener.INSTANCE, PACKET_IDS.clientboundBossEventPacket(), "ClientboundBossEventPacket", ConnectionState.PLAY, PacketFlow.CLIENTBOUND);
         registerByteBufferPacketListener(SetPlayerTeamListener.INSTANCE, PACKET_IDS.clientboundSetPlayerTeamPacket(), "ClientboundSetPlayerTeamPacket", ConnectionState.PLAY, PacketFlow.CLIENTBOUND);
         registerByteBufferPacketListener(SetObjectiveListener.INSTANCE, PACKET_IDS.clientboundSetObjectivePacket(), "ClientboundSetObjectivePacket", ConnectionState.PLAY, PacketFlow.CLIENTBOUND);
         registerByteBufferPacketListener(PlayerChatListener.INSTANCE, PACKET_IDS.clientboundPlayerChatPacket(), "ClientboundPlayerChatPacket", ConnectionState.PLAY, PacketFlow.CLIENTBOUND);
@@ -524,7 +541,7 @@ public final class BukkitNetworkManager extends AbstractNetworkManager implement
         if (user != null) {
             user.setPlayer(player);
             // 玩家自身实体的包处理器（血量 metadata 缩放等）
-            user.entityPacketHandlers().put(user.entityId(), PlayerPacketHandler.INSTANCE);
+            user.entityViews().put(user.entityId(), SelfPlayerPacketHandler.INSTANCE);
             this.onlineUsers.put(player.getUniqueId(), user);
             this.resetUserArray();
             // folia在此tick每个玩家
@@ -829,7 +846,7 @@ public final class BukkitNetworkManager extends AbstractNetworkManager implement
     private void handleC2SByteBufPacket(NetWorkUser user, ByteBufPacketEvent event) {
         int packetID = event.packetID();
         ByteBufferPacketListenerHolder[] listener = c2sPacketListeners[user.decoderState().ordinal()];
-        if (packetID >= listener.length) {
+        if (packetID >= listener.length || packetID < 0) {
             Debugger.PACKET.debug(() -> "Failed to convert the packet " + packetID + " for player " + user.name() +
                     ". Packet Flow: C->S, Decoder State: " + user.decoderState() + ", " +
                     "Server version: " + VersionHelper.MINECRAFT_VERSION.version() + ", Bytes: " + event.getBuffer());

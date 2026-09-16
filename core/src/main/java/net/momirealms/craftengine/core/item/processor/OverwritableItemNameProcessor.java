@@ -31,6 +31,11 @@ public final class OverwritableItemNameProcessor implements SimpleNetworkItemPro
     }
 
     @Override
+    public boolean isConstant() {
+        return this.modifier.isConstant();
+    }
+
+    @Override
     public Key componentType(Item item, ItemBuildContext context) {
         return DataComponentKeys.ITEM_NAME;
     }

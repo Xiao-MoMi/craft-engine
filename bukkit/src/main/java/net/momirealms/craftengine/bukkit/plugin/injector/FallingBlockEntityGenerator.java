@@ -27,6 +27,8 @@ import net.momirealms.craftengine.proxy.bukkit.craftbukkit.event.CraftEventFacto
 import net.momirealms.craftengine.proxy.minecraft.core.Vec3iProxy;
 import net.momirealms.craftengine.proxy.minecraft.server.level.ServerLevelProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.entity.EntityProxy;
+import net.momirealms.craftengine.proxy.minecraft.world.entity.EntityTypeProxy;
+import net.momirealms.craftengine.proxy.minecraft.world.entity.EntityTypesProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.entity.MoverTypeProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.entity.item.FallingBlockEntityProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.entity.item.ItemEntityProxy;
@@ -34,13 +36,12 @@ import net.momirealms.craftengine.proxy.minecraft.world.level.ItemLikeProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.level.LevelProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.level.LevelWriterProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.level.block.state.BlockBehaviourProxy;
-import net.momirealms.craftengine.proxy.minecraft.world.level.block.state.BlockStateProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.level.block.state.StateHolderProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.level.block.state.properties.BlockStatePropertiesProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.level.material.FluidStateProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.phys.Vec3Proxy;
 import net.momirealms.sparrow.reflection.clazz.SparrowClass;
-import net.momirealms.sparrow.reflection.constructor.SConstructor5;
+import net.momirealms.sparrow.reflection.constructor.SConstructor2;
 import net.momirealms.sparrow.reflection.constructor.matcher.ConstructorMatcher;
 import net.momirealms.sparrow.reflection.method.matcher.MethodMatcher;
 
@@ -51,7 +52,7 @@ import java.util.concurrent.Callable;
 import static java.util.Objects.requireNonNull;
 
 public final class FallingBlockEntityGenerator {
-    private static SConstructor5 constructor$CraftEngineFallingBlockEntity;
+    private static SConstructor2 constructor$CraftEngineFallingBlockEntity;
     public static final Method method$Entity$spawnAtLocation = requireNonNull(
             SparrowClass.of(EntityProxy.CLASS).getDeclaredMethod(MethodMatcher.named("spawnAtLocation")
                     .and(VersionHelper.isOrAbove1_21_2
@@ -95,15 +96,13 @@ public final class FallingBlockEntityGenerator {
                 .make()
                 .load(FallingBlockEntityGenerator.class.getClassLoader())
                 .getLoaded();
+        // The position constructor is private on vanilla/Spigot and only exposed by Paper.
         constructor$CraftEngineFallingBlockEntity = SparrowClass.of(clazz$CraftEngineFallingBlockEntity)
                 .getSparrowConstructor(ConstructorMatcher.takeArguments(
-                        LevelProxy.CLASS,
-                        double.class,
-                        double.class,
-                        double.class,
-                        BlockStateProxy.CLASS
+                        EntityTypeProxy.CLASS,
+                        LevelProxy.CLASS
                 ))
-                .asm$5();
+                .asm$2();
     }
 
     public static Object fall(Object level, Object pos, Object blockState) {
@@ -113,11 +112,23 @@ public final class FallingBlockEntityGenerator {
 
         Object finalBlockState = withoutWaterlogged(blockState);
         Object fallingBlockEntity = constructor$CraftEngineFallingBlockEntity.newInstance(
-                level,
-                Vec3iProxy.INSTANCE.getX(pos) + 0.5,
-                (double) Vec3iProxy.INSTANCE.getY(pos),
-                Vec3iProxy.INSTANCE.getZ(pos) + 0.5,
-                finalBlockState
+                EntityTypesProxy.FALLING_BLOCK,
+                level
+        );
+        // Mirror the initialization performed by FallingBlockEntity's private position constructor.
+        double x = Vec3iProxy.INSTANCE.getX(pos) + 0.5;
+        double y = Vec3iProxy.INSTANCE.getY(pos);
+        double z = Vec3iProxy.INSTANCE.getZ(pos) + 0.5;
+        FallingBlockEntityProxy.INSTANCE.setBlockState(fallingBlockEntity, finalBlockState);
+        EntityProxy.INSTANCE.setBlocksBuilding(fallingBlockEntity, true);
+        EntityProxy.INSTANCE.setPos(fallingBlockEntity, x, y, z);
+        EntityProxy.INSTANCE.setDeltaMovement(fallingBlockEntity, Vec3Proxy.ZERO);
+        EntityProxy.INSTANCE.setXo(fallingBlockEntity, x);
+        EntityProxy.INSTANCE.setYo(fallingBlockEntity, y);
+        EntityProxy.INSTANCE.setZo(fallingBlockEntity, z);
+        FallingBlockEntityProxy.INSTANCE.setStartPos(
+                fallingBlockEntity,
+                EntityProxy.INSTANCE.getBlockPosition(fallingBlockEntity)
         );
         ImmutableBlockState customBlockState = BlockStateUtils.getOptionalCustomBlockState(finalBlockState).orElse(null);
         if (customBlockState != null) {

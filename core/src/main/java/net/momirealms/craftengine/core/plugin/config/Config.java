@@ -63,6 +63,8 @@ public final class Config {
     private boolean misc$hook_axiom_paper;
     private boolean misc$fix_world_memory_leak;
 
+    private int cache$json_to_component = 512;
+
     private boolean scripting$js$enable;
     private String scripting$js$engine;
     private boolean scripting$js$nashorn_compat;
@@ -86,13 +88,8 @@ public final class Config {
     private List<String> resource_pack$merge_external_folders;
     private List<String> resource_pack$merge_external_zips;
     private Set<String> resource_pack$exclude_file_extensions;
-    private Path resource_pack$path;
     private String resource_pack$description;
-    private boolean resource_pack$map_plugin_compatibility$enable;
-    private Path resource_pack$map_plugin_compatibility$path;
 
-    private boolean resource_pack$protection$unprotected_copy$enable;
-    private Path resource_pack$protection$unprotected_copy$path;
     private boolean resource_pack$protection$crash_tools$method_1;
     private boolean resource_pack$protection$crash_tools$method_2;
     private boolean resource_pack$protection$crash_tools$method_3;
@@ -103,7 +100,7 @@ public final class Config {
     private boolean resource_pack$protection$crash_tools$method_8;
     private boolean resource_pack$protection$crash_tools$method_9;
 
-    private boolean resource_pack$validation$enable;
+    private boolean resource_pack$validation$fix_model_uv_out_of_bounds;
     private boolean resource_pack$validation$fix_atlas;
     private boolean resource_pack$validation$fix_missing_texture;
     private boolean resource_pack$validation$fallback_models$fix_textures_format;
@@ -139,7 +136,6 @@ public final class Config {
     private List<String> resource_pack$protection$obfuscation$bypass_equipments;
     private List<String> resource_pack$protection$obfuscation$bypass_item_models;
 
-    private boolean resource_pack$optimization$enable;
     private boolean resource_pack$optimization$texture$enable;
     private Set<String> resource_pack$optimization$texture$exlude;
     private int resource_pack$optimization$texture$zopfli_iterations;
@@ -153,10 +149,7 @@ public final class Config {
     private boolean resource_pack$delivery$kick_if_declined;
     private boolean resource_pack$delivery$kick_if_failed_to_apply;
     private boolean resource_pack$delivery$send_on_join;
-    private boolean resource_pack$delivery$resend_on_upload;
-    private boolean resource_pack$delivery$auto_upload;
     private boolean resource_pack$delivery$strict_player_uuid_validation;
-    private Path resource_pack$delivery$file_to_upload;
     private boolean resource_pack$delivery$proxy$enable;
     private int resource_pack$delivery$proxy$port;
     private String resource_pack$delivery$proxy$host;
@@ -245,9 +238,7 @@ public final class Config {
     private boolean network$intercept_packets$container;
     private boolean network$intercept_packets$team;
     private boolean network$intercept_packets$scoreboard;
-    private boolean network$intercept_packets$entity_name;
-    private boolean network$intercept_packets$text_display;
-    private boolean network$intercept_packets$armor_stand;
+    private boolean network$intercept_packets$entity_data;
     private boolean network$intercept_packets$player_info;
     private boolean network$intercept_packets$set_score;
     private boolean network$intercept_packets$item;
@@ -262,7 +253,9 @@ public final class Config {
     private int network$mod_channel$creative_tab_max_items_per_packet = 10;
     private int network$mod_channel$visual_block_states_max_per_packet = 5000;
     private boolean network$item_crypto$enable;
-    private boolean network$optimize_item_codec;
+    private boolean network$performance_mode$item;
+    private boolean network$performance_mode$entity;
+    private boolean network$performance_mode$text;
 
     private boolean item$client_bound_model;
     private boolean item$non_italic_tag;
@@ -286,6 +279,7 @@ public final class Config {
     private Key equipment$sacrificed_vanilla_armor$asset_id;
     private Key equipment$sacrificed_vanilla_armor$humanoid;
     private Key equipment$sacrificed_vanilla_armor$humanoid_leggings;
+    private boolean equipment$lod$enable;
 
     private boolean emoji$contexts$chat;
     private boolean emoji$contexts$book;
@@ -297,6 +291,8 @@ public final class Config {
     private int client_optimization$entity_culling$view_distance;
     private int client_optimization$entity_culling$threads;
     private boolean client_optimization$entity_culling$ray_tracing;
+    private boolean client_optimization$entity_culling$update_display_view_range;
+    private boolean client_optimization$entity_culling$keep_invisible_hitboxes;
     private boolean client_optimization$entity_culling$rate_limiting$enable;
     private int client_optimization$entity_culling$rate_limiting$bucket_size;
     private int client_optimization$entity_culling$rate_limiting$restore_per_tick;
@@ -362,7 +358,11 @@ public final class Config {
                     loadedConfig,
                     this.yaml.load(defaultInputStream),
                     List.of(
-                            YamlUtils.route("resource-pack.delivery.hosting"),
+                            YamlUtils.route("storage"),
+                            YamlUtils.route("resource-pack.packs"),
+                            YamlUtils.route("resource-pack.presets"),
+                            YamlUtils.route("resource-pack.self-host"),
+                            YamlUtils.route("resource-pack.workflows"),
                             YamlUtils.route("chunk-system.process-invalid-blocks.convert"),
                             YamlUtils.route("chunk-system.process-invalid-furniture.convert"),
                             YamlUtils.route("item.custom-model-data-starting-value.overrides"),
@@ -405,6 +405,11 @@ public final class Config {
         this.misc$hook_axiom_paper = config.getBoolean("misc.hook-axiompaper", true);
         this.misc$fix_world_memory_leak = config.getBoolean("misc.fix-world-memory-leak", false);
 
+        // cache，重启后生效
+        if (this.firstTime) {
+            this.cache$json_to_component = Math.max(config.getInt("cache.json-to-component", 512), 0);
+        }
+
         // scripting
         this.scripting$js$enable = config.getBoolean("scripting.js.enable", false);
         this.scripting$js$engine = config.getString("scripting.js.engine", "nashorn");
@@ -430,7 +435,6 @@ public final class Config {
         this.debug$print_stack_trace = config.getBoolean("debug.print-stack-trace", false);
 
         // resource pack
-        this.resource_pack$path = resolvePath(config.getString("resource-pack.path", "./generated/resource_pack.zip"));
         this.resource_pack$description = config.getString("resource-pack.description", "<gray>CraftEngine ResourcePack</gray>");
         this.resource_pack$override_uniform_font = config.getBoolean("resource-pack.override-uniform-font", false);
         this.resource_pack$generate_mod_assets = config.getBoolean("resource-pack.generate-mod-assets", false);
@@ -440,18 +444,13 @@ public final class Config {
         if (this.resource_pack$supported_version$min.isAbove(this.resource_pack$supported_version$max)) {
             this.resource_pack$supported_version$min = this.resource_pack$supported_version$max;
         }
-        this.resource_pack$map_plugin_compatibility$enable = config.getBoolean("resource-pack.map-plugin-compatibility.enable", false);
-        this.resource_pack$map_plugin_compatibility$path = resolvePath(config.getString("resource-pack.map-plugin-compatibility.path", "./generated/resource_pack_map.zip"));
         this.resource_pack$merge_external_folders = config.getStringList("resource-pack.merge-external-folders");
         this.resource_pack$merge_external_zips = config.getStringList("resource-pack.merge-external-zip-files");
         this.resource_pack$exclude_file_extensions = new HashSet<>(config.getStringList("resource-pack.exclude-file-extensions"));
         this.resource_pack$delivery$send_on_join = config.getBoolean("resource-pack.delivery.send-on-join", true);
-        this.resource_pack$delivery$resend_on_upload = config.getBoolean("resource-pack.delivery.resend-on-upload", true);
         this.resource_pack$delivery$kick_if_declined = config.getBoolean("resource-pack.delivery.kick-if-declined", true);
         this.resource_pack$delivery$kick_if_failed_to_apply = config.getBoolean("resource-pack.delivery.kick-if-failed-to-apply", true);
-        this.resource_pack$delivery$auto_upload = config.getBoolean("resource-pack.delivery.auto-upload", true);
         this.resource_pack$delivery$strict_player_uuid_validation = config.getBoolean("resource-pack.delivery.strict-player-uuid-validation", true);
-        this.resource_pack$delivery$file_to_upload = resolvePath(config.getString("resource-pack.delivery.file-to-upload", "./generated/resource_pack.zip"));
         this.resource_pack$delivery$proxy$enable = config.getBoolean("resource-pack.delivery.proxy.enable", false);
         this.resource_pack$delivery$proxy$port = config.getInt("resource-pack.delivery.proxy.port", 7890);
         this.resource_pack$delivery$proxy$host = config.getString("resource-pack.delivery.proxy.host", "localhost");
@@ -469,8 +468,6 @@ public final class Config {
         this.resource_pack$pack_squash$enable = config.getBoolean("resource-pack.pack-squash.enable", false);
         this.resource_pack$pack_squash$software_path = resolvePath(config.getString("resource-pack.pack-squash.software-path", "./packsquash/packsquash.exe"));
         this.resource_pack$pack_squash$config_path = resolvePath(config.getString("resource-pack.pack-squash.config-path", "./packsquash/config.toml"));
-        this.resource_pack$protection$unprotected_copy$enable = config.getBoolean("resource-pack.protection.unprotected-copy.enable", false);
-        this.resource_pack$protection$unprotected_copy$path = resolvePath(config.getString("resource-pack.protection.unprotected-copy.path", "./generated/unprotected_resource_pack.zip"));
         this.resource_pack$protection$crash_tools$method_1 = config.getBoolean("resource-pack.protection.crash-tools.method-1", false);
         this.resource_pack$protection$crash_tools$method_2 = config.getBoolean("resource-pack.protection.crash-tools.method-2", false);
         this.resource_pack$protection$crash_tools$method_3 = config.getBoolean("resource-pack.protection.crash-tools.method-3", false);
@@ -504,7 +501,6 @@ public final class Config {
         this.resource_pack$protection$obfuscation$bypass_sounds = config.getStringList("resource-pack.protection.obfuscation.bypass-sounds");
         this.resource_pack$protection$obfuscation$bypass_equipments = config.getStringList("resource-pack.protection.obfuscation.bypass-equipments");
         this.resource_pack$protection$obfuscation$bypass_item_models = config.getStringList("resource-pack.protection.obfuscation.bypass-item-models");
-        this.resource_pack$optimization$enable = config.getBoolean("resource-pack.optimization.enable", false);
         this.resource_pack$optimization$texture$enable = config.getBoolean("resource-pack.optimization.texture.enable", true);
         this.resource_pack$optimization$texture$zopfli_iterations = config.getInt("resource-pack.optimization.texture.zopfli-iterations", 0);
         this.resource_pack$optimization$texture$exlude = config.getStringList("resource-pack.optimization.texture.exclude").stream().map(p -> {
@@ -518,7 +514,7 @@ public final class Config {
             if (!p.endsWith(".json") && !p.endsWith(".mcmeta")) return p + ".json";
             return p;
         }).collect(Collectors.toSet());
-        this.resource_pack$validation$enable = config.getBoolean("resource-pack.validation.enable", true);
+        this.resource_pack$validation$fix_model_uv_out_of_bounds = config.getBoolean("resource-pack.validation.fix-model-uv-out-of-bounds", false);
         this.resource_pack$validation$fix_atlas = config.getBoolean("resource-pack.validation.fix-atlas", true);
         this.resource_pack$validation$fix_missing_texture = config.getBoolean("resource-pack.validation.fix-missing-texture", true);
         this.resource_pack$validation$fallback_models$fix_textures_format = config.getBoolean("resource-pack.validation.fallback-models.fix-textures-format", true);
@@ -574,7 +570,7 @@ public final class Config {
         this.chunk_system$async_read = config.getBoolean("chunk-system.async-read", true);
 
         if (this.firstTime) {
-            this.chunk_system$injection$target = config.getString("chunk-system.injection.target", "palette").equalsIgnoreCase("palette") || (VersionHelper.hasLeafPatch && !VersionHelper.isOrAbove1_21_11);
+            this.chunk_system$injection$target = config.getString("chunk-system.injection.target", "palette").equalsIgnoreCase("palette");
         }
 
         this.chunk_system$process_invalid_furniture$enable = config.getBoolean("chunk-system.process-invalid-furniture.enable", false);
@@ -585,8 +581,8 @@ public final class Config {
         if (config.contains("chunk-system.process-invalid-furniture.convert")) {
             SectionNode section = config.getSection("chunk-system.process-invalid-furniture.convert");
             if (section != null) {
-                for (Map.Entry<Object, Object> entry : section.getValues().entrySet()) {
-                    furnitureBuilder.put(entry.getKey().toString(), entry.getValue().toString());
+                for (Map.Entry<String, Object> entry : section.getValues().entrySet()) {
+                    furnitureBuilder.put(entry.getKey(), entry.getValue().toString());
                 }
             }
         }
@@ -600,8 +596,8 @@ public final class Config {
         if (config.contains("chunk-system.process-invalid-blocks.convert")) {
             SectionNode section = config.getSection("chunk-system.process-invalid-blocks.convert");
             if (section != null) {
-                for (Map.Entry<Object, Object> entry : section.getValues().entrySet()) {
-                    blockBuilder.put(entry.getKey().toString(), entry.getValue().toString());
+                for (Map.Entry<String, Object> entry : section.getValues().entrySet()) {
+                    blockBuilder.put(entry.getKey(), entry.getValue().toString());
                 }
             }
         }
@@ -650,6 +646,9 @@ public final class Config {
         this.equipment$sacrificed_vanilla_armor$asset_id = Key.of(config.getString("equipment.sacrificed-vanilla-armor.asset-id", "minecraft:chainmail"));
         this.equipment$sacrificed_vanilla_armor$humanoid = Key.of(config.getString("equipment.sacrificed-vanilla-armor.humanoid", "minecraft:trims/entity/humanoid/chainmail"));
         this.equipment$sacrificed_vanilla_armor$humanoid_leggings = Key.of(config.getString("equipment.sacrificed-vanilla-armor.humanoid-leggings", "minecraft:trims/entity/humanoid_leggings/chainmail"));
+        if (this.firstTime) {
+            this.equipment$lod$enable = config.getBoolean("equipment.lod.enable", true);
+        }
 
         // item
         this.item$client_bound_model = config.getBoolean("item.client-bound-model", true) && VersionHelper.PREMIUM;
@@ -675,11 +674,11 @@ public final class Config {
         SectionNode customModelDataOverridesSection = config.getSection("item.custom-model-data-starting-value.overrides");
         if (customModelDataOverridesSection != null) {
             Map<Key, Integer> customModelDataOverrides = new HashMap<>();
-            for (Map.Entry<Object, Object> entry : customModelDataOverridesSection.getValues().entrySet()) {
+            for (Map.Entry<String, Object> entry : customModelDataOverridesSection.getValues().entrySet()) {
                 if (entry.getValue() instanceof String s) {
-                    customModelDataOverrides.put(Key.of(entry.getKey().toString()), Integer.parseInt(s));
+                    customModelDataOverrides.put(Key.of(entry.getKey()), Integer.parseInt(s));
                 } else if (entry.getValue() instanceof Integer i) {
-                    customModelDataOverrides.put(Key.of(entry.getKey().toString()), i);
+                    customModelDataOverrides.put(Key.of(entry.getKey()), i);
                 }
             }
             this.item$custom_model_data_starting_value$overrides = customModelDataOverrides;
@@ -689,11 +688,11 @@ public final class Config {
         SectionNode breakPowerSection = config.getSection("item.break-power");
         if (breakPowerSection != null) {
             Map<Key, Integer> breakPowerOverrides = new HashMap<>();
-            for (Map.Entry<Object, Object> entry : breakPowerSection.getValues().entrySet()) {
+            for (Map.Entry<String, Object> entry : breakPowerSection.getValues().entrySet()) {
                 if (entry.getValue() instanceof String s) {
-                    breakPowerOverrides.put(Key.of(entry.getKey().toString()), Integer.parseInt(s));
+                    breakPowerOverrides.put(Key.of(entry.getKey()), Integer.parseInt(s));
                 } else if (entry.getValue() instanceof Integer i) {
-                    breakPowerOverrides.put(Key.of(entry.getKey().toString()), i);
+                    breakPowerOverrides.put(Key.of(entry.getKey()), i);
                 }
             }
             this.item$break_power = breakPowerOverrides;
@@ -718,8 +717,8 @@ public final class Config {
             this.block$deceive_bukkit_material$overrides = new HashMap<>();
             SectionNode overridesSection = config.getSection("block.deceive-bukkit-material.overrides");
             if (overridesSection != null) {
-                for (Map.Entry<Object, Object> entry : overridesSection.getValues().entrySet()) {
-                    String key = entry.getKey().toString();
+                for (Map.Entry<String, Object> entry : overridesSection.getValues().entrySet()) {
+                    String key = entry.getKey();
                     Key value = Key.of(String.valueOf(entry.getValue()));
                     if (key.contains("~")) {
                         int min = Integer.parseInt(key.split("~")[0]);
@@ -776,11 +775,11 @@ public final class Config {
         SectionNode codepointOverridesSection = config.getSection("image.codepoint-starting-value.overrides");
         if (codepointOverridesSection != null) {
             Map<Key, Integer> codepointOverrides = new HashMap<>();
-            for (Map.Entry<Object, Object> entry : codepointOverridesSection.getValues().entrySet()) {
+            for (Map.Entry<String, Object> entry : codepointOverridesSection.getValues().entrySet()) {
                 if (entry.getValue() instanceof String s) {
-                    codepointOverrides.put(Key.of(entry.getKey().toString()), Integer.parseInt(s));
+                    codepointOverrides.put(Key.of(entry.getKey()), Integer.parseInt(s));
                 } else if (entry.getValue() instanceof Integer i) {
-                    codepointOverrides.put(Key.of(entry.getKey().toString()), i);
+                    codepointOverrides.put(Key.of(entry.getKey()), i);
                 }
             }
             this.image$codepoint_starting_value$overrides = codepointOverrides;
@@ -790,9 +789,11 @@ public final class Config {
 
         if (this.firstTime) {
             this.network$disable_chat_report = config.getBoolean("network.disable-chat-report", false);
+            this.network$performance_mode$item = config.getBoolean("network.performance-mode.item", true);
+            this.network$performance_mode$entity = config.getBoolean("network.performance-mode.entity", true);
+            this.network$performance_mode$text = config.getBoolean("network.performance-mode.text", true);
         }
         this.network$disable_item_operations = config.getBoolean("network.disable-item-operations", false);
-        this.network$optimize_item_codec = config.getBoolean("network.optimize-item-codec", true);
         this.network$intercept_packets$system_chat = config.getBoolean("network.intercept-packets.system-chat", true);
         this.network$intercept_packets$tab_list = config.getBoolean("network.intercept-packets.tab-list", true);
         this.network$intercept_packets$actionbar = config.getBoolean("network.intercept-packets.actionbar", true);
@@ -801,9 +802,7 @@ public final class Config {
         this.network$intercept_packets$container = config.getBoolean("network.intercept-packets.container", true);
         this.network$intercept_packets$team = config.getBoolean("network.intercept-packets.team", true);
         this.network$intercept_packets$scoreboard = config.getBoolean("network.intercept-packets.scoreboard", true);
-        this.network$intercept_packets$entity_name = config.getBoolean("network.intercept-packets.entity-name", false);
-        this.network$intercept_packets$text_display = config.getBoolean("network.intercept-packets.text-display", true);
-        this.network$intercept_packets$armor_stand = config.getBoolean("network.intercept-packets.armor-stand", true);
+        this.network$intercept_packets$entity_data = config.getBoolean("network.intercept-packets.entity-data", true);
         this.network$intercept_packets$player_info = config.getBoolean("network.intercept-packets.player-info", true);
         this.network$intercept_packets$set_score = config.getBoolean("network.intercept-packets.set-score", true);
         this.network$intercept_packets$item = config.getBoolean("network.intercept-packets.item", true);
@@ -842,6 +841,8 @@ public final class Config {
         // client optimization
         if (this.firstTime) {
             this.client_optimization$entity_culling$enable = VersionHelper.PREMIUM && config.getBoolean("client-optimization.entity-culling.enable", false);
+            this.client_optimization$entity_culling$keep_invisible_hitboxes = config.getBoolean("client-optimization.entity-culling.keep-invisible-hitboxes", true);
+            this.client_optimization$entity_culling$update_display_view_range = config.getBoolean("client-optimization.entity-culling.update-display-view-range", true);
         }
         this.client_optimization$entity_culling$view_distance = config.getInt("client-optimization.entity-culling.view-distance", 64);
         this.client_optimization$entity_culling$threads = config.getInt("client-optimization.entity-culling.threads", 1);
@@ -905,6 +906,10 @@ public final class Config {
 
     public static boolean fixWorldMemoryLeak() {
         return instance.misc$fix_world_memory_leak;
+    }
+
+    public static int jsonToComponentCacheSize() {
+        return instance.cache$json_to_component;
     }
 
     public static boolean debugCommon() {
@@ -1095,20 +1100,8 @@ public final class Config {
         return instance.resource_pack$delivery$send_on_join;
     }
 
-    public static boolean sendPackOnUpload() {
-        return instance.resource_pack$delivery$resend_on_upload;
-    }
-
-    public static boolean autoUpload() {
-        return instance.resource_pack$delivery$auto_upload;
-    }
-
     public static boolean strictPlayerUuidValidation() {
         return instance.resource_pack$delivery$strict_player_uuid_validation;
-    }
-
-    public static Path fileToUpload() {
-        return instance.resource_pack$delivery$file_to_upload;
     }
 
     public static List<ConditionalResolution> resolutions() {
@@ -1350,8 +1343,16 @@ public final class Config {
         return instance.network$disable_item_operations;
     }
 
-    public static boolean optimizeItemCodec() {
-        return instance.network$optimize_item_codec;
+    public static boolean nettyPerformanceModeItem() {
+        return instance.network$performance_mode$item;
+    }
+
+    public static boolean nettyPerformanceModeEntity() {
+        return instance.network$performance_mode$entity;
+    }
+
+    public static boolean nettyPerformanceModeText() {
+        return instance.network$performance_mode$text;
     }
 
     public static boolean interceptSystemChat() {
@@ -1382,20 +1383,12 @@ public final class Config {
         return instance.network$intercept_packets$team;
     }
 
-    public static boolean interceptEntityName() {
-        return instance.network$intercept_packets$entity_name;
+    public static boolean interceptEntityData() {
+        return instance.network$intercept_packets$entity_data;
     }
 
     public static boolean interceptScoreboard() {
         return instance.network$intercept_packets$scoreboard;
-    }
-
-    public static boolean interceptTextDisplay() {
-        return instance.network$intercept_packets$text_display;
-    }
-
-    public static boolean interceptArmorStand() {
-        return instance.network$intercept_packets$armor_stand;
     }
 
     public static boolean interceptPlayerInfo() {
@@ -1482,8 +1475,8 @@ public final class Config {
         return instance.chunk_system$injection$target;
     }
 
-    public static boolean validateResourcePack() {
-        return instance.resource_pack$validation$enable;
+    public static boolean fixModelUvOutOfBounds() {
+        return instance.resource_pack$validation$fix_model_uv_out_of_bounds;
     }
 
     public static boolean fixTextureAtlas() {
@@ -1591,16 +1584,8 @@ public final class Config {
         return instance.item$default_material;
     }
 
-    public static Path resourcePackPath() {
-        return instance.resource_pack$path;
-    }
-
     public void setObf(boolean enable) {
         this.resource_pack$protection$obfuscation$enable = enable;
-    }
-
-    public static boolean optimizeResourcePack() {
-        return instance.resource_pack$optimization$enable;
     }
 
     public static boolean optimizeTexture() {
@@ -1639,8 +1624,20 @@ public final class Config {
         return instance.item$data_fixer_upper$fallback_version;
     }
 
+    public static boolean enableEquipmentLod() {
+        return instance.equipment$lod$enable;
+    }
+
     public static boolean enableEntityCulling() {
         return instance.client_optimization$entity_culling$enable;
+    }
+
+    public static boolean entityCullingKeepInvisibleHitboxes() {
+        return instance.client_optimization$entity_culling$keep_invisible_hitboxes;
+    }
+
+    public static boolean entityCullingUpdateDisplayViewRange() {
+        return instance.client_optimization$entity_culling$update_display_view_range;
     }
 
     public static int entityCullingViewDistance() {
@@ -1681,22 +1678,6 @@ public final class Config {
 
     public static String bedrockEditionPlayerPrefix() {
         return instance.bedrock_edition_support$player_prefix;
-    }
-
-    public static boolean enableMapPluginCompatibility() {
-        return instance.resource_pack$map_plugin_compatibility$enable;
-    }
-
-    public static Path mapPluginCompatibilityPath() {
-        return instance.resource_pack$map_plugin_compatibility$path;
-    }
-
-    public static boolean createUnprotectedCopy() {
-        return instance.resource_pack$protection$unprotected_copy$enable;
-    }
-
-    public static Path unprotectedCopyPath() {
-        return instance.resource_pack$protection$unprotected_copy$path;
     }
 
     public static boolean enableProxy() {
@@ -1789,7 +1770,6 @@ public final class Config {
 
     private List<DamageIndicator> parseDamageIndicatorSchemes(YamlDocument config) {
         List<Map<?, ?>> list = YamlUtils.reader(config).getMapList("damage-indicator.schemes");
-        if (list == null) return List.of();
         List<DamageIndicator> schemes = new ArrayList<>(list.size());
         int index = 0;
         for (Map<?, ?> element : list) {

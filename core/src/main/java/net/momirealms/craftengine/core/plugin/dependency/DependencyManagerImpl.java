@@ -18,7 +18,6 @@ import java.nio.file.Path;
 import java.util.*;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Executor;
-import java.util.stream.Stream;
 
 public class DependencyManagerImpl implements DependencyManager {
     private final DependencyRegistry registry;
@@ -125,29 +124,10 @@ public class DependencyManagerImpl implements DependencyManager {
     private Path downloadDependency(Dependency dependency) throws DependencyDownloadException {
         String fileName = dependency.fileName(null);
         Path file = this.cacheDirectory.resolve(dependency.toLocalPath()).resolve(fileName);
+        cleanOutdatedVersions(dependency, file.getParent());
         // if the file already exists, don't attempt to re-download it.
         if (Files.exists(file)) {
             return file;
-        }
-        // before downloading a newer version, delete those outdated files
-        Path versionFolder = file.getParent().getParent();
-        if (Files.exists(versionFolder) && Files.isDirectory(versionFolder)) {
-            String version = dependency.getVersion();
-            try (Stream<Path> dirStream = Files.list(versionFolder)) {
-                dirStream.filter(Files::isDirectory)
-                        .filter(it -> !it.getFileName().toString().equals(version))
-                        .forEach(dir -> {
-                            try {
-                                FileUtils.deleteDirectory(dir);
-                                if (dependency.hasJarInJarPath()) return; // 禁止 jarinjar 依赖打印垃圾日志
-                                plugin.logger().info("Cleaned up outdated dependency " + dir);
-                            } catch (IOException e) {
-                                throw new RuntimeException(e);
-                            }
-                        });
-            } catch (IOException e) {
-                throw new RuntimeException("Failed to clean " + versionFolder, e);
-            }
         }
         // if the dependency is inside the jar
         if (dependency.hasJarInJarPath()) {
@@ -181,6 +161,32 @@ public class DependencyManagerImpl implements DependencyManager {
                 }
             }
             throw Objects.requireNonNull(lastError);
+        }
+    }
+
+    private void cleanOutdatedVersions(Dependency dependency, Path currentVersionDirectory) {
+        Path artifactDirectory = currentVersionDirectory.getParent();
+        if (!Files.isDirectory(artifactDirectory)) return;
+
+        Set<Path> loadedVersionDirectories = new HashSet<>();
+        synchronized (this.loaded) {
+            this.loaded.values().forEach(path -> loadedVersionDirectories.add(path.getParent()));
+        }
+        try (DirectoryStream<Path> directories = Files.newDirectoryStream(artifactDirectory)) {
+            for (Path directory : directories) {
+                if (!Files.isDirectory(directory) || directory.equals(currentVersionDirectory)
+                        || loadedVersionDirectories.contains(directory)) continue;
+                try {
+                    FileUtils.deleteDirectory(directory);
+                    if (!dependency.hasJarInJarPath()) {
+                        this.plugin.logger().info("Cleaned up outdated dependency " + directory);
+                    }
+                } catch (IOException | RuntimeException e) {
+                    this.plugin.logger().warn("Failed to clean outdated dependency " + directory, e);
+                }
+            }
+        } catch (IOException e) {
+            this.plugin.logger().warn("Failed to clean outdated dependencies in " + artifactDirectory, e);
         }
     }
 

@@ -27,11 +27,13 @@ import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
+import org.bukkit.event.entity.EntityTeleportEvent;
 import org.bukkit.event.world.*;
 
 import java.util.List;
 import java.util.Optional;
 
+/** 区块/世界批量生命周期；单实体添加和 /kill 等补充入口见 PaperFurnitureEventListener。 */
 @SuppressWarnings("DuplicatedCode")
 public final class FurnitureEventListener implements Listener {
     private static final String DEBUG_STICK_TAG = "craftengine:debug_stick_state";
@@ -43,8 +45,16 @@ public final class FurnitureEventListener implements Listener {
         this.worldManager = worldManager;
     }
 
+    @EventHandler(ignoreCancelled = true, priority = EventPriority.MONITOR)
+    public void onFurnitureTeleport(EntityTeleportEvent event) {
+        if (event.getTo() != null && event.getEntity() instanceof ItemDisplay display) {
+            this.manager.handleFurnitureTeleport(display);
+        }
+    }
+
     @EventHandler(ignoreCancelled = true, priority = EventPriority.NORMAL)
     public void onWorldSave(WorldSaveEvent event) {
+        // 元数据 PDC 是存档来源；行为内部状态变脏时，先写回实体再由服务端序列化。
         List<ItemDisplay> entities = (List<ItemDisplay>) event.getWorld().getEntitiesByClass(ItemDisplay.class);
         for (int i = 0, size = entities.size(); i < size; i++) {
             ItemDisplay entity = entities.get(i);
@@ -55,66 +65,62 @@ public final class FurnitureEventListener implements Listener {
         }
     }
 
-    /*
-
-
-    加载实体
-
-
-     */
+    // Paper 的普通加载：单实体 Add 事件 -> ChunkLoadEvent -> EntitiesLoadEvent。
+    // Spigot 的批量事件来自 PersistentEntitySectionManager 完成实体读取，不能照搬 Paper 区块时序。
+    // LOWEST 表示尽早处理本批实体，不表示本方法早于另一个事件类型的 LOWEST。
     @EventHandler(ignoreCancelled = true, priority = EventPriority.LOWEST)
-    public void onEntitiesLoadEarly(EntitiesLoadEvent event) {
+    public void onEntitiesLoad(EntitiesLoadEvent event) {
         Chunk chunk = event.getChunk();
         if (!chunk.isLoaded()) {
             return;
         }
-        // 整个实体列表同属一个区块，实体操作的推迟判断共享一次计算
+        // 只在本次同步批量处理内共享状态检查；不能把 runner 保留到下一批或下一 tick。
         BukkitFurnitureManager.SafeEntityOperationRunner operationRunner = this.manager.newEntityOperationRunner(chunk);
         List<Entity> entities = event.getEntities();
         for (int i = 0, size = entities.size(); i < size; i++) {
             Entity entity = entities.get(i);
             if (entity instanceof ItemDisplay itemDisplay) {
-                this.manager.handleMetaEntityDuringChunkLoad(itemDisplay, operationRunner);
+                this.manager.restoreFurnitureFromEntity(itemDisplay, operationRunner);
             } else if (BukkitFurnitureManager.COLLISION_ENTITY_CLASS.isInstance(entity)) {
-                this.manager.handleCollisionEntityDuringChunkLoad(entity);
+                this.manager.removeStaleColliderEntity(entity);
             }
         }
         CEWorld world = BukkitAdaptor.adapt(event.getWorld()).storageWorld();
         CEChunk ceChunk = world.getChunkAtIfLoaded(chunk.getX(), chunk.getZ());
         if (ceChunk != null) {
+            // 在本批恢复结束后才允许单实体补载入口接管后续外部生成。
+            // 这是 CE 的阶段标记，不是 NMS 实体的 valid/persistent 状态。
             ceChunk.setEntitiesLoaded(true);
         }
     }
 
     @EventHandler(ignoreCancelled = true, priority = EventPriority.LOW)
     public void onWorldLoad(WorldLoadEvent event) {
+        // BukkitWorldManager 的 LOWEST 先建立 CE 世界/区块，再扫描可能早于监听器存在的实体。
+        // 这是补扫描，实体可能已经登记；去重必须由 manager 统一处理。
         List<Entity> entities = event.getWorld().getEntities();
         for (int i = 0, size = entities.size(); i < size; i++) {
             Entity entity = entities.get(i);
             if (entity instanceof ItemDisplay itemDisplay) {
-                this.manager.handleMetaEntityDuringChunkLoad(itemDisplay);
+                this.manager.restoreFurnitureFromEntity(itemDisplay);
             } else if (BukkitFurnitureManager.COLLISION_ENTITY_CLASS.isInstance(entity)) {
-                this.manager.handleCollisionEntityDuringChunkLoad(entity);
+                this.manager.removeStaleColliderEntity(entity);
             }
         }
     }
 
-    /*
-
-
-    卸载实体
-
-
-     */
+    // Paper 普通卸载：单实体 Remove -> EntitiesUnloadEvent -> ChunkUnloadEvent。
+    // 单实体回调可能因 section 正在切换而不能删除 Collider，这里承担批量清理。
+    // 非持久化的 Collider 不应依赖原版实体存档/卸载流程替我们销毁。
     @EventHandler(ignoreCancelled = true, priority = EventPriority.HIGHEST)
-    public void onChunkUnload(EntitiesUnloadEvent event) {
+    public void onEntitiesUnload(EntitiesUnloadEvent event) {
         List<Entity> entities = event.getEntities();
         for (int i = 0, size = entities.size(); i < size; i++) {
             Entity entity = entities.get(i);
             if (entity instanceof ItemDisplay itemDisplay) {
-                this.manager.handleMetaEntityUnload(itemDisplay, false);
+                this.manager.unloadFurnitureFromEntity(itemDisplay, false);
             } else if (CraftEngineFurniture.isCollisionEntity(entity)) {
-                this.manager.handleCollisionEntityUnload(entity);
+                this.manager.unregisterColliderEntity(entity);
                 entity.remove();
             }
         }
@@ -122,14 +128,16 @@ public final class FurnitureEventListener implements Listener {
 
     @EventHandler(ignoreCancelled = true, priority = EventPriority.HIGHEST)
     public void onWorldUnload(WorldUnloadEvent event) {
+        // WorldUnload 也可能与区块/单实体卸载重叠；元数据卸载仍以 manager 映射去重。
+        // HIGHEST 在 BukkitWorldManager 的 MONITOR 移除 CE 世界之前清理家具。
         GlowingFurnitureBehaviorTemplate.LIGHT_DATA.remove(event.getWorld().getUID());
         List<Entity> entities = event.getWorld().getEntities();
         for (int i = 0, size = entities.size(); i < size; i++) {
             Entity entity = entities.get(i);
             if (entity instanceof ItemDisplay itemDisplay) {
-                this.manager.handleMetaEntityUnload(itemDisplay, false);
+                this.manager.unloadFurnitureFromEntity(itemDisplay, false);
             } else if (CraftEngineFurniture.isCollisionEntity(entity)) {
-                this.manager.handleCollisionEntityUnload(entity);
+                this.manager.unregisterColliderEntity(entity);
                 entity.remove();
             }
         }

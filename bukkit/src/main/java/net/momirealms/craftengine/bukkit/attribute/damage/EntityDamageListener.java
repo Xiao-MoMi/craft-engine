@@ -53,7 +53,7 @@ public final class EntityDamageListener extends AbstractListener {
             if (attackerUser.damageVisibility() != DamageVisibility.NONE) {
                 viewers.add(attackerUser);
             }
-            for (BukkitServerPlayer user : EntityUtils.getTrackedBy(victim, BukkitAdaptor::adapt)) {
+            for (BukkitServerPlayer user : EntityUtils.getTrackedBySet(victim, BukkitAdaptor::adapt)) {
                 if (user == null || user.damageVisibility() != DamageVisibility.ALL) continue;
                 viewers.add(user);
             }

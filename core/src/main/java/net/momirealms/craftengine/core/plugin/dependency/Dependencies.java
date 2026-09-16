@@ -284,7 +284,8 @@ public final class Dependencies {
 
     public static final Dependency NETTY_HTTP2 = Dependency.of("netty-codec-http2", "io{}netty", "netty-codec-http2")
             .relocations(
-                    Relocation.of("netty{}handler{}codec{}http2", "io{}netty{}handler{}codec{}http2")
+                    Relocation.of("netty{}handler{}codec{}http2", "io{}netty{}handler{}codec{}http2"),
+                    Relocation.of("netty{}handler{}codec{}http", "io{}netty{}handler{}codec{}http")
             )
             .build();
 
@@ -300,6 +301,7 @@ public final class Dependencies {
 
     private static final List<Relocation> AWS_RELOCATIONS = List.of(
             Relocation.of("awssdk", "software{}amazon{}awssdk"),
+            Relocation.of("eventstream", "software{}amazon{}eventstream"),
             Relocation.of("reactivestreams", "org{}reactivestreams"),
             Relocation.of("netty{}handler{}codec{}http2", "io{}netty{}handler{}codec{}http2"),
             Relocation.of("netty{}handler{}codec{}http", "io{}netty{}handler{}codec{}http"),
@@ -455,5 +457,121 @@ public final class Dependencies {
                     Relocation.of("netty{}handler{}codec{}rtsp", "io{}netty{}handler{}codec{}rtsp"),
                     Relocation.of("netty{}handler{}codec{}spdy", "io{}netty{}handler{}codec{}spdy")
             )
+            .build();
+
+    public static final Dependency JACKSON_ANNOTATIONS = Dependency.of("jackson-annotations", "com{}fasterxml{}jackson{}core", "jackson-annotations")
+            .relocations(
+                    Relocation.of("jackson", "com{}fasterxml{}jackson")
+            )
+            .build();
+
+    public static final Dependency JACKSON_CORE = Dependency.of("jackson-core", "tools{}jackson{}core", "jackson-core")
+            .versionKey("jackson")
+            .relocations(
+                    Relocation.of("jackson3", "tools{}jackson")
+            )
+            .build();
+
+    public static final Dependency JACKSON_DATABIND = Dependency.of("jackson-databind", "tools{}jackson{}core", "jackson-databind")
+            .versionKey("jackson")
+            .relocations(
+                    Relocation.of("jackson", "com{}fasterxml{}jackson"),
+                    Relocation.of("jackson3", "tools{}jackson")
+            )
+            .build();
+
+    public static final Dependency PROTOBUF_JAVA = Dependency.of("protobuf-java", "com{}google{}protobuf", "protobuf-java")
+            .build();
+
+    public static final Dependency H2 = Dependency.of("h2", "com{}h2database", "h2")
+            .build();
+
+    public static final Dependency MYSQL_CONNECTOR_J = Dependency.of("mysql-connector-j", "com{}mysql", "mysql-connector-j")
+            .build();
+
+    public static final Dependency HIKARI = Dependency.of("hikari", "com{}zaxxer", "HikariCP")
+            .relocations(
+                    Relocation.of("hikari", "com{}zaxxer{}hikari")
+            )
+            .build();
+
+    public static final Dependency CHECKER_QUAL = Dependency.of("checker-qual", "org{}checkerframework", "checker-qual")
+            .build();
+
+    public static final Dependency FLYWAY_CORE = Dependency.of("flyway-core", "org{}flywaydb", "flyway-core")
+            .versionKey("flyway")
+            .relocations(
+                    Relocation.of("flywaydb", "org{}flywaydb"),
+                    Relocation.of("jackson", "com{}fasterxml{}jackson"),
+                    Relocation.of("jackson3", "tools{}jackson")
+            )
+            .build();
+
+    public static final Dependency FLYWAY_DATABASE_POSTGRESQL = Dependency.of("flyway-database-postgresql", "org{}flywaydb", "flyway-database-postgresql")
+            .versionKey("flyway")
+            .relocations(
+                    Relocation.of("flywaydb", "org{}flywaydb"),
+                    Relocation.of("jackson", "com{}fasterxml{}jackson"),
+                    Relocation.of("jackson3", "tools{}jackson")
+            )
+            .build();
+
+    public static final Dependency FLYWAY_MYSQL = Dependency.of("flyway-mysql", "org{}flywaydb", "flyway-mysql")
+            .versionKey("flyway")
+            .relocations(
+                    Relocation.of("flywaydb", "org{}flywaydb"),
+                    Relocation.of("jackson", "com{}fasterxml{}jackson"),
+                    Relocation.of("jackson3", "tools{}jackson")
+            )
+            .build();
+
+    public static final Dependency JDBI3_CORE = Dependency.of("jdbi3-core", "org{}jdbi", "jdbi3-core")
+            .relocations(
+                    Relocation.of("jdbi", "org{}jdbi"),
+                    Relocation.of("geantyref", "io{}leangen{}geantyref")
+            )
+            .build();
+
+    public static final Dependency MARIADB_JAVA_CLIENT = Dependency.of("mariadb-java-client", "org{}mariadb{}jdbc", "mariadb-java-client")
+            .build();
+
+    public static final Dependency BSON_RECORD_CODEC = Dependency.of("bson-record-codec", "org{}mongodb", "bson-record-codec")
+            .versionKey("mongodb")
+            .relocations(
+                    Relocation.of("bson", "org{}bson")
+            )
+            .build();
+
+    public static final Dependency BSON = Dependency.of("bson", "org{}mongodb", "bson")
+            .versionKey("mongodb")
+            .relocations(
+                    Relocation.of("bson", "org{}bson")
+            )
+            .build();
+
+    public static final Dependency MONGODB_DRIVER_CORE = Dependency.of("mongodb-driver-core", "org{}mongodb", "mongodb-driver-core")
+            .versionKey("mongodb")
+            .relocations(
+                    Relocation.of("mongodb", "com{}mongodb"),
+                    Relocation.of("bson", "org{}bson")
+            )
+            .build();
+
+    public static final Dependency MONGODB_DRIVER_SYNC = Dependency.of("mongodb-driver-sync", "org{}mongodb", "mongodb-driver-sync")
+            .versionKey("mongodb")
+            .relocations(
+                    Relocation.of("mongodb", "com{}mongodb"),
+                    Relocation.of("bson", "org{}bson")
+            )
+            .build();
+
+    public static final Dependency POSTGRESQL = Dependency.of("postgresql", "org{}postgresql", "postgresql")
+            .build();
+
+    public static final Dependency SLF4J = Dependency.of("slf4j", "org{}slf4j", "slf4j-api")
+            .versionKey("slf4j-api")
+            .build();
+
+    public static final Dependency SQLITE_JDBC = Dependency.of("sqlite-jdbc", "org{}xerial", "sqlite-jdbc")
             .build();
 }

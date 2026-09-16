@@ -1,9 +1,11 @@
 package net.momirealms.craftengine.bukkit.block.entity.renderer.constant;
 
 import it.unimi.dsi.fastutil.ints.IntList;
+import net.momirealms.craftengine.bukkit.entity.data.DisplayData;
 import net.momirealms.craftengine.bukkit.util.EntityUtils;
 import net.momirealms.craftengine.core.block.entity.render.element.AbstractConstantBlockEntityElement;
 import net.momirealms.craftengine.core.block.entity.render.tint.BlockEntityTintSource;
+import net.momirealms.craftengine.core.entity.culling.ViewRangeCullable;
 import net.momirealms.craftengine.core.entity.player.Player;
 import net.momirealms.craftengine.core.world.BlockPos;
 import net.momirealms.craftengine.proxy.minecraft.network.protocol.game.ClientboundAddEntityPacketProxy;
@@ -15,10 +17,11 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.joml.Vector3f;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
-public final class ItemDisplayBlockEntityElement extends AbstractConstantBlockEntityElement {
+public final class ItemDisplayBlockEntityElement extends AbstractConstantBlockEntityElement implements ViewRangeCullable {
     public final ItemDisplayBlockEntityElementConfig config;
     public final Object cachedSpawnPacket;
     public final Object cachedDespawnPacket;
@@ -43,6 +46,13 @@ public final class ItemDisplayBlockEntityElement extends AbstractConstantBlockEn
         this.cachedDespawnPacket = ClientboundRemoveEntitiesPacketProxy.INSTANCE.newInstance(IntList.of(entityId));
         this.entityId = entityId;
         this.cachedUpdatePosPacket = posChanged ? EntityUtils.createUpdatePosPacket(this.entityId, pos.x() + (double) position.x, pos.y() + (double) position.y, pos.z() + (double) position.z, config.yRot(), config.xRot(), false) : null;
+    }
+
+    @Override
+    public void setCulled(Player player, boolean culled) {
+        List<Object> values = new ArrayList<>(1);
+        DisplayData.ViewRange.addEntityData(culled ? 0f : (float) (this.config.viewRange * player.displayEntityViewDistance()), values, true);
+        player.sendPacket(ClientboundSetEntityDataPacketProxy.INSTANCE.newInstance(this.entityId, values), false);
     }
 
     @Override

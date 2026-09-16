@@ -86,7 +86,7 @@ public final class DropboxHost implements ResourcePackHost {
                 apiArg.addProperty("path", this.uploadPath);
                 apiArg.addProperty("mode", "overwrite");
 
-                HttpRequest request = HttpRequest.newBuilder()
+                HttpRequest request = HttpClientManager.requestBuilder()
                         .uri(URI.create("https://content.dropboxapi.com/2/files/upload"))
                         .header("Authorization", "Bearer " + token)
                         .header("Content-Type", "application/octet-stream")
@@ -94,7 +94,7 @@ public final class DropboxHost implements ResourcePackHost {
                         .POST(HttpRequest.BodyPublishers.ofFile(resourcePackPath))
                         .build();
 
-                HttpClientManager.get().sendAsync(request, HttpResponse.BodyHandlers.ofString())
+                HttpClientManager.sendAsync(request, HttpResponse.BodyHandlers.ofString())
                         .thenAccept(response -> handleUploadResponse(response, localSha1, token, future))
                         .exceptionally(ex -> {
                             future.completeExceptionally(ex);
@@ -131,28 +131,28 @@ public final class DropboxHost implements ResourcePackHost {
         createLink.add("settings", new JsonObject());
         createLink.getAsJsonObject("settings").addProperty("requested_visibility", "public");
 
-        HttpRequest createLinkRequest = HttpRequest.newBuilder()
+        HttpRequest createLinkRequest = HttpClientManager.requestBuilder()
                 .uri(URI.create("https://api.dropboxapi.com/2/sharing/create_shared_link_with_settings"))
                 .header("Authorization", "Bearer " + token)
                 .header("Content-Type", "application/json")
                 .POST(HttpRequest.BodyPublishers.ofString(GsonHelper.get().toJson(createLink)))
                 .build();
 
-        HttpResponse<String> response = HttpClientManager.get().send(createLinkRequest, HttpResponse.BodyHandlers.ofString());
+        HttpResponse<String> response = HttpClientManager.send(createLinkRequest, HttpResponse.BodyHandlers.ofString());
 
         try {
             if (response.statusCode() == 409) {
                 JsonObject listLinks = new JsonObject();
                 listLinks.addProperty("path", this.uploadPath);
 
-                HttpRequest listLinksRequest = HttpRequest.newBuilder()
+                HttpRequest listLinksRequest = HttpClientManager.requestBuilder()
                         .uri(URI.create("https://api.dropboxapi.com/2/sharing/list_shared_links"))
                         .header("Authorization", "Bearer " + token)
                         .header("Content-Type", "application/json")
                         .POST(HttpRequest.BodyPublishers.ofString(GsonHelper.get().toJson(listLinks)))
                         .build();
 
-                HttpResponse<String> listResp = HttpClientManager.get().send(listLinksRequest, HttpResponse.BodyHandlers.ofString());
+                HttpResponse<String> listResp = HttpClientManager.send(listLinksRequest, HttpResponse.BodyHandlers.ofString());
                 JsonObject data = GsonHelper.parseJsonToJsonObject(listResp.body());
                 JsonArray links = data.getAsJsonArray("links");
                 if (!links.isEmpty()) {
@@ -182,7 +182,7 @@ public final class DropboxHost implements ResourcePackHost {
                     (this.appKey + ":" + this.appSecret).getBytes(StandardCharsets.UTF_8)
             );
 
-            HttpRequest request = HttpRequest.newBuilder()
+            HttpRequest request = HttpClientManager.requestBuilder()
                     .uri(URI.create("https://api.dropboxapi.com/oauth2/token"))
                     .header("Content-Type", "application/x-www-form-urlencoded")
                     .header("Authorization", authHeader)
@@ -191,7 +191,7 @@ public final class DropboxHost implements ResourcePackHost {
                     ))
                     .build();
 
-            HttpResponse<String> response = HttpClientManager.get().send(request, HttpResponse.BodyHandlers.ofString());
+            HttpResponse<String> response = HttpClientManager.send(request, HttpResponse.BodyHandlers.ofString());
             if (response.statusCode() != 200) {
                 CraftEngine.instance().logger().warn("Dropbox Token Refresh Failed: " + response.body());
                 return null;
@@ -255,14 +255,14 @@ public final class DropboxHost implements ResourcePackHost {
         private static final String[] CACHE_FILE_NAME = ConfigKeys.of("cache_file_name");
 
         @Override
-        public DropboxHost create(ConfigSection section) {
+        public DropboxHost create(String id, ConfigSection section) {
             boolean useEnv = section.getBoolean(USE_ENVIRONMENT_VARIABLES);
             String appKey = useEnv ? getNonNullEnvironmentVariable(section, "CE_DROPBOX_APP_KEY") : section.getNonEmptyString(APP_KEY);
             String appSecret = useEnv ? getNonNullEnvironmentVariable(section, "CE_DROPBOX_APP_SECRET") : section.getNonEmptyString(APP_SECRET);
             String refreshToken = useEnv ? getNonNullEnvironmentVariable(section, "CE_DROPBOX_REFRESH_TOKEN") : section.getNonEmptyString(REFRESH_TOKEN);
             String uploadPath = section.getNonNullString(UPLOAD_PATH);
             Path cacheFilePath = CraftEngine.instance().dataFolderPath().resolve("cache")
-                    .resolve(section.getValue(CACHE_FILE_NAME, it -> it.getAsNonEmptyString().replace("/", "_"), "dropbox.json"));
+                    .resolve(section.getValue(CACHE_FILE_NAME, it -> it.getAsNonEmptyString().replace("/", "_"), "dropbox_" + id + ".json"));
             return new DropboxHost(appKey, appSecret, refreshToken, uploadPath, cacheFilePath);
         }
     }

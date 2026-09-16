@@ -29,6 +29,11 @@ public final class CustomNameProcessor implements SimpleNetworkItemProcessor {
         this.line = FormattedLine.create(this.argument);
     }
 
+    @Override
+    public boolean isConstant() {
+        return this.line.isConstant();
+    }
+
     public String customName() {
         return this.argument;
     }

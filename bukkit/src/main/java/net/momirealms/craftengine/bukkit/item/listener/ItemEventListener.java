@@ -134,7 +134,7 @@ public final class ItemEventListener implements Listener {
             Cancellable cancellable = Cancellable.of(event::isCancelled, event::setCancelled);
             Function.execute(PlayerOptionalContext.of(serverPlayer, ContextHolder.builder()
                     .withParameter(DirectContextParameters.PLAYER, serverPlayer)
-                    .withParameter(DirectContextParameters.ITEM_IN_HAND, itemInHand)
+                    .withOptionalParameter(DirectContextParameters.ITEM_IN_HAND, ItemUtils.emptyToNull(itemInHand))
                     .withParameter(DirectContextParameters.HAND, hand)
                     .withParameter(DirectContextParameters.EVENT, cancellable)
                     .withParameter(DirectContextParameters.ENTITY, bukkitEntity)
@@ -245,8 +245,9 @@ public final class ItemEventListener implements Listener {
                         .withParameter(DirectContextParameters.CUSTOM_BLOCK_STATE, immutableBlockState)
                         .withParameter(DirectContextParameters.HAND, hand)
                         .withParameter(DirectContextParameters.EVENT, dummy)
+                        .withParameter(DirectContextParameters.BLOCK, new BukkitExistingBlock(block))
                         .withParameter(DirectContextParameters.POSITION, LocationUtils.toWorldPosition(block.getLocation()))
-                        .withParameter(DirectContextParameters.ITEM_IN_HAND, itemInHand)
+                        .withOptionalParameter(DirectContextParameters.ITEM_IN_HAND, ItemUtils.emptyToNull(itemInHand))
                         .build()
                 ), functions);
                 if (dummy.isCancelled()) {
@@ -419,7 +420,7 @@ public final class ItemEventListener implements Listener {
                                 .withParameter(DirectContextParameters.PLAYER, serverPlayer)
                                 .withParameter(DirectContextParameters.BLOCK, new BukkitExistingBlock(block))
                                 .withOptionalParameter(DirectContextParameters.CUSTOM_BLOCK_STATE, immutableBlockState)
-                                .withParameter(DirectContextParameters.ITEM_IN_HAND, itemInHand)
+                                .withOptionalParameter(DirectContextParameters.ITEM_IN_HAND, ItemUtils.emptyToNull(itemInHand))
                                 .withParameter(DirectContextParameters.POSITION, LocationUtils.toWorldPosition(block.getLocation()))
                                 .withParameter(DirectContextParameters.HAND, hand)
                                 .withParameter(DirectContextParameters.EVENT, dummy)
@@ -520,7 +521,7 @@ public final class ItemEventListener implements Listener {
                         .withParameter(DirectContextParameters.PLAYER, serverPlayer)
                         .withParameter(DirectContextParameters.BLOCK, new BukkitExistingBlock(block))
                         .withOptionalParameter(DirectContextParameters.CUSTOM_BLOCK_STATE, immutableBlockState)
-                        .withParameter(DirectContextParameters.ITEM_IN_HAND, itemInHand)
+                        .withOptionalParameter(DirectContextParameters.ITEM_IN_HAND, ItemUtils.emptyToNull(itemInHand))
                         .withParameter(DirectContextParameters.POSITION, LocationUtils.toWorldPosition(block.getLocation()))
                         .withParameter(DirectContextParameters.HAND, hand)
                         .withParameter(DirectContextParameters.EVENT, dummy)
@@ -645,6 +646,7 @@ public final class ItemEventListener implements Listener {
     public void onConsumeItem(PlayerItemConsumeEvent event) {
         ItemStack consumedItem = event.getItem();
         if (ItemStackUtils.isEmpty(consumedItem)) return;
+        int consumedAmount = consumedItem.getAmount();
         Item wrapped = this.plugin.itemManager().wrap(consumedItem);
         Optional<ItemDefinition> optionalCustomItem = wrapped.getDefinition();
         if (optionalCustomItem.isEmpty()) {
@@ -669,22 +671,31 @@ public final class ItemEventListener implements Listener {
         }
         if (event.getPlayer().getGameMode() != GameMode.CREATIVE) {
             Key replacement = itemDefinition.settings().consumeReplacement();
-            if (wrapped.count() == 1) {
-                if (replacement != null && VersionHelper.hasPaperPatch) {
-                    BukkitItem replacementItem = (BukkitItem) Item.byId(replacement, serverPlayer);
-                    if (replacementItem != null) {
-                        event.setReplacement(replacementItem.getBukkitItem());
-                    }
+            if (replacement == null) return;
+            BukkitItem replacementItem = (BukkitItem) Item.byId(replacement, serverPlayer);
+            if (replacementItem == null) return;
+            if (VersionHelper.hasPaperPatch) {
+                if (consumedAmount == 1) {
+                    event.setReplacement(replacementItem.getBukkitItem());
+                    return;
                 }
-            } else {
-                // fixme 如何取消堆叠数量>1的物品的默认replacement
-                if (replacement != null) {
-                    Item replacementItem = Item.byId(replacement, serverPlayer);
-                    if (replacementItem != null) {
-                        PlayerUtils.giveItem(serverPlayer, 1, replacementItem, false);
-                    }
-                }
+                // Consume a single copy so vanilla returns its container instead of adding it to the inventory.
+                ItemStack remainingItems = event.getItem();
+                remainingItems.setAmount(consumedAmount - 1);
+                ItemStack singleItem = event.getItem();
+                singleItem.setAmount(1);
+                event.setItem(singleItem);
+                // Paper's replacement is the entire held stack, including the unconsumed items.
+                event.setReplacement(remainingItems);
+            } else if (consumedAmount == 1) {
+                return;
             }
+            // Wait until the held stack has been updated before merging the replacement into the inventory.
+            this.plugin.scheduler().platform().runDelayed(() -> {
+                if (!event.isCancelled()) {
+                    PlayerUtils.giveItem(serverPlayer, 1, replacementItem, false);
+                }
+            }, null, player);
         }
     }
 
@@ -761,7 +772,7 @@ public final class ItemEventListener implements Listener {
                 Cancellable cancellable = Cancellable.of(event::isCancelled, event::setCancelled);
                 Function.execute(PlayerOptionalContext.of(serverPlayer, ContextHolder.builder()
                         .withParameter(DirectContextParameters.PLAYER, serverPlayer)
-                        .withParameter(DirectContextParameters.ITEM_IN_HAND, itemInHand)
+                        .withOptionalParameter(DirectContextParameters.ITEM_IN_HAND, ItemUtils.emptyToNull(itemInHand))
                         .withParameter(DirectContextParameters.EVENT, cancellable)
                         .withParameter(DirectContextParameters.ENTITY, new BukkitEntity(hitEntity))
                         .withParameter(DirectContextParameters.POSITION, LocationUtils.toWorldPosition(hitEntity.getLocation()))
@@ -1103,7 +1114,7 @@ public final class ItemEventListener implements Listener {
                         .withParameter(DirectContextParameters.EVENT, Cancellable.of(event::isCancelled, event::setCancelled))
                         .withParameter(DirectContextParameters.ENTITY, new BukkitEntity(shooter))
                         .withParameter(DirectContextParameters.POSITION, LocationUtils.toWorldPosition(shooter.getLocation()))
-                        .withParameter(DirectContextParameters.ITEM_IN_HAND, bowItem)
+                        .withOptionalParameter(DirectContextParameters.ITEM_IN_HAND, ItemUtils.emptyToNull(bowItem))
                         .build()
                 ), functions);
             }

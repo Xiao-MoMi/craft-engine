@@ -8,6 +8,10 @@ public interface ItemProcessor {
 
     void apply(ItemBuildContext context);
 
+    default boolean isConstant() {
+        return false;
+    }
+
     default void prepareNetworkItem(NetworkItemBuildContext context, CompoundTag networkData) {
     }
 }

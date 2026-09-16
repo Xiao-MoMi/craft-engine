@@ -80,13 +80,13 @@ public final class OneDriveHost implements ResourcePackHost {
                     return;
                 }
 
-                HttpRequest request = HttpRequest.newBuilder()
+                HttpRequest request = HttpClientManager.requestBuilder()
                         .uri(URI.create("https://graph.microsoft.com/v1.0/drive/items/" + this.cachedFileId))
                         .header("Authorization", "Bearer " + token)
                         .GET()
                         .build();
 
-                HttpClientManager.get().sendAsync(request, HttpResponse.BodyHandlers.ofString())
+                HttpClientManager.sendAsync(request, HttpResponse.BodyHandlers.ofString())
                         .thenAccept(response -> handleDownloadLinkResponse(response, future))
                         .exceptionally(ex -> {
                             future.completeExceptionally(ex);
@@ -134,14 +134,14 @@ public final class OneDriveHost implements ResourcePackHost {
 
                 String localSha1 = HashUtils.sha1(resourcePackPath);
 
-                HttpRequest request = HttpRequest.newBuilder()
+                HttpRequest request = HttpClientManager.requestBuilder()
                         .uri(URI.create("https://graph.microsoft.com/v1.0/drive/root:/" + this.uploadPath + ":/content"))
                         .header("Authorization", "Bearer " + token)
                         .header("Content-Type", "application/octet-stream")
                         .PUT(HttpRequest.BodyPublishers.ofFile(resourcePackPath))
                         .build();
 
-                HttpClientManager.get().sendAsync(request, HttpResponse.BodyHandlers.ofString())
+                HttpClientManager.sendAsync(request, HttpResponse.BodyHandlers.ofString())
                         .thenAccept(response -> {
                             if (response.statusCode() == 200 || response.statusCode() == 201) {
                                 JsonObject json = GsonHelper.parseJsonToJsonObject(response.body());
@@ -184,13 +184,13 @@ public final class OneDriveHost implements ResourcePackHost {
                     "&grant_type=refresh_token" +
                     "&scope=Files.ReadWrite.All+offline_access";
 
-            HttpRequest request = HttpRequest.newBuilder()
+            HttpRequest request = HttpClientManager.requestBuilder()
                     .uri(URI.create("https://login.microsoftonline.com/common/oauth2/v2.0/token"))
                     .header("Content-Type", "application/x-www-form-urlencoded")
                     .POST(HttpRequest.BodyPublishers.ofString(formData))
                     .build();
 
-            HttpResponse<String> response = HttpClientManager.get().send(request, HttpResponse.BodyHandlers.ofString());
+            HttpResponse<String> response = HttpClientManager.send(request, HttpResponse.BodyHandlers.ofString());
 
             if (response.statusCode() != 200) {
                 CraftEngine.instance().logger().warn("OneDrive Token Refresh Failed: " + response.body());
@@ -253,14 +253,14 @@ public final class OneDriveHost implements ResourcePackHost {
         private static final String[] CACHE_FILE_NAME = ConfigKeys.of("cache_file_name");
 
         @Override
-        public OneDriveHost create(ConfigSection section) {
+        public OneDriveHost create(String id, ConfigSection section) {
             boolean useEnv = section.getBoolean(USE_ENVIRONMENT_VARIABLES);
             String clientId = useEnv ? getNonNullEnvironmentVariable(section, "CE_ONEDRIVE_CLIENT_ID") : section.getNonEmptyString(CLIENT_ID);
             String clientSecret = useEnv ? getNonNullEnvironmentVariable(section, "CE_ONEDRIVE_CLIENT_SECRET") : section.getNonEmptyString(CLIENT_SECRET);
             String refreshToken = useEnv ? getNonNullEnvironmentVariable(section, "CE_ONEDRIVE_REFRESH_TOKEN") : section.getNonEmptyString(REFRESH_TOKEN);
             String uploadPath = section.getString(UPLOAD_PATH, "resource_pack.zip");
             Path cacheFilePath = CraftEngine.instance().dataFolderPath().resolve("cache")
-                    .resolve(section.getValue(CACHE_FILE_NAME, it -> it.getAsNonEmptyString().replace("/", "_"), "onedrive.json"));
+                    .resolve(section.getValue(CACHE_FILE_NAME, it -> it.getAsNonEmptyString().replace("/", "_"), "onedrive_" + id + ".json"));
             return new OneDriveHost(clientId, clientSecret, refreshToken, uploadPath, cacheFilePath);
         }
     }

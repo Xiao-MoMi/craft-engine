@@ -3,6 +3,7 @@ package net.momirealms.craftengine.bukkit.entity.furniture.hitbox;
 import net.momirealms.craftengine.bukkit.entity.data.BaseEntityData;
 import net.momirealms.craftengine.bukkit.util.KeyUtils;
 import net.momirealms.craftengine.bukkit.util.RegistryUtils;
+import net.momirealms.craftengine.core.entity.furniture.ColliderProperties;
 import net.momirealms.craftengine.core.entity.furniture.Furniture;
 import net.momirealms.craftengine.core.entity.furniture.hitbox.AbstractFurnitureHitBoxConfig;
 import net.momirealms.craftengine.core.entity.furniture.hitbox.FurnitureHitBoxConfigFactory;
@@ -21,6 +22,7 @@ import java.util.List;
 import java.util.function.Consumer;
 
 public final class CustomFurnitureHitboxConfig extends AbstractFurnitureHitBoxConfig<CustomFurnitureHitbox> {
+    public final ColliderProperties colliderProperties;
     public static final FurnitureHitBoxConfigFactory<CustomFurnitureHitbox> FACTORY = new Factory();
     public final float scale;
     public final Object entityType;
@@ -39,6 +41,7 @@ public final class CustomFurnitureHitboxConfig extends AbstractFurnitureHitBoxCo
                                        float scale,
                                        Object type) {
         super(seats, position, canUseItemOn, blocksBuilding, canBeHitByProjectile);
+        this.colliderProperties = ColliderProperties.of(false, blocksBuilding, canBeHitByProjectile);
         this.scale = scale;
         this.entityType = type;
         this.width = fixed ? width : width * scale;
@@ -66,6 +69,11 @@ public final class CustomFurnitureHitboxConfig extends AbstractFurnitureHitBoxCo
 
     public float height() {
         return height;
+    }
+
+    @Override
+    public ColliderProperties colliderProperties() {
+        return this.colliderProperties;
     }
 
     @Override

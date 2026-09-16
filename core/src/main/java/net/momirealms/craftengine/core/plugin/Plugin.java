@@ -29,6 +29,7 @@ import net.momirealms.craftengine.core.plugin.network.NetworkManager;
 import net.momirealms.craftengine.core.plugin.proxy.ProxyMessageManager;
 import net.momirealms.craftengine.core.plugin.scheduler.SchedulerAdapter;
 import net.momirealms.craftengine.core.plugin.script.ScriptManager;
+import net.momirealms.craftengine.core.plugin.storage.StorageManager;
 import net.momirealms.craftengine.core.sound.SoundManager;
 import net.momirealms.craftengine.core.world.WorldManager;
 import net.momirealms.craftengine.core.world.score.TeamManager;
@@ -70,6 +71,8 @@ public interface Plugin {
     String pluginVersion();
 
     String serverVersion();
+
+    StorageManager storageManager();
 
     ItemManager itemManager();
 

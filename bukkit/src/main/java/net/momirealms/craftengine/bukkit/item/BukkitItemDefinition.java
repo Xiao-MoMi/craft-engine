@@ -28,6 +28,7 @@ import java.util.Map;
 public final class BukkitItemDefinition extends AbstractItemDefinition {
     private final Object item;
     private final Object clientItem;
+    private BukkitItem constantItem = null;
 
     public BukkitItemDefinition(boolean isVanillaItem, UniqueKey id, Object item, Object clientItem, Key materialKey, Key clientBoundMaterialKey,
                                 ItemBehavior behavior,
@@ -40,8 +41,26 @@ public final class BukkitItemDefinition extends AbstractItemDefinition {
         this.clientItem = clientItem;
     }
 
+    public void initConstantItem() {
+        for (ItemProcessor processor : this.processors) {
+            if (!processor.isConstant()) {
+                return;
+            }
+        }
+        this.constantItem = build0(ItemBuildContext.empty(), 1);
+    }
+
     @Override
     public BukkitItem buildItem(ItemBuildContext context, int count) {
+        if (this.constantItem == null) {
+            return build0(context, count);
+        } else {
+            // 常量路径不回写 context.setItem，调用方只能使用返回值
+            return (BukkitItem) this.constantItem.copy().count(count);
+        }
+    }
+
+    private BukkitItem build0(ItemBuildContext context, int count) {
         ItemStack item = ItemStackUtils.getBukkitStack(ItemStackProxy.INSTANCE.newInstance(this.item, count));
         Item wrapped = BukkitItemManager.instance().wrap(item);
         context.setItem(wrapped);

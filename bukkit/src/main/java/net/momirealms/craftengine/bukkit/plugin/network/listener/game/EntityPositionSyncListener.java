@@ -1,5 +1,6 @@
 package net.momirealms.craftengine.bukkit.plugin.network.listener.game;
 
+import net.momirealms.craftengine.core.entity.player.Player;
 import net.momirealms.craftengine.core.plugin.network.EntityPacketHandler;
 import net.momirealms.craftengine.core.plugin.network.NetWorkUser;
 import net.momirealms.craftengine.core.plugin.network.event.ByteBufPacketEvent;
@@ -14,11 +15,12 @@ public final class EntityPositionSyncListener implements ByteBufferPacketListene
 
     @Override
     public void onPacketSend(NetWorkUser user, ByteBufPacketEvent event) {
+        if (!(user instanceof Player player)) return;
         FriendlyByteBuf buf = event.getBuffer();
         int entityId = buf.readVarInt();
-        EntityPacketHandler handler = user.entityPacketHandlers().get(entityId);
+        EntityPacketHandler handler = player.entityViews().get(entityId);
         if (handler != null) {
-            handler.handleSyncEntityPosition(user, event, entityId, buf);
+            handler.handleSyncEntityPosition(player, event, entityId, buf);
         }
     }
 }

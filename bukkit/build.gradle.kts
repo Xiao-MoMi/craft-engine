@@ -39,6 +39,9 @@ dependencies {
     compileOnly(libs.bstats.bukkit)
     testImplementation(platform(libs.junit.bom))
     testImplementation(libs.junit.jupiter)
+    testImplementation(libs.byte.buddy)
+    testImplementation(project(":core"))
+    testCompileOnly(project(":bukkit:proxy"))
     testRuntimeOnly(libs.junit.platform.launcher)
 }
 

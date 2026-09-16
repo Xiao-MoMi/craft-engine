@@ -14,7 +14,6 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Locale;
 import java.util.Map;
 
-// todo 自定义装备声音
 public final class EquipmentData {
     @NotNull
     private EquipmentSlot slot;

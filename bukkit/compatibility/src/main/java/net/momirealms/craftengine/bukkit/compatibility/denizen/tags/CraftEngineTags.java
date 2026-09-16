@@ -105,6 +105,7 @@ public final class CraftEngineTags {
         // @attribute <LocationTag.ce_block_states>
         // @returns MapTag
         // @plugin CraftEngine
+        // @mechanism LocationTag.ce_block_state
         // @description
         // Returns a map of all block state properties of the CraftEngine custom block at the location.
         // Returns nothing if the block is not a CraftEngine custom block.
@@ -124,9 +125,12 @@ public final class CraftEngineTags {
         });
 
         // <--[mechanism]
-        // @mechanism LocationTag.ce_block_state
+        // @object LocationTag
+        // @name ce_block_state
         // @group CraftEngine
         // @input ElementTag
+        // @tags
+        // <LocationTag.ce_block_states>
         // @description
         // Sets a block state property of the CraftEngine custom block at the location, in the format "key=value".
         // @Example
@@ -219,6 +223,7 @@ public final class CraftEngineTags {
         // @attribute <EntityTag.ce_furniture_variant>
         // @returns ElementTag
         // @plugin CraftEngine
+        // @mechanism EntityTag.ce_furniture_variant
         // @description
         // Returns the current variant name of the CraftEngine furniture.
         // Returns nothing if the entity is not part of a CraftEngine furniture.
@@ -250,9 +255,12 @@ public final class CraftEngineTags {
         });
 
         // <--[mechanism]
-        // @mechanism EntityTag.ce_furniture_variant
+        // @object EntityTag
+        // @name ce_furniture_variant
         // @group CraftEngine
         // @input ElementTag
+        // @tags
+        // <EntityTag.ce_furniture_variant>
         // @description
         // Sets the variant of the CraftEngine furniture. Does nothing if the variant doesn't exist or is blocked.
         // @Example

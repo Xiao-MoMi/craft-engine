@@ -50,6 +50,10 @@ public final class EntityCulling {
         this.currentTokens = Math.min(Config.entityCullingRateLimitingBucketSize(), this.currentTokens + Config.entityCullingRateLimitingRestorePerTick());
     }
 
+    public boolean hasToken() {
+        return this.currentTokens > 0;
+    }
+
     public boolean takeToken() {
         if (this.currentTokens > 0) {
             this.currentTokens--;

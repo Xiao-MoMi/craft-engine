@@ -17,6 +17,11 @@ public final class CustomModelDataProcessor implements SimpleNetworkItemProcesso
     }
 
     @Override
+    public boolean isConstant() {
+        return this.argument.isConstant();
+    }
+
+    @Override
     public void apply(ItemBuildContext context) {
         context.item().customModelData(this.argument.getInt(context));
     }

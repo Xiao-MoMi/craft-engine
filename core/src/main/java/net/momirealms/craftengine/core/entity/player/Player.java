@@ -21,6 +21,7 @@ import net.momirealms.craftengine.core.sound.SoundData;
 import net.momirealms.craftengine.core.sound.SoundSource;
 import net.momirealms.craftengine.core.util.GameEdition;
 import net.momirealms.craftengine.core.util.Key;
+import net.momirealms.craftengine.core.util.Tristate;
 import net.momirealms.craftengine.core.world.BlockPos;
 import net.momirealms.craftengine.core.world.Position;
 import net.momirealms.craftengine.core.world.Vec3d;
@@ -32,6 +33,7 @@ import java.util.Collection;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.CompletableFuture;
 import java.util.function.Predicate;
 
 public interface Player extends NetWorkUser, LivingEntity {
@@ -60,6 +62,8 @@ public interface Player extends NetWorkUser, LivingEntity {
     void setClientSideWorld(World world);
 
     void entityCullingTick();
+
+    void asyncTick();
 
     float getDestroyProgress(Object blockState, BlockPos pos);
 
@@ -123,6 +127,10 @@ public interface Player extends NetWorkUser, LivingEntity {
 
     boolean hasPermission(String permission);
 
+    boolean discoverRecipe(Key recipe);
+
+    boolean hasDiscoveredRecipe(Key recipe);
+
     boolean canInstabuild();
 
     default void playSound(Key sound) {
@@ -160,6 +168,26 @@ public interface Player extends NetWorkUser, LivingEntity {
     void clearEntityView();
 
     void unloadCurrentResourcePack();
+
+    /**
+     * 更新并保存单个资源包的偏好。TRUE 为启用，FALSE 为禁用，UNDEFINED 为恢复配置默认值。
+     * 本服实际选择发生变化时重新发送资源包；未托管的包仅保存偏好。
+     *
+     * @return 偏好保存和必要的发送操作完成后返回是否修改了偏好，不等待客户端加载完成
+     */
+    default CompletableFuture<Boolean> setPackPreference(@NotNull String pack, @NotNull Tristate enabled) {
+        return plugin().packManager().setPackPreference(uuid(), pack, enabled);
+    }
+
+    /**
+     * 批量更新资源包偏好，未提供的包保持原偏好。UNDEFINED 表示恢复该包的配置默认值。
+     * 整批保存后至多重新发送一次资源包，不会逐包触发重载。
+     *
+     * @return 偏好保存和必要的发送操作完成后返回是否修改了偏好，不等待客户端加载完成
+     */
+    default CompletableFuture<Boolean> setPackPreference(@NotNull Map<String, @NotNull Tristate> preferences) {
+        return plugin().packManager().setPackPreferences(uuid(), preferences);
+    }
 
     void performCommand(String command, boolean asOp);
 
@@ -299,6 +327,7 @@ public interface Player extends NetWorkUser, LivingEntity {
 
     void playParticle(Key particleId, double x, double y, double z);
 
+    /** 仅移除实体的剔除追踪记录；客户端隐藏由调用方负责。 */
     void removeTrackedEntity(int entityId);
 
     void clearTrackedEntities();

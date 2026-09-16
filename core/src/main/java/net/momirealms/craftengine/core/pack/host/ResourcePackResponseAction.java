@@ -21,6 +21,14 @@ public enum ResourcePackResponseAction {
         return this.intermediate;
     }
 
+    public boolean shouldDisconnect(boolean kickOnDeclined, boolean kickOnFailedApply) {
+        return switch (this) {
+            case DECLINED, DISCARDED -> kickOnDeclined;
+            case FAILED_DOWNLOAD, INVALID_URL, FAILED_RELOAD -> kickOnFailedApply;
+            default -> false;
+        };
+    }
+
     public static ResourcePackResponseAction byOrdinal(int ordinal) {
         ResourcePackResponseAction[] values = values();
         if (ordinal < 0 || ordinal >= values.length) { // 为了以防万一还是加一个判断吧

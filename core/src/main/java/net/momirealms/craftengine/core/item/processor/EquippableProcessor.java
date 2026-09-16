@@ -26,6 +26,11 @@ public final class EquippableProcessor implements SimpleNetworkItemProcessor {
     }
 
     @Override
+    public boolean isConstant() {
+        return true;
+    }
+
+    @Override
     public @NotNull Key componentType(Item item, ItemBuildContext context) {
         return DataComponentKeys.EQUIPPABLE;
     }

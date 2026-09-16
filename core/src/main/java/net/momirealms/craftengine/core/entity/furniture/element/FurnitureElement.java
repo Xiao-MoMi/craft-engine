@@ -1,13 +1,12 @@
 package net.momirealms.craftengine.core.entity.furniture.element;
 
 import net.momirealms.craftengine.core.entity.player.Player;
-import net.momirealms.craftengine.core.plugin.context.PlayerContext;
 
-import java.util.function.Consumer;
+import java.util.function.IntConsumer;
 
 public interface FurnitureElement {
 
-    void gatherInteractableEntityId(Consumer<Integer> collector);
+    void gatherInteractableEntityId(IntConsumer collector);
 
     void show(Player player);
 
@@ -15,19 +14,11 @@ public interface FurnitureElement {
 
     void update(Player player);
 
-    default boolean hasCondition() {
-        return false;
-    }
-
-    default boolean canSee(PlayerContext context) {
+    default boolean canSee(Player player) {
         return true;
     }
 
     default void deactivate() {}
 
     default void activate() {}
-
-    default boolean supportsTransform() {
-        return false;
-    }
 }

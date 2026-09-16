@@ -26,10 +26,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.joml.Vector3f;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.UUID;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
 public final class GlowingFurnitureBehaviorTemplate extends FurnitureBehaviorTemplate {
@@ -88,9 +85,39 @@ public final class GlowingFurnitureBehaviorTemplate extends FurnitureBehaviorTem
         public void onVariantChange(FurnitureVariant previousVariant) {
             List<LightConfig> oldLightData = this.behavior.getLightDataByVariant(previousVariant.name());
             List<LightConfig> lightData = this.behavior.getLightDataByVariant(furniture.getCurrentVariant().name());
-            if (oldLightData.isEmpty() && lightData.isEmpty()) return;
-            this.removeLightBlocks(true);
-            this.setLightBlocks();
+            if (!oldLightData.isEmpty() || !lightData.isEmpty()) {
+                this.removeLightBlocks(true);
+                this.setLightBlocks();
+            } else {
+                this.updateLightData();
+            }
+        }
+
+        @Override
+        public void onAsyncPlayerVariantChange(Player player, FurnitureSnapshotState previous, FurnitureSnapshotState snapshotState) {
+            List<LightData> oldLights = this.getLightDataSnapshot(previous);
+            List<LightData> newLights = this.getLightDataSnapshot(snapshotState);
+            if (Objects.equals(oldLights, newLights)) return;
+
+            // 先完成计数替换，再发送最终亮度，避免同坐标亮度变化时先熄灭再点亮。
+            FurnitureLightData playerLights = player.furnitureLightData();
+            Map<BlockPos, Integer> previousLevels = new HashMap<>();
+            if (oldLights != null) {
+                for (LightData light : oldLights) {
+                    previousLevels.putIfAbsent(light.blockPos, playerLights.getLightPower(light.blockPos));
+                    playerLights.removeLightData(light.blockPos, light.light);
+                }
+            }
+            if (newLights != null) {
+                for (LightData light : newLights) {
+                    previousLevels.putIfAbsent(light.blockPos, playerLights.getLightPower(light.blockPos));
+                    playerLights.addLightData(light.blockPos, light.light);
+                }
+            }
+            previousLevels.forEach((pos, oldLevel) -> {
+                int level = playerLights.getLightPower(pos);
+                if (level != oldLevel) this.updateLightBlock(player, pos, level);
+            });
         }
 
         @Override
@@ -202,15 +229,16 @@ public final class GlowingFurnitureBehaviorTemplate extends FurnitureBehaviorTem
         }
 
         @Nullable
-        private List<LightData> getLightDataSnapshot(FurnitureSnapshotState snapshotState) {
-            return snapshotState.getCustomData(LIGHT_DATA_KEY);
+        private List<LightData> getLightDataSnapshot(@Nullable FurnitureSnapshotState snapshotState) {
+            return snapshotState == null ? null : snapshotState.getCustomData(LIGHT_DATA_KEY);
         }
 
         private void updateLightData() {
+            FurnitureSnapshotState snapshotState = this.furniture.snapshotState();
             List<LightConfig> lightData = this.behavior.getLightDataByVariant(this.furniture.getCurrentVariant().name());
             if (lightData != null) {
                 List<LightData> currentActualise = lightData.stream().map(it -> it.create(this.furniture)).toList();
-                this.furniture.snapshotState().setCustomData(LIGHT_DATA_KEY, currentActualise);
+                snapshotState.setCustomData(LIGHT_DATA_KEY, currentActualise);
                 this.placedLights = currentActualise;
             } else {
                 this.placedLights = List.of();

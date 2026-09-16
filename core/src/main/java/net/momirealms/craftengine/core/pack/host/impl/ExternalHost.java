@@ -42,7 +42,7 @@ public final class ExternalHost implements ResourcePackHost {
     private static class Factory implements ResourcePackHostFactory<ExternalHost> {
 
         @Override
-        public ExternalHost create(ConfigSection section) {
+        public ExternalHost create(String id, ConfigSection section) {
             String url = section.getNonEmptyString("url");
             UUID uuid = section.getValue("uuid", ConfigValue::getAsUUID, UUID.nameUUIDFromBytes(url.getBytes(StandardCharsets.UTF_8)));
             return new ExternalHost(new ResourcePackDownloadData(url, uuid, section.getString("sha1", "")));

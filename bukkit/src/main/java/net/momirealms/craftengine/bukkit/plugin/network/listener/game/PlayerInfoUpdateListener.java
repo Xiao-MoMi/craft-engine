@@ -1,5 +1,6 @@
 package net.momirealms.craftengine.bukkit.plugin.network.listener.game;
 
+import com.google.gson.JsonElement;
 import io.netty.buffer.ByteBuf;
 import net.momirealms.craftengine.bukkit.plugin.network.BukkitNetworkManager;
 import net.momirealms.craftengine.bukkit.plugin.user.BukkitServerPlayer;
@@ -48,13 +49,13 @@ public final class PlayerInfoUpdateListener implements ByteBufferPacketListener 
         boolean changed = false;
         for (Object entry : entries) {
             Object mcComponent = ClientboundPlayerInfoUpdatePacketProxy.EntryProxy.INSTANCE.getDisplayName(entry);
-            if (mcComponent == null) continue;
-            String json = ComponentUtils.minecraftToJson(mcComponent);
+            if (mcComponent == null || !ComponentUtils.hasNetworkTag(mcComponent)) continue;
+            JsonElement json = ComponentUtils.minecraftToJsonElement(mcComponent);
             Map<String, ComponentProvider> tokens = BukkitNetworkManager.instance().matchNetworkTags(json);
             if (tokens.isEmpty()) continue;
             ClientboundPlayerInfoUpdatePacketProxy.EntryProxy.INSTANCE.setDisplayName(
                     entry,
-                    ComponentUtils.adventureToMinecraft(AdventureHelper.replaceText(AdventureHelper.jsonToComponent(json), tokens, NetworkTextReplaceContext.of((BukkitServerPlayer) user)))
+                    ComponentUtils.adventureToMinecraft(AdventureHelper.replaceText(AdventureHelper.jsonElementToComponent(json), tokens, NetworkTextReplaceContext.of((BukkitServerPlayer) user)))
             );
             changed = true;
         }

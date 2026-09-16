@@ -23,20 +23,17 @@ public final class ModelEngineFurnitureElementConfig implements FurnitureElement
     public final float pitch;
     public final String model;
     public final Predicate<PlayerContext> predicate;
-    public final boolean hasCondition;
 
     private ModelEngineFurnitureElementConfig(String model,
                                               Vector3f position,
                                               float yaw,
                                               float pitch,
-                                              Predicate<PlayerContext> predicate,
-                                              boolean hasCondition) {
+                                              Predicate<PlayerContext> predicate) {
         this.pitch = pitch;
         this.position = position;
         this.yaw = yaw;
         this.model = model;
         this.predicate = predicate;
-        this.hasCondition = hasCondition;
     }
 
     @Override
@@ -59,8 +56,7 @@ public final class ModelEngineFurnitureElementConfig implements FurnitureElement
                     section.getVector3f("position", ConfigConstants.ZERO_VECTOR3),
                     section.getFloat("yaw"),
                     section.getFloat("pitch"),
-                    MiscUtils.allOf(conditions),
-                    !conditions.isEmpty()
+                    MiscUtils.allOf(conditions)
             );
         }
     }

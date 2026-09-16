@@ -15,6 +15,7 @@ import net.momirealms.craftengine.core.entity.furniture.hitbox.FurnitureHitBox;
 import net.momirealms.craftengine.core.entity.furniture.hitbox.FurnitureHitboxPart;
 import net.momirealms.craftengine.core.entity.furniture.setting.FurnitureHitData;
 import net.momirealms.craftengine.core.entity.player.InteractionHand;
+import net.momirealms.craftengine.core.item.Item;
 import net.momirealms.craftengine.core.plugin.CraftEngine;
 import net.momirealms.craftengine.core.plugin.context.Context;
 import net.momirealms.craftengine.core.plugin.context.ContextHolder;
@@ -29,6 +30,7 @@ import net.momirealms.craftengine.core.sound.SoundData;
 import net.momirealms.craftengine.core.sound.SoundSource;
 import net.momirealms.craftengine.core.util.Cancellable;
 import net.momirealms.craftengine.core.util.FriendlyByteBuf;
+import net.momirealms.craftengine.core.util.ItemUtils;
 import net.momirealms.craftengine.core.util.VersionHelper;
 import net.momirealms.craftengine.core.world.EntityHitResult;
 import net.momirealms.craftengine.core.world.Vec3d;
@@ -92,13 +94,7 @@ public final class AttackListener implements ByteBufferPacketListener {
             if (!BukkitCraftEngine.instance().antiGriefProvider().test(platformPlayer, Flag.BREAK, location))
                 return;
 
-            FurnitureHitboxPart part = null;
-            for (FurnitureHitboxPart p : hitBox.parts()) {
-                if (p.entityId() == entityId) {
-                    part = p;
-                    break;
-                }
-            }
+            FurnitureHitboxPart part = hitBox.findPart(entityId);
             if (part == null) {
                 return;
             }
@@ -120,6 +116,8 @@ public final class AttackListener implements ByteBufferPacketListener {
             if (EventUtils.fireAndCheckCancel(hitEvent))
                 return;
 
+            Item itemInHand = serverPlayer.getItemInHand(InteractionHand.MAIN_HAND);
+
             int hitTimes = config.settings().hitTimes();
             if (hitTimes > 1 && !serverPlayer.isCreativeMode()) {
                 FurnitureHitData furnitureHitData = serverPlayer.furnitureHitData();
@@ -135,7 +133,7 @@ public final class AttackListener implements ByteBufferPacketListener {
                             .withParameter(DirectContextParameters.HIT_TIMES, alreadyHit)
                             .withParameter(DirectContextParameters.FURNITURE, furniture)
                             .withParameter(DirectContextParameters.HAND, InteractionHand.MAIN_HAND)
-                            .withParameter(DirectContextParameters.ITEM_IN_HAND, serverPlayer.getItemInHand(InteractionHand.MAIN_HAND))
+                            .withOptionalParameter(DirectContextParameters.ITEM_IN_HAND, ItemUtils.emptyToNull(itemInHand))
                             .withParameter(DirectContextParameters.POSITION, furniture.position())
                             .withParameter(DirectContextParameters.EVENT, Cancellable.of(hitEvent::isCancelled, hitEvent::setCancelled))
                             .build()
@@ -168,7 +166,7 @@ public final class AttackListener implements ByteBufferPacketListener {
                         .withParameter(DirectContextParameters.PLAYER, serverPlayer)
                         .withParameter(DirectContextParameters.FURNITURE, furniture)
                         .withParameter(DirectContextParameters.HAND, InteractionHand.MAIN_HAND)
-                        .withParameter(DirectContextParameters.ITEM_IN_HAND, serverPlayer.getItemInHand(InteractionHand.MAIN_HAND))
+                        .withOptionalParameter(DirectContextParameters.ITEM_IN_HAND, ItemUtils.emptyToNull(itemInHand))
                         .withParameter(DirectContextParameters.POSITION, furniture.position())
                         .withParameter(DirectContextParameters.EVENT, Cancellable.of(breakEvent::isCancelled, breakEvent::setCancelled))
                         .build()

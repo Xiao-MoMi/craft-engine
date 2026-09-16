@@ -4,16 +4,19 @@ import net.momirealms.sparrow.nbt.*;
 
 import java.util.Map;
 
-public final class StringValueOnlyTagVisitor implements TagVisitor  {
-    private final StringBuilder builder = new StringBuilder();
+public final class StringValueOnlyTagVisitor implements TagVisitor {
+    private StringBuilder builder;
 
     public String visit(Tag element) {
         element.accept(this);
-        return this.builder.toString();
+        return this.builder == null ? "" : this.builder.toString();
     }
 
     @Override
     public void visitString(StringTag element) {
+        if (this.builder == null) {
+            this.builder = new StringBuilder();
+        }
         this.builder.append(element.getAsString());
     }
 
@@ -56,14 +59,14 @@ public final class StringValueOnlyTagVisitor implements TagVisitor  {
     @Override
     public void visitList(ListTag element) {
         for (Tag tag : element) {
-            this.builder.append((new StringValueOnlyTagVisitor()).visit(tag));
+            tag.accept(this);
         }
     }
 
     @Override
     public void visitCompound(CompoundTag compound) {
         for (Map.Entry<String, Tag> entry : compound.entrySet()) {
-            this.builder.append((new StringValueOnlyTagVisitor()).visit(entry.getValue()));
+            entry.getValue().accept(this);
         }
     }
 

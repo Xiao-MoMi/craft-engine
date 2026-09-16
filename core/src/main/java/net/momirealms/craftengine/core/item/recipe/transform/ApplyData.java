@@ -20,7 +20,7 @@ public final class ApplyData implements ItemTransformDataProcessor {
     @Override
     public void accept(Item item1, Item item2, Item item3) {
         for (ItemProcessor modifier : this.modifiers) {
-            item3.apply(modifier, ItemBuildContext.EMPTY);
+            item3.apply(modifier, ItemBuildContext.empty());
         }
     }
 

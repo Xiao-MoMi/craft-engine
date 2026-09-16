@@ -23,4 +23,9 @@ public final class PlainTextProvider implements TextProvider {
     public Key type() {
         return TextProviders.PLAIN;
     }
+
+    @Override
+    public boolean isConstant() {
+        return true;
+    }
 }

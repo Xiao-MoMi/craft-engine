@@ -16,9 +16,11 @@ import java.util.Optional;
 
 public class NamedArgumentTag extends StaticTagResolver implements StringTag {
     public static final NamedArgumentTag INSTANCE = new NamedArgumentTag("arg");
+    private final String name;
 
     protected NamedArgumentTag(String name) {
         super(name);
+        this.name = name;
     }
 
     @Override
@@ -63,7 +65,7 @@ public class NamedArgumentTag extends StaticTagResolver implements StringTag {
             Object value = parameter(context, key).orElse(null);
             if (value == null) {
                 if (defaultTemplate == null) {
-                    throw new IllegalArgumentException("No default value provided");
+                    throw new IllegalArgumentException("No default value provided for tag <" + this.name + ":" + String.join(":", args) + ">");
                 }
                 return defaultTemplate.render(context);
             }

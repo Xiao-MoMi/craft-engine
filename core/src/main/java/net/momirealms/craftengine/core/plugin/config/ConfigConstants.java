@@ -43,7 +43,6 @@ public final class ConfigConstants {
     public static final String PARSE_SNBT_FAILED = "resource.argument.parser.snbt";
     public static final String PARSE_AABB_FAILED = "resource.argument.parser.aabb";
     public static final String PARSE_IDENTIFIER_FAILED = "resource.argument.parser.identifier";
-    public static final String PARSE_LIST_FAILED = "resource.argument.parser.list";
     public static final String PARSE_UUID_FAILED = "resource.argument.parser.uuid";
     public static final String PARSE_SPLIT_FAILED = "resource.argument.parser.split";
     public static final String PARSE_BLOCK_STATE_FAILED = "resource.argument.parser.blockstate";

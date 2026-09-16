@@ -2,6 +2,7 @@ package net.momirealms.craftengine.bukkit.entity.furniture.hitbox;
 
 import net.momirealms.craftengine.bukkit.entity.data.BaseEntityData;
 import net.momirealms.craftengine.bukkit.entity.data.InteractionData;
+import net.momirealms.craftengine.core.entity.furniture.ColliderProperties;
 import net.momirealms.craftengine.core.entity.furniture.Furniture;
 import net.momirealms.craftengine.core.entity.furniture.hitbox.AbstractFurnitureHitBoxConfig;
 import net.momirealms.craftengine.core.entity.furniture.hitbox.FurnitureHitBoxConfigFactory;
@@ -20,6 +21,7 @@ import java.util.List;
 import java.util.function.Consumer;
 
 public final class InteractionFurnitureHitboxConfig extends AbstractFurnitureHitBoxConfig<InteractionFurnitureHitbox> {
+    public final ColliderProperties colliderProperties;
     public static final FurnitureHitBoxConfigFactory<InteractionFurnitureHitbox> FACTORY = new Factory();
     public static final InteractionFurnitureHitboxConfig DEFAULT = new InteractionFurnitureHitboxConfig();
     public final Vector3f size;
@@ -36,6 +38,7 @@ public final class InteractionFurnitureHitboxConfig extends AbstractFurnitureHit
                                             Vector3f size,
                                             boolean interactive) {
         super(seats, position, canUseItemOn, blocksBuilding, canBeHitByProjectile);
+        this.colliderProperties = ColliderProperties.of(false, blocksBuilding, canBeHitByProjectile);
         this.size = size;
         this.responsive = interactive;
         this.invisible = invisible;
@@ -49,6 +52,7 @@ public final class InteractionFurnitureHitboxConfig extends AbstractFurnitureHit
 
     private InteractionFurnitureHitboxConfig() {
         super(new SeatConfig[0], new Vector3f(), false, false, false);
+        this.colliderProperties = ColliderProperties.NONE;
         this.size = new Vector3f(1);
         this.responsive = true;
         this.invisible = false;
@@ -68,6 +72,11 @@ public final class InteractionFurnitureHitboxConfig extends AbstractFurnitureHit
 
     public List<Object> cachedValues() {
         return this.cachedValues;
+    }
+
+    @Override
+    public ColliderProperties colliderProperties() {
+        return this.colliderProperties;
     }
 
     @Override

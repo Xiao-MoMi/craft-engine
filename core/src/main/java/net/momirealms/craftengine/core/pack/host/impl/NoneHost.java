@@ -37,7 +37,7 @@ public final class NoneHost implements ResourcePackHost {
     private static class Factory implements ResourcePackHostFactory<NoneHost> {
 
         @Override
-        public NoneHost create(ConfigSection section) {
+        public NoneHost create(String id, ConfigSection section) {
             return INSTANCE;
         }
     }

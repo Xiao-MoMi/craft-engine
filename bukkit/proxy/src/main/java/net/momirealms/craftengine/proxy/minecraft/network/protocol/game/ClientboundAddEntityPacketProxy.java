@@ -6,6 +6,7 @@ import net.momirealms.craftengine.proxy.minecraft.world.phys.Vec3Proxy;
 import net.momirealms.sparrow.reflection.clazz.SparrowClass;
 import net.momirealms.sparrow.reflection.proxy.ASMProxyFactory;
 import net.momirealms.sparrow.reflection.proxy.annotation.ConstructorInvoker;
+import net.momirealms.sparrow.reflection.proxy.annotation.FieldGetter;
 import net.momirealms.sparrow.reflection.proxy.annotation.ReflectionProxy;
 import net.momirealms.sparrow.reflection.proxy.annotation.Type;
 
@@ -15,6 +16,12 @@ import java.util.UUID;
 public interface ClientboundAddEntityPacketProxy extends PacketProxy {
     ClientboundAddEntityPacketProxy INSTANCE = ASMProxyFactory.create(ClientboundAddEntityPacketProxy.class);
     Class<?> CLASS = SparrowClass.find("net.minecraft.network.protocol.game.ClientboundAddEntityPacket");
+
+    @FieldGetter(name = "id")
+    int getId(Object target);
+
+    @FieldGetter(name = "type")
+    Object getType(Object target);
 
     @ConstructorInvoker
     Object newInstance(

@@ -24,6 +24,11 @@ public final class ItemModelProcessor implements SimpleNetworkItemProcessor {
         return DataComponentKeys.ITEM_MODEL;
     }
 
+    @Override
+    public boolean isConstant() {
+        return true;
+    }
+
     private static class Factory implements ItemProcessorFactory<ItemModelProcessor> {
 
         @Override

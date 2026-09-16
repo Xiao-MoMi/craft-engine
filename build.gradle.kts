@@ -68,7 +68,20 @@ val embeddedVersionAliases = mapOf(
     "jimfs_version" to "jimfs",
     "bucket4j_version" to "bucket4j",
     "graaljs_version" to "graaljs",
-    "nashorn_version" to "nashorn"
+    "nashorn_version" to "nashorn",
+    "jackson_version" to "jackson",
+    "jackson_annotations_version" to "jackson-annotations",
+    "protobuf_java_version" to "protobuf-java",
+    "h2_version" to "h2",
+    "mysql_connector_j_version" to "mysql-connector-j",
+    "hikari_version" to "hikari",
+    "checker_qual_version" to "checker-qual",
+    "flyway_version" to "flyway",
+    "jdbi3_core_version" to "jdbi3-core",
+    "mariadb_java_client_version" to "mariadb-java-client",
+    "mongodb_version" to "mongodb",
+    "postgresql_version" to "postgresql",
+    "sqlite_jdbc_version" to "sqlite-jdbc"
 )
 val embeddedVersions = embeddedVersionAliases.mapValues { (_, alias) ->
     versionCatalog.findVersion(alias)

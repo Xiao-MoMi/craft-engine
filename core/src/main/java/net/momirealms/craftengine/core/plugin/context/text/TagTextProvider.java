@@ -10,8 +10,16 @@ public final class TagTextProvider implements TextProvider {
         this.template = StringTemplate.of(text);
     }
 
+    public TagTextProvider(StringTemplate template) {
+        this.template = template;
+    }
+
     public static TagTextProvider of(String text) {
         return new TagTextProvider(text);
+    }
+
+    public static TagTextProvider of(StringTemplate template) {
+        return new TagTextProvider(template);
     }
 
     @Override
@@ -22,5 +30,10 @@ public final class TagTextProvider implements TextProvider {
     @Override
     public Key type() {
         return TextProviders.TAG;
+    }
+
+    @Override
+    public boolean isConstant() {
+        return !this.template.hasTags();
     }
 }

@@ -6,6 +6,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class PlayerOptionalContext extends AbstractChainParameterContext implements PlayerContext {
+    @Deprecated(forRemoval = true, since = "26.9")
     public static final PlayerOptionalContext EMPTY = new PlayerOptionalContext(null, ContextHolder.emptyImmutable());
     protected final Player player;
 
@@ -37,10 +38,6 @@ public class PlayerOptionalContext extends AbstractChainParameterContext impleme
     @NotNull
     public static PlayerOptionalContext empty() {
         return new PlayerOptionalContext(null, ContextHolder.empty());
-    }
-
-    public static PlayerOptionalContext emptyImmutable() {
-        return EMPTY;
     }
 
     @Override

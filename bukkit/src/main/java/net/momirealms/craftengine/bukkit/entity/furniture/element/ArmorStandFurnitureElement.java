@@ -7,6 +7,7 @@ import net.momirealms.craftengine.bukkit.util.EntityUtils;
 import net.momirealms.craftengine.core.entity.furniture.Furniture;
 import net.momirealms.craftengine.core.entity.furniture.data.FurnitureDataResolver;
 import net.momirealms.craftengine.core.entity.furniture.data.ItemPatch;
+import net.momirealms.craftengine.core.entity.furniture.element.TransformableFurnitureElement;
 import net.momirealms.craftengine.core.entity.player.Player;
 import net.momirealms.craftengine.core.util.VersionHelper;
 import net.momirealms.craftengine.core.world.WorldPosition;
@@ -23,9 +24,9 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
-import java.util.function.Consumer;
+import java.util.function.IntConsumer;
 
-public final class ArmorStandFurnitureElement extends AbstractConditionalFurnitureElement {
+public final class ArmorStandFurnitureElement extends AbstractConditionalFurnitureElement implements TransformableFurnitureElement {
     public final ArmorStandFurnitureElementConfig config;
     public final Furniture furniture;
     public final WorldPosition position;
@@ -34,9 +35,7 @@ public final class ArmorStandFurnitureElement extends AbstractConditionalFurnitu
     public final Object cachedDespawnPacket;
     public final Object cachedScalePacket;
     public final Object cachedTeamPacket;
-    public final Object cachedUpdatePosPacket;
     public final int entityId;
-    public final UUID uuid = UUID.randomUUID();
 
     @Override
     public @NotNull Furniture furniture() {
@@ -44,18 +43,19 @@ public final class ArmorStandFurnitureElement extends AbstractConditionalFurnitu
     }
 
     ArmorStandFurnitureElement(Furniture furniture, ArmorStandFurnitureElementConfig config, WorldPosition pos) {
-        this(furniture, config, pos, EntityUtils.ENTITY_COUNTER.incrementAndGet(), false);
+        this(furniture, config, pos, EntityUtils.ENTITY_COUNTER.incrementAndGet());
     }
 
-    ArmorStandFurnitureElement(Furniture furniture, ArmorStandFurnitureElementConfig config, WorldPosition pos, int entityId, boolean positionChanged) {
-        super(config.predicate, config.hasCondition);
+    ArmorStandFurnitureElement(Furniture furniture, ArmorStandFurnitureElementConfig config, WorldPosition pos, int entityId) {
+        super(config.predicate);
         this.config = config;
         this.furniture = furniture;
         this.itemPatch = config.createItemPatch(furniture);
         this.entityId = entityId;
         this.position = pos;
+        UUID uuid = UUID.randomUUID();
         this.cachedSpawnPacket = ClientboundAddEntityPacketProxy.INSTANCE.newInstance(
-                this.entityId, this.uuid, position.x, position.y, position.z,
+                this.entityId, uuid, position.x, position.y, position.z,
                 this.position.xRot, this.position.yRot, EntityTypesProxy.ARMOR_STAND, 0, Vec3Proxy.ZERO, this.position.yRot
         );
         this.cachedDespawnPacket = ClientboundRemoveEntitiesPacketProxy.INSTANCE.newInstance(IntList.of(this.entityId));
@@ -70,11 +70,10 @@ public final class ArmorStandFurnitureElement extends AbstractConditionalFurnitu
         if (config.glowColor != null) {
             String teamName = TeamManagerImpl.instance().getTeamNameByColor(config.glowColor);
             if (teamName != null) {
-                teamPacket = ClientboundSetPlayerTeamPacketProxy.INSTANCE.newInstance(teamName, 3, Optional.empty(), ImmutableList.of(this.uuid.toString()));
+                teamPacket = ClientboundSetPlayerTeamPacketProxy.INSTANCE.newInstance(teamName, 3, Optional.empty(), ImmutableList.of(uuid.toString()));
             }
         }
         this.cachedTeamPacket = teamPacket;
-        this.cachedUpdatePosPacket = positionChanged ? EntityUtils.createUpdatePosPacket(this.entityId, this.position.x, this.position.y, this.position.z, this.position.yRot, this.position.xRot, false) : null;
     }
 
     @Override
@@ -98,24 +97,33 @@ public final class ArmorStandFurnitureElement extends AbstractConditionalFurnitu
 
     @Override
     public void update(Player player) {
-        if (this.cachedUpdatePosPacket != null) {
-            player.sendPackets(List.of(this.cachedUpdatePosPacket, ClientboundSetEquipmentPacketProxy.INSTANCE.newInstance(this.entityId, List.of(
-                    Pair.of(EquipmentSlotProxy.HEAD, this.config.item(player, this.itemPatch).minecraftItem())
-            ))), false);
-        } else {
-            player.sendPacket(ClientboundSetEquipmentPacketProxy.INSTANCE.newInstance(this.entityId, List.of(
-                    Pair.of(EquipmentSlotProxy.HEAD, this.config.item(player, this.itemPatch).minecraftItem())
-            )), false);
-        }
+        player.sendPacket(ClientboundSetEquipmentPacketProxy.INSTANCE.newInstance(this.entityId, List.of(
+                Pair.of(EquipmentSlotProxy.HEAD, this.config.item(player, this.itemPatch).minecraftItem())
+        )), false);
     }
 
     @Override
-    public void gatherInteractableEntityId(Consumer<Integer> collector) {
+    public void gatherInteractableEntityId(IntConsumer collector) {
         collector.accept(this.entityId);
     }
 
     @Override
-    public boolean supportsTransform() {
-        return true;
+    public int entityId() {
+        return this.entityId;
     }
+
+    @Override
+    public void update(Player player, TransformableFurnitureElement previous) {
+        // 按玩家实际已显示的位置比较，允许跳过中间变体快照。
+        if (!this.position.equals(previous.position())) {
+            player.sendPacket(EntityUtils.createUpdatePosPacket(this.entityId, this.position.x, this.position.y, this.position.z, this.position.yRot, this.position.xRot, false), false);
+        }
+        this.update(player);
+    }
+
+    @Override
+    public @NotNull WorldPosition position() {
+        return this.position;
+    }
+
 }

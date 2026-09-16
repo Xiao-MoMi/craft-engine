@@ -69,23 +69,20 @@ public final class YamlUtils {
         }
 
         public List<String> getStringList(String path) {
-            List<String> values = this.node.getStringList(route(path));
-            return values == null ? List.of() : values;
+            return this.node.getStringList(route(path));
         }
 
-        @Nullable
         public List<?> getList(String path) {
             return this.node.getList(NodeSerializers.OBJECT, route(path));
         }
 
-        @Nullable
         public List<Map<?, ?>> getMapList(String path) {
             List<Map<Object, Object>> values = this.node.getMapList(
                     NodeSerializers.OBJECT,
                     NodeSerializers.OBJECT,
                     route(path)
             );
-            return values == null ? null : new ArrayList<>(values);
+            return new ArrayList<>(values);
         }
 
         public boolean contains(String path) {

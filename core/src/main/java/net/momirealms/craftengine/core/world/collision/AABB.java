@@ -235,6 +235,28 @@ public final class AABB {
     }
 
     @Override
+    public boolean equals(Object other) {
+        return this == other || other instanceof AABB box
+                && Double.compare(this.minX, box.minX) == 0
+                && Double.compare(this.minY, box.minY) == 0
+                && Double.compare(this.minZ, box.minZ) == 0
+                && Double.compare(this.maxX, box.maxX) == 0
+                && Double.compare(this.maxY, box.maxY) == 0
+                && Double.compare(this.maxZ, box.maxZ) == 0;
+    }
+
+    @Override
+    public int hashCode() {
+        int result = Double.hashCode(this.minX);
+        result = 31 * result + Double.hashCode(this.minY);
+        result = 31 * result + Double.hashCode(this.minZ);
+        result = 31 * result + Double.hashCode(this.maxX);
+        result = 31 * result + Double.hashCode(this.maxY);
+        result = 31 * result + Double.hashCode(this.maxZ);
+        return result;
+    }
+
+    @Override
     public String toString() {
         return "AABB{" +
                 "minX=" + minX +

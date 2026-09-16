@@ -103,9 +103,20 @@ public abstract class AbstractNetworkManager implements NetworkManager {
         }
     }
 
+    private boolean hasTagFast(String text) {
+        if (text == null || text.length() < 2) return false;
+        int lt = text.indexOf('<');
+        if (lt < 0) return false;
+        return text.indexOf('>', lt + 1) >= 0;
+    }
+
     @SuppressWarnings("UnstableApiUsage")
     @Override
     public boolean hasNetworkTag(String text) {
+        // 避免产生列表分配
+        if (!hasTagFast(text)) {
+            return false;
+        }
         List<Token> root = TokenParser.tokenize(text, true);
         for (final Token token : root) {
             switch (token.type()) {
@@ -160,6 +171,9 @@ public abstract class AbstractNetworkManager implements NetworkManager {
 
     @SuppressWarnings("UnstableApiUsage")
     private Map<String, ComponentProvider> matchNetworkTags(String text, Map<String, ComponentProvider> tags) {
+        if (!hasTagFast(text)) {
+            return tags;
+        }
         List<Token> root = TokenParser.tokenize(text, true);
         for (final Token token : root) {
             switch (token.type()) {

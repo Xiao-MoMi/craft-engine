@@ -203,8 +203,8 @@ public final class ItemBrowserManagerImpl implements ItemBrowserManager {
                 this.plugin.logger().warn("Cannot find item " + it.icon() + " for category icon");
                 return null;
             }
-            item.customNameJson(AdventureHelper.componentToJsonElement(AdventureHelper.miniMessage().deserialize(it.displayName(), ItemBuildContext.EMPTY)));
-            item.loreComponent(it.displayLore().stream().map(lore -> AdventureHelper.miniMessage().deserialize(lore, ItemBuildContext.EMPTY)).toList());
+            item.customNameJson(AdventureHelper.componentToJsonElement(AdventureHelper.miniMessage().deserialize(it.displayName(), ItemBuildContext.empty())));
+            item.loreComponent(it.displayLore().stream().map(lore -> AdventureHelper.miniMessage().deserialize(lore, ItemBuildContext.empty())).toList());
             return new ItemWithAction(item, (element, click) -> {
                 click.cancel();
                 player.playSound(Constants.SOUND_CLICK_BUTTON);
@@ -296,12 +296,12 @@ public final class ItemBrowserManagerImpl implements ItemBrowserManager {
                     if (ItemUtils.isEmpty(item)) {
                         if (!subCategory.icon().equals(ItemKeys.AIR)) {
                             item = Objects.requireNonNull(Item.byId(ItemKeys.BARRIER, player));
-                            item.customNameJson(AdventureHelper.componentToJsonElement(AdventureHelper.miniMessage().deserialize(subCategory.displayName(), ItemBuildContext.EMPTY)));
-                            item.loreComponent(subCategory.displayLore().stream().map(lore -> AdventureHelper.miniMessage().deserialize(lore, ItemBuildContext.EMPTY)).toList());
+                            item.customNameJson(AdventureHelper.componentToJsonElement(AdventureHelper.miniMessage().deserialize(subCategory.displayName(), ItemBuildContext.empty())));
+                            item.loreComponent(subCategory.displayLore().stream().map(lore -> AdventureHelper.miniMessage().deserialize(lore, ItemBuildContext.empty())).toList());
                         }
                     } else {
-                        item.customNameJson(AdventureHelper.componentToJsonElement(AdventureHelper.miniMessage().deserialize(subCategory.displayName(), ItemBuildContext.EMPTY)));
-                        item.loreComponent(subCategory.displayLore().stream().map(lore -> AdventureHelper.miniMessage().deserialize(lore, ItemBuildContext.EMPTY)).toList());
+                        item.customNameJson(AdventureHelper.componentToJsonElement(AdventureHelper.miniMessage().deserialize(subCategory.displayName(), ItemBuildContext.empty())));
+                        item.loreComponent(subCategory.displayLore().stream().map(lore -> AdventureHelper.miniMessage().deserialize(lore, ItemBuildContext.empty())).toList());
                     }
                 }
                 return new ItemWithAction(item, (element, click) -> {

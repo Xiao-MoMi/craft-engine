@@ -1,8 +1,11 @@
 package net.momirealms.craftengine.bukkit.entity.furniture.element;
 
 import it.unimi.dsi.fastutil.ints.IntArrayList;
+import net.momirealms.craftengine.bukkit.entity.data.DisplayData;
 import net.momirealms.craftengine.bukkit.util.EntityUtils;
+import net.momirealms.craftengine.core.entity.culling.ViewRangeCullable;
 import net.momirealms.craftengine.core.entity.furniture.Furniture;
+import net.momirealms.craftengine.core.entity.furniture.element.TransformableFurnitureElement;
 import net.momirealms.craftengine.core.entity.player.Player;
 import net.momirealms.craftengine.core.util.MiscUtils;
 import net.momirealms.craftengine.core.world.WorldPosition;
@@ -14,37 +17,35 @@ import net.momirealms.craftengine.proxy.minecraft.world.entity.EntityTypesProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.phys.Vec3Proxy;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
-import java.util.function.Consumer;
+import java.util.function.IntConsumer;
 
-public final class TextDisplayFurnitureElement extends AbstractConditionalFurnitureElement {
+public final class TextDisplayFurnitureElement extends AbstractConditionalFurnitureElement implements TransformableFurnitureElement, ViewRangeCullable {
     public final TextDisplayFurnitureElementConfig config;
     public final Furniture furniture;
     public final WorldPosition position;
     public final int entityId;
     public final Object cachedDespawnPacket;
-    public final Object cachedUpdatePosPacket;
     public final Object cachedSpawnPacket;
-    public final UUID uuid = UUID.randomUUID();
 
     TextDisplayFurnitureElement(Furniture furniture, TextDisplayFurnitureElementConfig config, WorldPosition pos) {
-        this(furniture, config, pos, EntityUtils.ENTITY_COUNTER.incrementAndGet(), false);
+        this(furniture, config, pos, EntityUtils.ENTITY_COUNTER.incrementAndGet());
     }
 
-    TextDisplayFurnitureElement(Furniture furniture, TextDisplayFurnitureElementConfig config, WorldPosition pos, int entityId, boolean positionChanged) {
-        super(config.predicate, config.hasCondition);
+    TextDisplayFurnitureElement(Furniture furniture, TextDisplayFurnitureElementConfig config, WorldPosition pos, int entityId) {
+        super(config.predicate);
         this.furniture = furniture;
         this.config = config;
         this.entityId = entityId;
         this.position = pos;
         this.cachedDespawnPacket = ClientboundRemoveEntitiesPacketProxy.INSTANCE.newInstance(MiscUtils.init(new IntArrayList(), a -> a.add(entityId)));
         this.cachedSpawnPacket = ClientboundAddEntityPacketProxy.INSTANCE.newInstance(
-                this.entityId, this.uuid,
+                this.entityId, UUID.randomUUID(),
                 this.position.x, this.position.y, this.position.z, this.position.xRot, this.position.yRot,
                 EntityTypesProxy.TEXT_DISPLAY, 0, Vec3Proxy.ZERO, 0
         );
-        this.cachedUpdatePosPacket = positionChanged ? EntityUtils.createUpdatePosPacket(this.entityId, this.position.x, this.position.y, this.position.z, this.position.yRot, this.position.xRot, false) : null;
     }
 
     @Override
@@ -61,25 +62,43 @@ public final class TextDisplayFurnitureElement extends AbstractConditionalFurnit
     }
 
     @Override
+    public void setCulled(Player player, boolean culled) {
+        List<Object> values = new ArrayList<>(1);
+        DisplayData.ViewRange.addEntityData(culled ? 0f : (float) (this.config.viewRange * player.displayEntityViewDistance()), values, true);
+        player.sendPacket(ClientboundSetEntityDataPacketProxy.INSTANCE.newInstance(this.entityId, values), false);
+    }
+
+    @Override
     public void hide(Player player) {
         player.sendPacket(this.cachedDespawnPacket, false);
     }
 
     @Override
     public void update(Player player) {
-        if (this.cachedUpdatePosPacket != null) {
-            player.sendPackets(List.of(this.cachedUpdatePosPacket, ClientboundSetEntityDataPacketProxy.INSTANCE.newInstance(this.entityId, this.config.metadata.apply(player, null, true))), false);
-        } else {
-            player.sendPacket(ClientboundSetEntityDataPacketProxy.INSTANCE.newInstance(this.entityId, this.config.metadata.apply(player, null, true)), false);
+        player.sendPacket(ClientboundSetEntityDataPacketProxy.INSTANCE.newInstance(this.entityId, this.config.metadata.apply(player, null, true)), false);
+    }
+
+    @Override
+    public void gatherInteractableEntityId(IntConsumer collector) {
+    }
+
+    @Override
+    public int entityId() {
+        return this.entityId;
+    }
+
+    @Override
+    public void update(Player player, TransformableFurnitureElement previous) {
+        // 按玩家实际已显示的位置比较，允许跳过中间变体快照。
+        if (!this.position.equals(previous.position())) {
+            player.sendPacket(EntityUtils.createUpdatePosPacket(this.entityId, this.position.x, this.position.y, this.position.z, this.position.yRot, this.position.xRot, false), false);
         }
+        this.update(player);
     }
 
     @Override
-    public void gatherInteractableEntityId(Consumer<Integer> collector) {
+    public @NotNull WorldPosition position() {
+        return this.position;
     }
 
-    @Override
-    public boolean supportsTransform() {
-        return true;
-    }
 }

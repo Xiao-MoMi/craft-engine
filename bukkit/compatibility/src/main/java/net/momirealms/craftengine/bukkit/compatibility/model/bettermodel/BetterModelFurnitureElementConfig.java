@@ -31,7 +31,6 @@ public final class BetterModelFurnitureElementConfig implements FurnitureElement
     public final boolean sightTrace;
     public final List<BetterModelTintLayerConfig> tintLayers;
     public final Predicate<PlayerContext> predicate;
-    public final boolean hasCondition;
 
     private BetterModelFurnitureElementConfig(String model,
                                               Vector3f position,
@@ -39,8 +38,7 @@ public final class BetterModelFurnitureElementConfig implements FurnitureElement
                                               float pitch,
                                               boolean sightTrace,
                                               List<BetterModelTintLayerConfig> tintLayers,
-                                              Predicate<PlayerContext> predicate,
-                                              boolean hasCondition) {
+                                              Predicate<PlayerContext> predicate) {
         this.pitch = pitch;
         this.position = position;
         this.yaw = yaw;
@@ -48,7 +46,6 @@ public final class BetterModelFurnitureElementConfig implements FurnitureElement
         this.sightTrace = sightTrace;
         this.tintLayers = List.copyOf(tintLayers);
         this.predicate = predicate;
-        this.hasCondition = hasCondition;
     }
 
     @Override
@@ -81,8 +78,7 @@ public final class BetterModelFurnitureElementConfig implements FurnitureElement
                     section.getFloat("pitch"),
                     section.getBoolean(SIGHT_TRACE, true),
                     tintLayers(section),
-                    MiscUtils.allOf(conditions),
-                    !conditions.isEmpty()
+                    MiscUtils.allOf(conditions)
             );
         }
 

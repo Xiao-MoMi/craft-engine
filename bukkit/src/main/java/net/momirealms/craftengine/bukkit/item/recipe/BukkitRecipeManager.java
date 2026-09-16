@@ -250,12 +250,13 @@ public final class BukkitRecipeManager extends AbstractRecipeManager {
         });
     }
 
+    @SuppressWarnings({"deprecation", "removal"})
     @Override
     public void runDelayedSyncTasks() {
         if (!Config.enableRecipeSystem()) return;
 
-        // 处理酿造配方
-        if (VersionHelper.isOrAbove1_20_2 && VersionHelper.hasPaperPatch) {
+        // 处理酿造配方 1.20.2-26.2
+        if (VersionHelper.isOrAbove1_20_2 && !VersionHelper.isOrAbove26_3 && VersionHelper.hasPaperPatch) {
             PotionBrewer potionBrewer = Bukkit.getPotionBrewer();
             if (!this.brewingRecipesToUnregister.isEmpty()) {
                 for (Key potion : this.brewingRecipesToUnregister) {
@@ -280,6 +281,8 @@ public final class BukkitRecipeManager extends AbstractRecipeManager {
                 }
             }
         }
+
+        // todo 26.3 酿造
 
         // 重载资源
         if (VersionHelper.isOrAbove1_21_6 && !VersionHelper.hasFoliaPatch) {

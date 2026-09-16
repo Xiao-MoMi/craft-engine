@@ -44,6 +44,7 @@ import org.bukkit.entity.EntityType;
 import org.bukkit.entity.Player;
 import org.bukkit.event.entity.CreatureSpawnEvent;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -246,17 +247,29 @@ public final class EntityUtils {
     }
 
     public static Set<Player> getTrackedBy(Entity entity) {
-        return getTrackedBy(entity, p -> p);
+        return getTrackedBySet(entity, p -> p);
+    }
+
+    public static <T> Set<T> getTrackedBySet(Entity entity, Function<Player, T> function) {
+        ImmutableSet.Builder<T> players = ImmutableSet.builder();
+        collectTrackedBy(entity, function, players::add);
+        return players.build();
+    }
+
+    public static <T> List<T> getTrackedByList(Entity entity, Function<Player, T> function) {
+        List<T> players = new ArrayList<>();
+        collectTrackedBy(entity, function, players::add);
+        return players;
     }
 
     @SuppressWarnings("deprecation")
-    public static <T> Set<T> getTrackedBy(Entity entity, Function<Player, T> function) {
-        ImmutableSet.Builder<T> players = ImmutableSet.builder();
+    private static <T> void collectTrackedBy(Entity entity, Function<Player, T> function, Consumer<T> collector) {
         if (VersionHelper.hasPaperPatch) {
-            for (Player player : entity.getTrackedPlayers()) {
+            Set<Player> trackedPlayers = entity.getTrackedPlayers();
+            for (Player player : trackedPlayers) {
                 T adapted = function.apply(player);
                 if (adapted != null) {
-                    players.add(adapted);
+                    collector.accept(adapted);
                 }
             }
         } else {
@@ -269,12 +282,11 @@ public final class EntityUtils {
                     Object player = ServerPlayerConnectionProxy.INSTANCE.getPlayer(connection);
                     T adapted = function.apply((Player) PlayerProxy.INSTANCE.getBukkitEntity(player));
                     if (adapted != null) {
-                        players.add(adapted);
+                        collector.accept(adapted);
                     }
                 }
             }
         }
-        return players.build();
     }
 
     public static BukkitEntity adaptNMS(Object handle) {

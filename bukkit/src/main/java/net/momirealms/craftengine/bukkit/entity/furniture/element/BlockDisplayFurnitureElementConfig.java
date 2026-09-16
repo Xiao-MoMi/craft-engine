@@ -4,8 +4,9 @@ import net.momirealms.craftengine.bukkit.entity.data.DisplayData;
 import net.momirealms.craftengine.core.block.BlockStateWrapper;
 import net.momirealms.craftengine.core.entity.display.Billboard;
 import net.momirealms.craftengine.core.entity.furniture.Furniture;
-import net.momirealms.craftengine.core.entity.furniture.element.FurnitureElementConfig;
+import net.momirealms.craftengine.core.entity.furniture.element.ConditionalFurnitureElement;
 import net.momirealms.craftengine.core.entity.furniture.element.FurnitureElementConfigFactory;
+import net.momirealms.craftengine.core.entity.furniture.element.TransformableFurnitureElementConfig;
 import net.momirealms.craftengine.core.plugin.CraftEngine;
 import net.momirealms.craftengine.core.plugin.config.ConfigConstants;
 import net.momirealms.craftengine.core.plugin.config.ConfigKeys;
@@ -17,7 +18,6 @@ import net.momirealms.craftengine.core.plugin.context.PlayerContext;
 import net.momirealms.craftengine.core.util.Color;
 import net.momirealms.craftengine.core.util.LazyReference;
 import net.momirealms.craftengine.core.util.MiscUtils;
-import net.momirealms.craftengine.core.world.Vec3d;
 import net.momirealms.craftengine.core.world.WorldPosition;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -28,7 +28,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Predicate;
 
-public final class BlockDisplayFurnitureElementConfig implements FurnitureElementConfig<BlockDisplayFurnitureElement> {
+public final class BlockDisplayFurnitureElementConfig implements TransformableFurnitureElementConfig<BlockDisplayFurnitureElement> {
     public static final FurnitureElementConfigFactory<BlockDisplayFurnitureElement> FACTORY = new Factory();
     public final FurnitureMetadataProvider metadata;
     public final LazyReference<BlockStateWrapper> blockState;
@@ -46,7 +46,6 @@ public final class BlockDisplayFurnitureElementConfig implements FurnitureElemen
     public final int skyLight;
     public final float viewRange;
     public final Predicate<PlayerContext> predicate;
-    public final boolean hasCondition;
 
     private BlockDisplayFurnitureElementConfig(LazyReference<BlockStateWrapper> blockState,
                                                Vector3f scale,
@@ -62,8 +61,7 @@ public final class BlockDisplayFurnitureElementConfig implements FurnitureElemen
                                                int blockLight,
                                                int skyLight,
                                                float viewRange,
-                                               Predicate<PlayerContext> predicate,
-                                               boolean hasCondition) {
+                                               Predicate<PlayerContext> predicate) {
         this.blockState = blockState;
         this.scale = scale;
         this.position = position;
@@ -78,7 +76,6 @@ public final class BlockDisplayFurnitureElementConfig implements FurnitureElemen
         this.blockLight = blockLight;
         this.skyLight = skyLight;
         this.viewRange = viewRange;
-        this.hasCondition = hasCondition;
         this.predicate = predicate;
         this.metadata = (player, tintSource, force) -> {
             List<Object> dataValues = new ArrayList<>();
@@ -107,23 +104,13 @@ public final class BlockDisplayFurnitureElementConfig implements FurnitureElemen
     }
 
     @Override
-    public BlockDisplayFurnitureElement create(@NotNull Furniture furniture) {
-        return new BlockDisplayFurnitureElement(furniture, this, getPos(furniture));
+    public @NotNull BlockDisplayFurnitureElement create(@NotNull Furniture furniture, @NotNull WorldPosition pos) {
+        return new BlockDisplayFurnitureElement(furniture, this, pos);
     }
 
     @Override
-    public BlockDisplayFurnitureElement create(@NotNull Furniture furniture, @NotNull BlockDisplayFurnitureElement previous) {
-        WorldPosition pos = getPos(furniture);
-        return new BlockDisplayFurnitureElement(furniture, this, pos, previous.entityId, !pos.equals(previous.position));
-    }
-
-    @Override
-    public BlockDisplayFurnitureElement createExact(@NotNull Furniture furniture, @NotNull BlockDisplayFurnitureElement previous) {
-        WorldPosition pos = getPos(furniture);
-        if (!pos.equals(previous.position)) {
-            return null;
-        }
-        return new BlockDisplayFurnitureElement(furniture, this, pos, previous.entityId, false);
+    public @NotNull BlockDisplayFurnitureElement transform(@NotNull Furniture furniture, @NotNull BlockDisplayFurnitureElement previous, @NotNull WorldPosition pos) {
+        return new BlockDisplayFurnitureElement(furniture, this, pos, previous.entityId);
     }
 
     @Override
@@ -131,10 +118,9 @@ public final class BlockDisplayFurnitureElementConfig implements FurnitureElemen
         return BlockDisplayFurnitureElement.class;
     }
 
-    public WorldPosition getPos(Furniture furniture) {
-        WorldPosition furniturePos = furniture.position();
-        Vec3d position = Furniture.getRelativePosition(furniturePos, this.position);
-        return new WorldPosition(furniturePos.world, position.x, position.y, position.z, furniturePos.xRot + xRot, furniturePos.yRot + yRot);
+    @Override
+    public @NotNull WorldPosition getPos(@NotNull Furniture furniture) {
+        return furniture.placement().elementPosition(this.position, this.xRot, this.yRot);
     }
 
     private static class Factory implements FurnitureElementConfigFactory<BlockDisplayFurnitureElement> {
@@ -167,8 +153,7 @@ public final class BlockDisplayFurnitureElementConfig implements FurnitureElemen
                     brightness != null ? brightness.getInt(BLOCK_LIGHT, -1) : -1,
                     brightness != null ? brightness.getInt(SKY_LIGHT, -1) : -1,
                     section.getFloat(VIEW_RANGE, 1f),
-                    MiscUtils.allOf(conditions),
-                    !conditions.isEmpty()
+                    conditions.isEmpty() ? ConditionalFurnitureElement.ALWAYS_VISIBLE : MiscUtils.allOf(conditions)
             );
         }
     }

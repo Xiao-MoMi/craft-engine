@@ -117,14 +117,4 @@ public interface FontManager extends Manageable {
     void addEmojiSuggestions(@Nullable Player player);
 
     void removeEmojiSuggestions(@Nullable Player player);
-
-    @Deprecated
-    default Map<String, ComponentProvider> matchTags(String text) {
-        return CraftEngine.instance().networkManager().matchNetworkTags(text);
-    }
-
-    @Deprecated
-    default Map<String, ComponentProvider> matchTags(Tag nbt) {
-        return CraftEngine.instance().networkManager().matchNetworkTags(new StringValueOnlyTagVisitor().visit(nbt));
-    }
 }

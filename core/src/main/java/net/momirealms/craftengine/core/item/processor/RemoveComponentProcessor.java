@@ -33,6 +33,11 @@ public final class RemoveComponentProcessor implements ItemProcessor {
     }
 
     @Override
+    public boolean isConstant() {
+        return true;
+    }
+
+    @Override
     public void prepareNetworkItem(NetworkItemBuildContext context, CompoundTag networkData) {
         Item item = context.item();
         for (Key component : this.arguments) {

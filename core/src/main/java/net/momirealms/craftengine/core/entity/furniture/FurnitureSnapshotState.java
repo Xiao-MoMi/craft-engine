@@ -10,6 +10,7 @@ import net.momirealms.craftengine.core.util.CustomDataType;
 import net.momirealms.craftengine.core.world.World;
 
 import java.util.Collections;
+import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -18,31 +19,32 @@ public abstract class FurnitureSnapshotState {
     protected final List<FurnitureHitBox> hitboxes;
     protected final Int2ObjectMap<FurnitureHitBox> hitboxMap;
     protected final List<Collider> colliders;
-    protected final Map<CustomDataType<?>, Object> customData;
+    // 按需创建；家具线程写入后发布，供异步追踪回调读取。
+    protected volatile Map<CustomDataType<?>, Object> customData;
 
     public FurnitureSnapshotState(List<FurnitureElement> elements,
                                   List<FurnitureHitBox> hitboxes,
                                   Int2ObjectMap<FurnitureHitBox> hitboxMap,
-                                  List<Collider> colliders,
-                                  Map<CustomDataType<?>, Object> customData) {
+                                  List<Collider> colliders) {
         this.elements = elements;
         this.hitboxes = hitboxes;
         this.hitboxMap = hitboxMap;
         this.colliders = colliders;
-        this.customData = customData;
     }
 
     protected abstract void addCollidersToWorld(World world);
 
     public void refreshElements(Player player) {
-        for (FurnitureElement element : this.elements) {
+        for (int elementIndex = 0, elementCount = this.elements.size(); elementIndex < elementCount; elementIndex++) {
+            FurnitureElement element = this.elements.get(elementIndex);
             element.update(player);
         }
     }
 
     public void clearColliders() {
         if (this.colliders != null) {
-            for (Collider collider : this.colliders) {
+            for (int colliderIndex = 0, colliderCount = this.colliders.size(); colliderIndex < colliderCount; colliderIndex++) {
+                Collider collider = this.colliders.get(colliderIndex);
                 collider.destroy();
             }
         }
@@ -50,7 +52,8 @@ public abstract class FurnitureSnapshotState {
 
     public void hideHitboxes(Player player) {
         if (this.hitboxes != null) {
-            for (FurnitureHitBox hitbox : this.hitboxes) {
+            for (int hitboxIndex = 0, hitboxCount = this.hitboxes.size(); hitboxIndex < hitboxCount; hitboxIndex++) {
+                FurnitureHitBox hitbox = this.hitboxes.get(hitboxIndex);
                 hitbox.hide(player);
             }
         }
@@ -58,7 +61,8 @@ public abstract class FurnitureSnapshotState {
 
     public void showHitboxes(Player player) {
         if (this.hitboxes != null) {
-            for (FurnitureHitBox hitbox : this.hitboxes) {
+            for (int hitboxIndex = 0, hitboxCount = this.hitboxes.size(); hitboxIndex < hitboxCount; hitboxIndex++) {
+                FurnitureHitBox hitbox = this.hitboxes.get(hitboxIndex);
                 hitbox.show(player);
             }
         }
@@ -69,12 +73,14 @@ public abstract class FurnitureSnapshotState {
     }
 
     public void show(Player player) {
-        for (FurnitureElement element : this.elements) {
+        for (int elementIndex = 0, elementCount = this.elements.size(); elementIndex < elementCount; elementIndex++) {
+            FurnitureElement element = this.elements.get(elementIndex);
             if (element != null) {
                 element.show(player);
             }
         }
-        for (FurnitureHitBox hitbox : this.hitboxes) {
+        for (int hitboxIndex = 0, hitboxCount = this.hitboxes.size(); hitboxIndex < hitboxCount; hitboxIndex++) {
+            FurnitureHitBox hitbox = this.hitboxes.get(hitboxIndex);
             if (hitbox != null) {
                 hitbox.show(player);
             }
@@ -82,12 +88,14 @@ public abstract class FurnitureSnapshotState {
     }
 
     public void hide(Player player) {
-        for (FurnitureElement element : this.elements) {
+        for (int elementIndex = 0, elementCount = this.elements.size(); elementIndex < elementCount; elementIndex++) {
+            FurnitureElement element = this.elements.get(elementIndex);
             if (element != null) {
                 element.hide(player);
             }
         }
-        for (FurnitureHitBox hitbox : this.hitboxes) {
+        for (int hitboxIndex = 0, hitboxCount = this.hitboxes.size(); hitboxIndex < hitboxCount; hitboxIndex++) {
+            FurnitureHitBox hitbox = this.hitboxes.get(hitboxIndex);
             if (hitbox != null) {
                 hitbox.hide(player);
             }
@@ -95,7 +103,8 @@ public abstract class FurnitureSnapshotState {
     }
 
     public void destroySeats() {
-        for (FurnitureHitBox hitbox : this.hitboxes) {
+        for (int hitboxIndex = 0, hitboxCount = this.hitboxes.size(); hitboxIndex < hitboxCount; hitboxIndex++) {
+            FurnitureHitBox hitbox = this.hitboxes.get(hitboxIndex);
             for (Seat<SeatOwner> seat : hitbox.seats()) {
                 seat.destroy();
             }
@@ -115,15 +124,22 @@ public abstract class FurnitureSnapshotState {
     }
 
     public Map<CustomDataType<?>, Object> customData() {
-        return Collections.unmodifiableMap(this.customData);
+        Map<CustomDataType<?>, Object> customData = this.customData;
+        return customData == null ? Collections.emptyMap() : Collections.unmodifiableMap(customData);
     }
 
     public <T> void setCustomData(CustomDataType<T> contextKey, T value) {
-        this.customData.put(contextKey, value);
+        Map<CustomDataType<?>, Object> customData = this.customData;
+        if (customData == null) {
+            customData = new IdentityHashMap<>(4);
+        }
+        customData.put(contextKey, value);
+        this.customData = customData;
     }
 
     @SuppressWarnings("unchecked")
     public <T> T getCustomData(CustomDataType<T> contextKey) {
-        return (T) this.customData.get(contextKey);
+        Map<CustomDataType<?>, Object> customData = this.customData;
+        return customData == null ? null : (T) customData.get(contextKey);
     }
 }

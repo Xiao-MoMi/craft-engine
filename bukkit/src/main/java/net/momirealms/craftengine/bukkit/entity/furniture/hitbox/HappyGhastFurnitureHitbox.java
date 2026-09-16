@@ -2,7 +2,7 @@ package net.momirealms.craftengine.bukkit.entity.furniture.hitbox;
 
 import it.unimi.dsi.fastutil.ints.IntArrayList;
 import net.momirealms.craftengine.bukkit.util.EntityUtils;
-import net.momirealms.craftengine.core.entity.furniture.Collider;
+import net.momirealms.craftengine.core.entity.furniture.ColliderConfig;
 import net.momirealms.craftengine.core.entity.furniture.Furniture;
 import net.momirealms.craftengine.core.entity.furniture.hitbox.FurnitureHitboxPart;
 import net.momirealms.craftengine.core.entity.player.Player;
@@ -20,13 +20,13 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
-import java.util.function.Consumer;
+import java.util.function.IntConsumer;
 
 public final class HappyGhastFurnitureHitbox extends AbstractFurnitureHitBox {
     private final HappyGhastFurnitureHitboxConfig config;
-    private final Collider collider;
+    public final ColliderConfig colliderConfig;
     private final Object despawnPacket;
-    private final FurnitureHitboxPart part;
+    public final FurnitureHitboxPart part;
     private final Vec3d pos;
     private final List<Object> packets;
     private final int entityId;
@@ -36,43 +36,68 @@ public final class HappyGhastFurnitureHitbox extends AbstractFurnitureHitBox {
         super(furniture, config);
         this.config = config;
         WorldPosition position = furniture.position();
-        this.pos = Furniture.getRelativePosition(position, config.position());
-        double bbSize = 4 * config.scale();
+        this.pos = furniture.getRelativePosition(config.position);
+        double bbSize = 4 * config.scale;
         AABB aabb = AABB.makeBoundingBox(this.pos, bbSize, bbSize);
         this.yaw = position.yRot;
         this.entityId = EntityUtils.ENTITY_COUNTER.incrementAndGet();
         this.packets = new ArrayList<>(3);
-        this.packets.add(ClientboundSetEntityDataPacketProxy.INSTANCE.newInstance(this.entityId, config.cachedValues()));
-        if (config.scale() != 1) {
+        this.packets.add(ClientboundSetEntityDataPacketProxy.INSTANCE.newInstance(this.entityId, config.cachedValues));
+        if (config.scale != 1) {
             Object attributeIns = AttributeInstanceProxy.INSTANCE.newInstance$0(AttributesProxy.SCALE, $ -> {});
-            AttributeInstanceProxy.INSTANCE.setBaseValue(attributeIns, config.scale());
+            AttributeInstanceProxy.INSTANCE.setBaseValue(attributeIns, config.scale);
             this.packets.add(ClientboundUpdateAttributesPacketProxy.INSTANCE.newInstance$0(this.entityId, Collections.singletonList(attributeIns)));
         }
         this.packets.add(EntityUtils.createUpdatePosPacket(this.entityId, this.pos.x, this.pos.y, this.pos.z, position.yRot, 0, false));
-        this.collider = createCollider(furniture.world(), position, aabb, config.hardCollision(), config.blocksBuilding(), config.canBeHitByProjectile());
+        this.colliderConfig = new ColliderConfig(aabb, config.colliderProperties);
         this.part = new FurnitureHitboxPart(this.entityId, aabb, this.pos, false);
         this.despawnPacket = ClientboundRemoveEntitiesPacketProxy.INSTANCE.newInstance(MiscUtils.init(new IntArrayList(), l -> l.add(this.entityId)));
     }
 
     @Override
-    public List<Collider> colliders() {
-        return List.of(this.collider);
+    public int colliderConfigCount() {
+        return 1;
     }
 
     @Override
-    public List<FurnitureHitboxPart> parts() {
-        return List.of(this.part);
+    public ColliderConfig colliderConfig(int index) {
+        return this.colliderConfig;
+    }
+
+    @Override
+    public int partCount() {
+        return 1;
+    }
+
+    @Override
+    public FurnitureHitboxPart part(int index) {
+        return this.part;
     }
 
     @Override
     public void show(Player player) {
         List<Object> packets = new ArrayList<>();
         packets.add(ClientboundAddEntityPacketProxy.INSTANCE.newInstance(
-                this.entityId, UUID.randomUUID(), this.pos.x, player.y() - (this.config.scale() * 4 + 16), this.pos.z, 0, this.yaw,
+                this.entityId, UUID.randomUUID(), this.pos.x, player.y() - (this.config.scale * 4 + 16), this.pos.z, 0, this.yaw,
                 EntityTypesProxy.HAPPY_GHAST, 0, Vec3Proxy.ZERO, 0
         ));
         packets.addAll(this.packets);
         player.sendPacket(ClientboundBundlePacketProxy.INSTANCE.newInstance(packets), false);
+    }
+
+    @Override
+    public void showCulled(Player player) {
+        this.show(player);
+    }
+
+    @Override
+    public void cull(Player player) {
+        // The entity is spawned with SharedFlags 0x20 (invisible).
+    }
+
+    @Override
+    public void restore(Player player) {
+        // The invisible entity remains spawned while culled.
     }
 
     @Override
@@ -81,7 +106,7 @@ public final class HappyGhastFurnitureHitbox extends AbstractFurnitureHitBox {
     }
 
     @Override
-    public void collectInteractableEntityId(Consumer<Integer> collector) {
+    public void collectInteractableEntityId(IntConsumer collector) {
         collector.accept(this.entityId);
     }
 

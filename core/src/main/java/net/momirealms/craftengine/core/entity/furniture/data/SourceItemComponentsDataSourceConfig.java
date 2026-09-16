@@ -2,15 +2,17 @@ package net.momirealms.craftengine.core.entity.furniture.data;
 
 import net.momirealms.craftengine.core.entity.furniture.Furniture;
 import net.momirealms.craftengine.core.item.Item;
+import net.momirealms.craftengine.core.item.component.DataComponentKeys;
 import net.momirealms.craftengine.core.plugin.config.ConfigSection;
 import net.momirealms.craftengine.core.plugin.config.ConfigValue;
 import net.momirealms.craftengine.core.util.Key;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
-import java.util.Map;
 
 public final class SourceItemComponentsDataSourceConfig implements FurnitureDataSourceConfig<ItemPatch> {
+    public static final SourceItemComponentsDataSourceConfig DEFAULT = SourceItemComponentsDataSourceConfig.create(List.of(DataComponentKeys.DYED_COLOR));
     private final List<Key> components;
 
     private SourceItemComponentsDataSourceConfig(List<Key> components) {
@@ -22,10 +24,14 @@ public final class SourceItemComponentsDataSourceConfig implements FurnitureData
         return new SourceItemComponentsDataSourceConfig(components);
     }
 
-    @NotNull
+    @Nullable
     public static SourceItemComponentsDataSourceConfig fromConfig(@NotNull ConfigValue value) {
-        if (!value.is(Map.class)) {
-            return create(value.getAsList(ConfigValue::getAsIdentifier));
+        if (value.is(List.class) || value.is(String.class)) {
+            List<Key> components = value.getAsList(ConfigValue::getAsIdentifier);
+            if (components.isEmpty()) {
+                return null;
+            }
+            return create(components);
         }
         return fromSection(value.getAsSection());
     }

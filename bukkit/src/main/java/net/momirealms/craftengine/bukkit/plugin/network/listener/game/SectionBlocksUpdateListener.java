@@ -14,17 +14,17 @@ import net.momirealms.craftengine.core.world.chunk.client.ClientChunk;
 import net.momirealms.craftengine.core.world.chunk.client.light.LightSection;
 import net.momirealms.craftengine.core.world.chunk.client.occlusion.OccludingSection;
 
-import java.util.function.Predicate;
+import java.util.function.IntPredicate;
 
 public final class SectionBlocksUpdateListener implements ByteBufferPacketListener {
     private final int[] blockStateMapper;
     private final int[] modBlockStateMapper;
-    private final Predicate<Integer> occlusionPredicate;
+    private final IntPredicate occlusionPredicate;
     private final boolean cullingRayTracing;
     private final boolean glowingFurniture;
     private final boolean handleClientChunk;
 
-    public SectionBlocksUpdateListener(int[] blockStateMapper, int[] modBlockStateMapper, Predicate<Integer> occlusionPredicate) {
+    public SectionBlocksUpdateListener(int[] blockStateMapper, int[] modBlockStateMapper, IntPredicate occlusionPredicate) {
         this.blockStateMapper = blockStateMapper;
         this.modBlockStateMapper = modBlockStateMapper;
         this.occlusionPredicate = occlusionPredicate;

@@ -63,6 +63,11 @@ public final class PackedLightStorage implements ClientSectionLightStorage {
         this.set(index, 0);
     }
 
+    // Replaces the packed values of 32 consecutive blocks.
+    public void setPackedWord(int wordIndex, long value) {
+        this.data[wordIndex] = value;
+    }
+
     void setAir(int index) {
         this.set(index, 1);
     }

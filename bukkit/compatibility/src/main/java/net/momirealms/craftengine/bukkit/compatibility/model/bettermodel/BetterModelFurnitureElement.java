@@ -23,6 +23,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Consumer;
+import java.util.function.IntConsumer;
 
 public final class BetterModelFurnitureElement extends AbstractConditionalFurnitureElement {
     public final Furniture furniture;
@@ -34,11 +35,11 @@ public final class BetterModelFurnitureElement extends AbstractConditionalFurnit
     private DummyTracker dummyTracker;
 
     BetterModelFurnitureElement(Furniture furniture, BetterModelFurnitureElementConfig config) {
-        super(config.predicate, config.hasCondition);
+        super(config.predicate);
         this.furniture = furniture;
         this.config = config;
         WorldPosition furniturePos = furniture.position();
-        Vec3d position = Furniture.getRelativePosition(furniturePos, config.position);
+        Vec3d position = furniture.getRelativePosition(config.position);
         this.location = new Location((World) furniturePos.world.platformWorld(), position.x, position.y, position.z, furniturePos.yRot + config.yaw, furniturePos.xRot + config.pitch);
         this.tintLayers = new ArrayList<>(config.tintLayers.size());
         for (BetterModelTintLayerConfig layer : config.tintLayers) {
@@ -121,7 +122,7 @@ public final class BetterModelFurnitureElement extends AbstractConditionalFurnit
     }
 
     @Override
-    public void gatherInteractableEntityId(Consumer<Integer> collector) {
+    public void gatherInteractableEntityId(IntConsumer collector) {
     }
 
     private static final class TintLayer {

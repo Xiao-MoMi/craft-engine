@@ -101,6 +101,9 @@ public abstract class FurnitureController {
     public void onAsyncPlayerTrack(Player player, FurnitureSnapshotState snapshotState) {
     }
 
+    public void onAsyncPlayerVariantChange(Player player, FurnitureSnapshotState previous, FurnitureSnapshotState current) {
+    }
+
     public void onAsyncPlayerUntrack(Player player, FurnitureSnapshotState snapshotState) {
     }
 
@@ -232,6 +235,12 @@ public abstract class FurnitureController {
         public void onAsyncPlayerTrack(Player player, FurnitureSnapshotState snapshotState) {
             this.first.onAsyncPlayerTrack(player, snapshotState);
             this.second.onAsyncPlayerTrack(player, snapshotState);
+        }
+
+        @Override
+        public void onAsyncPlayerVariantChange(Player player, FurnitureSnapshotState previous, FurnitureSnapshotState current) {
+            this.first.onAsyncPlayerVariantChange(player, previous, current);
+            this.second.onAsyncPlayerVariantChange(player, previous, current);
         }
 
         @Override
@@ -430,6 +439,13 @@ public abstract class FurnitureController {
         public void onAsyncPlayerTrack(Player player, FurnitureSnapshotState snapshotState) {
             for (FurnitureController controller : this.controllers) {
                 controller.onAsyncPlayerTrack(player, snapshotState);
+            }
+        }
+
+        @Override
+        public void onAsyncPlayerVariantChange(Player player, FurnitureSnapshotState previous, FurnitureSnapshotState current) {
+            for (FurnitureController controller : this.controllers) {
+                controller.onAsyncPlayerVariantChange(player, previous, current);
             }
         }
 

@@ -7,6 +7,7 @@ import net.momirealms.craftengine.proxy.minecraft.network.protocol.PacketProxy;
 import net.momirealms.sparrow.reflection.clazz.SparrowClass;
 import net.momirealms.sparrow.reflection.proxy.ASMProxyFactory;
 import net.momirealms.sparrow.reflection.proxy.annotation.*;
+import org.bukkit.event.player.PlayerResourcePackStatusEvent;
 import org.jetbrains.annotations.Nullable;
 
 @ReflectionProxy(name = "net.minecraft.network.Connection")
@@ -25,6 +26,11 @@ public interface ConnectionProxy {
 
     @FieldSetter(name = "packetListener")
     void setPacketListener(Object target, Object packetListener);
+
+    // Paper 在配置阶段记录最近一次资源包状态；没有此扩展字段的服务端使用空实现。
+    @FieldSetter(name = "resourcePackStatus", activeIf = "has_patch=paper", optional = true)
+    default void setResourcePackStatus(Object target, PlayerResourcePackStatusEvent.Status status) {
+    }
 
     @FieldGetter(name = "channel")
     Channel getChannel(Object target);

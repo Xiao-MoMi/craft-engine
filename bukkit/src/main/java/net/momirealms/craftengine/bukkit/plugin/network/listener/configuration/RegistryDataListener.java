@@ -29,7 +29,8 @@ import java.util.Map;
 import java.util.Optional;
 
 public final class RegistryDataListener implements ByteBufferPacketListener {
-    public static final RegistryDataListener INSTANCE = VersionHelper.isOrAbove1_21 ? new RegistryDataListener() : null;
+    public static final RegistryDataListener INSTANCE = VersionHelper.isOrAbove1_20_2 ? new RegistryDataListener() : null;
+    private static final Key BIOME = Key.of("worldgen/biome");
     private static final Key ENCHANTMENT = Key.of("enchantment");
     private static final Key DIALOG = Key.of("dialog");
     private static final String BLOCK_ID = VersionHelper.isOrAbove26_3 ? "id" : "Name";
@@ -38,7 +39,15 @@ public final class RegistryDataListener implements ByteBufferPacketListener {
     @Override
     public void onPacketSend(NetWorkUser user, ByteBufPacketEvent event) {
         FriendlyByteBuf buf = event.getBuffer();
+        if (!VersionHelper.isOrAbove1_20_5) {
+            readLegacyRegistries(user, buf, false);
+            return;
+        }
         Key registryId = buf.readKey();
+        if (registryId.equals(BIOME)) {
+            user.setClientBiomeList(new IntIdentityList(buf.readVarInt()));
+            return;
+        }
         Player player = (Player) user;
         if (registryId.equals(ENCHANTMENT)) {
             List<Entry> entries = buf.readList(Entry::read);
@@ -82,6 +91,17 @@ public final class RegistryDataListener implements ByteBufferPacketListener {
                 e.write(b);
             });
         }
+    }
+
+    public static void readLegacyRegistries(NetWorkUser user, FriendlyByteBuf buf, boolean named) {
+        CompoundTag registries = (CompoundTag) buf.readNbt(named);
+        CompoundTag biomes = registries.getCompound(BIOME.asString());
+        ListTag entries = biomes.getList("value");
+        int size = 0;
+        for (Tag entry : entries) {
+            size = Math.max(size, ((CompoundTag) entry).getInt("id") + 1);
+        }
+        user.setClientBiomeList(new IntIdentityList(size));
     }
 
     // 自定义效果里可能有自定义方块，防止客户端解码错误

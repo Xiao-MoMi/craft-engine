@@ -90,3 +90,8 @@ fun DependencyHandlerScope.adventure(
     }
     addLibrary(project, "sparrow-minimessage", configuration)
 }
+
+fun DependencyHandlerScope.storage(
+    project: Project,
+    configuration: String = JavaPlugin.COMPILE_ONLY_CONFIGURATION_NAME
+) = addBundle(project, "storage", configuration)

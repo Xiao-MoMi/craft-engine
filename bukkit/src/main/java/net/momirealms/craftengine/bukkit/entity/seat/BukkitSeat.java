@@ -1,5 +1,6 @@
 package net.momirealms.craftengine.bukkit.entity.seat;
 
+import net.momirealms.craftengine.bukkit.plugin.BukkitCraftEngine;
 import net.momirealms.craftengine.bukkit.util.EntityUtils;
 import net.momirealms.craftengine.bukkit.util.LegacyAttributeUtils;
 import net.momirealms.craftengine.bukkit.util.LocationUtils;
@@ -9,6 +10,10 @@ import net.momirealms.craftengine.core.entity.seat.SeatOwner;
 import net.momirealms.craftengine.core.util.QuaternionUtils;
 import net.momirealms.craftengine.core.util.VersionHelper;
 import net.momirealms.craftengine.core.world.WorldPosition;
+import net.momirealms.craftengine.proxy.bukkit.craftbukkit.entity.CraftEntityProxy;
+import net.momirealms.craftengine.proxy.minecraft.commands.arguments.EntityAnchorArgumentProxy;
+import net.momirealms.craftengine.proxy.minecraft.server.level.ServerPlayerProxy;
+import net.momirealms.craftengine.proxy.minecraft.world.phys.Vec3Proxy;
 import net.momirealms.sparrow.nbt.CompoundTag;
 import net.momirealms.sparrow.nbt.NBT;
 import org.bukkit.Location;
@@ -140,6 +145,20 @@ public final class BukkitSeat<O extends SeatOwner> implements Seat<O> {
             return false;
         } else {
             this.entity = new WeakReference<>(seatEntity);
+            float forcedYaw = this.seatConfig.forcePlayerRotation();
+            if (!Float.isNaN(forcedYaw)) {
+                float targetYaw = Location.normalizeYaw(sourceLocation.getYaw() + forcedYaw);
+                // 等待骑乘位置更新；只在玩家仍坐在本座椅时调整一次视角。
+                BukkitCraftEngine.instance().scheduler().platform().runDelayed(() -> {
+                    if (!seatEntity.equals(player.getVehicle())) return;
+                    Location eyeLocation = player.getEyeLocation();
+                    eyeLocation.setYaw(targetYaw);
+                    Location target = eyeLocation.clone().add(eyeLocation.getDirection().multiply(64));
+                    ServerPlayerProxy.INSTANCE.lookAt(CraftEntityProxy.INSTANCE.getEntity(player),
+                            EntityAnchorArgumentProxy.AnchorProxy.EYES,
+                            Vec3Proxy.INSTANCE.newInstance(target.getX(), target.getY(), target.getZ()));
+                }, null, player);
+            }
             return true;
         }
     }

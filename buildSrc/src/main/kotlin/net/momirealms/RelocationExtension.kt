@@ -35,6 +35,13 @@ open class RelocationExtension {
             relocate("io.netty.handler.codec.spdy", "$libs.netty.handler.codec.spdy")
             relocate("io.netty.handler.codec.http2", "$libs.netty.handler.codec.http2")
             relocate("io.github.bucket4j", "$libs.bucket4j")
+            relocate("com.zaxxer.hikari", "$libs.hikari")
+            relocate("org.jdbi", "$libs.jdbi")
+            relocate("org.flywaydb", "$libs.flywaydb")
+            relocate("com.fasterxml.jackson", "$libs.jackson")
+            relocate("tools.jackson", "$libs.jackson3")
+            relocate("com.mongodb", "$libs.mongodb")
+            relocate("org.bson", "$libs.bson")
             mergeServiceFiles()
         }
     }

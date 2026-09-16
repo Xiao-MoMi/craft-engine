@@ -267,8 +267,14 @@ public final class ConfigValue {
                 throw new KnownResourceException(ConfigConstants.PARSE_BOOLEAN_FAILED, this.path, String.valueOf(n));
             }
             case String s -> {
-                if (s.equalsIgnoreCase("true") || s.equalsIgnoreCase("yes") || s.equalsIgnoreCase("on")) return true;
-                if (s.equalsIgnoreCase("false") || s.equalsIgnoreCase("no") || s.equalsIgnoreCase("off")) return false;
+                switch (s) {
+                    case "1", "true", "True", "TRUE", "yes", "YES", "Yes", "on", "ON", "On" -> {
+                        return true;
+                    }
+                    case "0", "false", "False", "FALSE", "no", "NO", "No", "off", "OFF", "Off" -> {
+                        return false;
+                    }
+                }
                 throw new KnownResourceException(ConfigConstants.PARSE_BOOLEAN_FAILED, this.path, s);
             }
             default -> throw new KnownResourceException(ConfigConstants.PARSE_BOOLEAN_FAILED, this.path, this.value.toString());

@@ -20,6 +20,11 @@ public final class PDCProcessor implements ItemProcessor {
     }
 
     @Override
+    public boolean isConstant() {
+        return true;
+    }
+
+    @Override
     public void apply(ItemBuildContext context) {
         Item item = context.item();
         if (VersionHelper.isOrAbove1_20_5) {

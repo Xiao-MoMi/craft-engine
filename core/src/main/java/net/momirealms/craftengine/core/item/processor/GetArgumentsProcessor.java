@@ -12,6 +12,11 @@ public final class GetArgumentsProcessor implements ItemProcessor {
     public static final ItemProcessorFactory<GetArgumentsProcessor> FACTORY = v -> INSTANCE;
 
     @Override
+    public boolean isConstant() {
+        return true;
+    }
+
+    @Override
     public void apply(ItemBuildContext context) {
         Tag sparrowTag = context.item().getSparrowTag(SetArgumentsProcessor.ARGUMENTS_TAG);
         if (sparrowTag instanceof CompoundTag compoundTag) {

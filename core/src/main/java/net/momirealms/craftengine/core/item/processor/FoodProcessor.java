@@ -35,6 +35,11 @@ public final class FoodProcessor implements SimpleNetworkItemProcessor {
     }
 
     @Override
+    public boolean isConstant() {
+        return true;
+    }
+
+    @Override
     public void apply(ItemBuildContext context) {
         context.item().setJavaComponent(DataComponentKeys.FOOD, Map.of(
                 "nutrition", this.nutrition,

@@ -21,6 +21,11 @@ public final class TrimProcessor implements SimpleNetworkItemProcessor {
         this.pattern = pattern;
     }
 
+    @Override
+    public boolean isConstant() {
+        return true;
+    }
+
     public Key material() {
         return this.material;
     }

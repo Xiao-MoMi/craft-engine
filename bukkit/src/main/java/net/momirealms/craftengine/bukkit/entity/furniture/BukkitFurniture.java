@@ -4,6 +4,7 @@ import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
 import net.momirealms.craftengine.bukkit.api.BukkitAdaptor;
 import net.momirealms.craftengine.bukkit.entity.BukkitEntity;
+import net.momirealms.craftengine.bukkit.plugin.network.packet.ClientboundFurnitureUpdatePacket;
 import net.momirealms.craftengine.bukkit.util.CollisionUtils;
 import net.momirealms.craftengine.bukkit.util.EntityUtils;
 import net.momirealms.craftengine.bukkit.util.LocationUtils;
@@ -13,7 +14,6 @@ import net.momirealms.craftengine.core.entity.furniture.hitbox.FurnitureHitBox;
 import net.momirealms.craftengine.core.entity.furniture.hitbox.FurnitureHitBoxConfig;
 import net.momirealms.craftengine.core.entity.player.Player;
 import net.momirealms.craftengine.core.plugin.CraftEngine;
-import net.momirealms.craftengine.core.util.CustomDataType;
 import net.momirealms.craftengine.core.util.MiscUtils;
 import net.momirealms.craftengine.core.util.QuaternionUtils;
 import net.momirealms.craftengine.core.util.VersionHelper;
@@ -22,6 +22,7 @@ import net.momirealms.craftengine.core.world.collision.AABB;
 import net.momirealms.craftengine.proxy.bukkit.craftbukkit.entity.CraftEntityProxy;
 import net.momirealms.craftengine.proxy.minecraft.network.protocol.game.ClientboundAddEntityPacketProxy;
 import net.momirealms.craftengine.proxy.minecraft.network.protocol.game.ClientboundRemoveEntitiesPacketProxy;
+import net.momirealms.craftengine.proxy.minecraft.world.entity.EntityProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.entity.EntityTypesProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.phys.AABBProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.phys.Vec3Proxy;
@@ -35,7 +36,10 @@ import org.joml.Vector3f;
 
 import java.io.IOException;
 import java.lang.ref.WeakReference;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Optional;
+import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -44,6 +48,25 @@ public final class BukkitFurniture extends Furniture {
     private final AtomicBoolean isMoving = new AtomicBoolean(false);
     private final WeakReference<ItemDisplay> metaEntity;
     private Location location;
+    // 仅在构建、行为回调和服务端登记完成后发布，网络线程不会读取构建中的快照。
+    private volatile FurnitureSnapshotState clientSnapshot;
+
+    public FurnitureSnapshotState clientSnapshot() {
+        return this.clientSnapshot;
+    }
+
+    public void publishClientSnapshot(List<Player> players) {
+        this.clientSnapshot = this.snapshot;
+        if (players.isEmpty()) return;
+        ClientboundFurnitureUpdatePacket packet = new ClientboundFurnitureUpdatePacket(this.entityId());
+        for (Player player : players) player.sendCustomPacket(packet);
+    }
+
+    @Override
+    protected Collider createCollider(ColliderConfig config) {
+        Object entity = this.metaDataEntity.minecraftEntity();
+        return new BukkitCollider(EntityProxy.INSTANCE.getLevel(entity), EntityProxy.INSTANCE.getX(entity), EntityProxy.INSTANCE.getY(entity), EntityProxy.INSTANCE.getZ(entity), config);
+    }
 
     public BukkitFurniture(ItemDisplay metaEntity, FurnitureDefinition config, FurniturePersistentData data) {
         super(new BukkitEntity(metaEntity), data, config);
@@ -55,13 +78,13 @@ public final class BukkitFurniture extends Furniture {
     protected FurnitureSnapshotState createSnapshot(List<FurnitureElement> elements,
                                                     List<FurnitureHitBox> hitboxes,
                                                     Int2ObjectMap<FurnitureHitBox> hitboxMap,
-                                                    List<Collider> colliders,
-                                                    Map<CustomDataType<?>, Object> customData) {
-        return new BukkitVariantSnapshot(elements, hitboxes, hitboxMap, colliders, customData);
+                                                    List<Collider> colliders) {
+        return new BukkitVariantSnapshot(elements, hitboxes, hitboxMap, colliders);
     }
 
     @Override
     public boolean setVariant(String variantName, boolean force) {
+        if (!this.isValid()) return false;
         FurnitureVariant variant = this.config.getVariant(variantName);
         if (variant == null) return false;
         if (this.currentVariant == variant) return false;
@@ -69,13 +92,17 @@ public final class BukkitFurniture extends Furniture {
         if (!force) {
             List<AABB> aabbs = new ArrayList<>();
             WorldPosition position = position();
-            for (FurnitureHitBoxConfig<?> hitBoxConfig : variant.hitBoxConfigs()) {
+            List<? extends FurnitureHitBoxConfig<?>> hitboxConfigs = variant.hitBoxConfigs();
+            for (int configIndex = 0, configCount = hitboxConfigs.size(); configIndex < configCount; configIndex++) {
+                FurnitureHitBoxConfig<?> hitBoxConfig = hitboxConfigs.get(configIndex);
                 hitBoxConfig.prepareBoundingBox(position, aabbs::add, false);
             }
             if (!aabbs.isEmpty()) {
                 if (!CollisionUtils.test(position.world.minecraftWorld(), aabbs.stream().map(it -> AABBProxy.INSTANCE.newInstance(it.minX, it.minY, it.minZ, it.maxX, it.maxY, it.maxZ)).toList(),
                         o -> {
-                            for (Collider collider : super.snapshot.colliders()) {
+                            List<Collider> colliders = super.snapshot.colliders();
+                            for (int colliderIndex = 0, colliderCount = colliders.size(); colliderIndex < colliderCount; colliderIndex++) {
+                                Collider collider = colliders.get(colliderIndex);
                                 if (o == collider.handle()) {
                                     return false;
                                 }
@@ -88,26 +115,12 @@ public final class BukkitFurniture extends Furniture {
         }
 
         List<Player> trackedBy = this.trackedBy();
-        // 先移除
-        {
-            BukkitFurnitureManager.instance().invalidateFurniture(this, false);
-            super.destroySeats();
-            super.clearColliders();
-            for (Player player : trackedBy) {
-                super.snapshot.hideHitboxes(player);
-            }
-        }
-
+        // 服务端实体仍在家具所属线程销毁和登记。
+        BukkitFurnitureManager.instance().unregisterFurniture(this, true);
         super.setVariantInternal(variant);
-
-        // 后展示
-        {
-            BukkitFurnitureManager.instance().initFurniture(this);
-            this.addCollidersToWorld();
-            for (Player player : trackedBy) {
-                super.snapshot.showHitboxes(player);
-            }
-        }
+        BukkitFurnitureManager.instance().registerFurniture(this);
+        this.addCollidersToWorld();
+        this.publishClientSnapshot(trackedBy);
         return true;
     }
 
@@ -119,20 +132,24 @@ public final class BukkitFurniture extends Furniture {
         }
         try {
             ItemDisplay itemDisplay = this.metaEntity.get();
-            if (itemDisplay == null) {
+            if (itemDisplay == null || !itemDisplay.isValid()) {
                 this.isMoving.set(false); // 解锁
                 return CompletableFuture.completedFuture(false);
             }
             if (!force) {
                 // 检查新位置是否可用
                 List<AABB> aabbs = new ArrayList<>();
-                for (FurnitureHitBoxConfig<?> hitBoxConfig : currentVariant().hitBoxConfigs()) {
+                List<? extends FurnitureHitBoxConfig<?>> hitboxConfigs = currentVariant().hitBoxConfigs();
+                for (int configIndex = 0, configCount = hitboxConfigs.size(); configIndex < configCount; configIndex++) {
+                    FurnitureHitBoxConfig<?> hitBoxConfig = hitboxConfigs.get(configIndex);
                     hitBoxConfig.prepareBoundingBox(position, aabbs::add, false);
                 }
                 if (!aabbs.isEmpty()) {
                     if (!CollisionUtils.test(position.world.minecraftWorld(), aabbs.stream().map(it -> AABBProxy.INSTANCE.newInstance(it.minX, it.minY, it.minZ, it.maxX, it.maxY, it.maxZ)).toList(),
                             o -> {
-                                for (Collider collider : super.snapshot.colliders()) {
+                                List<Collider> colliders = super.snapshot.colliders();
+                                for (int colliderIndex = 0, colliderCount = colliders.size(); colliderIndex < colliderCount; colliderIndex++) {
+                                    Collider collider = colliders.get(colliderIndex);
                                     if (o == collider.handle()) {
                                         return false;
                                     }
@@ -146,31 +163,22 @@ public final class BukkitFurniture extends Furniture {
             }
 
             // 先移除
-            List<Player> previousTrackedBy = trackedBy();
             {
-                BukkitFurnitureManager.instance().invalidateFurniture(this, false);
-                super.destroySeats();
-                super.clearColliders();
-                for (Player player : previousTrackedBy) {
-                    super.snapshot.hideHitboxes(player);
-                }
+                BukkitFurnitureManager.instance().unregisterFurniture(this, true);
             }
 
             Location location = LocationUtils.toLocation(position);
             if (VersionHelper.hasPaperPatch) {
                 return itemDisplay.teleportAsync(location).handle((result, throwable) -> {
                     try {
-                        if (result != null && result && throwable == null) {
+                        if (result != null && result && throwable == null && this.isValid()) {
                             this.location = location;
-                            super.setVariantInternal(currentVariant());
-                            BukkitFurnitureManager.instance().initFurniture(this);
-                            this.addCollidersToWorld();
+                            super.updatePlacement();
                             List<Player> afterTrackedBy = trackedBy();
-                            for (Player player : afterTrackedBy) {
-                                if (previousTrackedBy.contains(player)) {
-                                    super.snapshot.showHitboxes(player);
-                                }
-                            }
+                            super.setVariantInternal(currentVariant());
+                            BukkitFurnitureManager.instance().registerFurniture(this);
+                            this.addCollidersToWorld();
+                            this.publishClientSnapshot(afterTrackedBy);
                             return true;
                         } else {
                             return false;
@@ -181,22 +189,49 @@ public final class BukkitFurniture extends Furniture {
                 });
             } else {
                 itemDisplay.teleport(location);
-                this.location = location;
-                super.setVariantInternal(currentVariant());
-                BukkitFurnitureManager.instance().initFurniture(this);
-                this.addCollidersToWorld();
-                List<Player> afterTrackedBy = trackedBy();
-                for (Player player : afterTrackedBy) {
-                    if (previousTrackedBy.contains(player)) {
-                        super.snapshot.showHitboxes(player);
-                    }
+                if (!this.isValid()) {
+                    this.isMoving.set(false);
+                    return CompletableFuture.completedFuture(false);
                 }
+                this.location = location;
+                super.updatePlacement();
+                List<Player> afterTrackedBy = trackedBy();
+                super.setVariantInternal(currentVariant());
+                BukkitFurnitureManager.instance().registerFurniture(this);
+                this.addCollidersToWorld();
+                this.publishClientSnapshot(afterTrackedBy);
                 this.isMoving.set(false);
                 return CompletableFuture.completedFuture(true);
             }
         } catch (Throwable e) {
             this.isMoving.set(false); // 因发生异常而解锁
             return CompletableFuture.failedFuture(e);
+        }
+    }
+
+    public boolean isMoving() {
+        return this.isMoving.get();
+    }
+
+    // 外部传送已经完成；这里只同步派生状态，不再次传送元数据实体。
+    void synchronizePosition() {
+        ItemDisplay entity = this.metaEntity.get();
+        if (entity == null || !entity.isValid()) return;
+        Location actualLocation = entity.getLocation();
+        if (this.location.equals(actualLocation)) return;
+        if (!this.isMoving.compareAndSet(false, true)) return;
+        try {
+            List<Player> trackedBy = this.trackedBy();
+            BukkitFurnitureManager manager = BukkitFurnitureManager.instance();
+            manager.unregisterFurniture(this, true);
+            this.location = actualLocation;
+            super.updatePlacement();
+            super.setVariantInternal(this.currentVariant());
+            manager.registerFurniture(this);
+            this.addCollidersToWorld();
+            this.publishClientSnapshot(trackedBy);
+        } finally {
+            this.isMoving.set(false);
         }
     }
 
@@ -208,7 +243,9 @@ public final class BukkitFurniture extends Furniture {
         Location displayLocation = itemDisplay.getLocation();
         Object addPacket = ClientboundAddEntityPacketProxy.INSTANCE.newInstance(itemDisplay.getEntityId(), itemDisplay.getUniqueId(),
                 displayLocation.getX(), displayLocation.getY(), displayLocation.getZ(), displayLocation.getPitch(), displayLocation.getYaw(), EntityTypesProxy.ITEM_DISPLAY, 0, Vec3Proxy.ZERO, 0);
-        for (Player player : trackedBy()) {
+        List<Player> trackedBy = trackedBy();
+        for (int playerIndex = 0, playerCount = trackedBy.size(); playerIndex < playerCount; playerIndex++) {
+            Player player = trackedBy.get(playerIndex);
             player.sendPacket(removePacket, false);
             player.sendPacket(addPacket, false);
         }
@@ -228,11 +265,16 @@ public final class BukkitFurniture extends Furniture {
 
     @Override
     public void destroy(Player player) {
+        // 这是 CE 主动拆除（含 preRemove/postRemove）的入口。
+        // Paper 上 metaEntity.remove 会同步进入 manager.unloadFurnitureFromEntity，撤销登记并调用 onUnload；
+        // /kill、WorldEdit 删除不会反向调用本方法。纯 Spigot 缺少该 Paper 单实体回调，详见生命周期文档。
         try {
             this.controller.preRemove(player);
         } finally {
             Optional.ofNullable(this.metaEntity.get()).ifPresent(Entity::remove);
-            for (Collider entity : super.snapshot.colliders()) {
+            List<Collider> colliders = super.snapshot.colliders();
+            for (int colliderIndex = 0, colliderCount = colliders.size(); colliderIndex < colliderCount; colliderIndex++) {
+                Collider entity = colliders.get(colliderIndex);
                 entity.destroy();
             }
             destroySeats();
@@ -272,18 +314,20 @@ public final class BukkitFurniture extends Furniture {
     public List<Player> trackedBy() {
         ItemDisplay itemDisplay = this.metaEntity.get();
         if (itemDisplay == null) return List.of();
-        return new ArrayList<>(EntityUtils.getTrackedBy(itemDisplay, BukkitAdaptor::adapt));
+        return EntityUtils.getTrackedByList(itemDisplay, BukkitAdaptor::adapt);
     }
 
     @Override
     public Set<Player> getTrackedBy() {
         ItemDisplay itemDisplay = this.metaEntity.get();
         if (itemDisplay == null) return Set.of();
-        return EntityUtils.getTrackedBy(itemDisplay, BukkitAdaptor::adapt);
+        return EntityUtils.getTrackedBySet(itemDisplay, BukkitAdaptor::adapt);
     }
 
     @Override
     public void saveIfDirty() {
+        // 更新元数据实体的 PDC，不直接写区块文件。WorldSave 和运行时卸载都会调用，
+        // 包括已经不再 valid 的元数据实体；不能用 isValid() 作为保存前提。
         if (super.isUnsaved()) {
             CompoundTag dataToSave = new CompoundTag();
             this.controller.saveCustomData(dataToSave);

@@ -13,18 +13,14 @@ import net.momirealms.craftengine.bukkit.item.factory.BukkitItemFactory;
 import net.momirealms.craftengine.bukkit.item.listener.*;
 import net.momirealms.craftengine.bukkit.item.recipe.BukkitRecipeManager;
 import net.momirealms.craftengine.bukkit.plugin.BukkitCraftEngine;
-import net.momirealms.craftengine.bukkit.plugin.command.feature.ReloadCommand;
 import net.momirealms.craftengine.bukkit.plugin.user.BukkitServerPlayer;
-import net.momirealms.craftengine.bukkit.util.ItemStackUtils;
-import net.momirealms.craftengine.bukkit.util.KeyUtils;
-import net.momirealms.craftengine.bukkit.util.RegistryOps;
-import net.momirealms.craftengine.bukkit.util.RegistryUtils;
+import net.momirealms.craftengine.bukkit.util.*;
 import net.momirealms.craftengine.core.entity.player.Player;
 import net.momirealms.craftengine.core.item.*;
 import net.momirealms.craftengine.core.item.component.DataComponentKeys;
+import net.momirealms.craftengine.core.item.network.ItemModelMappings;
 import net.momirealms.craftengine.core.item.network.NetworkItemHandler;
 import net.momirealms.craftengine.core.item.processor.ItemProcessor;
-import net.momirealms.craftengine.core.item.processor.ObfuscatedItemModelProcessor;
 import net.momirealms.craftengine.core.item.recipe.DatapackRecipeResult;
 import net.momirealms.craftengine.core.item.recipe.IngredientUnlockable;
 import net.momirealms.craftengine.core.pack.AbstractPackManager;
@@ -47,6 +43,9 @@ import net.momirealms.craftengine.proxy.minecraft.world.item.ItemProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.item.ItemStackProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.item.ItemsProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.item.ProjectileWeaponItemProxy;
+import net.momirealms.craftengine.proxy.minecraft.world.item.crafting.RecipeHolderProxy;
+import net.momirealms.craftengine.proxy.minecraft.world.item.crafting.RecipeManagerProxy;
+import net.momirealms.craftengine.proxy.minecraft.world.item.crafting.RecipeProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.item.equipment.trim.*;
 import net.momirealms.sparrow.nbt.CompoundTag;
 import org.bukkit.Bukkit;
@@ -83,6 +82,7 @@ public final class BukkitItemManager extends AbstractItemManager {
     private final BukkitItem emptyItem;
     private final Cache<ByteArrayKey, BukkitItem> deserializedItemCache;
     private final Map<Object, Object> originalVanillaItemComponents = new ConcurrentHashMap<>();
+    private final Set<Object> sharedVanillaItemPrototypes = Collections.newSetFromMap(new IdentityHashMap<>());
     private Set<Key> lastRegisteredPatterns = Set.of();
     private boolean hasExternalRecipeSource = false;
     private ItemSource[] recipeIngredientSources = null;
@@ -105,8 +105,8 @@ public final class BukkitItemManager extends AbstractItemManager {
         this.loadItemModelMappings();
         this.emptyItem = wrap(ItemStackProxy.EMPTY);
         this.deserializedItemCache = Caffeine.newBuilder()
-                .maximumSize(2048)
-                .expireAfterAccess(Duration.of(20, ChronoUnit.MINUTES))
+                .maximumSize(4096)
+                .expireAfterAccess(Duration.of(10, ChronoUnit.MINUTES))
                 .scheduler(Scheduler.systemScheduler())
                 .executor(this.plugin.scheduler().async())
                 .build();
@@ -116,10 +116,15 @@ public final class BukkitItemManager extends AbstractItemManager {
     public void delayedLoad() {
         super.delayedLoad();
         this.resetItemProviders();
-        if (!ReloadCommand.RELOAD_PACK_FLAG || !Config.obfuscateItemModel()) {
+        if (!this.plugin.isReloadingPack() || !Config.obfuscateItemModel()) {
             for (Player player : this.plugin.networkManager().onlineUsers()) {
                 if (!player.hasClientMod()) continue;
                 player.sendCustomPackets(ClientboundCreativeModeTabItemsPacket.create(player));
+            }
+        }
+        for (ItemDefinition itemDefinition : this.itemDefinitionById.values()) {
+            if (itemDefinition instanceof BukkitItemDefinition bukkitItemDefinition) {
+                bukkitItemDefinition.initConstantItem();
             }
         }
     }
@@ -258,6 +263,11 @@ public final class BukkitItemManager extends AbstractItemManager {
 
     public void reloadVanillaItemDataOverrides() {
         if (!VersionHelper.isOrAbove1_20_5) return;
+        Set<Object> seen = Collections.newSetFromMap(new IdentityHashMap<>());
+        for (Object item : (Iterable<?>) BuiltInRegistriesProxy.ITEM) {
+            Object prototype = ItemProxy.INSTANCE.components(item);
+            if (!seen.add(prototype)) this.sharedVanillaItemPrototypes.add(prototype);
+        }
         this.restoreVanillaItemComponents();
         this.applyVanillaItemDataOverrides();
     }
@@ -268,7 +278,7 @@ public final class BukkitItemManager extends AbstractItemManager {
             Object item = RegistryUtils.getRegistryValue(BuiltInRegistriesProxy.ITEM, KeyUtils.toIdentifier(id));
             if (item == null || item == ItemsProxy.AIR) continue;
             try {
-                Object originalComponents = ItemProxy.INSTANCE.components(item);
+                Object originalComponents = ItemComponentUtils.copy(ItemProxy.INSTANCE.components(item));
                 Object itemStack = ItemStackProxy.INSTANCE.newInstance(item, 1);
                 BukkitItem wrapped = this.wrap(itemStack);
                 ItemBuildContext context = ItemBuildContext.of(null, wrapped, ContextHolder.builder()
@@ -301,11 +311,31 @@ public final class BukkitItemManager extends AbstractItemManager {
     }
 
     private void setVanillaItemComponents(Object item, Object components) {
-        if (VersionHelper.isOrAbove26_1) {
-            Object holder = ItemProxy.INSTANCE.getBuiltInRegistryHolder(item);
-            HolderProxy.ReferenceProxy.INSTANCE.bindComponents(holder, components);
-        } else {
-            ItemProxy.INSTANCE.setComponents(item, components);
+        Object prototype = ItemProxy.INSTANCE.components(item);
+        boolean detached = this.sharedVanillaItemPrototypes.contains(prototype);
+        if (detached) {
+            // Keep historical aliases too: old stacks may still hold the shared
+            // prototype after the other item types have been detached from it.
+            prototype = ItemComponentUtils.copy(prototype);
+            if (VersionHelper.isOrAbove26_1) {
+                Object holder = ItemProxy.INSTANCE.getBuiltInRegistryHolder(item);
+                HolderProxy.ReferenceProxy.INSTANCE.bindComponents(holder, prototype);
+            } else {
+                ItemProxy.INSTANCE.setComponents(item, prototype);
+            }
+        }
+        ItemComponentUtils.replaceContents(prototype, components);
+        if (detached && !VersionHelper.isOrAbove1_21_2) {
+            // These versions intern prototypes. Rebind cached recipe results to the
+            // item's private prototype, preserving explicitly configured components.
+            Object registries = RegistryUtils.getRegistryAccess();
+            Object recipeManager = BukkitRecipeManager.minecraftRecipeManager();
+            for (Object holder : RecipeManagerProxy.INSTANCE.getByName(recipeManager).values()) {
+                Object recipe = RecipeHolderProxy.INSTANCE.getValue(holder);
+                Object result = RecipeProxy.INSTANCE.getResultItem(recipe, registries);
+                if (ItemStackProxy.INSTANCE.getItem(result) != item) continue;
+                ItemComponentUtils.rebasePrototype(result, prototype);
+            }
         }
     }
 
@@ -369,7 +399,7 @@ public final class BukkitItemManager extends AbstractItemManager {
         try {
             Files.createDirectories(itemModelObfPath.getParent());
             JsonObject json = new JsonObject();
-            for (Map.Entry<Key, Key> entry : ObfuscatedItemModelProcessor.getMappings().entrySet()) {
+            for (Map.Entry<Key, Key> entry : ItemModelMappings.getMappings().entrySet()) {
                 json.addProperty(entry.getKey().toString(), entry.getValue().toString());
             }
             GsonHelper.writeJsonFile(json, itemModelObfPath);
@@ -392,7 +422,7 @@ public final class BukkitItemManager extends AbstractItemManager {
                         mappings.put(Key.of(entry.getKey()), Key.of(primitive.getAsString()));
                     }
                 }
-                ObfuscatedItemModelProcessor.setMappings(mappings);
+                ItemModelMappings.setMappings(mappings);
             } catch (IOException e) {
                 this.plugin.logger().warn("Failed to load item model obfuscation mappings.", e);
             }
