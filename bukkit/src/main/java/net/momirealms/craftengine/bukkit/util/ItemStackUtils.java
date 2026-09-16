@@ -1,6 +1,7 @@
 package net.momirealms.craftengine.bukkit.util;
 
 import com.github.benmanes.caffeine.cache.Cache;
+import com.github.benmanes.caffeine.cache.Caffeine;
 import com.mojang.serialization.Dynamic;
 import net.momirealms.craftengine.bukkit.api.BukkitAdaptor;
 import net.momirealms.craftengine.bukkit.item.BukkitItem;
@@ -33,11 +34,16 @@ import org.bukkit.inventory.ItemStack;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.Nullable;
 
+import java.time.Duration;
+import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.List;
 
 public final class ItemStackUtils {
-    private static final Cache<>
+    private static final Cache<VersionedItemTag, Object> ITEM_PARSER_CACHE = Caffeine.newBuilder()
+            .maximumSize(8192)
+            .expireAfterAccess(Duration.of(30, ChronoUnit.MINUTES))
+            .build();
 
     private ItemStackUtils() {}
 
@@ -149,8 +155,13 @@ public final class ItemStackUtils {
         return (CompoundTag) saveMinecraftItemStackAsTag(ItemStackUtils.unwrap(ensureCraftItemStack(itemStack)));
     }
 
+    @Nullable
     public static Object parseCachedMinecraftItem(Tag tag, int dataVersion) {
-
+        Object item = ITEM_PARSER_CACHE.get(new VersionedItemTag(tag, dataVersion), k -> parseMinecraftItem(k.tag, k.dataVersion));
+        if (item == null) {
+            return null;
+        }
+        return ItemStackProxy.INSTANCE.copy(item);
     }
 
     @Nullable
