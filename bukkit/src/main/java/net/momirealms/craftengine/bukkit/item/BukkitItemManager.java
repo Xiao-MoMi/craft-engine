@@ -2,6 +2,7 @@ package net.momirealms.craftengine.bukkit.item;
 
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
+import com.github.benmanes.caffeine.cache.Scheduler;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
@@ -106,7 +107,9 @@ public final class BukkitItemManager extends AbstractItemManager {
         this.emptyItem = wrap(ItemStackProxy.EMPTY);
         this.deserializedItemCache = Caffeine.newBuilder()
                 .maximumSize(8192)
-                .expireAfterAccess(Duration.of(30, ChronoUnit.MINUTES))
+                .expireAfterAccess(Duration.of(15, ChronoUnit.MINUTES))
+                .scheduler(Scheduler.systemScheduler())
+                .executor(this.plugin.scheduler().async())
                 .build();
     }
 

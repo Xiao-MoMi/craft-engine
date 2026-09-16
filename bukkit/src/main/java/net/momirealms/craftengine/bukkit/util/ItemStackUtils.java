@@ -2,6 +2,7 @@ package net.momirealms.craftengine.bukkit.util;
 
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
+import com.github.benmanes.caffeine.cache.Scheduler;
 import com.mojang.serialization.Dynamic;
 import net.momirealms.craftengine.bukkit.api.BukkitAdaptor;
 import net.momirealms.craftengine.bukkit.item.BukkitItem;
@@ -42,7 +43,9 @@ import java.util.List;
 public final class ItemStackUtils {
     private static final Cache<VersionedItemTag, Object> ITEM_PARSER_CACHE = Caffeine.newBuilder()
             .maximumSize(8192)
-            .expireAfterAccess(Duration.of(30, ChronoUnit.MINUTES))
+            .expireAfterAccess(Duration.of(15, ChronoUnit.MINUTES))
+            .scheduler(Scheduler.systemScheduler())
+            .executor(CraftEngine.instance().scheduler().async())
             .build();
 
     private ItemStackUtils() {}
