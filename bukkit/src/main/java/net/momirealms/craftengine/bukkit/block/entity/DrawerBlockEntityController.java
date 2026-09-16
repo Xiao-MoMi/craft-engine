@@ -474,8 +474,9 @@ public sealed abstract class DrawerBlockEntityController extends BlockEntityCont
         public void saveCustomData(CompoundTag tag) {
             if (isEmpty() || this.itemCount() <= 0) return;
             CompoundTag data = new CompoundTag();
-            data.put("data_version", new IntTag(VersionHelper.WORLD_VERSION));
-            data.put("count", new IntTag(this.itemCount()));
+            
+            data.put("data_version", IntTag.valueOf(VersionHelper.WORLD_VERSION));
+            data.put("count", IntTag.valueOf(this.itemCount()));
             data.put("item", ItemStackUtils.saveMinecraftItemStackAsTag(this.item().minecraftItem()));
             tag.put(behavior.customDataKey, data);
         }
@@ -738,8 +739,8 @@ public sealed abstract class DrawerBlockEntityController extends BlockEntityCont
         public void saveCustomData(CompoundTag tag) {
             if (isEmpty() || this.itemCount() <= 0) return;
             CompoundTag data = new CompoundTag();
-            data.put("data_version", new IntTag(Config.itemDataFixerUpperFallbackVersion()));
-            data.put("count", new IntTag(this.itemCount()));
+            data.put("data_version", IntTag.valueOf(Config.itemDataFixerUpperFallbackVersion()));
+            data.put("count", IntTag.valueOf(this.itemCount()));
             data.put("item", ItemStackUtils.saveMinecraftItemStackAsTag(this.items[0].copyWithCount(1).minecraftItem()));
             tag.put(behavior.customDataKey, data);
         }

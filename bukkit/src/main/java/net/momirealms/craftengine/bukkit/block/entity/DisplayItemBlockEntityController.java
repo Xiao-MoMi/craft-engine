@@ -130,7 +130,7 @@ public class DisplayItemBlockEntityController extends BlockEntityController {
     public void saveCustomData(CompoundTag tag) {
         if (ItemUtils.isEmpty(displayItem)) return;
         CompoundTag data = new CompoundTag();
-        data.put("data_version", new IntTag(VersionHelper.WORLD_VERSION));
+        data.put("data_version", IntTag.valueOf(VersionHelper.WORLD_VERSION));
         data.put("display_item", ItemStackUtils.saveMinecraftItemStackAsTag(this.displayItem.minecraftItem()));
         tag.put(behavior.customDataKey, data);
     }
