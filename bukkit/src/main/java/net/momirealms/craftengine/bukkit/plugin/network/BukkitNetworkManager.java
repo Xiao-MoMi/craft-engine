@@ -469,7 +469,12 @@ public final class BukkitNetworkManager extends AbstractNetworkManager implement
         registerByteBufferPacketListener(PlayerInfoUpdateListener.INSTANCE, PACKET_IDS.clientboundPlayerInfoUpdatePacket(), "ClientboundPlayerInfoUpdatePacket", ConnectionState.PLAY, PacketFlow.CLIENTBOUND);
         registerByteBufferPacketListener(BossEventListener.INSTANCE, PACKET_IDS.clientboundBossEventPacket(), "ClientboundBossEventPacket", ConnectionState.PLAY, PacketFlow.CLIENTBOUND);
         registerByteBufferPacketListener(TeleportEntityListener.INSTANCE, PACKET_IDS.clientboundTeleportEntityPacket(), "ClientboundTeleportEntityPacket", ConnectionState.PLAY, PacketFlow.CLIENTBOUND);
-        registerByteBufferPacketListener(SetEquipmentListener.INSTANCE, PACKET_IDS.clientboundSetEquipmentPacket(), "ClientboundSetEquipmentPacket", ConnectionState.PLAY, PacketFlow.CLIENTBOUND);
+        // 装备 LOD 需要字节层装备包做距离淘汰，未启用 LOD 时装备包也可以提前到 nms 阶段
+        if (Config.nettyPerformanceModeItem() && !(VersionHelper.isOrAbove1_21_2 && Config.enableEquipmentLod())) {
+            registerNMSPacketConsumer(NMSSetEquipmentListener.INSTANCE, ClientboundSetEquipmentPacketProxy.CLASS);
+        } else {
+            registerByteBufferPacketListener(SetEquipmentListener.INSTANCE, PACKET_IDS.clientboundSetEquipmentPacket(), "ClientboundSetEquipmentPacket", ConnectionState.PLAY, PacketFlow.CLIENTBOUND);
+        }
         registerByteBufferPacketListener(ClientInformationListener.INSTANCE, PACKET_IDS.serverboundClientInformationPacket$play(), "ServerboundClientInformationPacket", ConnectionState.PLAY, PacketFlow.SERVERBOUND);
         registerByteBufferPacketListener(ClientInformationListener.INSTANCE, PACKET_IDS.serverboundClientInformationPacket$configuration(), "ServerboundClientInformationPacket", ConnectionState.CONFIGURATION, PacketFlow.SERVERBOUND);
         registerByteBufferPacketListener(RespawnListener.INSTANCE, PACKET_IDS.clientboundRespawnPacket(), "ClientboundRespawnPacket", ConnectionState.PLAY, PacketFlow.CLIENTBOUND);
