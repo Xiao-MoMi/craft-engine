@@ -195,7 +195,7 @@ public final class LegacyNetworkItemHandler implements NetworkItemHandler {
             if (!Config.interceptItem()) {
                 return forceReturn ? Optional.of(wrapped) : Optional.empty();
             }
-            return new OtherItem(wrapped, forceReturn, source.requireNetworkTag).process(NetworkTextReplaceContext.of(player));
+            return new OtherItem(wrapped, forceReturn, source).process(NetworkTextReplaceContext.of(player));
         }
 
         // legacy 物品无需保留 original副本，因为不存在组件默认值设定
@@ -211,7 +211,7 @@ public final class LegacyNetworkItemHandler implements NetworkItemHandler {
             if (!Config.interceptItem()) {
                 return forceReturn ? Optional.of(wrapped) : Optional.empty();
             }
-            return new OtherItem(wrapped, forceReturn, source.requireNetworkTag).process(NetworkTextReplaceContext.of(player));
+            return new OtherItem(wrapped, forceReturn, source).process(NetworkTextReplaceContext.of(player));
         }
 
         // 应用client-bound-data
@@ -232,12 +232,22 @@ public final class LegacyNetworkItemHandler implements NetworkItemHandler {
         boolean changed = false;
         // 如果拦截物品的描述名称等
         if (Config.interceptItem()) {
-            if (!source.canSkipName) {
+            if (source.canSkipName) {
+                if (Config.minimizeItems() && wrapped.hasTag(DISPLAY_NAME)) {
+                    wrapped.removeTag(DISPLAY_NAME);
+                    changed = true;
+                }
+            } else {
                 if (wrapped.hasTag(DISPLAY_NAME)) {
                     changed |= processCustomName(wrapped, callback, context);
                 }
             }
-            if (!source.canSkipLore) {
+            if (source.canSkipLore) {
+                if (Config.minimizeItems() && wrapped.hasTag(DISPLAY_LORE)) {
+                    wrapped.removeTag(DISPLAY_LORE);
+                    changed = true;
+                }
+            } else {
                 if (wrapped.hasTag(DISPLAY_LORE)) {
                     changed |= processLore(wrapped, callback, context);
                 }
@@ -305,23 +315,37 @@ public final class LegacyNetworkItemHandler implements NetworkItemHandler {
     static class OtherItem {
         private final Item item;
         private final boolean forceReturn;
-        private final boolean inContainer;
+        private final ItemPacketSource source;
         private boolean globalChanged = false;
         private CompoundTag networkTag;
 
-        public OtherItem(Item item, boolean forceReturn, boolean inContainer) {
+        public OtherItem(Item item, boolean forceReturn, ItemPacketSource source) {
             this.item = item;
             this.forceReturn = forceReturn;
-            this.inContainer = inContainer;
+            this.source = source;
         }
 
         public Optional<Item> process(Context context) {
-            BiConsumer<String, CompoundTag> callback = this.inContainer ? (s, c) -> networkTag().put(s, c) : NOOP_PUT;
-            if (processLore(this.item, callback, context)) {
-                this.globalChanged = true;
+            BiConsumer<String, CompoundTag> callback = this.source.requireNetworkTag ? (s, c) -> networkTag().put(s, c) : NOOP_PUT;
+            if (this.source.canSkipLore) {
+                if (Config.minimizeItems() && this.item.hasTag(DISPLAY_LORE)) {
+                    this.item.removeTag(DISPLAY_LORE);
+                    this.globalChanged = true;
+                }
+            } else {
+                if (processLore(this.item, callback, context)) {
+                    this.globalChanged = true;
+                }
             }
-            if (processCustomName(this.item, callback, context)) {
-                this.globalChanged = true;
+            if (this.source.canSkipName) {
+                if (Config.minimizeItems() && this.item.hasTag(DISPLAY_NAME)) {
+                    this.item.removeTag(DISPLAY_NAME);
+                    this.globalChanged = true;
+                }
+            } else {
+                if (processCustomName(this.item, callback, context)) {
+                    this.globalChanged = true;
+                }
             }
             if (this.globalChanged) {
                 if (this.networkTag != null) {

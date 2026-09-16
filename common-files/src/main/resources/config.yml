@@ -537,6 +537,9 @@ network:
     # Handle entity data packets on the NMS stage instead of the bytebuf stage
     entity: true
 
+  # Some components are completely useless for display, yet Minecraft still encodes them. We can simply remove them.
+  minimize-item-packets: true
+
   # Allow <image> <shift> <global> tags in third-party plugins via packet manipulation
   # ⚠️ Disable unused handlers to reduce Netty thread workload
   intercept-packets:

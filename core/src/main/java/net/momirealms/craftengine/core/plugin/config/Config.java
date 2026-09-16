@@ -246,6 +246,7 @@ public final class Config {
     private boolean network$intercept_packets$combat_kill;
     private boolean network$intercept_packets$dialog;
     private boolean network$disable_item_operations;
+    private boolean network$minimize_item_packets;
     private boolean network$disable_chat_report;
     private boolean network$mod_channel$requires_permission;
     private boolean network$mod_channel$logging_permission_denied;
@@ -788,6 +789,8 @@ public final class Config {
             this.network$performance_mode$entity = config.getBoolean("network.performance-mode.entity", true);
             this.network$performance_mode$text = config.getBoolean("network.performance-mode.text", true);
         }
+
+        this.network$minimize_item_packets = config.getBoolean("network.minimize-item-packets", true);
         this.network$disable_item_operations = config.getBoolean("network.disable-item-operations", false);
         this.network$intercept_packets$system_chat = config.getBoolean("network.intercept-packets.system-chat", true);
         this.network$intercept_packets$tab_list = config.getBoolean("network.intercept-packets.tab-list", true);
@@ -1336,6 +1339,10 @@ public final class Config {
 
     public static boolean disableItemOperations() {
         return instance.network$disable_item_operations;
+    }
+
+    public static boolean minimizeItems() {
+        return instance.network$minimize_item_packets;
     }
 
     public static boolean nettyPerformanceModeItem() {
