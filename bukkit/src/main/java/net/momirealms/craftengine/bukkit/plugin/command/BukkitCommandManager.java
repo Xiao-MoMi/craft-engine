@@ -50,6 +50,7 @@ public final class BukkitCommandManager extends AbstractCommandManager<CommandSe
                 new ToggleEntityCullingCommand(this, plugin),
                 new UnsetLocaleCommand(this, plugin),
                 new DebugGetBlockStateRegistryIdCommand(this, plugin),
+                new DebugInternalBlockStateCommand(this, plugin),
                 new DebugGetBlockInternalIdCommand(this, plugin),
                 new DebugVisualStateUsageCommand(this, plugin),
                 new DebugAutoStateUsageCommand(this, plugin),
