@@ -2,6 +2,7 @@ package net.momirealms.craftengine.core.util;
 
 import org.jetbrains.annotations.NotNull;
 
+import java.io.BufferedOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.file.FileVisitResult;
@@ -14,10 +15,12 @@ import java.util.zip.ZipInputStream;
 import java.util.zip.ZipOutputStream;
 
 public final class ZipUtils {
+    private static final int ZIP_OUTPUT_BUFFER_SIZE = 64 * 1024;
+
     private ZipUtils() {}
 
     public static void compress(Path in, Path out) throws IOException {
-        try (OutputStream os = Files.newOutputStream(out);
+        try (OutputStream os = new BufferedOutputStream(Files.newOutputStream(out), ZIP_OUTPUT_BUFFER_SIZE);
              ZipOutputStream zos = new ZipOutputStream(os)) {
 
             Files.walkFileTree(in, new SimpleFileVisitor<>() {
