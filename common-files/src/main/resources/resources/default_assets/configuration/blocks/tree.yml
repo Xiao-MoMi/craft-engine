@@ -19,8 +19,10 @@ config_factory#basic:
       replaced_door_type: oak
       # Available types: oak, spruce, birch, jungle, acacia, dark_oak, mangrove, cherry, pale_oak, bamboo, warped, crimson
       replaced_fence_gate_type: oak
-      # Optional base fence type
+      # Optional base fence/button type
+      # They are based on the block entity renderer, so the base block is not that important.
       fence_type: oak
+      button_type: oak
       # If leaves can be tinted by biomes
       leaves_tintable: true
       default_leaves_color: "#48B358"
@@ -477,7 +479,7 @@ config_factory#basic:
             states:
               template: default:block_state/button
               arguments:
-                button_base_block: ${replaced_door_type}_button
+                button_base_block: ${button_type:-oak}_button
                 button_pressed_item: ${namespace}:${tree_type}_button_pressed
                 button_not_pressed_item: ${namespace}:${tree_type}_button_not_pressed
       ${namespace}:${tree_type}_button_pressed:
