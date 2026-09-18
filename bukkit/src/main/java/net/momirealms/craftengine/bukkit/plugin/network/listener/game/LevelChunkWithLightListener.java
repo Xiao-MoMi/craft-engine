@@ -1,6 +1,7 @@
 package net.momirealms.craftengine.bukkit.plugin.network.listener.game;
 
 import io.netty.buffer.PooledByteBufAllocator;
+import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import net.momirealms.craftengine.bukkit.entity.furniture.behavior.GlowingFurnitureBehaviorTemplate;
 import net.momirealms.craftengine.bukkit.plugin.user.BukkitServerPlayer;
 import net.momirealms.craftengine.core.entity.player.Player;
@@ -170,9 +171,12 @@ public final class LevelChunkWithLightListener implements ByteBufferPacketListen
         boolean named = !VersionHelper.isOrAbove1_20_2;
         boolean blockEntityChanged = false;
         List<ParsedBlockEntity> blockEntities = null;
+        int blockEntityStart = 0;
+        int blockEntityLength = 0;
         if (Config.interceptItem()) {
+            blockEntityStart = buf.readerIndex();
             int blockEntityCount = buf.readVarInt();
-            blockEntities = new ArrayList<>(blockEntityCount);
+            blockEntities = new ObjectArrayList<>(blockEntityCount);
             for (int i = 0; i < blockEntityCount; i++) {
                 byte packedXZ = buf.readByte();
                 short y = buf.readShort();
@@ -183,6 +187,7 @@ public final class LevelChunkWithLightListener implements ByteBufferPacketListen
                 }
                 blockEntities.add(new ParsedBlockEntity(packedXZ, y, typeId, tag));
             }
+            blockEntityLength = buf.readerIndex() - blockEntityStart;
         }
 
         // 只有被修改了才改写; 光照数据原样透传, 不做解析
@@ -200,9 +205,14 @@ public final class LevelChunkWithLightListener implements ByteBufferPacketListen
                 // 其他数据
                 int newChunkDataLength = staging.writerIndex() - writtenHeightmapsLength;
                 if (blockEntities != null) {
-                    staging.writeVarInt(blockEntities.size());
-                    for (int i = 0; i < blockEntities.size(); i++) {
-                        blockEntities.get(i).write(staging, named);
+                    // 未变化时按原始字节原样拷贝,避免NBT重序列化
+                    if (blockEntityChanged) {
+                        staging.writeVarInt(blockEntities.size());
+                        for (int i = 0; i < blockEntities.size(); i++) {
+                            blockEntities.get(i).write(staging, named);
+                        }
+                    } else {
+                        staging.writeBytes(buf, blockEntityStart, blockEntityLength);
                     }
                 }
                 staging.writeBytes(buf, tailLength);
