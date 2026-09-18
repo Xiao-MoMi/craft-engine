@@ -45,7 +45,7 @@ public final class BlockEntityDataListener implements ByteBufferPacketListener {
         if (tag != null && tag.containsKey("Items")) {
             BukkitItemManager itemManager = BukkitItemManager.instance();
             ListTag itemsTag = tag.getList("Items");
-            List<Pair<Byte, Item>> items = new ArrayList<>();
+            List<Pair<Byte, Item>> items = new ArrayList<>(itemsTag.size());
             for (Tag itemTag : itemsTag) {
                 if (itemTag instanceof CompoundTag itemCompoundTag) {
                     byte slot = itemCompoundTag.getByte("Slot");

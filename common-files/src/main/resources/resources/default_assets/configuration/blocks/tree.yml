@@ -19,6 +19,8 @@ config_factory#basic:
       replaced_door_type: oak
       # Available types: oak, spruce, birch, jungle, acacia, dark_oak, mangrove, cherry, pale_oak, bamboo, warped, crimson
       replaced_fence_gate_type: oak
+      # Optional base fence type
+      fence_type: oak
       # If leaves can be tinted by biomes
       leaves_tintable: true
       default_leaves_color: "#48B358"
@@ -298,7 +300,7 @@ config_factory#basic:
             states:
               template: default:block_state/door
               arguments:
-                door_base_block: oak_door
+                door_base_block: ${replaced_door_type}_door
                 door_model: ${asset_path_prefix}${tree_type}_door
                 door_texture_top: ${asset_path_prefix}${tree_type}_door_top
                 door_texture_bottom: ${asset_path_prefix}${tree_type}_door_bottom
@@ -475,7 +477,7 @@ config_factory#basic:
             states:
               template: default:block_state/button
               arguments:
-                button_base_block: oak_button
+                button_base_block: ${replaced_door_type}_button
                 button_pressed_item: ${namespace}:${tree_type}_button_pressed
                 button_not_pressed_item: ${namespace}:${tree_type}_button_not_pressed
       ${namespace}:${tree_type}_button_pressed:
@@ -609,7 +611,10 @@ $$>=1.20.3:
       - namespace: default
         tree_type: palm
         asset_path_prefix: minecraft:block/custom/
-        replaced_slab_type: cut_copper
+        # petrified_oak, cut_copper, exposed_cut_copper, weathered_cut_copper, oxidized_cut_copper
+        replaced_slab_type: petrified_oak
+        # cut_copper, exposed_cut_copper, weathered_cut_copper, oxidized_cut_copper
+        replaced_stair_type: cut_copper
         planks_map_color: sand
     blueprint:
       items:
@@ -641,7 +646,7 @@ $$>=1.20.3:
               states:
                 template: default:block_state/slab
                 arguments:
-                  slab_base_block: petrified_oak_slab
+                  slab_base_block: ${replaced_slab_type}_slab
                   slab_texture: ${asset_path_prefix}${tree_type}_planks
                   slab_model: ${asset_path_prefix}${tree_type}_slab
                   planks_model: ${asset_path_prefix}${tree_type}_planks
@@ -673,7 +678,7 @@ $$>=1.20.3:
               states:
                 template: default:block_state/stairs
                 arguments:
-                  stairs_base_block: ${replaced_slab_type}_stairs
+                  stairs_base_block: ${replaced_stair_type}_stairs
                   stairs_model: ${asset_path_prefix}${tree_type}_stairs
                   stairs_texture: ${asset_path_prefix}${tree_type}_planks
       recipes:
