@@ -6,6 +6,7 @@ import net.momirealms.craftengine.bukkit.util.KeyUtils;
 import net.momirealms.craftengine.bukkit.util.PacketUtils;
 import net.momirealms.craftengine.bukkit.util.RegistryUtils;
 import net.momirealms.craftengine.core.item.Item;
+import net.momirealms.craftengine.core.item.network.ItemPacketSource;
 import net.momirealms.craftengine.core.plugin.config.Config;
 import net.momirealms.craftengine.core.plugin.network.NetWorkUser;
 import net.momirealms.craftengine.core.plugin.network.event.ByteBufPacketEvent;
@@ -30,7 +31,7 @@ public final class LevelParticleListener implements ByteBufferPacketListener {
     public LevelParticleListener(int[] blockStateMapper, int[] modBlockStateMapper) {
         this.blockStateMapper = blockStateMapper;
         this.modBlockStateMapper = modBlockStateMapper;
-        this.internal = VersionHelper.isOrAbove1_21_4 ? new V1_21_4() : VersionHelper.isOrAbove1_20_5 ? new V1_20_5() : new V1_20();
+        this.internal = VersionHelper.isOrAbove1_21_4 ? new V1_21_4() : (VersionHelper.isOrAbove1_20_5 ? new V1_20_5() : new V1_20());
     }
 
     @Override
@@ -78,7 +79,7 @@ public final class LevelParticleListener implements ByteBufferPacketListener {
                 BukkitItemManager itemManager = BukkitItemManager.instance();
                 Object itemStack = ItemParticleOptionProxy.INSTANCE.getItemStack(option);
                 Item item = itemManager.wrap(itemStack);
-                item = itemManager.s2c(item, (net.momirealms.craftengine.core.entity.player.Player) user).orElse(null);
+                item = itemManager.s2c(item, (net.momirealms.craftengine.core.entity.player.Player) user, ItemPacketSource.PARTICLE).orElse(null);
                 if (item == null) return;
                 newOption = ItemParticleOptionProxy.INSTANCE.newInstance$0(type, item.minecraftItem());
             } else return;
@@ -135,7 +136,7 @@ public final class LevelParticleListener implements ByteBufferPacketListener {
                 BukkitItemManager itemManager = BukkitItemManager.instance();
                 Object itemStack = ItemParticleOptionProxy.INSTANCE.getItemStack(option);
                 Item item = itemManager.wrap(itemStack);
-                item = itemManager.s2c(item, (net.momirealms.craftengine.core.entity.player.Player) user).orElse(null);
+                item = itemManager.s2c(item, (net.momirealms.craftengine.core.entity.player.Player) user, ItemPacketSource.PARTICLE).orElse(null);
                 if (item == null) return;
                 Object type = ItemParticleOptionProxy.INSTANCE.getType(option);
                 newOption = ItemParticleOptionProxy.INSTANCE.newInstance$0(type, item.minecraftItem());
@@ -196,7 +197,7 @@ public final class LevelParticleListener implements ByteBufferPacketListener {
                     itemStack = ItemStackTemplateProxy.INSTANCE.create(itemStack);
                 }
                 Item item = itemManager.wrap(itemStack);
-                item = itemManager.s2c(item, (net.momirealms.craftengine.core.entity.player.Player) user).orElse(null);
+                item = itemManager.s2c(item, (net.momirealms.craftengine.core.entity.player.Player) user, ItemPacketSource.PARTICLE).orElse(null);
                 if (item == null) return;
                 Object type = ItemParticleOptionProxy.INSTANCE.getType(option);
                 Object stack = item.minecraftItem();

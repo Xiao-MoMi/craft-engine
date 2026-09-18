@@ -122,7 +122,7 @@ public class DisplayItemBlockEntityController extends BlockEntityController {
             return;
         }
         // 记录并刷新
-        this.displayItem = ItemStackUtils.wrap(ItemStackUtils.parseMinecraftItem(itemTag, dataVersion));
+        this.displayItem = ItemStackUtils.wrap(ItemStackUtils.parseCachedMinecraftItem(itemTag, dataVersion));
         this.element.refreshChangeDisplayItemPacket(this.displayItem.minecraftItem());
     }
 
@@ -130,7 +130,7 @@ public class DisplayItemBlockEntityController extends BlockEntityController {
     public void saveCustomData(CompoundTag tag) {
         if (ItemUtils.isEmpty(displayItem)) return;
         CompoundTag data = new CompoundTag();
-        data.put("data_version", new IntTag(VersionHelper.WORLD_VERSION));
+        data.put("data_version", IntTag.valueOf(VersionHelper.WORLD_VERSION));
         data.put("display_item", ItemStackUtils.saveMinecraftItemStackAsTag(this.displayItem.minecraftItem()));
         tag.put(behavior.customDataKey, data);
     }

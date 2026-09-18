@@ -5,6 +5,7 @@ import net.momirealms.craftengine.bukkit.plugin.user.BukkitServerPlayer;
 import net.momirealms.craftengine.bukkit.util.ItemStackUtils;
 import net.momirealms.craftengine.bukkit.util.PacketUtils;
 import net.momirealms.craftengine.core.item.Item;
+import net.momirealms.craftengine.core.item.network.ItemPacketSource;
 import net.momirealms.craftengine.core.plugin.config.Config;
 import net.momirealms.craftengine.core.plugin.network.NetWorkUser;
 import net.momirealms.craftengine.core.plugin.network.event.ByteBufPacketEvent;
@@ -45,7 +46,7 @@ public final class SetCursorItemListener implements ByteBufferPacketListener {
             }
         }
 
-        BukkitItemManager.instance().s2c(item, serverPlayer).ifPresent((newItemStack) -> {
+        BukkitItemManager.instance().s2c(item, serverPlayer, ItemPacketSource.CONTAINER).ifPresent((newItemStack) -> {
             event.setChanged(true);
             buf.clear();
             buf.writeVarInt(event.packetID());

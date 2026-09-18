@@ -49,12 +49,12 @@ public final class IntegerProperty extends Property<Integer> {
 
     @Override
     public Optional<Tag> createOptionalTag(String valueName) {
-        return optional(valueName).map(IntTag::new);
+        return optional(valueName).map(IntTag::valueOf);
     }
 
     @Override
     public Tag pack(Integer value) {
-        return new IntTag(value);
+        return IntTag.valueOf(value);
     }
 
     @Override

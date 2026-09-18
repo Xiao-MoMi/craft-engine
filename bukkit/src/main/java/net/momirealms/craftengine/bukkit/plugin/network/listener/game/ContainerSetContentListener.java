@@ -4,6 +4,7 @@ import net.momirealms.craftengine.bukkit.item.BukkitItemManager;
 import net.momirealms.craftengine.bukkit.plugin.user.BukkitServerPlayer;
 import net.momirealms.craftengine.bukkit.util.PacketUtils;
 import net.momirealms.craftengine.core.item.Item;
+import net.momirealms.craftengine.core.item.network.ItemPacketSource;
 import net.momirealms.craftengine.core.plugin.config.Config;
 import net.momirealms.craftengine.core.plugin.network.NetWorkUser;
 import net.momirealms.craftengine.core.plugin.network.event.ByteBufPacketEvent;
@@ -31,7 +32,7 @@ public final class ContainerSetContentListener implements ByteBufferPacketListen
         boolean changed = false;
         for (int i = 0; i < listSize; i++) {
             Item item = PacketUtils.readItem(buf);
-            Optional<Item> optional = BukkitItemManager.instance().s2c(item, serverPlayer);
+            Optional<Item> optional = BukkitItemManager.instance().s2c(item, serverPlayer, ItemPacketSource.CONTAINER);
             if (optional.isPresent()) {
                 items.add(optional.get());
                 changed = true;
@@ -41,7 +42,7 @@ public final class ContainerSetContentListener implements ByteBufferPacketListen
         }
         Item carriedItem = PacketUtils.readItem(buf);
         Item newCarriedItem = carriedItem;
-        Optional<Item> optional = BukkitItemManager.instance().s2c(carriedItem, serverPlayer);
+        Optional<Item> optional = BukkitItemManager.instance().s2c(carriedItem, serverPlayer, ItemPacketSource.CONTAINER);
         if (optional.isPresent()) {
             changed = true;
             newCarriedItem = optional.get();

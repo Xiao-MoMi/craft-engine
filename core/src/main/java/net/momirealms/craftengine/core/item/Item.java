@@ -12,6 +12,7 @@ import net.momirealms.craftengine.core.item.component.value.FireworkExplosion;
 import net.momirealms.craftengine.core.item.component.value.JukeboxPlayable;
 import net.momirealms.craftengine.core.item.component.value.Trim;
 import net.momirealms.craftengine.core.item.customdata.CustomDataSerializers;
+import net.momirealms.craftengine.core.item.network.ItemPacketSource;
 import net.momirealms.craftengine.core.item.processor.ItemProcessor;
 import net.momirealms.craftengine.core.item.setting.value.EquipmentData;
 import net.momirealms.craftengine.core.plugin.CraftEngine;
@@ -78,6 +79,11 @@ public interface Item extends ChainParameterSource {
 
     default Item toClientSide(Player player) {
         Optional<Item> item = CraftEngine.instance().itemManager().s2c(this, player);
+        return item.orElse(this);
+    }
+
+    default Item toClientSide(Player player, ItemPacketSource source) {
+        Optional<Item> item = CraftEngine.instance().itemManager().s2c(this, player, source);
         return item.orElse(this);
     }
 

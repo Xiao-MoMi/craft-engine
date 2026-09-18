@@ -5,6 +5,7 @@ import net.momirealms.craftengine.bukkit.item.BukkitItemManager;
 import net.momirealms.craftengine.bukkit.plugin.network.BukkitNetworkManager;
 import net.momirealms.craftengine.core.entity.player.Player;
 import net.momirealms.craftengine.core.item.Item;
+import net.momirealms.craftengine.core.item.network.ItemPacketSource;
 import net.momirealms.craftengine.core.plugin.config.Config;
 import net.momirealms.craftengine.core.plugin.context.NetworkTextReplaceContext;
 import net.momirealms.craftengine.core.plugin.network.NetWorkUser;
@@ -35,7 +36,7 @@ public final class ShowDialogListener implements ByteBufferPacketListener {
             Dialog dialog = DialogTypes.read((CompoundTag) tag);
             MutableBoolean changed = new MutableBoolean(false);
             dialog.applyClientboundData(item -> {
-                Optional<Item> remapped = BukkitItemManager.instance().s2c(item, player);
+                Optional<Item> remapped = BukkitItemManager.instance().s2c(item, player, ItemPacketSource.DIALOG);
                 if (remapped.isEmpty()) {
                     return item;
                 }

@@ -6,11 +6,13 @@ import net.momirealms.craftengine.bukkit.plugin.user.BukkitServerPlayer;
 import net.momirealms.craftengine.bukkit.util.ItemStackUtils;
 import net.momirealms.craftengine.bukkit.util.PacketUtils;
 import net.momirealms.craftengine.core.item.Item;
+import net.momirealms.craftengine.core.item.network.ItemPacketSource;
 import net.momirealms.craftengine.core.plugin.config.Config;
 import net.momirealms.craftengine.core.plugin.network.NetWorkUser;
 import net.momirealms.craftengine.core.plugin.network.event.NMSPacketEvent;
 import net.momirealms.craftengine.core.plugin.network.listener.NMSPacketListener;
 import net.momirealms.craftengine.proxy.minecraft.network.protocol.game.ClientboundSetEquipmentPacketProxy;
+import net.momirealms.craftengine.proxy.minecraft.world.item.ItemStackProxy;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -29,7 +31,7 @@ public final class NMSSetEquipmentListener implements NMSPacketListener {
         List<Pair<Object, Object>> newSlots = new ArrayList<>(slots.size());
         boolean changed = false;
         for (Pair<Object, Object> slot : slots) {
-            Optional<Item> converted = BukkitItemManager.instance().s2c(ItemStackUtils.wrap(slot.getSecond()).copy(), serverPlayer);
+            Optional<Item> converted = BukkitItemManager.instance().s2c(ItemStackUtils.wrap(ItemStackProxy.INSTANCE.copy(slot.getSecond())), serverPlayer, ItemPacketSource.SET_EQUIPMENT);
             if (converted.isPresent()) {
                 changed = true;
                 newSlots.add(Pair.of(slot.getFirst(), converted.get().minecraftItem()));

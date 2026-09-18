@@ -1,7 +1,5 @@
 package net.momirealms.craftengine.bukkit.util;
 
-import com.github.benmanes.caffeine.cache.Cache;
-import com.github.benmanes.caffeine.cache.Caffeine;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonParseException;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
@@ -15,7 +13,7 @@ import net.momirealms.craftengine.bukkit.item.BukkitItemManager;
 import net.momirealms.craftengine.bukkit.plugin.network.BukkitNetworkManager;
 import net.momirealms.craftengine.bukkit.plugin.user.BukkitServerPlayer;
 import net.momirealms.craftengine.core.item.Item;
-import net.momirealms.craftengine.core.plugin.config.Config;
+import net.momirealms.craftengine.core.item.network.ItemPacketSource;
 import net.momirealms.craftengine.core.plugin.text.component.ComponentProvider;
 import net.momirealms.craftengine.core.plugin.text.component.NBTDataComponentPatch;
 import net.momirealms.craftengine.core.util.AdventureHelper;
@@ -46,10 +44,6 @@ import java.util.Optional;
 
 public final class ComponentUtils {
     public static final Codec<Object> ComponentSerialization$CODEC = VersionHelper.isOrAbove1_20_3 ? ComponentSerializationProxy.INSTANCE.getCodec() : null;
-    // 减少重复序列化开销
-    private static final Cache<JsonElement, Object> JSON_COMPONENT_CACHE = Config.jsonToComponentCacheSize() >= 128 ? Caffeine.newBuilder()
-            .maximumSize(Config.jsonToComponentCacheSize())
-            .build() : null;
 
     private ComponentUtils() {}
 
@@ -62,9 +56,6 @@ public final class ComponentUtils {
     }
 
     public static Object jsonElementToMinecraft(JsonElement json) {
-        if (JSON_COMPONENT_CACHE != null) {
-            return JSON_COMPONENT_CACHE.get(json, ComponentUtils::deserializeJson);
-        }
         return deserializeJson(json);
     }
 
@@ -236,7 +227,7 @@ public final class ComponentUtils {
 
         BukkitItemManager itemManager = BukkitItemManager.instance();
         Item wrap = itemManager.wrap(ItemStackUtils.getBukkitStack(nmsItemStack));
-        Optional<Item> remapped = itemManager.s2c(wrap, player);
+        Optional<Item> remapped = itemManager.s2c(wrap, player, ItemPacketSource.MESSAGE);
         if (remapped.isEmpty()) {
             return showItem;
         }

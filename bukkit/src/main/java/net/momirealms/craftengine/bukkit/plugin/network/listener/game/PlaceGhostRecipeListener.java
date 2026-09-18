@@ -4,6 +4,7 @@ import net.momirealms.craftengine.bukkit.item.BukkitItemManager;
 import net.momirealms.craftengine.bukkit.plugin.user.BukkitServerPlayer;
 import net.momirealms.craftengine.bukkit.util.PacketUtils;
 import net.momirealms.craftengine.core.item.Item;
+import net.momirealms.craftengine.core.item.network.ItemPacketSource;
 import net.momirealms.craftengine.core.plugin.config.Config;
 import net.momirealms.craftengine.core.plugin.network.NetWorkUser;
 import net.momirealms.craftengine.core.plugin.network.event.ByteBufPacketEvent;
@@ -31,7 +32,7 @@ public final class PlaceGhostRecipeListener implements ByteBufferPacketListener 
         int containerId = buf.readContainerId();
         RecipeDisplay display = RecipeDisplay.read(buf, $ -> PacketUtils.readItem(buf));
         display.applyClientboundData(item -> {
-            Optional<Item> remapped = itemManager.s2c(item, player);
+            Optional<Item> remapped = itemManager.s2c(item, player, ItemPacketSource.CONTAINER);
             if (remapped.isEmpty()) {
                 return item;
             }

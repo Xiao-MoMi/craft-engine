@@ -8,6 +8,7 @@ import net.momirealms.craftengine.core.block.BlockKeys;
 import net.momirealms.craftengine.core.block.BlockStateWrapper;
 import net.momirealms.craftengine.core.entity.player.Player;
 import net.momirealms.craftengine.core.item.Item;
+import net.momirealms.craftengine.core.item.network.ItemPacketSource;
 import net.momirealms.craftengine.core.plugin.config.Config;
 import net.momirealms.craftengine.core.plugin.context.NetworkTextReplaceContext;
 import net.momirealms.craftengine.core.plugin.logger.Debugger;
@@ -71,7 +72,7 @@ public final class RegistryDataListener implements ByteBufferPacketListener {
                     Dialog dialog = DialogTypes.read((CompoundTag) dialogTag);
                     MutableBoolean changed = new MutableBoolean(false);
                     dialog.applyClientboundData(item -> {
-                        Optional<Item> remapped = BukkitItemManager.instance().s2c(item, player);
+                        Optional<Item> remapped = BukkitItemManager.instance().s2c(item, player, ItemPacketSource.DIALOG);
                         if (remapped.isEmpty()) {
                             return item;
                         }

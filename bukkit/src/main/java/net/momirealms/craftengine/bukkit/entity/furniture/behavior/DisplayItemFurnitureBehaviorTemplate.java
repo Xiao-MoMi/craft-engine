@@ -96,7 +96,7 @@ public final class DisplayItemFurnitureBehaviorTemplate extends FurnitureBehavio
             CompoundTag displayItem = data.getCompound(Optional.ofNullable(behavior.customDataKey).orElse(DEFAULT_DATA_KEY));
             if (displayItem != null) {
                 int dataVersion = displayItem.getInt("data_version", Config.itemDataFixerUpperFallbackVersion());
-                this.savedItem = ItemStackUtils.wrap(ItemStackUtils.parseMinecraftItem(displayItem, dataVersion));
+                this.savedItem = ItemStackUtils.wrap(ItemStackUtils.parseCachedMinecraftItem(displayItem, dataVersion));
             }
         }
 

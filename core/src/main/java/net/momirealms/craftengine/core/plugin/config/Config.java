@@ -63,8 +63,6 @@ public final class Config {
     private boolean misc$hook_axiom_paper;
     private boolean misc$fix_world_memory_leak;
 
-    private int cache$json_to_component = 512;
-
     private boolean scripting$js$enable;
     private String scripting$js$engine;
     private boolean scripting$js$nashorn_compat;
@@ -88,6 +86,7 @@ public final class Config {
     private List<String> resource_pack$merge_external_folders;
     private List<String> resource_pack$merge_external_zips;
     private Set<String> resource_pack$exclude_file_extensions;
+    private boolean resource_pack$cache_resource_files;
     private String resource_pack$description;
 
     private boolean resource_pack$protection$crash_tools$method_1;
@@ -247,6 +246,7 @@ public final class Config {
     private boolean network$intercept_packets$combat_kill;
     private boolean network$intercept_packets$dialog;
     private boolean network$disable_item_operations;
+    private boolean network$minimize_item_packets;
     private boolean network$disable_chat_report;
     private boolean network$mod_channel$requires_permission;
     private boolean network$mod_channel$logging_permission_denied;
@@ -405,11 +405,6 @@ public final class Config {
         this.misc$hook_axiom_paper = config.getBoolean("misc.hook-axiompaper", true);
         this.misc$fix_world_memory_leak = config.getBoolean("misc.fix-world-memory-leak", false);
 
-        // cache，重启后生效
-        if (this.firstTime) {
-            this.cache$json_to_component = Math.max(config.getInt("cache.json-to-component", 512), 0);
-        }
-
         // scripting
         this.scripting$js$enable = config.getBoolean("scripting.js.enable", false);
         this.scripting$js$engine = config.getString("scripting.js.engine", "nashorn");
@@ -447,6 +442,7 @@ public final class Config {
         this.resource_pack$merge_external_folders = config.getStringList("resource-pack.merge-external-folders");
         this.resource_pack$merge_external_zips = config.getStringList("resource-pack.merge-external-zip-files");
         this.resource_pack$exclude_file_extensions = new HashSet<>(config.getStringList("resource-pack.exclude-file-extensions"));
+        this.resource_pack$cache_resource_files = config.getBoolean("resource-pack.cache-resource-files", true);
         this.resource_pack$delivery$send_on_join = config.getBoolean("resource-pack.delivery.send-on-join", true);
         this.resource_pack$delivery$kick_if_declined = config.getBoolean("resource-pack.delivery.kick-if-declined", true);
         this.resource_pack$delivery$kick_if_failed_to_apply = config.getBoolean("resource-pack.delivery.kick-if-failed-to-apply", true);
@@ -570,7 +566,7 @@ public final class Config {
         this.chunk_system$async_read = config.getBoolean("chunk-system.async-read", true);
 
         if (this.firstTime) {
-            this.chunk_system$injection$target = config.getString("chunk-system.injection.target", "palette").equalsIgnoreCase("palette");
+            this.chunk_system$injection$target = config.getString("chunk-system.injection.target", "palette").equalsIgnoreCase("palette") || (VersionHelper.hasLeafPatch && !VersionHelper.isOrAbove1_21_11);
         }
 
         this.chunk_system$process_invalid_furniture$enable = config.getBoolean("chunk-system.process-invalid-furniture.enable", false);
@@ -793,6 +789,8 @@ public final class Config {
             this.network$performance_mode$entity = config.getBoolean("network.performance-mode.entity", true);
             this.network$performance_mode$text = config.getBoolean("network.performance-mode.text", true);
         }
+
+        this.network$minimize_item_packets = config.getBoolean("network.minimize-item-packets", false);
         this.network$disable_item_operations = config.getBoolean("network.disable-item-operations", false);
         this.network$intercept_packets$system_chat = config.getBoolean("network.intercept-packets.system-chat", true);
         this.network$intercept_packets$tab_list = config.getBoolean("network.intercept-packets.tab-list", true);
@@ -906,10 +904,6 @@ public final class Config {
 
     public static boolean fixWorldMemoryLeak() {
         return instance.misc$fix_world_memory_leak;
-    }
-
-    public static int jsonToComponentCacheSize() {
-        return instance.cache$json_to_component;
     }
 
     public static boolean debugCommon() {
@@ -1082,6 +1076,10 @@ public final class Config {
 
     public static Set<String> excludeFileExtensions() {
         return instance.resource_pack$exclude_file_extensions;
+    }
+
+    public static boolean cacheResourceFiles() {
+        return instance.resource_pack$cache_resource_files;
     }
 
     public static boolean kickOnDeclined() {
@@ -1341,6 +1339,10 @@ public final class Config {
 
     public static boolean disableItemOperations() {
         return instance.network$disable_item_operations;
+    }
+
+    public static boolean minimizeItems() {
+        return instance.network$minimize_item_packets;
     }
 
     public static boolean nettyPerformanceModeItem() {

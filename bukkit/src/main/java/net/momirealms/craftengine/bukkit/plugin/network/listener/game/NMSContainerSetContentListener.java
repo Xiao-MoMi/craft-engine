@@ -6,6 +6,7 @@ import net.momirealms.craftengine.bukkit.plugin.user.BukkitServerPlayer;
 import net.momirealms.craftengine.bukkit.util.ItemStackUtils;
 import net.momirealms.craftengine.bukkit.util.PacketUtils;
 import net.momirealms.craftengine.core.item.Item;
+import net.momirealms.craftengine.core.item.network.ItemPacketSource;
 import net.momirealms.craftengine.core.plugin.config.Config;
 import net.momirealms.craftengine.core.plugin.network.NetWorkUser;
 import net.momirealms.craftengine.core.plugin.network.event.NMSPacketEvent;
@@ -38,7 +39,7 @@ public final class NMSContainerSetContentListener implements NMSPacketListener {
                 continue;
             }
             BukkitItem item = ItemStackUtils.wrap(raw);
-            Optional<Item> optional = BukkitItemManager.instance().s2c(item.copy(), serverPlayer);
+            Optional<Item> optional = BukkitItemManager.instance().s2c(item.copy(), serverPlayer, ItemPacketSource.CONTAINER);
             if (optional.isPresent()) {
                 newItems.add(i, optional.get().minecraftItem());
                 changed = true;
@@ -50,7 +51,7 @@ public final class NMSContainerSetContentListener implements NMSPacketListener {
         Object newCarriedItem = rawCarried;
         Item carriedItem = ItemStackUtils.wrap(rawCarried);
         if (!carriedItem.isEmpty()) {
-            Optional<Item> optional = BukkitItemManager.instance().s2c(carriedItem.copy(), serverPlayer);
+            Optional<Item> optional = BukkitItemManager.instance().s2c(carriedItem.copy(), serverPlayer, ItemPacketSource.CONTAINER);
             if (optional.isPresent()) {
                 changed = true;
                 newCarriedItem = optional.get().minecraftItem();

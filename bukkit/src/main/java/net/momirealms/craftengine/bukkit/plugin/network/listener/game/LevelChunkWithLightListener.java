@@ -1,6 +1,7 @@
 package net.momirealms.craftengine.bukkit.plugin.network.listener.game;
 
 import io.netty.buffer.PooledByteBufAllocator;
+import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import net.momirealms.craftengine.bukkit.entity.furniture.behavior.GlowingFurnitureBehaviorTemplate;
 import net.momirealms.craftengine.bukkit.plugin.user.BukkitServerPlayer;
 import net.momirealms.craftengine.core.entity.player.Player;
@@ -28,8 +29,11 @@ import net.momirealms.craftengine.core.world.chunk.packet.GlobalPaletteSection;
 import net.momirealms.craftengine.core.world.chunk.packet.LocalPaletteSection;
 import net.momirealms.craftengine.core.world.chunk.packet.PacketSection;
 import net.momirealms.craftengine.core.world.chunk.packet.SingleValueSection;
+import net.momirealms.sparrow.nbt.CompoundTag;
 
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 import java.util.function.IntPredicate;
 
 public final class LevelChunkWithLightListener implements ByteBufferPacketListener {
@@ -163,8 +167,31 @@ public final class LevelChunkWithLightListener implements ByteBufferPacketListen
             }
         }
 
-        // 只有被修改了才改写; 高度图与尾部数据(方块实体/光照)原样透传, 不做解析
-        if (hasChanges || (needsBitWidthConversion && hasGlobalPalette)) {
+        // 区块加载路径的容器方块实体(shelf等)不会另行发包,必须在这里应用物品客户端侧组件
+        boolean named = !VersionHelper.isOrAbove1_20_2;
+        boolean blockEntityChanged = false;
+        List<ParsedBlockEntity> blockEntities = null;
+        int blockEntityStart = 0;
+        int blockEntityLength = 0;
+        if (Config.interceptItem()) {
+            blockEntityStart = buf.readerIndex();
+            int blockEntityCount = buf.readVarInt();
+            blockEntities = new ObjectArrayList<>(blockEntityCount);
+            for (int i = 0; i < blockEntityCount; i++) {
+                byte packedXZ = buf.readByte();
+                short y = buf.readShort();
+                int typeId = buf.readVarInt();
+                CompoundTag tag = (CompoundTag) buf.readNbt(named);
+                if (BlockEntityDataListener.processItemsTag(player, tag)) {
+                    blockEntityChanged = true;
+                }
+                blockEntities.add(new ParsedBlockEntity(packedXZ, y, typeId, tag));
+            }
+            blockEntityLength = buf.readerIndex() - blockEntityStart;
+        }
+
+        // 只有被修改了才改写; 光照数据原样透传, 不做解析
+        if (hasChanges || blockEntityChanged || (needsBitWidthConversion && hasGlobalPalette)) {
             int tailLength = buf.readableBytes();
             // 高度图
             FriendlyByteBuf staging = new FriendlyByteBuf(PooledByteBufAllocator.DEFAULT.buffer(heightmapsLength + chunkDataBufferSize + 16 + tailLength));
@@ -177,6 +204,17 @@ public final class LevelChunkWithLightListener implements ByteBufferPacketListen
                 }
                 // 其他数据
                 int newChunkDataLength = staging.writerIndex() - writtenHeightmapsLength;
+                if (blockEntities != null) {
+                    // 未变化时按原始字节原样拷贝,避免NBT重序列化
+                    if (blockEntityChanged) {
+                        staging.writeVarInt(blockEntities.size());
+                        for (int i = 0; i < blockEntities.size(); i++) {
+                            blockEntities.get(i).write(staging, named);
+                        }
+                    } else {
+                        staging.writeBytes(buf, blockEntityStart, blockEntityLength);
+                    }
+                }
                 staging.writeBytes(buf, tailLength);
 
                 // 开始修改
@@ -205,6 +243,15 @@ public final class LevelChunkWithLightListener implements ByteBufferPacketListen
                 // 生成方块实体
                 ceChunk.spawnBlockEntities(player);
             }
+        }
+    }
+
+    private record ParsedBlockEntity(byte packedXZ, short y, int typeId, CompoundTag tag) {
+        void write(FriendlyByteBuf buf, boolean named) {
+            buf.writeByte(this.packedXZ);
+            buf.writeShort(this.y);
+            buf.writeVarInt(this.typeId);
+            buf.writeNbt(this.tag, named);
         }
     }
 

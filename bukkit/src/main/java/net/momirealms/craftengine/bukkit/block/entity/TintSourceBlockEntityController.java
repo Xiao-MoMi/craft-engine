@@ -35,7 +35,7 @@ public final class TintSourceBlockEntityController extends BlockEntityController
     public void saveCustomData(CompoundTag tag) {
         if (ItemUtils.isEmpty(sourceItem)) return;
         CompoundTag data = new CompoundTag();
-        data.put("data_version", new IntTag(VersionHelper.WORLD_VERSION));
+        data.put("data_version", IntTag.valueOf(VersionHelper.WORLD_VERSION));
         data.put("tint_source_item", ItemStackUtils.saveMinecraftItemStackAsTag(this.sourceItem.minecraftItem()));
         tag.put(behavior.customDataKey, data);
     }
@@ -53,7 +53,7 @@ public final class TintSourceBlockEntityController extends BlockEntityController
             this.sourceItem = Item.empty();
             return;
         }
-        this.sourceItem = ItemStackUtils.wrap(ItemStackUtils.parseMinecraftItem(itemTag, dataVersion));
+        this.sourceItem = ItemStackUtils.wrap(ItemStackUtils.parseCachedMinecraftItem(itemTag, dataVersion));
     }
 
     @Override

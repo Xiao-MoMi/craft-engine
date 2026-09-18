@@ -19,6 +19,7 @@ import net.momirealms.craftengine.core.entity.player.Player;
 import net.momirealms.craftengine.core.item.*;
 import net.momirealms.craftengine.core.item.component.DataComponentKeys;
 import net.momirealms.craftengine.core.item.network.ItemModelMappings;
+import net.momirealms.craftengine.core.item.network.ItemPacketSource;
 import net.momirealms.craftengine.core.item.network.NetworkItemHandler;
 import net.momirealms.craftengine.core.item.processor.ItemProcessor;
 import net.momirealms.craftengine.core.item.recipe.DatapackRecipeResult;
@@ -105,8 +106,8 @@ public final class BukkitItemManager extends AbstractItemManager {
         this.loadItemModelMappings();
         this.emptyItem = wrap(ItemStackProxy.EMPTY);
         this.deserializedItemCache = Caffeine.newBuilder()
-                .maximumSize(4096)
-                .expireAfterAccess(Duration.of(10, ChronoUnit.MINUTES))
+                .maximumSize(8192)
+                .expireAfterAccess(Duration.of(15, ChronoUnit.MINUTES))
                 .scheduler(Scheduler.systemScheduler())
                 .executor(this.plugin.scheduler().async())
                 .build();
@@ -192,7 +193,13 @@ public final class BukkitItemManager extends AbstractItemManager {
     @Override
     public Optional<Item> s2c(Item item, @Nullable Player player) {
         if (item.isEmpty()) return Optional.empty();
-        return this.networkItemHandler.s2c(item, player);
+        return this.networkItemHandler.s2c(item, player, ItemPacketSource.GENERIC);
+    }
+
+    @Override
+    public Optional<Item> s2c(Item item, @Nullable Player player, ItemPacketSource source) {
+        if (item.isEmpty()) return Optional.empty();
+        return this.networkItemHandler.s2c(item, player, source);
     }
 
     @Override
@@ -203,7 +210,12 @@ public final class BukkitItemManager extends AbstractItemManager {
 
     public Optional<ItemStack> s2c(ItemStack item, Player player) {
         if (ItemStackUtils.isEmpty(item)) return Optional.empty();
-        return this.networkItemHandler.s2c(wrap(item), player).map(ItemStackUtils::getBukkitStack);
+        return this.networkItemHandler.s2c(wrap(item), player, ItemPacketSource.GENERIC).map(ItemStackUtils::getBukkitStack);
+    }
+
+    public Optional<ItemStack> s2c(ItemStack item, Player player, ItemPacketSource source) {
+        if (ItemStackUtils.isEmpty(item)) return Optional.empty();
+        return this.networkItemHandler.s2c(wrap(item), player, source).map(ItemStackUtils::getBukkitStack);
     }
 
     public Optional<ItemStack> c2s(ItemStack item) {
@@ -517,7 +529,7 @@ public final class BukkitItemManager extends AbstractItemManager {
 
     @Override
     public Item fromNBT(CompoundTag tag) {
-        return wrap(ItemStackUtils.parseMinecraftItem(tag, VersionHelper.WORLD_VERSION));
+        return wrap(ItemStackUtils.parseCachedMinecraftItem(tag, VersionHelper.WORLD_VERSION));
     }
 
     @Deprecated

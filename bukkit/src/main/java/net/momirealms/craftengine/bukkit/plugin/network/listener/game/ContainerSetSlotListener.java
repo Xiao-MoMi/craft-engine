@@ -4,6 +4,7 @@ import net.momirealms.craftengine.bukkit.item.BukkitItemManager;
 import net.momirealms.craftengine.bukkit.plugin.user.BukkitServerPlayer;
 import net.momirealms.craftengine.bukkit.util.PacketUtils;
 import net.momirealms.craftengine.core.item.Item;
+import net.momirealms.craftengine.core.item.network.ItemPacketSource;
 import net.momirealms.craftengine.core.plugin.config.Config;
 import net.momirealms.craftengine.core.plugin.network.NetWorkUser;
 import net.momirealms.craftengine.core.plugin.network.event.ByteBufPacketEvent;
@@ -30,7 +31,7 @@ public final class ContainerSetSlotListener implements ByteBufferPacketListener 
             // 其他插件干的，发送了非法的物品
             return;
         }
-        BukkitItemManager.instance().s2c(itemStack, serverPlayer).ifPresent((newItemStack) -> {
+        BukkitItemManager.instance().s2c(itemStack, serverPlayer, ItemPacketSource.CONTAINER).ifPresent((newItemStack) -> {
             event.setChanged(true);
             buf.clear();
             buf.writeVarInt(event.packetID());

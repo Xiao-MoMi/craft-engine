@@ -3,6 +3,7 @@ package net.momirealms.craftengine.core.plugin.network.mod.protocol;
 import net.momirealms.craftengine.core.entity.player.Player;
 import net.momirealms.craftengine.core.item.Item;
 import net.momirealms.craftengine.core.item.ItemManager;
+import net.momirealms.craftengine.core.item.network.ItemPacketSource;
 import net.momirealms.craftengine.core.plugin.CraftEngine;
 import net.momirealms.craftengine.core.plugin.config.Config;
 import net.momirealms.craftengine.core.plugin.network.codec.NetworkCodec;
@@ -47,7 +48,7 @@ public record ClientboundCreativeModeTabItemsPacket(Action action, List<Item> it
             if (itemManager.isVanillaItem(itemId)) continue;
             Item item = Item.byId(itemId, player);
             if (item == null) continue;
-            itemStacks.add(itemManager.s2c(item, player).orElse(item));
+            itemStacks.add(itemManager.s2c(item, player, ItemPacketSource.GENERIC).orElse(item));
         }
         List<ClientboundCreativeModeTabItemsPacket> packets = new ArrayList<>();
         boolean first = true;

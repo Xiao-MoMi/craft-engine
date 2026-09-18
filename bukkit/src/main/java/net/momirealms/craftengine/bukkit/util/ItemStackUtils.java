@@ -1,5 +1,8 @@
 package net.momirealms.craftengine.bukkit.util;
 
+import com.github.benmanes.caffeine.cache.Cache;
+import com.github.benmanes.caffeine.cache.Caffeine;
+import com.github.benmanes.caffeine.cache.Scheduler;
 import com.mojang.serialization.Dynamic;
 import net.momirealms.craftengine.bukkit.api.BukkitAdaptor;
 import net.momirealms.craftengine.bukkit.item.BukkitItem;
@@ -32,10 +35,19 @@ import org.bukkit.inventory.ItemStack;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.Nullable;
 
+import java.time.Duration;
+import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.List;
 
 public final class ItemStackUtils {
+    private static final Cache<VersionedItemTag, Object> ITEM_PARSER_CACHE = Caffeine.newBuilder()
+            .maximumSize(8192)
+            .expireAfterAccess(Duration.of(15, ChronoUnit.MINUTES))
+            .scheduler(Scheduler.systemScheduler())
+            .executor(CraftEngine.instance().scheduler().async())
+            .build();
+
     private ItemStackUtils() {}
 
     @Contract("null -> true")
@@ -147,6 +159,15 @@ public final class ItemStackUtils {
     }
 
     @Nullable
+    public static Object parseCachedMinecraftItem(Tag tag, int dataVersion) {
+        Object item = ITEM_PARSER_CACHE.get(new VersionedItemTag(tag, dataVersion), k -> parseMinecraftItem(k.tag, k.dataVersion));
+        if (item == null) {
+            return null;
+        }
+        return ItemStackProxy.INSTANCE.copy(item);
+    }
+
+    @Nullable
     public static Object parseMinecraftItem(Tag tag, int dataVersion) {
         Tag itemTag = tag;
         int currentVersion = VersionHelper.WORLD_VERSION;
@@ -251,5 +272,36 @@ public final class ItemStackUtils {
         Object unwrap = unwrap(itemStack);
         Object item = ItemStackProxy.INSTANCE.getItem(unwrap);
         return ItemProxy.INSTANCE.getDescriptionId(item);
+    }
+
+    public static class VersionedItemTag {
+        public final Tag tag;
+        public final int dataVersion;
+
+        public VersionedItemTag(Tag tag, int dataVersion) {
+            this.tag = tag;
+            this.dataVersion = dataVersion;
+        }
+
+        public Tag tag() {
+            return this.tag;
+        }
+
+        public int dataVersion() {
+            return this.dataVersion;
+        }
+
+        @Override
+        public boolean equals(Object obj) {
+            if (obj instanceof VersionedItemTag versionedItemTag) {
+                return this.tag.equals(versionedItemTag.tag) && this.dataVersion == versionedItemTag.dataVersion;
+            }
+            return false;
+        }
+
+        @Override
+        public int hashCode() {
+            return this.tag.hashCode();
+        }
     }
 }

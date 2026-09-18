@@ -3,6 +3,7 @@ package net.momirealms.craftengine.core.item.processor.lore;
 import net.momirealms.craftengine.core.item.Item;
 import net.momirealms.craftengine.core.item.ItemBuildContext;
 import net.momirealms.craftengine.core.item.component.DataComponentKeys;
+import net.momirealms.craftengine.core.item.network.ItemPacketSource;
 import net.momirealms.craftengine.core.item.network.NetworkItemBuildContext;
 import net.momirealms.craftengine.core.item.processor.ItemProcessorFactory;
 import net.momirealms.craftengine.core.item.processor.SimpleNetworkItemProcessor;
@@ -17,6 +18,11 @@ public final class OverwritableLoreProcessor implements SimpleNetworkItemProcess
 
     public OverwritableLoreProcessor(LoreProcessor loreProcessor) {
         this.loreProcessor = loreProcessor;
+    }
+
+    @Override
+    public boolean shouldSkip(ItemPacketSource source) {
+        return source.canSkipLore;
     }
 
     @Override

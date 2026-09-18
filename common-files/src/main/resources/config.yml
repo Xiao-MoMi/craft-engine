@@ -89,6 +89,8 @@ resource-pack:
     - "CustomNameplates/resourcepack.zip"
     - "BetterModel/build.zip"
   exclude-file-extensions: [ "md", "psd", "bbmodel", "db", "ini", "DS_Store", "zip", "gz", "tar", "jar" ]
+  # Cache the resource files in memory to speed up pack generation.
+  cache-resource-files: true
 
   # Remove 1.21.5+ tinted_leaves particles
   remove-tinted-leaves-particle: true
@@ -362,7 +364,7 @@ equipment:
   # If you do not need to use 3D armor, you can disable this option to reduce memory usage.
   # A restart is required to apply the changes.
   lod:
-    enable: true
+    enable: false
 
 block:
   # This decides the amount of real blocks on serverside. You should only consider increasing this value when your server state is insufficient.
@@ -527,13 +529,17 @@ network:
   disable-item-operations: false
 
   # Use the most optimized solution possible in every place to reduce Netty's CPU overhead and memory allocation.
-  # If you encounter any problems or find that it is incompatible with the plugins you are using, please let us know.
+  # This essentially involves processing packets at the NMS packet stage, rather than at the ByteBuffer stage.
+  # Some plugins do not send packets through the standard NMS packet approach in order to optimize their packet-sending performance.
+  # Therefore, when optimization is enabled, not all packets can be intercepted by CraftEngine.
   # Requires a restart to apply.
   performance-mode:
-    # Handle item packets on the NMS stage instead of the bytebuf stage
     item: true
-    # Handle entity data packets on the NMS stage instead of the bytebuf stage
     entity: true
+
+  # Some components are completely useless for display, yet Minecraft still encodes them. We can simply remove them.
+  # For example, the client doesn't care at all about the description on the other player's armor.
+  minimize-item-packets: false
 
   # Allow <image> <shift> <global> tags in third-party plugins via packet manipulation
   # ⚠️ Disable unused handlers to reduce Netty thread workload
@@ -848,12 +854,6 @@ misc:
   # There are many plugins that can cause world leaks, eventually leading to a large number of chunks being leaked.
   # Enabling this option can mitigate the world leak issues caused by most plugins.
   fix-world-memory-leak: false
-
-cache:
-  # Maximum number of deserialized components kept in the cache, avoiding repeated JSON parsing of identical text.
-  # Higher values use more memory. 0 disables the cache.
-  # Requires a restart to apply.
-  json-to-component: 512
 
 debug:
   common: false

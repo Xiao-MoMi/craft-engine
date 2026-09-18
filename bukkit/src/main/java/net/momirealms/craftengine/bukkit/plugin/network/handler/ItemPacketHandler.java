@@ -9,6 +9,7 @@ import net.momirealms.craftengine.bukkit.util.*;
 import net.momirealms.craftengine.core.entity.player.Player;
 import net.momirealms.craftengine.core.item.Item;
 import net.momirealms.craftengine.core.item.ItemDefinition;
+import net.momirealms.craftengine.core.item.network.ItemPacketSource;
 import net.momirealms.craftengine.core.item.setting.ItemSettings;
 import net.momirealms.craftengine.core.plugin.config.Config;
 import net.momirealms.craftengine.core.plugin.context.ContextHolder;
@@ -53,7 +54,7 @@ public final class ItemPacketHandler implements EntityPacketHandler {
 
                 // 性能模式下 nms 监听器已经转换过，这里已经是客户端侧物品
                 if (!Config.nettyPerformanceModeEntity()) {
-                    Optional<ItemStack> optional = BukkitItemManager.instance().s2c(itemStack, user);
+                    Optional<ItemStack> optional = BukkitItemManager.instance().s2c(itemStack, user, ItemPacketSource.ENTITY_DATA);
                     if (optional.isPresent()) {
                         changed = true;
                         itemStack = optional.get();

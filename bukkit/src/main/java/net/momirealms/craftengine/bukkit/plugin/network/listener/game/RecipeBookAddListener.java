@@ -4,6 +4,7 @@ import net.momirealms.craftengine.bukkit.item.BukkitItemManager;
 import net.momirealms.craftengine.bukkit.plugin.user.BukkitServerPlayer;
 import net.momirealms.craftengine.bukkit.util.PacketUtils;
 import net.momirealms.craftengine.core.item.Item;
+import net.momirealms.craftengine.core.item.network.ItemPacketSource;
 import net.momirealms.craftengine.core.plugin.config.Config;
 import net.momirealms.craftengine.core.plugin.network.NetWorkUser;
 import net.momirealms.craftengine.core.plugin.network.event.ByteBufPacketEvent;
@@ -32,7 +33,7 @@ public final class RecipeBookAddListener implements ByteBufferPacketListener {
         List<RecipeBookEntry> entries = buf.readCollection(ArrayList::new, byteBuf -> {
             RecipeBookEntry entry = RecipeBookEntry.read(byteBuf, $ -> PacketUtils.readItem(buf));
             entry.applyClientboundData(item -> {
-                Optional<Item> remapped = itemManager.s2c(item, player);
+                Optional<Item> remapped = itemManager.s2c(item, player, ItemPacketSource.RECIPE);
                 if (remapped.isEmpty()) {
                     return item;
                 }

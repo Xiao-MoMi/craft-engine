@@ -303,6 +303,13 @@ debug_get_block_state_registry_id:
     - /craftengine debug get-block-state-registry-id
     - /ce debug get-block-state-registry-id
 
+debug_internal_block_state:
+  enable: true
+  permission: ce.command.debug.internal_block_state
+  usage:
+    - /craftengine debug internal-block-state
+    - /ce debug internal-block-state
+
 debug_get_block_internal_id:
   enable: true
   permission: ce.command.debug.get_block_internal_id

@@ -3,6 +3,7 @@ package net.momirealms.craftengine.core.item;
 import net.momirealms.craftengine.core.entity.player.Player;
 import net.momirealms.craftengine.core.item.behavior.ItemBehavior;
 import net.momirealms.craftengine.core.item.equipment.Equipment;
+import net.momirealms.craftengine.core.item.network.ItemPacketSource;
 import net.momirealms.craftengine.core.item.recipe.DatapackRecipeResult;
 import net.momirealms.craftengine.core.item.updater.ItemUpdateResult;
 import net.momirealms.craftengine.core.pack.model.definition.ModernItemModel;
@@ -90,6 +91,8 @@ public interface ItemManager extends Manageable, ModelGenerator {
     Optional<Item> c2s(Item item);
 
     Optional<Item> s2c(Item item, @Nullable Player player);
+
+    Optional<Item> s2c(Item item, @Nullable Player player, ItemPacketSource source);
 
     Item applyTrim(Item base, Item addition, Item template, Key pattern);
 

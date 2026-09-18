@@ -7,6 +7,7 @@ import net.momirealms.craftengine.bukkit.util.ItemStackUtils;
 import net.momirealms.craftengine.core.entity.player.Player;
 import net.momirealms.craftengine.core.item.Item;
 import net.momirealms.craftengine.core.item.ItemDefinition;
+import net.momirealms.craftengine.core.item.network.ItemPacketSource;
 import net.momirealms.craftengine.core.item.network.NetworkItemBuildContext;
 import net.momirealms.craftengine.core.item.network.NetworkItemHandler;
 import net.momirealms.craftengine.core.item.network.encrypt.ItemCrypto;
@@ -39,6 +40,7 @@ import java.util.function.BiConsumer;
 public final class LegacyNetworkItemHandler implements NetworkItemHandler {
     private static final Object[] DISPLAY_NAME = new Object[]{"display", "Name"};
     private static final Object[] DISPLAY_LORE = new Object[]{"display", "Lore"};
+    private static final BiConsumer<String, CompoundTag> NOOP_PUT = (s, c) -> {};
 
     @Override
     public Optional<Item> c2s(Item wrapped) {
@@ -127,7 +129,7 @@ public final class LegacyNetworkItemHandler implements NetworkItemHandler {
     }
 
     @Override
-    public Optional<Item> s2c(Item wrapped, @Nullable Player player) {
+    public Optional<Item> s2c(Item wrapped, @Nullable Player player, ItemPacketSource source) {
         boolean forceReturn = false;
 
         // 处理收纳袋
@@ -137,7 +139,7 @@ public final class LegacyNetworkItemHandler implements NetworkItemHandler {
             boolean changed = false;
             for (Object tag : (Iterable<?>) bundleContents) {
                 Object previousItem = ItemStackProxy.INSTANCE.of(tag);
-                Optional<ItemStack> itemStack = BukkitItemManager.instance().s2c(ItemStackUtils.getBukkitStack(previousItem), player);
+                Optional<ItemStack> itemStack = BukkitItemManager.instance().s2c(ItemStackUtils.getBukkitStack(previousItem), player, source);
                 if (itemStack.isPresent()) {
                     newItems.add(ItemStackUtils.unwrap(itemStack.get()));
                     changed = true;
@@ -164,7 +166,7 @@ public final class LegacyNetworkItemHandler implements NetworkItemHandler {
                 List<Pair<Byte, Object>> newItems = new ArrayList<>();
                 for (Object tag : (Iterable<?>) itemTags) {
                     Object previousItem = ItemStackProxy.INSTANCE.of(tag);
-                    Optional<ItemStack> itemStack = BukkitItemManager.instance().s2c(ItemStackUtils.getBukkitStack(previousItem), player);
+                    Optional<ItemStack> itemStack = BukkitItemManager.instance().s2c(ItemStackUtils.getBukkitStack(previousItem), player, source);
                     byte slot = ByteTagProxy.INSTANCE.value(CompoundTagProxy.INSTANCE.get(tag, "Slot"));
                     if (itemStack.isPresent()) {
                         newItems.add(Pair.of(slot, ItemStackUtils.unwrap(itemStack.get())));
@@ -193,7 +195,7 @@ public final class LegacyNetworkItemHandler implements NetworkItemHandler {
             if (!Config.interceptItem()) {
                 return forceReturn ? Optional.of(wrapped) : Optional.empty();
             }
-            return new OtherItem(wrapped, forceReturn).process(NetworkTextReplaceContext.of(player));
+            return new OtherItem(wrapped, forceReturn, source).process(NetworkTextReplaceContext.of(player));
         }
 
         // legacy 物品无需保留 original副本，因为不存在组件默认值设定
@@ -209,34 +211,60 @@ public final class LegacyNetworkItemHandler implements NetworkItemHandler {
             if (!Config.interceptItem()) {
                 return forceReturn ? Optional.of(wrapped) : Optional.empty();
             }
-            return new OtherItem(wrapped, forceReturn).process(NetworkTextReplaceContext.of(player));
+            return new OtherItem(wrapped, forceReturn, source).process(NetworkTextReplaceContext.of(player));
         }
 
         // 应用client-bound-data
-        CompoundTag tag = new CompoundTag();
         // 创建context
         NetworkItemBuildContext context = NetworkItemBuildContext.of(player, wrapped);
-        // 准备阶段
-        for (ItemProcessor modifier : customItem.clientBoundProcessors()) {
-            modifier.prepareNetworkItem(context, tag);
+        // 容器外的物品客户端不会回传，无需记录原始数据
+        CompoundTag tag;
+        if (source.requireNetworkTag) {
+            tag = new CompoundTag();
+            for (ItemProcessor modifier : customItem.clientBoundProcessors()) {
+                if (modifier.shouldSkip(source)) continue;
+                modifier.prepareNetworkItem(context, tag);
+            }
+        } else {
+            tag = null;
         }
+        BiConsumer<String, CompoundTag> callback = tag == null ? NOOP_PUT : tag::put;
+        boolean changed = false;
         // 如果拦截物品的描述名称等
         if (Config.interceptItem()) {
-            if (wrapped.hasTag(DISPLAY_NAME)) {
-                processCustomName(wrapped, tag::put, context);
+            if (source.canSkipName) {
+                if (Config.minimizeItems() && wrapped.hasTag(DISPLAY_NAME)) {
+                    wrapped.removeTag(DISPLAY_NAME);
+                    changed = true;
+                }
+            } else {
+                if (wrapped.hasTag(DISPLAY_NAME)) {
+                    changed |= processCustomName(wrapped, callback, context);
+                }
             }
-            if (wrapped.hasTag(DISPLAY_LORE)) {
-                processLore(wrapped, tag::put, context);
+            if (source.canSkipLore) {
+                if (Config.minimizeItems() && wrapped.hasTag(DISPLAY_LORE)) {
+                    wrapped.removeTag(DISPLAY_LORE);
+                    changed = true;
+                }
+            } else {
+                if (wrapped.hasTag(DISPLAY_LORE)) {
+                    changed |= processLore(wrapped, callback, context);
+                }
             }
         }
         // 应用阶段
         for (ItemProcessor modifier : customItem.clientBoundProcessors()) {
+            if (modifier.shouldSkip(source)) continue;
+            changed = true;
             modifier.apply(context);
         }
         wrapped = context.item();
         // 如果tag不空，则需要返回
-        if (!tag.isEmpty()) {
+        if (tag != null && !tag.isEmpty()) {
             wrapped.setTag(ItemCrypto.encrypt(tag), NETWORK_ITEM_TAG);
+            forceReturn = true;
+        } else if (changed) {
             forceReturn = true;
         }
         return forceReturn ? Optional.of(wrapped) : Optional.empty();
@@ -286,24 +314,43 @@ public final class LegacyNetworkItemHandler implements NetworkItemHandler {
 
     static class OtherItem {
         private final Item item;
+        private final boolean forceReturn;
+        private final ItemPacketSource source;
         private boolean globalChanged = false;
         private CompoundTag networkTag;
-        private final boolean forceReturn;
 
-        public OtherItem(Item item, boolean forceReturn) {
+        public OtherItem(Item item, boolean forceReturn, ItemPacketSource source) {
             this.item = item;
             this.forceReturn = forceReturn;
+            this.source = source;
         }
 
         public Optional<Item> process(Context context) {
-            if (processLore(this.item, (s, c) -> networkTag().put(s, c), context)) {
-                this.globalChanged = true;
+            BiConsumer<String, CompoundTag> callback = this.source.requireNetworkTag ? (s, c) -> networkTag().put(s, c) : NOOP_PUT;
+            if (this.source.canSkipLore) {
+                if (Config.minimizeItems() && this.item.hasTag(DISPLAY_LORE)) {
+                    this.item.removeTag(DISPLAY_LORE);
+                    this.globalChanged = true;
+                }
+            } else {
+                if (processLore(this.item, callback, context)) {
+                    this.globalChanged = true;
+                }
             }
-            if (processCustomName(this.item, (s, c) -> networkTag().put(s, c), context)) {
-                this.globalChanged = true;
+            if (this.source.canSkipName) {
+                if (Config.minimizeItems() && this.item.hasTag(DISPLAY_NAME)) {
+                    this.item.removeTag(DISPLAY_NAME);
+                    this.globalChanged = true;
+                }
+            } else {
+                if (processCustomName(this.item, callback, context)) {
+                    this.globalChanged = true;
+                }
             }
             if (this.globalChanged) {
-                this.item.setTag(ItemCrypto.encrypt(this.networkTag), NETWORK_ITEM_TAG);
+                if (this.networkTag != null) {
+                    this.item.setTag(ItemCrypto.encrypt(this.networkTag), NETWORK_ITEM_TAG);
+                }
                 return Optional.of(this.item);
             } else if (this.forceReturn) {
                 return Optional.of(this.item);

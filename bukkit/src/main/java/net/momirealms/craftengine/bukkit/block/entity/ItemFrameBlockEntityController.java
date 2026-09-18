@@ -76,7 +76,7 @@ public final class ItemFrameBlockEntityController extends BlockEntityController 
             int dataVersion = dataTag.getInt("data_version", VersionHelper.WORLD_VERSION);
             Tag itemTag = dataTag.get("item");
             if (itemTag == null) return;
-            Object itemStack = ItemStackUtils.parseMinecraftItem(itemTag, dataVersion);
+            Object itemStack = ItemStackUtils.parseCachedMinecraftItem(itemTag, dataVersion);
             if (itemStack == null) return;
             this.itemStack = itemStack;
         } else {
@@ -85,7 +85,7 @@ public final class ItemFrameBlockEntityController extends BlockEntityController 
             if (oldItemTag == null) return;
             this.rotation = tag.getInt("rotation");
             int dataVersion = tag.getInt("data_version", Config.itemDataFixerUpperFallbackVersion());
-            Object itemStack = ItemStackUtils.parseMinecraftItem(oldItemTag, dataVersion);
+            Object itemStack = ItemStackUtils.parseCachedMinecraftItem(oldItemTag, dataVersion);
             if (itemStack == null) return;
             this.itemStack = itemStack;
         }

@@ -7,6 +7,7 @@ import net.momirealms.craftengine.bukkit.plugin.user.BukkitServerPlayer;
 import net.momirealms.craftengine.bukkit.util.PacketUtils;
 import net.momirealms.craftengine.core.entity.player.Player;
 import net.momirealms.craftengine.core.item.Item;
+import net.momirealms.craftengine.core.item.network.ItemPacketSource;
 import net.momirealms.craftengine.core.plugin.config.Config;
 import net.momirealms.craftengine.core.plugin.network.EntityPacketHandler;
 import net.momirealms.craftengine.core.plugin.network.event.ByteBufPacketEvent;
@@ -61,6 +62,6 @@ public class EquipmentPacketHandler implements EntityPacketHandler {
 
     protected Optional<Item> convertEquipment(Player player, int entityId, int slot, Item item) {
         EquipmentLodTracker tracker = ((BukkitServerPlayer) player).equipmentLod();
-        return tracker == null ? BukkitItemManager.instance().s2c(item, player) : tracker.equipment(entityId, slot, item);
+        return tracker == null ? BukkitItemManager.instance().s2c(item, player, ItemPacketSource.SET_EQUIPMENT) : tracker.equipment(entityId, slot, item);
     }
 }
