@@ -529,13 +529,14 @@ network:
   disable-item-operations: false
 
   # Use the most optimized solution possible in every place to reduce Netty's CPU overhead and memory allocation.
-  # If you encounter any problems or find that it is incompatible with the plugins you are using, please let us know.
+  # This essentially involves processing packets at the NMS packet stage, rather than at the ByteBuffer stage.
+  # Some plugins do not send packets through the standard NMS packet approach in order to optimize their packet-sending performance.
+  # Therefore, when optimization is enabled, not all packets can be intercepted by CraftEngine.
   # Requires a restart to apply.
   performance-mode:
-    # Handle item packets on the NMS stage instead of the bytebuf stage
     item: true
-    # Handle entity data packets on the NMS stage instead of the bytebuf stage
     entity: true
+    text: true
 
   # Some components are completely useless for display, yet Minecraft still encodes them. We can simply remove them.
   # For example, the client doesn't care at all about the description on the other player's armor.

@@ -566,7 +566,7 @@ public final class Config {
         this.chunk_system$async_read = config.getBoolean("chunk-system.async-read", true);
 
         if (this.firstTime) {
-            this.chunk_system$injection$target = config.getString("chunk-system.injection.target", "palette").equalsIgnoreCase("palette");
+            this.chunk_system$injection$target = config.getString("chunk-system.injection.target", "palette").equalsIgnoreCase("palette") || (VersionHelper.hasLeafPatch && !VersionHelper.isOrAbove1_21_11);
         }
 
         this.chunk_system$process_invalid_furniture$enable = config.getBoolean("chunk-system.process-invalid-furniture.enable", false);
