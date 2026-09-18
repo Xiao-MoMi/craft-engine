@@ -536,7 +536,6 @@ network:
   performance-mode:
     item: true
     entity: true
-    text: true
 
   # Some components are completely useless for display, yet Minecraft still encodes them. We can simply remove them.
   # For example, the client doesn't care at all about the description on the other player's armor.
