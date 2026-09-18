@@ -4,7 +4,7 @@ public final class ItemPacketSource {
     public static final ItemPacketSource GENERIC = builder("generic").requireNetworkTag().build();
     public static final ItemPacketSource MESSAGE = builder("message").build();
     public static final ItemPacketSource ENTITY_DATA = builder("entity_data").skipLore().build();
-    public static final ItemPacketSource SET_EQUIPMENT = builder("set_equipment").skipLore().skipName().build();
+    public static final ItemPacketSource SET_EQUIPMENT = builder("set_equipment").skipLore().build();
     public static final ItemPacketSource CONTAINER = builder("container").requireNetworkTag().build();
     public static final ItemPacketSource DIALOG = builder("dialog").build();
     public static final ItemPacketSource BLOCK_ENTITY = builder("block_entity").skipLore().build();
