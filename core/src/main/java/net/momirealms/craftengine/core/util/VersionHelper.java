@@ -200,7 +200,7 @@ public final class VersionHelper {
     }
 
     private static boolean checkLeaf() {
-        return exists("org.dreeam.leaf.config.LeafConfig");
+        return exists("org.dreeam.leaf.config.LeafConfig") || exists("org.dreeam.leaf.async.chunk.AsyncChunkSender");
     }
 
     private static boolean checkLithium() {
