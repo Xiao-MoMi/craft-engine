@@ -82,13 +82,31 @@ public interface LevelChunkSectionProxy {
     @FieldSetter(name = "knownBlockCollisionData", activeIf = "max_version=1.20.1")
     void setKnownBlockCollisionData(Object target, long[] knownBlockCollisionData);
 
-    @FieldGetter(name = "fluidCount", activeIf = "min_version=26.1 || (has_patch=leaf && min_version=1.21.11)", optional = true)
+    @FieldGetter(name = "fluidCount", optional = true)
     default short getFluidCount(Object target) {
         return 0;
     }
 
-    @FieldSetter(name = "fluidCount", activeIf = "min_version=26.1 || (has_patch=leaf && min_version=1.21.11)", optional = true)
+    @FieldSetter(name = "fluidCount", optional = true)
     default void setFluidCount(Object target, short fluidCount) {
+    }
+
+    @FieldGetter(name = "lavaFluids", optional = true)
+    default short getLavaFluids(Object target) {
+        return 0;
+    }
+
+    @FieldSetter(name = "lavaFluids", optional = true)
+    default void setLavaFluids(Object target, short lavaFluids) {
+    }
+
+    @FieldGetter(name = "waterFluids", optional = true)
+    default short getWaterFluids(Object target) {
+        return 0;
+    }
+
+    @FieldSetter(name = "waterFluids", optional = true)
+    default void setWaterFluids(Object target, short waterFluids) {
     }
 
     @FieldGetter(name = "isRandomlyTickingBlocksStatus", activeIf = "has_patch=universespigot", optional = true)

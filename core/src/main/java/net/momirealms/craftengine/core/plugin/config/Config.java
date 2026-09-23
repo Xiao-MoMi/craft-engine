@@ -1586,6 +1586,31 @@ public final class Config {
         return instance.item$default_material;
     }
 
+    /**
+     * Returns the first ZIP output path in resource pack workflow configuration order.
+     * Absolute paths are used directly; relative paths are resolved against the plugin data folder.
+     * The returned path is absolute and normalized.
+     *
+     * @throws IllegalStateException if no workflow contains a ZIP output step
+     * @deprecated Resource pack workflows can have multiple output paths, so there is no
+     * single resource pack path. Use the output path of the intended workflow instead.
+     */
+    @Deprecated
+    public static Path resourcePackPath() {
+        Object value = YamlUtils.reader(instance.settings()).getValue("resource-pack.workflows");
+        ConfigSection workflows = ConfigSection.of("resource-pack.workflows", value == null ? Map.of() : value);
+        for (String name : workflows.keySet()) {
+            ConfigSection workflow = Objects.requireNonNull(workflows.getValue(name)).getAsSection();
+            for (ConfigSection step : workflow.getList("steps", entry -> entry.value() instanceof String
+                    ? ConfigSection.of(entry.path(), Map.of("type", entry.getAsString())) : entry.getAsSection())) {
+                if (Key.ce(step.getNonEmptyString("type")).equals(Key.ce("zip"))) {
+                    return instance.plugin.dataFolderPath().resolve(step.getNonEmptyString("path")).toAbsolutePath().normalize();
+                }
+            }
+        }
+        throw new IllegalStateException("No resource pack workflow contains a ZIP output step");
+    }
+
     public void setObf(boolean enable) {
         this.resource_pack$protection$obfuscation$enable = enable;
     }
