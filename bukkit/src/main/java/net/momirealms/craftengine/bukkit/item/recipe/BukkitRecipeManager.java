@@ -33,10 +33,6 @@ import net.momirealms.craftengine.proxy.minecraft.server.packs.resources.MultiPa
 import net.momirealms.craftengine.proxy.minecraft.server.packs.resources.ResourceProxy;
 import net.momirealms.craftengine.proxy.minecraft.server.players.PlayerListProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.item.crafting.FireworkStarFadeRecipeProxy;
-import net.momirealms.craftengine.proxy.minecraft.world.item.crafting.IngredientProxy;
-import net.momirealms.craftengine.proxy.minecraft.world.item.crafting.PotionIngredientProxy;
-import net.momirealms.craftengine.proxy.minecraft.world.item.crafting.BrewingRecipeProxy;
-import net.momirealms.craftengine.proxy.minecraft.world.item.ItemStackTemplateProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.item.crafting.RecipeHolderProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.item.crafting.RecipeManagerProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.item.crafting.RecipeTypeProxy;
@@ -240,9 +236,7 @@ public final class BukkitRecipeManager extends AbstractRecipeManager {
             for (CustomBrewingRecipe recipe : this.brewingRecipes) {
                 try {
                     super.recipeRegistry.unregister(recipe.id());
-                    super.recipeRegistry.register(recipe.id(), BrewingRecipeProxy.INSTANCE.newInstance(
-                            brewingIngredient(recipe.container()), brewingIngredient(recipe.ingredient()),
-                            ItemStackTemplateProxy.INSTANCE.fromNonEmptyStack(recipe.result(ItemBuildContext.empty()).minecraftItem())));
+                    super.recipeRegistry.register(recipe.id(), FastNMS.INSTANCE.createBrewingRecipe(recipe));
                 } catch (Exception e) {
                     collector.add(e);
                 }
@@ -265,13 +259,6 @@ public final class BukkitRecipeManager extends AbstractRecipeManager {
         Optional.ofNullable(collector.result()).ifPresent(t -> {
             this.plugin.logger().warn("Failed to load recipes", t);
         });
-    }
-
-    private Object brewingIngredient(Ingredient ingredient) {
-        Object nativeIngredient = FastNMS.INSTANCE.toMinecraftIngredient(ingredient);
-        IngredientProxy.INSTANCE.setStackPredicate(nativeIngredient,
-                stack -> ingredient.test(UniqueIdItem.of(this.plugin.itemManager().wrap(stack))));
-        return PotionIngredientProxy.INSTANCE.newInstance(nativeIngredient, Optional.empty());
     }
 
     @SuppressWarnings({"deprecation", "removal"})
