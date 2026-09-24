@@ -41,7 +41,9 @@ public final class LifecycleCachedStorage implements WorldDataStorage {
     }
 
     public void preload(Entry entry, CEWorld world, ChunkPos pos, @Nullable Chunk access) throws IOException {
-        if (!entry.retired && !this.closed) this.read(entry, world, pos, access);
+        if (!entry.retired && !this.closed) {
+            this.read(entry, world, pos, access);
+        }
     }
 
     private CEChunk read(Entry entry, CEWorld world, ChunkPos pos, @Nullable Chunk access) throws IOException {
@@ -84,22 +86,34 @@ public final class LifecycleCachedStorage implements WorldDataStorage {
     }
 
     @Override
-    public WorldSettings readSettings() throws IOException { return this.storage.readSettings(); }
+    public WorldSettings readSettings() throws IOException {
+        return this.storage.readSettings();
+    }
 
     @Override
-    public void writeSettings(WorldSettings settings) throws IOException { this.storage.writeSettings(settings); }
+    public void writeSettings(WorldSettings settings) throws IOException {
+        this.storage.writeSettings(settings);
+    }
 
     @Override
-    public void writeChunkAt(@NotNull ChunkPos pos, @NotNull CEChunk chunk) throws IOException { this.storage.writeChunkAt(pos, chunk); }
+    public void writeChunkAt(@NotNull ChunkPos pos, @NotNull CEChunk chunk) throws IOException {
+        this.storage.writeChunkAt(pos, chunk);
+    }
 
     @Override
-    public @Nullable CompoundTag readChunkTagAt(@NotNull ChunkPos pos) throws IOException { return this.storage.readChunkTagAt(pos); }
+    public @Nullable CompoundTag readChunkTagAt(@NotNull ChunkPos pos) throws IOException {
+        return this.storage.readChunkTagAt(pos);
+    }
 
     @Override
-    public void writeChunkTagAt(@NotNull ChunkPos pos, @Nullable CompoundTag tag) throws IOException { this.storage.writeChunkTagAt(pos, tag); }
+    public void writeChunkTagAt(@NotNull ChunkPos pos, @Nullable CompoundTag tag) throws IOException {
+        this.storage.writeChunkTagAt(pos, tag);
+    }
 
     @Override
-    public void flush() throws IOException { this.storage.flush(); }
+    public void flush() throws IOException {
+        this.storage.flush();
+    }
 
     @Override
     public void close() throws IOException {
@@ -114,6 +128,8 @@ public final class LifecycleCachedStorage implements WorldDataStorage {
         private volatile CEChunk chunk;
         private volatile boolean retired;
 
-        private Entry(Object owner) { this.owner = owner; }
+        private Entry(Object owner) {
+            this.owner = owner;
+        }
     }
 }

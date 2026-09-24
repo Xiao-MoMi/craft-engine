@@ -49,7 +49,7 @@ public final class RuntimePatcher {
         boolean chunkDataWarmup = VersionHelper.hasPaperPatch && VersionHelper.isOrAbove1_21_4 && Config.enableChunkCache() && Config.enableAsyncChunkRead();
         boolean lifecycle = Config.lifecycleChunkCache();
         if (lifecycle && !chunkDataWarmup) {
-            lifecycleCacheUnavailableReason = "requires Paper/Moonrise 1.21.4+, cache-system=true and async-read=true";
+            lifecycleCacheUnavailableReason = "requires Paper 1.21.4+, cache-system=true and async-read=true";
         }
         if (!registryInjection && !chunkDataWarmup) return;
 
@@ -103,8 +103,7 @@ public final class RuntimePatcher {
         if (chunkCacheAvailabilityChecked) return;
         chunkCacheAvailabilityChecked = true;
         if (Config.lifecycleChunkCache() && !ChunkLifecycleAgent.installed()) {
-            plugin.logger().warn("Lifecycle chunk cache unavailable: " + lifecycleCacheUnavailableReason
-                    + (Config.enableChunkCache() ? "; using timed caching for this startup" : "; chunk caching is disabled"));
+            plugin.logger().warn("Lifecycle chunk cache unavailable: " + lifecycleCacheUnavailableReason + (Config.enableChunkCache() ? "; using timed caching for this startup" : "; chunk caching is disabled"));
         }
     }
 
