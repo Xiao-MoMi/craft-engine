@@ -2,10 +2,10 @@ package net.momirealms.craftengine.proxy.minecraft.tags;
 
 import net.momirealms.craftengine.proxy.minecraft.core.LayeredRegistryAccessProxy;
 import net.momirealms.craftengine.proxy.minecraft.network.FriendlyByteBufProxy;
-import net.momirealms.sparrow.reflection.proxy.ASMProxyFactory;
-import net.momirealms.sparrow.reflection.proxy.annotation.MethodInvoker;
-import net.momirealms.sparrow.reflection.proxy.annotation.FieldGetter;
 import net.momirealms.craftengine.proxy.minecraft.network.codec.StreamCodecProxy;
+import net.momirealms.sparrow.reflection.proxy.ASMProxyFactory;
+import net.momirealms.sparrow.reflection.proxy.annotation.FieldGetter;
+import net.momirealms.sparrow.reflection.proxy.annotation.MethodInvoker;
 import net.momirealms.sparrow.reflection.proxy.annotation.ReflectionProxy;
 import net.momirealms.sparrow.reflection.proxy.annotation.Type;
 

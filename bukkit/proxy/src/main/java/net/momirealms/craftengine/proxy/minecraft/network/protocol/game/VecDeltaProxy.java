@@ -1,7 +1,8 @@
 package net.momirealms.craftengine.proxy.minecraft.network.protocol.game;
 
 import net.momirealms.sparrow.reflection.proxy.ASMProxyFactory;
-import net.momirealms.sparrow.reflection.proxy.annotation.*;
+import net.momirealms.sparrow.reflection.proxy.annotation.ConstructorInvoker;
+import net.momirealms.sparrow.reflection.proxy.annotation.ReflectionProxy;
 
 @ReflectionProxy(name = "net.minecraft.network.protocol.game.VecDelta", activeIf = "min_version=26.3")
 public interface VecDeltaProxy {

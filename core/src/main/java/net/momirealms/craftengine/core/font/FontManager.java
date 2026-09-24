@@ -2,13 +2,13 @@ package net.momirealms.craftengine.core.font;
 
 import net.kyori.adventure.text.Component;
 import net.momirealms.craftengine.core.entity.player.Player;
-import net.momirealms.craftengine.core.plugin.CraftEngine;
 import net.momirealms.craftengine.core.plugin.Manageable;
 import net.momirealms.craftengine.core.plugin.config.Config;
 import net.momirealms.craftengine.core.plugin.config.ConfigParser;
-import net.momirealms.craftengine.core.plugin.text.component.ComponentProvider;
-import net.momirealms.craftengine.core.util.*;
-import net.momirealms.sparrow.nbt.Tag;
+import net.momirealms.craftengine.core.util.AdventureHelper;
+import net.momirealms.craftengine.core.util.CharacterUtils;
+import net.momirealms.craftengine.core.util.FormatUtils;
+import net.momirealms.craftengine.core.util.Key;
 import org.incendo.cloud.suggestion.Suggestion;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;

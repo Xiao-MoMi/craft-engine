@@ -1,7 +1,9 @@
 package net.momirealms.craftengine.proxy.minecraft.world.level.levelgen;
 
 import net.momirealms.sparrow.reflection.proxy.ASMProxyFactory;
-import net.momirealms.sparrow.reflection.proxy.annotation.*;
+import net.momirealms.sparrow.reflection.proxy.annotation.MethodInvoker;
+import net.momirealms.sparrow.reflection.proxy.annotation.ReflectionProxy;
+import net.momirealms.sparrow.reflection.proxy.annotation.Type;
 
 @ReflectionProxy(name = "net.minecraft.world.level.levelgen.RandomState")
 public interface RandomStateProxy {

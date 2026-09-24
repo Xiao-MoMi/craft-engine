@@ -2,7 +2,8 @@ package net.momirealms.craftengine.proxy.minecraft.world.level.block;
 
 import net.momirealms.sparrow.reflection.clazz.SparrowClass;
 import net.momirealms.sparrow.reflection.proxy.ASMProxyFactory;
-import net.momirealms.sparrow.reflection.proxy.annotation.*;
+import net.momirealms.sparrow.reflection.proxy.annotation.FieldGetter;
+import net.momirealms.sparrow.reflection.proxy.annotation.ReflectionProxy;
 
 @ReflectionProxy(name = "net.minecraft.world.level.block.BonemealSource", activeIf = "min_version=26.3")
 public interface BonemealSourceProxy {

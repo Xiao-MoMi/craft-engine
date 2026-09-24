@@ -6,7 +6,6 @@ import io.netty.channel.ChannelPipeline;
 import net.momirealms.craftengine.core.entity.player.Player;
 import net.momirealms.craftengine.core.plugin.Manageable;
 import net.momirealms.craftengine.core.plugin.text.component.ComponentProvider;
-import net.momirealms.craftengine.core.util.StringValueOnlyTagVisitor;
 import net.momirealms.sparrow.nbt.Tag;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;

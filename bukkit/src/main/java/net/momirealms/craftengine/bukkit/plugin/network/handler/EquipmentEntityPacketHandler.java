@@ -4,14 +4,11 @@ import it.unimi.dsi.fastutil.ints.IntList;
 import net.momirealms.craftengine.bukkit.plugin.network.EquipmentLodTracker;
 import net.momirealms.craftengine.bukkit.plugin.user.BukkitServerPlayer;
 import net.momirealms.craftengine.core.entity.player.Player;
-import net.momirealms.craftengine.core.item.Item;
-import net.momirealms.craftengine.core.plugin.network.PacketPosition;
 import net.momirealms.craftengine.core.plugin.network.EntityMovement26_3;
+import net.momirealms.craftengine.core.plugin.network.PacketPosition;
 import net.momirealms.craftengine.core.plugin.network.event.ByteBufPacketEvent;
 import net.momirealms.craftengine.core.util.FriendlyByteBuf;
 import net.momirealms.craftengine.core.util.VersionHelper;
-
-import java.util.Optional;
 
 public class EquipmentEntityPacketHandler extends EquipmentPacketHandler {
     public static final EquipmentEntityPacketHandler INSTANCE = new EquipmentEntityPacketHandler();

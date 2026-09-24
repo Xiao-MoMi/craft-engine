@@ -9,8 +9,8 @@ import net.momirealms.craftengine.bukkit.entity.projectile.BukkitProjectileManag
 import net.momirealms.craftengine.bukkit.plugin.BukkitCraftEngine;
 import net.momirealms.craftengine.bukkit.util.EntityUtils;
 import net.momirealms.craftengine.bukkit.util.ItemStackUtils;
-import net.momirealms.craftengine.bukkit.world.BukkitWorldManager;
 import net.momirealms.craftengine.bukkit.world.BukkitChunkLifecycle;
+import net.momirealms.craftengine.bukkit.world.BukkitWorldManager;
 import net.momirealms.craftengine.core.plugin.config.Config;
 import net.momirealms.craftengine.core.util.ReflectionUtils;
 import net.momirealms.craftengine.core.util.VersionHelper;
@@ -31,11 +31,7 @@ import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
 import java.util.Arrays;
 import java.util.Map;
-import java.util.function.BiConsumer;
-import java.util.function.BiPredicate;
-import java.util.function.Consumer;
-import java.util.function.Function;
-import java.util.function.Predicate;
+import java.util.function.*;
 
 public final class RuntimePatcher {
     private static Instrumentation instrumentation;
@@ -74,7 +70,7 @@ public final class RuntimePatcher {
         if (lifecycle && chunkDataWarmup) {
             try {
                 Class<?> bridge = injectBridge();
-                BukkitChunkLifecycle.initialize(Bukkit.class.getClassLoader());
+                BukkitChunkLifecycle.initialize();
                 bridge.getField("CHUNK_LIFECYCLE_START").set(null, (Consumer<Object[]>) BukkitChunkLifecycle::start);
                 bridge.getField("CHUNK_LIFECYCLE_CONTEXT").set(null, (Function<Object, Object>) BukkitChunkLifecycle::context);
                 bridge.getField("CHUNK_LIFECYCLE_READ").set(null, (BiConsumer<Object, Object>) BukkitChunkLifecycle::read);

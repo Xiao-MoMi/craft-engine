@@ -31,7 +31,6 @@ import net.momirealms.craftengine.core.world.chunk.packet.PacketSection;
 import net.momirealms.craftengine.core.world.chunk.packet.SingleValueSection;
 import net.momirealms.sparrow.nbt.CompoundTag;
 
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.function.IntPredicate;

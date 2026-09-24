@@ -7,30 +7,22 @@ import net.momirealms.craftengine.core.world.ChunkPos;
 import net.momirealms.craftengine.core.world.chunk.storage.LifecycleCachedStorage;
 import net.momirealms.craftengine.proxy.minecraft.world.level.LevelProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.level.chunk.ImposterProtoChunkProxy;
+import net.momirealms.craftengine.proxy.spottedleaf.moonrise.patches.chunk_system.scheduling.task.ReadChunkProxy;
+import net.momirealms.craftengine.proxy.spottedleaf.moonrise.patches.chunk_system.scheduling.task.TaskResultProxy;
 import org.bukkit.World;
 
-import java.lang.invoke.MethodHandle;
-import java.lang.invoke.MethodHandles;
-import java.lang.reflect.Method;
+import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
 
 public final class BukkitChunkLifecycle {
     private static final ConcurrentHashMap<Object, LoadContext> LOADS = new ConcurrentHashMap<>();
-    private static MethodHandle resultData;
-    private static MethodHandle protoChunk;
 
     private BukkitChunkLifecycle() {
     }
 
-    public static void initialize(ClassLoader loader) throws ReflectiveOperationException {
-        resultData = accessor(loader, "ca.spottedleaf.moonrise.patches.chunk_system.scheduling.task.GenericDataLoadTask$TaskResult", "left");
-        protoChunk = accessor(loader, "ca.spottedleaf.moonrise.patches.chunk_system.scheduling.task.ChunkLoadTask$ReadChunk", "protoChunk");
-    }
-
-    private static MethodHandle accessor(ClassLoader loader, String name, String methodName) throws ReflectiveOperationException {
-        Method method = Class.forName(name, false, loader).getDeclaredMethod(methodName);
-        method.setAccessible(true);
-        return MethodHandles.lookup().unreflect(method);
+    public static void initialize() {
+        Objects.requireNonNull(TaskResultProxy.INSTANCE, "Moonrise task result proxy is unavailable");
+        Objects.requireNonNull(ReadChunkProxy.INSTANCE, "Moonrise read chunk proxy is unavailable");
     }
 
     private static CEWorld world(Object level) {
@@ -58,8 +50,8 @@ public final class BukkitChunkLifecycle {
     public static void read(Object context, Object result) {
         if (context == null || result == null) return;
         try {
-            Object data = resultData.invoke(result);
-            if (data != null) preload((LoadContext) context, protoChunk.invoke(data));
+            Object data = TaskResultProxy.INSTANCE.left(result);
+            if (data != null) preload((LoadContext) context, ReadChunkProxy.INSTANCE.protoChunk(data));
         } catch (Throwable t) {
             failed((LoadContext) context, t);
         }

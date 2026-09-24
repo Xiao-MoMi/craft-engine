@@ -3,11 +3,7 @@ package net.momirealms.craftengine.bukkit.plugin.agent;
 import java.io.InputStream;
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodType;
-import java.util.function.BiConsumer;
-import java.util.function.BiPredicate;
-import java.util.function.Consumer;
-import java.util.function.Function;
-import java.util.function.Predicate;
+import java.util.function.*;
 
 public final class AgentBridge {
     /** 注册表注入回调，由织入 Bootstrap#validate/DispenserRegistry 的 advice 触发（旧版本服务端） */
