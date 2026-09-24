@@ -88,7 +88,7 @@ public class RemoveCEBlockCommand extends AbstractCommand implements Holdable {
     public void execute(ScriptEntry scriptEntry) {
         if (scriptEntry.dbCallShouldDebug()) {
             Debug.report(scriptEntry, getName(),
-                    scriptEntry.hasObject("locations") ? db("locations", scriptEntry.getObject("locations")) : scriptEntry.getObjectTag("location_list"));
+                    scriptEntry.hasObject("locations") ? db("locations", scriptEntry.getObject("locations")) : (Object) scriptEntry.getObjectTag("location_list"));
         }
         List<LocationTag> locations = PlaceCEBlockCommand.getLocations(scriptEntry);
         if (locations == null || locations.isEmpty()) {

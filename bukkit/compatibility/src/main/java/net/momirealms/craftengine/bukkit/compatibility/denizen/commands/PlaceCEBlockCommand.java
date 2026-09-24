@@ -27,16 +27,16 @@ public class PlaceCEBlockCommand extends AbstractCommand implements Holdable {
 
     public PlaceCEBlockCommand() {
         setName("placeceblock");
-        setSyntax("placeceblock [<location>|.../<ellipsoid>/<cuboid>] [<craftengine_block>|...] (no_physics) (<percent chance>|...)");
-        setRequiredArguments(2, 4);
+        setSyntax("placeceblock [<location>|.../<ellipsoid>/<cuboid>] [<craftengine_block>|...] (no_physics) (<percent chance>|...) (silent)");
+        setRequiredArguments(2, 5);
         isProcedural = false;
     }
 
     // <--[command]
     // @Name PlaceCEBlock
-    // @Syntax placeceblock [<location>|.../<ellipsoid>/<cuboid>] [<craftengine_block>|...] (no_physics) (<percent chance>|...)
+    // @Syntax placeceblock [<location>|.../<ellipsoid>/<cuboid>] [<craftengine_block>|...] (no_physics) (<percent chance>|...) (silent)
     // @Required 2
-    // @Maximum 4
+    // @Maximum 5
     // @Short Places CraftEngine custom blocks.
     // @Group world
     // @Plugin CraftEngine
@@ -48,6 +48,7 @@ public class PlaceCEBlockCommand extends AbstractCommand implements Holdable {
     // like "custom:sugar_block" or "custom:chinese_lantern[lit=true]".
     //
     // Use 'no_physics' to place the blocks without physics taking over the modified blocks.
+    // Use 'silent' to skip the placement sound. Sounds play by default.
     //
     // Specify (<percent chance>|...) to give a chance of each type of blocks being placed (in any block at all).
     // Chances are rolled in order per location: each block type is rolled against its own percentage until one succeeds.
@@ -72,6 +73,10 @@ public class PlaceCEBlockCommand extends AbstractCommand implements Holdable {
     // @Usage
     // Use to place a CraftEngine block without physics, and wait for completion.
     // - ~placeceblock <player.cursor_on> custom:chinese_lantern[lit=true] no_physics
+    //
+    // @Usage
+    // Use to place a CraftEngine block without playing its placement sound.
+    // - placeceblock <player.cursor_on> custom:sugar_block silent
     // -->
 
     @Override
@@ -98,6 +103,10 @@ public class PlaceCEBlockCommand extends AbstractCommand implements Holdable {
                     && arg.matches("no_physics")) {
                 scriptEntry.addObject("physics", new ElementTag(false));
             }
+            else if (!scriptEntry.hasObject("silent")
+                    && arg.matches("silent")) {
+                scriptEntry.addObject("silent", new ElementTag(true));
+            }
             else if (!scriptEntry.hasObject("blocks")) {
                 scriptEntry.addObject("blocks", listArg(arg));
             }
@@ -115,6 +124,7 @@ public class PlaceCEBlockCommand extends AbstractCommand implements Holdable {
             throw new InvalidArgumentsException("Missing location argument!");
         }
         scriptEntry.defaultObject("physics", new ElementTag(true));
+        scriptEntry.defaultObject("silent", new ElementTag(false));
     }
 
     @Override
@@ -122,6 +132,7 @@ public class PlaceCEBlockCommand extends AbstractCommand implements Holdable {
         final ListTag blocks = scriptEntry.getObjectTag("blocks");
         ListTag percents = scriptEntry.getObjectTag("percents");
         final ElementTag physics = scriptEntry.getElement("physics");
+        final ElementTag silent = scriptEntry.getElement("silent");
         if (percents != null && percents.size() != blocks.size()) {
             Debug.echoError(scriptEntry, "Percents length != blocks length");
             percents = null;
@@ -157,7 +168,7 @@ public class PlaceCEBlockCommand extends AbstractCommand implements Holdable {
             }
         }
         if (scriptEntry.dbCallShouldDebug()) {
-            Debug.report(scriptEntry, getName(), blocks, physics, percents,
+            Debug.report(scriptEntry, getName(), blocks, physics, percents, silent,
                     scriptEntry.hasObject("locations") ? db("locations", scriptEntry.getObject("locations")) : scriptEntry.getObjectTag("location_list"));
         }
         List<LocationTag> locations = getLocations(scriptEntry);
@@ -173,7 +184,7 @@ public class PlaceCEBlockCommand extends AbstractCommand implements Holdable {
                 scriptEntry.setFinished(true);
                 return;
             }
-            placeAt(location, index, states, percentages, flags);
+            placeAt(location, index, states, percentages, flags, !silent.asBoolean());
             index++;
         }
         scriptEntry.setFinished(true);
@@ -216,7 +227,7 @@ public class PlaceCEBlockCommand extends AbstractCommand implements Holdable {
         return result;
     }
 
-    static void placeAt(LocationTag location, int index, List<ImmutableBlockState> states, List<Float> percents, int flags) {
+    static void placeAt(LocationTag location, int index, List<ImmutableBlockState> states, List<Float> percents, int flags, boolean playSound) {
         ImmutableBlockState state;
         if (percents == null) {
             state = states.get(index % states.size());
@@ -234,6 +245,6 @@ public class PlaceCEBlockCommand extends AbstractCommand implements Holdable {
                 return;
             }
         }
-        CraftEngineBlocks.place(location.getBlockLocation(), state, flags, true);
+        CraftEngineBlocks.place(location.getBlockLocation(), state, flags, playSound);
     }
 }
