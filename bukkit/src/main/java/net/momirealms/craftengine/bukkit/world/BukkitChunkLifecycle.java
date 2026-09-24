@@ -1,6 +1,5 @@
 package net.momirealms.craftengine.bukkit.world;
 
-import net.momirealms.craftengine.bukkit.api.BukkitAdaptor;
 import net.momirealms.craftengine.bukkit.world.chunk.BukkitChunkAccess;
 import net.momirealms.craftengine.core.plugin.CraftEngine;
 import net.momirealms.craftengine.core.world.CEWorld;
@@ -38,7 +37,7 @@ public final class BukkitChunkLifecycle {
         BukkitWorldManager manager = BukkitWorldManager.instance();
         if (manager == null || !manager.initialized()) return null;
         World world = LevelProxy.INSTANCE.getWorld(level);
-        return world == null ? null : BukkitAdaptor.adapt(world).storageWorld();
+        return world == null ? null : manager.getStorageWorld(world);
     }
 
     public static void start(Object[] args) {

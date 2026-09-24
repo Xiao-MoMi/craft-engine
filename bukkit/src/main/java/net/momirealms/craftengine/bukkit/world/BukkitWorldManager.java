@@ -187,7 +187,8 @@ public final class BukkitWorldManager implements WorldManager, Listener {
             if (!manager.initialized) return;
             World bukkitWorld = LevelProxy.INSTANCE.getWorld(args[0]);
             if (bukkitWorld == null) return;
-            CEWorld ceWorld = BukkitAdaptor.adapt(bukkitWorld).storageWorld();
+            CEWorld ceWorld = manager.getStorageWorld(bukkitWorld);
+            if (ceWorld == null) return;
             WorldDataStorage storage = ceWorld.worldDataStorage();
             Object nmsChunkPos = args[1];
             ChunkPos pos = new ChunkPos(ChunkPosProxy.INSTANCE.getX(nmsChunkPos), ChunkPosProxy.INSTANCE.getZ(nmsChunkPos));
@@ -229,6 +230,17 @@ public final class BukkitWorldManager implements WorldManager, Listener {
             installStorageWorld(bukkitWorld, createStorageWorld(bukkitWorld));
         }
         return bukkitWorld;
+    }
+
+    /**
+     * Returns the storage installed during world initialization, if any.
+     * WorldEdit/FAWE regeneration worlds skip that lifecycle but still load chunks.
+     * Do not initialize storage here: those temporary worlds also skip normal unloading.
+     */
+    @Nullable
+    public CEWorld getStorageWorld(World world) {
+        Object worldBorder = CraftWorldProxy.INSTANCE.getWorldBorder(world);
+        return worldBorder instanceof BukkitWorld bukkitWorld ? bukkitWorld.storageWorld() : null;
     }
 
     /*
@@ -421,14 +433,16 @@ public final class BukkitWorldManager implements WorldManager, Listener {
 
     @EventHandler(ignoreCancelled = true, priority = EventPriority.LOWEST)
     public void onChunkLoad(ChunkLoadEvent event) {
-        BukkitWorld bukkitWorld = BukkitAdaptor.adapt(event.getWorld());
-        handleChunkLoad(bukkitWorld.storageWorld(), event.getChunk());
+        CEWorld world = getStorageWorld(event.getWorld());
+        if (world == null) return;
+        handleChunkLoad(world, event.getChunk());
     }
 
     @EventHandler(ignoreCancelled = true, priority = EventPriority.HIGHEST)
     public void onChunkUnload(ChunkUnloadEvent event) {
-        BukkitWorld bukkitWorld = BukkitAdaptor.adapt(event.getWorld());
-        handleChunkUnload(bukkitWorld.storageWorld(), event.getChunk());
+        CEWorld world = getStorageWorld(event.getWorld());
+        if (world == null) return;
+        handleChunkUnload(world, event.getChunk());
     }
 
     @Override

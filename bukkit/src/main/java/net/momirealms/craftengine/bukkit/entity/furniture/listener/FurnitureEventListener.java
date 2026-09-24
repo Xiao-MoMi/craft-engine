@@ -74,6 +74,8 @@ public final class FurnitureEventListener implements Listener {
         if (!chunk.isLoaded()) {
             return;
         }
+        CEWorld world = this.worldManager.getStorageWorld(event.getWorld());
+        if (world == null) return;
         // 只在本次同步批量处理内共享状态检查；不能把 runner 保留到下一批或下一 tick。
         BukkitFurnitureManager.SafeEntityOperationRunner operationRunner = this.manager.newEntityOperationRunner(chunk);
         List<Entity> entities = event.getEntities();
@@ -85,7 +87,6 @@ public final class FurnitureEventListener implements Listener {
                 this.manager.removeStaleColliderEntity(entity);
             }
         }
-        CEWorld world = BukkitAdaptor.adapt(event.getWorld()).storageWorld();
         CEChunk ceChunk = world.getChunkAtIfLoaded(chunk.getX(), chunk.getZ());
         if (ceChunk != null) {
             // 在本批恢复结束后才允许单实体补载入口接管后续外部生成。
