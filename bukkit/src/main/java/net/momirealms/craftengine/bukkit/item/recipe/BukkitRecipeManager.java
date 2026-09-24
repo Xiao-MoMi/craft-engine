@@ -18,6 +18,7 @@ import net.momirealms.craftengine.core.item.Item;
 import net.momirealms.craftengine.core.item.ItemBuildContext;
 import net.momirealms.craftengine.core.item.ItemKeys;
 import net.momirealms.craftengine.core.item.recipe.*;
+import net.momirealms.craftengine.core.item.recipe.predicate.DataComponentPredicate;
 import net.momirealms.craftengine.core.plugin.config.Config;
 import net.momirealms.craftengine.core.registry.BuiltInRegistries;
 import net.momirealms.craftengine.core.util.*;
@@ -65,6 +66,9 @@ public final class BukkitRecipeManager extends AbstractRecipeManager {
         it.put(RecipeSerializers.SMITHING_TRIM, recipe -> FastNMS.INSTANCE.createSmithingTrimRecipe((CustomSmithingTrimRecipe) recipe));
         it.put(RecipeSerializers.SMITHING_TRANSFORM, recipe -> FastNMS.INSTANCE.createSmithingTransformRecipe((CustomSmithingTransformRecipe) recipe));
         it.put(RecipeSerializers.DYE, recipe -> FastNMS.INSTANCE.createDyeRecipe((CustomDyeRecipe) recipe));
+        if (VersionHelper.isOrAbove26_3) {
+            it.put(RecipeSerializers.BREWING, recipe -> FastNMS.INSTANCE.createBrewingRecipe((CustomBrewingRecipe) recipe));
+        }
     });
 
     // nms 模块需要使用此方法
@@ -92,8 +96,8 @@ public final class BukkitRecipeManager extends AbstractRecipeManager {
     // 需要在主线程卸载的配方
     private final List<Key> nativeRecipesToUnregister = new ArrayList<>();
     private final List<Key> brewingRecipesToUnregister = new ArrayList<>();
-    // 已经被替换过的数据包配方
-    private final Set<Key> replacedDatapackRecipes = new HashSet<>();
+    // 已经被替换过的数据包配方，以及上次是否包含自定义物品
+    private final Map<Key, Boolean> replacedDatapackRecipes = new HashMap<>();
     // 换成的数据包配方
     private Map<Key, JsonObject> lastDatapackRecipes = Map.of();
     private Object lastRecipeManager = null;
@@ -132,6 +136,11 @@ public final class BukkitRecipeManager extends AbstractRecipeManager {
     }
 
     @Override
+    public DataComponentPredicate parsePotionContentsPredicate(JsonObject json) {
+        return FastNMS.INSTANCE.parsePotionContentsPredicate(json);
+    }
+
+    @Override
     public void delayedInit() {
         Bukkit.getPluginManager().registerEvents(this.recipeEventListener, this.plugin.javaPlugin());
         if (this.crafterEventListener != null) Bukkit.getPluginManager().registerEvents(this.crafterEventListener, this.plugin.javaPlugin());
@@ -157,7 +166,7 @@ public final class BukkitRecipeManager extends AbstractRecipeManager {
                 this.nativeRecipesToUnregister.add(id);
             }
             for (Recipe recipe : this.brewingRecipes) {
-                (VersionHelper.isOrAbove26_3 ? this.nativeRecipesToUnregister : this.brewingRecipesToUnregister).add(recipe.id());
+                this.brewingRecipesToUnregister.add(recipe.id());
             }
         }
         super.unload();
@@ -182,23 +191,20 @@ public final class BukkitRecipeManager extends AbstractRecipeManager {
         ExceptionCollector<Exception> collector = new ExceptionCollector<>(Exception.class);
         for (Recipe recipe : super.nativeRecipes) {
             Key id = recipe.id();
-            if (isDataPackRecipe(id)) {
-                // 如果这个数据包配方已经被换成了注入配方，那么是否需要重新注册取决于其是否含有tag，且tag里有自定义物品
-                if (!this.replacedDatapackRecipes.add(id)) {
-                    outer: {
-                        for (Ingredient ingredient : recipe.ingredientsInUse()) {
-                            if (ingredient.hasCustomItem()) {
-                                break outer;
-                            }
-                        }
-                        // 没有自定义物品，且被注入过了，那么就不需要移除后重新注册
-                        continue;
-                    }
+            boolean dataPackRecipe = isDataPackRecipe(id);
+            boolean hasCustomItem = dataPackRecipe && recipe.ingredientsInUse().stream().anyMatch(Ingredient::hasCustomItem);
+            if (dataPackRecipe) {
+                // 上次有自定义物品、这次没有时也要刷新，以移除旧的 tag 成员或材料替代。
+                if (!hasCustomItem && Boolean.FALSE.equals(this.replacedDatapackRecipes.get(id))) {
+                    continue;
                 }
                 super.recipeRegistry.unregister(id);
             }
             try {
                 super.recipeRegistry.register(id, RECIPE_GENERATOR.get(recipe.serializerType()).apply(recipe));
+                if (dataPackRecipe) {
+                    this.replacedDatapackRecipes.put(id, hasCustomItem);
+                }
             } catch (Exception e) {
                 collector.add(e);
             }
@@ -228,17 +234,6 @@ public final class BukkitRecipeManager extends AbstractRecipeManager {
                     ));
                 } catch (ReflectiveOperationException e) {
                     this.plugin.logger().warn("Failed to construct FireworkStarFadeRecipe", e);
-                }
-            }
-        }
-
-        if (VersionHelper.isOrAbove26_3) {
-            for (CustomBrewingRecipe recipe : this.brewingRecipes) {
-                try {
-                    super.recipeRegistry.unregister(recipe.id());
-                    super.recipeRegistry.register(recipe.id(), FastNMS.INSTANCE.createBrewingRecipe(recipe));
-                } catch (Exception e) {
-                    collector.add(e);
                 }
             }
         }
@@ -343,9 +338,6 @@ public final class BukkitRecipeManager extends AbstractRecipeManager {
             JsonObject jsonObject = entry.getValue();
             try {
                 Key serializerType = Key.of(jsonObject.get("type").getAsString());
-                // Native brewing recipes retain their potion predicates and remain in the server registry.
-                // CraftEngine brewing recipes are registered separately with their own item predicates.
-                if (VersionHelper.isOrAbove26_3 && serializerType.equals(RecipeSerializers.BREWING)) continue;
                 RecipeSerializer<? extends Recipe> serializer = BuiltInRegistries.RECIPE_SERIALIZER.getValue(serializerType);
                 if (serializer == null) {
                     continue;

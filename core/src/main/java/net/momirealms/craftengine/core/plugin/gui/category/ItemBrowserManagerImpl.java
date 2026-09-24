@@ -482,7 +482,7 @@ public final class ItemBrowserManagerImpl implements ItemBrowserManager {
         List<Item> containers = new ArrayList<>();
         net.momirealms.craftengine.core.item.recipe.Ingredient container = recipe.container();
         for (UniqueKey in : container.items()) {
-            containers.add(ingredient.applyPredicateLooks(Item.byId(in.key(), player)).count(container.count));
+            containers.add(container.applyPredicateLooks(Item.byId(in.key(), player)).count(container.count));
         }
 
         GuiLayout layout = new GuiLayout(
@@ -493,10 +493,10 @@ public final class ItemBrowserManagerImpl implements ItemBrowserManager {
                 "     ^   ",
                 " <  =  > "
         )
-        .addIngredient('X', GuiElement.constant(Item.byId(result, player).count(recipe.result().count()), (e, c) -> {
+        .addIngredient('X', GuiElement.constant(recipe.result(ItemBuildContext.of(player)).count(recipe.result().count()), (e, c) -> {
             c.cancel();
             if (MIDDLE_CLICK.contains(c.type()) && player.isCreativeMode() && player.hasPermission(GET_ITEM_PERMISSION) && c.itemOnCursor() == null) {
-                Item item = Item.byId(result, player);
+                Item item = recipe.result(ItemBuildContext.of(player));
                 item.count(item.maxStackSize());
                 c.setItemOnCursor(item);
                 return;
@@ -523,9 +523,9 @@ public final class ItemBrowserManagerImpl implements ItemBrowserManager {
             c.cancel();
             player.playSound(Constants.SOUND_PICK_ITEM);
             if (LEFT_CLICK.contains(c.type())) {
-                player.giveItem(Item.byId(result, player));
+                player.giveItem(recipe.result(ItemBuildContext.of(player)));
             } else if (RIGHT_CLICK.contains(c.type())) {
-                Item item = Item.byId(result, player);
+                Item item = recipe.result(ItemBuildContext.of(player));
                 player.giveItem(item.count(item.maxStackSize()));
             }
         }) : GuiElement.EMPTY)

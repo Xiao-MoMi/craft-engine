@@ -1,6 +1,8 @@
 package net.momirealms.craftengine.core.item.recipe;
 
+import com.google.gson.JsonObject;
 import net.momirealms.craftengine.core.item.recipe.input.RecipeInput;
+import net.momirealms.craftengine.core.item.recipe.predicate.DataComponentPredicate;
 import net.momirealms.craftengine.core.plugin.Manageable;
 import net.momirealms.craftengine.core.plugin.config.ConfigParser;
 import net.momirealms.craftengine.core.util.Key;
@@ -12,6 +14,8 @@ import java.util.Optional;
 public interface RecipeManager extends Manageable {
 
     ConfigParser parser();
+
+    DataComponentPredicate parsePotionContentsPredicate(JsonObject json);
 
     boolean isDataPackRecipe(Key key);
 

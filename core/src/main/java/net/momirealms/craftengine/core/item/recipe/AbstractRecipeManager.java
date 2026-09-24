@@ -127,7 +127,7 @@ public abstract class AbstractRecipeManager implements RecipeManager {
         if (this.byId.containsKey(recipe.id())) return;
         this.byType.computeIfAbsent(recipe.type(), k -> new ArrayList<>()).add(recipe);
         this.byId.put(recipe.id(), recipe);
-        if (recipe instanceof CustomBrewingRecipe brewingRecipe) {
+        if (!VersionHelper.isOrAbove26_3 && recipe instanceof CustomBrewingRecipe brewingRecipe) {
             this.brewingRecipes.add(brewingRecipe);
         } else {
             this.nativeRecipes.add(recipe);
