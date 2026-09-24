@@ -8,7 +8,7 @@ import net.momirealms.sparrow.reflection.proxy.annotation.*;
 public interface BonemealSourceProxy {
     BonemealSourceProxy INSTANCE = ASMProxyFactory.create(BonemealSourceProxy.class);
     Class<?> CLASS = SparrowClass.find("net.minecraft.world.level.block.BonemealSource");
-    Object INTERACTION = INSTANCE.getInteraction();
+    Object INTERACTION = INSTANCE != null ? INSTANCE.getInteraction() : null;
     @FieldGetter(name = "INTERACTION", isStatic = true)
     Object getInteraction();
 }

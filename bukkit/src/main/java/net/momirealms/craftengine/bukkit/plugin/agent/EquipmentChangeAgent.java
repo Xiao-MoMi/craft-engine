@@ -27,6 +27,7 @@ public final class EquipmentChangeAgent {
         AtomicBoolean ambiguous = new AtomicBoolean();
         AtomicBoolean failed = new AtomicBoolean();
         ClassFileTransformer transformer = new AgentBuilder.Default()
+                .disableClassFormatChanges()
                 .with(AgentBuilder.RedefinitionStrategy.RETRANSFORMATION)
                 .with(new AgentBuilder.Listener.Adapter() {
                     @Override

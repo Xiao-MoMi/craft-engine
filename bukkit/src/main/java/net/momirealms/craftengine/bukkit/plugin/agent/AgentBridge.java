@@ -1,5 +1,8 @@
 package net.momirealms.craftengine.bukkit.plugin.agent;
 
+import java.io.InputStream;
+import java.lang.invoke.MethodHandles;
+import java.lang.invoke.MethodType;
 import java.util.function.BiConsumer;
 import java.util.function.BiPredicate;
 import java.util.function.Consumer;
@@ -28,4 +31,18 @@ public final class AgentBridge {
     public static volatile Predicate<Object[]> MERCHANT_OFFER_MATCH;
 
     private AgentBridge() {}
+
+    static Class<?> inject(ClassLoader serverClassLoader, MethodHandles.Lookup lookup) {
+        // Keep this class JDK-only: server advice cannot access the plugin's dependencies.
+        // Define the same name in the server loader without Byte Buddy's Unsafe injection.
+        try (InputStream input = AgentBridge.class.getResourceAsStream("/" + AgentBridge.class.getName().replace('.', '/') + ".class")) {
+            if (input == null) throw new IllegalStateException("Missing agent bridge bytecode");
+            byte[] bytes = input.readAllBytes();
+            return (Class<?>) lookup.findVirtual(ClassLoader.class, "defineClass",
+                            MethodType.methodType(Class.class, String.class, byte[].class, int.class, int.class))
+                    .invoke(serverClassLoader, AgentBridge.class.getName(), bytes, 0, bytes.length);
+        } catch (Throwable t) {
+            throw new IllegalStateException("Failed to inject agent bridge", t);
+        }
+    }
 }

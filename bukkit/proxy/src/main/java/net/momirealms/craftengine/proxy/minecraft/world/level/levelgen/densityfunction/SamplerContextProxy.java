@@ -6,7 +6,7 @@ import net.momirealms.sparrow.reflection.proxy.annotation.*;
 @ReflectionProxy(name = "net.minecraft.world.level.levelgen.densityfunction.SamplerContext", activeIf = "min_version=26.3")
 public interface SamplerContextProxy {
     SamplerContextProxy INSTANCE = ASMProxyFactory.create(SamplerContextProxy.class);
-    Object EMPTY_UNCACHED = INSTANCE.getEmpty();
+    Object EMPTY_UNCACHED = INSTANCE != null ? INSTANCE.getEmpty() : null;
     @FieldGetter(name = "EMPTY_UNCACHED", isStatic = true)
     Object getEmpty();
 }

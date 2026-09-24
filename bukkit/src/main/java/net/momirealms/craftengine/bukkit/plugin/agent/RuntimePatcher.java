@@ -1,9 +1,7 @@
 package net.momirealms.craftengine.bukkit.plugin.agent;
 
 import cn.gtemc.reflection.ImplLookupGetter;
-import net.bytebuddy.ByteBuddy;
 import net.bytebuddy.agent.ByteBuddyAgent;
-import net.bytebuddy.dynamic.loading.ClassLoadingStrategy;
 import net.momirealms.craftengine.bukkit.api.BukkitAdaptor;
 import net.momirealms.craftengine.bukkit.api.CraftEngineFurniture;
 import net.momirealms.craftengine.bukkit.entity.furniture.BukkitFurnitureManager;
@@ -117,15 +115,7 @@ public final class RuntimePatcher {
     private static Class<?> injectBridge() {
         if (injectedBridge == null) {
             ClassLoader serverClassLoader = Bukkit.class.getClassLoader();
-            new ByteBuddy()
-                    .redefine(AgentBridge.class)
-                    .make()
-                    .load(serverClassLoader, ClassLoadingStrategy.Default.INJECTION);
-            try {
-                injectedBridge = Class.forName(AgentBridge.class.getName(), false, serverClassLoader);
-            } catch (ClassNotFoundException e) {
-                throw new IllegalStateException("Failed to inject agent bridge", e);
-            }
+            injectedBridge = AgentBridge.inject(serverClassLoader, ReflectionUtils.LOOKUP);
         }
         return injectedBridge;
     }

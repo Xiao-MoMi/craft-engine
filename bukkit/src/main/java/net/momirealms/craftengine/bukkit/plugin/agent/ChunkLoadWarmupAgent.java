@@ -23,6 +23,7 @@ public final class ChunkLoadWarmupAgent {
     public static void install(Instrumentation instrumentation) {
         AtomicBoolean transformed = new AtomicBoolean();
         transformer = new AgentBuilder.Default()
+                .disableClassFormatChanges()
                 .with(AgentBuilder.RedefinitionStrategy.RETRANSFORMATION)
                 .with(new AgentBuilder.Listener.Adapter() {
                     @Override

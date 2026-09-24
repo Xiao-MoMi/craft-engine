@@ -14,6 +14,7 @@ public final class BlocksAgent {
 
     public static void install(Instrumentation instrumentation) {
         transformer = new AgentBuilder.Default()
+                .disableClassFormatChanges()
                 .with(AgentBuilder.RedefinitionStrategy.RETRANSFORMATION)
                 .with(AgentBuilder.RedefinitionStrategy.REDEFINITION)
                 .type(ElementMatchers.named("net.minecraft.server.Bootstrap")
