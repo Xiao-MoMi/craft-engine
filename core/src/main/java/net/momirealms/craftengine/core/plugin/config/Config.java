@@ -566,7 +566,7 @@ public final class Config {
         this.chunk_system$async_write = config.getBoolean("chunk-system.async-write", true);
         this.chunk_system$async_read = config.getBoolean("chunk-system.async-read", true);
         if (this.firstTime) {
-            String cacheMode = config.getString("chunk-system.cache-mode", "timed");
+            String cacheMode = config.getString("chunk-system.cache-mode", "lifecycle");
             if (!cacheMode.equalsIgnoreCase("timed") && !cacheMode.equalsIgnoreCase("lifecycle")) {
                 throw new IllegalArgumentException("Unknown chunk-system.cache-mode: " + cacheMode);
             }

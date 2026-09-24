@@ -45,6 +45,8 @@ public final class RuntimePatcher {
     private static volatile boolean equipmentChangeHookInstalled;
     private static volatile boolean entityWorldHookInstalled;
     private static volatile boolean merchantItemMatchHookInstalled;
+    private static boolean chunkCacheAvailabilityChecked;
+    private static String lifecycleCacheUnavailableReason = "requires the Paper loader and compatible Moonrise hooks";
 
     private RuntimePatcher() {}
 
@@ -53,7 +55,7 @@ public final class RuntimePatcher {
         boolean chunkDataWarmup = VersionHelper.hasPaperPatch && VersionHelper.isOrAbove1_21_4 && Config.enableChunkCache() && Config.enableAsyncChunkRead();
         boolean lifecycle = Config.lifecycleChunkCache();
         if (lifecycle && !chunkDataWarmup) {
-            throw new IllegalStateException("Lifecycle chunk caching requires Paper/Moonrise 1.21.4+, cache-system=true and async-read=true");
+            lifecycleCacheUnavailableReason = "requires Paper/Moonrise 1.21.4+, cache-system=true and async-read=true";
         }
         if (!registryInjection && !chunkDataWarmup) return;
 
@@ -71,26 +73,44 @@ public final class RuntimePatcher {
             BlocksAgent.install(inst);
         }
 
-        if (lifecycle) {
-            Class<?> bridge = injectBridge();
-            BukkitChunkLifecycle.initialize(Bukkit.class.getClassLoader());
-            bridge.getField("CHUNK_LIFECYCLE_START").set(null, (Consumer<Object[]>) BukkitChunkLifecycle::start);
-            bridge.getField("CHUNK_LIFECYCLE_CONTEXT").set(null, (Function<Object, Object>) BukkitChunkLifecycle::context);
-            bridge.getField("CHUNK_LIFECYCLE_READ").set(null, (BiConsumer<Object, Object>) BukkitChunkLifecycle::read);
-            bridge.getField("CHUNK_LIFECYCLE_EMPTY").set(null, (BiConsumer<Object, Object>) BukkitChunkLifecycle::empty);
-            bridge.getField("CHUNK_LIFECYCLE_COMPLETE").set(null, (Consumer<Object>) BukkitChunkLifecycle::complete);
-            bridge.getField("CHUNK_LIFECYCLE_RELEASE").set(null, (Consumer<Object[]>) BukkitChunkLifecycle::release);
-            ChunkLifecycleAgent.install(instrumentation(), Bukkit.class.getClassLoader());
-            plugin.logger().info("Moonrise lifecycle chunk cache hooks installed");
-        } else if (chunkDataWarmup) {
+        if (lifecycle && chunkDataWarmup) {
+            try {
+                Class<?> bridge = injectBridge();
+                BukkitChunkLifecycle.initialize(Bukkit.class.getClassLoader());
+                bridge.getField("CHUNK_LIFECYCLE_START").set(null, (Consumer<Object[]>) BukkitChunkLifecycle::start);
+                bridge.getField("CHUNK_LIFECYCLE_CONTEXT").set(null, (Function<Object, Object>) BukkitChunkLifecycle::context);
+                bridge.getField("CHUNK_LIFECYCLE_READ").set(null, (BiConsumer<Object, Object>) BukkitChunkLifecycle::read);
+                bridge.getField("CHUNK_LIFECYCLE_EMPTY").set(null, (BiConsumer<Object, Object>) BukkitChunkLifecycle::empty);
+                bridge.getField("CHUNK_LIFECYCLE_COMPLETE").set(null, (Consumer<Object>) BukkitChunkLifecycle::complete);
+                bridge.getField("CHUNK_LIFECYCLE_RELEASE").set(null, (Consumer<Object[]>) BukkitChunkLifecycle::release);
+                ChunkLifecycleAgent.install(instrumentation(), Bukkit.class.getClassLoader());
+                plugin.logger().info("Moonrise lifecycle chunk cache hooks installed");
+            } catch (Throwable t) {
+                lifecycleCacheUnavailableReason = "could not install Moonrise hooks: " + t;
+            }
+        }
+        if (chunkDataWarmup && !ChunkLifecycleAgent.installed()) {
             try {
                 Class<?> bridge = injectBridge();
                 bridge.getField("CHUNK_DATA_WARMUP").set(null, (Consumer<Object[]>) BukkitWorldManager::onChunkDataRead);
                 plugin.logger().info("Patching the server...");
                 ChunkLoadWarmupAgent.install(instrumentation());
             } catch (Throwable t) {
-                plugin.logger().warn("Failed to hook chunk data read, chunk data will be read synchronously on chunk load", t);
+                if (lifecycle) {
+                    lifecycleCacheUnavailableReason += "; asynchronous warmup is also unavailable, using synchronous chunk reads";
+                } else {
+                    plugin.logger().warn("Failed to hook chunk data read, chunk data will be read synchronously on chunk load", t);
+                }
             }
+        }
+    }
+
+    public static void checkChunkCacheAvailability(BukkitCraftEngine plugin) {
+        if (chunkCacheAvailabilityChecked) return;
+        chunkCacheAvailabilityChecked = true;
+        if (Config.lifecycleChunkCache() && !ChunkLifecycleAgent.installed()) {
+            plugin.logger().warn("Lifecycle chunk cache unavailable: " + lifecycleCacheUnavailableReason
+                    + (Config.enableChunkCache() ? "; using timed caching for this startup" : "; chunk caching is disabled"));
         }
     }
 

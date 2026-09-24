@@ -742,9 +742,10 @@ chunk-system:
   # lifecycle: retain data until Moonrise releases its chunk holder, without a timer
   #
   # Lifecycle mode requires the Paper loader, compatible Moonrise hooks, cache-system and async-read.
-  # Requires Paper/Folia 1.21.4+; startup fails if the required hooks cannot be installed.
+  # Requires Paper/Folia 1.21.4+. Availability is checked at startup.
+  # If unavailable, falls back to timed caching with one warning per startup.
   # Requires server restart to take effect.
-  cache-mode: timed
+  cache-mode: lifecycle
   # Writes chunk data asynchronously on dedicated IO threads instead of blocking the server thread
   # Requires server restart to take effect
   async-write: true

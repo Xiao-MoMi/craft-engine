@@ -4,7 +4,6 @@ import net.momirealms.craftengine.bukkit.plugin.agent.ChunkLifecycleAgent;
 import net.momirealms.craftengine.bukkit.world.chunk.BukkitCEChunk;
 import net.momirealms.craftengine.bukkit.world.chunk.FoliaCEChunk;
 import net.momirealms.craftengine.bukkit.world.chunk.storage.PersistentDataContainerStorage;
-import net.momirealms.craftengine.core.plugin.CraftEngine;
 import net.momirealms.craftengine.core.plugin.config.Config;
 import net.momirealms.craftengine.core.util.VersionHelper;
 import net.momirealms.craftengine.core.world.CEWorld;
@@ -88,9 +87,7 @@ public class BukkitStorageAdaptor implements StorageAdaptor {
     }
 
     private WorldDataStorage cache(WorldDataStorage storage) {
-        if (!Config.lifecycleChunkCache()) return new CachedStorage<>(storage);
-        if (!ChunkLifecycleAgent.installed()) {
-            CraftEngine.instance().logger().warn("Lifecycle chunk cache requested without installed Moonrise hooks");
+        if (!Config.lifecycleChunkCache() || !ChunkLifecycleAgent.installed()) {
             return new CachedStorage<>(storage);
         }
         return new LifecycleCachedStorage(storage);
