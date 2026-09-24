@@ -21,6 +21,7 @@ import net.momirealms.craftengine.proxy.minecraft.resources.IdentifierProxy;
 import net.momirealms.craftengine.proxy.minecraft.server.level.ServerPlayerProxy;
 import net.momirealms.craftengine.proxy.minecraft.sounds.SoundEventProxy;
 import net.momirealms.craftengine.proxy.minecraft.sounds.SoundSourceProxy;
+import net.momirealms.craftengine.proxy.minecraft.util.PredictionProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.entity.EntityProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.entity.EntityTypesProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.entity.EquipmentSlotProxy;
@@ -105,6 +106,8 @@ public final class PlayerUtils {
             Object droppedItem;
             if (VersionHelper.isOrAbove1_21_4 && VersionHelper.hasPaperPatch) {
                 droppedItem = ServerPlayerProxy.INSTANCE.drop(serverPlayer, item.minecraftItem(), false, false, !VersionHelper.isOrAbove1_21_5, null);
+            } else if (VersionHelper.isOrAbove26_3) {
+                droppedItem = ServerPlayerProxy.INSTANCE.drop$2(serverPlayer, item.minecraftItem(), false, PredictionProxy.SERVER_ONLY, true);
             } else if (VersionHelper.isOrAbove1_20_3) {
                 droppedItem = ServerPlayerProxy.INSTANCE.drop$1(serverPlayer, item.minecraftItem(), false, false, true);
             } else {
