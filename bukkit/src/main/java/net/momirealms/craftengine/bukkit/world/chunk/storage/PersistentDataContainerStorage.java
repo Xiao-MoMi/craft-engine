@@ -62,7 +62,7 @@ public class PersistentDataContainerStorage implements WorldDataStorage {
         }
         try (DataInputStream dis = new DataInputStream(new ByteArrayInputStream(bytes))) {
             CompoundTag tag = NBT.readCompound(dis, false);
-            return DefaultChunkSerializer.deserialize(this.chunkFactory, world, pos, tag);
+            return DefaultChunkSerializer.deserialize(this.chunkFactory, world, pos, tag, false);
         }
     }
 

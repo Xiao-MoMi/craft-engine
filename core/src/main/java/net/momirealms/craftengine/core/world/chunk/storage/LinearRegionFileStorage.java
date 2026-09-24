@@ -133,7 +133,7 @@ public class LinearRegionFileStorage implements RegionStorage {
                 return this.chunkFactory.create(world, pos);
             }
             CompoundTag tag = NBT.readCompound(dataInputStream, false);
-            return DefaultChunkSerializer.deserialize(this.chunkFactory, world, pos, tag);
+            return DefaultChunkSerializer.deserialize(this.chunkFactory, world, pos, tag, false);
         }
     }
 

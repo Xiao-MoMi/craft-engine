@@ -198,14 +198,23 @@ public final class PalettedContainer<T> implements PaletteResizeListener<T>, Rea
 
     @Override
     public void count(Counter<T> counter) {
-        int paletteSize = this.data.palette.getSize();
+        Data<T> data = this.data;
+        int paletteSize = data.palette.getSize();
         if (paletteSize == 1) {
-            counter.accept(this.data.palette.get(0), this.data.storage.size());
+            counter.accept(data.palette.get(0), data.storage.size());
+        } else if (paletteSize <= 4096) {
+            int[] counts = new int[paletteSize];
+            data.storage.forEach(id -> ++counts[id]);
+            for (int id = 0; id < paletteSize; ++id) {
+                if (counts[id] != 0) {
+                    counter.accept(data.palette.get(id), counts[id]);
+                }
+            }
         } else {
             Int2IntOpenHashMap frequencyMap = new Int2IntOpenHashMap();
-            this.data.storage.forEach(key -> frequencyMap.addTo(key, 1));
+            data.storage.forEach(key -> frequencyMap.addTo(key, 1));
             frequencyMap.int2IntEntrySet().forEach(entry ->
-                    counter.accept(this.data.palette.get(entry.getIntKey()), entry.getIntValue())
+                    counter.accept(data.palette.get(entry.getIntKey()), entry.getIntValue())
             );
         }
     }
@@ -343,6 +352,11 @@ public final class PalettedContainer<T> implements PaletteResizeListener<T>, Rea
 
     public static <T> PalettedContainer<T> read(IndexedIterable<T> idList, PaletteProvider paletteProvider, ReadableContainer.Serialized<T> serialized) {
         List<T> list = serialized.paletteEntries();
+        long[] storage = paletteProvider.getBits(idList, list.size()) == 0 ? null : serialized.storage().map(LongStream::toArray).orElse(null);
+        return read(idList, paletteProvider, list, storage);
+    }
+
+    public static <T> PalettedContainer<T> read(IndexedIterable<T> idList, PaletteProvider paletteProvider, List<T> list, @Nullable long[] storage) {
         int containerSize = paletteProvider.getContainerSize();
         int bits = paletteProvider.getBits(idList, list.size());
         DataProvider<T> dataProvider = paletteProvider.createDataProvider(idList, bits);
@@ -350,21 +364,19 @@ public final class PalettedContainer<T> implements PaletteResizeListener<T>, Rea
         if (bits == 0) {
             paletteStorage = new EmptyPaletteStorage(containerSize);
         } else {
-            Optional<LongStream> optional = serialized.storage();
-            if (optional.isEmpty()) {
+            if (storage == null) {
                 return null;
             }
-            long[] ls = optional.get().toArray();
             try {
                 if (dataProvider.factory() == PalettedContainer.PaletteProvider.ID_LIST) {
                     Palette<T> palette = new BiMapPalette<>(idList, bits, (id, value) -> 0, list);
-                    PackedIntegerArray packedIntegerArray = new PackedIntegerArray(bits, containerSize, ls);
+                    PackedIntegerArray packedIntegerArray = new PackedIntegerArray(bits, containerSize, storage);
                     int[] is = new int[containerSize];
                     packedIntegerArray.writePaletteIndices(is);
                     applyEach(is, (id) -> idList.getRawId(palette.get(id)));
                     paletteStorage = new PackedIntegerArray(dataProvider.bits(), containerSize, is);
                 } else {
-                    paletteStorage = new PackedIntegerArray(dataProvider.bits(), containerSize, ls);
+                    paletteStorage = new PackedIntegerArray(dataProvider.bits(), containerSize, storage);
                 }
             } catch (PackedIntegerArray.InvalidLengthException e) {
                 CraftEngine.instance().logger().warn("Failed to read PalettedContainer", e);

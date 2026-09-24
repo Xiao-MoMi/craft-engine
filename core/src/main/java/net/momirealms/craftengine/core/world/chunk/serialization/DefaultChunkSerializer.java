@@ -41,11 +41,16 @@ public final class DefaultChunkSerializer {
 
     @NotNull
     public static CEChunk deserialize(ChunkFactory factory, @NotNull CEWorld world, @NotNull ChunkPos pos, @NotNull CompoundTag chunkNbt) {
+        return deserialize(factory, world, pos, chunkNbt, true);
+    }
+
+    @NotNull
+    public static CEChunk deserialize(ChunkFactory factory, @NotNull CEWorld world, @NotNull ChunkPos pos, @NotNull CompoundTag chunkNbt, boolean copyStorage) {
         ListTag sections = chunkNbt.getList("sections");
         CESection[] sectionArray = new CESection[world.worldHeight().getSectionsCount()];
         for (int i = 0, size = sections.size(); i < size; ++i) {
             CompoundTag sectionTag = sections.getCompound(i);
-            CESection ceSection = DefaultSectionSerializer.deserialize(sectionTag);
+            CESection ceSection = DefaultSectionSerializer.deserialize(sectionTag, copyStorage);
             if (ceSection != null) {
                 int sectionIndex = world.worldHeight().getSectionIndexFromSectionY(ceSection.sectionY);
                 if (sectionIndex >= 0 && sectionIndex < sectionArray.length) {

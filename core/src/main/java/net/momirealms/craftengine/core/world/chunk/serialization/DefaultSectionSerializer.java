@@ -24,8 +24,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
-import java.util.stream.LongStream;
 
 public final class DefaultSectionSerializer {
     private DefaultSectionSerializer() {}
@@ -49,6 +47,11 @@ public final class DefaultSectionSerializer {
 
     @Nullable
     public static CESection deserialize(@NotNull CompoundTag sectionNbt) {
+        return deserialize(sectionNbt, true);
+    }
+
+    @Nullable
+    public static CESection deserialize(@NotNull CompoundTag sectionNbt, boolean copyStorage) {
         CompoundTag blockStates = sectionNbt.getCompound("block_states");
         if (blockStates == null) {
             return null;
@@ -89,9 +92,8 @@ public final class DefaultSectionSerializer {
             }
         }
         long[] data = blockStates.getLongArray("data");
-        ReadableContainer.Serialized<ImmutableBlockState> serialized = new ReadableContainer.Serialized<>(paletteEntries,
-                data == null ? Optional.empty() : Optional.of(LongStream.of(data)));
-        PalettedContainer<ImmutableBlockState> palettedContainer = PalettedContainer.read(null, PalettedContainer.PaletteProvider.CUSTOM_BLOCK_STATE, serialized);
+        PalettedContainer<ImmutableBlockState> palettedContainer = PalettedContainer.read(null, PalettedContainer.PaletteProvider.CUSTOM_BLOCK_STATE,
+                paletteEntries, copyStorage && data != null ? data.clone() : data);
         return new CESection(sectionNbt.getByte("y"), palettedContainer);
     }
 }
