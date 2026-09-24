@@ -2,7 +2,7 @@ items:
   default:togglable_light_block:
     data:
       item_name: <!i><lang:item.default.togglable_light_block>
-    texture: default:item/togglable_light_block
+    texture: minecraft:item/custom/togglable_light_block
     behavior:
       type: block_item
       block: default:togglable_light_block
