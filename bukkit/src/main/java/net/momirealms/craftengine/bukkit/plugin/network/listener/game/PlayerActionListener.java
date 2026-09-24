@@ -11,6 +11,7 @@ import net.momirealms.craftengine.core.plugin.network.NetWorkUser;
 import net.momirealms.craftengine.core.plugin.network.event.ByteBufPacketEvent;
 import net.momirealms.craftengine.core.plugin.network.listener.ByteBufferPacketListener;
 import net.momirealms.craftengine.core.util.FriendlyByteBuf;
+import net.momirealms.craftengine.core.util.VersionHelper;
 import net.momirealms.craftengine.core.world.BlockPos;
 import net.momirealms.craftengine.core.world.Vec3d;
 import net.momirealms.craftengine.proxy.bukkit.craftbukkit.CraftWorldProxy;
@@ -87,11 +88,11 @@ public final class PlayerActionListener implements ByteBufferPacketListener {
                 }
             }
             player.startMiningBlock(pos, blockState, BukkitBlockManager.instance().getImmutableBlockStateUnsafe(stateId));
-        } else if (action == 1/*ABORT_DESTROY_BLOCK*/) {
+        } else if (action == (VersionHelper.isOrAbove26_3 ? 2 : 1)/*ABORT_DESTROY_BLOCK*/) {
             if (player.isMiningBlock()) {
                 player.abortMiningBlock();
             }
-        } else if (action == 2/*STOP_DESTROY_BLOCK*/) {
+        } else if (action == (VersionHelper.isOrAbove26_3 ? 3 : 2)/*STOP_DESTROY_BLOCK*/) {
             if (player.isMiningBlock()) {
                 player.finishMiningBlock();
             }

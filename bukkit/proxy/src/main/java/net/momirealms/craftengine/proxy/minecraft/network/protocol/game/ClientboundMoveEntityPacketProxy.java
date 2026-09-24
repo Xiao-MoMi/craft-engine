@@ -15,13 +15,13 @@ public interface ClientboundMoveEntityPacketProxy extends PacketProxy {
     @FieldGetter(name = "entityId")
     int getEntityId(Object target);
 
-    @FieldGetter(name = "xa")
+    @FieldGetter(name = "xa", activeIf = "max_version=26.2")
     short getXa(Object target);
 
-    @FieldGetter(name = "ya")
+    @FieldGetter(name = "ya", activeIf = "max_version=26.2")
     short getYa(Object target);
 
-    @FieldGetter(name = "za")
+    @FieldGetter(name = "za", activeIf = "max_version=26.2")
     short getZa(Object target);
 
     @FieldGetter(name = "yRot")
@@ -42,13 +42,13 @@ public interface ClientboundMoveEntityPacketProxy extends PacketProxy {
     @FieldSetter(name = "entityId")
     void setEntityId(Object target, int entityId);
 
-    @FieldSetter(name = "xa")
+    @FieldSetter(name = "xa", activeIf = "max_version=26.2")
     void setXa(Object target, short xa);
 
-    @FieldSetter(name = "ya")
+    @FieldSetter(name = "ya", activeIf = "max_version=26.2")
     void setYa(Object target, short ya);
 
-    @FieldSetter(name = "za")
+    @FieldSetter(name = "za", activeIf = "max_version=26.2")
     void setZa(Object target, short za);
 
     @FieldSetter(name = "yRot")
@@ -71,8 +71,13 @@ public interface ClientboundMoveEntityPacketProxy extends PacketProxy {
         PosRotProxy INSTANCE = ASMProxyFactory.create(PosRotProxy.class);
         Class<?> CLASS = SparrowClass.find("net.minecraft.network.protocol.game.ClientboundMoveEntityPacket$PosRot");
 
-        @ConstructorInvoker
-        Object newInstance(int entityId, short xa, short ya, short za, byte yRot, byte xRot, boolean onGround);
+        @ConstructorInvoker(activeIf = "max_version=26.2")
+        default Object newInstance(int entityId, short xa, short ya, short za, byte yRot, byte xRot, boolean onGround) {
+            return newInstance(entityId, VecDeltaProxy.LinearProxy.INSTANCE.newInstance(xa, ya, za), yRot, xRot, onGround);
+        }
+
+        @ConstructorInvoker(activeIf = "min_version=26.3")
+        Object newInstance(int entityId, @net.momirealms.sparrow.reflection.proxy.annotation.Type(clazz = VecDeltaProxy.class) Object delta, byte yRot, byte xRot, boolean onGround);
     }
 
     @ReflectionProxy(name = "net.minecraft.network.protocol.game.ClientboundMoveEntityPacket$Pos")
@@ -80,7 +85,12 @@ public interface ClientboundMoveEntityPacketProxy extends PacketProxy {
         PosProxy INSTANCE = ASMProxyFactory.create(PosProxy.class);
         Class<?> CLASS = SparrowClass.find("net.minecraft.network.protocol.game.ClientboundMoveEntityPacket$Pos");
 
-        @ConstructorInvoker
-        Object newInstance(int entityId, short deltaX, short deltaY, short deltaZ, boolean onGround);
+        @ConstructorInvoker(activeIf = "max_version=26.2")
+        default Object newInstance(int entityId, short deltaX, short deltaY, short deltaZ, boolean onGround) {
+            return newInstance(entityId, VecDeltaProxy.LinearProxy.INSTANCE.newInstance(deltaX, deltaY, deltaZ), onGround);
+        }
+
+        @ConstructorInvoker(activeIf = "min_version=26.3")
+        Object newInstance(int entityId, @net.momirealms.sparrow.reflection.proxy.annotation.Type(clazz = VecDeltaProxy.class) Object delta, boolean onGround);
     }
 }

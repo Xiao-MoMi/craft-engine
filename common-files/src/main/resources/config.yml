@@ -736,14 +736,22 @@ chunk-system:
   # Worlds whose name matches any of these regex patterns will always use 'none' storage mode (in-memory only)
   # Useful for temporary or frequently reset worlds where persistence is unnecessary
   blacklisted-worlds: []
-  # Caches serialized chunk data to reduce I/O overhead for frequently loaded/unloaded chunks
+  # Caches decoded chunk data to reduce I/O overhead for frequently loaded/unloaded chunks
   cache-system: true
+  # timed: expire cached data after 30 seconds without access
+  # lifecycle: retain data until Moonrise releases its chunk holder, without a timer
+  #
+  # Lifecycle mode requires the Paper loader, compatible Moonrise hooks, cache-system and async-read.
+  # Requires Paper/Folia 1.21.4+; startup fails if the required hooks cannot be installed.
+  # Requires server restart to take effect.
+  cache-mode: timed
   # Writes chunk data asynchronously on dedicated IO threads instead of blocking the server thread
   # Requires server restart to take effect
   async-write: true
   # Hooks into the server's chunk loading pipeline to read and cache chunk data
   # before the chunk load event, avoiding synchronous disk I/O on the main thread
-  # Only works on Paper 1.21.4+. Falls back to synchronous reads if the injection fails
+  # Only works on Paper 1.21.4+. Timed mode falls back to synchronous reads if injection fails.
+  # Startup chunks and failed preloads may still require synchronous reads in either mode.
   # Requires server restart to take effect
   async-read: true
   # Compression algorithm for chunk data

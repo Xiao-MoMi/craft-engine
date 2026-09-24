@@ -12,6 +12,8 @@ import net.bytebuddy.implementation.bind.annotation.FieldValue;
 import net.bytebuddy.implementation.bind.annotation.RuntimeType;
 import net.bytebuddy.matcher.ElementMatchers;
 import net.momirealms.craftengine.core.util.Key;
+import net.momirealms.craftengine.core.util.VersionHelper;
+import com.mojang.serialization.MapCodec;
 import net.momirealms.craftengine.proxy.minecraft.core.BlockPosProxy;
 import net.momirealms.craftengine.proxy.minecraft.core.HolderProxy;
 import net.momirealms.craftengine.proxy.minecraft.resources.IdentifierProxy;
@@ -35,13 +37,13 @@ import static java.util.Objects.requireNonNull;
 
 public final class BiomeFilterGenerator {
     public static final Constructor<?> constructor$PlacementFilter = requireNonNull(
-            SparrowClass.of(PlacementFilterProxy.CLASS).getDeclaredConstructor(ConstructorMatcher.takeArguments(new Class<?>[0]))
+            (VersionHelper.isOrAbove26_3 ? SparrowClass.of(Object.class) : SparrowClass.of(PlacementFilterProxy.CLASS)).getDeclaredConstructor(ConstructorMatcher.takeArguments(new Class<?>[0]))
     );
     public static final Method method$PlacementFilter$shouldPlace = requireNonNull(
             SparrowClass.of(PlacementFilterProxy.CLASS).getDeclaredMethod(MethodMatcher.takeArguments(PlacementContextProxy.CLASS, RandomSourceProxy.CLASS, BlockPosProxy.CLASS).and(MethodMatcher.returnType(boolean.class)))
     );
     public static final Method method$PlacementModifier$type = requireNonNull(
-            SparrowClass.of(PlacementModifierProxy.CLASS).getDeclaredMethod(MethodMatcher.takeArguments(new Class<?>[0]).and(MethodMatcher.returnType(PlacementModifierTypeProxy.CLASS)))
+            SparrowClass.of(PlacementModifierProxy.CLASS).getDeclaredMethod(MethodMatcher.takeArguments(new Class<?>[0]).and(MethodMatcher.returnType(VersionHelper.isOrAbove26_3 ? MapCodec.class : PlacementModifierTypeProxy.CLASS)))
     );
     private static SConstructor1 constructor$CraftEngineBiomeFilter;
     private static Object placementModifierType$BIOME_FILTER;

@@ -3,6 +3,7 @@ package net.momirealms.craftengine.bukkit.plugin.agent;
 import java.util.function.BiConsumer;
 import java.util.function.BiPredicate;
 import java.util.function.Consumer;
+import java.util.function.Function;
 import java.util.function.Predicate;
 
 public final class AgentBridge {
@@ -10,6 +11,12 @@ public final class AgentBridge {
     public static Runnable REGISTRY_INJECTION;
     /** 区块数据预热回调（{world, chunkPos, protoChunk}），由织入 SerializableChunkData#read 的 advice 触发 */
     public static volatile Consumer<Object[]> CHUNK_DATA_WARMUP;
+    public static volatile Consumer<Object[]> CHUNK_LIFECYCLE_START;
+    public static volatile Function<Object, Object> CHUNK_LIFECYCLE_CONTEXT;
+    public static volatile BiConsumer<Object, Object> CHUNK_LIFECYCLE_READ;
+    public static volatile BiConsumer<Object, Object> CHUNK_LIFECYCLE_EMPTY;
+    public static volatile Consumer<Object> CHUNK_LIFECYCLE_COMPLETE;
+    public static volatile Consumer<Object[]> CHUNK_LIFECYCLE_RELEASE;
     /** 实体装备变化回调（entity, changed equipment map），由原版装备变化收集方法触发 */
     public static volatile BiConsumer<Object, Object> EQUIPMENT_CHANGE;
     /** 世界实体追踪开始/结束回调（server level, entity），仅在 Spigot 织入。 */

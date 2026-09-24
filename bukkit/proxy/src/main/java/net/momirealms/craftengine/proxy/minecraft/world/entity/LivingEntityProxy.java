@@ -18,6 +18,9 @@ public interface LivingEntityProxy extends EntityProxy {
     LivingEntityProxy INSTANCE = ASMProxyFactory.create(LivingEntityProxy.class);
     Class<?> CLASS = SparrowClass.find("net.minecraft.world.entity.LivingEntity");
 
+    @MethodInvoker(name = "drop", activeIf = "min_version=26.3 && has_patch=paper")
+    Object drop(Object target, @Type(clazz = ItemStackProxy.class) Object droppedItem, boolean thrownFromHand, @Type(clazz = net.momirealms.craftengine.proxy.minecraft.util.PredictionProxy.class) Object prediction, boolean randomly, boolean callEvent, @org.jetbrains.annotations.Nullable java.util.function.Consumer<org.bukkit.entity.Item> entityOperation);
+
     @FieldGetter(name = "lastDamageSource")
     Object getLastDamageSource(Object target);
 
@@ -54,8 +57,13 @@ public interface LivingEntityProxy extends EntityProxy {
     @MethodInvoker(name = "getLastHurtByPlayer", activeIf = "min_version=1.21.5")
     Object getLastHurtByPlayer(Object target);
 
-    @MethodInvoker(name = "swing")
-    void swing(Object target, @Type(clazz = InteractionHandProxy.class) Object hand, boolean updateSelf);
+    @MethodInvoker(name = "swing", activeIf = "max_version=26.2")
+    default void swing(Object target, @Type(clazz = InteractionHandProxy.class) Object hand, boolean updateSelf) {
+        swing(target, hand, net.momirealms.craftengine.proxy.minecraft.world.item.component.SwingAnimationProxy.DEFAULT, updateSelf);
+    }
+
+    @MethodInvoker(name = "swing", activeIf = "min_version=26.3")
+    boolean swing(Object target, @Type(clazz = InteractionHandProxy.class) Object hand, @Type(clazz = net.momirealms.craftengine.proxy.minecraft.world.item.component.SwingAnimationProxy.class) Object animation, boolean updateSelf);
 
     @MethodInvoker(name = "addEffect")
     boolean addEffect(Object target, @Type(clazz = MobEffectInstanceProxy.class) Object effect);
@@ -74,4 +82,8 @@ public interface LivingEntityProxy extends EntityProxy {
 
     @MethodInvoker(name = "setItemSlot")
     void setItemSlot(Object target, @Type(clazz = EquipmentSlotProxy.class) Object slot, @Type(clazz = ItemStackProxy.class) Object item);
+    @MethodInvoker(name = "drop", activeIf = "min_version=26.3")
+    Object drop(Object target, @Type(clazz = ItemStackProxy.class) Object droppedItem, boolean dropAround, @Type(clazz = net.momirealms.craftengine.proxy.minecraft.util.PredictionProxy.class) Object prediction);
+
+
 }

@@ -8,6 +8,11 @@ import net.momirealms.sparrow.reflection.proxy.annotation.ReflectionProxy;
 public interface ServerEntityProxy {
     ServerEntityProxy INSTANCE = ASMProxyFactory.create(ServerEntityProxy.class);
 
-    @FieldSetter(name = "updateInterval")
-    void setUpdateInterval(Object target, int value);
+    @FieldSetter(name = "updateInterval", activeIf = "max_version=26.2")
+    default void setUpdateInterval(Object target, int value) {
+        setUpdateIntervalValue(target, net.momirealms.craftengine.proxy.minecraft.world.entity.UpdateIntervalProxy.INSTANCE.periodic(value));
+    }
+
+    @FieldSetter(name = "updateInterval", activeIf = "min_version=26.3")
+    void setUpdateIntervalValue(Object target, Object value);
 }

@@ -13,7 +13,7 @@ import java.util.Map;
 public interface TrimMaterialProxy {
     TrimMaterialProxy INSTANCE = ASMProxyFactory.create(TrimMaterialProxy.class);
 
-    @ConstructorInvoker(activeIf = "min_version=1.21.5")
+    @ConstructorInvoker(activeIf = "min_version=1.21.5 && max_version=26.2")
     Object newInstance(@Type(clazz = MaterialAssetGroupProxy.class) Object assets,
                        @Type(clazz = ComponentProxy.class) Object description);
 
@@ -29,4 +29,6 @@ public interface TrimMaterialProxy {
                        float itemModelIndex,
                        Map<Object, String> overrideArmorAssets,
                        @Type(clazz = ComponentProxy.class) Object description);
+    @ConstructorInvoker(activeIf = "min_version=26.3")
+    Object newInstance26_3(@Type(clazz = net.momirealms.craftengine.proxy.minecraft.resources.IdentifierProxy.class) Object palette, @Type(clazz = ComponentProxy.class) Object description);
 }

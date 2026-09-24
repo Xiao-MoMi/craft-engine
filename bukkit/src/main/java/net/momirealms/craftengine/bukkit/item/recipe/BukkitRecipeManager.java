@@ -33,6 +33,10 @@ import net.momirealms.craftengine.proxy.minecraft.server.packs.resources.MultiPa
 import net.momirealms.craftengine.proxy.minecraft.server.packs.resources.ResourceProxy;
 import net.momirealms.craftengine.proxy.minecraft.server.players.PlayerListProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.item.crafting.FireworkStarFadeRecipeProxy;
+import net.momirealms.craftengine.proxy.minecraft.world.item.crafting.IngredientProxy;
+import net.momirealms.craftengine.proxy.minecraft.world.item.crafting.PotionIngredientProxy;
+import net.momirealms.craftengine.proxy.minecraft.world.item.crafting.BrewingRecipeProxy;
+import net.momirealms.craftengine.proxy.minecraft.world.item.ItemStackTemplateProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.item.crafting.RecipeHolderProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.item.crafting.RecipeManagerProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.item.crafting.RecipeTypeProxy;
@@ -157,7 +161,7 @@ public final class BukkitRecipeManager extends AbstractRecipeManager {
                 this.nativeRecipesToUnregister.add(id);
             }
             for (Recipe recipe : this.brewingRecipes) {
-                this.brewingRecipesToUnregister.add(recipe.id());
+                (VersionHelper.isOrAbove26_3 ? this.nativeRecipesToUnregister : this.brewingRecipesToUnregister).add(recipe.id());
             }
         }
         super.unload();
@@ -232,6 +236,19 @@ public final class BukkitRecipeManager extends AbstractRecipeManager {
             }
         }
 
+        if (VersionHelper.isOrAbove26_3) {
+            for (CustomBrewingRecipe recipe : this.brewingRecipes) {
+                try {
+                    super.recipeRegistry.unregister(recipe.id());
+                    super.recipeRegistry.register(recipe.id(), BrewingRecipeProxy.INSTANCE.newInstance(
+                            brewingIngredient(recipe.container()), brewingIngredient(recipe.ingredient()),
+                            ItemStackTemplateProxy.INSTANCE.fromNonEmptyStack(recipe.result(ItemBuildContext.empty()).minecraftItem())));
+                } catch (Exception e) {
+                    collector.add(e);
+                }
+            }
+        }
+
         // 完成注册
         super.recipeRegistry.finalizeRegistration();
 
@@ -248,6 +265,13 @@ public final class BukkitRecipeManager extends AbstractRecipeManager {
         Optional.ofNullable(collector.result()).ifPresent(t -> {
             this.plugin.logger().warn("Failed to load recipes", t);
         });
+    }
+
+    private Object brewingIngredient(Ingredient ingredient) {
+        Object nativeIngredient = FastNMS.INSTANCE.toMinecraftIngredient(ingredient);
+        IngredientProxy.INSTANCE.setStackPredicate(nativeIngredient,
+                stack -> ingredient.test(UniqueIdItem.of(this.plugin.itemManager().wrap(stack))));
+        return PotionIngredientProxy.INSTANCE.newInstance(nativeIngredient, Optional.empty());
     }
 
     @SuppressWarnings({"deprecation", "removal"})
@@ -281,8 +305,6 @@ public final class BukkitRecipeManager extends AbstractRecipeManager {
                 }
             }
         }
-
-        // todo 26.3 酿造
 
         // 重载资源
         if (VersionHelper.isOrAbove1_21_6 && !VersionHelper.hasFoliaPatch) {
@@ -334,6 +356,9 @@ public final class BukkitRecipeManager extends AbstractRecipeManager {
             JsonObject jsonObject = entry.getValue();
             try {
                 Key serializerType = Key.of(jsonObject.get("type").getAsString());
+                // Native brewing recipes retain their potion predicates and remain in the server registry.
+                // CraftEngine brewing recipes are registered separately with their own item predicates.
+                if (VersionHelper.isOrAbove26_3 && serializerType.equals(RecipeSerializers.BREWING)) continue;
                 RecipeSerializer<? extends Recipe> serializer = BuiltInRegistries.RECIPE_SERIALIZER.getValue(serializerType);
                 if (serializer == null) {
                     continue;
@@ -396,7 +421,13 @@ public final class BukkitRecipeManager extends AbstractRecipeManager {
         List<Object> selected = PackRepositoryProxy.INSTANCE.getSelected(packRepository);
         List<Object> packResources = new ArrayList<>();
         for (Object pack : selected) {
-            packResources.add(PackProxy.INSTANCE.open(pack));
+            if (VersionHelper.isOrAbove26_3) {
+                try (java.util.stream.Stream<?> resources = (java.util.stream.Stream<?>) PackProxy.INSTANCE.open(pack)) {
+                    resources.forEach(packResources::add);
+                }
+            } else {
+                packResources.add(PackProxy.INSTANCE.open(pack));
+            }
         }
         Map<Key, JsonObject> recipes = new HashMap<>();
         try (AutoCloseable resourceManager = (AutoCloseable) MultiPackResourceManagerProxy.INSTANCE.newInstance(PackTypeProxy.SERVER_DATA, packResources)) {

@@ -358,4 +358,8 @@ public interface BlockBehaviourProxy {
     interface StatePredicateProxy {
         Class<?> CLASS = SparrowClass.find("net.minecraft.world.level.block.state.BlockBehaviour$StatePredicate");
     }
+    @ReflectionProxy(name = "net.minecraft.world.level.block.state.BlockBehaviour$StateArgumentPredicate", activeIf = "min_version=26.3")
+    interface StateArgumentPredicateProxy {
+        Class<?> CLASS = SparrowClass.find("net.minecraft.world.level.block.state.BlockBehaviour$StateArgumentPredicate");
+    }
 }

@@ -164,6 +164,7 @@ public final class Config {
     private boolean chunk_system$cache_system = true;
     private boolean chunk_system$async_write = true;
     private boolean chunk_system$async_read = true;
+    private boolean chunk_system$lifecycle_cache;
     private boolean chunk_system$injection$target;
     private boolean chunk_system$process_invalid_furniture$enable;
     private Map<String, String> chunk_system$process_invalid_furniture$mapping;
@@ -564,6 +565,13 @@ public final class Config {
         this.chunk_system$cache_system = config.getBoolean("chunk-system.cache-system", true);
         this.chunk_system$async_write = config.getBoolean("chunk-system.async-write", true);
         this.chunk_system$async_read = config.getBoolean("chunk-system.async-read", true);
+        if (this.firstTime) {
+            String cacheMode = config.getString("chunk-system.cache-mode", "timed");
+            if (!cacheMode.equalsIgnoreCase("timed") && !cacheMode.equalsIgnoreCase("lifecycle")) {
+                throw new IllegalArgumentException("Unknown chunk-system.cache-mode: " + cacheMode);
+            }
+            this.chunk_system$lifecycle_cache = cacheMode.equalsIgnoreCase("lifecycle");
+        }
 
         if (this.firstTime) {
             this.chunk_system$injection$target = config.getString("chunk-system.injection.target", "palette").equalsIgnoreCase("palette") || (VersionHelper.hasLeafPatch && !VersionHelper.isOrAbove1_21_11);
@@ -1467,6 +1475,10 @@ public final class Config {
 
     public static boolean enableAsyncChunkRead() {
         return instance.chunk_system$async_read;
+    }
+
+    public static boolean lifecycleChunkCache() {
+        return instance.chunk_system$lifecycle_cache;
     }
 
     public static boolean addNonItalicTag() {

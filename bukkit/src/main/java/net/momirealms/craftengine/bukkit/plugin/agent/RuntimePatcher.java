@@ -12,6 +12,7 @@ import net.momirealms.craftengine.bukkit.plugin.BukkitCraftEngine;
 import net.momirealms.craftengine.bukkit.util.EntityUtils;
 import net.momirealms.craftengine.bukkit.util.ItemStackUtils;
 import net.momirealms.craftengine.bukkit.world.BukkitWorldManager;
+import net.momirealms.craftengine.bukkit.world.BukkitChunkLifecycle;
 import net.momirealms.craftengine.core.plugin.config.Config;
 import net.momirealms.craftengine.core.util.ReflectionUtils;
 import net.momirealms.craftengine.core.util.VersionHelper;
@@ -35,6 +36,7 @@ import java.util.Map;
 import java.util.function.BiConsumer;
 import java.util.function.BiPredicate;
 import java.util.function.Consumer;
+import java.util.function.Function;
 import java.util.function.Predicate;
 
 public final class RuntimePatcher {
@@ -49,6 +51,10 @@ public final class RuntimePatcher {
     public static void patch(BukkitCraftEngine plugin) throws Exception {
         boolean registryInjection = !isDatapackDiscoveryAvailable();
         boolean chunkDataWarmup = VersionHelper.hasPaperPatch && VersionHelper.isOrAbove1_21_4 && Config.enableChunkCache() && Config.enableAsyncChunkRead();
+        boolean lifecycle = Config.lifecycleChunkCache();
+        if (lifecycle && !chunkDataWarmup) {
+            throw new IllegalStateException("Lifecycle chunk caching requires Paper/Moonrise 1.21.4+, cache-system=true and async-read=true");
+        }
         if (!registryInjection && !chunkDataWarmup) return;
 
         if (registryInjection) {
@@ -65,7 +71,18 @@ public final class RuntimePatcher {
             BlocksAgent.install(inst);
         }
 
-        if (chunkDataWarmup) {
+        if (lifecycle) {
+            Class<?> bridge = injectBridge();
+            BukkitChunkLifecycle.initialize(Bukkit.class.getClassLoader());
+            bridge.getField("CHUNK_LIFECYCLE_START").set(null, (Consumer<Object[]>) BukkitChunkLifecycle::start);
+            bridge.getField("CHUNK_LIFECYCLE_CONTEXT").set(null, (Function<Object, Object>) BukkitChunkLifecycle::context);
+            bridge.getField("CHUNK_LIFECYCLE_READ").set(null, (BiConsumer<Object, Object>) BukkitChunkLifecycle::read);
+            bridge.getField("CHUNK_LIFECYCLE_EMPTY").set(null, (BiConsumer<Object, Object>) BukkitChunkLifecycle::empty);
+            bridge.getField("CHUNK_LIFECYCLE_COMPLETE").set(null, (Consumer<Object>) BukkitChunkLifecycle::complete);
+            bridge.getField("CHUNK_LIFECYCLE_RELEASE").set(null, (Consumer<Object[]>) BukkitChunkLifecycle::release);
+            ChunkLifecycleAgent.install(instrumentation(), Bukkit.class.getClassLoader());
+            plugin.logger().info("Moonrise lifecycle chunk cache hooks installed");
+        } else if (chunkDataWarmup) {
             try {
                 Class<?> bridge = injectBridge();
                 bridge.getField("CHUNK_DATA_WARMUP").set(null, (Consumer<Object[]>) BukkitWorldManager::onChunkDataRead);

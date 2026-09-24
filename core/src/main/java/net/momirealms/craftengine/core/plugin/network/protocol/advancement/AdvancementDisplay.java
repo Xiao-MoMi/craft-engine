@@ -5,6 +5,7 @@ import net.momirealms.craftengine.core.advancement.AdvancementType;
 import net.momirealms.craftengine.core.item.Item;
 import net.momirealms.craftengine.core.util.FriendlyByteBuf;
 import net.momirealms.craftengine.core.util.Key;
+import net.momirealms.craftengine.core.util.VersionHelper;
 
 import java.util.Optional;
 import java.util.function.Function;
@@ -69,8 +70,10 @@ public final class AdvancementDisplay {
         }
         buf.writeInt(flags);
         this.background.ifPresent(buf::writeKey);
-        buf.writeFloat(this.x);
-        buf.writeFloat(this.y);
+        if (!VersionHelper.isOrAbove26_3) {
+            buf.writeFloat(this.x);
+            buf.writeFloat(this.y);
+        }
     }
 
     public static AdvancementDisplay read(FriendlyByteBuf buf, FriendlyByteBuf.Reader<Item> reader) {
@@ -83,8 +86,8 @@ public final class AdvancementDisplay {
         Optional<Key> background = hasBackground ? Optional.of(buf.readKey()) : Optional.empty();
         boolean showToast = (flags & 2) != 0;
         boolean hidden = (flags & 4) != 0;
-        float x = buf.readFloat();
-        float y = buf.readFloat();
+        float x = VersionHelper.isOrAbove26_3 ? 0 : buf.readFloat();
+        float y = VersionHelper.isOrAbove26_3 ? 0 : buf.readFloat();
         return new AdvancementDisplay(title, description, icon, background, type, showToast, hidden, x, y);
     }
 }

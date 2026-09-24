@@ -781,7 +781,7 @@ configured_feature:
         lower_size: 0
         upper_size: 2
       below_trunk_provider:
-        type: 'minecraft:rule_based_state_provider'
+        type: 'minecraft:rule_based'
         rules:
           - if_true:
               type: 'minecraft:not'
@@ -789,17 +789,17 @@ configured_feature:
                 type: 'minecraft:matching_block_tag'
                 tag: 'minecraft:cannot_replace_below_tree_trunk'
             then:
-              type: 'minecraft:simple_state_provider'
+              type: 'minecraft:simple'
               state:
                 id: 'minecraft:dirt'
       trunk_provider:
-        type: 'minecraft:simple_state_provider'
+        type: 'minecraft:simple'
         state:
           id: 'default:palm_log'
           properties:
             axis: 'y'
       foliage_provider:
-        type: 'minecraft:simple_state_provider'
+        type: 'minecraft:simple'
         state:
           id: 'default:palm_leaves'
           properties:

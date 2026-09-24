@@ -70,9 +70,9 @@ public interface BuiltInRegistriesProxy {
     @FieldGetter(name = "GAME_EVENT", isStatic = true)
     Object getGameEvent();
 
-    @FieldGetter(name = "BLOCKSTATE_PROVIDER_TYPE", isStatic = true)
+    @FieldGetter(name = {"BLOCK_STATE_PROVIDER_TYPE", "BLOCKSTATE_PROVIDER_TYPE"}, isStatic = true)
     Object getBlockstateProviderType();
 
-    @FieldGetter(name = "FEATURE", isStatic = true)
+    @FieldGetter(name = {"FEATURE_TYPE", "FEATURE"}, isStatic = true)
     Object getFeature();
 }

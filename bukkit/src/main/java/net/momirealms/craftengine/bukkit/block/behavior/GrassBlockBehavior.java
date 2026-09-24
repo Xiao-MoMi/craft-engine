@@ -166,7 +166,11 @@ public final class GrassBlockBehavior extends BukkitBlockBehavior implements Bon
                     continue out;
                 }
                 if (BlockStateUtils.getBlockOwner(currentState) == BlocksProxy.SHORT_GRASS && RandomUtils.generateRandomInt(0, 10) == 0) {
-                    BonemealableBlockProxy.INSTANCE.performBonemeal(BlocksProxy.SHORT_GRASS, world, random, nmsCurrentPos, currentState);
+                    if (VersionHelper.isOrAbove26_3) {
+                        BonemealableBlockProxy.INSTANCE.performBonemeal(BlocksProxy.SHORT_GRASS, world, random, nmsCurrentPos, currentState, args[4]);
+                    } else {
+                        BonemealableBlockProxy.INSTANCE.performBonemeal(BlocksProxy.SHORT_GRASS, world, random, nmsCurrentPos, currentState);
+                    }
                 }
                 if (BlockBehaviourProxy.BlockStateBaseProxy.INSTANCE.isAir(currentState)) {
                     Object chunkGenerator = ServerChunkCacheProxy.INSTANCE.getGenerator(ServerLevelProxy.INSTANCE.getChunkSource(world));

@@ -292,7 +292,7 @@ public final class PacketIds1_20_5 implements PacketIds {
 
     @Override
     public int serverboundSwingPacket() {
-        return PacketIdHelper.byName("minecraft:swing", ConnectionState.PLAY, PacketFlow.SERVERBOUND);
+        return PacketIdHelper.byName(VersionHelper.isOrAbove26_3 ? "minecraft:punch" : "minecraft:swing", ConnectionState.PLAY, PacketFlow.SERVERBOUND);
     }
 
     @Override

@@ -15,7 +15,7 @@ public final class SwingListener implements ByteBufferPacketListener {
     public void onPacketReceive(NetWorkUser user, ByteBufPacketEvent event) {
         BukkitServerPlayer player = (BukkitServerPlayer) user;
         FriendlyByteBuf buf = event.getBuffer();
-        int hand = buf.readVarInt();
+        int hand = net.momirealms.craftengine.core.util.VersionHelper.isOrAbove26_3 ? 0 : buf.readVarInt();
         if (hand == 0/*main*/) {
             player.onSwingHand();
         }

@@ -490,7 +490,9 @@ public final class BukkitItemManager extends AbstractItemManager {
     }
 
     private Object createTrimMaterial() {
-        if (VersionHelper.isOrAbove1_21_5) {
+        if (VersionHelper.isOrAbove26_3) {
+            return TrimMaterialProxy.INSTANCE.newInstance26_3(KeyUtils.toIdentifier(Key.of("minecraft", "custom")), ComponentProxy.INSTANCE.empty());
+        } else if (VersionHelper.isOrAbove1_21_5) {
             Object assetGroup = MaterialAssetGroupProxy.INSTANCE.create("custom");
             return TrimMaterialProxy.INSTANCE.newInstance(assetGroup, ComponentProxy.INSTANCE.empty());
         } else if (VersionHelper.isOrAbove1_21_4) {

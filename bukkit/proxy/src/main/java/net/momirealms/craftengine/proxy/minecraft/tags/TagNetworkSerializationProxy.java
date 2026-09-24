@@ -4,6 +4,8 @@ import net.momirealms.craftengine.proxy.minecraft.core.LayeredRegistryAccessProx
 import net.momirealms.craftengine.proxy.minecraft.network.FriendlyByteBufProxy;
 import net.momirealms.sparrow.reflection.proxy.ASMProxyFactory;
 import net.momirealms.sparrow.reflection.proxy.annotation.MethodInvoker;
+import net.momirealms.sparrow.reflection.proxy.annotation.FieldGetter;
+import net.momirealms.craftengine.proxy.minecraft.network.codec.StreamCodecProxy;
 import net.momirealms.sparrow.reflection.proxy.annotation.ReflectionProxy;
 import net.momirealms.sparrow.reflection.proxy.annotation.Type;
 
@@ -20,10 +22,17 @@ public interface TagNetworkSerializationProxy {
     interface NetworkPayloadProxy {
         NetworkPayloadProxy INSTANCE = ASMProxyFactory.create(NetworkPayloadProxy.class);
 
-        @MethodInvoker(name = "write")
-        void write(Object target, @Type(clazz = FriendlyByteBufProxy.class) Object buf);
+        @MethodInvoker(name = "write", activeIf = "max_version=26.2")
+        default void write(Object target, @Type(clazz = FriendlyByteBufProxy.class) Object buf) {
+            StreamCodecProxy.INSTANCE.encode(getStreamCodec(), buf, target);
+        }
 
-        @MethodInvoker(name = "read", isStatic = true)
-        Object read(@Type(clazz = FriendlyByteBufProxy.class) Object buf);
+        @MethodInvoker(name = "read", isStatic = true, activeIf = "max_version=26.2")
+        default Object read(@Type(clazz = FriendlyByteBufProxy.class) Object buf) {
+            return StreamCodecProxy.INSTANCE.decode(getStreamCodec(), buf);
+        }
+
+        @FieldGetter(name = "STREAM_CODEC", isStatic = true, activeIf = "min_version=26.3")
+        Object getStreamCodec();
     }
 }

@@ -87,7 +87,7 @@ import java.util.stream.Stream;
 public final class BukkitWorldManager implements WorldManager, Listener {
     private static BukkitWorldManager instance;
     private final BukkitCraftEngine plugin;
-    private boolean initialized = false;
+    private volatile boolean initialized = false;
     // loaded worlds
     private final ConcurrentChainedUUID2ReferenceHashTable<BukkitWorld> loadedWorlds;
     private final Cache<UUID, BukkitWorld> unloadedWorlds = Caffeine.newBuilder()
@@ -206,6 +206,8 @@ public final class BukkitWorldManager implements WorldManager, Listener {
     public void disable() {
         if (this.disabled) return;
         this.disabled = true;
+        this.initialized = false;
+        BukkitChunkLifecycle.clear();
         HandlerList.unregisterAll(this);
         if (this.storageAdaptor instanceof Listener listener) {
             HandlerList.unregisterAll(listener);

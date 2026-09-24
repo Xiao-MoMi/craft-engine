@@ -9,6 +9,7 @@ import net.momirealms.craftengine.core.entity.projectile.ProjectileDisplay;
 import net.momirealms.craftengine.core.item.Item;
 import net.momirealms.craftengine.core.item.network.ItemPacketSource;
 import net.momirealms.craftengine.core.plugin.network.EntityPacketHandler;
+import net.momirealms.craftengine.core.plugin.network.EntityMovement26_3;
 import net.momirealms.craftengine.core.plugin.network.event.ByteBufPacketEvent;
 import net.momirealms.craftengine.core.util.FriendlyByteBuf;
 import net.momirealms.craftengine.core.util.MiscUtils;
@@ -46,6 +47,17 @@ public final class ProjectilePacketHandler implements EntityPacketHandler {
 
     @Override
     public void handleSyncEntityPosition(Player user, ByteBufPacketEvent event, int entityId, FriendlyByteBuf buf) {
+        if (VersionHelper.isOrAbove26_3) {
+            EntityMovement26_3.readPosition(buf);
+            int rotationIndex = buf.readerIndex();
+            float yRot = buf.readFloat();
+            float xRot = buf.readFloat();
+            buf.setFloat(rotationIndex, -yRot);
+            buf.setFloat(rotationIndex + Float.BYTES, MiscUtils.clamp(-xRot, -90.0F, 90.0F));
+            buf.readerIndex(0);
+            event.setChanged(true);
+            return;
+        }
         Vec3d position = buf.readVec3();
         Vec3d deltaMovement = buf.readVec3();
         float yRot = buf.readFloat();
@@ -64,6 +76,17 @@ public final class ProjectilePacketHandler implements EntityPacketHandler {
 
     @Override
     public void handleMoveAndRotate(Player user, ByteBufPacketEvent event, int entityId, FriendlyByteBuf buf) {
+        if (VersionHelper.isOrAbove26_3) {
+            EntityMovement26_3.readDelta(buf, (x, y, z) -> {});
+            int rotationIndex = buf.readerIndex();
+            float yRot = MiscUtils.unpackDegrees(buf.readByte());
+            float xRot = MiscUtils.unpackDegrees(buf.readByte());
+            buf.setByte(rotationIndex, MiscUtils.packDegrees(-yRot));
+            buf.setByte(rotationIndex + 1, MiscUtils.packDegrees(MiscUtils.clamp(-xRot, -90.0F, 90.0F)));
+            buf.readerIndex(0);
+            event.setChanged(true);
+            return;
+        }
         short xa = buf.readShort();
         short ya = buf.readShort();
         short za = buf.readShort();

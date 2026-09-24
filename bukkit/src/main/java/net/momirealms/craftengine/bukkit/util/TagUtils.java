@@ -111,7 +111,13 @@ public final class TagUtils {
         List<Object> selected = PackRepositoryProxy.INSTANCE.getSelected(packRepository);
         List<Object> packResources = new ArrayList<>();
         for (Object pack : selected) {
-            packResources.add(PackProxy.INSTANCE.open(pack));
+            if (VersionHelper.isOrAbove26_3) {
+                try (java.util.stream.Stream<?> resources = (java.util.stream.Stream<?>) PackProxy.INSTANCE.open(pack)) {
+                    resources.forEach(packResources::add);
+                }
+            } else {
+                packResources.add(PackProxy.INSTANCE.open(pack));
+            }
         }
         try (AutoCloseable resourceManager = (AutoCloseable) MultiPackResourceManagerProxy.INSTANCE.newInstance(PackTypeProxy.SERVER_DATA, packResources)) {
             Map<Object, List<Object>> scannedResourceStacks = FileToIdConverterProxy.INSTANCE.listMatchingResourceStacks(fileToIdConverter, resourceManager);

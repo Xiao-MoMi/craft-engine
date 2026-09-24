@@ -57,8 +57,10 @@ public interface ItemStackProxy extends DataComponentHolderProxy, ItemInstancePr
     @MethodInvoker(name = "setCount")
     void setCount(Object target, int count);
 
-    @MethodInvoker(name = "getBukkitStack", activeIf = "has_patch=paper")
-    ItemStack getBukkitStack(Object target);
+    @MethodInvoker(name = "getBukkitStack", activeIf = "has_patch=paper && max_version=26.2")
+    default ItemStack getBukkitStack(Object target) {
+        return net.momirealms.craftengine.proxy.bukkit.craftbukkit.inventory.CraftItemStackProxy.INSTANCE.asCraftMirror(target);
+    }
 
     @MethodInvoker(name = "copyWithCount")
     Object copyWithCount(Object target, int count);

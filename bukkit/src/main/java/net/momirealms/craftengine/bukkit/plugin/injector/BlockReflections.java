@@ -136,7 +136,9 @@ final class BlockReflections {
 
     public static final Method method$BonemealableBlock$isValidBonemealTarget = requireNonNull(
             SparrowClass.of(BonemealableBlockProxy.CLASS).getDeclaredMethod(MethodMatcher.named("isValidBonemealTarget")
-                    .and(VersionHelper.isOrAbove1_20_2
+                    .and(VersionHelper.isOrAbove26_3
+                            ? MethodMatcher.takeArguments(LevelReaderProxy.CLASS, BlockPosProxy.CLASS, BlockStateProxy.CLASS, BonemealSourceProxy.CLASS)
+                            : VersionHelper.isOrAbove1_20_2
                             ? MethodMatcher.takeArguments(LevelReaderProxy.CLASS, BlockPosProxy.CLASS, BlockStateProxy.CLASS)
                             : MethodMatcher.takeArguments(LevelReaderProxy.CLASS, BlockPosProxy.CLASS, BlockStateProxy.CLASS, boolean.class))
                     .and(MethodMatcher.returnType(boolean.class)))
@@ -150,7 +152,9 @@ final class BlockReflections {
 
     public static final Method method$BonemealableBlock$isBonemealSuccess = requireNonNull(
             SparrowClass.of(BonemealableBlockProxy.CLASS).getDeclaredMethod(MethodMatcher.named("isBonemealSuccess")
-                    .and(MethodMatcher.takeArguments(LevelProxy.CLASS, RandomSourceProxy.CLASS, BlockPosProxy.CLASS, BlockStateProxy.CLASS))
+                    .and(VersionHelper.isOrAbove26_3
+                            ? MethodMatcher.takeArguments(LevelProxy.CLASS, RandomSourceProxy.CLASS, BlockPosProxy.CLASS, BlockStateProxy.CLASS, BonemealSourceProxy.CLASS)
+                            : MethodMatcher.takeArguments(LevelProxy.CLASS, RandomSourceProxy.CLASS, BlockPosProxy.CLASS, BlockStateProxy.CLASS))
                     .and(MethodMatcher.returnType(boolean.class)))
     );
 
@@ -207,7 +211,9 @@ final class BlockReflections {
 
     public static final Method method$BonemealableBlock$performBonemeal = requireNonNull(
             SparrowClass.of(BonemealableBlockProxy.CLASS).getDeclaredMethod(MethodMatcher.named("performBonemeal")
-                    .and(MethodMatcher.takeArguments(ServerLevelProxy.CLASS, RandomSourceProxy.CLASS, BlockPosProxy.CLASS, BlockStateProxy.CLASS))
+                    .and(VersionHelper.isOrAbove26_3
+                            ? MethodMatcher.takeArguments(ServerLevelProxy.CLASS, RandomSourceProxy.CLASS, BlockPosProxy.CLASS, BlockStateProxy.CLASS, BonemealSourceProxy.CLASS)
+                            : MethodMatcher.takeArguments(ServerLevelProxy.CLASS, RandomSourceProxy.CLASS, BlockPosProxy.CLASS, BlockStateProxy.CLASS))
                     .and(MethodMatcher.returnType(void.class)))
     );
 

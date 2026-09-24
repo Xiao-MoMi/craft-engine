@@ -17,12 +17,14 @@ public interface CraftItemStackProxy {
     @FieldGetter(name = "handle")
     Object getHandle(ItemStack target);
 
-    @MethodInvoker(name = "asCraftCopy", isStatic = true)
-    ItemStack asCraftCopy(ItemStack original);
+    @MethodInvoker(name = "asCraftCopy", isStatic = true, activeIf = "max_version=26.2")
+    default ItemStack asCraftCopy(ItemStack original) {
+        return asCraftMirror(asNMSCopy(original));
+    }
 
     @MethodInvoker(name = "asNMSCopy", isStatic = true)
     Object asNMSCopy(ItemStack original);
 
-    @MethodInvoker(name = "asCraftMirror", isStatic = true)
+    @MethodInvoker(name = {"asBukkitMirror", "asCraftMirror"}, isStatic = true)
     ItemStack asCraftMirror(@Type(clazz = ItemStackProxy.class) Object original);
 }

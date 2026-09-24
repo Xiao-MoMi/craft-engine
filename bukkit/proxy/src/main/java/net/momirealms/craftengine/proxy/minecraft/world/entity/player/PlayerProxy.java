@@ -38,8 +38,10 @@ public interface PlayerProxy extends LivingEntityProxy {
     @MethodInvoker(name = "drop", activeIf = "max_version=1.20.2")
     Object drop(Object target, @Type(clazz = ItemStackProxy.class) Object droppedItem, boolean dropAround, boolean traceItem, boolean callEvent);
 
-    @MethodInvoker(name = "drop")
-    Object drop(Object target, @Type(clazz = ItemStackProxy.class) Object droppedItem, boolean retainOwnership);
+    @MethodInvoker(name = "drop", activeIf = "max_version=26.2")
+    default Object drop(Object target, @Type(clazz = ItemStackProxy.class) Object droppedItem, boolean retainOwnership) {
+        return drop(target, droppedItem, retainOwnership, net.momirealms.craftengine.proxy.minecraft.util.PredictionProxy.SERVER_ONLY);
+    }
 
     @MethodInvoker(name = "getCooldowns")
     Object getCooldowns(Object target);

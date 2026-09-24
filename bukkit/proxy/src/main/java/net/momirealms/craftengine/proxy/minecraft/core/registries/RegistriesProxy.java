@@ -68,7 +68,7 @@ public interface RegistriesProxy {
     @FieldGetter(name = "DIMENSION", isStatic = true)
     Object getDimension();
 
-    @FieldGetter(name = "CONFIGURED_FEATURE", isStatic = true)
+    @FieldGetter(name = {"FEATURE", "CONFIGURED_FEATURE"}, isStatic = true)
     Object getConfiguredFeature();
 
     @FieldGetter(name = "PLACED_FEATURE", isStatic = true)

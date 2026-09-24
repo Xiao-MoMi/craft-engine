@@ -34,13 +34,33 @@ public interface StructureProxy {
                       Predicate<Object> validBiome
     );
 
-    @MethodInvoker(name = "generate", activeIf = "min_version=1.21.4")
-    Object generate$1(Object target,
+    @MethodInvoker(name = "generate", activeIf = "min_version=1.21.4 && max_version=26.2")
+    default Object generate$1(Object target,
                       @Type(clazz = HolderProxy.class) Object selected,
                       @Type(clazz = ResourceKeyProxy.class) Object dimension,
                       @Type(clazz = RegistryAccessProxy.class) Object registryAccess,
                       @Type(clazz = ChunkGeneratorProxy.class) Object chunkGenerator,
                       @Type(clazz = BiomeSourceProxy.class) Object biomeSource,
+                      @Type(clazz = RandomStateProxy.class) Object randomState,
+                      @Type(clazz = StructureTemplateManagerProxy.class) Object structureTemplateManager,
+                      long seed,
+                      @Type(clazz = ChunkPosProxy.class) Object sourceChunkPos,
+                      int references,
+                      @Type(clazz = LevelHeightAccessorProxy.class) Object heightAccessor,
+                      Predicate<Object> validBiome
+    ) {
+        Object sampler = RandomStateProxy.INSTANCE.createClimateSampler(randomState, net.momirealms.craftengine.proxy.minecraft.world.level.levelgen.densityfunction.SamplerContextProxy.EMPTY_UNCACHED);
+        return generate26_3(target, selected, dimension, registryAccess, chunkGenerator, biomeSource, sampler, randomState, structureTemplateManager, seed, sourceChunkPos, references, heightAccessor, validBiome);
+    }
+
+    @MethodInvoker(name = "generate", activeIf = "min_version=26.3")
+    Object generate26_3(Object target,
+                      @Type(clazz = HolderProxy.class) Object selected,
+                      @Type(clazz = ResourceKeyProxy.class) Object dimension,
+                      @Type(clazz = RegistryAccessProxy.class) Object registryAccess,
+                      @Type(clazz = ChunkGeneratorProxy.class) Object chunkGenerator,
+                      @Type(clazz = BiomeSourceProxy.class) Object biomeSource,
+                      @Type(clazz = net.momirealms.craftengine.proxy.minecraft.world.level.biome.ClimateProxy.SamplerProxy.class) Object sampler,
                       @Type(clazz = RandomStateProxy.class) Object randomState,
                       @Type(clazz = StructureTemplateManagerProxy.class) Object structureTemplateManager,
                       long seed,
