@@ -29,7 +29,7 @@ items:
           burnable: true
           is_suffocating: false
           is_redstone_conductor: false
-          push_reaction: block
+          push_reaction: immoveable
           instrument: bass
           support_shape: cobweb
           sounds:
@@ -100,7 +100,7 @@ items:
           burnable: true
           is_suffocating: false
           is_redstone_conductor: false
-          push_reaction: block
+          push_reaction: immoveable
           instrument: bass
           support_shape: cobweb
           sounds:

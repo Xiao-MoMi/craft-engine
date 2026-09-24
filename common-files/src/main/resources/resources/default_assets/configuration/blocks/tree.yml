@@ -289,7 +289,7 @@ config_factory#basic:
               template:
                 - default:sound/wood
               overrides:
-                push_reaction: destroy
+                push_reaction: popped
                 map_color: ${planks_map_color}
                 instrument: bass
                 hardness: 3.0
@@ -323,7 +323,7 @@ config_factory#basic:
                 - default:hardness/planks
               overrides:
                 burnable: true
-                push_reaction: destroy
+                push_reaction: popped
                 map_color: ${planks_map_color:-wood}
                 instrument: bass
                 tags:
@@ -405,7 +405,7 @@ config_factory#basic:
                 burnable: true
                 is_suffocating: false
                 is_redstone_conductor: false
-                push_reaction: NORMAL
+                push_reaction: push_pull
                 instrument: BASS
                 map_color: ${planks_map_color:-wood}
                 tags:
@@ -460,7 +460,7 @@ config_factory#basic:
                 - default:hardness/button
               overrides:
                 burnable: true
-                push_reaction: destroy
+                push_reaction: popped
                 map_color: ${planks_map_color:-wood}
                 instrument: harp
                 tags:

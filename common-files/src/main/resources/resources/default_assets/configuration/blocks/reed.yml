@@ -11,7 +11,7 @@ items:
             - default:hardness/none
             - default:sound/grass
           overrides:
-            push_reaction: destroy
+            push_reaction: popped
             map_color: 60
         behavior:
           type: on_liquid_block

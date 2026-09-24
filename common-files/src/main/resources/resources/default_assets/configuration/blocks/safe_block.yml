@@ -13,7 +13,7 @@ items:
           resistance: 1200
           is_suffocating: true
           is_redstone_conductor: true
-          push_reaction: block
+          push_reaction: immoveable
           instrument: basedrum
           map_color: 6
           tags:

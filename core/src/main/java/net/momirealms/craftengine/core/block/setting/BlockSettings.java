@@ -35,7 +35,7 @@ public final class BlockSettings {
     Tristate propagatesSkylightDown = Tristate.UNDEFINED;
     boolean isRaytraceBlocking = false;
     MapColor mapColor = MapColor.CLEAR;
-    PushReaction pushReaction = PushReaction.NORMAL;
+    PushReaction pushReaction = PushReaction.PUSH_PULL;
     int luminance;
     String instrument = "harp";
     BlockSounds sounds = BlockSounds.EMPTY;

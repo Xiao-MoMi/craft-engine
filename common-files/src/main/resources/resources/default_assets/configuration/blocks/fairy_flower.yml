@@ -12,7 +12,7 @@ items:
             - default:sound/grass
           overrides:
             item: default:fairy_flower
-            push_reaction: destroy
+            push_reaction: popped
             map_color: 19
         behavior:
           - type: liquid_flowable_block

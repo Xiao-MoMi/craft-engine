@@ -41,7 +41,7 @@ blocks:
         - default:sound/grass
       overrides:
         item: default:magma_fruit
-        push_reaction: destroy
+        push_reaction: popped
         map_color: 24
     behavior:
       - type: crop_block

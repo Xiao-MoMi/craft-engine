@@ -14,7 +14,7 @@ blocks:
         - default:sound/grass
       overrides:
         item: default:ender_pearl_flower_seeds
-        push_reaction: destroy
+        push_reaction: popped
         map_color: 24
     behaviors:
       - type: liquid_flowable_block

@@ -34,7 +34,7 @@ items:
           map_color: 29
           hardness: 10.0
           resistance: 1200
-          push_reaction: block
+          push_reaction: immoveable
           correct_tools: ["#minecraft:pickaxes"]
           required_break_power: 4
           tags: ["minecraft:mineable/pickaxe"]

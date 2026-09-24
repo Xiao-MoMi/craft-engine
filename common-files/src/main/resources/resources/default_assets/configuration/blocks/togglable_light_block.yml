@@ -17,7 +17,7 @@ blocks:
         - default:sound/amethyst_block
         - default:hardness/none
       overrides:
-        push_reaction: destroy
+        push_reaction: popped
         replaceable: false
         luminance: 15
     events:

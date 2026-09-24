@@ -17,7 +17,7 @@ templates#settings:
       - default:hardness/none
       - default:sound/grass
     overrides:
-      push_reaction: destroy
+      push_reaction: popped
       map_color: plant
       tags:
         - minecraft:mineable/axe
@@ -32,7 +32,7 @@ templates#settings:
     overrides:
       hardness: 0.2
       resistance: 0.2
-      push_reaction: destroy
+      push_reaction: popped
       instrument: harp
       map_color: plant
       tags:

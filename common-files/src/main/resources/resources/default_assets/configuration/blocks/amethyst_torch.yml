@@ -39,7 +39,7 @@ blocks:
         - default:sound/wood
         - default:hardness/none
       overrides:
-        push_reaction: destroy
+        push_reaction: popped
         replaceable: false
         map_color: 24
         luminance: 15
@@ -77,7 +77,7 @@ blocks:
         - default:sound/wood
         - default:hardness/none
       overrides:
-        push_reaction: destroy
+        push_reaction: popped
         replaceable: false
         map_color: 24
         luminance: 15

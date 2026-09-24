@@ -13,7 +13,7 @@ items:
           resistance: 1.4
           is_suffocating: true
           is_redstone_conductor: true
-          push_reaction: push_only
+          push_reaction: push
           instrument: basedrum
           correct_tools: ["#minecraft:pickaxes"]
           required_break_power: 1

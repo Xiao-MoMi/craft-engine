@@ -60,7 +60,7 @@ blocks:
         - default:hardness/melon
       overrides:
         map_color: 19
-        push_reaction: DESTROY
+        push_reaction: popped
         is_suffocating: true
         is_redstone_conductor: true
         tags:
@@ -83,7 +83,7 @@ blocks:
         - default:hardness/none
       overrides:
         map_color: 7
-        push_reaction: DESTROY
+        push_reaction: popped
         is_suffocating: false
         is_redstone_conductor: false
         item: default:hami_melon_seeds
@@ -150,7 +150,7 @@ blocks:
         - default:hardness/none
       overrides:
         map_color: 7
-        push_reaction: DESTROY
+        push_reaction: popped
         is_suffocating: false
         is_redstone_conductor: false
         item: default:hami_melon_seeds
