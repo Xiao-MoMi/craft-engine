@@ -5,7 +5,7 @@ placed_features:
     feature:
       type: 'minecraft:simple_block'
       to_place:
-        type: 'minecraft:rule_based_state_provider'
+        type: 'minecraft:rule_based'
         rules:
           - if_true:
               type: 'minecraft:all_of'
@@ -19,7 +19,7 @@ placed_features:
                     - -1
                     - 0
             then:
-              type: 'minecraft:weighted_state_provider'
+              type: 'minecraft:weighted'
               entries:
                 - weight: 4
                   data:
@@ -71,7 +71,7 @@ placed_features:
     feature:
       type: 'minecraft:simple_block'
       to_place:
-        type: 'minecraft:rule_based_state_provider'
+        type: 'minecraft:rule_based'
         rules:
           - if_true:
               type: 'minecraft:all_of'
@@ -86,7 +86,7 @@ placed_features:
                     - 0
                   blocks: 'minecraft:grass_block'
             then:
-              type: 'minecraft:simple_state_provider'
+              type: 'minecraft:simple'
               state:
                 id: 'default:fairy_flower'
     placement:
@@ -128,7 +128,7 @@ placed_features:
             max_inclusive: 4
             min_inclusive: 2
           provider:
-            type: 'minecraft:simple_state_provider'
+            type: 'minecraft:simple'
             state:
               id: 'default:flame_cane'
               properties:
@@ -210,7 +210,7 @@ placed_features:
     feature:
       type: 'minecraft:simple_block'
       to_place:
-        type: 'minecraft:rule_based_state_provider'
+        type: 'minecraft:rule_based'
         rules:
           - if_true:
               type: 'minecraft:all_of'
@@ -224,7 +224,7 @@ placed_features:
                     - 0
                   blocks: 'minecraft:grass_block'
             then:
-              type: 'minecraft:simple_state_provider'
+              type: 'minecraft:simple'
               state:
                 id: 'default:hami_melon'
     placement:
@@ -257,7 +257,7 @@ placed_features:
     feature:
       type: 'minecraft:simple_block'
       to_place:
-        type: 'minecraft:rule_based_state_provider'
+        type: 'minecraft:rule_based'
         rules:
           - if_true:
               type: 'minecraft:all_of'
@@ -272,7 +272,7 @@ placed_features:
                     - 0
                   fluids: '#minecraft:lava'
             then:
-              type: 'minecraft:weighted_state_provider'
+              type: 'minecraft:weighted'
               entries:
                 - weight: 7
                   data:
@@ -365,7 +365,7 @@ placed_features:
     feature:
       type: 'minecraft:simple_block'
       to_place:
-        type: 'minecraft:rule_based_state_provider'
+        type: 'minecraft:rule_based'
         rules:
           - if_true:
               type: 'minecraft:all_of'
@@ -380,7 +380,7 @@ placed_features:
                     - 0
                   fluids: '#minecraft:water'
             then:
-              type: 'minecraft:simple_state_provider'
+              type: 'minecraft:simple'
               state:
                 id: 'default:reed'
     placement:

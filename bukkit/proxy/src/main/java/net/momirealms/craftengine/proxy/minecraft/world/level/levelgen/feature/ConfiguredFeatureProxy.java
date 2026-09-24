@@ -16,7 +16,8 @@ public interface ConfiguredFeatureProxy {
     ConfiguredFeatureProxy INSTANCE = ASMProxyFactory.create(ConfiguredFeatureProxy.class);
     Codec<Object> CODEC = INSTANCE.getCodec();
 
-    @FieldGetter(name = {"DIRECT_CODEC", "CODEC"}, isStatic = true)
+    // Both ConfiguredFeature and 26.3's Feature expose the Holder codec as CODEC.
+    @FieldGetter(name = "CODEC", isStatic = true)
     Codec<Object> getCodec();
 
     @MethodInvoker(name = "place")
