@@ -4,7 +4,6 @@ import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
 import com.github.benmanes.caffeine.cache.Scheduler;
 import com.mojang.serialization.Dynamic;
-import net.momirealms.craftengine.bukkit.api.BukkitAdaptor;
 import net.momirealms.craftengine.bukkit.item.BukkitItem;
 import net.momirealms.craftengine.bukkit.item.BukkitItemManager;
 import net.momirealms.craftengine.core.item.Item;
@@ -67,7 +66,7 @@ public final class ItemStackUtils {
     public static boolean hasCustomItem(ItemStack[] stack) {
         for (ItemStack itemStack : stack) {
             if (!ItemStackUtils.isEmpty(itemStack)) {
-                if (BukkitAdaptor.adapt(itemStack).customId().isPresent()) {
+                if (BukkitItemManager.instance().customId(itemStack) != null) {
                     return true;
                 }
             }
@@ -77,7 +76,7 @@ public final class ItemStackUtils {
 
     public static boolean isCustomItem(ItemStack stack) {
         if (!ItemStackUtils.isEmpty(stack)) {
-            return BukkitAdaptor.adapt(stack).customId().isPresent();
+            return BukkitItemManager.instance().customId(stack) != null;
         }
         return false;
     }

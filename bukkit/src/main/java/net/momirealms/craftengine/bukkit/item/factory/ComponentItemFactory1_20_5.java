@@ -8,6 +8,7 @@ import net.momirealms.craftengine.bukkit.item.DataComponentTypes;
 import net.momirealms.craftengine.bukkit.util.*;
 import net.momirealms.craftengine.core.attribute.vanilla.VanillaAttributeModifier;
 import net.momirealms.craftengine.core.item.ItemType;
+import net.momirealms.craftengine.core.item.CustomItemIdCache;
 import net.momirealms.craftengine.core.item.component.DataComponentKeys;
 import net.momirealms.craftengine.core.item.component.value.Enchantment;
 import net.momirealms.craftengine.core.item.component.value.FireworkExplosion;
@@ -25,6 +26,7 @@ import net.momirealms.sparrow.nbt.CompoundTag;
 import net.momirealms.sparrow.nbt.ListTag;
 import net.momirealms.sparrow.nbt.Tag;
 import org.bukkit.inventory.ItemStack;
+import org.jetbrains.annotations.Nullable;
 
 import java.nio.charset.StandardCharsets;
 import java.util.*;
@@ -66,14 +68,14 @@ public class ComponentItemFactory1_20_5 extends BukkitItemFactory<ComponentItemW
     }
 
     @Override
-    protected Optional<Key> customId(ComponentItemWrapper item) {
-        Object nmsStack = item.minecraftItem();
+    @Nullable
+    public Key customIdFromMinecraft(Object nmsStack) {
         Object customData = ItemStackProxy.INSTANCE.get(nmsStack, DataComponentTypes.CUSTOM_DATA);
-        if (customData == null) return Optional.empty();
+        if (customData == null) return null;
         Object tag = CustomDataProxy.INSTANCE.getTag(customData);
         Object stringTag = CompoundTagProxy.INSTANCE.get(tag, IdProcessor.CRAFT_ENGINE_ID);
-        if (stringTag == null) return Optional.empty();
-        return Optional.of(Key.of(StringTagProxy.INSTANCE.getData(stringTag)));
+        if (stringTag == null) return null;
+        return CustomItemIdCache.parse(StringTagProxy.INSTANCE.getData(stringTag));
     }
 
     @Override

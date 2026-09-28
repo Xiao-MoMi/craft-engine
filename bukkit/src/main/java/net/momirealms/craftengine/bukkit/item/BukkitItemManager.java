@@ -569,6 +569,11 @@ public final class BukkitItemManager extends AbstractItemManager {
         return new BukkitItem((ItemFactory<BukkitItemWrapper>) this.factory, this.factory.wrap(itemStack));
     }
 
+    @Nullable
+    public Key customId(@NotNull ItemStack itemStack) {
+        return this.factory.customIdFromMinecraft(ItemStackUtils.unwrap(itemStack));
+    }
+
     public boolean isBrokenItem(@Nullable ItemStack itemStack) {
         if (ItemStackUtils.isEmpty(itemStack)) return false;
         return isBrokenItem(wrap(itemStack));

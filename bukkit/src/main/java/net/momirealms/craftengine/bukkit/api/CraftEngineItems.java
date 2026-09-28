@@ -85,6 +85,6 @@ public final class CraftEngineItems {
     @Nullable
     public static Key getCustomItemId(@NotNull ItemStack itemStack) {
         if (ItemStackUtils.isEmpty(itemStack)) return null;
-        return BukkitItemManager.instance().wrap(itemStack).customId().orElse(null);
+        return BukkitItemManager.instance().customId(itemStack);
     }
 }

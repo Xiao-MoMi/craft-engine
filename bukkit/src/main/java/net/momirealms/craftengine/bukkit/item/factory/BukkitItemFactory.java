@@ -21,6 +21,7 @@ import net.momirealms.craftengine.proxy.minecraft.world.item.BlockItemProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.item.ItemStackProxy;
 import net.momirealms.sparrow.nbt.CompoundTag;
 import net.momirealms.sparrow.nbt.Tag;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Objects;
 import java.util.Optional;
@@ -85,11 +86,21 @@ public abstract class BukkitItemFactory<W extends BukkitItemWrapper> extends Ite
 
     @Override
     protected Key id(W item) {
-        if (ItemStackProxy.INSTANCE.isEmpty(item.minecraftItem())) {
+        Object o = item.minecraftItem();
+        if (ItemStackProxy.INSTANCE.isEmpty(o)) {
             return ItemKeys.AIR;
         }
-        return customId(item).orElse(vanillaId(item));
+        Key customId = customIdFromMinecraft(o);
+        return customId != null ? customId : vanillaId(item);
     }
+
+    @Override
+    protected Optional<Key> customId(W item) {
+        return Optional.ofNullable(customIdFromMinecraft(item.minecraftItem()));
+    }
+
+    @Nullable
+    public abstract Key customIdFromMinecraft(Object itemStack);
 
     @Override
     protected boolean hasVanillaTag(W item, Key itemTag) {
