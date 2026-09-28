@@ -20,6 +20,7 @@ import net.momirealms.craftengine.bukkit.entity.BukkitLivingEntity;
 import net.momirealms.craftengine.bukkit.entity.furniture.BukkitFurniture;
 import net.momirealms.craftengine.bukkit.item.BukkitItem;
 import net.momirealms.craftengine.bukkit.item.BukkitItemManager;
+import net.momirealms.craftengine.bukkit.item.recipe.BukkitRecipeManager;
 import net.momirealms.craftengine.bukkit.nms.DelegatingContainer;
 import net.momirealms.craftengine.bukkit.pack.ResourcePackConfigurationTask;
 import net.momirealms.craftengine.bukkit.plugin.BukkitCraftEngine;
@@ -90,6 +91,8 @@ import net.momirealms.craftengine.proxy.minecraft.server.network.ServerGamePacke
 import net.momirealms.craftengine.proxy.minecraft.server.network.config.JoinWorldTaskProxy;
 import net.momirealms.craftengine.proxy.minecraft.server.network.config.ServerResourcePackConfigurationTaskProxy;
 import net.momirealms.craftengine.proxy.minecraft.sounds.SoundSourceProxy;
+import net.momirealms.craftengine.proxy.minecraft.stats.RecipeBookProxy;
+import net.momirealms.craftengine.proxy.minecraft.stats.ServerRecipeBookProxy;
 import net.momirealms.craftengine.proxy.minecraft.util.thread.BlockableEventLoopProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.InteractionHandProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.effect.MobEffectsProxy;
@@ -493,7 +496,12 @@ public class BukkitServerPlayer extends BukkitLivingEntity implements Player {
 
     @Override
     public boolean hasDiscoveredRecipe(Key recipe) {
-        return platformPlayer().hasDiscoveredRecipe(KeyUtils.toNamespacedKey(recipe));
+        Object recipeBook = ServerPlayerProxy.INSTANCE.getRecipeBook(minecraftPlayer());
+        Object recipeKey = BukkitRecipeManager.instance().minecraftRecipeKey(recipe);
+        if (VersionHelper.isOrAbove1_21_2) {
+            return ServerRecipeBookProxy.INSTANCE.contains(recipeBook, recipeKey);
+        }
+        return RecipeBookProxy.INSTANCE.contains(recipeBook, recipeKey);
     }
 
     @Override

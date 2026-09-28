@@ -682,10 +682,9 @@ public final class BukkitItemManager extends AbstractItemManager {
         if (recipes.isEmpty()) return;
         List<NamespacedKey> recipesToUnlock = new ArrayList<>(4);
         for (IngredientUnlockable recipe : recipes) {
-            NamespacedKey recipeBukkitId = KeyUtils.toNamespacedKey(recipe.id());
-            if (!player.hasDiscoveredRecipe(recipeBukkitId)) {
+            if (!serverPlayer.hasDiscoveredRecipe(recipe.id())) {
                 if (recipe.canUnlock(serverPlayer, serverPlayer.obtainedItems())) {
-                    recipesToUnlock.add(recipeBukkitId);
+                    recipesToUnlock.add(KeyUtils.toNamespacedKey(recipe.id()));
                 }
             }
         }

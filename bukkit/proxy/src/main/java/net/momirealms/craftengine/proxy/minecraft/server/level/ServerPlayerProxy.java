@@ -61,6 +61,9 @@ public interface ServerPlayerProxy extends PlayerProxy {
     @MethodInvoker(name = "getAdvancements")
     Object getAdvancements(Object target);
 
+    @MethodInvoker(name = "getRecipeBook")
+    Object getRecipeBook(Object target);
+
     @FieldGetter(name = "startingToFallPosition")
     Object getStartingToFallPosition(Object target);
 }

@@ -23,7 +23,9 @@ import net.momirealms.craftengine.core.plugin.config.Config;
 import net.momirealms.craftengine.core.registry.BuiltInRegistries;
 import net.momirealms.craftengine.core.util.*;
 import net.momirealms.craftengine.proxy.bukkit.craftbukkit.CraftServerProxy;
+import net.momirealms.craftengine.proxy.minecraft.core.registries.RegistriesProxy;
 import net.momirealms.craftengine.proxy.minecraft.resources.FileToIdConverterProxy;
+import net.momirealms.craftengine.proxy.minecraft.resources.ResourceKeyProxy;
 import net.momirealms.craftengine.proxy.minecraft.server.MinecraftServerProxy;
 import net.momirealms.craftengine.proxy.minecraft.server.PlayerAdvancementsProxy;
 import net.momirealms.craftengine.proxy.minecraft.server.level.ServerPlayerProxy;
@@ -48,6 +50,7 @@ import org.bukkit.potion.PotionBrewer;
 
 import java.io.Reader;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Function;
 
 public final class BukkitRecipeManager extends AbstractRecipeManager {
@@ -105,6 +108,8 @@ public final class BukkitRecipeManager extends AbstractRecipeManager {
     private List<NamespacedKey> cachedAllRecipeKeys;
     // 进入服务器时自动解锁指定配方的缓存（全局 list 与单配方 unlock_on_join 合并）
     private List<NamespacedKey> cachedUnlockOnJoinKeys;
+    // Share immutable keys across players; discovery state stays in each player's recipe book.
+    private final Map<Key, Object> cachedRecipeKeys = new ConcurrentHashMap<>();
 
     public BukkitRecipeManager(BukkitCraftEngine plugin) {
         super(createRecipeRegistry(), plugin);
@@ -135,6 +140,18 @@ public final class BukkitRecipeManager extends AbstractRecipeManager {
         return instance;
     }
 
+    // Recipe books use ResourceKey since 1.21.2, and ResourceLocation on older versions.
+    public Object minecraftRecipeKey(Key id) {
+        Object cached = this.cachedRecipeKeys.get(id);
+        if (cached != null) return cached;
+        return this.cachedRecipeKeys.computeIfAbsent(id, key -> {
+            Object identifier = KeyUtils.toIdentifier(key);
+            return VersionHelper.isOrAbove1_21_2
+                    ? ResourceKeyProxy.INSTANCE.create(RegistriesProxy.RECIPE, identifier)
+                    : identifier;
+        });
+    }
+
     @Override
     public DataComponentPredicate parsePotionContentsPredicate(JsonObject json) {
         return FastNMS.INSTANCE.parsePotionContentsPredicate(json);
@@ -154,6 +171,7 @@ public final class BukkitRecipeManager extends AbstractRecipeManager {
 
     @Override
     public void unload() {
+        this.cachedRecipeKeys.clear();
         if (!Config.enableRecipeSystem()) return;
         // 安排卸载任务，这些任务会在load后执行。如果没有load说明服务器已经关闭了，那就不需要管卸载了。
         if (!this.plugin.isStopping()) {
