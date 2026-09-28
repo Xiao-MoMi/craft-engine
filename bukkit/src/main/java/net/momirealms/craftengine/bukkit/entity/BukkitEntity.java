@@ -25,27 +25,26 @@ import org.bukkit.entity.Entity;
 import org.bukkit.event.player.PlayerTeleportEvent;
 import org.jetbrains.annotations.Nullable;
 
-import java.lang.ref.WeakReference;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 
 public class BukkitEntity implements net.momirealms.craftengine.core.entity.Entity {
-    protected final WeakReference<Object> entityRef;
+    protected final Object entity;
     protected Key id;
 
     public BukkitEntity(Object entity) {
         if (EntityProxy.CLASS.isInstance(entity)) {
-            this.entityRef = new WeakReference<>(entity);
+            this.entity = entity;
         } else if (entity instanceof Entity bukkitEntity) {
-            this.entityRef = new WeakReference<>(CraftEntityProxy.INSTANCE.getEntity(bukkitEntity));
+            this.entity = CraftEntityProxy.INSTANCE.getEntity(bukkitEntity);
         } else {
             throw new IllegalArgumentException(entity.getClass() + " is not a valid Entity");
         }
     }
 
-    protected BukkitEntity(WeakReference<Object> entity) {
-        this.entityRef = entity;
+    protected BukkitEntity() {
+        this.entity = null;
     }
 
     @Nullable
@@ -125,12 +124,12 @@ public class BukkitEntity implements net.momirealms.craftengine.core.entity.Enti
 
     @Override
     public org.bukkit.entity.Entity platformEntity() {
-        return EntityProxy.INSTANCE.getBukkitEntity(this.entityRef.get());
+        return EntityProxy.INSTANCE.getBukkitEntity(this.entity);
     }
 
     @Override
     public Object minecraftEntity() {
-        return this.entityRef.get();
+        return this.entity;
     }
 
     @Override

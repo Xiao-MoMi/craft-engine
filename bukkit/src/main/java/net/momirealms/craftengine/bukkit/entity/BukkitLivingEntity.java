@@ -27,15 +27,14 @@ import org.bukkit.entity.LivingEntity;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.lang.ref.WeakReference;
 import java.util.Objects;
 import java.util.Optional;
 
 public class BukkitLivingEntity extends BukkitEntity implements net.momirealms.craftengine.core.entity.LivingEntity {
     private Object2ObjectOpenHashMap<Key, BukkitVanillaAttributeInstance> vanillaAttributes;
 
-    protected BukkitLivingEntity(WeakReference<Object> entity) {
-        super(entity);
+    protected BukkitLivingEntity() {
+        super();
     }
 
     public BukkitLivingEntity(Object entity) {
