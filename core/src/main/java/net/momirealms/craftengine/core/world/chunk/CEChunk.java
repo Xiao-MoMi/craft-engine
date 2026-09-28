@@ -506,27 +506,32 @@ public class CEChunk {
 
     public void activateAllBlockEntities() {
         if (this.activated) return;
-        // onLoad may query neighbors. Restore all cached entities before a lookup
-        // can mistake a not-yet-activated neighbor for an invalid entity and remove it.
-        for (BlockEntity blockEntity : this.blockEntities.values()) {
-            blockEntity.setValid(true);
+        if (!this.blockEntities.isEmpty()) {
+            // onLoad may query neighbors. Restore all cached entities before a lookup
+            // can mistake a not-yet-activated neighbor for an invalid entity and remove it.
+            for (BlockEntity blockEntity : this.blockEntities.values()) {
+                blockEntity.setValid(true);
+            }
+            for (BlockEntity blockEntity : this.blockEntities.values()) {
+                this.replaceOrCreateTickingBlockEntity(blockEntity);
+                this.createDynamicBlockEntityRenderer(blockEntity);
+                try {
+                    blockEntity.controller.onLoad();
+                } catch (Throwable t) {
+                    CraftEngine.instance().logger().warn("Failed to load block entity " + blockEntity.blockState + " at " + world.name() + " " + blockEntity.pos, t);
+                }
+            }
         }
-        for (BlockEntity blockEntity : this.blockEntities.values()) {
-            this.replaceOrCreateTickingBlockEntity(blockEntity);
-            this.createDynamicBlockEntityRenderer(blockEntity);
+        // Renderer maps are only mutated by the owning region thread.
+        if (!this.constantBlockEntityRenderers.isEmpty()) {
             try {
-                blockEntity.controller.onLoad();
-            } catch (Throwable t) {
-                CraftEngine.instance().logger().warn("Failed to load block entity " + blockEntity.blockState + " at " + world.name() + " " + blockEntity.pos, t);
+                this.renderLock.readLock().lock();
+                for (ConstantBlockEntityRenderer renderer : this.constantBlockEntityRenderers.values()) {
+                    renderer.activate();
+                }
+            } finally {
+                this.renderLock.readLock().unlock();
             }
-        }
-        try {
-            this.renderLock.readLock().lock();
-            for (ConstantBlockEntityRenderer renderer : this.constantBlockEntityRenderers.values()) {
-                renderer.activate();
-            }
-        } finally {
-            this.renderLock.readLock().unlock();
         }
         this.activated = true;
     }
@@ -580,7 +585,7 @@ public class CEChunk {
                     return replaceableTicker;
                 }
             }));
-        } else {
+        } else if (!this.tickingSyncBlockEntitiesByPos.isEmpty()) {
             this.removeSyncBlockEntityTicker(blockEntity.pos());
         }
         BlockEntityTicker<BlockEntityController> asyncTicker = controller.createAsyncBlockEntityTicker(this.world, blockState);
@@ -596,7 +601,7 @@ public class CEChunk {
                     return replaceableTicker;
                 }
             }));
-        } else {
+        } else if (!this.tickingAsyncBlockEntitiesByPos.isEmpty()) {
             this.removeAsyncBlockEntityTicker(blockEntity.pos());
         }
     }
@@ -649,7 +654,7 @@ public class CEChunk {
                     }
                 }
             }
-        } else {
+        } else if (!this.dynamicBlockEntityRenderers.isEmpty()) {
             this.removeDynamicBlockEntityRenderer(blockEntity.pos());
         }
     }
