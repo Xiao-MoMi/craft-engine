@@ -77,8 +77,7 @@ public final class HashedStackGenerator {
                                         @FieldValue("player") Player player,
                                         @Argument(0) Object stack,
                                         @Argument(1) Object hashGenerator) {
-            if (HashedStackProxy.ActualItemProxy.CLASS.isInstance(hashedStack)
-                    && HashedStackProxy.ActualItemProxy.INSTANCE.count(hashedStack) != ItemStackProxy.INSTANCE.getCount(stack)) {
+            if (HashedStackProxy.ActualItemProxy.CLASS.isInstance(hashedStack) && HashedStackProxy.ActualItemProxy.INSTANCE.count(hashedStack) != ItemStackProxy.INSTANCE.getCount(stack)) {
                 return false;
             }
             if (!ItemStackProxy.INSTANCE.isEmpty(stack)) {

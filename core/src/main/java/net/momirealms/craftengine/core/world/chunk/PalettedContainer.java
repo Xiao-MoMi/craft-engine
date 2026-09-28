@@ -11,11 +11,11 @@ import net.momirealms.craftengine.core.util.MiscUtils;
 import net.momirealms.craftengine.core.util.VersionHelper;
 import org.jetbrains.annotations.Nullable;
 
+import java.lang.invoke.MethodHandles;
+import java.lang.invoke.VarHandle;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
-import java.util.concurrent.locks.Lock;
-import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import java.util.function.IntUnaryOperator;
@@ -23,23 +23,25 @@ import java.util.function.Predicate;
 import java.util.stream.LongStream;
 
 public final class PalettedContainer<T> implements PaletteResizeListener<T>, ReadableContainer<T> {
+    private static final VarHandle DATA_HANDLE;
+
+    static {
+        try {
+            DATA_HANDLE = MethodHandles.lookup().findVarHandle(PalettedContainer.class, "data", Data.class);
+        } catch (ReflectiveOperationException e) {
+            throw new ExceptionInInitializerError(e);
+        }
+    }
+
     private static final BiConsumer<FriendlyByteBuf, long[]> RAW_DATA_WRITER = VersionHelper.isOrAbove1_21_5 ?
             (FriendlyByteBuf::writeFixedSizeLongArray) : (FriendlyByteBuf::writeLongArray);
     private static final BiConsumer<FriendlyByteBuf, long[]> RAW_DATA_READER = VersionHelper.isOrAbove1_21_5 ?
             (FriendlyByteBuf::readFixedSizeLongArray) : (FriendlyByteBuf::readLongArray);
-    private final PaletteResizeListener<T> dummyListener = (newSize, added) -> 0;
+    private static final ThreadLocal<PaletteReadoutCache> READOUT_CACHE = ThreadLocal.withInitial(PaletteReadoutCache::new);
     private final IndexedIterable<T> idList;
-    private Data<T> data;
+    // Publish replacements with volatile writes; hot-path reads use Leaf's acquire access.
+    private volatile Data<T> data;
     private final PaletteProvider paletteProvider;
-    private final Lock lock = new ReentrantLock();
-
-    public void lock() {
-        this.lock.lock();
-    }
-
-    public void unlock() {
-        this.lock.unlock();
-    }
 
     public PalettedContainer(IndexedIterable<T> idList, PaletteProvider paletteProvider, DataProvider<T> dataProvider, PaletteStorage storage, List<T> paletteEntries) {
         this.idList = idList;
@@ -74,7 +76,7 @@ public final class PalettedContainer<T> implements PaletteResizeListener<T>, Rea
         return false;
     }
 
-    public PalettedContainer<T> getClientCompatiblePalettedContainer(IndexedIterable<T> idList) {
+    public synchronized PalettedContainer<T> getClientCompatiblePalettedContainer(IndexedIterable<T> idList) {
         Palette<T> palette = this.data.palette;
         if (!(palette instanceof IdListPalette<T> idListPalette)) {
             return this;
@@ -91,7 +93,7 @@ public final class PalettedContainer<T> implements PaletteResizeListener<T>, Rea
         return data;
     }
 
-    public void readPacket(FriendlyByteBuf buf) {
+    public synchronized void readPacket(FriendlyByteBuf buf) {
         int i = buf.readByte();
         Data<T> data = this.getCompatibleData(this.data, i);
         data.palette.readPacket(buf);
@@ -100,7 +102,7 @@ public final class PalettedContainer<T> implements PaletteResizeListener<T>, Rea
     }
 
     @Override
-    public void writePacket(FriendlyByteBuf buf) {
+    public synchronized void writePacket(FriendlyByteBuf buf) {
         this.data.writePacket(buf);
     }
 
@@ -119,7 +121,7 @@ public final class PalettedContainer<T> implements PaletteResizeListener<T>, Rea
     }
 
     @Override
-    public int onResize(int i, T object) {
+    public synchronized int onResize(int i, T object) {
         Data<T> oldData = this.data;
         Data<T> newData = this.getCompatibleData(oldData, i);
         newData.importFrom(oldData.palette, oldData.storage);
@@ -132,62 +134,51 @@ public final class PalettedContainer<T> implements PaletteResizeListener<T>, Rea
         return this.get(this.paletteProvider.computeIndex(x, y, z));
     }
 
+    @SuppressWarnings("unchecked")
     public T get(int index) {
-        Data<T> data = this.data;
+        Data<T> data = (Data<T>) DATA_HANDLE.getAcquire(this);
         return data.palette.get(data.storage.get(index));
     }
 
-    public T getAndSet(int index, T state) {
-        this.lock();
-        try {
-            int i = this.data.palette.index(state);
-            int preIndex = this.data.storage.getAndSet(index, i);
-            return this.data.palette.get(preIndex);
-        } finally {
-            this.unlock();
-        }
+    public synchronized T getAndSet(int index, T state) {
+        int i = this.data.palette.index(state);
+        // index() can resize the palette and replace data.
+        Data<T> data = this.data;
+        int preIndex = data.storage.getAndSet(index, i);
+        return data.palette.get(preIndex);
     }
 
     public void set(int x, int y, int z, T value) {
-        this.lock();
-        try {
-            this.set(this.paletteProvider.computeIndex(x, y, z), value);
-        } finally {
-            this.unlock();
-        }
+        this.set(this.paletteProvider.computeIndex(x, y, z), value);
     }
 
-    public void set(int index, T value) {
+    public synchronized void set(int index, T value) {
         int i = this.data.palette.index(value);
         this.data.storage.set(index, i);
     }
 
+    // Caller must hold this container's monitor or have exclusive ownership.
     public T swapUnsafe(int x, int y, int z, T value) {
         return this.swap(this.paletteProvider.computeIndex(x, y, z), value);
     }
 
-    public T swap(int x, int y, int z, T value) {
-        this.lock();
-        T previous;
-        try {
-            previous = this.swap(this.paletteProvider.computeIndex(x, y, z), value);
-        } finally {
-            this.unlock();
-        }
-        return previous;
+    public synchronized T swap(int x, int y, int z, T value) {
+        return this.swap(this.paletteProvider.computeIndex(x, y, z), value);
     }
 
     private T swap(int index, T value) {
         int i = this.data.palette.index(value);
-        int j = this.data.storage.swap(index, i);
-        return this.data.palette.get(j);
+        Data<T> data = this.data;
+        int j = data.storage.swap(index, i);
+        return data.palette.get(j);
     }
 
     @Override
     public void forEachValue(Consumer<T> action) {
-        Palette<T> palette = this.data.palette();
+        Data<T> data = this.data;
+        Palette<T> palette = data.palette();
         IntSet intSet = new IntArraySet();
-        this.data.storage.forEach(intSet::add);
+        data.storage.forEach(intSet::add);
         intSet.forEach((id) -> action.accept(palette.get(id)));
     }
 
@@ -220,7 +211,7 @@ public final class PalettedContainer<T> implements PaletteResizeListener<T>, Rea
     }
 
     @Override
-    public PalettedContainer<T> copy() {
+    public synchronized PalettedContainer<T> copy() {
         return new PalettedContainer<>(this);
     }
 
@@ -230,22 +221,36 @@ public final class PalettedContainer<T> implements PaletteResizeListener<T>, Rea
     }
 
     @Override
-    public Serialized<T> serialize(IndexedIterable<T> idList, PaletteProvider paletteProvider) {
-        this.lock();
-        try {
-            BiMapPalette<T> biMapPalette = new BiMapPalette<>(idList, this.data.storage.getElementBits(), this.dummyListener);
-            int containerSize = paletteProvider.getContainerSize();
-            int[] paletteIndices = new int[containerSize];
-            this.data.storage.writePaletteIndices(paletteIndices);
-            applyEach(paletteIndices, (id) -> biMapPalette.index(this.data.palette.get(id)));
-            int bitsRequired = paletteProvider.getBits(idList, biMapPalette.getSize());
-            Optional<LongStream> packedData = (bitsRequired != 0)
-                    ? Optional.of(Arrays.stream(new PackedIntegerArray(bitsRequired, containerSize, paletteIndices).getData()))
-                    : Optional.empty();
-            return new Serialized<>(biMapPalette.getElements(), packedData);
-        } finally {
-            this.unlock();
+    public synchronized Serialized<T> serialize(IndexedIterable<T> idList, PaletteProvider paletteProvider) {
+        Data<T> data = this.data;
+        Palette<T> palette = data.palette;
+        PaletteStorage storage = data.storage;
+        int containerSize = paletteProvider.getContainerSize();
+        if (storage.getElementBits() == 0 || palette.getSize() == 1) {
+            int bits = paletteProvider.getBits(idList, 1);
+            Optional<LongStream> packed = bits == 0 ? Optional.empty()
+                    : Optional.of(Arrays.stream(new PackedIntegerArray(bits, containerSize).getData()));
+            return new Serialized<>(List.of(palette.get(0)), packed);
         }
+
+        PaletteReadoutCache cache = READOUT_CACHE.get();
+        List<T> entries = cache.read(storage, palette);
+        int bits = paletteProvider.getBits(idList, entries.size());
+        if (bits == 0) {
+            return new Serialized<>(entries, Optional.empty());
+        }
+
+        long[] packed;
+        if (entries.size() == palette.getSize() && bits == storage.getElementBits()) {
+            // Every entry is used: retain the original IDs and copy the packed words.
+            for (int i = 0; i < entries.size(); i++) {
+                entries.set(i, palette.get(i));
+            }
+            packed = storage.getData().clone();
+        } else {
+            packed = cache.repack(bits, containerSize);
+        }
+        return new Serialized<>(entries, Optional.of(Arrays.stream(packed)));
     }
 
     private static void applyEach(int[] values, IntUnaryOperator applier) {
@@ -320,7 +325,7 @@ public final class PalettedContainer<T> implements PaletteResizeListener<T>, Rea
 
     public record DataProvider<T>(Palette.Factory factory, int bits) {
         public Data<T> createData(IndexedIterable<T> idList, PaletteResizeListener<T> listener, int size) {
-            PaletteStorage paletteStorage = this.bits == 0 ? new EmptyPaletteStorage(size) : new PackedIntegerArray(this.bits, size);
+            PaletteStorage paletteStorage = this.bits == 0 ? EmptyPaletteStorage.forSize(size) : new PackedIntegerArray(this.bits, size);
             Palette<T> palette = this.factory.create(this.bits, idList, listener, List.of());
             return new Data<>(this, paletteStorage, palette);
         }
@@ -362,7 +367,7 @@ public final class PalettedContainer<T> implements PaletteResizeListener<T>, Rea
         DataProvider<T> dataProvider = paletteProvider.createDataProvider(idList, bits);
         PaletteStorage paletteStorage;
         if (bits == 0) {
-            paletteStorage = new EmptyPaletteStorage(containerSize);
+            paletteStorage = EmptyPaletteStorage.forSize(containerSize);
         } else {
             if (storage == null) {
                 return null;
