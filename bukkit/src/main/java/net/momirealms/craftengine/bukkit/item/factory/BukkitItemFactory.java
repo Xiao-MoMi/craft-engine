@@ -53,8 +53,8 @@ public abstract class BukkitItemFactory<W extends BukkitItemWrapper> extends Ite
     @Override
     protected boolean hasPluginTag(W item, Key tag) {
         Key id = id(item);
-        Optional<ItemDefinition> itemDefinition = this.plugin.itemManager().getItemDefinition(id);
-        return itemDefinition.map(definition -> definition.settings().tags().contains(tag)).orElseGet(() -> this.plugin.itemManager().getVanillaItemTags(id).contains(tag));
+        ItemDefinition definition = this.plugin.itemManager().getItemDefinitionOrNull(id);
+        return definition != null ? definition.settings().tags().contains(tag) : this.plugin.itemManager().getVanillaItemTags(id).contains(tag);
     }
 
     @Override

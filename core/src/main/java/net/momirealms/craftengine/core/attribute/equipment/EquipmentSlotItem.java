@@ -5,7 +5,9 @@ import net.momirealms.craftengine.core.attribute.EntityAttributes;
 import net.momirealms.craftengine.core.attribute.modifier.AttributeModifierScope;
 import net.momirealms.craftengine.core.attribute.modifier.SlotAttributeModifierConfig;
 import net.momirealms.craftengine.core.item.Item;
+import net.momirealms.craftengine.core.item.ItemDefinition;
 import net.momirealms.craftengine.core.item.equipment.SetPotionEffect;
+import net.momirealms.craftengine.core.item.setting.value.EquipmentPotionEffects;
 import net.momirealms.craftengine.core.plugin.CraftEngine;
 
 import java.util.ArrayList;
@@ -30,10 +32,9 @@ public final class EquipmentSlotItem {
                 snapshots.add(config);
             }
         }
-        List<SetPotionEffect> potionEffects = item.getDefinition()
-                .map(definition -> definition.settings().equipmentPotionEffects())
-                .map(effects -> effects.effects(slot))
-                .orElseGet(List::of);
+        ItemDefinition definition = item.getDefinitionOrNull();
+        EquipmentPotionEffects effects = definition != null ? definition.settings().equipmentPotionEffects() : null;
+        List<SetPotionEffect> potionEffects = effects != null ? effects.effects(slot) : List.of();
         return new EquipmentSlotItem(
                 item,
                 snapshots.isEmpty() ? List.of() : List.copyOf(snapshots),

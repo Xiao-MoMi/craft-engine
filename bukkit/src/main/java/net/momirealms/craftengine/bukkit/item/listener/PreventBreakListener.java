@@ -25,7 +25,6 @@ import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.PlayerInventory;
 import org.bukkit.plugin.Plugin;
 
-import java.util.Optional;
 
 public final class PreventBreakListener implements Listener {
     private final BukkitItemManager itemManager;
@@ -51,9 +50,9 @@ public final class PreventBreakListener implements Listener {
     public void onItemDamage(PlayerItemDamageEvent event) {
         ItemStack itemStack = event.getItem();
         Item wrapped = this.itemManager.wrap(itemStack);
-        Optional<ItemDefinition> optionalCustomItem = wrapped.getDefinition();
-        if (optionalCustomItem.isEmpty()) return;
-        if (!optionalCustomItem.get().settings().preventBreak()) return;
+        ItemDefinition customItem = wrapped.getDefinitionOrNull();
+        if (customItem == null) return;
+        if (!customItem.settings().preventBreak()) return;
         int maxDamage = wrapped.maxDamage();
         if (maxDamage <= 0) return;
         int damage = wrapped.damage().orElse(0);

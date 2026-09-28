@@ -34,6 +34,7 @@ import net.momirealms.craftengine.core.plugin.context.number.ConstantNumberProvi
 import net.momirealms.craftengine.core.util.*;
 import org.incendo.cloud.suggestion.Suggestion;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.nio.file.Path;
@@ -154,6 +155,12 @@ public abstract class AbstractItemManager extends AbstractModelGenerator impleme
     }
 
     @Override
+    @Nullable
+    public ItemDefinition getItemDefinitionOrNull(Key key) {
+        return this.itemDefinitionById.get(key);
+    }
+
+    @Override
     public Optional<ItemDefinition> getItemDefinitionByPath(String path) {
         return Optional.ofNullable(this.itemDefinitionByPath.get(path));
     }
@@ -169,9 +176,8 @@ public abstract class AbstractItemManager extends AbstractModelGenerator impleme
 
     @Override
     public ItemUpdateResult updateItem(Item item, Supplier<ItemBuildContext> contextSupplier) {
-        Optional<ItemDefinition> optionalCustomItem = item.getDefinition();
-        if (optionalCustomItem.isPresent()) {
-            ItemDefinition itemDefinition = optionalCustomItem.get();
+        ItemDefinition itemDefinition = item.getDefinitionOrNull();
+        if (itemDefinition != null) {
             Optional<ItemUpdateConfig> updater = itemDefinition.updater();
             if (updater.isPresent()) {
                 return updater.get().update(item, contextSupplier);
@@ -202,8 +208,9 @@ public abstract class AbstractItemManager extends AbstractModelGenerator impleme
 
     @Override
     public Optional<ItemBehavior> getItemBehavior(Key key) {
-        Optional<ItemDefinition> definitionOptional = getItemDefinition(key);
-        return definitionOptional.map(ItemDefinition::behavior).or(() -> Optional.ofNullable(VANILLA_ITEM_EXTRA_BEHAVIORS.get(key)));
+        ItemDefinition definition = getItemDefinitionOrNull(key);
+        ItemBehavior behavior = definition != null ? definition.behavior() : null;
+        return Optional.ofNullable(behavior != null ? behavior : VANILLA_ITEM_EXTRA_BEHAVIORS.get(key));
     }
 
     @Override

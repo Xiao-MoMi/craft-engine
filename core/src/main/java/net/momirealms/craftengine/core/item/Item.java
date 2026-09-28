@@ -24,6 +24,7 @@ import net.momirealms.craftengine.core.util.CustomDataSerializer;
 import net.momirealms.craftengine.core.util.Key;
 import net.momirealms.sparrow.nbt.CompoundTag;
 import net.momirealms.sparrow.nbt.Tag;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -103,6 +104,12 @@ public interface Item extends ChainParameterSource {
     boolean isEmpty();
 
     Optional<ItemDefinition> getDefinition();
+
+    @ApiStatus.Internal
+    @Nullable
+    default ItemDefinition getDefinitionOrNull() {
+        return getDefinition().orElse(null);
+    }
 
     Optional<ItemBehavior> getBehavior();
 

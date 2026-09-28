@@ -12,7 +12,6 @@ import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.inventory.ItemStack;
 
-import java.util.Optional;
 import java.util.Set;
 
 public final class PaperItemEventListener implements Listener {
@@ -23,9 +22,8 @@ public final class PaperItemEventListener implements Listener {
     @EventHandler(ignoreCancelled = true)
     public void onReadyArrow(PlayerReadyArrowEvent event) {
         BukkitItem bowItem = BukkitAdaptor.adapt(event.getBow());
-        Optional<ItemDefinition> bowItemDefinition = bowItem.getDefinition();
-        if (bowItemDefinition.isPresent()) {
-            ItemDefinition itemDefinition = bowItemDefinition.get();
+        ItemDefinition itemDefinition = bowItem.getDefinitionOrNull();
+        if (itemDefinition != null) {
             Set<Key> ammo = itemDefinition.settings().allowedProjectiles();
             if (!ammo.isEmpty() && !ammo.contains(BukkitAdaptor.adapt(event.getArrow()).id())) {
                 event.setCancelled(true);
@@ -39,8 +37,8 @@ public final class PaperItemEventListener implements Listener {
     public void onCompost(CompostItemEvent event) {
         ItemStack itemToCompost = event.getItem();
         Item wrapped = BukkitAdaptor.adapt(itemToCompost);
-        Optional<ItemDefinition> optionalCustomItem = wrapped.getDefinition();
-        if (optionalCustomItem.isEmpty()) return;
-        event.setWillRaiseLevel(RandomUtils.generateRandomFloat(0, 1) < optionalCustomItem.get().settings().compostProbability());
+        ItemDefinition customItem = wrapped.getDefinitionOrNull();
+        if (customItem == null) return;
+        event.setWillRaiseLevel(RandomUtils.generateRandomFloat(0, 1) < customItem.settings().compostProbability());
     }
 }

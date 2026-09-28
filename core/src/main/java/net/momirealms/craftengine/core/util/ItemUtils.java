@@ -5,8 +5,6 @@ import net.momirealms.craftengine.core.item.ItemDefinition;
 import net.momirealms.craftengine.core.item.VanillaBreakPowers;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Optional;
-
 public final class ItemUtils {
     private ItemUtils() {
     }
@@ -22,9 +20,9 @@ public final class ItemUtils {
     }
 
     public static int breakPower(@NotNull Item item) {
-        Optional<ItemDefinition> definition = item.getDefinition();
-        if (definition.isPresent()) {
-            int power = definition.get().settings().breakPower();
+        ItemDefinition definition = item.getDefinitionOrNull();
+        if (definition != null) {
+            int power = definition.settings().breakPower();
             if (power >= 0) {
                 return power;
             }

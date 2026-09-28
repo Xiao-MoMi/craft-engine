@@ -38,7 +38,7 @@ public final class CraftEngineItems {
      */
     @Nullable
     public static BukkitItemDefinition byId(@NotNull final Key id) {
-        return (BukkitItemDefinition) BukkitItemManager.instance().getItemDefinition(id).orElse(null);
+        return (BukkitItemDefinition) BukkitItemManager.instance().getItemDefinitionOrNull(id);
     }
 
     /**
@@ -62,7 +62,7 @@ public final class CraftEngineItems {
     @Nullable
     public static BukkitItemDefinition byItemStack(@NotNull ItemStack itemStack) {
         if (ItemStackUtils.isEmpty(itemStack)) return null;
-        return (BukkitItemDefinition) BukkitItemManager.instance().wrap(itemStack).getDefinition().orElse(null);
+        return (BukkitItemDefinition) BukkitItemManager.instance().wrap(itemStack).getDefinitionOrNull();
     }
 
     /**

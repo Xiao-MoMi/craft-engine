@@ -580,9 +580,9 @@ public final class BukkitItemManager extends AbstractItemManager {
     }
 
     public boolean isBrokenItem(Item item) {
-        Optional<ItemDefinition> optionalCustomItem = item.getDefinition();
-        if (optionalCustomItem.isEmpty()) return false;
-        if (!optionalCustomItem.get().settings().preventBreak()) return false;
+        ItemDefinition customItem = item.getDefinitionOrNull();
+        if (customItem == null) return false;
+        if (!customItem.settings().preventBreak()) return false;
         int maxDamage = item.maxDamage();
         if (maxDamage <= 0) return false;
         return item.damage().orElse(0) >= maxDamage - 1;

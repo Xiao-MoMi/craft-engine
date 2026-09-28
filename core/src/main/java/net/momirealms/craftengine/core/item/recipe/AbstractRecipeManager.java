@@ -225,10 +225,9 @@ public abstract class AbstractRecipeManager implements RecipeManager {
                         }
                     }
                     for (UniqueKey holder : itemIds) {
-                        Optional<ItemDefinition> optionalCustomItem = itemManager.getItemDefinition(holder.key());
+                        ItemDefinition itemDefinition = itemManager.getItemDefinitionOrNull(holder.key());
                         UniqueKey vanillaItem;
-                        if (optionalCustomItem.isPresent()) {
-                            ItemDefinition itemDefinition = optionalCustomItem.get();
+                        if (itemDefinition != null) {
                             if (itemDefinition.isVanillaItem()) {
                                 vanillaItem = holder;
                             } else {

@@ -122,10 +122,9 @@ public abstract class AbstractRecipeSerializer<R extends Recipe> implements Reci
         });
         boolean hasCustomItem = false;
         for (UniqueKey holder : itemIds) {
-            Optional<ItemDefinition> optionalCustomItem = itemManager.getItemDefinition(holder.key());
+            ItemDefinition itemDefinition = itemManager.getItemDefinitionOrNull(holder.key());
             UniqueKey vanillaItem = holder;
-            if (optionalCustomItem.isPresent()) {
-                ItemDefinition itemDefinition = optionalCustomItem.get();
+            if (itemDefinition != null) {
                 if (!itemDefinition.isVanillaItem()) {
                     vanillaItem = UniqueKey.create(itemDefinition.material());
                     hasCustomItem = true;
@@ -179,11 +178,10 @@ public abstract class AbstractRecipeSerializer<R extends Recipe> implements Reci
 
         boolean hasCustomItem = false;
         for (UniqueKey holder : itemIds) {
-            Optional<ItemDefinition> optionalCustomItem = itemManager.getItemDefinition(holder.key());
+            ItemDefinition itemDefinition = itemManager.getItemDefinitionOrNull(holder.key());
             UniqueKey vanillaItem;
 
-            if (optionalCustomItem.isPresent()) {
-                ItemDefinition itemDefinition = optionalCustomItem.get();
+            if (itemDefinition != null) {
                 if (itemDefinition.isVanillaItem()) {
                     vanillaItem = holder;
                 } else {

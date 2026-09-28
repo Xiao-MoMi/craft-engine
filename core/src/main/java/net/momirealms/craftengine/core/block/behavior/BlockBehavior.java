@@ -18,7 +18,6 @@ import net.momirealms.craftengine.core.world.context.UseOnContext;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Optional;
 import java.util.function.Consumer;
 
 public abstract class BlockBehavior {
@@ -450,9 +449,8 @@ public abstract class BlockBehavior {
         // 如果物品和方块是一家人，那么不应该被替换
         Key clickedBlockId = state.owner().value().id();
         Item item = context.getItem();
-        Optional<ItemDefinition> customItem = CraftEngine.instance().itemManager().getItemDefinition(item.id());
-        if (customItem.isEmpty()) return state.settings().replaceable();
-        ItemDefinition custom = customItem.get();
+        ItemDefinition custom = CraftEngine.instance().itemManager().getItemDefinitionOrNull(item.id());
+        if (custom == null) return state.settings().replaceable();
         MutableBoolean canPlace = new MutableBoolean(true);
         custom.behavior().let(BlockItem.class, b -> {
             Key blockId = b.block();

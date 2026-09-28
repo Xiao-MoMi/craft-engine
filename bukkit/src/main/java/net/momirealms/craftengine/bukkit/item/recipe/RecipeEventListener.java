@@ -273,16 +273,16 @@ public final class RecipeEventListener implements Listener {
     }
 
     private int getFuelTime(Key id) {
-        return this.itemManager.getItemDefinition(id).map(it -> it.settings().fuelTime()).orElse(0);
+        ItemDefinition definition = this.itemManager.getItemDefinitionOrNull(id);
+        return definition != null ? definition.settings().fuelTime() : 0;
     }
 
     @EventHandler(ignoreCancelled = true, priority = EventPriority.HIGH)
     public void onFurnaceBurn(FurnaceBurnEvent event) {
         ItemStack fuel = event.getFuel();
         BukkitItem item = BukkitAdaptor.adapt(fuel);
-        Optional<ItemDefinition> optionalDefinition = item.getDefinition();
-        if (optionalDefinition.isPresent()) {
-            ItemDefinition itemDefinition = optionalDefinition.get();
+        ItemDefinition itemDefinition = item.getDefinitionOrNull();
+        if (itemDefinition != null) {
             int fuelTime = itemDefinition.settings().fuelTime();
             if (fuelTime != 0) {
                 // 自定义燃烧时间
@@ -438,25 +438,25 @@ public final class RecipeEventListener implements Listener {
         ItemStack second = inventory.getItem(1);
         if (first == null || second == null) return;
         Item wrappedFirst = BukkitItemManager.instance().wrap(first);
-        Optional<ItemDefinition> firstCustom = wrappedFirst.getDefinition();
+        ItemDefinition firstItemDefinition = wrappedFirst.getDefinitionOrNull();
         Item wrappedSecond = BukkitItemManager.instance().wrap(second);
-        Optional<ItemDefinition> secondCustom = wrappedSecond.getDefinition();
+        ItemDefinition secondCustom = wrappedSecond.getDefinitionOrNull();
         // 两个都是原版物品
-        if (firstCustom.isEmpty() && secondCustom.isEmpty()) {
+        if (firstItemDefinition == null && secondCustom == null) {
             return;
         }
         // 如果第二个物品是附魔书，那么忽略
         if (wrappedSecond.vanillaId().equals(ItemKeys.ENCHANTED_BOOK)) {
             // 禁止不可附魔的物品被附魔书附魔
-            if (firstCustom.isPresent() && !firstCustom.get().settings().canEnchant()) {
+            if (firstItemDefinition != null && !firstItemDefinition.settings().canEnchant()) {
                 event.setResult(null);
             }
             return;
         }
 
         // 被修的是自定义，材料不是自定义
-        if (firstCustom.isPresent() && secondCustom.isEmpty()) {
-            if (firstCustom.get().settings().respectRepairableComponent()) {
+        if (firstItemDefinition != null && secondCustom == null) {
+            if (firstItemDefinition.settings().respectRepairableComponent()) {
                 if (canRepair(second, first)) return; // 尊重原版的repairable
             } else {
                 event.setResult(null);
@@ -465,8 +465,8 @@ public final class RecipeEventListener implements Listener {
         }
 
         // 被修的是原版，材料是自定义
-        if (firstCustom.isEmpty() && secondCustom.isPresent()) {
-            if (secondCustom.get().settings().respectRepairableComponent()) {
+        if (firstItemDefinition == null && secondCustom != null) {
+            if (secondCustom.settings().respectRepairableComponent()) {
                 if (canRepair(second, first)) return;
             } else {
                 event.setResult(null);
@@ -480,8 +480,7 @@ public final class RecipeEventListener implements Listener {
             return;
         }
 
-        if (firstCustom.isPresent()) {
-            ItemDefinition firstItemDefinition = firstCustom.get();
+        if (firstItemDefinition != null) {
             if (firstItemDefinition.settings().repairable().anvilCombine() == Tristate.FALSE) {
                 event.setResult(null);
                 return;
@@ -524,12 +523,11 @@ public final class RecipeEventListener implements Listener {
 
         Item wrappedSecond = BukkitItemManager.instance().wrap(second);
         // 如果材料不是自定义的，那么忽略
-        Optional<ItemDefinition> customItemOptional = this.plugin.itemManager().getItemDefinition(wrappedSecond.id());
-        if (customItemOptional.isEmpty()) {
+        ItemDefinition itemDefinition = this.plugin.itemManager().getItemDefinitionOrNull(wrappedSecond.id());
+        if (itemDefinition == null) {
             return;
         }
 
-        ItemDefinition itemDefinition = customItemOptional.get();
         List<AnvilRepairItem> repairItems = itemDefinition.settings().repairItems();
         // 如果材料不支持修复物品，则忽略
         if (repairItems.isEmpty()) {
@@ -544,9 +542,9 @@ public final class RecipeEventListener implements Listener {
         if (damage == 0 || maxDamage == 0) return;
 
         Key firstId = wrappedFirst.id();
-        Optional<ItemDefinition> optionalCustomTool = wrappedFirst.getDefinition();
+        ItemDefinition customTool = wrappedFirst.getDefinitionOrNull();
         // 物品无法被修复
-        if (optionalCustomTool.isPresent() && optionalCustomTool.get().settings().repairable().anvilRepair() == Tristate.FALSE) {
+        if (customTool != null && customTool.settings().repairable().anvilRepair() == Tristate.FALSE) {
             event.setResult(null);
             return;
         }
@@ -556,7 +554,7 @@ public final class RecipeEventListener implements Listener {
             for (String target : item.targets()) {
                 if (target.charAt(0) == '#') {
                     Key tag = Key.of(target.substring(1));
-                    if (optionalCustomTool.isPresent() && optionalCustomTool.get().is(tag)) {
+                    if (customTool != null && customTool.is(tag)) {
                         repairItem = item;
                         break;
                     }
@@ -678,8 +676,9 @@ public final class RecipeEventListener implements Listener {
             return;
         }
         Item wrappedFirst = BukkitItemManager.instance().wrap(first);
-        wrappedFirst.getDefinition().ifPresent(item -> {
-            if (!item.settings().renameable()) {
+        ItemDefinition definition = wrappedFirst.getDefinitionOrNull();
+        if (definition != null) {
+            if (!definition.settings().renameable()) {
                 String renameText;
                 if (VersionHelper.isOrAbove1_21) {
                     AnvilView anvilView = event.getView();
@@ -697,7 +696,7 @@ public final class RecipeEventListener implements Listener {
                     }
                 }
             }
-        });
+        }
     }
 
     public static int calculateIncreasedRepairCost(int cost) {
@@ -716,11 +715,11 @@ public final class RecipeEventListener implements Listener {
         ItemStack second = inventory.getItem(1);
         if (ItemStackUtils.isEmpty(first) || ItemStackUtils.isEmpty(second)) return;
         Item wrappedFirst = BukkitItemManager.instance().wrap(first);
-        Optional<ItemDefinition> firstCustom = wrappedFirst.getDefinition();
+        ItemDefinition firstCustom = wrappedFirst.getDefinitionOrNull();
         Item wrappedSecond = BukkitItemManager.instance().wrap(second);
-        Optional<ItemDefinition> secondCustom = wrappedSecond.getDefinition();
+        ItemDefinition secondCustom = wrappedSecond.getDefinitionOrNull();
         // 两个都是原版物品
-        if (firstCustom.isEmpty() && secondCustom.isEmpty()) {
+        if (firstCustom == null && secondCustom == null) {
             return;
         }
         // 自定义物品只能与相同id的物品合并，防止原版砂轮吞掉自定义数据
@@ -728,7 +727,7 @@ public final class RecipeEventListener implements Listener {
             event.setResult(null);
             return;
         }
-        if (firstCustom.isPresent() && firstCustom.get().settings().repairable().grindstoneRepair() == Tristate.FALSE) {
+        if (firstCustom != null && firstCustom.settings().repairable().grindstoneRepair() == Tristate.FALSE) {
             event.setResult(null);
         }
     }
@@ -776,13 +775,13 @@ public final class RecipeEventListener implements Listener {
                 int durability1 = first.maxDamage() - first.damage().orElse(0);
                 int durability2 = right.maxDamage() - right.damage().orElse(0);
                 int finalDurability = durability1 + durability2 + max * 5 / 100;
-                Optional<ItemDefinition> customItemOptional = plugin.itemManager().getItemDefinition(first.id());
-                if (customItemOptional.isEmpty()) {
+                ItemDefinition customItemDefinition = plugin.itemManager().getItemDefinitionOrNull(first.id());
+                if (customItemDefinition == null) {
                     inventory.setResult(null);
                     return;
                 }
                 Player player = InventoryUtils.getPlayerFromInventoryEvent(event);
-                Item newItem = customItemOptional.get().buildItem(BukkitAdaptor.adapt(player));
+                Item newItem = customItemDefinition.buildItem(BukkitAdaptor.adapt(player));
                 newItem.maxDamage(max);
                 newItem.damage(Math.max(max - finalDurability, 0));
                 inventory.setResult(ItemStackUtils.getBukkitStack(newItem));
@@ -1052,9 +1051,8 @@ public final class RecipeEventListener implements Listener {
             ItemStack equipment = inventory.getItem(1); // paper -> getInputEquipment
             if (!ItemStackUtils.isEmpty(equipment)) {
                 Item wrappedEquipment = this.itemManager.wrap(equipment);
-                Optional<ItemDefinition> optionalCustomItem = wrappedEquipment.getDefinition();
-                if (optionalCustomItem.isPresent()) {
-                    ItemDefinition itemDefinition = optionalCustomItem.get();
+                ItemDefinition itemDefinition = wrappedEquipment.getDefinitionOrNull();
+                if (itemDefinition != null) {
                     ItemEquipment itemEquipmentSettings = itemDefinition.settings().equipment();
                     if (itemEquipmentSettings != null && itemEquipmentSettings.equipment() instanceof TrimBasedEquipment) {
                         // 不允许trim类型的盔甲再次被使用trim

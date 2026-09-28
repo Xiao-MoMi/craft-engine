@@ -103,9 +103,9 @@ public final class LegacyNetworkItemHandler implements NetworkItemHandler {
             }
         }
 
-        Optional<ItemDefinition> optionalCustomItem = wrapped.getDefinition();
-        if (optionalCustomItem.isPresent()) {
-            BukkitItemDefinition customItem = (BukkitItemDefinition) optionalCustomItem.get();
+        ItemDefinition customItemDefinition = wrapped.getDefinitionOrNull();
+        if (customItemDefinition != null) {
+            BukkitItemDefinition customItem = (BukkitItemDefinition) customItemDefinition;
             if (customItem.item() != ItemStackProxy.INSTANCE.getItem(wrapped.minecraftItem())) {
                 wrapped = wrapped.unsafeTransmuteCopy(customItem.item(), wrapped.count());
                 forceReturn = true;
@@ -189,9 +189,9 @@ public final class LegacyNetworkItemHandler implements NetworkItemHandler {
             }
         }
 
-        Optional<ItemDefinition> optionalCustomItem = wrapped.getDefinition();
+        ItemDefinition customItemDefinition = wrapped.getDefinitionOrNull();
         // 不是自定义物品或修改过的原版物品
-        if (optionalCustomItem.isEmpty()) {
+        if (customItemDefinition == null) {
             if (!Config.interceptItem()) {
                 return forceReturn ? Optional.of(wrapped) : Optional.empty();
             }
@@ -200,7 +200,7 @@ public final class LegacyNetworkItemHandler implements NetworkItemHandler {
 
         // legacy 物品无需保留 original副本，因为不存在组件默认值设定
         // 应用 client-bound-material
-        BukkitItemDefinition customItem = (BukkitItemDefinition) optionalCustomItem.get();
+        BukkitItemDefinition customItem = (BukkitItemDefinition) customItemDefinition;
         if (customItem.hasClientboundMaterial() && ItemStackProxy.INSTANCE.getItem(wrapped.minecraftItem()) != customItem.clientItem()) {
             wrapped = wrapped.unsafeTransmuteCopy(customItem.clientItem(), wrapped.count());
             forceReturn = true;

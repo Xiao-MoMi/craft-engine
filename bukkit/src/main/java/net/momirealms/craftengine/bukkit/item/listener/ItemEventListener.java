@@ -122,13 +122,12 @@ public final class ItemEventListener implements Listener {
         Item itemInHand = serverPlayer.getItemInHand(hand);
 
         if (ItemUtils.isEmpty(itemInHand)) return;
-        Optional<ItemDefinition> optionalCustomItem = itemInHand.getDefinition();
-        if (optionalCustomItem.isEmpty()) return;
+        ItemDefinition itemDefinition = itemInHand.getDefinitionOrNull();
+        if (itemDefinition == null) return;
         // 如果目标实体与手中物品可以产生交互，那么忽略
         if (InteractUtils.isEntityInteractable(player, entity, itemInHand)) return;
 
         BukkitEntity bukkitEntity = new BukkitEntity(entity);
-        ItemDefinition itemDefinition = optionalCustomItem.get();
         List<Function<Context>> functions = itemDefinition.eventFunctions(EventTrigger.RIGHT_CLICK);
         if (!functions.isEmpty()) {
             Cancellable cancellable = Cancellable.of(event::isCancelled, event::setCancelled);
@@ -324,8 +323,8 @@ public final class ItemEventListener implements Listener {
         }
 
         boolean hasItem = !itemInHand.isEmpty();
-        Optional<ItemDefinition> optionalItemDefinition = hasItem ? itemInHand.getDefinition() : Optional.empty();
-        boolean isCustomItem = optionalItemDefinition.isPresent() && !optionalItemDefinition.get().isVanillaItem();
+        ItemDefinition handDefinition = hasItem ? itemInHand.getDefinitionOrNull() : null;
+        boolean isCustomItem = handDefinition != null && !handDefinition.isVanillaItem();
 
         // interact block with items
         if (hasItem && action == Action.RIGHT_CLICK_BLOCK) {
@@ -364,7 +363,7 @@ public final class ItemEventListener implements Listener {
                 }
                 // 是自定义物品，尝试禁用掉原版放置逻辑（前提是能放）
                 else {
-                    if (optionalItemDefinition.get().settings().disableVanillaBehavior()) {
+                    if (handDefinition.settings().disableVanillaBehavior()) {
                         // 不能在BlockPlaceEvent里检测，是因为种农作物不触发相关事件
                         // 允许尝试放置方块
                         if (serverPlayer.isSecondaryUseActive() || !InteractUtils.isInteractable(player, blockData, hitResult, itemInHand)) {
@@ -412,7 +411,7 @@ public final class ItemEventListener implements Listener {
             if (isCustomItem) {
                 // 要求服务端侧这个方块不可交互，或玩家处于潜行状态
                 if (serverPlayer.isSecondaryUseActive() || !InteractUtils.isInteractable(player, blockData, hitResult, itemInHand)) {
-                    ItemDefinition itemDefinition = optionalItemDefinition.get();
+                    ItemDefinition itemDefinition = handDefinition;
                     List<Function<Context>> functions = itemDefinition.eventFunctions(EventTrigger.RIGHT_CLICK);
                     if (!functions.isEmpty()) {
                         Cancellable dummy = Cancellable.dummy();
@@ -513,7 +512,7 @@ public final class ItemEventListener implements Listener {
 
         // 执行物品左键事件
         if (isCustomItem && action == Action.LEFT_CLICK_BLOCK) {
-            ItemDefinition itemDefinition = optionalItemDefinition.get();
+            ItemDefinition itemDefinition = handDefinition;
             List<Function<Context>> functions = itemDefinition.eventFunctions(EventTrigger.LEFT_CLICK);
             if (!functions.isEmpty()) {
                 Cancellable dummy = Cancellable.dummy();
@@ -605,9 +604,8 @@ public final class ItemEventListener implements Listener {
         // should never be null
         if (itemInHand.isEmpty()) return;
 
-        Optional<ItemDefinition> optionalCustomItem = itemInHand.getDefinition();
-        if (optionalCustomItem.isPresent()) {
-            ItemDefinition itemDefinition = optionalCustomItem.get();
+        ItemDefinition itemDefinition = itemInHand.getDefinitionOrNull();
+        if (itemDefinition != null) {
             EventTrigger trigger = action == Action.RIGHT_CLICK_AIR ? EventTrigger.RIGHT_CLICK : EventTrigger.LEFT_CLICK;
             List<Function<Context>> functions = itemDefinition.eventFunctions(trigger);
             if (!functions.isEmpty()) {
@@ -648,14 +646,13 @@ public final class ItemEventListener implements Listener {
         if (ItemStackUtils.isEmpty(consumedItem)) return;
         int consumedAmount = consumedItem.getAmount();
         Item wrapped = this.plugin.itemManager().wrap(consumedItem);
-        Optional<ItemDefinition> optionalCustomItem = wrapped.getDefinition();
-        if (optionalCustomItem.isEmpty()) {
+        ItemDefinition itemDefinition = wrapped.getDefinitionOrNull();
+        if (itemDefinition == null) {
             return;
         }
         Player player = event.getPlayer();
         BukkitServerPlayer serverPlayer = BukkitAdaptor.adapt(player);
         if (serverPlayer == null) return;
-        ItemDefinition itemDefinition = optionalCustomItem.get();
         List<Function<Context>> functions = itemDefinition.eventFunctions(EventTrigger.CONSUME);
         if (!functions.isEmpty()) {
             Cancellable cancellable = Cancellable.of(event::isCancelled, event::setCancelled);
@@ -702,10 +699,10 @@ public final class ItemEventListener implements Listener {
     @EventHandler(priority = EventPriority.MONITOR)
     public void onItemBreak(PlayerItemBreakEvent event) {
         Item brokenItem = this.itemManager.wrap(event.getBrokenItem());
-        Optional<ItemDefinition> optionalCustomItem = brokenItem.getDefinition();
-        if (optionalCustomItem.isEmpty()) return;
+        ItemDefinition customItem = brokenItem.getDefinitionOrNull();
+        if (customItem == null) return;
 
-        List<Function<Context>> functions = optionalCustomItem.get().eventFunctions(EventTrigger.ITEM_BREAK);
+        List<Function<Context>> functions = customItem.eventFunctions(EventTrigger.ITEM_BREAK);
         if (functions.isEmpty()) return;
 
         BukkitServerPlayer serverPlayer = BukkitAdaptor.adapt(event.getPlayer());
@@ -723,11 +720,10 @@ public final class ItemEventListener implements Listener {
         ItemStack consumedItem = event.getItem();
         if (ItemStackUtils.isEmpty(consumedItem)) return;
         Item wrapped = this.plugin.itemManager().wrap(consumedItem);
-        Optional<ItemDefinition> optionalCustomItem = wrapped.getDefinition();
-        if (optionalCustomItem.isEmpty()) {
+        ItemDefinition itemDefinition = wrapped.getDefinitionOrNull();
+        if (itemDefinition == null) {
             return;
         }
-        ItemDefinition itemDefinition = optionalCustomItem.get();
         FoodData foodData = itemDefinition.settings().foodData();
         if (foodData == null) return;
         event.setCancelled(true);
@@ -762,10 +758,9 @@ public final class ItemEventListener implements Listener {
             // 获取物品
             BukkitItem itemInHand = serverPlayer.getItemInHand(InteractionHand.MAIN_HAND);
             if (ItemUtils.isEmpty(itemInHand)) return;
-            Optional<ItemDefinition> optionalCustomItem = itemInHand.getDefinition();
-            if (optionalCustomItem.isEmpty()) return;
+            ItemDefinition itemDefinition = itemInHand.getDefinitionOrNull();
+            if (itemDefinition == null) return;
 
-            ItemDefinition itemDefinition = optionalCustomItem.get();
             List<Function<Context>> functions = itemDefinition.eventFunctions(EventTrigger.ATTACK);
             if (!functions.isEmpty()) {
                 // 触发事件
@@ -787,9 +782,8 @@ public final class ItemEventListener implements Listener {
     public void onEnchant(PrepareItemEnchantEvent event) {
         ItemStack itemToEnchant = event.getItem();
         Item wrapped = this.plugin.itemManager().wrap(itemToEnchant);
-        Optional<ItemDefinition> optionalCustomItem = wrapped.getDefinition();
-        if (optionalCustomItem.isEmpty()) return;
-        ItemDefinition itemDefinition = optionalCustomItem.get();
+        ItemDefinition itemDefinition = wrapped.getDefinitionOrNull();
+        if (itemDefinition == null) return;
         if (!itemDefinition.settings().canEnchant()) {
             event.setCancelled(true);
         }
@@ -806,9 +800,9 @@ public final class ItemEventListener implements Listener {
         if (ItemStackUtils.isEmpty(item)) return;
         Item wrapped = this.plugin.itemManager().wrap(item);
         if (ItemUtils.isEmpty(wrapped)) return;
-        Optional<ItemDefinition> optionalCustomItem = wrapped.getDefinition();
-        if (optionalCustomItem.isEmpty()) return;
-        BukkitItemDefinition customItem = (BukkitItemDefinition) optionalCustomItem.get();
+        ItemDefinition customItemDefinition = wrapped.getDefinitionOrNull();
+        if (customItemDefinition == null) return;
+        BukkitItemDefinition customItem = (BukkitItemDefinition) customItemDefinition;
         if (customItem.clientItem() == ItemStackProxy.INSTANCE.getItem(wrapped.minecraftItem())) return;
         BukkitServerPlayer serverPlayer = BukkitAdaptor.adapt(player);
         if (serverPlayer == null) return;
@@ -843,23 +837,23 @@ public final class ItemEventListener implements Listener {
         ItemStack current = event.getCurrentItem();
         if (ItemStackUtils.isEmpty(cursor) || ItemStackUtils.isEmpty(current)) return;
         Item wrappedMaterial = this.itemManager.wrap(cursor);
-        Optional<ItemDefinition> optionalMaterial = wrappedMaterial.getDefinition();
-        if (optionalMaterial.isEmpty()) return;
-        List<DragRepairItem> dragRepairItems = optionalMaterial.get().settings().dragRepairItems();
+        ItemDefinition material = wrappedMaterial.getDefinitionOrNull();
+        if (material == null) return;
+        List<DragRepairItem> dragRepairItems = material.settings().dragRepairItems();
         if (dragRepairItems.isEmpty()) return;
         Item wrappedTarget = this.itemManager.wrap(current);
         int maxDamage = wrappedTarget.maxDamage();
         int damage = wrappedTarget.damage().orElse(0);
         // 目标无耐久或已修满
         if (maxDamage <= 0 || damage <= 0) return;
-        Optional<ItemDefinition> optionalTarget = wrappedTarget.getDefinition();
+        ItemDefinition targetDefinition = wrappedTarget.getDefinitionOrNull();
         Key targetId = wrappedTarget.id();
         DragRepairItem repairItem = null;
         for (DragRepairItem item : dragRepairItems) {
             for (String target : item.targets()) {
                 if (target.charAt(0) == '#') {
                     Key tag = Key.of(target.substring(1));
-                    if (optionalTarget.isPresent() && optionalTarget.get().is(tag)) {
+                    if (targetDefinition != null && targetDefinition.is(tag)) {
                         repairItem = item;
                         break;
                     }
@@ -930,10 +924,9 @@ public final class ItemEventListener implements Listener {
         if (!VersionHelper.isOrAbove1_20_3) {
             this.itemManager.unlockRecipeOnInventoryChanged(player, wrapped);
         }
-        Optional<ItemDefinition> optionalCustomItem = wrapped.getDefinition();
-        if (optionalCustomItem.isEmpty()) return;
+        ItemDefinition itemDefinition = wrapped.getDefinitionOrNull();
+        if (itemDefinition == null) return;
         BukkitServerPlayer serverPlayer = BukkitAdaptor.adapt(player);
-        ItemDefinition itemDefinition = optionalCustomItem.get();
         if (Config.triggerUpdatePickUp() && itemDefinition.updater().isPresent()) {
             ItemUpdateResult result = this.itemManager.updateItem(wrapped, () -> ItemBuildContext.of(serverPlayer));
             if (result.updated()) {
@@ -1002,10 +995,9 @@ public final class ItemEventListener implements Listener {
             for (ItemStack item : inventory.getContents()) {
                 if (item == null) continue;
 
-                Optional<ItemDefinition> optional = instance.wrap(item).getDefinition();
-                if (optional.isEmpty()) continue;
+                ItemDefinition itemDefinition = instance.wrap(item).getDefinitionOrNull();
+                if (itemDefinition == null) continue;
 
-                ItemDefinition itemDefinition = optional.get();
                 ItemSettings settings = itemDefinition.settings();
                 float destroyChance = settings.destroyOnDeathChance();
                 if (destroyChance <= 0f) continue;
@@ -1037,10 +1029,9 @@ public final class ItemEventListener implements Listener {
 
             while (iterator.hasNext()) {
                 ItemStack item = iterator.next();
-                Optional<ItemDefinition> optional = instance.wrap(item).getDefinition();
-                if (optional.isEmpty()) continue;
+                ItemDefinition itemDefinition = instance.wrap(item).getDefinitionOrNull();
+                if (itemDefinition == null) continue;
 
-                ItemDefinition itemDefinition = optional.get();
                 ItemSettings settings = itemDefinition.settings();
 
                 float destroyChance = settings.destroyOnDeathChance();
@@ -1106,8 +1097,9 @@ public final class ItemEventListener implements Listener {
         BukkitServerPlayer serverPlayer = shooter instanceof Player player ? BukkitAdaptor.adapt(player) : null;
 
         // 触发射击事件
-        bowItem.getDefinition().ifPresent(definition -> {
-            List<Function<Context>> functions = definition.eventFunctions(EventTrigger.SHOOT);
+        ItemDefinition bowDefinition = bowItem.getDefinitionOrNull();
+        if (bowDefinition != null) {
+            List<Function<Context>> functions = bowDefinition.eventFunctions(EventTrigger.SHOOT);
             if (!functions.isEmpty()) {
                 Function.execute(PlayerOptionalContext.of(serverPlayer, ContextHolder.builder()
                         .withOptionalParameter(DirectContextParameters.PLAYER, serverPlayer)
@@ -1118,7 +1110,7 @@ public final class ItemEventListener implements Listener {
                         .build()
                 ), functions);
             }
-        });
+        }
 
         ItemStack consumable = event.getConsumable();
         if (consumable == null) {
@@ -1145,9 +1137,8 @@ public final class ItemEventListener implements Listener {
         }
 
         // 设置一些其他属性，无限和是否允许捡起
-        Optional<ItemDefinition> arrowDefinition = arrowItem.getDefinition();
-        if (arrowDefinition.isPresent()) {
-            ItemDefinition definition = arrowDefinition.get();
+        ItemDefinition definition = arrowItem.getDefinitionOrNull();
+        if (definition != null) {
             ProjectileMeta projectileMeta = definition.settings().projectileMeta();
             if (projectileMeta != null && serverPlayer != null && !serverPlayer.isCreativeMode() && VersionHelper.hasPaperPatch) {
                 if (projectileMeta.ignoreInfinityEnchantment() && bowItem.getEnchantment(EnchantmentKeys.INFINITY).isPresent()) {

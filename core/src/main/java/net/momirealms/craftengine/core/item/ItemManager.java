@@ -59,6 +59,12 @@ public interface ItemManager extends Manageable, ModelGenerator {
 
     Optional<ItemDefinition> getItemDefinition(Key key);
 
+    @ApiStatus.Internal
+    @Nullable
+    default ItemDefinition getItemDefinitionOrNull(Key key) {
+        return getItemDefinition(key).orElse(null);
+    }
+
     Optional<ItemBehavior> getItemBehavior(Key key);
 
     Optional<? extends BuildableItem> getVanillaItem(Key key);

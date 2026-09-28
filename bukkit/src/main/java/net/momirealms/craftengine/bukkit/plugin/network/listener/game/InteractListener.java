@@ -261,9 +261,8 @@ public final class InteractListener {
             }
             // 必须从网络包层面处理，否则无法获取交互的具体实体
             if (usingSecondaryAction && !itemInHand.isEmpty() && hitBox.canUseItemOn()) {
-                Optional<ItemDefinition> optionalItemDefinition = itemInHand.getDefinition();
-                if (optionalItemDefinition.isPresent()) {
-                    ItemDefinition itemDefinition = optionalItemDefinition.get();
+                ItemDefinition itemDefinition = itemInHand.getDefinitionOrNull();
+                if (itemDefinition != null) {
                     FurnitureItem firstFurniture = itemDefinition.behavior().getFirst(FurnitureItem.class);
                     if (firstFurniture != null) {
                         ((ItemBehavior) firstFurniture).useOnBlock(new UseOnContext(serverPlayer, InteractionHand.MAIN_HAND, new BlockHitResult(hitResult.hitLocation(), hitResult.direction(), BlockPos.fromVec3d(hitResult.hitLocation()), false)));

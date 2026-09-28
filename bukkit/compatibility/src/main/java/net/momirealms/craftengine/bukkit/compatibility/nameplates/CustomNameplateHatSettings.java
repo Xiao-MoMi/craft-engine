@@ -23,7 +23,6 @@ import org.bukkit.inventory.EquipmentSlot;
 import org.bukkit.inventory.ItemStack;
 
 import java.util.Objects;
-import java.util.Optional;
 
 public final class CustomNameplateHatSettings implements Listener {
     public static final CustomItemSettingType<Double> HAT_HEIGHT = CustomItemSettingType.simple();
@@ -69,12 +68,12 @@ public final class CustomNameplateHatSettings implements Listener {
         TagRenderer tagRender = CustomNameplates.getInstance().getUnlimitedTagManager().getTagRender(cnPlayer);
         if (tagRender == null) return;
         Item wrapped = BukkitItemManager.instance().wrap(newItem);
-        Optional<ItemDefinition> optionalCustomItem = wrapped.getDefinition();
-        if (optionalCustomItem.isEmpty()) {
+        ItemDefinition customItem = wrapped.getDefinitionOrNull();
+        if (customItem == null) {
             tagRender.hatOffset(0d);
             return;
         }
-        Double customHeight = optionalCustomItem.get().settings().getCustomData(HAT_HEIGHT);
+        Double customHeight = customItem.settings().getCustomData(HAT_HEIGHT);
         tagRender.hatOffset(Objects.requireNonNullElse(customHeight, 0d));
     }
 }

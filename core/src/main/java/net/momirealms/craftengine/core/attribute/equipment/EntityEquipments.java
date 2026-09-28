@@ -149,16 +149,16 @@ public final class EntityEquipments {
         Map<Key, Integer> setPartCount = new HashMap<>();
         for (Map.Entry<EquipmentSetSlot, EquipmentSlotItem> entry : this.equipments.entrySet()) {
             Item item = entry.getValue().item();
-            Optional<ItemDefinition> definition = item.getDefinition();
-            definition.ifPresent(def -> {
-                EquipmentSetPart equipmentSetPart = def.settings().equipmentSetPart();
+            ItemDefinition definition = item.getDefinitionOrNull();
+            if (definition != null) {
+                EquipmentSetPart equipmentSetPart = definition.settings().equipmentSetPart();
                 if (equipmentSetPart != null) {
                     List<Key> matchingSets = equipmentSetPart.getMatchingSets(entry.getKey());
                     for (Key set : matchingSets) {
                         setPartCount.merge(set, 1, Integer::sum);
                     }
                 }
-            });
+            }
         }
         return setPartCount;
     }

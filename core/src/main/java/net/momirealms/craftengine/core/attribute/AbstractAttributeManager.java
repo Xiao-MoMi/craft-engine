@@ -72,9 +72,9 @@ public abstract class AbstractAttributeManager implements AttributeManager {
         this.apiOperations.put(AttributeOperations.ADD_MULTIPLIED_BASE_ID, AttributeOperations.ADD_MULTIPLIED_BASE);
         this.apiOperations.put(AttributeOperations.ADD_MULTIPLIED_TOTAL_ID, AttributeOperations.ADD_MULTIPLIED_TOTAL);
         registerItemModifiersProvider(Key.ce("settings"), ItemAttributeModifiersProvider.PRIORITY_SETTINGS, item -> {
-            Optional<ItemDefinition> definition = item.getDefinition();
-            if (definition.isEmpty()) return List.of();
-            AttributeModifiers modifiers = definition.get().settings().attributeModifiers();
+            ItemDefinition definition = item.getDefinitionOrNull();
+            if (definition == null) return List.of();
+            AttributeModifiers modifiers = definition.settings().attributeModifiers();
             return modifiers == null ? List.of() : modifiers.modifiers();
         });
         registerItemModifiersProvider(Key.ce("persistent"), ItemAttributeModifiersProvider.PRIORITY_PERSISTENT, item -> {

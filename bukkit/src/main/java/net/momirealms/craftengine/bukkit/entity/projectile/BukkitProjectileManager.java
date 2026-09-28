@@ -14,6 +14,7 @@ import net.momirealms.craftengine.core.entity.projectile.ProjectileManager;
 import net.momirealms.craftengine.core.entity.projectile.ProjectileMeta;
 import net.momirealms.craftengine.core.entity.projectile.ProjectileSounds;
 import net.momirealms.craftengine.core.item.Item;
+import net.momirealms.craftengine.core.item.ItemDefinition;
 import net.momirealms.craftengine.core.item.enchantment.EnchantmentKeys;
 import net.momirealms.craftengine.core.plugin.scheduler.SchedulerTask;
 import net.momirealms.craftengine.core.sound.SoundData;
@@ -193,8 +194,9 @@ public final class BukkitProjectileManager implements Listener, ProjectileManage
         if (projectileItem == null) return;
         Item wrapped = this.plugin.itemManager().wrap(projectileItem);
         if (ItemUtils.isEmpty(wrapped)) return;
-        wrapped.getDefinition().ifPresent(it -> {
-            ProjectileMeta meta = it.settings().projectileMeta();
+        ItemDefinition definition = wrapped.getDefinitionOrNull();
+        if (definition != null) {
+            ProjectileMeta meta = definition.settings().projectileMeta();
             if (meta != null) {
                 BukkitCustomProjectile customProjectile = new BukkitCustomProjectile(meta, projectile, wrapped);
                 this.projectiles.put(projectile.getEntityId(), customProjectile);
@@ -242,7 +244,7 @@ public final class BukkitProjectileManager implements Listener, ProjectileManage
                     }
                 }
             }
-        });
+        }
     }
 
     public class ProjectileInjectTask implements Runnable {

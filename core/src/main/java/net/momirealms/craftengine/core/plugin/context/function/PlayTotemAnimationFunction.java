@@ -47,7 +47,7 @@ public final class PlayTotemAnimationFunction<CTX extends Context> extends Abstr
 
     @Override
     protected void runInternal(CTX ctx) {
-        ItemDefinition itemDefinition = CraftEngine.instance().itemManager().getItemDefinition(this.item).orElse(null);
+        ItemDefinition itemDefinition = CraftEngine.instance().itemManager().getItemDefinitionOrNull(this.item);
         if (itemDefinition == null) {
             return;
         }

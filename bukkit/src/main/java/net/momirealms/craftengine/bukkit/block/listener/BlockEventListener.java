@@ -156,9 +156,8 @@ public final class BlockEventListener implements Listener {
         BukkitItem itemInHand = serverPlayer.getItemInHand(InteractionHand.MAIN_HAND);
 
         if (!event.isCancelled() && !ItemUtils.isEmpty(itemInHand)) {
-            Optional<ItemDefinition> optionalCustomItem = itemInHand.getDefinition();
-            if (optionalCustomItem.isPresent()) {
-                ItemDefinition itemDefinition = optionalCustomItem.get();
+            ItemDefinition itemDefinition = itemInHand.getDefinitionOrNull();
+            if (itemDefinition != null) {
                 List<Function<Context>> functions = itemDefinition.eventFunctions(EventTrigger.BLOCK_BREAK);
                 if (!functions.isEmpty()) {
                     Cancellable cancellable = Cancellable.of(event::isCancelled, event::setCancelled);
