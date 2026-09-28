@@ -6,10 +6,8 @@ import net.momirealms.craftengine.core.attribute.modifier.AttributeModifierConfi
 import net.momirealms.craftengine.core.attribute.modifier.AttributeModifierScope;
 import net.momirealms.craftengine.core.entity.LivingEntityHolder;
 import net.momirealms.craftengine.core.item.Item;
-import net.momirealms.craftengine.core.item.ItemDefinition;
 import net.momirealms.craftengine.core.item.equipment.EquipmentSet;
 import net.momirealms.craftengine.core.item.equipment.SetPotionEffect;
-import net.momirealms.craftengine.core.item.setting.value.EquipmentSetPart;
 import net.momirealms.craftengine.core.plugin.CraftEngine;
 import net.momirealms.craftengine.core.util.Key;
 import org.jetbrains.annotations.Nullable;
@@ -21,6 +19,8 @@ public final class EntityEquipments {
     private final LivingEntityHolder holder;
     private Map<Key, Integer> activeSets = Map.of();
     private boolean dirty = true;
+    private volatile long setMembershipRevision;
+    private long appliedSetMembershipRevision;
 
     public EntityEquipments(LivingEntityHolder holder) {
         this.holder = holder;
@@ -50,8 +50,8 @@ public final class EntityEquipments {
         EquipmentSlotItem removed = this.equipments.remove(slot);
         if (removed != null) {
             this.holder.ifAttributesExist(removed::removeModifiers);
+            this.dirty = true;
         }
-        this.dirty = true;
         return removed;
     }
 
@@ -68,9 +68,12 @@ public final class EntityEquipments {
     }
 
     public boolean updateSetsAndReportChange(boolean runTransitionActions) {
-        if (!this.dirty) return false;
+        long revision = this.setMembershipRevision;
+        boolean refreshMemberships = revision != this.appliedSetMembershipRevision;
+        if (!this.dirty && !refreshMemberships) return false;
         this.dirty = false;
-        Map<Key, Integer> raw = computeRawActiveSets();
+        this.appliedSetMembershipRevision = revision;
+        Map<Key, Integer> raw = computeRawActiveSets(refreshMemberships);
         Map<Key, Integer> previous = this.activeSets;
         if (raw.equals(previous)) {
             this.activeSets = raw;
@@ -142,25 +145,30 @@ public final class EntityEquipments {
     public void clearSetEffects() {
         this.activeSets = Map.of();
         this.dirty = false;
+        this.appliedSetMembershipRevision = this.setMembershipRevision;
     }
 
-    private Map<Key, Integer> computeRawActiveSets() {
+    // Called by the serialized configuration reload; refresh on the owning entity thread.
+    public void invalidateSetMemberships() {
+        this.setMembershipRevision++;
+    }
+
+    private Map<Key, Integer> computeRawActiveSets(boolean refreshMemberships) {
         if (this.equipments.isEmpty()) return Map.of();
-        Map<Key, Integer> setPartCount = new HashMap<>();
+        Map<Key, Integer> setPartCount = null;
         for (Map.Entry<EquipmentSetSlot, EquipmentSlotItem> entry : this.equipments.entrySet()) {
-            Item item = entry.getValue().item();
-            ItemDefinition definition = item.getDefinitionOrNull();
-            if (definition != null) {
-                EquipmentSetPart equipmentSetPart = definition.settings().equipmentSetPart();
-                if (equipmentSetPart != null) {
-                    List<Key> matchingSets = equipmentSetPart.getMatchingSets(entry.getKey());
-                    for (Key set : matchingSets) {
-                        setPartCount.merge(set, 1, Integer::sum);
-                    }
-                }
+            EquipmentSlotItem item = entry.getValue();
+            if (refreshMemberships) {
+                item.refreshMatchingSets(entry.getKey());
+            }
+            List<Key> matchingSets = item.matchingSets();
+            if (matchingSets.isEmpty()) continue;
+            if (setPartCount == null) setPartCount = new HashMap<>();
+            for (Key set : matchingSets) {
+                setPartCount.merge(set, 1, Integer::sum);
             }
         }
-        return setPartCount;
+        return setPartCount == null ? Map.of() : setPartCount;
     }
 
     private void synchronizePotionEffects() {

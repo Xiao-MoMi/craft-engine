@@ -61,6 +61,9 @@ public abstract class AbstractEntityManager implements EntityManager {
     @Override
     public void delayedLoad() {
         resetEntityProviders();
+        for (LivingEntityHolder holder : this.livingEntities.values()) {
+            holder.equipments.invalidateSetMemberships();
+        }
     }
 
     @Override

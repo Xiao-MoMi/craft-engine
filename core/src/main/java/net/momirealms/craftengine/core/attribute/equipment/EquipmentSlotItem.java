@@ -8,7 +8,10 @@ import net.momirealms.craftengine.core.item.Item;
 import net.momirealms.craftengine.core.item.ItemDefinition;
 import net.momirealms.craftengine.core.item.equipment.SetPotionEffect;
 import net.momirealms.craftengine.core.item.setting.value.EquipmentPotionEffects;
+import net.momirealms.craftengine.core.item.setting.value.EquipmentSetPart;
 import net.momirealms.craftengine.core.plugin.CraftEngine;
+import net.momirealms.craftengine.core.util.Key;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -17,11 +20,13 @@ public final class EquipmentSlotItem {
     private final Item item;
     private final List<SlotAttributeModifierConfig> snapshots;
     private final List<SetPotionEffect> potionEffects;
+    private List<Key> matchingSets;
 
-    private EquipmentSlotItem(Item item, List<SlotAttributeModifierConfig> snapshots, List<SetPotionEffect> potionEffects) {
+    private EquipmentSlotItem(Item item, List<SlotAttributeModifierConfig> snapshots, List<SetPotionEffect> potionEffects, List<Key> matchingSets) {
         this.item = item;
         this.snapshots = snapshots;
         this.potionEffects = potionEffects;
+        this.matchingSets = matchingSets;
     }
 
     public static EquipmentSlotItem create(EquipmentSetSlot slot, Item item) {
@@ -38,7 +43,8 @@ public final class EquipmentSlotItem {
         return new EquipmentSlotItem(
                 item,
                 snapshots.isEmpty() ? List.of() : List.copyOf(snapshots),
-                potionEffects
+                potionEffects,
+                matchingSets(slot, definition)
         );
     }
 
@@ -52,6 +58,19 @@ public final class EquipmentSlotItem {
 
     public List<SetPotionEffect> potionEffects() {
         return this.potionEffects;
+    }
+
+    List<Key> matchingSets() {
+        return this.matchingSets;
+    }
+
+    void refreshMatchingSets(EquipmentSetSlot slot) {
+        this.matchingSets = matchingSets(slot, this.item.getDefinitionOrNull());
+    }
+
+    private static List<Key> matchingSets(EquipmentSetSlot slot, @Nullable ItemDefinition definition) {
+        EquipmentSetPart part = definition != null ? definition.settings().equipmentSetPart() : null;
+        return part != null ? part.getMatchingSets(slot) : List.of();
     }
 
     public void addOrUpdateModifiers(EntityAttributes attributes) {
