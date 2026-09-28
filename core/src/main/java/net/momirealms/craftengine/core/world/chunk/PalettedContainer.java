@@ -96,6 +96,8 @@ public final class PalettedContainer<T> implements PaletteResizeListener<T>, Rea
     /**
      * Acquires data once for a scan that does not resize or replace this container.
      * The returned palette and storage are live references, not a snapshot.
+     * Acquire-read optimization adapted from Leaf's "optimize PalettedContainer#get" patch.
+     * @see <a href="https://github.com/Winds-Studio/Leaf">Leaf</a>
      */
     @SuppressWarnings("unchecked")
     public Data<T> dataAcquire() {
