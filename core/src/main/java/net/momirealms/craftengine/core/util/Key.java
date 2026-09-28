@@ -9,6 +9,8 @@ public final class Key {
     public static final String MINECRAFT_NAMESPACE = "minecraft";
     public final String namespace;
     public final String value;
+    // Resolved by UniqueKey.create; the immutable namespace/value never need invalidation.
+    transient UniqueKey uniqueKey;
 
     public Key(String namespace, String value) {
         this.namespace = namespace;

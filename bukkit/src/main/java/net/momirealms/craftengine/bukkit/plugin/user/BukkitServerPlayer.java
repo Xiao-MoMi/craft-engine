@@ -11,6 +11,7 @@ import io.netty.buffer.Unpooled;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelHandler;
 import it.unimi.dsi.fastutil.longs.LongOpenHashSet;
+import it.unimi.dsi.fastutil.objects.ReferenceOpenHashSet;
 import net.kyori.adventure.text.Component;
 import net.momirealms.craftengine.bukkit.api.BukkitAdaptor;
 import net.momirealms.craftengine.bukkit.api.CraftEngineFurniture;
@@ -325,7 +326,7 @@ public class BukkitServerPlayer extends BukkitLivingEntity implements Player {
         this.trackedEntities = new ConcurrentHashMap<>(64);
         this.trackedChunks = ConcurrentChainedLong2ReferenceHashTable.createWithCapacity(128, 0.5f);
         this.entityTypeView = ConcurrentChainedInt2ObjectHashTable.createWithCapacity(128, 0.75f);
-        this.obtainedItems = new HashSet<>(32);
+        this.obtainedItems = new ReferenceOpenHashSet<>(32);
         this.furnitureHitData = new FurnitureHitData();
         this.furnitureLightData = new FurnitureLightData();
         this.receivedMapData = CacheBuilder.newBuilder()

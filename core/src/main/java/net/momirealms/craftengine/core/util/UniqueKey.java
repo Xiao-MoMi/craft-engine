@@ -17,7 +17,13 @@ public final class UniqueKey {
     }
 
     public static UniqueKey create(Key key) {
-        return CACHE.computeIfAbsent(key, UniqueKey::new);
+        UniqueKey uniqueKey = key.uniqueKey;
+        if (uniqueKey == null) {
+            uniqueKey = CACHE.computeIfAbsent(key, UniqueKey::new);
+            // Races only repeat the lookup: CACHE always returns the same immutable instance.
+            key.uniqueKey = uniqueKey;
+        }
+        return uniqueKey;
     }
 
     @Nullable
