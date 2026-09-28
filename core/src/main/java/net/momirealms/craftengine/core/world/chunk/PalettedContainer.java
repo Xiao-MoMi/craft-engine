@@ -93,6 +93,15 @@ public final class PalettedContainer<T> implements PaletteResizeListener<T>, Rea
         return data;
     }
 
+    /**
+     * Acquires data once for a scan that does not resize or replace this container.
+     * The returned palette and storage are live references, not a snapshot.
+     */
+    @SuppressWarnings("unchecked")
+    public Data<T> dataAcquire() {
+        return (Data<T>) DATA_HANDLE.getAcquire(this);
+    }
+
     public synchronized void readPacket(FriendlyByteBuf buf) {
         int i = buf.readByte();
         Data<T> data = this.getCompatibleData(this.data, i);
@@ -134,10 +143,8 @@ public final class PalettedContainer<T> implements PaletteResizeListener<T>, Rea
         return this.get(this.paletteProvider.computeIndex(x, y, z));
     }
 
-    @SuppressWarnings("unchecked")
     public T get(int index) {
-        Data<T> data = (Data<T>) DATA_HANDLE.getAcquire(this);
-        return data.palette.get(data.storage.get(index));
+        return this.dataAcquire().get(index);
     }
 
     public synchronized T getAndSet(int index, T state) {
@@ -332,6 +339,10 @@ public final class PalettedContainer<T> implements PaletteResizeListener<T>, Rea
     }
 
     public record Data<T>(DataProvider<T> configuration, PaletteStorage storage, Palette<T> palette) {
+        public T get(int index) {
+            return this.palette.get(this.storage.get(index));
+        }
+
         public void importFrom(Palette<T> palette, PaletteStorage storage) {
             for (int i = 0; i < storage.size(); ++i) {
                 T object = palette.get(storage.get(i));

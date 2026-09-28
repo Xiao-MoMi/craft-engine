@@ -560,9 +560,9 @@ public final class BukkitWorldManager implements WorldManager, Listener {
                     Object section = sections[i];
                     WorldStorageInjector.uninject(section);
                     if (restore && !ceSection.isEmpty()) {
-                        PalettedContainer<ImmutableBlockState> statesContainer = ceSection.statesContainer;
+                        PalettedContainer.Data<ImmutableBlockState> states = ceSection.statesContainer.dataAcquire();
                         for (int index = 0; index < 4096; index++) {
-                            ImmutableBlockState customState = statesContainer.get(index);
+                            ImmutableBlockState customState = states.get(index);
                             if (!customState.isEmpty()) {
                                 BlockStateWrapper wrapper = customState.restoreBlockState();
                                 if (wrapper != null) {
@@ -741,9 +741,9 @@ public final class BukkitWorldManager implements WorldManager, Listener {
                             if (isEmptyBefore) {
                                 LightEventListenerProxy.INSTANCE.updateSectionStatus(lightEngine, SectionPosProxy.INSTANCE.newInstance(chunkX, sectionY, chunkZ), false);
                             }
-                            PalettedContainer<ImmutableBlockState> statesContainer = ceSection.statesContainer;
+                            PalettedContainer.Data<ImmutableBlockState> states = ceSection.statesContainer.dataAcquire();
                             for (int index = 0; index < 4096; index++) {
-                                ImmutableBlockState customState = statesContainer.get(index);
+                                ImmutableBlockState customState = states.get(index);
                                 if (!customState.isEmpty() && customState.customBlockState() != null) {
                                     int x = index & 0xF;
                                     int z = (index >> 4) & 0xF;
