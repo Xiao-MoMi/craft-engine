@@ -52,10 +52,14 @@ public final class BlockEntityTickerScheduler {
     }
 
     public void tick() {
+        tick(true);
+    }
+
+    public void tick(boolean runTickers) {
         if (this.async) {
             Runnable change;
             while ((change = this.pendingLifecycleChanges.poll()) != null) change.run();
         }
-        this.tickers.tick();
+        if (runTickers) this.tickers.tick();
     }
 }

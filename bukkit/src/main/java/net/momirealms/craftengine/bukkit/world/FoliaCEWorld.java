@@ -30,6 +30,7 @@ public final class FoliaCEWorld extends BukkitCEWorld {
 
     @Override
     protected void tickSyncBlockEntities() {
+        if (!this.runBlockEntityTick) return;
         TickingChunk pending;
         while ((pending = this.pendingAsyncTickingChunks.poll()) != null) {
             this.tickingChunks.add(pending);

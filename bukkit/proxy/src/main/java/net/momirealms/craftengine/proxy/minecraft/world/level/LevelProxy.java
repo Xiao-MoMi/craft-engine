@@ -19,6 +19,9 @@ public interface LevelProxy extends LevelAccessorProxy {
     LevelProxy INSTANCE = ASMProxyFactory.create(LevelProxy.class);
     Class<?> CLASS = SparrowClass.find("net.minecraft.world.level.Level");
 
+    @MethodInvoker(name = "tickRateManager", activeIf = "min_version=1.20.3")
+    Object tickRateManager(Object target);
+
     @FieldGetter(name = "dimensionTypeRegistration")
     Object getDimensionTypeRegistration(Object target);
 
