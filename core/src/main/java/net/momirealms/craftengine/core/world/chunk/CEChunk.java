@@ -534,6 +534,7 @@ public class CEChunk {
             }
         }
         this.activated = true;
+        this.world.chunkLoadSubscriptions().onChunkLoad(this.chunkPos.longKey);
     }
 
     public void deactivateAllBlockEntities() {
@@ -567,6 +568,7 @@ public class CEChunk {
         this.tickingAsyncBlockEntitiesByPos.values().forEach((ticker) -> ticker.setTicker(DummyTickingBlockEntity.INSTANCE));
         this.tickingAsyncBlockEntitiesByPos.clear();
         this.activated = false;
+        this.world.chunkLoadSubscriptions().onChunkUnload(this.chunkPos.longKey);
     }
 
     public void replaceOrCreateTickingBlockEntity(BlockEntity blockEntity) {

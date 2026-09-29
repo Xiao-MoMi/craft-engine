@@ -8,6 +8,8 @@ import net.momirealms.craftengine.core.block.entity.tick.CompositeBlockEntityTic
 import net.momirealms.craftengine.core.block.entity.tick.DualBlockEntityTicker;
 import net.momirealms.craftengine.core.item.Item;
 import net.momirealms.craftengine.core.world.CEWorld;
+import net.momirealms.craftengine.core.world.BlockPos;
+import net.momirealms.craftengine.core.world.chunk.ChunkSubscription;
 import net.momirealms.sparrow.nbt.CompoundTag;
 import org.jetbrains.annotations.Nullable;
 
@@ -26,6 +28,19 @@ public abstract class BlockEntityController {
 
     public BlockEntity blockEntity() {
         return this.blockEntity;
+    }
+
+    /**
+     * Subscribe to completed loads of the target position's chunk in this entity's world.
+     * Call on this block's owning synchronous tick thread, normally from {@link #onLoad()}.
+     * Load callbacks run directly on Paper, or are scheduled on the owner's region on Folia.
+     * If the target is already loaded, the initial callback is deferred on both platforms.
+     * It never loads a chunk and must recheck that the target is available.
+     * Subscriptions persist across target reloads, and are automatically cancelled when
+     * this block entity unloads or is removed. Subscribe again when the owner reloads.
+     */
+    public final ChunkSubscription subscribeChunkLoad(BlockPos target, Runnable callback) {
+        return this.blockEntity.subscribeChunkLoad(target, callback);
     }
 
     public <C> void let(Class<C> clazz, int index, Consumer<C> consumer) {

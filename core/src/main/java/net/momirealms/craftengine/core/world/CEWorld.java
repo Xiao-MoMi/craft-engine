@@ -11,6 +11,7 @@ import net.momirealms.craftengine.core.plugin.CraftEngine;
 import net.momirealms.craftengine.core.plugin.config.Config;
 import net.momirealms.craftengine.core.plugin.scheduler.SchedulerTask;
 import net.momirealms.craftengine.core.world.chunk.CEChunk;
+import net.momirealms.craftengine.core.world.chunk.ChunkLoadSubscriptions;
 import net.momirealms.craftengine.core.world.chunk.storage.StorageAdaptor;
 import net.momirealms.craftengine.core.world.chunk.storage.WorldDataStorage;
 import org.jetbrains.annotations.Nullable;
@@ -25,6 +26,7 @@ public abstract class CEWorld {
     public final World world;
     public final WorldSettings settings;
     protected final ConcurrentChainedLong2ReferenceHashTable<CEChunk> loadedChunkMap;
+    private final ChunkLoadSubscriptions chunkLoadSubscriptions;
     protected final WorldDataStorage worldDataStorage;
     protected final WorldHeight worldHeightAccessor;
     protected final MultiThreadedQueue<Collection<SectionPos>> pendingLightSectionBatches = new MultiThreadedQueue<>();
@@ -43,6 +45,10 @@ public abstract class CEWorld {
     public CEWorld(World world, WorldDataStorage dataStorage) {
         this.world = world;
         this.loadedChunkMap = ConcurrentChainedLong2ReferenceHashTable.createWithCapacity(1024, 0.5f);
+        this.chunkLoadSubscriptions = new ChunkLoadSubscriptions(key -> {
+            CEChunk chunk = getChunkAtIfLoaded(key);
+            return chunk != null && chunk.isActivated();
+        });
         this.worldDataStorage = dataStorage;
         this.worldHeightAccessor = world.worldHeight();
         WorldSettings worldSettings;
@@ -127,6 +133,11 @@ public abstract class CEWorld {
 
     public void removeLoadedChunk(CEChunk chunk) {
         this.loadedChunkMap.remove(chunk.chunkPos.longKey);
+        this.chunkLoadSubscriptions.onChunkUnload(chunk.chunkPos.longKey);
+    }
+
+    public ChunkLoadSubscriptions chunkLoadSubscriptions() {
+        return this.chunkLoadSubscriptions;
     }
 
     @Nullable
