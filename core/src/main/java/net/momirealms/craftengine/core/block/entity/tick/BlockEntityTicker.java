@@ -8,4 +8,11 @@ import net.momirealms.craftengine.core.world.CEWorld;
 public interface BlockEntityTicker<T extends BlockEntityController> {
 
     void tick(CEWorld world, BlockPos pos, ImmutableBlockState state, T controller);
+
+    default boolean isSleeping() {
+        return false;
+    }
+
+    default void setTickingStateListener(BlockEntityTickingStateListener listener) {
+    }
 }

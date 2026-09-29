@@ -3,6 +3,9 @@ package net.momirealms.craftengine.core.block.entity;
 import net.momirealms.craftengine.core.block.ImmutableBlockState;
 import net.momirealms.craftengine.core.block.entity.render.element.BlockEntityElement;
 import net.momirealms.craftengine.core.block.entity.tick.BlockEntityTicker;
+import net.momirealms.craftengine.core.block.entity.tick.BoundBlockEntityTicker;
+import net.momirealms.craftengine.core.block.entity.tick.CompositeBlockEntityTicker;
+import net.momirealms.craftengine.core.block.entity.tick.DualBlockEntityTicker;
 import net.momirealms.craftengine.core.item.Item;
 import net.momirealms.craftengine.core.world.CEWorld;
 import net.momirealms.sparrow.nbt.CompoundTag;
@@ -77,16 +80,9 @@ public abstract class BlockEntityController {
     public void onRemove() {
     }
 
-    /**
-     * 方块实体在已加载区块中生效时触发：区块加载（activateAllBlockEntities）或放置进已激活区块。
-     */
     public void onLoad() {
     }
 
-    /**
-     * 方块实体失效时触发：区块卸载（deactivateAllBlockEntities）或被移除。
-     * 与 onLoad 成对：只在区块处于激活状态时触发的移除才会收到 onUnload。
-     */
     public void onUnload() {
     }
 
@@ -152,12 +148,9 @@ public abstract class BlockEntityController {
 
         private BlockEntityTicker<DualController> getCombinedTicker(BlockEntityTicker<BlockEntityController> t1, BlockEntityTicker<BlockEntityController> t2) {
             if (t1 == null && t2 == null) return null;
-            if (t1 == null) return (w, p, s, bi) -> t2.tick(w, p, s, bi.second);
-            if (t2 == null) return (w, p, s, bi) -> t1.tick(w, p, s, bi.first);
-            return (w, p, s, bi) -> {
-                t1.tick(w, p, s, bi.first);
-                t2.tick(w, p, s, bi.second);
-            };
+            if (t1 == null) return new BoundBlockEntityTicker<>(t2, this.second);
+            if (t2 == null) return new BoundBlockEntityTicker<>(t1, this.first);
+            return new DualBlockEntityTicker<>(t1, this.first, t2, this.second);
         }
 
         @Override
@@ -295,33 +288,43 @@ public abstract class BlockEntityController {
                 ImmutableBlockState blockState,
                 TickerExtractor extractor) {
 
-            List<BlockEntityTicker<BlockEntityController>> tickers = new ArrayList<>(4);
-            List<BlockEntityController> activeControllers = new ArrayList<>(4);
+            BlockEntityTicker<BlockEntityController> firstTicker = null;
+            BlockEntityTicker<BlockEntityController> secondTicker = null;
+            BlockEntityController firstController = null;
+            BlockEntityController secondController = null;
+            List<BlockEntityTicker<BlockEntityController>> tickers = null;
+            List<BlockEntityController> activeControllers = null;
 
             for (BlockEntityController controller : this.controllers) {
                 BlockEntityTicker<BlockEntityController> ticker = extractor.extract(controller, world, blockState);
-                if (ticker != null) {
+                if (ticker == null) continue;
+                if (firstTicker == null) {
+                    firstTicker = ticker;
+                    firstController = controller;
+                } else if (secondTicker == null) {
+                    secondTicker = ticker;
+                    secondController = controller;
+                } else {
+                    if (tickers == null) {
+                        tickers = new ArrayList<>(this.controllers.length);
+                        activeControllers = new ArrayList<>(this.controllers.length);
+                        tickers.add(firstTicker);
+                        tickers.add(secondTicker);
+                        activeControllers.add(firstController);
+                        activeControllers.add(secondController);
+                    }
                     tickers.add(ticker);
                     activeControllers.add(controller);
                 }
             }
 
-            if (tickers.isEmpty()) return null;
-
-            if (tickers.size() == 1) {
-                BlockEntityTicker<BlockEntityController> firstTicker = tickers.getFirst();
-                BlockEntityController firstController = activeControllers.getFirst();
-                return (ceWorld, pos, state, controller) -> firstTicker.tick(ceWorld, pos, state, firstController);
-            }
+            if (firstTicker == null) return null;
+            if (secondTicker == null) return new BoundBlockEntityTicker<>(firstTicker, firstController);
+            if (tickers == null) return new DualBlockEntityTicker<>(firstTicker, firstController, secondTicker, secondController);
 
             BlockEntityTicker<BlockEntityController>[] tickersArray = tickers.toArray(new BlockEntityTicker[0]);
             BlockEntityController[] controllersArray = activeControllers.toArray(new BlockEntityController[0]);
-
-            return (ceWorld, pos, state, controller) -> {
-                for (int i = 0; i < tickersArray.length; i++) {
-                    tickersArray[i].tick(ceWorld, pos, state, controllersArray[i]);
-                }
-            };
+            return new CompositeBlockEntityTicker<>(tickersArray, controllersArray);
         }
 
         @FunctionalInterface

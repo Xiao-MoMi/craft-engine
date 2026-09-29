@@ -9,4 +9,11 @@ public interface TickingBlockEntity {
     boolean isValid();
 
     BlockPos pos();
+
+    default boolean isSleeping() {
+        return false;
+    }
+
+    default void setTickingStateListener(BlockEntityTickingStateListener listener) {
+    }
 }

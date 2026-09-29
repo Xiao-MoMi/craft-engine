@@ -41,4 +41,14 @@ public final class DefaultTickingBlockEntity<T extends BlockEntityController> im
     public boolean isValid() {
         return this.blockEntity.isValid();
     }
+
+    @Override
+    public boolean isSleeping() {
+        return this.ticker.isSleeping();
+    }
+
+    @Override
+    public void setTickingStateListener(BlockEntityTickingStateListener listener) {
+        this.ticker.setTickingStateListener(listener);
+    }
 }
