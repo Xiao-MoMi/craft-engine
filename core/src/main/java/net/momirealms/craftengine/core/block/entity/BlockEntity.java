@@ -1,6 +1,8 @@
 package net.momirealms.craftengine.core.block.entity;
 
 import net.momirealms.craftengine.core.block.ImmutableBlockState;
+import net.momirealms.craftengine.core.block.BlockDefinition;
+import net.momirealms.craftengine.core.registry.Holder;
 import net.momirealms.craftengine.core.block.behavior.EntityBlock;
 import net.momirealms.craftengine.core.block.entity.render.ConstantBlockEntityRenderer;
 import net.momirealms.craftengine.core.block.entity.render.DynamicBlockEntityRenderer;
@@ -27,11 +29,15 @@ public final class BlockEntity {
     public CEWorld world;
     public BlockEntityController controller;
     private boolean valid;
+    private final Holder<BlockDefinition> blockOwner;
+    private boolean validForTick;
     private ChunkLoadSubscriptions.Owner chunkLoadSubscriptions;
 
     public BlockEntity(BlockPos pos, ImmutableBlockState blockState) {
         this.pos = pos;
+        this.blockOwner = blockState.owner();
         this.blockState = blockState;
+        this.validForTick = isValidBlockState(blockState);
         this.controller = ((EntityBlock) blockState.behavior()).createBlockEntityController(this);
         if (this.controller.hasElement()) {
             List<BlockEntityElement> elements = new ArrayList<>(4);
@@ -44,7 +50,9 @@ public final class BlockEntity {
 
     private BlockEntity(BlockPos pos, ImmutableBlockState blockState, CompoundTag tag) {
         this.pos = pos;
+        this.blockOwner = blockState.owner();
         this.blockState = blockState;
+        this.validForTick = isValidBlockState(blockState);
         this.controller = new InactiveBlockEntityController(this, tag);
         this.renderer = null;
         this.valid = true;
@@ -84,6 +92,11 @@ public final class BlockEntity {
             this.controller.preBlockStateChange(blockState);
         }
         this.blockState = blockState;
+        this.validForTick = isValidBlockState(blockState);
+    }
+
+    public boolean isValidForTick() {
+        return this.validForTick;
     }
 
     public ImmutableBlockState blockState() {
@@ -157,7 +170,7 @@ public final class BlockEntity {
     }
 
     public boolean isValidBlockState(ImmutableBlockState blockState) {
-        return blockState.owner() == this.blockState.owner();
+        return blockState.hasBlockEntity() && blockState.owner() == this.blockOwner;
     }
 
     public DynamicBlockEntityRenderer dynamicRenderer() {

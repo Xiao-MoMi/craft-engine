@@ -1,5 +1,6 @@
 package net.momirealms.craftengine.core.block.entity.tick;
 
+import net.momirealms.craftengine.core.block.ImmutableBlockState;
 import net.momirealms.craftengine.core.block.entity.BlockEntity;
 import net.momirealms.craftengine.core.block.entity.BlockEntityController;
 import net.momirealms.craftengine.core.plugin.CraftEngine;
@@ -12,6 +13,7 @@ public final class DefaultTickingBlockEntity<T extends BlockEntityController> im
     private final BlockEntity blockEntity;
     private final BlockEntityTicker<T> ticker;
     private final CEChunk chunk;
+    private boolean loggedInvalidBlockState;
 
     public DefaultTickingBlockEntity(CEChunk chunk, BlockEntity blockEntity, BlockEntityTicker<T> ticker) {
         this.blockEntity = Objects.requireNonNull(blockEntity);
@@ -31,7 +33,16 @@ public final class DefaultTickingBlockEntity<T extends BlockEntityController> im
         if (this.blockEntity.world == null) return;
         BlockPos pos = pos();
         try {
-            this.ticker.tick(this.chunk.world(), pos, this.blockEntity.blockState, (T) this.blockEntity.controller);
+            ImmutableBlockState state = this.blockEntity.blockState();
+            if (!this.blockEntity.isValidForTick()) {
+                if (!this.loggedInvalidBlockState) {
+                    this.loggedInvalidBlockState = true;
+                    CraftEngine.instance().logger().warn("Block entity state " + state + " is invalid for ticking at world " + this.chunk.world().name() + " " + pos);
+                }
+                return;
+            }
+            this.loggedInvalidBlockState = false;
+            this.ticker.tick(this.chunk.world(), pos, state, (T) this.blockEntity.controller);
         } catch (Throwable t) {
             CraftEngine.instance().logger().warn("Failed to tick block entity(" + this.blockEntity.getClass().getSimpleName() + ") at world " + this.chunk.world().name() + " " + pos, t);
         }
