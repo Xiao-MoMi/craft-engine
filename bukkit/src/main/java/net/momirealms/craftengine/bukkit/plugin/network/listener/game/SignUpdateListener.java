@@ -10,6 +10,7 @@ import net.momirealms.craftengine.core.plugin.network.NetWorkUser;
 import net.momirealms.craftengine.core.plugin.network.event.ByteBufPacketEvent;
 import net.momirealms.craftengine.core.plugin.network.listener.ByteBufferPacketListener;
 import net.momirealms.craftengine.core.util.FriendlyByteBuf;
+import net.momirealms.craftengine.core.util.VersionHelper;
 import net.momirealms.craftengine.core.world.BlockPos;
 
 public final class SignUpdateListener implements ByteBufferPacketListener {
@@ -28,7 +29,7 @@ public final class SignUpdateListener implements ByteBufferPacketListener {
         if (!manager.isDefaultFontInUse()) return;
         FriendlyByteBuf buf = event.getBuffer();
         BlockPos pos = buf.readBlockPos();
-        boolean isFrontText = buf.readBoolean();
+        boolean isFrontText = !VersionHelper.isOrAbove26_3 && buf.readBoolean();
         String[] lines = new String[4];
         boolean changed = false;
         for(int i = 0; i < 4; ++i) {
@@ -45,14 +46,21 @@ public final class SignUpdateListener implements ByteBufferPacketListener {
                 lines[i] = "";
             }
         }
+        // Since 26.3, the side is a VarInt after the four lines.
+        int slot = VersionHelper.isOrAbove26_3 ? buf.readVarInt() : 0;
         if (changed) {
             event.setChanged(true);
             buf.clear();
             buf.writeVarInt(event.packetID());
             buf.writeBlockPos(pos);
-            buf.writeBoolean(isFrontText);
+            if (!VersionHelper.isOrAbove26_3) {
+                buf.writeBoolean(isFrontText);
+            }
             for (String line : lines) {
                 buf.writeUtf(line);
+            }
+            if (VersionHelper.isOrAbove26_3) {
+                buf.writeVarInt(slot);
             }
         }
     }
