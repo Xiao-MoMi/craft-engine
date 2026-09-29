@@ -513,7 +513,6 @@ public class CEChunk {
                 blockEntity.setValid(true);
             }
             for (BlockEntity blockEntity : this.blockEntities.values()) {
-                this.replaceOrCreateTickingBlockEntity(blockEntity);
                 this.createDynamicBlockEntityRenderer(blockEntity);
                 try {
                     blockEntity.controller.onLoad();
@@ -534,6 +533,10 @@ public class CEChunk {
             }
         }
         this.activated = true;
+        // Publish tickers only after every controller has finished onLoad.
+        for (BlockEntity blockEntity : this.blockEntities.values()) {
+            this.replaceOrCreateTickingBlockEntity(blockEntity);
+        }
         this.world.chunkLoadSubscriptions().onChunkLoad(this.chunkPos.longKey);
     }
 
@@ -572,6 +575,7 @@ public class CEChunk {
     }
 
     public void replaceOrCreateTickingBlockEntity(BlockEntity blockEntity) {
+        if (!this.activated) return;
         ImmutableBlockState blockState = blockEntity.blockState();
         BlockEntityController controller = blockEntity.controller;
         BlockEntityTicker<BlockEntityController> syncTicker = controller.createBlockEntityTicker(this.world, blockState);

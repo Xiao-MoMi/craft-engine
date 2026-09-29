@@ -48,6 +48,8 @@ public final class SleepingBlockEntityTicker<T extends BlockEntityController> im
 
     @Override
     public void tick(CEWorld world, BlockPos pos, ImmutableBlockState state, T controller) {
-        if (!this.sleeping) this.delegate.tick(world, pos, state, controller);
+        if (!this.sleeping) {
+            this.delegate.tick(world, pos, state, controller);
+        }
     }
 }

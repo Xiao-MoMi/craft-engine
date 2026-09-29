@@ -29,6 +29,7 @@ public final class FoliaCEChunk extends BukkitCEChunk {
     // folia 同步 ticker 在区域线程执行，异步 ticker 交给世界异步 tick 列表
     @Override
     public void replaceOrCreateTickingBlockEntity(BlockEntity blockEntity) {
+        if (!this.activated) return;
         ImmutableBlockState blockState = blockEntity.blockState();
         BlockEntityController controller = blockEntity.controller;
         BlockEntityTicker<BlockEntityController> syncTicker = controller.createBlockEntityTicker(this.world, blockState);
