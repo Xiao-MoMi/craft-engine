@@ -665,6 +665,18 @@ public class CEChunk {
         }
     }
 
+    @Nullable
+    public Boolean isSyncBlockEntitySleeping(BlockPos pos) {
+        ReplaceableTickingBlockEntity ticker = this.tickingSyncBlockEntitiesByPos.get(pos);
+        return ticker == null ? null : ticker.isSleeping();
+    }
+
+    @Nullable
+    public Boolean isAsyncBlockEntitySleeping(BlockPos pos) {
+        ReplaceableTickingBlockEntity ticker = this.tickingAsyncBlockEntitiesByPos.get(pos);
+        return ticker == null ? null : ticker.isSleeping();
+    }
+
     protected void removeSyncBlockEntityTicker(BlockPos pos) {
         ReplaceableTickingBlockEntity e1 = this.tickingSyncBlockEntitiesByPos.remove(pos);
         if (e1 != null) {
