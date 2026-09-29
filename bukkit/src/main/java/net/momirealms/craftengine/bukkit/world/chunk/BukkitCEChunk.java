@@ -4,6 +4,9 @@ import net.momirealms.craftengine.core.world.CEWorld;
 import net.momirealms.craftengine.core.world.ChunkPos;
 import net.momirealms.craftengine.core.world.chunk.CEChunk;
 import net.momirealms.craftengine.core.world.chunk.CESection;
+import net.momirealms.craftengine.proxy.minecraft.server.level.FullChunkStatusProxy;
+import net.momirealms.craftengine.proxy.minecraft.server.level.ServerLevelProxy;
+import net.momirealms.craftengine.proxy.minecraft.world.level.chunk.LevelChunkProxy;
 import net.momirealms.sparrow.nbt.ListTag;
 import org.jetbrains.annotations.Nullable;
 

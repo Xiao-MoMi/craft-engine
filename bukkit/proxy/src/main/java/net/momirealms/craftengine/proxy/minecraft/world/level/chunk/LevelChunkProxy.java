@@ -8,6 +8,9 @@ import net.momirealms.sparrow.reflection.proxy.annotation.ReflectionProxy;
 public interface LevelChunkProxy extends ChunkAccessProxy {
     LevelChunkProxy INSTANCE = ASMProxyFactory.create(LevelChunkProxy.class);
 
+    @MethodInvoker(name = "getFullStatus")
+    Object getFullStatus(Object target);
+
     @MethodInvoker(name = "markUnsaved", activeIf = "min_version=1.21.2")
     void markUnsaved(Object target);
 

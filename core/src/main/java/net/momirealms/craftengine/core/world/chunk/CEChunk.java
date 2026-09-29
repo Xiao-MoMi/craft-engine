@@ -115,6 +115,10 @@ public class CEChunk {
         this.chunkAccess = chunkAccess;
     }
 
+    public boolean isBlockTicking() {
+        return this.isEntitiesLoaded;
+    }
+
     public void spawnBlockEntities(Player player) {
         try {
             this.renderLock.readLock().lock();

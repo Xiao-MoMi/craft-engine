@@ -35,7 +35,7 @@ public final class FoliaCEChunk extends BukkitCEChunk {
         BlockEntityTicker<BlockEntityController> syncTicker = controller.createBlockEntityTicker(this.world, blockState);
         if (syncTicker != null) {
             super.tickingSyncBlockEntitiesByPos.compute(blockEntity.pos(), ((pos, previousTicker) -> {
-                TickingBlockEntity newTicker = new DefaultTickingBlockEntity<>(this, blockEntity, syncTicker);
+                TickingBlockEntity newTicker = new DefaultTickingBlockEntity<>(this, blockEntity, syncTicker, false);
                 if (previousTicker != null) {
                     previousTicker.setTicker(newTicker);
                     return previousTicker;
@@ -69,7 +69,7 @@ public final class FoliaCEChunk extends BukkitCEChunk {
     }
 
     public void tickBlockEntities() {
-        this.tickingBlockEntities.tick();
+        if (this.isBlockTicking()) this.tickingBlockEntities.tick();
     }
 
     private void addBlockEntityTicker(TickingBlockEntity ticker) {

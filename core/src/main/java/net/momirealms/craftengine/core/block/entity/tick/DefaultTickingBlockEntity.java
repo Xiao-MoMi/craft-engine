@@ -13,12 +13,18 @@ public final class DefaultTickingBlockEntity<T extends BlockEntityController> im
     private final BlockEntity blockEntity;
     private final BlockEntityTicker<T> ticker;
     private final CEChunk chunk;
+    private final boolean checkChunkTicking;
     private boolean loggedInvalidBlockState;
 
     public DefaultTickingBlockEntity(CEChunk chunk, BlockEntity blockEntity, BlockEntityTicker<T> ticker) {
+        this(chunk, blockEntity, ticker, true);
+    }
+
+    public DefaultTickingBlockEntity(CEChunk chunk, BlockEntity blockEntity, BlockEntityTicker<T> ticker, boolean checkChunkTicking) {
         this.blockEntity = Objects.requireNonNull(blockEntity);
         this.ticker = ticker;
         this.chunk = chunk;
+        this.checkChunkTicking = checkChunkTicking;
     }
 
     @Override
@@ -31,6 +37,7 @@ public final class DefaultTickingBlockEntity<T extends BlockEntityController> im
     public void tick() {
         // 还没加载完全
         if (this.blockEntity.world == null) return;
+        if (this.checkChunkTicking && !this.chunk.isBlockTicking()) return;
         BlockPos pos = pos();
         try {
             ImmutableBlockState state = this.blockEntity.blockState();
