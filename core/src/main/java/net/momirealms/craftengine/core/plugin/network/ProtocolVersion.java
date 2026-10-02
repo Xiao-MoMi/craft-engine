@@ -33,6 +33,7 @@ public final class ProtocolVersion {
     public static final ProtocolVersion V26_1_1 = new ProtocolVersion(775, "26.1.1");
     public static final ProtocolVersion V26_1_2 = new ProtocolVersion(775, "26.1.2");
     public static final ProtocolVersion V26_2 = new ProtocolVersion(776, "26.2");
+    public static final ProtocolVersion V26_3 = new ProtocolVersion(777, "26.3");
 
     private final int id;
     private final String name;
@@ -53,6 +54,8 @@ public final class ProtocolVersion {
     }
 
     public boolean isVersionNewerThan(ProtocolVersion targetVersion) {
+        // 未登记的协议号通常来自比插件更新的客户端，按最新版本处理
+        if (this == UNKNOWN) return true;
         return this.getId() >= targetVersion.getId();
     }
 
