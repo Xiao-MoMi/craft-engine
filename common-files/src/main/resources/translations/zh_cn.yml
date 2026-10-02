@@ -23,6 +23,9 @@ command.pack_preset.unknown: '<red>未知的资源包预设：<arg:0></red>'
 command.pack_preset.no_permission: '<red>你没有使用资源包预设<arg:0>的权限</red>'
 command.pack_preset.success: '<white>已应用资源包预设<arg:0></white>'
 workflow.unknown_type: 未知的资源包工作流类型“<arg:0>”
+resource_pack.unknown_reference: 资源包“<arg:0>”的“<arg:1>”引用了不存在的资源包“<arg:2>”
+resource_pack.circular_dependencies: 资源包存在循环依赖：<arg:0>
+resource_pack.conflicting_dependencies: 资源包“<arg:0>”及其依赖中存在互相冲突的包
 storage.unknown_type: 未知的存储类型“<arg:0>”
 storage.invalid_path: '存储路径无效'
 exception.invalid_syntax: <red>语法错误。正确语法：<white><arg:0></white></red>

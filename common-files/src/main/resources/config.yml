@@ -44,6 +44,12 @@ resource-pack:
   packs:
     default:
       default: true
+      # Pack IDs enabled together with this pack, including their transitive dependencies.
+      # Disabling a dependency also disables packs that depend on it.
+      dependencies: []
+      # Mutually exclusive pack IDs. Enabling either pack disables the other and its dependents.
+      # When a preset enables conflicting packs, the later pack in this configuration wins.
+      conflicts: []
       type: self
       # Destination ZIP file for uploads. Relative paths start at plugins/CraftEngine.
       # Defaults to ./cache/hosted/<id>/resource_pack.zip when omitted.

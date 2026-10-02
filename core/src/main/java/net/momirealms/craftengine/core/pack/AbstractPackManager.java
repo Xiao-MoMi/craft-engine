@@ -152,7 +152,7 @@ public abstract class AbstractPackManager implements PackManager {
     protected ZipGenerator zipGenerator;
     protected volatile ResourcePackHost resourcePackHost = NoneHost.INSTANCE;
     private volatile Map<String, ResourcePackHost> resourcePackHosts = Map.of();
-    private volatile Map<String, Boolean> defaultPacks = Map.of();
+    private volatile PackSelection packSelection = new PackSelection(Map.of(), Map.of(), Map.of());
     private volatile Map<String, PackWorkflowSequence> workflows = Map.of();
     private volatile Map<String, PackPreset> packPresets = Map.of();
     private final Map<NetWorkUser, Set<String>> selectedPacks = Collections.synchronizedMap(new WeakHashMap<>());
@@ -326,21 +326,21 @@ public abstract class AbstractPackManager implements PackManager {
         UUID playerId = user.uuid();
         if (playerId == null) return CompletableFuture.completedFuture(List.of());
         Map<String, ResourcePackHost> hosts = this.resourcePackHosts;
-        Map<String, Boolean> defaults = this.defaultPacks;
+        PackSelection selection = this.packSelection;
         ResourcePackHost group = this.resourcePackHost;
         return this.plugin.storageManager().submit(storage -> storage.loadPackPreferences(playerId)).thenApplyAsync(states -> {
             this.packPreferences.put(user, Map.copyOf(states));
-            List<String> selected = new ArrayList<>(defaults.entrySet().stream()
-                    .filter(entry -> states.getOrDefault(entry.getKey(), entry.getValue()))
-                    .map(Map.Entry::getKey).toList());
+            List<String> selected = new ArrayList<>(selection.resolve(states));
             prepareResourcePackList(user, selected);
-            // Plugins may change membership; configured order and known IDs remain authoritative.
-            return hosts.keySet().stream().filter(selected::contains).toList();
+            // Apply the same rules after plugins change membership; preserve configured sending order.
+            return selection.resolve(selected);
         }, this.plugin.scheduler().async()).thenCompose(selected -> {
             // Keep the selection even when a pack has not been generated or uploaded yet.
             this.selectedPacks.put(user, Set.copyOf(selected));
             if (!(group instanceof ResourcePackHostGroup hostGroup)) return CompletableFuture.completedFuture(List.of());
-            return hostGroup.requestResourcePackDownloadLink(user, selected.stream().map(hosts::get).toList());
+            Map<String, ResourcePackHost> selectedHosts = new LinkedHashMap<>();
+            selected.forEach(pack -> selectedHosts.put(pack, hosts.get(pack)));
+            return hostGroup.requestResourcePackDownloadLink(user, selectedHosts, selection::dependenciesAvailable);
         });
     }
 
@@ -374,19 +374,18 @@ public abstract class AbstractPackManager implements PackManager {
             case FALSE -> false;
             case UNDEFINED -> null;
         }));
-        Map<String, Boolean> defaults = this.defaultPacks;
+        PackSelection selection = this.packSelection;
         return this.plugin.storageManager().submit(storage -> {
             Map<String, Boolean> previous = storage.loadPackPreferences(player);
+            Map<String, Boolean> expanded = selection.expandUpdates(previous, snapshot);
             // 比较保存的三态偏好，而非最终是否启用；默认启用与显式启用仍是不同偏好。
-            boolean preferencesChanged = snapshot.entrySet().stream()
+            boolean preferencesChanged = expanded.entrySet().stream()
                     .anyMatch(entry -> !Objects.equals(previous.get(entry.getKey()), entry.getValue()));
             if (!preferencesChanged) return new PackPreferenceUpdate(Map.copyOf(previous), false, false);
             // 整批持久化后再更新缓存、重发，不能逐个调用单包接口导致多次加载。
-            storage.setPackPreferences(player, snapshot);
+            storage.setPackPreferences(player, expanded);
             Map<String, Boolean> states = Map.copyOf(storage.loadPackPreferences(player));
-            boolean changed = defaults.entrySet().stream().anyMatch(entry ->
-                    !Objects.equals(previous.getOrDefault(entry.getKey(), entry.getValue()),
-                            states.getOrDefault(entry.getKey(), entry.getValue())));
+            boolean changed = !selection.resolve(previous).equals(selection.resolve(states));
             return new PackPreferenceUpdate(states, true, changed);
         }).thenCompose(result -> {
             Player online = this.plugin.networkManager().getOnlineUser(player);
@@ -885,7 +884,6 @@ public abstract class AbstractPackManager implements PackManager {
         try {
             ConfigSection packs = ConfigSection.of("resource-pack.packs", hostingObj == null ? Map.of() : hostingObj);
             Map<String, ResourcePackHost> hosts = new LinkedHashMap<>();
-            Map<String, Boolean> defaults = new LinkedHashMap<>();
             Map<String, Path> selfHostedPacks = new LinkedHashMap<>();
             // 与工作流一样使用配置键作为 ID，并保留配置顺序作为资源包发送顺序。
             for (String id : packs.keySet()) {
@@ -894,7 +892,6 @@ public abstract class AbstractPackManager implements PackManager {
                 }
                 ConfigSection section = packs.getNonNullSection(id);
                 hosts.put(id, ResourcePackHosts.fromConfig(id, section));
-                defaults.put(id, section.getBoolean("default", true));
                 if (hosts.get(id) instanceof SelfHost selfHost) {
                     selfHostedPacks.put(id, selfHost.storagePath());
                 }
@@ -907,12 +904,42 @@ public abstract class AbstractPackManager implements PackManager {
                 SelfHostHttpServer.instance().clearPacks();
             }
             this.resourcePackHosts = Collections.unmodifiableMap(hosts);
-            this.defaultPacks = Collections.unmodifiableMap(defaults);
             this.resourcePackHost = hosts.isEmpty() ? NoneHost.INSTANCE : new ResourcePackHostGroup(hosts.values());
+            this.loadPackSelection(packs);
         } catch (KnownResourceException e) {
             this.plugin.logger().warn(TranslationManager.instance().plainTranslation("config.errors_detected", e.getLocalizedMessage()));
         } catch (Throwable e) {
             this.plugin.logger().warn("Failed to load resource pack hosts", e);
+        }
+    }
+
+    private void loadPackSelection(ConfigSection packs) {
+        Map<String, Boolean> defaults = new LinkedHashMap<>();
+        for (String id : this.resourcePackHosts.keySet()) {
+            defaults.put(id, true);
+            try {
+                defaults.put(id, packs.getNonNullSection(id).getBoolean("default", true));
+            } catch (KnownResourceException e) {
+                this.plugin.logger().warn(TranslationManager.instance().plainTranslation("config.errors_detected", e.getLocalizedMessage()));
+            } catch (Exception e) {
+                this.plugin.logger().warn("Failed to load resource pack default: " + id, e);
+            }
+        }
+        // Use the current hosts and defaults even if dependency/conflict rules cannot be loaded.
+        this.packSelection = new PackSelection(defaults, Map.of(), Map.of());
+        try {
+            Map<String, List<String>> dependencies = new LinkedHashMap<>();
+            Map<String, List<String>> conflicts = new LinkedHashMap<>();
+            for (String id : defaults.keySet()) {
+                ConfigSection section = packs.getNonNullSection(id);
+                dependencies.put(id, section.getStringList("dependencies", List.of()));
+                conflicts.put(id, section.getStringList("conflicts", List.of()));
+            }
+            this.packSelection = new PackSelection(defaults, dependencies, conflicts);
+        } catch (KnownResourceException e) {
+            this.plugin.logger().warn(TranslationManager.instance().plainTranslation("config.errors_detected", e.getLocalizedMessage()));
+        } catch (Exception e) {
+            this.plugin.logger().warn("Failed to load resource pack selection rules", e);
         }
     }
 

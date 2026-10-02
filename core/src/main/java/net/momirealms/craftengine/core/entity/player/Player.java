@@ -171,6 +171,7 @@ public interface Player extends NetWorkUser, LivingEntity {
 
     /**
      * 更新并保存单个资源包的偏好。TRUE 为启用，FALSE 为禁用，UNDEFINED 为恢复配置默认值。
+     * 启用时同时启用依赖并禁用冲突包；禁用时同时禁用依赖此包的包。
      * 本服实际选择发生变化时重新发送资源包；未托管的包仅保存偏好。
      *
      * @return 偏好保存和必要的发送操作完成后返回是否修改了偏好，不等待客户端加载完成
@@ -180,7 +181,8 @@ public interface Player extends NetWorkUser, LivingEntity {
     }
 
     /**
-     * 批量更新资源包偏好，未提供的包保持原偏好。UNDEFINED 表示恢复该包的配置默认值。
+     * 批量更新资源包偏好，并同步调整依赖和冲突包。UNDEFINED 表示恢复该包的配置默认值。
+     * 同批启用的冲突包按配置顺序决定优先级，后面的包优先。
      * 整批保存后至多重新发送一次资源包，不会逐包触发重载。
      *
      * @return 偏好保存和必要的发送操作完成后返回是否修改了偏好，不等待客户端加载完成
