@@ -16,9 +16,14 @@ public class Category implements Comparable<Category> {
     private final List<String> members;
     private final int priority;
     private final boolean hidden;
+    private final boolean creativeTab;
     private final Predicate<Context> condition;
 
     public Category(Key id, String displayName, List<String> displayLore, Key icon, List<String> members, int priority, boolean hidden, Predicate<Context> condition) {
+        this(id, displayName, displayLore, icon, members, priority, hidden, true, condition);
+    }
+
+    public Category(Key id, String displayName, List<String> displayLore, Key icon, List<String> members, int priority, boolean hidden, boolean creativeTab, Predicate<Context> condition) {
         this.id = id;
         this.displayName = displayName;
         this.members = new ArrayList<>(members);
@@ -26,6 +31,7 @@ public class Category implements Comparable<Category> {
         this.priority = priority;
         this.displayLore = new ArrayList<>(displayLore);
         this.hidden = hidden;
+        this.creativeTab = creativeTab;
         this.condition = condition;
     }
 
@@ -47,6 +53,14 @@ public class Category implements Comparable<Category> {
 
     public boolean hidden() {
         return this.hidden;
+    }
+
+    /**
+     * 是否作为客户端模组的创造模式标签页发送，对应配置项 {@code creative-tab}，默认为 true。
+     * 仅对主页面（非 hidden）的分类生效，作为子分类被展开时不受影响。
+     */
+    public boolean creativeTab() {
+        return this.creativeTab;
     }
 
     @NotNull

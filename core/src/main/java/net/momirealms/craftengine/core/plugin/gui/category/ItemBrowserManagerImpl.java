@@ -140,6 +140,7 @@ public final class ItemBrowserManagerImpl implements ItemBrowserManager {
         }
 
         private static final String[] ALL_ITEMS = ConfigKeys.of("all_items");
+        private static final String[] CREATIVE_TAB = ConfigKeys.of("creative_tab");
 
         @Override
         public void parseSection(@NotNull Pack pack, @NotNull Path path, @NotNull Key id, @NotNull ConfigSection section) {
@@ -153,8 +154,9 @@ public final class ItemBrowserManagerImpl implements ItemBrowserManager {
             int priority = section.getInt("priority");
             List<String> lore = section.getStringList("lore");
             boolean hidden = section.getBoolean("hidden");
+            boolean creativeTab = section.getBoolean(CREATIVE_TAB, true);
             List<Condition<Context>> conditionList = section.getSectionList(ConfigKeys.of("condition(s)"), CommonConditions::fromConfig);
-            Category category = new Category(id, name, lore, icon, new ArrayList<>(members), priority, hidden, MiscUtils.allOf(conditionList));
+            Category category = new Category(id, name, lore, icon, new ArrayList<>(members), priority, hidden, creativeTab, MiscUtils.allOf(conditionList));
             ItemBrowserManagerImpl.this.byId.put(id, category);
         }
 

@@ -6,6 +6,8 @@ categories:
     lore:
       - <!i><gray><l10n:category.default.lore>
     icon: default:topaz
+    # Whether to show this category as a creative mode tab for CraftEngine Mod users (default: true)
+    creative-tab: true
     list:
       - '#default:palm_tree'
       - '#default:topaz'

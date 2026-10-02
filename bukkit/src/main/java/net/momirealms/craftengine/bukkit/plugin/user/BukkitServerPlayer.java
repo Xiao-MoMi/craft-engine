@@ -486,7 +486,9 @@ public class BukkitServerPlayer extends BukkitLivingEntity implements Player {
 
     @Override
     public boolean hasPermission(String permission) {
-        return platformPlayer().hasPermission(permission);
+        org.bukkit.entity.Player player = platformPlayer();
+        if (player == null) return false;
+        return player.hasPermission(permission);
     }
 
     @Override

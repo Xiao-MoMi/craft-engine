@@ -3,6 +3,7 @@ categories:
     priority: -1000
     name: <!i><white><l10n:category.internal.all></white>
     icon: minecraft:command_block
+    creative-tab: false
     conditions:
       - type: permission
         permission: craftengine.admin

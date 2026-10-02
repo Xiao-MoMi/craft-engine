@@ -14,7 +14,9 @@ import net.momirealms.craftengine.core.util.Key;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public record ClientboundCreativeModeTabItemsPacket(Action action, List<Item> itemStacks) implements ClientCustomPacket {
     public static final Key ID = Key.ce("creative_mode_tab_items");
@@ -39,18 +41,21 @@ public record ClientboundCreativeModeTabItemsPacket(Action action, List<Item> it
         buf.writeCollection(this.itemStacks, CraftEngine.instance().platform()::writeItem);
     }
 
-    public static List<ClientboundCreativeModeTabItemsPacket> create(@NotNull Player player) {
+    public static List<ClientCustomPacket> create(@NotNull Player player) {
         if (!CustomPackets.CREATIVE_MODE_TAB_ITEMS.checkPermission(player)) return List.of();
         List<Item> itemStacks = new ArrayList<>();
+        // 物品 id 到最终列表下标，供分类包引用
+        Map<Key, Integer> itemIndexes = new HashMap<>();
         ItemManager itemManager = CraftEngine.instance().itemManager();
         List<Key> itemIds = itemManager.orderedItemIds();
         for (Key itemId : itemIds) {
             if (itemManager.isVanillaItem(itemId)) continue;
             Item item = Item.byId(itemId, player);
             if (item == null) continue;
+            itemIndexes.putIfAbsent(itemId, itemStacks.size());
             itemStacks.add(itemManager.s2c(item, player, ItemPacketSource.GENERIC).orElse(item));
         }
-        List<ClientboundCreativeModeTabItemsPacket> packets = new ArrayList<>();
+        List<ClientCustomPacket> packets = new ArrayList<>();
         boolean first = true;
         int singletonSize = Config.modChannelCreativeTabMaxItemsPerPacket();
         for (int i = 0; i < itemStacks.size(); i += singletonSize) {
@@ -60,6 +65,10 @@ public record ClientboundCreativeModeTabItemsPacket(Action action, List<Item> it
         }
         if (packets.isEmpty()) {
             packets.add(new ClientboundCreativeModeTabItemsPacket(Action.CLEAR, List.of()));
+        }
+        // 分类包必须紧跟在物品包之后
+        if (Config.modChannelCreativeTabCategories() && CustomPackets.CREATIVE_MODE_TAB_CATEGORIES.checkPermission(player)) {
+            packets.add(ClientboundCreativeModeTabCategoriesPacket.create(player, itemIndexes));
         }
         return packets;
     }
