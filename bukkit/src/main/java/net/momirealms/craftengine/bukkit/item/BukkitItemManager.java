@@ -117,12 +117,6 @@ public final class BukkitItemManager extends AbstractItemManager {
     public void delayedLoad() {
         super.delayedLoad();
         this.resetItemProviders();
-        if (!this.plugin.isReloadingPack() || !Config.obfuscateItemModel()) {
-            for (Player player : this.plugin.networkManager().onlineUsers()) {
-                if (!player.hasClientMod()) continue;
-                player.sendCustomPackets(ClientboundCreativeModeTabItemsPacket.create(player));
-            }
-        }
         for (ItemDefinition itemDefinition : this.itemDefinitionById.values()) {
             if (itemDefinition instanceof BukkitItemDefinition bukkitItemDefinition) {
                 bukkitItemDefinition.initConstantItem();
@@ -255,6 +249,16 @@ public final class BukkitItemManager extends AbstractItemManager {
     @Override
     public void runDelayedSyncTasks() {
         this.reloadVanillaItemDataOverrides();
+        // 创造模式标签页的分类依赖物品浏览器的 delayedLoad（合并外部分类成员），它与本管理器的 delayedLoad 并行执行，
+        // 因此在所有 delayedLoad 完成后的同步阶段再发送
+        if (!this.plugin.isReloadingPack() || !Config.obfuscateItemModel()) {
+            this.plugin.scheduler().async().execute(() -> {
+                for (Player player : this.plugin.networkManager().onlineUsers()) {
+                    if (!player.hasClientMod()) continue;
+                    player.sendCustomPackets(ClientboundCreativeModeTabItemsPacket.create(player));
+                }
+            });
+        }
         if (this.featureFlag$preventBreak()) {
             this.preventBreakListener.register(this.plugin.javaPlugin());
         } else {
