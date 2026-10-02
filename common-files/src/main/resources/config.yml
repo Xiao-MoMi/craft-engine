@@ -574,6 +574,8 @@ network:
     requires-permission: false
     logging-permission-denied: true
     creative-tab-max-items-per-packet: 10
+    # Split the creative mode tab into tabs by item browser categories (categories with "creative-tab: false" are excluded)
+    creative-tab-categories: true
     visual-block-states-max-per-packet: 5000
 
   # Encrypt the raw component information before sending it to the client.
