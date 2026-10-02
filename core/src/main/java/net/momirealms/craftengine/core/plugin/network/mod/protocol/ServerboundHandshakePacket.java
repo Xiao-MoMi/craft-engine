@@ -41,8 +41,9 @@ public record ServerboundHandshakePacket(int protocolVersion, int blockListSize)
         user.setClientBlockList(new IntIdentityList(this.blockListSize));
         CustomPackets.checkProtocolVersion(user);
         // 1.20.1 或更低版本没有配置阶段所以在这里处理
-        if (user.hasClientMod() && !user.protocolVersion().isVersionNewerThan(ProtocolVersion.V1_20_2)) {
-            user.sendCustomPackets(ClientboundCreativeModeTabItemsPacket.create((Player) user));
+        if (user.hasClientMod() && !user.protocolVersion().isVersionNewerThan(ProtocolVersion.V1_20_2)
+                && user instanceof Player player && player.platformPlayer() != null) {
+            user.sendCustomPackets(ClientboundCreativeModeTabItemsPacket.create(player));
         }
     }
 }
