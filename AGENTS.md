@@ -1,3 +1,9 @@
+## Design Decisions and Approval
+
+- Before implementation, ask the user to resolve all required design decisions. Recommend options with brief trade-offs or invite alternatives; never decide for the user.
+- Obtain explicit approval after each proposal and before proceeding, including new decisions or design changes. Silence is not approval.
+- If the user cannot resolve a required decision or approve a solution, decline the task and state what remains unresolved. Do not assume a design.
+
 ## Branches and Pull Requests
 
 - Make all changes on the `dev` branch. If the current branch is `main`, switch to `dev` before making changes.
