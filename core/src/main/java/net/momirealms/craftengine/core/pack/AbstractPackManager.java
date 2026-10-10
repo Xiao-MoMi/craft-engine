@@ -111,8 +111,6 @@ public abstract class AbstractPackManager implements PackManager {
     public static final String NEW_TRIM_MATERIAL = "custom";
 
     public static final Set<String> ALLOWED_VANILLA_EQUIPMENT = Set.of("chainmail", "diamond", "gold", "iron", "netherite");
-    public static final Set<String> ALLOWED_MODEL_TAGS = Set.of("parent", "ambientocclusion", "display", "textures", "elements", "gui_light", "overrides");
-
     private static final Key MISSING_NO = Key.of("missingno");
 
     private static final Key BUILTIN_GENERATED = Key.of("builtin/generated");
@@ -1521,9 +1519,7 @@ public abstract class AbstractPackManager implements PackManager {
     private static byte[] optimizeJson(byte[] input, boolean model) {
         JsonElement json = GsonHelper.parseJson(new String(input, StandardCharsets.UTF_8));
         if (model) {
-            JsonObject object = json.getAsJsonObject();
-            List<String> invalidKey = object.keySet().stream().filter(k -> !ALLOWED_MODEL_TAGS.contains(k)).toList();
-            for (String key : invalidKey) object.remove(key);
+            ModelJsonOptimizer.optimize(json.getAsJsonObject());
         }
         return PackJsonWriter.toJson(json).replace("\"minecraft:", "\"").getBytes(StandardCharsets.UTF_8);
     }
