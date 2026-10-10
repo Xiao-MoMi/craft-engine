@@ -23,7 +23,9 @@ public final class ItemSettings {
     Set<Key> tags = Set.of();
     Repairable repairable = Repairable.UNDEFINED;
     List<AnvilRepairItem> anvilRepairItems = List.of();
+    List<AnvilRepairItem> anvilRepairMaterials = List.of();
     List<DragRepairItem> dragRepairItems = List.of();
+    List<DragRepairItem> dragRepairMaterials = List.of();
     boolean renameable = true;
     boolean preventBreak = false;
     boolean disableVanillaBehavior = true;
@@ -146,7 +148,9 @@ public final class ItemSettings {
         newSettings.equipmentFallback = settings.equipmentFallback;
         newSettings.repairable = settings.repairable;
         newSettings.anvilRepairItems = settings.anvilRepairItems;
+        newSettings.anvilRepairMaterials = settings.anvilRepairMaterials;
         newSettings.dragRepairItems = settings.dragRepairItems;
+        newSettings.dragRepairMaterials = settings.dragRepairMaterials;
         newSettings.renameable = settings.renameable;
         newSettings.preventBreak = settings.preventBreak;
         newSettings.disableVanillaBehavior = settings.disableVanillaBehavior;
@@ -256,6 +260,14 @@ public final class ItemSettings {
 
     public List<DragRepairItem> dragRepairItems() {
         return this.dragRepairItems;
+    }
+
+    public List<AnvilRepairItem> repairMaterials() {
+        return this.anvilRepairMaterials;
+    }
+
+    public List<DragRepairItem> dragRepairMaterials() {
+        return this.dragRepairMaterials;
     }
 
     public boolean respectRepairableComponent() {
@@ -382,6 +394,16 @@ public final class ItemSettings {
 
     public ItemSettings dragRepairItems(List<DragRepairItem> items) {
         this.dragRepairItems = items;
+        return this;
+    }
+
+    public ItemSettings repairMaterials(List<AnvilRepairItem> materials) {
+        this.anvilRepairMaterials = materials;
+        return this;
+    }
+
+    public ItemSettings dragRepairMaterials(List<DragRepairItem> materials) {
+        this.dragRepairMaterials = materials;
         return this;
     }
 

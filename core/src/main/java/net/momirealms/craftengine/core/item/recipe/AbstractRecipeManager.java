@@ -2,6 +2,7 @@ package net.momirealms.craftengine.core.item.recipe;
 
 import net.momirealms.craftengine.core.item.AbstractItemManager;
 import net.momirealms.craftengine.core.item.ItemDefinition;
+import net.momirealms.craftengine.core.item.ItemSelector;
 import net.momirealms.craftengine.core.item.recipe.input.RecipeInput;
 import net.momirealms.craftengine.core.item.recipe.result.CustomRecipeResult;
 import net.momirealms.craftengine.core.pack.Pack;
@@ -258,13 +259,13 @@ public abstract class AbstractRecipeManager implements RecipeManager {
                                 null, null,
                                 CraftingRecipeCategory.MISC,
                                 Ingredient.of(
-                                        List.of(IngredientElement.item(itemId)),
+                                        List.of(ItemSelector.item(itemId)),
                                         Set.of(UniqueKey.create(itemId)),
                                         Set.of(UniqueKey.create(itemDefinition.material())),
                                         !itemDefinition.isVanillaItem()
                                 ),
                                 Ingredient.of(
-                                        List.of(IngredientElement.tag(DYES)),
+                                        List.of(ItemSelector.tag(DYES)),
                                         itemIds,
                                         minecraftItemIds,
                                         hasCustomItem

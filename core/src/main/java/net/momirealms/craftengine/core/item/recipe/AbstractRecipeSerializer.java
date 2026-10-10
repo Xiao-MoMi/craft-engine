@@ -88,13 +88,13 @@ public abstract class AbstractRecipeSerializer<R extends Recipe> implements Reci
         }
         Set<UniqueKey> itemIds = new HashSet<>();
         Set<UniqueKey> minecraftItemIds = new HashSet<>();
-        List<IngredientElement> elements = new ArrayList<>();
+        List<ItemSelector> elements = new ArrayList<>();
         ItemManager itemManager = CraftEngine.instance().itemManager();
         itemsValue.forEach(v -> {
             String itemOrTag = v.getAsString();
             if (itemOrTag.charAt(0) == '#') {
                 Key tag = Key.of(itemOrTag.substring(1));
-                IngredientElement.Tag itemTag = IngredientElement.tag(tag);
+                ItemSelector.Tag itemTag = ItemSelector.tag(tag);
                 elements.add(itemTag);
                 List<UniqueKey> items = itemManager.itemIdsByTag(tag);
                 if (items.isEmpty()) {
@@ -109,7 +109,7 @@ public abstract class AbstractRecipeSerializer<R extends Recipe> implements Reci
                 }
             } else {
                 Key itemId = Key.of(itemOrTag);
-                elements.add(new IngredientElement.Item(itemId));
+                elements.add(new ItemSelector.Item(itemId));
                 if (itemManager.getBuildableItem(itemId).isEmpty()) {
                     throw new KnownResourceException("resource.recipe.ingredient.item_not_exist", v.path(), itemOrTag);
                 }
@@ -141,12 +141,12 @@ public abstract class AbstractRecipeSerializer<R extends Recipe> implements Reci
         Set<UniqueKey> itemIds = new HashSet<>();
         Set<UniqueKey> minecraftItemIds = new HashSet<>();
         ItemManager itemManager = CraftEngine.instance().itemManager();
-        List<IngredientElement> elements = new ArrayList<>();
+        List<ItemSelector> elements = new ArrayList<>();
 
         for (String item : items) {
             if (item.charAt(0) == '#') {
                 Key tag = Key.of(item.substring(1));
-                elements.add(new IngredientElement.Tag(tag));
+                elements.add(new ItemSelector.Tag(tag));
                 List<UniqueKey> uniqueKeys = itemManager.itemIdsByTag(tag);
 
                 if (uniqueKeys.isEmpty()) {
@@ -162,7 +162,7 @@ public abstract class AbstractRecipeSerializer<R extends Recipe> implements Reci
                 }
             } else {
                 Key itemId = Key.of(item);
-                elements.add(new IngredientElement.Item(itemId));
+                elements.add(new ItemSelector.Item(itemId));
 
                 if (itemManager.getBuildableItem(itemId).isEmpty()) {
                     throw new IllegalArgumentException("Unknown item identifier: " + itemId);

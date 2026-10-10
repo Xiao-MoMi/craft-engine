@@ -511,38 +511,32 @@ public final class RecipeEventListener implements Listener {
         }
     }
 
-    /*
-    处理item settings中repair item属性。如果修补材料不是自定义物品，则不会参与后续逻辑。
-    这会忽略preprocess里event.setResult(null);
-     */
     private void processRepairable(PrepareAnvilEvent event) {
         AnvilInventory inventory = event.getInventory();
         ItemStack first = inventory.getItem(0);
         ItemStack second = inventory.getItem(1);
-        if (ItemStackUtils.isEmpty(first) || ItemStackUtils.isEmpty(second)) return;
-
-        Item wrappedSecond = BukkitItemManager.instance().wrap(second);
-        // 如果材料不是自定义的，那么忽略
-        ItemDefinition itemDefinition = this.plugin.itemManager().getItemDefinitionOrNull(wrappedSecond.id());
-        if (itemDefinition == null) {
+        if (ItemStackUtils.isEmpty(first) || ItemStackUtils.isEmpty(second)) {
             return;
         }
 
-        List<AnvilRepairItem> repairItems = itemDefinition.settings().repairItems();
-        // 如果材料不支持修复物品，则忽略
-        if (repairItems.isEmpty()) {
+        Item wrappedSecond = BukkitItemManager.instance().wrap(second);
+        ItemDefinition itemDefinition = this.plugin.itemManager().getItemDefinitionOrNull(wrappedSecond.id());
+        List<AnvilRepairItem> repairItems = itemDefinition != null ? itemDefinition.settings().repairItems() : List.of();
+        Item wrappedFirst = BukkitItemManager.instance().wrap(first);
+        ItemDefinition customTool = wrappedFirst.getDefinitionOrNull();
+        List<AnvilRepairItem> repairMaterials = customTool != null ? customTool.settings().repairMaterials() : List.of();
+        if (repairItems.isEmpty() && repairMaterials.isEmpty()) {
             return;
         }
 
         // 后续均为修复逻辑
-        Item wrappedFirst = BukkitItemManager.instance().wrap(first.clone());
         int maxDamage = wrappedFirst.maxDamage();
         int damage = wrappedFirst.damage().orElse(0);
         // 物品无damage属性
-        if (damage == 0 || maxDamage == 0) return;
+        if (damage == 0 || maxDamage == 0) {
+            return;
+        }
 
-        Key firstId = wrappedFirst.id();
-        ItemDefinition customTool = wrappedFirst.getDefinitionOrNull();
         // 物品无法被修复
         if (customTool != null && customTool.settings().repairable().anvilRepair() == Tristate.FALSE) {
             event.setResult(null);
@@ -550,21 +544,15 @@ public final class RecipeEventListener implements Listener {
         }
 
         AnvilRepairItem repairItem = null;
-        for (AnvilRepairItem item : repairItems) {
-            for (String target : item.targets()) {
-                if (target.charAt(0) == '#') {
-                    Key tag = Key.of(target.substring(1));
-                    if (customTool != null && customTool.is(tag)) {
-                        repairItem = item;
-                        break;
-                    }
-                    if (wrappedFirst.hasVanillaTag(tag)) {
-                        repairItem = item;
-                        break;
-                    }
-                } else if (target.equals(firstId.toString())) {
+        for (AnvilRepairItem item : repairMaterials) {
+            if (ItemUtils.matchesItemOrTag(wrappedSecond, item.targets())) {
+                repairItem = item;
+            }
+        }
+        if (repairItem == null) {
+            for (AnvilRepairItem item : repairItems) {
+                if (ItemUtils.matchesItemOrTag(wrappedFirst, item.targets())) {
                     repairItem = item;
-                    break;
                 }
             }
         }
@@ -574,6 +562,7 @@ public final class RecipeEventListener implements Listener {
             return;
         }
 
+        wrappedFirst = BukkitItemManager.instance().wrap(first.clone());
         boolean hasResult = true;
 
         Player player = InventoryUtils.getPlayerFromInventoryEvent(event);

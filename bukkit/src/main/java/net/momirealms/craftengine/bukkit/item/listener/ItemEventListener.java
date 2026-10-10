@@ -838,35 +838,30 @@ public final class ItemEventListener implements Listener {
         if (ItemStackUtils.isEmpty(cursor) || ItemStackUtils.isEmpty(current)) return;
         Item wrappedMaterial = this.itemManager.wrap(cursor);
         ItemDefinition material = wrappedMaterial.getDefinitionOrNull();
-        if (material == null) return;
-        List<DragRepairItem> dragRepairItems = material.settings().dragRepairItems();
-        if (dragRepairItems.isEmpty()) return;
+        List<DragRepairItem> dragRepairItems = material != null ? material.settings().dragRepairItems() : List.of();
         Item wrappedTarget = this.itemManager.wrap(current);
+        ItemDefinition targetDefinition = wrappedTarget.getDefinitionOrNull();
+        List<DragRepairItem> dragRepairMaterials = targetDefinition != null ? targetDefinition.settings().dragRepairMaterials() : List.of();
+        if (dragRepairItems.isEmpty() && dragRepairMaterials.isEmpty()) {
+            return;
+        }
         int maxDamage = wrappedTarget.maxDamage();
         int damage = wrappedTarget.damage().orElse(0);
         // 目标无耐久或已修满
         if (maxDamage <= 0 || damage <= 0) return;
-        ItemDefinition targetDefinition = wrappedTarget.getDefinitionOrNull();
-        Key targetId = wrappedTarget.id();
         DragRepairItem repairItem = null;
-        for (DragRepairItem item : dragRepairItems) {
-            for (String target : item.targets()) {
-                if (target.charAt(0) == '#') {
-                    Key tag = Key.of(target.substring(1));
-                    if (targetDefinition != null && targetDefinition.is(tag)) {
-                        repairItem = item;
-                        break;
-                    }
-                    if (wrappedTarget.hasVanillaTag(tag)) {
-                        repairItem = item;
-                        break;
-                    }
-                } else if (target.equals(targetId.toString())) {
+        for (DragRepairItem item : dragRepairMaterials) {
+            if (ItemUtils.matchesItemOrTag(wrappedMaterial, item.targets())) {
+                repairItem = item;
+            }
+        }
+        if (repairItem == null) {
+            for (DragRepairItem item : dragRepairItems) {
+                if (ItemUtils.matchesItemOrTag(wrappedTarget, item.targets())) {
                     repairItem = item;
                     break;
                 }
             }
-            if (repairItem != null) break;
         }
         // 找不到匹配的修复目标
         if (repairItem == null) return;
