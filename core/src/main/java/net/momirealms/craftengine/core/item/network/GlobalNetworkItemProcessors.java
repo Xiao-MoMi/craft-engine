@@ -11,7 +11,7 @@ public final class GlobalNetworkItemProcessors {
     private final Map<Key, Entry> entries = new LinkedHashMap<>();
     private NetworkItemProcessor[] processors = new NetworkItemProcessor[0];
 
-    public synchronized void register(Key id, int priority, NetworkItemProcessor processor) {
+    public void register(Key id, int priority, NetworkItemProcessor processor) {
         Objects.requireNonNull(id, "id");
         Objects.requireNonNull(processor, "processor");
         if (this.entries.containsKey(id)) {
@@ -21,7 +21,7 @@ public final class GlobalNetworkItemProcessors {
         this.rebuild();
     }
 
-    public synchronized boolean unregister(Key id) {
+    public boolean unregister(Key id) {
         if (this.entries.remove(id) == null) {
             return false;
         }
@@ -33,7 +33,7 @@ public final class GlobalNetworkItemProcessors {
         return this.processors;
     }
 
-    public synchronized void loadConfig(List<ConfigSection> sections) {
+    public void loadConfig(List<ConfigSection> sections) {
         Map<Key, Entry> configured = new LinkedHashMap<>();
         for (ConfigSection section : sections) {
             int priority = section.getInt("priority", 100);
