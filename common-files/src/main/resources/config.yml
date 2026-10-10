@@ -12,9 +12,6 @@ forced-locale: ''
 # https://xiao-momi.github.io/craft-engine-wiki/getting_start/database
 storage:
   # none, json, sqlite, h2, mysql, mariadb, postgresql, mongodb
-  # 'none' disables reads and writes without creating files or downloading database dependencies.
-  # Player resource pack preferences have no effect with 'none'; configured defaults are used.
-  # Existing stored data is left untouched. Other storage options below are ignored with 'none'.
   type: sqlite
   # Required JDBC URL. Relative paths start at the server working directory.
   # SQLite needs no credentials and uses one connection.
